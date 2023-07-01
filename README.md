@@ -9,9 +9,12 @@ Start the docker image with `task docker:run`.
 Task UI is meant for Docker environments. A generic Dockerfile exists, which
 bundles typical dependencies like `task`, `ttyrec`, `docker`, `docker compose`.
 
-To use, start by navigating to the `docker/` subfolder. It contains a Taskfile,
-with the typical commands to build and run task-ui from a docker image. For
-examples with Taskfiles you could run, look into the folder.
+To use, start by navigating to the
+[docker](https://github.com/titpetric/task-ui/tree/main/docker)
+subfolder. It contains a Taskfile, with the typical commands to build and
+run task-ui from a docker image. For examples with Taskfiles you could
+run, look into the folder
+[examples](https://github.com/titpetric/task-ui/tree/main/examples).
 
 The layout is somewhat responsive, supporting mobile.
 
