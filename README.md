@@ -2,6 +2,8 @@
 
 Run your Taskfile.yml from the browser.
 
+![](https://raw.githubusercontent.com/titpetric/task-ui/main/.github/assets/task-ui.gif)
+
 Task UI is meant for Docker environments. A generic Dockerfile exists, which
 bundles typical dependencies like `task`, `ttyrec`, `docker`, `docker compose`.
 
