@@ -4,6 +4,8 @@ Run your Taskfile.yml from the browser.
 
 ![](https://raw.githubusercontent.com/titpetric/task-ui/main/.github/assets/task-ui.png)
 
+Start the docker image with `task docker:run`.
+
 Task UI is meant for Docker environments. A generic Dockerfile exists, which
 bundles typical dependencies like `task`, `ttyrec`, `docker`, `docker compose`.
 
@@ -43,7 +45,6 @@ with what you provide it with.
 The image provides an `id_ecdsa` key to use for ssh hops. The recommended
 way to deploy is to provide your own `docker/root/.ssh` folder with
 the ssh keys. You can regenerate the ssh key with `task docker:gen`.
-
 
 # Development
 
