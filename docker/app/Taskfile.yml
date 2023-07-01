@@ -7,7 +7,7 @@ vars:
 
 tasks:
   run:
-    desc: "Test chaos monkey (docker compose, docker)"
+    desc: "Test chaos monkey"
     summary: |
       The task brings up a docker-compose setup and then uses chaos monkey
       to kill off two containers with the label `role:disposable`.
