@@ -1,0 +1,47 @@
+---
+version: "3"
+
+vars:
+  folder: docker-chaos-monkey
+  repository: https://github.com/titpetric/docker-chaos-monkey
+
+tasks:
+  run:
+    desc: "Test chaos monkey (docker compose, docker)"
+    summary: |
+      The task brings up a docker-compose setup and then uses chaos monkey
+      to kill off two containers with the label `role:disposable`.
+    deps:
+      - clone
+    vars:
+      format: '{{`{{.Names}}`}}'
+    cmds:
+      - docker compose up -d
+      - docker ps -f status=running -f "label=role:disposable" --format "{{.format}}" | sort > /tmp/before.txt
+      - SKIP_WARNING=1 ./docker-chaos-monkey/chaos-docker.sh stop
+      - SKIP_WARNING=1 ./docker-chaos-monkey/chaos-docker.sh stop
+      - docker ps -f status=running -f "label=role:disposable" --format "{{.format}}" | sort > /tmp/after.txt
+      - colordiff -w -u /tmp/before.txt /tmp/after.txt || true
+      - docker compose down
+
+  info:
+    desc: "Print environment info"
+    cmds:
+      - task --version
+      - task-ui -v
+      - ttyrec -V
+      - docker version
+      - docker compose version
+
+  shell:
+    interactive: true
+    desc: "Drop into shell"
+    cmds:
+      - bash
+
+  clone:
+    internal: true
+    status:
+      - stat {{.folder}}
+    cmds:
+      - git clone --depth=1 {{ .repository }} {{ .folder }}

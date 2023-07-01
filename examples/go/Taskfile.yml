@@ -1,0 +1,33 @@
+---
+version: "3"
+
+tasks:
+  default:
+    desc: "Lint/fmt and print help"
+    cmds:
+      - task fix
+      - task -l
+
+  fix:
+    desc: "Fix source by running common sanitizers"
+    silent: true
+    cmds:
+      - goimports -w .
+      - go mod tidy
+      - go fmt ./...
+      - go vet ./...
+
+  build:
+    desc: "Build the Go project"
+    cmds:
+      - go build ./...
+
+  test:
+    desc: "Run tests for the Go project"
+    cmds:
+      - go test -race -cover ./...
+
+  benchmark:
+    desc: "Run benchmarks for the Go project"
+    cmds:
+      - go test -race -cover -benchmem -run=^$ -bench=".*" ./...

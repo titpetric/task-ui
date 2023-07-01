@@ -1,0 +1,18 @@
+services:
+  runner:
+    image: titpetric/task-ui
+    restart: unless-stopped
+    networks: [ proxy ]
+    labels:
+      - role:disposable
+    deploy:
+      mode: replicated
+      replicas: 10
+    volumes:
+    - $PWD/app:/app
+    - /var/run/docker.sock:/var/run/docker.sock:ro
+
+networks:
+  proxy:
+    name: proxy
+    driver: bridge

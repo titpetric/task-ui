@@ -1,0 +1,11 @@
+services:
+  runner:
+    image: titpetric/task-ui
+    restart: always
+    command:
+      - --history-enable
+    ports:
+    - 3000:3000
+    volumes:
+    - $PWD/app:/app
+    - /var/run/docker.sock:/var/run/docker.sock:ro

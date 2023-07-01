@@ -1,0 +1,6 @@
+Host *
+   SendEnv LANG LC_* DEPLOY_*
+   ForwardAgent yes
+   StrictHostKeyChecking no
+   UserKnownHostsFile=/dev/null
+   LogLevel ERROR

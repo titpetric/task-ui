@@ -1,0 +1,46 @@
+#!/bin/bash
+function git_status_folder
+{
+	dir=${1}
+	cd ${dir}
+
+	OIFS=${IFS}
+	NIFS=$'\n'
+
+	IFS=${NIFS}
+
+	GITSTATUS=`git status | grep 'is ahead' ; git status --porcelain`
+	echo \# ${dir}
+	if [ -n "$GITSTATUS" ]; then
+		for CHANGE in $GITSTATUS
+		do
+			IFS=${OIFS}
+			echo $CHANGE
+			IFS=${NIFS}
+		done
+	else
+		echo "No changes."
+	fi
+
+	IFS=$OIFS
+	cd ${ORIGPWD}
+}
+
+ORIGPWD=${PWD}
+REPOS=`find -type d -name '.git' | sed 's/\/\.git//g'`
+for REPO in $REPOS
+do
+	if [ "$REPO" == "." ]; then
+		continue;
+	fi
+	git_status_folder "$REPO"
+done
+
+GITDIR=`git rev-parse --git-dir 2>&1`
+if [ $? -eq 0 ]; then
+	REPOPATH=`echo $GITDIR | sed 's/\/\?\.git$//'`
+	if [ -z "$REPOPATH" ]; then
+		REPOPATH=$ORIGPWD;
+	fi
+	git_status_folder "$REPOPATH";
+fi

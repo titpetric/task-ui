@@ -1,0 +1,31 @@
+#!/bin/bash
+function git_pull_folder
+{
+	dir=${1}
+	cd ${dir}
+
+	echo \# ${dir}
+	git pull origin master
+	git pull
+
+	cd ${ORIGPWD}
+}
+
+ORIGPWD=${PWD}
+REPOS=`find -type d -name '.git' | sed 's/\/\.git//g'`
+for REPO in $REPOS
+do
+	if [ "$REPO" == "." ]; then
+		continue;
+	fi
+	git_pull_folder "$REPO"
+done
+
+GITDIR=`git rev-parse --git-dir 2>&1`
+if [ $? -eq 0 ]; then
+	REPOPATH=`echo $GITDIR | sed 's/\/\?\.git$//'`
+	if [ -z "$REPOPATH" ]; then
+		REPOPATH=$ORIGPWD;
+	fi
+	git_pull_folder "$REPOPATH";
+fi

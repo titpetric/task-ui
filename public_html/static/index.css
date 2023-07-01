@@ -1,0 +1,94 @@
+.action {
+	margin: 0 5px 0 0;
+}
+
+.container-terminal {
+	margin-top: 1em;
+}
+
+.terminal {
+	border: #000 solid 5px;
+	font-family: "DejaVu Sans Mono", "Liberation Mono", monospace;
+	font-size: 11px;
+	color: #f0f0f0;
+	background: #000;
+}
+.terminal:empty {
+	display: none;
+}
+.terminal .xterm-viewport {
+	overflow-y: auto;
+}
+
+.terminal-cursor {
+	color: #000;
+	background: #f0f0f0;
+}
+
+.btn-deploy { font-weight: 500; border: 1px solid black; }
+
+.breadcrumbs .nav-item {
+	padding: 0;
+}
+
+.breadcrumbs .nav-item:after {
+	content: '›';
+	display: inline;
+	font-weight: bold;
+	color: #AAA;
+	
+	padding: 0 0.5em 0 0.5em;
+}
+
+.breadcrumbs .nav-item:last-child:after {
+	content: '';
+}
+
+.card {
+	margin-top: 1em;
+}
+
+header {
+	background: #eee;
+	padding: 1em;
+}
+
+/** from https://jsfiddle.net/tovic/AbpRD/ - could use highlight.js or sth */
+
+pre {
+  background-color:#eee;
+  overflow:auto;
+  margin:0 0 1em;
+  padding:.5em 1em;
+}
+
+pre code,
+pre .line-number {
+  /* Ukuran line-height antara teks di dalam tag <code> dan <span class="line-number"> harus sama! */
+  font:normal normal 12px/14px "Courier New",Courier,Monospace;
+  color:black;
+  display:block;
+}
+
+pre .line-number {
+  float:left;
+  margin:0 1em 0 -1em;
+  border-right:1px solid;
+  text-align:right;
+}
+
+pre .line-number span {
+  display:block;
+  padding:0 .5em 0 1em;
+}
+
+pre .cl {
+  display:block;
+  clear:both;
+}
+
+.list-group-item.active {
+  --bs-list-group-active-color: #333;
+  --bs-list-group-active-bg: #eee;
+  --bs-list-group-active-border-color: #ddd;
+}

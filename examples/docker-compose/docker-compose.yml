@@ -1,0 +1,8 @@
+# This is all essential
+
+services:
+  echo:
+    image: mendhak/http-https-echo
+
+  fortune:
+    image: andis/http-fortune

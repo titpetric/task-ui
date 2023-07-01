@@ -1,0 +1,34 @@
+---
+version: "3"
+
+tasks:
+  build:
+    desc: "Build docker image"
+    cmds:
+      - docker compose build
+
+  pull:
+    desc: "Pull docker images"
+    cmds:
+      - docker compose pull
+
+  status:
+    aliases: [ps]
+    desc: "Environment status"
+    cmds:
+      - docker compose ps
+
+  up:
+    desc: "Bring up env"
+    cmds:
+      - docker compose up -d --remove-orphans
+
+  down:
+    desc: "Shut down env"
+    cmds:
+      - docker compose down
+
+  logs:
+    desc: "Tail container logs (live)"
+    cmds:
+      - docker compose logs --tail=10 -f

@@ -1,0 +1,16 @@
+---
+version: "3"
+
+tasks:
+  lint:
+    desc: "Lint Terraform files"
+    cmds:
+      - terraform fmt -check=true -recursive
+
+  apply:
+    desc: "Apply Terraform configuration"
+    cmds:
+      - terraform init
+      - terraform validate
+      - terraform plan
+      - terraform apply
