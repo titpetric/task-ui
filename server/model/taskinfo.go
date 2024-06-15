@@ -10,7 +10,7 @@ import (
 // internally.
 //
 // This is also the point where exposing vars and cmds becomes
-// a security issue. We still asume that users may want to
+// a security issue. We still assume that users may want to
 // run it in less trusted environments, in which case we
 // explicitly don't want any information about the contents
 // of the taskfile beyond the target names and descriptions.
