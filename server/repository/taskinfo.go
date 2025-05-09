@@ -12,7 +12,7 @@ type FilterFunc func(task *Task) bool
 // List tasks lists the names of the defined tasks.
 func ListTasks(spec *Taskfile, filters ...FilterFunc) []*TaskInfo {
 	result := make([]*TaskInfo, 0, len(spec.Tasks))
-	for _, task := range spec.Tasks {
+	for _, task := range spec.Tasks.Values() {
 		for _, filter := range filters {
 			if filter(task) {
 				goto next
