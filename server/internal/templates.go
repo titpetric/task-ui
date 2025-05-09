@@ -36,8 +36,8 @@ func loadTemplateFromFilesystem(filename string, funcs template.FuncMap) (*templ
 func loadTemplate(name string, files *embed.FS, funcs template.FuncMap) (*template.Template, error) {
 	loadTemplateFromEmbedFS := embeddedLoader(files)
 	loaders := []func(string, template.FuncMap) (*template.Template, error){
-		loadTemplateFromEmbedFS,
 		loadTemplateFromFilesystem,
+		loadTemplateFromEmbedFS,
 	}
 
 	for _, loader := range loaders {
