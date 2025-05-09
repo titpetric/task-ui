@@ -12,7 +12,7 @@ tasks:
     desc: "Build task-ui docker image"
     dir: '{{ .root }}'
     cmds:
-      - docker build --build-arg ssh_private_key="$(cat ./.ssh/id_rsa)" -t {{ .image }} -f docker/Dockerfile --squash .
+      - docker build -t {{ .image }} -f docker/Dockerfile .
       - docker images | grep {{ .image }}
 
   gen:
