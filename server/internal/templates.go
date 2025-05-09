@@ -3,14 +3,10 @@ package internal
 import (
 	"embed"
 	"encoding/json"
-	"errors"
+	"fmt"
 	"html/template"
 	"io"
 	"path/filepath"
-
-	"github.com/apex/log"
-
-	. "github.com/titpetric/task-ui/server/model"
 )
 
 const commonTemplate = "templates/_common.tpl"
@@ -40,17 +36,16 @@ func loadTemplate(name string, files *embed.FS, funcs template.FuncMap) (*templa
 		loadTemplateFromEmbedFS,
 	}
 
+	var lastErr error
 	for _, loader := range loaders {
 		t, err := loader(name, funcs)
 		if err == nil {
 			return t, nil
 		}
-		if !errors.Is(err, ErrNotFound) {
-			log.Warnf("Loader error: %s", err)
-		}
+		lastErr = err
 	}
 
-	return nil, errors.New("no such template: " + name)
+	return nil, fmt.Errorf("no such template: %s: %w", name, lastErr)
 }
 
 type TemplateRendererFunc func(w io.Writer, templateName string, data any) error
