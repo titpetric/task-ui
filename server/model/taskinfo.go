@@ -18,7 +18,7 @@ type TaskInfo struct {
 	Flags TaskFlags
 
 	// History holds history data
-	History []HistoryRecord
+	History []HistoryRecord `json:",omitempty"`
 }
 
 // TaskFlags holds some task flags.

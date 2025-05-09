@@ -23,6 +23,8 @@ func record(actionName, commandName string, args []string, env []string) (*launc
 	newName := "ttyrec"
 	outfile := fmt.Sprintf("history/%s-%d.ttyrec", actionName, time.Now().Unix())
 	newArgs := []string{
+		"-T",
+		"always",
 		"-f",
 		outfile,
 		"--",
