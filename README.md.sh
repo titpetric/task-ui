@@ -14,6 +14,6 @@ for NAME in $(taskList); do
 	if [ -z "$NAME" ]; then
 		continue
 	fi
-	echo "## $(task ${NAME} --summary)"
+	echo "## $(task ${NAME} --summary | perl -p -e 's/^ - (.*)/- \`\1\`/g')"
 	echo
 done
