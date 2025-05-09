@@ -53,9 +53,9 @@ the SSH keys. You can regenerate the SSH key with `task docker:gen`.
 
 task: Available tasks for this project:
 
-* build:              Build task-ui
+* default:            Run everything
 * fix:                Fix code
-* install:            Install task-ui locally
+* install:            Install task-ui
 * run:                Run task-ui
 * test:               Test task-ui
 * docker:build:       Build task-ui docker image
@@ -63,22 +63,18 @@ task: Available tasks for this project:
 * docker:push:        Push task-ui to registry
 * docker:run:         Run task-ui in docker env
 
-## task: build
+## task: default
 
-Build task-ui
-
-dependencies:
- - fix
+Run everything
 
 commands:
- - CGO_ENABLED=0 go build .
+ - Task: fix
+ - Task: install
+ - Task: test
 
 ## task: test
 
 Test task-ui
-
-dependencies:
- - fix
 
 commands:
  - CGO_ENABLED=1 go test -race -count=1 -cover ./...
@@ -88,21 +84,15 @@ commands:
 
 Run task-ui
 
-dependencies:
- - build
-
 commands:
- - ./task-ui --history-enable
+ - task-ui --history-enable
 
 ## task: install
 
-Install task-ui locally
-
-dependencies:
- - fix
+Install task-ui
 
 commands:
- - go install .
+ - CGO_ENABLED=0 go install .
 
 ## task: fix
 
