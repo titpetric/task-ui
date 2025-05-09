@@ -10,10 +10,10 @@ import (
 
 	"github.com/apex/log"
 	"github.com/go-chi/chi"
-	"github.com/titpetric/task-ui/server/config"
 	"golang.org/x/net/websocket"
 
-	. "github.com/titpetric/task-ui/server/repository"
+	"github.com/titpetric/task-ui/server/model"
+	"github.com/titpetric/task-ui/server/repository"
 )
 
 func (svc *Server) Launch() websocket.Handler {
@@ -31,13 +31,13 @@ func (svc *Server) Launch() websocket.Handler {
 		r := ws.Request()
 		id := chi.URLParam(r, "id")
 
-		spec, err := config.Load(".", svc.config.Taskfile)
+		spec, err := model.LoadTaskfile(svc.config.Taskfile)
 		if err != nil {
 			logError(ws, "error loading "+svc.config.Taskfile, err)
 			return
 		}
 
-		action, err := FindTask(spec, id)
+		action, err := repository.FindTask(spec, id)
 		if err != nil {
 			logError(ws, "can't find task by id", err)
 			return

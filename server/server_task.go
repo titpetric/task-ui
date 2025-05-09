@@ -9,40 +9,38 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
 
-	"github.com/titpetric/task-ui/server/config"
-
-	. "github.com/titpetric/task-ui/server/model"
-	. "github.com/titpetric/task-ui/server/repository"
+	"github.com/titpetric/task-ui/server/model"
+	"github.com/titpetric/task-ui/server/repository"
 )
 
 func (svc *Server) Task(w http.ResponseWriter, r *http.Request) {
 	serverError := func(err error) {
-		render.JSON(w, r, InternalServerError(err))
+		render.JSON(w, r, model.InternalServerError(err))
 	}
 	notFoundError := func(err error) {
-		render.JSON(w, r, NotFoundError(err))
+		render.JSON(w, r, model.NotFoundError(err))
 	}
 
-	spec, err := config.Load(".", "Taskfile.yml")
+	spec, err := model.LoadTaskfile("Taskfile.yml")
 	if err != nil {
 		serverError(err)
 		return
 	}
 
 	id := chi.URLParam(r, "id")
-	task, err := FindTask(spec, id)
+	task, err := repository.FindTask(spec, id)
 	if err != nil {
 		notFoundError(err)
 		return
 	}
 
-	taskinfo := NewTaskInfo(task)
-	taskinfo.History = LoadHistory(id)
+	taskinfo := model.NewTaskInfo(task)
+	taskinfo.History = repository.LoadHistory(id)
 
 	var (
 		out  = new(bytes.Buffer)
 		data = &templateData{
-			Tasks:   ListTasks(spec, FilterOutInternal, FilterOutNoDesc),
+			Tasks:   repository.ListTasks(spec, repository.FilterOutInternal, repository.FilterOutNoDesc),
 			Current: taskinfo,
 		}
 	)

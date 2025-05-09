@@ -13,8 +13,7 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
-
-	. "github.com/titpetric/task-ui/server/internal"
+	"github.com/titpetric/task-ui/server/internal"
 )
 
 const (
@@ -25,8 +24,8 @@ const (
 type Server struct {
 	files     *embed.FS
 	config    *flags
-	semaphore *Semaphore
-	template  TemplateRendererFunc
+	semaphore *internal.Semaphore
+	template  internal.TemplateRendererFunc
 }
 
 func New(files *embed.FS) (*Server, error) {
@@ -48,9 +47,9 @@ func New(files *embed.FS) (*Server, error) {
 
 	return &Server{
 		config:    flags,
-		semaphore: new(Semaphore),
+		semaphore: internal.NewSemaphore(),
 		files:     files,
-		template:  NewTemplateRenderer(files),
+		template:  internal.NewTemplateRenderer(files),
 	}, nil
 }
 

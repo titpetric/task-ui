@@ -7,10 +7,8 @@ import (
 
 	"github.com/go-chi/render"
 
-	"github.com/titpetric/task-ui/server/config"
-
-	. "github.com/titpetric/task-ui/server/model"
-	. "github.com/titpetric/task-ui/server/repository"
+	"github.com/titpetric/task-ui/server/model"
+	"github.com/titpetric/task-ui/server/repository"
 )
 
 func (svc *Server) Index(w http.ResponseWriter, r *http.Request) {
@@ -18,7 +16,7 @@ func (svc *Server) Index(w http.ResponseWriter, r *http.Request) {
 		render.JSON(w, r, InternalServerError(err))
 	}
 
-	spec, err := config.Load(".", "Taskfile.yml")
+	spec, err := model.LoadTaskfile("Taskfile.yml")
 	if err != nil {
 		serverError(err)
 		return
@@ -27,7 +25,7 @@ func (svc *Server) Index(w http.ResponseWriter, r *http.Request) {
 	var (
 		out  = new(bytes.Buffer)
 		data = &templateData{
-			Tasks: ListTasks(spec, FilterOutInternal, FilterOutNoDesc),
+			Tasks: repository.ListTasks(spec, repository.FilterOutInternal, repository.FilterOutNoDesc),
 		}
 	)
 

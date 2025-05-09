@@ -3,12 +3,12 @@ package server
 import (
 	"html/template"
 
-	. "github.com/titpetric/task-ui/server/model"
+	"github.com/titpetric/task-ui/server/model"
 )
 
 type templateData struct {
-	Tasks   []*TaskInfo
-	Current *TaskInfo
+	Tasks   []*model.TaskInfo
+	Current *model.TaskInfo
 }
 
 func (f *templateData) FuncMap() template.FuncMap {
@@ -17,7 +17,7 @@ func (f *templateData) FuncMap() template.FuncMap {
 	}
 }
 
-func (f *templateData) isCurrent(item *TaskInfo) bool {
+func (f *templateData) isCurrent(item *model.TaskInfo) bool {
 	if f.Current == nil || item == nil {
 		return false
 	}
