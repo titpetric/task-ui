@@ -27,8 +27,3 @@ tasks:
     dir: '{{ .root }}/docker'
     cmds:
       - docker compose up
-
-  push:
-    desc: "Push task-ui to registry"
-    cmds:
-      - docker push {{ .image }}
