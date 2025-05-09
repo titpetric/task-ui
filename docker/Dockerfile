@@ -2,7 +2,7 @@
 FROM docker:20.10 AS docker
 
 # Build project
-FROM golang:1.20-alpine AS builder
+FROM golang:1.24-alpine AS builder
 
 RUN GOBIN=/usr/local/bin CGO_ENABLED=0 go install github.com/go-task/task/v3/cmd/task@latest
 
