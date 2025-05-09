@@ -60,7 +60,6 @@ task: Available tasks for this project:
 * test:               Test task-ui
 * docker:build:       Build task-ui docker image
 * docker:gen:         Generate ssh key for docker image
-* docker:push:        Push task-ui to registry
 * docker:run:         Run task-ui in docker env
 
 ## task: default
