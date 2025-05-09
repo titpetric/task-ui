@@ -67,43 +67,43 @@ task: Available tasks for this project:
 Run everything
 
 commands:
- - Task: fix
- - Task: install
- - Task: test
+- `Task: fix`
+- `Task: install`
+- `Task: test`
 
 ## task: test
 
 Test task-ui
 
 commands:
- - CGO_ENABLED=1 go test -race -count=1 -cover ./...
- - CGO_ENABLED=0 go test -count=1 -cover ./...
+- `CGO_ENABLED=1 go test -race -count=1 -cover ./...`
+- `CGO_ENABLED=0 go test -count=1 -cover ./...`
 
 ## task: run
 
 Run task-ui
 
 commands:
- - task-ui --history-enable
+- `task-ui --history-enable`
 
 ## task: install
 
 Install task-ui
 
 commands:
- - CGO_ENABLED=0 go install .
+- `CGO_ENABLED=0 go install .`
 
 ## task: fix
 
 Fix code
 
 dependencies:
- - deps:goimports
+- `deps:goimports`
 
 commands:
- - goimports -w .
- - go fmt ./...
- - go vet .
- - go mod tidy
- - ./README.md.sh > README.md
+- `goimports -w .`
+- `go fmt ./...`
+- `go vet .`
+- `go mod tidy`
+- `./README.md.sh > README.md`
 
