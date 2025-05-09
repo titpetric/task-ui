@@ -1,9 +1,5 @@
 package model
 
-import (
-	"github.com/go-task/task/v3/taskfile"
-)
-
 // TaskInfo holds information available about a task, without
 // coupling to taskfile structures too much. We need a subset
 // of data available for the UI, we can still use the rest
@@ -21,17 +17,8 @@ type TaskInfo struct {
 	// Flags holds some flags
 	Flags TaskFlags
 
-	// Stats holds some counters
-	Stats TaskStats
-
 	// History holds history data
 	History []HistoryRecord
-}
-
-// TaskStats holds counters for sensitive data.
-type TaskStats struct {
-	Cmds int
-	Vars int
 }
 
 // TaskFlags holds some task flags.
@@ -41,17 +28,13 @@ type TaskFlags struct {
 }
 
 // NewTaskInfo converts the taskfile record into our own.
-func NewTaskInfo(spec *taskfile.Task) *TaskInfo {
+func NewTaskInfo(spec *Task) *TaskInfo {
 	return &TaskInfo{
-		Task:        spec.Task,
-		Description: spec.Desc,
+		Task:        spec.Name,
+		Description: spec.Description,
 		Flags: TaskFlags{
 			Internal:    spec.Internal,
 			Interactive: spec.Interactive,
-		},
-		Stats: TaskStats{
-			Cmds: len(spec.Cmds),
-			Vars: spec.Vars.Len(),
 		},
 	}
 }

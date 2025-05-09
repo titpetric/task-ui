@@ -9,6 +9,13 @@ type Semaphore struct {
 	semaphore int32
 }
 
+// NewSemaphore creates a *Semaphore.
+func NewSemaphore() *Semaphore {
+	return &Semaphore{
+		semaphore: 0,
+	}
+}
+
 // CanRun will allow a caller to proceed
 func (l *Semaphore) CanRun() bool {
 	return atomic.CompareAndSwapInt32(&l.semaphore, 0, 1)
