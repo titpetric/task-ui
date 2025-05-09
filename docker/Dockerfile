@@ -24,7 +24,7 @@ WORKDIR /tmp/ovh-ttyrec
 RUN STATIC=1 ./configure --bindir=/usr/local/bin && make && make install
 
 # The final image environment.
-FROM golang:1.20-alpine
+FROM golang:1.24-alpine
 
 RUN apk --no-cache add bash git colordiff openssh mailcap curl
 
