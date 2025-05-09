@@ -6,7 +6,14 @@ echo
 task -l | sed 's/:$/:\n/g'
 echo
 
-for NAME in build test run install fix; do
+function taskList {
+	yq -r '.tasks | to_entries | map(select(.value.internal != true)) | .[].key' Taskfile.yml
+}
+
+for NAME in $(taskList); do
+	if [ -z "$NAME" ]; then
+		continue
+	fi
 	echo "## $(task ${NAME} --summary)"
 	echo
 done

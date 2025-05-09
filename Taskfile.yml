@@ -5,34 +5,28 @@ includes:
   docker: docker/Taskfile.yml
 
 tasks:
-  build:
-    desc: "Build task-ui"
-    deps:
-      - fix
+  default:
+    desc: "Run everything"
     cmds:
-      - CGO_ENABLED=0 go build .
+      - task: fix
+      - task: install
+      - task: test
 
   test:
     desc: "Test task-ui"
-    deps:
-      - fix
     cmds:
       - CGO_ENABLED=1 go test -race -count=1 -cover ./...
       - CGO_ENABLED=0 go test -count=1 -cover ./...
 
   run:
     desc: "Run task-ui"
-    deps:
-      - build
     cmds:
-      - ./task-ui --history-enable
+      - task-ui --history-enable
 
   install:
-    desc: "Install task-ui locally"
-    deps:
-      - fix
+    desc: "Install task-ui"
     cmds:
-      - go install .
+      - CGO_ENABLED=0 go install .
 
   fix:
     desc: "Fix code"
