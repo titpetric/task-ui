@@ -1,6 +1,8 @@
 package server
 
 import (
+	"os/exec"
+
 	"github.com/apex/log"
 	"github.com/spf13/pflag"
 )
@@ -28,7 +30,12 @@ func (f *flags) Bind() {
 // fields, and upgrade deprecated flags to newer fields...
 func (f *flags) Validate() error {
 	if f.EnableHistory {
-		log.Infof("History is enabled, writing to %q", f.HistoryOutput)
+		if _, err := exec.LookPath("ttyrec"); err != nil {
+			f.EnableHistory = false
+			log.Warnf("History is enabled but ttyrec not found, disabling history")
+		} else {
+			log.Infof("History is enabled, writing to %q", f.HistoryOutput)
+		}
 	}
 	return nil
 }
