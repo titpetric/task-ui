@@ -19,9 +19,12 @@ tasks:
       - CGO_ENABLED=0 go test -count=1 -cover ./...
 
   run:
-    desc: "Run task-ui"
+    desc: "Run task-ui over the examples folder"
+    env:
+      TASK_UI_ROOT: examples
+      TASK_UI_ASSETS: .
     cmds:
-      - task-ui --history-enable
+      - go run .
 
   install:
     desc: "Install task-ui"

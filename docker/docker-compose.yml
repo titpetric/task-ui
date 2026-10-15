@@ -2,10 +2,15 @@ services:
   runner:
     image: titpetric/task-ui
     restart: always
-    command:
-      - --history-enable
+    environment:
+      # Signs the session cookie, keep sessions across restarts.
+      TASK_UI_SECRET: ${TASK_UI_SECRET:-change-me}
+      TASK_UI_TITLE: task-ui
+      # Users live in /app/task-ui.yml; without users, visitors get this role.
+      TASK_UI_ANONYMOUS: viewer
     ports:
     - 3000:3000
     volumes:
     - $PWD/app:/app
+    - $PWD/root/.ssh:/root/.ssh
     - /var/run/docker.sock:/var/run/docker.sock:ro

@@ -1,0 +1,30 @@
+# Copy to task-ui.yml next to your projects (TASK_UI_ROOT), or point
+# TASK_UI_CONFIG at it. The file is re-read when it changes.
+title: production
+
+# Roles:
+#   admin   runs everything, manages the SSH keys
+#   runner  runs runbooks the allow lists permit
+#   viewer  reads runbooks and history, runs nothing
+#
+# Passwords are bcrypt hashes: `task-ui hash <password>`.
+users:
+  - name: admin
+    password: $2a$10$replace.with.output.of.task-ui.hash
+    role: admin
+  - name: ops
+    password: $2a$10$replace.with.output.of.task-ui.hash
+    role: runner
+    # Optional: only these projects are visible to the user.
+    projects: [infra, website]
+  - name: support
+    password: $2a$10$replace.with.output.of.task-ui.hash
+    role: viewer
+
+# Optional: projects are discovered from the folders under TASK_UI_ROOT.
+# List one here to rename it, restrict it, or point it somewhere else.
+projects:
+  - id: infra
+    path: infra
+    title: Infrastructure
+    allow: [ops]
