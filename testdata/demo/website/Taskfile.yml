@@ -1,0 +1,21 @@
+version: "3"
+
+tasks:
+  build:
+    desc: "Build the static site"
+    cmds:
+      - echo build
+  publish:
+    desc: "Publish the site to the CDN"
+    summary: |
+      Uploads the build/ folder and purges the CDN cache.
+    cmds:
+      - echo publish
+  lint:
+    desc: "Check links and markup"
+    cmds:
+      - echo lint
+  clean:
+    internal: true
+    cmds:
+      - rm -rf build
