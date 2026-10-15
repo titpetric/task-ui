@@ -1,0 +1,253 @@
+package repository
+
+import (
+	"crypto/ecdsa"
+	"crypto/ed25519"
+	"crypto/elliptic"
+	"crypto/rand"
+	"crypto/rsa"
+	"encoding/pem"
+	"errors"
+	"fmt"
+	"os"
+	"path/filepath"
+	"regexp"
+	"sort"
+	"strings"
+	"time"
+
+	"golang.org/x/crypto/ssh"
+
+	"github.com/titpetric/task-ui/server/model"
+)
+
+// KeyTypes are the key types the store generates, by file name.
+var KeyTypes = map[string]string{
+	"ed25519": "id_ed25519",
+	"ecdsa":   "id_ecdsa",
+	"rsa":     "id_rsa",
+}
+
+// Keys manages the SSH key pairs in one folder, usually $HOME/.ssh. A key
+// pair is the private key file and its .pub sibling. Replacing a key moves
+// the previous pair aside with a timestamped .bak suffix, so a rotation can
+// be undone by hand.
+type Keys struct {
+	Dir string
+}
+
+var keyName = regexp.MustCompile(`^id_[a-z0-9]+(\.bak-[0-9]{8}T[0-9]{6})?$`)
+
+// ErrPassphrase is returned for an uploaded key protected by a passphrase:
+// the runbooks run unattended and could not unlock it.
+var ErrPassphrase = errors.New("the key is protected by a passphrase, upload an unencrypted key")
+
+// List returns the key pairs and their backups.
+func (k *Keys) List() []model.SSHKey {
+	entries, _ := os.ReadDir(k.Dir)
+	result := []model.SSHKey{}
+	for _, entry := range entries {
+		name := entry.Name()
+		if entry.IsDir() || !keyName.MatchString(name) {
+			continue
+		}
+		key, err := k.describe(name)
+		if err != nil {
+			continue
+		}
+		result = append(result, key)
+	}
+	sort.Slice(result, func(i, j int) bool {
+		if result[i].Backup != result[j].Backup {
+			return !result[i].Backup
+		}
+		return result[i].Name > result[j].Name
+	})
+	return result
+}
+
+func (k *Keys) describe(name string) (model.SSHKey, error) {
+	path := filepath.Join(k.Dir, name)
+	info, err := os.Stat(path)
+	if err != nil {
+		return model.SSHKey{}, err
+	}
+
+	var (
+		pub     ssh.PublicKey
+		comment string
+	)
+	if data, err := os.ReadFile(path + ".pub"); err == nil {
+		pub, comment, _, _, err = ssh.ParseAuthorizedKey(data)
+		if err != nil {
+			pub = nil
+		}
+	}
+	if pub == nil {
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return model.SSHKey{}, err
+		}
+		signer, err := ssh.ParsePrivateKey(data)
+		if err != nil {
+			return model.SSHKey{}, err
+		}
+		pub = signer.PublicKey()
+	}
+
+	return model.SSHKey{
+		Name:        name,
+		Type:        pub.Type(),
+		Bits:        keyBits(pub),
+		Fingerprint: ssh.FingerprintSHA256(pub),
+		Comment:     comment,
+		PublicKey:   strings.TrimSpace(string(ssh.MarshalAuthorizedKey(pub))) + commentSuffix(comment),
+		Modified:    info.ModTime(),
+		Backup:      strings.Contains(name, ".bak-"),
+	}, nil
+}
+
+func commentSuffix(comment string) string {
+	if comment == "" {
+		return ""
+	}
+	return " " + comment
+}
+
+func keyBits(pub ssh.PublicKey) int {
+	crypto, ok := pub.(ssh.CryptoPublicKey)
+	if !ok {
+		return 0
+	}
+	switch key := crypto.CryptoPublicKey().(type) {
+	case *rsa.PublicKey:
+		return key.N.BitLen()
+	case *ecdsa.PublicKey:
+		return key.Curve.Params().BitSize
+	case ed25519.PublicKey:
+		return 256
+	}
+	return 0
+}
+
+// Generate creates a new key pair of the given type, moving an existing pair
+// of the same type aside. It returns the new key.
+func (k *Keys) Generate(kind, comment string) (model.SSHKey, error) {
+	name, ok := KeyTypes[kind]
+	if !ok {
+		return model.SSHKey{}, fmt.Errorf("unsupported key type %q", kind)
+	}
+
+	var private any
+	switch kind {
+	case "ed25519":
+		_, key, err := ed25519.GenerateKey(rand.Reader)
+		if err != nil {
+			return model.SSHKey{}, err
+		}
+		private = key
+	case "ecdsa":
+		key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+		if err != nil {
+			return model.SSHKey{}, err
+		}
+		private = key
+	case "rsa":
+		key, err := rsa.GenerateKey(rand.Reader, 4096)
+		if err != nil {
+			return model.SSHKey{}, err
+		}
+		private = key
+	}
+
+	block, err := ssh.MarshalPrivateKey(private, comment)
+	if err != nil {
+		return model.SSHKey{}, err
+	}
+	return k.write(name, pem.EncodeToMemory(block), private, comment)
+}
+
+// Upload stores a private key given in PEM or OpenSSH format, moving an
+// existing pair of the same type aside.
+func (k *Keys) Upload(data []byte, comment string) (model.SSHKey, error) {
+	data = []byte(strings.TrimSpace(strings.ReplaceAll(string(data), "\r\n", "\n")) + "\n")
+	private, err := ssh.ParseRawPrivateKey(data)
+	if err != nil {
+		var missing *ssh.PassphraseMissingError
+		if errors.As(err, &missing) {
+			return model.SSHKey{}, ErrPassphrase
+		}
+		return model.SSHKey{}, fmt.Errorf("not a private key: %w", err)
+	}
+
+	if key, ok := private.(*ed25519.PrivateKey); ok {
+		private = *key
+	}
+
+	var name string
+	switch private.(type) {
+	case ed25519.PrivateKey:
+		name = KeyTypes["ed25519"]
+	case *ecdsa.PrivateKey:
+		name = KeyTypes["ecdsa"]
+	case *rsa.PrivateKey:
+		name = KeyTypes["rsa"]
+	default:
+		return model.SSHKey{}, fmt.Errorf("unsupported key type %T", private)
+	}
+	return k.write(name, data, private, comment)
+}
+
+func (k *Keys) write(name string, privatePEM []byte, private any, comment string) (model.SSHKey, error) {
+	signer, err := ssh.NewSignerFromKey(private)
+	if err != nil {
+		return model.SSHKey{}, err
+	}
+	if err := os.MkdirAll(k.Dir, 0o700); err != nil {
+		return model.SSHKey{}, err
+	}
+	if err := k.backup(name); err != nil {
+		return model.SSHKey{}, err
+	}
+
+	path := filepath.Join(k.Dir, name)
+	if err := os.WriteFile(path, privatePEM, 0o600); err != nil {
+		return model.SSHKey{}, err
+	}
+	public := strings.TrimSpace(string(ssh.MarshalAuthorizedKey(signer.PublicKey()))) + commentSuffix(comment) + "\n"
+	if err := os.WriteFile(path+".pub", []byte(public), 0o644); err != nil {
+		return model.SSHKey{}, err
+	}
+	return k.describe(name)
+}
+
+// backup moves an existing key pair aside.
+func (k *Keys) backup(name string) error {
+	path := filepath.Join(k.Dir, name)
+	if _, err := os.Stat(path); errors.Is(err, os.ErrNotExist) {
+		return nil
+	}
+	suffix := ".bak-" + time.Now().UTC().Format("20060102T150405")
+	if err := os.Rename(path, path+suffix); err != nil {
+		return err
+	}
+	if _, err := os.Stat(path + ".pub"); err == nil {
+		return os.Rename(path+".pub", path+suffix+".pub")
+	}
+	return nil
+}
+
+// Delete removes a key pair or a backup.
+func (k *Keys) Delete(name string) error {
+	if !keyName.MatchString(name) {
+		return fmt.Errorf("invalid key name %q", name)
+	}
+	path := filepath.Join(k.Dir, name)
+	if err := os.Remove(path); err != nil {
+		return err
+	}
+	if err := os.Remove(path + ".pub"); err != nil && !errors.Is(err, os.ErrNotExist) {
+		return err
+	}
+	return nil
+}
