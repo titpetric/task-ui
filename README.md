@@ -143,10 +143,15 @@ Atkins files run with `atkins -f <file> <runbook>`, Taskfiles with
 
 | | |
 |-|-|
-| ![Runbook](.github/assets/runbook-dark.png) | ![Running](.github/assets/run-running-dark.png) |
-| ![Already running](.github/assets/run-busy-dark.png) | ![Finished, light theme](.github/assets/run-done-light.png) |
+| ![Runbook](.github/assets/runbook-dark.png) | ![A run replayed in the dialog](.github/assets/run-replay-dark.png) |
+| ![Project runbooks](.github/assets/project-dark.png) | ![A recorded run, light theme](.github/assets/run-history-light.png) |
 | ![Viewer](.github/assets/viewer-runbook-dark.png) | ![SSH keys](.github/assets/keys-dark.png) |
 | ![Login](.github/assets/login-dark.png) | ![Overview, light theme](.github/assets/overview-light.png) |
+
+`scripts/demo.sh` regenerates them: it serves `testdata/demo`, records real
+runs over the websocket with `scripts/run.sh`, and captures each view with
+headless chromium through `scripts/chromium.sh`. A recorded run opens in the
+dialog from a link: `/p/<project>/<runbook>#history=<id>`, or `#replay=<id>`.
 
 # Development
 
@@ -155,11 +160,12 @@ task: Available tasks for this project:
 * default:            Run everything
 * fix:                Fix code
 * install:            Install task-ui
-* run:                Run task-ui over the examples folder
+* run:                Run task-ui over the demo projects
 * test:               Test task-ui
 * docker:build:       Build task-ui docker image
 * docker:gen:         Generate ssh key for docker image
 * docker:run:         Run task-ui in docker env
+* docs:shots:         Regenerate the README screenshots
 
 ## task: default
 
@@ -180,10 +186,17 @@ commands:
 
 ## task: run
 
-Run task-ui over the examples folder
+Run task-ui over the demo projects
 
 commands:
 - `go run .`
+
+## task: docs:shots
+
+Regenerate the README screenshots
+
+commands:
+- `scripts/demo.sh`
 
 ## task: install
 

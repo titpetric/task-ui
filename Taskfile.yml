@@ -19,12 +19,17 @@ tasks:
       - CGO_ENABLED=0 go test -count=1 -cover ./...
 
   run:
-    desc: "Run task-ui over the examples folder"
+    desc: "Run task-ui over the demo projects"
     env:
-      TASK_UI_ROOT: examples
+      TASK_UI_ROOT: testdata/demo
       TASK_UI_ASSETS: .
     cmds:
       - go run .
+
+  docs:shots:
+    desc: "Regenerate the README screenshots"
+    cmds:
+      - scripts/demo.sh
 
   install:
     desc: "Install task-ui"

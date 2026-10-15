@@ -6,6 +6,8 @@
 (function () {
   "use strict";
 
+  var history_ = window.history;
+
   var dialog = document.getElementById("run-dialog");
   var els = dialog && {
     kind: document.getElementById("run-kind"),
@@ -113,6 +115,9 @@
     if (session.onResize) window.removeEventListener("resize", session.onResize);
     var changed = session.changed;
     session = null;
+    if (/^#(history|replay)=/.test(location.hash)) {
+      history_.replaceState(null, "", location.pathname + location.search);
+    }
     // A run changes the history and the run state on the page.
     if (changed) window.location.reload();
   }
@@ -236,6 +241,9 @@
     buttons({});
     setState("running", "loading");
     var replay = btn.hasAttribute("data-replay");
+    // The open recording is in the address, so the link can be shared.
+    var id = btn.dataset.history.split("/").pop();
+    history_.replaceState(null, "", "#" + (replay ? "replay" : "history") + "=" + id);
 
     fetch(btn.dataset.history, { credentials: "same-origin" })
       .then(function (res) {
@@ -253,8 +261,8 @@
           } catch (e) { /* torn last line */ }
         }
         if (!replay) {
-          s.term.write(events.map(function (ev) { return ev[2]; }).join(""));
-          setState("ok", events.length + " chunks");
+          s.term.write(events.map(function (ev) { return ev[2]; }).join("") + "\x1b[?25l");
+          setState("ok", "recorded");
           return;
         }
         setState("running", "replaying");
@@ -262,6 +270,7 @@
         var step = function () {
           if (session !== s) return;
           if (idx >= events.length) {
+            s.term.write("\x1b[?25l");
             setState("ok", "done");
             return;
           }
@@ -340,6 +349,16 @@
       force: btn.hasAttribute("data-force"),
     });
   });
+
+  // #history=<id> and #replay=<id> open a recording on load.
+  function openFromHash() {
+    var match = /^#(history|replay)=([0-9A-Za-z-]+)$/.exec(location.hash);
+    if (!match || !dialog || !window.Terminal) return;
+    var selector = "[data-history$='/" + match[2] + "']" + (match[1] === "replay" ? "[data-replay]" : ":not([data-replay])");
+    var btn = document.querySelector(selector);
+    if (btn) history(btn);
+  }
+  openFromHash();
 
   document.addEventListener("submit", function (event) {
     var form = event.target.closest("form[data-confirm]");
