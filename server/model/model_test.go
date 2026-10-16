@@ -5,8 +5,8 @@ import "testing"
 func TestUserCanRun(t *testing.T) {
 	open := &Project{ID: "web"}
 	locked := &Project{ID: "infra", Allow: []string{"ops"}}
-	build := &Runbook{Name: "build"}
-	certs := &Runbook{Name: "certs", Allow: []string{"admin"}}
+	build := &Job{Name: "build"}
+	certs := &Job{Name: "certs", Allow: []string{"admin"}}
 
 	admin := &User{Name: "root", Role: RoleAdmin}
 	ops := &User{Name: "ops", Role: RoleRunner}
@@ -17,7 +17,7 @@ func TestUserCanRun(t *testing.T) {
 	cases := []struct {
 		user *User
 		p    *Project
-		r    *Runbook
+		r    *Job
 		want bool
 	}{
 		{admin, locked, certs, true},
@@ -45,9 +45,9 @@ func TestUserCanRun(t *testing.T) {
 	}
 }
 
-func TestProjectRunbookNil(t *testing.T) {
+func TestProjectJobNil(t *testing.T) {
 	var p *Project
-	if p.Runbook("x") != nil {
-		t.Fatal("nil project returned a runbook")
+	if p.Job("x") != nil {
+		t.Fatal("nil project returned a job")
 	}
 }

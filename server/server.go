@@ -33,6 +33,7 @@ type Server struct {
 	runs     *internal.Runs
 	history  *repository.History
 	keys     *repository.Keys
+	env      *repository.Env
 
 	assets    fs.FS
 	templates fs.FS
@@ -75,6 +76,7 @@ func NewWithConfig(files fs.FS, config *Config) (*Server, error) {
 		runs:      internal.NewRuns(),
 		history:   &repository.History{Root: config.HistoryPath},
 		keys:      &repository.Keys{Dir: config.SSHDir},
+		env:       &repository.Env{Root: config.EnvPath},
 		assets:    assets,
 		templates: templates,
 	}
@@ -103,20 +105,30 @@ func (svc *Server) Handler() http.Handler {
 		r.Use(svc.requireUser)
 
 		r.Get("/", svc.Index)
-		r.Get("/p/{project}", svc.ProjectPage)
-		r.Get("/p/{project}/{runbook}", svc.RunbookPage)
+		r.Get("/f/{project}", svc.ProjectPage)
+		r.Get("/f/{project}/{job}", svc.JobPage)
 
 		r.Get("/api/runs", svc.APIRuns)
-		r.Post("/api/runs/{project}/{runbook}/stop", svc.APIStop)
-		r.Get("/api/history/{project}/{runbook}/{id}", svc.APIHistory)
-		r.Handle("/ws/run/{project}/{runbook}", svc.RunSocket())
+		r.Post("/api/runs/{project}/{job}/stop", svc.APIStop)
+		r.Get("/api/history/{project}/{job}/{id}", svc.APIHistory)
+		r.Handle("/ws/run/{project}/{job}", svc.RunSocket())
 
 		r.Group(func(r chi.Router) {
 			r.Use(requireAdmin)
-			r.Get("/admin/keys", svc.KeysPage)
-			r.Post("/admin/keys/generate", svc.KeysGenerate)
-			r.Post("/admin/keys/upload", svc.KeysUpload)
-			r.Post("/admin/keys/delete", svc.KeysDelete)
+			r.Get("/settings", svc.SettingsPage)
+			r.Get("/settings/keys", svc.KeysPage)
+			r.Get("/settings/keys/generate", svc.KeysGeneratePage)
+			r.Post("/settings/keys/generate", svc.KeysGenerate)
+			r.Get("/settings/keys/upload", svc.KeysUploadPage)
+			r.Post("/settings/keys/upload", svc.KeysUpload)
+			r.Post("/settings/keys/delete", svc.KeysDelete)
+			r.Get("/settings/secrets", svc.SecretsPage)
+			r.Get("/settings/secrets/new", svc.SecretForm)
+			r.Get("/settings/secrets/edit", svc.SecretForm)
+			r.Post("/settings/secrets/save", svc.SecretSave)
+			r.Post("/settings/secrets/delete", svc.SecretDelete)
+			r.Get("/f/{project}/env/*", svc.EnvFilePage)
+			r.Post("/f/{project}/env/*", svc.EnvFileSave)
 		})
 	})
 	return r
@@ -186,6 +198,12 @@ func requireAdmin(next http.Handler) http.Handler {
 	})
 }
 
+// crumb is one breadcrumb; an empty Href is the current page.
+type crumb struct {
+	Text string
+	Href string
+}
+
 // pageData is what every template renders from.
 type pageData struct {
 	Title    string
@@ -197,7 +215,7 @@ type pageData struct {
 
 	Projects []*model.Project
 	Project  *model.Project
-	Runbook  *model.Runbook
+	Job      *model.Job
 
 	Runs    []*internal.Run
 	History []model.HistoryRecord
@@ -208,13 +226,19 @@ type pageData struct {
 	Keys    []model.SSHKey
 	KeysDir string
 
+	Secrets  []model.Secret
+	Secret   *model.Secret
+	EnvFiles []model.EnvFile
+	EnvFile  *model.EnvFile
+	EnvPath  string
+
 	Back     string
 	Username string
 	Error    string
 	Notice   string
 
 	running map[string]*internal.Run
-	last    func(project, runbook string) (model.HistoryRecord, bool)
+	last    func(project, job string) (model.HistoryRecord, bool)
 }
 
 func (svc *Server) pageData(r *http.Request, title string) *pageData {
@@ -249,15 +273,15 @@ func (svc *Server) pageData(r *http.Request, title string) *pageData {
 
 func (d *pageData) funcs() template.FuncMap {
 	return template.FuncMap{
-		"canRun": func(p *model.Project, rb *model.Runbook) bool { return d.User.CanRun(p, rb) },
+		"canRun": func(p *model.Project, rb *model.Job) bool { return d.User.CanRun(p, rb) },
 		"running": func(key string) *internal.Run {
 			return d.running[key]
 		},
-		"last": func(project, runbook string) *model.HistoryRecord {
+		"last": func(project, job string) *model.HistoryRecord {
 			if !d.HistoryEnabled {
 				return nil
 			}
-			if record, ok := d.last(project, runbook); ok {
+			if record, ok := d.last(project, job); ok {
 				return &record
 			}
 			return nil
@@ -272,15 +296,16 @@ func (d *pageData) funcs() template.FuncMap {
 			}
 			return n
 		},
-		"add":  func(a, b int) int { return a + b },
-		"list": func(items ...any) []any { return items },
-		"whoCanRun": func(p *model.Project, rb *model.Runbook) string {
+		"add":   func(a, b int) int { return a + b },
+		"list":  func(items ...any) []any { return items },
+		"crumb": func(text, href string) crumb { return crumb{Text: text, Href: href} },
+		"whoCanRun": func(p *model.Project, rb *model.Job) string {
 			who := "admin, runner"
 			if len(p.Allow) > 0 {
 				who = "admin, " + strings.Join(p.Allow, ", ")
 			}
 			if len(rb.Allow) > 0 {
-				who += " (this runbook: admin, " + strings.Join(rb.Allow, ", ") + ")"
+				who += " (this job: admin, " + strings.Join(rb.Allow, ", ") + ")"
 			}
 			return who
 		},
@@ -288,6 +313,13 @@ func (d *pageData) funcs() template.FuncMap {
 		"duration": durationText,
 		"stamp":    func(t time.Time) string { return t.Local().Format("2006-01-02 15:04:05") },
 		"iso":      func(t time.Time) string { return t.UTC().Format(time.RFC3339) },
+		"join":     strings.Join,
+		"mask": func(value string) string {
+			if value == "" {
+				return ""
+			}
+			return "••••••••"
+		},
 	}
 }
 
@@ -360,7 +392,7 @@ func (svc *Server) visibleProject(r *http.Request, data *pageData) *model.Projec
 	return nil
 }
 
-// ProjectPage renders a project with its runbooks.
+// ProjectPage renders a project with its jobs.
 func (svc *Server) ProjectPage(w http.ResponseWriter, r *http.Request) {
 	data := svc.pageData(r, "")
 	project := svc.visibleProject(r, data)
@@ -370,25 +402,26 @@ func (svc *Server) ProjectPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Title = project.Title
 	data.Project = project
-	svc.render(w, r, "project.tpl", data)
+	data.EnvFiles = svc.env.Files(project)
+	svc.render(w, r, "folder.tpl", data)
 }
 
-// RunbookPage renders a runbook: its description, run actions and history.
-func (svc *Server) RunbookPage(w http.ResponseWriter, r *http.Request) {
+// JobPage renders a job: its description, run actions and history.
+func (svc *Server) JobPage(w http.ResponseWriter, r *http.Request) {
 	data := svc.pageData(r, "")
 	project := svc.visibleProject(r, data)
-	runbook := project.Runbook(chi.URLParam(r, "runbook"))
-	if runbook == nil {
-		svc.notFound(w, r, data, "No such runbook.")
+	job := project.Job(chi.URLParam(r, "job"))
+	if job == nil {
+		svc.notFound(w, r, data, "No such job.")
 		return
 	}
-	data.Title = runbook.Name + " · " + project.Title
+	data.Title = job.Name + " | " + project.Title
 	data.Project = project
-	data.Runbook = runbook
+	data.Job = job
 	if svc.config.History {
-		data.History = svc.history.List(project.ID, runbook.Name)
+		data.History = svc.history.List(project.ID, job.Name)
 	}
-	svc.render(w, r, "runbook.tpl", data)
+	svc.render(w, r, "job.tpl", data)
 }
 
 func (svc *Server) notFound(w http.ResponseWriter, r *http.Request, data *pageData, message string) {
@@ -402,12 +435,12 @@ func (svc *Server) notFound(w http.ResponseWriter, r *http.Request, data *pageDa
 func (svc *Server) APIHistory(w http.ResponseWriter, r *http.Request) {
 	data := svc.pageData(r, "")
 	project := svc.visibleProject(r, data)
-	runbook := project.Runbook(chi.URLParam(r, "runbook"))
-	if runbook == nil || !svc.config.History {
+	job := project.Job(chi.URLParam(r, "job"))
+	if job == nil || !svc.config.History {
 		http.NotFound(w, r)
 		return
 	}
-	file, err := svc.history.CastPath(project.ID, runbook.Name, chi.URLParam(r, "id"))
+	file, err := svc.history.CastPath(project.ID, job.Name, chi.URLParam(r, "id"))
 	if err != nil {
 		http.NotFound(w, r)
 		return

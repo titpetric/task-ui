@@ -18,7 +18,7 @@ var AtkinsNames = []string{".atkins.yml", ".atkins.yaml", "atkins.yml", "atkins.
 // TaskfileNames are the file names go-task discovers.
 var TaskfileNames = []string{"Taskfile.yml", "taskfile.yml", "Taskfile.yaml", "taskfile.yaml", "Taskfile.dist.yml", "taskfile.dist.yml", "Taskfile.dist.yaml", "taskfile.dist.yaml"}
 
-// FindTaskfile returns the task file in dir, atkins files first.
+// FindTaskfile returns the pipeline file in dir, atkins files first.
 func FindTaskfile(dir string) (string, bool) {
 	for _, name := range append(append([]string{}, AtkinsNames...), TaskfileNames...) {
 		path := filepath.Join(dir, name)
@@ -41,33 +41,60 @@ func KindOf(path string) string {
 }
 
 // fileSpec is the subset of an atkins pipeline or a Taskfile that task-ui
-// reads. Both formats share `tasks:` with `desc`, `summary`, `aliases`,
-// `internal` and `interactive`; atkins adds `jobs:`, `name:` and `help:`.
-// Unknown keys are ignored, so either file parses.
+// reads. Both share `tasks:` with `desc`, `summary`, `aliases`, `internal`
+// and `interactive`; atkins adds `jobs:`, `name:`, `help:`, `include:` and
+// `env.include:`, Taskfiles add `dotenv:`. Unknown keys are ignored, so
+// either file parses, and nothing task-ui needs is an extension.
 type fileSpec struct {
-	Name  string             `yaml:"name"`
-	Help  string             `yaml:"help"`
-	UI    uiSpec             `yaml:"ui"`
-	Jobs  map[string]jobSpec `yaml:"jobs"`
-	Tasks map[string]jobSpec `yaml:"tasks"`
+	Name    string             `yaml:"name"`
+	Help    string             `yaml:"help"`
+	Include stringList         `yaml:"include"`
+	Env     envSpec            `yaml:"env"`
+	Dotenv  stringList         `yaml:"dotenv"`
+	Jobs    map[string]jobSpec `yaml:"jobs"`
+	Tasks   map[string]jobSpec `yaml:"tasks"`
 }
 
-// uiSpec is the optional `ui:` section of a task file.
-type uiSpec struct {
-	Title       string   `yaml:"title"`
-	Description string   `yaml:"description"`
-	Allow       []string `yaml:"allow"`
-	Command     string   `yaml:"command"`
+// envSpec is an atkins env declaration: `{vars, include}`.
+type envSpec struct {
+	Include stringList `yaml:"include"`
+}
+
+// stringList accepts one string or a list of strings.
+type stringList []string
+
+func (l *stringList) UnmarshalYAML(node *yaml.Node) error {
+	switch node.Kind {
+	case yaml.ScalarNode:
+		if strings.TrimSpace(node.Value) != "" {
+			*l = []string{strings.TrimSpace(node.Value)}
+		}
+		return nil
+	case yaml.SequenceNode:
+		var items []string
+		if err := node.Decode(&items); err != nil {
+			return err
+		}
+		*l = items
+		return nil
+	}
+	return nil
 }
 
 type jobSpec struct {
-	Desc        string   `yaml:"desc"`
-	Summary     string   `yaml:"summary"`
-	Aliases     []string `yaml:"aliases"`
-	Internal    bool     `yaml:"internal"`
-	Interactive bool     `yaml:"interactive"`
-	Show        *bool    `yaml:"show"`
-	Allow       []string `yaml:"allow"`
+	Desc        string     `yaml:"desc"`
+	Summary     string     `yaml:"summary"`
+	Aliases     []string   `yaml:"aliases"`
+	Internal    bool       `yaml:"internal"`
+	Interactive bool       `yaml:"interactive"`
+	Show        *bool      `yaml:"show"`
+	Run         string     `yaml:"run"`
+	Cmd         string     `yaml:"cmd"`
+	Steps       []stepSpec `yaml:"steps"`
+	Cmds        []stepSpec `yaml:"cmds"`
+	DependsOn   stringList `yaml:"depends_on"`
+	Deps        []stepSpec `yaml:"deps"`
+	Env         envSpec    `yaml:"env"`
 }
 
 // UnmarshalYAML accepts the short forms: a job given as a single command
@@ -75,26 +102,114 @@ type jobSpec struct {
 func (j *jobSpec) UnmarshalYAML(node *yaml.Node) error {
 	switch node.Kind {
 	case yaml.ScalarNode:
-		j.Desc = strings.TrimSpace(node.Value)
+		cmd := strings.TrimSpace(node.Value)
+		j.Desc = cmd
+		j.Steps = []stepSpec{{Run: cmd, bare: true}}
 		return nil
 	case yaml.SequenceNode:
-		var cmds []any
-		if err := node.Decode(&cmds); err != nil {
+		var steps []stepSpec
+		if err := node.Decode(&steps); err != nil {
 			return err
 		}
-		if len(cmds) > 0 {
-			if s, ok := cmds[0].(string); ok {
-				j.Desc = strings.TrimSpace(s)
-			}
+		j.Steps = steps
+		if len(steps) > 0 {
+			j.Desc = steps[0].Label()
 		}
 		return nil
 	}
 	type raw jobSpec
-	return node.Decode((*raw)(j))
+	if err := node.Decode((*raw)(j)); err != nil {
+		return err
+	}
+	if len(j.Steps) == 0 && len(j.Cmds) == 0 {
+		if cmd := strings.TrimSpace(firstOf(j.Run, j.Cmd)); cmd != "" {
+			j.Steps = []stepSpec{{Run: cmd, bare: true}}
+		}
+	}
+	return nil
 }
 
-// LoadProject reads a task file into a project. A file that does not parse
-// returns the project with Error set, so it still shows up in the UI.
+func (j *jobSpec) steps() []stepSpec {
+	if len(j.Steps) > 0 {
+		return j.Steps
+	}
+	return j.Cmds
+}
+
+// stepSpec is one step: a bare command, or a mapping naming a command or
+// a job, with an optional name and desc for the label.
+type stepSpec struct {
+	Name     string   `yaml:"name"`
+	Desc     string   `yaml:"desc"`
+	Run      string   `yaml:"run"`
+	Cmd      string   `yaml:"cmd"`
+	Cmds     []string `yaml:"cmds"`
+	Task     string   `yaml:"task"`
+	Defer    string   `yaml:"defer"`
+	Deferred bool     `yaml:"deferred"`
+	bare     bool
+}
+
+func (s *stepSpec) UnmarshalYAML(node *yaml.Node) error {
+	if node.Kind == yaml.ScalarNode {
+		s.Run = strings.TrimSpace(node.Value)
+		s.bare = true
+		return nil
+	}
+	type raw stepSpec
+	if err := node.Decode((*raw)(s)); err != nil {
+		return err
+	}
+	if s.Defer != "" {
+		s.Run = s.Defer
+		s.Deferred = true
+	}
+	return nil
+}
+
+// Label renders the step the way atkins lists it: the desc, then the
+// name, then the command with its kind as a prefix.
+func (s *stepSpec) Label() string {
+	if s.Desc != "" {
+		return s.Desc
+	}
+	if s.Name != "" {
+		return s.Name
+	}
+	label := ""
+	switch {
+	case s.Task != "":
+		label = "task: " + s.Task
+	case s.Run != "":
+		if strings.Contains(strings.TrimSpace(s.Run), "\n") {
+			label = "run: <script>"
+		} else if s.bare {
+			label = strings.TrimSpace(s.Run)
+		} else {
+			label = "run: " + strings.TrimSpace(s.Run)
+		}
+	case s.Cmd != "":
+		label = "cmd: " + strings.TrimSpace(s.Cmd)
+	case len(s.Cmds) > 0:
+		label = fmt.Sprintf("cmds: <%d commands>", len(s.Cmds))
+	}
+	if s.Deferred && label != "" {
+		label = "defer: " + strings.TrimPrefix(label, "run: ")
+	}
+	return label
+}
+
+func firstOf(values ...string) string {
+	for _, v := range values {
+		if v != "" {
+			return v
+		}
+	}
+	return ""
+}
+
+// LoadProject reads a pipeline file into a folder. A file that does not
+// parse returns the folder with Error set, so it still shows up in the UI.
 func LoadProject(id, path string) *model.Project {
 	project := &model.Project{
 		ID:    id,
@@ -121,16 +236,9 @@ func LoadProject(id, path string) *model.Project {
 		project.Title = spec.Name
 	}
 	project.Description = strings.TrimSpace(spec.Help)
-	if spec.UI.Title != "" {
-		project.Title = spec.UI.Title
-	}
-	if spec.UI.Description != "" {
-		project.Description = strings.TrimSpace(spec.UI.Description)
-	}
-	project.Allow = spec.UI.Allow
-	if spec.UI.Command != "" {
-		project.Command = strings.Fields(spec.UI.Command)
-	}
+	project.Includes = spec.Include
+	project.EnvFiles = appendUnique(nil, spec.Env.Include...)
+	project.EnvFiles = appendUnique(project.EnvFiles, spec.Dotenv...)
 
 	jobs := spec.Jobs
 	if len(jobs) == 0 {
@@ -148,20 +256,55 @@ func LoadProject(id, path string) *model.Project {
 		if job.Internal || job.Desc == "" || (job.Show != nil && !*job.Show) {
 			continue
 		}
-		project.Runbooks = append(project.Runbooks, &model.Runbook{
+		j := &model.Job{
 			Project:     id,
 			Name:        name,
 			Description: job.Desc,
 			Summary:     strings.TrimSpace(job.Summary),
 			Aliases:     job.Aliases,
 			Interactive: job.Interactive,
-			Allow:       job.Allow,
-		})
+			DependsOn:   job.DependsOn,
+			EnvFiles:    job.Env.Include,
+		}
+		for _, dep := range job.Deps {
+			if dep.Task != "" {
+				j.DependsOn = append(j.DependsOn, dep.Task)
+			} else if dep.bare {
+				j.DependsOn = append(j.DependsOn, dep.Run)
+			}
+		}
+		for _, step := range job.steps() {
+			if label := step.Label(); label != "" {
+				j.Steps = append(j.Steps, label)
+			}
+		}
+		project.EnvFiles = appendUnique(project.EnvFiles, j.EnvFiles...)
+		project.Jobs = append(project.Jobs, j)
 	}
 	return project
 }
 
-// DefaultCommand returns the command for a task file kind.
+func appendUnique(list []string, items ...string) []string {
+	for _, item := range items {
+		item = strings.TrimSpace(item)
+		if item == "" {
+			continue
+		}
+		found := false
+		for _, have := range list {
+			if have == item {
+				found = true
+				break
+			}
+		}
+		if !found {
+			list = append(list, item)
+		}
+	}
+	return list
+}
+
+// DefaultCommand returns the command for a pipeline file kind.
 func DefaultCommand(kind, file string) []string {
 	if kind == "atkins" {
 		return []string{"atkins", "-f", file}

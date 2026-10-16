@@ -2,34 +2,34 @@
 <div class="page-head">
 	<div>
 		<h2>Overview</h2>
-		<p>Pick a runbook on the left to read what it does, run it, or look through its history.</p>
+		<p>Open a folder on the left to see its jobs, run one, or look through its history.</p>
 	</div>
 </div>
 
-{{- $runbooks := 0 }}{{ range .Projects }}{{ $runbooks = len .Runbooks | add $runbooks }}{{ end }}
+{{- $jobs := 0 }}{{ range .Projects }}{{ $jobs = len .Jobs | add $jobs }}{{ end }}
 <div class="metrics">
-	<div><b>Projects</b><span>{{ len .Projects }}</span></div>
-	<div><b>Runbooks</b><span>{{ $runbooks }}</span></div>
+	<div><b>Folders</b><span>{{ len .Projects }}</span></div>
+	<div><b>Jobs</b><span>{{ $jobs }}</span></div>
 	<div><b>Running</b><span>{{ len .Runs }}</span></div>
 	<div><b>Your role</b><span>{{ .User.Role }}</span></div>
 </div>
 
 <section class="block" data-live>
-	<h3>Running now <small>one run per runbook, instance wide</small></h3>
+	<h3>Running now <small>one run per job, instance wide</small></h3>
 	<div class="table-wrap">
 	<table class="table">
-		<thead><tr><th>Project</th><th>Runbook</th><th>Started by</th><th>Started</th><th></th></tr></thead>
+		<thead><tr><th>Folder</th><th>Job</th><th>Started by</th><th>Started</th><th></th></tr></thead>
 		<tbody>
 		{{- range .Runs }}
 			<tr>
-				<td>{{ .Project }}</td>
-				<td class="key"><span class="state"><i class="dot running"></i><a href="/p/{{ .Project }}/{{ .Runbook }}">{{ .Runbook }}</a></span>{{ if .Forced }} <span class="badge signal">forced</span>{{ end }}</td>
+				<td><a href="/f/{{ .Project }}">{{ .Project }}</a></td>
+				<td class="key"><span class="state"><i class="dot running"></i><a href="/f/{{ .Project }}/{{ .Job }}">{{ .Job }}</a></span>{{ if .Forced }} <span class="badge signal">forced</span>{{ end }}</td>
 				<td>{{ .User }}</td>
 				<td class="nowrap" title="{{ stamp .Started }}">{{ ago .Started }}</td>
 				<td class="actions">
-					<form method="post" action="/api/runs/{{ .Project }}/{{ .Runbook }}/stop" data-confirm="Kill {{ .Project }} / {{ .Runbook }}, started by {{ .User }}?">
+					<form method="post" action="/api/runs/{{ .Project }}/{{ .Job }}/stop" data-confirm="Kill {{ .Project }} / {{ .Job }}, started by {{ .User }}?" data-confirm-ok="Kill">
 						<input type="hidden" name="back" value="/">
-						<button class="btn btn-danger btn-sm" type="submit">Kill</button>
+						<button class="btn-icon danger" type="submit" title="Kill the run" aria-label="Kill the run"><svg class="ic"><use href="#i-stop"/></svg></button>
 					</form>
 				</td>
 			</tr>
@@ -42,21 +42,20 @@
 </section>
 
 <section class="block">
-	<h3>Projects</h3>
+	<h3>Folders</h3>
 	<div class="table-wrap">
 	<table class="table">
-		<thead><tr><th>Project</th><th class="hide-sm">Description</th><th>File</th><th class="text-end">Runbooks</th><th></th></tr></thead>
+		<thead><tr><th>Folder</th><th>Name</th><th class="hide-sm">Description</th><th class="text-end">Jobs</th></tr></thead>
 		<tbody>
 		{{- range .Projects }}
 			<tr>
-				<td class="key"><a href="/p/{{ .ID }}">{{ .Title }}</a></td>
+				<td class="key nowrap"><a href="/f/{{ .ID }}"><svg class="ic"><use href="#i-folder"/></svg> {{ .ID }}/{{ .File }}</a></td>
+				<td>{{ .Title }}</td>
 				<td class="desc hide-sm">{{ if .Error }}<span class="badge bad">error</span> {{ .Error }}{{ else }}{{ .Description }}{{ end }}</td>
-				<td class="dim nowrap">{{ .File }} <span class="badge">{{ .Kind }}</span></td>
-				<td class="text-end">{{ len .Runbooks }}</td>
-				<td class="actions"><a class="btn btn-sm" href="/p/{{ .ID }}">Open</a></td>
+				<td class="text-end">{{ len .Jobs }}</td>
 			</tr>
 		{{- else }}
-			<tr class="empty"><td colspan="5">No projects yet. Put a folder with an atkins.yml or Taskfile.yml under the root folder, or list one in task-ui.yml.</td></tr>
+			<tr class="empty"><td colspan="4">No folders yet. Put a folder with an atkins.yml or Taskfile.yml under the root, or list one in task-ui.yml.</td></tr>
 		{{- end }}
 		</tbody>
 	</table>
@@ -68,19 +67,19 @@
 	<h3>Recent runs</h3>
 	<div class="table-wrap">
 	<table class="table">
-		<thead><tr><th>Started</th><th>Project</th><th>Runbook</th><th>User</th><th>Duration</th><th>Result</th></tr></thead>
+		<thead><tr><th>Started</th><th>Folder</th><th>Job</th><th>User</th><th>Duration</th><th>Result</th></tr></thead>
 		<tbody>
 		{{- range .Recent }}
 			<tr>
 				<td class="nowrap" title="{{ stamp .Started }}">{{ ago .Started }}</td>
-				<td>{{ .Project }}</td>
-				<td class="key"><a href="/p/{{ .Project }}/{{ .Runbook }}">{{ .Runbook }}</a></td>
+				<td><a href="/f/{{ .Project }}">{{ .Project }}</a></td>
+				<td class="key"><a href="/f/{{ .Project }}/{{ .Job }}#history={{ .ID }}">{{ .Job }}</a></td>
 				<td>{{ .User }}</td>
 				<td class="nowrap">{{ if ne .State "running" }}{{ duration .Duration }}{{ end }}</td>
 				<td>{{ template "state" . }}</td>
 			</tr>
 		{{- else }}
-			<tr class="empty"><td colspan="6">No runs recorded yet. Run a runbook and it is recorded here.</td></tr>
+			<tr class="empty"><td colspan="6">No runs recorded yet. Run a job and it is recorded here.</td></tr>
 		{{- end }}
 		</tbody>
 	</table>

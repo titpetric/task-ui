@@ -145,9 +145,9 @@
     return session;
   }
 
-  // run opens the dialog and runs a runbook.
+  // run opens the dialog and runs a job.
   function run(spec) {
-    var s = open("Run", { project: spec.title, name: spec.runbook });
+    var s = open("Run", { project: spec.title, name: spec.job });
     s.spec = spec;
     els.hint.textContent = "Closing this window stops the run.";
     buttons({ stop: true });
@@ -156,7 +156,7 @@
     var term = s.term;
     var proto = location.protocol === "https:" ? "wss:" : "ws:";
     var query = "?cols=" + term.cols + "&rows=" + term.rows + (spec.force ? "&force=1" : "");
-    var url = proto + "//" + location.host + "/ws/run/" + encodeURIComponent(spec.project) + "/" + encodeURIComponent(spec.runbook) + query;
+    var url = proto + "//" + location.host + "/ws/run/" + encodeURIComponent(spec.project) + "/" + encodeURIComponent(spec.job) + query;
     var ws = new WebSocket(url);
     ws.binaryType = "arraybuffer";
     s.ws = ws;
@@ -235,7 +235,7 @@
   // history plays a recording in the dialog. View writes it out at once,
   // Replay keeps the recorded timing, with long pauses shortened.
   function history(btn) {
-    var s = open(btn.hasAttribute("data-replay") ? "Replay" : "History", { project: btn.dataset.title, name: btn.dataset.runbook });
+    var s = open(btn.hasAttribute("data-replay") ? "Replay" : "History", { project: btn.dataset.title, name: btn.dataset.job });
     els.hint.textContent = "Recorded " + (btn.dataset.when || "") + ".";
     els.elapsed.textContent = "";
     buttons({});
@@ -343,7 +343,7 @@
     }
     run({
       project: btn.dataset.project,
-      runbook: btn.dataset.runbook,
+      job: btn.dataset.job,
       title: btn.dataset.title || btn.dataset.project,
       interactive: btn.dataset.interactive === "true",
       force: btn.hasAttribute("data-force"),
@@ -360,10 +360,45 @@
   }
   openFromHash();
 
+  // Destructive forms confirm in a dialog of their own before they submit.
+  var confirmDialog = document.getElementById("confirm-dialog");
+  var pendingForm = null;
   document.addEventListener("submit", function (event) {
     var form = event.target.closest("form[data-confirm]");
-    if (form && !window.confirm(form.getAttribute("data-confirm"))) event.preventDefault();
+    if (!form || form.dataset.confirmed === "1") return;
+    event.preventDefault();
+    if (!confirmDialog || typeof confirmDialog.showModal !== "function") {
+      if (window.confirm(form.getAttribute("data-confirm"))) {
+        form.dataset.confirmed = "1";
+        form.submit();
+      }
+      return;
+    }
+    pendingForm = form;
+    document.getElementById("confirm-text").textContent = form.getAttribute("data-confirm");
+    document.getElementById("confirm-ok").textContent = form.getAttribute("data-confirm-ok") || "Confirm";
+    confirmDialog.showModal();
   });
+  if (confirmDialog) {
+    document.getElementById("confirm-cancel").addEventListener("click", function () { confirmDialog.close(); });
+    document.getElementById("confirm-ok").addEventListener("click", function () {
+      var form = pendingForm;
+      confirmDialog.close();
+      if (form) {
+        form.dataset.confirmed = "1";
+        form.submit();
+      }
+    });
+    confirmDialog.addEventListener("close", function () { pendingForm = null; });
+  }
+
+  // The user menu closes when the page is clicked elsewhere.
+  var userMenu = document.getElementById("user-menu");
+  if (userMenu) {
+    document.addEventListener("click", function (event) {
+      if (userMenu.open && !userMenu.contains(event.target)) userMenu.removeAttribute("open");
+    });
+  }
 
   // Live run status: the sidebar dots follow the runs started anywhere on
   // the instance. Polling is cheap, the list holds active runs only.
@@ -376,8 +411,10 @@
         if (!runs) return;
         var keys = {};
         runs.forEach(function (r) { keys[r.key] = r; });
-        document.querySelectorAll(".side [data-key] .dot").forEach(function (dot) {
-          dot.classList.toggle("running", !!keys[dot.parentElement.dataset.key]);
+        var folders = {};
+        runs.forEach(function (r) { folders[r.project] = true; });
+        document.querySelectorAll(".side [data-folder] .dot").forEach(function (dot) {
+          dot.classList.toggle("running", !!folders[dot.parentElement.dataset.folder]);
         });
         var signature = Object.keys(keys).sort().join(",");
         // Refresh pages that list runs when the set changes, unless a

@@ -18,6 +18,8 @@ type ProjectConfig struct {
 	Description string   `yaml:"description"`
 	Allow       []string `yaml:"allow"`
 	Command     string   `yaml:"command"`
+	// Jobs narrows who may run single jobs: job name to users or roles.
+	Jobs map[string][]string `yaml:"jobs"`
 }
 
 // Projects discovers the projects under a root folder: the root itself when
@@ -137,5 +139,10 @@ func apply(project *model.Project, cfg ProjectConfig) {
 	}
 	if cfg.Command != "" {
 		project.Command = strings.Fields(cfg.Command)
+	}
+	for name, allow := range cfg.Jobs {
+		if job := project.Job(name); job != nil {
+			job.Allow = allow
+		}
 	}
 }

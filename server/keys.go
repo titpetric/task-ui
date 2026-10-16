@@ -12,7 +12,18 @@ import (
 // around 12KB.
 const maxKeyUpload = 64 << 10
 
-// KeysPage renders the SSH key admin.
+// SettingsPage lists the settings sections.
+func (svc *Server) SettingsPage(w http.ResponseWriter, r *http.Request) {
+	data := svc.pageData(r, "Settings")
+	data.Keys = svc.keys.List()
+	data.Secrets = svc.env.Secrets()
+	data.KeysDir = svc.keys.Dir
+	data.EnvPath = svc.env.Root
+	svc.render(w, r, "settings.tpl", data)
+}
+
+// KeysPage lists the SSH keys. The forms that change them are pages of
+// their own, so the list stays a list.
 func (svc *Server) KeysPage(w http.ResponseWriter, r *http.Request) {
 	data := svc.pageData(r, "SSH keys")
 	data.Keys = svc.keys.List()
@@ -22,14 +33,17 @@ func (svc *Server) KeysPage(w http.ResponseWriter, r *http.Request) {
 	svc.render(w, r, "keys.tpl", data)
 }
 
-func keysRedirect(w http.ResponseWriter, r *http.Request, notice string, err error) {
+func redirectWith(w http.ResponseWriter, r *http.Request, path, notice string, err error) {
 	query := url.Values{}
 	if err != nil {
 		query.Set("error", err.Error())
-	} else {
+	} else if notice != "" {
 		query.Set("notice", notice)
 	}
-	http.Redirect(w, r, "/admin/keys?"+query.Encode(), http.StatusSeeOther)
+	if len(query) > 0 {
+		path += "?" + query.Encode()
+	}
+	http.Redirect(w, r, path, http.StatusSeeOther)
 }
 
 func keyComment(r *http.Request) string {
@@ -40,6 +54,13 @@ func keyComment(r *http.Request) string {
 	return strings.Join(strings.Fields(comment), "-")
 }
 
+// KeysGeneratePage renders the generate form.
+func (svc *Server) KeysGeneratePage(w http.ResponseWriter, r *http.Request) {
+	data := svc.pageData(r, "Generate key")
+	data.Keys = svc.keys.List()
+	svc.render(w, r, "keys_generate.tpl", data)
+}
+
 // KeysGenerate creates or rotates a key pair.
 func (svc *Server) KeysGenerate(w http.ResponseWriter, r *http.Request) {
 	kind := r.PostFormValue("type")
@@ -47,7 +68,13 @@ func (svc *Server) KeysGenerate(w http.ResponseWriter, r *http.Request) {
 	if err == nil {
 		slog.Info("ssh key generated", "name", key.Name, "fingerprint", key.Fingerprint, "by", currentUser(r).Name)
 	}
-	keysRedirect(w, r, "Generated "+key.Name+" "+key.Fingerprint, err)
+	redirectWith(w, r, "/settings/keys", "Generated "+key.Name+" "+key.Fingerprint, err)
+}
+
+// KeysUploadPage renders the upload form.
+func (svc *Server) KeysUploadPage(w http.ResponseWriter, r *http.Request) {
+	data := svc.pageData(r, "Upload key")
+	svc.render(w, r, "keys_upload.tpl", data)
 }
 
 // KeysUpload stores an uploaded private key, from the file field or the
@@ -55,7 +82,7 @@ func (svc *Server) KeysGenerate(w http.ResponseWriter, r *http.Request) {
 func (svc *Server) KeysUpload(w http.ResponseWriter, r *http.Request) {
 	r.Body = http.MaxBytesReader(w, r.Body, maxKeyUpload)
 	if err := r.ParseMultipartForm(maxKeyUpload); err != nil && err != http.ErrNotMultipart {
-		keysRedirect(w, r, "", err)
+		redirectWith(w, r, "/settings/keys/upload", "", err)
 		return
 	}
 
@@ -67,15 +94,17 @@ func (svc *Server) KeysUpload(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if len(strings.TrimSpace(string(data))) == 0 {
-		keysRedirect(w, r, "", errEmptyKey)
+		redirectWith(w, r, "/settings/keys/upload", "", errEmptyKey)
 		return
 	}
 
 	key, err := svc.keys.Upload(data, keyComment(r))
-	if err == nil {
-		slog.Info("ssh key uploaded", "name", key.Name, "fingerprint", key.Fingerprint, "by", currentUser(r).Name)
+	if err != nil {
+		redirectWith(w, r, "/settings/keys/upload", "", err)
+		return
 	}
-	keysRedirect(w, r, "Stored "+key.Name+" "+key.Fingerprint, err)
+	slog.Info("ssh key uploaded", "name", key.Name, "fingerprint", key.Fingerprint, "by", currentUser(r).Name)
+	redirectWith(w, r, "/settings/keys", "Stored "+key.Name+" "+key.Fingerprint, nil)
 }
 
 type keyError string
@@ -91,5 +120,5 @@ func (svc *Server) KeysDelete(w http.ResponseWriter, r *http.Request) {
 	if err == nil {
 		slog.Info("ssh key deleted", "name", name, "by", currentUser(r).Name)
 	}
-	keysRedirect(w, r, "Deleted "+name, err)
+	redirectWith(w, r, "/settings/keys", "Deleted "+name, err)
 }

@@ -151,7 +151,7 @@ header.top {
   display: flex;
   align-items: center;
   gap: 1rem;
-  padding: 0.7rem 1.25rem;
+  padding: 0.55rem 1.25rem;
   border-bottom: 1px solid var(--line-2);
   background: var(--ink-0);
 }
@@ -171,39 +171,154 @@ header.top h1 a:hover {
   text-decoration: none;
 }
 
-header.top h1 span {
-  margin-left: 0.5rem;
-  padding-left: 0.75rem;
-  border-left: 1px solid var(--line-2);
-  color: var(--text-dim);
-  font-weight: 400;
-  letter-spacing: 0.08em;
-  text-transform: none;
-}
-
 header.top .spacer {
   flex: 1;
 }
 
-header.top .who {
+header.login-top {
+  justify-content: center;
+}
+
+/* The signed in user: a circle with their initials, and a disclosure menu
+   under it. A details element, so it needs no script and closes on Escape. */
+details.user {
+  position: relative;
+}
+
+details.user summary {
+  list-style: none;
+  cursor: pointer;
+  display: block;
+}
+
+details.user summary::marker,
+details.user summary::-webkit-details-marker {
+  display: none;
+}
+
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  border: 1px solid var(--line-2);
+  background: var(--ink-2);
+  color: var(--text);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+
+details.user summary:hover .avatar,
+details[open].user .avatar {
+  border-color: var(--signal);
+  color: var(--signal);
+  background: var(--signal-wash);
+}
+
+.user-menu {
+  position: absolute;
+  z-index: 25;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  min-width: 13rem;
+  padding: 0.25rem 0;
+  background: var(--ink-1);
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius);
+  box-shadow: 0 18px 36px rgba(0, 0, 0, 0.55), 0 4px 10px rgba(0, 0, 0, 0.4);
+}
+
+.user-menu .who {
+  display: flex;
+  flex-direction: column;
+  padding: 0.45rem 0.8rem 0.5rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.user-menu .who b {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.user-menu .who span {
+  color: var(--text-faint);
+  font-size: 0.68rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.user-menu a,
+.user-menu button {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
-  color: var(--text-dim);
-  white-space: nowrap;
-}
-
-header.top .who b {
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.4rem 0.8rem;
+  border: 0;
+  background: transparent;
   color: var(--text);
-  font-weight: 500;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
 }
 
-header.top form {
+.user-menu a:hover,
+.user-menu button:hover {
+  background: var(--ink-2);
+  text-decoration: none;
+}
+
+.user-menu form {
   margin: 0;
 }
 
-header.login-top {
+/* ------------------------------------------------------------------- icons */
+
+.ic {
+  width: 1em;
+  height: 1em;
+  vertical-align: -0.15em;
+  fill: none;
+  flex: none;
+}
+
+.btn-icon {
+  display: inline-flex;
+  align-items: center;
   justify-content: center;
+  width: 1.7rem;
+  height: 1.7rem;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+}
+
+.btn-icon .ic {
+  width: 1rem;
+  height: 1rem;
+}
+
+.btn-icon:hover {
+  color: var(--text);
+  border-color: var(--line-2);
+  background: var(--ink-3);
+  text-decoration: none;
+}
+
+/* Destructive actions wear the one red on the page. */
+.btn-icon.danger {
+  color: var(--bad);
+}
+
+.btn-icon.danger:hover {
+  border-color: var(--bad);
+  background: var(--bad-wash);
 }
 
 /* ------------------------------------------------------------------ shell */
@@ -223,11 +338,6 @@ aside.side {
   min-height: 100%;
 }
 
-.side .label {
-  display: block;
-  padding: 0 1.1rem 0.4rem;
-}
-
 .label {
   color: var(--text-faint);
   font-size: 0.7rem;
@@ -236,63 +346,61 @@ aside.side {
   text-transform: uppercase;
 }
 
-.side nav + .label {
-  margin-top: 1rem;
-}
-
-.side .overview,
-.side .project > a,
-.side .runbooks a {
+/* The folders, as a file browser lists them: an icon, the folder name, and
+   the count of jobs. The open folder shows an open icon and the accent. */
+.folders a {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.22rem 1.1rem;
+  padding: 0.3rem 1.1rem;
   color: var(--text-dim);
   border-left: 2px solid transparent;
 }
 
-.side a:hover {
+.folders a .ic {
+  width: 1.05rem;
+  height: 1.05rem;
+  color: var(--text-faint);
+}
+
+.folders a span {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.folders a small {
+  color: var(--text-faint);
+}
+
+.folders a small.bad {
+  color: var(--bad);
+  font-weight: 700;
+}
+
+.folders a .dot:not(.running) {
+  display: none;
+}
+
+.folders a:hover {
   text-decoration: none;
   color: var(--text);
   background: var(--ink-2);
 }
 
-.side a.active {
+.folders a.active {
   color: var(--text);
   background: var(--signal-wash);
   border-left-color: var(--signal);
 }
 
-.side .project {
-  margin-top: 0.35rem;
+.folders a.active .ic {
+  color: var(--signal);
 }
 
-.side .project > a {
-  color: var(--text);
-  font-weight: 600;
-}
-
-.side .project > a small {
-  margin-left: auto;
-  color: var(--text-faint);
-  font-weight: 400;
-}
-
-.side .runbooks {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.side .runbooks a {
-  padding-left: 1.9rem;
-  font-size: 0.8125rem;
-}
-
-.side .runbooks a span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.folders a.overview {
+  margin-bottom: 0.5rem;
 }
 
 .side .empty {
@@ -497,6 +605,31 @@ table.table-kv td {
   width: auto;
 }
 
+/* Step labels stack in their cell and lose their tail rather than pushing
+   the table into a scroll: the full step is one click away on the job. */
+.steps code {
+  display: block;
+  margin: 0.1rem 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.78rem;
+}
+
+.table.jobs th.steps,
+.table.jobs td.steps {
+  width: 40%;
+  max-width: 0;
+}
+
+.table.jobs td.desc {
+  min-width: 16ch;
+}
+
+.table td .ic {
+  color: var(--text-faint);
+}
+
 table.table-kv th {
   width: 9rem;
   background: transparent;
@@ -682,6 +815,35 @@ textarea {
   font-size: 0.75rem;
 }
 
+select {
+  width: 100%;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius);
+  background: var(--ink-2);
+  color: var(--text);
+  font: inherit;
+}
+
+.form {
+  max-width: 40rem;
+}
+
+.form-foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 0.4rem;
+}
+
+.grid-2.wide {
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+}
+
+.grid-2.wide .form {
+  max-width: none;
+}
+
 input[type="file"] {
   color: var(--text-dim);
   font: inherit;
@@ -722,44 +884,70 @@ input[type="file"]::file-selector-button {
 
 /* ------------------------------------------------------------------- login */
 
+/* The sign in screen, as oida draws it: one narrow card, labels above
+   inputs, one amber action, nothing else on the page. */
 section.login {
   position: relative;
   z-index: 1;
-  width: min(26rem, calc(100% - 2rem));
-  margin: 12vh auto 4rem;
-  padding: 1.6rem 1.8rem 1.4rem;
+  width: min(21rem, calc(100% - 2rem));
+  margin: 3.5rem auto 4rem;
+  padding: 1.3rem 1.5rem 1.5rem;
+  background: var(--ink-1);
   border: 1px solid var(--line-2);
   border-radius: var(--radius);
-  background: var(--ink-1);
 }
 
 section.login h2 {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  margin-bottom: 1rem;
-  color: var(--text-dim);
+  justify-content: center;
+  gap: 0.7rem;
+  margin: 0 0 1rem;
   font-size: 0.85rem;
-  letter-spacing: 0.24em;
+  font-weight: 600;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
 }
 
 section.login h2::before,
 section.login h2::after {
   content: "";
-  flex: 1;
-  border-top: 1px solid var(--line-2);
+  width: 2.5rem;
+  height: 1px;
+  background: var(--line-2);
 }
 
-section.login p {
-  color: var(--text-dim);
+section.login .login-error {
+  margin: 0 0 0.8rem;
+  padding: 0.5rem 0.7rem;
+  background: var(--bad-wash);
+  border: 1px solid var(--bad);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-size: 0.78rem;
 }
 
-section.login .btn {
-  width: 100%;
-  justify-content: center;
-  padding: 0.6rem;
-  margin-top: 0.4rem;
+section.login form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+section.login .field {
+  margin: 0;
+}
+
+section.login button[type="submit"] {
+  padding: 0.45rem 0.55rem;
+  background: var(--signal);
+  border: 1px solid var(--signal);
+  border-radius: var(--radius);
+  color: var(--signal-ink);
+  font: inherit;
+  font-size: 0.78rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  cursor: pointer;
 }
 
 /* ------------------------------------------------------------------ footer */
@@ -768,23 +956,77 @@ footer {
   margin-top: auto;
   position: relative;
   z-index: 1;
-  padding: 0.7rem 1.25rem;
+  padding: 0.8rem 1.25rem;
   border-top: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
   color: var(--text-faint);
-  font-size: 0.75rem;
+  font-size: 0.68rem;
   text-align: center;
 }
 
-footer .wordmark {
+footer .credit {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.4em;
+  white-space: nowrap;
+}
+
+footer .credit a {
+  color: var(--text-dim);
+}
+
+footer .credit .wordmark {
   color: var(--text);
+  font-size: 0.62rem;
   font-weight: 600;
   letter-spacing: 0.24em;
   text-transform: uppercase;
 }
 
-footer .sep {
-  margin: 0 0.4rem;
-  color: var(--line-2);
+footer .credit .sep {
+  color: var(--text-faint);
+}
+
+footer .credit a:hover {
+  color: var(--signal);
+}
+
+/* ----------------------------------------------------------------- confirm */
+
+dialog.confirm {
+  width: min(26rem, calc(100vw - 2rem));
+  padding: 1.1rem 1.3rem 1rem;
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius);
+  background: var(--ink-1);
+  color: var(--text);
+  box-shadow: 0 1.5rem 4rem rgba(0, 0, 0, 0.55);
+}
+
+dialog.confirm::backdrop {
+  background: rgba(4, 6, 9, 0.72);
+}
+
+dialog.confirm h3 {
+  font-size: 0.85rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 0.6rem;
+}
+
+dialog.confirm p {
+  color: var(--text);
+  margin-bottom: 1rem;
+}
+
+.confirm-foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
 }
 
 /* ------------------------------------------------------------------- modal */
@@ -911,11 +1153,8 @@ dialog.run[open] {
     padding: 0.6rem 1rem;
   }
 
-  header.top h1 span {
-    display: none;
-  }
-
-  .grid-2 {
+  .grid-2,
+  .grid-2.wide {
     grid-template-columns: 1fr;
   }
 
@@ -925,6 +1164,17 @@ dialog.run[open] {
 
   .run-body .terminal-host {
     height: 60vh;
+  }
+
+  /* Run and Run force stack in their cell instead of widening the table. */
+  .table.jobs td.actions {
+    white-space: normal;
+  }
+
+  .table.jobs td.actions .btn {
+    display: flex;
+    justify-content: center;
+    margin: 0.15rem 0;
   }
 }
 
