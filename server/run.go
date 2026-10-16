@@ -4,12 +4,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"log/slog"
 	"net/http"
 	"net/url"
 	"os"
 	"os/exec"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -191,26 +193,11 @@ func (svc *Server) execute(out *socket, ws *websocket.Conn, project *model.Proje
 		"TASK_UI_RUN_ID="+run.ID,
 	)
 
-	proc, err := internal.Start(cmd, cols, rows)
-	if err != nil {
-		return "", 0, err
-	}
-	defer proc.TTY.Close()
-
-	var stopped bool
-	var stopMu sync.Mutex
-	stop := func(byUser bool) {
-		stopMu.Lock()
-		stopped = stopped || byUser
-		stopMu.Unlock()
-		proc.Stop(5 * time.Second)
-	}
-	run.SetStop(func() { stop(false) })
-
 	out.status(control{State: model.StateRunning, ID: run.ID, User: run.User, Started: run.Started.UTC().Format(time.RFC3339)})
 
 	var recorder *repository.Recorder
 	if svc.config.History {
+		var err error
 		recorder, err = svc.history.Start(model.HistoryRecord{
 			ID:      run.ID,
 			Project: project.ID,
@@ -225,6 +212,45 @@ func (svc *Server) execute(out *socket, ws *websocket.Conn, project *model.Proje
 			recorder = nil
 		}
 	}
+	// term is what the user sees: the socket, and the recording when on.
+	var term io.Writer = out
+	if recorder != nil {
+		term = io.MultiWriter(out, recorder)
+	}
+
+	// A folder that is a checkout is brought up to date first, so the run
+	// uses the latest version of the project. A pull that fails fails the
+	// run: running stale code quietly is worse than not running.
+	if svc.git.IsRepo(project.Dir) {
+		fmt.Fprintf(term, "\x1b[2m$ git pull --ff-only\x1b[0m\r\n")
+		if err := svc.git.Pull(ws.Request().Context(), project.Dir, crlfWriter{term}); err != nil {
+			fmt.Fprintf(term, "\x1b[31mgit pull failed: %s\x1b[0m\r\n", err)
+			if recorder != nil {
+				recorder.Finish(model.StateFailed, 1)
+			}
+			return model.StateFailed, 1, nil
+		}
+		fmt.Fprint(term, "\r\n")
+	}
+
+	proc, err := internal.Start(cmd, cols, rows)
+	if err != nil {
+		if recorder != nil {
+			recorder.Finish(model.StateFailed, 1)
+		}
+		return "", 0, err
+	}
+	defer proc.TTY.Close()
+
+	var stopped bool
+	var stopMu sync.Mutex
+	stop := func(byUser bool) {
+		stopMu.Lock()
+		stopped = stopped || byUser
+		stopMu.Unlock()
+		proc.Stop(5 * time.Second)
+	}
+	run.SetStop(func() { stop(false) })
 
 	// Client to process: input for interactive jobs, resize and stop
 	// for all. The read fails when the window closes, which stops the run.
@@ -258,11 +284,7 @@ func (svc *Server) execute(out *socket, ws *websocket.Conn, project *model.Proje
 	for {
 		n, err := proc.TTY.Read(buf)
 		if n > 0 {
-			chunk := buf[:n]
-			if recorder != nil {
-				recorder.Write(chunk)
-			}
-			_, _ = out.Write(chunk)
+			_, _ = term.Write(buf[:n])
 		}
 		if err != nil {
 			break
@@ -290,6 +312,17 @@ func (svc *Server) execute(out *socket, ws *websocket.Conn, project *model.Proje
 		}
 	}
 	return state, exitCode, nil
+}
+
+// crlfWriter turns the newlines of a plain command into the line ends a
+// terminal expects, which a pty would otherwise do.
+type crlfWriter struct {
+	w io.Writer
+}
+
+func (c crlfWriter) Write(p []byte) (int, error) {
+	_, err := c.w.Write([]byte(strings.ReplaceAll(string(p), "\n", "\r\n")))
+	return len(p), err
 }
 
 // APIRuns lists the active runs the user can see.

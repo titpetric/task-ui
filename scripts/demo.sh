@@ -15,7 +15,7 @@ set -euo pipefail
 root="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$root"
 
-for tool in chromium curl atkins task; do
+for tool in chromium curl atkins task git; do
   command -v "$tool" >/dev/null || { echo "$tool not found in PATH" >&2; exit 1; }
 done
 
@@ -32,7 +32,30 @@ go build -o "$work/task-ui" .
 # Runs generate env files inside the folders, so the demo is served from
 # a copy and the checkout stays clean.
 cp -r testdata/demo "$work/demo"
-cp "$work/demo/task-ui.yml.example" "$work/demo/task-ui.yml"
+
+# Login is mandatory: three users, one per role. The instances sign in as
+# one of them with TASK_UI_AUTOLOGIN, since chromium's screenshot flag has
+# no way to log in; the sign in screen comes from an instance without it.
+{
+  echo "users:"
+  for user in admin:admin ops:runner guest:viewer; do
+    echo "  - name: ${user%%:*}"
+    echo "    password: \"$("$work/task-ui" hash demo)\""
+    echo "    role: ${user##*:}"
+  done
+  cat "$work/demo/task-ui.yml.example"
+} >"$work/demo/task-ui.yml"
+
+# The infra folder comes from a git repository, so the Projects page has
+# a checkout to show and every run of it pulls first.
+git() { command git -c user.name=demo -c user.email=demo@example -c init.defaultBranch=main "$@"; }
+mkdir -p "$work/repos"
+mv "$work/demo/infra" "$work/repos/infra"
+printf '.env\n' >"$work/repos/infra/.gitignore"
+git -C "$work/repos/infra" init -q
+git -C "$work/repos/infra" add .
+git -C "$work/repos/infra" commit -q -m "Provisioning and deploy jobs"
+git clone -q --bare "$work/repos/infra" "$work/repos/infra.git"
 
 # serve starts an instance on a port, sharing the history, keys and env
 # store, and waits for it to answer. Extra arguments are KEY=value.
@@ -63,16 +86,19 @@ post() {
   curl -fsS -o /dev/null -H "Origin: ${TASK_UI_BASE}" "$@" "${TASK_UI_BASE}${path}"
 }
 
-# An open instance: no users, visitors are admins.
+# The admin's instance.
 admin=3101
-serve "$admin" TASK_UI_ANONYMOUS=admin
+serve "$admin" TASK_UI_AUTOLOGIN=admin
 export TASK_UI_BASE="http://127.0.0.1:${admin}"
+
+# Add the infra project from its repository: the clone is the test.
+post /settings/projects/clone -d "url=file://$work/repos/infra.git" -d id=infra
 
 # Secrets and a managed env file, so the runs and the pages have them.
 post /settings/secrets/save -d scope=all -d key=CDN_PURGE_URL -d value=https://cdn.example/purge
 post /settings/secrets/save -d scope=infra -d key=REGION -d value=eu-central-1
 post /settings/secrets/save -d scope=infra -d key=DEPLOY_TOKEN -d value=s3cret
-post /f/infra/env/.env --data-urlencode "content=$(cat "$work/demo/infra/.env")"
+post /f/infra/env/.env --data-urlencode "content=$(cat "$work/repos/infra/.env")"
 post /settings/keys/generate -d type=ed25519 -d comment=task-ui
 
 # Real runs, so the history has something to show: a forced run that kills
@@ -106,27 +132,23 @@ for theme in dark light; do
   shot "keys-${theme}" /settings/keys "$theme"
   shot "secrets-${theme}" /settings/secrets "$theme"
   shot "envfile-${theme}" /f/infra/env/.env "$theme"
+  shot "projects-${theme}" /settings/projects "$theme"
 done
+shot project-new-dark /settings/projects/new dark
 shot settings-dark /settings dark
 shot keys-generate-dark /settings/keys/generate dark
 shot keys-upload-dark /settings/keys/upload dark
 shot secret-new-dark "/settings/secrets/new?scope=infra" dark
 shot mobile-folder-dark /f/infra dark 390x844
 
-# A read only instance over the same history.
+# A viewer's instance over the same history.
 viewer=3102
-serve "$viewer" TASK_UI_ANONYMOUS=viewer
+serve "$viewer" TASK_UI_AUTOLOGIN=guest
 TASK_UI_BASE="http://127.0.0.1:${viewer}" shot viewer-job-dark /f/infra/deploy dark
 
-# An instance with users, for the sign in screen.
+# An instance nobody is signed in to, for the sign in screen.
 login=3103
-cat >"$work/task-ui.yml" <<YAML
-users:
-  - name: admin
-    password: "$("$work/task-ui" hash demo)"
-    role: admin
-YAML
-serve "$login" TASK_UI_CONFIG="$work/task-ui.yml"
+serve "$login"
 for theme in dark light; do
   TASK_UI_BASE="http://127.0.0.1:${login}" shot "login-${theme}" /login "$theme"
 done

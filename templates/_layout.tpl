@@ -30,6 +30,8 @@
 				{{- end }}
 				{{- if .LoginRequired }}
 				<form method="post" action="/logout"><button type="submit"><svg class="ic"><use href="#i-logout"/></svg>Logout</button></form>
+				{{- else }}
+				<div class="who"><span>auto login, no logout</span></div>
 				{{- end }}
 			</div>
 		</details>

@@ -14,8 +14,11 @@ its pipeline declares, and runs them in a terminal window over a websocket.
 - **One run per job.** A job runs once at a time across the instance,
   different jobs run side by side. Run force stops the active run and starts
   again.
-- **Users and roles.** A login screen, and three roles: `admin`, `runner` and
-  `viewer`. Viewers read jobs and history and run nothing.
+- **Users and roles.** Login is mandatory, with three roles: `admin`,
+  `runner` and `viewer`. Viewers read jobs and history and run nothing.
+- **Projects from git.** Admins add a folder by cloning a repository; the
+  clone is the test. A checkout is pulled before every run, so the latest
+  version of the project is what runs.
 - **History.** Every run is recorded with who ran it, how it ended and the
   full terminal output, with view and replay.
 - **Settings.** Admins manage the instance SSH keys, the secrets added to
@@ -69,7 +72,7 @@ Everything is configured from the environment:
 | `TASK_UI_ENV_PATH`     | `env`              | Secrets and managed env files                                      |
 | `TASK_UI_SECRET`       | random per process | Signs the session cookie, set it to keep sessions over restarts    |
 | `TASK_UI_SESSION_TTL`  | `12h`              | Session lifetime                                                   |
-| `TASK_UI_ANONYMOUS`    | `admin`            | Role of visitors when no users exist: admin, runner, viewer, none  |
+| `TASK_UI_AUTOLOGIN`    |                    | Sign every request in as this user, for development only          |
 | `TASK_UI_ASSETS`       |                    | Serve templates and static files from this folder, for development |
 
 The flags `-l`, `-f`, `--root`, `--config`, `--history-enable` and
@@ -77,9 +80,9 @@ The flags `-l`, `-f`, `--root`, `--config`, `--history-enable` and
 
 ## Users and roles
 
-Users live in `task-ui.yml` next to the folders. The file is re-read when
-it changes, so adding or removing a user needs no restart. With no users,
-every visitor gets the `TASK_UI_ANONYMOUS` role and there is no login.
+Login is mandatory. Users live in `task-ui.yml` next to the folders, and
+the file is re-read when it changes, so adding or removing a user needs no
+restart. With no users nobody can sign in, and the sign in screen says so.
 
 ```yaml
 users:
@@ -143,6 +146,18 @@ Atkins files run with `atkins -f <file> <job>`, Taskfiles with
 something else. Jobs get `TASK_UI_USER`, `TASK_UI_FOLDER`, `TASK_UI_JOB`
 and `TASK_UI_RUN_ID` in the environment.
 
+## Projects from git
+
+Settings → Projects lists the folders under the root with their source.
+Add project clones a repository into the root: it either succeeds and the
+folder appears in the sidebar, or git's output is shown and nothing is
+kept. Private repositories are reached with the instance SSH keys, which
+git uses through `GIT_SSH_COMMAND` with a `known_hosts` file next to them.
+
+A folder that is a checkout is pulled with `git pull --ff-only` before
+every run, in the run's own terminal, so the job always runs the latest
+version of the project. A pull that fails fails the run.
+
 ## Secrets and env files
 
 Settings hold the secrets: variables added to the environment of every run,
@@ -162,6 +177,7 @@ pipeline file is never changed.
 | ![A folder: its jobs, steps, pipeline and env files](.github/assets/folder-dark.png) | ![A run replayed in the dialog](.github/assets/run-replay-dark.png) |
 | ![A job and its history](.github/assets/job-dark.png) | ![Overview, light theme](.github/assets/overview-light.png) |
 | ![Secrets](.github/assets/secrets-dark.png) | ![An env file](.github/assets/envfile-dark.png) |
+| ![Projects](.github/assets/projects-dark.png) | ![Add a project](.github/assets/project-new-dark.png) |
 | ![SSH keys](.github/assets/keys-dark.png) | ![Login](.github/assets/login-dark.png) |
 
 `scripts/demo.sh` regenerates them: it serves a copy of `testdata/demo`,

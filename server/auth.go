@@ -91,8 +91,14 @@ func currentUser(r *http.Request) *model.User {
 	return user
 }
 
-// loginRequired reports whether the instance has users configured.
+// loginRequired reports whether requests carry a session. Login is the
+// only way in, unless the development auto login is set.
 func (svc *Server) loginRequired() bool {
+	return svc.config.AutoLogin == ""
+}
+
+// hasUsers reports whether task-ui.yml names anyone.
+func (svc *Server) hasUsers() bool {
 	return len(svc.file.Get().Users) > 0
 }
 
@@ -107,14 +113,11 @@ func (svc *Server) lookupUser(name string) *model.User {
 	return nil
 }
 
-// authenticate resolves the user of a request: the session user when users
-// are configured, the anonymous role otherwise.
+// authenticate resolves the user of a request from its session cookie, or
+// from the auto login when one is configured.
 func (svc *Server) authenticate(r *http.Request) *model.User {
 	if !svc.loginRequired() {
-		if svc.config.Anonymous == "none" {
-			return nil
-		}
-		return &model.User{Name: "anonymous", Role: svc.config.Anonymous}
+		return svc.lookupUser(svc.config.AutoLogin)
 	}
 	cookie, err := r.Cookie(sessionCookie)
 	if err != nil {
@@ -205,6 +208,12 @@ func (svc *Server) Login(w http.ResponseWriter, r *http.Request) {
 
 	if !svc.loginRequired() {
 		http.Redirect(w, r, data.Back, http.StatusSeeOther)
+		return
+	}
+	if !svc.hasUsers() {
+		data.Error = "No users are configured. Add one to task-ui.yml, with a password from `task-ui hash`, and sign in."
+		w.WriteHeader(http.StatusServiceUnavailable)
+		svc.render(w, r, "login.tpl", data)
 		return
 	}
 

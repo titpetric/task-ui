@@ -34,6 +34,7 @@ type Server struct {
 	history  *repository.History
 	keys     *repository.Keys
 	env      *repository.Env
+	git      *repository.Git
 
 	assets    fs.FS
 	templates fs.FS
@@ -77,6 +78,7 @@ func NewWithConfig(files fs.FS, config *Config) (*Server, error) {
 		history:   &repository.History{Root: config.HistoryPath},
 		keys:      &repository.Keys{Dir: config.SSHDir},
 		env:       &repository.Env{Root: config.EnvPath},
+		git:       &repository.Git{SSHDir: config.SSHDir},
 		assets:    assets,
 		templates: templates,
 	}
@@ -127,6 +129,10 @@ func (svc *Server) Handler() http.Handler {
 			r.Get("/settings/secrets/edit", svc.SecretForm)
 			r.Post("/settings/secrets/save", svc.SecretSave)
 			r.Post("/settings/secrets/delete", svc.SecretDelete)
+			r.Get("/settings/projects", svc.ProjectsPage)
+			r.Get("/settings/projects/new", svc.ProjectNewPage)
+			r.Post("/settings/projects/clone", svc.ProjectClone)
+			r.Post("/settings/projects/delete", svc.ProjectDelete)
 			r.Get("/f/{project}/env/*", svc.EnvFilePage)
 			r.Post("/f/{project}/env/*", svc.EnvFileSave)
 		})
@@ -164,8 +170,14 @@ func (svc *Server) Start(ctx context.Context) error {
 			}
 		}
 	}
-	if !svc.loginRequired() {
-		slog.Warn("no users configured, visitors get the anonymous role", "role", svc.config.Anonymous)
+	if svc.config.AutoLogin != "" {
+		slog.Warn("TASK_UI_AUTOLOGIN is set, every request is signed in without a password", "user", svc.config.AutoLogin)
+	}
+	if !svc.hasUsers() {
+		slog.Error("no users configured, nobody can sign in: add users to task-ui.yml with passwords from `task-ui hash`", "config", svc.config.ConfigFile)
+	}
+	if _, err := exec.LookPath("git"); err != nil {
+		slog.Warn("git not found in PATH, projects cannot be cloned or pulled")
 	}
 
 	server := &http.Server{
@@ -231,6 +243,10 @@ type pageData struct {
 	EnvFiles []model.EnvFile
 	EnvFile  *model.EnvFile
 	EnvPath  string
+
+	Git     *model.GitInfo
+	Folders []repository.Folder
+	Form    map[string]string
 
 	Back     string
 	Username string
@@ -403,6 +419,7 @@ func (svc *Server) ProjectPage(w http.ResponseWriter, r *http.Request) {
 	data.Title = project.Title
 	data.Project = project
 	data.EnvFiles = svc.env.Files(project)
+	data.Git = svc.git.Info(project.Dir)
 	svc.render(w, r, "folder.tpl", data)
 }
 

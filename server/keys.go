@@ -17,6 +17,7 @@ func (svc *Server) SettingsPage(w http.ResponseWriter, r *http.Request) {
 	data := svc.pageData(r, "Settings")
 	data.Keys = svc.keys.List()
 	data.Secrets = svc.env.Secrets()
+	data.Folders = svc.git.ListFolders(svc.config.Root)
 	data.KeysDir = svc.keys.Dir
 	data.EnvPath = svc.env.Root
 	svc.render(w, r, "settings.tpl", data)

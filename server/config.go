@@ -55,10 +55,10 @@ type Config struct {
 	Secret string
 	// SessionTTL is the session lifetime. TASK_UI_SESSION_TTL, default 12h.
 	SessionTTL time.Duration
-	// Anonymous is the role of a visitor when no users are configured.
-	// TASK_UI_ANONYMOUS, default admin, so a local instance works without
-	// setup. Set it to viewer for a read only instance, or configure users.
-	Anonymous model.Role
+	// AutoLogin signs every request in as this configured user, without
+	// a password. TASK_UI_AUTOLOGIN. It is for development and for the
+	// screenshot scripts, never for a deployment.
+	AutoLogin string
 
 	// Columns and Rows are the initial terminal size.
 	Columns, Rows int
@@ -105,7 +105,7 @@ func NewConfig(args []string) (*Config, error) {
 		SSHDir:      env("TASK_UI_SSH_DIR", filepath.Join(home, ".ssh")),
 		EnvPath:     env("TASK_UI_ENV_PATH", "env"),
 		Secret:      env("TASK_UI_SECRET", ""),
-		Anonymous:   model.Role(env("TASK_UI_ANONYMOUS", string(model.RoleAdmin))),
+		AutoLogin:   env("TASK_UI_AUTOLOGIN", ""),
 		Columns:     120,
 		Rows:        30,
 	}
@@ -133,12 +133,6 @@ func NewConfig(args []string) (*Config, error) {
 
 // Validate checks the configuration and fills computed defaults.
 func (c *Config) Validate() error {
-	if c.Anonymous == "" {
-		c.Anonymous = model.RoleViewer
-	}
-	if c.Anonymous != "none" && !c.Anonymous.Valid() {
-		return fmt.Errorf("TASK_UI_ANONYMOUS: unknown role %q, use admin, runner, viewer or none", c.Anonymous)
-	}
 	if c.ConfigFile == "" {
 		for _, name := range []string{"task-ui.yml", "task-ui.yaml"} {
 			path := filepath.Join(c.Root, name)

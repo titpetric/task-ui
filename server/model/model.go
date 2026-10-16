@@ -218,6 +218,15 @@ const (
 	StateKilled  = "killed"
 )
 
+// GitInfo describes a folder that is a git checkout.
+type GitInfo struct {
+	Remote  string    `json:"remote"`
+	Branch  string    `json:"branch"`
+	Commit  string    `json:"commit"`
+	Subject string    `json:"subject"`
+	When    time.Time `json:"when"`
+}
+
 // SSHKey describes a key pair in the instance SSH folder.
 type SSHKey struct {
 	Name        string    `json:"name"`
