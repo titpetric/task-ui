@@ -161,9 +161,8 @@
     ws.binaryType = "arraybuffer";
     s.ws = ws;
 
-    var encoder = new TextEncoder();
     term.onData(function (data) {
-      if (spec.interactive && ws.readyState === 1) ws.send(encoder.encode(data));
+      if (spec.interactive && ws.readyState === 1) ws.send(JSON.stringify({ type: "input", message: data }));
     });
 
     s.onResize = function () {

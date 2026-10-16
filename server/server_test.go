@@ -47,6 +47,12 @@ jobs:
   GREETING:
     desc: "Print the greeting"
 `)
+	mkfile(filepath.Join(root, "cat", "atkins.yml"), `
+jobs:
+  "-":
+    desc: "Echo what is typed"
+    interactive: true
+`)
 	mkfile(filepath.Join(root, "sleep", "Taskfile.yml"), `
 tasks:
   "5":
@@ -80,6 +86,8 @@ projects:
     command: sleep
   - id: printenv
     command: printenv
+  - id: cat
+    command: cat
 `)
 
 	cfg := &Config{
@@ -538,5 +546,44 @@ func TestSecretsReachRuns(t *testing.T) {
 	ws.Close()
 	if !strings.Contains(out, "hello from all") {
 		t.Fatalf("shared secret not applied: %q", out)
+	}
+}
+
+func TestInteractiveInput(t *testing.T) {
+	ts, _ := testServer(t)
+	c := login(t, ts, "ops")
+
+	ws, err := dial(t, ts, c, "/ws/run/cat/-", ts.URL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer ws.Close()
+	if _, statuses := collect(t, ws, func(m control) bool { return m.State == "running" }); len(statuses) == 0 {
+		t.Fatal("run did not start")
+	}
+
+	// Typed input is a control frame; cat echoes it through the pty.
+	if err := websocket.Message.Send(ws, `{"type":"input","message":"hi there\n"}`); err != nil {
+		t.Fatal(err)
+	}
+	var out strings.Builder
+	ws.SetReadDeadline(time.Now().Add(5 * time.Second))
+	for !strings.Contains(out.String(), "hi there") {
+		var frame []byte
+		if err := websocket.Message.Receive(ws, &frame); err != nil {
+			t.Fatalf("waiting for the echo: %v, got %q", err, out.String())
+		}
+		if len(frame) > 0 && frame[0] != '{' {
+			out.Write(frame)
+		}
+	}
+
+	// Stop ends the run as stopped.
+	if err := websocket.Message.Send(ws, `{"type":"stop"}`); err != nil {
+		t.Fatal(err)
+	}
+	_, statuses := collect(t, ws, final)
+	if len(statuses) == 0 || statuses[len(statuses)-1].State != "stopped" {
+		t.Fatalf("after stop: %+v", statuses)
 	}
 }

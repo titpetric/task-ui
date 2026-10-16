@@ -103,6 +103,10 @@ func TestLoadProjectTaskfile(t *testing.T) {
 	write(t, path, `
 version: "3"
 dotenv: ['.env']
+includes:
+  docker: ./docker/Taskfile.yml
+  docs:
+    taskfile: docs/Taskfile.yml
 tasks:
   build:
     desc: "Build"
@@ -139,6 +143,9 @@ tasks:
 	}
 	if !slices.Equal(project.EnvFiles, []string{".env"}) {
 		t.Fatalf("dotenv: %v", project.EnvFiles)
+	}
+	if !slices.Equal(project.Includes, []string{"./docker/Taskfile.yml", "docs/Taskfile.yml"}) {
+		t.Fatalf("includes: %v", project.Includes)
 	}
 	if !project.Job("shell").Interactive {
 		t.Fatal("interactive flag lost")

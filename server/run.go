@@ -22,10 +22,13 @@ import (
 )
 
 // The run socket speaks two kinds of frames. Binary frames carry terminal
-// bytes, both ways. Text frames carry JSON control messages:
+// output. Text frames carry JSON control messages:
 //
 //	server: {"type":"status","state":"running|busy|denied|error|ok|failed|stopped|killed", ...}
-//	client: {"type":"resize","cols":120,"rows":30} | {"type":"stop"}
+//	client: {"type":"resize","cols":120,"rows":30} | {"type":"stop"} | {"type":"input","message":"..."}
+//
+// Input is a control frame rather than raw bytes, so a key the user types
+// is never mistaken for a message and the server never has to guess.
 //
 // Closing the socket stops the run: a run belongs to the window that started it.
 type control struct {
@@ -182,6 +185,7 @@ func (svc *Server) execute(out *socket, ws *websocket.Conn, project *model.Proje
 		"LINES="+strconv.Itoa(rows),
 		"TASK_UI=1",
 		"TASK_UI_USER="+run.User,
+		"TASK_UI_FOLDER="+project.ID,
 		"TASK_UI_PROJECT="+project.ID,
 		"TASK_UI_RUNBOOK="+job.Name,
 		"TASK_UI_RUN_ID="+run.ID,
@@ -231,25 +235,20 @@ func (svc *Server) execute(out *socket, ws *websocket.Conn, project *model.Proje
 				stop(true)
 				return
 			}
-			if len(frame) > 0 && frame[0] == '{' {
-				var msg control
-				if json.Unmarshal(frame, &msg) == nil {
-					switch msg.Type {
-					case "resize":
-						proc.Resize(msg.Cols, msg.Rows)
-					case "stop":
-						out.Write([]byte("\r\n\x1b[33mStopping...\x1b[0m\r\n"))
-						stop(true)
-					case "input":
-						if job.Interactive {
-							proc.TTY.Write([]byte(msg.Message))
-						}
-					}
-					continue
-				}
+			var msg control
+			if json.Unmarshal(frame, &msg) != nil {
+				continue
 			}
-			if job.Interactive {
-				proc.TTY.Write(frame)
+			switch msg.Type {
+			case "resize":
+				proc.Resize(msg.Cols, msg.Rows)
+			case "stop":
+				out.Write([]byte("\r\n\x1b[33mStopping...\x1b[0m\r\n"))
+				stop(true)
+			case "input":
+				if job.Interactive {
+					proc.TTY.Write([]byte(msg.Message))
+				}
 			}
 		}
 	}()
