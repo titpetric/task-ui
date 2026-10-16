@@ -1166,9 +1166,18 @@ dialog.run[open] {
     height: 60vh;
   }
 
-  /* Run and Run force stack in their cell instead of widening the table. */
+  /* Run and Run force stack in their cell instead of widening the table,
+     and the name and description give up their minimum widths. */
   .table.jobs td.actions {
     white-space: normal;
+  }
+
+  .table.jobs td.key {
+    white-space: normal;
+  }
+
+  .table.jobs td.desc {
+    min-width: 0;
   }
 
   .table.jobs td.actions .btn {
