@@ -6,8 +6,7 @@ services:
       # Signs the session cookie, keep sessions across restarts.
       TASK_UI_SECRET: ${TASK_UI_SECRET:-change-me}
       TASK_UI_TITLE: task-ui
-      # Users live in /app/task-ui.yml; without users, visitors get this role.
-      TASK_UI_ANONYMOUS: viewer
+      # Users live in /app/task-ui.yml; without users nobody can sign in.
     ports:
     - 3000:3000
     volumes:

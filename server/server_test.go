@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -88,6 +89,8 @@ projects:
     command: printenv
   - id: cat
     command: cat
+  - id: notes
+    command: cat
 `)
 
 	cfg := &Config{
@@ -99,7 +102,6 @@ projects:
 		HistoryPath: filepath.Join(t.TempDir(), "history"),
 		SSHDir:      filepath.Join(t.TempDir(), "ssh"),
 		SessionTTL:  time.Hour,
-		Anonymous:   "admin",
 	}
 	if err := cfg.Validate(); err != nil {
 		t.Fatal(err)
@@ -438,8 +440,8 @@ func TestSessions(t *testing.T) {
 	}
 }
 
-func TestAnonymousRole(t *testing.T) {
-	cfg := &Config{Root: t.TempDir(), Anonymous: "viewer", SessionTTL: time.Hour}
+func TestNoUsersNoWayIn(t *testing.T) {
+	cfg := &Config{Root: t.TempDir(), SessionTTL: time.Hour}
 	if err := cfg.Validate(); err != nil {
 		t.Fatal(err)
 	}
@@ -451,17 +453,142 @@ func TestAnonymousRole(t *testing.T) {
 	defer ts.Close()
 
 	c := client(t)
-	code, body := get(t, c, ts.URL+"/")
-	if code != http.StatusOK || !strings.Contains(body, "anonymous") {
-		t.Fatalf("anonymous overview: %d", code)
+	resp, _ := c.Get(ts.URL + "/")
+	resp.Body.Close()
+	if resp.StatusCode != http.StatusSeeOther {
+		t.Fatalf("overview without users: %d", resp.StatusCode)
 	}
-	if code, _ := get(t, c, ts.URL+"/settings/keys"); code != http.StatusForbidden {
-		t.Fatalf("anonymous viewer keys: %d", code)
+	code, body := get(t, c, ts.URL+"/login")
+	if code != http.StatusServiceUnavailable || !strings.Contains(body, "No users are configured") {
+		t.Fatalf("login without users: %d", code)
+	}
+}
+
+func TestAutoLogin(t *testing.T) {
+	ts, svc := testServer(t)
+	svc.config.AutoLogin = "ops"
+
+	c := client(t)
+	code, body := get(t, c, ts.URL+"/f/echo")
+	if code != http.StatusOK || !strings.Contains(body, "auto login") || !strings.Contains(body, "data-run") {
+		t.Fatalf("auto login as ops: %d", code)
+	}
+	if code, _ := get(t, c, ts.URL+"/settings"); code != http.StatusForbidden {
+		t.Fatalf("auto login kept the role: %d", code)
 	}
 
-	bad := &Config{Anonymous: "root"}
-	if err := bad.Validate(); err == nil {
-		t.Fatal("unknown anonymous role accepted")
+	svc.config.AutoLogin = "nobody"
+	if code, _ := get(t, c, ts.URL+"/api/runs"); code != http.StatusUnauthorized {
+		t.Fatalf("auto login as an unknown user: %d", code)
+	}
+}
+
+// gitRepo makes a bare repository holding a pipeline file and a note, and
+// returns its file URL and a working clone to push changes from.
+func gitRepo(t *testing.T) (string, string) {
+	t.Helper()
+	git := func(dir string, args ...string) {
+		t.Helper()
+		cmd := exec.Command("git", append([]string{"-c", "user.name=t", "-c", "user.email=t@t", "-c", "init.defaultBranch=main"}, args...)...)
+		cmd.Dir = dir
+		if out, err := cmd.CombinedOutput(); err != nil {
+			t.Fatalf("git %v: %v\n%s", args, err, out)
+		}
+	}
+	work := filepath.Join(t.TempDir(), "work")
+	os.MkdirAll(work, 0o755)
+	git(work, "init", "-q")
+	os.WriteFile(filepath.Join(work, "atkins.yml"), []byte("name: Notes\njobs:\n  note.txt:\n    desc: \"Print the note\"\n"), 0o644)
+	os.WriteFile(filepath.Join(work, "note.txt"), []byte("v1\n"), 0o644)
+	git(work, "add", ".")
+	git(work, "commit", "-q", "-m", "first")
+	bare := filepath.Join(t.TempDir(), "notes.git")
+	git(filepath.Dir(bare), "clone", "-q", "--bare", work, bare)
+	git(work, "remote", "add", "origin", bare)
+	return "file://" + bare, work
+}
+
+func TestProjectsCloneAndPull(t *testing.T) {
+	ts, svc := testServer(t)
+	admin := login(t, ts, "admin")
+	ops := login(t, ts, "ops")
+	repo, work := gitRepo(t)
+
+	if code, _ := get(t, ops, ts.URL+"/settings/projects"); code != http.StatusForbidden {
+		t.Fatalf("runner projects page: %d", code)
+	}
+	resp, _ := ops.PostForm(ts.URL+"/settings/projects/clone", url.Values{"url": {repo}})
+	resp.Body.Close()
+	if resp.StatusCode != http.StatusForbidden {
+		t.Fatalf("runner cloned: %d", resp.StatusCode)
+	}
+
+	// A clone that cannot work reports git's output and keeps nothing.
+	resp, _ = admin.PostForm(ts.URL+"/settings/projects/clone", url.Values{"url": {"file:///nonexistent/repo.git"}, "id": {"broken"}})
+	resp.Body.Close()
+	if !strings.Contains(resp.Header.Get("Location"), "error=") {
+		t.Fatalf("bad clone: %s", resp.Header.Get("Location"))
+	}
+	if _, err := os.Stat(filepath.Join(svc.config.Root, "broken")); err == nil {
+		t.Fatal("failed clone left a folder")
+	}
+	resp, _ = admin.PostForm(ts.URL+"/settings/projects/clone", url.Values{"url": {"-oops"}})
+	resp.Body.Close()
+	if !strings.Contains(resp.Header.Get("Location"), "error=") {
+		t.Fatal("option-like URL accepted")
+	}
+
+	// The folder name comes from the URL.
+	resp, _ = admin.PostForm(ts.URL+"/settings/projects/clone", url.Values{"url": {repo}})
+	resp.Body.Close()
+	if resp.StatusCode != http.StatusSeeOther || !strings.Contains(resp.Header.Get("Location"), "notice=") {
+		t.Fatalf("clone: %d %s", resp.StatusCode, resp.Header.Get("Location"))
+	}
+	code, body := get(t, admin, ts.URL+"/settings/projects")
+	if code != http.StatusOK || !strings.Contains(body, "notes") || !strings.Contains(body, "atkins.yml") {
+		t.Fatalf("projects page: %d", code)
+	}
+	code, body = get(t, admin, ts.URL+"/f/notes")
+	if code != http.StatusOK || !strings.Contains(body, "Source") || !strings.Contains(body, "first") {
+		t.Fatalf("folder page source: %d", code)
+	}
+
+	// The run pulls first, so a change pushed upstream is what runs.
+	ws, err := dial(t, ts, ops, "/ws/run/notes/note.txt", ts.URL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	out, statuses := collect(t, ws, final)
+	ws.Close()
+	if !strings.Contains(out, "git pull") || !strings.Contains(out, "v1") || statuses[len(statuses)-1].State != "ok" {
+		t.Fatalf("first run: %q %+v", out, statuses)
+	}
+
+	os.WriteFile(filepath.Join(work, "note.txt"), []byte("v2\n"), 0o644)
+	for _, args := range [][]string{{"commit", "-q", "-am", "second"}, {"push", "-q", "origin", "HEAD:main"}} {
+		cmd := exec.Command("git", append([]string{"-c", "user.name=t", "-c", "user.email=t@t"}, args...)...)
+		cmd.Dir = work
+		if o, err := cmd.CombinedOutput(); err != nil {
+			t.Fatalf("git %v: %v\n%s", args, err, o)
+		}
+	}
+	ws, _ = dial(t, ts, ops, "/ws/run/notes/note.txt", ts.URL)
+	out, _ = collect(t, ws, final)
+	ws.Close()
+	if !strings.Contains(out, "v2") {
+		t.Fatalf("run did not pull: %q", out)
+	}
+
+	// Removing takes the checkout away; a local folder cannot be removed.
+	resp, _ = admin.PostForm(ts.URL+"/settings/projects/delete", url.Values{"id": {"echo"}})
+	resp.Body.Close()
+	if !strings.Contains(resp.Header.Get("Location"), "error=") {
+		t.Fatal("removed a local folder")
+	}
+	resp, _ = admin.PostForm(ts.URL+"/settings/projects/delete", url.Values{"id": {"notes"}})
+	resp.Body.Close()
+	if _, err := os.Stat(filepath.Join(svc.config.Root, "notes")); err == nil {
+		t.Fatal("checkout still there")
 	}
 }
 

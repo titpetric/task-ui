@@ -51,6 +51,7 @@
 	<table class="table table-kv">
 		<tbody>
 			<tr><th>File</th><td><svg class="ic"><use href="#i-file"/></svg> {{ $p.ID }}/{{ $p.File }}</td></tr>
+			{{- with $.Git }}<tr><th>Source</th><td><div class="mono-break">{{ .Remote }}</div><div class="dim">{{ .Branch }} <span class="faint">{{ .Commit }}</span> {{ .Subject }}{{ if not .When.IsZero }} <span class="faint">{{ ago .When }}</span>{{ end }}</div><div class="faint">pulled before every run</div></td></tr>{{ end }}
 			<tr><th>Runs with</th><td><code>{{ join $p.Command " " }} &lt;job&gt;</code></td></tr>
 			<tr><th>Who can run</th><td>{{ if $p.Allow }}admin, {{ join $p.Allow ", " }}{{ else }}admin, runner{{ end }}</td></tr>
 			{{- if $p.Includes }}<tr><th>Includes</th><td>{{ range $p.Includes }}<div><svg class="ic"><use href="#i-file"/></svg> {{ . }}</div>{{ end }}</td></tr>{{ end }}

@@ -3,7 +3,7 @@
 <div class="page-head">
 	<div>
 		<h2>Settings</h2>
-		<p>What the instance brings to every run: the SSH keys it authenticates with, and the secrets it adds to the environment.</p>
+		<p>What the instance brings to every run: the projects it keeps up to date, the SSH keys it authenticates with, and the secrets it adds to the environment.</p>
 	</div>
 </div>
 
@@ -11,6 +11,12 @@
 <table class="table settings">
 	<tbody>
 		{{- $keys := 0 }}{{ range .Keys }}{{ if not .Backup }}{{ $keys = add $keys 1 }}{{ end }}{{ end }}
+		<tr>
+			<td class="key nowrap"><a href="/settings/projects"><svg class="ic"><use href="#i-folder"/></svg> Projects</a></td>
+			<td class="desc">The folders under the root. Add one from a git repository; a checkout is pulled before every run.</td>
+			<td class="nowrap dim">{{ len .Folders }} {{ if eq (len .Folders) 1 }}folder{{ else }}folders{{ end }}</td>
+			<td class="actions"><a class="btn btn-sm" href="/settings/projects">Open</a></td>
+		</tr>
 		<tr>
 			<td class="key nowrap"><a href="/settings/keys"><svg class="ic"><use href="#i-key"/></svg> SSH keys</a></td>
 			<td class="desc">Key pairs the jobs use to reach hosts, git remotes and services. Generate, rotate or upload them.</td>
