@@ -5,70 +5,113 @@ import (
 	"time"
 )
 
-// Project is a folder holding a pipeline file: a working directory and the
-// atkins.yml (or Taskfile.yml) in it. Its jobs are what the file declares.
+// Project is a folder: a working directory and the targets found in it.
+// Each convention the folder follows is a Source, and every target of
+// every source is a Job.
 type Project struct {
 	// ID is the URL safe name of the folder.
 	ID string `json:"id"`
-	// Title is the pipeline name, falls back to the folder name.
+	// Title is the name the first source declares, or the folder name.
 	Title string `json:"title"`
-	// Description is the pipeline help text.
+	// Description is what the first source says about itself.
 	Description string `json:"description,omitempty"`
 
 	// Dir is the working directory the jobs run in.
 	Dir string `json:"-"`
-	// File is the pipeline file name inside Dir.
-	File string `json:"file"`
-	// Kind is "atkins" or "task", which picks the default command.
-	Kind string `json:"kind"`
-	// Command runs a job: the job name is appended as the last argument.
-	// Defaults to `atkins -f <file>` or `task -t <file>`.
-	Command []string `json:"-"`
 
-	// Includes are the files the pipeline reads into its variables.
+	// Sources are the conventions detected in the folder, in detection
+	// order: pipeline files first, then build files, then scripts.
+	Sources []*Source `json:"sources"`
+
+	// Includes are the files the sources read into their variables.
 	Includes []string `json:"includes,omitempty"`
-	// EnvFiles are the dotenv files the pipeline and its jobs read, relative
-	// to Dir. These are the files task-ui can manage.
+	// EnvFiles are the dotenv files the sources read, relative to Dir.
+	// These are the files task-ui can manage.
 	EnvFiles []string `json:"env_files,omitempty"`
 
 	// Allow lists the users and roles that may run this folder's jobs,
 	// from task-ui.yml. Empty allows every runner.
 	Allow []string `json:"allow,omitempty"`
 
+	// Jobs are every source's jobs, in source order.
 	Jobs []*Job `json:"jobs"`
 
-	// Error holds a parse error. The folder is listed so the problem is
-	// visible, but it has no jobs.
+	// Error holds the parse errors of the sources, so a folder with a
+	// broken file is listed and says what is wrong.
 	Error string `json:"error,omitempty"`
 }
 
-// Job returns the job by name or alias, or nil.
-func (p *Project) Job(name string) *Job {
+// Source is one convention found in a folder: the file it was read from,
+// the command that runs its targets, and the targets.
+type Source struct {
+	// Kind names the convention: atkins, task, make, npm, composer, script.
+	Kind string `json:"kind"`
+	// File is the file the targets were read from, relative to the folder.
+	File string `json:"file"`
+	// Name and Description are what the file says about itself, when the
+	// convention has a place for that.
+	Name        string `json:"name,omitempty"`
+	Description string `json:"description,omitempty"`
+	// Command is the argv prefix that runs a target, such as
+	// `atkins -f atkins.yml` or `npm run`. A job's Args follow it.
+	Command []string `json:"command"`
+
+	Includes []string `json:"includes,omitempty"`
+	EnvFiles []string `json:"env_files,omitempty"`
+
+	Jobs []*Job `json:"jobs"`
+
+	Error string `json:"error,omitempty"`
+}
+
+// Job returns the job by ID, name or alias, or nil. The ID is what URLs
+// and history use; the name is the target as its file spells it.
+func (p *Project) Job(id string) *Job {
 	if p == nil {
 		return nil
 	}
 	for _, j := range p.Jobs {
-		if j.Name == name || slices.Contains(j.Aliases, name) {
+		if j.ID == id {
+			return j
+		}
+	}
+	for _, j := range p.Jobs {
+		if j.Name == id || slices.Contains(j.Aliases, id) {
 			return j
 		}
 	}
 	return nil
 }
 
-// Job is one runnable job of a folder.
+// Job is one runnable target of a folder.
 type Job struct {
-	Project     string   `json:"project"`
-	Name        string   `json:"name"`
+	Project string `json:"project"`
+	// ID is the job's name within the folder: the target name when the
+	// folder follows one convention, kind:name when it follows several,
+	// so `make build` and `npm run build` stay apart.
+	ID   string `json:"id"`
+	Name string `json:"name"`
+	// Kind and Source name the convention and file the job came from.
+	Kind   string `json:"kind"`
+	Source string `json:"source"`
+
 	Description string   `json:"description,omitempty"`
 	Summary     string   `json:"summary,omitempty"`
 	Aliases     []string `json:"aliases,omitempty"`
 	Interactive bool     `json:"interactive,omitempty"`
 
-	// Steps are the step labels, the way `atkins -l` prints them.
+	// Args follow the source command: the target name for most
+	// conventions, the script path for a script.
+	Args []string `json:"args"`
+	// Command is the full argv, the source command and Args.
+	Command []string `json:"command"`
+
+	// Steps are the step labels, the way `atkins -l` prints them, or the
+	// recipe lines of a make target, or the script of an npm target.
 	Steps []string `json:"steps,omitempty"`
 	// DependsOn names the jobs that run first.
 	DependsOn []string `json:"depends_on,omitempty"`
-	// EnvFiles are the dotenv files this job reads on top of the pipeline's.
+	// EnvFiles are the dotenv files this job reads on top of the source's.
 	EnvFiles []string `json:"env_files,omitempty"`
 
 	// Allow narrows who may run this job, on top of the folder Allow,
@@ -76,10 +119,10 @@ type Job struct {
 	Allow []string `json:"allow,omitempty"`
 }
 
-// Key is the identity used for the run lock: one run per job per folder,
-// across the instance.
+// Key is the identity used for the run lock and the history: one run per
+// job per folder, across the instance.
 func (j *Job) Key() string {
-	return j.Project + "/" + j.Name
+	return j.Project + "/" + j.ID
 }
 
 // Role names the permission sets a user can hold.

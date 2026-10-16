@@ -158,14 +158,13 @@ func (svc *Server) runSocket(ws *websocket.Conn) {
 // execute runs the job command on a pty and pumps it to the socket and
 // the recording. It returns how the run ended.
 func (svc *Server) execute(out *socket, ws *websocket.Conn, project *model.Project, job *model.Job, run *internal.Run, cols, rows int) (string, int, error) {
-	if len(project.Command) == 0 {
-		return "", 0, errors.New("project has no command configured")
+	if len(job.Command) == 0 {
+		return "", 0, errors.New("job has no command")
 	}
 
 	// bash -l gives the login environment (PATH, profile), and passing the
-	// command as arguments keeps the job name out of shell parsing.
-	args := append([]string{"-l", "-c", `exec "$0" "$@"`}, project.Command...)
-	args = append(args, job.Name)
+	// command as arguments keeps the target name out of shell parsing.
+	args := append([]string{"-l", "-c", `exec "$0" "$@"`}, job.Command...)
 	cmd := exec.Command("bash", args...)
 	cmd.Dir = project.Dir
 
@@ -189,7 +188,7 @@ func (svc *Server) execute(out *socket, ws *websocket.Conn, project *model.Proje
 		"TASK_UI_USER="+run.User,
 		"TASK_UI_FOLDER="+project.ID,
 		"TASK_UI_PROJECT="+project.ID,
-		"TASK_UI_RUNBOOK="+job.Name,
+		"TASK_UI_JOB="+job.ID,
 		"TASK_UI_RUN_ID="+run.ID,
 	)
 

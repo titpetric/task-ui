@@ -41,14 +41,14 @@
 			<nav class="folders">
 				<a class="overview{{ if isPath "/" }} active{{ end }}" href="/"><svg class="ic"><use href="#i-home"/></svg><span>Overview</span></a>
 				{{- range $p := .Projects }}
-				<a href="/f/{{ $p.ID }}" data-folder="{{ $p.ID }}" class="folder{{ if and $.Project (eq $.Project.ID $p.ID) }} active{{ end }}" title="{{ $p.ID }}/{{ $p.File }}">
+				<a href="/f/{{ $p.ID }}" data-folder="{{ $p.ID }}" class="folder{{ if and $.Project (eq $.Project.ID $p.ID) }} active{{ end }}" title="{{ $p.ID }}/{{ range $i, $s := $p.Sources }}{{ if $i }}, {{ end }}{{ $s.File }}{{ end }}">
 					<svg class="ic"><use href="#i-folder{{ if and $.Project (eq $.Project.ID $p.ID) }}-open{{ end }}"/></svg>
 					<span>{{ $p.ID }}</span>
 					<i class="dot{{ if projectRunning $p.ID }} running{{ end }}"></i>
 					{{- if $p.Error }}<small class="bad">!</small>{{ else }}<small>{{ len $p.Jobs }}</small>{{ end }}
 				</a>
 				{{- else }}
-				<div class="empty">No folders. Add a folder with an atkins.yml or Taskfile.yml under the root.</div>
+				<div class="empty">No folders. Add one from a git repository in Settings, or put a folder with something to run under the root.</div>
 				{{- end }}
 			</nav>
 		</aside>
@@ -138,8 +138,8 @@
 
 {{ define "runButtons" }}
 {{- $p := index . 0 }}{{ $r := index . 1 -}}
-<button type="button" class="btn btn-primary btn-sm" data-run data-project="{{ $p.ID }}" data-job="{{ $r.Name }}" data-title="{{ $p.ID }}" data-interactive="{{ $r.Interactive }}">Run</button>
-<button type="button" class="btn btn-danger btn-sm" data-run data-force data-project="{{ $p.ID }}" data-job="{{ $r.Name }}" data-title="{{ $p.ID }}" data-interactive="{{ $r.Interactive }}" title="Stop a run in progress, then run again">Run force</button>
+<button type="button" class="btn btn-primary btn-sm" data-run data-project="{{ $p.ID }}" data-job="{{ $r.ID }}" data-title="{{ $p.ID }}" data-interactive="{{ $r.Interactive }}">Run</button>
+<button type="button" class="btn btn-danger btn-sm" data-run data-force data-project="{{ $p.ID }}" data-job="{{ $r.ID }}" data-title="{{ $p.ID }}" data-interactive="{{ $r.Interactive }}" title="Stop a run in progress, then run again">Run force</button>
 {{- end }}
 
 {{ define "crumbs" }}

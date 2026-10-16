@@ -45,17 +45,18 @@
 	<h3>Folders</h3>
 	<div class="table-wrap">
 	<table class="table">
-		<thead><tr><th>Folder</th><th>Name</th><th class="hide-sm">Description</th><th class="text-end">Jobs</th></tr></thead>
+		<thead><tr><th>Folder</th><th>Name</th><th class="hide-sm">Description</th><th>Sources</th><th class="text-end">Jobs</th></tr></thead>
 		<tbody>
 		{{- range .Projects }}
 			<tr>
-				<td class="key nowrap"><a href="/f/{{ .ID }}"><svg class="ic"><use href="#i-folder"/></svg> {{ .ID }}/{{ .File }}</a></td>
+				<td class="key nowrap"><a href="/f/{{ .ID }}"><svg class="ic"><use href="#i-folder"/></svg> {{ .ID }}/</a></td>
 				<td>{{ .Title }}</td>
 				<td class="desc hide-sm">{{ if .Error }}<span class="badge bad">error</span> {{ .Error }}{{ else }}{{ .Description }}{{ end }}</td>
+				<td class="nowrap">{{ range .Sources }}<span class="badge">{{ .Kind }}</span> {{ end }}</td>
 				<td class="text-end">{{ len .Jobs }}</td>
 			</tr>
 		{{- else }}
-			<tr class="empty"><td colspan="4">No folders yet. Put a folder with an atkins.yml or Taskfile.yml under the root, or list one in task-ui.yml.</td></tr>
+			<tr class="empty"><td colspan="5">No folders yet. Add one from a git repository in Settings, or put a folder with something to run under the root.</td></tr>
 		{{- end }}
 		</tbody>
 	</table>

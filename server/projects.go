@@ -79,8 +79,8 @@ func (svc *Server) ProjectClone(w http.ResponseWriter, r *http.Request) {
 	slog.Info("project cloned", "url", repo, "folder", id, "by", currentUser(r).Name)
 
 	notice := "Cloned " + repo + " into " + id + "."
-	if _, ok := repository.FindTaskfile(dir); !ok {
-		notice += " It holds no pipeline file, so it has no jobs yet."
+	if !repository.DetectAny(dir) {
+		notice += " Nothing to run was found in it: no pipeline file, Makefile, package scripts or scripts folder."
 	}
 	redirectWith(w, r, "/settings/projects", notice, nil)
 }

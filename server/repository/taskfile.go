@@ -18,28 +18,6 @@ var AtkinsNames = []string{".atkins.yml", ".atkins.yaml", "atkins.yml", "atkins.
 // TaskfileNames are the file names go-task discovers.
 var TaskfileNames = []string{"Taskfile.yml", "taskfile.yml", "Taskfile.yaml", "taskfile.yaml", "Taskfile.dist.yml", "taskfile.dist.yml", "Taskfile.dist.yaml", "taskfile.dist.yaml"}
 
-// FindTaskfile returns the pipeline file in dir, atkins files first.
-func FindTaskfile(dir string) (string, bool) {
-	for _, name := range append(append([]string{}, AtkinsNames...), TaskfileNames...) {
-		path := filepath.Join(dir, name)
-		if info, err := os.Stat(path); err == nil && !info.IsDir() {
-			return path, true
-		}
-	}
-	return "", false
-}
-
-// KindOf returns "atkins" for an atkins file name and "task" otherwise.
-func KindOf(path string) string {
-	base := filepath.Base(path)
-	for _, name := range AtkinsNames {
-		if base == name {
-			return "atkins"
-		}
-	}
-	return "task"
-}
-
 // fileSpec is the subset of an atkins pipeline or a Taskfile that task-ui
 // reads. Both share `tasks:` with `desc`, `summary`, `aliases`, `internal`
 // and `interactive`; atkins adds `jobs:`, `name:`, `help:`, `include:` and
@@ -225,48 +203,56 @@ func firstOf(values ...string) string {
 	return ""
 }
 
-// LoadProject reads a pipeline file into a folder. A file that does not
-// parse returns the folder with Error set, so it still shows up in the UI.
-func LoadProject(id, path string) *model.Project {
-	project := &model.Project{
-		ID:    id,
-		Title: id,
-		Dir:   filepath.Dir(path),
-		File:  filepath.Base(path),
-		Kind:  KindOf(path),
-	}
-	project.Command = DefaultCommand(project.Kind, project.File)
+// pipelineDetector reads an atkins pipeline or a Taskfile: the first of
+// its file names present in the folder.
+type pipelineDetector struct {
+	kind  string
+	names []string
+}
 
-	data, err := os.ReadFile(path)
-	if err != nil {
-		project.Error = err.Error()
-		return project
-	}
+func (d pipelineDetector) Kind() string { return d.kind }
 
-	var spec fileSpec
-	if err := yaml.Unmarshal(data, &spec); err != nil {
-		project.Error = fmt.Sprintf("%s: %s", project.File, err)
-		return project
-	}
-
-	if spec.Name != "" {
-		project.Title = spec.Name
-	}
-	project.Description = strings.TrimSpace(spec.Help)
-	project.Includes = spec.Include
-	for _, namespace := range sortedNames(spec.Includes) {
-		if path := spec.Includes[namespace].Taskfile; path != "" {
-			project.Includes = appendUnique(project.Includes, path)
+func (d pipelineDetector) Detect(dir string) *model.Source {
+	for _, name := range d.names {
+		path := filepath.Join(dir, name)
+		if info, err := os.Stat(path); err == nil && !info.IsDir() {
+			return d.detectFile(dir, name)
 		}
 	}
-	project.EnvFiles = appendUnique(nil, spec.Env.Include...)
-	project.EnvFiles = appendUnique(project.EnvFiles, spec.Dotenv...)
+	return nil
+}
+
+// detectFile reads one pipeline file. Jobs with a description show up;
+// internal ones and hidden ones do not, as with `atkins -l`.
+func (d pipelineDetector) detectFile(dir, name string) *model.Source {
+	source := &model.Source{Kind: d.kind, File: name, Command: DefaultCommand(d.kind, name)}
+
+	data, err := os.ReadFile(filepath.Join(dir, name))
+	if err != nil {
+		source.Error = err.Error()
+		return source
+	}
+	var spec fileSpec
+	if err := yaml.Unmarshal(data, &spec); err != nil {
+		source.Error = fmt.Sprintf("%s: %s", name, err)
+		return source
+	}
+
+	source.Name = spec.Name
+	source.Description = strings.TrimSpace(spec.Help)
+	source.Includes = spec.Include
+	for _, namespace := range sortedNames(spec.Includes) {
+		if path := spec.Includes[namespace].Taskfile; path != "" {
+			source.Includes = appendUnique(source.Includes, path)
+		}
+	}
+	source.EnvFiles = appendUnique(nil, spec.Env.Include...)
+	source.EnvFiles = appendUnique(source.EnvFiles, spec.Dotenv...)
 
 	jobs := spec.Jobs
 	if len(jobs) == 0 {
 		jobs = spec.Tasks
 	}
-
 	names := make([]string, 0, len(jobs))
 	for name := range jobs {
 		names = append(names, name)
@@ -279,7 +265,6 @@ func LoadProject(id, path string) *model.Project {
 			continue
 		}
 		j := &model.Job{
-			Project:     id,
 			Name:        name,
 			Description: job.Desc,
 			Summary:     strings.TrimSpace(job.Summary),
@@ -300,10 +285,10 @@ func LoadProject(id, path string) *model.Project {
 				j.Steps = append(j.Steps, label)
 			}
 		}
-		project.EnvFiles = appendUnique(project.EnvFiles, j.EnvFiles...)
-		project.Jobs = append(project.Jobs, j)
+		source.EnvFiles = appendUnique(source.EnvFiles, j.EnvFiles...)
+		source.Jobs = append(source.Jobs, j)
 	}
-	return project
+	return source
 }
 
 func sortedNames(m map[string]taskfileInclude) []string {

@@ -61,8 +61,8 @@ jobs:
 	if project.Title != "Infra" || project.Description != "Deploys things." {
 		t.Fatalf("title/description: %q %q", project.Title, project.Description)
 	}
-	if project.Kind != "atkins" || !slices.Equal(project.Command, []string{"atkins", "-f", "atkins.yml"}) {
-		t.Fatalf("kind/command: %s %v", project.Kind, project.Command)
+	if len(project.Sources) != 1 || project.Sources[0].Kind != "atkins" || !slices.Equal(project.Sources[0].Command, []string{"atkins", "-f", "atkins.yml"}) {
+		t.Fatalf("sources: %+v", project.Sources)
 	}
 	if !slices.Equal(project.Includes, []string{"vars.yml"}) {
 		t.Fatalf("includes: %v", project.Includes)
@@ -80,6 +80,9 @@ jobs:
 	}
 
 	deploy := project.Job("deploy")
+	if !slices.Equal(deploy.Command, []string{"atkins", "-f", "atkins.yml", "deploy"}) || deploy.ID != "deploy" {
+		t.Fatalf("deploy command: %v id %q", deploy.Command, deploy.ID)
+	}
 	if deploy.Summary != "Long text." || !slices.Equal(deploy.DependsOn, []string{"build"}) || !slices.Equal(deploy.EnvFiles, []string{"deploy.env"}) {
 		t.Fatalf("deploy: %+v", deploy)
 	}
@@ -125,8 +128,8 @@ tasks:
     cmds: [echo]
 `)
 	project := LoadProject("web", path)
-	if project.Kind != "task" || !slices.Equal(project.Command, []string{"task", "-t", "Taskfile.yml"}) {
-		t.Fatalf("kind/command: %s %v", project.Kind, project.Command)
+	if len(project.Sources) != 1 || project.Sources[0].Kind != "task" || !slices.Equal(project.Sources[0].Command, []string{"task", "-t", "Taskfile.yml"}) {
+		t.Fatalf("sources: %+v", project.Sources)
 	}
 	got := []string{}
 	for _, r := range project.Jobs {
@@ -196,11 +199,11 @@ func TestProjectsDiscovery(t *testing.T) {
 	}
 
 	infra := repo.Find("infra")
-	if infra.Kind != "atkins" || infra.Job("plan") == nil {
+	if infra.Sources[0].Kind != "atkins" || infra.Job("plan") == nil {
 		t.Fatalf("infra: %+v", infra)
 	}
 	web := repo.Find("web")
-	if web.Title != "Website" || !slices.Equal(web.Allow, []string{"ops"}) || !slices.Equal(web.Command, []string{"make"}) {
+	if web.Title != "Website" || !slices.Equal(web.Allow, []string{"ops"}) || !slices.Equal(web.Sources[0].Command, []string{"make"}) || !slices.Equal(web.Job("build").Command, []string{"make", "build"}) {
 		t.Fatalf("web overrides not applied: %+v", web)
 	}
 	if !slices.Equal(web.Job("build").Allow, []string{"admin"}) {
