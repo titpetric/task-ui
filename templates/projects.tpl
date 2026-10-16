@@ -17,15 +17,15 @@
 <table class="table">
 	<thead><tr><th>Folder</th><th>Runs</th><th>Source</th><th class="hide-sm">Last commit</th><th>Actions</th></tr></thead>
 	<tbody>
-	{{- range .Folders }}
+	{{- range .Entries }}
 		<tr>
 			<td class="key nowrap">{{ if .Sources }}<a href="/f/{{ .ID }}"><svg class="ic"><use href="#i-folder"/></svg> {{ .ID }}</a>{{ else }}<svg class="ic"><use href="#i-folder"/></svg> {{ .ID }}{{ end }}</td>
 			<td class="nowrap">{{ if .Error }}<span class="badge bad">error</span> {{ end }}{{ if .Sources }}{{ join .Sources ", " }} <span class="faint">{{ .Jobs }} jobs</span>{{ else }}<span class="faint">nothing to run</span>{{ end }}</td>
-			<td class="mono-break">{{ with .Git }}{{ .Remote }} <span class="badge">{{ .Branch }}</span>{{ else }}<span class="faint">local folder</span>{{ end }}</td>
-			<td class="desc hide-sm">{{ with .Git }}<span class="faint">{{ .Commit }}</span> {{ .Subject }}{{ if not .When.IsZero }} <span class="faint">{{ ago .When }}</span>{{ end }}{{ end }}</td>
+			<td class="mono-break">{{ with .Checkout }}{{ .Remote }} <span class="badge">{{ .Branch }}</span>{{ else }}<span class="faint">local folder</span>{{ end }}</td>
+			<td class="desc hide-sm">{{ with .Checkout }}<span class="faint">{{ .Commit }}</span> {{ .Subject }}{{ if not .When.IsZero }} <span class="faint">{{ ago .When }}</span>{{ end }}{{ end }}</td>
 			<td class="actions">
-				{{- if .Git }}
-				<form method="post" action="/settings/projects/delete" data-confirm="Remove the folder {{ .ID }} and its checkout? It can be cloned again from {{ .Git.Remote }}." data-confirm-ok="Remove">
+				{{- if .Checkout }}
+				<form method="post" action="/settings/projects/delete" data-confirm="Remove the folder {{ .ID }} and its checkout? It can be cloned again from {{ .Checkout.Remote }}." data-confirm-ok="Remove">
 					<input type="hidden" name="id" value="{{ .ID }}">
 					<button class="btn-icon danger" type="submit" title="Remove the checkout" aria-label="Remove {{ .ID }}"><svg class="ic"><use href="#i-trash"/></svg></button>
 				</form>
@@ -33,10 +33,10 @@
 			</td>
 		</tr>
 	{{- else }}
-		<tr class="empty"><td colspan="5">The root is empty. Add a project from a git repository, or put a folder with something to run under {{ $.EnvPath }}.</td></tr>
+		<tr class="empty"><td colspan="5">The root is empty. Add a project from a git repository, or put a folder with something to run under {{ $.Root }}.</td></tr>
 	{{- end }}
 	</tbody>
 </table>
 </div>
-<p class="faint" style="margin-top:0.6rem">Root: {{ .EnvPath }}</p>
+<p class="faint" style="margin-top:0.6rem">Root: {{ .Root }}</p>
 {{ end }}

@@ -15,7 +15,7 @@
 		<label for="s-scope">Folder</label>
 		<select id="s-scope" name="scope">
 			<option value="all"{{ if eq $s.Scope "all" }} selected{{ end }}>all folders</option>
-			{{- range .Projects }}
+			{{- range .Folders }}
 			<option value="{{ .ID }}"{{ if eq $s.Scope .ID }} selected{{ end }}>{{ .ID }}</option>
 			{{- end }}
 		</select>
