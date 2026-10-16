@@ -40,11 +40,11 @@
 		<aside class="side">
 			<nav class="folders">
 				<a class="overview{{ if isPath "/" }} active{{ end }}" href="/"><svg class="ic"><use href="#i-home"/></svg><span>Overview</span></a>
-				{{- range $p := .Projects }}
-				<a href="/f/{{ $p.ID }}" data-folder="{{ $p.ID }}" class="folder{{ if and $.Project (eq $.Project.ID $p.ID) }} active{{ end }}" title="{{ $p.ID }}/{{ range $i, $s := $p.Sources }}{{ if $i }}, {{ end }}{{ $s.File }}{{ end }}">
-					<svg class="ic"><use href="#i-folder{{ if and $.Project (eq $.Project.ID $p.ID) }}-open{{ end }}"/></svg>
+				{{- range $p := .Folders }}
+				<a href="/f/{{ $p.ID }}" data-folder="{{ $p.ID }}" class="folder{{ if and $.Folder (eq $.Folder.ID $p.ID) }} active{{ end }}" title="{{ $p.ID }}/{{ range $i, $s := $p.Sources }}{{ if $i }}, {{ end }}{{ $s.File }}{{ end }}">
+					<svg class="ic"><use href="#i-folder{{ if and $.Folder (eq $.Folder.ID $p.ID) }}-open{{ end }}"/></svg>
 					<span>{{ $p.ID }}</span>
-					<i class="dot{{ if projectRunning $p.ID }} running{{ end }}"></i>
+					<i class="dot{{ if folderRunning $p.ID }} running{{ end }}"></i>
 					{{- if $p.Error }}<small class="bad">!</small>{{ else }}<small>{{ len $p.Jobs }}</small>{{ end }}
 				</a>
 				{{- else }}

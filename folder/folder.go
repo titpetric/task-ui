@@ -1,0 +1,75 @@
+// Package folder is the catalogue: a folder is a working directory and the
+// targets found in it, and a job is one of those targets with an identity
+// inside the folder.
+package folder
+
+import (
+	"slices"
+
+	"github.com/titpetric/task-ui/detector"
+)
+
+// Folder is a working directory and the conventions detected in it. Each
+// convention is a Source, and every target of every source is a Job.
+type Folder struct {
+	// ID is the URL safe name of the folder.
+	ID string `json:"id"`
+	// Title is the name the first source declares, or the folder name.
+	Title string `json:"title"`
+	// Description is what the first source says about itself.
+	Description string `json:"description,omitempty"`
+
+	// Dir is the working directory the jobs run in.
+	Dir string `json:"-"`
+
+	// Sources are the conventions detected in the folder, in detection
+	// order: pipeline files first, then build files, then scripts.
+	Sources []*detector.Source `json:"sources"`
+
+	// Includes are the files the sources read into their variables.
+	Includes []string `json:"includes,omitempty"`
+	// EnvFiles are the dotenv files the sources read, relative to Dir.
+	// These are the files task-ui can manage.
+	EnvFiles []string `json:"env_files,omitempty"`
+
+	// Allow lists the users and roles that may run this folder's jobs,
+	// from the configuration. Empty allows every runner.
+	Allow []string `json:"allow,omitempty"`
+
+	// Jobs are every source's jobs, in source order.
+	Jobs []*Job `json:"jobs"`
+
+	// Error holds the parse errors of the sources, so a folder with a
+	// broken file is listed and says what is wrong.
+	Error string `json:"error,omitempty"`
+}
+
+// Job returns the job by ID, name or alias, or nil. The ID is what URLs
+// and history use; the name is the target as its file spells it.
+func (f *Folder) Job(id string) *Job {
+	if f == nil {
+		return nil
+	}
+	for _, j := range f.Jobs {
+		if j.ID == id {
+			return j
+		}
+	}
+	for _, j := range f.Jobs {
+		if j.Name == id || slices.Contains(j.Aliases, id) {
+			return j
+		}
+	}
+	return nil
+}
+
+// SourceJobs returns the jobs of one source, in order.
+func (f *Folder) SourceJobs(source *detector.Source) []*Job {
+	var jobs []*Job
+	for _, job := range f.Jobs {
+		if job.Source == source.File && job.Kind == source.Kind {
+			jobs = append(jobs, job)
+		}
+	}
+	return jobs
+}

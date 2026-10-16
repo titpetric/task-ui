@@ -1,5 +1,5 @@
 {{ define "content" }}
-{{- $p := .Project }}
+{{- $p := .Folder }}
 {{ template "crumbs" (list (crumb $p.ID "")) }}
 <div class="page-head">
 	<div>
@@ -20,7 +20,7 @@
 	<table class="table jobs">
 		<thead><tr><th>Name</th><th>Description</th><th class="hide-sm steps">Steps</th><th class="hide-sm">Last run</th><th></th></tr></thead>
 		<tbody>
-		{{- range $r := $s.Jobs }}
+		{{- range $r := $p.SourceJobs $s }}
 			{{- $run := running $r.Key }}
 			<tr>
 				<td class="key"><a href="/f/{{ $p.ID }}/{{ $r.ID }}">{{ $r.Name }}</a>{{ if $r.Interactive }} <span class="badge">interactive</span>{{ end }}</td>

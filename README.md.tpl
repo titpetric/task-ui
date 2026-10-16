@@ -135,9 +135,10 @@ Pipeline sources also give the folder its name and description (atkins
 its target name, or `kind:name` when the folder follows more than one
 convention, so `make build` and `npm run build` stay apart.
 
-A convention is a `Detector` in `server/repository`: one type that reads
-a folder and returns a `Source`, added to the `Detectors` list. The rest
-of task-ui runs on sources and jobs and never asks which kind they are.
+A convention is a `Detector` in the `detector` package: one type that
+reads a folder and returns a `Source`, added to the `Detectors` list. The
+rest of task-ui runs on sources and jobs and never asks which kind they
+are.
 
 In `task-ui.yml`, `command` replaces the runner of a folder's only source
 (`gmake`), `commands` does so per kind, and `sources` limits which
@@ -195,3 +196,25 @@ records real runs over the websocket with `scripts/run.sh`, and captures each
 view with headless chromium through `scripts/chromium.sh`. A recorded run
 opens in the dialog from a link: `/f/<folder>/<job>#history=<id>`, or
 `#replay=<id>`.
+
+## Layout
+
+Packages are the bounded contexts, one per domain, singular:
+
+| Package    | Holds                                                                  |
+|------------|------------------------------------------------------------------------|
+| `detector` | the conventions: a `Detector` per file kind, returning a `Source` of `Target`s |
+| `folder`   | the catalogue: a `Folder` with its `Job`s, discovery under the root, the configuration overrides |
+| `run`      | execution: the `Run` lock registry and the `Process` on a pty         |
+| `history`  | the recordings: a `Record` per run, written by a `Recorder`           |
+| `access`   | who may do what: `User`, `Role`, passwords, `Sessions`                |
+| `secret`   | the variables added to runs, per folder or for all                    |
+| `envfile`  | the dotenv files a folder reads, as task-ui manages and generates them |
+| `sshkey`   | the key pairs in the SSH folder                                       |
+| `git`      | clone, pull and the facts of a checkout                               |
+| `dotenv`   | the file format the two above share                                   |
+| `server`   | the presentation: routes, pages, the run socket                       |
+
+`splint ./...` (`task lint`) is the bar: every file has a test beside it,
+every exported symbol a test that reaches it, every symbol a file named
+for it, and every dependency one import per package.

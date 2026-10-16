@@ -1,5 +1,5 @@
 {{ define "content" }}
-{{- $p := .Project }}{{ $f := .EnvFile }}
+{{- $p := .Folder }}{{ $f := .EnvFile }}
 {{ template "crumbs" (list (crumb $p.ID (print "/f/" $p.ID)) (crumb $f.Path "")) }}
 <div class="page-head">
 	<div>

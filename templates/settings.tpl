@@ -14,7 +14,7 @@
 		<tr>
 			<td class="key nowrap"><a href="/settings/projects"><svg class="ic"><use href="#i-folder"/></svg> Projects</a></td>
 			<td class="desc">The folders under the root. Add one from a git repository; a checkout is pulled before every run.</td>
-			<td class="nowrap dim">{{ len .Folders }} {{ if eq (len .Folders) 1 }}folder{{ else }}folders{{ end }}</td>
+			<td class="nowrap dim">{{ len .Entries }} {{ if eq (len .Entries) 1 }}folder{{ else }}folders{{ end }}</td>
 			<td class="actions"><a class="btn btn-sm" href="/settings/projects">Open</a></td>
 		</tr>
 		<tr>

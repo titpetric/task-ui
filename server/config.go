@@ -1,49 +1,43 @@
 package server
 
 import (
-	"errors"
 	"fmt"
-	"log/slog"
 	"os"
 	"path/filepath"
 	"strconv"
-	"strings"
-	"sync"
 	"time"
 
 	"github.com/spf13/pflag"
-	"gopkg.in/yaml.v3"
 
-	"github.com/titpetric/task-ui/server/model"
-	"github.com/titpetric/task-ui/server/repository"
+	"github.com/titpetric/task-ui/folder"
 )
 
 // Config is the instance configuration. Every field comes from a TASK_UI_*
 // environment variable, and a flag of the same meaning overrides it. The
-// users and project overrides come from the configuration file.
+// users and folder overrides come from the configuration file.
 type Config struct {
 	// Listen is the listen address. TASK_UI_LISTEN, -l.
 	Listen string
-	// Title names the instance in the header. TASK_UI_TITLE.
+	// Title names the instance. TASK_UI_TITLE.
 	Title string
-	// Root is the folder holding the projects. TASK_UI_ROOT, --root.
+	// Root is the directory holding the folders. TASK_UI_ROOT, --root.
 	Root string
-	// File runs a single task file as the only project. TASK_UI_FILE, -f.
+	// File serves a single pipeline file as the only folder. TASK_UI_FILE, -f.
 	File string
-	// Discover lists every folder under Root with a task file as a
-	// project. TASK_UI_DISCOVER, default true.
+	// Discover lists every directory under Root with something to run.
+	// TASK_UI_DISCOVER, default true.
 	Discover bool
-	// ConfigFile holds the users and project overrides. TASK_UI_CONFIG,
+	// ConfigFile holds the users and folder overrides. TASK_UI_CONFIG,
 	// --config, default task-ui.yml (or task-ui.yaml) in Root.
 	ConfigFile string
 
 	// History records every run. TASK_UI_HISTORY, default true.
 	History bool
-	// HistoryPath is the recordings folder. TASK_UI_HISTORY_PATH,
+	// HistoryPath is the recordings directory. TASK_UI_HISTORY_PATH,
 	// --history-output, default ./history.
 	HistoryPath string
 
-	// SSHDir is the folder the key admin manages. TASK_UI_SSH_DIR,
+	// SSHDir is the directory the key settings manage. TASK_UI_SSH_DIR,
 	// default $HOME/.ssh.
 	SSHDir string
 	// EnvPath holds the secrets and the managed env files.
@@ -63,14 +57,8 @@ type Config struct {
 	// Columns and Rows are the initial terminal size.
 	Columns, Rows int
 
+	// PrintBuildInfo prints the build and exits. -v.
 	PrintBuildInfo bool
-}
-
-// FileConfig is the shape of task-ui.yml.
-type FileConfig struct {
-	Title    string                     `yaml:"title"`
-	Users    []model.User               `yaml:"users"`
-	Projects []repository.ProjectConfig `yaml:"projects"`
 }
 
 func env(name, fallback string) string {
@@ -118,11 +106,11 @@ func NewConfig(args []string) (*Config, error) {
 
 	flags := pflag.NewFlagSet("task-ui", pflag.ContinueOnError)
 	flags.StringVarP(&cfg.Listen, "listen", "l", cfg.Listen, "Listen address (TASK_UI_LISTEN)")
-	flags.StringVar(&cfg.Root, "root", cfg.Root, "Projects folder (TASK_UI_ROOT)")
-	flags.StringVarP(&cfg.File, "file", "f", cfg.File, "Serve a single task file (TASK_UI_FILE)")
-	flags.StringVar(&cfg.ConfigFile, "config", cfg.ConfigFile, "Users and projects config (TASK_UI_CONFIG)")
+	flags.StringVar(&cfg.Root, "root", cfg.Root, "Root directory (TASK_UI_ROOT)")
+	flags.StringVarP(&cfg.File, "file", "f", cfg.File, "Serve a single pipeline file (TASK_UI_FILE)")
+	flags.StringVar(&cfg.ConfigFile, "config", cfg.ConfigFile, "Users and folders config (TASK_UI_CONFIG)")
 	flags.BoolVar(&cfg.History, "history-enable", cfg.History, "Record runs (TASK_UI_HISTORY)")
-	flags.StringVar(&cfg.HistoryPath, "history-output", cfg.HistoryPath, "History folder (TASK_UI_HISTORY_PATH)")
+	flags.StringVar(&cfg.HistoryPath, "history-output", cfg.HistoryPath, "History directory (TASK_UI_HISTORY_PATH)")
 	flags.BoolVarP(&cfg.PrintBuildInfo, "version", "v", false, "Print build info")
 	if err := flags.Parse(args); err != nil {
 		return nil, err
@@ -148,19 +136,32 @@ func (c *Config) Validate() error {
 	if c.Rows <= 0 {
 		c.Rows = 30
 	}
+	if c.SessionTTL <= 0 {
+		c.SessionTTL = 12 * time.Hour
+	}
 	return nil
 }
 
-// Projects returns the project repository for this configuration.
-func (c *Config) Projects(file *FileConfig) *repository.Projects {
+// SecretsPath is where the secrets live under EnvPath.
+func (c *Config) SecretsPath() string {
+	return filepath.Join(c.EnvPath, "secrets")
+}
+
+// FilesPath is where the managed env files live under EnvPath.
+func (c *Config) FilesPath() string {
+	return filepath.Join(c.EnvPath, "files")
+}
+
+// discovery returns the catalogue for this configuration.
+func (c *Config) discovery(file *FileConfig) *folder.Discovery {
 	if c.File != "" {
-		id := repository.SafeID(filepath.Base(filepath.Dir(mustAbs(c.File))))
-		return &repository.Projects{
+		id := folder.SafeID(filepath.Base(filepath.Dir(mustAbs(c.File))))
+		return &folder.Discovery{
 			Root:   ".",
-			Config: []repository.ProjectConfig{{ID: id, Path: mustAbs(c.File)}},
+			Config: []folder.Config{{ID: id, Path: mustAbs(c.File)}},
 		}
 	}
-	return &repository.Projects{
+	return &folder.Discovery{
 		Root:     c.Root,
 		Discover: c.Discover,
 		Config:   file.Projects,
@@ -173,81 +174,4 @@ func mustAbs(path string) string {
 		return path
 	}
 	return abs
-}
-
-// fileConfig loads task-ui.yml and reloads it when it changes, so users can
-// be added or removed without a restart.
-type fileConfig struct {
-	path string
-
-	mu       sync.Mutex
-	modified time.Time
-	current  *FileConfig
-}
-
-func (f *fileConfig) Get() *FileConfig {
-	f.mu.Lock()
-	defer f.mu.Unlock()
-
-	if f.current == nil {
-		f.current = &FileConfig{}
-	}
-	if f.path == "" {
-		return f.current
-	}
-
-	info, err := os.Stat(f.path)
-	if err != nil {
-		if !errors.Is(err, os.ErrNotExist) || !f.modified.IsZero() {
-			slog.Warn("config file unavailable", "path", f.path, "err", err)
-		}
-		return f.current
-	}
-	if info.ModTime().Equal(f.modified) {
-		return f.current
-	}
-
-	loaded, err := LoadFileConfig(f.path)
-	if err != nil {
-		// Keep the previous users: a typo in the file must not lock
-		// everyone out, or let everyone in.
-		slog.Error("config file invalid, keeping previous", "path", f.path, "err", err)
-		f.modified = info.ModTime()
-		return f.current
-	}
-	f.current = loaded
-	f.modified = info.ModTime()
-	slog.Info("config loaded", "path", f.path, "users", len(loaded.Users), "projects", len(loaded.Projects))
-	return f.current
-}
-
-// LoadFileConfig reads and validates a task-ui.yml file.
-func LoadFileConfig(path string) (*FileConfig, error) {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return nil, err
-	}
-	var cfg FileConfig
-	if err := yaml.Unmarshal(data, &cfg); err != nil {
-		return nil, err
-	}
-	seen := map[string]bool{}
-	for i, user := range cfg.Users {
-		if user.Name == "" {
-			return nil, fmt.Errorf("users[%d]: name is required", i)
-		}
-		if seen[user.Name] {
-			return nil, fmt.Errorf("users[%d]: duplicate user %q", i, user.Name)
-		}
-		seen[user.Name] = true
-		if user.Role == "" {
-			cfg.Users[i].Role = model.RoleViewer
-		} else if !user.Role.Valid() {
-			return nil, fmt.Errorf("users[%d]: unknown role %q", i, user.Role)
-		}
-		if !strings.HasPrefix(user.Password, "$2") {
-			return nil, fmt.Errorf("users[%d]: password must be a bcrypt hash, generate one with `task-ui hash`", i)
-		}
-	}
-	return &cfg, nil
 }

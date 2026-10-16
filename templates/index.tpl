@@ -6,9 +6,9 @@
 	</div>
 </div>
 
-{{- $jobs := 0 }}{{ range .Projects }}{{ $jobs = len .Jobs | add $jobs }}{{ end }}
+{{- $jobs := 0 }}{{ range .Folders }}{{ $jobs = len .Jobs | add $jobs }}{{ end }}
 <div class="metrics">
-	<div><b>Folders</b><span>{{ len .Projects }}</span></div>
+	<div><b>Folders</b><span>{{ len .Folders }}</span></div>
 	<div><b>Jobs</b><span>{{ $jobs }}</span></div>
 	<div><b>Running</b><span>{{ len .Runs }}</span></div>
 	<div><b>Your role</b><span>{{ .User.Role }}</span></div>
@@ -22,12 +22,12 @@
 		<tbody>
 		{{- range .Runs }}
 			<tr>
-				<td><a href="/f/{{ .Project }}">{{ .Project }}</a></td>
-				<td class="key"><span class="state"><i class="dot running"></i><a href="/f/{{ .Project }}/{{ .Job }}">{{ .Job }}</a></span>{{ if .Forced }} <span class="badge signal">forced</span>{{ end }}</td>
+				<td><a href="/f/{{ .Folder }}">{{ .Folder }}</a></td>
+				<td class="key"><span class="state"><i class="dot running"></i><a href="/f/{{ .Folder }}/{{ .Job }}">{{ .Job }}</a></span>{{ if .Forced }} <span class="badge signal">forced</span>{{ end }}</td>
 				<td>{{ .User }}</td>
 				<td class="nowrap" title="{{ stamp .Started }}">{{ ago .Started }}</td>
 				<td class="actions">
-					<form method="post" action="/api/runs/{{ .Project }}/{{ .Job }}/stop" data-confirm="Kill {{ .Project }} / {{ .Job }}, started by {{ .User }}?" data-confirm-ok="Kill">
+					<form method="post" action="/api/runs/{{ .Folder }}/{{ .Job }}/stop" data-confirm="Kill {{ .Folder }} / {{ .Job }}, started by {{ .User }}?" data-confirm-ok="Kill">
 						<input type="hidden" name="back" value="/">
 						<button class="btn-icon danger" type="submit" title="Kill the run" aria-label="Kill the run"><svg class="ic"><use href="#i-stop"/></svg></button>
 					</form>
@@ -47,7 +47,7 @@
 	<table class="table">
 		<thead><tr><th>Folder</th><th>Name</th><th class="hide-sm">Description</th><th>Sources</th><th class="text-end">Jobs</th></tr></thead>
 		<tbody>
-		{{- range .Projects }}
+		{{- range .Folders }}
 			<tr>
 				<td class="key nowrap"><a href="/f/{{ .ID }}"><svg class="ic"><use href="#i-folder"/></svg> {{ .ID }}/</a></td>
 				<td>{{ .Title }}</td>
@@ -73,8 +73,8 @@
 		{{- range .Recent }}
 			<tr>
 				<td class="nowrap" title="{{ stamp .Started }}">{{ ago .Started }}</td>
-				<td><a href="/f/{{ .Project }}">{{ .Project }}</a></td>
-				<td class="key"><a href="/f/{{ .Project }}/{{ .Job }}#history={{ .ID }}">{{ .Job }}</a></td>
+				<td><a href="/f/{{ .Folder }}">{{ .Folder }}</a></td>
+				<td class="key"><a href="/f/{{ .Folder }}/{{ .Job }}#history={{ .ID }}">{{ .Job }}</a></td>
 				<td>{{ .User }}</td>
 				<td class="nowrap">{{ if ne .State "running" }}{{ duration .Duration }}{{ end }}</td>
 				<td>{{ template "state" . }}</td>

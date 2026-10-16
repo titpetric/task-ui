@@ -1,5 +1,5 @@
 {{ define "content" }}
-{{- $p := .Project }}{{ $r := .Job }}{{ $run := running $r.Key }}{{ $can := canRun $p $r }}
+{{- $p := .Folder }}{{ $r := .Job }}{{ $run := running $r.Key }}{{ $can := canRun $p $r }}
 {{ template "crumbs" (list (crumb $p.ID (print "/f/" $p.ID)) (crumb $r.Name "")) }}
 <div class="page-head">
 	<div>
@@ -60,8 +60,8 @@
 				<td class="nowrap">{{ if ne .State "running" }}{{ duration .Duration }}{{ end }}</td>
 				<td>{{ template "state" . }}</td>
 				<td class="actions">
-					<button type="button" class="btn btn-sm" data-history="/api/history/{{ .Project }}/{{ .Job }}/{{ .ID }}" data-title="{{ $p.ID }}" data-job="{{ .Job }}" data-when="{{ stamp .Started }}">View</button>
-					<button type="button" class="btn btn-sm" data-history="/api/history/{{ .Project }}/{{ .Job }}/{{ .ID }}" data-replay data-title="{{ $p.ID }}" data-job="{{ .Job }}" data-when="{{ stamp .Started }}">Replay</button>
+					<button type="button" class="btn btn-sm" data-history="/api/history/{{ .Folder }}/{{ .Job }}/{{ .ID }}" data-title="{{ $p.ID }}" data-job="{{ .Job }}" data-when="{{ stamp .Started }}">View</button>
+					<button type="button" class="btn btn-sm" data-history="/api/history/{{ .Folder }}/{{ .Job }}/{{ .ID }}" data-replay data-title="{{ $p.ID }}" data-job="{{ .Job }}" data-when="{{ stamp .Started }}">Replay</button>
 				</td>
 			</tr>
 		{{- else }}
