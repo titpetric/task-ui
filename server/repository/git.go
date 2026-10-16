@@ -191,12 +191,13 @@ func lastLine(s string) string {
 // Folder is one directory under the root, as the settings list it: with
 // or without a pipeline file, with or without a git remote.
 type Folder struct {
-	ID   string
-	Dir  string
-	File string
-	Jobs int
-	Git  *model.GitInfo
-	// Error is set when the pipeline file does not parse.
+	ID  string
+	Dir string
+	// Sources are the files the folder's conventions were read from.
+	Sources []string
+	Jobs    int
+	Git     *model.GitInfo
+	// Error is set when a source does not parse.
 	Error string
 }
 
@@ -210,9 +211,11 @@ func (g *Git) ListFolders(root string) []Folder {
 		}
 		dir := filepath.Join(root, entry.Name())
 		folder := Folder{ID: SafeID(entry.Name()), Dir: dir, Git: g.Info(dir)}
-		if file, ok := FindTaskfile(dir); ok {
-			project := LoadProject(folder.ID, file)
-			folder.File = project.File
+		if DetectAny(dir) {
+			project := LoadFolder(folder.ID, dir)
+			for _, source := range project.Sources {
+				folder.Sources = append(folder.Sources, source.File)
+			}
 			folder.Jobs = len(project.Jobs)
 			folder.Error = project.Error
 		}

@@ -1,14 +1,16 @@
 # Task UI
 
-Run your pipelines from the browser. Task UI reads the `atkins.yml` and
-`Taskfile.yml` files under a root folder, lists each folder with the jobs
-its pipeline declares, and runs them in a terminal window over a websocket.
+Run what your source trees declare, from the browser. Task UI looks at
+each folder under a root, detects the conventions it follows, and lists
+their targets as jobs: atkins pipelines, Taskfiles, Makefile targets,
+package.json and composer.json scripts, and a `scripts/` folder. A job
+runs in a terminal window over a websocket.
 
 ![The overview: folders on the left, active runs and recent history on the right](https://raw.githubusercontent.com/titpetric/task-ui/main/.github/assets/task-ui.png)
 
-- **Folders and jobs.** A folder is a working directory with a pipeline
-  file. Everything on the page comes from that file: the pipeline `name`
-  and `help`, each job's `desc` and steps, the files it includes.
+- **Folders and jobs.** A folder is a working directory and whatever it
+  holds that can be run. Everything on the page comes from the files
+  themselves: names, descriptions, steps, the files they include.
 - **Run in a window.** Run opens a modal terminal. Closing the window stops
   the run.
 - **One run per job.** A job runs once at a time across the instance,
@@ -47,9 +49,8 @@ services:
     - /var/run/docker.sock:/var/run/docker.sock:ro
 ```
 
-Mount your folders at `/app`. Each subfolder with an `atkins.yml` or
-`Taskfile.yml` becomes a folder in the UI, and a pipeline file in `/app`
-itself is one too. The image bundles `task`, `atkins`, `docker` and
+Mount your folders at `/app`. Each subfolder with something to run
+becomes a folder in the UI, and `/app` itself is one too when it has. The image bundles `task`, `atkins`, `docker` and
 `docker compose`.
 
 - If you don't want to use Docker, remove the volume for `docker.sock`.
@@ -64,7 +65,7 @@ Everything is configured from the environment:
 | `TASK_UI_LISTEN`       | `:3000`            | Listen address                                                     |
 | `TASK_UI_ROOT`         | `.`                | Root folder holding the pipeline folders                           |
 | `TASK_UI_FILE`         |                    | Serve one pipeline file as the only folder                         |
-| `TASK_UI_DISCOVER`     | `true`             | List every folder under the root with a pipeline file              |
+| `TASK_UI_DISCOVER`     | `true`             | List every folder under the root with something to run             |
 | `TASK_UI_CONFIG`       | `task-ui.yml`      | Users and folder permissions, looked up in the root                |
 | `TASK_UI_HISTORY`      | `true`             | Record runs                                                        |
 | `TASK_UI_HISTORY_PATH` | `history`          | Recordings folder                                                  |
@@ -113,38 +114,47 @@ projects:
 Generate a password hash with `task-ui hash <password>`, or
 `echo secret | task-ui hash`.
 
-## Pipeline files
+## Conventions
 
-Task UI reads atkins pipelines and Taskfiles as they are, and nothing it
-needs is an extension: the pipeline `name` and `help`, `include` and
-`env.include` (Taskfile `dotenv`), the jobs under `tasks:` or `jobs:` with
-`desc`, `summary`, `aliases`, `interactive`, `depends_on` and their steps,
-including the short forms `job: command` and `job: [commands]`. Jobs with
-a description show up; `internal: true` or `show: false` hides one. Who may
-run what is decided in `task-ui.yml`, and the pipeline files are never
-written.
+A folder may follow several conventions at once; each one is a source
+with its own table on the folder page. Nothing task-ui needs is an
+extension of any file, and no file is ever written.
+
+| Source | File | Runs with | Targets |
+|--------|------|-----------|---------|
+| atkins | `atkins.yml`, `.atkins.yml` | `atkins -f <file> <job>` | jobs with a `desc`; `show: false` hides one |
+| task | `Taskfile.yml` | `task -t <file> <task>` | tasks with a `desc`; `internal: true` hides one |
+| make | `GNUmakefile`, `makefile`, `Makefile` | `make <target>` | plain targets; `target: ## text` or a comment above describes one |
+| npm | `package.json` | `npm run <script>`, or `pnpm`, `yarn`, `bun` after the lock file | the scripts, hooks folded into theirs |
+| composer | `composer.json` | `composer run-script <script>` | the scripts, with `scripts-descriptions` |
+| script | `scripts/*` | `./scripts/<file>`, or `sh` for a `.sh` that is not executable | one per file; the first comment describes it |
+
+Pipeline sources also give the folder its name and description (atkins
+`name` and `help`), the files under `include`, and the dotenv files under
+`env.include` or `dotenv`, which task-ui manages (below). A job's ID is
+its target name, or `kind:name` when the folder follows more than one
+convention, so `make build` and `npm run build` stay apart.
+
+A convention is a `Detector` in `server/repository`: one type that reads
+a folder and returns a `Source`, added to the `Detectors` list. The rest
+of task-ui runs on sources and jobs and never asks which kind they are.
+
+In `task-ui.yml`, `command` replaces the runner of a folder's only source
+(`gmake`), `commands` does so per kind, and `sources` limits which
+conventions are read in a folder. Who may run what is decided there too.
 
 ```yaml
-name: Infrastructure
-help: Provisioning and deploys for the production cluster.
-
-env:
-  include: .env
-
-jobs:
-  deploy:
-    desc: "Roll out the current release"
-    depends_on: plan
-    steps:
-      - name: Pull the release image
-        run: ./pull.sh
-      - run: ./deploy.sh
+projects:
+  - id: tools
+    sources: [make, script]   # ignore package.json here
+    commands:
+      make: gmake
+    jobs:
+      "make:release": [admin]
 ```
 
-Atkins files run with `atkins -f <file> <job>`, Taskfiles with
-`task -t <file> <job>`. Set `command` on a folder in `task-ui.yml` to run
-something else. Jobs get `TASK_UI_USER`, `TASK_UI_FOLDER`, `TASK_UI_JOB`
-and `TASK_UI_RUN_ID` in the environment.
+Jobs get `TASK_UI_USER`, `TASK_UI_FOLDER`, `TASK_UI_JOB` and
+`TASK_UI_RUN_ID` in the environment.
 
 ## Projects from git
 
@@ -164,7 +174,7 @@ Settings hold the secrets: variables added to the environment of every run,
 for all folders or for one folder, where the folder's value wins. They are
 stored under `TASK_UI_ENV_PATH` and never shown again in full.
 
-A folder page lists the env files its pipeline reads with `env.include`.
+A folder page lists the dotenv files its sources declare.
 An admin edits the content from the UI; the file in the folder is generated
 from it with the secrets appended, when it is saved and again before every
 run. A file that was never edited is read from the folder as it is. The
@@ -175,9 +185,9 @@ pipeline file is never changed.
 | | |
 |-|-|
 | ![A folder: its jobs, steps, pipeline and env files](.github/assets/folder-dark.png) | ![A run replayed in the dialog](.github/assets/run-replay-dark.png) |
-| ![A job and its history](.github/assets/job-dark.png) | ![Overview, light theme](.github/assets/overview-light.png) |
+| ![A folder with a Makefile, package scripts and a scripts folder](.github/assets/tools-dark.png) | ![A job and its history](.github/assets/job-dark.png) |
+| ![Overview, light theme](.github/assets/overview-light.png) | ![Projects](.github/assets/projects-dark.png) |
 | ![Secrets](.github/assets/secrets-dark.png) | ![An env file](.github/assets/envfile-dark.png) |
-| ![Projects](.github/assets/projects-dark.png) | ![Add a project](.github/assets/project-new-dark.png) |
 | ![SSH keys](.github/assets/keys-dark.png) | ![Login](.github/assets/login-dark.png) |
 
 `scripts/demo.sh` regenerates them: it serves a copy of `testdata/demo`,

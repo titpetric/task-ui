@@ -3,7 +3,7 @@
 {{ template "crumbs" (list (crumb $p.ID (print "/f/" $p.ID)) (crumb $r.Name "")) }}
 <div class="page-head">
 	<div>
-		<h2>{{ $r.Name }}{{ if $r.Interactive }} <span class="badge">interactive</span>{{ end }}</h2>
+		<h2>{{ $r.Name }} <span class="badge">{{ $r.Kind }}</span>{{ if $r.Interactive }} <span class="badge">interactive</span>{{ end }}</h2>
 		<p>{{ $r.Description }}</p>
 	</div>
 	<div class="actions">
@@ -31,9 +31,10 @@
 	<table class="table table-kv">
 		<tbody>
 			<tr><th>Folder</th><td><a href="/f/{{ $p.ID }}"><svg class="ic"><use href="#i-folder"/></svg> {{ $p.ID }}</a> <span class="dim">{{ $p.Title }}</span></td></tr>
-			<tr><th>Command</th><td><code>{{ join $p.Command " " }} {{ $r.Name }}</code></td></tr>
-			{{- if $r.DependsOn }}<tr><th>Depends on</th><td>{{ range $r.DependsOn }}<a href="/f/{{ $p.ID }}/{{ . }}">{{ . }}</a> {{ end }}</td></tr>{{ end }}
-			<tr><th>Steps</th><td class="steps">{{ range $r.Steps }}<code>{{ . }}</code>{{ else }}<span class="faint">none declared</span>{{ end }}</td></tr>
+			<tr><th>Source</th><td><svg class="ic"><use href="#i-file"/></svg> {{ $r.Source }}</td></tr>
+			<tr><th>Command</th><td><code>{{ join $r.Command " " }}</code></td></tr>
+			{{- if $r.DependsOn }}<tr><th>Depends on</th><td>{{ range $r.DependsOn }}{{ with $p.Job . }}<a href="/f/{{ $p.ID }}/{{ .ID }}">{{ .Name }}</a>{{ else }}{{ . }}{{ end }} {{ end }}</td></tr>{{ end }}
+			<tr><th>Steps</th><td class="steps">{{ range $r.Steps }}<code>{{ . }}</code>{{ else }}<span class="faint">none listed</span>{{ end }}</td></tr>
 			{{- if $r.Aliases }}<tr><th>Aliases</th><td>{{ range $r.Aliases }}<span class="badge">{{ . }}</span> {{ end }}</td></tr>{{ end }}
 			{{- if $r.EnvFiles }}<tr><th>Env files</th><td>{{ range $r.EnvFiles }}<div><svg class="ic"><use href="#i-file"/></svg> {{ . }}</div>{{ end }}</td></tr>{{ end }}
 			<tr><th>Who can run</th><td>{{ whoCanRun $p $r }}</td></tr>

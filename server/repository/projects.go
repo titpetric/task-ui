@@ -17,8 +17,15 @@ type ProjectConfig struct {
 	Title       string   `yaml:"title"`
 	Description string   `yaml:"description"`
 	Allow       []string `yaml:"allow"`
-	Command     string   `yaml:"command"`
-	// Jobs narrows who may run single jobs: job name to users or roles.
+	// Command replaces the command of the folder's only source, such as
+	// `gmake` for a Makefile. Commands does the same per kind when the
+	// folder follows several conventions.
+	Command  string            `yaml:"command"`
+	Commands map[string]string `yaml:"commands"`
+	// Sources limits the conventions read in the folder, by kind:
+	// atkins, task, make, npm, composer, script. Empty reads them all.
+	Sources []string `yaml:"sources"`
+	// Jobs narrows who may run single jobs: job ID to users or roles.
 	Jobs map[string][]string `yaml:"jobs"`
 }
 
@@ -75,22 +82,20 @@ func (p *Projects) List() []*model.Project {
 		}
 
 		var project *model.Project
-		if file, ok := FindTaskfile(dir); ok {
-			project = LoadProject(id, file)
-		} else if info, err := os.Stat(dir); err == nil && !info.IsDir() {
+		if info, err := os.Stat(dir); err == nil && !info.IsDir() {
 			project = LoadProject(id, dir)
+		} else if DetectAny(dir) {
+			project = LoadFolder(id, dir, cfg.Sources...)
 		} else {
-			project = &model.Project{ID: id, Title: id, Dir: dir, Error: "no task file found in " + dir}
+			project = &model.Project{ID: id, Title: id, Dir: dir, Error: "nothing to run found in " + dir}
 		}
 		apply(project, cfg)
 		add(project)
 	}
 
 	if p.Discover {
-		if file, ok := FindTaskfile(root); ok {
-			if _, seen := byDir[root]; !seen {
-				add(LoadProject(SafeID(filepath.Base(root)), file))
-			}
+		if _, seen := byDir[root]; !seen && DetectAny(root) {
+			add(LoadFolder(SafeID(filepath.Base(root)), root))
 		}
 		entries, _ := os.ReadDir(root)
 		for _, entry := range entries {
@@ -101,8 +106,8 @@ func (p *Projects) List() []*model.Project {
 			if _, seen := byDir[dir]; seen {
 				continue
 			}
-			if file, ok := FindTaskfile(dir); ok {
-				add(LoadProject(SafeID(entry.Name()), file))
+			if DetectAny(dir) {
+				add(LoadFolder(SafeID(entry.Name()), dir))
 			}
 		}
 	}
@@ -137,8 +142,20 @@ func apply(project *model.Project, cfg ProjectConfig) {
 	if len(cfg.Allow) > 0 {
 		project.Allow = cfg.Allow
 	}
-	if cfg.Command != "" {
-		project.Command = strings.Fields(cfg.Command)
+	commands := map[string][]string{}
+	for kind, command := range cfg.Commands {
+		commands[kind] = strings.Fields(command)
+	}
+	if cfg.Command != "" && len(project.Sources) == 1 {
+		commands[project.Sources[0].Kind] = strings.Fields(cfg.Command)
+	}
+	for _, source := range project.Sources {
+		if command, ok := commands[source.Kind]; ok {
+			source.Command = command
+			for _, job := range source.Jobs {
+				job.Command = append(append([]string{}, command...), job.Args...)
+			}
+		}
 	}
 	for name, allow := range cfg.Jobs {
 		if job := project.Job(name); job != nil {

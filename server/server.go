@@ -163,10 +163,13 @@ func (svc *Server) Start(ctx context.Context) error {
 		if project.Error != "" {
 			slog.Warn("project has errors", "project", project.ID, "err", project.Error)
 		}
-		if len(project.Command) > 0 && !seen[project.Command[0]] {
-			seen[project.Command[0]] = true
-			if _, err := exec.LookPath(project.Command[0]); err != nil {
-				slog.Warn("runner not found in PATH", "command", project.Command[0], "project", project.ID)
+		for _, source := range project.Sources {
+			if len(source.Command) == 0 || seen[source.Command[0]] {
+				continue
+			}
+			seen[source.Command[0]] = true
+			if _, err := exec.LookPath(source.Command[0]); err != nil {
+				slog.Warn("runner not found in PATH", "command", source.Command[0], "project", project.ID, "source", source.File)
 			}
 		}
 	}

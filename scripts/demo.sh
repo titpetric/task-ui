@@ -109,6 +109,8 @@ sleep 1
 scripts/run.sh infra deploy force >/dev/null
 scripts/run.sh infra plan >/dev/null
 scripts/run.sh backups verify >/dev/null
+scripts/run.sh tools make:test >/dev/null
+scripts/run.sh tools script:cleanup >/dev/null
 scripts/run.sh infra deploy >/dev/null
 wait "$first"
 
@@ -126,6 +128,7 @@ shot() {
 for theme in dark light; do
   shot "overview-${theme}" / "$theme"
   shot "folder-${theme}" /f/infra "$theme"
+  shot "tools-${theme}" /f/tools "$theme" 1440x1000
   shot "job-${theme}" /f/infra/deploy "$theme"
   # Part way through the replay, so the dialog shows a run in progress.
   shot "run-replay-${theme}" "/f/infra/deploy#replay=${run}" "$theme" 1440x900 1800
