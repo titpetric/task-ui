@@ -1184,6 +1184,13 @@ dialog.run[open] {
     display: flex;
     justify-content: center;
     margin: 0.15rem 0;
+    padding: 0.18rem 0.45rem;
+    letter-spacing: 0.04em;
+  }
+
+  .table th,
+  .table td {
+    padding: 0.32rem 0.5rem;
   }
 }
 
