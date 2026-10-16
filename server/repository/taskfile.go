@@ -46,18 +46,35 @@ func KindOf(path string) string {
 // `env.include:`, Taskfiles add `dotenv:`. Unknown keys are ignored, so
 // either file parses, and nothing task-ui needs is an extension.
 type fileSpec struct {
-	Name    string             `yaml:"name"`
-	Help    string             `yaml:"help"`
-	Include stringList         `yaml:"include"`
-	Env     envSpec            `yaml:"env"`
-	Dotenv  stringList         `yaml:"dotenv"`
-	Jobs    map[string]jobSpec `yaml:"jobs"`
-	Tasks   map[string]jobSpec `yaml:"tasks"`
+	Name    string     `yaml:"name"`
+	Help    string     `yaml:"help"`
+	Include stringList `yaml:"include"`
+	Env     envSpec    `yaml:"env"`
+	Dotenv  stringList `yaml:"dotenv"`
+	// Includes is the Taskfile map of namespace to included Taskfile.
+	Includes map[string]taskfileInclude `yaml:"includes"`
+	Jobs     map[string]jobSpec         `yaml:"jobs"`
+	Tasks    map[string]jobSpec         `yaml:"tasks"`
 }
 
 // envSpec is an atkins env declaration: `{vars, include}`.
 type envSpec struct {
 	Include stringList `yaml:"include"`
+}
+
+// taskfileInclude is one Taskfile include: a path, or a mapping with the
+// path under taskfile.
+type taskfileInclude struct {
+	Taskfile string `yaml:"taskfile"`
+}
+
+func (i *taskfileInclude) UnmarshalYAML(node *yaml.Node) error {
+	if node.Kind == yaml.ScalarNode {
+		i.Taskfile = strings.TrimSpace(node.Value)
+		return nil
+	}
+	type raw taskfileInclude
+	return node.Decode((*raw)(i))
 }
 
 // stringList accepts one string or a list of strings.
@@ -237,6 +254,11 @@ func LoadProject(id, path string) *model.Project {
 	}
 	project.Description = strings.TrimSpace(spec.Help)
 	project.Includes = spec.Include
+	for _, namespace := range sortedNames(spec.Includes) {
+		if path := spec.Includes[namespace].Taskfile; path != "" {
+			project.Includes = appendUnique(project.Includes, path)
+		}
+	}
 	project.EnvFiles = appendUnique(nil, spec.Env.Include...)
 	project.EnvFiles = appendUnique(project.EnvFiles, spec.Dotenv...)
 
@@ -282,6 +304,15 @@ func LoadProject(id, path string) *model.Project {
 		project.Jobs = append(project.Jobs, j)
 	}
 	return project
+}
+
+func sortedNames(m map[string]taskfileInclude) []string {
+	names := make([]string, 0, len(m))
+	for name := range m {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	return names
 }
 
 func appendUnique(list []string, items ...string) []string {

@@ -140,7 +140,7 @@ jobs:
 
 Atkins files run with `atkins -f <file> <job>`, Taskfiles with
 `task -t <file> <job>`. Set `command` on a folder in `task-ui.yml` to run
-something else. Jobs get `TASK_UI_USER`, `TASK_UI_PROJECT`, `TASK_UI_JOB`
+something else. Jobs get `TASK_UI_USER`, `TASK_UI_FOLDER`, `TASK_UI_JOB`
 and `TASK_UI_RUN_ID` in the environment.
 
 ## Secrets and env files

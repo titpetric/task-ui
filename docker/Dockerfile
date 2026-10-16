@@ -45,6 +45,7 @@ ENV GOPATH=/go \
 	TASK_UI_LISTEN=:3000 \
 	TASK_UI_ROOT=/app \
 	TASK_UI_HISTORY_PATH=/app/history \
+	TASK_UI_ENV_PATH=/app/env \
 	TASK_UI_SSH_DIR=/root/.ssh
 
 EXPOSE 3000
