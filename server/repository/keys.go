@@ -39,7 +39,7 @@ type Keys struct {
 var keyName = regexp.MustCompile(`^id_[a-z0-9]+(\.bak-[0-9]{8}T[0-9]{6})?$`)
 
 // ErrPassphrase is returned for an uploaded key protected by a passphrase:
-// the runbooks run unattended and could not unlock it.
+// the jobs run unattended and could not unlock it.
 var ErrPassphrase = errors.New("the key is protected by a passphrase, upload an unencrypted key")
 
 // List returns the key pairs and their backups.

@@ -19,7 +19,7 @@ import (
 )
 
 // History stores run recordings as asciicast v2 files, one folder per
-// project and runbook: <root>/<project>/<runbook>/<id>.cast, with the run
+// project and job: <root>/<project>/<job>/<id>.cast, with the run
 // outcome next to it in <id>.json.
 type History struct {
 	Root string
@@ -33,23 +33,23 @@ func ValidID(id string) bool {
 	return validHistoryID.MatchString(id)
 }
 
-func (h *History) dir(project, runbook string) string {
-	// Runbook names may contain ':' (namespaced tasks), which is fine on
+func (h *History) dir(project, job string) string {
+	// Job names may contain ':' (namespaced tasks), which is fine on
 	// the file systems this runs on, but never a path separator.
-	return filepath.Join(h.Root, filepath.Base(project), strings.ReplaceAll(runbook, "/", "_"))
+	return filepath.Join(h.Root, filepath.Base(project), strings.ReplaceAll(job, "/", "_"))
 }
 
 // CastPath returns the recording path for a run.
-func (h *History) CastPath(project, runbook, id string) (string, error) {
+func (h *History) CastPath(project, job, id string) (string, error) {
 	if !ValidID(id) {
 		return "", fmt.Errorf("invalid history id %q", id)
 	}
-	return filepath.Join(h.dir(project, runbook), id+".cast"), nil
+	return filepath.Join(h.dir(project, job), id+".cast"), nil
 }
 
-// List returns the recorded runs of a runbook, newest first.
-func (h *History) List(project, runbook string) []model.HistoryRecord {
-	files, _ := filepath.Glob(filepath.Join(h.dir(project, runbook), "*.json"))
+// List returns the recorded runs of a job, newest first.
+func (h *History) List(project, job string) []model.HistoryRecord {
+	files, _ := filepath.Glob(filepath.Join(h.dir(project, job), "*.json"))
 	result := make([]model.HistoryRecord, 0, len(files))
 	for _, file := range files {
 		if record, err := readRecord(file); err == nil {
@@ -77,9 +77,9 @@ func (h *History) Recent(limit int) []model.HistoryRecord {
 	return result
 }
 
-// Last returns the most recent run of a runbook.
-func (h *History) Last(project, runbook string) (model.HistoryRecord, bool) {
-	files, _ := filepath.Glob(filepath.Join(h.dir(project, runbook), "*.json"))
+// Last returns the most recent run of a job.
+func (h *History) Last(project, job string) (model.HistoryRecord, bool) {
+	files, _ := filepath.Glob(filepath.Join(h.dir(project, job), "*.json"))
 	sort.Strings(files)
 	for i := len(files) - 1; i >= 0; i-- {
 		if record, err := readRecord(files[i]); err == nil {
@@ -121,7 +121,7 @@ func NewID(t time.Time) string {
 // Start opens a recording for a run. The record is written as running, so a
 // run is visible in the history while it happens.
 func (h *History) Start(record model.HistoryRecord, cols, rows int) (*Recorder, error) {
-	dir := h.dir(record.Project, record.Runbook)
+	dir := h.dir(record.Project, record.Job)
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return nil, err
 	}
@@ -147,7 +147,7 @@ func (h *History) Start(record model.HistoryRecord, cols, rows int) (*Recorder, 
 		"width":     cols,
 		"height":    rows,
 		"timestamp": record.Started.Unix(),
-		"title":     record.Project + " / " + record.Runbook,
+		"title":     record.Project + " / " + record.Job,
 	})
 	r.buf.Write(header)
 	r.buf.WriteByte('\n')

@@ -1,6 +1,6 @@
 {{ define "content" }}
-{{- $p := .Project }}{{ $r := .Runbook }}{{ $run := running $r.Key }}{{ $can := canRun $p $r }}
-<div class="crumbs"><a href="/">Overview</a><span><a href="/p/{{ $p.ID }}">{{ $p.Title }}</a></span><span>{{ $r.Name }}</span></div>
+{{- $p := .Project }}{{ $r := .Job }}{{ $run := running $r.Key }}{{ $can := canRun $p $r }}
+{{ template "crumbs" (list (crumb $p.ID (print "/f/" $p.ID)) (crumb $r.Name "")) }}
 <div class="page-head">
 	<div>
 		<h2>{{ $r.Name }}{{ if $r.Interactive }} <span class="badge">interactive</span>{{ end }}</h2>
@@ -18,7 +18,7 @@
 </div>
 {{- end }}
 {{- if not $can }}
-<div class="alert">You can read this runbook and its history. Your role, <b>{{ .User.Role }}</b>, is not allowed to run it.</div>
+<div class="alert">You can read this job and its history. Your role, <b>{{ .User.Role }}</b>, is not allowed to run it.</div>
 {{- end }}
 
 {{- if $r.Summary }}
@@ -26,16 +26,18 @@
 {{- end }}
 
 <section class="block">
-	<h3>Details</h3>
+	<h3>Job</h3>
 	<div class="table-wrap">
 	<table class="table table-kv">
 		<tbody>
-			<tr><th>Project</th><td><a href="/p/{{ $p.ID }}">{{ $p.Title }}</a></td></tr>
-			<tr><th>Task file</th><td>{{ $p.File }} <span class="badge">{{ $p.Kind }}</span></td></tr>
-			<tr><th>Command</th><td><code>{{ range $p.Command }}{{ . }} {{ end }}{{ $r.Name }}</code></td></tr>
+			<tr><th>Folder</th><td><a href="/f/{{ $p.ID }}"><svg class="ic"><use href="#i-folder"/></svg> {{ $p.ID }}</a> <span class="dim">{{ $p.Title }}</span></td></tr>
+			<tr><th>Command</th><td><code>{{ join $p.Command " " }} {{ $r.Name }}</code></td></tr>
+			{{- if $r.DependsOn }}<tr><th>Depends on</th><td>{{ range $r.DependsOn }}<a href="/f/{{ $p.ID }}/{{ . }}">{{ . }}</a> {{ end }}</td></tr>{{ end }}
+			<tr><th>Steps</th><td class="steps">{{ range $r.Steps }}<code>{{ . }}</code>{{ else }}<span class="faint">none declared</span>{{ end }}</td></tr>
 			{{- if $r.Aliases }}<tr><th>Aliases</th><td>{{ range $r.Aliases }}<span class="badge">{{ . }}</span> {{ end }}</td></tr>{{ end }}
+			{{- if $r.EnvFiles }}<tr><th>Env files</th><td>{{ range $r.EnvFiles }}<div><svg class="ic"><use href="#i-file"/></svg> {{ . }}</div>{{ end }}</td></tr>{{ end }}
 			<tr><th>Who can run</th><td>{{ whoCanRun $p $r }}</td></tr>
-			<tr><th>Input</th><td>{{ if $r.Interactive }}keyboard input is sent to the task{{ else }}output only{{ end }}</td></tr>
+			<tr><th>Input</th><td>{{ if $r.Interactive }}keyboard input is sent to the job{{ else }}output only{{ end }}</td></tr>
 		</tbody>
 	</table>
 	</div>
@@ -57,8 +59,8 @@
 				<td class="nowrap">{{ if ne .State "running" }}{{ duration .Duration }}{{ end }}</td>
 				<td>{{ template "state" . }}</td>
 				<td class="actions">
-					<button type="button" class="btn btn-sm" data-history="/api/history/{{ .Project }}/{{ .Runbook }}/{{ .ID }}" data-title="{{ $p.Title }}" data-runbook="{{ .Runbook }}" data-when="{{ stamp .Started }}">View</button>
-					<button type="button" class="btn btn-sm" data-history="/api/history/{{ .Project }}/{{ .Runbook }}/{{ .ID }}" data-replay data-title="{{ $p.Title }}" data-runbook="{{ .Runbook }}" data-when="{{ stamp .Started }}">Replay</button>
+					<button type="button" class="btn btn-sm" data-history="/api/history/{{ .Project }}/{{ .Job }}/{{ .ID }}" data-title="{{ $p.ID }}" data-job="{{ .Job }}" data-when="{{ stamp .Started }}">View</button>
+					<button type="button" class="btn btn-sm" data-history="/api/history/{{ .Project }}/{{ .Job }}/{{ .ID }}" data-replay data-title="{{ $p.ID }}" data-job="{{ .Job }}" data-when="{{ stamp .Started }}">Replay</button>
 				</td>
 			</tr>
 		{{- else }}

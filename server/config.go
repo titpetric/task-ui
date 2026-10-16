@@ -46,6 +46,9 @@ type Config struct {
 	// SSHDir is the folder the key admin manages. TASK_UI_SSH_DIR,
 	// default $HOME/.ssh.
 	SSHDir string
+	// EnvPath holds the secrets and the managed env files.
+	// TASK_UI_ENV_PATH, default ./env.
+	EnvPath string
 
 	// Secret signs the session cookies. TASK_UI_SECRET. Empty generates
 	// one per process, so sessions do not survive a restart.
@@ -100,6 +103,7 @@ func NewConfig(args []string) (*Config, error) {
 		History:     envBool("TASK_UI_HISTORY", true),
 		HistoryPath: env("TASK_UI_HISTORY_PATH", "history"),
 		SSHDir:      env("TASK_UI_SSH_DIR", filepath.Join(home, ".ssh")),
+		EnvPath:     env("TASK_UI_ENV_PATH", "env"),
 		Secret:      env("TASK_UI_SECRET", ""),
 		Anonymous:   model.Role(env("TASK_UI_ANONYMOUS", string(model.RoleAdmin))),
 		Columns:     120,

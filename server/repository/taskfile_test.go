@@ -23,16 +23,26 @@ func TestLoadProjectAtkins(t *testing.T) {
 	write(t, path, `
 name: Infra
 help: Deploys things.
-ui:
-  allow: [ops]
+include: vars.yml
+env:
+  include: [.env, secrets.env]
 jobs:
   deploy:
     desc: "Deploy"
     summary: |
       Long text.
-    allow: [admin]
+    depends_on: build
+    env:
+      include: deploy.env
     steps:
       - run: echo deploy
+      - name: Verify
+        run: ./verify.sh
+      - task: notify
+      - defer: rm -f lock
+  build:
+    desc: "Build"
+    run: go build ./...
   up: docker compose up
   list:
     - echo one
@@ -54,26 +64,35 @@ jobs:
 	if project.Kind != "atkins" || !slices.Equal(project.Command, []string{"atkins", "-f", "atkins.yml"}) {
 		t.Fatalf("kind/command: %s %v", project.Kind, project.Command)
 	}
-	if !slices.Equal(project.Allow, []string{"ops"}) {
-		t.Fatalf("allow: %v", project.Allow)
+	if !slices.Equal(project.Includes, []string{"vars.yml"}) {
+		t.Fatalf("includes: %v", project.Includes)
+	}
+	if !slices.Equal(project.EnvFiles, []string{".env", "secrets.env", "deploy.env"}) {
+		t.Fatalf("env files: %v", project.EnvFiles)
 	}
 
 	got := []string{}
-	for _, r := range project.Runbooks {
+	for _, r := range project.Jobs {
 		got = append(got, r.Name)
 	}
-	if want := []string{"deploy", "list", "up"}; !slices.Equal(got, want) {
-		t.Fatalf("runbooks: got %v, want %v", got, want)
+	if want := []string{"build", "deploy", "list", "up"}; !slices.Equal(got, want) {
+		t.Fatalf("jobs: got %v, want %v", got, want)
 	}
 
-	deploy := project.Runbook("deploy")
-	if deploy.Summary != "Long text." || !slices.Equal(deploy.Allow, []string{"admin"}) {
+	deploy := project.Job("deploy")
+	if deploy.Summary != "Long text." || !slices.Equal(deploy.DependsOn, []string{"build"}) || !slices.Equal(deploy.EnvFiles, []string{"deploy.env"}) {
 		t.Fatalf("deploy: %+v", deploy)
 	}
-	if up := project.Runbook("up"); up.Description != "docker compose up" {
-		t.Fatalf("scalar job description: %q", up.Description)
+	if want := []string{"run: echo deploy", "Verify", "task: notify", "defer: rm -f lock"}; !slices.Equal(deploy.Steps, want) {
+		t.Fatalf("deploy steps: got %v, want %v", deploy.Steps, want)
 	}
-	if list := project.Runbook("list"); list.Description != "echo one" {
+	if build := project.Job("build"); !slices.Equal(build.Steps, []string{"go build ./..."}) {
+		t.Fatalf("build steps: %v", build.Steps)
+	}
+	if up := project.Job("up"); up.Description != "docker compose up" || !slices.Equal(up.Steps, []string{"docker compose up"}) {
+		t.Fatalf("scalar job: %+v", up)
+	}
+	if list := project.Job("list"); list.Description != "echo one" {
 		t.Fatalf("list job description: %q", list.Description)
 	}
 }
@@ -83,10 +102,15 @@ func TestLoadProjectTaskfile(t *testing.T) {
 	path := filepath.Join(dir, "Taskfile.yml")
 	write(t, path, `
 version: "3"
+dotenv: ['.env']
 tasks:
   build:
     desc: "Build"
     aliases: [b]
+    deps: [lint]
+    cmds:
+      - go build ./...
+      - task: package
   shell:
     desc: "Shell"
     interactive: true
@@ -101,16 +125,22 @@ tasks:
 		t.Fatalf("kind/command: %s %v", project.Kind, project.Command)
 	}
 	got := []string{}
-	for _, r := range project.Runbooks {
+	for _, r := range project.Jobs {
 		got = append(got, r.Name)
 	}
 	if want := []string{"build", "shell"}; !slices.Equal(got, want) {
-		t.Fatalf("runbooks: got %v, want %v", got, want)
+		t.Fatalf("jobs: got %v, want %v", got, want)
 	}
-	if project.Runbook("b") == nil || project.Runbook("b").Name != "build" {
+	if project.Job("b") == nil || project.Job("b").Name != "build" {
 		t.Fatal("alias lookup failed")
 	}
-	if !project.Runbook("shell").Interactive {
+	if build := project.Job("build"); !slices.Equal(build.Steps, []string{"go build ./...", "task: package"}) || !slices.Equal(build.DependsOn, []string{"lint"}) {
+		t.Fatalf("taskfile build: %+v", build)
+	}
+	if !slices.Equal(project.EnvFiles, []string{".env"}) {
+		t.Fatalf("dotenv: %v", project.EnvFiles)
+	}
+	if !project.Job("shell").Interactive {
 		t.Fatal("interactive flag lost")
 	}
 	if project.Title != "web" {
@@ -143,7 +173,7 @@ func TestProjectsDiscovery(t *testing.T) {
 		Root:     root,
 		Discover: true,
 		Config: []ProjectConfig{
-			{ID: "web", Path: "web site", Title: "Website", Allow: []string{"ops"}, Command: "make"},
+			{ID: "web", Path: "web site", Title: "Website", Allow: []string{"ops"}, Command: "make", Jobs: map[string][]string{"build": {"admin"}}},
 			{ID: "sync", Path: "elsewhere/jobs.yml"},
 		},
 	}
@@ -159,14 +189,17 @@ func TestProjectsDiscovery(t *testing.T) {
 	}
 
 	infra := repo.Find("infra")
-	if infra.Kind != "atkins" || infra.Runbook("plan") == nil {
+	if infra.Kind != "atkins" || infra.Job("plan") == nil {
 		t.Fatalf("infra: %+v", infra)
 	}
 	web := repo.Find("web")
 	if web.Title != "Website" || !slices.Equal(web.Allow, []string{"ops"}) || !slices.Equal(web.Command, []string{"make"}) {
 		t.Fatalf("web overrides not applied: %+v", web)
 	}
-	if sync := repo.Find("sync"); sync == nil || sync.Runbook("sync") == nil {
+	if !slices.Equal(web.Job("build").Allow, []string{"admin"}) {
+		t.Fatalf("job allow not applied: %+v", web.Job("build"))
+	}
+	if sync := repo.Find("sync"); sync == nil || sync.Job("sync") == nil {
 		t.Fatalf("configured file project missing: %+v", sync)
 	}
 }

@@ -7,17 +7,17 @@ import (
 	"time"
 )
 
-// ErrBusy is returned when a runbook is already running.
+// ErrBusy is returned when a job is already running.
 var ErrBusy = errors.New("already running")
 
-// Run is an active run of a runbook. The registry holds one per key, which
-// is what keeps two copies of the same runbook in a project from running at
-// the same time, while different runbooks run side by side.
+// Run is an active run of a job. The registry holds one per key, which
+// is what keeps two copies of the same job in a project from running at
+// the same time, while different jobs run side by side.
 type Run struct {
 	ID      string    `json:"id"`
 	Key     string    `json:"key"`
 	Project string    `json:"project"`
-	Runbook string    `json:"runbook"`
+	Job     string    `json:"job"`
 	User    string    `json:"user"`
 	Started time.Time `json:"started"`
 	Forced  bool      `json:"forced,omitempty"`

@@ -13,7 +13,7 @@ func TestHistoryRecord(t *testing.T) {
 	h := &History{Root: t.TempDir()}
 
 	start := time.Now().Add(-time.Minute)
-	rec, err := h.Start(model.HistoryRecord{Project: "infra", Runbook: "deploy", User: "ops", Started: start}, 80, 24)
+	rec, err := h.Start(model.HistoryRecord{Project: "infra", Job: "deploy", User: "ops", Started: start}, 80, 24)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -51,7 +51,7 @@ func TestHistoryRecord(t *testing.T) {
 		t.Fatal("accepted a path as id")
 	}
 
-	second, _ := h.Start(model.HistoryRecord{Project: "web", Runbook: "build", User: "a", Started: time.Now()}, 80, 24)
+	second, _ := h.Start(model.HistoryRecord{Project: "web", Job: "build", User: "a", Started: time.Now()}, 80, 24)
 	second.Finish(model.StateOK, 0)
 	recent := h.Recent(10)
 	if len(recent) != 2 || recent[0].Project != "web" {

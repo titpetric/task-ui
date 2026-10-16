@@ -1,0 +1,7 @@
+# Permissions for the demo folders. Pipeline files stay as atkins and task
+# read them; who may run what is decided here.
+projects:
+  - id: infra
+    allow: [ops]
+    jobs:
+      rotate-certs: [admin]

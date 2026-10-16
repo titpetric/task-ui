@@ -18,7 +18,7 @@ import (
 )
 
 // testServer starts task-ui over a temporary root with two projects:
-// "echo" runs `echo <runbook>`, "sleep" runs `sleep <runbook>`.
+// "echo" runs `echo <job>`, "sleep" runs `sleep <job>`.
 func testServer(t *testing.T) (*httptest.Server, *Server) {
 	t.Helper()
 	root := t.TempDir()
@@ -33,18 +33,21 @@ func testServer(t *testing.T) (*httptest.Server, *Server) {
 	}
 	mkfile(filepath.Join(root, "echo", "atkins.yml"), `
 name: Echo
-ui:
-  command: echo
 jobs:
   hello:
     desc: "Say hello"
   locked:
     desc: "Admins only"
-    allow: [admin]
+`)
+	mkfile(filepath.Join(root, "printenv", "atkins.yml"), `
+name: Printenv
+env:
+  include: .env
+jobs:
+  GREETING:
+    desc: "Print the greeting"
 `)
 	mkfile(filepath.Join(root, "sleep", "Taskfile.yml"), `
-ui:
-  command: sleep
 tasks:
   "5":
     desc: "Sleep a while"
@@ -68,11 +71,21 @@ users:
   - name: guest
     password: "`+hash("guest")+`"
     role: viewer
+projects:
+  - id: echo
+    command: echo
+    jobs:
+      locked: [admin]
+  - id: sleep
+    command: sleep
+  - id: printenv
+    command: printenv
 `)
 
 	cfg := &Config{
 		Listen:      "127.0.0.1:0",
 		Root:        root,
+		EnvPath:     filepath.Join(t.TempDir(), "env"),
 		Discover:    true,
 		History:     true,
 		HistoryPath: filepath.Join(t.TempDir(), "history"),
@@ -106,12 +119,12 @@ func client(t *testing.T) *http.Client {
 func login(t *testing.T, ts *httptest.Server, user string) *http.Client {
 	t.Helper()
 	c := client(t)
-	resp, err := c.PostForm(ts.URL+"/login", url.Values{"username": {user}, "password": {user}, "back": {"/p/echo"}})
+	resp, err := c.PostForm(ts.URL+"/login", url.Values{"username": {user}, "password": {user}, "back": {"/f/echo"}})
 	if err != nil {
 		t.Fatal(err)
 	}
 	resp.Body.Close()
-	if resp.StatusCode != http.StatusSeeOther || resp.Header.Get("Location") != "/p/echo" {
+	if resp.StatusCode != http.StatusSeeOther || resp.Header.Get("Location") != "/f/echo" {
 		t.Fatalf("login %s: %d %s", user, resp.StatusCode, resp.Header.Get("Location"))
 	}
 	return c
@@ -182,7 +195,7 @@ func TestLoginFlow(t *testing.T) {
 	ts, _ := testServer(t)
 	c := client(t)
 
-	resp, err := c.Get(ts.URL + "/p/echo/hello")
+	resp, err := c.Get(ts.URL + "/f/echo/hello")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -208,11 +221,11 @@ func TestLoginFlow(t *testing.T) {
 		t.Fatalf("open redirect: %s", resp.Header.Get("Location"))
 	}
 
-	code, body := get(t, c, ts.URL+"/p/echo/hello")
+	code, body := get(t, c, ts.URL+"/f/echo/hello")
 	if code != http.StatusOK || !strings.Contains(body, "Say hello") || !strings.Contains(body, "data-run") {
-		t.Fatalf("runbook page: %d", code)
+		t.Fatalf("job page: %d", code)
 	}
-	if code, _ := get(t, c, ts.URL+"/p/nope"); code != http.StatusNotFound {
+	if code, _ := get(t, c, ts.URL+"/f/nope"); code != http.StatusNotFound {
 		t.Fatalf("missing project: %d", code)
 	}
 }
@@ -221,7 +234,7 @@ func TestViewerCannotRun(t *testing.T) {
 	ts, _ := testServer(t)
 	c := login(t, ts, "guest")
 
-	_, body := get(t, c, ts.URL+"/p/echo/hello")
+	_, body := get(t, c, ts.URL+"/f/echo/hello")
 	if strings.Contains(body, "data-run ") || !strings.Contains(body, "not allowed to run") {
 		t.Fatal("viewer page offers a run button")
 	}
@@ -296,7 +309,7 @@ func TestRunLockForceAndClose(t *testing.T) {
 		t.Fatal("first run did not start")
 	}
 
-	// A second run of the same runbook is refused.
+	// A second run of the same job is refused.
 	second, err := dial(t, ts, bob, "/ws/run/sleep/5", ts.URL)
 	if err != nil {
 		t.Fatal(err)
@@ -362,7 +375,7 @@ func TestCrossOriginRefused(t *testing.T) {
 		t.Fatal("cross origin websocket accepted")
 	}
 
-	req, _ := http.NewRequest(http.MethodPost, ts.URL+"/admin/keys/generate", strings.NewReader("type=ed25519"))
+	req, _ := http.NewRequest(http.MethodPost, ts.URL+"/settings/keys/generate", strings.NewReader("type=ed25519"))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Set("Origin", "http://evil.example")
 	resp, err := c.Do(req)
@@ -379,12 +392,12 @@ func TestKeysAdminOnly(t *testing.T) {
 	ts, svc := testServer(t)
 
 	ops := login(t, ts, "ops")
-	if code, _ := get(t, ops, ts.URL+"/admin/keys"); code != http.StatusForbidden {
+	if code, _ := get(t, ops, ts.URL+"/settings/keys"); code != http.StatusForbidden {
 		t.Fatalf("runner keys page: %d", code)
 	}
 
 	admin := login(t, ts, "admin")
-	resp, err := admin.PostForm(ts.URL+"/admin/keys/generate", url.Values{"type": {"ed25519"}, "comment": {"ci key"}})
+	resp, err := admin.PostForm(ts.URL+"/settings/keys/generate", url.Values{"type": {"ed25519"}, "comment": {"ci key"}})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -396,7 +409,7 @@ func TestKeysAdminOnly(t *testing.T) {
 	if len(keys) != 1 || keys[0].Comment != "ci-key" {
 		t.Fatalf("keys: %+v", keys)
 	}
-	code, body := get(t, admin, ts.URL+"/admin/keys")
+	code, body := get(t, admin, ts.URL+"/settings/keys")
 	if code != http.StatusOK || !strings.Contains(html.UnescapeString(body), keys[0].Fingerprint) {
 		t.Fatalf("keys page: %d", code)
 	}
@@ -434,12 +447,96 @@ func TestAnonymousRole(t *testing.T) {
 	if code != http.StatusOK || !strings.Contains(body, "anonymous") {
 		t.Fatalf("anonymous overview: %d", code)
 	}
-	if code, _ := get(t, c, ts.URL+"/admin/keys"); code != http.StatusForbidden {
+	if code, _ := get(t, c, ts.URL+"/settings/keys"); code != http.StatusForbidden {
 		t.Fatalf("anonymous viewer keys: %d", code)
 	}
 
 	bad := &Config{Anonymous: "root"}
 	if err := bad.Validate(); err == nil {
 		t.Fatal("unknown anonymous role accepted")
+	}
+}
+
+func TestSecretsReachRuns(t *testing.T) {
+	ts, svc := testServer(t)
+	admin := login(t, ts, "admin")
+	ops := login(t, ts, "ops")
+
+	// Settings are the admin's.
+	for _, path := range []string{"/settings", "/settings/secrets", "/settings/secrets/new", "/f/printenv/env/.env"} {
+		if code, _ := get(t, ops, ts.URL+path); code != http.StatusForbidden {
+			t.Fatalf("runner %s: %d", path, code)
+		}
+	}
+	resp, _ := ops.PostForm(ts.URL+"/settings/secrets/save", url.Values{"scope": {"all"}, "key": {"GREETING"}, "value": {"nope"}})
+	resp.Body.Close()
+	if resp.StatusCode != http.StatusForbidden {
+		t.Fatalf("runner saved a secret: %d", resp.StatusCode)
+	}
+
+	// A shared secret, a folder secret that wins, and a managed env file.
+	for _, form := range []url.Values{
+		{"scope": {"all"}, "key": {"GREETING"}, "value": {"hello from all"}},
+		{"scope": {"printenv"}, "key": {"GREETING"}, "value": {"hello from the folder"}},
+	} {
+		resp, err := admin.PostForm(ts.URL+"/settings/secrets/save", form)
+		if err != nil {
+			t.Fatal(err)
+		}
+		resp.Body.Close()
+		if resp.StatusCode != http.StatusSeeOther || !strings.Contains(resp.Header.Get("Location"), "notice=") {
+			t.Fatalf("save secret: %d %s", resp.StatusCode, resp.Header.Get("Location"))
+		}
+	}
+	resp, _ = admin.PostForm(ts.URL+"/settings/secrets/save", url.Values{"scope": {"all"}, "key": {"bad key"}, "value": {"x"}})
+	resp.Body.Close()
+	if !strings.Contains(resp.Header.Get("Location"), "error=") {
+		t.Fatal("invalid key accepted")
+	}
+
+	resp, _ = admin.PostForm(ts.URL+"/f/printenv/env/.env", url.Values{"content": {"EDITED=yes\n"}})
+	resp.Body.Close()
+	if resp.StatusCode != http.StatusSeeOther || !strings.Contains(resp.Header.Get("Location"), "notice=") {
+		t.Fatalf("save env file: %d %s", resp.StatusCode, resp.Header.Get("Location"))
+	}
+	resp, _ = admin.PostForm(ts.URL+"/f/printenv/env/other.env", url.Values{"content": {"X=1"}})
+	resp.Body.Close()
+	if resp.StatusCode != http.StatusNotFound {
+		t.Fatalf("undeclared env file accepted: %d", resp.StatusCode)
+	}
+
+	code, body := get(t, admin, ts.URL+"/settings/secrets")
+	if code != http.StatusOK || strings.Contains(body, "hello from") || !strings.Contains(body, "GREETING") {
+		t.Fatalf("secrets page shows values: %d", code)
+	}
+	code, body = get(t, admin, ts.URL+"/f/printenv")
+	if code != http.StatusOK || !strings.Contains(body, "managed") || !strings.Contains(body, "EDITED") {
+		t.Fatalf("folder page env files: %d", code)
+	}
+
+	// The run sees the folder secret, and the env file was generated.
+	ws, err := dial(t, ts, ops, "/ws/run/printenv/GREETING", ts.URL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	out, statuses := collect(t, ws, final)
+	ws.Close()
+	if !strings.Contains(out, "hello from the folder") || statuses[len(statuses)-1].State != "ok" {
+		t.Fatalf("run output %q, statuses %+v", out, statuses)
+	}
+	project := svc.projects().Find("printenv")
+	data, err := os.ReadFile(filepath.Join(project.Dir, ".env"))
+	if err != nil || !strings.Contains(string(data), "EDITED=yes") || !strings.Contains(string(data), "GREETING=\"hello from the folder\"") {
+		t.Fatalf("generated env file: %q %v", data, err)
+	}
+
+	// Deleting the folder secret falls back to the shared one.
+	resp, _ = admin.PostForm(ts.URL+"/settings/secrets/delete", url.Values{"scope": {"printenv"}, "key": {"GREETING"}})
+	resp.Body.Close()
+	ws, _ = dial(t, ts, ops, "/ws/run/printenv/GREETING", ts.URL)
+	out, _ = collect(t, ws, final)
+	ws.Close()
+	if !strings.Contains(out, "hello from all") {
+		t.Fatalf("shared secret not applied: %q", out)
 	}
 }

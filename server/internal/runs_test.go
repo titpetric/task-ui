@@ -14,13 +14,13 @@ func TestRunsLock(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Another runbook runs side by side.
+	// Another job runs side by side.
 	other := &Run{Key: "infra/plan"}
 	if _, err := runs.Acquire(other, false); err != nil {
 		t.Fatal(err)
 	}
 
-	// The same runbook does not.
+	// The same job does not.
 	current, err := runs.Acquire(&Run{Key: "infra/deploy", User: "b"}, false)
 	if !errors.Is(err, ErrBusy) || current != a {
 		t.Fatalf("expected busy with run a, got %v %v", current, err)
