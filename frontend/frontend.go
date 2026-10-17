@@ -12,6 +12,7 @@ import (
 
 	chi "github.com/go-chi/chi/v5"
 
+	"github.com/titpetric/task-ui/access"
 	"github.com/titpetric/task-ui/frontend/view"
 )
 
@@ -36,8 +37,8 @@ func (h *Handlers) Routes() http.Handler {
 
 	r.Handle(view.AssetPrefix+"*", assets())
 	r.Get("/login", h.loginForm)
-	r.Post("/login", h.login)
-	r.Post("/logout", h.logout)
+	r.With(access.SameOrigin).Post("/login", h.login)
+	r.With(access.SameOrigin).Post("/logout", h.logout)
 	r.Get("/healthz", func(w http.ResponseWriter, _ *http.Request) { _, _ = w.Write([]byte("ok\n")) })
 
 	r.Group(func(r chi.Router) {

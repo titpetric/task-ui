@@ -20,6 +20,7 @@ import (
 	"github.com/titpetric/task-ui/envfile"
 	"github.com/titpetric/task-ui/frontend"
 	"github.com/titpetric/task-ui/git"
+	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/recording"
 	"github.com/titpetric/task-ui/runner"
 	"github.com/titpetric/task-ui/scheduler"
@@ -83,6 +84,9 @@ func (a *App) prepare(ctx context.Context) error {
 	if err := a.seed(ctx); err != nil {
 		return err
 	}
+	if err := a.autoLogin(ctx); err != nil {
+		return err
+	}
 	n, err := storage.NewRunStorage(a.DB).KillActive(ctx)
 	if err != nil {
 		return err
@@ -107,6 +111,21 @@ func (a *App) seed(ctx context.Context) error {
 	}
 	slog.Info("users read from the password file", "file", a.Config.Htpasswd, "created", created, "removed", removed, "admins", a.Config.Admins)
 	return nil
+}
+
+// autoLogin makes the auto login user when there is none, as an admin:
+// the knob is for development, where there may be no password file at
+// all, and a user that cannot sign in would make it useless.
+func (a *App) autoLogin(ctx context.Context) error {
+	name := a.Config.AutoLogin
+	if name == "" {
+		return nil
+	}
+	if _, err := a.Users.GetByName(ctx, name); err == nil {
+		return nil
+	}
+	slog.Warn("auto login names a user that is not there: created as an admin", "user", name)
+	return a.Users.Create(ctx, &model.User{Name: name, Password: "-", Role: model.RoleAdmin})
 }
 
 // wire builds the services and the handler over the open database.

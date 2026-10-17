@@ -104,8 +104,14 @@ func (f *UsersFile) keep(ctx context.Context, users *storage.UserStorage, creds 
 		if user.Password == cred.Hash && user.Role == role {
 			continue
 		}
-		user.Password, user.Role = cred.Hash, role
-		if err := users.Update(ctx, user); err != nil {
+		// The row again, not the listing: the folders may have changed
+		// under Settings since.
+		current, err := users.GetByName(ctx, cred.Name)
+		if err != nil {
+			return created, err
+		}
+		current.Password, current.Role = cred.Hash, role
+		if err := users.Update(ctx, current); err != nil {
 			return created, err
 		}
 	}
