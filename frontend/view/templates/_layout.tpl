@@ -197,7 +197,7 @@
 
 {{ define "who" }}<span class="who-ran"><span class="avatar sm" title="{{ .UserName }}">{{ .Initials }}</span> {{ .UserName }}{{ if .IsScheduled }} <span class="badge">scheduled</span>{{ end }}{{ if .Reason }} <span class="badge bad" title="{{ .Reason }}">out of hours</span>{{ else if .IsForced }} <span class="badge signal">forced</span>{{ end }}</span>{{ end }}
 
-{{ define "hours" }}{{ if . }}{{ hoursLine . }} {{ if inHours . }}<span class="badge ok">open now</span>{{ else }}<span class="badge bad">out of hours now</span>{{ end }}{{ else }}<span class="faint">always</span>{{ end }}{{ end }}
+{{ define "hours" }}{{ $text := index . 0 }}{{ $page := index . 1 }}{{ if $text }}{{ hoursLine $text }} {{ if $page.InHours $text }}<span class="badge ok">open now</span>{{ else }}<span class="badge bad">out of hours now</span>{{ end }}{{ else }}<span class="faint">always</span>{{ end }}{{ end }}
 
 {{ define "runButtons" }}
 {{- $p := index . 0 }}{{ $r := index . 1 -}}

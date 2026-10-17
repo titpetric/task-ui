@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/titpetric/task-ui/access"
 	"github.com/titpetric/task-ui/frontend/view"
@@ -30,6 +31,10 @@ func (h *Handlers) page(r *http.Request, title string) *view.Page {
 		Form:          map[string]string{},
 		Notice:        q.Get("notice"),
 		Error:         q.Get("error"),
+		Now:           time.Now(),
+	}
+	if h.opts.Now != nil {
+		p.Now = h.opts.Now()
 	}
 	for _, f := range h.opts.Catalogue.List() {
 		if user.CanSee(f.ID) {

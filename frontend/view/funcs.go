@@ -26,19 +26,18 @@ func Funcs() template.FuncMap {
 		"states":    model.States,
 		"roles":     model.Roles,
 		"list":      func(items ...any) []any { return items },
-		"inHours":   InHours,
 		"hoursLine": HoursLine,
 	}
 }
 
-// InHours reports whether the hours allow a run now. Hours that do not
-// parse are not the page's problem: they read as open.
-func InHours(text string) bool {
+// InHours reports whether the hours allow a run at a moment. Hours that
+// do not parse are not the page's problem: they read as open.
+func InHours(text string, now time.Time) bool {
 	rules, err := hours.Parse(text)
 	if err != nil {
 		return true
 	}
-	return rules.Allows(time.Now())
+	return rules.Allows(now)
 }
 
 // HoursLine writes hours on one line.

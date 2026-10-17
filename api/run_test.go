@@ -180,6 +180,10 @@ func TestRun_Frames(t *testing.T) {
 	assert.Equal(t, http.StatusOK, svg.Status)
 	assert.True(t, strings.HasPrefix(string(svg.Raw), "<svg"))
 	assert.Contains(t, string(svg.Raw), "planned")
+	// Trimmed to what there is; the full screen on request.
+	assert.Contains(t, string(svg.Raw), `viewBox="0 0 672.0 136.0"`)
+	full := f.call(t, asViewer, http.MethodGet, "/runs/"+id+"/frame.svg?full=1", nil)
+	assert.Contains(t, string(full.Raw), `viewBox="0 0 672.0 408.0"`)
 
 	missing := f.call(t, asViewer, http.MethodGet, "/runs/"+model.NewID()+"/frame.svg", nil)
 	assert.Equal(t, http.StatusNotFound, missing.Status)

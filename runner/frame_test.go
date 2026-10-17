@@ -52,3 +52,32 @@ func TestCell(t *testing.T) {
 	assert.Equal(t, 'a', cell.Char)
 	assert.False(t, cell.Bold)
 }
+
+func TestFrame_Trim(t *testing.T) {
+	t.Parallel()
+	row := func(text string) []runner.Cell {
+		cells := make([]runner.Cell, 4)
+		for i, r := range text {
+			cells[i] = runner.Cell{Char: r, BG: runner.DefaultBG}
+		}
+		return cells
+	}
+	frame := runner.Frame{Cols: 4, Rows: 6, CursorY: 1, Lines: [][]runner.Cell{row("one"), row(""), row("two"), row(""), row(""), row("")}}
+
+	short := frame.Trim(2)
+	assert.Equal(t, 3, short.Rows)
+	assert.Len(t, short.Lines, 3)
+	assert.Equal(t, "one\n\ntwo\n", short.Text())
+
+	// At least min rows, and the cursor's row, stay.
+	assert.Equal(t, 5, frame.Trim(5).Rows)
+	cursor := frame
+	cursor.CursorY = 4
+	assert.Equal(t, 5, cursor.Trim(1).Rows)
+	assert.Equal(t, 6, frame.Trim(10).Rows, "never more than there is")
+
+	// A painted empty row counts as content.
+	painted := frame
+	painted.Lines[5][0].BG = 4
+	assert.Equal(t, 6, painted.Trim(1).Rows)
+}

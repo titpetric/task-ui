@@ -78,7 +78,7 @@ serve() {
 admin=3101
 viewer=3102
 login=3103
-serve "$admin" TASK_UI_AUTOLOGIN=admin
+serve "$admin" TASK_UI_AUTOLOGIN=admin TASK_UI_NOW=2026-10-16T22:00:00+02:00
 serve "$viewer" TASK_UI_AUTOLOGIN=guest
 serve "$login"
 export TASK_UI_BASE="http://127.0.0.1:${admin}"
@@ -95,9 +95,9 @@ api() {
 # say who may run it.
 api POST /projects -d "{\"url\":\"file://$work/repos/infra.git\",\"id\":\"infra\"}"
 api PUT /projects/infra -d '{"allow":["ops"],"job_allow":{"rotate-certs":["admin"]}}'
-# The website folder runs in office hours only; the demo is out of them
-# at any time but one minute a week, so a run of it asks for a reason.
-api PUT /projects/website -d '{"hours":"mon-fri 9-17\nfri 9-13\nsun 0:00-0:01"}'
+# The website folder runs in office hours only. The admin instance's
+# clock is pinned to a Friday night, so a run of it asks for a reason.
+api PUT /projects/website -d '{"hours":"mon-fri 9-17\nfri 9-13"}'
 
 # A key first: the secrets are encrypted with it. Then secrets and a
 # managed env file, so the runs and the pages have them.

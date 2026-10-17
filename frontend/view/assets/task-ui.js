@@ -569,7 +569,10 @@
 
     if (btn.hasAttribute("data-run-all")) {
       event.preventDefault();
-      runAll(btn.dataset.folder, btn.hasAttribute("data-force"));
+      var count = btn.dataset.count ? btn.dataset.count + " jobs" : "every job";
+      confirm("Start " + count + " of " + btn.dataset.folder + " in the background? Jobs already running are skipped.", "Run all").then(function (ok) {
+        if (ok) runAll(btn.dataset.folder, btn.hasAttribute("data-force"));
+      });
       return;
     }
 

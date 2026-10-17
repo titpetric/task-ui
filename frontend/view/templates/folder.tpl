@@ -1,6 +1,6 @@
 {{ define "content" }}
 {{- $p := .Folder }}
-{{- $any := false }}{{ range $p.Jobs }}{{ if $.CanRun $p . }}{{ $any = true }}{{ end }}{{ end }}
+{{- $any := false }}{{ $runnable := 0 }}{{ range $p.Jobs }}{{ if $.CanRun $p . }}{{ $any = true }}{{ $runnable = add $runnable 1 }}{{ end }}{{ end }}
 <div class="page-head">
 	<div>
 		<h2><svg class="ic"><use href="#i-folder-open"/></svg> {{ $p.Title }}</h2>
@@ -9,7 +9,7 @@
 	<div class="actions">
 		<span class="dim nowrap">{{ range $p.Sources }}<span class="badge">{{ .Kind }}</span> {{ end }}</span>
 		{{- if $any }}
-		<button type="button" class="btn btn-primary" data-run-all data-folder="{{ $p.ID }}" title="Start every job of the folder in the background">Run all</button>
+		<button type="button" class="btn btn-primary" data-run-all data-folder="{{ $p.ID }}" data-count="{{ $runnable }}" title="Start every job of the folder in the background"><svg class="ic"><use href="#i-play"/></svg>Run all</button>
 		{{- end }}
 	</div>
 </div>
@@ -69,7 +69,7 @@
 			{{- range $p.Sources }}<tr><th>{{ .Kind }}</th><td><svg class="ic"><use href="#i-file"/></svg> {{ .File }}{{ if .Command }} <span class="dim">runs with</span> <code>{{ join .Command " " }} &lt;target&gt;</code>{{ end }}</td></tr>{{ end }}
 			{{- with $.Checkout }}<tr><th>Source</th><td><div class="mono-break">{{ .Remote }}</div><div class="dim">{{ .Branch }} <span class="faint">{{ .Commit }}</span> {{ .Subject }}{{ if not .When.IsZero }} <span class="faint">{{ ago .When }}</span>{{ end }}</div><div class="faint">pulled before every run</div></td></tr>{{ end }}
 			<tr><th>Who can run</th><td>{{ if $p.Allow }}admin, {{ join $p.Allow ", " }}{{ else }}admin, runner{{ end }}</td></tr>
-			<tr><th>Hours</th><td>{{ template "hours" $p.Hours }}</td></tr>
+			<tr><th>Hours</th><td>{{ template "hours" (list $p.Hours $) }}</td></tr>
 			{{- if $p.Includes }}<tr><th>Includes</th><td>{{ range $p.Includes }}<div><svg class="ic"><use href="#i-file"/></svg> {{ . }}</div>{{ end }}</td></tr>{{ end }}
 			<tr><th>Scheduled</th><td>{{ if .Schedules }}{{ len .Schedules }} <a href="/schedules?folder={{ $p.ID }}">schedules</a>{{ else }}<span class="faint">none</span>, <a href="/schedules?folder={{ $p.ID }}">add one</a>{{ end }}</td></tr>
 		</tbody>

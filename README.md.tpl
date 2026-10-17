@@ -98,6 +98,7 @@ Everything is configured from the environment:
 | `TASK_UI_KEEP`        | `15m`                | How long a finished run stays attachable with its frame in memory |
 | `TASK_UI_GRACE`       | `10s`                | How long a stopped process gets before it is killed               |
 | `TASK_UI_AUTOLOGIN`   |                      | Sign every request in as this user, for development only          |
+| `TASK_UI_NOW`         |                      | Pin the clock the hours read (RFC 3339), for the screenshots only |
 
 The flags `-l`, `--root`, `--htpasswd` and `--data` override the
 matching variables; `-v` prints the build.

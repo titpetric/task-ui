@@ -36,6 +36,42 @@ func (f Frame) Text() string {
 	return b.String()
 }
 
+// Trim returns the frame without its trailing empty rows, keeping at
+// least min rows and the row the cursor is on: what a tile shows of a
+// terminal that has only begun.
+func (f Frame) Trim(min int) Frame {
+	rows := f.CursorY + 1
+	for y := len(f.Lines) - 1; y >= rows; y-- {
+		if !blank(f.Lines[y]) {
+			rows = y + 1
+			break
+		}
+	}
+	if rows < min {
+		rows = min
+	}
+	if rows >= f.Rows {
+		return f
+	}
+	trimmed := f
+	trimmed.Rows = rows
+	trimmed.Lines = f.Lines[:rows]
+	return trimmed
+}
+
+// blank reports whether a row shows nothing.
+func blank(line []Cell) bool {
+	for _, cell := range line {
+		if cell.Char != 0 && cell.Char != ' ' {
+			return false
+		}
+		if cell.Reverse || (cell.BG != DefaultBG && cell.BG != 0) {
+			return false
+		}
+	}
+	return true
+}
+
 // SVG renders the frame as an image: one text row per line, a tspan per
 // run of the same colours, a rect behind every run with a background of
 // its own. The cell size is in user units, so the image scales.

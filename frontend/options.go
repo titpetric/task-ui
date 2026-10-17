@@ -1,6 +1,8 @@
 package frontend
 
 import (
+	"time"
+
 	"github.com/titpetric/task-ui/access"
 	"github.com/titpetric/task-ui/envfile"
 	"github.com/titpetric/task-ui/folder"
@@ -30,4 +32,6 @@ type Options struct {
 	// Root is where the folders are, for the projects page.
 	Root    string
 	Version string
+	// Now is the clock the pages read for the hours. Nil is time.Now.
+	Now func() time.Time
 }

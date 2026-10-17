@@ -2,6 +2,7 @@ package frontend_test
 
 import (
 	"testing"
+	"time"
 
 	"github.com/titpetric/task-ui/frontend"
 	"github.com/titpetric/task-ui/internal/assert"
@@ -26,4 +27,5 @@ func TestOptions(t *testing.T) {
 	assert.NotNil(t, opts.Env)
 	assert.Equal(t, f.root, opts.Root)
 	assert.Equal(t, "test", opts.Version)
+	assert.Equal(t, time.Friday, opts.Now().Weekday())
 }

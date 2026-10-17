@@ -93,15 +93,16 @@ func TestFolder_SidebarAndCards(t *testing.T) {
 func TestFolder_Hours(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
-	f.infra.Hours = "mon 0:00-0:01"
+	f.infra.Hours = "mon-fri 9-17\nfri 9-13"
 	f.infra.Job("plan").Hours = "daily 0-24"
 
+	// The fixture's clock is a Friday night.
 	body := f.page(t, asOps, "/f/infra")
-	assert.Contains(t, body, "mon 00:00-00:01 <span class=\"badge bad\">out of hours now</span>")
+	assert.Contains(t, body, "mon-fri 9-17, fri 9-13 <span class=\"badge bad\">out of hours now</span>")
 
 	job := f.page(t, asOps, "/f/infra/plan")
 	assert.Contains(t, job, "daily 0-24 <span class=\"badge ok\">open now</span>")
-	assert.Contains(t, job, "the folder runs mon 00:00-00:01")
+	assert.Contains(t, job, "the folder runs mon-fri 9-17, fri 9-13")
 
 	slow := f.page(t, asOps, "/f/infra/slow")
 	assert.Contains(t, slow, "out of hours now")

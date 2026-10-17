@@ -91,6 +91,7 @@ func New(ctx context.Context, cfg *Config, version string) (*App, error) {
 		Grace:        cfg.Grace,
 		KillTimeout:  cfg.Grace + 5*time.Second,
 		Keep:         cfg.Keep,
+		Now:          cfg.Clock(),
 	})
 	a.Scheduler = scheduler.NewLoop(schedules, a.Users, a.Catalogue, a.Runner)
 
@@ -107,7 +108,7 @@ func New(ctx context.Context, cfg *Config, version string) (*App, error) {
 	})
 	pages, err := frontend.New(frontend.Options{
 		Guard: a.Guard, Users: a.Users, Projects: projects, Runs: runs, Artifacts: artifacts, Schedules: schedules, Secrets: secrets,
-		Runner: a.Runner, Catalogue: a.Catalogue, Git: g, Keys: keys, Env: env, Root: cfg.Root, Version: version,
+		Runner: a.Runner, Catalogue: a.Catalogue, Git: g, Keys: keys, Env: env, Root: cfg.Root, Version: version, Now: cfg.Clock(),
 	})
 	if err != nil {
 		db.Close()
