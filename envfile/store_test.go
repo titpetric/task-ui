@@ -1,113 +1,121 @@
-package envfile
+package envfile_test
 
 import (
+	"context"
 	"os"
 	"path/filepath"
-	"slices"
 	"strings"
 	"testing"
 
+	_ "modernc.org/sqlite" // the driver storage opens
+
+	"github.com/titpetric/task-ui/envfile"
 	"github.com/titpetric/task-ui/folder"
-	"github.com/titpetric/task-ui/secret"
+	"github.com/titpetric/task-ui/internal/assert"
+	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/storage"
 )
 
-func newStore(t *testing.T) *Store {
+func newStore(t *testing.T) *envfile.Store {
 	t.Helper()
-	return &Store{Root: t.TempDir(), Secrets: &secret.Store{Root: t.TempDir()}}
+	db, err := storage.OpenAndMigrate(context.Background(), ":memory:")
+	assert.NoError(t, err)
+	t.Cleanup(func() { db.Close() })
+	return envfile.New(storage.NewEnvFileStorage(db), storage.NewSecretStorage(db))
+}
+
+func TestNew(t *testing.T) {
+	t.Parallel()
+	s := newStore(t)
+	assert.NotNil(t, s.Managed)
+	assert.NotNil(t, s.Secrets)
+}
+
+func TestSafeRelative(t *testing.T) {
+	t.Parallel()
+	rel, err := envfile.SafeRelative(" conf/./x.env ")
+	assert.NoError(t, err)
+	assert.Equal(t, "conf/x.env", rel)
+	for _, bad := range []string{"", "/etc/env", "../x.env", "$HOME/.env", "."} {
+		_, err := envfile.SafeRelative(bad)
+		assert.Error(t, err, bad)
+	}
 }
 
 func TestStore_Files(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
 	s := newStore(t)
 	dir := t.TempDir()
 	f := &folder.Folder{ID: "infra", Dir: dir, EnvFiles: []string{".env", "conf/deploy.env", "../outside.env"}}
-	if err := os.WriteFile(filepath.Join(dir, ".env"), []byte("PORT=8080\n# note\nNAME=\"my app\"\n"), 0o644); err != nil {
-		t.Fatal(err)
-	}
+	assert.NoError(t, os.WriteFile(filepath.Join(dir, ".env"), []byte("PORT=8080\n# note\nNAME=\"my app\"\n"), 0o644))
 
-	files := s.Files(f)
-	if len(files) != 2 {
-		t.Fatalf("files: %+v", files)
-	}
-	if !files[0].Exists || files[0].Managed || !slices.Equal(files[0].Keys, []string{"NAME", "PORT"}) {
-		t.Fatalf(".env: %+v", files[0])
-	}
-	if files[1].Exists || files[1].Managed {
-		t.Fatalf("deploy.env: %+v", files[1])
-	}
-	if _, err := s.File(f, "../outside.env"); err == nil {
-		t.Fatal("path outside the folder accepted")
-	}
-	if _, err := s.File(f, "$HOME/.env"); err == nil {
-		t.Fatal("path with a variable accepted")
-	}
+	files := s.Files(ctx, f)
+	assert.Len(t, files, 2)
+	assert.True(t, files[0].Exists)
+	assert.False(t, files[0].Managed)
+	assert.Equal(t, []string{"NAME", "PORT"}, files[0].Keys)
+	assert.False(t, files[1].Exists)
+	_, err := s.File(ctx, f, "../outside.env")
+	assert.Error(t, err)
 }
 
 func TestStore_Save(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
 	s := newStore(t)
 	dir := t.TempDir()
 	f := &folder.Folder{ID: "infra", Dir: dir, EnvFiles: []string{".env"}}
-	if err := s.Secrets.Set(secret.Secret{Scope: secret.ScopeAll, Key: "TOKEN", Value: "s3cret"}); err != nil {
-		t.Fatal(err)
-	}
-	if err := s.Secrets.Set(secret.Secret{Scope: "infra", Key: "PORT", Value: "9090"}); err != nil {
-		t.Fatal(err)
-	}
+	assert.NoError(t, s.Secrets.Set(ctx, &model.Secret{Scope: storage.ScopeAll, Name: "TOKEN", Content: "s3cret"}))
+	assert.NoError(t, s.Secrets.Set(ctx, &model.Secret{Scope: "infra", Name: "PORT", Content: "9090"}))
 
-	if err := s.Save(f, File{Path: ".env", Content: "PORT=8080\r\nNAME=app\r\n"}); err != nil {
-		t.Fatal(err)
-	}
-	data, _ := os.ReadFile(filepath.Join(dir, ".env"))
-	if content := string(data); !strings.HasPrefix(content, "PORT=8080\nNAME=app\n\n"+marker+"\nPORT=9090\nTOKEN=s3cret\n") {
-		t.Fatalf("generated .env: %q", content)
-	}
+	assert.NoError(t, s.Save(ctx, f, envfile.File{Path: ".env", Content: "PORT=8080\r\nNAME=app"}))
+	data, err := os.ReadFile(filepath.Join(dir, ".env"))
+	assert.NoError(t, err)
+	assert.True(t, strings.HasPrefix(string(data), "PORT=8080\nNAME=app\n\n"+envfile.Marker+"\nPORT=9090\nTOKEN=s3cret\n"), string(data))
 
 	// Reading it back shows the managed content, not the secrets.
-	file, _ := s.File(f, ".env")
-	if !file.Managed || file.Content != "PORT=8080\nNAME=app\n" {
-		t.Fatalf("managed .env: %+v", file)
-	}
-	if err := s.Save(f, File{Path: "../x.env", Content: "A=1"}); err == nil {
-		t.Fatal("saved outside the folder")
-	}
+	file, err := s.File(ctx, f, ".env")
+	assert.NoError(t, err)
+	assert.True(t, file.Managed)
+	assert.Equal(t, "PORT=8080\nNAME=app\n", file.Content)
+
+	assert.Error(t, s.Save(ctx, f, envfile.File{Path: "../x.env", Content: "A=1"}))
 }
 
 func TestStore_Generate(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
 	s := newStore(t)
 	dir := t.TempDir()
 	f := &folder.Folder{ID: "infra", Dir: dir, EnvFiles: []string{"conf/deploy.env", "../outside.env"}}
-	if err := s.Secrets.Set(secret.Secret{Scope: secret.ScopeAll, Key: "TOKEN", Value: "s3cret"}); err != nil {
-		t.Fatal(err)
-	}
+	assert.NoError(t, s.Secrets.Set(ctx, &model.Secret{Scope: storage.ScopeAll, Name: "TOKEN", Content: "s3cret"}))
 
-	// A file never saved and not in the folder is generated from the secrets.
-	if err := s.Generate(f); err == nil {
-		t.Fatal("expected the outside path to fail")
-	}
+	assert.Error(t, s.Generate(ctx, f), "the outside path fails")
 	data, err := os.ReadFile(filepath.Join(dir, "conf", "deploy.env"))
-	if err != nil || !strings.Contains(string(data), "TOKEN=s3cret") {
-		t.Fatalf("generated deploy.env: %q %v", data, err)
-	}
-	if _, err := os.Stat(filepath.Join(filepath.Dir(dir), "outside.env")); err == nil {
-		t.Fatal("wrote outside the folder")
-	}
+	assert.NoError(t, err)
+	assert.Contains(t, string(data), "TOKEN=s3cret")
+	assert.NoFileExists(t, filepath.Join(filepath.Dir(dir), "outside.env"))
 
-	// A folder file that was generated before reads back without the secrets.
+	// A folder file generated before reads back without the secrets.
 	unmanaged := &folder.Folder{ID: "web", Dir: t.TempDir(), EnvFiles: []string{".env"}}
-	if err := os.WriteFile(filepath.Join(unmanaged.Dir, ".env"), []byte("A=1\n\n"+marker+"\nTOKEN=old\n"), 0o600); err != nil {
-		t.Fatal(err)
-	}
-	file, _ := s.File(unmanaged, ".env")
-	if file.Content != "A=1\n" || !slices.Equal(file.Keys, []string{"A"}) {
-		t.Fatalf("stripped: %+v", file)
-	}
+	assert.NoError(t, os.WriteFile(filepath.Join(unmanaged.Dir, ".env"), []byte("A=1\n\n"+envfile.Marker+"\nTOKEN=old\n"), 0o600))
+	file, err := s.File(ctx, unmanaged, ".env")
+	assert.NoError(t, err)
+	assert.Equal(t, "A=1\n", file.Content)
+	assert.Equal(t, []string{"A"}, file.Keys)
+}
 
-	// Without secrets the file is the content alone.
-	plain := newStore(t)
-	if err := plain.Generate(unmanaged); err != nil {
-		t.Fatal(err)
-	}
-	data, _ = os.ReadFile(filepath.Join(unmanaged.Dir, ".env"))
-	if string(data) != "A=1\n" {
-		t.Fatalf("plain generate: %q", data)
-	}
+func TestStripGenerated(t *testing.T) {
+	t.Parallel()
+	assert.Equal(t, "A=1\n", envfile.StripGenerated("A=1\n\n"+envfile.Marker+"\nX=y\n"))
+	assert.Equal(t, "A=1\n", envfile.StripGenerated("A=1\n"))
+}
+
+func TestRender(t *testing.T) {
+	t.Parallel()
+	assert.Equal(t, "", envfile.Render("", nil))
+	assert.Equal(t, "A=1\n", envfile.Render("A=1", nil))
+	assert.Equal(t, envfile.Marker+"\nX=y\n", envfile.Render("", map[string]string{"X": "y"}))
+	assert.Equal(t, "A=1\n\n"+envfile.Marker+"\nX=y\n", envfile.Render("A=1\n", map[string]string{"X": "y"}))
 }

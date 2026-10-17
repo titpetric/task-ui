@@ -1,6 +1,3 @@
-// Package envfile manages the dotenv files a folder's sources read: the
-// content an admin edits, and the file generated into the folder with the
-// secrets appended before each run.
 package envfile
 
 // File is a dotenv file a folder reads, as task-ui manages it.
@@ -16,4 +13,15 @@ type File struct {
 	Content string `json:"-"`
 	// Keys are the variable names the content declares.
 	Keys []string `json:"keys"`
+}
+
+// State names what the folder page shows for the file.
+func (f File) State() string {
+	switch {
+	case f.Managed:
+		return "managed"
+	case f.Exists:
+		return "in folder"
+	}
+	return "missing"
 }

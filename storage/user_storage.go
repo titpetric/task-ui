@@ -4,18 +4,16 @@ import (
 	"context"
 	"errors"
 
-	"github.com/jmoiron/sqlx"
-
 	"github.com/titpetric/task-ui/model"
 )
 
 // UserStorage keeps the users.
 type UserStorage struct {
-	db *sqlx.DB
+	db DB
 }
 
 // NewUserStorage returns the storage over a pool.
-func NewUserStorage(db *sqlx.DB) *UserStorage {
+func NewUserStorage(db DB) *UserStorage {
 	return &UserStorage{db: db}
 }
 

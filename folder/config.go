@@ -2,6 +2,8 @@ package folder
 
 import (
 	"strings"
+
+	"github.com/titpetric/task-ui/model"
 )
 
 // Config overrides or declares a folder in task-ui.yml.
@@ -54,4 +56,29 @@ func (c Config) Apply(f *Folder) {
 			job.Allow = allow
 		}
 	}
+}
+
+// ConfigOf reads a project row as the configuration of its folder.
+func ConfigOf(p *model.Project) Config {
+	if p == nil {
+		return Config{}
+	}
+	return Config{
+		ID:          p.Folder,
+		Title:       p.Title,
+		Description: p.Description,
+		Allow:       p.AllowList(),
+		Commands:    p.CommandMap(),
+		Sources:     p.SourceList(),
+		Jobs:        p.JobAllowMap(),
+	}
+}
+
+// ConfigsOf reads project rows as folder configurations.
+func ConfigsOf(projects []model.Project) []Config {
+	configs := make([]Config, 0, len(projects))
+	for i := range projects {
+		configs = append(configs, ConfigOf(&projects[i]))
+	}
+	return configs
 }

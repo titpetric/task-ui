@@ -4,19 +4,17 @@ import (
 	"context"
 	"errors"
 
-	"github.com/jmoiron/sqlx"
-
 	"github.com/titpetric/task-ui/model"
 )
 
 // EnvFileStorage keeps the managed content of the dotenv files folders
 // read.
 type EnvFileStorage struct {
-	db *sqlx.DB
+	db DB
 }
 
 // NewEnvFileStorage returns the storage over a pool.
-func NewEnvFileStorage(db *sqlx.DB) *EnvFileStorage {
+func NewEnvFileStorage(db DB) *EnvFileStorage {
 	return &EnvFileStorage{db: db}
 }
 

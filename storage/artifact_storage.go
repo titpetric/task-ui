@@ -6,18 +6,16 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/jmoiron/sqlx"
-
 	"github.com/titpetric/task-ui/model"
 )
 
 // ArtifactStorage keeps the files runs left behind.
 type ArtifactStorage struct {
-	db *sqlx.DB
+	db DB
 }
 
 // NewArtifactStorage returns the storage over a pool.
-func NewArtifactStorage(db *sqlx.DB) *ArtifactStorage {
+func NewArtifactStorage(db DB) *ArtifactStorage {
 	return &ArtifactStorage{db: db}
 }
 

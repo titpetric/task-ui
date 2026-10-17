@@ -5,14 +5,14 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/jmoiron/sqlx"
+	_ "modernc.org/sqlite" // the driver storage opens
 
 	"github.com/titpetric/task-ui/internal/assert"
 	"github.com/titpetric/task-ui/storage"
 )
 
 // newDB opens a private in-memory database with the schema applied.
-func newDB(t *testing.T) *sqlx.DB {
+func newDB(t *testing.T) storage.DB {
 	t.Helper()
 	db, err := storage.OpenAndMigrate(context.Background(), ":memory:")
 	assert.NoError(t, err)
@@ -24,7 +24,8 @@ func TestOpen(t *testing.T) {
 	t.Parallel()
 	db, err := storage.Open("")
 	assert.NoError(t, err)
-	assert.NoError(t, db.Ping())
+	var pool storage.DB = db
+	assert.NoError(t, pool.Ping())
 	assert.Equal(t, 1, db.Stats().MaxOpenConnections)
 	db.Close()
 

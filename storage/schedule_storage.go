@@ -5,18 +5,16 @@ import (
 	"errors"
 	"time"
 
-	"github.com/jmoiron/sqlx"
-
 	"github.com/titpetric/task-ui/model"
 )
 
 // ScheduleStorage keeps the schedules.
 type ScheduleStorage struct {
-	db *sqlx.DB
+	db DB
 }
 
 // NewScheduleStorage returns the storage over a pool.
-func NewScheduleStorage(db *sqlx.DB) *ScheduleStorage {
+func NewScheduleStorage(db DB) *ScheduleStorage {
 	return &ScheduleStorage{db: db}
 }
 

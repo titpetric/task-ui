@@ -4,18 +4,16 @@ import (
 	"context"
 	"errors"
 
-	"github.com/jmoiron/sqlx"
-
 	"github.com/titpetric/task-ui/model"
 )
 
 // ProjectStorage keeps what the configuration says about folders.
 type ProjectStorage struct {
-	db *sqlx.DB
+	db DB
 }
 
 // NewProjectStorage returns the storage over a pool.
-func NewProjectStorage(db *sqlx.DB) *ProjectStorage {
+func NewProjectStorage(db DB) *ProjectStorage {
 	return &ProjectStorage{db: db}
 }
 
