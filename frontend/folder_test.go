@@ -65,10 +65,10 @@ func TestFolder_SidebarAndCards(t *testing.T) {
 	session := f.start(t, f.infra, "slow")
 
 	body := f.page(t, asOps, "/f/infra")
-	assert.Contains(t, body, `<details class="folder active" data-folder="infra" open>`)
+	assert.Contains(t, body, `<details class="folder active" data-folder="infra" style="--depth: 0" open>`)
 	// Few jobs: every folder opens; the sidebar runs a job in place and
 	// attaches to the one running.
-	assert.Contains(t, body, `<details class="folder" data-folder="private" open>`)
+	assert.Contains(t, body, `<details class="folder" data-folder="private" style="--depth: 0" open>`)
 	assert.Contains(t, body, `<div class="job" data-job-key="infra/plan">`)
 	assert.Contains(t, body, `class="play" data-run data-folder="infra" data-job="plan"`)
 	assert.Contains(t, body, `<div class="job" data-job-key="infra/slow">
@@ -105,4 +105,32 @@ func TestFolder_Hours(t *testing.T) {
 
 	slow := f.page(t, asOps, "/f/infra/slow")
 	assert.Contains(t, slow, "out of hours now")
+}
+
+// A nested folder has a path for an ID: its page, its jobs and its env
+// files resolve under it, and the sidebar indents it under its parent.
+func TestFolder_Nested(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+
+	body := f.page(t, asAdmin, "/f/infra/edge")
+	assert.Contains(t, body, `<details class="folder active" data-folder="infra/edge" style="--depth: 1" open>`)
+	assert.Contains(t, body, `<details class="folder" data-folder="infra" style="--depth: 0" open>`)
+	assert.Contains(t, body, `<a href="/f/infra/edge"><svg class="ic"><use href="#i-folder-open"/></svg><span>edge</span></a>`)
+	assert.Contains(t, body, `<a href="/f/infra">infra</a>`)
+	assert.Contains(t, body, `class="play" data-run data-folder="infra/edge" data-job="deploy"`)
+
+	job := f.page(t, asAdmin, "/f/infra/edge/deploy")
+	assert.Contains(t, job, "<h2>deploy")
+	assert.Contains(t, job, `<span><a href="/f/infra/edge">edge</a></span><span>deploy</span>`)
+
+	env := f.page(t, asAdmin, "/f/infra/edge/env/.env")
+	assert.Contains(t, env, `data-api="/api/env/infra/edge/.env"`)
+
+	assert.Equal(t, http.StatusNotFound, f.get(t, asAdmin, "/f/infra/edge/nothing").Status)
+	assert.Equal(t, http.StatusNotFound, f.get(t, asAdmin, "/f/infra/edge/deploy/more").Status)
+	assert.Equal(t, http.StatusNotFound, f.get(t, asAdmin, "/f/infra/nope/deploy").Status)
+	// The limited user sees infra, not the folder inside it.
+	assert.Equal(t, http.StatusNotFound, f.get(t, asLimited, "/f/infra/edge").Status)
+	assert.Equal(t, http.StatusOK, f.get(t, asAdmin, "/settings/projects/infra/edge").Status)
 }

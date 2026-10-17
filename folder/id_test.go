@@ -26,3 +26,16 @@ func TestValidID(t *testing.T) {
 		t.Fatal("invalid ids accepted")
 	}
 }
+
+func TestValidID_Paths(t *testing.T) {
+	for id, want := range map[string]bool{"infra": true, "services/api": true, "a/b/c": true, "a//b": false, "/a": false, "a/": false, "..": false, "a/../b": false, "": false} {
+		if ValidID(id) != want {
+			t.Errorf("ValidID(%q) = %v", id, !want)
+		}
+	}
+	for rel, want := range map[string]string{"services/api": "services/api", "./a/b c": "a/b-c", "": "default", ".": "default"} {
+		if got := PathID(rel); got != want {
+			t.Errorf("PathID(%q) = %q, want %q", rel, got, want)
+		}
+	}
+}

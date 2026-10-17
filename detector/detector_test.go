@@ -107,3 +107,18 @@ func TestDescribeFromComment(t *testing.T) {
 		}
 	}
 }
+
+func TestHasPipeline(t *testing.T) {
+	dir := t.TempDir()
+	write(t, filepath.Join(dir, "Makefile"), "build:\n\tgo build\n")
+	if HasPipeline(dir) {
+		t.Fatal("a Makefile is not a pipeline")
+	}
+	write(t, filepath.Join(dir, "atkins.yml"), "jobs:\n  build: go build\n")
+	if !HasPipeline(dir) {
+		t.Fatal("atkins.yml is a pipeline")
+	}
+	if !Pipeline("task") || Pipeline("make") || !slices.Equal(PipelineKinds, []string{"atkins", "task"}) {
+		t.Fatal("pipeline kinds")
+	}
+}

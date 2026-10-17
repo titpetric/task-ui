@@ -2,6 +2,7 @@ package frontend
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/titpetric/task-ui/access"
 	"github.com/titpetric/task-ui/folder"
@@ -10,26 +11,33 @@ import (
 	"github.com/titpetric/task-ui/storage"
 )
 
-// visibleFolder returns the folder a route names when the user may see
-// it, or nil.
-func (h *Handlers) visibleFolder(r *http.Request) *folder.Folder {
-	f := h.opts.Catalogue.Find(param(r, "folder"))
+// folderPath serves everything under /f: the folder a path names, a
+// job of it, or one of its env files. Folders nest, so the longest
+// folder that starts the path is the one meant.
+func (h *Handlers) folderPath(w http.ResponseWriter, r *http.Request) {
+	path := param(r, "*")
+	f, rest := folder.Resolve(h.opts.Catalogue, path)
 	if f == nil || !access.UserFrom(r.Context()).CanSee(f.ID) {
-		return nil
+		h.missing(w, r, "No folder named "+path+".")
+		return
 	}
-	return f
+	switch {
+	case rest == "":
+		h.folder(w, r, f)
+	case strings.HasPrefix(rest, "env/"):
+		h.envFile(w, r, f, strings.TrimPrefix(rest, "env/"))
+	case !strings.Contains(rest, "/"):
+		h.job(w, r, f, rest)
+	default:
+		h.missing(w, r, "There is nothing at /f/"+path+".")
+	}
 }
 
 // folder shows a folder: its jobs, what it is, its env files.
-func (h *Handlers) folder(w http.ResponseWriter, r *http.Request) {
-	f := h.visibleFolder(r)
-	if f == nil {
-		h.missing(w, r, "No folder named "+param(r, "folder")+".")
-		return
-	}
+func (h *Handlers) folder(w http.ResponseWriter, r *http.Request, f *folder.Folder) {
 	p := h.page(r, f.Title)
 	p.Folder = f
-	p.Crumbs = view.Crumbs(f.ID)
+	p.Crumbs = crumbsOf(f.ID, "")
 	if h.opts.Git != nil && h.opts.Git.IsRepo(f.Dir) {
 		p.Checkout = h.opts.Git.Info(f.Dir)
 	}

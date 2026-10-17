@@ -5,6 +5,7 @@ import (
 
 	"github.com/titpetric/task-ui/access"
 	"github.com/titpetric/task-ui/envfile"
+	"github.com/titpetric/task-ui/folder"
 )
 
 // EnvRequest saves the managed content of an env file.
@@ -20,22 +21,23 @@ type EnvView struct {
 	Secrets []string `json:"secrets"`
 }
 
-// listEnv returns the env files a folder's sources read, without content.
-func (h *Handlers) listEnv(w http.ResponseWriter, r *http.Request) {
-	f := h.visibleFolder(access.UserFrom(r.Context()), param(r, "folder"))
-	if f == nil {
-		fail(w, http.StatusNotFound, "no such folder")
-		return
+// envTarget resolves the folder and the file a route names: the folder
+// alone lists its files, folder/path is one of them.
+func (h *Handlers) envTarget(r *http.Request) (*folder.Folder, string) {
+	f, rest := folder.Resolve(h.opts.Catalogue, param(r, "*"))
+	if f == nil || !access.UserFrom(r.Context()).CanSee(f.ID) {
+		return nil, ""
 	}
+	return f, rest
+}
+
+// listEnv returns the env files a folder's sources read, without content.
+func (h *Handlers) listEnv(w http.ResponseWriter, r *http.Request, f *folder.Folder) {
 	writeJSON(w, http.StatusOK, map[string]any{"files": h.opts.Env.Files(r.Context(), f)})
 }
 
 // envView loads a file with what admins may see of it.
-func (h *Handlers) envView(r *http.Request, f, path string) (*EnvView, error) {
-	fold := h.opts.Catalogue.Find(f)
-	if fold == nil {
-		return nil, storageNotFound
-	}
+func (h *Handlers) envView(r *http.Request, fold *folder.Folder, path string) (*EnvView, error) {
 	file, err := h.opts.Env.File(r.Context(), fold, path)
 	if err != nil {
 		return nil, err
@@ -51,13 +53,23 @@ func (h *Handlers) envView(r *http.Request, f, path string) (*EnvView, error) {
 	return &EnvView{File: file, Content: file.Content, Secrets: sorted(names)}, nil
 }
 
-// getEnv returns an env file with its content. Admins only: the content
-// may hold what the folder's own file keeps.
+// getEnv lists a folder's env files, or returns one with its content.
+// The content is for admins only: it may hold what the folder's own
+// file keeps.
 func (h *Handlers) getEnv(w http.ResponseWriter, r *http.Request) {
+	f, path := h.envTarget(r)
+	if f == nil {
+		fail(w, http.StatusNotFound, "no such folder")
+		return
+	}
+	if path == "" {
+		h.listEnv(w, r, f)
+		return
+	}
 	if !requireAdmin(w, r) {
 		return
 	}
-	view, err := h.envView(r, param(r, "folder"), param(r, "*"))
+	view, err := h.envView(r, f, path)
 	if err != nil {
 		fail(w, statusOf(err), err.Error())
 		return
@@ -76,17 +88,17 @@ func (h *Handlers) putEnv(w http.ResponseWriter, r *http.Request) {
 		fail(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	fold := h.opts.Catalogue.Find(param(r, "folder"))
-	if fold == nil {
+	fold, path := h.envTarget(r)
+	if fold == nil || path == "" {
 		fail(w, http.StatusNotFound, "no such folder")
 		return
 	}
-	file := envfile.File{Folder: fold.ID, Path: param(r, "*"), Content: req.Content}
+	file := envfile.File{Folder: fold.ID, Path: path, Content: req.Content}
 	if err := h.opts.Env.Save(r.Context(), fold, file); err != nil {
 		fail(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	view, err := h.envView(r, fold.ID, file.Path)
+	view, err := h.envView(r, fold, file.Path)
 	if err != nil {
 		fail(w, statusOf(err), err.Error())
 		return

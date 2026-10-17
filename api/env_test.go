@@ -76,3 +76,27 @@ func TestEnv_Refused(t *testing.T) {
 
 	assert.Equal(t, http.StatusBadRequest, f.call(t, asAdmin, http.MethodPut, "/env/infra/.env", nil).Status)
 }
+
+// A nested folder's env files resolve under its path.
+func TestEnv_Nested(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	f.withKey(t)
+
+	list := f.call(t, asAdmin, http.MethodGet, "/env/infra/edge", nil)
+	assert.Equal(t, http.StatusOK, list.Status, string(list.Raw))
+	assert.Len(t, list.list("files"), 1)
+
+	put := f.call(t, asAdmin, http.MethodPut, "/env/infra/edge/.env", api.EnvRequest{Content: "EDGE=1"})
+	assert.Equal(t, http.StatusOK, put.Status, string(put.Raw))
+	assert.Equal(t, "infra/edge", put.str("folder"))
+	assert.FileExists(t, filepath.Join(f.root, "infra", "edge", ".env"))
+
+	got := f.call(t, asAdmin, http.MethodGet, "/env/infra/edge/.env", nil)
+	assert.Equal(t, "EDGE=1\n", got.str("content"))
+
+	project := f.call(t, asAdmin, http.MethodPut, "/projects/infra/edge", api.ProjectRequest{Title: "Edge"})
+	assert.Equal(t, http.StatusOK, project.Status, string(project.Raw))
+	assert.Equal(t, "infra/edge", project.str("folder"))
+	assert.Equal(t, http.StatusOK, f.call(t, asAdmin, http.MethodGet, "/projects/infra/edge", nil).Status)
+}

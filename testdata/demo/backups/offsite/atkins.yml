@@ -1,0 +1,11 @@
+name: Offsite
+help: The copy of the backups at the other site.
+jobs:
+  sync:
+    desc: "Push the latest dumps to the offsite bucket"
+    steps:
+      - run: echo "rclone sync /backup offsite:backup"
+  verify:
+    desc: "Compare checksums with the offsite copy"
+    steps:
+      - run: echo "checksums match, 12 files"

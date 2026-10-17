@@ -35,7 +35,7 @@ func (h *Handlers) projectEdit(w http.ResponseWriter, r *http.Request) {
 	if !h.requireAdmin(w, r) {
 		return
 	}
-	id := param(r, "folder")
+	id := strings.Trim(param(r, "*"), "/")
 	f := h.opts.Catalogue.Find(id)
 	if f == nil {
 		if !folder.ValidID(id) {

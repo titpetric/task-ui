@@ -13,22 +13,46 @@ func TestLoad(t *testing.T) {
 	write(t, filepath.Join(dir, "scripts", "build.sh"), "# Build with the script\n")
 	write(t, filepath.Join(dir, "package.json"), `{"name": "site", "description": "The site"}`)
 
+	// The pipeline file stands for the folder: the Makefile, the scripts
+	// and the package scripts beside it are not jobs of their own.
 	f := Load("site", dir)
 	ids := []string{}
 	for _, job := range f.Jobs {
 		ids = append(ids, job.ID)
 	}
-	if want := []string{"task:build", "make:build", "script:build"}; !slices.Equal(ids, want) {
+	if want := []string{"build"}; !slices.Equal(ids, want) {
 		t.Fatalf("ids: %v", ids)
 	}
-	if f.Title != "site" || f.Description != "The site" {
-		t.Fatalf("title from the first named source: %q %q", f.Title, f.Description)
+	if len(f.Sources) != 1 || f.Sources[0].Kind != "task" || f.Description != "" {
+		t.Fatalf("pipeline only: %+v", f.Sources)
 	}
-	if job := f.Job("make:build"); !slices.Equal(job.Command, []string{"make", "build"}) || job.Key() != "site/make:build" || job.Source != "Makefile" {
+
+	// The configuration can still widen a folder to the other conventions.
+	wide := Load("site", dir, "task", "make", "script", "npm")
+	ids = ids[:0]
+	for _, job := range wide.Jobs {
+		ids = append(ids, job.ID)
+	}
+	if want := []string{"task:build", "make:build", "script:build"}; !slices.Equal(ids, want) {
+		t.Fatalf("widened ids: %v", ids)
+	}
+	if wide.Title != "site" || wide.Description != "The site" {
+		t.Fatalf("title from the first named source: %q %q", wide.Title, wide.Description)
+	}
+	if job := wide.Job("make:build"); !slices.Equal(job.Command, []string{"make", "build"}) || job.Key() != "site/make:build" || job.Source != "Makefile" {
 		t.Fatalf("make:build: %+v", job)
 	}
-	if script := f.Job("script:build"); !slices.Equal(script.Command, []string{"sh", "scripts/build.sh"}) || script.Description != "Build with the script" {
+	if script := wide.Job("script:build"); !slices.Equal(script.Command, []string{"sh", "scripts/build.sh"}) || script.Description != "Build with the script" {
 		t.Fatalf("script: %+v", script)
+	}
+
+	// Without a pipeline file every convention is a source.
+	plain := t.TempDir()
+	write(t, filepath.Join(plain, "Makefile"), "build:\n\tgo build\n")
+	write(t, filepath.Join(plain, "scripts", "build.sh"), "# Build with the script\n")
+	mixed := Load("tools", plain)
+	if len(mixed.Sources) != 2 || mixed.Job("make:build") == nil || mixed.Job("script:build") == nil {
+		t.Fatalf("mixed: %+v", mixed.Jobs)
 	}
 
 	only := Load("site", dir, "make")
@@ -47,8 +71,12 @@ func TestLoadErrors(t *testing.T) {
 	write(t, filepath.Join(dir, "atkins.yml"), "jobs: [unclosed")
 	write(t, filepath.Join(dir, "Makefile"), "build:\n\tgo build\n")
 	f := Load("bad", dir)
-	if f.Error == "" || len(f.Jobs) != 1 || f.Jobs[0].ID != "make:build" {
-		t.Fatalf("broken source keeps the others: %+v", f)
+	if f.Error == "" || len(f.Jobs) != 0 || len(f.Sources) != 1 {
+		t.Fatalf("a broken pipeline is still the folder's pipeline: %+v", f)
+	}
+	wide := Load("bad", dir, "atkins", "make")
+	if wide.Error == "" || len(wide.Jobs) != 1 || wide.Jobs[0].ID != "make:build" {
+		t.Fatalf("broken source keeps the others when widened: %+v", wide)
 	}
 }
 

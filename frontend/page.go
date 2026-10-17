@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"net/http"
 	"sort"
+	"strings"
 
 	"github.com/titpetric/task-ui/access"
 	"github.com/titpetric/task-ui/frontend/view"
@@ -127,4 +128,24 @@ func (h *Handlers) requireAdmin(w http.ResponseWriter, r *http.Request) bool {
 	p.Error = "Settings are for admins."
 	h.render(w, http.StatusForbidden, "notfound", p)
 	return false
+}
+
+// crumbsOf walks a nested folder ID into a breadcrumb, one step per
+// segment, with a last step that has no link when given.
+func crumbsOf(id, last string) []view.Crumb {
+	var crumbs []view.Crumb
+	path := ""
+	for _, segment := range strings.Split(id, "/") {
+		if path != "" {
+			path += "/"
+		}
+		path += segment
+		crumbs = append(crumbs, view.Crumb{Text: segment, Href: "/f/" + path})
+	}
+	if last != "" {
+		crumbs = append(crumbs, view.Crumb{Text: last})
+	} else if len(crumbs) > 0 {
+		crumbs[len(crumbs)-1].Href = ""
+	}
+	return crumbs
 }

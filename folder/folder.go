@@ -5,6 +5,7 @@ package folder
 
 import (
 	"slices"
+	"strings"
 
 	"github.com/titpetric/task-ui/detector"
 )
@@ -86,4 +87,26 @@ func (f *Folder) HoursOf(job *Job) string {
 		return ""
 	}
 	return f.Hours
+}
+
+// Name is the last segment of the ID: what the sidebar shows at its depth.
+func (f *Folder) Name() string {
+	if i := strings.LastIndex(f.ID, "/"); i >= 0 {
+		return f.ID[i+1:]
+	}
+	return f.ID
+}
+
+// Depth is how far below the root the folder is: zero for a folder of
+// the root, one for a folder inside one of those.
+func (f *Folder) Depth() int {
+	return strings.Count(f.ID, "/")
+}
+
+// Parent is the ID of the folder above, or "" at the top.
+func (f *Folder) Parent() string {
+	if i := strings.LastIndex(f.ID, "/"); i >= 0 {
+		return f.ID[:i]
+	}
+	return ""
 }

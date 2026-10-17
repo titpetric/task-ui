@@ -63,3 +63,48 @@ func TestDiscovery(t *testing.T) {
 		t.Fatal("discovery off still listed folders")
 	}
 }
+
+// Discovery goes deep: a nested folder with a pipeline file is listed
+// at its path, in tree order. Under a pipeline folder the build files of
+// a source tree are not folders; under a plain folder they are.
+func TestDiscovery_Tree(t *testing.T) {
+	root := t.TempDir()
+	write(t, filepath.Join(root, "atkins.yml"), "name: Root\njobs:\n  all: echo all\n")
+	write(t, filepath.Join(root, "services", "api", "atkins.yml"), "jobs:\n  deploy: echo api\n")
+	write(t, filepath.Join(root, "services", "api", "edge", "atkins.yml"), "jobs:\n  deploy: echo edge\n")
+	write(t, filepath.Join(root, "services", "api", "internal", "Makefile"), "build:\n\tgo build\n")
+	write(t, filepath.Join(root, "cmd", "tool", "Makefile"), "build:\n\tgo build\n")
+	write(t, filepath.Join(root, "node_modules", "dep", "atkins.yml"), "jobs:\n  x: echo x\n")
+
+	d := &Discovery{Root: root, Discover: true}
+	ids := []string{}
+	for _, f := range d.List() {
+		ids = append(ids, f.ID)
+	}
+	if want := []string{filepath.Base(root), "services/api", "services/api/edge"}; !slices.Equal(ids, want) {
+		t.Fatalf("tree: got %v, want %v", ids, want)
+	}
+	edge := d.Find("services/api/edge")
+	if edge == nil || edge.Name() != "edge" || edge.Depth() != 2 || edge.Parent() != "services/api" || edge.Job("deploy") == nil {
+		t.Fatalf("edge: %+v", edge)
+	}
+	if api := d.Find("services/api"); api.Depth() != 1 || api.Parent() != "services" || api.Name() != "api" {
+		t.Fatalf("api: %+v", api)
+	}
+	if top := d.Find(filepath.Base(root)); top.Depth() != 0 || top.Parent() != "" {
+		t.Fatalf("root: %+v", top)
+	}
+
+	// A plain root: the build files are folders, as deep as they go.
+	plain := t.TempDir()
+	write(t, filepath.Join(plain, "lib", "Makefile"), "build:\n\tgo build\n")
+	write(t, filepath.Join(plain, "lib", "sub", "scripts", "run.sh"), "# Run\n")
+	write(t, filepath.Join(plain, "lib", "sub", "deeper", "atkins.yml"), "jobs:\n  x: echo x\n")
+	ids = ids[:0]
+	for _, f := range (&Discovery{Root: plain, Discover: true}).List() {
+		ids = append(ids, f.ID)
+	}
+	if want := []string{"lib", "lib/sub", "lib/sub/deeper"}; !slices.Equal(ids, want) {
+		t.Fatalf("plain tree: got %v, want %v", ids, want)
+	}
+}
