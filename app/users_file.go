@@ -3,73 +3,135 @@ package app
 import (
 	"context"
 	"errors"
-	"fmt"
 	"os"
+	"slices"
+	"time"
 
-	"gopkg.in/yaml.v3"
-
+	"github.com/titpetric/task-ui/access"
+	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/storage"
 )
 
-// UsersFile is the shape of task-ui.yml: the users to seed. The file is
-// the way in on a fresh instance; the users page takes over after.
+// UsersFile is the password file, htpasswd style, and the role lists
+// from the environment: who may sign in, and what they are. The file is
+// the truth: a user it does not name cannot sign in and is removed from
+// storage; a user it names gets the password it holds and the role the
+// lists give. It is re-read when it changes.
 type UsersFile struct {
-	Users []UserEntry `yaml:"users"`
+	Path string
+	// Admins and Viewers name the users with those roles; everyone else
+	// in the file is a runner.
+	Admins  []string
+	Viewers []string
+	// Interval is how often Watch looks at the file. Zero is five seconds.
+	Interval time.Duration
+
+	modified time.Time
 }
 
-// LoadUsersFile reads and validates a users file.
-func LoadUsersFile(path string) (*UsersFile, error) {
-	data, err := os.ReadFile(path)
+// NewUsersFile returns the file with the role lists.
+func NewUsersFile(path string, admins, viewers []string) *UsersFile {
+	return &UsersFile{Path: path, Admins: admins, Viewers: viewers, Interval: 5 * time.Second}
+}
+
+// Role returns the role of a user by name: the lists decide, admins first.
+func (f *UsersFile) Role(name string) string {
+	switch {
+	case slices.Contains(f.Admins, name):
+		return model.RoleAdmin
+	case slices.Contains(f.Viewers, name):
+		return model.RoleViewer
+	}
+	return model.RoleRunner
+}
+
+// Changed reports whether the file changed since the last Sync.
+func (f *UsersFile) Changed() bool {
+	info, err := os.Stat(f.Path)
 	if err != nil {
-		return nil, err
+		return false
 	}
-	var file UsersFile
-	if err := yaml.Unmarshal(data, &file); err != nil {
-		return nil, fmt.Errorf("%s: %w", path, err)
-	}
-	return &file, file.Validate()
+	return !info.ModTime().Equal(f.modified)
 }
 
-// Validate checks every entry and that the names are unique.
-func (f *UsersFile) Validate() error {
-	seen := map[string]bool{}
-	for _, entry := range f.Users {
-		if err := entry.Validate(); err != nil {
-			return err
-		}
-		if seen[entry.Name] {
-			return errors.New("user " + entry.Name + " is listed twice")
-		}
-		seen[entry.Name] = true
+// Sync writes the file to storage: users it names are created or
+// updated with its hash and their role, users it does not name are
+// removed. It returns how many were created and removed.
+func (f *UsersFile) Sync(ctx context.Context, users *storage.UserStorage) (int, int, error) {
+	info, err := os.Stat(f.Path)
+	if err != nil {
+		return 0, 0, err
 	}
-	return nil
-}
+	creds, err := access.LoadHtpasswd(f.Path)
+	if err != nil {
+		return 0, 0, err
+	}
+	existing, err := users.List(ctx)
+	if err != nil {
+		return 0, 0, err
+	}
+	byName := map[string]*model.User{}
+	for i := range existing {
+		byName[existing[i].Name] = &existing[i]
+	}
 
-// Seed writes the entries to storage: a user that is not there is
-// created, one that is gets the role, folders and password of the file.
-// It returns how many were created.
-func (f *UsersFile) Seed(ctx context.Context, users *storage.UserStorage) (int, error) {
 	created := 0
-	for _, entry := range f.Users {
-		user, err := entry.User()
-		if err != nil {
-			return created, err
-		}
-		existing, err := users.GetByName(ctx, user.Name)
-		if errors.Is(err, storage.ErrNotFound) {
+	named := map[string]bool{}
+	for _, cred := range creds {
+		named[cred.Name] = true
+		user, ok := byName[cred.Name]
+		if !ok {
+			user = &model.User{Name: cred.Name, Password: cred.Hash, Role: f.Role(cred.Name)}
 			if err := users.Create(ctx, user); err != nil {
-				return created, err
+				return created, 0, err
 			}
 			created++
 			continue
 		}
-		if err != nil {
-			return created, err
+		if user.Password == cred.Hash && user.Role == f.Role(cred.Name) {
+			continue
 		}
-		existing.Role, existing.Folders, existing.Password = user.Role, user.Folders, user.Password
-		if err := users.Update(ctx, existing); err != nil {
-			return created, err
+		user.Password, user.Role = cred.Hash, f.Role(cred.Name)
+		if err := users.Update(ctx, user); err != nil {
+			return created, 0, err
 		}
 	}
-	return created, nil
+
+	removed := 0
+	for _, user := range existing {
+		if named[user.Name] {
+			continue
+		}
+		if err := users.Delete(ctx, user.ID); err != nil {
+			return created, removed, err
+		}
+		removed++
+	}
+	f.modified = info.ModTime()
+	return created, removed, nil
+}
+
+// Watch syncs the file whenever it changes, until the context ends. A
+// file that stops parsing keeps the users as they are: a typo must not
+// lock everyone out.
+func (f *UsersFile) Watch(ctx context.Context, users *storage.UserStorage, report func(error)) {
+	interval := f.Interval
+	if interval <= 0 {
+		interval = 5 * time.Second
+	}
+	ticker := time.NewTicker(interval)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+		}
+		if !f.Changed() {
+			continue
+		}
+		if _, _, err := f.Sync(ctx, users); err != nil && !errors.Is(err, context.Canceled) {
+			report(err)
+		}
+	}
 }

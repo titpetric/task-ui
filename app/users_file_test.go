@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/titpetric/task-ui/access"
 	"github.com/titpetric/task-ui/app"
@@ -13,61 +14,134 @@ import (
 	"github.com/titpetric/task-ui/storage"
 )
 
-// usersYAML writes a users file and returns its path.
-func usersYAML(t *testing.T, content string) string {
+// htpasswdFile writes a password file with one line per name, every
+// password "demo", and returns its path.
+func htpasswdFile(t *testing.T, names ...string) string {
 	t.Helper()
-	path := filepath.Join(t.TempDir(), "task-ui.yml")
-	assert.NoError(t, os.WriteFile(path, []byte(content), 0o644))
+	path := filepath.Join(t.TempDir(), ".htpasswd")
+	hash, err := access.HashPassword("demo")
+	assert.NoError(t, err)
+	content := ""
+	for _, name := range names {
+		content += name + ":" + hash + "\n"
+	}
+	assert.NoError(t, os.WriteFile(path, []byte(content), 0o600))
 	return path
 }
 
-func TestLoadUsersFile(t *testing.T) {
-	t.Parallel()
-
-	file, err := app.LoadUsersFile(usersYAML(t, "users:\n  - name: admin\n    password: demo\n    role: admin\n  - name: guest\n    password: demo\n    folders: [infra]\n"))
-	assert.NoError(t, err)
-	assert.Len(t, file.Users, 2)
-	assert.Equal(t, model.RoleAdmin, file.Users[0].Role)
-	assert.Equal(t, []string{"infra"}, file.Users[1].Folders)
-
-	_, err = app.LoadUsersFile(filepath.Join(t.TempDir(), "missing.yml"))
-	assert.Error(t, err)
-	_, err = app.LoadUsersFile(usersYAML(t, "users: [\n"))
-	assert.Error(t, err)
-	_, err = app.LoadUsersFile(usersYAML(t, "users:\n  - name: admin\n    password: x\n  - name: admin\n    password: y\n"))
-	assert.ErrorContains(t, err, "listed twice")
-	_, err = app.LoadUsersFile(usersYAML(t, "users:\n  - name: admin\n    password: x\n    role: king\n"))
-	assert.ErrorContains(t, err, "king")
-}
-
-func TestUsersFile_Seed(t *testing.T) {
-	t.Parallel()
-	ctx := context.Background()
-	db, err := storage.OpenAndMigrate(ctx, ":memory:")
+func newUsers(t *testing.T) *storage.UserStorage {
+	t.Helper()
+	db, err := storage.OpenAndMigrate(context.Background(), ":memory:")
 	assert.NoError(t, err)
 	t.Cleanup(func() { db.Close() })
-	users := storage.NewUserStorage(db)
+	return storage.NewUserStorage(db)
+}
 
-	file := &app.UsersFile{Users: []app.UserEntry{{Name: "admin", Password: "demo", Role: model.RoleAdmin}, {Name: "ops", Password: "demo", Role: model.RoleRunner}}}
-	assert.NoError(t, file.Validate())
-	created, err := file.Seed(ctx, users)
-	assert.NoError(t, err)
-	assert.Equal(t, 2, created)
+func TestNewUsersFile(t *testing.T) {
+	t.Parallel()
 
-	admin, err := users.GetByName(ctx, "admin")
+	f := app.NewUsersFile("/etc/task-ui/.htpasswd", []string{"admin"}, []string{"guest", "admin"})
+	assert.Equal(t, "/etc/task-ui/.htpasswd", f.Path)
+	assert.Equal(t, 5*time.Second, f.Interval)
+	assert.Equal(t, model.RoleAdmin, f.Role("admin"))
+	assert.Equal(t, model.RoleViewer, f.Role("guest"))
+	assert.Equal(t, model.RoleRunner, f.Role("ops"))
+	assert.False(t, f.Changed())
+}
+
+func TestUsersFile_Sync(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	users := newUsers(t)
+	path := htpasswdFile(t, "admin", "ops", "guest")
+	f := app.NewUsersFile(path, []string{"admin"}, []string{"guest"})
+
+	assert.True(t, f.Changed())
+	created, removed, err := f.Sync(ctx, users)
 	assert.NoError(t, err)
+	assert.Equal(t, 3, created)
+	assert.Equal(t, 0, removed)
+	assert.False(t, f.Changed())
+
+	admin := mustUser(t, users, "admin")
+	assert.Equal(t, model.RoleAdmin, admin.Role)
 	assert.True(t, access.CheckPassword(admin, "demo"))
+	assert.Equal(t, model.RoleRunner, mustUser(t, users, "ops").Role)
+	assert.Equal(t, model.RoleViewer, mustUser(t, users, "guest").Role)
 
-	// Seeding again changes what the file says and creates nothing.
-	file.Users[1].Role, file.Users[1].Password = model.RoleViewer, "changed"
-	created, err = file.Seed(ctx, users)
+	// A changed file: ops gets a new password and leaves the viewers,
+	// guest is gone, a newcomer arrives; folders set in the UI stay.
+	ops := mustUser(t, users, "ops")
+	ops.Folders = model.EncodeList([]string{"infra"})
+	assert.NoError(t, users.Update(ctx, ops))
+	reset, _ := access.HashPassword("changed")
+	assert.NoError(t, access.SetHtpasswd(path, "ops", reset))
+	assert.NoError(t, access.SetHtpasswd(path, "dev", reset))
+	data, _ := os.ReadFile(path)
+	assert.NoError(t, os.WriteFile(path, []byte(replaceLine(string(data), "guest")), 0o600))
+	f.Viewers = []string{"ops"}
+
+	created, removed, err = f.Sync(ctx, users)
 	assert.NoError(t, err)
-	assert.Equal(t, 0, created)
-	ops, err := users.GetByName(ctx, "ops")
-	assert.NoError(t, err)
-	assert.Equal(t, model.RoleViewer, ops.Role)
+	assert.Equal(t, 1, created)
+	assert.Equal(t, 1, removed)
+	ops = mustUser(t, users, "ops")
 	assert.True(t, access.CheckPassword(ops, "changed"))
+	assert.Equal(t, model.RoleViewer, ops.Role)
+	assert.Equal(t, []string{"infra"}, ops.FolderList())
 	assert.Equal(t, admin.ID, mustUser(t, users, "admin").ID)
+	_, err = users.GetByName(ctx, "guest")
+	assert.ErrorIs(t, err, storage.ErrNotFound)
+
+	// A missing or broken file syncs nothing.
+	f.Path = filepath.Join(t.TempDir(), "missing")
+	_, _, err = f.Sync(ctx, users)
+	assert.Error(t, err)
+	assert.NoError(t, os.WriteFile(path, []byte("broken\n"), 0o600))
+	f.Path = path
+	_, _, err = f.Sync(ctx, users)
+	assert.Error(t, err)
+	assert.Len(t, mustList(t, users), 3)
+}
+
+func TestUsersFile_Watch(t *testing.T) {
+	t.Parallel()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	users := newUsers(t)
+	path := htpasswdFile(t, "admin")
+	f := app.NewUsersFile(path, []string{"admin"}, nil)
+	f.Interval = 20 * time.Millisecond
+	_, _, err := f.Sync(ctx, users)
+	assert.NoError(t, err)
+
+	errs := make(chan error, 4)
+	done := make(chan struct{})
+	go func() {
+		f.Watch(ctx, users, func(err error) { errs <- err })
+		close(done)
+	}()
+
+	// A new line shows up without a restart.
+	hash, _ := access.HashPassword("demo")
+	time.Sleep(10 * time.Millisecond)
+	assert.NoError(t, access.SetHtpasswd(path, "ops", hash))
+	assert.NoError(t, os.Chtimes(path, time.Now(), time.Now().Add(time.Second)))
+	assert.Eventually(t, func() bool { return len(mustList(t, users)) == 2 }, 5*time.Second, 20*time.Millisecond)
+
+	// A broken file is reported and changes nothing.
+	assert.NoError(t, os.WriteFile(path, []byte("broken\n"), 0o600))
+	assert.NoError(t, os.Chtimes(path, time.Now(), time.Now().Add(2*time.Second)))
+	select {
+	case err := <-errs:
+		assert.ErrorContains(t, err, "line 1")
+	case <-time.After(5 * time.Second):
+		t.Fatal("the broken file was not reported")
+	}
+	assert.Len(t, mustList(t, users), 2)
+
+	cancel()
+	<-done
 }
 
 func mustUser(t *testing.T, users *storage.UserStorage, name string) *model.User {
@@ -75,4 +149,41 @@ func mustUser(t *testing.T, users *storage.UserStorage, name string) *model.User
 	user, err := users.GetByName(context.Background(), name)
 	assert.NoError(t, err)
 	return user
+}
+
+func mustList(t *testing.T, users *storage.UserStorage) []model.User {
+	t.Helper()
+	list, err := users.List(context.Background())
+	assert.NoError(t, err)
+	return list
+}
+
+// replaceLine drops the line of a user from a password file.
+func replaceLine(content, name string) string {
+	var out string
+	for _, line := range splitLines(content) {
+		if line != "" && !hasPrefix(line, name+":") {
+			out += line + "\n"
+		}
+	}
+	return out
+}
+
+func splitLines(s string) []string {
+	var lines []string
+	start := 0
+	for i := 0; i < len(s); i++ {
+		if s[i] == '\n' {
+			lines = append(lines, s[start:i])
+			start = i + 1
+		}
+	}
+	if start < len(s) {
+		lines = append(lines, s[start:])
+	}
+	return lines
+}
+
+func hasPrefix(s, prefix string) bool {
+	return len(s) >= len(prefix) && s[:len(prefix)] == prefix
 }

@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/spf13/pflag"
@@ -24,9 +25,15 @@ type Config struct {
 	// Discover lists every directory under Root with something to run.
 	// TASK_UI_DISCOVER, default true.
 	Discover bool
-	// UsersFile lists the users to seed. TASK_UI_CONFIG, --config, default
-	// task-ui.yml in Root when it exists.
-	UsersFile string
+	// Htpasswd is the password file, htpasswd style, read for sign in.
+	// TASK_UI_HTPASSWD, --htpasswd, default .htpasswd in Root when it
+	// exists.
+	Htpasswd string
+	// Admins and Viewers name the users with those roles, comma
+	// separated. TASK_UI_ADMINS, TASK_UI_VIEWERS. Everyone else in the
+	// file is a runner.
+	Admins  []string
+	Viewers []string
 	// DataDir holds the database, the recordings and the artifacts.
 	// TASK_UI_DATA, --data, default ./data.
 	DataDir string
@@ -60,6 +67,17 @@ func env(name, fallback string) string {
 	return fallback
 }
 
+// csv splits a comma separated list, trimmed, empties dropped.
+func csv(text string) []string {
+	var result []string
+	for _, item := range strings.Split(text, ",") {
+		if item = strings.TrimSpace(item); item != "" {
+			result = append(result, item)
+		}
+	}
+	return result
+}
+
 func envBool(name string, fallback bool) bool {
 	if parsed, err := strconv.ParseBool(os.Getenv(name)); err == nil {
 		return parsed
@@ -86,7 +104,9 @@ func NewConfig(args []string) (*Config, error) {
 		Listen:    env("TASK_UI_LISTEN", ":3000"),
 		Root:      env("TASK_UI_ROOT", "."),
 		Discover:  envBool("TASK_UI_DISCOVER", true),
-		UsersFile: env("TASK_UI_CONFIG", ""),
+		Htpasswd:  env("TASK_UI_HTPASSWD", ""),
+		Admins:    csv(env("TASK_UI_ADMINS", "")),
+		Viewers:   csv(env("TASK_UI_VIEWERS", "")),
 		DataDir:   env("TASK_UI_DATA", "data"),
 		DB:        env("TASK_UI_DB", ""),
 		SSHDir:    env("TASK_UI_SSH_DIR", filepath.Join(home, ".ssh")),
@@ -107,7 +127,7 @@ func NewConfig(args []string) (*Config, error) {
 	flags := pflag.NewFlagSet("task-ui", pflag.ContinueOnError)
 	flags.StringVarP(&cfg.Listen, "listen", "l", cfg.Listen, "Listen address (TASK_UI_LISTEN)")
 	flags.StringVar(&cfg.Root, "root", cfg.Root, "Root directory holding the folders (TASK_UI_ROOT)")
-	flags.StringVar(&cfg.UsersFile, "config", cfg.UsersFile, "Users file to seed from (TASK_UI_CONFIG)")
+	flags.StringVar(&cfg.Htpasswd, "htpasswd", cfg.Htpasswd, "Password file, htpasswd style (TASK_UI_HTPASSWD)")
 	flags.StringVar(&cfg.DataDir, "data", cfg.DataDir, "Data directory: database, recordings, artifacts (TASK_UI_DATA)")
 	flags.BoolVarP(&cfg.PrintBuildInfo, "version", "v", false, "Print build info")
 	if err := flags.Parse(args); err != nil {
@@ -124,12 +144,9 @@ func (c *Config) Validate() error {
 	if info, err := os.Stat(c.Root); err != nil || !info.IsDir() {
 		return fmt.Errorf("TASK_UI_ROOT: %s is not a directory", c.Root)
 	}
-	if c.UsersFile == "" {
-		for _, name := range []string{"task-ui.yml", "task-ui.yaml"} {
-			if _, err := os.Stat(filepath.Join(c.Root, name)); err == nil {
-				c.UsersFile = filepath.Join(c.Root, name)
-				break
-			}
+	if c.Htpasswd == "" {
+		if _, err := os.Stat(filepath.Join(c.Root, ".htpasswd")); err == nil {
+			c.Htpasswd = filepath.Join(c.Root, ".htpasswd")
 		}
 	}
 	if c.DB == "" {

@@ -17,17 +17,7 @@ func (h *Handlers) users(w http.ResponseWriter, r *http.Request) {
 	h.render(w, http.StatusOK, "users", p)
 }
 
-// userNew shows the form for a new user.
-func (h *Handlers) userNew(w http.ResponseWriter, r *http.Request) {
-	if !h.requireAdmin(w, r) {
-		return
-	}
-	p := h.page(r, "Add user")
-	p.Crumbs = view.Crumbs("Settings", "/settings", "Users", "/settings/users", "Add")
-	h.render(w, http.StatusOK, "user_form", p)
-}
-
-// userEdit shows the form of a user.
+// userEdit shows the folders of a user, to change.
 func (h *Handlers) userEdit(w http.ResponseWriter, r *http.Request) {
 	if !h.requireAdmin(w, r) {
 		return
@@ -37,7 +27,7 @@ func (h *Handlers) userEdit(w http.ResponseWriter, r *http.Request) {
 		h.missing(w, r, "No user with that ID.")
 		return
 	}
-	p := h.page(r, "Edit "+user.Name)
+	p := h.page(r, "Folders of "+user.Name)
 	p.Crumbs = view.Crumbs("Settings", "/settings", "Users", "/settings/users", user.Name)
 	p.Account = user
 	h.render(w, http.StatusOK, "user_form", p)

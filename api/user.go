@@ -2,20 +2,19 @@ package api
 
 import (
 	"net/http"
-	"strings"
 
-	"github.com/titpetric/task-ui/access"
 	"github.com/titpetric/task-ui/model"
 )
 
-// UserRequest creates or changes a user. An empty password on an update
-// keeps the one there is.
+// UserRequest changes what the instance keeps about a user: the folders
+// they see. Names, passwords and roles come from the password file and
+// the role lists, not from here.
 type UserRequest struct {
-	Name     string   `json:"name"`
-	Password string   `json:"password"`
-	Role     string   `json:"role"`
-	Folders  []string `json:"folders"`
+	Folders []string `json:"folders"`
 }
+
+// managedElsewhere is the answer to making or removing users here.
+const managedElsewhere = "users are managed in the password file: task-ui passwd <user> adds or resets one, removing the line removes the user; TASK_UI_ADMINS and TASK_UI_VIEWERS set the roles"
 
 // listUsers returns every user. Admins only.
 func (h *Handlers) listUsers(w http.ResponseWriter, r *http.Request) {
@@ -30,38 +29,15 @@ func (h *Handlers) listUsers(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"users": users})
 }
 
-// createUser adds a user with a hashed password.
+// createUser says where users are made.
 func (h *Handlers) createUser(w http.ResponseWriter, r *http.Request) {
 	if !requireAdmin(w, r) {
 		return
 	}
-	var req UserRequest
-	if err := readJSON(r, &req); err != nil {
-		fail(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	req.Name = strings.TrimSpace(req.Name)
-	if req.Name == "" || req.Password == "" {
-		fail(w, http.StatusBadRequest, "a user needs a name and a password")
-		return
-	}
-	hash, err := access.HashPassword(req.Password)
-	if err != nil {
-		failErr(w, err)
-		return
-	}
-	user := &model.User{Name: req.Name, Password: hash, Role: req.Role, Folders: model.EncodeList(req.Folders)}
-	if user.Role == "" {
-		user.Role = model.RoleViewer
-	}
-	if err := h.opts.Users.Create(r.Context(), user); err != nil {
-		fail(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	writeJSON(w, http.StatusCreated, user)
+	fail(w, http.StatusMethodNotAllowed, managedElsewhere)
 }
 
-// updateUser changes a user's role, folders, or password.
+// updateUser changes the folders a user sees. Empty shows them all.
 func (h *Handlers) updateUser(w http.ResponseWriter, r *http.Request) {
 	if !requireAdmin(w, r) {
 		return
@@ -76,20 +52,7 @@ func (h *Handlers) updateUser(w http.ResponseWriter, r *http.Request) {
 		fail(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	if req.Role != "" {
-		user.Role = req.Role
-	}
-	if req.Folders != nil {
-		user.Folders = model.EncodeList(req.Folders)
-	}
-	if req.Password != "" {
-		hash, err := access.HashPassword(req.Password)
-		if err != nil {
-			failErr(w, err)
-			return
-		}
-		user.Password = hash
-	}
+	user.Folders = model.EncodeList(req.Folders)
 	if err := h.opts.Users.Update(r.Context(), user); err != nil {
 		fail(w, http.StatusBadRequest, err.Error())
 		return
@@ -97,23 +60,10 @@ func (h *Handlers) updateUser(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, user)
 }
 
-// deleteUser removes a user. Not yourself: the instance keeps an admin.
+// deleteUser says where users are removed.
 func (h *Handlers) deleteUser(w http.ResponseWriter, r *http.Request) {
 	if !requireAdmin(w, r) {
 		return
 	}
-	id := param(r, "id")
-	if id == access.UserFrom(r.Context()).ID {
-		fail(w, http.StatusBadRequest, "you cannot delete yourself")
-		return
-	}
-	if _, err := h.opts.Users.Get(r.Context(), id); err != nil {
-		failErr(w, err)
-		return
-	}
-	if err := h.opts.Users.Delete(r.Context(), id); err != nil {
-		failErr(w, err)
-		return
-	}
-	w.WriteHeader(http.StatusNoContent)
+	fail(w, http.StatusMethodNotAllowed, managedElsewhere)
 }

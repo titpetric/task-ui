@@ -17,7 +17,7 @@ var ErrInvalidToken = errors.New("invalid session")
 
 // Sessions signs and verifies the session cookie: an HS256 JWT holding the
 // username. The role is looked up from the configuration on every request,
-// so a user removed from task-ui.yml loses access on their next click.
+// so a user removed from the password file loses access on their next click.
 type Sessions struct {
 	secret []byte
 	ttl    time.Duration

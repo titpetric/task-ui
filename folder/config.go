@@ -6,7 +6,7 @@ import (
 	"github.com/titpetric/task-ui/model"
 )
 
-// Config overrides or declares a folder in task-ui.yml.
+// Config overrides or declares a folder, from its project row.
 type Config struct {
 	ID          string   `yaml:"id"`
 	Path        string   `yaml:"path"`
