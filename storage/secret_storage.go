@@ -5,8 +5,6 @@ import (
 	"errors"
 	"regexp"
 
-	"github.com/jmoiron/sqlx"
-
 	"github.com/titpetric/task-ui/model"
 )
 
@@ -20,11 +18,11 @@ var ErrInvalidName = errors.New("a variable name is letters, digits and undersco
 
 // SecretStorage keeps the variables added to runs.
 type SecretStorage struct {
-	db *sqlx.DB
+	db DB
 }
 
 // NewSecretStorage returns the storage over a pool.
-func NewSecretStorage(db *sqlx.DB) *SecretStorage {
+func NewSecretStorage(db DB) *SecretStorage {
 	return &SecretStorage{db: db}
 }
 

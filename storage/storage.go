@@ -17,11 +17,14 @@ import (
 
 	"github.com/go-bridget/mig/migrate"
 	"github.com/jmoiron/sqlx"
+
 	"github.com/titpetric/pdo"
-	_ "modernc.org/sqlite" // the sqlite driver, registered as "sqlite"
 
 	"github.com/titpetric/task-ui/schema"
 )
+
+// DB is the shared connection pool every storage is built over.
+type DB = *sqlx.DB
 
 // Project is the migration project name recorded in the migrations table.
 const Project = "task-ui"
@@ -29,10 +32,11 @@ const Project = "task-ui"
 // ErrNotFound is returned when a row is not there.
 var ErrNotFound = errors.New("not found")
 
-// Open opens a sqlite database. An empty DSN or ":memory:" is a private
+// Open opens a sqlite database. The driver is the program's to link:
+// main imports modernc.org/sqlite for its side effect, as do the tests. An empty DSN or ":memory:" is a private
 // in-memory database held on one connection, which is what tests use;
 // anything else is a file.
-func Open(dsn string) (*sqlx.DB, error) {
+func Open(dsn string) (DB, error) {
 	memory := dsn == "" || dsn == ":memory:"
 	if memory {
 		dsn = ":memory:"
@@ -50,7 +54,7 @@ func Open(dsn string) (*sqlx.DB, error) {
 }
 
 // Migrate applies the schema migrations to the database.
-func Migrate(ctx context.Context, db *sqlx.DB) error {
+func Migrate(ctx context.Context, db DB) error {
 	m, err := migrate.NewManager(db, schema.Migrations(), Project)
 	if err != nil {
 		return err
@@ -60,7 +64,7 @@ func Migrate(ctx context.Context, db *sqlx.DB) error {
 }
 
 // OpenAndMigrate opens the database and brings it up to date.
-func OpenAndMigrate(ctx context.Context, dsn string) (*sqlx.DB, error) {
+func OpenAndMigrate(ctx context.Context, dsn string) (DB, error) {
 	db, err := Open(dsn)
 	if err != nil {
 		return nil, err
@@ -73,7 +77,7 @@ func OpenAndMigrate(ctx context.Context, dsn string) (*sqlx.DB, error) {
 }
 
 // client returns a request scoped pdo client over the shared pool.
-func client(db *sqlx.DB) *pdo.PDO {
+func client(db DB) *pdo.PDO {
 	return pdo.New(db)
 }
 

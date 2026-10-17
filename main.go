@@ -4,40 +4,16 @@ package main
 
 import (
 	"bufio"
-	"context"
-	"embed"
 	"errors"
 	"fmt"
 	"io"
-	"io/fs"
 	"os"
-	"os/signal"
 	"strings"
-	"syscall"
+
+	_ "modernc.org/sqlite" // the sqlite driver the storage opens
 
 	"github.com/titpetric/task-ui/access"
-	"github.com/titpetric/task-ui/server"
 )
-
-//go:embed templates/*.tpl public_html/static
-var files embed.FS
-
-// assets returns the embedded templates and static files, or the folder
-// named in TASK_UI_ASSETS, which serves them from disk while developing.
-func assets() fs.FS {
-	if dir := os.Getenv("TASK_UI_ASSETS"); dir != "" {
-		return os.DirFS(dir)
-	}
-	return files
-}
-
-func start(ctx context.Context) error {
-	svc, err := server.New(assets(), os.Args[1:])
-	if err != nil {
-		return err
-	}
-	return svc.Start(ctx)
-}
 
 // hash prints a bcrypt hash for task-ui.yml. The password is read from
 // the arguments, or from the first line of stdin.
@@ -66,12 +42,6 @@ func main() {
 		}
 		return
 	}
-
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-	defer stop()
-
-	if err := start(ctx); err != nil {
-		fmt.Fprintln(os.Stderr, "task-ui:", err)
-		os.Exit(1)
-	}
+	fmt.Fprintln(os.Stderr, "task-ui: the server is being rewired, see docs/plan.md")
+	os.Exit(1)
 }

@@ -1,0 +1,30 @@
+package runner
+
+import (
+	"time"
+
+	"github.com/titpetric/task-ui/envfile"
+	"github.com/titpetric/task-ui/git"
+	"github.com/titpetric/task-ui/recording"
+	"github.com/titpetric/task-ui/storage"
+)
+
+// Options configure the manager.
+type Options struct {
+	Runs       *storage.RunStorage
+	Artifacts  *storage.ArtifactStorage
+	Secrets    *storage.SecretStorage
+	Env        *envfile.Store
+	Git        *git.Git
+	Recordings *recording.Store
+	// ArtifactRoot is where collected artifact files go, one directory
+	// per run.
+	ArtifactRoot string
+	// Grace is how long a stopped process gets before SIGKILL.
+	Grace time.Duration
+	// KillTimeout bounds how long Run force waits for the previous run.
+	KillTimeout time.Duration
+	// Keep is how long a finished session stays attachable in memory
+	// before it is forgotten; the row and the recording remain.
+	Keep time.Duration
+}

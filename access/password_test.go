@@ -1,32 +1,32 @@
-package access
+package access_test
 
 import (
-	"strings"
 	"testing"
+
+	"github.com/titpetric/task-ui/access"
+	"github.com/titpetric/task-ui/internal/assert"
+	"github.com/titpetric/task-ui/model"
 )
 
 func TestHashPassword(t *testing.T) {
-	hash, err := HashPassword("secret")
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !strings.HasPrefix(hash, "$2") {
-		t.Fatalf("not a bcrypt hash: %q", hash)
-	}
-	user := &User{Name: "a", Password: hash}
-	if !CheckPassword(user, "secret") {
-		t.Fatal("right password refused")
-	}
-	if CheckPassword(user, "wrong") {
-		t.Fatal("wrong password accepted")
-	}
+	t.Parallel()
+	hash, err := access.HashPassword("secret")
+	assert.NoError(t, err)
+	assert.True(t, access.Hashed(hash))
+	user := &model.User{Name: "a", Password: hash}
+	assert.True(t, access.CheckPassword(user, "secret"))
+	assert.False(t, access.CheckPassword(user, "wrong"))
 }
 
 func TestCheckPassword(t *testing.T) {
-	if CheckPassword(nil, "anything") {
-		t.Fatal("nil user matched")
-	}
-	if CheckPassword(&User{Password: "not a hash"}, "anything") {
-		t.Fatal("garbage hash matched")
-	}
+	t.Parallel()
+	assert.False(t, access.CheckPassword(nil, "anything"))
+	assert.False(t, access.CheckPassword(&model.User{Password: "not a hash"}, "anything"))
+}
+
+func TestHashed(t *testing.T) {
+	t.Parallel()
+	assert.True(t, access.Hashed("$2a$10$abc"))
+	assert.False(t, access.Hashed("secret"))
+	assert.False(t, access.Hashed("$2"))
 }

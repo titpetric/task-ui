@@ -1,34 +1,51 @@
-package access
+package access_test
 
 import (
-	"errors"
 	"testing"
 	"time"
+
+	"github.com/titpetric/task-ui/access"
+	"github.com/titpetric/task-ui/internal/assert"
 )
 
-func TestSessions(t *testing.T) {
-	s := NewSessions("secret", time.Hour)
-	if s.TTL() != time.Hour {
-		t.Fatal("ttl")
-	}
-	token := s.Issue("ops")
-	if name, err := s.Verify(token); err != nil || name != "ops" {
-		t.Fatalf("verify: %q %v", name, err)
-	}
-	if _, err := NewSessions("other", time.Hour).Verify(token); !errors.Is(err, ErrInvalidToken) {
-		t.Fatal("token verified with another secret")
-	}
-	if _, err := s.Verify("a.b"); !errors.Is(err, ErrInvalidToken) {
-		t.Fatal("malformed token verified")
-	}
-	s.Now = func() time.Time { return time.Now().Add(2 * time.Hour) }
-	if _, err := s.Verify(token); !errors.Is(err, ErrInvalidToken) {
-		t.Fatal("expired token verified")
-	}
+func TestNewSessions(t *testing.T) {
+	t.Parallel()
+	s := access.NewSessions("secret", time.Hour)
+	assert.NotNil(t, s)
+	assert.Equal(t, time.Hour, s.TTL())
 
 	// Without a secret, each process signs with its own.
-	a, b := NewSessions("", time.Hour), NewSessions("", time.Hour)
-	if _, err := b.Verify(a.Issue("x")); err == nil {
-		t.Fatal("generated secrets collided")
-	}
+	a, b := access.NewSessions("", time.Hour), access.NewSessions("", time.Hour)
+	_, err := b.Verify(a.Issue("x"))
+	assert.ErrorIs(t, err, access.ErrInvalidToken)
+}
+
+func TestSessions_Issue(t *testing.T) {
+	t.Parallel()
+	s := access.NewSessions("secret", time.Hour)
+	token := s.Issue("ops")
+	name, err := s.Verify(token)
+	assert.NoError(t, err)
+	assert.Equal(t, "ops", name)
+}
+
+func TestSessions_Verify(t *testing.T) {
+	t.Parallel()
+	s := access.NewSessions("secret", time.Hour)
+	token := s.Issue("ops")
+	_, err := access.NewSessions("other", time.Hour).Verify(token)
+	assert.ErrorIs(t, err, access.ErrInvalidToken)
+	_, err = s.Verify("a.b")
+	assert.ErrorIs(t, err, access.ErrInvalidToken)
+	_, err = s.Verify("")
+	assert.ErrorIs(t, err, access.ErrInvalidToken)
+
+	s.Now = func() time.Time { return time.Now().Add(2 * time.Hour) }
+	_, err = s.Verify(token)
+	assert.ErrorIs(t, err, access.ErrInvalidToken, "expired")
+}
+
+func TestSessions_TTL(t *testing.T) {
+	t.Parallel()
+	assert.Equal(t, 12*time.Hour, access.NewSessions("x", 12*time.Hour).TTL())
 }

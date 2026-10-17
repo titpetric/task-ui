@@ -6,38 +6,19 @@ import (
 	"testing"
 
 	"github.com/titpetric/task-ui/access"
+	"github.com/titpetric/task-ui/internal/assert"
+	"github.com/titpetric/task-ui/model"
 )
 
 func TestHash(t *testing.T) {
+	t.Parallel()
 	var out bytes.Buffer
-	if err := hash([]string{"secret"}, strings.NewReader(""), &out); err != nil {
-		t.Fatal(err)
-	}
-	hashed := strings.TrimSpace(out.String())
-	if !access.CheckPassword(&access.User{Password: hashed}, "secret") {
-		t.Fatalf("hash does not verify: %q", hashed)
-	}
+	assert.NoError(t, hash([]string{"secret"}, strings.NewReader(""), &out))
+	assert.True(t, access.CheckPassword(&model.User{Password: strings.TrimSpace(out.String())}, "secret"))
 
 	out.Reset()
-	if err := hash(nil, strings.NewReader("from stdin\n"), &out); err != nil {
-		t.Fatal(err)
-	}
-	if !access.CheckPassword(&access.User{Password: strings.TrimSpace(out.String())}, "from stdin") {
-		t.Fatal("stdin password does not verify")
-	}
+	assert.NoError(t, hash(nil, strings.NewReader("from stdin\n"), &out))
+	assert.True(t, access.CheckPassword(&model.User{Password: strings.TrimSpace(out.String())}, "from stdin"))
 
-	if err := hash(nil, strings.NewReader(""), &out); err == nil {
-		t.Fatal("empty input accepted")
-	}
-}
-
-func TestAssets(t *testing.T) {
-	t.Setenv("TASK_UI_ASSETS", "")
-	if _, err := assets().Open("templates/_layout.tpl"); err != nil {
-		t.Fatalf("embedded layout: %v", err)
-	}
-	t.Setenv("TASK_UI_ASSETS", ".")
-	if _, err := assets().Open("templates/_layout.tpl"); err != nil {
-		t.Fatalf("layout from disk: %v", err)
-	}
+	assert.Error(t, hash(nil, strings.NewReader(""), &out))
 }

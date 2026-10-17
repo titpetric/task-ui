@@ -4,6 +4,8 @@ import (
 	"path/filepath"
 	"slices"
 	"testing"
+
+	"github.com/titpetric/task-ui/model"
 )
 
 func TestConfig_Apply(t *testing.T) {
@@ -29,5 +31,36 @@ func TestConfig_Apply(t *testing.T) {
 	}
 	if !slices.Equal(f.Job("npm:build").Command, []string{"pnpm", "run", "build"}) {
 		t.Fatalf("per kind command: %v", f.Job("npm:build").Command)
+	}
+}
+
+func TestConfigOf(t *testing.T) {
+	t.Parallel()
+	project := &model.Project{
+		Folder:      "infra",
+		Title:       "Infrastructure",
+		Description: "Deploys",
+		Allow:       model.EncodeList([]string{"ops"}),
+		Commands:    model.EncodeStrings(map[string]string{"make": "gmake"}),
+		Sources:     model.EncodeList([]string{"make"}),
+		JobAllow:    model.EncodeMap(map[string][]string{"build": {"admin"}}),
+	}
+	cfg := ConfigOf(project)
+	if cfg.ID != "infra" || cfg.Title != "Infrastructure" || cfg.Description != "Deploys" {
+		t.Fatalf("identity: %+v", cfg)
+	}
+	if !slices.Equal(cfg.Allow, []string{"ops"}) || cfg.Commands["make"] != "gmake" || !slices.Equal(cfg.Sources, []string{"make"}) || !slices.Equal(cfg.Jobs["build"], []string{"admin"}) {
+		t.Fatalf("lists: %+v", cfg)
+	}
+	if empty := ConfigOf(nil); empty.ID != "" {
+		t.Fatalf("nil project: %+v", empty)
+	}
+}
+
+func TestConfigsOf(t *testing.T) {
+	t.Parallel()
+	configs := ConfigsOf([]model.Project{{Folder: "a"}, {Folder: "b"}})
+	if len(configs) != 2 || configs[1].ID != "b" {
+		t.Fatalf("configs: %+v", configs)
 	}
 }

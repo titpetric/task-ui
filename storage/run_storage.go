@@ -6,18 +6,16 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/jmoiron/sqlx"
-
 	"github.com/titpetric/task-ui/model"
 )
 
 // RunStorage keeps the runs.
 type RunStorage struct {
-	db *sqlx.DB
+	db DB
 }
 
 // NewRunStorage returns the storage over a pool.
-func NewRunStorage(db *sqlx.DB) *RunStorage {
+func NewRunStorage(db DB) *RunStorage {
 	return &RunStorage{db: db}
 }
 
