@@ -56,8 +56,20 @@ type Config struct {
 	// Grace is how long a stopped process gets before it is killed.
 	// TASK_UI_GRACE, default 10s.
 	Grace time.Duration
+	// Now pins the clock the hours gate and the pages read, for the
+	// screenshot scripts. TASK_UI_NOW, RFC 3339. Empty is the real time.
+	Now time.Time
 	// PrintBuildInfo prints the build and exits. -v.
 	PrintBuildInfo bool
+}
+
+// Clock returns the clock: the pinned time, or the real one.
+func (c *Config) Clock() func() time.Time {
+	if c.Now.IsZero() {
+		return time.Now
+	}
+	now := c.Now
+	return func() time.Time { return now }
 }
 
 func env(name, fallback string) string {
@@ -122,6 +134,11 @@ func NewConfig(args []string) (*Config, error) {
 	}
 	if cfg.Grace, err = envDuration("TASK_UI_GRACE", 10*time.Second); err != nil {
 		return nil, err
+	}
+	if value := os.Getenv("TASK_UI_NOW"); value != "" {
+		if cfg.Now, err = time.Parse(time.RFC3339, value); err != nil {
+			return nil, fmt.Errorf("TASK_UI_NOW: %w", err)
+		}
 	}
 
 	flags := pflag.NewFlagSet("task-ui", pflag.ContinueOnError)

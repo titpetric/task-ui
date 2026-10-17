@@ -22,6 +22,7 @@ func TestNewConfig(t *testing.T) {
 	t.Setenv("TASK_UI_KEEP", "2m")
 	t.Setenv("TASK_UI_DISCOVER", "false")
 	t.Setenv("TASK_UI_AUTOLOGIN", "admin")
+	t.Setenv("TASK_UI_NOW", "2026-10-16T22:00:00+02:00")
 
 	cfg, err := app.NewConfig(nil)
 	assert.NoError(t, err)
@@ -38,6 +39,8 @@ func TestNewConfig(t *testing.T) {
 	assert.Equal(t, 10*time.Second, cfg.Grace)
 	assert.False(t, cfg.Discover)
 	assert.Equal(t, "admin", cfg.AutoLogin)
+	assert.Equal(t, 22, cfg.Clock()().Hour())
+	assert.Equal(t, time.Friday, cfg.Clock()().Weekday())
 
 	// Flags win over the environment.
 	flagged, err := app.NewConfig([]string{"-l", ":9000", "--root", root, "--htpasswd", "/x/.htpasswd", "--data", "/tmp/d", "-v"})
@@ -61,6 +64,11 @@ func TestNewConfig_Errors(t *testing.T) {
 	t.Setenv("TASK_UI_SESSION_TTL", "")
 	_, err = app.NewConfig([]string{"--nope"})
 	assert.Error(t, err)
+
+	t.Setenv("TASK_UI_NOW", "yesterday")
+	_, err = app.NewConfig(nil)
+	assert.ErrorContains(t, err, "TASK_UI_NOW")
+	t.Setenv("TASK_UI_NOW", "")
 }
 
 func TestConfig_Validate(t *testing.T) {
@@ -71,6 +79,7 @@ func TestConfig_Validate(t *testing.T) {
 	assert.Equal(t, filepath.Join("d", "task-ui.db"), cfg.DB)
 	assert.Equal(t, "", cfg.Htpasswd)
 	assert.Nil(t, cfg.Admins)
+	assert.True(t, time.Since(cfg.Clock()()) < time.Minute)
 
 	assert.ErrorContains(t, (&app.Config{}).Validate(), "root directory")
 	assert.ErrorContains(t, (&app.Config{Root: t.TempDir()}).Validate(), "positive")

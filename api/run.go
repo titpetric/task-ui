@@ -204,12 +204,17 @@ func (h *Handlers) frameOf(r *http.Request) (runner.Frame, error) {
 	return session.Frame(), nil
 }
 
-// frameSVG renders the last frame of a run as an image.
+// frameSVG renders the last frame of a run as an image. The empty rows
+// at the bottom are left out, so a tile shows what there is; ?full=1
+// keeps the whole screen.
 func (h *Handlers) frameSVG(w http.ResponseWriter, r *http.Request) {
 	frame, err := h.frameOf(r)
 	if err != nil {
 		failErr(w, err)
 		return
+	}
+	if r.URL.Query().Get("full") == "" {
+		frame = frame.Trim(8)
 	}
 	w.Header().Set("Content-Type", "image/svg+xml")
 	w.Header().Set("Cache-Control", "no-store")

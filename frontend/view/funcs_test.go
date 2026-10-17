@@ -72,11 +72,13 @@ func TestMask(t *testing.T) {
 
 func TestInHours(t *testing.T) {
 	t.Parallel()
+	friday := time.Date(2026, time.October, 16, 22, 0, 0, 0, time.UTC)
 
-	assert.True(t, view.InHours(""))
-	assert.True(t, view.InHours("daily 0-24"))
-	assert.False(t, view.InHours("mon 0:00-0:01"))
-	assert.True(t, view.InHours("not hours at all"))
+	assert.True(t, view.InHours("", friday))
+	assert.True(t, view.InHours("daily 0-24", friday))
+	assert.False(t, view.InHours("mon-fri 9-17", friday))
+	assert.True(t, view.InHours("mon-fri 9-17", friday.Add(-12*time.Hour)))
+	assert.True(t, view.InHours("not hours at all", friday))
 }
 
 func TestHoursLine(t *testing.T) {

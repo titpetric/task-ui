@@ -113,6 +113,7 @@ func newFixture(t *testing.T) *fixture {
 		Env:       envfile.New(storage.NewEnvFileStorage(db), secrets),
 		Root:      root,
 		Version:   "test",
+		Now:       func() time.Time { return time.Date(2026, time.October, 16, 22, 0, 0, 0, time.Local) },
 	}
 	h, err := frontend.New(f.opts)
 	assert.NoError(t, err)

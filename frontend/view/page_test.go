@@ -2,6 +2,7 @@ package view_test
 
 import (
 	"testing"
+	"time"
 
 	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/frontend/view"
@@ -50,6 +51,15 @@ func TestPage_Paths(t *testing.T) {
 	assert.True(t, p.Under("/settings"))
 	assert.True(t, p.Under("/settings/keys"))
 	assert.False(t, p.Under("/set"))
+}
+
+func TestPage_InHours(t *testing.T) {
+	t.Parallel()
+
+	p := &view.Page{Now: time.Date(2026, time.October, 16, 22, 0, 0, 0, time.UTC)}
+	assert.False(t, p.InHours("mon-fri 9-17"))
+	assert.True(t, p.InHours(""))
+	assert.True(t, (&view.Page{}).InHours("daily 0-24"))
 }
 
 func TestPage_WhoCanRun(t *testing.T) {

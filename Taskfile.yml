@@ -25,6 +25,7 @@ tasks:
       TASK_UI_ROOT: testdata/demo
       TASK_UI_DATA: .data
       TASK_UI_AUTOLOGIN: admin
+      TASK_UI_ADMINS: admin
     cmds:
       - go run .
 

@@ -19,7 +19,9 @@ area, dependencies one way, the front end makes no external requests.
 | `folder`     | the catalogue: folders and jobs, now configured by project rows            |
 | `runner`     | sessions: a process on a pty, its terminal state, subscribers, artifacts  |
 | `scheduler`  | cron expressions and the loop that starts scheduled runs                   |
-| `access`     | roles, passwords, sessions; users live in storage                          |
+| `hours`      | the office hours a folder or job may run in                                |
+| `secret`     | the secrets, encrypted at rest with the SSH keys                           |
+| `access`     | the password file, sessions, the guard; users live in storage              |
 | `git`, `sshkey`, `dotenv` | unchanged services                                             |
 | `recording`  | the asciicast files                                                        |
 | `envfile`    | the dotenv files a folder reads, managed over storage                      |

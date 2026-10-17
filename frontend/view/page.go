@@ -2,6 +2,7 @@ package view
 
 import (
 	"strings"
+	"time"
 
 	"github.com/titpetric/task-ui/envfile"
 	"github.com/titpetric/task-ui/folder"
@@ -20,6 +21,8 @@ type Page struct {
 	User          *model.User
 	LoginRequired bool
 	Version       string
+	// Now is the moment the page is for: the hours read against it.
+	Now time.Time
 
 	// Folders are the folders the user may see, for the sidebar.
 	Folders []*folder.Folder
@@ -92,6 +95,15 @@ func (p *Page) IsPath(path string) bool {
 // Under reports whether the page is at or under a path.
 func (p *Page) Under(prefix string) bool {
 	return p.Path == prefix || strings.HasPrefix(p.Path, prefix+"/")
+}
+
+// InHours reports whether the hours allow a run at the page's moment.
+func (p *Page) InHours(text string) bool {
+	now := p.Now
+	if now.IsZero() {
+		now = time.Now()
+	}
+	return InHours(text, now)
 }
 
 // WhoCanRun says who may run a job, from the allow lists.

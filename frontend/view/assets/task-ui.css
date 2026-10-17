@@ -1806,13 +1806,17 @@ img.frame {
 }
 
 .jobcard footer {
+  position: static;
   display: flex;
+  flex-direction: row;
   align-items: center;
   gap: 0.5rem;
   margin-top: auto;
-  padding-top: 0.5rem;
+  padding: 0.5rem 0 0;
   border-top: 1px solid var(--line);
+  color: var(--text-dim);
   font-size: 0.8125rem;
+  text-align: left;
 }
 
 .jobcard footer .last {
