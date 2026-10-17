@@ -26,20 +26,20 @@ type Session struct {
 	Folder *folder.Folder
 	Job    *folder.Job
 
-	mu      sync.Mutex
-	term    vt10x.Terminal
-	tail    *ring
-	proc    *Process
+	mu   sync.Mutex
+	term vt10x.Terminal
+	tail *ring
+	proc *Process
 	// pending is the input typed before the process started, and the
 	// size the window asked for; both reach the process when it starts.
 	pending    []byte
 	cols, rows int
 	subs       map[*Subscriber]struct{}
-	sinks   []io.Writer
-	status  Status
-	stopped bool
-	killed  bool
-	done    chan struct{}
+	sinks      []io.Writer
+	status     Status
+	stopped    bool
+	killed     bool
+	done       chan struct{}
 }
 
 func newSession(run *model.Run, f *folder.Folder, job *folder.Job) *Session {
