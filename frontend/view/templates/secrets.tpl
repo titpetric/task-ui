@@ -26,7 +26,7 @@
 		<tr>
 			<td class="nowrap">{{ if eq .Scope "all" }}<span class="badge signal">all folders</span>{{ else }}<a href="/f/{{ .Scope }}"><svg class="ic"><use href="#i-folder"/></svg> {{ .Scope }}</a>{{ end }}</td>
 			<td class="key">{{ .Name }}</td>
-			<td class="faint">{{ mask .Content }}</td>
+			<td class="faint"><svg class="ic"><use href="#i-secret"/></svg> {{ len .Content }} characters</td>
 			<td class="nowrap" title="{{ stamp .UpdatedAt }}">{{ ago .UpdatedAt }}</td>
 			<td class="actions">
 				<a class="btn-icon" href="/settings/secrets/edit?scope={{ .Scope }}&name={{ .Name }}" title="Replace" aria-label="Replace {{ .Name }}"><svg class="ic"><use href="#i-edit"/></svg></a>

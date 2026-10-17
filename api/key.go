@@ -1,6 +1,9 @@
 package api
 
 import (
+	"context"
+	"errors"
+	"fmt"
 	"net/http"
 	"strings"
 )
@@ -80,24 +83,30 @@ func (h *Handlers) deleteKey(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	name := param(r, "name")
-	count, err := h.opts.Secrets.Count(r.Context())
-	if err != nil {
-		failErr(w, err)
+	if err := h.releaseKey(r.Context(), name); err != nil {
+		fail(w, http.StatusConflict, err.Error())
 		return
-	}
-	if count > 0 {
-		if len(h.opts.Secrets.Vault.Recipients(name)) == 0 && len(h.opts.Secrets.Vault.Recipients()) > 0 {
-			fail(w, http.StatusConflict, "the secrets are encrypted with this key: generate or upload another before deleting it")
-			return
-		}
-		if _, err := h.opts.Secrets.Rekey(r.Context(), name); err != nil {
-			fail(w, http.StatusConflict, "the secrets cannot be written for the other keys: "+err.Error())
-			return
-		}
 	}
 	if err := h.opts.Keys.Delete(name); err != nil {
 		failErr(w, err)
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
+}
+
+// releaseKey writes the secrets for the other keys before one goes. The
+// last key that can encrypt them cannot go while there are any.
+func (h *Handlers) releaseKey(ctx context.Context, name string) error {
+	count, err := h.opts.Secrets.Count(ctx)
+	if err != nil || count == 0 {
+		return err
+	}
+	vault := h.opts.Secrets.Vault
+	if len(vault.Recipients(name)) == 0 && len(vault.Recipients()) > 0 {
+		return errors.New("the secrets are encrypted with this key: generate or upload another before deleting it")
+	}
+	if _, err := h.opts.Secrets.Rekey(ctx, name); err != nil {
+		return fmt.Errorf("the secrets cannot be written for the other keys: %w", err)
+	}
+	return nil
 }

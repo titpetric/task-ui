@@ -96,3 +96,23 @@ func TestRun_Reason(t *testing.T) {
 	assert.Contains(t, list, `<table class="table cards">`)
 	assert.Contains(t, list, `data-label="Result"`)
 }
+
+// A run someone watches says so in its result; the sidebar says what a
+// click does by permission.
+func TestRuns_Watching(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	session := f.start(t, f.infra, "slow")
+	sub := session.Attach(true)
+	defer session.Detach(sub)
+
+	ops := f.page(t, asOps, "/runs")
+	assert.Contains(t, ops, `running</span> <span class="faint">1 watching</span>`)
+	assert.NotContains(t, ops, "<th>Watching</th>")
+	assert.Contains(t, ops, `title="Attach to infra / slow, ops, running"`)
+	assert.Contains(t, ops, `<svg class="ic act"><use href="#i-play"/></svg>`)
+
+	viewer := f.page(t, asViewer, "/runs")
+	assert.Contains(t, viewer, `title="Watch infra / slow, ops, running"`)
+	assert.Contains(t, viewer, `<svg class="ic act"><use href="#i-eye"/></svg>`)
+}

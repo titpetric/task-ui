@@ -442,7 +442,6 @@
 
   // serialize reads a form into the JSON the API takes. data-type says
   // what a field is: a list splits on commas, a bool parses, an int too.
-  // A field named target holds "folder/job" and is sent as both.
   function serialize(form) {
     var body = {};
     Array.prototype.forEach.call(form.elements, function (el) {
@@ -459,10 +458,14 @@
           value = parseInt(value, 10) || 0;
           break;
       }
-      if (el.name === "target" && typeof value === "string") {
-        var at = value.indexOf("/");
-        body.folder = value.slice(0, at);
-        body.job = value.slice(at + 1);
+      // "map.key" fields build an object; empty entries are left out, so
+      // a job without an override inherits the folder's.
+      var dot = el.name.indexOf(".");
+      if (dot > 0) {
+        var map = el.name.slice(0, dot), key = el.name.slice(dot + 1);
+        if (value === "" || (Array.isArray(value) && !value.length)) return;
+        body[map] = body[map] || {};
+        body[map][key] = value;
         return;
       }
       body[el.name] = value;
@@ -513,6 +516,22 @@
       return;
     }
     submit(form);
+  });
+
+  // A select that narrows another keeps only the options of its folder:
+  // the job list follows the folder picked for a schedule.
+  function narrow(select) {
+    var target = document.getElementById(select.dataset.narrows);
+    if (!target) return;
+    if (!target.allOptions) target.allOptions = Array.prototype.slice.call(target.options);
+    target.innerHTML = "";
+    target.allOptions.forEach(function (option) {
+      if (option.dataset.folder === select.value) target.appendChild(option);
+    });
+  }
+  document.querySelectorAll("select[data-narrows]").forEach(function (select) {
+    narrow(select);
+    select.addEventListener("change", function () { narrow(select); });
   });
 
   // A file picker fills the field it names, so a key can be chosen or pasted.
@@ -637,10 +656,13 @@
       return;
     }
     recents.innerHTML = runs.map(function (r) {
+      var running = r.state === "running";
+      var verb = !running ? "View" : r.can_run ? "Attach to" : "Watch";
       return '<a href="/runs/' + encodeURIComponent(r.id) + '" data-attach="' + escapeHTML(r.id) + '" class="recent" title="' +
-        escapeHTML(r.folder + " / " + r.job + ", " + r.user_name + ", " + r.state) + '">' +
+        escapeHTML(verb + " " + r.folder + " / " + r.job + ", " + r.user_name + ", " + r.state) + '">' +
         '<i class="dot ' + escapeHTML(r.state) + '"></i>' +
         '<span class="what"><b>' + escapeHTML(r.job) + '</b><small>' + escapeHTML(r.folder) + '</small></span>' +
+        (running ? '<svg class="ic act"><use href="#i-' + (r.can_run ? "play" : "eye") + '"/></svg>' : "") +
         '<span class="avatar sm" title="' + escapeHTML(r.user_name) + '">' + escapeHTML(initials(r.user_name)) + '</span></a>';
     }).join("");
   }
@@ -675,16 +697,21 @@
     }).catch(function () {});
   }
 
+  // The frames are inline SVG, so they use the page's own faces; each
+  // one is fetched again and swapped in place.
   function refreshFrames() {
     if (document.hidden) return;
-    document.querySelectorAll("img[data-frame]").forEach(function (img) {
-      img.src = "/api/runs/" + encodeURIComponent(img.dataset.frame) + "/frame.svg?t=" + Date.now();
+    document.querySelectorAll(".frame[data-frame]").forEach(function (frame) {
+      fetch("/api/runs/" + encodeURIComponent(frame.dataset.frame) + "/frame.svg", { credentials: "same-origin" })
+        .then(function (res) { return res.ok ? res.text() : null; })
+        .then(function (svg) { if (svg) frame.innerHTML = svg; })
+        .catch(function () {});
     });
   }
 
   if (document.querySelector(".side")) {
     poll();
     setInterval(poll, 4000);
-    if (document.querySelector("img[data-frame]")) setInterval(refreshFrames, 2000);
+    if (document.querySelector(".frame[data-frame]")) setInterval(refreshFrames, 2000);
   }
 })();

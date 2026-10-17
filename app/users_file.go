@@ -70,45 +70,65 @@ func (f *UsersFile) Sync(ctx context.Context, users *storage.UserStorage) (int, 
 	if err != nil {
 		return 0, 0, err
 	}
+	created, err := f.keep(ctx, users, creds, existing)
+	if err != nil {
+		return created, 0, err
+	}
+	removed, err := drop(ctx, users, creds, existing)
+	if err != nil {
+		return created, removed, err
+	}
+	f.modified = info.ModTime()
+	return created, removed, nil
+}
+
+// keep creates the users the file names and updates the ones that
+// changed. It returns how many were created.
+func (f *UsersFile) keep(ctx context.Context, users *storage.UserStorage, creds []access.Credential, existing []model.User) (int, error) {
 	byName := map[string]*model.User{}
 	for i := range existing {
 		byName[existing[i].Name] = &existing[i]
 	}
-
 	created := 0
-	named := map[string]bool{}
 	for _, cred := range creds {
-		named[cred.Name] = true
+		role := f.Role(cred.Name)
 		user, ok := byName[cred.Name]
 		if !ok {
-			user = &model.User{Name: cred.Name, Password: cred.Hash, Role: f.Role(cred.Name)}
+			user = &model.User{Name: cred.Name, Password: cred.Hash, Role: role}
 			if err := users.Create(ctx, user); err != nil {
-				return created, 0, err
+				return created, err
 			}
 			created++
 			continue
 		}
-		if user.Password == cred.Hash && user.Role == f.Role(cred.Name) {
+		if user.Password == cred.Hash && user.Role == role {
 			continue
 		}
-		user.Password, user.Role = cred.Hash, f.Role(cred.Name)
+		user.Password, user.Role = cred.Hash, role
 		if err := users.Update(ctx, user); err != nil {
-			return created, 0, err
+			return created, err
 		}
 	}
+	return created, nil
+}
 
+// drop removes the users the file does not name. It returns how many.
+func drop(ctx context.Context, users *storage.UserStorage, creds []access.Credential, existing []model.User) (int, error) {
+	named := map[string]bool{}
+	for _, cred := range creds {
+		named[cred.Name] = true
+	}
 	removed := 0
 	for _, user := range existing {
 		if named[user.Name] {
 			continue
 		}
 		if err := users.Delete(ctx, user.ID); err != nil {
-			return created, removed, err
+			return removed, err
 		}
 		removed++
 	}
-	f.modified = info.ModTime()
-	return created, removed, nil
+	return removed, nil
 }
 
 // Watch syncs the file whenever it changes, until the context ends. A

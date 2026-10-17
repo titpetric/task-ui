@@ -52,8 +52,9 @@ func (h *Handlers) attach() http.Handler {
 	}
 }
 
-// serveAttach pumps a session to the socket and the socket's control
-// messages to the session, until the run ends or the window closes.
+// serveAttach finds the run the socket names and, while its session is
+// there, opens a window on it. A run that is over gets its last status
+// and nothing more.
 func (h *Handlers) serveAttach(ws *websocket.Conn) {
 	r := ws.Request()
 	run, err := h.runOf(r)
@@ -67,8 +68,12 @@ func (h *Handlers) serveAttach(ws *websocket.Conn) {
 		return
 	}
 	f, job, _ := h.target(r, run.Folder, run.Job)
-	readOnly := !canRun(access.UserFrom(r.Context()), f, job)
+	h.window(ws, session, !canRun(access.UserFrom(r.Context()), f, job))
+}
 
+// window pumps a session to the socket and the socket's control messages
+// to the session, until the run ends or the window closes.
+func (h *Handlers) window(ws *websocket.Conn, session *runner.Session, readOnly bool) {
 	sub := session.Attach(readOnly)
 	defer session.Detach(sub)
 

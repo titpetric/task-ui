@@ -81,9 +81,11 @@
 			<div class="label side-label">Recents</div>
 			<nav class="recents" id="recents">
 				{{- range .Recents }}
-				<a href="/runs/{{ .ID }}" data-attach="{{ .ID }}" class="recent" title="{{ .Folder }} / {{ .Job }}, {{ .UserName }}, {{ .State }}">
+				{{- $can := $.CanRunJob .Folder .Job }}
+				<a href="/runs/{{ .ID }}" data-attach="{{ .ID }}" class="recent" title="{{ if ne .State "running" }}View{{ else if $can }}Attach to{{ else }}Watch{{ end }} {{ .Folder }} / {{ .Job }}, {{ .UserName }}, {{ .State }}">
 					<i class="dot {{ .State }}"></i>
 					<span class="what"><b>{{ .Job }}</b><small>{{ .Folder }}</small></span>
+					{{- if eq .State "running" }}<svg class="ic act"><use href="#i-{{ if $can }}play{{ else }}eye{{ end }}"/></svg>{{ end }}
 					<span class="avatar sm" title="{{ .UserName }}">{{ .Initials }}</span>
 				</a>
 				{{- else }}

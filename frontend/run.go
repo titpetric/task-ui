@@ -28,7 +28,7 @@ func (h *Handlers) run(w http.ResponseWriter, r *http.Request) {
 		h.missing(w, r, "No run with that ID.")
 		return
 	}
-	run := h.runView(*row)
+	run := h.framed(h.runView(*row))
 	p := h.page(r, run.Folder+" / "+run.Job)
 	p.Run = &run
 	p.Crumbs = view.Crumbs("Runs", "/runs", run.Folder+" / "+run.Job)

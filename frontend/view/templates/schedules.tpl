@@ -10,13 +10,19 @@
 {{- if $any }}
 <form class="form inline" data-api="/api/schedules" data-method="POST" data-next="reload">
 	<div class="field">
-		<label for="sch-target">Job</label>
-		<select id="sch-target" name="target" required>
-			{{- range $p := .Folders }}
-			<optgroup label="{{ $p.ID }}">
-				{{- range $p.Jobs }}{{ if $.CanRun $p . }}<option value="{{ $p.ID }}/{{ .ID }}"{{ if eq (index $.Form "folder") $p.ID }} selected{{ end }}>{{ $p.ID }} / {{ .Name }}</option>{{ end }}{{ end }}
-			</optgroup>
-			{{- end }}
+		<label for="sch-folder">Folder</label>
+		<select id="sch-folder" name="folder" data-narrows="sch-job" required>
+			{{- range $p := .Folders }}{{ if $.CanRunAny $p }}
+			<option value="{{ $p.ID }}"{{ if eq (index $.Form "folder") $p.ID }} selected{{ end }}>{{ $p.ID }}</option>
+			{{- end }}{{ end }}
+		</select>
+	</div>
+	<div class="field">
+		<label for="sch-job">Job</label>
+		<select id="sch-job" name="job" required>
+			{{- range $p := .Folders }}{{ range $p.Jobs }}{{ if $.CanRun $p . }}
+			<option value="{{ .ID }}" data-folder="{{ $p.ID }}">{{ .Name }}</option>
+			{{- end }}{{ end }}{{ end }}
 		</select>
 	</div>
 	<div class="field">

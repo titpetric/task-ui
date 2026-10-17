@@ -22,7 +22,6 @@ func Funcs() template.FuncMap {
 		"add":       func(a, b int) int { return a + b },
 		"sub":       func(a, b int) int { return a - b },
 		"initials":  func(name string) string { return (&model.User{Name: name}).Initials() },
-		"mask":      Mask,
 		"states":    model.States,
 		"roles":     model.Roles,
 		"list":      func(items ...any) []any { return items },
@@ -121,12 +120,4 @@ func Size(n int64) string {
 		value, suffix = value/unit, "GB"
 	}
 	return fmt.Sprintf("%.1f %s", value, suffix)
-}
-
-// Mask hides a value, keeping the first characters of a long one.
-func Mask(value string) string {
-	if len(value) <= 6 {
-		return strings.Repeat("*", 8)
-	}
-	return value[:3] + strings.Repeat("*", 8)
 }

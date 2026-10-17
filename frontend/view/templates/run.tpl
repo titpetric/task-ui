@@ -18,7 +18,7 @@
 {{- if $run.Live }}
 <section class="block" data-live>
 	<h3>Terminal <small>{{ if eq $run.State "running" }}as it looks now, {{ if $run.Attached }}{{ $run.Attached }} watching{{ else }}nobody attached{{ end }}{{ else }}the last screen{{ end }}</small></h3>
-	<a class="tile wide" href="#" data-attach="{{ $run.ID }}"><img class="frame" src="/api/runs/{{ $run.ID }}/frame.svg" alt="Terminal of {{ $run.Folder }} / {{ $run.Job }}" data-frame="{{ $run.ID }}"></a>
+	<a class="tile wide" href="#" data-attach="{{ $run.ID }}"><div class="frame" data-frame="{{ $run.ID }}" role="img" aria-label="Terminal of {{ $run.Folder }} / {{ $run.Job }}">{{ $run.FrameSVG }}</div></a>
 </section>
 {{- end }}
 

@@ -48,6 +48,7 @@ func (h *Handlers) projectEdit(w http.ResponseWriter, r *http.Request) {
 	p.Folder = f
 	p.Crumbs = view.Crumbs("Settings", "/settings", "Projects", "/settings/projects", id)
 	if project, err := h.opts.Projects.GetByFolder(r.Context(), id); err == nil {
+		p.Project = project
 		p.Form = map[string]string{
 			"title":       project.Title,
 			"description": project.Description,

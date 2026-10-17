@@ -34,8 +34,8 @@ func TestHome_Live(t *testing.T) {
 
 	body := f.page(t, asViewer, "/")
 	assert.Contains(t, body, "<b>Running</b><span>1</span>")
-	assert.Contains(t, body, `data-frame="`+session.ID()+`"`)
-	assert.Contains(t, body, `src="/api/runs/`+session.ID()+`/frame.svg"`)
+	assert.Contains(t, body, `<div class="frame" data-frame="`+session.ID()+`" role="img"`)
+	assert.Contains(t, body, `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 672.0 136.0" font-family="JetBrains Mono`)
 	assert.Contains(t, body, `data-attach="`+session.ID()+`"`)
 	assert.Contains(t, body, `<i class="dot running"></i>`)
 }

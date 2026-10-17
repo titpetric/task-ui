@@ -43,3 +43,18 @@ func TestKeyForms(t *testing.T) {
 	assert.Contains(t, upload, `data-read-into="up-content"`)
 	assert.Contains(t, upload, `data-api="/api/keys/upload"`)
 }
+
+func TestKeys_Encrypting(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	_, err := f.opts.Keys.Generate("ed25519", "deploy")
+	assert.NoError(t, err)
+	_, err = f.opts.Keys.Generate("ecdsa", "curve")
+	assert.NoError(t, err)
+
+	body := f.page(t, asAdmin, "/settings/keys")
+	assert.Contains(t, body, `<span class="badge">id_ed25519</span>`)
+	assert.Contains(t, body, `title="The secrets are encrypted with this key"`)
+	// One badge: the ECDSA key does not encrypt.
+	assert.Equal(t, 1, strings.Count(body, "secrets</span>"))
+}

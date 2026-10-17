@@ -12,7 +12,7 @@ func TestFuncs(t *testing.T) {
 	t.Parallel()
 
 	funcs := view.Funcs()
-	for _, name := range []string{"ago", "stamp", "duration", "size", "join", "lower", "add", "sub", "initials", "mask", "states", "roles", "list"} {
+	for _, name := range []string{"ago", "stamp", "duration", "size", "join", "lower", "add", "sub", "initials", "states", "roles", "list"} {
 		assert.NotNil(t, funcs[name], name)
 	}
 	assert.Equal(t, 3, funcs["add"].(func(a, b int) int)(1, 2))
@@ -61,13 +61,6 @@ func TestSize(t *testing.T) {
 	assert.Equal(t, "1.5 KB", view.Size(1536))
 	assert.Equal(t, "2.0 MB", view.Size(2<<20))
 	assert.Equal(t, "3.0 GB", view.Size(3<<30))
-}
-
-func TestMask(t *testing.T) {
-	t.Parallel()
-
-	assert.Equal(t, "********", view.Mask("short"))
-	assert.Equal(t, "hun********", view.Mask("hunter2secret"))
 }
 
 func TestInHours(t *testing.T) {
