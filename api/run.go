@@ -27,16 +27,22 @@ type RunView struct {
 	Live     bool           `json:"live"`
 	Attached int            `json:"attached"`
 	Status   *runner.Status `json:"status,omitempty"`
+	// CanRun says whether the user asking may run the job, and so end
+	// the run and type into it.
+	CanRun bool `json:"can_run"`
 }
 
-// view decorates a run row with what the runner knows.
-func (h *Handlers) view(run model.Run) RunView {
+// view decorates a run row with what the runner knows, for the user
+// asking.
+func (h *Handlers) view(r *http.Request, run model.Run) RunView {
 	v := RunView{Run: run}
 	if session, ok := h.opts.Runner.Get(run.ID); ok {
 		status := session.Status()
 		v.Live, v.Attached, v.Status = true, session.Attached(), &status
 		v.Run = session.Snapshot()
 	}
+	f, job, _ := h.target(r, run.Folder, run.Job)
+	v.CanRun = canRun(access.UserFrom(r.Context()), f, job)
 	return v
 }
 
@@ -53,7 +59,7 @@ func (h *Handlers) listRuns(w http.ResponseWriter, r *http.Request) {
 	views := []RunView{}
 	for _, run := range runs {
 		if user.CanSee(run.Folder) {
-			views = append(views, h.view(run))
+			views = append(views, h.view(r, run))
 		}
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"runs": views})
@@ -79,14 +85,14 @@ func (h *Handlers) startRun(w http.ResponseWriter, r *http.Request) {
 	}
 	session, err := h.opts.Runner.Start(r.Context(), runner.Request{Folder: f, Job: job, User: user, Force: req.Force, Cols: req.Cols, Rows: req.Rows})
 	if errors.Is(err, runner.ErrBusy) {
-		writeJSON(w, http.StatusConflict, map[string]any{"error": "already running", "run": h.view(session.Snapshot())})
+		writeJSON(w, http.StatusConflict, map[string]any{"error": "already running", "run": h.view(r, session.Snapshot())})
 		return
 	}
 	if err != nil {
 		failErr(w, err)
 		return
 	}
-	writeJSON(w, http.StatusCreated, h.view(session.Snapshot()))
+	writeJSON(w, http.StatusCreated, h.view(r, session.Snapshot()))
 }
 
 // RunAllRequest starts every job of a folder.
@@ -122,7 +128,7 @@ func (h *Handlers) startAll(w http.ResponseWriter, r *http.Request) {
 			skipped[job.ID] = err.Error()
 			continue
 		}
-		started = append(started, h.view(session.Snapshot()))
+		started = append(started, h.view(r, session.Snapshot()))
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"started": started, "skipped": skipped})
 }
@@ -146,7 +152,7 @@ func (h *Handlers) getRun(w http.ResponseWriter, r *http.Request) {
 		failErr(w, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, h.view(*run))
+	writeJSON(w, http.StatusOK, h.view(r, *run))
 }
 
 // endRun stops or kills a run, for a user allowed to run its job.

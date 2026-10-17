@@ -27,6 +27,7 @@ func TestRun_Start(t *testing.T) {
 	assert.Equal(t, "plan", view.Job)
 	assert.Equal(t, "ops", view.UserName)
 	assert.True(t, view.Live)
+	assert.True(t, view.CanRun)
 	assert.NotNil(t, view.Status)
 
 	run := f.finished(t, view.ID)
@@ -131,6 +132,7 @@ func TestRun_Get(t *testing.T) {
 
 	res := f.call(t, asViewer, http.MethodGet, "/runs/"+id, nil)
 	assert.Equal(t, http.StatusOK, res.Status)
+	assert.Equal(t, false, res.get("can_run"))
 	assert.Equal(t, model.StateFailed, res.str("state"))
 	assert.Equal(t, float64(3), res.get("exit_code"))
 	assert.Equal(t, model.StateFailed, res.str("status", "state"))
