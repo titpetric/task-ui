@@ -98,6 +98,9 @@ api() {
 # say who may run it.
 api POST /projects -d "{\"url\":\"file://$work/repos/infra.git\",\"id\":\"infra\"}"
 api PUT /projects/infra -d '{"allow":["ops"],"job_allow":{"rotate-certs":["admin"]}}'
+# The website folder runs in office hours only; the demo is out of them
+# at any time but one minute a week, so a run of it asks for a reason.
+api PUT /projects/website -d '{"hours":"mon-fri 9-17\nfri 9-13\nsun 0:00-0:01"}'
 
 # Secrets, a managed env file and a key, so the runs and the pages have them.
 api POST /secrets -d '{"scope":"all","name":"CDN_PURGE_URL","content":"https://cdn.example/purge"}'
@@ -123,7 +126,11 @@ scripts/run.sh tools make:test >/dev/null 2>&1
 scripts/run.sh tools script:cleanup >/dev/null 2>&1
 scripts/run.sh tools script:report >/dev/null 2>&1
 scripts/run.sh website lint >/dev/null 2>&1 || true
+scripts/run.sh website lint force "customer waiting on the fix" >/dev/null 2>&1 || true
 wait "$first" || true
+
+# Every link on every page answers.
+scripts/crawl.sh
 
 # The newest deploy run, for the run page and the dialog.
 run="$(curl -fsS "${TASK_UI_BASE}/api/runs?folder=infra&job=deploy&limit=1" | grep -o '"id":"[a-z0-9]*"' | head -1 | cut -d'"' -f4)"
@@ -170,7 +177,10 @@ shot secret-new-dark "/settings/secrets/new?scope=infra" dark
 shot users-dark /settings/users dark
 shot user-new-dark /settings/users/new dark
 shot envfile-dark /f/infra/env/.env dark
+shot out-of-hours-dark "/f/website#start=website/lint" dark 1440x900 2000
 shot mobile-dashboard-dark / dark 390x844
+shot mobile-menu-dark "/f/infra#menu" dark 390x844
+shot mobile-folder-dark /f/infra dark 390x1100
 
 # The viewer's instance over the same database: it attaches read only.
 TASK_UI_BASE="http://127.0.0.1:${viewer}" shot viewer-job-dark /f/infra/deploy dark

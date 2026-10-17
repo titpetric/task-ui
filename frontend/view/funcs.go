@@ -6,25 +6,47 @@ import (
 	"strings"
 	"time"
 
+	"github.com/titpetric/task-ui/hours"
 	"github.com/titpetric/task-ui/model"
 )
 
 // Funcs returns the functions the templates use.
 func Funcs() template.FuncMap {
 	return template.FuncMap{
-		"ago":      Ago,
-		"stamp":    Stamp,
-		"duration": Duration,
-		"size":     Size,
-		"join":     strings.Join,
-		"lower":    strings.ToLower,
-		"add":      func(a, b int) int { return a + b },
-		"initials": func(name string) string { return (&model.User{Name: name}).Initials() },
-		"mask":     Mask,
-		"states":   model.States,
-		"roles":    model.Roles,
-		"list":     func(items ...any) []any { return items },
+		"ago":       Ago,
+		"stamp":     Stamp,
+		"duration":  Duration,
+		"size":      Size,
+		"join":      strings.Join,
+		"lower":     strings.ToLower,
+		"add":       func(a, b int) int { return a + b },
+		"initials":  func(name string) string { return (&model.User{Name: name}).Initials() },
+		"mask":      Mask,
+		"states":    model.States,
+		"roles":     model.Roles,
+		"list":      func(items ...any) []any { return items },
+		"inHours":   InHours,
+		"hoursLine": HoursLine,
 	}
+}
+
+// InHours reports whether the hours allow a run now. Hours that do not
+// parse are not the page's problem: they read as open.
+func InHours(text string) bool {
+	rules, err := hours.Parse(text)
+	if err != nil {
+		return true
+	}
+	return rules.Allows(time.Now())
+}
+
+// HoursLine writes hours on one line.
+func HoursLine(text string) string {
+	rules, err := hours.Parse(text)
+	if err != nil {
+		return strings.TrimSpace(text)
+	}
+	return strings.ReplaceAll(rules.String(), "\n", ", ")
 }
 
 // when returns the time a value stands for: a time, a pointer to one, or

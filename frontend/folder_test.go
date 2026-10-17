@@ -56,3 +56,43 @@ func TestFolder_Missing(t *testing.T) {
 	assert.Equal(t, http.StatusNotFound, hidden.Status)
 	assert.Contains(t, hidden.Body, "No folder named private")
 }
+
+// The sidebar opens the folder of the page into its jobs, a menu button
+// drives the drawer, and the jobs table folds into cards.
+func TestFolder_SidebarAndCards(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	session := f.start(t, f.infra, "slow")
+
+	body := f.page(t, asOps, "/f/infra")
+	assert.Contains(t, body, `<details class="folder active" data-folder="infra" open>`)
+	assert.Contains(t, body, `<details class="folder" data-folder="private">`)
+	assert.Contains(t, body, `href="/f/infra/plan" data-job-key="infra/plan"`)
+	assert.Contains(t, body, `data-job-key="infra/slow" class=""><i class="dot running"></i>`)
+	assert.Contains(t, body, `id="menu-toggle"`)
+	assert.Contains(t, body, `id="menu-backdrop"`)
+	assert.Contains(t, body, `<table class="table jobs cards">`)
+	assert.Contains(t, body, `data-label="Last run"`)
+	assert.Contains(t, body, "<th>Hours</th><td><span class=\"faint\">always</span></td>")
+
+	job := f.page(t, asOps, "/f/infra/plan")
+	assert.Contains(t, job, `data-job-key="infra/plan" class="active"`)
+	_ = session
+}
+
+func TestFolder_Hours(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	f.infra.Hours = "mon 0:00-0:01"
+	f.infra.Job("plan").Hours = "daily 0-24"
+
+	body := f.page(t, asOps, "/f/infra")
+	assert.Contains(t, body, "mon 00:00-00:01 <span class=\"badge bad\">out of hours now</span>")
+
+	job := f.page(t, asOps, "/f/infra/plan")
+	assert.Contains(t, job, "daily 0-24 <span class=\"badge ok\">open now</span>")
+	assert.Contains(t, job, "the folder runs mon 00:00-00:01")
+
+	slow := f.page(t, asOps, "/f/infra/slow")
+	assert.Contains(t, slow, "out of hours now")
+}

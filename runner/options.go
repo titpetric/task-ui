@@ -27,4 +27,6 @@ type Options struct {
 	// Keep is how long a finished session stays attachable in memory
 	// before it is forgotten; the row and the recording remain.
 	Keep time.Duration
+	// Now is the clock the hours gate reads. Nil is time.Now.
+	Now func() time.Time
 }

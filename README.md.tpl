@@ -26,6 +26,8 @@ as it runs.
 - **Users and roles.** Login is mandatory, with three roles: `admin`,
   `runner` and `viewer`. Users are seeded from `task-ui.yml` and managed
   in Settings.
+- **Hours.** A folder runs in office hours only when told to. Out of
+  hours Run force asks why, and the reason is kept with the run.
 - **Projects from git.** Admins add a folder by cloning a repository; the
   clone is the test. A checkout is pulled before every run.
 - **History, artifacts, schedules.** Every run is recorded with who ran it,
@@ -179,6 +181,28 @@ terminal colors, `/api/runs/{id}/frame.txt` as text, and
 page lists every run with who started it, how many windows are on it and
 how it ended, filtered by folder, job and state.
 
+## Hours
+
+A folder can be limited to office hours: one rule per line in Settings,
+Projects, Configure, days then a span. The last rule that covers a day
+decides it, so
+
+```
+mon-fri 9-17
+fri 9-13
+```
+
+runs Monday to Thursday nine to five and Friday mornings, and nothing on
+the weekend. Days are names or ranges (`mon-fri`, `sat,sun`, `weekdays`,
+`daily`), spans are hours or `hh:mm`. The API also sets hours per job
+(`job_hours`). The folder and job pages say whether it is open now.
+
+Out of hours a run is refused with "out of hours". Run force is still
+there, but it asks why: the reason is required, kept on the run, and
+shown wherever the run is listed, as the log entry of who ran what out
+of hours and why. Scheduled runs are not gated; the schedule is the
+decision.
+
 ## Projects from git
 
 Settings, Projects lists the folders under the root with their source.
@@ -228,7 +252,7 @@ Writes need the same origin. The browser pages are the reference client;
 | Method | Path | Does |
 |--------|------|------|
 | `GET` | `/api/runs?folder=&job=&state=&limit=` | the runs, newest first, with `live`, `attached` and `can_run` |
-| `POST` | `/api/runs` `{folder, job, force, cols, rows}` | starts a run; `409` with the run in the way unless forced |
+| `POST` | `/api/runs` `{folder, job, force, reason, cols, rows}` | starts a run; `409` with the run in the way unless forced; `403` out of hours unless forced with a reason |
 | `POST` | `/api/runs/all` `{folder, force}` | starts every job of a folder the user may run |
 | `GET` | `/api/runs/{id}` | one run |
 | `POST` | `/api/runs/{id}/stop`, `/kill` | ends a run |
@@ -236,7 +260,7 @@ Writes need the same origin. The browser pages are the reference client;
 | `WS` | `/api/runs/{id}/attach` | binary frames are output; text frames are `{"type":"input"\|"resize"\|"stop"\|"kill"}` in and `{"type":"status"}` out |
 | `GET` `DELETE` | `/api/artifacts`, `/api/artifacts/{id}` | list, download, delete |
 | `GET` `POST` `PUT` `DELETE` | `/api/schedules`, `/api/schedules/{id}` | `{folder, job, expression, enabled}` |
-| `GET` `POST` `PUT` `DELETE` | `/api/projects`, `/api/projects/{folder}` | clone `{url, id, branch}`; configure `{title, description, allow, sources, commands, job_allow}` |
+| `GET` `POST` `PUT` `DELETE` | `/api/projects`, `/api/projects/{folder}` | clone `{url, id, branch}`; configure `{title, description, allow, sources, commands, job_allow, hours, job_hours}` |
 | `GET` `POST` `PUT` `DELETE` | `/api/users`, `/api/users/{id}` | `{name, password, role, folders}` |
 | `GET` `POST` `DELETE` | `/api/secrets`, `/api/secrets/{id}` | `{scope, name, content}`; content is never returned |
 | `GET` `POST` `DELETE` | `/api/keys`, `/api/keys/generate`, `/api/keys/upload`, `/api/keys/{name}` | `{type, comment}`, `{content, comment}` |
@@ -254,12 +278,19 @@ Writes need the same origin. The browser pages are the reference client;
 | ![Projects](.github/assets/projects-dark.png) | ![Users](.github/assets/users-dark.png) |
 | ![Secrets](.github/assets/secrets-dark.png) | ![An env file](.github/assets/envfile-dark.png) |
 | ![SSH keys](.github/assets/keys-dark.png) | ![Login](.github/assets/login-dark.png) |
+| ![Out of hours: Run force asks why](.github/assets/out-of-hours-dark.png) | ![The phone: the drawer with the folders and their jobs, and the jobs as cards](.github/assets/mobile-menu-dark.png) |
 
 `scripts/demo.sh` regenerates them: it serves a copy of `testdata/demo`,
 sets the instance up through the API with curl, starts real runs with
-`scripts/run.sh`, and captures each view with headless chromium through
-`scripts/chromium.sh`. A run opens in its window from a link:
-`/runs/<id>#run=<id>`.
+`scripts/run.sh`, walks every link of every page with `scripts/crawl.sh`
+and captures each view with headless chromium through
+`scripts/chromium.sh`, the phone views included. A run opens in its
+window from a link: `/runs/<id>#run=<id>`; `#start=<folder>/<job>`
+starts one; `#menu` opens the drawer.
+
+Under 860px the sidebar is a drawer behind the menu button, with the
+folders opening into their jobs, and the tables of jobs and runs fold
+into cards.
 
 ## Layout
 
@@ -276,6 +307,7 @@ domains, the domains to `model` and `storage`, `model` to nothing of ours.
 | `folder`    | the catalogue: a `Folder` with its `Job`s, discovery under the root, the project configuration |
 | `runner`    | sessions: a `Process` on a pty, the terminal `Frame`, subscribers, artifacts |
 | `scheduler` | cron `Expression`s and the `Loop` that starts due schedules                  |
+| `hours`     | the office hours `Rules` a folder or job may run in                          |
 | `recording` | the asciicast files                                                          |
 | `access`    | who may do what: passwords, `Sessions`, the `Guard`                          |
 | `envfile`   | the dotenv files a folder reads, as task-ui manages and generates them       |

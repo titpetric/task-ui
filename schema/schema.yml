@@ -170,6 +170,14 @@
       type: text
       comment: Job Allow
       datatype: varchar
+    - name: hours
+      type: text
+      comment: Hours
+      datatype: varchar
+    - name: job_hours
+      type: text
+      comment: Job Hours
+      datatype: varchar
     - name: created_at
       type: timestamp
       comment: Created At
@@ -254,6 +262,10 @@
     - name: cast_path
       type: text
       comment: Cast Path
+      datatype: varchar
+    - name: reason
+      type: text
+      comment: Reason
       datatype: varchar
     - name: started_at
       type: timestamp

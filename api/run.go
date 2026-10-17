@@ -16,6 +16,8 @@ type RunRequest struct {
 	Folder string `json:"folder"`
 	Job    string `json:"job"`
 	Force  bool   `json:"force"`
+	// Reason says why the run is forced out of hours. Required then.
+	Reason string `json:"reason"`
 	Cols   int    `json:"cols"`
 	Rows   int    `json:"rows"`
 }
@@ -83,9 +85,15 @@ func (h *Handlers) startRun(w http.ResponseWriter, r *http.Request) {
 		fail(w, http.StatusForbidden, "your role may view this job, but not run it")
 		return
 	}
-	session, err := h.opts.Runner.Start(r.Context(), runner.Request{Folder: f, Job: job, User: user, Force: req.Force, Cols: req.Cols, Rows: req.Rows})
+	session, err := h.opts.Runner.Start(r.Context(), runner.Request{Folder: f, Job: job, User: user, Force: req.Force, Reason: req.Reason, Cols: req.Cols, Rows: req.Rows})
 	if errors.Is(err, runner.ErrBusy) {
 		writeJSON(w, http.StatusConflict, map[string]any{"error": "already running", "run": h.view(r, session.Snapshot())})
+		return
+	}
+	if errors.Is(err, runner.ErrOutOfHours) || errors.Is(err, runner.ErrReasonNeeded) {
+		// The window asks for the reason and forces; it needs the hours
+		// to say what they are.
+		writeJSON(w, statusOf(err), map[string]any{"error": err.Error(), "out_of_hours": true, "hours": f.HoursOf(job)})
 		return
 	}
 	if err != nil {

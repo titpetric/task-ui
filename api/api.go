@@ -18,6 +18,7 @@ import (
 
 	chi "github.com/go-chi/chi/v5"
 
+	"github.com/titpetric/task-ui/hours"
 	"github.com/titpetric/task-ui/runner"
 	"github.com/titpetric/task-ui/storage"
 )
@@ -131,6 +132,10 @@ func statusOf(err error) int {
 		return http.StatusNotFound
 	case errors.Is(err, runner.ErrBusy):
 		return http.StatusConflict
+	case errors.Is(err, runner.ErrOutOfHours):
+		return http.StatusForbidden
+	case errors.Is(err, runner.ErrReasonNeeded), errors.Is(err, hours.ErrInvalid):
+		return http.StatusBadRequest
 	case errors.Is(err, runner.ErrNotInteractive), errors.Is(err, runner.ErrNotRunning), errors.Is(err, storage.ErrInvalidName):
 		return http.StatusBadRequest
 	}

@@ -23,6 +23,8 @@
     stop: document.getElementById("run-stop"),
     kill: document.getElementById("run-kill"),
     close: document.getElementById("run-close"),
+    reason: document.getElementById("run-reason"),
+    reasonText: document.getElementById("run-reason-text"),
   };
 
   var session = null; // { run, spec, ws, term, fit, timer, onResize, finished, changed }
@@ -173,6 +175,8 @@
     setState(null);
     notice("");
     buttons({});
+    els.reason.hidden = true;
+    els.reasonText.value = "";
     if (!dialog.open) dialog.showModal();
     session = newTerminal();
     session.term.focus();
@@ -187,12 +191,24 @@
     var s = open("Run", spec.title, "");
     s.spec = spec;
     setState("running", "starting");
-    var body = { folder: spec.folder, job: spec.job, force: !!spec.force, cols: s.term.cols, rows: s.term.rows };
+    var body = { folder: spec.folder, job: spec.job, force: !!spec.force, reason: spec.reason || "", cols: s.term.cols, rows: s.term.rows };
     api("POST", "/api/runs", body).then(function (res) {
       if (session !== s) return;
       if (res.status === 201) {
         s.changed = true;
         connect(s, res.data);
+        return;
+      }
+      if (res.data.out_of_hours) {
+        // The job's hours do not allow a run now. Force needs a reason,
+        // which the run keeps: the log entry of why.
+        s.outOfHours = true;
+        setState("busy", "out of hours");
+        notice("Out of hours: " + spec.title + " runs " + (res.data.hours || "never").replace(/\n/g, ", ") + ". Run force needs a reason.", "signal");
+        els.hint.textContent = "The reason is recorded with the run, for everyone to see.";
+        els.reason.hidden = false;
+        els.reasonText.focus();
+        buttons({ force: true });
         return;
       }
       if (res.status === 409 && res.data.run) {
@@ -376,7 +392,14 @@
     });
     els.force.addEventListener("click", function () {
       var spec = session && session.spec;
-      if (spec) start(Object.assign({}, spec, { force: true }));
+      if (!spec) return;
+      var reason = els.reasonText.value.trim();
+      if (session.outOfHours && !reason) {
+        notice("Say why this has to run out of hours.", "bad");
+        els.reasonText.focus();
+        return;
+      }
+      start(Object.assign({}, spec, { force: true, reason: reason }));
     });
     els.again.addEventListener("click", function () {
       var spec = session && session.spec;
@@ -565,11 +588,29 @@
     });
   });
 
-  // #run=<id> opens a run on load, so a window can be shared.
+  // #run=<id> opens a run on load, so a window can be shared;
+  // #start=<folder>/<job> starts one.
   (function openFromHash() {
     var match = /^#run=([0-9a-z]+)$/.exec(location.hash);
     if (match && dialog && window.Terminal) attach(match[1]);
+    var start_ = /^#start=([^/]+)\/(.+)$/.exec(location.hash);
+    if (start_ && dialog && window.Terminal) {
+      history.replaceState(null, "", location.pathname + location.search);
+      start({ folder: start_[1], job: start_[2], title: start_[1] + " / " + start_[2] });
+    }
   })();
+
+  // The sidebar is a drawer under the breakpoint. #menu opens it on load.
+  var menuToggle = document.getElementById("menu-toggle");
+  if (menuToggle) {
+    var setMenu = function (open) {
+      document.body.classList.toggle("menu-open", open);
+      menuToggle.setAttribute("aria-expanded", open ? "true" : "false");
+    };
+    menuToggle.addEventListener("click", function () { setMenu(!document.body.classList.contains("menu-open")); });
+    document.getElementById("menu-backdrop").addEventListener("click", function () { setMenu(false); });
+    if (location.hash === "#menu") setMenu(true);
+  }
 
   // The user menu closes when the page is clicked elsewhere.
   var userMenu = document.getElementById("user-menu");
@@ -607,10 +648,17 @@
       if (res.status !== 200 || !res.data.runs) return;
       var runs = res.data.runs;
       renderRecents(runs);
-      var running = {};
-      runs.forEach(function (r) { if (r.state === "running") running[r.folder] = true; });
-      document.querySelectorAll(".side [data-folder] .dot").forEach(function (dot) {
-        dot.classList.toggle("running", !!running[dot.parentElement.dataset.folder]);
+      var running = {}, runningJobs = {};
+      runs.forEach(function (r) {
+        if (r.state !== "running") return;
+        running[r.folder] = true;
+        runningJobs[r.folder + "/" + r.job] = true;
+      });
+      document.querySelectorAll(".side [data-folder] > summary .dot").forEach(function (dot) {
+        dot.classList.toggle("running", !!running[dot.closest("[data-folder]").dataset.folder]);
+      });
+      document.querySelectorAll(".side [data-job-key] .dot").forEach(function (dot) {
+        dot.classList.toggle("running", !!runningJobs[dot.parentElement.dataset.jobKey]);
       });
       var any = document.querySelector("[data-any-running]");
       if (any) any.classList.toggle("running", Object.keys(running).length > 0);

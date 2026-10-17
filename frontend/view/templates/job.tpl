@@ -40,6 +40,7 @@
 			{{- if $r.Aliases }}<tr><th>Aliases</th><td>{{ range $r.Aliases }}<span class="badge">{{ . }}</span> {{ end }}</td></tr>{{ end }}
 			{{- if $r.EnvFiles }}<tr><th>Env files</th><td>{{ range $r.EnvFiles }}<div><svg class="ic"><use href="#i-file"/></svg> {{ . }}</div>{{ end }}</td></tr>{{ end }}
 			<tr><th>Who can run</th><td>{{ .WhoCanRun $p $r }}</td></tr>
+			<tr><th>Hours</th><td>{{ template "hours" ($p.HoursOf $r) }}{{ if and $r.Hours $p.Hours }} <span class="faint">(the job's own; the folder runs {{ hoursLine $p.Hours }})</span>{{ end }}</td></tr>
 			<tr><th>Input</th><td>{{ if $r.Interactive }}keyboard input is sent to the job{{ else }}output only{{ end }}</td></tr>
 		</tbody>
 	</table>
@@ -49,15 +50,15 @@
 <section class="block" data-live>
 	<h3>History{{ if .Runs }} <small>{{ len .Runs }} runs</small>{{ end }}</h3>
 	<div class="table-wrap">
-	<table class="table">
+	<table class="table cards">
 		<thead><tr><th>Started</th><th>By</th><th>Duration</th><th>Result</th><th></th></tr></thead>
 		<tbody>
 		{{- range .Runs }}
 			<tr>
-				<td class="nowrap" title="{{ ago .StartedAt }}">{{ stamp .StartedAt }}</td>
-				<td>{{ template "who" . }}</td>
-				<td class="nowrap">{{ duration .Elapsed }}</td>
-				<td>{{ template "state" . }}</td>
+				<td class="nowrap key" title="{{ ago .StartedAt }}">{{ stamp .StartedAt }}</td>
+				<td data-label="By">{{ template "who" . }}</td>
+				<td class="nowrap" data-label="Took">{{ duration .Elapsed }}</td>
+				<td data-label="Result">{{ template "state" . }}</td>
 				<td class="actions">
 					<a class="btn btn-sm" href="/runs/{{ .ID }}" data-attach="{{ .ID }}">{{ if eq .State "running" }}Attach{{ else }}View{{ end }}</a>
 					{{- if and (eq .State "running") $can }}<button type="button" class="btn-icon danger" data-kill="{{ .ID }}" title="Kill the run" aria-label="Kill the run"><svg class="ic"><use href="#i-stop"/></svg></button>{{ end }}

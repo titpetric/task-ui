@@ -24,6 +24,10 @@
 		<label for="pe-sources">Sources <span class="faint">files to read, comma separated; empty detects them</span></label>
 		<input type="text" id="pe-sources" name="sources" data-type="list" value="{{ index .Form "sources" }}" placeholder="atkins.yml, Makefile" spellcheck="false" autocomplete="off">
 	</div>
+	<div class="field">
+		<label for="pe-hours">Hours <span class="faint">when the jobs may run, one rule per line; the last rule for a day wins; empty is always</span></label>
+		<textarea id="pe-hours" name="hours" rows="3" spellcheck="false" autocomplete="off" placeholder="mon-fri 9-17&#10;fri 9-13">{{ index .Form "hours" }}</textarea>
+	</div>
 	<div class="form-foot">
 		<a class="btn" href="/settings/projects">Cancel</a>
 		<button class="btn btn-primary" type="submit">Save</button>

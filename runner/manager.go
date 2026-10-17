@@ -15,6 +15,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -93,7 +94,14 @@ func (m *Manager) Start(ctx context.Context, req Request) (*Session, error) {
 	if req.Folder == nil || req.Job == nil {
 		return nil, errors.New("a run needs a folder and a job")
 	}
+	outOfHours, err := m.gate(req)
+	if err != nil {
+		return nil, err
+	}
 	run := m.newRun(req)
+	if outOfHours {
+		run.Reason = strings.TrimSpace(req.Reason)
+	}
 	if current, err := m.acquire(run.Key(), req.Force); err != nil {
 		return current, err
 	}

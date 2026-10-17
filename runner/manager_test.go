@@ -29,6 +29,8 @@ type fixture struct {
 	files   *storage.ArtifactStorage
 	secrets *storage.SecretStorage
 	root    string
+	// now is what the manager's clock reads; zero is the real time.
+	now time.Time
 }
 
 func newFixture(t *testing.T) *fixture {
@@ -39,7 +41,14 @@ func newFixture(t *testing.T) *fixture {
 	runs := storage.NewRunStorage(db)
 	artifacts := storage.NewArtifactStorage(db)
 	secrets := storage.NewSecretStorage(db)
+	f := &fixture{runs: runs, files: artifacts, secrets: secrets, root: t.TempDir()}
 	manager := runner.New(runner.Options{
+		Now: func() time.Time {
+			if f.now.IsZero() {
+				return time.Now()
+			}
+			return f.now
+		},
 		Runs:         runs,
 		Artifacts:    artifacts,
 		Secrets:      secrets,
@@ -51,7 +60,8 @@ func newFixture(t *testing.T) *fixture {
 		KillTimeout:  5 * time.Second,
 		Keep:         time.Minute,
 	})
-	return &fixture{manager: manager, runs: runs, files: artifacts, secrets: secrets, root: t.TempDir()}
+	f.manager = manager
+	return f
 }
 
 // shellJob is a folder with one job that runs a shell script.

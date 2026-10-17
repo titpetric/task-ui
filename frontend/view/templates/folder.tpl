@@ -22,19 +22,19 @@
 <section class="block" data-live>
 	<h3>{{ if eq (len $p.Sources) 1 }}Jobs{{ else }}{{ $s.Kind }}{{ end }} <small>{{ $s.File }}{{ if $s.Command }} · {{ join $s.Command " " }}{{ end }}</small></h3>
 	<div class="table-wrap">
-	<table class="table jobs">
+	<table class="table jobs cards">
 		<thead><tr><th>Name</th><th>Description</th><th class="hide-sm steps">Steps</th><th class="hide-sm">Last run</th><th></th></tr></thead>
 		<tbody>
 		{{- range $r := $p.SourceJobs $s }}
 			{{- $run := $.RunningRun $r.Key }}{{ $can := $.CanRun $p $r }}
 			<tr>
 				<td class="key"><a href="/f/{{ $p.ID }}/{{ $r.ID }}">{{ $r.Name }}</a>{{ if $r.Interactive }} <span class="badge">interactive</span>{{ end }}</td>
-				<td class="desc">{{ $r.Description }}</td>
-				<td class="hide-sm steps">
+				<td class="desc" data-label="About">{{ $r.Description }}</td>
+				<td class="hide-sm steps" data-label="Steps">
 					{{- if $r.DependsOn }}<span class="dim">after {{ join $r.DependsOn ", " }}</span>{{ end }}
 					{{- range $r.Steps }}<code>{{ . }}</code>{{ end }}
 				</td>
-				<td class="nowrap hide-sm">
+				<td class="nowrap hide-sm" data-label="Last run">
 					{{- if $run }}<span class="state"><i class="dot running"></i>running, {{ $run.UserName }}</span>
 					{{- else }}{{ with $.LastRun $r.Key }}{{ template "state" . }} <span class="faint">{{ ago .StartedAt }}</span>{{ else }}<span class="faint">never run</span>{{ end }}{{ end -}}
 				</td>
@@ -67,6 +67,7 @@
 			{{- range $p.Sources }}<tr><th>{{ .Kind }}</th><td><svg class="ic"><use href="#i-file"/></svg> {{ .File }}{{ if .Command }} <span class="dim">runs with</span> <code>{{ join .Command " " }} &lt;target&gt;</code>{{ end }}</td></tr>{{ end }}
 			{{- with $.Checkout }}<tr><th>Source</th><td><div class="mono-break">{{ .Remote }}</div><div class="dim">{{ .Branch }} <span class="faint">{{ .Commit }}</span> {{ .Subject }}{{ if not .When.IsZero }} <span class="faint">{{ ago .When }}</span>{{ end }}</div><div class="faint">pulled before every run</div></td></tr>{{ end }}
 			<tr><th>Who can run</th><td>{{ if $p.Allow }}admin, {{ join $p.Allow ", " }}{{ else }}admin, runner{{ end }}</td></tr>
+			<tr><th>Hours</th><td>{{ template "hours" $p.Hours }}</td></tr>
 			{{- if $p.Includes }}<tr><th>Includes</th><td>{{ range $p.Includes }}<div><svg class="ic"><use href="#i-file"/></svg> {{ . }}</div>{{ end }}</td></tr>{{ end }}
 			<tr><th>Scheduled</th><td>{{ if .Schedules }}{{ len .Schedules }} <a href="/schedules?folder={{ $p.ID }}">schedules</a>{{ else }}<span class="faint">none</span>, <a href="/schedules?folder={{ $p.ID }}">add one</a>{{ end }}</td></tr>
 		</tbody>

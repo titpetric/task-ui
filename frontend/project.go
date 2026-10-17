@@ -53,6 +53,7 @@ func (h *Handlers) projectEdit(w http.ResponseWriter, r *http.Request) {
 			"description": project.Description,
 			"allow":       strings.Join(project.AllowList(), ", "),
 			"sources":     strings.Join(project.SourceList(), ", "),
+			"hours":       project.Hours,
 		}
 	}
 	h.render(w, http.StatusOK, "project_edit", p)

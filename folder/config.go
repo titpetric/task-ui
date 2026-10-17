@@ -23,6 +23,9 @@ type Config struct {
 	Sources []string `yaml:"sources"`
 	// Jobs narrows who may run single jobs: job ID to users or roles.
 	Jobs map[string][]string `yaml:"jobs"`
+	// Hours says when the folder's jobs may run; JobHours does so per job.
+	Hours    string            `yaml:"hours"`
+	JobHours map[string]string `yaml:"job_hours"`
 }
 
 // Apply puts the configuration on a loaded folder.
@@ -56,6 +59,14 @@ func (c Config) Apply(f *Folder) {
 			job.Allow = allow
 		}
 	}
+	if c.Hours != "" {
+		f.Hours = c.Hours
+	}
+	for name, hours := range c.JobHours {
+		if job := f.Job(name); job != nil {
+			job.Hours = hours
+		}
+	}
 }
 
 // ConfigOf reads a project row as the configuration of its folder.
@@ -71,6 +82,8 @@ func ConfigOf(p *model.Project) Config {
 		Commands:    p.CommandMap(),
 		Sources:     p.SourceList(),
 		Jobs:        p.JobAllowMap(),
+		Hours:       p.Hours,
+		JobHours:    p.JobHoursMap(),
 	}
 }
 
