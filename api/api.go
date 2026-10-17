@@ -15,6 +15,7 @@ import (
 	"net/http"
 	"sort"
 	"strconv"
+	"strings"
 
 	chi "github.com/go-chi/chi/v5"
 
@@ -62,9 +63,9 @@ func (h *Handlers) Routes() http.Handler {
 
 	r.Get("/projects", h.listProjects)
 	r.Post("/projects", h.cloneProject)
-	r.Get("/projects/{folder}", h.getProject)
-	r.Put("/projects/{folder}", h.updateProject)
-	r.Delete("/projects/{folder}", h.deleteProject)
+	r.Get("/projects/*", h.getProject)
+	r.Put("/projects/*", h.updateProject)
+	r.Delete("/projects/*", h.deleteProject)
 
 	r.Get("/users", h.listUsers)
 	r.Post("/users", h.createUser)
@@ -81,9 +82,8 @@ func (h *Handlers) Routes() http.Handler {
 	r.Post("/keys/upload", h.uploadKey)
 	r.Delete("/keys/{name}", h.deleteKey)
 
-	r.Get("/env/{folder}", h.listEnv)
-	r.Get("/env/{folder}/*", h.getEnv)
-	r.Put("/env/{folder}/*", h.putEnv)
+	r.Get("/env/*", h.getEnv)
+	r.Put("/env/*", h.putEnv)
 
 	return r
 }
@@ -91,6 +91,11 @@ func (h *Handlers) Routes() http.Handler {
 // param returns what the route bound under name.
 func param(r *http.Request, name string) string {
 	return chi.URLParam(r, name)
+}
+
+// folderParam returns the folder ID a wildcard route carries.
+func folderParam(r *http.Request) string {
+	return strings.Trim(chi.URLParam(r, "*"), "/")
 }
 
 // maxBody bounds a request body.

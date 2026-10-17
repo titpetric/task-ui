@@ -33,6 +33,26 @@ var Detectors = []Detector{
 	scriptDetector{},
 }
 
+// PipelineKinds are the conventions that describe a folder's jobs on
+// purpose, as opposed to build files and scripts that happen to be there.
+// A folder with one lists only its targets.
+var PipelineKinds = []string{"atkins", "task"}
+
+// Pipeline reports whether a kind is a pipeline convention.
+func Pipeline(kind string) bool {
+	return contains(PipelineKinds, kind)
+}
+
+// HasPipeline reports whether a folder has a pipeline file.
+func HasPipeline(dir string) bool {
+	for _, detector := range Detectors {
+		if Pipeline(detector.Kind()) && detector.Detect(dir) != nil {
+			return true
+		}
+	}
+	return false
+}
+
 // ByKind returns the detector of a convention.
 func ByKind(kind string) (Detector, bool) {
 	for _, detector := range Detectors {

@@ -83,6 +83,8 @@ func newFixture(t *testing.T) *fixture {
 	})
 	private := shellFolder(t, root, "private", map[string]string{"deploy": "echo deployed"})
 	private.Allow = []string{"admin"}
+	edge := shellFolder(t, root, "infra/edge", map[string]string{"deploy": "echo edge"})
+	edge.EnvFiles = []string{".env"}
 
 	infra.Job("echo").Interactive = true
 	infra.EnvFiles = []string{".env"}
@@ -122,7 +124,7 @@ func newFixture(t *testing.T) *fixture {
 		Schedules:  storage.NewScheduleStorage(db),
 		Secrets:    secrets,
 		Runner:     manager,
-		Catalogue:  catalogue{"infra": infra, "private": private},
+		Catalogue:  catalogue{"infra": infra, "private": private, "infra/edge": edge},
 		Git:        &git.Git{},
 		Keys:       keys,
 		Env:        envfile.New(storage.NewEnvFileStorage(db), secrets),

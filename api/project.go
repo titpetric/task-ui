@@ -100,7 +100,7 @@ func (h *Handlers) getProject(w http.ResponseWriter, r *http.Request) {
 	if !requireAdmin(w, r) {
 		return
 	}
-	project, err := h.opts.Projects.GetByFolder(r.Context(), param(r, "folder"))
+	project, err := h.opts.Projects.GetByFolder(r.Context(), folderParam(r))
 	if err != nil {
 		failErr(w, err)
 		return
@@ -114,7 +114,7 @@ func (h *Handlers) updateProject(w http.ResponseWriter, r *http.Request) {
 	if !requireAdmin(w, r) {
 		return
 	}
-	id := param(r, "folder")
+	id := folderParam(r)
 	if !folder.ValidID(id) {
 		fail(w, http.StatusBadRequest, "invalid folder name")
 		return
@@ -161,12 +161,12 @@ func (h *Handlers) deleteProject(w http.ResponseWriter, r *http.Request) {
 	if !requireAdmin(w, r) {
 		return
 	}
-	id := param(r, "folder")
+	id := folderParam(r)
 	if !folder.ValidID(id) {
 		fail(w, http.StatusBadRequest, "invalid folder name")
 		return
 	}
-	dir := filepath.Join(h.opts.Root, id)
+	dir := filepath.Join(h.opts.Root, filepath.FromSlash(id))
 	if h.opts.Git.IsRepo(dir) {
 		if err := h.opts.Git.Remove(dir); err != nil {
 			failErr(w, err)

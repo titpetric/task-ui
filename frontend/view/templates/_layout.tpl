@@ -50,9 +50,9 @@
 				{{- $total := 0 }}{{ range .Folders }}{{ $total = len .Jobs | add $total }}{{ end }}
 				{{- range $p := .Folders }}
 				{{- $active := and $.Folder (eq $.Folder.ID $p.ID) }}
-				<details class="folder{{ if $active }} active{{ end }}" data-folder="{{ $p.ID }}"{{ if or $active (le $total 24) }} open{{ end }}>
+				<details class="folder{{ if $active }} active{{ end }}" data-folder="{{ $p.ID }}" style="--depth: {{ $p.Depth }}"{{ if or $active (le $total 24) }} open{{ end }}>
 					<summary title="{{ $p.ID }}/{{ range $i, $s := $p.Sources }}{{ if $i }}, {{ end }}{{ $s.File }}{{ end }}">
-						<a href="/f/{{ $p.ID }}"><svg class="ic"><use href="#i-folder{{ if $active }}-open{{ end }}"/></svg><span>{{ $p.ID }}</span></a>
+						<a href="/f/{{ $p.ID }}"><svg class="ic"><use href="#i-folder{{ if $active }}-open{{ end }}"/></svg><span>{{ $p.Name }}</span></a>
 						<i class="dot"></i>
 						{{- if $p.Error }}<small class="bad">!</small>{{ else }}<small>{{ len $p.Jobs }}</small>{{ end }}
 						<svg class="ic chev"><use href="#i-chev"/></svg>

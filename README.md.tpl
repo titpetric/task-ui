@@ -153,11 +153,24 @@ extension of any file, and no pipeline file is ever written.
 | composer | `composer.json` | `composer run-script <script>` | the scripts, with `scripts-descriptions` |
 | script | `scripts/*` | `./scripts/<file>`, or `sh` for a `.sh` that is not executable | one per file; the first comment describes it |
 
+A pipeline file stands for its folder: a folder with `atkins.yml` or a
+Taskfile lists that pipeline's targets only, and the Makefile, package
+scripts or `scripts/` beside it are the pipeline's business. Without a
+pipeline file every convention is a source. A job's ID is its target
+name, or `kind:name` when the folder lists more than one convention, so
+`make build` and `npm run build` stay apart.
+
+Discovery goes as deep as the folders do: every directory under the root
+with something to run is a folder, at its path (`services/api`), and the
+sidebar shows them as a tree, each folder indented under its parent with
+its targets below it. Under a folder with a pipeline file only folders
+with a pipeline file of their own are listed, so a Go tree's Makefiles
+do not become folders; under a plain folder they do. Hidden directories,
+`node_modules`, `vendor` and `testdata` are never looked into.
+
 Pipeline sources also give the folder its name and description (atkins
 `name` and `help`), the files under `include`, and the dotenv files under
-`env.include` or `dotenv`, which task-ui manages (below). A job's ID is
-its target name, or `kind:name` when the folder follows more than one
-convention, so `make build` and `npm run build` stay apart.
+`env.include` or `dotenv`, which task-ui manages (below).
 
 A convention is a `Detector` in the `detector` package: one type that
 reads a folder and returns a `Source`, added to the `Detectors` list. The
@@ -166,7 +179,8 @@ are.
 
 Settings, Projects, Configure sets what the instance adds to a folder: a
 title and description, who may run it (`allow`: user names or roles,
-empty means every runner), and which `sources` to read. Through the API a
+empty means every runner), and which `sources` to read, which is also
+how a pipeline folder gets its Makefile or scripts back as jobs. Through the API a
 project also takes `commands` (the runner per kind, `make: gmake`) and
 `job_allow` (per job). Pipeline files stay as they are.
 
