@@ -3,10 +3,10 @@
 <div class="page-head">
 	<div>
 		<h2>{{ $run.Folder }} / {{ $run.Job }} {{ template "state" $run }}</h2>
-		<p>Started by {{ $run.UserName }} {{ ago $run.StartedAt }}{{ if $run.IsScheduled }} by the scheduler{{ end }}{{ if $run.IsForced }}, with Run force{{ end }}.{{ if $run.Live }} The session is live: attach to follow it{{ if $can }}, or end it{{ end }}.{{ else }} The session is over; what it showed is in the recording.{{ end }}</p>
+		<p>Started by {{ $run.UserName }} {{ ago $run.StartedAt }}{{ if $run.IsScheduled }} by the scheduler{{ end }}{{ if $run.IsForced }}, with Run force{{ end }}.{{ if eq $run.State "running" }} The session is live: attach to follow it{{ if $can }}, or end it{{ end }}.{{ else if $run.Live }} The run is over; its last screen is below and what it showed is in the recording.{{ else }} The run is over; what it showed is in the recording.{{ end }}</p>
 	</div>
 	<div class="actions">
-		<button type="button" class="btn btn-primary" data-attach="{{ $run.ID }}">{{ if $run.Live }}Attach{{ else }}View{{ end }}</button>
+		<button type="button" class="btn btn-primary" data-attach="{{ $run.ID }}">{{ if eq $run.State "running" }}Attach{{ else }}View{{ end }}</button>
 		{{- if and $run.Live (eq $run.State "running") $can }}
 		<button type="button" class="btn" data-stop="{{ $run.ID }}">Stop</button>
 		<button type="button" class="btn btn-danger" data-kill="{{ $run.ID }}">Kill</button>
@@ -17,7 +17,7 @@
 
 {{- if $run.Live }}
 <section class="block" data-live>
-	<h3>Terminal <small>as it looks now, {{ if $run.Attached }}{{ $run.Attached }} watching{{ else }}nobody attached{{ end }}</small></h3>
+	<h3>Terminal <small>{{ if eq $run.State "running" }}as it looks now, {{ if $run.Attached }}{{ $run.Attached }} watching{{ else }}nobody attached{{ end }}{{ else }}the last screen{{ end }}</small></h3>
 	<a class="tile wide" href="#" data-attach="{{ $run.ID }}"><img class="frame" src="/api/runs/{{ $run.ID }}/frame.svg" alt="Terminal of {{ $run.Folder }} / {{ $run.Job }}" data-frame="{{ $run.ID }}"></a>
 </section>
 {{- end }}

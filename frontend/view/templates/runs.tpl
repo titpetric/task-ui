@@ -38,7 +38,7 @@
 				<td>{{ template "state" . }}</td>
 				<td class="hide-sm">{{ if .Live }}{{ .Attached }}{{ else }}<span class="faint">-</span>{{ end }}</td>
 				<td class="actions">
-					<a class="btn btn-sm" href="/runs/{{ .ID }}" data-attach="{{ .ID }}">{{ if .Live }}Attach{{ else }}View{{ end }}</a>
+					<a class="btn btn-sm" href="/runs/{{ .ID }}" data-attach="{{ .ID }}">{{ if eq .State "running" }}Attach{{ else }}View{{ end }}</a>
 					{{- if and .Live (eq .State "running") }}
 					<button type="button" class="btn-icon" data-stop="{{ .ID }}" title="Stop the run" aria-label="Stop the run"><svg class="ic"><use href="#i-stop"/></svg></button>
 					<button type="button" class="btn-icon danger" data-kill="{{ .ID }}" title="Kill the run" aria-label="Kill the run"><svg class="ic"><use href="#i-trash"/></svg></button>

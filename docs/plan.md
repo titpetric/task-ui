@@ -21,13 +21,16 @@ area, dependencies one way, the front end makes no external requests.
 | `scheduler`  | cron expressions and the loop that starts scheduled runs                   |
 | `access`     | roles, passwords, sessions; users live in storage                          |
 | `git`, `sshkey`, `dotenv` | unchanged services                                             |
-| `api`        | the JSON endpoints: runs, frames, artifacts, schedules, projects, users    |
-| `frontend`   | the pages, templates and assets, and the attach socket                     |
+| `recording`  | the asciicast files                                                        |
+| `envfile`    | the dotenv files a folder reads, managed over storage                      |
+| `api`        | the JSON endpoints: runs, the attach socket, frames, artifacts, schedules, projects, users, secrets, keys, env files |
+| `frontend`   | the pages; `frontend/view` renders them from embedded templates and assets |
+| `app`        | the composition root: configuration, wiring, serving                       |
 | `internal/assert` | the test assertions, copied from atkins                               |
 
 ## Sweeps
 
-Each sweep ends green: `go test -race ./...`, `splint ./...` with no
+All six sweeps are in. Each sweep ended green: `go test -race ./...`, `splint ./...` with no
 findings, a commit.
 
 1. **Foundation.** Go 1.27, pdo and mig, migrations for user, project, run,

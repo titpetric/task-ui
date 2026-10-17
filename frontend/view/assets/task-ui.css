@@ -1309,7 +1309,7 @@ dialog.run[open] {
    the way a control room shows them. */
 .tiles {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(21rem, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(26rem, 1fr));
   gap: 0.8rem;
 }
 

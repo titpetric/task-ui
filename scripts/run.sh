@@ -1,25 +1,48 @@
 #!/usr/bin/env bash
-# Run a job on the running task-ui over its websocket, the same way the
-# run dialog does, and print the terminal output.
+# Start a job on the running task-ui through its API, wait for it to end
+# and print the last frame of its terminal.
 #
-#   scripts/run.sh <project> <job> [force]
+#   scripts/run.sh <folder> <job> [force]
 #
-# Works against an instance without users, where visitors get the
-# TASK_UI_ANONYMOUS role. Target another instance with TASK_UI_BASE.
+# Works against an instance signed in with TASK_UI_AUTOLOGIN, since curl
+# has no session. Target another instance with TASK_UI_BASE. The run ID
+# and the final state go to stderr.
 set -euo pipefail
 
 BASE="${TASK_UI_BASE:-http://localhost:3000}"
 
-project="${1:?usage: run.sh <project> <job> [force]}"
-job="${2:?usage: run.sh <project> <job> [force]}"
-query="cols=120&rows=30"
+folder="${1:?usage: run.sh <folder> <job> [force]}"
+job="${2:?usage: run.sh <folder> <job> [force]}"
+force=false
 if [ "${3:-}" = "force" ]; then
-  query="${query}&force=1"
+  force=true
 fi
 
-# The socket refuses other origins, so send ours. curl prints the frames as
-# they arrive and exits when the server closes the socket at the end of a run.
-curl -sN --max-time 120 \
-  -H "Origin: ${BASE}" \
-  "${BASE/http/ws}/ws/run/${project}/${job}?${query}"
+# The API refuses other origins on writes, so send ours.
+api() {
+  curl -sS -H "Origin: ${BASE}" -H "Content-Type: application/json" "$@"
+}
+
+field() {
+  grep -o "\"$1\":\"[^\"]*\"" | head -1 | cut -d'"' -f4
+}
+
+started="$(api -X POST -d "{\"folder\":\"${folder}\",\"job\":\"${job}\",\"force\":${force},\"cols\":120,\"rows\":30}" "${BASE}/api/runs")"
+id="$(printf '%s' "$started" | field id)"
+if [ -z "$id" ]; then
+  echo "$started" >&2
+  exit 1
+fi
+
+state=running
+for _ in $(seq 1 1200); do
+  state="$(api "${BASE}/api/runs/${id}" | field state)"
+  if [ "$state" != "running" ]; then
+    break
+  fi
+  sleep 0.2
+done
+
+api "${BASE}/api/runs/${id}/frame.txt"
 echo
+echo "${id} ${state}" >&2

@@ -1,7 +1,14 @@
-# Permissions for the demo folders. Pipeline files stay as atkins and task
-# read them; who may run what is decided here.
-projects:
-  - id: infra
-    allow: [ops]
-    jobs:
-      rotate-certs: [admin]
+# Users to seed on startup. Passwords are bcrypt hashes from
+# `task-ui hash <password>`, or plain text, hashed when seeded. Who may run
+# what is set per folder in Settings, Projects.
+users:
+  - name: admin
+    password: "$2a$10$replace-with-task-ui-hash"
+    role: admin
+  - name: ops
+    password: "$2a$10$replace-with-task-ui-hash"
+    role: runner
+  - name: guest
+    password: "$2a$10$replace-with-task-ui-hash"
+    role: viewer
+    folders: [infra, website]

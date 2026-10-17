@@ -40,6 +40,8 @@ type Manager struct {
 	mu       sync.Mutex
 	sessions map[string]*Session
 	byKey    map[string]*Session
+	// pulls holds one lock per checkout, so its runs pull one at a time.
+	pulls map[string]*sync.Mutex
 }
 
 // New returns a manager. Zero durations get defaults.
@@ -262,12 +264,8 @@ func (m *Manager) execute(ctx context.Context, session *Session) Status {
 	if len(job.Command) == 0 {
 		return failed(session, "the job has no command")
 	}
-	if m.opts.Git != nil && m.opts.Git.IsRepo(f.Dir) {
-		fmt.Fprint(session, "\x1b[2m$ git pull --ff-only\x1b[0m\r\n")
-		if err := m.opts.Git.Pull(ctx, f.Dir, crlfWriter{session}); err != nil {
-			return failed(session, "git pull failed: "+err.Error())
-		}
-		fmt.Fprint(session, "\r\n")
+	if err := m.pull(ctx, session); err != nil {
+		return failed(session, err.Error())
 	}
 	if m.opts.Env != nil {
 		if err := m.opts.Env.Generate(ctx, f); err != nil {
