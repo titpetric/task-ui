@@ -51,7 +51,7 @@
 				<td>{{ template "who" . }}</td>
 				<td class="nowrap">{{ duration .Elapsed }}</td>
 				<td>{{ template "state" . }}</td>
-				<td class="actions"><a class="btn btn-sm" href="/runs/{{ .ID }}" data-attach="{{ .ID }}">{{ if .Live }}Attach{{ else }}View{{ end }}</a></td>
+				<td class="actions"><a class="btn btn-sm" href="/runs/{{ .ID }}" data-attach="{{ .ID }}">{{ if eq .State "running" }}Attach{{ else }}View{{ end }}</a></td>
 			</tr>
 		{{- else }}
 			<tr class="empty"><td colspan="7">No runs yet. Run a job and it is recorded here.</td></tr>

@@ -1,30 +1,39 @@
 # Task UI
 
-Run what your source trees declare, from the browser. Task UI looks at
-each folder under a root, detects the conventions it follows, and lists
-their targets as jobs: atkins pipelines, Taskfiles, Makefile targets,
-package.json and composer.json scripts, and a `scripts/` folder. A job
-runs in a terminal window over a websocket.
+Run what your source trees declare, from the browser, and watch it run.
+Task UI looks at each folder under a root, detects the conventions it
+follows, and lists their targets as jobs: atkins pipelines, Taskfiles,
+Makefile targets, package.json and composer.json scripts, and a
+`scripts/` folder. A job runs as a session on the server: a process on a
+terminal that anyone allowed can attach to, from any window, for as long
+as it runs.
 
-![The overview: folders on the left, active runs and recent history on the right](https://raw.githubusercontent.com/titpetric/task-ui/main/.github/assets/task-ui.png)
+![The dashboard: every terminal in progress, as it looks right now](https://raw.githubusercontent.com/titpetric/task-ui/main/.github/assets/task-ui.png)
 
 - **Folders and jobs.** A folder is a working directory and whatever it
   holds that can be run. Everything on the page comes from the files
   themselves: names, descriptions, steps, the files they include.
-- **Run in a window.** Run opens a modal terminal. Closing the window stops
-  the run.
+- **Runs are sessions.** Run opens a window on the run. Closing the window
+  leaves the run running; Stop ends it, Kill ends it now. Anyone who may
+  see the job attaches from the sidebar, the dashboard or the run list;
+  runners type into it, viewers watch.
+- **The dashboard.** Every terminal in progress as its last frame, for
+  everyone, the way a control room shows its screens. Each frame is one
+  URL, as SVG or text.
 - **One run per job.** A job runs once at a time across the instance,
-  different jobs run side by side. Run force stops the active run and starts
-  again.
+  different jobs run side by side. Run force kills the active run and
+  starts again. Run all starts every job of a folder in the background.
 - **Users and roles.** Login is mandatory, with three roles: `admin`,
-  `runner` and `viewer`. Viewers read jobs and history and run nothing.
+  `runner` and `viewer`. Users are seeded from `task-ui.yml` and managed
+  in Settings.
 - **Projects from git.** Admins add a folder by cloning a repository; the
-  clone is the test. A checkout is pulled before every run, so the latest
-  version of the project is what runs.
-- **History.** Every run is recorded with who ran it, how it ended and the
-  full terminal output, with view and replay.
+  clone is the test. A checkout is pulled before every run.
+- **History, artifacts, schedules.** Every run is recorded with who ran it,
+  how it ended and the full terminal output. Files a job leaves under
+  `$TASK_UI_ARTIFACTS` are kept. A job runs on a cron expression under the
+  name of whoever scheduled it.
 - **Settings.** Admins manage the instance SSH keys, the secrets added to
-  every run, and the env files the pipelines read.
+  every run, the env files the pipelines read, and the users.
 
 The look follows [oida](https://github.com/titpetric/oida): monospace,
 hairlines, one amber accent, dark and light from `prefers-color-scheme`. All
@@ -45,13 +54,15 @@ services:
     - 3000:3000
     volumes:
     - $PWD/app:/app
+    - $PWD/data:/data
     - $PWD/root/.ssh:/root/.ssh
     - /var/run/docker.sock:/var/run/docker.sock:ro
 ```
 
 Mount your folders at `/app`. Each subfolder with something to run
-becomes a folder in the UI, and `/app` itself is one too when it has. The image bundles `task`, `atkins`, `docker` and
-`docker compose`.
+becomes a folder in the UI, and `/app` itself is one too when it has.
+The database, the recordings and the artifacts live under `/data`. The
+image bundles `task`, `atkins`, `docker` and `docker compose`.
 
 - If you don't want to use Docker, remove the volume for `docker.sock`.
 - Mount `/root/.ssh` to keep the SSH keys managed from the UI.
@@ -60,56 +71,50 @@ becomes a folder in the UI, and `/app` itself is one too when it has. The image 
 
 Everything is configured from the environment:
 
-| Variable               | Default            | Meaning                                                            |
-|------------------------|--------------------|--------------------------------------------------------------------|
-| `TASK_UI_LISTEN`       | `:3000`            | Listen address                                                     |
-| `TASK_UI_ROOT`         | `.`                | Root folder holding the pipeline folders                           |
-| `TASK_UI_FILE`         |                    | Serve one pipeline file as the only folder                         |
-| `TASK_UI_DISCOVER`     | `true`             | List every folder under the root with something to run             |
-| `TASK_UI_CONFIG`       | `task-ui.yml`      | Users and folder permissions, looked up in the root                |
-| `TASK_UI_HISTORY`      | `true`             | Record runs                                                        |
-| `TASK_UI_HISTORY_PATH` | `history`          | Recordings folder                                                  |
-| `TASK_UI_SSH_DIR`      | `$HOME/.ssh`       | Folder the SSH key settings manage                                 |
-| `TASK_UI_ENV_PATH`     | `env`              | Secrets and managed env files                                      |
-| `TASK_UI_SECRET`       | random per process | Signs the session cookie, set it to keep sessions over restarts    |
-| `TASK_UI_SESSION_TTL`  | `12h`              | Session lifetime                                                   |
-| `TASK_UI_AUTOLOGIN`    |                    | Sign every request in as this user, for development only          |
-| `TASK_UI_ASSETS`       |                    | Serve templates and static files from this folder, for development |
+| Variable              | Default              | Meaning                                                           |
+|-----------------------|----------------------|-------------------------------------------------------------------|
+| `TASK_UI_LISTEN`      | `:3000`              | Listen address                                                    |
+| `TASK_UI_ROOT`        | `.`                  | Root folder holding the folders                                   |
+| `TASK_UI_DISCOVER`    | `true`               | List every folder under the root with something to run            |
+| `TASK_UI_CONFIG`      | `task-ui.yml`        | Users to seed, looked up in the root                              |
+| `TASK_UI_DATA`        | `data`               | Database, recordings and artifacts                                |
+| `TASK_UI_DB`          | `<data>/task-ui.db`  | Database file (sqlite)                                            |
+| `TASK_UI_SSH_DIR`     | `$HOME/.ssh`         | Folder the SSH key settings manage                                |
+| `TASK_UI_SECRET`      | random per process   | Signs the session cookie, set it to keep sessions over restarts   |
+| `TASK_UI_SESSION_TTL` | `12h`                | Session lifetime                                                  |
+| `TASK_UI_KEEP`        | `15m`                | How long a finished run stays attachable with its frame in memory |
+| `TASK_UI_GRACE`       | `10s`                | How long a stopped process gets before it is killed               |
+| `TASK_UI_AUTOLOGIN`   |                      | Sign every request in as this user, for development only          |
 
-The flags `-l`, `-f`, `--root`, `--config`, `--history-enable` and
-`--history-output` override the matching variables.
+The flags `-l`, `--root`, `--config` and `--data` override the matching
+variables; `-v` prints the build.
 
 ## Users and roles
 
-Login is mandatory. Users live in `task-ui.yml` next to the folders, and
-the file is re-read when it changes, so adding or removing a user needs no
-restart. With no users nobody can sign in, and the sign in screen says so.
+Login is mandatory. On startup the users in `task-ui.yml` are written to
+the database: a user that is not there is created, one that is gets the
+role, folders and password of the file. From then on Settings manages them.
+With no users nobody can sign in.
 
 ```yaml
 users:
   - name: admin
-    password: $2a$10$...   # task-ui hash <password>
+    password: $2a$10$...   # task-ui hash <password>, or plain text
     role: admin
   - name: ops
     password: $2a$10$...
     role: runner
-    projects: [infra]      # optional, limits the visible folders
+    folders: [infra]       # optional, limits the visible folders
   - name: support
     password: $2a$10$...
     role: viewer
-
-projects:
-  - id: infra
-    allow: [ops]           # users or roles that may run this folder's jobs
-    jobs:
-      rotate-certs: [admin]
 ```
 
-| Role     | Read jobs and history | Run, Run force, Kill        | Settings |
-|----------|-----------------------|-----------------------------|----------|
-| `admin`  | yes                   | everything                  | yes      |
-| `runner` | yes                   | what the allow lists permit | no       |
-| `viewer` | yes                   | no                          | no       |
+| Role     | See jobs, watch runs, read history | Run, Run force, Run all, Stop, Kill, schedule | Settings |
+|----------|------------------------------------|-----------------------------------------------|----------|
+| `admin`  | yes                                | everything                                    | yes      |
+| `runner` | yes                                | what the allow lists permit                   | no       |
+| `viewer` | yes                                | no                                            | no       |
 
 Generate a password hash with `task-ui hash <password>`, or
 `echo secret | task-ui hash`.
@@ -118,7 +123,7 @@ Generate a password hash with `task-ui hash <password>`, or
 
 A folder may follow several conventions at once; each one is a source
 with its own table on the folder page. Nothing task-ui needs is an
-extension of any file, and no file is ever written.
+extension of any file, and no pipeline file is ever written.
 
 | Source | File | Runs with | Targets |
 |--------|------|-----------|---------|
@@ -140,26 +145,43 @@ reads a folder and returns a `Source`, added to the `Detectors` list. The
 rest of task-ui runs on sources and jobs and never asks which kind they
 are.
 
-In `task-ui.yml`, `command` replaces the runner of a folder's only source
-(`gmake`), `commands` does so per kind, and `sources` limits which
-conventions are read in a folder. Who may run what is decided there too.
+Settings, Projects, Configure sets what the instance adds to a folder: a
+title and description, who may run it (`allow`: user names or roles,
+empty means every runner), and which `sources` to read. Through the API a
+project also takes `commands` (the runner per kind, `make: gmake`) and
+`job_allow` (per job). Pipeline files stay as they are.
 
-```yaml
-projects:
-  - id: tools
-    sources: [make, script]   # ignore package.json here
-    commands:
-      make: gmake
-    jobs:
-      "make:release": [admin]
-```
+Jobs get `TASK_UI=1`, `TASK_UI_USER`, `TASK_UI_FOLDER`, `TASK_UI_JOB`,
+`TASK_UI_RUN_ID` and `TASK_UI_ARTIFACTS` in the environment, along with
+the secrets.
 
-Jobs get `TASK_UI_USER`, `TASK_UI_FOLDER`, `TASK_UI_JOB` and
-`TASK_UI_RUN_ID` in the environment.
+## Runs, windows and the dashboard
+
+A run is a session: the process on a pty, a terminal emulator following
+its output so the screen is known at every moment, the windows attached,
+and how it ended. The window that started it is one of many. Closing a
+window does nothing to the run; the sidebar, the dashboard and the run
+list open a window on it again. A window that was away gets the tail of
+what it missed.
+
+A viewer's window is read only. A runner's window takes input, resizes
+the terminal, and ends the run: **Stop** sends the process group SIGHUP
+and SIGTERM, then SIGKILL after `TASK_UI_GRACE`, and records the run as
+`stopped`; **Kill** does the same and records `killed`, as does **Run
+force** when it takes a job over. A finished session stays attachable for
+`TASK_UI_KEEP`, with its last frame; after that the row and the recording
+remain.
+
+The dashboard shows the frame of every live session, refreshed every two
+seconds. `/api/runs/{id}/frame.svg` is the frame as an image, with the
+terminal colors, `/api/runs/{id}/frame.txt` as text, and
+`/api/runs/{id}/cast` is the recording, an asciicast v2 file. The runs
+page lists every run with who started it, how many windows are on it and
+how it ended, filtered by folder, job and state.
 
 ## Projects from git
 
-Settings → Projects lists the folders under the root with their source.
+Settings, Projects lists the folders under the root with their source.
 Add project clones a repository into the root: it either succeeds and the
 folder appears in the sidebar, or git's output is shown and nothing is
 kept. Private repositories are reached with the instance SSH keys, which
@@ -169,52 +191,100 @@ A folder that is a checkout is pulled with `git pull --ff-only` before
 every run, in the run's own terminal, so the job always runs the latest
 version of the project. A pull that fails fails the run.
 
+## Artifacts
+
+A job that writes files to the directory named in `$TASK_UI_ARTIFACTS`
+leaves artifacts: when the run ends they are recorded with their size and
+type, listed on the run and under Artifacts, and served for download.
+Admins delete them.
+
+## Scheduled
+
+A job runs on a schedule: a five field cron expression (`0 3 * * *`,
+`*/15 * * * 1-5`, names and `@hourly`, `@daily`, `@weekly`, `@monthly`
+work too), in the server's time zone. The run starts in the background
+under the name of whoever scheduled it, with their permissions, and shows
+up like any other. A job that is still running when its time comes is
+skipped; a schedule whose job is gone is disabled.
+
 ## Secrets and env files
 
 Settings hold the secrets: variables added to the environment of every run,
 for all folders or for one folder, where the folder's value wins. They are
-stored under `TASK_UI_ENV_PATH` and never shown again in full.
+kept in the database and never shown again in full.
 
-A folder page lists the dotenv files its sources declare.
-An admin edits the content from the UI; the file in the folder is generated
-from it with the secrets appended, when it is saved and again before every
-run. A file that was never edited is read from the folder as it is. The
-pipeline file is never changed.
+A folder page lists the dotenv files its sources declare. An admin edits
+the content from the UI; the file in the folder is generated from it with
+the secrets appended, when it is saved and again before every run. A file
+that was never edited is read from the folder as it is. The pipeline file
+is never changed.
+
+## API
+
+Everything the pages do goes through `/api`, JSON over the session cookie.
+Writes need the same origin. The browser pages are the reference client;
+`scripts/run.sh` is the curl one.
+
+| Method | Path | Does |
+|--------|------|------|
+| `GET` | `/api/runs?folder=&job=&state=&limit=` | the runs, newest first, with `live`, `attached` and `can_run` |
+| `POST` | `/api/runs` `{folder, job, force, cols, rows}` | starts a run; `409` with the run in the way unless forced |
+| `POST` | `/api/runs/all` `{folder, force}` | starts every job of a folder the user may run |
+| `GET` | `/api/runs/{id}` | one run |
+| `POST` | `/api/runs/{id}/stop`, `/kill` | ends a run |
+| `GET` | `/api/runs/{id}/frame.svg`, `/frame.txt`, `/cast` | the last frame, the recording |
+| `WS` | `/api/runs/{id}/attach` | binary frames are output; text frames are `{"type":"input"\|"resize"\|"stop"\|"kill"}` in and `{"type":"status"}` out |
+| `GET` `DELETE` | `/api/artifacts`, `/api/artifacts/{id}` | list, download, delete |
+| `GET` `POST` `PUT` `DELETE` | `/api/schedules`, `/api/schedules/{id}` | `{folder, job, expression, enabled}` |
+| `GET` `POST` `PUT` `DELETE` | `/api/projects`, `/api/projects/{folder}` | clone `{url, id, branch}`; configure `{title, description, allow, sources, commands, job_allow}` |
+| `GET` `POST` `PUT` `DELETE` | `/api/users`, `/api/users/{id}` | `{name, password, role, folders}` |
+| `GET` `POST` `DELETE` | `/api/secrets`, `/api/secrets/{id}` | `{scope, name, content}`; content is never returned |
+| `GET` `POST` `DELETE` | `/api/keys`, `/api/keys/generate`, `/api/keys/upload`, `/api/keys/{name}` | `{type, comment}`, `{content, comment}` |
+| `GET` `PUT` | `/api/env/{folder}`, `/api/env/{folder}/{path}` | the env files; `{content}` saves and generates |
 
 ## Screenshots
 
 | | |
 |-|-|
-| ![A folder: its jobs, steps, pipeline and env files](.github/assets/folder-dark.png) | ![A run replayed in the dialog](.github/assets/run-replay-dark.png) |
-| ![A folder with a Makefile, package scripts and a scripts folder](.github/assets/tools-dark.png) | ![A job and its history](.github/assets/job-dark.png) |
-| ![Overview, light theme](.github/assets/overview-light.png) | ![Projects](.github/assets/projects-dark.png) |
+| ![The dashboard: every live terminal as its last frame](.github/assets/dashboard-dark.png) | ![A run in its window, attached](.github/assets/run-dark.png) |
+| ![A folder: its jobs, steps, pipeline and env files](.github/assets/folder-dark.png) | ![A job, its history and its schedules](.github/assets/job-dark.png) |
+| ![The runs](.github/assets/runs-dark.png) | ![A run's page](.github/assets/run-page-dark.png) |
+| ![Dashboard, light theme](.github/assets/dashboard-light.png) | ![A folder with a Makefile, package scripts and a scripts folder](.github/assets/tools-dark.png) |
+| ![Artifacts](.github/assets/artifacts-dark.png) | ![Scheduled](.github/assets/schedules-dark.png) |
+| ![Projects](.github/assets/projects-dark.png) | ![Users](.github/assets/users-dark.png) |
 | ![Secrets](.github/assets/secrets-dark.png) | ![An env file](.github/assets/envfile-dark.png) |
 | ![SSH keys](.github/assets/keys-dark.png) | ![Login](.github/assets/login-dark.png) |
 
 `scripts/demo.sh` regenerates them: it serves a copy of `testdata/demo`,
-records real runs over the websocket with `scripts/run.sh`, and captures each
-view with headless chromium through `scripts/chromium.sh`. A recorded run
-opens in the dialog from a link: `/f/<folder>/<job>#history=<id>`, or
-`#replay=<id>`.
+sets the instance up through the API with curl, starts real runs with
+`scripts/run.sh`, and captures each view with headless chromium through
+`scripts/chromium.sh`. A run opens in its window from a link:
+`/runs/<id>#run=<id>`.
 
 ## Layout
 
-Packages are the bounded contexts, one per domain, singular:
+Packages are the bounded contexts, one per domain, singular. The
+dependency runs one way: `app` to everything, `api` and `frontend` to the
+domains, the domains to `model` and `storage`, `model` to nothing of ours.
 
-| Package    | Holds                                                                  |
-|------------|------------------------------------------------------------------------|
-| `detector` | the conventions: a `Detector` per file kind, returning a `Source` of `Target`s |
-| `folder`   | the catalogue: a `Folder` with its `Job`s, discovery under the root, the configuration overrides |
-| `run`      | execution: the `Run` lock registry and the `Process` on a pty         |
-| `history`  | the recordings: a `Record` per run, written by a `Recorder`           |
-| `access`   | who may do what: `User`, `Role`, passwords, `Sessions`                |
-| `secret`   | the variables added to runs, per folder or for all                    |
-| `envfile`  | the dotenv files a folder reads, as task-ui manages and generates them |
-| `sshkey`   | the key pairs in the SSH folder                                       |
-| `git`      | clone, pull and the facts of a checkout                               |
-| `dotenv`   | the file format the two above share                                   |
-| `server`   | the presentation: routes, pages, the run socket                       |
+| Package     | Holds                                                                        |
+|-------------|------------------------------------------------------------------------------|
+| `schema`    | the SQL migrations, the source of truth of the data model (mig)              |
+| `model`     | the mig generated types and the rules on them                                |
+| `storage`   | CRUD per table over pdo, one in-memory database per test                     |
+| `detector`  | the conventions: a `Detector` per file kind, returning a `Source` of `Target`s |
+| `folder`    | the catalogue: a `Folder` with its `Job`s, discovery under the root, the project configuration |
+| `runner`    | sessions: a `Process` on a pty, the terminal `Frame`, subscribers, artifacts |
+| `scheduler` | cron `Expression`s and the `Loop` that starts due schedules                  |
+| `recording` | the asciicast files                                                          |
+| `access`    | who may do what: passwords, `Sessions`, the `Guard`                          |
+| `envfile`   | the dotenv files a folder reads, as task-ui manages and generates them       |
+| `sshkey`, `git`, `dotenv` | the key pairs, the checkouts, the file format                 |
+| `api`       | the JSON endpoints and the attach socket                                     |
+| `frontend`  | the pages; `frontend/view` renders them from embedded templates and assets   |
+| `app`       | the composition root: configuration, wiring, serving                         |
 
 `splint ./...` (`task lint`) is the bar: every file has a test beside it,
 every exported symbol a test that reaches it, every symbol a file named
-for it, and every dependency one import per package.
+for it, and every dependency one import per package. Tests are black box,
+parallel, and share nothing.

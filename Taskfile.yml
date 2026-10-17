@@ -23,7 +23,8 @@ tasks:
     desc: "Run task-ui over the demo projects"
     env:
       TASK_UI_ROOT: testdata/demo
-      TASK_UI_ASSETS: .
+      TASK_UI_DATA: .data
+      TASK_UI_AUTOLOGIN: admin
     cmds:
       - go run .
 

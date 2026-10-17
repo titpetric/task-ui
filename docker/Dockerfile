@@ -2,7 +2,7 @@
 FROM docker:20.10 AS docker
 
 # Build project
-FROM golang:1.26-alpine AS builder
+FROM golang:1.27-alpine AS builder
 
 RUN apk --no-cache add git
 RUN GOBIN=/usr/local/bin CGO_ENABLED=0 go install github.com/go-task/task/v3/cmd/task@latest
@@ -15,7 +15,7 @@ RUN go test ./...
 RUN GOBIN=/usr/local/bin CGO_ENABLED=0 go install .
 
 # The final image environment.
-FROM golang:1.26-alpine
+FROM golang:1.27-alpine
 
 RUN apk --no-cache add bash git colordiff openssh mailcap curl
 
@@ -35,6 +35,8 @@ COPY --from=docker /usr/local/bin/docker /usr/local/bin
 ADD /docker /
 
 WORKDIR /app
+RUN mkdir -p /data
+VOLUME /data
 
 RUN	DOCKER_CONFIG=${DOCKER_CONFIG:-$HOME/.docker} && \
 	mkdir -p $DOCKER_CONFIG/cli-plugins && \
@@ -44,8 +46,7 @@ RUN	DOCKER_CONFIG=${DOCKER_CONFIG:-$HOME/.docker} && \
 ENV GOPATH=/go \
 	TASK_UI_LISTEN=:3000 \
 	TASK_UI_ROOT=/app \
-	TASK_UI_HISTORY_PATH=/app/history \
-	TASK_UI_ENV_PATH=/app/env \
+	TASK_UI_DATA=/data \
 	TASK_UI_SSH_DIR=/root/.ssh
 
 EXPOSE 3000
