@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/titpetric/task-ui/access"
 	"github.com/titpetric/task-ui/detector"
 	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/model"
@@ -28,15 +27,6 @@ type ProjectRequest struct {
 	Commands    map[string]string   `json:"commands"`
 	Sources     []string            `json:"sources"`
 	JobAllow    map[string][]string `json:"job_allow"`
-}
-
-// requireAdmin answers anyone but an admin with 403 and reports it.
-func requireAdmin(w http.ResponseWriter, r *http.Request) bool {
-	if !access.UserFrom(r.Context()).CanAdmin() {
-		fail(w, http.StatusForbidden, "admin role required")
-		return false
-	}
-	return true
 }
 
 // listProjects returns the directories under the root with their

@@ -1,9 +1,12 @@
 package api
 
 import (
+	"github.com/titpetric/task-ui/envfile"
+	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/git"
 	"github.com/titpetric/task-ui/recording"
 	"github.com/titpetric/task-ui/runner"
+	"github.com/titpetric/task-ui/sshkey"
 	"github.com/titpetric/task-ui/storage"
 )
 
@@ -17,8 +20,10 @@ type Options struct {
 	Secrets   *storage.SecretStorage
 
 	Runner     *runner.Manager
-	Catalogue  Catalogue
+	Catalogue  folder.Catalogue
 	Git        *git.Git
+	Keys       *sshkey.Store
+	Env        *envfile.Store
 	Recordings *recording.Store
 	// Root is where projects are cloned to.
 	Root string

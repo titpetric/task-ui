@@ -46,7 +46,9 @@ func read(t *testing.T, ws *websocket.Conn) message {
 	t.Helper()
 	assert.NoError(t, ws.SetReadDeadline(time.Now().Add(10*time.Second)))
 	var data []byte
-	assert.NoError(t, websocket.Message.Receive(ws, &data))
+	if err := websocket.Message.Receive(ws, &data); err != nil {
+		t.Fatalf("reading the socket: %v", err)
+	}
 	var msg message
 	if json.Unmarshal(data, &msg) == nil && msg.Type != "" {
 		return msg

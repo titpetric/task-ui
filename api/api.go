@@ -11,7 +11,9 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"io/fs"
 	"net/http"
+	"sort"
 	"strconv"
 
 	chi "github.com/go-chi/chi/v5"
@@ -71,6 +73,15 @@ func (h *Handlers) Routes() http.Handler {
 	r.Post("/secrets", h.setSecret)
 	r.Delete("/secrets/{id}", h.deleteSecret)
 
+	r.Get("/keys", h.listKeys)
+	r.Post("/keys/generate", h.generateKey)
+	r.Post("/keys/upload", h.uploadKey)
+	r.Delete("/keys/{name}", h.deleteKey)
+
+	r.Get("/env/{folder}", h.listEnv)
+	r.Get("/env/{folder}/*", h.getEnv)
+	r.Put("/env/{folder}/*", h.putEnv)
+
 	return r
 }
 
@@ -116,7 +127,7 @@ func failErr(w http.ResponseWriter, err error) {
 // statusOf maps the errors the packages return to HTTP statuses.
 func statusOf(err error) int {
 	switch {
-	case errors.Is(err, storage.ErrNotFound), errors.Is(err, runner.ErrNotFound):
+	case errors.Is(err, storage.ErrNotFound), errors.Is(err, runner.ErrNotFound), errors.Is(err, fs.ErrNotExist):
 		return http.StatusNotFound
 	case errors.Is(err, runner.ErrBusy):
 		return http.StatusConflict
@@ -124,6 +135,16 @@ func statusOf(err error) int {
 		return http.StatusBadRequest
 	}
 	return http.StatusInternalServerError
+}
+
+// storageNotFound is the not found error, named for the handlers that
+// find nothing themselves.
+var storageNotFound = storage.ErrNotFound
+
+// sorted returns the list in order.
+func sorted(list []string) []string {
+	sort.Strings(list)
+	return list
 }
 
 // queryInt reads an integer query parameter, or the fallback.
