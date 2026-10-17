@@ -26,7 +26,7 @@
 			<td class="nowrap" title="{{ stamp .CreatedAt }}">{{ ago .CreatedAt }}</td>
 			<td><a href="/f/{{ .Folder }}">{{ .Folder }}</a></td>
 			<td><a href="/f/{{ .Folder }}/{{ .Job }}">{{ .Job }}</a></td>
-			<td><a class="faint" href="/runs/{{ .RunID }}">{{ .RunID }}</a></td>
+			<td><a class="faint mono" href="/runs/{{ .RunID }}" title="{{ .RunID }}">{{ slice .RunID 0 8 }}</a></td>
 			<td class="key"><a href="/api/artifacts/{{ .ID }}">{{ .Name }}</a></td>
 			<td class="nowrap">{{ size .ByteSize }}</td>
 			<td class="actions">

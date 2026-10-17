@@ -26,7 +26,22 @@ func Funcs() template.FuncMap {
 		"roles":     model.Roles,
 		"list":      func(items ...any) []any { return items },
 		"hoursLine": HoursLine,
+		"tone":      Tone,
 	}
+}
+
+// Tone names the badge class of a run state: ok, signal while running,
+// bad when it failed or was killed, plain when it was stopped.
+func Tone(state string) string {
+	switch state {
+	case model.StateOK:
+		return "ok"
+	case model.StateRunning:
+		return "signal"
+	case model.StateFailed, model.StateKilled:
+		return "bad"
+	}
+	return ""
 }
 
 // InHours reports whether the hours allow a run at a moment. Hours that

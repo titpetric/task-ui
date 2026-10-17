@@ -167,6 +167,7 @@ shot schedules-dark /schedules dark
 shot settings-dark /settings dark
 shot projects-dark /settings/projects dark
 shot project-new-dark /settings/projects/new dark
+shot project-edit-dark /settings/projects/infra dark
 shot keys-dark /settings/keys dark
 shot keys-generate-dark /settings/keys/generate dark
 shot keys-upload-dark /settings/keys/upload dark

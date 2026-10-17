@@ -11,7 +11,7 @@
 
 <div class="table-wrap">
 <table class="table">
-	<thead><tr><th>Folder</th><th>Runs</th><th>Source</th><th class="hide-sm">Last commit</th><th></th></tr></thead>
+	<thead><tr><th>Folder</th><th>Sources</th><th>Origin</th><th class="hide-sm">Last commit</th><th></th></tr></thead>
 	<tbody>
 	{{- range .Entries }}
 		<tr>
