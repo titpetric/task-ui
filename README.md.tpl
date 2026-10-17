@@ -12,7 +12,10 @@ as it runs.
 
 - **Folders and jobs.** A folder is a working directory and whatever it
   holds that can be run. Everything on the page comes from the files
-  themselves: names, descriptions, steps, the files they include.
+  themselves: names, descriptions, steps, the files they include. A
+  folder page is its jobs as cards, each with Run; the sidebar lists
+  every folder's jobs with a play button, so a job is one click from
+  anywhere.
 - **Runs are sessions.** Run opens a window on the run. Closing the window
   leaves the run running; Stop ends it, Kill ends it now. Anyone who may
   see the job attaches from the sidebar, the dashboard or the run list;
@@ -39,8 +42,11 @@ as it runs.
   every run, encrypted at rest with those keys, the env files the
   pipelines read, and the folders each user sees.
 
-The look follows [oida](https://github.com/titpetric/oida): monospace,
-hairlines, one amber accent, dark and light from `prefers-color-scheme`. All
+The look follows [oida](https://github.com/titpetric/oida): hairlines,
+one amber accent, dark and light from `prefers-color-scheme`. The type is
+a dashboard pair, [Inter](https://rsms.me/inter/) for the words and
+[JetBrains Mono](https://www.jetbrains.com/lp/mono/) for the data, both
+vendored under `frontend/view/assets/fonts/` with their licenses. All
 assets are embedded, the front end makes no external requests.
 
 # Running

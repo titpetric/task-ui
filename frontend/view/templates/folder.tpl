@@ -21,36 +21,38 @@
 {{- range $s := $p.Sources }}
 <section class="block" data-live>
 	<h3>{{ if eq (len $p.Sources) 1 }}Jobs{{ else }}{{ $s.Kind }}{{ end }} <small>{{ $s.File }}{{ if $s.Command }} · {{ join $s.Command " " }}{{ end }}</small></h3>
-	<div class="table-wrap">
-	<table class="table jobs cards">
-		<thead><tr><th>Name</th><th>Description</th><th class="hide-sm steps">Steps</th><th class="hide-sm">Last run</th><th></th></tr></thead>
-		<tbody>
-		{{- range $r := $p.SourceJobs $s }}
-			{{- $run := $.RunningRun $r.Key }}{{ $can := $.CanRun $p $r }}
-			<tr>
-				<td class="key"><a href="/f/{{ $p.ID }}/{{ $r.ID }}">{{ $r.Name }}</a>{{ if $r.Interactive }} <span class="badge">interactive</span>{{ end }}</td>
-				<td class="desc" data-label="About">{{ $r.Description }}</td>
-				<td class="hide-sm steps" data-label="Steps">
-					{{- if $r.DependsOn }}<span class="dim">after {{ join $r.DependsOn ", " }}</span>{{ end }}
-					{{- range $r.Steps }}<code>{{ . }}</code>{{ end }}
-				</td>
-				<td class="nowrap hide-sm" data-label="Last run">
+	<div class="jobcards">
+	{{- range $r := $p.SourceJobs $s }}
+		{{- $run := $.RunningRun $r.Key }}{{ $can := $.CanRun $p $r }}
+		<article class="jobcard{{ if $run }} running{{ end }}">
+			<header>
+				<i class="dot{{ if $run }} running{{ else }}{{ with $.LastRun $r.Key }} {{ .State }}{{ end }}{{ end }}"></i>
+				<a class="name" href="/f/{{ $p.ID }}/{{ $r.ID }}">{{ $r.Name }}</a>
+				{{- if $r.Interactive }}<span class="badge">interactive</span>{{ end }}
+			</header>
+			{{- if $r.Description }}<p class="desc">{{ $r.Description }}</p>{{ end }}
+			<div class="steps">
+				{{- if $r.DependsOn }}<span class="dim">after {{ join $r.DependsOn ", " }}</span>{{ end }}
+				{{- range $i, $step := $r.Steps }}{{ if lt $i 3 }}<code>{{ $step }}</code>{{ end }}{{ end }}
+				{{- if gt (len $r.Steps) 3 }}<span class="faint">+{{ sub (len $r.Steps) 3 }} more</span>{{ end }}
+			</div>
+			<footer>
+				<span class="last">
 					{{- if $run }}<span class="state"><i class="dot running"></i>running, {{ $run.UserName }}</span>
 					{{- else }}{{ with $.LastRun $r.Key }}{{ template "state" . }} <span class="faint">{{ ago .StartedAt }}</span>{{ else }}<span class="faint">never run</span>{{ end }}{{ end -}}
-				</td>
-				<td class="actions">
+				</span>
+				<span class="actions">
 					{{- if $run }}
-					<a class="btn btn-sm" href="/runs/{{ $run.ID }}" data-attach="{{ $run.ID }}">Attach</a>
+					<a class="btn btn-sm" href="/runs/{{ $run.ID }}" data-attach="{{ $run.ID }}"><svg class="ic"><use href="#i-eye"/></svg>Attach</a>
 					{{- if $can }}<button type="button" class="btn-icon danger" data-kill="{{ $run.ID }}" title="Kill the run" aria-label="Kill the run"><svg class="ic"><use href="#i-stop"/></svg></button>{{ end }}
 					{{- else if $can }}{{ template "runButtons" (list $p $r) }}
 					{{- else }}<a class="btn btn-sm" href="/f/{{ $p.ID }}/{{ $r.ID }}">History</a>{{ end -}}
-				</td>
-			</tr>
-		{{- else }}
-			<tr class="empty"><td colspan="5">{{ if $s.Error }}{{ $s.Error }}{{ else }}No targets in {{ $s.File }}.{{ end }}</td></tr>
-		{{- end }}
-		</tbody>
-	</table>
+				</span>
+			</footer>
+		</article>
+	{{- else }}
+		<div class="alert">{{ if $s.Error }}{{ $s.Error }}{{ else }}No targets in {{ $s.File }}.{{ end }}</div>
+	{{- end }}
 	</div>
 </section>
 {{- else }}

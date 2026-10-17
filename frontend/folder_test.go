@@ -66,18 +66,28 @@ func TestFolder_SidebarAndCards(t *testing.T) {
 
 	body := f.page(t, asOps, "/f/infra")
 	assert.Contains(t, body, `<details class="folder active" data-folder="infra" open>`)
-	assert.Contains(t, body, `<details class="folder" data-folder="private">`)
-	assert.Contains(t, body, `href="/f/infra/plan" data-job-key="infra/plan"`)
-	assert.Contains(t, body, `data-job-key="infra/slow" class=""><i class="dot running"></i>`)
+	// Few jobs: every folder opens; the sidebar runs a job in place and
+	// attaches to the one running.
+	assert.Contains(t, body, `<details class="folder" data-folder="private" open>`)
+	assert.Contains(t, body, `<div class="job" data-job-key="infra/plan">`)
+	assert.Contains(t, body, `class="play" data-run data-folder="infra" data-job="plan"`)
+	assert.Contains(t, body, `<div class="job" data-job-key="infra/slow">
+							<i class="dot running"></i>`)
+	assert.Contains(t, body, `class="play" data-attach="`+session.ID()+`"`)
+	assert.NotContains(t, body, `class="play" data-run data-folder="private"`) // ops may not run private
 	assert.Contains(t, body, `id="menu-toggle"`)
 	assert.Contains(t, body, `id="menu-backdrop"`)
-	assert.Contains(t, body, `<table class="table jobs cards">`)
-	assert.Contains(t, body, `data-label="Last run"`)
+	assert.Contains(t, body, `<div class="jobcards">`)
+	assert.Contains(t, body, `<article class="jobcard">`)
+	assert.Contains(t, body, `<article class="jobcard running">`)
 	assert.Contains(t, body, "<th>Hours</th><td><span class=\"faint\">always</span></td>")
 
 	job := f.page(t, asOps, "/f/infra/plan")
-	assert.Contains(t, job, `data-job-key="infra/plan" class="active"`)
-	_ = session
+	assert.Contains(t, job, `<div class="job active" data-job-key="infra/plan">`)
+
+	viewer := f.page(t, asViewer, "/f/infra")
+	assert.NotContains(t, viewer, `class="play" data-run`)
+	assert.Contains(t, viewer, `class="play" data-attach="`+session.ID()+`"`)
 }
 
 func TestFolder_Hours(t *testing.T) {

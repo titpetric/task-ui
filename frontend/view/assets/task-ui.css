@@ -1,14 +1,66 @@
 /* task-ui: runbook console.
-   The visual language follows oida: monospace throughout, hairlines instead
-   of boxes, one amber accent for state and action, one corner radius.
-   Layout follows bootstrap habits: a header, a sidebar column, condensed
-   tables and plain action buttons. */
+   The visual language follows oida: hairlines instead of boxes, one amber
+   accent for state and action, one corner radius. The type is a dashboard
+   pair, both vendored so the page makes no external requests: Inter for
+   the words, JetBrains Mono for the data: names, numbers, code and the
+   terminal. Layout follows bootstrap habits: a header, a sidebar column,
+   condensed tables and plain action buttons. */
+
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("fonts/Inter-Regular.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("fonts/Inter-Medium.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("fonts/Inter-SemiBold.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("fonts/JetBrainsMono-Regular.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("fonts/JetBrainsMono-Medium.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("fonts/JetBrainsMono-SemiBold.woff2") format("woff2");
+}
 
 :root {
   color-scheme: dark light;
 
-  --font: ui-monospace, "SFMono-Regular", "SF Mono", "JetBrains Mono",
+  /* --font is the data face, which the terminal uses too; --font-ui the words. */
+  --font: "JetBrains Mono", ui-monospace, "SFMono-Regular", "SF Mono",
     "IBM Plex Mono", "Cascadia Mono", "Roboto Mono", Menlo, Consolas, monospace;
+  --font-ui: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
 
   --ink-0: #07090c;
   --ink-1: #0b0f14;
@@ -79,7 +131,8 @@ body {
   flex-direction: column;
   background: var(--ink-0);
   color: var(--text);
-  font: 400 0.875rem/1.5 var(--font);
+  font: 400 0.9rem/1.5 var(--font-ui);
+  font-feature-settings: "cv11", "ss01", "tnum";
   font-variant-numeric: tabular-nums slashed-zero;
   -webkit-font-smoothing: antialiased;
 }
@@ -124,6 +177,33 @@ h1, h2, h3 {
   font-weight: 600;
 }
 
+h2 {
+  letter-spacing: -0.01em;
+}
+
+/* The data wears the mono face: names, keys, numbers, code. */
+code, pre, kbd,
+.mono,
+.table td.key,
+.metrics span,
+.avatar,
+.recents .what b,
+.folders details.folder summary a span,
+.folders .jobs .job a,
+.jobcard .name,
+.crumbs,
+.filters input,
+input[type="text"],
+input[type="password"],
+textarea,
+select,
+.run-head h3,
+.elapsed,
+.state,
+.who-ran {
+  font-family: var(--font);
+}
+
 p {
   margin: 0 0 0.75rem;
 }
@@ -157,6 +237,7 @@ header.top {
 }
 
 header.top h1 {
+  font-family: var(--font);
   font-size: 0.95rem;
   letter-spacing: 0.24em;
   text-transform: uppercase;
@@ -442,14 +523,15 @@ main {
 }
 
 .page-head h2 {
-  font-size: 1.15rem;
-  letter-spacing: 0.02em;
+  font-size: 1.45rem;
+  letter-spacing: -0.015em;
 }
 
 .page-head p {
   margin: 0.35rem 0 0;
   color: var(--text-dim);
   max-width: 70ch;
+  font-size: 0.925rem;
 }
 
 .page-head .actions {
@@ -1620,32 +1702,6 @@ img.frame {
   padding: 0.1rem 0 0.3rem;
 }
 
-.folders .jobs a {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.2rem 1.1rem 0.2rem 2.4rem;
-  color: var(--text-dim);
-  font-size: 0.8125rem;
-  border-left: 2px solid transparent;
-}
-
-.folders .jobs a .dot {
-  width: 0.4rem;
-  height: 0.4rem;
-}
-
-.folders .jobs a:hover {
-  text-decoration: none;
-  color: var(--text);
-  background: var(--ink-2);
-}
-
-.folders .jobs a.active {
-  color: var(--signal);
-  border-left-color: var(--signal);
-}
-
 .folders .jobs .empty {
   padding: 0.2rem 1.1rem 0.2rem 2.4rem;
 }
@@ -1663,4 +1719,200 @@ img.frame {
 .run-reason label {
   color: var(--text);
   font-size: 0.8125rem;
+}
+
+/* -------------------------------------------------------------- job cards */
+
+/* A folder's jobs as cards, as many as it has: the name, what it does, the
+   first steps, how it last went, and Run. The grid takes the width. */
+.jobcards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(19rem, 1fr));
+  gap: 0.8rem;
+}
+
+.jobcard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 0;
+  padding: 0.8rem 0.95rem 0.75rem;
+  border: 1px solid var(--line);
+  border-top: 2px solid var(--line-2);
+  border-radius: var(--radius);
+  background: var(--ink-1);
+}
+
+.jobcard.running {
+  border-top-color: var(--signal);
+}
+
+.jobcard:hover {
+  border-color: var(--line-2);
+  border-top-color: var(--signal);
+}
+
+.jobcard header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.jobcard header .name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text);
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.jobcard header .name:hover {
+  color: var(--signal);
+  text-decoration: none;
+}
+
+.jobcard .desc {
+  margin: 0;
+  color: var(--text-dim);
+  font-size: 0.875rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.jobcard .steps {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+  font-size: 0.78rem;
+}
+
+.jobcard .steps code {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.75rem;
+}
+
+.jobcard .steps:empty {
+  display: none;
+}
+
+.jobcard footer {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: auto;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--line);
+  font-size: 0.8125rem;
+}
+
+.jobcard footer .last {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.jobcard footer .actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.btn .ic {
+  width: 0.85em;
+  height: 0.85em;
+}
+
+/* The sidebar's jobs run in place: the name opens the job, the play
+   button runs it, an eye attaches to the run in progress. */
+.folders .jobs .job {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.15rem 0.5rem 0.15rem 2.1rem;
+  color: var(--text-dim);
+  font-size: 0.8125rem;
+  border-left: 2px solid transparent;
+}
+
+.folders .jobs .job .dot {
+  width: 0.4rem;
+  height: 0.4rem;
+}
+
+.folders .jobs .job a {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: inherit;
+  padding: 0.1rem 0;
+}
+
+.folders .jobs .job a:hover {
+  color: var(--text);
+  text-decoration: none;
+}
+
+.folders .jobs .job.active {
+  color: var(--signal);
+  border-left-color: var(--signal);
+}
+
+.folders .jobs .job .play {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--text-faint);
+  cursor: pointer;
+  opacity: 0.55;
+}
+
+.folders .jobs .job .play .ic {
+  width: 0.8rem;
+  height: 0.8rem;
+}
+
+.folders .jobs .job:hover .play,
+.folders .jobs .job .play:focus-visible {
+  opacity: 1;
+}
+
+.folders .jobs .job .play:hover {
+  color: var(--signal-ink);
+  background: var(--signal);
+  border-color: var(--signal);
+}
+
+.folders .jobs .job .play[data-attach] {
+  color: var(--signal);
+  opacity: 1;
+}
+
+@media (max-width: 860px) {
+  .folders .jobs .job .play {
+    opacity: 1;
+  }
+
+  .jobcards {
+    grid-template-columns: 1fr;
+  }
 }

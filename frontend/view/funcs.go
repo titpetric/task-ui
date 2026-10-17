@@ -20,6 +20,7 @@ func Funcs() template.FuncMap {
 		"join":      strings.Join,
 		"lower":     strings.ToLower,
 		"add":       func(a, b int) int { return a + b },
+		"sub":       func(a, b int) int { return a - b },
 		"initials":  func(name string) string { return (&model.User{Name: name}).Initials() },
 		"mask":      Mask,
 		"states":    model.States,
