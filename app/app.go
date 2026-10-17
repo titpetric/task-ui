@@ -45,9 +45,27 @@ type App struct {
 	addr    atomic.Pointer[string]
 }
 
-// New opens the database, seeds the users, and builds everything. Runs
+// New opens the database, reads the users, and builds everything. Runs
 // left running by a previous process are marked killed.
 func New(ctx context.Context, cfg *Config, version string) (*App, error) {
+	db, err := openStorage(ctx, cfg)
+	if err != nil {
+		return nil, err
+	}
+	a := &App{Config: cfg, DB: db, Users: storage.NewUserStorage(db)}
+	if err := a.prepare(ctx); err != nil {
+		db.Close()
+		return nil, err
+	}
+	if err := a.wire(version); err != nil {
+		db.Close()
+		return nil, err
+	}
+	return a, nil
+}
+
+// openStorage makes the data directories and opens the database.
+func openStorage(ctx context.Context, cfg *Config) (storage.DB, error) {
 	for _, dir := range []string{cfg.DataDir, cfg.RecordingsDir(), cfg.ArtifactsDir()} {
 		if err := os.MkdirAll(dir, 0o755); err != nil {
 			return nil, err
@@ -57,19 +75,44 @@ func New(ctx context.Context, cfg *Config, version string) (*App, error) {
 	if err != nil {
 		return nil, fmt.Errorf("opening %s: %w", cfg.DB, err)
 	}
-	a := &App{Config: cfg, DB: db, Users: storage.NewUserStorage(db)}
+	return db, nil
+}
+
+// prepare reads the users and settles what the previous process left.
+func (a *App) prepare(ctx context.Context) error {
 	if err := a.seed(ctx); err != nil {
-		db.Close()
-		return nil, err
+		return err
 	}
-	runs := storage.NewRunStorage(db)
-	if n, err := runs.KillActive(ctx); err != nil {
-		db.Close()
-		return nil, err
-	} else if n > 0 {
+	n, err := storage.NewRunStorage(a.DB).KillActive(ctx)
+	if err != nil {
+		return err
+	}
+	if n > 0 {
 		slog.Warn("runs left running by the previous process marked killed", "count", n)
 	}
+	return nil
+}
 
+// seed writes the password file to storage, when there is one. Without
+// one the users in storage stay as they are.
+func (a *App) seed(ctx context.Context) error {
+	if a.Config.Htpasswd == "" {
+		slog.Warn("no password file: nobody new can sign in", "hint", "set TASK_UI_HTPASSWD or put .htpasswd in the root")
+		return nil
+	}
+	a.UsersFile = NewUsersFile(a.Config.Htpasswd, a.Config.Admins, a.Config.Viewers)
+	created, removed, err := a.UsersFile.Sync(ctx, a.Users)
+	if err != nil {
+		return fmt.Errorf("reading users: %w", err)
+	}
+	slog.Info("users read from the password file", "file", a.Config.Htpasswd, "created", created, "removed", removed, "admins", a.Config.Admins)
+	return nil
+}
+
+// wire builds the services and the handler over the open database.
+func (a *App) wire(version string) error {
+	cfg, db := a.Config, a.DB
+	runs := storage.NewRunStorage(db)
 	projects := storage.NewProjectStorage(db)
 	artifacts := storage.NewArtifactStorage(db)
 	schedules := storage.NewScheduleStorage(db)
@@ -94,12 +137,7 @@ func New(ctx context.Context, cfg *Config, version string) (*App, error) {
 		Now:          cfg.Clock(),
 	})
 	a.Scheduler = scheduler.NewLoop(schedules, a.Users, a.Catalogue, a.Runner)
-
-	secret := cfg.Secret
-	if secret == "" {
-		secret = randomSecret()
-	}
-	a.Guard = access.NewGuard(a.Users, access.NewSessions(secret, cfg.SessionTTL))
+	a.Guard = access.NewGuard(a.Users, access.NewSessions(sessionSecret(cfg), cfg.SessionTTL))
 	a.Guard.AutoLogin = cfg.AutoLogin
 
 	apiHandlers := api.New(api.Options{
@@ -111,35 +149,21 @@ func New(ctx context.Context, cfg *Config, version string) (*App, error) {
 		Runner: a.Runner, Catalogue: a.Catalogue, Git: g, Keys: keys, Env: env, Root: cfg.Root, Version: version, Now: cfg.Clock(),
 	})
 	if err != nil {
-		db.Close()
-		return nil, err
+		return err
 	}
 
 	r := chi.NewRouter()
 	r.Mount("/api", a.Guard.Require(access.SameOrigin(apiHandlers.Routes())))
 	r.Mount("/", pages.Routes())
 	a.handler = r
-	return a, nil
-}
-
-// seed writes the password file to storage, when there is one. Without
-// one the users in storage stay as they are.
-func (a *App) seed(ctx context.Context) error {
-	if a.Config.Htpasswd == "" {
-		slog.Warn("no password file: nobody new can sign in", "hint", "set TASK_UI_HTPASSWD or put .htpasswd in the root")
-		return nil
-	}
-	a.UsersFile = NewUsersFile(a.Config.Htpasswd, a.Config.Admins, a.Config.Viewers)
-	created, removed, err := a.UsersFile.Sync(ctx, a.Users)
-	if err != nil {
-		return fmt.Errorf("reading users: %w", err)
-	}
-	slog.Info("users read from the password file", "file", a.Config.Htpasswd, "created", created, "removed", removed, "admins", a.Config.Admins)
 	return nil
 }
 
-// randomSecret returns a session secret for one process.
-func randomSecret() string {
+// sessionSecret is the configured secret, or one for this process.
+func sessionSecret(cfg *Config) string {
+	if cfg.Secret != "" {
+		return cfg.Secret
+	}
 	buf := make([]byte, 32)
 	_, _ = rand.Read(buf)
 	return hex.EncodeToString(buf)
@@ -168,8 +192,9 @@ func (a *App) Run(ctx context.Context) error {
 	return a.Serve(ctx, ln)
 }
 
-// Serve serves on a listener, with the scheduler running, until the
-// context ends. Running jobs are killed on the way out.
+// Serve serves on a listener, with the scheduler and the password file
+// watch running, until the context ends. Running jobs are killed on the
+// way out.
 func (a *App) Serve(ctx context.Context, ln net.Listener) error {
 	addr := ln.Addr().String()
 	a.addr.Store(&addr)
@@ -178,11 +203,11 @@ func (a *App) Serve(ctx context.Context, ln net.Listener) error {
 		slog.Warn("auto login is on: every request is signed in", "user", a.Config.AutoLogin)
 	}
 
-	server := &http.Server{Handler: a.handler, ReadHeaderTimeout: 10 * time.Second}
 	go a.Scheduler.Run(ctx)
 	if a.UsersFile != nil {
 		go a.UsersFile.Watch(ctx, a.Users, func(err error) { slog.Error("re-reading the password file", "err", err) })
 	}
+	server := &http.Server{Handler: a.handler, ReadHeaderTimeout: 10 * time.Second}
 	errs := make(chan error, 1)
 	go func() { errs <- server.Serve(ln) }()
 
@@ -190,11 +215,16 @@ func (a *App) Serve(ctx context.Context, ln net.Listener) error {
 	case err := <-errs:
 		return err
 	case <-ctx.Done():
+		return a.shutdown(server)
 	}
-	shutdown, cancel := context.WithTimeout(context.Background(), a.Config.Grace+5*time.Second)
+}
+
+// shutdown ends the runs and the server, within the grace.
+func (a *App) shutdown(server *http.Server) error {
+	ctx, cancel := context.WithTimeout(context.Background(), a.Config.Grace+5*time.Second)
 	defer cancel()
-	a.Runner.Shutdown(shutdown)
-	if err := server.Shutdown(shutdown); err != nil && !errors.Is(err, context.DeadlineExceeded) {
+	a.Runner.Shutdown(ctx)
+	if err := server.Shutdown(ctx); err != nil && !errors.Is(err, context.DeadlineExceeded) {
 		return err
 	}
 	return nil

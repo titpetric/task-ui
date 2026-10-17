@@ -712,6 +712,11 @@ table.table-kv td {
   color: var(--text-faint);
 }
 
+.table td input[type="text"] {
+  padding: 0.3rem 0.5rem;
+  font-size: 0.8125rem;
+}
+
 table.table-kv th {
   width: 9rem;
   background: transparent;
@@ -1465,6 +1470,12 @@ dialog.run[open] {
   font-size: 0.7rem;
 }
 
+.recents .act {
+  width: 0.8rem;
+  height: 0.8rem;
+  color: var(--signal);
+}
+
 .avatar.sm {
   width: 1.45rem;
   height: 1.45rem;
@@ -1523,12 +1534,17 @@ dialog.run[open] {
   flex: 1;
 }
 
-.tile img.frame,
-img.frame {
+.frame {
+  display: block;
+  width: 100%;
+  min-height: 3rem;
+  background: #090c10;
+}
+
+.frame svg {
   display: block;
   width: 100%;
   height: auto;
-  background: var(--term-bg);
 }
 
 .tile.wide {

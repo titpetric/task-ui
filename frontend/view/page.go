@@ -49,8 +49,10 @@ type Page struct {
 	Secret      *model.Secret
 	Entries     []folder.Entry
 	Projects    []model.Project
-	Keys        []sshkey.Key
-	KeysDir     string
+	// Project is the row a configure page edits, nil for a fresh folder.
+	Project *model.Project
+	Keys    []sshkey.Key
+	KeysDir string
 	// Encryption names the keys the secrets are encrypted with.
 	Encryption []string
 	Users      []model.User
@@ -69,6 +71,27 @@ type Page struct {
 // CanRun reports whether the signed in user may run a job.
 func (p *Page) CanRun(f *folder.Folder, job *folder.Job) bool {
 	return f != nil && job != nil && p.User.CanRun(f.ID, f.Allow, job.Allow)
+}
+
+// CanRunAny reports whether the signed in user may run a job of a folder.
+func (p *Page) CanRunAny(f *folder.Folder) bool {
+	for _, job := range f.Jobs {
+		if p.CanRun(f, job) {
+			return true
+		}
+	}
+	return false
+}
+
+// CanRunJob reports whether the signed in user may run a job named by
+// the IDs of its folder and itself, as a run names them.
+func (p *Page) CanRunJob(folderID, jobID string) bool {
+	for _, f := range p.Folders {
+		if f.ID == folderID {
+			return p.CanRun(f, f.Job(jobID))
+		}
+	}
+	return false
 }
 
 // RunningRun returns the run in progress of a job, or nil.

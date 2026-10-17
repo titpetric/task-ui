@@ -18,8 +18,9 @@ func TestSecrets(t *testing.T) {
 	body := f.page(t, asAdmin, "/settings/secrets")
 	assert.Contains(t, body, "<h2>Secrets</h2>")
 	assert.Contains(t, body, "DB_PASS")
-	assert.Contains(t, body, "hun********")
+	assert.Contains(t, body, "13 characters")
 	assert.NotContains(t, body, "hunter2secret")
+	assert.NotContains(t, body, "hun")
 	assert.Contains(t, body, `href="/settings/secrets/edit?scope=infra&name=DB_PASS"`)
 	assert.Contains(t, body, `data-delete="/api/secrets/`)
 }

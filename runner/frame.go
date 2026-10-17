@@ -78,7 +78,7 @@ func blank(line []Cell) bool {
 func (f Frame) SVG(p Palette) string {
 	const cw, ch = 8.4, 17.0
 	var b strings.Builder
-	fmt.Fprintf(&b, `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 %.1f %.1f" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14">`,
+	fmt.Fprintf(&b, `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 %.1f %.1f" font-family="JetBrains Mono, ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14">`,
 		float64(f.Cols)*cw, float64(f.Rows)*ch)
 	fmt.Fprintf(&b, `<rect width="100%%" height="100%%" fill="%s"/>`, p.BG)
 	for y, line := range f.Lines {

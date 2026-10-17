@@ -75,3 +75,17 @@ func TestPage_WhoCanRun(t *testing.T) {
 
 	var _ *folder.Folder = f
 }
+
+func TestPage_CanRunJob(t *testing.T) {
+	t.Parallel()
+	p := admin(t)
+
+	assert.True(t, p.CanRunAny(p.Folder))
+	assert.True(t, p.CanRunJob("infra", "plan"))
+	assert.False(t, p.CanRunJob("infra", "nothing"))
+	assert.False(t, p.CanRunJob("nowhere", "plan"))
+
+	p.User = &model.User{Name: "guest", Role: model.RoleViewer}
+	assert.False(t, p.CanRunAny(p.Folder))
+	assert.False(t, p.CanRunJob("infra", "plan"))
+}

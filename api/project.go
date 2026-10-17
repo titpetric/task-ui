@@ -2,6 +2,7 @@ package api
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"path/filepath"
 	"strings"
@@ -32,6 +33,30 @@ type ProjectRequest struct {
 	// reads them; JobHours does so per job.
 	Hours    string            `json:"hours"`
 	JobHours map[string]string `json:"job_hours"`
+}
+
+// validHours checks the hours of the folder and of its jobs.
+func (req ProjectRequest) validHours() error {
+	if _, err := hours.Parse(req.Hours); err != nil {
+		return err
+	}
+	for job, text := range req.JobHours {
+		if _, err := hours.Parse(text); err != nil {
+			return fmt.Errorf("%s: %w", job, err)
+		}
+	}
+	return nil
+}
+
+// apply writes the request onto the row.
+func (req ProjectRequest) apply(project *model.Project) {
+	project.Title, project.Description = req.Title, req.Description
+	project.Allow = model.EncodeList(req.Allow)
+	project.Commands = model.EncodeStrings(req.Commands)
+	project.Sources = model.EncodeList(req.Sources)
+	project.JobAllow = model.EncodeMap(req.JobAllow)
+	project.Hours = strings.TrimSpace(req.Hours)
+	project.JobHours = model.EncodeStrings(req.JobHours)
 }
 
 // listProjects returns the directories under the root with their
@@ -124,6 +149,10 @@ func (h *Handlers) updateProject(w http.ResponseWriter, r *http.Request) {
 		fail(w, http.StatusBadRequest, err.Error())
 		return
 	}
+	if err := req.validHours(); err != nil {
+		fail(w, http.StatusBadRequest, err.Error())
+		return
+	}
 	project, err := h.opts.Projects.GetByFolder(r.Context(), id)
 	if errors.Is(err, storage.ErrNotFound) {
 		project = &model.Project{Folder: id}
@@ -131,23 +160,7 @@ func (h *Handlers) updateProject(w http.ResponseWriter, r *http.Request) {
 		failErr(w, err)
 		return
 	}
-	project.Title, project.Description = req.Title, req.Description
-	project.Allow = model.EncodeList(req.Allow)
-	project.Commands = model.EncodeStrings(req.Commands)
-	project.Sources = model.EncodeList(req.Sources)
-	project.JobAllow = model.EncodeMap(req.JobAllow)
-	if _, err := hours.Parse(req.Hours); err != nil {
-		fail(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	for job, text := range req.JobHours {
-		if _, err := hours.Parse(text); err != nil {
-			fail(w, http.StatusBadRequest, job+": "+err.Error())
-			return
-		}
-	}
-	project.Hours = strings.TrimSpace(req.Hours)
-	project.JobHours = model.EncodeStrings(req.JobHours)
+	req.apply(project)
 	if err := h.opts.Projects.Upsert(r.Context(), project); err != nil {
 		failErr(w, err)
 		return

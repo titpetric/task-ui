@@ -28,6 +28,26 @@
 		<label for="pe-hours">Hours <span class="faint">when the jobs may run, one rule per line; the last rule for a day wins; empty is always</span></label>
 		<textarea id="pe-hours" name="hours" rows="3" spellcheck="false" autocomplete="off" placeholder="mon-fri 9-17&#10;fri 9-13">{{ index .Form "hours" }}</textarea>
 	</div>
+	{{- if $p.Jobs }}
+	{{- $allow := $.Project.JobAllowMap }}{{ $hours := $.Project.JobHoursMap }}
+	<div class="field">
+		<label>Per job <span class="faint">who may run it and when, over the folder's; empty inherits</span></label>
+		<div class="table-wrap">
+		<table class="table cards">
+			<thead><tr><th>Job</th><th>Who may run</th><th>Hours</th></tr></thead>
+			<tbody>
+			{{- range $p.Jobs }}
+			<tr>
+				<td class="key"><label for="ja-{{ .ID }}">{{ .Name }}</label></td>
+				<td data-label="Who may run"><input type="text" id="ja-{{ .ID }}" name="job_allow.{{ .ID }}" data-type="list" value="{{ join (index $allow .ID) ", " }}" placeholder="ops, release" spellcheck="false" autocomplete="off"></td>
+				<td data-label="Hours"><input type="text" name="job_hours.{{ .ID }}" value="{{ index $hours .ID }}" placeholder="mon-fri 9-17" spellcheck="false" autocomplete="off"></td>
+			</tr>
+			{{- end }}
+			</tbody>
+		</table>
+		</div>
+	</div>
+	{{- end }}
 	<div class="form-foot">
 		<a class="btn" href="/settings/projects">Cancel</a>
 		<button class="btn btn-primary" type="submit">Save</button>

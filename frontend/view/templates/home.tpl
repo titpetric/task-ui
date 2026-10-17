@@ -28,7 +28,7 @@
 				<span class="faint">{{ if .Attached }}{{ .Attached }} watching{{ end }}</span>
 				<span class="avatar sm" title="{{ .UserName }}">{{ .Initials }}</span>
 			</div>
-			<img class="frame" src="/api/runs/{{ .ID }}/frame.svg" alt="Terminal of {{ .Folder }} / {{ .Job }}" data-frame="{{ .ID }}" loading="lazy">
+			<div class="frame" data-frame="{{ .ID }}" role="img" aria-label="Terminal of {{ .Folder }} / {{ .Job }}">{{ .FrameSVG }}</div>
 		</a>
 	{{- end }}
 	</div>

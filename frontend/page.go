@@ -2,6 +2,7 @@ package frontend
 
 import (
 	"context"
+	"html/template"
 	"log/slog"
 	"net/http"
 	"sort"
@@ -11,6 +12,7 @@ import (
 	"github.com/titpetric/task-ui/access"
 	"github.com/titpetric/task-ui/frontend/view"
 	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/runner"
 	"github.com/titpetric/task-ui/storage"
 )
 
@@ -63,13 +65,14 @@ func (h *Handlers) running(user *model.User) map[string]view.Run {
 }
 
 // live returns the runs with a session in memory the user may see,
-// newest first: running ones, and the ones that just finished.
+// newest first, each with its frame: running ones, and the ones that
+// just finished.
 func (h *Handlers) live(user *model.User) []view.Run {
 	var result []view.Run
 	for _, session := range h.opts.Runner.List() {
 		run := session.Snapshot()
 		if user.CanSee(run.Folder) {
-			result = append(result, h.runView(run))
+			result = append(result, h.framed(h.runView(run)))
 		}
 	}
 	sort.Slice(result, func(i, j int) bool { return result[i].ID > result[j].ID })
@@ -85,6 +88,17 @@ func (h *Handlers) runView(run model.Run) view.Run {
 	}
 	return v
 }
+
+// framed adds the rendered frame of a live run.
+func (h *Handlers) framed(run view.Run) view.Run {
+	if session, ok := h.opts.Runner.Get(run.ID); ok {
+		run.FrameSVG = template.HTML(session.Frame().Trim(frameRows).SVG(runner.DarkPalette))
+	}
+	return run
+}
+
+// frameRows is the least rows a frame on a page shows.
+const frameRows = 8
 
 // visibleRuns lists runs the user may see.
 func (h *Handlers) visibleRuns(ctx context.Context, user *model.User, filter storage.RunFilter) []view.Run {

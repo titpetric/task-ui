@@ -27,6 +27,26 @@ type Discovery struct {
 	Config   []Config
 }
 
+// catalogue collects folders by ID and by directory, the first of each
+// winning.
+type catalogue struct {
+	byID  map[string]*Folder
+	byDir map[string]*Folder
+}
+
+func (c *catalogue) add(f *Folder) {
+	if _, ok := c.byID[f.ID]; ok {
+		return
+	}
+	c.byID[f.ID] = f
+	c.byDir[f.Dir] = f
+}
+
+func (c *catalogue) seen(dir string) bool {
+	_, ok := c.byDir[dir]
+	return ok
+}
+
 // List returns the folders in tree order: a folder, then the folders
 // inside it.
 func (d *Discovery) List() []*Folder {
@@ -34,62 +54,71 @@ func (d *Discovery) List() []*Folder {
 	if err != nil {
 		root = d.Root
 	}
-
-	byID := map[string]*Folder{}
-	byDir := map[string]*Folder{}
-	add := func(f *Folder) {
-		if _, ok := byID[f.ID]; ok {
-			return
-		}
-		byID[f.ID] = f
-		byDir[f.Dir] = f
-	}
-
+	c := &catalogue{byID: map[string]*Folder{}, byDir: map[string]*Folder{}}
 	// Configured folders first, so their paths win over discovery.
 	for _, cfg := range d.Config {
-		dir := cfg.Path
-		if dir == "" {
-			dir = filepath.FromSlash(cfg.ID)
-		}
-		if !filepath.IsAbs(dir) {
-			dir = filepath.Join(root, dir)
-		}
-		id := cfg.ID
-		if id == "" {
-			id = SafeID(filepath.Base(dir))
-		}
-
-		var f *Folder
-		if info, err := os.Stat(dir); err == nil && !info.IsDir() {
-			f = LoadFile(id, dir)
-		} else if detector.Any(dir) {
-			f = Load(id, dir, cfg.Sources...)
-		} else {
-			f = &Folder{ID: id, Title: id, Dir: dir, Error: "nothing to run found in " + dir}
-		}
-		cfg.Apply(f)
-		add(f)
+		c.add(configured(root, cfg))
 	}
-
 	if d.Discover {
-		if _, seen := byDir[root]; !seen && detector.Any(root) {
-			add(Load(SafeID(filepath.Base(root)), root))
-		}
-		walk(root, "", 1, detector.HasPipeline(root), func(id, dir string) {
-			if _, seen := byDir[dir]; !seen {
-				add(Load(id, dir))
-			}
-		})
+		d.discover(root, c)
 	}
 
-	result := make([]*Folder, 0, len(byID))
-	for _, f := range byID {
+	result := make([]*Folder, 0, len(c.byID))
+	for _, f := range c.byID {
 		result = append(result, f)
 	}
 	sort.Slice(result, func(i, j int) bool {
 		return strings.ToLower(result[i].ID) < strings.ToLower(result[j].ID)
 	})
 	return result
+}
+
+// configured loads the folder a configuration names: a directory, a
+// single file, or a path with nothing to run, which is listed with its
+// error so the configuration can be seen to be wrong.
+func configured(root string, cfg Config) *Folder {
+	dir := cfg.Path
+	if dir == "" {
+		dir = filepath.FromSlash(cfg.ID)
+	}
+	if !filepath.IsAbs(dir) {
+		dir = filepath.Join(root, dir)
+	}
+	id := cfg.ID
+	if id == "" {
+		id = SafeID(filepath.Base(dir))
+	}
+
+	var f *Folder
+	switch {
+	case isFile(dir):
+		f = LoadFile(id, dir)
+	case detector.Any(dir):
+		f = Load(id, dir, cfg.Sources...)
+	default:
+		f = &Folder{ID: id, Title: id, Dir: dir, Error: "nothing to run found in " + dir}
+	}
+	cfg.Apply(f)
+	return f
+}
+
+// isFile reports whether a path is a file.
+func isFile(path string) bool {
+	info, err := os.Stat(path)
+	return err == nil && !info.IsDir()
+}
+
+// discover adds the root when it has something to run, and walks the
+// tree below it.
+func (d *Discovery) discover(root string, c *catalogue) {
+	if !c.seen(root) && detector.Any(root) {
+		c.add(Load(SafeID(filepath.Base(root)), root))
+	}
+	walk(root, "", 1, detector.HasPipeline(root), func(id, dir string) {
+		if !c.seen(dir) {
+			c.add(Load(id, dir))
+		}
+	})
 }
 
 // walk visits the directories below dir, in name order, and reports the

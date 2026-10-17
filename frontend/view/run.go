@@ -1,6 +1,8 @@
 package view
 
 import (
+	"html/template"
+
 	"github.com/titpetric/task-ui/model"
 )
 
@@ -14,6 +16,9 @@ type Run struct {
 	Attached int
 	// Message is what the status says, when it says something.
 	Message string
+	// FrameSVG is the last frame of the terminal, rendered, when the
+	// page shows it.
+	FrameSVG template.HTML
 }
 
 // Initials returns the initials of the user who started the run.
