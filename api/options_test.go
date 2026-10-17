@@ -21,6 +21,8 @@ func TestOptions(t *testing.T) {
 	assert.NotNil(t, opts.Runner)
 	assert.NotNil(t, opts.Catalogue)
 	assert.NotNil(t, opts.Git)
+	assert.NotNil(t, opts.Keys)
+	assert.NotNil(t, opts.Env)
 	assert.NotNil(t, opts.Recordings)
 	assert.Equal(t, f.root, opts.Root)
 }

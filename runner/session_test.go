@@ -151,3 +151,22 @@ func TestSession_Stop(t *testing.T) {
 	assert.Equal(t, model.StateStopped, snapshot.State)
 	assert.NotNil(t, snapshot.FinishedAt)
 }
+
+// Input typed before the process is up reaches it once it starts, and a
+// window may size the terminal before the process exists.
+func TestSession_InputBeforeStart(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	req := f.shellJob("early", `read line; echo "got $line"; stty size`, true)
+
+	session, err := f.manager.Start(context.Background(), req)
+	assert.NoError(t, err)
+	session.Resize(100, 40)
+	assert.NoError(t, session.Input([]byte("hello\n")))
+
+	out, status := collect(t, session.Attach(false))
+	assert.Contains(t, out, "got hello")
+	assert.Contains(t, out, "40 100")
+	assert.Equal(t, model.StateOK, status.State)
+	assert.ErrorIs(t, session.Input([]byte("late\n")), runner.ErrNotRunning)
+}

@@ -18,12 +18,14 @@ import (
 
 	"github.com/titpetric/task-ui/access"
 	"github.com/titpetric/task-ui/api"
+	"github.com/titpetric/task-ui/envfile"
 	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/git"
 	"github.com/titpetric/task-ui/internal/assert"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/recording"
 	"github.com/titpetric/task-ui/runner"
+	"github.com/titpetric/task-ui/sshkey"
 	"github.com/titpetric/task-ui/storage"
 )
 
@@ -82,6 +84,7 @@ func newFixture(t *testing.T) *fixture {
 	private.Allow = []string{"admin"}
 
 	infra.Job("echo").Interactive = true
+	infra.EnvFiles = []string{".env"}
 
 	runs := storage.NewRunStorage(db)
 	artifacts := storage.NewArtifactStorage(db)
@@ -108,16 +111,19 @@ func newFixture(t *testing.T) *fixture {
 		f.users[name] = user
 	}
 
+	secrets := storage.NewSecretStorage(db)
 	f.opts = api.Options{
 		Users:      users,
 		Projects:   storage.NewProjectStorage(db),
 		Runs:       runs,
 		Artifacts:  artifacts,
 		Schedules:  storage.NewScheduleStorage(db),
-		Secrets:    storage.NewSecretStorage(db),
+		Secrets:    secrets,
 		Runner:     manager,
 		Catalogue:  catalogue{"infra": infra, "private": private},
 		Git:        &git.Git{},
+		Keys:       &sshkey.Store{Dir: t.TempDir()},
+		Env:        envfile.New(storage.NewEnvFileStorage(db), secrets),
 		Recordings: recordings,
 		Root:       root,
 	}

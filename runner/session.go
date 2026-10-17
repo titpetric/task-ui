@@ -14,6 +14,9 @@ import (
 // replaySize is how much of the output a late window gets.
 const replaySize = 256 << 10
 
+// pendingSize bounds the input kept for a process that has not started.
+const pendingSize = 64 << 10
+
 // Session is one run in progress, and what is known of it after: the
 // process on its pty, the terminal emulator that follows the output, the
 // windows attached, and how it ended. A session outlives the window that
@@ -27,7 +30,11 @@ type Session struct {
 	term    vt10x.Terminal
 	tail    *ring
 	proc    *Process
-	subs    map[*Subscriber]struct{}
+	// pending is the input typed before the process started, and the
+	// size the window asked for; both reach the process when it starts.
+	pending    []byte
+	cols, rows int
+	subs       map[*Subscriber]struct{}
 	sinks   []io.Writer
 	status  Status
 	stopped bool
@@ -114,15 +121,25 @@ func (s *Session) Attached() int {
 
 // Input sends keystrokes to the process, for an interactive job.
 func (s *Session) Input(p []byte) error {
-	s.mu.Lock()
-	proc := s.proc
-	s.mu.Unlock()
-	if proc == nil {
-		return ErrNotRunning
-	}
 	if !s.Job.Interactive {
 		return ErrNotInteractive
 	}
+	s.mu.Lock()
+	proc := s.proc
+	if proc == nil {
+		if s.status.Finished() {
+			s.mu.Unlock()
+			return ErrNotRunning
+		}
+		// Typed before the process is up: keep it for the process, a
+		// window cannot tell the two moments apart.
+		if len(s.pending)+len(p) <= pendingSize {
+			s.pending = append(s.pending, p...)
+		}
+		s.mu.Unlock()
+		return nil
+	}
+	s.mu.Unlock()
 	_, err := proc.Write(p)
 	return err
 }
@@ -135,6 +152,7 @@ func (s *Session) Resize(cols, rows int) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.term.Resize(cols, rows)
+	s.cols, s.rows = cols, rows
 	if s.proc != nil {
 		s.proc.Resize(cols, rows)
 	}
@@ -208,9 +226,18 @@ func (s *Session) setProcess(proc *Process, grace time.Duration) {
 	s.mu.Lock()
 	s.proc = proc
 	ended := s.stopped || s.killed
+	pending, cols, rows := s.pending, s.cols, s.rows
+	s.pending = nil
 	s.mu.Unlock()
 	if ended {
 		proc.Stop(grace)
+		return
+	}
+	if cols > 0 && rows > 0 {
+		proc.Resize(cols, rows)
+	}
+	if len(pending) > 0 {
+		_, _ = proc.Write(pending)
 	}
 }
 
