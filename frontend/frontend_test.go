@@ -24,6 +24,7 @@ import (
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/recording"
 	"github.com/titpetric/task-ui/runner"
+	"github.com/titpetric/task-ui/secret"
 	"github.com/titpetric/task-ui/sshkey"
 	"github.com/titpetric/task-ui/storage"
 )
@@ -90,7 +91,8 @@ func newFixture(t *testing.T) *fixture {
 	}
 
 	runs := storage.NewRunStorage(db)
-	secrets := storage.NewSecretStorage(db)
+	keys := &sshkey.Store{Dir: t.TempDir()}
+	secrets := secret.New(storage.NewSecretStorage(db), secret.NewVault(keys))
 	manager := runner.New(runner.Options{Runs: runs, Recordings: &recording.Store{Root: t.TempDir()}, Grace: time.Second, Keep: time.Minute})
 	t.Cleanup(func() { manager.Shutdown(context.Background()) })
 
@@ -105,7 +107,7 @@ func newFixture(t *testing.T) *fixture {
 		Runner:    manager,
 		Catalogue: catalogue{"infra": infra, "private": private},
 		Git:       &git.Git{},
-		Keys:      &sshkey.Store{Dir: t.TempDir()},
+		Keys:      keys,
 		Env:       envfile.New(storage.NewEnvFileStorage(db), secrets),
 		Root:      root,
 		Version:   "test",
@@ -172,6 +174,13 @@ func (f *fixture) page(t *testing.T, user, path string) string {
 	assert.Equal(t, http.StatusOK, res.Status, path)
 	assert.Contains(t, res.Body, "<!DOCTYPE html>")
 	return res.Body
+}
+
+// withKey puts an ed25519 key in the SSH folder, so secrets can be kept.
+func (f *fixture) withKey(t *testing.T) {
+	t.Helper()
+	_, err := f.opts.Keys.Generate("ed25519", "test")
+	assert.NoError(t, err)
 }
 
 // run records a finished run of a job.

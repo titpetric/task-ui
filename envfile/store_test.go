@@ -13,6 +13,8 @@ import (
 	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/internal/assert"
 	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/secret"
+	"github.com/titpetric/task-ui/sshkey"
 	"github.com/titpetric/task-ui/storage"
 )
 
@@ -21,7 +23,10 @@ func newStore(t *testing.T) *envfile.Store {
 	db, err := storage.OpenAndMigrate(context.Background(), ":memory:")
 	assert.NoError(t, err)
 	t.Cleanup(func() { db.Close() })
-	return envfile.New(storage.NewEnvFileStorage(db), storage.NewSecretStorage(db))
+	keys := &sshkey.Store{Dir: t.TempDir()}
+	_, err = keys.Generate("ed25519", "test")
+	assert.NoError(t, err)
+	return envfile.New(storage.NewEnvFileStorage(db), secret.New(storage.NewSecretStorage(db), secret.NewVault(keys)))
 }
 
 func TestNew(t *testing.T) {

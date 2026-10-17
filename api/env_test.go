@@ -30,6 +30,7 @@ func TestEnv_List(t *testing.T) {
 func TestEnv_GetAndPut(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
+	f.withKey(t)
 
 	denied := f.call(t, asOps, http.MethodGet, "/env/infra/.env", nil)
 	assert.Equal(t, http.StatusForbidden, denied.Status)

@@ -12,7 +12,8 @@ import (
 func TestSecrets(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
-	assert.NoError(t, f.opts.Secrets.Create(context.Background(), &model.Secret{Scope: "infra", Name: "DB_PASS", Content: "hunter2secret"}))
+	f.withKey(t)
+	assert.NoError(t, f.opts.Secrets.Set(context.Background(), &model.Secret{Scope: "infra", Name: "DB_PASS", Content: "hunter2secret"}))
 
 	body := f.page(t, asAdmin, "/settings/secrets")
 	assert.Contains(t, body, "<h2>Secrets</h2>")
@@ -26,7 +27,8 @@ func TestSecrets(t *testing.T) {
 func TestSecretForms(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
-	assert.NoError(t, f.opts.Secrets.Create(context.Background(), &model.Secret{Scope: "infra", Name: "DB_PASS", Content: "x"}))
+	f.withKey(t)
+	assert.NoError(t, f.opts.Secrets.Set(context.Background(), &model.Secret{Scope: "infra", Name: "DB_PASS", Content: "x"}))
 
 	add := f.page(t, asAdmin, "/settings/secrets/new?scope=infra")
 	assert.Contains(t, add, "<h2>Add secret</h2>")
@@ -40,4 +42,20 @@ func TestSecretForms(t *testing.T) {
 	assert.NotContains(t, edit, ">x</textarea>")
 
 	assert.Equal(t, http.StatusNotFound, f.get(t, asAdmin, "/settings/secrets/edit?scope=all&name=NOPE").Status)
+}
+
+func TestSecrets_Encryption(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+
+	none := f.page(t, asAdmin, "/settings/secrets")
+	assert.Contains(t, none, "No key to encrypt with")
+	assert.NotContains(t, none, `data-api="/api/secrets/rekey"`)
+
+	f.withKey(t)
+	body := f.page(t, asAdmin, "/settings/secrets")
+	assert.Contains(t, body, "Encrypted at rest with the instance SSH key <b>id_ed25519</b>")
+	assert.Contains(t, body, `data-api="/api/secrets/rekey"`)
+	assert.Contains(t, f.page(t, asAdmin, "/settings/secrets/new"), "<b>id_ed25519</b>")
+	assert.Contains(t, f.page(t, asAdmin, "/settings/keys"), "encrypted with: <b>id_ed25519</b>")
 }

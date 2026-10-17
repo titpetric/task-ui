@@ -3,6 +3,7 @@ module github.com/titpetric/task-ui
 go 1.27.0
 
 require (
+	filippo.io/age v1.3.2
 	github.com/creack/pty v1.1.24
 	github.com/go-bridget/mig v0.6.6
 	github.com/go-chi/chi/v5 v5.5.0
@@ -17,6 +18,8 @@ require (
 )
 
 require (
+	filippo.io/edwards25519 v1.2.0 // indirect
+	filippo.io/hpke v0.4.0 // indirect
 	github.com/dustin/go-humanize v1.1.0 // indirect
 	github.com/gofrs/uuid v4.4.0+incompatible // indirect
 	github.com/google/uuid v1.6.0 // indirect

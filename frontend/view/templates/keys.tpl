@@ -2,7 +2,7 @@
 <div class="page-head">
 	<div>
 		<h2>SSH keys</h2>
-		<p>The key pairs jobs use to reach other hosts, git remotes and services. Add the public key where it should be accepted.</p>
+		<p>The key pairs jobs use to reach other hosts, git remotes and services, and what the secrets are encrypted with{{ if .Encryption }}: <b>{{ join .Encryption ", " }}</b>{{ end }}. Add the public key where it should be accepted. Rotating a key writes the secrets again for the new one; the last key that opens them cannot be deleted.</p>
 	</div>
 	<div class="actions">
 		<a class="btn" href="/settings/keys/upload">Upload key</a>

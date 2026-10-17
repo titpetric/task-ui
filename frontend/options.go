@@ -6,6 +6,7 @@ import (
 	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/git"
 	"github.com/titpetric/task-ui/runner"
+	"github.com/titpetric/task-ui/secret"
 	"github.com/titpetric/task-ui/sshkey"
 	"github.com/titpetric/task-ui/storage"
 )
@@ -19,7 +20,7 @@ type Options struct {
 	Runs      *storage.RunStorage
 	Artifacts *storage.ArtifactStorage
 	Schedules *storage.ScheduleStorage
-	Secrets   *storage.SecretStorage
+	Secrets   *secret.Store
 
 	Runner    *runner.Manager
 	Catalogue folder.Catalogue

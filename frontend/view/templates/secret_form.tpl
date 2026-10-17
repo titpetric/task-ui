@@ -3,7 +3,7 @@
 <div class="page-head">
 	<div>
 		<h2>{{ .Title }}</h2>
-		<p>The value is kept in the database and never shown again in full. Saving a name that exists replaces its value.</p>
+		<p>The value is encrypted with the instance SSH {{ if eq (len .Encryption) 1 }}key{{ else }}keys{{ end }} {{ if .Encryption }}<b>{{ join .Encryption ", " }}</b>{{ else }}<span class="badge bad">none yet</span>{{ end }} and never shown again in full. Saving a name that exists replaces its value.</p>
 	</div>
 </div>
 

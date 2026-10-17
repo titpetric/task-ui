@@ -6,6 +6,7 @@ import (
 	"github.com/titpetric/task-ui/envfile"
 	"github.com/titpetric/task-ui/git"
 	"github.com/titpetric/task-ui/recording"
+	"github.com/titpetric/task-ui/secret"
 	"github.com/titpetric/task-ui/storage"
 )
 
@@ -13,7 +14,7 @@ import (
 type Options struct {
 	Runs       *storage.RunStorage
 	Artifacts  *storage.ArtifactStorage
-	Secrets    *storage.SecretStorage
+	Secrets    *secret.Store
 	Env        *envfile.Store
 	Git        *git.Git
 	Recordings *recording.Store

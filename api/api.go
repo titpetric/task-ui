@@ -20,6 +20,7 @@ import (
 
 	"github.com/titpetric/task-ui/hours"
 	"github.com/titpetric/task-ui/runner"
+	"github.com/titpetric/task-ui/secret"
 	"github.com/titpetric/task-ui/storage"
 )
 
@@ -73,6 +74,7 @@ func (h *Handlers) Routes() http.Handler {
 	r.Get("/secrets", h.listSecrets)
 	r.Post("/secrets", h.setSecret)
 	r.Delete("/secrets/{id}", h.deleteSecret)
+	r.Post("/secrets/rekey", h.rekeySecrets)
 
 	r.Get("/keys", h.listKeys)
 	r.Post("/keys/generate", h.generateKey)
@@ -134,6 +136,8 @@ func statusOf(err error) int {
 		return http.StatusConflict
 	case errors.Is(err, runner.ErrOutOfHours):
 		return http.StatusForbidden
+	case errors.Is(err, secret.ErrNoKey):
+		return http.StatusConflict
 	case errors.Is(err, runner.ErrReasonNeeded), errors.Is(err, hours.ErrInvalid):
 		return http.StatusBadRequest
 	case errors.Is(err, runner.ErrNotInteractive), errors.Is(err, runner.ErrNotRunning), errors.Is(err, storage.ErrInvalidName):

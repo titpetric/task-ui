@@ -48,7 +48,9 @@ type Page struct {
 	Projects    []model.Project
 	Keys        []sshkey.Key
 	KeysDir     string
-	Users       []model.User
+	// Encryption names the keys the secrets are encrypted with.
+	Encryption []string
+	Users      []model.User
 	// Account is the user a form edits.
 	Account *model.User
 	Root    string

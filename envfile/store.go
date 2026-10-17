@@ -15,6 +15,7 @@ import (
 	"github.com/titpetric/task-ui/dotenv"
 	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/secret"
 	"github.com/titpetric/task-ui/storage"
 )
 
@@ -27,11 +28,11 @@ type Store struct {
 	// Managed holds the content saved from the UI.
 	Managed *storage.EnvFileStorage
 	// Secrets holds what is appended at generation.
-	Secrets *storage.SecretStorage
+	Secrets *secret.Store
 }
 
 // New returns the store over the two storages it reads.
-func New(managed *storage.EnvFileStorage, secrets *storage.SecretStorage) *Store {
+func New(managed *storage.EnvFileStorage, secrets *secret.Store) *Store {
 	return &Store{Managed: managed, Secrets: secrets}
 }
 
