@@ -30,3 +30,9 @@ func TestProject_JobAllowMap(t *testing.T) {
 	assert.Len(t, (*model.Project)(nil).JobAllowMap(), 0)
 	assert.Equal(t, map[string][]string{"deploy": {"admin"}}, (&model.Project{JobAllow: `{"deploy":["admin"]}`}).JobAllowMap())
 }
+
+func TestProject_JobHoursMap(t *testing.T) {
+	t.Parallel()
+	assert.Len(t, (*model.Project)(nil).JobHoursMap(), 0)
+	assert.Equal(t, map[string]string{"build": "mon-fri 9-17"}, (&model.Project{JobHours: `{"build":"mon-fri 9-17"}`}).JobHoursMap())
+}

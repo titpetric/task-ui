@@ -365,6 +365,12 @@ type Project struct {
 	// Job Allow
 	JobAllow string `db:"job_allow" json:"job_allow"`
 
+	// Hours
+	Hours string `db:"hours" json:"hours"`
+
+	// Job Hours
+	JobHours string `db:"job_hours" json:"job_hours"`
+
 	// Created At
 	CreatedAt *time.Time `db:"created_at" json:"created_at"`
 
@@ -432,6 +438,18 @@ func (p *Project) GetJobAllow() string { return p.JobAllow }
 // SetJobAllow sets JobAllow to the provided value.
 func (p *Project) SetJobAllow(val string) { p.JobAllow = val }
 
+// GetHours will return the value of Hours.
+func (p *Project) GetHours() string { return p.Hours }
+
+// SetHours sets Hours to the provided value.
+func (p *Project) SetHours(val string) { p.Hours = val }
+
+// GetJobHours will return the value of JobHours.
+func (p *Project) GetJobHours() string { return p.JobHours }
+
+// SetJobHours sets JobHours to the provided value.
+func (p *Project) SetJobHours(val string) { p.JobHours = val }
+
 // GetCreatedAt will return the value of CreatedAt.
 func (p *Project) GetCreatedAt() *time.Time { return p.CreatedAt }
 
@@ -448,7 +466,7 @@ func (p *Project) SetUpdatedAt(stamp time.Time) { p.UpdatedAt = &stamp }
 const ProjectTable = "`project`"
 
 // ProjectFields is a list of all columns in the DB table.
-var ProjectFields = []string{"id", "folder", "title", "description", "source_url", "branch", "allow", "commands", "sources", "job_allow", "created_at", "updated_at"}
+var ProjectFields = []string{"id", "folder", "title", "description", "source_url", "branch", "allow", "commands", "sources", "job_allow", "hours", "job_hours", "created_at", "updated_at"}
 
 // ProjectPrimaryFields are the primary key fields in the DB table.
 var ProjectPrimaryFields = []string{"id"}
@@ -490,6 +508,9 @@ type Run struct {
 
 	// Cast Path
 	CastPath string `db:"cast_path" json:"cast_path"`
+
+	// Reason
+	Reason string `db:"reason" json:"reason"`
 
 	// Started At
 	StartedAt *time.Time `db:"started_at" json:"started_at"`
@@ -576,6 +597,12 @@ func (r *Run) GetCastPath() string { return r.CastPath }
 // SetCastPath sets CastPath to the provided value.
 func (r *Run) SetCastPath(val string) { r.CastPath = val }
 
+// GetReason will return the value of Reason.
+func (r *Run) GetReason() string { return r.Reason }
+
+// SetReason sets Reason to the provided value.
+func (r *Run) SetReason(val string) { r.Reason = val }
+
 // GetStartedAt will return the value of StartedAt.
 func (r *Run) GetStartedAt() *time.Time { return r.StartedAt }
 
@@ -604,7 +631,7 @@ func (r *Run) SetUpdatedAt(stamp time.Time) { r.UpdatedAt = &stamp }
 const RunTable = "`run`"
 
 // RunFields is a list of all columns in the DB table.
-var RunFields = []string{"id", "folder", "job", "user_id", "user_name", "state", "exit_code", "forced", "scheduled", "term_cols", "term_rows", "cast_path", "started_at", "finished_at", "created_at", "updated_at"}
+var RunFields = []string{"id", "folder", "job", "user_id", "user_name", "state", "exit_code", "forced", "scheduled", "term_cols", "term_rows", "cast_path", "reason", "started_at", "finished_at", "created_at", "updated_at"}
 
 // RunPrimaryFields are the primary key fields in the DB table.
 var RunPrimaryFields = []string{"id"}

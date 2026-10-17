@@ -25,18 +25,18 @@
 
 <section class="block" data-live>
 	<div class="table-wrap">
-	<table class="table">
+	<table class="table cards">
 		<thead><tr><th>Started</th><th>Folder</th><th>Job</th><th>By</th><th>Duration</th><th>Result</th><th class="hide-sm">Watching</th><th></th></tr></thead>
 		<tbody>
 		{{- range .Runs }}
 			<tr>
-				<td class="nowrap" title="{{ stamp .StartedAt }}">{{ ago .StartedAt }}</td>
-				<td><a href="/f/{{ .Folder }}">{{ .Folder }}</a></td>
+				<td class="nowrap" data-label="Started" title="{{ stamp .StartedAt }}">{{ ago .StartedAt }}</td>
+				<td data-label="Folder"><a href="/f/{{ .Folder }}">{{ .Folder }}</a></td>
 				<td class="key"><a href="/f/{{ .Folder }}/{{ .Job }}">{{ .Job }}</a></td>
-				<td>{{ template "who" . }}</td>
-				<td class="nowrap">{{ duration .Elapsed }}</td>
-				<td>{{ template "state" . }}</td>
-				<td class="hide-sm">{{ if .Live }}{{ .Attached }}{{ else }}<span class="faint">-</span>{{ end }}</td>
+				<td data-label="By">{{ template "who" . }}</td>
+				<td class="nowrap" data-label="Took">{{ duration .Elapsed }}</td>
+				<td data-label="Result">{{ template "state" . }}</td>
+				<td class="hide-sm" data-label="Watching">{{ if .Live }}{{ .Attached }}{{ else }}<span class="faint">-</span>{{ end }}</td>
 				<td class="actions">
 					<a class="btn btn-sm" href="/runs/{{ .ID }}" data-attach="{{ .ID }}">{{ if eq .State "running" }}Attach{{ else }}View{{ end }}</a>
 					{{- if and .Live (eq .State "running") }}

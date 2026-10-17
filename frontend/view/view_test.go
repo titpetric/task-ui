@@ -83,3 +83,15 @@ func TestView_Render(t *testing.T) {
 
 	assert.Error(t, v.Render(&buf, "nothing", admin(t)))
 }
+
+// The window carries the reason field a run out of hours asks for.
+func TestView_RenderDialog(t *testing.T) {
+	t.Parallel()
+
+	v, err := view.New()
+	assert.NoError(t, err)
+	var buf bytes.Buffer
+	assert.NoError(t, v.Render(&buf, "home", admin(t)))
+	assert.Contains(t, buf.String(), `id="run-reason-text"`)
+	assert.Contains(t, buf.String(), `id="run-force"`)
+}

@@ -35,6 +35,7 @@
 			<tr><th>Finished</th><td>{{ if $run.FinishedAt }}{{ stamp $run.FinishedAt }}{{ else }}<span class="faint">in progress</span>{{ end }}</td></tr>
 			<tr><th>Duration</th><td>{{ duration $run.Elapsed }}</td></tr>
 			<tr><th>Result</th><td>{{ template "state" $run }}{{ if $run.Message }} <span class="dim">{{ $run.Message }}</span>{{ end }}</td></tr>
+			{{- if $run.Reason }}<tr><th>Reason</th><td>{{ $run.Reason }} <span class="badge bad">out of hours</span></td></tr>{{ end }}
 			<tr><th>Terminal</th><td>{{ $run.TermCols }}×{{ $run.TermRows }}</td></tr>
 			<tr><th>ID</th><td class="faint">{{ $run.ID }}</td></tr>
 		</tbody>

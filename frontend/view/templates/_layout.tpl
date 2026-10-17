@@ -19,6 +19,7 @@
 	{{ template "content" . }}
 {{- else }}
 	<header class="top">
+		<button type="button" class="btn-icon menu-toggle" id="menu-toggle" aria-label="Menu" aria-controls="side" aria-expanded="false"><svg class="ic"><use href="#i-menu"/></svg></button>
 		<h1><a href="/">TaskUI</a></h1>
 		<span class="spacer"></span>
 		<details class="user" id="user-menu">
@@ -37,7 +38,8 @@
 		</details>
 	</header>
 	<div class="shell">
-		<aside class="side">
+		<div class="menu-backdrop" id="menu-backdrop"></div>
+		<aside class="side" id="side">
 			<nav class="menu">
 				<a href="/" class="{{ if .IsPath "/" }}active{{ end }}"><svg class="ic"><use href="#i-grid"/></svg><span>Dashboard</span></a>
 				<a href="/runs" class="{{ if .Under "/runs" }}active{{ end }}"><svg class="ic"><use href="#i-list"/></svg><span>Runs</span><i class="dot{{ if .Running }} running{{ end }}" data-any-running></i></a>
@@ -46,12 +48,22 @@
 			</nav>
 			<nav class="folders">
 				{{- range $p := .Folders }}
-				<a href="/f/{{ $p.ID }}" data-folder="{{ $p.ID }}" class="folder{{ if and $.Folder (eq $.Folder.ID $p.ID) }} active{{ end }}" title="{{ $p.ID }}/{{ range $i, $s := $p.Sources }}{{ if $i }}, {{ end }}{{ $s.File }}{{ end }}">
-					<svg class="ic"><use href="#i-folder{{ if and $.Folder (eq $.Folder.ID $p.ID) }}-open{{ end }}"/></svg>
-					<span>{{ $p.ID }}</span>
-					<i class="dot"></i>
-					{{- if $p.Error }}<small class="bad">!</small>{{ else }}<small>{{ len $p.Jobs }}</small>{{ end }}
-				</a>
+				{{- $active := and $.Folder (eq $.Folder.ID $p.ID) }}
+				<details class="folder{{ if $active }} active{{ end }}" data-folder="{{ $p.ID }}"{{ if $active }} open{{ end }}>
+					<summary title="{{ $p.ID }}/{{ range $i, $s := $p.Sources }}{{ if $i }}, {{ end }}{{ $s.File }}{{ end }}">
+						<a href="/f/{{ $p.ID }}"><svg class="ic"><use href="#i-folder{{ if $active }}-open{{ end }}"/></svg><span>{{ $p.ID }}</span></a>
+						<i class="dot"></i>
+						{{- if $p.Error }}<small class="bad">!</small>{{ else }}<small>{{ len $p.Jobs }}</small>{{ end }}
+						<svg class="ic chev"><use href="#i-chev"/></svg>
+					</summary>
+					<div class="jobs">
+						{{- range $p.Jobs }}
+						<a href="/f/{{ $p.ID }}/{{ .ID }}" data-job-key="{{ .Key }}" class="{{ if and $.Job (eq $.Job.Key .Key) }}active{{ end }}"><i class="dot{{ if $.RunningRun .Key }} running{{ end }}"></i><span>{{ .Name }}</span></a>
+						{{- else }}
+						<div class="empty">Nothing to run.</div>
+						{{- end }}
+					</div>
+				</details>
 				{{- else }}
 				<div class="empty">No folders. Add one from a git repository in Settings, or put a folder with something to run under the root.</div>
 				{{- end }}
@@ -118,6 +130,8 @@
 	<symbol id="i-play" viewBox="0 0 16 16"><path d="M4.5 2.5v11l8-5.5z" fill="currentColor"/></symbol>
 	<symbol id="i-stop" viewBox="0 0 16 16"><rect x="3.5" y="3.5" width="9" height="9" rx="1" fill="currentColor"/></symbol>
 	<symbol id="i-eye" viewBox="0 0 16 16"><path d="M1.5 8s2.5-4.5 6.5-4.5S14.5 8 14.5 8 12 12.5 8 12.5 1.5 8 1.5 8z" fill="none" stroke="currentColor" stroke-width="1.2"/><circle cx="8" cy="8" r="2" fill="none" stroke="currentColor" stroke-width="1.2"/></symbol>
+	<symbol id="i-menu" viewBox="0 0 16 16"><path d="M2.5 4h11M2.5 8h11M2.5 12h11" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></symbol>
+	<symbol id="i-chev" viewBox="0 0 16 16"><path d="M6 3.5 10.5 8 6 12.5" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></symbol>
 	<symbol id="i-download" viewBox="0 0 16 16"><path d="M8 2.5v8M4.5 7 8 10.5 11.5 7M2.5 13.5h11" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
 </svg>
 {{ end }}
@@ -136,6 +150,10 @@
 		<div class="terminal-host" id="run-terminal"></div>
 	</div>
 	<p class="run-notice" id="run-notice" role="status"></p>
+	<div class="run-reason" id="run-reason" hidden>
+		<label for="run-reason-text">Why does this have to run out of hours? The reason is kept with the run.</label>
+		<input type="text" id="run-reason-text" placeholder="customer is waiting on the hotfix" autocomplete="off" maxlength="200">
+	</div>
 	<div class="run-foot">
 		<span class="hint" id="run-hint">Closing this window leaves the run running.</span>
 		<button type="button" class="btn" id="run-attach" hidden>Attach</button>
@@ -167,7 +185,9 @@
 {{- end -}}
 {{ end }}
 
-{{ define "who" }}<span class="who-ran"><span class="avatar sm" title="{{ .UserName }}">{{ .Initials }}</span> {{ .UserName }}{{ if .IsScheduled }} <span class="badge">scheduled</span>{{ end }}{{ if .IsForced }} <span class="badge signal">forced</span>{{ end }}</span>{{ end }}
+{{ define "who" }}<span class="who-ran"><span class="avatar sm" title="{{ .UserName }}">{{ .Initials }}</span> {{ .UserName }}{{ if .IsScheduled }} <span class="badge">scheduled</span>{{ end }}{{ if .Reason }} <span class="badge bad" title="{{ .Reason }}">out of hours</span>{{ else if .IsForced }} <span class="badge signal">forced</span>{{ end }}</span>{{ end }}
+
+{{ define "hours" }}{{ if . }}{{ hoursLine . }} {{ if inHours . }}<span class="badge ok">open now</span>{{ else }}<span class="badge bad">out of hours now</span>{{ end }}{{ else }}<span class="faint">always</span>{{ end }}{{ end }}
 
 {{ define "runButtons" }}
 {{- $p := index . 0 }}{{ $r := index . 1 -}}

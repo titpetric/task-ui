@@ -35,6 +35,9 @@ type Folder struct {
 	// Allow lists the users and roles that may run this folder's jobs,
 	// from the configuration. Empty allows every runner.
 	Allow []string `json:"allow,omitempty"`
+	// Hours says when the folder's jobs may run, as the hours package
+	// reads them. Empty is always.
+	Hours string `json:"hours,omitempty"`
 
 	// Jobs are every source's jobs, in source order.
 	Jobs []*Job `json:"jobs"`
@@ -72,4 +75,15 @@ func (f *Folder) SourceJobs(source *detector.Source) []*Job {
 		}
 	}
 	return jobs
+}
+
+// HoursOf returns the hours a job may run in: its own, or the folder's.
+func (f *Folder) HoursOf(job *Job) string {
+	if job != nil && job.Hours != "" {
+		return job.Hours
+	}
+	if f == nil {
+		return ""
+	}
+	return f.Hours
 }

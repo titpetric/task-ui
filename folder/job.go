@@ -23,6 +23,9 @@ type Job struct {
 	// Allow narrows who may run this job, on top of the folder Allow,
 	// from the configuration.
 	Allow []string `json:"allow,omitempty"`
+	// Hours says when this job may run, over the folder's hours, from
+	// the configuration.
+	Hours string `json:"hours,omitempty"`
 }
 
 // Key is the identity used for the run lock and the history: one run per

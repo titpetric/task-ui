@@ -10,6 +10,8 @@ CREATE TABLE IF NOT EXISTS project (
     commands TEXT NOT NULL DEFAULT '{}',
     sources TEXT NOT NULL DEFAULT '[]',
     job_allow TEXT NOT NULL DEFAULT '{}',
+    hours TEXT NOT NULL DEFAULT '',
+    job_hours TEXT NOT NULL DEFAULT '{}',
     created_at DATETIME,
     updated_at DATETIME
 );

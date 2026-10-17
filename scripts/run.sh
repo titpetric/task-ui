@@ -2,7 +2,7 @@
 # Start a job on the running task-ui through its API, wait for it to end
 # and print the last frame of its terminal.
 #
-#   scripts/run.sh <folder> <job> [force]
+#   scripts/run.sh <folder> <job> [force [reason]]
 #
 # Works against an instance signed in with TASK_UI_AUTOLOGIN, since curl
 # has no session. Target another instance with TASK_UI_BASE. The run ID
@@ -17,6 +17,7 @@ force=false
 if [ "${3:-}" = "force" ]; then
   force=true
 fi
+reason="${4:-}"
 
 # The API refuses other origins on writes, so send ours.
 api() {
@@ -27,7 +28,7 @@ field() {
   grep -o "\"$1\":\"[^\"]*\"" | head -1 | cut -d'"' -f4
 }
 
-started="$(api -X POST -d "{\"folder\":\"${folder}\",\"job\":\"${job}\",\"force\":${force},\"cols\":120,\"rows\":30}" "${BASE}/api/runs")"
+started="$(api -X POST -d "{\"folder\":\"${folder}\",\"job\":\"${job}\",\"force\":${force},\"reason\":\"${reason}\",\"cols\":120,\"rows\":30}" "${BASE}/api/runs")"
 id="$(printf '%s' "$started" | field id)"
 if [ -z "$id" ]; then
   echo "$started" >&2

@@ -204,3 +204,31 @@ func TestRun_Cast(t *testing.T) {
 	none := f.call(t, asViewer, http.MethodGet, "/runs/"+bare.ID+"/cast", nil)
 	assert.Equal(t, http.StatusNotFound, none.Status)
 }
+
+// Outside the job's hours a run is refused; forced with a reason it runs
+// and the run keeps the reason.
+func TestRun_OutOfHours(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	f.opts.Catalogue.Find("infra").Hours = "sun 1-2"
+
+	denied := f.call(t, asOps, http.MethodPost, "/runs", api.RunRequest{Folder: "infra", Job: "plan"})
+	assert.Equal(t, http.StatusForbidden, denied.Status, string(denied.Raw))
+	assert.Equal(t, "out of hours", denied.str("error"))
+	assert.Equal(t, true, denied.get("out_of_hours"))
+	assert.Equal(t, "sun 1-2", denied.str("hours"))
+
+	silent := f.call(t, asOps, http.MethodPost, "/runs", api.RunRequest{Folder: "infra", Job: "plan", Force: true})
+	assert.Equal(t, http.StatusBadRequest, silent.Status)
+	assert.Equal(t, true, silent.get("out_of_hours"))
+
+	forced := f.call(t, asOps, http.MethodPost, "/runs", api.RunRequest{Folder: "infra", Job: "plan", Force: true, Reason: "customer is waiting"})
+	assert.Equal(t, http.StatusCreated, forced.Status, string(forced.Raw))
+	assert.Equal(t, "customer is waiting", forced.str("reason"))
+	assert.Equal(t, model.StateOK, f.finished(t, forced.str("id")).State)
+
+	all := f.call(t, asOps, http.MethodPost, "/runs/all", api.RunAllRequest{Folder: "infra"})
+	assert.Equal(t, http.StatusOK, all.Status)
+	assert.Len(t, all.list("started"), 0)
+	assert.Equal(t, "out of hours", all.str("skipped", "slow"))
+}

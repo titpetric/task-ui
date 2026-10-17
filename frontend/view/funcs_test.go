@@ -68,3 +68,20 @@ func TestMask(t *testing.T) {
 	assert.Equal(t, "********", view.Mask("short"))
 	assert.Equal(t, "hun********", view.Mask("hunter2secret"))
 }
+
+func TestInHours(t *testing.T) {
+	t.Parallel()
+
+	assert.True(t, view.InHours(""))
+	assert.True(t, view.InHours("daily 0-24"))
+	assert.False(t, view.InHours("mon 0:00-0:01"))
+	assert.True(t, view.InHours("not hours at all"))
+}
+
+func TestHoursLine(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, "mon-fri 9-17, fri 9-13", view.HoursLine("mon-fri 9-17\nfri 9-13"))
+	assert.Equal(t, "", view.HoursLine(""))
+	assert.Equal(t, "broken", view.HoursLine(" broken "))
+}

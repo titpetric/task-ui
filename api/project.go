@@ -8,6 +8,7 @@ import (
 
 	"github.com/titpetric/task-ui/detector"
 	"github.com/titpetric/task-ui/folder"
+	"github.com/titpetric/task-ui/hours"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/storage"
 )
@@ -27,6 +28,10 @@ type ProjectRequest struct {
 	Commands    map[string]string   `json:"commands"`
 	Sources     []string            `json:"sources"`
 	JobAllow    map[string][]string `json:"job_allow"`
+	// Hours says when the folder's jobs may run, as the hours package
+	// reads them; JobHours does so per job.
+	Hours    string            `json:"hours"`
+	JobHours map[string]string `json:"job_hours"`
 }
 
 // listProjects returns the directories under the root with their
@@ -131,6 +136,18 @@ func (h *Handlers) updateProject(w http.ResponseWriter, r *http.Request) {
 	project.Commands = model.EncodeStrings(req.Commands)
 	project.Sources = model.EncodeList(req.Sources)
 	project.JobAllow = model.EncodeMap(req.JobAllow)
+	if _, err := hours.Parse(req.Hours); err != nil {
+		fail(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	for job, text := range req.JobHours {
+		if _, err := hours.Parse(text); err != nil {
+			fail(w, http.StatusBadRequest, job+": "+err.Error())
+			return
+		}
+	}
+	project.Hours = strings.TrimSpace(req.Hours)
+	project.JobHours = model.EncodeStrings(req.JobHours)
 	if err := h.opts.Projects.Upsert(r.Context(), project); err != nil {
 		failErr(w, err)
 		return

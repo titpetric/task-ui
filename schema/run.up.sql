@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS run (
     term_cols INTEGER NOT NULL DEFAULT 120,
     term_rows INTEGER NOT NULL DEFAULT 30,
     cast_path TEXT NOT NULL DEFAULT '',
+    reason TEXT NOT NULL DEFAULT '',
     started_at DATETIME,
     finished_at DATETIME,
     created_at DATETIME,

@@ -78,3 +78,21 @@ func TestRun_Missing(t *testing.T) {
 	assert.Equal(t, http.StatusNotFound, f.get(t, asOps, "/runs/"+model.NewID()).Status)
 	assert.Equal(t, http.StatusNotFound, f.get(t, asLimited, "/runs/"+hidden.ID).Status)
 }
+
+func TestRun_Reason(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	run := f.run(t, "infra", "plan", "ops", model.StateOK)
+	run.Forced, run.Reason = 1, "customer waiting on the fix"
+	assert.NoError(t, f.opts.Runs.Update(context.Background(), run))
+
+	page := f.page(t, asViewer, "/runs/"+run.ID)
+	assert.Contains(t, page, "<th>Reason</th><td>customer waiting on the fix")
+	assert.Contains(t, page, `title="customer waiting on the fix">out of hours</span>`)
+
+	list := f.page(t, asViewer, "/runs")
+	assert.Contains(t, list, `title="customer waiting on the fix">out of hours</span>`)
+	assert.NotContains(t, list, ">forced</span>")
+	assert.Contains(t, list, `<table class="table cards">`)
+	assert.Contains(t, list, `data-label="Result"`)
+}

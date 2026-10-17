@@ -16,6 +16,7 @@ Run.
 | term_cols   | bigint   |     | Term Cols   |
 | term_rows   | bigint   |     | Term Rows   |
 | cast_path   | varchar  |     | Cast Path   |
+| reason      | varchar  |     | Reason      |
 | started_at  | datetime | MUL | Started At  |
 | finished_at | datetime |     | Finished At |
 | created_at  | datetime |     | Created At  |

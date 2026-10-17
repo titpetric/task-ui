@@ -33,3 +33,11 @@ func (p *Project) JobAllowMap() map[string][]string {
 	}
 	return DecodeMap(p.JobAllow)
 }
+
+// JobHoursMap returns the hours of single jobs, by job ID.
+func (p *Project) JobHoursMap() map[string]string {
+	if p == nil {
+		return map[string]string{}
+	}
+	return DecodeStrings(p.JobHours)
+}

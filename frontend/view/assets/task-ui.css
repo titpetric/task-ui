@@ -1132,16 +1132,49 @@ dialog.run[open] {
 
 /* ------------------------------------------------------------------ mobile */
 
+/* Under the breakpoint the sidebar is a drawer behind the menu button, and
+   the tables that list jobs and runs fold into cards: one block per row,
+   each cell with its label in front. */
 @media (max-width: 860px) {
   .shell {
     grid-template-columns: 1fr;
   }
 
+  .menu-toggle {
+    display: inline-flex;
+  }
+
   aside.side {
+    position: fixed;
+    z-index: 30;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: min(20rem, 86vw);
     min-height: 0;
-    border-right: 0;
-    border-bottom: 1px solid var(--line);
-    padding: 0.6rem 0 0.8rem;
+    overflow-y: auto;
+    border-right: 1px solid var(--line-2);
+    box-shadow: 0 0 3rem rgba(0, 0, 0, 0.5);
+    transform: translateX(-100%);
+    transition: transform 0.2s ease-out;
+  }
+
+  body.menu-open aside.side {
+    transform: none;
+  }
+
+  /* The shell is a stacking context under the header; the open drawer
+     has to rise above both. */
+  body.menu-open .shell {
+    z-index: 31;
+  }
+
+  body.menu-open .menu-backdrop {
+    display: block;
+  }
+
+  body.menu-open {
+    overflow: hidden;
   }
 
   main {
@@ -1149,8 +1182,7 @@ dialog.run[open] {
   }
 
   header.top {
-    flex-wrap: wrap;
-    padding: 0.6rem 1rem;
+    padding: 0.55rem 0.8rem;
   }
 
   .grid-2,
@@ -1166,31 +1198,93 @@ dialog.run[open] {
     height: 60vh;
   }
 
-  /* Run and Run force stack in their cell instead of widening the table,
-     and the name and description give up their minimum widths. */
-  .table.jobs td.actions {
-    white-space: normal;
+  .tiles {
+    grid-template-columns: 1fr;
   }
 
-  .table.jobs td.key {
-    white-space: normal;
+  .table.cards thead {
+    display: none;
   }
 
-  .table.jobs td.desc {
-    min-width: 0;
+  .table.cards,
+  .table.cards tbody,
+  .table.cards tr {
+    display: block;
   }
 
-  .table.jobs td.actions .btn {
+  .table.cards tr {
+    padding: 0.55rem 0.7rem;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .table.cards tr:last-child {
+    border-bottom: 0;
+  }
+
+  .table.cards tbody tr:hover td {
+    background: transparent;
+  }
+
+  .table.cards td,
+  .table.cards td.hide-sm {
     display: flex;
-    justify-content: center;
-    margin: 0.15rem 0;
-    padding: 0.18rem 0.45rem;
-    letter-spacing: 0.04em;
+    align-items: baseline;
+    gap: 0.6rem;
+    padding: 0.15rem 0;
+    border: 0;
+    white-space: normal;
   }
 
-  .table th,
-  .table td {
-    padding: 0.32rem 0.5rem;
+  .table.cards td[data-label]::before {
+    content: attr(data-label);
+    flex: 0 0 5.5rem;
+    color: var(--text-faint);
+    font-size: 0.64rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .table.cards td.key {
+    font-size: 0.95rem;
+    padding-bottom: 0.25rem;
+  }
+
+  .table.cards td.steps {
+    width: auto;
+    max-width: none;
+    flex-wrap: wrap;
+  }
+
+  .table.cards td.steps code {
+    display: inline-block;
+    max-width: 100%;
+  }
+
+  .table.cards td.actions {
+    width: auto;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    padding-top: 0.45rem;
+  }
+
+  .table.cards td.actions > * + * {
+    margin-left: 0;
+  }
+
+  .table.cards tr.empty td {
+    display: block;
+    padding: 0.4rem 0;
+  }
+
+  .filters input,
+  .filters select {
+    width: 100%;
+  }
+
+  .filters label {
+    flex: 1 1 10rem;
   }
 }
 
@@ -1422,4 +1516,151 @@ img.frame {
 
 .table td.actions form {
   display: inline;
+}
+
+/* ----------------------------------------------------------- sidebar tree */
+
+/* The menu button shows under the breakpoint. */
+.menu-toggle {
+  display: none;
+  margin-right: 0.2rem;
+}
+
+.menu-backdrop {
+  display: none;
+  position: fixed;
+  z-index: 29;
+  inset: 0;
+  background: rgba(4, 6, 9, 0.6);
+}
+
+/* A folder is a disclosure: the row opens the folder, the chevron shows
+   its jobs. The open folder shows its jobs, each with a running dot. */
+.folders details.folder summary {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.3rem 0.6rem 0.3rem 1.1rem;
+  color: var(--text-dim);
+  border-left: 2px solid transparent;
+  list-style: none;
+  cursor: pointer;
+}
+
+.folders details.folder summary::marker,
+.folders details.folder summary::-webkit-details-marker {
+  display: none;
+}
+
+.folders details.folder summary a {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: inherit;
+}
+
+.folders details.folder summary a:hover {
+  text-decoration: none;
+  color: var(--text);
+}
+
+.folders details.folder summary a span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.folders details.folder summary .ic {
+  width: 1.05rem;
+  height: 1.05rem;
+  color: var(--text-faint);
+}
+
+.folders details.folder summary .chev {
+  width: 0.85rem;
+  height: 0.85rem;
+  transition: transform 0.15s ease-out;
+}
+
+.folders details.folder[open] summary .chev {
+  transform: rotate(90deg);
+}
+
+.folders details.folder summary small {
+  color: var(--text-faint);
+}
+
+.folders details.folder summary small.bad {
+  color: var(--bad);
+  font-weight: 700;
+}
+
+.folders details.folder summary .dot:not(.running) {
+  display: none;
+}
+
+.folders details.folder summary:hover {
+  color: var(--text);
+  background: var(--ink-2);
+}
+
+.folders details.folder.active summary {
+  color: var(--text);
+  background: var(--signal-wash);
+  border-left-color: var(--signal);
+}
+
+.folders details.folder.active summary .ic {
+  color: var(--signal);
+}
+
+.folders .jobs {
+  padding: 0.1rem 0 0.3rem;
+}
+
+.folders .jobs a {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.2rem 1.1rem 0.2rem 2.4rem;
+  color: var(--text-dim);
+  font-size: 0.8125rem;
+  border-left: 2px solid transparent;
+}
+
+.folders .jobs a .dot {
+  width: 0.4rem;
+  height: 0.4rem;
+}
+
+.folders .jobs a:hover {
+  text-decoration: none;
+  color: var(--text);
+  background: var(--ink-2);
+}
+
+.folders .jobs a.active {
+  color: var(--signal);
+  border-left-color: var(--signal);
+}
+
+.folders .jobs .empty {
+  padding: 0.2rem 1.1rem 0.2rem 2.4rem;
+}
+
+/* The reason a run out of hours needs, asked in the window. */
+.run-reason {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.55rem 0.9rem;
+  border-top: 1px solid var(--line);
+  background: var(--signal-wash);
+}
+
+.run-reason label {
+  color: var(--text);
+  font-size: 0.8125rem;
 }

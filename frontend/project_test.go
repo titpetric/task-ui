@@ -46,3 +46,14 @@ func TestProjectEdit(t *testing.T) {
 	assert.Equal(t, http.StatusOK, f.get(t, asAdmin, "/settings/projects/fresh").Status)
 	assert.Equal(t, http.StatusNotFound, f.get(t, asAdmin, "/settings/projects/..").Status)
 }
+
+func TestProjectEdit_Hours(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+
+	project := &model.Project{Folder: "infra", Hours: "mon-fri 9-17\nfri 9-13"}
+	assert.NoError(t, f.opts.Projects.Create(context.Background(), project))
+	body := f.page(t, asAdmin, "/settings/projects/infra")
+	assert.Contains(t, body, `name="hours"`)
+	assert.Contains(t, body, ">mon-fri 9-17\nfri 9-13</textarea>")
+}
