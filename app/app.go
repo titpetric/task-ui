@@ -37,6 +37,8 @@ type App struct {
 	Scheduler *scheduler.Loop
 	Catalogue *Catalogue
 	Guard     *access.Guard
+	// UsersFile is the password file, nil when there is none.
+	UsersFile *UsersFile
 
 	handler http.Handler
 	addr    atomic.Pointer[string]
@@ -118,22 +120,19 @@ func New(ctx context.Context, cfg *Config, version string) (*App, error) {
 	return a, nil
 }
 
-// seed writes the users file to storage, when there is one.
+// seed writes the password file to storage, when there is one. Without
+// one the users in storage stay as they are.
 func (a *App) seed(ctx context.Context) error {
-	if a.Config.UsersFile == "" {
+	if a.Config.Htpasswd == "" {
+		slog.Warn("no password file: nobody new can sign in", "hint", "set TASK_UI_HTPASSWD or put .htpasswd in the root")
 		return nil
 	}
-	file, err := LoadUsersFile(a.Config.UsersFile)
+	a.UsersFile = NewUsersFile(a.Config.Htpasswd, a.Config.Admins, a.Config.Viewers)
+	created, removed, err := a.UsersFile.Sync(ctx, a.Users)
 	if err != nil {
-		return err
+		return fmt.Errorf("reading users: %w", err)
 	}
-	created, err := file.Seed(ctx, a.Users)
-	if err != nil {
-		return fmt.Errorf("seeding users from %s: %w", a.Config.UsersFile, err)
-	}
-	if created > 0 {
-		slog.Info("users created from the users file", "count", created, "file", a.Config.UsersFile)
-	}
+	slog.Info("users read from the password file", "file", a.Config.Htpasswd, "created", created, "removed", removed, "admins", a.Config.Admins)
 	return nil
 }
 
@@ -179,6 +178,9 @@ func (a *App) Serve(ctx context.Context, ln net.Listener) error {
 
 	server := &http.Server{Handler: a.handler, ReadHeaderTimeout: 10 * time.Second}
 	go a.Scheduler.Run(ctx)
+	if a.UsersFile != nil {
+		go a.UsersFile.Watch(ctx, a.Users, func(err error) { slog.Error("re-reading the password file", "err", err) })
+	}
 	errs := make(chan error, 1)
 	go func() { errs <- server.Serve(ln) }()
 

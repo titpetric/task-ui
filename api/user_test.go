@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/titpetric/task-ui/access"
 	"github.com/titpetric/task-ui/api"
 	"github.com/titpetric/task-ui/internal/assert"
 	"github.com/titpetric/task-ui/model"
@@ -35,28 +34,18 @@ func TestUser_List(t *testing.T) {
 	assert.Len(t, res.list("users"), 4)
 }
 
-func TestUser_Create(t *testing.T) {
+// Users are made and removed in the password file, not here.
+func TestUser_ManagedElsewhere(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
 
-	res := f.call(t, asAdmin, http.MethodPost, "/users", api.UserRequest{Name: " dev ", Password: "secret", Folders: []string{"infra"}})
-	assert.Equal(t, http.StatusCreated, res.Status, string(res.Raw))
-	assert.Equal(t, "dev", res.str("name"))
-	assert.Equal(t, model.RoleViewer, res.str("role"))
+	created := f.call(t, asAdmin, http.MethodPost, "/users", map[string]any{"name": "dev", "password": "x"})
+	assert.Equal(t, http.StatusMethodNotAllowed, created.Status)
+	assert.Contains(t, created.str("error"), "task-ui passwd")
 
-	user, err := f.opts.Users.Get(context.Background(), res.str("id"))
-	assert.NoError(t, err)
-	assert.True(t, access.CheckPassword(user, "secret"))
-	assert.Equal(t, []string{"infra"}, user.FolderList())
-
-	dup := f.call(t, asAdmin, http.MethodPost, "/users", api.UserRequest{Name: "dev", Password: "x", Role: model.RoleRunner})
-	assert.Equal(t, http.StatusBadRequest, dup.Status)
-
-	blank := f.call(t, asAdmin, http.MethodPost, "/users", api.UserRequest{Name: "nopass"})
-	assert.Equal(t, http.StatusBadRequest, blank.Status)
-
-	role := f.call(t, asAdmin, http.MethodPost, "/users", api.UserRequest{Name: "boss", Password: "x", Role: "king"})
-	assert.Equal(t, http.StatusBadRequest, role.Status)
+	deleted := f.call(t, asAdmin, http.MethodDelete, "/users/"+f.users[asViewer].ID, nil)
+	assert.Equal(t, http.StatusMethodNotAllowed, deleted.Status)
+	assert.Len(t, f.call(t, asAdmin, http.MethodGet, "/users", nil).list("users"), 4)
 }
 
 func TestUser_Update(t *testing.T) {
@@ -64,38 +53,21 @@ func TestUser_Update(t *testing.T) {
 	f := newFixture(t)
 	path := "/users/" + f.users[asViewer].ID
 
-	res := f.call(t, asAdmin, http.MethodPut, path, api.UserRequest{Role: model.RoleRunner, Folders: []string{"private"}, Password: "changed"})
+	res := f.call(t, asAdmin, http.MethodPut, path, api.UserRequest{Folders: []string{"private"}})
 	assert.Equal(t, http.StatusOK, res.Status, string(res.Raw))
-	assert.Equal(t, model.RoleRunner, res.str("role"))
-
 	user, err := f.opts.Users.Get(context.Background(), f.users[asViewer].ID)
 	assert.NoError(t, err)
-	assert.True(t, access.CheckPassword(user, "changed"))
 	assert.Equal(t, []string{"private"}, user.FolderList())
+	// The role and the password are not this endpoint's to change.
+	assert.Equal(t, model.RoleViewer, user.Role)
+	assert.Equal(t, "x", user.Password)
 
-	// An empty request changes nothing.
-	same := f.call(t, asAdmin, http.MethodPut, path, api.UserRequest{})
-	assert.Equal(t, http.StatusOK, same.Status)
-	assert.Equal(t, model.RoleRunner, same.str("role"))
-
-	bad := f.call(t, asAdmin, http.MethodPut, path, api.UserRequest{Role: "king"})
-	assert.Equal(t, http.StatusBadRequest, bad.Status)
+	all := f.call(t, asAdmin, http.MethodPut, path, api.UserRequest{})
+	assert.Equal(t, http.StatusOK, all.Status)
+	user, _ = f.opts.Users.Get(context.Background(), f.users[asViewer].ID)
+	assert.Len(t, user.FolderList(), 0)
 
 	missing := f.call(t, asAdmin, http.MethodPut, "/users/"+model.NewID(), api.UserRequest{})
 	assert.Equal(t, http.StatusNotFound, missing.Status)
-}
-
-func TestUser_Delete(t *testing.T) {
-	t.Parallel()
-	f := newFixture(t)
-
-	self := f.call(t, asAdmin, http.MethodDelete, "/users/"+f.users[asAdmin].ID, nil)
-	assert.Equal(t, http.StatusBadRequest, self.Status)
-
-	missing := f.call(t, asAdmin, http.MethodDelete, "/users/"+model.NewID(), nil)
-	assert.Equal(t, http.StatusNotFound, missing.Status)
-
-	res := f.call(t, asAdmin, http.MethodDelete, "/users/"+f.users[asViewer].ID, nil)
-	assert.Equal(t, http.StatusNoContent, res.Status)
-	assert.Len(t, f.call(t, asAdmin, http.MethodGet, "/users", nil).list("users"), 3)
+	assert.Equal(t, http.StatusBadRequest, f.call(t, asAdmin, http.MethodPut, path, nil).Status)
 }

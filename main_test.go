@@ -44,10 +44,24 @@ func TestRun(t *testing.T) {
 
 	assert.Error(t, run(context.Background(), []string{"--nope"}, strings.NewReader(""), &out))
 
-	// A bad users file stops the server before it listens.
-	assert.NoError(t, os.WriteFile(filepath.Join(root, "task-ui.yml"), []byte("users: [\n"), 0o644))
+	// passwd adds a user to the password file, and resets one; a bad file
+	// stops the server before it listens.
+	t.Setenv("TASK_UI_HTPASSWD", filepath.Join(root, ".htpasswd"))
+	assert.Error(t, run(context.Background(), []string{"passwd"}, strings.NewReader(""), &out))
+	out.Reset()
+	assert.NoError(t, run(context.Background(), []string{"passwd", "alice", "secret"}, strings.NewReader(""), &out))
+	assert.Contains(t, out.String(), "alice: password set")
+	assert.NoError(t, run(context.Background(), []string{"passwd", "alice"}, strings.NewReader("reset\n"), &out))
+	creds, err := access.LoadHtpasswd(filepath.Join(root, ".htpasswd"))
+	assert.NoError(t, err)
+	assert.Len(t, creds, 1)
+	assert.True(t, access.CheckPassword(&model.User{Password: creds[0].Hash}, "reset"))
+	assert.Error(t, run(context.Background(), []string{"passwd", "bob"}, strings.NewReader(""), &out))
+
+	assert.NoError(t, os.WriteFile(filepath.Join(root, ".htpasswd"), []byte("broken\n"), 0o600))
 	assert.Error(t, run(context.Background(), nil, strings.NewReader(""), &out))
-	assert.NoError(t, os.Remove(filepath.Join(root, "task-ui.yml")))
+	assert.NoError(t, os.Remove(filepath.Join(root, ".htpasswd")))
+	t.Setenv("TASK_UI_HTPASSWD", "")
 
 	// The server runs until the context ends.
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)

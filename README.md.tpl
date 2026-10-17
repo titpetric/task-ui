@@ -23,9 +23,10 @@ as it runs.
 - **One run per job.** A job runs once at a time across the instance,
   different jobs run side by side. Run force kills the active run and
   starts again. Run all starts every job of a folder in the background.
-- **Users and roles.** Login is mandatory, with three roles: `admin`,
-  `runner` and `viewer`. Users are seeded from `task-ui.yml` and managed
-  in Settings.
+- **Users and roles.** Login is mandatory. Users come from a password
+  file, htpasswd style, read again whenever it changes; `TASK_UI_ADMINS`
+  and `TASK_UI_VIEWERS` name the admins and the viewers, everyone else is
+  a runner.
 - **Hours.** A folder runs in office hours only when told to. Out of
   hours Run force asks why, and the reason is kept with the run.
 - **Projects from git.** Admins add a folder by cloning a repository; the
@@ -63,8 +64,9 @@ services:
 
 Mount your folders at `/app`. Each subfolder with something to run
 becomes a folder in the UI, and `/app` itself is one too when it has.
-The database, the recordings and the artifacts live under `/data`. The
-image bundles `task`, `atkins`, `docker` and `docker compose`.
+The database, the recordings and the artifacts live under `/data`, and
+the users sign in from `/app/.htpasswd`. The image bundles `task`,
+`atkins`, `docker` and `docker compose`.
 
 - If you don't want to use Docker, remove the volume for `docker.sock`.
 - Mount `/root/.ssh` to keep the SSH keys managed from the UI.
@@ -78,7 +80,9 @@ Everything is configured from the environment:
 | `TASK_UI_LISTEN`      | `:3000`              | Listen address                                                    |
 | `TASK_UI_ROOT`        | `.`                  | Root folder holding the folders                                   |
 | `TASK_UI_DISCOVER`    | `true`               | List every folder under the root with something to run            |
-| `TASK_UI_CONFIG`      | `task-ui.yml`        | Users to seed, looked up in the root                              |
+| `TASK_UI_HTPASSWD`    | `.htpasswd`          | The password file, looked up in the root                          |
+| `TASK_UI_ADMINS`      |                      | Users with the admin role, comma separated                        |
+| `TASK_UI_VIEWERS`     |                      | Users with the viewer role, comma separated; the rest are runners |
 | `TASK_UI_DATA`        | `data`               | Database, recordings and artifacts                                |
 | `TASK_UI_DB`          | `<data>/task-ui.db`  | Database file (sqlite)                                            |
 | `TASK_UI_SSH_DIR`     | `$HOME/.ssh`         | Folder the SSH key settings manage                                |
@@ -88,29 +92,37 @@ Everything is configured from the environment:
 | `TASK_UI_GRACE`       | `10s`                | How long a stopped process gets before it is killed               |
 | `TASK_UI_AUTOLOGIN`   |                      | Sign every request in as this user, for development only          |
 
-The flags `-l`, `--root`, `--config` and `--data` override the matching
-variables; `-v` prints the build.
+The flags `-l`, `--root`, `--htpasswd` and `--data` override the
+matching variables; `-v` prints the build.
 
 ## Users and roles
 
-Login is mandatory. On startup the users in `task-ui.yml` are written to
-the database: a user that is not there is created, one that is gets the
-role, folders and password of the file. From then on Settings manages them.
-With no users nobody can sign in.
+Login is mandatory, through the sign in screen; there is no HTTP basic
+auth. Who may sign in is the password file, `.htpasswd` in the root or
+wherever `TASK_UI_HTPASSWD` points: one `name:hash` per line, the
+htpasswd format, bcrypt hashes only. The file is the truth. It is read
+on startup and again whenever it changes, so adding, resetting or
+removing a user needs no restart: a user not in the file cannot sign in
+and is removed from the instance; one in the file signs in with the
+password it holds.
 
-```yaml
-users:
-  - name: admin
-    password: $2a$10$...   # task-ui hash <password>, or plain text
-    role: admin
-  - name: ops
-    password: $2a$10$...
-    role: runner
-    folders: [infra]       # optional, limits the visible folders
-  - name: support
-    password: $2a$10$...
-    role: viewer
+Adding a user, or resetting a password, is one line either way:
+
+```sh
+task-ui passwd alice            # asks nothing, reads the password from stdin
+task-ui passwd alice s3cret     # or takes it as an argument
+htpasswd -B .htpasswd alice     # the same with apache2-utils; -B for bcrypt
 ```
+
+`task-ui passwd` writes the file `TASK_UI_HTPASSWD` names (or
+`.htpasswd` in `TASK_UI_ROOT`), adding the line or replacing it. To
+remove a user, delete the line. `task-ui hash <password>` prints a hash
+for editing the file by hand.
+
+The roles are labels from the environment: `TASK_UI_ADMINS=alice,bob`
+makes those two admins, `TASK_UI_VIEWERS=support` a viewer, and everyone
+else in the file is a runner. Which folders a user sees is set per user
+under Settings, Users; empty shows them all.
 
 | Role     | See jobs, watch runs, read history | Run, Run force, Run all, Stop, Kill, schedule | Settings |
 |----------|------------------------------------|-----------------------------------------------|----------|
@@ -118,8 +130,6 @@ users:
 | `runner` | yes                                | what the allow lists permit                   | no       |
 | `viewer` | yes                                | no                                            | no       |
 
-Generate a password hash with `task-ui hash <password>`, or
-`echo secret | task-ui hash`.
 
 ## Conventions
 
@@ -261,7 +271,7 @@ Writes need the same origin. The browser pages are the reference client;
 | `GET` `DELETE` | `/api/artifacts`, `/api/artifacts/{id}` | list, download, delete |
 | `GET` `POST` `PUT` `DELETE` | `/api/schedules`, `/api/schedules/{id}` | `{folder, job, expression, enabled}` |
 | `GET` `POST` `PUT` `DELETE` | `/api/projects`, `/api/projects/{folder}` | clone `{url, id, branch}`; configure `{title, description, allow, sources, commands, job_allow, hours, job_hours}` |
-| `GET` `POST` `PUT` `DELETE` | `/api/users`, `/api/users/{id}` | `{name, password, role, folders}` |
+| `GET` `PUT` | `/api/users`, `/api/users/{id}` | `{folders}`; names, passwords and roles come from the password file and the role lists |
 | `GET` `POST` `DELETE` | `/api/secrets`, `/api/secrets/{id}` | `{scope, name, content}`; content is never returned |
 | `GET` `POST` `DELETE` | `/api/keys`, `/api/keys/generate`, `/api/keys/upload`, `/api/keys/{name}` | `{type, comment}`, `{content, comment}` |
 | `GET` `PUT` | `/api/env/{folder}`, `/api/env/{folder}/{path}` | the env files; `{content}` saves and generates |
@@ -275,7 +285,7 @@ Writes need the same origin. The browser pages are the reference client;
 | ![The runs](.github/assets/runs-dark.png) | ![A run's page](.github/assets/run-page-dark.png) |
 | ![Dashboard, light theme](.github/assets/dashboard-light.png) | ![A folder with a Makefile, package scripts and a scripts folder](.github/assets/tools-dark.png) |
 | ![Artifacts](.github/assets/artifacts-dark.png) | ![Scheduled](.github/assets/schedules-dark.png) |
-| ![Projects](.github/assets/projects-dark.png) | ![Users](.github/assets/users-dark.png) |
+| ![Projects](.github/assets/projects-dark.png) | ![Users, from the password file](.github/assets/users-dark.png) |
 | ![Secrets](.github/assets/secrets-dark.png) | ![An env file](.github/assets/envfile-dark.png) |
 | ![SSH keys](.github/assets/keys-dark.png) | ![Login](.github/assets/login-dark.png) |
 | ![Out of hours: Run force asks why](.github/assets/out-of-hours-dark.png) | ![The phone: the drawer with the folders and their jobs, and the jobs as cards](.github/assets/mobile-menu-dark.png) |

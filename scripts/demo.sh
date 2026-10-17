@@ -32,18 +32,13 @@ go build -o "$work/task-ui" .
 # a copy and the checkout stays clean.
 cp -r testdata/demo "$work/demo"
 
-# Login is mandatory: three users, one per role, seeded from the users
-# file. The instances sign in as one of them with TASK_UI_AUTOLOGIN, since
-# chromium's screenshot flag has no way to log in; the sign in screen
-# comes from an instance without it.
-{
-  echo "users:"
-  for user in admin:admin ops:runner guest:viewer; do
-    echo "  - name: ${user%%:*}"
-    echo "    password: \"$("$work/task-ui" hash demo)\""
-    echo "    role: ${user##*:}"
-  done
-} >"$work/demo/task-ui.yml"
+# Login is mandatory: three users in the password file, the roles from
+# the environment. The instances sign in as one of them with
+# TASK_UI_AUTOLOGIN, since chromium's screenshot flag has no way to log
+# in; the sign in screen comes from an instance without it.
+for user in admin ops guest; do
+  TASK_UI_ROOT="$work/demo" TASK_UI_HTPASSWD="$work/demo/.htpasswd" "$work/task-ui" passwd "$user" demo >/dev/null
+done
 
 # The infra folder comes from a git repository, so the Projects page has
 # a checkout to show and every run of it pulls first.
@@ -67,6 +62,8 @@ serve() {
     TASK_UI_DATA="$work/data" \
     TASK_UI_SSH_DIR="$work/ssh" \
     TASK_UI_SECRET=demo \
+    TASK_UI_ADMINS=admin \
+    TASK_UI_VIEWERS=guest \
     "$@" "$work/task-ui" >"$work/task-ui-${port}.log" 2>&1 &
   pids+=("$!")
   for _ in $(seq 1 50); do
@@ -175,7 +172,6 @@ shot keys-upload-dark /settings/keys/upload dark
 shot secrets-dark /settings/secrets dark
 shot secret-new-dark "/settings/secrets/new?scope=infra" dark
 shot users-dark /settings/users dark
-shot user-new-dark /settings/users/new dark
 shot envfile-dark /f/infra/env/.env dark
 shot out-of-hours-dark "/f/website#start=website/lint" dark 1440x900 2000
 shot mobile-dashboard-dark / dark 390x844

@@ -6,11 +6,13 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/titpetric/task-ui/access"
 	"github.com/titpetric/task-ui/app"
 	"github.com/titpetric/task-ui/internal/assert"
 	"github.com/titpetric/task-ui/model"
@@ -22,12 +24,13 @@ func newApp(t *testing.T, autoLogin string) *app.App {
 	t.Helper()
 	root := t.TempDir()
 	makeFolder(t, root, "site")
-	users := usersYAML(t, "users:\n  - name: admin\n    password: demo\n    role: admin\n  - name: guest\n    password: demo\n    role: viewer\n")
 	cfg := &app.Config{
 		Listen:     "127.0.0.1:0",
 		Root:       root,
 		Discover:   true,
-		UsersFile:  users,
+		Htpasswd:   htpasswdFile(t, "admin", "guest"),
+		Admins:     []string{"admin"},
+		Viewers:    []string{"guest"},
 		DataDir:    filepath.Join(t.TempDir(), "data"),
 		DB:         ":memory:",
 		SSHDir:     t.TempDir(),
@@ -60,6 +63,7 @@ func TestNew(t *testing.T) {
 	assert.NotNil(t, a.Scheduler)
 	assert.NotNil(t, a.Guard)
 	assert.NotNil(t, a.Handler())
+	assert.NotNil(t, a.UsersFile)
 	assert.Equal(t, "", a.Addr())
 
 	// The users file was seeded, the folder discovered.
@@ -72,9 +76,18 @@ func TestNew(t *testing.T) {
 func TestNew_Errors(t *testing.T) {
 	t.Parallel()
 
-	bad := &app.Config{Root: t.TempDir(), DataDir: t.TempDir(), DB: ":memory:", SessionTTL: time.Hour, UsersFile: usersYAML(t, "users: [\n")}
+	broken := filepath.Join(t.TempDir(), ".htpasswd")
+	assert.NoError(t, os.WriteFile(broken, []byte("admin:{SHA}x\n"), 0o600))
+	bad := &app.Config{Root: t.TempDir(), DataDir: t.TempDir(), DB: ":memory:", SessionTTL: time.Hour, Htpasswd: broken}
 	_, err := app.New(context.Background(), bad, "test")
-	assert.Error(t, err)
+	assert.ErrorContains(t, err, "htpasswd -B")
+
+	// Without a file the instance starts with whoever is in storage.
+	none := &app.Config{Root: t.TempDir(), DataDir: t.TempDir(), DB: ":memory:", SessionTTL: time.Hour}
+	a, err := app.New(context.Background(), none, "test")
+	assert.NoError(t, err)
+	assert.Nil(t, a.UsersFile)
+	a.Close()
 
 	unwritable := &app.Config{Root: t.TempDir(), DataDir: "/proc/task-ui-nope", DB: ":memory:", SessionTTL: time.Hour}
 	_, err = app.New(context.Background(), unwritable, "test")
@@ -114,6 +127,7 @@ func TestApp_Handler(t *testing.T) {
 func TestApp_Serve(t *testing.T) {
 	t.Parallel()
 	a := newApp(t, "guest")
+	a.UsersFile.Interval = 20 * time.Millisecond
 
 	ln, err := net.Listen("tcp", "127.0.0.1:0")
 	assert.NoError(t, err)
@@ -130,6 +144,16 @@ func TestApp_Serve(t *testing.T) {
 	res.Body.Close()
 	assert.Equal(t, http.StatusOK, res.StatusCode)
 	assert.Equal(t, ln.Addr().String(), a.Addr())
+
+	// The password file is watched while serving: a new user signs in
+	// without a restart.
+	hash, _ := access.HashPassword("demo")
+	assert.NoError(t, access.SetHtpasswd(a.Config.Htpasswd, "late", hash))
+	assert.NoError(t, os.Chtimes(a.Config.Htpasswd, time.Now(), time.Now().Add(time.Second)))
+	assert.Eventually(t, func() bool {
+		_, err := a.Users.GetByName(context.Background(), "late")
+		return err == nil
+	}, 5*time.Second, 20*time.Millisecond)
 
 	cancel()
 	select {
