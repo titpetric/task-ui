@@ -361,4 +361,7 @@ domains, the domains to `model` and `storage`, `model` to nothing of ours.
 `splint ./...` (`task lint`) is the bar: every file has a test beside it,
 every exported symbol a test that reaches it, every symbol a file named
 for it, and every dependency one import per package. Tests are black box,
-parallel, and share nothing.
+parallel, and share nothing. `scripts/smoke.sh` (`task smoke`) then
+exercises a fresh instance end to end with curl and headless chromium:
+runs, hours, secrets and keys, env files, schedules, users, projects,
+artifacts, every page, and the browser's console.

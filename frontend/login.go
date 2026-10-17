@@ -14,7 +14,7 @@ func (h *Handlers) loginForm(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
 	}
-	p := &view.Page{Title: "Sign in", Back: access.SafeBack(r.URL.Query().Get("back")), Form: map[string]string{}}
+	p := &view.Page{Title: "Sign in", Back: access.SafeBack(r.URL.Query().Get("back")), Form: map[string]string{}, Version: h.opts.Version}
 	h.render(w, http.StatusOK, "login", p)
 }
 
@@ -28,7 +28,7 @@ func (h *Handlers) login(w http.ResponseWriter, r *http.Request) {
 	back := access.SafeBack(r.PostFormValue("back"))
 	user, err := h.opts.Users.GetByName(r.Context(), name)
 	if err != nil || !access.CheckPassword(user, r.PostFormValue("password")) {
-		p := &view.Page{Title: "Sign in", Back: back, Error: "Wrong username or password.", Form: map[string]string{"username": name}}
+		p := &view.Page{Title: "Sign in", Back: back, Error: "Wrong username or password.", Form: map[string]string{"username": name}, Version: h.opts.Version}
 		h.render(w, http.StatusUnauthorized, "login", p)
 		return
 	}

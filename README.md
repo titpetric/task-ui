@@ -361,7 +361,10 @@ domains, the domains to `model` and `storage`, `model` to nothing of ours.
 `splint ./...` (`task lint`) is the bar: every file has a test beside it,
 every exported symbol a test that reaches it, every symbol a file named
 for it, and every dependency one import per package. Tests are black box,
-parallel, and share nothing.
+parallel, and share nothing. `scripts/smoke.sh` (`task smoke`) then
+exercises a fresh instance end to end with curl and headless chromium:
+runs, hours, secrets and keys, env files, schedules, users, projects,
+artifacts, every page, and the browser's console.
 
 # Development
 
@@ -372,6 +375,7 @@ task: Available tasks for this project:
 * install:            Install task-ui
 * lint:               Lint with splint, zero findings is the bar
 * run:                Run task-ui over the demo projects
+* smoke:              Exercise a fresh instance end to end, the browser console included
 * test:               Test task-ui
 * docker:build:       Build task-ui docker image
 * docker:gen:         Generate ssh key for docker image
@@ -409,6 +413,13 @@ Regenerate the README screenshots
 
 commands:
 - `scripts/demo.sh`
+
+## task: smoke
+
+Exercise a fresh instance end to end, the browser console included
+
+commands:
+- `scripts/smoke.sh`
 
 ## task: lint
 

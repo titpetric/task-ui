@@ -222,6 +222,8 @@ func TestRoutes_Assets(t *testing.T) {
 	assert.True(t, strings.HasPrefix(css.Headers.Get("Content-Type"), "text/css"))
 	assert.Equal(t, "public, max-age=3600", css.Headers.Get("Cache-Control"))
 	assert.Contains(t, css.Body, "--signal")
+	assert.Contains(t, f.page(t, asViewer, "/"), `href="/static/task-ui.css?v=test"`)
+	assert.Contains(t, f.get(t, "", "/login").Body, `src="/static/task-ui.js?v=test"`)
 
 	health := f.get(t, "", "/healthz")
 	assert.Equal(t, http.StatusOK, health.Status)

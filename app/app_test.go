@@ -82,11 +82,17 @@ func TestNew_Errors(t *testing.T) {
 	_, err := app.New(context.Background(), bad, "test")
 	assert.ErrorContains(t, err, "htpasswd -B")
 
-	// Without a file the instance starts with whoever is in storage.
-	none := &app.Config{Root: t.TempDir(), DataDir: t.TempDir(), DB: ":memory:", SessionTTL: time.Hour}
+	// Without a file the instance starts with whoever is in storage, and
+	// the auto login user is made so development works from nothing.
+	none := &app.Config{Root: t.TempDir(), DataDir: t.TempDir(), DB: ":memory:", SessionTTL: time.Hour, AutoLogin: "dev"}
 	a, err := app.New(context.Background(), none, "test")
 	assert.NoError(t, err)
 	assert.Nil(t, a.UsersFile)
+	dev, err := a.Users.GetByName(context.Background(), "dev")
+	assert.NoError(t, err)
+	assert.Equal(t, model.RoleAdmin, dev.Role)
+	status, _, _ := get(t, a.Handler(), "/")
+	assert.Equal(t, http.StatusOK, status)
 	a.Close()
 
 	unwritable := &app.Config{Root: t.TempDir(), DataDir: "/proc/task-ui-nope", DB: ":memory:", SessionTTL: time.Hour}

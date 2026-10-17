@@ -61,6 +61,15 @@ func TestLogin(t *testing.T) {
 	res.Body.Close()
 	assert.Equal(t, http.StatusOK, res.StatusCode)
 
+	// A sign in from another site is refused.
+	req, _ = http.NewRequest(http.MethodPost, f.server.URL+"/login", strings.NewReader(url.Values{"username": {"admin"}, "password": {"demo"}}.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("Origin", "https://evil.example")
+	res, err = client().Do(req)
+	assert.NoError(t, err)
+	res.Body.Close()
+	assert.Equal(t, http.StatusForbidden, res.StatusCode)
+
 	// Off site targets land home.
 	elsewhere := f.post(t, "/login", url.Values{"username": {"admin"}, "password": {"demo"}, "back": {"https://evil.example"}})
 	assert.Equal(t, "/", elsewhere.Header.Get("Location"))
