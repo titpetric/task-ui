@@ -2,10 +2,17 @@ services:
   runner:
     image: titpetric/task-ui
     restart: always
-    command:
-      - --history-enable
+    environment:
+      # Signs the session cookie, keep sessions across restarts.
+      TASK_UI_SECRET: ${TASK_UI_SECRET:-change-me}
+      # Users sign in from /app/.htpasswd: `task-ui passwd <user>` adds one.
+      # The roles: these names are admins, these viewers, the rest runners.
+      TASK_UI_ADMINS: ${TASK_UI_ADMINS:-admin}
+      TASK_UI_VIEWERS: ${TASK_UI_VIEWERS:-}
     ports:
     - 3000:3000
     volumes:
     - $PWD/app:/app
+    - $PWD/data:/data
+    - $PWD/root/.ssh:/root/.ssh
     - /var/run/docker.sock:/var/run/docker.sock:ro

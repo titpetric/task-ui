@@ -1,0 +1,31 @@
+# Copy to task-ui.yml next to your folders (TASK_UI_ROOT), or point
+# TASK_UI_CONFIG at it. The file is re-read when it changes.
+title: production
+
+# Roles:
+#   admin   runs everything, manages settings (SSH keys, secrets, env files)
+#   runner  runs jobs the allow lists permit
+#   viewer  reads jobs and history, runs nothing
+#
+# Passwords are bcrypt hashes: `task-ui hash <password>`.
+users:
+  - name: admin
+    password: $2a$10$replace.with.output.of.task-ui.hash
+    role: admin
+  - name: ops
+    password: $2a$10$replace.with.output.of.task-ui.hash
+    role: runner
+    # Optional: only these folders are visible to the user.
+    projects: [infra, website]
+  - name: support
+    password: $2a$10$replace.with.output.of.task-ui.hash
+    role: viewer
+
+# Optional: folders are discovered under TASK_UI_ROOT. List one here to
+# restrict who runs it, run it with another command, or point it elsewhere.
+# The pipeline files are never changed.
+projects:
+  - id: infra
+    allow: [ops]            # users or roles that may run this folder's jobs
+    jobs:
+      rotate-certs: [admin] # narrows one job further

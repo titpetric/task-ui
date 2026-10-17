@@ -1,0 +1,43 @@
+name: Infrastructure
+help: Provisioning and deploys for the production cluster. Runs against the hosts in inventory/.
+
+include: vars.yml
+env:
+  include: .env
+
+jobs:
+  deploy:
+    desc: "Roll out the current release to all web nodes"
+    summary: |
+      Pulls the tagged image on each node, drains it from the load
+      balancer, restarts the service and waits for the health check.
+    depends_on: plan
+    steps:
+      - name: Pull the release image on every node
+        run: |
+          for n in web-1 web-2 web-3; do echo "pull ghcr.io/acme/app:${RELEASE:-v1.42.0} on $n"; sleep 0.5; done
+      - name: Drain, restart and health check
+        run: |
+          for n in web-1 web-2 web-3; do echo "drain $n, restart, health check ok"; sleep 0.7; done
+      - run: |
+          echo "rollout complete, 3/3 nodes healthy, region ${REGION:-unset}"
+  plan:
+    desc: "Show pending infrastructure changes"
+    steps:
+      - run: |
+          printf '\033[32m+ aws_instance.web[3]\033[0m\n\033[33m~ aws_lb.main (tags)\033[0m\nPlan: 1 to add, 1 to change, 0 to destroy.\n'
+  rotate-certs:
+    desc: "Renew TLS certificates and reload nginx"
+    steps:
+      - run: certbot renew --quiet
+      - run: nginx -s reload
+  shell:
+    desc: "Open a shell on the bastion host"
+    interactive: true
+    steps:
+      - run: bash
+  internal:helper:
+    desc: "Not shown"
+    show: false
+    steps:
+      - run: echo hidden

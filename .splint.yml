@@ -1,0 +1,7 @@
+imports:
+  company:
+    - github.com/titpetric/
+  pollution:
+    # The run socket's test is a websocket client of the one file that
+    # serves it; counting the test reports the dependency twice.
+    include-tests: false
