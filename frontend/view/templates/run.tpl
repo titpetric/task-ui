@@ -2,7 +2,7 @@
 {{- $run := .Run }}{{ $can := .CanRun .Folder .Job }}
 <div class="page-head">
 	<div>
-		<h2>{{ $run.Folder }} / {{ $run.Job }} {{ template "state" $run }}</h2>
+		<h2>{{ $run.Folder }} / {{ $run.Job }} <span class="badge {{ tone $run.State }}">{{ $run.State }}{{ if and (ne $run.State "ok") (ne $run.State "running") }} {{ $run.ExitCode }}{{ end }}</span></h2>
 		<p>Started by {{ $run.UserName }} {{ ago $run.StartedAt }}{{ if $run.IsScheduled }} by the scheduler{{ end }}{{ if $run.IsForced }}, with Run force{{ end }}.{{ if eq $run.State "running" }} The session is live: attach to follow it{{ if $can }}, or end it{{ end }}.{{ else if $run.Live }} The run is over; its last screen is below and what it showed is in the recording.{{ else }} The run is over; what it showed is in the recording.{{ end }}</p>
 	</div>
 	<div class="actions">

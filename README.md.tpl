@@ -316,7 +316,8 @@ Writes need the same origin. The browser pages are the reference client;
 | ![The runs](.github/assets/runs-dark.png) | ![A run's page](.github/assets/run-page-dark.png) |
 | ![Dashboard, light theme](.github/assets/dashboard-light.png) | ![A folder with a Makefile, package scripts and a scripts folder](.github/assets/tools-dark.png) |
 | ![Artifacts](.github/assets/artifacts-dark.png) | ![Scheduled](.github/assets/schedules-dark.png) |
-| ![Projects](.github/assets/projects-dark.png) | ![Users, from the password file](.github/assets/users-dark.png) |
+| ![Projects](.github/assets/projects-dark.png) | ![Configure a folder](.github/assets/project-edit-dark.png) |
+| ![Users, from the password file](.github/assets/users-dark.png) | ![Secrets, encrypted with the SSH key](.github/assets/secrets-dark.png) |
 | ![Secrets](.github/assets/secrets-dark.png) | ![An env file](.github/assets/envfile-dark.png) |
 | ![SSH keys](.github/assets/keys-dark.png) | ![Login](.github/assets/login-dark.png) |
 | ![Out of hours: Run force asks why](.github/assets/out-of-hours-dark.png) | ![The phone: the drawer with the folders and their jobs, and the jobs as cards](.github/assets/mobile-menu-dark.png) |

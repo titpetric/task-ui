@@ -874,7 +874,7 @@ table.table-kv th {
   margin-bottom: 0.8rem;
 }
 
-.field label {
+.field > label {
   display: block;
   margin-bottom: 0.3rem;
   color: var(--text-faint);
@@ -882,6 +882,14 @@ table.table-kv th {
   font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
+}
+
+/* The hint after a label is a sentence, not a label. */
+.field > label .faint {
+  margin-left: 0.35rem;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 input[type="text"],
@@ -1022,6 +1030,14 @@ section.login form {
 
 section.login .field {
   margin: 0;
+}
+
+/* A label inside a field's table names its row in the row's own type. */
+.field .table label {
+  color: inherit;
+  font: inherit;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 section.login button[type="submit"] {

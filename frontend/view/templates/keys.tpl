@@ -19,8 +19,9 @@
 		{{- $any := false }}
 		{{- range .Keys }}{{ if not .Backup }}{{ $any = true }}
 			<tr>
-				<td class="key nowrap">{{ .Comment }} <span class="badge">{{ .Name }}</span></td>
-				<td class="mono-break"><span class="dim">{{ .Type }}</span> {{ .Fingerprint }}{{ $name := .Name }}{{ range $.Encryption }}{{ if eq . $name }} <span class="badge signal" title="The secrets are encrypted with this key"><svg class="ic"><use href="#i-secret"/></svg> secrets</span>{{ end }}{{ end }}</td>
+				{{- $name := .Name }}
+				<td class="key nowrap">{{ .Comment }} <span class="badge">{{ .Name }}</span>{{ range $.Encryption }}{{ if eq . $name }} <span class="badge signal" title="The secrets are encrypted with this key"><svg class="ic"><use href="#i-secret"/></svg> secrets</span>{{ end }}{{ end }}</td>
+				<td class="mono-break"><span class="dim">{{ .Type }}</span> {{ .Fingerprint }}</td>
 				<td class="nowrap" title="{{ ago .Modified }}">{{ stamp .Modified }}</td>
 				<td class="actions">
 					<button type="button" class="btn-icon" data-copy="{{ .PublicKey }}" title="Copy public key" aria-label="Copy public key"><svg class="ic"><use href="#i-copy"/></svg></button>

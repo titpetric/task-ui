@@ -63,6 +63,16 @@ func TestSize(t *testing.T) {
 	assert.Equal(t, "3.0 GB", view.Size(3<<30))
 }
 
+func TestTone(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, "ok", view.Tone("ok"))
+	assert.Equal(t, "signal", view.Tone("running"))
+	assert.Equal(t, "bad", view.Tone("failed"))
+	assert.Equal(t, "bad", view.Tone("killed"))
+	assert.Equal(t, "", view.Tone("stopped"))
+}
+
 func TestInHours(t *testing.T) {
 	t.Parallel()
 	friday := time.Date(2026, time.October, 16, 22, 0, 0, 0, time.UTC)

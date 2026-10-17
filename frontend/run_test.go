@@ -40,8 +40,7 @@ func TestRun(t *testing.T) {
 	assert.NoError(t, f.opts.Artifacts.Create(context.Background(), &model.Artifact{RunID: run.ID, Folder: "infra", Job: "plan", Name: "report.txt", Path: "x/report.txt", ByteSize: 2048, ContentType: "text/plain"}))
 
 	body := f.page(t, asViewer, "/runs/"+run.ID)
-	assert.Contains(t, body, "<h2>infra / plan")
-	assert.Contains(t, body, "failed")
+	assert.Contains(t, body, `<h2>infra / plan <span class="badge bad">failed 2</span></h2>`)
 	assert.Contains(t, body, `data-attach="`+run.ID+`">View</button>`)
 	assert.Contains(t, body, `href="/api/runs/`+run.ID+`/cast"`)
 	assert.Contains(t, body, "report.txt")
