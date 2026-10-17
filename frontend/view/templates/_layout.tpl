@@ -47,9 +47,10 @@
 				<a href="/schedules" class="{{ if .Under "/schedules" }}active{{ end }}"><svg class="ic"><use href="#i-clock"/></svg><span>Scheduled</span></a>
 			</nav>
 			<nav class="folders">
+				{{- $total := 0 }}{{ range .Folders }}{{ $total = len .Jobs | add $total }}{{ end }}
 				{{- range $p := .Folders }}
 				{{- $active := and $.Folder (eq $.Folder.ID $p.ID) }}
-				<details class="folder{{ if $active }} active{{ end }}" data-folder="{{ $p.ID }}"{{ if $active }} open{{ end }}>
+				<details class="folder{{ if $active }} active{{ end }}" data-folder="{{ $p.ID }}"{{ if or $active (le $total 24) }} open{{ end }}>
 					<summary title="{{ $p.ID }}/{{ range $i, $s := $p.Sources }}{{ if $i }}, {{ end }}{{ $s.File }}{{ end }}">
 						<a href="/f/{{ $p.ID }}"><svg class="ic"><use href="#i-folder{{ if $active }}-open{{ end }}"/></svg><span>{{ $p.ID }}</span></a>
 						<i class="dot"></i>
@@ -57,8 +58,17 @@
 						<svg class="ic chev"><use href="#i-chev"/></svg>
 					</summary>
 					<div class="jobs">
-						{{- range $p.Jobs }}
-						<a href="/f/{{ $p.ID }}/{{ .ID }}" data-job-key="{{ .Key }}" class="{{ if and $.Job (eq $.Job.Key .Key) }}active{{ end }}"><i class="dot{{ if $.RunningRun .Key }} running{{ end }}"></i><span>{{ .Name }}</span></a>
+						{{- range $r := $p.Jobs }}
+						{{- $run := $.RunningRun $r.Key }}
+						<div class="job{{ if and $.Job (eq $.Job.Key $r.Key) }} active{{ end }}" data-job-key="{{ $r.Key }}">
+							<i class="dot{{ if $run }} running{{ end }}"></i>
+							<a href="/f/{{ $p.ID }}/{{ $r.ID }}">{{ $r.Name }}</a>
+							{{- if $run }}
+							<button type="button" class="play" data-attach="{{ $run.ID }}" title="Attach to {{ $r.Name }}, running" aria-label="Attach to {{ $r.Name }}"><svg class="ic"><use href="#i-eye"/></svg></button>
+							{{- else if $.CanRun $p $r }}
+							<button type="button" class="play" data-run data-folder="{{ $p.ID }}" data-job="{{ $r.ID }}" data-title="{{ $p.ID }} / {{ $r.Name }}" title="Run {{ $r.Name }}" aria-label="Run {{ $r.Name }}"><svg class="ic"><use href="#i-play"/></svg></button>
+							{{- end }}
+						</div>
 						{{- else }}
 						<div class="empty">Nothing to run.</div>
 						{{- end }}
@@ -191,6 +201,6 @@
 
 {{ define "runButtons" }}
 {{- $p := index . 0 }}{{ $r := index . 1 -}}
-<button type="button" class="btn btn-primary btn-sm" data-run data-folder="{{ $p.ID }}" data-job="{{ $r.ID }}" data-title="{{ $p.ID }} / {{ $r.Name }}">Run</button>
+<button type="button" class="btn btn-primary btn-sm" data-run data-folder="{{ $p.ID }}" data-job="{{ $r.ID }}" data-title="{{ $p.ID }} / {{ $r.Name }}"><svg class="ic"><use href="#i-play"/></svg>Run</button>
 <button type="button" class="btn btn-danger btn-sm" data-run data-force data-folder="{{ $p.ID }}" data-job="{{ $r.ID }}" data-title="{{ $p.ID }} / {{ $r.Name }}" title="Kill the run in progress, then run again">Run force</button>
 {{- end }}

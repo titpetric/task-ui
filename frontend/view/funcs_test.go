@@ -12,10 +12,11 @@ func TestFuncs(t *testing.T) {
 	t.Parallel()
 
 	funcs := view.Funcs()
-	for _, name := range []string{"ago", "stamp", "duration", "size", "join", "lower", "add", "initials", "mask", "states", "roles", "list"} {
+	for _, name := range []string{"ago", "stamp", "duration", "size", "join", "lower", "add", "sub", "initials", "mask", "states", "roles", "list"} {
 		assert.NotNil(t, funcs[name], name)
 	}
 	assert.Equal(t, 3, funcs["add"].(func(a, b int) int)(1, 2))
+	assert.Equal(t, 2, funcs["sub"].(func(a, b int) int)(5, 3))
 	assert.Equal(t, "OP", funcs["initials"].(func(string) string)("ops"))
 	assert.Len(t, funcs["list"].(func(...any) []any)(1, "a"), 2)
 }
