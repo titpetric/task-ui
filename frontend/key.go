@@ -14,6 +14,7 @@ func (h *Handlers) keys(w http.ResponseWriter, r *http.Request) {
 	p := h.page(r, "SSH keys")
 	p.Crumbs = view.Crumbs("Settings", "/settings", "SSH keys")
 	p.Keys, p.KeysDir = h.opts.Keys.List(), h.opts.Keys.Dir
+	p.Encryption = h.opts.Secrets.Vault.Recipients()
 	h.render(w, http.StatusOK, "keys", p)
 }
 

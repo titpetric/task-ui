@@ -99,12 +99,13 @@ api PUT /projects/infra -d '{"allow":["ops"],"job_allow":{"rotate-certs":["admin
 # at any time but one minute a week, so a run of it asks for a reason.
 api PUT /projects/website -d '{"hours":"mon-fri 9-17\nfri 9-13\nsun 0:00-0:01"}'
 
-# Secrets, a managed env file and a key, so the runs and the pages have them.
+# A key first: the secrets are encrypted with it. Then secrets and a
+# managed env file, so the runs and the pages have them.
+api POST /keys/generate -d '{"type":"ed25519","comment":"task-ui"}'
 api POST /secrets -d '{"scope":"all","name":"CDN_PURGE_URL","content":"https://cdn.example/purge"}'
 api POST /secrets -d '{"scope":"infra","name":"REGION","content":"eu-central-1"}'
 api POST /secrets -d '{"scope":"infra","name":"DEPLOY_TOKEN","content":"s3cret"}'
 api PUT /env/infra/.env -d '{"content":"# Managed from task-ui; the secrets are appended on generation.\nRELEASE=v1.42.0\n"}'
-api POST /keys/generate -d '{"type":"ed25519","comment":"task-ui"}'
 
 # Two schedules, one of them off.
 api POST /schedules -d '{"folder":"backups","job":"verify","expression":"0 3 * * *"}'

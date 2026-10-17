@@ -19,6 +19,8 @@ import (
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/recording"
 	"github.com/titpetric/task-ui/runner"
+	"github.com/titpetric/task-ui/secret"
+	"github.com/titpetric/task-ui/sshkey"
 	"github.com/titpetric/task-ui/storage"
 )
 
@@ -27,7 +29,7 @@ type fixture struct {
 	manager *runner.Manager
 	runs    *storage.RunStorage
 	files   *storage.ArtifactStorage
-	secrets *storage.SecretStorage
+	secrets *secret.Store
 	root    string
 	// now is what the manager's clock reads; zero is the real time.
 	now time.Time
@@ -40,7 +42,10 @@ func newFixture(t *testing.T) *fixture {
 	t.Cleanup(func() { db.Close() })
 	runs := storage.NewRunStorage(db)
 	artifacts := storage.NewArtifactStorage(db)
-	secrets := storage.NewSecretStorage(db)
+	keys := &sshkey.Store{Dir: t.TempDir()}
+	_, err = keys.Generate("ed25519", "test")
+	assert.NoError(t, err)
+	secrets := secret.New(storage.NewSecretStorage(db), secret.NewVault(keys))
 	f := &fixture{runs: runs, files: artifacts, secrets: secrets, root: t.TempDir()}
 	manager := runner.New(runner.Options{
 		Now: func() time.Time {

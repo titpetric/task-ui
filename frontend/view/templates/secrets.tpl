@@ -5,9 +5,18 @@
 		<p>Variables added to the environment of every run. A secret for all folders reaches every job; a secret for one folder reaches that folder's jobs and wins over the shared one. Before a run, they are written into the env files the pipeline reads.</p>
 	</div>
 	<div class="actions">
+		{{- if .Encryption }}
+		<form data-api="/api/secrets/rekey" data-method="POST" data-next="/settings/secrets?notice=Secrets+written+again+for+the+current+keys"><button class="btn" type="submit" title="Write every secret again for the current keys, after a rotation">Re-encrypt</button></form>
+		{{- end }}
 		<a class="btn btn-primary" href="/settings/secrets/new">Add secret</a>
 	</div>
 </div>
+
+{{- if .Encryption }}
+<div class="alert"><svg class="ic"><use href="#i-secret"/></svg> Encrypted at rest with the instance SSH {{ if eq (len .Encryption) 1 }}key{{ else }}keys{{ end }} <b>{{ join .Encryption ", " }}</b>. A rotation keeps the old pair as a backup, so everything still opens; Re-encrypt writes the secrets for the current keys, after which the backup can go.</div>
+{{- else }}
+<div class="alert bad"><b>No key to encrypt with.</b> Secrets are encrypted with the instance SSH keys, ed25519 or RSA. <a href="/settings/keys/generate">Generate one</a> before adding a secret.</div>
+{{- end }}
 
 <div class="table-wrap">
 <table class="table">

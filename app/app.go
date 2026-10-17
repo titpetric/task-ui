@@ -23,6 +23,7 @@ import (
 	"github.com/titpetric/task-ui/recording"
 	"github.com/titpetric/task-ui/runner"
 	"github.com/titpetric/task-ui/scheduler"
+	"github.com/titpetric/task-ui/secret"
 	"github.com/titpetric/task-ui/sshkey"
 	"github.com/titpetric/task-ui/storage"
 )
@@ -72,10 +73,10 @@ func New(ctx context.Context, cfg *Config, version string) (*App, error) {
 	projects := storage.NewProjectStorage(db)
 	artifacts := storage.NewArtifactStorage(db)
 	schedules := storage.NewScheduleStorage(db)
-	secrets := storage.NewSecretStorage(db)
-	env := envfile.New(storage.NewEnvFileStorage(db), secrets)
 	g := &git.Git{SSHDir: cfg.SSHDir}
 	keys := &sshkey.Store{Dir: cfg.SSHDir}
+	secrets := secret.New(storage.NewSecretStorage(db), secret.NewVault(keys))
+	env := envfile.New(storage.NewEnvFileStorage(db), secrets)
 	recordings := &recording.Store{Root: cfg.RecordingsDir()}
 
 	a.Catalogue = NewCatalogue(cfg.Root, cfg.Discover, projects)

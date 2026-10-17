@@ -25,6 +25,7 @@ import (
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/recording"
 	"github.com/titpetric/task-ui/runner"
+	"github.com/titpetric/task-ui/secret"
 	"github.com/titpetric/task-ui/sshkey"
 	"github.com/titpetric/task-ui/storage"
 )
@@ -111,7 +112,8 @@ func newFixture(t *testing.T) *fixture {
 		f.users[name] = user
 	}
 
-	secrets := storage.NewSecretStorage(db)
+	keys := &sshkey.Store{Dir: t.TempDir()}
+	secrets := secret.New(storage.NewSecretStorage(db), secret.NewVault(keys))
 	f.opts = api.Options{
 		Users:      users,
 		Projects:   storage.NewProjectStorage(db),
@@ -122,7 +124,7 @@ func newFixture(t *testing.T) *fixture {
 		Runner:     manager,
 		Catalogue:  catalogue{"infra": infra, "private": private},
 		Git:        &git.Git{},
-		Keys:       &sshkey.Store{Dir: t.TempDir()},
+		Keys:       keys,
 		Env:        envfile.New(storage.NewEnvFileStorage(db), secrets),
 		Recordings: recordings,
 		Root:       root,
@@ -215,6 +217,13 @@ func (f *fixture) call(t *testing.T, user, method, path string, body any) respon
 		_ = json.Unmarshal(raw, &result.Body)
 	}
 	return result
+}
+
+// withKey puts an ed25519 key in the SSH folder, so secrets can be kept.
+func (f *fixture) withKey(t *testing.T) {
+	t.Helper()
+	_, err := f.opts.Keys.Generate("ed25519", "test")
+	assert.NoError(t, err)
 }
 
 // start starts a job as a user and returns the run ID.

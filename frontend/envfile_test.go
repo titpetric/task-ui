@@ -13,9 +13,10 @@ import (
 func TestEnvFile(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
+	f.withKey(t)
 	ctx := context.Background()
-	assert.NoError(t, f.opts.Secrets.Create(ctx, &model.Secret{Scope: "infra", Name: "TOKEN", Content: "t"}))
-	assert.NoError(t, f.opts.Secrets.Create(ctx, &model.Secret{Scope: "all", Name: "CDN", Content: "c"}))
+	assert.NoError(t, f.opts.Secrets.Set(ctx, &model.Secret{Scope: "infra", Name: "TOKEN", Content: "t"}))
+	assert.NoError(t, f.opts.Secrets.Set(ctx, &model.Secret{Scope: "all", Name: "CDN", Content: "c"}))
 
 	missing := f.page(t, asAdmin, "/f/infra/env/.env")
 	assert.Contains(t, missing, `class="badge bad">missing`)

@@ -65,6 +65,19 @@ func (h *Handlers) setSecret(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, SecretView{ID: secret.ID, Scope: secret.Scope, Name: secret.Name})
 }
 
+// rekeySecrets writes every secret again for the current keys.
+func (h *Handlers) rekeySecrets(w http.ResponseWriter, r *http.Request) {
+	if !requireAdmin(w, r) {
+		return
+	}
+	n, err := h.opts.Secrets.Rekey(r.Context())
+	if err != nil {
+		failErr(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"rekeyed": n, "keys": h.opts.Secrets.Vault.Recipients()})
+}
+
 // deleteSecret removes a secret.
 func (h *Handlers) deleteSecret(w http.ResponseWriter, r *http.Request) {
 	if !requireAdmin(w, r) {

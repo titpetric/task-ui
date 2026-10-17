@@ -36,7 +36,8 @@ as it runs.
   `$TASK_UI_ARTIFACTS` are kept. A job runs on a cron expression under the
   name of whoever scheduled it.
 - **Settings.** Admins manage the instance SSH keys, the secrets added to
-  every run, the env files the pipelines read, and the users.
+  every run, encrypted at rest with those keys, the env files the
+  pipelines read, and the folders each user sees.
 
 The look follows [oida](https://github.com/titpetric/oida): monospace,
 hairlines, one amber accent, dark and light from `prefers-color-scheme`. All
@@ -245,7 +246,15 @@ skipped; a schedule whose job is gone is disabled.
 
 Settings hold the secrets: variables added to the environment of every run,
 for all folders or for one folder, where the folder's value wins. They are
-kept in the database and never shown again in full.
+never shown again in full, and they are encrypted at rest with the
+instance SSH keys: every ed25519 and RSA key under Settings, SSH keys
+encrypts (as an [age](https://age-encryption.org) recipient), and the
+private key files decrypt. Without such a key no secret can be added.
+A rotation keeps the old pair as a backup, so everything still opens, and
+writes the secrets again for the new key; Re-encrypt on the secrets page
+does the same by hand, after which the backup can go. The last key that
+opens the secrets cannot be deleted until another is there. ECDSA keys
+reach hosts but do not encrypt.
 
 A folder page lists the dotenv files its sources declare. An admin edits
 the content from the UI; the file in the folder is generated from it with
@@ -272,8 +281,9 @@ Writes need the same origin. The browser pages are the reference client;
 | `GET` `POST` `PUT` `DELETE` | `/api/schedules`, `/api/schedules/{id}` | `{folder, job, expression, enabled}` |
 | `GET` `POST` `PUT` `DELETE` | `/api/projects`, `/api/projects/{folder}` | clone `{url, id, branch}`; configure `{title, description, allow, sources, commands, job_allow, hours, job_hours}` |
 | `GET` `PUT` | `/api/users`, `/api/users/{id}` | `{folders}`; names, passwords and roles come from the password file and the role lists |
-| `GET` `POST` `DELETE` | `/api/secrets`, `/api/secrets/{id}` | `{scope, name, content}`; content is never returned |
-| `GET` `POST` `DELETE` | `/api/keys`, `/api/keys/generate`, `/api/keys/upload`, `/api/keys/{name}` | `{type, comment}`, `{content, comment}` |
+| `GET` `POST` `DELETE` | `/api/secrets`, `/api/secrets/{id}` | `{scope, name, content}`; content is never returned; `409` without a key to encrypt with |
+| `POST` | `/api/secrets/rekey` | writes every secret again for the current keys |
+| `GET` `POST` `DELETE` | `/api/keys`, `/api/keys/generate`, `/api/keys/upload`, `/api/keys/{name}` | `{type, comment}`, `{content, comment}`; a new key rekeys the secrets, the last key that opens them cannot go |
 | `GET` `PUT` | `/api/env/{folder}`, `/api/env/{folder}/{path}` | the env files; `{content}` saves and generates |
 
 ## Screenshots
@@ -319,7 +329,8 @@ domains, the domains to `model` and `storage`, `model` to nothing of ours.
 | `scheduler` | cron `Expression`s and the `Loop` that starts due schedules                  |
 | `hours`     | the office hours `Rules` a folder or job may run in                          |
 | `recording` | the asciicast files                                                          |
-| `access`    | who may do what: passwords, `Sessions`, the `Guard`                          |
+| `access`    | who may do what: the password file, `Sessions`, the `Guard`                  |
+| `secret`    | the secrets, encrypted at rest with the SSH keys through the `Vault`         |
 | `envfile`   | the dotenv files a folder reads, as task-ui manages and generates them       |
 | `sshkey`, `git`, `dotenv` | the key pairs, the checkouts, the file format                 |
 | `api`       | the JSON endpoints and the attach socket                                     |
