@@ -12,16 +12,16 @@ import (
 // Entry is one directory under the root, as the settings list it: with or
 // without something to run, with or without a git remote.
 type Entry struct {
-	ID  string
-	Dir string
+	ID  string `json:"id"`
+	Dir string `json:"dir"`
 	// Sources are the files the directory's conventions were read from.
-	Sources []string
-	Jobs    int
+	Sources []string `json:"sources"`
+	Jobs    int      `json:"jobs"`
 	// Checkout is what git knows about the directory, nil when it is not
 	// a checkout.
-	Checkout *git.Info
+	Checkout *git.Info `json:"checkout,omitempty"`
 	// Error is set when a source does not parse.
-	Error string
+	Error string `json:"error,omitempty"`
 }
 
 // Entries lists the directories under root.
