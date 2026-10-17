@@ -1,0 +1,446 @@
+- name: artifact
+  comment: Artifact
+  columns:
+    - name: id
+      type: text
+      key: PRI
+      comment: ID
+      datatype: char(26)
+    - name: run_id
+      type: text
+      key: MUL
+      comment: Run ID
+      datatype: char(26)
+    - name: folder
+      type: text
+      key: MUL
+      comment: Folder
+      datatype: varchar
+    - name: job
+      type: text
+      key: MUL
+      comment: Job
+      datatype: varchar
+    - name: name
+      type: text
+      comment: Name
+      datatype: varchar
+    - name: path
+      type: text
+      comment: Path
+      datatype: varchar
+    - name: byte_size
+      type: integer
+      comment: Byte Size
+      datatype: bigint
+      size: 8
+    - name: content_type
+      type: text
+      comment: Content Type
+      datatype: varchar
+    - name: created_at
+      type: timestamp
+      comment: Created At
+      datatype: datetime
+  indexes:
+    - name: sqlite_autoindex_artifact_1
+      columns:
+        - id
+      primary: true
+      unique: true
+    - name: idx_artifact_folder_job
+      columns:
+        - folder
+        - job
+    - name: idx_artifact_run_id
+      columns:
+        - run_id
+- name: env_file
+  comment: Env File
+  columns:
+    - name: id
+      type: text
+      key: PRI
+      comment: ID
+      datatype: char(26)
+    - name: folder
+      type: text
+      key: MUL
+      comment: Folder
+      datatype: varchar
+    - name: path
+      type: text
+      key: MUL
+      comment: Path
+      datatype: varchar
+    - name: content
+      type: text
+      comment: Content
+      datatype: varchar
+    - name: created_at
+      type: timestamp
+      comment: Created At
+      datatype: datetime
+    - name: updated_at
+      type: timestamp
+      comment: Updated At
+      datatype: datetime
+  indexes:
+    - name: sqlite_autoindex_env_file_1
+      columns:
+        - id
+      primary: true
+      unique: true
+    - name: idx_env_file_folder_path
+      columns:
+        - folder
+        - path
+      unique: true
+- name: migrations
+  comment: Migrations
+  columns:
+    - name: project
+      type: text
+      key: PRI
+      comment: Project
+      datatype: varchar
+    - name: filename
+      type: text
+      key: PRI
+      comment: Filename
+      datatype: varchar
+    - name: statement_index
+      type: integer
+      comment: Statement Index
+      datatype: bigint
+      size: 8
+    - name: status
+      type: text
+      comment: Status
+      datatype: varchar
+  indexes:
+    - name: sqlite_autoindex_migrations_1
+      columns:
+        - project
+        - filename
+      primary: true
+      unique: true
+- name: project
+  comment: Project
+  columns:
+    - name: id
+      type: text
+      key: PRI
+      comment: ID
+      datatype: char(26)
+    - name: folder
+      type: text
+      key: MUL
+      comment: Folder
+      datatype: varchar
+    - name: title
+      type: text
+      comment: Title
+      datatype: varchar
+    - name: description
+      type: text
+      comment: Description
+      datatype: varchar
+    - name: source_url
+      type: text
+      comment: Source URL
+      datatype: varchar
+    - name: branch
+      type: text
+      comment: Branch
+      datatype: varchar
+    - name: allow
+      type: text
+      comment: Allow
+      datatype: varchar
+    - name: commands
+      type: text
+      comment: Commands
+      datatype: varchar
+    - name: sources
+      type: text
+      comment: Sources
+      datatype: varchar
+    - name: job_allow
+      type: text
+      comment: Job Allow
+      datatype: varchar
+    - name: created_at
+      type: timestamp
+      comment: Created At
+      datatype: datetime
+    - name: updated_at
+      type: timestamp
+      comment: Updated At
+      datatype: datetime
+  indexes:
+    - name: sqlite_autoindex_project_1
+      columns:
+        - id
+      primary: true
+      unique: true
+    - name: idx_project_folder
+      columns:
+        - folder
+      unique: true
+- name: run
+  comment: Run
+  columns:
+    - name: id
+      type: text
+      key: PRI
+      comment: ID
+      datatype: char(26)
+    - name: folder
+      type: text
+      key: MUL
+      comment: Folder
+      datatype: varchar
+    - name: job
+      type: text
+      key: MUL
+      comment: Job
+      datatype: varchar
+    - name: user_id
+      type: text
+      key: MUL
+      comment: User ID
+      datatype: char(26)
+    - name: user_name
+      type: text
+      comment: User Name
+      datatype: varchar
+    - name: state
+      type: TEXT
+      key: MUL
+      comment: State
+      datatype: varchar
+      values:
+        - failed
+        - killed
+        - ok
+        - running
+        - stopped
+    - name: exit_code
+      type: integer
+      comment: Exit Code
+      datatype: bigint
+      size: 8
+    - name: forced
+      type: integer
+      comment: Forced
+      datatype: bigint
+      size: 8
+    - name: scheduled
+      type: integer
+      comment: Scheduled
+      datatype: bigint
+      size: 8
+    - name: term_cols
+      type: integer
+      comment: Term Cols
+      datatype: bigint
+      size: 8
+    - name: term_rows
+      type: integer
+      comment: Term Rows
+      datatype: bigint
+      size: 8
+    - name: cast_path
+      type: text
+      comment: Cast Path
+      datatype: varchar
+    - name: started_at
+      type: timestamp
+      key: MUL
+      comment: Started At
+      datatype: datetime
+    - name: finished_at
+      type: timestamp
+      comment: Finished At
+      datatype: datetime
+    - name: created_at
+      type: timestamp
+      comment: Created At
+      datatype: datetime
+    - name: updated_at
+      type: timestamp
+      comment: Updated At
+      datatype: datetime
+  indexes:
+    - name: sqlite_autoindex_run_1
+      columns:
+        - id
+      primary: true
+      unique: true
+    - name: idx_run_folder_job
+      columns:
+        - folder
+        - job
+    - name: idx_run_started_at
+      columns:
+        - started_at
+    - name: idx_run_state
+      columns:
+        - state
+- name: schedule
+  comment: Schedule
+  columns:
+    - name: id
+      type: text
+      key: PRI
+      comment: ID
+      datatype: char(26)
+    - name: folder
+      type: text
+      key: MUL
+      comment: Folder
+      datatype: varchar
+    - name: job
+      type: text
+      key: MUL
+      comment: Job
+      datatype: varchar
+    - name: user_id
+      type: text
+      key: MUL
+      comment: User ID
+      datatype: char(26)
+    - name: user_name
+      type: text
+      comment: User Name
+      datatype: varchar
+    - name: expression
+      type: text
+      comment: Expression
+      datatype: varchar
+    - name: enabled
+      type: integer
+      key: MUL
+      comment: Enabled
+      datatype: bigint
+      size: 8
+    - name: last_run_at
+      type: timestamp
+      comment: Last Run At
+      datatype: datetime
+    - name: next_run_at
+      type: timestamp
+      key: MUL
+      comment: Next Run At
+      datatype: datetime
+    - name: created_at
+      type: timestamp
+      comment: Created At
+      datatype: datetime
+    - name: updated_at
+      type: timestamp
+      comment: Updated At
+      datatype: datetime
+  indexes:
+    - name: sqlite_autoindex_schedule_1
+      columns:
+        - id
+      primary: true
+      unique: true
+    - name: idx_schedule_next_run_at
+      columns:
+        - enabled
+        - next_run_at
+    - name: idx_schedule_folder_job
+      columns:
+        - folder
+        - job
+- name: secret
+  comment: Secret
+  columns:
+    - name: id
+      type: text
+      key: PRI
+      comment: ID
+      datatype: char(26)
+    - name: scope
+      type: text
+      key: MUL
+      comment: Scope
+      datatype: varchar
+    - name: name
+      type: text
+      key: MUL
+      comment: Name
+      datatype: varchar
+    - name: content
+      type: text
+      comment: Content
+      datatype: varchar
+    - name: created_at
+      type: timestamp
+      comment: Created At
+      datatype: datetime
+    - name: updated_at
+      type: timestamp
+      comment: Updated At
+      datatype: datetime
+  indexes:
+    - name: sqlite_autoindex_secret_1
+      columns:
+        - id
+      primary: true
+      unique: true
+    - name: idx_secret_scope_name
+      columns:
+        - scope
+        - name
+      unique: true
+- name: user
+  comment: User
+  columns:
+    - name: id
+      type: text
+      key: PRI
+      comment: ID
+      datatype: char(26)
+    - name: name
+      type: text
+      key: MUL
+      comment: Name
+      datatype: varchar
+    - name: password
+      type: text
+      comment: Password
+      datatype: varchar
+    - name: role
+      type: TEXT
+      comment: Role
+      datatype: varchar
+      values:
+        - admin
+        - runner
+        - viewer
+    - name: folders
+      type: text
+      comment: Folders
+      datatype: varchar
+    - name: created_at
+      type: timestamp
+      comment: Created At
+      datatype: datetime
+    - name: updated_at
+      type: timestamp
+      comment: Updated At
+      datatype: datetime
+  indexes:
+    - name: sqlite_autoindex_user_1
+      columns:
+        - id
+      primary: true
+      unique: true
+    - name: idx_user_name
+      columns:
+        - name
+      unique: true
