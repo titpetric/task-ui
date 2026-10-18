@@ -265,8 +265,9 @@ func (m *Manager) settle(ctx context.Context, session *Session, status Status) {
 	session.finish(status)
 }
 
-// execute does the run: a pull when the folder is a checkout, the env
-// files, then the process, pumped until it exits.
+// execute does the run: a pull when the folder is in a checkout, the keys
+// of the checkout's .ssh/ in an agent, the env files, then the process,
+// pumped until it exits.
 func (m *Manager) execute(ctx context.Context, session *Session) Status {
 	f, job, run := session.Folder, session.Job, session.Run
 	if len(job.Command) == 0 {
@@ -275,6 +276,11 @@ func (m *Manager) execute(ctx context.Context, session *Session) Status {
 	if err := m.pull(ctx, session); err != nil {
 		return failed(session, err.Error())
 	}
+	keys, err := m.agent(session)
+	if err != nil {
+		return failed(session, err.Error())
+	}
+	defer keys.Close()
 	if m.opts.Env != nil {
 		if err := m.opts.Env.Generate(ctx, f); err != nil {
 			return failed(session, "generating env files: "+err.Error())
@@ -283,6 +289,9 @@ func (m *Manager) execute(ctx context.Context, session *Session) Status {
 	cmd, err := m.command(ctx, session)
 	if err != nil {
 		return failed(session, err.Error())
+	}
+	if keys != nil {
+		cmd.Env = append(cmd.Env, "SSH_AUTH_SOCK="+keys.Socket)
 	}
 	proc, err := StartProcess(cmd, int(run.TermCols), int(run.TermRows))
 	if err != nil {

@@ -260,9 +260,17 @@ folder appears in the sidebar, or git's output is shown and nothing is
 kept. Private repositories are reached with the instance SSH keys, which
 git uses through `GIT_SSH_COMMAND` with a `known_hosts` file next to them.
 
-A folder that is a checkout is pulled with `git pull --ff-only` before
-every run, in the run's own terminal, so the job always runs the latest
-version of the project. A pull that fails fails the run.
+A folder in a checkout is pulled with `git pull --ff-only` before every
+run, in the run's own terminal, so the job always runs the latest
+version of the project; a folder inside a checkout pulls the checkout.
+A pull that fails fails the run.
+
+A checkout with a `.ssh/` folder at its top has its keys loaded for its
+runs: every unencrypted private key in it goes into an ssh agent that
+task-ui serves for the run alone, and the job gets `SSH_AUTH_SOCK`, so
+`ssh`, `git`, `rsync` and terraform's agent authentication use them. The
+keys stay in memory and the agent ends with the run; the terminal says
+which keys were loaded.
 
 ## Artifacts
 

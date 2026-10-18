@@ -30,6 +30,24 @@ func (g *Git) IsRepo(dir string) bool {
 	return err == nil && info.IsDir()
 }
 
+// Checkout returns the checkout dir belongs to: dir itself when it is
+// one, or the nearest of its parents, looking up at most levels of them.
+// A folder's levels are its depth below the root, so the search stays
+// inside the root. "" when there is none.
+func (g *Git) Checkout(dir string, levels int) string {
+	for i := 0; i <= levels; i++ {
+		if g.IsRepo(dir) {
+			return dir
+		}
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			break
+		}
+		dir = parent
+	}
+	return ""
+}
+
 // env returns the environment git runs with: no prompts, and ssh using
 // the instance keys when there are any.
 func (g *Git) env() []string {

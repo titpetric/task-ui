@@ -168,3 +168,33 @@ func TestGit_IsRepo(t *testing.T) {
 		t.Fatalf("ssh command: %q", command)
 	}
 }
+
+// Checkout finds the checkout a folder is in, no higher than it is told.
+func TestGit_Checkout(t *testing.T) {
+	t.Parallel()
+	g := &Git{}
+	root := t.TempDir()
+	repo := filepath.Join(root, "deploy")
+	deep := filepath.Join(repo, "terraform", "apps")
+	if err := os.MkdirAll(filepath.Join(repo, ".git"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(deep, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	for _, c := range []struct {
+		dir    string
+		levels int
+		want   string
+	}{
+		{repo, 0, repo},
+		{deep, 2, repo},
+		{deep, 1, ""},
+		{root, 0, ""},
+		{"/", 3, ""},
+	} {
+		if got := g.Checkout(c.dir, c.levels); got != c.want {
+			t.Errorf("Checkout(%q, %d) = %q, want %q", c.dir, c.levels, got, c.want)
+		}
+	}
+}

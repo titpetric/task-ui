@@ -1,0 +1,58 @@
+package sshagent_test
+
+import (
+	"net"
+	"os"
+	"path/filepath"
+	"testing"
+
+	"golang.org/x/crypto/ssh/agent"
+
+	"github.com/titpetric/task-ui/internal/assert"
+	"github.com/titpetric/task-ui/sshagent"
+	"github.com/titpetric/task-ui/sshkey"
+)
+
+// A directory as a checkout's .ssh/ holds it: a key pair, known_hosts and
+// a file that is no key. Only the private key is served.
+func TestLoad(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	_, err := (&sshkey.Store{Dir: dir}).Generate("ed25519", "deploy")
+	assert.NoError(t, err)
+	assert.NoError(t, os.WriteFile(filepath.Join(dir, "known_hosts"), []byte("example.com ssh-ed25519 AAAA\n"), 0o600))
+	assert.NoError(t, os.WriteFile(filepath.Join(dir, "README"), []byte("not a key\n"), 0o600))
+
+	a, err := sshagent.Load(dir, t.TempDir())
+	assert.NoError(t, err)
+	assert.NotNil(t, a)
+	assert.Equal(t, []string{"id_ed25519"}, a.Keys)
+
+	conn, err := net.Dial("unix", a.Socket)
+	assert.NoError(t, err)
+	keys, err := agent.NewClient(conn).List()
+	conn.Close()
+	assert.NoError(t, err)
+	assert.Len(t, keys, 1)
+	assert.Equal(t, "id_ed25519", keys[0].Comment)
+
+	assert.NoError(t, a.Close())
+	_, err = os.Stat(a.Socket)
+	assert.True(t, os.IsNotExist(err))
+}
+
+func TestLoad_NoKeys(t *testing.T) {
+	t.Parallel()
+	a, err := sshagent.Load(t.TempDir(), t.TempDir())
+	assert.NoError(t, err)
+	assert.Nil(t, a)
+
+	_, err = sshagent.Load(filepath.Join(t.TempDir(), "missing"), t.TempDir())
+	assert.Error(t, err)
+}
+
+func TestAgent_Close(t *testing.T) {
+	t.Parallel()
+	var a *sshagent.Agent
+	assert.NoError(t, a.Close())
+}
