@@ -82,6 +82,20 @@ func TestNew_Errors(t *testing.T) {
 	_, err := app.New(context.Background(), bad, "test")
 	assert.ErrorContains(t, err, "htpasswd -B")
 
+	// A password file not made yet starts the instance, and is read
+	// once it is there.
+	missing := filepath.Join(t.TempDir(), ".htpasswd")
+	later := &app.Config{Root: t.TempDir(), DataDir: t.TempDir(), DB: ":memory:", SessionTTL: time.Hour, Htpasswd: missing}
+	b, err := app.New(context.Background(), later, "test")
+	assert.NoError(t, err)
+	assert.True(t, !b.UsersFile.Changed())
+	hash, _ := access.HashPassword("first")
+	assert.NoError(t, access.SetHtpasswd(missing, "first", hash))
+	assert.True(t, b.UsersFile.Changed())
+	created, _, err := b.UsersFile.Sync(context.Background(), b.Users)
+	assert.NoError(t, err)
+	assert.Equal(t, 1, created)
+
 	// Without a file the instance starts with whoever is in storage, and
 	// the auto login user is made so development works from nothing.
 	none := &app.Config{Root: t.TempDir(), DataDir: t.TempDir(), DB: ":memory:", SessionTTL: time.Hour, AutoLogin: "dev"}
