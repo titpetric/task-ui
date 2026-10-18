@@ -24,9 +24,16 @@ type Entry struct {
 	Error string `json:"error,omitempty"`
 }
 
-// Entries lists the directories under root.
+// Entries lists the directories under root. Jobs counts the jobs of the
+// directory and of the folders discovered inside it.
 func Entries(root string, g *git.Git) []Entry {
 	entries, _ := os.ReadDir(root)
+	nested := map[string]int{}
+	for _, f := range (&Discovery{Root: root, Discover: true}).List() {
+		if top, _, ok := strings.Cut(f.ID, "/"); ok {
+			nested[top] += len(f.Jobs)
+		}
+	}
 	result := []Entry{}
 	for _, entry := range entries {
 		if !entry.IsDir() || strings.HasPrefix(entry.Name(), ".") {
@@ -42,6 +49,7 @@ func Entries(root string, g *git.Git) []Entry {
 			item.Jobs = len(f.Jobs)
 			item.Error = f.Error
 		}
+		item.Jobs += nested[item.ID]
 		result = append(result, item)
 	}
 	return result

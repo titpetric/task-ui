@@ -16,6 +16,10 @@ func TestEntries(t *testing.T) {
 	write(t, filepath.Join(root, "docs", "README.md"), "nothing to run")
 	write(t, filepath.Join(root, "broken", "atkins.yml"), "jobs: [")
 	write(t, filepath.Join(root, ".git", "HEAD"), "")
+	// A project whose jobs are all in its subfolders.
+	write(t, filepath.Join(root, "apps", "README.md"), "apps")
+	write(t, filepath.Join(root, "apps", "blog", "atkins.yml"), "jobs:\n  serve: phpscript serve\n  test: go test ./...\n")
+	write(t, filepath.Join(root, "apps", "booking", "atkins.yml"), "jobs:\n  build: go build\n")
 
 	repo := filepath.Join(root, "repo")
 	write(t, filepath.Join(repo, "atkins.yml"), "jobs:\n  a:\n    desc: A\n")
@@ -32,12 +36,15 @@ func TestEntries(t *testing.T) {
 	for _, entry := range entries {
 		byID[entry.ID] = entry
 	}
-	if len(entries) != 4 {
+	if len(entries) != 5 {
 		t.Fatalf("entries: %+v", entries)
 	}
 	tools := byID["tools"]
 	if !slices.Equal(tools.Sources, []string{"Makefile", "package.json"}) || tools.Jobs != 2 || tools.Checkout != nil {
 		t.Fatalf("tools: %+v", tools)
+	}
+	if apps := byID["apps"]; apps.Jobs != 3 {
+		t.Fatalf("apps counts the jobs of its subfolders: %+v", apps)
 	}
 	if docs := byID["docs"]; len(docs.Sources) != 0 || docs.Jobs != 0 {
 		t.Fatalf("docs: %+v", docs)

@@ -83,7 +83,9 @@ func TestDiscovery_Tree(t *testing.T) {
 	for _, f := range d.List() {
 		ids = append(ids, f.ID)
 	}
-	if want := []string{filepath.Base(root), "services/api", "services/api/edge"}; !slices.Equal(ids, want) {
+	// services has nothing to run, but holds folders that do: it is listed
+	// as their top level folder, the sidebar's section for them.
+	if want := []string{filepath.Base(root), "services", "services/api", "services/api/edge"}; !slices.Equal(ids, want) {
 		t.Fatalf("tree: got %v, want %v", ids, want)
 	}
 	edge := d.Find("services/api/edge")
@@ -130,7 +132,7 @@ func TestDiscovery_SkipsIgnoredAndEmpty(t *testing.T) {
 	for _, f := range d.List() {
 		ids = append(ids, f.ID)
 	}
-	if want := []string{"dockerfiles/app"}; !slices.Equal(ids, want) {
+	if want := []string{"dockerfiles", "dockerfiles/app"}; !slices.Equal(ids, want) {
 		t.Fatalf("folders: got %v, want %v", ids, want)
 	}
 }
@@ -142,5 +144,28 @@ func gitInit(t *testing.T, dir string) {
 	}
 	if out, err := exec.Command("git", "-C", dir, "init", "-q").CombinedOutput(); err != nil {
 		t.Fatalf("git init: %v: %s", err, out)
+	}
+}
+
+// A checkout with nothing to run at its top, its apps in subfolders, is
+// still the top level folder those apps are listed under.
+func TestDiscovery_ProjectSection(t *testing.T) {
+	root := t.TempDir()
+	apps := filepath.Join(root, "apps")
+	gitInit(t, apps)
+	write(t, filepath.Join(apps, "README.md"), "apps")
+	write(t, filepath.Join(apps, "blog", "atkins.yml"), "jobs:\n  serve: phpscript serve\n")
+	write(t, filepath.Join(apps, "booking", "atkins.yml"), "tasks:\n  default:\n    steps:\n      - task: go:build\n")
+
+	d := &Discovery{Root: root, Discover: true}
+	ids := []string{}
+	for _, f := range d.List() {
+		ids = append(ids, f.ID)
+	}
+	if want := []string{"apps", "apps/blog", "apps/booking"}; !slices.Equal(ids, want) {
+		t.Fatalf("folders: got %v, want %v", ids, want)
+	}
+	if top := d.Find("apps"); top.Depth() != 0 || len(top.Jobs) != 0 {
+		t.Fatalf("apps: %+v", top)
 	}
 }
