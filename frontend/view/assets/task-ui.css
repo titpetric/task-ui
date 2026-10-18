@@ -2334,6 +2334,24 @@ pre.output {
   display: none;
 }
 
+/* Expand sits above the terminal, at its right edge. */
+.pipeline .what .frame-tools {
+  display: flex;
+  justify-content: flex-end;
+  max-width: 60rem;
+  margin-top: 0.4rem;
+}
+
+.pipeline .what .frame-tools + .frame {
+  margin-top: 0.3rem;
+}
+
+/* The whole output scrolls inside its box past a screenful or two. */
+.pipeline .what .frame.expanded {
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
 /* The chain of a workflow a step ran, under that step. */
 .pipeline.sub {
   margin-top: 0.5rem;
