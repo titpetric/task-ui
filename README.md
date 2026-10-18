@@ -337,6 +337,7 @@ Writes need the same origin. The browser pages are the reference client;
 | `GET` `POST` `PUT` `DELETE` | `/api/schedules`, `/api/schedules/{id}` | `{folder, job, expression, enabled}` |
 | `GET` `POST` `PUT` `DELETE` | `/api/workflows`, `/api/workflows/{id}` | `{name, steps: [{folder, job} or {workflow}]}`; owner or admin changes; 409 deleting one another workflow runs |
 | `GET` `POST` | `/api/workflows/{id}/runs` | runs, newest first, with their steps; `POST` starts one, 409 while one runs |
+| `GET` | `/api/sse/{topic}` | server-sent events of a topic: `workflow:{id}` sends `run`, `step` and `done` as a run goes, for a user who sees the workflow |
 | `POST` | `/api/workflow-runs/{id}/stop` | stops the step running, skips the rest |
 | `GET` `POST` `PUT` `DELETE` | `/api/projects`, `/api/projects/{folder}` | clone `{url, id, branch}`; configure `{title, description, allow, sources, commands, job_allow, hours, job_hours}` |
 | `GET` `PUT` | `/api/users`, `/api/users/{id}` | `{folders}`; names, passwords and roles come from the password file and the role lists |

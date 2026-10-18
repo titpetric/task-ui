@@ -82,14 +82,18 @@ func TestWorkflows_List(t *testing.T) {
 	content := ops[strings.Index(ops, "<main>"):]
 	assert.Contains(t, content, `data-workflow-run="`)
 	assert.Equal(t, 2, strings.Count(content, `data-workflow-run="`))
-	// The step editor offers every job ops can see.
-	assert.Contains(t, ops, `data-api="/api/workflows"`)
-	assert.Contains(t, ops, `<option value="plan" data-folder="infra">`)
+	// The list links to the form for a new one, which offers every job
+	// ops can see; the list itself has no form.
+	assert.Contains(t, ops, `href="/workflows/new"`)
+	assert.NotContains(t, ops, `data-api="/api/workflows"`)
+	form := f.page(t, asOps, "/workflows/new")
+	assert.Contains(t, form, `data-api="/api/workflows"`)
+	assert.Contains(t, form, `<option value="plan" data-folder="infra">`)
 
 	// Any user makes workflows, a viewer too, and runs none.
-	viewer := f.page(t, asViewer, "/workflows")
+	viewer := f.page(t, asViewer, "/workflows/new")
 	assert.Contains(t, viewer, `data-api="/api/workflows"`)
-	assert.NotContains(t, viewer, `data-workflow-run="`)
+	assert.NotContains(t, f.page(t, asViewer, "/workflows"), `data-workflow-run="`)
 
 	// A workflow with a step in a folder the user can not see is not
 	// listed: limited sees infra, not infra/edge or private.
@@ -115,20 +119,43 @@ func TestWorkflow_Page(t *testing.T) {
 	ops := f.page(t, asOps, "/workflows/"+wf.ID)
 	assert.Contains(t, ops, "<h2>release</h2>")
 	assert.Contains(t, ops, `data-workflow-run="`)
-	assert.Contains(t, ops, `data-method="PUT"`) // the owner edits it
+	assert.Contains(t, ops, `href="/workflows/`+wf.ID+`/edit"`) // the owner edits it, on its own page
+	assert.NotContains(t, ops, `data-method="PUT"`)
 	assert.Contains(t, ops, `<i class="dot ok"></i>ok`)
 	steps, err := f.opts.WorkflowRuns.Steps(context.Background(), run.ID)
 	assert.NoError(t, err)
 	assert.Contains(t, ops, `href="/runs/`+steps[0].RunID+`"`)
+	// The pipeline runs top to bottom, with the latest run's states, and
+	// the page follows the workflow's topic instead of reloading.
+	assert.Contains(t, ops, `<ol class="pipeline"`)
+	assert.Contains(t, ops, `<li class="node ok">`)
+	assert.Contains(t, ops, `data-sse="workflow:`+wf.ID+`"`)
+	assert.NotContains(t, ops, `data-refresh`)
 
 	mine := f.workflow(t, asOps, "plan only", "infra", "plan")
 	limited := f.page(t, asLimited, "/workflows/"+mine.ID)
-	assert.NotContains(t, limited, `data-method="PUT"`) // not theirs
+	assert.NotContains(t, limited, `/edit"`) // not theirs
 	hidden := f.get(t, asLimited, "/workflows/"+wf.ID)
 	assert.Equal(t, 404, hidden.Status) // a step in infra/edge
 
 	missing := f.get(t, asOps, "/workflows/nope")
 	assert.Equal(t, 404, missing.Status)
+}
+
+// The edit page carries the form, for the owner or an admin.
+func TestWorkflow_EditPage(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	wf := f.workflow(t, asOps, "release", "infra", "plan")
+
+	edit := f.page(t, asOps, "/workflows/"+wf.ID+"/edit")
+	assert.Contains(t, edit, "<h2>Edit release</h2>")
+	assert.Contains(t, edit, `data-api="/api/workflows/`+wf.ID+`" data-method="PUT"`)
+	assert.Contains(t, edit, `value="release"`)
+	assert.Contains(t, f.page(t, asAdmin, "/workflows/"+wf.ID+"/edit"), `data-method="PUT"`)
+
+	assert.Equal(t, 403, f.get(t, asLimited, "/workflows/"+wf.ID+"/edit").Status)
+	assert.Equal(t, 404, f.get(t, asOps, "/workflows/nope/edit").Status)
 }
 
 // A chain names a folder once for the steps that follow in it; a step
@@ -147,12 +174,13 @@ func TestWorkflows_ChainAndNested(t *testing.T) {
 	assert.Contains(t, list, `>deploy</a>`)
 	assert.NotContains(t, list, "infra / deploy")
 	assert.Contains(t, list, `href="/workflows/`+same.ID+`"><svg class="ic"><use href="#i-flow"/></svg>same</a>`)
-	assert.Contains(t, list, `<option value="workflow:`+same.ID+`">same</option>`)
-	assert.Contains(t, list, `<option value="workflow:`+outer.ID+`">outer</option>`)
+	form := f.page(t, asOps, "/workflows/new")
+	assert.Contains(t, form, `<option value="workflow:`+same.ID+`">same</option>`)
+	assert.Contains(t, form, `<option value="workflow:`+outer.ID+`">outer</option>`)
 
-	edit := f.page(t, asOps, "/workflows/"+same.ID)
+	edit := f.page(t, asOps, "/workflows/"+same.ID+"/edit")
 	assert.NotContains(t, edit, `<option value="workflow:`+same.ID+`"`)
 	assert.NotContains(t, edit, `<option value="workflow:`+outer.ID+`"`) // outer runs same
-	edit = f.page(t, asOps, "/workflows/"+outer.ID)
+	edit = f.page(t, asOps, "/workflows/"+outer.ID+"/edit")
 	assert.Contains(t, edit, `<option value="workflow:`+same.ID+`"`)
 }

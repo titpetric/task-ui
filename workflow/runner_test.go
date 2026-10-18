@@ -9,6 +9,7 @@ import (
 
 	_ "modernc.org/sqlite" // the driver storage opens
 
+	"github.com/titpetric/task-ui/event"
 	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/internal/assert"
 	"github.com/titpetric/task-ui/model"
@@ -240,4 +241,35 @@ func TestRunner_StopNested(t *testing.T) {
 	assert.Equal(t, model.StateStopped, ended.State)
 	innerEnded := f.wait(t, innerRun)
 	assert.Equal(t, model.StateStopped, innerEnded.State)
+}
+
+// A run reports on the workflow's topic: the run, each step as it
+// starts and ends, and the end.
+func TestRunner_Events(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	f.runner.Events = event.NewBus()
+	wf := f.create(t, "build", "test")
+	ch, cancel := f.runner.Events.Subscribe("workflow:" + wf.ID)
+	defer cancel()
+
+	run, err := f.runner.Start(context.Background(), wf, ops)
+	assert.NoError(t, err)
+	f.wait(t, run.ID)
+
+	names, states := []string{}, []string{}
+	for len(names) == 0 || names[len(names)-1] != "done" {
+		select {
+		case e := <-ch:
+			names = append(names, e.Name)
+			if step, ok := e.Data.(workflow.StepEvent); ok {
+				states = append(states, step.State)
+				assert.Equal(t, run.ID, step.RunID)
+			}
+		case <-time.After(5 * time.Second):
+			t.Fatalf("events so far: %v", names)
+		}
+	}
+	assert.Equal(t, []string{"run", "step", "step", "step", "step", "done"}, names)
+	assert.Equal(t, []string{"running", "ok", "running", "ok"}, states)
 }

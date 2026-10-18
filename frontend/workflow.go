@@ -112,27 +112,70 @@ func (h *Handlers) workflows(w http.ResponseWriter, r *http.Request) {
 	h.render(w, http.StatusOK, "workflows", p)
 }
 
-// workflow shows one workflow: its steps, to run or change, and its runs.
-func (h *Handlers) workflow(w http.ResponseWriter, r *http.Request) {
+// workflowNew shows the form for a new workflow. Any user may make one,
+// from the jobs and workflows they see.
+func (h *Handlers) workflowNew(w http.ResponseWriter, r *http.Request) {
+	p := h.page(r, "New workflow")
+	p.Crumbs = view.Crumbs("Workflows", "/workflows", "New")
+	p.StepWorkflows = p.SideWorkflows
+	h.render(w, http.StatusOK, "workflow_new", p)
+}
+
+// loadWorkflow fills the page with the workflow a route names, or
+// renders the not found page and returns nil.
+func (h *Handlers) loadWorkflow(w http.ResponseWriter, r *http.Request) (*view.Page, map[string]string) {
 	wf, err := h.opts.Workflows.Get(r.Context(), param(r, "id"))
 	if err != nil {
 		h.missing(w, r, "No workflow with that ID.")
-		return
+		return nil, nil
 	}
 	p := h.page(r, wf.Name)
 	names := h.workflowNames(r.Context())
 	v := h.workflowView(r.Context(), p, *wf, names)
 	if v == nil {
 		h.missing(w, r, "No workflow with that ID.")
-		return
+		return nil, nil
 	}
 	p.Workflow = v
-	p.StepWorkflows = h.stepWorkflows(r.Context(), p, wf.ID)
 	p.Crumbs = view.Crumbs("Workflows", "/workflows", wf.Name)
-	runs, _ := h.opts.WorkflowRuns.ListByWorkflow(r.Context(), wf.ID, 20)
+	return p, names
+}
+
+// workflow shows one workflow: its pipeline with the latest run's
+// states, and its runs. The page follows the workflow's events.
+func (h *Handlers) workflow(w http.ResponseWriter, r *http.Request) {
+	p, names := h.loadWorkflow(w, r)
+	if p == nil {
+		return
+	}
+	runs, _ := h.opts.WorkflowRuns.ListByWorkflow(r.Context(), p.Workflow.ID, 20)
 	for _, run := range runs {
 		rows, _ := h.opts.WorkflowRuns.Steps(r.Context(), run.ID)
 		p.WorkflowRuns = append(p.WorkflowRuns, view.WorkflowRun{WorkflowRun: run, Steps: viewRunSteps(rows, names)})
 	}
+	var latest []view.Step
+	if len(p.WorkflowRuns) > 0 {
+		latest = p.WorkflowRuns[0].Steps
+	}
+	p.Pipeline = view.Pipeline(p.Workflow.Steps, latest)
 	h.render(w, http.StatusOK, "workflow", p)
+}
+
+// workflowEdit shows the form that changes a workflow, for its owner or
+// an admin.
+func (h *Handlers) workflowEdit(w http.ResponseWriter, r *http.Request) {
+	p, _ := h.loadWorkflow(w, r)
+	if p == nil {
+		return
+	}
+	if !p.Workflow.CanChange {
+		p.Title = "Not yours"
+		p.Error = "Its owner or an admin changes a workflow."
+		h.render(w, http.StatusForbidden, "notfound", p)
+		return
+	}
+	p.Title = "Edit " + p.Workflow.Name
+	p.Crumbs = view.Crumbs("Workflows", "/workflows", p.Workflow.Name, "/workflows/"+p.Workflow.ID, "Edit")
+	p.StepWorkflows = h.stepWorkflows(r.Context(), p, p.Workflow.ID)
+	h.render(w, http.StatusOK, "workflow_edit", p)
 }

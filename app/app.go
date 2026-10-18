@@ -18,6 +18,7 @@ import (
 	"github.com/titpetric/task-ui/access"
 	"github.com/titpetric/task-ui/api"
 	"github.com/titpetric/task-ui/envfile"
+	"github.com/titpetric/task-ui/event"
 	"github.com/titpetric/task-ui/frontend"
 	"github.com/titpetric/task-ui/git"
 	"github.com/titpetric/task-ui/model"
@@ -174,12 +175,14 @@ func (a *App) wire(version string) error {
 	})
 	a.Scheduler = scheduler.NewLoop(schedules, a.Users, a.Catalogue, a.Runner)
 	a.Workflows = workflow.New(workflows, workflowRuns, a.Catalogue, a.Runner)
+	events := event.NewBus()
+	a.Workflows.Events = events
 	a.Guard = access.NewGuard(a.Users, access.NewSessions(sessionSecret(cfg), cfg.SessionTTL))
 	a.Guard.AutoLogin = cfg.AutoLogin
 
 	apiHandlers := api.New(api.Options{
 		Users: a.Users, Projects: projects, Runs: runs, Artifacts: artifacts, Schedules: schedules, Secrets: secrets,
-		Workflows: workflows, WorkflowRuns: workflowRuns, Flows: a.Workflows,
+		Workflows: workflows, WorkflowRuns: workflowRuns, Flows: a.Workflows, Events: events,
 		Runner: a.Runner, Catalogue: a.Catalogue, Git: g, Keys: keys, Env: env, Recordings: recordings, Root: cfg.Root,
 	})
 	pages, err := frontend.New(frontend.Options{

@@ -47,7 +47,10 @@ type Page struct {
 	Artifacts []model.Artifact
 	Schedules []model.Schedule
 	Workflows []Workflow
-	Workflow  *Workflow
+	// Pipeline is a workflow's steps top to bottom, with the latest run's
+	// states.
+	Pipeline []Link
+	Workflow *Workflow
 	// WorkflowRuns are a workflow's runs, newest first.
 	WorkflowRuns []WorkflowRun
 	EnvFiles     []envfile.File

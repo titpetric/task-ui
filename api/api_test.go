@@ -19,6 +19,7 @@ import (
 	"github.com/titpetric/task-ui/access"
 	"github.com/titpetric/task-ui/api"
 	"github.com/titpetric/task-ui/envfile"
+	"github.com/titpetric/task-ui/event"
 	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/git"
 	"github.com/titpetric/task-ui/internal/assert"
@@ -120,10 +121,13 @@ func newFixture(t *testing.T) *fixture {
 	secrets := secret.New(storage.NewSecretStorage(db), secret.NewVault(keys))
 	cat := catalogue{"infra": infra, "private": private, "infra/edge": edge}
 	workflows, workflowRuns := storage.NewWorkflowStorage(db), storage.NewWorkflowRunStorage(db)
+	flows := workflow.New(workflows, workflowRuns, cat, manager)
+	flows.Events = event.NewBus()
 	f.opts = api.Options{
 		Workflows:    workflows,
 		WorkflowRuns: workflowRuns,
-		Flows:        workflow.New(workflows, workflowRuns, cat, manager),
+		Flows:        flows,
+		Events:       flows.Events,
 		Users:        users,
 		Projects:     storage.NewProjectStorage(db),
 		Runs:         runs,
