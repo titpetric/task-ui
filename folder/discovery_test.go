@@ -169,3 +169,29 @@ func TestDiscovery_ProjectSection(t *testing.T) {
 		t.Fatalf("apps: %+v", top)
 	}
 }
+
+// A root-only project lists its own jobs alone: discovery does not go
+// into it. Another checkout, recursive as projects are by default, lists
+// the folders inside it.
+func TestDiscovery_RootOnly(t *testing.T) {
+	root := t.TempDir()
+	for _, name := range []string{"mono", "apps"} {
+		dir := filepath.Join(root, name)
+		gitInit(t, dir)
+		write(t, filepath.Join(dir, "atkins.yml"), "jobs:\n  all: echo all\n")
+		write(t, filepath.Join(dir, "blog", "atkins.yml"), "jobs:\n  serve: echo serve\n")
+		write(t, filepath.Join(dir, "lib", "web", "atkins.yml"), "jobs:\n  build: echo build\n")
+	}
+
+	d := &Discovery{Root: root, Discover: true, Config: []Config{{ID: "mono", RootOnly: true}, {ID: "apps"}}}
+	ids := []string{}
+	for _, f := range d.List() {
+		ids = append(ids, f.ID)
+	}
+	if want := []string{"apps", "apps/blog", "apps/lib/web", "mono"}; !slices.Equal(ids, want) {
+		t.Fatalf("folders: got %v, want %v", ids, want)
+	}
+	if mono := d.Find("mono"); mono == nil || mono.Job("all") == nil {
+		t.Fatalf("mono's own jobs: %+v", mono)
+	}
+}

@@ -80,13 +80,7 @@ func (d *Discovery) List() []*Folder {
 // single file, or a path with nothing to run, which is listed with its
 // error so the configuration can be seen to be wrong.
 func configured(root string, cfg Config) *Folder {
-	dir := cfg.Path
-	if dir == "" {
-		dir = filepath.FromSlash(cfg.ID)
-	}
-	if !filepath.IsAbs(dir) {
-		dir = filepath.Join(root, dir)
-	}
+	dir := cfg.dir(root)
 	id := cfg.ID
 	if id == "" {
 		id = SafeID(filepath.Base(dir))
@@ -112,14 +106,20 @@ func isFile(path string) bool {
 }
 
 // discover adds the root when it has something to run, and walks the
-// tree below it.
+// tree below it, not into a root-only project.
 func (d *Discovery) discover(root string, c *catalogue) {
 	if !c.seen(root) && detector.Any(root) {
 		if f := Load(SafeID(filepath.Base(root)), root); runnable(f) {
 			c.add(f)
 		}
 	}
-	walk(root, "", 1, detector.HasPipeline(root), gitIgnored(root, nil), func(id, dir string) {
+	stop := map[string]bool{}
+	for _, cfg := range d.Config {
+		if cfg.RootOnly {
+			stop[cfg.dir(root)] = true
+		}
+	}
+	walk(root, "", 1, detector.HasPipeline(root), gitIgnored(root, nil), stop, func(id, dir string) {
 		if c.seen(dir) {
 			return
 		}
@@ -185,8 +185,9 @@ func gitIgnored(dir string, ignored map[string]bool) map[string]bool {
 // walk visits the directories below dir, in name order, and reports the
 // ones with something to run. Below a pipeline folder only a folder with
 // a pipeline file is reported, but the walk goes on through the rest.
-// Directories a git checkout ignores are not visited.
-func walk(dir, id string, depth int, underPipeline bool, ignored map[string]bool, found func(id, dir string)) {
+// Directories a git checkout ignores are not visited, and the walk does
+// not go into a directory in stop: a root-only project.
+func walk(dir, id string, depth int, underPipeline bool, ignored, stop map[string]bool, found func(id, dir string)) {
 	if depth > maxDepth {
 		return
 	}
@@ -209,7 +210,10 @@ func walk(dir, id string, depth int, underPipeline bool, ignored map[string]bool
 		if pipeline || (!underPipeline && detector.Any(sub)) {
 			found(subID, sub)
 		}
-		walk(sub, subID, depth+1, underPipeline || pipeline, ignored, found)
+		if stop[sub] {
+			continue
+		}
+		walk(sub, subID, depth+1, underPipeline || pipeline, ignored, stop, found)
 	}
 }
 

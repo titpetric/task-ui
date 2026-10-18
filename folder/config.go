@@ -1,6 +1,7 @@
 package folder
 
 import (
+	"path/filepath"
 	"strings"
 
 	"github.com/titpetric/task-ui/model"
@@ -26,6 +27,21 @@ type Config struct {
 	// Hours says when the folder's jobs may run; JobHours does so per job.
 	Hours    string            `yaml:"hours"`
 	JobHours map[string]string `yaml:"job_hours"`
+	// RootOnly lists the folder's own jobs alone: discovery does not go
+	// into it. Off, the default, the folders inside it are listed too.
+	RootOnly bool `yaml:"root_only"`
+}
+
+// dir returns the directory the configuration names, under root.
+func (c Config) dir(root string) string {
+	dir := c.Path
+	if dir == "" {
+		dir = filepath.FromSlash(c.ID)
+	}
+	if !filepath.IsAbs(dir) {
+		dir = filepath.Join(root, dir)
+	}
+	return dir
 }
 
 // Apply puts the configuration on a loaded folder.
@@ -84,6 +100,7 @@ func ConfigOf(p *model.Project) Config {
 		Jobs:        p.JobAllowMap(),
 		Hours:       p.Hours,
 		JobHours:    p.JobHoursMap(),
+		RootOnly:    p.RootOnly,
 	}
 }
 

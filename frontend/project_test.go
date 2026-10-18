@@ -74,3 +74,22 @@ func TestProjectEdit_PerJob(t *testing.T) {
 	assert.Contains(t, filled, `name="job_allow.plan" data-type="list" value="ops, release"`)
 	assert.Contains(t, filled, `name="job_hours.slow" value="mon-fri 9-17"`)
 }
+
+// The clone and configure forms have the recursive toggle, on unless
+// the project is root-only.
+func TestProject_RecursiveToggle(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+
+	add := f.page(t, asAdmin, "/settings/projects/new")
+	assert.Contains(t, add, `type="checkbox" id="p-recursive" name="recursive" checked`)
+
+	fresh := f.page(t, asAdmin, "/settings/projects/infra")
+	assert.Contains(t, fresh, `type="checkbox" id="pe-recursive" name="recursive" checked`)
+
+	project := &model.Project{Folder: "infra", RootOnly: true}
+	assert.NoError(t, f.opts.Projects.Create(context.Background(), project))
+	rootOnly := f.page(t, asAdmin, "/settings/projects/infra")
+	assert.Contains(t, rootOnly, `type="checkbox" id="pe-recursive" name="recursive">`)
+	assert.NotContains(t, rootOnly, `name="recursive" checked`)
+}

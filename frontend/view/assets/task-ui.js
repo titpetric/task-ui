@@ -439,7 +439,7 @@
     var body = {};
     Array.prototype.forEach.call(form.elements, function (el) {
       if (!el.name || el.disabled) return;
-      var value = el.value;
+      var value = el.type === "checkbox" ? el.checked : el.value;
       switch (el.dataset.type) {
         case "list":
           value = value.split(",").map(function (s) { return s.trim(); }).filter(Boolean);

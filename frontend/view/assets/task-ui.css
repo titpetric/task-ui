@@ -2274,3 +2274,18 @@ pre.output {
     grid-column: 2;
   }
 }
+
+/* A toggle in a form: the box before its label, on one line. */
+.field label.check {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.field label.check input[type="checkbox"] {
+  width: 1rem;
+  height: 1rem;
+  margin: 0;
+  accent-color: var(--signal);
+}

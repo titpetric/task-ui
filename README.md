@@ -205,9 +205,12 @@ are.
 Settings, Projects, Configure sets what the instance adds to a folder: a
 title and description, who may run it (`allow`: user names or roles,
 empty means every runner), and which `sources` to read, which is also
-how a pipeline folder gets its Makefile or scripts back as jobs. Through the API a
-project also takes `commands` (the runner per kind, `make: gmake`) and
-`job_allow` (per job). Pipeline files stay as they are.
+how a pipeline folder gets its Makefile or scripts back as jobs. Recursive,
+on by default, lists the folders inside the project too; off lists the
+project's own jobs alone, for a checkout whose inner folders are not
+jobs to run. Through the API a project also takes `commands` (the
+runner per kind, `make: gmake`), `job_allow` (per job) and `recursive`.
+Pipeline files stay as they are.
 
 Jobs get `TASK_UI=1`, `TASK_UI_USER`, `TASK_UI_FOLDER`, `TASK_UI_JOB`,
 `TASK_UI_RUN_ID` and `TASK_UI_ARTIFACTS` in the environment, along with
@@ -264,7 +267,8 @@ decision.
 Settings, Projects lists the folders under the root with their source.
 Add project clones a repository into the root: it either succeeds and the
 folder appears in the sidebar, or git's output is shown and nothing is
-kept. Private repositories are reached with the instance SSH keys, which
+kept. Recursive, on by default, lists the folders inside the checkout
+with something to run; off, the checkout is one folder with its own jobs. Private repositories are reached with the instance SSH keys, which
 git uses through `GIT_SSH_COMMAND` with a `known_hosts` file next to them.
 
 A folder in a checkout is pulled with `git pull --ff-only` before every
