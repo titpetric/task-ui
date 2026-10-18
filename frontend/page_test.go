@@ -50,10 +50,15 @@ func TestPage_ProjectsFold(t *testing.T) {
 	assert.Contains(t, chev, `<a class="section" href="/f/infra" data-folder="infra"`)
 	assert.Contains(t, chev, `<svg class="ic chev"><use href="#i-chev"/></svg>`)
 
-	// The open project is marked, on the project and its row.
+	// The open project is marked, on the project and its whole row.
 	page := f.page(t, asAdmin, "/f/infra")
 	assert.Contains(t, page, `<details class="project active" data-project="infra" open>`)
+	assert.Contains(t, page, `<summary class="active" title="infra/`)
 	assert.Contains(t, page, `<a class="section active" href="/f/infra"`)
+	// A folder inside it keeps the project open, and lights its own row only.
+	edgePage := f.page(t, asAdmin, "/f/infra/edge")
+	assert.Contains(t, edgePage, `<details class="project active" data-project="infra" open>`)
+	assert.NotContains(t, edgePage, `<summary class="active"`)
 }
 
 func TestPage_NoticeAndError(t *testing.T) {
