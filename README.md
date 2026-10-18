@@ -112,7 +112,8 @@ htpasswd format, bcrypt hashes only. The file is the truth. It is read
 on startup and again whenever it changes, so adding, resetting or
 removing a user needs no restart: a user not in the file cannot sign in
 and is removed from the instance; one in the file signs in with the
-password it holds.
+password it holds. A file that is not there yet is a warning, not an
+error: the instance starts and reads it once `task-ui passwd` makes it.
 
 Adding a user, or resetting a password, is one line either way:
 
