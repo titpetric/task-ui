@@ -13,9 +13,10 @@ as it runs.
 - **Folders and jobs.** A folder is a working directory and whatever it
   holds that can be run. Everything on the page comes from the files
   themselves: names, descriptions, steps, the files they include. A
-  folder page is its jobs as cards, each with Run; the sidebar lists
-  every folder's jobs with a play button, so a job is one click from
-  anywhere.
+  folder page is its jobs as cards, each with Run, and what the folder
+  holds: its directories, to open and browse down to any depth, then its
+  files; the sidebar lists every folder's jobs with a play button, so a
+  job is one click from anywhere.
 - **Runs are sessions.** Run opens a window on the run. Closing the window
   leaves the run running; Stop ends it, Kill ends it now. Anyone who may
   see the job attaches from the sidebar, the dashboard or the run list;

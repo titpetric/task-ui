@@ -2,6 +2,9 @@ package frontend
 
 import (
 	"net/http"
+	"os"
+	"path"
+	"path/filepath"
 	"strings"
 
 	"github.com/titpetric/task-ui/access"
@@ -12,8 +15,9 @@ import (
 )
 
 // folderPath serves everything under /f: the folder a path names, a
-// job of it, or one of its env files. Folders nest, so the longest
-// folder that starts the path is the one meant.
+// job of it, one of its env files, or a directory inside it with
+// nothing to run, which opens as a page to browse. Folders nest, so the
+// longest folder that starts the path is the one meant.
 func (h *Handlers) folderPath(w http.ResponseWriter, r *http.Request) {
 	path := param(r, "*")
 	f, rest := folder.Resolve(h.opts.Catalogue, path)
@@ -26,6 +30,10 @@ func (h *Handlers) folderPath(w http.ResponseWriter, r *http.Request) {
 		h.folder(w, r, f)
 	case strings.HasPrefix(rest, "env/"):
 		h.envFile(w, r, f, strings.TrimPrefix(rest, "env/"))
+	case !strings.Contains(rest, "/") && f.Job(rest) != nil:
+		h.job(w, r, f, rest)
+	case isDirIn(f.Dir, rest):
+		h.browse(w, r, f, rest)
 	case !strings.Contains(rest, "/"):
 		h.job(w, r, f, rest)
 	default:
@@ -33,10 +41,35 @@ func (h *Handlers) folderPath(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// folder shows a folder: its jobs, what it is, its env files.
+// isDirIn reports whether rel names a directory inside dir, without
+// leaving it.
+func isDirIn(dir, rel string) bool {
+	for _, segment := range strings.Split(rel, "/") {
+		if segment == "" || segment == "." || segment == ".." {
+			return false
+		}
+	}
+	info, err := os.Stat(filepath.Join(dir, filepath.FromSlash(rel)))
+	return err == nil && info.IsDir()
+}
+
+// browse shows a directory inside a folder that is not a folder itself:
+// what it holds, to go on into.
+func (h *Handlers) browse(w http.ResponseWriter, r *http.Request, f *folder.Folder, rel string) {
+	p := h.page(r, path.Base(rel))
+	p.Folder = f
+	p.Browse = rel + "/"
+	p.Tree = folder.Listing(filepath.Join(f.Dir, filepath.FromSlash(rel)))
+	p.Crumbs = crumbsOf(f.ID+"/"+rel, "")
+	h.render(w, http.StatusOK, "browse", p)
+}
+
+// folder shows a folder: its jobs, what it is, what it holds, its env
+// files.
 func (h *Handlers) folder(w http.ResponseWriter, r *http.Request, f *folder.Folder) {
 	p := h.page(r, f.Title)
 	p.Folder = f
+	p.Tree = folder.Listing(f.Dir)
 	p.Crumbs = crumbsOf(f.ID, "")
 	if h.opts.Git != nil && h.opts.Git.IsRepo(f.Dir) {
 		p.Checkout = h.opts.Git.Info(f.Dir)

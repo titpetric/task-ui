@@ -289,6 +289,19 @@
 </details>
 {{- end }}
 
+{{/* tree lists what the folder page's directory holds: the directories
+     first, linked into, then the files, plain. */}}
+{{- define "tree" }}
+{{- $p := .Folder }}
+<ul class="tree">
+	{{- range .Tree }}
+	<li class="{{ if .Dir }}dir{{ else }}file{{ end }}"><svg class="ic"><use href="#i-{{ if .Dir }}folder{{ else }}file{{ end }}"/></svg>{{ if .Dir }}<a href="/f/{{ $p.ID }}/{{ $.Browse }}{{ .Name }}">{{ .Name }}</a>{{ else }}<span>{{ .Name }}</span>{{ end }}</li>
+	{{- else }}
+	<li class="empty">Empty.</li>
+	{{- end }}
+</ul>
+{{- end }}
+
 {{ define "runButtons" }}
 {{- $p := index . 0 }}{{ $r := index . 1 -}}
 <button type="button" class="btn btn-primary btn-sm" data-run data-folder="{{ $p.ID }}" data-job="{{ $r.ID }}" data-title="{{ $p.ID }} / {{ $r.Name }}"><svg class="ic"><use href="#i-play"/></svg>Run</button>

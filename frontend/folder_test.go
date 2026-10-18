@@ -2,6 +2,8 @@ package frontend_test
 
 import (
 	"net/http"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -61,6 +63,37 @@ func TestFolder_Missing(t *testing.T) {
 	hidden := f.get(t, asLimited, "/f/private")
 	assert.Equal(t, http.StatusNotFound, hidden.Status)
 	assert.Contains(t, hidden.Body, "No folder named private")
+}
+
+// The folder page lists what the folder holds, directories first and
+// linked, files after and plain; a directory with nothing to run opens
+// as a page of its own, down to any depth.
+func TestFolder_Tree(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	assert.NoError(t, os.MkdirAll(filepath.Join(f.infra.Dir, "terraform", "modules"), 0o755))
+	assert.NoError(t, os.WriteFile(filepath.Join(f.infra.Dir, "README.md"), []byte("infra"), 0o644))
+	assert.NoError(t, os.WriteFile(filepath.Join(f.infra.Dir, "terraform", "main.tf"), []byte(""), 0o644))
+
+	body := f.page(t, asOps, "/f/infra")
+	assert.Contains(t, body, `<a href="/f/infra/edge">edge</a>`) // a folder of the catalogue
+	assert.Contains(t, body, `<a href="/f/infra/terraform">terraform</a>`)
+	assert.Contains(t, body, `<span>README.md</span>`)
+	assert.NotContains(t, body, `href="/f/infra/README.md"`)
+	assert.True(t, strings.Index(body, `>terraform</a>`) < strings.Index(body, `<span>README.md</span>`), "folders before files")
+
+	sub := f.page(t, asOps, "/f/infra/terraform")
+	assert.Contains(t, sub, "<h2>")
+	assert.Contains(t, sub, `<a href="/f/infra/terraform/modules">modules</a>`)
+	assert.Contains(t, sub, `<span>main.tf</span>`)
+	assert.Contains(t, sub, `<a href="/f/infra">infra</a>`) // the crumb back
+	assert.Contains(t, sub, "Nothing to run")
+	deep := f.page(t, asOps, "/f/infra/terraform/modules")
+	assert.Contains(t, deep, `<a href="/f/infra/terraform">terraform</a>`)
+
+	assert.Equal(t, http.StatusNotFound, f.get(t, asOps, "/f/infra/nowhere").Status)
+	assert.Equal(t, http.StatusNotFound, f.get(t, asOps, "/f/infra/terraform/README.md").Status) // a file is not a page
+	assert.Equal(t, http.StatusNotFound, f.get(t, asLimited, "/f/private/anything").Status)
 }
 
 // The sidebar heads each top level folder with its name and its jobs,
