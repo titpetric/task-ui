@@ -1809,20 +1809,53 @@ dialog.run[open] {
   --tree-2: calc(var(--tree-1) + var(--tree-icon) + var(--tree-gap));
 }
 
-.folders a.section {
+/* A project is a disclosure: its row opens the project, the chevron at
+   its right folds the jobs and folders under it. */
+.folders details.project > summary {
   display: flex;
   align-items: center;
-  gap: var(--tree-gap);
   margin-top: 0.6rem;
+  list-style: none;
+  cursor: pointer;
+}
+
+.folders details.project:first-child > summary {
+  margin-top: 0;
+}
+
+.folders details.project > summary::marker,
+.folders details.project > summary::-webkit-details-marker {
+  display: none;
+}
+
+.folders details.project > summary .chev {
+  flex: none;
+  width: 0.85rem;
+  height: 0.85rem;
+  margin-right: 0.6rem;
+  color: var(--text-faint);
+  transition: transform 0.15s ease-out;
+}
+
+.folders details.project[open] > summary .chev {
+  transform: rotate(90deg);
+}
+
+.folders details.project > summary:hover .chev {
+  color: var(--text);
+}
+
+.folders a.section {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  align-items: center;
+  gap: var(--tree-gap);
   padding: 0.3rem 0.6rem 0.3rem 1.1rem;
   color: var(--text);
   font-family: var(--font);
   font-weight: 600;
   border-left: 2px solid transparent;
-}
-
-.folders a.section:first-child {
-  margin-top: 0;
 }
 
 .folders a.section .ic {

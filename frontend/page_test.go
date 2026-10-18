@@ -2,6 +2,7 @@ package frontend_test
 
 import (
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/titpetric/task-ui/internal/assert"
@@ -31,6 +32,28 @@ func TestPage_Chrome(t *testing.T) {
 	assert.NotContains(t, limited, `data-folder="private"`)
 	assert.NotContains(t, limited, `title="admin">AD<`)
 	assert.Contains(t, limited, `title="ops">OP<`)
+}
+
+// A project in the sidebar folds: a disclosure with the folders inside
+// it, open by default, the chevron on its row.
+func TestPage_ProjectsFold(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+
+	body := f.page(t, asAdmin, "/")
+	infra := strings.Index(body, `<details class="project" data-project="infra" open>`)
+	edge := strings.Index(body, `<details class="folder" data-folder="infra/edge"`)
+	private := strings.Index(body, `<details class="project" data-project="private" open>`)
+	assert.True(t, infra >= 0 && edge > infra && private > edge, "infra holds infra/edge, then private")
+	assert.True(t, strings.Index(body[infra:], "</details>") > edge-infra, "infra closes after infra/edge")
+	chev := body[infra:strings.Index(body[infra:], "</summary>")+infra]
+	assert.Contains(t, chev, `<a class="section" href="/f/infra" data-folder="infra"`)
+	assert.Contains(t, chev, `<svg class="ic chev"><use href="#i-chev"/></svg>`)
+
+	// The open project is marked, on the project and its row.
+	page := f.page(t, asAdmin, "/f/infra")
+	assert.Contains(t, page, `<details class="project active" data-project="infra" open>`)
+	assert.Contains(t, page, `<a class="section active" href="/f/infra"`)
 }
 
 func TestPage_NoticeAndError(t *testing.T) {

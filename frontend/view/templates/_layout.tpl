@@ -64,30 +64,27 @@
 			</nav>
 			<nav class="folders">
 				{{- $total := 0 }}{{ range .Folders }}{{ $total = len .Jobs | add $total }}{{ end }}
-				{{- range $p := .Folders }}
-				{{- $active := and $.Folder (eq $.Folder.ID $p.ID) }}
-				{{- if eq $p.Depth 0 }}
-				<a class="section{{ if $active }} active{{ end }}" href="/f/{{ $p.ID }}" data-folder="{{ $p.ID }}" title="{{ $p.ID }}/{{ range $i, $s := $p.Sources }}{{ if $i }}, {{ end }}{{ $s.File }}{{ end }}">
-					<svg class="ic"><use href="#i-project"/></svg><span>{{ $p.Name }}</span>
-					{{- if $p.Error }}<small class="bad">!</small>{{ else if $p.Jobs }}<small>{{ len $p.Jobs }}</small>{{ end }}
-				</a>
-				{{- if $p.Jobs }}
-				<div class="jobs top">
-					{{- template "sidejobs" (list $ $p) }}
-				</div>
-				{{- end }}
-				{{- else }}
-				<details class="folder{{ if $active }} active{{ end }}" data-folder="{{ $p.ID }}"{{ if or $active (le $total 24) }} open{{ end }}>
+				{{- range $g := groups .Folders }}
+				{{- with $p := $g.Top }}
+				{{- /* A project folds on its chevron; the row opens it. The open page's project is marked and stays open. */}}
+				{{- $active := and $.Folder (or (eq $.Folder.ID $p.ID) (hasPrefix $.Folder.ID (print $p.ID "/"))) }}
+				<details class="project{{ if $active }} active{{ end }}" data-project="{{ $p.ID }}" open>
 					<summary title="{{ $p.ID }}/{{ range $i, $s := $p.Sources }}{{ if $i }}, {{ end }}{{ $s.File }}{{ end }}">
-						<a href="/f/{{ $p.ID }}"><svg class="ic"><use href="#i-folder{{ if $active }}-open{{ end }}"/></svg><span>{{ with folderDir $p.ID }}<i>{{ . }}/</i>{{ end }}<b>{{ $p.Name }}</b></span></a>
-						<i class="dot"></i>
-						{{- if $p.Error }}<small class="bad">!</small>{{ else }}<small>{{ len $p.Jobs }}</small>{{ end }}
+						<a class="section{{ if and $.Folder (eq $.Folder.ID $p.ID) }} active{{ end }}" href="/f/{{ $p.ID }}" data-folder="{{ $p.ID }}">
+							<svg class="ic"><use href="#i-project"/></svg><span>{{ $p.Name }}</span>
+							{{- if $p.Error }}<small class="bad">!</small>{{ else if $p.Jobs }}<small>{{ len $p.Jobs }}</small>{{ end }}
+						</a>
 						<svg class="ic chev"><use href="#i-chev"/></svg>
 					</summary>
-					<div class="jobs">
+					{{- if $p.Jobs }}
+					<div class="jobs top">
 						{{- template "sidejobs" (list $ $p) }}
 					</div>
+					{{- end }}
+					{{- range $g.Nested }}{{ template "sidefolder" (list $ . $total) }}{{ end }}
 				</details>
+				{{- else }}
+				{{- range $g.Nested }}{{ template "sidefolder" (list $ . $total) }}{{ end }}
 				{{- end }}
 				{{- else }}
 				<div class="empty">No folders. Add one from a git repository in Settings, or put a folder with something to run under the root.</div>
@@ -271,6 +268,24 @@
      steps that follow in it, a workflow step by its name, each linked. */}}
 {{- define "chain" }}
 {{- range $i, $l := chain . }}{{ if $i }}<span class="faint"> → </span>{{ end }}<a class="nowrap" href="{{ $l.Href }}"{{ if $l.RunID }} data-attach="{{ $l.RunID }}"{{ end }}>{{ if $l.State }}<i class="dot {{ $l.State }}"></i>{{ end }}{{ if $l.Workflow }}<svg class="ic"><use href="#i-flow"/></svg>{{ end }}{{ $l.Text }}</a>{{ end }}
+{{- end }}
+
+{{/* sidefolder is a folder inside a project in the sidebar: a disclosure
+     of its jobs, open when it is the page's or the tree is small. */}}
+{{- define "sidefolder" }}
+{{- $ := index . 0 }}{{ $p := index . 1 }}{{ $total := index . 2 }}
+{{- $active := and $.Folder (eq $.Folder.ID $p.ID) }}
+<details class="folder{{ if $active }} active{{ end }}" data-folder="{{ $p.ID }}"{{ if or $active (le $total 24) }} open{{ end }}>
+	<summary title="{{ $p.ID }}/{{ range $i, $s := $p.Sources }}{{ if $i }}, {{ end }}{{ $s.File }}{{ end }}">
+		<a href="/f/{{ $p.ID }}"><svg class="ic"><use href="#i-folder{{ if $active }}-open{{ end }}"/></svg><span>{{ with folderDir $p.ID }}<i>{{ . }}/</i>{{ end }}<b>{{ $p.Name }}</b></span></a>
+		<i class="dot"></i>
+		{{- if $p.Error }}<small class="bad">!</small>{{ else }}<small>{{ len $p.Jobs }}</small>{{ end }}
+		<svg class="ic chev"><use href="#i-chev"/></svg>
+	</summary>
+	<div class="jobs">
+		{{- template "sidejobs" (list $ $p) }}
+	</div>
+</details>
 {{- end }}
 
 {{ define "runButtons" }}
