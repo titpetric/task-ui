@@ -25,8 +25,14 @@ type Link struct {
 	State string
 	// RunID is the run a run's step made of a job, to attach to.
 	RunID string
-	// Workflow says the step runs a workflow.
-	Workflow bool
+	// Workflow says the step runs a workflow: WorkflowID, and for a run's
+	// step WorkflowRunID, the run it made of it.
+	Workflow      bool
+	WorkflowID    string
+	WorkflowRunID string
+	// Sub is the chain of the run the step made of a workflow, when the
+	// page shows it.
+	Sub []Link
 	// FrameSVG is the last screen of the step's run, when the page shows
 	// it.
 	FrameSVG template.HTML
@@ -43,6 +49,7 @@ func Chain(steps []Step) []Link {
 		switch {
 		case s.WorkflowID != "":
 			l.Workflow, l.Text, l.Href = true, s.WorkflowName, "/workflows/"+s.WorkflowID
+			l.WorkflowID, l.WorkflowRunID = s.WorkflowID, s.WorkflowRunID
 			if l.Text == "" {
 				l.Text = "a workflow that is gone"
 			}

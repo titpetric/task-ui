@@ -202,3 +202,29 @@ func TestWorkflows_ChainAndNested(t *testing.T) {
 	edit = f.page(t, asOps, "/workflows/"+outer.ID+"/edit")
 	assert.Contains(t, edit, `<option value="workflow:`+same.ID+`"`)
 }
+
+// A step that ran a workflow shows that run's chain under it, each step
+// with its run and terminal.
+func TestWorkflow_NestedPipeline(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	inner := f.workflow(t, asOps, "inner", "infra", "plan")
+	user := f.users[asOps]
+	outer := &model.Workflow{Name: "outer", UserID: user.ID, UserName: user.Name}
+	assert.NoError(t, f.opts.Workflows.Create(context.Background(), outer, []model.WorkflowStep{{WorkflowRef: inner.ID}}))
+
+	run, err := f.opts.Flows.Start(context.Background(), outer, user)
+	assert.NoError(t, err)
+	select {
+	case <-f.opts.Flows.Done(run.ID):
+	case <-time.After(20 * time.Second):
+		t.Fatal("the workflow did not finish")
+	}
+	steps, _ := f.opts.WorkflowRuns.Steps(context.Background(), run.ID)
+	innerSteps, _ := f.opts.WorkflowRuns.Steps(context.Background(), steps[0].WorkflowRunRef)
+
+	page := f.page(t, asOps, "/workflows/"+outer.ID)
+	assert.Contains(t, page, `<ol class="pipeline sub" data-sub="`+steps[0].WorkflowRunRef+`" data-workflow="`+inner.ID+`">`)
+	assert.Contains(t, page, `href="/runs/`+innerSteps[0].RunID+`" data-attach="`+innerSteps[0].RunID+`">infra / plan</a>`)
+	assert.Contains(t, page, `<a class="frame" href="/runs/`+innerSteps[0].RunID+`"`)
+}

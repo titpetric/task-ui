@@ -158,13 +158,27 @@ func (h *Handlers) workflow(w http.ResponseWriter, r *http.Request) {
 		latest = p.WorkflowRuns[0].Steps
 	}
 	p.Pipeline = view.Pipeline(p.Workflow.Steps, latest)
-	// Each step of the latest run shows the screen its run ended on.
-	for i := range p.Pipeline {
-		if p.Pipeline[i].RunID != "" {
-			p.Pipeline[i].FrameSVG = h.frameSVG(r.Context(), p.Pipeline[i].RunID)
+	h.frames(r.Context(), p.Pipeline, names, true)
+	h.render(w, http.StatusOK, "workflow", p)
+}
+
+// frames puts on each step of a run's chain the screen its run ended
+// on, and under a step that ran a workflow the chain of that run, one
+// level down.
+func (h *Handlers) frames(ctx context.Context, links []view.Link, names map[string]string, deeper bool) {
+	for i := range links {
+		if links[i].RunID != "" {
+			links[i].FrameSVG = h.frameSVG(ctx, links[i].RunID)
+		}
+		if deeper && links[i].WorkflowRunID != "" {
+			rows, err := h.opts.WorkflowRuns.Steps(ctx, links[i].WorkflowRunID)
+			if err != nil {
+				continue
+			}
+			links[i].Sub = view.Chain(viewRunSteps(rows, names))
+			h.frames(ctx, links[i].Sub, names, false)
 		}
 	}
-	h.render(w, http.StatusOK, "workflow", p)
 }
 
 // workflowEdit shows the form that changes a workflow, for its owner or

@@ -27,17 +27,7 @@
 	<p class="faint" data-latest>Not run yet.</p>
 	{{- end }}
 	<ol class="pipeline" data-pipeline>
-		{{- range $i, $l := $.Pipeline }}
-		<li class="node{{ with $l.State }} {{ . }}{{ end }}" data-step="{{ $i }}">
-			<span class="rail"><i class="dot{{ with $l.State }} {{ . }}{{ end }}"></i></span>
-			<div class="what">
-				<a href="{{ $l.Href }}"{{ if $l.RunID }} data-attach="{{ $l.RunID }}"{{ end }}>{{ if $l.Workflow }}<svg class="ic"><use href="#i-flow"/></svg>{{ end }}{{ $l.Text }}</a>
-				<small>{{ if $l.State }}{{ $l.State }}{{ else }}step {{ add $i 1 }}{{ end }}</small>
-				{{- /* The run's last screen; while it runs the frame is polled, by data-frame. */}}
-				{{- if $l.RunID }}<a class="frame" href="/runs/{{ $l.RunID }}" data-attach="{{ $l.RunID }}"{{ if eq $l.State "running" }} data-frame="{{ $l.RunID }}"{{ end }} role="img" aria-label="Terminal of {{ $l.Text }}">{{ $l.FrameSVG }}</a>{{ end }}
-			</div>
-		</li>
-		{{- end }}
+		{{- range $i, $l := $.Pipeline }}{{ template "pipenode" (list $l $i) }}{{ end }}
 	</ol>
 </section>
 
@@ -63,3 +53,23 @@
 </section>
 {{- end }}
 {{ end }}
+
+{{/* pipenode is a step of the pipeline: its name, state and, for a run's
+     step, its terminal's last screen, polled while it runs (data-frame).
+     A step that ran a workflow holds that run's chain. */}}
+{{- define "pipenode" }}
+{{- $l := index . 0 }}{{ $i := index . 1 }}
+<li class="node{{ with $l.State }} {{ . }}{{ end }}" data-step="{{ $i }}">
+	<span class="rail"><i class="dot{{ with $l.State }} {{ . }}{{ end }}"></i></span>
+	<div class="what">
+		<a href="{{ $l.Href }}"{{ if $l.RunID }} data-attach="{{ $l.RunID }}"{{ end }}>{{ if $l.Workflow }}<svg class="ic"><use href="#i-flow"/></svg>{{ end }}{{ $l.Text }}</a>
+		<small>{{ if $l.State }}{{ $l.State }}{{ else }}step {{ add $i 1 }}{{ end }}</small>
+		{{- if $l.RunID }}<a class="frame" href="/runs/{{ $l.RunID }}" data-attach="{{ $l.RunID }}"{{ if eq $l.State "running" }} data-frame="{{ $l.RunID }}"{{ end }} role="img" aria-label="Terminal of {{ $l.Text }}">{{ $l.FrameSVG }}</a>{{ end }}
+		{{- if $l.WorkflowRunID }}
+		<ol class="pipeline sub" data-sub="{{ $l.WorkflowRunID }}" data-workflow="{{ $l.WorkflowID }}">
+			{{- range $j, $s := $l.Sub }}{{ template "pipenode" (list $s $j) }}{{ end }}
+		</ol>
+		{{- end }}
+	</div>
+</li>
+{{- end }}

@@ -21,6 +21,8 @@ func TestPipeline(t *testing.T) {
 	assert.Equal(t, "/runs/r1", links[0].Href)
 	assert.Equal(t, "running", links[1].State)
 	assert.Equal(t, "infra / plan", links[0].Text)
+	assert.Equal(t, "w", links[1].WorkflowID)
+	assert.Equal(t, "wr", links[1].WorkflowRunID)
 
 	older := []view.Step{{Folder: "infra", Job: "deploy", State: "ok", RunID: "r0"}}
 	links = view.Pipeline(def, older)
