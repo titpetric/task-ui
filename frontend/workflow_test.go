@@ -60,6 +60,15 @@ func TestWorkflows_SidebarList(t *testing.T) {
 	assert.Contains(t, viewer, `<a class="name" href="/workflows/`+release.ID+`"`)
 	assert.NotContains(t, viewer, `data-workflow-run="`)
 
+	// A workflow set not to show in the sidebar is left out of it, and
+	// listed on the Workflows page still.
+	user := f.users[asOps]
+	part := &model.Workflow{Name: "part", UserID: user.ID, UserName: user.Name, SidebarHidden: true}
+	assert.NoError(t, f.opts.Workflows.Create(context.Background(), part, []model.WorkflowStep{{Folder: "infra", Job: "plan"}}))
+	ops = f.page(t, asOps, "/")
+	assert.NotContains(t, ops, `href="/workflows/`+part.ID+`"`)
+	assert.Contains(t, f.page(t, asOps, "/workflows"), `href="/workflows/`+part.ID+`"`)
+
 	// The open workflow is the active entry.
 	page := f.page(t, asOps, "/workflows/"+release.ID)
 	assert.Contains(t, page, `<div class="flow active">`)

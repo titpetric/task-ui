@@ -190,6 +190,10 @@
       type: boolean
       comment: Root Only
       datatype: boolean
+    - name: sidebar_hidden
+      type: boolean
+      comment: Sidebar Hidden
+      datatype: boolean
   indexes:
     - name: sqlite_autoindex_project_1
       columns:
@@ -572,6 +576,10 @@
       type: timestamp
       comment: Updated At
       datatype: datetime
+    - name: sidebar_hidden
+      type: boolean
+      comment: Sidebar Hidden
+      datatype: boolean
   indexes:
     - name: sqlite_autoindex_workflow_1
       columns:

@@ -31,6 +31,9 @@
 	<div class="field">
 		<label class="check"><input type="checkbox" id="pe-recursive" name="recursive"{{ if or (not $.Project) (not $.Project.RootOnly) }} checked{{ end }}> Recursive <span class="faint">list the folders inside the project too; off lists its own jobs alone</span></label>
 	</div>
+	<div class="field">
+		<label class="check"><input type="checkbox" id="pe-sidebar" name="sidebar"{{ if or (not $.Project) (not $.Project.SidebarHidden) }} checked{{ end }}> Show in sidebar <span class="faint">off keeps the project and its folders out of the sidebar; their pages stay</span></label>
+	</div>
 	{{- if $p.Jobs }}
 	{{- $allow := $.Project.JobAllowMap }}{{ $hours := $.Project.JobHoursMap }}
 	<div class="field">

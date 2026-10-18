@@ -379,6 +379,9 @@ type Project struct {
 
 	// Root Only
 	RootOnly bool `db:"root_only" json:"root_only"`
+
+	// Sidebar Hidden
+	SidebarHidden bool `db:"sidebar_hidden" json:"sidebar_hidden"`
 }
 
 // GetID will return the value of ID.
@@ -471,11 +474,17 @@ func (p *Project) GetRootOnly() bool { return p.RootOnly }
 // SetRootOnly sets RootOnly to the provided value.
 func (p *Project) SetRootOnly(val bool) { p.RootOnly = val }
 
+// GetSidebarHidden will return the value of SidebarHidden.
+func (p *Project) GetSidebarHidden() bool { return p.SidebarHidden }
+
+// SetSidebarHidden sets SidebarHidden to the provided value.
+func (p *Project) SetSidebarHidden(val bool) { p.SidebarHidden = val }
+
 // ProjectTable is the name of the table in the DB.
 const ProjectTable = "`project`"
 
 // ProjectFields is a list of all columns in the DB table.
-var ProjectFields = []string{"id", "folder", "title", "description", "source_url", "branch", "allow", "commands", "sources", "job_allow", "hours", "job_hours", "created_at", "updated_at", "root_only"}
+var ProjectFields = []string{"id", "folder", "title", "description", "source_url", "branch", "allow", "commands", "sources", "job_allow", "hours", "job_hours", "created_at", "updated_at", "root_only", "sidebar_hidden"}
 
 // ProjectPrimaryFields are the primary key fields in the DB table.
 var ProjectPrimaryFields = []string{"id"}
@@ -1043,6 +1052,9 @@ type Workflow struct {
 
 	// Updated At
 	UpdatedAt *time.Time `db:"updated_at" json:"updated_at"`
+
+	// Sidebar Hidden
+	SidebarHidden bool `db:"sidebar_hidden" json:"sidebar_hidden"`
 }
 
 // GetID will return the value of ID.
@@ -1081,11 +1093,17 @@ func (w *Workflow) GetUpdatedAt() *time.Time { return w.UpdatedAt }
 // SetUpdatedAt sets UpdatedAt to the provided value.
 func (w *Workflow) SetUpdatedAt(stamp time.Time) { w.UpdatedAt = &stamp }
 
+// GetSidebarHidden will return the value of SidebarHidden.
+func (w *Workflow) GetSidebarHidden() bool { return w.SidebarHidden }
+
+// SetSidebarHidden sets SidebarHidden to the provided value.
+func (w *Workflow) SetSidebarHidden(val bool) { w.SidebarHidden = val }
+
 // WorkflowTable is the name of the table in the DB.
 const WorkflowTable = "`workflow`"
 
 // WorkflowFields is a list of all columns in the DB table.
-var WorkflowFields = []string{"id", "name", "user_id", "user_name", "created_at", "updated_at"}
+var WorkflowFields = []string{"id", "name", "user_id", "user_name", "created_at", "updated_at", "sidebar_hidden"}
 
 // WorkflowPrimaryFields are the primary key fields in the DB table.
 var WorkflowPrimaryFields = []string{"id"}

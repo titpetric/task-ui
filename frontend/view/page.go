@@ -24,8 +24,11 @@ type Page struct {
 	// Now is the moment the page is for: the hours read against it.
 	Now time.Time
 
-	// Folders are the folders the user may see, for the sidebar.
+	// Folders are the folders the user may see.
 	Folders []*folder.Folder
+	// SideFolders are the folders the sidebar lists: Folders less the
+	// projects set not to show there.
+	SideFolders []*folder.Folder
 	// Recents are the latest runs the user may see, for the sidebar.
 	Recents []Run
 	// SideWorkflows are the workflows the user may see, for the sidebar.

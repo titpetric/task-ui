@@ -45,7 +45,7 @@
 				<a href="/workflows" class="{{ if .Under "/workflows" }}active{{ end }}"><svg class="ic"><use href="#i-flow"/></svg><span>Workflows</span></a>
 				{{- if .SideWorkflows }}
 				<div class="flows">
-					{{- range .SideWorkflows }}
+					{{- range .SideWorkflows }}{{ if not .SidebarHidden }}
 					<div class="flow{{ if $.IsPath (print "/workflows/" .ID) }} active{{ end }}">
 						<i class="dot{{ if .Running }} running{{ end }}"></i>
 						<a class="name" href="/workflows/{{ .ID }}" title="{{ range $i, $l := chain .Steps }}{{ if $i }} → {{ end }}{{ $l.Text }}{{ end }}">{{ .Name }}</a>
@@ -55,7 +55,7 @@
 						<button type="button" class="play" data-workflow-run="{{ .ID }}" title="Run {{ .Name }}" aria-label="Run {{ .Name }}"><svg class="ic"><use href="#i-play"/></svg></button>
 						{{- end }}
 					</div>
-					{{- end }}
+					{{- end }}{{ end }}
 				</div>
 				{{- end }}
 				<a href="/runs" class="{{ if .Under "/runs" }}active{{ end }}"><svg class="ic"><use href="#i-list"/></svg><span>Runs</span><i class="dot{{ if .Running }} running{{ end }}" data-any-running></i></a>
@@ -63,8 +63,8 @@
 				<a href="/schedules" class="{{ if .Under "/schedules" }}active{{ end }}"><svg class="ic"><use href="#i-clock"/></svg><span>Scheduled</span></a>
 			</nav>
 			<nav class="folders">
-				{{- $total := 0 }}{{ range .Folders }}{{ $total = len .Jobs | add $total }}{{ end }}
-				{{- range $g := groups .Folders }}
+				{{- $total := 0 }}{{ range .SideFolders }}{{ $total = len .Jobs | add $total }}{{ end }}
+				{{- range $g := groups .SideFolders }}
 				{{- with $p := $g.Top }}
 				{{- /* A project folds on its chevron; the row opens it. The open page's project is marked and stays open. */}}
 				{{- $active := and $.Folder (or (eq $.Folder.ID $p.ID) (hasPrefix $.Folder.ID (print $p.ID "/"))) }}
@@ -225,6 +225,9 @@
 	<div class="field">
 		<label for="wf-name{{ if $w }}-{{ $w.ID }}{{ end }}">Name</label>
 		<input type="text" id="wf-name{{ if $w }}-{{ $w.ID }}{{ end }}" name="name" value="{{ if $w }}{{ $w.Name }}{{ end }}" placeholder="deploy" autocomplete="off" required>
+	</div>
+	<div class="field">
+		<label class="check"><input type="checkbox" id="wf-sidebar{{ if $w }}-{{ $w.ID }}{{ end }}" name="sidebar"{{ if or (not $w) (not $w.SidebarHidden) }} checked{{ end }}> Show in sidebar <span class="faint">off for a workflow that is a step of others</span></label>
 	</div>
 	<ol class="steps" data-steps>
 		{{- if $w }}{{ range $w.Steps }}{{ template "steprow" (list $p .Folder .Job .WorkflowID) }}{{ end }}{{ else }}{{ template "steprow" (list $p "" "" "") }}{{ end }}

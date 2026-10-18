@@ -22,6 +22,9 @@ type ProjectCloneRequest struct {
 	// Recursive lists the folders inside the checkout too, the default;
 	// false lists the project's own jobs alone.
 	Recursive *bool `json:"recursive,omitempty"`
+	// Sidebar lists the project in the sidebar, the default; false keeps
+	// it, and the folders inside it, out. Its pages stay.
+	Sidebar *bool `json:"sidebar,omitempty"`
 }
 
 // ProjectRequest changes what the configuration says about a folder.
@@ -39,6 +42,9 @@ type ProjectRequest struct {
 	// Recursive lists the folders inside the project too, the default;
 	// false lists its own jobs alone. Left out, it stays as it is.
 	Recursive *bool `json:"recursive,omitempty"`
+	// Sidebar lists the project in the sidebar, the default; false keeps
+	// it, and the folders inside it, out. Left out, it stays as it is.
+	Sidebar *bool `json:"sidebar,omitempty"`
 }
 
 // validHours checks the hours of the folder and of its jobs.
@@ -65,6 +71,9 @@ func (req ProjectRequest) apply(project *model.Project) {
 	project.JobHours = model.EncodeStrings(req.JobHours)
 	if req.Recursive != nil {
 		project.RootOnly = !*req.Recursive
+	}
+	if req.Sidebar != nil {
+		project.SidebarHidden = !*req.Sidebar
 	}
 }
 
@@ -121,7 +130,11 @@ func (h *Handlers) cloneProject(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusBadGateway, map[string]string{"error": err.Error(), "output": output})
 		return
 	}
-	project := &model.Project{Folder: req.ID, SourceURL: req.URL, Branch: req.Branch, RootOnly: req.Recursive != nil && !*req.Recursive}
+	project := &model.Project{
+		Folder: req.ID, SourceURL: req.URL, Branch: req.Branch,
+		RootOnly:      req.Recursive != nil && !*req.Recursive,
+		SidebarHidden: req.Sidebar != nil && !*req.Sidebar,
+	}
 	if err := h.opts.Projects.Upsert(r.Context(), project); err != nil {
 		failErr(w, err)
 		return
