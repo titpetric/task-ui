@@ -68,9 +68,10 @@
 				{{- with $p := $g.Top }}
 				{{- /* A project folds on its chevron; the row opens it. The open page's project is marked and stays open. */}}
 				{{- $active := and $.Folder (or (eq $.Folder.ID $p.ID) (hasPrefix $.Folder.ID (print $p.ID "/"))) }}
+				{{- $here := and $.Folder (eq $.Folder.ID $p.ID) }}
 				<details class="project{{ if $active }} active{{ end }}" data-project="{{ $p.ID }}" open>
-					<summary title="{{ $p.ID }}/{{ range $i, $s := $p.Sources }}{{ if $i }}, {{ end }}{{ $s.File }}{{ end }}">
-						<a class="section{{ if and $.Folder (eq $.Folder.ID $p.ID) }} active{{ end }}" href="/f/{{ $p.ID }}" data-folder="{{ $p.ID }}">
+					<summary{{ if $here }} class="active"{{ end }} title="{{ $p.ID }}/{{ range $i, $s := $p.Sources }}{{ if $i }}, {{ end }}{{ $s.File }}{{ end }}">
+						<a class="section{{ if $here }} active{{ end }}" href="/f/{{ $p.ID }}" data-folder="{{ $p.ID }}">
 							<svg class="ic"><use href="#i-project"/></svg><span>{{ $p.Name }}</span>
 							{{- if $p.Error }}<small class="bad">!</small>{{ else if $p.Jobs }}<small>{{ len $p.Jobs }}</small>{{ end }}
 						</a>

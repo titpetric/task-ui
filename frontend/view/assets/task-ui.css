@@ -1819,6 +1819,18 @@ dialog.run[open] {
   margin-top: 0.6rem;
   list-style: none;
   cursor: pointer;
+  border-left: 2px solid transparent;
+}
+
+/* The row as a whole, chevron included, is lit on hover and when it is
+   the page's folder. */
+.folders details.project > summary:hover {
+  background: var(--ink-2);
+}
+
+.folders details.project > summary.active {
+  background: var(--signal-wash);
+  border-left-color: var(--signal);
 }
 
 .folders details.project:first-child > summary {
@@ -1857,7 +1869,6 @@ dialog.run[open] {
   color: var(--text);
   font-family: var(--font);
   font-weight: 600;
-  border-left: 2px solid transparent;
 }
 
 .folders a.section .ic {
@@ -1876,15 +1887,6 @@ dialog.run[open] {
 .folders a.section small {
   color: var(--text-faint);
   font-weight: 400;
-}
-
-.folders a.section:hover {
-  background: var(--ink-2);
-}
-
-.folders a.section.active {
-  background: var(--signal-wash);
-  border-left-color: var(--signal);
 }
 
 .folders a.section.active .ic {
