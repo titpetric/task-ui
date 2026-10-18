@@ -1693,24 +1693,34 @@ dialog.run[open] {
   background: rgba(4, 6, 9, 0.6);
 }
 
-/* A folder at the top of the root is a heading, set like Recents: its
-   name, the count of its own jobs, and those jobs below it. */
+/* A folder at the top of the root is a project: a repository icon at the
+   menu's alignment, its name, the count of its own jobs. Its jobs and
+   folders hang under it, one step in.
+
+   The columns of the tree, from the left edge of a row:
+     1.1rem   the project icon, as the menu icons
+     2.65rem  a folder icon, under the project's name
+     4.2rem   a job's dot, under the folder's name */
 .folders a.section {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 0.5rem;
-  margin: 1rem 0 0.25rem;
-  padding: 0.15rem 0.6rem 0.15rem 1.1rem;
-  color: var(--text-faint);
-  font-size: 0.7rem;
+  margin-top: 0.6rem;
+  padding: 0.3rem 0.6rem 0.3rem 1.1rem;
+  color: var(--text);
+  font-family: var(--font);
   font-weight: 600;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
   border-left: 2px solid transparent;
 }
 
 .folders a.section:first-child {
-  margin-top: 0.3rem;
+  margin-top: 0;
+}
+
+.folders a.section .ic {
+  width: 1.05rem;
+  height: 1.05rem;
+  color: var(--text-dim);
 }
 
 .folders a.section span {
@@ -1721,30 +1731,32 @@ dialog.run[open] {
 }
 
 .folders a.section small {
+  color: var(--text-faint);
   font-weight: 400;
-  letter-spacing: 0;
 }
 
 .folders a.section:hover {
-  color: var(--text);
-  background: transparent;
+  background: var(--ink-2);
 }
 
 .folders a.section.active {
-  color: var(--signal);
-  background: transparent;
+  background: var(--signal-wash);
   border-left-color: var(--signal);
 }
 
-/* The folders under a heading, one row each at the menu's alignment,
-   named by their path below the heading: the part above the folder dim,
-   the folder itself bright. A folder is a disclosure: the row opens the
-   folder, the chevron shows its jobs, each with a running dot. */
+.folders a.section.active .ic {
+  color: var(--signal);
+}
+
+/* The folders of a project, one step in, named by their path below the
+   project: the part above the folder dim, the folder itself bright. A
+   folder is a disclosure: the row opens the folder, the chevron shows its
+   jobs, each with a running dot. */
 .folders details.folder summary {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.3rem 0.6rem 0.3rem 1.1rem;
+  padding: 0.3rem 0.6rem 0.3rem 2.65rem;
   color: var(--text-dim);
   border-left: 2px solid transparent;
   list-style: none;
@@ -1850,7 +1862,7 @@ dialog.run[open] {
 }
 
 .folders .jobs .empty {
-  padding: 0.2rem 1.1rem 0.2rem 2.65rem;
+  padding: 0.2rem 1.1rem 0.2rem 4.2rem;
 }
 
 /* The reason a run out of hours needs, asked in the window. */
@@ -1991,9 +2003,8 @@ dialog.run[open] {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  /* One step in from the folder: the dot under the folder's name, which
-     starts after the 1.1rem row, the 1.05rem icon and its 0.5rem gap. */
-  padding: 0.15rem 0.6rem 0.15rem 2.65rem;
+  /* One step in from the folder: the dot under the folder's name. */
+  padding: 0.15rem 0.6rem 0.15rem 4.2rem;
   color: var(--text-dim);
   font-size: 0.8125rem;
   border-left: 2px solid transparent;
@@ -2005,11 +2016,11 @@ dialog.run[open] {
   height: 0.4rem;
 }
 
-/* A heading's own jobs are rows like the folders below them: the dot
-   centred in the icon's column, the name where the folder names start. */
+/* A project's own jobs are rows like its folders: the dot centred in the
+   folder icon's column, the name where the folder names start. */
 .folders .jobs.top .job {
-  padding-left: 1.425rem;
-  gap: 0.775rem;
+  padding-left: 2.975rem;
+  gap: 0.825rem;
 }
 
 .folders .jobs .job a {

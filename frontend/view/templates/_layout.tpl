@@ -52,7 +52,7 @@
 				{{- $active := and $.Folder (eq $.Folder.ID $p.ID) }}
 				{{- if eq $p.Depth 0 }}
 				<a class="section{{ if $active }} active{{ end }}" href="/f/{{ $p.ID }}" data-folder="{{ $p.ID }}" title="{{ $p.ID }}/{{ range $i, $s := $p.Sources }}{{ if $i }}, {{ end }}{{ $s.File }}{{ end }}">
-					<span>{{ $p.Name }}</span>
+					<svg class="ic"><use href="#i-project"/></svg><span>{{ $p.Name }}</span>
 					{{- if $p.Error }}<small class="bad">!</small>{{ else if $p.Jobs }}<small>{{ len $p.Jobs }}</small>{{ end }}
 				</a>
 				{{- if $p.Jobs }}
@@ -122,6 +122,7 @@
 
 {{ define "icons" }}
 <svg xmlns="http://www.w3.org/2000/svg" style="display:none">
+	<symbol id="i-project" viewBox="0 0 16 16"><path d="M3.5 1.5h9v11h-8a1 1 0 0 0-1 1z" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/><path d="M3.5 13.5a1 1 0 0 0 1 1h8v-2" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/><path d="M6 1.5v5l1.25-1 1.25 1v-5" fill="currentColor"/></symbol>
 	<symbol id="i-folder" viewBox="0 0 16 16"><path d="M1.5 3.5A1.5 1.5 0 0 1 3 2h3.2l1.6 1.5H13a1.5 1.5 0 0 1 1.5 1.5v7A1.5 1.5 0 0 1 13 13.5H3a1.5 1.5 0 0 1-1.5-1.5z" fill="none" stroke="currentColor" stroke-width="1.2"/></symbol>
 	<symbol id="i-folder-open" viewBox="0 0 16 16"><path d="M1.5 3.5A1.5 1.5 0 0 1 3 2h3.2l1.6 1.5H13a1.5 1.5 0 0 1 1.5 1.5V6" fill="none" stroke="currentColor" stroke-width="1.2"/><path d="M1.5 6.5h12.3a1 1 0 0 1 .96 1.27l-1.3 4.5a1.5 1.5 0 0 1-1.44 1.08H3a1.5 1.5 0 0 1-1.5-1.5z" fill="currentColor" opacity=".85"/></symbol>
 	<symbol id="i-grid" viewBox="0 0 16 16"><rect x="2" y="2" width="5" height="5" rx="1" fill="none" stroke="currentColor" stroke-width="1.2"/><rect x="9" y="2" width="5" height="5" rx="1" fill="none" stroke="currentColor" stroke-width="1.2"/><rect x="2" y="9" width="5" height="5" rx="1" fill="none" stroke="currentColor" stroke-width="1.2"/><rect x="9" y="9" width="5" height="5" rx="1" fill="none" stroke="currentColor" stroke-width="1.2"/></symbol>
