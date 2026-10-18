@@ -111,6 +111,11 @@ api PUT /env/infra/.env -d '{"content":"# Managed from task-ui; the secrets are 
 api POST /schedules -d '{"folder":"backups","job":"verify","expression":"0 3 * * *"}'
 api POST /schedules -d '{"folder":"infra","job":"plan","expression":"@hourly","enabled":false}'
 
+# Two workflows: a release chain, and one that runs it as a step.
+api POST /workflows -d '{"name":"release","steps":[{"folder":"infra","job":"plan"},{"folder":"infra","job":"deploy"},{"folder":"tools","job":"make:build"}]}'
+release="$(grep -o '"id":"[a-z0-9]*"' "$work/api.out" | head -1 | cut -d'"' -f4)"
+api POST /workflows -d "{\"name\":\"ship\",\"steps\":[{\"folder\":\"tools\",\"job\":\"make:test\"},{\"workflow\":\"${release}\"}]}"
+
 # Real runs, so the history has something to show: a forced run that kills
 # the one before it, a plain one, a failure, and runs in the other folders.
 scripts/run.sh infra deploy >/dev/null 2>&1 &
@@ -126,6 +131,13 @@ scripts/run.sh tools script:report >/dev/null 2>&1
 scripts/run.sh website lint >/dev/null 2>&1 || true
 scripts/run.sh website lint force "customer waiting on the fix" >/dev/null 2>&1 || true
 wait "$first" || true
+
+# A run of the release workflow, so its page has one to show.
+api POST "/workflows/${release}/runs"
+for _ in $(seq 1 200); do
+  curl -fsS "${TASK_UI_BASE}/api/workflows/${release}/runs?limit=1" | grep -q '"state":"running"' || break
+  sleep 0.3
+done
 
 # Every link on every page answers.
 scripts/crawl.sh
@@ -164,6 +176,8 @@ shot tools-dark /f/tools dark 1440x1000
 shot run-page-dark "/runs/${run}" dark
 shot artifacts-dark /artifacts dark
 shot schedules-dark /schedules dark
+shot workflows-dark /workflows dark
+shot workflow-dark "/workflows/${release}" dark
 shot settings-dark /settings dark
 shot projects-dark /settings/projects dark
 shot project-new-dark /settings/projects/new dark
