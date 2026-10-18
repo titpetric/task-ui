@@ -18,3 +18,4 @@ Project.
 | job_hours   | varchar  |     | Job Hours   |
 | created_at  | datetime |     | Created At  |
 | updated_at  | datetime |     | Updated At  |
+| root_only   | boolean  |     | Root Only   |

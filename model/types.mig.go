@@ -376,6 +376,9 @@ type Project struct {
 
 	// Updated At
 	UpdatedAt *time.Time `db:"updated_at" json:"updated_at"`
+
+	// Root Only
+	RootOnly bool `db:"root_only" json:"root_only"`
 }
 
 // GetID will return the value of ID.
@@ -462,11 +465,17 @@ func (p *Project) GetUpdatedAt() *time.Time { return p.UpdatedAt }
 // SetUpdatedAt sets UpdatedAt to the provided value.
 func (p *Project) SetUpdatedAt(stamp time.Time) { p.UpdatedAt = &stamp }
 
+// GetRootOnly will return the value of RootOnly.
+func (p *Project) GetRootOnly() bool { return p.RootOnly }
+
+// SetRootOnly sets RootOnly to the provided value.
+func (p *Project) SetRootOnly(val bool) { p.RootOnly = val }
+
 // ProjectTable is the name of the table in the DB.
 const ProjectTable = "`project`"
 
 // ProjectFields is a list of all columns in the DB table.
-var ProjectFields = []string{"id", "folder", "title", "description", "source_url", "branch", "allow", "commands", "sources", "job_allow", "hours", "job_hours", "created_at", "updated_at"}
+var ProjectFields = []string{"id", "folder", "title", "description", "source_url", "branch", "allow", "commands", "sources", "job_allow", "hours", "job_hours", "created_at", "updated_at", "root_only"}
 
 // ProjectPrimaryFields are the primary key fields in the DB table.
 var ProjectPrimaryFields = []string{"id"}

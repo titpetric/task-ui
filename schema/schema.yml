@@ -186,6 +186,10 @@
       type: timestamp
       comment: Updated At
       datatype: datetime
+    - name: root_only
+      type: boolean
+      comment: Root Only
+      datatype: boolean
   indexes:
     - name: sqlite_autoindex_project_1
       columns:

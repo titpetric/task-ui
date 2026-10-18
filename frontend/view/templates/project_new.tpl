@@ -19,6 +19,9 @@
 		<label for="p-branch">Branch <span class="faint">optional, the default branch otherwise</span></label>
 		<input type="text" id="p-branch" name="branch" spellcheck="false" autocomplete="off">
 	</div>
+	<div class="field">
+		<label class="check"><input type="checkbox" id="p-recursive" name="recursive" checked> Recursive <span class="faint">list the folders inside the checkout too; off lists its own jobs alone</span></label>
+	</div>
 	<div class="form-foot">
 		<a class="btn" href="/settings/projects">Cancel</a>
 		<button class="btn btn-primary" type="submit">Clone</button>

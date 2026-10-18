@@ -159,3 +159,26 @@ func TestProject_UpdateHours(t *testing.T) {
 	assert.Equal(t, http.StatusBadRequest, job.Status)
 	assert.Contains(t, job.str("error"), "plan:")
 }
+
+// A project is recursive unless it is made or set root-only: then its
+// own jobs are listed alone.
+func TestProject_RootOnly(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+
+	res := f.call(t, asAdmin, http.MethodPut, "/projects/infra", api.ProjectRequest{Title: "Infra"})
+	assert.Equal(t, http.StatusOK, res.Status, string(res.Raw))
+	assert.Equal(t, false, res.get("root_only"))
+
+	no := false
+	res = f.call(t, asAdmin, http.MethodPut, "/projects/infra", api.ProjectRequest{Title: "Infra", Recursive: &no})
+	assert.Equal(t, http.StatusOK, res.Status, string(res.Raw))
+	assert.Equal(t, true, res.get("root_only"))
+
+	// A request without the field leaves it as it is.
+	res = f.call(t, asAdmin, http.MethodPut, "/projects/infra", api.ProjectRequest{Title: "Infra"})
+	assert.Equal(t, true, res.get("root_only"))
+	yes := true
+	res = f.call(t, asAdmin, http.MethodPut, "/projects/infra", api.ProjectRequest{Title: "Infra", Recursive: &yes})
+	assert.Equal(t, false, res.get("root_only"))
+}
