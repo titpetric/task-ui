@@ -34,18 +34,27 @@ func (h *Handlers) workflowView(ctx context.Context, p *view.Page, wf model.Work
 	return v
 }
 
+// visibleWorkflows returns the workflows the page's user may see.
+func (h *Handlers) visibleWorkflows(ctx context.Context, p *view.Page) []view.Workflow {
+	result := []view.Workflow{}
+	if h.opts.Workflows == nil {
+		return result
+	}
+	workflows, _ := h.opts.Workflows.List(ctx)
+	for _, wf := range workflows {
+		if v := h.workflowView(ctx, p, wf); v != nil {
+			result = append(result, *v)
+		}
+	}
+	return result
+}
+
 // workflows lists the workflows and takes a new one. Any user may make
 // one, from the jobs they can see.
 func (h *Handlers) workflows(w http.ResponseWriter, r *http.Request) {
 	p := h.page(r, "Workflows")
 	p.Crumbs = view.Crumbs("Workflows")
-	workflows, _ := h.opts.Workflows.List(r.Context())
-	p.Workflows = []view.Workflow{}
-	for _, wf := range workflows {
-		if v := h.workflowView(r.Context(), p, wf); v != nil {
-			p.Workflows = append(p.Workflows, *v)
-		}
-	}
+	p.Workflows = p.SideWorkflows
 	h.render(w, http.StatusOK, "workflows", p)
 }
 

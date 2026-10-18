@@ -28,6 +28,8 @@ type Page struct {
 	Folders []*folder.Folder
 	// Recents are the latest runs the user may see, for the sidebar.
 	Recents []Run
+	// SideWorkflows are the workflows the user may see, for the sidebar.
+	SideWorkflows []Workflow
 	// Running holds the runs in progress by job key.
 	Running map[string]Run
 	// Last holds the latest run of each job the page lists, by job key.
