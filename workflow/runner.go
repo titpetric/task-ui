@@ -1,7 +1,9 @@
 // Package workflow runs workflows: named chains of jobs from any folders,
 // started one after another as ordinary runs. A step starts when the one
 // before it ended ok; the first that does not end ok ends the workflow
-// run, and the steps after it are skipped.
+// run, and the steps after it are skipped. A step may name another
+// workflow instead of a job: it runs as a run of its own, and ends the
+// step as it ended.
 package workflow
 
 import (
@@ -28,10 +30,13 @@ type Catalogue interface {
 	Find(id string) *folder.Folder
 }
 
-// Step is a workflow step resolved to its folder and job.
+// Step is a workflow step resolved to its folder and job, or to the
+// workflow it runs in place of one.
 type Step struct {
 	Folder *folder.Folder
 	Job    *folder.Job
+	// Workflow is the workflow the step runs, nil for a job.
+	Workflow *model.Workflow
 }
 
 // Runner starts workflow runs and walks their steps.
@@ -65,11 +70,19 @@ func New(workflows *storage.WorkflowStorage, runs *storage.WorkflowRunStorage, c
 	}
 }
 
-// Resolve finds the folder and job of every step, or says which one is
-// gone.
-func (r *Runner) Resolve(steps []model.WorkflowStep) ([]Step, error) {
+// Resolve finds the folder and job, or the workflow, of every step, or
+// says which one is gone.
+func (r *Runner) Resolve(ctx context.Context, steps []model.WorkflowStep) ([]Step, error) {
 	resolved := make([]Step, 0, len(steps))
 	for _, step := range steps {
+		if step.IsWorkflow() {
+			wf, err := r.workflows.Get(ctx, step.WorkflowRef)
+			if err != nil {
+				return nil, fmt.Errorf("no workflow %s", step.WorkflowRef)
+			}
+			resolved = append(resolved, Step{Workflow: wf})
+			continue
+		}
 		f := r.catalogue.Find(step.Folder)
 		var job *folder.Job
 		if f != nil {
@@ -90,7 +103,7 @@ func (r *Runner) Start(ctx context.Context, workflow *model.Workflow, user *mode
 	if err != nil {
 		return nil, err
 	}
-	resolved, err := r.Resolve(steps)
+	resolved, err := r.Resolve(ctx, steps)
 	if err != nil {
 		return nil, err
 	}
@@ -176,8 +189,13 @@ func (r *Runner) walk(ctx context.Context, a *active, steps []Step, rows []model
 			r.saveStep(store, row)
 			continue
 		}
-		state, runID, message := r.step(ctx, step, user)
-		row.State, row.RunID = state, runID
+		var state, message string
+		if step.Workflow != nil {
+			state, row.WorkflowRunRef, message = r.nested(ctx, step.Workflow, user)
+		} else {
+			state, row.RunID, message = r.step(ctx, step, user)
+		}
+		row.State = state
 		r.saveStep(store, row)
 		switch {
 		case state == model.StateOK:
@@ -225,6 +243,41 @@ func (r *Runner) step(ctx context.Context, step Step, user *model.User) (state, 
 	}
 }
 
+// nested runs the workflow a step names and waits for it. One already
+// running is waited for and then started again; a stop ends the run in
+// progress. The run's own state and message are the step's.
+func (r *Runner) nested(ctx context.Context, wf *model.Workflow, user *model.User) (state, runID, message string) {
+	for {
+		if ctx.Err() != nil {
+			return model.StateStopped, "", ""
+		}
+		run, err := r.Start(context.WithoutCancel(ctx), wf, user)
+		if errors.Is(err, ErrBusy) {
+			running, _ := r.Active(wf.ID)
+			select {
+			case <-r.Done(running):
+				continue
+			case <-ctx.Done():
+				return model.StateStopped, "", ""
+			}
+		}
+		if err != nil {
+			return model.StateFailed, "", err.Error()
+		}
+		select {
+		case <-r.Done(run.ID):
+		case <-ctx.Done():
+			_ = r.Stop(run.ID)
+			<-r.Done(run.ID)
+		}
+		ended, err := r.runs.Get(context.Background(), run.ID)
+		if err != nil {
+			return model.StateFailed, run.ID, err.Error()
+		}
+		return ended.State, run.ID, ended.Message
+	}
+}
+
 func (r *Runner) saveStep(ctx context.Context, row *model.WorkflowRunStep) {
 	if err := r.runs.UpdateStep(ctx, row); err != nil {
 		slog.Warn("workflow step not saved", "folder", row.Folder, "job", row.Job, "err", err)
@@ -232,6 +285,9 @@ func (r *Runner) saveStep(ctx context.Context, row *model.WorkflowRunStep) {
 }
 
 func label(step Step) string {
+	if step.Workflow != nil {
+		return step.Workflow.Name
+	}
 	return step.Folder.ID + " / " + step.Job.ID
 }
 

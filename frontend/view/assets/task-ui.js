@@ -531,21 +531,29 @@
 
   // ------------------------------------------------------------- workflows
 
-  // workflowSteps reads a workflow form's steps, in their order.
+  // A step's folder select also lists the workflows, as workflow:<id>.
+  var WORKFLOW = "workflow:";
+
+  // workflowSteps reads a workflow form's steps, in their order: a job of
+  // a folder, or a workflow.
   function workflowSteps(form) {
     return Array.prototype.map.call(form.querySelectorAll("[data-step]"), function (row) {
-      return {
-        folder: row.querySelector("[data-step-folder]").value,
-        job: row.querySelector("[data-step-job]").value,
-      };
+      var folder = row.querySelector("[data-step-folder]").value;
+      if (folder.indexOf(WORKFLOW) === 0) return { workflow: folder.slice(WORKFLOW.length) };
+      return { folder: folder, job: row.querySelector("[data-step-job]").value };
     });
   }
 
   // narrowStep keeps the jobs of the step's folder in its job select,
-  // and the job picked when it still belongs.
+  // and the job picked when it still belongs. A step that runs a
+  // workflow has no job to pick.
   function narrowStep(row) {
     var folder = row.querySelector("[data-step-folder]");
     var job = row.querySelector("[data-step-job]");
+    var flow = folder.value.indexOf(WORKFLOW) === 0;
+    job.hidden = flow;
+    job.required = !flow;
+    if (flow) return;
     if (!job.allOptions) job.allOptions = Array.prototype.slice.call(job.options);
     var picked = job.value;
     job.innerHTML = "";

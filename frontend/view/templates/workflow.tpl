@@ -3,7 +3,7 @@
 <div class="page-head">
 	<div>
 		<h2>{{ $w.Name }}</h2>
-		<p class="chain">{{ range $i, $s := $w.Steps }}{{ if $i }}<span class="faint"> → </span>{{ end }}<a class="nowrap" href="/f/{{ $s.Folder }}/{{ $s.Job }}">{{ $s.Folder }} / {{ $s.Job }}</a>{{ end }}</p>
+		<p class="chain">{{ template "chain" $w.Steps }}</p>
 	</div>
 	<div class="actions">
 		{{- if $w.CanRun }}{{ if $w.Running }}
@@ -28,7 +28,7 @@
 				<td class="nowrap" data-label="Started" title="{{ stamp .StartedAt }}">{{ ago .StartedAt }}</td>
 				<td data-label="By">{{ .UserName }}</td>
 				<td data-label="Result"><span class="state"><i class="dot {{ .State }}"></i>{{ .State }}</span>{{ if .Message }} <span class="faint">{{ .Message }}</span>{{ end }}</td>
-				<td data-label="Steps"><span class="chain">{{ range $i, $s := .Steps }}{{ if $i }}<span class="faint"> → </span>{{ end }}<span class="nowrap">{{ if $s.RunID }}<a href="/runs/{{ $s.RunID }}" data-attach="{{ $s.RunID }}">{{ end }}<i class="dot {{ $s.State }}"></i>{{ $s.Folder }} / {{ $s.Job }}{{ if $s.RunID }}</a>{{ end }}</span>{{ end }}</span></td>
+				<td data-label="Steps"><span class="chain">{{ template "chain" .Steps }}</span></td>
 			</tr>
 		{{- else }}
 			<tr class="empty"><td colspan="4">Not run yet.</td></tr>

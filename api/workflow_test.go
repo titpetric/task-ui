@@ -172,3 +172,47 @@ func TestWorkflow_ChangeAndDelete(t *testing.T) {
 	assert.Equal(t, http.StatusNoContent, f.call(t, asOps, http.MethodDelete, "/workflows/"+id, nil).Status)
 	assert.Equal(t, http.StatusNotFound, f.call(t, asOps, http.MethodGet, "/workflows/"+id, nil).Status)
 }
+
+// A step may name another workflow: the user sees it when they see
+// every step of it, and runs it when they may run them all.
+func TestWorkflow_Nested(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	inner := f.createWorkflow(t, asOps, "inner", chain("infra", "plan"))
+
+	res := f.call(t, asOps, http.MethodPost, "/workflows", api.WorkflowRequest{Name: "outer", Steps: []api.StepRequest{{Folder: "infra", Job: "plan"}, {Workflow: inner}}})
+	assert.Equal(t, http.StatusCreated, res.Status, string(res.Raw))
+	outer := res.str("id")
+	assert.Equal(t, inner, res.list("steps")[1].(map[string]any)["workflow_ref"])
+
+	missing := f.call(t, asOps, http.MethodPost, "/workflows", api.WorkflowRequest{Name: "gone", Steps: []api.StepRequest{{Workflow: "nope"}}})
+	assert.Equal(t, http.StatusBadRequest, missing.Status)
+	loop := f.call(t, asOps, http.MethodPut, "/workflows/"+inner, api.WorkflowRequest{Name: "inner", Steps: []api.StepRequest{{Workflow: outer}}})
+	assert.Equal(t, http.StatusBadRequest, loop.Status)
+	assert.Contains(t, loop.str("error"), "loop")
+
+	started := f.call(t, asOps, http.MethodPost, "/workflows/"+outer+"/runs", nil)
+	assert.Equal(t, http.StatusCreated, started.Status, string(started.Raw))
+	run := f.workflowRun(t, outer, started.str("id"))
+	assert.Equal(t, model.StateOK, run["state"])
+	assert.Equal(t, []string{"ok", "ok"}, stepStates(run))
+	nested := run["steps"].([]any)[1].(map[string]any)
+	assert.True(t, nested["workflow_run_ref"] != "", "the run of inner")
+
+	// A workflow around a folder the user can not see is hidden, and
+	// one around a job they may not run is not theirs to run.
+	private := f.createWorkflow(t, asAdmin, "private", chain("private", "deploy"))
+	wrap := f.createWorkflow(t, asAdmin, "wrap", []api.StepRequest{{Workflow: private}})
+	assert.Equal(t, http.StatusNotFound, f.call(t, asLimited, http.MethodGet, "/workflows/"+wrap, nil).Status)
+	seen := f.call(t, asOps, http.MethodGet, "/workflows/"+wrap, nil)
+	assert.Equal(t, http.StatusOK, seen.Status)
+	assert.Equal(t, false, seen.get("can_run"))
+	denied := f.call(t, asOps, http.MethodPost, "/workflows/"+wrap+"/runs", nil)
+	assert.Equal(t, http.StatusForbidden, denied.Status)
+	assert.Contains(t, denied.str("error"), "private / deploy")
+
+	// A workflow another one runs stays.
+	used := f.call(t, asOps, http.MethodDelete, "/workflows/"+inner, nil)
+	assert.Equal(t, http.StatusConflict, used.Status)
+	assert.Contains(t, used.str("error"), "outer")
+}

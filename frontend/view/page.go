@@ -30,6 +30,9 @@ type Page struct {
 	Recents []Run
 	// SideWorkflows are the workflows the user may see, for the sidebar.
 	SideWorkflows []Workflow
+	// StepWorkflows are the workflows a step of the one edited may run:
+	// those the user sees, less the one edited and those that run it.
+	StepWorkflows []Workflow
 	// Running holds the runs in progress by job key.
 	Running map[string]Run
 	// Last holds the latest run of each job the page lists, by job key.

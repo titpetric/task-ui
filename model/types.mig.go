@@ -1224,6 +1224,12 @@ type WorkflowRunStep struct {
 
 	// Updated At
 	UpdatedAt *time.Time `db:"updated_at" json:"updated_at"`
+
+	// Workflow Ref
+	WorkflowRef string `db:"workflow_ref" json:"workflow_ref"`
+
+	// Workflow Run Ref
+	WorkflowRunRef string `db:"workflow_run_ref" json:"workflow_run_ref"`
 }
 
 // GetID will return the value of ID.
@@ -1280,11 +1286,23 @@ func (w *WorkflowRunStep) GetUpdatedAt() *time.Time { return w.UpdatedAt }
 // SetUpdatedAt sets UpdatedAt to the provided value.
 func (w *WorkflowRunStep) SetUpdatedAt(stamp time.Time) { w.UpdatedAt = &stamp }
 
+// GetWorkflowRef will return the value of WorkflowRef.
+func (w *WorkflowRunStep) GetWorkflowRef() string { return w.WorkflowRef }
+
+// SetWorkflowRef sets WorkflowRef to the provided value.
+func (w *WorkflowRunStep) SetWorkflowRef(val string) { w.WorkflowRef = val }
+
+// GetWorkflowRunRef will return the value of WorkflowRunRef.
+func (w *WorkflowRunStep) GetWorkflowRunRef() string { return w.WorkflowRunRef }
+
+// SetWorkflowRunRef sets WorkflowRunRef to the provided value.
+func (w *WorkflowRunStep) SetWorkflowRunRef(val string) { w.WorkflowRunRef = val }
+
 // WorkflowRunStepTable is the name of the table in the DB.
 const WorkflowRunStepTable = "`workflow_run_step`"
 
 // WorkflowRunStepFields is a list of all columns in the DB table.
-var WorkflowRunStepFields = []string{"id", "workflow_run_id", "position", "folder", "job", "run_id", "state", "created_at", "updated_at"}
+var WorkflowRunStepFields = []string{"id", "workflow_run_id", "position", "folder", "job", "run_id", "state", "created_at", "updated_at", "workflow_ref", "workflow_run_ref"}
 
 // WorkflowRunStepPrimaryFields are the primary key fields in the DB table.
 var WorkflowRunStepPrimaryFields = []string{"id"}
@@ -1307,6 +1325,9 @@ type WorkflowStep struct {
 
 	// Job
 	Job string `db:"job" json:"job"`
+
+	// Workflow Ref
+	WorkflowRef string `db:"workflow_ref" json:"workflow_ref"`
 }
 
 // GetID will return the value of ID.
@@ -1339,11 +1360,17 @@ func (w *WorkflowStep) GetJob() string { return w.Job }
 // SetJob sets Job to the provided value.
 func (w *WorkflowStep) SetJob(val string) { w.Job = val }
 
+// GetWorkflowRef will return the value of WorkflowRef.
+func (w *WorkflowStep) GetWorkflowRef() string { return w.WorkflowRef }
+
+// SetWorkflowRef sets WorkflowRef to the provided value.
+func (w *WorkflowStep) SetWorkflowRef(val string) { w.WorkflowRef = val }
+
 // WorkflowStepTable is the name of the table in the DB.
 const WorkflowStepTable = "`workflow_step`"
 
 // WorkflowStepFields is a list of all columns in the DB table.
-var WorkflowStepFields = []string{"id", "workflow_id", "position", "folder", "job"}
+var WorkflowStepFields = []string{"id", "workflow_id", "position", "folder", "job", "workflow_ref"}
 
 // WorkflowStepPrimaryFields are the primary key fields in the DB table.
 var WorkflowStepPrimaryFields = []string{"id"}

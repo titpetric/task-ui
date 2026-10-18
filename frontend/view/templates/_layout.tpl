@@ -48,7 +48,7 @@
 					{{- range .SideWorkflows }}
 					<div class="flow{{ if $.IsPath (print "/workflows/" .ID) }} active{{ end }}">
 						<i class="dot{{ if .Running }} running{{ end }}"></i>
-						<a class="name" href="/workflows/{{ .ID }}" title="{{ range $i, $s := .Steps }}{{ if $i }} → {{ end }}{{ $s.Folder }} / {{ $s.Job }}{{ end }}">{{ .Name }}</a>
+						<a class="name" href="/workflows/{{ .ID }}" title="{{ range $i, $l := chain .Steps }}{{ if $i }} → {{ end }}{{ $l.Text }}{{ end }}">{{ .Name }}</a>
 						{{- if .Running }}
 						<a class="play" href="/workflows/{{ .ID }}" title="{{ .Name }}, running" aria-label="Watch {{ .Name }}"><svg class="ic"><use href="#i-eye"/></svg></a>
 						{{- else if .CanRun }}
@@ -229,9 +229,9 @@
 		<input type="text" id="wf-name{{ if $w }}-{{ $w.ID }}{{ end }}" name="name" value="{{ if $w }}{{ $w.Name }}{{ end }}" placeholder="deploy" autocomplete="off" required>
 	</div>
 	<ol class="steps" data-steps>
-		{{- if $w }}{{ range $w.Steps }}{{ template "steprow" (list $p .Folder .Job) }}{{ end }}{{ else }}{{ template "steprow" (list $p "" "") }}{{ end }}
+		{{- if $w }}{{ range $w.Steps }}{{ template "steprow" (list $p .Folder .Job .WorkflowID) }}{{ end }}{{ else }}{{ template "steprow" (list $p "" "" "") }}{{ end }}
 	</ol>
-	<template data-step-template>{{ template "steprow" (list $p "" "") }}</template>
+	<template data-step-template>{{ template "steprow" (list $p "" "" "") }}</template>
 	<div class="form-foot">
 		<button type="button" class="btn" data-step-add>Add step</button>
 		<button class="btn btn-primary" type="submit">{{ $label }}</button>
@@ -240,12 +240,19 @@
 {{ end }}
 
 {{ define "steprow" }}
-{{- $p := index . 0 }}{{ $folder := index . 1 }}{{ $job := index . 2 -}}
+{{- $p := index . 0 }}{{ $folder := index . 1 }}{{ $job := index . 2 }}{{ $ref := index . 3 -}}
 <li class="step" data-step>
-	<select data-step-folder aria-label="Folder" required>
+	<select data-step-folder aria-label="Folder or workflow" required>
 		{{- range $p.Folders }}{{ if .Jobs }}
 		<option value="{{ .ID }}"{{ if eq .ID $folder }} selected{{ end }}>{{ .ID }}</option>
 		{{- end }}{{ end }}
+		{{- if $p.StepWorkflows }}
+		<optgroup label="Workflows">
+			{{- range $p.StepWorkflows }}
+			<option value="workflow:{{ .ID }}"{{ if eq .ID $ref }} selected{{ end }}>{{ .Name }}</option>
+			{{- end }}
+		</optgroup>
+		{{- end }}
 	</select>
 	<select data-step-job aria-label="Job" required>
 		{{- range $f := $p.Folders }}{{ range $f.Jobs }}
@@ -258,6 +265,12 @@
 		<button type="button" class="btn-icon danger" data-step-remove title="Remove" aria-label="Remove step"><svg class="ic"><use href="#i-trash"/></svg></button>
 	</span>
 </li>
+{{- end }}
+
+{{/* chain draws a workflow's steps, or a run's: a folder once for the
+     steps that follow in it, a workflow step by its name, each linked. */}}
+{{- define "chain" }}
+{{- range $i, $l := chain . }}{{ if $i }}<span class="faint"> → </span>{{ end }}<a class="nowrap" href="{{ $l.Href }}"{{ if $l.RunID }} data-attach="{{ $l.RunID }}"{{ end }}>{{ if $l.State }}<i class="dot {{ $l.State }}"></i>{{ end }}{{ if $l.Workflow }}<svg class="ic"><use href="#i-flow"/></svg>{{ end }}{{ $l.Text }}</a>{{ end }}
 {{- end }}
 
 {{ define "runButtons" }}
