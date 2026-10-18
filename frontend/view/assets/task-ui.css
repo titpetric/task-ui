@@ -2334,6 +2334,26 @@ pre.output {
   display: none;
 }
 
+/* The chain of a workflow a step ran, under that step. */
+.pipeline.sub {
+  margin-top: 0.5rem;
+  padding: 0;
+}
+
+.pipeline.sub:empty {
+  display: none;
+}
+
+.pipeline.sub .node {
+  padding-bottom: 0.8rem;
+}
+
+.pipeline.sub .rail .dot {
+  width: 0.55rem;
+  height: 0.55rem;
+  margin-top: 0.35rem;
+}
+
 .pipeline .what a {
   color: var(--text);
 }

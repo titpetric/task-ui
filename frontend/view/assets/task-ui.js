@@ -668,14 +668,19 @@
   }
 
   function workflowEvent(name, data) {
-    var nodes = Array.prototype.slice.call(document.querySelectorAll("[data-pipeline] [data-step]"));
+    var nodes = Array.prototype.slice.call(document.querySelectorAll("[data-pipeline] > [data-step]"));
     var latest = document.querySelector("[data-latest]");
     var runs = document.querySelector("[data-runs]");
     var actions = document.querySelector("[data-actions]");
     var row = runs && runs.querySelector('[data-run="' + data.run_id + '"]');
 
     if (name === "run") {
-      nodes.forEach(function (node) { setStep(node, "pending", null, null); });
+      nodes.forEach(function (node) {
+        setStep(node, "pending", null, null);
+        // A step that ran a workflow starts over: its chain comes with the run.
+        var sub = node.querySelector(".pipeline.sub");
+        if (sub) sub.innerHTML = "";
+      });
       if (latest) {
         latest.innerHTML = "";
         latest.appendChild(document.createTextNode("Latest run "));
@@ -736,6 +741,7 @@
       var href = data.step_run_id ? "/runs/" + data.step_run_id : null;
       if (node) setStep(node, data.state, href, data.step_run_id || null);
       if (node && data.step_run_id) stepFrame(node, data.step_run_id, data.state === "running");
+      if (node && data.workflow_ref && data.workflow_run_ref) subChain(node, data.workflow_ref, data.workflow_run_ref);
       // A window open on this page follows the workflow: as a step
       // starts, the window attaches to its run.
       if (data.state === "running" && data.step_run_id && session && dialog && dialog.open) attach(data.step_run_id);
@@ -782,6 +788,58 @@
     }
   }
 
+  // subChain follows the workflow a step runs: its steps are drawn under
+  // the step as its topic reports them, with their terminals, and a
+  // window open on the page follows into them.
+  var subSources = {};
+  function subChain(node, workflowId, runId) {
+    var sub = node.querySelector(".pipeline.sub");
+    if (!sub) {
+      sub = el("ol", "pipeline sub");
+      node.querySelector(".what").appendChild(sub);
+    }
+    if (sub.dataset.sub !== runId) {
+      sub.innerHTML = "";
+      sub.dataset.sub = runId;
+      sub.dataset.workflow = workflowId;
+    }
+    if (subSources[workflowId]) return;
+    var source = new EventSource("/api/sse/workflow:" + encodeURIComponent(workflowId));
+    subSources[workflowId] = source;
+    source.addEventListener("step", function (event) {
+      var data;
+      try { data = JSON.parse(event.data); } catch (e) { return; }
+      var list = document.querySelector('.pipeline.sub[data-sub="' + data.run_id + '"]');
+      if (!list) return;
+      var item = list.querySelector('[data-step="' + data.position + '"]');
+      if (!item) {
+        item = el("li", "node");
+        item.dataset.step = data.position;
+        var rail = el("span", "rail");
+        rail.appendChild(el("i", "dot"));
+        var what = el("div", "what");
+        var a = el("a");
+        if (data.workflow_ref) {
+          a.href = "/workflows/" + data.workflow_ref;
+          a.appendChild(icon("i-flow"));
+          a.appendChild(document.createTextNode("workflow"));
+        } else {
+          a.href = "/f/" + data.folder + "/" + data.job;
+          a.textContent = data.folder + " / " + data.job;
+        }
+        what.appendChild(a);
+        what.appendChild(el("small"));
+        item.appendChild(rail);
+        item.appendChild(what);
+        list.appendChild(item);
+      }
+      var href = data.step_run_id ? "/runs/" + data.step_run_id : null;
+      setStep(item, data.state, href, data.step_run_id || null);
+      if (data.step_run_id) stepFrame(item, data.step_run_id, data.state === "running");
+      if (data.state === "running" && data.step_run_id && session && dialog && dialog.open) attach(data.step_run_id);
+    });
+  }
+
   // stepFrame puts the step's terminal under its name: polled while the
   // run goes, fetched once more when it ended.
   function stepFrame(node, runId, running) {
@@ -823,8 +881,12 @@
 
   if (live && window.EventSource) {
     // Each link keeps where it pointed before a run, to point back to.
-    document.querySelectorAll("[data-pipeline] [data-step] a").forEach(function (a) {
+    document.querySelectorAll("[data-pipeline] [data-step] > .what > a").forEach(function (a) {
       if (!a.dataset.attach) a.dataset.target = a.getAttribute("href");
+    });
+    // The workflows the steps run are followed too, for their chains.
+    document.querySelectorAll("[data-pipeline] > [data-step] .pipeline.sub[data-workflow]").forEach(function (sub) {
+      subChain(sub.closest("[data-step]"), sub.dataset.workflow, sub.dataset.sub);
     });
     var source = new EventSource("/api/sse/" + encodeURIComponent(live.dataset.sse));
     ["run", "step", "done"].forEach(function (name) {
