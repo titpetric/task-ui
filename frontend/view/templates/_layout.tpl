@@ -14,13 +14,13 @@
 {{ template "icons" . }}
 {{- if not .User }}
 	<header class="top login-top">
-		<h1><a href="/">TaskUI</a></h1>
+		<h1><a href="/">TaskUI{{ template "logo" }}</a></h1>
 	</header>
 	{{ template "content" . }}
 {{- else }}
 	<header class="top">
 		<button type="button" class="btn-icon menu-toggle" id="menu-toggle" aria-label="Menu" aria-controls="side" aria-expanded="false"><svg class="ic"><use href="#i-menu"/></svg></button>
-		<h1><a href="/">TaskUI</a></h1>
+		<h1><a href="/">TaskUI{{ template "logo" }}</a></h1>
 		<span class="spacer"></span>
 		<details class="user" id="user-menu">
 			<summary aria-label="{{ .User.Name }}, {{ .User.Role }}" title="{{ .User.Name }}"><span class="avatar">{{ .User.Initials }}</span></summary>
@@ -50,30 +50,29 @@
 				{{- $total := 0 }}{{ range .Folders }}{{ $total = len .Jobs | add $total }}{{ end }}
 				{{- range $p := .Folders }}
 				{{- $active := and $.Folder (eq $.Folder.ID $p.ID) }}
-				<details class="folder{{ if $active }} active{{ end }}" data-folder="{{ $p.ID }}" style="--depth: {{ $p.Depth }}"{{ if or $active (le $total 24) }} open{{ end }}>
+				{{- if eq $p.Depth 0 }}
+				<a class="section{{ if $active }} active{{ end }}" href="/f/{{ $p.ID }}" data-folder="{{ $p.ID }}" title="{{ $p.ID }}/{{ range $i, $s := $p.Sources }}{{ if $i }}, {{ end }}{{ $s.File }}{{ end }}">
+					<span>{{ $p.Name }}</span>
+					{{- if $p.Error }}<small class="bad">!</small>{{ else if $p.Jobs }}<small>{{ len $p.Jobs }}</small>{{ end }}
+				</a>
+				{{- if $p.Jobs }}
+				<div class="jobs top">
+					{{- template "sidejobs" (list $ $p) }}
+				</div>
+				{{- end }}
+				{{- else }}
+				<details class="folder{{ if $active }} active{{ end }}" data-folder="{{ $p.ID }}"{{ if or $active (le $total 24) }} open{{ end }}>
 					<summary title="{{ $p.ID }}/{{ range $i, $s := $p.Sources }}{{ if $i }}, {{ end }}{{ $s.File }}{{ end }}">
-						<a href="/f/{{ $p.ID }}"><svg class="ic"><use href="#i-folder{{ if $active }}-open{{ end }}"/></svg><span>{{ $p.Name }}</span></a>
+						<a href="/f/{{ $p.ID }}"><svg class="ic"><use href="#i-folder{{ if $active }}-open{{ end }}"/></svg><span>{{ with folderDir $p.ID }}<i>{{ . }}/</i>{{ end }}<b>{{ $p.Name }}</b></span></a>
 						<i class="dot"></i>
 						{{- if $p.Error }}<small class="bad">!</small>{{ else }}<small>{{ len $p.Jobs }}</small>{{ end }}
 						<svg class="ic chev"><use href="#i-chev"/></svg>
 					</summary>
 					<div class="jobs">
-						{{- range $r := $p.Jobs }}
-						{{- $run := $.RunningRun $r.Key }}
-						<div class="job{{ if and $.Job (eq $.Job.Key $r.Key) }} active{{ end }}" data-job-key="{{ $r.Key }}">
-							<i class="dot{{ if $run }} running{{ end }}"></i>
-							<a href="/f/{{ $p.ID }}/{{ $r.ID }}">{{ $r.Name }}</a>
-							{{- if $run }}
-							<button type="button" class="play" data-attach="{{ $run.ID }}" title="Attach to {{ $r.Name }}, running" aria-label="Attach to {{ $r.Name }}"><svg class="ic"><use href="#i-eye"/></svg></button>
-							{{- else if $.CanRun $p $r }}
-							<button type="button" class="play" data-run data-folder="{{ $p.ID }}" data-job="{{ $r.ID }}" data-title="{{ $p.ID }} / {{ $r.Name }}" title="Run {{ $r.Name }}" aria-label="Run {{ $r.Name }}"><svg class="ic"><use href="#i-play"/></svg></button>
-							{{- end }}
-						</div>
-						{{- else }}
-						<div class="empty">Nothing to run.</div>
-						{{- end }}
+						{{- template "sidejobs" (list $ $p) }}
 					</div>
 				</details>
+				{{- end }}
 				{{- else }}
 				<div class="empty">No folders. Add one from a git repository in Settings, or put a folder with something to run under the root.</div>
 				{{- end }}
@@ -206,3 +205,23 @@
 <button type="button" class="btn btn-primary btn-sm" data-run data-folder="{{ $p.ID }}" data-job="{{ $r.ID }}" data-title="{{ $p.ID }} / {{ $r.Name }}"><svg class="ic"><use href="#i-play"/></svg>Run</button>
 <button type="button" class="btn btn-danger btn-sm" data-run data-force data-folder="{{ $p.ID }}" data-job="{{ $r.ID }}" data-title="{{ $p.ID }} / {{ $r.Name }}" title="Kill the run in progress, then run again">Run force</button>
 {{- end }}
+
+{{- define "sidejobs" }}
+{{- $ := index . 0 }}{{ $p := index . 1 }}
+{{- range $r := $p.Jobs }}
+{{- $run := $.RunningRun $r.Key }}
+<div class="job{{ if and $.Job (eq $.Job.Key $r.Key) }} active{{ end }}" data-job-key="{{ $r.Key }}">
+	<i class="dot{{ if $run }} running{{ end }}"></i>
+	<a href="/f/{{ $p.ID }}/{{ $r.ID }}">{{ if ne $r.ID $r.Name }}<i>{{ index (split $r.ID ":") 0 }}:</i>{{ end }}{{ $r.Name }}</a>
+	{{- if $run }}
+	<button type="button" class="play" data-attach="{{ $run.ID }}" title="Attach to {{ $r.Name }}, running" aria-label="Attach to {{ $r.Name }}"><svg class="ic"><use href="#i-eye"/></svg></button>
+	{{- else if $.CanRun $p $r }}
+	<button type="button" class="play" data-run data-folder="{{ $p.ID }}" data-job="{{ $r.ID }}" data-title="{{ $p.ID }} / {{ $r.Name }}" title="Run {{ $r.Name }}" aria-label="Run {{ $r.Name }}"><svg class="ic"><use href="#i-play"/></svg></button>
+	{{- end }}
+</div>
+{{- else }}
+<div class="empty">Nothing to run.</div>
+{{- end }}
+{{- end }}
+
+{{- define "logo" }}<svg class="logo" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="3"/><path class="prompt" d="M8 10l6 6-6 6"/><path class="cursor" d="M16 23h8"/></svg>{{ end }}
