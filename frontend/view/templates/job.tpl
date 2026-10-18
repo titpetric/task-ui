@@ -16,7 +16,7 @@
 {{- if $run }}
 <div class="alert signal">
 	<span class="state"><i class="dot running"></i><b>Running</b></span>, started by <b>{{ $run.UserName }}</b> {{ ago $run.StartedAt }}{{ if $run.Attached }}, {{ $run.Attached }} watching{{ end }}.
-	{{- if $can }} Attach to follow it, kill it, or rerun it from its window.{{ else }} Attach to follow it.{{ end }}
+	{{- if $can }} Attach to follow it, or kill it.{{ else }} Attach to follow it.{{ end }}
 </div>
 {{- end }}
 {{- if not $can }}

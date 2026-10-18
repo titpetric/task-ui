@@ -17,7 +17,7 @@ func TestFolder(t *testing.T) {
 	f.run(t, "infra", "plan", "ops", model.StateFailed)
 
 	// Run force stands beside Run only for a job with hours, where a
-	// plain run can be refused; a run in progress is rerun from its window.
+	// plain run can be refused; a run that failed is forced from its window.
 	f.infra.Job("plan").Hours = "mon-fri 9-17"
 
 	body := f.page(t, asOps, "/f/infra")
