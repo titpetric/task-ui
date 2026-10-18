@@ -46,7 +46,7 @@ func TestPage_ProjectsFold(t *testing.T) {
 	private := strings.Index(body, `<details class="project" data-project="private" open>`)
 	assert.True(t, infra >= 0 && edge > infra && private > edge, "infra holds infra/edge, then private")
 	assert.True(t, strings.Index(body[infra:], "</details>") > edge-infra, "infra closes after infra/edge")
-	chev := body[infra:strings.Index(body[infra:], "</summary>")+infra]
+	chev := body[infra : strings.Index(body[infra:], "</summary>")+infra]
 	assert.Contains(t, chev, `<a class="section" href="/f/infra" data-folder="infra"`)
 	assert.Contains(t, chev, `<svg class="ic chev"><use href="#i-chev"/></svg>`)
 
