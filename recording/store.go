@@ -38,6 +38,14 @@ func (s *Store) Relative(path string) string {
 	return rel
 }
 
+// Read opens the recording a run row names, for playback.
+func (s *Store) Read(run *model.Run) (*os.File, error) {
+	if run.CastPath == "" {
+		return nil, os.ErrNotExist
+	}
+	return os.Open(filepath.Join(s.Root, filepath.FromSlash(run.CastPath)))
+}
+
 // Open starts a recording for a run.
 func (s *Store) Open(run *model.Run) (*Recorder, error) {
 	path, err := s.Path(run)

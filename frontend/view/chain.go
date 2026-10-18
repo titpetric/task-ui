@@ -1,5 +1,7 @@
 package view
 
+import "html/template"
+
 // Step is a step of a workflow, or of a run of one, as a page shows
 // it: a job of a folder, or another workflow.
 type Step struct {
@@ -25,6 +27,9 @@ type Link struct {
 	RunID string
 	// Workflow says the step runs a workflow.
 	Workflow bool
+	// FrameSVG is the last screen of the step's run, when the page shows
+	// it.
+	FrameSVG template.HTML
 }
 
 // Chain turns steps into links. A folder is named once, for the steps
