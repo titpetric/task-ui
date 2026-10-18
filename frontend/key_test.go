@@ -1,10 +1,13 @@
 package frontend_test
 
 import (
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
 	"github.com/titpetric/task-ui/internal/assert"
+	"github.com/titpetric/task-ui/sshkey"
 )
 
 func TestKeys(t *testing.T) {
@@ -57,4 +60,25 @@ func TestKeys_Encrypting(t *testing.T) {
 	assert.Contains(t, body, `title="The secrets are encrypted with this key"`)
 	// One badge: the ECDSA key does not encrypt.
 	assert.Equal(t, 1, strings.Count(body, "secrets</span>"))
+}
+
+// A project that is a checkout with keys in its .ssh/ folder lists them
+// under the instance keys, to copy and nothing else: the project manages
+// them. A folder that is not a checkout lists none.
+func TestKeys_ProjectFolders(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	dir := filepath.Join(f.infra.Dir, ".ssh")
+	key, err := (&sshkey.Store{Dir: dir}).Generate("rsa", "deploy")
+	assert.NoError(t, err)
+
+	plain := f.page(t, asAdmin, "/settings/keys")
+	assert.NotContains(t, plain, dir)
+
+	assert.NoError(t, os.MkdirAll(filepath.Join(f.infra.Dir, ".git"), 0o755))
+	body := f.page(t, asAdmin, "/settings/keys")
+	assert.Contains(t, body, dir+" · for the runs of infra")
+	assert.Contains(t, body, strings.ReplaceAll(key.Fingerprint, "+", "&#43;"))
+	assert.Contains(t, body, `data-copy="ssh-rsa`)
+	assert.NotContains(t, body, `data-delete="/api/keys/id_rsa"`)
 }
