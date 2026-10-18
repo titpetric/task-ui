@@ -111,6 +111,17 @@ func (j *jobSpec) UnmarshalYAML(node *yamlNode) error {
 	return nil
 }
 
+// firstLabel is the label of the job's first labelled step, what atkins
+// shows for a job without a desc.
+func (j *jobSpec) firstLabel() string {
+	for _, step := range j.steps() {
+		if label := step.Label(); label != "" {
+			return label
+		}
+	}
+	return ""
+}
+
 func (j *jobSpec) steps() []stepSpec {
 	if len(j.Steps) > 0 {
 		return j.Steps

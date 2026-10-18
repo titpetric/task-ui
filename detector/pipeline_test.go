@@ -41,6 +41,15 @@ jobs:
   nodesc:
     steps:
       - run: echo
+  default:
+    passthru: true
+    steps:
+      - task: go:fmt
+      - task: go:test
+  helper:
+    internal: true
+    steps:
+      - run: echo
 `)
 	source := (pipelineDetector{kind: "atkins", names: atkinsNames}).Detect(dir)
 	if source == nil || source.Error != "" {
@@ -63,8 +72,16 @@ jobs:
 	for _, target := range source.Targets {
 		got = append(got, target.Name)
 	}
-	if want := []string{"build", "deploy", "list", "up"}; !slices.Equal(got, want) {
+	// atkins lists every job, as `atkins -l` does: one without a desc is
+	// described by its first step. Internal and show: false jobs stay out.
+	if want := []string{"build", "default", "deploy", "list", "nodesc", "up"}; !slices.Equal(got, want) {
 		t.Fatalf("targets: got %v, want %v", got, want)
+	}
+	if nodesc := source.Target("nodesc"); nodesc.Description != "run: echo" {
+		t.Fatalf("nodesc description: %q", nodesc.Description)
+	}
+	if def := source.Target("default"); def.Description != "task: go:fmt" || !slices.Equal(def.Steps, []string{"task: go:fmt", "task: go:test"}) {
+		t.Fatalf("default: %+v", def)
 	}
 
 	deploy := source.Target("deploy")

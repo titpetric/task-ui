@@ -1,6 +1,8 @@
 package folder
 
 import (
+	"os"
+	"os/exec"
 	"path/filepath"
 	"slices"
 	"testing"
@@ -106,5 +108,39 @@ func TestDiscovery_Tree(t *testing.T) {
 	}
 	if want := []string{"lib", "lib/sub", "lib/sub/deeper"}; !slices.Equal(ids, want) {
 		t.Fatalf("plain tree: got %v, want %v", ids, want)
+	}
+}
+
+// A folder git ignores is a build copy or a cache, not a project: the
+// sources a dockerfiles build copies into src/ carry their own pipelines.
+// A folder with nothing to run (a Taskfile whose tasks have no desc, a
+// package.json without scripts) is left out as well.
+func TestDiscovery_SkipsIgnoredAndEmpty(t *testing.T) {
+	root := t.TempDir()
+	repo := filepath.Join(root, "dockerfiles")
+	gitInit(t, repo)
+	write(t, filepath.Join(repo, ".gitignore"), "/app/src\n")
+	write(t, filepath.Join(repo, "app", "atkins.yml"), "jobs:\n  build: docker build .\n")
+	write(t, filepath.Join(repo, "app", "src", "lib", "atkins.yml"), "jobs:\n  test: go test ./...\n")
+	write(t, filepath.Join(repo, "assets", "Taskfile.yml"), "tasks:\n  helper:\n    cmds: [echo]\n")
+	write(t, filepath.Join(repo, "tool", "package.json"), "{\"name\": \"tool\"}\n")
+
+	d := &Discovery{Root: root, Discover: true}
+	ids := []string{}
+	for _, f := range d.List() {
+		ids = append(ids, f.ID)
+	}
+	if want := []string{"dockerfiles/app"}; !slices.Equal(ids, want) {
+		t.Fatalf("folders: got %v, want %v", ids, want)
+	}
+}
+
+func gitInit(t *testing.T, dir string) {
+	t.Helper()
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if out, err := exec.Command("git", "-C", dir, "init", "-q").CombinedOutput(); err != nil {
+		t.Fatalf("git init: %v: %s", err, out)
 	}
 }
