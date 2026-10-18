@@ -12,6 +12,8 @@ import (
 	"io"
 	"os"
 	"os/signal"
+	"path/filepath"
+	"strconv"
 	"strings"
 	"syscall"
 
@@ -19,6 +21,8 @@ import (
 
 	"github.com/titpetric/task-ui/access"
 	"github.com/titpetric/task-ui/app"
+	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/storage"
 )
 
 // Build information, filled in by the linker.
@@ -70,8 +74,99 @@ func passwd(path string, args []string, stdin io.Reader, stdout io.Writer) error
 	return err
 }
 
-// run is main without the exit: the hash and passwd commands, the
-// version, or the server until a signal.
+// openUser opens the database and finds a user by name, for the commands
+// that change what the user signs in with. Users come from the password
+// file, and reach the database when the server reads it.
+func openUser(ctx context.Context, dsn, name string) (storage.DB, *model.User, error) {
+	if name == "" {
+		return nil, nil, errors.New("no user named")
+	}
+	if err := os.MkdirAll(filepath.Dir(dsn), 0o755); err != nil {
+		return nil, nil, err
+	}
+	db, err := storage.OpenAndMigrate(ctx, dsn)
+	if err != nil {
+		return nil, nil, err
+	}
+	user, err := storage.NewUserStorage(db).GetByName(ctx, name)
+	if err != nil {
+		db.Close()
+		if errors.Is(err, storage.ErrNotFound) {
+			return nil, nil, fmt.Errorf("no user %s: add it with task-ui passwd, and let the server read the file", name)
+		}
+		return nil, nil, err
+	}
+	return db, user, nil
+}
+
+// email lists the email addresses a user signs in with, after adding or
+// removing the ones given: task-ui email <user> [add|rm <address>...].
+func email(ctx context.Context, dsn string, args []string, stdout io.Writer) error {
+	if len(args) != 1 && (len(args) < 3 || args[1] != "add" && args[1] != "rm") {
+		return errors.New("usage: task-ui email <user> [add|rm <address>...]")
+	}
+	db, user, err := openUser(ctx, dsn, args[0])
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+	emails := storage.NewUserEmailStorage(db)
+	if len(args) > 1 {
+		for _, address := range args[2:] {
+			if args[1] == "rm" {
+				err = emails.Delete(ctx, user.ID, address)
+			} else {
+				err = emails.Add(ctx, user.ID, address)
+			}
+			if err != nil {
+				return fmt.Errorf("%s: %w", address, err)
+			}
+		}
+	}
+	list, err := emails.List(ctx, user.ID)
+	if err != nil {
+		return err
+	}
+	for _, e := range list {
+		if _, err := fmt.Fprintln(stdout, e.Email); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// backup replaces a user's backup passwords with new ones, ten unless a
+// count is given, and prints them. Each signs in once.
+func backup(ctx context.Context, dsn string, args []string, stdout io.Writer) error {
+	if len(args) == 0 || len(args) > 2 {
+		return errors.New("usage: task-ui backup <user> [count]")
+	}
+	count := 10
+	if len(args) == 2 {
+		n, err := strconv.Atoi(args[1])
+		if err != nil {
+			return fmt.Errorf("count: %w", err)
+		}
+		count = n
+	}
+	passwords, hashes, err := access.BackupPasswords(count)
+	if err != nil {
+		return err
+	}
+	db, user, err := openUser(ctx, dsn, args[0])
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+	if err := storage.NewUserAuthPasswordStorage(db).SetBackups(ctx, user.ID, hashes); err != nil {
+		return err
+	}
+	_, err = fmt.Fprintf(stdout, "%s: backup passwords, each signs in once, the previous ones no longer do\n%s\n", user.Name, strings.Join(passwords, "\n"))
+	return err
+}
+
+// run is main without the exit: the hash, passwd, email and backup
+// commands, the version, or the server until a signal.
 func run(ctx context.Context, args []string, stdin io.Reader, stdout io.Writer) error {
 	if len(args) > 0 && args[0] == "hash" {
 		return hash(args[1:], stdin, stdout)
@@ -82,6 +177,12 @@ func run(ctx context.Context, args []string, stdin io.Reader, stdout io.Writer) 
 	}
 	if len(args) > 0 && args[0] == "passwd" {
 		return passwd(cfg.Htpasswd, args[1:], stdin, stdout)
+	}
+	if len(args) > 0 && args[0] == "email" {
+		return email(ctx, cfg.DB, args[1:], stdout)
+	}
+	if len(args) > 0 && args[0] == "backup" {
+		return backup(ctx, cfg.DB, args[1:], stdout)
 	}
 	if cfg.PrintBuildInfo {
 		_, err := fmt.Fprintf(stdout, "task-ui %s %s\n", version, commit)

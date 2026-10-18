@@ -8,7 +8,6 @@ import (
 
 	"github.com/titpetric/task-ui/access"
 	"github.com/titpetric/task-ui/internal/assert"
-	"github.com/titpetric/task-ui/model"
 )
 
 func TestParseHtpasswd(t *testing.T) {
@@ -20,7 +19,7 @@ func TestParseHtpasswd(t *testing.T) {
 	creds, err := access.ParseHtpasswd(strings.NewReader("# who may sign in\n\nadmin:" + hash + "\n ops : " + apache + " \n"))
 	assert.NoError(t, err)
 	assert.Equal(t, []access.Credential{{Name: "admin", Hash: hash}, {Name: "ops", Hash: apache}}, creds)
-	assert.True(t, access.CheckPassword(&model.User{Password: creds[1].Hash}, "demo"))
+	assert.True(t, access.CheckHash(creds[1].Hash, "demo"))
 
 	for _, bad := range []string{"admin", "admin:", ":x", "admin:{SHA}abc", "admin:$apr1$abc", "admin:" + hash + "\nadmin:" + hash} {
 		_, err := access.ParseHtpasswd(strings.NewReader(bad))

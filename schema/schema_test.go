@@ -12,7 +12,7 @@ func TestMigrations(t *testing.T) {
 	t.Parallel()
 	files, err := fs.Glob(schema.Migrations(), "*.up.sql")
 	assert.NoError(t, err)
-	assert.Len(t, files, 7)
+	assert.Len(t, files, 9)
 	assert.Contains(t, files, "run.up.sql")
 	data, err := fs.ReadFile(schema.Migrations(), "user.up.sql")
 	assert.NoError(t, err)

@@ -28,9 +28,9 @@ func TestLogin(t *testing.T) {
 	f := newFixture(t)
 	hash, err := access.HashPassword("demo")
 	assert.NoError(t, err)
+	ctx := context.Background()
 	admin := f.users[asAdmin]
-	admin.Password = hash
-	assert.NoError(t, f.opts.Users.Update(context.Background(), admin))
+	assert.NoError(t, f.passwords.SetPassword(ctx, admin.ID, hash))
 
 	form := f.get(t, "", "/login?back=/f/infra")
 	assert.Equal(t, http.StatusOK, form.Status)
@@ -96,4 +96,22 @@ func TestLogout(t *testing.T) {
 			assert.Equal(t, -1, c.MaxAge)
 		}
 	}
+}
+
+// An email address signs in as the user it belongs to, and a backup
+// password signs in once.
+func TestLogin_EmailAndBackup(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	ctx := context.Background()
+	ops := f.users[asOps]
+	assert.NoError(t, f.emails.Add(ctx, ops.ID, "Ops@Example.com"))
+	codes, hashes, err := access.BackupPasswords(1)
+	assert.NoError(t, err)
+	assert.NoError(t, f.passwords.SetBackups(ctx, ops.ID, hashes))
+
+	first := f.post(t, "/login", url.Values{"username": {"ops@example.com"}, "password": {codes[0]}, "back": {"/"}})
+	assert.Equal(t, http.StatusSeeOther, first.StatusCode)
+	again := f.post(t, "/login", url.Values{"username": {"ops"}, "password": {codes[0]}, "back": {"/"}})
+	assert.Equal(t, http.StatusUnauthorized, again.StatusCode)
 }

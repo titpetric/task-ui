@@ -55,6 +55,7 @@ type fixture struct {
 	server *httptest.Server
 	users  map[string]*model.User
 	root   string
+	db     storage.DB
 }
 
 // The users of every fixture. The admin and ops see everything; the
@@ -104,9 +105,9 @@ func newFixture(t *testing.T) *fixture {
 	t.Cleanup(func() { manager.Shutdown(context.Background()) })
 
 	users := storage.NewUserStorage(db)
-	f := &fixture{root: root, users: map[string]*model.User{}}
+	f := &fixture{root: root, users: map[string]*model.User{}, db: db}
 	for name, role := range map[string]string{asAdmin: model.RoleAdmin, asOps: model.RoleRunner, asViewer: model.RoleViewer, asLimited: model.RoleRunner} {
-		user := &model.User{Name: name, Password: "x", Role: role}
+		user := &model.User{Name: name, Role: role}
 		if name == asLimited {
 			user.Folders = model.EncodeList([]string{"infra"})
 		}

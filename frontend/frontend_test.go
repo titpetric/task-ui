@@ -64,6 +64,9 @@ type fixture struct {
 	users  map[string]*model.User
 	infra  *folder.Folder
 	root   string
+
+	passwords *storage.UserAuthPasswordStorage
+	emails    *storage.UserEmailStorage
 }
 
 func newFixture(t *testing.T) *fixture {
@@ -82,9 +85,9 @@ func newFixture(t *testing.T) *fixture {
 	edge.EnvFiles = []string{".env"}
 
 	users := storage.NewUserStorage(db)
-	f := &fixture{root: root, users: map[string]*model.User{}, infra: infra}
+	f := &fixture{root: root, users: map[string]*model.User{}, infra: infra, passwords: storage.NewUserAuthPasswordStorage(db), emails: storage.NewUserEmailStorage(db)}
 	for name, role := range map[string]string{asAdmin: model.RoleAdmin, asOps: model.RoleRunner, asViewer: model.RoleViewer, asLimited: model.RoleRunner} {
-		user := &model.User{Name: name, Password: "x", Role: role}
+		user := &model.User{Name: name, Role: role}
 		if name == asLimited {
 			user.Folders = model.EncodeList([]string{"infra"})
 		}
@@ -100,6 +103,7 @@ func newFixture(t *testing.T) *fixture {
 
 	f.opts = frontend.Options{
 		Guard:     access.NewGuard(users, access.NewSessions("test-secret", time.Hour)),
+		Auth:      access.NewAuthenticator(users, storage.NewUserEmailStorage(db), storage.NewUserAuthPasswordStorage(db)),
 		Users:     users,
 		Projects:  storage.NewProjectStorage(db),
 		Runs:      runs,

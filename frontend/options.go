@@ -16,6 +16,8 @@ import (
 // Options are what the pages read from.
 type Options struct {
 	Guard *access.Guard
+	// Auth checks the sign in form.
+	Auth *access.Authenticator
 
 	Users     *storage.UserStorage
 	Projects  *storage.ProjectStorage

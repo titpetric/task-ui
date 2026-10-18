@@ -14,7 +14,7 @@ func TestUserStorage_Create(t *testing.T) {
 	ctx := context.Background()
 	users := storage.NewUserStorage(newDB(t))
 
-	user := &model.User{Name: "ops", Password: "$2hash", Role: model.RoleRunner}
+	user := &model.User{Name: "ops", Role: model.RoleRunner}
 	assert.NoError(t, users.Create(ctx, user))
 	assert.True(t, model.ValidID(user.ID))
 	assert.NotNil(t, user.CreatedAt)

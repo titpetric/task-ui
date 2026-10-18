@@ -35,6 +35,8 @@ type App struct {
 	Config    *Config
 	DB        storage.DB
 	Users     *storage.UserStorage
+	Emails    *storage.UserEmailStorage
+	Passwords *storage.UserAuthPasswordStorage
 	Runner    *runner.Manager
 	Scheduler *scheduler.Loop
 	Catalogue *Catalogue
@@ -53,7 +55,12 @@ func New(ctx context.Context, cfg *Config, version string) (*App, error) {
 	if err != nil {
 		return nil, err
 	}
-	a := &App{Config: cfg, DB: db, Users: storage.NewUserStorage(db)}
+	a := &App{
+		Config: cfg, DB: db,
+		Users:     storage.NewUserStorage(db),
+		Emails:    storage.NewUserEmailStorage(db),
+		Passwords: storage.NewUserAuthPasswordStorage(db),
+	}
 	if err := a.prepare(ctx); err != nil {
 		db.Close()
 		return nil, err
@@ -105,7 +112,7 @@ func (a *App) seed(ctx context.Context) error {
 		return nil
 	}
 	a.UsersFile = NewUsersFile(a.Config.Htpasswd, a.Config.Admins, a.Config.Viewers)
-	created, removed, err := a.UsersFile.Sync(ctx, a.Users)
+	created, removed, err := a.UsersFile.Sync(ctx, a.Users, a.Passwords)
 	if errors.Is(err, os.ErrNotExist) {
 		// Not made yet: start anyway, the watcher reads it once it is,
 		// so `task-ui passwd` works against a running instance.
@@ -131,7 +138,7 @@ func (a *App) autoLogin(ctx context.Context) error {
 		return nil
 	}
 	slog.Warn("auto login names a user that is not there: created as an admin", "user", name)
-	return a.Users.Create(ctx, &model.User{Name: name, Password: "-", Role: model.RoleAdmin})
+	return a.Users.Create(ctx, &model.User{Name: name, Role: model.RoleAdmin})
 }
 
 // wire builds the services and the handler over the open database.
@@ -170,7 +177,7 @@ func (a *App) wire(version string) error {
 		Runner: a.Runner, Catalogue: a.Catalogue, Git: g, Keys: keys, Env: env, Recordings: recordings, Root: cfg.Root,
 	})
 	pages, err := frontend.New(frontend.Options{
-		Guard: a.Guard, Users: a.Users, Projects: projects, Runs: runs, Artifacts: artifacts, Schedules: schedules, Secrets: secrets,
+		Guard: a.Guard, Auth: access.NewAuthenticator(a.Users, a.Emails, a.Passwords), Users: a.Users, Projects: projects, Runs: runs, Artifacts: artifacts, Schedules: schedules, Secrets: secrets,
 		Runner: a.Runner, Catalogue: a.Catalogue, Git: g, Keys: keys, Env: env, Root: cfg.Root, Version: version, Now: cfg.Clock(),
 	})
 	if err != nil {
@@ -230,7 +237,7 @@ func (a *App) Serve(ctx context.Context, ln net.Listener) error {
 
 	go a.Scheduler.Run(ctx)
 	if a.UsersFile != nil {
-		go a.UsersFile.Watch(ctx, a.Users, func(err error) { slog.Error("re-reading the password file", "err", err) })
+		go a.UsersFile.Watch(ctx, a.Users, a.Passwords, func(err error) { slog.Error("re-reading the password file", "err", err) })
 	}
 	server := &http.Server{Handler: a.handler, ReadHeaderTimeout: 10 * time.Second}
 	errs := make(chan error, 1)

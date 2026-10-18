@@ -29,12 +29,20 @@ func htpasswdFile(t *testing.T, names ...string) string {
 	return path
 }
 
-func newUsers(t *testing.T) *storage.UserStorage {
+func newUsers(t *testing.T) (*storage.UserStorage, *storage.UserAuthPasswordStorage) {
 	t.Helper()
 	db, err := storage.OpenAndMigrate(context.Background(), ":memory:")
 	assert.NoError(t, err)
 	t.Cleanup(func() { db.Close() })
-	return storage.NewUserStorage(db)
+	return storage.NewUserStorage(db), storage.NewUserAuthPasswordStorage(db)
+}
+
+// signsIn reports whether a user's stored password is the one given.
+func signsIn(t *testing.T, passwords *storage.UserAuthPasswordStorage, user *model.User, password string) bool {
+	t.Helper()
+	hash, err := passwords.PasswordHash(context.Background(), user.ID)
+	assert.NoError(t, err)
+	return access.CheckHash(hash, password)
 }
 
 func TestNewUsersFile(t *testing.T) {
@@ -52,12 +60,12 @@ func TestNewUsersFile(t *testing.T) {
 func TestUsersFile_Sync(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
-	users := newUsers(t)
+	users, passwords := newUsers(t)
 	path := htpasswdFile(t, "admin", "ops", "guest")
 	f := app.NewUsersFile(path, []string{"admin"}, []string{"guest"})
 
 	assert.True(t, f.Changed())
-	created, removed, err := f.Sync(ctx, users)
+	created, removed, err := f.Sync(ctx, users, passwords)
 	assert.NoError(t, err)
 	assert.Equal(t, 3, created)
 	assert.Equal(t, 0, removed)
@@ -65,7 +73,7 @@ func TestUsersFile_Sync(t *testing.T) {
 
 	admin := mustUser(t, users, "admin")
 	assert.Equal(t, model.RoleAdmin, admin.Role)
-	assert.True(t, access.CheckPassword(admin, "demo"))
+	assert.True(t, signsIn(t, passwords, admin, "demo"))
 	assert.Equal(t, model.RoleRunner, mustUser(t, users, "ops").Role)
 	assert.Equal(t, model.RoleViewer, mustUser(t, users, "guest").Role)
 
@@ -81,12 +89,12 @@ func TestUsersFile_Sync(t *testing.T) {
 	assert.NoError(t, os.WriteFile(path, []byte(replaceLine(string(data), "guest")), 0o600))
 	f.Viewers = []string{"ops"}
 
-	created, removed, err = f.Sync(ctx, users)
+	created, removed, err = f.Sync(ctx, users, passwords)
 	assert.NoError(t, err)
 	assert.Equal(t, 1, created)
 	assert.Equal(t, 1, removed)
 	ops = mustUser(t, users, "ops")
-	assert.True(t, access.CheckPassword(ops, "changed"))
+	assert.True(t, signsIn(t, passwords, ops, "changed"))
 	assert.Equal(t, model.RoleViewer, ops.Role)
 	assert.Equal(t, []string{"infra"}, ops.FolderList())
 	assert.Equal(t, admin.ID, mustUser(t, users, "admin").ID)
@@ -95,11 +103,11 @@ func TestUsersFile_Sync(t *testing.T) {
 
 	// A missing or broken file syncs nothing.
 	f.Path = filepath.Join(t.TempDir(), "missing")
-	_, _, err = f.Sync(ctx, users)
+	_, _, err = f.Sync(ctx, users, passwords)
 	assert.Error(t, err)
 	assert.NoError(t, os.WriteFile(path, []byte("broken\n"), 0o600))
 	f.Path = path
-	_, _, err = f.Sync(ctx, users)
+	_, _, err = f.Sync(ctx, users, passwords)
 	assert.Error(t, err)
 	assert.Len(t, mustList(t, users), 3)
 }
@@ -108,17 +116,17 @@ func TestUsersFile_Watch(t *testing.T) {
 	t.Parallel()
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	users := newUsers(t)
+	users, passwords := newUsers(t)
 	path := htpasswdFile(t, "admin")
 	f := app.NewUsersFile(path, []string{"admin"}, nil)
 	f.Interval = 20 * time.Millisecond
-	_, _, err := f.Sync(ctx, users)
+	_, _, err := f.Sync(ctx, users, passwords)
 	assert.NoError(t, err)
 
 	errs := make(chan error, 4)
 	done := make(chan struct{})
 	go func() {
-		f.Watch(ctx, users, func(err error) { errs <- err })
+		f.Watch(ctx, users, passwords, func(err error) { errs <- err })
 		close(done)
 	}()
 

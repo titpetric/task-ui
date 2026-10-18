@@ -821,9 +821,6 @@ type User struct {
 	// Name
 	Name string `db:"name" json:"name"`
 
-	// Password
-	Password string `db:"password" json:"password"`
-
 	// Role
 	Role string `db:"role" json:"role"`
 
@@ -848,12 +845,6 @@ func (u *User) GetName() string { return u.Name }
 
 // SetName sets Name to the provided value.
 func (u *User) SetName(val string) { u.Name = val }
-
-// GetPassword will return the value of Password.
-func (u *User) GetPassword() string { return u.Password }
-
-// SetPassword sets Password to the provided value.
-func (u *User) SetPassword(val string) { u.Password = val }
 
 // GetRole will return the value of Role.
 func (u *User) GetRole() string { return u.Role }
@@ -883,10 +874,146 @@ func (u *User) SetUpdatedAt(stamp time.Time) { u.UpdatedAt = &stamp }
 const UserTable = "`user`"
 
 // UserFields is a list of all columns in the DB table.
-var UserFields = []string{"id", "name", "password", "role", "folders", "created_at", "updated_at"}
+var UserFields = []string{"id", "name", "role", "folders", "created_at", "updated_at"}
 
 // UserPrimaryFields are the primary key fields in the DB table.
 var UserPrimaryFields = []string{"id"}
+
+// UserAuthPassword generated for db table `user_auth_password`.
+//
+// User Auth Password.
+type UserAuthPassword struct {
+	// ID
+	ID string `db:"id" json:"id"`
+
+	// User ID
+	UserID string `db:"user_id" json:"user_id"`
+
+	// Hash
+	Hash string `db:"hash" json:"hash"`
+
+	// Kind
+	Kind string `db:"kind" json:"kind"`
+
+	// Used At
+	UsedAt *time.Time `db:"used_at" json:"used_at"`
+
+	// Created At
+	CreatedAt *time.Time `db:"created_at" json:"created_at"`
+
+	// Updated At
+	UpdatedAt *time.Time `db:"updated_at" json:"updated_at"`
+}
+
+// GetID will return the value of ID.
+func (u *UserAuthPassword) GetID() string { return u.ID }
+
+// SetID sets ID to the provided value.
+func (u *UserAuthPassword) SetID(val string) { u.ID = val }
+
+// GetUserID will return the value of UserID.
+func (u *UserAuthPassword) GetUserID() string { return u.UserID }
+
+// SetUserID sets UserID to the provided value.
+func (u *UserAuthPassword) SetUserID(val string) { u.UserID = val }
+
+// GetHash will return the value of Hash.
+func (u *UserAuthPassword) GetHash() string { return u.Hash }
+
+// SetHash sets Hash to the provided value.
+func (u *UserAuthPassword) SetHash(val string) { u.Hash = val }
+
+// GetKind will return the value of Kind.
+func (u *UserAuthPassword) GetKind() string { return u.Kind }
+
+// SetKind sets Kind to the provided value.
+func (u *UserAuthPassword) SetKind(val string) { u.Kind = val }
+
+// GetUsedAt will return the value of UsedAt.
+func (u *UserAuthPassword) GetUsedAt() *time.Time { return u.UsedAt }
+
+// SetUsedAt sets UsedAt to the provided value.
+func (u *UserAuthPassword) SetUsedAt(stamp time.Time) { u.UsedAt = &stamp }
+
+// GetCreatedAt will return the value of CreatedAt.
+func (u *UserAuthPassword) GetCreatedAt() *time.Time { return u.CreatedAt }
+
+// SetCreatedAt sets CreatedAt to the provided value.
+func (u *UserAuthPassword) SetCreatedAt(stamp time.Time) { u.CreatedAt = &stamp }
+
+// GetUpdatedAt will return the value of UpdatedAt.
+func (u *UserAuthPassword) GetUpdatedAt() *time.Time { return u.UpdatedAt }
+
+// SetUpdatedAt sets UpdatedAt to the provided value.
+func (u *UserAuthPassword) SetUpdatedAt(stamp time.Time) { u.UpdatedAt = &stamp }
+
+// UserAuthPasswordTable is the name of the table in the DB.
+const UserAuthPasswordTable = "`user_auth_password`"
+
+// UserAuthPasswordFields is a list of all columns in the DB table.
+var UserAuthPasswordFields = []string{"id", "user_id", "hash", "kind", "used_at", "created_at", "updated_at"}
+
+// UserAuthPasswordPrimaryFields are the primary key fields in the DB table.
+var UserAuthPasswordPrimaryFields = []string{"id"}
+
+// UserEmail generated for db table `user_email`.
+//
+// User Email.
+type UserEmail struct {
+	// ID
+	ID string `db:"id" json:"id"`
+
+	// User ID
+	UserID string `db:"user_id" json:"user_id"`
+
+	// Email
+	Email string `db:"email" json:"email"`
+
+	// Created At
+	CreatedAt *time.Time `db:"created_at" json:"created_at"`
+
+	// Updated At
+	UpdatedAt *time.Time `db:"updated_at" json:"updated_at"`
+}
+
+// GetID will return the value of ID.
+func (u *UserEmail) GetID() string { return u.ID }
+
+// SetID sets ID to the provided value.
+func (u *UserEmail) SetID(val string) { u.ID = val }
+
+// GetUserID will return the value of UserID.
+func (u *UserEmail) GetUserID() string { return u.UserID }
+
+// SetUserID sets UserID to the provided value.
+func (u *UserEmail) SetUserID(val string) { u.UserID = val }
+
+// GetEmail will return the value of Email.
+func (u *UserEmail) GetEmail() string { return u.Email }
+
+// SetEmail sets Email to the provided value.
+func (u *UserEmail) SetEmail(val string) { u.Email = val }
+
+// GetCreatedAt will return the value of CreatedAt.
+func (u *UserEmail) GetCreatedAt() *time.Time { return u.CreatedAt }
+
+// SetCreatedAt sets CreatedAt to the provided value.
+func (u *UserEmail) SetCreatedAt(stamp time.Time) { u.CreatedAt = &stamp }
+
+// GetUpdatedAt will return the value of UpdatedAt.
+func (u *UserEmail) GetUpdatedAt() *time.Time { return u.UpdatedAt }
+
+// SetUpdatedAt sets UpdatedAt to the provided value.
+func (u *UserEmail) SetUpdatedAt(stamp time.Time) { u.UpdatedAt = &stamp }
+
+// UserEmailTable is the name of the table in the DB.
+const UserEmailTable = "`user_email`"
+
+// UserEmailFields is a list of all columns in the DB table.
+var UserEmailFields = []string{"id", "user_id", "email", "created_at", "updated_at"}
+
+// UserEmailPrimaryFields are the primary key fields in the DB table.
+var UserEmailPrimaryFields = []string{"id"}
 
 // Insert starts building an INSERT INTO query.
 func (a *Artifact) Insert(opts ...QueryOption) string {
@@ -1369,6 +1496,128 @@ func (u *User) Update(opts ...QueryOption) string {
 // Delete starts building a DELETE query.
 func (u *User) Delete(opts ...QueryOption) string {
 	cfg := (&QueryConfig{Table: UserTable}).Apply(opts...)
+	query := fmt.Sprintf("DELETE FROM %s", cfg.Table)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	return query
+}
+
+// Insert starts building an INSERT INTO query.
+func (u *UserAuthPassword) Insert(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: UserAuthPasswordTable, Statement: "INSERT INTO"}).Apply(opts...)
+	cols := UserAuthPasswordFields
+	if len(cfg.Columns) > 0 {
+		cols = cfg.Columns
+	}
+	return fmt.Sprintf("%s %s (%s) VALUES (:%s)", cfg.Statement, cfg.Table, strings.Join(cols, ", "), strings.Join(cols, ", :"))
+}
+
+// Select starts building a SELECT query.
+func (u *UserAuthPassword) Select(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: UserAuthPasswordTable}).Apply(opts...)
+	cols := "*"
+	if len(cfg.Columns) > 0 {
+		cols = strings.Join(cfg.Columns, ", ")
+	}
+	query := fmt.Sprintf("SELECT %s FROM %s", cols, cfg.Table)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	if cfg.OrderBy != "" {
+		query += " ORDER BY " + cfg.OrderBy
+	}
+	if cfg.LimitOffset > 0 {
+		query += fmt.Sprintf(" LIMIT %d, %d", cfg.LimitStart, cfg.LimitOffset)
+	}
+	return query
+}
+
+// Update starts building a UPDATE query.
+func (u *UserAuthPassword) Update(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: UserAuthPasswordTable}).Apply(opts...)
+	cols := UserAuthPasswordFields
+	if len(cfg.Columns) > 0 {
+		cols = cfg.Columns
+	}
+	setClause := ""
+	for i, col := range cols {
+		if i > 0 {
+			setClause += ", "
+		}
+		setClause += col + "=:" + col
+	}
+	query := fmt.Sprintf("UPDATE %s SET %s", cfg.Table, setClause)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	return query
+}
+
+// Delete starts building a DELETE query.
+func (u *UserAuthPassword) Delete(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: UserAuthPasswordTable}).Apply(opts...)
+	query := fmt.Sprintf("DELETE FROM %s", cfg.Table)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	return query
+}
+
+// Insert starts building an INSERT INTO query.
+func (u *UserEmail) Insert(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: UserEmailTable, Statement: "INSERT INTO"}).Apply(opts...)
+	cols := UserEmailFields
+	if len(cfg.Columns) > 0 {
+		cols = cfg.Columns
+	}
+	return fmt.Sprintf("%s %s (%s) VALUES (:%s)", cfg.Statement, cfg.Table, strings.Join(cols, ", "), strings.Join(cols, ", :"))
+}
+
+// Select starts building a SELECT query.
+func (u *UserEmail) Select(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: UserEmailTable}).Apply(opts...)
+	cols := "*"
+	if len(cfg.Columns) > 0 {
+		cols = strings.Join(cfg.Columns, ", ")
+	}
+	query := fmt.Sprintf("SELECT %s FROM %s", cols, cfg.Table)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	if cfg.OrderBy != "" {
+		query += " ORDER BY " + cfg.OrderBy
+	}
+	if cfg.LimitOffset > 0 {
+		query += fmt.Sprintf(" LIMIT %d, %d", cfg.LimitStart, cfg.LimitOffset)
+	}
+	return query
+}
+
+// Update starts building a UPDATE query.
+func (u *UserEmail) Update(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: UserEmailTable}).Apply(opts...)
+	cols := UserEmailFields
+	if len(cfg.Columns) > 0 {
+		cols = cfg.Columns
+	}
+	setClause := ""
+	for i, col := range cols {
+		if i > 0 {
+			setClause += ", "
+		}
+		setClause += col + "=:" + col
+	}
+	query := fmt.Sprintf("UPDATE %s SET %s", cfg.Table, setClause)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	return query
+}
+
+// Delete starts building a DELETE query.
+func (u *UserEmail) Delete(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: UserEmailTable}).Apply(opts...)
 	query := fmt.Sprintf("DELETE FROM %s", cfg.Table)
 	if cfg.Where != "" {
 		query += " WHERE " + cfg.Where
