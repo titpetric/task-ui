@@ -128,6 +128,32 @@ func (h *Handlers) framed(run view.Run) view.Run {
 // frameRows is the least rows a frame on a page shows.
 const frameRows = 8
 
+// frameSVG renders the last frame of a run: its session's while that
+// is in memory, else the screen its recording ends on. Empty when
+// neither is there.
+func (h *Handlers) frameSVG(ctx context.Context, runID string) template.HTML {
+	if session, ok := h.opts.Runner.Get(runID); ok {
+		return template.HTML(session.Frame().Trim(frameRows).SVG(runner.DarkPalette))
+	}
+	if h.opts.Recordings == nil {
+		return ""
+	}
+	run, err := h.opts.Runs.Get(ctx, runID)
+	if err != nil {
+		return ""
+	}
+	cast, err := h.opts.Recordings.Read(run)
+	if err != nil {
+		return ""
+	}
+	defer cast.Close()
+	frame, err := runner.FrameFromCast(cast)
+	if err != nil {
+		return ""
+	}
+	return template.HTML(frame.Trim(frameRows).SVG(runner.DarkPalette))
+}
+
 // visibleRuns lists runs the user may see.
 func (h *Handlers) visibleRuns(ctx context.Context, user *model.User, filter storage.RunFilter) []view.Run {
 	runs, err := h.opts.Runs.List(ctx, filter)

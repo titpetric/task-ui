@@ -158,6 +158,12 @@ func (h *Handlers) workflow(w http.ResponseWriter, r *http.Request) {
 		latest = p.WorkflowRuns[0].Steps
 	}
 	p.Pipeline = view.Pipeline(p.Workflow.Steps, latest)
+	// Each step of the latest run shows the screen its run ended on.
+	for i := range p.Pipeline {
+		if p.Pipeline[i].RunID != "" {
+			p.Pipeline[i].FrameSVG = h.frameSVG(r.Context(), p.Pipeline[i].RunID)
+		}
+	}
 	h.render(w, http.StatusOK, "workflow", p)
 }
 

@@ -162,7 +162,8 @@
     var changed = session.changed;
     session = null;
     if (/^#run=/.test(location.hash)) history.replaceState(null, "", location.pathname + location.search);
-    if (changed) window.location.reload();
+    // A page that follows its topic drew the change already.
+    if (changed && !live) window.location.reload();
   }
 
   function open(kind, title, who) {
@@ -606,8 +607,8 @@
     });
   });
 
-  // refreshLive is set on a page that follows a topic, below.
-  var refreshLive = null;
+  // The workflow page follows its topic; live says so, below.
+  var live = document.querySelector("[data-sse]");
 
   document.addEventListener("click", function (event) {
     var btn = event.target.closest("[data-workflow-run], [data-workflow-stop]");
@@ -625,36 +626,212 @@
         window.alert(res.data.error || ("HTTP " + res.status));
         return;
       }
-      // The workflow's own page follows its events; elsewhere, go there.
-      if (refreshLive) refreshLive();
-      else if (run) window.location.href = "/workflows/" + encodeURIComponent(btn.dataset.workflowRun);
+      // The workflow's own page hears of the run from its events and
+      // draws it; elsewhere, go there.
+      if (live) return;
+      if (run) window.location.href = "/workflows/" + encodeURIComponent(btn.dataset.workflowRun);
       else window.location.reload();
     });
   });
 
-  // A page with data-sse follows that topic on /api/sse/<topic>. On an
-  // event it fetches itself again and swaps the parts marked data-live
-  // in place, so the page keeps up without a reload or a blink.
-  var live = document.querySelector("[data-sse]");
+  // The workflow page is drawn on from the events of its topic, no
+  // fetch and no reload: `run` resets the pipeline to pending, swaps Run
+  // for Stop and adds the run on top of the runs; `step` sets a step's
+  // state and links it to its run; `done` ends the run.
+  function el(tag, className, text) {
+    var node = document.createElement(tag);
+    if (className) node.className = className;
+    if (text) node.textContent = text;
+    return node;
+  }
+
+  function icon(name) {
+    var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("class", "ic");
+    var use = document.createElementNS("http://www.w3.org/2000/svg", "use");
+    use.setAttribute("href", "#" + name);
+    svg.appendChild(use);
+    return svg;
+  }
+
+  function stateSpan(state, message) {
+    var span = el("span", "state");
+    span.appendChild(el("i", "dot " + state));
+    span.appendChild(document.createTextNode(state));
+    if (message) {
+      span.appendChild(document.createTextNode(" "));
+      span.appendChild(el("span", "faint", message));
+    }
+    return span;
+  }
+
+  function workflowEvent(name, data) {
+    var nodes = Array.prototype.slice.call(document.querySelectorAll("[data-pipeline] [data-step]"));
+    var latest = document.querySelector("[data-latest]");
+    var runs = document.querySelector("[data-runs]");
+    var actions = document.querySelector("[data-actions]");
+    var row = runs && runs.querySelector('[data-run="' + data.run_id + '"]');
+
+    if (name === "run") {
+      nodes.forEach(function (node) { setStep(node, "pending", null, null); });
+      if (latest) {
+        latest.innerHTML = "";
+        latest.appendChild(document.createTextNode("Latest run "));
+        latest.appendChild(stateSpan("running"));
+        latest.appendChild(document.createTextNode(" just now by " + (data.user_name || "")));
+      }
+      if (runs && !row) {
+        var empty = runs.querySelector(".empty");
+        if (empty) empty.remove();
+        row = el("tr");
+        row.dataset.run = data.run_id;
+        var started = el("td", "nowrap", "just now");
+        started.dataset.label = "Started";
+        var by = el("td", "", data.user_name || "");
+        by.dataset.label = "By";
+        var result = el("td");
+        result.dataset.label = "Result";
+        result.dataset.result = "";
+        result.appendChild(stateSpan("running"));
+        var steps = el("td");
+        steps.dataset.label = "Steps";
+        var chain = el("span", "chain");
+        nodes.forEach(function (node, i) {
+          if (i) chain.appendChild(el("span", "faint", " → "));
+          var link = node.querySelector("a");
+          var a = el("a", "nowrap");
+          a.href = link.dataset.target || link.getAttribute("href");
+          a.dataset.pos = i;
+          a.appendChild(el("i", "dot pending"));
+          if (link.querySelector(".ic")) a.appendChild(icon("i-flow"));
+          a.appendChild(document.createTextNode(link.textContent.trim()));
+          chain.appendChild(a);
+        });
+        steps.appendChild(chain);
+        row.appendChild(started);
+        row.appendChild(by);
+        row.appendChild(result);
+        row.appendChild(steps);
+        runs.insertBefore(row, runs.firstChild);
+      }
+      if (actions) {
+        var runBtn = actions.querySelector("[data-workflow-run]");
+        if (runBtn) {
+          runBtn.removeAttribute("data-workflow-run");
+          runBtn.dataset.workflowStop = data.run_id;
+          runBtn.className = "btn";
+          runBtn.disabled = false;
+          runBtn.innerHTML = "";
+          runBtn.appendChild(icon("i-stop"));
+          runBtn.appendChild(document.createTextNode("Stop"));
+        }
+      }
+      return;
+    }
+
+    if (name === "step") {
+      var node = nodes[data.position];
+      var href = data.step_run_id ? "/runs/" + data.step_run_id : null;
+      if (node) setStep(node, data.state, href, data.step_run_id || null);
+      if (node && data.step_run_id) stepFrame(node, data.step_run_id, data.state === "running");
+      // A window open on this page follows the workflow: as a step
+      // starts, the window attaches to its run.
+      if (data.state === "running" && data.step_run_id && session && dialog && dialog.open) attach(data.step_run_id);
+      if (row) {
+        var a = row.querySelector('[data-pos="' + data.position + '"]');
+        if (a) {
+          a.querySelector(".dot").className = "dot " + data.state;
+          if (href) {
+            a.href = href;
+            a.dataset.attach = data.step_run_id;
+          }
+        }
+      }
+      return;
+    }
+
+    if (name === "done") {
+      if (session && dialog && dialog.open) {
+        notice("The workflow ended: " + data.state + (data.message ? ", " + data.message : "") + ".", data.state === "ok" ? "" : "bad");
+      }
+      if (latest) {
+        latest.innerHTML = "";
+        latest.appendChild(document.createTextNode("Latest run "));
+        latest.appendChild(stateSpan(data.state, data.message));
+        latest.appendChild(document.createTextNode(" just now by " + (data.user_name || "")));
+      }
+      if (row) {
+        var result = row.querySelector("[data-result]");
+        result.innerHTML = "";
+        result.appendChild(stateSpan(data.state, data.message));
+      }
+      if (actions) {
+        var stopBtn = actions.querySelector("[data-workflow-stop]");
+        if (stopBtn) {
+          stopBtn.removeAttribute("data-workflow-stop");
+          stopBtn.dataset.workflowRun = data.workflow_id;
+          stopBtn.className = "btn btn-primary";
+          stopBtn.disabled = false;
+          stopBtn.innerHTML = "";
+          stopBtn.appendChild(icon("i-play"));
+          stopBtn.appendChild(document.createTextNode("Run"));
+        }
+      }
+    }
+  }
+
+  // stepFrame puts the step's terminal under its name: polled while the
+  // run goes, fetched once more when it ended.
+  function stepFrame(node, runId, running) {
+    var frame = node.querySelector(".frame");
+    if (!frame) {
+      frame = el("a", "frame");
+      frame.setAttribute("role", "img");
+      node.querySelector(".what").appendChild(frame);
+    }
+    frame.href = "/runs/" + runId;
+    frame.dataset.attach = runId;
+    if (running) {
+      frame.dataset.frame = runId;
+      watchFrames();
+      return;
+    }
+    delete frame.dataset.frame;
+    fetch("/api/runs/" + encodeURIComponent(runId) + "/frame.svg", { credentials: "same-origin" })
+      .then(function (res) { return res.ok ? res.text() : null; })
+      .then(function (svg) { if (svg) frame.innerHTML = svg; })
+      .catch(function () {});
+  }
+
+  // setStep draws a pipeline node in a state, linked to its run when it
+  // has one.
+  function setStep(node, state, href, runId) {
+    node.className = "node " + state;
+    node.querySelector(".dot").className = "dot " + state;
+    node.querySelector("small").textContent = state === "pending" ? "step " + (Number(node.dataset.step) + 1) : state;
+    var a = node.querySelector("a");
+    if (href) {
+      a.href = href;
+      a.dataset.attach = runId;
+    } else if (state === "pending" && a.dataset.attach) {
+      a.href = a.dataset.target || a.href;
+      delete a.dataset.attach;
+    }
+  }
+
   if (live && window.EventSource) {
-    var waiting = null;
-    refreshLive = function () {
-      if (waiting) return;
-      waiting = setTimeout(function () {
-        waiting = null;
-        fetch(window.location.pathname, { credentials: "same-origin", headers: { Accept: "text/html" } })
-          .then(function (res) { return res.text(); })
-          .then(function (html) {
-            var doc = new DOMParser().parseFromString(html, "text/html");
-            document.querySelectorAll("[data-live]").forEach(function (node) {
-              var fresh = doc.querySelector('[data-live="' + node.dataset.live + '"]');
-              if (fresh && fresh.innerHTML !== node.innerHTML) node.innerHTML = fresh.innerHTML;
-            });
-          });
-      }, 150);
-    };
+    // Each link keeps where it pointed before a run, to point back to.
+    document.querySelectorAll("[data-pipeline] [data-step] a").forEach(function (a) {
+      if (!a.dataset.attach) a.dataset.target = a.getAttribute("href");
+    });
     var source = new EventSource("/api/sse/" + encodeURIComponent(live.dataset.sse));
-    ["run", "step", "done"].forEach(function (name) { source.addEventListener(name, refreshLive); });
+    ["run", "step", "done"].forEach(function (name) {
+      source.addEventListener(name, function (event) {
+        var data;
+        try { data = JSON.parse(event.data); } catch (e) { return; }
+        workflowEvent(name, data);
+      });
+    });
   }
 
   // A file picker fills the field it names, so a key can be chosen or pasted.
@@ -940,9 +1117,15 @@
     });
   }
 
+  // watchFrames starts polling the frames once there is one to poll.
+  var framesTimer = null;
+  function watchFrames() {
+    if (!framesTimer && document.querySelector(".frame[data-frame]")) framesTimer = setInterval(refreshFrames, 2000);
+  }
+
   if (document.querySelector(".side")) {
     poll();
     setInterval(poll, 4000);
-    if (document.querySelector(".frame[data-frame]")) setInterval(refreshFrames, 2000);
+    watchFrames();
   }
 })();

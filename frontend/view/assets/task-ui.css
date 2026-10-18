@@ -2315,9 +2315,23 @@ pre.output {
 
 .pipeline .what {
   display: flex;
+  flex: 1;
   flex-direction: column;
   gap: 0.1rem;
   min-width: 0;
+}
+
+/* The step's terminal, its last screen, under its name: a tile like
+   the dashboard's, opening the run. */
+.pipeline .what .frame {
+  max-width: 60rem;
+  margin-top: 0.4rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+.pipeline .what .frame:empty {
+  display: none;
 }
 
 .pipeline .what a {

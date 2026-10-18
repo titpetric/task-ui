@@ -136,10 +136,19 @@ func TestWorkflow_Page(t *testing.T) {
 	assert.Contains(t, ops, `href="/runs/`+steps[0].RunID+`"`)
 	// The pipeline runs top to bottom, with the latest run's states, and
 	// the page follows the workflow's topic instead of reloading.
-	assert.Contains(t, ops, `<ol class="pipeline"`)
-	assert.Contains(t, ops, `<li class="node ok">`)
+	assert.Contains(t, ops, `<ol class="pipeline" data-pipeline>`)
+	assert.Contains(t, ops, `<li class="node ok" data-step="0">`)
 	assert.Contains(t, ops, `data-sse="workflow:`+wf.ID+`"`)
+	assert.Contains(t, ops, `data-latest>Latest run`)
+	assert.Contains(t, ops, `<tbody data-runs>`)
+	assert.Contains(t, ops, `<tr data-run="`+run.ID+`">`)
 	assert.NotContains(t, ops, `data-refresh`)
+	assert.NotContains(t, ops, `data-live`)
+	// Each step of the latest run shows its terminal's last screen, from
+	// the session still in memory; a finished one is not polled.
+	assert.Contains(t, ops, `<a class="frame" href="/runs/`+steps[0].RunID+`" data-attach="`+steps[0].RunID+`" role="img"`)
+	assert.Contains(t, ops, `aria-label="Terminal of infra / plan"><svg`)
+	assert.NotContains(t, ops, `data-frame=`)
 
 	mine := f.workflow(t, asOps, "plan only", "infra", "plan")
 	limited := f.page(t, asLimited, "/workflows/"+mine.ID)

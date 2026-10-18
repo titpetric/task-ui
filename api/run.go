@@ -159,11 +159,19 @@ func (h *Handlers) frameOf(r *http.Request) (runner.Frame, error) {
 	if err != nil {
 		return runner.Frame{}, err
 	}
-	session, ok := h.opts.Runner.Get(run.ID)
-	if !ok {
+	if session, ok := h.opts.Runner.Get(run.ID); ok {
+		return session.Frame(), nil
+	}
+	// The session is gone: the recording ends on the same screen.
+	if h.opts.Recordings == nil {
 		return runner.Frame{}, runner.ErrNotFound
 	}
-	return session.Frame(), nil
+	cast, err := h.opts.Recordings.Read(run)
+	if err != nil {
+		return runner.Frame{}, runner.ErrNotFound
+	}
+	defer cast.Close()
+	return runner.FrameFromCast(cast)
 }
 
 // frameSVG renders the last frame of a run as an image. The empty rows

@@ -7,6 +7,7 @@ import (
 	"github.com/titpetric/task-ui/envfile"
 	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/git"
+	"github.com/titpetric/task-ui/recording"
 	"github.com/titpetric/task-ui/runner"
 	"github.com/titpetric/task-ui/secret"
 	"github.com/titpetric/task-ui/sshkey"
@@ -37,6 +38,9 @@ type Options struct {
 	Git       *git.Git
 	Keys      *sshkey.Store
 	Env       *envfile.Store
+	// Recordings holds the runs' recordings, for the last screen of a
+	// run whose session is gone.
+	Recordings *recording.Store
 	// Root is where the folders are, for the projects page.
 	Root    string
 	Version string
