@@ -2394,3 +2394,50 @@ pre.output {
   margin: 0;
   accent-color: var(--signal);
 }
+
+/* What a folder holds: directories first, linked into, then files. */
+.tree {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+  gap: 0.15rem 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-family: var(--font);
+  font-size: 0.8125rem;
+}
+
+.tree li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  padding: 0.2rem 0;
+  color: var(--text-dim);
+}
+
+.tree li .ic {
+  flex: none;
+  width: 0.9rem;
+  height: 0.9rem;
+  color: var(--text-faint);
+}
+
+.tree li.dir .ic {
+  color: var(--text-dim);
+}
+
+.tree li a,
+.tree li span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tree li a {
+  color: var(--text);
+}
+
+.tree li.empty {
+  color: var(--text-faint);
+}

@@ -55,6 +55,11 @@
 <div class="alert">Nothing to run was found in this folder: no pipeline file, Makefile, package scripts or scripts folder.</div>
 {{- end }}
 
+<section class="block">
+	<h3>Files <small>{{ $p.ID }}/</small></h3>
+	{{ template "tree" $ }}
+</section>
+
 <div class="grid-2">
 <section class="block">
 	<h3>Folder</h3>

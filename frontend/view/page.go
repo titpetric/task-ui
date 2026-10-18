@@ -41,6 +41,11 @@ type Page struct {
 	Folder   *folder.Folder
 	Job      *folder.Job
 	Checkout *git.Info
+	// Tree is what the folder, or the directory browsed in it, holds.
+	Tree []folder.Item
+	// Browse is the directory open inside the folder, "" for the folder
+	// itself, else a path ending in "/".
+	Browse string
 
 	Runs      []Run
 	Run       *Run
