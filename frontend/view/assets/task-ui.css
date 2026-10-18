@@ -1585,7 +1585,7 @@ dialog.run[open] {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.4rem 0.7rem;
+  padding: 0.4rem 0.8rem;
   border-bottom: 1px solid var(--line);
   font-size: 0.8125rem;
 }
@@ -1601,10 +1601,13 @@ dialog.run[open] {
   flex: 1;
 }
 
+/* The terminal sits inset like the text of an alert or a form, not
+   against the tile's border. */
 .frame {
   display: block;
   width: 100%;
   min-height: 3rem;
+  padding: 0.55rem 0.8rem;
   background: #090c10;
 }
 
