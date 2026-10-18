@@ -68,6 +68,7 @@ func (h *Handlers) Routes() http.Handler {
 	r.Get("/workflows/{id}/runs", h.listWorkflowRuns)
 	r.Post("/workflows/{id}/runs", h.startWorkflow)
 	r.Post("/workflow-runs/{id}/stop", h.stopWorkflowRun)
+	r.Get("/sse/{topic}", h.sse)
 
 	r.Get("/projects", h.listProjects)
 	r.Post("/projects", h.cloneProject)

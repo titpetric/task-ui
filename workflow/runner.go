@@ -13,6 +13,7 @@ import (
 	"log/slog"
 	"sync"
 
+	"github.com/titpetric/task-ui/event"
 	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/runner"
@@ -45,6 +46,10 @@ type Runner struct {
 	runs      *storage.WorkflowRunStorage
 	catalogue Catalogue
 	manager   *runner.Manager
+	// Events gets a workflow's topic told about its runs: `run` when
+	// one starts, `step` as each step changes, `done` when it ended.
+	// Nil tells nobody.
+	Events *event.Bus
 
 	mu     sync.Mutex
 	byFlow map[string]*active // workflow ID -> its run in progress
@@ -126,8 +131,39 @@ func (r *Runner) Start(ctx context.Context, workflow *model.Workflow, user *mode
 	a := &active{run: run, cancel: cancel, done: make(chan struct{})}
 	r.byFlow[workflow.ID], r.byRun[run.ID] = a, a
 	snapshot := *run
+	r.publish(workflow.ID, "run", RunEvent{RunID: run.ID, WorkflowID: workflow.ID, Name: run.Name, State: run.State, UserName: run.UserName})
 	go r.walk(walkCtx, a, resolved, rows, user)
 	return &snapshot, nil
+}
+
+// RunEvent is the payload of a workflow's `run` and `done` events.
+type RunEvent struct {
+	RunID      string `json:"run_id"`
+	WorkflowID string `json:"workflow_id"`
+	Name       string `json:"name"`
+	State      string `json:"state"`
+	Message    string `json:"message,omitempty"`
+	UserName   string `json:"user_name"`
+}
+
+// StepEvent is the payload of a workflow's `step` event: the step as
+// its row stands.
+type StepEvent struct {
+	RunID          string `json:"run_id"`
+	Position       int64  `json:"position"`
+	Folder         string `json:"folder,omitempty"`
+	Job            string `json:"job,omitempty"`
+	WorkflowRef    string `json:"workflow_ref,omitempty"`
+	State          string `json:"state"`
+	StepRunID      string `json:"step_run_id,omitempty"`
+	WorkflowRunRef string `json:"workflow_run_ref,omitempty"`
+}
+
+// publish tells the workflow's topic, when there is a bus.
+func (r *Runner) publish(workflowID, name string, data any) {
+	if r.Events != nil {
+		r.Events.Publish("workflow:"+workflowID, name, data)
+	}
 }
 
 // Active returns the ID of the workflow's run in progress.
@@ -189,6 +225,8 @@ func (r *Runner) walk(ctx context.Context, a *active, steps []Step, rows []model
 			r.saveStep(store, row)
 			continue
 		}
+		row.State = model.StateRunning
+		r.saveStep(store, row)
 		var state, message string
 		if step.Workflow != nil {
 			state, row.WorkflowRunRef, message = r.nested(ctx, step.Workflow, user)
@@ -209,6 +247,7 @@ func (r *Runner) walk(ctx context.Context, a *active, steps []Step, rows []model
 		slog.Warn("workflow run not saved", "workflow", run.Name, "err", err)
 	}
 	slog.Info("workflow finished", "workflow", run.Name, "user", run.UserName, "state", run.State)
+	r.publish(run.WorkflowID, "done", RunEvent{RunID: run.ID, WorkflowID: run.WorkflowID, Name: run.Name, State: run.State, Message: run.Message, UserName: run.UserName})
 }
 
 // step starts one job and waits for it. A job already running is waited
@@ -278,10 +317,26 @@ func (r *Runner) nested(ctx context.Context, wf *model.Workflow, user *model.Use
 	}
 }
 
+// saveStep writes a step's row back and tells the workflow's topic.
 func (r *Runner) saveStep(ctx context.Context, row *model.WorkflowRunStep) {
 	if err := r.runs.UpdateStep(ctx, row); err != nil {
 		slog.Warn("workflow step not saved", "folder", row.Folder, "job", row.Job, "err", err)
 	}
+	r.publish(r.workflowOf(row), "step", StepEvent{
+		RunID: row.WorkflowRunID, Position: row.Position, Folder: row.Folder, Job: row.Job, WorkflowRef: row.WorkflowRef,
+		State: row.State, StepRunID: row.RunID, WorkflowRunRef: row.WorkflowRunRef,
+	})
+}
+
+// workflowOf returns the workflow of a run's step, from the run in
+// progress.
+func (r *Runner) workflowOf(row *model.WorkflowRunStep) string {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if a, ok := r.byRun[row.WorkflowRunID]; ok {
+		return a.run.WorkflowID
+	}
+	return ""
 }
 
 func label(step Step) string {

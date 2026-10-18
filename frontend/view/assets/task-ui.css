@@ -2234,6 +2234,74 @@ pre.output {
   margin-right: 0.3rem;
 }
 
+/* The workflow page's pipeline: the steps top to bottom on a rail, the
+   dot of each on it in the state of the latest run. */
+.pipeline {
+  margin: 0;
+  padding: 0.2rem 0 0.2rem 0.2rem;
+  list-style: none;
+}
+
+.pipeline .node {
+  position: relative;
+  display: flex;
+  gap: 0.8rem;
+  padding: 0 0 1.1rem;
+}
+
+.pipeline .node:last-child {
+  padding-bottom: 0;
+}
+
+.pipeline .rail {
+  position: relative;
+  flex: none;
+  display: flex;
+  justify-content: center;
+  width: 1rem;
+}
+
+.pipeline .node:not(:last-child) .rail::after {
+  content: "";
+  position: absolute;
+  top: 1.1rem;
+  bottom: -1.1rem;
+  left: calc(50% - 1px);
+  border-left: 2px solid var(--line);
+}
+
+.pipeline .rail .dot {
+  width: 0.7rem;
+  height: 0.7rem;
+  margin-top: 0.3rem;
+}
+
+.pipeline .what {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.pipeline .what a {
+  color: var(--text);
+}
+
+.pipeline .what a .ic {
+  width: 0.9rem;
+  height: 0.9rem;
+  margin-right: 0.3rem;
+  vertical-align: -0.1rem;
+}
+
+.pipeline .what small {
+  color: var(--text-dim);
+}
+
+.pipeline .node.running .what a {
+  color: var(--signal);
+}
+
 .workflow-form .steps {
   display: grid;
   gap: 0.4rem;

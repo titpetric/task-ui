@@ -605,6 +605,9 @@
     });
   });
 
+  // refreshLive is set on a page that follows a topic, below.
+  var refreshLive = null;
+
   document.addEventListener("click", function (event) {
     var btn = event.target.closest("[data-workflow-run], [data-workflow-stop]");
     if (!btn) return;
@@ -621,16 +624,36 @@
         window.alert(res.data.error || ("HTTP " + res.status));
         return;
       }
-      if (run) window.location.href = "/workflows/" + encodeURIComponent(btn.dataset.workflowRun);
+      // The workflow's own page follows its events; elsewhere, go there.
+      if (refreshLive) refreshLive();
+      else if (run) window.location.href = "/workflows/" + encodeURIComponent(btn.dataset.workflowRun);
       else window.location.reload();
     });
   });
 
-  // A section with data-refresh reloads the page while something in it
-  // runs, so a workflow's steps show their progress.
-  var refresh = document.querySelector("[data-refresh]");
-  if (refresh) {
-    setTimeout(function () { window.location.reload(); }, parseInt(refresh.dataset.refresh, 10) || 3000);
+  // A page with data-sse follows that topic on /api/sse/<topic>. On an
+  // event it fetches itself again and swaps the parts marked data-live
+  // in place, so the page keeps up without a reload or a blink.
+  var live = document.querySelector("[data-sse]");
+  if (live && window.EventSource) {
+    var waiting = null;
+    refreshLive = function () {
+      if (waiting) return;
+      waiting = setTimeout(function () {
+        waiting = null;
+        fetch(window.location.pathname, { credentials: "same-origin", headers: { Accept: "text/html" } })
+          .then(function (res) { return res.text(); })
+          .then(function (html) {
+            var doc = new DOMParser().parseFromString(html, "text/html");
+            document.querySelectorAll("[data-live]").forEach(function (node) {
+              var fresh = doc.querySelector('[data-live="' + node.dataset.live + '"]');
+              if (fresh && fresh.innerHTML !== node.innerHTML) node.innerHTML = fresh.innerHTML;
+            });
+          });
+      }, 150);
+    };
+    var source = new EventSource("/api/sse/" + encodeURIComponent(live.dataset.sse));
+    ["run", "step", "done"].forEach(function (name) { source.addEventListener(name, refreshLive); });
   }
 
   // A file picker fills the field it names, so a key can be chosen or pasted.

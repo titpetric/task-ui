@@ -2,6 +2,7 @@ package api
 
 import (
 	"github.com/titpetric/task-ui/envfile"
+	"github.com/titpetric/task-ui/event"
 	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/git"
 	"github.com/titpetric/task-ui/recording"
@@ -25,6 +26,8 @@ type Options struct {
 	WorkflowRuns *storage.WorkflowRunStorage
 	// Flows runs the workflows.
 	Flows *workflow.Runner
+	// Events is the bus /sse/{topic} streams from.
+	Events *event.Bus
 
 	Runner     *runner.Manager
 	Catalogue  folder.Catalogue
