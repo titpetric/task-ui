@@ -45,8 +45,10 @@ func (d pipelineDetector) Detect(dir string) *Source {
 	return nil
 }
 
-// detectFile reads one pipeline file. Jobs with a description show up;
-// internal ones and hidden ones do not, as with `atkins -l`.
+// detectFile reads one pipeline file. An atkins file lists every job, as
+// `atkins -l` does, and a job without a desc is described by its first
+// step; a Taskfile lists the jobs with a desc, as `task -l` does. Internal
+// and hidden jobs are left out of both.
 func (d pipelineDetector) detectFile(dir, name string) *Source {
 	source := &Source{Kind: d.kind, File: name, Command: defaultCommand(d.kind, name)}
 
@@ -84,12 +86,16 @@ func (d pipelineDetector) detectFile(dir, name string) *Source {
 
 	for _, name := range names {
 		job := jobs[name]
-		if job.Internal || job.Desc == "" || (job.Show != nil && !*job.Show) {
+		desc := job.Desc
+		if desc == "" && d.kind == "atkins" {
+			desc = job.firstLabel()
+		}
+		if job.Internal || desc == "" || (job.Show != nil && !*job.Show) {
 			continue
 		}
 		j := &Target{
 			Name:        name,
-			Description: job.Desc,
+			Description: desc,
 			Summary:     strings.TrimSpace(job.Summary),
 			Aliases:     job.Aliases,
 			Interactive: job.Interactive,

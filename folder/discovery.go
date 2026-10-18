@@ -1,7 +1,9 @@
 package folder
 
 import (
+	"bytes"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -112,19 +114,59 @@ func isFile(path string) bool {
 // tree below it.
 func (d *Discovery) discover(root string, c *catalogue) {
 	if !c.seen(root) && detector.Any(root) {
-		c.add(Load(SafeID(filepath.Base(root)), root))
+		if f := Load(SafeID(filepath.Base(root)), root); runnable(f) {
+			c.add(f)
+		}
 	}
-	walk(root, "", 1, detector.HasPipeline(root), func(id, dir string) {
-		if !c.seen(dir) {
-			c.add(Load(id, dir))
+	walk(root, "", 1, detector.HasPipeline(root), gitIgnored(root, nil), func(id, dir string) {
+		if c.seen(dir) {
+			return
+		}
+		if f := Load(id, dir); runnable(f) {
+			c.add(f)
 		}
 	})
+}
+
+// runnable reports whether a discovered folder has a job to run, or a
+// source that failed to read, which the folder page shows.
+func runnable(f *Folder) bool {
+	for _, source := range f.Sources {
+		if len(source.Targets) > 0 || source.Error != "" {
+			return true
+		}
+	}
+	return false
+}
+
+// gitIgnored adds the directories a git checkout at dir ignores to
+// ignored: build copies, caches, dependencies. dir that is not a checkout
+// adds nothing, and nor does a failing git.
+func gitIgnored(dir string, ignored map[string]bool) map[string]bool {
+	if _, err := os.Stat(filepath.Join(dir, ".git")); err != nil {
+		return ignored
+	}
+	out, err := exec.Command("git", "-C", dir, "ls-files", "-z", "--others", "--ignored", "--exclude-standard", "--directory").Output()
+	if err != nil {
+		return ignored
+	}
+	merged := map[string]bool{}
+	for path := range ignored {
+		merged[path] = true
+	}
+	for _, path := range bytes.Split(out, []byte{0}) {
+		if p := strings.TrimSuffix(string(path), "/"); p != "" {
+			merged[filepath.Join(dir, p)] = true
+		}
+	}
+	return merged
 }
 
 // walk visits the directories below dir, in name order, and reports the
 // ones with something to run. Below a pipeline folder only a folder with
 // a pipeline file is reported, but the walk goes on through the rest.
-func walk(dir, id string, depth int, underPipeline bool, found func(id, dir string)) {
+// Directories a git checkout ignores are not visited.
+func walk(dir, id string, depth int, underPipeline bool, ignored map[string]bool, found func(id, dir string)) {
 	if depth > maxDepth {
 		return
 	}
@@ -135,6 +177,10 @@ func walk(dir, id string, depth int, underPipeline bool, found func(id, dir stri
 			continue
 		}
 		sub := filepath.Join(dir, name)
+		if ignored[sub] {
+			continue
+		}
+		ignored := gitIgnored(sub, ignored)
 		subID := SafeID(name)
 		if id != "" {
 			subID = id + "/" + subID
@@ -143,7 +189,7 @@ func walk(dir, id string, depth int, underPipeline bool, found func(id, dir stri
 		if pipeline || (!underPipeline && detector.Any(sub)) {
 			found(subID, sub)
 		}
-		walk(sub, subID, depth+1, underPipeline || pipeline, found)
+		walk(sub, subID, depth+1, underPipeline || pipeline, ignored, found)
 	}
 }
 
