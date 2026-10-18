@@ -63,6 +63,7 @@ func (d *Discovery) List() []*Folder {
 	}
 	if d.Discover {
 		d.discover(root, c)
+		sections(root, c)
 	}
 
 	result := make([]*Folder, 0, len(c.byID))
@@ -126,6 +127,25 @@ func (d *Discovery) discover(root string, c *catalogue) {
 			c.add(f)
 		}
 	})
+}
+
+// sections adds the top level folder of every listed folder below one
+// that has nothing to run itself, such as a checkout of several apps: the
+// sidebar lists the folders inside it under it.
+func sections(root string, c *catalogue) {
+	ids := make([]string, 0, len(c.byID))
+	for id := range c.byID {
+		ids = append(ids, id)
+	}
+	for _, id := range ids {
+		top, _, nested := strings.Cut(id, "/")
+		if !nested {
+			continue
+		}
+		if dir := filepath.Join(root, top); !c.seen(dir) {
+			c.add(Load(top, dir))
+		}
+	}
 }
 
 // runnable reports whether a discovered folder has a job to run, or a
