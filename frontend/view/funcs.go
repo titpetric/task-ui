@@ -31,6 +31,8 @@ func Funcs() template.FuncMap {
 		"assetVersion": AssetVersion,
 		"folderDir":    FolderDir,
 		"chain":        Chain,
+		"groups":       Groups,
+		"hasPrefix":    strings.HasPrefix,
 	}
 }
 
