@@ -14,13 +14,13 @@
 {{ template "icons" . }}
 {{- if not .User }}
 	<header class="top login-top">
-		<h1><a href="/">TaskUI{{ template "logo" }}</a></h1>
+		<h1><a href="/"><span>TaskUI</span>{{ template "logo" }}</a></h1>
 	</header>
 	{{ template "content" . }}
 {{- else }}
 	<header class="top">
 		<button type="button" class="btn-icon menu-toggle" id="menu-toggle" aria-label="Menu" aria-controls="side" aria-expanded="false"><svg class="ic"><use href="#i-menu"/></svg></button>
-		<h1><a href="/">TaskUI{{ template "logo" }}</a></h1>
+		<h1><a href="/"><span>TaskUI</span>{{ template "logo" }}</a></h1>
 		<span class="spacer"></span>
 		<details class="user" id="user-menu">
 			<summary aria-label="{{ .User.Name }}, {{ .User.Role }}" title="{{ .User.Name }}"><span class="avatar">{{ .User.Initials }}</span></summary>

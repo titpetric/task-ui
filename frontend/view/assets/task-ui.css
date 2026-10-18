@@ -258,12 +258,18 @@ header.top h1 a:hover {
 header.top h1 a {
   display: inline-flex;
   align-items: center;
-  gap: 0.6rem;
+  gap: 0.5rem;
+}
+
+/* The letter spacing trails the last letter too; take it back so the gap
+   to the logo is the gap. */
+header.top h1 a span {
+  margin-right: -0.24em;
 }
 
 header.top h1 .logo {
-  width: 1.45rem;
-  height: 1.45rem;
+  width: 1.3rem;
+  height: 1.3rem;
 }
 
 header.top h1 .logo rect {
@@ -1673,9 +1679,11 @@ dialog.run[open] {
 /* ----------------------------------------------------------- sidebar tree */
 
 /* The menu button shows under the breakpoint. */
+/* The header's 1rem gap is for its groups; the button belongs with the
+   name, so it sits closer. */
 .menu-toggle {
   display: none;
-  margin-right: 0.2rem;
+  margin: 0 -0.4rem 0 -0.35rem;
 }
 
 /* After the rule above, or it would hide the button on phones too. */
