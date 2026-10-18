@@ -1,0 +1,99 @@
+package frontend_test
+
+import (
+	"context"
+	"net/http"
+	"net/url"
+	"strings"
+	"testing"
+
+	"github.com/titpetric/task-ui/access"
+	"github.com/titpetric/task-ui/internal/assert"
+)
+
+// post submits a form as a browser does.
+func (f *fixture) post(t *testing.T, path string, form url.Values) *http.Response {
+	t.Helper()
+	req, err := http.NewRequest(http.MethodPost, f.server.URL+path, strings.NewReader(form.Encode()))
+	assert.NoError(t, err)
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	res, err := client().Do(req)
+	assert.NoError(t, err)
+	res.Body.Close()
+	return res
+}
+
+func TestLogin(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	hash, err := access.HashPassword("demo")
+	assert.NoError(t, err)
+	admin := f.users[asAdmin]
+	admin.Password = hash
+	assert.NoError(t, f.opts.Users.Update(context.Background(), admin))
+
+	form := f.get(t, "", "/login?back=/f/infra")
+	assert.Equal(t, http.StatusOK, form.Status)
+	assert.Contains(t, form.Body, "Sign in")
+	assert.Contains(t, form.Body, `name="back" value="/f/infra"`)
+	assert.NotContains(t, form.Body, "Recents")
+
+	wrong := f.post(t, "/login", url.Values{"username": {"admin"}, "password": {"nope"}, "back": {"/f/infra"}})
+	assert.Equal(t, http.StatusUnauthorized, wrong.StatusCode)
+
+	right := f.post(t, "/login", url.Values{"username": {" admin "}, "password": {"demo"}, "back": {"/f/infra"}})
+	assert.Equal(t, http.StatusSeeOther, right.StatusCode)
+	assert.Equal(t, "/f/infra", right.Header.Get("Location"))
+	var cookie *http.Cookie
+	for _, c := range right.Cookies() {
+		if c.Name == access.Cookie {
+			cookie = c
+		}
+	}
+	assert.NotNil(t, cookie)
+	assert.True(t, cookie.HttpOnly)
+
+	// The cookie signs the next request in.
+	req, _ := http.NewRequest(http.MethodGet, f.server.URL+"/", nil)
+	req.AddCookie(cookie)
+	res, err := client().Do(req)
+	assert.NoError(t, err)
+	res.Body.Close()
+	assert.Equal(t, http.StatusOK, res.StatusCode)
+
+	// A sign in from another site is refused.
+	req, _ = http.NewRequest(http.MethodPost, f.server.URL+"/login", strings.NewReader(url.Values{"username": {"admin"}, "password": {"demo"}}.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("Origin", "https://evil.example")
+	res, err = client().Do(req)
+	assert.NoError(t, err)
+	res.Body.Close()
+	assert.Equal(t, http.StatusForbidden, res.StatusCode)
+
+	// Off site targets land home.
+	elsewhere := f.post(t, "/login", url.Values{"username": {"admin"}, "password": {"demo"}, "back": {"https://evil.example"}})
+	assert.Equal(t, "/", elsewhere.Header.Get("Location"))
+}
+
+func TestLogin_SignedIn(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+
+	res := f.get(t, asOps, "/login")
+	assert.Equal(t, http.StatusSeeOther, res.Status)
+	assert.Equal(t, "/", res.Location)
+}
+
+func TestLogout(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+
+	res := f.post(t, "/logout", nil)
+	assert.Equal(t, http.StatusSeeOther, res.StatusCode)
+	assert.Equal(t, "/login", res.Header.Get("Location"))
+	for _, c := range res.Cookies() {
+		if c.Name == access.Cookie {
+			assert.Equal(t, -1, c.MaxAge)
+		}
+	}
+}

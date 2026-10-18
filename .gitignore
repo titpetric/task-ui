@@ -1,3 +1,6 @@
 /task-ui
 /.ssh
 /build
+/env
+/history
+.data/

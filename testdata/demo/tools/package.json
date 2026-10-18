@@ -1,0 +1,9 @@
+{
+  "name": "tools-dashboard",
+  "description": "Internal dashboard for the tools team",
+  "scripts": {
+    "build": "echo 'vite build' && mkdir -p dist && echo ok > dist/index.html",
+    "dev": "echo 'vite dev server would start here'",
+    "test": "echo 'vitest: 12 passed'"
+  }
+}

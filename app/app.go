@@ -1,0 +1,255 @@
+package app
+
+import (
+	"context"
+	"crypto/rand"
+	"encoding/hex"
+	"errors"
+	"fmt"
+	"log/slog"
+	"net"
+	"net/http"
+	"os"
+	"sync/atomic"
+	"time"
+
+	chi "github.com/go-chi/chi/v5"
+
+	"github.com/titpetric/task-ui/access"
+	"github.com/titpetric/task-ui/api"
+	"github.com/titpetric/task-ui/envfile"
+	"github.com/titpetric/task-ui/frontend"
+	"github.com/titpetric/task-ui/git"
+	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/recording"
+	"github.com/titpetric/task-ui/runner"
+	"github.com/titpetric/task-ui/scheduler"
+	"github.com/titpetric/task-ui/secret"
+	"github.com/titpetric/task-ui/sshkey"
+	"github.com/titpetric/task-ui/storage"
+)
+
+// App is a running instance: the database, the runner, the scheduler and
+// the handler that serves the API and the pages.
+type App struct {
+	Config    *Config
+	DB        storage.DB
+	Users     *storage.UserStorage
+	Runner    *runner.Manager
+	Scheduler *scheduler.Loop
+	Catalogue *Catalogue
+	Guard     *access.Guard
+	// UsersFile is the password file, nil when there is none.
+	UsersFile *UsersFile
+
+	handler http.Handler
+	addr    atomic.Pointer[string]
+}
+
+// New opens the database, reads the users, and builds everything. Runs
+// left running by a previous process are marked killed.
+func New(ctx context.Context, cfg *Config, version string) (*App, error) {
+	db, err := openStorage(ctx, cfg)
+	if err != nil {
+		return nil, err
+	}
+	a := &App{Config: cfg, DB: db, Users: storage.NewUserStorage(db)}
+	if err := a.prepare(ctx); err != nil {
+		db.Close()
+		return nil, err
+	}
+	if err := a.wire(version); err != nil {
+		db.Close()
+		return nil, err
+	}
+	return a, nil
+}
+
+// openStorage makes the data directories and opens the database.
+func openStorage(ctx context.Context, cfg *Config) (storage.DB, error) {
+	for _, dir := range []string{cfg.DataDir, cfg.RecordingsDir(), cfg.ArtifactsDir()} {
+		if err := os.MkdirAll(dir, 0o755); err != nil {
+			return nil, err
+		}
+	}
+	db, err := storage.OpenAndMigrate(ctx, cfg.DB)
+	if err != nil {
+		return nil, fmt.Errorf("opening %s: %w", cfg.DB, err)
+	}
+	return db, nil
+}
+
+// prepare reads the users and settles what the previous process left.
+func (a *App) prepare(ctx context.Context) error {
+	if err := a.seed(ctx); err != nil {
+		return err
+	}
+	if err := a.autoLogin(ctx); err != nil {
+		return err
+	}
+	n, err := storage.NewRunStorage(a.DB).KillActive(ctx)
+	if err != nil {
+		return err
+	}
+	if n > 0 {
+		slog.Warn("runs left running by the previous process marked killed", "count", n)
+	}
+	return nil
+}
+
+// seed writes the password file to storage, when there is one. Without
+// one the users in storage stay as they are.
+func (a *App) seed(ctx context.Context) error {
+	if a.Config.Htpasswd == "" {
+		slog.Warn("no password file: nobody new can sign in", "hint", "set TASK_UI_HTPASSWD or put .htpasswd in the root")
+		return nil
+	}
+	a.UsersFile = NewUsersFile(a.Config.Htpasswd, a.Config.Admins, a.Config.Viewers)
+	created, removed, err := a.UsersFile.Sync(ctx, a.Users)
+	if err != nil {
+		return fmt.Errorf("reading users: %w", err)
+	}
+	slog.Info("users read from the password file", "file", a.Config.Htpasswd, "created", created, "removed", removed, "admins", a.Config.Admins)
+	return nil
+}
+
+// autoLogin makes the auto login user when there is none, as an admin:
+// the knob is for development, where there may be no password file at
+// all, and a user that cannot sign in would make it useless.
+func (a *App) autoLogin(ctx context.Context) error {
+	name := a.Config.AutoLogin
+	if name == "" {
+		return nil
+	}
+	if _, err := a.Users.GetByName(ctx, name); err == nil {
+		return nil
+	}
+	slog.Warn("auto login names a user that is not there: created as an admin", "user", name)
+	return a.Users.Create(ctx, &model.User{Name: name, Password: "-", Role: model.RoleAdmin})
+}
+
+// wire builds the services and the handler over the open database.
+func (a *App) wire(version string) error {
+	cfg, db := a.Config, a.DB
+	runs := storage.NewRunStorage(db)
+	projects := storage.NewProjectStorage(db)
+	artifacts := storage.NewArtifactStorage(db)
+	schedules := storage.NewScheduleStorage(db)
+	g := &git.Git{SSHDir: cfg.SSHDir}
+	keys := &sshkey.Store{Dir: cfg.SSHDir}
+	secrets := secret.New(storage.NewSecretStorage(db), secret.NewVault(keys))
+	env := envfile.New(storage.NewEnvFileStorage(db), secrets)
+	recordings := &recording.Store{Root: cfg.RecordingsDir()}
+
+	a.Catalogue = NewCatalogue(cfg.Root, cfg.Discover, projects)
+	a.Runner = runner.New(runner.Options{
+		Runs:         runs,
+		Artifacts:    artifacts,
+		Secrets:      secrets,
+		Env:          env,
+		Git:          g,
+		Recordings:   recordings,
+		ArtifactRoot: cfg.ArtifactsDir(),
+		Grace:        cfg.Grace,
+		KillTimeout:  cfg.Grace + 5*time.Second,
+		Keep:         cfg.Keep,
+		Now:          cfg.Clock(),
+	})
+	a.Scheduler = scheduler.NewLoop(schedules, a.Users, a.Catalogue, a.Runner)
+	a.Guard = access.NewGuard(a.Users, access.NewSessions(sessionSecret(cfg), cfg.SessionTTL))
+	a.Guard.AutoLogin = cfg.AutoLogin
+
+	apiHandlers := api.New(api.Options{
+		Users: a.Users, Projects: projects, Runs: runs, Artifacts: artifacts, Schedules: schedules, Secrets: secrets,
+		Runner: a.Runner, Catalogue: a.Catalogue, Git: g, Keys: keys, Env: env, Recordings: recordings, Root: cfg.Root,
+	})
+	pages, err := frontend.New(frontend.Options{
+		Guard: a.Guard, Users: a.Users, Projects: projects, Runs: runs, Artifacts: artifacts, Schedules: schedules, Secrets: secrets,
+		Runner: a.Runner, Catalogue: a.Catalogue, Git: g, Keys: keys, Env: env, Root: cfg.Root, Version: version, Now: cfg.Clock(),
+	})
+	if err != nil {
+		return err
+	}
+
+	r := chi.NewRouter()
+	r.Mount("/api", a.Guard.Require(access.SameOrigin(apiHandlers.Routes())))
+	r.Mount("/", pages.Routes())
+	a.handler = r
+	return nil
+}
+
+// sessionSecret is the configured secret, or one for this process.
+func sessionSecret(cfg *Config) string {
+	if cfg.Secret != "" {
+		return cfg.Secret
+	}
+	buf := make([]byte, 32)
+	_, _ = rand.Read(buf)
+	return hex.EncodeToString(buf)
+}
+
+// Handler returns what serves the API and the pages.
+func (a *App) Handler() http.Handler {
+	return a.handler
+}
+
+// Addr returns the address being served, once Serve has started.
+func (a *App) Addr() string {
+	if addr := a.addr.Load(); addr != nil {
+		return *addr
+	}
+	return ""
+}
+
+// Run listens on the configured address and serves until the context
+// ends.
+func (a *App) Run(ctx context.Context) error {
+	ln, err := net.Listen("tcp", a.Config.Listen)
+	if err != nil {
+		return err
+	}
+	return a.Serve(ctx, ln)
+}
+
+// Serve serves on a listener, with the scheduler and the password file
+// watch running, until the context ends. Running jobs are killed on the
+// way out.
+func (a *App) Serve(ctx context.Context, ln net.Listener) error {
+	addr := ln.Addr().String()
+	a.addr.Store(&addr)
+	slog.Info("task-ui listening", "addr", addr, "root", a.Config.Root, "login", a.Guard.LoginRequired())
+	if a.Config.AutoLogin != "" {
+		slog.Warn("auto login is on: every request is signed in", "user", a.Config.AutoLogin)
+	}
+
+	go a.Scheduler.Run(ctx)
+	if a.UsersFile != nil {
+		go a.UsersFile.Watch(ctx, a.Users, func(err error) { slog.Error("re-reading the password file", "err", err) })
+	}
+	server := &http.Server{Handler: a.handler, ReadHeaderTimeout: 10 * time.Second}
+	errs := make(chan error, 1)
+	go func() { errs <- server.Serve(ln) }()
+
+	select {
+	case err := <-errs:
+		return err
+	case <-ctx.Done():
+		return a.shutdown(server)
+	}
+}
+
+// shutdown ends the runs and the server, within the grace.
+func (a *App) shutdown(server *http.Server) error {
+	ctx, cancel := context.WithTimeout(context.Background(), a.Config.Grace+5*time.Second)
+	defer cancel()
+	a.Runner.Shutdown(ctx)
+	if err := server.Shutdown(ctx); err != nil && !errors.Is(err, context.DeadlineExceeded) {
+		return err
+	}
+	return nil
+}
+
+// Close releases the database.
+func (a *App) Close() error {
+	return a.DB.Close()
+}

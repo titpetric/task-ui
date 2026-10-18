@@ -1,0 +1,9 @@
+name: Backups
+help: Nightly database dumps and offsite sync.
+tasks:
+  dump: pg_dumpall > /backup/db.sql
+  sync: rclone sync /backup remote:backup
+  verify:
+    desc: "Restore the latest dump into a scratch database"
+    cmds:
+      - echo verify
