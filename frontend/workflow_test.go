@@ -148,6 +148,7 @@ func TestWorkflow_Page(t *testing.T) {
 	// the session still in memory; a finished one is not polled.
 	assert.Contains(t, ops, `<a class="frame" href="/runs/`+steps[0].RunID+`" data-attach="`+steps[0].RunID+`" role="img"`)
 	assert.Contains(t, ops, `aria-label="Terminal of infra / plan"><svg`)
+	assert.Contains(t, ops, `data-expand="`+steps[0].RunID+`" aria-expanded="false">Expand</button>`)
 	assert.NotContains(t, ops, `data-frame=`)
 
 	mine := f.workflow(t, asOps, "plan only", "infra", "plan")

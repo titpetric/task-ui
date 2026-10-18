@@ -64,6 +64,7 @@
 	<div class="what">
 		<a href="{{ $l.Href }}"{{ if $l.RunID }} data-attach="{{ $l.RunID }}"{{ end }}>{{ if $l.Workflow }}<svg class="ic"><use href="#i-flow"/></svg>{{ end }}{{ $l.Text }}</a>
 		<small>{{ if $l.State }}{{ $l.State }}{{ else }}step {{ add $i 1 }}{{ end }}</small>
+		{{- if $l.RunID }}<div class="frame-tools"><button type="button" class="btn btn-sm" data-expand="{{ $l.RunID }}" aria-expanded="false">Expand</button></div>{{ end }}
 		{{- if $l.RunID }}<a class="frame" href="/runs/{{ $l.RunID }}" data-attach="{{ $l.RunID }}"{{ if eq $l.State "running" }} data-frame="{{ $l.RunID }}"{{ end }} role="img" aria-label="Terminal of {{ $l.Text }}">{{ $l.FrameSVG }}</a>{{ end }}
 		{{- if $l.WorkflowRunID }}
 		<ol class="pipeline sub" data-sub="{{ $l.WorkflowRunID }}" data-workflow="{{ $l.WorkflowID }}">

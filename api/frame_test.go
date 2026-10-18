@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"testing"
 
 	"github.com/titpetric/task-ui/internal/assert"
@@ -31,6 +32,20 @@ func TestFrame_FromRecording(t *testing.T) {
 	svg := f.call(t, asOps, http.MethodGet, "/runs/"+id+"/frame.svg", nil)
 	assert.Equal(t, http.StatusOK, svg.Status)
 	assert.Contains(t, svg.Headers.Get("Content-Type"), "image/svg+xml")
+
+	// ?all=1 is the whole output, where the last screen of a 5 row
+	// terminal holds only the last lines.
+	long := "{\"version\":2,\"width\":40,\"height\":5}\n"
+	for i := 0; i < 20; i++ {
+		long += "[0.1,\"o\",\"output line " + strconv.Itoa(i) + "\\r\\n\"]\n"
+	}
+	assert.NoError(t, os.WriteFile(path, []byte(long), 0o644))
+	screen := f.call(t, asOps, http.MethodGet, "/runs/"+id+"/frame.txt", nil)
+	assert.NotContains(t, string(screen.Raw), "output line 0\n")
+	all := f.call(t, asOps, http.MethodGet, "/runs/"+id+"/frame.txt?all=1", nil)
+	assert.Equal(t, http.StatusOK, all.Status)
+	assert.Contains(t, string(all.Raw), "output line 0\n")
+	assert.Contains(t, string(all.Raw), "output line 19")
 
 	// No session and no recording: nothing to show.
 	bare := &model.Run{Folder: "infra", Job: "plan", State: model.StateOK, UserName: "ops"}

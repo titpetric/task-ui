@@ -153,13 +153,16 @@ func (h *Handlers) stopRun(w http.ResponseWriter, r *http.Request) { h.endRun(w,
 
 func (h *Handlers) killRun(w http.ResponseWriter, r *http.Request) { h.endRun(w, r, true) }
 
-// frameOf returns the current frame of a run's session.
+// frameOf returns the current frame of a run's session. With ?all=1 it
+// is the run's whole output so far instead: its recording replayed into
+// a tall terminal.
 func (h *Handlers) frameOf(r *http.Request) (runner.Frame, error) {
 	run, err := h.runOf(r)
 	if err != nil {
 		return runner.Frame{}, err
 	}
-	if session, ok := h.opts.Runner.Get(run.ID); ok {
+	all := r.URL.Query().Get("all") != ""
+	if session, ok := h.opts.Runner.Get(run.ID); ok && !all {
 		return session.Frame(), nil
 	}
 	// The session is gone: the recording ends on the same screen.
@@ -171,12 +174,15 @@ func (h *Handlers) frameOf(r *http.Request) (runner.Frame, error) {
 		return runner.Frame{}, runner.ErrNotFound
 	}
 	defer cast.Close()
+	if all {
+		return runner.OutputFromCast(cast)
+	}
 	return runner.FrameFromCast(cast)
 }
 
 // frameSVG renders the last frame of a run as an image. The empty rows
 // at the bottom are left out, so a tile shows what there is; ?full=1
-// keeps the whole screen.
+// keeps the whole screen, ?all=1 renders the whole output.
 func (h *Handlers) frameSVG(w http.ResponseWriter, r *http.Request) {
 	frame, err := h.frameOf(r)
 	if err != nil {

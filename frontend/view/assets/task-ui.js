@@ -845,12 +845,23 @@
   // stepFrame puts the step's terminal under its name: polled while the
   // run goes, fetched once more when it ended.
   function stepFrame(node, runId, running) {
-    var frame = node.querySelector(".frame");
+    var frame = node.querySelector(":scope > .what > .frame");
     if (!frame) {
+      var tools = el("div", "frame-tools");
+      var expand = el("button", "btn btn-sm", "Expand");
+      expand.type = "button";
+      expand.setAttribute("aria-expanded", "false");
+      tools.appendChild(expand);
       frame = el("a", "frame");
       frame.setAttribute("role", "img");
-      node.querySelector(".what").appendChild(frame);
+      var what = node.querySelector(".what");
+      var sub = what.querySelector(":scope > .pipeline.sub");
+      what.insertBefore(tools, sub);
+      what.insertBefore(frame, sub);
     }
+    var button = frame.previousElementSibling && frame.previousElementSibling.querySelector("[data-expand]") ||
+      node.querySelector(":scope > .what > .frame-tools button");
+    if (button) button.dataset.expand = runId;
     frame.href = "/runs/" + runId;
     frame.dataset.attach = runId;
     if (running) {
@@ -859,7 +870,7 @@
       return;
     }
     delete frame.dataset.frame;
-    fetch("/api/runs/" + encodeURIComponent(runId) + "/frame.svg", { credentials: "same-origin" })
+    fetch(frameURL(runId, frame.dataset.all), { credentials: "same-origin" })
       .then(function (res) { return res.ok ? res.text() : null; })
       .then(function (svg) { if (svg) frame.innerHTML = svg; })
       .catch(function () {});
@@ -1250,12 +1261,38 @@
     }).catch(function () {});
   }
 
+  // frameURL is where a run's frame is drawn: its last screen, or with
+  // all its whole output so far.
+  function frameURL(runId, all) {
+    return "/api/runs/" + encodeURIComponent(runId) + "/frame.svg" + (all ? "?all=1" : "");
+  }
+
+  // Expand above a step's terminal shows the run's whole output in its
+  // place, Collapse its last screen again.
+  document.addEventListener("click", function (event) {
+    var btn = event.target.closest("[data-expand]");
+    if (!btn) return;
+    event.preventDefault();
+    var frame = btn.closest(".what").querySelector(":scope > .frame");
+    if (!frame) return;
+    var open = btn.getAttribute("aria-expanded") !== "true";
+    if (open) frame.dataset.all = "1";
+    else delete frame.dataset.all;
+    frame.classList.toggle("expanded", open);
+    btn.setAttribute("aria-expanded", open ? "true" : "false");
+    btn.textContent = open ? "Collapse" : "Expand";
+    fetch(frameURL(btn.dataset.expand, open), { credentials: "same-origin" })
+      .then(function (res) { return res.ok ? res.text() : null; })
+      .then(function (svg) { if (svg) frame.innerHTML = svg; })
+      .catch(function () {});
+  });
+
   // The frames are inline SVG, so they use the page's own faces; each
   // one is fetched again and swapped in place.
   function refreshFrames() {
     if (document.hidden) return;
     document.querySelectorAll(".frame[data-frame]").forEach(function (frame) {
-      fetch("/api/runs/" + encodeURIComponent(frame.dataset.frame) + "/frame.svg", { credentials: "same-origin" })
+      fetch(frameURL(frame.dataset.frame, frame.dataset.all), { credentials: "same-origin" })
         .then(function (res) { return res.ok ? res.text() : null; })
         .then(function (svg) { if (svg) frame.innerHTML = svg; })
         .catch(function () {});
