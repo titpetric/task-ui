@@ -882,6 +882,8 @@ table.table-kv th {
 .dot.ok { background: var(--ok); }
 .dot.failed, .dot.killed { background: var(--bad); }
 .dot.stopped { background: var(--text-faint); }
+.dot.pending { background: transparent; box-shadow: inset 0 0 0 1px var(--line-2); }
+.dot.skipped { background: var(--line); }
 .dot.running {
   background: var(--signal);
   box-shadow: 0 0 0 0 var(--signal-wash);
@@ -2137,4 +2139,56 @@ pre.output {
   line-height: 1.35;
   white-space: pre;
   tab-size: 8;
+}
+
+/* -------------------------------------------------------------- workflows */
+
+/* A chain of steps, folder / job, wrapping between steps. */
+.chain {
+  line-height: 1.7;
+}
+
+.chain .dot {
+  margin-right: 0.3rem;
+}
+
+.workflow-form .steps {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0 0 0.8rem;
+  padding: 0;
+  list-style: none;
+  counter-reset: step;
+}
+
+.workflow-form .step {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.5rem;
+  counter-increment: step;
+}
+
+.workflow-form .step::before {
+  content: counter(step);
+  min-width: 1.4rem;
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.workflow-form .step-tools {
+  display: flex;
+  gap: 0.2rem;
+}
+
+@media (max-width: 640px) {
+  .workflow-form .step {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .workflow-form .step [data-step-job],
+  .workflow-form .step-tools {
+    grid-column: 2;
+  }
 }

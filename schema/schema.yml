@@ -538,3 +538,211 @@
     - name: idx_user_email_user_id
       columns:
         - user_id
+- name: workflow
+  comment: Workflow
+  columns:
+    - name: id
+      type: text
+      key: PRI
+      comment: ID
+      datatype: char(26)
+    - name: name
+      type: text
+      key: MUL
+      comment: Name
+      datatype: varchar
+    - name: user_id
+      type: text
+      key: MUL
+      comment: User ID
+      datatype: char(26)
+    - name: user_name
+      type: text
+      comment: User Name
+      datatype: varchar
+    - name: created_at
+      type: timestamp
+      comment: Created At
+      datatype: datetime
+    - name: updated_at
+      type: timestamp
+      comment: Updated At
+      datatype: datetime
+  indexes:
+    - name: sqlite_autoindex_workflow_1
+      columns:
+        - id
+      primary: true
+      unique: true
+    - name: idx_workflow_name
+      columns:
+        - name
+- name: workflow_run
+  comment: Workflow Run
+  columns:
+    - name: id
+      type: text
+      key: PRI
+      comment: ID
+      datatype: char(26)
+    - name: workflow_id
+      type: text
+      key: MUL
+      comment: Workflow ID
+      datatype: char(26)
+    - name: name
+      type: text
+      comment: Name
+      datatype: varchar
+    - name: user_id
+      type: text
+      key: MUL
+      comment: User ID
+      datatype: char(26)
+    - name: user_name
+      type: text
+      comment: User Name
+      datatype: varchar
+    - name: state
+      type: TEXT
+      key: MUL
+      comment: State
+      datatype: varchar
+      values:
+        - failed
+        - ok
+        - running
+        - stopped
+    - name: message
+      type: text
+      comment: Message
+      datatype: varchar
+    - name: started_at
+      type: timestamp
+      key: MUL
+      comment: Started At
+      datatype: datetime
+    - name: finished_at
+      type: timestamp
+      comment: Finished At
+      datatype: datetime
+    - name: created_at
+      type: timestamp
+      comment: Created At
+      datatype: datetime
+    - name: updated_at
+      type: timestamp
+      comment: Updated At
+      datatype: datetime
+  indexes:
+    - name: sqlite_autoindex_workflow_run_1
+      columns:
+        - id
+      primary: true
+      unique: true
+    - name: idx_workflow_run_state
+      columns:
+        - state
+    - name: idx_workflow_run_workflow
+      columns:
+        - workflow_id
+        - started_at
+- name: workflow_run_step
+  comment: Workflow Run Step
+  columns:
+    - name: id
+      type: text
+      key: PRI
+      comment: ID
+      datatype: char(26)
+    - name: workflow_run_id
+      type: text
+      key: MUL
+      comment: Workflow Run ID
+      datatype: char(26)
+    - name: position
+      type: integer
+      key: MUL
+      comment: Position
+      datatype: bigint
+      size: 8
+    - name: folder
+      type: text
+      comment: Folder
+      datatype: varchar
+    - name: job
+      type: text
+      comment: Job
+      datatype: varchar
+    - name: run_id
+      type: text
+      key: MUL
+      comment: Run ID
+      datatype: char(26)
+    - name: state
+      type: TEXT
+      comment: State
+      datatype: varchar
+      values:
+        - failed
+        - killed
+        - ok
+        - pending
+        - running
+        - skipped
+        - stopped
+    - name: created_at
+      type: timestamp
+      comment: Created At
+      datatype: datetime
+    - name: updated_at
+      type: timestamp
+      comment: Updated At
+      datatype: datetime
+  indexes:
+    - name: sqlite_autoindex_workflow_run_step_1
+      columns:
+        - id
+      primary: true
+      unique: true
+    - name: idx_workflow_run_step_run
+      columns:
+        - workflow_run_id
+        - position
+- name: workflow_step
+  comment: Workflow Step
+  columns:
+    - name: id
+      type: text
+      key: PRI
+      comment: ID
+      datatype: char(26)
+    - name: workflow_id
+      type: text
+      key: MUL
+      comment: Workflow ID
+      datatype: char(26)
+    - name: position
+      type: integer
+      key: MUL
+      comment: Position
+      datatype: bigint
+      size: 8
+    - name: folder
+      type: text
+      comment: Folder
+      datatype: varchar
+    - name: job
+      type: text
+      comment: Job
+      datatype: varchar
+  indexes:
+    - name: sqlite_autoindex_workflow_step_1
+      columns:
+        - id
+      primary: true
+      unique: true
+    - name: idx_workflow_step_workflow
+      columns:
+        - workflow_id
+        - position

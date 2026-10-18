@@ -11,6 +11,7 @@ import (
 	"github.com/titpetric/task-ui/secret"
 	"github.com/titpetric/task-ui/sshkey"
 	"github.com/titpetric/task-ui/storage"
+	"github.com/titpetric/task-ui/workflow"
 )
 
 // Options are what the pages read from.
@@ -25,6 +26,11 @@ type Options struct {
 	Artifacts *storage.ArtifactStorage
 	Schedules *storage.ScheduleStorage
 	Secrets   *secret.Store
+
+	Workflows    *storage.WorkflowStorage
+	WorkflowRuns *storage.WorkflowRunStorage
+	// Flows runs the workflows.
+	Flows *workflow.Runner
 
 	Runner    *runner.Manager
 	Catalogue folder.Catalogue

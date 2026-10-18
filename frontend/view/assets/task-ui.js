@@ -487,7 +487,9 @@
     var button = form.querySelector("[type=submit]");
     if (button) button.disabled = true;
     formError(form, "");
-    api(method, form.dataset.api, serialize(form)).then(function (res) {
+    var body = serialize(form);
+    if (form.hasAttribute("data-workflow")) body.steps = workflowSteps(form);
+    api(method, form.dataset.api, body).then(function (res) {
       if (res.status >= 300) {
         if (button) button.disabled = false;
         formError(form, (res.data.error || ("HTTP " + res.status)) + (res.data.output ? "\n\n" + res.data.output : ""));
@@ -526,6 +528,102 @@
     narrow(select);
     select.addEventListener("change", function () { narrow(select); });
   });
+
+  // ------------------------------------------------------------- workflows
+
+  // workflowSteps reads a workflow form's steps, in their order.
+  function workflowSteps(form) {
+    return Array.prototype.map.call(form.querySelectorAll("[data-step]"), function (row) {
+      return {
+        folder: row.querySelector("[data-step-folder]").value,
+        job: row.querySelector("[data-step-job]").value,
+      };
+    });
+  }
+
+  // narrowStep keeps the jobs of the step's folder in its job select,
+  // and the job picked when it still belongs.
+  function narrowStep(row) {
+    var folder = row.querySelector("[data-step-folder]");
+    var job = row.querySelector("[data-step-job]");
+    if (!job.allOptions) job.allOptions = Array.prototype.slice.call(job.options);
+    var picked = job.value;
+    job.innerHTML = "";
+    job.allOptions.forEach(function (option) {
+      if (option.dataset.folder === folder.value) job.appendChild(option);
+    });
+    if (picked && Array.prototype.some.call(job.options, function (o) { return o.value === picked; })) job.value = picked;
+  }
+
+  // stepTools enables the move buttons that have somewhere to go, and
+  // keeps one step at least.
+  function stepTools(list) {
+    var rows = list.querySelectorAll("[data-step]");
+    Array.prototype.forEach.call(rows, function (row, i) {
+      row.querySelector("[data-step-up]").disabled = i === 0;
+      row.querySelector("[data-step-down]").disabled = i === rows.length - 1;
+      row.querySelector("[data-step-remove]").disabled = rows.length === 1;
+    });
+  }
+
+  document.querySelectorAll("form[data-workflow]").forEach(function (form) {
+    var list = form.querySelector("[data-steps]");
+    list.querySelectorAll("[data-step]").forEach(narrowStep);
+    stepTools(list);
+    form.addEventListener("change", function (event) {
+      if (event.target.matches("[data-step-folder]")) narrowStep(event.target.closest("[data-step]"));
+    });
+    form.addEventListener("click", function (event) {
+      var btn = event.target.closest("[data-step-add], [data-step-up], [data-step-down], [data-step-remove]");
+      if (!btn) return;
+      event.preventDefault();
+      var row = btn.closest("[data-step]");
+      if (btn.hasAttribute("data-step-add")) {
+        var fresh = form.querySelector("[data-step-template]").content.firstElementChild.cloneNode(true);
+        var last = list.querySelector("[data-step]:last-child");
+        // A new step starts in the folder of the one before it.
+        if (last) fresh.querySelector("[data-step-folder]").value = last.querySelector("[data-step-folder]").value;
+        list.appendChild(fresh);
+        narrowStep(fresh);
+        fresh.querySelector("[data-step-job]").focus();
+      } else if (btn.hasAttribute("data-step-up") && row.previousElementSibling) {
+        list.insertBefore(row, row.previousElementSibling);
+      } else if (btn.hasAttribute("data-step-down") && row.nextElementSibling) {
+        list.insertBefore(row.nextElementSibling, row);
+      } else if (btn.hasAttribute("data-step-remove") && list.children.length > 1) {
+        row.remove();
+      }
+      stepTools(list);
+    });
+  });
+
+  document.addEventListener("click", function (event) {
+    var btn = event.target.closest("[data-workflow-run], [data-workflow-stop]");
+    if (!btn) return;
+    event.preventDefault();
+    btn.disabled = true;
+    var run = btn.hasAttribute("data-workflow-run");
+    var path = run
+      ? "/api/workflows/" + encodeURIComponent(btn.dataset.workflowRun) + "/runs"
+      : "/api/workflow-runs/" + encodeURIComponent(btn.dataset.workflowStop) + "/stop";
+    api("POST", path).then(function (res) {
+      // A workflow already running answers 409; its page shows that run.
+      if (res.status >= 300 && res.status !== 409) {
+        btn.disabled = false;
+        window.alert(res.data.error || ("HTTP " + res.status));
+        return;
+      }
+      if (run) window.location.href = "/workflows/" + encodeURIComponent(btn.dataset.workflowRun);
+      else window.location.reload();
+    });
+  });
+
+  // A section with data-refresh reloads the page while something in it
+  // runs, so a workflow's steps show their progress.
+  var refresh = document.querySelector("[data-refresh]");
+  if (refresh) {
+    setTimeout(function () { window.location.reload(); }, parseInt(refresh.dataset.refresh, 10) || 3000);
+  }
 
   // A file picker fills the field it names, so a key can be chosen or pasted.
   document.addEventListener("change", function (event) {

@@ -28,6 +28,7 @@ import (
 	"github.com/titpetric/task-ui/secret"
 	"github.com/titpetric/task-ui/sshkey"
 	"github.com/titpetric/task-ui/storage"
+	"github.com/titpetric/task-ui/workflow"
 )
 
 // catalogue is a fixed set of folders.
@@ -117,20 +118,25 @@ func newFixture(t *testing.T) *fixture {
 
 	keys := &sshkey.Store{Dir: t.TempDir()}
 	secrets := secret.New(storage.NewSecretStorage(db), secret.NewVault(keys))
+	cat := catalogue{"infra": infra, "private": private, "infra/edge": edge}
+	workflows, workflowRuns := storage.NewWorkflowStorage(db), storage.NewWorkflowRunStorage(db)
 	f.opts = api.Options{
-		Users:      users,
-		Projects:   storage.NewProjectStorage(db),
-		Runs:       runs,
-		Artifacts:  artifacts,
-		Schedules:  storage.NewScheduleStorage(db),
-		Secrets:    secrets,
-		Runner:     manager,
-		Catalogue:  catalogue{"infra": infra, "private": private, "infra/edge": edge},
-		Git:        &git.Git{},
-		Keys:       keys,
-		Env:        envfile.New(storage.NewEnvFileStorage(db), secrets),
-		Recordings: recordings,
-		Root:       root,
+		Workflows:    workflows,
+		WorkflowRuns: workflowRuns,
+		Flows:        workflow.New(workflows, workflowRuns, cat, manager),
+		Users:        users,
+		Projects:     storage.NewProjectStorage(db),
+		Runs:         runs,
+		Artifacts:    artifacts,
+		Schedules:    storage.NewScheduleStorage(db),
+		Secrets:      secrets,
+		Runner:       manager,
+		Catalogue:    cat,
+		Git:          &git.Git{},
+		Keys:         keys,
+		Env:          envfile.New(storage.NewEnvFileStorage(db), secrets),
+		Recordings:   recordings,
+		Root:         root,
 	}
 	routes := api.New(f.opts).Routes()
 	f.server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

@@ -12,8 +12,11 @@ func TestMigrations(t *testing.T) {
 	t.Parallel()
 	files, err := fs.Glob(schema.Migrations(), "*.up.sql")
 	assert.NoError(t, err)
-	assert.Len(t, files, 9)
+	assert.Len(t, files, 13)
 	assert.Contains(t, files, "run.up.sql")
+	for _, name := range []string{"workflow.up.sql", "workflow_step.up.sql", "workflow_run.up.sql", "workflow_run_step.up.sql"} {
+		assert.Contains(t, files, name)
+	}
 	data, err := fs.ReadFile(schema.Migrations(), "user.up.sql")
 	assert.NoError(t, err)
 	assert.Contains(t, string(data), "CREATE TABLE IF NOT EXISTS user")
