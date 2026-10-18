@@ -35,7 +35,7 @@ func (s *UserEmailStorage) Add(ctx context.Context, userID, email string) error 
 
 // List returns a user's email addresses, oldest first.
 func (s *UserEmailStorage) List(ctx context.Context, userID string) ([]model.UserEmail, error) {
-	return client(s.db).Select[model.UserEmail](ctx, "SELECT * FROM user_email WHERE user_id = ? ORDER BY id", userID)
+	return client(s.db).Select[model.UserEmail](ctx, "SELECT * FROM user_email WHERE user_id = ? ORDER BY rowid", userID)
 }
 
 // UserID returns the user an email address belongs to.
