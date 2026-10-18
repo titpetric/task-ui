@@ -163,7 +163,7 @@
     session = null;
     if (/^#run=/.test(location.hash)) history.replaceState(null, "", location.pathname + location.search);
     // A page that follows its topic drew the change already.
-    if (changed && !live) window.location.reload();
+    if (changed && !follows) window.location.reload();
   }
 
   function open(kind, title, who) {
@@ -364,7 +364,7 @@
   function endRun(id, how) {
     return api("POST", "/api/runs/" + encodeURIComponent(id) + "/" + how).then(function (res) {
       if (res.status >= 300) window.alert(res.data.error || ("HTTP " + res.status));
-      else if (!session) window.location.reload();
+      else if (!session && !follows) window.location.reload();
     });
   }
 
@@ -609,8 +609,10 @@
     });
   });
 
-  // The workflow page follows its topic; live says so, below.
-  var live = document.querySelector("[data-sse]");
+  // The workflow page follows its topic; live says so, below. Any page
+  // that follows a topic draws its changes and is never reloaded.
+  var live = document.querySelector('[data-sse^="workflow:"]');
+  var follows = document.querySelector("[data-sse]");
 
   document.addEventListener("click", function (event) {
     var btn = event.target.closest("[data-workflow-run], [data-workflow-stop]");
@@ -896,6 +898,85 @@
         workflowEvent(name, data);
       });
     });
+  }
+
+  // The runs page follows the runs topic: a run that starts is added on
+  // top of the table, one that ends is updated in place. The filters of
+  // the page hold for the rows it adds.
+  var runsTable = document.querySelector('[data-sse="runs"] [data-runs-table]');
+  if (runsTable && window.EventSource) {
+    var params = new URLSearchParams(location.search);
+    var matches = function (run) {
+      return (!params.get("folder") || params.get("folder") === run.folder) &&
+        (!params.get("job") || run.job.indexOf(params.get("job")) >= 0) &&
+        (!params.get("state") || params.get("state") === run.state);
+    };
+    var took = function (run) {
+      if (!run.started_at) return "";
+      var end = run.finished_at ? Date.parse(run.finished_at) : Date.now();
+      var s = Math.max(0, (end - Date.parse(run.started_at)) / 1000);
+      return s < 60 ? s.toFixed(1) + "s" : Math.floor(s / 60) + "m" + ("0" + Math.floor(s % 60)).slice(-2) + "s";
+    };
+    var stateHTML = function (run) {
+      return '<span class="state"><i class="dot ' + escapeHTML(run.state) + '"></i>' + escapeHTML(run.state) +
+        (run.state !== "ok" && run.state !== "running" ? ' <span class="faint">(' + (run.exit_code || 0) + ")</span>" : "") + "</span>";
+    };
+    var actionsHTML = function (run, canRun) {
+      var id = escapeHTML(run.id);
+      var html = '<a class="btn btn-sm" href="/runs/' + id + '" data-attach="' + id + '">' + (run.state === "running" ? "Attach" : "View") + "</a>";
+      if (run.state === "running" && canRun) {
+        html += '<button type="button" class="btn-icon" data-stop="' + id + '" title="Stop the run" aria-label="Stop the run"><svg class="ic"><use href="#i-stop"/></svg></button>' +
+          '<button type="button" class="btn-icon danger" data-kill="' + id + '" title="Kill the run" aria-label="Kill the run"><svg class="ic"><use href="#i-trash"/></svg></button>';
+      }
+      return html;
+    };
+    var whoHTML = function (run) {
+      return '<span class="who-ran"><span class="avatar sm" title="' + escapeHTML(run.user_name) + '">' + escapeHTML(initials(run.user_name)) + "</span> " +
+        escapeHTML(run.user_name) + (run.scheduled ? ' <span class="badge">scheduled</span>' : "") +
+        (run.reason ? ' <span class="badge bad" title="' + escapeHTML(run.reason) + '">out of hours</span>' : run.forced ? ' <span class="badge signal">forced</span>' : "") + "</span>";
+    };
+    var runsSource = new EventSource("/api/sse/runs");
+    runsSource.addEventListener("run", function (event) {
+      var run;
+      try { run = JSON.parse(event.data); } catch (e) { return; }
+      var row = runsTable.querySelector('[data-run="' + run.id + '"]');
+      if (row) {
+        if (!matches(run)) { row.remove(); return; }
+        row.querySelector("[data-result]").innerHTML = stateHTML(run);
+        row.querySelector("[data-took]").textContent = took(run);
+        var canRun = !!row.querySelector("[data-stop]");
+        row.querySelector("[data-actions]").innerHTML = actionsHTML(run, canRun);
+        return;
+      }
+      if (!matches(run)) return;
+      var empty = runsTable.querySelector(".empty");
+      if (empty) empty.remove();
+      row = document.createElement("tr");
+      row.dataset.run = run.id;
+      var folder = escapeHTML(run.folder), job = escapeHTML(run.job);
+      row.innerHTML =
+        '<td class="nowrap" data-label="Started">just now</td>' +
+        '<td data-label="Folder"><a href="/f/' + folder + '">' + folder + "</a></td>" +
+        '<td class="key"><a href="/f/' + folder + "/" + job + '">' + job + "</a></td>" +
+        '<td data-label="By">' + whoHTML(run) + "</td>" +
+        '<td class="nowrap" data-label="Took" data-took>' + took(run) + "</td>" +
+        '<td data-label="Result" data-result>' + stateHTML(run) + "</td>" +
+        '<td class="actions" data-actions>' + actionsHTML(run, false) + "</td>";
+      runsTable.insertBefore(row, runsTable.firstChild);
+      // Whether this user may end it comes with the run's own view.
+      api("GET", "/api/runs/" + encodeURIComponent(run.id)).then(function (res) {
+        if (res.status === 200 && res.data.state === "running") row.querySelector("[data-actions]").innerHTML = actionsHTML(res.data, res.data.can_run);
+      });
+    });
+    // The running rows count their time.
+    setInterval(function () {
+      runsTable.querySelectorAll("tr[data-run]").forEach(function (row) {
+        if (!row.querySelector(".dot.running")) return;
+        var cell = row.querySelector("[data-took]");
+        if (!cell.dataset.since) cell.dataset.since = Date.now() - (parseFloat(cell.textContent) || 0) * 1000;
+        cell.textContent = took({ started_at: new Date(Number(cell.dataset.since)).toISOString() });
+      });
+    }, 1000);
   }
 
   // A file picker fills the field it names, so a key can be chosen or pasted.

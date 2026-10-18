@@ -19,6 +19,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/titpetric/task-ui/event"
 	"github.com/titpetric/task-ui/model"
 )
 
@@ -37,6 +38,9 @@ var (
 // Manager starts runs and holds their sessions.
 type Manager struct {
 	opts Options
+	// Events gets the runs topic told of each run as it starts and as
+	// it ends: a `run` event with the run row. Nil tells nobody.
+	Events *event.Bus
 
 	mu       sync.Mutex
 	sessions map[string]*Session
@@ -114,8 +118,19 @@ func (m *Manager) Start(ctx context.Context, req Request) (*Session, error) {
 	m.sessions[run.ID] = session
 	m.byKey[run.Key()] = session
 	m.mu.Unlock()
+	m.publish(*run)
 	go m.serve(session)
 	return session, nil
+}
+
+// RunsTopic is the topic every run is told on.
+const RunsTopic = "runs"
+
+// publish tells the runs topic how a run stands, when there is a bus.
+func (m *Manager) publish(run model.Run) {
+	if m.Events != nil {
+		m.Events.Publish(RunsTopic, "run", run)
+	}
 }
 
 func (m *Manager) newRun(req Request) *model.Run {
@@ -262,6 +277,7 @@ func (m *Manager) settle(ctx context.Context, session *Session, status Status) {
 	session.mu.Unlock()
 	m.collectArtifacts(ctx, session)
 	slog.Info("run finished", "folder", run.Folder, "job", run.Job, "user", run.UserName, "state", status.State, "exit", status.ExitCode)
+	m.publish(run)
 	session.finish(status)
 }
 

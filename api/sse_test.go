@@ -72,6 +72,38 @@ func TestSSE_Workflow(t *testing.T) {
 	assert.Contains(t, strings.Join(datas, "\n"), `"folder":"infra/edge"`)
 }
 
+// The runs topic streams every run as it starts and ends, of the
+// folders the user sees only.
+func TestSSE_Runs(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+	res := f.sse(t, ctx, asLimited, "runs")
+	defer res.Body.Close()
+	assert.Equal(t, http.StatusOK, res.StatusCode)
+
+	f.finished(t, f.start(t, asAdmin, "private", "deploy")) // limited does not see private
+	id := f.start(t, asOps, "infra", "plan")
+
+	scanner := bufio.NewScanner(res.Body)
+	datas := []string{}
+	for scanner.Scan() {
+		line := scanner.Text()
+		if strings.HasPrefix(line, "data: ") {
+			datas = append(datas, strings.TrimPrefix(line, "data: "))
+			if strings.Contains(line, `"state":"ok"`) {
+				break
+			}
+		}
+	}
+	all := strings.Join(datas, "\n")
+	assert.Contains(t, datas[0], `"id":"`+id+`"`)
+	assert.Contains(t, datas[0], `"state":"running"`)
+	assert.Contains(t, all, `"folder":"infra"`)
+	assert.NotContains(t, all, `"folder":"private"`)
+}
+
 // A topic that is not a workflow the user sees answers 404.
 func TestSSE_Hidden(t *testing.T) {
 	t.Parallel()

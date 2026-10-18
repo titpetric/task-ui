@@ -177,6 +177,7 @@ func (a *App) wire(version string) error {
 	a.Workflows = workflow.New(workflows, workflowRuns, a.Catalogue, a.Runner)
 	events := event.NewBus()
 	a.Workflows.Events = events
+	a.Runner.Events = events
 	a.Guard = access.NewGuard(a.Users, access.NewSessions(sessionSecret(cfg), cfg.SessionTTL))
 	a.Guard.AutoLogin = cfg.AutoLogin
 

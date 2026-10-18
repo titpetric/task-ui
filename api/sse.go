@@ -7,6 +7,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/titpetric/task-ui/access"
+	"github.com/titpetric/task-ui/event"
+	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/runner"
 	"github.com/titpetric/task-ui/storage"
 )
 
@@ -19,12 +23,26 @@ const heartbeat = 15 * time.Second
 //
 //	workflow:{id}  a workflow's runs: run, step and done, for a user who
 //	               sees every step of it
+//	runs           every run as it starts and ends: run, with the run row,
+//	               of the folders the user sees
 //
 // The stream ends when the client goes.
 func (h *Handlers) sse(w http.ResponseWriter, r *http.Request) {
 	topic := param(r, "topic")
 	kind, id, _ := strings.Cut(topic, ":")
+	user := access.UserFrom(r.Context())
+	// visible says whether the user may see an event of the topic.
+	visible := func(event.Event) bool { return true }
 	switch kind {
+	case runner.RunsTopic:
+		if id != "" {
+			failErr(w, storage.ErrNotFound)
+			return
+		}
+		visible = func(e event.Event) bool {
+			run, ok := e.Data.(model.Run)
+			return ok && user.CanSee(run.Folder)
+		}
 	case "workflow":
 		wf, err := h.opts.Workflows.Get(r.Context(), id)
 		if err != nil {
@@ -64,6 +82,9 @@ func (h *Handlers) sse(w http.ResponseWriter, r *http.Request) {
 		case e, open := <-events:
 			if !open {
 				return
+			}
+			if !visible(e) {
+				continue
 			}
 			data, err := json.Marshal(e.Data)
 			if err != nil {
