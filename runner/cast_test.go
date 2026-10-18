@@ -60,4 +60,18 @@ func TestOutputFromCast(t *testing.T) {
 	if all.Rows != 13 {
 		t.Fatalf("rows: %d, want the 12 lines and the cursor's", all.Rows)
 	}
+
+	// Twelve lines scroll off a four row screen; two do not.
+	replay, _ := ReplayCast(strings.NewReader(b.String()))
+	if replay.Complete() {
+		t.Fatal("a screen that scrolled shows the whole output")
+	}
+	if replay.Lines() != 12 {
+		t.Fatalf("lines: %d, want 12", replay.Lines())
+	}
+	short := `{"version":2,"width":20,"height":4}` + "\n" + `[0.1,"o","one\r\ntwo\r\n"]` + "\n"
+	replay, _ = ReplayCast(strings.NewReader(short))
+	if !replay.Complete() {
+		t.Fatalf("two lines on a four row screen: %q vs %q", replay.Screen.Trim(1).Text(), replay.Output.Text())
+	}
 }

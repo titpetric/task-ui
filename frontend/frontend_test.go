@@ -78,7 +78,7 @@ func newFixture(t *testing.T) *fixture {
 	t.Cleanup(func() { db.Close() })
 
 	root := t.TempDir()
-	infra := shellFolder(t, root, "infra", map[string]string{"plan": "echo planned", "slow": "sleep 30"})
+	infra := shellFolder(t, root, "infra", map[string]string{"plan": "echo planned", "slow": "sleep 30", "many": "seq 1 200"})
 	infra.Description = "The servers"
 	infra.EnvFiles = []string{".env"}
 	private := shellFolder(t, root, "private", map[string]string{"deploy": "echo deployed"})
@@ -100,12 +100,14 @@ func newFixture(t *testing.T) *fixture {
 	runs := storage.NewRunStorage(db)
 	keys := &sshkey.Store{Dir: t.TempDir()}
 	secrets := secret.New(storage.NewSecretStorage(db), secret.NewVault(keys))
-	manager := runner.New(runner.Options{Runs: runs, Recordings: &recording.Store{Root: t.TempDir()}, Grace: time.Second, Keep: time.Minute})
+	recordings := &recording.Store{Root: t.TempDir()}
+	manager := runner.New(runner.Options{Runs: runs, Recordings: recordings, Grace: time.Second, Keep: time.Minute})
 	t.Cleanup(func() { manager.Shutdown(context.Background()) })
 
 	cat := catalogue{"infra": infra, "private": private, "infra/edge": edge}
 	workflows, workflowRuns := storage.NewWorkflowStorage(db), storage.NewWorkflowRunStorage(db)
 	f.opts = frontend.Options{
+		Recordings:   recordings,
 		Workflows:    workflows,
 		WorkflowRuns: workflowRuns,
 		Flows:        workflow.New(workflows, workflowRuns, cat, manager),

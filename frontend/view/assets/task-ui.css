@@ -2334,16 +2334,22 @@ pre.output {
   display: none;
 }
 
-/* Expand sits above the terminal, at its right edge. */
-.pipeline .what .frame-tools {
+/* The step's name, with Expand on its row at the terminal's right edge. */
+.pipeline .what .step-head {
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
+  gap: 0.6rem;
   max-width: 60rem;
-  margin-top: 0.4rem;
 }
 
-.pipeline .what .frame-tools + .frame {
-  margin-top: 0.3rem;
+.pipeline .what .step-head > a {
+  flex: 1;
+  min-width: 0;
+}
+
+.pipeline .what .step-head .btn .ic {
+  width: 0.8rem;
+  height: 0.8rem;
 }
 
 /* The whole output scrolls inside its box past a screenful or two. */

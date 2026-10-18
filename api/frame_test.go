@@ -32,6 +32,7 @@ func TestFrame_FromRecording(t *testing.T) {
 	svg := f.call(t, asOps, http.MethodGet, "/runs/"+id+"/frame.svg", nil)
 	assert.Equal(t, http.StatusOK, svg.Status)
 	assert.Contains(t, svg.Headers.Get("Content-Type"), "image/svg+xml")
+	assert.Equal(t, "true", svg.Headers.Get("X-Output-Complete")) // one line: nothing to expand
 
 	// ?all=1 is the whole output, where the last screen of a 5 row
 	// terminal holds only the last lines.
@@ -42,6 +43,9 @@ func TestFrame_FromRecording(t *testing.T) {
 	assert.NoError(t, os.WriteFile(path, []byte(long), 0o644))
 	screen := f.call(t, asOps, http.MethodGet, "/runs/"+id+"/frame.txt", nil)
 	assert.NotContains(t, string(screen.Raw), "output line 0\n")
+	scrolled := f.call(t, asOps, http.MethodGet, "/runs/"+id+"/frame.svg", nil)
+	assert.Equal(t, "", scrolled.Headers.Get("X-Output-Complete"))
+	assert.Equal(t, "20", scrolled.Headers.Get("X-Output-Lines"))
 	all := f.call(t, asOps, http.MethodGet, "/runs/"+id+"/frame.txt?all=1", nil)
 	assert.Equal(t, http.StatusOK, all.Status)
 	assert.Contains(t, string(all.Raw), "output line 0\n")

@@ -829,7 +829,9 @@
           a.href = "/f/" + data.folder + "/" + data.job;
           a.textContent = data.folder + " / " + data.job;
         }
-        what.appendChild(a);
+        var head = el("div", "step-head");
+        head.appendChild(a);
+        what.appendChild(head);
         what.appendChild(el("small"));
         item.appendChild(rail);
         item.appendChild(what);
@@ -842,26 +844,28 @@
     });
   }
 
-  // stepFrame puts the step's terminal under its name: polled while the
-  // run goes, fetched once more when it ended.
+  // stepFrame puts the step's terminal under its name, with Expand on the
+  // name's row: polled while the run goes, fetched once more when it
+  // ended, when Expand goes if the screen shows the whole output.
   function stepFrame(node, runId, running) {
-    var frame = node.querySelector(":scope > .what > .frame");
+    var what = node.querySelector(":scope > .what");
+    var head = what.querySelector(":scope > .step-head");
+    var frame = what.querySelector(":scope > .frame");
     if (!frame) {
-      var tools = el("div", "frame-tools");
-      var expand = el("button", "btn btn-sm", "Expand");
-      expand.type = "button";
-      expand.setAttribute("aria-expanded", "false");
-      tools.appendChild(expand);
       frame = el("a", "frame");
       frame.setAttribute("role", "img");
-      var what = node.querySelector(".what");
-      var sub = what.querySelector(":scope > .pipeline.sub");
-      what.insertBefore(tools, sub);
-      what.insertBefore(frame, sub);
+      what.insertBefore(frame, what.querySelector(":scope > .pipeline.sub"));
     }
-    var button = frame.previousElementSibling && frame.previousElementSibling.querySelector("[data-expand]") ||
-      node.querySelector(":scope > .what > .frame-tools button");
-    if (button) button.dataset.expand = runId;
+    var button = head.querySelector("[data-expand]");
+    if (!button) {
+      button = el("button", "btn btn-sm");
+      button.type = "button";
+      button.setAttribute("aria-expanded", "false");
+      button.appendChild(icon("i-expand"));
+      button.appendChild(el("span", "", "Expand"));
+      head.appendChild(button);
+    }
+    button.dataset.expand = runId;
     frame.href = "/runs/" + runId;
     frame.dataset.attach = runId;
     if (running) {
@@ -871,7 +875,15 @@
     }
     delete frame.dataset.frame;
     fetch(frameURL(runId, frame.dataset.all), { credentials: "same-origin" })
-      .then(function (res) { return res.ok ? res.text() : null; })
+      .then(function (res) {
+        var lines = res.ok && res.headers ? res.headers.get("X-Output-Lines") : null;
+        if (res.ok && res.headers && res.headers.get("X-Output-Complete") === "true" && !frame.dataset.all) button.remove();
+        else if (lines && !frame.dataset.all) {
+          button.dataset.label = "Expand " + lines + " lines";
+          button.querySelector("span").textContent = button.dataset.label;
+        }
+        return res.ok ? res.text() : null;
+      })
       .then(function (svg) { if (svg) frame.innerHTML = svg; })
       .catch(function () {});
   }
@@ -894,7 +906,7 @@
 
   if (live && window.EventSource) {
     // Each link keeps where it pointed before a run, to point back to.
-    document.querySelectorAll("[data-pipeline] [data-step] > .what > a").forEach(function (a) {
+    document.querySelectorAll("[data-pipeline] [data-step] > .what > .step-head > a").forEach(function (a) {
       if (!a.dataset.attach) a.dataset.target = a.getAttribute("href");
     });
     // The workflows the steps run are followed too, for their chains.
@@ -1267,8 +1279,9 @@
     return "/api/runs/" + encodeURIComponent(runId) + "/frame.svg" + (all ? "?all=1" : "");
   }
 
-  // Expand above a step's terminal shows the run's whole output in its
-  // place, Collapse its last screen again.
+  // Expand on a step's row asks the API for the run's whole output and
+  // shows it in place of the last screen; Collapse puts back the screen
+  // it kept, with no request.
   document.addEventListener("click", function (event) {
     var btn = event.target.closest("[data-expand]");
     if (!btn) return;
@@ -1276,14 +1289,24 @@
     var frame = btn.closest(".what").querySelector(":scope > .frame");
     if (!frame) return;
     var open = btn.getAttribute("aria-expanded") !== "true";
-    if (open) frame.dataset.all = "1";
-    else delete frame.dataset.all;
     frame.classList.toggle("expanded", open);
     btn.setAttribute("aria-expanded", open ? "true" : "false");
-    btn.textContent = open ? "Collapse" : "Expand";
-    fetch(frameURL(btn.dataset.expand, open), { credentials: "same-origin" })
+    // The label keeps the line count it was drawn with: "Expand 120 lines".
+    var label = btn.querySelector("span");
+    if (!btn.dataset.label) btn.dataset.label = label ? label.textContent : "Expand";
+    btn.innerHTML = "";
+    btn.appendChild(icon(open ? "i-collapse" : "i-expand"));
+    btn.appendChild(el("span", "", open ? "Collapse" : btn.dataset.label));
+    if (!open) {
+      delete frame.dataset.all;
+      if (frame.screen !== undefined) frame.innerHTML = frame.screen;
+      return;
+    }
+    frame.screen = frame.innerHTML;
+    frame.dataset.all = "1";
+    fetch(frameURL(btn.dataset.expand, true), { credentials: "same-origin" })
       .then(function (res) { return res.ok ? res.text() : null; })
-      .then(function (svg) { if (svg) frame.innerHTML = svg; })
+      .then(function (svg) { if (svg && frame.dataset.all) frame.innerHTML = svg; })
       .catch(function () {});
   });
 
