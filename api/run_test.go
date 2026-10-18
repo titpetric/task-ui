@@ -78,25 +78,13 @@ func TestRun_StartBusy(t *testing.T) {
 	assert.Equal(t, model.StateKilled, killed.State)
 }
 
-func TestRun_StartAll(t *testing.T) {
+// Run all is gone: a folder's jobs are chained in a workflow instead.
+func TestRun_NoStartAll(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
 
-	denied := f.call(t, asViewer, http.MethodPost, "/runs/all", api.RunAllRequest{Folder: "infra"})
-	assert.Equal(t, http.StatusOK, denied.Status)
-	assert.Len(t, denied.list("started"), 0)
-	assert.Equal(t, "not allowed", denied.str("skipped", "plan"))
-
-	missing := f.call(t, asOps, http.MethodPost, "/runs/all", api.RunAllRequest{Folder: "nowhere"})
-	assert.Equal(t, http.StatusNotFound, missing.Status)
-
-	res := f.call(t, asOps, http.MethodPost, "/runs/all", api.RunAllRequest{Folder: "infra"})
-	assert.Equal(t, http.StatusOK, res.Status)
-	assert.Len(t, res.list("started"), 5)
-
-	again := f.call(t, asOps, http.MethodPost, "/runs/all", api.RunAllRequest{Folder: "infra"})
-	assert.Equal(t, http.StatusOK, again.Status)
-	assert.Contains(t, again.str("skipped", "slow"), "running")
+	res := f.call(t, asOps, http.MethodPost, "/runs/all", map[string]string{"folder": "infra"})
+	assert.Equal(t, http.StatusMethodNotAllowed, res.Status)
 }
 
 func TestRun_List(t *testing.T) {
@@ -231,8 +219,4 @@ func TestRun_OutOfHours(t *testing.T) {
 	assert.Equal(t, "customer is waiting", forced.str("reason"))
 	assert.Equal(t, model.StateOK, f.finished(t, forced.str("id")).State)
 
-	all := f.call(t, asOps, http.MethodPost, "/runs/all", api.RunAllRequest{Folder: "infra"})
-	assert.Equal(t, http.StatusOK, all.Status)
-	assert.Len(t, all.list("started"), 0)
-	assert.Equal(t, "out of hours", all.str("skipped", "slow"))
 }

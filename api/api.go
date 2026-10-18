@@ -42,7 +42,6 @@ func (h *Handlers) Routes() http.Handler {
 
 	r.Get("/runs", h.listRuns)
 	r.Post("/runs", h.startRun)
-	r.Post("/runs/all", h.startAll)
 	r.Get("/runs/{id}", h.getRun)
 	r.Post("/runs/{id}/stop", h.stopRun)
 	r.Post("/runs/{id}/kill", h.killRun)

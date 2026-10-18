@@ -364,16 +364,6 @@
     });
   }
 
-  function runAll(folder, force) {
-    api("POST", "/api/runs/all", { folder: folder, force: !!force }).then(function (res) {
-      if (res.status >= 300) {
-        window.alert(res.data.error || ("HTTP " + res.status));
-        return;
-      }
-      window.location.reload();
-    });
-  }
-
   if (dialog) {
     dialog.addEventListener("close", teardown);
     els.close.addEventListener("click", function () { dialog.close(); });
@@ -550,7 +540,7 @@
   // --------------------------------------------------------------- clicks
 
   document.addEventListener("click", function (event) {
-    var btn = event.target.closest("[data-run], [data-run-all], [data-attach], [data-stop], [data-kill], [data-delete], [data-copy]");
+    var btn = event.target.closest("[data-run], [data-attach], [data-stop], [data-kill], [data-delete], [data-copy]");
     if (!btn) return;
 
     if (btn.hasAttribute("data-copy")) {
@@ -586,15 +576,6 @@
     if (btn.hasAttribute("data-kill")) {
       event.preventDefault();
       confirm("Kill the run? It ends now, as killed.", "Kill").then(function (ok) { if (ok) endRun(btn.dataset.kill, "kill"); });
-      return;
-    }
-
-    if (btn.hasAttribute("data-run-all")) {
-      event.preventDefault();
-      var count = btn.dataset.count ? btn.dataset.count + " jobs" : "every job";
-      confirm("Start " + count + " of " + btn.dataset.folder + " in the background? Jobs already running are skipped.", "Run all").then(function (ok) {
-        if (ok) runAll(btn.dataset.folder, btn.hasAttribute("data-force"));
-      });
       return;
     }
 

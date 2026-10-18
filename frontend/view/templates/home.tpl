@@ -33,7 +33,7 @@
 	{{- end }}
 	</div>
 	{{- else }}
-	<div class="alert">Nothing is running. Open a folder and press Run, or Run all, and the terminal shows up here for everyone.</div>
+	<div class="alert">Nothing is running. Open a folder and press Run, or run a workflow, and the terminal shows up here for everyone.</div>
 	{{- end }}
 </section>
 
