@@ -182,3 +182,22 @@ func TestProject_RootOnly(t *testing.T) {
 	res = f.call(t, asAdmin, http.MethodPut, "/projects/infra", api.ProjectRequest{Title: "Infra", Recursive: &yes})
 	assert.Equal(t, false, res.get("root_only"))
 }
+
+// A project shows in the sidebar unless it is set not to.
+func TestProject_Sidebar(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+
+	res := f.call(t, asAdmin, http.MethodPut, "/projects/infra", api.ProjectRequest{Title: "Infra"})
+	assert.Equal(t, http.StatusOK, res.Status, string(res.Raw))
+	assert.Equal(t, false, res.get("sidebar_hidden"))
+
+	no := false
+	res = f.call(t, asAdmin, http.MethodPut, "/projects/infra", api.ProjectRequest{Title: "Infra", Sidebar: &no})
+	assert.Equal(t, true, res.get("sidebar_hidden"))
+	res = f.call(t, asAdmin, http.MethodPut, "/projects/infra", api.ProjectRequest{Title: "Infra"})
+	assert.Equal(t, true, res.get("sidebar_hidden")) // left out: as it was
+	yes := true
+	res = f.call(t, asAdmin, http.MethodPut, "/projects/infra", api.ProjectRequest{Title: "Infra", Sidebar: &yes})
+	assert.Equal(t, false, res.get("sidebar_hidden"))
+}

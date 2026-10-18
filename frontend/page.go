@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/titpetric/task-ui/access"
+	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/frontend/view"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/runner"
@@ -43,6 +44,7 @@ func (h *Handlers) page(r *http.Request, title string) *view.Page {
 			p.Folders = append(p.Folders, f)
 		}
 	}
+	p.SideFolders = h.sideFolders(r.Context(), p.Folders)
 	p.Running = h.running(user)
 	p.Recents = h.visibleRuns(r.Context(), user, storage.RunFilter{Limit: 5 * recentCount})
 	if len(p.Recents) > recentCount {
@@ -50,6 +52,31 @@ func (h *Handlers) page(r *http.Request, title string) *view.Page {
 	}
 	p.SideWorkflows = h.visibleWorkflows(r.Context(), p)
 	return p
+}
+
+// sideFolders returns the folders the sidebar lists: all of them but
+// the projects set not to show there, and the folders inside those.
+func (h *Handlers) sideFolders(ctx context.Context, folders []*folder.Folder) []*folder.Folder {
+	hidden := map[string]bool{}
+	if h.opts.Projects != nil {
+		projects, _ := h.opts.Projects.List(ctx)
+		for _, project := range projects {
+			if project.SidebarHidden {
+				hidden[project.Folder] = true
+			}
+		}
+	}
+	if len(hidden) == 0 {
+		return folders
+	}
+	side := make([]*folder.Folder, 0, len(folders))
+	for _, f := range folders {
+		top, _, _ := strings.Cut(f.ID, "/")
+		if !hidden[f.ID] && !hidden[top] {
+			side = append(side, f)
+		}
+	}
+	return side
 }
 
 // running returns the live runs the user may see, by job key.

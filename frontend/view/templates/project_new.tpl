@@ -22,6 +22,9 @@
 	<div class="field">
 		<label class="check"><input type="checkbox" id="p-recursive" name="recursive" checked> Recursive <span class="faint">list the folders inside the checkout too; off lists its own jobs alone</span></label>
 	</div>
+	<div class="field">
+		<label class="check"><input type="checkbox" id="p-sidebar" name="sidebar" checked> Show in sidebar <span class="faint">off keeps the project out of the sidebar; its pages stay</span></label>
+	</div>
 	<div class="form-foot">
 		<a class="btn" href="/settings/projects">Cancel</a>
 		<button class="btn btn-primary" type="submit">Clone</button>

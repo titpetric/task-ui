@@ -1,6 +1,7 @@
 package frontend_test
 
 import (
+	"context"
 	"net/http"
 	"strings"
 	"testing"
@@ -34,6 +35,13 @@ func TestPage_Chrome(t *testing.T) {
 	assert.Contains(t, limited, `title="ops">OP<`)
 }
 
+func mustProject(t *testing.T, f *fixture, folder string) *model.Project {
+	t.Helper()
+	project, err := f.opts.Projects.GetByFolder(context.Background(), folder)
+	assert.NoError(t, err)
+	return project
+}
+
 // A project in the sidebar folds: a disclosure with the folders inside
 // it, open by default, the chevron on its row.
 func TestPage_ProjectsFold(t *testing.T) {
@@ -49,6 +57,16 @@ func TestPage_ProjectsFold(t *testing.T) {
 	chev := body[infra : strings.Index(body[infra:], "</summary>")+infra]
 	assert.Contains(t, chev, `<a class="section" href="/f/infra" data-folder="infra"`)
 	assert.Contains(t, chev, `<svg class="ic chev"><use href="#i-chev"/></svg>`)
+
+	// A project set not to show in the sidebar is left out of it, with
+	// the folders inside it; its pages stay.
+	assert.NoError(t, f.opts.Projects.Create(context.Background(), &model.Project{Folder: "infra", SidebarHidden: true}))
+	hidden := f.page(t, asAdmin, "/")
+	assert.NotContains(t, hidden, `data-project="infra"`)
+	assert.NotContains(t, hidden, `data-folder="infra/edge"`)
+	assert.Contains(t, hidden, `data-project="private"`)
+	assert.Equal(t, http.StatusOK, f.get(t, asAdmin, "/f/infra").Status)
+	assert.NoError(t, f.opts.Projects.Delete(context.Background(), mustProject(t, f, "infra").ID))
 
 	// The open project is marked, on the project and its whole row.
 	page := f.page(t, asAdmin, "/f/infra")

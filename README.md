@@ -209,8 +209,11 @@ empty means every runner), and which `sources` to read, which is also
 how a pipeline folder gets its Makefile or scripts back as jobs. Recursive,
 on by default, lists the folders inside the project too; off lists the
 project's own jobs alone, for a checkout whose inner folders are not
-jobs to run. Through the API a project also takes `commands` (the
-runner per kind, `make: gmake`), `job_allow` (per job) and `recursive`.
+jobs to run. Show in sidebar, on by default, lists the project there;
+off keeps it and its folders out of the sidebar, their pages still
+reachable. A workflow has the same switch, for one that is a step of
+others. Through the API a project also takes `commands` (the runner per
+kind, `make: gmake`), `job_allow` (per job), `recursive` and `sidebar`.
 Pipeline files stay as they are.
 
 Jobs get `TASK_UI=1`, `TASK_UI_USER`, `TASK_UI_FOLDER`, `TASK_UI_JOB`,

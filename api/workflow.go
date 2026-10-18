@@ -25,6 +25,10 @@ type StepRequest struct {
 type WorkflowRequest struct {
 	Name  string        `json:"name"`
 	Steps []StepRequest `json:"steps"`
+	// Sidebar lists the workflow in the sidebar, the default; false
+	// keeps it out, for one that is a step of others. Left out on a
+	// change, it stays as it is.
+	Sidebar *bool `json:"sidebar,omitempty"`
 }
 
 // WorkflowView is a workflow as the API shows it.
@@ -180,7 +184,7 @@ func (h *Handlers) createWorkflow(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	user := access.UserFrom(r.Context())
-	wf := &model.Workflow{Name: req.Name, UserID: user.ID, UserName: user.Name}
+	wf := &model.Workflow{Name: req.Name, UserID: user.ID, UserName: user.Name, SidebarHidden: req.Sidebar != nil && !*req.Sidebar}
 	if err := h.opts.Workflows.Create(r.Context(), wf, steps); err != nil {
 		fail(w, http.StatusBadRequest, err.Error())
 		return
@@ -221,6 +225,9 @@ func (h *Handlers) updateWorkflow(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	wf.Name = req.Name
+	if req.Sidebar != nil {
+		wf.SidebarHidden = !*req.Sidebar
+	}
 	if err := h.opts.Workflows.Update(r.Context(), wf, steps); err != nil {
 		fail(w, http.StatusBadRequest, err.Error())
 		return

@@ -216,3 +216,23 @@ func TestWorkflow_Nested(t *testing.T) {
 	assert.Equal(t, http.StatusConflict, used.Status)
 	assert.Contains(t, used.str("error"), "outer")
 }
+
+// A workflow shows in the sidebar unless it is made or set not to.
+func TestWorkflow_Sidebar(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	no, yes := false, true
+
+	res := f.call(t, asOps, http.MethodPost, "/workflows", api.WorkflowRequest{Name: "part", Steps: chain("infra", "plan"), Sidebar: &no})
+	assert.Equal(t, http.StatusCreated, res.Status, string(res.Raw))
+	assert.Equal(t, true, res.get("sidebar_hidden"))
+	id := res.str("id")
+
+	res = f.call(t, asOps, http.MethodPut, "/workflows/"+id, api.WorkflowRequest{Name: "part", Steps: chain("infra", "plan")})
+	assert.Equal(t, true, res.get("sidebar_hidden")) // left out: as it was
+	res = f.call(t, asOps, http.MethodPut, "/workflows/"+id, api.WorkflowRequest{Name: "part", Steps: chain("infra", "plan"), Sidebar: &yes})
+	assert.Equal(t, false, res.get("sidebar_hidden"))
+
+	plain := f.call(t, asOps, http.MethodPost, "/workflows", api.WorkflowRequest{Name: "whole", Steps: chain("infra", "plan")})
+	assert.Equal(t, false, plain.get("sidebar_hidden"))
+}
