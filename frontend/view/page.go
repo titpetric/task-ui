@@ -53,6 +53,8 @@ type Page struct {
 	Project *model.Project
 	Keys    []sshkey.Key
 	KeysDir string
+	// KeyFolders are the projects' .ssh/ folders with keys in them.
+	KeyFolders []KeyFolder
 	// Encryption names the keys the secrets are encrypted with.
 	Encryption []string
 	Users      []model.User
