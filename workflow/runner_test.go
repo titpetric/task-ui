@@ -164,3 +164,80 @@ func TestRunner_MissingJob(t *testing.T) {
 	runs, _ := f.wfRuns.ListByWorkflow(context.Background(), wf.ID, 10)
 	assert.Len(t, runs, 0)
 }
+
+// A step that names a workflow runs it, as a run of its own, and waits
+// for it.
+func TestRunner_NestedWorkflow(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	ctx := context.Background()
+	inner := f.create(t, "build")
+	outer := &model.Workflow{Name: "outer"}
+	assert.NoError(t, f.workflows.Create(ctx, outer, []model.WorkflowStep{{Folder: "infra", Job: "test"}, {WorkflowRef: inner.ID}}))
+
+	run, err := f.runner.Start(ctx, outer, ops)
+	assert.NoError(t, err)
+	ended := f.wait(t, run.ID)
+	assert.Equal(t, model.StateOK, ended.State)
+
+	steps, err := f.wfRuns.Steps(ctx, run.ID)
+	assert.NoError(t, err)
+	assert.Equal(t, model.StateOK, steps[1].State)
+	assert.Equal(t, "", steps[1].RunID)
+	assert.True(t, steps[1].WorkflowRunRef != "", "the run of inner")
+	innerRun, err := f.wfRuns.Get(ctx, steps[1].WorkflowRunRef)
+	assert.NoError(t, err)
+	assert.Equal(t, inner.ID, innerRun.WorkflowID)
+	assert.Equal(t, model.StateOK, innerRun.State)
+	assert.Equal(t, "ops", innerRun.UserName)
+	innerSteps, _ := f.wfRuns.Steps(ctx, innerRun.ID)
+	assert.True(t, innerSteps[0].RunID != "")
+	first, _ := f.runs.Get(ctx, steps[0].RunID)
+	second, _ := f.runs.Get(ctx, innerSteps[0].RunID)
+	assert.True(t, !second.StartedAt.Before(*first.FinishedAt), "inner starts after the step before it ended")
+}
+
+// A workflow that fails fails the step that ran it, and the rest are
+// skipped.
+func TestRunner_NestedFailure(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	ctx := context.Background()
+	inner := f.create(t, "broken")
+	outer := &model.Workflow{Name: "outer"}
+	assert.NoError(t, f.workflows.Create(ctx, outer, []model.WorkflowStep{{WorkflowRef: inner.ID}, {Folder: "infra", Job: "test"}}))
+
+	run, err := f.runner.Start(ctx, outer, ops)
+	assert.NoError(t, err)
+	ended := f.wait(t, run.ID)
+	assert.Equal(t, model.StateFailed, ended.State)
+	assert.Contains(t, ended.Message, "chain")
+	steps, _ := f.wfRuns.Steps(ctx, run.ID)
+	assert.Equal(t, model.StateFailed, steps[0].State)
+	assert.Equal(t, model.StepSkipped, steps[1].State)
+}
+
+// Stopping a workflow stops the workflow its step is running.
+func TestRunner_StopNested(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	ctx := context.Background()
+	inner := f.create(t, "slow")
+	outer := &model.Workflow{Name: "outer"}
+	assert.NoError(t, f.workflows.Create(ctx, outer, []model.WorkflowStep{{WorkflowRef: inner.ID}}))
+
+	run, err := f.runner.Start(ctx, outer, ops)
+	assert.NoError(t, err)
+	deadline := time.Now().Add(10 * time.Second)
+	innerRun, started := "", false
+	for !started && time.Now().Before(deadline) {
+		innerRun, started = f.runner.Active(inner.ID)
+		time.Sleep(20 * time.Millisecond)
+	}
+	assert.True(t, started, "inner started")
+	assert.NoError(t, f.runner.Stop(run.ID))
+	ended := f.wait(t, run.ID)
+	assert.Equal(t, model.StateStopped, ended.State)
+	innerEnded := f.wait(t, innerRun)
+	assert.Equal(t, model.StateStopped, innerEnded.State)
+}

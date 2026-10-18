@@ -29,7 +29,9 @@ as it runs.
 - **Workflows.** A named chain of jobs from any folders, a one button
   deploy: build, test, push, plan, apply. Run starts each step when the
   one before it ended ok; the first that does not end ok ends the
-  workflow and the rest are skipped. Anyone can make a workflow from the
+  workflow and the rest are skipped. A step can run another workflow in
+  place of a job, so a release is a chain of chains; a workflow may not
+  run itself, through any depth. Anyone can make a workflow from the
   jobs they see; running it needs the right to run every step.
 - **Users and roles.** Login is mandatory. Users come from a password
   file, htpasswd style, read again whenever it changes; `TASK_UI_ADMINS`
@@ -329,7 +331,7 @@ Writes need the same origin. The browser pages are the reference client;
 | `WS` | `/api/runs/{id}/attach` | binary frames are output; text frames are `{"type":"input"\|"resize"\|"stop"\|"kill"}` in and `{"type":"status"}` out |
 | `GET` `DELETE` | `/api/artifacts`, `/api/artifacts/{id}` | list, download, delete |
 | `GET` `POST` `PUT` `DELETE` | `/api/schedules`, `/api/schedules/{id}` | `{folder, job, expression, enabled}` |
-| `GET` `POST` `PUT` `DELETE` | `/api/workflows`, `/api/workflows/{id}` | `{name, steps: [{folder, job}]}`; owner or admin changes |
+| `GET` `POST` `PUT` `DELETE` | `/api/workflows`, `/api/workflows/{id}` | `{name, steps: [{folder, job} or {workflow}]}`; owner or admin changes; 409 deleting one another workflow runs |
 | `GET` `POST` | `/api/workflows/{id}/runs` | runs, newest first, with their steps; `POST` starts one, 409 while one runs |
 | `POST` | `/api/workflow-runs/{id}/stop` | stops the step running, skips the rest |
 | `GET` `POST` `PUT` `DELETE` | `/api/projects`, `/api/projects/{folder}` | clone `{url, id, branch}`; configure `{title, description, allow, sources, commands, job_allow, hours, job_hours}` |

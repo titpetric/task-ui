@@ -121,3 +121,68 @@ func TestWorkflowRunStorage(t *testing.T) {
 	assert.Equal(t, model.StateFailed, openSteps[0].State)
 	assert.Equal(t, model.StepSkipped, openSteps[1].State)
 }
+
+// A step runs another workflow in place of a job. A workflow may not
+// reach itself through the workflows it runs, and one in use stays.
+func TestWorkflowStorage_WorkflowSteps(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	workflows := storage.NewWorkflowStorage(newDB(t))
+
+	inner := &model.Workflow{Name: "inner"}
+	assert.NoError(t, workflows.Create(ctx, inner, steps("infra", "build")))
+	outer := &model.Workflow{Name: "outer"}
+	assert.NoError(t, workflows.Create(ctx, outer, []model.WorkflowStep{{Folder: "infra", Job: "test"}, {WorkflowRef: inner.ID}}))
+	got, err := workflows.Steps(ctx, outer.ID)
+	assert.NoError(t, err)
+	assert.Len(t, got, 2)
+	assert.Equal(t, inner.ID, got[1].WorkflowRef)
+	assert.Equal(t, "", got[1].Folder)
+
+	assert.Error(t, workflows.Create(ctx, &model.Workflow{Name: "both"}, []model.WorkflowStep{{Folder: "infra", Job: "build", WorkflowRef: inner.ID}}), "a job or a workflow, not both")
+	assert.Error(t, workflows.Create(ctx, &model.Workflow{Name: "gone"}, []model.WorkflowStep{{WorkflowRef: model.NewID()}}), "a workflow that is not there")
+
+	// inner may not run outer, which runs inner, nor itself.
+	err = workflows.Update(ctx, inner, []model.WorkflowStep{{WorkflowRef: outer.ID}})
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "loop")
+	assert.Error(t, workflows.Update(ctx, inner, []model.WorkflowStep{{WorkflowRef: inner.ID}}))
+	got, _ = workflows.Steps(ctx, inner.ID)
+	assert.Equal(t, "build", got[0].Job) // unchanged
+
+	// Reaches says which workflows run one, outer among them.
+	users, err := workflows.UsedBy(ctx, inner.ID)
+	assert.NoError(t, err)
+	assert.Len(t, users, 1)
+	assert.Equal(t, "outer", users[0].Name)
+
+	err = workflows.Delete(ctx, inner.ID)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "outer")
+	assert.NoError(t, workflows.Delete(ctx, outer.ID))
+	assert.NoError(t, workflows.Delete(ctx, inner.ID))
+}
+
+// A run's step copies the workflow a step names, and keeps the run it
+// made of it.
+func TestWorkflowRunStorage_WorkflowStep(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	db := newDB(t)
+	workflows := storage.NewWorkflowStorage(db)
+	runs := storage.NewWorkflowRunStorage(db)
+
+	inner := &model.Workflow{Name: "inner"}
+	assert.NoError(t, workflows.Create(ctx, inner, steps("infra", "build")))
+	run := &model.WorkflowRun{WorkflowID: model.NewID(), Name: "outer"}
+	assert.NoError(t, runs.Create(ctx, run, []model.WorkflowStep{{WorkflowRef: inner.ID}}))
+	rows, err := runs.Steps(ctx, run.ID)
+	assert.NoError(t, err)
+	assert.Equal(t, inner.ID, rows[0].WorkflowRef)
+
+	rows[0].WorkflowRunRef, rows[0].State = model.NewID(), model.StateOK
+	assert.NoError(t, runs.UpdateStep(ctx, &rows[0]))
+	rows, _ = runs.Steps(ctx, run.ID)
+	assert.True(t, rows[0].WorkflowRunRef != "")
+	assert.Equal(t, model.StateOK, rows[0].State)
+}

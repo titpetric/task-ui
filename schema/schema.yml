@@ -699,6 +699,14 @@
       type: timestamp
       comment: Updated At
       datatype: datetime
+    - name: workflow_ref
+      type: text
+      comment: Workflow Ref
+      datatype: char(26)
+    - name: workflow_run_ref
+      type: text
+      comment: Workflow Run Ref
+      datatype: char(26)
   indexes:
     - name: sqlite_autoindex_workflow_run_step_1
       columns:
@@ -736,6 +744,10 @@
       type: text
       comment: Job
       datatype: varchar
+    - name: workflow_ref
+      type: text
+      comment: Workflow Ref
+      datatype: char(26)
   indexes:
     - name: sqlite_autoindex_workflow_step_1
       columns:

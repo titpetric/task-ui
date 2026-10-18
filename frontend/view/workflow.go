@@ -5,7 +5,7 @@ import "github.com/titpetric/task-ui/model"
 // Workflow is a workflow as a page shows it.
 type Workflow struct {
 	model.Workflow
-	Steps []model.WorkflowStep
+	Steps []Step
 	// Running is the ID of its run in progress, if any.
 	Running string
 	// LastRun is its newest run.
@@ -19,5 +19,5 @@ type Workflow struct {
 // WorkflowRun is a run of a workflow with its steps.
 type WorkflowRun struct {
 	model.WorkflowRun
-	Steps []model.WorkflowRunStep
+	Steps []Step
 }

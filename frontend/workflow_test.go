@@ -130,3 +130,29 @@ func TestWorkflow_Page(t *testing.T) {
 	missing := f.get(t, asOps, "/workflows/nope")
 	assert.Equal(t, 404, missing.Status)
 }
+
+// A chain names a folder once for the steps that follow in it; a step
+// that runs a workflow links to it. The step editor offers the
+// workflows, except the one edited and those that run it.
+func TestWorkflows_ChainAndNested(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	same := f.workflow(t, asOps, "same", "infra", "plan", "infra", "deploy")
+	user := f.users[asOps]
+	outer := &model.Workflow{Name: "outer", UserID: user.ID, UserName: user.Name}
+	assert.NoError(t, f.opts.Workflows.Create(context.Background(), outer, []model.WorkflowStep{{Folder: "infra", Job: "plan"}, {WorkflowRef: same.ID}}))
+
+	list := f.page(t, asOps, "/workflows")
+	assert.Contains(t, list, "infra / plan")
+	assert.Contains(t, list, `>deploy</a>`)
+	assert.NotContains(t, list, "infra / deploy")
+	assert.Contains(t, list, `href="/workflows/`+same.ID+`"><svg class="ic"><use href="#i-flow"/></svg>same</a>`)
+	assert.Contains(t, list, `<option value="workflow:`+same.ID+`">same</option>`)
+	assert.Contains(t, list, `<option value="workflow:`+outer.ID+`">outer</option>`)
+
+	edit := f.page(t, asOps, "/workflows/"+same.ID)
+	assert.NotContains(t, edit, `<option value="workflow:`+same.ID+`"`)
+	assert.NotContains(t, edit, `<option value="workflow:`+outer.ID+`"`) // outer runs same
+	edit = f.page(t, asOps, "/workflows/"+outer.ID)
+	assert.Contains(t, edit, `<option value="workflow:`+same.ID+`"`)
+}

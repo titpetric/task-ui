@@ -10,3 +10,9 @@ const (
 	// failed or the workflow run was ended.
 	StepSkipped State = "skipped"
 )
+
+// IsWorkflow says the step runs a workflow in place of a job.
+func (s WorkflowStep) IsWorkflow() bool { return s.WorkflowRef != "" }
+
+// IsWorkflow says the step ran a workflow in place of a job.
+func (s WorkflowRunStep) IsWorkflow() bool { return s.WorkflowRef != "" }

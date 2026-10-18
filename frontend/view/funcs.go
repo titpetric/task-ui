@@ -30,6 +30,7 @@ func Funcs() template.FuncMap {
 		"tone":         Tone,
 		"assetVersion": AssetVersion,
 		"folderDir":    FolderDir,
+		"chain":        Chain,
 	}
 }
 

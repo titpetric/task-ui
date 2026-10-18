@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 
@@ -10,6 +11,9 @@ import (
 
 	"github.com/titpetric/task-ui/model"
 )
+
+// ErrInUse is returned when deleting a workflow another one runs.
+var ErrInUse = errors.New("the workflow is in use")
 
 // WorkflowStorage keeps the workflows and their steps.
 type WorkflowStorage struct {
@@ -30,11 +34,66 @@ func checkChain(workflow *model.Workflow, steps []model.WorkflowStep) error {
 		return errors.New("a workflow needs at least one step")
 	}
 	for _, step := range steps {
-		if step.Folder == "" || step.Job == "" {
-			return errors.New("every step names a folder and a job")
+		job := step.Folder != "" || step.Job != ""
+		switch {
+		case step.IsWorkflow() && job:
+			return errors.New("a step names a job or a workflow, not both")
+		case !step.IsWorkflow() && (step.Folder == "" || step.Job == ""):
+			return errors.New("every step names a folder and a job, or a workflow")
 		}
 	}
 	return nil
+}
+
+// checkRefs says what is wrong with the workflows the steps run: one
+// that is not there, or one that runs the workflow itself, a loop.
+func checkRefs(ctx context.Context, c *pdo.PDO, workflowID string, steps []model.WorkflowStep) error {
+	for _, step := range steps {
+		if !step.IsWorkflow() {
+			continue
+		}
+		if step.WorkflowRef == workflowID {
+			return errors.New("a workflow may not run itself: a loop")
+		}
+		ref, err := c.Get[model.Workflow](ctx, "SELECT * FROM workflow WHERE id = ?", step.WorkflowRef)
+		if errors.Is(notFound(err), ErrNotFound) {
+			return fmt.Errorf("no workflow %s", step.WorkflowRef)
+		}
+		if err != nil {
+			return err
+		}
+		loops, err := reaches(ctx, c, ref.ID, workflowID, map[string]bool{})
+		if err != nil {
+			return err
+		}
+		if loops {
+			return fmt.Errorf("%s runs this workflow: a loop", ref.Name)
+		}
+	}
+	return nil
+}
+
+// reaches reports whether a workflow runs the target, through any
+// workflows its steps run.
+func reaches(ctx context.Context, c *pdo.PDO, from, target string, seen map[string]bool) (bool, error) {
+	if from == target {
+		return true, nil
+	}
+	if seen[from] {
+		return false, nil
+	}
+	seen[from] = true
+	refs, err := c.Select[model.WorkflowStep](ctx, "SELECT * FROM workflow_step WHERE workflow_id = ? AND workflow_ref != '' ORDER BY position", from)
+	if err != nil {
+		return false, err
+	}
+	for _, ref := range refs {
+		found, err := reaches(ctx, c, ref.WorkflowRef, target, seen)
+		if err != nil || found {
+			return found, err
+		}
+	}
+	return false, nil
 }
 
 // inTx runs fn in a transaction on one client, committing when it
@@ -53,7 +112,7 @@ func inTx(ctx context.Context, db DB, fn func(c *pdo.PDO) error) error {
 // insertSteps writes a workflow's steps in order, positions from zero.
 func insertSteps(ctx context.Context, c *pdo.PDO, workflowID string, steps []model.WorkflowStep) error {
 	for i, step := range steps {
-		row := model.WorkflowStep{ID: model.NewID(), WorkflowID: workflowID, Position: int64(i), Folder: step.Folder, Job: step.Job}
+		row := model.WorkflowStep{ID: model.NewID(), WorkflowID: workflowID, Position: int64(i), Folder: step.Folder, Job: step.Job, WorkflowRef: step.WorkflowRef}
 		if err := c.Insert(ctx, model.WorkflowStepTable, &row); err != nil {
 			return err
 		}
@@ -72,6 +131,9 @@ func (s *WorkflowStorage) Create(ctx context.Context, workflow *model.Workflow, 
 	workflow.CreatedAt = stamp()
 	workflow.UpdatedAt = workflow.CreatedAt
 	return inTx(ctx, s.db, func(c *pdo.PDO) error {
+		if err := checkRefs(ctx, c, workflow.ID, steps); err != nil {
+			return err
+		}
 		if err := c.Insert(ctx, model.WorkflowTable, workflow); err != nil {
 			return err
 		}
@@ -95,6 +157,49 @@ func (s *WorkflowStorage) List(ctx context.Context) ([]model.Workflow, error) {
 	return client(s.db).Select[model.Workflow](ctx, "SELECT * FROM workflow ORDER BY name COLLATE NOCASE, id")
 }
 
+// UsedBy returns the workflows with a step that runs the workflow, by
+// name.
+func (s *WorkflowStorage) UsedBy(ctx context.Context, id string) ([]model.Workflow, error) {
+	return client(s.db).Select[model.Workflow](ctx, "SELECT w.* FROM workflow w WHERE w.id IN (SELECT workflow_id FROM workflow_step WHERE workflow_ref = ?) ORDER BY w.name COLLATE NOCASE, w.id", id)
+}
+
+// Reaches reports whether a workflow runs the target, through any
+// workflows its steps run; a workflow reaches itself.
+func (s *WorkflowStorage) Reaches(ctx context.Context, from, target string) (bool, error) {
+	return reaches(ctx, client(s.db), from, target, map[string]bool{})
+}
+
+// Expand replaces each step that runs a workflow with that workflow's
+// steps, through any depth, so a check sees every job the chain runs. A
+// step whose workflow is gone is left out.
+func (s *WorkflowStorage) Expand(ctx context.Context, steps []model.WorkflowStep) ([]model.WorkflowStep, error) {
+	return s.expand(ctx, steps, map[string]bool{})
+}
+
+func (s *WorkflowStorage) expand(ctx context.Context, steps []model.WorkflowStep, seen map[string]bool) ([]model.WorkflowStep, error) {
+	flat := make([]model.WorkflowStep, 0, len(steps))
+	for _, step := range steps {
+		if !step.IsWorkflow() {
+			flat = append(flat, step)
+			continue
+		}
+		if seen[step.WorkflowRef] {
+			continue
+		}
+		seen[step.WorkflowRef] = true
+		inner, err := s.Steps(ctx, step.WorkflowRef)
+		if err != nil {
+			return nil, err
+		}
+		inner, err = s.expand(ctx, inner, seen)
+		if err != nil {
+			return nil, err
+		}
+		flat = append(flat, inner...)
+	}
+	return flat, nil
+}
+
 // Update writes a workflow's name back and replaces its steps.
 func (s *WorkflowStorage) Update(ctx context.Context, workflow *model.Workflow, steps []model.WorkflowStep) error {
 	if err := checkChain(workflow, steps); err != nil {
@@ -102,6 +207,9 @@ func (s *WorkflowStorage) Update(ctx context.Context, workflow *model.Workflow, 
 	}
 	workflow.UpdatedAt = stamp()
 	return inTx(ctx, s.db, func(c *pdo.PDO) error {
+		if err := checkRefs(ctx, c, workflow.ID, steps); err != nil {
+			return err
+		}
 		if err := c.Update(ctx, model.WorkflowTable, workflow, "id"); err != nil {
 			return err
 		}
@@ -112,9 +220,21 @@ func (s *WorkflowStorage) Update(ctx context.Context, workflow *model.Workflow, 
 	})
 }
 
-// Delete removes a workflow and its steps. Its runs stay, as history.
+// Delete removes a workflow and its steps. Its runs stay, as history. A
+// workflow another one runs stays, with ErrInUse.
 func (s *WorkflowStorage) Delete(ctx context.Context, id string) error {
 	return inTx(ctx, s.db, func(c *pdo.PDO) error {
+		users, err := c.Select[model.Workflow](ctx, "SELECT w.* FROM workflow w WHERE w.id IN (SELECT workflow_id FROM workflow_step WHERE workflow_ref = ?) ORDER BY w.name COLLATE NOCASE", id)
+		if err != nil {
+			return err
+		}
+		if len(users) > 0 {
+			names := make([]string, 0, len(users))
+			for _, u := range users {
+				names = append(names, u.Name)
+			}
+			return fmt.Errorf("%w: %s runs it", ErrInUse, strings.Join(names, ", "))
+		}
 		if err := c.Exec(ctx, "DELETE FROM workflow_step WHERE workflow_id = ?", id); err != nil {
 			return err
 		}
@@ -149,7 +269,7 @@ func (s *WorkflowRunStorage) Create(ctx context.Context, run *model.WorkflowRun,
 		for i, step := range steps {
 			row := model.WorkflowRunStep{
 				ID: model.NewID(), WorkflowRunID: run.ID, Position: int64(i),
-				Folder: step.Folder, Job: step.Job, State: model.StepPending,
+				Folder: step.Folder, Job: step.Job, WorkflowRef: step.WorkflowRef, State: model.StepPending,
 				CreatedAt: run.StartedAt, UpdatedAt: run.StartedAt,
 			}
 			if err := c.Insert(ctx, model.WorkflowRunStepTable, &row); err != nil {

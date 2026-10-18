@@ -11,10 +11,13 @@ import (
 	"github.com/titpetric/task-ui/workflow"
 )
 
-// StepRequest names one job of a workflow.
+// StepRequest names one step of a workflow: a job of a folder, or a
+// workflow to run in its place.
 type StepRequest struct {
-	Folder string `json:"folder"`
-	Job    string `json:"job"`
+	Folder string `json:"folder,omitempty"`
+	Job    string `json:"job,omitempty"`
+	// Workflow is the ID of a workflow the step runs instead of a job.
+	Workflow string `json:"workflow,omitempty"`
 }
 
 // WorkflowRequest creates or changes a workflow: a name and its jobs, in
@@ -44,11 +47,21 @@ type WorkflowRunView struct {
 	Steps []model.WorkflowRunStep `json:"steps"`
 }
 
-// mayRun returns the first step the user may not run, or "" when the
-// user may run them all.
+// expand replaces the steps that run a workflow with that workflow's
+// jobs, through any depth, so a check sees every job the chain runs.
+func (h *Handlers) expand(r *http.Request, steps []model.WorkflowStep) []model.WorkflowStep {
+	flat, err := h.opts.Workflows.Expand(r.Context(), steps)
+	if err != nil {
+		return steps
+	}
+	return flat
+}
+
+// mayRun returns the first job the user may not run, or "" when the
+// user may run them all, the jobs of the workflows the steps run too.
 func (h *Handlers) mayRun(r *http.Request, steps []model.WorkflowStep) string {
 	user := access.UserFrom(r.Context())
-	for _, step := range steps {
+	for _, step := range h.expand(r, steps) {
 		f, job, _ := h.target(r, step.Folder, step.Job)
 		if !canRun(user, f, job) {
 			return step.Folder + " / " + step.Job
@@ -57,9 +70,11 @@ func (h *Handlers) mayRun(r *http.Request, steps []model.WorkflowStep) string {
 	return ""
 }
 
-// visibleSteps reports whether the user may see every step's folder.
-func visibleSteps(user *model.User, steps []model.WorkflowStep) bool {
-	for _, step := range steps {
+// visibleSteps reports whether the user may see every step's folder,
+// the folders of the workflows the steps run too.
+func (h *Handlers) visibleSteps(r *http.Request, steps []model.WorkflowStep) bool {
+	user := access.UserFrom(r.Context())
+	for _, step := range h.expand(r, steps) {
 		if !user.CanSee(step.Folder) {
 			return false
 		}
@@ -86,13 +101,25 @@ func (h *Handlers) workflowView(r *http.Request, wf model.Workflow, steps []mode
 }
 
 // checkSteps turns the requested steps into rows, each a job the user
-// may see.
+// may see, or a workflow whose jobs they all see.
 func (h *Handlers) checkSteps(r *http.Request, req WorkflowRequest) ([]model.WorkflowStep, error) {
 	if len(req.Steps) == 0 {
 		return nil, errors.New("a workflow needs at least one step")
 	}
 	steps := make([]model.WorkflowStep, 0, len(req.Steps))
 	for i, step := range req.Steps {
+		if step.Workflow != "" {
+			wf, err := h.opts.Workflows.Get(r.Context(), step.Workflow)
+			var inner []model.WorkflowStep
+			if err == nil {
+				inner, err = h.opts.Workflows.Steps(r.Context(), wf.ID)
+			}
+			if err != nil || !h.visibleSteps(r, inner) {
+				return nil, fmt.Errorf("step %d: no workflow %s", i+1, step.Workflow)
+			}
+			steps = append(steps, model.WorkflowStep{WorkflowRef: wf.ID})
+			continue
+		}
 		f, job, problem := h.target(r, step.Folder, step.Job)
 		if problem != "" {
 			return nil, fmt.Errorf("step %d, %s / %s: %s", i+1, step.Folder, step.Job, problem)
@@ -113,7 +140,7 @@ func (h *Handlers) workflowOf(r *http.Request) (*model.Workflow, []model.Workflo
 	if err != nil {
 		return nil, nil, err
 	}
-	if !visibleSteps(access.UserFrom(r.Context()), steps) {
+	if !h.visibleSteps(r, steps) {
 		return nil, nil, storage.ErrNotFound
 	}
 	return wf, steps, nil
@@ -121,7 +148,6 @@ func (h *Handlers) workflowOf(r *http.Request) (*model.Workflow, []model.Workflo
 
 // listWorkflows returns the workflows whose steps the user may see.
 func (h *Handlers) listWorkflows(w http.ResponseWriter, r *http.Request) {
-	user := access.UserFrom(r.Context())
 	workflows, err := h.opts.Workflows.List(r.Context())
 	if err != nil {
 		failErr(w, err)
@@ -134,7 +160,7 @@ func (h *Handlers) listWorkflows(w http.ResponseWriter, r *http.Request) {
 			failErr(w, err)
 			return
 		}
-		if visibleSteps(user, steps) {
+		if h.visibleSteps(r, steps) {
 			views = append(views, h.workflowView(r, wf, steps))
 		}
 	}
@@ -203,7 +229,8 @@ func (h *Handlers) updateWorkflow(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, h.workflowView(r, *wf, steps))
 }
 
-// deleteWorkflow removes a workflow; its runs stay in the history.
+// deleteWorkflow removes a workflow; its runs stay in the history. One
+// another workflow runs stays, with 409.
 func (h *Handlers) deleteWorkflow(w http.ResponseWriter, r *http.Request) {
 	wf, _, err := h.workflowOf(r)
 	if err != nil {
@@ -214,7 +241,12 @@ func (h *Handlers) deleteWorkflow(w http.ResponseWriter, r *http.Request) {
 		fail(w, http.StatusForbidden, "not your workflow")
 		return
 	}
-	if err := h.opts.Workflows.Delete(r.Context(), wf.ID); err != nil {
+	err = h.opts.Workflows.Delete(r.Context(), wf.ID)
+	if errors.Is(err, storage.ErrInUse) {
+		fail(w, http.StatusConflict, err.Error())
+		return
+	}
+	if err != nil {
 		failErr(w, err)
 		return
 	}
@@ -285,9 +317,9 @@ func (h *Handlers) stopWorkflowRun(w http.ResponseWriter, r *http.Request) {
 	}
 	steps := make([]model.WorkflowStep, 0, len(rows))
 	for _, row := range rows {
-		steps = append(steps, model.WorkflowStep{Folder: row.Folder, Job: row.Job})
+		steps = append(steps, model.WorkflowStep{Folder: row.Folder, Job: row.Job, WorkflowRef: row.WorkflowRef})
 	}
-	if !visibleSteps(access.UserFrom(r.Context()), steps) {
+	if !h.visibleSteps(r, steps) {
 		failErr(w, storage.ErrNotFound)
 		return
 	}
