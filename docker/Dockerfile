@@ -1,10 +1,15 @@
-# Final image dependency
-FROM docker:20.10 AS docker
+# Final image dependency: the docker CLI with the buildx and compose
+# plugins. Without buildx, `docker build` on a current daemon falls back
+# to the deprecated legacy builder, and BuildKit features error out.
+FROM docker:29-cli AS docker
 
 # Build project
 FROM golang:1.27-alpine AS builder
 
-RUN apk --no-cache add git
+# bash runs the jobs in the runner and api tests, make is a convention
+# they detect. coreutils for stty: busybox `stty size` answers from
+# $COLUMNS/$LINES before the pty, so it misses a resize the tests make.
+RUN apk --no-cache add bash coreutils git make
 RUN GOBIN=/usr/local/bin CGO_ENABLED=0 go install github.com/go-task/task/v3/cmd/task@latest
 RUN GOBIN=/usr/local/bin CGO_ENABLED=0 go install github.com/titpetric/atkins@latest
 
@@ -23,13 +28,13 @@ RUN apk --no-cache add bash git colordiff openssh mailcap curl
 # colordiff - as it sounds like
 # git, ssh - allows git clone from github, bitbucket,...
 # bash - run bash scripts, commands
-# curl - install compose v2
 
 # Copy over Task, Atkins, Task UI and docker-cli
 COPY --from=builder /usr/local/bin/task /usr/local/bin
 COPY --from=builder /usr/local/bin/atkins /usr/local/bin
 COPY --from=builder /usr/local/bin/task-ui /usr/local/bin
 COPY --from=docker /usr/local/bin/docker /usr/local/bin
+COPY --from=docker /usr/local/libexec/docker/cli-plugins /usr/local/libexec/docker/cli-plugins
 
 # Configure the final image with whatever.
 ADD /docker /
@@ -38,10 +43,7 @@ WORKDIR /app
 RUN mkdir -p /data
 VOLUME /data
 
-RUN	DOCKER_CONFIG=${DOCKER_CONFIG:-$HOME/.docker} && \
-	mkdir -p $DOCKER_CONFIG/cli-plugins && \
-	curl -sSL https://github.com/docker/compose/releases/download/v2.2.3/docker-compose-linux-x86_64 -o $DOCKER_CONFIG/cli-plugins/docker-compose && \
-	chmod +x $DOCKER_CONFIG/cli-plugins/docker-compose
+RUN docker --version && docker buildx version && docker compose version
 
 ENV GOPATH=/go \
 	TASK_UI_LISTEN=:3000 \
