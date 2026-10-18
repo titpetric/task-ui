@@ -11,18 +11,17 @@ import (
 
 	"github.com/titpetric/task-ui/access"
 	"github.com/titpetric/task-ui/internal/assert"
-	"github.com/titpetric/task-ui/model"
 )
 
 func TestHash(t *testing.T) {
 	t.Parallel()
 	var out bytes.Buffer
 	assert.NoError(t, hash([]string{"secret"}, strings.NewReader(""), &out))
-	assert.True(t, access.CheckPassword(&model.User{Password: strings.TrimSpace(out.String())}, "secret"))
+	assert.True(t, access.CheckHash(strings.TrimSpace(out.String()), "secret"))
 
 	out.Reset()
 	assert.NoError(t, hash(nil, strings.NewReader("from stdin\n"), &out))
-	assert.True(t, access.CheckPassword(&model.User{Password: strings.TrimSpace(out.String())}, "from stdin"))
+	assert.True(t, access.CheckHash(strings.TrimSpace(out.String()), "from stdin"))
 
 	assert.Error(t, hash(nil, strings.NewReader(""), &out))
 }
@@ -55,7 +54,7 @@ func TestRun(t *testing.T) {
 	creds, err := access.LoadHtpasswd(filepath.Join(root, ".htpasswd"))
 	assert.NoError(t, err)
 	assert.Len(t, creds, 1)
-	assert.True(t, access.CheckPassword(&model.User{Password: creds[0].Hash}, "reset"))
+	assert.True(t, access.CheckHash(creds[0].Hash, "reset"))
 	assert.Error(t, run(context.Background(), []string{"passwd", "bob"}, strings.NewReader(""), &out))
 
 	assert.NoError(t, os.WriteFile(filepath.Join(root, ".htpasswd"), []byte("broken\n"), 0o600))
@@ -68,4 +67,44 @@ func TestRun(t *testing.T) {
 	defer cancel()
 	assert.NoError(t, run(ctx, nil, strings.NewReader(""), &out))
 	assert.FileExists(t, filepath.Join(root, "data", "task-ui.db"))
+}
+
+// email and backup change what a user from the password file signs in
+// with, in the database the server reads.
+func TestRun_EmailAndBackup(t *testing.T) {
+	var out bytes.Buffer
+	root := t.TempDir()
+	t.Setenv("TASK_UI_ROOT", root)
+	t.Setenv("TASK_UI_DATA", filepath.Join(root, "data"))
+	t.Setenv("TASK_UI_HTPASSWD", filepath.Join(root, ".htpasswd"))
+	ctx := context.Background()
+
+	// Not a user until the server has read the file.
+	assert.ErrorContains(t, run(ctx, []string{"email", "alice"}, strings.NewReader(""), &out), "no user alice")
+	assert.NoError(t, run(ctx, []string{"passwd", "alice", "secret"}, strings.NewReader(""), &out))
+	served, cancel := context.WithTimeout(ctx, time.Second)
+	defer cancel()
+	t.Setenv("TASK_UI_LISTEN", "127.0.0.1:0")
+	assert.NoError(t, run(served, nil, strings.NewReader(""), &out))
+
+	out.Reset()
+	assert.NoError(t, run(ctx, []string{"email", "alice", "add", "alice@example.com", "a@example.com"}, strings.NewReader(""), &out))
+	assert.Equal(t, "alice@example.com\na@example.com\n", out.String())
+	out.Reset()
+	assert.NoError(t, run(ctx, []string{"email", "alice", "rm", "a@example.com"}, strings.NewReader(""), &out))
+	assert.Equal(t, "alice@example.com\n", out.String())
+	assert.Error(t, run(ctx, []string{"email", "alice", "add", "nope"}, strings.NewReader(""), &out))
+	assert.Error(t, run(ctx, []string{"email"}, strings.NewReader(""), &out))
+	assert.Error(t, run(ctx, []string{"email", "alice", "add"}, strings.NewReader(""), &out))
+
+	out.Reset()
+	assert.NoError(t, run(ctx, []string{"backup", "alice", "3"}, strings.NewReader(""), &out))
+	lines := strings.Split(strings.TrimSpace(out.String()), "\n")
+	assert.Len(t, lines, 4)
+	assert.Contains(t, lines[0], "each signs in once")
+	assert.NoError(t, run(ctx, []string{"backup", "alice"}, strings.NewReader(""), &out))
+	assert.Error(t, run(ctx, []string{"backup", "alice", "x"}, strings.NewReader(""), &out))
+	assert.Error(t, run(ctx, []string{"backup", "alice", "0"}, strings.NewReader(""), &out))
+	assert.Error(t, run(ctx, []string{"backup"}, strings.NewReader(""), &out))
+	assert.Error(t, run(ctx, []string{"backup", "bob"}, strings.NewReader(""), &out))
 }

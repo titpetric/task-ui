@@ -51,6 +51,6 @@ func TestUser_Getters(t *testing.T) {
 	assert.Equal(t, "ops", user.GetName())
 	assert.Equal(t, model.RoleRunner, user.GetRole())
 	assert.Equal(t, "`user`", model.UserTable)
-	assert.Contains(t, model.UserFields, "password")
+	assert.NotContains(t, model.UserFields, "password")
 	assert.Equal(t, []string{"id"}, model.UserPrimaryFields)
 }

@@ -26,8 +26,8 @@ func (h *Handlers) login(w http.ResponseWriter, r *http.Request) {
 	}
 	name := strings.TrimSpace(r.PostFormValue("username"))
 	back := access.SafeBack(r.PostFormValue("back"))
-	user, err := h.opts.Users.GetByName(r.Context(), name)
-	if err != nil || !access.CheckPassword(user, r.PostFormValue("password")) {
+	user, err := h.opts.Auth.Authenticate(r.Context(), name, r.PostFormValue("password"))
+	if err != nil {
 		p := &view.Page{Title: "Sign in", Back: back, Error: "Wrong username or password.", Form: map[string]string{"username": name}, Version: h.opts.Version}
 		h.render(w, http.StatusUnauthorized, "login", p)
 		return

@@ -128,6 +128,22 @@ htpasswd -B .htpasswd alice     # the same with apache2-utils; -B for bcrypt
 remove a user, delete the line. `task-ui hash <password>` prints a hash
 for editing the file by hand.
 
+What a user signs in with is kept apart from the user row, so nothing
+that reads a user, the API included, carries a credential:
+`user_auth_password` holds the password hashes and `user_email` the
+email addresses. Sign in takes the user name or any of the user's
+addresses, and the password or a backup password:
+
+```sh
+task-ui email alice                          # the addresses alice signs in with
+task-ui email alice add alice@example.com    # add one or more, `rm` removes
+task-ui backup alice                         # ten new backup passwords, printed once
+```
+
+A backup password signs in once and is then used up; `task-ui backup`
+replaces the previous set. Both commands work on the database of a user
+the server has read from the password file.
+
 The roles are labels from the environment: `TASK_UI_ADMINS=alice,bob`
 makes those two admins, `TASK_UI_VIEWERS=support` a viewer, and everyone
 else in the file is a runner. Which folders a user sees is set per user

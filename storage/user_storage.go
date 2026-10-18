@@ -71,7 +71,14 @@ func (s *UserStorage) Update(ctx context.Context, user *model.User) error {
 	return client(s.db).Update(ctx, model.UserTable, user, "id")
 }
 
-// Delete removes a user by ID.
+// Delete removes a user by ID, with the email addresses and passwords
+// it signs in with.
 func (s *UserStorage) Delete(ctx context.Context, id string) error {
+	if err := NewUserEmailStorage(s.db).DeleteByUser(ctx, id); err != nil {
+		return err
+	}
+	if err := NewUserAuthPasswordStorage(s.db).DeleteByUser(ctx, id); err != nil {
+		return err
+	}
 	return client(s.db).Exec(ctx, "DELETE FROM user WHERE id = ?", id)
 }

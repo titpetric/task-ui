@@ -55,9 +55,9 @@ func (f *UsersFile) Changed() bool {
 }
 
 // Sync writes the file to storage: users it names are created or
-// updated with its hash and their role, users it does not name are
-// removed. It returns how many were created and removed.
-func (f *UsersFile) Sync(ctx context.Context, users *storage.UserStorage) (int, int, error) {
+// updated with their role, and their hash kept as their password; users
+// it does not name are removed, with what they sign in with. It returns how many were created and removed.
+func (f *UsersFile) Sync(ctx context.Context, users *storage.UserStorage, passwords *storage.UserAuthPasswordStorage) (int, int, error) {
 	info, err := os.Stat(f.Path)
 	if err != nil {
 		return 0, 0, err
@@ -70,7 +70,7 @@ func (f *UsersFile) Sync(ctx context.Context, users *storage.UserStorage) (int, 
 	if err != nil {
 		return 0, 0, err
 	}
-	created, err := f.keep(ctx, users, creds, existing)
+	created, err := f.keep(ctx, users, passwords, creds, existing)
 	if err != nil {
 		return created, 0, err
 	}
@@ -82,9 +82,9 @@ func (f *UsersFile) Sync(ctx context.Context, users *storage.UserStorage) (int, 
 	return created, removed, nil
 }
 
-// keep creates the users the file names and updates the ones that
-// changed. It returns how many were created.
-func (f *UsersFile) keep(ctx context.Context, users *storage.UserStorage, creds []access.Credential, existing []model.User) (int, error) {
+// keep creates the users the file names, and updates the roles and
+// passwords that changed. It returns how many were created.
+func (f *UsersFile) keep(ctx context.Context, users *storage.UserStorage, passwords *storage.UserAuthPasswordStorage, creds []access.Credential, existing []model.User) (int, error) {
 	byName := map[string]*model.User{}
 	for i := range existing {
 		byName[existing[i].Name] = &existing[i]
@@ -94,25 +94,31 @@ func (f *UsersFile) keep(ctx context.Context, users *storage.UserStorage, creds 
 		role := f.Role(cred.Name)
 		user, ok := byName[cred.Name]
 		if !ok {
-			user = &model.User{Name: cred.Name, Password: cred.Hash, Role: role}
+			user = &model.User{Name: cred.Name, Role: role}
 			if err := users.Create(ctx, user); err != nil {
 				return created, err
 			}
 			created++
-			continue
+		} else if user.Role != role {
+			// The row again, not the listing: the folders may have
+			// changed under Settings since.
+			current, err := users.GetByName(ctx, cred.Name)
+			if err != nil {
+				return created, err
+			}
+			current.Role = role
+			if err := users.Update(ctx, current); err != nil {
+				return created, err
+			}
 		}
-		if user.Password == cred.Hash && user.Role == role {
-			continue
-		}
-		// The row again, not the listing: the folders may have changed
-		// under Settings since.
-		current, err := users.GetByName(ctx, cred.Name)
+		hash, err := passwords.PasswordHash(ctx, user.ID)
 		if err != nil {
 			return created, err
 		}
-		current.Password, current.Role = cred.Hash, role
-		if err := users.Update(ctx, current); err != nil {
-			return created, err
+		if hash != cred.Hash {
+			if err := passwords.SetPassword(ctx, user.ID, cred.Hash); err != nil {
+				return created, err
+			}
 		}
 	}
 	return created, nil
@@ -140,7 +146,7 @@ func drop(ctx context.Context, users *storage.UserStorage, creds []access.Creden
 // Watch syncs the file whenever it changes, until the context ends. A
 // file that stops parsing keeps the users as they are: a typo must not
 // lock everyone out.
-func (f *UsersFile) Watch(ctx context.Context, users *storage.UserStorage, report func(error)) {
+func (f *UsersFile) Watch(ctx context.Context, users *storage.UserStorage, passwords *storage.UserAuthPasswordStorage, report func(error)) {
 	interval := f.Interval
 	if interval <= 0 {
 		interval = 5 * time.Second
@@ -156,7 +162,7 @@ func (f *UsersFile) Watch(ctx context.Context, users *storage.UserStorage, repor
 		if !f.Changed() {
 			continue
 		}
-		if _, _, err := f.Sync(ctx, users); err != nil && !errors.Is(err, context.Canceled) {
+		if _, _, err := f.Sync(ctx, users, passwords); err != nil && !errors.Is(err, context.Canceled) {
 			report(err)
 		}
 	}

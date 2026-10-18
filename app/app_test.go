@@ -92,7 +92,7 @@ func TestNew_Errors(t *testing.T) {
 	hash, _ := access.HashPassword("first")
 	assert.NoError(t, access.SetHtpasswd(missing, "first", hash))
 	assert.True(t, b.UsersFile.Changed())
-	created, _, err := b.UsersFile.Sync(context.Background(), b.Users)
+	created, _, err := b.UsersFile.Sync(context.Background(), b.Users, b.Passwords)
 	assert.NoError(t, err)
 	assert.Equal(t, 1, created)
 

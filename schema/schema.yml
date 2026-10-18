@@ -422,10 +422,6 @@
       key: MUL
       comment: Name
       datatype: varchar
-    - name: password
-      type: text
-      comment: Password
-      datatype: varchar
     - name: role
       type: TEXT
       comment: Role
@@ -456,3 +452,89 @@
       columns:
         - name
       unique: true
+- name: user_auth_password
+  comment: User Auth Password
+  columns:
+    - name: id
+      type: text
+      key: PRI
+      comment: ID
+      datatype: char(26)
+    - name: user_id
+      type: text
+      key: MUL
+      comment: User ID
+      datatype: char(26)
+    - name: hash
+      type: text
+      comment: Hash
+      datatype: varchar
+    - name: kind
+      type: TEXT
+      key: MUL
+      comment: Kind
+      datatype: varchar
+      values:
+        - backup
+        - password
+    - name: used_at
+      type: timestamp
+      comment: Used At
+      datatype: datetime
+    - name: created_at
+      type: timestamp
+      comment: Created At
+      datatype: datetime
+    - name: updated_at
+      type: timestamp
+      comment: Updated At
+      datatype: datetime
+  indexes:
+    - name: sqlite_autoindex_user_auth_password_1
+      columns:
+        - id
+      primary: true
+      unique: true
+    - name: idx_user_auth_password_user_id
+      columns:
+        - user_id
+        - kind
+- name: user_email
+  comment: User Email
+  columns:
+    - name: id
+      type: text
+      key: PRI
+      comment: ID
+      datatype: char(26)
+    - name: user_id
+      type: text
+      key: MUL
+      comment: User ID
+      datatype: char(26)
+    - name: email
+      type: text
+      key: MUL
+      comment: Email
+      datatype: varchar
+    - name: created_at
+      type: timestamp
+      comment: Created At
+      datatype: datetime
+    - name: updated_at
+      type: timestamp
+      comment: Updated At
+      datatype: datetime
+  indexes:
+    - name: sqlite_autoindex_user_email_1
+      columns:
+        - id
+      primary: true
+      unique: true
+    - name: idx_user_email_email
+      columns:
+        - email
+      unique: true
+    - name: idx_user_email_user_id
+      columns:
+        - user_id

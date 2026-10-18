@@ -6,7 +6,6 @@ User.
 |------------|----------|-----|------------|
 | id         | char(26) | PRI | ID         |
 | name       | varchar  | MUL | Name       |
-| password   | varchar  |     | Password   |
 | role       | varchar  |     | Role       |
 | folders    | varchar  |     | Folders    |
 | created_at | datetime |     | Created At |
