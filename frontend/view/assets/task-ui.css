@@ -1498,6 +1498,87 @@ dialog.run[open] {
   color: var(--signal);
 }
 
+/* The workflows under Workflows, rows like a project's jobs: the dot
+   centred in the icon's column, the name where the entry names start. */
+.menu .flows {
+  padding: 0.1rem 0 0.2rem;
+}
+
+.menu .flows .flow {
+  display: flex;
+  align-items: center;
+  gap: calc((1.05rem - 0.4rem) / 2 + 0.5rem);
+  padding: 0.15rem 0.6rem 0.15rem calc(1.1rem + (1.05rem - 0.4rem) / 2);
+  color: var(--text-dim);
+  font-size: 0.8125rem;
+  border-left: 2px solid transparent;
+}
+
+.menu .flows .flow.active {
+  color: var(--signal);
+  border-left-color: var(--signal);
+}
+
+.menu .flows .dot {
+  flex: none;
+  width: 0.4rem;
+  height: 0.4rem;
+}
+
+.menu .flows a.name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 0.1rem 0;
+  color: inherit;
+  border: 0;
+  background: none;
+}
+
+.menu .flows a.name:hover {
+  color: var(--text);
+}
+
+.menu .flows .play {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--text-faint);
+  cursor: pointer;
+  opacity: 0.55;
+}
+
+.menu .flows .play .ic {
+  width: 0.8rem;
+  height: 0.8rem;
+  color: inherit;
+}
+
+.menu .flows .flow:hover .play,
+.menu .flows .play:focus-visible {
+  opacity: 1;
+}
+
+.menu .flows .play:hover {
+  color: var(--signal-ink);
+  background: var(--signal);
+  border-color: var(--signal);
+}
+
+.menu .flows a.play {
+  color: var(--signal);
+  opacity: 1;
+}
+
 .side-label {
   margin: 1rem 1.1rem 0.3rem;
 }
@@ -2112,7 +2193,8 @@ dialog.run[open] {
 }
 
 @media (max-width: 860px) {
-  .folders .jobs .job .play {
+  .folders .jobs .job .play,
+  .menu .flows .play {
     opacity: 1;
   }
 

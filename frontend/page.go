@@ -48,6 +48,7 @@ func (h *Handlers) page(r *http.Request, title string) *view.Page {
 	if len(p.Recents) > recentCount {
 		p.Recents = p.Recents[:recentCount]
 	}
+	p.SideWorkflows = h.visibleWorkflows(r.Context(), p)
 	return p
 }
 

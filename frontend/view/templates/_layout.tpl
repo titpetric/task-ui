@@ -43,6 +43,21 @@
 			<nav class="menu">
 				<a href="/" class="{{ if .IsPath "/" }}active{{ end }}"><svg class="ic"><use href="#i-grid"/></svg><span>Dashboard</span></a>
 				<a href="/workflows" class="{{ if .Under "/workflows" }}active{{ end }}"><svg class="ic"><use href="#i-flow"/></svg><span>Workflows</span></a>
+				{{- if .SideWorkflows }}
+				<div class="flows">
+					{{- range .SideWorkflows }}
+					<div class="flow{{ if $.IsPath (print "/workflows/" .ID) }} active{{ end }}">
+						<i class="dot{{ if .Running }} running{{ end }}"></i>
+						<a class="name" href="/workflows/{{ .ID }}" title="{{ range $i, $s := .Steps }}{{ if $i }} → {{ end }}{{ $s.Folder }} / {{ $s.Job }}{{ end }}">{{ .Name }}</a>
+						{{- if .Running }}
+						<a class="play" href="/workflows/{{ .ID }}" title="{{ .Name }}, running" aria-label="Watch {{ .Name }}"><svg class="ic"><use href="#i-eye"/></svg></a>
+						{{- else if .CanRun }}
+						<button type="button" class="play" data-workflow-run="{{ .ID }}" title="Run {{ .Name }}" aria-label="Run {{ .Name }}"><svg class="ic"><use href="#i-play"/></svg></button>
+						{{- end }}
+					</div>
+					{{- end }}
+				</div>
+				{{- end }}
 				<a href="/runs" class="{{ if .Under "/runs" }}active{{ end }}"><svg class="ic"><use href="#i-list"/></svg><span>Runs</span><i class="dot{{ if .Running }} running{{ end }}" data-any-running></i></a>
 				<a href="/artifacts" class="{{ if .Under "/artifacts" }}active{{ end }}"><svg class="ic"><use href="#i-box"/></svg><span>Artifacts</span></a>
 				<a href="/schedules" class="{{ if .Under "/schedules" }}active{{ end }}"><svg class="ic"><use href="#i-clock"/></svg><span>Scheduled</span></a>

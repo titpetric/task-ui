@@ -33,6 +33,38 @@ func TestWorkflows_Sidebar(t *testing.T) {
 	assert.True(t, dashboard >= 0 && workflows > dashboard && runs > workflows, "Dashboard, Workflows, Runs")
 }
 
+// Under Workflows the sidebar lists the workflows the user sees, each
+// with a run button when the user may run every step.
+func TestWorkflows_SidebarList(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	release := f.workflow(t, asOps, "release", "infra", "plan", "infra/edge", "deploy")
+	private := f.workflow(t, asAdmin, "private", "infra", "plan", "private", "deploy")
+
+	ops := f.page(t, asOps, "/")
+	workflows := strings.Index(ops, `<a href="/workflows"`)
+	item := strings.Index(ops, `<a class="name" href="/workflows/`+release.ID+`"`)
+	runs := strings.Index(ops, `<a href="/runs"`)
+	assert.True(t, workflows >= 0 && item > workflows && runs > item, "release listed under Workflows")
+	assert.Contains(t, ops, `data-workflow-run="`+release.ID+`"`)
+	// ops sees private, and can not run its step in the admin's folder.
+	assert.Contains(t, ops, `<a class="name" href="/workflows/`+private.ID+`"`)
+	assert.NotContains(t, ops, `data-workflow-run="`+private.ID+`"`)
+
+	// limited does not see infra/edge, so not release either.
+	limited := f.page(t, asLimited, "/")
+	assert.NotContains(t, limited, `href="/workflows/`+release.ID+`"`)
+
+	// A viewer sees the workflow and no run button.
+	viewer := f.page(t, asViewer, "/")
+	assert.Contains(t, viewer, `<a class="name" href="/workflows/`+release.ID+`"`)
+	assert.NotContains(t, viewer, `data-workflow-run="`)
+
+	// The open workflow is the active entry.
+	page := f.page(t, asOps, "/workflows/"+release.ID)
+	assert.Contains(t, page, `<div class="flow active">`)
+}
+
 func TestWorkflows_List(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
@@ -46,8 +78,10 @@ func TestWorkflows_List(t *testing.T) {
 	assert.Contains(t, ops, "infra / plan")
 	assert.Contains(t, ops, "infra/edge / deploy")
 	// ops may run release, not private, which needs the admin's folder.
-	assert.Contains(t, ops, `data-workflow-run="`)
-	assert.Equal(t, 2, strings.Count(ops, `data-workflow-run="`))
+	// The sidebar lists them too: count the page's own buttons.
+	content := ops[strings.Index(ops, "<main>"):]
+	assert.Contains(t, content, `data-workflow-run="`)
+	assert.Equal(t, 2, strings.Count(content, `data-workflow-run="`))
 	// The step editor offers every job ops can see.
 	assert.Contains(t, ops, `data-api="/api/workflows"`)
 	assert.Contains(t, ops, `<option value="plan" data-folder="infra">`)
