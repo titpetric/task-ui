@@ -22,13 +22,13 @@ func NewUserAuthPasswordStorage(db DB) *UserAuthPasswordStorage {
 // passwords, oldest first.
 func (s *UserAuthPasswordStorage) List(ctx context.Context, userID string) ([]model.UserAuthPassword, error) {
 	return client(s.db).Select[model.UserAuthPassword](ctx,
-		"SELECT * FROM user_auth_password WHERE user_id = ? ORDER BY kind = 'backup', id", userID)
+		"SELECT * FROM user_auth_password WHERE user_id = ? ORDER BY kind = 'backup', rowid", userID)
 }
 
 // PasswordHash returns the hash of a user's password, empty when there is none.
 func (s *UserAuthPasswordStorage) PasswordHash(ctx context.Context, userID string) (string, error) {
 	hash, err := client(s.db).Get[string](ctx,
-		"SELECT hash FROM user_auth_password WHERE user_id = ? AND kind = 'password' ORDER BY id DESC LIMIT 1", userID)
+		"SELECT hash FROM user_auth_password WHERE user_id = ? AND kind = 'password' ORDER BY rowid DESC LIMIT 1", userID)
 	if err := notFound(err); errors.Is(err, ErrNotFound) {
 		return "", nil
 	} else if err != nil {
