@@ -2,6 +2,7 @@ package frontend_test
 
 import (
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/titpetric/task-ui/internal/assert"
@@ -13,11 +14,16 @@ func TestFolder(t *testing.T) {
 	f := newFixture(t)
 	f.run(t, "infra", "plan", "ops", model.StateFailed)
 
+	// Run force stands beside Run only for a job with hours, where a
+	// plain run can be refused; a run in progress is rerun from its window.
+	f.infra.Job("plan").Hours = "mon-fri 9-17"
+
 	body := f.page(t, asOps, "/f/infra")
 	assert.Contains(t, body, "The servers")
 	assert.NotContains(t, body, "data-run-all") // workflows chain jobs instead
 	assert.Contains(t, body, `data-run data-folder="infra" data-job="plan"`)
-	assert.Contains(t, body, "Run force")
+	assert.Contains(t, body, `data-force data-folder="infra" data-job="plan"`)
+	assert.Equal(t, 1, strings.Count(body, "data-force"), "only plan has hours")
 	assert.Contains(t, body, `<i class="dot failed"></i>failed`)
 	assert.Contains(t, body, ".env")
 	assert.Contains(t, body, `class="badge bad">missing`)
