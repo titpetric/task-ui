@@ -2115,3 +2115,23 @@ dialog.run[open] {
     grid-template-columns: 1fr;
   }
 }
+
+/* ------------------------------------------------------------------ output */
+
+/* The whole output of a finished run, as the terminal drew it: every line,
+   in the terminal's colours, scrolling inside the block when it is long. */
+pre.output {
+  margin: 0;
+  max-height: 75vh;
+  overflow: auto;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--term-bg);
+  color: var(--term-fg);
+  font-family: var(--font);
+  font-size: 0.8125rem;
+  line-height: 1.35;
+  white-space: pre;
+  tab-size: 8;
+}

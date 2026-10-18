@@ -3,7 +3,7 @@
 <div class="page-head">
 	<div>
 		<h2>{{ $run.Folder }} / {{ $run.Job }} <span class="badge {{ tone $run.State }}">{{ $run.State }}{{ if and (ne $run.State "ok") (ne $run.State "running") }} {{ $run.ExitCode }}{{ end }}</span></h2>
-		<p>Started by {{ $run.UserName }} {{ ago $run.StartedAt }}{{ if $run.IsScheduled }} by the scheduler{{ end }}{{ if $run.IsForced }}, with Run force{{ end }}.{{ if eq $run.State "running" }} The session is live: attach to follow it{{ if $can }}, or end it{{ end }}.{{ else if $run.Live }} The run is over; its last screen is below and what it showed is in the recording.{{ else }} The run is over; what it showed is in the recording.{{ end }}</p>
+		<p>Started by {{ $run.UserName }} {{ ago $run.StartedAt }}{{ if $run.IsScheduled }} by the scheduler{{ end }}{{ if $run.IsForced }}, with Run force{{ end }}.{{ if eq $run.State "running" }} The session is live: attach to follow it{{ if $can }}, or end it{{ end }}.{{ else }} The run is over; everything it printed is below.{{ end }}</p>
 	</div>
 	<div class="actions">
 		<button type="button" class="btn btn-primary" data-attach="{{ $run.ID }}">{{ if eq $run.State "running" }}Attach{{ else }}View{{ end }}</button>
@@ -15,10 +15,17 @@
 	</div>
 </div>
 
-{{- if $run.Live }}
+{{- if and $run.Live (eq $run.State "running") }}
 <section class="block" data-live>
-	<h3>Terminal <small>{{ if eq $run.State "running" }}as it looks now, {{ if $run.Attached }}{{ $run.Attached }} watching{{ else }}nobody attached{{ end }}{{ else }}the last screen{{ end }}</small></h3>
+	<h3>Terminal <small>as it looks now, {{ if $run.Attached }}{{ $run.Attached }} watching{{ else }}nobody attached{{ end }}</small></h3>
 	<a class="tile wide" href="#" data-attach="{{ $run.ID }}"><div class="frame" data-frame="{{ $run.ID }}" role="img" aria-label="Terminal of {{ $run.Folder }} / {{ $run.Job }}">{{ $run.FrameSVG }}</div></a>
+</section>
+{{- end }}
+
+{{- if and $run.CastPath (ne $run.State "running") }}
+<section class="block">
+	<h3>Output <small>every line the run printed</small></h3>
+	<pre class="output" data-output="{{ $run.ID }}" data-cols="{{ $run.TermCols }}" data-rows="{{ $run.TermRows }}"><span class="faint">Reading the recording…</span></pre>
 </section>
 {{- end }}
 

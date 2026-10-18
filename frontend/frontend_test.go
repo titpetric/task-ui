@@ -19,6 +19,7 @@ import (
 	"github.com/titpetric/task-ui/envfile"
 	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/frontend"
+	"github.com/titpetric/task-ui/frontend/view"
 	"github.com/titpetric/task-ui/git"
 	"github.com/titpetric/task-ui/internal/assert"
 	"github.com/titpetric/task-ui/model"
@@ -226,8 +227,10 @@ func TestRoutes_Assets(t *testing.T) {
 	assert.True(t, strings.HasPrefix(css.Headers.Get("Content-Type"), "text/css"))
 	assert.Equal(t, "public, max-age=3600", css.Headers.Get("Cache-Control"))
 	assert.Contains(t, css.Body, "--signal")
-	assert.Contains(t, f.page(t, asViewer, "/"), `href="/static/task-ui.css?v=test"`)
-	assert.Contains(t, f.get(t, "", "/login").Body, `src="/static/task-ui.js?v=test"`)
+	// The URLs carry a hash of the assets, so a deploy that changes them
+	// changes the URLs; the build version is "dev" for every go install.
+	assert.Contains(t, f.page(t, asViewer, "/"), `href="/static/task-ui.css?v=`+view.AssetVersion()+`"`)
+	assert.Contains(t, f.get(t, "", "/login").Body, `src="/static/task-ui.js?v=`+view.AssetVersion()+`"`)
 
 	health := f.get(t, "", "/healthz")
 	assert.Equal(t, http.StatusOK, health.Status)
