@@ -252,6 +252,45 @@ header.top h1 a:hover {
   text-decoration: none;
 }
 
+/* The logo after the name is the favicon as a prompt: a terminal tile, the
+   amber chevron, and a cursor that blinks the way a shell's does. The tile
+   stays dark in the light theme, as a terminal does. */
+header.top h1 a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+header.top h1 .logo {
+  width: 1.45rem;
+  height: 1.45rem;
+}
+
+header.top h1 .logo rect {
+  fill: #0b0f14;
+  stroke: var(--line-2);
+  stroke-width: 1;
+}
+
+header.top h1 .logo .prompt {
+  fill: none;
+  stroke: var(--signal);
+  stroke-width: 3;
+  stroke-linecap: square;
+}
+
+header.top h1 .logo .cursor {
+  stroke: #d5dee7;
+  stroke-width: 3;
+  animation: cursor-blink 1.06s steps(1, end) infinite;
+}
+
+@keyframes cursor-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
 header.top .spacer {
   flex: 1;
 }
@@ -1243,10 +1282,6 @@ dialog.run[open] {
     grid-template-columns: 1fr;
   }
 
-  .menu-toggle {
-    display: inline-flex;
-  }
-
   aside.side {
     position: fixed;
     z-index: 30;
@@ -1257,13 +1292,15 @@ dialog.run[open] {
     min-height: 0;
     overflow-y: auto;
     border-right: 1px solid var(--line-2);
-    box-shadow: 0 0 3rem rgba(0, 0, 0, 0.5);
     transform: translateX(-100%);
     transition: transform 0.2s ease-out;
   }
 
+  /* The shadow only on the open drawer: on the closed one it bleeds in
+     from the left edge, which shows on the light theme. */
   body.menu-open aside.side {
     transform: none;
+    box-shadow: 0 0 3rem rgba(0, 0, 0, 0.5);
   }
 
   /* The shell is a stacking context under the header; the open drawer
@@ -1392,7 +1429,8 @@ dialog.run[open] {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .dot.running {
+  .dot.running,
+  header.top h1 .logo .cursor {
     animation: none;
   }
 }
@@ -1640,6 +1678,13 @@ dialog.run[open] {
   margin-right: 0.2rem;
 }
 
+/* After the rule above, or it would hide the button on phones too. */
+@media (max-width: 860px) {
+  .menu-toggle {
+    display: inline-flex;
+  }
+}
+
 .menu-backdrop {
   display: none;
   position: fixed;
@@ -1648,13 +1693,58 @@ dialog.run[open] {
   background: rgba(4, 6, 9, 0.6);
 }
 
-/* A folder is a disclosure: the row opens the folder, the chevron shows
-   its jobs. The open folder shows its jobs, each with a running dot. */
+/* A folder at the top of the root is a heading, set like Recents: its
+   name, the count of its own jobs, and those jobs below it. */
+.folders a.section {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin: 1rem 0 0.25rem;
+  padding: 0.15rem 0.6rem 0.15rem 1.1rem;
+  color: var(--text-faint);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  border-left: 2px solid transparent;
+}
+
+.folders a.section:first-child {
+  margin-top: 0.3rem;
+}
+
+.folders a.section span {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.folders a.section small {
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+.folders a.section:hover {
+  color: var(--text);
+  background: transparent;
+}
+
+.folders a.section.active {
+  color: var(--signal);
+  background: transparent;
+  border-left-color: var(--signal);
+}
+
+/* The folders under a heading, one row each at the menu's alignment,
+   named by their path below the heading: the part above the folder dim,
+   the folder itself bright. A folder is a disclosure: the row opens the
+   folder, the chevron shows its jobs, each with a running dot. */
 .folders details.folder summary {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.3rem 0.6rem 0.3rem calc(1.1rem + var(--depth, 0) * 1rem);
+  padding: 0.3rem 0.6rem 0.3rem 1.1rem;
   color: var(--text-dim);
   border-left: 2px solid transparent;
   list-style: none;
@@ -1672,7 +1762,13 @@ dialog.run[open] {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  padding: 0;
+  border: 0;
   color: inherit;
+}
+
+.folders details.folder summary a:hover {
+  background: transparent;
 }
 
 .folders details.folder summary a:hover {
@@ -1680,10 +1776,29 @@ dialog.run[open] {
   color: var(--text);
 }
 
+/* The path above the folder gives way before the folder's own name. */
 .folders details.folder summary a span {
+  display: flex;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.folders details.folder summary a span i {
+  flex-shrink: 100;
+  min-width: 1.5em;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
+  font-style: normal;
+  color: var(--text-faint);
+}
+
+.folders details.folder summary a span b {
+  flex: none;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: inherit;
 }
 
 .folders details.folder summary .ic {
@@ -1735,7 +1850,7 @@ dialog.run[open] {
 }
 
 .folders .jobs .empty {
-  padding: 0.2rem 1.1rem 0.2rem calc(2.1rem + var(--depth, 0) * 1rem);
+  padding: 0.2rem 1.1rem 0.2rem 2.65rem;
 }
 
 /* The reason a run out of hours needs, asked in the window. */
@@ -1876,15 +1991,25 @@ dialog.run[open] {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.15rem 0.5rem 0.15rem calc(2.1rem + var(--depth, 0) * 1rem);
+  /* One step in from the folder: the dot under the folder's name, which
+     starts after the 1.1rem row, the 1.05rem icon and its 0.5rem gap. */
+  padding: 0.15rem 0.6rem 0.15rem 2.65rem;
   color: var(--text-dim);
   font-size: 0.8125rem;
   border-left: 2px solid transparent;
 }
 
 .folders .jobs .job .dot {
+  flex: none;
   width: 0.4rem;
   height: 0.4rem;
+}
+
+/* A heading's own jobs are rows like the folders below them: the dot
+   centred in the icon's column, the name where the folder names start. */
+.folders .jobs.top .job {
+  padding-left: 1.425rem;
+  gap: 0.775rem;
 }
 
 .folders .jobs .job a {
@@ -1895,6 +2020,11 @@ dialog.run[open] {
   white-space: nowrap;
   color: inherit;
   padding: 0.1rem 0;
+}
+
+.folders .jobs .job a i {
+  font-style: normal;
+  color: var(--text-faint);
 }
 
 .folders .jobs .job a:hover {

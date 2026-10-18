@@ -91,3 +91,15 @@ func TestHoursLine(t *testing.T) {
 	assert.Equal(t, "", view.HoursLine(""))
 	assert.Equal(t, "broken", view.HoursLine(" broken "))
 }
+
+func TestFolderDir(t *testing.T) {
+	t.Parallel()
+	for id, want := range map[string]string{
+		"deploy":                         "",
+		"deploy/dockerfiles":             "",
+		"deploy/dockerfiles/atkins-docs": "dockerfiles",
+		"a/b/c/d":                        "b/c",
+	} {
+		assert.Equal(t, want, view.FolderDir(id), id)
+	}
+}

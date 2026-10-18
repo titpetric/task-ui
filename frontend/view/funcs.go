@@ -18,6 +18,7 @@ func Funcs() template.FuncMap {
 		"duration":  Duration,
 		"size":      Size,
 		"join":      strings.Join,
+		"split":     strings.Split,
 		"lower":     strings.ToLower,
 		"add":       func(a, b int) int { return a + b },
 		"sub":       func(a, b int) int { return a - b },
@@ -27,6 +28,7 @@ func Funcs() template.FuncMap {
 		"list":      func(items ...any) []any { return items },
 		"hoursLine": HoursLine,
 		"tone":      Tone,
+		"folderDir": FolderDir,
 	}
 }
 
@@ -135,4 +137,18 @@ func Size(n int64) string {
 		value, suffix = value/unit, "GB"
 	}
 	return fmt.Sprintf("%.1f %s", value, suffix)
+}
+
+// FolderDir is where a folder sits under its top level folder, which the
+// sidebar shows as a heading: "dockerfiles" for deploy/dockerfiles/blog,
+// "" for deploy/dockerfiles and for deploy itself.
+func FolderDir(id string) string {
+	_, rest, ok := strings.Cut(id, "/")
+	if !ok {
+		return ""
+	}
+	if i := strings.LastIndex(rest, "/"); i >= 0 {
+		return rest[:i]
+	}
+	return ""
 }

@@ -57,22 +57,22 @@ func TestFolder_Missing(t *testing.T) {
 	assert.Contains(t, hidden.Body, "No folder named private")
 }
 
-// The sidebar opens the folder of the page into its jobs, a menu button
-// drives the drawer, and the jobs table folds into cards.
+// The sidebar heads each top level folder with its name and its jobs,
+// marks the folder of the page, a menu button drives the drawer, and the
+// jobs table folds into cards.
 func TestFolder_SidebarAndCards(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
 	session := f.start(t, f.infra, "slow")
 
 	body := f.page(t, asOps, "/f/infra")
-	assert.Contains(t, body, `<details class="folder active" data-folder="infra" style="--depth: 0" open>`)
-	// Few jobs: every folder opens; the sidebar runs a job in place and
-	// attaches to the one running.
-	assert.Contains(t, body, `<details class="folder" data-folder="private" style="--depth: 0" open>`)
+	assert.Contains(t, body, `<a class="section active" href="/f/infra" data-folder="infra"`)
+	// The sidebar runs a job in place and attaches to the one running.
+	assert.Contains(t, body, `<a class="section" href="/f/private" data-folder="private"`)
 	assert.Contains(t, body, `<div class="job" data-job-key="infra/plan">`)
 	assert.Contains(t, body, `class="play" data-run data-folder="infra" data-job="plan"`)
 	assert.Contains(t, body, `<div class="job" data-job-key="infra/slow">
-							<i class="dot running"></i>`)
+	<i class="dot running"></i>`)
 	assert.Contains(t, body, `class="play" data-attach="`+session.ID()+`"`)
 	assert.NotContains(t, body, `class="play" data-run data-folder="private"`) // ops may not run private
 	assert.Contains(t, body, `id="menu-toggle"`)
@@ -109,15 +109,16 @@ func TestFolder_Hours(t *testing.T) {
 }
 
 // A nested folder has a path for an ID: its page, its jobs and its env
-// files resolve under it, and the sidebar indents it under its parent.
+// files resolve under it, and the sidebar lists it under the heading of
+// its top level folder, by its path below it.
 func TestFolder_Nested(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
 
 	body := f.page(t, asAdmin, "/f/infra/edge")
-	assert.Contains(t, body, `<details class="folder active" data-folder="infra/edge" style="--depth: 1" open>`)
-	assert.Contains(t, body, `<details class="folder" data-folder="infra" style="--depth: 0" open>`)
-	assert.Contains(t, body, `<a href="/f/infra/edge"><svg class="ic"><use href="#i-folder-open"/></svg><span>edge</span></a>`)
+	assert.Contains(t, body, `<details class="folder active" data-folder="infra/edge" open>`)
+	assert.Contains(t, body, `<a class="section" href="/f/infra" data-folder="infra"`)
+	assert.Contains(t, body, `<a href="/f/infra/edge"><svg class="ic"><use href="#i-folder-open"/></svg><span><b>edge</b></span></a>`)
 	assert.Contains(t, body, `<a href="/f/infra">infra</a>`)
 	assert.Contains(t, body, `class="play" data-run data-folder="infra/edge" data-job="deploy"`)
 
