@@ -23,20 +23,22 @@
 	<button class="btn" type="submit">Filter</button>
 </form>
 
-<section class="block" data-live>
+{{- /* The table follows the runs topic: a run that starts is added on
+     top, one that ends is updated in place, no reload. */}}
+<section class="block" data-sse="runs">
 	<div class="table-wrap">
 	<table class="table cards">
 		<thead><tr><th>Started</th><th>Folder</th><th>Job</th><th>By</th><th>Duration</th><th>Result</th><th></th></tr></thead>
-		<tbody>
+		<tbody data-runs-table>
 		{{- range .Runs }}
-			<tr>
+			<tr data-run="{{ .ID }}">
 				<td class="nowrap" data-label="Started" title="{{ stamp .StartedAt }}">{{ ago .StartedAt }}</td>
 				<td data-label="Folder"><a href="/f/{{ .Folder }}">{{ .Folder }}</a></td>
 				<td class="key"><a href="/f/{{ .Folder }}/{{ .Job }}">{{ .Job }}</a></td>
 				<td data-label="By">{{ template "who" . }}</td>
-				<td class="nowrap" data-label="Took">{{ duration .Elapsed }}</td>
-				<td data-label="Result">{{ template "state" . }}{{ if .Attached }} <span class="faint">{{ .Attached }} watching</span>{{ end }}</td>
-				<td class="actions">
+				<td class="nowrap" data-label="Took" data-took>{{ duration .Elapsed }}</td>
+				<td data-label="Result" data-result>{{ template "state" . }}{{ if .Attached }} <span class="faint">{{ .Attached }} watching</span>{{ end }}</td>
+				<td class="actions" data-actions>
 					<a class="btn btn-sm" href="/runs/{{ .ID }}" data-attach="{{ .ID }}">{{ if eq .State "running" }}Attach{{ else }}View{{ end }}</a>
 					{{- if and .Live (eq .State "running") }}
 					<button type="button" class="btn-icon" data-stop="{{ .ID }}" title="Stop the run" aria-label="Stop the run"><svg class="ic"><use href="#i-stop"/></svg></button>

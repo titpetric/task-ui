@@ -19,6 +19,10 @@ func TestRuns(t *testing.T) {
 	assert.Contains(t, body, "<h2>Runs</h2>")
 	assert.Contains(t, body, `href="/runs/`+plan.ID+`"`)
 	assert.Contains(t, body, `href="/runs/`+deploy.ID+`"`)
+	// The table follows the runs topic and is drawn on, never reloaded.
+	assert.Contains(t, body, `<section class="block" data-sse="runs">`)
+	assert.Contains(t, body, `<tr data-run="`+plan.ID+`">`)
+	assert.NotContains(t, body, `data-live`)
 
 	// The sidebar lists every recent run; the table only the filtered ones.
 	filtered := f.page(t, asAdmin, "/runs?folder=infra&state=ok")
