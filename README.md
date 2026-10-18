@@ -354,6 +354,7 @@ Writes need the same origin. The browser pages are the reference client;
 | ![The runs](.github/assets/runs-dark.png) | ![A run's page](.github/assets/run-page-dark.png) |
 | ![Dashboard, light theme](.github/assets/dashboard-light.png) | ![A folder with a Makefile, package scripts and a scripts folder](.github/assets/tools-dark.png) |
 | ![Artifacts](.github/assets/artifacts-dark.png) | ![Scheduled](.github/assets/schedules-dark.png) |
+| ![Workflows: chains of jobs, a step can be another workflow](.github/assets/workflows-dark.png) | ![A workflow: its chain, its runs and the step editor](.github/assets/workflow-dark.png) |
 | ![Projects](.github/assets/projects-dark.png) | ![Configure a folder](.github/assets/project-edit-dark.png) |
 | ![Users, from the password file](.github/assets/users-dark.png) | ![Secrets, encrypted with the SSH key](.github/assets/secrets-dark.png) |
 | ![Secrets](.github/assets/secrets-dark.png) | ![An env file](.github/assets/envfile-dark.png) |
