@@ -45,6 +45,8 @@ func (h *Handlers) Routes() http.Handler {
 		r.Use(h.opts.Guard.Require)
 		r.Get("/", h.home)
 		r.Get("/f/*", h.folderPath)
+		r.Get("/workflows", h.workflows)
+		r.Get("/workflows/{id}", h.workflow)
 		r.Get("/runs", h.runs)
 		r.Get("/runs/{id}", h.run)
 		r.Get("/artifacts", h.artifacts)

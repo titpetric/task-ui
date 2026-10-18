@@ -41,8 +41,12 @@ type Page struct {
 	Run       *Run
 	Artifacts []model.Artifact
 	Schedules []model.Schedule
-	EnvFiles  []envfile.File
-	EnvFile   *envfile.File
+	Workflows []Workflow
+	Workflow  *Workflow
+	// WorkflowRuns are a workflow's runs, newest first.
+	WorkflowRuns []WorkflowRun
+	EnvFiles     []envfile.File
+	EnvFile      *envfile.File
 	// SecretNames are the secrets that reach a folder, by name.
 	SecretNames []string
 	Secrets     []model.Secret

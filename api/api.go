@@ -60,6 +60,15 @@ func (h *Handlers) Routes() http.Handler {
 	r.Put("/schedules/{id}", h.updateSchedule)
 	r.Delete("/schedules/{id}", h.deleteSchedule)
 
+	r.Get("/workflows", h.listWorkflows)
+	r.Post("/workflows", h.createWorkflow)
+	r.Get("/workflows/{id}", h.getWorkflow)
+	r.Put("/workflows/{id}", h.updateWorkflow)
+	r.Delete("/workflows/{id}", h.deleteWorkflow)
+	r.Get("/workflows/{id}/runs", h.listWorkflowRuns)
+	r.Post("/workflows/{id}/runs", h.startWorkflow)
+	r.Post("/workflow-runs/{id}/stop", h.stopWorkflowRun)
+
 	r.Get("/projects", h.listProjects)
 	r.Post("/projects", h.cloneProject)
 	r.Get("/projects/*", h.getProject)

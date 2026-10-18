@@ -25,7 +25,12 @@ as it runs.
   URL, as SVG or text.
 - **One run per job.** A job runs once at a time across the instance,
   different jobs run side by side. Run force kills the active run and
-  starts again. A workflow chains jobs of any folders, one after another.
+  starts again.
+- **Workflows.** A named chain of jobs from any folders, a one button
+  deploy: build, test, push, plan, apply. Run starts each step when the
+  one before it ended ok; the first that does not end ok ends the
+  workflow and the rest are skipped. Anyone can make a workflow from the
+  jobs they see; running it needs the right to run every step.
 - **Users and roles.** Login is mandatory. Users come from a password
   file, htpasswd style, read again whenever it changes; `TASK_UI_ADMINS`
   and `TASK_UI_VIEWERS` name the admins and the viewers, everyone else is
@@ -324,6 +329,9 @@ Writes need the same origin. The browser pages are the reference client;
 | `WS` | `/api/runs/{id}/attach` | binary frames are output; text frames are `{"type":"input"\|"resize"\|"stop"\|"kill"}` in and `{"type":"status"}` out |
 | `GET` `DELETE` | `/api/artifacts`, `/api/artifacts/{id}` | list, download, delete |
 | `GET` `POST` `PUT` `DELETE` | `/api/schedules`, `/api/schedules/{id}` | `{folder, job, expression, enabled}` |
+| `GET` `POST` `PUT` `DELETE` | `/api/workflows`, `/api/workflows/{id}` | `{name, steps: [{folder, job}]}`; owner or admin changes |
+| `GET` `POST` | `/api/workflows/{id}/runs` | runs, newest first, with their steps; `POST` starts one, 409 while one runs |
+| `POST` | `/api/workflow-runs/{id}/stop` | stops the step running, skips the rest |
 | `GET` `POST` `PUT` `DELETE` | `/api/projects`, `/api/projects/{folder}` | clone `{url, id, branch}`; configure `{title, description, allow, sources, commands, job_allow, hours, job_hours}` |
 | `GET` `PUT` | `/api/users`, `/api/users/{id}` | `{folders}`; names, passwords and roles come from the password file and the role lists |
 | `GET` `POST` `DELETE` | `/api/secrets`, `/api/secrets/{id}` | `{scope, name, content}`; content is never returned; `409` without a key to encrypt with |

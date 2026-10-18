@@ -1015,6 +1015,339 @@ var UserEmailFields = []string{"id", "user_id", "email", "created_at", "updated_
 // UserEmailPrimaryFields are the primary key fields in the DB table.
 var UserEmailPrimaryFields = []string{"id"}
 
+// Workflow generated for db table `workflow`.
+type Workflow struct {
+	// ID
+	ID string `db:"id" json:"id"`
+
+	// Name
+	Name string `db:"name" json:"name"`
+
+	// User ID
+	UserID string `db:"user_id" json:"user_id"`
+
+	// User Name
+	UserName string `db:"user_name" json:"user_name"`
+
+	// Created At
+	CreatedAt *time.Time `db:"created_at" json:"created_at"`
+
+	// Updated At
+	UpdatedAt *time.Time `db:"updated_at" json:"updated_at"`
+}
+
+// GetID will return the value of ID.
+func (w *Workflow) GetID() string { return w.ID }
+
+// SetID sets ID to the provided value.
+func (w *Workflow) SetID(val string) { w.ID = val }
+
+// GetName will return the value of Name.
+func (w *Workflow) GetName() string { return w.Name }
+
+// SetName sets Name to the provided value.
+func (w *Workflow) SetName(val string) { w.Name = val }
+
+// GetUserID will return the value of UserID.
+func (w *Workflow) GetUserID() string { return w.UserID }
+
+// SetUserID sets UserID to the provided value.
+func (w *Workflow) SetUserID(val string) { w.UserID = val }
+
+// GetUserName will return the value of UserName.
+func (w *Workflow) GetUserName() string { return w.UserName }
+
+// SetUserName sets UserName to the provided value.
+func (w *Workflow) SetUserName(val string) { w.UserName = val }
+
+// GetCreatedAt will return the value of CreatedAt.
+func (w *Workflow) GetCreatedAt() *time.Time { return w.CreatedAt }
+
+// SetCreatedAt sets CreatedAt to the provided value.
+func (w *Workflow) SetCreatedAt(stamp time.Time) { w.CreatedAt = &stamp }
+
+// GetUpdatedAt will return the value of UpdatedAt.
+func (w *Workflow) GetUpdatedAt() *time.Time { return w.UpdatedAt }
+
+// SetUpdatedAt sets UpdatedAt to the provided value.
+func (w *Workflow) SetUpdatedAt(stamp time.Time) { w.UpdatedAt = &stamp }
+
+// WorkflowTable is the name of the table in the DB.
+const WorkflowTable = "`workflow`"
+
+// WorkflowFields is a list of all columns in the DB table.
+var WorkflowFields = []string{"id", "name", "user_id", "user_name", "created_at", "updated_at"}
+
+// WorkflowPrimaryFields are the primary key fields in the DB table.
+var WorkflowPrimaryFields = []string{"id"}
+
+// WorkflowRun generated for db table `workflow_run`.
+//
+// Workflow Run.
+type WorkflowRun struct {
+	// ID
+	ID string `db:"id" json:"id"`
+
+	// Workflow ID
+	WorkflowID string `db:"workflow_id" json:"workflow_id"`
+
+	// Name
+	Name string `db:"name" json:"name"`
+
+	// User ID
+	UserID string `db:"user_id" json:"user_id"`
+
+	// User Name
+	UserName string `db:"user_name" json:"user_name"`
+
+	// State
+	State string `db:"state" json:"state"`
+
+	// Message
+	Message string `db:"message" json:"message"`
+
+	// Started At
+	StartedAt *time.Time `db:"started_at" json:"started_at"`
+
+	// Finished At
+	FinishedAt *time.Time `db:"finished_at" json:"finished_at"`
+
+	// Created At
+	CreatedAt *time.Time `db:"created_at" json:"created_at"`
+
+	// Updated At
+	UpdatedAt *time.Time `db:"updated_at" json:"updated_at"`
+}
+
+// GetID will return the value of ID.
+func (w *WorkflowRun) GetID() string { return w.ID }
+
+// SetID sets ID to the provided value.
+func (w *WorkflowRun) SetID(val string) { w.ID = val }
+
+// GetWorkflowID will return the value of WorkflowID.
+func (w *WorkflowRun) GetWorkflowID() string { return w.WorkflowID }
+
+// SetWorkflowID sets WorkflowID to the provided value.
+func (w *WorkflowRun) SetWorkflowID(val string) { w.WorkflowID = val }
+
+// GetName will return the value of Name.
+func (w *WorkflowRun) GetName() string { return w.Name }
+
+// SetName sets Name to the provided value.
+func (w *WorkflowRun) SetName(val string) { w.Name = val }
+
+// GetUserID will return the value of UserID.
+func (w *WorkflowRun) GetUserID() string { return w.UserID }
+
+// SetUserID sets UserID to the provided value.
+func (w *WorkflowRun) SetUserID(val string) { w.UserID = val }
+
+// GetUserName will return the value of UserName.
+func (w *WorkflowRun) GetUserName() string { return w.UserName }
+
+// SetUserName sets UserName to the provided value.
+func (w *WorkflowRun) SetUserName(val string) { w.UserName = val }
+
+// GetState will return the value of State.
+func (w *WorkflowRun) GetState() string { return w.State }
+
+// SetState sets State to the provided value.
+func (w *WorkflowRun) SetState(val string) { w.State = val }
+
+// GetMessage will return the value of Message.
+func (w *WorkflowRun) GetMessage() string { return w.Message }
+
+// SetMessage sets Message to the provided value.
+func (w *WorkflowRun) SetMessage(val string) { w.Message = val }
+
+// GetStartedAt will return the value of StartedAt.
+func (w *WorkflowRun) GetStartedAt() *time.Time { return w.StartedAt }
+
+// SetStartedAt sets StartedAt to the provided value.
+func (w *WorkflowRun) SetStartedAt(stamp time.Time) { w.StartedAt = &stamp }
+
+// GetFinishedAt will return the value of FinishedAt.
+func (w *WorkflowRun) GetFinishedAt() *time.Time { return w.FinishedAt }
+
+// SetFinishedAt sets FinishedAt to the provided value.
+func (w *WorkflowRun) SetFinishedAt(stamp time.Time) { w.FinishedAt = &stamp }
+
+// GetCreatedAt will return the value of CreatedAt.
+func (w *WorkflowRun) GetCreatedAt() *time.Time { return w.CreatedAt }
+
+// SetCreatedAt sets CreatedAt to the provided value.
+func (w *WorkflowRun) SetCreatedAt(stamp time.Time) { w.CreatedAt = &stamp }
+
+// GetUpdatedAt will return the value of UpdatedAt.
+func (w *WorkflowRun) GetUpdatedAt() *time.Time { return w.UpdatedAt }
+
+// SetUpdatedAt sets UpdatedAt to the provided value.
+func (w *WorkflowRun) SetUpdatedAt(stamp time.Time) { w.UpdatedAt = &stamp }
+
+// WorkflowRunTable is the name of the table in the DB.
+const WorkflowRunTable = "`workflow_run`"
+
+// WorkflowRunFields is a list of all columns in the DB table.
+var WorkflowRunFields = []string{"id", "workflow_id", "name", "user_id", "user_name", "state", "message", "started_at", "finished_at", "created_at", "updated_at"}
+
+// WorkflowRunPrimaryFields are the primary key fields in the DB table.
+var WorkflowRunPrimaryFields = []string{"id"}
+
+// WorkflowRunStep generated for db table `workflow_run_step`.
+//
+// Workflow Run Step.
+type WorkflowRunStep struct {
+	// ID
+	ID string `db:"id" json:"id"`
+
+	// Workflow Run ID
+	WorkflowRunID string `db:"workflow_run_id" json:"workflow_run_id"`
+
+	// Position
+	Position int64 `db:"position" json:"position"`
+
+	// Folder
+	Folder string `db:"folder" json:"folder"`
+
+	// Job
+	Job string `db:"job" json:"job"`
+
+	// Run ID
+	RunID string `db:"run_id" json:"run_id"`
+
+	// State
+	State string `db:"state" json:"state"`
+
+	// Created At
+	CreatedAt *time.Time `db:"created_at" json:"created_at"`
+
+	// Updated At
+	UpdatedAt *time.Time `db:"updated_at" json:"updated_at"`
+}
+
+// GetID will return the value of ID.
+func (w *WorkflowRunStep) GetID() string { return w.ID }
+
+// SetID sets ID to the provided value.
+func (w *WorkflowRunStep) SetID(val string) { w.ID = val }
+
+// GetWorkflowRunID will return the value of WorkflowRunID.
+func (w *WorkflowRunStep) GetWorkflowRunID() string { return w.WorkflowRunID }
+
+// SetWorkflowRunID sets WorkflowRunID to the provided value.
+func (w *WorkflowRunStep) SetWorkflowRunID(val string) { w.WorkflowRunID = val }
+
+// GetPosition will return the value of Position.
+func (w *WorkflowRunStep) GetPosition() int64 { return w.Position }
+
+// SetPosition sets Position to the provided value.
+func (w *WorkflowRunStep) SetPosition(val int64) { w.Position = val }
+
+// GetFolder will return the value of Folder.
+func (w *WorkflowRunStep) GetFolder() string { return w.Folder }
+
+// SetFolder sets Folder to the provided value.
+func (w *WorkflowRunStep) SetFolder(val string) { w.Folder = val }
+
+// GetJob will return the value of Job.
+func (w *WorkflowRunStep) GetJob() string { return w.Job }
+
+// SetJob sets Job to the provided value.
+func (w *WorkflowRunStep) SetJob(val string) { w.Job = val }
+
+// GetRunID will return the value of RunID.
+func (w *WorkflowRunStep) GetRunID() string { return w.RunID }
+
+// SetRunID sets RunID to the provided value.
+func (w *WorkflowRunStep) SetRunID(val string) { w.RunID = val }
+
+// GetState will return the value of State.
+func (w *WorkflowRunStep) GetState() string { return w.State }
+
+// SetState sets State to the provided value.
+func (w *WorkflowRunStep) SetState(val string) { w.State = val }
+
+// GetCreatedAt will return the value of CreatedAt.
+func (w *WorkflowRunStep) GetCreatedAt() *time.Time { return w.CreatedAt }
+
+// SetCreatedAt sets CreatedAt to the provided value.
+func (w *WorkflowRunStep) SetCreatedAt(stamp time.Time) { w.CreatedAt = &stamp }
+
+// GetUpdatedAt will return the value of UpdatedAt.
+func (w *WorkflowRunStep) GetUpdatedAt() *time.Time { return w.UpdatedAt }
+
+// SetUpdatedAt sets UpdatedAt to the provided value.
+func (w *WorkflowRunStep) SetUpdatedAt(stamp time.Time) { w.UpdatedAt = &stamp }
+
+// WorkflowRunStepTable is the name of the table in the DB.
+const WorkflowRunStepTable = "`workflow_run_step`"
+
+// WorkflowRunStepFields is a list of all columns in the DB table.
+var WorkflowRunStepFields = []string{"id", "workflow_run_id", "position", "folder", "job", "run_id", "state", "created_at", "updated_at"}
+
+// WorkflowRunStepPrimaryFields are the primary key fields in the DB table.
+var WorkflowRunStepPrimaryFields = []string{"id"}
+
+// WorkflowStep generated for db table `workflow_step`.
+//
+// Workflow Step.
+type WorkflowStep struct {
+	// ID
+	ID string `db:"id" json:"id"`
+
+	// Workflow ID
+	WorkflowID string `db:"workflow_id" json:"workflow_id"`
+
+	// Position
+	Position int64 `db:"position" json:"position"`
+
+	// Folder
+	Folder string `db:"folder" json:"folder"`
+
+	// Job
+	Job string `db:"job" json:"job"`
+}
+
+// GetID will return the value of ID.
+func (w *WorkflowStep) GetID() string { return w.ID }
+
+// SetID sets ID to the provided value.
+func (w *WorkflowStep) SetID(val string) { w.ID = val }
+
+// GetWorkflowID will return the value of WorkflowID.
+func (w *WorkflowStep) GetWorkflowID() string { return w.WorkflowID }
+
+// SetWorkflowID sets WorkflowID to the provided value.
+func (w *WorkflowStep) SetWorkflowID(val string) { w.WorkflowID = val }
+
+// GetPosition will return the value of Position.
+func (w *WorkflowStep) GetPosition() int64 { return w.Position }
+
+// SetPosition sets Position to the provided value.
+func (w *WorkflowStep) SetPosition(val int64) { w.Position = val }
+
+// GetFolder will return the value of Folder.
+func (w *WorkflowStep) GetFolder() string { return w.Folder }
+
+// SetFolder sets Folder to the provided value.
+func (w *WorkflowStep) SetFolder(val string) { w.Folder = val }
+
+// GetJob will return the value of Job.
+func (w *WorkflowStep) GetJob() string { return w.Job }
+
+// SetJob sets Job to the provided value.
+func (w *WorkflowStep) SetJob(val string) { w.Job = val }
+
+// WorkflowStepTable is the name of the table in the DB.
+const WorkflowStepTable = "`workflow_step`"
+
+// WorkflowStepFields is a list of all columns in the DB table.
+var WorkflowStepFields = []string{"id", "workflow_id", "position", "folder", "job"}
+
+// WorkflowStepPrimaryFields are the primary key fields in the DB table.
+var WorkflowStepPrimaryFields = []string{"id"}
+
 // Insert starts building an INSERT INTO query.
 func (a *Artifact) Insert(opts ...QueryOption) string {
 	cfg := (&QueryConfig{Table: ArtifactTable, Statement: "INSERT INTO"}).Apply(opts...)
@@ -1618,6 +1951,250 @@ func (u *UserEmail) Update(opts ...QueryOption) string {
 // Delete starts building a DELETE query.
 func (u *UserEmail) Delete(opts ...QueryOption) string {
 	cfg := (&QueryConfig{Table: UserEmailTable}).Apply(opts...)
+	query := fmt.Sprintf("DELETE FROM %s", cfg.Table)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	return query
+}
+
+// Insert starts building an INSERT INTO query.
+func (w *Workflow) Insert(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: WorkflowTable, Statement: "INSERT INTO"}).Apply(opts...)
+	cols := WorkflowFields
+	if len(cfg.Columns) > 0 {
+		cols = cfg.Columns
+	}
+	return fmt.Sprintf("%s %s (%s) VALUES (:%s)", cfg.Statement, cfg.Table, strings.Join(cols, ", "), strings.Join(cols, ", :"))
+}
+
+// Select starts building a SELECT query.
+func (w *Workflow) Select(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: WorkflowTable}).Apply(opts...)
+	cols := "*"
+	if len(cfg.Columns) > 0 {
+		cols = strings.Join(cfg.Columns, ", ")
+	}
+	query := fmt.Sprintf("SELECT %s FROM %s", cols, cfg.Table)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	if cfg.OrderBy != "" {
+		query += " ORDER BY " + cfg.OrderBy
+	}
+	if cfg.LimitOffset > 0 {
+		query += fmt.Sprintf(" LIMIT %d, %d", cfg.LimitStart, cfg.LimitOffset)
+	}
+	return query
+}
+
+// Update starts building a UPDATE query.
+func (w *Workflow) Update(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: WorkflowTable}).Apply(opts...)
+	cols := WorkflowFields
+	if len(cfg.Columns) > 0 {
+		cols = cfg.Columns
+	}
+	setClause := ""
+	for i, col := range cols {
+		if i > 0 {
+			setClause += ", "
+		}
+		setClause += col + "=:" + col
+	}
+	query := fmt.Sprintf("UPDATE %s SET %s", cfg.Table, setClause)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	return query
+}
+
+// Delete starts building a DELETE query.
+func (w *Workflow) Delete(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: WorkflowTable}).Apply(opts...)
+	query := fmt.Sprintf("DELETE FROM %s", cfg.Table)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	return query
+}
+
+// Insert starts building an INSERT INTO query.
+func (w *WorkflowRun) Insert(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: WorkflowRunTable, Statement: "INSERT INTO"}).Apply(opts...)
+	cols := WorkflowRunFields
+	if len(cfg.Columns) > 0 {
+		cols = cfg.Columns
+	}
+	return fmt.Sprintf("%s %s (%s) VALUES (:%s)", cfg.Statement, cfg.Table, strings.Join(cols, ", "), strings.Join(cols, ", :"))
+}
+
+// Select starts building a SELECT query.
+func (w *WorkflowRun) Select(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: WorkflowRunTable}).Apply(opts...)
+	cols := "*"
+	if len(cfg.Columns) > 0 {
+		cols = strings.Join(cfg.Columns, ", ")
+	}
+	query := fmt.Sprintf("SELECT %s FROM %s", cols, cfg.Table)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	if cfg.OrderBy != "" {
+		query += " ORDER BY " + cfg.OrderBy
+	}
+	if cfg.LimitOffset > 0 {
+		query += fmt.Sprintf(" LIMIT %d, %d", cfg.LimitStart, cfg.LimitOffset)
+	}
+	return query
+}
+
+// Update starts building a UPDATE query.
+func (w *WorkflowRun) Update(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: WorkflowRunTable}).Apply(opts...)
+	cols := WorkflowRunFields
+	if len(cfg.Columns) > 0 {
+		cols = cfg.Columns
+	}
+	setClause := ""
+	for i, col := range cols {
+		if i > 0 {
+			setClause += ", "
+		}
+		setClause += col + "=:" + col
+	}
+	query := fmt.Sprintf("UPDATE %s SET %s", cfg.Table, setClause)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	return query
+}
+
+// Delete starts building a DELETE query.
+func (w *WorkflowRun) Delete(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: WorkflowRunTable}).Apply(opts...)
+	query := fmt.Sprintf("DELETE FROM %s", cfg.Table)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	return query
+}
+
+// Insert starts building an INSERT INTO query.
+func (w *WorkflowRunStep) Insert(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: WorkflowRunStepTable, Statement: "INSERT INTO"}).Apply(opts...)
+	cols := WorkflowRunStepFields
+	if len(cfg.Columns) > 0 {
+		cols = cfg.Columns
+	}
+	return fmt.Sprintf("%s %s (%s) VALUES (:%s)", cfg.Statement, cfg.Table, strings.Join(cols, ", "), strings.Join(cols, ", :"))
+}
+
+// Select starts building a SELECT query.
+func (w *WorkflowRunStep) Select(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: WorkflowRunStepTable}).Apply(opts...)
+	cols := "*"
+	if len(cfg.Columns) > 0 {
+		cols = strings.Join(cfg.Columns, ", ")
+	}
+	query := fmt.Sprintf("SELECT %s FROM %s", cols, cfg.Table)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	if cfg.OrderBy != "" {
+		query += " ORDER BY " + cfg.OrderBy
+	}
+	if cfg.LimitOffset > 0 {
+		query += fmt.Sprintf(" LIMIT %d, %d", cfg.LimitStart, cfg.LimitOffset)
+	}
+	return query
+}
+
+// Update starts building a UPDATE query.
+func (w *WorkflowRunStep) Update(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: WorkflowRunStepTable}).Apply(opts...)
+	cols := WorkflowRunStepFields
+	if len(cfg.Columns) > 0 {
+		cols = cfg.Columns
+	}
+	setClause := ""
+	for i, col := range cols {
+		if i > 0 {
+			setClause += ", "
+		}
+		setClause += col + "=:" + col
+	}
+	query := fmt.Sprintf("UPDATE %s SET %s", cfg.Table, setClause)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	return query
+}
+
+// Delete starts building a DELETE query.
+func (w *WorkflowRunStep) Delete(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: WorkflowRunStepTable}).Apply(opts...)
+	query := fmt.Sprintf("DELETE FROM %s", cfg.Table)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	return query
+}
+
+// Insert starts building an INSERT INTO query.
+func (w *WorkflowStep) Insert(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: WorkflowStepTable, Statement: "INSERT INTO"}).Apply(opts...)
+	cols := WorkflowStepFields
+	if len(cfg.Columns) > 0 {
+		cols = cfg.Columns
+	}
+	return fmt.Sprintf("%s %s (%s) VALUES (:%s)", cfg.Statement, cfg.Table, strings.Join(cols, ", "), strings.Join(cols, ", :"))
+}
+
+// Select starts building a SELECT query.
+func (w *WorkflowStep) Select(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: WorkflowStepTable}).Apply(opts...)
+	cols := "*"
+	if len(cfg.Columns) > 0 {
+		cols = strings.Join(cfg.Columns, ", ")
+	}
+	query := fmt.Sprintf("SELECT %s FROM %s", cols, cfg.Table)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	if cfg.OrderBy != "" {
+		query += " ORDER BY " + cfg.OrderBy
+	}
+	if cfg.LimitOffset > 0 {
+		query += fmt.Sprintf(" LIMIT %d, %d", cfg.LimitStart, cfg.LimitOffset)
+	}
+	return query
+}
+
+// Update starts building a UPDATE query.
+func (w *WorkflowStep) Update(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: WorkflowStepTable}).Apply(opts...)
+	cols := WorkflowStepFields
+	if len(cfg.Columns) > 0 {
+		cols = cfg.Columns
+	}
+	setClause := ""
+	for i, col := range cols {
+		if i > 0 {
+			setClause += ", "
+		}
+		setClause += col + "=:" + col
+	}
+	query := fmt.Sprintf("UPDATE %s SET %s", cfg.Table, setClause)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	return query
+}
+
+// Delete starts building a DELETE query.
+func (w *WorkflowStep) Delete(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: WorkflowStepTable}).Apply(opts...)
 	query := fmt.Sprintf("DELETE FROM %s", cfg.Table)
 	if cfg.Where != "" {
 		query += " WHERE " + cfg.Where

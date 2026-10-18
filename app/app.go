@@ -27,6 +27,7 @@ import (
 	"github.com/titpetric/task-ui/secret"
 	"github.com/titpetric/task-ui/sshkey"
 	"github.com/titpetric/task-ui/storage"
+	"github.com/titpetric/task-ui/workflow"
 )
 
 // App is a running instance: the database, the runner, the scheduler and
@@ -39,6 +40,7 @@ type App struct {
 	Passwords *storage.UserAuthPasswordStorage
 	Runner    *runner.Manager
 	Scheduler *scheduler.Loop
+	Workflows *workflow.Runner
 	Catalogue *Catalogue
 	Guard     *access.Guard
 	// UsersFile is the password file, nil when there is none.
@@ -101,7 +103,7 @@ func (a *App) prepare(ctx context.Context) error {
 	if n > 0 {
 		slog.Warn("runs left running by the previous process marked killed", "count", n)
 	}
-	return nil
+	return storage.NewWorkflowRunStorage(a.DB).Interrupt(ctx, "task-ui restarted while it ran")
 }
 
 // seed writes the password file to storage, when there is one. Without
@@ -148,6 +150,8 @@ func (a *App) wire(version string) error {
 	projects := storage.NewProjectStorage(db)
 	artifacts := storage.NewArtifactStorage(db)
 	schedules := storage.NewScheduleStorage(db)
+	workflows := storage.NewWorkflowStorage(db)
+	workflowRuns := storage.NewWorkflowRunStorage(db)
 	g := &git.Git{SSHDir: cfg.SSHDir}
 	keys := &sshkey.Store{Dir: cfg.SSHDir}
 	secrets := secret.New(storage.NewSecretStorage(db), secret.NewVault(keys))
@@ -169,15 +173,18 @@ func (a *App) wire(version string) error {
 		Now:          cfg.Clock(),
 	})
 	a.Scheduler = scheduler.NewLoop(schedules, a.Users, a.Catalogue, a.Runner)
+	a.Workflows = workflow.New(workflows, workflowRuns, a.Catalogue, a.Runner)
 	a.Guard = access.NewGuard(a.Users, access.NewSessions(sessionSecret(cfg), cfg.SessionTTL))
 	a.Guard.AutoLogin = cfg.AutoLogin
 
 	apiHandlers := api.New(api.Options{
 		Users: a.Users, Projects: projects, Runs: runs, Artifacts: artifacts, Schedules: schedules, Secrets: secrets,
+		Workflows: workflows, WorkflowRuns: workflowRuns, Flows: a.Workflows,
 		Runner: a.Runner, Catalogue: a.Catalogue, Git: g, Keys: keys, Env: env, Recordings: recordings, Root: cfg.Root,
 	})
 	pages, err := frontend.New(frontend.Options{
 		Guard: a.Guard, Auth: access.NewAuthenticator(a.Users, a.Emails, a.Passwords), Users: a.Users, Projects: projects, Runs: runs, Artifacts: artifacts, Schedules: schedules, Secrets: secrets,
+		Workflows: workflows, WorkflowRuns: workflowRuns, Flows: a.Workflows,
 		Runner: a.Runner, Catalogue: a.Catalogue, Git: g, Keys: keys, Env: env, Root: cfg.Root, Version: version, Now: cfg.Clock(),
 	})
 	if err != nil {

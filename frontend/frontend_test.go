@@ -28,6 +28,7 @@ import (
 	"github.com/titpetric/task-ui/secret"
 	"github.com/titpetric/task-ui/sshkey"
 	"github.com/titpetric/task-ui/storage"
+	"github.com/titpetric/task-ui/workflow"
 )
 
 // catalogue is a fixed set of folders.
@@ -102,23 +103,28 @@ func newFixture(t *testing.T) *fixture {
 	manager := runner.New(runner.Options{Runs: runs, Recordings: &recording.Store{Root: t.TempDir()}, Grace: time.Second, Keep: time.Minute})
 	t.Cleanup(func() { manager.Shutdown(context.Background()) })
 
+	cat := catalogue{"infra": infra, "private": private, "infra/edge": edge}
+	workflows, workflowRuns := storage.NewWorkflowStorage(db), storage.NewWorkflowRunStorage(db)
 	f.opts = frontend.Options{
-		Guard:     access.NewGuard(users, access.NewSessions("test-secret", time.Hour)),
-		Auth:      access.NewAuthenticator(users, storage.NewUserEmailStorage(db), storage.NewUserAuthPasswordStorage(db)),
-		Users:     users,
-		Projects:  storage.NewProjectStorage(db),
-		Runs:      runs,
-		Artifacts: storage.NewArtifactStorage(db),
-		Schedules: storage.NewScheduleStorage(db),
-		Secrets:   secrets,
-		Runner:    manager,
-		Catalogue: catalogue{"infra": infra, "private": private, "infra/edge": edge},
-		Git:       &git.Git{},
-		Keys:      keys,
-		Env:       envfile.New(storage.NewEnvFileStorage(db), secrets),
-		Root:      root,
-		Version:   "test",
-		Now:       func() time.Time { return time.Date(2026, time.October, 16, 22, 0, 0, 0, time.Local) },
+		Workflows:    workflows,
+		WorkflowRuns: workflowRuns,
+		Flows:        workflow.New(workflows, workflowRuns, cat, manager),
+		Guard:        access.NewGuard(users, access.NewSessions("test-secret", time.Hour)),
+		Auth:         access.NewAuthenticator(users, storage.NewUserEmailStorage(db), storage.NewUserAuthPasswordStorage(db)),
+		Users:        users,
+		Projects:     storage.NewProjectStorage(db),
+		Runs:         runs,
+		Artifacts:    storage.NewArtifactStorage(db),
+		Schedules:    storage.NewScheduleStorage(db),
+		Secrets:      secrets,
+		Runner:       manager,
+		Catalogue:    cat,
+		Git:          &git.Git{},
+		Keys:         keys,
+		Env:          envfile.New(storage.NewEnvFileStorage(db), secrets),
+		Root:         root,
+		Version:      "test",
+		Now:          func() time.Time { return time.Date(2026, time.October, 16, 22, 0, 0, 0, time.Local) },
 	}
 	h, err := frontend.New(f.opts)
 	assert.NoError(t, err)
