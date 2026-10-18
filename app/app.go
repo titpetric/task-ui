@@ -106,6 +106,12 @@ func (a *App) seed(ctx context.Context) error {
 	}
 	a.UsersFile = NewUsersFile(a.Config.Htpasswd, a.Config.Admins, a.Config.Viewers)
 	created, removed, err := a.UsersFile.Sync(ctx, a.Users)
+	if errors.Is(err, os.ErrNotExist) {
+		// Not made yet: start anyway, the watcher reads it once it is,
+		// so `task-ui passwd` works against a running instance.
+		slog.Warn("no password file yet: nobody new can sign in until it is made", "file", a.Config.Htpasswd, "hint", "task-ui passwd <user>")
+		return nil
+	}
 	if err != nil {
 		return fmt.Errorf("reading users: %w", err)
 	}
