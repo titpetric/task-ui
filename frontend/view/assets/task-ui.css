@@ -1498,9 +1498,11 @@ dialog.run[open] {
   color: var(--signal);
 }
 
-/* The workflows under Workflows, rows like a project's jobs: the dot
-   centred in the icon's column, the name where the entry names start. */
+/* The workflows under Workflows, rows like a project's jobs, one step
+   in: the dot centred under where the entry names start, the name a
+   column further, as a job sits under its project. */
 .menu .flows {
+  --menu-name: calc(1.1rem + 1.05rem + 0.5rem);
   padding: 0.1rem 0 0.2rem;
 }
 
@@ -1508,7 +1510,7 @@ dialog.run[open] {
   display: flex;
   align-items: center;
   gap: calc((1.05rem - 0.4rem) / 2 + 0.5rem);
-  padding: 0.15rem 0.6rem 0.15rem calc(1.1rem + (1.05rem - 0.4rem) / 2);
+  padding: 0.15rem 0.6rem 0.15rem calc(var(--menu-name) + (1.05rem - 0.4rem) / 2);
   color: var(--text-dim);
   font-size: 0.8125rem;
   border-left: 2px solid transparent;
