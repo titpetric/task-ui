@@ -245,7 +245,9 @@
       els.title.textContent = run.folder + " / " + run.job;
       els.who.textContent = run.user_name || "";
       s.spec = { folder: run.folder, job: run.job, title: run.folder + " / " + run.job };
-      if (run.live) {
+      // A finished run stays live in memory for a while, for the windows
+      // on it; opened afterwards it is history, not something to attach to.
+      if (run.live && run.state === "running") {
         connect(s, run);
       } else {
         playback(s, run);
@@ -325,6 +327,7 @@
 
   // playback writes the recording of a finished run into the terminal.
   function playback(s, run) {
+    s.run = run;
     els.kind.textContent = "History";
     els.hint.textContent = "Recorded " + (run.started_at ? new Date(run.started_at).toLocaleString() : "") + ".";
     buttons({ again: run.can_run });
