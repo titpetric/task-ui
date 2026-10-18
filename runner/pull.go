@@ -18,7 +18,7 @@ func (m *Manager) checkout(session *Session) string {
 // pull brings the checkout of the run's folder up to date, in the run's
 // own terminal; a folder inside a checkout pulls the checkout. Runs of one
 // checkout pull one at a time: two pulls at once fight over the index
-// lock, and Run all starts them together.
+// lock, and a workflow starts them one after another.
 func (m *Manager) pull(ctx context.Context, session *Session) error {
 	dir := m.checkout(session)
 	if dir == "" {

@@ -103,44 +103,6 @@ func (h *Handlers) startRun(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusCreated, h.view(r, session.Snapshot()))
 }
 
-// RunAllRequest starts every job of a folder.
-type RunAllRequest struct {
-	Folder string `json:"folder"`
-	Force  bool   `json:"force"`
-}
-
-// startAll starts every job of a folder the user may run, in the
-// background. Jobs that are running or not allowed are reported as
-// skipped.
-func (h *Handlers) startAll(w http.ResponseWriter, r *http.Request) {
-	var req RunAllRequest
-	if err := readJSON(r, &req); err != nil {
-		fail(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	user := access.UserFrom(r.Context())
-	f := h.visibleFolder(user, req.Folder)
-	if f == nil {
-		fail(w, http.StatusNotFound, "no such folder")
-		return
-	}
-	started := []RunView{}
-	skipped := map[string]string{}
-	for _, job := range f.Jobs {
-		if !canRun(user, f, job) {
-			skipped[job.ID] = "not allowed"
-			continue
-		}
-		session, err := h.opts.Runner.Start(r.Context(), runner.Request{Folder: f, Job: job, User: user, Force: req.Force})
-		if err != nil {
-			skipped[job.ID] = err.Error()
-			continue
-		}
-		started = append(started, h.view(r, session.Snapshot()))
-	}
-	writeJSON(w, http.StatusOK, map[string]any{"started": started, "skipped": skipped})
-}
-
 // runOf returns the run a route names, when the user may see it.
 func (h *Handlers) runOf(r *http.Request) (*model.Run, error) {
 	run, err := h.opts.Runs.Get(r.Context(), param(r, "id"))

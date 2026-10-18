@@ -1,6 +1,5 @@
 {{ define "content" }}
 {{- $p := .Folder }}
-{{- $any := false }}{{ $runnable := 0 }}{{ range $p.Jobs }}{{ if $.CanRun $p . }}{{ $any = true }}{{ $runnable = add $runnable 1 }}{{ end }}{{ end }}
 <div class="page-head">
 	<div>
 		<h2><svg class="ic"><use href="#i-folder-open"/></svg> {{ $p.Title }}</h2>
@@ -8,9 +7,6 @@
 	</div>
 	<div class="actions">
 		<span class="dim nowrap">{{ range $p.Sources }}<span class="badge">{{ .Kind }}</span> {{ end }}</span>
-		{{- if $any }}
-		<button type="button" class="btn btn-primary" data-run-all data-folder="{{ $p.ID }}" data-count="{{ $runnable }}" title="Start every job of the folder in the background"><svg class="ic"><use href="#i-play"/></svg>Run all</button>
-		{{- end }}
 	</div>
 </div>
 

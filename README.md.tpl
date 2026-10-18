@@ -25,7 +25,7 @@ as it runs.
   URL, as SVG or text.
 - **One run per job.** A job runs once at a time across the instance,
   different jobs run side by side. Run force kills the active run and
-  starts again. Run all starts every job of a folder in the background.
+  starts again. A workflow chains jobs of any folders, one after another.
 - **Users and roles.** Login is mandatory. Users come from a password
   file, htpasswd style, read again whenever it changes; `TASK_UI_ADMINS`
   and `TASK_UI_VIEWERS` name the admins and the viewers, everyone else is
@@ -149,7 +149,7 @@ makes those two admins, `TASK_UI_VIEWERS=support` a viewer, and everyone
 else in the file is a runner. Which folders a user sees is set per user
 under Settings, Users; empty shows them all.
 
-| Role     | See jobs, watch runs, read history | Run, Run force, Run all, Stop, Kill, schedule | Settings |
+| Role     | See jobs, watch runs, read history | Run, Run force, Stop, Kill, schedule, workflows | Settings |
 |----------|------------------------------------|-----------------------------------------------|----------|
 | `admin`  | yes                                | everything                                    | yes      |
 | `runner` | yes                                | what the allow lists permit                   | no       |
@@ -318,7 +318,6 @@ Writes need the same origin. The browser pages are the reference client;
 |--------|------|------|
 | `GET` | `/api/runs?folder=&job=&state=&limit=` | the runs, newest first, with `live`, `attached` and `can_run` |
 | `POST` | `/api/runs` `{folder, job, force, reason, cols, rows}` | starts a run; `409` with the run in the way unless forced; `403` out of hours unless forced with a reason |
-| `POST` | `/api/runs/all` `{folder, force}` | starts every job of a folder the user may run |
 | `GET` | `/api/runs/{id}` | one run |
 | `POST` | `/api/runs/{id}/stop`, `/kill` | ends a run |
 | `GET` | `/api/runs/{id}/frame.svg`, `/frame.txt`, `/cast` | the last frame, the recording |

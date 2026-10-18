@@ -93,7 +93,6 @@ check "its frame shows the prompt" 'infra$' curl -sS "${TASK_UI_BASE}/api/runs/$
 check "killing it ends it" '204' curl -sS -o /dev/null -w '%{http_code}' -X POST -H "Origin: ${TASK_UI_BASE}" "${TASK_UI_BASE}/api/runs/${shell}/kill"
 sleep 1
 check "killed is recorded" '"state":"killed"' api GET "/runs/${shell}"
-check "run all starts the folder" '"started":[' api POST /runs/all '{"folder":"tools"}'
 check "a cross site write is refused" '403' curl -sS -o /dev/null -w '%{http_code}' -X POST -H "Origin: https://evil.example" -H "Content-Type: application/json" -d '{"folder":"infra","job":"plan"}' "${TASK_UI_BASE}/api/runs"
 
 # ---- hours

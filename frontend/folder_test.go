@@ -15,7 +15,7 @@ func TestFolder(t *testing.T) {
 
 	body := f.page(t, asOps, "/f/infra")
 	assert.Contains(t, body, "The servers")
-	assert.Contains(t, body, `data-run-all data-folder="infra"`)
+	assert.NotContains(t, body, "data-run-all") // workflows chain jobs instead
 	assert.Contains(t, body, `data-run data-folder="infra" data-job="plan"`)
 	assert.Contains(t, body, "Run force")
 	assert.Contains(t, body, `<i class="dot failed"></i>failed`)
