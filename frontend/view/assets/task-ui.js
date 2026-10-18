@@ -267,10 +267,9 @@
     ws.binaryType = "arraybuffer";
     s.ws = ws;
     setState("running", "attaching");
-    // Run force here is a rerun: it kills this run and starts the job again.
-    buttons({ stop: run.can_run, kill: run.can_run, force: run.can_run });
+    buttons({ stop: run.can_run, kill: run.can_run });
     els.hint.textContent = run.can_run
-      ? "Closing this window leaves the run running. Stop ends it, Kill ends it now, Run force kills it and starts again."
+      ? "Closing this window leaves the run running. Stop ends it, Kill ends it now."
       : "You are watching: your role cannot type into it or end it. Closing this window leaves it running.";
 
     term.onData(function (data) {
@@ -324,7 +323,10 @@
     else if (msg.state === "stopped") notice("Stopped.", "");
     else notice("");
     els.hint.textContent = "Finished. The run and its recording are in the history.";
-    buttons({ again: s.run && s.run.can_run });
+    // A run that ended well is run again; one that did not is forced,
+    // which also gets past what refused it.
+    var can = s.run && s.run.can_run;
+    buttons({ again: can && msg.state === "ok", force: can && msg.state !== "ok" });
   }
 
   // playback writes the recording of a finished run into the terminal.
