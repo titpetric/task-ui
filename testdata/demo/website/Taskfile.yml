@@ -1,0 +1,29 @@
+version: "3"
+
+dotenv: ['.env']
+
+tasks:
+  build:
+    desc: "Build the static site"
+    cmds:
+      - hugo --minify
+  publish:
+    desc: "Publish the site to the CDN"
+    summary: |
+      Uploads the build/ folder and purges the CDN cache.
+    deps: [build]
+    cmds:
+      - rclone sync public/ cdn:site
+      - task: purge
+  purge:
+    desc: "Purge the CDN cache"
+    cmds:
+      - curl -X POST "$CDN_PURGE_URL"
+  lint:
+    desc: "Check links and markup"
+    cmds:
+      - htmltest public/
+  clean:
+    internal: true
+    cmds:
+      - rm -rf public

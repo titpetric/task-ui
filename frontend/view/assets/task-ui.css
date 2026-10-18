@@ -1,0 +1,1954 @@
+/* task-ui: runbook console.
+   The visual language follows oida: hairlines instead of boxes, one amber
+   accent for state and action, one corner radius. The type is a dashboard
+   pair, both vendored so the page makes no external requests: Inter for
+   the words, JetBrains Mono for the data: names, numbers, code and the
+   terminal. Layout follows bootstrap habits: a header, a sidebar column,
+   condensed tables and plain action buttons. */
+
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("fonts/Inter-Regular.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("fonts/Inter-Medium.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("fonts/Inter-SemiBold.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("fonts/JetBrainsMono-Regular.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("fonts/JetBrainsMono-Medium.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("fonts/JetBrainsMono-SemiBold.woff2") format("woff2");
+}
+
+:root {
+  color-scheme: dark light;
+
+  /* --font is the data face, which the terminal uses too; --font-ui the words. */
+  --font: "JetBrains Mono", ui-monospace, "SFMono-Regular", "SF Mono",
+    "IBM Plex Mono", "Cascadia Mono", "Roboto Mono", Menlo, Consolas, monospace;
+  --font-ui: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+
+  --ink-0: #07090c;
+  --ink-1: #0b0f14;
+  --ink-2: #10161d;
+  --ink-3: #161f28;
+  --line: #1c2630;
+  --line-2: #2a3844;
+  --text: #d5dee7;
+  --text-dim: #8394a3;
+  --text-faint: #5a6b79;
+
+  --signal: #e0a44f;
+  --signal-ink: #07090c;
+  --signal-wash: rgba(224, 164, 79, 0.12);
+  --ok: #57b894;
+  --ok-wash: rgba(87, 184, 148, 0.1);
+  --bad: #e06c6c;
+  --bad-wash: rgba(224, 108, 108, 0.1);
+
+  --term-bg: #090c10;
+  --term-fg: #d5dee7;
+
+  --radius: 2px;
+  --side: 17rem;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --ink-0: #f7f5f0;
+    --ink-1: #fffdf9;
+    --ink-2: #f1eee7;
+    --ink-3: #e8e4db;
+    --line: #ddd8cc;
+    --line-2: #c3bcab;
+    --text: #23201a;
+    --text-dim: #5d574a;
+    --text-faint: #857e6e;
+
+    --signal: #9a5d0d;
+    --signal-ink: #fffdf9;
+    --signal-wash: rgba(154, 93, 13, 0.1);
+    --ok: #1c6f56;
+    --ok-wash: rgba(28, 111, 86, 0.08);
+    --bad: #a63232;
+    --bad-wash: rgba(166, 50, 50, 0.08);
+
+    --term-bg: #fffdf9;
+    --term-fg: #23201a;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+html {
+  background: var(--ink-0);
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--ink-0);
+  color: var(--text);
+  font: 400 0.9rem/1.5 var(--font-ui);
+  font-feature-settings: "cv11", "ss01", "tnum";
+  font-variant-numeric: tabular-nums slashed-zero;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Grain and scanlines, as in oida. Pointer events pass through. */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 9;
+  pointer-events: none;
+  opacity: 0.5;
+  background-image:
+    repeating-linear-gradient(to bottom, rgba(255, 255, 255, 0.016) 0 1px, transparent 1px 3px),
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/><feColorMatrix type='saturate' values='0'/></filter><rect width='140' height='140' filter='url(%23n)' opacity='0.35'/></svg>");
+}
+
+@media (prefers-color-scheme: light) {
+  body::after {
+    opacity: 0.25;
+    mix-blend-mode: multiply;
+  }
+}
+
+a {
+  color: var(--signal);
+  text-decoration: none;
+  text-underline-offset: 0.2em;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+:focus-visible {
+  outline: 2px solid var(--signal);
+  outline-offset: 2px;
+}
+
+h1, h2, h3 {
+  margin: 0;
+  font-weight: 600;
+}
+
+h2 {
+  letter-spacing: -0.01em;
+}
+
+/* The data wears the mono face: names, keys, numbers, code. */
+code, pre, kbd,
+.mono,
+.table td.key,
+.metrics span,
+.avatar,
+.recents .what b,
+.folders details.folder summary a span,
+.folders .jobs .job a,
+.jobcard .name,
+.crumbs,
+.filters input,
+input[type="text"],
+input[type="password"],
+textarea,
+select,
+.run-head h3,
+.elapsed,
+.state,
+.who-ran {
+  font-family: var(--font);
+}
+
+p {
+  margin: 0 0 0.75rem;
+}
+
+code {
+  font: inherit;
+  color: var(--text);
+  background: var(--ink-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 0 0.3em;
+}
+
+.dim { color: var(--text-dim); }
+.faint { color: var(--text-faint); }
+.nowrap { white-space: nowrap; }
+.mono-break { word-break: break-all; }
+.text-end { text-align: right; }
+
+/* ------------------------------------------------------------------ header */
+
+header.top {
+  position: relative;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.55rem 1.25rem;
+  border-bottom: 1px solid var(--line-2);
+  background: var(--ink-0);
+}
+
+header.top h1 {
+  font-family: var(--font);
+  font-size: 0.95rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+header.top h1 a {
+  color: var(--text);
+}
+
+header.top h1 a:hover {
+  text-decoration: none;
+}
+
+header.top .spacer {
+  flex: 1;
+}
+
+header.login-top {
+  justify-content: center;
+}
+
+/* The signed in user: a circle with their initials, and a disclosure menu
+   under it. A details element, so it needs no script and closes on Escape. */
+details.user {
+  position: relative;
+}
+
+details.user summary {
+  list-style: none;
+  cursor: pointer;
+  display: block;
+}
+
+details.user summary::marker,
+details.user summary::-webkit-details-marker {
+  display: none;
+}
+
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  border: 1px solid var(--line-2);
+  background: var(--ink-2);
+  color: var(--text);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+
+details.user summary:hover .avatar,
+details[open].user .avatar {
+  border-color: var(--signal);
+  color: var(--signal);
+  background: var(--signal-wash);
+}
+
+.user-menu {
+  position: absolute;
+  z-index: 25;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  min-width: 13rem;
+  padding: 0.25rem 0;
+  background: var(--ink-1);
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius);
+  box-shadow: 0 18px 36px rgba(0, 0, 0, 0.55), 0 4px 10px rgba(0, 0, 0, 0.4);
+}
+
+.user-menu .who {
+  display: flex;
+  flex-direction: column;
+  padding: 0.45rem 0.8rem 0.5rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.user-menu .who b {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.user-menu .who span {
+  color: var(--text-faint);
+  font-size: 0.68rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.user-menu a,
+.user-menu button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.4rem 0.8rem;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.user-menu a:hover,
+.user-menu button:hover {
+  background: var(--ink-2);
+  text-decoration: none;
+}
+
+.user-menu form {
+  margin: 0;
+}
+
+/* ------------------------------------------------------------------- icons */
+
+.ic {
+  width: 1em;
+  height: 1em;
+  vertical-align: -0.15em;
+  fill: none;
+  flex: none;
+}
+
+.btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.7rem;
+  height: 1.7rem;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+}
+
+.btn-icon .ic {
+  width: 1rem;
+  height: 1rem;
+}
+
+.btn-icon:hover {
+  color: var(--text);
+  border-color: var(--line-2);
+  background: var(--ink-3);
+  text-decoration: none;
+}
+
+/* Destructive actions wear the one red on the page. */
+.btn-icon.danger {
+  color: var(--bad);
+}
+
+.btn-icon.danger:hover {
+  border-color: var(--bad);
+  background: var(--bad-wash);
+}
+
+/* ------------------------------------------------------------------ shell */
+
+.shell {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  display: grid;
+  grid-template-columns: var(--side) minmax(0, 1fr);
+}
+
+aside.side {
+  border-right: 1px solid var(--line);
+  background: var(--ink-1);
+  padding: 0.9rem 0 2rem;
+  min-height: 100%;
+}
+
+.label {
+  color: var(--text-faint);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+/* The folders, as a file browser lists them: an icon, the folder name, and
+   the count of jobs. The open folder shows an open icon and the accent. */
+.folders a {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.3rem 1.1rem;
+  color: var(--text-dim);
+  border-left: 2px solid transparent;
+}
+
+.folders a .ic {
+  width: 1.05rem;
+  height: 1.05rem;
+  color: var(--text-faint);
+}
+
+.folders a span {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.folders a small {
+  color: var(--text-faint);
+}
+
+.folders a small.bad {
+  color: var(--bad);
+  font-weight: 700;
+}
+
+.folders a .dot:not(.running) {
+  display: none;
+}
+
+.folders a:hover {
+  text-decoration: none;
+  color: var(--text);
+  background: var(--ink-2);
+}
+
+.folders a.active {
+  color: var(--text);
+  background: var(--signal-wash);
+  border-left-color: var(--signal);
+}
+
+.folders a.active .ic {
+  color: var(--signal);
+}
+
+.folders a.overview {
+  margin-bottom: 0.5rem;
+}
+
+.side .empty {
+  padding: 0.3rem 1.1rem;
+  color: var(--text-faint);
+  font-size: 0.8125rem;
+}
+
+main {
+  padding: 1.1rem 1.5rem 2rem;
+  min-width: 0;
+}
+
+.crumbs {
+  margin-bottom: 0.6rem;
+  color: var(--text-faint);
+  font-size: 0.8125rem;
+}
+
+.crumbs a {
+  color: var(--text-dim);
+}
+
+.crumbs span::before {
+  content: "/";
+  margin: 0 0.45rem;
+  color: var(--line-2);
+}
+
+.page-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.5rem;
+  padding-bottom: 0.8rem;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.page-head h2 {
+  font-size: 1.45rem;
+  letter-spacing: -0.015em;
+}
+
+.page-head p {
+  margin: 0.35rem 0 0;
+  color: var(--text-dim);
+  max-width: 70ch;
+  font-size: 0.925rem;
+}
+
+.page-head .actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+section.block {
+  margin-bottom: 1.6rem;
+}
+
+section.block > h3,
+.section-title {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  margin-bottom: 0.45rem;
+  color: var(--text-faint);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+section.block > h3 small {
+  color: var(--text-faint);
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  text-transform: none;
+}
+
+.summary {
+  margin: 0 0 1rem;
+  padding: 0.6rem 0.8rem;
+  border-left: 2px solid var(--line-2);
+  background: var(--ink-1);
+  color: var(--text-dim);
+  white-space: pre-wrap;
+  font: inherit;
+}
+
+/* ----------------------------------------------------------------- metrics */
+
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  margin-bottom: 1.4rem;
+  background: var(--ink-1);
+}
+
+.metrics > div {
+  padding: 0.55rem 0.8rem;
+  border-right: 1px solid var(--line);
+}
+
+.metrics > div:last-child {
+  border-right: 0;
+}
+
+.metrics b {
+  display: block;
+  color: var(--text-faint);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.metrics span {
+  font-size: 1.1rem;
+  color: var(--text);
+}
+
+.metrics small {
+  margin-left: 0.35rem;
+  color: var(--text-faint);
+  font-size: 0.75rem;
+}
+
+/* ------------------------------------------------------------------ tables */
+
+.table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--ink-1);
+}
+
+table.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th,
+.table td {
+  padding: 0.32rem 0.7rem;
+  text-align: left;
+  vertical-align: middle;
+  border-bottom: 1px solid var(--line);
+}
+
+.table tr:last-child td {
+  border-bottom: 0;
+}
+
+.table th {
+  color: var(--text-faint);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  background: var(--ink-2);
+  white-space: nowrap;
+}
+
+.table tbody tr:hover td {
+  background: var(--ink-2);
+}
+
+.table td.actions {
+  text-align: right;
+  white-space: nowrap;
+  width: 1%;
+}
+
+.table td.actions > * + * {
+  margin-left: 0.3rem;
+}
+
+.table td.actions form {
+  display: inline;
+}
+
+.table td.key {
+  color: var(--text);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.table .desc {
+  color: var(--text-dim);
+}
+
+.table tr.empty td {
+  color: var(--text-dim);
+  padding: 0.8rem 0.7rem;
+}
+
+table.table-kv td {
+  width: auto;
+}
+
+/* Step labels stack in their cell and lose their tail rather than pushing
+   the table into a scroll: the full step is one click away on the job. */
+.steps code {
+  display: block;
+  margin: 0.1rem 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.78rem;
+}
+
+.table.jobs th.steps,
+.table.jobs td.steps {
+  width: 40%;
+  max-width: 0;
+}
+
+.table.jobs td.desc {
+  min-width: 16ch;
+}
+
+.table td .ic {
+  color: var(--text-faint);
+}
+
+.table td input[type="text"] {
+  padding: 0.3rem 0.5rem;
+  font-size: 0.8125rem;
+}
+
+table.table-kv th {
+  width: 9rem;
+  background: transparent;
+}
+
+/* ----------------------------------------------------------------- buttons */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.38rem 0.9rem;
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius);
+  background: var(--ink-2);
+  color: var(--text);
+  font: 500 0.78rem/1.2 var(--font);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.btn:hover {
+  text-decoration: none;
+  border-color: var(--text-faint);
+  background: var(--ink-3);
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: var(--signal);
+  border-color: var(--signal);
+  color: var(--signal-ink);
+  font-weight: 600;
+}
+
+.btn-primary:hover {
+  background: var(--signal);
+  border-color: var(--text);
+  filter: brightness(1.08);
+}
+
+.btn-danger {
+  color: var(--bad);
+  border-color: color-mix(in srgb, var(--bad) 55%, var(--line-2));
+  background: transparent;
+}
+
+.btn-danger:hover {
+  background: var(--bad-wash);
+  border-color: var(--bad);
+}
+
+.btn-ghost {
+  background: transparent;
+  border-color: transparent;
+  color: var(--text-dim);
+}
+
+.btn-ghost:hover {
+  background: var(--ink-2);
+  border-color: var(--line);
+  color: var(--text);
+}
+
+.btn-sm {
+  padding: 0.18rem 0.55rem;
+  font-size: 0.68rem;
+}
+
+.btn-group {
+  display: inline-flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+/* ------------------------------------------------------------------ badges */
+
+.badge {
+  display: inline-block;
+  padding: 0.05rem 0.45rem;
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius);
+  color: var(--text-dim);
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.badge.signal { color: var(--signal); border-color: var(--signal); background: var(--signal-wash); }
+.badge.ok { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 50%, transparent); background: var(--ok-wash); }
+.badge.bad { color: var(--bad); border-color: color-mix(in srgb, var(--bad) 50%, transparent); background: var(--bad-wash); }
+
+.dot {
+  display: inline-block;
+  flex: none;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--line-2);
+  vertical-align: middle;
+}
+
+.dot.ok { background: var(--ok); }
+.dot.failed, .dot.killed { background: var(--bad); }
+.dot.stopped { background: var(--text-faint); }
+.dot.running {
+  background: var(--signal);
+  box-shadow: 0 0 0 0 var(--signal-wash);
+  animation: pulse 1.6s ease-out infinite;
+}
+
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 var(--signal); }
+  70% { box-shadow: 0 0 0 0.45rem transparent; }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
+
+.state {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  white-space: nowrap;
+}
+
+/* ------------------------------------------------------------------ alerts */
+
+.alert {
+  margin-bottom: 1rem;
+  padding: 0.55rem 0.8rem;
+  border: 1px solid var(--line-2);
+  border-left-width: 3px;
+  border-radius: var(--radius);
+  background: var(--ink-1);
+  color: var(--text-dim);
+}
+
+.alert.signal { border-color: var(--signal); background: var(--signal-wash); color: var(--text); }
+.alert.ok { border-color: var(--ok); background: var(--ok-wash); color: var(--text); }
+.alert.bad { border-color: var(--bad); background: var(--bad-wash); color: var(--text); }
+
+.alert b { color: var(--text); }
+
+/* ------------------------------------------------------------------- forms */
+
+.field {
+  display: block;
+  margin-bottom: 0.8rem;
+}
+
+.field > label {
+  display: block;
+  margin-bottom: 0.3rem;
+  color: var(--text-faint);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+/* The hint after a label is a sentence, not a label. */
+.field > label .faint {
+  margin-left: 0.35rem;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+input[type="text"],
+input[type="password"],
+textarea {
+  width: 100%;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius);
+  background: var(--ink-2);
+  color: var(--text);
+  font: inherit;
+}
+
+textarea {
+  min-height: 9rem;
+  resize: vertical;
+  font-size: 0.75rem;
+}
+
+select {
+  width: 100%;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius);
+  background: var(--ink-2);
+  color: var(--text);
+  font: inherit;
+}
+
+.form {
+  max-width: 40rem;
+}
+
+.form-foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 0.4rem;
+}
+
+.grid-2.wide {
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+}
+
+.grid-2.wide .form {
+  max-width: none;
+}
+
+input[type="file"] {
+  color: var(--text-dim);
+  font: inherit;
+  font-size: 0.8125rem;
+}
+
+input[type="file"]::file-selector-button {
+  margin-right: 0.7rem;
+  padding: 0.3rem 0.7rem;
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius);
+  background: var(--ink-2);
+  color: var(--text);
+  font: 500 0.7rem var(--font);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.2rem;
+  align-items: start;
+}
+
+.panel {
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--ink-1);
+}
+
+.panel p {
+  color: var(--text-dim);
+  font-size: 0.8125rem;
+}
+
+/* ------------------------------------------------------------------- login */
+
+/* The sign in screen, as oida draws it: one narrow card, labels above
+   inputs, one amber action, nothing else on the page. */
+section.login {
+  position: relative;
+  z-index: 1;
+  width: min(21rem, calc(100% - 2rem));
+  margin: 3.5rem auto 4rem;
+  padding: 1.3rem 1.5rem 1.5rem;
+  background: var(--ink-1);
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius);
+}
+
+section.login h2 {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.7rem;
+  margin: 0 0 1rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+section.login h2::before,
+section.login h2::after {
+  content: "";
+  width: 2.5rem;
+  height: 1px;
+  background: var(--line-2);
+}
+
+section.login .login-error {
+  margin: 0 0 0.8rem;
+  padding: 0.5rem 0.7rem;
+  background: var(--bad-wash);
+  border: 1px solid var(--bad);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-size: 0.78rem;
+}
+
+section.login form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+section.login .field {
+  margin: 0;
+}
+
+/* A label inside a field's table names its row in the row's own type. */
+.field .table label {
+  color: inherit;
+  font: inherit;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+section.login button[type="submit"] {
+  padding: 0.45rem 0.55rem;
+  background: var(--signal);
+  border: 1px solid var(--signal);
+  border-radius: var(--radius);
+  color: var(--signal-ink);
+  font: inherit;
+  font-size: 0.78rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+/* ------------------------------------------------------------------ footer */
+
+footer {
+  margin-top: auto;
+  position: relative;
+  z-index: 1;
+  padding: 0.8rem 1.25rem;
+  border-top: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--text-faint);
+  font-size: 0.68rem;
+  text-align: center;
+}
+
+footer .credit {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.4em;
+  white-space: nowrap;
+}
+
+footer .credit a {
+  color: var(--text-dim);
+}
+
+footer .credit .wordmark {
+  color: var(--text);
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+}
+
+footer .credit .sep {
+  color: var(--text-faint);
+}
+
+footer .credit a:hover {
+  color: var(--signal);
+}
+
+/* ----------------------------------------------------------------- confirm */
+
+dialog.confirm {
+  width: min(26rem, calc(100vw - 2rem));
+  padding: 1.1rem 1.3rem 1rem;
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius);
+  background: var(--ink-1);
+  color: var(--text);
+  box-shadow: 0 1.5rem 4rem rgba(0, 0, 0, 0.55);
+}
+
+dialog.confirm::backdrop {
+  background: rgba(4, 6, 9, 0.72);
+}
+
+dialog.confirm h3 {
+  font-size: 0.85rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 0.6rem;
+}
+
+dialog.confirm p {
+  color: var(--text);
+  margin-bottom: 1rem;
+}
+
+.confirm-foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+/* ------------------------------------------------------------------- modal */
+
+dialog.run {
+  width: min(78rem, calc(100vw - 2rem));
+  max-height: calc(100vh - 2rem);
+  padding: 0;
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius);
+  background: var(--ink-1);
+  color: var(--text);
+  box-shadow: 0 1.5rem 4rem rgba(0, 0, 0, 0.55);
+}
+
+dialog.run::backdrop {
+  background: rgba(4, 6, 9, 0.72);
+  backdrop-filter: blur(2px);
+}
+
+dialog.run[open] {
+  display: flex;
+  flex-direction: column;
+}
+
+.run-head {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0.65rem 0.9rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.run-head .label {
+  white-space: nowrap;
+}
+
+.run-head h3 {
+  font-size: 0.95rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.run-head h3 span {
+  color: var(--text-faint);
+  font-weight: 400;
+}
+
+.run-head .spacer {
+  flex: 1;
+}
+
+.run-head .elapsed {
+  color: var(--text-dim);
+  font-size: 0.8125rem;
+}
+
+.run-body {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  padding: 0.6rem 0.7rem;
+  background: var(--term-bg);
+}
+
+.run-body .terminal-host {
+  height: min(62vh, 40rem);
+}
+
+.run-notice {
+  display: none;
+  margin: 0;
+  padding: 0.55rem 0.9rem;
+  border-top: 1px solid var(--line);
+  font-size: 0.8125rem;
+}
+
+.run-notice.show {
+  display: block;
+}
+
+.run-notice.signal { background: var(--signal-wash); color: var(--text); }
+.run-notice.bad { background: var(--bad-wash); color: var(--text); }
+
+.run-foot {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 0.9rem;
+  border-top: 1px solid var(--line);
+}
+
+.run-foot .hint {
+  flex: 1;
+  color: var(--text-faint);
+  font-size: 0.75rem;
+}
+
+.xterm .xterm-viewport {
+  background-color: var(--term-bg) !important;
+}
+
+/* ------------------------------------------------------------------ mobile */
+
+/* Under the breakpoint the sidebar is a drawer behind the menu button, and
+   the tables that list jobs and runs fold into cards: one block per row,
+   each cell with its label in front. */
+@media (max-width: 860px) {
+  .shell {
+    grid-template-columns: 1fr;
+  }
+
+  .menu-toggle {
+    display: inline-flex;
+  }
+
+  aside.side {
+    position: fixed;
+    z-index: 30;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: min(20rem, 86vw);
+    min-height: 0;
+    overflow-y: auto;
+    border-right: 1px solid var(--line-2);
+    box-shadow: 0 0 3rem rgba(0, 0, 0, 0.5);
+    transform: translateX(-100%);
+    transition: transform 0.2s ease-out;
+  }
+
+  body.menu-open aside.side {
+    transform: none;
+  }
+
+  /* The shell is a stacking context under the header; the open drawer
+     has to rise above both. */
+  body.menu-open .shell {
+    z-index: 31;
+  }
+
+  body.menu-open .menu-backdrop {
+    display: block;
+  }
+
+  body.menu-open {
+    overflow: hidden;
+  }
+
+  main {
+    padding: 1rem;
+  }
+
+  header.top {
+    padding: 0.55rem 0.8rem;
+  }
+
+  .grid-2,
+  .grid-2.wide {
+    grid-template-columns: 1fr;
+  }
+
+  .table .hide-sm {
+    display: none;
+  }
+
+  .run-body .terminal-host {
+    height: 60vh;
+  }
+
+  .tiles {
+    grid-template-columns: 1fr;
+  }
+
+  .table.cards thead {
+    display: none;
+  }
+
+  .table.cards,
+  .table.cards tbody,
+  .table.cards tr {
+    display: block;
+  }
+
+  .table.cards tr {
+    padding: 0.55rem 0.7rem;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .table.cards tr:last-child {
+    border-bottom: 0;
+  }
+
+  .table.cards tbody tr:hover td {
+    background: transparent;
+  }
+
+  .table.cards td,
+  .table.cards td.hide-sm {
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
+    padding: 0.15rem 0;
+    border: 0;
+    white-space: normal;
+  }
+
+  .table.cards td[data-label]::before {
+    content: attr(data-label);
+    flex: 0 0 5.5rem;
+    color: var(--text-faint);
+    font-size: 0.64rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .table.cards td.key {
+    font-size: 0.95rem;
+    padding-bottom: 0.25rem;
+  }
+
+  .table.cards td.steps {
+    width: auto;
+    max-width: none;
+    flex-wrap: wrap;
+  }
+
+  .table.cards td.steps code {
+    display: inline-block;
+    max-width: 100%;
+  }
+
+  .table.cards td.actions {
+    width: auto;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    padding-top: 0.45rem;
+  }
+
+  .table.cards td.actions > * + * {
+    margin-left: 0;
+  }
+
+  .table.cards tr.empty td {
+    display: block;
+    padding: 0.4rem 0;
+  }
+
+  .filters input,
+  .filters select {
+    width: 100%;
+  }
+
+  .filters label {
+    flex: 1 1 10rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dot.running {
+    animation: none;
+  }
+}
+
+/* ---------------------------------------------------------------- sidebar */
+
+/* The menu above the folders: the views that cut across folders. */
+.menu {
+  margin-bottom: 0.7rem;
+  padding-bottom: 0.6rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.menu a {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.3rem 1.1rem;
+  color: var(--text-dim);
+  border-left: 2px solid transparent;
+}
+
+.menu a .ic {
+  width: 1.05rem;
+  height: 1.05rem;
+  color: var(--text-faint);
+}
+
+.menu a span {
+  flex: 1;
+}
+
+.menu a .dot:not(.running) {
+  display: none;
+}
+
+.menu a:hover {
+  text-decoration: none;
+  color: var(--text);
+  background: var(--ink-2);
+}
+
+.menu a.active {
+  color: var(--text);
+  background: var(--signal-wash);
+  border-left-color: var(--signal);
+}
+
+.menu a.active .ic {
+  color: var(--signal);
+}
+
+.side-label {
+  margin: 1rem 1.1rem 0.3rem;
+}
+
+/* Recents, as a chat app lists conversations: the state, the job, the
+   folder, and who started it as an initials badge. */
+.recents a.recent {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.3rem 1.1rem;
+  color: var(--text-dim);
+  border-left: 2px solid transparent;
+}
+
+.recents a.recent:hover {
+  text-decoration: none;
+  color: var(--text);
+  background: var(--ink-2);
+}
+
+.recents .what {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+}
+
+.recents .what b {
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.recents .what small {
+  color: var(--text-faint);
+  font-size: 0.7rem;
+}
+
+.recents .act {
+  width: 0.8rem;
+  height: 0.8rem;
+  color: var(--signal);
+}
+
+.avatar.sm {
+  width: 1.45rem;
+  height: 1.45rem;
+  font-size: 0.55rem;
+  letter-spacing: 0.04em;
+}
+
+.who-ran {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  white-space: nowrap;
+}
+
+/* ------------------------------------------------------------------ tiles */
+
+/* The dashboard: every live terminal as its last frame, a grid of screens
+   the way a control room shows them. */
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(26rem, 1fr));
+  gap: 0.8rem;
+}
+
+.tile {
+  display: block;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--ink-1);
+  color: var(--text);
+  overflow: hidden;
+}
+
+.tile:hover {
+  text-decoration: none;
+  border-color: var(--signal);
+}
+
+.tile-head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.7rem;
+  border-bottom: 1px solid var(--line);
+  font-size: 0.8125rem;
+}
+
+.tile-head b {
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tile-head .spacer {
+  flex: 1;
+}
+
+.frame {
+  display: block;
+  width: 100%;
+  min-height: 3rem;
+  background: #090c10;
+}
+
+.frame svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.tile.wide {
+  max-width: 78rem;
+}
+
+/* ---------------------------------------------------------------- filters */
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.6rem 0.8rem;
+  margin-bottom: 1rem;
+}
+
+.filters label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  color: var(--text-faint);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.filters input,
+.filters select {
+  width: 12rem;
+  padding: 0.35rem 0.55rem;
+  font-size: 0.8125rem;
+}
+
+.form.inline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.6rem 0.8rem;
+  max-width: none;
+  margin-top: 0.8rem;
+}
+
+.form.inline .field {
+  flex: 1 1 14rem;
+  margin: 0;
+}
+
+.form.inline .form-foot {
+  margin: 0;
+}
+
+.form-error {
+  margin: 0 0 0.8rem;
+  padding: 0.5rem 0.7rem;
+  background: var(--bad-wash);
+  border: 1px solid var(--bad);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-size: 0.8125rem;
+  white-space: pre-wrap;
+}
+
+.form-error:empty {
+  display: none;
+}
+
+.table td.actions form {
+  display: inline;
+}
+
+/* ----------------------------------------------------------- sidebar tree */
+
+/* The menu button shows under the breakpoint. */
+.menu-toggle {
+  display: none;
+  margin-right: 0.2rem;
+}
+
+.menu-backdrop {
+  display: none;
+  position: fixed;
+  z-index: 29;
+  inset: 0;
+  background: rgba(4, 6, 9, 0.6);
+}
+
+/* A folder is a disclosure: the row opens the folder, the chevron shows
+   its jobs. The open folder shows its jobs, each with a running dot. */
+.folders details.folder summary {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.3rem 0.6rem 0.3rem calc(1.1rem + var(--depth, 0) * 1rem);
+  color: var(--text-dim);
+  border-left: 2px solid transparent;
+  list-style: none;
+  cursor: pointer;
+}
+
+.folders details.folder summary::marker,
+.folders details.folder summary::-webkit-details-marker {
+  display: none;
+}
+
+.folders details.folder summary a {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: inherit;
+}
+
+.folders details.folder summary a:hover {
+  text-decoration: none;
+  color: var(--text);
+}
+
+.folders details.folder summary a span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.folders details.folder summary .ic {
+  width: 1.05rem;
+  height: 1.05rem;
+  color: var(--text-faint);
+}
+
+.folders details.folder summary .chev {
+  width: 0.85rem;
+  height: 0.85rem;
+  transition: transform 0.15s ease-out;
+}
+
+.folders details.folder[open] summary .chev {
+  transform: rotate(90deg);
+}
+
+.folders details.folder summary small {
+  color: var(--text-faint);
+}
+
+.folders details.folder summary small.bad {
+  color: var(--bad);
+  font-weight: 700;
+}
+
+.folders details.folder summary .dot:not(.running) {
+  display: none;
+}
+
+.folders details.folder summary:hover {
+  color: var(--text);
+  background: var(--ink-2);
+}
+
+.folders details.folder.active summary {
+  color: var(--text);
+  background: var(--signal-wash);
+  border-left-color: var(--signal);
+}
+
+.folders details.folder.active summary .ic {
+  color: var(--signal);
+}
+
+.folders .jobs {
+  padding: 0.1rem 0 0.3rem;
+}
+
+.folders .jobs .empty {
+  padding: 0.2rem 1.1rem 0.2rem calc(2.1rem + var(--depth, 0) * 1rem);
+}
+
+/* The reason a run out of hours needs, asked in the window. */
+.run-reason {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.55rem 0.9rem;
+  border-top: 1px solid var(--line);
+  background: var(--signal-wash);
+}
+
+.run-reason label {
+  color: var(--text);
+  font-size: 0.8125rem;
+}
+
+/* -------------------------------------------------------------- job cards */
+
+/* A folder's jobs as cards, as many as it has: the name, what it does, the
+   first steps, how it last went, and Run. The grid takes the width. */
+.jobcards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(19rem, 1fr));
+  gap: 0.8rem;
+}
+
+.jobcard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 0;
+  padding: 0.8rem 0.95rem 0.75rem;
+  border: 1px solid var(--line);
+  border-top: 2px solid var(--line-2);
+  border-radius: var(--radius);
+  background: var(--ink-1);
+}
+
+.jobcard.running {
+  border-top-color: var(--signal);
+}
+
+.jobcard:hover {
+  border-color: var(--line-2);
+  border-top-color: var(--signal);
+}
+
+.jobcard header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.jobcard header .name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text);
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.jobcard header .name:hover {
+  color: var(--signal);
+  text-decoration: none;
+}
+
+.jobcard .desc {
+  margin: 0;
+  color: var(--text-dim);
+  font-size: 0.875rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.jobcard .steps {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+  font-size: 0.78rem;
+}
+
+.jobcard .steps code {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.75rem;
+}
+
+.jobcard .steps:empty {
+  display: none;
+}
+
+.jobcard footer {
+  position: static;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: auto;
+  padding: 0.5rem 0 0;
+  border-top: 1px solid var(--line);
+  color: var(--text-dim);
+  font-size: 0.8125rem;
+  text-align: left;
+}
+
+.jobcard footer .last {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.jobcard footer .actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.btn .ic {
+  width: 0.85em;
+  height: 0.85em;
+}
+
+/* The sidebar's jobs run in place: the name opens the job, the play
+   button runs it, an eye attaches to the run in progress. */
+.folders .jobs .job {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.15rem 0.5rem 0.15rem calc(2.1rem + var(--depth, 0) * 1rem);
+  color: var(--text-dim);
+  font-size: 0.8125rem;
+  border-left: 2px solid transparent;
+}
+
+.folders .jobs .job .dot {
+  width: 0.4rem;
+  height: 0.4rem;
+}
+
+.folders .jobs .job a {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: inherit;
+  padding: 0.1rem 0;
+}
+
+.folders .jobs .job a:hover {
+  color: var(--text);
+  text-decoration: none;
+}
+
+.folders .jobs .job.active {
+  color: var(--signal);
+  border-left-color: var(--signal);
+}
+
+.folders .jobs .job .play {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--text-faint);
+  cursor: pointer;
+  opacity: 0.55;
+}
+
+.folders .jobs .job .play .ic {
+  width: 0.8rem;
+  height: 0.8rem;
+}
+
+.folders .jobs .job:hover .play,
+.folders .jobs .job .play:focus-visible {
+  opacity: 1;
+}
+
+.folders .jobs .job .play:hover {
+  color: var(--signal-ink);
+  background: var(--signal);
+  border-color: var(--signal);
+}
+
+.folders .jobs .job .play[data-attach] {
+  color: var(--signal);
+  opacity: 1;
+}
+
+@media (max-width: 860px) {
+  .folders .jobs .job .play {
+    opacity: 1;
+  }
+
+  .jobcards {
+    grid-template-columns: 1fr;
+  }
+}

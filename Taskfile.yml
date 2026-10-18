@@ -9,6 +9,7 @@ tasks:
     desc: "Run everything"
     cmds:
       - task: fix
+      - task: lint
       - task: install
       - task: test
 
@@ -19,9 +20,29 @@ tasks:
       - CGO_ENABLED=0 go test -count=1 -cover ./...
 
   run:
-    desc: "Run task-ui"
+    desc: "Run task-ui over the demo projects"
+    env:
+      TASK_UI_ROOT: testdata/demo
+      TASK_UI_DATA: .data
+      TASK_UI_AUTOLOGIN: admin
+      TASK_UI_ADMINS: admin
     cmds:
-      - task-ui --history-enable
+      - go run .
+
+  docs:shots:
+    desc: "Regenerate the README screenshots"
+    cmds:
+      - scripts/demo.sh
+
+  smoke:
+    desc: "Exercise a fresh instance end to end, the browser console included"
+    cmds:
+      - scripts/smoke.sh
+
+  lint:
+    desc: "Lint with splint, zero findings is the bar"
+    cmds:
+      - splint ./...
 
   install:
     desc: "Install task-ui"
@@ -31,17 +52,16 @@ tasks:
   fix:
     desc: "Fix code"
     deps:
-      - deps:goimports
+      - deps:splint
     cmds:
-      - goimports -w .
-      - go fmt ./...
-      - go vet .
+      - splint fix ./...
+      - go vet ./...
       - go mod tidy
       - ./README.md.sh > README.md
 
-  deps:goimports:
+  deps:splint:
     internal: true
     status:
-      - type goimports
+      - type splint
     cmds:
-      - go install golang.org/x/tools/cmd/goimports@latest
+      - go install github.com/titpetric/tools/splint@main
