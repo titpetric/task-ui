@@ -22,3 +22,11 @@ func TestAssetsFS(t *testing.T) {
 		assert.NotEmpty(t, data, name)
 	}
 }
+
+// The version of the assets is a short hash of them, the same every call.
+func TestAssetVersion(t *testing.T) {
+	t.Parallel()
+	v := view.AssetVersion()
+	assert.Len(t, v, 12)
+	assert.Equal(t, v, view.AssetVersion())
+}

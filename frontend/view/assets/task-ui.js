@@ -613,6 +613,106 @@
     });
   });
 
+  // ------------------------------------------------------------- output
+
+  // The whole output of a finished run, flat: the recording replayed into
+  // a terminal no one sees, with scrollback enough for every line, so what
+  // redraws itself (a progress line, a pipeline tree) ends as it was last
+  // drawn, and read back line by line with its colours into the page.
+  function palette256(t) {
+    var names = ["black", "red", "green", "yellow", "blue", "magenta", "cyan", "white"];
+    var p = names.map(function (n) { return t[n]; }).concat(names.map(function (n) {
+      return t["bright" + n.charAt(0).toUpperCase() + n.slice(1)];
+    }));
+    var steps = [0, 95, 135, 175, 215, 255];
+    for (var i = 0; i < 216; i++) {
+      p.push("rgb(" + steps[Math.floor(i / 36)] + "," + steps[Math.floor(i / 6) % 6] + "," + steps[i % 6] + ")");
+    }
+    for (var g = 0; g < 24; g++) {
+      var v = 8 + g * 10;
+      p.push("rgb(" + v + "," + v + "," + v + ")");
+    }
+    return p;
+  }
+
+  function cellColor(cell, fg, pal) {
+    if (fg ? cell.isFgDefault() : cell.isBgDefault()) return "";
+    var c = fg ? cell.getFgColor() : cell.getBgColor();
+    if (fg ? cell.isFgRGB() : cell.isBgRGB()) {
+      return "#" + ("000000" + c.toString(16)).slice(-6);
+    }
+    return pal[c] || "";
+  }
+
+  function outputHTML(term, pal) {
+    var buf = term.buffer.active;
+    var cell = buf.getNullCell();
+    var lines = [];
+    for (var y = 0; y < buf.length; y++) {
+      var line = buf.getLine(y);
+      var html = "", run = "", style = null;
+      var flush = function () {
+        if (!run) return;
+        html += style ? '<span style="' + style + '">' + escapeHTML(run) + "</span>" : escapeHTML(run);
+        run = "";
+      };
+      for (var x = 0; x < line.length; x++) {
+        line.getCell(x, cell);
+        if (cell.getWidth() === 0) continue;
+        var fg = cellColor(cell, true, pal), bg = cellColor(cell, false, pal);
+        if (cell.isInverse()) { var tmp = fg; fg = bg || "var(--term-bg)"; bg = tmp || "var(--term-fg)"; }
+        var st = (fg ? "color:" + fg + ";" : "") + (bg ? "background:" + bg + ";" : "") +
+          (cell.isBold() ? "font-weight:700;" : "") + (cell.isDim() ? "opacity:.6;" : "") +
+          (cell.isItalic() ? "font-style:italic;" : "") + (cell.isUnderline() ? "text-decoration:underline;" : "");
+        st = st || null;
+        if (st !== style) { flush(); style = st; }
+        run += cell.getChars() || " ";
+      }
+      flush();
+      lines.push(html.replace(/(\s|&nbsp;)+$/, ""));
+    }
+    while (lines.length && lines[lines.length - 1] === "") lines.pop();
+    return lines.join("\n");
+  }
+
+  Array.prototype.forEach.call(document.querySelectorAll("[data-output]"), function (pre) {
+    if (!window.Terminal) return;
+    var id = pre.dataset.output;
+    fetch("/api/runs/" + encodeURIComponent(id) + "/cast", { credentials: "same-origin" })
+      .then(function (res) {
+        if (!res.ok) throw new Error(res.status === 404 ? "no recording" : "HTTP " + res.status);
+        return res.text();
+      })
+      .then(function (text) {
+        var out = [];
+        text.split("\n").filter(Boolean).slice(1).forEach(function (line) {
+          try {
+            var ev = JSON.parse(line);
+            if (ev[1] === "o") out.push(ev[2]);
+          } catch (e) { /* torn last line */ }
+        });
+        var t = theme();
+        var term = new window.Terminal({
+          cols: parseInt(pre.dataset.cols, 10) || 120,
+          rows: parseInt(pre.dataset.rows, 10) || 30,
+          scrollback: 1000000,
+          theme: t,
+        });
+        var host = document.createElement("div");
+        host.style.cssText = "position:absolute;left:-10000px;top:0;width:10px;height:10px;overflow:hidden";
+        document.body.appendChild(host);
+        term.open(host);
+        term.write(out.join(""), function () {
+          pre.innerHTML = outputHTML(term, palette256(t)) || '<span class="faint">The run printed nothing.</span>';
+          term.dispose();
+          host.remove();
+        });
+      })
+      .catch(function (err) {
+        pre.innerHTML = '<span class="faint">Could not load the recording: ' + escapeHTML(err.message) + "</span>";
+      });
+  });
+
   // #run=<id> opens a run on load, so a window can be shared;
   // #start=<folder>/<job> starts one.
   (function openFromHash() {

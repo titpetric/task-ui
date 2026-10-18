@@ -7,8 +7,8 @@
 	<meta name="robots" content="noindex, nofollow">
 	<title>{{ if .Title }}{{ .Title }} | {{ end }}TaskUI</title>
 	<link rel="icon" href="/static/icon.svg" type="image/svg+xml">
-	<link rel="stylesheet" href="/static/vendor/xterm.css?v={{ .Version }}">
-	<link rel="stylesheet" href="/static/task-ui.css?v={{ .Version }}">
+	<link rel="stylesheet" href="/static/vendor/xterm.css?v={{ assetVersion }}">
+	<link rel="stylesheet" href="/static/task-ui.css?v={{ assetVersion }}">
 </head>
 <body>
 {{ template "icons" . }}
@@ -113,9 +113,9 @@
 			<a href="https://blacksky.digital/products/task-ui">blacksky.digital</a>
 		</span>
 	</footer>
-	<script src="/static/vendor/xterm.js?v={{ .Version }}" defer></script>
-	<script src="/static/vendor/addon-fit.js?v={{ .Version }}" defer></script>
-	<script src="/static/task-ui.js?v={{ .Version }}" defer></script>
+	<script src="/static/vendor/xterm.js?v={{ assetVersion }}" defer></script>
+	<script src="/static/vendor/addon-fit.js?v={{ assetVersion }}" defer></script>
+	<script src="/static/task-ui.js?v={{ assetVersion }}" defer></script>
 </body>
 </html>
 {{- end }}
