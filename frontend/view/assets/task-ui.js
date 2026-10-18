@@ -266,9 +266,10 @@
     ws.binaryType = "arraybuffer";
     s.ws = ws;
     setState("running", "attaching");
-    buttons({ stop: run.can_run, kill: run.can_run });
+    // Run force here is a rerun: it kills this run and starts the job again.
+    buttons({ stop: run.can_run, kill: run.can_run, force: run.can_run });
     els.hint.textContent = run.can_run
-      ? "Closing this window leaves the run running. Stop ends it, Kill ends it now."
+      ? "Closing this window leaves the run running. Stop ends it, Kill ends it now, Run force kills it and starts again."
       : "You are watching: your role cannot type into it or end it. Closing this window leaves it running.";
 
     term.onData(function (data) {
