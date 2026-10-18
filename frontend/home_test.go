@@ -19,7 +19,7 @@ func TestHome(t *testing.T) {
 	assert.Contains(t, body, "Nothing is running")
 	assert.Contains(t, body, "<b>Scheduled</b><span>1</span>")
 	assert.Contains(t, body, "<b>Folders</b><span>3</span>")
-	assert.Contains(t, body, "<b>Jobs</b><span>4</span>")
+	assert.Contains(t, body, "<b>Jobs</b><span>5</span>")
 	assert.Contains(t, body, `href="/f/infra/plan">plan</a>`)
 
 	limited := f.page(t, asLimited, "/")

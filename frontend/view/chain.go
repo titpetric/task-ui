@@ -36,6 +36,11 @@ type Link struct {
 	// FrameSVG is the last screen of the step's run, when the page shows
 	// it.
 	FrameSVG template.HTML
+	// Complete says the frame already shows the run's whole output, so
+	// there is nothing to expand; Lines is how many lines that output
+	// has, 0 when not known.
+	Complete bool
+	Lines    int
 }
 
 // Chain turns steps into links. A folder is named once, for the steps

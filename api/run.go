@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 	"path/filepath"
+	"strconv"
 
 	"github.com/titpetric/task-ui/access"
 	"github.com/titpetric/task-ui/model"
@@ -161,33 +162,63 @@ func (h *Handlers) frameOf(r *http.Request) (runner.Frame, error) {
 	if err != nil {
 		return runner.Frame{}, err
 	}
+	frame, _, _, err := h.replayOf(r, run)
+	return frame, err
+}
+
+// replayOf returns the frame of a run as frameOf does, the lines of its
+// whole output, and whether the last screen already shows them all: a
+// run that ended and never scrolled. A run in progress is drawn from
+// its session, its lines not counted (0).
+func (h *Handlers) replayOf(r *http.Request, run *model.Run) (runner.Frame, int, bool, error) {
 	all := r.URL.Query().Get("all") != ""
-	if session, ok := h.opts.Runner.Get(run.ID); ok && !all {
-		return session.Frame(), nil
+	if session, ok := h.opts.Runner.Get(run.ID); ok && !all && !session.Status().Finished() {
+		return session.Frame(), 0, false, nil
 	}
-	// The session is gone: the recording ends on the same screen.
+	// The run ended or the whole output is asked for: the recording
+	// holds both.
 	if h.opts.Recordings == nil {
-		return runner.Frame{}, runner.ErrNotFound
+		return runner.Frame{}, 0, false, runner.ErrNotFound
 	}
 	cast, err := h.opts.Recordings.Read(run)
 	if err != nil {
-		return runner.Frame{}, runner.ErrNotFound
+		if session, ok := h.opts.Runner.Get(run.ID); ok && !all {
+			return session.Frame(), 0, false, nil
+		}
+		return runner.Frame{}, 0, false, runner.ErrNotFound
 	}
 	defer cast.Close()
-	if all {
-		return runner.OutputFromCast(cast)
+	replay, err := runner.ReplayCast(cast)
+	if err != nil {
+		return runner.Frame{}, 0, false, err
 	}
-	return runner.FrameFromCast(cast)
+	if all {
+		return replay.Output, replay.Lines(), replay.Complete(), nil
+	}
+	return replay.Screen, replay.Lines(), replay.Complete(), nil
 }
 
 // frameSVG renders the last frame of a run as an image. The empty rows
 // at the bottom are left out, so a tile shows what there is; ?full=1
-// keeps the whole screen, ?all=1 renders the whole output.
+// keeps the whole screen, ?all=1 renders the whole output. The
+// X-Output-Lines header counts the lines of the whole output, and
+// X-Output-Complete says the screen already shows all of them.
 func (h *Handlers) frameSVG(w http.ResponseWriter, r *http.Request) {
-	frame, err := h.frameOf(r)
+	run, err := h.runOf(r)
 	if err != nil {
 		failErr(w, err)
 		return
+	}
+	frame, lines, complete, err := h.replayOf(r, run)
+	if err != nil {
+		failErr(w, err)
+		return
+	}
+	if lines > 0 {
+		w.Header().Set("X-Output-Lines", strconv.Itoa(lines))
+	}
+	if complete {
+		w.Header().Set("X-Output-Complete", "true")
 	}
 	if r.URL.Query().Get("full") == "" {
 		frame = frame.Trim(8)

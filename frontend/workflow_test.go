@@ -148,7 +148,23 @@ func TestWorkflow_Page(t *testing.T) {
 	// the session still in memory; a finished one is not polled.
 	assert.Contains(t, ops, `<a class="frame" href="/runs/`+steps[0].RunID+`" data-attach="`+steps[0].RunID+`" role="img"`)
 	assert.Contains(t, ops, `aria-label="Terminal of infra / plan"><svg`)
-	assert.Contains(t, ops, `data-expand="`+steps[0].RunID+`" aria-expanded="false">Expand</button>`)
+	assert.Contains(t, ops, `<div class="step-head">`)
+	// plan prints a line: the screen shows it all, so there is no Expand.
+	assert.NotContains(t, ops, `data-expand="`+steps[0].RunID+`"`)
+
+	// A run that prints more than a screen gets Expand, with its lines.
+	long := f.workflow(t, asOps, "long", "infra", "many")
+	longRun, err := f.opts.Flows.Start(context.Background(), long, f.users[asOps])
+	assert.NoError(t, err)
+	select {
+	case <-f.opts.Flows.Done(longRun.ID):
+	case <-time.After(20 * time.Second):
+		t.Fatal("the workflow did not finish")
+	}
+	longSteps, _ := f.opts.WorkflowRuns.Steps(context.Background(), longRun.ID)
+	longPage := f.page(t, asOps, "/workflows/"+long.ID)
+	assert.Contains(t, longPage, `data-expand="`+longSteps[0].RunID+`" aria-expanded="false"><svg class="ic"><use href="#i-expand"/></svg><span>Expand `)
+	assert.Contains(t, longPage, `<span>Expand 200 lines</span></button>`) // seq 1 200
 	assert.NotContains(t, ops, `data-frame=`)
 
 	mine := f.workflow(t, asOps, "plan only", "infra", "plan")

@@ -168,7 +168,7 @@ func (h *Handlers) workflow(w http.ResponseWriter, r *http.Request) {
 func (h *Handlers) frames(ctx context.Context, links []view.Link, names map[string]string, deeper bool) {
 	for i := range links {
 		if links[i].RunID != "" {
-			links[i].FrameSVG = h.frameSVG(ctx, links[i].RunID)
+			links[i].FrameSVG, links[i].Lines, links[i].Complete = h.frameOf(ctx, links[i].RunID)
 		}
 		if deeper && links[i].WorkflowRunID != "" {
 			rows, err := h.opts.WorkflowRuns.Steps(ctx, links[i].WorkflowRunID)

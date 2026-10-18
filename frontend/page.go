@@ -132,26 +132,39 @@ const frameRows = 8
 // is in memory, else the screen its recording ends on. Empty when
 // neither is there.
 func (h *Handlers) frameSVG(ctx context.Context, runID string) template.HTML {
-	if session, ok := h.opts.Runner.Get(runID); ok {
-		return template.HTML(session.Frame().Trim(frameRows).SVG(runner.DarkPalette))
+	svg, _, _ := h.frameOf(ctx, runID)
+	return svg
+}
+
+// frameOf renders the last frame of a run like frameSVG, with the lines
+// of its whole output, and reports whether the frame shows all of them:
+// a finished run whose output never scrolled off the screen. A run in
+// progress may still scroll; its lines are not counted (0).
+func (h *Handlers) frameOf(ctx context.Context, runID string) (template.HTML, int, bool) {
+	session, live := h.opts.Runner.Get(runID)
+	fromSession := func() (template.HTML, int, bool) {
+		if !live {
+			return "", 0, false
+		}
+		return template.HTML(session.Frame().Trim(frameRows).SVG(runner.DarkPalette)), 0, false
 	}
-	if h.opts.Recordings == nil {
-		return ""
+	if live && !session.Status().Finished() || h.opts.Recordings == nil {
+		return fromSession()
 	}
 	run, err := h.opts.Runs.Get(ctx, runID)
 	if err != nil {
-		return ""
+		return fromSession()
 	}
 	cast, err := h.opts.Recordings.Read(run)
 	if err != nil {
-		return ""
+		return fromSession()
 	}
 	defer cast.Close()
-	frame, err := runner.FrameFromCast(cast)
+	replay, err := runner.ReplayCast(cast)
 	if err != nil {
-		return ""
+		return fromSession()
 	}
-	return template.HTML(frame.Trim(frameRows).SVG(runner.DarkPalette))
+	return template.HTML(replay.Screen.Trim(frameRows).SVG(runner.DarkPalette)), replay.Lines(), replay.Complete()
 }
 
 // visibleRuns lists runs the user may see.
