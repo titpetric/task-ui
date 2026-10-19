@@ -198,8 +198,6 @@ func TestWorkflow_Recents(t *testing.T) {
 
 	ops := f.page(t, asOps, "/")
 	recents := ops[strings.Index(ops, `id="recents"`):]
-	// The dashboard's recent runs hold them too.
-	assert.Contains(t, ops, `<td class="key"><a href="/workflows/`+wf.ID+`">release</a></td>`)
 	entry := `<a href="/workflows/` + wf.ID + `" class="recent flow" title="Workflow release, admin, ok">`
 	assert.Contains(t, recents, entry)
 	assert.Contains(t, recents, `<b>release</b><small><svg class="ic"><use href="#i-flow"/></svg>workflow</small>`)

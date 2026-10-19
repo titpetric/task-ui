@@ -2529,3 +2529,62 @@ pre.output {
 .tree li.empty {
   color: var(--text-faint);
 }
+
+/* The control centre: a folder a row, a shared job a column, a button
+   in each cell the folder has the job for. */
+.table.control th.col,
+.table.control td.col {
+  width: 1%;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.table.control td.other {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.cc {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  min-width: 1.8rem;
+  height: 1.6rem;
+  padding: 0 0.4rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--text-dim);
+  font: inherit;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+
+.cc .ic {
+  width: 0.75rem;
+  height: 0.75rem;
+}
+
+.cc:hover {
+  color: var(--signal-ink);
+  background: var(--signal);
+  border-color: var(--signal);
+  text-decoration: none;
+}
+
+.cc.running {
+  color: var(--signal);
+  border-color: var(--signal);
+}
+
+.cc.idle {
+  border-color: transparent;
+  cursor: default;
+}
+
+.cc.idle:hover {
+  color: var(--text-dim);
+  background: transparent;
+}
