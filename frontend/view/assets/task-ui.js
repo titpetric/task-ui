@@ -1297,7 +1297,14 @@
     };
     menuToggle.addEventListener("click", function () { setMenu(!document.body.classList.contains("menu-open")); });
     document.getElementById("menu-backdrop").addEventListener("click", function () { setMenu(false); });
-    if (location.hash === "#menu") setMenu(true);
+    // Opened by the link it is simply open, without the slide: the page
+    // is new, there is nothing to slide in from.
+    if (location.hash === "#menu") {
+      var side = document.getElementById("side");
+      side.style.transition = "none";
+      setMenu(true);
+      requestAnimationFrame(function () { requestAnimationFrame(function () { side.style.transition = ""; }); });
+    }
   }
 
   // The projects in the sidebar fold on their chevron, and the folded

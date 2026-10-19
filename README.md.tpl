@@ -8,7 +8,7 @@ Makefile targets, package.json and composer.json scripts, and a
 terminal that anyone allowed can attach to, from any window, for as long
 as it runs.
 
-![The dashboard: every terminal in progress, as it looks right now](https://raw.githubusercontent.com/titpetric/task-ui/main/.github/assets/task-ui.png)
+![The dashboard: every terminal in progress, as it looks right now](https://raw.githubusercontent.com/titpetric/task-ui/main/docs/assets/task-ui.png)
 
 - **Folders and jobs.** A folder is a working directory and whatever it
   holds that can be run. Everything on the page comes from the files
@@ -46,6 +46,10 @@ as it runs.
 - **Settings.** Admins manage the instance SSH keys, the secrets added to
   every run, encrypted at rest with those keys, the env files the
   pipelines read, and the folders each user sees.
+
+The [usage guide](docs/README.md) walks through the screen as the sidebar
+lists it, a chapter a section: the dashboard, workflows, runs, artifacts,
+schedules, the projects and their jobs, recents, and the settings.
 
 The look follows [oida](https://github.com/titpetric/oida): hairlines,
 one amber accent, dark and light from `prefers-color-scheme`. The type is
@@ -341,18 +345,9 @@ Writes need the same origin. The browser pages are the reference client;
 
 ## Screenshots
 
-| | |
-|-|-|
-| ![The dashboard: every live terminal as its last frame](.github/assets/dashboard-dark.png) | ![A run in its window, attached](.github/assets/run-dark.png) |
-| ![A folder: its jobs, steps, pipeline and env files](.github/assets/folder-dark.png) | ![A job, its history and its schedules](.github/assets/job-dark.png) |
-| ![The runs](.github/assets/runs-dark.png) | ![A run's page](.github/assets/run-page-dark.png) |
-| ![Dashboard, light theme](.github/assets/dashboard-light.png) | ![A folder with a Makefile, package scripts and a scripts folder](.github/assets/tools-dark.png) |
-| ![Artifacts](.github/assets/artifacts-dark.png) | ![Scheduled](.github/assets/schedules-dark.png) |
-| ![Projects](.github/assets/projects-dark.png) | ![Configure a folder](.github/assets/project-edit-dark.png) |
-| ![Users, from the password file](.github/assets/users-dark.png) | ![Secrets, encrypted with the SSH key](.github/assets/secrets-dark.png) |
-| ![Secrets](.github/assets/secrets-dark.png) | ![An env file](.github/assets/envfile-dark.png) |
-| ![SSH keys](.github/assets/keys-dark.png) | ![Login](.github/assets/login-dark.png) |
-| ![Out of hours: Run force asks why](.github/assets/out-of-hours-dark.png) | ![The phone: the drawer with the folders and their jobs, and the jobs as cards](.github/assets/mobile-menu-dark.png) |
+Every view, in both themes and on a phone, is in
+[docs/screenshots.md](docs/screenshots.md); the pictures are under
+`docs/assets/`.
 
 `scripts/demo.sh` regenerates them: it serves a copy of `testdata/demo`,
 sets the instance up through the API with curl, starts real runs with
