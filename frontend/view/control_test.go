@@ -8,19 +8,33 @@ import (
 	"github.com/titpetric/task-ui/internal/assert"
 )
 
-func jobs(id string, names ...string) *folder.Folder {
+// jobs makes a folder of jobs: "name" or "kind:name".
+func jobs(id string, ids ...string) *folder.Folder {
 	f := &folder.Folder{ID: id}
-	for _, name := range names {
-		j := &folder.Job{Folder: id, ID: name}
-		j.Name = name
+	for _, jobID := range ids {
+		j := &folder.Job{Folder: id, ID: jobID}
+		j.Name = jobID
+		if kind, name, ok := cutKind(jobID); ok {
+			j.Kind, j.Name = kind, name
+		}
 		f.Jobs = append(f.Jobs, j)
 	}
 	return f
 }
 
-// The control centre has a column for each job name that repeats across
-// folders, the most common first, up to n; the rest of a folder's jobs
-// are its extra. A folder without jobs has no row.
+func cutKind(id string) (string, string, bool) {
+	for i := range id {
+		if id[i] == ':' {
+			return id[:i], id[i+1:], true
+		}
+	}
+	return "", "", false
+}
+
+// Every job name that occurs more than once, across folders or within
+// one, gets a column, the most common first; a cell holds all of the
+// folder's jobs of that name. Other holds the names that occur once. A
+// folder without jobs has no row.
 func TestControl(t *testing.T) {
 	t.Parallel()
 	folders := []*folder.Folder{
@@ -29,26 +43,29 @@ func TestControl(t *testing.T) {
 		jobs("docs", "build", "deploy"),
 		jobs("empty"),
 		jobs("infra", "plan", "apply", "test"),
+		jobs("tools", "make:release", "script:release", "make:lint"),
 	}
 
-	c := view.NewControl(folders, 2)
-	assert.Equal(t, []string{"build", "test"}, c.Columns)
-	assert.Len(t, c.Rows, 4)
+	c := view.NewControl(folders)
+	assert.Equal(t, []string{"build", "test", "lint", "release"}, c.Columns)
+	assert.Len(t, c.Rows, 5)
 
 	api := c.Rows[0]
 	assert.Equal(t, "api", api.Folder.ID)
-	assert.Equal(t, "build", api.Cells[0].ID)
-	assert.Equal(t, "test", api.Cells[1].ID)
-	assert.Equal(t, []string{"push", "lint"}, names(api.Extra))
+	assert.Equal(t, []string{"build"}, names(api.Cells[0]))
+	assert.Equal(t, []string{"lint"}, names(api.Cells[2]))
+	assert.Equal(t, []string{"push"}, names(api.Extra))
 
 	docs := c.Rows[2]
-	assert.True(t, docs.Cells[1] == nil, "docs has no test")
+	assert.Len(t, docs.Cells[1], 0) // docs has no test
 	assert.Equal(t, []string{"deploy"}, names(docs.Extra))
 
-	// A name only one folder has is no column, however many columns
-	// there may be.
-	wide := view.NewControl(folders, 7)
-	assert.Equal(t, []string{"build", "test"}, wide.Columns)
+	// Two of a name in one folder share its cell; nothing repeats under
+	// other.
+	tools := c.Rows[4]
+	assert.Equal(t, []string{"make:release", "script:release"}, names(tools.Cells[3]))
+	assert.Equal(t, []string{"make:lint"}, names(tools.Cells[2]))
+	assert.Len(t, tools.Extra, 0)
 }
 
 func names(js []*folder.Job) []string {

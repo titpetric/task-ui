@@ -2539,10 +2539,15 @@ pre.output {
   white-space: nowrap;
 }
 
-.table.control td.other {
+.table.control td > div {
   display: flex;
   flex-wrap: wrap;
+  justify-content: center;
   gap: 0.3rem;
+}
+
+.table.control td.other > div {
+  justify-content: flex-start;
 }
 
 .cc {

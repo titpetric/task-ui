@@ -14,7 +14,7 @@ func (h *Handlers) home(w http.ResponseWriter, r *http.Request) {
 	user := access.UserFrom(r.Context())
 	p := h.page(r, "Dashboard")
 	p.Runs = h.live(user)
-	p.Control = view.NewControl(p.Folders, view.ControlColumns)
+	p.Control = view.NewControl(p.Folders)
 	schedules, _ := h.opts.Schedules.List(r.Context())
 	for _, schedule := range schedules {
 		if user.CanSee(schedule.Folder) {

@@ -6,12 +6,8 @@ import (
 	"github.com/titpetric/task-ui/folder"
 )
 
-// ControlColumns is how many job names the control centre gives a
-// column of their own.
-const ControlColumns = 7
-
 // Control is the dashboard's control centre: a row per folder with
-// jobs, a column per job name that repeats across folders.
+// jobs, a column per job name that occurs more than once.
 type Control struct {
 	// Columns are the job names with a column, the most common first.
 	Columns []string
@@ -21,25 +17,23 @@ type Control struct {
 // ControlRow is a folder in the control centre.
 type ControlRow struct {
 	Folder *folder.Folder
-	// Cells hold the folder's job of each column, nil where it has none.
-	Cells []*folder.Job
-	// Extra are the folder's jobs without a column, in their order.
+	// Cells hold the folder's jobs of each column, none where it has
+	// none.
+	Cells [][]*folder.Job
+	// Extra are the folder's jobs whose names occur once, in their order.
 	Extra []*folder.Job
 }
 
-// NewControl lays the folders out: the job names that more than one
-// folder has get a column, the most common first and then by name, up
-// to n of them. A job is placed by its name, so a Makefile's build and
-// a pipeline's build share the column.
-func NewControl(folders []*folder.Folder, n int) Control {
+// NewControl lays the folders out: every job name that occurs more than
+// once, across folders or within one, gets a column, the most common
+// first and then by name. A job is placed by its name, so a Makefile's
+// build and a pipeline's build share the column, and a folder's two
+// builds share its cell.
+func NewControl(folders []*folder.Folder) Control {
 	counts := map[string]int{}
 	for _, f := range folders {
-		seen := map[string]bool{}
 		for _, job := range f.Jobs {
-			if !seen[job.Name] {
-				seen[job.Name] = true
-				counts[job.Name]++
-			}
+			counts[job.Name]++
 		}
 	}
 	columns := []string{}
@@ -54,9 +48,6 @@ func NewControl(folders []*folder.Folder, n int) Control {
 		}
 		return columns[i] < columns[j]
 	})
-	if len(columns) > n {
-		columns = columns[:n]
-	}
 	index := map[string]int{}
 	for i, name := range columns {
 		index[name] = i
@@ -67,10 +58,10 @@ func NewControl(folders []*folder.Folder, n int) Control {
 		if len(f.Jobs) == 0 {
 			continue
 		}
-		row := ControlRow{Folder: f, Cells: make([]*folder.Job, len(columns))}
+		row := ControlRow{Folder: f, Cells: make([][]*folder.Job, len(columns))}
 		for _, job := range f.Jobs {
-			if i, ok := index[job.Name]; ok && row.Cells[i] == nil {
-				row.Cells[i] = job
+			if i, ok := index[job.Name]; ok {
+				row.Cells[i] = append(row.Cells[i], job)
 				continue
 			}
 			row.Extra = append(row.Extra, job)
