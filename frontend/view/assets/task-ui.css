@@ -1499,8 +1499,8 @@ dialog.run[open] {
 }
 
 /* The workflows under Workflows, rows like a project's jobs, one step
-   in: the dot centred under where the entry names start, the name a
-   column further, as a job sits under its project. */
+   in: a #! where the entry names start, in an icon's column, and the
+   name a column further, as a job sits under its project. */
 .menu .flows {
   --menu-name: calc(1.1rem + 1.05rem + 0.5rem);
   padding: 0.1rem 0 0.2rem;
@@ -1509,8 +1509,8 @@ dialog.run[open] {
 .menu .flows .flow {
   display: flex;
   align-items: center;
-  gap: calc((1.05rem - 0.4rem) / 2 + 0.5rem);
-  padding: 0.15rem 0.6rem 0.15rem calc(var(--menu-name) + (1.05rem - 0.4rem) / 2);
+  gap: 0.5rem;
+  padding: 0.15rem 0.6rem 0.15rem var(--menu-name);
   color: var(--text-dim);
   font-size: 0.8125rem;
   border-left: 2px solid transparent;
@@ -1521,10 +1521,21 @@ dialog.run[open] {
   border-left-color: var(--signal);
 }
 
-.menu .flows .dot {
+/* The shebang of a workflow: faint, in the signal colour while it runs. */
+.menu .flows .shebang {
   flex: none;
-  width: 0.4rem;
-  height: 0.4rem;
+  width: 1.05rem;
+  font-family: var(--font);
+  font-size: 0.75rem;
+  font-style: normal;
+  font-weight: 700;
+  text-align: center;
+  color: var(--text-faint);
+}
+
+.menu .flows .flow.active .shebang,
+.menu .flows .shebang.running {
+  color: var(--signal);
 }
 
 .menu .flows a.name {
