@@ -7,8 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/titpetric/pdo"
-
 	"github.com/titpetric/task-ui/model"
 )
 
@@ -47,7 +45,7 @@ func checkChain(workflow *model.Workflow, steps []model.WorkflowStep) error {
 
 // checkRefs says what is wrong with the workflows the steps run: one
 // that is not there, or one that runs the workflow itself, a loop.
-func checkRefs(ctx context.Context, c *pdo.PDO, workflowID string, steps []model.WorkflowStep) error {
+func checkRefs(ctx context.Context, c conn, workflowID string, steps []model.WorkflowStep) error {
 	for _, step := range steps {
 		if !step.IsWorkflow() {
 			continue
@@ -75,7 +73,7 @@ func checkRefs(ctx context.Context, c *pdo.PDO, workflowID string, steps []model
 
 // reaches reports whether a workflow runs the target, through any
 // workflows its steps run.
-func reaches(ctx context.Context, c *pdo.PDO, from, target string, seen map[string]bool) (bool, error) {
+func reaches(ctx context.Context, c conn, from, target string, seen map[string]bool) (bool, error) {
 	if from == target {
 		return true, nil
 	}
@@ -98,7 +96,7 @@ func reaches(ctx context.Context, c *pdo.PDO, from, target string, seen map[stri
 
 // inTx runs fn in a transaction on one client, committing when it
 // returns nil.
-func inTx(ctx context.Context, db DB, fn func(c *pdo.PDO) error) error {
+func inTx(ctx context.Context, db DB, fn func(c conn) error) error {
 	c := client(db)
 	if err := c.Begin(ctx); err != nil {
 		return err
@@ -110,7 +108,7 @@ func inTx(ctx context.Context, db DB, fn func(c *pdo.PDO) error) error {
 }
 
 // insertSteps writes a workflow's steps in order, positions from zero.
-func insertSteps(ctx context.Context, c *pdo.PDO, workflowID string, steps []model.WorkflowStep) error {
+func insertSteps(ctx context.Context, c conn, workflowID string, steps []model.WorkflowStep) error {
 	for i, step := range steps {
 		row := model.WorkflowStep{ID: model.NewID(), WorkflowID: workflowID, Position: int64(i), Folder: step.Folder, Job: step.Job, WorkflowRef: step.WorkflowRef}
 		if err := c.Insert(ctx, model.WorkflowStepTable, &row); err != nil {
@@ -130,7 +128,7 @@ func (s *WorkflowStorage) Create(ctx context.Context, workflow *model.Workflow, 
 	}
 	workflow.CreatedAt = stamp()
 	workflow.UpdatedAt = workflow.CreatedAt
-	return inTx(ctx, s.db, func(c *pdo.PDO) error {
+	return inTx(ctx, s.db, func(c conn) error {
 		if err := checkRefs(ctx, c, workflow.ID, steps); err != nil {
 			return err
 		}
@@ -206,7 +204,7 @@ func (s *WorkflowStorage) Update(ctx context.Context, workflow *model.Workflow, 
 		return err
 	}
 	workflow.UpdatedAt = stamp()
-	return inTx(ctx, s.db, func(c *pdo.PDO) error {
+	return inTx(ctx, s.db, func(c conn) error {
 		if err := checkRefs(ctx, c, workflow.ID, steps); err != nil {
 			return err
 		}
@@ -223,7 +221,7 @@ func (s *WorkflowStorage) Update(ctx context.Context, workflow *model.Workflow, 
 // Delete removes a workflow and its steps. Its runs stay, as history. A
 // workflow another one runs stays, with ErrInUse.
 func (s *WorkflowStorage) Delete(ctx context.Context, id string) error {
-	return inTx(ctx, s.db, func(c *pdo.PDO) error {
+	return inTx(ctx, s.db, func(c conn) error {
 		users, err := c.Select[model.Workflow](ctx, "SELECT w.* FROM workflow w WHERE w.id IN (SELECT workflow_id FROM workflow_step WHERE workflow_ref = ?) ORDER BY w.name COLLATE NOCASE", id)
 		if err != nil {
 			return err
@@ -262,7 +260,7 @@ func (s *WorkflowRunStorage) Create(ctx context.Context, run *model.WorkflowRun,
 	run.State = model.StateRunning
 	run.StartedAt = stamp()
 	run.CreatedAt, run.UpdatedAt = run.StartedAt, run.StartedAt
-	return inTx(ctx, s.db, func(c *pdo.PDO) error {
+	return inTx(ctx, s.db, func(c conn) error {
 		if err := c.Insert(ctx, model.WorkflowRunTable, run); err != nil {
 			return err
 		}
@@ -327,7 +325,7 @@ func (s *WorkflowRunStorage) UpdateStep(ctx context.Context, step *model.Workflo
 // and the steps after it are skipped.
 func (s *WorkflowRunStorage) Interrupt(ctx context.Context, message string) error {
 	now := time.Now().UTC().Truncate(time.Millisecond)
-	return inTx(ctx, s.db, func(c *pdo.PDO) error {
+	return inTx(ctx, s.db, func(c conn) error {
 		if err := c.Exec(ctx, "UPDATE workflow_run_step SET state = ?, updated_at = ? WHERE state = ? AND workflow_run_id IN (SELECT id FROM workflow_run WHERE state = ?)", model.StateFailed, now, model.StateRunning, model.StateRunning); err != nil {
 			return err
 		}

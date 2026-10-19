@@ -47,7 +47,7 @@ func newSession(run *model.Run, f *folder.Folder, job *folder.Job) *Session {
 		Run:    run,
 		Folder: f,
 		Job:    job,
-		term:   vt10x.New(vt10x.WithSize(int(run.TermCols), int(run.TermRows))),
+		term:   newTerminal(int(run.TermCols), int(run.TermRows)),
 		tail:   newRing(replaySize),
 		subs:   map[*Subscriber]struct{}{},
 		status: Status{State: model.StateRunning},
@@ -291,6 +291,12 @@ const (
 )
 
 // snapshot reads a frame off a terminal.
+// newTerminal returns a terminal emulator of a size: vt10x stays imported
+// in this file alone.
+func newTerminal(cols, rows int) vt10x.Terminal {
+	return vt10x.New(vt10x.WithSize(cols, rows))
+}
+
 func snapshot(term vt10x.Terminal) Frame {
 	term.Lock()
 	defer term.Unlock()

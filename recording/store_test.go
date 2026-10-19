@@ -47,3 +47,27 @@ func TestStore_Relative(t *testing.T) {
 	assert.Equal(t, "a/b.cast", s.Relative("/data/a/b.cast"))
 	assert.Equal(t, "../x", s.Relative("/x"), "a path outside the root is relative to it")
 }
+
+// Read opens the recording a run row names; a row without one, or whose
+// file is gone, has none.
+func TestStore_Read(t *testing.T) {
+	t.Parallel()
+	s := &recording.Store{Root: t.TempDir()}
+	run := &model.Run{ID: model.NewID(), Folder: "infra", Job: "plan"}
+	path, err := s.Path(run)
+	assert.NoError(t, err)
+	assert.NoError(t, os.MkdirAll(filepath.Dir(path), 0o755))
+	assert.NoError(t, os.WriteFile(path, []byte("{\"version\":2}\n"), 0o644))
+	run.CastPath = s.Relative(path)
+
+	file, err := s.Read(run)
+	assert.NoError(t, err)
+	data, _ := os.ReadFile(file.Name())
+	file.Close()
+	assert.Equal(t, "{\"version\":2}\n", string(data))
+
+	_, err = s.Read(&model.Run{})
+	assert.ErrorIs(t, err, os.ErrNotExist)
+	_, err = s.Read(&model.Run{CastPath: "infra/plan/gone.cast"})
+	assert.ErrorIs(t, err, os.ErrNotExist)
+}

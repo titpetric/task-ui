@@ -3,7 +3,9 @@
 // memory, for one instance, and never waits on a subscriber.
 package event
 
-import "sync"
+import (
+	"sync"
+)
 
 // Buffer is how many events a subscriber may fall behind before it
 // loses the next ones.

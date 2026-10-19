@@ -2,6 +2,7 @@ package workflow_test
 
 import (
 	"context"
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"testing"
@@ -272,4 +273,57 @@ func TestRunner_Events(t *testing.T) {
 	}
 	assert.Equal(t, []string{"run", "step", "step", "step", "step", "done"}, names)
 	assert.Equal(t, []string{"running", "ok", "running", "ok"}, states)
+}
+
+// Resolve finds every step's folder and job, or its workflow, and says
+// which step is gone.
+func TestRunner_Resolve(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	ctx := context.Background()
+	inner := f.create(t, "build")
+
+	var steps []workflow.Step
+	steps, err := f.runner.Resolve(ctx, []model.WorkflowStep{{Folder: "infra", Job: "test"}, {WorkflowRef: inner.ID}})
+	assert.NoError(t, err)
+	assert.Len(t, steps, 2)
+	assert.Equal(t, "infra", steps[0].Folder.ID)
+	assert.Equal(t, "test", steps[0].Job.ID)
+	assert.True(t, steps[0].Workflow == nil)
+	assert.Equal(t, inner.ID, steps[1].Workflow.ID)
+	assert.True(t, steps[1].Job == nil)
+
+	_, err = f.runner.Resolve(ctx, []model.WorkflowStep{{Folder: "infra", Job: "gone"}})
+	assert.ErrorContains(t, err, "no job infra / gone")
+	_, err = f.runner.Resolve(ctx, []model.WorkflowStep{{Folder: "nowhere", Job: "build"}})
+	assert.ErrorContains(t, err, "no job nowhere / build")
+	_, err = f.runner.Resolve(ctx, []model.WorkflowStep{{WorkflowRef: model.NewID()}})
+	assert.ErrorContains(t, err, "no workflow")
+}
+
+// A step is a job of a folder, or a workflow in its place.
+func TestStep(t *testing.T) {
+	t.Parallel()
+	j := job("build", "echo built")
+	s := workflow.Step{Folder: &folder.Folder{ID: "infra"}, Job: j}
+	assert.Equal(t, "build", s.Job.ID)
+	assert.True(t, workflow.Step{Workflow: &model.Workflow{ID: "w1"}}.Job == nil)
+}
+
+// Anything that finds a folder by ID is a catalogue: the discovery, or
+// a fixed set of folders.
+func TestCatalogue(t *testing.T) {
+	t.Parallel()
+	var c workflow.Catalogue = catalogue{"infra": {ID: "infra"}}
+	assert.Equal(t, "infra", c.Find("infra").ID)
+	assert.True(t, c.Find("gone") == nil)
+	var _ workflow.Catalogue = &folder.Discovery{}
+}
+
+// The run and done events carry the run as the browser reads it.
+func TestRunEvent(t *testing.T) {
+	t.Parallel()
+	data, err := json.Marshal(workflow.RunEvent{RunID: "wr1", WorkflowID: "w1", Name: "release", State: "ok", UserName: "ops"})
+	assert.NoError(t, err)
+	assert.Equal(t, `{"run_id":"wr1","workflow_id":"w1","name":"release","state":"ok","user_name":"ops"}`, string(data))
 }

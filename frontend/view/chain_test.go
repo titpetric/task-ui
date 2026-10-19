@@ -28,3 +28,20 @@ func TestChain(t *testing.T) {
 	assert.True(t, links[3].Workflow)
 	assert.Equal(t, "ok", links[4].State)
 }
+
+// A link of a run's chain points at the run a step made, and one of a
+// workflow step at the run it made of the workflow.
+func TestLink(t *testing.T) {
+	t.Parallel()
+	links := view.Chain([]view.Step{
+		{Folder: "infra", Job: "plan", State: "ok", RunID: "r1"},
+		{WorkflowID: "w1", WorkflowName: "release", State: "running", WorkflowRunID: "wr1"},
+	})
+	var job, flow view.Link = links[0], links[1]
+	assert.Equal(t, "r1", job.RunID)
+	assert.False(t, job.Workflow)
+	assert.True(t, flow.Workflow)
+	assert.Equal(t, "w1", flow.WorkflowID)
+	assert.Equal(t, "wr1", flow.WorkflowRunID)
+	assert.Equal(t, "running", flow.State)
+}

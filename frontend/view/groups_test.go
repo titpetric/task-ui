@@ -38,3 +38,11 @@ func idsOf(folders []*folder.Folder) []string {
 	}
 	return ids
 }
+
+// A group is a project: its top folder, and the folders inside it.
+func TestGroup(t *testing.T) {
+	t.Parallel()
+	var g view.Group = view.Groups([]*folder.Folder{{ID: "deploy"}, {ID: "deploy/terraform"}})[0]
+	assert.Equal(t, "deploy", g.Top.ID)
+	assert.Equal(t, []string{"deploy/terraform"}, idsOf(g.Nested))
+}
