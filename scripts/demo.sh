@@ -78,7 +78,11 @@ serve() {
 admin=3101
 viewer=3102
 login=3103
-serve "$admin" TASK_UI_AUTOLOGIN=admin TASK_UI_NOW=2026-10-16T22:00:00+02:00
+# The clock is pinned to a Friday evening, out of the website's hours,
+# for the Run force capture: the coming Friday, so the runs the demo
+# makes now fall in the activity charts' thirty days before it.
+friday="$(date -d friday +%F)"
+serve "$admin" TASK_UI_AUTOLOGIN=admin TASK_UI_NOW="${friday}T22:00:00+02:00"
 serve "$viewer" TASK_UI_AUTOLOGIN=guest
 serve "$login"
 export TASK_UI_BASE="http://127.0.0.1:${admin}"
