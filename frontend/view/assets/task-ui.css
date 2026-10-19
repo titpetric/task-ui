@@ -2734,6 +2734,39 @@ pre.output {
   opacity: 0.6;
 }
 
+/* Under each count, the average duration of the same days or hours: a
+   shorter row in the text colour, so it reads apart from the counts. */
+.activity-bars.average {
+  height: 2rem;
+  margin-top: 3px;
+}
+
+.activity-bars i.avg {
+  background: linear-gradient(to top, var(--text-dim), color-mix(in oklch, var(--text-dim) 55%, transparent));
+}
+
+.activity-key {
+  float: right;
+  color: var(--text-faint);
+  font-size: 0.75rem;
+}
+
+.activity-key i {
+  display: inline-block;
+  width: 0.6rem;
+  height: 0.6rem;
+  margin: 0 0.3rem 0 0.8rem;
+  vertical-align: -0.05rem;
+}
+
+.activity-key i.ok {
+  background: var(--signal);
+}
+
+.activity-key i.avg {
+  background: var(--text-dim);
+}
+
 .activity-chart figcaption {
   display: flex;
   justify-content: space-between;

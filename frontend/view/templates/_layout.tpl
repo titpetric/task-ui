@@ -386,7 +386,7 @@
      on the line hovers its counts. */}}
 {{- define "activity" }}
 <div class="activity">
-	<p class="activity-sum">{{ .Total }} run{{ if ne .Total 1 }}s{{ end }} in {{ len .Days }} days{{ if .Failed }} · <span class="bad">{{ .Failed }} failed</span>{{ end }}{{ if .Median }} · median {{ duration .Median }}{{ end }}</p>
+	<p class="activity-sum">{{ .Total }} run{{ if ne .Total 1 }}s{{ end }} in {{ len .Days }} days{{ if .Failed }} · <span class="bad">{{ .Failed }} failed</span>{{ end }}{{ if .Median }} · median {{ duration .Median }}{{ end }}<span class="activity-key"><i class="ok"></i>runs <i class="avg"></i>average duration</span></p>
 	<div class="activity-charts">
 		<figure class="activity-chart">
 			<div class="activity-bars" style="--n: {{ len .Days }}" role="img" aria-label="Runs per day, the last {{ len .Days }} days">
@@ -395,12 +395,23 @@
 				<span class="tip{{ if lt $i 4 }} tip-start{{ else if ge $i $last }} tip-end{{ end }}" data-tip="{{ .Title }}" aria-label="{{ .Title }}">{{ if .OtherStyle }}<i class="other" style="{{ .OtherStyle }}"></i>{{ end }}{{ if .FailedStyle }}<i class="bad" style="{{ .FailedStyle }}"></i>{{ end }}{{ if .OKStyle }}<i class="ok" style="{{ .OKStyle }}"></i>{{ end }}</span>
 				{{- end }}{{ end }}
 			</div>
+			<div class="activity-bars average" style="--n: {{ len .Days }}" role="img" aria-label="Average duration per day">
+				{{- $last := sub (len .Days) 4 }}
+				{{- range $i, $b := .Days }}{{ with $b }}
+				<span class="tip{{ if lt $i 4 }} tip-start{{ else if ge $i $last }} tip-end{{ end }}" data-tip="{{ .AverageTitle }}" aria-label="{{ .AverageTitle }}">{{ if .AverageStyle }}<i class="avg" style="{{ .AverageStyle }}"></i>{{ end }}</span>
+				{{- end }}{{ end }}
+			</div>
 			<figcaption>{{ range .Axis }}<span>{{ . }}</span>{{ end }}</figcaption>
 		</figure>
 		<figure class="activity-chart hours">
 			<div class="activity-bars" style="--n: 24" role="img" aria-label="Runs per hour of the day">
 				{{- range $i, $b := .Hours }}{{ with $b }}
 				<span class="tip{{ if lt $i 4 }} tip-start{{ else if ge $i 20 }} tip-end{{ end }}" data-tip="{{ .Title }}" aria-label="{{ .Title }}">{{ if .OtherStyle }}<i class="other" style="{{ .OtherStyle }}"></i>{{ end }}{{ if .FailedStyle }}<i class="bad" style="{{ .FailedStyle }}"></i>{{ end }}{{ if .OKStyle }}<i class="ok" style="{{ .OKStyle }}"></i>{{ end }}</span>
+				{{- end }}{{ end }}
+			</div>
+			<div class="activity-bars average" style="--n: 24" role="img" aria-label="Average duration per hour of the day">
+				{{- range $i, $b := .Hours }}{{ with $b }}
+				<span class="tip{{ if lt $i 4 }} tip-start{{ else if ge $i 20 }} tip-end{{ end }}" data-tip="{{ .AverageTitle }}" aria-label="{{ .AverageTitle }}">{{ if .AverageStyle }}<i class="avg" style="{{ .AverageStyle }}"></i>{{ end }}</span>
 				{{- end }}{{ end }}
 			</div>
 			<figcaption><span>00</span><span>06</span><span>12</span><span>18</span><span>24</span></figcaption>

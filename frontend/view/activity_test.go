@@ -64,6 +64,20 @@ func TestNewActivity(t *testing.T) {
 	assert.Equal(t, template.CSS("height:25.00%"), a.Days[27].OtherStyle) // the 17th: stopped
 	assert.Equal(t, template.CSS(""), yesterday.OKStyle)
 
+	// Each day's and hour's bar of average duration: the mean of its
+	// finished runs, the slowest full height; a running run is not in it.
+	assert.Equal(t, 4*time.Second, today.Average)
+	assert.Equal(t, 3, today.Finished)
+	assert.Equal(t, template.CSS("height:50.00%"), today.AverageStyle)
+	assert.Equal(t, "avg 4.0s over 3 runs, Mon 2026-10-19", today.AverageTitle)
+	assert.Equal(t, 8*time.Second, a.Days[27].Average)
+	assert.Equal(t, template.CSS("height:100.00%"), a.Days[27].AverageStyle)
+	assert.Equal(t, "no finished runs, Sun 2026-10-18", yesterday.AverageTitle)
+	assert.Equal(t, template.CSS(""), yesterday.AverageStyle)
+	assert.Equal(t, 3*time.Second, a.Hours[7].Average)
+	assert.Equal(t, "avg 3.0s over 2 runs, 07:00–08:00", a.Hours[7].AverageTitle)
+	assert.Equal(t, "no finished runs, 21:00–22:00", a.Hours[21].AverageTitle) // only the running one
+
 	// The median of the finished runs: 2, 4, 6 and 8 seconds.
 	assert.Equal(t, 5*time.Second, a.Median)
 	assert.Len(t, a.Durations.Points, 4)
