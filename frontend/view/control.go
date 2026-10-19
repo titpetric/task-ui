@@ -6,8 +6,12 @@ import (
 	"github.com/titpetric/task-ui/folder"
 )
 
+// ControlRepeats is how many times a job name occurs, at least, for the
+// control centre to give it a column: more than five.
+const ControlRepeats = 6
+
 // Control is the dashboard's control centre: a row per folder with
-// jobs, a column per job name that occurs more than once.
+// jobs, a column per job name that repeats enough.
 type Control struct {
 	// Columns are the job names with a column, the most common first.
 	Columns []string
@@ -20,16 +24,17 @@ type ControlRow struct {
 	// Cells hold the folder's jobs of each column, none where it has
 	// none.
 	Cells [][]*folder.Job
-	// Extra are the folder's jobs whose names occur once, in their order.
+	// Extra are the folder's jobs whose names have no column, in their
+	// order.
 	Extra []*folder.Job
 }
 
-// NewControl lays the folders out: every job name that occurs more than
-// once, across folders or within one, gets a column, the most common
+// NewControl lays the folders out: every job name that occurs min times
+// or more, across folders or within one, gets a column, the most common
 // first and then by name. A job is placed by its name, so a Makefile's
 // build and a pipeline's build share the column, and a folder's two
 // builds share its cell.
-func NewControl(folders []*folder.Folder) Control {
+func NewControl(folders []*folder.Folder, min int) Control {
 	counts := map[string]int{}
 	for _, f := range folders {
 		for _, job := range f.Jobs {
@@ -38,7 +43,7 @@ func NewControl(folders []*folder.Folder) Control {
 	}
 	columns := []string{}
 	for name, count := range counts {
-		if count > 1 {
+		if count >= min {
 			columns = append(columns, name)
 		}
 	}

@@ -923,6 +923,21 @@
     });
   }
 
+  // onRuns calls fn with each run of the runs topic, as it starts and as
+  // it ends, over one event stream for the page.
+  var runsHandlers = [];
+  function onRuns(fn) {
+    if (!runsHandlers.length) {
+      var source = new EventSource("/api/sse/runs");
+      source.addEventListener("run", function (event) {
+        var run;
+        try { run = JSON.parse(event.data); } catch (e) { return; }
+        runsHandlers.forEach(function (handler) { handler(run); });
+      });
+    }
+    runsHandlers.push(fn);
+  }
+
   // The runs page follows the runs topic: a run that starts is added on
   // top of the table, one that ends is updated in place. The filters of
   // the page hold for the rows it adds.
@@ -958,10 +973,7 @@
         escapeHTML(run.user_name) + (run.scheduled ? ' <span class="badge">scheduled</span>' : "") +
         (run.reason ? ' <span class="badge bad" title="' + escapeHTML(run.reason) + '">out of hours</span>' : run.forced ? ' <span class="badge signal">forced</span>' : "") + "</span>";
     };
-    var runsSource = new EventSource("/api/sse/runs");
-    runsSource.addEventListener("run", function (event) {
-      var run;
-      try { run = JSON.parse(event.data); } catch (e) { return; }
+    onRuns(function (run) {
       var row = runsTable.querySelector('[data-run="' + run.id + '"]');
       if (row) {
         if (!matches(run)) { row.remove(); return; }
@@ -1000,6 +1012,67 @@
         cell.textContent = took({ started_at: new Date(Number(cell.dataset.since)).toISOString() });
       });
     }, 1000);
+  }
+
+  // The dashboard follows the runs topic too: a run that starts adds its
+  // tile, polled for its frame; one that ends marks its tile and the last
+  // frame is fetched. The running count and the control centre's buttons
+  // follow: an eye on the job running, Run again when it ended.
+  var dashboard = document.querySelector('[data-sse="runs"][data-dashboard]');
+  if (dashboard && window.EventSource) {
+    var tiles = dashboard.querySelector("[data-tiles]");
+    var tilesEmpty = dashboard.querySelector("[data-tiles-empty]");
+    var runningCount = dashboard.querySelector("[data-running-count]");
+    var countRunning = function () {
+      var n = tiles.querySelectorAll(".tile-head .dot.running").length;
+      if (runningCount) runningCount.textContent = n;
+      if (tilesEmpty) tilesEmpty.hidden = tiles.children.length > 0;
+    };
+    var slotHTML = function (slot, run) {
+      var label = slot.dataset.label ? "<span>" + escapeHTML(slot.dataset.label) + "</span>" : "";
+      var named = slot.dataset.label ? " named" : "";
+      var what = escapeHTML(slot.dataset.folder + " / " + slot.dataset.name);
+      if (run && run.state === "running") {
+        return '<a class="cc' + named + ' running" href="/runs/' + escapeHTML(run.id) + '" data-attach="' + escapeHTML(run.id) +
+          '" title="Attach to ' + what + ', running"><svg class="ic"><use href="#i-eye"/></svg>' + label + "</a>";
+      }
+      if (slot.hasAttribute("data-can")) {
+        return '<button type="button" class="cc' + named + '" data-run data-folder="' + escapeHTML(slot.dataset.folder) + '" data-job="' +
+          escapeHTML(slot.dataset.job) + '" data-title="' + what + '" title="Run ' + what + '"><svg class="ic"><use href="#i-play"/></svg>' + label + "</button>";
+      }
+      return '<a class="cc' + named + ' idle" href="/f/' + escapeHTML(slot.dataset.folder) + "/" + escapeHTML(slot.dataset.job) + '" title="' + what +
+        ': your role may not run it"><i class="shebang" aria-hidden="true">#!</i>' + label + "</a>";
+    };
+    onRuns(function (run) {
+      var tile = tiles.querySelector('[data-tile="' + run.id + '"]');
+      if (!tile && run.state === "running") {
+        tile = document.createElement("a");
+        tile.className = "tile";
+        tile.href = "/runs/" + run.id;
+        tile.dataset.attach = run.id;
+        tile.dataset.tile = run.id;
+        tile.innerHTML = '<div class="tile-head"><i class="dot running"></i><b>' + escapeHTML(run.folder + " / " + run.job) + "</b>" +
+          '<span class="spacer"></span><span class="faint"></span>' +
+          '<span class="avatar sm" title="' + escapeHTML(run.user_name) + '">' + escapeHTML(initials(run.user_name)) + "</span></div>" +
+          '<div class="frame" data-frame="' + escapeHTML(run.id) + '" role="img" aria-label="Terminal of ' + escapeHTML(run.folder + " / " + run.job) + '"></div>';
+        tiles.insertBefore(tile, tiles.firstChild);
+        watchFrames();
+      } else if (tile) {
+        tile.querySelector(".tile-head .dot").className = "dot " + run.state;
+        var frame = tile.querySelector(".frame");
+        if (run.state !== "running" && frame.dataset.frame) {
+          delete frame.dataset.frame;
+          fetch(frameURL(run.id), { credentials: "same-origin" })
+            .then(function (res) { return res.ok ? res.text() : null; })
+            .then(function (svg) { if (svg) frame.innerHTML = svg; })
+            .catch(function () {});
+        }
+      }
+      dashboard.querySelectorAll('.cc-slot[data-cc="' + run.folder + "/" + run.job + '"]').forEach(function (slot) {
+        slot.innerHTML = slotHTML(slot, run);
+      });
+      countRunning();
+    });
   }
 
   // A file picker fills the field it names, so a key can be chosen or pasted.
