@@ -29,15 +29,16 @@ esac
 out="${TASK_UI_SHOTS:-/tmp}/task-ui-${name}.png"
 rm -f "$out"
 
-# Pages poll /api/runs, which keeps the virtual time budget from settling on
-# its own; the budget bounds it.
+# A page that follows a topic keeps an event stream open, and virtual time
+# never runs out while a request is open: the shot is taken on a timeout
+# instead, the budget in real time.
 timeout 45 chromium \
   --headless \
   --no-sandbox \
   --disable-gpu \
   --hide-scrollbars \
   --blink-settings=preferredColorScheme=${scheme} \
-  --virtual-time-budget="${budget}" \
+  --timeout="${budget}" \
   --window-size="${size/x/,}" \
   --screenshot="$out" \
   "${BASE}${path}" 2>/dev/null || true
