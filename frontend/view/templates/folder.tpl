@@ -22,7 +22,7 @@
 		{{- $run := $.RunningRun $r.Key }}{{ $can := $.CanRun $p $r }}
 		<article class="jobcard{{ if $run }} running{{ end }}">
 			<header>
-				<i class="dot{{ if $run }} running{{ else }}{{ with $.LastRun $r.Key }} {{ .State }}{{ end }}{{ end }}"></i>
+				<i class="shebang{{ if $run }} running{{ else }}{{ with $.LastRun $r.Key }} {{ .State }}{{ end }}{{ end }}" aria-hidden="true">#!</i>
 				<a class="name" href="/f/{{ $p.ID }}/{{ $r.ID }}">{{ $r.Name }}</a>
 				{{- if $r.Interactive }}<span class="badge">interactive</span>{{ end }}
 			</header>

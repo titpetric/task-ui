@@ -111,7 +111,10 @@ func TestFolder_SidebarAndCards(t *testing.T) {
 	assert.Contains(t, body, `<div class="job" data-job-key="infra/plan">`)
 	assert.Contains(t, body, `class="play" data-run data-folder="infra" data-job="plan"`)
 	assert.Contains(t, body, `<div class="job" data-job-key="infra/slow">
-	<i class="dot running"></i>`)
+	<i class="shebang running" aria-hidden="true">#!</i>`)
+	// Every job is marked #!, the card's in the colour of its last run.
+	assert.Contains(t, body, `<div class="job" data-job-key="infra/plan">
+	<i class="shebang" aria-hidden="true">#!</i>`)
 	assert.Contains(t, body, `class="play" data-attach="`+session.ID()+`"`)
 	assert.NotContains(t, body, `class="play" data-run data-folder="private"`) // ops may not run private
 	assert.Contains(t, body, `id="menu-toggle"`)
