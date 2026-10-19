@@ -390,17 +390,18 @@
 	<div class="activity-charts">
 		<figure class="activity-chart">
 			<div class="activity-bars" style="--n: {{ len .Days }}" role="img" aria-label="Runs per day, the last {{ len .Days }} days">
-				{{- range .Days }}
-				<span title="{{ .Title }}">{{ if .OtherStyle }}<i class="other" style="{{ .OtherStyle }}"></i>{{ end }}{{ if .FailedStyle }}<i class="bad" style="{{ .FailedStyle }}"></i>{{ end }}{{ if .OKStyle }}<i class="ok" style="{{ .OKStyle }}"></i>{{ end }}</span>
-				{{- end }}
+				{{- $last := sub (len .Days) 4 }}
+				{{- range $i, $b := .Days }}{{ with $b }}
+				<span class="tip{{ if lt $i 4 }} tip-start{{ else if ge $i $last }} tip-end{{ end }}" data-tip="{{ .Title }}" aria-label="{{ .Title }}">{{ if .OtherStyle }}<i class="other" style="{{ .OtherStyle }}"></i>{{ end }}{{ if .FailedStyle }}<i class="bad" style="{{ .FailedStyle }}"></i>{{ end }}{{ if .OKStyle }}<i class="ok" style="{{ .OKStyle }}"></i>{{ end }}</span>
+				{{- end }}{{ end }}
 			</div>
 			<figcaption>{{ range .Axis }}<span>{{ . }}</span>{{ end }}</figcaption>
 		</figure>
 		<figure class="activity-chart hours">
 			<div class="activity-bars" style="--n: 24" role="img" aria-label="Runs per hour of the day">
-				{{- range .Hours }}
-				<span title="{{ .Title }}">{{ if .OtherStyle }}<i class="other" style="{{ .OtherStyle }}"></i>{{ end }}{{ if .FailedStyle }}<i class="bad" style="{{ .FailedStyle }}"></i>{{ end }}{{ if .OKStyle }}<i class="ok" style="{{ .OKStyle }}"></i>{{ end }}</span>
-				{{- end }}
+				{{- range $i, $b := .Hours }}{{ with $b }}
+				<span class="tip{{ if lt $i 4 }} tip-start{{ else if ge $i 20 }} tip-end{{ end }}" data-tip="{{ .Title }}" aria-label="{{ .Title }}">{{ if .OtherStyle }}<i class="other" style="{{ .OtherStyle }}"></i>{{ end }}{{ if .FailedStyle }}<i class="bad" style="{{ .FailedStyle }}"></i>{{ end }}{{ if .OKStyle }}<i class="ok" style="{{ .OKStyle }}"></i>{{ end }}</span>
+				{{- end }}{{ end }}
 			</div>
 			<figcaption><span>00</span><span>06</span><span>12</span><span>18</span><span>24</span></figcaption>
 		</figure>
@@ -414,10 +415,11 @@
 				<line class="bad" x1="{{ .At }}" y1="0" x2="{{ .At }}" y2="100" vector-effect="non-scaling-stroke"></line>
 				{{- end }}{{ end }}
 				<path class="line" d="{{ .Line }}" vector-effect="non-scaling-stroke"></path>
-				{{- range .Points }}
-				<rect class="hit" x="{{ .X }}" y="0" width="{{ .Width }}" height="100"><title>{{ .Title }}</title></rect>
-				{{- end }}
 			</svg>
+			{{- $n := len .Points }}
+			{{- range $i, $pt := .Points }}
+			<span class="hit tip{{ if lt $i 4 }} tip-start{{ else if ge $i (sub $n 4) }} tip-end{{ end }}" style="left:{{ $pt.X }}%;width:{{ $pt.Width }}%" data-tip="{{ $pt.Title }}" aria-label="{{ $pt.Title }}"></span>
+			{{- end }}
 			<span class="activity-longest">{{ duration .Longest }}</span>
 		</div>
 		<figcaption><span>duration of the latest {{ len .Points }} runs</span></figcaption>

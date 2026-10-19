@@ -48,13 +48,13 @@ func TestNewActivity(t *testing.T) {
 	assert.Equal(t, 1, today.OK)
 	assert.Equal(t, 2, today.Failed) // the killed run too: 01:30 here, the day before in UTC
 	assert.Equal(t, 1, today.Other)
-	assert.Equal(t, "Mon 2026-10-19: 4 runs, 2 failed, 1 running or stopped", today.Title)
+	assert.Equal(t, "4 runs, Mon 2026-10-19 · 2 failed · 1 running or stopped", today.Title)
 	assert.Equal(t, 0, yesterday.OK+yesterday.Failed+yesterday.Other)
-	assert.Equal(t, "Wed 2026-10-07: no runs", a.Days[17].Title)
+	assert.Equal(t, "no runs, Wed 2026-10-07", a.Days[17].Title)
 
 	assert.Equal(t, 1, a.Hours[7].OK)
 	assert.Equal(t, 1, a.Hours[7].Failed)
-	assert.Equal(t, "07:00–08:00: 2 runs, 1 failed", a.Hours[7].Title)
+	assert.Equal(t, "2 runs, 07:00–08:00 · 1 failed", a.Hours[7].Title)
 	assert.Equal(t, 1, a.Hours[1].Failed)
 
 	// The busiest day is a full bar; its parts share it.
@@ -110,7 +110,7 @@ func TestActivitySpark(t *testing.T) {
 	assert.Equal(t, "50.00", p.Width)
 	assert.Equal(t, "50.00", p.At)
 	assert.True(t, p.Failed)
-	assert.Equal(t, "Mon 2026-10-19 08:00 · failed · 5.0s", p.Title)
+	assert.Equal(t, "5.0s, Mon 2026-10-19 08:00 · failed", p.Title)
 	assert.Equal(t, "0.00", s.Points[0].X)
 	assert.Equal(t, "25.00", s.Points[0].Width)
 

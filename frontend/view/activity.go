@@ -51,7 +51,8 @@ type ActivityBar struct {
 }
 
 // ActivityPoint is a run on the duration line: the stretch of the plot
-// that hovers it, and its text.
+// that hovers it, from X as wide as Width, both in percent; At is where
+// the run is on the line; Title the text a hover shows.
 type ActivityPoint struct {
 	X      string
 	Width  string
@@ -140,10 +141,10 @@ func NewActivity(runs []ActivityRun, now time.Time, days int) *Activity {
 	scale(a.Days)
 	scale(a.Hours)
 	for i := range a.Days {
-		a.Days[i].Title = a.Days[i].Label + ": " + counts(a.Days[i])
+		a.Days[i].Title = counts(a.Days[i], a.Days[i].Label)
 	}
 	for h := range a.Hours {
-		a.Hours[h].Title = twoDigits(h) + ":00–" + twoDigits(h+1) + ":00: " + counts(a.Hours[h])
+		a.Hours[h].Title = counts(a.Hours[h], twoDigits(h)+":00–"+twoDigits(h+1)+":00")
 	}
 	sort.SliceStable(finished, func(i, j int) bool { return finished[i].StartedAt.Before(finished[j].StartedAt) })
 	a.Median = median(finished)
@@ -180,18 +181,19 @@ func scale(bars []ActivityBar) {
 	}
 }
 
-// counts says what a bar holds, for its hover.
-func counts(b ActivityBar) string {
+// counts says what a bar holds and when, for its hover: the runs first,
+// "5 runs, 09:00–10:00", then the ones that did not end ok.
+func counts(b ActivityBar, when string) string {
 	total := b.OK + b.Failed + b.Other
 	if total == 0 {
-		return "no runs"
+		return "no runs, " + when
 	}
-	text := plural(total, "run")
+	text := plural(total, "run") + ", " + when
 	if b.Failed > 0 {
-		text += ", " + strconv.Itoa(b.Failed) + " failed"
+		text += " · " + strconv.Itoa(b.Failed) + " failed"
 	}
 	if b.Other > 0 {
-		text += ", " + strconv.Itoa(b.Other) + " running or stopped"
+		text += " · " + strconv.Itoa(b.Other) + " running or stopped"
 	}
 	return text
 }
@@ -268,7 +270,7 @@ func spark(loc *time.Location, runs []ActivityRun) *ActivitySpark {
 			X:      svgNumber(from),
 			Width:  svgNumber(to - from),
 			At:     svgNumber(xs[i]),
-			Title:  run.StartedAt.In(loc).Format("Mon 2006-01-02 15:04") + " · " + run.State + " · " + Duration(run.Elapsed),
+			Title:  Duration(run.Elapsed) + ", " + run.StartedAt.In(loc).Format("Mon 2006-01-02 15:04") + " · " + run.State,
 			Failed: failed,
 		})
 	}

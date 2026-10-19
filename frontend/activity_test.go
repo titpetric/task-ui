@@ -35,14 +35,14 @@ func TestActivity_Runs(t *testing.T) {
 	assert.Contains(t, admin, `<div class="activity-bars" style="--n: 30"`)
 	assert.Contains(t, admin, "3 runs in 30 days")
 	assert.Contains(t, admin, `<span class="bad">1 failed</span>`)
-	assert.Contains(t, admin, `title="Fri 2026-10-16: 2 runs, 1 failed"`)
-	assert.Contains(t, admin, `title="Thu 2026-10-15: 1 run"`)
-	assert.Contains(t, admin, `title="20:00–21:00: 2 runs"`) // the 16th and the 15th
+	assert.Contains(t, admin, `data-tip="2 runs, Fri 2026-10-16 · 1 failed"`)
+	assert.Contains(t, admin, `data-tip="1 run, Thu 2026-10-15"`)
+	assert.Contains(t, admin, `data-tip="2 runs, 20:00–21:00"`) // the 16th and the 15th
 	assert.NotContains(t, admin, "activity-line")
 
 	limited := f.page(t, asLimited, "/runs")
 	assert.Contains(t, limited, "2 runs in 30 days")
-	assert.Contains(t, limited, `title="Thu 2026-10-15: no runs"`)
+	assert.Contains(t, limited, `data-tip="no runs, Thu 2026-10-15"`)
 
 	filtered := f.page(t, asAdmin, "/runs?job=deploy")
 	assert.Contains(t, filtered, "1 run in 30 days")
@@ -61,7 +61,7 @@ func TestActivity_Job(t *testing.T) {
 	assert.Contains(t, body, "median 3.0s")
 	assert.Contains(t, body, `class="activity-line"`)
 	assert.Contains(t, body, `<line class="bad"`)
-	assert.Contains(t, body, "Fri 2026-10-16 21:00 · failed · 4.0s")
+	assert.Contains(t, body, "4.0s, Fri 2026-10-16 21:00 · failed")
 
 	quiet := f.page(t, asOps, "/f/infra/many")
 	assert.NotContains(t, quiet, `class="activity"`)
@@ -85,7 +85,7 @@ func TestActivity_Workflow(t *testing.T) {
 	body := f.page(t, asOps, "/workflows/"+wf.ID)
 	assert.Contains(t, body, "2 runs in 30 days")
 	assert.Contains(t, body, "median 15.0s")
-	assert.Contains(t, body, `title="Fri 2026-10-16: 2 runs, 1 failed"`)
+	assert.Contains(t, body, `data-tip="2 runs, Fri 2026-10-16 · 1 failed"`)
 	assert.Contains(t, body, `class="activity-line"`)
 
 	empty := f.workflow(t, asOps, "never", "infra", "plan")
