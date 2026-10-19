@@ -39,15 +39,16 @@ func TestHome_Control(t *testing.T) {
 	session := f.start(t, f.infra, "slow")
 
 	body := f.page(t, asOps, "/")
-	// deploy occurs twice, short of the six a column needs: every job is
-	// under other, a button with its name.
-	assert.Contains(t, body, `<thead><tr><th>Folder</th><th>Other</th></tr></thead>`)
+	// deploy occurs twice, so it gets a column, its name on end; a cell
+	// with the one job is a bare button.
+	assert.Contains(t, body, `<thead><tr><th>Folder</th><th class="col"><span>deploy</span></th><th>Other</th></tr></thead>`)
 	edge := body[strings.Index(body, `<a href="/f/infra/edge">infra/edge</a>`):]
 	edge = edge[:strings.Index(edge, "</tr>")]
-	assert.Contains(t, edge, `<button type="button" class="cc named" data-run data-folder="infra/edge" data-job="deploy"`)
+	assert.Contains(t, edge, `<button type="button" class="cc" data-run data-folder="infra/edge" data-job="deploy"`)
 
 	infra := body[strings.Index(body, `<td class="key nowrap"><a href="/f/infra">infra</a>`):]
 	infra = infra[:strings.Index(infra, "</tr>")]
+	assert.Contains(t, infra, `<td class="col" data-label="deploy"></td>`) // infra has no deploy
 	assert.Contains(t, infra, `<td class="other" data-label="Other"><div>`)
 	assert.Contains(t, infra, `class="cc named" data-run data-folder="infra" data-job="plan"`)
 	assert.Contains(t, infra, `<span>plan</span>`)
@@ -58,7 +59,7 @@ func TestHome_Control(t *testing.T) {
 	// ops may not run private's deploy: a #! to its page instead.
 	private := body[strings.Index(body, `<a href="/f/private">private</a>`):]
 	private = private[:strings.Index(private, "</tr>")]
-	assert.Contains(t, private, `<a class="cc named idle" href="/f/private/deploy"`)
+	assert.Contains(t, private, `<a class="cc idle" href="/f/private/deploy"`)
 	assert.NotContains(t, private, "data-run")
 	assert.NotContains(t, private, "data-can")
 

@@ -54,8 +54,8 @@ func TestControl(t *testing.T) {
 	three := view.NewControl(folders, 3)
 	assert.Equal(t, []string{"build", "test"}, three.Columns)
 	assert.Equal(t, []string{"make:release", "script:release", "make:lint"}, names(three.Rows[4].Extra))
-	assert.Len(t, view.NewControl(folders, view.ControlRepeats).Columns, 0)
-	assert.Equal(t, 6, view.ControlRepeats) // more than five
+	assert.Len(t, view.NewControl(folders, 4).Columns, 0)
+	assert.Equal(t, 2, view.ControlRepeats) // more than once
 	assert.Len(t, c.Rows, 5)
 
 	api := c.Rows[0]
