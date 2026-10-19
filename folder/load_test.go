@@ -1,6 +1,7 @@
 package folder
 
 import (
+	"os"
 	"path/filepath"
 	"slices"
 	"testing"
@@ -111,5 +112,27 @@ func TestAppendUnique(t *testing.T) {
 	got := appendUnique([]string{"a"}, "b", " a ", "", "b")
 	if !slices.Equal(got, []string{"a", "b"}) {
 		t.Fatalf("%v", got)
+	}
+}
+
+// A scripts folder with a pipeline lists its loose scripts beside the
+// pipeline's jobs, every job under its own name.
+func TestLoad_LooseScripts(t *testing.T) {
+	dir := filepath.Join(t.TempDir(), "scripts")
+	write(t, filepath.Join(dir, "atkins.yml"), "tasks:\n  weather:\n    desc: \"Weather\"\n    cmds:\n      - echo sunny\n")
+	write(t, filepath.Join(dir, "bash.sh"), "#!/bin/bash\n# A shell\n# interactive: true\nexec bash\n")
+	if err := os.Chmod(filepath.Join(dir, "bash.sh"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	f := Load("deploy/scripts", dir)
+	if len(f.Sources) != 2 {
+		t.Fatalf("sources: %d", len(f.Sources))
+	}
+	weather, bash := f.Job("weather"), f.Job("bash")
+	if weather == nil || bash == nil {
+		t.Fatalf("jobs: %+v", f.Jobs)
+	}
+	if !bash.Interactive || bash.Kind != "script" || bash.Command[0] != "./bash.sh" {
+		t.Fatalf("bash: %+v", bash)
 	}
 }

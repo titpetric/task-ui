@@ -26,13 +26,16 @@ changes them.
 | make     | `Makefile`, `makefile`, `GNUmakefile` | a target; `target: ## text` or a comment describes it |
 | npm      | `package.json`                        | a script, run with npm, pnpm, yarn or bun by the lock file |
 | composer | `composer.json`                       | a script, described by `scripts-descriptions`         |
-| script   | `scripts/*`                           | a file; its first comment describes it                |
+| script   | `scripts/*`                           | a file; its first comment describes it, `# interactive: true` makes it take input |
 
 A pipeline file, `atkins.yml` or a Taskfile, speaks for its folder: the
 folder lists that pipeline's jobs, and what is beside it is the
 pipeline's business. Without one, every source is listed, and a job name
 that two of them share gets its kind in front (`make:build`,
-`npm:build`).
+`npm:build`). A folder that is itself a `scripts` directory with a
+pipeline also lists the scripts beside it that the pipeline does not
+run, under their own names, such as a `bash.sh` with `exec bash` and
+`# interactive: true`, a terminal to work in.
 
 Every directory under the root that has something to run is a folder, as
 deep as they go. Hidden directories, `node_modules`, `vendor` and

@@ -178,11 +178,14 @@ extension of any file, and no pipeline file is ever written.
 | make | `GNUmakefile`, `makefile`, `Makefile` | `make <target>` | plain targets; `target: ## text` or a comment above describes one |
 | npm | `package.json` | `npm run <script>`, or `pnpm`, `yarn`, `bun` after the lock file | the scripts, hooks folded into theirs |
 | composer | `composer.json` | `composer run-script <script>` | the scripts, with `scripts-descriptions` |
-| script | `scripts/*` | `./scripts/<file>`, or `sh` for a `.sh` that is not executable | one per file; the first comment describes it |
+| script | `scripts/*` | `./scripts/<file>`, or `sh` for a `.sh` that is not executable | one per file; the first comment describes it, `# interactive: true` in the same comments makes it take keyboard input |
 
 A pipeline file stands for its folder: a folder with `atkins.yml` or a
 Taskfile lists that pipeline's targets only, and the Makefile, package
-scripts or `scripts/` beside it are the pipeline's business. Without a
+scripts or `scripts/` beside it are the pipeline's business. A folder
+that is itself a `scripts` directory with a pipeline file also lists the
+scripts beside it that its pipeline does not run, under their own names:
+a `bash.sh` with `exec bash` next to the pipeline's jobs. Without a
 pipeline file every convention is a source. A job's ID is its target
 name, or `kind:name` when the folder lists more than one convention, so
 `make build` and `npm run build` stay apart.

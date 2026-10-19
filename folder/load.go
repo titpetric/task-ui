@@ -17,6 +17,11 @@ func Load(id, dir string, kinds ...string) *Folder {
 	f.Sources = detector.All(dir, kinds...)
 	if len(kinds) == 0 {
 		f.Sources = firstSource(f.Sources)
+		if len(f.Sources) == 1 {
+			if loose := detector.Loose(dir, f.Sources[0]); loose != nil {
+				f.Sources = append(f.Sources, loose)
+			}
+		}
 	}
 	finish(f)
 	return f
@@ -52,6 +57,14 @@ func LoadFile(id, path string) *Folder {
 // sources, and the merged include and env file lists.
 func finish(f *Folder) {
 	var failures []string
+	// A source aside keeps its targets' names; the others take their
+	// kind in front when there are several of them.
+	named := 0
+	for _, source := range f.Sources {
+		if !source.Aside {
+			named++
+		}
+	}
 	for _, source := range f.Sources {
 		if f.Title == f.ID && source.Name != "" {
 			f.Title = source.Name
@@ -72,7 +85,7 @@ func finish(f *Folder) {
 				Kind:   source.Kind,
 				Source: source.File,
 			}
-			if len(f.Sources) > 1 {
+			if named > 1 && !source.Aside {
 				job.ID = source.Kind + ":" + target.Name
 			}
 			job.Command = append(append([]string{}, source.Command...), target.Argv()...)

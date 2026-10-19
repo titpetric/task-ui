@@ -24,6 +24,11 @@ type Source struct {
 
 	// Error is set when the file does not parse.
 	Error string `json:"error,omitempty"`
+
+	// Aside marks a source listed beside the one that reads the folder,
+	// whose targets keep their names: the loose scripts of a scripts
+	// folder with a pipeline, none named as a pipeline target.
+	Aside bool `json:"aside,omitempty"`
 }
 
 // Target returns the target by name, or nil.

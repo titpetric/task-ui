@@ -57,3 +57,17 @@ func TestScriptDetector_OwnedScripts(t *testing.T) {
 		}
 	}
 }
+
+// The header of a script in a scripts folder can make it interactive.
+func TestScriptDetector_Interactive(t *testing.T) {
+	dir := t.TempDir()
+	write(t, filepath.Join(dir, "scripts", "shell.sh"), "#!/bin/bash\n# Open a shell\n# interactive: true\nexec bash\n")
+	write(t, filepath.Join(dir, "scripts", "plain.sh"), "#!/bin/bash\n# Just output\necho hi\n")
+	source := (scriptDetector{}).Detect(dir)
+	if !source.Target("shell").Interactive || source.Target("shell").Description != "Open a shell" {
+		t.Fatalf("shell: %+v", source.Target("shell"))
+	}
+	if source.Target("plain").Interactive {
+		t.Fatal("plain is not interactive")
+	}
+}
