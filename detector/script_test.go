@@ -39,3 +39,21 @@ func TestScriptDetector(t *testing.T) {
 		t.Fatal("a scripts folder with nothing runnable is a source")
 	}
 }
+
+// A scripts folder that runs its scripts itself, from a pipeline file
+// or a Makefile of its own, is a folder of its own: its scripts are not
+// listed again on the folder above.
+func TestScriptDetector_OwnedScripts(t *testing.T) {
+	for name, file := range map[string]string{
+		"atkins.yml":   "jobs:\n  update: ./update.sh\n",
+		"Taskfile.yml": "tasks:\n  update:\n    cmds: [./update.sh]\n",
+		"Makefile":     "update:\n\t./update.sh\n",
+	} {
+		dir := t.TempDir()
+		write(t, filepath.Join(dir, "scripts", "update.sh"), "#!/usr/bin/env bash\n# Update\n")
+		write(t, filepath.Join(dir, "scripts", name), file)
+		if source := (scriptDetector{}).Detect(dir); source != nil {
+			t.Fatalf("%s owns the scripts, yet they are listed above it: %+v", name, source)
+		}
+	}
+}

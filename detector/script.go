@@ -10,14 +10,31 @@ import (
 
 // scriptDetector lists the executables and shell scripts of a scripts
 // directory. A script describes itself with the first comment after the
-// shebang.
+// shebang. A scripts directory with a pipeline file or a Makefile of its
+// own runs its scripts itself, as a folder of its own, so the folder
+// above does not list them again.
 type scriptDetector struct{}
+
+// ownsScripts reports whether a scripts directory follows a convention
+// other than a scripts folder: a pipeline file, a Makefile, a
+// package.json.
+func ownsScripts(dir string) bool {
+	for _, detector := range Detectors {
+		if detector.Kind() != "script" && detector.Detect(dir) != nil {
+			return true
+		}
+	}
+	return false
+}
 
 func (scriptDetector) Kind() string { return "script" }
 
 func (d scriptDetector) Detect(dir string) *Source {
 	entries, err := os.ReadDir(filepath.Join(dir, "scripts"))
 	if err != nil {
+		return nil
+	}
+	if ownsScripts(filepath.Join(dir, "scripts")) {
 		return nil
 	}
 	source := &Source{Kind: "script", File: "scripts/", Command: nil}
