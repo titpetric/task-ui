@@ -896,6 +896,33 @@ table.table-kv th {
   100% { box-shadow: 0 0 0 0 transparent; }
 }
 
+/* The mark of a job or a workflow: a shebang in an icon's column, faint,
+   in the colour of how it last ended, pulsing in the signal colour while
+   it runs. */
+.shebang {
+  flex: none;
+  display: inline-block;
+  width: var(--tree-icon, 1.05rem);
+  font-family: var(--font);
+  font-size: 0.75rem;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 1;
+  text-align: center;
+  color: var(--text-faint);
+}
+
+.shebang.ok { color: var(--ok); }
+.shebang.failed, .shebang.killed { color: var(--bad); }
+.shebang.running {
+  color: var(--signal);
+  animation: blink 1.6s ease-in-out infinite;
+}
+
+@keyframes blink {
+  50% { opacity: 0.35; }
+}
+
 .state {
   display: inline-flex;
   align-items: center;
@@ -1521,20 +1548,11 @@ dialog.run[open] {
   border-left-color: var(--signal);
 }
 
-/* The shebang of a workflow: faint, in the signal colour while it runs. */
 .menu .flows .shebang {
-  flex: none;
   width: 1.05rem;
-  font-family: var(--font);
-  font-size: 0.75rem;
-  font-style: normal;
-  font-weight: 700;
-  text-align: center;
-  color: var(--text-faint);
 }
 
-.menu .flows .flow.active .shebang,
-.menu .flows .shebang.running {
+.menu .flows .flow.active .shebang {
   color: var(--signal);
 }
 
@@ -2158,25 +2176,18 @@ dialog.run[open] {
 .folders .jobs .job {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  /* One step in from the folder: the dot under the folder's name. */
+  gap: var(--tree-gap);
+  /* One step in from the folder: the #! under the folder's name. */
   padding: 0.15rem 0.6rem 0.15rem var(--tree-2);
   color: var(--text-dim);
   font-size: 0.8125rem;
   border-left: 2px solid transparent;
 }
 
-.folders .jobs .job .dot {
-  flex: none;
-  width: 0.4rem;
-  height: 0.4rem;
-}
-
-/* A project's own jobs are rows like its folders: the dot centred in the
-   folder icon's column, the name where the folder names start. */
+/* A project's own jobs are rows like its folders: the #! in the folder
+   icon's column, the name where the folder names start. */
 .folders .jobs.top .job {
-  padding-left: calc(var(--tree-1) + (var(--tree-icon) - 0.4rem) / 2);
-  gap: calc((var(--tree-icon) - 0.4rem) / 2 + var(--tree-gap));
+  padding-left: var(--tree-1);
 }
 
 .folders .jobs .job a {

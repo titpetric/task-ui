@@ -1258,7 +1258,7 @@
       document.querySelectorAll(".side [data-folder] > summary .dot").forEach(function (dot) {
         dot.classList.toggle("running", !!running[dot.closest("[data-folder]").dataset.folder]);
       });
-      document.querySelectorAll(".side [data-job-key] .dot").forEach(function (dot) {
+      document.querySelectorAll(".side [data-job-key] .shebang").forEach(function (dot) {
         dot.classList.toggle("running", !!runningJobs[dot.parentElement.dataset.jobKey]);
       });
       var any = document.querySelector("[data-any-running]");

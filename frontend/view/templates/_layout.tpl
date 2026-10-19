@@ -321,7 +321,7 @@
 {{- range $r := $p.Jobs }}
 {{- $run := $.RunningRun $r.Key }}
 <div class="job{{ if and $.Job (eq $.Job.Key $r.Key) }} active{{ end }}" data-job-key="{{ $r.Key }}">
-	<i class="dot{{ if $run }} running{{ end }}"></i>
+	<i class="shebang{{ if $run }} running{{ end }}" aria-hidden="true">#!</i>
 	<a href="/f/{{ $p.ID }}/{{ $r.ID }}">{{ if ne $r.ID $r.Name }}<i>{{ index (split $r.ID ":") 0 }}:</i>{{ end }}{{ $r.Name }}</a>
 	{{- if $run }}
 	<button type="button" class="play" data-attach="{{ $run.ID }}" title="Attach to {{ $r.Name }}, running" aria-label="Attach to {{ $r.Name }}"><svg class="ic"><use href="#i-eye"/></svg></button>
