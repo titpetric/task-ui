@@ -4,6 +4,9 @@
 package folder
 
 import (
+	"bytes"
+	"os"
+	"path/filepath"
 	"slices"
 	"strings"
 
@@ -91,6 +94,28 @@ func (f *Folder) HoursOf(job *Job) string {
 
 // Name is the last segment of the ID: what the sidebar shows at its depth.
 func (f *Folder) Name() string {
+	return f.name()
+}
+
+// Lines counts the lines of a file in the folder, for the Show button of
+// a file its pipeline reads: a last line without a newline counts. A
+// file it cannot read, or one outside the folder, is 0.
+func (f *Folder) Lines(name string) int {
+	if name == "" || filepath.IsAbs(name) || strings.HasPrefix(filepath.Clean(filepath.FromSlash(name)), "..") {
+		return 0
+	}
+	data, err := os.ReadFile(filepath.Join(f.Dir, filepath.FromSlash(name)))
+	if err != nil || len(data) == 0 {
+		return 0
+	}
+	lines := bytes.Count(data, []byte{'\n'})
+	if data[len(data)-1] != '\n' {
+		lines++
+	}
+	return lines
+}
+
+func (f *Folder) name() string {
 	if i := strings.LastIndex(f.ID, "/"); i >= 0 {
 		return f.ID[i+1:]
 	}

@@ -3,6 +3,8 @@ package frontend_test
 import (
 	"context"
 	"net/http"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/titpetric/task-ui/detector"
@@ -62,9 +64,11 @@ func TestJob_ShowSource(t *testing.T) {
 	f.infra.Sources = []*detector.Source{{Kind: "atkins", File: "atkins.yml"}}
 	f.infra.Includes = []string{"vars.yml"}
 	f.infra.Job("plan").Kind, f.infra.Job("plan").Source = "atkins", "atkins.yml"
+	assert.NoError(t, os.WriteFile(filepath.Join(f.infra.Dir, "atkins.yml"), []byte("jobs:\n  plan: echo plan\n  apply: echo apply\n"), 0o644))
 
 	job := f.page(t, asOps, "/f/infra/plan")
 	assert.Contains(t, job, `atkins.yml<button type="button" class="btn btn-sm show-source" data-source="infra" data-file="atkins.yml" aria-haspopup="dialog">`)
+	assert.Contains(t, job, `<span>Show 3 lines</span>`)
 	assert.Contains(t, job, `data-source="infra" data-file="vars.yml"`)
 	assert.Contains(t, job, `<dialog class="run source" id="source-dialog"`)
 
