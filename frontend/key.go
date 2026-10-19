@@ -48,8 +48,8 @@ func (h *Handlers) keyUpload(w http.ResponseWriter, r *http.Request) {
 }
 
 // keyFolders lists the .ssh/ folders of the projects, the checkouts at
-// the top of the root, that hold a key: what their runs load into an ssh
-// agent. They are the projects' to manage, so the page only shows them.
+// the top of the root, that hold a private key. Runs do not load them, so
+// the page warns: a key a project needs is uploaded and given by policy.
 func (h *Handlers) keyFolders() []view.KeyFolder {
 	var result []view.KeyFolder
 	for _, f := range h.opts.Catalogue.List() {

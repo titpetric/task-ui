@@ -77,15 +77,23 @@ run, in the run's own terminal, so a job always runs the latest version.
 A folder inside a checkout pulls the checkout. A pull that fails fails
 the run.
 
-## Keys from the project
+## Keys for a run
 
-A checkout with a `.ssh/` folder at its top has its keys loaded for its
-runs: every unencrypted private key there goes into an ssh agent served
-for that run alone, and the job gets `SSH_AUTH_SOCK`. `ssh`, `git`,
-`rsync` and terraform's agent authentication use it. The keys stay in
-memory and the agent ends with the run; the terminal says which keys it
-loaded. The SSH keys page lists them under the project (see
-[Settings](settings.md#ssh-keys)).
+A run gets SSH keys only through an ssh agent served for that run alone:
+the instance keys whose policies name the role of whoever started it, or
+them by name (see [Settings](settings.md#ssh-keys)). A scheduled run gets
+the keys of the schedule's creator. The job gets `SSH_AUTH_SOCK`, and
+`ssh`, `git`, `rsync` and terraform's agent authentication use it. The
+keys stay in memory and the agent ends with the run; the terminal says
+which keys it loaded, or `(none)`. A run with no key has an empty
+`SSH_AUTH_SOCK`, never the server's own.
+
+`git` in a job uses `GIT_SSH_COMMAND` with `IdentityFile=none`, so it
+offers the agent's keys and no key file, and the instance `known_hosts`.
+
+A checkout's `.ssh/` folder is not loaded. The SSH keys page warns about
+one with private keys in it: upload a key the project needs as an
+instance key and give it by policy.
 
 ## Hours
 

@@ -166,7 +166,7 @@ func TestWorkflow_Page(t *testing.T) {
 	longSteps, _ := f.opts.WorkflowRuns.Steps(context.Background(), longRun.ID)
 	longPage := f.page(t, asOps, "/workflows/"+long.ID)
 	assert.Contains(t, longPage, `data-expand="`+longSteps[0].RunID+`" aria-expanded="false"><svg class="ic"><use href="#i-expand"/></svg><span>Expand `)
-	assert.Contains(t, longPage, `<span>Expand 200 lines</span></button>`) // seq 1 200
+	assert.Contains(t, longPage, `<span>Expand 201 lines</span></button>`) // the ssh-agent line, seq 1 200
 	assert.NotContains(t, ops, `data-frame=`)
 
 	mine := f.workflow(t, asOps, "plan only", "infra", "plan")
