@@ -681,7 +681,7 @@
     var latest = document.querySelector("[data-latest]");
     var runs = document.querySelector("[data-runs]");
     var actions = document.querySelector("[data-actions]");
-    var row = runs && runs.querySelector('[data-run="' + data.run_id + '"]');
+    var row = runs && runs.querySelector('[data-run-id="' + data.run_id + '"]');
 
     if (name === "run") {
       nodes.forEach(function (node) {
@@ -700,7 +700,7 @@
         var empty = runs.querySelector(".empty");
         if (empty) empty.remove();
         row = el("tr");
-        row.dataset.run = data.run_id;
+        row.dataset.runId = data.run_id;
         var started = el("td", "nowrap", "just now");
         started.dataset.label = "Started";
         var by = el("td", "", data.user_name || "");
@@ -758,10 +758,7 @@
         var a = row.querySelector('[data-pos="' + data.position + '"]');
         if (a) {
           a.querySelector(".dot").className = "dot " + data.state;
-          if (href) {
-            a.href = href;
-            a.dataset.attach = data.step_run_id;
-          }
+          if (href) a.href = href;
         }
       }
       return;
@@ -904,10 +901,10 @@
     var a = node.querySelector("a");
     if (href) {
       a.href = href;
-      a.dataset.attach = runId;
-    } else if (state === "pending" && a.dataset.attach) {
+      a.dataset.runLink = runId;
+    } else if (state === "pending" && a.dataset.runLink) {
       a.href = a.dataset.target || a.href;
-      delete a.dataset.attach;
+      delete a.dataset.runLink;
     }
   }
 
@@ -1015,7 +1012,7 @@
         (run.reason ? ' <span class="badge bad" title="' + escapeHTML(run.reason) + '">out of hours</span>' : run.forced ? ' <span class="badge signal">forced</span>' : "") + "</span>";
     };
     onRuns(function (run) {
-      var row = runsTable.querySelector('[data-run="' + run.id + '"]');
+      var row = runsTable.querySelector('[data-run-id="' + run.id + '"]');
       if (row) {
         if (!matches(run)) { row.remove(); return; }
         row.querySelector("[data-result]").innerHTML = stateHTML(run);
@@ -1028,7 +1025,7 @@
       var empty = runsTable.querySelector(".empty");
       if (empty) empty.remove();
       row = document.createElement("tr");
-      row.dataset.run = run.id;
+      row.dataset.runId = run.id;
       var folder = escapeHTML(run.folder), job = escapeHTML(run.job);
       row.innerHTML =
         '<td class="nowrap" data-label="Started">just now</td>' +
@@ -1046,7 +1043,7 @@
     });
     // The running rows count their time.
     setInterval(function () {
-      runsTable.querySelectorAll("tr[data-run]").forEach(function (row) {
+      runsTable.querySelectorAll("tr[data-run-id]").forEach(function (row) {
         if (!row.querySelector(".dot.running")) return;
         var cell = row.querySelector("[data-took]");
         if (!cell.dataset.since) cell.dataset.since = Date.now() - (parseFloat(cell.textContent) || 0) * 1000;
@@ -1131,6 +1128,10 @@
   document.addEventListener("click", function (event) {
     var btn = event.target.closest("[data-run], [data-attach], [data-stop], [data-kill], [data-delete], [data-copy]");
     if (!btn) return;
+    // A link inside the element matched is a link: it navigates, it does
+    // not run or attach for the element around it.
+    var link = event.target.closest("a[href]");
+    if (link && link !== btn && btn.contains(link)) return;
 
     if (btn.hasAttribute("data-copy")) {
       var value = btn.getAttribute("data-copy");

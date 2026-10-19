@@ -38,7 +38,7 @@
 		<thead><tr><th>Started</th><th>Folder</th><th>Job</th><th>By</th><th>Duration</th><th>Result</th><th></th></tr></thead>
 		<tbody data-runs-table>
 		{{- range .Runs }}
-			<tr data-run="{{ .ID }}">
+			<tr data-run-id="{{ .ID }}">
 				<td class="nowrap" data-label="Started" title="{{ stamp .StartedAt }}">{{ ago .StartedAt }}</td>
 				<td data-label="Folder"><a href="/f/{{ .Folder }}">{{ .Folder }}</a></td>
 				<td class="key"><a href="/f/{{ .Folder }}/{{ .Job }}">{{ .Job }}</a></td>

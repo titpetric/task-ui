@@ -39,11 +39,11 @@
 		<thead><tr><th>Started</th><th>By</th><th>Result</th><th>Steps</th></tr></thead>
 		<tbody data-runs>
 		{{- range $.WorkflowRuns }}
-			<tr data-run="{{ .ID }}">
+			<tr data-run-id="{{ .ID }}">
 				<td class="nowrap" data-label="Started" title="{{ stamp .StartedAt }}">{{ ago .StartedAt }}</td>
 				<td data-label="By">{{ .UserName }}</td>
 				<td data-label="Result" data-result><span class="state"><i class="dot {{ .State }}"></i>{{ .State }}</span>{{ if .Message }} <span class="faint">{{ .Message }}</span>{{ end }}</td>
-				<td data-label="Steps"><span class="chain">{{ range $i, $l := chain .Steps }}{{ if $i }}<span class="faint"> → </span>{{ end }}<a class="nowrap" href="{{ $l.Href }}" data-pos="{{ $i }}"{{ if $l.RunID }} data-attach="{{ $l.RunID }}"{{ end }}><i class="dot {{ $l.State }}"></i>{{ if $l.Workflow }}<svg class="ic"><use href="#i-flow"/></svg>{{ end }}{{ $l.Text }}</a>{{ end }}</span></td>
+				<td data-label="Steps"><span class="chain">{{ range $i, $l := chain .Steps }}{{ if $i }}<span class="faint"> → </span>{{ end }}<a class="nowrap" href="{{ $l.Href }}" data-pos="{{ $i }}"><i class="dot {{ $l.State }}"></i>{{ if $l.Workflow }}<svg class="ic"><use href="#i-flow"/></svg>{{ end }}{{ $l.Text }}</a>{{ end }}</span></td>
 			</tr>
 		{{- else }}
 			<tr class="empty"><td colspan="4">Not run yet.</td></tr>
@@ -64,7 +64,7 @@
 	<span class="rail"><i class="dot{{ with $l.State }} {{ . }}{{ end }}"></i></span>
 	<div class="what">
 		<div class="step-head">
-			<a href="{{ $l.Href }}"{{ if $l.RunID }} data-attach="{{ $l.RunID }}"{{ end }}>{{ if $l.Workflow }}<svg class="ic"><use href="#i-flow"/></svg>{{ end }}{{ $l.Text }}</a>
+			<a href="{{ $l.Href }}"{{ if $l.RunID }} data-run-link="{{ $l.RunID }}"{{ end }}>{{ if $l.Workflow }}<svg class="ic"><use href="#i-flow"/></svg>{{ end }}{{ $l.Text }}</a>
 			{{- if and $l.RunID (not $l.Complete) }}<button type="button" class="btn btn-sm" data-expand="{{ $l.RunID }}" aria-expanded="false"><svg class="ic"><use href="#i-expand"/></svg><span>Expand{{ with $l.Lines }} {{ . }} lines{{ end }}</span></button>{{ end }}
 		</div>
 		<small>{{ if $l.State }}{{ $l.State }}{{ else }}step {{ add $i 1 }}{{ end }}</small>
