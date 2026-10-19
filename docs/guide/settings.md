@@ -78,8 +78,8 @@ secrets are encrypted with.
   for the new key. The last key that opens the secrets cannot be deleted.
 - **Policies** are whose runs get a key: roles, and users by name. A run
   started by someone with one of the key's roles, or by one of its users,
-  has it in the run's ssh agent, beside the keys of its project's `.ssh/`
-  folder. Pick them when you generate or upload a key, or later with the
+  has it in the run's ssh agent, and nothing else does: that agent is the
+  only way a key reaches a run. Pick them when you generate or upload a key, or later with the
   edit button on its row. A key can have several, and a key with none
   stays the instance's: git and the secrets use it, runs do not get it.
 - **A key for someone**: give it a **Name** when you generate or upload
@@ -88,10 +88,10 @@ secrets are encrypted with.
   menu, the keys her runs get, and copies the public half to her git host
   or servers. A rotation keeps a key's policies. The key files are still
   readable by any job, as jobs run as the server's user; policies decide
-  what a run is handed, they do not hide a file.
-- Below the instance keys, each project with keys in its `.ssh/` folder
-  has a section of its own: the keys its runs get through an ssh agent.
-  The project manages them, so they can be copied but not changed here.
+  what a run is handed, they do not hide a file. Keep `TASK_UI_SSH_DIR`
+  out of `~/.ssh`, so `ssh` in a job does not find them by default.
+- A project with private keys in its `.ssh/` folder gets a warning: runs
+  do not load them. Upload a key it needs here and give it by policy.
 
 ## Env files
 

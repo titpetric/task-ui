@@ -288,9 +288,9 @@ func (m *Manager) settle(ctx context.Context, session *Session, status Status) {
 	session.finish(status)
 }
 
-// execute does the run: a pull when the folder is in a checkout, the keys
-// of the checkout's .ssh/ in an agent, the env files, then the process,
-// pumped until it exits.
+// execute does the run: a pull when the folder is in a checkout, the
+// keys the policies give the run's user in an agent, the env files, then
+// the process, pumped until it exits.
 func (m *Manager) execute(ctx context.Context, session *Session) Status {
 	f, job, run := session.Folder, session.Job, session.Run
 	if len(job.Command) == 0 {
@@ -313,9 +313,12 @@ func (m *Manager) execute(ctx context.Context, session *Session) Status {
 	if err != nil {
 		return failed(session, err.Error())
 	}
+	// The run's agent or none: never the server's own SSH_AUTH_SOCK.
+	socket := ""
 	if keys != nil {
-		cmd.Env = append(cmd.Env, "SSH_AUTH_SOCK="+keys.Socket)
+		socket = keys.Socket
 	}
+	cmd.Env = append(cmd.Env, "SSH_AUTH_SOCK="+socket)
 	proc, err := StartProcess(cmd, int(run.TermCols), int(run.TermRows))
 	if err != nil {
 		return failed(session, "cannot start: "+err.Error())
@@ -372,6 +375,7 @@ func (m *Manager) command(ctx context.Context, session *Session) (*exec.Cmd, err
 		"LINES="+strconv.Itoa(int(run.TermRows)),
 		"TASK_UI=1",
 		"TASK_UI_USER="+run.UserName,
+		"GIT_SSH_COMMAND="+gitSSH(m.opts.KeyDir),
 		"TASK_UI_FOLDER="+f.ID,
 		"TASK_UI_JOB="+job.ID,
 		"TASK_UI_RUN_ID="+run.ID,

@@ -69,12 +69,13 @@ services:
     restart: always
     environment:
       TASK_UI_SECRET: change-me
+      TASK_UI_SSH_DIR: /keys
     ports:
     - 3000:3000
     volumes:
     - $PWD/app:/app
     - $PWD/data:/data
-    - $PWD/root/.ssh:/root/.ssh
+    - $PWD/keys:/keys
     - /var/run/docker.sock:/var/run/docker.sock:ro
 ```
 
@@ -85,7 +86,9 @@ the users sign in from `/app/.htpasswd`. The image bundles `task`,
 `atkins`, `docker` and `docker compose`.
 
 - If you don't want to use Docker, remove the volume for `docker.sock`.
-- Mount `/root/.ssh` to keep the SSH keys managed from the UI.
+- Mount `/keys` with `TASK_UI_SSH_DIR` to keep the SSH keys managed from
+  the UI. Keep it out of `/root/.ssh`, so `ssh` in a job does not find
+  them by default; a run gets the keys its policies give it.
 
 ## Configuration
 
@@ -277,12 +280,14 @@ run, in the run's own terminal, so the job always runs the latest
 version of the project; a folder inside a checkout pulls the checkout.
 A pull that fails fails the run.
 
-A checkout with a `.ssh/` folder at its top has its keys loaded for its
-runs: every unencrypted private key in it goes into an ssh agent that
-task-ui serves for the run alone, and the job gets `SSH_AUTH_SOCK`, so
-`ssh`, `git`, `rsync` and terraform's agent authentication use them. The
-keys stay in memory and the agent ends with the run; the terminal says
-which keys were loaded.
+A run gets SSH keys only through an ssh agent that task-ui serves for the
+run alone, with the instance keys whose policies name the role or the
+name of whoever started it; a scheduled run gets its creator's. The job
+gets `SSH_AUTH_SOCK`, so `ssh`, `git`, `rsync` and terraform's agent
+authentication use them, and `git` gets a `GIT_SSH_COMMAND` that offers no
+key file. The keys stay in memory and the agent ends with the run; the
+terminal says which keys were loaded, or `(none)`. A checkout's `.ssh/`
+folder is not loaded: upload a key a project needs and give it by policy.
 
 ## Artifacts
 

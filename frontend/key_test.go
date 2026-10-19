@@ -64,14 +64,14 @@ func TestKeys_Encrypting(t *testing.T) {
 	assert.Equal(t, 1, strings.Count(body, "secrets</span>"))
 }
 
-// A project that is a checkout with keys in its .ssh/ folder lists them
-// under the instance keys, to copy and nothing else: the project manages
-// them. A folder that is not a checkout lists none.
+// A project that is a checkout with keys in its .ssh/ folder gets a
+// warning: runs do not load them, upload and map them instead. A folder
+// that is not a checkout gets none.
 func TestKeys_ProjectFolders(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
 	dir := filepath.Join(f.infra.Dir, ".ssh")
-	key, err := (&sshkey.Store{Dir: dir}).Generate("rsa", "deploy")
+	_, err := (&sshkey.Store{Dir: dir}).Generate("rsa", "deploy")
 	assert.NoError(t, err)
 
 	plain := f.page(t, asAdmin, "/settings/keys")
@@ -79,9 +79,8 @@ func TestKeys_ProjectFolders(t *testing.T) {
 
 	assert.NoError(t, os.MkdirAll(filepath.Join(f.infra.Dir, ".git"), 0o755))
 	body := f.page(t, asAdmin, "/settings/keys")
-	assert.Contains(t, body, dir+" · for the runs of infra")
-	assert.Contains(t, body, strings.ReplaceAll(key.Fingerprint, "+", "&#43;"))
-	assert.Contains(t, body, `data-copy="ssh-rsa`)
+	assert.Contains(t, body, "<b>infra</b> has private keys in <b>"+dir+"</b>: id_rsa. They are not loaded into its runs.")
+	assert.NotContains(t, body, `data-copy="ssh-rsa`)
 	assert.NotContains(t, body, `data-delete="/api/keys/id_rsa"`)
 }
 

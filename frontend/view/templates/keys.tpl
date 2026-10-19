@@ -50,26 +50,7 @@
 </section>
 
 {{- range .KeyFolders }}
-<section class="block">
-	<h3><svg class="ic"><use href="#i-project"/></svg> {{ .Project }} <small>{{ .Dir }} · for the runs of {{ .Project }}, through an ssh agent</small></h3>
-	<div class="table-wrap">
-	<table class="table">
-		<thead><tr><th>Comment</th><th>Fingerprint</th><th>Date</th><th>Actions</th></tr></thead>
-		<tbody>
-		{{- range .Keys }}
-			<tr>
-				<td class="key nowrap">{{ .Comment }} <span class="badge">{{ .Name }}</span>{{ if .Backup }} <span class="badge">backup</span>{{ end }}</td>
-				<td class="mono-break"><span class="dim">{{ .Type }}</span> {{ .Fingerprint }}</td>
-				<td class="nowrap" title="{{ ago .Modified }}">{{ stamp .Modified }}</td>
-				<td class="actions">
-					<button type="button" class="btn-icon" data-copy="{{ .PublicKey }}" title="Copy public key" aria-label="Copy public key"><svg class="ic"><use href="#i-copy"/></svg></button>
-				</td>
-			</tr>
-		{{- end }}
-		</tbody>
-	</table>
-	</div>
-</section>
+<div class="alert signal"><b>{{ .Project }}</b> has private keys in <b>{{ .Dir }}</b>: {{ range $i, $k := .Keys }}{{ if $i }}, {{ end }}{{ $k.Name }}{{ end }}. They are not loaded into its runs. Upload a key the project needs as an instance key and give it to the roles or users by policy.</div>
 {{- end }}
 
 {{- $backups := false }}{{ range .Keys }}{{ if .Backup }}{{ $backups = true }}{{ end }}{{ end }}
