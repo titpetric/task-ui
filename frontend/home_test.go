@@ -39,24 +39,35 @@ func TestHome_Control(t *testing.T) {
 	session := f.start(t, f.infra, "slow")
 
 	body := f.page(t, asOps, "/")
-	assert.Contains(t, body, `<thead><tr><th>Folder</th><th class="col">deploy</th><th>Other</th></tr></thead>`)
+	// deploy occurs twice, short of the six a column needs: every job is
+	// under other, a button with its name.
+	assert.Contains(t, body, `<thead><tr><th>Folder</th><th>Other</th></tr></thead>`)
 	edge := body[strings.Index(body, `<a href="/f/infra/edge">infra/edge</a>`):]
 	edge = edge[:strings.Index(edge, "</tr>")]
-	assert.Contains(t, edge, `<button type="button" class="cc" data-run data-folder="infra/edge" data-job="deploy"`)
+	assert.Contains(t, edge, `<button type="button" class="cc named" data-run data-folder="infra/edge" data-job="deploy"`)
 
 	infra := body[strings.Index(body, `<td class="key nowrap"><a href="/f/infra">infra</a>`):]
 	infra = infra[:strings.Index(infra, "</tr>")]
-	assert.Contains(t, infra, `<td class="col" data-label="deploy"></td>`) // infra has no deploy
 	assert.Contains(t, infra, `<td class="other" data-label="Other"><div>`)
 	assert.Contains(t, infra, `class="cc named" data-run data-folder="infra" data-job="plan"`)
 	assert.Contains(t, infra, `<span>plan</span>`)
 	assert.Contains(t, infra, `<a class="cc named running" href="/runs/`+session.ID()+`"`) // slow runs
+	// Each button sits in a slot the page redraws from the run events.
+	assert.Contains(t, infra, `<span class="cc-slot" data-cc="infra/plan" data-folder="infra" data-job="plan" data-name="plan" data-label="plan" data-can>`)
 
 	// ops may not run private's deploy: a #! to its page instead.
 	private := body[strings.Index(body, `<a href="/f/private">private</a>`):]
 	private = private[:strings.Index(private, "</tr>")]
-	assert.Contains(t, private, `<a class="cc idle" href="/f/private/deploy"`)
+	assert.Contains(t, private, `<a class="cc named idle" href="/f/private/deploy"`)
 	assert.NotContains(t, private, "data-run")
+	assert.NotContains(t, private, "data-can")
+
+	// The dashboard follows the runs topic and is never reloaded.
+	assert.Contains(t, body, `<div data-sse="runs" data-dashboard>`)
+	assert.Contains(t, body, `<span data-running-count>1</span>`)
+	assert.Contains(t, body, `data-tile="`+session.ID()+`"`)
+	assert.Contains(t, body, `<div class="alert" data-tiles-empty hidden>`)
+	assert.NotContains(t, body, "data-live")
 }
 
 func TestHome_Live(t *testing.T) {
@@ -65,7 +76,7 @@ func TestHome_Live(t *testing.T) {
 	session := f.start(t, f.infra, "slow")
 
 	body := f.page(t, asViewer, "/")
-	assert.Contains(t, body, "<b>Running</b><span>1</span>")
+	assert.Contains(t, body, "<b>Running</b><span data-running-count>1</span>")
 	assert.Contains(t, body, `<div class="frame" data-frame="`+session.ID()+`" role="img"`)
 	assert.Contains(t, body, `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 672.0 136.0" font-family="JetBrains Mono`)
 	assert.Contains(t, body, `data-attach="`+session.ID()+`"`)

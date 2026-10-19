@@ -2539,6 +2539,24 @@ pre.output {
   white-space: nowrap;
 }
 
+/* A column's name stands on end, read from the bottom up, so a column is
+   as wide as its buttons. */
+.table.control th.col {
+  vertical-align: bottom;
+  padding-top: 0.6rem;
+  padding-bottom: 0.6rem;
+}
+
+.table.control th.col > span {
+  display: inline-block;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+}
+
+.cc-slot {
+  display: contents;
+}
+
 .table.control td > div {
   display: flex;
   flex-wrap: wrap;

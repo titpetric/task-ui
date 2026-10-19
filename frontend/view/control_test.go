@@ -46,8 +46,16 @@ func TestControl(t *testing.T) {
 		jobs("tools", "make:release", "script:release", "make:lint"),
 	}
 
-	c := view.NewControl(folders)
+	c := view.NewControl(folders, 2)
 	assert.Equal(t, []string{"build", "test", "lint", "release"}, c.Columns)
+
+	// A name needs as many as min to get a column: build and test
+	// occur three times, lint and release twice.
+	three := view.NewControl(folders, 3)
+	assert.Equal(t, []string{"build", "test"}, three.Columns)
+	assert.Equal(t, []string{"make:release", "script:release", "make:lint"}, names(three.Rows[4].Extra))
+	assert.Len(t, view.NewControl(folders, view.ControlRepeats).Columns, 0)
+	assert.Equal(t, 6, view.ControlRepeats) // more than five
 	assert.Len(t, c.Rows, 5)
 
 	api := c.Rows[0]
