@@ -17,10 +17,12 @@ server's time zone, following the filter:
 A bar is as tall as its runs against the busiest bar, split into the runs
 that ended ok (amber), failed or were killed (red), and the rest, running
 or stopped (faint). Hover a bar for its counts. Under each, a grey row
-of the same days or hours is the **average duration** of their finished
-runs against the slowest, so a day or an hour that ran slow stands out
-however many runs it had; hover one for the average and how many runs it
-is over. A line above says how
+of the same days or hours is their **durations**: the bar is the average
+of their finished runs, and a capped line over it runs from the fastest
+to the slowest of them, all against the slowest run of the chart. A day
+or an hour that ran slow stands out however many runs it had, and a long
+line says the runs in it varied. Hover one for the average, the minimum,
+the maximum and how many runs they are over. A line above says how
 many runs there were, how many failed and the median duration.
 
 ## The list

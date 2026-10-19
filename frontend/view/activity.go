@@ -48,12 +48,17 @@ type ActivityBar struct {
 	OKStyle     template.CSS
 	FailedStyle template.CSS
 	OtherStyle  template.CSS
-	// Average is the mean duration of the bucket's finished runs, and
-	// Finished how many there were; AverageStyle the height of its bar
-	// against the slowest bucket, AverageTitle what its hover says.
+	// Average is the mean duration of the bucket's finished runs, Min
+	// and Max the fastest and the slowest of them, and Finished how many
+	// there were. AverageStyle is the height of its bar and RangeStyle
+	// the line from Min to Max, both against the slowest Max of the
+	// chart; AverageTitle what its hover says.
 	Average      time.Duration
+	Min          time.Duration
+	Max          time.Duration
 	Finished     int
 	AverageStyle template.CSS
+	RangeStyle   template.CSS
 	AverageTitle string
 
 	elapsed time.Duration
@@ -142,10 +147,8 @@ func NewActivity(runs []ActivityRun, now time.Time, days int) *Activity {
 		}
 		if run.State != model.StateRunning {
 			finished = append(finished, run)
-			day.Finished++
-			day.elapsed += run.Elapsed
-			hour.Finished++
-			hour.elapsed += run.Elapsed
+			day.add(run.Elapsed)
+			hour.add(run.Elapsed)
 		}
 	}
 	if a.Total == 0 {
@@ -199,15 +202,26 @@ func scale(bars []ActivityBar) {
 	}
 }
 
-// average sets each bar's mean duration and its height against the
-// slowest bar; a bar with finished runs is at least activityStub tall.
+// add counts a finished run's duration into the bar.
+func (b *ActivityBar) add(elapsed time.Duration) {
+	if b.Finished == 0 || elapsed < b.Min {
+		b.Min = elapsed
+	}
+	b.Max = max(b.Max, elapsed)
+	b.Finished++
+	b.elapsed += elapsed
+}
+
+// average sets each bar's mean duration, its bar and the line from its
+// fastest to its slowest run, all against the slowest run of the chart;
+// a bar with finished runs is at least activityStub tall.
 func average(bars []ActivityBar) {
 	var slowest time.Duration
 	for i := range bars {
 		b := &bars[i]
 		if b.Finished > 0 {
 			b.Average = b.elapsed / time.Duration(b.Finished)
-			slowest = max(slowest, b.Average)
+			slowest = max(slowest, b.Max)
 		}
 	}
 	for i := range bars {
@@ -215,20 +229,26 @@ func average(bars []ActivityBar) {
 		if b.Finished == 0 {
 			continue
 		}
-		percent := 100.0
-		if slowest > 0 {
-			percent = max(float64(b.Average)/float64(slowest)*100, activityStub)
+		if slowest == 0 {
+			b.AverageStyle = height(activityStub)
+			continue
 		}
-		b.AverageStyle = height(percent)
+		of := func(d time.Duration) float64 { return float64(d) / float64(slowest) * 100 }
+		b.AverageStyle = height(max(of(b.Average), activityStub))
+		low, high := of(b.Min), of(b.Max)
+		b.RangeStyle = template.CSS("bottom:" + svgNumber(low) + "%;height:" + svgNumber(high-low) + "%")
 	}
 }
 
-// averageText says a bar's mean duration and when, for its hover.
+// averageText says a bar's durations and when, for its hover.
 func averageText(b ActivityBar, when string) string {
 	if b.Finished == 0 {
 		return "no finished runs, " + when
 	}
-	return "avg " + Duration(b.Average) + " over " + plural(b.Finished, "run") + ", " + when
+	if b.Finished == 1 {
+		return Duration(b.Average) + ", 1 run, " + when
+	}
+	return "avg " + Duration(b.Average) + " · min " + Duration(b.Min) + " · max " + Duration(b.Max) + " over " + plural(b.Finished, "run") + ", " + when
 }
 
 // counts says what a bar holds and when, for its hover: the runs first,

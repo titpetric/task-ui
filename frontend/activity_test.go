@@ -63,7 +63,7 @@ func TestActivity_Job(t *testing.T) {
 	assert.Contains(t, body, `<line class="bad"`)
 	assert.Contains(t, body, "4.0s, Fri 2026-10-16 21:00 · failed")
 	assert.Contains(t, body, `class="activity-bars average"`)
-	assert.Contains(t, body, `data-tip="avg 3.0s over 2 runs, Fri 2026-10-16"`)
+	assert.Contains(t, body, `data-tip="avg 3.0s · min 2.0s · max 4.0s over 2 runs, Fri 2026-10-16"`)
 
 	quiet := f.page(t, asOps, "/f/infra/many")
 	assert.NotContains(t, quiet, `class="activity"`)
