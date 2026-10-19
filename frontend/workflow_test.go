@@ -143,7 +143,7 @@ func TestWorkflow_Page(t *testing.T) {
 	assert.Contains(t, ops, `data-sse="workflow:`+wf.ID+`"`)
 	assert.Contains(t, ops, `data-latest>Latest run`)
 	assert.Contains(t, ops, `<tbody data-runs>`)
-	assert.Contains(t, ops, `<tr data-run="`+run.ID+`">`)
+	assert.Contains(t, ops, `<tr data-run-id="`+run.ID+`">`)
 	assert.NotContains(t, ops, `data-refresh`)
 	assert.NotContains(t, ops, `data-live`)
 	// Each step of the latest run shows its terminal's last screen, from
@@ -274,6 +274,8 @@ func TestWorkflow_NestedPipeline(t *testing.T) {
 
 	page := f.page(t, asOps, "/workflows/"+outer.ID)
 	assert.Contains(t, page, `<ol class="pipeline sub" data-sub="`+steps[0].WorkflowRunRef+`" data-workflow="`+inner.ID+`">`)
-	assert.Contains(t, page, `href="/runs/`+innerSteps[0].RunID+`" data-attach="`+innerSteps[0].RunID+`">infra / plan</a>`)
+	// The step's name links to its run's page; only the screen and the
+	// buttons open the window.
+	assert.Contains(t, page, `href="/runs/`+innerSteps[0].RunID+`" data-run-link="`+innerSteps[0].RunID+`">infra / plan</a>`)
 	assert.Contains(t, page, `<a class="frame" href="/runs/`+innerSteps[0].RunID+`"`)
 }
