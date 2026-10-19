@@ -8,15 +8,14 @@ Makefile targets, package.json and composer.json scripts, and a
 terminal that anyone allowed can attach to, from any window, for as long
 as it runs.
 
-![The dashboard: every terminal in progress, as it looks right now](https://raw.githubusercontent.com/titpetric/task-ui/main/.github/assets/task-ui.png)
+![The dashboard: every terminal in progress, as it looks right now](https://raw.githubusercontent.com/titpetric/task-ui/main/docs/assets/task-ui.png)
 
 - **Folders and jobs.** A folder is a working directory and whatever it
   holds that can be run. Everything on the page comes from the files
   themselves: names, descriptions, steps, the files they include. A
-  folder page is its jobs as cards, each with Run, and what the folder
-  holds: its directories, to open and browse down to any depth, then its
-  files; the sidebar lists every folder's jobs with a play button, so a
-  job is one click from anywhere.
+  folder page is its jobs as cards, each with Run; the sidebar lists
+  every folder's jobs with a play button, so a job is one click from
+  anywhere.
 - **Runs are sessions.** Run opens a window on the run. Closing the window
   leaves the run running; Stop ends it, Kill ends it now. Anyone who may
   see the job attaches from the sidebar, the dashboard or the run list;
@@ -30,9 +29,7 @@ as it runs.
 - **Workflows.** A named chain of jobs from any folders, a one button
   deploy: build, test, push, plan, apply. Run starts each step when the
   one before it ended ok; the first that does not end ok ends the
-  workflow and the rest are skipped. A step can run another workflow in
-  place of a job, so a release is a chain of chains; a workflow may not
-  run itself, through any depth. Anyone can make a workflow from the
+  workflow and the rest are skipped. Anyone can make a workflow from the
   jobs they see; running it needs the right to run every step.
 - **Users and roles.** Login is mandatory. Users come from a password
   file, htpasswd style, read again whenever it changes; `TASK_UI_ADMINS`
@@ -49,6 +46,10 @@ as it runs.
 - **Settings.** Admins manage the instance SSH keys, the secrets added to
   every run, encrypted at rest with those keys, the env files the
   pipelines read, and the folders each user sees.
+
+The [usage guide](docs/README.md) walks through the screen as the sidebar
+lists it, a chapter a section: the dashboard, workflows, runs, artifacts,
+schedules, the projects and their jobs, recents, and the settings.
 
 The look follows [oida](https://github.com/titpetric/oida): hairlines,
 one amber accent, dark and light from `prefers-color-scheme`. The type is
@@ -179,16 +180,12 @@ extension of any file, and no pipeline file is ever written.
 | composer | `composer.json` | `composer run-script <script>` | the scripts, with `scripts-descriptions` |
 | script | `scripts/*` | `./scripts/<file>`, or `sh` for a `.sh` that is not executable | one per file; the first comment describes it |
 
-One convention reads a folder: the first there is, in this order. An
-`atkins.yml` wins, and its targets are the folder's jobs; else a
-Taskfile; else a Makefile; else package scripts (npm, then composer);
-and the executables of `scripts/` only when nothing names the jobs.
-What else sits beside the convention that won is its business. A
-`scripts/` directory with a pipeline file or a Makefile of its own is a
-folder of its own, and the folder above does not list its scripts
-again. A project's `sources` read more than one convention on purpose;
-then a job's ID is `kind:name`, so `make build` and `npm run build` stay
-apart.
+A pipeline file stands for its folder: a folder with `atkins.yml` or a
+Taskfile lists that pipeline's targets only, and the Makefile, package
+scripts or `scripts/` beside it are the pipeline's business. Without a
+pipeline file every convention is a source. A job's ID is its target
+name, or `kind:name` when the folder lists more than one convention, so
+`make build` and `npm run build` stay apart.
 
 Discovery goes as deep as the folders do: every directory under the root
 with something to run is a folder, at its path (`services/api`), and the
@@ -210,15 +207,9 @@ are.
 Settings, Projects, Configure sets what the instance adds to a folder: a
 title and description, who may run it (`allow`: user names or roles,
 empty means every runner), and which `sources` to read, which is also
-how a pipeline folder gets its Makefile or scripts back as jobs. Recursive,
-on by default, lists the folders inside the project too; off lists the
-project's own jobs alone, for a checkout whose inner folders are not
-jobs to run. Show in sidebar, on by default, lists the project there;
-off keeps it and its folders out of the sidebar, their pages still
-reachable. A workflow has the same switch, for one that is a step of
-others. Through the API a project also takes `commands` (the runner per
-kind, `make: gmake`), `job_allow` (per job), `recursive` and `sidebar`.
-Pipeline files stay as they are.
+how a pipeline folder gets its Makefile or scripts back as jobs. Through the API a
+project also takes `commands` (the runner per kind, `make: gmake`) and
+`job_allow` (per job). Pipeline files stay as they are.
 
 Jobs get `TASK_UI=1`, `TASK_UI_USER`, `TASK_UI_FOLDER`, `TASK_UI_JOB`,
 `TASK_UI_RUN_ID` and `TASK_UI_ARTIFACTS` in the environment, along with
@@ -275,8 +266,7 @@ decision.
 Settings, Projects lists the folders under the root with their source.
 Add project clones a repository into the root: it either succeeds and the
 folder appears in the sidebar, or git's output is shown and nothing is
-kept. Recursive, on by default, lists the folders inside the checkout
-with something to run; off, the checkout is one folder with its own jobs. Private repositories are reached with the instance SSH keys, which
+kept. Private repositories are reached with the instance SSH keys, which
 git uses through `GIT_SSH_COMMAND` with a `known_hosts` file next to them.
 
 A folder in a checkout is pulled with `git pull --ff-only` before every
@@ -343,9 +333,8 @@ Writes need the same origin. The browser pages are the reference client;
 | `WS` | `/api/runs/{id}/attach` | binary frames are output; text frames are `{"type":"input"\|"resize"\|"stop"\|"kill"}` in and `{"type":"status"}` out |
 | `GET` `DELETE` | `/api/artifacts`, `/api/artifacts/{id}` | list, download, delete |
 | `GET` `POST` `PUT` `DELETE` | `/api/schedules`, `/api/schedules/{id}` | `{folder, job, expression, enabled}` |
-| `GET` `POST` `PUT` `DELETE` | `/api/workflows`, `/api/workflows/{id}` | `{name, steps: [{folder, job} or {workflow}]}`; owner or admin changes; 409 deleting one another workflow runs |
+| `GET` `POST` `PUT` `DELETE` | `/api/workflows`, `/api/workflows/{id}` | `{name, steps: [{folder, job}]}`; owner or admin changes |
 | `GET` `POST` | `/api/workflows/{id}/runs` | runs, newest first, with their steps; `POST` starts one, 409 while one runs |
-| `GET` | `/api/sse/{topic}` | server-sent events of a topic: `workflow:{id}` sends `run`, `step` and `done` as a run goes, for a user who sees the workflow |
 | `POST` | `/api/workflow-runs/{id}/stop` | stops the step running, skips the rest |
 | `GET` `POST` `PUT` `DELETE` | `/api/projects`, `/api/projects/{folder}` | clone `{url, id, branch}`; configure `{title, description, allow, sources, commands, job_allow, hours, job_hours}` |
 | `GET` `PUT` | `/api/users`, `/api/users/{id}` | `{folders}`; names, passwords and roles come from the password file and the role lists |
@@ -356,19 +345,9 @@ Writes need the same origin. The browser pages are the reference client;
 
 ## Screenshots
 
-| | |
-|-|-|
-| ![The dashboard: every live terminal as its last frame](.github/assets/dashboard-dark.png) | ![A run in its window, attached](.github/assets/run-dark.png) |
-| ![A folder: its jobs, steps, pipeline and env files](.github/assets/folder-dark.png) | ![A job, its history and its schedules](.github/assets/job-dark.png) |
-| ![The runs](.github/assets/runs-dark.png) | ![A run's page](.github/assets/run-page-dark.png) |
-| ![Dashboard, light theme](.github/assets/dashboard-light.png) | ![A folder with a Makefile, package scripts and a scripts folder](.github/assets/tools-dark.png) |
-| ![Artifacts](.github/assets/artifacts-dark.png) | ![Scheduled](.github/assets/schedules-dark.png) |
-| ![Workflows: chains of jobs, a step can be another workflow](.github/assets/workflows-dark.png) | ![A workflow: its chain, its runs and the step editor](.github/assets/workflow-dark.png) |
-| ![Projects](.github/assets/projects-dark.png) | ![Configure a folder](.github/assets/project-edit-dark.png) |
-| ![Users, from the password file](.github/assets/users-dark.png) | ![Secrets, encrypted with the SSH key](.github/assets/secrets-dark.png) |
-| ![Secrets](.github/assets/secrets-dark.png) | ![An env file](.github/assets/envfile-dark.png) |
-| ![SSH keys](.github/assets/keys-dark.png) | ![Login](.github/assets/login-dark.png) |
-| ![Out of hours: Run force asks why](.github/assets/out-of-hours-dark.png) | ![The phone: the drawer with the folders and their jobs, and the jobs as cards](.github/assets/mobile-menu-dark.png) |
+Every view, in both themes and on a phone, is in
+[docs/screenshots.md](docs/screenshots.md); the pictures are under
+`docs/assets/`.
 
 `scripts/demo.sh` regenerates them: it serves a copy of `testdata/demo`,
 sets the instance up through the API with curl, starts real runs with

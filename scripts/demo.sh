@@ -6,7 +6,7 @@
 # Builds task-ui, serves a copy of testdata/demo from throwaway instances
 # over one database, sets the instance up through the API with curl,
 # starts real runs with scripts/run.sh, and captures every view with
-# scripts/chromium.sh in both themes. Writes .github/assets/*.png.
+# scripts/chromium.sh in both themes. Writes docs/assets/*.png.
 #
 # Needs chromium, curl, atkins, task and git in PATH.
 set -euo pipefail
@@ -205,11 +205,11 @@ for theme in dark light; do
   TASK_UI_BASE="http://127.0.0.1:${login}" shot "login-${theme}" /login "$theme"
 done
 
-mkdir -p .github/assets
-rm -f .github/assets/*.png
+mkdir -p docs/assets
+rm -f docs/assets/*.png
 for file in "${shots[@]}"; do
   name="$(basename "$file" .png)"
-  out=".github/assets/${name#task-ui-}.png"
+  out="docs/assets/${name#task-ui-}.png"
   if command -v magick >/dev/null 2>&1; then
     magick "$file" -strip -colors 256 -define png:compression-level=9 "$out"
   else
@@ -217,4 +217,4 @@ for file in "${shots[@]}"; do
   fi
   echo "$out"
 done
-cp .github/assets/dashboard-dark.png .github/assets/task-ui.png
+cp docs/assets/dashboard-dark.png docs/assets/task-ui.png
