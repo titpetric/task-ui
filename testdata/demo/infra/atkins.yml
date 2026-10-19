@@ -13,10 +13,10 @@ jobs:
       balancer, restarts the service and waits for the health check.
     depends_on: plan
     steps:
-      - name: Pull the release image on every node
+      - desc: Pull the release image on every node
         run: |
           for n in web-1 web-2 web-3; do echo "pull ghcr.io/acme/app:${RELEASE:-v1.42.0} on $n"; sleep 0.5; done
-      - name: Drain, restart and health check
+      - desc: Drain, restart and health check
         run: |
           for n in web-1 web-2 web-3; do echo "drain $n, restart, health check ok"; sleep 0.7; done
       - run: |
@@ -24,8 +24,9 @@ jobs:
   plan:
     desc: "Show pending infrastructure changes"
     steps:
-      - run: |
-          printf '\033[32m+ aws_instance.web[3]\033[0m\n\033[33m~ aws_lb.main (tags)\033[0m\nPlan: 1 to add, 1 to change, 0 to destroy.\n'
+      - run: 'echo -e "\033[32m+ aws_instance.web[3]\033[0m"'
+      - run: 'echo -e "\033[33m~ aws_lb.main (tags)\033[0m"'
+      - run: 'echo "Plan: 1 to add, 1 to change, 0 to destroy."'
   rotate-certs:
     desc: "Renew TLS certificates and reload nginx"
     steps:

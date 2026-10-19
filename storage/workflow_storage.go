@@ -296,7 +296,7 @@ func (s *WorkflowRunStorage) ListByWorkflow(ctx context.Context, workflowID stri
 	if limit <= 0 {
 		limit = 20
 	}
-	return client(s.db).Select[model.WorkflowRun](ctx, "SELECT * FROM workflow_run WHERE workflow_id = ? ORDER BY started_at DESC, id DESC LIMIT ?", workflowID, limit)
+	return client(s.db).Select[model.WorkflowRun](ctx, "SELECT * FROM workflow_run WHERE workflow_id = ? ORDER BY started_at DESC, rowid DESC LIMIT ?", workflowID, limit)
 }
 
 // List returns the runs of every workflow, newest first.
@@ -304,7 +304,7 @@ func (s *WorkflowRunStorage) List(ctx context.Context, limit int) ([]model.Workf
 	if limit <= 0 {
 		limit = 20
 	}
-	return client(s.db).Select[model.WorkflowRun](ctx, "SELECT * FROM workflow_run ORDER BY started_at DESC, id DESC LIMIT ?", limit)
+	return client(s.db).Select[model.WorkflowRun](ctx, "SELECT * FROM workflow_run ORDER BY started_at DESC, rowid DESC LIMIT ?", limit)
 }
 
 // Update writes a workflow run back, by ID; a finished state stamps it.
