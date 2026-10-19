@@ -1281,6 +1281,70 @@ dialog.run[open] {
   height: min(62vh, 40rem);
 }
 
+/* A file a folder's pipeline reads, coloured: in the source window, and
+   below the row its Show button is on. The classes are the highlight
+   package's: k key, c comment, s string, n number, v variable, p dash. */
+pre.code {
+  margin: 0;
+  padding: 0.55rem 0.8rem;
+  overflow: auto;
+  background: var(--term-bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 0.78rem;
+  line-height: 1.5;
+  white-space: pre;
+  tab-size: 4;
+}
+
+dialog.source .run-body {
+  padding: 0;
+  overflow: auto;
+}
+
+dialog.source pre.code {
+  min-height: 20rem;
+  max-height: calc(100vh - 8rem);
+}
+
+pre.code .k { color: #7cb7e8; }
+pre.code .c { color: var(--text-faint); font-style: italic; }
+pre.code .s { color: var(--ok); }
+pre.code .n { color: #c99be6; }
+pre.code .v { color: var(--signal); }
+pre.code .p { color: var(--text-faint); }
+
+.source-block {
+  margin: 0.4rem 0 0.2rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.source-block[hidden] {
+  display: none;
+}
+
+.source-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0.25rem 0.4rem 0.25rem 0.8rem;
+  border-bottom: 1px solid var(--line);
+  color: var(--text-dim);
+  font-size: 0.78rem;
+}
+
+.source-block pre.code {
+  max-height: 24rem;
+}
+
+.btn.show-source {
+  margin-left: 0.5rem;
+  vertical-align: middle;
+}
+
 .run-notice {
   display: none;
   margin: 0;

@@ -203,6 +203,17 @@
 		<button type="button" class="btn" id="run-close" aria-label="Close">Close</button>
 	</div>
 </dialog>
+{{- /* The source window: a file a folder's pipeline reads, coloured, as
+     large as the run window. */}}
+<dialog class="run source" id="source-dialog" aria-labelledby="source-title">
+	<div class="run-head">
+		<span class="label">Source</span>
+		<h3 id="source-title"></h3>
+		<span class="spacer"></span>
+		<button type="button" class="btn" id="source-close" aria-label="Close">Close</button>
+	</div>
+	<div class="run-body"><pre class="code" id="source-code"></pre></div>
+</dialog>
 {{ end }}
 
 {{ define "confirm" }}
@@ -315,6 +326,14 @@
 	<li class="empty">Empty.</li>
 	{{- end }}
 </ul>
+{{- end }}
+
+{{/* showsource is the Show button of a file a folder's pipeline reads:
+     it opens the file, coloured, below the row; Open there shows it in a
+     window. */}}
+{{- define "showsource" }}
+{{- $folder := index . 0 }}{{ $file := index . 1 -}}
+<button type="button" class="btn btn-sm show-source" data-source="{{ $folder }}" data-file="{{ $file }}" aria-expanded="false"><svg class="ic"><use href="#i-file"/></svg><span>Show</span></button>
 {{- end }}
 
 {{ define "runButtons" }}
