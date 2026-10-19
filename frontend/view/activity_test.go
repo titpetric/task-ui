@@ -70,15 +70,19 @@ func TestNewActivity(t *testing.T) {
 	assert.Equal(t, 3, today.Finished)
 	assert.Equal(t, 2*time.Second, today.Min)
 	assert.Equal(t, 6*time.Second, today.Max)
-	// Against the slowest run of the chart, 8 seconds on the 17th.
-	assert.Equal(t, template.CSS("height:50.00%"), today.AverageStyle)
-	assert.Equal(t, template.CSS("bottom:25.00%;height:50.00%"), today.RangeStyle)
 	assert.Equal(t, "avg 4.0s · min 2.0s · max 6.0s over 3 runs, Mon 2026-10-19", today.AverageTitle)
 	assert.Equal(t, 8*time.Second, a.Days[27].Average)
-	assert.Equal(t, template.CSS("height:100.00%"), a.Days[27].AverageStyle)
 	assert.Equal(t, "8.0s, 1 run, Sat 2026-10-17", a.Days[27].AverageTitle)
+
+	// The durations as lines against the slowest run, 8 seconds on the
+	// 17th: a point in the middle of each column with finished runs, the
+	// 18th without breaks them, so each is a dot.
+	var lines *view.ActivityLines = a.DayLines
+	assert.Equal(t, 8*time.Second, lines.Slowest)
+	assert.Equal(t, "M 91.67 10.00 L 91.67 10.00 M 98.33 55.00 L 98.33 55.00", lines.Average)
+	assert.Equal(t, "M 91.67 10.00 L 91.67 10.00 M 98.33 77.50 L 98.33 77.50", lines.Min)
+	assert.Equal(t, "M 91.67 10.00 L 91.67 10.00 M 98.33 32.50 L 98.33 32.50", lines.Max)
 	assert.Equal(t, "no finished runs, Sun 2026-10-18", yesterday.AverageTitle)
-	assert.Equal(t, template.CSS(""), yesterday.AverageStyle)
 	assert.Equal(t, 3*time.Second, a.Hours[7].Average)
 	assert.Equal(t, "avg 3.0s · min 2.0s · max 4.0s over 2 runs, 07:00–08:00", a.Hours[7].AverageTitle)
 	assert.Equal(t, "no finished runs, 21:00–22:00", a.Hours[21].AverageTitle) // only the running one

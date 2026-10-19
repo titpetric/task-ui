@@ -386,7 +386,7 @@
      on the line hovers its counts. */}}
 {{- define "activity" }}
 <div class="activity">
-	<p class="activity-sum">{{ .Total }} run{{ if ne .Total 1 }}s{{ end }} in {{ len .Days }} days{{ if .Failed }} · <span class="bad">{{ .Failed }} failed</span>{{ end }}{{ if .Median }} · median {{ duration .Median }}{{ end }}<span class="activity-key"><i class="ok"></i>runs <i class="avg"></i>average duration <b class="range"></b>min to max</span></p>
+	<p class="activity-sum">{{ .Total }} run{{ if ne .Total 1 }}s{{ end }} in {{ len .Days }} days{{ if .Failed }} · <span class="bad">{{ .Failed }} failed</span>{{ end }}{{ if .Median }} · median {{ duration .Median }}{{ end }}<span class="activity-key"><i class="ok"></i>runs <i class="line avg"></i>average <i class="line max"></i>max <i class="line min"></i>min duration</span></p>
 	<div class="activity-charts">
 		<figure class="activity-chart">
 			<div class="activity-bars" style="--n: {{ len .Days }}" role="img" aria-label="Runs per day, the last {{ len .Days }} days">
@@ -395,12 +395,7 @@
 				<span class="tip{{ if lt $i 4 }} tip-start{{ else if ge $i $last }} tip-end{{ end }}" data-tip="{{ .Title }}" aria-label="{{ .Title }}">{{ if .OtherStyle }}<i class="other" style="{{ .OtherStyle }}"></i>{{ end }}{{ if .FailedStyle }}<i class="bad" style="{{ .FailedStyle }}"></i>{{ end }}{{ if .OKStyle }}<i class="ok" style="{{ .OKStyle }}"></i>{{ end }}</span>
 				{{- end }}{{ end }}
 			</div>
-			<div class="activity-bars average" style="--n: {{ len .Days }}" role="img" aria-label="Average duration per day">
-				{{- $last := sub (len .Days) 4 }}
-				{{- range $i, $b := .Days }}{{ with $b }}
-				<span class="tip{{ if lt $i 4 }} tip-start{{ else if ge $i $last }} tip-end{{ end }}" data-tip="{{ .AverageTitle }}" aria-label="{{ .AverageTitle }}">{{ if .AverageStyle }}<i class="avg" style="{{ .AverageStyle }}"></i>{{ end }}{{ if .RangeStyle }}<b class="range" style="{{ .RangeStyle }}"></b>{{ end }}</span>
-				{{- end }}{{ end }}
-			</div>
+			{{- with $.DayLines }}{{ template "activity-lines" (list . $.Days) }}{{ end }}
 			<figcaption>{{ range .Axis }}<span>{{ . }}</span>{{ end }}</figcaption>
 		</figure>
 		<figure class="activity-chart hours">
@@ -409,11 +404,7 @@
 				<span class="tip{{ if lt $i 4 }} tip-start{{ else if ge $i 20 }} tip-end{{ end }}" data-tip="{{ .Title }}" aria-label="{{ .Title }}">{{ if .OtherStyle }}<i class="other" style="{{ .OtherStyle }}"></i>{{ end }}{{ if .FailedStyle }}<i class="bad" style="{{ .FailedStyle }}"></i>{{ end }}{{ if .OKStyle }}<i class="ok" style="{{ .OKStyle }}"></i>{{ end }}</span>
 				{{- end }}{{ end }}
 			</div>
-			<div class="activity-bars average" style="--n: 24" role="img" aria-label="Average duration per hour of the day">
-				{{- range $i, $b := .Hours }}{{ with $b }}
-				<span class="tip{{ if lt $i 4 }} tip-start{{ else if ge $i 20 }} tip-end{{ end }}" data-tip="{{ .AverageTitle }}" aria-label="{{ .AverageTitle }}">{{ if .AverageStyle }}<i class="avg" style="{{ .AverageStyle }}"></i>{{ end }}{{ if .RangeStyle }}<b class="range" style="{{ .RangeStyle }}"></b>{{ end }}</span>
-				{{- end }}{{ end }}
-			</div>
+			{{- with $.HourLines }}{{ template "activity-lines" (list . $.Hours) }}{{ end }}
 			<figcaption><span>00</span><span>06</span><span>12</span><span>18</span><span>24</span></figcaption>
 		</figure>
 	</div>
@@ -436,5 +427,25 @@
 		<figcaption><span>duration of the latest {{ len .Points }} runs</span></figcaption>
 	</figure>
 	{{- end }}
+</div>
+{{- end }}
+
+{{- /* The durations under a count chart: the average, the slowest and the
+     fastest run of each bucket as lines, a point in the middle of its
+     column; each column hovers its numbers. */}}
+{{- define "activity-lines" }}
+{{- $l := index . 0 }}{{ $bars := index . 1 }}{{ $n := len $bars }}{{ $last := sub $n 4 }}
+<div class="activity-line durations" style="--n: {{ $n }}">
+	<svg viewBox="0 0 100 100" preserveAspectRatio="none" role="img" aria-label="Average, slowest and fastest run per column, the slowest {{ duration $l.Slowest }}">
+		<path class="max" d="{{ $l.Max }}" vector-effect="non-scaling-stroke"></path>
+		<path class="min" d="{{ $l.Min }}" vector-effect="non-scaling-stroke"></path>
+		<path class="avg" d="{{ $l.Average }}" vector-effect="non-scaling-stroke"></path>
+	</svg>
+	<span class="activity-longest">{{ duration $l.Slowest }}</span>
+	<div class="activity-hits">
+		{{- range $i, $b := $bars }}
+		<span class="tip{{ if lt $i 4 }} tip-start{{ else if ge $i $last }} tip-end{{ end }}" data-tip="{{ $b.AverageTitle }}" aria-label="{{ $b.AverageTitle }}"></span>
+		{{- end }}
+	</div>
 </div>
 {{- end }}

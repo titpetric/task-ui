@@ -50,18 +50,26 @@ type ActivityBar struct {
 	OtherStyle  template.CSS
 	// Average is the mean duration of the bucket's finished runs, Min
 	// and Max the fastest and the slowest of them, and Finished how many
-	// there were. AverageStyle is the height of its bar and RangeStyle
-	// the line from Min to Max, both against the slowest Max of the
-	// chart; AverageTitle what its hover says.
+	// there were; AverageTitle is what the duration graph's hover says.
 	Average      time.Duration
 	Min          time.Duration
 	Max          time.Duration
 	Finished     int
-	AverageStyle template.CSS
-	RangeStyle   template.CSS
 	AverageTitle string
 
 	elapsed time.Duration
+}
+
+// ActivityLines is the duration graph under a count chart: a line each
+// for the average, the fastest and the slowest run of the buckets, as SVG
+// paths in a 100 by 100 viewBox, a point at the middle of each bucket's
+// column. A bucket without finished runs breaks the lines. Slowest is
+// the top of the scale.
+type ActivityLines struct {
+	Average string
+	Min     string
+	Max     string
+	Slowest time.Duration
 }
 
 // ActivityPoint is a run on the duration line: the stretch of the plot
@@ -91,6 +99,10 @@ type ActivitySpark struct {
 type Activity struct {
 	Days  []ActivityBar
 	Hours []ActivityBar
+	// DayLines and HourLines are the durations of the days and the hours
+	// as lines, nil when none of their runs finished.
+	DayLines  *ActivityLines
+	HourLines *ActivityLines
 	// Axis labels the first, middle and last day.
 	Axis      []string
 	Total     int
@@ -156,8 +168,8 @@ func NewActivity(runs []ActivityRun, now time.Time, days int) *Activity {
 	}
 	scale(a.Days)
 	scale(a.Hours)
-	average(a.Days)
-	average(a.Hours)
+	a.DayLines = lines(a.Days)
+	a.HourLines = lines(a.Hours)
 	for i := range a.Days {
 		a.Days[i].Title = counts(a.Days[i], a.Days[i].Label)
 		a.Days[i].AverageTitle = averageText(a.Days[i], a.Days[i].Label)
@@ -212,32 +224,69 @@ func (b *ActivityBar) add(elapsed time.Duration) {
 	b.elapsed += elapsed
 }
 
-// average sets each bar's mean duration, its bar and the line from its
-// fastest to its slowest run, all against the slowest run of the chart;
-// a bar with finished runs is at least activityStub tall.
-func average(bars []ActivityBar) {
-	var slowest time.Duration
+// lines draws the buckets' average, fastest and slowest durations as
+// lines against the slowest run, a point at the middle of each column.
+func lines(bars []ActivityBar) *ActivityLines {
+	l := &ActivityLines{}
 	for i := range bars {
 		b := &bars[i]
 		if b.Finished > 0 {
 			b.Average = b.elapsed / time.Duration(b.Finished)
-			slowest = max(slowest, b.Max)
+			l.Slowest = max(l.Slowest, b.Max)
 		}
 	}
-	for i := range bars {
-		b := &bars[i]
+	if l.Slowest == 0 && !anyFinished(bars) {
+		return nil
+	}
+	y := func(d time.Duration) float64 {
+		if l.Slowest == 0 {
+			return 100
+		}
+		return 100 - float64(d)/float64(l.Slowest)*(100-activityHeadroom)
+	}
+	l.Average = linePath(bars, func(b ActivityBar) float64 { return y(b.Average) })
+	l.Min = linePath(bars, func(b ActivityBar) float64 { return y(b.Min) })
+	l.Max = linePath(bars, func(b ActivityBar) float64 { return y(b.Max) })
+	return l
+}
+
+func anyFinished(bars []ActivityBar) bool {
+	for _, b := range bars {
+		if b.Finished > 0 {
+			return true
+		}
+	}
+	return false
+}
+
+// linePath joins the points of the buckets with finished runs; a bucket
+// without breaks the line, and a point alone is a dot.
+func linePath(bars []ActivityBar, y func(ActivityBar) float64) string {
+	var out strings.Builder
+	open := false
+	n := float64(len(bars))
+	for i, b := range bars {
 		if b.Finished == 0 {
+			open = false
 			continue
 		}
-		if slowest == 0 {
-			b.AverageStyle = height(activityStub)
+		x := svgNumber((float64(i) + 0.5) * 100 / n)
+		point := x + " " + svgNumber(y(b))
+		if open {
+			out.WriteString(" L " + point)
 			continue
 		}
-		of := func(d time.Duration) float64 { return float64(d) / float64(slowest) * 100 }
-		b.AverageStyle = height(max(of(b.Average), activityStub))
-		low, high := of(b.Min), of(b.Max)
-		b.RangeStyle = template.CSS("bottom:" + svgNumber(low) + "%;height:" + svgNumber(high-low) + "%")
+		next := i+1 < len(bars) && bars[i+1].Finished > 0
+		if out.Len() > 0 {
+			out.WriteString(" ")
+		}
+		out.WriteString("M " + point)
+		if !next {
+			out.WriteString(" L " + point)
+		}
+		open = true
 	}
+	return out.String()
 }
 
 // averageText says a bar's durations and when, for its hover.

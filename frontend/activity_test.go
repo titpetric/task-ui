@@ -38,7 +38,10 @@ func TestActivity_Runs(t *testing.T) {
 	assert.Contains(t, admin, `data-tip="2 runs, Fri 2026-10-16 · 1 failed"`)
 	assert.Contains(t, admin, `data-tip="1 run, Thu 2026-10-15"`)
 	assert.Contains(t, admin, `data-tip="2 runs, 20:00–21:00"`) // the 16th and the 15th
-	assert.NotContains(t, admin, "activity-line")
+	// The durations of the days and the hours as lines; no line of the
+	// latest runs, which would mix jobs.
+	assert.Contains(t, admin, `class="activity-line durations"`)
+	assert.NotContains(t, admin, `<div class="activity-line">`)
 
 	limited := f.page(t, asLimited, "/runs")
 	assert.Contains(t, limited, "2 runs in 30 days")
@@ -62,7 +65,7 @@ func TestActivity_Job(t *testing.T) {
 	assert.Contains(t, body, `class="activity-line"`)
 	assert.Contains(t, body, `<line class="bad"`)
 	assert.Contains(t, body, "4.0s, Fri 2026-10-16 21:00 · failed")
-	assert.Contains(t, body, `class="activity-bars average"`)
+	assert.Contains(t, body, `class="activity-line durations"`)
 	assert.Contains(t, body, `data-tip="avg 3.0s · min 2.0s · max 4.0s over 2 runs, Fri 2026-10-16"`)
 
 	quiet := f.page(t, asOps, "/f/infra/many")
