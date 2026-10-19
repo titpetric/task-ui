@@ -40,7 +40,7 @@ func TestDiscovery(t *testing.T) {
 	}
 
 	infra := d.Find("infra")
-	if len(infra.Sources) != 2 || infra.Sources[0].Kind != "atkins" || infra.Job("atkins:plan") == nil {
+	if len(infra.Sources) != 1 || infra.Sources[0].Kind != "atkins" || infra.Job("plan") == nil || infra.Job("other") != nil {
 		t.Fatalf("infra: %+v", infra)
 	}
 	web := d.Find("web")

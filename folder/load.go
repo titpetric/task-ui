@@ -16,24 +16,22 @@ func Load(id, dir string, kinds ...string) *Folder {
 	f := &Folder{ID: id, Title: id, Dir: dir}
 	f.Sources = detector.All(dir, kinds...)
 	if len(kinds) == 0 {
-		f.Sources = pipelinesOnly(f.Sources)
+		f.Sources = firstSource(f.Sources)
 	}
 	finish(f)
 	return f
 }
 
-// pipelinesOnly keeps the pipeline sources when there are any.
-func pipelinesOnly(sources []*detector.Source) []*detector.Source {
-	var pipelines []*detector.Source
-	for _, source := range sources {
-		if detector.Pipeline(source.Kind) {
-			pipelines = append(pipelines, source)
-		}
+// firstSource keeps the one convention that reads a folder: the first
+// there is, in the order of detector.Detectors. Atkins wins, then a
+// Taskfile, a Makefile, package scripts, and the scripts folder only
+// when nothing names the jobs. A project's sources name others on
+// purpose.
+func firstSource(sources []*detector.Source) []*detector.Source {
+	if len(sources) > 1 {
+		return sources[:1]
 	}
-	if len(pipelines) == 0 {
-		return sources
-	}
-	return pipelines
+	return sources
 }
 
 // LoadFile reads one file as the only source of a folder, for the single

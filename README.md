@@ -179,12 +179,16 @@ extension of any file, and no pipeline file is ever written.
 | composer | `composer.json` | `composer run-script <script>` | the scripts, with `scripts-descriptions` |
 | script | `scripts/*` | `./scripts/<file>`, or `sh` for a `.sh` that is not executable | one per file; the first comment describes it |
 
-A pipeline file stands for its folder: a folder with `atkins.yml` or a
-Taskfile lists that pipeline's targets only, and the Makefile, package
-scripts or `scripts/` beside it are the pipeline's business. Without a
-pipeline file every convention is a source. A job's ID is its target
-name, or `kind:name` when the folder lists more than one convention, so
-`make build` and `npm run build` stay apart.
+One convention reads a folder: the first there is, in this order. An
+`atkins.yml` wins, and its targets are the folder's jobs; else a
+Taskfile; else a Makefile; else package scripts (npm, then composer);
+and the executables of `scripts/` only when nothing names the jobs.
+What else sits beside the convention that won is its business. A
+`scripts/` directory with a pipeline file or a Makefile of its own is a
+folder of its own, and the folder above does not list its scripts
+again. A project's `sources` read more than one convention on purpose;
+then a job's ID is `kind:name`, so `make build` and `npm run build` stay
+apart.
 
 Discovery goes as deep as the folders do: every directory under the root
 with something to run is a folder, at its path (`services/api`), and the

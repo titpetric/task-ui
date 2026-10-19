@@ -46,13 +46,28 @@ func TestLoad(t *testing.T) {
 		t.Fatalf("script: %+v", script)
 	}
 
-	// Without a pipeline file every convention is a source.
+	// One convention reads a folder, the first there is: atkins, then a
+	// Taskfile, a Makefile, package scripts, and the scripts folder last.
 	plain := t.TempDir()
 	write(t, filepath.Join(plain, "Makefile"), "build:\n\tgo build\n")
+	write(t, filepath.Join(plain, "package.json"), `{"scripts":{"dev":"vite"}}`)
 	write(t, filepath.Join(plain, "scripts", "build.sh"), "# Build with the script\n")
 	mixed := Load("tools", plain)
-	if len(mixed.Sources) != 2 || mixed.Job("make:build") == nil || mixed.Job("script:build") == nil {
-		t.Fatalf("mixed: %+v", mixed.Jobs)
+	if len(mixed.Sources) != 1 || mixed.Sources[0].Kind != "make" || mixed.Job("build") == nil || mixed.Job("dev") != nil {
+		t.Fatalf("make before package scripts and scripts: %+v", mixed.Jobs)
+	}
+	write(t, filepath.Join(plain, "Taskfile.yml"), "tasks:\n  lint:\n    desc: Lint\n")
+	if task := Load("tools", plain); len(task.Sources) != 1 || task.Sources[0].Kind != "task" {
+		t.Fatalf("a Taskfile before the Makefile: %+v", task.Sources)
+	}
+	write(t, filepath.Join(plain, "atkins.yml"), "jobs:\n  ship: echo ship\n")
+	if atkins := Load("tools", plain); len(atkins.Sources) != 1 || atkins.Sources[0].Kind != "atkins" || atkins.Job("ship") == nil {
+		t.Fatalf("atkins first and alone: %+v", atkins.Sources)
+	}
+	scripts := t.TempDir()
+	write(t, filepath.Join(scripts, "scripts", "build.sh"), "# Build with the script\n")
+	if s := Load("bin", scripts); len(s.Sources) != 1 || s.Sources[0].Kind != "script" || s.Job("build") == nil {
+		t.Fatalf("the scripts folder when there is nothing else: %+v", s.Sources)
 	}
 
 	only := Load("site", dir, "make")

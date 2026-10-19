@@ -22,8 +22,9 @@ type Detector interface {
 	Detect(dir string) *Source
 }
 
-// Detectors are the conventions task-ui knows, in the order their sources
-// are listed: pipelines first, then build files, then scripts.
+// Detectors are the conventions task-ui knows, in the order a folder is
+// read by them: the first that reads it is its source. Pipelines first,
+// then build files, then the scripts folder.
 var Detectors = []Detector{
 	pipelineDetector{kind: "atkins", names: atkinsNames},
 	pipelineDetector{kind: "task", names: taskfileNames},
