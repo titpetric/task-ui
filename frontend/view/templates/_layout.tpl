@@ -363,3 +363,14 @@
 {{- end }}
 
 {{- define "logo" }}<svg class="logo" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="3"/><path class="prompt" d="M8 10l6 6-6 6"/><path class="cursor" d="M16 23h8"/></svg>{{ end }}
+
+{{- define "keypolicies" }}
+{{- $selected := . }}
+<div class="field">
+	<label>Policies <span class="faint">the roles whose runs get this key, through the run's ssh agent; a key can be in several</span></label>
+	{{- range roles }}
+	{{- $role := . }}{{ $on := false }}{{ range $selected }}{{ if eq . $role }}{{ $on = true }}{{ end }}{{ end }}
+	<label class="check"><input type="checkbox" name="policies" value="{{ $role }}" data-type="set"{{ if $on }} checked{{ end }}> {{ $role }}{{ if eq $role "viewer" }} <span class="faint">reader</span>{{ end }}</label>
+	{{- end }}
+</div>
+{{- end }}

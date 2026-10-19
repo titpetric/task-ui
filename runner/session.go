@@ -25,6 +25,9 @@ type Session struct {
 	Run    *model.Run
 	Folder *folder.Folder
 	Job    *folder.Job
+	// role is the role of the user who started the run, for the instance
+	// keys its runs get.
+	role string
 
 	mu   sync.Mutex
 	term vt10x.Terminal

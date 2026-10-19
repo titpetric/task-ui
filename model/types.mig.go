@@ -831,6 +831,56 @@ var SecretFields = []string{"id", "scope", "name", "content", "created_at", "upd
 // SecretPrimaryFields are the primary key fields in the DB table.
 var SecretPrimaryFields = []string{"id"}
 
+// SSHKeyPolicy generated for db table `ssh_key_policy`.
+//
+// SSH Key Policy.
+type SSHKeyPolicy struct {
+	// ID
+	ID string `db:"id" json:"id"`
+
+	// Key Name
+	KeyName string `db:"key_name" json:"key_name"`
+
+	// Role
+	Role string `db:"role" json:"role"`
+
+	// Created At
+	CreatedAt *time.Time `db:"created_at" json:"created_at"`
+}
+
+// GetID will return the value of ID.
+func (s *SSHKeyPolicy) GetID() string { return s.ID }
+
+// SetID sets ID to the provided value.
+func (s *SSHKeyPolicy) SetID(val string) { s.ID = val }
+
+// GetKeyName will return the value of KeyName.
+func (s *SSHKeyPolicy) GetKeyName() string { return s.KeyName }
+
+// SetKeyName sets KeyName to the provided value.
+func (s *SSHKeyPolicy) SetKeyName(val string) { s.KeyName = val }
+
+// GetRole will return the value of Role.
+func (s *SSHKeyPolicy) GetRole() string { return s.Role }
+
+// SetRole sets Role to the provided value.
+func (s *SSHKeyPolicy) SetRole(val string) { s.Role = val }
+
+// GetCreatedAt will return the value of CreatedAt.
+func (s *SSHKeyPolicy) GetCreatedAt() *time.Time { return s.CreatedAt }
+
+// SetCreatedAt sets CreatedAt to the provided value.
+func (s *SSHKeyPolicy) SetCreatedAt(stamp time.Time) { s.CreatedAt = &stamp }
+
+// SSHKeyPolicyTable is the name of the table in the DB.
+const SSHKeyPolicyTable = "`ssh_key_policy`"
+
+// SSHKeyPolicyFields is a list of all columns in the DB table.
+var SSHKeyPolicyFields = []string{"id", "key_name", "role", "created_at"}
+
+// SSHKeyPolicyPrimaryFields are the primary key fields in the DB table.
+var SSHKeyPolicyPrimaryFields = []string{"id"}
+
 // User generated for db table `user`.
 type User struct {
 	// ID
@@ -1822,6 +1872,67 @@ func (s *Secret) Update(opts ...QueryOption) string {
 // Delete starts building a DELETE query.
 func (s *Secret) Delete(opts ...QueryOption) string {
 	cfg := (&QueryConfig{Table: SecretTable}).Apply(opts...)
+	query := fmt.Sprintf("DELETE FROM %s", cfg.Table)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	return query
+}
+
+// Insert starts building an INSERT INTO query.
+func (s *SSHKeyPolicy) Insert(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: SSHKeyPolicyTable, Statement: "INSERT INTO"}).Apply(opts...)
+	cols := SSHKeyPolicyFields
+	if len(cfg.Columns) > 0 {
+		cols = cfg.Columns
+	}
+	return fmt.Sprintf("%s %s (%s) VALUES (:%s)", cfg.Statement, cfg.Table, strings.Join(cols, ", "), strings.Join(cols, ", :"))
+}
+
+// Select starts building a SELECT query.
+func (s *SSHKeyPolicy) Select(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: SSHKeyPolicyTable}).Apply(opts...)
+	cols := "*"
+	if len(cfg.Columns) > 0 {
+		cols = strings.Join(cfg.Columns, ", ")
+	}
+	query := fmt.Sprintf("SELECT %s FROM %s", cols, cfg.Table)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	if cfg.OrderBy != "" {
+		query += " ORDER BY " + cfg.OrderBy
+	}
+	if cfg.LimitOffset > 0 {
+		query += fmt.Sprintf(" LIMIT %d, %d", cfg.LimitStart, cfg.LimitOffset)
+	}
+	return query
+}
+
+// Update starts building a UPDATE query.
+func (s *SSHKeyPolicy) Update(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: SSHKeyPolicyTable}).Apply(opts...)
+	cols := SSHKeyPolicyFields
+	if len(cfg.Columns) > 0 {
+		cols = cfg.Columns
+	}
+	setClause := ""
+	for i, col := range cols {
+		if i > 0 {
+			setClause += ", "
+		}
+		setClause += col + "=:" + col
+	}
+	query := fmt.Sprintf("UPDATE %s SET %s", cfg.Table, setClause)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	return query
+}
+
+// Delete starts building a DELETE query.
+func (s *SSHKeyPolicy) Delete(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: SSHKeyPolicyTable}).Apply(opts...)
 	query := fmt.Sprintf("DELETE FROM %s", cfg.Table)
 	if cfg.Where != "" {
 		query += " WHERE " + cfg.Where

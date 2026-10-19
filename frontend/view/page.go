@@ -78,6 +78,10 @@ type Page struct {
 	KeysDir string
 	// KeyFolders are the projects' .ssh/ folders with keys in them.
 	KeyFolders []KeyFolder
+	// KeyPolicies are the roles whose runs get each instance key, by
+	// key name; Key is the key an edit form changes.
+	KeyPolicies map[string][]string
+	Key         *sshkey.Key
 	// Encryption names the keys the secrets are encrypted with.
 	Encryption []string
 	Users      []model.User

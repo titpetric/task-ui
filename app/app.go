@@ -155,12 +155,14 @@ func (a *App) wire(version string) error {
 	workflowRuns := storage.NewWorkflowRunStorage(db)
 	g := &git.Git{SSHDir: cfg.SSHDir}
 	keys := &sshkey.Store{Dir: cfg.SSHDir}
+	keyPolicies := storage.NewSSHKeyPolicyStorage(db)
 	secrets := secret.New(storage.NewSecretStorage(db), secret.NewVault(keys))
 	env := envfile.New(storage.NewEnvFileStorage(db), secrets)
 	recordings := &recording.Store{Root: cfg.RecordingsDir()}
 
 	a.Catalogue = NewCatalogue(cfg.Root, cfg.Discover, projects)
 	a.Runner = runner.New(runner.Options{
+		KeyDir: keys.Dir, KeyPolicies: keyPolicies,
 		Runs:         runs,
 		Artifacts:    artifacts,
 		Secrets:      secrets,
@@ -184,12 +186,12 @@ func (a *App) wire(version string) error {
 	apiHandlers := api.New(api.Options{
 		Users: a.Users, Projects: projects, Runs: runs, Artifacts: artifacts, Schedules: schedules, Secrets: secrets,
 		Workflows: workflows, WorkflowRuns: workflowRuns, Flows: a.Workflows, Events: events,
-		Runner: a.Runner, Catalogue: a.Catalogue, Git: g, Keys: keys, Env: env, Recordings: recordings, Root: cfg.Root,
+		Runner: a.Runner, Catalogue: a.Catalogue, Git: g, Keys: keys, KeyPolicies: keyPolicies, Env: env, Recordings: recordings, Root: cfg.Root,
 	})
 	pages, err := frontend.New(frontend.Options{
 		Guard: a.Guard, Auth: access.NewAuthenticator(a.Users, a.Emails, a.Passwords), Users: a.Users, Projects: projects, Runs: runs, Artifacts: artifacts, Schedules: schedules, Secrets: secrets,
 		Workflows: workflows, WorkflowRuns: workflowRuns, Flows: a.Workflows,
-		Runner: a.Runner, Catalogue: a.Catalogue, Git: g, Keys: keys, Env: env, Recordings: recordings, Root: cfg.Root, Version: version, Now: cfg.Clock(),
+		Runner: a.Runner, Catalogue: a.Catalogue, Git: g, Keys: keys, KeyPolicies: keyPolicies, Env: env, Recordings: recordings, Root: cfg.Root, Version: version, Now: cfg.Clock(),
 	})
 	if err != nil {
 		return err

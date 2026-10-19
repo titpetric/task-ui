@@ -125,3 +125,45 @@ func TestKey_Secrets(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "hunter2", secrets["TOKEN"])
 }
+
+// A key carries the roles whose runs get it: set on generate, changed on
+// its own, kept by a rotation that names none, and gone with the key.
+func TestKey_Policies(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+
+	res := f.call(t, asAdmin, http.MethodPost, "/keys/generate", api.KeyRequest{Type: "ed25519", Comment: "deploy", Policies: []string{"runner", "viewer"}})
+	assert.Equal(t, http.StatusCreated, res.Status, string(res.Raw))
+	list := f.call(t, asAdmin, http.MethodGet, "/keys", nil)
+	assert.Equal(t, []any{"runner", "viewer"}, list.get("policies", "id_ed25519"))
+
+	// A rotation sends no policies, and keeps them.
+	res = f.call(t, asAdmin, http.MethodPost, "/keys/generate", api.KeyRequest{Type: "ed25519", Comment: "deploy"})
+	assert.Equal(t, http.StatusCreated, res.Status)
+	assert.Equal(t, []any{"runner", "viewer"}, f.call(t, asAdmin, http.MethodGet, "/keys", nil).get("policies", "id_ed25519"))
+
+	updated := f.call(t, asAdmin, http.MethodPut, "/keys/id_ed25519", api.KeyRequest{Policies: []string{"admin"}})
+	assert.Equal(t, http.StatusOK, updated.Status, string(updated.Raw))
+	assert.Equal(t, []any{"admin"}, f.call(t, asAdmin, http.MethodGet, "/keys", nil).get("policies", "id_ed25519"))
+
+	none := f.call(t, asAdmin, http.MethodPut, "/keys/id_ed25519", map[string]any{})
+	assert.Equal(t, http.StatusOK, none.Status)
+	assert.Nil(t, f.call(t, asAdmin, http.MethodGet, "/keys", nil).get("policies", "id_ed25519"))
+
+	bad := f.call(t, asAdmin, http.MethodPut, "/keys/id_ed25519", api.KeyRequest{Policies: []string{"root"}})
+	assert.Equal(t, http.StatusBadRequest, bad.Status)
+	missing := f.call(t, asAdmin, http.MethodPut, "/keys/id_rsa", api.KeyRequest{Policies: []string{"runner"}})
+	assert.Equal(t, http.StatusNotFound, missing.Status)
+	forbidden := f.call(t, asOps, http.MethodPut, "/keys/id_ed25519", api.KeyRequest{Policies: []string{"runner"}})
+	assert.Equal(t, http.StatusForbidden, forbidden.Status)
+
+	// Upload takes them too; a deleted key's are gone.
+	pem, err := os.ReadFile(filepath.Join(f.opts.Keys.Dir, "id_ed25519"))
+	assert.NoError(t, err)
+	assert.NoError(t, f.opts.Keys.Delete("id_ed25519"))
+	up := f.call(t, asAdmin, http.MethodPost, "/keys/upload", api.KeyRequest{Content: string(pem), Policies: []string{"runner"}})
+	assert.Equal(t, http.StatusCreated, up.Status, string(up.Raw))
+	assert.Equal(t, []any{"runner"}, f.call(t, asAdmin, http.MethodGet, "/keys", nil).get("policies", "id_ed25519"))
+	assert.Equal(t, http.StatusNoContent, f.call(t, asAdmin, http.MethodDelete, "/keys/id_ed25519", nil).Status)
+	assert.Nil(t, f.call(t, asAdmin, http.MethodGet, "/keys", nil).get("policies", "id_ed25519"))
+}

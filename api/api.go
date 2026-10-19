@@ -90,6 +90,7 @@ func (h *Handlers) Routes() http.Handler {
 	r.Get("/keys", h.listKeys)
 	r.Post("/keys/generate", h.generateKey)
 	r.Post("/keys/upload", h.uploadKey)
+	r.Put("/keys/{name}", h.updateKey)
 	r.Delete("/keys/{name}", h.deleteKey)
 
 	r.Get("/sources/*", h.getSource)

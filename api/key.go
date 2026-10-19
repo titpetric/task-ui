@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+
+	"github.com/titpetric/task-ui/storage"
 )
 
 // KeyRequest generates a key pair, or uploads a private key.
@@ -15,6 +17,10 @@ type KeyRequest struct {
 	Comment string `json:"comment"`
 	// Content is the private key to upload, PEM encoded.
 	Content string `json:"content"`
+	// Policies are the roles whose runs get the key through the run's
+	// ssh agent. Left out, a key keeps the roles it had, so a rotation
+	// keeps them; an empty list gives the key to none.
+	Policies []string `json:"policies"`
 }
 
 // listKeys returns the key pairs of the instance SSH folder. Admins only.
@@ -22,7 +28,49 @@ func (h *Handlers) listKeys(w http.ResponseWriter, r *http.Request) {
 	if !requireAdmin(w, r) {
 		return
 	}
-	writeJSON(w, http.StatusOK, map[string]any{"keys": h.opts.Keys.List(), "dir": h.opts.Keys.Dir})
+	policies, err := h.opts.KeyPolicies.All(r.Context())
+	if err != nil {
+		failErr(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"keys": h.opts.Keys.List(), "dir": h.opts.Keys.Dir, "policies": policies})
+}
+
+// setPolicies maps a key to the roles a request names, when it names any.
+func (h *Handlers) setPolicies(r *http.Request, name string, policies []string) error {
+	if policies == nil {
+		return nil
+	}
+	return h.opts.KeyPolicies.Set(r.Context(), name, policies)
+}
+
+// updateKey changes the roles whose runs get a key. Admins only.
+func (h *Handlers) updateKey(w http.ResponseWriter, r *http.Request) {
+	if !requireAdmin(w, r) {
+		return
+	}
+	name := param(r, "name")
+	found := false
+	for _, key := range h.opts.Keys.List() {
+		found = found || (key.Name == name && !key.Backup)
+	}
+	if !found {
+		failErr(w, storage.ErrNotFound)
+		return
+	}
+	var req KeyRequest
+	if err := readJSON(r, &req); err != nil {
+		fail(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	if req.Policies == nil {
+		req.Policies = []string{}
+	}
+	if err := h.setPolicies(r, name, req.Policies); err != nil {
+		fail(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"name": name, "policies": req.Policies})
 }
 
 // generateKey makes a new pair. The pair of the same type that was there
@@ -38,6 +86,10 @@ func (h *Handlers) generateKey(w http.ResponseWriter, r *http.Request) {
 	}
 	key, err := h.opts.Keys.Generate(req.Type, strings.TrimSpace(req.Comment))
 	if err != nil {
+		fail(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	if err := h.setPolicies(r, key.Name, req.Policies); err != nil {
 		fail(w, http.StatusBadRequest, err.Error())
 		return
 	}
@@ -72,6 +124,10 @@ func (h *Handlers) uploadKey(w http.ResponseWriter, r *http.Request) {
 		fail(w, http.StatusBadRequest, err.Error())
 		return
 	}
+	if err := h.setPolicies(r, key.Name, req.Policies); err != nil {
+		fail(w, http.StatusBadRequest, err.Error())
+		return
+	}
 	h.rekeyed(w, r, http.StatusCreated, key)
 }
 
@@ -88,6 +144,10 @@ func (h *Handlers) deleteKey(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := h.opts.Keys.Delete(name); err != nil {
+		failErr(w, err)
+		return
+	}
+	if err := h.opts.KeyPolicies.Delete(r.Context(), name); err != nil {
 		failErr(w, err)
 		return
 	}

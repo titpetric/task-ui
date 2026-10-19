@@ -37,7 +37,9 @@ type Options struct {
 	Catalogue folder.Catalogue
 	Git       *git.Git
 	Keys      *sshkey.Store
-	Env       *envfile.Store
+	// KeyPolicies give the instance keys to roles' runs.
+	KeyPolicies *storage.SSHKeyPolicyStorage
+	Env         *envfile.Store
 	// Recordings holds the runs' recordings, for the last screen of a
 	// run whose session is gone.
 	Recordings *recording.Store

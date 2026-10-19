@@ -20,7 +20,7 @@ import (
 type Agent struct {
 	// Socket is the path ssh connects to, for SSH_AUTH_SOCK.
 	Socket string
-	// Keys are the names of the files the keys came from.
+	// Keys are the paths of the files the keys came from.
 	Keys []string
 
 	dir      string
@@ -28,23 +28,37 @@ type Agent struct {
 	wg       sync.WaitGroup
 }
 
-// Load reads the private keys in keys and serves them on a socket in a new
-// private directory under tmp ("" is the system's). Files that are not an
-// unencrypted private key, public halves, known_hosts and config among
-// them, are skipped. A directory without a key returns nil and no error.
+// Load reads the private keys in a directory and serves them, as
+// LoadFiles does with every file in it.
 func Load(keys, tmp string) (*Agent, error) {
-	ring := agent.NewKeyring()
-	var names []string
 	entries, err := os.ReadDir(keys)
 	if err != nil {
 		return nil, err
 	}
+	var paths []string
 	for _, entry := range entries {
-		name := entry.Name()
-		if entry.IsDir() || strings.HasSuffix(name, ".pub") {
+		if !entry.IsDir() {
+			paths = append(paths, filepath.Join(keys, entry.Name()))
+		}
+	}
+	return LoadFiles(tmp, paths...)
+}
+
+// LoadFiles reads the private keys in the files given and serves them on
+// a socket in a new private directory under tmp ("" is the system's).
+// Files that are not an unencrypted private key, public halves,
+// known_hosts and config among them, are skipped, and so is a file given
+// twice. No key returns nil and no error.
+func LoadFiles(tmp string, paths ...string) (*Agent, error) {
+	ring := agent.NewKeyring()
+	var loaded []string
+	seen := map[string]bool{}
+	for _, path := range paths {
+		if seen[path] || strings.HasSuffix(path, ".pub") {
 			continue
 		}
-		data, err := os.ReadFile(filepath.Join(keys, name))
+		seen[path] = true
+		data, err := os.ReadFile(path)
 		if err != nil {
 			continue
 		}
@@ -52,12 +66,12 @@ func Load(keys, tmp string) (*Agent, error) {
 		if err != nil {
 			continue
 		}
-		if err := ring.Add(agent.AddedKey{PrivateKey: key, Comment: name}); err != nil {
+		if err := ring.Add(agent.AddedKey{PrivateKey: key, Comment: filepath.Base(path)}); err != nil {
 			return nil, err
 		}
-		names = append(names, name)
+		loaded = append(loaded, path)
 	}
-	if len(names) == 0 {
+	if len(loaded) == 0 {
 		return nil, nil
 	}
 
@@ -71,7 +85,7 @@ func Load(keys, tmp string) (*Agent, error) {
 		os.RemoveAll(dir)
 		return nil, err
 	}
-	a := &Agent{Socket: socket, Keys: names, dir: dir, listener: listener}
+	a := &Agent{Socket: socket, Keys: loaded, dir: dir, listener: listener}
 	a.wg.Add(1)
 	go a.serve(ring)
 	return a, nil

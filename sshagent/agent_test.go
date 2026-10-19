@@ -26,7 +26,7 @@ func TestLoad(t *testing.T) {
 	a, err := sshagent.Load(dir, t.TempDir())
 	assert.NoError(t, err)
 	assert.NotNil(t, a)
-	assert.Equal(t, []string{"id_ed25519"}, a.Keys)
+	assert.Equal(t, []string{filepath.Join(dir, "id_ed25519")}, a.Keys)
 
 	conn, err := net.Dial("unix", a.Socket)
 	assert.NoError(t, err)
@@ -55,4 +55,32 @@ func TestAgent_Close(t *testing.T) {
 	t.Parallel()
 	var a *sshagent.Agent
 	assert.NoError(t, a.Close())
+}
+
+// LoadFiles serves the keys of the files given, each once, from any
+// directories, and skips what is not a key.
+func TestLoadFiles(t *testing.T) {
+	t.Parallel()
+	one, two := t.TempDir(), t.TempDir()
+	_, err := (&sshkey.Store{Dir: one}).Generate("ed25519", "project")
+	assert.NoError(t, err)
+	_, err = (&sshkey.Store{Dir: two}).Generate("rsa", "instance")
+	assert.NoError(t, err)
+	first, second := filepath.Join(one, "id_ed25519"), filepath.Join(two, "id_rsa")
+
+	a, err := sshagent.LoadFiles(t.TempDir(), first, second, first, second+".pub", filepath.Join(two, "missing"))
+	assert.NoError(t, err)
+	defer a.Close()
+	assert.Equal(t, []string{first, second}, a.Keys)
+
+	conn, err := net.Dial("unix", a.Socket)
+	assert.NoError(t, err)
+	keys, err := agent.NewClient(conn).List()
+	conn.Close()
+	assert.NoError(t, err)
+	assert.Len(t, keys, 2)
+
+	none, err := sshagent.LoadFiles(t.TempDir())
+	assert.NoError(t, err)
+	assert.Nil(t, none)
 }
