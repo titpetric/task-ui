@@ -40,7 +40,8 @@ func TestEntries(t *testing.T) {
 		t.Fatalf("entries: %+v", entries)
 	}
 	tools := byID["tools"]
-	if !slices.Equal(tools.Sources, []string{"Makefile", "package.json"}) || tools.Jobs != 2 || tools.Checkout != nil {
+	// The Makefile reads tools; its package.json is the Makefile's business.
+	if !slices.Equal(tools.Sources, []string{"Makefile"}) || tools.Jobs != 1 || tools.Checkout != nil {
 		t.Fatalf("tools: %+v", tools)
 	}
 	if apps := byID["apps"]; apps.Jobs != 3 {
