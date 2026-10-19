@@ -67,6 +67,7 @@ func (h *Handlers) Routes() http.Handler {
 	r.Delete("/workflows/{id}", h.deleteWorkflow)
 	r.Get("/workflows/{id}/runs", h.listWorkflowRuns)
 	r.Post("/workflows/{id}/runs", h.startWorkflow)
+	r.Get("/workflow-runs", h.listRecentWorkflowRuns)
 	r.Post("/workflow-runs/{id}/stop", h.stopWorkflowRun)
 	r.Get("/sse/{topic}", h.sse)
 

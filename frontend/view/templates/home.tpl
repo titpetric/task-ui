@@ -43,7 +43,19 @@
 	<table class="table cards">
 		<thead><tr><th>Started</th><th>Folder</th><th>Job</th><th>By</th><th>Duration</th><th>Result</th><th></th></tr></thead>
 		<tbody>
-		{{- range .Recents }}
+		{{- range $e := .Recents }}
+		{{- with $e.Flow }}
+			<tr class="flow">
+				<td class="nowrap" data-label="Started" title="{{ stamp .StartedAt }}">{{ ago .StartedAt }}</td>
+				<td data-label="Folder"><span class="faint"><svg class="ic"><use href="#i-flow"/></svg> workflow</span></td>
+				<td class="key"><a href="/workflows/{{ .WorkflowID }}">{{ .Name }}</a></td>
+				<td data-label="By"><span class="who-ran"><span class="avatar sm" title="{{ .UserName }}">{{ $e.Initials }}</span> {{ .UserName }}</span></td>
+				<td class="nowrap" data-label="Took">{{ duration $e.Elapsed }}</td>
+				<td data-label="Result"><span class="state"><i class="dot {{ .State }}"></i>{{ .State }}</span>{{ if .Message }} <span class="faint">{{ .Message }}</span>{{ end }}</td>
+				<td class="actions"><a class="btn btn-sm" href="/workflows/{{ .WorkflowID }}">Open</a></td>
+			</tr>
+		{{- end }}
+		{{- with $e.Run }}
 			<tr>
 				<td class="nowrap" data-label="Started" title="{{ stamp .StartedAt }}">{{ ago .StartedAt }}</td>
 				<td data-label="Folder"><a href="/f/{{ .Folder }}">{{ .Folder }}</a></td>
@@ -53,6 +65,7 @@
 				<td data-label="Result">{{ template "state" . }}</td>
 				<td class="actions"><a class="btn btn-sm" href="/runs/{{ .ID }}" data-attach="{{ .ID }}">{{ if eq .State "running" }}Attach{{ else }}View{{ end }}</a></td>
 			</tr>
+		{{- end }}
 		{{- else }}
 			<tr class="empty"><td colspan="7">No runs yet. Run a job and it is recorded here.</td></tr>
 		{{- end }}

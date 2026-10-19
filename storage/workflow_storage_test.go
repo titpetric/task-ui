@@ -106,6 +106,16 @@ func TestWorkflowRunStorage(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Len(t, list, 1)
 
+	// The runs of every workflow, newest first, for the sidebar.
+	other := &model.WorkflowRun{WorkflowID: "wf2", Name: "release", UserName: "ops"}
+	assert.NoError(t, runs.Create(ctx, other, steps("a", "build")))
+	all, err := runs.List(ctx, 10)
+	assert.NoError(t, err)
+	assert.Len(t, all, 2)
+	assert.Equal(t, "release", all[0].Name)
+	one, _ := runs.List(ctx, 1)
+	assert.Len(t, one, 1)
+
 	// A restart ends what was running: the run fails, a running step with
 	// it, and steps that never started are skipped.
 	open := &model.WorkflowRun{WorkflowID: "wf", Name: "deploy"}

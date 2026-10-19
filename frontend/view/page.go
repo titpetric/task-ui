@@ -29,8 +29,9 @@ type Page struct {
 	// SideFolders are the folders the sidebar lists: Folders less the
 	// projects set not to show there.
 	SideFolders []*folder.Folder
-	// Recents are the latest runs the user may see, for the sidebar.
-	Recents []Run
+	// Recents are the latest runs of jobs and of workflows the user may
+	// see, newest first, for the sidebar.
+	Recents []Recent
 	// SideWorkflows are the workflows the user may see, for the sidebar.
 	SideWorkflows []Workflow
 	// StepWorkflows are the workflows a step of the one edited may run:

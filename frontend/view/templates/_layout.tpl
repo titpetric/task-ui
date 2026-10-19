@@ -93,7 +93,16 @@
 			</nav>
 			<div class="label side-label">Recents</div>
 			<nav class="recents" id="recents">
-				{{- range .Recents }}
+				{{- range $e := .Recents }}
+				{{- with $e.Flow }}
+				<a href="/workflows/{{ .WorkflowID }}" class="recent flow" title="Workflow {{ .Name }}, {{ .UserName }}, {{ .State }}">
+					<i class="dot {{ .State }}"></i>
+					<span class="what"><b>{{ .Name }}</b><small><svg class="ic"><use href="#i-flow"/></svg>workflow</small></span>
+					{{- if eq .State "running" }}<svg class="ic act"><use href="#i-eye"/></svg>{{ end }}
+					<span class="avatar sm" title="{{ .UserName }}">{{ $e.Initials }}</span>
+				</a>
+				{{- end }}
+				{{- with $e.Run }}
 				{{- $can := $.CanRunJob .Folder .Job }}
 				<a href="/runs/{{ .ID }}" data-attach="{{ .ID }}" class="recent" title="{{ if ne .State "running" }}View{{ else if $can }}Attach to{{ else }}Watch{{ end }} {{ .Folder }} / {{ .Job }}, {{ .UserName }}, {{ .State }}">
 					<i class="dot {{ .State }}"></i>
@@ -101,6 +110,7 @@
 					{{- if eq .State "running" }}<svg class="ic act"><use href="#i-{{ if $can }}play{{ else }}eye{{ end }}"/></svg>{{ end }}
 					<span class="avatar sm" title="{{ .UserName }}">{{ .Initials }}</span>
 				</a>
+				{{- end }}
 				{{- else }}
 				<div class="empty">Runs started by anyone show up here.</div>
 				{{- end }}
