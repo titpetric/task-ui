@@ -2734,43 +2734,49 @@ pre.output {
   opacity: 0.6;
 }
 
-/* Under each count, the average duration of the same days or hours: a
-   shorter row in the text colour, so it reads apart from the counts. */
-.activity-bars.average {
-  height: 2rem;
-  margin-top: 3px;
+/* Under each count chart, its durations as lines: the average solid in
+   the text colour, the slowest dashed, the fastest faint. The columns
+   over it are the hover targets, lined up with the bars above. */
+.activity-line.durations {
+  height: 2.6rem;
+  margin-top: 4px;
 }
 
-.activity-bars i.avg {
-  background: linear-gradient(to top, var(--text-dim), color-mix(in oklch, var(--text-dim) 55%, transparent));
+.activity-line.durations path {
+  fill: none;
+  stroke-linejoin: round;
+  stroke-linecap: round;
 }
 
-/* The fastest to the slowest run of the bucket: a hairline over the
-   average bar, capped at both ends. */
-.activity-bars b.range {
+.activity-line.durations .avg {
+  stroke: var(--text);
+  stroke-width: 1.75;
+}
+
+.activity-line.durations .max {
+  stroke: var(--text-dim);
+  stroke-width: 1.25;
+  stroke-dasharray: 3 3;
+}
+
+.activity-line.durations .min {
+  stroke: var(--text-faint);
+  stroke-width: 1.25;
+}
+
+.activity-hits {
   position: absolute;
-  left: 50%;
-  width: 0;
-  border-left: 1px solid var(--text);
-  opacity: 0.55;
-  pointer-events: none;
+  inset: 0;
+  display: grid;
+  grid-template-columns: repeat(var(--n), minmax(0, 1fr));
 }
 
-.activity-bars b.range::before,
-.activity-bars b.range::after {
-  content: "";
-  position: absolute;
-  left: -3px;
-  width: 5px;
-  border-top: 1px solid var(--text);
+.activity-hits span {
+  position: relative;
 }
 
-.activity-bars b.range::before {
-  top: 0;
-}
-
-.activity-bars b.range::after {
-  bottom: 0;
+.activity-hits span:hover {
+  background: var(--signal-wash);
 }
 
 .activity-key {
@@ -2791,20 +2797,19 @@ pre.output {
   background: var(--signal);
 }
 
-.activity-key i.avg {
-  background: var(--text-dim);
+.activity-key i.line {
+  width: 0.9rem;
+  height: 0;
+  vertical-align: 0.2rem;
+  border-top: 2px solid var(--text);
 }
 
-.activity-key b.range {
-  display: inline-block;
-  width: 5px;
-  height: 0.7rem;
-  margin: 0 0.3rem 0 0.8rem;
-  vertical-align: -0.1rem;
-  border: 1px solid var(--text);
-  border-width: 1px 0;
-  background: linear-gradient(var(--text), var(--text)) center / 1px 100% no-repeat;
-  opacity: 0.55;
+.activity-key i.line.max {
+  border-top: 2px dashed var(--text-dim);
+}
+
+.activity-key i.line.min {
+  border-top-color: var(--text-faint);
 }
 
 .activity-chart figcaption {
