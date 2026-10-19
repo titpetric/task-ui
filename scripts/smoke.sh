@@ -149,6 +149,8 @@ check "the clone can be removed" '204' curl -sS -o /dev/null -w '%{http_code}' -
 check "and is gone" '404' curl -sS -o /dev/null -w '%{http_code}' "${TASK_UI_BASE}/f/cloned"
 
 # ---- artifacts
+# tools reads its Makefile alone by default; its sources add the scripts.
+check "sources add the scripts folder" '"sources":"[\"make\",\"script\"]"' api PUT /projects/tools '{"sources":["make","script"]}'
 check "a job leaves an artifact" '"name":"report.txt"' bash -c "
   api POST /runs '{\"folder\":\"tools\",\"job\":\"script:report\"}' >/dev/null
   for _ in \$(seq 1 40); do api GET '/artifacts?folder=tools' | grep -q report.txt && break; sleep 0.25; done
