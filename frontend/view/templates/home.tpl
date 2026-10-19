@@ -38,7 +38,7 @@
 </section>
 
 <section class="block">
-	<h3>Control centre <small>the jobs folders share get a column; the rest are under other</small></h3>
+	<h3>Control centre <small>a job name that repeats gets a column; the rest are under other</small></h3>
 	{{- with $c := .Control }}
 	<div class="table-wrap">
 	<table class="table control">
@@ -47,10 +47,11 @@
 		{{- range $row := $c.Rows }}
 			<tr>
 				<td class="key nowrap"><a href="/f/{{ $row.Folder.ID }}">{{ $row.Folder.ID }}</a></td>
-				{{- range $i, $job := $row.Cells }}
-				<td class="col" data-label="{{ index $c.Columns $i }}">{{ with $job }}{{ template "controljob" (list $ $row.Folder . false) }}{{ end }}</td>
+				{{- range $i, $cell := $row.Cells }}
+				{{- /* One job is a bare button; several of a name carry their kinds. */}}
+				<td class="col" data-label="{{ index $c.Columns $i }}">{{ if $cell }}<div>{{ range $cell }}{{ template "controljob" (list $ $row.Folder . (gt (len $cell) 1)) }}{{ end }}</div>{{ end }}</td>
 				{{- end }}
-				<td class="other" data-label="Other">{{ range $row.Extra }}{{ template "controljob" (list $ $row.Folder . true) }}{{ end }}</td>
+				<td class="other" data-label="Other"><div>{{ range $row.Extra }}{{ template "controljob" (list $ $row.Folder . true) }}{{ end }}</div></td>
 			</tr>
 		{{- else }}
 			<tr class="empty"><td colspan="{{ add (len $c.Columns) 2 }}">No jobs yet. Add a project from a git repository in Settings, or put a folder with something to run under the root.</td></tr>
@@ -68,11 +69,13 @@
 {{- define "controljob" }}
 {{- $ := index . 0 }}{{ $f := index . 1 }}{{ $r := index . 2 }}{{ $named := index . 3 }}
 {{- $run := $.RunningRun $r.Key }}
+{{- /* A name two sources share is told apart by its kind, as in the sidebar. */}}
+{{- $label := $r.Name }}{{ if ne $r.ID $r.Name }}{{ $label = $r.ID }}{{ end }}
 {{- if $run -}}
-<a class="cc{{ if $named }} named{{ end }} running" href="/runs/{{ $run.ID }}" data-attach="{{ $run.ID }}" title="Attach to {{ $f.ID }} / {{ $r.Name }}, running"><svg class="ic"><use href="#i-eye"/></svg>{{ if $named }}<span>{{ $r.Name }}</span>{{ end }}</a>
+<a class="cc{{ if $named }} named{{ end }} running" href="/runs/{{ $run.ID }}" data-attach="{{ $run.ID }}" title="Attach to {{ $f.ID }} / {{ $r.Name }}, running"><svg class="ic"><use href="#i-eye"/></svg>{{ if $named }}<span>{{ $label }}</span>{{ end }}</a>
 {{- else if $.CanRun $f $r -}}
-<button type="button" class="cc{{ if $named }} named{{ end }}" data-run data-folder="{{ $f.ID }}" data-job="{{ $r.ID }}" data-title="{{ $f.ID }} / {{ $r.Name }}" title="Run {{ $f.ID }} / {{ $r.Name }}"><svg class="ic"><use href="#i-play"/></svg>{{ if $named }}<span>{{ $r.Name }}</span>{{ end }}</button>
+<button type="button" class="cc{{ if $named }} named{{ end }}" data-run data-folder="{{ $f.ID }}" data-job="{{ $r.ID }}" data-title="{{ $f.ID }} / {{ $r.Name }}" title="Run {{ $f.ID }} / {{ $r.Name }}"><svg class="ic"><use href="#i-play"/></svg>{{ if $named }}<span>{{ $label }}</span>{{ end }}</button>
 {{- else -}}
-<a class="cc{{ if $named }} named{{ end }} idle" href="/f/{{ $f.ID }}/{{ $r.ID }}" title="{{ $f.ID }} / {{ $r.Name }}: your role may not run it"><i class="shebang" aria-hidden="true">#!</i>{{ if $named }}<span>{{ $r.Name }}</span>{{ end }}</a>
+<a class="cc{{ if $named }} named{{ end }} idle" href="/f/{{ $f.ID }}/{{ $r.ID }}" title="{{ $f.ID }} / {{ $r.Name }}: your role may not run it"><i class="shebang" aria-hidden="true">#!</i>{{ if $named }}<span>{{ $label }}</span>{{ end }}</a>
 {{- end }}
 {{- end }}

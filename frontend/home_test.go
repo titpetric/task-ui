@@ -47,6 +47,7 @@ func TestHome_Control(t *testing.T) {
 	infra := body[strings.Index(body, `<td class="key nowrap"><a href="/f/infra">infra</a>`):]
 	infra = infra[:strings.Index(infra, "</tr>")]
 	assert.Contains(t, infra, `<td class="col" data-label="deploy"></td>`) // infra has no deploy
+	assert.Contains(t, infra, `<td class="other" data-label="Other"><div>`)
 	assert.Contains(t, infra, `class="cc named" data-run data-folder="infra" data-job="plan"`)
 	assert.Contains(t, infra, `<span>plan</span>`)
 	assert.Contains(t, infra, `<a class="cc named running" href="/runs/`+session.ID()+`"`) // slow runs
