@@ -63,7 +63,7 @@ func TestPage_ProjectsFold(t *testing.T) {
 	assert.NoError(t, f.opts.Projects.Create(context.Background(), &model.Project{Folder: "infra", SidebarHidden: true}))
 	hidden := f.page(t, asAdmin, "/")
 	assert.NotContains(t, hidden, `data-project="infra"`)
-	assert.NotContains(t, hidden, `data-folder="infra/edge"`)
+	assert.NotContains(t, hidden, `<details class="folder" data-folder="infra/edge"`)
 	assert.Contains(t, hidden, `data-project="private"`)
 	assert.Equal(t, http.StatusOK, f.get(t, asAdmin, "/f/infra").Status)
 	assert.NoError(t, f.opts.Projects.Delete(context.Background(), mustProject(t, f, "infra").ID))

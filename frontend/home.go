@@ -4,15 +4,17 @@ import (
 	"net/http"
 
 	"github.com/titpetric/task-ui/access"
+	"github.com/titpetric/task-ui/frontend/view"
 	"github.com/titpetric/task-ui/model"
 )
 
-// home is the dashboard: every live terminal, the recent runs and the
-// folders.
+// home is the dashboard: every live terminal, and the control centre,
+// a button for every job of every folder.
 func (h *Handlers) home(w http.ResponseWriter, r *http.Request) {
 	user := access.UserFrom(r.Context())
 	p := h.page(r, "Dashboard")
 	p.Runs = h.live(user)
+	p.Control = view.NewControl(p.Folders, view.ControlColumns)
 	schedules, _ := h.opts.Schedules.List(r.Context())
 	for _, schedule := range schedules {
 		if user.CanSee(schedule.Folder) {

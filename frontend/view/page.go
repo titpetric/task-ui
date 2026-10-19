@@ -59,6 +59,8 @@ type Page struct {
 	// Pipeline is a workflow's steps top to bottom, with the latest run's
 	// states.
 	Pipeline []Link
+	// Control is the dashboard's control centre.
+	Control  Control
 	Workflow *Workflow
 	// WorkflowRuns are a workflow's runs, newest first.
 	WorkflowRuns []WorkflowRun

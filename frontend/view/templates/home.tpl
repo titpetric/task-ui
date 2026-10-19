@@ -38,61 +38,41 @@
 </section>
 
 <section class="block">
-	<h3>Recent runs</h3>
+	<h3>Control centre <small>the jobs folders share get a column; the rest are under other</small></h3>
+	{{- with $c := .Control }}
 	<div class="table-wrap">
-	<table class="table cards">
-		<thead><tr><th>Started</th><th>Folder</th><th>Job</th><th>By</th><th>Duration</th><th>Result</th><th></th></tr></thead>
+	<table class="table control">
+		<thead><tr><th>Folder</th>{{ range $c.Columns }}<th class="col">{{ . }}</th>{{ end }}<th>Other</th></tr></thead>
 		<tbody>
-		{{- range $e := .Recents }}
-		{{- with $e.Flow }}
-			<tr class="flow">
-				<td class="nowrap" data-label="Started" title="{{ stamp .StartedAt }}">{{ ago .StartedAt }}</td>
-				<td data-label="Folder"><span class="faint"><svg class="ic"><use href="#i-flow"/></svg> workflow</span></td>
-				<td class="key"><a href="/workflows/{{ .WorkflowID }}">{{ .Name }}</a></td>
-				<td data-label="By"><span class="who-ran"><span class="avatar sm" title="{{ .UserName }}">{{ $e.Initials }}</span> {{ .UserName }}</span></td>
-				<td class="nowrap" data-label="Took">{{ duration $e.Elapsed }}</td>
-				<td data-label="Result"><span class="state"><i class="dot {{ .State }}"></i>{{ .State }}</span>{{ if .Message }} <span class="faint">{{ .Message }}</span>{{ end }}</td>
-				<td class="actions"><a class="btn btn-sm" href="/workflows/{{ .WorkflowID }}">Open</a></td>
-			</tr>
-		{{- end }}
-		{{- with $e.Run }}
+		{{- range $row := $c.Rows }}
 			<tr>
-				<td class="nowrap" data-label="Started" title="{{ stamp .StartedAt }}">{{ ago .StartedAt }}</td>
-				<td data-label="Folder"><a href="/f/{{ .Folder }}">{{ .Folder }}</a></td>
-				<td class="key"><a href="/f/{{ .Folder }}/{{ .Job }}">{{ .Job }}</a></td>
-				<td data-label="By">{{ template "who" . }}</td>
-				<td class="nowrap" data-label="Took">{{ duration .Elapsed }}</td>
-				<td data-label="Result">{{ template "state" . }}</td>
-				<td class="actions"><a class="btn btn-sm" href="/runs/{{ .ID }}" data-attach="{{ .ID }}">{{ if eq .State "running" }}Attach{{ else }}View{{ end }}</a></td>
+				<td class="key nowrap"><a href="/f/{{ $row.Folder.ID }}">{{ $row.Folder.ID }}</a></td>
+				{{- range $i, $job := $row.Cells }}
+				<td class="col" data-label="{{ index $c.Columns $i }}">{{ with $job }}{{ template "controljob" (list $ $row.Folder . false) }}{{ end }}</td>
+				{{- end }}
+				<td class="other" data-label="Other">{{ range $row.Extra }}{{ template "controljob" (list $ $row.Folder . true) }}{{ end }}</td>
 			</tr>
-		{{- end }}
 		{{- else }}
-			<tr class="empty"><td colspan="7">No runs yet. Run a job and it is recorded here.</td></tr>
+			<tr class="empty"><td colspan="{{ add (len $c.Columns) 2 }}">No jobs yet. Add a project from a git repository in Settings, or put a folder with something to run under the root.</td></tr>
 		{{- end }}
 		</tbody>
 	</table>
 	</div>
-</section>
-
-<section class="block">
-	<h3>Folders</h3>
-	<div class="table-wrap">
-	<table class="table">
-		<thead><tr><th>Folder</th><th>Name</th><th class="hide-sm">Description</th><th>Sources</th><th class="text-end">Jobs</th></tr></thead>
-		<tbody>
-		{{- range .Folders }}
-			<tr>
-				<td class="key nowrap"><a href="/f/{{ .ID }}"><svg class="ic"><use href="#i-folder"/></svg> {{ .ID }}/</a></td>
-				<td>{{ .Title }}</td>
-				<td class="desc hide-sm">{{ if .Error }}<span class="badge bad">error</span> {{ .Error }}{{ else }}{{ .Description }}{{ end }}</td>
-				<td class="nowrap">{{ range .Sources }}<span class="badge">{{ .Kind }}</span> {{ end }}</td>
-				<td class="text-end">{{ len .Jobs }}</td>
-			</tr>
-		{{- else }}
-			<tr class="empty"><td colspan="5">No folders yet. Add one from a git repository in Settings, or put a folder with something to run under the root.</td></tr>
-		{{- end }}
-		</tbody>
-	</table>
-	</div>
+	{{- end }}
 </section>
 {{ end }}
+
+{{/* controljob is a job's button in the control centre: Run, an eye on
+     the run in progress, or a #! to its page for a user who may not run
+     it. In the other column the button carries the job's name. */}}
+{{- define "controljob" }}
+{{- $ := index . 0 }}{{ $f := index . 1 }}{{ $r := index . 2 }}{{ $named := index . 3 }}
+{{- $run := $.RunningRun $r.Key }}
+{{- if $run -}}
+<a class="cc{{ if $named }} named{{ end }} running" href="/runs/{{ $run.ID }}" data-attach="{{ $run.ID }}" title="Attach to {{ $f.ID }} / {{ $r.Name }}, running"><svg class="ic"><use href="#i-eye"/></svg>{{ if $named }}<span>{{ $r.Name }}</span>{{ end }}</a>
+{{- else if $.CanRun $f $r -}}
+<button type="button" class="cc{{ if $named }} named{{ end }}" data-run data-folder="{{ $f.ID }}" data-job="{{ $r.ID }}" data-title="{{ $f.ID }} / {{ $r.Name }}" title="Run {{ $f.ID }} / {{ $r.Name }}"><svg class="ic"><use href="#i-play"/></svg>{{ if $named }}<span>{{ $r.Name }}</span>{{ end }}</button>
+{{- else -}}
+<a class="cc{{ if $named }} named{{ end }} idle" href="/f/{{ $f.ID }}/{{ $r.ID }}" title="{{ $f.ID }} / {{ $r.Name }}: your role may not run it"><i class="shebang" aria-hidden="true">#!</i>{{ if $named }}<span>{{ $r.Name }}</span>{{ end }}</a>
+{{- end }}
+{{- end }}
