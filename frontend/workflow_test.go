@@ -47,6 +47,8 @@ func TestWorkflows_SidebarList(t *testing.T) {
 	runs := strings.Index(ops, `<a href="/runs"`)
 	assert.True(t, workflows >= 0 && item > workflows && runs > item, "release listed under Workflows")
 	assert.Contains(t, ops, `data-workflow-run="`+release.ID+`"`)
+	// Each is marked with a shebang, not a bullet.
+	assert.Contains(t, ops, `<i class="shebang" aria-hidden="true">#!</i>`)
 	// ops sees private, and can not run its step in the admin's folder.
 	assert.Contains(t, ops, `<a class="name" href="/workflows/`+private.ID+`"`)
 	assert.NotContains(t, ops, `data-workflow-run="`+private.ID+`"`)
