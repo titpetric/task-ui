@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/titpetric/task-ui/detector"
 	"github.com/titpetric/task-ui/internal/assert"
 	"github.com/titpetric/task-ui/model"
 )
@@ -18,6 +19,8 @@ func TestJob(t *testing.T) {
 
 	body := f.page(t, asOps, "/f/infra/plan")
 	assert.Contains(t, body, "<h2>plan")
+	// A script is its own source: there is no pipeline file to show.
+	assert.NotContains(t, body, `class="btn btn-sm show-source"`)
 	assert.Contains(t, body, "<code>sh -c echo planned</code>")
 	assert.Contains(t, body, "1 runs")
 	assert.Contains(t, body, `data-attach="`+run.ID+`">View</a>`)
@@ -49,4 +52,23 @@ func TestJob_Missing(t *testing.T) {
 	assert.Equal(t, http.StatusNotFound, res.Status)
 	assert.Contains(t, res.Body, "No job named nothing in infra")
 	assert.Equal(t, http.StatusNotFound, f.get(t, asOps, "/f/nowhere/plan").Status)
+}
+
+// A pipeline's job shows its file and the files it includes, each with
+// a Show button; the folder page does too.
+func TestJob_ShowSource(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	f.infra.Sources = []*detector.Source{{Kind: "atkins", File: "atkins.yml"}}
+	f.infra.Includes = []string{"vars.yml"}
+	f.infra.Job("plan").Kind, f.infra.Job("plan").Source = "atkins", "atkins.yml"
+
+	job := f.page(t, asOps, "/f/infra/plan")
+	assert.Contains(t, job, `atkins.yml<button type="button" class="btn btn-sm show-source" data-source="infra" data-file="atkins.yml" aria-expanded="false">`)
+	assert.Contains(t, job, `data-source="infra" data-file="vars.yml"`)
+	assert.Contains(t, job, `<dialog class="run source" id="source-dialog"`)
+
+	folder := f.page(t, asOps, "/f/infra")
+	assert.Contains(t, folder, `data-source="infra" data-file="atkins.yml"`)
+	assert.Contains(t, folder, `data-source="infra" data-file="vars.yml"`)
 }
