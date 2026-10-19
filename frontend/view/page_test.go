@@ -31,14 +31,14 @@ func TestPage_CanRun(t *testing.T) {
 func TestPage_Runs(t *testing.T) {
 	t.Parallel()
 	p := admin(t)
-	key := p.Recents[0].Key()
+	key := p.Recents[0].Run.Key()
 
 	assert.NotNil(t, p.RunningRun(key))
 	assert.Equal(t, "ops", p.RunningRun(key).UserName)
 	assert.Nil(t, p.RunningRun("infra/other"))
 
 	assert.Nil(t, p.LastRun(key))
-	p.Last = map[string]view.Run{key: p.Recents[0]}
+	p.Last = map[string]view.Run{key: *p.Recents[0].Run}
 	assert.NotNil(t, p.LastRun(key))
 }
 

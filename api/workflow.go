@@ -310,6 +310,37 @@ func (h *Handlers) listWorkflowRuns(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"runs": views})
 }
 
+// listRecentWorkflowRuns returns the runs of every workflow, newest
+// first, those of the workflows the user sees every folder of.
+func (h *Handlers) listRecentWorkflowRuns(w http.ResponseWriter, r *http.Request) {
+	runs, err := h.opts.WorkflowRuns.List(r.Context(), queryInt(r, "limit", 10))
+	if err != nil {
+		failErr(w, err)
+		return
+	}
+	views := []model.WorkflowRun{}
+	for _, run := range runs {
+		if h.visibleRun(r, run.ID) {
+			views = append(views, run)
+		}
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"runs": views})
+}
+
+// visibleRun reports whether the user may see a workflow run: every
+// folder its steps ran in, the workflows they ran included.
+func (h *Handlers) visibleRun(r *http.Request, runID string) bool {
+	rows, err := h.opts.WorkflowRuns.Steps(r.Context(), runID)
+	if err != nil {
+		return false
+	}
+	steps := make([]model.WorkflowStep, 0, len(rows))
+	for _, row := range rows {
+		steps = append(steps, model.WorkflowStep{Folder: row.Folder, Job: row.Job, WorkflowRef: row.WorkflowRef})
+	}
+	return h.visibleSteps(r, steps)
+}
+
 // stopWorkflowRun ends a workflow run, for a user who may run its steps.
 func (h *Handlers) stopWorkflowRun(w http.ResponseWriter, r *http.Request) {
 	run, err := h.opts.WorkflowRuns.Get(r.Context(), param(r, "id"))

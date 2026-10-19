@@ -217,6 +217,30 @@ func TestWorkflow_Nested(t *testing.T) {
 	assert.Contains(t, used.str("error"), "outer")
 }
 
+// The runs of every workflow the user sees, newest first.
+func TestWorkflow_RecentRuns(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	ok := f.createWorkflow(t, asOps, "ok", chain("infra", "plan"))
+	private := f.createWorkflow(t, asAdmin, "private", chain("private", "deploy"))
+	for _, id := range []string{ok, private} {
+		started := f.call(t, asAdmin, http.MethodPost, "/workflows/"+id+"/runs", nil)
+		assert.Equal(t, http.StatusCreated, started.Status, string(started.Raw))
+		f.workflowRun(t, id, started.str("id"))
+	}
+
+	admin := f.call(t, asAdmin, http.MethodGet, "/workflow-runs?limit=10", nil)
+	assert.Equal(t, http.StatusOK, admin.Status, string(admin.Raw))
+	assert.Len(t, admin.list("runs"), 2)
+	assert.Equal(t, "private", admin.list("runs")[0].(map[string]any)["name"])
+
+	limited := f.call(t, asLimited, http.MethodGet, "/workflow-runs", nil)
+	runs := limited.list("runs")
+	assert.Len(t, runs, 1)
+	assert.Equal(t, "ok", runs[0].(map[string]any)["name"])
+	assert.Equal(t, ok, runs[0].(map[string]any)["workflow_id"])
+}
+
 // A workflow shows in the sidebar unless it is made or set not to.
 func TestWorkflow_Sidebar(t *testing.T) {
 	t.Parallel()

@@ -27,7 +27,7 @@ func admin(t *testing.T) *view.Page {
 		User:          &model.User{Name: "admin", Role: model.RoleAdmin},
 		LoginRequired: true,
 		Folders:       []*folder.Folder{f},
-		Recents:       []view.Run{run},
+		Recents:       []view.Recent{{Run: &run}},
 		Running:       map[string]view.Run{run.Key(): run},
 		Folder:        f,
 		Job:           job,

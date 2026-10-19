@@ -179,6 +179,38 @@ func TestWorkflow_Page(t *testing.T) {
 	assert.Equal(t, 404, missing.Status)
 }
 
+// The sidebar's recents hold the runs of workflows among those of jobs,
+// newest first, linking to the workflow.
+func TestWorkflow_Recents(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	wf := f.workflow(t, asOps, "release", "infra", "plan")
+	private := f.workflow(t, asAdmin, "private", "private", "deploy")
+	for _, w := range []*model.Workflow{wf, private} {
+		run, err := f.opts.Flows.Start(context.Background(), w, f.users[asAdmin])
+		assert.NoError(t, err)
+		select {
+		case <-f.opts.Flows.Done(run.ID):
+		case <-time.After(20 * time.Second):
+			t.Fatal("the workflow did not finish")
+		}
+	}
+
+	ops := f.page(t, asOps, "/")
+	recents := ops[strings.Index(ops, `id="recents"`):]
+	// The dashboard's recent runs hold them too.
+	assert.Contains(t, ops, `<td class="key"><a href="/workflows/`+wf.ID+`">release</a></td>`)
+	entry := `<a href="/workflows/` + wf.ID + `" class="recent flow" title="Workflow release, admin, ok">`
+	assert.Contains(t, recents, entry)
+	assert.Contains(t, recents, `<b>release</b><small><svg class="ic"><use href="#i-flow"/></svg>workflow</small>`)
+	// Its step's run is listed too; and ops sees the private folder.
+	assert.Contains(t, recents, `<b>plan</b>`)
+	assert.Contains(t, recents, `href="/workflows/`+private.ID+`"`)
+	// limited does not see the private folder, nor the workflow that ran in it.
+	limited := f.page(t, asLimited, "/")
+	assert.NotContains(t, limited[strings.Index(limited, `id="recents"`):], `href="/workflows/`+private.ID+`"`)
+}
+
 // The edit page carries the form, for the owner or an admin.
 func TestWorkflow_EditPage(t *testing.T) {
 	t.Parallel()

@@ -1225,13 +1225,28 @@
   var recents = document.getElementById("recents");
   var known = null;
 
-  function renderRecents(runs) {
+  // renderRecents draws the runs of jobs and of workflows, newest first.
+  function renderRecents(runs, flows) {
     if (!recents) return;
-    if (!runs.length) {
+    var entries = runs.map(function (r) { return { run: r, at: r.started_at || "" }; })
+      .concat((flows || []).map(function (f) { return { flow: f, at: f.started_at || "" }; }));
+    entries.sort(function (a, b) { return a.at < b.at ? 1 : a.at > b.at ? -1 : 0; });
+    entries = entries.slice(0, 10);
+    if (!entries.length) {
       recents.innerHTML = '<div class="empty">Runs started by anyone show up here.</div>';
       return;
     }
-    recents.innerHTML = runs.map(function (r) {
+    recents.innerHTML = entries.map(function (e) {
+      if (e.flow) {
+        var f = e.flow;
+        return '<a href="/workflows/' + encodeURIComponent(f.workflow_id) + '" class="recent flow" title="' +
+          escapeHTML("Workflow " + f.name + ", " + f.user_name + ", " + f.state) + '">' +
+          '<i class="dot ' + escapeHTML(f.state) + '"></i>' +
+          '<span class="what"><b>' + escapeHTML(f.name) + '</b><small><svg class="ic"><use href="#i-flow"/></svg>workflow</small></span>' +
+          (f.state === "running" ? '<svg class="ic act"><use href="#i-eye"/></svg>' : "") +
+          '<span class="avatar sm" title="' + escapeHTML(f.user_name) + '">' + escapeHTML(initials(f.user_name)) + '</span></a>';
+      }
+      var r = e.run;
       var running = r.state === "running";
       var verb = !running ? "View" : r.can_run ? "Attach to" : "Watch";
       return '<a href="/runs/' + encodeURIComponent(r.id) + '" data-attach="' + escapeHTML(r.id) + '" class="recent" title="' +
@@ -1245,10 +1260,11 @@
 
   function poll() {
     if (document.hidden) return;
-    api("GET", "/api/runs?limit=10").then(function (res) {
+    Promise.all([api("GET", "/api/runs?limit=10"), api("GET", "/api/workflow-runs?limit=10")]).then(function (both) {
+      var res = both[0], flows = both[1];
       if (res.status !== 200 || !res.data.runs) return;
       var runs = res.data.runs;
-      renderRecents(runs);
+      renderRecents(runs, flows.status === 200 ? flows.data.runs : []);
       var running = {}, runningJobs = {};
       runs.forEach(function (r) {
         if (r.state !== "running") return;

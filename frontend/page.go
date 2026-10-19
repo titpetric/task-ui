@@ -46,12 +46,47 @@ func (h *Handlers) page(r *http.Request, title string) *view.Page {
 	}
 	p.SideFolders = h.sideFolders(r.Context(), p.Folders)
 	p.Running = h.running(user)
-	p.Recents = h.visibleRuns(r.Context(), user, storage.RunFilter{Limit: 5 * recentCount})
-	if len(p.Recents) > recentCount {
-		p.Recents = p.Recents[:recentCount]
-	}
+	runs := h.visibleRuns(r.Context(), user, storage.RunFilter{Limit: 5 * recentCount})
+	p.Recents = view.Recents(runs, h.visibleFlowRuns(r.Context(), user, recentCount), recentCount)
 	p.SideWorkflows = h.visibleWorkflows(r.Context(), p)
 	return p
+}
+
+// visibleFlowRuns returns the latest runs of workflows the user may
+// see, newest first: those that ran in folders the user sees only.
+func (h *Handlers) visibleFlowRuns(ctx context.Context, user *model.User, limit int) []model.WorkflowRun {
+	if h.opts.WorkflowRuns == nil {
+		return nil
+	}
+	runs, err := h.opts.WorkflowRuns.List(ctx, 5*limit)
+	if err != nil {
+		return nil
+	}
+	visible := []model.WorkflowRun{}
+	for _, run := range runs {
+		if h.seesFlowRun(ctx, user, run.ID, 0) && len(visible) < limit {
+			visible = append(visible, run)
+		}
+	}
+	return visible
+}
+
+// seesFlowRun reports whether the user sees every folder a workflow run
+// ran in, through the runs of the workflows it ran.
+func (h *Handlers) seesFlowRun(ctx context.Context, user *model.User, runID string, depth int) bool {
+	rows, err := h.opts.WorkflowRuns.Steps(ctx, runID)
+	if err != nil || depth > 8 {
+		return false
+	}
+	for _, row := range rows {
+		if row.Folder != "" && !user.CanSee(row.Folder) {
+			return false
+		}
+		if row.WorkflowRunRef != "" && !h.seesFlowRun(ctx, user, row.WorkflowRunRef, depth+1) {
+			return false
+		}
+	}
+	return true
 }
 
 // sideFolders returns the folders the sidebar lists: all of them but

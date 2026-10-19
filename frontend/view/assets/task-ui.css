@@ -1651,6 +1651,14 @@ dialog.run[open] {
   font-size: 0.7rem;
 }
 
+/* A workflow's run says so under its name, with the workflow icon. */
+.recents .what small .ic {
+  width: 0.7rem;
+  height: 0.7rem;
+  margin-right: 0.25rem;
+  vertical-align: -0.1rem;
+}
+
 .recents .act {
   width: 0.8rem;
   height: 0.8rem;
