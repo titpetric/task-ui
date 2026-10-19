@@ -329,11 +329,10 @@
 {{- end }}
 
 {{/* showsource is the Show button of a file a folder's pipeline reads:
-     it opens the file, coloured, below the row; Open there shows it in a
-     window. */}}
+     it opens the file, coloured, in the source window. */}}
 {{- define "showsource" }}
 {{- $folder := index . 0 }}{{ $file := index . 1 -}}
-<button type="button" class="btn btn-sm show-source" data-source="{{ $folder }}" data-file="{{ $file }}" aria-expanded="false"><svg class="ic"><use href="#i-file"/></svg><span>Show</span></button>
+<button type="button" class="btn btn-sm show-source" data-source="{{ $folder }}" data-file="{{ $file }}" aria-haspopup="dialog"><svg class="ic"><use href="#i-file"/></svg><span>Show</span></button>
 {{- end }}
 
 {{ define "runButtons" }}
