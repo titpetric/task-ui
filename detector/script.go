@@ -50,18 +50,7 @@ func (d scriptDetector) Detect(dir string) *Source {
 		if !executable && !strings.HasSuffix(entry.Name(), ".sh") {
 			continue
 		}
-		rel := "scripts/" + entry.Name()
-		job := &Target{
-			Name:        strings.TrimSuffix(entry.Name(), filepath.Ext(entry.Name())),
-			Description: scriptDescription(filepath.Join(dir, rel)),
-			Args:        []string{"./" + rel},
-			Steps:       []string{"./" + rel},
-		}
-		if !executable {
-			job.Args = []string{"sh", rel}
-			job.Steps = []string{"sh " + rel}
-		}
-		source.Targets = append(source.Targets, job)
+		source.Targets = append(source.Targets, scriptTarget(dir, "scripts/"+entry.Name(), executable))
 	}
 	if len(source.Targets) == 0 {
 		return nil
@@ -69,14 +58,36 @@ func (d scriptDetector) Detect(dir string) *Source {
 	return source
 }
 
-// scriptDescription reads the first comment after the shebang, skipping
-// editor and shellcheck directives.
-func scriptDescription(path string) string {
+// scriptTarget is the job of a script, rel to the folder that runs it:
+// an executable runs itself, a .sh that is not runs with sh.
+func scriptTarget(dir, rel string, executable bool) *Target {
+	description, interactive := scriptHeader(filepath.Join(dir, rel))
+	name := filepath.Base(rel)
+	job := &Target{
+		Name:        strings.TrimSuffix(name, filepath.Ext(name)),
+		Description: description,
+		Interactive: interactive,
+		Args:        []string{"./" + rel},
+		Steps:       []string{"./" + rel},
+	}
+	if !executable {
+		job.Args = []string{"sh", rel}
+		job.Steps = []string{"sh " + rel}
+	}
+	return job
+}
+
+// scriptHeader reads the comments at the top of a script, after the
+// shebang: the first is its description, skipping editor and shellcheck
+// directives, and a line `# interactive: true` makes it take keyboard
+// input, as a pipeline job's interactive does.
+func scriptHeader(path string) (string, bool) {
 	file, err := os.Open(path)
 	if err != nil {
-		return ""
+		return "", false
 	}
 	defer file.Close()
+	description, interactive := "", false
 	scanner := bufio.NewScanner(file)
 	for i := 0; scanner.Scan() && i < 10; i++ {
 		line := strings.TrimSpace(scanner.Text())
@@ -88,14 +99,17 @@ func scriptDescription(path string) string {
 		}
 		text, ok := describeFromComment(line)
 		if !ok {
-			return ""
+			break
 		}
-		if strings.HasPrefix(text, "shellcheck") || strings.HasPrefix(text, "vim:") || strings.HasPrefix(text, "-*-") {
-			continue
+		switch {
+		case text == "interactive: true":
+			interactive = true
+		case strings.HasPrefix(text, "shellcheck") || strings.HasPrefix(text, "vim:") || strings.HasPrefix(text, "-*-"):
+		case description == "":
+			description = text
 		}
-		return text
 	}
-	return ""
+	return description, interactive
 }
 
 func sortedStrings(m map[string]string) []string {
