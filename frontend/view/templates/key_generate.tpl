@@ -19,6 +19,7 @@
 		<label for="gen-comment">Comment</label>
 		<input type="text" id="gen-comment" name="comment" value="task-ui">
 	</div>
+	{{- template "keypolicies" (list) }}
 	<div class="form-foot">
 		<a class="btn" href="/settings/keys">Cancel</a>
 		<button class="btn btn-primary" type="submit">Generate</button>

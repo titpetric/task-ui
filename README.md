@@ -340,7 +340,7 @@ Writes need the same origin. The browser pages are the reference client;
 | `GET` `PUT` | `/api/users`, `/api/users/{id}` | `{folders}`; names, passwords and roles come from the password file and the role lists |
 | `GET` `POST` `DELETE` | `/api/secrets`, `/api/secrets/{id}` | `{scope, name, content}`; content is never returned; `409` without a key to encrypt with |
 | `POST` | `/api/secrets/rekey` | writes every secret again for the current keys |
-| `GET` `POST` `DELETE` | `/api/keys`, `/api/keys/generate`, `/api/keys/upload`, `/api/keys/{name}` | `{type, comment}`, `{content, comment}`; a new key rekeys the secrets, the last key that opens them cannot go |
+| `GET` `POST` `PUT` `DELETE` | `/api/keys`, `/api/keys/generate`, `/api/keys/upload`, `/api/keys/{name}` | `{type, comment, policies}`, `{content, comment, policies}`; `PUT` sets a key's `{policies}`, the roles whose runs get it; a new key rekeys the secrets, the last key that opens them cannot go |
 | `GET` `PUT` | `/api/env/{folder}`, `/api/env/{folder}/{path}` | the env files; `{content}` saves and generates |
 
 ## Screenshots

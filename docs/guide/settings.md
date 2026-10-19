@@ -76,6 +76,15 @@ secrets are encrypted with.
 - **Rotate** makes a new pair of the same type; the old one is kept as a
   backup, so the secrets still open, and the secrets are written again
   for the new key. The last key that opens the secrets cannot be deleted.
+- **Policies** are the roles whose runs get a key: a run started by
+  someone with one of the key's roles has it in the run's ssh agent,
+  beside the keys of its project's `.ssh/` folder. Pick them when you
+  generate or upload a key, or later with the edit button on its row. A
+  key can be in several roles' sets, a role can have several keys, and a
+  key in none stays the instance's: git and the secrets use it, runs do
+  not get it. A rotation keeps a key's policies. The key files are still
+  readable by any job, as jobs run as the server's user; policies decide
+  what a run is handed, they do not hide a file.
 - Below the instance keys, each project with keys in its `.ssh/` folder
   has a section of its own: the keys its runs get through an ssh agent.
   The project manages them, so they can be copied but not changed here.

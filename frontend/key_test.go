@@ -1,6 +1,8 @@
 package frontend_test
 
 import (
+	"context"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -81,4 +83,31 @@ func TestKeys_ProjectFolders(t *testing.T) {
 	assert.Contains(t, body, strings.ReplaceAll(key.Fingerprint, "+", "&#43;"))
 	assert.Contains(t, body, `data-copy="ssh-rsa`)
 	assert.NotContains(t, body, `data-delete="/api/keys/id_rsa"`)
+}
+
+// A key shows the roles whose runs get it, and its edit form has a box
+// per role, checked for those; generate and upload offer the same boxes.
+func TestKeys_Policies(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	_, err := f.opts.Keys.Generate("ed25519", "deploy")
+	assert.NoError(t, err)
+	assert.NoError(t, f.opts.KeyPolicies.Set(context.Background(), "id_ed25519", []string{"runner"}))
+
+	list := f.page(t, asAdmin, "/settings/keys")
+	assert.Contains(t, list, `<span class="badge">runner</span>`)
+	assert.Contains(t, list, `href="/settings/keys/id_ed25519"`)
+
+	edit := f.page(t, asAdmin, "/settings/keys/id_ed25519")
+	assert.Contains(t, edit, `data-api="/api/keys/id_ed25519" data-method="PUT"`)
+	assert.Contains(t, edit, `value="runner" data-type="set" checked`)
+	assert.Contains(t, edit, `value="admin" data-type="set">`)
+	assert.Contains(t, edit, `value="viewer" data-type="set">`)
+
+	missing := f.get(t, asAdmin, "/settings/keys/id_rsa")
+	assert.Equal(t, http.StatusNotFound, missing.Status)
+
+	for _, path := range []string{"/settings/keys/generate", "/settings/keys/upload"} {
+		assert.Contains(t, f.page(t, asAdmin, path), `name="policies" value="runner" data-type="set"`)
+	}
 }

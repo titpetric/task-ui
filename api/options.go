@@ -29,12 +29,14 @@ type Options struct {
 	// Events is the bus /sse/{topic} streams from.
 	Events *event.Bus
 
-	Runner     *runner.Manager
-	Catalogue  folder.Catalogue
-	Git        *git.Git
-	Keys       *sshkey.Store
-	Env        *envfile.Store
-	Recordings *recording.Store
+	Runner    *runner.Manager
+	Catalogue folder.Catalogue
+	Git       *git.Git
+	Keys      *sshkey.Store
+	// KeyPolicies give the instance keys to roles' runs.
+	KeyPolicies *storage.SSHKeyPolicyStorage
+	Env         *envfile.Store
+	Recordings  *recording.Store
 	// Root is where projects are cloned to.
 	Root string
 }

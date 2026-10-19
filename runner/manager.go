@@ -114,6 +114,9 @@ func (m *Manager) Start(ctx context.Context, req Request) (*Session, error) {
 		return nil, err
 	}
 	session := newSession(run, req.Folder, req.Job)
+	if req.User != nil {
+		session.role = req.User.Role
+	}
 	m.mu.Lock()
 	m.sessions[run.ID] = session
 	m.byKey[run.Key()] = session
@@ -292,7 +295,7 @@ func (m *Manager) execute(ctx context.Context, session *Session) Status {
 	if err := m.pull(ctx, session); err != nil {
 		return failed(session, err.Error())
 	}
-	keys, err := m.agent(session)
+	keys, err := m.agent(ctx, session)
 	if err != nil {
 		return failed(session, err.Error())
 	}

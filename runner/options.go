@@ -17,6 +17,11 @@ type Options struct {
 	Secrets    *secret.Store
 	Env        *envfile.Store
 	Git        *git.Git
+	// KeyDir is the instance SSH folder, and KeyPolicies which of its
+	// keys each role's runs get through the run's ssh agent. Either nil
+	// or empty gives no instance key to a run.
+	KeyDir      string
+	KeyPolicies *storage.SSHKeyPolicyStorage
 	Recordings *recording.Store
 	// ArtifactRoot is where collected artifact files go, one directory
 	// per run.

@@ -19,6 +19,7 @@
 		<label for="up-comment">Comment</label>
 		<input type="text" id="up-comment" name="comment" value="task-ui">
 	</div>
+	{{- template "keypolicies" (list) }}
 	<div class="form-foot">
 		<a class="btn" href="/settings/keys">Cancel</a>
 		<button class="btn btn-primary" type="submit">Upload</button>

@@ -31,6 +31,8 @@ type fixture struct {
 	files   *storage.ArtifactStorage
 	secrets *secret.Store
 	root    string
+	// policies give the instance key, id_ed25519, to roles' runs.
+	policies *storage.SSHKeyPolicyStorage
 	// now is what the manager's clock reads; zero is the real time.
 	now time.Time
 }
@@ -46,7 +48,7 @@ func newFixture(t *testing.T) *fixture {
 	_, err = keys.Generate("ed25519", "test")
 	assert.NoError(t, err)
 	secrets := secret.New(storage.NewSecretStorage(db), secret.NewVault(keys))
-	f := &fixture{runs: runs, files: artifacts, secrets: secrets, root: t.TempDir()}
+	f := &fixture{runs: runs, files: artifacts, secrets: secrets, root: t.TempDir(), policies: storage.NewSSHKeyPolicyStorage(db)}
 	manager := runner.New(runner.Options{
 		Now: func() time.Time {
 			if f.now.IsZero() {
@@ -64,6 +66,8 @@ func newFixture(t *testing.T) *fixture {
 		Grace:        time.Second,
 		KillTimeout:  5 * time.Second,
 		Keep:         time.Minute,
+		KeyDir:       keys.Dir,
+		KeyPolicies:  f.policies,
 	})
 	f.manager = manager
 	return f

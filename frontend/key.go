@@ -17,6 +17,7 @@ func (h *Handlers) keys(w http.ResponseWriter, r *http.Request) {
 	p.Crumbs = view.Crumbs("Settings", "/settings", "SSH keys")
 	p.Keys, p.KeysDir = h.opts.Keys.List(), h.opts.Keys.Dir
 	p.KeyFolders = h.keyFolders()
+	p.KeyPolicies = h.keyPolicies(r)
 	p.Encryption = h.opts.Secrets.Vault.Recipients()
 	h.render(w, http.StatusOK, "keys", p)
 }
@@ -60,4 +61,36 @@ func (h *Handlers) keyFolders() []view.KeyFolder {
 		result = append(result, view.KeyFolder{Project: f.ID, Dir: dir, Keys: keys})
 	}
 	return result
+}
+
+// keyPolicies returns the roles each instance key is given to, none when
+// they cannot be read.
+func (h *Handlers) keyPolicies(r *http.Request) map[string][]string {
+	if h.opts.KeyPolicies == nil {
+		return map[string][]string{}
+	}
+	policies, err := h.opts.KeyPolicies.All(r.Context())
+	if err != nil {
+		return map[string][]string{}
+	}
+	return policies
+}
+
+// keyEdit shows the form that sets the roles whose runs get a key.
+func (h *Handlers) keyEdit(w http.ResponseWriter, r *http.Request) {
+	if !h.requireAdmin(w, r) {
+		return
+	}
+	name := param(r, "name")
+	for _, key := range h.opts.Keys.List() {
+		if key.Name != name || key.Backup {
+			continue
+		}
+		p := h.page(r, key.Name)
+		p.Crumbs = view.Crumbs("Settings", "/settings", "SSH keys", "/settings/keys", key.Name)
+		p.Key, p.KeyPolicies = &key, h.keyPolicies(r)
+		h.render(w, http.StatusOK, "key_edit", p)
+		return
+	}
+	h.notFound(w, r)
 }

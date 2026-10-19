@@ -417,6 +417,46 @@
         - scope
         - name
       unique: true
+- name: ssh_key_policy
+  comment: SSH Key Policy
+  columns:
+    - name: id
+      type: text
+      key: PRI
+      comment: ID
+      datatype: char(26)
+    - name: key_name
+      type: text
+      key: MUL
+      comment: Key Name
+      datatype: varchar
+    - name: role
+      type: TEXT
+      key: MUL
+      comment: Role
+      datatype: varchar
+      values:
+        - admin
+        - runner
+        - viewer
+    - name: created_at
+      type: timestamp
+      comment: Created At
+      datatype: datetime
+  indexes:
+    - name: sqlite_autoindex_ssh_key_policy_1
+      columns:
+        - id
+      primary: true
+      unique: true
+    - name: idx_ssh_key_policy_key_role
+      columns:
+        - key_name
+        - role
+      unique: true
+    - name: idx_ssh_key_policy_role
+      columns:
+        - role
 - name: user
   comment: User
   columns:

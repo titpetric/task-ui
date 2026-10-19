@@ -64,8 +64,10 @@ A run starts in its folder, as a login shell, with:
 - `TASK_UI=1`, `TASK_UI_USER`, `TASK_UI_FOLDER`, `TASK_UI_JOB`,
   `TASK_UI_RUN_ID`, and `TASK_UI_ARTIFACTS`, a directory for its files;
 - the secrets of its folder (see [Settings](settings.md#secrets));
-- when its project has a `.ssh/` folder, its keys in an ssh agent, through
-  `SSH_AUTH_SOCK` (see [Projects and jobs](projects.md#keys-from-the-project)).
+- an ssh agent, through `SSH_AUTH_SOCK`, with the keys of its project's
+  `.ssh/` folder (see [Projects and jobs](projects.md#keys-from-the-project))
+  and the instance keys whose policies name the role of whoever started
+  the run (see [Settings](settings.md#ssh-keys)); the terminal says which.
 
 Before the job, a folder in a git checkout pulls it, in the run's own
 terminal; a pull that fails fails the run.

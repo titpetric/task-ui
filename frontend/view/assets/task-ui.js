@@ -443,6 +443,13 @@
     var body = {};
     Array.prototype.forEach.call(form.elements, function (el) {
       if (!el.name || el.disabled) return;
+      // A set is the checked values of the boxes that share a name: a
+      // list, empty when none is checked.
+      if (el.dataset.type === "set") {
+        body[el.name] = body[el.name] || [];
+        if (el.checked) body[el.name].push(el.value);
+        return;
+      }
       var value = el.type === "checkbox" ? el.checked : el.value;
       switch (el.dataset.type) {
         case "list":
