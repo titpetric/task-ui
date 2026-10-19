@@ -16,6 +16,8 @@ func (h *Handlers) runs(w http.ResponseWriter, r *http.Request) {
 	p.Form = map[string]string{"folder": q.Get("folder"), "job": q.Get("job"), "state": q.Get("state")}
 	filter := storage.RunFilter{Folder: q.Get("folder"), Job: q.Get("job"), State: q.Get("state"), Limit: 200}
 	p.Runs = h.visibleRuns(r.Context(), access.UserFrom(r.Context()), filter)
+	filter.Limit = activityLimit
+	p.Activity = h.activity(r.Context(), access.UserFrom(r.Context()), filter, p.Now, false)
 	h.render(w, http.StatusOK, "runs", p)
 }
 

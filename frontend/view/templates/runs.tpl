@@ -23,6 +23,13 @@
 	<button class="btn" type="submit">Filter</button>
 </form>
 
+{{- with .Activity }}
+<section class="block">
+	<h3>Activity <small>the last {{ len .Days }} days, by day and by hour, in the server's time zone</small></h3>
+	{{- template "activity" . }}
+</section>
+{{- end }}
+
 {{- /* The table follows the runs topic: a run that starts is added on
      top, one that ends is updated in place, no reload. */}}
 <section class="block" data-sse="runs">

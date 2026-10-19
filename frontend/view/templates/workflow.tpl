@@ -33,6 +33,7 @@
 
 <section class="block">
 	<h3>Runs</h3>
+	{{- with $.Activity }}{{ template "activity" . }}{{ end }}
 	<div class="table-wrap">
 	<table class="table cards">
 		<thead><tr><th>Started</th><th>By</th><th>Result</th><th>Steps</th></tr></thead>

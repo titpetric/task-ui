@@ -24,7 +24,9 @@ runs once at a time; starting it again while it runs is refused.
 ![A workflow: its chain and its runs](../assets/workflow-dark.png)
 
 - **Pipeline**: the steps in the order they run.
-- **Runs**: every run of the workflow, newest first, with who started it,
+- **Runs**: the workflow's activity, its runs of the last thirty days by
+  day and by hour and the duration of its latest thirty (see
+  [Runs](runs.md#activity)), then every run of the workflow, newest first, with who started it,
   how it ended, and each step's run, which opens like any other run.
   **Stop** on a running workflow stops the step that runs and skips the
   rest.

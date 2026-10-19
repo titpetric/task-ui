@@ -379,3 +379,49 @@
 	{{- end }}
 </div>
 {{- end }}
+
+{{- /* When runs ran: a bar per day and per hour of the day, each split
+     into the runs that ended ok, failed and the rest, and for a job or a
+     workflow the duration of its latest runs. Every bar and every run
+     on the line hovers its counts. */}}
+{{- define "activity" }}
+<div class="activity">
+	<p class="activity-sum">{{ .Total }} run{{ if ne .Total 1 }}s{{ end }} in {{ len .Days }} days{{ if .Failed }} · <span class="bad">{{ .Failed }} failed</span>{{ end }}{{ if .Median }} · median {{ duration .Median }}{{ end }}</p>
+	<div class="activity-charts">
+		<figure class="activity-chart">
+			<div class="activity-bars" style="--n: {{ len .Days }}" role="img" aria-label="Runs per day, the last {{ len .Days }} days">
+				{{- range .Days }}
+				<span title="{{ .Title }}">{{ if .OtherStyle }}<i class="other" style="{{ .OtherStyle }}"></i>{{ end }}{{ if .FailedStyle }}<i class="bad" style="{{ .FailedStyle }}"></i>{{ end }}{{ if .OKStyle }}<i class="ok" style="{{ .OKStyle }}"></i>{{ end }}</span>
+				{{- end }}
+			</div>
+			<figcaption>{{ range .Axis }}<span>{{ . }}</span>{{ end }}</figcaption>
+		</figure>
+		<figure class="activity-chart hours">
+			<div class="activity-bars" style="--n: 24" role="img" aria-label="Runs per hour of the day">
+				{{- range .Hours }}
+				<span title="{{ .Title }}">{{ if .OtherStyle }}<i class="other" style="{{ .OtherStyle }}"></i>{{ end }}{{ if .FailedStyle }}<i class="bad" style="{{ .FailedStyle }}"></i>{{ end }}{{ if .OKStyle }}<i class="ok" style="{{ .OKStyle }}"></i>{{ end }}</span>
+				{{- end }}
+			</div>
+			<figcaption><span>00</span><span>06</span><span>12</span><span>18</span><span>24</span></figcaption>
+		</figure>
+	</div>
+	{{- with .Durations }}
+	<figure class="activity-chart durations">
+		<div class="activity-line">
+			<svg viewBox="0 0 100 100" preserveAspectRatio="none" role="img" aria-label="Duration of the latest {{ len .Points }} runs, the longest {{ duration .Longest }}">
+				<path class="wash" d="{{ .Area }}"></path>
+				{{- range .Points }}{{ if .Failed }}
+				<line class="bad" x1="{{ .At }}" y1="0" x2="{{ .At }}" y2="100" vector-effect="non-scaling-stroke"></line>
+				{{- end }}{{ end }}
+				<path class="line" d="{{ .Line }}" vector-effect="non-scaling-stroke"></path>
+				{{- range .Points }}
+				<rect class="hit" x="{{ .X }}" y="0" width="{{ .Width }}" height="100"><title>{{ .Title }}</title></rect>
+				{{- end }}
+			</svg>
+			<span class="activity-longest">{{ duration .Longest }}</span>
+		</div>
+		<figcaption><span>duration of the latest {{ len .Points }} runs</span></figcaption>
+	</figure>
+	{{- end }}
+</div>
+{{- end }}

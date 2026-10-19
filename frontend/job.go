@@ -19,6 +19,7 @@ func (h *Handlers) job(w http.ResponseWriter, r *http.Request, f *folder.Folder,
 	p.Folder, p.Job = f, job
 	p.Crumbs = crumbsOf(f.ID, job.Name)
 	p.Runs = h.visibleRuns(r.Context(), access.UserFrom(r.Context()), storage.RunFilter{Folder: f.ID, Job: job.ID, Limit: 100})
+	p.Activity = h.activity(r.Context(), access.UserFrom(r.Context()), storage.RunFilter{Folder: f.ID, Job: job.ID, Limit: activityLimit}, p.Now, true)
 	p.Schedules = h.visibleSchedules(r, f.ID, job.ID)
 	h.render(w, http.StatusOK, "job", p)
 }

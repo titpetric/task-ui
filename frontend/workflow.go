@@ -157,6 +157,7 @@ func (h *Handlers) workflow(w http.ResponseWriter, r *http.Request) {
 	if len(p.WorkflowRuns) > 0 {
 		latest = p.WorkflowRuns[0].Steps
 	}
+	p.Activity = h.workflowActivity(r.Context(), p.Workflow.ID, p.Now)
 	p.Pipeline = view.Pipeline(p.Workflow.Steps, latest)
 	h.frames(r.Context(), p.Pipeline, names, true)
 	h.render(w, http.StatusOK, "workflow", p)

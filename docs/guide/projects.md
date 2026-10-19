@@ -61,6 +61,12 @@ Open a job from the sidebar or a card: the command it runs, its steps
 and dependencies, who can run it and when, its **History** of runs, and
 its **Scheduled** section (see [Scheduled](scheduled.md)).
 
+The History opens with the job's activity: its runs of the last thirty
+days by day and by hour of the day, as on the [Runs](runs.md#activity)
+page, and a line of how long its latest thirty runs took, a red mark at
+each that failed. Hover a point for the run's time, outcome and
+duration.
+
 ## Pulled before every run
 
 A folder in a git checkout pulls it with `git pull --ff-only` before every

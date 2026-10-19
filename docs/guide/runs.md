@@ -5,6 +5,20 @@ pulses while something runs.
 
 ![The runs](../assets/runs-dark.png)
 
+## Activity
+
+Above the list, two charts of the runs of the last thirty days, in the
+server's time zone, following the filter:
+
+- **by day**, a bar a day, today on the right;
+- **by hour of the day**, over the same days, so a schedule at seven
+  stands out from the work spread over the afternoon.
+
+A bar is as tall as its runs against the busiest bar, split into the runs
+that ended ok (amber), failed or were killed (red), and the rest, running
+or stopped (faint). Hover a bar for its counts. A line above says how
+many runs there were, how many failed and the median duration.
+
 ## The list
 
 Each row is a run: when it started, the folder and job, who started it,
