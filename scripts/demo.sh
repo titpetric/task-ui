@@ -98,6 +98,9 @@ api PUT /projects/infra -d '{"allow":["ops"],"job_allow":{"rotate-certs":["admin
 # The website folder runs in office hours only. The admin instance's
 # clock is pinned to a Friday night, so a run of it asks for a reason.
 api PUT /projects/website -d '{"hours":"mon-fri 9-17\nfri 9-13"}'
+# The tools folder reads its Makefile alone by default; its sources name
+# the package scripts and the scripts folder too.
+api PUT /projects/tools -d '{"sources":["make","npm","script"]}'
 
 # A key first: the secrets are encrypted with it. Then secrets and a
 # managed env file, so the runs and the pages have them.
