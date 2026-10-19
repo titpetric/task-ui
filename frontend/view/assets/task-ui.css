@@ -2745,6 +2745,34 @@ pre.output {
   background: linear-gradient(to top, var(--text-dim), color-mix(in oklch, var(--text-dim) 55%, transparent));
 }
 
+/* The fastest to the slowest run of the bucket: a hairline over the
+   average bar, capped at both ends. */
+.activity-bars b.range {
+  position: absolute;
+  left: 50%;
+  width: 0;
+  border-left: 1px solid var(--text);
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.activity-bars b.range::before,
+.activity-bars b.range::after {
+  content: "";
+  position: absolute;
+  left: -3px;
+  width: 5px;
+  border-top: 1px solid var(--text);
+}
+
+.activity-bars b.range::before {
+  top: 0;
+}
+
+.activity-bars b.range::after {
+  bottom: 0;
+}
+
 .activity-key {
   float: right;
   color: var(--text-faint);
@@ -2765,6 +2793,18 @@ pre.output {
 
 .activity-key i.avg {
   background: var(--text-dim);
+}
+
+.activity-key b.range {
+  display: inline-block;
+  width: 5px;
+  height: 0.7rem;
+  margin: 0 0.3rem 0 0.8rem;
+  vertical-align: -0.1rem;
+  border: 1px solid var(--text);
+  border-width: 1px 0;
+  background: linear-gradient(var(--text), var(--text)) center / 1px 100% no-repeat;
+  opacity: 0.55;
 }
 
 .activity-chart figcaption {
