@@ -33,13 +33,7 @@ func (r Recent) Elapsed() time.Duration {
 	if r.Run != nil {
 		return r.Run.Elapsed()
 	}
-	if r.Flow == nil || r.Flow.StartedAt == nil {
-		return 0
-	}
-	if r.Flow.FinishedAt != nil {
-		return r.Flow.FinishedAt.Sub(*r.Flow.StartedAt)
-	}
-	return time.Since(*r.Flow.StartedAt)
+	return r.Flow.Elapsed()
 }
 
 // Initials returns the initials of the user who started the entry's run.

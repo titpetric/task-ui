@@ -2661,3 +2661,140 @@ pre.output {
   color: var(--text-dim);
   background: transparent;
 }
+
+/* --------------------------------------------------------------- activity */
+
+/* When runs ran, the way pulse draws its sparklines: a bar per bucket,
+   the busiest one full height, each split into the runs that ended ok
+   (the accent), failed (red) and the rest (faint), fading upwards. The
+   whole column is the hover target. The duration line is drawn the way
+   oida draws its memory graph. */
+.activity {
+  margin: 0 0 1rem;
+}
+
+.activity-sum {
+  margin: 0 0 0.6rem;
+  color: var(--text-dim);
+  font-size: 0.8125rem;
+}
+
+.activity-sum .bad {
+  color: var(--bad);
+}
+
+.activity-charts {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 4fr);
+  gap: 0.6rem 1.4rem;
+}
+
+.activity-chart {
+  margin: 0;
+  min-width: 0;
+}
+
+.activity-bars {
+  display: grid;
+  grid-template-columns: repeat(var(--n), minmax(0, 1fr));
+  align-items: stretch;
+  gap: 2px;
+  height: 3.5rem;
+  border-bottom: 1px solid var(--line-2);
+}
+
+.activity-bars span {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  min-width: 0;
+}
+
+.activity-bars span:hover {
+  background: var(--ink-2);
+}
+
+.activity-bars i {
+  display: block;
+  width: 100%;
+  min-height: 1px;
+}
+
+.activity-bars i.ok {
+  background: linear-gradient(to top, var(--signal), color-mix(in oklch, var(--signal) 60%, transparent));
+}
+
+.activity-bars i.bad {
+  background: linear-gradient(to top, var(--bad), color-mix(in oklch, var(--bad) 60%, transparent));
+}
+
+.activity-bars i.other {
+  background: var(--text-faint);
+  opacity: 0.6;
+}
+
+.activity-chart figcaption {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.25rem;
+  color: var(--text-faint);
+  font-family: var(--font);
+  font-size: 0.6875rem;
+}
+
+.activity-chart.durations {
+  margin-top: 0.9rem;
+}
+
+.activity-line {
+  position: relative;
+  height: 3rem;
+  border-bottom: 1px solid var(--line-2);
+}
+
+.activity-line svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.activity-line .line {
+  fill: none;
+  stroke: var(--signal);
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+}
+
+.activity-line .wash {
+  fill: var(--signal-wash);
+}
+
+.activity-line line.bad {
+  stroke: var(--bad);
+  stroke-width: 1;
+  opacity: 0.7;
+}
+
+.activity-line .hit {
+  fill: transparent;
+}
+
+.activity-line .hit:hover {
+  fill: var(--signal-wash);
+}
+
+.activity-longest {
+  position: absolute;
+  top: 0;
+  right: 0;
+  color: var(--text-faint);
+  font-family: var(--font);
+  font-size: 0.6875rem;
+}
+
+@media (max-width: 860px) {
+  .activity-charts {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

@@ -52,6 +52,8 @@ type Page struct {
 	Browse string
 
 	Runs      []Run
+	// Activity charts when the runs of the page ran, nil without any.
+	Activity *Activity
 	Run       *Run
 	Artifacts []model.Artifact
 	Schedules []model.Schedule

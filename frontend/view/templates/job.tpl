@@ -50,6 +50,7 @@
 
 <section class="block" data-live>
 	<h3>History{{ if .Runs }} <small>{{ len .Runs }} runs</small>{{ end }}</h3>
+	{{- with .Activity }}{{ template "activity" . }}{{ end }}
 	<div class="table-wrap">
 	<table class="table cards">
 		<thead><tr><th>Started</th><th>By</th><th>Duration</th><th>Result</th><th></th></tr></thead>
