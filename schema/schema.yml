@@ -457,6 +457,42 @@
     - name: idx_ssh_key_policy_role
       columns:
         - role
+- name: ssh_key_user
+  comment: SSH Key User
+  columns:
+    - name: id
+      type: text
+      key: PRI
+      comment: ID
+      datatype: char(26)
+    - name: key_name
+      type: text
+      key: MUL
+      comment: Key Name
+      datatype: varchar
+    - name: user_name
+      type: text
+      key: MUL
+      comment: User Name
+      datatype: varchar
+    - name: created_at
+      type: timestamp
+      comment: Created At
+      datatype: datetime
+  indexes:
+    - name: sqlite_autoindex_ssh_key_user_1
+      columns:
+        - id
+      primary: true
+      unique: true
+    - name: idx_ssh_key_user_key_user
+      columns:
+        - key_name
+        - user_name
+      unique: true
+    - name: idx_ssh_key_user_user
+      columns:
+        - user_name
 - name: user
   comment: User
   columns:

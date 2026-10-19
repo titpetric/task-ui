@@ -117,3 +117,62 @@ func TestStore_Upload(t *testing.T) {
 		t.Fatal("accepted garbage")
 	}
 }
+
+// A key made for someone sits beside the type's own key: generating or
+// uploading one under a label leaves the other alone, and rotating it
+// keeps its name.
+func TestStore_GenerateAs(t *testing.T) {
+	k := &Store{Dir: t.TempDir()}
+	own, err := k.Generate("ed25519", "instance")
+	if err != nil {
+		t.Fatal(err)
+	}
+	alice, err := k.GenerateAs("ed25519", "alice", "alice@task")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if alice.Name != "id_ed25519_alice" || alice.Kind != "ed25519" || alice.Label != "alice" {
+		t.Fatalf("labelled key: %+v", alice)
+	}
+	if own.Label != "" || own.Kind != "ed25519" {
+		t.Fatalf("own key: %+v", own)
+	}
+	again, err := k.GenerateAs("ed25519", "alice", "alice@task")
+	if err != nil || again.Fingerprint == alice.Fingerprint {
+		t.Fatal("rotating the labelled key makes a new one")
+	}
+	names := map[string]bool{}
+	for _, key := range k.List() {
+		names[key.Name] = true
+	}
+	if !names["id_ed25519"] || !names["id_ed25519_alice"] || len(names) != 3 {
+		t.Fatalf("own key, labelled key and its backup: %v", names)
+	}
+	for _, bad := range []string{"Alice", "a b", "../x", "-x"} {
+		if _, err := k.GenerateAs("ed25519", bad, ""); err == nil {
+			t.Fatalf("label %q accepted", bad)
+		}
+	}
+	if err := k.Delete("id_ed25519_alice"); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestStore_UploadAs(t *testing.T) {
+	k := &Store{Dir: t.TempDir()}
+	key, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		t.Fatal(err)
+	}
+	data := pem.EncodeToMemory(&pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(key)})
+	got, err := k.UploadAs(data, "ops", "ops key")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Name != "id_rsa_ops" || got.Label != "ops" {
+		t.Fatalf("uploaded under a label: %+v", got)
+	}
+	if _, err := k.UploadAs(data, "Not OK", ""); err == nil {
+		t.Fatal("a bad label is refused")
+	}
+}

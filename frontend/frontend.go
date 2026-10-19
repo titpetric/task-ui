@@ -61,6 +61,7 @@ func (h *Handlers) Routes() http.Handler {
 		r.Get("/settings/keys/generate", h.keyGenerate)
 		r.Get("/settings/keys/upload", h.keyUpload)
 		r.Get("/settings/keys/{name}", h.keyEdit)
+		r.Get("/keys", h.myKeys)
 		r.Get("/settings/secrets", h.secrets)
 		r.Get("/settings/secrets/new", h.secretNew)
 		r.Get("/settings/secrets/edit", h.secretEdit)

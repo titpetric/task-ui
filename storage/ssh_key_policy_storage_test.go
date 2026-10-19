@@ -48,3 +48,34 @@ func TestSSHKeyPolicyStorage(t *testing.T) {
 	keys, _ = policies.Keys(ctx, model.RoleAdmin)
 	assert.Len(t, keys, 0)
 }
+
+// A key given to users by name reaches them beside their role's keys.
+func TestSSHKeyPolicyStorage_Users(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	policies := storage.NewSSHKeyPolicyStorage(newDB(t))
+	assert.NoError(t, policies.Set(ctx, "id_ed25519", []string{model.RoleRunner}))
+	assert.NoError(t, policies.SetUsers(ctx, "id_ed25519_alice", []string{"alice", "alice", ""}))
+	assert.NoError(t, policies.SetUsers(ctx, "id_rsa_ops", []string{"bob", "alice"}))
+
+	keys, err := policies.For(ctx, model.RoleRunner, "alice")
+	assert.NoError(t, err)
+	assert.Equal(t, []string{"id_ed25519", "id_ed25519_alice", "id_rsa_ops"}, keys)
+	keys, _ = policies.For(ctx, model.RoleViewer, "bob")
+	assert.Equal(t, []string{"id_rsa_ops"}, keys)
+	keys, _ = policies.For(ctx, model.RoleViewer, "carol")
+	assert.Len(t, keys, 0)
+
+	all, err := policies.AllUsers(ctx)
+	assert.NoError(t, err)
+	assert.Equal(t, map[string][]string{"id_ed25519_alice": {"alice"}, "id_rsa_ops": {"alice", "bob"}}, all)
+
+	assert.NoError(t, policies.SetUsers(ctx, "id_rsa_ops", nil))
+	keys, _ = policies.For(ctx, model.RoleViewer, "bob")
+	assert.Len(t, keys, 0)
+	assert.Error(t, policies.SetUsers(ctx, "", []string{"alice"}))
+
+	assert.NoError(t, policies.Delete(ctx, "id_ed25519_alice"))
+	keys, _ = policies.For(ctx, model.RoleViewer, "alice")
+	assert.Len(t, keys, 0)
+}

@@ -167,3 +167,35 @@ func TestKey_Policies(t *testing.T) {
 	assert.Equal(t, http.StatusNoContent, f.call(t, asAdmin, http.MethodDelete, "/keys/id_ed25519", nil).Status)
 	assert.Nil(t, f.call(t, asAdmin, http.MethodGet, "/keys", nil).get("policies", "id_ed25519"))
 }
+
+// An admin makes a key for a user: under a name, beside the type's own
+// key, given to the user by name. A rotation keeps both.
+func TestKey_ForAUser(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+
+	own := f.call(t, asAdmin, http.MethodPost, "/keys/generate", api.KeyRequest{Type: "ed25519", Comment: "instance"})
+	assert.Equal(t, http.StatusCreated, own.Status, string(own.Raw))
+	res := f.call(t, asAdmin, http.MethodPost, "/keys/generate", api.KeyRequest{Type: "ed25519", Name: "ops", Comment: "ops", Users: []string{" ops "}})
+	assert.Equal(t, http.StatusCreated, res.Status, string(res.Raw))
+	assert.Equal(t, "id_ed25519_ops", res.str("key", "name"))
+	assert.Equal(t, "ops", res.str("key", "label"))
+
+	list := f.call(t, asAdmin, http.MethodGet, "/keys", nil)
+	assert.Len(t, list.list("keys"), 2)
+	assert.Equal(t, []any{"ops"}, list.get("users", "id_ed25519_ops"))
+	assert.Nil(t, list.get("users", "id_ed25519"))
+
+	rotated := f.call(t, asAdmin, http.MethodPost, "/keys/generate", api.KeyRequest{Type: "ed25519", Name: "ops", Comment: "ops"})
+	assert.Equal(t, http.StatusCreated, rotated.Status)
+	assert.Equal(t, []any{"ops"}, f.call(t, asAdmin, http.MethodGet, "/keys", nil).get("users", "id_ed25519_ops"))
+
+	updated := f.call(t, asAdmin, http.MethodPut, "/keys/id_ed25519_ops", api.KeyRequest{Users: []string{"ops", "viewer"}, Policies: []string{"runner"}})
+	assert.Equal(t, http.StatusOK, updated.Status, string(updated.Raw))
+	after := f.call(t, asAdmin, http.MethodGet, "/keys", nil)
+	assert.Equal(t, []any{"ops", "viewer"}, after.get("users", "id_ed25519_ops"))
+	assert.Equal(t, []any{"runner"}, after.get("policies", "id_ed25519_ops"))
+
+	bad := f.call(t, asAdmin, http.MethodPost, "/keys/generate", api.KeyRequest{Type: "ed25519", Name: "Not OK"})
+	assert.Equal(t, http.StatusBadRequest, bad.Status)
+}

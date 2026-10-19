@@ -3,6 +3,7 @@ package frontend
 import (
 	"net/http"
 	"path/filepath"
+	"slices"
 
 	"github.com/titpetric/task-ui/frontend/view"
 	"github.com/titpetric/task-ui/sshkey"
@@ -17,7 +18,7 @@ func (h *Handlers) keys(w http.ResponseWriter, r *http.Request) {
 	p.Crumbs = view.Crumbs("Settings", "/settings", "SSH keys")
 	p.Keys, p.KeysDir = h.opts.Keys.List(), h.opts.Keys.Dir
 	p.KeyFolders = h.keyFolders()
-	p.KeyPolicies = h.keyPolicies(r)
+	p.KeyPolicies, p.KeyUsers = h.keyPolicies(r), h.keyUsers(r)
 	p.Encryption = h.opts.Secrets.Vault.Recipients()
 	h.render(w, http.StatusOK, "keys", p)
 }
@@ -30,6 +31,7 @@ func (h *Handlers) keyGenerate(w http.ResponseWriter, r *http.Request) {
 	p := h.page(r, "Generate key")
 	p.Crumbs = view.Crumbs("Settings", "/settings", "SSH keys", "/settings/keys", "Generate")
 	p.KeysDir = h.opts.Keys.Dir
+	p.Users, _ = h.opts.Users.List(r.Context())
 	h.render(w, http.StatusOK, "key_generate", p)
 }
 
@@ -41,6 +43,7 @@ func (h *Handlers) keyUpload(w http.ResponseWriter, r *http.Request) {
 	p := h.page(r, "Upload key")
 	p.Crumbs = view.Crumbs("Settings", "/settings", "SSH keys", "/settings/keys", "Upload")
 	p.KeysDir = h.opts.Keys.Dir
+	p.Users, _ = h.opts.Users.List(r.Context())
 	h.render(w, http.StatusOK, "key_upload", p)
 }
 
@@ -88,9 +91,42 @@ func (h *Handlers) keyEdit(w http.ResponseWriter, r *http.Request) {
 		}
 		p := h.page(r, key.Name)
 		p.Crumbs = view.Crumbs("Settings", "/settings", "SSH keys", "/settings/keys", key.Name)
-		p.Key, p.KeyPolicies = &key, h.keyPolicies(r)
+		p.Key, p.KeyPolicies, p.KeyUsers = &key, h.keyPolicies(r), h.keyUsers(r)
+		p.Users, _ = h.opts.Users.List(r.Context())
 		h.render(w, http.StatusOK, "key_edit", p)
 		return
 	}
 	h.notFound(w, r)
+}
+
+// keyUsers returns the users each instance key is given to, by name, none
+// when they cannot be read.
+func (h *Handlers) keyUsers(r *http.Request) map[string][]string {
+	if h.opts.KeyPolicies == nil {
+		return map[string][]string{}
+	}
+	users, err := h.opts.KeyPolicies.AllUsers(r.Context())
+	if err != nil {
+		return map[string][]string{}
+	}
+	return users
+}
+
+// myKeys lists the keys the signed in user's runs get, by role or by
+// name, to copy their public halves. Every user has it.
+func (h *Handlers) myKeys(w http.ResponseWriter, r *http.Request) {
+	p := h.page(r, "Your SSH keys")
+	p.Crumbs = view.Crumbs("Your SSH keys")
+	p.KeyUsers = h.keyUsers(r)
+	if h.opts.KeyPolicies != nil && p.User != nil {
+		names, err := h.opts.KeyPolicies.For(r.Context(), p.User.Role, p.User.Name)
+		if err == nil {
+			for _, key := range h.opts.Keys.List() {
+				if !key.Backup && slices.Contains(names, key.Name) {
+					p.Keys = append(p.Keys, key)
+				}
+			}
+		}
+	}
+	h.render(w, http.StatusOK, "my_keys", p)
 }

@@ -3,6 +3,7 @@
 package sshkey
 
 import (
+	"strings"
 	"time"
 )
 
@@ -17,15 +18,32 @@ type Key struct {
 	Modified    time.Time `json:"modified"`
 	// Backup is set for keys moved aside by a rotation.
 	Backup bool `json:"backup,omitempty"`
+	// Kind is the key type the name stands for, ed25519, ecdsa or rsa,
+	// and Label what follows it, for a key made for someone:
+	// id_ed25519_alice is ed25519 and alice. A rotation keeps both.
+	Kind  string `json:"kind,omitempty"`
+	Label string `json:"label,omitempty"`
 }
 
-// KindOf returns the key type a file name stands for, or "" for a name
-// that is not one of the generated ones.
+// KindOf returns the key type a file name stands for, its own key or one
+// under a label; "" for a backup or a name that is not one of them.
 func KindOf(name string) string {
+	if strings.Contains(name, ".bak-") {
+		return ""
+	}
 	for kind, file := range Types {
-		if file == name {
+		if name == file || strings.HasPrefix(name, file+"_") {
 			return kind
 		}
+	}
+	return ""
+}
+
+// labelOf returns what follows the type in a key's name, "" for the
+// type's own key.
+func labelOf(name string) string {
+	if kind := KindOf(name); kind != "" {
+		return strings.TrimPrefix(strings.TrimPrefix(name, Types[kind]), "_")
 	}
 	return ""
 }

@@ -881,6 +881,56 @@ var SSHKeyPolicyFields = []string{"id", "key_name", "role", "created_at"}
 // SSHKeyPolicyPrimaryFields are the primary key fields in the DB table.
 var SSHKeyPolicyPrimaryFields = []string{"id"}
 
+// SSHKeyUser generated for db table `ssh_key_user`.
+//
+// SSH Key User.
+type SSHKeyUser struct {
+	// ID
+	ID string `db:"id" json:"id"`
+
+	// Key Name
+	KeyName string `db:"key_name" json:"key_name"`
+
+	// User Name
+	UserName string `db:"user_name" json:"user_name"`
+
+	// Created At
+	CreatedAt *time.Time `db:"created_at" json:"created_at"`
+}
+
+// GetID will return the value of ID.
+func (s *SSHKeyUser) GetID() string { return s.ID }
+
+// SetID sets ID to the provided value.
+func (s *SSHKeyUser) SetID(val string) { s.ID = val }
+
+// GetKeyName will return the value of KeyName.
+func (s *SSHKeyUser) GetKeyName() string { return s.KeyName }
+
+// SetKeyName sets KeyName to the provided value.
+func (s *SSHKeyUser) SetKeyName(val string) { s.KeyName = val }
+
+// GetUserName will return the value of UserName.
+func (s *SSHKeyUser) GetUserName() string { return s.UserName }
+
+// SetUserName sets UserName to the provided value.
+func (s *SSHKeyUser) SetUserName(val string) { s.UserName = val }
+
+// GetCreatedAt will return the value of CreatedAt.
+func (s *SSHKeyUser) GetCreatedAt() *time.Time { return s.CreatedAt }
+
+// SetCreatedAt sets CreatedAt to the provided value.
+func (s *SSHKeyUser) SetCreatedAt(stamp time.Time) { s.CreatedAt = &stamp }
+
+// SSHKeyUserTable is the name of the table in the DB.
+const SSHKeyUserTable = "`ssh_key_user`"
+
+// SSHKeyUserFields is a list of all columns in the DB table.
+var SSHKeyUserFields = []string{"id", "key_name", "user_name", "created_at"}
+
+// SSHKeyUserPrimaryFields are the primary key fields in the DB table.
+var SSHKeyUserPrimaryFields = []string{"id"}
+
 // User generated for db table `user`.
 type User struct {
 	// ID
@@ -1933,6 +1983,67 @@ func (s *SSHKeyPolicy) Update(opts ...QueryOption) string {
 // Delete starts building a DELETE query.
 func (s *SSHKeyPolicy) Delete(opts ...QueryOption) string {
 	cfg := (&QueryConfig{Table: SSHKeyPolicyTable}).Apply(opts...)
+	query := fmt.Sprintf("DELETE FROM %s", cfg.Table)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	return query
+}
+
+// Insert starts building an INSERT INTO query.
+func (s *SSHKeyUser) Insert(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: SSHKeyUserTable, Statement: "INSERT INTO"}).Apply(opts...)
+	cols := SSHKeyUserFields
+	if len(cfg.Columns) > 0 {
+		cols = cfg.Columns
+	}
+	return fmt.Sprintf("%s %s (%s) VALUES (:%s)", cfg.Statement, cfg.Table, strings.Join(cols, ", "), strings.Join(cols, ", :"))
+}
+
+// Select starts building a SELECT query.
+func (s *SSHKeyUser) Select(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: SSHKeyUserTable}).Apply(opts...)
+	cols := "*"
+	if len(cfg.Columns) > 0 {
+		cols = strings.Join(cfg.Columns, ", ")
+	}
+	query := fmt.Sprintf("SELECT %s FROM %s", cols, cfg.Table)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	if cfg.OrderBy != "" {
+		query += " ORDER BY " + cfg.OrderBy
+	}
+	if cfg.LimitOffset > 0 {
+		query += fmt.Sprintf(" LIMIT %d, %d", cfg.LimitStart, cfg.LimitOffset)
+	}
+	return query
+}
+
+// Update starts building a UPDATE query.
+func (s *SSHKeyUser) Update(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: SSHKeyUserTable}).Apply(opts...)
+	cols := SSHKeyUserFields
+	if len(cfg.Columns) > 0 {
+		cols = cfg.Columns
+	}
+	setClause := ""
+	for i, col := range cols {
+		if i > 0 {
+			setClause += ", "
+		}
+		setClause += col + "=:" + col
+	}
+	query := fmt.Sprintf("UPDATE %s SET %s", cfg.Table, setClause)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	return query
+}
+
+// Delete starts building a DELETE query.
+func (s *SSHKeyUser) Delete(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: SSHKeyUserTable}).Apply(opts...)
 	query := fmt.Sprintf("DELETE FROM %s", cfg.Table)
 	if cfg.Where != "" {
 		query += " WHERE " + cfg.Where

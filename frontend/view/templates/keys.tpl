@@ -2,7 +2,7 @@
 <div class="page-head">
 	<div>
 		<h2>SSH keys</h2>
-		<p>The key pairs jobs use to reach other hosts, git remotes and services, and what the secrets are encrypted with{{ if .Encryption }}: <b>{{ join .Encryption ", " }}</b>{{ end }}. Add the public key where it should be accepted. Rotating a key writes the secrets again for the new one; the last key that opens them cannot be deleted. A key's policies are the roles whose runs get it in their ssh agent.</p>
+		<p>The key pairs jobs use to reach other hosts, git remotes and services, and what the secrets are encrypted with{{ if .Encryption }}: <b>{{ join .Encryption ", " }}</b>{{ end }}. Add the public key where it should be accepted. Rotating a key writes the secrets again for the new one; the last key that opens them cannot be deleted. A key's policies are the roles and the users whose runs get it in their ssh agent; a key made for someone carries their name, id_ed25519_alice.</p>
 	</div>
 	<div class="actions">
 		<a class="btn" href="/settings/keys/upload">Upload key</a>
@@ -22,15 +22,17 @@
 				{{- $name := .Name }}
 				<td class="key nowrap">{{ .Comment }} <span class="badge">{{ .Name }}</span>{{ range $.Encryption }}{{ if eq . $name }} <span class="badge signal" title="The secrets are encrypted with this key"><svg class="ic"><use href="#i-secret"/></svg> secrets</span>{{ end }}{{ end }}</td>
 				<td class="mono-break"><span class="dim">{{ .Type }}</span> {{ .Fingerprint }}</td>
-				<td class="nowrap">{{ range index $.KeyPolicies .Name }}<span class="badge">{{ . }}</span> {{ else }}<span class="faint">none</span>{{ end }}</td>
+				{{- $roles := index $.KeyPolicies .Name }}{{ $users := index $.KeyUsers .Name }}
+				<td class="nowrap">{{ range $roles }}<span class="badge">{{ . }}</span> {{ end }}{{ range $users }}<span class="avatar sm" title="{{ . }}">{{ initials . }}</span> {{ end }}{{ if not (or $roles $users) }}<span class="faint">none</span>{{ end }}</td>
 				<td class="nowrap" title="{{ ago .Modified }}">{{ stamp .Modified }}</td>
 				<td class="actions">
 					<button type="button" class="btn-icon" data-copy="{{ .PublicKey }}" title="Copy public key" aria-label="Copy public key"><svg class="ic"><use href="#i-copy"/></svg></button>
 					<a class="btn-icon" href="/settings/keys/{{ .Name }}" title="Policies: the roles whose runs get it" aria-label="Edit policies"><svg class="ic"><use href="#i-edit"/></svg></a>
-					{{- $kind := "" }}{{ if eq .Name "id_ed25519" }}{{ $kind = "ed25519" }}{{ else if eq .Name "id_ecdsa" }}{{ $kind = "ecdsa" }}{{ else if eq .Name "id_rsa" }}{{ $kind = "rsa" }}{{ end }}
+					{{- $kind := .Kind }}
 					{{- if $kind }}
 					<form data-api="/api/keys/generate" data-method="POST" data-next="reload" data-confirm="Rotate {{ .Name }}? The current pair is kept as a backup. Hosts that trust it need the new public key." data-confirm-ok="Rotate">
 						<input type="hidden" name="type" value="{{ $kind }}">
+						<input type="hidden" name="name" value="{{ .Label }}">
 						<input type="hidden" name="comment" value="{{ .Comment }}">
 						<button class="btn-icon" type="submit" title="Rotate: generate a new pair" aria-label="Rotate key"><svg class="ic"><use href="#i-rotate"/></svg></button>
 					</form>
