@@ -7,8 +7,9 @@ import (
 )
 
 // ControlRepeats is how many times a job name occurs, at least, for the
-// control centre to give it a column: more than five.
-const ControlRepeats = 6
+// control centre to give it a column: more than once. The column's name
+// stands on end, so a column is narrow.
+const ControlRepeats = 2
 
 // Control is the dashboard's control centre: a row per folder with
 // jobs, a column per job name that repeats enough.
