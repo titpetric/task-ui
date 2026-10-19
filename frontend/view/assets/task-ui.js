@@ -923,9 +923,8 @@
     });
   }
 
-  // Show beside a file a folder's pipeline reads opens it, coloured,
-  // below its row: one request, kept. Open there shows it in the source
-  // window, as large as the run window.
+  // Show beside a file a folder's pipeline reads opens it, coloured, in
+  // the source window, as large as the run window: one request, kept.
   var sourceDialog = document.getElementById("source-dialog");
   function openSource(title, html) {
     if (!sourceDialog) return;
@@ -941,41 +940,20 @@
     if (!btn) return;
     event.preventDefault();
     var title = btn.dataset.source + "/" + btn.dataset.file;
-    var block = btn.sourceBlock;
-    if (block) {
-      var open = block.hidden;
-      block.hidden = !open;
-      btn.setAttribute("aria-expanded", open ? "true" : "false");
-      btn.querySelector("span").textContent = open ? "Hide" : "Show";
+    if (btn.sourceHTML !== undefined) {
+      openSource(title, btn.sourceHTML);
       return;
     }
-    block = el("div", "source-block");
-    var head = el("div", "source-head");
-    head.appendChild(el("span", "", btn.dataset.file));
-    var openBtn = el("button", "btn btn-sm");
-    openBtn.type = "button";
-    openBtn.appendChild(icon("i-expand"));
-    openBtn.appendChild(el("span", "", "Open"));
-    head.appendChild(openBtn);
-    var pre = el("pre", "code", "loading…");
-    block.appendChild(head);
-    block.appendChild(pre);
-    // Below the row: in the cell, after the line the button is on, or at
-    // the end of the cell when the button sits in it alone.
-    var line = btn.parentElement;
-    if (line.tagName === "TD") line.appendChild(block);
-    else line.parentElement.insertBefore(block, line.nextSibling);
-    btn.sourceBlock = block;
-    btn.setAttribute("aria-expanded", "true");
-    btn.querySelector("span").textContent = "Hide";
-    openBtn.addEventListener("click", function () { openSource(title, pre.innerHTML); });
+    btn.disabled = true;
     api("GET", "/api/sources/" + btn.dataset.source.split("/").map(encodeURIComponent).join("/") + "?file=" + encodeURIComponent(btn.dataset.file))
       .then(function (res) {
+        btn.disabled = false;
         if (res.status !== 200) {
-          pre.textContent = res.data.error || ("HTTP " + res.status);
+          openSource(title, escapeHTML(res.data.error || ("HTTP " + res.status)));
           return;
         }
-        pre.innerHTML = res.data.html;
+        btn.sourceHTML = res.data.html;
+        openSource(title, btn.sourceHTML);
       });
   });
 

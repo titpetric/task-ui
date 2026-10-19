@@ -1281,9 +1281,9 @@ dialog.run[open] {
   height: min(62vh, 40rem);
 }
 
-/* A file a folder's pipeline reads, coloured: in the source window, and
-   below the row its Show button is on. The classes are the highlight
-   package's: k key, c comment, s string, n number, v variable, p dash. */
+/* A file a folder's pipeline reads, coloured, in the source window. The
+   classes are the highlight package's: k key, c comment, s string, n
+   number, v variable, p dash. */
 pre.code {
   margin: 0;
   padding: 0.55rem 0.8rem;
@@ -1313,32 +1313,6 @@ pre.code .s { color: var(--ok); }
 pre.code .n { color: #c99be6; }
 pre.code .v { color: var(--signal); }
 pre.code .p { color: var(--text-faint); }
-
-.source-block {
-  margin: 0.4rem 0 0.2rem;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  overflow: hidden;
-}
-
-.source-block[hidden] {
-  display: none;
-}
-
-.source-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.6rem;
-  padding: 0.25rem 0.4rem 0.25rem 0.8rem;
-  border-bottom: 1px solid var(--line);
-  color: var(--text-dim);
-  font-size: 0.78rem;
-}
-
-.source-block pre.code {
-  max-height: 24rem;
-}
 
 .btn.show-source {
   margin-left: 0.5rem;
