@@ -269,9 +269,13 @@ func (m *Manager) serve(session *Session) {
 
 // settle writes the outcome down and tells the windows.
 func (m *Manager) settle(ctx context.Context, session *Session, status Status) {
+	// The session takes the outcome before the row does: a reader that
+	// sees the row ended and asks the session, as the API does while the
+	// session is kept, must not hear it is still running.
+	session.mu.Lock()
+	session.Run.State, session.Run.ExitCode = status.State, int64(status.ExitCode)
+	session.mu.Unlock()
 	run := session.Snapshot()
-	run.State = status.State
-	run.ExitCode = int64(status.ExitCode)
 	if err := m.opts.Runs.Finish(ctx, &run); err != nil {
 		slog.Warn("run outcome not recorded", "run", run.ID, "err", err)
 	}
