@@ -13,7 +13,10 @@ import (
 // KeyRequest generates a key pair, or uploads a private key.
 type KeyRequest struct {
 	// Type is the pair to generate: ed25519, ecdsa or rsa.
-	Type    string `json:"type"`
+	Type string `json:"type"`
+	// Name labels a key made for someone: id_<type>_<name>, beside the
+	// type's own key. Empty is the type's own key.
+	Name    string `json:"name"`
 	Comment string `json:"comment"`
 	// Content is the private key to upload, PEM encoded.
 	Content string `json:"content"`
@@ -21,6 +24,9 @@ type KeyRequest struct {
 	// ssh agent. Left out, a key keeps the roles it had, so a rotation
 	// keeps them; an empty list gives the key to none.
 	Policies []string `json:"policies"`
+	// Users are the users, by name, whose runs get the key, beside the
+	// roles. Left out, a key keeps the users it had.
+	Users []string `json:"users"`
 }
 
 // listKeys returns the key pairs of the instance SSH folder. Admins only.
@@ -33,15 +39,30 @@ func (h *Handlers) listKeys(w http.ResponseWriter, r *http.Request) {
 		failErr(w, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, map[string]any{"keys": h.opts.Keys.List(), "dir": h.opts.Keys.Dir, "policies": policies})
+	users, err := h.opts.KeyPolicies.AllUsers(r.Context())
+	if err != nil {
+		failErr(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"keys": h.opts.Keys.List(), "dir": h.opts.Keys.Dir, "policies": policies, "users": users})
 }
 
-// setPolicies maps a key to the roles a request names, when it names any.
-func (h *Handlers) setPolicies(r *http.Request, name string, policies []string) error {
-	if policies == nil {
-		return nil
+// setPolicies gives a key to the roles and the users a request names,
+// each when it names them.
+func (h *Handlers) setPolicies(r *http.Request, name string, req KeyRequest) error {
+	if req.Policies != nil {
+		if err := h.opts.KeyPolicies.Set(r.Context(), name, req.Policies); err != nil {
+			return err
+		}
 	}
-	return h.opts.KeyPolicies.Set(r.Context(), name, policies)
+	if req.Users != nil {
+		users := make([]string, 0, len(req.Users))
+		for _, user := range req.Users {
+			users = append(users, strings.TrimSpace(user))
+		}
+		return h.opts.KeyPolicies.SetUsers(r.Context(), name, users)
+	}
+	return nil
 }
 
 // updateKey changes the roles whose runs get a key. Admins only.
@@ -66,11 +87,14 @@ func (h *Handlers) updateKey(w http.ResponseWriter, r *http.Request) {
 	if req.Policies == nil {
 		req.Policies = []string{}
 	}
-	if err := h.setPolicies(r, name, req.Policies); err != nil {
+	if req.Users == nil {
+		req.Users = []string{}
+	}
+	if err := h.setPolicies(r, name, req); err != nil {
 		fail(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	writeJSON(w, http.StatusOK, map[string]any{"name": name, "policies": req.Policies})
+	writeJSON(w, http.StatusOK, map[string]any{"name": name, "policies": req.Policies, "users": req.Users})
 }
 
 // generateKey makes a new pair. The pair of the same type that was there
@@ -84,12 +108,12 @@ func (h *Handlers) generateKey(w http.ResponseWriter, r *http.Request) {
 		fail(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	key, err := h.opts.Keys.Generate(req.Type, strings.TrimSpace(req.Comment))
+	key, err := h.opts.Keys.GenerateAs(req.Type, strings.TrimSpace(req.Name), strings.TrimSpace(req.Comment))
 	if err != nil {
 		fail(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	if err := h.setPolicies(r, key.Name, req.Policies); err != nil {
+	if err := h.setPolicies(r, key.Name, req); err != nil {
 		fail(w, http.StatusBadRequest, err.Error())
 		return
 	}
@@ -119,12 +143,12 @@ func (h *Handlers) uploadKey(w http.ResponseWriter, r *http.Request) {
 		fail(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	key, err := h.opts.Keys.Upload([]byte(req.Content), strings.TrimSpace(req.Comment))
+	key, err := h.opts.Keys.UploadAs([]byte(req.Content), strings.TrimSpace(req.Name), strings.TrimSpace(req.Comment))
 	if err != nil {
 		fail(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	if err := h.setPolicies(r, key.Name, req.Policies); err != nil {
+	if err := h.setPolicies(r, key.Name, req); err != nil {
 		fail(w, http.StatusBadRequest, err.Error())
 		return
 	}

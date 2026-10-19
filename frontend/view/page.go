@@ -81,7 +81,9 @@ type Page struct {
 	// KeyPolicies are the roles whose runs get each instance key, by
 	// key name; Key is the key an edit form changes.
 	KeyPolicies map[string][]string
-	Key         *sshkey.Key
+	// KeyUsers are the users, by name, whose runs get each instance key.
+	KeyUsers map[string][]string
+	Key      *sshkey.Key
 	// Encryption names the keys the secrets are encrypted with.
 	Encryption []string
 	Users      []model.User

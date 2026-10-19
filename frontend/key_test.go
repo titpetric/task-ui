@@ -111,3 +111,35 @@ func TestKeys_Policies(t *testing.T) {
 		assert.Contains(t, f.page(t, asAdmin, path), `name="policies" value="runner" data-type="set"`)
 	}
 }
+
+// The forms offer a name and a box per user; a user's SSH keys page lists
+// the keys given to them or their role, to copy.
+func TestKeys_ForAUser(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	ctx := context.Background()
+	_, err := f.opts.Keys.Generate("ed25519", "instance")
+	assert.NoError(t, err)
+	mine, err := f.opts.Keys.GenerateAs("ed25519", "ops", "ops key")
+	assert.NoError(t, err)
+	assert.NoError(t, f.opts.KeyPolicies.SetUsers(ctx, "id_ed25519_ops", []string{asOps}))
+	assert.NoError(t, f.opts.KeyPolicies.Set(ctx, "id_ed25519", []string{"runner"}))
+
+	generate := f.page(t, asAdmin, "/settings/keys/generate")
+	assert.Contains(t, generate, `name="name" pattern=`)
+	assert.Contains(t, generate, `name="users" value="`+asOps+`" data-type="set"`)
+	edit := f.page(t, asAdmin, "/settings/keys/id_ed25519_ops")
+	assert.Contains(t, edit, `name="users" value="`+asOps+`" data-type="set" checked`)
+	list := f.page(t, asAdmin, "/settings/keys")
+	assert.Contains(t, list, `<input type="hidden" name="name" value="ops">`)
+
+	ops := f.page(t, asOps, "/keys")
+	assert.Contains(t, ops, "Your SSH keys")
+	assert.Contains(t, ops, strings.ReplaceAll(mine.Fingerprint, "+", "&#43;"))
+	assert.Contains(t, ops, "id_ed25519_ops")
+	assert.Contains(t, ops, "id_ed25519</span>") // the runner role's
+	assert.Contains(t, ops, `href="/keys"`)
+
+	viewer := f.page(t, asViewer, "/keys")
+	assert.Contains(t, viewer, "No key is given to you or your role")
+}

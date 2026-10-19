@@ -12,8 +12,8 @@ import (
 
 // agent loads the keys a run gets into an ssh agent for it, and says so
 // in the terminal: the private keys in the .ssh/ folder of the checkout
-// the folder is in, and the instance keys the policies give the role of
-// whoever started the run. No key is no agent and no error; the caller
+// the folder is in, and the instance keys the policies give whoever
+// started the run, by their role or by name. No key is no agent and no error; the caller
 // closes the agent.
 func (m *Manager) agent(ctx context.Context, session *Session) (*sshagent.Agent, error) {
 	var paths []string
@@ -30,15 +30,15 @@ func (m *Manager) agent(ctx context.Context, session *Session) (*sshagent.Agent,
 			}
 		}
 	}
-	if m.opts.KeyPolicies != nil && m.opts.KeyDir != "" && session.role != "" {
-		names, err := m.opts.KeyPolicies.Keys(ctx, session.role)
+	if m.opts.KeyPolicies != nil && m.opts.KeyDir != "" && (session.role != "" || session.Run.UserName != "") {
+		names, err := m.opts.KeyPolicies.For(ctx, session.role, session.Run.UserName)
 		if err != nil {
 			return nil, fmt.Errorf("reading the key policies: %w", err)
 		}
 		for _, name := range names {
 			path := filepath.Join(m.opts.KeyDir, name)
 			paths = append(paths, path)
-			from[path] = name + " (" + session.role + ")"
+			from[path] = name
 		}
 	}
 	if len(paths) == 0 {

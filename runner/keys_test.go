@@ -55,7 +55,7 @@ func TestManager_PolicyKeys(t *testing.T) {
 	assert.NoError(t, err)
 	out, status := collect(t, session.Attach(false))
 	assert.Equal(t, model.StateOK, status.State, out)
-	assert.Contains(t, out, "ssh-agent: id_ed25519 (runner)")
+	assert.Contains(t, out, "ssh-agent: id_ed25519")
 	assert.Contains(t, out, "agent-ok")
 
 	admin := f.shellJob("policy-admin", "true", false)
@@ -65,4 +65,13 @@ func TestManager_PolicyKeys(t *testing.T) {
 	out, status = collect(t, session.Attach(false))
 	assert.Equal(t, model.StateOK, status.State, out)
 	assert.NotContains(t, out, "ssh-agent:")
+
+	// Given to the admin by name, the key reaches their runs too.
+	assert.NoError(t, f.policies.SetUsers(context.Background(), "id_ed25519", []string{"root"}))
+	admin = f.shellJob("policy-admin-named", "true", false)
+	admin.User = &model.User{ID: "u2", Name: "root", Role: model.RoleAdmin}
+	session, err = f.manager.Start(context.Background(), admin)
+	assert.NoError(t, err)
+	out, _ = collect(t, session.Attach(false))
+	assert.Contains(t, out, "ssh-agent: id_ed25519")
 }

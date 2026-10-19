@@ -19,7 +19,11 @@
 		<label for="up-comment">Comment</label>
 		<input type="text" id="up-comment" name="comment" value="task-ui">
 	</div>
-	{{- template "keypolicies" (list) }}
+	<div class="field">
+		<label for="up-name">Name <span class="faint">for a key made for someone: id_&lt;type&gt;_&lt;name&gt;, beside the type's own key; empty is the type's own key</span></label>
+		<input type="text" id="up-name" name="name" pattern="[a-z0-9][a-z0-9-]{0,31}" placeholder="alice" spellcheck="false" autocomplete="off">
+	</div>
+	{{- template "keypolicies" (list (list) (list) .Users) }}
 	<div class="form-foot">
 		<a class="btn" href="/settings/keys">Cancel</a>
 		<button class="btn btn-primary" type="submit">Upload</button>

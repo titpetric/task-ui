@@ -26,6 +26,7 @@
 			<summary aria-label="{{ .User.Name }}, {{ .User.Role }}" title="{{ .User.Name }}"><span class="avatar">{{ .User.Initials }}</span></summary>
 			<div class="user-menu">
 				<div class="who"><b>{{ .User.Name }}</b><span>{{ .User.Role }}</span></div>
+				<a href="/keys"><svg class="ic"><use href="#i-key"/></svg>SSH keys</a>
 				{{- if .User.CanAdmin }}
 				<a href="/settings"><svg class="ic"><use href="#i-settings"/></svg>Settings</a>
 				{{- end }}
@@ -365,12 +366,16 @@
 {{- define "logo" }}<svg class="logo" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="3"/><path class="prompt" d="M8 10l6 6-6 6"/><path class="cursor" d="M16 23h8"/></svg>{{ end }}
 
 {{- define "keypolicies" }}
-{{- $selected := . }}
+{{- $roles := index . 0 }}{{ $users := index . 1 }}{{ $all := index . 2 }}
 <div class="field">
-	<label>Policies <span class="faint">the roles whose runs get this key, through the run's ssh agent; a key can be in several</span></label>
+	<label>Policies <span class="faint">whose runs get this key, through the run's ssh agent: roles, and users by name; a key can have several</span></label>
 	{{- range roles }}
-	{{- $role := . }}{{ $on := false }}{{ range $selected }}{{ if eq . $role }}{{ $on = true }}{{ end }}{{ end }}
+	{{- $role := . }}{{ $on := false }}{{ range $roles }}{{ if eq . $role }}{{ $on = true }}{{ end }}{{ end }}
 	<label class="check"><input type="checkbox" name="policies" value="{{ $role }}" data-type="set"{{ if $on }} checked{{ end }}> {{ $role }}{{ if eq $role "viewer" }} <span class="faint">reader</span>{{ end }}</label>
+	{{- end }}
+	{{- range $all }}
+	{{- $name := .Name }}{{ $on := false }}{{ range $users }}{{ if eq . $name }}{{ $on = true }}{{ end }}{{ end }}
+	<label class="check"><input type="checkbox" name="users" value="{{ $name }}" data-type="set"{{ if $on }} checked{{ end }}> <span class="avatar sm">{{ .Initials }}</span> {{ $name }} <span class="faint">{{ .Role }}</span></label>
 	{{- end }}
 </div>
 {{- end }}

@@ -34,7 +34,26 @@ type Store struct {
 	Dir string
 }
 
-var keyName = regexp.MustCompile(`^id_[a-z0-9]+(\.bak-[0-9]{8}T[0-9]{6})?$`)
+var keyName = regexp.MustCompile(`^id_[a-z0-9]+(_[a-z0-9][a-z0-9-]*)?(\.bak-[0-9]{8}T[0-9]{6})?$`)
+
+// keyLabel is what may follow the type in a key's name: id_ed25519_alice.
+var keyLabel = regexp.MustCompile(`^[a-z0-9][a-z0-9-]{0,31}$`)
+
+// fileName is the file a key of a kind and label is kept in: the kind's
+// name, then the label after an underscore when there is one.
+func fileName(kind, label string) (string, error) {
+	name, ok := Types[kind]
+	if !ok {
+		return "", fmt.Errorf("unsupported key type %q", kind)
+	}
+	if label == "" {
+		return name, nil
+	}
+	if !keyLabel.MatchString(label) {
+		return "", fmt.Errorf("a key name is lower case letters, digits and dashes, not %q", label)
+	}
+	return name + "_" + label, nil
+}
 
 // ErrPassphrase is returned for an uploaded key protected by a passphrase:
 // the jobs run unattended and could not unlock it.
@@ -102,6 +121,8 @@ func (k *Store) describe(name string) (Key, error) {
 		PublicKey:   strings.TrimSpace(string(ssh.MarshalAuthorizedKey(pub))) + commentSuffix(comment),
 		Modified:    info.ModTime(),
 		Backup:      strings.Contains(name, ".bak-"),
+		Kind:        KindOf(name),
+		Label:       labelOf(name),
 	}, nil
 }
 
@@ -131,9 +152,17 @@ func keyBits(pub ssh.PublicKey) int {
 // Generate creates a new key pair of the given type, moving an existing pair
 // of the same type aside. It returns the new key.
 func (k *Store) Generate(kind, comment string) (Key, error) {
-	name, ok := Types[kind]
-	if !ok {
-		return Key{}, fmt.Errorf("unsupported key type %q", kind)
+	return k.GenerateAs(kind, "", comment)
+}
+
+// GenerateAs creates a new key pair of the given type under a label, as
+// id_<type>_<label>, beside the type's own key: a key made for someone.
+// An existing pair of the same name is moved aside. An empty label is
+// Generate.
+func (k *Store) GenerateAs(kind, label, comment string) (Key, error) {
+	name, err := fileName(kind, label)
+	if err != nil {
+		return Key{}, err
 	}
 
 	var private any
@@ -168,6 +197,13 @@ func (k *Store) Generate(kind, comment string) (Key, error) {
 // Upload stores a private key given in PEM or OpenSSH format, moving an
 // existing pair of the same type aside.
 func (k *Store) Upload(data []byte, comment string) (Key, error) {
+	return k.UploadAs(data, "", comment)
+}
+
+// UploadAs stores a private key under a label, as id_<type>_<label>,
+// moving an existing pair of the same name aside. An empty label is
+// Upload.
+func (k *Store) UploadAs(data []byte, label, comment string) (Key, error) {
 	data = []byte(strings.TrimSpace(strings.ReplaceAll(string(data), "\r\n", "\n")) + "\n")
 	private, err := ssh.ParseRawPrivateKey(data)
 	if err != nil {
@@ -182,16 +218,20 @@ func (k *Store) Upload(data []byte, comment string) (Key, error) {
 		private = *key
 	}
 
-	var name string
+	var kind string
 	switch private.(type) {
 	case ed25519.PrivateKey:
-		name = Types["ed25519"]
+		kind = "ed25519"
 	case *ecdsa.PrivateKey:
-		name = Types["ecdsa"]
+		kind = "ecdsa"
 	case *rsa.PrivateKey:
-		name = Types["rsa"]
+		kind = "rsa"
 	default:
 		return Key{}, fmt.Errorf("unsupported key type %T", private)
+	}
+	name, err := fileName(kind, label)
+	if err != nil {
+		return Key{}, err
 	}
 	return k.write(name, data, private, comment)
 }
