@@ -1,6 +1,8 @@
 package view
 
-import "html/template"
+import (
+	"html/template"
+)
 
 // Step is a step of a workflow, or of a run of one, as a page shows
 // it: a job of a folder, or another workflow.

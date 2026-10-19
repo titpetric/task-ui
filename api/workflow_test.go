@@ -1,6 +1,7 @@
 package api_test
 
 import (
+	"encoding/json"
 	"net/http"
 	"testing"
 	"time"
@@ -259,4 +260,46 @@ func TestWorkflow_Sidebar(t *testing.T) {
 
 	plain := f.call(t, asOps, http.MethodPost, "/workflows", api.WorkflowRequest{Name: "whole", Steps: chain("infra", "plan")})
 	assert.Equal(t, false, plain.get("sidebar_hidden"))
+}
+
+// A workflow decodes into its view: the row, the steps, and what the
+// user asking may do; its runs into theirs, each with its steps.
+func TestWorkflowView(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	id := f.createWorkflow(t, asOps, "ship", chain("infra", "plan", "infra/edge", "deploy"))
+
+	res := f.call(t, asOps, http.MethodGet, "/workflows/"+id, nil)
+	assert.Equal(t, http.StatusOK, res.Status, string(res.Raw))
+	var view api.WorkflowView
+	assert.NoError(t, json.Unmarshal(res.Raw, &view))
+	assert.Equal(t, "ship", view.Name)
+	assert.Len(t, view.Steps, 2)
+	assert.Equal(t, "infra/edge", view.Steps[1].Folder)
+	assert.True(t, view.CanRun)
+	assert.True(t, view.CanChange)
+
+	var viewer api.WorkflowView
+	assert.NoError(t, json.Unmarshal(f.call(t, asViewer, http.MethodGet, "/workflows/"+id, nil).Raw, &viewer))
+	assert.False(t, viewer.CanRun)
+	assert.False(t, viewer.CanChange)
+}
+
+func TestWorkflowRunView(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	id := f.createWorkflow(t, asOps, "ship", chain("infra", "plan"))
+	started := f.call(t, asOps, http.MethodPost, "/workflows/"+id+"/runs", nil)
+	assert.Equal(t, http.StatusCreated, started.Status, string(started.Raw))
+	f.workflowRun(t, id, started.str("id"))
+
+	var body struct {
+		Runs []api.WorkflowRunView `json:"runs"`
+	}
+	assert.NoError(t, json.Unmarshal(f.call(t, asOps, http.MethodGet, "/workflows/"+id+"/runs", nil).Raw, &body))
+	assert.Len(t, body.Runs, 1)
+	assert.Equal(t, started.str("id"), body.Runs[0].ID)
+	assert.Equal(t, model.StateOK, body.Runs[0].State)
+	assert.Len(t, body.Runs[0].Steps, 1)
+	assert.Equal(t, "plan", body.Runs[0].Steps[0].Job)
 }

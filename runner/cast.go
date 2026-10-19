@@ -5,37 +5,11 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
-
-	"github.com/hinshun/vt10x"
 )
 
 // OutputRows is how tall a terminal a recording's whole output is
 // replayed into: the most of a run's output it shows.
 const OutputRows = 5000
-
-// Replay is a recording played back: the screen it ended on, and its
-// whole output, the same output in a terminal OutputRows tall without
-// its empty rows at the bottom.
-type Replay struct {
-	Screen Frame
-	Output Frame
-}
-
-// Lines counts the lines of the whole output, less the empty one the
-// cursor waits on after the last.
-func (r Replay) Lines() int {
-	lines := r.Output.Rows
-	if lines > 0 && blank(r.Output.Lines[lines-1]) {
-		lines--
-	}
-	return lines
-}
-
-// Complete reports whether the screen already shows the whole output:
-// nothing scrolled off it.
-func (r Replay) Complete() bool {
-	return r.Screen.Trim(1).Text() == r.Output.Text()
-}
 
 // FrameFromCast replays an asciicast v2 recording into a terminal of the
 // size its header names and returns the frame it ended on: the last
@@ -68,8 +42,8 @@ func ReplayCast(r io.Reader) (Replay, error) {
 	if err := json.Unmarshal(scanner.Bytes(), &header); err != nil || header.Width <= 0 || header.Height <= 0 {
 		return Replay{}, errors.New("not an asciicast recording")
 	}
-	screen := vt10x.New(vt10x.WithSize(header.Width, header.Height))
-	output := vt10x.New(vt10x.WithSize(header.Width, OutputRows))
+	screen := newTerminal(header.Width, header.Height)
+	output := newTerminal(header.Width, OutputRows)
 	for scanner.Scan() {
 		var event []any
 		if json.Unmarshal(scanner.Bytes(), &event) != nil || len(event) < 3 {

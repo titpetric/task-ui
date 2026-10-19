@@ -76,8 +76,12 @@ func OpenAndMigrate(ctx context.Context, dsn string) (DB, error) {
 	return db, nil
 }
 
+// conn is a request scoped client, the one type of pdo the rest of the
+// package names: pdo stays imported in this file alone.
+type conn = *pdo.PDO
+
 // client returns a request scoped pdo client over the shared pool.
-func client(db DB) *pdo.PDO {
+func client(db DB) conn {
 	return pdo.New(db)
 }
 

@@ -1,11 +1,13 @@
 package api_test
 
 import (
+	"encoding/json"
 	"net/http"
 	"os"
 	"path/filepath"
 	"testing"
 
+	"github.com/titpetric/task-ui/api"
 	"github.com/titpetric/task-ui/detector"
 	"github.com/titpetric/task-ui/internal/assert"
 )
@@ -39,4 +41,21 @@ func TestSource(t *testing.T) {
 	}
 	// Nor a folder the user does not see.
 	assert.Equal(t, http.StatusNotFound, f.call(t, asLimited, http.MethodGet, "/sources/private?file=scripts", nil).Status)
+}
+
+// The source decodes into its view: the file, as it is and coloured.
+func TestSourceView(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	infra := f.opts.Catalogue.Find("infra")
+	assert.NoError(t, os.WriteFile(filepath.Join(infra.Dir, "Taskfile.yml"), []byte("tasks:\n  plan: {}\n"), 0o644))
+	infra.Sources = append(infra.Sources, &detector.Source{Kind: "task", File: "Taskfile.yml"})
+
+	res := f.call(t, asViewer, http.MethodGet, "/sources/infra?file=Taskfile.yml", nil)
+	assert.Equal(t, http.StatusOK, res.Status, string(res.Raw))
+	var view api.SourceView
+	assert.NoError(t, json.Unmarshal(res.Raw, &view))
+	assert.Equal(t, "Taskfile.yml", view.File)
+	assert.Equal(t, "tasks:\n  plan: {}\n", view.Content)
+	assert.Contains(t, string(view.HTML), "tasks")
 }

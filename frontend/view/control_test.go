@@ -83,3 +83,13 @@ func names(js []*folder.Job) []string {
 	}
 	return out
 }
+
+// A row is a folder: its jobs of each column, and the rest under other.
+func TestControlRow(t *testing.T) {
+	t.Parallel()
+	c := view.NewControl([]*folder.Folder{jobs("api", "build", "push"), jobs("web", "build", "serve")}, view.ControlRepeats)
+	var row view.ControlRow = c.Rows[1]
+	assert.Equal(t, "web", row.Folder.ID)
+	assert.Equal(t, []string{"build"}, names(row.Cells[0]))
+	assert.Equal(t, []string{"serve"}, names(row.Extra))
+}

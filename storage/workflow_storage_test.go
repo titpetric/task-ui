@@ -196,3 +196,56 @@ func TestWorkflowRunStorage_WorkflowStep(t *testing.T) {
 	assert.True(t, rows[0].WorkflowRunRef != "")
 	assert.Equal(t, model.StateOK, rows[0].State)
 }
+
+// A workflow reaches the workflows its steps run, through any depth, and
+// itself; not the ones that run it.
+func TestWorkflowStorage_Reaches(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	workflows := storage.NewWorkflowStorage(newDB(t))
+	inner := &model.Workflow{Name: "inner"}
+	assert.NoError(t, workflows.Create(ctx, inner, steps("infra", "build")))
+	middle := &model.Workflow{Name: "middle"}
+	assert.NoError(t, workflows.Create(ctx, middle, []model.WorkflowStep{{WorkflowRef: inner.ID}}))
+	outer := &model.Workflow{Name: "outer"}
+	assert.NoError(t, workflows.Create(ctx, outer, []model.WorkflowStep{{Folder: "infra", Job: "test"}, {WorkflowRef: middle.ID}}))
+
+	for _, c := range []struct {
+		from, target string
+		want         bool
+	}{
+		{outer.ID, inner.ID, true},
+		{outer.ID, middle.ID, true},
+		{inner.ID, inner.ID, true},
+		{inner.ID, outer.ID, false},
+		{middle.ID, outer.ID, false},
+	} {
+		got, err := workflows.Reaches(ctx, c.from, c.target)
+		assert.NoError(t, err)
+		assert.Equal(t, c.want, got)
+	}
+}
+
+// Expand flattens the workflows the steps run into their jobs, in order.
+func TestWorkflowStorage_Expand(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	workflows := storage.NewWorkflowStorage(newDB(t))
+	inner := &model.Workflow{Name: "inner"}
+	assert.NoError(t, workflows.Create(ctx, inner, steps("infra", "build", "infra", "test")))
+	middle := &model.Workflow{Name: "middle"}
+	assert.NoError(t, workflows.Create(ctx, middle, []model.WorkflowStep{{WorkflowRef: inner.ID}, {Folder: "infra", Job: "push"}}))
+
+	flat, err := workflows.Expand(ctx, []model.WorkflowStep{{Folder: "infra", Job: "lint"}, {WorkflowRef: middle.ID}})
+	assert.NoError(t, err)
+	jobs := []string{}
+	for _, s := range flat {
+		assert.False(t, s.IsWorkflow())
+		jobs = append(jobs, s.Job)
+	}
+	assert.Equal(t, []string{"lint", "build", "test", "push"}, jobs)
+
+	gone, err := workflows.Expand(ctx, []model.WorkflowStep{{WorkflowRef: model.NewID()}})
+	assert.NoError(t, err)
+	assert.Len(t, gone, 0)
+}

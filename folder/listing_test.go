@@ -32,3 +32,13 @@ func TestListing(t *testing.T) {
 		t.Fatal("a missing directory lists something")
 	}
 }
+
+// An item is a name, and whether it is a directory to link into.
+func TestItem(t *testing.T) {
+	dir := t.TempDir()
+	write(t, filepath.Join(dir, "sub", "x"), "x")
+	items := Listing(dir)
+	if len(items) != 1 || items[0] != (Item{Name: "sub", Dir: true}) {
+		t.Fatalf("items: %+v", items)
+	}
+}

@@ -1,6 +1,8 @@
 package view
 
-import "github.com/titpetric/task-ui/model"
+import (
+	"github.com/titpetric/task-ui/model"
+)
 
 // Workflow is a workflow as a page shows it.
 type Workflow struct {
