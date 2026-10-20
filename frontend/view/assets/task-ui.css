@@ -2602,6 +2602,26 @@ pre.output {
   accent-color: var(--signal);
 }
 
+/* The user form's folders: All projects, or Custom and a box each. */
+[data-folder-pick] > label.check {
+  display: inline-flex;
+  margin-right: 1.2rem;
+}
+
+.folder-choices {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+  gap: 0.3rem 1rem;
+  margin-top: 0.6rem;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+[data-folder-pick]:has(input[value="all"]:checked) .folder-choices {
+  display: none;
+}
+
 /* A key in the keys page's policy table: its comment, linked to its
    policies; a key that comes with the role is quieter. */
 .key-chip {

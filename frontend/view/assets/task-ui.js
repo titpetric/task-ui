@@ -492,6 +492,15 @@
     return body;
   }
 
+  // A user's folders: All projects turns the boxes off, so the form sends
+  // none and the user sees everything; Custom turns them on.
+  document.addEventListener("change", function (event) {
+    var radio = event.target.closest("[data-folder-pick] input[name=scope]");
+    if (!radio) return;
+    var custom = radio.value === "custom" && radio.checked;
+    radio.closest("[data-folder-pick]").querySelectorAll("input[name=folders]").forEach(function (box) { box.disabled = !custom; });
+  });
+
   // A new key made for a user takes their name: id_<type>_<user>.
   document.addEventListener("change", function (event) {
     var pick = event.target.closest("select[data-key-for]");

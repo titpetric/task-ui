@@ -44,16 +44,19 @@ run and when, per job.
 
 ## Users
 
-Who may sign in comes from the password file on the server, not from this
-page: `task-ui passwd <user>` adds or resets one, removing the line
-removes them, and task-ui reads the file again whenever it changes. The roles
+Who may sign in comes from the password file on the server. **Create
+user** adds one to it, with a name and a password of at least 8
+characters, and they can sign in at once; `task-ui passwd <user>` on the
+server adds or resets one too. Removing the line removes them, and
+task-ui reads the file again whenever it changes. The roles
 come from the server's `TASK_UI_ADMINS` and `TASK_UI_VIEWERS`; everyone
 else is a runner.
 
 ![Users](../assets/users-dark.png)
 
-This page sets which folders a user sees: open a user and pick
-them, or leave it empty for all.
+This page sets which folders a user sees: open a user, then pick **All
+projects**, or **Custom** and check the folders. A user's name and role
+show as text: the password file and the role lists set them.
 
 A client that is not a browser, such as an agent over [MCP](mcp.md),
 signs in with a token instead: `task-ui token <user> <name>` on the

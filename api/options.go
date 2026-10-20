@@ -1,6 +1,8 @@
 package api
 
 import (
+	"context"
+
 	"github.com/titpetric/task-ui/artifactstore"
 	"github.com/titpetric/task-ui/beszel"
 	"github.com/titpetric/task-ui/claude"
@@ -55,6 +57,9 @@ type Options struct {
 	Hosts        *beszel.Inventory
 	// SSH runs a command on the hosts over the logins it finds.
 	SSH *sshprobe.Prober
+	// AddUser puts a new user in the password file; nil leaves users to
+	// the file and task-ui passwd.
+	AddUser func(ctx context.Context, name, password string) error
 	// Summarizer writes the summary of a run on the hosts with Claude.
 	Summarizer *claude.Summarizer
 }

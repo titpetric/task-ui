@@ -3,6 +3,8 @@ package api_test
 import (
 	"context"
 	"net/http"
+	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/titpetric/task-ui/access"
@@ -48,18 +50,32 @@ func TestUser_List(t *testing.T) {
 	assert.NotContains(t, string(res.Raw), "admin@example.com")
 }
 
-// Only the password file makes and removes users.
-func TestUser_ManagedElsewhere(t *testing.T) {
+// An admin makes a user, with their folders; the password file still
+// removes them, and without one to write, it makes them too.
+func TestUser_Create(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
 
-	created := f.call(t, asAdmin, http.MethodPost, "/users", map[string]any{"name": "dev", "password": "x"})
-	assert.Equal(t, http.StatusMethodNotAllowed, created.Status)
-	assert.Contains(t, created.str("error"), "task-ui passwd")
+	created := f.call(t, asAdmin, http.MethodPost, "/users", map[string]any{"name": "dev", "password": "correct horse", "folders": []string{"infra"}})
+	assert.Equal(t, http.StatusCreated, created.Status, string(created.Raw))
+	assert.Equal(t, "dev", created.str("name"))
+	assert.Equal(t, `["infra"]`, created.str("folders"))
+	assert.NotContains(t, string(created.Raw), "correct horse")
+	assert.Equal(t, http.StatusConflict, f.call(t, asAdmin, http.MethodPost, "/users", map[string]any{"name": "dev", "password": "correct horse"}).Status)
+	assert.Equal(t, http.StatusBadRequest, f.call(t, asAdmin, http.MethodPost, "/users", map[string]any{"name": "eve", "password": "x"}).Status)
+	assert.Len(t, f.call(t, asAdmin, http.MethodGet, "/users", nil).list("users"), 5)
 
 	deleted := f.call(t, asAdmin, http.MethodDelete, "/users/"+f.users[asViewer].ID, nil)
 	assert.Equal(t, http.StatusMethodNotAllowed, deleted.Status)
-	assert.Len(t, f.call(t, asAdmin, http.MethodGet, "/users", nil).list("users"), 4)
+	assert.Contains(t, deleted.str("error"), "task-ui passwd")
+
+	opts := f.opts
+	opts.AddUser = nil
+	req := httptest.NewRequest(http.MethodPost, "/users", strings.NewReader(`{"name":"dev2","password":"correct horse"}`))
+	req = req.WithContext(access.WithUser(req.Context(), f.users[asAdmin]))
+	rec := httptest.NewRecorder()
+	api.New(opts).Routes().ServeHTTP(rec, req)
+	assert.Equal(t, http.StatusMethodNotAllowed, rec.Code)
 }
 
 func TestUser_Update(t *testing.T) {
