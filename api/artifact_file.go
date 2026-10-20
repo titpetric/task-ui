@@ -38,8 +38,12 @@ func (h *Handlers) viewArtifactFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	view := ArtifactFileView{Path: rel, ContentType: runner.ContentType(rel), Versions: []ArtifactVersion{}}
+	// A run that writes the same content again leaves a record on the
+	// commit before; the newest record of a commit stands for it.
+	seen := map[string]bool{}
 	for _, record := range records {
-		if record.CommitID != "" && user.CanSee(record.Folder) {
+		if record.CommitID != "" && !seen[record.CommitID] && user.CanSee(record.Folder) {
+			seen[record.CommitID] = true
 			view.Versions = append(view.Versions, ArtifactVersion{Commit: record.CommitID, CreatedAt: record.CreatedAt, Folder: record.Folder, Job: record.Job, RunID: record.RunID, ByteSize: record.ByteSize})
 		}
 	}

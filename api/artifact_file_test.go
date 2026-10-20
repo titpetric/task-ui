@@ -31,6 +31,7 @@ func TestArtifactFile_View(t *testing.T) {
 	f := newFixture(t)
 	first := f.version(t, "infra", "reports/r.md", "# One\n\n![plot](plot.png)\n")
 	f.version(t, "infra", "reports/r.md", "# Two\n")
+	f.version(t, "infra", "reports/r.md", "# Two\n")
 	f.version(t, "private", "secret.txt", "hidden")
 
 	latest := f.call(t, asLimited, http.MethodGet, "/artifacts/files/reports/r.md", nil)
