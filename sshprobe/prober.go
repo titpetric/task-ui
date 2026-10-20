@@ -141,6 +141,9 @@ func (p *Prober) terminal(ctx context.Context, login, remote string) *exec.Cmd {
 	// after "ssh".
 	// -q keeps ssh's own "Connection closed" out of the output.
 	cmd.Args = append([]string{cmd.Args[0], "-tt", "-q"}, cmd.Args[1:]...)
+	// ssh hands the remote terminal this TERM; without one, programs see a
+	// dumb terminal and print no colours.
+	cmd.Env = append(os.Environ(), "TERM=xterm-256color")
 	return cmd
 }
 

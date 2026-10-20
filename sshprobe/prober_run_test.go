@@ -56,6 +56,6 @@ func TestProber_RunTerminal(t *testing.T) {
 	t.Parallel()
 	p := &sshprobe.Prober{Timeout: time.Second, Command: runSSH(t), Terminal: true}
 	logins := map[string]string{"a": "debian@a"}
-	results := p.Run(context.Background(), []string{"a"}, logins, `printf 'pager=%s\r\n' "$PAGER"`, 5*time.Second)
-	assert.Equal(t, "pager=cat\n", results[0].Output)
+	results := p.Run(context.Background(), []string{"a"}, logins, `printf 'pager=%s term=%s\r\n' "$PAGER" "$TERM"`, 5*time.Second)
+	assert.Equal(t, "pager=cat term=xterm-256color\n", results[0].Output)
 }
