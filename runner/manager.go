@@ -375,7 +375,6 @@ func (m *Manager) command(ctx context.Context, session *Session) (*exec.Cmd, err
 		"LINES="+strconv.Itoa(int(run.TermRows)),
 		"TASK_UI=1",
 		"TASK_UI_USER="+run.UserName,
-		"GIT_SSH_COMMAND="+gitSSH(m.opts.KeyDir),
 		"TASK_UI_FOLDER="+f.ID,
 		"TASK_UI_JOB="+job.ID,
 		"TASK_UI_RUN_ID="+run.ID,

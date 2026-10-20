@@ -46,14 +46,3 @@ func (m *Manager) agent(ctx context.Context, session *Session) (*sshagent.Agent,
 	fmt.Fprintf(session, "\x1b[2m$ ssh-agent: %s\x1b[0m\r\n", strings.Join(labels, ", "))
 	return a, nil
 }
-
-// gitSSH is the ssh command git in a job uses: the run's agent keys and
-// no key file, ~/.ssh/id_* included, and the instance known_hosts.
-func gitSSH(keyDir string) string {
-	cmd := "ssh -o IdentityFile=none"
-	if keyDir != "" {
-		known := filepath.Join(keyDir, "known_hosts")
-		cmd += " -o UserKnownHostsFile='" + strings.ReplaceAll(known, "'", `'\''`) + "'"
-	}
-	return cmd
-}
