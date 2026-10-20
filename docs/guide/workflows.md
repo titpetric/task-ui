@@ -28,11 +28,14 @@ last runs.
 
 ![A workflow: its chain and its runs](../assets/workflow-dark.png)
 
-- **Pipeline**: the steps in the order they run.
+- **Pipeline**: the steps in the order they run. While a run is going, it
+  follows that run live: each step's state and terminal.
 - **Runs**: the workflow's activity, its runs of the last thirty days by
   day and by hour and the duration of its latest thirty (see
   [Runs](runs.md#activity)), then every run of the workflow, newest first, with who started it,
   how it ended, and each step's run, which opens like any other run.
+  **View** opens that run's pipeline in a window, each step with its
+  state and the screen it ended on; Ctrl and a click open it as a page.
   **Stop** on a running workflow stops the step that runs and skips the
   rest.
 

@@ -49,6 +49,7 @@ func (h *Handlers) Routes() http.Handler {
 		r.Get("/workflows/new", h.workflowNew)
 		r.Get("/workflows/{id}", h.workflow)
 		r.Get("/workflows/{id}/edit", h.workflowEdit)
+		r.Get("/workflows/{id}/runs/{run}", h.workflowRun)
 		r.Get("/runs", h.runs)
 		r.Get("/runs/{id}", h.run)
 		r.Get("/artifacts", h.artifacts)

@@ -3141,6 +3141,27 @@ dialog.preview #preview-version {
   max-width: 22rem;
 }
 
+/* The pipeline window: centred, one size, the run's pipeline scrolling
+   inside it on the page's background. */
+dialog.pipeline-window {
+  width: min(64rem, calc(100vw - 2rem));
+  height: min(46rem, calc(100vh - 4rem));
+}
+
+dialog.pipeline-window .pipeline-body {
+  padding: 0.9rem 1.1rem;
+  overflow: auto;
+  background: var(--ink-0);
+}
+
+dialog.pipeline-window .page-head {
+  margin-bottom: 0.6rem;
+}
+
+dialog.pipeline-window .page-head h2 {
+  display: none;
+}
+
 /* The summary window: centred like the others, one size from the wait to
    the answer, the answer scrolling inside it. */
 dialog.run-summary {

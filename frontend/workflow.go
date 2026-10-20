@@ -141,8 +141,9 @@ func (h *Handlers) loadWorkflow(w http.ResponseWriter, r *http.Request) (*view.P
 	return p, names
 }
 
-// workflow shows one workflow: its pipeline with the latest run's
-// states, and its runs. The page follows the workflow's events.
+// workflow shows one workflow: its pipeline, live while a run is going
+// and as its steps otherwise, and its runs, each with a View of its
+// pipeline. The page follows the workflow's events.
 func (h *Handlers) workflow(w http.ResponseWriter, r *http.Request) {
 	p, names := h.loadWorkflow(w, r)
 	if p == nil {
@@ -154,13 +155,34 @@ func (h *Handlers) workflow(w http.ResponseWriter, r *http.Request) {
 		p.WorkflowRuns = append(p.WorkflowRuns, view.WorkflowRun{WorkflowRun: run, Steps: viewRunSteps(rows, names)})
 	}
 	var latest []view.Step
-	if len(p.WorkflowRuns) > 0 {
+	if len(p.WorkflowRuns) > 0 && p.WorkflowRuns[0].State == model.StateRunning {
 		latest = p.WorkflowRuns[0].Steps
 	}
 	p.Activity = h.workflowActivity(r.Context(), p.Workflow.ID, p.Now)
 	p.Pipeline = view.Pipeline(p.Workflow.Steps, latest)
 	h.frames(r.Context(), p.Pipeline, names, true)
 	h.render(w, http.StatusOK, "workflow", p)
+}
+
+// workflowRun shows one run of a workflow: its pipeline as the run left
+// it, each step's state and the screen its run ended on. The workflow
+// page opens it in a window.
+func (h *Handlers) workflowRun(w http.ResponseWriter, r *http.Request) {
+	p, names := h.loadWorkflow(w, r)
+	if p == nil {
+		return
+	}
+	run, err := h.opts.WorkflowRuns.Get(r.Context(), param(r, "run"))
+	if err != nil || run.WorkflowID != p.Workflow.ID {
+		h.missing(w, r, "No run of this workflow with that ID.")
+		return
+	}
+	rows, _ := h.opts.WorkflowRuns.Steps(r.Context(), run.ID)
+	p.WorkflowRuns = []view.WorkflowRun{{WorkflowRun: *run, Steps: viewRunSteps(rows, names)}}
+	p.Pipeline = view.Chain(p.WorkflowRuns[0].Steps)
+	h.frames(r.Context(), p.Pipeline, names, true)
+	p.Crumbs = view.Crumbs("Workflows", "/workflows", p.Workflow.Name, "/workflows/"+p.Workflow.ID, "Run")
+	h.render(w, http.StatusOK, "workflow_run", p)
 }
 
 // frames puts on each step of a run's chain the screen its run ended

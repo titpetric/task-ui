@@ -766,10 +766,16 @@
           chain.appendChild(a);
         });
         steps.appendChild(chain);
+        var view = el("td", "actions");
+        var viewLink = el("a", "btn btn-sm", "View");
+        viewLink.href = location.pathname.replace(/\/$/, "") + "/runs/" + encodeURIComponent(data.run_id);
+        viewLink.dataset.workflowView = "";
+        view.appendChild(viewLink);
         row.appendChild(started);
         row.appendChild(by);
         row.appendChild(result);
         row.appendChild(steps);
+        row.appendChild(view);
         runs.insertBefore(row, runs.firstChild);
       }
       if (actions) {
@@ -1079,6 +1085,33 @@
       previewImage.alt = title;
       showImage(link.dataset.preview);
       previewDialog.showModal();
+    });
+  }
+
+  // View on a workflow run opens its pipeline in a window: the run's page,
+  // fetched, its pipeline part shown. Ctrl or a middle click opens the
+  // page itself.
+  var pipelineDialog = document.getElementById("pipeline-dialog");
+  if (pipelineDialog) {
+    var pipelineBody = document.getElementById("pipeline-body");
+    document.getElementById("pipeline-close").addEventListener("click", function () { pipelineDialog.close(); });
+    pipelineDialog.addEventListener("close", function () { pipelineBody.innerHTML = ""; });
+    document.addEventListener("click", function (event) {
+      var link = event.target.closest("a[data-workflow-view]");
+      if (!link || event.ctrlKey || event.metaKey || event.shiftKey || event.button !== 0) return;
+      event.preventDefault();
+      var href = link.getAttribute("href");
+      var title = document.querySelector(".page-head h2");
+      document.getElementById("pipeline-title").textContent = title ? title.textContent : "";
+      document.getElementById("pipeline-page").setAttribute("href", href);
+      pipelineBody.innerHTML = '<p class="faint">Loading…</p>';
+      pipelineDialog.showModal();
+      fetch(href, { credentials: "same-origin" }).then(function (res) { return res.text(); }).then(function (text) {
+        var view = new DOMParser().parseFromString(text, "text/html").querySelector("[data-pipeline-view]");
+        pipelineBody.innerHTML = view ? view.innerHTML : '<p class="form-error">The run is not there.</p>';
+      }).catch(function () {
+        pipelineBody.innerHTML = '<p class="form-error">The run did not load.</p>';
+      });
     });
   }
 

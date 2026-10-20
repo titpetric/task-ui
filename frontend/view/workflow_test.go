@@ -2,6 +2,7 @@ package view_test
 
 import (
 	"testing"
+	"time"
 
 	"github.com/titpetric/task-ui/frontend/view"
 	"github.com/titpetric/task-ui/internal/assert"
@@ -32,4 +33,12 @@ func TestWorkflowRun(t *testing.T) {
 	}
 	assert.Equal(t, "wr1", r.ID)
 	assert.Equal(t, "failed", view.Chain(r.Steps)[1].State)
+}
+
+func TestWorkflowRun_Took(t *testing.T) {
+	t.Parallel()
+	start := time.Date(2026, 10, 20, 9, 0, 0, 0, time.UTC)
+	end := start.Add(90 * time.Second)
+	run := view.WorkflowRun{WorkflowRun: model.WorkflowRun{StartedAt: &start, FinishedAt: &end}}
+	assert.Equal(t, 90*time.Second, run.Took())
 }
