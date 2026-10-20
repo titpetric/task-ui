@@ -46,44 +46,44 @@
   margin-top: 0.6rem;
   list-style: none;
   cursor: pointer;
-  border-left: 2px solid transparent;
-}
+  border-inline-start: 2px solid transparent;
 
-/* The row as a whole, chevron included, is lit on hover and when it is
-   the page's folder. */
-.folders details.project > summary:hover {
-  background: var(--ink-2);
-}
+  /* The row as a whole, chevron included, is lit on hover and when it is
+     the page's folder. */
+  &:hover {
+    background: var(--ink-2);
+  }
 
-.folders details.project > summary.active {
-  background: var(--signal-wash);
-  border-left-color: var(--signal);
+  &.active {
+    background: var(--signal-wash);
+    border-inline-start-color: var(--signal);
+  }
+
+  &::marker,
+  &::-webkit-details-marker {
+    display: none;
+  }
+
+  & .chev {
+    flex: none;
+    width: 0.85rem;
+    height: 0.85rem;
+    margin-inline-end: 0.6rem;
+    color: var(--text-faint);
+    transition: transform 0.15s ease-out;
+  }
+
+  &:hover .chev {
+    color: var(--text);
+  }
 }
 
 .folders details.project:first-child > summary {
   margin-top: 0;
 }
 
-.folders details.project > summary::marker,
-.folders details.project > summary::-webkit-details-marker {
-  display: none;
-}
-
-.folders details.project > summary .chev {
-  flex: none;
-  width: 0.85rem;
-  height: 0.85rem;
-  margin-right: 0.6rem;
-  color: var(--text-faint);
-  transition: transform 0.15s ease-out;
-}
-
 .folders details.project[open] > summary .chev {
   transform: rotate(90deg);
-}
-
-.folders details.project > summary:hover .chev {
-  color: var(--text);
 }
 
 .folders a.section {
@@ -96,28 +96,28 @@
   color: var(--text);
   font-family: var(--font);
   font-weight: 600;
-}
 
-.folders a.section .ic {
-  width: var(--tree-icon);
-  height: var(--tree-icon);
-  color: var(--text-dim);
-}
+  & .ic {
+    width: var(--tree-icon);
+    height: var(--tree-icon);
+    color: var(--text-dim);
+  }
 
-.folders a.section span {
-  flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
+  & span {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 
-.folders a.section small {
-  color: var(--text-faint);
-  font-weight: 400;
-}
+  & small {
+    color: var(--text-faint);
+    font-weight: 400;
+  }
 
-.folders a.section.active .ic {
-  color: var(--signal);
+  &.active .ic {
+    color: var(--signal);
+  }
 }
 
 /* The folders of a project, one step in, named by their path below the
@@ -130,111 +130,108 @@
   gap: 0.5rem;
   padding: 0.3rem 0.6rem 0.3rem var(--tree-1);
   color: var(--text-dim);
-  border-left: 2px solid transparent;
+  border-inline-start: 2px solid transparent;
   list-style: none;
   cursor: pointer;
-}
 
-.folders details.folder summary::marker,
-.folders details.folder summary::-webkit-details-marker {
-  display: none;
-}
+  &::marker,
+  &::-webkit-details-marker {
+    display: none;
+  }
 
-.folders details.folder summary a {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  gap: var(--tree-gap);
-  padding: 0;
-  border: 0;
-  color: inherit;
-}
+  & a {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: var(--tree-gap);
+    padding: 0;
+    border: 0;
+    color: inherit;
 
-.folders details.folder summary a:hover {
-  background: transparent;
-}
+    &:hover {
+      background: transparent;
+      text-decoration: none;
+      color: var(--text);
+    }
 
-.folders details.folder summary a:hover {
-  text-decoration: none;
-  color: var(--text);
-}
+    /* The path above the folder gives way before the folder's own name. */
+    & span {
+      display: flex;
+      min-width: 0;
+      overflow: hidden;
+      white-space: nowrap;
 
-/* The path above the folder gives way before the folder's own name. */
-.folders details.folder summary a span {
-  display: flex;
-  min-width: 0;
-  overflow: hidden;
-  white-space: nowrap;
-}
+      & i {
+        flex-shrink: 100;
+        min-width: 1.5em;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-style: normal;
+        color: var(--text-faint);
+      }
 
-.folders details.folder summary a span i {
-  flex-shrink: 100;
-  min-width: 1.5em;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  font-style: normal;
-  color: var(--text-faint);
-}
+      & b {
+        flex: none;
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-weight: inherit;
+      }
+    }
+  }
 
-.folders details.folder summary a span b {
-  flex: none;
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  font-weight: inherit;
-}
+  & .ic {
+    width: var(--tree-icon);
+    height: 10px;
+    color: var(--text-faint);
+  }
 
-.folders details.folder summary .ic {
-  width: var(--tree-icon);
-  height: 10px;
-  color: var(--text-faint);
-}
+  & .chev {
+    width: 0.85rem;
+    height: 0.85rem;
+    transition: transform 0.15s ease-out;
+  }
 
-.folders details.folder summary .chev {
-  width: 0.85rem;
-  height: 0.85rem;
-  transition: transform 0.15s ease-out;
+  & small {
+    color: var(--text-faint);
+
+    &.bad {
+      color: var(--bad);
+      font-weight: 700;
+    }
+  }
+
+  & .dot:not(.running) {
+    display: none;
+  }
+
+  &:hover {
+    color: var(--text);
+    background: var(--ink-2);
+  }
 }
 
 .folders details.folder[open] summary .chev {
   transform: rotate(90deg);
 }
 
-.folders details.folder summary small {
-  color: var(--text-faint);
-}
-
-.folders details.folder summary small.bad {
-  color: var(--bad);
-  font-weight: 700;
-}
-
-.folders details.folder summary .dot:not(.running) {
-  display: none;
-}
-
-.folders details.folder summary:hover {
-  color: var(--text);
-  background: var(--ink-2);
-}
-
 .folders details.folder.active summary {
   color: var(--text);
   background: var(--signal-wash);
-  border-left-color: var(--signal);
-}
+  border-inline-start-color: var(--signal);
 
-.folders details.folder.active summary .ic {
-  color: var(--signal);
+  & .ic {
+    color: var(--signal);
+  }
 }
 
 .folders .jobs {
   padding: 0.1rem 0 0.3rem;
-}
 
-.folders .jobs .empty {
-  padding: 0.2rem 1.1rem 0.2rem var(--tree-2);
+  & .empty {
+    padding: 0.2rem 1.1rem 0.2rem var(--tree-2);
+  }
 }
 
 /* The reason a run out of hours needs, asked in the window. */
@@ -245,9 +242,9 @@
   padding: 0.55rem 0.9rem;
   border-top: 1px solid var(--line);
   background: var(--signal-wash);
-}
 
-.run-reason label {
-  color: var(--text);
-  font-size: 0.8125rem;
+  & label {
+    color: var(--text);
+    font-size: var(--fs-sm);
+  }
 }
