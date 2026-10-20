@@ -3,6 +3,8 @@ cat README.md.tpl
 echo
 echo "# Development"
 echo
+echo "The packages, the lint and test bar and the screenshots are in [docs/development.md](docs/development.md). The tasks:"
+echo
 task -l | sed 's/:$/:\n/g'
 echo
 
