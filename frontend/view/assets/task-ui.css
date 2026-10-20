@@ -3551,12 +3551,67 @@ dialog.run-summary .preview-doc {
 .activity-charts {
   display: grid;
   grid-template-columns: minmax(0, 5fr) minmax(0, 4fr);
-  gap: 0.6rem 1.4rem;
+  gap: 0.8rem;
 }
 
+/* Each chart in a panel of its own: its title and its slowest run over
+   it, the time markers under it. */
 .activity-chart {
   margin: 0;
   min-width: 0;
+}
+
+.activity-charts .activity-chart {
+  padding: 0.55rem 0.8rem 0.4rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--ink-1);
+}
+
+.activity-chart .activity-title {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin: 0 0 0.4rem;
+  color: var(--text-dim);
+  font-family: var(--font-ui);
+  font-size: 0.75rem;
+}
+
+.activity-chart .activity-title .faint {
+  font-family: var(--font);
+}
+
+/* A time marker in the middle of its column, with a tick over it. */
+.activity-axis {
+  position: relative;
+  height: 1.2rem;
+  margin-top: 0.15rem;
+}
+
+.activity-axis span {
+  position: absolute;
+  top: 0.25rem;
+  transform: translateX(-50%);
+  color: var(--text-faint);
+  font-family: var(--font);
+  font-size: 0.6875rem;
+  white-space: nowrap;
+}
+
+.activity-axis span::before {
+  content: "";
+  position: absolute;
+  top: -0.3rem;
+  left: 50%;
+  height: 0.2rem;
+  border-left: 1px solid var(--line-2);
+}
+
+@media (max-width: 860px) {
+  .activity-charts {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 .activity-bars {
@@ -3599,8 +3654,8 @@ dialog.run-summary .preview-doc {
   opacity: 0.6;
 }
 
-/* Under each count chart, its durations as lines: the average solid in
-   the text colour, the slowest dashed, the fastest faint. The columns
+/* Under each count chart, its durations as lines, all solid: the average
+   in the text colour, the slowest dimmer, the fastest faint. The columns
    over it are the hover targets, lined up with the bars above. */
 .activity-line.durations {
   height: 2.6rem;
@@ -3621,7 +3676,7 @@ dialog.run-summary .preview-doc {
 .activity-line.durations .max {
   stroke: var(--text-dim);
   stroke-width: 1.25;
-  stroke-dasharray: 3 3;
+  opacity: 0.8;
 }
 
 .activity-line.durations .min {
@@ -3670,7 +3725,7 @@ dialog.run-summary .preview-doc {
 }
 
 .activity-key i.line.max {
-  border-top: 2px dashed var(--text-dim);
+  border-top-color: var(--text-dim);
 }
 
 .activity-key i.line.min {
