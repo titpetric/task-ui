@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/titpetric/task-ui/access"
+	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/storage"
 )
 
@@ -16,15 +17,15 @@ func (h *Handlers) board(w http.ResponseWriter) bool {
 	return true
 }
 
-// listNotes returns the threads of a channel, newest first, each with its
-// replies: ?channel=notes|chat, ?mention= a user name, ?state= open,
-// working, done or failed, ?limit=.
+// listNotes returns the threads of the board, newest first, each with its
+// replies: ?mention= a user name, ?state= open, working, done or failed,
+// ?limit=.
 func (h *Handlers) listNotes(w http.ResponseWriter, r *http.Request) {
 	if !h.board(w) {
 		return
 	}
 	q := r.URL.Query()
-	filter := storage.NoteFilter{Channel: q.Get("channel"), Mention: q.Get("mention"), State: q.Get("state"), Limit: queryInt(r, "limit", 50)}
+	filter := storage.NoteFilter{Channel: model.ChannelNotes, Mention: q.Get("mention"), State: q.Get("state"), Limit: queryInt(r, "limit", 50)}
 	notes, err := h.opts.Board.Notes.List(r.Context(), filter)
 	if err != nil {
 		failErr(w, err)
@@ -56,7 +57,7 @@ func (h *Handlers) postNote(w http.ResponseWriter, r *http.Request) {
 		fail(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	note, err := h.opts.Board.Post(r.Context(), access.UserFrom(r.Context()), req.Channel, req.ParentID, req.Body)
+	note, err := h.opts.Board.Post(r.Context(), access.UserFrom(r.Context()), req.ParentID, req.Body)
 	if err != nil {
 		failErr(w, err)
 		return

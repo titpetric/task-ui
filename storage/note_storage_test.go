@@ -23,7 +23,7 @@ func TestNoteStorage(t *testing.T) {
 	assert.True(t, task.Mentioned("claude"))
 	other := &model.Note{UserName: "ops", Body: "@alice have a look"}
 	assert.NoError(t, notes.Create(ctx, other))
-	chat := &model.Note{Channel: model.ChannelChat, UserName: "alice", Body: "hello"}
+	chat := &model.Note{Channel: "chat", UserName: "alice", Body: "hello"}
 	assert.NoError(t, notes.Create(ctx, chat))
 	reply := &model.Note{UserName: "claude", Body: "done", ParentID: task.ID}
 	assert.NoError(t, notes.Create(ctx, reply))

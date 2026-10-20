@@ -88,7 +88,6 @@ func tools() []Tool {
 			InputSchema: object(map[string]Property{
 				"mention": str("Only notes that name this user; empty is you, * is anyone."),
 				"state":   {Type: "string", Description: "Only notes in this state; open unless given, * for any.", Enum: []string{"open", "working", "done", "failed", "*"}},
-				"channel": {Type: "string", Description: "The board, notes unless given, or the chat.", Enum: []string{"notes", "chat"}},
 				"limit":   num("How many, 20 unless given."),
 			}),
 			call: listNotes,
@@ -502,7 +501,6 @@ func tail(text string, n int) string {
 type notesArgs struct {
 	Mention string `json:"mention"`
 	State   string `json:"state"`
-	Channel string `json:"channel"`
 	Limit   int    `json:"limit"`
 }
 
@@ -511,7 +509,7 @@ type noteList struct {
 }
 
 func listNotes(ctx context.Context, c *client, args json.RawMessage) (string, error) {
-	in := notesArgs{State: model.NoteOpen, Channel: model.ChannelNotes, Limit: 20}
+	in := notesArgs{State: model.NoteOpen, Limit: 20}
 	if err := decode(args, &in); err != nil {
 		return "", err
 	}
@@ -527,7 +525,6 @@ func listNotes(ctx context.Context, c *client, args json.RawMessage) (string, er
 		in.State = ""
 	}
 	q := url.Values{}
-	q.Set("channel", in.Channel)
 	q.Set("mention", in.Mention)
 	q.Set("state", in.State)
 	q.Set("limit", fmt.Sprint(in.Limit))

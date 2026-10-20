@@ -64,7 +64,7 @@ header in place of the session cookie.
 | `list_runs`          | `folder`, `job`, `state`, `limit`                | The latest runs, newest first |
 | `get_run`            | `id`, `lines`                                    | A run and the end of its output, as the terminal showed it |
 | `list_workflow_runs` | `workflow`, `limit`                              | A workflow's latest runs and their steps |
-| `list_notes`         | `mention`, `state`, `channel`, `limit`           | The notes with their replies; by default the open ones that name you |
+| `list_notes`         | `mention`, `state`, `limit`                      | The notes with their replies; by default the open ones that name you |
 | `note_comment`       | `id`, `body`, `state`                            | Replies to a note and sets its instruction to working, done or failed |
 
 A run started over MCP is like any other: it shows in the history, anyone
