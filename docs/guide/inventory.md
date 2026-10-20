@@ -1,7 +1,7 @@
 # Inventory
 
 The hosts Beszel monitors, inline in task-ui, the largest first by cores,
-then RAM: whether each is up, who task-ui signs in to it as over ssh, its
+then RAM: whether each is up, its icon green when up and red otherwise, who task-ui signs in to it as over ssh, its
 cores, how busy its CPU is, and how full its memory and disk are, with what
 it uses of each and the size, in GB. A share turns amber past 75% and red
 past 90%. A host whose agent sends no core count shows its threads.
