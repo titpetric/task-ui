@@ -29,6 +29,12 @@
 			<td class="actions"><a class="btn btn-sm" href="/settings/secrets">Open</a></td>
 		</tr>
 		<tr>
+			<td class="key nowrap"><a href="/settings/integrations"><svg class="ic"><use href="#i-plug"/></svg> Integrations</a></td>
+			<td class="desc">The services task-ui talks to, and their API keys and tokens, encrypted with the instance keys: Claude Code, Beszel.</td>
+			<td class="nowrap dim"></td>
+			<td class="actions"><a class="btn btn-sm" href="/settings/integrations">Open</a></td>
+		</tr>
+		<tr>
 			<td class="key nowrap"><a href="/settings/users"><svg class="ic"><use href="#i-users"/></svg> Users</a></td>
 			<td class="desc">Who may sign in, from the password file, with the role the lists give, and which folders they see.</td>
 			<td class="nowrap dim">{{ len .Users }} {{ if eq (len .Users) 1 }}user{{ else }}users{{ end }}</td>

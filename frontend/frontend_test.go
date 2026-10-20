@@ -16,6 +16,7 @@ import (
 
 	"github.com/titpetric/task-ui/access"
 	"github.com/titpetric/task-ui/artifactstore"
+	"github.com/titpetric/task-ui/beszel"
 	"github.com/titpetric/task-ui/detector"
 	"github.com/titpetric/task-ui/diskusage"
 	"github.com/titpetric/task-ui/envfile"
@@ -23,6 +24,7 @@ import (
 	"github.com/titpetric/task-ui/frontend"
 	"github.com/titpetric/task-ui/frontend/view"
 	"github.com/titpetric/task-ui/git"
+	"github.com/titpetric/task-ui/integration"
 	"github.com/titpetric/task-ui/internal/assert"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/note"
@@ -133,8 +135,13 @@ func newFixture(t *testing.T) *fixture {
 		Now:           func() time.Time { return time.Date(2026, time.October, 16, 22, 0, 0, 0, time.Local) },
 		ArtifactStore: &artifactstore.Store{Dir: filepath.Join(t.TempDir(), "tree")},
 		Board:         &note.Board{Notes: storage.NewNoteStorage(db), Users: users, Agent: "claude"},
+		Integrations:  &integration.Store{Secrets: secrets},
 		Disk:          &diskusage.Meter{TTL: time.Minute},
 	}
+	f.opts.Hosts = &beszel.Inventory{TTL: time.Minute, Settings: func(ctx context.Context) (string, string, error) {
+		values, err := f.opts.Integrations.Values(ctx, integration.Beszel)
+		return values["url"], values["token"], err
+	}}
 	h, err := frontend.New(f.opts)
 	assert.NoError(t, err)
 	f.server = httptest.NewServer(h.Routes())
@@ -228,6 +235,10 @@ func TestNew(t *testing.T) {
 	f := newFixture(t)
 
 	var h *frontend.Handlers
+	f.opts.Hosts = &beszel.Inventory{TTL: time.Minute, Settings: func(ctx context.Context) (string, string, error) {
+		values, err := f.opts.Integrations.Values(ctx, integration.Beszel)
+		return values["url"], values["token"], err
+	}}
 	h, err := frontend.New(f.opts)
 	assert.NoError(t, err)
 	assert.NotNil(t, h.Routes())

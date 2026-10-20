@@ -2704,6 +2704,36 @@ pre.output {
   font-variant-numeric: tabular-nums;
 }
 
+/* The host inventory: a share as a short bar, warm past 75%, high past 90%. */
+.meter {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.meter .spacebar-track {
+  width: 4.5rem;
+  height: 0.45rem;
+}
+
+.meter.warm .spacebar-track i.files {
+  background: var(--signal);
+}
+
+.meter.high .spacebar-track i.files {
+  background: var(--bad);
+}
+
+.meter:not(.warm):not(.high) .spacebar-track i.files {
+  background: var(--ok);
+}
+
+.integration .field small {
+  display: block;
+  margin-top: 0.25rem;
+}
+
 /* The image window: the picture scaled to fit, with room around it. */
 dialog.preview .preview-body {
   display: flex;

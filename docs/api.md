@@ -12,6 +12,7 @@ route or a tool only for a need these cannot serve, and states the reason.
 |-------|-----|
 | `DELETE /api/artifacts` | **Delete all** on the Artifacts page: deleting the records one by one leaves the files and their history |
 | `/api/notes`, `list_notes`, `note_comment` | Notes and Chat, and instructions to the agent, which reads and reports on them over MCP |
+| `/api/integrations`, `/api/hosts` | Settings, Integrations, which keeps the services' tokens encrypted, and the host inventory from Beszel |
 
 | Method | Path | Does |
 |--------|------|------|
@@ -30,6 +31,8 @@ route or a tool only for a need these cannot serve, and states the reason.
 | `GET` `POST` | `/api/notes?channel=&mention=&state=&limit=` | the threads, newest first, with their replies; `POST {channel, parent_id, body}` leaves a note or a reply |
 | `POST` | `/api/notes/{id}/comments` | `{body, state}`: a reply, and the instruction's state: working, done or failed |
 | `DELETE` | `/api/notes/{id}` | a note and its replies; its author or an admin |
+| `GET` `PUT` `DELETE` | `/api/integrations`, `/api/integrations/{id}` | the integrations, `claude` and `beszel`: `{values}` by setting name; secrets come back only as `set`, and an empty one keeps its value (admins) |
+| `GET` | `/api/hosts` | the host inventory from the Beszel integration; 404 without it |
 | `GET` `POST` `PUT` `DELETE` | `/api/projects`, `/api/projects/{folder}` | clone `{url, id, branch}`; configure `{title, description, allow, sources, commands, job_allow, hours, job_hours}` |
 | `GET` `PUT` | `/api/users`, `/api/users/{id}` | `{folders}`; names, passwords and roles come from the password file and the role lists |
 | `GET` `POST` `DELETE` | `/api/secrets`, `/api/secrets/{id}` | `{scope, name, content}`; content is never returned; `409` without a key to encrypt with |

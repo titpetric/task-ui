@@ -369,6 +369,15 @@ func (m *Manager) command(ctx context.Context, session *Session) (*exec.Cmd, err
 			cmd.Env = append(cmd.Env, key+"="+secrets[key])
 		}
 	}
+	if m.opts.Integrations != nil {
+		vars, err := m.opts.Integrations.Env(ctx, f.ID)
+		if err != nil {
+			return nil, err
+		}
+		for _, key := range model.SortedKeys(vars) {
+			cmd.Env = append(cmd.Env, key+"="+vars[key])
+		}
+	}
 	cmd.Env = append(cmd.Env, session.env...)
 	cmd.Env = append(cmd.Env,
 		"TERM=xterm-256color",

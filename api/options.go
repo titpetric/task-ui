@@ -1,10 +1,12 @@
 package api
 
 import (
+	"github.com/titpetric/task-ui/beszel"
 	"github.com/titpetric/task-ui/envfile"
 	"github.com/titpetric/task-ui/event"
 	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/git"
+	"github.com/titpetric/task-ui/integration"
 	"github.com/titpetric/task-ui/note"
 	"github.com/titpetric/task-ui/recording"
 	"github.com/titpetric/task-ui/runner"
@@ -39,6 +41,11 @@ type Options struct {
 	Env         *envfile.Store
 	Recordings  *recording.Store
 	// Root is the folder that holds cloned projects.
-	Root  string // Board is the notes board and the chat; nil turns them off.
+	Root string
+	// Board is the notes board and the chat; nil turns them off.
 	Board *note.Board
+	// Integrations keep the integrations' settings, and Hosts reads the
+	// host inventory through the Beszel one.
+	Integrations *integration.Store
+	Hosts        *beszel.Inventory
 }

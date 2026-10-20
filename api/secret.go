@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/titpetric/task-ui/integration"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/storage"
 )
@@ -34,6 +35,9 @@ func (h *Handlers) listSecrets(w http.ResponseWriter, r *http.Request) {
 	}
 	views := []SecretView{}
 	for _, secret := range secrets {
+		if integration.Internal(secret.Scope) {
+			continue
+		}
 		views = append(views, SecretView{ID: secret.ID, Scope: secret.Scope, Name: secret.Name})
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"secrets": views})

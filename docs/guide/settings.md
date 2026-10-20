@@ -102,6 +102,35 @@ encrypt the secrets.
 - A project with private keys in its `.ssh/` folder gets a warning: runs
   do not load them. Upload a key it needs here and grant it by policy.
 
+## Integrations
+
+The services task-ui talks to, with their API keys and tokens. task-ui
+encrypts them with the instance keys, as it does the secrets, and never
+shows them again: a form marks a secret with a value as **set**, and an empty secret
+field keeps it on save. The Secrets page leaves them out, and no run sees
+them as secrets.
+
+- **Claude Code**: the token Claude Code signs in with, from
+  `claude setup-token`, and the folders whose runs get it as
+  `CLAUDE_CODE_OAUTH_TOKEN`: the folder of the agent job of the
+  [Notes](notes.md) board, and of a Claude terminal.
+- **Beszel**: the hub's URL, as task-ui reaches it, and a token, for the
+  [Hosts](hosts.md) page.
+
+Beszel has no API keys, so task-ui takes a token of a read-only user that
+no one signs in as. Make one in Beszel with a password nobody keeps, then
+mint a token for it as a superuser, with how long it lasts in seconds:
+
+```bash
+super=$(curl -s -X POST http://beszel:8090/api/collections/_superusers/auth-with-password \
+  -H 'Content-Type: application/json' -d '{"identity":"<admin email>","password":"<admin password>"}' | jq -r .token)
+curl -s -X POST http://beszel:8090/api/collections/users/impersonate/<user id> \
+  -H "Authorization: $super" -H 'Content-Type: application/json' -d '{"duration":31536000}' | jq -r .token
+```
+
+The token works until it expires, and changing the user's password in
+Beszel revokes it.
+
 ## Env files
 
 A folder's page lists the dotenv files its pipeline reads. An admin edits

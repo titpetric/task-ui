@@ -4,6 +4,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/titpetric/task-ui/beszel"
 	"github.com/titpetric/task-ui/diskusage"
 	"github.com/titpetric/task-ui/envfile"
 	"github.com/titpetric/task-ui/folder"
@@ -62,6 +63,12 @@ type Page struct {
 	// oldest first; Agent is who a note names to hand out work.
 	Threads []Thread
 	Agent   string
+	// Integrations are the forms of Settings, Integrations.
+	Integrations []Integration
+	// Hosts are the inventory of the Beszel integration; HostsOff says
+	// the integration is not set up.
+	Hosts    []beszel.System
+	HostsOff bool
 
 	Runs []Run
 	// Activity charts when the runs of the page ran, nil without any.

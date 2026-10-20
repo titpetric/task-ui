@@ -5,10 +5,12 @@ import (
 
 	"github.com/titpetric/task-ui/access"
 	"github.com/titpetric/task-ui/artifactstore"
+	"github.com/titpetric/task-ui/beszel"
 	"github.com/titpetric/task-ui/diskusage"
 	"github.com/titpetric/task-ui/envfile"
 	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/git"
+	"github.com/titpetric/task-ui/integration"
 	"github.com/titpetric/task-ui/note"
 	"github.com/titpetric/task-ui/recording"
 	"github.com/titpetric/task-ui/runner"
@@ -56,6 +58,11 @@ type Options struct {
 	ArtifactStore *artifactstore.Store
 	// Disk measures the space the artifacts and the checkouts take. Nil
 	// leaves the space bars out.
-	Disk  *diskusage.Meter // Board is the notes board and the chat; nil turns them off.
+	Disk *diskusage.Meter
+	// Board is the notes board and the chat; nil turns them off.
 	Board *note.Board
+	// Integrations keep the integrations' settings, and Hosts reads the
+	// host inventory through the Beszel one.
+	Integrations *integration.Store
+	Hosts        *beszel.Inventory
 }

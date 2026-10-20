@@ -16,7 +16,8 @@ func (h *Handlers) settings(w http.ResponseWriter, r *http.Request) {
 	p.Crumbs = view.Crumbs("Settings")
 	p.Entries = folder.Entries(h.opts.Root, h.opts.Git)
 	p.Keys, p.KeysDir = h.opts.Keys.List(), h.opts.Keys.Dir
-	p.Secrets, _ = h.opts.Secrets.List(r.Context())
+	secrets, _ := h.opts.Secrets.List(r.Context())
+	p.Secrets = userSecrets(secrets)
 	p.Users, _ = h.opts.Users.List(r.Context())
 	h.render(w, http.StatusOK, "settings", p)
 }
