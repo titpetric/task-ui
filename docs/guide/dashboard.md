@@ -35,8 +35,14 @@ with the action of each. The button takes the running colour while one
 of them runs. A folder with more than one source shows the kind on the
 button (`make`, `npm`) where a name is there more than once.
 
-A button runs the job, or, while it runs, attaches to it. Its `#!` mark
-says how the job last ended.
+A button runs the job, or, while it runs, attaches to it. A role that
+may not run the job sees a `#!` mark that links to the job's page. The
+button and the mark take the colour of the job's last run: green when it
+succeeded, red when it failed or someone stopped or killed it, grey when
+the job has no runs. A run that ends recolours its button with no reload.
+
+Under the pointer the whole column lights up, so one job reads down every
+folder at once.
 
 ---
 

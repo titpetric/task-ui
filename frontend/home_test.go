@@ -37,14 +37,20 @@ func TestHome_Control(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
 	session := f.start(t, f.infra, "slow")
+	f.run(t, "infra", "plan", "ops", model.StateOK)
+	f.run(t, "infra/edge", "deploy", "ops", model.StateStopped)
 
 	body := f.page(t, asOps, "/")
+	// The table lights the column under the pointer.
+	assert.Contains(t, body, `<table class="table control col-hover">`)
 	// deploy occurs twice, so it gets a column, its name on end; a cell
 	// with the one job is a bare button.
 	assert.Contains(t, body, `<thead><tr><th>Folder</th><th class="col"><span>deploy</span></th><th class="col"><span>other</span></th></tr></thead>`)
 	edge := body[strings.Index(body, `<a href="/f/infra/edge">infra/edge</a>`):]
 	edge = edge[:strings.Index(edge, "</tr>")]
-	assert.Contains(t, edge, `<button type="button" class="cc" data-run data-folder="infra/edge" data-job="deploy"`)
+	// Its last run ended stopped: a red button.
+	assert.Contains(t, edge, `<button type="button" class="cc bad" data-run data-folder="infra/edge" data-job="deploy"`)
+	assert.Contains(t, edge, `data-last="bad"`)
 
 	infra := body[strings.Index(body, `<td class="key nowrap"><a href="/f/infra">infra</a>`):]
 	infra = infra[:strings.Index(infra, "</tr>")]
@@ -53,16 +59,17 @@ func TestHome_Control(t *testing.T) {
 	assert.Contains(t, infra, `<details class="cc-more">`)
 	assert.Contains(t, infra, `<summary class="cc" title="3 more jobs of infra"`)
 	assert.Contains(t, infra, `<div class="cc-menu" role="menu">`)
-	assert.Contains(t, infra, `class="cc named" data-run data-folder="infra" data-job="plan"`)
+	assert.Contains(t, infra, `class="cc named ok" data-run data-folder="infra" data-job="plan"`)
 	assert.Contains(t, infra, `<span>plan</span>`)
 	assert.Contains(t, infra, `<a class="cc named running" href="/runs/`+session.ID()+`"`) // slow runs
 	// Each button sits in a slot the page redraws from the run events.
-	assert.Contains(t, infra, `<span class="cc-slot" data-cc="infra/plan" data-folder="infra" data-job="plan" data-name="plan" data-label="plan" data-can>`)
+	assert.Contains(t, infra, `<span class="cc-slot" data-cc="infra/plan" data-folder="infra" data-job="plan" data-name="plan" data-label="plan" data-last="ok" data-can>`)
 
 	// ops may not run private's deploy: a #! to its page instead.
 	private := body[strings.Index(body, `<a href="/f/private">private</a>`):]
 	private = private[:strings.Index(private, "</tr>")]
-	assert.Contains(t, private, `<a class="cc idle" href="/f/private/deploy"`)
+	// It never ran: grey.
+	assert.Contains(t, private, `<a class="cc idle never" href="/f/private/deploy"`)
 	assert.NotContains(t, private, "data-run")
 	assert.NotContains(t, private, "data-can")
 

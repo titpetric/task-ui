@@ -38,6 +38,16 @@ table.table {
   background: var(--ink-2);
 }
 
+/* A table with col-hover lights the column under the pointer too; the
+   script marks its cells col-hot, the head a step darker. */
+.table.col-hover .col-hot {
+  background: var(--ink-2);
+}
+
+.table.col-hover th.col-hot {
+  background: var(--ink-3);
+}
+
 .table td.actions {
   text-align: right;
   white-space: nowrap;
