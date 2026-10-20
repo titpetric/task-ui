@@ -28,7 +28,7 @@ To follow up, reply on the note and name the agent again: it works from
 the thread, its own replies included. A viewer's note to the agent stays a
 message.
 
-The author of a note, or an admin, deletes it with its replies. The form
+The author of a note, or an admin, deletes it with its replies, and the author of a reply, or an admin, deletes that reply alone. The form
 posts with **Post note** or Ctrl+Enter; a reply opens under **Reply**.
 A note and a reply are markdown: `**bold**`, `*italic*`, lists, headings,
 links, quotes, tables, `` `code` `` and ```` ``` ```` blocks. A line break
