@@ -229,6 +229,30 @@ code {
 .faint { color: var(--text-faint); }
 .nowrap { white-space: nowrap; }
 .mono-break { word-break: break-all; }
+
+/* A key's fingerprint: its type on a line of its own, whole, the hash
+   under it, broken anywhere, in a column wide enough to read. */
+td.fingerprint {
+  min-width: 14rem;
+  font-family: var(--font);
+  font-size: 0.8rem;
+  overflow-wrap: anywhere;
+}
+
+td.fingerprint .kind {
+  display: block;
+  white-space: nowrap;
+}
+
+/* A key's name and badges wrap under its comment before the table runs
+   past its actions. */
+.table.keys td.key {
+  white-space: normal;
+}
+
+.table.keys td.key .badge {
+  margin: 0.1rem 0;
+}
 .text-end { text-align: right; }
 
 /* ------------------------------------------------------------------ header */

@@ -13,18 +13,18 @@
 <section class="block">
 	<h3>Keys <small>{{ .KeysDir }}</small></h3>
 	<div class="table-wrap">
-	<table class="table">
+	<table class="table keys">
 		<thead><tr><th>Comment</th><th>Fingerprint</th><th>Policies</th><th>Date</th><th>Actions</th></tr></thead>
 		<tbody>
 		{{- $any := false }}
 		{{- range .Keys }}{{ if not .Backup }}{{ $any = true }}
 			<tr>
 				{{- $name := .Name }}
-				<td class="key nowrap">{{ .Comment }} <span class="badge">{{ .Name }}</span>{{ range $.Encryption }}{{ if eq . $name }} <span class="badge signal" title="The secrets are encrypted with this key"><svg class="ic"><use href="#i-secret"/></svg> secrets</span>{{ end }}{{ end }}</td>
-				<td class="mono-break"><span class="dim">{{ .Type }}</span> {{ .Fingerprint }}</td>
+				<td class="key">{{ .Comment }} <span class="badge">{{ .Name }}</span>{{ range $.Encryption }}{{ if eq . $name }} <span class="badge signal" title="The secrets are encrypted with this key"><svg class="ic"><use href="#i-secret"/></svg> secrets</span>{{ end }}{{ end }}</td>
+				<td class="fingerprint"><span class="kind dim">{{ .Type }}</span>{{ .Fingerprint }}</td>
 				{{- $roles := index $.KeyPolicies .Name }}{{ $users := index $.KeyUsers .Name }}
 				<td class="nowrap">{{ range $roles }}<span class="badge">{{ . }}</span> {{ end }}{{ range $users }}<span class="avatar sm" title="{{ . }}">{{ initials . }}</span> {{ end }}{{ if not (or $roles $users) }}<span class="faint">none</span>{{ end }}</td>
-				<td class="nowrap" title="{{ ago .Modified }}">{{ stamp .Modified }}</td>
+				<td class="nowrap" title="{{ stamp .Modified }}">{{ ago .Modified }}</td>
 				<td class="actions">
 					<button type="button" class="btn-icon" data-copy="{{ .PublicKey }}" title="Copy public key" aria-label="Copy public key"><svg class="ic"><use href="#i-copy"/></svg></button>
 					<a class="btn-icon" href="/settings/keys/{{ .Name }}" title="Policies: the roles whose runs get it" aria-label="Edit policies"><svg class="ic"><use href="#i-edit"/></svg></a>
@@ -80,14 +80,14 @@
 	<h3>Server user's keys <small>{{ .HomeKeysDir }}</small></h3>
 	<p class="dim">The keys of the user task-ui runs as. ssh and git take them by default: in every run, for git remotes, and for the inventory's logins. They come with the image, so they change there, not here.</p>
 	<div class="table-wrap">
-	<table class="table">
+	<table class="table keys">
 		<thead><tr><th>Comment</th><th>Fingerprint</th><th>Date</th><th>Actions</th></tr></thead>
 		<tbody>
 		{{- range .HomeKeys }}
 			<tr>
-				<td class="key nowrap">{{ .Comment }} <span class="badge">{{ .Name }}</span></td>
-				<td class="mono-break"><span class="dim">{{ .Type }}</span> {{ .Fingerprint }}</td>
-				<td class="nowrap" title="{{ ago .Modified }}">{{ stamp .Modified }}</td>
+				<td class="key">{{ .Comment }} <span class="badge">{{ .Name }}</span></td>
+				<td class="fingerprint"><span class="kind dim">{{ .Type }}</span>{{ .Fingerprint }}</td>
+				<td class="nowrap" title="{{ stamp .Modified }}">{{ ago .Modified }}</td>
 				<td class="actions">
 					<button type="button" class="btn-icon" data-copy="{{ .PublicKey }}" title="Copy public key" aria-label="Copy public key"><svg class="ic"><use href="#i-copy"/></svg></button>
 				</td>
@@ -108,14 +108,14 @@
 <section class="block">
 	<h3>Backups <small>pairs moved aside by a rotation or upload</small></h3>
 	<div class="table-wrap">
-	<table class="table">
+	<table class="table keys">
 		<thead><tr><th>Comment</th><th>Fingerprint</th><th>Date</th><th>Actions</th></tr></thead>
 		<tbody>
 		{{- range .Keys }}{{ if .Backup }}
 			<tr>
 				<td class="key nowrap dim">{{ .Comment }} <span class="badge">{{ .Name }}</span></td>
-				<td class="mono-break dim"><span class="faint">{{ .Type }}</span> {{ .Fingerprint }}</td>
-				<td class="nowrap dim">{{ stamp .Modified }}</td>
+				<td class="fingerprint dim"><span class="kind faint">{{ .Type }}</span>{{ .Fingerprint }}</td>
+				<td class="nowrap dim" title="{{ stamp .Modified }}">{{ ago .Modified }}</td>
 				<td class="actions">
 					<button type="button" class="btn-icon" data-copy="{{ .PublicKey }}" title="Copy public key" aria-label="Copy public key"><svg class="ic"><use href="#i-copy"/></svg></button>
 					<button type="button" class="btn-icon danger" data-delete="/api/keys/{{ .Name }}" data-confirm="Delete the backup {{ .Name }}?" data-next="reload" title="Delete backup" aria-label="Delete backup"><svg class="ic"><use href="#i-trash"/></svg></button>

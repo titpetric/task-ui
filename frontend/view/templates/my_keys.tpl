@@ -15,7 +15,7 @@
 			{{- $users := index $.KeyUsers .Name }}
 			<tr>
 				<td class="key nowrap">{{ .Comment }} <span class="badge">{{ .Name }}</span></td>
-				<td class="mono-break"><span class="dim">{{ .Type }}</span> {{ .Fingerprint }}</td>
+				<td class="fingerprint"><span class="kind dim">{{ .Type }}</span>{{ .Fingerprint }}</td>
 				<td class="nowrap">{{ $mine := false }}{{ range $users }}{{ if and $.User (eq . $.User.Name) }}{{ $mine = true }}{{ end }}{{ end }}{{ if $mine }}you{{ else }}your role{{ end }}</td>
 				<td class="actions">
 					<button type="button" class="btn-icon" data-copy="{{ .PublicKey }}" title="Copy public key" aria-label="Copy public key"><svg class="ic"><use href="#i-copy"/></svg></button>
