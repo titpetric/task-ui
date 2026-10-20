@@ -21,7 +21,7 @@ func Kinds() []Kind {
 		{
 			ID:          Claude,
 			Title:       "Claude Code",
-			Description: "The token Claude Code signs in with, from `claude setup-token`, for the whole instance. A run gets it as CLAUDE_CODE_OAUTH_TOKEN when the user who started it is named below: the agent job of the Notes board runs as the agent's user, and a Claude terminal as you.",
+			Description: "The token Claude Code signs in with, from `claude setup-token`, for the whole instance. A run gets it as CLAUDE_CODE_OAUTH_TOKEN when the user who started it, or their role, is checked below: the agent job of the Notes board runs as the agent's user, and a Claude terminal as you.",
 			Fields: []Field{
 				{Name: "token", Label: "OAuth token", Secret: true, Placeholder: "sk-ant-oat01-…", Help: "Valid for a year from setup-token; set a new one before it ends."},
 				{Name: "who", Label: "Who", Optional: true, Who: true, Help: "The roles and users whose runs get the token; none checked is everyone."},
@@ -30,7 +30,7 @@ func Kinds() []Kind {
 		{
 			ID:          Beszel,
 			Title:       "Beszel",
-			Description: "The host monitor. task-ui reads its systems for the Hosts page: each host's state, load, memory, disk and uptime. It signs in with a token, never a password.",
+			Description: "The host monitor. task-ui reads its systems for the Inventory page: each host's state, cores, CPU, memory and disk. It signs in with a token, never a password.",
 			Fields: []Field{
 				{Name: "url", Label: "URL", Placeholder: "http://beszel:8090", Help: "Where task-ui reaches the hub."},
 				{Name: "token", Label: "Token", Secret: true, Help: "An impersonation token of a read-only Beszel user, minted by a superuser with a duration; see the Integrations chapter. Changing that user's password revokes it."},
