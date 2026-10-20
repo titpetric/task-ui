@@ -137,7 +137,8 @@ func (p *Prober) terminal(ctx context.Context, login, remote string) *exec.Cmd {
 		return p.ssh(ctx, login, remote)
 	}
 	cmd := p.ssh(ctx, login, "export PAGER=cat SYSTEMD_PAGER=cat GIT_PAGER=cat; "+remote)
-	// -tt asks for a terminal even with stdin closed: right after "ssh".
+	// -tt makes ssh open a terminal even with stdin closed; it goes right
+	// after "ssh".
 	cmd.Args = append([]string{cmd.Args[0], "-tt"}, cmd.Args[1:]...)
 	return cmd
 }
