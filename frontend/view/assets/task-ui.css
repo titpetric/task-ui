@@ -993,7 +993,8 @@ table.table-kv th {
   margin-bottom: 0.8rem;
 }
 
-.field > label {
+.field > label,
+.field > .label {
   display: block;
   margin-bottom: 0.3rem;
   color: var(--text-faint);
@@ -2808,9 +2809,113 @@ pre.output {
   background: var(--ok);
 }
 
+/* Settings, Integrations: one type size for the prose of a section, its
+   description and the hint under each field; a switch shows or hides the
+   section, and remembers. */
+.integration .integration-body > p,
+.integration .field small {
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
 .integration .field small {
   display: block;
-  margin-top: 0.25rem;
+  margin-top: 0.3rem;
+}
+
+.integration:has(.peek-toggle input:not(:checked)) .integration-body {
+  display: none;
+}
+
+.integration:has(.peek-toggle input:not(:checked)) .block-head {
+  margin-bottom: 0;
+}
+
+.checks {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 1rem;
+  margin-bottom: 0.35rem;
+  font-size: 0.8rem;
+}
+
+.checks > .faint {
+  min-width: 3.5rem;
+}
+
+.field .checks label.check {
+  display: inline-flex;
+}
+
+/* A show/hide switch beside a heading, as oida sets it: a small uppercase
+   word and a track whose knob moves; the checkbox stays the state and the
+   focus target. */
+.peek-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-left: auto;
+  color: var(--text-dim);
+  font-size: 0.63rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  cursor: pointer;
+  user-select: none;
+}
+
+.peek-toggle:hover {
+  color: var(--text);
+}
+
+.peek-toggle input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.peek-toggle i {
+  position: relative;
+  display: block;
+  width: 1.7rem;
+  height: 0.85rem;
+  border: 1px solid var(--line-2);
+  border-radius: 999px;
+  background: var(--ink-3);
+}
+
+.peek-toggle i::after {
+  content: "";
+  position: absolute;
+  top: 0.13rem;
+  left: 0.15rem;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--text-faint);
+}
+
+.peek-toggle input:checked + i {
+  border-color: var(--signal);
+  background: var(--signal-wash);
+}
+
+.peek-toggle input:checked + i::after {
+  transform: translateX(0.8rem);
+  background: var(--signal);
+}
+
+.peek-toggle input:focus-visible + i {
+  outline: 1px solid var(--signal);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .peek-toggle i::after {
+    transition: transform 0.12s ease, background 0.12s ease;
+  }
 }
 
 /* The inventory's run: quick commands, the command, the hosts, then a

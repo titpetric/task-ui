@@ -77,3 +77,12 @@ func TestStore(t *testing.T) {
 	assert.Len(t, env, 0)
 	assert.False(t, integration.Internal("tools"))
 }
+
+// Configured holds without the optional settings: Claude Code without
+// Who, which then reaches every run.
+func TestConfigured(t *testing.T) {
+	t.Parallel()
+	claude := *integration.KindOf(integration.Claude)
+	assert.True(t, integration.Configured(claude, map[string]string{"token": "sk-1"}))
+	assert.False(t, integration.Configured(claude, map[string]string{"who": "admin"}))
+}

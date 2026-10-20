@@ -20,7 +20,10 @@ func TestIntegrations(t *testing.T) {
 
 	body := f.page(t, asAdmin, "/settings/integrations")
 	assert.Contains(t, body, "Claude Code")
-	assert.Contains(t, body, `name="values.who" value="admin"`)
+	assert.Contains(t, body, `name="values.who" value="admin" data-type="joined" checked>`)
+	assert.Contains(t, body, `name="values.who" value="viewer" data-type="joined">`)
+	assert.Contains(t, body, `data-peek="integration.claude" checked`)
+	assert.Contains(t, body, `data-confirm-ok="Clear"`)
 	assert.Contains(t, body, `<span class="badge ok">set</span>`)
 	assert.NotContains(t, body, "sk-secret")
 	assert.Contains(t, body, `data-api="/api/integrations/beszel"`)
