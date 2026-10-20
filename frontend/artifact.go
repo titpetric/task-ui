@@ -2,6 +2,7 @@ package frontend
 
 import (
 	"archive/tar"
+	"bytes"
 	"compress/gzip"
 	"io"
 	"io/fs"
@@ -11,6 +12,7 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/titpetric/task-ui/access"
 	"github.com/titpetric/task-ui/diskusage"
@@ -72,8 +74,8 @@ func (h *Handlers) artifacts(w http.ResponseWriter, r *http.Request) {
 }
 
 // artifactFile serves the latest version of a file in the artifact tree,
-// inline: an image or a page opens in the browser, ?download saves it. A
-// directory goes to its listing.
+// or the one ?version= names, inline: an image or a page opens in the
+// browser, ?download saves it. A directory goes to its listing.
 func (h *Handlers) artifactFile(w http.ResponseWriter, r *http.Request) {
 	store := h.opts.ArtifactStore
 	rel := strings.Trim(param(r, "*"), "/")
@@ -82,6 +84,10 @@ func (h *Handlers) artifactFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	user := access.UserFrom(r.Context())
+	if version := r.URL.Query().Get("version"); version != "" {
+		h.artifactVersion(w, r, rel, version)
+		return
+	}
 	if !user.CanAdmin() && !h.visibleArtifacts(r).covers(rel, false) {
 		h.missing(w, r, "No such artifact.")
 		return
@@ -106,6 +112,39 @@ func (h *Handlers) artifactFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer f.Close()
+	serveArtifact(w, r, rel, info.ModTime(), f)
+}
+
+// artifactVersion serves a version of a file of the artifact tree, from
+// its history, when a run of a folder the user sees wrote it.
+func (h *Handlers) artifactVersion(w http.ResponseWriter, r *http.Request, rel, version string) {
+	user := access.UserFrom(r.Context())
+	records, _ := h.opts.Artifacts.List(r.Context(), storage.ArtifactFilter{Path: rel, Limit: 200})
+	var when time.Time
+	found := false
+	for _, record := range records {
+		if record.CommitID == version && (user.CanAdmin() || user.CanSee(record.Folder)) {
+			found = true
+			if record.CreatedAt != nil {
+				when = *record.CreatedAt
+			}
+		}
+	}
+	if !found && !user.CanAdmin() {
+		h.missing(w, r, "No such artifact.")
+		return
+	}
+	data, err := h.opts.ArtifactStore.Show(r.Context(), version, rel)
+	if err != nil {
+		h.missing(w, r, "No such artifact.")
+		return
+	}
+	serveArtifact(w, r, rel, when, bytes.NewReader(data))
+}
+
+// serveArtifact writes a file of the artifact tree, inline unless the
+// query carries ?download.
+func serveArtifact(w http.ResponseWriter, r *http.Request, rel string, modified time.Time, content io.ReadSeeker) {
 	disposition := "inline"
 	if _, ok := r.URL.Query()["download"]; ok {
 		disposition = "attachment"
@@ -117,7 +156,7 @@ func (h *Handlers) artifactFile(w http.ResponseWriter, r *http.Request) {
 	// scripts, in a sandbox of its own.
 	w.Header().Set("Content-Security-Policy", "default-src 'none'; img-src 'self' data:; style-src 'unsafe-inline'; sandbox")
 	w.Header().Set("Cache-Control", "no-cache")
-	http.ServeContent(w, r, "", info.ModTime(), f)
+	http.ServeContent(w, r, "", modified, content)
 }
 
 // visibleArtifacts returns the paths of the tree the user may see: the

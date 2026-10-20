@@ -14,6 +14,7 @@ import (
 
 	"github.com/titpetric/task-ui/internal/assert"
 	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/storage"
 )
 
 func TestArtifacts(t *testing.T) {
@@ -61,8 +62,9 @@ func store(t *testing.T, f *fixture, folderID string, files map[string]string) {
 	}
 }
 
-// The tree lists the latest files a user may see, links each, opens an
-// image in the image window, and shows the space it all takes.
+// The tree lists the latest files a user may see, links each to the
+// preview window, shows an admin a delete button on each, and shows the space
+// it all takes.
 func TestArtifacts_Tree(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
@@ -75,14 +77,16 @@ func TestArtifacts_Tree(t *testing.T) {
 	assert.Contains(t, body, `href="/artifacts?path=reports"`)
 	assert.Contains(t, body, `class="spacebar"`)
 	assert.Contains(t, body, `data-delete="/api/artifacts"`)
+	assert.Contains(t, body, `data-delete="/api/artifacts/files/job1.txt"`)
+	assert.Contains(t, body, `data-delete="/api/artifacts/files/reports"`)
 
 	limited := f.page(t, asLimited, "/artifacts")
 	assert.Contains(t, limited, "job1.txt")
 	assert.NotContains(t, limited, `/artifacts/files/job2.txt`)
-	assert.NotContains(t, limited, `data-delete="/api/artifacts"`)
+	assert.NotContains(t, limited, `data-delete="/api/artifacts`)
 
 	reports := f.page(t, asLimited, "/artifacts?path=reports")
-	assert.Contains(t, reports, `data-preview="/artifacts/files/reports/chart.svg"`)
+	assert.Contains(t, reports, `data-artifact="reports/chart.svg"`)
 	assert.Contains(t, reports, `<a href="/artifacts">Artifacts</a>`)
 }
 
@@ -154,4 +158,21 @@ func TestArtifacts_Archive(t *testing.T) {
 	assert.Contains(t, page, `Delete all</button>`)
 	assert.Contains(t, page, `href="/artifacts.tgz" download`)
 	assert.Equal(t, http.StatusNotFound, f.get(t, asAdmin, "/artifacts/reports").Status, "only a .tgz")
+}
+
+// ?version= serves a version from the history, when a run of a folder the
+// user sees wrote it; the History rows open their version.
+func TestArtifacts_FileVersion(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	store(t, f, "infra", map[string]string{"out.txt": "first"})
+	records, err := f.opts.Artifacts.List(context.Background(), storage.ArtifactFilter{Path: "out.txt"})
+	assert.NoError(t, err)
+	first := records[0].CommitID
+	store(t, f, "infra", map[string]string{"out.txt": "second"})
+
+	assert.Equal(t, "second", f.get(t, asLimited, "/artifacts/files/out.txt").Body)
+	assert.Equal(t, "first", f.get(t, asLimited, "/artifacts/files/out.txt?version="+first).Body)
+	assert.Equal(t, http.StatusNotFound, f.get(t, asLimited, "/artifacts/files/out.txt?version=0000000").Status)
+	assert.Contains(t, f.page(t, asLimited, "/artifacts"), `data-artifact="out.txt" data-version="`+first+`"`)
 }

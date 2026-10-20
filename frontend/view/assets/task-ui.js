@@ -961,22 +961,81 @@
       });
   });
 
-  // An image or an svg of the artifacts opens in the image window, scaled
-  // to fit; the link itself still opens the file in a new view.
+  // The preview window: an image of a folder's tree, scaled to fit, or a
+  // file of the artifact tree, an image, markdown rendered, or text, with
+  // a pick of the versions the runs wrote. The link still opens the file
+  // on its own with Ctrl or a middle click.
   var previewDialog = document.getElementById("preview-dialog");
   if (previewDialog) {
     var previewImage = document.getElementById("preview-image");
+    var previewDoc = document.getElementById("preview-doc");
+    var previewVersion = document.getElementById("preview-version");
+    var previewDownload = document.getElementById("preview-download");
+    var previewPath = "";
     document.getElementById("preview-close").addEventListener("click", function () { previewDialog.close(); });
-    previewDialog.addEventListener("close", function () { previewImage.removeAttribute("src"); });
+    previewDialog.addEventListener("close", function () { previewImage.removeAttribute("src"); previewDoc.innerHTML = ""; });
+
+    var fileURL = function (rel, version) {
+      return "/artifacts/files/" + rel.split("/").map(encodeURIComponent).join("/") + (version ? "?version=" + encodeURIComponent(version) : "");
+    };
+    var showImage = function (src) {
+      previewDoc.hidden = true;
+      previewImage.hidden = false;
+      previewImage.src = src;
+    };
+    var showDoc = function (html, kind) {
+      previewImage.hidden = true;
+      previewImage.removeAttribute("src");
+      previewDoc.hidden = false;
+      previewDoc.className = "preview-doc " + kind;
+      previewDoc.innerHTML = html;
+    };
+    var openFile = function (rel, version) {
+      previewPath = rel;
+      document.getElementById("preview-title").textContent = rel;
+      showDoc('<p class="faint">Loading…</p>', "text");
+      if (!previewDialog.open) previewDialog.showModal();
+      api("GET", "/api" + fileURL(rel, version)).then(function (res) {
+        if (rel !== previewPath) return;
+        if (res.status !== 200) {
+          showDoc('<p class="form-error">' + escapeHTML(res.data.error || ("HTTP " + res.status)) + "</p>", "text");
+          return;
+        }
+        var view = res.data;
+        previewVersion.innerHTML = view.versions.map(function (v, i) {
+          var when = v.created_at ? new Date(v.created_at).toLocaleString() : v.commit.slice(0, 7);
+          return '<option value="' + escapeHTML(v.commit) + '"' + (v.commit === view.version ? " selected" : "") + ">" +
+            escapeHTML((i === 0 ? "latest · " : "") + when + " · " + v.folder + "/" + v.job) + "</option>";
+        }).join("");
+        previewVersion.hidden = view.versions.length < 2;
+        var src = fileURL(rel, view.version);
+        previewDownload.setAttribute("href", src + (src.indexOf("?") < 0 ? "?" : "&") + "download");
+        if (view.kind === "image") showImage(src);
+        else if (view.kind === "markdown") showDoc(view.html, "markdown");
+        else if (view.kind === "text") showDoc("<pre>" + escapeHTML(view.text) + "</pre>", "text");
+        else showDoc('<p class="faint">No preview for this file, ' + escapeHTML(view.content_type) + ". Download it to open it.</p>", "text");
+      });
+    };
+    previewVersion.addEventListener("change", function () { openFile(previewPath, previewVersion.value); });
+
     document.addEventListener("click", function (event) {
+      if (event.ctrlKey || event.metaKey || event.shiftKey || event.button !== 0) return;
+      var artifact = event.target.closest("a[data-artifact]");
+      if (artifact) {
+        event.preventDefault();
+        openFile(artifact.dataset.artifact, artifact.dataset.version || "");
+        return;
+      }
       var link = event.target.closest("a[data-preview]");
-      if (!link || event.ctrlKey || event.metaKey || event.shiftKey || event.button !== 0) return;
+      if (!link) return;
       event.preventDefault();
+      previewPath = "";
       var title = link.dataset.previewTitle || link.textContent;
       document.getElementById("preview-title").textContent = title;
-      document.getElementById("preview-download").setAttribute("href", link.dataset.preview + "?download");
+      previewDownload.setAttribute("href", link.dataset.preview + "?download");
+      previewVersion.hidden = true;
       previewImage.alt = title;
-      previewImage.src = link.dataset.preview;
+      showImage(link.dataset.preview);
       previewDialog.showModal();
     });
   }

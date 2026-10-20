@@ -220,10 +220,11 @@
 		<span class="label">Artifact</span>
 		<h3 id="preview-title"></h3>
 		<span class="spacer"></span>
+		<select id="preview-version" aria-label="Version" hidden></select>
 		<a class="btn" id="preview-download" href="#" download>Download</a>
 		<button type="button" class="btn" id="preview-close" aria-label="Close">Close</button>
 	</div>
-	<div class="run-body preview-body"><img id="preview-image" alt=""></div>
+	<div class="run-body preview-body"><img id="preview-image" alt=""><div id="preview-doc" class="preview-doc" hidden></div></div>
 </dialog>
 {{- /* The source window: a file a folder's pipeline reads, coloured, as
      large as the run window. */}}

@@ -33,8 +33,8 @@
 		{{- range .Tree }}
 			<tr>
 				<td class="key"><svg class="ic{{ if .Dir }} dir{{ end }}"><use href="#i-{{ if .Dir }}folder{{ else }}file{{ end }}"/></svg>
-					{{- if .Preview }} <a href="{{ .Href }}" data-preview="{{ .Href }}" data-preview-title="{{ .Path }}">{{ .Name }}</a>
-					{{- else }} <a href="{{ .Href }}">{{ .Name }}{{ if .Dir }}/{{ end }}</a>{{ end }}</td>
+					{{- if .Dir }} <a href="{{ .Href }}">{{ .Name }}/</a>
+					{{- else }} <a href="{{ .Href }}" data-artifact="{{ .Path }}">{{ .Name }}</a>{{ end }}</td>
 				<td class="num nowrap">{{ size .Size }}</td>
 				<td class="hide-sm nowrap" title="{{ stamp .ModTime }}">{{ ago .ModTime }}</td>
 				<td class="actions">
@@ -42,9 +42,12 @@
 					<a class="btn-icon" href="{{ .Archive }}" download title="Download {{ .Name }} as .tgz" aria-label="Download {{ .Name }} as .tgz"><svg class="ic"><use href="#i-download"/></svg></a>
 					<button type="button" class="btn-icon" data-copy="{{ .Archive }}" title="Copy the link to the .tgz" aria-label="Copy the link to {{ .Name }} as .tgz"><svg class="ic"><use href="#i-copy"/></svg></button>
 					{{- else }}
-					{{- if .Preview }}<a class="btn-icon" href="{{ .Href }}" data-preview="{{ .Href }}" data-preview-title="{{ .Path }}" title="View {{ .Name }}" aria-label="View {{ .Name }}"><svg class="ic"><use href="#i-eye"/></svg></a>{{ end }}
+					<a class="btn-icon" href="{{ .Href }}" data-artifact="{{ .Path }}" title="View {{ .Name }} and its versions" aria-label="View {{ .Name }}"><svg class="ic"><use href="#i-eye"/></svg></a>
 					<a class="btn-icon" href="{{ .Href }}?download" title="Download {{ .Name }}" aria-label="Download {{ .Name }}"><svg class="ic"><use href="#i-download"/></svg></a>
 					<button type="button" class="btn-icon" data-copy="{{ .Href }}" title="Copy the link to {{ .Name }}" aria-label="Copy the link to {{ .Name }}"><svg class="ic"><use href="#i-copy"/></svg></button>
+					{{- end }}
+					{{- if $.User.CanAdmin }}
+					<button type="button" class="btn-icon danger" data-delete="/api{{ if .Dir }}/artifacts/files/{{ .Path }}{{ else }}{{ .Href }}{{ end }}" data-confirm="Delete {{ .Path }}{{ if .Dir }}/ and everything in it{{ end }} from the tree? The history keeps its versions." data-confirm-ok="Delete" data-next="reload" title="Delete from the tree" aria-label="Delete {{ .Name }}"><svg class="ic"><use href="#i-trash"/></svg></button>
 					{{- end }}
 				</td>
 			</tr>
@@ -79,7 +82,7 @@
 				<td><a href="/f/{{ .Folder }}">{{ .Folder }}</a></td>
 				<td><a href="/f/{{ .Folder }}/{{ .Job }}">{{ .Job }}</a></td>
 				<td><a class="faint mono" href="/runs/{{ .RunID }}" title="{{ .RunID }}">{{ slice .RunID 0 8 }}</a></td>
-				<td class="key"><a href="/api/artifacts/{{ .ID }}">{{ .Name }}</a></td>
+				<td class="key">{{ if .CommitID }}<a href="/artifacts/files/{{ .Path }}?version={{ .CommitID }}" data-artifact="{{ .Path }}" data-version="{{ .CommitID }}" title="View this version">{{ .Name }}</a>{{ else }}<a href="/api/artifacts/{{ .ID }}">{{ .Name }}</a>{{ end }}</td>
 				<td class="hide-sm">{{ if .CommitID }}<span class="faint mono" title="{{ .CommitID }}">{{ slice .CommitID 0 7 }}</span>{{ else }}<span class="faint">kept apart</span>{{ end }}</td>
 				<td class="nowrap">{{ size .ByteSize }}</td>
 				<td class="actions">

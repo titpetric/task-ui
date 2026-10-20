@@ -1,6 +1,7 @@
 package api
 
 import (
+	"github.com/titpetric/task-ui/artifactstore"
 	"github.com/titpetric/task-ui/beszel"
 	"github.com/titpetric/task-ui/claude"
 	"github.com/titpetric/task-ui/envfile"
@@ -24,8 +25,10 @@ type Options struct {
 	Projects  *storage.ProjectStorage
 	Runs      *storage.RunStorage
 	Artifacts *storage.ArtifactStorage
-	Schedules *storage.ScheduleStorage
-	Secrets   *secret.Store
+	// ArtifactStore is the tree of the files the runs leave.
+	ArtifactStore *artifactstore.Store
+	Schedules     *storage.ScheduleStorage
+	Secrets       *secret.Store
 
 	Workflows    *storage.WorkflowStorage
 	WorkflowRuns *storage.WorkflowRunStorage

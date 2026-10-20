@@ -24,7 +24,9 @@ type ArtifactFilter struct {
 	RunID  string
 	Folder string
 	Job    string
-	Limit  int
+	// Path is a file of the artifact tree: its versions.
+	Path  string
+	Limit int
 }
 
 // Create inserts an artifact.
@@ -60,6 +62,7 @@ func (s *ArtifactStorage) List(ctx context.Context, filter ArtifactFilter) ([]mo
 	add("run_id", filter.RunID)
 	add("folder", filter.Folder)
 	add("job", filter.Job)
+	add("path", filter.Path)
 	query := "SELECT * FROM artifact"
 	if len(where) > 0 {
 		query += " WHERE " + strings.Join(where, " AND ")

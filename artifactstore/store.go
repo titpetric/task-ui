@@ -74,6 +74,40 @@ func (s *Store) Ingest(ctx context.Context, src, message, author string) (string
 	return s.head(ctx), nil
 }
 
+// Remove takes a file or a directory out of the tree and commits that
+// under the author's name; the history keeps its versions. It returns
+// the new commit. A path the tree does not hold is ErrNotFound.
+func (s *Store) Remove(ctx context.Context, rel, author string) (string, error) {
+	clean, err := cleanPath(rel)
+	if err != nil || clean == "" {
+		return "", ErrNotFound
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if !s.exists() {
+		return "", ErrNotFound
+	}
+	if _, err := os.Lstat(filepath.Join(s.Dir, filepath.FromSlash(clean))); err != nil {
+		return "", ErrNotFound
+	}
+	if err := os.RemoveAll(filepath.Join(s.Dir, filepath.FromSlash(clean))); err != nil {
+		return "", err
+	}
+	if _, err := s.git(ctx, "add", "-A", "--", clean); err != nil {
+		return "", err
+	}
+	if _, err := s.git(ctx, "diff", "--cached", "--quiet"); err == nil {
+		return s.head(ctx), nil
+	}
+	if author == "" {
+		author = "task-ui"
+	}
+	if _, err := s.git(ctx, "commit", "-q", "--author", author+" <"+author+"@task-ui>", "-m", "Delete "+clean); err != nil {
+		return "", err
+	}
+	return s.head(ctx), nil
+}
+
 // Squash flattens the history to one commit of the current tree when it
 // holds more than Keep commits, and drops the versions only the history
 // held. It returns the new commit, or "" when the history is within Keep.
