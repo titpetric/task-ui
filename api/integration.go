@@ -95,5 +95,5 @@ func (h *Handlers) listHosts(w http.ResponseWriter, r *http.Request) {
 		fail(w, http.StatusBadGateway, err.Error())
 		return
 	}
-	writeJSON(w, http.StatusOK, map[string]any{"hosts": systems})
+	writeJSON(w, http.StatusOK, map[string]any{"hosts": beszel.ByCapacity(systems)})
 }

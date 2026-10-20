@@ -10,6 +10,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"path/filepath"
 	"sync/atomic"
 	"time"
 
@@ -33,6 +34,7 @@ import (
 	"github.com/titpetric/task-ui/scheduler"
 	"github.com/titpetric/task-ui/secret"
 	"github.com/titpetric/task-ui/sshkey"
+	"github.com/titpetric/task-ui/sshprobe"
 	"github.com/titpetric/task-ui/storage"
 	"github.com/titpetric/task-ui/workflow"
 )
@@ -219,6 +221,10 @@ func (a *App) wire(version string) error {
 		Runner: a.Runner, Catalogue: a.Catalogue, Git: g, Keys: keys, KeyPolicies: keyPolicies, Env: env, Recordings: recordings, Root: cfg.Root, Version: version, Now: cfg.Clock(),
 		ArtifactStore: store, Disk: &diskusage.Meter{TTL: 10 * time.Minute}, Board: a.Board,
 		Integrations: integrations, Hosts: hosts,
+		SSH: &sshprobe.Prober{
+			Users: []string{"debian", "root"}, KeyDirs: []string{cfg.SSHDir, filepath.Join(home(), ".ssh")},
+			KnownHosts: filepath.Join(cfg.SSHDir, "known_hosts"), Timeout: 4 * time.Second, TTL: 10 * time.Minute,
+		},
 	})
 	if err != nil {
 		return err
@@ -309,4 +315,13 @@ func (a *App) shutdown(server *http.Server) error {
 // Close releases the database.
 func (a *App) Close() error {
 	return a.DB.Close()
+}
+
+// home is the user's home directory, or / when there is none.
+func home() string {
+	dir, err := os.UserHomeDir()
+	if err != nil {
+		return "/"
+	}
+	return dir
 }

@@ -16,6 +16,7 @@ import (
 	"github.com/titpetric/task-ui/runner"
 	"github.com/titpetric/task-ui/secret"
 	"github.com/titpetric/task-ui/sshkey"
+	"github.com/titpetric/task-ui/sshprobe"
 	"github.com/titpetric/task-ui/storage"
 	"github.com/titpetric/task-ui/workflow"
 )
@@ -65,4 +66,7 @@ type Options struct {
 	// host inventory through the Beszel one.
 	Integrations *integration.Store
 	Hosts        *beszel.Inventory
+	// SSH finds who task-ui signs in to each host as, for the Hosts page;
+	// nil leaves the column out.
+	SSH *sshprobe.Prober
 }
