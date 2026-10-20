@@ -9,7 +9,7 @@
   padding: 0;
   list-style: none;
   font-family: var(--font);
-  font-size: 0.8125rem;
+  font-size: var(--fs-sm);
 }
 
 .tree li {
@@ -20,47 +20,47 @@
   padding: 0.25rem 0;
   border-bottom: 1px solid var(--line);
   color: var(--text-dim);
-}
 
-.tree li .ic {
-  flex: none;
-  width: 0.9rem;
-  height: 0.9rem;
-  color: var(--text-faint);
-}
+  & .ic {
+    flex: none;
+    width: 0.9rem;
+    height: 0.9rem;
+    color: var(--text-faint);
+  }
 
-.tree li.dir .ic {
-  color: var(--signal);
-}
+  &.dir .ic {
+    color: var(--signal);
+  }
 
-.tree li a,
-.tree li > span {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
+  & a,
+  & > span {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 
-.tree li a {
-  color: var(--text);
-}
+  & a {
+    color: var(--text);
 
-.tree li a:hover {
-  color: var(--signal);
-}
+    &:hover {
+      color: var(--signal);
+    }
+  }
 
-.tree li .meta {
-  flex: none;
-  color: var(--text-faint);
-  font-size: 0.75rem;
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-}
+  & .meta {
+    flex: none;
+    color: var(--text-faint);
+    font-size: var(--fs-xs);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
 
-.tree li.empty {
-  color: var(--text-faint);
-  border-bottom: 0;
+  &.empty {
+    color: var(--text-faint);
+    border-bottom: 0;
+  }
 }
 
 /* The space a directory takes: the files in the signal colour, the git
@@ -77,11 +77,11 @@
   overflow: hidden;
   border-radius: var(--radius);
   background: var(--ink-3);
-}
 
-.spacebar-track i {
-  display: block;
-  height: 100%;
+  & i {
+    display: block;
+    height: 100%;
+  }
 }
 
 .spacebar-track i.files,
@@ -98,20 +98,20 @@
   display: flex;
   flex-wrap: wrap;
   gap: 0.4rem 1.25rem;
-  font-size: 0.8125rem;
+  font-size: var(--fs-sm);
   color: var(--text-dim);
-}
 
-.spacebar-legend span {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-}
+  & span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
 
-.spacebar-legend b {
-  color: var(--text);
-  font-weight: 500;
-  font-variant-numeric: tabular-nums;
+  & b {
+    color: var(--text);
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+  }
 }
 
 .swatch {
@@ -126,9 +126,9 @@
   align-items: center;
   gap: 0.5rem;
   font-variant-numeric: tabular-nums;
-}
 
-.spacemini .spacebar-track {
-  width: 5rem;
-  height: 0.45rem;
+  & .spacebar-track {
+    width: 5rem;
+    height: 0.45rem;
+  }
 }
