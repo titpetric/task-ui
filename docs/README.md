@@ -46,6 +46,7 @@ and red for failed or killed, and pulsing amber while it runs.
 | Chapter                              | The sidebar section                    | What it covers                                              |
 |--------------------------------------|----------------------------------------|-------------------------------------------------------------|
 | [Dashboard](guide/dashboard.md)      | Dashboard                              | The terminals running now, and the control centre           |
+| [Hosts](guide/hosts.md)              | Hosts                                  | The hosts Beszel monitors, their load and machines          |
 | [Workflows](guide/workflows.md)      | Workflows, and the list under it       | Chains of jobs, run with one button                         |
 | [Runs](guide/runs.md)                | Runs                                   | The run window, the history, a run's page and its output    |
 | [Artifacts](guide/artifacts.md)      | Artifacts                              | Files the runs leave behind                                 |

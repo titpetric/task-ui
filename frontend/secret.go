@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/titpetric/task-ui/frontend/view"
+	"github.com/titpetric/task-ui/integration"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/storage"
 )
@@ -16,8 +17,8 @@ func (h *Handlers) secrets(w http.ResponseWriter, r *http.Request) {
 	p := h.page(r, "Secrets")
 	p.Crumbs = view.Crumbs("Settings", "/settings", "Secrets")
 	p.Encryption = h.opts.Secrets.Vault.Recipients()
-	var err error
-	p.Secrets, err = h.opts.Secrets.List(r.Context())
+	secrets, err := h.opts.Secrets.List(r.Context())
+	p.Secrets = userSecrets(secrets)
 	if err != nil {
 		p.Error = err.Error()
 	}
@@ -56,4 +57,16 @@ func (h *Handlers) secretEdit(w http.ResponseWriter, r *http.Request) {
 	p.Crumbs = view.Crumbs("Settings", "/settings", "Secrets", "/settings/secrets", secret.Name)
 	p.Secret = &model.Secret{ID: secret.ID, Scope: secret.Scope, Name: secret.Name}
 	h.render(w, http.StatusOK, "secret_form", p)
+}
+
+// userSecrets leaves out the secrets of the integrations, which their own
+// page shows.
+func userSecrets(all []model.Secret) []model.Secret {
+	secrets := []model.Secret{}
+	for _, secret := range all {
+		if !integration.Internal(secret.Scope) {
+			secrets = append(secrets, secret)
+		}
+	}
+	return secrets
 }

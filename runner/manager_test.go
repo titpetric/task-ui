@@ -414,3 +414,27 @@ func TestManager_RequestEnv(t *testing.T) {
 	assert.Equal(t, model.StateOK, status.State)
 	assert.Contains(t, out, "note=[n1] user=[ops]")
 }
+
+// fixedIntegrations adds one variable to the runs of one folder.
+type fixedIntegrations struct{ folder string }
+
+func (f fixedIntegrations) Env(_ context.Context, folder string) (map[string]string, error) {
+	if folder != f.folder {
+		return nil, nil
+	}
+	return map[string]string{"CLAUDE_CODE_OAUTH_TOKEN": "sk-1"}, nil
+}
+
+// An integration's variables reach the runs of its folder alone.
+func TestManager_Integrations(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	m := runner.New(runner.Options{Runs: f.runs, Recordings: &recording.Store{Root: t.TempDir()}, Grace: time.Second, KillTimeout: 5 * time.Second, Keep: time.Minute, Integrations: fixedIntegrations{folder: "agent"}})
+	t.Cleanup(func() { m.Shutdown(context.Background()) })
+	for id, want := range map[string]string{"agent": "token=[sk-1]", "other": "token=[]"} {
+		session, err := m.Start(context.Background(), f.shellJob(id, `echo "token=[$CLAUDE_CODE_OAUTH_TOKEN]"`, false))
+		assert.NoError(t, err)
+		out, _ := collect(t, session.Attach(true))
+		assert.Contains(t, out, want, id)
+	}
+}

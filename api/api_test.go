@@ -18,10 +18,12 @@ import (
 
 	"github.com/titpetric/task-ui/access"
 	"github.com/titpetric/task-ui/api"
+	"github.com/titpetric/task-ui/beszel"
 	"github.com/titpetric/task-ui/envfile"
 	"github.com/titpetric/task-ui/event"
 	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/git"
+	"github.com/titpetric/task-ui/integration"
 	"github.com/titpetric/task-ui/internal/assert"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/note"
@@ -144,8 +146,13 @@ func newFixture(t *testing.T) *fixture {
 		Env:          envfile.New(storage.NewEnvFileStorage(db), secrets),
 		Recordings:   recordings,
 		Root:         root,
+		Integrations: &integration.Store{Secrets: secrets},
 		Board:        &note.Board{Notes: storage.NewNoteStorage(db), Users: users, Catalogue: cat, Runner: manager, Recordings: recordings, Events: flows.Events, Agent: "claude"},
 	}
+	f.opts.Hosts = &beszel.Inventory{TTL: time.Minute, Settings: func(ctx context.Context) (string, string, error) {
+		values, err := f.opts.Integrations.Values(ctx, integration.Beszel)
+		return values["url"], values["token"], err
+	}}
 	routes := api.New(f.opts).Routes()
 	f.server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		user := f.users[r.Header.Get("X-User")]

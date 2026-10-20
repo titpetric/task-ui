@@ -17,7 +17,10 @@ type Options struct {
 	Artifacts *storage.ArtifactStorage
 	Secrets   *secret.Store
 	Env       *envfile.Store
-	Git       *git.Git
+	// Integrations add to a run what an integration has for its folder,
+	// such as the Claude Code token. Nil adds nothing.
+	Integrations Integrations
+	Git          *git.Git
 	// KeyDir is the instance SSH folder, and KeyPolicies which of its
 	// keys each role's runs get through the run's ssh agent. With either
 	// nil or empty, a run gets no instance key.

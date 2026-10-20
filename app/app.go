@@ -18,11 +18,13 @@ import (
 	"github.com/titpetric/task-ui/access"
 	"github.com/titpetric/task-ui/api"
 	"github.com/titpetric/task-ui/artifactstore"
+	"github.com/titpetric/task-ui/beszel"
 	"github.com/titpetric/task-ui/diskusage"
 	"github.com/titpetric/task-ui/envfile"
 	"github.com/titpetric/task-ui/event"
 	"github.com/titpetric/task-ui/frontend"
 	"github.com/titpetric/task-ui/git"
+	"github.com/titpetric/task-ui/integration"
 	"github.com/titpetric/task-ui/mcp"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/note"
@@ -164,6 +166,11 @@ func (a *App) wire(version string) error {
 	keyPolicies := storage.NewSSHKeyPolicyStorage(db)
 	secrets := secret.New(storage.NewSecretStorage(db), secret.NewVault(keys))
 	env := envfile.New(storage.NewEnvFileStorage(db), secrets)
+	integrations := &integration.Store{Secrets: secrets}
+	hosts := &beszel.Inventory{TTL: time.Minute, Settings: func(ctx context.Context) (string, string, error) {
+		values, err := integrations.Values(ctx, integration.Beszel)
+		return values["url"], values["token"], err
+	}}
 	recordings := &recording.Store{Root: cfg.RecordingsDir()}
 
 	a.Catalogue = NewCatalogue(cfg.Root, cfg.Discover, projects)
@@ -178,6 +185,7 @@ func (a *App) wire(version string) error {
 		Recordings:    recordings,
 		ArtifactRoot:  cfg.ArtifactsDir(),
 		ArtifactStore: store,
+		Integrations:  integrations,
 		Grace:         cfg.Grace,
 		KillTimeout:   cfg.Grace + 5*time.Second,
 		Keep:          cfg.Keep,
@@ -203,12 +211,14 @@ func (a *App) wire(version string) error {
 		Users: a.Users, Projects: projects, Runs: runs, Artifacts: artifacts, Schedules: schedules, Secrets: secrets,
 		Workflows: workflows, WorkflowRuns: workflowRuns, Flows: a.Workflows, Events: events,
 		Runner: a.Runner, Catalogue: a.Catalogue, Git: g, Keys: keys, KeyPolicies: keyPolicies, Env: env, Recordings: recordings, Root: cfg.Root, Board: a.Board,
+		Integrations: integrations, Hosts: hosts,
 	})
 	pages, err := frontend.New(frontend.Options{
 		Guard: a.Guard, Auth: access.NewAuthenticator(a.Users, a.Emails, a.Passwords), Users: a.Users, Projects: projects, Runs: runs, Artifacts: artifacts, Schedules: schedules, Secrets: secrets,
 		Workflows: workflows, WorkflowRuns: workflowRuns, Flows: a.Workflows,
 		Runner: a.Runner, Catalogue: a.Catalogue, Git: g, Keys: keys, KeyPolicies: keyPolicies, Env: env, Recordings: recordings, Root: cfg.Root, Version: version, Now: cfg.Clock(),
 		ArtifactStore: store, Disk: &diskusage.Meter{TTL: 10 * time.Minute}, Board: a.Board,
+		Integrations: integrations, Hosts: hosts,
 	})
 	if err != nil {
 		return err
