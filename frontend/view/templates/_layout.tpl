@@ -231,6 +231,17 @@
 	</div>
 	<div class="run-body preview-body"><img id="preview-image" alt=""><div id="preview-doc" class="preview-doc" hidden></div></div>
 </dialog>
+{{- /* The summary window: Claude's summary of a run's output. */}}
+<dialog class="run preview summary" id="summary-dialog" aria-labelledby="summary-title">
+	<div class="run-head">
+		<span class="label">Summary</span>
+		<h3 id="summary-title"></h3>
+		<span class="spacer"></span>
+		<a class="btn" id="summary-run" href="#">View run</a>
+		<button type="button" class="btn" id="summary-close" aria-label="Close">Close</button>
+	</div>
+	<div class="run-body preview-body"><div id="summary-text" class="preview-doc markdown"></div></div>
+</dialog>
 {{- /* The source window: a file a folder's pipeline reads, coloured, as
      large as the run window. */}}
 <dialog class="run source" id="source-dialog" aria-labelledby="source-title">

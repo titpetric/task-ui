@@ -8,6 +8,7 @@ import (
 	"github.com/titpetric/task-ui/beszel"
 	"github.com/titpetric/task-ui/frontend/view"
 	"github.com/titpetric/task-ui/integration"
+	"github.com/titpetric/task-ui/model"
 )
 
 // integrations shows Settings, Integrations: a form for each integration.
@@ -55,9 +56,16 @@ func (h *Handlers) inventory(w http.ResponseWriter, r *http.Request) {
 		}
 		p.Logins = h.opts.SSH.Logins(r.Context(), hosts, 4*time.Second)
 	}
-	if h.opts.Integrations != nil && p.User.CanAdmin() {
-		env, _ := h.opts.Integrations.Env(r.Context(), p.User.Name, p.User.Role)
-		p.Summarize = env["CLAUDE_CODE_OAUTH_TOKEN"] != ""
-	}
+	p.Summarize = p.User.CanAdmin() && h.claudeFor(r, p.User)
 	h.render(w, http.StatusOK, "inventory", p)
+}
+
+// claudeFor reports whether the Claude Code integration has a token for
+// the user, so the pages show what Claude summarizes.
+func (h *Handlers) claudeFor(r *http.Request, user *model.User) bool {
+	if h.opts.Integrations == nil || user == nil {
+		return false
+	}
+	env, _ := h.opts.Integrations.Env(r.Context(), user.Name, user.Role)
+	return env["CLAUDE_CODE_OAUTH_TOKEN"] != ""
 }

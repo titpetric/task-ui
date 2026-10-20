@@ -18,6 +18,7 @@ func (h *Handlers) runs(w http.ResponseWriter, r *http.Request) {
 	p.Runs = h.visibleRuns(r.Context(), access.UserFrom(r.Context()), filter)
 	filter.Limit = activityLimit
 	p.Activity = h.activity(r.Context(), access.UserFrom(r.Context()), filter, p.Now, false)
+	p.Summarize = h.claudeFor(r, p.User)
 	h.render(w, http.StatusOK, "runs", p)
 }
 

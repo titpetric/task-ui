@@ -60,6 +60,8 @@ type Options struct {
 	// AddUser puts a new user in the password file; nil leaves users to
 	// the file and task-ui passwd.
 	AddUser func(ctx context.Context, name, password string) error
+	// Summaries keep Claude's summary of each run that has one.
+	Summaries *storage.RunSummaryStorage
 	// Summarizer writes the summary of a run on the hosts with Claude.
 	Summarizer *claude.Summarizer
 }

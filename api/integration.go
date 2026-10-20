@@ -163,7 +163,7 @@ func (h *Handlers) runOnHosts(w http.ResponseWriter, r *http.Request) {
 	if req.Summarize {
 		report := sshprobe.Report(req.Command, results)
 		body["report"] = report
-		summary, err := h.summarize(r, report)
+		summary, err := h.summarize(r, summaryPrompt, report)
 		if err != nil {
 			body["summary_error"] = err.Error()
 		} else {
@@ -180,7 +180,7 @@ const summaryPrompt = "The input is a markdown report of one shell command run o
 
 // summarize sends the report to Claude, signed in with the token the
 // Claude integration holds for the user.
-func (h *Handlers) summarize(r *http.Request, report string) (string, error) {
+func (h *Handlers) summarize(r *http.Request, prompt, report string) (string, error) {
 	if h.opts.Summarizer == nil || h.opts.Integrations == nil {
 		return "", claude.ErrNoToken
 	}
@@ -189,5 +189,5 @@ func (h *Handlers) summarize(r *http.Request, report string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return h.opts.Summarizer.Summarize(r.Context(), env["CLAUDE_CODE_OAUTH_TOKEN"], summaryPrompt, report)
+	return h.opts.Summarizer.Summarize(r.Context(), env["CLAUDE_CODE_OAUTH_TOKEN"], prompt, report)
 }

@@ -30,6 +30,13 @@ Each row is a run: when it started, the folder and job, who started it,
 how long it took and how it ended. **Filter** narrows it by folder, job
 and state. A run in progress has **Attach**, a finished one **View**.
 
+With the Claude Code integration set up for you (see
+[Settings](settings.md#integrations)), a finished run also has
+**Summary**: Claude reads the end of its output, up to 2000 lines, and
+writes what it did or why it failed, in a window. task-ui keeps the
+summary by run, so the next **Summary** of that run, by anyone, shows
+the kept one at once, without asking Claude again.
+
 ## The run window
 
 ![A run in its window](../assets/run-dark.png)
