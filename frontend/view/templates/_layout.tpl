@@ -94,7 +94,19 @@
 				<div class="empty">No folders. Add one from a git repository in Settings, or put a folder with something to run under the root.</div>
 				{{- end }}
 			</nav>
-			<div class="label side-label">Recents</div>
+		</aside>
+		<main>
+			{{- if .Crumbs }}
+			<div class="crumbs"><a href="/">Dashboard</a>{{ range .Crumbs }}<span>{{ if .Href }}<a href="{{ .Href }}">{{ .Text }}</a>{{ else }}{{ .Text }}{{ end }}</span>{{ end }}</div>
+			{{- end }}
+			{{- if .Notice }}<div class="alert ok" role="status">{{ .Notice }}</div>{{ end }}
+			{{- if .Error }}<div class="alert bad" role="alert">{{ .Error }}</div>{{ end }}
+			{{ template "content" . }}
+		</main>
+		{{- /* The right rail, on wide screens: the latest runs and workflow
+		     runs by anyone. Narrower, Runs in the sidebar lists them. */}}
+		<aside class="rail" aria-label="Recents">
+			<div class="label side-label"><a href="/runs">Recents</a></div>
 			<nav class="recents" id="recents">
 				{{- range $e := .Recents }}
 				{{- with $e.Flow }}
@@ -119,14 +131,6 @@
 				{{- end }}
 			</nav>
 		</aside>
-		<main>
-			{{- if .Crumbs }}
-			<div class="crumbs"><a href="/">Dashboard</a>{{ range .Crumbs }}<span>{{ if .Href }}<a href="{{ .Href }}">{{ .Text }}</a>{{ else }}{{ .Text }}{{ end }}</span>{{ end }}</div>
-			{{- end }}
-			{{- if .Notice }}<div class="alert ok" role="status">{{ .Notice }}</div>{{ end }}
-			{{- if .Error }}<div class="alert bad" role="alert">{{ .Error }}</div>{{ end }}
-			{{ template "content" . }}
-		</main>
 	</div>
 	{{ template "dialog" . }}
 	{{ template "confirm" . }}

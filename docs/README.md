@@ -15,11 +15,14 @@ The page has three parts.
   **Settings** for admins, and **Sign out**. On a phone a menu button on
   the left opens the sidebar as a drawer.
 - **The sidebar.** Everything you can open, in a fixed order:
-  1. the views across all folders: **Dashboard**, **Workflows** (with the
-     workflows listed under it), **Runs**, **Artifacts** and **Scheduled**;
+  1. the views across all folders: **Dashboard**, **Inventory**,
+     **Workflows** (with the workflows listed under it), **Runs**,
+     **Artifacts**, **Scheduled** and **Notes**;
   2. the **projects**, each a folder at the top of the root, with their
-     jobs and the folders inside them, as a tree;
-  3. **Recents**, the latest runs and workflow runs by anyone.
+     jobs and the folders inside them, as a tree.
+- **Recents**, on a wide screen, a rail on the right: the latest runs and
+  workflow runs by anyone. A narrower screen leaves it out; **Runs** lists
+  the same runs.
 - **The page.** What you opened in the sidebar. A run you start or attach
   to opens in a **window** over the page: a terminal on the run, which
   you close without ending the run.
