@@ -7,20 +7,23 @@ pulses while something runs.
 
 ## Activity
 
-Above the list, two charts of the runs of the last thirty days, in the
-server's time zone, following the filter:
+Above the list, two charts, in the server's time zone, following the
+filter:
 
-- **by day**, a bar a day, today on the right;
-- **by hour of the day**, over the same days, so a schedule at seven
-  stands out from the work spread over the afternoon.
+- **Last 30 days**, a bar a day, today on the right;
+- **Last 24 hours**, a bar an hour, this hour on the right, with a time
+  marker every six hours.
+
+Each chart's head reads `min/avg/max/total:`, the fastest, the mean and
+the slowest finished run of its window and their time together.
 
 A bar is as tall as its runs against the busiest bar, split into the runs
 that ended ok (amber), failed or got killed (red), and the rest, running
 or stopped (faint). Hover a bar for its counts. Under each, the same days or
-hours as a **line graph of their durations**: the average solid, the
-slowest run dashed and the fastest faint, against the slowest run of the
-chart, a point in the middle of each column. A day or an hour without a
-finished run breaks the lines. Hover a column for the average, the
+hours as a **line graph of their durations**: the average in the text
+colour, the slowest dimmer and the fastest faint, against the slowest run
+of the chart, a smooth curve through the middle of each column. A day or
+an hour without a finished run sits on the baseline. Hover a column for the average, the
 fastest, the slowest and how many runs they cover. A line above shows the
 run count, how many failed and the median duration.
 

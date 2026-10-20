@@ -100,9 +100,8 @@ type ActivityTick struct {
 	At    string
 }
 
-// Activity is when runs ran: a bar per day of the last ActivityDays,
-// a bar per hour of the day over the same days, the counts, and the
-// duration line.
+// Activity is when runs ran: a bar per day of the last ActivityDays, a
+// bar per hour of the last 24, the counts, and the duration line.
 type Activity struct {
 	Days  []ActivityBar
 	Hours []ActivityBar
@@ -111,18 +110,16 @@ type Activity struct {
 	DayLines  *ActivityLines
 	HourLines *ActivityLines
 	// DayTicks mark a day a week, today the last; HourTicks every third
-	// hour, labelled at 03:00, 09:00, 15:00 and 21:00.
+	// clock hour, labelled at 03:00, 09:00, 15:00 and 21:00.
 	DayTicks  []ActivityTick
 	HourTicks []ActivityTick
 	Total     int
 	Failed    int
 	Median    time.Duration
-	// Spent is the time the finished runs took, together; Fastest,
-	// Mean and Slowest are the shortest, the mean and the longest of them.
-	Spent     time.Duration
-	Fastest   time.Duration
-	Mean      time.Duration
-	Slowest   time.Duration
+	// DayStats are the finished runs of the days, HourStats of the last
+	// 24 hours.
+	DayStats  ActivityStats
+	HourStats ActivityStats
 	Durations *ActivitySpark
 }
 
@@ -146,17 +143,23 @@ func NewActivity(runs []ActivityRun, now time.Time, days int) *Activity {
 		index[day.Format(time.DateOnly)] = i
 		a.Days[i].Label = day.Format("Mon 2006-01-02")
 	}
+	// The hours are the last 24 clock hours, this one the last.
+	firstHour := now.Truncate(time.Hour).Add(-23 * time.Hour)
 	for h := range a.Hours {
-		a.Hours[h].Label = strconv.Itoa(h)
+		a.Hours[h].Label = strconv.Itoa(firstHour.Add(time.Duration(h) * time.Hour).In(loc).Hour())
 	}
 	for i := days - 1; i >= 0; i -= 7 {
 		day := first.AddDate(0, 0, i)
 		a.DayTicks = append([]ActivityTick{{Label: day.Format("Jan 2"), At: svgNumber((float64(i) + 0.5) * 100 / float64(days))}}, a.DayTicks...)
 	}
-	for h := 0; h < 24; h += 3 {
+	for h := range a.Hours {
+		clock := firstHour.Add(time.Duration(h) * time.Hour).In(loc).Hour()
+		if clock%3 != 0 {
+			continue
+		}
 		tick := ActivityTick{At: svgNumber((float64(h) + 0.5) * 100 / 24)}
-		if h%6 == 3 {
-			tick.Label = twoDigits(h) + ":00"
+		if clock%6 == 3 {
+			tick.Label = twoDigits(clock) + ":00"
 		}
 		a.HourTicks = append(a.HourTicks, tick)
 	}
@@ -169,7 +172,12 @@ func NewActivity(runs []ActivityRun, now time.Time, days int) *Activity {
 		}
 		a.Total++
 		day := &a.Days[index[at.Format(time.DateOnly)]]
-		hour := &a.Hours[at.Hour()]
+		// A run of the last 24 hours counts in its hour too; an older one
+		// counts in a bar no chart draws.
+		hour, recent := &ActivityBar{}, false
+		if h := int(at.Sub(firstHour) / time.Hour); !at.Before(firstHour) && h < 24 {
+			hour, recent = &a.Hours[h], true
+		}
 		switch run.State {
 		case model.StateOK:
 			day.OK++
@@ -183,14 +191,13 @@ func NewActivity(runs []ActivityRun, now time.Time, days int) *Activity {
 			hour.Other++
 		}
 		if run.State != model.StateRunning {
-			if len(finished) == 0 || run.Elapsed < a.Fastest {
-				a.Fastest = run.Elapsed
-			}
-			a.Slowest = max(a.Slowest, run.Elapsed)
 			finished = append(finished, run)
-			a.Spent += run.Elapsed
+			a.DayStats.add(run.Elapsed)
 			day.add(run.Elapsed)
-			hour.add(run.Elapsed)
+			if recent {
+				a.HourStats.add(run.Elapsed)
+				hour.add(run.Elapsed)
+			}
 		}
 	}
 	if a.Total == 0 {
@@ -205,15 +212,13 @@ func NewActivity(runs []ActivityRun, now time.Time, days int) *Activity {
 		a.Days[i].AverageTitle = averageText(a.Days[i], a.Days[i].Label)
 	}
 	for h := range a.Hours {
-		when := twoDigits(h) + ":00–" + twoDigits(h+1) + ":00"
+		start := firstHour.Add(time.Duration(h) * time.Hour).In(loc)
+		when := start.Format("Mon ") + twoDigits(start.Hour()) + ":00–" + twoDigits(start.Add(time.Hour).Hour()) + ":00"
 		a.Hours[h].Title = counts(a.Hours[h], when)
 		a.Hours[h].AverageTitle = averageText(a.Hours[h], when)
 	}
 	sort.SliceStable(finished, func(i, j int) bool { return finished[i].StartedAt.Before(finished[j].StartedAt) })
 	a.Median = median(finished)
-	if len(finished) > 0 {
-		a.Mean = a.Spent / time.Duration(len(finished))
-	}
 	if len(finished) > ActivityDurations {
 		finished = finished[len(finished)-ActivityDurations:]
 	}

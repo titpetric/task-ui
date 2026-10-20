@@ -21,7 +21,7 @@ func at(day, hour, minute int) time.Time {
 }
 
 // The days are the last thirty, today the last, counted in the zone of
-// now; the hours are the hours of the day over the same days. A run is
+// now; the hours are the last 24 clock hours, this one the last. A run is
 // ok, failed (killed too) or other (running, stopped); the chart leaves out
 // runs outside the window.
 func TestNewActivity(t *testing.T) {
@@ -44,15 +44,17 @@ func TestNewActivity(t *testing.T) {
 	assert.Equal(t, 5, a.Total)
 	assert.Equal(t, 2, a.Failed)
 	// A tick a week, today the last, each in the middle of its column;
-	// the hours every third, as times.
+	// the hours at every third clock hour, labelled every sixth.
 	assert.Equal(t, view.ActivityTick{Label: "Oct 19", At: "98.33"}, a.DayTicks[len(a.DayTicks)-1])
 	assert.Equal(t, view.ActivityTick{Label: "Sep 21", At: "5.00"}, a.DayTicks[0])
 	assert.Len(t, a.DayTicks, 5)
 	assert.Len(t, a.HourTicks, 8)
-	assert.True(t, a.Spent > 0, "the finished runs' time adds up")
-	assert.True(t, a.Fastest > 0 && a.Fastest <= a.Mean && a.Mean <= a.Slowest, "min, avg and max in order")
-	assert.Equal(t, view.ActivityTick{Label: "09:00", At: "39.58"}, a.HourTicks[3])
-	assert.Equal(t, view.ActivityTick{At: "27.08"}, a.HourTicks[2])
+	assert.Equal(t, view.ActivityTick{Label: "09:00", At: "43.75"}, a.HourTicks[3])
+	assert.Equal(t, view.ActivityTick{At: "31.25"}, a.HourTicks[2])
+	// Each window's finished runs: the 30 days hold the stopped run of the
+	// 17th too, the last 24 hours only today's three.
+	assert.Equal(t, view.ActivityStats{Count: 4, Fastest: 2 * time.Second, Mean: 5 * time.Second, Slowest: 8 * time.Second, Spent: 20 * time.Second}, a.DayStats)
+	assert.Equal(t, view.ActivityStats{Count: 3, Fastest: 2 * time.Second, Mean: 4 * time.Second, Slowest: 6 * time.Second, Spent: 12 * time.Second}, a.HourStats)
 
 	today, yesterday := a.Days[29], a.Days[28]
 	assert.Equal(t, "Mon 2026-10-19", today.Label)
@@ -63,10 +65,11 @@ func TestNewActivity(t *testing.T) {
 	assert.Equal(t, 0, yesterday.OK+yesterday.Failed+yesterday.Other)
 	assert.Equal(t, "no runs, Wed 2026-10-07", a.Days[17].Title)
 
-	assert.Equal(t, 1, a.Hours[7].OK)
-	assert.Equal(t, 1, a.Hours[7].Failed)
-	assert.Equal(t, "2 runs, 07:00–08:00 · 1 failed", a.Hours[7].Title)
-	assert.Equal(t, 1, a.Hours[1].Failed)
+	// The hours start at 23:00 on the 18th: 07:00 is the ninth.
+	assert.Equal(t, 1, a.Hours[8].OK)
+	assert.Equal(t, 1, a.Hours[8].Failed)
+	assert.Equal(t, "2 runs, Mon 07:00–08:00 · 1 failed", a.Hours[8].Title)
+	assert.Equal(t, 1, a.Hours[2].Failed)
 
 	// The busiest day is a full bar; its parts share it.
 	assert.Equal(t, template.CSS("height:25.00%"), today.OKStyle)
@@ -104,9 +107,9 @@ func TestNewActivity(t *testing.T) {
 		}
 	}
 	assert.Equal(t, "no finished runs, Sun 2026-10-18", yesterday.AverageTitle)
-	assert.Equal(t, 3*time.Second, a.Hours[7].Average)
-	assert.Equal(t, "avg 3.0s · min 2.0s · max 4.0s over 2 runs, 07:00–08:00", a.Hours[7].AverageTitle)
-	assert.Equal(t, "no finished runs, 21:00–22:00", a.Hours[21].AverageTitle) // only the running one
+	assert.Equal(t, 3*time.Second, a.Hours[8].Average)
+	assert.Equal(t, "avg 3.0s · min 2.0s · max 4.0s over 2 runs, Mon 07:00–08:00", a.Hours[8].AverageTitle)
+	assert.Equal(t, "no finished runs, Mon 21:00–22:00", a.Hours[22].AverageTitle) // only the running one
 
 	// The median of the finished runs: 2, 4, 6 and 8 seconds.
 	assert.Equal(t, 5*time.Second, a.Median)
@@ -130,7 +133,8 @@ func TestActivityBar(t *testing.T) {
 	assert.Equal(t, template.CSS("height:4.00%"), quiet.OKStyle)
 	assert.Equal(t, template.CSS("height:100.00%"), a.Days[1].OKStyle)
 	assert.Len(t, a.Days, 2)
-	assert.Equal(t, 101, a.Hours[9].OK)
+	// The 18th is past the last 24 hours; the 19th at 09:00 is the eleventh.
+	assert.Equal(t, 100, a.Hours[10].OK)
 }
 
 // The duration line runs from the first run on the left to the last on
