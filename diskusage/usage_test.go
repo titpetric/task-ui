@@ -2,6 +2,7 @@ package diskusage_test
 
 import (
 	"os"
+	"os/exec"
 	"path/filepath"
 	"testing"
 
@@ -32,6 +33,23 @@ func TestMeasure(t *testing.T) {
 	assert.Equal(t, int64(460), u.Total())
 
 	assert.Equal(t, diskusage.Usage{}, diskusage.Measure(filepath.Join(dir, "missing")))
+}
+
+// In a checkout, what .gitignore leaves out counts as Ignored, outside
+// the total.
+func TestMeasure_Ignored(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	assert.NoError(t, exec.Command("git", "init", "-q", dir).Run())
+	assert.NoError(t, os.WriteFile(filepath.Join(dir, ".gitignore"), []byte("build/\n*.out\n"), 0o644))
+	write(t, dir, "main.go", 100)
+	write(t, dir, "build/bin/app", 1000)
+	write(t, dir, "sub/cover.out", 200)
+
+	u := diskusage.Measure(dir)
+	assert.Equal(t, int64(113), u.Files)
+	assert.Equal(t, int64(1200), u.Ignored)
+	assert.Equal(t, u.Files+u.History, u.Total())
 }
 
 func TestUsage_Percent(t *testing.T) {
