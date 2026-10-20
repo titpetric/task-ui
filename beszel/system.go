@@ -66,7 +66,7 @@ func (s System) UptimeDuration() time.Duration {
 }
 
 // ByCapacity returns the systems largest first: by cores, then by RAM,
-// then by name. The slice it was given stays as it was.
+// then by name, in a new slice.
 func ByCapacity(systems []System) []System {
 	sorted := append([]System(nil), systems...)
 	sort.SliceStable(sorted, func(i, j int) bool {

@@ -1,6 +1,6 @@
 // Package sshprobe finds who task-ui can sign in to a host as over ssh:
 // the first of a list of users whose login works with the instance keys,
-// tried in batch mode, so a host that wants a password counts as closed.
+// tried in batch mode, so a host that only takes a password counts as closed.
 package sshprobe
 
 import (
@@ -16,7 +16,8 @@ import (
 
 // Prober tries the users on a host and keeps what it found for TTL.
 type Prober struct {
-	// Users are tried in order; the first that signs in is the answer.
+	// Users are the logins Logins tries, in order; the first that signs in
+	// wins.
 	Users []string
 	// KeyDirs hold the private keys tried, the id_* files.
 	KeyDirs []string
@@ -41,7 +42,7 @@ type probe struct {
 
 // Logins returns who signs in to each host: user@host, or "" for a host
 // none of the users reach. It waits at most wait for the hosts it has no
-// fresh answer for; those still being tried come back empty this time and
+// fresh answer for; a host whose probe still runs comes back empty this time and
 // fill in for the next call.
 func (p *Prober) Logins(ctx context.Context, hosts []string, wait time.Duration) map[string]string {
 	var wg sync.WaitGroup
