@@ -66,11 +66,15 @@
 
   --signal: #e0a44f;
   --signal-ink: #07090c;
-  --signal-wash: rgba(224, 164, 79, 0.12);
   --ok: #57b894;
-  --ok-wash: rgba(87, 184, 148, 0.1);
   --bad: #e06c6c;
-  --bad-wash: rgba(224, 108, 108, 0.1);
+
+  /* A wash is its colour over the page, faint: the background of a lit
+     row, an alert, a badge. Mixed with transparent in srgb, a wash is the
+     colour itself at that alpha. */
+  --signal-wash: color-mix(in srgb, var(--signal) 12%, transparent);
+  --ok-wash: color-mix(in srgb, var(--ok) 10%, transparent);
+  --bad-wash: color-mix(in srgb, var(--bad) 10%, transparent);
 
   /* The ring of an avatar says the user's role. */
   --role-admin: var(--signal);
@@ -80,7 +84,49 @@
   --term-bg: #090c10;
   --term-fg: #d5dee7;
 
+  /* The type sizes in use, smallest first. The labels are uppercase and
+     tracked, the fields and the body are text. */
+  --fs-label: 0.68rem;
+  --fs-tick: 0.6875rem;
+  --fs-caption: 0.7rem;
+  --fs-xs: 0.75rem;
+  --fs-button: 0.78rem;
+  --fs-data: 0.8rem;
+  --fs-sm: 0.8125rem;
+  --fs-field: 0.85rem;
+  --fs-md: 0.875rem;
+  --fs-body: 0.9rem;
+  --fs-lg: 0.95rem;
+
+  /* The tracking of uppercase words, from an avatar's initials to the
+     brand. */
+  --ls-xs: 0.04em;
+  --ls-sm: 0.08em;
+  --ls-button: 0.1em;
+  --ls-label: 0.14em;
+  --ls-heading: 0.16em;
+  --ls-brand: 0.24em;
+
+  /* One height for every control in a row: a text field, a select and a
+     button line up, a small button is the small height, and a button in
+     a row of the sidebar or a table the smallest. */
+  --control: 2.3rem;
+  --control-sm: 1.75rem;
+  --control-xs: 1.5rem;
+
+  /* What floats over the page casts a shadow by how far it rises: a
+     tooltip, a dropdown, the user menu, the drawer, a dialog. The scrim
+     dims the page under a dialog. */
+  --shadow-tip: 0 2px 8px rgba(0, 0, 0, 0.25);
+  --shadow-pop: 0 0.75rem 2rem rgba(0, 0, 0, 0.35);
+  --shadow-menu: 0 18px 36px rgba(0, 0, 0, 0.55), 0 4px 10px rgba(0, 0, 0, 0.4);
+  --shadow-drawer: 0 0 3rem rgba(0, 0, 0, 0.5);
+  --shadow-dialog: 0 1.5rem 4rem rgba(0, 0, 0, 0.55);
+  --scrim: rgba(4, 6, 9, 0.72);
+
   --radius: 2px;
+  --radius-pill: 999px;
+  --radius-round: 50%;
   --side: 17rem;
   --rail: 17rem;
 }
@@ -99,11 +145,12 @@
 
     --signal: #9a5d0d;
     --signal-ink: #fffdf9;
-    --signal-wash: rgba(154, 93, 13, 0.1);
     --ok: #1c6f56;
-    --ok-wash: rgba(28, 111, 86, 0.08);
     --bad: #a63232;
-    --bad-wash: rgba(166, 50, 50, 0.08);
+
+    --signal-wash: color-mix(in srgb, var(--signal) 10%, transparent);
+    --ok-wash: color-mix(in srgb, var(--ok) 8%, transparent);
+    --bad-wash: color-mix(in srgb, var(--bad) 8%, transparent);
 
     --term-bg: #fffdf9;
     --term-fg: #23201a;

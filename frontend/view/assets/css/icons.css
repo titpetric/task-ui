@@ -20,26 +20,26 @@
   background: transparent;
   color: var(--text-dim);
   cursor: pointer;
-}
 
-.btn-icon .ic {
-  width: 1rem;
-  height: 1rem;
-}
+  & .ic {
+    width: 1rem;
+    height: 1rem;
+  }
 
-.btn-icon:hover {
-  color: var(--text);
-  border-color: var(--line-2);
-  background: var(--ink-3);
-  text-decoration: none;
-}
+  &:hover {
+    color: var(--text);
+    border-color: var(--line-2);
+    background: var(--ink-3);
+    text-decoration: none;
+  }
 
-/* Destructive actions wear the one red on the page. */
-.btn-icon.danger {
-  color: var(--bad);
-}
+  /* Destructive actions wear the one red on the page. */
+  &.danger {
+    color: var(--bad);
 
-.btn-icon.danger:hover {
-  border-color: var(--bad);
-  background: var(--bad-wash);
+    &:hover {
+      border-color: var(--bad);
+      background: var(--bad-wash);
+    }
+  }
 }

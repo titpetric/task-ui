@@ -24,7 +24,7 @@ body {
   flex-direction: column;
   background: var(--ink-0);
   color: var(--text);
-  font: 400 0.9rem/1.5 var(--font-ui);
+  font: 400 var(--fs-body)/1.5 var(--font-ui);
   font-feature-settings: "cv11", "ss01", "tnum";
   font-variant-numeric: tabular-nums slashed-zero;
   -webkit-font-smoothing: antialiased;
@@ -120,22 +120,23 @@ code {
 td.fingerprint {
   min-width: 14rem;
   font-family: var(--font);
-  font-size: 0.8rem;
+  font-size: var(--fs-data);
   overflow-wrap: anywhere;
-}
 
-td.fingerprint .kind {
-  display: block;
-  white-space: nowrap;
+  & .kind {
+    display: block;
+    white-space: nowrap;
+  }
 }
 
 /* A key's name and badges wrap under its comment before the table runs
    past its actions. */
 .table.keys td.key {
   white-space: normal;
+
+  & .badge {
+    margin: 0.1rem 0;
+  }
 }
 
-.table.keys td.key .badge {
-  margin: 0.1rem 0;
-}
-.text-end { text-align: right; }
+.text-end { text-align: end; }
