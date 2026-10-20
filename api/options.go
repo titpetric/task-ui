@@ -23,10 +23,12 @@ import (
 
 // Options are what the handlers work with.
 type Options struct {
-	Users     *storage.UserStorage
-	Projects  *storage.ProjectStorage
-	Runs      *storage.RunStorage
-	Artifacts *storage.ArtifactStorage
+	Users    *storage.UserStorage
+	Projects *storage.ProjectStorage
+	// Workspaces are the checkouts the projects may clone inside.
+	Workspaces *storage.WorkspaceStorage
+	Runs       *storage.RunStorage
+	Artifacts  *storage.ArtifactStorage
 	// ArtifactStore is the tree of the files the runs leave.
 	ArtifactStore *artifactstore.Store
 	Schedules     *storage.ScheduleStorage

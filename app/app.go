@@ -160,6 +160,7 @@ func (a *App) wire(version string) error {
 	cfg, db := a.Config, a.DB
 	runs := storage.NewRunStorage(db)
 	projects := storage.NewProjectStorage(db)
+	workspaces := storage.NewWorkspaceStorage(db)
 	artifacts := storage.NewArtifactStorage(db)
 	schedules := storage.NewScheduleStorage(db)
 	workflows := storage.NewWorkflowStorage(db)
@@ -227,7 +228,7 @@ func (a *App) wire(version string) error {
 		}
 	}
 	apiHandlers := api.New(api.Options{
-		Users: a.Users, Projects: projects, Runs: runs, Artifacts: artifacts, ArtifactStore: store, Schedules: schedules, Secrets: secrets,
+		Users: a.Users, Projects: projects, Workspaces: workspaces, Runs: runs, Artifacts: artifacts, ArtifactStore: store, Schedules: schedules, Secrets: secrets,
 		Workflows: workflows, WorkflowRuns: workflowRuns, Flows: a.Workflows, Events: events,
 		Runner: a.Runner, Catalogue: a.Catalogue, Git: g, Keys: keys, KeyPolicies: keyPolicies, Env: env, Recordings: recordings, Root: cfg.Root, Board: a.Board,
 		Integrations: integrations, Hosts: hosts, SSH: prober, Summarizer: &claude.Summarizer{Timeout: 3 * time.Minute},

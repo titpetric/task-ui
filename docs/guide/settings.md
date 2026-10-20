@@ -45,6 +45,39 @@ run and when, per job.
 
 ![Configure a folder](../assets/project-edit-dark.png)
 
+## Workspaces
+
+A workspace is a checkout under the root that holds projects: the
+tooling of an organisation, such as `.atkins/skills`, `.claude/` and its
+policies, with the projects cloned inside it. You name its folder, and
+the folder is the namespace of its projects: `dockerfiles` cloned into
+the workspace `malta` lives at `<root>/malta/dockerfiles` and opens at
+`/f/malta/dockerfiles`. Any number of workspaces may come from one
+repository, each under its own name.
+
+An admin adds one over the API, with a token from `task-ui token`:
+
+```sh
+curl -s -X POST https://task.example.com/api/workspaces \
+  -H "Authorization: Bearer $TOKEN" \
+  -d '{"url": "git@example.com:org/workspace.git", "folder": "malta", "title": "Malta"}'
+```
+
+The clone works or answers with git's output and keeps nothing. A folder
+that a workspace, a project or a directory under the root holds already
+answers `409`, and `internal` is task-ui's own. A project joins a
+workspace when its clone names it:
+
+```sh
+curl -s -X POST https://task.example.com/api/projects \
+  -H "Authorization: Bearer $TOKEN" \
+  -d '{"url": "git@example.com:org/dockerfiles.git", "workspace": "malta"}'
+```
+
+`PUT /api/workspaces/malta` with `{title, description}` changes its
+text; the repository and the folder stay. `DELETE /api/workspaces/malta`
+removes the checkout, every project inside it and their rows.
+
 ## Users
 
 Who may sign in comes from the password file on the server. **Create
