@@ -56,6 +56,10 @@ and red for failed or killed, and pulsing amber while it runs.
 | [MCP](guide/mcp.md)                  |                                        | Tokens, and the tools an agent runs jobs with               |
 | [Screenshots](screenshots.md)        |                                        | Every view, in both themes and on a phone                   |
 
-Installing and configuring the server is in the [README](../README.md):
-the Docker image, the environment variables, the password file and the
-API.
+Beside the guide:
+
+- [Running the server](running.md): the Docker image, the environment
+  variables, the password file and the server commands;
+- [API](api.md): the JSON endpoints and the MCP server;
+- [Development](development.md): the packages, the lint and test bar, and
+  the screenshots.
