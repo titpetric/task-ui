@@ -26,6 +26,7 @@ func TestDiscovery(t *testing.T) {
 			{ID: "web", Path: "web site", Title: "Website", Allow: []string{"ops"}, Command: "make", Jobs: map[string][]string{"build": {"admin"}}},
 			{ID: "sync", Path: "elsewhere/jobs.yml"},
 			{ID: "ghost", Path: "ghost"},
+			{ID: "holder", Path: "empty"},
 		},
 	}
 	list := d.List()
@@ -35,7 +36,7 @@ func TestDiscovery(t *testing.T) {
 		ids = append(ids, f.ID)
 	}
 	slices.Sort(ids)
-	if want := []string{filepath.Base(root), "ghost", "infra", "sync", "web"}; !slices.Equal(ids, want) {
+	if want := []string{filepath.Base(root), "ghost", "holder", "infra", "sync", "web"}; !slices.Equal(ids, want) {
 		t.Fatalf("folders: got %v, want %v", ids, want)
 	}
 
@@ -54,7 +55,11 @@ func TestDiscovery(t *testing.T) {
 		t.Fatalf("configured file folder missing: %+v", sync)
 	}
 	if ghost := d.Find("ghost"); ghost == nil || ghost.Error == "" {
-		t.Fatalf("configured folder with nothing to run: %+v", ghost)
+		t.Fatalf("configured folder that is not there: %+v", ghost)
+	}
+	// A directory with nothing to run of its own holds folders: no error.
+	if holder := d.Find("holder"); holder == nil || holder.Error != "" {
+		t.Fatalf("configured directory with nothing to run: %+v", holder)
 	}
 	if d.Find("nope") != nil {
 		t.Fatal("missing folder found")

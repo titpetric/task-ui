@@ -1110,6 +1110,138 @@ select {
   font: inherit;
 }
 
+/* A dropdown: the select stays in the form under it, out of sight, and
+   a button shows the choice, drawn like a text field; its list opens
+   under it, or over it when the screen ends first. */
+.dd {
+  position: relative;
+  width: 100%;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.dd > select {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.dd-button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  width: 100%;
+  height: var(--control);
+  padding: 0 0.6rem 0 0.65rem;
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius);
+  background: var(--ink-2);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 0.85rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.dd-button:hover {
+  border-color: var(--text-faint);
+}
+
+.dd-button:focus-visible,
+.dd.open .dd-button {
+  outline: none;
+  border-color: var(--signal);
+}
+
+.dd-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.dd-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dd-chev {
+  flex: none;
+  color: var(--text-faint);
+  transform: rotate(90deg);
+}
+
+.dd.open .dd-chev {
+  transform: rotate(-90deg);
+}
+
+.dd-list {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 60;
+  min-width: 100%;
+  max-height: 18rem;
+  overflow-y: auto;
+  padding: 0.25rem;
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius);
+  background: var(--ink-1);
+  box-shadow: 0 0.75rem 2rem rgba(0, 0, 0, 0.35);
+}
+
+.dd.up .dd-list {
+  top: auto;
+  bottom: calc(100% + 4px);
+}
+
+.dd-option {
+  padding: 0.4rem 0.6rem;
+  border-radius: var(--radius);
+  color: var(--text-dim);
+  font-family: var(--font);
+  font-size: 0.85rem;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.dd-option.active {
+  background: var(--ink-3);
+  color: var(--text);
+}
+
+.dd-option[aria-selected="true"] {
+  color: var(--signal);
+}
+
+.dd-option[aria-disabled] {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.dd-group {
+  padding: 0.45rem 0.6rem 0.2rem;
+  color: var(--text-faint);
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.filters .dd {
+  width: 12rem;
+}
+
+.run-head .dd {
+  width: auto;
+  min-width: 14rem;
+  max-width: 22rem;
+}
+
 .form {
   max-width: 40rem;
 }
@@ -1608,7 +1740,8 @@ pre.code .p { color: var(--text-faint); }
   }
 
   .filters input,
-  .filters select {
+  .filters select,
+  .filters .dd {
     width: 100%;
   }
 

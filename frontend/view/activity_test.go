@@ -50,6 +50,7 @@ func TestNewActivity(t *testing.T) {
 	assert.Len(t, a.DayTicks, 5)
 	assert.Len(t, a.HourTicks, 8)
 	assert.True(t, a.Spent > 0, "the finished runs' time adds up")
+	assert.True(t, a.Fastest > 0 && a.Fastest <= a.Mean && a.Mean <= a.Slowest, "min, avg and max in order")
 	assert.Equal(t, view.ActivityTick{Label: "09:00", At: "39.58"}, a.HourTicks[3])
 	assert.Equal(t, view.ActivityTick{At: "27.08"}, a.HourTicks[2])
 

@@ -114,6 +114,8 @@ type Page struct {
 	KeyPolicies map[string][]string
 	// KeyUsers are the users, by name, whose runs get each instance key.
 	KeyUsers map[string][]string
+	// SubFolders are the folders right under the folder a page shows.
+	SubFolders []*folder.Folder
 	// KeyHolders are the roles and the users, and the keys each gets.
 	KeyHolders []KeyHolder
 	Key        *sshkey.Key

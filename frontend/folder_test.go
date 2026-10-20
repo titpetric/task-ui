@@ -22,6 +22,9 @@ func TestFolder(t *testing.T) {
 
 	body := f.page(t, asOps, "/f/infra")
 	assert.Contains(t, body, "The servers")
+	// The folders under it are listed, each linked, with its job count.
+	assert.Contains(t, body, `<a href="/f/infra/edge">`)
+	assert.NotContains(t, body, "Nothing to run was found")
 	assert.NotContains(t, body, "data-run-all") // workflows chain jobs instead
 	assert.Contains(t, body, `data-run data-folder="infra" data-job="plan"`)
 	assert.Contains(t, body, `data-force data-folder="infra" data-job="plan"`)

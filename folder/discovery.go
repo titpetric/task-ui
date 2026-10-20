@@ -77,8 +77,9 @@ func (d *Discovery) List() []*Folder {
 }
 
 // configured loads the folder a configuration names: a directory, a
-// single file, or a path with nothing to run, which the listing shows with
-// its error so the configuration shows as wrong.
+// single file, or a directory with nothing to run of its own, which holds
+// folders that do. A path that is missing carries an error, so the
+// configuration shows as wrong.
 func configured(root string, cfg Config) *Folder {
 	dir := cfg.dir(root)
 	id := cfg.ID
@@ -92,11 +93,19 @@ func configured(root string, cfg Config) *Folder {
 		f = LoadFile(id, dir)
 	case detector.Any(dir):
 		f = Load(id, dir, cfg.Sources...)
+	case isDir(dir):
+		f = &Folder{ID: id, Title: id, Dir: dir}
 	default:
-		f = &Folder{ID: id, Title: id, Dir: dir, Error: "nothing to run found in " + dir}
+		f = &Folder{ID: id, Title: id, Dir: dir, Error: "no such directory: " + dir}
 	}
 	cfg.Apply(f)
 	return f
+}
+
+// isDir reports whether a path is a directory.
+func isDir(path string) bool {
+	info, err := os.Stat(path)
+	return err == nil && info.IsDir()
 }
 
 // isFile reports whether a path is a file.
