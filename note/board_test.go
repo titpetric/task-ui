@@ -39,7 +39,8 @@ func (c catalogue) List() []*folder.Folder {
 }
 
 // fixture is a board over a private database, with the users ops and
-// claude and an agent job that echoes its note.
+// claude and an agent job that echoes its note, and writes the reply file
+// for a note with the word answer.
 type fixture struct {
 	board *note.Board
 	ops   *model.User
@@ -59,7 +60,7 @@ func newFixture(t *testing.T, agentJob string) *fixture {
 	dir := filepath.Join(t.TempDir(), "agent")
 	assert.NoError(t, os.MkdirAll(dir, 0o755))
 	f := &folder.Folder{ID: "agent", Title: "agent", Dir: dir}
-	job := &folder.Job{Folder: "agent", ID: "run", Kind: "script", Command: []string{"sh", "-c", `echo "note $TASK_UI_NOTE_ID from $TASK_UI_NOTE_AUTHOR: $TASK_UI_NOTE"; test "$TASK_UI_NOTE" != "@claude fail"`}}
+	job := &folder.Job{Folder: "agent", ID: "run", Kind: "script", Command: []string{"sh", "-c", `echo "note $TASK_UI_NOTE_ID from $TASK_UI_NOTE_AUTHOR: $TASK_UI_NOTE"; case "$TASK_UI_NOTE" in *answer*) echo "Done: $TASK_UI_NOTE" > "$TASK_UI_NOTE_REPLY";; esac; test "$TASK_UI_NOTE" != "@claude fail" && test "$TASK_UI_NOTE" != "@claude answer, fail"`}}
 	job.Name = "run"
 	f.Jobs = []*folder.Job{job}
 
@@ -234,4 +235,24 @@ func TestBoard_RecoverOpen(t *testing.T) {
 	assert.NoError(t, f.board.Notes.Create(ctx, note))
 	assert.NoError(t, f.board.Recover(ctx))
 	assert.Equal(t, model.NoteDone, f.settled(t, note.ID).State)
+}
+
+// A job that writes the reply file answers with it alone; the reply links
+// the run, which keeps the output.
+func TestBoard_InstructionAnswer(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t, "agent/run")
+	ctx := context.Background()
+	posted, err := f.board.Post(ctx, f.ops, "", "@claude answer me")
+	assert.NoError(t, err)
+	done := f.settled(t, posted.ID)
+	assert.Equal(t, model.NoteDone, done.State)
+	reply := replies(t, f, posted.ID)[0]
+	assert.Equal(t, "Done: @claude answer me", reply.Body)
+	assert.Equal(t, done.RunID, reply.RunID)
+
+	failed, err := f.board.Post(ctx, f.ops, "", "@claude answer, fail")
+	assert.NoError(t, err)
+	assert.Equal(t, model.NoteFailed, f.settled(t, failed.ID).State)
+	assert.Equal(t, "Done: @claude answer, fail\n\nThe run ended failed (exit 1).", replies(t, f, failed.ID)[0].Body)
 }

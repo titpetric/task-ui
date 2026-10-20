@@ -14,6 +14,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"os"
 	"strings"
 	"time"
 
@@ -179,11 +180,23 @@ func (b *Board) dispatch(note *model.Note) {
 		fail("There is no user " + b.Agent + " to run the agent job as.")
 		return
 	}
+	// The job writes its answer to the reply file; the reply on the note
+	// is that answer, and the run's output stays in the run.
+	answer, err := os.CreateTemp("", "note-reply-*.md")
+	if err != nil {
+		fail("The reply file was not made: " + err.Error())
+		return
+	}
+	_ = answer.Close()
 	req := runner.Request{
 		Folder: f, Job: job, User: agent, Cols: 120, Rows: 40,
-		Env: []string{"TASK_UI_NOTE_ID=" + note.ID, "TASK_UI_NOTE_AUTHOR=" + note.UserName, "TASK_UI_NOTE=" + b.thread(ctx, note)},
+		Env: []string{
+			"TASK_UI_NOTE_ID=" + note.ID, "TASK_UI_NOTE_AUTHOR=" + note.UserName, "TASK_UI_NOTE=" + b.thread(ctx, note),
+			"TASK_UI_NOTE_REPLY=" + answer.Name(),
+		},
 	}
 	go func() {
+		defer os.Remove(answer.Name())
 		// One run of the job at a time: an instruction waits for the
 		// run in the way, then starts its own.
 		session, err := b.Runner.Start(ctx, req)
@@ -207,6 +220,13 @@ func (b *Board) dispatch(note *model.Note) {
 			state = model.NoteFailed
 		}
 		run := session.Snapshot()
+		if reply := readReply(answer.Name()); reply != "" {
+			if state == model.NoteFailed {
+				reply += fmt.Sprintf("\n\nThe run ended %s (exit %d).", status.State, status.ExitCode)
+			}
+			b.finish(ctx, note, state, reply)
+			return
+		}
 		b.finish(ctx, note, state, report(&run, status, b.output(&run)))
 	}()
 }
@@ -228,7 +248,7 @@ func (b *Board) thread(ctx context.Context, note *model.Note) string {
 
 // finish replies to an instruction as the agent and records its state.
 func (b *Board) finish(ctx context.Context, note *model.Note, state, body string) {
-	reply := &model.Note{Channel: note.Channel, ParentID: note.ID, UserName: b.Agent, Body: body}
+	reply := &model.Note{Channel: note.Channel, ParentID: note.ID, UserName: b.Agent, Body: body, RunID: note.RunID}
 	if agent, err := b.Users.GetByName(ctx, b.Agent); err == nil {
 		reply.UserID = agent.ID
 	}
@@ -285,7 +305,20 @@ func (b *Board) publish(note *model.Note) {
 	}
 }
 
-// report is the agent's reply when its run ends: how it ended, and the end
+// readReply returns what the agent's job wrote to the reply file, at
+// most 64 KiB.
+func readReply(path string) string {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return ""
+	}
+	if len(data) > 64<<10 {
+		data = data[:64<<10]
+	}
+	return strings.TrimSpace(string(data))
+}
+
+// report is the agent's reply when its run ends without an answer: how it ended, and the end
 // of the output in a code block.
 func report(run *model.Run, status runner.Status, output string) string {
 	took := run.Elapsed().Round(time.Second)

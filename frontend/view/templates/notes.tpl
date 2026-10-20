@@ -28,7 +28,7 @@
 		<ol class="replies">
 			{{- range .Replies }}
 			<li>
-				<header><span class="avatar sm">{{ initials .UserName }}</span><b>{{ .UserName }}</b> <span class="faint" title="{{ stamp .CreatedAt }}">{{ ago .CreatedAt }}</span></header>
+				<header><span class="avatar sm">{{ initials .UserName }}</span><b>{{ .UserName }}</b> <span class="faint" title="{{ stamp .CreatedAt }}">{{ ago .CreatedAt }}</span>{{ if .RunID }} <a class="faint mono" href="/runs/{{ .RunID }}" title="The run this reply comes from">run {{ slice .RunID 0 8 }}</a>{{ end }}</header>
 				<div class="note-body">{{ message .Body }}</div>
 			</li>
 			{{- end }}

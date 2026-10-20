@@ -14,9 +14,11 @@ edge: **open**, **working**, then **done** or **failed**.
   user the moment the note or the reply appears, with the whole thread in
   its environment: `TASK_UI_NOTE`, every message of the thread under its
   author, `TASK_UI_NOTE_ID` and `TASK_UI_NOTE_AUTHOR`. The note links the
-  run. When the run ends, the agent replies with how it ended and the end
-  of its output. One run of the job goes at a time; another instruction
-  waits for it.
+  run. The job writes its answer to the file `TASK_UI_NOTE_REPLY` names,
+  and when the run ends, the agent replies with that answer alone, with a
+  link to the run for the output. A job that writes no answer replies with
+  how the run ended and the end of its output. One run of the job goes at
+  a time; another instruction waits for it.
 - The agent may decline an instruction: its reply says why, and the note
   ends there.
 - Without an agent job, the note stays open until an agent reads the board
