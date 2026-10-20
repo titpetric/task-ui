@@ -53,7 +53,7 @@ func TestInventory(t *testing.T) {
 
 	admin := f.page(t, asAdmin, "/inventory")
 	assert.Contains(t, admin, `data-inventory-run`)
-	assert.Contains(t, admin, `name="hosts" value="10.10.10.11" checked> <code>debian@10.10.10.11</code>`)
+	assert.Contains(t, admin, `name="hosts" value="10.10.10.11" checked><span>debian@10.10.10.11</span>`)
 	assert.Contains(t, admin, `data-command="uptime"`)
 	assert.NotContains(t, admin, `name="summarize"`)
 	assert.NoError(t, f.opts.Integrations.Save(context.Background(), integration.Claude, map[string]string{"token": "sk-1", "who": "admin"}))

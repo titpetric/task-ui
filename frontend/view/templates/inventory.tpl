@@ -19,10 +19,18 @@
 			{{- end }}
 		</div>
 		<textarea name="command" rows="2" required spellcheck="false" placeholder="a shell command, run on each host at once" aria-label="The command"></textarea>
-		<div class="run-hosts">
-			{{- range $h := .Hosts }}{{ with index $.Logins $h.Host }}
-			<label class="check"><input type="checkbox" name="hosts" value="{{ $h.Host }}" checked> <code>{{ . }}</code></label>
-			{{- end }}{{ end }}
+		<div class="run-hosts" data-host-picker>
+			<div class="host-tools">
+				<span class="faint" data-host-count></span>
+				<button type="button" class="btn btn-sm" data-hosts="all">All</button>
+				<button type="button" class="btn btn-sm" data-hosts="none">None</button>
+				<button type="button" class="btn btn-sm" data-hosts="invert">Invert</button>
+			</div>
+			<div class="host-picks">
+				{{- range $h := .Hosts }}{{ with index $.Logins $h.Host }}
+				<label class="host-pick"><input type="checkbox" name="hosts" value="{{ $h.Host }}" checked><span>{{ . }}</span></label>
+				{{- end }}{{ end }}
+			</div>
 		</div>
 		<div class="note-form-foot"><span></span><span class="actions">{{ if .Summarize }}<button class="btn" type="submit" name="summarize" value="1"><svg class="ic"><use href="#i-note"/></svg>Run and summarize</button>{{ end }}<button class="btn btn-primary" type="submit"><svg class="ic"><use href="#i-play"/></svg>Run</button></span></div>
 	</form>
