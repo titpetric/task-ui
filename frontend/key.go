@@ -27,6 +27,8 @@ func (h *Handlers) keys(w http.ResponseWriter, r *http.Request) {
 		p.HomeKeysDir = h.opts.HomeKeys.Dir
 	}
 	p.KeyPolicies, p.KeyUsers = h.keyPolicies(r), h.keyUsers(r)
+	users, _ := h.opts.Users.List(r.Context())
+	p.KeyHolders = view.KeyHolders(p.Keys, p.KeyPolicies, p.KeyUsers, users)
 	p.Encryption = h.opts.Secrets.Vault.Recipients()
 	h.render(w, http.StatusOK, "keys", p)
 }

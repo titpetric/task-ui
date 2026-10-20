@@ -113,6 +113,8 @@ type Page struct {
 	KeyPolicies map[string][]string
 	// KeyUsers are the users, by name, whose runs get each instance key.
 	KeyUsers map[string][]string
+	// KeyHolders are the roles and the users, and the keys each gets.
+	KeyHolders []KeyHolder
 	Key      *sshkey.Key
 	// Encryption names the keys that encrypt the secrets.
 	Encryption []string
