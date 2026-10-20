@@ -19,7 +19,8 @@ quick one (`uptime`, `df -h /`, `free -h`, the containers, the kernel, the
 OS), and **Run**, or Ctrl+Enter. Each host runs it over its login, on a
 terminal, for at most two minutes, and the page shows a row a host: its
 exit code, how long it took, and what it printed, both streams, with the
-colours a program prints on a terminal. Pagers are off (`PAGER=cat`), so
+colours a program prints on a terminal. A long output shows its last screen,
+the final 24 lines; **Expand** shows the whole output, as on a job run's steps. Pagers are off (`PAGER=cat`), so
 `systemctl status` and the like end on their own.
 
 **Run and summarize** runs the command the same way, and after the last

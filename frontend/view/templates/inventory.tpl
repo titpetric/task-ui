@@ -24,11 +24,13 @@
 			<label class="check"><input type="checkbox" name="hosts" value="{{ $h.Host }}" checked> <code>{{ . }}</code></label>
 			{{- end }}{{ end }}
 		</div>
-		<div class="note-form-foot"><span class="faint">Each host runs it over its ssh login, at once, for at most two minutes. Ctrl+Enter runs.{{ if .Summarize }} Run and summarize hands every host's output to Claude as one report once all are done.{{ end }}</span><span class="actions">{{ if .Summarize }}<button class="btn" type="submit" name="summarize" value="1"><svg class="ic"><use href="#i-note"/></svg>Run and summarize</button>{{ end }}<button class="btn btn-primary" type="submit"><svg class="ic"><use href="#i-play"/></svg>Run</button></span></div>
+		<div class="note-form-foot"><span></span><span class="actions">{{ if .Summarize }}<button class="btn" type="submit" name="summarize" value="1"><svg class="ic"><use href="#i-note"/></svg>Run and summarize</button>{{ end }}<button class="btn btn-primary" type="submit"><svg class="ic"><use href="#i-play"/></svg>Run</button></span></div>
 	</form>
 	<div class="inventory-results" data-inventory-results></div>
 </section>
 {{- end }}
+<section class="block">
+<h3>Hosts</h3>
 <div class="table-wrap">
 <table class="table hosts">
 	<thead><tr><th>Host</th><th>State</th>{{ if .Logins }}<th>SSH</th>{{ end }}<th class="center">Cores</th><th>CPU</th><th colspan="2">Memory</th><th colspan="2">Disk</th></tr></thead>
@@ -53,6 +55,7 @@
 	</tbody>
 </table>
 </div>
+</section>
 {{- end }}
 {{ end }}
 
