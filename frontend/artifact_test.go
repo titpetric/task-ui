@@ -1,10 +1,15 @@
 package frontend_test
 
 import (
+	"archive/tar"
+	"compress/gzip"
 	"context"
+	"io"
 	"net/http"
 	"os"
 	"path/filepath"
+	"sort"
+	"strings"
 	"testing"
 
 	"github.com/titpetric/task-ui/internal/assert"
@@ -108,4 +113,45 @@ func TestArtifacts_File(t *testing.T) {
 	dir := f.get(t, asAdmin, "/artifacts/files/reports")
 	assert.Equal(t, http.StatusSeeOther, dir.Status)
 	assert.Equal(t, "/artifacts?path=reports", dir.Location)
+}
+
+// A folder, or the whole tree, downloads as a .tgz of the latest files the
+// user may see.
+func TestArtifacts_Archive(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	store(t, f, "infra", map[string]string{"reports/chart.svg": "<svg/>", "job1.txt": "one"})
+	store(t, f, "private", map[string]string{"secret.txt": "x"})
+
+	names := func(user, path string) []string {
+		res := f.get(t, user, path)
+		assert.Equal(t, http.StatusOK, res.Status, path)
+		assert.Equal(t, "application/gzip", res.Headers.Get("Content-Type"))
+		zr, err := gzip.NewReader(strings.NewReader(res.Body))
+		assert.NoError(t, err)
+		tr := tar.NewReader(zr)
+		var got []string
+		for {
+			header, err := tr.Next()
+			if err == io.EOF {
+				break
+			}
+			assert.NoError(t, err)
+			got = append(got, header.Name)
+		}
+		sort.Strings(got)
+		return got
+	}
+	assert.Equal(t, []string{"reports/chart.svg"}, names(asLimited, "/artifacts/reports.tgz"))
+	assert.Equal(t, []string{"artifacts/job1.txt", "artifacts/reports/chart.svg"}, names(asLimited, "/artifacts.tgz"))
+	assert.Equal(t, []string{"artifacts/job1.txt", "artifacts/reports/chart.svg", "artifacts/secret.txt"}, names(asAdmin, "/artifacts.tgz"))
+	assert.Contains(t, f.get(t, asAdmin, "/artifacts/reports.tgz").Headers.Get("Content-Disposition"), `filename="reports.tgz"`)
+	assert.Equal(t, http.StatusNotFound, f.get(t, asAdmin, "/artifacts/missing.tgz").Status)
+
+	page := f.page(t, asAdmin, "/artifacts")
+	assert.Contains(t, page, `data-copy="/artifacts/reports.tgz"`)
+	assert.Contains(t, page, `href="/artifacts/files/job1.txt?download"`)
+	assert.Contains(t, page, `Delete all</button>`)
+	assert.Contains(t, page, `href="/artifacts.tgz" download`)
+	assert.Equal(t, http.StatusNotFound, f.get(t, asAdmin, "/artifacts/reports").Status, "only a .tgz")
 }

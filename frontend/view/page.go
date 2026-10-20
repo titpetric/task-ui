@@ -51,6 +51,8 @@ type Page struct {
 	// Browse is the directory open inside the folder, or in the artifact
 	// tree: "" for the top, else a path ending in "/".
 	Browse string
+	// Archive is where the directory the page shows downloads as a .tgz.
+	Archive string
 	// Space is how much the directory the page shows takes, files and
 	// history; nil leaves the bar out.
 	Space *diskusage.Usage

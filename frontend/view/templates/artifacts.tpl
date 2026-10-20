@@ -6,7 +6,7 @@
 	</div>
 	{{- if .User.CanAdmin }}
 	<div class="actions">
-		<button type="button" class="btn btn-danger" data-delete="/api/artifacts" data-confirm="Empty the artifacts? Every file, its history and the record of every version go." data-confirm-ok="Empty" data-next="reload">Empty</button>
+		<button type="button" class="btn btn-danger" data-delete="/api/artifacts" data-confirm="Delete all the artifacts? Every file, its history and the record of every version go." data-confirm-ok="Delete all" data-next="reload"><svg class="ic"><use href="#i-trash"/></svg>Delete all</button>
 	</div>
 	{{- end }}
 </div>
@@ -19,8 +19,41 @@
 {{- end }}
 
 <section class="block">
-	<h3>Files{{ if .Browse }} <small>{{ .Browse }}</small>{{ end }}</h3>
-	{{ template "tree" . }}
+	<div class="block-head">
+		<h3>Files <small>/{{ .Browse }}</small></h3>
+		<div class="actions">
+			<a class="btn btn-sm" href="{{ .Archive }}" download><svg class="ic"><use href="#i-download"/></svg>{{ if .Browse }}This folder{{ else }}Everything{{ end }} as .tgz</a>
+			<button type="button" class="btn-icon" data-copy="{{ .Archive }}" title="Copy the link to the .tgz" aria-label="Copy the link to the .tgz"><svg class="ic"><use href="#i-copy"/></svg></button>
+		</div>
+	</div>
+	<div class="table-wrap">
+	<table class="table artifact-files">
+		<thead><tr><th>Name</th><th class="num">Size</th><th class="hide-sm">Changed</th><th></th></tr></thead>
+		<tbody>
+		{{- range .Tree }}
+			<tr>
+				<td class="key"><svg class="ic{{ if .Dir }} dir{{ end }}"><use href="#i-{{ if .Dir }}folder{{ else }}file{{ end }}"/></svg>
+					{{- if .Preview }} <a href="{{ .Href }}" data-preview="{{ .Href }}" data-preview-title="{{ .Path }}">{{ .Name }}</a>
+					{{- else }} <a href="{{ .Href }}">{{ .Name }}{{ if .Dir }}/{{ end }}</a>{{ end }}</td>
+				<td class="num nowrap">{{ size .Size }}</td>
+				<td class="hide-sm nowrap" title="{{ stamp .ModTime }}">{{ ago .ModTime }}</td>
+				<td class="actions">
+					{{- if .Dir }}
+					<a class="btn-icon" href="{{ .Archive }}" download title="Download {{ .Name }} as .tgz" aria-label="Download {{ .Name }} as .tgz"><svg class="ic"><use href="#i-download"/></svg></a>
+					<button type="button" class="btn-icon" data-copy="{{ .Archive }}" title="Copy the link to the .tgz" aria-label="Copy the link to {{ .Name }} as .tgz"><svg class="ic"><use href="#i-copy"/></svg></button>
+					{{- else }}
+					{{- if .Preview }}<a class="btn-icon" href="{{ .Href }}" data-preview="{{ .Href }}" data-preview-title="{{ .Path }}" title="View {{ .Name }}" aria-label="View {{ .Name }}"><svg class="ic"><use href="#i-eye"/></svg></a>{{ end }}
+					<a class="btn-icon" href="{{ .Href }}?download" title="Download {{ .Name }}" aria-label="Download {{ .Name }}"><svg class="ic"><use href="#i-download"/></svg></a>
+					<button type="button" class="btn-icon" data-copy="{{ .Href }}" title="Copy the link to {{ .Name }}" aria-label="Copy the link to {{ .Name }}"><svg class="ic"><use href="#i-copy"/></svg></button>
+					{{- end }}
+				</td>
+			</tr>
+		{{- else }}
+			<tr class="empty"><td colspan="4">Empty.</td></tr>
+		{{- end }}
+		</tbody>
+	</table>
+	</div>
 </section>
 
 <section class="block">

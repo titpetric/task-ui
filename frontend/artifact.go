@@ -1,13 +1,19 @@
 package frontend
 
 import (
+	"archive/tar"
+	"compress/gzip"
+	"io"
+	"io/fs"
 	"net/http"
 	"net/url"
 	"os"
 	"path"
+	"path/filepath"
 	"strings"
 
 	"github.com/titpetric/task-ui/access"
+	"github.com/titpetric/task-ui/diskusage"
 	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/frontend/view"
 	"github.com/titpetric/task-ui/model"
@@ -28,6 +34,7 @@ func (h *Handlers) artifacts(w http.ResponseWriter, r *http.Request) {
 	if dir != "" {
 		p.Browse = dir + "/"
 	}
+	p.Archive = archiveHref(dir)
 
 	if store := h.opts.ArtifactStore; store != nil {
 		visible := h.visibleArtifacts(r)
@@ -36,8 +43,13 @@ func (h *Handlers) artifacts(w http.ResponseWriter, r *http.Request) {
 			if !user.CanAdmin() && !visible.covers(full, item.Dir) {
 				continue
 			}
+			item.Path = full
 			if item.Dir {
 				item.Href = "/artifacts?path=" + url.QueryEscape(full)
+				item.Archive = archiveHref(full)
+				if dir, err := store.Path(full); err == nil {
+					item.Size = diskusage.Measure(dir).Files
+				}
 			} else {
 				item.Href = "/artifacts/files/" + escapePath(full)
 			}
@@ -169,4 +181,91 @@ func linkTree(items []folder.Item, base string) []folder.Item {
 		}
 	}
 	return items
+}
+
+// artifactArchive serves a directory of the artifact tree as a gzipped
+// tar of the latest files the user may see: /artifacts/<dir>.tgz, or
+// /artifacts.tgz for the whole tree.
+func (h *Handlers) artifactArchive(w http.ResponseWriter, r *http.Request) {
+	store := h.opts.ArtifactStore
+	wanted := param(r, "*")
+	if r.URL.Path != "/artifacts.tgz" && !strings.HasSuffix(wanted, ".tgz") {
+		h.missing(w, r, "No such artifact.")
+		return
+	}
+	rel := strings.Trim(path.Clean("/"+strings.TrimSuffix(wanted, ".tgz")), "/")
+	if store == nil {
+		h.missing(w, r, "No such artifact.")
+		return
+	}
+	user := access.UserFrom(r.Context())
+	visible := h.visibleArtifacts(r)
+	if rel != "" && !user.CanAdmin() && !visible.covers(rel, true) {
+		h.missing(w, r, "No such artifact.")
+		return
+	}
+	dir, err := store.Path(rel)
+	if err != nil {
+		h.missing(w, r, "No such artifact.")
+		return
+	}
+	if info, err := os.Stat(dir); err != nil || !info.IsDir() {
+		h.missing(w, r, "No such artifact.")
+		return
+	}
+	name := "artifacts"
+	if rel != "" {
+		name = path.Base(rel)
+	}
+	w.Header().Set("Content-Type", "application/gzip")
+	w.Header().Set("Content-Disposition", `attachment; filename="`+strings.ReplaceAll(name, `"`, "")+`.tgz"`)
+	zw := gzip.NewWriter(w)
+	tw := tar.NewWriter(zw)
+	_ = filepath.WalkDir(dir, func(p string, entry fs.DirEntry, err error) error {
+		if err != nil {
+			return nil
+		}
+		if entry.Name() == ".git" && entry.IsDir() {
+			return filepath.SkipDir
+		}
+		if entry.IsDir() || !entry.Type().IsRegular() || strings.HasPrefix(entry.Name(), ".") {
+			return nil
+		}
+		inner, _ := filepath.Rel(dir, p)
+		full := path.Join(rel, filepath.ToSlash(inner))
+		if !user.CanAdmin() && !visible[full] {
+			return nil
+		}
+		return addToTar(tw, p, path.Join(name, filepath.ToSlash(inner)))
+	})
+	_ = tw.Close()
+	_ = zw.Close()
+}
+
+// addToTar writes a file into a tar under a name.
+func addToTar(tw *tar.Writer, file, name string) error {
+	f, err := os.Open(file)
+	if err != nil {
+		return nil
+	}
+	defer f.Close()
+	info, err := f.Stat()
+	if err != nil {
+		return nil
+	}
+	if err := tw.WriteHeader(&tar.Header{Name: name, Mode: 0o644, Size: info.Size(), ModTime: info.ModTime(), Typeflag: tar.TypeReg}); err != nil {
+		return err
+	}
+	_, err = io.Copy(tw, f)
+	return err
+}
+
+// archiveHref is where a directory of the artifact tree downloads as a
+// .tgz: /artifacts/<dir>.tgz, or /artifacts.tgz for the whole tree.
+func archiveHref(dir string) string {
+	dir = strings.Trim(dir, "/")
+	if dir == "" {
+		return "/artifacts.tgz"
+	}
+	return "/artifacts/" + escapePath(dir) + ".tgz"
 }
