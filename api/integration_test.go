@@ -20,7 +20,7 @@ func TestIntegration_SaveListDelete(t *testing.T) {
 	denied := f.call(t, asOps, http.MethodPut, "/integrations/claude", api.IntegrationRequest{Values: map[string]string{"token": "sk-1"}})
 	assert.Equal(t, http.StatusForbidden, denied.Status)
 
-	saved := f.call(t, asAdmin, http.MethodPut, "/integrations/claude", api.IntegrationRequest{Values: map[string]string{"token": "sk-1", "folders": "infra"}})
+	saved := f.call(t, asAdmin, http.MethodPut, "/integrations/claude", api.IntegrationRequest{Values: map[string]string{"token": "sk-1", "who": "admin"}})
 	assert.Equal(t, http.StatusOK, saved.Status, string(saved.Raw))
 	assert.False(t, strings.Contains(string(saved.Raw), "sk-1"), "the token never comes back")
 	assert.Contains(t, string(saved.Raw), `"set":["token"]`)

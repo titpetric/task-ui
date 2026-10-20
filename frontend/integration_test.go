@@ -16,11 +16,11 @@ func TestIntegrations(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
 	f.withKey(t)
-	assert.NoError(t, f.opts.Integrations.Save(context.Background(), integration.Claude, map[string]string{"token": "sk-secret", "folders": "infra"}))
+	assert.NoError(t, f.opts.Integrations.Save(context.Background(), integration.Claude, map[string]string{"token": "sk-secret", "who": "admin"}))
 
 	body := f.page(t, asAdmin, "/settings/integrations")
 	assert.Contains(t, body, "Claude Code")
-	assert.Contains(t, body, `name="values.folders" value="infra"`)
+	assert.Contains(t, body, `name="values.who" value="admin"`)
 	assert.Contains(t, body, `<span class="badge ok">set</span>`)
 	assert.NotContains(t, body, "sk-secret")
 	assert.Contains(t, body, `data-api="/api/integrations/beszel"`)

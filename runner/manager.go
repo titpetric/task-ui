@@ -370,7 +370,7 @@ func (m *Manager) command(ctx context.Context, session *Session) (*exec.Cmd, err
 		}
 	}
 	if m.opts.Integrations != nil {
-		vars, err := m.opts.Integrations.Env(ctx, f.ID)
+		vars, err := m.opts.Integrations.Env(ctx, run.UserName, session.role)
 		if err != nil {
 			return nil, err
 		}

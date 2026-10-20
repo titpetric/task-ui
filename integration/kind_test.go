@@ -15,6 +15,7 @@ func TestKinds(t *testing.T) {
 	assert.Nil(t, kind.Field("colour"))
 	assert.Nil(t, integration.KindOf("nothing"))
 	assert.Len(t, integration.Kinds(), 2)
+	assert.NotNil(t, integration.KindOf(integration.Claude).Field("who"))
 
 	assert.False(t, integration.Configured(*kind, map[string]string{"url": "http://beszel:8090"}))
 	assert.True(t, integration.Configured(*kind, map[string]string{"url": "u", "token": "t"}))

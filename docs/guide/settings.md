@@ -111,9 +111,11 @@ field keeps it on save. The Secrets page leaves them out, and no run sees
 them as secrets.
 
 - **Claude Code**: the token Claude Code signs in with, from
-  `claude setup-token`, and the folders whose runs get it as
-  `CLAUDE_CODE_OAUTH_TOKEN`: the folder of the agent job of the
-  [Notes](notes.md) board, and of a Claude terminal.
+  `claude setup-token`, for the whole instance, and **Who**: the users or
+  roles whose runs get it as `CLAUDE_CODE_OAUTH_TOKEN`, such as
+  `admin, claude`. Name the agent's user too: the agent job of the
+  [Notes](notes.md) board runs as that user. With nobody named, every run
+  gets it.
 - **Beszel**: the hub's URL, as task-ui reaches it, and a token, for the
   [Hosts](hosts.md) page.
 
