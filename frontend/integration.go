@@ -3,6 +3,7 @@ package frontend
 import (
 	"errors"
 	"net/http"
+	"time"
 
 	"github.com/titpetric/task-ui/beszel"
 	"github.com/titpetric/task-ui/frontend/view"
@@ -44,6 +45,13 @@ func (h *Handlers) hosts(w http.ResponseWriter, r *http.Request) {
 	case err != nil:
 		p.Error = err.Error()
 	}
-	p.Hosts = systems
+	p.Hosts = beszel.ByCapacity(systems)
+	if h.opts.SSH != nil && len(systems) > 0 {
+		hosts := make([]string, len(systems))
+		for i, system := range systems {
+			hosts[i] = system.Host
+		}
+		p.Logins = h.opts.SSH.Logins(r.Context(), hosts, 4*time.Second)
+	}
 	h.render(w, http.StatusOK, "hosts", p)
 }

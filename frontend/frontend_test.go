@@ -32,6 +32,7 @@ import (
 	"github.com/titpetric/task-ui/runner"
 	"github.com/titpetric/task-ui/secret"
 	"github.com/titpetric/task-ui/sshkey"
+	"github.com/titpetric/task-ui/sshprobe"
 	"github.com/titpetric/task-ui/storage"
 	"github.com/titpetric/task-ui/workflow"
 )
@@ -136,6 +137,7 @@ func newFixture(t *testing.T) *fixture {
 		ArtifactStore: &artifactstore.Store{Dir: filepath.Join(t.TempDir(), "tree")},
 		Board:         &note.Board{Notes: storage.NewNoteStorage(db), Users: users, Agent: "claude"},
 		Integrations:  &integration.Store{Secrets: secrets},
+		SSH:           &sshprobe.Prober{Users: []string{"debian", "root"}, Timeout: 2 * time.Second, TTL: time.Hour, Command: fakeSSH(t)},
 		Disk:          &diskusage.Meter{TTL: time.Minute},
 	}
 	f.opts.Hosts = &beszel.Inventory{TTL: time.Minute, Settings: func(ctx context.Context) (string, string, error) {
@@ -281,4 +283,14 @@ func TestRoutes_Guard(t *testing.T) {
 	assert.Equal(t, http.StatusNotFound, gone.Status)
 	assert.Contains(t, gone.Body, "Not found")
 	assert.Contains(t, gone.Body, "/nothing")
+}
+
+// fakeSSH is an ssh that signs in as debian to 10.10.10.11 and to nothing
+// else.
+func fakeSSH(t *testing.T) string {
+	t.Helper()
+	script := filepath.Join(t.TempDir(), "ssh")
+	body := "#!/bin/sh\ntarget=$(eval echo \\${$(($# - 1))})\n[ \"$target\" = debian@10.10.10.11 ] && exit 0\nexit 255\n"
+	assert.NoError(t, os.WriteFile(script, []byte(body), 0o755))
+	return script
 }

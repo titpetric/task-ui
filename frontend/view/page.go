@@ -69,6 +69,9 @@ type Page struct {
 	// the integration is not set up.
 	Hosts    []beszel.System
 	HostsOff bool
+	// Logins are who task-ui signs in to each host as over ssh, user@host
+	// by the host's address; nil leaves the SSH column out.
+	Logins map[string]string
 
 	Runs []Run
 	// Activity charts when the runs of the page ran, nil without any.

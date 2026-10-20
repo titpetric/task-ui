@@ -1,6 +1,7 @@
 package beszel
 
 import (
+	"sort"
 	"time"
 )
 
@@ -62,4 +63,29 @@ func (s System) Up() bool {
 // UptimeDuration is how long the host has run.
 func (s System) UptimeDuration() time.Duration {
 	return time.Duration(s.Info.Uptime) * time.Second
+}
+
+// ByCapacity returns the systems largest first: by cores, then by RAM,
+// then by name. The slice it was given stays as it was.
+func ByCapacity(systems []System) []System {
+	sorted := append([]System(nil), systems...)
+	sort.SliceStable(sorted, func(i, j int) bool {
+		a, b := sorted[i], sorted[j]
+		if a.CPUs() != b.CPUs() {
+			return a.CPUs() > b.CPUs()
+		}
+		if a.memory() != b.memory() {
+			return a.memory() > b.memory()
+		}
+		return a.Name < b.Name
+	})
+	return sorted
+}
+
+// memory is the host's RAM in GB, 0 without stats.
+func (s System) memory() float64 {
+	if s.Stats == nil {
+		return 0
+	}
+	return s.Stats.Memory
 }
