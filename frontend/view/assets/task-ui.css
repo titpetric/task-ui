@@ -3252,8 +3252,11 @@ dialog.preview #preview-version {
   font-size: 0.75rem;
 }
 
+/* One column as wide as the page: a long line in a code block scrolls in
+   its block, never widens the note. */
 .notes {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 0.75rem;
 }
 
@@ -3398,6 +3401,7 @@ dialog.preview #preview-version {
 
 .replies {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 0.6rem;
   margin: 0.75rem 0 0;
   padding: 0 0 0 1rem;
