@@ -469,12 +469,38 @@ details[open].user .avatar {
 aside.rail {
   border-left: 1px solid var(--line);
   background: var(--ink-1);
-  padding: 0.9rem 0 2rem;
   min-height: 100%;
+}
+
+aside.rail .rail-inner {
+  padding: 0.9rem 0 1rem;
 }
 
 aside.rail .side-label {
   margin-top: 0;
+}
+
+/* The rail holds its place while the page scrolls, as tall as the
+   screen; past that, the recents scroll on their own. */
+aside.rail .rail-inner {
+  position: sticky;
+  top: 0;
+  max-height: 100vh;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+/* A heading over the recents of one hour, or one day. */
+.recents .recent-group {
+  margin: 0.7rem 1.1rem 0.2rem;
+  color: var(--text-faint);
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.recents .recent-group:first-child {
+  margin-top: 0.2rem;
 }
 
 aside.rail .side-label a {

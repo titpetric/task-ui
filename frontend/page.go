@@ -17,8 +17,9 @@ import (
 	"github.com/titpetric/task-ui/storage"
 )
 
-// recentCount is how many runs the sidebar lists.
-const recentCount = 10
+// recentCount is how many runs the rail lists, more than a screen holds:
+// the rail scrolls.
+const recentCount = 50
 
 // page returns the page model with the chrome filled in: the user, the
 // folders they see, the recent runs and what is running.
@@ -46,8 +47,8 @@ func (h *Handlers) page(r *http.Request, title string) *view.Page {
 	}
 	p.SideFolders = h.sideFolders(r.Context(), p.Folders)
 	p.Running = h.running(user)
-	runs := h.visibleRuns(r.Context(), user, storage.RunFilter{Limit: 5 * recentCount})
-	p.Recents = view.Recents(runs, h.visibleFlowRuns(r.Context(), user, recentCount), recentCount)
+	runs := h.visibleRuns(r.Context(), user, storage.RunFilter{Limit: 2 * recentCount})
+	p.Recents = view.GroupRecents(p.Now, view.Recents(runs, h.visibleFlowRuns(r.Context(), user, recentCount), recentCount))
 	p.SideWorkflows = h.visibleWorkflows(r.Context(), p)
 	return p
 }

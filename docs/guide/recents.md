@@ -5,6 +5,11 @@ at the top, the way a chat app lists conversations. A screen narrower than
 1200 pixels, a phone included, leaves the rail out; **Runs** in the
 sidebar lists the same runs, and the rail's heading links there.
 
+The rail lists the latest 50, under headings of when they started: **In
+the last hour**, **1 hour ago**, **2 hours ago**, and past a day, **1 day
+ago** and on. It stays in place, as tall as the screen, while the page
+scrolls, and scrolls on its own past what the screen holds.
+
 Each entry shows how the run went (its dot), the job and folder, and who
 started it, as their initials. A workflow run shows the workflow's name
 and marks itself as a workflow. A run in progress carries a play or an
