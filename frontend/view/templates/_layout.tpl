@@ -470,6 +470,24 @@
 </div>
 {{- end }}
 
+{{- /* whopicker is a "who may run" field as boxes: the roles that run,
+     then the users, each a value of the set the name holds. */}}
+{{- define "whopicker" }}
+{{- $name := index . 0 }}{{ $choices := index . 1 }}
+<div class="checks who">
+	<span class="faint">Roles</span>
+	{{- range $choices }}{{ if .Role }}
+	<label class="check"><input type="checkbox" name="{{ $name }}" value="{{ .Name }}" data-type="set"{{ if .Checked }} checked{{ end }}> {{ .Name }}</label>
+	{{- end }}{{ end }}
+</div>
+<div class="checks who">
+	<span class="faint">Users</span>
+	{{- range $choices }}{{ if not .Role }}
+	<label class="check"><input type="checkbox" name="{{ $name }}" value="{{ .Name }}" data-type="set"{{ if .Checked }} checked{{ end }}> {{ .Name }}</label>
+	{{- end }}{{ end }}
+</div>
+{{- end }}
+
 {{- define "keypolicies" }}
 {{- $roles := index . 0 }}{{ $users := index . 1 }}{{ $all := index . 2 }}
 <div class="field">

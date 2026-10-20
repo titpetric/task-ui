@@ -124,6 +124,10 @@ type Page struct {
 	Users      []model.User
 	// Account is the user a form edits.
 	Account *model.User
+	// AllowChoices are the boxes of a project's "who may run", and
+	// JobAllowChoices those of each job, by job ID.
+	AllowChoices    []WhoChoice
+	JobAllowChoices map[string][]WhoChoice
 	// FolderChoices are the boxes of the user form's folders.
 	FolderChoices []FolderChoice
 	// CanAddUsers shows Create user: the server writes a password file.

@@ -33,13 +33,17 @@ func TestProjectEdit(t *testing.T) {
 	empty := f.page(t, asAdmin, "/settings/projects/infra")
 	assert.Contains(t, empty, "<h2>Configure infra</h2>")
 	assert.Contains(t, empty, `data-api="/api/projects/infra"`)
-	assert.Contains(t, empty, `name="allow" data-type="list" value=""`)
+	// Who may run is a box a role and a user; none checked is everyone.
+	assert.Contains(t, empty, `<input type="checkbox" name="allow" value="runner" data-type="set">`)
+	assert.Contains(t, empty, `<input type="checkbox" name="allow" value="ops" data-type="set">`)
+	assert.NotContains(t, empty, `name="allow" value="viewer"`)
 
 	project := &model.Project{Folder: "infra", Title: "Infra", Allow: model.EncodeList([]string{"ops", "release"}), Sources: model.EncodeList([]string{"Makefile"})}
 	assert.NoError(t, f.opts.Projects.Create(context.Background(), project))
 	filled := f.page(t, asAdmin, "/settings/projects/infra")
 	assert.Contains(t, filled, `value="Infra"`)
-	assert.Contains(t, filled, `value="ops, release"`)
+	assert.Contains(t, filled, `<input type="checkbox" name="allow" value="ops" data-type="set" checked>`)
+	assert.Contains(t, filled, `<input type="checkbox" name="allow" value="release" data-type="set" checked>`)
 	assert.Contains(t, filled, `value="Makefile"`)
 
 	// A folder without sources still opens its settings; a bad name does not.
@@ -65,13 +69,14 @@ func TestProjectEdit_PerJob(t *testing.T) {
 	f := newFixture(t)
 
 	fresh := f.page(t, asAdmin, "/settings/projects/infra")
-	assert.Contains(t, fresh, `name="job_allow.plan" data-type="list" value=""`)
+	assert.Contains(t, fresh, `<input type="checkbox" name="job_allow.plan" value="ops" data-type="set">`)
 	assert.Contains(t, fresh, `name="job_hours.slow" value=""`)
 
 	project := &model.Project{Folder: "infra", JobAllow: model.EncodeMap(map[string][]string{"plan": {"ops", "release"}}), JobHours: `{"slow":"mon-fri 9-17"}`}
 	assert.NoError(t, f.opts.Projects.Create(context.Background(), project))
 	filled := f.page(t, asAdmin, "/settings/projects/infra")
-	assert.Contains(t, filled, `name="job_allow.plan" data-type="list" value="ops, release"`)
+	assert.Contains(t, filled, `<input type="checkbox" name="job_allow.plan" value="ops" data-type="set" checked>`)
+	assert.Contains(t, filled, `<input type="checkbox" name="job_allow.plan" value="release" data-type="set" checked>`) // no such user: kept
 	assert.Contains(t, filled, `name="job_hours.slow" value="mon-fri 9-17"`)
 }
 

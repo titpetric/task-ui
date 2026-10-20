@@ -1057,7 +1057,8 @@ select {
 }
 
 /* The hint after a label is a sentence, not a label. */
-.field > label .faint {
+.field > label .faint,
+.field > .label .faint {
   margin-left: 0.35rem;
   font-weight: 400;
   letter-spacing: 0;
