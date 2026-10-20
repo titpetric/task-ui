@@ -35,6 +35,10 @@ stay as they are:
   weekend. Days are names or ranges (`mon-fri`, `sat,sun`, `weekdays`,
   `daily`); spans are hours or `hh:mm`.
 
+The API sets three more on a project: `commands`, the program a kind of
+job runs with (`make: gmake`), and `job_allow` and `job_hours`, who may
+run and when, per job.
+
 ![Configure a folder](../assets/project-edit-dark.png)
 
 ## Users
@@ -49,6 +53,10 @@ else is a runner.
 
 What is set here is which folders a user sees: open a user and pick
 them, or leave it empty for all.
+
+A client that is not a browser, such as an agent over [MCP](mcp.md),
+signs in with a token instead: `task-ui token <user> <name>` on the
+server prints one, once.
 
 ## Secrets
 

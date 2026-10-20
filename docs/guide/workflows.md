@@ -19,6 +19,11 @@ place, all its steps.
 Running a workflow needs the right to run every step in it. A workflow
 runs once at a time; starting it again while it runs is refused.
 
+An agent runs one over [MCP](mcp.md) by name: `run_workflow` starts it
+and can wait for the end, then says how each step went;
+`list_workflows` and `list_workflow_runs` show the chains and their
+last runs.
+
 ## The workflow page
 
 ![A workflow: its chain and its runs](../assets/workflow-dark.png)

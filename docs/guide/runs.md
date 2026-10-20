@@ -42,13 +42,15 @@ page: the run's terminal, live.
   on it again. A window that was away gets the tail of what it missed.
 - **Runners type into it.** Input goes to the job, and the terminal takes
   the window's size. A viewer's window is read only.
-- **Stop** asks the job to end (SIGHUP and SIGTERM, then SIGKILL after a
-  grace period) and records it as `stopped`. **Kill** ends it now, as
+- **Stop** asks the job to end (SIGHUP and SIGTERM, then SIGKILL after
+  `TASK_UI_GRACE`, ten seconds) and records it as `stopped`. **Kill** ends it now, as
   `killed`.
 - **Run again** starts the job once more when it has ended.
 
-A finished run opens as history: its whole recording played into the
-window, with how it ended, and **Run again** for whoever may run it.
+A finished run stays attachable, its last frame in memory, for
+`TASK_UI_KEEP`, fifteen minutes; after that it opens as history: its
+whole recording played into the window, with how it ended, and **Run
+again** for whoever may run it.
 
 ### One run per job
 
@@ -56,6 +58,14 @@ A job runs once at a time across the instance. Starting a job that runs
 already attaches to the run in the way. **Run force** kills that run and
 starts again; out of a folder's hours it also asks why, and keeps the
 reason with the run (see [Projects and jobs](projects.md#hours)).
+
+### From an agent
+
+An agent starts runs over [MCP](mcp.md) as the user of its token:
+`run_job` starts one and can wait for it to end, `list_runs` and
+`get_run` read the history and the end of a run's output. Such a run is
+like any other: it is listed here under that user, and anyone allowed
+attaches to it.
 
 ## A run's page
 

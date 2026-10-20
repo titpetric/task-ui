@@ -36,7 +36,8 @@ func New(opts Options) *Handlers {
 }
 
 // Routes returns the router, to mount under /api. Every route expects
-// the user on the context.
+// the user on the context. The routes are frozen: one is added only for
+// a need these cannot serve, with the reason in the change.
 func (h *Handlers) Routes() http.Handler {
 	r := chi.NewRouter()
 

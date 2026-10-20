@@ -10,46 +10,14 @@ as it runs.
 
 ![The dashboard: every terminal in progress, as it looks right now](https://raw.githubusercontent.com/titpetric/task-ui/main/docs/assets/task-ui.png)
 
-- **Folders and jobs.** A folder is a working directory and whatever it
-  holds that can be run. Everything on the page comes from the files
-  themselves: names, descriptions, steps, the files they include. A
-  folder page is its jobs as cards, each with Run; the sidebar lists
-  every folder's jobs with a play button, so a job is one click from
-  anywhere.
-- **Runs are sessions.** Run opens a window on the run. Closing the window
-  leaves the run running; Stop ends it, Kill ends it now. Anyone who may
-  see the job attaches from the sidebar, the dashboard or the run list;
-  runners type into it, viewers watch.
-- **The dashboard.** Every terminal in progress as its last frame, for
-  everyone, the way a control room shows its screens. Each frame is one
-  URL, as SVG or text.
-- **One run per job.** A job runs once at a time across the instance,
-  different jobs run side by side. Run force kills the active run and
-  starts again.
-- **Workflows.** A named chain of jobs from any folders, a one button
-  deploy: build, test, push, plan, apply. Run starts each step when the
-  one before it ended ok; the first that does not end ok ends the
-  workflow and the rest are skipped. Anyone can make a workflow from the
-  jobs they see; running it needs the right to run every step.
-- **Users and roles.** Login is mandatory. Users come from a password
-  file, htpasswd style, read again whenever it changes; `TASK_UI_ADMINS`
-  and `TASK_UI_VIEWERS` name the admins and the viewers, everyone else is
-  a runner.
-- **Hours.** A folder runs in office hours only when told to. Out of
-  hours Run force asks why, and the reason is kept with the run.
-- **Projects from git.** Admins add a folder by cloning a repository; the
-  clone is the test. A checkout is pulled before every run.
-- **History, artifacts, schedules.** Every run is recorded with who ran it,
-  how it ended and the full terminal output. Files a job leaves under
-  `$TASK_UI_ARTIFACTS` are kept. A job runs on a cron expression under the
-  name of whoever scheduled it.
-- **Settings.** Admins manage the instance SSH keys, the secrets added to
-  every run, encrypted at rest with those keys, the env files the
-  pipelines read, and the folders each user sees.
-
-The [usage guide](docs/README.md) walks through the screen as the sidebar
-lists it, a chapter a section: the dashboard, workflows, runs, artifacts,
-schedules, the projects and their jobs, recents, and the settings.
+How to use it is in the [usage guide](docs/README.md), a chapter per
+section of the sidebar: the [dashboard](docs/guide/dashboard.md),
+[workflows](docs/guide/workflows.md), [runs](docs/guide/runs.md),
+[artifacts](docs/guide/artifacts.md), [schedules](docs/guide/scheduled.md),
+the [projects and their jobs](docs/guide/projects.md), the
+[recents](docs/guide/recents.md), the [settings](docs/guide/settings.md),
+and [MCP](docs/guide/mcp.md), for an agent that runs jobs. This README
+covers running the server and working on it.
 
 The look follows [oida](https://github.com/titpetric/oida): hairlines,
 one amber accent, dark and light from `prefers-color-scheme`. The type is
@@ -123,214 +91,41 @@ wherever `TASK_UI_HTPASSWD` points: one `name:hash` per line, the
 htpasswd format, bcrypt hashes only. The file is the truth. It is read
 on startup and again whenever it changes, so adding, resetting or
 removing a user needs no restart: a user not in the file cannot sign in
-and is removed from the instance; one in the file signs in with the
-password it holds. A file that is not there yet is a warning, not an
-error: the instance starts and reads it once `task-ui passwd` makes it.
-
-Adding a user, or resetting a password, is one line either way:
+and is removed from the instance. A file that is not there yet is a
+warning, not an error: the instance reads it once `task-ui passwd` makes
+it.
 
 ```sh
-task-ui passwd alice            # asks nothing, reads the password from stdin
-task-ui passwd alice s3cret     # or takes it as an argument
-htpasswd -B .htpasswd alice     # the same with apache2-utils; -B for bcrypt
+task-ui passwd alice                         # add or reset; the password from stdin
+task-ui passwd alice s3cret                  # or as an argument
+htpasswd -B .htpasswd alice                  # the same with apache2-utils; -B for bcrypt
+task-ui hash s3cret                          # a hash, for editing the file by hand
+task-ui email alice add alice@example.com    # an address alice signs in with; `rm` removes
+task-ui backup alice                         # ten backup passwords, each signs in once
+task-ui token alice cli                      # a token for a client such as an MCP agent
 ```
-
-`task-ui passwd` writes the file `TASK_UI_HTPASSWD` names (or
-`.htpasswd` in `TASK_UI_ROOT`), adding the line or replacing it. To
-remove a user, delete the line. `task-ui hash <password>` prints a hash
-for editing the file by hand.
 
 What a user signs in with is kept apart from the user row, so nothing
 that reads a user, the API included, carries a credential:
-`user_auth_password` holds the password hashes and `user_email` the
-email addresses. Sign in takes the user name or any of the user's
-addresses, and the password or a backup password:
+`user_auth_password` holds the password hashes, `user_email` the
+addresses and `user_auth_token` the token hashes. The `email`, `backup`
+and `token` commands work on the database of a user the server has read
+from the password file. To remove a user, delete the line.
 
-```sh
-task-ui email alice                          # the addresses alice signs in with
-task-ui email alice add alice@example.com    # add one or more, `rm` removes
-task-ui backup alice                         # ten new backup passwords, printed once
-```
-
-A backup password signs in once and is then used up; `task-ui backup`
-replaces the previous set. Both commands work on the database of a user
-the server has read from the password file.
-
-The roles are labels from the environment: `TASK_UI_ADMINS=alice,bob`
-makes those two admins, `TASK_UI_VIEWERS=support` a viewer, and everyone
-else in the file is a runner. Which folders a user sees is set per user
-under Settings, Users; empty shows them all.
-
-| Role     | See jobs, watch runs, read history | Run, Run force, Stop, Kill, schedule, workflows | Settings |
-|----------|------------------------------------|-----------------------------------------------|----------|
-| `admin`  | yes                                | everything                                    | yes      |
-| `runner` | yes                                | what the allow lists permit                   | no       |
-| `viewer` | yes                                | no                                            | no       |
-
-
-## Conventions
-
-A folder may follow several conventions at once; each one is a source
-with its own table on the folder page. Nothing task-ui needs is an
-extension of any file, and no pipeline file is ever written.
-
-| Source | File | Runs with | Targets |
-|--------|------|-----------|---------|
-| atkins | `atkins.yml`, `.atkins.yml` | `atkins -f <file> <job>` | jobs with a `desc`; `show: false` hides one |
-| task | `Taskfile.yml` | `task -t <file> <task>` | tasks with a `desc`; `internal: true` hides one |
-| make | `GNUmakefile`, `makefile`, `Makefile` | `make <target>` | plain targets; `target: ## text` or a comment above describes one |
-| npm | `package.json` | `npm run <script>`, or `pnpm`, `yarn`, `bun` after the lock file | the scripts, hooks folded into theirs |
-| composer | `composer.json` | `composer run-script <script>` | the scripts, with `scripts-descriptions` |
-| script | `scripts/*` | `./scripts/<file>`, or `sh` for a `.sh` that is not executable | one per file; the first comment describes it, `# interactive: true` in the same comments makes it take keyboard input |
-
-A pipeline file stands for its folder: a folder with `atkins.yml` or a
-Taskfile lists that pipeline's targets only, and the Makefile, package
-scripts or `scripts/` beside it are the pipeline's business. A folder
-that is itself a `scripts` directory with a pipeline file also lists the
-scripts beside it that its pipeline does not run, under their own names:
-a `bash.sh` with `exec bash` next to the pipeline's jobs. Without a
-pipeline file every convention is a source. A job's ID is its target
-name, or `kind:name` when the folder lists more than one convention, so
-`make build` and `npm run build` stay apart.
-
-Discovery goes as deep as the folders do: every directory under the root
-with something to run is a folder, at its path (`services/api`), and the
-sidebar shows them as a tree, each folder indented under its parent with
-its targets below it. Under a folder with a pipeline file only folders
-with a pipeline file of their own are listed, so a Go tree's Makefiles
-do not become folders; under a plain folder they do. Hidden directories,
-`node_modules`, `vendor` and `testdata` are never looked into.
-
-Pipeline sources also give the folder its name and description (atkins
-`name` and `help`), the files under `include`, and the dotenv files under
-`env.include` or `dotenv`, which task-ui manages (below).
-
-A convention is a `Detector` in the `detector` package: one type that
-reads a folder and returns a `Source`, added to the `Detectors` list. The
-rest of task-ui runs on sources and jobs and never asks which kind they
-are.
-
-Settings, Projects, Configure sets what the instance adds to a folder: a
-title and description, who may run it (`allow`: user names or roles,
-empty means every runner), and which `sources` to read, which is also
-how a pipeline folder gets its Makefile or scripts back as jobs. Through the API a
-project also takes `commands` (the runner per kind, `make: gmake`) and
-`job_allow` (per job). Pipeline files stay as they are.
-
-Jobs get `TASK_UI=1`, `TASK_UI_USER`, `TASK_UI_FOLDER`, `TASK_UI_JOB`,
-`TASK_UI_RUN_ID` and `TASK_UI_ARTIFACTS` in the environment, along with
-the secrets.
-
-## Runs, windows and the dashboard
-
-A run is a session: the process on a pty, a terminal emulator following
-its output so the screen is known at every moment, the windows attached,
-and how it ended. The window that started it is one of many. Closing a
-window does nothing to the run; the sidebar, the dashboard and the run
-list open a window on it again. A window that was away gets the tail of
-what it missed.
-
-A viewer's window is read only. A runner's window takes input, resizes
-the terminal, and ends the run: **Stop** sends the process group SIGHUP
-and SIGTERM, then SIGKILL after `TASK_UI_GRACE`, and records the run as
-`stopped`; **Kill** does the same and records `killed`, as does **Run
-force** when it takes a job over. A finished session stays attachable for
-`TASK_UI_KEEP`, with its last frame; after that the row and the recording
-remain.
-
-The dashboard shows the frame of every live session, refreshed every two
-seconds. `/api/runs/{id}/frame.svg` is the frame as an image, with the
-terminal colors, `/api/runs/{id}/frame.txt` as text, and
-`/api/runs/{id}/cast` is the recording, an asciicast v2 file. The runs
-page lists every run with who started it, how many windows are on it and
-how it ended, filtered by folder, job and state.
-
-## Hours
-
-A folder can be limited to office hours: one rule per line in Settings,
-Projects, Configure, days then a span. The last rule that covers a day
-decides it, so
-
-```
-mon-fri 9-17
-fri 9-13
-```
-
-runs Monday to Thursday nine to five and Friday mornings, and nothing on
-the weekend. Days are names or ranges (`mon-fri`, `sat,sun`, `weekdays`,
-`daily`), spans are hours or `hh:mm`. The API also sets hours per job
-(`job_hours`). The folder and job pages say whether it is open now.
-
-Out of hours a run is refused with "out of hours". Run force is still
-there, but it asks why: the reason is required, kept on the run, and
-shown wherever the run is listed, as the log entry of who ran what out
-of hours and why. Scheduled runs are not gated; the schedule is the
-decision.
-
-## Projects from git
-
-Settings, Projects lists the folders under the root with their source.
-Add project clones a repository into the root: it either succeeds and the
-folder appears in the sidebar, or git's output is shown and nothing is
-kept. Private repositories are reached with the instance SSH keys, which
-git uses through `GIT_SSH_COMMAND` with a `known_hosts` file next to them.
-
-A folder in a checkout is pulled with `git pull --ff-only` before every
-run, in the run's own terminal, so the job always runs the latest
-version of the project; a folder inside a checkout pulls the checkout.
-A pull that fails fails the run.
-
-A run gets SSH keys only through an ssh agent that task-ui serves for the
-run alone, with the instance keys whose policies name the role or the
-name of whoever started it; a scheduled run gets its creator's. The job
-gets `SSH_AUTH_SOCK`, so `ssh`, `git`, `rsync` and terraform's agent
-authentication use them. `ssh` and `git` in a job also use the
-container's own `~/.ssh` keys, the host's identity. The keys stay in memory and the agent ends with the run; the
-terminal says which keys were loaded, or `(none)`. A checkout's `.ssh/`
-folder is not loaded: upload a key a project needs and give it by policy.
-
-## Artifacts
-
-A job that writes files to the directory named in `$TASK_UI_ARTIFACTS`
-leaves artifacts: when the run ends they are recorded with their size and
-type, listed on the run and under Artifacts, and served for download.
-Admins delete them.
-
-## Scheduled
-
-A job runs on a schedule: a five field cron expression (`0 3 * * *`,
-`*/15 * * * 1-5`, names and `@hourly`, `@daily`, `@weekly`, `@monthly`
-work too), in the server's time zone. The run starts in the background
-under the name of whoever scheduled it, with their permissions, and shows
-up like any other. A job that is still running when its time comes is
-skipped; a schedule whose job is gone is disabled.
-
-## Secrets and env files
-
-Settings hold the secrets: variables added to the environment of every run,
-for all folders or for one folder, where the folder's value wins. They are
-never shown again in full, and they are encrypted at rest with the
-instance SSH keys: every ed25519 and RSA key under Settings, SSH keys
-encrypts (as an [age](https://age-encryption.org) recipient), and the
-private key files decrypt. Without such a key no secret can be added.
-A rotation keeps the old pair as a backup, so everything still opens, and
-writes the secrets again for the new key; Re-encrypt on the secrets page
-does the same by hand, after which the backup can go. The last key that
-opens the secrets cannot be deleted until another is there. ECDSA keys
-reach hosts but do not encrypt.
-
-A folder page lists the dotenv files its sources declare. An admin edits
-the content from the UI; the file in the folder is generated from it with
-the secrets appended, when it is saved and again before every run. A file
-that was never edited is read from the folder as it is. The pipeline file
-is never changed.
+`TASK_UI_ADMINS=alice,bob` makes those two admins, `TASK_UI_VIEWERS=support`
+a viewer, and everyone else in the file is a runner; what each role may
+do is in [the guide](docs/guide/projects.md#who-may-run-what).
 
 ## API
 
 Everything the pages do goes through `/api`, JSON over the session cookie,
 or over a token in an `Authorization: Bearer` header (`task-ui token
-<user> <name>` prints one). Writes need the same origin. The browser pages are the reference client;
-`scripts/run.sh` is the curl one.
+<user> <name>` prints one). Writes need the same origin. The browser
+pages are the reference client; `scripts/run.sh` is the curl one.
+
+The surface below, and the MCP tools on it, is frozen: a route or a tool
+is added only for a need these cannot serve, with the reason in the
+change.
 
 | Method | Path | Does |
 |--------|------|------|
@@ -355,18 +150,9 @@ or over a token in an `Authorization: Bearer` header (`task-ui token
 
 ### MCP
 
-`/api/mcp` is an MCP server over the streamable HTTP transport, for an
-agent that runs jobs. It signs in with a token, and its tools call the
-API as the token's user: `list_jobs`, `list_workflows`, `run_job`,
-`run_workflow` (both can wait for the end), `list_runs`, `get_run` (with
-the end of the output) and `list_workflow_runs`. See
-[the MCP chapter](docs/guide/mcp.md).
-
-```bash
-task-ui token claude claude-code
-claude mcp add --transport http --scope user task https://task.example.com/api/mcp \
-  --header "Authorization: Bearer $TOKEN"
-```
+`/api/mcp` is an MCP server over the streamable HTTP transport: seven
+tools to list jobs and workflows, run them, and read the runs, as the
+token's user. Its use is in [the MCP chapter](docs/guide/mcp.md).
 
 ## Screenshots
 
@@ -403,13 +189,19 @@ domains, the domains to `model` and `storage`, `model` to nothing of ours.
 | `scheduler` | cron `Expression`s and the `Loop` that starts due schedules                  |
 | `hours`     | the office hours `Rules` a folder or job may run in                          |
 | `recording` | the asciicast files                                                          |
-| `access`    | who may do what: the password file, `Sessions`, the `Guard`                  |
+| `access`    | who may do what: the password file, `Sessions`, tokens, the `Guard`          |
 | `secret`    | the secrets, encrypted at rest with the SSH keys through the `Vault`         |
 | `envfile`   | the dotenv files a folder reads, as task-ui manages and generates them       |
 | `sshkey`, `git`, `dotenv` | the key pairs, the checkouts, the file format                 |
 | `api`       | the JSON endpoints and the attach socket                                     |
+| `mcp`       | the MCP server: JSON-RPC tools that call the API as the token's user         |
 | `frontend`  | the pages; `frontend/view` renders them from embedded templates and assets   |
 | `app`       | the composition root: configuration, wiring, serving                         |
+
+A convention is a `Detector` in the `detector` package: one type that
+reads a folder and returns a `Source`, added to the `Detectors` list. The
+rest of task-ui runs on sources and jobs and never asks which kind they
+are.
 
 `splint ./...` (`task lint`) is the bar: every file has a test beside it,
 every exported symbol a test that reaches it, every symbol a file named
