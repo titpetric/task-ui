@@ -80,3 +80,35 @@ func (s *ArtifactStorage) Delete(ctx context.Context, id string) error {
 func (s *ArtifactStorage) DeleteByRun(ctx context.Context, runID string) error {
 	return client(s.db).Exec(ctx, "DELETE FROM artifact WHERE run_id = ?", runID)
 }
+
+// Latest returns the newest version of every path in the artifact tree,
+// the artifacts with a commit, by path.
+func (s *ArtifactStorage) Latest(ctx context.Context) ([]model.Artifact, error) {
+	return client(s.db).Select[model.Artifact](ctx, `SELECT * FROM artifact WHERE id IN (
+		SELECT id FROM (
+			SELECT id, ROW_NUMBER() OVER (PARTITION BY path ORDER BY rowid DESC) AS version
+			FROM artifact WHERE commit_id != ''
+		) WHERE version = 1
+	) ORDER BY path`)
+}
+
+// Squash follows the artifact tree flattening its history to one commit:
+// the newest version of each path now lives in head, and the artifacts of
+// the older versions go, as their files did.
+func (s *ArtifactStorage) Squash(ctx context.Context, head string) error {
+	db := client(s.db)
+	if err := db.Exec(ctx, `DELETE FROM artifact WHERE commit_id != '' AND id NOT IN (
+		SELECT id FROM (
+			SELECT id, ROW_NUMBER() OVER (PARTITION BY path ORDER BY rowid DESC) AS version
+			FROM artifact WHERE commit_id != ''
+		) WHERE version = 1
+	)`); err != nil {
+		return err
+	}
+	return db.Exec(ctx, "UPDATE artifact SET commit_id = ? WHERE commit_id != ''", head)
+}
+
+// DeleteAll removes every artifact.
+func (s *ArtifactStorage) DeleteAll(ctx context.Context) error {
+	return client(s.db).Exec(ctx, "DELETE FROM artifact")
+}

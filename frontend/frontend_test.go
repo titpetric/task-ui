@@ -15,7 +15,9 @@ import (
 	_ "modernc.org/sqlite" // the driver storage opens
 
 	"github.com/titpetric/task-ui/access"
+	"github.com/titpetric/task-ui/artifactstore"
 	"github.com/titpetric/task-ui/detector"
+	"github.com/titpetric/task-ui/diskusage"
 	"github.com/titpetric/task-ui/envfile"
 	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/frontend"
@@ -107,27 +109,29 @@ func newFixture(t *testing.T) *fixture {
 	cat := catalogue{"infra": infra, "private": private, "infra/edge": edge}
 	workflows, workflowRuns := storage.NewWorkflowStorage(db), storage.NewWorkflowRunStorage(db)
 	f.opts = frontend.Options{
-		Recordings:   recordings,
-		Workflows:    workflows,
-		WorkflowRuns: workflowRuns,
-		Flows:        workflow.New(workflows, workflowRuns, cat, manager),
-		Guard:        access.NewGuard(users, access.NewSessions("test-secret", time.Hour)),
-		Auth:         access.NewAuthenticator(users, storage.NewUserEmailStorage(db), storage.NewUserAuthPasswordStorage(db)),
-		Users:        users,
-		Projects:     storage.NewProjectStorage(db),
-		Runs:         runs,
-		Artifacts:    storage.NewArtifactStorage(db),
-		Schedules:    storage.NewScheduleStorage(db),
-		Secrets:      secrets,
-		Runner:       manager,
-		Catalogue:    cat,
-		Git:          &git.Git{},
-		Keys:         keys,
-		KeyPolicies:  storage.NewSSHKeyPolicyStorage(db),
-		Env:          envfile.New(storage.NewEnvFileStorage(db), secrets),
-		Root:         root,
-		Version:      "test",
-		Now:          func() time.Time { return time.Date(2026, time.October, 16, 22, 0, 0, 0, time.Local) },
+		Recordings:    recordings,
+		Workflows:     workflows,
+		WorkflowRuns:  workflowRuns,
+		Flows:         workflow.New(workflows, workflowRuns, cat, manager),
+		Guard:         access.NewGuard(users, access.NewSessions("test-secret", time.Hour)),
+		Auth:          access.NewAuthenticator(users, storage.NewUserEmailStorage(db), storage.NewUserAuthPasswordStorage(db)),
+		Users:         users,
+		Projects:      storage.NewProjectStorage(db),
+		Runs:          runs,
+		Artifacts:     storage.NewArtifactStorage(db),
+		Schedules:     storage.NewScheduleStorage(db),
+		Secrets:       secrets,
+		Runner:        manager,
+		Catalogue:     cat,
+		Git:           &git.Git{},
+		Keys:          keys,
+		KeyPolicies:   storage.NewSSHKeyPolicyStorage(db),
+		Env:           envfile.New(storage.NewEnvFileStorage(db), secrets),
+		Root:          root,
+		Version:       "test",
+		Now:           func() time.Time { return time.Date(2026, time.October, 16, 22, 0, 0, 0, time.Local) },
+		ArtifactStore: &artifactstore.Store{Dir: filepath.Join(t.TempDir(), "tree")},
+		Disk:          &diskusage.Meter{TTL: time.Minute},
 	}
 	h, err := frontend.New(f.opts)
 	assert.NoError(t, err)

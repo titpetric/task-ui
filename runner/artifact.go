@@ -1,6 +1,7 @@
 package runner
 
 import (
+	"bytes"
 	"context"
 	"io"
 	"io/fs"
@@ -11,37 +12,84 @@ import (
 	"strings"
 
 	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/storage"
 )
 
 // collectArtifacts records every file a run left under its artifact
-// directory. It removes an empty directory. The files stay where the run
-// wrote them: the row says where.
+// directory. With an artifact store, the files go into its tree as one
+// commit, the artifacts name that commit, and the run's directory goes;
+// the store squashes its history when it grows past what it keeps.
+// Without one, or when the store fails, the files stay where the run wrote
+// them. It removes an empty directory.
 func (m *Manager) collectArtifacts(ctx context.Context, session *Session) {
-	dir := m.artifactDir(session.Run)
+	run := session.Run
+	dir := m.artifactDir(run)
 	if dir == "" || m.opts.Artifacts == nil {
 		return
 	}
 	if _, err := os.Stat(dir); err != nil {
 		return
 	}
-	found := 0
+	var found []*model.Artifact
 	err := filepath.WalkDir(dir, func(path string, entry fs.DirEntry, err error) error {
-		if err != nil || entry.IsDir() {
+		if err != nil || entry.IsDir() || !entry.Type().IsRegular() {
 			return err
 		}
-		artifact, err := describeArtifact(session.Run, dir, path, entry)
+		artifact, err := describeArtifact(run, dir, path, entry)
 		if err != nil {
 			return err
 		}
-		found++
-		return m.opts.Artifacts.Create(ctx, artifact)
+		found = append(found, artifact)
+		return nil
 	})
 	if err != nil {
-		slog.Warn("artifacts not collected", "run", session.Run.ID, "err", err)
+		slog.Warn("artifacts not collected", "run", run.ID, "err", err)
 	}
-	if found == 0 {
-		_ = os.Remove(dir)
+	if len(found) == 0 {
+		_ = os.RemoveAll(dir)
+		return
 	}
+	commit := m.storeArtifacts(ctx, run, dir)
+	for _, artifact := range found {
+		if commit != "" {
+			artifact.Path, artifact.CommitID = artifact.Name, commit
+		}
+		if err := m.opts.Artifacts.Create(ctx, artifact); err != nil {
+			slog.Warn("artifact not recorded", "run", run.ID, "name", artifact.Name, "err", err)
+		}
+	}
+	if commit == "" {
+		return
+	}
+	_ = os.RemoveAll(dir)
+	head, err := m.opts.ArtifactStore.Squash(ctx)
+	if err != nil {
+		slog.Warn("artifact history not squashed", "err", err)
+		return
+	}
+	if head != "" {
+		if err := m.opts.Artifacts.Squash(ctx, head); err != nil {
+			slog.Warn("artifact versions not updated after the squash", "err", err)
+		}
+	}
+}
+
+// storeArtifacts commits a run's directory into the artifact store and
+// returns the commit, or "" without a store or when it fails.
+func (m *Manager) storeArtifacts(ctx context.Context, run *model.Run, dir string) string {
+	if m.opts.ArtifactStore == nil {
+		return ""
+	}
+	author := run.UserName
+	if author == "" {
+		author = "task-ui"
+	}
+	commit, err := m.opts.ArtifactStore.Ingest(ctx, dir, run.Folder+"/"+run.Job+" run "+run.ID, author)
+	if err != nil || commit == "" {
+		slog.Warn("artifacts not stored", "run", run.ID, "err", err)
+		return ""
+	}
+	return commit
 }
 
 // describeArtifact reads one file as an artifact row: its path relative
@@ -80,9 +128,44 @@ func (m *Manager) ArtifactPath(artifact *model.Artifact) string {
 	return filepath.Join(m.opts.ArtifactRoot, filepath.FromSlash(artifact.Path))
 }
 
-// OpenArtifact opens an artifact's file for reading.
+// OpenArtifact opens an artifact's file for reading: the version its
+// commit holds in the artifact store, or the file in its run's directory.
 func (m *Manager) OpenArtifact(artifact *model.Artifact) (io.ReadCloser, error) {
+	if artifact.CommitID != "" {
+		if m.opts.ArtifactStore == nil {
+			return nil, ErrNotFound
+		}
+		data, err := m.opts.ArtifactStore.Show(context.Background(), artifact.CommitID, artifact.Path)
+		if err != nil {
+			return nil, err
+		}
+		return io.NopCloser(bytes.NewReader(data)), nil
+	}
 	return os.Open(m.ArtifactPath(artifact))
+}
+
+// EmptyArtifacts deletes every artifact: the store's tree and history, the
+// files kept in finished runs' directories, and the records. A running
+// run's directory stays, so the run can still write to it.
+func (m *Manager) EmptyArtifacts(ctx context.Context) error {
+	if m.opts.Artifacts == nil {
+		return nil
+	}
+	all, err := m.opts.Artifacts.List(ctx, storage.ArtifactFilter{})
+	if err != nil {
+		return err
+	}
+	for _, artifact := range all {
+		if artifact.CommitID == "" && m.opts.ArtifactRoot != "" {
+			_ = os.RemoveAll(filepath.Join(m.opts.ArtifactRoot, artifact.RunID))
+		}
+	}
+	if m.opts.ArtifactStore != nil {
+		if err := m.opts.ArtifactStore.Empty(); err != nil {
+			return err
+		}
+	}
+	return m.opts.Artifacts.DeleteAll(ctx)
 }
 
 // crlfWriter turns the newlines of a plain command into the line ends a

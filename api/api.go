@@ -54,6 +54,7 @@ func (h *Handlers) Routes() http.Handler {
 	r.Handle("/runs/{id}/attach", h.attach())
 
 	r.Get("/artifacts", h.listArtifacts)
+	r.Delete("/artifacts", h.emptyArtifacts)
 	r.Get("/artifacts/{id}", h.downloadArtifact)
 	r.Delete("/artifacts/{id}", h.deleteArtifact)
 

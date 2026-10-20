@@ -8,6 +8,10 @@ pages are the reference client; `scripts/run.sh` is the curl one.
 The surface below, and the MCP tools on it, stay frozen: a change adds a
 route or a tool only for a need these cannot serve, and states the reason.
 
+| Added | For |
+|-------|-----|
+| `DELETE /api/artifacts` | **Empty** on the Artifacts page: deleting the records one by one leaves the files and their history |
+
 | Method | Path | Does |
 |--------|------|------|
 | `GET` | `/api/folders?folder=` | the folders you can see and their jobs, with `can_run` and `last_run` |
@@ -17,7 +21,7 @@ route or a tool only for a need these cannot serve, and states the reason.
 | `POST` | `/api/runs/{id}/stop`, `/kill` | ends a run |
 | `GET` | `/api/runs/{id}/frame.svg`, `/frame.txt`, `/cast` | the last frame, the recording |
 | `WS` | `/api/runs/{id}/attach` | binary frames are output; text frames are `{"type":"input"\|"resize"\|"stop"\|"kill"}` in and `{"type":"status"}` out |
-| `GET` `DELETE` | `/api/artifacts`, `/api/artifacts/{id}` | list, download, delete |
+| `GET` `DELETE` | `/api/artifacts`, `/api/artifacts/{id}` | list, download a version, delete a record; `DELETE /api/artifacts` empties the tree, its history and the records (admins) |
 | `GET` `POST` `PUT` `DELETE` | `/api/schedules`, `/api/schedules/{id}` | `{folder, job, expression, enabled}` |
 | `GET` `POST` `PUT` `DELETE` | `/api/workflows`, `/api/workflows/{id}` | `{name, steps: [{folder, job}]}`; owner or admin changes |
 | `GET` `POST` | `/api/workflows/{id}/runs` | runs, newest first, with their steps; `POST` starts one, 409 while one runs |

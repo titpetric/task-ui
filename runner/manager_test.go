@@ -3,6 +3,7 @@ package runner_test
 import (
 	"context"
 	"errors"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -12,6 +13,7 @@ import (
 
 	_ "modernc.org/sqlite" // the driver storage opens
 
+	"github.com/titpetric/task-ui/artifactstore"
 	"github.com/titpetric/task-ui/envfile"
 	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/git"
@@ -332,4 +334,70 @@ func TestErrors(t *testing.T) {
 		assert.Error(t, err)
 		assert.False(t, errors.Is(err, context.Canceled))
 	}
+}
+
+// With an artifact store, a run's files go into its tree: a second run that
+// writes the same name replaces it there, each artifact opens the version
+// its run wrote, and the run's own directory goes. Past Keep commits the
+// history squashes and the older versions go with it.
+func TestManager_ArtifactStore(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	ctx := context.Background()
+	root := t.TempDir()
+	store := &artifactstore.Store{Dir: filepath.Join(root, "tree"), Keep: 2}
+	m := runner.New(runner.Options{
+		Runs: f.runs, Artifacts: f.files, Recordings: &recording.Store{Root: t.TempDir()},
+		ArtifactRoot: root, ArtifactStore: store, Grace: time.Second, KillTimeout: 5 * time.Second, Keep: time.Minute,
+	})
+	t.Cleanup(func() { m.Shutdown(context.Background()) })
+
+	write := func(id, script string) string {
+		session, err := m.Start(ctx, f.shellJob(id, script, false))
+		assert.NoError(t, err)
+		_, status := collect(t, session.Attach(true))
+		assert.Equal(t, model.StateOK, status.State)
+		return session.ID()
+	}
+	first := write("job1", `echo one > "$TASK_UI_ARTIFACTS/job1.txt"`)
+	write("job2", `mkdir -p "$TASK_UI_ARTIFACTS/reports"; echo two > "$TASK_UI_ARTIFACTS/reports/job2.txt"`)
+
+	artifacts, err := f.files.List(ctx, storage.ArtifactFilter{RunID: first})
+	assert.NoError(t, err)
+	assert.Len(t, artifacts, 1)
+	one := artifacts[0]
+	assert.Equal(t, "job1.txt", one.Path)
+	assert.NotEqual(t, "", one.CommitID)
+	assert.NoDirExists(t, filepath.Join(root, first))
+
+	file, err := m.OpenArtifact(&one)
+	assert.NoError(t, err)
+	data, _ := io.ReadAll(file)
+	file.Close()
+	assert.Equal(t, "one\n", string(data), "the first run's version")
+
+	again := write("job1", `echo once more > "$TASK_UI_ARTIFACTS/job1.txt"`)
+	latest, _ := os.ReadFile(filepath.Join(root, "tree", "job1.txt"))
+	assert.Equal(t, "once more\n", string(latest))
+	assert.FileExists(t, filepath.Join(root, "tree", "reports", "job2.txt"))
+
+	// The third commit is past Keep: the history squashes, and the first
+	// version of job1.txt goes with its artifact.
+	all, _ := f.files.List(ctx, storage.ArtifactFilter{})
+	assert.Len(t, all, 2)
+	for _, artifact := range all {
+		assert.NotEqual(t, first, artifact.RunID)
+	}
+	current, _ := f.files.List(ctx, storage.ArtifactFilter{RunID: again})
+	file, err = m.OpenArtifact(&current[0])
+	assert.NoError(t, err)
+	data, _ = io.ReadAll(file)
+	file.Close()
+	assert.Equal(t, "once more\n", string(data))
+
+	// Empty deletes the tree and every record.
+	assert.NoError(t, m.EmptyArtifacts(ctx))
+	all, _ = f.files.List(ctx, storage.ArtifactFilter{})
+	assert.Len(t, all, 0)
+	assert.NoDirExists(t, filepath.Join(root, "tree"))
 }

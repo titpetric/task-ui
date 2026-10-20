@@ -7,7 +7,8 @@ header, for admins: what the instance brings to every run.
 
 ## Projects
 
-The folders under the root, with their sources and where they came from.
+The folders under the root, with their sources, where they came from, and
+the space each takes: its files, and the git history beside them.
 
 ![Projects](../assets/projects-dark.png)
 

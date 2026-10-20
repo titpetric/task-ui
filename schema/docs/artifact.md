@@ -9,7 +9,8 @@ Artifact.
 | folder       | varchar  | MUL | Folder       |
 | job          | varchar  | MUL | Job          |
 | name         | varchar  |     | Name         |
-| path         | varchar  |     | Path         |
+| path         | varchar  | MUL | Path         |
 | byte_size    | bigint   |     | Byte Size    |
 | content_type | varchar  |     | Content Type |
 | created_at   | datetime |     | Created At   |
+| commit_id    | varchar  | MUL | Commit ID    |

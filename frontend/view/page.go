@@ -4,6 +4,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/titpetric/task-ui/diskusage"
 	"github.com/titpetric/task-ui/envfile"
 	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/git"
@@ -47,9 +48,14 @@ type Page struct {
 	Checkout *git.Info
 	// Tree is what the folder, or the directory browsed in it, holds.
 	Tree []folder.Item
-	// Browse is the directory open inside the folder, "" for the folder
-	// itself, else a path ending in "/".
+	// Browse is the directory open inside the folder, or in the artifact
+	// tree: "" for the top, else a path ending in "/".
 	Browse string
+	// Space is how much the directory the page shows takes, files and
+	// history; nil leaves the bar out.
+	Space *diskusage.Usage
+	// Spaces are the same for each project of the projects page, by ID.
+	Spaces map[string]diskusage.Usage
 
 	Runs []Run
 	// Activity charts when the runs of the page ran, nil without any.

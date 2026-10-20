@@ -59,7 +59,7 @@ func (h *Handlers) browse(w http.ResponseWriter, r *http.Request, f *folder.Fold
 	p := h.page(r, path.Base(rel))
 	p.Folder = f
 	p.Browse = rel + "/"
-	p.Tree = folder.Listing(filepath.Join(f.Dir, filepath.FromSlash(rel)))
+	p.Tree = linkTree(folder.Listing(filepath.Join(f.Dir, filepath.FromSlash(rel))), "/f/"+f.ID+"/"+escapePath(rel)+"/")
 	p.Crumbs = crumbsOf(f.ID+"/"+rel, "")
 	h.render(w, http.StatusOK, "browse", p)
 }
@@ -69,10 +69,16 @@ func (h *Handlers) browse(w http.ResponseWriter, r *http.Request, f *folder.Fold
 func (h *Handlers) folder(w http.ResponseWriter, r *http.Request, f *folder.Folder) {
 	p := h.page(r, f.Title)
 	p.Folder = f
-	p.Tree = folder.Listing(f.Dir)
+	p.Tree = linkTree(folder.Listing(f.Dir), "/f/"+f.ID+"/")
 	p.Crumbs = crumbsOf(f.ID, "")
 	if h.opts.Git != nil && h.opts.Git.IsRepo(f.Dir) {
 		p.Checkout = h.opts.Git.Info(f.Dir)
+		if h.opts.Disk != nil {
+			if root := h.opts.Git.Checkout(f.Dir, 8); root != "" {
+				usage := h.opts.Disk.Measure(root)
+				p.Space = &usage
+			}
+		}
 	}
 	if h.opts.Env != nil {
 		p.EnvFiles = h.opts.Env.Files(r.Context(), f)

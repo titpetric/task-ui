@@ -82,3 +82,22 @@ func TestArtifact_Delete(t *testing.T) {
 	again := f.call(t, asAdmin, http.MethodDelete, "/artifacts/"+artifactID, nil)
 	assert.Equal(t, http.StatusNotFound, again.Status)
 }
+
+// Empty deletes every artifact; only an admin may.
+func TestArtifact_Empty(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+
+	id := f.start(t, asOps, "infra", "artifact")
+	f.finished(t, id)
+	assert.Eventually(t, func() bool {
+		return len(f.call(t, asOps, http.MethodGet, "/artifacts", nil).list("artifacts")) == 1
+	}, 5e9, 2e7)
+
+	denied := f.call(t, asOps, http.MethodDelete, "/artifacts", nil)
+	assert.Equal(t, http.StatusForbidden, denied.Status)
+
+	emptied := f.call(t, asAdmin, http.MethodDelete, "/artifacts", nil)
+	assert.Equal(t, http.StatusNoContent, emptied.Status)
+	assert.Len(t, f.call(t, asAdmin, http.MethodGet, "/artifacts", nil).list("artifacts"), 0)
+}
