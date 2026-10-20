@@ -91,16 +91,20 @@ encrypt the secrets.
   only way a key reaches a run. Pick them when you generate or upload a key, or later with the
   edit button on its row. A key can have more than one, and a key with none
   stays the instance's: git and the secrets use it, runs do not get it.
-- **A key for someone**: set a **Name** when you generate or upload
-  it, `alice`, and task-ui stores it as `id_ed25519_alice` beside the type's own
-  key, then grant it to alice. She finds it under **SSH keys** in her user
+- **A key for someone**: pick the user under **For** when you generate or
+  upload it, `alice`, and task-ui stores it as `id_ed25519_alice` beside
+  the type's own key and grants it to alice. She finds it under **SSH keys** in her user
   menu, the keys her runs get, and copies the public half to her git host
   or servers. A rotation keeps a key's policies. The key files are still
   readable by any job, as jobs run as the server's user; policies decide
   what a run gets, they do not hide a file. Keep `TASK_UI_SSH_DIR`
   out of `~/.ssh`, so `ssh` in a job does not find them by default.
+- **Who gets which key** lists each role and each user, and the keys
+  their runs get, by comment: a user's own keys, then, dashed, those of
+  their role. A key links to its policies.
 - A project with private keys in its `.ssh/` folder gets a warning: runs
-  do not load them. Upload a key it needs here and grant it by policy.
+  do not load them. Keys belong here: upload a key it needs and grant it
+  by policy, then delete the folder.
 - **Server user's keys** lists the pairs in `~/.ssh` of the user task-ui
   runs as, when that is not `TASK_UI_SSH_DIR`. `ssh` and git take them by
   default, in every run, for git remotes and for the inventory's logins.

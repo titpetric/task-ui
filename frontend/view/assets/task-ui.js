@@ -492,6 +492,12 @@
     return body;
   }
 
+  // A new key made for a user takes their name: id_<type>_<user>.
+  document.addEventListener("change", function (event) {
+    var pick = event.target.closest("select[data-key-for]");
+    if (pick) pick.form.elements.name.value = pick.value;
+  });
+
   // A show/hide switch remembers its choice, in this browser.
   Array.prototype.forEach.call(document.querySelectorAll("input[data-peek]"), function (input) {
     var key = "task-ui.peek." + input.dataset.peek;

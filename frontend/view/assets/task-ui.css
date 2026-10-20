@@ -2602,6 +2602,29 @@ pre.output {
   accent-color: var(--signal);
 }
 
+/* A key in the keys page's policy table: its comment, linked to its
+   policies; a key that comes with the role is quieter. */
+.key-chip {
+  display: inline-block;
+  margin: 0.1rem 0.35rem 0.1rem 0;
+  padding: 0 0.45rem;
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 0.8rem;
+}
+
+.key-chip:hover {
+  text-decoration: none;
+  border-color: var(--signal);
+}
+
+.key-chip.faint {
+  border-style: dashed;
+  color: var(--text-dim);
+}
+
 /* What a folder holds: directories first, then files, each with its
    size and when it changed; a name that links opens the directory or the
    file. */

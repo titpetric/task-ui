@@ -416,6 +416,28 @@
 
 {{- define "logo" }}<svg class="logo" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="3"/><path class="prompt" d="M8 10l6 6-6 6"/><path class="cursor" d="M16 23h8"/></svg>{{ end }}
 
+{{- /* keyfor is the start of a new key's policies: who it is made for,
+     one user or the instance, and the roles whose runs get it. A key for
+     a user is named for them, id_<type>_<user>, and given to them. */}}
+{{- define "keyfor" }}
+<div class="field">
+	<label for="key-for">For <span class="faint">a user's key is named for them and goes to their runs</span></label>
+	<select id="key-for" name="users" data-type="list" data-key-for>
+		<option value="">the instance, no one by name</option>
+		{{- range . }}
+		<option value="{{ .Name }}">{{ .Name }} ({{ .Role }})</option>
+		{{- end }}
+	</select>
+	<input type="hidden" name="name" value="">
+</div>
+<div class="field">
+	<label>Roles <span class="faint">whose runs get it too, through their ssh agent</span></label>
+	{{- range roles }}
+	<label class="check"><input type="checkbox" name="policies" value="{{ . }}" data-type="set"> {{ . }}</label>
+	{{- end }}
+</div>
+{{- end }}
+
 {{- define "keypolicies" }}
 {{- $roles := index . 0 }}{{ $users := index . 1 }}{{ $all := index . 2 }}
 <div class="field">

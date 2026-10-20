@@ -125,12 +125,18 @@ func TestKeys_ForAUser(t *testing.T) {
 	assert.NoError(t, f.opts.KeyPolicies.Set(ctx, "id_ed25519", []string{"runner"}))
 
 	generate := f.page(t, asAdmin, "/settings/keys/generate")
-	assert.Contains(t, generate, `name="name" pattern=`)
-	assert.Contains(t, generate, `name="users" value="`+asOps+`" data-type="set"`)
+	assert.Contains(t, generate, `<select id="key-for" name="users" data-type="list" data-key-for>`)
+	assert.Contains(t, generate, `<option value="`+asOps+`">`+asOps+` (runner)</option>`)
+	assert.NotContains(t, generate, `name="users" value="`+asOps+`" data-type="set"`)
 	edit := f.page(t, asAdmin, "/settings/keys/id_ed25519_ops")
 	assert.Contains(t, edit, `name="users" value="`+asOps+`" data-type="set" checked`)
 	list := f.page(t, asAdmin, "/settings/keys")
 	assert.Contains(t, list, `<input type="hidden" name="name" value="ops">`)
+	// The policy table: ops gets its own key and, from the runner role,
+	// the instance's.
+	holders := list[strings.Index(list, `class="table key-holders"`):]
+	assert.Contains(t, holders, `<a class="key-chip" href="/settings/keys/id_ed25519_ops" title="id_ed25519_ops, `)
+	assert.Contains(t, holders, `<a class="key-chip faint" href="/settings/keys/id_ed25519" title="id_ed25519, from the runner role">instance <small>via role</small></a>`)
 
 	ops := f.page(t, asOps, "/keys")
 	assert.Contains(t, ops, "Your SSH keys")

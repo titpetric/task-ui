@@ -49,6 +49,32 @@
 	</div>
 </section>
 
+<section class="block">
+	<h3>Who gets which key <small>through the ssh agent of their runs</small></h3>
+	<div class="table-wrap">
+	<table class="table key-holders">
+		<thead><tr><th>Policy or user</th><th>Keys</th></tr></thead>
+		<tbody>
+		{{- range .KeyHolders }}
+			<tr>
+				{{- if .User }}
+				<td class="nowrap"><span class="avatar sm">{{ .User.Initials }}</span> {{ .User.Name }} <span class="faint">{{ .Role }}</span></td>
+				{{- else }}
+				<td class="nowrap"><span class="badge">{{ .Role }}</span> <span class="faint">every {{ .Role }}</span></td>
+				{{- end }}
+				<td>
+					{{- $role := .Role }}
+					{{- range .Direct }}<a class="key-chip" href="/settings/keys/{{ .Name }}" title="{{ .Name }}, {{ .Fingerprint }}">{{ or .Comment .Name }}</a>{{ end }}
+					{{- range .ViaRole }}<a class="key-chip faint" href="/settings/keys/{{ .Name }}" title="{{ .Name }}, from the {{ $role }} role">{{ or .Comment .Name }} <small>via role</small></a>{{ end }}
+					{{- if not (or .Direct .ViaRole) }}<span class="faint">none</span>{{ end }}
+				</td>
+			</tr>
+		{{- end }}
+		</tbody>
+	</table>
+	</div>
+</section>
+
 {{- if .HomeKeys }}
 <section class="block">
 	<h3>Server user's keys <small>{{ .HomeKeysDir }}</small></h3>
