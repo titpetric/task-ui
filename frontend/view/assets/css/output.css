@@ -12,7 +12,7 @@ pre.output {
   background: var(--term-bg);
   color: var(--term-fg);
   font-family: var(--font);
-  font-size: 0.8125rem;
+  font-size: var(--fs-sm);
   line-height: 1.35;
   white-space: pre;
   tab-size: 8;
