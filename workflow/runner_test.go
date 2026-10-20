@@ -199,8 +199,8 @@ func TestRunner_NestedWorkflow(t *testing.T) {
 	assert.True(t, !second.StartedAt.Before(*first.FinishedAt), "inner starts after the step before it ended")
 }
 
-// A workflow that fails fails the step that ran it, and the rest are
-// skipped.
+// A failing nested workflow fails the step that ran it, and the runner
+// skips the rest.
 func TestRunner_NestedFailure(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
@@ -276,7 +276,7 @@ func TestRunner_Events(t *testing.T) {
 }
 
 // Resolve finds every step's folder and job, or its workflow, and says
-// which step is gone.
+// which step is missing.
 func TestRunner_Resolve(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)

@@ -45,7 +45,7 @@ func TestStore_SetAndRead(t *testing.T) {
 	assert.NoError(t, s.Set(ctx, &model.Secret{Scope: "infra", Name: "TOKEN", Content: "infra wins"}))
 	assert.NoError(t, s.Set(ctx, &model.Secret{Scope: "infra", Name: "REGION", Content: "eu"}))
 
-	// At rest the content is armored; every way out decrypts.
+	// At rest the store keeps the content armored; every way out decrypts.
 	raw, err := rows.Get(ctx, model.Secret{Scope: storage.ScopeAll, Name: "TOKEN"})
 	assert.NoError(t, err)
 	assert.True(t, secret.Encrypted(raw.Content))
@@ -115,7 +115,7 @@ func TestStore_Rekey(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, map[string]string{"A": "one", "B": "two"}, infra)
 
-	// Excluding the only key cannot rekey; nothing is lost.
+	// Excluding the only key cannot rekey; every secret survives.
 	_, err = s.Rekey(ctx, "id_ed25519")
 	assert.ErrorIs(t, err, secret.ErrNoKey)
 	infra, err = s.For(ctx, "infra")

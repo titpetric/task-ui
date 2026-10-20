@@ -17,7 +17,7 @@ func NewUserStorage(db DB) *UserStorage {
 	return &UserStorage{db: db}
 }
 
-// Create inserts a user. An empty ID is filled in; the timestamps are set.
+// Create inserts a user. It fills in an empty ID and sets the timestamps.
 func (s *UserStorage) Create(ctx context.Context, user *model.User) error {
 	if user.Name == "" {
 		return errors.New("a user needs a name")

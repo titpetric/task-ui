@@ -21,7 +21,7 @@ import (
 	"github.com/titpetric/task-ui/sshkey"
 )
 
-// ErrNoKey is returned when no key in the SSH folder can encrypt.
+// ErrNoKey reports that no key in the SSH folder can encrypt.
 var ErrNoKey = errors.New("no SSH key to encrypt the secrets with: generate an ed25519 or RSA key in Settings, SSH keys")
 
 // Vault encrypts and decrypts with the keys of the SSH folder.
@@ -118,8 +118,8 @@ func (v *Vault) Encrypt(plain string, exclude ...string) (string, error) {
 	return buf.String(), nil
 }
 
-// Decrypt reads a value with whichever key opens it. A value that was
-// never encrypted is returned as it is.
+// Decrypt reads a value with whichever key opens it. It returns a value
+// without encryption unchanged.
 func (v *Vault) Decrypt(text string) (string, error) {
 	if !Encrypted(text) {
 		return text, nil

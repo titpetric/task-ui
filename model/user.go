@@ -27,7 +27,7 @@ func (u *User) Initials() string {
 	return strings.ToUpper(string(initials))
 }
 
-// FolderList returns the folders the user is limited to. Empty means all.
+// FolderList returns the folders the user may see. Empty means all.
 func (u *User) FolderList() []string {
 	if u == nil {
 		return nil

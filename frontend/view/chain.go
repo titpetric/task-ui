@@ -45,8 +45,8 @@ type Link struct {
 	Lines    int
 }
 
-// Chain turns steps into links. A folder is named once, for the steps
-// that follow in it; a workflow step is named by its name. A run's step
+// Chain turns steps into links. It names a folder once, for the steps
+// that follow in it, and a workflow step by its name. A run's step
 // links to the run it made.
 func Chain(steps []Step) []Link {
 	links := make([]Link, 0, len(steps))

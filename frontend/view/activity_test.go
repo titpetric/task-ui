@@ -20,8 +20,8 @@ func at(day, hour, minute int) time.Time {
 
 // The days are the last thirty, today the last, counted in the zone of
 // now; the hours are the hours of the day over the same days. A run is
-// ok, failed (killed too) or other (running, stopped); runs outside the
-// window are left out.
+// ok, failed (killed too) or other (running, stopped); the chart leaves out
+// runs outside the window.
 func TestNewActivity(t *testing.T) {
 	t.Parallel()
 	now := at(19, 22, 0)
@@ -95,8 +95,8 @@ func TestNewActivity(t *testing.T) {
 	assert.Nil(t, view.NewActivity(runs[5:], now, view.ActivityDays))
 }
 
-// A bar with runs is never shorter than the stub, however busy the
-// busiest one is.
+// A bar with runs is never shorter than the stub, even beside a
+// far busier one.
 func TestActivityBar(t *testing.T) {
 	t.Parallel()
 	now := at(19, 22, 0)

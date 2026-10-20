@@ -31,7 +31,7 @@ func TestHome(t *testing.T) {
 	assert.Contains(t, limited, "<b>Folders</b><span>1</span>")
 }
 
-// The control centre gives deploy, which private and infra/edge share, a
+// In the control centre deploy, which private and infra/edge share, has a
 // column; infra's own jobs are under other, each a button by name.
 func TestHome_Control(t *testing.T) {
 	t.Parallel()

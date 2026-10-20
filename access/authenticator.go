@@ -10,13 +10,13 @@ import (
 )
 
 // ErrWrongCredentials is the one answer to a failed sign in, whatever
-// was wrong: the login, the password, or a backup password already used.
+// the fault: the login, the password, or a spent backup password.
 var ErrWrongCredentials = errors.New("wrong username or password")
 
 // Authenticator checks a sign in: a login, which is a user name or one
 // of the user's email addresses, and a password, which is the user's
 // password or one of the unused backup passwords. A backup password
-// that signs in is used up.
+// that signs in stops working.
 type Authenticator struct {
 	users     *storage.UserStorage
 	emails    *storage.UserEmailStorage

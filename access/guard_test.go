@@ -26,7 +26,7 @@ func newGuard(t *testing.T) (*access.Guard, *model.User) {
 	return access.NewGuard(users, access.NewSessions("secret", time.Hour)), ops
 }
 
-// hello is a handler that names the user it was reached with.
+// hello is a handler that names the user on the request context.
 var hello = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write([]byte("hello " + access.UserFrom(r.Context()).Name))
 })

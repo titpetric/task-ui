@@ -1,14 +1,14 @@
 // Package access is who may do what: the passwords users sign in with
 // and the sessions they carry. The users themselves are rows in storage,
 // the rules on them are on model.User, and what they sign in with, the
-// email addresses and password hashes, is kept apart from the user row.
+// email addresses and password hashes, lives apart from the user row.
 package access
 
 import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-// dummyHash is compared against when a login names no user, so a missing
+// dummyHash stands in when a login names no user, so a missing
 // user costs the same time as a wrong password.
 var dummyHash, _ = bcrypt.GenerateFromPassword([]byte("task-ui"), bcrypt.DefaultCost)
 

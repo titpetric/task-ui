@@ -89,7 +89,7 @@ func (h *Handlers) seesFlowRun(ctx context.Context, user *model.User, runID stri
 	return true
 }
 
-// sideFolders returns the folders the sidebar lists: all of them but
+// sideFolders returns the folders the sidebar lists: every folder but
 // the projects set not to show there, and the folders inside those.
 func (h *Handlers) sideFolders(ctx context.Context, folders []*folder.Folder) []*folder.Folder {
 	hidden := map[string]bool{}
@@ -172,7 +172,7 @@ func (h *Handlers) frameSVG(ctx context.Context, runID string) template.HTML {
 }
 
 // frameOf renders the last frame of a run like frameSVG, with the lines
-// of its whole output, and reports whether the frame shows all of them:
+// of its whole output, and reports whether the frame shows every line:
 // a finished run whose output never scrolled off the screen. A run in
 // progress may still scroll; its lines are not counted (0).
 func (h *Handlers) frameOf(ctx context.Context, runID string) (template.HTML, int, bool) {

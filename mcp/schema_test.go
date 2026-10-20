@@ -23,7 +23,7 @@ func TestSchema(t *testing.T) {
 	}
 }
 
-// A property says what it is; an enum lists its values.
+// A property describes itself; an enum lists its values.
 func TestProperty(t *testing.T) {
 	t.Parallel()
 	data, err := json.Marshal(mcp.Property{Type: "string", Description: "A state.", Enum: []string{"ok"}})

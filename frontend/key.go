@@ -49,7 +49,8 @@ func (h *Handlers) keyUpload(w http.ResponseWriter, r *http.Request) {
 
 // keyFolders lists the .ssh/ folders of the projects, the checkouts at
 // the top of the root, that hold a private key. Runs do not load them, so
-// the page warns: a key a project needs is uploaded and given by policy.
+// the page warns: an admin uploads a key a project needs and assigns it by
+// policy.
 func (h *Handlers) keyFolders() []view.KeyFolder {
 	var result []view.KeyFolder
 	for _, f := range h.opts.Catalogue.List() {
@@ -66,8 +67,8 @@ func (h *Handlers) keyFolders() []view.KeyFolder {
 	return result
 }
 
-// keyPolicies returns the roles each instance key is given to, none when
-// they cannot be read.
+// keyPolicies returns the roles that receive each instance key, none when
+// reading the policies fails.
 func (h *Handlers) keyPolicies(r *http.Request) map[string][]string {
 	if h.opts.KeyPolicies == nil {
 		return map[string][]string{}
@@ -99,8 +100,8 @@ func (h *Handlers) keyEdit(w http.ResponseWriter, r *http.Request) {
 	h.notFound(w, r)
 }
 
-// keyUsers returns the users each instance key is given to, by name, none
-// when they cannot be read.
+// keyUsers returns the users that receive each instance key, by name,
+// none when reading them fails.
 func (h *Handlers) keyUsers(r *http.Request) map[string][]string {
 	if h.opts.KeyPolicies == nil {
 		return map[string][]string{}

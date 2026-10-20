@@ -12,8 +12,8 @@ import (
 	"github.com/titpetric/task-ui/internal/assert"
 )
 
-// A folder's source files and the files they include are served,
-// coloured, to whoever sees the folder; no other file is.
+// The API serves a folder's source files and the files they include,
+// coloured, to whoever sees the folder, and no other file.
 func TestSource(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
@@ -43,7 +43,7 @@ func TestSource(t *testing.T) {
 	assert.Equal(t, http.StatusNotFound, f.call(t, asLimited, http.MethodGet, "/sources/private?file=scripts", nil).Status)
 }
 
-// The source decodes into its view: the file, as it is and coloured.
+// The source decodes into its view: the file, verbatim and coloured.
 func TestSourceView(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)

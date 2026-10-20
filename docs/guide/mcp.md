@@ -1,26 +1,26 @@
 # MCP
 
 task-ui is also an MCP server, so an agent such as Claude Code can see
-the jobs and workflows, run them and read how they went. It is at
-`/api/mcp`, and the agent signs in with a token of a user: it may see and
+the jobs and workflows, run them and read how they went. The endpoint
+`/api/mcp` serves it, and the agent signs in with a token of a user: it may see and
 run what that user may in the browser, with the same roles, allow lists
 and hours.
 
 ## A token
 
-An admin gives a user a token on the server, by a name of their choosing:
+An admin creates a token for a user on the server, by a name of their choosing:
 
 ```bash
 task-ui token claude claude-code
 ```
 
-The token is printed once and only its hash is kept. Giving a token the
-same name again replaces it, and the old one stops working.
-`task-ui token claude` lists the names and when each was last used, and
+task-ui prints the token once and keeps only its hash. A new token
+under the same name replaces it, and the old one stops working.
+`task-ui token claude` lists the names and the last use of each, and
 `task-ui token claude rm claude-code` removes one.
 
 A token signs in to the rest of `/api` too, in an `Authorization: Bearer`
-header instead of the session cookie.
+header in place of the session cookie.
 
 ## Claude Code
 
@@ -43,16 +43,16 @@ claude mcp add --transport http --scope user task https://task.example.com/api/m
 | `get_run`            | `id`, `lines`                                    | A run and the end of its output, as the terminal showed it |
 | `list_workflow_runs` | `workflow`, `limit`                              | A workflow's latest runs and their steps |
 
-A run started over MCP is like any other: it is in the history, anyone
+A run started over MCP is like any other: it shows in the history, anyone
 allowed can watch it, and it goes on if the agent stops waiting.
 
 ## A frozen surface
 
 These seven tools, like the JSON API behind them, are the whole surface,
-and it is frozen. An agent can see what there is, run it and read how it
+and the surface stays frozen. An agent can see what there is, run it and read how it
 went; ending runs, schedules, artifacts, secrets, keys, users and
-changing workflows stay with people, in the browser. A tool or an
-endpoint is added only for a reason that the ones there cannot serve,
+changing workflows stay with people, in the browser. A new tool or
+endpoint needs a reason that the current ones cannot serve,
 and the reason goes with the change.
 
 ---

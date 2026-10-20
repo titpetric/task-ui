@@ -13,7 +13,7 @@ type UserRequest struct {
 	Folders []string `json:"folders"`
 }
 
-// managedElsewhere is the answer to making or removing users here.
+// managedElsewhere is the reply to making or removing users here.
 const managedElsewhere = "users are managed in the password file: task-ui passwd <user> adds or resets one, removing the line removes the user; TASK_UI_ADMINS and TASK_UI_VIEWERS set the roles"
 
 // listUsers returns every user. Admins only.
@@ -29,7 +29,7 @@ func (h *Handlers) listUsers(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"users": users})
 }
 
-// createUser says where users are made.
+// createUser says where to make users.
 func (h *Handlers) createUser(w http.ResponseWriter, r *http.Request) {
 	if !requireAdmin(w, r) {
 		return
@@ -60,7 +60,7 @@ func (h *Handlers) updateUser(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, user)
 }
 
-// deleteUser says where users are removed.
+// deleteUser says where to remove users.
 func (h *Handlers) deleteUser(w http.ResponseWriter, r *http.Request) {
 	if !requireAdmin(w, r) {
 		return

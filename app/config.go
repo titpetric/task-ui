@@ -53,7 +53,7 @@ type Config struct {
 	// Keep is how long a finished run stays attachable in memory.
 	// TASK_UI_KEEP, default 15m.
 	Keep time.Duration
-	// Grace is how long a stopped process gets before it is killed.
+	// Grace is how long a stopped process gets before the kill.
 	// TASK_UI_GRACE, default 10s.
 	Grace time.Duration
 	// Now pins the clock the hours gate and the pages read, for the

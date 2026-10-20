@@ -8,8 +8,8 @@ import (
 	"github.com/titpetric/task-ui/internal/assert"
 )
 
-// YAML is drawn with its keys, comments, strings, numbers, list dashes and
-// ${{ }} interpolations marked; everything is escaped.
+// YAML marks the keys, comments, strings, numbers, list dashes and
+// ${{ }} interpolations, and escapes everything.
 func TestYAML(t *testing.T) {
 	t.Parallel()
 	src := "# the setup\njobs:\n  setup:\n    cmds:\n      - for: repositories as repo\n        cmd: git clone ${{repo.remote}} \"<x>\"\n    retries: 3\n    internal: true\n"
@@ -36,7 +36,7 @@ func TestMakefile(t *testing.T) {
 	assert.Contains(t, out, `<span class="v">$(BIN)</span>`)
 }
 
-// Anything else is escaped and drawn as it is.
+// Plain escapes anything else and draws it unchanged.
 func TestPlain(t *testing.T) {
 	t.Parallel()
 	assert.Equal(t, "echo &lt;hi&gt;\n", string(highlight.HTML("run.sh", "echo <hi>\n")))

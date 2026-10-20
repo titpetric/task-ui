@@ -40,7 +40,7 @@ type ActivityBar struct {
 	Label string
 	Title string
 	OK    int
-	// Failed counts the runs that failed or were killed, Other those
+	// Failed counts the failed and killed runs, Other those
 	// still running or stopped.
 	Failed int
 	Other  int
@@ -49,8 +49,8 @@ type ActivityBar struct {
 	FailedStyle template.CSS
 	OtherStyle  template.CSS
 	// Average is the mean duration of the bucket's finished runs, Min
-	// and Max the fastest and the slowest of them, and Finished how many
-	// there were; AverageTitle is what the duration graph's hover says.
+	// and Max the fastest and the slowest of them, and Finished their
+	// count; AverageTitle is what the duration graph's hover says.
 	Average      time.Duration
 	Min          time.Duration
 	Max          time.Duration
@@ -111,7 +111,7 @@ type Activity struct {
 	Durations *ActivitySpark
 }
 
-// NewActivity charts the runs that started in the days days up to now,
+// NewActivity charts the runs that started in a window of days up to now,
 // counted in now's time zone. Nil when none did.
 func NewActivity(runs []ActivityRun, now time.Time, days int) *Activity {
 	if days < 1 {
@@ -301,7 +301,7 @@ func averageText(b ActivityBar, when string) string {
 }
 
 // counts says what a bar holds and when, for its hover: the runs first,
-// "5 runs, 09:00–10:00", then the ones that did not end ok.
+// "5 runs" and the hour, then the ones that did not end ok.
 func counts(b ActivityBar, when string) string {
 	total := b.OK + b.Failed + b.Other
 	if total == 0 {

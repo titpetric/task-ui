@@ -8,8 +8,8 @@ import (
 	"github.com/titpetric/task-ui/storage"
 )
 
-// A token is found by its hash, replaced by name, touched when used and
-// gone once deleted.
+// The storage finds a token by its hash, replaces it by name, touches it
+// on use and drops it on delete.
 func TestUserAuthTokenStorage(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
@@ -27,7 +27,7 @@ func TestUserAuthTokenStorage(t *testing.T) {
 	token, _ = tokens.Find(ctx, "h1")
 	assert.NotNil(t, token.UsedAt)
 
-	// Set under the same name replaces: the old hash no longer signs in.
+	// Set under the same name replaces: the old hash fails to sign in.
 	assert.NoError(t, tokens.Set(ctx, "u1", "cli", "h3"))
 	_, err = tokens.Find(ctx, "h1")
 	assert.ErrorIs(t, err, storage.ErrNotFound)

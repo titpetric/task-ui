@@ -37,7 +37,7 @@ func Funcs() template.FuncMap {
 }
 
 // Tone names the badge class of a run state: ok, signal while running,
-// bad when it failed or was killed, plain when it was stopped.
+// bad for a failed or killed run, plain for a stopped one.
 func Tone(state string) string {
 	switch state {
 	case model.StateOK:
@@ -84,8 +84,8 @@ func when(v any) (time.Time, bool) {
 	return time.Time{}, false
 }
 
-// Ago says how long ago a time was, in the coarsest unit that is not
-// zero. A missing time is a dash.
+// Ago says how much time has passed since a time, in the coarsest unit
+// that is not zero. A missing time is a dash.
 func Ago(v any) string {
 	t, ok := when(v)
 	if !ok {

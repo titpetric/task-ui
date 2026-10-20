@@ -9,7 +9,7 @@ import (
 )
 
 // UserEmailStorage keeps the email addresses users sign in with. A user
-// may have several; an address belongs to one user.
+// may have many; an address belongs to one user.
 type UserEmailStorage struct {
 	db DB
 }
@@ -19,7 +19,7 @@ func NewUserEmailStorage(db DB) *UserEmailStorage {
 	return &UserEmailStorage{db: db}
 }
 
-// Add gives a user an email address, kept lower case.
+// Add stores an email address for a user, in lower case.
 func (s *UserEmailStorage) Add(ctx context.Context, userID, email string) error {
 	email = normalEmail(email)
 	if userID == "" {

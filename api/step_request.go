@@ -5,6 +5,7 @@ package api
 type StepRequest struct {
 	Folder string `json:"folder,omitempty"`
 	Job    string `json:"job,omitempty"`
-	// Workflow is the ID of a workflow the step runs instead of a job.
+	// Workflow is the ID of a workflow the step runs; a step runs a job or
+	// a workflow.
 	Workflow string `json:"workflow,omitempty"`
 }

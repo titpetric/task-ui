@@ -58,8 +58,8 @@ func TestPage_ProjectsFold(t *testing.T) {
 	assert.Contains(t, chev, `<a class="section" href="/f/infra" data-folder="infra"`)
 	assert.Contains(t, chev, `<svg class="ic chev"><use href="#i-chev"/></svg>`)
 
-	// A project set not to show in the sidebar is left out of it, with
-	// the folders inside it; its pages stay.
+	// The sidebar leaves out a project set not to show there, with the
+	// folders inside it; its pages stay.
 	assert.NoError(t, f.opts.Projects.Create(context.Background(), &model.Project{Folder: "infra", SidebarHidden: true}))
 	hidden := f.page(t, asAdmin, "/")
 	assert.NotContains(t, hidden, `data-project="infra"`)
@@ -68,7 +68,7 @@ func TestPage_ProjectsFold(t *testing.T) {
 	assert.Equal(t, http.StatusOK, f.get(t, asAdmin, "/f/infra").Status)
 	assert.NoError(t, f.opts.Projects.Delete(context.Background(), mustProject(t, f, "infra").ID))
 
-	// The open project is marked, on the project and its whole row.
+	// The sidebar marks the open project, on the project and its whole row.
 	page := f.page(t, asAdmin, "/f/infra")
 	assert.Contains(t, page, `<details class="project active" data-project="infra" open>`)
 	assert.Contains(t, page, `<summary class="active" title="infra/`)

@@ -16,8 +16,8 @@ func TestFolder(t *testing.T) {
 	f := newFixture(t)
 	f.run(t, "infra", "plan", "ops", model.StateFailed)
 
-	// Run force stands beside Run only for a job with hours, where a
-	// plain run can be refused; a run that failed is forced from its window.
+	// Run force stands beside Run only for a job with hours, where the
+	// server can refuse a plain run; the window of a failed run forces it.
 	f.infra.Job("plan").Hours = "mon-fri 9-17"
 
 	body := f.page(t, asOps, "/f/infra")
@@ -112,7 +112,7 @@ func TestFolder_SidebarAndCards(t *testing.T) {
 	assert.Contains(t, body, `class="play" data-run data-folder="infra" data-job="plan"`)
 	assert.Contains(t, body, `<div class="job" data-job-key="infra/slow">
 	<i class="shebang running" aria-hidden="true">#!</i>`)
-	// Every job is marked #!, the card's in the colour of its last run.
+	// Every job carries #!, the card's in the colour of its last run.
 	assert.Contains(t, body, `<div class="job" data-job-key="infra/plan">
 	<i class="shebang" aria-hidden="true">#!</i>`)
 	assert.Contains(t, body, `class="play" data-attach="`+session.ID()+`"`)
@@ -174,7 +174,7 @@ func TestFolder_Nested(t *testing.T) {
 	assert.Equal(t, http.StatusNotFound, f.get(t, asAdmin, "/f/infra/edge/nothing").Status)
 	assert.Equal(t, http.StatusNotFound, f.get(t, asAdmin, "/f/infra/edge/deploy/more").Status)
 	assert.Equal(t, http.StatusNotFound, f.get(t, asAdmin, "/f/infra/nope/deploy").Status)
-	// The limited user sees infra, not the folder inside it.
+	// The limited user sees infra; the folder inside it stays hidden.
 	assert.Equal(t, http.StatusNotFound, f.get(t, asLimited, "/f/infra/edge").Status)
 	assert.Equal(t, http.StatusOK, f.get(t, asAdmin, "/settings/projects/infra/edge").Status)
 }

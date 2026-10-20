@@ -53,7 +53,7 @@ func Parse(r io.Reader) (map[string]string, error) {
 }
 
 // Write writes the variables as a dotenv file, keys sorted, readable by
-// the owner alone. The directory is created.
+// the owner alone. Write creates the directory.
 func Write(path string, vars map[string]string) error {
 	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
 		return err
@@ -70,7 +70,7 @@ func Format(vars map[string]string) string {
 	return b.String()
 }
 
-// Quote wraps a value in quotes when a bare one would be read differently:
+// Quote wraps a value in quotes when a shell would read a bare one differently:
 // spaces, a quote, a comment character, or nothing at all.
 func Quote(value string) string {
 	switch {

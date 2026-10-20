@@ -15,14 +15,14 @@ server's time zone, following the filter:
   stands out from the work spread over the afternoon.
 
 A bar is as tall as its runs against the busiest bar, split into the runs
-that ended ok (amber), failed or were killed (red), and the rest, running
+that ended ok (amber), failed or got killed (red), and the rest, running
 or stopped (faint). Hover a bar for its counts. Under each, the same days or
 hours as a **line graph of their durations**: the average solid, the
 slowest run dashed and the fastest faint, against the slowest run of the
 chart, a point in the middle of each column. A day or an hour without a
 finished run breaks the lines. Hover a column for the average, the
-minimum, the maximum and how many runs they are over. A line above says how
-many runs there were, how many failed and the median duration.
+fastest, the slowest and how many runs they cover. A line above shows the
+run count, how many failed and the median duration.
 
 ## The list
 
@@ -39,10 +39,10 @@ page: the run's terminal, live.
 
 - **The run goes on without the window.** Closing it detaches; the run
   keeps running, and the sidebar, the dashboard or this list open a window
-  on it again. A window that was away gets the tail of what it missed.
+  on it again. A window that comes back gets the tail of what it missed.
 - **Runners type into it.** Input goes to the job, and the terminal takes
-  the window's size. A viewer's window is read only.
-- **Stop** asks the job to end (SIGHUP and SIGTERM, then SIGKILL after
+  the window's size. A viewer can only watch in the window.
+- **Stop** signals the job to end (SIGHUP and SIGTERM, then SIGKILL after
   `TASK_UI_GRACE`, ten seconds) and records it as `stopped`. **Kill** ends it now, as
   `killed`.
 - **Run again** starts the job once more when it has ended.
@@ -64,7 +64,7 @@ reason with the run (see [Projects and jobs](projects.md#hours)).
 An agent starts runs over [MCP](mcp.md) as the user of its token:
 `run_job` starts one and can wait for it to end, `list_runs` and
 `get_run` read the history and the end of a run's output. Such a run is
-like any other: it is listed here under that user, and anyone allowed
+like any other: this list shows it under that user, and anyone allowed
 attaches to it.
 
 ## A run's page
@@ -74,9 +74,9 @@ attaches to it.
 `/runs/<id>` is one run, to link to:
 
 - **Output**: every line the run printed, in its colours, from the first
-  to the last, scrolling inside the block. It is the recording replayed,
-  so what redraws itself, a progress bar or a pipeline tree, shows as it
-  was last drawn.
+  to the last, scrolling inside the block. The block replays the recording,
+  so what redraws itself, a progress bar or a pipeline tree, shows its
+  last frame.
 - **Run**: folder, job, who and when, how long, how it ended, and the
   reason for a run forced out of hours.
 - **Artifacts**: the files the run left (see [Artifacts](artifacts.md)).
@@ -99,7 +99,7 @@ A run starts in its folder, as a login shell, with:
   which, or `(none)`.
 
 Before the job, a folder in a git checkout pulls it, in the run's own
-terminal; a pull that fails fails the run.
+terminal; when the pull fails, the run fails with it.
 
 ---
 

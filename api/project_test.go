@@ -160,8 +160,8 @@ func TestProject_UpdateHours(t *testing.T) {
 	assert.Contains(t, job.str("error"), "plan:")
 }
 
-// A project is recursive unless it is made or set root-only: then its
-// own jobs are listed alone.
+// A project is recursive unless made or set root-only: then the listing
+// shows its own jobs alone.
 func TestProject_RootOnly(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
@@ -175,7 +175,7 @@ func TestProject_RootOnly(t *testing.T) {
 	assert.Equal(t, http.StatusOK, res.Status, string(res.Raw))
 	assert.Equal(t, true, res.get("root_only"))
 
-	// A request without the field leaves it as it is.
+	// A request without the field leaves it unchanged.
 	res = f.call(t, asAdmin, http.MethodPut, "/projects/infra", api.ProjectRequest{Title: "Infra"})
 	assert.Equal(t, true, res.get("root_only"))
 	yes := true
@@ -183,7 +183,7 @@ func TestProject_RootOnly(t *testing.T) {
 	assert.Equal(t, false, res.get("root_only"))
 }
 
-// A project shows in the sidebar unless it is set not to.
+// A project shows in the sidebar unless set not to.
 func TestProject_Sidebar(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
@@ -196,7 +196,7 @@ func TestProject_Sidebar(t *testing.T) {
 	res = f.call(t, asAdmin, http.MethodPut, "/projects/infra", api.ProjectRequest{Title: "Infra", Sidebar: &no})
 	assert.Equal(t, true, res.get("sidebar_hidden"))
 	res = f.call(t, asAdmin, http.MethodPut, "/projects/infra", api.ProjectRequest{Title: "Infra"})
-	assert.Equal(t, true, res.get("sidebar_hidden")) // left out: as it was
+	assert.Equal(t, true, res.get("sidebar_hidden")) // left out: unchanged
 	yes := true
 	res = f.call(t, asAdmin, http.MethodPut, "/projects/infra", api.ProjectRequest{Title: "Infra", Sidebar: &yes})
 	assert.Equal(t, false, res.get("sidebar_hidden"))

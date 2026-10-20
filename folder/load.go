@@ -10,8 +10,8 @@ import (
 // Load reads a directory. A folder with a pipeline file lists that
 // pipeline's targets only: the Makefile, package scripts and scripts
 // folder beside it are the pipeline's business, not jobs of their own.
-// With kinds given, only those detectors run, which is how the
-// configuration widens or narrows a folder.
+// With kinds given, only those detectors run: the configuration
+// widens or narrows a folder this way.
 func Load(id, dir string, kinds ...string) *Folder {
 	f := &Folder{ID: id, Title: id, Dir: dir}
 	f.Sources = detector.All(dir, kinds...)
@@ -58,7 +58,7 @@ func LoadFile(id, path string) *Folder {
 func finish(f *Folder) {
 	var failures []string
 	// A source aside keeps its targets' names; the others take their
-	// kind in front when there are several of them.
+	// kind in front when there is more than one.
 	named := 0
 	for _, source := range f.Sources {
 		if !source.Aside {

@@ -14,13 +14,13 @@ import (
 type Entry struct {
 	ID  string `json:"id"`
 	Dir string `json:"dir"`
-	// Sources are the files the directory's conventions were read from.
+	// Sources are the files that hold the directory's conventions.
 	Sources []string `json:"sources"`
 	Jobs    int      `json:"jobs"`
-	// Checkout is what git knows about the directory, nil when it is not
-	// a checkout.
+	// Checkout is what git knows about the directory, nil for a directory
+	// that is not a checkout.
 	Checkout *git.Info `json:"checkout,omitempty"`
-	// Error is set when a source does not parse.
+	// Error holds the parse error when a source does not parse.
 	Error string `json:"error,omitempty"`
 }
 

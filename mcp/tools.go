@@ -20,8 +20,8 @@ const maxWait = 15 * time.Minute
 // pollEvery is how often a waiting call looks at the run.
 var pollEvery = time.Second
 
-// tools are the tools the server offers. The set is frozen: a tool is
-// added only for a need these cannot serve, with the reason in the change
+// tools are the server's tools. The set does not grow: a change adds a
+// tool only for a need these cannot serve, and states the reason
 // (docs/guide/mcp.md).
 func tools() []Tool {
 	str := func(text string) Property { return Property{Type: "string", Description: text} }
@@ -360,7 +360,7 @@ func listWorkflowRuns(ctx context.Context, c *client, args json.RawMessage) (str
 }
 
 // findWorkflow returns the workflow with an ID or a name, and the names
-// of all of them by ID, for the steps that run another.
+// of every workflow by ID, for the steps that run another.
 func findWorkflow(ctx context.Context, c *client, ref string) (*api.WorkflowView, map[string]string, error) {
 	if ref == "" {
 		return nil, nil, errors.New("a workflow ID or name is needed")

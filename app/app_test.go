@@ -66,7 +66,7 @@ func TestNew(t *testing.T) {
 	assert.NotNil(t, a.UsersFile)
 	assert.Equal(t, "", a.Addr())
 
-	// The users file was seeded, the folder discovered.
+	// The users file seeds storage, and discovery finds the folder.
 	admin, err := a.Users.GetByName(context.Background(), "admin")
 	assert.NoError(t, err)
 	assert.Equal(t, model.RoleAdmin, admin.Role)
@@ -82,8 +82,8 @@ func TestNew_Errors(t *testing.T) {
 	_, err := app.New(context.Background(), bad, "test")
 	assert.ErrorContains(t, err, "htpasswd -B")
 
-	// A password file not made yet starts the instance, and is read
-	// once it is there.
+	// A missing password file still starts the instance, which reads
+	// the file once it appears.
 	missing := filepath.Join(t.TempDir(), ".htpasswd")
 	later := &app.Config{Root: t.TempDir(), DataDir: t.TempDir(), DB: ":memory:", SessionTTL: time.Hour, Htpasswd: missing}
 	b, err := app.New(context.Background(), later, "test")
@@ -97,7 +97,7 @@ func TestNew_Errors(t *testing.T) {
 	assert.Equal(t, 1, created)
 
 	// Without a file the instance starts with whoever is in storage, and
-	// the auto login user is made so development works from nothing.
+	// the instance makes the auto login user so development works from nothing.
 	none := &app.Config{Root: t.TempDir(), DataDir: t.TempDir(), DB: ":memory:", SessionTTL: time.Hour, AutoLogin: "dev"}
 	a, err := app.New(context.Background(), none, "test")
 	assert.NoError(t, err)
@@ -165,7 +165,7 @@ func TestApp_Serve(t *testing.T) {
 	assert.Equal(t, http.StatusOK, res.StatusCode)
 	assert.Equal(t, ln.Addr().String(), a.Addr())
 
-	// The password file is watched while serving: a new user signs in
+	// The instance watches the password file while serving: a new user signs in
 	// without a restart.
 	hash, _ := access.HashPassword("demo")
 	assert.NoError(t, access.SetHtpasswd(a.Config.Htpasswd, "late", hash))

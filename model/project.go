@@ -9,7 +9,7 @@ func (p *Project) AllowList() []string {
 	return DecodeList(p.Allow)
 }
 
-// SourceList returns the conventions the project is limited to, by kind.
+// SourceList returns the conventions the project reads, by kind.
 // Empty reads them all.
 func (p *Project) SourceList() []string {
 	if p == nil {

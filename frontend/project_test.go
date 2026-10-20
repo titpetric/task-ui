@@ -42,7 +42,7 @@ func TestProjectEdit(t *testing.T) {
 	assert.Contains(t, filled, `value="ops, release"`)
 	assert.Contains(t, filled, `value="Makefile"`)
 
-	// A folder without sources can still be configured; a bad name cannot.
+	// A folder without sources still opens its settings; a bad name does not.
 	assert.Equal(t, http.StatusOK, f.get(t, asAdmin, "/settings/projects/fresh").Status)
 	assert.Equal(t, http.StatusNotFound, f.get(t, asAdmin, "/settings/projects/..").Status)
 }

@@ -8,11 +8,12 @@ import (
 	"strings"
 )
 
-// TokenPrefix starts every token, so one is recognised in a config file.
+// TokenPrefix starts every token, so a reader spots one in a
+// configuration file.
 const TokenPrefix = "tui_"
 
 // NewToken returns a new token for a client, 256 random bits, and its
-// hash. The token is shown once; only the hash is kept.
+// hash. The caller shows the token once and keeps only the hash.
 func NewToken() (string, string, error) {
 	buf := make([]byte, 32)
 	if _, err := rand.Read(buf); err != nil {
@@ -22,8 +23,9 @@ func NewToken() (string, string, error) {
 	return token, HashToken(token), nil
 }
 
-// HashToken returns the hash a token is kept and looked up by. A token is
-// random enough that a plain sha256 does; a password needs bcrypt.
+// HashToken returns the hash storage keeps a token under and looks it up
+// by. A token is random enough that a plain sha256 does; a password needs
+// bcrypt.
 func HashToken(token string) string {
 	sum := sha256.Sum256([]byte(token))
 	return hex.EncodeToString(sum[:])

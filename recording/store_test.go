@@ -49,7 +49,7 @@ func TestStore_Relative(t *testing.T) {
 }
 
 // Read opens the recording a run row names; a row without one, or whose
-// file is gone, has none.
+// file is missing, has none.
 func TestStore_Read(t *testing.T) {
 	t.Parallel()
 	s := &recording.Store{Root: t.TempDir()}

@@ -17,8 +17,8 @@ func TestKindOf(t *testing.T) {
 	}
 }
 
-// A key made for someone is its type with a label: the kind and label
-// are read back from the name, and a rotation keeps them.
+// A key made for someone is its type with a label: KindOf reads the kind and
+// label back from the name, and a rotation keeps them.
 func TestKindOf_Labelled(t *testing.T) {
 	if KindOf("id_ed25519_alice") != "ed25519" || labelOf("id_ed25519_alice") != "alice" {
 		t.Fatal("kind and label of a labelled key")

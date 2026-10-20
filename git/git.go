@@ -21,7 +21,7 @@ type Git struct {
 	SSHDir string
 }
 
-// ErrNotRepo is returned for a folder without a .git directory.
+// ErrNotRepo reports a folder without a .git directory.
 var ErrNotRepo = errors.New("not a git repository")
 
 // IsRepo reports whether dir is a git checkout.
@@ -30,8 +30,8 @@ func (g *Git) IsRepo(dir string) bool {
 	return err == nil && info.IsDir()
 }
 
-// Checkout returns the checkout dir belongs to: dir itself when it is
-// one, or the nearest of its parents, looking up at most levels of them.
+// Checkout returns the checkout dir belongs to: dir itself when dir
+// is one, or the nearest of its parents, looking up at most levels of them.
 // A folder's levels are its depth below the root, so the search stays
 // inside the root. "" when there is none.
 func (g *Git) Checkout(dir string, levels int) string {
@@ -190,8 +190,8 @@ func (g *Git) Pull(ctx context.Context, dir string, w io.Writer) error {
 	return g.run(ctx, dir, w, "pull", "--ff-only", "--no-rebase")
 }
 
-// Remove deletes a cloned folder. A folder that is not a checkout is left
-// alone: it was not added from here, so it is not removed from here.
+// Remove deletes a cloned folder. It refuses a folder that is not a
+// checkout: the instance did not clone that folder, so it does not delete it.
 func (g *Git) Remove(dir string) error {
 	if !g.IsRepo(dir) {
 		return ErrNotRepo

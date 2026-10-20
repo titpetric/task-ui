@@ -65,7 +65,7 @@ func (c *client) call(ctx context.Context, method, path string, body any) ([]byt
 	return data, nil
 }
 
-// get decodes the answer to a GET into out.
+// get decodes the response to a GET into out.
 func (c *client) get(ctx context.Context, path string, out any) error {
 	data, err := c.call(ctx, http.MethodGet, path, nil)
 	if err != nil {

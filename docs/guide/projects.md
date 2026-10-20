@@ -3,7 +3,7 @@
 Below the views, the sidebar lists what there is to run, as a tree:
 
 - a **project** (the branch icon) is a folder at the top of the root,
-  usually a git checkout;
+  most often a git checkout;
 - under it, its own **jobs**, then the **folders** inside it (the folder
   icon), each with its jobs.
 
@@ -29,8 +29,8 @@ changes them.
 | script   | `scripts/*`                           | a file; its first comment describes it, `# interactive: true` makes it take input |
 
 A pipeline file, `atkins.yml` or a Taskfile, speaks for its folder: the
-folder lists that pipeline's jobs, and what is beside it is the
-pipeline's business. Without one, every source is listed, and a job name
+folder lists that pipeline's jobs, and the files beside it are the
+pipeline's business. Without one, the folder lists every source, and a job name
 that two of them share gets its kind in front (`make:build`,
 `npm:build`). A folder that is itself a `scripts` directory with a
 pipeline also lists the scripts beside it that the pipeline does not
@@ -38,12 +38,12 @@ run, under their own names, such as a `bash.sh` with `exec bash` and
 `# interactive: true`, a terminal to work in.
 
 Every directory under the root that has something to run is a folder, as
-deep as they go. Under a folder with a pipeline, only folders with a
-pipeline of their own are listed, so the Makefiles of a Go tree do not
+deep as they go. Under a folder with a pipeline, the sidebar lists only folders with a
+pipeline of their own, so the Makefiles of a Go tree do not
 become folders; under a plain folder they do. Hidden directories, `node_modules`, `vendor` and
 `testdata` are never looked into.
 
-An agent sees the same list over [MCP](mcp.md): `list_jobs` gives the
+An agent sees the same list over [MCP](mcp.md): `list_jobs` returns the
 folders, their jobs, whether its user may run each, and how each last
 went.
 
@@ -53,7 +53,7 @@ Open a folder from the sidebar:
 
 - **Jobs**: a card each, with what it does, its first steps, how it last
   went, **Run** and **Run force**. **Run all** starts every job of the
-  folder in the background. A folder with several sources has a section
+  folder in the background. A folder with more than one source has a section
   per source.
 - **Files**: the pipeline's files; **Show** opens one, coloured, in a
   window.
@@ -80,8 +80,8 @@ duration.
 
 A folder in a git checkout pulls it with `git pull --ff-only` before every
 run, in the run's own terminal, so a job always runs the latest version.
-A folder inside a checkout pulls the checkout. A pull that fails fails
-the run.
+A folder inside a checkout pulls the checkout. When the pull fails, the
+run fails with it.
 
 ## Keys for a run
 
@@ -94,20 +94,20 @@ keys stay in memory and the agent ends with the run; the terminal says
 which keys it loaded, or `(none)`. A run with no key has an empty
 `SSH_AUTH_SOCK`, never the server's own.
 
-`ssh` and `git` in a job also offer the server's own keys in `~/.ssh`,
+`ssh` and `git` in a job also try the server's own keys in `~/.ssh`,
 the identity of the host task-ui runs on, such as the key it pulls with.
 terraform's agent authentication uses only the agent.
 
 A checkout's `.ssh/` folder is not loaded. The SSH keys page warns about
 one with private keys in it: upload a key the project needs as an
-instance key and give it by policy.
+instance key and grant it by policy.
 
 ## Hours
 
-A folder or a job can be limited to office hours, set by an admin (see
-[Settings](settings.md#projects)). Out of hours **Run** is refused.
-**Run force** still works, but asks why: the reason is required, kept
-with the run, and shown wherever the run is listed.
+An admin can limit a folder or a job to office hours (see
+[Settings](settings.md#projects)). Out of hours **Run** fails.
+**Run force** still works, but asks why: it needs a reason, keeps it
+with the run, and every list of runs shows it.
 
 ![Out of hours, Run force asks why](../assets/out-of-hours-dark.png)
 
@@ -115,7 +115,7 @@ with the run, and shown wherever the run is listed.
 
 An admin runs everything. A runner runs a folder's jobs unless its allow
 list names other users or roles. A viewer runs nothing, but sees the jobs
-and watches the runs. Which folders each user sees at all is set under
+and watches the runs. An admin sets which folders each user sees at all under
 Settings, Users.
 
 ---

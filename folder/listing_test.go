@@ -7,7 +7,7 @@ import (
 )
 
 // A listing has the folders first, then the files, each by name
-// regardless of case; dot entries are left out.
+// regardless of case; dot entries stay out.
 func TestListing(t *testing.T) {
 	dir := t.TempDir()
 	write(t, filepath.Join(dir, "b.txt"), "b")
@@ -33,7 +33,7 @@ func TestListing(t *testing.T) {
 	}
 }
 
-// An item is a name, and whether it is a directory to link into.
+// An item is a name, and whether the name links into a directory.
 func TestItem(t *testing.T) {
 	dir := t.TempDir()
 	write(t, filepath.Join(dir, "sub", "x"), "x")

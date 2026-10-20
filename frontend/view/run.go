@@ -10,7 +10,7 @@ import (
 // while the session is in memory.
 type Run struct {
 	model.Run
-	// Live is set while the session can be attached to.
+	// Live holds true while the session accepts an attach.
 	Live bool
 	// Attached counts the windows on the session.
 	Attached int

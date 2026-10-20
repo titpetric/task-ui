@@ -17,7 +17,7 @@ const replaySize = 256 << 10
 // pendingSize bounds the input kept for a process that has not started.
 const pendingSize = 64 << 10
 
-// Session is one run in progress, and what is known of it after: the
+// Session is one run in progress, and what remains of it after: the
 // process on its pty, the terminal emulator that follows the output, the
 // windows attached, and how it ended. A session outlives the window that
 // started it: windows attach and detach, the run goes on.
@@ -34,7 +34,7 @@ type Session struct {
 	tail *ring
 	proc *Process
 	// pending is the input typed before the process started, and the
-	// size the window asked for; both reach the process when it starts.
+	// size the window requested; both reach the process when it starts.
 	pending    []byte
 	cols, rows int
 	subs       map[*Subscriber]struct{}
@@ -68,7 +68,8 @@ func (s *Session) Key() string {
 	return s.Run.Key()
 }
 
-// Done is closed when the run ended and the session settled.
+// Done returns a channel that closes when the run ended and the session
+// settled.
 func (s *Session) Done() <-chan struct{} {
 	return s.done
 }
@@ -115,7 +116,7 @@ func (s *Session) Detach(sub *Subscriber) {
 	}
 }
 
-// Attached returns how many windows are attached.
+// Attached returns the number of attached windows.
 func (s *Session) Attached() int {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -171,7 +172,7 @@ func (s *Session) Kill(grace time.Duration) {
 	s.end(false, grace)
 }
 
-// end asks the process to stop. A session whose process has not started
+// end signals the process to stop. A session whose process has not started
 // yet remembers, and stops it as soon as it starts.
 func (s *Session) end(byUser bool, grace time.Duration) {
 	s.mu.Lock()
@@ -217,14 +218,14 @@ func (s *Session) write(p []byte) {
 	}
 }
 
-// Write lets the session be written to as the run's terminal.
+// Write implements io.Writer: the session is the run's terminal.
 func (s *Session) Write(p []byte) (int, error) {
 	s.write(p)
 	return len(p), nil
 }
 
 // setProcess installs the running process, stopping it at once when the
-// session was ended before it started.
+// session ended before it started.
 func (s *Session) setProcess(proc *Process, grace time.Duration) {
 	s.mu.Lock()
 	s.proc = proc
@@ -262,7 +263,7 @@ func (s *Session) finish(status Status) {
 }
 
 // outcome decides the final state from how the process ended and who
-// asked for it.
+// requested it.
 func (s *Session) outcome(exitCode int) Status {
 	s.mu.Lock()
 	defer s.mu.Unlock()

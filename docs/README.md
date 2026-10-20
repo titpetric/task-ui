@@ -31,13 +31,13 @@ Three ideas carry the rest of the guide.
   reads the files and lists what they declare; it never writes them.
 - **A run** is a job running on the server, on a terminal of its own. It
   belongs to no window: anyone allowed attaches to it, and it goes on when
-  every window is closed. One job runs once at a time across the
+  you close every window. One job runs once at a time across the
   instance; different jobs run side by side.
 - **A role** decides what you can do. Viewers watch and read history,
   runners start the jobs the allow lists let them, admins also manage the
   instance under Settings.
 
-A job, a workflow or a run is marked `#!` wherever it is listed: faint
+Every list marks a job, a workflow or a run with `#!`: faint
 until it has run, then in the colour of how it last ended, green for ok
 and red for failed or killed, and pulsing amber while it runs.
 

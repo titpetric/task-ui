@@ -17,7 +17,7 @@ type RunRequest struct {
 	Folder string `json:"folder"`
 	Job    string `json:"job"`
 	Force  bool   `json:"force"`
-	// Reason says why the run is forced out of hours. Required then.
+	// Reason says why the user forces the run out of hours. Required then.
 	Reason string `json:"reason"`
 	Cols   int    `json:"cols"`
 	Rows   int    `json:"rows"`
@@ -92,7 +92,7 @@ func (h *Handlers) startRun(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if errors.Is(err, runner.ErrOutOfHours) || errors.Is(err, runner.ErrReasonNeeded) {
-		// The window asks for the reason and forces; it needs the hours
+		// The window prompts for the reason and forces; it needs the hours
 		// to say what they are.
 		writeJSON(w, statusOf(err), map[string]any{"error": err.Error(), "out_of_hours": true, "hours": f.HoursOf(job)})
 		return
@@ -168,14 +168,14 @@ func (h *Handlers) frameOf(r *http.Request) (runner.Frame, error) {
 
 // replayOf returns the frame of a run as frameOf does, the lines of its
 // whole output, and whether the last screen already shows them all: a
-// run that ended and never scrolled. A run in progress is drawn from
-// its session, its lines not counted (0).
+// run that ended and never scrolled. A run in progress takes its frame
+// from its session, its lines not counted (0).
 func (h *Handlers) replayOf(r *http.Request, run *model.Run) (runner.Frame, int, bool, error) {
 	all := r.URL.Query().Get("all") != ""
 	if session, ok := h.opts.Runner.Get(run.ID); ok && !all && !session.Status().Finished() {
 		return session.Frame(), 0, false, nil
 	}
-	// The run ended or the whole output is asked for: the recording
+	// The run ended or the request names ?all: the recording
 	// holds both.
 	if h.opts.Recordings == nil {
 		return runner.Frame{}, 0, false, runner.ErrNotFound
@@ -198,11 +198,11 @@ func (h *Handlers) replayOf(r *http.Request, run *model.Run) (runner.Frame, int,
 	return replay.Screen, replay.Lines(), replay.Complete(), nil
 }
 
-// frameSVG renders the last frame of a run as an image. The empty rows
-// at the bottom are left out, so a tile shows what there is; ?full=1
+// frameSVG renders the last frame of a run as an image. It drops the empty
+// rows at the bottom, so a tile shows what there is; ?full=1
 // keeps the whole screen, ?all=1 renders the whole output. The
 // X-Output-Lines header counts the lines of the whole output, and
-// X-Output-Complete says the screen already shows all of them.
+// X-Output-Complete says the screen already shows them all.
 func (h *Handlers) frameSVG(w http.ResponseWriter, r *http.Request) {
 	run, err := h.runOf(r)
 	if err != nil {

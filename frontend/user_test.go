@@ -19,7 +19,7 @@ func TestUsers(t *testing.T) {
 	for _, name := range []string{asAdmin, asOps, asViewer, asLimited} {
 		assert.Contains(t, body, `href="/settings/users/`+f.users[name].ID+`"`)
 	}
-	// Nobody is made or removed here.
+	// The page has no way to make or remove a user.
 	assert.NotContains(t, body, "data-delete")
 	assert.NotContains(t, body, "/settings/users/new")
 	assert.Contains(t, body, "infra</td>")

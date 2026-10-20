@@ -25,14 +25,14 @@ The database, the recordings and the artifacts live under `/data`, and
 the users sign in from `/app/.htpasswd`. The image bundles `task`,
 `atkins`, `docker` and `docker compose`.
 
-- If you don't want to use Docker, remove the volume for `docker.sock`.
+- To run without Docker, remove the volume for `docker.sock`.
 - Mount `/keys` with `TASK_UI_SSH_DIR` to keep the SSH keys managed from
   the UI. Keep it out of `/root/.ssh`, so `ssh` in a job does not find
-  them by default; a run gets the keys its policies give it.
+  them by default; a run receives the keys its policies grant it.
 
 ## Configuration
 
-Everything is configured from the environment:
+The environment sets the whole configuration:
 
 | Variable              | Default              | Meaning                                                           |
 |-----------------------|----------------------|-------------------------------------------------------------------|
@@ -48,7 +48,7 @@ Everything is configured from the environment:
 | `TASK_UI_SECRET`      | random per process   | Signs the session cookie, set it to keep sessions over restarts   |
 | `TASK_UI_SESSION_TTL` | `12h`                | Session lifetime                                                  |
 | `TASK_UI_KEEP`        | `15m`                | How long a finished run stays attachable with its frame in memory |
-| `TASK_UI_GRACE`       | `10s`                | How long a stopped process gets before it is killed               |
+| `TASK_UI_GRACE`       | `10s`                | How long a stopped process gets before task-ui kills it           |
 | `TASK_UI_AUTOLOGIN`   |                      | Sign every request in as this user, for development only          |
 | `TASK_UI_NOW`         |                      | Pin the clock the hours read (RFC 3339), for the screenshots only |
 
@@ -60,10 +60,10 @@ matching variables; `-v` prints the build.
 Login is mandatory, through the sign in screen; there is no HTTP basic
 auth. Who may sign in is the password file, `.htpasswd` in the root or
 wherever `TASK_UI_HTPASSWD` points: one `name:hash` per line, the
-htpasswd format, bcrypt hashes only. The file is the truth. It is read
-on startup and again whenever it changes, so adding, resetting or
+htpasswd format, bcrypt hashes only. The file is the truth. task-ui reads
+it on startup and again whenever it changes, so adding, resetting or
 removing a user needs no restart: a user not in the file cannot sign in
-and is removed from the instance. A file that is not there yet is a
+and the instance removes them. A file that is not there yet is a
 warning, not an error: the instance reads it once `task-ui passwd` makes
 it.
 
@@ -77,7 +77,7 @@ task-ui backup alice                         # ten backup passwords, each signs 
 task-ui token alice cli                      # a token for a client such as an MCP agent
 ```
 
-What a user signs in with is kept apart from the user row, so nothing
+task-ui keeps what a user signs in with apart from the user row, so nothing
 that reads a user, the API included, carries a credential:
 `user_auth_password` holds the password hashes, `user_email` the
 addresses and `user_auth_token` the token hashes. The `email`, `backup`

@@ -8,12 +8,12 @@ is the instance at a glance, the way a control room shows its screens.
 ## The numbers
 
 A row of five: how many folders and jobs there are, how many runs are
-running, how many schedules are set, and your role.
+running, how many schedules exist, and your role.
 
 ## Running now
 
 Every run in progress as a tile: the folder and job, how many windows
-are attached, who started it, and its terminal as it looks right now,
+watch it, who started it, and its terminal as it looks right now,
 redrawn every two seconds. Click a tile to open a window on the run:
 runners can type into it and end it, viewers watch.
 
@@ -30,7 +30,7 @@ a script.
 Every folder's jobs in one table, a button each. A job name that repeats
 across folders gets a column of its own (`build`, `push`, `plan`), so the
 same step of every project lines up; the names that do not repeat are
-under **Other**. A folder with several sources shows the kind on the
+under **Other**. A folder with more than one source shows the kind on the
 button (`make`, `npm`) where a name is there more than once.
 
 A button runs the job, or, while it runs, attaches to it. Its `#!` mark

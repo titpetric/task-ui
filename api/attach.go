@@ -29,9 +29,9 @@ type control struct {
 	Rows     int    `json:"rows,omitempty"`
 }
 
-// attach serves the websocket a window attaches to a run with. Input is
-// allowed when the user may run the job; everyone who may see the run
-// may watch it.
+// attach serves the websocket a window attaches to a run with. The window
+// may send input when the user may run the job; everyone who may see the
+// run may watch it.
 func (h *Handlers) attach() http.Handler {
 	return websocket.Server{
 		Handshake: func(config *websocket.Config, r *http.Request) error {
@@ -77,7 +77,7 @@ func (h *Handlers) window(ws *websocket.Conn, session *runner.Session, readOnly 
 	sub := session.Attach(readOnly)
 	defer session.Detach(sub)
 
-	// The window is gone when its reads end; a quiet run would not
+	// The reads end when the window leaves; a quiet run would not
 	// notice otherwise.
 	gone := make(chan struct{})
 	go func() {
@@ -105,7 +105,7 @@ func (h *Handlers) window(ws *websocket.Conn, session *runner.Session, readOnly 
 }
 
 // readControls applies what the window sends: input, resizes, stop and
-// kill. A read-only window's input and ends are ignored.
+// kill. It ignores a read-only window's input and ends.
 func (h *Handlers) readControls(ws *websocket.Conn, session *runner.Session, readOnly bool) {
 	for {
 		var frame []byte

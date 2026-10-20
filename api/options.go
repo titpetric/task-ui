@@ -33,10 +33,10 @@ type Options struct {
 	Catalogue folder.Catalogue
 	Git       *git.Git
 	Keys      *sshkey.Store
-	// KeyPolicies give the instance keys to roles' runs.
+	// KeyPolicies name the roles whose runs get each instance key.
 	KeyPolicies *storage.SSHKeyPolicyStorage
 	Env         *envfile.Store
 	Recordings  *recording.Store
-	// Root is where projects are cloned to.
+	// Root is the folder that holds cloned projects.
 	Root string
 }

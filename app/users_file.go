@@ -14,9 +14,9 @@ import (
 
 // UsersFile is the password file, htpasswd style, and the role lists
 // from the environment: who may sign in, and what they are. The file is
-// the truth: a user it does not name cannot sign in and is removed from
+// the truth: a user it does not name cannot sign in and leaves
 // storage; a user it names gets the password it holds and the role the
-// lists give. It is re-read when it changes.
+// lists set. Watch reads it again when it changes.
 type UsersFile struct {
 	Path string
 	// Admins and Viewers name the users with those roles; everyone else
@@ -54,9 +54,10 @@ func (f *UsersFile) Changed() bool {
 	return !info.ModTime().Equal(f.modified)
 }
 
-// Sync writes the file to storage: users it names are created or
-// updated with their role, and their hash kept as their password; users
-// it does not name are removed, with what they sign in with. It returns how many were created and removed.
+// Sync writes the file to storage: it creates or updates the users it
+// names with their role, with their hash as their password, and removes
+// the users it does not name, with what they sign in with. It returns
+// how many users it created and removed.
 func (f *UsersFile) Sync(ctx context.Context, users *storage.UserStorage, passwords *storage.UserAuthPasswordStorage) (int, int, error) {
 	info, err := os.Stat(f.Path)
 	if err != nil {
@@ -83,7 +84,7 @@ func (f *UsersFile) Sync(ctx context.Context, users *storage.UserStorage, passwo
 }
 
 // keep creates the users the file names, and updates the roles and
-// passwords that changed. It returns how many were created.
+// passwords that changed. It returns the count of new users.
 func (f *UsersFile) keep(ctx context.Context, users *storage.UserStorage, passwords *storage.UserAuthPasswordStorage, creds []access.Credential, existing []model.User) (int, error) {
 	byName := map[string]*model.User{}
 	for i := range existing {

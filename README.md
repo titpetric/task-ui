@@ -10,7 +10,7 @@ as it runs.
 
 ![The dashboard: every terminal in progress, as it looks right now](https://raw.githubusercontent.com/titpetric/task-ui/main/docs/assets/task-ui.png)
 
-How to use it is in the [usage guide](docs/README.md), a chapter per
+The [usage guide](docs/README.md) shows how to use it, a chapter per
 section of the sidebar: the [dashboard](docs/guide/dashboard.md),
 [workflows](docs/guide/workflows.md), [runs](docs/guide/runs.md),
 [artifacts](docs/guide/artifacts.md), [schedules](docs/guide/scheduled.md),
@@ -23,8 +23,8 @@ The look follows [oida](https://github.com/titpetric/oida): hairlines,
 one amber accent, dark and light from `prefers-color-scheme`. The type is
 a dashboard pair, [Inter](https://rsms.me/inter/) for the words and
 [JetBrains Mono](https://www.jetbrains.com/lp/mono/) for the data, both
-vendored under `frontend/view/assets/fonts/` with their licenses. All
-assets are embedded, the front end makes no external requests.
+vendored under `frontend/view/assets/fonts/` with their licenses. The
+binary embeds all assets, and the front end makes no external requests.
 
 ## Documents
 

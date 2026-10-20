@@ -32,7 +32,7 @@ func cutKind(id string) (string, string, bool) {
 }
 
 // Every job name that occurs more than once, across folders or within
-// one, gets a column, the most common first; a cell holds all of the
+// one, gets a column, the most common first; a cell holds the
 // folder's jobs of that name. Other holds the names that occur once. A
 // folder without jobs has no row.
 func TestControl(t *testing.T) {

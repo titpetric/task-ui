@@ -40,10 +40,10 @@ type ProjectRequest struct {
 	Hours    string            `json:"hours"`
 	JobHours map[string]string `json:"job_hours"`
 	// Recursive lists the folders inside the project too, the default;
-	// false lists its own jobs alone. Left out, it stays as it is.
+	// false lists its own jobs alone. Left out, it stays unchanged.
 	Recursive *bool `json:"recursive,omitempty"`
 	// Sidebar lists the project in the sidebar, the default; false keeps
-	// it, and the folders inside it, out. Left out, it stays as it is.
+	// it, and the folders inside it, out. Left out, it stays unchanged.
 	Sidebar *bool `json:"sidebar,omitempty"`
 }
 

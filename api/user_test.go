@@ -41,14 +41,14 @@ func TestUser_List(t *testing.T) {
 	res := f.call(t, asAdmin, http.MethodGet, "/users", nil)
 	assert.Equal(t, http.StatusOK, res.Status)
 	assert.Len(t, res.list("users"), 4)
-	// What a user signs in with is never in the answer.
+	// The listing never holds what a user signs in with.
 	assert.NotContains(t, string(res.Raw), hash)
 	assert.NotContains(t, string(res.Raw), "$2")
 	assert.NotContains(t, string(res.Raw), "password")
 	assert.NotContains(t, string(res.Raw), "admin@example.com")
 }
 
-// Users are made and removed in the password file, not here.
+// Only the password file makes and removes users.
 func TestUser_ManagedElsewhere(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)

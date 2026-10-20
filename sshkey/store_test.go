@@ -101,7 +101,7 @@ func TestStore_Upload(t *testing.T) {
 		t.Fatalf("ed25519 upload: %+v %v", uploaded, err)
 	}
 
-	// A key behind a passphrase is refused: runs are unattended.
+	// Upload refuses a key behind a passphrase: runs have nobody to type it.
 	if _, err := exec.LookPath("ssh-keygen"); err == nil {
 		locked := filepath.Join(t.TempDir(), "locked")
 		cmd := exec.Command("ssh-keygen", "-q", "-t", "ed25519", "-N", "secret", "-f", locked)

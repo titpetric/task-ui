@@ -1,13 +1,12 @@
 # API
 
-Everything the pages do goes through `/api`, JSON over the session cookie,
+Everything the pages do calls `/api`, JSON over the session cookie,
 or over a token in an `Authorization: Bearer` header (`task-ui token
 <user> <name>` prints one). Writes need the same origin. The browser
 pages are the reference client; `scripts/run.sh` is the curl one.
 
-The surface below, and the MCP tools on it, is frozen: a route or a tool
-is added only for a need these cannot serve, with the reason in the
-change.
+The surface below, and the MCP tools on it, stay frozen: a change adds a
+route or a tool only for a need these cannot serve, and states the reason.
 
 | Method | Path | Does |
 |--------|------|------|

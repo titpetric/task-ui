@@ -47,7 +47,7 @@ var aliases = map[string]string{
 	"@hourly":   "0 * * * *",
 }
 
-// ErrInvalid is returned for an expression that does not parse.
+// ErrInvalid reports an expression that does not parse.
 var ErrInvalid = errors.New("invalid cron expression")
 
 // Parse reads a cron expression: five fields of `*`, `*/n`, `a`, `a-b`,

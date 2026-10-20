@@ -11,7 +11,7 @@ import (
 	"github.com/titpetric/task-ui/mcp"
 )
 
-// A tool says what the API answered when it is not a success: its
+// A tool says what the API answered on a failure: its
 // message, or the body when it sent no JSON.
 func TestClient_Errors(t *testing.T) {
 	t.Parallel()

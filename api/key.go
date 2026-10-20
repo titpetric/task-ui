@@ -22,7 +22,7 @@ type KeyRequest struct {
 	Content string `json:"content"`
 	// Policies are the roles whose runs get the key through the run's
 	// ssh agent. Left out, a key keeps the roles it had, so a rotation
-	// keeps them; an empty list gives the key to none.
+	// keeps them; an empty list withholds the key from all.
 	Policies []string `json:"policies"`
 	// Users are the users, by name, whose runs get the key, beside the
 	// roles. Left out, a key keeps the users it had.
@@ -47,8 +47,8 @@ func (h *Handlers) listKeys(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"keys": h.opts.Keys.List(), "dir": h.opts.Keys.Dir, "policies": policies, "users": users})
 }
 
-// setPolicies gives a key to the roles and the users a request names,
-// each when it names them.
+// setPolicies sets the roles and the users whose runs get a key, each
+// when the request names them.
 func (h *Handlers) setPolicies(r *http.Request, name string, req KeyRequest) error {
 	if req.Policies != nil {
 		if err := h.opts.KeyPolicies.Set(r.Context(), name, req.Policies); err != nil {
@@ -97,8 +97,8 @@ func (h *Handlers) updateKey(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"name": name, "policies": req.Policies, "users": req.Users})
 }
 
-// generateKey makes a new pair. The pair of the same type that was there
-// is kept as a backup.
+// generateKey makes a new pair. It keeps the existing pair of the same
+// type as a backup.
 func (h *Handlers) generateKey(w http.ResponseWriter, r *http.Request) {
 	if !requireAdmin(w, r) {
 		return
@@ -120,7 +120,7 @@ func (h *Handlers) generateKey(w http.ResponseWriter, r *http.Request) {
 	h.rekeyed(w, r, http.StatusCreated, key)
 }
 
-// rekeyed answers a key change with the key and how many secrets were
+// rekeyed answers a key change with the key and the count of secrets
 // written again for the keys now current. A rekey that fails is in the
 // answer, not a failure: the key is there, the backups still open the
 // secrets.
@@ -155,8 +155,8 @@ func (h *Handlers) uploadKey(w http.ResponseWriter, r *http.Request) {
 	h.rekeyed(w, r, http.StatusCreated, key)
 }
 
-// deleteKey removes a pair, or a backup. The secrets are written again
-// for the keys that remain first; the last key that can encrypt them
+// deleteKey removes a pair, or a backup. It first writes the secrets
+// again for the keys that remain; the last key that can encrypt them
 // stays until another is there.
 func (h *Handlers) deleteKey(w http.ResponseWriter, r *http.Request) {
 	if !requireAdmin(w, r) {

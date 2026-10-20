@@ -13,7 +13,7 @@ import (
 	"github.com/titpetric/task-ui/storage"
 )
 
-// SourceView is a file a folder's pipeline reads, as it is and coloured.
+// SourceView is a file a folder's pipeline reads, verbatim and coloured.
 type SourceView struct {
 	File    string        `json:"file"`
 	Content string        `json:"content"`
@@ -24,8 +24,8 @@ type SourceView struct {
 const maxSource = 1 << 20
 
 // getSource returns a file of a folder's sources, ?file=atkins.yml, or a
-// file they include, for whoever sees the folder. Only the files the
-// folder lists are served, from inside the root.
+// file they include, for whoever sees the folder. It serves only the files
+// the folder lists, from inside the root.
 func (h *Handlers) getSource(w http.ResponseWriter, r *http.Request) {
 	f, rest := folder.Resolve(h.opts.Catalogue, param(r, "*"))
 	if f == nil || rest != "" || !access.UserFrom(r.Context()).CanSee(f.ID) {

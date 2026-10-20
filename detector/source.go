@@ -1,11 +1,11 @@
 package detector
 
-// Source is one convention found in a folder: the file it was read from,
-// the command that runs its targets, and the targets.
+// Source is one convention found in a folder: the file the detector
+// read, the command that runs its targets, and the targets.
 type Source struct {
 	// Kind names the convention: atkins, task, make, npm, composer, script.
 	Kind string `json:"kind"`
-	// File is the file the targets were read from, relative to the folder.
+	// File is the file holding the targets, relative to the folder.
 	File string `json:"file"`
 	// Name and Description are what the file says about itself, when the
 	// convention has a place for that.
@@ -22,7 +22,7 @@ type Source struct {
 
 	Targets []*Target `json:"targets"`
 
-	// Error is set when the file does not parse.
+	// Error holds the parse error when the file does not parse.
 	Error string `json:"error,omitempty"`
 
 	// Aside marks a source listed beside the one that reads the folder,

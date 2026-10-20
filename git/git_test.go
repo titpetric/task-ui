@@ -169,7 +169,7 @@ func TestGit_IsRepo(t *testing.T) {
 	}
 }
 
-// Checkout finds the checkout a folder is in, no higher than it is told.
+// Checkout finds the checkout a folder is in, no higher than the levels allow.
 func TestGit_Checkout(t *testing.T) {
 	t.Parallel()
 	g := &Git{}

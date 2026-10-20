@@ -45,7 +45,7 @@ func (d npmDetector) Detect(dir string) *Source {
 	source.Description = pkg.Description
 	for _, name := range sortedStrings(pkg.Scripts) {
 		if strings.HasPrefix(name, "pre") || strings.HasPrefix(name, "post") {
-			// Hooks run around the script they are named after.
+			// Hooks run around the script whose name they carry.
 			base := strings.TrimPrefix(strings.TrimPrefix(name, "pre"), "post")
 			if _, ok := pkg.Scripts[base]; ok {
 				continue

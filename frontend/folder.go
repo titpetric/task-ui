@@ -64,7 +64,7 @@ func (h *Handlers) browse(w http.ResponseWriter, r *http.Request, f *folder.Fold
 	h.render(w, http.StatusOK, "browse", p)
 }
 
-// folder shows a folder: its jobs, what it is, what it holds, its env
+// folder shows a folder: its jobs, its kind, what it holds, its env
 // files.
 func (h *Handlers) folder(w http.ResponseWriter, r *http.Request, f *folder.Folder) {
 	p := h.page(r, f.Title)

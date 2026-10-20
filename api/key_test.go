@@ -157,7 +157,7 @@ func TestKey_Policies(t *testing.T) {
 	forbidden := f.call(t, asOps, http.MethodPut, "/keys/id_ed25519", api.KeyRequest{Policies: []string{"runner"}})
 	assert.Equal(t, http.StatusForbidden, forbidden.Status)
 
-	// Upload takes them too; a deleted key's are gone.
+	// Upload takes them too; a deleted key loses its own.
 	pem, err := os.ReadFile(filepath.Join(f.opts.Keys.Dir, "id_ed25519"))
 	assert.NoError(t, err)
 	assert.NoError(t, f.opts.Keys.Delete("id_ed25519"))

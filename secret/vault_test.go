@@ -50,7 +50,7 @@ func TestVault_RoundTrip(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "hunter2", plain)
 
-	// A value that was never encrypted comes back as it is.
+	// A plain value comes back unchanged.
 	plain, err = v.Decrypt("plain")
 	assert.NoError(t, err)
 	assert.Equal(t, "plain", plain)
@@ -80,7 +80,7 @@ func TestVault_Rotation(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "before", plain)
 
-	// Without the backup the old value is lost; a rekeyed one is not.
+	// Without the backup the old value stays unreadable; a rekeyed one decrypts.
 	fresh, err := v.Encrypt("after")
 	assert.NoError(t, err)
 	for _, key := range keys.List() {

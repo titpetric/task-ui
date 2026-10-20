@@ -8,8 +8,8 @@ import (
 // fileSpec is the subset of an atkins pipeline or a Taskfile that task-ui
 // reads. Both share `tasks:` with `desc`, `summary`, `aliases`, `internal`
 // and `interactive`; atkins adds `jobs:`, `name:`, `help:`, `include:` and
-// `env.include:`, Taskfiles add `dotenv:`. Unknown keys are ignored, so
-// either file parses, and nothing task-ui needs is an extension.
+// `env.include:`, Taskfiles add `dotenv:`. The decoder skips unknown keys,
+// so either file parses, and nothing task-ui needs is an extension.
 type fileSpec struct {
 	Name    string     `yaml:"name"`
 	Help    string     `yaml:"help"`

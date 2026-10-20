@@ -102,7 +102,7 @@ func TestAttach_ReadOnly(t *testing.T) {
 	send(t, ws, map[string]any{"type": "stop"})
 	send(t, ws, map[string]any{"type": "kill"})
 
-	// The viewer's ends are ignored: the run is still running.
+	// The run ignores the viewer's ends and keeps running.
 	time.Sleep(200 * time.Millisecond)
 	res := f.call(t, asViewer, http.MethodGet, "/runs/"+id, nil)
 	assert.Equal(t, model.StateRunning, res.str("state"))

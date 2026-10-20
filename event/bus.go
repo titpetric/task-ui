@@ -1,6 +1,6 @@
 // Package event is the bus the pages follow: a publisher names a topic
-// and an event, and every subscriber of the topic gets it. It is in
-// memory, for one instance, and never waits on a subscriber.
+// and an event, and every subscriber of the topic gets it. It holds
+// everything in memory, for one instance, and never waits on a subscriber.
 package event
 
 import (

@@ -66,7 +66,7 @@ func TestDiscovery(t *testing.T) {
 	}
 }
 
-// Discovery goes deep: a nested folder with a pipeline file is listed
+// Discovery goes deep: it lists a nested folder with a pipeline file
 // at its path, in tree order. Under a pipeline folder the build files of
 // a source tree are not folders; under a plain folder they are.
 func TestDiscovery_Tree(t *testing.T) {
@@ -83,8 +83,8 @@ func TestDiscovery_Tree(t *testing.T) {
 	for _, f := range d.List() {
 		ids = append(ids, f.ID)
 	}
-	// services has nothing to run, but holds folders that do: it is listed
-	// as their top level folder, the sidebar's section for them.
+	// services has nothing to run, but holds folders that do: the listing
+	// shows it as their top level folder, the sidebar's section for them.
 	if want := []string{filepath.Base(root), "services", "services/api", "services/api/edge"}; !slices.Equal(ids, want) {
 		t.Fatalf("tree: got %v, want %v", ids, want)
 	}
@@ -116,7 +116,7 @@ func TestDiscovery_Tree(t *testing.T) {
 // A folder git ignores is a build copy or a cache, not a project: the
 // sources a dockerfiles build copies into src/ carry their own pipelines.
 // A folder with nothing to run (a Taskfile whose tasks have no desc, a
-// package.json without scripts) is left out as well.
+// package.json without scripts) stays out as well.
 func TestDiscovery_SkipsIgnoredAndEmpty(t *testing.T) {
 	root := t.TempDir()
 	repo := filepath.Join(root, "dockerfiles")
@@ -148,7 +148,7 @@ func gitInit(t *testing.T, dir string) {
 }
 
 // A checkout with nothing to run at its top, its apps in subfolders, is
-// still the top level folder those apps are listed under.
+// still the top level folder the listing puts those apps under.
 func TestDiscovery_ProjectSection(t *testing.T) {
 	root := t.TempDir()
 	apps := filepath.Join(root, "apps")

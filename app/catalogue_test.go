@@ -45,7 +45,7 @@ func TestCatalogue(t *testing.T) {
 	assert.Equal(t, "The servers", infra.Title)
 	assert.Equal(t, []string{"ops"}, infra.Allow)
 
-	// Without discovery only configured folders are listed.
+	// Without discovery the catalogue lists only configured folders.
 	narrow := app.NewCatalogue(root, false, projects)
 	assert.Len(t, narrow.List(), 1)
 	assert.Equal(t, "infra", narrow.List()[0].ID)

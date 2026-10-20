@@ -40,7 +40,7 @@ func viewRunSteps(rows []model.WorkflowRunStep, names map[string]string) []view.
 	return out
 }
 
-// workflowView decorates a workflow for the page's user. It is nil when
+// workflowView decorates a workflow for the page's user. It returns nil when
 // the user may not see a step's folder, the folders of the workflows
 // the steps run among them.
 func (h *Handlers) workflowView(ctx context.Context, p *view.Page, wf model.Workflow, names map[string]string) *view.Workflow {

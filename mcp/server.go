@@ -42,7 +42,7 @@ func New(api http.Handler, version string) *Server {
 	return &Server{API: api, Version: version, tools: tools()}
 }
 
-// Tools returns the tools the server offers.
+// Tools returns the server's tools.
 func (s *Server) Tools() []Tool {
 	return s.tools
 }
@@ -135,8 +135,8 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// serveHTTP answers a request, or returns why the message could not be
-// read, which is answered without an ID.
+// serveHTTP answers a request, or returns why reading the message
+// failed; the caller answers that without an ID.
 func (s *Server) serveHTTP(w http.ResponseWriter, r *http.Request) error {
 	if r.Method != http.MethodPost {
 		w.Header().Set("Allow", http.MethodPost)

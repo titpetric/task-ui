@@ -1,6 +1,6 @@
 // Package runner runs jobs and keeps them running: a session per run,
-// detached from any window, with a terminal emulator behind it so the
-// screen is known at every moment, windows that attach and detach, a
+// detached from any window, with a terminal emulator behind it that
+// holds the screen at every moment, windows that attach and detach, a
 // lock that allows one run per job across the instance, and the
 // artifacts a run leaves behind.
 package runner
@@ -25,13 +25,13 @@ import (
 
 // The errors a start or an attach can end in.
 var (
-	// ErrBusy is returned when the job is already running.
+	// ErrBusy reports a job that is already running.
 	ErrBusy = errors.New("already running")
-	// ErrNotRunning is returned for input to a run that is not running.
+	// ErrNotRunning refuses input to a run that is not running.
 	ErrNotRunning = errors.New("the run is not running")
-	// ErrNotInteractive is returned for input to a job that takes none.
+	// ErrNotInteractive refuses input to a job that takes none.
 	ErrNotInteractive = errors.New("the job takes no input")
-	// ErrNotFound is returned for a session that is not there.
+	// ErrNotFound reports a session that does not exist.
 	ErrNotFound = errors.New("no such run")
 )
 
@@ -92,8 +92,8 @@ func (m *Manager) List() []*Session {
 }
 
 // Start starts a run. When the job is running already it returns the
-// session in the way and ErrBusy, unless the request forces: then the
-// run in the way is killed, waited for, and the new run takes its place.
+// session in the way and ErrBusy, unless the request forces: then Start
+// kills the run in the way, waits for it, and the new run takes its place.
 func (m *Manager) Start(ctx context.Context, req Request) (*Session, error) {
 	if req.Folder == nil || req.Job == nil {
 		return nil, errors.New("a run needs a folder and a job")
@@ -126,7 +126,7 @@ func (m *Manager) Start(ctx context.Context, req Request) (*Session, error) {
 	return session, nil
 }
 
-// RunsTopic is the topic every run is told on.
+// RunsTopic is the topic the manager publishes every run on.
 const RunsTopic = "runs"
 
 // publish tells the runs topic how a run stands, when there is a bus.
@@ -270,8 +270,8 @@ func (m *Manager) serve(session *Session) {
 // settle writes the outcome down and tells the windows.
 func (m *Manager) settle(ctx context.Context, session *Session, status Status) {
 	// The session takes the outcome before the row does: a reader that
-	// sees the row ended and asks the session, as the API does while the
-	// session is kept, must not hear it is still running.
+	// sees the row ended and then reads the session, as the API does while
+	// the manager keeps the session, must not find it still running.
 	session.mu.Lock()
 	session.Run.State, session.Run.ExitCode = status.State, int64(status.ExitCode)
 	session.mu.Unlock()
@@ -289,7 +289,7 @@ func (m *Manager) settle(ctx context.Context, session *Session, status Status) {
 }
 
 // execute does the run: a pull when the folder is in a checkout, the
-// keys the policies give the run's user in an agent, the env files, then
+// keys the policies grant the run's user in an agent, the env files, then
 // the process, pumped until it exits.
 func (m *Manager) execute(ctx context.Context, session *Session) Status {
 	f, job, run := session.Folder, session.Job, session.Run
@@ -350,7 +350,7 @@ func pump(proc *Process, session *Session) {
 }
 
 // command builds the process: bash -l for the login environment, the
-// job's argv passed as arguments so no name goes through the shell, the
+// job's argv passed as arguments so the shell never parses a name, the
 // secrets and the run facts in the environment, the artifact directory
 // ready.
 func (m *Manager) command(ctx context.Context, session *Session) (*exec.Cmd, error) {

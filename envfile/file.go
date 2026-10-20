@@ -5,9 +5,9 @@ type File struct {
 	Folder string `json:"folder"`
 	// Path is the file path relative to the folder, as the source names it.
 	Path string `json:"path"`
-	// Managed is set once the content was saved from the UI.
+	// Managed reports whether the UI holds a saved copy of the content.
 	Managed bool `json:"managed"`
-	// Exists is set when the file is present in the folder.
+	// Exists reports whether the file is present in the folder.
 	Exists bool `json:"exists"`
 	// Content is the managed content, or the folder's file when not managed.
 	Content string `json:"-"`

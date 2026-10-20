@@ -17,7 +17,7 @@ type EnvRequest struct {
 type EnvView struct {
 	envfile.File
 	Content string `json:"content"`
-	// Secrets are the names appended to the file when it is generated.
+	// Secrets are the names the generator appends to the file.
 	Secrets []string `json:"secrets"`
 }
 

@@ -7,8 +7,8 @@ import (
 )
 
 // Frame is what a terminal shows at one moment: the cells of the screen
-// with their colours, and where the cursor is. It is taken from the
-// terminal emulator every session feeds, so it is right for a program
+// with their colours, and where the cursor is. The terminal emulator
+// every session feeds produces it, so it matches for a program
 // that redraws the screen as much as for one that prints lines.
 type Frame struct {
 	Cols, Rows int

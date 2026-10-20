@@ -31,7 +31,7 @@ var (
 	commit  = ""
 )
 
-// hash prints a bcrypt hash for the password file. The password is read from
+// hash prints a bcrypt hash for the password file. The password comes from
 // the arguments, or from stdin when there are none.
 func hash(args []string, stdin io.Reader, stdout io.Writer) error {
 	password := strings.Join(args, " ")
@@ -54,7 +54,7 @@ func hash(args []string, stdin io.Reader, stdout io.Writer) error {
 }
 
 // passwd sets a user's password in the password file: added when new,
-// replaced when there. The password is read from the arguments, or from
+// replaced when there. The password comes from the arguments, or from
 // stdin when there are none.
 func passwd(path string, args []string, stdin io.Reader, stdout io.Writer) error {
 	if len(args) == 0 || args[0] == "" {
@@ -135,8 +135,8 @@ func email(ctx context.Context, dsn string, args []string, stdout io.Writer) err
 	return nil
 }
 
-// backup replaces a user's backup passwords with new ones, ten unless a
-// count is given, and prints them. Each signs in once.
+// backup replaces a user's backup passwords with new ones, ten unless the
+// arguments name a count, and prints them. Each signs in once.
 func backup(ctx context.Context, dsn string, args []string, stdout io.Writer) error {
 	if len(args) == 0 || len(args) > 2 {
 		return errors.New("usage: task-ui backup <user> [count]")
@@ -165,8 +165,8 @@ func backup(ctx context.Context, dsn string, args []string, stdout io.Writer) er
 	return err
 }
 
-// token gives a user a token for a client, such as an MCP client, and
-// prints it, the only time it is shown: task-ui token <user> <name>. A
+// token makes a token for a user's client, such as an MCP client, and
+// prints it, the only time anyone sees it: task-ui token <user> <name>. A
 // token of the same name stops working. task-ui token <user> lists the
 // names, and task-ui token <user> rm <name> removes one.
 func token(ctx context.Context, dsn string, args []string, stdout io.Writer) error {

@@ -19,8 +19,8 @@ func DecodeList(text string) []string {
 	return list
 }
 
-// EncodeList writes a list of strings as JSON text. Nil is written as an
-// empty list, so the column never holds null.
+// EncodeList writes a list of strings as JSON text. EncodeList writes nil as
+// an empty list, so the column never holds null.
 func EncodeList(list []string) string {
 	if list == nil {
 		list = []string{}

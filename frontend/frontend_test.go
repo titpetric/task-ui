@@ -193,7 +193,7 @@ func (f *fixture) page(t *testing.T, user, path string) string {
 	return res.Body
 }
 
-// withKey puts an ed25519 key in the SSH folder, so secrets can be kept.
+// withKey puts an ed25519 key in the SSH folder, so the vault can keep secrets.
 func (f *fixture) withKey(t *testing.T) {
 	t.Helper()
 	_, err := f.opts.Keys.Generate("ed25519", "test")
@@ -250,7 +250,7 @@ func TestRoutes_Guard(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
 
-	// A visitor without a session is sent to sign in, with the way back.
+	// The server sends a visitor without a session to sign in, with the way back.
 	res := f.get(t, "", "/f/infra")
 	assert.Equal(t, http.StatusSeeOther, res.Status)
 	assert.Equal(t, "/login?back=%2Ff%2Finfra", res.Location)

@@ -13,7 +13,7 @@ import (
 // which. It replaces testify's assert.AnError.
 var AnError = errors.New("assert.AnError general error for testing")
 
-// Positive checks that value is a number greater than zero.
+// Positive checks that value is numeric and greater than zero.
 func Positive(t testing.TB, value any, msg ...any) {
 	if !isPositive(value) {
 		Errorf(t, "%v is not positive: %v", value, msg)

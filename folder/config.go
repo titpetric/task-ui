@@ -16,7 +16,7 @@ type Config struct {
 	Allow       []string `yaml:"allow"`
 	// Command replaces the command of the folder's only source, such as
 	// `gmake` for a Makefile. Commands does the same per kind when the
-	// folder follows several conventions.
+	// folder follows more than one convention.
 	Command  string            `yaml:"command"`
 	Commands map[string]string `yaml:"commands"`
 	// Sources limits the conventions read in the folder, by kind:
@@ -28,7 +28,7 @@ type Config struct {
 	Hours    string            `yaml:"hours"`
 	JobHours map[string]string `yaml:"job_hours"`
 	// RootOnly lists the folder's own jobs alone: discovery does not go
-	// into it. Off, the default, the folders inside it are listed too.
+	// into it. Off, the default, the listing shows the folders inside it too.
 	RootOnly bool `yaml:"root_only"`
 }
 

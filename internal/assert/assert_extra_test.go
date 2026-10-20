@@ -43,7 +43,7 @@ func assertExtra(t *testing.T) {
 	assert.IsIncreasing(t, []string{"a", "b"})
 }
 
-// errTarget is the sentinel ErrorIs is asked to match and does not find.
+// errTarget is the sentinel the test asks ErrorIs to match, which it does not find.
 var errTarget = errors.New("target")
 
 // assertExtraFailure drives the failing path of every assertion in
@@ -64,7 +64,7 @@ func assertExtraFailure(t *testing.T) {
 	mustFail(t, "GreaterUint", func(tb testing.TB) { assert.Greater(tb, uint(1), uint(2)) })
 	mustFail(t, "GreaterFloat", func(tb testing.TB) { assert.Greater(tb, 1.5, 2.5) })
 	mustFail(t, "GreaterString", func(tb testing.TB) { assert.Greater(tb, "a", "b") })
-	// Kinds that do not compare are a failure, not an equal.
+	// Kinds that do not compare are a failure.
 	mustFail(t, "GreaterMixedKinds", func(tb testing.TB) { assert.Greater(tb, 1, "a") })
 
 	mustFail(t, "NotContains", func(tb testing.TB) { assert.NotContains(tb, "haystack", "stack") })

@@ -47,7 +47,7 @@ func TestWorkflows_SidebarList(t *testing.T) {
 	runs := strings.Index(ops, `<a href="/runs"`)
 	assert.True(t, workflows >= 0 && item > workflows && runs > item, "release listed under Workflows")
 	assert.Contains(t, ops, `data-workflow-run="`+release.ID+`"`)
-	// Each is marked with a shebang, not a bullet.
+	// Each carries a shebang for a marker.
 	assert.Contains(t, ops, `<i class="shebang" aria-hidden="true">#!</i>`)
 	// ops sees private, and can not run its step in the admin's folder.
 	assert.Contains(t, ops, `<a class="name" href="/workflows/`+private.ID+`"`)
@@ -62,8 +62,8 @@ func TestWorkflows_SidebarList(t *testing.T) {
 	assert.Contains(t, viewer, `<a class="name" href="/workflows/`+release.ID+`"`)
 	assert.NotContains(t, viewer, `data-workflow-run="`)
 
-	// A workflow set not to show in the sidebar is left out of it, and
-	// listed on the Workflows page still.
+	// The sidebar leaves out a workflow set not to show there, and the
+	// Workflows page still lists it.
 	user := f.users[asOps]
 	part := &model.Workflow{Name: "part", UserID: user.ID, UserName: user.Name, SidebarHidden: true}
 	assert.NoError(t, f.opts.Workflows.Create(context.Background(), part, []model.WorkflowStep{{Folder: "infra", Job: "plan"}}))
@@ -93,7 +93,7 @@ func TestWorkflows_List(t *testing.T) {
 	content := ops[strings.Index(ops, "<main>"):]
 	assert.Contains(t, content, `data-workflow-run="`)
 	assert.Equal(t, 2, strings.Count(content, `data-workflow-run="`))
-	// The list links to the form for a new one, which offers every job
+	// The list links to the form for a new one, which lists every job
 	// ops can see; the list itself has no form.
 	assert.Contains(t, ops, `href="/workflows/new"`)
 	assert.NotContains(t, ops, `data-api="/api/workflows"`)
@@ -137,7 +137,7 @@ func TestWorkflow_Page(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Contains(t, ops, `href="/runs/`+steps[0].RunID+`"`)
 	// The pipeline runs top to bottom, with the latest run's states, and
-	// the page follows the workflow's topic instead of reloading.
+	// the page follows the workflow's topic and never reloads.
 	assert.Contains(t, ops, `<ol class="pipeline" data-pipeline>`)
 	assert.Contains(t, ops, `<li class="node ok" data-step="0">`)
 	assert.Contains(t, ops, `data-sse="workflow:`+wf.ID+`"`)
@@ -201,7 +201,7 @@ func TestWorkflow_Recents(t *testing.T) {
 	entry := `<a href="/workflows/` + wf.ID + `" class="recent flow" title="Workflow release, admin, ok">`
 	assert.Contains(t, recents, entry)
 	assert.Contains(t, recents, `<b>release</b><small><svg class="ic"><use href="#i-flow"/></svg>workflow</small>`)
-	// Its step's run is listed too; and ops sees the private folder.
+	// The list shows its step's run too; and ops sees the private folder.
 	assert.Contains(t, recents, `<b>plan</b>`)
 	assert.Contains(t, recents, `href="/workflows/`+private.ID+`"`)
 	// limited does not see the private folder, nor the workflow that ran in it.
@@ -226,7 +226,7 @@ func TestWorkflow_EditPage(t *testing.T) {
 }
 
 // A chain names a folder once for the steps that follow in it; a step
-// that runs a workflow links to it. The step editor offers the
+// that runs a workflow links to it. The step editor lists the
 // workflows, except the one edited and those that run it.
 func TestWorkflows_ChainAndNested(t *testing.T) {
 	t.Parallel()

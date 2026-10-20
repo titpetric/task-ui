@@ -1,7 +1,7 @@
 // Package frontend serves the pages of task-ui: the sign in screen, the
 // dashboard, the folders and their jobs, the runs, the artifacts, the
-// schedules and the settings. Pages read; every change goes through the
-// API, which the pages call from the browser.
+// schedules and the settings. Pages read; the API makes every change,
+// and the pages call it from the browser.
 //
 // The guard sits in front of every page but the sign in screen and the
 // assets, so a handler always finds its user on the context.

@@ -81,7 +81,7 @@ func TestRun_StartBusy(t *testing.T) {
 	assert.Equal(t, model.StateKilled, killed.State)
 }
 
-// Run all is gone: a folder's jobs are chained in a workflow instead.
+// The API has no run all route: a workflow chains a folder's jobs.
 func TestRun_NoStartAll(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
@@ -200,7 +200,7 @@ func TestRun_Cast(t *testing.T) {
 	assert.Equal(t, http.StatusNotFound, none.Status)
 }
 
-// Outside the job's hours a run is refused; forced with a reason it runs
+// Outside the job's hours the API refuses a run; forced with a reason it runs
 // and the run keeps the reason.
 func TestRun_OutOfHours(t *testing.T) {
 	t.Parallel()
@@ -224,7 +224,7 @@ func TestRun_OutOfHours(t *testing.T) {
 
 }
 
-// A run whose session is gone still has a last screen: the one its
+// A run whose session has ended still has a last screen: the one its
 // recording ends on.
 func TestFrame_FromRecording(t *testing.T) {
 	t.Parallel()

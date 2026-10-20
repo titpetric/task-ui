@@ -11,8 +11,8 @@ import (
 // MakefileNames are the file names make reads, in its order.
 var MakefileNames = []string{"GNUmakefile", "makefile", "Makefile"}
 
-// makeDetector reads the targets of a Makefile. A target is documented
-// with `## text` after its rule, the convention `make help` recipes read,
+// makeDetector reads the targets of a Makefile. A target carries its
+// help as `## text` after its rule, the convention `make help` recipes read,
 // or with a comment line right above it. Pattern rules, dot targets and
 // variable assignments are not targets.
 type makeDetector struct{}

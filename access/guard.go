@@ -19,11 +19,11 @@ const Cookie = "task_ui_session"
 type Guard struct {
 	Sessions *Sessions
 	Users    *storage.UserStorage
-	// Tokens are what clients sign with instead of a session, in an
+	// Tokens sign clients in without a session, through an
 	// Authorization: Bearer header. Nil turns them off.
 	Tokens    *storage.UserAuthTokenStorage
 	AutoLogin string
-	// LoginPath is where a browser without a session is sent.
+	// LoginPath is where the guard sends a browser without a session.
 	LoginPath string
 }
 
@@ -100,8 +100,8 @@ func (g *Guard) Require(next http.Handler) http.Handler {
 	})
 }
 
-// wantsPage reports a browser asking for a page, which gets a redirect,
-// as opposed to a client asking for data, which gets a status.
+// wantsPage reports a browser's request for a page, which gets a
+// redirect; a client's request for data gets a status.
 func (g *Guard) wantsPage(r *http.Request) bool {
 	return r.Method == http.MethodGet && g.LoginRequired() &&
 		!strings.HasPrefix(r.URL.Path, "/api/") && !strings.HasPrefix(r.URL.Path, "/ws/")
@@ -120,7 +120,7 @@ func (g *Guard) SetCookie(w http.ResponseWriter, r *http.Request, user *model.Us
 	})
 }
 
-// ClearCookie ends the session. Secure says whether the site is served
+// ClearCookie ends the session. Secure says whether the site runs
 // over https, which IsHTTPS tells from the request.
 func (g *Guard) ClearCookie(w http.ResponseWriter, secure bool) {
 	http.SetCookie(w, &http.Cookie{

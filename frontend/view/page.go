@@ -86,14 +86,14 @@ type Page struct {
 	// KeyUsers are the users, by name, whose runs get each instance key.
 	KeyUsers map[string][]string
 	Key      *sshkey.Key
-	// Encryption names the keys the secrets are encrypted with.
+	// Encryption names the keys that encrypt the secrets.
 	Encryption []string
 	Users      []model.User
 	// Account is the user a form edits.
 	Account *model.User
 	Root    string
 
-	// Form holds the values of a form being shown again.
+	// Form holds the values of a form the page shows again.
 	Form   map[string]string
 	Error  string
 	Notice string
