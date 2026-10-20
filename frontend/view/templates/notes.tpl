@@ -8,7 +8,7 @@
 
 <form class="note-form" data-note-form>
 	<textarea name="body" rows="3" required placeholder="{{ if .Agent }}@{{ .Agent }} update the weather job to …{{ else }}@name …{{ end }}" aria-label="A new note"></textarea>
-	<div class="note-form-foot"><span class="faint">Ctrl+Enter posts. <code>`code`</code> and <code>```</code> blocks show as code.</span><button class="btn btn-primary" type="submit">Post note</button></div>
+	<div class="note-form-foot"><span class="faint">Ctrl+Enter posts. Markdown: <code>**bold**</code>, <code>- lists</code>, <code>`code`</code> and <code>```</code> blocks.</span><button class="btn btn-primary" type="submit">Post note</button></div>
 </form>
 
 <div class="notes" data-notes>

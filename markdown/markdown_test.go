@@ -1,6 +1,7 @@
 package markdown_test
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/titpetric/task-ui/internal/assert"
@@ -17,5 +18,16 @@ func TestHTML(t *testing.T) {
 	assert.Contains(t, html, `href="https://example.com" target="_blank" rel="nofollow noreferrer"`)
 	assert.NotContains(t, html, "javascript:")
 	assert.NotContains(t, html, "<script>")
+	assert.Contains(t, html, "&lt;script&gt;alert(1)&lt;/script&gt;")
 	assert.Contains(t, markdown.HTML([]byte("[out](../../../etc/passwd)"), "/f/", "a"), `href="/f/etc/passwd"`)
+}
+
+// Render keeps a single line break with HardBreaks, and the hook rewrites
+// the text outside code and links.
+func TestRender(t *testing.T) {
+	t.Parallel()
+	mark := func(text string) string { return strings.ReplaceAll(text, "@cl", "<b>@cl</b>") }
+	html := markdown.Render(markdown.Options{HardBreaks: true, Text: mark}, []byte("hi @cl\nnext `@cl` [@cl](https://x.example)"))
+	assert.Equal(t, "<p>hi <b>@cl</b><br />\nnext <code>@cl</code> <a href=\"https://x.example\" target=\"_blank\" rel=\"nofollow noreferrer\">@cl</a></p>\n", html)
+	assert.Contains(t, markdown.Render(markdown.Options{Text: mark}, []byte("a & <b>")), "a &amp; ")
 }

@@ -30,7 +30,9 @@ message.
 
 The author of a note, or an admin, deletes it with its replies. The form
 posts with **Post note** or Ctrl+Enter; a reply opens under **Reply**.
-`` `code` `` and ```` ``` ```` blocks show as code. Messages from others
+A note and a reply are markdown: `**bold**`, `*italic*`, lists, headings,
+links, quotes, tables, `` `code` `` and ```` ``` ```` blocks. A line break
+stays a line break, and HTML shows escaped, as text. Messages from others
 arrive the moment someone sends them.
 
 ## The agent
