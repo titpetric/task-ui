@@ -25,7 +25,7 @@
 
 {{- with .Activity }}
 <section class="block">
-	<h3>Activity <small>the last {{ len .Days }} days, by day and by hour, in the server's time zone</small></h3>
+	<h3>Activity <small>in the server's time zone</small></h3>
 	{{- template "activity" . }}
 </section>
 {{- end }}

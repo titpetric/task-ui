@@ -31,7 +31,7 @@ last runs.
 - **Pipeline**: the steps in the order they run. While a run is going, it
   follows that run live: each step's state and terminal.
 - **Runs**: the workflow's activity, its runs of the last thirty days by
-  day and by hour and the duration of its latest thirty (see
+  day and of the last 24 hours by hour, and the duration of its latest thirty (see
   [Runs](runs.md#activity)), then every run of the workflow, newest first, with who started it,
   how it ended, and each step's run, which opens like any other run.
   **View** opens that run's pipeline in a window, each step with its

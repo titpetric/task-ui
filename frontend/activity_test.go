@@ -20,9 +20,9 @@ func (f *fixture) ran(t *testing.T, folderID, job, state string, at time.Time, t
 	assert.NoError(t, f.opts.Runs.Create(context.Background(), run))
 }
 
-// The runs page charts the runs of the last thirty days, by day and by
-// hour, across jobs and without a duration line; a folder the user may
-// not see is not counted.
+// The runs page charts the runs of the last thirty days by day and of the
+// last 24 hours by hour, across jobs and without a duration line; a
+// folder the user may not see is not counted.
 func TestActivity_Runs(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
@@ -37,7 +37,14 @@ func TestActivity_Runs(t *testing.T) {
 	assert.Contains(t, admin, `<span class="bad">1 failed</span>`)
 	assert.Contains(t, admin, `data-tip="2 runs, Fri 2026-10-16 · 1 failed"`)
 	assert.Contains(t, admin, `data-tip="1 run, Thu 2026-10-15"`)
-	assert.Contains(t, admin, `data-tip="2 runs, 20:00–21:00"`) // the 16th and the 15th
+	// The last 24 hours hold the 16th's two runs; the 15th's is older.
+	assert.Contains(t, admin, `data-tip="1 run, Fri 20:00–21:00"`)
+	assert.Contains(t, admin, `data-tip="1 run, Fri 19:00–20:00 · 1 failed"`)
+	// Each chart heads its own window's finished runs.
+	assert.Contains(t, admin, `<span>Last 30 days</span>`)
+	assert.Contains(t, admin, `min/avg/max/total: 1.0s 2.0s 3.0s 6.0s</span>`)
+	assert.Contains(t, admin, `<span>Last 24 hours</span>`)
+	assert.Contains(t, admin, `min/avg/max/total: 2.0s 2.5s 3.0s 5.0s</span>`)
 	// The durations of the days and the hours as lines; no line of the
 	// latest runs, which would mix jobs.
 	assert.Contains(t, admin, `class="activity-line durations"`)

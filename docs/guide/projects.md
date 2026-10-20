@@ -73,7 +73,7 @@ and dependencies, who can run it and when, its **History** of runs, and
 its **Scheduled** section (see [Scheduled](scheduled.md)).
 
 The History opens with the job's activity: its runs of the last thirty
-days by day and by hour of the day, as on the [Runs](runs.md#activity)
+days by day and of the last 24 hours by hour, as on the [Runs](runs.md#activity)
 page, and a line of how long its latest thirty runs took, a red mark at
 each that failed. Hover a point for the run's time, outcome and
 duration.

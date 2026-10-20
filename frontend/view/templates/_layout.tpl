@@ -485,7 +485,7 @@
 </div>
 {{- end }}
 
-{{- /* When runs ran: a bar per day and per hour of the day, each split
+{{- /* When runs ran: a bar per day and per hour of the last 24, each split
      into the runs that ended ok, failed and the rest, and for a job or a
      workflow the duration of its latest runs. Every bar and every run
      on the line hovers its counts. */}}
@@ -494,7 +494,7 @@
 	<p class="activity-sum">{{ .Total }} run{{ if ne .Total 1 }}s{{ end }} in {{ len .Days }} days{{ if .Failed }} · <span class="bad">{{ .Failed }} failed</span>{{ end }}{{ if .Median }} · median {{ duration .Median }}{{ end }}<span class="activity-key"><i class="ok"></i>runs <i class="line avg"></i>average <i class="line max"></i>slowest <i class="line min"></i>fastest</span></p>
 	<div class="activity-charts">
 		<figure class="activity-chart">
-			<figcaption class="activity-title"><span>Per day, the last {{ len .Days }} days</span>{{ if .Spent }}<span class="faint" title="The finished runs: the fastest, the mean, the slowest and their time together">min {{ duration .Fastest }} · avg {{ duration .Mean }} · max {{ duration .Slowest }} · total {{ duration .Spent }}</span>{{ end }}</figcaption>
+			<figcaption class="activity-title"><span>Last {{ len .Days }} days</span>{{ template "activity-stats" .DayStats }}</figcaption>
 			<div class="activity-bars" style="--n: {{ len .Days }}" role="img" aria-label="Runs per day, the last {{ len .Days }} days">
 				{{- $last := sub (len .Days) 4 }}
 				{{- range $i, $b := .Days }}{{ with $b }}
@@ -505,8 +505,8 @@
 			<div class="activity-axis">{{ range .DayTicks }}<span style="left: {{ .At }}%">{{ .Label }}</span>{{ end }}</div>
 		</figure>
 		<figure class="activity-chart hours">
-			<figcaption class="activity-title"><span>Per hour of the day</span></figcaption>
-			<div class="activity-bars" style="--n: 24" role="img" aria-label="Runs per hour of the day">
+			<figcaption class="activity-title"><span>Last 24 hours</span>{{ template "activity-stats" .HourStats }}</figcaption>
+			<div class="activity-bars" style="--n: 24" role="img" aria-label="Runs per hour, the last 24 hours">
 				{{- range $i, $b := .Hours }}{{ with $b }}
 				<span class="tip{{ if lt $i 4 }} tip-start{{ else if ge $i 20 }} tip-end{{ end }}" data-tip="{{ .Title }}" aria-label="{{ .Title }}">{{ if .OtherStyle }}<i class="other" style="{{ .OtherStyle }}"></i>{{ end }}{{ if .FailedStyle }}<i class="bad" style="{{ .FailedStyle }}"></i>{{ end }}{{ if .OKStyle }}<i class="ok" style="{{ .OKStyle }}"></i>{{ end }}</span>
 				{{- end }}{{ end }}
@@ -559,6 +559,10 @@
 	</div>
 </li>
 {{- end }}
+
+{{- /* activity-stats are a chart's finished runs in one line: the
+     fastest, the mean, the slowest and their time together. */}}
+{{- define "activity-stats" }}{{ if .Count }}<span class="faint" title="{{ .Count }} finished run{{ if ne .Count 1 }}s{{ end }}: the fastest, the mean, the slowest and their time together">min/avg/max/total: {{ duration .Fastest }} {{ duration .Mean }} {{ duration .Slowest }} {{ duration .Spent }}</span>{{ end }}{{ end }}
 
 {{- /* The durations under a count chart: the average, the slowest and the
      fastest run of each bucket as lines, a point in the middle of its
