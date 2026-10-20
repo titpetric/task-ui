@@ -231,6 +231,18 @@
 	</div>
 	<div class="run-body preview-body"><img id="preview-image" alt=""><div id="preview-doc" class="preview-doc" hidden></div></div>
 </dialog>
+{{- /* The pipeline window: one workflow run's pipeline, fetched from its
+     page. */}}
+<dialog class="run pipeline-window" id="pipeline-dialog" aria-labelledby="pipeline-title">
+	<div class="run-head">
+		<span class="label">Workflow run</span>
+		<h3 id="pipeline-title"></h3>
+		<span class="spacer"></span>
+		<a class="btn" id="pipeline-page" href="#">Open page</a>
+		<button type="button" class="btn" id="pipeline-close" aria-label="Close">Close</button>
+	</div>
+	<div class="run-body pipeline-body" id="pipeline-body"></div>
+</dialog>
 {{- /* The summary window: Claude's summary of a run's output. */}}
 <dialog class="run preview run-summary" id="summary-dialog" aria-labelledby="summary-title">
 	<div class="run-head">
@@ -514,6 +526,29 @@
 	</figure>
 	{{- end }}
 </div>
+{{- end }}
+
+{{/* pipenode is a step of the pipeline: its name, state and, for a run's
+     step, its terminal's last screen, polled while it runs (data-frame).
+     A step that ran a workflow holds that run's chain. */}}
+{{- define "pipenode" }}
+{{- $l := index . 0 }}{{ $i := index . 1 }}
+<li class="node{{ with $l.State }} {{ . }}{{ end }}" data-step="{{ $i }}">
+	<span class="rail"><i class="dot{{ with $l.State }} {{ . }}{{ end }}"></i></span>
+	<div class="what">
+		<div class="step-head">
+			<a href="{{ $l.Href }}"{{ if $l.RunID }} data-run-link="{{ $l.RunID }}"{{ end }}>{{ if $l.Workflow }}<svg class="ic"><use href="#i-flow"/></svg>{{ end }}{{ $l.Text }}</a>
+			{{- if and $l.RunID (not $l.Complete) }}<button type="button" class="btn btn-sm" data-expand="{{ $l.RunID }}" aria-expanded="false"><svg class="ic"><use href="#i-expand"/></svg><span>Expand{{ with $l.Lines }} {{ . }} lines{{ end }}</span></button>{{ end }}
+		</div>
+		<small>{{ if $l.State }}{{ $l.State }}{{ else }}step {{ add $i 1 }}{{ end }}</small>
+		{{- if $l.RunID }}<a class="frame" href="/runs/{{ $l.RunID }}" data-attach="{{ $l.RunID }}"{{ if eq $l.State "running" }} data-frame="{{ $l.RunID }}"{{ end }} role="img" aria-label="Terminal of {{ $l.Text }}">{{ $l.FrameSVG }}</a>{{ end }}
+		{{- if $l.WorkflowRunID }}
+		<ol class="pipeline sub" data-sub="{{ $l.WorkflowRunID }}" data-workflow="{{ $l.WorkflowID }}">
+			{{- range $j, $s := $l.Sub }}{{ template "pipenode" (list $s $j) }}{{ end }}
+		</ol>
+		{{- end }}
+	</div>
+</li>
 {{- end }}
 
 {{- /* The durations under a count chart: the average, the slowest and the

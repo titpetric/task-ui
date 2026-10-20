@@ -21,6 +21,8 @@
      parts below are updated in place from the events, no fetch. */}}
 <section class="block" data-sse="workflow:{{ $w.ID }}" data-user="{{ $.User.Name }}">
 	<h3>Pipeline</h3>
+	{{- /* The steps; while a run is going, its states and screens live. A
+	     finished run opens with View under Runs. */}}
 	{{- if $.WorkflowRuns }}{{ $latest := index $.WorkflowRuns 0 }}
 	<p class="faint" data-latest>Latest run <span class="state"><i class="dot {{ $latest.State }}"></i>{{ $latest.State }}</span>{{ if $latest.Message }} {{ $latest.Message }},{{ end }} <span title="{{ stamp $latest.StartedAt }}">{{ ago $latest.StartedAt }}</span> by {{ $latest.UserName }}</p>
 	{{- else }}
@@ -36,7 +38,7 @@
 	{{- with $.Activity }}{{ template "activity" . }}{{ end }}
 	<div class="table-wrap">
 	<table class="table cards">
-		<thead><tr><th>Started</th><th>By</th><th>Result</th><th>Steps</th></tr></thead>
+		<thead><tr><th>Started</th><th>By</th><th>Result</th><th>Steps</th><th></th></tr></thead>
 		<tbody data-runs>
 		{{- range $.WorkflowRuns }}
 			<tr data-run-id="{{ .ID }}">
@@ -44,9 +46,10 @@
 				<td data-label="By">{{ .UserName }}</td>
 				<td data-label="Result" data-result><span class="state"><i class="dot {{ .State }}"></i>{{ .State }}</span>{{ if .Message }} <span class="faint">{{ .Message }}</span>{{ end }}</td>
 				<td data-label="Steps"><span class="chain">{{ range $i, $l := chain .Steps }}{{ if $i }}<span class="faint"> → </span>{{ end }}<a class="nowrap" href="{{ $l.Href }}" data-pos="{{ $i }}"><i class="dot {{ $l.State }}"></i>{{ if $l.Workflow }}<svg class="ic"><use href="#i-flow"/></svg>{{ end }}{{ $l.Text }}</a>{{ end }}</span></td>
+				<td class="actions"><a class="btn btn-sm" href="/workflows/{{ $w.ID }}/runs/{{ .ID }}" data-workflow-view>View</a></td>
 			</tr>
 		{{- else }}
-			<tr class="empty"><td colspan="4">Not run yet.</td></tr>
+			<tr class="empty"><td colspan="5">Not run yet.</td></tr>
 		{{- end }}
 		</tbody>
 	</table>
@@ -54,26 +57,3 @@
 </section>
 {{- end }}
 {{ end }}
-
-{{/* pipenode is a step of the pipeline: its name, state and, for a run's
-     step, its terminal's last screen, polled while it runs (data-frame).
-     A step that ran a workflow holds that run's chain. */}}
-{{- define "pipenode" }}
-{{- $l := index . 0 }}{{ $i := index . 1 }}
-<li class="node{{ with $l.State }} {{ . }}{{ end }}" data-step="{{ $i }}">
-	<span class="rail"><i class="dot{{ with $l.State }} {{ . }}{{ end }}"></i></span>
-	<div class="what">
-		<div class="step-head">
-			<a href="{{ $l.Href }}"{{ if $l.RunID }} data-run-link="{{ $l.RunID }}"{{ end }}>{{ if $l.Workflow }}<svg class="ic"><use href="#i-flow"/></svg>{{ end }}{{ $l.Text }}</a>
-			{{- if and $l.RunID (not $l.Complete) }}<button type="button" class="btn btn-sm" data-expand="{{ $l.RunID }}" aria-expanded="false"><svg class="ic"><use href="#i-expand"/></svg><span>Expand{{ with $l.Lines }} {{ . }} lines{{ end }}</span></button>{{ end }}
-		</div>
-		<small>{{ if $l.State }}{{ $l.State }}{{ else }}step {{ add $i 1 }}{{ end }}</small>
-		{{- if $l.RunID }}<a class="frame" href="/runs/{{ $l.RunID }}" data-attach="{{ $l.RunID }}"{{ if eq $l.State "running" }} data-frame="{{ $l.RunID }}"{{ end }} role="img" aria-label="Terminal of {{ $l.Text }}">{{ $l.FrameSVG }}</a>{{ end }}
-		{{- if $l.WorkflowRunID }}
-		<ol class="pipeline sub" data-sub="{{ $l.WorkflowRunID }}" data-workflow="{{ $l.WorkflowID }}">
-			{{- range $j, $s := $l.Sub }}{{ template "pipenode" (list $s $j) }}{{ end }}
-		</ol>
-		{{- end }}
-	</div>
-</li>
-{{- end }}

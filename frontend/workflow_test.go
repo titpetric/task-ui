@@ -2,6 +2,7 @@ package frontend_test
 
 import (
 	"context"
+	"net/http"
 	"strings"
 	"testing"
 	"time"
@@ -136,23 +137,32 @@ func TestWorkflow_Page(t *testing.T) {
 	steps, err := f.opts.WorkflowRuns.Steps(context.Background(), run.ID)
 	assert.NoError(t, err)
 	assert.Contains(t, ops, `href="/runs/`+steps[0].RunID+`"`)
-	// The pipeline runs top to bottom, with the latest run's states, and
-	// the page follows the workflow's topic and never reloads.
+	// The pipeline runs top to bottom as the steps, the finished run left
+	// out of it, and the page follows the workflow's topic and never
+	// reloads.
 	assert.Contains(t, ops, `<ol class="pipeline" data-pipeline>`)
-	assert.Contains(t, ops, `<li class="node ok" data-step="0">`)
+	assert.Contains(t, ops, `<li class="node" data-step="0">`)
+	assert.NotContains(t, ops, `<a class="frame"`)
 	assert.Contains(t, ops, `data-sse="workflow:`+wf.ID+`"`)
 	assert.Contains(t, ops, `data-latest>Latest run`)
 	assert.Contains(t, ops, `<tbody data-runs>`)
 	assert.Contains(t, ops, `<tr data-run-id="`+run.ID+`">`)
 	assert.NotContains(t, ops, `data-refresh`)
 	assert.NotContains(t, ops, `data-live`)
-	// Each step of the latest run shows its terminal's last screen, from
-	// the session still in memory; a finished one is not polled.
-	assert.Contains(t, ops, `<a class="frame" href="/runs/`+steps[0].RunID+`" data-attach="`+steps[0].RunID+`" role="img"`)
-	assert.Contains(t, ops, `aria-label="Terminal of infra / plan"><svg`)
-	assert.Contains(t, ops, `<div class="step-head">`)
+	// Each run has View, which opens its pipeline: each step's terminal's
+	// last screen, from the session still in memory; a finished one is
+	// not polled.
+	assert.Contains(t, ops, `<a class="btn btn-sm" href="/workflows/`+wf.ID+`/runs/`+run.ID+`" data-workflow-view>View</a>`)
+	viewed := f.page(t, asOps, "/workflows/"+wf.ID+"/runs/"+run.ID)
+	assert.Contains(t, viewed, `<section class="block" data-pipeline-view>`)
+	assert.Contains(t, viewed, `<li class="node ok" data-step="0">`)
+	assert.Contains(t, viewed, `<a class="frame" href="/runs/`+steps[0].RunID+`" data-attach="`+steps[0].RunID+`" role="img"`)
+	assert.Contains(t, viewed, `aria-label="Terminal of infra / plan"><svg`)
+	assert.Contains(t, viewed, `<div class="step-head">`)
+	assert.NotContains(t, viewed, `data-pipeline>`)
 	// plan prints a line: the screen shows it all, so there is no Expand.
-	assert.NotContains(t, ops, `data-expand="`+steps[0].RunID+`"`)
+	assert.NotContains(t, viewed, `data-expand="`+steps[0].RunID+`"`)
+	assert.Equal(t, http.StatusNotFound, f.get(t, asOps, "/workflows/"+wf.ID+"/runs/"+model.NewID()).Status)
 
 	// A run that prints more than a screen gets Expand, with its lines.
 	long := f.workflow(t, asOps, "long", "infra", "many")
@@ -164,10 +174,10 @@ func TestWorkflow_Page(t *testing.T) {
 		t.Fatal("the workflow did not finish")
 	}
 	longSteps, _ := f.opts.WorkflowRuns.Steps(context.Background(), longRun.ID)
-	longPage := f.page(t, asOps, "/workflows/"+long.ID)
+	longPage := f.page(t, asOps, "/workflows/"+long.ID+"/runs/"+longRun.ID)
 	assert.Contains(t, longPage, `data-expand="`+longSteps[0].RunID+`" aria-expanded="false"><svg class="ic"><use href="#i-expand"/></svg><span>Expand `)
 	assert.Contains(t, longPage, `<span>Expand 201 lines</span></button>`) // the ssh-agent line, seq 1 200
-	assert.NotContains(t, ops, `data-frame=`)
+	assert.NotContains(t, viewed, `data-frame=`)
 
 	mine := f.workflow(t, asOps, "plan only", "infra", "plan")
 	limited := f.page(t, asLimited, "/workflows/"+mine.ID)
@@ -273,7 +283,7 @@ func TestWorkflow_NestedPipeline(t *testing.T) {
 	steps, _ := f.opts.WorkflowRuns.Steps(context.Background(), run.ID)
 	innerSteps, _ := f.opts.WorkflowRuns.Steps(context.Background(), steps[0].WorkflowRunRef)
 
-	page := f.page(t, asOps, "/workflows/"+outer.ID)
+	page := f.page(t, asOps, "/workflows/"+outer.ID+"/runs/"+run.ID)
 	assert.Contains(t, page, `<ol class="pipeline sub" data-sub="`+steps[0].WorkflowRunRef+`" data-workflow="`+inner.ID+`">`)
 	// The step's name links to its run's page; only the screen and the
 	// buttons open the window.
