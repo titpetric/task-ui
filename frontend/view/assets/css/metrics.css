@@ -7,33 +7,33 @@
   border-radius: var(--radius);
   margin-bottom: 1.4rem;
   background: var(--ink-1);
-}
 
-.metrics > div {
-  padding: 0.55rem 0.8rem;
-  border-right: 1px solid var(--line);
-}
+  & > div {
+    padding: 0.55rem 0.8rem;
+    border-inline-end: 1px solid var(--line);
 
-.metrics > div:last-child {
-  border-right: 0;
-}
+    &:last-child {
+      border-inline-end: 0;
+    }
+  }
 
-.metrics b {
-  display: block;
-  color: var(--text-faint);
-  font-size: 0.68rem;
-  font-weight: 600;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-}
+  & b {
+    display: block;
+    color: var(--text-faint);
+    font-size: var(--fs-label);
+    font-weight: 600;
+    letter-spacing: var(--ls-heading);
+    text-transform: uppercase;
+  }
 
-.metrics span {
-  font-size: 1.1rem;
-  color: var(--text);
-}
+  & span {
+    font-size: 1.1rem;
+    color: var(--text);
+  }
 
-.metrics small {
-  margin-left: 0.35rem;
-  color: var(--text-faint);
-  font-size: 0.75rem;
+  & small {
+    margin-inline-start: 0.35rem;
+    color: var(--text-faint);
+    font-size: var(--fs-xs);
+  }
 }
