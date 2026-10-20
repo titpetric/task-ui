@@ -5,12 +5,9 @@ import (
 	"strings"
 )
 
-// The channels a note goes to: the notes board, where a note can be an
-// instruction to the agent, and the chat between the users.
-const (
-	ChannelNotes = "notes"
-	ChannelChat  = "chat"
-)
+// ChannelNotes is the channel of the notes board, where a note can be an
+// instruction to the agent.
+const ChannelNotes = "notes"
 
 // The states of a note to the agent.
 const (

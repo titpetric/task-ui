@@ -1,9 +1,8 @@
-// Package note is the notes board and the chat: messages users leave for
-// each other, the replies to them, and the notes that send the agent an
-// instruction.
+// Package note is the notes board: messages users leave for each other,
+// the replies to them, and the notes that send the agent an instruction.
 //
-// A note on the board that names the agent with @, such as @claude, is an
-// instruction. With an agent job configured, the board starts that job as
+// A note on the board, or a reply, that names the agent with @, such as
+// @claude, is an instruction. With an agent job configured, the board starts that job as
 // the agent's user, the note's text in its environment, and replies with
 // how the run ended. Without one, the note stays open for an agent that
 // reads the board over MCP. A note to anyone else is a message and nothing
@@ -30,8 +29,8 @@ import (
 // note on, as "note".
 const Topic = "notes"
 
-// ErrInvalid reports a note the board does not take: an unknown channel
-// or state, or a reply to a note elsewhere.
+// ErrInvalid reports a note the board does not take: an empty one, an
+// unknown state, or a reply to a reply.
 var ErrInvalid = errors.New("invalid note")
 
 // tail is how many lines of a run's output the agent's reply quotes.
@@ -53,41 +52,49 @@ type Board struct {
 	AgentJob string
 }
 
-// Post leaves a note on a channel, or a reply to a note. A note on the
-// board naming the agent opens an instruction, and the board starts the
-// agent's job on it.
-func (b *Board) Post(ctx context.Context, user *model.User, channel, parentID, body string) (*model.Note, error) {
+// Post leaves a note on the board, or a reply to one. A note naming the
+// agent opens an instruction, and so does a reply naming it: the board
+// starts the agent's job on the whole thread.
+func (b *Board) Post(ctx context.Context, user *model.User, parentID, body string) (*model.Note, error) {
 	if user == nil || strings.TrimSpace(body) == "" {
 		return nil, fmt.Errorf("%w: a note needs an author and some text", ErrInvalid)
 	}
-	if channel == "" {
-		channel = model.ChannelNotes
-	}
-	if channel != model.ChannelNotes && channel != model.ChannelChat {
-		return nil, fmt.Errorf("%w: no channel %q", ErrInvalid, channel)
-	}
+	var parent *model.Note
 	if parentID != "" {
-		parent, err := b.Notes.Get(ctx, parentID)
-		if err != nil {
+		var err error
+		if parent, err = b.Notes.Get(ctx, parentID); err != nil {
 			return nil, err
 		}
-		if parent.ParentID != "" || parent.Channel != channel {
-			return nil, fmt.Errorf("%w: a reply goes to a note of the same channel", ErrInvalid)
+		if parent.ParentID != "" {
+			return nil, fmt.Errorf("%w: a reply goes to a note, not to a reply", ErrInvalid)
 		}
 	}
-	note := &model.Note{Channel: channel, ParentID: parentID, UserID: user.ID, UserName: user.Name, Body: body}
+	note := &model.Note{Channel: model.ChannelNotes, ParentID: parentID, UserID: user.ID, UserName: user.Name, Body: body}
 	// Only someone who may run jobs sends the agent an instruction: a
 	// viewer's note to the agent is a message.
-	instruction := channel == model.ChannelNotes && parentID == "" && b.Agent != "" && user.Name != b.Agent && user.Role != model.RoleViewer
-	if instruction && contains(model.Mentions(body), b.Agent) {
+	instruction := b.Agent != "" && user.Name != b.Agent && user.Role != model.RoleViewer && contains(model.Mentions(body), b.Agent)
+	if instruction && parent == nil {
 		note.State = model.NoteOpen
 	}
 	if err := b.Notes.Create(ctx, note); err != nil {
 		return nil, err
 	}
 	b.publish(note)
-	if note.State == model.NoteOpen && b.AgentJob != "" {
-		b.dispatch(note)
+	if !instruction {
+		return note, nil
+	}
+	thread := note
+	if parent != nil {
+		// A reply naming the agent opens the note it answers again.
+		if err := b.Notes.SetState(ctx, parent.ID, model.NoteOpen, ""); err != nil {
+			return nil, err
+		}
+		parent.State = model.NoteOpen
+		thread = parent
+		b.publish(parent)
+	}
+	if b.AgentJob != "" {
+		b.dispatch(thread)
 	}
 	return note, nil
 }
@@ -109,7 +116,7 @@ func (b *Board) Comment(ctx context.Context, user *model.User, id, body, state s
 	}
 	var reply *model.Note
 	if strings.TrimSpace(body) != "" {
-		if reply, err = b.Post(ctx, user, note.Channel, note.ID, body); err != nil {
+		if reply, err = b.Post(ctx, user, note.ID, body); err != nil {
 			return nil, err
 		}
 	}
@@ -162,7 +169,7 @@ func (b *Board) dispatch(note *model.Note) {
 	}
 	req := runner.Request{
 		Folder: f, Job: job, User: agent, Cols: 120, Rows: 40,
-		Env: []string{"TASK_UI_NOTE_ID=" + note.ID, "TASK_UI_NOTE_AUTHOR=" + note.UserName, "TASK_UI_NOTE=" + note.Body},
+		Env: []string{"TASK_UI_NOTE_ID=" + note.ID, "TASK_UI_NOTE_AUTHOR=" + note.UserName, "TASK_UI_NOTE=" + b.thread(ctx, note)},
 	}
 	go func() {
 		// One run of the job at a time: an instruction waits for the
@@ -190,6 +197,21 @@ func (b *Board) dispatch(note *model.Note) {
 		run := session.Snapshot()
 		b.finish(ctx, note, state, report(&run, status, b.output(&run)))
 	}()
+}
+
+// thread is the text of a note and its replies, oldest first, each under
+// its author: the conversation the agent works from.
+func (b *Board) thread(ctx context.Context, note *model.Note) string {
+	replies, _ := b.Notes.Replies(ctx, []string{note.ID})
+	if len(replies[note.ID]) == 0 {
+		return note.Body
+	}
+	var text strings.Builder
+	text.WriteString(note.UserName + ":\n" + note.Body)
+	for _, reply := range replies[note.ID] {
+		text.WriteString("\n\n" + reply.UserName + ":\n" + reply.Body)
+	}
+	return text.String()
 }
 
 // finish replies to an instruction as the agent and records its state.

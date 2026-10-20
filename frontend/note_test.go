@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/titpetric/task-ui/internal/assert"
-	"github.com/titpetric/task-ui/model"
 )
 
 // The board shows the notes newest first with their replies; a note to the
@@ -16,11 +15,11 @@ func TestNotes(t *testing.T) {
 	f := newFixture(t)
 	ctx := context.Background()
 	ops, admin := f.users[asOps], f.users[asAdmin]
-	first, err := f.opts.Board.Post(ctx, ops, model.ChannelNotes, "", "@claude update `weather.php`")
+	first, err := f.opts.Board.Post(ctx, ops, "", "@claude update `weather.php`")
 	assert.NoError(t, err)
-	_, err = f.opts.Board.Post(ctx, admin, model.ChannelNotes, first.ID, "and push it")
+	_, err = f.opts.Board.Post(ctx, admin, first.ID, "and push it")
 	assert.NoError(t, err)
-	_, err = f.opts.Board.Post(ctx, admin, model.ChannelNotes, "", "@ops a plain note")
+	_, err = f.opts.Board.Post(ctx, admin, "", "@ops a plain note")
 	assert.NoError(t, err)
 
 	body := f.page(t, asOps, "/notes")
@@ -33,21 +32,4 @@ func TestNotes(t *testing.T) {
 
 	viewer := f.page(t, asViewer, "/notes")
 	assert.NotContains(t, viewer, `data-delete="/api/notes/`+first.ID+`"`)
-}
-
-// The chat shows the messages oldest first, the user's own marked.
-func TestChat(t *testing.T) {
-	t.Parallel()
-	f := newFixture(t)
-	ctx := context.Background()
-	_, err := f.opts.Board.Post(ctx, f.users[asOps], model.ChannelChat, "", "first")
-	assert.NoError(t, err)
-	_, err = f.opts.Board.Post(ctx, f.users[asAdmin], model.ChannelChat, "", "second @ops")
-	assert.NoError(t, err)
-
-	body := f.page(t, asOps, "/chat")
-	assert.Contains(t, body, `href="/chat" class="active"`)
-	assert.True(t, strings.Index(body, "first") < strings.Index(body, "second"), "oldest first")
-	assert.Contains(t, body, `chat-line mine`)
-	assert.Contains(t, body, `<span class="mention">@ops</span>`)
 }

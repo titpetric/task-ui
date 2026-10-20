@@ -36,4 +36,4 @@ again. When its job leaves the folder, task-ui disables the schedule.
 
 ---
 
-Previous: [Artifacts](artifacts.md) · Next: [Notes and Chat](notes.md) · [Contents](../README.md)
+Previous: [Artifacts](artifacts.md) · Next: [Notes](notes.md) · [Contents](../README.md)

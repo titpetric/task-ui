@@ -981,9 +981,9 @@
     });
   }
 
-  // Notes and the chat: a form posts a note or a reply, and the list of
-  // the page follows the notes topic, fetched again when a note arrives
-  // or changes. A reply form being written keeps its text.
+  // Notes: a form posts a note or a reply, and the list follows the notes
+  // topic, fetched again when a note arrives or changes. A reply form
+  // being written keeps its text.
   var notesList = document.querySelector("[data-notes]");
   function refreshNotes() {
     if (!notesList) return Promise.resolve();
@@ -1004,14 +1004,8 @@
           form.elements.body.value = drafts[parent];
           form.closest("details").open = true;
         });
-        scrollChat();
       });
   }
-  function scrollChat() {
-    var log = document.querySelector("[data-chat-log]");
-    if (log) log.scrollTop = log.scrollHeight;
-  }
-  scrollChat();
   document.addEventListener("submit", function (event) {
     var form = event.target.closest("form[data-note-form]");
     if (!form) return;
@@ -1020,7 +1014,7 @@
     if (!body) return;
     var button = form.querySelector("button[type=submit]");
     button.disabled = true;
-    api("POST", "/api/notes", { channel: form.dataset.channel, parent_id: form.dataset.parent || "", body: body })
+    api("POST", "/api/notes", { parent_id: form.dataset.parent || "", body: body })
       .then(function (res) {
         button.disabled = false;
         if (res.status >= 300) {
@@ -1034,8 +1028,7 @@
   document.addEventListener("keydown", function (event) {
     var area = event.target.closest && event.target.closest("form[data-note-form] textarea");
     if (!area || event.key !== "Enter") return;
-    var chat = area.form.dataset.channel === "chat";
-    if ((chat && !event.shiftKey) || event.ctrlKey || event.metaKey) {
+    if (event.ctrlKey || event.metaKey) {
       event.preventDefault();
       area.form.requestSubmit();
     }

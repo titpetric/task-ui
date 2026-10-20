@@ -99,7 +99,7 @@ func TestBoard_Instruction(t *testing.T) {
 	f := newFixture(t, "agent/run")
 	ctx := context.Background()
 
-	posted, err := f.board.Post(ctx, f.ops, model.ChannelNotes, "", "@claude update the weather job")
+	posted, err := f.board.Post(ctx, f.ops, "", "@claude update the weather job")
 	assert.NoError(t, err)
 	assert.Equal(t, model.NoteOpen, posted.State)
 
@@ -112,13 +112,35 @@ func TestBoard_Instruction(t *testing.T) {
 	assert.Contains(t, reply[0].Body, "ended ok")
 	assert.Contains(t, reply[0].Body, "note "+posted.ID+" from ops: @claude update the weather job")
 
-	failed, err := f.board.Post(ctx, f.ops, model.ChannelNotes, "", "@claude fail")
+	failed, err := f.board.Post(ctx, f.ops, "", "@claude fail")
 	assert.NoError(t, err)
 	assert.Equal(t, model.NoteFailed, f.settled(t, failed.ID).State)
 }
 
-// A note to someone else, a chat message, a reply and the agent's own
-// note are messages, not instructions.
+// A reply naming the agent opens its note again, and the agent works from
+// the whole thread.
+func TestBoard_ReplyInstruction(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t, "agent/run")
+	ctx := context.Background()
+	first, err := f.board.Post(ctx, f.ops, "", "@claude update the weather job")
+	assert.NoError(t, err)
+	assert.Equal(t, model.NoteDone, f.settled(t, first.ID).State)
+
+	reply, err := f.board.Post(ctx, f.ops, first.ID, "@claude and add Lisbon")
+	assert.NoError(t, err)
+	assert.Equal(t, "", reply.State, "the reply carries no state, its note does")
+	assert.Eventually(t, func() bool { return len(replies(t, f, first.ID)) == 3 }, 10*time.Second, 20*time.Millisecond)
+	again := f.settled(t, first.ID)
+	assert.Equal(t, model.NoteDone, again.State)
+	last := replies(t, f, first.ID)[2]
+	assert.Equal(t, "claude", last.UserName)
+	assert.Contains(t, last.Body, "ops:")
+	assert.Contains(t, last.Body, "@claude and add Lisbon")
+}
+
+// A note to someone else, a reply that names no agent, a viewer's note and
+// the agent's own note are messages, not instructions.
 func TestBoard_Messages(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t, "agent/run")
@@ -126,34 +148,29 @@ func TestBoard_Messages(t *testing.T) {
 	claude, err := f.board.Users.GetByName(ctx, "claude")
 	assert.NoError(t, err)
 
-	other, err := f.board.Post(ctx, f.ops, model.ChannelNotes, "", "@alice have a look")
+	other, err := f.board.Post(ctx, f.ops, "", "@alice have a look")
 	assert.NoError(t, err)
 	assert.Equal(t, "", other.State)
-	chat, err := f.board.Post(ctx, f.ops, model.ChannelChat, "", "@claude hello")
-	assert.NoError(t, err)
-	assert.Equal(t, "", chat.State)
-	reply, err := f.board.Post(ctx, f.ops, model.ChannelNotes, other.ID, "@claude and you")
+	reply, err := f.board.Post(ctx, f.ops, other.ID, "and you, @alice")
 	assert.NoError(t, err)
 	assert.Equal(t, "", reply.State)
-	own, err := f.board.Post(ctx, claude, model.ChannelNotes, "", "@claude a reminder")
+	own, err := f.board.Post(ctx, claude, "", "@claude a reminder")
 	assert.NoError(t, err)
 	assert.Equal(t, "", own.State)
 
 	viewer := &model.User{Name: "guest", Role: model.RoleViewer}
 	assert.NoError(t, f.board.Users.Create(ctx, viewer))
-	watched, err := f.board.Post(ctx, viewer, model.ChannelNotes, "", "@claude delete everything")
+	watched, err := f.board.Post(ctx, viewer, "", "@claude delete everything")
 	assert.NoError(t, err)
 	assert.Equal(t, "", watched.State, "a viewer cannot hand out work")
 
-	_, err = f.board.Post(ctx, f.ops, "nowhere", "", "x")
+	_, err = f.board.Post(ctx, f.ops, "", "  ")
 	assert.ErrorIs(t, err, note.ErrInvalid)
-	_, err = f.board.Post(ctx, f.ops, model.ChannelChat, other.ID, "a reply across channels")
+	_, err = f.board.Post(ctx, f.ops, reply.ID, "a reply to a reply")
 	assert.ErrorIs(t, err, note.ErrInvalid)
-	_, err = f.board.Post(ctx, f.ops, model.ChannelNotes, reply.ID, "a reply to a reply")
-	assert.ErrorIs(t, err, note.ErrInvalid)
-	_, err = f.board.Post(ctx, f.ops, model.ChannelNotes, "missing", "x")
+	_, err = f.board.Post(ctx, f.ops, "missing", "x")
 	assert.ErrorIs(t, err, storage.ErrNotFound)
-	_, err = f.board.Post(ctx, nil, model.ChannelNotes, "", "x")
+	_, err = f.board.Post(ctx, nil, "", "x")
 	assert.ErrorIs(t, err, note.ErrInvalid)
 }
 
@@ -165,7 +182,7 @@ func TestBoard_Comment(t *testing.T) {
 	ctx := context.Background()
 	claude, _ := f.board.Users.GetByName(ctx, "claude")
 
-	open, err := f.board.Post(ctx, f.ops, model.ChannelNotes, "", "@claude tidy the README")
+	open, err := f.board.Post(ctx, f.ops, "", "@claude tidy the README")
 	assert.NoError(t, err)
 	assert.Equal(t, model.NoteOpen, open.State)
 	time.Sleep(50 * time.Millisecond)
@@ -178,7 +195,7 @@ func TestBoard_Comment(t *testing.T) {
 	got, _ = f.board.Notes.Get(ctx, open.ID)
 	assert.Equal(t, model.NoteDone, got.State)
 
-	plain, _ := f.board.Post(ctx, f.ops, model.ChannelNotes, "", "a note")
+	plain, _ := f.board.Post(ctx, f.ops, "", "a note")
 	_, err = f.board.Comment(ctx, claude, plain.ID, "", model.NoteDone)
 	assert.ErrorIs(t, err, note.ErrInvalid, "not an instruction")
 	_, err = f.board.Comment(ctx, claude, open.ID, "x", "lost")
@@ -188,7 +205,7 @@ func TestBoard_Comment(t *testing.T) {
 	assert.Equal(t, model.NoteWorking, stated.State)
 
 	missing := newFixture(t, "agent/nothing")
-	lost, err := missing.board.Post(ctx, missing.ops, model.ChannelNotes, "", "@claude go")
+	lost, err := missing.board.Post(ctx, missing.ops, "", "@claude go")
 	assert.NoError(t, err)
 	failed := missing.settled(t, lost.ID)
 	assert.Equal(t, model.NoteFailed, failed.State)
@@ -200,7 +217,7 @@ func TestBoard_Recover(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t, "")
 	ctx := context.Background()
-	open, _ := f.board.Post(ctx, f.ops, model.ChannelNotes, "", "@claude go")
+	open, _ := f.board.Post(ctx, f.ops, "", "@claude go")
 	assert.NoError(t, f.board.Notes.SetState(ctx, open.ID, model.NoteWorking, "gone"))
 	assert.NoError(t, f.board.Recover(ctx))
 	got, _ := f.board.Notes.Get(ctx, open.ID)

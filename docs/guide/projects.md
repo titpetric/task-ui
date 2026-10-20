@@ -122,4 +122,4 @@ Settings, Users.
 
 ---
 
-Previous: [Notes and Chat](notes.md) · Next: [Recents](recents.md) · [Contents](../README.md)
+Previous: [Notes](notes.md) · Next: [Recents](recents.md) · [Contents](../README.md)

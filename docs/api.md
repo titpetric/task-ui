@@ -11,7 +11,7 @@ route or a tool only for a need these cannot serve, and states the reason.
 | Added | For |
 |-------|-----|
 | `DELETE /api/artifacts` | **Delete all** on the Artifacts page: deleting the records one by one leaves the files and their history |
-| `/api/notes`, `list_notes`, `note_comment` | Notes and Chat, and instructions to the agent, which reads and reports on them over MCP |
+| `/api/notes`, `list_notes`, `note_comment` | Notes, and instructions to the agent, which reads and reports on them over MCP |
 | `/api/integrations`, `/api/hosts` | Settings, Integrations, which keeps the services' tokens encrypted, and the host inventory from Beszel |
 
 | Method | Path | Does |
@@ -28,7 +28,7 @@ route or a tool only for a need these cannot serve, and states the reason.
 | `GET` `POST` `PUT` `DELETE` | `/api/workflows`, `/api/workflows/{id}` | `{name, steps: [{folder, job}]}`; owner or admin changes |
 | `GET` `POST` | `/api/workflows/{id}/runs` | runs, newest first, with their steps; `POST` starts one, 409 while one runs |
 | `POST` | `/api/workflow-runs/{id}/stop` | stops the step running, skips the rest |
-| `GET` `POST` | `/api/notes?channel=&mention=&state=&limit=` | the threads, newest first, with their replies; `POST {channel, parent_id, body}` leaves a note or a reply |
+| `GET` `POST` | `/api/notes?mention=&state=&limit=` | the threads, newest first, with their replies; `POST {parent_id, body}` leaves a note or a reply, and one naming the agent starts it |
 | `POST` | `/api/notes/{id}/comments` | `{body, state}`: a reply, and the instruction's state: working, done or failed |
 | `DELETE` | `/api/notes/{id}` | a note and its replies; its author or an admin |
 | `GET` `PUT` `DELETE` | `/api/integrations`, `/api/integrations/{id}` | the integrations, `claude` and `beszel`: `{values}` by setting name; secrets come back only as `set`, and an empty one keeps its value (admins) |

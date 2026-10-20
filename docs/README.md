@@ -51,7 +51,7 @@ and red for failed or killed, and pulsing amber while it runs.
 | [Runs](guide/runs.md)                | Runs                                   | The run window, the history, a run's page and its output    |
 | [Artifacts](guide/artifacts.md)      | Artifacts                              | Files the runs leave behind                                 |
 | [Scheduled](guide/scheduled.md)      | Scheduled                              | Jobs on a cron expression                                   |
-| [Notes and Chat](guide/notes.md)     | Notes, Chat                            | Messages, replies, and instructions to the agent            |
+| [Notes](guide/notes.md)              | Notes                                  | Messages, replies, and instructions to the agent            |
 | [Projects and jobs](guide/projects.md) | The tree of projects, folders, jobs  | Folders, the conventions, a job's page, pulls, keys, hours  |
 | [Recents](guide/recents.md)          | Recents                                | The latest runs, by anyone                                  |
 | [Settings](guide/settings.md)        | The user menu, Settings                | Projects, users, secrets, SSH keys, env files               |
