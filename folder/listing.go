@@ -20,6 +20,11 @@ type Item struct {
 	// Href is where the name links to: the directory to go into, or the
 	// file to open. Empty leaves the name plain.
 	Href string
+	// Path is the entry's path from the top of the tree a page lists, for
+	// the actions on it; empty where a page has none.
+	Path string
+	// Archive is where a directory downloads as a .tgz; empty without.
+	Archive string
 }
 
 // previewable are the image types a page opens in the image window.

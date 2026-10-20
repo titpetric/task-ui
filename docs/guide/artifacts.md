@@ -27,16 +27,20 @@ own directory goes, and nothing carries over into the next run's.
 
 - **Space**: the bar shows what the tree takes: the latest files, and the
   history of earlier versions.
-- **Files**: the latest version of every file, a directory at a time.
-  A directory opens; a file opens in the browser, and an image or an svg
-  opens in the image window, scaled to fit, with **Download** beside it.
+- **Files**: the latest version of every file, a directory at a time, as
+  a table of names, sizes and times. A directory opens; a file opens in
+  the browser, and an image or an svg opens in the image window, scaled to
+  fit. Each row downloads its file, or its directory as a `.tgz`, and
+  copies the link to it. The button over the table downloads the open
+  directory, or everything, as a `.tgz`, and its link copies the same way:
+  `/artifacts/<directory>.tgz`, and `/artifacts.tgz` for the whole tree.
 - **History**: every version a run left, newest first, with the folder,
   job and run it came from, filtered by folder and job. A name downloads
   that version. A run's page lists its own.
 
-You see the files of the folders you may see. Admins delete a record, and
-**Empty**, at the top right, deletes every file, its history and every
-record.
+You see the files of the folders you may see, in the table and in a
+`.tgz`. Admins delete a record, and **Delete all**, at the top right,
+deletes every file, its history and every record.
 
 ## History
 

@@ -10,7 +10,7 @@ route or a tool only for a need these cannot serve, and states the reason.
 
 | Added | For |
 |-------|-----|
-| `DELETE /api/artifacts` | **Empty** on the Artifacts page: deleting the records one by one leaves the files and their history |
+| `DELETE /api/artifacts` | **Delete all** on the Artifacts page: deleting the records one by one leaves the files and their history |
 | `/api/notes`, `list_notes`, `note_comment` | Notes and Chat, and instructions to the agent, which reads and reports on them over MCP |
 
 | Method | Path | Does |

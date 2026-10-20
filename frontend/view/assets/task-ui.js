@@ -1222,13 +1222,15 @@
 
     if (btn.hasAttribute("data-copy")) {
       var value = btn.getAttribute("data-copy");
+      // A path copies as a whole link, to paste anywhere.
+      if (value.charAt(0) === "/") value = location.origin + value;
       if (navigator.clipboard && window.isSecureContext) {
         navigator.clipboard.writeText(value).then(function () {
           btn.classList.add("copied");
           setTimeout(function () { btn.classList.remove("copied"); }, 1200);
         });
       } else {
-        window.prompt("Copy the public key:", value);
+        window.prompt("Copy:", value);
       }
       return;
     }
