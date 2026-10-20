@@ -14,7 +14,7 @@ import (
 )
 
 // collectArtifacts records every file a run left under its artifact
-// directory. An empty directory is removed. The files stay where the run
+// directory. It removes an empty directory. The files stay where the run
 // wrote them: the row says where.
 func (m *Manager) collectArtifacts(ctx context.Context, session *Session) {
 	dir := m.artifactDir(session.Run)

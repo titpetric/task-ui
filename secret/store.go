@@ -107,7 +107,7 @@ func (s *Store) Count(ctx context.Context) (int, error) {
 
 // Rekey writes every secret again for the current keys, the excluded
 // names left out: after a rotation, or before a key goes. It returns
-// how many were written.
+// the number it wrote.
 func (s *Store) Rekey(ctx context.Context, exclude ...string) (int, error) {
 	secrets, err := s.Secrets.List(ctx)
 	if err != nil {

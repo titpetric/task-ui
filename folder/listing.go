@@ -15,7 +15,7 @@ type Item struct {
 
 // Listing returns what a directory holds, for the folder page: the
 // directories first, then the files, each by name regardless of case.
-// Dot entries are left out. A directory that cannot be read lists
+// Listing skips dot entries. A directory Listing cannot read lists
 // nothing.
 func Listing(dir string) []Item {
 	entries, err := os.ReadDir(dir)

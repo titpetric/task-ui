@@ -116,8 +116,8 @@ func TestWorkflowRunStorage(t *testing.T) {
 	one, _ := runs.List(ctx, 1)
 	assert.Len(t, one, 1)
 
-	// A restart ends what was running: the run fails, a running step with
-	// it, and steps that never started are skipped.
+	// A restart ends the open runs: the run fails, a running step with
+	// it, and Interrupt skips steps that never started.
 	open := &model.WorkflowRun{WorkflowID: "wf", Name: "deploy"}
 	assert.NoError(t, runs.Create(ctx, open, steps("a", "build", "a", "push")))
 	openSteps, _ := runs.Steps(ctx, open.ID)

@@ -9,8 +9,8 @@ import (
 	"time"
 )
 
-// Recorder writes one run's output as asciicast events. It is an
-// io.Writer: what is written to it is what the terminal showed.
+// Recorder writes one run's output as asciicast events. As an
+// io.Writer, it takes exactly what the terminal showed.
 type Recorder struct {
 	mu    sync.Mutex
 	path  string
@@ -19,7 +19,7 @@ type Recorder struct {
 	start time.Time
 }
 
-// Path returns the file being written.
+// Path returns the file the recorder writes.
 func (r *Recorder) Path() string {
 	return r.path
 }

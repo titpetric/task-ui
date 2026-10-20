@@ -108,7 +108,7 @@ func TestRun_EmailAndBackup(t *testing.T) {
 	assert.Error(t, run(ctx, []string{"backup"}, strings.NewReader(""), &out))
 	assert.Error(t, run(ctx, []string{"backup", "bob"}, strings.NewReader(""), &out))
 
-	// A token is printed once; the list names it without it.
+	// The command prints a token once; the list names it without it.
 	out.Reset()
 	assert.NoError(t, run(ctx, []string{"token", "alice", "mcp"}, strings.NewReader(""), &out))
 	secret := strings.TrimSpace(out.String())

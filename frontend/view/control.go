@@ -7,7 +7,7 @@ import (
 )
 
 // ControlRepeats is how many times a job name occurs, at least, for the
-// control centre to give it a column: more than once. The column's name
+// control centre to show it as a column: more than once. The column's name
 // stands on end, so a column is narrow.
 const ControlRepeats = 2
 
@@ -32,7 +32,7 @@ type ControlRow struct {
 
 // NewControl lays the folders out: every job name that occurs min times
 // or more, across folders or within one, gets a column, the most common
-// first and then by name. A job is placed by its name, so a Makefile's
+// first and then by name. The column of a job follows its name, so a Makefile's
 // build and a pipeline's build share the column, and a folder's two
 // builds share its cell.
 func NewControl(folders []*folder.Folder, min int) Control {

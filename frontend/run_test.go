@@ -19,7 +19,7 @@ func TestRuns(t *testing.T) {
 	assert.Contains(t, body, "<h2>Runs</h2>")
 	assert.Contains(t, body, `href="/runs/`+plan.ID+`"`)
 	assert.Contains(t, body, `href="/runs/`+deploy.ID+`"`)
-	// The table follows the runs topic and is drawn on, never reloaded.
+	// The table follows the runs topic; the page draws on it and never reloads.
 	assert.Contains(t, body, `<section class="block" data-sse="runs">`)
 	assert.Contains(t, body, `<tr data-run-id="`+plan.ID+`">`)
 	// Only the View button opens the window: the row is not a Run button,

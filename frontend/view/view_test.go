@@ -84,7 +84,7 @@ func TestView_Render(t *testing.T) {
 	assert.Error(t, v.Render(&buf, "nothing", admin(t)))
 }
 
-// The window carries the reason field a run out of hours asks for.
+// The window carries the reason field a run out of hours requires.
 func TestView_RenderDialog(t *testing.T) {
 	t.Parallel()
 

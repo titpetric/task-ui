@@ -20,7 +20,7 @@ func next(t *testing.T, ch <-chan event.Event) event.Event {
 }
 
 // A subscriber gets the events of its topic, in order, and none of
-// another topic's; after it unsubscribes its channel is closed.
+// another topic's; after it unsubscribes the bus closes its channel.
 func TestBus(t *testing.T) {
 	t.Parallel()
 	bus := event.NewBus()
@@ -64,5 +64,5 @@ func TestBus_SlowSubscriber(t *testing.T) {
 	case <-time.After(2 * time.Second):
 		t.Fatal("publish blocked on a slow subscriber")
 	}
-	assert.Equal(t, 0, next(t, ch).Data) // the first events are kept
+	assert.Equal(t, 0, next(t, ch).Data) // the channel keeps the first events
 }

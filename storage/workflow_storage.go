@@ -10,7 +10,7 @@ import (
 	"github.com/titpetric/task-ui/model"
 )
 
-// ErrInUse is returned when deleting a workflow another one runs.
+// ErrInUse reports deleting a workflow another one runs.
 var ErrInUse = errors.New("the workflow is in use")
 
 // WorkflowStorage keeps the workflows and their steps.
@@ -168,8 +168,8 @@ func (s *WorkflowStorage) Reaches(ctx context.Context, from, target string) (boo
 }
 
 // Expand replaces each step that runs a workflow with that workflow's
-// steps, through any depth, so a check sees every job the chain runs. A
-// step whose workflow is gone is left out.
+// steps, through any depth, so a check sees every job the chain runs. Expand
+// drops a step whose workflow does not exist.
 func (s *WorkflowStorage) Expand(ctx context.Context, steps []model.WorkflowStep) ([]model.WorkflowStep, error) {
 	return s.expand(ctx, steps, map[string]bool{})
 }
@@ -250,9 +250,9 @@ func NewWorkflowRunStorage(db DB) *WorkflowRunStorage {
 	return &WorkflowRunStorage{db: db}
 }
 
-// Create inserts a running workflow run and its steps, all pending. The
-// steps are copied, so a later change to the workflow leaves the run's
-// history as it was.
+// Create inserts a running workflow run and its steps, all pending. Create
+// copies the steps, so a later change to the workflow leaves the run's
+// history intact.
 func (s *WorkflowRunStorage) Create(ctx context.Context, run *model.WorkflowRun, steps []model.WorkflowStep) error {
 	if run.ID == "" {
 		run.ID = model.NewID()
@@ -321,8 +321,8 @@ func (s *WorkflowRunStorage) UpdateStep(ctx context.Context, step *model.Workflo
 }
 
 // Interrupt ends the workflow runs left running, when the instance that
-// ran them is gone: they fail with the message, their running step fails
-// and the steps after it are skipped.
+// ran them has stopped: they fail with the message, their running step
+// fails and Interrupt skips the steps after it.
 func (s *WorkflowRunStorage) Interrupt(ctx context.Context, message string) error {
 	now := time.Now().UTC().Truncate(time.Millisecond)
 	return inTx(ctx, s.db, func(c conn) error {

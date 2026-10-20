@@ -119,7 +119,7 @@ func TestLoop_Tick(t *testing.T) {
 }
 
 // A scheduled run gets the keys of the schedule's creator: the user the
-// key is mapped to gets it through the run's agent, another user's
+// policy maps the key to gets it through the run's agent, another user's
 // schedule gets no agent.
 func TestLoop_TickKeys(t *testing.T) {
 	t.Parallel()

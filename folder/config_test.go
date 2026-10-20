@@ -23,7 +23,7 @@ func TestConfig_Apply(t *testing.T) {
 		t.Fatalf("job allow: %+v", f.Job("build"))
 	}
 
-	// A project that names its sources reads all of them.
+	// A project that names its sources reads every one.
 	write(t, filepath.Join(dir, "package.json"), `{"scripts": {"build": "vite build"}}`)
 	f = Load("tools", dir, "make", "npm")
 	Config{Command: "gmake", Commands: map[string]string{"npm": "pnpm run"}}.Apply(f)

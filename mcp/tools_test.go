@@ -9,7 +9,7 @@ import (
 	"github.com/titpetric/task-ui/internal/assert"
 )
 
-// A job is listed, run, waited for and shown; a viewer may not run it.
+// The tools list a job, run it, wait for it and show it; a viewer may not run it.
 func TestTools_Jobs(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
@@ -43,7 +43,7 @@ func TestTools_Jobs(t *testing.T) {
 	assert.True(t, failed)
 }
 
-// A workflow is listed, run by name and waited for, and its runs listed.
+// The tools list a workflow, run it by name, wait for it and list its runs.
 func TestTools_Workflows(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)

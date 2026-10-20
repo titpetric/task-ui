@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-// A recording replayed into a terminal gives the frame it ended on.
+// A recording replayed into a terminal ends on the frame the run ended on.
 func TestFrameFromCast(t *testing.T) {
 	cast := `{"version":2,"width":20,"height":4}
 [0.1,"o","hello"]

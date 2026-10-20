@@ -8,6 +8,6 @@ type AuthKind = string
 const (
 	// AuthPassword is the user's password, from the password file.
 	AuthPassword AuthKind = "password"
-	// AuthBackup is a backup password: it signs in once, then it is used.
+	// AuthBackup is a backup password: it signs in once, then counts as used.
 	AuthBackup AuthKind = "backup"
 )

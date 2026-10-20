@@ -31,7 +31,7 @@ func (s *ProjectStorage) Create(ctx context.Context, project *model.Project) err
 	return client(s.db).Insert(ctx, model.ProjectTable, project)
 }
 
-// fillProjectLists makes sure the JSON columns hold JSON, so a row made
+// fillProjectLists sets the JSON columns to JSON, so a row made
 // from a literal reads back the same as one made from a form.
 func fillProjectLists(project *model.Project) {
 	if project.Allow == "" {

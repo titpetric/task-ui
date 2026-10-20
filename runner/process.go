@@ -50,7 +50,7 @@ func (p *Process) PID() int {
 	return p.cmd.Process.Pid
 }
 
-// Resize changes the terminal size. A size that is not positive is ignored.
+// Resize changes the terminal size. It ignores a size that is not positive.
 func (p *Process) Resize(cols, rows int) {
 	if cols > 0 && rows > 0 {
 		_ = pty.Setsize(p.tty, &pty.Winsize{Cols: uint16(cols), Rows: uint16(rows)})

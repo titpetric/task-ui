@@ -11,12 +11,12 @@ import (
 	"time"
 )
 
-// ErrInvalidToken is returned for a session token that does not verify,
-// or has expired.
+// ErrInvalidToken reports a session token that does not verify, or one
+// that has expired.
 var ErrInvalidToken = errors.New("invalid session")
 
 // Sessions signs and verifies the session cookie: an HS256 JWT holding the
-// username. The role is looked up from the configuration on every request,
+// username. Every request looks up the role from the configuration,
 // so a user removed from the password file loses access on their next click.
 type Sessions struct {
 	secret []byte
@@ -55,7 +55,7 @@ func (s *Sessions) Issue(username string) string {
 	return signed + "." + s.sign(signed)
 }
 
-// Verify returns the username a token was issued to.
+// Verify returns the username a token holds.
 func (s *Sessions) Verify(token string) (string, error) {
 	parts := strings.Split(token, ".")
 	if len(parts) != 3 || !hmac.Equal([]byte(s.sign(parts[0]+"."+parts[1])), []byte(parts[2])) {

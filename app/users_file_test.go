@@ -78,7 +78,7 @@ func TestUsersFile_Sync(t *testing.T) {
 	assert.Equal(t, model.RoleViewer, mustUser(t, users, "guest").Role)
 
 	// A changed file: ops gets a new password and leaves the viewers,
-	// guest is gone, a newcomer arrives; folders set in the UI stay.
+	// guest leaves, a newcomer arrives; folders set in the UI stay.
 	ops := mustUser(t, users, "ops")
 	ops.Folders = model.EncodeList([]string{"infra"})
 	assert.NoError(t, users.Update(ctx, ops))
@@ -137,7 +137,7 @@ func TestUsersFile_Watch(t *testing.T) {
 	assert.NoError(t, os.Chtimes(path, time.Now(), time.Now().Add(time.Second)))
 	assert.Eventually(t, func() bool { return len(mustList(t, users)) == 2 }, 5*time.Second, 20*time.Millisecond)
 
-	// A broken file is reported and changes nothing.
+	// Watch reports a broken file, and the file changes nothing.
 	assert.NoError(t, os.WriteFile(path, []byte("broken\n"), 0o600))
 	assert.NoError(t, os.Chtimes(path, time.Now(), time.Now().Add(2*time.Second)))
 	select {

@@ -234,7 +234,7 @@ func (f *fixture) call(t *testing.T, user, method, path string, body any) respon
 	return result
 }
 
-// withKey puts an ed25519 key in the SSH folder, so secrets can be kept.
+// withKey puts an ed25519 key in the SSH folder, so the store can keep secrets.
 func (f *fixture) withKey(t *testing.T) {
 	t.Helper()
 	_, err := f.opts.Keys.Generate("ed25519", "test")

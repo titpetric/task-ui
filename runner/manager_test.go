@@ -31,7 +31,7 @@ type fixture struct {
 	files   *storage.ArtifactStorage
 	secrets *secret.Store
 	root    string
-	// policies give the instance key, id_ed25519, to roles' runs.
+	// policies grant the instance key, id_ed25519, to roles' runs.
 	policies *storage.SSHKeyPolicyStorage
 	// now is what the manager's clock reads; zero is the real time.
 	now time.Time

@@ -10,7 +10,7 @@ import (
 )
 
 // agent loads the keys a run gets into an ssh agent for it, and says so
-// in the terminal: the instance keys the policies give whoever started
+// in the terminal: the instance keys the policies grant whoever started
 // the run, by their role or by name, and nothing else. A checkout's
 // .ssh/ folder is not loaded. No key is no agent and no error, told as
 // (none); the caller closes the agent.

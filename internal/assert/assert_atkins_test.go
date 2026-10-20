@@ -10,7 +10,7 @@ import (
 	"github.com/titpetric/task-ui/internal/assert"
 )
 
-// wrappedError is the type ErrorAs is asked to find.
+// wrappedError is the type the test asks ErrorAs to find.
 type wrappedError struct{ msg string }
 
 func (e *wrappedError) Error() string { return e.msg }
@@ -81,7 +81,7 @@ func assertAtkinsFailure(t *testing.T) {
 	mustFail(t, "Less", func(tb testing.TB) { assert.Less(tb, 2, 1) })
 	mustFail(t, "LessOrEqual", func(tb testing.TB) { assert.LessOrEqual(tb, 3, 2) })
 	mustFail(t, "GreaterOrEqual", func(tb testing.TB) { assert.GreaterOrEqual(tb, 1, 2) })
-	// Kinds that do not compare are a failure rather than a silent pass.
+	// Kinds that do not compare are a failure.
 	mustFail(t, "LessOrEqualMixedKinds", func(tb testing.TB) { assert.LessOrEqual(tb, 1, "a") })
 	mustFail(t, "GreaterOrEqualMixedKinds", func(tb testing.TB) { assert.GreaterOrEqual(tb, 1, "a") })
 

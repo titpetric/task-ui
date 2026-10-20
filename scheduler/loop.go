@@ -63,9 +63,9 @@ func (l *Loop) Run(ctx context.Context) {
 }
 
 // Tick starts every schedule that is due and moves it to its next run.
-// It returns how many runs it started. A schedule whose job is busy is
-// skipped until its next time; one whose folder or job is gone is
-// disabled, so it stops asking.
+// It returns how many runs it started. It skips a schedule whose job is
+// busy until its next time, and disables one whose folder or job is
+// missing, so it stops asking.
 func (l *Loop) Tick(ctx context.Context) (int, error) {
 	now := l.Now()
 	due, err := l.Schedules.Due(ctx, now)
@@ -126,7 +126,7 @@ func (l *Loop) target(schedule *model.Schedule) (*folder.Folder, *folder.Job) {
 	return f, f.Job(schedule.Job)
 }
 
-// user resolves who the run is attributed to: the schedule's user when
+// user resolves whom to attribute the run to: the schedule's user when
 // the row still exists, otherwise the name the schedule kept.
 func (l *Loop) user(ctx context.Context, schedule *model.Schedule) *model.User {
 	if l.Users != nil && schedule.UserID != "" {

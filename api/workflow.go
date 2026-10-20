@@ -18,7 +18,7 @@ type WorkflowRequest struct {
 	Steps []StepRequest `json:"steps"`
 	// Sidebar lists the workflow in the sidebar, the default; false
 	// keeps it out, for one that is a step of others. Left out on a
-	// change, it stays as it is.
+	// change, it stays unchanged.
 	Sidebar *bool `json:"sidebar,omitempty"`
 }
 

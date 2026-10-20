@@ -72,8 +72,8 @@ jobs:
 	for _, target := range source.Targets {
 		got = append(got, target.Name)
 	}
-	// atkins lists every job, as `atkins -l` does: one without a desc is
-	// described by its first step. Internal and show: false jobs stay out.
+	// atkins lists every job, as `atkins -l` does: one without a desc takes
+	// its first step as its description. Internal and show: false jobs stay out.
 	if want := []string{"build", "default", "deploy", "list", "nodesc", "up"}; !slices.Equal(got, want) {
 		t.Fatalf("targets: got %v, want %v", got, want)
 	}

@@ -1,6 +1,6 @@
 // Package recording writes the terminal output of a run as an asciicast
-// v2 file, which the run dialog plays back. What a run was is a row in
-// storage; this is only what it showed.
+// v2 file, which the run dialog plays back. A row in storage describes
+// the run; the recording holds only what it showed.
 package recording
 
 import (
@@ -28,8 +28,8 @@ func (s *Store) Path(run *model.Run) (string, error) {
 	return filepath.Join(s.Root, filepath.Base(run.Folder), strings.ReplaceAll(run.Job, "/", "_"), run.ID+".cast"), nil
 }
 
-// Relative returns the recording path relative to the root, which is what
-// the run row keeps.
+// Relative returns the recording path relative to the root, the form the
+// run row keeps.
 func (s *Store) Relative(path string) string {
 	rel, err := filepath.Rel(s.Root, path)
 	if err != nil {

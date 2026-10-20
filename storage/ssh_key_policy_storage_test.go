@@ -9,8 +9,8 @@ import (
 	"github.com/titpetric/task-ui/storage"
 )
 
-// A key is given to roles by its name; it can be in several roles' sets,
-// and a role can have several keys.
+// Roles get a key by its name; a key can be in many roles' sets, and a
+// role can have many keys.
 func TestSSHKeyPolicyStorage(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
@@ -33,7 +33,7 @@ func TestSSHKeyPolicyStorage(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, map[string][]string{"id_ed25519": {model.RoleRunner, model.RoleViewer}, "id_rsa": {model.RoleRunner}}, all)
 
-	// Set replaces; none gives the key to nobody.
+	// Set replaces; none leaves the key with nobody.
 	assert.NoError(t, policies.Set(ctx, "id_ed25519", []string{model.RoleAdmin}))
 	roles, _ = policies.Roles(ctx, "id_ed25519")
 	assert.Equal(t, []string{model.RoleAdmin}, roles)

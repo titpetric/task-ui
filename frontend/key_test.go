@@ -85,7 +85,7 @@ func TestKeys_ProjectFolders(t *testing.T) {
 }
 
 // A key shows the roles whose runs get it, and its edit form has a box
-// per role, checked for those; generate and upload offer the same boxes.
+// per role, checked for those; generate and upload show the same boxes.
 func TestKeys_Policies(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
@@ -111,7 +111,7 @@ func TestKeys_Policies(t *testing.T) {
 	}
 }
 
-// The forms offer a name and a box per user; a user's SSH keys page lists
+// The forms show a name and a box per user; a user's SSH keys page lists
 // the keys given to them or their role, to copy.
 func TestKeys_ForAUser(t *testing.T) {
 	t.Parallel()

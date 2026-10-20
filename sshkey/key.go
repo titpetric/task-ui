@@ -16,7 +16,7 @@ type Key struct {
 	Comment     string    `json:"comment"`
 	PublicKey   string    `json:"public_key"`
 	Modified    time.Time `json:"modified"`
-	// Backup is set for keys moved aside by a rotation.
+	// Backup marks keys a rotation moved aside.
 	Backup bool `json:"backup,omitempty"`
 	// Kind is the key type the name stands for, ed25519, ecdsa or rsa,
 	// and Label what follows it, for a key made for someone:

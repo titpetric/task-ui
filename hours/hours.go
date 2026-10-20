@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-// ErrInvalid is returned for a rule that does not parse, wrapped with
+// ErrInvalid reports a rule that does not parse, wrapped with
 // what is wrong.
 var ErrInvalid = errors.New("invalid hours")
 
@@ -46,7 +46,7 @@ func (r Rule) Allows(t time.Time) bool {
 	return r.Matches(t) && minute >= r.From && minute < r.To
 }
 
-// String writes the rule back the way it is parsed: whole hours as
+// String writes the rule back the way Parse reads it: whole hours as
 // hours, anything finer as hh:mm on both ends.
 func (r Rule) String() string {
 	padded := r.From%60 != 0 || r.To%60 != 0
@@ -55,7 +55,7 @@ func (r Rule) String() string {
 
 // Rules are the rules of a folder or a job, in order. The last rule that
 // covers a weekday decides it, so "mon-fri 9-17" followed by "fri 9-13"
-// closes Friday afternoons. A day no rule covers is closed. No rules at
+// closes Friday afternoons. A day no rule covers stays closed. No rules at
 // all means always.
 type Rules []Rule
 
@@ -206,8 +206,8 @@ func clock(minutes int, padded bool) string {
 	return fmt.Sprintf("%02d:%02d", minutes/60, minutes%60)
 }
 
-// days names a weekday set the short way: a range when it is one, the
-// names otherwise.
+// days names a weekday set the short way: a range when the set forms
+// one, the names otherwise.
 func days(set [7]bool) string {
 	var names []string
 	for d := time.Monday; ; d = (d + 1) % 7 {

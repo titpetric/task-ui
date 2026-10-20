@@ -13,7 +13,7 @@ const ScopeAll = "all"
 
 var validName = regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_]*$`)
 
-// ErrInvalidName is returned for a variable name a shell would not accept.
+// ErrInvalidName reports a variable name a shell would not accept.
 var ErrInvalidName = errors.New("a variable name is letters, digits and underscores, and does not start with a digit")
 
 // SecretStorage keeps the variables added to runs.

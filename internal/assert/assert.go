@@ -1,7 +1,7 @@
 // Copyright 2022 Fortio Authors
 
 // Package assert is a minimalistic drop-in replacement for testify/assert.
-// It is based on fortio.org/assert and is internal to this module.
+// It derives from fortio.org/assert and is internal to this module.
 package assert
 
 import (
@@ -104,7 +104,7 @@ func CheckEquals(t testing.TB, actual, expected any, msg ...any) {
 	}
 }
 
-// Assert is similar to True() under a different name and earlier
+// Assert matches True() under a different name, from the earlier
 // fortio/stats test implementation.
 func Assert(t testing.TB, cond bool, msg string, rest ...any) {
 	if !cond {
@@ -121,7 +121,7 @@ type hasT interface {
 	SetT(t *testing.T)
 }
 
-// TestSuite to be used as base struct for test suites.
+// TestSuite is the base struct for test suites.
 // Replaces https://pkg.go.dev/github.com/stretchr/testify@v1.8.0/suite.
 type TestSuite struct {
 	t *testing.T

@@ -15,7 +15,7 @@ go build -o "$TASK_UI_ARTIFACTS/app" .
 cp report.html "$TASK_UI_ARTIFACTS/"
 ```
 
-When the run ends the files are recorded with their size and type.
+When the run ends, task-ui records each file with its size and type.
 
 ## Finding one
 

@@ -11,7 +11,7 @@ func newRing(size int) *ring {
 	return &ring{size: size}
 }
 
-// Write keeps the tail of what was written.
+// Write keeps the tail of everything written so far.
 func (r *ring) Write(p []byte) (int, error) {
 	r.buf = append(r.buf, p...)
 	if len(r.buf) > r.size {
@@ -20,7 +20,7 @@ func (r *ring) Write(p []byte) (int, error) {
 	return len(p), nil
 }
 
-// Bytes returns a copy of what is kept.
+// Bytes returns a copy of the tail the ring keeps.
 func (r *ring) Bytes() []byte {
 	return append([]byte{}, r.buf...)
 }

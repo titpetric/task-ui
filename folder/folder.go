@@ -47,7 +47,7 @@ type Folder struct {
 	Jobs []*Job `json:"jobs"`
 
 	// Error holds the parse errors of the sources, so a folder with a
-	// broken file is listed and says what is wrong.
+	// broken file still shows in the listing and says what is wrong.
 	Error string `json:"error,omitempty"`
 }
 

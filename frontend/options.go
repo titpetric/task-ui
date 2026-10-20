@@ -37,11 +37,11 @@ type Options struct {
 	Catalogue folder.Catalogue
 	Git       *git.Git
 	Keys      *sshkey.Store
-	// KeyPolicies give the instance keys to roles' runs.
+	// KeyPolicies assign the instance keys to roles' runs.
 	KeyPolicies *storage.SSHKeyPolicyStorage
 	Env         *envfile.Store
 	// Recordings holds the runs' recordings, for the last screen of a
-	// run whose session is gone.
+	// run whose session has ended.
 	Recordings *recording.Store
 	// Root is where the folders are, for the projects page.
 	Root    string

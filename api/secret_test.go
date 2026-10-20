@@ -89,12 +89,12 @@ func TestSecret_ListAndDelete(t *testing.T) {
 	assert.Equal(t, http.StatusNoContent, deleted.Status)
 	assert.Len(t, f.call(t, asAdmin, http.MethodGet, "/secrets", nil).list("secrets"), 1)
 
-	// Deleting again is nothing to do, not an error.
+	// Deleting again succeeds and does nothing.
 	again := f.call(t, asAdmin, http.MethodDelete, "/secrets/"+set.str("id"), nil)
 	assert.Equal(t, http.StatusNoContent, again.Status)
 }
 
-// Without a key to encrypt with no secret is kept; a rekey writes every
+// Without a key to encrypt with the store keeps no secret; a rekey writes every
 // secret again for the current keys.
 func TestSecret_Encryption(t *testing.T) {
 	t.Parallel()

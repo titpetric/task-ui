@@ -23,18 +23,18 @@ import (
 	"github.com/titpetric/task-ui/schema"
 )
 
-// DB is the shared connection pool every storage is built over.
+// DB is the shared connection pool under every storage.
 type DB = *sqlx.DB
 
 // Project is the migration project name recorded in the migrations table.
 const Project = "task-ui"
 
-// ErrNotFound is returned when a row is not there.
+// ErrNotFound reports a row that is not there.
 var ErrNotFound = errors.New("not found")
 
 // Open opens a sqlite database. The driver is the program's to link:
 // main imports modernc.org/sqlite for its side effect, as do the tests. An empty DSN or ":memory:" is a private
-// in-memory database held on one connection, which is what tests use;
+// in-memory database held on one connection, for tests;
 // anything else is a file.
 func Open(dsn string) (DB, error) {
 	memory := dsn == "" || dsn == ":memory:"
@@ -76,7 +76,7 @@ func OpenAndMigrate(ctx context.Context, dsn string) (DB, error) {
 	return db, nil
 }
 
-// conn is a request scoped client, the one type of pdo the rest of the
+// conn is a request scoped client, the one pdo type the rest of the
 // package names: pdo stays imported in this file alone.
 type conn = *pdo.PDO
 

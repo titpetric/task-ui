@@ -19,10 +19,10 @@ var skipped = map[string]bool{"node_modules": true, "vendor": true, "testdata": 
 
 // Discovery finds the folders under a root: the root itself when it holds
 // something to run, and every directory below it that does, as deep as
-// they go. Under a folder with a pipeline file only folders with a
-// pipeline file of their own are listed: a Go tree's Makefiles are the
-// pipeline's business. Configured folders are applied over the
-// discovered ones by ID, and added when their path was not discovered.
+// they go. Under a folder with a pipeline file Discovery lists only folders with
+// a pipeline file of their own: a Go tree's Makefiles are the pipeline's
+// business. Configured folders override the discovered ones by ID, and
+// Discovery adds a configured folder whose path the walk did not find.
 type Discovery struct {
 	Root     string
 	Discover bool
@@ -77,8 +77,8 @@ func (d *Discovery) List() []*Folder {
 }
 
 // configured loads the folder a configuration names: a directory, a
-// single file, or a path with nothing to run, which is listed with its
-// error so the configuration can be seen to be wrong.
+// single file, or a path with nothing to run, which the listing shows with
+// its error so the configuration shows as wrong.
 func configured(root string, cfg Config) *Folder {
 	dir := cfg.dir(root)
 	id := cfg.ID
@@ -130,7 +130,7 @@ func (d *Discovery) discover(root string, c *catalogue) {
 }
 
 // sections adds the top level folder of every listed folder below one
-// that has nothing to run itself, such as a checkout of several apps: the
+// that has nothing to run itself, such as a checkout of many apps: the
 // sidebar lists the folders inside it under it.
 func sections(root string, c *catalogue) {
 	ids := make([]string, 0, len(c.byID))
@@ -183,8 +183,8 @@ func gitIgnored(dir string, ignored map[string]bool) map[string]bool {
 }
 
 // walk visits the directories below dir, in name order, and reports the
-// ones with something to run. Below a pipeline folder only a folder with
-// a pipeline file is reported, but the walk goes on through the rest.
+// ones with something to run. Below a pipeline folder walk reports only a
+// folder with a pipeline file, but goes on through the rest.
 // Directories a git checkout ignores are not visited, and the walk does
 // not go into a directory in stop: a root-only project.
 func walk(dir, id string, depth int, underPipeline bool, ignored, stop map[string]bool, found func(id, dir string)) {

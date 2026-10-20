@@ -47,7 +47,7 @@ func originMatches(r *http.Request) bool {
 	return SameHost(r, u.Host)
 }
 
-// SameHost reports whether host is the host the request was made to. A
+// SameHost reports whether host is the host the request targets. A
 // reverse proxy that rewrites Host passes the original in X-Forwarded-Host.
 func SameHost(r *http.Request, host string) bool {
 	if host == "" {

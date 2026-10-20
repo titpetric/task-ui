@@ -10,8 +10,8 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// yamlNode is the yaml node the spec types decode from. It is named here
-// so the one import of the yaml package in this package is this file.
+// yamlNode is the yaml node the spec types decode from. This file names
+// it so the one import of the yaml package in this package is this file.
 type yamlNode = yaml.Node
 
 // The node kinds the spec types tell apart.
@@ -46,9 +46,9 @@ func (d pipelineDetector) Detect(dir string) *Source {
 }
 
 // detectFile reads one pipeline file. An atkins file lists every job, as
-// `atkins -l` does, and a job without a desc is described by its first
-// step; a Taskfile lists the jobs with a desc, as `task -l` does. Internal
-// and hidden jobs are left out of both.
+// `atkins -l` does, and a job without a desc takes its first step as
+// its description; a Taskfile lists the jobs with a desc, as `task -l`
+// does. Neither lists internal and hidden jobs.
 func (d pipelineDetector) detectFile(dir, name string) *Source {
 	source := &Source{Kind: d.kind, File: name, Command: defaultCommand(d.kind, name)}
 

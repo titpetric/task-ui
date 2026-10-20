@@ -61,7 +61,7 @@ func TestLogin(t *testing.T) {
 	res.Body.Close()
 	assert.Equal(t, http.StatusOK, res.StatusCode)
 
-	// A sign in from another site is refused.
+	// The server refuses a sign in from another site.
 	req, _ = http.NewRequest(http.MethodPost, f.server.URL+"/login", strings.NewReader(url.Values{"username": {"admin"}, "password": {"demo"}}.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Set("Origin", "https://evil.example")

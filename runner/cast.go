@@ -7,13 +7,13 @@ import (
 	"io"
 )
 
-// OutputRows is how tall a terminal a recording's whole output is
-// replayed into: the most of a run's output it shows.
+// OutputRows is the height of the terminal a recording's whole output
+// replays into: the most of a run's output it shows.
 const OutputRows = 5000
 
 // FrameFromCast replays an asciicast v2 recording into a terminal of the
 // size its header names and returns the frame it ended on: the last
-// screen of a run whose session is gone.
+// screen of a run without a session in memory.
 func FrameFromCast(r io.Reader) (Frame, error) {
 	replay, err := ReplayCast(r)
 	return replay.Screen, err

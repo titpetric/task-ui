@@ -6,9 +6,10 @@ import (
 
 // Subscriber is one window attached to a session. Its channel carries the
 // output as it happens, after a replay of what the window missed. A
-// subscriber that does not keep up loses output rather than slowing the
-// run: the channel is bounded, and when it is full the oldest output is
-// dropped to make room. The status is never dropped: it is the last word.
+// subscriber that does not keep up loses output and never slows the run:
+// the channel holds a bounded number of events, and when it fills the
+// subscriber drops the oldest output to make room. The status always
+// arrives, as the last word.
 type Subscriber struct {
 	C <-chan Event
 
@@ -25,8 +26,8 @@ func newSubscriber(buffer int, readOnly bool) *Subscriber {
 	return &Subscriber{C: c, c: c, ReadOnly: readOnly}
 }
 
-// send delivers an event without ever blocking the run. Output that does
-// not fit is dropped; a status makes room for itself by dropping the
+// send delivers an event without ever blocking the run. It drops output
+// that does not fit; a status makes room for itself by dropping the
 // oldest output waiting.
 func (s *Subscriber) send(event Event) {
 	s.mu.Lock()

@@ -8,7 +8,7 @@ import (
 	"github.com/titpetric/task-ui/storage"
 )
 
-// job shows a job: what it is, its history and its schedules.
+// job shows a job: its details, its history and its schedules.
 func (h *Handlers) job(w http.ResponseWriter, r *http.Request, f *folder.Folder, id string) {
 	job := f.Job(id)
 	if job == nil {

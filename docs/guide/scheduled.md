@@ -27,12 +27,12 @@ Month and day names work too (`mon-fri`, `jan`).
 
 It starts in the background under the name of whoever scheduled it, with
 their permissions, and shows up like any other run: on the dashboard, in
-Runs and in Recents. A job that is still running when its time comes is
-skipped for that time. Office hours do not gate a schedule: the schedule
+Runs and in Recents. When its time comes while the job still runs,
+the schedule skips that time. Office hours do not gate a schedule: the schedule
 is the decision.
 
 **Disable** stops a schedule without losing it, **Enable** starts it
-again. A schedule whose job is gone from its folder is disabled.
+again. When its job leaves the folder, task-ui disables the schedule.
 
 ---
 

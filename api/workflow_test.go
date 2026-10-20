@@ -96,7 +96,7 @@ func TestWorkflow_List(t *testing.T) {
 	assert.Len(t, admin.list("workflows"), 2)
 	assert.Equal(t, "a private", admin.list("workflows")[0].(map[string]any)["name"])
 
-	// A workflow with a step in a folder the user can not see is hidden.
+	// The listing hides a workflow with a step in a folder the user can not see.
 	limited := f.call(t, asLimited, http.MethodGet, "/workflows", nil)
 	assert.Len(t, limited.list("workflows"), 1)
 	assert.Equal(t, "b infra", limited.list("workflows")[0].(map[string]any)["name"])
@@ -200,7 +200,7 @@ func TestWorkflow_Nested(t *testing.T) {
 	nested := run["steps"].([]any)[1].(map[string]any)
 	assert.True(t, nested["workflow_run_ref"] != "", "the run of inner")
 
-	// A workflow around a folder the user can not see is hidden, and
+	// The API hides a workflow around a folder the user can not see, and
 	// one around a job they may not run is not theirs to run.
 	private := f.createWorkflow(t, asAdmin, "private", chain("private", "deploy"))
 	wrap := f.createWorkflow(t, asAdmin, "wrap", []api.StepRequest{{Workflow: private}})
@@ -242,7 +242,7 @@ func TestWorkflow_RecentRuns(t *testing.T) {
 	assert.Equal(t, ok, runs[0].(map[string]any)["workflow_id"])
 }
 
-// A workflow shows in the sidebar unless it is made or set not to.
+// A workflow shows in the sidebar unless made or set not to.
 func TestWorkflow_Sidebar(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
@@ -254,7 +254,7 @@ func TestWorkflow_Sidebar(t *testing.T) {
 	id := res.str("id")
 
 	res = f.call(t, asOps, http.MethodPut, "/workflows/"+id, api.WorkflowRequest{Name: "part", Steps: chain("infra", "plan")})
-	assert.Equal(t, true, res.get("sidebar_hidden")) // left out: as it was
+	assert.Equal(t, true, res.get("sidebar_hidden")) // left out: unchanged
 	res = f.call(t, asOps, http.MethodPut, "/workflows/"+id, api.WorkflowRequest{Name: "part", Steps: chain("infra", "plan"), Sidebar: &yes})
 	assert.Equal(t, false, res.get("sidebar_hidden"))
 

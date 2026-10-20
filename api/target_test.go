@@ -10,7 +10,7 @@ import (
 
 // The target of a request is the folder and job the user may see; what a
 // user may not see does not exist for them, and a job they may see but
-// not run is refused with a reason.
+// not run gets a refusal with a reason.
 func TestTarget(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)

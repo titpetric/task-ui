@@ -10,11 +10,11 @@ import (
 
 // The errors the hours gate ends a start in.
 var (
-	// ErrOutOfHours is returned when the job's hours do not allow a run
+	// ErrOutOfHours refuses a run when the job's hours do not allow one
 	// now and the request does not force.
 	ErrOutOfHours = errors.New("out of hours")
-	// ErrReasonNeeded is returned when a run out of hours is forced
-	// without saying why.
+	// ErrReasonNeeded refuses a forced run out of hours that does not
+	// say why.
 	ErrReasonNeeded = errors.New("a reason is needed to run out of hours")
 )
 

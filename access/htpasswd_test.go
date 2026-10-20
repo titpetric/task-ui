@@ -52,7 +52,7 @@ func TestSetHtpasswd(t *testing.T) {
 	second, _ := access.HashPassword("two")
 	path := filepath.Join(t.TempDir(), "etc", ".htpasswd")
 
-	// The file is made, a user added, another added, the first replaced.
+	// Make the file, add a user, add another, replace the first.
 	assert.NoError(t, access.SetHtpasswd(path, "admin", first))
 	assert.NoError(t, access.SetHtpasswd(path, " ops ", first))
 	assert.NoError(t, access.SetHtpasswd(path, "admin", second))

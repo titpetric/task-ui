@@ -11,7 +11,7 @@ type Request struct {
 	Job    *folder.Job
 	User   *model.User
 	Force  bool
-	// Reason says why a run is forced out of hours; it is kept on the run.
+	// Reason says why the request forces a run out of hours; the run keeps it.
 	Reason    string
 	Scheduled bool
 	Cols      int

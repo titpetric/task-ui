@@ -1,8 +1,8 @@
 // Package workflow runs workflows: named chains of jobs from any folders,
 // started one after another as ordinary runs. A step starts when the one
 // before it ended ok; the first that does not end ok ends the workflow
-// run, and the steps after it are skipped. A step may name another
-// workflow instead of a job: it runs as a run of its own, and ends the
+// run, and the runner skips the steps after it. A step names a job or
+// another workflow; a workflow runs as a run of its own, and ends the
 // step as it ended.
 package workflow
 
@@ -20,10 +20,10 @@ import (
 	"github.com/titpetric/task-ui/storage"
 )
 
-// ErrBusy is returned when the workflow already has a run in progress.
+// ErrBusy reports a workflow that already has a run in progress.
 var ErrBusy = errors.New("the workflow is running")
 
-// ErrNotRunning is returned when stopping a workflow run that ended.
+// ErrNotRunning refuses a stop of a workflow run that ended.
 var ErrNotRunning = errors.New("the workflow run is not running")
 
 // Catalogue finds the folder a step names. folder.Discovery is one.
@@ -76,7 +76,7 @@ func New(workflows *storage.WorkflowStorage, runs *storage.WorkflowRunStorage, c
 }
 
 // Resolve finds the folder and job, or the workflow, of every step, or
-// says which one is gone.
+// says which one is missing.
 func (r *Runner) Resolve(ctx context.Context, steps []model.WorkflowStep) ([]Step, error) {
 	resolved := make([]Step, 0, len(steps))
 	for _, step := range steps {
@@ -176,8 +176,8 @@ func (r *Runner) Active(workflowID string) (string, bool) {
 	return "", false
 }
 
-// Done is closed when the workflow run ended; for a run not in progress
-// it is closed already.
+// Done returns a channel that closes when the workflow run ended; for a
+// run not in progress it returns a closed channel.
 func (r *Runner) Done(runID string) <-chan struct{} {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -189,8 +189,8 @@ func (r *Runner) Done(runID string) <-chan struct{} {
 	return closed
 }
 
-// Stop ends a workflow run: the step running is stopped, the rest are
-// skipped.
+// Stop ends a workflow run: it stops the running step and skips the
+// rest.
 func (r *Runner) Stop(runID string) error {
 	r.mu.Lock()
 	a, ok := r.byRun[runID]
@@ -212,8 +212,8 @@ func (r *Runner) walk(ctx context.Context, a *active, steps []Step, rows []model
 		r.mu.Unlock()
 		close(a.done)
 	}()
-	// The records outlive a stopped walk, so they are written without its
-	// context.
+	// The records outlive a stopped walk, so the runner writes them without
+	// its context.
 	store := context.Background()
 	run := a.run
 	run.State = model.StateOK
@@ -250,8 +250,8 @@ func (r *Runner) walk(ctx context.Context, a *active, steps []Step, rows []model
 	r.publish(run.WorkflowID, "done", RunEvent{RunID: run.ID, WorkflowID: run.WorkflowID, Name: run.Name, State: run.State, Message: run.Message, UserName: run.UserName})
 }
 
-// step starts one job and waits for it. A job already running is waited
-// for and then started again; a stop ends the run in progress.
+// step starts one job and waits for it. When the job is already
+// running, step waits for that run and then starts the job again; a stop ends the run in progress.
 func (r *Runner) step(ctx context.Context, step Step, user *model.User) (state, runID, message string) {
 	for {
 		if ctx.Err() != nil {
@@ -282,8 +282,9 @@ func (r *Runner) step(ctx context.Context, step Step, user *model.User) (state, 
 	}
 }
 
-// nested runs the workflow a step names and waits for it. One already
-// running is waited for and then started again; a stop ends the run in
+// nested runs the workflow a step names and waits for it. When that
+// workflow is already running, nested waits for it and then starts it
+// again; a stop ends the run in
 // progress. The run's own state and message are the step's.
 func (r *Runner) nested(ctx context.Context, wf *model.Workflow, user *model.User) (state, runID, message string) {
 	for {

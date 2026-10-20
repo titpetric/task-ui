@@ -22,8 +22,8 @@ type Detector interface {
 	Detect(dir string) *Source
 }
 
-// Detectors are the conventions task-ui knows, in the order a folder is
-// read by them: the first that reads it is its source. Pipelines first,
+// Detectors are the conventions task-ui knows, in the order they read a
+// folder: the first that reads the folder names its source. Pipelines first,
 // then build files, then the scripts folder.
 var Detectors = []Detector{
 	pipelineDetector{kind: "atkins", names: atkinsNames},
@@ -75,7 +75,7 @@ func Any(dir string) bool {
 }
 
 // All reads every convention out of a folder. With kinds given, only those
-// detectors run, which is how a configuration narrows a folder.
+// detectors run: a configuration narrows a folder this way.
 func All(dir string, kinds ...string) []*Source {
 	var sources []*Source
 	for _, detector := range Detectors {
@@ -90,8 +90,8 @@ func All(dir string, kinds ...string) []*Source {
 }
 
 // FromFile reads one file as a pipeline source: the file named in a
-// configuration, or the one the single file mode serves. A YAML file with
-// a name no convention claims is read as an atkins pipeline, which
+// configuration, or the one the single file mode serves. FromFile reads a
+// YAML file with a name no convention claims as an atkins pipeline, which
 // understands the Taskfile vocabulary as well. A file that is neither
 // returns nil.
 func FromFile(path string) *Source {

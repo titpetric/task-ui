@@ -4,8 +4,8 @@ import (
 	"time"
 )
 
-// Due reports whether the schedule should start a run at now: it is
-// enabled and its next run is not in the future.
+// Due reports whether the schedule should start a run at now: the schedule
+// is on and its next run is not in the future.
 func (s *Schedule) Due(now time.Time) bool {
 	if s == nil || s.Enabled == 0 || s.NextRunAt == nil {
 		return false

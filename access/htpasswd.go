@@ -11,8 +11,8 @@ import (
 )
 
 // ParseHtpasswd reads a password file in the htpasswd format, one
-// "name:hash" per line, blank lines and # comments skipped. Only bcrypt
-// hashes are accepted, as `htpasswd -B` and `task-ui hash` make them:
+// "name:hash" per line, blank lines and # comments skipped. It accepts only
+// bcrypt hashes, as `htpasswd -B` and `task-ui hash` make them:
 // the other htpasswd formats are too weak to keep.
 func ParseHtpasswd(r io.Reader) ([]Credential, error) {
 	var result []Credential
@@ -54,9 +54,9 @@ func LoadHtpasswd(path string) ([]Credential, error) {
 	return creds, nil
 }
 
-// SetHtpasswd writes a user's hash into a password file: the line is
-// replaced when the user is there, added when not, and the file is made
-// when it is missing. Other lines stay as they are.
+// SetHtpasswd writes a user's hash into a password file: it replaces
+// the user's line when there, adds one when not, and creates a missing
+// file. Other lines stay as they are.
 func SetHtpasswd(path, name, hash string) error {
 	name = strings.TrimSpace(name)
 	if name == "" || strings.ContainsAny(name, ":\n") {

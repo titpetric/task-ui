@@ -1,6 +1,6 @@
 // Package view renders the pages of task-ui: the templates, the page
 // model they bind to and the embedded assets. It knows nothing of HTTP
-// routing; the frontend package fills a Page and asks for a name.
+// routing; the frontend package fills a Page and renders it by name.
 package view
 
 import (
@@ -65,8 +65,8 @@ func (v *View) Names() []string {
 	return names
 }
 
-// Render writes a page. The page is rendered in full before anything is
-// written, so a template error never leaves half a page behind.
+// Render writes a page. It builds the page in full before it writes
+// anything, so a template error never leaves half a page behind.
 func (v *View) Render(w io.Writer, name string, page *Page) error {
 	tpl, ok := v.pages[name]
 	if !ok {

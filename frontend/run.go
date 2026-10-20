@@ -21,7 +21,7 @@ func (h *Handlers) runs(w http.ResponseWriter, r *http.Request) {
 	h.render(w, http.StatusOK, "runs", p)
 }
 
-// run shows one run: its terminal while it is live, its details and its
+// run shows one run: its terminal while live, its details and its
 // artifacts.
 func (h *Handlers) run(w http.ResponseWriter, r *http.Request) {
 	user := access.UserFrom(r.Context())

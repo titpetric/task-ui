@@ -11,7 +11,7 @@ const backupAlphabet = "abcdefghjkmnpqrstuvwxyz23456789"
 
 // BackupPasswords returns count new backup passwords, each three groups
 // of four characters, about 59 bits, and their hashes in the same order.
-// The passwords are shown once; only the hashes are kept.
+// The caller shows the passwords once and keeps only the hashes.
 func BackupPasswords(count int) ([]string, []string, error) {
 	if count < 1 || count > 100 {
 		return nil, nil, errors.New("backup passwords come 1 to 100 at a time")
@@ -35,9 +35,9 @@ func BackupPasswords(count int) ([]string, []string, error) {
 	return passwords, hashes, nil
 }
 
-// randomBytes reads n bytes from the system's random source. Bytes at or
-// above the largest multiple of the alphabet are drawn again, so every
-// character is equally likely.
+// randomBytes reads n bytes from the system's random source. It draws
+// again any byte at or above the end of the last whole run of the
+// alphabet, so every character is equally likely.
 func randomBytes(n int) []byte {
 	limit := byte(256 - 256%len(backupAlphabet))
 	out := make([]byte, 0, n)

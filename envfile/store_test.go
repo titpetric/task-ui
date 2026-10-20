@@ -79,7 +79,7 @@ func TestStore_Save(t *testing.T) {
 	assert.NoError(t, err)
 	assert.True(t, strings.HasPrefix(string(data), "PORT=8080\nNAME=app\n\n"+envfile.Marker+"\nPORT=9090\nTOKEN=s3cret\n"), string(data))
 
-	// Reading it back shows the managed content, not the secrets.
+	// Reading it back shows the managed content alone.
 	file, err := s.File(ctx, f, ".env")
 	assert.NoError(t, err)
 	assert.True(t, file.Managed)

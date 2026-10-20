@@ -10,7 +10,7 @@ import (
 
 func TestRing(t *testing.T) {
 	t.Parallel()
-	// The replay a late window gets is bounded: a run that printed more
+	// The tail bounds the replay a late window gets: a run that printed more
 	// than the tail keeps replays only the end of it.
 	f := newFixture(t)
 	session, err := f.manager.Start(context.Background(), f.shellJob("tail", "yes abcdefghij | head -c 600000; echo END", false))

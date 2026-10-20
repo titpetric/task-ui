@@ -26,7 +26,7 @@ var Types = map[string]string{
 	"rsa":     "id_rsa",
 }
 
-// Store manages the SSH key pairs in one folder, usually $HOME/.ssh. A key
+// Store manages the SSH key pairs in one folder, such as $HOME/.ssh. A key
 // pair is the private key file and its .pub sibling. Replacing a key moves
 // the previous pair aside with a timestamped .bak suffix, so a rotation can
 // be undone by hand.
@@ -39,7 +39,7 @@ var keyName = regexp.MustCompile(`^id_[a-z0-9]+(_[a-z0-9][a-z0-9-]*)?(\.bak-[0-9
 // keyLabel is what may follow the type in a key's name: id_ed25519_alice.
 var keyLabel = regexp.MustCompile(`^[a-z0-9][a-z0-9-]{0,31}$`)
 
-// fileName is the file a key of a kind and label is kept in: the kind's
+// fileName is the file that holds a key of a kind and label: the kind's
 // name, then the label after an underscore when there is one.
 func fileName(kind, label string) (string, error) {
 	name, ok := Types[kind]
@@ -55,8 +55,8 @@ func fileName(kind, label string) (string, error) {
 	return name + "_" + label, nil
 }
 
-// ErrPassphrase is returned for an uploaded key protected by a passphrase:
-// the jobs run unattended and could not unlock it.
+// ErrPassphrase reports an uploaded key protected by a passphrase: the
+// jobs run unattended and could not open it.
 var ErrPassphrase = errors.New("the key is protected by a passphrase, upload an unencrypted key")
 
 // List returns the key pairs and their backups.
@@ -157,7 +157,7 @@ func (k *Store) Generate(kind, comment string) (Key, error) {
 
 // GenerateAs creates a new key pair of the given type under a label, as
 // id_<type>_<label>, beside the type's own key: a key made for someone.
-// An existing pair of the same name is moved aside. An empty label is
+// It moves an existing pair of the same name aside. An empty label is
 // Generate.
 func (k *Store) GenerateAs(kind, label, comment string) (Key, error) {
 	name, err := fileName(kind, label)

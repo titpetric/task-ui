@@ -10,7 +10,7 @@ type Job struct {
 
 	Folder string `json:"folder"`
 	// ID is the job's name within the folder: the target name when the
-	// folder follows one convention, kind:name when it follows several,
+	// folder follows one convention, kind:name when it follows more than one,
 	// so `make build` and `npm run build` stay apart.
 	ID string `json:"id"`
 	// Kind and Source name the convention and file the job came from.

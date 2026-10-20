@@ -11,7 +11,7 @@ import (
 //go:embed all:assets
 var assets embed.FS
 
-// AssetPrefix is where the assets are served.
+// AssetPrefix is the path the server serves the assets under.
 const AssetPrefix = "/static/"
 
 // AssetsFS returns the embedded assets: the stylesheet, the script, the

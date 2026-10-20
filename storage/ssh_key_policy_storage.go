@@ -9,9 +9,9 @@ import (
 )
 
 // SSHKeyPolicyStorage keeps whose runs get an instance SSH key: roles,
-// and users by name, the way allow lists name them. A key is kept by its
-// file name, which a rotation keeps, so it keeps its policies. A key can
-// be in several roles' and users' sets.
+// and users by name, the way allow lists name them. The storage keys a key
+// by its file name, which a rotation keeps, so it keeps its policies. A
+// key can be in many roles' and users' sets.
 type SSHKeyPolicyStorage struct {
 	db DB
 }
@@ -21,7 +21,7 @@ func NewSSHKeyPolicyStorage(db DB) *SSHKeyPolicyStorage {
 	return &SSHKeyPolicyStorage{db: db}
 }
 
-// Set replaces the roles a key is given to. No roles gives it to none.
+// Set replaces the roles that get a key. No roles leaves it with none.
 func (s *SSHKeyPolicyStorage) Set(ctx context.Context, keyName string, roles []string) error {
 	if keyName == "" {
 		return errors.New("a policy needs a key")
@@ -49,7 +49,7 @@ func (s *SSHKeyPolicyStorage) Set(ctx context.Context, keyName string, roles []s
 	return nil
 }
 
-// Roles returns the roles a key is given to, most permissive first.
+// Roles returns the roles that get a key, most permissive first.
 func (s *SSHKeyPolicyStorage) Roles(ctx context.Context, keyName string) ([]string, error) {
 	all, err := s.All(ctx)
 	if err != nil {
@@ -74,13 +74,13 @@ func (s *SSHKeyPolicyStorage) All(ctx context.Context) (map[string][]string, err
 	return result, nil
 }
 
-// Keys returns the names of the keys a role is given, by name.
+// Keys returns the names of the keys a role gets, by name.
 func (s *SSHKeyPolicyStorage) Keys(ctx context.Context, role string) ([]string, error) {
 	return client(s.db).Select[string](ctx, "SELECT key_name FROM ssh_key_policy WHERE role = ? ORDER BY key_name", role)
 }
 
-// SetUsers replaces the users a key is given to, by name. No users gives
-// it to none by name; its roles stay.
+// SetUsers replaces the users that get a key by name. No users leaves it
+// with none by name; its roles stay.
 func (s *SSHKeyPolicyStorage) SetUsers(ctx context.Context, keyName string, users []string) error {
 	if keyName == "" {
 		return errors.New("a policy needs a key")

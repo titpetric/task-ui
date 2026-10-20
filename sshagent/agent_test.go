@@ -14,7 +14,7 @@ import (
 )
 
 // A directory as a checkout's .ssh/ holds it: a key pair, known_hosts and
-// a file that is no key. Only the private key is served.
+// a file that is no key. The agent serves only the private key.
 func TestLoad(t *testing.T) {
 	t.Parallel()
 	dir := t.TempDir()

@@ -34,7 +34,7 @@ func TestUserAuthPasswordStorage(t *testing.T) {
 	assert.Equal(t, model.AuthPassword, list[0].Kind)
 	assert.Equal(t, model.AuthBackup, list[1].Kind)
 
-	// A backup is used once; the password is never "used".
+	// A backup signs in once; the password never counts as "used".
 	ok, err := passwords.Use(ctx, list[1].ID)
 	assert.NoError(t, err)
 	assert.True(t, ok)

@@ -56,10 +56,10 @@ func TestRules_Allows(t *testing.T) {
 	assert.True(t, rules.Allows(at(time.Wednesday, 16, 59)))
 	assert.False(t, rules.Allows(at(time.Wednesday, 17, 0)))
 	assert.False(t, rules.Allows(at(time.Monday, 8, 59)))
-	// Friday afternoon is closed by the later, narrower rule.
+	// The later, narrower rule closes Friday afternoon.
 	assert.True(t, rules.Allows(at(time.Friday, 12, 59)))
 	assert.False(t, rules.Allows(at(time.Friday, 14, 0)))
-	// Days no rule names are closed once any rule exists.
+	// Once any rule exists, days no rule names stay closed.
 	assert.False(t, rules.Allows(at(time.Saturday, 10, 0)))
 	assert.False(t, rules.Allows(at(time.Sunday, 10, 0)))
 

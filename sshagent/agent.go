@@ -46,8 +46,8 @@ func Load(keys, tmp string) (*Agent, error) {
 
 // LoadFiles reads the private keys in the files given and serves them on
 // a socket in a new private directory under tmp ("" is the system's).
-// Files that are not an unencrypted private key, public halves,
-// known_hosts and config among them, are skipped, and so is a file given
+// It skips files that are not an unencrypted private key, public halves,
+// known_hosts and the ssh configuration file among them, and a file given
 // twice. No key returns nil and no error.
 func LoadFiles(tmp string, paths ...string) (*Agent, error) {
 	ring := agent.NewKeyring()

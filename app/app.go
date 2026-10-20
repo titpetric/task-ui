@@ -52,8 +52,8 @@ type App struct {
 	addr    atomic.Pointer[string]
 }
 
-// New opens the database, reads the users, and builds everything. Runs
-// left running by a previous process are marked killed.
+// New opens the database, reads the users, and builds everything. It
+// marks runs a previous process left running as killed.
 func New(ctx context.Context, cfg *Config, version string) (*App, error) {
 	db, err := openStorage(ctx, cfg)
 	if err != nil {
@@ -118,7 +118,7 @@ func (a *App) seed(ctx context.Context) error {
 	a.UsersFile = NewUsersFile(a.Config.Htpasswd, a.Config.Admins, a.Config.Viewers)
 	created, removed, err := a.UsersFile.Sync(ctx, a.Users, a.Passwords)
 	if errors.Is(err, os.ErrNotExist) {
-		// Not made yet: start anyway, the watcher reads it once it is,
+		// Not made yet: start anyway, the watcher reads it once it exists,
 		// so `task-ui passwd` works against a running instance.
 		slog.Warn("no password file yet: nobody new can sign in until it is made", "file", a.Config.Htpasswd, "hint", "task-ui passwd <user>")
 		return nil
@@ -225,7 +225,7 @@ func (a *App) Handler() http.Handler {
 	return a.handler
 }
 
-// Addr returns the address being served, once Serve has started.
+// Addr returns the address Serve listens on, once Serve has started.
 func (a *App) Addr() string {
 	if addr := a.addr.Load(); addr != nil {
 		return *addr
@@ -244,7 +244,7 @@ func (a *App) Run(ctx context.Context) error {
 }
 
 // Serve serves on a listener, with the scheduler and the password file
-// watch running, until the context ends. Running jobs are killed on the
+// watch running, until the context ends. It kills running jobs on the
 // way out.
 func (a *App) Serve(ctx context.Context, ln net.Listener) error {
 	addr := ln.Addr().String()

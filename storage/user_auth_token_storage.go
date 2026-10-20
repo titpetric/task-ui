@@ -18,7 +18,7 @@ func NewUserAuthTokenStorage(db DB) *UserAuthTokenStorage {
 	return &UserAuthTokenStorage{db: db}
 }
 
-// Set gives a user a token under a name, in place of the one it had.
+// Set stores a token for a user under a name, in place of the one it had.
 func (s *UserAuthTokenStorage) Set(ctx context.Context, userID, name, hash string) error {
 	if userID == "" || name == "" || hash == "" {
 		return errors.New("a token needs a user, a name and a hash")
@@ -37,7 +37,7 @@ func (s *UserAuthTokenStorage) Find(ctx context.Context, hash string) (*model.Us
 	return token, notFound(err)
 }
 
-// Touch records that a token was used.
+// Touch records a token's use.
 func (s *UserAuthTokenStorage) Touch(ctx context.Context, id string) error {
 	now := stamp()
 	return client(s.db).Exec(ctx, "UPDATE user_auth_token SET used_at = ?, updated_at = ? WHERE id = ?", now, now, id)
