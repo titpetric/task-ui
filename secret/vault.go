@@ -39,19 +39,30 @@ func Encrypted(text string) bool {
 	return strings.HasPrefix(text, armor.Header)
 }
 
-// Recipients returns the current keys that can encrypt, by name, leaving
-// out the backups and the names excluded. ECDSA keys cannot encrypt.
+// Recipients returns the instance key, by name, the one key that encrypts
+// the secrets, or none; it skips the names excluded.
 func (v *Vault) Recipients(exclude ...string) []string {
-	var names []string
-	for _, key := range v.Keys.List() {
-		if key.Backup || contains(exclude, key.Name) {
-			continue
-		}
-		if _, err := recipient(key); err == nil {
-			names = append(names, key.Name)
+	if key, _, ok := v.instanceKey(exclude); ok {
+		return []string{key.Name}
+	}
+	return nil
+}
+
+// instanceKey picks the key that encrypts the secrets: a type's own
+// key, id_ed25519 before id_rsa, never a backup and never a key made for
+// someone or for a use, such as id_rsa_deploy. ECDSA keys cannot encrypt.
+func (v *Vault) instanceKey(exclude []string) (sshkey.Key, age.Recipient, bool) {
+	for _, kind := range []string{"ed25519", "rsa"} {
+		for _, key := range v.Keys.List() {
+			if key.Backup || key.Label != "" || sshkey.KindOf(key.Name) != kind || contains(exclude, key.Name) {
+				continue
+			}
+			if r, err := recipient(key); err == nil {
+				return key, r, true
+			}
 		}
 	}
-	return names
+	return sshkey.Key{}, nil, false
 }
 
 // recipient turns a key into an age recipient.
@@ -85,24 +96,16 @@ func (v *Vault) identities() []age.Identity {
 	return result
 }
 
-// Encrypt writes a value for the current keys, the excluded names left
-// out, as armored text.
+// Encrypt writes a value for the instance key, the excluded names passed
+// over, as armored text.
 func (v *Vault) Encrypt(plain string, exclude ...string) (string, error) {
-	var recipients []age.Recipient
-	for _, key := range v.Keys.List() {
-		if key.Backup || contains(exclude, key.Name) {
-			continue
-		}
-		if r, err := recipient(key); err == nil {
-			recipients = append(recipients, r)
-		}
-	}
-	if len(recipients) == 0 {
+	_, r, ok := v.instanceKey(exclude)
+	if !ok {
 		return "", ErrNoKey
 	}
 	var buf bytes.Buffer
 	arm := armor.NewWriter(&buf)
-	w, err := age.Encrypt(arm, recipients...)
+	w, err := age.Encrypt(arm, r)
 	if err != nil {
 		return "", err
 	}
