@@ -98,28 +98,33 @@ func (p *Prober) start(host string) bool {
 
 // try returns the first user that signs in to the host, or "".
 func (p *Prober) try(ctx context.Context, host string) string {
-	keys := p.keys()
 	for _, user := range p.Users {
 		attempt, cancel := context.WithTimeout(ctx, p.Timeout)
-		args := []string{"-n", "-o", "BatchMode=yes", "-o", "ConnectTimeout=" + seconds(p.Timeout), "-o", "StrictHostKeyChecking=accept-new"}
-		if p.KnownHosts != "" {
-			args = append(args, "-o", "UserKnownHostsFile="+p.KnownHosts)
-		}
-		for _, key := range keys {
-			args = append(args, "-i", key)
-		}
-		args = append(args, user+"@"+host, "true")
-		command := p.Command
-		if command == "" {
-			command = "ssh"
-		}
-		err := exec.CommandContext(attempt, command, args...).Run()
+		err := p.ssh(attempt, user+"@"+host, "true").Run()
 		cancel()
 		if err == nil {
 			return user
 		}
 	}
 	return ""
+}
+
+// ssh is the ssh command for a login: batch mode, the instance keys, the
+// known hosts file, and the remote command.
+func (p *Prober) ssh(ctx context.Context, login, remote string) *exec.Cmd {
+	args := []string{"-n", "-o", "BatchMode=yes", "-o", "ConnectTimeout=" + seconds(p.Timeout), "-o", "StrictHostKeyChecking=accept-new"}
+	if p.KnownHosts != "" {
+		args = append(args, "-o", "UserKnownHostsFile="+p.KnownHosts)
+	}
+	for _, key := range p.keys() {
+		args = append(args, "-i", key)
+	}
+	args = append(args, login, remote)
+	command := p.Command
+	if command == "" {
+		command = "ssh"
+	}
+	return exec.CommandContext(ctx, command, args...)
 }
 
 // keys lists the private keys in the key directories.

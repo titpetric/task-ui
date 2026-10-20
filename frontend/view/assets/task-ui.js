@@ -1041,6 +1041,54 @@
     });
   }
 
+  // The inventory runs a command on the hosts checked, all at once, and
+  // shows each host's output and exit code. A quick button fills in a
+  // command.
+  var inventoryRun = document.querySelector("form[data-inventory-run]");
+  if (inventoryRun) {
+    var results = document.querySelector("[data-inventory-results]");
+    inventoryRun.addEventListener("click", function (event) {
+      var quick = event.target.closest("[data-command]");
+      if (!quick) return;
+      inventoryRun.elements.command.value = quick.dataset.command;
+      inventoryRun.elements.command.focus();
+    });
+    inventoryRun.elements.command.addEventListener("keydown", function (event) {
+      if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
+        event.preventDefault();
+        inventoryRun.requestSubmit();
+      }
+    });
+    inventoryRun.addEventListener("submit", function (event) {
+      event.preventDefault();
+      var hosts = Array.prototype.filter.call(inventoryRun.querySelectorAll("input[name=hosts]"), function (box) { return box.checked; })
+        .map(function (box) { return box.value; });
+      if (!hosts.length) return;
+      var button = inventoryRun.querySelector("button[type=submit]");
+      button.disabled = true;
+      results.innerHTML = '<p class="faint">Running on ' + hosts.length + " host" + (hosts.length === 1 ? "" : "s") + "…</p>";
+      api("POST", "/api/inventory/run", { command: inventoryRun.elements.command.value, hosts: hosts }).then(function (res) {
+        button.disabled = false;
+        if (res.status >= 300) {
+          results.innerHTML = '<p class="form-error">' + escapeHTML(res.data.error || ("HTTP " + res.status)) + "</p>";
+          return;
+        }
+        results.innerHTML = res.data.results.map(function (r) {
+          var ok = !r.error && r.exit_code === 0;
+          var badge = r.error ? "bad" : (ok ? "ok" : "bad");
+          var state = r.error ? "error" : "exit " + r.exit_code;
+          var took = r.duration ? " · " + (r.duration / 1e9).toFixed(1) + "s" : "";
+          return '<article class="run-result">' +
+            '<header><code>' + escapeHTML(r.login || r.host) + '</code> <span class="badge ' + badge + '">' + state + "</span>" +
+            '<span class="faint">' + took + "</span></header>" +
+            (r.error ? '<p class="run-error">' + escapeHTML(r.error) + "</p>" : "") +
+            (r.output ? '<pre class="note-code">' + escapeHTML(r.output) + "</pre>" : "") +
+            "</article>";
+        }).join("");
+      });
+    });
+  }
+
   // onRuns calls fn with each run of the runs topic, as it starts and as
   // it ends, over one event stream for the page.
   var runsHandlers = [];

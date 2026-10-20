@@ -3,6 +3,8 @@ package api
 import (
 	"errors"
 	"net/http"
+	"strings"
+	"time"
 
 	"github.com/titpetric/task-ui/beszel"
 	"github.com/titpetric/task-ui/integration"
@@ -80,7 +82,8 @@ func (h *Handlers) deleteIntegration(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-// listHosts returns the host inventory from the Beszel integration.
+// listHosts returns the inventory: the hosts of the Beszel integration,
+// largest first.
 func (h *Handlers) listHosts(w http.ResponseWriter, r *http.Request) {
 	if h.opts.Hosts == nil {
 		fail(w, http.StatusNotFound, beszel.ErrOff.Error())
@@ -96,4 +99,62 @@ func (h *Handlers) listHosts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"hosts": beszel.ByCapacity(systems)})
+}
+
+// runTimeout bounds a command on one host.
+const runTimeout = 2 * time.Minute
+
+// runOnHosts runs a command on hosts of the inventory, all at once, over
+// the ssh login task-ui has to each, and returns each host's output and
+// exit code. Admins only: the logins reach the hosts as debian or root.
+func (h *Handlers) runOnHosts(w http.ResponseWriter, r *http.Request) {
+	if !requireAdmin(w, r) {
+		return
+	}
+	if h.opts.Hosts == nil || h.opts.SSH == nil {
+		fail(w, http.StatusNotFound, beszel.ErrOff.Error())
+		return
+	}
+	var req InventoryRequest
+	if err := readJSON(r, &req); err != nil {
+		fail(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	if strings.TrimSpace(req.Command) == "" {
+		fail(w, http.StatusBadRequest, "a command is needed")
+		return
+	}
+	systems, err := h.opts.Hosts.Systems(r.Context())
+	if err != nil {
+		fail(w, http.StatusBadGateway, err.Error())
+		return
+	}
+	known := map[string]bool{}
+	var all []string
+	for _, system := range beszel.ByCapacity(systems) {
+		known[system.Host] = true
+		all = append(all, system.Host)
+	}
+	hosts := req.Hosts
+	if len(hosts) == 0 {
+		hosts = all
+	}
+	for _, host := range hosts {
+		if !known[host] {
+			fail(w, http.StatusBadRequest, "no host "+host+" in the inventory")
+			return
+		}
+	}
+	logins := h.opts.SSH.Logins(r.Context(), hosts, 10*time.Second)
+	if len(req.Hosts) == 0 {
+		var reachable []string
+		for _, host := range hosts {
+			if logins[host] != "" {
+				reachable = append(reachable, host)
+			}
+		}
+		hosts = reachable
+	}
+	results := h.opts.SSH.Run(r.Context(), hosts, logins, req.Command, runTimeout)
+	writeJSON(w, http.StatusOK, map[string]any{"results": results})
 }

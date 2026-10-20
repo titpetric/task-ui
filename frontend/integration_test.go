@@ -30,12 +30,13 @@ func TestIntegrations(t *testing.T) {
 	assert.NotContains(t, f.page(t, asAdmin, "/settings/secrets"), "integration:claude")
 }
 
-// Hosts shows the Beszel inventory, or how to set it up.
-func TestHosts(t *testing.T) {
+// Inventory shows the Beszel hosts, or how to set them up, and the run
+// panel for an admin.
+func TestInventory(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
 	f.withKey(t)
-	assert.Contains(t, f.page(t, asAdmin, "/hosts"), "The Beszel integration is not set up")
+	assert.Contains(t, f.page(t, asAdmin, "/inventory"), "The Beszel integration is not set up")
 
 	hub := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/api/collections/system_stats/records" {
@@ -47,7 +48,12 @@ func TestHosts(t *testing.T) {
 	t.Cleanup(hub.Close)
 	assert.NoError(t, f.opts.Integrations.Save(context.Background(), integration.Beszel, map[string]string{"url": hub.URL, "token": "t1"}))
 
-	body := f.page(t, asViewer, "/hosts")
+	admin := f.page(t, asAdmin, "/inventory")
+	assert.Contains(t, admin, `data-inventory-run`)
+	assert.Contains(t, admin, `name="hosts" value="10.10.10.11" checked> <code>debian@10.10.10.11</code>`)
+	assert.Contains(t, admin, `data-command="uptime"`)
+	body := f.page(t, asViewer, "/inventory")
+	assert.NotContains(t, body, `data-inventory-run`)
 	assert.Contains(t, body, "dev1")
 	assert.Contains(t, body, `class="meter high"`)
 	assert.Contains(t, body, `class="meter warm"`)
@@ -58,5 +64,6 @@ func TestHosts(t *testing.T) {
 	assert.Contains(t, body, "12.4 / 15.6 GB")
 	assert.Contains(t, body, "60 / 200 GB")
 	assert.NotContains(t, body, "EPYC")
-	assert.Contains(t, body, `href="/hosts" class="active"`)
+	assert.Contains(t, body, `href="/inventory" class="active"`)
+	assert.Equal(t, http.StatusNotFound, f.get(t, asViewer, "/hosts").Status)
 }

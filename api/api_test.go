@@ -31,6 +31,7 @@ import (
 	"github.com/titpetric/task-ui/runner"
 	"github.com/titpetric/task-ui/secret"
 	"github.com/titpetric/task-ui/sshkey"
+	"github.com/titpetric/task-ui/sshprobe"
 	"github.com/titpetric/task-ui/storage"
 	"github.com/titpetric/task-ui/workflow"
 )
@@ -153,6 +154,7 @@ func newFixture(t *testing.T) *fixture {
 		values, err := f.opts.Integrations.Values(ctx, integration.Beszel)
 		return values["url"], values["token"], err
 	}}
+	f.opts.SSH = &sshprobe.Prober{Users: []string{"debian"}, Timeout: 2 * time.Second, TTL: time.Hour, Command: fakeSSH(t)}
 	routes := api.New(f.opts).Routes()
 	f.server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		user := f.users[r.Header.Get("X-User")]
@@ -302,4 +304,14 @@ func TestRoutes_BadJSON(t *testing.T) {
 	empty := f.call(t, asAdmin, http.MethodPost, "/runs", nil)
 	assert.Equal(t, http.StatusBadRequest, empty.Status)
 	assert.Contains(t, empty.str("error"), "JSON body")
+}
+
+// fakeSSH is an ssh that signs in as debian to dev1, running the remote
+// command locally, and reaches nothing else.
+func fakeSSH(t *testing.T) string {
+	t.Helper()
+	script := filepath.Join(t.TempDir(), "ssh")
+	body := "#!/bin/sh\nlogin=$(eval echo \\${$(($# - 1))})\nremote=$(eval echo \\${$#})\n[ \"$login\" = debian@dev1 ] && exec sh -c \"$remote\"\nexit 255\n"
+	assert.NoError(t, os.WriteFile(script, []byte(body), 0o755))
+	return script
 }

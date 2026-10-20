@@ -29,13 +29,14 @@ func (h *Handlers) integrations(w http.ResponseWriter, r *http.Request) {
 	h.render(w, http.StatusOK, "integrations", p)
 }
 
-// hosts shows the host inventory from the Beszel integration.
-func (h *Handlers) hosts(w http.ResponseWriter, r *http.Request) {
-	p := h.page(r, "Hosts")
-	p.Crumbs = view.Crumbs("Hosts")
+// inventory shows the hosts of the Beszel integration, who task-ui signs
+// in to each as, and for an admin the form that runs a command on them.
+func (h *Handlers) inventory(w http.ResponseWriter, r *http.Request) {
+	p := h.page(r, "Inventory")
+	p.Crumbs = view.Crumbs("Inventory")
 	if h.opts.Hosts == nil {
 		p.HostsOff = true
-		h.render(w, http.StatusOK, "hosts", p)
+		h.render(w, http.StatusOK, "inventory", p)
 		return
 	}
 	systems, err := h.opts.Hosts.Systems(r.Context())
@@ -53,5 +54,5 @@ func (h *Handlers) hosts(w http.ResponseWriter, r *http.Request) {
 		}
 		p.Logins = h.opts.SSH.Logins(r.Context(), hosts, 4*time.Second)
 	}
-	h.render(w, http.StatusOK, "hosts", p)
+	h.render(w, http.StatusOK, "inventory", p)
 }

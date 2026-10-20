@@ -80,7 +80,8 @@ func (h *Handlers) Routes() http.Handler {
 	r.Get("/integrations", h.listIntegrations)
 	r.Put("/integrations/{id}", h.saveIntegration)
 	r.Delete("/integrations/{id}", h.deleteIntegration)
-	r.Get("/hosts", h.listHosts)
+	r.Get("/inventory", h.listHosts)
+	r.Post("/inventory/run", h.runOnHosts)
 
 	r.Get("/notes", h.listNotes)
 	r.Post("/notes", h.postNote)

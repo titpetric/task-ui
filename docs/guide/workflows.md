@@ -45,4 +45,4 @@ keep the steps they had.
 
 ---
 
-Previous: [Hosts](hosts.md) · Next: [Runs](runs.md) · [Contents](../README.md)
+Previous: [Inventory](inventory.md) · Next: [Runs](runs.md) · [Contents](../README.md)
