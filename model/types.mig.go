@@ -342,6 +342,117 @@ var MigrationsFields = []string{"project", "filename", "statement_index", "statu
 // MigrationsPrimaryFields are the primary key fields in the DB table.
 var MigrationsPrimaryFields = []string{"project", "filename"}
 
+// Note generated for db table `note`.
+type Note struct {
+	// ID
+	ID string `db:"id" json:"id"`
+
+	// Channel
+	Channel string `db:"channel" json:"channel"`
+
+	// Parent ID
+	ParentID string `db:"parent_id" json:"parent_id"`
+
+	// User ID
+	UserID string `db:"user_id" json:"user_id"`
+
+	// User Name
+	UserName string `db:"user_name" json:"user_name"`
+
+	// Body
+	Body string `db:"body" json:"body"`
+
+	// Mentions
+	Mentions string `db:"mentions" json:"mentions"`
+
+	// State
+	State string `db:"state" json:"state"`
+
+	// Run ID
+	RunID string `db:"run_id" json:"run_id"`
+
+	// Created At
+	CreatedAt *time.Time `db:"created_at" json:"created_at"`
+
+	// Updated At
+	UpdatedAt *time.Time `db:"updated_at" json:"updated_at"`
+}
+
+// GetID will return the value of ID.
+func (n *Note) GetID() string { return n.ID }
+
+// SetID sets ID to the provided value.
+func (n *Note) SetID(val string) { n.ID = val }
+
+// GetChannel will return the value of Channel.
+func (n *Note) GetChannel() string { return n.Channel }
+
+// SetChannel sets Channel to the provided value.
+func (n *Note) SetChannel(val string) { n.Channel = val }
+
+// GetParentID will return the value of ParentID.
+func (n *Note) GetParentID() string { return n.ParentID }
+
+// SetParentID sets ParentID to the provided value.
+func (n *Note) SetParentID(val string) { n.ParentID = val }
+
+// GetUserID will return the value of UserID.
+func (n *Note) GetUserID() string { return n.UserID }
+
+// SetUserID sets UserID to the provided value.
+func (n *Note) SetUserID(val string) { n.UserID = val }
+
+// GetUserName will return the value of UserName.
+func (n *Note) GetUserName() string { return n.UserName }
+
+// SetUserName sets UserName to the provided value.
+func (n *Note) SetUserName(val string) { n.UserName = val }
+
+// GetBody will return the value of Body.
+func (n *Note) GetBody() string { return n.Body }
+
+// SetBody sets Body to the provided value.
+func (n *Note) SetBody(val string) { n.Body = val }
+
+// GetMentions will return the value of Mentions.
+func (n *Note) GetMentions() string { return n.Mentions }
+
+// SetMentions sets Mentions to the provided value.
+func (n *Note) SetMentions(val string) { n.Mentions = val }
+
+// GetState will return the value of State.
+func (n *Note) GetState() string { return n.State }
+
+// SetState sets State to the provided value.
+func (n *Note) SetState(val string) { n.State = val }
+
+// GetRunID will return the value of RunID.
+func (n *Note) GetRunID() string { return n.RunID }
+
+// SetRunID sets RunID to the provided value.
+func (n *Note) SetRunID(val string) { n.RunID = val }
+
+// GetCreatedAt will return the value of CreatedAt.
+func (n *Note) GetCreatedAt() *time.Time { return n.CreatedAt }
+
+// SetCreatedAt sets CreatedAt to the provided value.
+func (n *Note) SetCreatedAt(stamp time.Time) { n.CreatedAt = &stamp }
+
+// GetUpdatedAt will return the value of UpdatedAt.
+func (n *Note) GetUpdatedAt() *time.Time { return n.UpdatedAt }
+
+// SetUpdatedAt sets UpdatedAt to the provided value.
+func (n *Note) SetUpdatedAt(stamp time.Time) { n.UpdatedAt = &stamp }
+
+// NoteTable is the name of the table in the DB.
+const NoteTable = "`note`"
+
+// NoteFields is a list of all columns in the DB table.
+var NoteFields = []string{"id", "channel", "parent_id", "user_id", "user_name", "body", "mentions", "state", "run_id", "created_at", "updated_at"}
+
+// NotePrimaryFields are the primary key fields in the DB table.
+var NotePrimaryFields = []string{"id"}
+
 // Project generated for db table `project`.
 type Project struct {
 	// ID
@@ -1764,6 +1875,67 @@ func (m *Migrations) Update(opts ...QueryOption) string {
 // Delete starts building a DELETE query.
 func (m *Migrations) Delete(opts ...QueryOption) string {
 	cfg := (&QueryConfig{Table: MigrationsTable}).Apply(opts...)
+	query := fmt.Sprintf("DELETE FROM %s", cfg.Table)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	return query
+}
+
+// Insert starts building an INSERT INTO query.
+func (n *Note) Insert(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: NoteTable, Statement: "INSERT INTO"}).Apply(opts...)
+	cols := NoteFields
+	if len(cfg.Columns) > 0 {
+		cols = cfg.Columns
+	}
+	return fmt.Sprintf("%s %s (%s) VALUES (:%s)", cfg.Statement, cfg.Table, strings.Join(cols, ", "), strings.Join(cols, ", :"))
+}
+
+// Select starts building a SELECT query.
+func (n *Note) Select(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: NoteTable}).Apply(opts...)
+	cols := "*"
+	if len(cfg.Columns) > 0 {
+		cols = strings.Join(cfg.Columns, ", ")
+	}
+	query := fmt.Sprintf("SELECT %s FROM %s", cols, cfg.Table)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	if cfg.OrderBy != "" {
+		query += " ORDER BY " + cfg.OrderBy
+	}
+	if cfg.LimitOffset > 0 {
+		query += fmt.Sprintf(" LIMIT %d, %d", cfg.LimitStart, cfg.LimitOffset)
+	}
+	return query
+}
+
+// Update starts building a UPDATE query.
+func (n *Note) Update(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: NoteTable}).Apply(opts...)
+	cols := NoteFields
+	if len(cfg.Columns) > 0 {
+		cols = cfg.Columns
+	}
+	setClause := ""
+	for i, col := range cols {
+		if i > 0 {
+			setClause += ", "
+		}
+		setClause += col + "=:" + col
+	}
+	query := fmt.Sprintf("UPDATE %s SET %s", cfg.Table, setClause)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	return query
+}
+
+// Delete starts building a DELETE query.
+func (n *Note) Delete(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: NoteTable}).Apply(opts...)
 	query := fmt.Sprintf("DELETE FROM %s", cfg.Table)
 	if cfg.Where != "" {
 		query += " WHERE " + cfg.Where

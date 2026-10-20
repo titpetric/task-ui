@@ -9,6 +9,7 @@ import (
 	"github.com/titpetric/task-ui/envfile"
 	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/git"
+	"github.com/titpetric/task-ui/note"
 	"github.com/titpetric/task-ui/recording"
 	"github.com/titpetric/task-ui/runner"
 	"github.com/titpetric/task-ui/secret"
@@ -55,5 +56,6 @@ type Options struct {
 	ArtifactStore *artifactstore.Store
 	// Disk measures the space the artifacts and the checkouts take. Nil
 	// leaves the space bars out.
-	Disk *diskusage.Meter
+	Disk  *diskusage.Meter // Board is the notes board and the chat; nil turns them off.
+	Board *note.Board
 }

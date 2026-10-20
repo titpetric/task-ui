@@ -50,6 +50,8 @@ The environment sets the whole configuration:
 | `TASK_UI_KEEP`        | `15m`                | How long a finished run stays attachable with its frame in memory |
 | `TASK_UI_GRACE`       | `10s`                | How long a stopped process gets before task-ui kills it           |
 | `TASK_UI_ARTIFACT_HISTORY` | `50`            | Commits the artifact history keeps before it squashes; 0 keeps all |
+| `TASK_UI_AGENT`       |                      | The user a note names to send it an instruction, such as `claude` |
+| `TASK_UI_AGENT_JOB`   |                      | The job an instruction runs, as `folder/job`; empty leaves it for MCP |
 | `TASK_UI_AUTOLOGIN`   |                      | Sign every request in as this user, for development only          |
 | `TASK_UI_NOW`         |                      | Pin the clock the hours read (RFC 3339), for the screenshots only |
 

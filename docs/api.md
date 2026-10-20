@@ -11,6 +11,7 @@ route or a tool only for a need these cannot serve, and states the reason.
 | Added | For |
 |-------|-----|
 | `DELETE /api/artifacts` | **Empty** on the Artifacts page: deleting the records one by one leaves the files and their history |
+| `/api/notes`, `list_notes`, `note_comment` | Notes and Chat, and instructions to the agent, which reads and reports on them over MCP |
 
 | Method | Path | Does |
 |--------|------|------|
@@ -26,6 +27,9 @@ route or a tool only for a need these cannot serve, and states the reason.
 | `GET` `POST` `PUT` `DELETE` | `/api/workflows`, `/api/workflows/{id}` | `{name, steps: [{folder, job}]}`; owner or admin changes |
 | `GET` `POST` | `/api/workflows/{id}/runs` | runs, newest first, with their steps; `POST` starts one, 409 while one runs |
 | `POST` | `/api/workflow-runs/{id}/stop` | stops the step running, skips the rest |
+| `GET` `POST` | `/api/notes?channel=&mention=&state=&limit=` | the threads, newest first, with their replies; `POST {channel, parent_id, body}` leaves a note or a reply |
+| `POST` | `/api/notes/{id}/comments` | `{body, state}`: a reply, and the instruction's state: working, done or failed |
+| `DELETE` | `/api/notes/{id}` | a note and its replies; its author or an admin |
 | `GET` `POST` `PUT` `DELETE` | `/api/projects`, `/api/projects/{folder}` | clone `{url, id, branch}`; configure `{title, description, allow, sources, commands, job_allow, hours, job_hours}` |
 | `GET` `PUT` | `/api/users`, `/api/users/{id}` | `{folders}`; names, passwords and roles come from the password file and the role lists |
 | `GET` `POST` `DELETE` | `/api/secrets`, `/api/secrets/{id}` | `{scope, name, content}`; content is never returned; `409` without a key to encrypt with |
@@ -35,9 +39,9 @@ route or a tool only for a need these cannot serve, and states the reason.
 
 ## MCP
 
-`/api/mcp` is an MCP server over the streamable HTTP transport: seven
-tools to list jobs and workflows, run them, and read the runs, as the
-token's user. Its use is in [the MCP chapter](guide/mcp.md).
+`/api/mcp` is an MCP server over the streamable HTTP transport: nine
+tools to list jobs and workflows, run them, read the runs, and read and
+answer the notes, as the token's user. Its use is in [the MCP chapter](guide/mcp.md).
 
 ---
 

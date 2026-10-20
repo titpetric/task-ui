@@ -5,6 +5,7 @@ import (
 	"github.com/titpetric/task-ui/event"
 	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/git"
+	"github.com/titpetric/task-ui/note"
 	"github.com/titpetric/task-ui/recording"
 	"github.com/titpetric/task-ui/runner"
 	"github.com/titpetric/task-ui/secret"
@@ -38,5 +39,6 @@ type Options struct {
 	Env         *envfile.Store
 	Recordings  *recording.Store
 	// Root is the folder that holds cloned projects.
-	Root string
+	Root  string // Board is the notes board and the chat; nil turns them off.
+	Board *note.Board
 }

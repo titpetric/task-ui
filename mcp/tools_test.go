@@ -67,3 +67,35 @@ func TestTools_Workflows(t *testing.T) {
 	_, failed = f.tool(t, "guest", "run_workflow", map[string]any{"workflow": "Ship"})
 	assert.True(t, failed)
 }
+
+// A note naming the agent is the agent's to list; it replies and
+// closes it with note_comment.
+func TestTools_Notes(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	status, raw := f.post(t, f.tokens["ops"], "/api/notes", api.NoteRequest{Body: "@admin tidy the README"})
+	assert.Equal(t, http.StatusCreated, status, string(raw))
+	f.post(t, f.tokens["ops"], "/api/notes", api.NoteRequest{Body: "@guest have a look"})
+
+	text, failed := f.tool(t, "admin", "list_notes", nil)
+	assert.False(t, failed, text)
+	assert.Contains(t, text, "by ops, open,")
+	assert.Contains(t, text, "@admin tidy the README")
+	assert.NotContains(t, text, "@guest")
+	id := strings.Fields(strings.TrimPrefix(text, "note "))[0]
+
+	text, failed = f.tool(t, "admin", "note_comment", map[string]any{"id": id, "body": "Tidied in abc123.", "state": "done"})
+	assert.False(t, failed, text)
+	assert.Contains(t, text, "it is done")
+
+	text, _ = f.tool(t, "admin", "list_notes", nil)
+	assert.Equal(t, "No notes.", text)
+	text, _ = f.tool(t, "admin", "list_notes", map[string]any{"state": "*", "mention": "*"})
+	assert.Contains(t, text, "reply by admin")
+	assert.Contains(t, text, "@guest have a look")
+
+	_, failed = f.tool(t, "admin", "note_comment", map[string]any{"id": id})
+	assert.True(t, failed)
+	_, failed = f.tool(t, "admin", "note_comment", map[string]any{"id": "nothing", "body": "x"})
+	assert.True(t, failed)
+}

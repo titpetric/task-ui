@@ -56,6 +56,13 @@ type Config struct {
 	// Grace is how long a stopped process gets before the kill.
 	// TASK_UI_GRACE, default 10s.
 	Grace time.Duration
+	// Agent is the user a note on the board names with @ to make it an
+	// instruction to run. TASK_UI_AGENT; empty turns instructions off.
+	Agent string
+	// AgentJob is the job an instruction runs, as folder/job, as the
+	// agent's user. TASK_UI_AGENT_JOB; empty leaves instructions open for
+	// an agent that reads the board over MCP.
+	AgentJob string
 	// ArtifactHistory is how many versions the artifact history keeps
 	// before it squashes to one. TASK_UI_ARTIFACT_HISTORY, default 50; 0
 	// keeps every version.
@@ -128,6 +135,8 @@ func NewConfig(args []string) (*Config, error) {
 		SSHDir:    env("TASK_UI_SSH_DIR", filepath.Join(home, ".ssh")),
 		Secret:    env("TASK_UI_SECRET", ""),
 		AutoLogin: env("TASK_UI_AUTOLOGIN", ""),
+		Agent:     env("TASK_UI_AGENT", ""),
+		AgentJob:  env("TASK_UI_AGENT_JOB", ""),
 	}
 	var err error
 	if cfg.SessionTTL, err = envDuration("TASK_UI_SESSION_TTL", 12*time.Hour); err != nil {

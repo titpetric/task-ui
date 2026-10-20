@@ -401,3 +401,16 @@ func TestManager_ArtifactStore(t *testing.T) {
 	assert.Len(t, all, 0)
 	assert.NoDirExists(t, filepath.Join(root, "tree"))
 }
+
+// A request's Env reaches the run; the TASK_UI_ variables still win.
+func TestManager_RequestEnv(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	req := f.shellJob("reqenv", `echo "note=[$TASK_UI_NOTE_ID] user=[$TASK_UI_USER]"`, false)
+	req.Env = []string{"TASK_UI_NOTE_ID=n1", "TASK_UI_USER=mallory"}
+	session, err := f.manager.Start(context.Background(), req)
+	assert.NoError(t, err)
+	out, status := collect(t, session.Attach(true))
+	assert.Equal(t, model.StateOK, status.State)
+	assert.Contains(t, out, "note=[n1] user=[ops]")
+}

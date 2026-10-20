@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/titpetric/task-ui/access"
 	"github.com/titpetric/task-ui/api"
 	"github.com/titpetric/task-ui/model"
 )
@@ -79,6 +80,29 @@ func tools() []Tool {
 			Description: "Show a run: its job, who started it, how it went, and the end of its output.",
 			InputSchema: object(map[string]Property{"id": str("The run's ID."), "lines": lines}, "id"),
 			call:        getRun,
+		},
+		{
+			Name: "list_notes",
+			Description: "List the notes on the board with their replies, newest first. By default the open notes that name you with @: " +
+				"each is an instruction to do, then report on with note_comment. Notes to other users are not yours.",
+			InputSchema: object(map[string]Property{
+				"mention": str("Only notes that name this user; empty is you, * is anyone."),
+				"state":   {Type: "string", Description: "Only notes in this state; open unless given, * for any.", Enum: []string{"open", "working", "done", "failed", "*"}},
+				"channel": {Type: "string", Description: "The board, notes unless given, or the chat.", Enum: []string{"notes", "chat"}},
+				"limit":   num("How many, 20 unless given."),
+			}),
+			call: listNotes,
+		},
+		{
+			Name: "note_comment",
+			Description: "Reply to a note, and set the state of its instruction: working when you start, done or failed when you end, " +
+				"with what you did or why it failed. A change the author wants is a new note.",
+			InputSchema: object(map[string]Property{
+				"id":    str("The note's ID, from list_notes."),
+				"body":  str("The reply: what you did, what changed, where to look."),
+				"state": {Type: "string", Description: "The state of the instruction, left as it is unless given.", Enum: []string{"working", "done", "failed"}},
+			}, "id"),
+			call: noteComment,
 		},
 		{
 			Name:        "list_workflow_runs",
@@ -473,4 +497,102 @@ func tail(text string, n int) string {
 		lines = lines[len(lines)-n:]
 	}
 	return strings.Join(lines, "\n") + "\n"
+}
+
+type notesArgs struct {
+	Mention string `json:"mention"`
+	State   string `json:"state"`
+	Channel string `json:"channel"`
+	Limit   int    `json:"limit"`
+}
+
+type noteList struct {
+	Notes []api.NoteView `json:"notes"`
+}
+
+func listNotes(ctx context.Context, c *client, args json.RawMessage) (string, error) {
+	in := notesArgs{State: model.NoteOpen, Channel: model.ChannelNotes, Limit: 20}
+	if err := decode(args, &in); err != nil {
+		return "", err
+	}
+	switch in.Mention {
+	case "":
+		if user := access.UserFrom(ctx); user != nil {
+			in.Mention = user.Name
+		}
+	case "*":
+		in.Mention = ""
+	}
+	if in.State == "*" {
+		in.State = ""
+	}
+	q := url.Values{}
+	q.Set("channel", in.Channel)
+	q.Set("mention", in.Mention)
+	q.Set("state", in.State)
+	q.Set("limit", fmt.Sprint(in.Limit))
+	var out noteList
+	if err := c.get(ctx, "/notes?"+q.Encode(), &out); err != nil {
+		return "", err
+	}
+	if len(out.Notes) == 0 {
+		return "No notes.", nil
+	}
+	shown := make([]string, 0, len(out.Notes))
+	for _, view := range out.Notes {
+		shown = append(shown, showNote(view))
+	}
+	return strings.Join(shown, "\n"), nil
+}
+
+// showNote is a note with its replies, as text.
+func showNote(view api.NoteView) string {
+	var b strings.Builder
+	state := view.State
+	if state == "" {
+		state = "message"
+	}
+	fmt.Fprintf(&b, "note %s by %s, %s, %s\n%s\n", view.ID, view.UserName, state, when(view.CreatedAt), view.Body)
+	if view.RunID != "" {
+		fmt.Fprintf(&b, "(run %s)\n", view.RunID)
+	}
+	for _, reply := range view.Replies {
+		fmt.Fprintf(&b, "  reply by %s, %s: %s\n", reply.UserName, when(reply.CreatedAt), strings.ReplaceAll(reply.Body, "\n", "\n    "))
+	}
+	return b.String()
+}
+
+// when is a time as the tools print it.
+func when(t *time.Time) string {
+	if t == nil {
+		return "-"
+	}
+	return t.Local().Format("2006-01-02 15:04:05")
+}
+
+type commentArgs struct {
+	ID    string `json:"id"`
+	Body  string `json:"body"`
+	State string `json:"state"`
+}
+
+func noteComment(ctx context.Context, c *client, args json.RawMessage) (string, error) {
+	var in commentArgs
+	if err := decode(args, &in); err != nil {
+		return "", err
+	}
+	if in.ID == "" {
+		return "", errors.New("a note ID is needed")
+	}
+	if strings.TrimSpace(in.Body) == "" && in.State == "" {
+		return "", errors.New("a reply, a state, or both are needed")
+	}
+	if _, err := c.call(ctx, http.MethodPost, "/notes/"+url.PathEscape(in.ID)+"/comments", api.CommentRequest{Body: in.Body, State: in.State}); err != nil {
+		return "", err
+	}
+	text := "Replied to note " + in.ID
+	if in.State != "" {
+		text += "; it is " + in.State
+	}
+	return text + ".", nil
 }

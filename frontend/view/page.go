@@ -56,6 +56,10 @@ type Page struct {
 	Space *diskusage.Usage
 	// Spaces are the same for each project of the projects page, by ID.
 	Spaces map[string]diskusage.Usage
+	// Threads are the notes of the notes board, newest first, or the chat,
+	// oldest first; Agent is who a note names to hand out work.
+	Threads []Thread
+	Agent   string
 
 	Runs []Run
 	// Activity charts when the runs of the page ran, nil without any.

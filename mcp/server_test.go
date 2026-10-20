@@ -38,13 +38,13 @@ func newFixture(t *testing.T) *fixture {
 	hash, err := access.HashPassword("demo")
 	assert.NoError(t, err)
 	htpasswd := filepath.Join(t.TempDir(), ".htpasswd")
-	assert.NoError(t, os.WriteFile(htpasswd, []byte("admin:"+hash+"\nguest:"+hash+"\n"), 0o600))
+	assert.NoError(t, os.WriteFile(htpasswd, []byte("admin:"+hash+"\nguest:"+hash+"\nops:"+hash+"\n"), 0o600))
 
 	cfg := &app.Config{
 		Listen: "127.0.0.1:0", Root: root, Discover: true, Htpasswd: htpasswd,
 		Admins: []string{"admin"}, Viewers: []string{"guest"},
 		DataDir: filepath.Join(t.TempDir(), "data"), DB: ":memory:", SSHDir: t.TempDir(),
-		SessionTTL: time.Hour, Keep: time.Minute, Grace: time.Second,
+		SessionTTL: time.Hour, Keep: time.Minute, Grace: time.Second, Agent: "admin",
 	}
 	assert.NoError(t, cfg.Validate())
 	a, err := app.New(ctx, cfg, "test")
@@ -54,7 +54,7 @@ func newFixture(t *testing.T) *fixture {
 	f := &fixture{server: httptest.NewServer(a.Handler()), tokens: map[string]string{}}
 	t.Cleanup(f.server.Close)
 	tokens := storage.NewUserAuthTokenStorage(a.DB)
-	for _, name := range []string{"admin", "guest"} {
+	for _, name := range []string{"admin", "guest", "ops"} {
 		user, err := a.Users.GetByName(ctx, name)
 		assert.NoError(t, err)
 		token, hash, err := access.NewToken()
@@ -129,7 +129,7 @@ func TestNew(t *testing.T) {
 		names = append(names, tool.Name)
 		assert.Equal(t, "object", tool.InputSchema.Type)
 	}
-	assert.Equal(t, []string{"list_jobs", "list_workflows", "run_job", "run_workflow", "list_runs", "get_run", "list_workflow_runs"}, names)
+	assert.Equal(t, []string{"list_jobs", "list_workflows", "run_job", "run_workflow", "list_runs", "get_run", "list_notes", "note_comment", "list_workflow_runs"}, names)
 }
 
 // Only a token of a user gets in.
@@ -168,7 +168,7 @@ func TestServer_ServeHTTP(t *testing.T) {
 	assert.Equal(t, http.StatusAccepted, status)
 	assert.Len(t, raw, 0)
 
-	assert.Len(t, f.rpc(t, "admin", "tools/list", nil).Result.Tools, 7)
+	assert.Len(t, f.rpc(t, "admin", "tools/list", nil).Result.Tools, 9)
 	assert.Equal(t, -32601, f.rpc(t, "admin", "resources/list", nil).Error.Code)
 	assert.Equal(t, -32602, f.rpc(t, "admin", "tools/call", map[string]any{"name": "nothing"}).Error.Code)
 

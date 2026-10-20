@@ -981,6 +981,73 @@
     });
   }
 
+  // Notes and the chat: a form posts a note or a reply, and the list of
+  // the page follows the notes topic, fetched again when a note arrives
+  // or changes. A reply form being written keeps its text.
+  var notesList = document.querySelector("[data-notes]");
+  function refreshNotes() {
+    if (!notesList) return Promise.resolve();
+    return fetch(location.pathname + location.search, { credentials: "same-origin" })
+      .then(function (res) { return res.text(); })
+      .then(function (text) {
+        var fresh = new DOMParser().parseFromString(text, "text/html").querySelector("[data-notes]");
+        if (!fresh) return;
+        var drafts = {};
+        notesList.querySelectorAll("form[data-parent]").forEach(function (form) {
+          var value = form.elements.body.value;
+          if (value) drafts[form.dataset.parent] = value;
+        });
+        notesList.innerHTML = fresh.innerHTML;
+        Object.keys(drafts).forEach(function (parent) {
+          var form = notesList.querySelector('form[data-parent="' + parent + '"]');
+          if (!form) return;
+          form.elements.body.value = drafts[parent];
+          form.closest("details").open = true;
+        });
+        scrollChat();
+      });
+  }
+  function scrollChat() {
+    var log = document.querySelector("[data-chat-log]");
+    if (log) log.scrollTop = log.scrollHeight;
+  }
+  scrollChat();
+  document.addEventListener("submit", function (event) {
+    var form = event.target.closest("form[data-note-form]");
+    if (!form) return;
+    event.preventDefault();
+    var body = form.elements.body.value.trim();
+    if (!body) return;
+    var button = form.querySelector("button[type=submit]");
+    button.disabled = true;
+    api("POST", "/api/notes", { channel: form.dataset.channel, parent_id: form.dataset.parent || "", body: body })
+      .then(function (res) {
+        button.disabled = false;
+        if (res.status >= 300) {
+          window.alert(res.data.error || ("HTTP " + res.status));
+          return;
+        }
+        form.elements.body.value = "";
+        refreshNotes();
+      });
+  });
+  document.addEventListener("keydown", function (event) {
+    var area = event.target.closest && event.target.closest("form[data-note-form] textarea");
+    if (!area || event.key !== "Enter") return;
+    var chat = area.form.dataset.channel === "chat";
+    if ((chat && !event.shiftKey) || event.ctrlKey || event.metaKey) {
+      event.preventDefault();
+      area.form.requestSubmit();
+    }
+  });
+  if (notesList && window.EventSource) {
+    var pending;
+    new EventSource("/api/sse/notes").addEventListener("note", function () {
+      clearTimeout(pending);
+      pending = setTimeout(refreshNotes, 150);
+    });
+  }
+
   // onRuns calls fn with each run of the runs topic, as it starts and as
   // it ends, over one event stream for the page.
   var runsHandlers = [];

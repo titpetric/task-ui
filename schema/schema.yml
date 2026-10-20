@@ -134,6 +134,84 @@
         - filename
       primary: true
       unique: true
+- name: note
+  comment: Note
+  columns:
+    - name: id
+      type: text
+      key: PRI
+      comment: ID
+      datatype: char(26)
+    - name: channel
+      type: TEXT
+      key: MUL
+      comment: Channel
+      datatype: varchar
+      values:
+        - chat
+        - notes
+    - name: parent_id
+      type: text
+      key: MUL
+      comment: Parent ID
+      datatype: char(26)
+    - name: user_id
+      type: text
+      key: MUL
+      comment: User ID
+      datatype: char(26)
+    - name: user_name
+      type: text
+      comment: User Name
+      datatype: varchar
+    - name: body
+      type: text
+      comment: Body
+      datatype: varchar
+    - name: mentions
+      type: text
+      comment: Mentions
+      datatype: varchar
+    - name: state
+      type: TEXT
+      key: MUL
+      comment: State
+      datatype: varchar
+      values:
+        - ""
+        - done
+        - failed
+        - open
+        - working
+    - name: run_id
+      type: text
+      key: MUL
+      comment: Run ID
+      datatype: char(26)
+    - name: created_at
+      type: timestamp
+      comment: Created At
+      datatype: datetime
+    - name: updated_at
+      type: timestamp
+      comment: Updated At
+      datatype: datetime
+  indexes:
+    - name: sqlite_autoindex_note_1
+      columns:
+        - id
+      primary: true
+      unique: true
+    - name: idx_note_channel
+      columns:
+        - channel
+        - parent_id
+    - name: idx_note_parent
+      columns:
+        - parent_id
+    - name: idx_note_state
+      columns:
+        - state
 - name: project
   comment: Project
   columns:

@@ -10,6 +10,7 @@ import (
 	"github.com/titpetric/task-ui/access"
 	"github.com/titpetric/task-ui/event"
 	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/note"
 	"github.com/titpetric/task-ui/runner"
 	"github.com/titpetric/task-ui/storage"
 )
@@ -25,6 +26,7 @@ const heartbeat = 15 * time.Second
 //	               sees every step of it
 //	runs           every run as it starts and ends: run, with the run row,
 //	               of the folders the user sees
+//	notes          every note and reply as someone leaves or changes it: note
 //
 // The stream ends when the client goes.
 func (h *Handlers) sse(w http.ResponseWriter, r *http.Request) {
@@ -42,6 +44,11 @@ func (h *Handlers) sse(w http.ResponseWriter, r *http.Request) {
 		visible = func(e event.Event) bool {
 			run, ok := e.Data.(model.Run)
 			return ok && user.CanSee(run.Folder)
+		}
+	case note.Topic:
+		if id != "" || h.opts.Board == nil {
+			failErr(w, storage.ErrNotFound)
+			return
 		}
 	case "workflow":
 		wf, err := h.opts.Workflows.Get(r.Context(), id)
