@@ -224,3 +224,14 @@ func TestBoard_Recover(t *testing.T) {
 	assert.Equal(t, model.NoteFailed, got.State)
 	assert.Contains(t, replies(t, f, open.ID)[0].Body, "restarted")
 }
+
+// After a restart, an open instruction with no run starts the agent.
+func TestBoard_RecoverOpen(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t, "agent/run")
+	ctx := context.Background()
+	note := &model.Note{Channel: model.ChannelNotes, UserID: f.ops.ID, UserName: f.ops.Name, Body: "@claude go", State: model.NoteOpen}
+	assert.NoError(t, f.board.Notes.Create(ctx, note))
+	assert.NoError(t, f.board.Recover(ctx))
+	assert.Equal(t, model.NoteDone, f.settled(t, note.ID).State)
+}

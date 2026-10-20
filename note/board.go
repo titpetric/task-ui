@@ -134,8 +134,20 @@ func (b *Board) Comment(ctx context.Context, user *model.User, id, body, state s
 }
 
 // Recover fails the instructions a restart cut short: a note still
-// working has no run to wait on any more.
+// working has no run to wait on any more. An open instruction with no run
+// yet, one that never started or one set open by hand, starts the agent.
 func (b *Board) Recover(ctx context.Context) error {
+	if b.AgentJob != "" {
+		open, err := b.Notes.List(ctx, storage.NoteFilter{State: model.NoteOpen})
+		if err != nil {
+			return err
+		}
+		for i := range open {
+			if open[i].RunID == "" {
+				b.dispatch(&open[i])
+			}
+		}
+	}
 	working, err := b.Notes.List(ctx, storage.NoteFilter{State: model.NoteWorking})
 	if err != nil {
 		return err
