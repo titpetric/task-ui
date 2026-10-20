@@ -63,7 +63,7 @@ type ActivityBar struct {
 // ActivityLines is the duration graph under a count chart: a line each
 // for the average, the fastest and the slowest run of the buckets, as SVG
 // paths in a 100 by 100 viewBox, a point at the middle of each bucket's
-// column. A bucket without finished runs breaks the lines. Slowest is
+// column; a bucket without finished runs sits on the baseline. Slowest is
 // the top of the scale.
 type ActivityLines struct {
 	Average string
@@ -93,6 +93,13 @@ type ActivitySpark struct {
 	Longest time.Duration
 }
 
+// ActivityTick is a time marker under a chart: its label, and At, where
+// it sits along the chart in percent, the middle of its column.
+type ActivityTick struct {
+	Label string
+	At    string
+}
+
 // Activity is when runs ran: a bar per day of the last ActivityDays,
 // a bar per hour of the day over the same days, the counts, and the
 // duration line.
@@ -103,11 +110,15 @@ type Activity struct {
 	// as lines, nil when none of their runs finished.
 	DayLines  *ActivityLines
 	HourLines *ActivityLines
-	// Axis labels the first, middle and last day.
-	Axis      []string
+	// DayTicks mark a day a week, today the last; HourTicks every third
+	// hour, 00:00 to 21:00.
+	DayTicks  []ActivityTick
+	HourTicks []ActivityTick
 	Total     int
 	Failed    int
 	Median    time.Duration
+	// Spent is the time the finished runs took, together.
+	Spent     time.Duration
 	Durations *ActivitySpark
 }
 
@@ -134,7 +145,13 @@ func NewActivity(runs []ActivityRun, now time.Time, days int) *Activity {
 	for h := range a.Hours {
 		a.Hours[h].Label = strconv.Itoa(h)
 	}
-	a.Axis = []string{a.Days[0].Label[4:], a.Days[days/2].Label[4:], a.Days[days-1].Label[4:]}
+	for i := days - 1; i >= 0; i -= 7 {
+		day := first.AddDate(0, 0, i)
+		a.DayTicks = append([]ActivityTick{{Label: day.Format("Jan 2"), At: svgNumber((float64(i) + 0.5) * 100 / float64(days))}}, a.DayTicks...)
+	}
+	for h := 0; h < 24; h += 3 {
+		a.HourTicks = append(a.HourTicks, ActivityTick{Label: twoDigits(h) + ":00", At: svgNumber((float64(h) + 0.5) * 100 / 24)})
+	}
 
 	var finished []ActivityRun
 	for _, run := range runs {
@@ -159,6 +176,7 @@ func NewActivity(runs []ActivityRun, now time.Time, days int) *Activity {
 		}
 		if run.State != model.StateRunning {
 			finished = append(finished, run)
+			a.Spent += run.Elapsed
 			day.add(run.Elapsed)
 			hour.add(run.Elapsed)
 		}

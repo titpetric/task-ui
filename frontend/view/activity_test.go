@@ -43,7 +43,14 @@ func TestNewActivity(t *testing.T) {
 	assert.Len(t, a.Hours, 24)
 	assert.Equal(t, 5, a.Total)
 	assert.Equal(t, 2, a.Failed)
-	assert.Equal(t, []string{"2026-09-20", "2026-10-05", "2026-10-19"}, a.Axis)
+	// A tick a week, today the last, each in the middle of its column;
+	// the hours every third, as times.
+	assert.Equal(t, view.ActivityTick{Label: "Oct 19", At: "98.33"}, a.DayTicks[len(a.DayTicks)-1])
+	assert.Equal(t, view.ActivityTick{Label: "Sep 21", At: "5.00"}, a.DayTicks[0])
+	assert.Len(t, a.DayTicks, 5)
+	assert.Len(t, a.HourTicks, 8)
+	assert.True(t, a.Spent > 0, "the finished runs' time adds up")
+	assert.Equal(t, view.ActivityTick{Label: "09:00", At: "39.58"}, a.HourTicks[3])
 
 	today, yesterday := a.Days[29], a.Days[28]
 	assert.Equal(t, "Mon 2026-10-19", today.Label)
