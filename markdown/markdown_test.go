@@ -31,3 +31,11 @@ func TestRender(t *testing.T) {
 	assert.Equal(t, "<p>hi <b>@cl</b><br />\nnext <code>@cl</code> <a href=\"https://x.example\" target=\"_blank\" rel=\"nofollow noreferrer\">@cl</a></p>\n", html)
 	assert.Contains(t, markdown.Render(markdown.Options{Text: mark}, []byte("a & <b>")), "a &amp; ")
 }
+
+// A list right under a line of text is a list, as a chat writes it; in a
+// fence it stays code.
+func TestRender_ListAfterText(t *testing.T) {
+	t.Parallel()
+	html := markdown.Render(markdown.Options{HardBreaks: true}, []byte("**Runtime**\n- one\n- two\n\n```\nx\n- y\n```"))
+	assert.Equal(t, "<p><strong>Runtime</strong></p>\n\n<ul>\n<li>one</li>\n<li>two</li>\n</ul>\n\n<pre><code>x\n- y\n</code></pre>\n", html)
+}

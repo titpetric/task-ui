@@ -3345,6 +3345,7 @@ dialog.preview #preview-version {
 
 .note-body pre code {
   padding: 0;
+  border: 0;
   background: none;
   color: inherit;
   font-size: inherit;

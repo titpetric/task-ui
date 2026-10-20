@@ -7,6 +7,7 @@ import (
 	"html"
 	"net/url"
 	"path"
+	"regexp"
 	"strings"
 
 	blackfriday "github.com/russross/blackfriday/v2"
@@ -36,12 +37,14 @@ func HTML(src []byte, prefix, dir string) string {
 
 // Render renders markdown as HTML, as HTML does, shaped by the options.
 func Render(opts Options, src []byte) string {
-	src = bytes.ReplaceAll(src, []byte("\r\n"), []byte("\n"))
+	src = fenceBreaks(bytes.ReplaceAll(src, []byte("\r\n"), []byte("\n")))
 	renderer := blackfriday.NewHTMLRenderer(blackfriday.HTMLRendererParameters{
 		Flags: blackfriday.CommonHTMLFlags | blackfriday.SkipHTML | blackfriday.Safelink |
 			blackfriday.NofollowLinks | blackfriday.NoreferrerLinks | blackfriday.HrefTargetBlank,
 	})
-	extensions := blackfriday.CommonExtensions | blackfriday.AutoHeadingIDs
+	// NoEmptyLineBeforeBlock starts a list, a quote or code right under a
+	// line of text, as CommonMark and a chat do.
+	extensions := blackfriday.CommonExtensions | blackfriday.AutoHeadingIDs | blackfriday.NoEmptyLineBeforeBlock
 	if opts.HardBreaks {
 		extensions |= blackfriday.HardLineBreak
 	}
@@ -62,6 +65,9 @@ func Render(opts Options, src []byte) string {
 			out.WriteString(html.EscapeString(string(node.Literal)))
 			return blackfriday.GoToNext
 		case blackfriday.HTMLBlock:
+			if strings.TrimSpace(string(node.Literal)) == listEnd {
+				return blackfriday.GoToNext
+			}
 			out.WriteString("<p>" + html.EscapeString(string(node.Literal)) + "</p>\n")
 			return blackfriday.GoToNext
 		}
@@ -77,6 +83,44 @@ func Render(opts Options, src []byte) string {
 		return strings.ReplaceAll(out.String(), "<br />\n</li>", "</li>")
 	}
 	return out.String()
+}
+
+// listEnd ends a list for blackfriday and renders as nothing.
+const listEnd = "<!-- -->"
+
+// listItem matches the first line of a list item.
+var listItem = regexp.MustCompile(`^\s{0,3}([-*+]|\d{1,9}[.)])\s+\S`)
+
+// fenceBreaks puts listEnd before a fence at the margin that follows a
+// list, outside other fences: blackfriday, even with
+// NoEmptyLineBeforeBlock, takes such a fence into the last item, where
+// CommonMark ends the list.
+func fenceBreaks(src []byte) []byte {
+	lines := strings.Split(string(src), "\n")
+	out := make([]string, 0, len(lines))
+	fenced, inList := false, false
+	for _, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		margin := line != "" && line[0] != ' ' && line[0] != '\t'
+		if strings.HasPrefix(trimmed, "```") || strings.HasPrefix(trimmed, "~~~") {
+			if !fenced && inList && margin {
+				out = append(out, "", listEnd, "")
+				inList = false
+			}
+			fenced = !fenced
+			out = append(out, line)
+			continue
+		}
+		switch {
+		case fenced:
+		case listItem.MatchString(line):
+			inList = true
+		case margin && trimmed != "":
+			inList = false
+		}
+		out = append(out, line)
+	}
+	return []byte(strings.Join(out, "\n"))
 }
 
 // inLink reports whether a node sits inside a link or an image.

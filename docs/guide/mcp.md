@@ -53,6 +53,22 @@ To list the tokens of a user with the last use of each, run
 A token signs in to the rest of `/api` too, in an `Authorization: Bearer`
 header in place of the session cookie.
 
+## Claude Code inside task-ui
+
+The Claude Code that task-ui runs, the agent job of the [Notes](notes.md)
+board and a Claude terminal, reaches the same tools when its own
+configuration has the server. Add it with a token of the agent's user and
+the loopback address, from inside the server:
+
+```bash
+claude mcp add --transport http --scope user task http://127.0.0.1:3000/api/mcp \
+  --header "Authorization: Bearer $(task-ui token claude task-agent)"
+```
+
+The configuration sits in `CLAUDE_CONFIG_DIR`; keep that on a volume so
+it outlives the container. `claude mcp list` shows the server as
+connected.
+
 ## Tools
 
 | Tool                 | Arguments                                        | What it does |
