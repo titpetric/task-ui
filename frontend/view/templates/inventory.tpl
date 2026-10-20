@@ -31,7 +31,7 @@
 {{- end }}
 <div class="table-wrap">
 <table class="table hosts">
-	<thead><tr><th>Host</th><th>State</th>{{ if .Logins }}<th>SSH</th>{{ end }}<th class="num">Cores</th><th>CPU</th><th colspan="2">Memory</th><th colspan="2">Disk</th></tr></thead>
+	<thead><tr><th>Host</th><th>State</th>{{ if .Logins }}<th>SSH</th>{{ end }}<th class="center">Cores</th><th>CPU</th><th colspan="2">Memory</th><th colspan="2">Disk</th></tr></thead>
 	<tbody>
 	{{- range .Hosts }}
 		<tr>
@@ -40,12 +40,12 @@
 			{{- if $.Logins }}
 			<td class="nowrap">{{ with index $.Logins .Host }}<code>{{ . }}</code> <button type="button" class="btn-icon" data-copy="ssh {{ . }}" title="Copy ssh {{ . }}" aria-label="Copy ssh {{ . }}"><svg class="ic"><use href="#i-copy"/></svg></button>{{ else }}<span class="faint">-</span>{{ end }}</td>
 			{{- end }}
-			<td class="num">{{ with .CPUs }}{{ . }}{{ else }}<span class="faint">-</span>{{ end }}</td>
+			<td class="center">{{ with .CPUs }}{{ . }}{{ else }}<span class="faint">-</span>{{ end }}</td>
 			<td>{{ template "meter" .Info.CPU }}</td>
 			<td>{{ template "meter" .Info.Memory }}</td>
-			<td class="num faint nowrap">{{ with .Stats }}{{ printf "%.1f" .MemoryUsed }} / {{ printf "%.1f" .Memory }} GB{{ end }}</td>
+			<td class="size faint nowrap">{{ with .Stats }}{{ printf "%.1f" .MemoryUsed }} / {{ printf "%.1f" .Memory }} GB{{ end }}</td>
 			<td>{{ template "meter" .Info.Disk }}</td>
-			<td class="num faint nowrap">{{ with .Stats }}{{ printf "%.0f" .DiskUsed }} / {{ printf "%.0f" .Disk }} GB{{ end }}</td>
+			<td class="size faint nowrap">{{ with .Stats }}{{ printf "%.0f" .DiskUsed }} / {{ printf "%.0f" .Disk }} GB{{ end }}</td>
 		</tr>
 	{{- else }}
 		<tr class="empty"><td colspan="9">Beszel monitors no hosts.</td></tr>
