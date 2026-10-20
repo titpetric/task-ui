@@ -13,8 +13,8 @@ header.top {
 
 header.top h1 {
   font-family: var(--font);
-  font-size: 0.95rem;
-  letter-spacing: 0.24em;
+  font-size: var(--fs-lg);
+  letter-spacing: var(--ls-brand);
   text-transform: uppercase;
   white-space: nowrap;
 }
@@ -39,7 +39,7 @@ header.top h1 a {
 /* The letter spacing trails the last letter too; take it back so the gap
    to the logo is the gap. */
 header.top h1 a span {
-  margin-right: -0.24em;
+  margin-inline-end: calc(-1 * var(--ls-brand));
 }
 
 header.top h1 .logo {
@@ -90,11 +90,11 @@ details.user summary {
   list-style: none;
   cursor: pointer;
   display: block;
-}
 
-details.user summary::marker,
-details.user summary::-webkit-details-marker {
-  display: none;
+  &::marker,
+  &::-webkit-details-marker {
+    display: none;
+  }
 }
 
 /* The initials sit in the middle of the disc as the blog's account disc
@@ -111,30 +111,29 @@ details.user summary::-webkit-details-marker {
   vertical-align: middle;
   width: 2rem;
   height: 2rem;
-  border-radius: 50%;
+  border-radius: var(--radius-round);
   border: 1px solid var(--line-2);
   background: var(--ink-2);
   color: var(--text);
-  font-size: 0.7rem;
+  font-size: var(--fs-caption);
   font-weight: 600;
-  letter-spacing: 0.08em;
-  text-indent: 0.08em;
+  letter-spacing: var(--ls-sm);
+  text-indent: var(--ls-sm);
+
+  &.role-admin {
+    border-color: var(--role-admin);
+  }
+
+  &.role-runner {
+    border-color: var(--role-runner);
+  }
+
+  &.role-viewer {
+    border-color: var(--role-viewer);
+  }
 }
 
-.avatar.role-admin {
-  border-color: var(--role-admin);
-}
-
-.avatar.role-runner {
-  border-color: var(--role-runner);
-}
-
-.avatar.role-viewer {
-  border-color: var(--role-viewer);
-}
-
-details.user summary:hover .avatar,
-details[open].user .avatar {
+:is(details.user summary:hover, details[open].user) .avatar {
   border-color: var(--signal);
   color: var(--signal);
   background: var(--signal-wash);
@@ -144,13 +143,17 @@ details[open].user .avatar {
   position: absolute;
   z-index: 25;
   top: calc(100% + 0.5rem);
-  right: 0;
+  inset-inline-end: 0;
   min-width: 13rem;
   padding: 0.25rem 0;
   background: var(--ink-1);
   border: 1px solid var(--line-2);
   border-radius: var(--radius);
-  box-shadow: 0 18px 36px rgba(0, 0, 0, 0.55), 0 4px 10px rgba(0, 0, 0, 0.4);
+  box-shadow: var(--shadow-menu);
+
+  & form {
+    margin: 0;
+  }
 }
 
 .user-menu .who {
@@ -167,13 +170,12 @@ details[open].user .avatar {
 
 .user-menu .who span {
   color: var(--text-faint);
-  font-size: 0.68rem;
-  letter-spacing: 0.14em;
+  font-size: var(--fs-label);
+  letter-spacing: var(--ls-label);
   text-transform: uppercase;
 }
 
-.user-menu a,
-.user-menu button {
+.user-menu :is(a, button) {
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -183,16 +185,11 @@ details[open].user .avatar {
   background: transparent;
   color: var(--text);
   font: inherit;
-  text-align: left;
+  text-align: start;
   cursor: pointer;
-}
 
-.user-menu a:hover,
-.user-menu button:hover {
-  background: var(--ink-2);
-  text-decoration: none;
-}
-
-.user-menu form {
-  margin: 0;
+  &:hover {
+    background: var(--ink-2);
+    text-decoration: none;
+  }
 }
