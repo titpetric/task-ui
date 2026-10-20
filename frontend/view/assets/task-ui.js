@@ -1508,6 +1508,24 @@
     });
   }
 
+  // The inventory's hosts refresh once a minute, the rate task-ui reads
+  // Beszel: the page fetches itself and puts its hosts section back,
+  // the time it was drawn with it. A hidden tab waits.
+  var hostsLive = document.querySelector("[data-hosts-live]");
+  if (hostsLive) {
+    setInterval(function () {
+      if (document.hidden) return;
+      fetch(location.pathname, { credentials: "same-origin" })
+        .then(function (res) { return res.ok ? res.text() : null; })
+        .then(function (text) {
+          if (!text) return;
+          var fresh = new DOMParser().parseFromString(text, "text/html").querySelector("[data-hosts-live]");
+          if (fresh) hostsLive.innerHTML = fresh.innerHTML;
+        })
+        .catch(function () {});
+    }, 60000);
+  }
+
   // The host picker: All, None and Invert set the boxes, and the count
   // says how many of the hosts a run reaches.
   document.querySelectorAll("[data-host-picker]").forEach(function (picker) {

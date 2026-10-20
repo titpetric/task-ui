@@ -3040,6 +3040,12 @@ pre.output {
   vertical-align: top;
 }
 
+.live-stamp {
+  margin: 0.4rem 0 0;
+  font-size: 0.75rem;
+  text-align: right;
+}
+
 /* A host's icon says its state: green up, red anything else. */
 .table.hosts td .ic.host-state.up {
   color: var(--ok);
