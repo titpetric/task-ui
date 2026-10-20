@@ -844,16 +844,37 @@ table.table-kv th {
 
 /* ----------------------------------------------------------------- buttons */
 
+/* One height for every control in a row: a text field, a select and a
+   button line up, and a small button is the small height. The caption
+   is uppercase, which has no descenders, so it sits a hair lower than
+   the line box's middle to look centred. */
+:root {
+  --control: 2.3rem;
+  --control-sm: 1.75rem;
+}
+
+input[type="text"],
+input[type="password"],
+input[type="email"],
+input[type="number"],
+input[type="search"],
+input[type="url"],
+select {
+  height: var(--control);
+}
+
 .btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.4rem;
-  padding: 0.38rem 0.9rem;
+  height: var(--control);
+  padding: 0.12em 0.9rem 0;
   border: 1px solid var(--line-2);
   border-radius: var(--radius);
   background: var(--ink-2);
   color: var(--text);
-  font: 500 0.78rem/1.2 var(--font);
+  font: 500 0.78rem/1 var(--font);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   white-space: nowrap;
@@ -908,7 +929,8 @@ table.table-kv th {
 }
 
 .btn-sm {
-  padding: 0.18rem 0.55rem;
+  height: var(--control-sm);
+  padding: 0.12em 0.55rem 0;
   font-size: 0.68rem;
 }
 
@@ -1060,9 +1082,27 @@ textarea {
   font-size: 0.75rem;
 }
 
+/* A one-line field takes its height from --control: no padding above or
+   below, the text centred in it. A field and a select set their text
+   alike, whatever the label around them sets. */
+input[type="text"],
+input[type="password"] {
+  padding-block: 0;
+  line-height: normal;
+}
+
+input[type="text"],
+input[type="password"],
+select {
+  font-size: 0.85rem;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
 select {
   width: 100%;
-  padding: 0.5rem 0.65rem;
+  padding: 0 0.65rem;
   border: 1px solid var(--line-2);
   border-radius: var(--radius);
   background: var(--ink-2);
@@ -1874,8 +1914,7 @@ pre.code .p { color: var(--text-faint); }
 .filters input,
 .filters select {
   width: 12rem;
-  padding: 0.35rem 0.55rem;
-  font-size: 0.8125rem;
+  padding: 0 0.55rem;
 }
 
 .form.inline {
@@ -1885,18 +1924,6 @@ pre.code .p { color: var(--text-faint); }
   gap: 0.6rem 0.8rem;
   max-width: none;
   margin: 0.8rem 0 1.4rem;
-}
-
-/* A row of fields and its button: one height for all of them, the
-   button's caption centred in it. */
-.form.inline input[type="text"],
-.form.inline select,
-.form.inline .btn {
-  height: 2.4rem;
-}
-
-.form.inline .btn {
-  justify-content: center;
 }
 
 .form.inline .field {
@@ -2587,11 +2614,18 @@ pre.output {
   }
 }
 
-/* A toggle in a form: the box before its label, on one line. */
+/* A toggle in a form: the box before its label, on one line, the label
+   set as text, not as a field's heading. */
 .field label.check {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  margin-bottom: 0.3rem;
+  color: var(--text);
+  font-size: 0.85rem;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
   cursor: pointer;
 }
 
