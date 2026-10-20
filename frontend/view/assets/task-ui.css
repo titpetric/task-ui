@@ -85,6 +85,7 @@
 
   --radius: 2px;
   --side: 17rem;
+  --rail: 17rem;
 }
 
 @media (prefers-color-scheme: light) {
@@ -461,7 +462,44 @@ details[open].user .avatar {
   z-index: 1;
   flex: 1;
   display: grid;
-  grid-template-columns: var(--side) minmax(0, 1fr);
+  grid-template-columns: var(--side) minmax(0, 1fr) var(--rail);
+}
+
+/* The right rail: the recents, beside the page on a wide screen. */
+aside.rail {
+  border-left: 1px solid var(--line);
+  background: var(--ink-1);
+  padding: 0.9rem 0 2rem;
+  min-height: 100%;
+}
+
+aside.rail .side-label {
+  margin-top: 0;
+}
+
+aside.rail .side-label a {
+  color: inherit;
+}
+
+aside.rail .side-label a:hover {
+  color: var(--text);
+  text-decoration: none;
+}
+
+aside.rail .empty {
+  padding: 0.3rem 1.1rem;
+  color: var(--text-faint);
+  font-size: 0.8125rem;
+}
+
+@media (max-width: 1199px) {
+  .shell {
+    grid-template-columns: var(--side) minmax(0, 1fr);
+  }
+
+  aside.rail {
+    display: none;
+  }
 }
 
 aside.side {

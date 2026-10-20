@@ -1,7 +1,9 @@
 # Recents
 
-The last section of the sidebar: the latest runs, by anyone, newest at the
-top, the way a chat app lists conversations.
+The rail on the right of a wide screen: the latest runs, by anyone, newest
+at the top, the way a chat app lists conversations. A screen narrower than
+1200 pixels, a phone included, leaves the rail out; **Runs** in the
+sidebar lists the same runs, and the rail's heading links there.
 
 Each entry shows how the run went (its dot), the job and folder, and who
 started it, as their initials. A workflow run shows the workflow's name
