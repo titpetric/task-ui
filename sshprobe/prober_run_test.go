@@ -49,3 +49,13 @@ func TestProber_Run(t *testing.T) {
 	assert.Equal(t, 256<<10, len(big[0].Output))
 	assert.False(t, strings.Contains(big[0].Output, "\x00"))
 }
+
+// On a terminal, ssh gets -tt, the pagers are off, and the carriage
+// returns of the terminal's line ends go.
+func TestProber_RunTerminal(t *testing.T) {
+	t.Parallel()
+	p := &sshprobe.Prober{Timeout: time.Second, Command: runSSH(t), Terminal: true}
+	logins := map[string]string{"a": "debian@a"}
+	results := p.Run(context.Background(), []string{"a"}, logins, `printf 'pager=%s\r\n' "$PAGER"`, 5*time.Second)
+	assert.Equal(t, "pager=cat\n", results[0].Output)
+}

@@ -172,6 +172,7 @@ func (a *App) wire(version string) error {
 	prober := &sshprobe.Prober{
 		Users: []string{"debian", "root"}, KeyDirs: []string{cfg.SSHDir, filepath.Join(home(), ".ssh")},
 		KnownHosts: filepath.Join(cfg.SSHDir, "known_hosts"), Timeout: 4 * time.Second, TTL: 10 * time.Minute,
+		Terminal: true,
 	}
 	hosts := &beszel.Inventory{TTL: time.Minute, Settings: func(ctx context.Context) (string, string, error) {
 		values, err := integrations.Values(ctx, integration.Beszel)
