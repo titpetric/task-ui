@@ -2743,7 +2743,24 @@ pre.output {
 }
 
 /* The host inventory: a share as a short bar, warm past 75%, high past 90%;
-   the cores centred, the sizes left-aligned, digits of one width. */
+   the cores centred, the sizes left-aligned, digits of one width. Every
+   cell is the mono face at one size, on a line as tall as the copy button,
+   aligned to the top. */
+.table.hosts td {
+  font: 400 0.8rem/1.7rem var(--font);
+  vertical-align: top;
+}
+
+.table.hosts td.key {
+  font-weight: 600;
+}
+
+.table.hosts .badge {
+  line-height: 1.5;
+  font-size: inherit;
+  letter-spacing: 0.05em;
+}
+
 .table.hosts .center {
   text-align: center;
   font-variant-numeric: tabular-nums;
@@ -2754,7 +2771,6 @@ pre.output {
   font-variant-numeric: tabular-nums;
 }
 
-/* The host inventory: a share as a short bar, warm past 75%, high past 90%. */
 .meter {
   display: inline-flex;
   align-items: center;
