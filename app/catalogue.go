@@ -4,17 +4,22 @@ import (
 	"context"
 	"log/slog"
 
+	"github.com/titpetric/task-ui/agent"
 	"github.com/titpetric/task-ui/folder"
+	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/storage"
 )
 
 // Catalogue discovers the folders under the root on every call, with the
 // project rows applied, so a clone or a configuration change shows at
-// once.
+// once. The internal folder of the host commands comes first.
 type Catalogue struct {
 	Root     string
 	Discover bool
 	Projects *storage.ProjectStorage
+	// Agent is the notes agent's user, whose job in the internal folder
+	// allows it.
+	Agent string
 }
 
 // NewCatalogue returns a catalogue over the root and the project rows.
@@ -35,12 +40,25 @@ func (c *Catalogue) discovery() *folder.Discovery {
 	return d
 }
 
-// List returns the folders, ordered by title.
+// List returns the internal folder, then the folders of the root ordered
+// by ID. A project row under the internal namespace lists nothing.
 func (c *Catalogue) List() []*folder.Folder {
-	return c.discovery().List()
+	list := []*folder.Folder{agent.Folder(c.Root, c.Agent)}
+	for _, f := range c.discovery().List() {
+		if !model.IsInternal(f.ID) {
+			list = append(list, f)
+		}
+	}
+	return list
 }
 
 // Find returns a folder by ID, or nil.
 func (c *Catalogue) Find(id string) *folder.Folder {
+	if id == agent.Namespace {
+		return agent.Folder(c.Root, c.Agent)
+	}
+	if model.IsInternal(id) {
+		return nil
+	}
 	return c.discovery().Find(id)
 }

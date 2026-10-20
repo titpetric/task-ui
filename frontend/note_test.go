@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/titpetric/task-ui/internal/assert"
+	"github.com/titpetric/task-ui/model"
 )
 
 // The board shows the notes newest first with their replies; a note to the
@@ -38,4 +39,30 @@ func TestNotes(t *testing.T) {
 
 	viewer := f.page(t, asViewer, "/notes")
 	assert.NotContains(t, viewer, `data-delete="/api/notes/`+first.ID+`"`)
+}
+
+// A note links the agent's run for the users who see it: the runs of the
+// internal folder are the admins'.
+func TestNotes_runLink(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	ctx := context.Background()
+	note, err := f.opts.Board.Post(ctx, f.users[asOps], "", "@claude tidy up")
+	assert.NoError(t, err)
+	internal := f.run(t, model.Internal, "claude-note", "claude", model.StateOK)
+	assert.NoError(t, f.opts.Board.Notes.SetState(ctx, note.ID, model.NoteDone, internal.ID))
+	assert.NoError(t, f.opts.Board.Notes.Create(ctx, &model.Note{Channel: model.ChannelNotes, ParentID: note.ID, UserName: "claude", Body: "Tidied.", RunID: internal.ID}))
+	other, err := f.opts.Board.Post(ctx, f.users[asOps], "", "@claude build it")
+	assert.NoError(t, err)
+	web := f.run(t, "web", "build", "claude", model.StateOK)
+	assert.NoError(t, f.opts.Board.Notes.SetState(ctx, other.ID, model.NoteDone, web.ID))
+
+	link := func(id string) string { return `href="/runs/` + id + `" title="The run` }
+	admin := f.page(t, asAdmin, "/notes")
+	assert.Equal(t, 2, strings.Count(admin, link(internal.ID)), "the note and the reply")
+	assert.Contains(t, admin, link(web.ID))
+	ops := f.page(t, asOps, "/notes")
+	assert.NotContains(t, ops, link(internal.ID))
+	assert.Contains(t, ops, "Tidied.")
+	assert.Contains(t, ops, link(web.ID))
 }

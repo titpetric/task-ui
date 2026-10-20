@@ -92,6 +92,9 @@ func (h *Handlers) listProjects(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"entries": entries, "projects": projects})
 }
 
+// internalRefused refuses a project in the internal namespace.
+const internalRefused = "internal is task-ui's own namespace: name the folder otherwise"
+
 // folderIDFromURL derives a folder name from a repository URL.
 func folderIDFromURL(repo string) string {
 	base := strings.TrimSuffix(strings.TrimRight(repo, "/"), ".git")
@@ -122,6 +125,10 @@ func (h *Handlers) cloneProject(w http.ResponseWriter, r *http.Request) {
 	}
 	if !folder.ValidID(req.ID) {
 		fail(w, http.StatusBadRequest, "the folder name may hold letters, digits, dots, dashes and underscores")
+		return
+	}
+	if model.IsInternal(req.ID) {
+		fail(w, http.StatusBadRequest, internalRefused)
 		return
 	}
 	dir := filepath.Join(h.opts.Root, req.ID)
@@ -164,6 +171,10 @@ func (h *Handlers) updateProject(w http.ResponseWriter, r *http.Request) {
 	id := folderParam(r)
 	if !folder.ValidID(id) {
 		fail(w, http.StatusBadRequest, "invalid folder name")
+		return
+	}
+	if model.IsInternal(id) {
+		fail(w, http.StatusBadRequest, internalRefused)
 		return
 	}
 	var req ProjectRequest

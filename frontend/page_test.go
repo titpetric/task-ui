@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/titpetric/task-ui/agent"
 	"github.com/titpetric/task-ui/internal/assert"
 	"github.com/titpetric/task-ui/model"
 )
@@ -99,5 +100,28 @@ func TestPage_AdminOnly(t *testing.T) {
 		res := f.get(t, asOps, path)
 		assert.Equal(t, http.StatusForbidden, res.Status, path)
 		assert.Contains(t, res.Body, "Settings are for admins.")
+	}
+}
+
+// The internal folder is the admins': in the sidebar, on the dashboard
+// and at /f/internal, with its three jobs. Nobody else finds it.
+func TestPage_internal(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	f.opts.Catalogue.(catalogue)[model.Internal] = agent.Folder(f.root, "claude")
+
+	home := f.page(t, asAdmin, "/")
+	assert.Contains(t, home, `href="/f/internal"`)
+	assert.Contains(t, home, "claude-note")
+	page := f.page(t, asAdmin, "/f/internal")
+	for _, job := range []string{"claude-note", "claude-prompt", "claude"} {
+		assert.Contains(t, page, `href="/f/internal/`+job+`"`)
+		assert.Contains(t, f.page(t, asAdmin, "/f/internal/"+job), "Claude Code")
+	}
+
+	for _, user := range []string{asOps, asViewer, asLimited} {
+		assert.NotContains(t, f.page(t, user, "/"), `/f/internal`, user)
+		assert.Equal(t, http.StatusNotFound, f.get(t, user, "/f/internal").Status, user)
+		assert.Equal(t, http.StatusNotFound, f.get(t, user, "/f/internal/claude-note").Status, user)
 	}
 }
