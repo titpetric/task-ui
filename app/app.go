@@ -166,6 +166,10 @@ func (a *App) wire(version string) error {
 	workflowRuns := storage.NewWorkflowRunStorage(db)
 	g := &git.Git{SSHDir: cfg.SSHDir}
 	keys := &sshkey.Store{Dir: cfg.SSHDir}
+	var homeKeys *sshkey.Store
+	if dir := filepath.Join(home(), ".ssh"); filepath.Clean(dir) != filepath.Clean(cfg.SSHDir) {
+		homeKeys = &sshkey.Store{Dir: dir}
+	}
 	keyPolicies := storage.NewSSHKeyPolicyStorage(db)
 	secrets := secret.New(storage.NewSecretStorage(db), secret.NewVault(keys))
 	env := envfile.New(storage.NewEnvFileStorage(db), secrets)
@@ -224,7 +228,7 @@ func (a *App) wire(version string) error {
 	pages, err := frontend.New(frontend.Options{
 		Guard: a.Guard, Auth: access.NewAuthenticator(a.Users, a.Emails, a.Passwords), Users: a.Users, Projects: projects, Runs: runs, Artifacts: artifacts, Schedules: schedules, Secrets: secrets,
 		Workflows: workflows, WorkflowRuns: workflowRuns, Flows: a.Workflows,
-		Runner: a.Runner, Catalogue: a.Catalogue, Git: g, Keys: keys, KeyPolicies: keyPolicies, Env: env, Recordings: recordings, Root: cfg.Root, Version: version, Now: cfg.Clock(),
+		Runner: a.Runner, Catalogue: a.Catalogue, Git: g, Keys: keys, HomeKeys: homeKeys, KeyPolicies: keyPolicies, Env: env, Recordings: recordings, Root: cfg.Root, Version: version, Now: cfg.Clock(),
 		ArtifactStore: store, Disk: &diskusage.Meter{TTL: 10 * time.Minute}, Board: a.Board,
 		Integrations: integrations, Hosts: hosts,
 		SSH: prober,

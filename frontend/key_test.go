@@ -142,3 +142,17 @@ func TestKeys_ForAUser(t *testing.T) {
 	viewer := f.page(t, asViewer, "/keys")
 	assert.Contains(t, viewer, "No key is given to you or your role")
 }
+
+// The server user's own keys, in its ~/.ssh, show apart and read-only:
+// copy, no edit or delete.
+func TestKeys_HomeKeys(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	assert.NotContains(t, f.page(t, asAdmin, "/settings/keys"), "Server user's keys")
+	_, err := f.opts.HomeKeys.Generate("ed25519", "root@task")
+	assert.NoError(t, err)
+	body := f.page(t, asAdmin, "/settings/keys")
+	assert.Contains(t, body, "Server user's keys <small>"+f.opts.HomeKeys.Dir+"</small>")
+	assert.Contains(t, body, `data-copy="ssh-ed25519`)
+	assert.NotContains(t, body, `data-delete="/api/keys/id_ed25519"`)
+}

@@ -103,6 +103,9 @@ type Page struct {
 	Project *model.Project
 	Keys    []sshkey.Key
 	KeysDir string
+	// HomeKeys are the key pairs in ~/.ssh of the user task-ui runs as.
+	HomeKeys    []sshkey.Key
+	HomeKeysDir string
 	// KeyFolders are the projects' .ssh/ folders with keys in them.
 	KeyFolders []KeyFolder
 	// KeyPolicies are the roles whose runs get each instance key, by

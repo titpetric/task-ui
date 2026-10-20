@@ -101,6 +101,11 @@ encrypt the secrets.
   out of `~/.ssh`, so `ssh` in a job does not find them by default.
 - A project with private keys in its `.ssh/` folder gets a warning: runs
   do not load them. Upload a key it needs here and grant it by policy.
+- **Server user's keys** lists the pairs in `~/.ssh` of the user task-ui
+  runs as, when that is not `TASK_UI_SSH_DIR`. `ssh` and git take them by
+  default, in every run, for git remotes and for the inventory's logins.
+  The page shows them read-only, with the copy button: they come with the
+  server or its image, and change there.
 
 ## Integrations
 
