@@ -52,7 +52,29 @@
 	</div>
 </section>
 {{- else }}
+{{- if not $.SubFolders }}
 <div class="alert">Nothing to run was found in this folder: no pipeline file, Makefile, package scripts or scripts folder.</div>
+{{- end }}
+{{- end }}
+
+{{- with $.SubFolders }}
+<section class="block">
+	<h3>Folders</h3>
+	<div class="table-wrap">
+	<table class="table">
+		<thead><tr><th>Folder</th><th>Jobs</th><th class="hide-sm">Sources</th></tr></thead>
+		<tbody>
+		{{- range . }}
+			<tr>
+				<td class="key nowrap"><svg class="ic dir"><use href="#i-folder"/></svg> <a href="/f/{{ .ID }}">{{ .Title }}</a></td>
+				<td class="nowrap">{{ len .Jobs }}</td>
+				<td class="hide-sm">{{ range .Sources }}<span class="badge">{{ .Kind }}</span> {{ end }}{{ with .Error }}<span class="badge bad" title="{{ . }}">error</span>{{ end }}</td>
+			</tr>
+		{{- end }}
+		</tbody>
+	</table>
+	</div>
+</section>
 {{- end }}
 
 <section class="block">

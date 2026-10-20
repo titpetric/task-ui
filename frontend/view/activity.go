@@ -117,8 +117,12 @@ type Activity struct {
 	Total     int
 	Failed    int
 	Median    time.Duration
-	// Spent is the time the finished runs took, together.
+	// Spent is the time the finished runs took, together; Fastest,
+	// Mean and Slowest are the shortest, the mean and the longest of them.
 	Spent     time.Duration
+	Fastest   time.Duration
+	Mean      time.Duration
+	Slowest   time.Duration
 	Durations *ActivitySpark
 }
 
@@ -179,6 +183,10 @@ func NewActivity(runs []ActivityRun, now time.Time, days int) *Activity {
 			hour.Other++
 		}
 		if run.State != model.StateRunning {
+			if len(finished) == 0 || run.Elapsed < a.Fastest {
+				a.Fastest = run.Elapsed
+			}
+			a.Slowest = max(a.Slowest, run.Elapsed)
 			finished = append(finished, run)
 			a.Spent += run.Elapsed
 			day.add(run.Elapsed)
@@ -203,6 +211,9 @@ func NewActivity(runs []ActivityRun, now time.Time, days int) *Activity {
 	}
 	sort.SliceStable(finished, func(i, j int) bool { return finished[i].StartedAt.Before(finished[j].StartedAt) })
 	a.Median = median(finished)
+	if len(finished) > 0 {
+		a.Mean = a.Spent / time.Duration(len(finished))
+	}
 	if len(finished) > ActivityDurations {
 		finished = finished[len(finished)-ActivityDurations:]
 	}

@@ -482,10 +482,10 @@
      on the line hovers its counts. */}}
 {{- define "activity" }}
 <div class="activity">
-	<p class="activity-sum">{{ .Total }} run{{ if ne .Total 1 }}s{{ end }} in {{ len .Days }} days{{ if .Failed }} · <span class="bad">{{ .Failed }} failed</span>{{ end }}{{ if .Median }} · median {{ duration .Median }} · total {{ duration .Spent }}{{ end }}<span class="activity-key"><i class="ok"></i>runs <i class="line avg"></i>average <i class="line max"></i>slowest <i class="line min"></i>fastest</span></p>
+	<p class="activity-sum">{{ .Total }} run{{ if ne .Total 1 }}s{{ end }} in {{ len .Days }} days{{ if .Failed }} · <span class="bad">{{ .Failed }} failed</span>{{ end }}{{ if .Median }} · median {{ duration .Median }}{{ end }}<span class="activity-key"><i class="ok"></i>runs <i class="line avg"></i>average <i class="line max"></i>slowest <i class="line min"></i>fastest</span></p>
 	<div class="activity-charts">
 		<figure class="activity-chart">
-			<figcaption class="activity-title"><span>Per day, the last {{ len .Days }} days</span>{{ with $.DayLines }}<span class="faint">slowest {{ duration .Slowest }}</span>{{ end }}</figcaption>
+			<figcaption class="activity-title"><span>Per day, the last {{ len .Days }} days</span>{{ if .Spent }}<span class="faint" title="The finished runs: the fastest, the mean, the slowest and their time together">min {{ duration .Fastest }} · avg {{ duration .Mean }} · max {{ duration .Slowest }} · total {{ duration .Spent }}</span>{{ end }}</figcaption>
 			<div class="activity-bars" style="--n: {{ len .Days }}" role="img" aria-label="Runs per day, the last {{ len .Days }} days">
 				{{- $last := sub (len .Days) 4 }}
 				{{- range $i, $b := .Days }}{{ with $b }}
@@ -496,7 +496,7 @@
 			<div class="activity-axis">{{ range .DayTicks }}<span style="left: {{ .At }}%">{{ .Label }}</span>{{ end }}</div>
 		</figure>
 		<figure class="activity-chart hours">
-			<figcaption class="activity-title"><span>Per hour of the day</span>{{ with $.HourLines }}<span class="faint">slowest {{ duration .Slowest }}</span>{{ end }}</figcaption>
+			<figcaption class="activity-title"><span>Per hour of the day</span></figcaption>
 			<div class="activity-bars" style="--n: 24" role="img" aria-label="Runs per hour of the day">
 				{{- range $i, $b := .Hours }}{{ with $b }}
 				<span class="tip{{ if lt $i 4 }} tip-start{{ else if ge $i 20 }} tip-end{{ end }}" data-tip="{{ .Title }}" aria-label="{{ .Title }}">{{ if .OtherStyle }}<i class="other" style="{{ .OtherStyle }}"></i>{{ end }}{{ if .FailedStyle }}<i class="bad" style="{{ .FailedStyle }}"></i>{{ end }}{{ if .OKStyle }}<i class="ok" style="{{ .OKStyle }}"></i>{{ end }}</span>

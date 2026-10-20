@@ -85,6 +85,11 @@ func (h *Handlers) folder(w http.ResponseWriter, r *http.Request, f *folder.Fold
 	}
 	p.Schedules = h.visibleSchedules(r, f.ID, "")
 	p.Last = h.lastRuns(r, f)
+	for _, sub := range p.Folders {
+		if rest, ok := strings.CutPrefix(sub.ID, f.ID+"/"); ok && !strings.Contains(rest, "/") {
+			p.SubFolders = append(p.SubFolders, sub)
+		}
+	}
 	h.render(w, http.StatusOK, "folder", p)
 }
 

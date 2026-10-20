@@ -582,6 +582,204 @@
     select.addEventListener("change", function () { narrow(select); });
   });
 
+  // ------------------------------------------------------------- dropdowns
+
+  // Every select gets a dropdown drawn in the page's own style: a button
+  // showing the choice, and a list under it. The select stays in the
+  // form, hidden, so forms, validation and change handlers read it as
+  // before; the dropdown follows its options, its value and whether it is
+  // hidden, as scripts change them. data-native keeps a select as it is.
+  var openDropdown = null;
+
+  function enhanceSelect(select) {
+    if (select.multiple || select.hasAttribute("data-native") || select.closest(".dd")) return;
+    var wrap = document.createElement("div");
+    wrap.className = "dd";
+    select.parentNode.insertBefore(wrap, select);
+    wrap.appendChild(select);
+    select.tabIndex = -1;
+    select.setAttribute("aria-hidden", "true");
+
+    var button = document.createElement("button");
+    button.type = "button";
+    button.className = "dd-button";
+    button.setAttribute("aria-haspopup", "listbox");
+    button.setAttribute("aria-expanded", "false");
+    var label = select.getAttribute("aria-label") || (select.id && document.querySelector('label[for="' + select.id + '"]') || {}).textContent;
+    if (label) button.setAttribute("aria-label", label.trim());
+    var text = document.createElement("span");
+    text.className = "dd-text";
+    button.appendChild(text);
+    var chev = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    chev.setAttribute("class", "ic dd-chev");
+    var use = document.createElementNS("http://www.w3.org/2000/svg", "use");
+    use.setAttribute("href", "#i-chev");
+    chev.appendChild(use);
+    button.appendChild(chev);
+    wrap.appendChild(button);
+
+    var list = document.createElement("div");
+    list.className = "dd-list";
+    list.setAttribute("role", "listbox");
+    list.hidden = true;
+    wrap.appendChild(list);
+
+    var active = -1;
+    var typed = "", typedAt = 0;
+
+    function render() {
+      var picked = select.options[select.selectedIndex];
+      text.textContent = picked ? picked.textContent : "";
+      wrap.hidden = select.hidden;
+      button.disabled = select.disabled;
+      if (!list.hidden) fill();
+    }
+    function fill() {
+      list.innerHTML = "";
+      Array.prototype.forEach.call(select.children, function (child) {
+        if (child.tagName === "OPTGROUP") {
+          var head = document.createElement("div");
+          head.className = "dd-group";
+          head.textContent = child.label;
+          list.appendChild(head);
+          Array.prototype.forEach.call(child.children, addOption);
+        } else {
+          addOption(child);
+        }
+      });
+      mark();
+    }
+    function addOption(option) {
+      var item = document.createElement("div");
+      item.className = "dd-option";
+      item.setAttribute("role", "option");
+      item.dataset.index = option.index;
+      item.textContent = option.textContent;
+      if (option.disabled) item.setAttribute("aria-disabled", "true");
+      list.appendChild(item);
+    }
+    function items() {
+      return Array.prototype.slice.call(list.querySelectorAll(".dd-option:not([aria-disabled])"));
+    }
+    function mark() {
+      Array.prototype.forEach.call(list.querySelectorAll(".dd-option"), function (item) {
+        var index = Number(item.dataset.index);
+        item.setAttribute("aria-selected", index === select.selectedIndex ? "true" : "false");
+        item.classList.toggle("active", index === active);
+        if (index === active) item.scrollIntoView({ block: "nearest" });
+      });
+    }
+    function open() {
+      if (openDropdown && openDropdown !== close) openDropdown();
+      fill();
+      active = select.selectedIndex;
+      list.hidden = false;
+      wrap.classList.add("open");
+      button.setAttribute("aria-expanded", "true");
+      // Opens upward when the space under it is short of the list.
+      var rect = button.getBoundingClientRect();
+      wrap.classList.toggle("up", window.innerHeight - rect.bottom < Math.min(list.scrollHeight, 288) + 8 && rect.top > window.innerHeight - rect.bottom);
+      mark();
+      openDropdown = close;
+    }
+    function close() {
+      list.hidden = true;
+      wrap.classList.remove("open", "up");
+      button.setAttribute("aria-expanded", "false");
+      if (openDropdown === close) openDropdown = null;
+    }
+    function choose(index) {
+      if (index < 0) return;
+      var changed = select.selectedIndex !== index;
+      select.selectedIndex = index;
+      close();
+      render();
+      button.focus();
+      if (changed) {
+        select.dispatchEvent(new Event("input", { bubbles: true }));
+        select.dispatchEvent(new Event("change", { bubbles: true }));
+      }
+    }
+    function move(step) {
+      var all = items();
+      if (!all.length) return;
+      var at = all.findIndex(function (item) { return Number(item.dataset.index) === active; });
+      at = at < 0 ? 0 : Math.max(0, Math.min(all.length - 1, at + step));
+      active = Number(all[at].dataset.index);
+      mark();
+    }
+
+    button.addEventListener("click", function () {
+      if (list.hidden) open(); else close();
+    });
+    list.addEventListener("mousedown", function (event) { event.preventDefault(); });
+    list.addEventListener("click", function (event) {
+      var item = event.target.closest(".dd-option");
+      if (item && !item.hasAttribute("aria-disabled")) choose(Number(item.dataset.index));
+    });
+    list.addEventListener("mousemove", function (event) {
+      var item = event.target.closest(".dd-option");
+      if (item && Number(item.dataset.index) !== active) { active = Number(item.dataset.index); mark(); }
+    });
+    button.addEventListener("keydown", function (event) {
+      var key = event.key;
+      if (key === "ArrowDown" || key === "ArrowUp") {
+        event.preventDefault();
+        if (list.hidden) { open(); return; }
+        move(key === "ArrowDown" ? 1 : -1);
+      } else if (key === "Home" || key === "End") {
+        if (list.hidden) return;
+        event.preventDefault();
+        var all = items();
+        if (all.length) { active = Number(all[key === "Home" ? 0 : all.length - 1].dataset.index); mark(); }
+      } else if (key === "Enter" || key === " ") {
+        if (list.hidden) return;
+        event.preventDefault();
+        choose(active);
+      } else if (key === "Escape") {
+        if (list.hidden) return;
+        event.preventDefault();
+        event.stopPropagation();
+        close();
+      } else if (key === "Tab") {
+        close();
+      } else if (key.length === 1 && !event.ctrlKey && !event.metaKey && !event.altKey) {
+        // Typing jumps to the first option that starts with what was typed.
+        var now = Date.now();
+        typed = (now - typedAt > 700 ? "" : typed) + key.toLowerCase();
+        typedAt = now;
+        var hit = Array.prototype.find.call(select.options, function (o) { return !o.disabled && o.textContent.trim().toLowerCase().indexOf(typed) === 0; });
+        if (!hit) return;
+        if (list.hidden) choose(hit.index);
+        else { active = hit.index; mark(); }
+      }
+    });
+    // A label pointing at the select, or a script focusing it, focuses
+    // the dropdown; the form's own reset puts the shown choice back.
+    select.addEventListener("focus", function () { button.focus(); });
+    select.addEventListener("change", render);
+    if (select.form) select.form.addEventListener("reset", function () { setTimeout(render, 0); });
+    new MutationObserver(render).observe(select, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ["hidden", "disabled"] });
+    select.dropdown = render;
+    render();
+  }
+
+  document.addEventListener("mousedown", function (event) {
+    if (openDropdown && !event.target.closest(".dd.open")) openDropdown();
+  });
+  document.querySelectorAll("select").forEach(enhanceSelect);
+  // Selects that arrive later, a cloned form row or a window's content,
+  // get theirs on arrival.
+  new MutationObserver(function (records) {
+    records.forEach(function (record) {
+      record.addedNodes.forEach(function (node) {
+        if (node.nodeType !== 1) return;
+        if (node.tagName === "SELECT") enhanceSelect(node);
+        else node.querySelectorAll && node.querySelectorAll("select").forEach(enhanceSelect);
+      });
+    });
+  }).observe(document.body, { childList: true, subtree: true });
+
   // ------------------------------------------------------------- workflows
 
   // A step's folder select also lists the workflows, as workflow:<id>.
@@ -614,6 +812,7 @@
       if (option.dataset.folder === folder.value) job.appendChild(option);
     });
     if (picked && Array.prototype.some.call(job.options, function (o) { return o.value === picked; })) job.value = picked;
+    if (job.dropdown) job.dropdown();
   }
 
   // stepTools enables the move buttons that have somewhere to go, and
@@ -645,6 +844,7 @@
         // A new step starts in the folder of the one before it.
         if (last) fresh.querySelector("[data-step-folder]").value = last.querySelector("[data-step-folder]").value;
         list.appendChild(fresh);
+        fresh.querySelectorAll("select").forEach(enhanceSelect);
         narrowStep(fresh);
         fresh.querySelector("[data-step-job]").focus();
       } else if (btn.hasAttribute("data-step-up") && row.previousElementSibling) {
