@@ -15,124 +15,124 @@
   margin: 0;
   padding: 0.2rem 0 0.2rem 0.2rem;
   list-style: none;
-}
 
-.pipeline .node {
-  position: relative;
-  display: flex;
-  gap: 0.8rem;
-  padding: 0 0 1.1rem;
-}
+  & .node {
+    position: relative;
+    display: flex;
+    gap: 0.8rem;
+    padding: 0 0 1.1rem;
 
-.pipeline .node:last-child {
-  padding-bottom: 0;
-}
+    &:last-child {
+      padding-bottom: 0;
+    }
+  }
 
-.pipeline .rail {
-  position: relative;
-  flex: none;
-  display: flex;
-  justify-content: center;
-  width: 1rem;
-}
+  & .rail {
+    position: relative;
+    flex: none;
+    display: flex;
+    justify-content: center;
+    width: 1rem;
+  }
 
-.pipeline .node:not(:last-child) .rail::after {
-  content: "";
-  position: absolute;
-  top: 1.1rem;
-  bottom: -1.1rem;
-  left: calc(50% - 1px);
-  border-left: 2px solid var(--line);
-}
+  & .node:not(:last-child) .rail::after {
+    content: "";
+    position: absolute;
+    top: 1.1rem;
+    bottom: -1.1rem;
+    left: calc(50% - 1px);
+    border-left: 2px solid var(--line);
+  }
 
-.pipeline .rail .dot {
-  width: 0.7rem;
-  height: 0.7rem;
-  margin-top: 0.3rem;
-}
+  & .rail .dot {
+    width: 0.7rem;
+    height: 0.7rem;
+    margin-top: 0.3rem;
+  }
 
-.pipeline .what {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  gap: 0.1rem;
-  min-width: 0;
-}
+  & .what {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 0.1rem;
+    min-width: 0;
+  }
 
-/* The step's terminal, its last screen, under its name: a tile like
-   the dashboard's, opening the run. */
-.pipeline .what .frame {
-  max-width: 60rem;
-  margin-top: 0.4rem;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-}
+  /* The step's terminal, its last screen, under its name: a tile like
+     the dashboard's, opening the run. */
+  & .what .frame {
+    max-width: 60rem;
+    margin-top: 0.4rem;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
 
-.pipeline .what .frame:empty {
-  display: none;
-}
+    &:empty {
+      display: none;
+    }
+  }
 
-/* The step's name, with Expand on its row at the terminal's right edge. */
-.pipeline .what .step-head {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  max-width: 60rem;
-}
+  /* The step's name, with Expand on its row at the terminal's right edge. */
+  & .what .step-head {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    max-width: 60rem;
 
-.pipeline .what .step-head > a {
-  flex: 1;
-  min-width: 0;
-}
+    & > a {
+      flex: 1;
+      min-width: 0;
+    }
 
-.pipeline .what .step-head .btn .ic {
-  width: 0.8rem;
-  height: 0.8rem;
-}
+    & .btn .ic {
+      width: 0.8rem;
+      height: 0.8rem;
+    }
+  }
 
-/* The whole output scrolls inside its box past a screenful or two. */
-.pipeline .what .frame.expanded {
-  max-height: 70vh;
-  overflow-y: auto;
-}
+  /* The whole output scrolls inside its box past a screenful or two. */
+  & .what .frame.expanded {
+    max-height: 70vh;
+    overflow-y: auto;
+  }
 
-/* The chain of a workflow a step ran, under that step. */
-.pipeline.sub {
-  margin-top: 0.5rem;
-  padding: 0;
-}
+  /* The chain of a workflow a step ran, under that step. */
+  &.sub {
+    margin-top: 0.5rem;
+    padding: 0;
 
-.pipeline.sub:empty {
-  display: none;
-}
+    &:empty {
+      display: none;
+    }
 
-.pipeline.sub .node {
-  padding-bottom: 0.8rem;
-}
+    & .node {
+      padding-bottom: 0.8rem;
+    }
 
-.pipeline.sub .rail .dot {
-  width: 0.55rem;
-  height: 0.55rem;
-  margin-top: 0.35rem;
-}
+    & .rail .dot {
+      width: 0.55rem;
+      height: 0.55rem;
+      margin-top: 0.35rem;
+    }
+  }
 
-.pipeline .what a {
-  color: var(--text);
-}
+  & .what a {
+    color: var(--text);
 
-.pipeline .what a .ic {
-  width: 0.9rem;
-  height: 0.9rem;
-  margin-right: 0.3rem;
-  vertical-align: -0.1rem;
-}
+    & .ic {
+      width: 0.9rem;
+      height: 0.9rem;
+      margin-inline-end: 0.3rem;
+      vertical-align: -0.1rem;
+    }
+  }
 
-.pipeline .what small {
-  color: var(--text-dim);
-}
+  & .what small {
+    color: var(--text-dim);
+  }
 
-.pipeline .node.running .what a {
-  color: var(--signal);
+  & .node.running .what a {
+    color: var(--signal);
+  }
 }
 
 .workflow-form .steps {
@@ -157,7 +157,7 @@
   min-width: 1.4rem;
   color: var(--text-faint);
   font-variant-numeric: tabular-nums;
-  text-align: right;
+  text-align: end;
 }
 
 .workflow-form .step-tools {

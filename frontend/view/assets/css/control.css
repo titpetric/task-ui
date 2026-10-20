@@ -1,7 +1,6 @@
 /* The control centre: a folder a row, a shared job a column, a button
    in each cell the folder has the job for. */
-.table.control th.col,
-.table.control td.col {
+.table.control :is(th, td).col {
   width: 1%;
   text-align: center;
   white-space: nowrap;
@@ -18,13 +17,11 @@
    and the rows only as tall as a button. The folder's name keeps its
    room on the left. */
 .table.control td {
-  padding-top: 0.2rem;
-  padding-bottom: 0.2rem;
+  padding-block: 0.2rem;
 }
 
 .table.control td.col {
-  padding-left: 0.3rem;
-  padding-right: 0.3rem;
+  padding-inline: 0.3rem;
 }
 
 .table.control th.col > span {
@@ -53,10 +50,10 @@
 
 .cc-more > summary {
   list-style: none;
-}
 
-.cc-more > summary::-webkit-details-marker {
-  display: none;
+  &::-webkit-details-marker {
+    display: none;
+  }
 }
 
 .cc-more:has(.cc.running) > summary {
@@ -80,22 +77,22 @@
   border: 1px solid var(--line-2);
   border-radius: var(--radius);
   background: var(--ink-1);
-  box-shadow: 0 0.75rem 2rem rgba(0, 0, 0, 0.35);
-}
+  box-shadow: var(--shadow-pop);
 
-.cc-menu .cc {
-  justify-content: flex-start;
-  width: 100%;
-  height: 1.9rem;
-  border-color: transparent;
-  background: transparent;
-  text-align: left;
-}
+  & .cc {
+    justify-content: flex-start;
+    width: 100%;
+    height: 1.9rem;
+    border-color: transparent;
+    background: transparent;
+    text-align: start;
 
-.cc-menu .cc span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+    & span {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  }
 }
 
 .cc {
@@ -111,59 +108,59 @@
   background: var(--cc-wash, transparent);
   color: var(--cc, var(--text-dim));
   font: inherit;
-  font-size: 0.78rem;
+  font-size: var(--fs-button);
   cursor: pointer;
-}
 
-.cc .ic {
-  width: 0.75rem;
-  height: 0.75rem;
-}
+  & .ic {
+    width: 0.75rem;
+    height: 0.75rem;
+  }
 
-/* A job's button without a name is a circle. */
-.cc:not(.named) {
-  width: 1.8rem;
-  height: 1.8rem;
-  padding: 0;
-  border-radius: 50%;
-}
+  /* A job's button without a name is a circle. */
+  &:not(.named) {
+    width: 1.8rem;
+    height: 1.8rem;
+    padding: 0;
+    border-radius: var(--radius-round);
+  }
 
-/* The colour of the job's last run: green when it went well, red when it
-   failed, was stopped or killed, grey when the job never ran. */
-.cc.ok {
-  --cc: var(--ok);
-  --cc-line: var(--ok);
-  --cc-wash: var(--ok-wash);
-}
+  /* The colour of the job's last run: green when it went well, red when it
+     failed, was stopped or killed, grey when the job never ran. */
+  &.ok {
+    --cc: var(--ok);
+    --cc-line: var(--ok);
+    --cc-wash: var(--ok-wash);
+  }
 
-.cc.bad {
-  --cc: var(--bad);
-  --cc-line: var(--bad);
-  --cc-wash: var(--bad-wash);
-}
+  &.bad {
+    --cc: var(--bad);
+    --cc-line: var(--bad);
+    --cc-wash: var(--bad-wash);
+  }
 
-.cc.never {
-  --cc: var(--text-faint);
-}
+  &.never {
+    --cc: var(--text-faint);
+  }
 
-.cc:hover {
-  color: var(--signal-ink);
-  background: var(--signal);
-  border-color: var(--signal);
-  text-decoration: none;
-}
+  &:hover {
+    color: var(--signal-ink);
+    background: var(--signal);
+    border-color: var(--signal);
+    text-decoration: none;
+  }
 
-.cc.running {
-  color: var(--signal);
-  border-color: var(--signal);
-}
+  &.running {
+    color: var(--signal);
+    border-color: var(--signal);
+  }
 
-.cc.idle {
-  border-color: transparent;
-  cursor: default;
-}
+  &.idle {
+    border-color: transparent;
+    cursor: default;
 
-.cc.idle:hover {
-  color: var(--cc, var(--text-dim));
-  background: var(--cc-wash, transparent);
+    &:hover {
+      color: var(--cc, var(--text-dim));
+      background: var(--cc-wash, transparent);
+    }
+  }
 }
