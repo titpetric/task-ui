@@ -2743,9 +2743,14 @@ pre.output {
 }
 
 /* The host inventory: a share as a short bar, warm past 75%, high past 90%;
-   the counts and sizes right-aligned, so the digits line up. */
-.table.hosts .num {
-  text-align: right;
+   the cores centred, the sizes left-aligned, digits of one width. */
+.table.hosts .center {
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.table.hosts .size {
+  text-align: left;
   font-variant-numeric: tabular-nums;
 }
 
