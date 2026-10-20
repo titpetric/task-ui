@@ -12,7 +12,7 @@ import (
 )
 
 // fakeSSH is an ssh that signs in as debian to a, as root to b, slowly to
-// c, and to nothing else; it records the keys it was handed.
+// c, and to nothing else; it records its arguments.
 func fakeSSH(t *testing.T) (string, string) {
 	t.Helper()
 	dir := t.TempDir()
