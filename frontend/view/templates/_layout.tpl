@@ -453,20 +453,23 @@
      a user is named for them, id_<type>_<user>, and given to them. */}}
 {{- define "keyfor" }}
 <div class="field">
-	<label for="key-for">For <span class="faint">a user's key is named for them and goes to their runs</span></label>
-	<select id="key-for" name="users" data-type="list" data-key-for>
-		<option value="">the instance, no one by name</option>
-		{{- range . }}
-		<option value="{{ .Name }}">{{ .Name }} ({{ .Role }})</option>
+	<span class="label">Who gets it <span class="faint">a key for a user is named for them; roles get it through the ssh agent of their runs</span></span>
+	<div class="checks who">
+		<label class="faint" for="key-for">User</label>
+		<select id="key-for" name="users" data-type="list" data-key-for>
+			<option value="">none, a key of the instance</option>
+			{{- range . }}
+			<option value="{{ .Name }}">{{ .Name }} ({{ .Role }})</option>
+			{{- end }}
+		</select>
+		<input type="hidden" name="name" value="">
+	</div>
+	<div class="checks who">
+		<span class="faint">Roles</span>
+		{{- range roles }}
+		<label class="check"><input type="checkbox" name="policies" value="{{ . }}" data-type="set"> {{ . }}</label>
 		{{- end }}
-	</select>
-	<input type="hidden" name="name" value="">
-</div>
-<div class="field">
-	<label>Roles <span class="faint">whose runs get it too, through their ssh agent</span></label>
-	{{- range roles }}
-	<label class="check"><input type="checkbox" name="policies" value="{{ . }}" data-type="set"> {{ . }}</label>
-	{{- end }}
+	</div>
 </div>
 {{- end }}
 
@@ -491,15 +494,21 @@
 {{- define "keypolicies" }}
 {{- $roles := index . 0 }}{{ $users := index . 1 }}{{ $all := index . 2 }}
 <div class="field">
-	<label>Policies <span class="faint">whose runs get this key, through the run's ssh agent: roles, and users by name; a key can have several</span></label>
-	{{- range roles }}
-	{{- $role := . }}{{ $on := false }}{{ range $roles }}{{ if eq . $role }}{{ $on = true }}{{ end }}{{ end }}
-	<label class="check"><input type="checkbox" name="policies" value="{{ $role }}" data-type="set"{{ if $on }} checked{{ end }}> {{ $role }}{{ if eq $role "viewer" }} <span class="faint">reader</span>{{ end }}</label>
-	{{- end }}
-	{{- range $all }}
-	{{- $name := .Name }}{{ $on := false }}{{ range $users }}{{ if eq . $name }}{{ $on = true }}{{ end }}{{ end }}
-	<label class="check"><input type="checkbox" name="users" value="{{ $name }}" data-type="set"{{ if $on }} checked{{ end }}> <span class="avatar sm">{{ .Initials }}</span> {{ $name }} <span class="faint">{{ .Role }}</span></label>
-	{{- end }}
+	<span class="label">Who gets it <span class="faint">through the ssh agent of their runs; a key can go to several roles and users</span></span>
+	<div class="checks who">
+		<span class="faint">Roles</span>
+		{{- range roles }}
+		{{- $role := . }}{{ $on := false }}{{ range $roles }}{{ if eq . $role }}{{ $on = true }}{{ end }}{{ end }}
+		<label class="check"><input type="checkbox" name="policies" value="{{ $role }}" data-type="set"{{ if $on }} checked{{ end }}> {{ $role }}</label>
+		{{- end }}
+	</div>
+	<div class="checks who">
+		<span class="faint">Users</span>
+		{{- range $all }}
+		{{- $name := .Name }}{{ $on := false }}{{ range $users }}{{ if eq . $name }}{{ $on = true }}{{ end }}{{ end }}
+		<label class="check"><input type="checkbox" name="users" value="{{ $name }}" data-type="set"{{ if $on }} checked{{ end }}> {{ $name }} <span class="faint">{{ .Role }}</span></label>
+		{{- end }}
+	</div>
 </div>
 {{- end }}
 

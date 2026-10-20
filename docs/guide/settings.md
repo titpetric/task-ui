@@ -94,7 +94,7 @@ key that encrypts the secrets, marked **secrets**.
 - **Rotate** makes a new pair of the same type; task-ui keeps the old one as a
   backup, so the secrets still open, and writes the secrets again
   for the new key. Nobody can delete the last key that opens the secrets.
-- **Policies** are whose runs get a key: roles, and users by name. A run
+- **Who gets it** picks whose runs get a key, in a **Roles** row and a **Users** row of boxes. A run
   started by someone with one of the key's roles, or by one of its users,
   has it in the run's ssh agent, and nothing else does: that agent is the
   only way a key reaches a run. Pick them when you generate or upload a key, or later with the
