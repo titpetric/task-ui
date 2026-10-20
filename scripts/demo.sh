@@ -195,6 +195,9 @@ shot keys-upload-dark /settings/keys/upload dark
 shot secrets-dark /settings/secrets dark
 shot secret-new-dark "/settings/secrets/new?scope=infra" dark
 shot users-dark /settings/users dark
+shot user-new-dark /settings/users/new dark
+shot integrations-dark /settings/integrations dark
+shot notes-dark /notes dark
 shot envfile-dark /f/infra/env/.env dark
 shot out-of-hours-dark "/f/website#start=website/lint" dark 1440x900 2000
 shot mobile-dashboard-dark / dark 390x844

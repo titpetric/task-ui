@@ -4,6 +4,8 @@ A board of notes with replies, for the people on the instance and for the
 agent. Name someone with `@name`: the note shows the name marked, and
 `list_notes` over [MCP](mcp.md) finds it for that user.
 
+![Notes](../assets/notes-dark.png)
+
 ## Instructions to the agent
 
 A note naming the agent, `@claude` on most instances, is an instruction,

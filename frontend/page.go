@@ -48,7 +48,9 @@ func (h *Handlers) page(r *http.Request, title string) *view.Page {
 	p.SideFolders = h.sideFolders(r.Context(), p.Folders)
 	p.Running = h.running(user)
 	runs := h.visibleRuns(r.Context(), user, storage.RunFilter{Limit: 2 * recentCount})
-	p.Recents = view.GroupRecents(p.Now, view.Recents(runs, h.visibleFlowRuns(r.Context(), user, recentCount), recentCount))
+	// The headings read against the wall clock, as "ago" does; the page's
+	// clock stays fixed for a demo or a test.
+	p.Recents = view.GroupRecents(time.Now(), view.Recents(runs, h.visibleFlowRuns(r.Context(), user, recentCount), recentCount))
 	p.SideWorkflows = h.visibleWorkflows(r.Context(), p)
 	return p
 }
