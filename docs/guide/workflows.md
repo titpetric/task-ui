@@ -36,6 +36,11 @@ last runs.
   how it ended, and each step's run, which opens like any other run.
   **View** opens that run's pipeline in a window, each step with its
   state and the screen it ended on; Ctrl and a click open it as a page.
+  With the Claude Code integration set up for you, a finished run also
+  has **Summary**: Claude reads every step, its job, how it ended and the
+  end of its output, and writes what the workflow did or where and why it
+  failed. task-ui keeps the summary, as for a single run (see
+  [Runs](runs.md#the-list)).
   **Stop** on a running workflow stops the step that runs and skips the
   rest.
 

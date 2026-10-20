@@ -12,6 +12,7 @@ route or a tool only for a need these cannot serve, and states the reason.
 |-------|-----|
 | `DELETE /api/artifacts` | **Delete all** on the Artifacts page: deleting the records one by one leaves the files and their history |
 | `/api/runs/{id}/summary` | **Summary** on the Runs page: Claude's summary of a run, written once and kept |
+| `/api/workflow-runs/{id}/summary` | **Summary** on a workflow's runs: Claude's summary of every step, written once and kept |
 | `POST /api/users` | **Create user** on the Users page: the password file had no writer but `task-ui passwd` on the server |
 | `/api/artifacts/files/{path}` | The preview window: a file of the tree, rendered, with its versions, and the delete of one file, which the records cannot reach |
 | `/api/notes`, `list_notes`, `note_comment` | Notes, and instructions to the agent, which reads and reports on them over MCP |
@@ -29,6 +30,7 @@ route or a tool only for a need these cannot serve, and states the reason.
 | `WS` | `/api/runs/{id}/attach` | binary frames are output; text frames are `{"type":"input"\|"resize"\|"stop"\|"kill"}` in and `{"type":"status"}` out |
 | `GET` `DELETE` | `/api/artifacts`, `/api/artifacts/{id}` | list, download a version, delete a record; `DELETE /api/artifacts` empties the tree, its history and the records (admins) |
 | `GET` `POST` | `/api/runs/{id}/summary` | a finished run's summary: `GET` the kept one, `404` without; `POST` returns the kept one or has Claude write it from the end of the output and keeps it; `summary` as markdown, `html`, `kept` (Claude Code integration) |
+| `GET` `POST` | `/api/workflow-runs/{id}/summary` | a finished workflow run's summary, as for a run: Claude reads each step's job, state and the end of its output; `404` for a run with a step you may not see |
 | `GET` `DELETE` | `/api/artifacts/files/{path}?version=` | a file of the tree: `kind` (`image`, `markdown`, `text` or `file`), markdown as `html`, text as `text`, and its `versions`; `DELETE` takes a file or a directory out of the tree, the history keeps it (admins) |
 | `GET` `POST` `PUT` `DELETE` | `/api/schedules`, `/api/schedules/{id}` | `{folder, job, expression, enabled}` |
 | `GET` `POST` `PUT` `DELETE` | `/api/workflows`, `/api/workflows/{id}` | `{name, steps: [{folder, job}]}`; owner or admin changes |

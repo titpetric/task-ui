@@ -43,7 +43,7 @@ func TestRuns(t *testing.T) {
 	assert.NoError(t, f.opts.Integrations.Save(context.Background(), integration.Claude, map[string]string{"token": "sk-1", "who": "admin"}))
 	summed := f.page(t, asAdmin, "/runs")
 	assert.Contains(t, summed, `<tbody data-runs-table data-summarize>`)
-	assert.Contains(t, summed, `data-summary="`+deploy.ID+`" data-summary-title="private / deploy"`)
+	assert.Contains(t, summed, `data-summary="/api/runs/`+deploy.ID+`/summary" data-summary-page="/runs/`+deploy.ID+`" data-summary-title="private / deploy"`)
 	assert.NotContains(t, f.page(t, asOps, "/runs"), `data-summary=`)
 
 	limited := f.page(t, asLimited, "/runs")

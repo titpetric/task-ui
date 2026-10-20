@@ -79,6 +79,8 @@ func (h *Handlers) Routes() http.Handler {
 	r.Post("/workflows/{id}/runs", h.startWorkflow)
 	r.Get("/workflow-runs", h.listRecentWorkflowRuns)
 	r.Post("/workflow-runs/{id}/stop", h.stopWorkflowRun)
+	r.Get("/workflow-runs/{id}/summary", h.workflowRunSummary)
+	r.Post("/workflow-runs/{id}/summary", h.summarizeWorkflowRun)
 	r.Get("/sse/{topic}", h.sse)
 
 	r.Get("/integrations", h.listIntegrations)

@@ -73,8 +73,8 @@ type Page struct {
 	// by the host's address; nil leaves the SSH column out.
 	Logins map[string]string
 	// Summarize shows what Claude summarizes, Run and summarize on the
-	// Inventory and Summary on the runs: the Claude integration has a
-	// token for the user.
+	// Inventory and Summary on runs and workflow runs: the Claude
+	// integration has a token for the user.
 	Summarize bool
 
 	Runs []Run

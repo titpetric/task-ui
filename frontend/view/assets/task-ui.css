@@ -1236,7 +1236,7 @@ select {
   width: 12rem;
 }
 
-.run-head .dd {
+.run-foot .dd {
   width: auto;
   min-width: 14rem;
   max-width: 22rem;
@@ -3345,11 +3345,6 @@ dialog.run-summary .preview-doc {
   max-height: none;
   margin: 0 auto;
   overflow: visible;
-}
-
-.summary-meta {
-  margin-top: 1rem;
-  font-size: 0.75rem;
 }
 
 /* A document in the preview window: markdown as a page, text as it is. */

@@ -1058,6 +1058,18 @@
         var result = row.querySelector("[data-result]");
         result.innerHTML = "";
         result.appendChild(stateSpan(data.state, data.message));
+        // A run that ended takes Summary, where the page offers it.
+        var cell = row.querySelector("td.actions");
+        if (cell && runs.hasAttribute("data-summarize") && !cell.querySelector("[data-summary]")) {
+          var sum = el("button", "btn btn-sm", "Summary");
+          sum.type = "button";
+          sum.dataset.summary = "/api/workflow-runs/" + encodeURIComponent(data.run_id) + "/summary";
+          sum.dataset.summaryPage = location.pathname.replace(/\/$/, "") + "/runs/" + encodeURIComponent(data.run_id);
+          var heading = document.querySelector(".page-head h2");
+          sum.dataset.summaryTitle = heading ? heading.textContent : "";
+          cell.appendChild(document.createTextNode(" "));
+          cell.appendChild(sum);
+        }
       }
       if (actions) {
         var stopBtn = actions.querySelector("[data-workflow-stop]");
@@ -1347,8 +1359,9 @@
     });
   }
 
-  // Summary on a run asks Claude for a summary of its output, once: the
-  // API keeps it, and every later ask returns what it kept.
+  // Summary on a run or a workflow run asks Claude for a summary of its
+  // output, once: data-summary is the API route, which keeps it, and every
+  // later ask returns what it kept; data-summary-page is the run's page.
   var summaryDialog = document.getElementById("summary-dialog");
   if (summaryDialog) {
     var summaryText = document.getElementById("summary-text");
@@ -1357,21 +1370,22 @@
       var btn = event.target.closest("[data-summary]");
       if (!btn) return;
       event.preventDefault();
-      var id = btn.dataset.summary;
-      document.getElementById("summary-title").textContent = btn.dataset.summaryTitle || id;
-      document.getElementById("summary-run").setAttribute("href", "/runs/" + encodeURIComponent(id));
+      var meta = document.getElementById("summary-meta");
+      document.getElementById("summary-title").textContent = btn.dataset.summaryTitle || "";
+      document.getElementById("summary-run").setAttribute("href", btn.dataset.summaryPage || "#");
       summaryText.innerHTML = '<p class="faint">Claude is reading the output…</p>';
+      meta.textContent = "";
       summaryDialog.showModal();
       btn.disabled = true;
-      api("POST", "/api/runs/" + encodeURIComponent(id) + "/summary", {}).then(function (res) {
+      api("POST", btn.dataset.summary, {}).then(function (res) {
         btn.disabled = false;
         if (res.status !== 200) {
           summaryText.innerHTML = '<p class="form-error">' + escapeHTML(res.data.error || ("HTTP " + res.status)) + "</p>";
           return;
         }
         var when = res.data.created_at ? new Date(res.data.created_at).toLocaleString() : "";
-        summaryText.innerHTML = res.data.html +
-          '<p class="faint summary-meta">' + (res.data.kept ? "Kept from " : "Written ") + escapeHTML(when) + " for " + escapeHTML(res.data.user_name) + ".</p>";
+        summaryText.innerHTML = res.data.html;
+        meta.textContent = (res.data.kept ? "Kept from " : "Written ") + when + " for " + res.data.user_name + ".";
       });
     });
   }
@@ -1638,7 +1652,7 @@
           '<button type="button" class="btn-icon danger" data-kill="' + id + '" title="Kill the run" aria-label="Kill the run"><svg class="ic"><use href="#i-trash"/></svg></button>';
       }
       if (run.state !== "running" && runsTable.hasAttribute("data-summarize")) {
-        html += '<button type="button" class="btn btn-sm" data-summary="' + id + '" data-summary-title="' + escapeHTML(run.folder + " / " + run.job) +
+        html += '<button type="button" class="btn btn-sm" data-summary="/api/runs/' + id + '/summary" data-summary-page="/runs/' + id + '" data-summary-title="' + escapeHTML(run.folder + " / " + run.job) +
           '" title="Claude\'s summary of the output, written once and kept">Summary</button>';
       }
       return html;

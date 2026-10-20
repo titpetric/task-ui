@@ -48,7 +48,7 @@
 				<td class="actions" data-actions>
 					<a class="btn btn-sm" href="/runs/{{ .ID }}" data-attach="{{ .ID }}">{{ if eq .State "running" }}Attach{{ else }}View{{ end }}</a>
 					{{- if and $.Summarize (ne .State "running") }}
-					<button type="button" class="btn btn-sm" data-summary="{{ .ID }}" data-summary-title="{{ .Folder }} / {{ .Job }}" title="Claude's summary of the output, written once and kept">Summary</button>
+					<button type="button" class="btn btn-sm" data-summary="/api/runs/{{ .ID }}/summary" data-summary-page="/runs/{{ .ID }}" data-summary-title="{{ .Folder }} / {{ .Job }}" title="Claude's summary of the output, written once and kept">Summary</button>
 					{{- end }}
 					{{- if and .Live (eq .State "running") }}
 					<button type="button" class="btn-icon" data-stop="{{ .ID }}" title="Stop the run" aria-label="Stop the run"><svg class="ic"><use href="#i-stop"/></svg></button>

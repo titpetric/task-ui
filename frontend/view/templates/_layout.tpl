@@ -225,12 +225,13 @@
 	<div class="run-head">
 		<span class="label">Artifact</span>
 		<h3 id="preview-title"></h3>
-		<span class="spacer"></span>
-		<select id="preview-version" aria-label="Version" hidden></select>
+	</div>
+	<div class="run-body preview-body"><img id="preview-image" alt=""><div id="preview-doc" class="preview-doc" hidden></div></div>
+	<div class="run-foot">
+		<span class="hint"><select id="preview-version" aria-label="Version" hidden></select></span>
 		<a class="btn" id="preview-download" href="#" download>Download</a>
 		<button type="button" class="btn" id="preview-close" aria-label="Close">Close</button>
 	</div>
-	<div class="run-body preview-body"><img id="preview-image" alt=""><div id="preview-doc" class="preview-doc" hidden></div></div>
 </dialog>
 {{- /* The pipeline window: one workflow run's pipeline, fetched from its
      page. */}}
@@ -238,22 +239,27 @@
 	<div class="run-head">
 		<span class="label">Workflow run</span>
 		<h3 id="pipeline-title"></h3>
-		<span class="spacer"></span>
+	</div>
+	<div class="run-body pipeline-body" id="pipeline-body"></div>
+	<div class="run-foot">
+		<span class="hint"></span>
 		<a class="btn" id="pipeline-page" href="#">Open page</a>
 		<button type="button" class="btn" id="pipeline-close" aria-label="Close">Close</button>
 	</div>
-	<div class="run-body pipeline-body" id="pipeline-body"></div>
 </dialog>
-{{- /* The summary window: Claude's summary of a run's output. */}}
+{{- /* The summary window: Claude's summary of a run's or a workflow
+     run's output. */}}
 <dialog class="run preview run-summary" id="summary-dialog" aria-labelledby="summary-title">
 	<div class="run-head">
 		<span class="label">Summary</span>
 		<h3 id="summary-title"></h3>
-		<span class="spacer"></span>
+	</div>
+	<div class="run-body preview-body"><div id="summary-text" class="preview-doc markdown"></div></div>
+	<div class="run-foot">
+		<span class="hint" id="summary-meta"></span>
 		<a class="btn" id="summary-run" href="#">View run</a>
 		<button type="button" class="btn" id="summary-close" aria-label="Close">Close</button>
 	</div>
-	<div class="run-body preview-body"><div id="summary-text" class="preview-doc markdown"></div></div>
 </dialog>
 {{- /* The source window: a file a folder's pipeline reads, coloured, as
      large as the run window. */}}
@@ -261,10 +267,12 @@
 	<div class="run-head">
 		<span class="label">Source</span>
 		<h3 id="source-title"></h3>
-		<span class="spacer"></span>
-		<button type="button" class="btn" id="source-close" aria-label="Close">Close</button>
 	</div>
 	<div class="run-body"><pre class="code" id="source-code"></pre></div>
+	<div class="run-foot">
+		<span class="hint"></span>
+		<button type="button" class="btn" id="source-close" aria-label="Close">Close</button>
+	</div>
 </dialog>
 {{ end }}
 
