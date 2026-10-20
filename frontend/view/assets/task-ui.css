@@ -2742,6 +2742,13 @@ pre.output {
   font-variant-numeric: tabular-nums;
 }
 
+/* The host inventory: a share as a short bar, warm past 75%, high past 90%;
+   the counts and sizes right-aligned, so the digits line up. */
+.table.hosts .num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
 /* The host inventory: a share as a short bar, warm past 75%, high past 90%. */
 .meter {
   display: inline-flex;
