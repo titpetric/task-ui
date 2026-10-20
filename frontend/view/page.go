@@ -121,6 +121,10 @@ type Page struct {
 	Users      []model.User
 	// Account is the user a form edits.
 	Account *model.User
+	// FolderChoices are the boxes of the user form's folders.
+	FolderChoices []FolderChoice
+	// CanAddUsers shows Create user: the server writes a password file.
+	CanAddUsers bool
 	Root    string
 
 	// Form holds the values of a form the page shows again.

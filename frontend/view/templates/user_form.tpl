@@ -1,28 +1,43 @@
 {{ define "content" }}
 {{- $u := .Account }}
+{{- $all := or (not $u) (not $u.FolderList) }}
 <div class="page-head">
 	<div>
 		<h2>{{ .Title }}</h2>
-		<p>Limit the folders {{ $u.Name }} sees, or show them all. The name, the password and the role come from the password file and the role lists.</p>
+		{{- if $u }}
+		<p><span class="avatar sm">{{ $u.Initials }}</span> <b>{{ $u.Name }}</b>, <span class="badge{{ if $u.CanAdmin }} signal{{ end }}">{{ $u.Role }}</span>. The name and the password come from the password file, the role from <code>TASK_UI_ADMINS</code> and <code>TASK_UI_VIEWERS</code>; here you pick the folders {{ $u.Name }} sees.</p>
+		{{- else }}
+		<p>Adds a user to the password file, who can sign in at once. They are a runner unless <code>TASK_UI_ADMINS</code> or <code>TASK_UI_VIEWERS</code> names them.</p>
+		{{- end }}
 	</div>
 </div>
 
-<form class="form" data-api="/api/users/{{ $u.ID }}" data-method="PUT" data-next="/settings/users?notice=Folders+saved">
+<form class="form" data-api="/api/users{{ with $u }}/{{ .ID }}{{ end }}" data-method="{{ if $u }}PUT{{ else }}POST{{ end }}" data-next="/settings/users?notice={{ if $u }}Folders+saved{{ else }}User+created{{ end }}">
+	{{- if not $u }}
 	<div class="field">
-		<label for="u-name">Name</label>
-		<input type="text" id="u-name" value="{{ $u.Name }}" readonly>
+		<label for="u-name">Name <span class="faint">lowercase letters, digits and dashes; it also names their SSH keys</span></label>
+		<input type="text" id="u-name" name="name" required pattern="[a-z0-9][a-z0-9\-]{0,31}" spellcheck="false" autocomplete="off" autofocus>
 	</div>
 	<div class="field">
-		<label for="u-role">Role <span class="faint">from TASK_UI_ADMINS and TASK_UI_VIEWERS</span></label>
-		<input type="text" id="u-role" value="{{ $u.Role }}" readonly>
+		<label for="u-password">Password <span class="faint">at least 8 characters, stored as a bcrypt hash</span></label>
+		<input type="password" id="u-password" name="password" required minlength="8" autocomplete="new-password">
 	</div>
-	<div class="field">
-		<label for="u-folders">Folders <span class="faint">comma separated; empty shows all</span></label>
-		<input type="text" id="u-folders" name="folders" data-type="list" value="{{ join $u.FolderList ", " }}" placeholder="infra, website" spellcheck="false" autocomplete="off" autofocus>
+	{{- end }}
+	<div class="field" data-folder-pick>
+		<span class="label">Folders</span>
+		<label class="check"><input type="radio" name="scope" value="all"{{ if $all }} checked{{ end }}> All projects</label>
+		<label class="check"><input type="radio" name="scope" value="custom"{{ if not $all }} checked{{ end }}> Custom</label>
+		<div class="folder-choices">
+			{{- range .FolderChoices }}
+			<label class="check"><input type="checkbox" name="folders" value="{{ .ID }}" data-type="set"{{ if .Checked }} checked{{ end }}{{ if $all }} disabled{{ end }}> <span class="mono">{{ .ID }}</span></label>
+			{{- else }}
+			<span class="faint">No folders yet.</span>
+			{{- end }}
+		</div>
 	</div>
 	<div class="form-foot">
 		<a class="btn" href="/settings/users">Cancel</a>
-		<button class="btn btn-primary" type="submit">Save</button>
+		<button class="btn btn-primary" type="submit">{{ if $u }}Save{{ else }}Create user{{ end }}</button>
 	</div>
 </form>
 {{ end }}

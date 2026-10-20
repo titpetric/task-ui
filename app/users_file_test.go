@@ -195,3 +195,30 @@ func splitLines(s string) []string {
 func hasPrefix(s, prefix string) bool {
 	return len(s) >= len(prefix) && s[:len(prefix)] == prefix
 }
+
+// Add writes a new user to the file and storage at once; a name the file
+// holds, a bad name and a short password each get an error.
+func TestUsersFile_Add(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	users, passwords := newUsers(t)
+	f := app.NewUsersFile(htpasswdFile(t, "admin"), []string{"admin"}, nil)
+	_, _, err := f.Sync(ctx, users, passwords)
+	assert.NoError(t, err)
+
+	assert.NoError(t, f.Add(ctx, users, passwords, "alice", "correct horse"))
+	alice := mustUser(t, users, "alice")
+	assert.Equal(t, model.RoleRunner, alice.Role)
+	assert.True(t, signsIn(t, passwords, alice, "correct horse"))
+	assert.False(t, f.Changed())
+	creds, err := access.LoadHtpasswd(f.Path)
+	assert.NoError(t, err)
+	assert.Len(t, creds, 2)
+
+	assert.ErrorIs(t, f.Add(ctx, users, passwords, "alice", "another one"), app.ErrUserExists)
+	assert.Error(t, f.Add(ctx, users, passwords, "Bad:Name", "correct horse"))
+	assert.Error(t, f.Add(ctx, users, passwords, "bob", "short"))
+
+	fresh := app.NewUsersFile(filepath.Join(t.TempDir(), ".htpasswd"), nil, nil)
+	assert.NoError(t, fresh.Add(ctx, users, passwords, "carol", "correct horse"))
+}

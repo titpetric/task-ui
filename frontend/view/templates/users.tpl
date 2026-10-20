@@ -4,10 +4,15 @@
 		<h2>Users</h2>
 		<p>Who may sign in, from the password file. Viewers read history and watch runs, runners start them where the allow lists permit, admins manage the instance. What is set here is which folders a user sees.</p>
 	</div>
+	{{- if .CanAddUsers }}
+	<div class="actions">
+		<a class="btn btn-primary" href="/settings/users/new">Create user</a>
+	</div>
+	{{- end }}
 </div>
 
 <div class="alert">
-	Users live in the password file, htpasswd style, read again whenever it changes. <code>task-ui passwd &lt;user&gt;</code> adds a user or resets a password; removing the line removes the user. The roles come from <code>TASK_UI_ADMINS</code> and <code>TASK_UI_VIEWERS</code>; everyone else is a runner.
+	Users live in the password file, htpasswd style, read again whenever it changes. <b>Create user</b> adds one, as does <code>task-ui passwd &lt;user&gt;</code>, which also resets a password; removing the line removes the user. The roles come from <code>TASK_UI_ADMINS</code> and <code>TASK_UI_VIEWERS</code>; everyone else is a runner.
 </div>
 
 <div class="table-wrap">

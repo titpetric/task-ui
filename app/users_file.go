@@ -4,10 +4,13 @@ import (
 	"context"
 	"errors"
 	"os"
+	"regexp"
 	"slices"
+	"sync"
 	"time"
 
 	"github.com/titpetric/task-ui/access"
+	"github.com/titpetric/task-ui/api"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/storage"
 )
@@ -26,7 +29,47 @@ type UsersFile struct {
 	// Interval is how often Watch looks at the file. Zero is five seconds.
 	Interval time.Duration
 
+	mu       sync.Mutex
 	modified time.Time
+}
+
+// ErrUserExists reports an Add of a name the file holds.
+var ErrUserExists = api.ErrUserExists
+
+// userName is what a new user's name may hold: it names their keys too,
+// id_<type>_<name>.
+var userName = regexp.MustCompile(`^[a-z0-9][a-z0-9-]{0,31}$`)
+
+// Add puts a new user in the file, with the password hashed, and reads
+// the file again so they can sign in at once. The role comes from the
+// lists, as for any user of the file.
+func (f *UsersFile) Add(ctx context.Context, users *storage.UserStorage, passwords *storage.UserAuthPasswordStorage, name, password string) error {
+	if !userName.MatchString(name) {
+		return errors.New("a user name is lowercase letters, digits and dashes, up to 32")
+	}
+	if len(password) < 8 {
+		return errors.New("a password needs at least 8 characters")
+	}
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	creds, err := access.LoadHtpasswd(f.Path)
+	if err != nil && !errors.Is(err, os.ErrNotExist) {
+		return err
+	}
+	for _, cred := range creds {
+		if cred.Name == name {
+			return ErrUserExists
+		}
+	}
+	hash, err := access.HashPassword(password)
+	if err != nil {
+		return err
+	}
+	if err := access.SetHtpasswd(f.Path, name, hash); err != nil {
+		return err
+	}
+	_, _, err = f.sync(ctx, users, passwords)
+	return err
 }
 
 // NewUsersFile returns the file with the role lists.
@@ -51,6 +94,8 @@ func (f *UsersFile) Changed() bool {
 	if err != nil {
 		return false
 	}
+	f.mu.Lock()
+	defer f.mu.Unlock()
 	return !info.ModTime().Equal(f.modified)
 }
 
@@ -59,6 +104,13 @@ func (f *UsersFile) Changed() bool {
 // the users it does not name, with what they sign in with. It returns
 // how many users it created and removed.
 func (f *UsersFile) Sync(ctx context.Context, users *storage.UserStorage, passwords *storage.UserAuthPasswordStorage) (int, int, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return f.sync(ctx, users, passwords)
+}
+
+// sync is Sync, with the lock held.
+func (f *UsersFile) sync(ctx context.Context, users *storage.UserStorage, passwords *storage.UserAuthPasswordStorage) (int, int, error) {
 	info, err := os.Stat(f.Path)
 	if err != nil {
 		return 0, 0, err

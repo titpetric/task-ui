@@ -219,11 +219,18 @@ func (a *App) wire(version string) error {
 		return err
 	}
 
+	var addUser func(ctx context.Context, name, password string) error
+	if a.UsersFile != nil {
+		addUser = func(ctx context.Context, name, password string) error {
+			return a.UsersFile.Add(ctx, a.Users, a.Passwords, name, password)
+		}
+	}
 	apiHandlers := api.New(api.Options{
 		Users: a.Users, Projects: projects, Runs: runs, Artifacts: artifacts, ArtifactStore: store, Schedules: schedules, Secrets: secrets,
 		Workflows: workflows, WorkflowRuns: workflowRuns, Flows: a.Workflows, Events: events,
 		Runner: a.Runner, Catalogue: a.Catalogue, Git: g, Keys: keys, KeyPolicies: keyPolicies, Env: env, Recordings: recordings, Root: cfg.Root, Board: a.Board,
 		Integrations: integrations, Hosts: hosts, SSH: prober, Summarizer: &claude.Summarizer{Timeout: 3 * time.Minute},
+		AddUser: addUser,
 	})
 	pages, err := frontend.New(frontend.Options{
 		Guard: a.Guard, Auth: access.NewAuthenticator(a.Users, a.Emails, a.Passwords), Users: a.Users, Projects: projects, Runs: runs, Artifacts: artifacts, Schedules: schedules, Secrets: secrets,
@@ -231,7 +238,7 @@ func (a *App) wire(version string) error {
 		Runner: a.Runner, Catalogue: a.Catalogue, Git: g, Keys: keys, HomeKeys: homeKeys, KeyPolicies: keyPolicies, Env: env, Recordings: recordings, Root: cfg.Root, Version: version, Now: cfg.Clock(),
 		ArtifactStore: store, Disk: &diskusage.Meter{TTL: 10 * time.Minute}, Board: a.Board,
 		Integrations: integrations, Hosts: hosts,
-		SSH: prober,
+		SSH: prober, AddUsers: a.UsersFile != nil,
 	})
 	if err != nil {
 		return err

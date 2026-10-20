@@ -1,16 +1,21 @@
 package api
 
 import (
+	"errors"
 	"net/http"
+	"strings"
 
 	"github.com/titpetric/task-ui/model"
 )
 
-// UserRequest changes what the instance keeps about a user: the folders
-// they see. Names, passwords and roles come from the password file and
-// the role lists, not from here.
+// UserRequest makes a user, with a name and a password the password file
+// takes, or changes the folders a user sees. Roles come from the role
+// lists.
 type UserRequest struct {
-	Folders []string `json:"folders"`
+	// Name and Password make a new user; an edit takes only the folders.
+	Name     string   `json:"name,omitempty"`
+	Password string   `json:"password,omitempty"`
+	Folders  []string `json:"folders"`
 }
 
 // managedElsewhere is the reply to making or removing users here.
@@ -29,12 +34,47 @@ func (h *Handlers) listUsers(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"users": users})
 }
 
-// createUser says where to make users.
+// ErrUserExists is what AddUser reports for a name the password file
+// already holds.
+var ErrUserExists = errors.New("the password file already has that user")
+
+// createUser adds a user to the password file, with their folders, when
+// the server has one to write. Admins only.
 func (h *Handlers) createUser(w http.ResponseWriter, r *http.Request) {
 	if !requireAdmin(w, r) {
 		return
 	}
-	fail(w, http.StatusMethodNotAllowed, managedElsewhere)
+	if h.opts.AddUser == nil {
+		fail(w, http.StatusMethodNotAllowed, managedElsewhere)
+		return
+	}
+	var req UserRequest
+	if err := readJSON(r, &req); err != nil {
+		fail(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	name := strings.TrimSpace(req.Name)
+	if err := h.opts.AddUser(r.Context(), name, req.Password); err != nil {
+		status := http.StatusBadRequest
+		if errors.Is(err, ErrUserExists) {
+			status = http.StatusConflict
+		}
+		fail(w, status, err.Error())
+		return
+	}
+	user, err := h.opts.Users.GetByName(r.Context(), name)
+	if err != nil {
+		failErr(w, err)
+		return
+	}
+	if len(req.Folders) > 0 {
+		user.Folders = model.EncodeList(req.Folders)
+		if err := h.opts.Users.Update(r.Context(), user); err != nil {
+			failErr(w, err)
+			return
+		}
+	}
+	writeJSON(w, http.StatusCreated, user)
 }
 
 // updateUser changes the folders a user sees. Empty shows them all.

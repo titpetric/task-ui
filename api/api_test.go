@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -159,6 +160,16 @@ func newFixture(t *testing.T) *fixture {
 	}}
 	f.opts.SSH = &sshprobe.Prober{Users: []string{"debian"}, Timeout: 2 * time.Second, TTL: time.Hour, Command: fakeSSH(t)}
 	f.opts.Summarizer = &claude.Summarizer{Command: fakeClaude(t), Timeout: 10 * time.Second}
+	// AddUser stands in for the password file: a new name becomes a runner.
+	f.opts.AddUser = func(ctx context.Context, name, password string) error {
+		if _, err := users.GetByName(ctx, name); err == nil {
+			return api.ErrUserExists
+		}
+		if len(password) < 8 {
+			return errors.New("a password needs at least 8 characters")
+		}
+		return users.Create(ctx, &model.User{Name: name, Role: model.RoleRunner})
+	}
 	routes := api.New(f.opts).Routes()
 	f.server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		user := f.users[r.Header.Get("X-User")]

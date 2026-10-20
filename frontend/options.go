@@ -63,6 +63,9 @@ type Options struct {
 	// Disk measures the space the artifacts and the checkouts take. Nil
 	// leaves the space bars out.
 	Disk *diskusage.Meter
+	// AddUsers lets an admin make users: the server writes a password
+	// file.
+	AddUsers bool
 	// Board is the notes board and the chat; nil turns them off.
 	Board *note.Board
 	// Integrations keep the integrations' settings, and Hosts reads the
