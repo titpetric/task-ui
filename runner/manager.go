@@ -114,6 +114,7 @@ func (m *Manager) Start(ctx context.Context, req Request) (*Session, error) {
 		return nil, err
 	}
 	session := newSession(run, req.Folder, req.Job)
+	session.env = req.Env
 	if req.User != nil {
 		session.role = req.User.Role
 	}
@@ -368,6 +369,7 @@ func (m *Manager) command(ctx context.Context, session *Session) (*exec.Cmd, err
 			cmd.Env = append(cmd.Env, key+"="+secrets[key])
 		}
 	}
+	cmd.Env = append(cmd.Env, session.env...)
 	cmd.Env = append(cmd.Env,
 		"TERM=xterm-256color",
 		"COLORTERM=truecolor",

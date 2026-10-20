@@ -28,6 +28,8 @@ type Session struct {
 	// role is the role of the user who started the run, for the instance
 	// keys its runs get.
 	role string
+	// env is what the request adds to the run's environment.
+	env []string
 
 	mu   sync.Mutex
 	term vt10x.Terminal

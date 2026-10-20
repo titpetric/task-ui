@@ -25,6 +25,7 @@ import (
 	"github.com/titpetric/task-ui/git"
 	"github.com/titpetric/task-ui/internal/assert"
 	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/note"
 	"github.com/titpetric/task-ui/recording"
 	"github.com/titpetric/task-ui/runner"
 	"github.com/titpetric/task-ui/secret"
@@ -131,6 +132,7 @@ func newFixture(t *testing.T) *fixture {
 		Version:       "test",
 		Now:           func() time.Time { return time.Date(2026, time.October, 16, 22, 0, 0, 0, time.Local) },
 		ArtifactStore: &artifactstore.Store{Dir: filepath.Join(t.TempDir(), "tree")},
+		Board:         &note.Board{Notes: storage.NewNoteStorage(db), Users: users, Agent: "claude"},
 		Disk:          &diskusage.Meter{TTL: time.Minute},
 	}
 	h, err := frontend.New(f.opts)

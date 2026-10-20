@@ -24,6 +24,7 @@ import (
 	"github.com/titpetric/task-ui/git"
 	"github.com/titpetric/task-ui/internal/assert"
 	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/note"
 	"github.com/titpetric/task-ui/recording"
 	"github.com/titpetric/task-ui/runner"
 	"github.com/titpetric/task-ui/secret"
@@ -143,6 +144,7 @@ func newFixture(t *testing.T) *fixture {
 		Env:          envfile.New(storage.NewEnvFileStorage(db), secrets),
 		Recordings:   recordings,
 		Root:         root,
+		Board:        &note.Board{Notes: storage.NewNoteStorage(db), Users: users, Catalogue: cat, Runner: manager, Recordings: recordings, Events: flows.Events, Agent: "claude"},
 	}
 	routes := api.New(f.opts).Routes()
 	f.server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

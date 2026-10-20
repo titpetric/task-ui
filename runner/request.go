@@ -16,4 +16,7 @@ type Request struct {
 	Scheduled bool
 	Cols      int
 	Rows      int
+	// Env adds NAME=value pairs to the run's environment, after the
+	// secrets and before the TASK_UI_ variables, which win.
+	Env []string
 }

@@ -64,15 +64,17 @@ header in place of the session cookie.
 | `list_runs`          | `folder`, `job`, `state`, `limit`                | The latest runs, newest first |
 | `get_run`            | `id`, `lines`                                    | A run and the end of its output, as the terminal showed it |
 | `list_workflow_runs` | `workflow`, `limit`                              | A workflow's latest runs and their steps |
+| `list_notes`         | `mention`, `state`, `channel`, `limit`           | The notes with their replies; by default the open ones that name you |
+| `note_comment`       | `id`, `body`, `state`                            | Replies to a note and sets its instruction to working, done or failed |
 
 A run started over MCP is like any other: it shows in the history, anyone
 allowed can watch it, and it goes on if the agent stops waiting.
 
 ## A frozen surface
 
-These seven tools, like the JSON API behind them, are the whole surface,
-and the surface stays frozen. An agent can see what there is, run it and read how it
-went; ending runs, schedules, artifacts, secrets, keys, users and
+These nine tools, like the JSON API behind them, are the whole surface,
+and the surface stays frozen. An agent can see what there is, run it, read
+how it went, and work through the notes that name it; ending runs, schedules, artifacts, secrets, keys, users and
 changing workflows stay with people, in the browser. A new tool or
 endpoint needs a reason that the current ones cannot serve,
 and the reason goes with the change.

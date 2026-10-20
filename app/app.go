@@ -25,6 +25,7 @@ import (
 	"github.com/titpetric/task-ui/git"
 	"github.com/titpetric/task-ui/mcp"
 	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/note"
 	"github.com/titpetric/task-ui/recording"
 	"github.com/titpetric/task-ui/runner"
 	"github.com/titpetric/task-ui/scheduler"
@@ -47,6 +48,8 @@ type App struct {
 	Workflows *workflow.Runner
 	Catalogue *Catalogue
 	Guard     *access.Guard
+	// Board is the notes board and the chat.
+	Board *note.Board
 	// UsersFile is the password file, nil when there is none.
 	UsersFile *UsersFile
 
@@ -188,17 +191,24 @@ func (a *App) wire(version string) error {
 	a.Guard = access.NewGuard(a.Users, access.NewSessions(sessionSecret(cfg), cfg.SessionTTL))
 	a.Guard.AutoLogin = cfg.AutoLogin
 	a.Guard.Tokens = storage.NewUserAuthTokenStorage(a.DB)
+	a.Board = &note.Board{
+		Notes: storage.NewNoteStorage(a.DB), Users: a.Users, Catalogue: a.Catalogue, Runner: a.Runner,
+		Recordings: recordings, Events: events, Agent: cfg.Agent, AgentJob: cfg.AgentJob,
+	}
+	if err := a.Board.Recover(context.Background()); err != nil {
+		return err
+	}
 
 	apiHandlers := api.New(api.Options{
 		Users: a.Users, Projects: projects, Runs: runs, Artifacts: artifacts, Schedules: schedules, Secrets: secrets,
 		Workflows: workflows, WorkflowRuns: workflowRuns, Flows: a.Workflows, Events: events,
-		Runner: a.Runner, Catalogue: a.Catalogue, Git: g, Keys: keys, KeyPolicies: keyPolicies, Env: env, Recordings: recordings, Root: cfg.Root,
+		Runner: a.Runner, Catalogue: a.Catalogue, Git: g, Keys: keys, KeyPolicies: keyPolicies, Env: env, Recordings: recordings, Root: cfg.Root, Board: a.Board,
 	})
 	pages, err := frontend.New(frontend.Options{
 		Guard: a.Guard, Auth: access.NewAuthenticator(a.Users, a.Emails, a.Passwords), Users: a.Users, Projects: projects, Runs: runs, Artifacts: artifacts, Schedules: schedules, Secrets: secrets,
 		Workflows: workflows, WorkflowRuns: workflowRuns, Flows: a.Workflows,
 		Runner: a.Runner, Catalogue: a.Catalogue, Git: g, Keys: keys, KeyPolicies: keyPolicies, Env: env, Recordings: recordings, Root: cfg.Root, Version: version, Now: cfg.Clock(),
-		ArtifactStore: store, Disk: &diskusage.Meter{TTL: 10 * time.Minute},
+		ArtifactStore: store, Disk: &diskusage.Meter{TTL: 10 * time.Minute}, Board: a.Board,
 	})
 	if err != nil {
 		return err

@@ -2688,6 +2688,212 @@ dialog.preview .preview-body img {
   background: var(--ink-0);
 }
 
+/* Notes and the chat: a note is its author, its text and its replies;
+   an instruction to the agent carries its state on the left edge. */
+.note-form {
+  display: grid;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.note-form textarea {
+  width: 100%;
+  min-height: 3rem;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius);
+  background: var(--ink-0);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  resize: vertical;
+}
+
+.note-form textarea:focus {
+  outline: none;
+  border-color: var(--signal);
+}
+
+.note-form-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 0.75rem;
+}
+
+.notes {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.note {
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--line-2);
+  border-radius: var(--radius);
+  background: var(--ink-2);
+}
+
+.note.instruction.open,
+.note.instruction.working {
+  border-left-color: var(--signal);
+}
+
+.note.instruction.done {
+  border-left-color: var(--ok);
+}
+
+.note.instruction.failed {
+  border-left-color: var(--bad);
+}
+
+.note header,
+.replies header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+}
+
+.note header .spacer {
+  flex: 1;
+}
+
+.note-state.working,
+.note-state.open {
+  color: var(--signal);
+}
+
+.note-state.done {
+  color: var(--ok);
+}
+
+.note-state.failed {
+  color: var(--bad);
+}
+
+.note-body {
+  margin-top: 0.4rem;
+  font-size: 0.875rem;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+
+.note-body p {
+  margin: 0 0 0.5rem;
+}
+
+.note-body p:last-child {
+  margin-bottom: 0;
+}
+
+.note-body code {
+  padding: 0 0.25rem;
+  border-radius: var(--radius);
+  background: var(--ink-3);
+  font-family: var(--font);
+  font-size: 0.8125rem;
+}
+
+.note-code {
+  margin: 0.5rem 0;
+  padding: 0.6rem 0.75rem;
+  max-height: 24rem;
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--term-bg);
+  color: var(--term-fg);
+  font-family: var(--font);
+  font-size: 0.75rem;
+  line-height: 1.45;
+  white-space: pre;
+}
+
+.mention {
+  padding: 0 0.2rem;
+  border-radius: var(--radius);
+  background: var(--signal-wash);
+  color: var(--signal);
+}
+
+.replies {
+  display: grid;
+  gap: 0.6rem;
+  margin: 0.75rem 0 0;
+  padding: 0 0 0 1rem;
+  border-left: 1px solid var(--line);
+  list-style: none;
+}
+
+.note .reply {
+  margin-top: 0.6rem;
+}
+
+.note .reply summary {
+  color: var(--text-faint);
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.note .reply .note-form {
+  margin: 0.5rem 0 0;
+}
+
+.empty-state {
+  color: var(--text-faint);
+}
+
+.chat {
+  display: grid;
+  grid-template-rows: 1fr auto;
+  height: calc(100vh - 16rem);
+  min-height: 20rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--ink-2);
+}
+
+.chat-log {
+  margin: 0;
+  padding: 0.75rem 1rem;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.chat-line {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.6rem;
+  padding: 0.4rem 0;
+}
+
+.chat-line header {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+}
+
+.chat-line.mine b {
+  color: var(--signal);
+}
+
+.chat-line .note-body {
+  margin-top: 0.1rem;
+}
+
+.chat-form {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: end;
+  margin: 0;
+  padding: 0.75rem 1rem;
+  border-top: 1px solid var(--line);
+}
+
 /* The control centre: a folder a row, a shared job a column, a button
    in each cell the folder has the job for. */
 .table.control th.col,

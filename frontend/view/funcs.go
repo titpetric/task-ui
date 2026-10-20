@@ -33,6 +33,7 @@ func Funcs() template.FuncMap {
 		"chain":        Chain,
 		"groups":       Groups,
 		"hasPrefix":    strings.HasPrefix,
+		"message":      Message,
 	}
 }
 
