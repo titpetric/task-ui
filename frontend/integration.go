@@ -54,5 +54,9 @@ func (h *Handlers) inventory(w http.ResponseWriter, r *http.Request) {
 		}
 		p.Logins = h.opts.SSH.Logins(r.Context(), hosts, 4*time.Second)
 	}
+	if h.opts.Integrations != nil && p.User.CanAdmin() {
+		env, _ := h.opts.Integrations.Env(r.Context(), p.User.Name, p.User.Role)
+		p.Summarize = env["CLAUDE_CODE_OAUTH_TOKEN"] != ""
+	}
 	h.render(w, http.StatusOK, "inventory", p)
 }

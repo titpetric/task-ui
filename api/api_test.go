@@ -19,6 +19,7 @@ import (
 	"github.com/titpetric/task-ui/access"
 	"github.com/titpetric/task-ui/api"
 	"github.com/titpetric/task-ui/beszel"
+	"github.com/titpetric/task-ui/claude"
 	"github.com/titpetric/task-ui/envfile"
 	"github.com/titpetric/task-ui/event"
 	"github.com/titpetric/task-ui/folder"
@@ -155,6 +156,7 @@ func newFixture(t *testing.T) *fixture {
 		return values["url"], values["token"], err
 	}}
 	f.opts.SSH = &sshprobe.Prober{Users: []string{"debian"}, Timeout: 2 * time.Second, TTL: time.Hour, Command: fakeSSH(t)}
+	f.opts.Summarizer = &claude.Summarizer{Command: fakeClaude(t), Timeout: 10 * time.Second}
 	routes := api.New(f.opts).Routes()
 	f.server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		user := f.users[r.Header.Get("X-User")]
@@ -308,6 +310,16 @@ func TestRoutes_BadJSON(t *testing.T) {
 
 // fakeSSH is an ssh that signs in as debian to dev1, running the remote
 // command locally, and reaches nothing else.
+// fakeClaude answers with the token it signed in with and the report's
+// first line.
+func fakeClaude(t *testing.T) string {
+	t.Helper()
+	script := filepath.Join(t.TempDir(), "claude")
+	body := "#!/bin/sh\necho \"summary by $CLAUDE_CODE_OAUTH_TOKEN of $(head -n1)\"\n"
+	assert.NoError(t, os.WriteFile(script, []byte(body), 0o755))
+	return script
+}
+
 func fakeSSH(t *testing.T) string {
 	t.Helper()
 	script := filepath.Join(t.TempDir(), "ssh")

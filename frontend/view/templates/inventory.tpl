@@ -24,7 +24,7 @@
 			<label class="check"><input type="checkbox" name="hosts" value="{{ $h.Host }}" checked> <code>{{ . }}</code></label>
 			{{- end }}{{ end }}
 		</div>
-		<div class="note-form-foot"><span class="faint">Each host runs it over its ssh login, at once, for at most two minutes. Ctrl+Enter runs.</span><button class="btn btn-primary" type="submit"><svg class="ic"><use href="#i-play"/></svg>Run</button></div>
+		<div class="note-form-foot"><span class="faint">Each host runs it over its ssh login, at once, for at most two minutes. Ctrl+Enter runs.{{ if .Summarize }} Run and summarize hands every host's output to Claude as one report once all are done.{{ end }}</span><span class="actions">{{ if .Summarize }}<button class="btn" type="submit" name="summarize" value="1"><svg class="ic"><use href="#i-note"/></svg>Run and summarize</button>{{ end }}<button class="btn btn-primary" type="submit"><svg class="ic"><use href="#i-play"/></svg>Run</button></span></div>
 	</form>
 	<div class="inventory-results" data-inventory-results></div>
 </section>

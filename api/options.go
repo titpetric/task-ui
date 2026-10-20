@@ -2,6 +2,7 @@ package api
 
 import (
 	"github.com/titpetric/task-ui/beszel"
+	"github.com/titpetric/task-ui/claude"
 	"github.com/titpetric/task-ui/envfile"
 	"github.com/titpetric/task-ui/event"
 	"github.com/titpetric/task-ui/folder"
@@ -51,4 +52,6 @@ type Options struct {
 	Hosts        *beszel.Inventory
 	// SSH runs a command on the hosts over the logins it finds.
 	SSH *sshprobe.Prober
+	// Summarizer writes the summary of a run on the hosts with Claude.
+	Summarizer *claude.Summarizer
 }

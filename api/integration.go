@@ -6,8 +6,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/titpetric/task-ui/access"
 	"github.com/titpetric/task-ui/beszel"
+	"github.com/titpetric/task-ui/claude"
 	"github.com/titpetric/task-ui/integration"
+	"github.com/titpetric/task-ui/sshprobe"
 )
 
 // integrationView reads an integration's settings for the user: the plain
@@ -156,5 +159,35 @@ func (h *Handlers) runOnHosts(w http.ResponseWriter, r *http.Request) {
 		hosts = reachable
 	}
 	results := h.opts.SSH.Run(r.Context(), hosts, logins, req.Command, runTimeout)
-	writeJSON(w, http.StatusOK, map[string]any{"results": results})
+	body := map[string]any{"results": results}
+	if req.Summarize {
+		report := sshprobe.Report(req.Command, results)
+		body["report"] = report
+		summary, err := h.summarize(r, report)
+		if err != nil {
+			body["summary_error"] = err.Error()
+		} else {
+			body["summary"] = summary
+		}
+	}
+	writeJSON(w, http.StatusOK, body)
+}
+
+// summaryPrompt is what Claude reads the report with.
+const summaryPrompt = "The input is a markdown report of one shell command run on several hosts over ssh: a section a host, with its exit code and output. " +
+	"Summarize it for the operator in markdown: lead with what needs attention (failures, hosts that differ, warnings, anything near a limit), " +
+	"then a short line on what's fine. Name the hosts. Keep it brief, and say only what the report shows."
+
+// summarize sends the report to Claude, signed in with the token the
+// Claude integration holds for the user.
+func (h *Handlers) summarize(r *http.Request, report string) (string, error) {
+	if h.opts.Summarizer == nil || h.opts.Integrations == nil {
+		return "", claude.ErrNoToken
+	}
+	user := access.UserFrom(r.Context())
+	env, err := h.opts.Integrations.Env(r.Context(), user.Name, user.Role)
+	if err != nil {
+		return "", err
+	}
+	return h.opts.Summarizer.Summarize(r.Context(), env["CLAUDE_CODE_OAUTH_TOKEN"], summaryPrompt, report)
 }

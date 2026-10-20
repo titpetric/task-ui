@@ -74,6 +74,17 @@ func TestIntegration_Hosts(t *testing.T) {
 	stranger := f.call(t, asAdmin, http.MethodPost, "/inventory/run", api.InventoryRequest{Command: "uptime", Hosts: []string{"elsewhere"}})
 	assert.Equal(t, http.StatusBadRequest, stranger.Status)
 
+	// With summarize, Claude writes a summary after the run, signed in with
+	// the token the Claude integration holds for the admin.
+	unsigned := f.call(t, asAdmin, http.MethodPost, "/inventory/run", api.InventoryRequest{Command: "uptime", Summarize: true})
+	assert.Equal(t, http.StatusOK, unsigned.Status)
+	assert.Contains(t, string(unsigned.Raw), `"summary_error":"the Claude Code integration has no token for you"`)
+	f.call(t, asAdmin, http.MethodPut, "/integrations/claude", api.IntegrationRequest{Values: map[string]string{"token": "sk-1", "who": "admin"}})
+	summed := f.call(t, asAdmin, http.MethodPost, "/inventory/run", api.InventoryRequest{Command: "echo up", Summarize: true})
+	assert.Equal(t, http.StatusOK, summed.Status, string(summed.Raw))
+	assert.Equal(t, "summary by sk-1 of # `echo up` on 1 hosts", summed.Body["summary"])
+	assert.Contains(t, summed.Body["report"].(string), "## debian@dev1")
+
 	f.call(t, asAdmin, http.MethodPut, "/integrations/beszel", api.IntegrationRequest{Values: map[string]string{"url": hub.URL, "token": "expired"}})
 	assert.Equal(t, http.StatusBadGateway, f.call(t, asViewer, http.MethodGet, "/inventory", nil).Status)
 }
