@@ -2,6 +2,8 @@ package view_test
 
 import (
 	"html/template"
+	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -79,9 +81,19 @@ func TestNewActivity(t *testing.T) {
 	// 18th without breaks them, so each is a dot.
 	var lines *view.ActivityLines = a.DayLines
 	assert.Equal(t, 8*time.Second, lines.Slowest)
-	assert.Equal(t, "M 91.67 10.00 L 91.67 10.00 M 98.33 55.00 L 98.33 55.00", lines.Average)
-	assert.Equal(t, "M 91.67 10.00 L 91.67 10.00 M 98.33 77.50 L 98.33 77.50", lines.Min)
-	assert.Equal(t, "M 91.67 10.00 L 91.67 10.00 M 98.33 32.50 L 98.33 32.50", lines.Max)
+	// A line runs through every day, an empty one on the baseline, as a
+	// curve that passes through each point and stays within the chart.
+	for line, last := range map[string]string{lines.Average: "98.33 55.00", lines.Min: "98.33 77.50", lines.Max: "98.33 32.50"} {
+		assert.True(t, strings.HasPrefix(line, "M 1.67 100.00 C "), line)
+		assert.Equal(t, 29, strings.Count(line, " C "))
+		assert.Contains(t, line, "91.67 10.00")
+		assert.True(t, strings.HasSuffix(line, last), line)
+		for _, field := range strings.Fields(strings.NewReplacer("M", "", "C", "").Replace(line)) {
+			v, err := strconv.ParseFloat(field, 64)
+			assert.NoError(t, err)
+			assert.True(t, v >= 0 && v <= 100, field)
+		}
+	}
 	assert.Equal(t, "no finished runs, Sun 2026-10-18", yesterday.AverageTitle)
 	assert.Equal(t, 3*time.Second, a.Hours[7].Average)
 	assert.Equal(t, "avg 3.0s · min 2.0s · max 4.0s over 2 runs, 07:00–08:00", a.Hours[7].AverageTitle)

@@ -259,34 +259,60 @@ func anyFinished(bars []ActivityBar) bool {
 	return false
 }
 
-// linePath joins the points of the buckets with finished runs; a bucket
-// without breaks the line, and a point alone is a dot.
+// linePath draws a line through every bucket, a point at the middle of
+// each column: a bucket with no finished run sits on the baseline, so the
+// line runs the width of the chart. The line is a monotone cubic curve
+// (Fritsch and Carlson): smooth, and it never swings past its points,
+// below the baseline or over the slowest run. A bucket alone is a dot.
 func linePath(bars []ActivityBar, y func(ActivityBar) float64) string {
-	var out strings.Builder
-	open := false
-	n := float64(len(bars))
+	n := len(bars)
+	if n == 0 {
+		return ""
+	}
+	step := 100 / float64(n)
+	xs, ys := make([]float64, n), make([]float64, n)
 	for i, b := range bars {
-		if b.Finished == 0 {
-			open = false
-			continue
+		xs[i] = (float64(i) + 0.5) * step
+		ys[i] = 100
+		if b.Finished > 0 {
+			ys[i] = y(b)
 		}
-		x := svgNumber((float64(i) + 0.5) * 100 / n)
-		point := x + " " + svgNumber(y(b))
-		if open {
-			out.WriteString(" L " + point)
-			continue
-		}
-		next := i+1 < len(bars) && bars[i+1].Finished > 0
-		if out.Len() > 0 {
-			out.WriteString(" ")
-		}
-		out.WriteString("M " + point)
-		if !next {
-			out.WriteString(" L " + point)
-		}
-		open = true
+	}
+	point := func(x, y float64) string { return svgNumber(x) + " " + svgNumber(y) }
+	if n == 1 {
+		return "M " + point(xs[0], ys[0]) + " L " + point(xs[0], ys[0])
+	}
+	tangents := monotoneTangents(ys, step)
+	var out strings.Builder
+	out.WriteString("M " + point(xs[0], ys[0]))
+	for i := 0; i < n-1; i++ {
+		third := step / 3
+		out.WriteString(" C " + point(xs[i]+third, ys[i]+tangents[i]*third) +
+			" " + point(xs[i+1]-third, ys[i+1]-tangents[i+1]*third) +
+			" " + point(xs[i+1], ys[i+1]))
 	}
 	return out.String()
+}
+
+// monotoneTangents returns the slope of the curve at each point, spaced
+// step apart: zero at a peak, a valley or a flat, the harmonic mean of the
+// slopes on either side elsewhere, so the curve stays between its points.
+func monotoneTangents(ys []float64, step float64) []float64 {
+	n := len(ys)
+	slopes := make([]float64, n-1)
+	for i := range slopes {
+		slopes[i] = (ys[i+1] - ys[i]) / step
+	}
+	tangents := make([]float64, n)
+	tangents[0], tangents[n-1] = slopes[0], slopes[n-2]
+	for i := 1; i < n-1; i++ {
+		before, after := slopes[i-1], slopes[i]
+		if before*after <= 0 {
+			continue
+		}
+		tangents[i] = 2 * before * after / (before + after)
+	}
+	return tangents
 }
 
 // averageText says a bar's durations and when, for its hover.
