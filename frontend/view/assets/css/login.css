@@ -11,46 +11,59 @@ section.login {
   background: var(--ink-1);
   border: 1px solid var(--line-2);
   border-radius: var(--radius);
-}
 
-section.login h2 {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.7rem;
-  margin: 0 0 1rem;
-  font-size: 0.85rem;
-  font-weight: 600;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-}
+  & h2 {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.7rem;
+    margin: 0 0 1rem;
+    font-size: var(--fs-field);
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
 
-section.login h2::before,
-section.login h2::after {
-  content: "";
-  width: 2.5rem;
-  height: 1px;
-  background: var(--line-2);
-}
+    &::before,
+    &::after {
+      content: "";
+      width: 2.5rem;
+      height: 1px;
+      background: var(--line-2);
+    }
+  }
 
-section.login .login-error {
-  margin: 0 0 0.8rem;
-  padding: 0.5rem 0.7rem;
-  background: var(--bad-wash);
-  border: 1px solid var(--bad);
-  border-radius: var(--radius);
-  color: var(--text);
-  font-size: 0.78rem;
-}
+  & .login-error {
+    margin: 0 0 0.8rem;
+    padding: 0.5rem 0.7rem;
+    background: var(--bad-wash);
+    border: 1px solid var(--bad);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-size: var(--fs-button);
+  }
 
-section.login form {
-  display: flex;
-  flex-direction: column;
-  gap: 0.8rem;
-}
+  & form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+  }
 
-section.login .field {
-  margin: 0;
+  & .field {
+    margin: 0;
+  }
+
+  & button[type="submit"] {
+    padding: 0.45rem 0.55rem;
+    background: var(--signal);
+    border: 1px solid var(--signal);
+    border-radius: var(--radius);
+    color: var(--signal-ink);
+    font: inherit;
+    font-size: var(--fs-button);
+    letter-spacing: var(--ls-label);
+    text-transform: uppercase;
+    cursor: pointer;
+  }
 }
 
 /* A label inside a field's table names its row in the row's own type. */
@@ -59,17 +72,4 @@ section.login .field {
   font: inherit;
   letter-spacing: 0;
   text-transform: none;
-}
-
-section.login button[type="submit"] {
-  padding: 0.45rem 0.55rem;
-  background: var(--signal);
-  border: 1px solid var(--signal);
-  border-radius: var(--radius);
-  color: var(--signal-ink);
-  font: inherit;
-  font-size: 0.78rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  cursor: pointer;
 }

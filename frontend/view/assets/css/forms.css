@@ -10,23 +10,22 @@
   display: block;
   margin-bottom: 0.3rem;
   color: var(--text-faint);
-  font-size: 0.7rem;
+  font-size: var(--fs-caption);
   font-weight: 600;
-  letter-spacing: 0.14em;
+  letter-spacing: var(--ls-label);
   text-transform: uppercase;
 }
 
 /* The hint after a label is a sentence, not a label. */
 .field > label .faint,
 .field > .label .faint {
-  margin-left: 0.35rem;
+  margin-inline-start: 0.35rem;
   font-weight: 400;
   letter-spacing: 0;
   text-transform: none;
 }
 
-input[type="text"],
-input[type="password"],
+input:is([type="text"], [type="password"]),
 textarea {
   width: 100%;
   padding: 0.5rem 0.65rem;
@@ -40,22 +39,20 @@ textarea {
 textarea {
   min-height: 9rem;
   resize: vertical;
-  font-size: 0.75rem;
+  font-size: var(--fs-xs);
 }
 
 /* A one-line field takes its height from --control: no padding above or
    below, the text centred in it. A field and a select set their text
    alike, whatever the label around them sets. */
-input[type="text"],
-input[type="password"] {
+input:is([type="text"], [type="password"]) {
   padding-block: 0;
   line-height: normal;
 }
 
-input[type="text"],
-input[type="password"],
+input:is([type="text"], [type="password"]),
 select {
-  font-size: 0.85rem;
+  font-size: var(--fs-field);
   font-weight: 400;
   letter-spacing: 0;
   text-transform: none;
@@ -80,15 +77,15 @@ select {
   font-weight: 400;
   letter-spacing: 0;
   text-transform: none;
-}
 
-.dd > select {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  opacity: 0;
-  pointer-events: none;
+  & > select {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    pointer-events: none;
+  }
 }
 
 .dd-button {
@@ -104,13 +101,13 @@ select {
   background: var(--ink-2);
   color: var(--text);
   font-family: var(--font);
-  font-size: 0.85rem;
-  text-align: left;
+  font-size: var(--fs-field);
+  text-align: start;
   cursor: pointer;
-}
 
-.dd-button:hover {
-  border-color: var(--text-faint);
+  &:hover {
+    border-color: var(--text-faint);
+  }
 }
 
 .dd-button:focus-visible,
@@ -144,7 +141,7 @@ select {
 .dd-list {
   position: absolute;
   top: calc(100% + 4px);
-  left: 0;
+  inset-inline-start: 0;
   z-index: 60;
   min-width: 100%;
   max-height: 18rem;
@@ -153,7 +150,7 @@ select {
   border: 1px solid var(--line-2);
   border-radius: var(--radius);
   background: var(--ink-1);
-  box-shadow: 0 0.75rem 2rem rgba(0, 0, 0, 0.35);
+  box-shadow: var(--shadow-pop);
 }
 
 .dd.up .dd-list {
@@ -166,29 +163,29 @@ select {
   border-radius: var(--radius);
   color: var(--text-dim);
   font-family: var(--font);
-  font-size: 0.85rem;
+  font-size: var(--fs-field);
   white-space: nowrap;
   cursor: pointer;
-}
 
-.dd-option.active {
-  background: var(--ink-3);
-  color: var(--text);
-}
+  &.active {
+    background: var(--ink-3);
+    color: var(--text);
+  }
 
-.dd-option[aria-selected="true"] {
-  color: var(--signal);
-}
+  &[aria-selected="true"] {
+    color: var(--signal);
+  }
 
-.dd-option[aria-disabled] {
-  opacity: 0.45;
-  cursor: default;
+  &[aria-disabled] {
+    opacity: 0.45;
+    cursor: default;
+  }
 }
 
 .dd-group {
   padding: 0.45rem 0.6rem 0.2rem;
   color: var(--text-faint);
-  font-size: 0.68rem;
+  font-size: var(--fs-label);
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
@@ -197,8 +194,7 @@ select {
   width: 11rem;
 }
 
-.filters .page-size select,
-.filters .page-size .dd {
+.filters .page-size :is(select, .dd) {
   width: 5.5rem;
 }
 
@@ -221,29 +217,29 @@ select {
 
 .grid-2.wide {
   grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
-}
 
-.grid-2.wide .form {
-  max-width: none;
+  & .form {
+    max-width: none;
+  }
 }
 
 input[type="file"] {
   color: var(--text-dim);
   font: inherit;
-  font-size: 0.8125rem;
-}
+  font-size: var(--fs-sm);
 
-input[type="file"]::file-selector-button {
-  margin-right: 0.7rem;
-  padding: 0.3rem 0.7rem;
-  border: 1px solid var(--line-2);
-  border-radius: var(--radius);
-  background: var(--ink-2);
-  color: var(--text);
-  font: 500 0.7rem var(--font);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  cursor: pointer;
+  &::file-selector-button {
+    margin-inline-end: 0.7rem;
+    padding: 0.3rem 0.7rem;
+    border: 1px solid var(--line-2);
+    border-radius: var(--radius);
+    background: var(--ink-2);
+    color: var(--text);
+    font: 500 var(--fs-caption) var(--font);
+    letter-spacing: var(--ls-button);
+    text-transform: uppercase;
+    cursor: pointer;
+  }
 }
 
 .grid-2 {
@@ -258,9 +254,9 @@ input[type="file"]::file-selector-button {
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--ink-1);
-}
 
-.panel p {
-  color: var(--text-dim);
-  font-size: 0.8125rem;
+  & p {
+    color: var(--text-dim);
+    font-size: var(--fs-sm);
+  }
 }

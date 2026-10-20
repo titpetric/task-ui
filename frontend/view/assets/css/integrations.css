@@ -3,7 +3,7 @@
    section, and remembers. */
 .integration .integration-body > p,
 .integration .field small {
-  font-size: 0.8rem;
+  font-size: var(--fs-data);
   line-height: 1.5;
 }
 
@@ -26,7 +26,7 @@
   align-items: center;
   gap: 0.35rem 1rem;
   margin-bottom: 0.35rem;
-  font-size: 0.8rem;
+  font-size: var(--fs-data);
 }
 
 .checks > .faint {
@@ -57,61 +57,62 @@
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
-  margin-left: auto;
+  margin-inline-start: auto;
   color: var(--text-dim);
   font-size: 0.63rem;
   letter-spacing: 0.18em;
   text-transform: uppercase;
   cursor: pointer;
   user-select: none;
-}
 
-.peek-toggle:hover {
-  color: var(--text);
-}
+  &:hover {
+    color: var(--text);
+  }
 
-.peek-toggle input {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  opacity: 0;
-  pointer-events: none;
-}
+  & input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+  }
 
-.peek-toggle i {
-  position: relative;
-  display: block;
-  width: 1.7rem;
-  height: 0.85rem;
-  border: 1px solid var(--line-2);
-  border-radius: 999px;
-  background: var(--ink-3);
-}
+  & i {
+    position: relative;
+    display: block;
+    width: 1.7rem;
+    height: 0.85rem;
+    border: 1px solid var(--line-2);
+    border-radius: var(--radius-pill);
+    background: var(--ink-3);
 
-.peek-toggle i::after {
-  content: "";
-  position: absolute;
-  top: 0.13rem;
-  left: 0.15rem;
-  width: 0.5rem;
-  height: 0.5rem;
-  border-radius: 50%;
-  background: var(--text-faint);
-}
+    /* The knob slides with a transform, so it is placed from the left. */
+    &::after {
+      content: "";
+      position: absolute;
+      top: 0.13rem;
+      left: 0.15rem;
+      width: 0.5rem;
+      height: 0.5rem;
+      border-radius: var(--radius-round);
+      background: var(--text-faint);
+    }
+  }
 
-.peek-toggle input:checked + i {
-  border-color: var(--signal);
-  background: var(--signal-wash);
-}
+  & input:checked + i {
+    border-color: var(--signal);
+    background: var(--signal-wash);
 
-.peek-toggle input:checked + i::after {
-  transform: translateX(0.8rem);
-  background: var(--signal);
-}
+    &::after {
+      transform: translateX(0.8rem);
+      background: var(--signal);
+    }
+  }
 
-.peek-toggle input:focus-visible + i {
-  outline: 1px solid var(--signal);
-  outline-offset: 2px;
+  & input:focus-visible + i {
+    outline: 1px solid var(--signal);
+    outline-offset: 2px;
+  }
 }
 
 @media (prefers-reduced-motion: no-preference) {
