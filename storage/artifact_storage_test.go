@@ -60,6 +60,10 @@ func TestArtifactStorage_List(t *testing.T) {
 	byJob, err := artifacts.List(ctx, storage.ArtifactFilter{Folder: "infra", Job: "plan", Limit: 5})
 	assert.NoError(t, err)
 	assert.Len(t, byJob, 1)
+	byPath, err := artifacts.List(ctx, storage.ArtifactFilter{Path: "r1/b"})
+	assert.NoError(t, err)
+	assert.Len(t, byPath, 1)
+	assert.Equal(t, "b", byPath[0].Name)
 }
 
 func TestArtifactStorage_Delete(t *testing.T) {

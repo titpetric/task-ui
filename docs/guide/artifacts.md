@@ -29,18 +29,23 @@ own directory goes, and nothing carries over into the next run's.
   history of earlier versions.
 - **Files**: the latest version of every file, a directory at a time, as
   a table of names, sizes and times. A directory opens; a file opens in
-  the browser, and an image or an svg opens in the image window, scaled to
-  fit. Each row downloads its file, or its directory as a `.tgz`, and
-  copies the link to it. The button over the table downloads the open
+  the preview window: an image scaled to fit, markdown rendered as a page,
+  plain text, and for anything else its type and the download. The
+  window picks among the versions the runs wrote, newest first, and
+  downloads the one it shows. Ctrl and a click open the file on its own.
+  Each row downloads its file, or its directory as a `.tgz`, and copies
+  the link to it. The button over the table downloads the open
   directory, or everything, as a `.tgz`, and its link copies the same way:
   `/artifacts/<directory>.tgz`, and `/artifacts.tgz` for the whole tree.
 - **History**: every version a run left, newest first, with the folder,
-  job and run it came from, filtered by folder and job. A name downloads
-  that version. A run's page lists its own.
+  job and run it came from, filtered by folder and job. A name opens
+  that version in the preview window. A run's page lists its own.
 
 You see the files of the folders you may see, in the table and in a
-`.tgz`. Admins delete a record, and **Delete all**, at the top right,
-deletes every file, its history and every record.
+`.tgz`. Admins delete a file or a directory from the tree, with the
+button on its row: the history keeps its versions, and the preview
+window still shows them. Admins delete a record, and **Delete all**, at
+the top right, deletes every file, its history and every record.
 
 ## History
 

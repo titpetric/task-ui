@@ -18,6 +18,7 @@ import (
 
 	"github.com/titpetric/task-ui/access"
 	"github.com/titpetric/task-ui/api"
+	"github.com/titpetric/task-ui/artifactstore"
 	"github.com/titpetric/task-ui/beszel"
 	"github.com/titpetric/task-ui/claude"
 	"github.com/titpetric/task-ui/envfile"
@@ -130,26 +131,27 @@ func newFixture(t *testing.T) *fixture {
 	flows.Events = event.NewBus()
 	manager.Events = flows.Events
 	f.opts = api.Options{
-		Workflows:    workflows,
-		WorkflowRuns: workflowRuns,
-		Flows:        flows,
-		Events:       flows.Events,
-		Users:        users,
-		Projects:     storage.NewProjectStorage(db),
-		Runs:         runs,
-		Artifacts:    artifacts,
-		Schedules:    storage.NewScheduleStorage(db),
-		Secrets:      secrets,
-		Runner:       manager,
-		Catalogue:    cat,
-		Git:          &git.Git{},
-		Keys:         keys,
-		KeyPolicies:  storage.NewSSHKeyPolicyStorage(db),
-		Env:          envfile.New(storage.NewEnvFileStorage(db), secrets),
-		Recordings:   recordings,
-		Root:         root,
-		Integrations: &integration.Store{Secrets: secrets},
-		Board:        &note.Board{Notes: storage.NewNoteStorage(db), Users: users, Catalogue: cat, Runner: manager, Recordings: recordings, Events: flows.Events, Agent: "claude"},
+		Workflows:     workflows,
+		WorkflowRuns:  workflowRuns,
+		Flows:         flows,
+		Events:        flows.Events,
+		Users:         users,
+		Projects:      storage.NewProjectStorage(db),
+		Runs:          runs,
+		Artifacts:     artifacts,
+		ArtifactStore: &artifactstore.Store{Dir: filepath.Join(t.TempDir(), "tree")},
+		Schedules:     storage.NewScheduleStorage(db),
+		Secrets:       secrets,
+		Runner:        manager,
+		Catalogue:     cat,
+		Git:           &git.Git{},
+		Keys:          keys,
+		KeyPolicies:   storage.NewSSHKeyPolicyStorage(db),
+		Env:           envfile.New(storage.NewEnvFileStorage(db), secrets),
+		Recordings:    recordings,
+		Root:          root,
+		Integrations:  &integration.Store{Secrets: secrets},
+		Board:         &note.Board{Notes: storage.NewNoteStorage(db), Users: users, Catalogue: cat, Runner: manager, Recordings: recordings, Events: flows.Events, Agent: "claude"},
 	}
 	f.opts.Hosts = &beszel.Inventory{TTL: time.Minute, Settings: func(ctx context.Context) (string, string, error) {
 		values, err := f.opts.Integrations.Values(ctx, integration.Beszel)

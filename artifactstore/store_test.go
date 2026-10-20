@@ -123,3 +123,35 @@ func TestStore_Empty(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Len(t, s.List(""), 1)
 }
+
+// Remove takes a file or a directory out of the tree; the history keeps
+// what it held.
+func TestStore_Remove(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	s := &artifactstore.Store{Dir: filepath.Join(t.TempDir(), "tree")}
+	_, err := s.Remove(ctx, "job1.txt", "alice")
+	assert.ErrorIs(t, err, artifactstore.ErrNotFound)
+
+	first, err := s.Ingest(ctx, run(t, map[string]string{"job1.txt": "one", "reports/a.html": "a", "reports/b.html": "b"}), "run 1", "alice")
+	assert.NoError(t, err)
+	gone, err := s.Remove(ctx, "job1.txt", "admin")
+	assert.NoError(t, err)
+	assert.NotEqual(t, first, gone)
+	path, _ := s.Path("job1.txt")
+	_, err = os.Stat(path)
+	assert.True(t, os.IsNotExist(err))
+	old, err := s.Show(ctx, first, "job1.txt")
+	assert.NoError(t, err)
+	assert.Equal(t, "one", string(old))
+
+	_, err = s.Remove(ctx, "reports", "admin")
+	assert.NoError(t, err)
+	assert.Len(t, s.List(""), 0)
+	_, err = s.Remove(ctx, "job1.txt", "admin")
+	assert.ErrorIs(t, err, artifactstore.ErrNotFound)
+	_, err = s.Remove(ctx, "../x", "admin")
+	assert.ErrorIs(t, err, artifactstore.ErrNotFound)
+	_, err = s.Remove(ctx, "", "admin")
+	assert.ErrorIs(t, err, artifactstore.ErrNotFound)
+}
