@@ -31,7 +31,7 @@
 {{- end }}
 <div class="table-wrap">
 <table class="table hosts">
-	<thead><tr><th>Host</th><th>State</th>{{ if .Logins }}<th>SSH</th>{{ end }}<th class="num">Cores</th><th>CPU</th><th>Memory</th><th>Disk</th></tr></thead>
+	<thead><tr><th>Host</th><th>State</th>{{ if .Logins }}<th>SSH</th>{{ end }}<th class="num">Cores</th><th>CPU</th><th colspan="2">Memory</th><th colspan="2">Disk</th></tr></thead>
 	<tbody>
 	{{- range .Hosts }}
 		<tr>
@@ -42,11 +42,13 @@
 			{{- end }}
 			<td class="num">{{ with .CPUs }}{{ . }}{{ else }}<span class="faint">-</span>{{ end }}</td>
 			<td>{{ template "meter" .Info.CPU }}</td>
-			<td>{{ template "meter" .Info.Memory }}{{ with .Stats }} <span class="faint nowrap">{{ printf "%.1f" .MemoryUsed }} / {{ printf "%.1f" .Memory }} GB</span>{{ end }}</td>
-			<td>{{ template "meter" .Info.Disk }}{{ with .Stats }} <span class="faint nowrap">{{ printf "%.0f" .DiskUsed }} / {{ printf "%.0f" .Disk }} GB</span>{{ end }}</td>
+			<td>{{ template "meter" .Info.Memory }}</td>
+			<td class="num faint nowrap">{{ with .Stats }}{{ printf "%.1f" .MemoryUsed }} / {{ printf "%.1f" .Memory }} GB{{ end }}</td>
+			<td>{{ template "meter" .Info.Disk }}</td>
+			<td class="num faint nowrap">{{ with .Stats }}{{ printf "%.0f" .DiskUsed }} / {{ printf "%.0f" .Disk }} GB{{ end }}</td>
 		</tr>
 	{{- else }}
-		<tr class="empty"><td colspan="7">Beszel monitors no hosts.</td></tr>
+		<tr class="empty"><td colspan="9">Beszel monitors no hosts.</td></tr>
 	{{- end }}
 	</tbody>
 </table>
