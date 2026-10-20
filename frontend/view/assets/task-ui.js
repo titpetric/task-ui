@@ -582,6 +582,38 @@
     select.addEventListener("change", function () { narrow(select); });
   });
 
+  // ------------------------------------------------------------ cc-menus
+
+  // A control centre's Other menu opens over the page, placed against
+  // its button, so the table's scrolling box cannot clip it; under the
+  // button, or over it when the screen ends first. It closes on a click
+  // outside it, on Escape, on a scroll, and once one of its jobs is
+  // picked.
+  document.addEventListener("toggle", function (event) {
+    var menu = event.target;
+    if (!menu.matches || !menu.matches("details.cc-more") || !menu.open) return;
+    var list = menu.querySelector(".cc-menu");
+    var at = menu.querySelector("summary").getBoundingClientRect();
+    list.style.left = Math.max(8, at.right - list.offsetWidth) + "px";
+    var below = window.innerHeight - at.bottom;
+    list.style.top = (below < list.offsetHeight + 8 && at.top > below ? at.top - list.offsetHeight - 4 : at.bottom + 4) + "px";
+  }, true);
+  window.addEventListener("scroll", function () {
+    document.querySelectorAll("details.cc-more[open]").forEach(function (menu) { menu.removeAttribute("open"); });
+  }, true);
+  document.addEventListener("click", function (event) {
+    document.querySelectorAll("details.cc-more[open]").forEach(function (menu) {
+      if (!menu.contains(event.target) || event.target.closest(".cc-menu .cc")) menu.removeAttribute("open");
+    });
+  });
+  document.addEventListener("keydown", function (event) {
+    if (event.key !== "Escape") return;
+    document.querySelectorAll("details.cc-more[open]").forEach(function (menu) {
+      menu.removeAttribute("open");
+      menu.querySelector("summary").focus();
+    });
+  });
+
   // ------------------------------------------------------------- dropdowns
 
   // Every select gets a dropdown drawn in the page's own style: a button
