@@ -37,7 +37,9 @@
 	<div class="inventory-results" data-inventory-results></div>
 </section>
 {{- end }}
-<section class="block">
+{{- /* The hosts follow Beszel: the page fetches itself once a minute and
+     puts this section back, the time it was drawn under the table. */}}
+<section class="block" data-hosts-live>
 <h3>Hosts</h3>
 <div class="table-wrap">
 <table class="table hosts">
@@ -62,6 +64,7 @@
 	</tbody>
 </table>
 </div>
+<p class="faint live-stamp">Live updated: {{ .Now.Format "15:04" }}</p>
 </section>
 {{- end }}
 {{ end }}

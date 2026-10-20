@@ -35,7 +35,9 @@ runs no tools, for at most three minutes.
 
 The logins sign in as `debian` or `root`, so the panel is for admins alone.
 
-task-ui reads the hub at most once a minute. The page needs the Beszel
+task-ui reads the hub at most once a minute, and the page fetches the
+hosts again each minute on its own, the time it drew them under the
+table as **Live updated**. The page needs the Beszel
 integration: its URL and a token (see [Settings](settings.md#integrations)).
 Without one, the page says so.
 

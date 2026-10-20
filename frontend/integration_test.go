@@ -64,6 +64,9 @@ func TestInventory(t *testing.T) {
 	// The host's icon carries its state; there is no State column.
 	assert.Contains(t, body, `<svg class="ic host-state up" role="img" aria-label="up">`)
 	assert.NotContains(t, body, `<th>State</th>`)
+	// The hosts refresh themselves, and say the time of their drawing.
+	assert.Contains(t, body, `<section class="block" data-hosts-live>`)
+	assert.Contains(t, body, `<p class="faint live-stamp">Live updated: 22:00</p>`)
 	assert.Contains(t, body, `class="meter high"`)
 	assert.Contains(t, body, `class="meter warm"`)
 	assert.Contains(t, body, `<td class="center">4</td>`)
