@@ -51,6 +51,7 @@ func TestNewActivity(t *testing.T) {
 	assert.Len(t, a.HourTicks, 8)
 	assert.True(t, a.Spent > 0, "the finished runs' time adds up")
 	assert.Equal(t, view.ActivityTick{Label: "09:00", At: "39.58"}, a.HourTicks[3])
+	assert.Equal(t, view.ActivityTick{At: "27.08"}, a.HourTicks[2])
 
 	today, yesterday := a.Days[29], a.Days[28]
 	assert.Equal(t, "Mon 2026-10-19", today.Label)
