@@ -15,11 +15,11 @@
   background: var(--ink-1);
   color: var(--text);
   overflow: hidden;
-}
 
-.tile:hover {
-  text-decoration: none;
-  border-color: var(--signal);
+  &:hover {
+    text-decoration: none;
+    border-color: var(--signal);
+  }
 }
 
 .tile-head {
@@ -28,18 +28,18 @@
   gap: 0.5rem;
   padding: 0.4rem 0.8rem;
   border-bottom: 1px solid var(--line);
-  font-size: 0.8125rem;
-}
+  font-size: var(--fs-sm);
 
-.tile-head b {
-  font-weight: 500;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
+  & b {
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 
-.tile-head .spacer {
-  flex: 1;
+  & .spacer {
+    flex: 1;
+  }
 }
 
 /* The terminal sits inset like the text of an alert or a form, not
@@ -50,12 +50,12 @@
   min-height: 3rem;
   padding: 0.55rem 0.8rem;
   background: #090c10;
-}
 
-.frame svg {
-  display: block;
-  width: 100%;
-  height: auto;
+  & svg {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
 }
 
 .tile.wide {

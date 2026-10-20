@@ -13,9 +13,9 @@
   flex-direction: column;
   gap: 0.3rem;
   color: var(--text-faint);
-  font-size: 0.7rem;
+  font-size: var(--fs-caption);
   font-weight: 600;
-  letter-spacing: 0.14em;
+  letter-spacing: var(--ls-label);
   text-transform: uppercase;
 }
 
@@ -30,10 +30,10 @@
   display: flex;
   gap: 0.6rem;
   margin-top: 0.8rem;
-}
 
-.pager [rel="next"] {
-  margin-left: auto;
+  & [rel="next"] {
+    margin-inline-start: auto;
+  }
 }
 
 .form.inline {
@@ -43,15 +43,15 @@
   gap: 0.6rem 0.8rem;
   max-width: none;
   margin: 0.8rem 0 1.4rem;
-}
 
-.form.inline .field {
-  flex: 1 1 14rem;
-  margin: 0;
-}
+  & .field {
+    flex: 1 1 14rem;
+    margin: 0;
+  }
 
-.form.inline .form-foot {
-  margin: 0;
+  & .form-foot {
+    margin: 0;
+  }
 }
 
 .form-error {
@@ -61,12 +61,12 @@
   border: 1px solid var(--bad);
   border-radius: var(--radius);
   color: var(--text);
-  font-size: 0.8125rem;
+  font-size: var(--fs-sm);
   white-space: pre-wrap;
-}
 
-.form-error:empty {
-  display: none;
+  &:empty {
+    display: none;
+  }
 }
 
 .table td.actions form {

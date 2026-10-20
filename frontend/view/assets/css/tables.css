@@ -12,69 +12,70 @@ table.table {
   border-collapse: collapse;
 }
 
-.table th,
-.table td {
-  padding: 0.32rem 0.7rem;
-  text-align: left;
-  vertical-align: middle;
-  border-bottom: 1px solid var(--line);
-}
+.table {
+  & :is(th, td) {
+    padding: 0.32rem 0.7rem;
+    text-align: start;
+    vertical-align: middle;
+    border-bottom: 1px solid var(--line);
+  }
 
-.table tr:last-child td {
-  border-bottom: 0;
-}
+  & tr:last-child td {
+    border-bottom: 0;
+  }
 
-.table th {
-  color: var(--text-faint);
-  font-size: 0.68rem;
-  font-weight: 600;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  background: var(--ink-2);
-  white-space: nowrap;
-}
+  & th {
+    color: var(--text-faint);
+    font-size: var(--fs-label);
+    font-weight: 600;
+    letter-spacing: var(--ls-label);
+    text-transform: uppercase;
+    background: var(--ink-2);
+    white-space: nowrap;
+  }
 
-.table tbody tr:hover td {
-  background: var(--ink-2);
-}
+  & tbody tr:hover td {
+    background: var(--ink-2);
+  }
 
-/* A table with col-hover lights the column under the pointer too; the
-   script marks its cells col-hot, the head a step darker. */
-.table.col-hover .col-hot {
-  background: var(--ink-2);
-}
+  /* A table with col-hover lights the column under the pointer too; the
+     script marks its cells col-hot, the head a step darker. */
+  &.col-hover .col-hot {
+    background: var(--ink-2);
+  }
 
-.table.col-hover th.col-hot {
-  background: var(--ink-3);
-}
+  &.col-hover th.col-hot {
+    background: var(--ink-3);
+  }
 
-.table td.actions {
-  text-align: right;
-  white-space: nowrap;
-  width: 1%;
-}
+  & td.actions {
+    text-align: end;
+    white-space: nowrap;
+    width: 1%;
 
-.table td.actions > * + * {
-  margin-left: 0.3rem;
-}
+    & > * + * {
+      margin-inline-start: 0.3rem;
+    }
 
-.table td.actions form {
-  display: inline;
-}
+    & form {
+      display: inline;
+    }
+  }
 
-.table td.key {
-  color: var(--text);
-  font-weight: 600;
-  white-space: nowrap;
-}
+  & td.key {
+    color: var(--text);
+    font-weight: 600;
+    white-space: nowrap;
+  }
 
-.table .desc {
-  color: var(--text-dim);
-}
+  & .desc {
+    color: var(--text-dim);
+  }
 
-.table tr.empty td {
-  color: var(--text-dim);
-  padding: 0.8rem 0.7rem;
+  & tr.empty td {
+    color: var(--text-dim);
+    padding: 0.8rem 0.7rem;
+  }
 }
 
 table.table-kv td {
@@ -89,26 +90,29 @@ table.table-kv td {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 0.78rem;
+  font-size: var(--fs-button);
 }
 
-.table.jobs th.steps,
-.table.jobs td.steps {
-  width: 40%;
-  max-width: 0;
+.table.jobs {
+  & :is(th, td).steps {
+    width: 40%;
+    max-width: 0;
+  }
+
+  & td.desc {
+    min-width: 16ch;
+  }
 }
 
-.table.jobs td.desc {
-  min-width: 16ch;
-}
+.table td {
+  & .ic {
+    color: var(--text-faint);
+  }
 
-.table td .ic {
-  color: var(--text-faint);
-}
-
-.table td input[type="text"] {
-  padding: 0.3rem 0.5rem;
-  font-size: 0.8125rem;
+  & input[type="text"] {
+    padding: 0.3rem 0.5rem;
+    font-size: var(--fs-sm);
+  }
 }
 
 table.table-kv th {

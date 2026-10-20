@@ -4,14 +4,14 @@
   margin-bottom: 1rem;
   padding: 0.55rem 0.8rem;
   border: 1px solid var(--line-2);
-  border-left-width: 3px;
+  border-inline-start-width: 3px;
   border-radius: var(--radius);
   background: var(--ink-1);
   color: var(--text-dim);
+
+  &.signal { border-color: var(--signal); background: var(--signal-wash); color: var(--text); }
+  &.ok { border-color: var(--ok); background: var(--ok-wash); color: var(--text); }
+  &.bad { border-color: var(--bad); background: var(--bad-wash); color: var(--text); }
+
+  & b { color: var(--text); }
 }
-
-.alert.signal { border-color: var(--signal); background: var(--signal-wash); color: var(--text); }
-.alert.ok { border-color: var(--ok); background: var(--ok-wash); color: var(--text); }
-.alert.bad { border-color: var(--bad); background: var(--bad-wash); color: var(--text); }
-
-.alert b { color: var(--text); }
