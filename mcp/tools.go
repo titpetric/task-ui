@@ -20,7 +20,9 @@ const maxWait = 15 * time.Minute
 // pollEvery is how often a waiting call looks at the run.
 var pollEvery = time.Second
 
-// tools are the tools the server offers.
+// tools are the tools the server offers. The set is frozen: a tool is
+// added only for a need these cannot serve, with the reason in the change
+// (docs/guide/mcp.md).
 func tools() []Tool {
 	str := func(text string) Property { return Property{Type: "string", Description: text} }
 	num := func(text string) Property { return Property{Type: "integer", Description: text} }

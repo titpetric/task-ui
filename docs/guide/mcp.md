@@ -46,6 +46,15 @@ claude mcp add --transport http --scope user task https://task.example.com/api/m
 A run started over MCP is like any other: it is in the history, anyone
 allowed can watch it, and it goes on if the agent stops waiting.
 
+## A frozen surface
+
+These seven tools, like the JSON API behind them, are the whole surface,
+and it is frozen. An agent can see what there is, run it and read how it
+went; ending runs, schedules, artifacts, secrets, keys, users and
+changing workflows stay with people, in the browser. A tool or an
+endpoint is added only for a reason that the ones there cannot serve,
+and the reason goes with the change.
+
 ---
 
 Previous: [Settings](settings.md) · Back to the [contents](../README.md)

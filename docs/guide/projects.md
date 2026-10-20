@@ -38,8 +38,14 @@ run, under their own names, such as a `bash.sh` with `exec bash` and
 `# interactive: true`, a terminal to work in.
 
 Every directory under the root that has something to run is a folder, as
-deep as they go. Hidden directories, `node_modules`, `vendor` and
+deep as they go. Under a folder with a pipeline, only folders with a
+pipeline of their own are listed, so the Makefiles of a Go tree do not
+become folders; under a plain folder they do. Hidden directories, `node_modules`, `vendor` and
 `testdata` are never looked into.
+
+An agent sees the same list over [MCP](mcp.md): `list_jobs` gives the
+folders, their jobs, whether its user may run each, and how each last
+went.
 
 ## A folder's page
 
