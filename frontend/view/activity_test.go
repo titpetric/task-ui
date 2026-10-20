@@ -32,7 +32,7 @@ func TestNewActivity(t *testing.T) {
 		{StartedAt: at(17, 12, 0), Elapsed: 8 * time.Second, State: model.StateStopped},
 		{StartedAt: at(19, 21, 0), State: model.StateRunning},
 		{StartedAt: at(19, 7, 0).AddDate(0, 0, -30), State: model.StateOK}, // a day before the window
-		{StartedAt: at(20, 7, 0), State: model.StateOK},                   // tomorrow
+		{StartedAt: at(20, 7, 0), State: model.StateOK},                    // tomorrow
 	}
 
 	a := view.NewActivity(runs, now, view.ActivityDays)

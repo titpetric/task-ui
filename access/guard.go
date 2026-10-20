@@ -17,8 +17,11 @@ const Cookie = "task_ui_session"
 // out. Login is the only way in, unless the development auto login names
 // a user: then every request is that user.
 type Guard struct {
-	Sessions  *Sessions
-	Users     *storage.UserStorage
+	Sessions *Sessions
+	Users    *storage.UserStorage
+	// Tokens are what clients sign with instead of a session, in an
+	// Authorization: Bearer header. Nil turns them off.
+	Tokens    *storage.UserAuthTokenStorage
 	AutoLogin string
 	// LoginPath is where a browser without a session is sent.
 	LoginPath string
@@ -34,9 +37,13 @@ func (g *Guard) LoginRequired() bool {
 	return g.AutoLogin == ""
 }
 
-// User resolves the user of a request: the auto login, or the session
-// cookie. Nobody is nil.
+// User resolves the user of a request: a bearer token, the auto login,
+// or the session cookie. Nobody is nil, and so is a request with a token
+// that signs in nobody, whatever else it carries.
 func (g *Guard) User(r *http.Request) *model.User {
+	if token := BearerToken(r); token != "" {
+		return g.bearer(r.Context(), token)
+	}
 	if !g.LoginRequired() {
 		return g.lookup(r.Context(), g.AutoLogin)
 	}
@@ -49,6 +56,23 @@ func (g *Guard) User(r *http.Request) *model.User {
 		return nil
 	}
 	return g.lookup(r.Context(), name)
+}
+
+// bearer resolves the user of a token, and records its use.
+func (g *Guard) bearer(ctx context.Context, token string) *model.User {
+	if g.Tokens == nil {
+		return nil
+	}
+	row, err := g.Tokens.Find(ctx, HashToken(token))
+	if err != nil {
+		return nil
+	}
+	user, err := g.Users.Get(ctx, row.UserID)
+	if err != nil {
+		return nil
+	}
+	_ = g.Tokens.Touch(ctx, row.ID)
+	return user
 }
 
 func (g *Guard) lookup(ctx context.Context, name string) *model.User {

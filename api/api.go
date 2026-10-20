@@ -1,6 +1,6 @@
-// Package api implements the JSON endpoints of task-ui: runs and their
-// frames, artifacts, schedules, projects, users and secrets, and the
-// websocket a window attaches to a run with.
+// Package api implements the JSON endpoints of task-ui: the folders and
+// their jobs, runs and their frames, artifacts, schedules, projects, users
+// and secrets, and the websocket a window attaches to a run with.
 //
 // Handlers decode, check permissions, call storage and the runner, map
 // errors to status codes and encode. The user comes from the context,
@@ -39,6 +39,8 @@ func New(opts Options) *Handlers {
 // the user on the context.
 func (h *Handlers) Routes() http.Handler {
 	r := chi.NewRouter()
+
+	r.Get("/folders", h.listFolders)
 
 	r.Get("/runs", h.listRuns)
 	r.Post("/runs", h.startRun)

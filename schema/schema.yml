@@ -583,6 +583,56 @@
       columns:
         - user_id
         - kind
+- name: user_auth_token
+  comment: User Auth Token
+  columns:
+    - name: id
+      type: text
+      key: PRI
+      comment: ID
+      datatype: char(26)
+    - name: user_id
+      type: text
+      key: MUL
+      comment: User ID
+      datatype: char(26)
+    - name: name
+      type: text
+      key: MUL
+      comment: Name
+      datatype: varchar
+    - name: hash
+      type: text
+      key: MUL
+      comment: Hash
+      datatype: varchar
+    - name: used_at
+      type: timestamp
+      comment: Used At
+      datatype: datetime
+    - name: created_at
+      type: timestamp
+      comment: Created At
+      datatype: datetime
+    - name: updated_at
+      type: timestamp
+      comment: Updated At
+      datatype: datetime
+  indexes:
+    - name: sqlite_autoindex_user_auth_token_1
+      columns:
+        - id
+      primary: true
+      unique: true
+    - name: idx_user_auth_token_hash
+      columns:
+        - hash
+      unique: true
+    - name: idx_user_auth_token_user_name
+      columns:
+        - user_id
+        - name
+      unique: true
 - name: user_email
   comment: User Email
   columns:

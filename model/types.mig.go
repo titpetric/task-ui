@@ -1074,6 +1074,83 @@ var UserAuthPasswordFields = []string{"id", "user_id", "hash", "kind", "used_at"
 // UserAuthPasswordPrimaryFields are the primary key fields in the DB table.
 var UserAuthPasswordPrimaryFields = []string{"id"}
 
+// UserAuthToken generated for db table `user_auth_token`.
+//
+// User Auth Token.
+type UserAuthToken struct {
+	// ID
+	ID string `db:"id" json:"id"`
+
+	// User ID
+	UserID string `db:"user_id" json:"user_id"`
+
+	// Name
+	Name string `db:"name" json:"name"`
+
+	// Hash
+	Hash string `db:"hash" json:"hash"`
+
+	// Used At
+	UsedAt *time.Time `db:"used_at" json:"used_at"`
+
+	// Created At
+	CreatedAt *time.Time `db:"created_at" json:"created_at"`
+
+	// Updated At
+	UpdatedAt *time.Time `db:"updated_at" json:"updated_at"`
+}
+
+// GetID will return the value of ID.
+func (u *UserAuthToken) GetID() string { return u.ID }
+
+// SetID sets ID to the provided value.
+func (u *UserAuthToken) SetID(val string) { u.ID = val }
+
+// GetUserID will return the value of UserID.
+func (u *UserAuthToken) GetUserID() string { return u.UserID }
+
+// SetUserID sets UserID to the provided value.
+func (u *UserAuthToken) SetUserID(val string) { u.UserID = val }
+
+// GetName will return the value of Name.
+func (u *UserAuthToken) GetName() string { return u.Name }
+
+// SetName sets Name to the provided value.
+func (u *UserAuthToken) SetName(val string) { u.Name = val }
+
+// GetHash will return the value of Hash.
+func (u *UserAuthToken) GetHash() string { return u.Hash }
+
+// SetHash sets Hash to the provided value.
+func (u *UserAuthToken) SetHash(val string) { u.Hash = val }
+
+// GetUsedAt will return the value of UsedAt.
+func (u *UserAuthToken) GetUsedAt() *time.Time { return u.UsedAt }
+
+// SetUsedAt sets UsedAt to the provided value.
+func (u *UserAuthToken) SetUsedAt(stamp time.Time) { u.UsedAt = &stamp }
+
+// GetCreatedAt will return the value of CreatedAt.
+func (u *UserAuthToken) GetCreatedAt() *time.Time { return u.CreatedAt }
+
+// SetCreatedAt sets CreatedAt to the provided value.
+func (u *UserAuthToken) SetCreatedAt(stamp time.Time) { u.CreatedAt = &stamp }
+
+// GetUpdatedAt will return the value of UpdatedAt.
+func (u *UserAuthToken) GetUpdatedAt() *time.Time { return u.UpdatedAt }
+
+// SetUpdatedAt sets UpdatedAt to the provided value.
+func (u *UserAuthToken) SetUpdatedAt(stamp time.Time) { u.UpdatedAt = &stamp }
+
+// UserAuthTokenTable is the name of the table in the DB.
+const UserAuthTokenTable = "`user_auth_token`"
+
+// UserAuthTokenFields is a list of all columns in the DB table.
+var UserAuthTokenFields = []string{"id", "user_id", "name", "hash", "used_at", "created_at", "updated_at"}
+
+// UserAuthTokenPrimaryFields are the primary key fields in the DB table.
+var UserAuthTokenPrimaryFields = []string{"id"}
+
 // UserEmail generated for db table `user_email`.
 //
 // User Email.
@@ -2166,6 +2243,67 @@ func (u *UserAuthPassword) Update(opts ...QueryOption) string {
 // Delete starts building a DELETE query.
 func (u *UserAuthPassword) Delete(opts ...QueryOption) string {
 	cfg := (&QueryConfig{Table: UserAuthPasswordTable}).Apply(opts...)
+	query := fmt.Sprintf("DELETE FROM %s", cfg.Table)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	return query
+}
+
+// Insert starts building an INSERT INTO query.
+func (u *UserAuthToken) Insert(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: UserAuthTokenTable, Statement: "INSERT INTO"}).Apply(opts...)
+	cols := UserAuthTokenFields
+	if len(cfg.Columns) > 0 {
+		cols = cfg.Columns
+	}
+	return fmt.Sprintf("%s %s (%s) VALUES (:%s)", cfg.Statement, cfg.Table, strings.Join(cols, ", "), strings.Join(cols, ", :"))
+}
+
+// Select starts building a SELECT query.
+func (u *UserAuthToken) Select(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: UserAuthTokenTable}).Apply(opts...)
+	cols := "*"
+	if len(cfg.Columns) > 0 {
+		cols = strings.Join(cfg.Columns, ", ")
+	}
+	query := fmt.Sprintf("SELECT %s FROM %s", cols, cfg.Table)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	if cfg.OrderBy != "" {
+		query += " ORDER BY " + cfg.OrderBy
+	}
+	if cfg.LimitOffset > 0 {
+		query += fmt.Sprintf(" LIMIT %d, %d", cfg.LimitStart, cfg.LimitOffset)
+	}
+	return query
+}
+
+// Update starts building a UPDATE query.
+func (u *UserAuthToken) Update(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: UserAuthTokenTable}).Apply(opts...)
+	cols := UserAuthTokenFields
+	if len(cfg.Columns) > 0 {
+		cols = cfg.Columns
+	}
+	setClause := ""
+	for i, col := range cols {
+		if i > 0 {
+			setClause += ", "
+		}
+		setClause += col + "=:" + col
+	}
+	query := fmt.Sprintf("UPDATE %s SET %s", cfg.Table, setClause)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	return query
+}
+
+// Delete starts building a DELETE query.
+func (u *UserAuthToken) Delete(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: UserAuthTokenTable}).Apply(opts...)
 	query := fmt.Sprintf("DELETE FROM %s", cfg.Table)
 	if cfg.Where != "" {
 		query += " WHERE " + cfg.Where

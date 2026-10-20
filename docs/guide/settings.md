@@ -104,4 +104,4 @@ never edited is read from the folder as it is.
 
 ---
 
-Previous: [Recents](recents.md) · Back to the [contents](../README.md)
+Previous: [Recents](recents.md) · Next: [MCP](mcp.md) · [Contents](../README.md)

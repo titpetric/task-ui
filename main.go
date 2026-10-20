@@ -165,8 +165,52 @@ func backup(ctx context.Context, dsn string, args []string, stdout io.Writer) er
 	return err
 }
 
-// run is main without the exit: the hash, passwd, email and backup
-// commands, the version, or the server until a signal.
+// token gives a user a token for a client, such as an MCP client, and
+// prints it, the only time it is shown: task-ui token <user> <name>. A
+// token of the same name stops working. task-ui token <user> lists the
+// names, and task-ui token <user> rm <name> removes one.
+func token(ctx context.Context, dsn string, args []string, stdout io.Writer) error {
+	if len(args) < 1 || len(args) > 3 || len(args) == 3 && args[1] != "rm" || len(args) == 2 && args[1] == "rm" {
+		return errors.New("usage: task-ui token <user> [<name> | rm <name>]")
+	}
+	db, user, err := openUser(ctx, dsn, args[0])
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+	tokens := storage.NewUserAuthTokenStorage(db)
+	switch len(args) {
+	case 3:
+		return tokens.Delete(ctx, user.ID, args[2])
+	case 2:
+		secret, hash, err := access.NewToken()
+		if err != nil {
+			return err
+		}
+		if err := tokens.Set(ctx, user.ID, args[1], hash); err != nil {
+			return err
+		}
+		_, err = fmt.Fprintln(stdout, secret)
+		return err
+	}
+	list, err := tokens.List(ctx, user.ID)
+	if err != nil {
+		return err
+	}
+	for _, t := range list {
+		used := "never used"
+		if t.UsedAt != nil {
+			used = "used " + t.UsedAt.Local().Format("2006-01-02 15:04")
+		}
+		if _, err := fmt.Fprintf(stdout, "%s\t%s\n", t.Name, used); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// run is main without the exit: the hash, passwd, email, backup and
+// token commands, the version, or the server until a signal.
 func run(ctx context.Context, args []string, stdin io.Reader, stdout io.Writer) error {
 	if len(args) > 0 && args[0] == "hash" {
 		return hash(args[1:], stdin, stdout)
@@ -183,6 +227,9 @@ func run(ctx context.Context, args []string, stdin io.Reader, stdout io.Writer) 
 	}
 	if len(args) > 0 && args[0] == "backup" {
 		return backup(ctx, cfg.DB, args[1:], stdout)
+	}
+	if len(args) > 0 && args[0] == "token" {
+		return token(ctx, cfg.DB, args[1:], stdout)
 	}
 	if cfg.PrintBuildInfo {
 		_, err := fmt.Fprintf(stdout, "task-ui %s %s\n", version, commit)

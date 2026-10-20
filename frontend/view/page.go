@@ -51,9 +51,9 @@ type Page struct {
 	// itself, else a path ending in "/".
 	Browse string
 
-	Runs      []Run
+	Runs []Run
 	// Activity charts when the runs of the page ran, nil without any.
-	Activity *Activity
+	Activity  *Activity
 	Run       *Run
 	Artifacts []model.Artifact
 	Schedules []model.Schedule

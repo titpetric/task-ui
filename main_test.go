@@ -69,8 +69,8 @@ func TestRun(t *testing.T) {
 	assert.FileExists(t, filepath.Join(root, "data", "task-ui.db"))
 }
 
-// email and backup change what a user from the password file signs in
-// with, in the database the server reads.
+// email, backup and token change what a user from the password file
+// signs in with, in the database the server reads.
 func TestRun_EmailAndBackup(t *testing.T) {
 	var out bytes.Buffer
 	root := t.TempDir()
@@ -107,4 +107,21 @@ func TestRun_EmailAndBackup(t *testing.T) {
 	assert.Error(t, run(ctx, []string{"backup", "alice", "0"}, strings.NewReader(""), &out))
 	assert.Error(t, run(ctx, []string{"backup"}, strings.NewReader(""), &out))
 	assert.Error(t, run(ctx, []string{"backup", "bob"}, strings.NewReader(""), &out))
+
+	// A token is printed once; the list names it without it.
+	out.Reset()
+	assert.NoError(t, run(ctx, []string{"token", "alice", "mcp"}, strings.NewReader(""), &out))
+	secret := strings.TrimSpace(out.String())
+	assert.True(t, strings.HasPrefix(secret, "tui_"))
+	out.Reset()
+	assert.NoError(t, run(ctx, []string{"token", "alice"}, strings.NewReader(""), &out))
+	assert.Equal(t, "mcp\tnever used\n", out.String())
+	assert.NoError(t, run(ctx, []string{"token", "alice", "rm", "mcp"}, strings.NewReader(""), &out))
+	out.Reset()
+	assert.NoError(t, run(ctx, []string{"token", "alice"}, strings.NewReader(""), &out))
+	assert.Equal(t, "", out.String())
+	assert.Error(t, run(ctx, []string{"token"}, strings.NewReader(""), &out))
+	assert.Error(t, run(ctx, []string{"token", "alice", "rm"}, strings.NewReader(""), &out))
+	assert.Error(t, run(ctx, []string{"token", "alice", "add", "x"}, strings.NewReader(""), &out))
+	assert.Error(t, run(ctx, []string{"token", "bob", "x"}, strings.NewReader(""), &out))
 }

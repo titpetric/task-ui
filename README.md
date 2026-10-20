@@ -327,12 +327,14 @@ is never changed.
 
 ## API
 
-Everything the pages do goes through `/api`, JSON over the session cookie.
-Writes need the same origin. The browser pages are the reference client;
+Everything the pages do goes through `/api`, JSON over the session cookie,
+or over a token in an `Authorization: Bearer` header (`task-ui token
+<user> <name>` prints one). Writes need the same origin. The browser pages are the reference client;
 `scripts/run.sh` is the curl one.
 
 | Method | Path | Does |
 |--------|------|------|
+| `GET` | `/api/folders?folder=` | the folders you can see and their jobs, with `can_run` and `last_run` |
 | `GET` | `/api/runs?folder=&job=&state=&limit=` | the runs, newest first, with `live`, `attached` and `can_run` |
 | `POST` | `/api/runs` `{folder, job, force, reason, cols, rows}` | starts a run; `409` with the run in the way unless forced; `403` out of hours unless forced with a reason |
 | `GET` | `/api/runs/{id}` | one run |
@@ -350,6 +352,21 @@ Writes need the same origin. The browser pages are the reference client;
 | `POST` | `/api/secrets/rekey` | writes every secret again for the current keys |
 | `GET` `POST` `PUT` `DELETE` | `/api/keys`, `/api/keys/generate`, `/api/keys/upload`, `/api/keys/{name}` | `{type, name, comment, policies, users}`, `{content, name, comment, policies, users}`; `name` makes `id_<type>_<name>` for someone; `PUT` sets a key's `{policies, users}`, the roles and users whose runs get it; a new key rekeys the secrets, the last key that opens them cannot go |
 | `GET` `PUT` | `/api/env/{folder}`, `/api/env/{folder}/{path}` | the env files; `{content}` saves and generates |
+
+### MCP
+
+`/api/mcp` is an MCP server over the streamable HTTP transport, for an
+agent that runs jobs. It signs in with a token, and its tools call the
+API as the token's user: `list_jobs`, `list_workflows`, `run_job`,
+`run_workflow` (both can wait for the end), `list_runs`, `get_run` (with
+the end of the output) and `list_workflow_runs`. See
+[the MCP chapter](docs/guide/mcp.md).
+
+```bash
+task-ui token claude claude-code
+claude mcp add --transport http --scope user task https://task.example.com/api/mcp \
+  --header "Authorization: Bearer $TOKEN"
+```
 
 ## Screenshots
 
