@@ -3040,6 +3040,15 @@ pre.output {
   vertical-align: top;
 }
 
+/* A host's icon says its state: green up, red anything else. */
+.table.hosts td .ic.host-state.up {
+  color: var(--ok);
+}
+
+.table.hosts td .ic.host-state.down {
+  color: var(--bad);
+}
+
 .table.hosts .center {
   text-align: center;
   font-variant-numeric: tabular-nums;

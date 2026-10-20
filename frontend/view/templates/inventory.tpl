@@ -33,12 +33,11 @@
 <h3>Hosts</h3>
 <div class="table-wrap">
 <table class="table hosts">
-	<thead><tr><th>Host</th><th>State</th>{{ if .Logins }}<th>SSH</th>{{ end }}<th class="center">Cores</th><th>CPU</th><th colspan="2">Memory</th><th colspan="2">Disk</th></tr></thead>
+	<thead><tr><th>Host</th>{{ if .Logins }}<th>SSH</th>{{ end }}<th class="center">Cores</th><th>CPU</th><th colspan="2">Memory</th><th colspan="2">Disk</th></tr></thead>
 	<tbody>
 	{{- range .Hosts }}
 		<tr>
-			<td class="key nowrap" title="{{ .Host }}"><svg class="ic"><use href="#i-server"/></svg> {{ .Name }}</td>
-			<td><span class="badge {{ if .Up }}ok{{ else if eq .Status "down" }}bad{{ end }}">{{ .Status }}</span></td>
+			<td class="key nowrap" title="{{ .Host }}, {{ .Status }}"><svg class="ic host-state {{ if .Up }}up{{ else }}down{{ end }}" role="img" aria-label="{{ .Status }}"><use href="#i-server"/></svg> {{ .Name }}</td>
 			{{- if $.Logins }}
 			<td class="nowrap">{{ with index $.Logins .Host }}<code>{{ . }}</code> <button type="button" class="btn-icon" data-copy="ssh {{ . }}" title="Copy ssh {{ . }}" aria-label="Copy ssh {{ . }}"><svg class="ic"><use href="#i-copy"/></svg></button>{{ else }}<span class="faint">-</span>{{ end }}</td>
 			{{- end }}
@@ -50,7 +49,7 @@
 			<td class="size faint nowrap">{{ with .Stats }}{{ printf "%.0f" .DiskUsed }} / {{ printf "%.0f" .Disk }} GB{{ end }}</td>
 		</tr>
 	{{- else }}
-		<tr class="empty"><td colspan="9">Beszel monitors no hosts.</td></tr>
+		<tr class="empty"><td colspan="8">Beszel monitors no hosts.</td></tr>
 	{{- end }}
 	</tbody>
 </table>
