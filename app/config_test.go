@@ -20,6 +20,7 @@ func TestNewConfig(t *testing.T) {
 	t.Setenv("TASK_UI_DATA", filepath.Join(root, "data"))
 	t.Setenv("TASK_UI_SESSION_TTL", "1h")
 	t.Setenv("TASK_UI_KEEP", "2m")
+	t.Setenv("TASK_UI_ARTIFACT_HISTORY", "7")
 	t.Setenv("TASK_UI_DISCOVER", "false")
 	t.Setenv("TASK_UI_AUTOLOGIN", "admin")
 	t.Setenv("TASK_UI_NOW", "2026-10-16T22:00:00+02:00")
@@ -34,6 +35,8 @@ func TestNewConfig(t *testing.T) {
 	assert.Equal(t, filepath.Join(root, "data", "task-ui.db"), cfg.DB)
 	assert.Equal(t, filepath.Join(root, "data", "recordings"), cfg.RecordingsDir())
 	assert.Equal(t, filepath.Join(root, "data", "artifacts"), cfg.ArtifactsDir())
+	assert.Equal(t, filepath.Join(root, "data", "artifacts", "tree"), cfg.ArtifactTree())
+	assert.Equal(t, 7, cfg.ArtifactHistory)
 	assert.Equal(t, time.Hour, cfg.SessionTTL)
 	assert.Equal(t, 2*time.Minute, cfg.Keep)
 	assert.Equal(t, 10*time.Second, cfg.Grace)
@@ -64,6 +67,11 @@ func TestNewConfig_Errors(t *testing.T) {
 	t.Setenv("TASK_UI_SESSION_TTL", "")
 	_, err = app.NewConfig([]string{"--nope"})
 	assert.Error(t, err)
+
+	t.Setenv("TASK_UI_ARTIFACT_HISTORY", "-1")
+	_, err = app.NewConfig(nil)
+	assert.ErrorContains(t, err, "TASK_UI_ARTIFACT_HISTORY")
+	t.Setenv("TASK_UI_ARTIFACT_HISTORY", "")
 
 	t.Setenv("TASK_UI_NOW", "yesterday")
 	_, err = app.NewConfig(nil)

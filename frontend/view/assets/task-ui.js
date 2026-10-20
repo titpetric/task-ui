@@ -961,6 +961,26 @@
       });
   });
 
+  // An image or an svg of the artifacts opens in the image window, scaled
+  // to fit; the link itself still opens the file in a new view.
+  var previewDialog = document.getElementById("preview-dialog");
+  if (previewDialog) {
+    var previewImage = document.getElementById("preview-image");
+    document.getElementById("preview-close").addEventListener("click", function () { previewDialog.close(); });
+    previewDialog.addEventListener("close", function () { previewImage.removeAttribute("src"); });
+    document.addEventListener("click", function (event) {
+      var link = event.target.closest("a[data-preview]");
+      if (!link || event.ctrlKey || event.metaKey || event.shiftKey || event.button !== 0) return;
+      event.preventDefault();
+      var title = link.dataset.previewTitle || link.textContent;
+      document.getElementById("preview-title").textContent = title;
+      document.getElementById("preview-download").setAttribute("href", link.dataset.preview + "?download");
+      previewImage.alt = title;
+      previewImage.src = link.dataset.preview;
+      previewDialog.showModal();
+    });
+  }
+
   // onRuns calls fn with each run of the runs topic, as it starts and as
   // it ends, over one event stream for the page.
   var runsHandlers = [];

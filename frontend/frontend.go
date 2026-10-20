@@ -52,6 +52,7 @@ func (h *Handlers) Routes() http.Handler {
 		r.Get("/runs", h.runs)
 		r.Get("/runs/{id}", h.run)
 		r.Get("/artifacts", h.artifacts)
+		r.Get("/artifacts/files/*", h.artifactFile)
 		r.Get("/schedules", h.schedules)
 		r.Get("/settings", h.settings)
 		r.Get("/settings/projects", h.projects)

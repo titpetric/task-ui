@@ -17,6 +17,8 @@ import (
 
 	"github.com/titpetric/task-ui/access"
 	"github.com/titpetric/task-ui/api"
+	"github.com/titpetric/task-ui/artifactstore"
+	"github.com/titpetric/task-ui/diskusage"
 	"github.com/titpetric/task-ui/envfile"
 	"github.com/titpetric/task-ui/event"
 	"github.com/titpetric/task-ui/frontend"
@@ -162,19 +164,21 @@ func (a *App) wire(version string) error {
 	recordings := &recording.Store{Root: cfg.RecordingsDir()}
 
 	a.Catalogue = NewCatalogue(cfg.Root, cfg.Discover, projects)
+	store := &artifactstore.Store{Dir: cfg.ArtifactTree(), Keep: cfg.ArtifactHistory}
 	a.Runner = runner.New(runner.Options{
 		KeyDir: keys.Dir, KeyPolicies: keyPolicies,
-		Runs:         runs,
-		Artifacts:    artifacts,
-		Secrets:      secrets,
-		Env:          env,
-		Git:          g,
-		Recordings:   recordings,
-		ArtifactRoot: cfg.ArtifactsDir(),
-		Grace:        cfg.Grace,
-		KillTimeout:  cfg.Grace + 5*time.Second,
-		Keep:         cfg.Keep,
-		Now:          cfg.Clock(),
+		Runs:          runs,
+		Artifacts:     artifacts,
+		Secrets:       secrets,
+		Env:           env,
+		Git:           g,
+		Recordings:    recordings,
+		ArtifactRoot:  cfg.ArtifactsDir(),
+		ArtifactStore: store,
+		Grace:         cfg.Grace,
+		KillTimeout:   cfg.Grace + 5*time.Second,
+		Keep:          cfg.Keep,
+		Now:           cfg.Clock(),
 	})
 	a.Scheduler = scheduler.NewLoop(schedules, a.Users, a.Catalogue, a.Runner)
 	a.Workflows = workflow.New(workflows, workflowRuns, a.Catalogue, a.Runner)
@@ -194,6 +198,7 @@ func (a *App) wire(version string) error {
 		Guard: a.Guard, Auth: access.NewAuthenticator(a.Users, a.Emails, a.Passwords), Users: a.Users, Projects: projects, Runs: runs, Artifacts: artifacts, Schedules: schedules, Secrets: secrets,
 		Workflows: workflows, WorkflowRuns: workflowRuns, Flows: a.Workflows,
 		Runner: a.Runner, Catalogue: a.Catalogue, Git: g, Keys: keys, KeyPolicies: keyPolicies, Env: env, Recordings: recordings, Root: cfg.Root, Version: version, Now: cfg.Clock(),
+		ArtifactStore: store, Disk: &diskusage.Meter{TTL: 10 * time.Minute},
 	})
 	if err != nil {
 		return err

@@ -152,6 +152,9 @@ type Artifact struct {
 
 	// Created At
 	CreatedAt *time.Time `db:"created_at" json:"created_at"`
+
+	// Commit ID
+	CommitID string `db:"commit_id" json:"commit_id"`
 }
 
 // GetID will return the value of ID.
@@ -208,11 +211,17 @@ func (a *Artifact) GetCreatedAt() *time.Time { return a.CreatedAt }
 // SetCreatedAt sets CreatedAt to the provided value.
 func (a *Artifact) SetCreatedAt(stamp time.Time) { a.CreatedAt = &stamp }
 
+// GetCommitID will return the value of CommitID.
+func (a *Artifact) GetCommitID() string { return a.CommitID }
+
+// SetCommitID sets CommitID to the provided value.
+func (a *Artifact) SetCommitID(val string) { a.CommitID = val }
+
 // ArtifactTable is the name of the table in the DB.
 const ArtifactTable = "`artifact`"
 
 // ArtifactFields is a list of all columns in the DB table.
-var ArtifactFields = []string{"id", "run_id", "folder", "job", "name", "path", "byte_size", "content_type", "created_at"}
+var ArtifactFields = []string{"id", "run_id", "folder", "job", "name", "path", "byte_size", "content_type", "created_at", "commit_id"}
 
 // ArtifactPrimaryFields are the primary key fields in the DB table.
 var ArtifactPrimaryFields = []string{"id"}

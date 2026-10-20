@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/titpetric/task-ui/diskusage"
 	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/frontend/view"
 )
@@ -17,6 +18,12 @@ func (h *Handlers) projects(w http.ResponseWriter, r *http.Request) {
 	p.Crumbs = view.Crumbs("Settings", "/settings", "Projects")
 	p.Root = h.opts.Root
 	p.Entries = folder.Entries(h.opts.Root, h.opts.Git)
+	if h.opts.Disk != nil {
+		p.Spaces = map[string]diskusage.Usage{}
+		for _, entry := range p.Entries {
+			p.Spaces[entry.ID] = h.opts.Disk.Measure(entry.Dir)
+		}
+	}
 	h.render(w, http.StatusOK, "projects", p)
 }
 

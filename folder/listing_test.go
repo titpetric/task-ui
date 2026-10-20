@@ -37,8 +37,22 @@ func TestListing(t *testing.T) {
 func TestItem(t *testing.T) {
 	dir := t.TempDir()
 	write(t, filepath.Join(dir, "sub", "x"), "x")
+	write(t, filepath.Join(dir, "chart.SVG"), "<svg/>")
 	items := Listing(dir)
-	if len(items) != 1 || items[0] != (Item{Name: "sub", Dir: true}) {
+	if len(items) != 2 || items[0].Name != "sub" || !items[0].Dir || items[0].Size != 0 || items[0].ModTime.IsZero() {
 		t.Fatalf("items: %+v", items)
+	}
+	if items[1].Size != 6 {
+		t.Fatalf("size: %+v", items[1])
+	}
+	if items[1].Preview() {
+		t.Fatal("a file without a link has no preview")
+	}
+	items[1].Href = "/x"
+	if !items[1].Preview() {
+		t.Fatal("an svg with a link has a preview")
+	}
+	if (Item{Name: "a.txt", Href: "/a"}).Preview() || (Item{Name: "d.png", Dir: true, Href: "/d"}).Preview() {
+		t.Fatal("text and directories have no preview")
 	}
 }

@@ -27,6 +27,7 @@
       datatype: varchar
     - name: path
       type: text
+      key: MUL
       comment: Path
       datatype: varchar
     - name: byte_size
@@ -42,6 +43,11 @@
       type: timestamp
       comment: Created At
       datatype: datetime
+    - name: commit_id
+      type: text
+      key: MUL
+      comment: Commit ID
+      datatype: varchar
   indexes:
     - name: sqlite_autoindex_artifact_1
       columns:
@@ -52,6 +58,9 @@
       columns:
         - folder
         - job
+    - name: idx_artifact_path
+      columns:
+        - path
     - name: idx_artifact_run_id
       columns:
         - run_id

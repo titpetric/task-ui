@@ -55,10 +55,12 @@ Open a folder from the sidebar:
   went, **Run** and **Run force**. **Run all** starts every job of the
   folder in the background. A folder with more than one source has a section
   per source.
-- **Files**: the pipeline's files; **Show** opens one, coloured, in a
-  window.
+- **Files**: what the folder holds, each with its size and when it
+  changed; a directory opens.
 - **Folder**: its path, its sources, who can run it, its hours, the
-  files it includes, its schedules.
+  files it includes, its schedules. **Show** beside a pipeline file opens
+  it, coloured, in a window. A folder in a git checkout also shows the
+  checkout's size: its files, and the history in `.git`.
 - **Environment**: the dotenv files the pipeline reads (see
   [Settings](settings.md#env-files)).
 

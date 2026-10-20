@@ -56,6 +56,10 @@ type Config struct {
 	// Grace is how long a stopped process gets before the kill.
 	// TASK_UI_GRACE, default 10s.
 	Grace time.Duration
+	// ArtifactHistory is how many versions the artifact history keeps
+	// before it squashes to one. TASK_UI_ARTIFACT_HISTORY, default 50; 0
+	// keeps every version.
+	ArtifactHistory int
 	// Now pins the clock the hours gate and the pages read, for the
 	// screenshot scripts. TASK_UI_NOW, RFC 3339. Empty is the real time.
 	Now time.Time
@@ -135,6 +139,9 @@ func NewConfig(args []string) (*Config, error) {
 	if cfg.Grace, err = envDuration("TASK_UI_GRACE", 10*time.Second); err != nil {
 		return nil, err
 	}
+	if cfg.ArtifactHistory, err = envInt("TASK_UI_ARTIFACT_HISTORY", 50); err != nil {
+		return nil, err
+	}
 	if value := os.Getenv("TASK_UI_NOW"); value != "" {
 		if cfg.Now, err = time.Parse(time.RFC3339, value); err != nil {
 			return nil, fmt.Errorf("TASK_UI_NOW: %w", err)
@@ -180,7 +187,25 @@ func (c *Config) RecordingsDir() string {
 	return filepath.Join(c.DataDir, "recordings")
 }
 
-// ArtifactsDir is where the artifacts go.
+// ArtifactTree is the tree every run's artifacts go into, a git repository.
+func (c *Config) ArtifactTree() string {
+	return filepath.Join(c.ArtifactsDir(), "tree")
+}
+
+// ArtifactsDir is where the runs write their artifacts while they run.
 func (c *Config) ArtifactsDir() string {
 	return filepath.Join(c.DataDir, "artifacts")
+}
+
+// envInt reads a whole number from the environment, or the fallback.
+func envInt(name string, fallback int) (int, error) {
+	value := os.Getenv(name)
+	if value == "" {
+		return fallback, nil
+	}
+	n, err := strconv.Atoi(value)
+	if err != nil || n < 0 {
+		return 0, fmt.Errorf("%s: %q is not a whole number", name, value)
+	}
+	return n, nil
 }

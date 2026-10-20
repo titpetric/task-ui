@@ -3,6 +3,7 @@ package runner
 import (
 	"time"
 
+	"github.com/titpetric/task-ui/artifactstore"
 	"github.com/titpetric/task-ui/envfile"
 	"github.com/titpetric/task-ui/git"
 	"github.com/titpetric/task-ui/recording"
@@ -23,9 +24,12 @@ type Options struct {
 	KeyDir      string
 	KeyPolicies *storage.SSHKeyPolicyStorage
 	Recordings  *recording.Store
-	// ArtifactRoot is where collected artifact files go, one directory
-	// per run.
+	// ArtifactRoot is where a run writes its artifacts, one directory per
+	// run, while it runs.
 	ArtifactRoot string
+	// ArtifactStore takes a run's artifacts when it ends, into the one tree
+	// of every run's files. Nil keeps them in the run's directory.
+	ArtifactStore *artifactstore.Store
 	// Grace is how long a stopped process gets before SIGKILL.
 	Grace time.Duration
 	// KillTimeout bounds how long Run force waits for the previous run.

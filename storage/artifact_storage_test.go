@@ -80,3 +80,39 @@ func TestArtifactStorage_Delete(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Len(t, left, 0)
 }
+
+// Latest is the newest version of each path in the tree; Squash keeps
+// those, now in the new commit, and drops the older ones.
+func TestArtifactStorage_LatestAndSquash(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	artifacts := storage.NewArtifactStorage(newDB(t))
+	create := func(run, name, commit string) {
+		assert.NoError(t, artifacts.Create(ctx, &model.Artifact{RunID: run, Folder: "web", Job: "build", Name: name, Path: name, CommitID: commit}))
+	}
+	create("r1", "a.txt", "c1")
+	create("r1", "b.txt", "c1")
+	create("r2", "a.txt", "c2")
+	assert.NoError(t, artifacts.Create(ctx, &model.Artifact{RunID: "r0", Folder: "web", Job: "old", Name: "x.txt", Path: "r0/x.txt"}))
+
+	latest, err := artifacts.Latest(ctx)
+	assert.NoError(t, err)
+	assert.Len(t, latest, 2)
+	assert.Equal(t, "a.txt", latest[0].Path)
+	assert.Equal(t, "r2", latest[0].RunID)
+	assert.Equal(t, "b.txt", latest[1].Path)
+
+	assert.NoError(t, artifacts.Squash(ctx, "c3"))
+	all, err := artifacts.List(ctx, storage.ArtifactFilter{})
+	assert.NoError(t, err)
+	assert.Len(t, all, 3, "the older a.txt is gone; the one without a commit stays")
+	for _, artifact := range all {
+		if artifact.Path != "r0/x.txt" {
+			assert.Equal(t, "c3", artifact.CommitID, artifact.Path)
+		}
+	}
+
+	assert.NoError(t, artifacts.DeleteAll(ctx))
+	all, _ = artifacts.List(ctx, storage.ArtifactFilter{})
+	assert.Len(t, all, 0)
+}

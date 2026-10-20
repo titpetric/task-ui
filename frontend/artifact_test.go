@@ -2,6 +2,9 @@ package frontend_test
 
 import (
 	"context"
+	"net/http"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/titpetric/task-ui/internal/assert"
@@ -32,4 +35,77 @@ func TestArtifacts(t *testing.T) {
 
 	empty := f.page(t, asAdmin, "/artifacts?folder=nowhere")
 	assert.Contains(t, empty, "No artifacts yet")
+}
+
+// store puts files into the fixture's artifact tree as a run of a folder
+// would, and records them.
+func store(t *testing.T, f *fixture, folderID string, files map[string]string) {
+	t.Helper()
+	ctx := context.Background()
+	dir := t.TempDir()
+	for rel, content := range files {
+		path := filepath.Join(dir, filepath.FromSlash(rel))
+		assert.NoError(t, os.MkdirAll(filepath.Dir(path), 0o755))
+		assert.NoError(t, os.WriteFile(path, []byte(content), 0o644))
+	}
+	run := model.NewID()
+	commit, err := f.opts.ArtifactStore.Ingest(ctx, dir, folderID+" run", "ops")
+	assert.NoError(t, err)
+	for rel, content := range files {
+		assert.NoError(t, f.opts.Artifacts.Create(ctx, &model.Artifact{RunID: run, Folder: folderID, Job: "build", Name: rel, Path: rel, CommitID: commit, ByteSize: int64(len(content))}))
+	}
+}
+
+// The tree lists the latest files a user may see, links each, opens an
+// image in the image window, and shows the space it all takes.
+func TestArtifacts_Tree(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	store(t, f, "infra", map[string]string{"job1.txt": "one", "reports/chart.svg": "<svg xmlns='http://www.w3.org/2000/svg'/>"})
+	store(t, f, "private", map[string]string{"job2.txt": "two"})
+
+	body := f.page(t, asAdmin, "/artifacts")
+	assert.Contains(t, body, `href="/artifacts/files/job1.txt"`)
+	assert.Contains(t, body, `href="/artifacts/files/job2.txt"`)
+	assert.Contains(t, body, `href="/artifacts?path=reports"`)
+	assert.Contains(t, body, `class="spacebar"`)
+	assert.Contains(t, body, `data-delete="/api/artifacts"`)
+
+	limited := f.page(t, asLimited, "/artifacts")
+	assert.Contains(t, limited, "job1.txt")
+	assert.NotContains(t, limited, `/artifacts/files/job2.txt`)
+	assert.NotContains(t, limited, `data-delete="/api/artifacts"`)
+
+	reports := f.page(t, asLimited, "/artifacts?path=reports")
+	assert.Contains(t, reports, `data-preview="/artifacts/files/reports/chart.svg"`)
+	assert.Contains(t, reports, `<a href="/artifacts">Artifacts</a>`)
+}
+
+// The page serves a file inline in a sandbox, or saves it with
+// ?download; one the user may not see is not there, and a directory goes
+// to its listing.
+func TestArtifacts_File(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	store(t, f, "infra", map[string]string{"reports/chart.svg": "<svg/>"})
+	store(t, f, "private", map[string]string{"secret.txt": "x"})
+
+	res := f.get(t, asOps, "/artifacts/files/reports/chart.svg")
+	assert.Equal(t, http.StatusOK, res.Status)
+	assert.Equal(t, "<svg/>", res.Body)
+	assert.Equal(t, "image/svg+xml", res.Headers.Get("Content-Type"))
+	assert.Contains(t, res.Headers.Get("Content-Security-Policy"), "sandbox")
+	assert.Contains(t, res.Headers.Get("Content-Disposition"), "inline")
+
+	saved := f.get(t, asOps, "/artifacts/files/reports/chart.svg?download")
+	assert.Contains(t, saved.Headers.Get("Content-Disposition"), "attachment")
+
+	assert.Equal(t, http.StatusNotFound, f.get(t, asLimited, "/artifacts/files/secret.txt").Status)
+	assert.Equal(t, http.StatusOK, f.get(t, asAdmin, "/artifacts/files/secret.txt").Status)
+	assert.Equal(t, http.StatusNotFound, f.get(t, asAdmin, "/artifacts/files/missing.txt").Status)
+	assert.Equal(t, http.StatusNotFound, f.get(t, asAdmin, "/artifacts/files/../frontend_test.go").Status)
+
+	dir := f.get(t, asAdmin, "/artifacts/files/reports")
+	assert.Equal(t, http.StatusSeeOther, dir.Status)
+	assert.Equal(t, "/artifacts?path=reports", dir.Location)
 }

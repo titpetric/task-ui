@@ -204,6 +204,18 @@
 		<button type="button" class="btn" id="run-close" aria-label="Close">Close</button>
 	</div>
 </dialog>
+{{- /* The image window: an image or an svg of the artifacts, scaled to
+     fit, in place of a download. */}}
+<dialog class="run preview" id="preview-dialog" aria-labelledby="preview-title">
+	<div class="run-head">
+		<span class="label">Artifact</span>
+		<h3 id="preview-title"></h3>
+		<span class="spacer"></span>
+		<a class="btn" id="preview-download" href="#" download>Download</a>
+		<button type="button" class="btn" id="preview-close" aria-label="Close">Close</button>
+	</div>
+	<div class="run-body preview-body"><img id="preview-image" alt=""></div>
+</dialog>
 {{- /* The source window: a file a folder's pipeline reads, coloured, as
      large as the run window. */}}
 <dialog class="run source" id="source-dialog" aria-labelledby="source-title">
@@ -319,14 +331,37 @@
 {{/* tree lists what the folder page's directory holds: the directories
      first, linked into, then the files, plain. */}}
 {{- define "tree" }}
-{{- $p := .Folder }}
 <ul class="tree">
 	{{- range .Tree }}
-	<li class="{{ if .Dir }}dir{{ else }}file{{ end }}"><svg class="ic"><use href="#i-{{ if .Dir }}folder{{ else }}file{{ end }}"/></svg>{{ if .Dir }}<a href="/f/{{ $p.ID }}/{{ $.Browse }}{{ .Name }}">{{ .Name }}</a>{{ else }}<span>{{ .Name }}</span>{{ end }}</li>
+	<li class="{{ if .Dir }}dir{{ else }}file{{ end }}">
+		<svg class="ic"><use href="#i-{{ if .Dir }}folder{{ else }}file{{ end }}"/></svg>
+		{{- if .Preview }}<a href="{{ .Href }}" data-preview="{{ .Href }}" data-preview-title="{{ .Name }}">{{ .Name }}</a>
+		{{- else if .Href }}<a href="{{ .Href }}">{{ .Name }}</a>
+		{{- else }}<span>{{ .Name }}</span>{{ end }}
+		<small class="meta">{{ if not .Dir }}{{ size .Size }} · {{ end }}<span title="{{ stamp .ModTime }}">{{ ago .ModTime }}</span></small>
+	</li>
 	{{- else }}
 	<li class="empty">Empty.</li>
 	{{- end }}
 </ul>
+{{- end }}
+
+{{/* spacebar is the space a directory takes: its files, and the git
+     history beside them, as one bar with a legend. */}}
+{{- define "spacebar" }}
+<div class="spacebar" role="img" aria-label="{{ size .Total }} in all: {{ size .Files }} of files, {{ size .History }} of history">
+	<div class="spacebar-track"><i class="files" style="width: {{ printf "%.2f" .FilesPercent }}%"></i><i class="history" style="width: {{ printf "%.2f" .HistoryPercent }}%"></i></div>
+	<div class="spacebar-legend">
+		<span><i class="swatch files"></i>Files <b>{{ size .Files }}</b></span>
+		<span><i class="swatch history"></i>History <b>{{ size .History }}</b></span>
+		<span class="faint">{{ size .Total }} in all</span>
+	</div>
+</div>
+{{- end }}
+
+{{/* spacemini is the same in a table cell: a short bar and the total. */}}
+{{- define "spacemini" }}
+<span class="spacemini" title="{{ size .Files }} of files, {{ size .History }} of history"><span class="spacebar-track"><i class="files" style="width: {{ printf "%.2f" .FilesPercent }}%"></i><i class="history" style="width: {{ printf "%.2f" .HistoryPercent }}%"></i></span><span class="nowrap">{{ size .Total }}</span></span>
 {{- end }}
 
 {{/* showsource is the Show button of a file a folder's pipeline reads:

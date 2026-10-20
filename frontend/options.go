@@ -4,6 +4,8 @@ import (
 	"time"
 
 	"github.com/titpetric/task-ui/access"
+	"github.com/titpetric/task-ui/artifactstore"
+	"github.com/titpetric/task-ui/diskusage"
 	"github.com/titpetric/task-ui/envfile"
 	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/git"
@@ -48,4 +50,10 @@ type Options struct {
 	Version string
 	// Now is the clock the pages read for the hours. Nil is time.Now.
 	Now func() time.Time
+	// ArtifactStore is the tree of every run's artifacts the artifacts
+	// page lists and serves. Nil shows the records only.
+	ArtifactStore *artifactstore.Store
+	// Disk measures the space the artifacts and the checkouts take. Nil
+	// leaves the space bars out.
+	Disk *diskusage.Meter
 }

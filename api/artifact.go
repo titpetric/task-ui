@@ -62,7 +62,9 @@ func (h *Handlers) downloadArtifact(w http.ResponseWriter, r *http.Request) {
 	_, _ = io.Copy(w, file)
 }
 
-// deleteArtifact removes an artifact and its file. Admins only.
+// deleteArtifact removes an artifact, and its file when the run's
+// directory holds it; a version in the artifact store stays in its history.
+// Admins only.
 func (h *Handlers) deleteArtifact(w http.ResponseWriter, r *http.Request) {
 	if !access.UserFrom(r.Context()).CanAdmin() {
 		fail(w, http.StatusForbidden, "admin role required")
@@ -73,8 +75,23 @@ func (h *Handlers) deleteArtifact(w http.ResponseWriter, r *http.Request) {
 		failErr(w, err)
 		return
 	}
-	_ = os.Remove(h.opts.Runner.ArtifactPath(artifact))
+	if artifact.CommitID == "" {
+		_ = os.Remove(h.opts.Runner.ArtifactPath(artifact))
+	}
 	if err := h.opts.Artifacts.Delete(r.Context(), artifact.ID); err != nil {
+		failErr(w, err)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
+// emptyArtifacts deletes every artifact, the files and their history with
+// them. Admins only.
+func (h *Handlers) emptyArtifacts(w http.ResponseWriter, r *http.Request) {
+	if !requireAdmin(w, r) {
+		return
+	}
+	if err := h.opts.Runner.EmptyArtifacts(r.Context()); err != nil {
 		failErr(w, err)
 		return
 	}
