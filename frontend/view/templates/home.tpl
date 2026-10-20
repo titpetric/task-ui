@@ -43,7 +43,7 @@
 	{{- with $c := .Control }}
 	<div class="table-wrap">
 	<table class="table control">
-		<thead><tr><th>Folder</th>{{ range $c.Columns }}<th class="col"><span>{{ . }}</span></th>{{ end }}<th>Other</th></tr></thead>
+		<thead><tr><th>Folder</th>{{ range $c.Columns }}<th class="col"><span>{{ . }}</span></th>{{ end }}<th class="col"><span>other</span></th></tr></thead>
 		<tbody>
 		{{- range $row := $c.Rows }}
 			<tr>
@@ -52,7 +52,7 @@
 				{{- /* One job is a bare button; several of a name carry their kinds. */}}
 				<td class="col" data-label="{{ index $c.Columns $i }}">{{ if $cell }}<div>{{ range $cell }}{{ template "controljob" (list $ $row.Folder . (gt (len $cell) 1)) }}{{ end }}</div>{{ end }}</td>
 				{{- end }}
-				<td class="other" data-label="Other">
+				<td class="col other" data-label="Other">
 					{{- /* The rest of a folder's jobs behind one button: a menu of
 					     them, each with its own action, live as the slots are. */}}
 					{{- with $row.Extra }}

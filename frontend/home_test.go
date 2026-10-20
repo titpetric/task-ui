@@ -41,7 +41,7 @@ func TestHome_Control(t *testing.T) {
 	body := f.page(t, asOps, "/")
 	// deploy occurs twice, so it gets a column, its name on end; a cell
 	// with the one job is a bare button.
-	assert.Contains(t, body, `<thead><tr><th>Folder</th><th class="col"><span>deploy</span></th><th>Other</th></tr></thead>`)
+	assert.Contains(t, body, `<thead><tr><th>Folder</th><th class="col"><span>deploy</span></th><th class="col"><span>other</span></th></tr></thead>`)
 	edge := body[strings.Index(body, `<a href="/f/infra/edge">infra/edge</a>`):]
 	edge = edge[:strings.Index(edge, "</tr>")]
 	assert.Contains(t, edge, `<button type="button" class="cc" data-run data-folder="infra/edge" data-job="deploy"`)
