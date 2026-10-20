@@ -16,9 +16,11 @@ reaches slowly fills in on the next view.
 An admin runs a shell command on the hosts at once, like pssh: pick the
 hosts, by default every one with an ssh login, write the command or take a
 quick one (`uptime`, `df -h /`, `free -h`, the containers, the kernel, the
-OS), and **Run**, or Ctrl+Enter. Each host runs it over its login, for at
-most two minutes, and the page shows a card a host: its exit code, how
-long it took, and what it printed, both streams.
+OS), and **Run**, or Ctrl+Enter. Each host runs it over its login, on a
+terminal, for at most two minutes, and the page shows a row a host: its
+exit code, how long it took, and what it printed, both streams, with the
+colours a program prints on a terminal. Pagers are off (`PAGER=cat`), so
+`systemctl status` and the like end on their own.
 
 The logins sign in as `debian` or `root`, so the panel is for admins alone.
 

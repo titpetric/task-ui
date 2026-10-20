@@ -1073,20 +1073,82 @@
           results.innerHTML = '<p class="form-error">' + escapeHTML(res.data.error || ("HTTP " + res.status)) + "</p>";
           return;
         }
-        results.innerHTML = res.data.results.map(function (r) {
-          var ok = !r.error && r.exit_code === 0;
-          var badge = r.error ? "bad" : (ok ? "ok" : "bad");
-          var state = r.error ? "error" : "exit " + r.exit_code;
-          var took = r.duration ? " · " + (r.duration / 1e9).toFixed(1) + "s" : "";
-          return '<article class="run-result">' +
-            '<header><code>' + escapeHTML(r.login || r.host) + '</code> <span class="badge ' + badge + '">' + state + "</span>" +
-            '<span class="faint">' + took + "</span></header>" +
-            (r.error ? '<p class="run-error">' + escapeHTML(r.error) + "</p>" : "") +
-            (r.output ? '<pre class="note-code">' + escapeHTML(r.output) + "</pre>" : "") +
-            "</article>";
-        }).join("");
+        results.innerHTML = '<div class="table-wrap"><table class="table run-results"><thead><tr><th>Host</th><th>Exit</th><th>Output</th></tr></thead><tbody>' +
+          res.data.results.map(function (r) {
+            var ok = !r.error && r.exit_code === 0;
+            var state = r.error ? "error" : String(r.exit_code);
+            var took = r.duration ? (r.duration / 1e9).toFixed(1) + "s" : "";
+            return "<tr>" +
+              '<td class="nowrap"><code>' + escapeHTML(r.login || r.host) + "</code></td>" +
+              '<td class="nowrap"><span class="badge ' + (ok ? "ok" : "bad") + '">' + state + '</span> <span class="faint">' + took + "</span></td>" +
+              '<td class="run-output">' + (r.error ? '<div class="run-error">' + escapeHTML(r.error) + "</div>" : "") + ansiHTML(r.output || "") + "</td>" +
+              "</tr>";
+          }).join("") + "</tbody></table></div>";
       });
     });
+  }
+
+  // ansiHTML renders text with the colour codes a terminal prints: the
+  // 16 colours, the 256, true colour, bold, dim, italic and underline.
+  // Every other escape goes, and the text is escaped.
+  function ansiHTML(text) {
+    var out = "", open = false, state = {};
+    function span() {
+      if (open) out += "</span>";
+      var cls = [], style = [];
+      if (state.bold) cls.push("ansi-bold");
+      if (state.dim) cls.push("ansi-dim");
+      if (state.italic) cls.push("ansi-italic");
+      if (state.underline) cls.push("ansi-underline");
+      if (typeof state.fg === "number") cls.push("ansi-fg-" + state.fg);
+      else if (state.fg) style.push("color:" + state.fg);
+      if (typeof state.bg === "number") cls.push("ansi-bg-" + state.bg);
+      else if (state.bg) style.push("background:" + state.bg);
+      open = cls.length > 0 || style.length > 0;
+      if (open) out += '<span class="' + cls.join(" ") + '"' + (style.length ? ' style="' + style.join(";") + '"' : "") + ">";
+    }
+    function color256(n) {
+      if (n < 16) return n;
+      if (n >= 232) { var g = 8 + (n - 232) * 10; return "rgb(" + g + "," + g + "," + g + ")"; }
+      n -= 16;
+      var level = function (v) { return v ? 55 + v * 40 : 0; };
+      return "rgb(" + level(Math.floor(n / 36)) + "," + level(Math.floor(n / 6) % 6) + "," + level(n % 6) + ")";
+    }
+    var parts = text.split(/(\x1b\[[0-9;?]*[A-Za-z]|\x1b\][^\x07\x1b]*(?:\x07|\x1b\\)|\x1b[()][A-Za-z0-9]|\x1b.)/);
+    parts.forEach(function (part) {
+      if (part.charAt(0) !== "\x1b") {
+        out += escapeHTML(part.replace(/\r/g, ""));
+        return;
+      }
+      var m = /^\x1b\[([0-9;]*)m$/.exec(part);
+      if (!m) return;
+      var codes = m[1] === "" ? [0] : m[1].split(";").map(Number);
+      for (var i = 0; i < codes.length; i++) {
+        var c = codes[i];
+        if (c === 0) state = {};
+        else if (c === 1) state.bold = true;
+        else if (c === 2) state.dim = true;
+        else if (c === 3) state.italic = true;
+        else if (c === 4) state.underline = true;
+        else if (c === 22) state.bold = state.dim = false;
+        else if (c === 23) state.italic = false;
+        else if (c === 24) state.underline = false;
+        else if (c >= 30 && c <= 37) state.fg = c - 30;
+        else if (c >= 90 && c <= 97) state.fg = c - 90 + 8;
+        else if (c === 39) delete state.fg;
+        else if (c >= 40 && c <= 47) state.bg = c - 40;
+        else if (c >= 100 && c <= 107) state.bg = c - 100 + 8;
+        else if (c === 49) delete state.bg;
+        else if ((c === 38 || c === 48) && codes[i + 1] === 5) {
+          state[c === 38 ? "fg" : "bg"] = color256(codes[i + 2]); i += 2;
+        } else if ((c === 38 || c === 48) && codes[i + 1] === 2) {
+          state[c === 38 ? "fg" : "bg"] = "rgb(" + codes[i + 2] + "," + codes[i + 3] + "," + codes[i + 4] + ")"; i += 4;
+        }
+      }
+      span();
+    });
+    if (open) out += "</span>";
+    return out;
   }
 
   // onRuns calls fn with each run of the runs topic, as it starts and as

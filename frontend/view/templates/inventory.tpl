@@ -26,7 +26,7 @@
 		</div>
 		<div class="note-form-foot"><span class="faint">Each host runs it over its ssh login, at once, for at most two minutes. Ctrl+Enter runs.</span><button class="btn btn-primary" type="submit"><svg class="ic"><use href="#i-play"/></svg>Run</button></div>
 	</form>
-	<div class="run-results" data-inventory-results></div>
+	<div class="inventory-results" data-inventory-results></div>
 </section>
 {{- end }}
 <div class="table-wrap">

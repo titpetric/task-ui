@@ -28,6 +28,9 @@ type Prober struct {
 	TTL     time.Duration
 	// Command is the ssh client, ssh unless set.
 	Command string
+	// Terminal runs a command of Run on a terminal (ssh -tt), so programs
+	// print their colours, with PAGER=cat so none waits on a pager.
+	Terminal bool
 
 	mu      sync.Mutex
 	found   map[string]probe
@@ -125,6 +128,18 @@ func (p *Prober) ssh(ctx context.Context, login, remote string) *exec.Cmd {
 		command = "ssh"
 	}
 	return exec.CommandContext(ctx, command, args...)
+}
+
+// terminal is the ssh command for a command of Run: on a terminal when
+// Terminal says so, the pagers turned off.
+func (p *Prober) terminal(ctx context.Context, login, remote string) *exec.Cmd {
+	if !p.Terminal {
+		return p.ssh(ctx, login, remote)
+	}
+	cmd := p.ssh(ctx, login, "export PAGER=cat SYSTEMD_PAGER=cat GIT_PAGER=cat; "+remote)
+	// -tt asks for a terminal even with stdin closed: right after "ssh".
+	cmd.Args = append([]string{cmd.Args[0], "-tt"}, cmd.Args[1:]...)
+	return cmd
 }
 
 // keys lists the private keys in the key directories.

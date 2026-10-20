@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"os/exec"
+	"strings"
 	"sync"
 	"time"
 )
@@ -53,7 +54,7 @@ func (p *Prober) Run(ctx context.Context, hosts []string, logins map[string]stri
 			run, cancel := context.WithTimeout(ctx, timeout)
 			defer cancel()
 			out := &limited{max: maxOutput}
-			cmd := p.ssh(run, r.Login, command)
+			cmd := p.terminal(run, r.Login, command)
 			cmd.Stdout, cmd.Stderr = out, out
 			// A remote command's children may hold the output open after
 			// the time limit ends ssh; stop reading a second later.
@@ -61,7 +62,8 @@ func (p *Prober) Run(ctx context.Context, hosts []string, logins map[string]stri
 			start := time.Now()
 			err := cmd.Run()
 			r.Duration = time.Since(start).Round(time.Millisecond)
-			r.Output = out.String()
+			// A terminal ends its lines with a carriage return too.
+			r.Output = strings.ReplaceAll(out.String(), "\r\n", "\n")
 			var exit *exec.ExitError
 			switch {
 			case run.Err() == context.DeadlineExceeded:
