@@ -21,7 +21,10 @@ keys.
 stay as they are:
 
 - a title and a description;
-- **who may run it**, user names or roles, empty for every runner;
+- **who may run it**: a box for each role that runs, admin and runner,
+  and each user who is no viewer; none checked is every runner. Each job
+  has the same boxes in the per-job table, over the folder's, and none
+  checked there inherits;
 - which **sources** to read, which is also how a folder with a pipeline
   gets its Makefile or scripts back as jobs;
 - **hours**, one rule per line, days then a span. The last rule that

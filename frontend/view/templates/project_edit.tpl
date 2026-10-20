@@ -17,8 +17,8 @@
 		<input type="text" id="pe-description" name="description" value="{{ index .Form "description" }}" autocomplete="off">
 	</div>
 	<div class="field">
-		<label for="pe-allow">Who may run <span class="faint">user names or roles, comma separated; empty means every runner</span></label>
-		<input type="text" id="pe-allow" name="allow" data-type="list" value="{{ index .Form "allow" }}" placeholder="ops, release" spellcheck="false" autocomplete="off">
+		<span class="label">Who may run <span class="faint">none checked is every runner</span></span>
+		{{- template "whopicker" (list "allow" .AllowChoices) }}
 	</div>
 	<div class="field">
 		<label for="pe-sources">Sources <span class="faint">files to read, comma separated; empty detects them</span></label>
@@ -35,17 +35,17 @@
 		<label class="check"><input type="checkbox" id="pe-sidebar" name="sidebar"{{ if or (not $.Project) (not $.Project.SidebarHidden) }} checked{{ end }}> Show in sidebar <span class="faint">off keeps the project and its folders out of the sidebar; their pages stay</span></label>
 	</div>
 	{{- if $p.Jobs }}
-	{{- $allow := $.Project.JobAllowMap }}{{ $hours := $.Project.JobHoursMap }}
+	{{- $hours := $.Project.JobHoursMap }}
 	<div class="field">
-		<label>Per job <span class="faint">who may run it and when, over the folder's; empty inherits</span></label>
+		<span class="label">Per job <span class="faint">who may run it and when, over the folder's; none checked and empty hours inherit</span></span>
 		<div class="table-wrap">
 		<table class="table cards">
 			<thead><tr><th>Job</th><th>Who may run</th><th>Hours</th></tr></thead>
 			<tbody>
 			{{- range $p.Jobs }}
 			<tr>
-				<td class="key"><label for="ja-{{ .ID }}">{{ .Name }}</label></td>
-				<td data-label="Who may run"><input type="text" id="ja-{{ .ID }}" name="job_allow.{{ .ID }}" data-type="list" value="{{ join (index $allow .ID) ", " }}" placeholder="ops, release" spellcheck="false" autocomplete="off"></td>
+				<td class="key">{{ .Name }}</td>
+				<td data-label="Who may run">{{ template "whopicker" (list (printf "job_allow.%s" .ID) (index $.JobAllowChoices .ID)) }}</td>
 				<td data-label="Hours"><input type="text" name="job_hours.{{ .ID }}" value="{{ index $hours .ID }}" placeholder="mon-fri 9-17" spellcheck="false" autocomplete="off"></td>
 			</tr>
 			{{- end }}

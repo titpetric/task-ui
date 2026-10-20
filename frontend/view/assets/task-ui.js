@@ -443,16 +443,26 @@
     var body = {}, joined = {};
     Array.prototype.forEach.call(form.elements, function (el) {
       if (!el.name || el.disabled) return;
-      // A set is the checked values of the boxes that share a name: a
-      // list, empty when none is checked.
-      // A joined set is the same, as one comma separated value: a
-      // setting of a "map.key" form.
+      // A joined set is the checked values of the boxes that share a
+      // name, as one comma separated value: a setting of a "map.key" form.
       if (el.dataset.type === "joined") {
         joined[el.name] = joined[el.name] || [];
         if (el.checked) joined[el.name].push(el.value);
         return;
       }
+      // A set is the same as a list, empty when none is checked; under a
+      // "map.key" name it is that key's list, left out while empty, so a
+      // job without its own inherits the folder's.
       if (el.dataset.type === "set") {
+        var at = el.name.indexOf(".");
+        if (at > 0) {
+          if (!el.checked) return;
+          var group = el.name.slice(0, at), item = el.name.slice(at + 1);
+          body[group] = body[group] || {};
+          body[group][item] = body[group][item] || [];
+          body[group][item].push(el.value);
+          return;
+        }
         body[el.name] = body[el.name] || [];
         if (el.checked) body[el.name].push(el.value);
         return;
