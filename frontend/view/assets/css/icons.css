@@ -1,0 +1,45 @@
+/* ------------------------------------------------------------------- icons */
+
+.ic {
+  width: 1em;
+  height: 1em;
+  vertical-align: -0.15em;
+  fill: none;
+  flex: none;
+}
+
+.btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.7rem;
+  height: 1.7rem;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+}
+
+.btn-icon .ic {
+  width: 1rem;
+  height: 1rem;
+}
+
+.btn-icon:hover {
+  color: var(--text);
+  border-color: var(--line-2);
+  background: var(--ink-3);
+  text-decoration: none;
+}
+
+/* Destructive actions wear the one red on the page. */
+.btn-icon.danger {
+  color: var(--bad);
+}
+
+.btn-icon.danger:hover {
+  border-color: var(--bad);
+  background: var(--bad-wash);
+}

@@ -1,0 +1,238 @@
+/* ------------------------------------------------------------------ shell */
+
+.shell {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  display: grid;
+  grid-template-columns: var(--side) minmax(0, 1fr) var(--rail);
+}
+
+/* The right rail: the recents, beside the page on a wide screen. */
+aside.rail {
+  position: relative;
+  border-left: 1px solid var(--line);
+  background: var(--ink-1);
+  min-height: 100%;
+}
+
+aside.rail .rail-inner {
+  padding: 0.9rem 0 1rem;
+}
+
+aside.rail .side-label {
+  margin-top: 0;
+}
+
+/* The rail adds nothing to the page's height: it lies over its column,
+   and the script hides the recents that would run past the page or the
+   screen, whichever ends first. */
+aside.rail .rail-inner {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.recents [hidden] {
+  display: none;
+}
+
+/* A heading over the recents of one hour, or one day. */
+.recents .recent-group {
+  margin: 0.7rem 1.1rem 0.2rem;
+  color: var(--text-faint);
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.recents .recent-group:first-child {
+  margin-top: 0.2rem;
+}
+
+aside.rail .side-label a {
+  color: inherit;
+}
+
+aside.rail .side-label a:hover {
+  color: var(--text);
+  text-decoration: none;
+}
+
+aside.rail .empty {
+  padding: 0.3rem 1.1rem;
+  color: var(--text-faint);
+  font-size: 0.8125rem;
+}
+
+@media (max-width: 1199px) {
+  .shell {
+    grid-template-columns: var(--side) minmax(0, 1fr);
+  }
+
+  aside.rail {
+    display: none;
+  }
+}
+
+aside.side {
+  border-right: 1px solid var(--line);
+  background: var(--ink-1);
+  padding: 0.9rem 0 2rem;
+  min-height: 100%;
+}
+
+.label {
+  color: var(--text-faint);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+/* The folders, as a file browser lists them: an icon, the folder name, and
+   the count of jobs. The open folder shows an open icon and the accent. */
+.folders a {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.3rem 1.1rem;
+  color: var(--text-dim);
+  border-left: 2px solid transparent;
+}
+
+.folders a .ic {
+  width: 1.05rem;
+  height: 1.05rem;
+  color: var(--text-faint);
+}
+
+.folders a span {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.folders a small {
+  color: var(--text-faint);
+}
+
+.folders a small.bad {
+  color: var(--bad);
+  font-weight: 700;
+}
+
+.folders a .dot:not(.running) {
+  display: none;
+}
+
+.folders a:hover {
+  text-decoration: none;
+  color: var(--text);
+  background: var(--ink-2);
+}
+
+.folders a.active {
+  color: var(--text);
+  background: var(--signal-wash);
+  border-left-color: var(--signal);
+}
+
+.folders a.active .ic {
+  color: var(--signal);
+}
+
+.folders a.overview {
+  margin-bottom: 0.5rem;
+}
+
+.side .empty {
+  padding: 0.3rem 1.1rem;
+  color: var(--text-faint);
+  font-size: 0.8125rem;
+}
+
+main {
+  padding: 1.1rem 1.5rem 2rem;
+  min-width: 0;
+}
+
+.crumbs {
+  margin-bottom: 0.6rem;
+  color: var(--text-faint);
+  font-size: 0.8125rem;
+}
+
+.crumbs a {
+  color: var(--text-dim);
+}
+
+.crumbs span::before {
+  content: "/";
+  margin: 0 0.45rem;
+  color: var(--line-2);
+}
+
+.page-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.5rem;
+  padding-bottom: 0.8rem;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.page-head h2 {
+  font-size: 1.45rem;
+  letter-spacing: -0.015em;
+}
+
+.page-head p {
+  margin: 0.35rem 0 0;
+  color: var(--text-dim);
+  max-width: 70ch;
+  font-size: 0.925rem;
+}
+
+.page-head .actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+section.block {
+  margin-bottom: 1.6rem;
+}
+
+section.block > h3,
+.section-title {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  margin-bottom: 0.45rem;
+  color: var(--text-faint);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+section.block > h3 small {
+  color: var(--text-faint);
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  text-transform: none;
+}
+
+.summary {
+  margin: 0 0 1rem;
+  padding: 0.6rem 0.8rem;
+  border-left: 2px solid var(--line-2);
+  background: var(--ink-1);
+  color: var(--text-dim);
+  white-space: pre-wrap;
+  font: inherit;
+}

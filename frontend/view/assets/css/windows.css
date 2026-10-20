@@ -1,0 +1,138 @@
+/* The preview window: the picture scaled to fit, with room around it, or
+   a document from the top. */
+dialog.preview .preview-body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  overflow: auto;
+  background: var(--ink-1);
+}
+
+dialog.preview .preview-body img {
+  display: block;
+  max-width: 100%;
+  max-height: calc(100vh - 10rem);
+  object-fit: contain;
+  border: 1px solid var(--line-2);
+  border-radius: 4px;
+  background: var(--ink-0);
+}
+
+dialog.preview .preview-body:has(.preview-doc:not([hidden])) {
+  align-items: flex-start;
+}
+
+dialog.preview #preview-version {
+  max-width: 22rem;
+}
+
+/* The pipeline window: centred, one size, the run's pipeline scrolling
+   inside it on the page's background. */
+dialog.pipeline-window {
+  width: min(64rem, calc(100vw - 2rem));
+  height: min(46rem, calc(100vh - 4rem));
+}
+
+dialog.pipeline-window .pipeline-body {
+  padding: 0.9rem 1.1rem;
+  overflow: auto;
+  background: var(--ink-0);
+}
+
+dialog.pipeline-window .page-head {
+  margin-bottom: 0.6rem;
+}
+
+dialog.pipeline-window .page-head h2 {
+  display: none;
+}
+
+/* The summary window: centred like the others, one size from the wait to
+   the answer, the answer scrolling inside it. */
+dialog.run-summary {
+  width: min(56rem, calc(100vw - 2rem));
+  height: min(46rem, calc(100vh - 4rem));
+}
+
+dialog.run-summary .preview-body {
+  display: block;
+  overflow: auto;
+}
+
+dialog.run-summary .preview-doc {
+  max-height: none;
+  margin: 0 auto;
+  overflow: visible;
+}
+
+/* A document in the preview window: markdown as a page, text as it is. */
+.preview-doc {
+  width: 100%;
+  max-width: 52rem;
+  max-height: calc(100vh - 10rem);
+  overflow: auto;
+}
+
+.preview-doc.text pre {
+  margin: 0;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.preview-doc.markdown {
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.preview-doc.markdown h1,
+.preview-doc.markdown h2,
+.preview-doc.markdown h3 {
+  margin: 1.2rem 0 0.5rem;
+  line-height: 1.3;
+}
+
+.preview-doc.markdown h1:first-child,
+.preview-doc.markdown h2:first-child {
+  margin-top: 0;
+}
+
+.preview-doc.markdown img {
+  max-width: 100%;
+}
+
+.preview-doc.markdown pre {
+  padding: 0.6rem 0.8rem;
+  overflow-x: auto;
+  font-size: 0.8rem;
+  background: var(--ink-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+.preview-doc.markdown pre code {
+  padding: 0;
+  border: 0;
+  background: none;
+}
+
+.preview-doc.markdown table {
+  border-collapse: collapse;
+  margin: 0.75rem 0;
+}
+
+.preview-doc.markdown th,
+.preview-doc.markdown td {
+  padding: 0.3rem 0.6rem;
+  border: 1px solid var(--line);
+  text-align: left;
+}
+
+.preview-doc.markdown blockquote {
+  margin: 0.75rem 0;
+  padding-left: 0.9rem;
+  color: var(--text-dim);
+  border-left: 3px solid var(--line-2);
+}

@@ -1,0 +1,63 @@
+/* ------------------------------------------------------------------ tiles */
+
+/* The dashboard: every live terminal as its last frame, a grid of screens
+   the way a control room shows them. */
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(26rem, 1fr));
+  gap: 0.8rem;
+}
+
+.tile {
+  display: block;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--ink-1);
+  color: var(--text);
+  overflow: hidden;
+}
+
+.tile:hover {
+  text-decoration: none;
+  border-color: var(--signal);
+}
+
+.tile-head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.8rem;
+  border-bottom: 1px solid var(--line);
+  font-size: 0.8125rem;
+}
+
+.tile-head b {
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tile-head .spacer {
+  flex: 1;
+}
+
+/* The terminal sits inset like the text of an alert or a form, not
+   against the tile's border. */
+.frame {
+  display: block;
+  width: 100%;
+  min-height: 3rem;
+  padding: 0.55rem 0.8rem;
+  background: #090c10;
+}
+
+.frame svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.tile.wide {
+  max-width: 78rem;
+}

@@ -1,0 +1,41 @@
+/* A toggle in a form: the box before its label, on one line, the label
+   set as text, not as a field's heading. */
+.field label.check {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.3rem;
+  color: var(--text);
+  font-size: 0.85rem;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+  cursor: pointer;
+}
+
+.field label.check input[type="checkbox"] {
+  width: 1rem;
+  height: 1rem;
+  margin: 0;
+  accent-color: var(--signal);
+}
+
+/* The user form's folders: All projects, or Custom and a box each. */
+[data-folder-pick] > label.check {
+  display: inline-flex;
+  margin-right: 1.2rem;
+}
+
+.folder-choices {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+  gap: 0.3rem 1rem;
+  margin-top: 0.6rem;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+[data-folder-pick]:has(input[value="all"]:checked) .folder-choices {
+  display: none;
+}

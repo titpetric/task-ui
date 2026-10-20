@@ -1,0 +1,75 @@
+/* ------------------------------------------------------------------- login */
+
+/* The sign in screen, as oida draws it: one narrow card, labels above
+   inputs, one amber action, nothing else on the page. */
+section.login {
+  position: relative;
+  z-index: 1;
+  width: min(21rem, calc(100% - 2rem));
+  margin: 3.5rem auto 4rem;
+  padding: 1.3rem 1.5rem 1.5rem;
+  background: var(--ink-1);
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius);
+}
+
+section.login h2 {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.7rem;
+  margin: 0 0 1rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+section.login h2::before,
+section.login h2::after {
+  content: "";
+  width: 2.5rem;
+  height: 1px;
+  background: var(--line-2);
+}
+
+section.login .login-error {
+  margin: 0 0 0.8rem;
+  padding: 0.5rem 0.7rem;
+  background: var(--bad-wash);
+  border: 1px solid var(--bad);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-size: 0.78rem;
+}
+
+section.login form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+section.login .field {
+  margin: 0;
+}
+
+/* A label inside a field's table names its row in the row's own type. */
+.field .table label {
+  color: inherit;
+  font: inherit;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+section.login button[type="submit"] {
+  padding: 0.45rem 0.55rem;
+  background: var(--signal);
+  border: 1px solid var(--signal);
+  border-radius: var(--radius);
+  color: var(--signal-ink);
+  font: inherit;
+  font-size: 0.78rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  cursor: pointer;
+}

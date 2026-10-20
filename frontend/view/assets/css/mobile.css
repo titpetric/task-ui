@@ -1,0 +1,163 @@
+/* ------------------------------------------------------------------ mobile */
+
+/* Under the breakpoint the sidebar is a drawer behind the menu button, and
+   the tables that list jobs and runs fold into cards: one block per row,
+   each cell with its label in front. */
+@media (max-width: 860px) {
+  .shell {
+    grid-template-columns: 1fr;
+  }
+
+  aside.side {
+    position: fixed;
+    z-index: 30;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: min(20rem, 86vw);
+    min-height: 0;
+    overflow-y: auto;
+    border-right: 1px solid var(--line-2);
+    transform: translateX(-100%);
+    transition: transform 0.2s ease-out;
+  }
+
+  /* The shadow only on the open drawer: on the closed one it bleeds in
+     from the left edge, which shows on the light theme. */
+  body.menu-open aside.side {
+    transform: none;
+    box-shadow: 0 0 3rem rgba(0, 0, 0, 0.5);
+  }
+
+  /* The shell is a stacking context under the header; the open drawer
+     has to rise above both. */
+  body.menu-open .shell {
+    z-index: 31;
+  }
+
+  body.menu-open .menu-backdrop {
+    display: block;
+  }
+
+  body.menu-open {
+    overflow: hidden;
+  }
+
+  main {
+    padding: 1rem;
+  }
+
+  header.top {
+    padding: 0.55rem 0.8rem;
+  }
+
+  .grid-2,
+  .grid-2.wide {
+    grid-template-columns: 1fr;
+  }
+
+  .table .hide-sm {
+    display: none;
+  }
+
+  .run-body .terminal-host {
+    height: 60vh;
+  }
+
+  .tiles {
+    grid-template-columns: 1fr;
+  }
+
+  .table.cards thead {
+    display: none;
+  }
+
+  .table.cards,
+  .table.cards tbody,
+  .table.cards tr {
+    display: block;
+  }
+
+  .table.cards tr {
+    padding: 0.55rem 0.7rem;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .table.cards tr:last-child {
+    border-bottom: 0;
+  }
+
+  .table.cards tbody tr:hover td {
+    background: transparent;
+  }
+
+  .table.cards td,
+  .table.cards td.hide-sm {
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
+    padding: 0.15rem 0;
+    border: 0;
+    white-space: normal;
+  }
+
+  .table.cards td[data-label]::before {
+    content: attr(data-label);
+    flex: 0 0 5.5rem;
+    color: var(--text-faint);
+    font-size: 0.64rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .table.cards td.key {
+    font-size: 0.95rem;
+    padding-bottom: 0.25rem;
+  }
+
+  .table.cards td.steps {
+    width: auto;
+    max-width: none;
+    flex-wrap: wrap;
+  }
+
+  .table.cards td.steps code {
+    display: inline-block;
+    max-width: 100%;
+  }
+
+  .table.cards td.actions {
+    width: auto;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    padding-top: 0.45rem;
+  }
+
+  .table.cards td.actions > * + * {
+    margin-left: 0;
+  }
+
+  .table.cards tr.empty td {
+    display: block;
+    padding: 0.4rem 0;
+  }
+
+  .filters input,
+  .filters select,
+  .filters .dd {
+    width: 100%;
+  }
+
+  .filters label {
+    flex: 1 1 10rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dot.running,
+  header.top h1 .logo .cursor {
+    animation: none;
+  }
+}

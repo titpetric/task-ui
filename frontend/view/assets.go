@@ -5,6 +5,7 @@ import (
 	"embed"
 	"encoding/hex"
 	"io/fs"
+	"regexp"
 	"sync"
 )
 
@@ -48,4 +49,22 @@ var assetVersion = sync.OnceValue(func() string {
 // not do it, a `go install` build is "dev" every time.
 func AssetVersion() string {
 	return assetVersion()
+}
+
+// importURL matches the url of an @import in the stylesheet.
+var importURL = regexp.MustCompile(`@import url\("(css/[^"?]+\.css)"\)`)
+
+var stylesheet = sync.OnceValue(func() []byte {
+	data, err := assets.ReadFile("assets/task-ui.css")
+	if err != nil {
+		panic(err)
+	}
+	return importURL.ReplaceAll(data, []byte(`@import url("$1?v=`+AssetVersion()+`")`))
+})
+
+// Stylesheet is task-ui.css as the server serves it: a list of imports
+// of the files in css/, each with the ?v= of AssetVersion, so a deploy
+// that changes one file changes every import's URL with it.
+func Stylesheet() []byte {
+	return stylesheet()
 }

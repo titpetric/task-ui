@@ -1,0 +1,79 @@
+/* ------------------------------------------------------------------ badges */
+
+.badge {
+  display: inline-block;
+  padding: 0.05rem 0.45rem;
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius);
+  color: var(--text-dim);
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.badge.signal { color: var(--signal); border-color: var(--signal); background: var(--signal-wash); }
+.badge.ok { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 50%, transparent); background: var(--ok-wash); }
+.badge.bad { color: var(--bad); border-color: color-mix(in srgb, var(--bad) 50%, transparent); background: var(--bad-wash); }
+
+.dot {
+  display: inline-block;
+  flex: none;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--line-2);
+  vertical-align: middle;
+}
+
+.dot.ok { background: var(--ok); }
+.dot.failed, .dot.killed { background: var(--bad); }
+.dot.stopped { background: var(--text-faint); }
+.dot.pending { background: transparent; box-shadow: inset 0 0 0 1px var(--line-2); }
+.dot.skipped { background: var(--line); }
+.dot.running {
+  background: var(--signal);
+  box-shadow: 0 0 0 0 var(--signal-wash);
+  animation: pulse 1.6s ease-out infinite;
+}
+
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 var(--signal); }
+  70% { box-shadow: 0 0 0 0.45rem transparent; }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
+
+/* The mark of a job or a workflow: a shebang in an icon's column, faint,
+   in the colour of how it last ended, pulsing in the signal colour while
+   it runs. */
+.shebang {
+  flex: none;
+  display: inline-block;
+  width: var(--tree-icon, 1.05rem);
+  font-family: var(--font);
+  font-size: 0.75rem;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 1;
+  text-align: center;
+  color: var(--text-faint);
+}
+
+.shebang.ok { color: var(--ok); }
+.shebang.failed, .shebang.killed { color: var(--bad); }
+.shebang.running {
+  color: var(--signal);
+  animation: blink 1.6s ease-in-out infinite;
+}
+
+@keyframes blink {
+  50% { opacity: 0.35; }
+}
+
+.state {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  white-space: nowrap;
+}

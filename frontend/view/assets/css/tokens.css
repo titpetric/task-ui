@@ -1,0 +1,106 @@
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../fonts/Inter-Regular.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("../fonts/Inter-Medium.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("../fonts/Inter-SemiBold.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../fonts/JetBrainsMono-Regular.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("../fonts/JetBrainsMono-Medium.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("../fonts/JetBrainsMono-SemiBold.woff2") format("woff2");
+}
+
+:root {
+  color-scheme: dark light;
+
+  /* --font is the data face, which the terminal uses too; --font-ui the words. */
+  --font: "JetBrains Mono", ui-monospace, "SFMono-Regular", "SF Mono",
+    "IBM Plex Mono", "Cascadia Mono", "Roboto Mono", Menlo, Consolas, monospace;
+  --font-ui: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+
+  --ink-0: #07090c;
+  --ink-1: #0b0f14;
+  --ink-2: #10161d;
+  --ink-3: #161f28;
+  --line: #1c2630;
+  --line-2: #2a3844;
+  --text: #d5dee7;
+  --text-dim: #8394a3;
+  --text-faint: #5a6b79;
+
+  --signal: #e0a44f;
+  --signal-ink: #07090c;
+  --signal-wash: rgba(224, 164, 79, 0.12);
+  --ok: #57b894;
+  --ok-wash: rgba(87, 184, 148, 0.1);
+  --bad: #e06c6c;
+  --bad-wash: rgba(224, 108, 108, 0.1);
+
+  --term-bg: #090c10;
+  --term-fg: #d5dee7;
+
+  --radius: 2px;
+  --side: 17rem;
+  --rail: 17rem;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --ink-0: #f7f5f0;
+    --ink-1: #fffdf9;
+    --ink-2: #f1eee7;
+    --ink-3: #e8e4db;
+    --line: #ddd8cc;
+    --line-2: #c3bcab;
+    --text: #23201a;
+    --text-dim: #5d574a;
+    --text-faint: #857e6e;
+
+    --signal: #9a5d0d;
+    --signal-ink: #fffdf9;
+    --signal-wash: rgba(154, 93, 13, 0.1);
+    --ok: #1c6f56;
+    --ok-wash: rgba(28, 111, 86, 0.08);
+    --bad: #a63232;
+    --bad-wash: rgba(166, 50, 50, 0.08);
+
+    --term-bg: #fffdf9;
+    --term-fg: #23201a;
+  }
+}

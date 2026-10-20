@@ -1,0 +1,253 @@
+/* ----------------------------------------------------------- sidebar tree */
+
+/* The menu button shows under the breakpoint. */
+/* The header's 1rem gap is for its groups; the button belongs with the
+   name, so it sits closer. */
+.menu-toggle {
+  display: none;
+  margin: 0 -0.4rem 0 -0.35rem;
+}
+
+/* After the rule above, or it would hide the button on phones too. */
+@media (max-width: 860px) {
+  .menu-toggle {
+    display: inline-flex;
+  }
+}
+
+.menu-backdrop {
+  display: none;
+  position: fixed;
+  z-index: 29;
+  inset: 0;
+  background: rgba(4, 6, 9, 0.6);
+}
+
+/* A folder at the top of the root is a project: a repository icon at the
+   menu's alignment, its name, the count of its own jobs. Its jobs and
+   folders hang under it, one step in.
+
+   The columns of the tree, from the left edge of a row: the project icon
+   where the menu icons are, a folder icon under the project's name, a
+   job's dot under the folder's name. Each step is an icon and its gap. */
+.folders {
+  --tree-icon: 16px;
+  --tree-gap: 0.55rem;
+  --tree-0: 1.1rem;
+  --tree-1: calc(var(--tree-0) + var(--tree-icon) + var(--tree-gap));
+  --tree-2: calc(var(--tree-1) + var(--tree-icon) + var(--tree-gap));
+}
+
+/* A project is a disclosure: its row opens the project, the chevron at
+   its right folds the jobs and folders under it. */
+.folders details.project > summary {
+  display: flex;
+  align-items: center;
+  margin-top: 0.6rem;
+  list-style: none;
+  cursor: pointer;
+  border-left: 2px solid transparent;
+}
+
+/* The row as a whole, chevron included, is lit on hover and when it is
+   the page's folder. */
+.folders details.project > summary:hover {
+  background: var(--ink-2);
+}
+
+.folders details.project > summary.active {
+  background: var(--signal-wash);
+  border-left-color: var(--signal);
+}
+
+.folders details.project:first-child > summary {
+  margin-top: 0;
+}
+
+.folders details.project > summary::marker,
+.folders details.project > summary::-webkit-details-marker {
+  display: none;
+}
+
+.folders details.project > summary .chev {
+  flex: none;
+  width: 0.85rem;
+  height: 0.85rem;
+  margin-right: 0.6rem;
+  color: var(--text-faint);
+  transition: transform 0.15s ease-out;
+}
+
+.folders details.project[open] > summary .chev {
+  transform: rotate(90deg);
+}
+
+.folders details.project > summary:hover .chev {
+  color: var(--text);
+}
+
+.folders a.section {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  align-items: center;
+  gap: var(--tree-gap);
+  padding: 0.3rem 0.6rem 0.3rem 1.1rem;
+  color: var(--text);
+  font-family: var(--font);
+  font-weight: 600;
+}
+
+.folders a.section .ic {
+  width: var(--tree-icon);
+  height: var(--tree-icon);
+  color: var(--text-dim);
+}
+
+.folders a.section span {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.folders a.section small {
+  color: var(--text-faint);
+  font-weight: 400;
+}
+
+.folders a.section.active .ic {
+  color: var(--signal);
+}
+
+/* The folders of a project, one step in, named by their path below the
+   project: the part above the folder dim, the folder itself bright. A
+   folder is a disclosure: the row opens the folder, the chevron shows its
+   jobs, each with a running dot. */
+.folders details.folder summary {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.3rem 0.6rem 0.3rem var(--tree-1);
+  color: var(--text-dim);
+  border-left: 2px solid transparent;
+  list-style: none;
+  cursor: pointer;
+}
+
+.folders details.folder summary::marker,
+.folders details.folder summary::-webkit-details-marker {
+  display: none;
+}
+
+.folders details.folder summary a {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--tree-gap);
+  padding: 0;
+  border: 0;
+  color: inherit;
+}
+
+.folders details.folder summary a:hover {
+  background: transparent;
+}
+
+.folders details.folder summary a:hover {
+  text-decoration: none;
+  color: var(--text);
+}
+
+/* The path above the folder gives way before the folder's own name. */
+.folders details.folder summary a span {
+  display: flex;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.folders details.folder summary a span i {
+  flex-shrink: 100;
+  min-width: 1.5em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-style: normal;
+  color: var(--text-faint);
+}
+
+.folders details.folder summary a span b {
+  flex: none;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: inherit;
+}
+
+.folders details.folder summary .ic {
+  width: var(--tree-icon);
+  height: 10px;
+  color: var(--text-faint);
+}
+
+.folders details.folder summary .chev {
+  width: 0.85rem;
+  height: 0.85rem;
+  transition: transform 0.15s ease-out;
+}
+
+.folders details.folder[open] summary .chev {
+  transform: rotate(90deg);
+}
+
+.folders details.folder summary small {
+  color: var(--text-faint);
+}
+
+.folders details.folder summary small.bad {
+  color: var(--bad);
+  font-weight: 700;
+}
+
+.folders details.folder summary .dot:not(.running) {
+  display: none;
+}
+
+.folders details.folder summary:hover {
+  color: var(--text);
+  background: var(--ink-2);
+}
+
+.folders details.folder.active summary {
+  color: var(--text);
+  background: var(--signal-wash);
+  border-left-color: var(--signal);
+}
+
+.folders details.folder.active summary .ic {
+  color: var(--signal);
+}
+
+.folders .jobs {
+  padding: 0.1rem 0 0.3rem;
+}
+
+.folders .jobs .empty {
+  padding: 0.2rem 1.1rem 0.2rem var(--tree-2);
+}
+
+/* The reason a run out of hours needs, asked in the window. */
+.run-reason {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.55rem 0.9rem;
+  border-top: 1px solid var(--line);
+  background: var(--signal-wash);
+}
+
+.run-reason label {
+  color: var(--text);
+  font-size: 0.8125rem;
+}

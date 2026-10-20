@@ -1,0 +1,141 @@
+* {
+  box-sizing: border-box;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+html {
+  background: var(--ink-0);
+}
+
+/* A step up on desktops: the rem everything is set in grows a sixteenth. */
+@media (min-width: 1100px) {
+  html {
+    font-size: 106.25%;
+  }
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--ink-0);
+  color: var(--text);
+  font: 400 0.9rem/1.5 var(--font-ui);
+  font-feature-settings: "cv11", "ss01", "tnum";
+  font-variant-numeric: tabular-nums slashed-zero;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Grain and scanlines, as in oida. Pointer events pass through. */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 9;
+  pointer-events: none;
+  opacity: 0.5;
+  background-image:
+    repeating-linear-gradient(to bottom, rgba(255, 255, 255, 0.016) 0 1px, transparent 1px 3px),
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/><feColorMatrix type='saturate' values='0'/></filter><rect width='140' height='140' filter='url(%23n)' opacity='0.35'/></svg>");
+}
+
+@media (prefers-color-scheme: light) {
+  body::after {
+    opacity: 0.25;
+    mix-blend-mode: multiply;
+  }
+}
+
+a {
+  color: var(--signal);
+  text-decoration: none;
+  text-underline-offset: 0.2em;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+:focus-visible {
+  outline: 2px solid var(--signal);
+  outline-offset: 2px;
+}
+
+h1, h2, h3 {
+  margin: 0;
+  font-weight: 600;
+}
+
+h2 {
+  letter-spacing: -0.01em;
+}
+
+/* The data wears the mono face: names, keys, numbers, code. */
+code, pre, kbd,
+.mono,
+.table td.key,
+.metrics span,
+.avatar,
+.recents .what b,
+.folders details.folder summary a span,
+.folders .jobs .job a,
+.jobcard .name,
+.crumbs,
+.filters input,
+input[type="text"],
+input[type="password"],
+textarea,
+select,
+.run-head h3,
+.elapsed,
+.state,
+.who-ran {
+  font-family: var(--font);
+}
+
+p {
+  margin: 0 0 0.75rem;
+}
+
+code {
+  font: inherit;
+  color: var(--text);
+  background: var(--ink-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 0 0.3em;
+}
+
+.dim { color: var(--text-dim); }
+.faint { color: var(--text-faint); }
+.nowrap { white-space: nowrap; }
+.mono-break { word-break: break-all; }
+
+/* A key's fingerprint: its type on a line of its own, whole, the hash
+   under it, broken anywhere, in a column wide enough to read. */
+td.fingerprint {
+  min-width: 14rem;
+  font-family: var(--font);
+  font-size: 0.8rem;
+  overflow-wrap: anywhere;
+}
+
+td.fingerprint .kind {
+  display: block;
+  white-space: nowrap;
+}
+
+/* A key's name and badges wrap under its comment before the table runs
+   past its actions. */
+.table.keys td.key {
+  white-space: normal;
+}
+
+.table.keys td.key .badge {
+  margin: 0.1rem 0;
+}
+.text-end { text-align: right; }

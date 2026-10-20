@@ -1,0 +1,193 @@
+/* The inventory's run: quick commands, the command, the hosts, then a
+   card of output per host. */
+/* The run panel: the quick commands, the command, the hosts, then the
+   buttons, a step apart; the command box as tall as a few lines. */
+.inventory-run form {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.inventory-run textarea {
+  min-height: 4.5rem;
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius);
+  background: var(--ink-0);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 0.8125rem;
+}
+
+.run-commands {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.9rem;
+}
+
+.run-commands .btn {
+  font-family: var(--font);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+/* The hosts to run on: a chip each, its box filled while picked, and
+   All, None and Invert with the count over them. The checkbox stays in
+   the chip, out of sight, for the form and the keyboard. */
+.run-hosts {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.host-tools {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.host-tools [data-host-count] {
+  margin-right: auto;
+  font-size: 0.75rem;
+}
+
+.host-picks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.host-pick {
+  position: relative;
+  cursor: pointer;
+}
+
+.host-pick input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+}
+
+.host-pick span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  height: var(--control-sm);
+  padding: 0 0.7rem 0 0.55rem;
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius);
+  background: var(--ink-2);
+  color: var(--text-dim);
+  font-family: var(--font);
+  font-size: 0.8rem;
+  user-select: none;
+}
+
+.host-pick span::before {
+  content: "";
+  flex: none;
+  width: 0.7rem;
+  height: 0.7rem;
+  border: 1px solid var(--text-faint);
+  border-radius: 2px;
+  background: transparent;
+}
+
+.host-pick:hover span {
+  border-color: var(--text-faint);
+  color: var(--text);
+}
+
+.host-pick input:checked + span {
+  border-color: var(--signal);
+  background: var(--signal-wash);
+  color: var(--text);
+}
+
+.host-pick input:checked + span::before {
+  border-color: var(--signal);
+  background: var(--signal);
+  box-shadow: inset 0 0 0 2px var(--ink-1);
+}
+
+.host-pick input:focus-visible + span {
+  outline: 1px solid var(--signal);
+  outline-offset: 2px;
+}
+
+.inventory-results:not(:empty) {
+  margin-top: 1rem;
+}
+
+.run-results td.run-output {
+  width: 100%;
+  font-family: var(--font);
+  font-size: 0.75rem;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.run-results .run-error {
+  color: var(--bad);
+}
+
+/* Every cell from the top, the host and its exit level with the first
+   line of its output; a long output shows its last screen, with Expand
+   over it. */
+.run-results td {
+  vertical-align: top;
+}
+
+.run-results .output-toggle {
+  float: right;
+  margin: 0 0 0.4rem 0.6rem;
+}
+
+.run-summary {
+  margin-bottom: 1rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--signal);
+  border-radius: var(--radius);
+}
+
+.run-summary h4 {
+  margin: 0;
+}
+
+.summary-text {
+  font-size: 0.875rem;
+  line-height: 1.55;
+}
+
+.summary-text h5 {
+  margin: 0.9rem 0 0.3rem;
+  font-size: 0.875rem;
+}
+
+.summary-text p,
+.summary-text ul,
+.summary-text ol {
+  margin: 0.4rem 0;
+}
+
+.summary-text ul,
+.summary-text ol {
+  padding-left: 1.25rem;
+}
+
+.summary-text pre {
+  padding: 0.5rem 0.75rem;
+  overflow-x: auto;
+  font-size: 0.75rem;
+  background: var(--ink-1);
+  border-radius: var(--radius);
+}
+
+.note-form-foot .actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
