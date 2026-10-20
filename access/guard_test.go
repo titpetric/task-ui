@@ -124,3 +124,42 @@ func TestIsHTTPS(t *testing.T) {
 	r.Header.Set("X-Forwarded-Proto", "HTTPS")
 	assert.True(t, access.IsHTTPS(r))
 }
+
+// A bearer token signs in its user; a wrong one signs in nobody, even
+// beside a good session cookie.
+func TestGuard_UserBearer(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	db, err := storage.OpenAndMigrate(ctx, ":memory:")
+	assert.NoError(t, err)
+	t.Cleanup(func() { db.Close() })
+	users := storage.NewUserStorage(db)
+	ops := &model.User{Name: "ops", Role: model.RoleRunner}
+	assert.NoError(t, users.Create(ctx, ops))
+	guard := access.NewGuard(users, access.NewSessions("secret", time.Hour))
+
+	bearer := func(token string) *http.Request {
+		r := httptest.NewRequest(http.MethodGet, "/", nil)
+		r.Header.Set("Authorization", "Bearer "+token)
+		return r
+	}
+	assert.Nil(t, guard.User(bearer("tui_x")), "tokens off")
+
+	guard.Tokens = storage.NewUserAuthTokenStorage(db)
+	token, hash, err := access.NewToken()
+	assert.NoError(t, err)
+	assert.NoError(t, guard.Tokens.Set(ctx, ops.ID, "cli", hash))
+
+	assert.Equal(t, ops.ID, guard.User(bearer(token)).ID)
+	row, err := guard.Tokens.Find(ctx, hash)
+	assert.NoError(t, err)
+	assert.NotNil(t, row.UsedAt)
+
+	r := bearer("tui_wrong")
+	r.AddCookie(&http.Cookie{Name: access.Cookie, Value: guard.Sessions.Issue("ops")})
+	assert.Nil(t, guard.User(r))
+
+	w := httptest.NewRecorder()
+	guard.Require(hello).ServeHTTP(w, bearer(token))
+	assert.Equal(t, "hello ops", w.Body.String())
+}

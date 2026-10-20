@@ -53,6 +53,7 @@ and red for failed or killed, and pulsing amber while it runs.
 | [Projects and jobs](guide/projects.md) | The tree of projects, folders, jobs  | Folders, the conventions, a job's page, pulls, keys, hours  |
 | [Recents](guide/recents.md)          | Recents                                | The latest runs, by anyone                                  |
 | [Settings](guide/settings.md)        | The user menu, Settings                | Projects, users, secrets, SSH keys, env files               |
+| [MCP](guide/mcp.md)                  |                                        | Tokens, and the tools an agent runs jobs with               |
 | [Screenshots](screenshots.md)        |                                        | Every view, in both themes and on a phone                   |
 
 Installing and configuring the server is in the [README](../README.md):

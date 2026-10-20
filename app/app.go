@@ -21,6 +21,7 @@ import (
 	"github.com/titpetric/task-ui/event"
 	"github.com/titpetric/task-ui/frontend"
 	"github.com/titpetric/task-ui/git"
+	"github.com/titpetric/task-ui/mcp"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/recording"
 	"github.com/titpetric/task-ui/runner"
@@ -182,6 +183,7 @@ func (a *App) wire(version string) error {
 	a.Runner.Events = events
 	a.Guard = access.NewGuard(a.Users, access.NewSessions(sessionSecret(cfg), cfg.SessionTTL))
 	a.Guard.AutoLogin = cfg.AutoLogin
+	a.Guard.Tokens = storage.NewUserAuthTokenStorage(a.DB)
 
 	apiHandlers := api.New(api.Options{
 		Users: a.Users, Projects: projects, Runs: runs, Artifacts: artifacts, Schedules: schedules, Secrets: secrets,
@@ -197,8 +199,12 @@ func (a *App) wire(version string) error {
 		return err
 	}
 
+	routes := apiHandlers.Routes()
 	r := chi.NewRouter()
-	r.Mount("/api", a.Guard.Require(access.SameOrigin(apiHandlers.Routes())))
+	// MCP clients sign with a bearer token; its tools call the API as
+	// the token's user.
+	r.Mount("/api/mcp", a.Guard.Require(access.SameOrigin(mcp.New(routes, version))))
+	r.Mount("/api", a.Guard.Require(access.SameOrigin(routes)))
 	r.Mount("/", pages.Routes())
 	a.handler = r
 	return nil
