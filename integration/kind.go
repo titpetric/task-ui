@@ -21,10 +21,10 @@ func Kinds() []Kind {
 		{
 			ID:          Claude,
 			Title:       "Claude Code",
-			Description: "The token Claude Code signs in with, from `claude setup-token`. Runs of the folders below get it as CLAUDE_CODE_OAUTH_TOKEN: the agent job of the Notes board, and a Claude terminal.",
+			Description: "The token Claude Code signs in with, from `claude setup-token`, for the whole instance. A run gets it as CLAUDE_CODE_OAUTH_TOKEN when the user who started it is named below: the agent job of the Notes board runs as the agent's user, and a Claude terminal as you.",
 			Fields: []Field{
 				{Name: "token", Label: "OAuth token", Secret: true, Placeholder: "sk-ant-oat01-…", Help: "Valid for a year from setup-token; set a new one before it ends."},
-				{Name: "folders", Label: "Folders", Placeholder: "deploy/scripts", Help: "The folders whose runs get the token, comma separated."},
+				{Name: "who", Label: "Who", Placeholder: "admin, claude", Help: "The users or roles whose runs get the token, comma separated; empty is everyone."},
 			},
 		},
 		{

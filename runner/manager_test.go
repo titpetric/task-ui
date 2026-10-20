@@ -415,26 +415,28 @@ func TestManager_RequestEnv(t *testing.T) {
 	assert.Contains(t, out, "note=[n1] user=[ops]")
 }
 
-// fixedIntegrations adds one variable to the runs of one folder.
-type fixedIntegrations struct{ folder string }
+// fixedIntegrations adds one variable to the runs of one user.
+type fixedIntegrations struct{ user string }
 
-func (f fixedIntegrations) Env(_ context.Context, folder string) (map[string]string, error) {
-	if folder != f.folder {
+func (f fixedIntegrations) Env(_ context.Context, user, _ string) (map[string]string, error) {
+	if user != f.user {
 		return nil, nil
 	}
 	return map[string]string{"CLAUDE_CODE_OAUTH_TOKEN": "sk-1"}, nil
 }
 
-// An integration's variables reach the runs of its folder alone.
+// An integration's variables reach the runs of the users it names alone.
 func TestManager_Integrations(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
-	m := runner.New(runner.Options{Runs: f.runs, Recordings: &recording.Store{Root: t.TempDir()}, Grace: time.Second, KillTimeout: 5 * time.Second, Keep: time.Minute, Integrations: fixedIntegrations{folder: "agent"}})
+	m := runner.New(runner.Options{Runs: f.runs, Recordings: &recording.Store{Root: t.TempDir()}, Grace: time.Second, KillTimeout: 5 * time.Second, Keep: time.Minute, Integrations: fixedIntegrations{user: "ops"}})
 	t.Cleanup(func() { m.Shutdown(context.Background()) })
-	for id, want := range map[string]string{"agent": "token=[sk-1]", "other": "token=[]"} {
-		session, err := m.Start(context.Background(), f.shellJob(id, `echo "token=[$CLAUDE_CODE_OAUTH_TOKEN]"`, false))
+	for user, want := range map[string]string{"ops": "token=[sk-1]", "guest": "token=[]"} {
+		req := f.shellJob("integrations-"+user, `echo "token=[$CLAUDE_CODE_OAUTH_TOKEN]"`, false)
+		req.User = &model.User{ID: user, Name: user, Role: model.RoleRunner}
+		session, err := m.Start(context.Background(), req)
 		assert.NoError(t, err)
 		out, _ := collect(t, session.Attach(true))
-		assert.Contains(t, out, want, id)
+		assert.Contains(t, out, want, user)
 	}
 }

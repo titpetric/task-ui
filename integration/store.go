@@ -98,19 +98,29 @@ func (s *Store) Delete(ctx context.Context, id string) error {
 	return nil
 }
 
-// Env returns what the integrations add to a run of a folder: the Claude
-// token, for a folder the Claude integration names.
-func (s *Store) Env(ctx context.Context, folder string) (map[string]string, error) {
+// Env returns what the integrations add to a run by a user of a role: the
+// Claude token, when the Claude integration names the user or the role, or
+// names nobody.
+func (s *Store) Env(ctx context.Context, user, role string) (map[string]string, error) {
 	values, err := s.Values(ctx, Claude)
 	if err != nil || values["token"] == "" {
 		return nil, err
 	}
-	for _, name := range strings.Split(values["folders"], ",") {
-		if strings.TrimSpace(name) == folder {
-			return map[string]string{"CLAUDE_CODE_OAUTH_TOKEN": values["token"]}, nil
+	if strings.TrimSpace(values["who"]) != "" && !listed(values["who"], user) && !listed(values["who"], role) {
+		return nil, nil
+	}
+	return map[string]string{"CLAUDE_CODE_OAUTH_TOKEN": values["token"]}, nil
+}
+
+// listed reports whether a comma separated list names the item, or is *.
+func listed(list, item string) bool {
+	for _, name := range strings.Split(list, ",") {
+		name = strings.TrimSpace(name)
+		if name == "*" || (name != "" && name == item) {
+			return true
 		}
 	}
-	return nil, nil
+	return false
 }
 
 // rows returns an integration's secret rows, still encrypted, by name.

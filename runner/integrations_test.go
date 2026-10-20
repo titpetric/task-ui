@@ -11,8 +11,8 @@ import (
 // Integrations is the contract between the manager and the integrations.
 func TestIntegrations(t *testing.T) {
 	t.Parallel()
-	var integrations runner.Integrations = fixedIntegrations{folder: "agent"}
-	vars, err := integrations.Env(context.Background(), "agent")
+	var integrations runner.Integrations = fixedIntegrations{user: "ops"}
+	vars, err := integrations.Env(context.Background(), "ops", "runner")
 	assert.NoError(t, err)
 	assert.Equal(t, "sk-1", vars["CLAUDE_CODE_OAUTH_TOKEN"])
 }
