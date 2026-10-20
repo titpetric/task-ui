@@ -1691,7 +1691,34 @@
       heading = label;
       return head + recentHTML(e);
     }).join("");
+    fitRecents();
   }
+
+  // fitRecents hides the recents that run past the rail's column or the
+  // bottom of the screen, whichever comes first, and a heading left with
+  // no entry under it: the list is trimmed, not scrolled.
+  function fitRecents() {
+    if (!recents) return;
+    var rail = recents.closest(".rail-inner");
+    if (!rail || !rail.offsetParent) return;
+    // Where the rail starts on the page, not on the screen, so the trim
+    // holds wherever the page is scrolled to.
+    var top = rail.getBoundingClientRect().top + window.scrollY;
+    var limit = Math.min(rail.clientHeight, window.innerHeight - top);
+    var items = Array.prototype.slice.call(recents.children);
+    items.forEach(function (item) { item.hidden = false; });
+    items.forEach(function (item) {
+      if (item.offsetTop + item.offsetHeight > limit) item.hidden = true;
+    });
+    for (var i = items.length - 1; i >= 0; i--) {
+      var item = items[i];
+      if (!item.classList.contains("recent-group") || item.hidden) continue;
+      var next = item.nextElementSibling;
+      if (!next || next.hidden || next.classList.contains("recent-group")) item.hidden = true;
+    }
+  }
+  fitRecents();
+  window.addEventListener("resize", fitRecents);
 
   // hoursAgo is the heading of a recent that started a while ago, in
   // milliseconds: whole hours, then whole days, as the page draws them.
