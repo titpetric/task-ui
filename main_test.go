@@ -43,6 +43,11 @@ func TestRun(t *testing.T) {
 
 	assert.Error(t, run(context.Background(), []string{"--nope"}, strings.NewReader(""), &out))
 
+	// agent reaches the host commands, before the configuration.
+	assert.ErrorContains(t, run(context.Background(), []string{"agent"}, strings.NewReader(""), &out), "usage: task-ui agent")
+	t.Setenv("CLAUDE_CODE_OAUTH_TOKEN", "")
+	assert.ErrorContains(t, run(context.Background(), []string{"agent", "note", "--root", "/nowhere"}, strings.NewReader(""), &out), "TASK_UI_NOTE: this job runs from a note")
+
 	// passwd adds a user to the password file, and resets one; a bad file
 	// stops the server before it listens.
 	t.Setenv("TASK_UI_HTPASSWD", filepath.Join(root, ".htpasswd"))

@@ -1,0 +1,51 @@
+package agent_test
+
+import (
+	"context"
+	"os"
+	"path/filepath"
+	"strings"
+	"testing"
+
+	"github.com/titpetric/task-ui/agent"
+	"github.com/titpetric/task-ui/internal/assert"
+)
+
+// TestMain runs the shell command in a process of its own under
+// AGENT_TEST_SHELL: the command replaces its process with claude.
+func TestMain(m *testing.M) {
+	if args, ok := os.LookupEnv("AGENT_TEST_SHELL"); ok {
+		a := &agent.Agent{Env: os.Environ(), Stdin: os.Stdin, Stdout: os.Stdout, Stderr: os.Stderr}
+		if err := a.Run(context.Background(), append([]string{"shell"}, strings.Fields(args)...)); err != nil {
+			os.Stderr.WriteString(err.Error() + "\n")
+			os.Exit(2)
+		}
+	}
+	os.Exit(m.Run())
+}
+
+// fakeClaude puts a claude first in a PATH that prints where it runs, the
+// sandbox flag, HOME and its arguments, one per line, and exits with
+// FAKE_EXIT. It returns the PATH.
+func fakeClaude(t *testing.T) string {
+	t.Helper()
+	dir := t.TempDir()
+	body := "#!/bin/sh\necho \"cwd=$(pwd -P)\"\necho \"sandbox=$IS_SANDBOX\"\necho \"home=$HOME\"\nfor a; do echo \"arg=$a\"; done\nexit ${FAKE_EXIT:-0}\n"
+	assert.NoError(t, os.WriteFile(filepath.Join(dir, "claude"), []byte(body), 0o755))
+	return dir + string(os.PathListSeparator) + os.Getenv("PATH")
+}
+
+// realDir resolves a temporary directory the way pwd -P prints it.
+func realDir(t *testing.T) string {
+	t.Helper()
+	dir, err := filepath.EvalSymlinks(t.TempDir())
+	assert.NoError(t, err)
+	return dir
+}
+
+func TestAgent_Run(t *testing.T) {
+	t.Parallel()
+	a := &agent.Agent{}
+	assert.ErrorContains(t, a.Run(context.Background(), nil), "usage: task-ui agent")
+	assert.ErrorContains(t, a.Run(context.Background(), []string{"nope"}), "usage: task-ui agent")
+}

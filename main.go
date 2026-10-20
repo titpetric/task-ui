@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/exec"
 	"os/signal"
 	"path/filepath"
 	"strconv"
@@ -20,6 +21,7 @@ import (
 	_ "modernc.org/sqlite" // the driver storage opens
 
 	"github.com/titpetric/task-ui/access"
+	"github.com/titpetric/task-ui/agent"
 	"github.com/titpetric/task-ui/app"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/storage"
@@ -209,11 +211,15 @@ func token(ctx context.Context, dsn string, args []string, stdout io.Writer) err
 	return nil
 }
 
-// run is main without the exit: the hash, passwd, email, backup and
-// token commands, the version, or the server until a signal.
+// run is main without the exit: the hash, agent, passwd, email, backup
+// and token commands, the version, or the server until a signal.
 func run(ctx context.Context, args []string, stdin io.Reader, stdout io.Writer) error {
 	if len(args) > 0 && args[0] == "hash" {
 		return hash(args[1:], stdin, stdout)
+	}
+	if len(args) > 0 && args[0] == "agent" {
+		a := &agent.Agent{Env: os.Environ(), Stdin: stdin, Stdout: stdout, Stderr: os.Stderr}
+		return a.Run(ctx, args[1:])
 	}
 	cfg, err := app.NewConfig(args)
 	if err != nil {
@@ -247,6 +253,12 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 	if err := run(ctx, os.Args[1:], os.Stdin, os.Stdout); err != nil {
+		// A host command ends with the code of the command it ran, which
+		// said what went wrong itself.
+		var exit *exec.ExitError
+		if errors.As(err, &exit) {
+			os.Exit(exit.ExitCode())
+		}
 		fmt.Fprintln(os.Stderr, "task-ui:", err)
 		os.Exit(1)
 	}
