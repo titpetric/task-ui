@@ -115,7 +115,7 @@ type Page struct {
 	KeyUsers map[string][]string
 	// KeyHolders are the roles and the users, and the keys each gets.
 	KeyHolders []KeyHolder
-	Key      *sshkey.Key
+	Key        *sshkey.Key
 	// Encryption names the keys that encrypt the secrets.
 	Encryption []string
 	Users      []model.User
@@ -125,7 +125,7 @@ type Page struct {
 	FolderChoices []FolderChoice
 	// CanAddUsers shows Create user: the server writes a password file.
 	CanAddUsers bool
-	Root    string
+	Root        string
 
 	// Form holds the values of a form the page shows again.
 	Form   map[string]string
