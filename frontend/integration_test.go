@@ -38,7 +38,11 @@ func TestHosts(t *testing.T) {
 	assert.Contains(t, f.page(t, asAdmin, "/hosts"), "The Beszel integration is not set up")
 
 	hub := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		_, _ = w.Write([]byte(`{"items":[{"id":"a","name":"dev1","host":"10.10.10.11","status":"up","info":{"cpu":95,"mp":80,"dp":30,"u":7200,"c":4,"m":"EPYC","k":"6.12","v":"0.12"}}]}`))
+		if r.URL.Path == "/api/collections/system_stats/records" {
+			_, _ = w.Write([]byte(`{"items":[{"system":"a","stats":{"m":15.6,"mu":12.4,"d":200,"du":60}}]}`))
+			return
+		}
+		_, _ = w.Write([]byte(`{"items":[{"id":"a","name":"dev1","host":"10.10.10.11","status":"up","info":{"cpu":95,"mp":80,"dp":30,"u":7200,"t":4,"m":"EPYC","k":"6.12","v":"0.12"}}]}`))
 	}))
 	t.Cleanup(hub.Close)
 	assert.NoError(t, f.opts.Integrations.Save(context.Background(), integration.Beszel, map[string]string{"url": hub.URL, "token": "t1"}))
@@ -47,6 +51,9 @@ func TestHosts(t *testing.T) {
 	assert.Contains(t, body, "dev1")
 	assert.Contains(t, body, `class="meter high"`)
 	assert.Contains(t, body, `class="meter warm"`)
-	assert.Contains(t, body, "EPYC")
+	assert.Contains(t, body, `<td class="num">4</td>`)
+	assert.Contains(t, body, "12.4 / 15.6 GB")
+	assert.Contains(t, body, "60 / 200 GB")
+	assert.NotContains(t, body, "EPYC")
 	assert.Contains(t, body, `href="/hosts" class="active"`)
 }

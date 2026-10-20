@@ -2,7 +2,7 @@
 <div class="page-head">
 	<div>
 		<h2>Hosts</h2>
-		<p>The hosts Beszel monitors: whether each is up, its load, memory and disk, and the machine. Read from the hub at most once a minute.</p>
+		<p>The hosts Beszel monitors: whether each is up, its cores, and how busy its CPU, memory and disk are, with their sizes. Read from the hub at most once a minute.</p>
 	</div>
 </div>
 
@@ -11,21 +11,19 @@
 {{- else }}
 <div class="table-wrap">
 <table class="table hosts">
-	<thead><tr><th>Host</th><th>State</th><th>CPU</th><th>Memory</th><th>Disk</th><th class="hide-sm">Uptime</th><th class="hide-sm">Machine</th><th class="hide-sm">Agent</th></tr></thead>
+	<thead><tr><th>Host</th><th>State</th><th class="num">Cores</th><th>CPU</th><th>Memory</th><th>Disk</th></tr></thead>
 	<tbody>
 	{{- range .Hosts }}
 		<tr>
-			<td class="key nowrap"><svg class="ic"><use href="#i-server"/></svg> {{ .Name }}<div class="faint mono">{{ .Host }}</div></td>
+			<td class="key nowrap"><svg class="ic"><use href="#i-server"/></svg> {{ .Name }}{{ if ne .Host .Name }}<div class="faint mono">{{ .Host }}</div>{{ end }}</td>
 			<td><span class="badge {{ if .Up }}ok{{ else if eq .Status "down" }}bad{{ end }}">{{ .Status }}</span></td>
+			<td class="num">{{ with .CPUs }}{{ . }}{{ else }}<span class="faint">-</span>{{ end }}</td>
 			<td>{{ template "meter" .Info.CPU }}</td>
-			<td>{{ template "meter" .Info.Memory }}</td>
-			<td>{{ template "meter" .Info.Disk }}</td>
-			<td class="hide-sm nowrap">{{ if .Info.Uptime }}{{ duration .UptimeDuration }}{{ else }}<span class="faint">-</span>{{ end }}</td>
-			<td class="hide-sm"><div>{{ .Info.CPUModel }}</div><div class="faint">{{ if .Info.Cores }}{{ .Info.Cores }} cores{{ end }}{{ with .Info.Kernel }} · {{ . }}{{ end }}</div></td>
-			<td class="hide-sm faint mono">{{ .Info.Agent }}</td>
+			<td>{{ template "meter" .Info.Memory }}{{ with .Stats }} <span class="faint nowrap">{{ printf "%.1f" .MemoryUsed }} / {{ printf "%.1f" .Memory }} GB</span>{{ end }}</td>
+			<td>{{ template "meter" .Info.Disk }}{{ with .Stats }} <span class="faint nowrap">{{ printf "%.0f" .DiskUsed }} / {{ printf "%.0f" .Disk }} GB</span>{{ end }}</td>
 		</tr>
 	{{- else }}
-		<tr class="empty"><td colspan="8">Beszel monitors no hosts.</td></tr>
+		<tr class="empty"><td colspan="6">Beszel monitors no hosts.</td></tr>
 	{{- end }}
 	</tbody>
 </table>

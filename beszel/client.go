@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"strings"
 	"sync"
 	"time"
@@ -57,8 +58,44 @@ func (c *Client) Systems(ctx context.Context) ([]System, error) {
 	if err != nil {
 		return nil, err
 	}
+	c.stats(ctx, list.Items)
 	c.systems, c.at = list.Items, time.Now()
 	return c.systems, nil
+}
+
+// statRecord is a row of the system_stats collection.
+type statRecord struct {
+	System string `json:"system"`
+	Stats  Stats  `json:"stats"`
+}
+
+// statList is a page of the system_stats collection.
+type statList struct {
+	Items []statRecord `json:"items"`
+}
+
+// stats fills in each system's latest minute of measures. The hub writes
+// one a minute per host, so the newest records of the last ten minutes
+// hold every host that reports; a host without one keeps no stats.
+func (c *Client) stats(ctx context.Context, systems []System) {
+	since := time.Now().UTC().Add(-10 * time.Minute).Format("2006-01-02 15:04:05")
+	filter := url.QueryEscape("type='1m' && created>='" + since + "'")
+	var list statList
+	if _, err := c.do(ctx, "/api/collections/system_stats/records?perPage=500&sort=-created&filter="+filter, &list); err != nil {
+		return
+	}
+	latest := map[string]Stats{}
+	for _, record := range list.Items {
+		if _, ok := latest[record.System]; !ok {
+			latest[record.System] = record.Stats
+		}
+	}
+	for i := range systems {
+		if stats, ok := latest[systems[i].ID]; ok {
+			stats := stats
+			systems[i].Stats = &stats
+		}
+	}
 }
 
 // do reads a path from the hub and decodes a success into out. It returns
