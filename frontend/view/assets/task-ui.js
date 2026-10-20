@@ -1061,19 +1061,20 @@
     });
     inventoryRun.addEventListener("submit", function (event) {
       event.preventDefault();
+      var summarize = !!(event.submitter && event.submitter.name === "summarize");
       var hosts = Array.prototype.filter.call(inventoryRun.querySelectorAll("input[name=hosts]"), function (box) { return box.checked; })
         .map(function (box) { return box.value; });
       if (!hosts.length) return;
-      var button = inventoryRun.querySelector("button[type=submit]");
-      button.disabled = true;
-      results.innerHTML = '<p class="faint">Running on ' + hosts.length + " host" + (hosts.length === 1 ? "" : "s") + "…</p>";
-      api("POST", "/api/inventory/run", { command: inventoryRun.elements.command.value, hosts: hosts }).then(function (res) {
-        button.disabled = false;
+      var buttons = inventoryRun.querySelectorAll("button[type=submit]");
+      buttons.forEach(function (button) { button.disabled = true; });
+      results.innerHTML = '<p class="faint">Running on ' + hosts.length + " host" + (hosts.length === 1 ? "" : "s") + (summarize ? ", then Claude summarizes the outputs" : "") + "…</p>";
+      api("POST", "/api/inventory/run", { command: inventoryRun.elements.command.value, hosts: hosts, summarize: summarize }).then(function (res) {
+        buttons.forEach(function (button) { button.disabled = false; });
         if (res.status >= 300) {
           results.innerHTML = '<p class="form-error">' + escapeHTML(res.data.error || ("HTTP " + res.status)) + "</p>";
           return;
         }
-        results.innerHTML = '<div class="table-wrap"><table class="table run-results"><thead><tr><th>Host</th><th>Exit</th><th>Output</th></tr></thead><tbody>' +
+        results.innerHTML = runSummary(res.data) + '<div class="table-wrap"><table class="table run-results"><thead><tr><th>Host</th><th>Exit</th><th>Output</th></tr></thead><tbody>' +
           res.data.results.map(function (r) {
             var ok = !r.error && r.exit_code === 0;
             var state = r.error ? "error" : String(r.exit_code);
@@ -1086,6 +1087,53 @@
           }).join("") + "</tbody></table></div>";
       });
     });
+  }
+
+  // runSummary shows Claude's summary of a run on the hosts, with the
+  // report it read to download; a run without one shows nothing.
+  function runSummary(data) {
+    if (!data.report) return "";
+    var report = URL.createObjectURL(new Blob([data.report], { type: "text/markdown" }));
+    var head = '<div class="block-head"><h4>Summary</h4><a class="btn btn-sm" href="' + report + '" download="report.md"><svg class="ic"><use href="#i-download"/></svg>Report .md</a></div>';
+    var body = data.summary ? '<div class="summary-text">' + markdownHTML(data.summary) + "</div>" : '<p class="form-error">' + escapeHTML(data.summary_error || "No summary.") + "</p>";
+    return '<section class="run-summary">' + head + body + "</section>";
+  }
+
+  // markdownHTML renders the markdown Claude answers in: headings, lists,
+  // fences, **bold**, `code` and paragraphs. The text is escaped first.
+  function markdownHTML(text) {
+    var out = [], list = null, fence = null, para = [];
+    function inline(line) {
+      return escapeHTML(line)
+        .replace(/`([^`]+)`/g, "<code>$1</code>")
+        .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+        .replace(/(^|[^*])\*([^*\s][^*]*)\*/g, "$1<em>$2</em>");
+    }
+    function flush() {
+      if (para.length) { out.push("<p>" + para.map(inline).join("<br>") + "</p>"); para = []; }
+      if (list) { out.push("</" + list + ">"); list = null; }
+    }
+    text.replace(/\r/g, "").split("\n").forEach(function (line) {
+      if (fence !== null) {
+        if (/^```/.test(line)) { out.push("<pre>" + escapeHTML(fence.join("\n")) + "</pre>"); fence = null; }
+        else fence.push(line);
+        return;
+      }
+      var m;
+      if (/^```/.test(line)) { flush(); fence = []; }
+      else if ((m = /^(#{1,6})\s+(.*)$/.exec(line))) { flush(); out.push("<h5>" + inline(m[2]) + "</h5>"); }
+      else if ((m = /^\s*(?:[-*+]|(\d+)[.)])\s+(.*)$/.exec(line))) {
+        var kind = m[1] ? "ol" : "ul";
+        if (para.length) { out.push("<p>" + para.map(inline).join("<br>") + "</p>"); para = []; }
+        if (list !== kind) { if (list) out.push("</" + list + ">"); out.push("<" + kind + ">"); list = kind; }
+        out.push("<li>" + inline(m[2]) + "</li>");
+      }
+      else if (!line.trim()) flush();
+      else { if (list) { out.push("</" + list + ">"); list = null; } para.push(line); }
+    });
+    if (fence !== null) out.push("<pre>" + escapeHTML(fence.join("\n")) + "</pre>");
+    flush();
+    return out.join("");
   }
 
   // ansiHTML renders text with the colour codes a terminal prints: the

@@ -2828,6 +2828,53 @@ pre.output {
   color: var(--bad);
 }
 
+.run-summary {
+  margin-bottom: 1rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--signal);
+  border-radius: var(--radius);
+}
+
+.run-summary h4 {
+  margin: 0;
+}
+
+.summary-text {
+  font-size: 0.875rem;
+  line-height: 1.55;
+}
+
+.summary-text h5 {
+  margin: 0.9rem 0 0.3rem;
+  font-size: 0.875rem;
+}
+
+.summary-text p,
+.summary-text ul,
+.summary-text ol {
+  margin: 0.4rem 0;
+}
+
+.summary-text ul,
+.summary-text ol {
+  padding-left: 1.25rem;
+}
+
+.summary-text pre {
+  padding: 0.5rem 0.75rem;
+  overflow-x: auto;
+  font-size: 0.75rem;
+  background: var(--ink-1);
+  border-radius: var(--radius);
+}
+
+.note-form-foot .actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
 /* The colours a terminal prints, as the run window's palette draws them. */
 .ansi-bold { font-weight: 700; }
 .ansi-dim { opacity: 0.65; }

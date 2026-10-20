@@ -72,6 +72,9 @@ type Page struct {
 	// Logins are who task-ui signs in to each host as over ssh, user@host
 	// by the host's address; nil leaves the SSH column out.
 	Logins map[string]string
+	// Summarize shows Run and summarize, the run with a summary by Claude: the
+	// Claude integration has a token for the user.
+	Summarize bool
 
 	Runs []Run
 	// Activity charts when the runs of the page ran, nil without any.

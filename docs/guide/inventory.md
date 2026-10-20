@@ -22,6 +22,15 @@ exit code, how long it took, and what it printed, both streams, with the
 colours a program prints on a terminal. Pagers are off (`PAGER=cat`), so
 `systemctl status` and the like end on their own.
 
+**Run and summarize** runs the command the same way, and after the last
+host finishes, sends Claude every output as one markdown report: a
+section a host with its login, exit code and output, without colours.
+Claude's summary leads with what needs attention, and shows above the
+rows, with the report to download as `.md`. The button shows when the
+Claude Code integration has a token for you (see
+[Settings](settings.md#integrations)); Claude only reads the report and
+runs no tools, for at most three minutes.
+
 The logins sign in as `debian` or `root`, so the panel is for admins alone.
 
 task-ui reads the hub at most once a minute. The page needs the Beszel
