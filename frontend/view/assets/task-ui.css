@@ -1261,6 +1261,11 @@ select {
   width: 12rem;
 }
 
+.filters .page-size select,
+.filters .page-size .dd {
+  width: 5.5rem;
+}
+
 .run-foot .dd {
   width: auto;
   min-width: 14rem;
@@ -2073,6 +2078,17 @@ pre.code .p { color: var(--text-faint); }
 .filters select {
   width: 12rem;
   padding: 0 0.55rem;
+}
+
+/* Previous on the left, Next on the right, under a table of runs. */
+.pager {
+  display: flex;
+  gap: 0.6rem;
+  margin-top: 0.8rem;
+}
+
+.pager [rel="next"] {
+  margin-left: auto;
 }
 
 .form.inline {

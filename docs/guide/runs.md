@@ -33,6 +33,14 @@ Each row is a run: when it started, the folder and job, who started it,
 how long it took and how it ended. **Filter** narrows it by folder, job
 and state. A run in progress has **Attach**, a finished one **View**.
 
+The list shows a page of runs at a time. **Page size** picks 15, the
+default, 50 or 100 rows. Under the table, **Next** goes to older runs
+and **Previous** back to newer ones; both keep the filter and the page
+size. A page holds only the runs of the folders you may see, so no
+hidden run leaves a gap in it. The list adds a run that starts on top
+of the first page only; on a later page, the rows in it still update in
+place.
+
 With the Claude Code integration set up for you (see
 [Settings](settings.md#integrations)), a finished run also has
 **Summary**: Claude reads the end of its output, up to 2000 lines, and

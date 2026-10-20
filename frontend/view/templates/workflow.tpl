@@ -23,7 +23,7 @@
 	<h3>Pipeline</h3>
 	{{- /* The steps; while a run is going, its states and screens live. A
 	     finished run opens with View under Runs. */}}
-	{{- if $.WorkflowRuns }}{{ $latest := index $.WorkflowRuns 0 }}
+	{{- with $latest := $w.LastRun }}
 	<p class="faint" data-latest>Latest run <span class="state"><i class="dot {{ $latest.State }}"></i>{{ $latest.State }}</span>{{ if $latest.Message }} {{ $latest.Message }},{{ end }} <span title="{{ stamp $latest.StartedAt }}">{{ ago $latest.StartedAt }}</span> by {{ $latest.UserName }}</p>
 	{{- else }}
 	<p class="faint" data-latest>Not run yet.</p>
@@ -36,6 +36,10 @@
 <section class="block">
 	<h3>Runs</h3>
 	{{- with $.Activity }}{{ template "activity" . }}{{ end }}
+	<form method="get" action="/workflows/{{ $w.ID }}" class="filters">
+		{{- template "pagesize" $ }}
+		<button class="btn" type="submit">Show</button>
+	</form>
 	<div class="table-wrap">
 	<table class="table cards">
 		<thead><tr><th>Started</th><th>By</th><th>Result</th><th>Steps</th><th></th></tr></thead>
@@ -55,6 +59,7 @@
 		</tbody>
 	</table>
 	</div>
+	{{- template "pager" $.Pager }}
 </section>
 {{- end }}
 {{ end }}

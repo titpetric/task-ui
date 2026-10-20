@@ -3,6 +3,7 @@ package storage_test
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/titpetric/task-ui/internal/assert"
 	"github.com/titpetric/task-ui/model"
@@ -102,7 +103,7 @@ func TestWorkflowRunStorage(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "push failed", got.Message)
 
-	list, err := runs.ListByWorkflow(ctx, "wf", 10)
+	list, err := runs.ListByWorkflow(ctx, "wf", storage.WorkflowRunFilter{Limit: 10})
 	assert.NoError(t, err)
 	assert.Len(t, list, 1)
 
@@ -248,4 +249,44 @@ func TestWorkflowStorage_Expand(t *testing.T) {
 	gone, err := workflows.Expand(ctx, []model.WorkflowStep{{WorkflowRef: model.NewID()}})
 	assert.NoError(t, err)
 	assert.Len(t, gone, 0)
+}
+
+func TestWorkflowRunStorage_ListByWorkflow(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	runs := storage.NewWorkflowRunStorage(newDB(t))
+	base := time.Now().Add(-time.Hour).UTC().Truncate(time.Millisecond)
+	var made []string // oldest first
+	for i := range 5 {
+		run := &model.WorkflowRun{ID: model.NewIDAt(base.Add(time.Duration(i) * time.Minute)), WorkflowID: "wf", Name: "deploy"}
+		assert.NoError(t, runs.Create(ctx, run, steps("a", "build")))
+		// Every run started at the same moment: the ID orders them.
+		run.StartedAt = &base
+		assert.NoError(t, runs.Update(ctx, run))
+		made = append(made, run.ID)
+	}
+	assert.NoError(t, runs.Create(ctx, &model.WorkflowRun{WorkflowID: "other"}, steps("a", "build")))
+
+	runIDs := func(list []model.WorkflowRun) []string {
+		out := []string{}
+		for _, run := range list {
+			out = append(out, run.ID)
+		}
+		return out
+	}
+	first, err := runs.ListByWorkflow(ctx, "wf", storage.WorkflowRunFilter{Limit: 2})
+	assert.NoError(t, err)
+	assert.Equal(t, []string{made[4], made[3]}, runIDs(first))
+	next, err := runs.ListByWorkflow(ctx, "wf", storage.WorkflowRunFilter{Limit: 2, Before: made[3]})
+	assert.NoError(t, err)
+	assert.Equal(t, []string{made[2], made[1]}, runIDs(next))
+	back, err := runs.ListByWorkflow(ctx, "wf", storage.WorkflowRunFilter{Limit: 2, After: made[2]})
+	assert.NoError(t, err)
+	assert.Equal(t, runIDs(first), runIDs(back))
+	all, err := runs.ListByWorkflow(ctx, "wf", storage.WorkflowRunFilter{})
+	assert.NoError(t, err)
+	assert.Len(t, all, 5)
+	none, err := runs.ListByWorkflow(ctx, "wf", storage.WorkflowRunFilter{Before: "nope"})
+	assert.NoError(t, err)
+	assert.Len(t, none, 0)
 }

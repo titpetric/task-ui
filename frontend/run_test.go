@@ -3,7 +3,9 @@ package frontend_test
 import (
 	"context"
 	"net/http"
+	"strings"
 	"testing"
+	"time"
 
 	"github.com/titpetric/task-ui/integration"
 	"github.com/titpetric/task-ui/internal/assert"
@@ -133,4 +135,60 @@ func TestRuns_Watching(t *testing.T) {
 	viewer := f.page(t, asViewer, "/runs")
 	assert.Contains(t, viewer, `title="Watch infra / slow, ops, running"`)
 	assert.Contains(t, viewer, `<svg class="ic act"><use href="#i-eye"/></svg>`)
+}
+
+// The runs come a page at a time, 15 unless ?n= picks 50 or 100, with
+// Previous and Next under the table that keep the filters.
+func TestRuns_Pages(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	base := time.Now().Add(-time.Hour)
+	var infra []string // newest first
+	for i := range 40 {
+		started := base.Add(time.Duration(i) * time.Second)
+		folder := "infra"
+		if i%2 == 1 {
+			folder = "private"
+		}
+		run := &model.Run{ID: model.NewIDAt(started), Folder: folder, Job: "plan", UserName: "ops", State: model.StateOK, StartedAt: &started}
+		assert.NoError(t, f.opts.Runs.Create(context.Background(), run))
+		if folder == "infra" {
+			infra = append([]string{run.ID}, infra...)
+		}
+	}
+	rows := func(body string) int { return strings.Count(body, `<tr data-run-id="`) }
+
+	first := f.page(t, asAdmin, "/runs")
+	assert.Equal(t, 15, rows(first))
+	assert.Contains(t, first, `<select name="n">`)
+	assert.Contains(t, first, `<option value="15" selected>15</option>`)
+	assert.Contains(t, first, `<nav class="pager" aria-label="Pages">`)
+	assert.NotContains(t, first, `rel="prev"`)
+	assert.Equal(t, 15, rows(f.page(t, asAdmin, "/runs?n=7")))
+	assert.Equal(t, 40, rows(f.page(t, asAdmin, "/runs?n=100")))
+	assert.NotContains(t, f.page(t, asAdmin, "/runs?n=100"), `class="pager"`)
+
+	// A limited user's page is full, of their folder only.
+	limited := f.page(t, asLimited, "/runs?folder=infra&state=ok&n=50")
+	assert.Equal(t, 20, rows(limited))
+	limited = f.page(t, asLimited, "/runs")
+	assert.Equal(t, 15, rows(limited))
+	for _, id := range infra[:15] {
+		assert.Contains(t, limited, `<tr data-run-id="`+id+`">`)
+	}
+	assert.Contains(t, limited, `href="/runs?before=`+infra[14]+`&amp;n=15" rel="next">Next</a>`)
+
+	// Next, then Previous, come back to the same rows; the links carry
+	// the filters and the page size.
+	next := f.page(t, asLimited, "/runs?folder=infra&state=ok&n=15&before="+infra[14])
+	assert.Equal(t, 5, rows(next))
+	assert.Contains(t, next, `<tr data-run-id="`+infra[15]+`">`)
+	assert.Contains(t, next, `href="/runs?after=`+infra[15]+`&amp;folder=infra&amp;n=15&amp;state=ok" rel="prev">Previous</a>`)
+	assert.NotContains(t, next, `rel="next"`)
+	back := f.page(t, asLimited, "/runs?folder=infra&state=ok&n=15&after="+infra[15])
+	assert.Equal(t, 15, rows(back))
+	assert.Contains(t, back, `<tr data-run-id="`+infra[0]+`">`)
+	assert.Contains(t, back, `<tr data-run-id="`+infra[14]+`">`)
+	assert.NotContains(t, back, `rel="prev"`)
+	assert.Contains(t, back, `rel="next"`)
 }

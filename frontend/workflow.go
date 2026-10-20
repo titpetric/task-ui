@@ -7,6 +7,7 @@ import (
 	"github.com/titpetric/task-ui/access"
 	"github.com/titpetric/task-ui/frontend/view"
 	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/storage"
 )
 
 // workflowNames returns the name of every workflow by ID.
@@ -63,7 +64,7 @@ func (h *Handlers) workflowView(ctx context.Context, p *view.Page, wf model.Work
 		}
 	}
 	v.Running, _ = h.opts.Flows.Active(wf.ID)
-	if runs, err := h.opts.WorkflowRuns.ListByWorkflow(ctx, wf.ID, 1); err == nil && len(runs) > 0 {
+	if runs, err := h.opts.WorkflowRuns.ListByWorkflow(ctx, wf.ID, storage.WorkflowRunFilter{Limit: 1}); err == nil && len(runs) > 0 {
 		v.LastRun = &runs[0]
 	}
 	v.CanChange = user.CanAdmin() || (wf.UserID != "" && wf.UserID == user.ID)
@@ -143,20 +144,33 @@ func (h *Handlers) loadWorkflow(w http.ResponseWriter, r *http.Request) (*view.P
 
 // workflow shows one workflow: its pipeline, live while a run is going
 // and as its steps otherwise, and its runs, each with a View of its
-// pipeline. The page follows the workflow's events.
+// pipeline, a page at a time. The page follows the workflow's events.
 func (h *Handlers) workflow(w http.ResponseWriter, r *http.Request) {
 	p, names := h.loadWorkflow(w, r)
 	if p == nil {
 		return
 	}
-	runs, _ := h.opts.WorkflowRuns.ListByWorkflow(r.Context(), p.Workflow.ID, 20)
+	q := r.URL.Query()
+	n := pageSize(q)
+	p.Form = map[string]string{"n": q.Get("n")}
+	filter := storage.WorkflowRunFilter{Limit: n + 1, Before: q.Get("before"), After: q.Get("after")}
+	runs, _ := h.opts.WorkflowRuns.ListByWorkflow(r.Context(), p.Workflow.ID, filter)
+	runs, prev, next := paged(runs, n, filter.Before, filter.After, func(run model.WorkflowRun) string { return run.ID })
+	p.Pager = view.NewPager("/workflows/"+p.Workflow.ID, q, prev, next)
 	for _, run := range runs {
 		rows, _ := h.opts.WorkflowRuns.Steps(r.Context(), run.ID)
 		p.WorkflowRuns = append(p.WorkflowRuns, view.WorkflowRun{WorkflowRun: run, Steps: viewRunSteps(rows, names)})
 	}
+	// The pipeline follows the newest run, which a page further down
+	// does not hold.
 	var latest []view.Step
-	if len(p.WorkflowRuns) > 0 && p.WorkflowRuns[0].State == model.StateRunning {
-		latest = p.WorkflowRuns[0].Steps
+	if last := p.Workflow.LastRun; last != nil && last.State == model.StateRunning {
+		if len(p.WorkflowRuns) > 0 && p.WorkflowRuns[0].ID == last.ID {
+			latest = p.WorkflowRuns[0].Steps
+		} else {
+			rows, _ := h.opts.WorkflowRuns.Steps(r.Context(), last.ID)
+			latest = viewRunSteps(rows, names)
+		}
 	}
 	p.Activity = h.workflowActivity(r.Context(), p.Workflow.ID, p.Now)
 	p.Summarize = h.claudeFor(r, p.User)

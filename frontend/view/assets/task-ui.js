@@ -960,6 +960,13 @@
     return span;
   }
 
+  // pagedBack reports whether the page shows older runs, through a
+  // cursor in its query: a run that starts belongs on the first page.
+  function pagedBack() {
+    var q = new URLSearchParams(location.search);
+    return q.has("before") || q.has("after");
+  }
+
   function workflowEvent(name, data) {
     var nodes = Array.prototype.slice.call(document.querySelectorAll("[data-pipeline] > [data-step]"));
     var latest = document.querySelector("[data-latest]");
@@ -980,7 +987,8 @@
         latest.appendChild(stateSpan("running"));
         latest.appendChild(document.createTextNode(" just now by " + (data.user_name || "")));
       }
-      if (runs && !row) {
+      // A page further down the runs leaves the new run to the first page.
+      if (runs && !row && !pagedBack()) {
         var empty = runs.querySelector(".empty");
         if (empty) empty.remove();
         row = el("tr");
@@ -1699,7 +1707,7 @@
 
   // The runs page follows the runs topic: a run that starts is added on
   // top of the table, one that ends is updated in place. The filters of
-  // the page hold for the rows it adds.
+  // the page hold for the rows it adds; a page of older runs adds none.
   var runsTable = document.querySelector('[data-sse="runs"] [data-runs-table]');
   if (runsTable && window.EventSource) {
     var params = new URLSearchParams(location.search);
@@ -1746,7 +1754,7 @@
         row.querySelector("[data-actions]").innerHTML = actionsHTML(run, canRun);
         return;
       }
-      if (!matches(run)) return;
+      if (!matches(run) || pagedBack()) return;
       var empty = runsTable.querySelector(".empty");
       if (empty) empty.remove();
       row = document.createElement("tr");

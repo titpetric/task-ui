@@ -78,6 +78,9 @@ type Page struct {
 	Summarize bool
 
 	Runs []Run
+	// Pager links the runs of the page to the newer and the older ones,
+	// nil when they fit on one page.
+	Pager *Pager
 	// Activity charts when the runs of the page ran, nil without any.
 	Activity  *Activity
 	Run       *Run

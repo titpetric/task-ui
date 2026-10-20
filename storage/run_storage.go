@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"errors"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -19,13 +20,18 @@ func NewRunStorage(db DB) *RunStorage {
 	return &RunStorage{db: db}
 }
 
-// RunFilter narrows a listing. Zero values match everything.
+// RunFilter narrows a listing. Zero values match everything. Folders
+// keeps the runs of those folders, empty for all. Before and After name
+// runs by ID: a page of the runs older than the one, or newer.
 type RunFilter struct {
-	Folder string
-	Job    string
-	State  model.State
-	UserID string
-	Limit  int
+	Folder  string
+	Folders []string
+	Job     string
+	State   model.State
+	UserID  string
+	Before  string
+	After   string
+	Limit   int
 }
 
 // Create inserts a run as running, started now.
@@ -57,7 +63,26 @@ func (s *RunStorage) Get(ctx context.Context, id string) (*model.Run, error) {
 // List returns runs matching the filter, newest first.
 func (s *RunStorage) List(ctx context.Context, filter RunFilter) ([]model.Run, error) {
 	query, args := runQuery(filter)
-	return client(s.db).Select[model.Run](ctx, query, args...)
+	runs, err := client(s.db).Select[model.Run](ctx, query, args...)
+	if filter.Before == "" && filter.After != "" {
+		slices.Reverse(runs)
+	}
+	return runs, err
+}
+
+// cursor returns the condition that keeps the rows of a table older
+// than the row before names, or newer than the row after names, and the
+// order the query reads them in: newer rows read up from the cursor,
+// oldest first, for the caller to reverse. A cursor on a missing row
+// keeps none.
+func cursor(table, before, after string) (string, []any, string) {
+	switch {
+	case before != "":
+		return "(started_at, id) < (SELECT started_at, id FROM " + table + " WHERE id = ?)", []any{before}, "started_at DESC, id DESC"
+	case after != "":
+		return "(started_at, id) > (SELECT started_at, id FROM " + table + " WHERE id = ?)", []any{after}, "started_at ASC, id ASC"
+	}
+	return "", nil, "started_at DESC, id DESC"
 }
 
 // runQuery builds the listing from the filter.
@@ -74,11 +99,22 @@ func runQuery(filter RunFilter) (string, []any) {
 	add("job", filter.Job)
 	add("state", filter.State)
 	add("user_id", filter.UserID)
+	if len(filter.Folders) > 0 {
+		where = append(where, "folder IN (?"+strings.Repeat(", ?", len(filter.Folders)-1)+")")
+		for _, folder := range filter.Folders {
+			args = append(args, folder)
+		}
+	}
+	page, pageArgs, order := cursor("run", filter.Before, filter.After)
+	if page != "" {
+		where = append(where, page)
+		args = append(args, pageArgs...)
+	}
 	query := "SELECT * FROM run"
 	if len(where) > 0 {
 		query += " WHERE " + strings.Join(where, " AND ")
 	}
-	query += " ORDER BY started_at DESC, id DESC"
+	query += " ORDER BY " + order
 	if filter.Limit > 0 {
 		query += " LIMIT " + strconv.Itoa(filter.Limit)
 	}
