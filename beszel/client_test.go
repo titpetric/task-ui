@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -17,12 +18,20 @@ func hub(t *testing.T) (*httptest.Server, *atomic.Int32) {
 	t.Helper()
 	var lists atomic.Int32
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/api/collections/systems/records" {
-			http.NotFound(w, r)
-			return
-		}
 		if r.Header.Get("Authorization") != "t1" {
 			http.Error(w, "{}", http.StatusUnauthorized)
+			return
+		}
+		if r.URL.Path == "/api/collections/system_stats/records" {
+			if !strings.Contains(r.URL.Query().Get("filter"), "type='1m'") {
+				http.Error(w, "{}", http.StatusBadRequest)
+				return
+			}
+			_, _ = w.Write([]byte(`{"items":[{"system":"a","stats":{"cpu":12,"m":15.6,"mu":9.5,"d":200,"du":80}},{"system":"a","stats":{"m":1}}]}`))
+			return
+		}
+		if r.URL.Path != "/api/collections/systems/records" {
+			http.NotFound(w, r)
 			return
 		}
 		lists.Add(1)
@@ -47,6 +56,10 @@ func TestClient_Systems(t *testing.T) {
 	assert.Equal(t, 61.2, dev1.Info.Memory)
 	assert.Equal(t, time.Hour, dev1.UptimeDuration())
 	assert.False(t, systems[1].Up())
+	assert.NotNil(t, dev1.Stats)
+	assert.Equal(t, 15.6, dev1.Stats.Memory, "the newest record of the host")
+	assert.Equal(t, 80.0, dev1.Stats.DiskUsed)
+	assert.Nil(t, systems[1].Stats)
 
 	_, err = c.Systems(context.Background())
 	assert.NoError(t, err)
