@@ -200,6 +200,7 @@ func TestWorkflow_Recents(t *testing.T) {
 	recents := ops[strings.Index(ops, `id="recents"`):]
 	entry := `<a href="/workflows/` + wf.ID + `" class="recent flow" title="Workflow release, admin, ok">`
 	assert.Contains(t, recents, entry)
+	assert.Contains(t, recents, `<div class="recent-group">`)
 	assert.Contains(t, recents, `<b>release</b><small><svg class="ic"><use href="#i-flow"/></svg>workflow</small>`)
 	// The list shows its step's run too; and ops sees the private folder.
 	assert.Contains(t, recents, `<b>plan</b>`)

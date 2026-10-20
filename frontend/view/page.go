@@ -33,7 +33,7 @@ type Page struct {
 	SideFolders []*folder.Folder
 	// Recents are the latest runs of jobs and of workflows the user may
 	// see, newest first, for the sidebar.
-	Recents []Recent
+	Recents []RecentGroup
 	// SideWorkflows are the workflows the user may see, for the sidebar.
 	SideWorkflows []Workflow
 	// StepWorkflows are the workflows a step of the one edited may run:

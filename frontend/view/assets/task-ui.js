@@ -1679,36 +1679,55 @@
     var entries = runs.map(function (r) { return { run: r, at: r.started_at || "" }; })
       .concat((flows || []).map(function (f) { return { flow: f, at: f.started_at || "" }; }));
     entries.sort(function (a, b) { return a.at < b.at ? 1 : a.at > b.at ? -1 : 0; });
-    entries = entries.slice(0, 10);
+    entries = entries.slice(0, 50);
     if (!entries.length) {
       recents.innerHTML = '<div class="empty">Runs started by anyone show up here.</div>';
       return;
     }
+    var now = Date.now(), heading = "";
     recents.innerHTML = entries.map(function (e) {
-      if (e.flow) {
-        var f = e.flow;
-        return '<a href="/workflows/' + encodeURIComponent(f.workflow_id) + '" class="recent flow" title="' +
-          escapeHTML("Workflow " + f.name + ", " + f.user_name + ", " + f.state) + '">' +
-          '<i class="dot ' + escapeHTML(f.state) + '"></i>' +
-          '<span class="what"><b>' + escapeHTML(f.name) + '</b><small><svg class="ic"><use href="#i-flow"/></svg>workflow</small></span>' +
-          (f.state === "running" ? '<svg class="ic act"><use href="#i-eye"/></svg>' : "") +
-          '<span class="avatar sm" title="' + escapeHTML(f.user_name) + '">' + escapeHTML(initials(f.user_name)) + '</span></a>';
-      }
-      var r = e.run;
-      var running = r.state === "running";
-      var verb = !running ? "View" : r.can_run ? "Attach to" : "Watch";
-      return '<a href="/runs/' + encodeURIComponent(r.id) + '" data-attach="' + escapeHTML(r.id) + '" class="recent" title="' +
-        escapeHTML(verb + " " + r.folder + " / " + r.job + ", " + r.user_name + ", " + r.state) + '">' +
-        '<i class="dot ' + escapeHTML(r.state) + '"></i>' +
-        '<span class="what"><b>' + escapeHTML(r.job) + '</b><small>' + escapeHTML(r.folder) + '</small></span>' +
-        (running ? '<svg class="ic act"><use href="#i-' + (r.can_run ? "play" : "eye") + '"/></svg>' : "") +
-        '<span class="avatar sm" title="' + escapeHTML(r.user_name) + '">' + escapeHTML(initials(r.user_name)) + '</span></a>';
+      var label = hoursAgo(now - Date.parse(e.at));
+      var head = label !== heading ? '<div class="recent-group">' + label + "</div>" : "";
+      heading = label;
+      return head + recentHTML(e);
     }).join("");
+  }
+
+  // hoursAgo is the heading of a recent that started a while ago, in
+  // milliseconds: whole hours, then whole days, as the page draws them.
+  function hoursAgo(ms) {
+    var hours = Math.floor((ms || 0) / 3600000);
+    if (hours < 1) return "In the last hour";
+    if (hours < 24) return (hours === 1 ? "1 hour" : hours + " hours") + " ago";
+    var days = Math.floor(hours / 24);
+    return (days === 1 ? "1 day" : days + " days") + " ago";
+  }
+
+  // recentHTML draws one entry of the recents: a workflow run, or a run.
+  function recentHTML(e) {
+    if (e.flow) {
+      var f = e.flow;
+      return '<a href="/workflows/' + encodeURIComponent(f.workflow_id) + '" class="recent flow" title="' +
+        escapeHTML("Workflow " + f.name + ", " + f.user_name + ", " + f.state) + '">' +
+        '<i class="dot ' + escapeHTML(f.state) + '"></i>' +
+        '<span class="what"><b>' + escapeHTML(f.name) + '</b><small><svg class="ic"><use href="#i-flow"/></svg>workflow</small></span>' +
+        (f.state === "running" ? '<svg class="ic act"><use href="#i-eye"/></svg>' : "") +
+        '<span class="avatar sm" title="' + escapeHTML(f.user_name) + '">' + escapeHTML(initials(f.user_name)) + '</span></a>';
+    }
+    var r = e.run;
+    var running = r.state === "running";
+    var verb = !running ? "View" : r.can_run ? "Attach to" : "Watch";
+    return '<a href="/runs/' + encodeURIComponent(r.id) + '" data-attach="' + escapeHTML(r.id) + '" class="recent" title="' +
+      escapeHTML(verb + " " + r.folder + " / " + r.job + ", " + r.user_name + ", " + r.state) + '">' +
+      '<i class="dot ' + escapeHTML(r.state) + '"></i>' +
+      '<span class="what"><b>' + escapeHTML(r.job) + '</b><small>' + escapeHTML(r.folder) + '</small></span>' +
+      (running ? '<svg class="ic act"><use href="#i-' + (r.can_run ? "play" : "eye") + '"/></svg>' : "") +
+      '<span class="avatar sm" title="' + escapeHTML(r.user_name) + '">' + escapeHTML(initials(r.user_name)) + '</span></a>';
   }
 
   function poll() {
     if (document.hidden) return;
-    Promise.all([api("GET", "/api/runs?limit=10"), api("GET", "/api/workflow-runs?limit=10")]).then(function (both) {
+    Promise.all([api("GET", "/api/runs?limit=50"), api("GET", "/api/workflow-runs?limit=50")]).then(function (both) {
       var res = both[0], flows = both[1];
       if (res.status !== 200 || !res.data.runs) return;
       var runs = res.data.runs;
