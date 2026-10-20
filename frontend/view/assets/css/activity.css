@@ -12,11 +12,11 @@
 .activity-sum {
   margin: 0 0 0.6rem;
   color: var(--text-dim);
-  font-size: 0.8125rem;
-}
+  font-size: var(--fs-sm);
 
-.activity-sum .bad {
-  color: var(--bad);
+  & .bad {
+    color: var(--bad);
+  }
 }
 
 .activity-charts {
@@ -46,11 +46,11 @@
   margin: 0 0 0.4rem;
   color: var(--text-dim);
   font-family: var(--font-ui);
-  font-size: 0.75rem;
-}
+  font-size: var(--fs-xs);
 
-.activity-chart .activity-title .faint {
-  font-family: var(--font);
+  & .faint {
+    font-family: var(--font);
+  }
 }
 
 /* A time marker in the middle of its column, with a tick over it. */
@@ -66,17 +66,17 @@
   transform: translateX(-50%);
   color: var(--text-faint);
   font-family: var(--font);
-  font-size: 0.6875rem;
+  font-size: var(--fs-tick);
   white-space: nowrap;
-}
 
-.activity-axis span::before {
-  content: "";
-  position: absolute;
-  top: -0.3rem;
-  left: 50%;
-  height: 0.2rem;
-  border-left: 1px solid var(--line-2);
+  &::before {
+    content: "";
+    position: absolute;
+    top: -0.3rem;
+    left: 50%;
+    height: 0.2rem;
+    border-left: 1px solid var(--line-2);
+  }
 }
 
 @media (max-width: 860px) {
@@ -92,37 +92,37 @@
   gap: 2px;
   height: 3.5rem;
   border-bottom: 1px solid var(--line-2);
-}
 
-.activity-bars span {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  min-width: 0;
-}
+  & span {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    min-width: 0;
 
-.activity-bars span:hover {
-  background: var(--ink-2);
-}
+    &:hover {
+      background: var(--ink-2);
+    }
+  }
 
-.activity-bars i {
-  display: block;
-  width: 100%;
-  min-height: 1px;
-}
+  & i {
+    display: block;
+    width: 100%;
+    min-height: 1px;
 
-.activity-bars i.ok {
-  background: linear-gradient(to top, var(--signal), color-mix(in oklch, var(--signal) 60%, transparent));
-}
+    &.ok {
+      background: linear-gradient(to top, var(--signal), color-mix(in oklch, var(--signal) 60%, transparent));
+    }
 
-.activity-bars i.bad {
-  background: linear-gradient(to top, var(--bad), color-mix(in oklch, var(--bad) 60%, transparent));
-}
+    &.bad {
+      background: linear-gradient(to top, var(--bad), color-mix(in oklch, var(--bad) 60%, transparent));
+    }
 
-.activity-bars i.other {
-  background: var(--text-faint);
-  opacity: 0.6;
+    &.other {
+      background: var(--text-faint);
+      opacity: 0.6;
+    }
+  }
 }
 
 /* Under each count chart, its durations as lines, all solid: the average
@@ -131,28 +131,28 @@
 .activity-line.durations {
   height: 2.6rem;
   margin-top: 4px;
-}
 
-.activity-line.durations path {
-  fill: none;
-  stroke-linejoin: round;
-  stroke-linecap: round;
-}
+  & path {
+    fill: none;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+  }
 
-.activity-line.durations .avg {
-  stroke: var(--text);
-  stroke-width: 1.75;
-}
+  & .avg {
+    stroke: var(--text);
+    stroke-width: 1.75;
+  }
 
-.activity-line.durations .max {
-  stroke: var(--text-dim);
-  stroke-width: 1.25;
-  opacity: 0.8;
-}
+  & .max {
+    stroke: var(--text-dim);
+    stroke-width: 1.25;
+    opacity: 0.8;
+  }
 
-.activity-line.durations .min {
-  stroke: var(--text-faint);
-  stroke-width: 1.25;
+  & .min {
+    stroke: var(--text-faint);
+    stroke-width: 1.25;
+  }
 }
 
 .activity-hits {
@@ -164,43 +164,43 @@
 
 .activity-hits span {
   position: relative;
-}
 
-.activity-hits span:hover {
-  background: var(--signal-wash);
+  &:hover {
+    background: var(--signal-wash);
+  }
 }
 
 .activity-key {
-  float: right;
+  float: inline-end;
   color: var(--text-faint);
-  font-size: 0.75rem;
-}
+  font-size: var(--fs-xs);
 
-.activity-key i {
-  display: inline-block;
-  width: 0.6rem;
-  height: 0.6rem;
-  margin: 0 0.3rem 0 0.8rem;
-  vertical-align: -0.05rem;
-}
+  & i {
+    display: inline-block;
+    width: 0.6rem;
+    height: 0.6rem;
+    margin: 0 0.3rem 0 0.8rem;
+    vertical-align: -0.05rem;
 
-.activity-key i.ok {
-  background: var(--signal);
-}
+    &.ok {
+      background: var(--signal);
+    }
 
-.activity-key i.line {
-  width: 0.9rem;
-  height: 0;
-  vertical-align: 0.2rem;
-  border-top: 2px solid var(--text);
-}
+    &.line {
+      width: 0.9rem;
+      height: 0;
+      vertical-align: 0.2rem;
+      border-top: 2px solid var(--text);
 
-.activity-key i.line.max {
-  border-top-color: var(--text-dim);
-}
+      &.max {
+        border-top-color: var(--text-dim);
+      }
 
-.activity-key i.line.min {
-  border-top-color: var(--text-faint);
+      &.min {
+        border-top-color: var(--text-faint);
+      }
+    }
+  }
 }
 
 .activity-chart figcaption {
@@ -209,7 +209,7 @@
   margin-top: 0.25rem;
   color: var(--text-faint);
   font-family: var(--font);
-  font-size: 0.6875rem;
+  font-size: var(--fs-tick);
 }
 
 .activity-chart.durations {
@@ -220,51 +220,51 @@
   position: relative;
   height: 3rem;
   border-bottom: 1px solid var(--line-2);
-}
 
-.activity-line svg {
-  display: block;
-  width: 100%;
-  height: 100%;
-  overflow: visible;
-}
+  & svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
 
-.activity-line .line {
-  fill: none;
-  stroke: var(--signal);
-  stroke-width: 1.5;
-  stroke-linejoin: round;
-}
+  & .line {
+    fill: none;
+    stroke: var(--signal);
+    stroke-width: 1.5;
+    stroke-linejoin: round;
+  }
 
-.activity-line .wash {
-  fill: var(--signal-wash);
-}
+  & .wash {
+    fill: var(--signal-wash);
+  }
 
-.activity-line line.bad {
-  stroke: var(--bad);
-  stroke-width: 1;
-  opacity: 0.7;
-}
+  & line.bad {
+    stroke: var(--bad);
+    stroke-width: 1;
+    opacity: 0.7;
+  }
 
-/* The runs on the line hover as strips laid over it, so they carry the
-   same tooltip as the bars. */
-.activity-line .hit {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-}
+  /* The runs on the line hover as strips laid over it, so they carry the
+     same tooltip as the bars. */
+  & .hit {
+    position: absolute;
+    top: 0;
+    bottom: 0;
 
-.activity-line .hit:hover {
-  background: var(--signal-wash);
+    &:hover {
+      background: var(--signal-wash);
+    }
+  }
 }
 
 .activity-longest {
   position: absolute;
   top: 0;
-  right: 0;
+  inset-inline-end: 0;
   color: var(--text-faint);
   font-family: var(--font);
-  font-size: 0.6875rem;
+  font-size: var(--fs-tick);
 }
 
 @media (max-width: 860px) {
@@ -293,7 +293,7 @@
   line-height: 1.3;
   white-space: nowrap;
   pointer-events: none;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  box-shadow: var(--shadow-tip);
 }
 
 .tip.tip-start:hover::after {

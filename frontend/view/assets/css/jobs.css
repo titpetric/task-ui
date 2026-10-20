@@ -18,96 +18,96 @@
   border-top: 2px solid var(--line-2);
   border-radius: var(--radius);
   background: var(--ink-1);
-}
 
-.jobcard.running {
-  border-top-color: var(--signal);
-}
+  &.running {
+    border-top-color: var(--signal);
+  }
 
-.jobcard:hover {
-  border-color: var(--line-2);
-  border-top-color: var(--signal);
-}
+  &:hover {
+    border-color: var(--line-2);
+    border-top-color: var(--signal);
+  }
 
-.jobcard header {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  min-width: 0;
-}
+  & header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 0;
 
-.jobcard header .name {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: var(--text);
-  font-size: 1rem;
-  font-weight: 600;
-}
+    & .name {
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: var(--text);
+      font-size: 1rem;
+      font-weight: 600;
 
-.jobcard header .name:hover {
-  color: var(--signal);
-  text-decoration: none;
-}
+      &:hover {
+        color: var(--signal);
+        text-decoration: none;
+      }
+    }
+  }
 
-.jobcard .desc {
-  margin: 0;
-  color: var(--text-dim);
-  font-size: 0.875rem;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
+  & .desc {
+    margin: 0;
+    color: var(--text-dim);
+    font-size: var(--fs-md);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
 
-.jobcard .steps {
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
-  min-width: 0;
-  font-size: 0.78rem;
-}
+  & .steps {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    min-width: 0;
+    font-size: var(--fs-button);
 
-.jobcard .steps code {
-  display: block;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 0.75rem;
-}
+    & code {
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: var(--fs-xs);
+    }
 
-.jobcard .steps:empty {
-  display: none;
-}
+    &:empty {
+      display: none;
+    }
+  }
 
-.jobcard footer {
-  position: static;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 0.5rem;
-  margin-top: auto;
-  padding: 0.5rem 0 0;
-  border-top: 1px solid var(--line);
-  color: var(--text-dim);
-  font-size: 0.8125rem;
-  text-align: left;
-}
+  & footer {
+    position: static;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: auto;
+    padding: 0.5rem 0 0;
+    border-top: 1px solid var(--line);
+    color: var(--text-dim);
+    font-size: var(--fs-sm);
+    text-align: start;
 
-.jobcard footer .last {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
+    & .last {
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
 
-.jobcard footer .actions {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
+    & .actions {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+  }
 }
 
 .btn .ic {
@@ -124,75 +124,75 @@
   /* One step in from the folder: the #! under the folder's name. */
   padding: 0.15rem 0.6rem 0.15rem var(--tree-2);
   color: var(--text-dim);
-  font-size: 0.8125rem;
-  border-left: 2px solid transparent;
+  font-size: var(--fs-sm);
+  border-inline-start: 2px solid transparent;
+
+  & a {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: inherit;
+    padding: 0.1rem 0;
+
+    & i {
+      font-style: normal;
+      color: var(--text-faint);
+    }
+
+    &:hover {
+      color: var(--text);
+      text-decoration: none;
+    }
+  }
+
+  &.active {
+    color: var(--signal);
+    border-inline-start-color: var(--signal);
+  }
+
+  & .play {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--control-xs);
+    height: var(--control-xs);
+    padding: 0;
+    border: 1px solid transparent;
+    border-radius: var(--radius);
+    background: transparent;
+    color: var(--text-faint);
+    cursor: pointer;
+    opacity: 0.55;
+
+    & .ic {
+      width: 0.8rem;
+      height: 0.8rem;
+    }
+  }
+
+  &:hover .play,
+  & .play:focus-visible {
+    opacity: 1;
+  }
+
+  & .play:hover {
+    color: var(--signal-ink);
+    background: var(--signal);
+    border-color: var(--signal);
+  }
+
+  & .play[data-attach] {
+    color: var(--signal);
+    opacity: 1;
+  }
 }
 
 /* A project's own jobs are rows like its folders: the #! in the folder
    icon's column, the name where the folder names start. */
 .folders .jobs.top .job {
-  padding-left: var(--tree-1);
-}
-
-.folders .jobs .job a {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: inherit;
-  padding: 0.1rem 0;
-}
-
-.folders .jobs .job a i {
-  font-style: normal;
-  color: var(--text-faint);
-}
-
-.folders .jobs .job a:hover {
-  color: var(--text);
-  text-decoration: none;
-}
-
-.folders .jobs .job.active {
-  color: var(--signal);
-  border-left-color: var(--signal);
-}
-
-.folders .jobs .job .play {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 1.5rem;
-  height: 1.5rem;
-  padding: 0;
-  border: 1px solid transparent;
-  border-radius: var(--radius);
-  background: transparent;
-  color: var(--text-faint);
-  cursor: pointer;
-  opacity: 0.55;
-}
-
-.folders .jobs .job .play .ic {
-  width: 0.8rem;
-  height: 0.8rem;
-}
-
-.folders .jobs .job:hover .play,
-.folders .jobs .job .play:focus-visible {
-  opacity: 1;
-}
-
-.folders .jobs .job .play:hover {
-  color: var(--signal-ink);
-  background: var(--signal);
-  border-color: var(--signal);
-}
-
-.folders .jobs .job .play[data-attach] {
-  color: var(--signal);
-  opacity: 1;
+  padding-inline-start: var(--tree-1);
 }
 
 @media (max-width: 860px) {
