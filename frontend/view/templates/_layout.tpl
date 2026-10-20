@@ -43,7 +43,7 @@
 		<aside class="side" id="side">
 			<nav class="menu">
 				<a href="/" class="{{ if .IsPath "/" }}active{{ end }}"><svg class="ic"><use href="#i-grid"/></svg><span>Dashboard</span></a>
-				<a href="/hosts" class="{{ if .Under "/hosts" }}active{{ end }}"><svg class="ic"><use href="#i-server"/></svg><span>Hosts</span></a>
+				<a href="/inventory" class="{{ if .Under "/inventory" }}active{{ end }}"><svg class="ic"><use href="#i-server"/></svg><span>Inventory</span></a>
 				<a href="/workflows" class="{{ if .Under "/workflows" }}active{{ end }}"><svg class="ic"><use href="#i-flow"/></svg><span>Workflows</span></a>
 				{{- if .SideWorkflows }}
 				<div class="flows">

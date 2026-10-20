@@ -117,7 +117,7 @@ them as secrets.
   [Notes](notes.md) board runs as that user. With nobody named, every run
   gets it.
 - **Beszel**: the hub's URL, as task-ui reaches it, and a token, for the
-  [Hosts](hosts.md) page.
+  [Inventory](inventory.md) page.
 
 Beszel has no API keys, so task-ui takes a token of a read-only user that
 no one signs in as. Make one in Beszel with a password nobody keeps, then

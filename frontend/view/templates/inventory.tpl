@@ -1,14 +1,34 @@
 {{ define "content" }}
 <div class="page-head">
 	<div>
-		<h2>Hosts</h2>
-		<p>The hosts Beszel monitors: whether each is up, who task-ui signs in to it as over ssh, its cores, and how busy its CPU, memory and disk are, with their sizes. Read from the hub at most once a minute.</p>
+		<h2>Inventory</h2>
+		<p>The hosts Beszel monitors, largest first: whether each is up, who task-ui signs in to it as over ssh, its cores, and how busy its CPU, memory and disk are, with their sizes. An admin runs a command on them all at once, like pssh.</p>
 	</div>
 </div>
 
 {{- if .HostsOff }}
 <p class="empty-state">The Beszel integration is not set up.{{ if .User.CanAdmin }} Add its URL and token under <a href="/settings/integrations#beszel">Settings, Integrations</a>.{{ end }}</p>
 {{- else }}
+{{- if and .User.CanAdmin .Logins }}
+<section class="block inventory-run">
+	<h3>Run on the hosts</h3>
+	<form data-inventory-run>
+		<div class="run-commands">
+			{{- range list "uptime" "df -h /" "free -h" "docker ps --format '{{.Names}}\t{{.Status}}'" "uname -r" "cat /etc/os-release | grep PRETTY" }}
+			<button type="button" class="btn btn-sm" data-command="{{ . }}">{{ . }}</button>
+			{{- end }}
+		</div>
+		<textarea name="command" rows="2" required spellcheck="false" placeholder="a shell command, run on each host at once" aria-label="The command"></textarea>
+		<div class="run-hosts">
+			{{- range $h := .Hosts }}{{ with index $.Logins $h.Host }}
+			<label class="check"><input type="checkbox" name="hosts" value="{{ $h.Host }}" checked> <code>{{ . }}</code></label>
+			{{- end }}{{ end }}
+		</div>
+		<div class="note-form-foot"><span class="faint">Each host runs it over its ssh login, at once, for at most two minutes. Ctrl+Enter runs.</span><button class="btn btn-primary" type="submit"><svg class="ic"><use href="#i-play"/></svg>Run</button></div>
+	</form>
+	<div class="run-results" data-inventory-results></div>
+</section>
+{{- end }}
 <div class="table-wrap">
 <table class="table hosts">
 	<thead><tr><th>Host</th><th>State</th>{{ if .Logins }}<th>SSH</th>{{ end }}<th class="num">Cores</th><th>CPU</th><th>Memory</th><th>Disk</th></tr></thead>

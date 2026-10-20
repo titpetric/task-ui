@@ -38,4 +38,4 @@ says how the job last ended.
 
 ---
 
-Next: [Hosts](hosts.md) · Back to the [contents](../README.md)
+Next: [Inventory](inventory.md) · Back to the [contents](../README.md)

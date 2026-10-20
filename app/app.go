@@ -169,6 +169,10 @@ func (a *App) wire(version string) error {
 	secrets := secret.New(storage.NewSecretStorage(db), secret.NewVault(keys))
 	env := envfile.New(storage.NewEnvFileStorage(db), secrets)
 	integrations := &integration.Store{Secrets: secrets}
+	prober := &sshprobe.Prober{
+		Users: []string{"debian", "root"}, KeyDirs: []string{cfg.SSHDir, filepath.Join(home(), ".ssh")},
+		KnownHosts: filepath.Join(cfg.SSHDir, "known_hosts"), Timeout: 4 * time.Second, TTL: 10 * time.Minute,
+	}
 	hosts := &beszel.Inventory{TTL: time.Minute, Settings: func(ctx context.Context) (string, string, error) {
 		values, err := integrations.Values(ctx, integration.Beszel)
 		return values["url"], values["token"], err
@@ -213,7 +217,7 @@ func (a *App) wire(version string) error {
 		Users: a.Users, Projects: projects, Runs: runs, Artifacts: artifacts, Schedules: schedules, Secrets: secrets,
 		Workflows: workflows, WorkflowRuns: workflowRuns, Flows: a.Workflows, Events: events,
 		Runner: a.Runner, Catalogue: a.Catalogue, Git: g, Keys: keys, KeyPolicies: keyPolicies, Env: env, Recordings: recordings, Root: cfg.Root, Board: a.Board,
-		Integrations: integrations, Hosts: hosts,
+		Integrations: integrations, Hosts: hosts, SSH: prober,
 	})
 	pages, err := frontend.New(frontend.Options{
 		Guard: a.Guard, Auth: access.NewAuthenticator(a.Users, a.Emails, a.Passwords), Users: a.Users, Projects: projects, Runs: runs, Artifacts: artifacts, Schedules: schedules, Secrets: secrets,
@@ -221,10 +225,7 @@ func (a *App) wire(version string) error {
 		Runner: a.Runner, Catalogue: a.Catalogue, Git: g, Keys: keys, KeyPolicies: keyPolicies, Env: env, Recordings: recordings, Root: cfg.Root, Version: version, Now: cfg.Clock(),
 		ArtifactStore: store, Disk: &diskusage.Meter{TTL: 10 * time.Minute}, Board: a.Board,
 		Integrations: integrations, Hosts: hosts,
-		SSH: &sshprobe.Prober{
-			Users: []string{"debian", "root"}, KeyDirs: []string{cfg.SSHDir, filepath.Join(home(), ".ssh")},
-			KnownHosts: filepath.Join(cfg.SSHDir, "known_hosts"), Timeout: 4 * time.Second, TTL: 10 * time.Minute,
-		},
+		SSH: prober,
 	})
 	if err != nil {
 		return err
