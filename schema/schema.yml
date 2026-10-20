@@ -1009,3 +1009,50 @@
       columns:
         - workflow_id
         - position
+- name: workspace
+  comment: Workspace
+  columns:
+    - name: id
+      type: text
+      key: PRI
+      comment: ID
+      datatype: char(26)
+    - name: folder
+      type: text
+      key: MUL
+      comment: Folder
+      datatype: varchar
+    - name: title
+      type: text
+      comment: Title
+      datatype: varchar
+    - name: description
+      type: text
+      comment: Description
+      datatype: varchar
+    - name: source_url
+      type: text
+      comment: Source URL
+      datatype: varchar
+    - name: branch
+      type: text
+      comment: Branch
+      datatype: varchar
+    - name: created_at
+      type: timestamp
+      comment: Created At
+      datatype: datetime
+    - name: updated_at
+      type: timestamp
+      comment: Updated At
+      datatype: datetime
+  indexes:
+    - name: sqlite_autoindex_workspace_1
+      columns:
+        - id
+      primary: true
+      unique: true
+    - name: idx_workspace_folder
+      columns:
+        - folder
+      unique: true

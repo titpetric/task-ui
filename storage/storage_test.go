@@ -46,7 +46,7 @@ func TestMigrate(t *testing.T) {
 
 	var count int
 	assert.NoError(t, db.GetContext(ctx, &count, "SELECT COUNT(*) FROM migrations WHERE project = ?", storage.Project))
-	assert.Equal(t, 23, count)
+	assert.Equal(t, 24, count)
 }
 
 func TestOpenAndMigrate(t *testing.T) {

@@ -17,6 +17,7 @@ route or a tool only for a need these cannot serve, and states the reason.
 | `/api/artifacts/files/{path}` | The preview window: a file of the tree, rendered, with its versions, and the delete of one file, which the records cannot reach |
 | `/api/notes`, `list_notes`, `note_comment` | Notes, and instructions to the agent, which reads and reports on them over MCP |
 | `/api/integrations`, `/api/inventory` | Settings, Integrations, which keeps the services' tokens encrypted, the inventory from Beszel, and commands run on its hosts |
+| `/api/workspaces`, `workspace` on `POST /api/projects` | Workspaces: a checkout whose folder is the namespace of the projects cloned inside it, a resource the project routes cannot express. Any number of workspaces may share a repository, and deleting one takes its projects with it |
 | `summarize` on `POST /api/inventory/run` | **Run and summarize** on the Inventory page: Claude reads every host's output as one report, after the run, in the same request |
 
 | Method | Path | Does |
@@ -42,7 +43,8 @@ route or a tool only for a need these cannot serve, and states the reason.
 | `GET` `PUT` `DELETE` | `/api/integrations`, `/api/integrations/{id}` | the integrations, `claude` and `beszel`: `{values}` by setting name; secrets come back only as `set`, and an empty one keeps its value (admins) |
 | `GET` | `/api/inventory` | the hosts of the Beszel integration, largest first; 404 without it |
 | `POST` | `/api/inventory/run` | `{command, hosts, summarize}`: runs the command on the hosts over their ssh logins at once, every host with a login when `hosts` is empty; each host's `output`, `exit_code` and `error` (admins). With `summarize`, also the markdown `report` of every output and Claude's `summary` of it, or `summary_error` |
-| `GET` `POST` `PUT` `DELETE` | `/api/projects`, `/api/projects/{folder}` | clone `{url, id, branch}`; configure `{title, description, allow, sources, commands, job_allow, hours, job_hours}` |
+| `GET` `POST` `PUT` `DELETE` | `/api/projects`, `/api/projects/{folder}` | clone `{url, id, branch, workspace}`, into `<workspace>/<id>` when `workspace` names one; configure `{title, description, allow, sources, commands, job_allow, hours, job_hours}` |
+| `GET` `POST` `PUT` `DELETE` | `/api/workspaces`, `/api/workspaces/{folder}` | clone `{url, folder, title, description, branch}` into `<root>/<folder>`; `409` for a folder a workspace, a project or a directory holds; `PUT {title, description}`; `DELETE` removes the checkout, the projects inside it and their rows (admins) |
 | `GET` `POST` `PUT` | `/api/users`, `/api/users/{id}` | `POST {name, password, folders}` adds a user to the password file (admins; `409` for a name it holds); `PUT {folders}`; roles come from the role lists, and removing a user is removing its line |
 | `GET` `POST` `DELETE` | `/api/secrets`, `/api/secrets/{id}` | `{scope, name, content}`; content is never returned; `409` without a key to encrypt with |
 | `POST` | `/api/secrets/rekey` | writes every secret again for the current keys |

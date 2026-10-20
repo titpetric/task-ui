@@ -19,6 +19,9 @@ type ProjectCloneRequest struct {
 	URL    string `json:"url"`
 	ID     string `json:"id"`
 	Branch string `json:"branch"`
+	// Workspace clones the project inside that workspace's checkout:
+	// the folder becomes <workspace>/<id>. Empty clones into the root.
+	Workspace string `json:"workspace,omitempty"`
 	// Recursive lists the folders inside the checkout too, the default;
 	// false lists the project's own jobs alone.
 	Recursive *bool `json:"recursive,omitempty"`
@@ -104,8 +107,9 @@ func folderIDFromURL(repo string) string {
 	return folder.SafeID(base)
 }
 
-// cloneProject clones a repository into the root and records it. The
-// clone is the test: a failure reports git's output and keeps nothing.
+// cloneProject clones a repository into the root, or into a workspace's
+// checkout, and records it. The clone is the test: a failure reports
+// git's output and keeps nothing.
 func (h *Handlers) cloneProject(w http.ResponseWriter, r *http.Request) {
 	if !requireAdmin(w, r) {
 		return
@@ -127,18 +131,27 @@ func (h *Handlers) cloneProject(w http.ResponseWriter, r *http.Request) {
 		fail(w, http.StatusBadRequest, "the folder name may hold letters, digits, dots, dashes and underscores")
 		return
 	}
-	if model.IsInternal(req.ID) {
+	req.Workspace = strings.TrimSpace(req.Workspace)
+	if model.IsInternal(req.ID) || model.IsInternal(req.Workspace) {
 		fail(w, http.StatusBadRequest, internalRefused)
 		return
 	}
-	dir := filepath.Join(h.opts.Root, req.ID)
+	id := req.ID
+	if req.Workspace != "" {
+		if _, err := h.opts.Workspaces.GetByFolder(r.Context(), req.Workspace); err != nil {
+			fail(w, http.StatusBadRequest, "there is no workspace named "+req.Workspace)
+			return
+		}
+		id = req.Workspace + "/" + req.ID
+	}
+	dir := filepath.Join(h.opts.Root, filepath.FromSlash(id))
 	output, err := h.opts.Git.Clone(r.Context(), req.URL, dir, req.Branch)
 	if err != nil {
 		writeJSON(w, http.StatusBadGateway, map[string]string{"error": err.Error(), "output": output})
 		return
 	}
 	project := &model.Project{
-		Folder: req.ID, SourceURL: req.URL, Branch: req.Branch,
+		Folder: id, SourceURL: req.URL, Branch: req.Branch,
 		RootOnly:      req.Recursive != nil && !*req.Recursive,
 		SidebarHidden: req.Sidebar != nil && !*req.Sidebar,
 	}

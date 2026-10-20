@@ -1749,6 +1749,90 @@ var WorkflowStepFields = []string{"id", "workflow_id", "position", "folder", "jo
 // WorkflowStepPrimaryFields are the primary key fields in the DB table.
 var WorkflowStepPrimaryFields = []string{"id"}
 
+// Workspace generated for db table `workspace`.
+type Workspace struct {
+	// ID
+	ID string `db:"id" json:"id"`
+
+	// Folder
+	Folder string `db:"folder" json:"folder"`
+
+	// Title
+	Title string `db:"title" json:"title"`
+
+	// Description
+	Description string `db:"description" json:"description"`
+
+	// Source URL
+	SourceURL string `db:"source_url" json:"source_url"`
+
+	// Branch
+	Branch string `db:"branch" json:"branch"`
+
+	// Created At
+	CreatedAt *time.Time `db:"created_at" json:"created_at"`
+
+	// Updated At
+	UpdatedAt *time.Time `db:"updated_at" json:"updated_at"`
+}
+
+// GetID will return the value of ID.
+func (w *Workspace) GetID() string { return w.ID }
+
+// SetID sets ID to the provided value.
+func (w *Workspace) SetID(val string) { w.ID = val }
+
+// GetFolder will return the value of Folder.
+func (w *Workspace) GetFolder() string { return w.Folder }
+
+// SetFolder sets Folder to the provided value.
+func (w *Workspace) SetFolder(val string) { w.Folder = val }
+
+// GetTitle will return the value of Title.
+func (w *Workspace) GetTitle() string { return w.Title }
+
+// SetTitle sets Title to the provided value.
+func (w *Workspace) SetTitle(val string) { w.Title = val }
+
+// GetDescription will return the value of Description.
+func (w *Workspace) GetDescription() string { return w.Description }
+
+// SetDescription sets Description to the provided value.
+func (w *Workspace) SetDescription(val string) { w.Description = val }
+
+// GetSourceURL will return the value of SourceURL.
+func (w *Workspace) GetSourceURL() string { return w.SourceURL }
+
+// SetSourceURL sets SourceURL to the provided value.
+func (w *Workspace) SetSourceURL(val string) { w.SourceURL = val }
+
+// GetBranch will return the value of Branch.
+func (w *Workspace) GetBranch() string { return w.Branch }
+
+// SetBranch sets Branch to the provided value.
+func (w *Workspace) SetBranch(val string) { w.Branch = val }
+
+// GetCreatedAt will return the value of CreatedAt.
+func (w *Workspace) GetCreatedAt() *time.Time { return w.CreatedAt }
+
+// SetCreatedAt sets CreatedAt to the provided value.
+func (w *Workspace) SetCreatedAt(stamp time.Time) { w.CreatedAt = &stamp }
+
+// GetUpdatedAt will return the value of UpdatedAt.
+func (w *Workspace) GetUpdatedAt() *time.Time { return w.UpdatedAt }
+
+// SetUpdatedAt sets UpdatedAt to the provided value.
+func (w *Workspace) SetUpdatedAt(stamp time.Time) { w.UpdatedAt = &stamp }
+
+// WorkspaceTable is the name of the table in the DB.
+const WorkspaceTable = "`workspace`"
+
+// WorkspaceFields is a list of all columns in the DB table.
+var WorkspaceFields = []string{"id", "folder", "title", "description", "source_url", "branch", "created_at", "updated_at"}
+
+// WorkspacePrimaryFields are the primary key fields in the DB table.
+var WorkspacePrimaryFields = []string{"id"}
+
 // Insert starts building an INSERT INTO query.
 func (a *Artifact) Insert(opts ...QueryOption) string {
 	cfg := (&QueryConfig{Table: ArtifactTable, Statement: "INSERT INTO"}).Apply(opts...)
@@ -2901,6 +2985,67 @@ func (w *WorkflowStep) Update(opts ...QueryOption) string {
 // Delete starts building a DELETE query.
 func (w *WorkflowStep) Delete(opts ...QueryOption) string {
 	cfg := (&QueryConfig{Table: WorkflowStepTable}).Apply(opts...)
+	query := fmt.Sprintf("DELETE FROM %s", cfg.Table)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	return query
+}
+
+// Insert starts building an INSERT INTO query.
+func (w *Workspace) Insert(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: WorkspaceTable, Statement: "INSERT INTO"}).Apply(opts...)
+	cols := WorkspaceFields
+	if len(cfg.Columns) > 0 {
+		cols = cfg.Columns
+	}
+	return fmt.Sprintf("%s %s (%s) VALUES (:%s)", cfg.Statement, cfg.Table, strings.Join(cols, ", "), strings.Join(cols, ", :"))
+}
+
+// Select starts building a SELECT query.
+func (w *Workspace) Select(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: WorkspaceTable}).Apply(opts...)
+	cols := "*"
+	if len(cfg.Columns) > 0 {
+		cols = strings.Join(cfg.Columns, ", ")
+	}
+	query := fmt.Sprintf("SELECT %s FROM %s", cols, cfg.Table)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	if cfg.OrderBy != "" {
+		query += " ORDER BY " + cfg.OrderBy
+	}
+	if cfg.LimitOffset > 0 {
+		query += fmt.Sprintf(" LIMIT %d, %d", cfg.LimitStart, cfg.LimitOffset)
+	}
+	return query
+}
+
+// Update starts building a UPDATE query.
+func (w *Workspace) Update(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: WorkspaceTable}).Apply(opts...)
+	cols := WorkspaceFields
+	if len(cfg.Columns) > 0 {
+		cols = cfg.Columns
+	}
+	setClause := ""
+	for i, col := range cols {
+		if i > 0 {
+			setClause += ", "
+		}
+		setClause += col + "=:" + col
+	}
+	query := fmt.Sprintf("UPDATE %s SET %s", cfg.Table, setClause)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	return query
+}
+
+// Delete starts building a DELETE query.
+func (w *Workspace) Delete(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: WorkspaceTable}).Apply(opts...)
 	query := fmt.Sprintf("DELETE FROM %s", cfg.Table)
 	if cfg.Where != "" {
 		query += " WHERE " + cfg.Where

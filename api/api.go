@@ -1,6 +1,7 @@
 // Package api implements the JSON endpoints of task-ui: the folders and
-// their jobs, runs and their frames, artifacts, schedules, projects, users
-// and secrets, and the websocket a window attaches to a run with.
+// their jobs, runs and their frames, artifacts, schedules, projects,
+// workspaces, users and secrets, and the websocket a window attaches to
+// a run with.
 //
 // Handlers decode, check permissions, call storage and the runner, map
 // errors to status codes and encode. The user comes from the context,
@@ -99,6 +100,12 @@ func (h *Handlers) Routes() http.Handler {
 	r.Get("/projects/*", h.getProject)
 	r.Put("/projects/*", h.updateProject)
 	r.Delete("/projects/*", h.deleteProject)
+
+	r.Get("/workspaces", h.listWorkspaces)
+	r.Post("/workspaces", h.createWorkspace)
+	r.Get("/workspaces/{folder}", h.getWorkspace)
+	r.Put("/workspaces/{folder}", h.updateWorkspace)
+	r.Delete("/workspaces/{folder}", h.deleteWorkspace)
 
 	r.Get("/users", h.listUsers)
 	r.Post("/users", h.createUser)

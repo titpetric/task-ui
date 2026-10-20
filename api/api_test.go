@@ -138,6 +138,7 @@ func newFixture(t *testing.T) *fixture {
 		Events:        flows.Events,
 		Users:         users,
 		Projects:      storage.NewProjectStorage(db),
+		Workspaces:    storage.NewWorkspaceStorage(db),
 		Runs:          runs,
 		Artifacts:     artifacts,
 		ArtifactStore: &artifactstore.Store{Dir: filepath.Join(t.TempDir(), "tree")},
