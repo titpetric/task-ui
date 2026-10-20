@@ -356,21 +356,22 @@
 {{- end }}
 
 {{/* spacebar is the space a directory takes: its files, and the git
-     history beside them, as one bar with a legend. */}}
+     history beside them, as one bar with a legend; what git ignores is
+     left out of the bar and named apart. */}}
 {{- define "spacebar" }}
 <div class="spacebar" role="img" aria-label="{{ size .Total }} in all: {{ size .Files }} of files, {{ size .History }} of history">
 	<div class="spacebar-track"><i class="files" style="width: {{ printf "%.2f" .FilesPercent }}%"></i><i class="history" style="width: {{ printf "%.2f" .HistoryPercent }}%"></i></div>
 	<div class="spacebar-legend">
 		<span><i class="swatch files"></i>Files <b>{{ size .Files }}</b></span>
 		<span><i class="swatch history"></i>History <b>{{ size .History }}</b></span>
-		<span class="faint">{{ size .Total }} in all</span>
+		<span class="faint">{{ size .Total }} in all{{ if .Ignored }}, and {{ size .Ignored }} git ignores{{ end }}</span>
 	</div>
 </div>
 {{- end }}
 
 {{/* spacemini is the same in a table cell: a short bar and the total. */}}
 {{- define "spacemini" }}
-<span class="spacemini" title="{{ size .Files }} of files, {{ size .History }} of history"><span class="spacebar-track"><i class="files" style="width: {{ printf "%.2f" .FilesPercent }}%"></i><i class="history" style="width: {{ printf "%.2f" .HistoryPercent }}%"></i></span><span class="nowrap">{{ size .Total }}</span></span>
+<span class="spacemini" title="{{ size .Files }} of files, {{ size .History }} of history{{ if .Ignored }}; {{ size .Ignored }} more that git ignores{{ end }}"><span class="spacebar-track"><i class="files" style="width: {{ printf "%.2f" .FilesPercent }}%"></i><i class="history" style="width: {{ printf "%.2f" .HistoryPercent }}%"></i></span><span class="nowrap">{{ size .Total }}</span></span>
 {{- end }}
 
 {{/* showsource is the Show button of a file a folder's pipeline reads:
