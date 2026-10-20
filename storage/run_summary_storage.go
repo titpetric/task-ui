@@ -7,8 +7,8 @@ import (
 	"github.com/titpetric/task-ui/model"
 )
 
-// RunSummaryStorage keeps Claude's summary of each run that has one, by
-// the run's ID.
+// RunSummaryStorage keeps Claude's summary of each run, or workflow run,
+// that has one, by the ID of the run.
 type RunSummaryStorage struct {
 	db DB
 }

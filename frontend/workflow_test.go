@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/titpetric/task-ui/integration"
 	"github.com/titpetric/task-ui/internal/assert"
 	"github.com/titpetric/task-ui/model"
 )
@@ -163,6 +164,14 @@ func TestWorkflow_Page(t *testing.T) {
 	// plan prints a line: the screen shows it all, so there is no Expand.
 	assert.NotContains(t, viewed, `data-expand="`+steps[0].RunID+`"`)
 	assert.Equal(t, http.StatusNotFound, f.get(t, asOps, "/workflows/"+wf.ID+"/runs/"+model.NewID()).Status)
+
+	// With a Claude token for the user, a finished run has Summary too.
+	assert.NotContains(t, ops, `data-summary=`)
+	f.withKey(t)
+	assert.NoError(t, f.opts.Integrations.Save(context.Background(), integration.Claude, map[string]string{"token": "sk-1"}))
+	summed := f.page(t, asOps, "/workflows/"+wf.ID)
+	assert.Contains(t, summed, `<tbody data-runs data-summarize>`)
+	assert.Contains(t, summed, `data-summary="/api/workflow-runs/`+run.ID+`/summary" data-summary-page="/workflows/`+wf.ID+`/runs/`+run.ID+`" data-summary-title="release"`)
 
 	// A run that prints more than a screen gets Expand, with its lines.
 	long := f.workflow(t, asOps, "long", "infra", "many")
