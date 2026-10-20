@@ -1082,6 +1082,35 @@
     });
   }
 
+  // Summary on a run asks Claude for a summary of its output, once: the
+  // API keeps it, and every later ask returns what it kept.
+  var summaryDialog = document.getElementById("summary-dialog");
+  if (summaryDialog) {
+    var summaryText = document.getElementById("summary-text");
+    document.getElementById("summary-close").addEventListener("click", function () { summaryDialog.close(); });
+    document.addEventListener("click", function (event) {
+      var btn = event.target.closest("[data-summary]");
+      if (!btn) return;
+      event.preventDefault();
+      var id = btn.dataset.summary;
+      document.getElementById("summary-title").textContent = btn.dataset.summaryTitle || id;
+      document.getElementById("summary-run").setAttribute("href", "/runs/" + encodeURIComponent(id));
+      summaryText.innerHTML = '<p class="faint">Claude is reading the output…</p>';
+      summaryDialog.showModal();
+      btn.disabled = true;
+      api("POST", "/api/runs/" + encodeURIComponent(id) + "/summary", {}).then(function (res) {
+        btn.disabled = false;
+        if (res.status !== 200) {
+          summaryText.innerHTML = '<p class="form-error">' + escapeHTML(res.data.error || ("HTTP " + res.status)) + "</p>";
+          return;
+        }
+        var when = res.data.created_at ? new Date(res.data.created_at).toLocaleString() : "";
+        summaryText.innerHTML = res.data.html +
+          '<p class="faint summary-meta">' + (res.data.kept ? "Kept from " : "Written ") + escapeHTML(when) + " for " + escapeHTML(res.data.user_name) + ".</p>";
+      });
+    });
+  }
+
   // Notes: a form posts a note or a reply, and the list follows the notes
   // topic, fetched again when a note arrives or changes. A reply form
   // being written keeps its text.
@@ -1342,6 +1371,10 @@
       if (run.state === "running" && canRun) {
         html += '<button type="button" class="btn-icon" data-stop="' + id + '" title="Stop the run" aria-label="Stop the run"><svg class="ic"><use href="#i-stop"/></svg></button>' +
           '<button type="button" class="btn-icon danger" data-kill="' + id + '" title="Kill the run" aria-label="Kill the run"><svg class="ic"><use href="#i-trash"/></svg></button>';
+      }
+      if (run.state !== "running" && runsTable.hasAttribute("data-summarize")) {
+        html += '<button type="button" class="btn btn-sm" data-summary="' + id + '" data-summary-title="' + escapeHTML(run.folder + " / " + run.job) +
+          '" title="Claude\'s summary of the output, written once and kept">Summary</button>';
       }
       return html;
     };
@@ -1791,7 +1824,7 @@
       var signature = runs.map(function (r) { return r.id + ":" + r.state + ":" + r.attached; }).join(",");
       // Pages that list runs refresh when the set changes, unless a window
       // is open: that window refreshes the page when it closes.
-      if (known !== null && signature !== known && !session && document.querySelector("[data-live]")) {
+      if (known !== null && signature !== known && !session && !document.querySelector("dialog[open]") && document.querySelector("[data-live]")) {
         window.location.reload();
       }
       known = signature;

@@ -53,6 +53,8 @@ func (h *Handlers) Routes() http.Handler {
 	r.Get("/runs/{id}/frame.svg", h.frameSVG)
 	r.Get("/runs/{id}/frame.txt", h.frameText)
 	r.Get("/runs/{id}/cast", h.cast)
+	r.Get("/runs/{id}/summary", h.runSummary)
+	r.Post("/runs/{id}/summary", h.summarizeRun)
 	r.Handle("/runs/{id}/attach", h.attach())
 
 	r.Get("/artifacts", h.listArtifacts)

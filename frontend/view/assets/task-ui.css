@@ -3141,6 +3141,11 @@ dialog.preview #preview-version {
   max-width: 22rem;
 }
 
+.summary-meta {
+  margin-top: 1rem;
+  font-size: 0.75rem;
+}
+
 /* A document in the preview window: markdown as a page, text as it is. */
 .preview-doc {
   width: 100%;

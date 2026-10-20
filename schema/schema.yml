@@ -395,6 +395,32 @@
     - name: idx_run_state
       columns:
         - state
+- name: run_summary
+  comment: Run Summary
+  columns:
+    - name: run_id
+      type: text
+      key: PRI
+      comment: Run ID
+      datatype: char(26)
+    - name: summary
+      type: text
+      comment: Summary
+      datatype: varchar
+    - name: user_name
+      type: text
+      comment: User Name
+      datatype: varchar
+    - name: created_at
+      type: timestamp
+      comment: Created At
+      datatype: datetime
+  indexes:
+    - name: sqlite_autoindex_run_summary_1
+      columns:
+        - run_id
+      primary: true
+      unique: true
 - name: schedule
   comment: Schedule
   columns:

@@ -774,6 +774,56 @@ var RunFields = []string{"id", "folder", "job", "user_id", "user_name", "state",
 // RunPrimaryFields are the primary key fields in the DB table.
 var RunPrimaryFields = []string{"id"}
 
+// RunSummary generated for db table `run_summary`.
+//
+// Run Summary.
+type RunSummary struct {
+	// Run ID
+	RunID string `db:"run_id" json:"run_id"`
+
+	// Summary
+	Summary string `db:"summary" json:"summary"`
+
+	// User Name
+	UserName string `db:"user_name" json:"user_name"`
+
+	// Created At
+	CreatedAt *time.Time `db:"created_at" json:"created_at"`
+}
+
+// GetRunID will return the value of RunID.
+func (r *RunSummary) GetRunID() string { return r.RunID }
+
+// SetRunID sets RunID to the provided value.
+func (r *RunSummary) SetRunID(val string) { r.RunID = val }
+
+// GetSummary will return the value of Summary.
+func (r *RunSummary) GetSummary() string { return r.Summary }
+
+// SetSummary sets Summary to the provided value.
+func (r *RunSummary) SetSummary(val string) { r.Summary = val }
+
+// GetUserName will return the value of UserName.
+func (r *RunSummary) GetUserName() string { return r.UserName }
+
+// SetUserName sets UserName to the provided value.
+func (r *RunSummary) SetUserName(val string) { r.UserName = val }
+
+// GetCreatedAt will return the value of CreatedAt.
+func (r *RunSummary) GetCreatedAt() *time.Time { return r.CreatedAt }
+
+// SetCreatedAt sets CreatedAt to the provided value.
+func (r *RunSummary) SetCreatedAt(stamp time.Time) { r.CreatedAt = &stamp }
+
+// RunSummaryTable is the name of the table in the DB.
+const RunSummaryTable = "`run_summary`"
+
+// RunSummaryFields is a list of all columns in the DB table.
+var RunSummaryFields = []string{"run_id", "summary", "user_name", "created_at"}
+
+// RunSummaryPrimaryFields are the primary key fields in the DB table.
+var RunSummaryPrimaryFields = []string{"run_id"}
+
 // Schedule generated for db table `schedule`.
 type Schedule struct {
 	// ID
@@ -2058,6 +2108,67 @@ func (r *Run) Update(opts ...QueryOption) string {
 // Delete starts building a DELETE query.
 func (r *Run) Delete(opts ...QueryOption) string {
 	cfg := (&QueryConfig{Table: RunTable}).Apply(opts...)
+	query := fmt.Sprintf("DELETE FROM %s", cfg.Table)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	return query
+}
+
+// Insert starts building an INSERT INTO query.
+func (r *RunSummary) Insert(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: RunSummaryTable, Statement: "INSERT INTO"}).Apply(opts...)
+	cols := RunSummaryFields
+	if len(cfg.Columns) > 0 {
+		cols = cfg.Columns
+	}
+	return fmt.Sprintf("%s %s (%s) VALUES (:%s)", cfg.Statement, cfg.Table, strings.Join(cols, ", "), strings.Join(cols, ", :"))
+}
+
+// Select starts building a SELECT query.
+func (r *RunSummary) Select(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: RunSummaryTable}).Apply(opts...)
+	cols := "*"
+	if len(cfg.Columns) > 0 {
+		cols = strings.Join(cfg.Columns, ", ")
+	}
+	query := fmt.Sprintf("SELECT %s FROM %s", cols, cfg.Table)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	if cfg.OrderBy != "" {
+		query += " ORDER BY " + cfg.OrderBy
+	}
+	if cfg.LimitOffset > 0 {
+		query += fmt.Sprintf(" LIMIT %d, %d", cfg.LimitStart, cfg.LimitOffset)
+	}
+	return query
+}
+
+// Update starts building a UPDATE query.
+func (r *RunSummary) Update(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: RunSummaryTable}).Apply(opts...)
+	cols := RunSummaryFields
+	if len(cfg.Columns) > 0 {
+		cols = cfg.Columns
+	}
+	setClause := ""
+	for i, col := range cols {
+		if i > 0 {
+			setClause += ", "
+		}
+		setClause += col + "=:" + col
+	}
+	query := fmt.Sprintf("UPDATE %s SET %s", cfg.Table, setClause)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	return query
+}
+
+// Delete starts building a DELETE query.
+func (r *RunSummary) Delete(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: RunSummaryTable}).Apply(opts...)
 	query := fmt.Sprintf("DELETE FROM %s", cfg.Table)
 	if cfg.Where != "" {
 		query += " WHERE " + cfg.Where

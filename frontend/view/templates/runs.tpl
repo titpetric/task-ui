@@ -36,7 +36,7 @@
 	<div class="table-wrap">
 	<table class="table cards">
 		<thead><tr><th>Started</th><th>Folder</th><th>Job</th><th>By</th><th>Duration</th><th>Result</th><th></th></tr></thead>
-		<tbody data-runs-table>
+		<tbody data-runs-table{{ if .Summarize }} data-summarize{{ end }}>
 		{{- range .Runs }}
 			<tr data-run-id="{{ .ID }}">
 				<td class="nowrap" data-label="Started" title="{{ stamp .StartedAt }}">{{ ago .StartedAt }}</td>
@@ -47,6 +47,9 @@
 				<td data-label="Result" data-result>{{ template "state" . }}{{ if .Attached }} <span class="faint">{{ .Attached }} watching</span>{{ end }}</td>
 				<td class="actions" data-actions>
 					<a class="btn btn-sm" href="/runs/{{ .ID }}" data-attach="{{ .ID }}">{{ if eq .State "running" }}Attach{{ else }}View{{ end }}</a>
+					{{- if and $.Summarize (ne .State "running") }}
+					<button type="button" class="btn btn-sm" data-summary="{{ .ID }}" data-summary-title="{{ .Folder }} / {{ .Job }}" title="Claude's summary of the output, written once and kept">Summary</button>
+					{{- end }}
 					{{- if and .Live (eq .State "running") }}
 					<button type="button" class="btn-icon" data-stop="{{ .ID }}" title="Stop the run" aria-label="Stop the run"><svg class="ic"><use href="#i-stop"/></svg></button>
 					<button type="button" class="btn-icon danger" data-kill="{{ .ID }}" title="Kill the run" aria-label="Kill the run"><svg class="ic"><use href="#i-trash"/></svg></button>

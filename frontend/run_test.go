@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/titpetric/task-ui/integration"
 	"github.com/titpetric/task-ui/internal/assert"
 	"github.com/titpetric/task-ui/model"
 )
@@ -35,6 +36,15 @@ func TestRuns(t *testing.T) {
 	assert.NotContains(t, filtered, `class="btn btn-sm" href="/runs/`+deploy.ID+`"`)
 	assert.Contains(t, filtered, `<option value="infra" selected>`)
 	assert.Contains(t, filtered, `<option value="ok" selected>`)
+
+	// Summary shows once the Claude integration has a token for the user.
+	assert.NotContains(t, body, `data-summary=`)
+	f.withKey(t)
+	assert.NoError(t, f.opts.Integrations.Save(context.Background(), integration.Claude, map[string]string{"token": "sk-1", "who": "admin"}))
+	summed := f.page(t, asAdmin, "/runs")
+	assert.Contains(t, summed, `<tbody data-runs-table data-summarize>`)
+	assert.Contains(t, summed, `data-summary="`+deploy.ID+`" data-summary-title="private / deploy"`)
+	assert.NotContains(t, f.page(t, asOps, "/runs"), `data-summary=`)
 
 	limited := f.page(t, asLimited, "/runs")
 	assert.NotContains(t, limited, deploy.ID)
