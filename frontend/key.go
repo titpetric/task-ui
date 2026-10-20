@@ -18,6 +18,14 @@ func (h *Handlers) keys(w http.ResponseWriter, r *http.Request) {
 	p.Crumbs = view.Crumbs("Settings", "/settings", "SSH keys")
 	p.Keys, p.KeysDir = h.opts.Keys.List(), h.opts.Keys.Dir
 	p.KeyFolders = h.keyFolders()
+	if h.opts.HomeKeys != nil {
+		for _, key := range h.opts.HomeKeys.List() {
+			if !key.Backup {
+				p.HomeKeys = append(p.HomeKeys, key)
+			}
+		}
+		p.HomeKeysDir = h.opts.HomeKeys.Dir
+	}
 	p.KeyPolicies, p.KeyUsers = h.keyPolicies(r), h.keyUsers(r)
 	p.Encryption = h.opts.Secrets.Vault.Recipients()
 	h.render(w, http.StatusOK, "keys", p)

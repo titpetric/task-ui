@@ -43,6 +43,9 @@ type Options struct {
 	Catalogue folder.Catalogue
 	Git       *git.Git
 	Keys      *sshkey.Store
+	// HomeKeys are the keys in the ~/.ssh of the user task-ui runs as,
+	// which ssh and git take by default; nil when they are the instance keys.
+	HomeKeys *sshkey.Store
 	// KeyPolicies assign the instance keys to roles' runs.
 	KeyPolicies *storage.SSHKeyPolicyStorage
 	Env         *envfile.Store

@@ -129,6 +129,7 @@ func newFixture(t *testing.T) *fixture {
 		Catalogue:     cat,
 		Git:           &git.Git{},
 		Keys:          keys,
+		HomeKeys:      &sshkey.Store{Dir: t.TempDir()},
 		KeyPolicies:   storage.NewSSHKeyPolicyStorage(db),
 		Env:           envfile.New(storage.NewEnvFileStorage(db), secrets),
 		Root:          root,
