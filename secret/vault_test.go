@@ -1,6 +1,8 @@
 package secret_test
 
 import (
+	"encoding/base64"
+	"strings"
 	"testing"
 
 	"github.com/titpetric/task-ui/internal/assert"
@@ -119,4 +121,57 @@ func TestVault_KeyTypes(t *testing.T) {
 	plain, err := v.Decrypt(text)
 	assert.NoError(t, err)
 	assert.Equal(t, "with rsa", plain)
+}
+
+// The secrets have one instance key: a type's own, Ed25519 before RSA. A
+// key made for someone or for a use never encrypts them, and still opens
+// what it encrypted before.
+func TestVault_InstanceKey(t *testing.T) {
+	t.Parallel()
+	keys := newKeys(t)
+	deploy, err := keys.GenerateAs("rsa", "deploy", "deploy")
+	assert.NoError(t, err)
+	v := secret.NewVault(keys)
+	assert.Nil(t, v.Recipients())
+	_, err = v.Encrypt("x")
+	assert.ErrorIs(t, err, secret.ErrNoKey)
+
+	_, err = keys.Generate("rsa", "own")
+	assert.NoError(t, err)
+	assert.Equal(t, []string{"id_rsa"}, v.Recipients())
+	_, err = keys.Generate("ed25519", "instance")
+	assert.NoError(t, err)
+	assert.Equal(t, []string{"id_ed25519"}, v.Recipients())
+	assert.Equal(t, []string{"id_rsa"}, v.Recipients("id_ed25519"))
+
+	text, err := v.Encrypt("one key")
+	assert.NoError(t, err)
+	plain, err := v.Decrypt(text)
+	assert.NoError(t, err)
+	assert.Equal(t, "one key", plain)
+	assert.Equal(t, []string{"ssh-ed25519"}, stanzas(t, text))
+	assert.Equal(t, "id_rsa_deploy", deploy.Name)
+}
+
+// stanzas returns the kinds of recipient an armored age file opens for,
+// from its header: one stanza a key that opens it.
+// for, from its header: one stanza a key that opens it.
+func stanzas(t *testing.T, text string) []string {
+	t.Helper()
+	var body strings.Builder
+	for _, line := range strings.Split(strings.TrimSpace(text), "\n") {
+		if !strings.HasPrefix(line, "-----") {
+			body.WriteString(line)
+		}
+	}
+	raw, err := base64.StdEncoding.DecodeString(body.String())
+	assert.NoError(t, err)
+	header, _, _ := strings.Cut(string(raw), "\n---")
+	var kinds []string
+	for _, line := range strings.Split(header, "\n") {
+		if fields := strings.Fields(line); len(fields) > 1 && fields[0] == "->" {
+			kinds = append(kinds, fields[1])
+		}
+	}
+	return kinds
 }

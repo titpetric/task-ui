@@ -72,14 +72,15 @@ wins over the shared one. A value is never shown again once saved.
 
 ![Secrets](../assets/secrets-dark.png)
 
-The instance SSH keys encrypt the secrets at rest: every ed25519
-and RSA key below encrypts them, so a secret needs such a key first.
-**Re-encrypt** writes every secret again for the keys there are now.
+One key encrypts the secrets at rest, the instance key: `id_ed25519`,
+or `id_rsa` when there is no ed25519 key. A key made for someone or for a
+use, such as `id_rsa_deploy`, never does. A secret needs the instance key
+first. **Re-encrypt** writes every secret again for the instance key.
 
 ## SSH keys
 
-The key pairs the jobs and git use to reach other hosts, and the keys that
-encrypt the secrets.
+The key pairs the jobs and git use to reach other hosts, and the instance
+key that encrypts the secrets, marked **secrets**.
 
 ![SSH keys](../assets/keys-dark.png)
 

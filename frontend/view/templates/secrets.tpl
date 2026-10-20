@@ -6,7 +6,7 @@
 	</div>
 	<div class="actions">
 		{{- if .Encryption }}
-		<form data-api="/api/secrets/rekey" data-method="POST" data-next="/settings/secrets?notice=Secrets+written+again+for+the+current+keys"><button class="btn" type="submit" title="Write every secret again for the current keys, after a rotation">Re-encrypt</button></form>
+		<form data-api="/api/secrets/rekey" data-method="POST" data-next="/settings/secrets?notice=Secrets+written+again+for+the+current+keys"><button class="btn" type="submit" title="Write every secret again for the instance key, after a rotation">Re-encrypt</button></form>
 		{{- end }}
 		<a class="btn btn-primary" href="/settings/secrets/new">Add secret</a>
 	</div>
@@ -15,7 +15,7 @@
 {{- if .Encryption }}
 <div class="alert"><svg class="ic"><use href="#i-secret"/></svg> Encrypted at rest with the instance SSH {{ if eq (len .Encryption) 1 }}key{{ else }}keys{{ end }} <b>{{ join .Encryption ", " }}</b>. A rotation keeps the old pair as a backup, so everything still opens; Re-encrypt writes the secrets for the current keys, after which the backup can go.</div>
 {{- else }}
-<div class="alert bad"><b>No key to encrypt with.</b> Secrets are encrypted with the instance SSH keys, ed25519 or RSA. <a href="/settings/keys/generate">Generate one</a> before adding a secret.</div>
+<div class="alert bad"><b>No key to encrypt with.</b> Secrets are encrypted with the instance key, id_ed25519 or id_rsa. <a href="/settings/keys/generate">Generate one</a> before adding a secret.</div>
 {{- end }}
 
 <div class="table-wrap">
