@@ -1508,6 +1508,27 @@
     });
   }
 
+  // The host picker: All, None and Invert set the boxes, and the count
+  // says how many of the hosts a run reaches.
+  document.querySelectorAll("[data-host-picker]").forEach(function (picker) {
+    var boxes = picker.querySelectorAll("input[name=hosts]");
+    var count = picker.querySelector("[data-host-count]");
+    var tally = function () {
+      var picked = Array.prototype.filter.call(boxes, function (box) { return box.checked; }).length;
+      count.textContent = picked + " of " + boxes.length + " host" + (boxes.length === 1 ? "" : "s");
+    };
+    picker.addEventListener("change", tally);
+    picker.addEventListener("click", function (event) {
+      var btn = event.target.closest("[data-hosts]");
+      if (!btn) return;
+      boxes.forEach(function (box) {
+        box.checked = btn.dataset.hosts === "all" ? true : btn.dataset.hosts === "none" ? false : !box.checked;
+      });
+      tally();
+    });
+    tally();
+  });
+
   // outputHTML shows a host's output as its last screen, the final
   // screenLines lines, and the whole of it behind Expand, as a job run's
   // step does; output that fits a screen shows whole.

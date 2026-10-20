@@ -14,7 +14,8 @@ reaches slowly fills in on the next view.
 ## Running a command on the hosts
 
 An admin runs a shell command on the hosts at once, like pssh: pick the
-hosts, by default every one with an ssh login, write the command or take a
+hosts, by default every one with an ssh login (**All**, **None** and
+**Invert** set them at once), write the command or take a
 quick one (`uptime`, `df -h /`, `free -h`, the containers, the kernel, the
 OS), and **Run**, or Ctrl+Enter. Each host runs it over its login, on a
 terminal, for at most two minutes, and the page shows a row a host: its
