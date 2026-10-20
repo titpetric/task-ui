@@ -3326,7 +3326,9 @@ dialog.preview #preview-version {
   font-size: 0.8125rem;
 }
 
-.note-code {
+/* A note is markdown: a fenced block as the terminal draws it, lists,
+   headings no louder than the note, quotes and tables. */
+.note-body pre {
   margin: 0.5rem 0;
   padding: 0.6rem 0.75rem;
   max-height: 24rem;
@@ -3339,6 +3341,51 @@ dialog.preview #preview-version {
   font-size: 0.75rem;
   line-height: 1.45;
   white-space: pre;
+}
+
+.note-body pre code {
+  padding: 0;
+  background: none;
+  color: inherit;
+  font-size: inherit;
+}
+
+.note-body ul,
+.note-body ol {
+  margin: 0.3rem 0 0.5rem;
+  padding-left: 1.3rem;
+}
+
+.note-body li + li {
+  margin-top: 0.15rem;
+}
+
+.note-body h1,
+.note-body h2,
+.note-body h3,
+.note-body h4 {
+  margin: 0.7rem 0 0.3rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.note-body blockquote {
+  margin: 0.4rem 0;
+  padding-left: 0.75rem;
+  color: var(--text-dim);
+  border-left: 3px solid var(--line-2);
+}
+
+.note-body table {
+  margin: 0.4rem 0;
+  border-collapse: collapse;
+}
+
+.note-body th,
+.note-body td {
+  padding: 0.2rem 0.55rem;
+  border: 1px solid var(--line);
+  text-align: left;
 }
 
 .mention {
