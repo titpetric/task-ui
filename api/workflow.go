@@ -87,7 +87,7 @@ func mayChangeWorkflow(user *model.User, wf *model.Workflow) bool {
 func (h *Handlers) workflowView(r *http.Request, wf model.Workflow, steps []model.WorkflowStep) WorkflowView {
 	v := WorkflowView{Workflow: wf, Steps: steps}
 	v.Running, _ = h.opts.Flows.Active(wf.ID)
-	if runs, err := h.opts.WorkflowRuns.ListByWorkflow(r.Context(), wf.ID, 1); err == nil && len(runs) > 0 {
+	if runs, err := h.opts.WorkflowRuns.ListByWorkflow(r.Context(), wf.ID, storage.WorkflowRunFilter{Limit: 1}); err == nil && len(runs) > 0 {
 		v.LastRun = &runs[0]
 	}
 	v.CanRun = h.mayRun(r, steps) == ""
@@ -284,7 +284,7 @@ func (h *Handlers) listWorkflowRuns(w http.ResponseWriter, r *http.Request) {
 		failErr(w, err)
 		return
 	}
-	runs, err := h.opts.WorkflowRuns.ListByWorkflow(r.Context(), wf.ID, queryInt(r, "limit", 20))
+	runs, err := h.opts.WorkflowRuns.ListByWorkflow(r.Context(), wf.ID, storage.WorkflowRunFilter{Limit: queryInt(r, "limit", 20)})
 	if err != nil {
 		failErr(w, err)
 		return

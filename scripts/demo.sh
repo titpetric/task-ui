@@ -171,7 +171,10 @@ sleep 1.5
 for theme in dark light; do
   shot "dashboard-${theme}" / "$theme"
 done
-shot runs-dark /runs dark
+# More runs than a page holds, so the runs shot shows Next under the
+# table, in a window tall enough for it.
+for _ in 1 2 3; do scripts/run.sh backups verify >/dev/null 2>&1; done
+shot runs-dark /runs dark 1440x1500
 scripts/run.sh tools make:build >/dev/null 2>&1
 
 for theme in dark light; do

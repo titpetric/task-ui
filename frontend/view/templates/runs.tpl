@@ -20,6 +20,7 @@
 			{{- range states }}<option value="{{ . }}"{{ if eq (index $.Form "state") . }} selected{{ end }}>{{ . }}</option>{{ end }}
 		</select>
 	</label>
+	{{- template "pagesize" . }}
 	<button class="btn" type="submit">Filter</button>
 </form>
 
@@ -62,5 +63,6 @@
 		</tbody>
 	</table>
 	</div>
+	{{- template "pager" .Pager }}
 </section>
 {{ end }}

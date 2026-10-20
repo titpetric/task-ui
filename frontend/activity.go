@@ -39,7 +39,7 @@ func (h *Handlers) activity(ctx context.Context, user *model.User, filter storag
 
 // workflowActivity charts a workflow's runs, the duration line with them.
 func (h *Handlers) workflowActivity(ctx context.Context, workflowID string, now time.Time) *view.Activity {
-	rows, err := h.opts.WorkflowRuns.ListByWorkflow(ctx, workflowID, activityLimit)
+	rows, err := h.opts.WorkflowRuns.ListByWorkflow(ctx, workflowID, storage.WorkflowRunFilter{Limit: activityLimit})
 	if err != nil {
 		slog.Error("listing workflow runs for the charts", "err", err)
 		return nil

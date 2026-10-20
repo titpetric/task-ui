@@ -299,3 +299,38 @@ func TestWorkflow_NestedPipeline(t *testing.T) {
 	assert.Contains(t, page, `href="/runs/`+innerSteps[0].RunID+`" data-run-link="`+innerSteps[0].RunID+`">infra / plan</a>`)
 	assert.Contains(t, page, `<a class="frame" href="/runs/`+innerSteps[0].RunID+`"`)
 }
+
+// A workflow's runs come a page at a time, as on Runs; the latest run
+// above the pipeline stays the newest on every page.
+func TestWorkflow_Pages(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	wf := f.workflow(t, asOps, "release", "infra", "plan")
+	var made []string // newest first
+	for i := range 18 {
+		run := &model.WorkflowRun{WorkflowID: wf.ID, Name: wf.Name, UserName: "ops"}
+		assert.NoError(t, f.opts.WorkflowRuns.Create(context.Background(), run, []model.WorkflowStep{{Folder: "infra", Job: "plan"}}))
+		run.State = model.StateOK
+		started := time.Now().Add(time.Duration(i-60) * time.Second)
+		run.StartedAt = &started
+		assert.NoError(t, f.opts.WorkflowRuns.Update(context.Background(), run))
+		made = append([]string{run.ID}, made...)
+	}
+	rows := func(body string) int { return strings.Count(body, `<tr data-run-id="`) }
+	path := "/workflows/" + wf.ID
+
+	first := f.page(t, asOps, path)
+	assert.Equal(t, 15, rows(first))
+	assert.Contains(t, first, `<option value="15" selected>15</option>`)
+	assert.Contains(t, first, `href="`+path+`?before=`+made[14]+`&amp;n=15" rel="next">Next</a>`)
+	assert.NotContains(t, first, `rel="prev"`)
+	assert.Equal(t, 18, rows(f.page(t, asOps, path+"?n=50")))
+
+	next := f.page(t, asOps, path+"?before="+made[14])
+	assert.Equal(t, 3, rows(next))
+	assert.Contains(t, next, `href="`+path+`?after=`+made[15]+`&amp;n=15" rel="prev">Previous</a>`)
+	assert.Contains(t, next, `data-latest>Latest run`)
+	back := f.page(t, asOps, path+"?after="+made[15])
+	assert.Equal(t, 15, rows(back))
+	assert.Contains(t, back, `<tr data-run-id="`+made[0]+`">`)
+}

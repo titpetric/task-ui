@@ -163,7 +163,7 @@ func TestRunner_MissingJob(t *testing.T) {
 	_, err := f.runner.Start(context.Background(), wf, ops)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "infra / gone")
-	runs, _ := f.wfRuns.ListByWorkflow(context.Background(), wf.ID, 10)
+	runs, _ := f.wfRuns.ListByWorkflow(context.Background(), wf.ID, storage.WorkflowRunFilter{Limit: 10})
 	assert.Len(t, runs, 0)
 }
 

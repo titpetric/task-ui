@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
@@ -289,12 +290,33 @@ func (s *WorkflowRunStorage) Steps(ctx context.Context, id string) ([]model.Work
 	return client(s.db).Select[model.WorkflowRunStep](ctx, "SELECT * FROM workflow_run_step WHERE workflow_run_id = ? ORDER BY position", id)
 }
 
+// WorkflowRunFilter pages a workflow's runs: Limit of them, 20 when
+// zero, older than the run Before names or newer than the one After
+// names.
+type WorkflowRunFilter struct {
+	Limit  int
+	Before string
+	After  string
+}
+
 // ListByWorkflow returns a workflow's runs, newest first.
-func (s *WorkflowRunStorage) ListByWorkflow(ctx context.Context, workflowID string, limit int) ([]model.WorkflowRun, error) {
-	if limit <= 0 {
-		limit = 20
+func (s *WorkflowRunStorage) ListByWorkflow(ctx context.Context, workflowID string, filter WorkflowRunFilter) ([]model.WorkflowRun, error) {
+	if filter.Limit <= 0 {
+		filter.Limit = 20
 	}
-	return client(s.db).Select[model.WorkflowRun](ctx, "SELECT * FROM workflow_run WHERE workflow_id = ? ORDER BY started_at DESC, rowid DESC LIMIT ?", workflowID, limit)
+	query := "SELECT * FROM workflow_run WHERE workflow_id = ?"
+	args := []any{workflowID}
+	page, pageArgs, order := cursor("workflow_run", filter.Before, filter.After)
+	if page != "" {
+		query += " AND " + page
+		args = append(args, pageArgs...)
+	}
+	args = append(args, filter.Limit)
+	runs, err := client(s.db).Select[model.WorkflowRun](ctx, query+" ORDER BY "+order+" LIMIT ?", args...)
+	if filter.Before == "" && filter.After != "" {
+		slices.Reverse(runs)
+	}
+	return runs, err
 }
 
 // List returns the runs of every workflow, newest first.
@@ -302,7 +324,7 @@ func (s *WorkflowRunStorage) List(ctx context.Context, limit int) ([]model.Workf
 	if limit <= 0 {
 		limit = 20
 	}
-	return client(s.db).Select[model.WorkflowRun](ctx, "SELECT * FROM workflow_run ORDER BY started_at DESC, rowid DESC LIMIT ?", limit)
+	return client(s.db).Select[model.WorkflowRun](ctx, "SELECT * FROM workflow_run ORDER BY started_at DESC, id DESC LIMIT ?", limit)
 }
 
 // Update writes a workflow run back, by ID; a finished state stamps it.

@@ -164,3 +164,62 @@ func TestRunStorage_KillActive(t *testing.T) {
 	assert.Len(t, list, 2)
 	assert.NotNil(t, list[0].FinishedAt)
 }
+
+// ids returns the IDs of runs, in order.
+func ids(runs []model.Run) []string {
+	out := make([]string, 0, len(runs))
+	for _, run := range runs {
+		out = append(out, run.ID)
+	}
+	return out
+}
+
+func TestRunStorage_ListPages(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	runs := storage.NewRunStorage(newDB(t))
+	base := time.Now().Add(-time.Hour)
+	var made []string // oldest first
+	for i := range 7 {
+		started := base.Add(time.Duration(i) * time.Minute)
+		folder := "infra"
+		if i%2 == 1 {
+			folder = "web"
+		}
+		run := &model.Run{ID: model.NewIDAt(started), Folder: folder, Job: "deploy", StartedAt: &started}
+		assert.NoError(t, runs.Create(ctx, run))
+		made = append(made, run.ID)
+	}
+
+	// The first page, then the page before its last row: full, newest first.
+	first, err := runs.List(ctx, storage.RunFilter{Limit: 3})
+	assert.NoError(t, err)
+	assert.Equal(t, []string{made[6], made[5], made[4]}, ids(first))
+	second, err := runs.List(ctx, storage.RunFilter{Limit: 3, Before: first[2].ID})
+	assert.NoError(t, err)
+	assert.Equal(t, []string{made[3], made[2], made[1]}, ids(second))
+
+	// Back from the second page's first row lands on the first page.
+	back, err := runs.List(ctx, storage.RunFilter{Limit: 3, After: second[0].ID})
+	assert.NoError(t, err)
+	assert.Equal(t, ids(first), ids(back))
+
+	// The folders narrow in the query, so a page stays full.
+	web, err := runs.List(ctx, storage.RunFilter{Limit: 2, Folders: []string{"web"}})
+	assert.NoError(t, err)
+	assert.Equal(t, []string{made[5], made[3]}, ids(web))
+	both, err := runs.List(ctx, storage.RunFilter{Folders: []string{"web", "infra"}})
+	assert.NoError(t, err)
+	assert.Len(t, both, 7)
+	older, err := runs.List(ctx, storage.RunFilter{Folders: []string{"infra"}, Before: made[4]})
+	assert.NoError(t, err)
+	assert.Equal(t, []string{made[2], made[0]}, ids(older))
+
+	// A cursor on a run that is not there pages nothing.
+	missing, err := runs.List(ctx, storage.RunFilter{Before: model.NewID()})
+	assert.NoError(t, err)
+	assert.Len(t, missing, 0)
+	missing, err = runs.List(ctx, storage.RunFilter{After: "nope"})
+	assert.NoError(t, err)
+	assert.Len(t, missing, 0)
+}

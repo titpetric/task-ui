@@ -295,6 +295,23 @@
 {{- end -}}
 {{ end }}
 
+{{- /* The pages either side of a page of runs, from a view.Pager. */}}
+{{ define "pager" }}{{ with . }}
+<nav class="pager" aria-label="Pages">
+	{{- if .Prev }}<a class="btn btn-sm" href="{{ .Prev }}" rel="prev">Previous</a>{{ end }}
+	{{- if .Next }}<a class="btn btn-sm" href="{{ .Next }}" rel="next">Next</a>{{ end }}
+</nav>
+{{- end }}{{ end }}
+
+{{- /* The page size select of a form that lists runs. */}}
+{{ define "pagesize" }}
+	<label class="page-size">Page size
+		<select name="n">
+			{{- range list "15" "50" "100" }}<option value="{{ . }}"{{ if eq (index $.Form "n") . }} selected{{ end }}>{{ . }}</option>{{ end }}
+		</select>
+	</label>
+{{- end }}
+
 {{ define "who" }}<span class="who-ran"><span class="avatar sm" title="{{ .UserName }}">{{ .Initials }}</span> {{ .UserName }}{{ if .IsScheduled }} <span class="badge">scheduled</span>{{ end }}{{ if .Reason }} <span class="badge bad" title="{{ .Reason }}">out of hours</span>{{ else if .IsForced }} <span class="badge signal">forced</span>{{ end }}</span>{{ end }}
 
 {{ define "hours" }}{{ $text := index . 0 }}{{ $page := index . 1 }}{{ if $text }}{{ hoursLine $text }} {{ if $page.InHours $text }}<span class="badge ok">open now</span>{{ else }}<span class="badge bad">out of hours now</span>{{ end }}{{ else }}<span class="faint">always</span>{{ end }}{{ end }}
