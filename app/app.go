@@ -186,6 +186,7 @@ func (a *App) wire(version string) error {
 	recordings := &recording.Store{Root: cfg.RecordingsDir()}
 
 	a.Catalogue = NewCatalogue(cfg.Root, cfg.Discover, projects)
+	a.Catalogue.Agent = cfg.Agent
 	store := &artifactstore.Store{Dir: cfg.ArtifactTree(), Keep: cfg.ArtifactHistory}
 	a.Runner = runner.New(runner.Options{
 		KeyDir: keys.Dir, KeyPolicies: keyPolicies,

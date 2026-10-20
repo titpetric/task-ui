@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/titpetric/task-ui/detector"
+	"github.com/titpetric/task-ui/model"
 )
 
 // maxDepth bounds how far discovery descends below the root.
@@ -115,7 +116,8 @@ func isFile(path string) bool {
 }
 
 // discover adds the root when it has something to run, and walks the
-// tree below it, not into a root-only project.
+// tree below it, not into a root-only project. A directory of the root
+// named internal lists nothing: the namespace is task-ui's own.
 func (d *Discovery) discover(root string, c *catalogue) {
 	if !c.seen(root) && detector.Any(root) {
 		if f := Load(SafeID(filepath.Base(root)), root); runnable(f) {
@@ -129,7 +131,7 @@ func (d *Discovery) discover(root string, c *catalogue) {
 		}
 	}
 	walk(root, "", 1, detector.HasPipeline(root), gitIgnored(root, nil), stop, func(id, dir string) {
-		if c.seen(dir) {
+		if c.seen(dir) || model.IsInternal(id) {
 			return
 		}
 		if f := Load(id, dir); runnable(f) {
@@ -148,7 +150,7 @@ func sections(root string, c *catalogue) {
 	}
 	for _, id := range ids {
 		top, _, nested := strings.Cut(id, "/")
-		if !nested {
+		if !nested || model.IsInternal(top) {
 			continue
 		}
 		if dir := filepath.Join(root, top); !c.seen(dir) {

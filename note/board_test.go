@@ -256,3 +256,27 @@ func TestBoard_InstructionAnswer(t *testing.T) {
 	assert.Equal(t, model.NoteFailed, f.settled(t, failed.ID).State)
 	assert.Equal(t, "Done: @claude answer, fail\n\nThe run ended failed (exit 1).", replies(t, f, failed.ID)[0].Body)
 }
+
+// The agent job may live in the internal folder, which the agent's user,
+// a runner, does not see: the board starts it all the same.
+func TestBoard_InternalJob(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t, "internal/run")
+	agentFolder := *f.board.Catalogue.Find("agent")
+	agentFolder.ID = model.Internal
+	job := *agentFolder.Jobs[0]
+	job.Folder = model.Internal
+	agentFolder.Jobs = []*folder.Job{&job}
+	f.board.Catalogue = catalogue{model.Internal: &agentFolder}
+
+	posted, err := f.board.Post(context.Background(), f.ops, "", "@claude answer this")
+	assert.NoError(t, err)
+	done := f.settled(t, posted.ID)
+	assert.Equal(t, model.NoteDone, done.State)
+	reply := replies(t, f, posted.ID)
+	assert.Len(t, reply, 1)
+	assert.Equal(t, "Done: @claude answer this", reply[0].Body)
+	run, ok := f.board.Runner.Get(done.RunID)
+	assert.True(t, ok)
+	assert.Equal(t, model.Internal, run.Snapshot().Folder)
+}

@@ -200,3 +200,23 @@ func TestDiscovery_RootOnly(t *testing.T) {
 		t.Fatalf("mono's own jobs: %+v", mono)
 	}
 }
+
+// A directory of the root named internal lists nothing, nor do the
+// folders inside it: the namespace is task-ui's own. Deeper down the
+// name is an ordinary one.
+func TestDiscovery_SkipsInternal(t *testing.T) {
+	t.Parallel()
+	root := t.TempDir()
+	write(t, filepath.Join(root, "internal", "Taskfile.yml"), "tasks:\n  x:\n    desc: X\n")
+	write(t, filepath.Join(root, "internal", "tools", "Taskfile.yml"), "tasks:\n  y:\n    desc: Y\n")
+	write(t, filepath.Join(root, "deploy", "internal", "Taskfile.yml"), "tasks:\n  z:\n    desc: Z\n")
+
+	d := &Discovery{Root: root, Discover: true}
+	ids := []string{}
+	for _, f := range d.List() {
+		ids = append(ids, f.ID)
+	}
+	if want := []string{"deploy", "deploy/internal"}; !slices.Equal(ids, want) {
+		t.Fatalf("folders: got %v, want %v", ids, want)
+	}
+}

@@ -88,6 +88,13 @@ func TestProject_CloneRefused(t *testing.T) {
 	name := f.call(t, asAdmin, http.MethodPost, "/projects", api.ProjectCloneRequest{URL: "https://example.com/x.git", ID: "../x"})
 	assert.Equal(t, http.StatusBadRequest, name.Status)
 
+	internal := f.call(t, asAdmin, http.MethodPost, "/projects", api.ProjectCloneRequest{URL: "file://" + localRepo(t), ID: "internal"})
+	assert.Equal(t, http.StatusBadRequest, internal.Status)
+	assert.Contains(t, internal.str("error"), "task-ui's own namespace")
+	under := f.call(t, asAdmin, http.MethodPost, "/projects", api.ProjectCloneRequest{URL: "file://" + localRepo(t), ID: "internal/tools"})
+	assert.Equal(t, http.StatusBadRequest, under.Status)
+	assert.NoDirExists(t, filepath.Join(f.root, "internal"))
+
 	missing := f.call(t, asAdmin, http.MethodPost, "/projects", api.ProjectCloneRequest{URL: "file://" + filepath.Join(t.TempDir(), "nothing.git")})
 	assert.Equal(t, http.StatusBadGateway, missing.Status)
 	assert.NotEqual(t, "", missing.str("error"))
@@ -118,6 +125,9 @@ func TestProject_Update(t *testing.T) {
 
 	bad := f.call(t, asAdmin, http.MethodPut, "/projects/..", api.ProjectRequest{})
 	assert.Equal(t, http.StatusBadRequest, bad.Status)
+
+	internal := f.call(t, asAdmin, http.MethodPut, "/projects/internal", api.ProjectRequest{Title: "Mine"})
+	assert.Equal(t, http.StatusBadRequest, internal.Status)
 }
 
 func TestProject_Delete(t *testing.T) {

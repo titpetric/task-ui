@@ -35,10 +35,14 @@ func (u *User) FolderList() []string {
 	return DecodeList(u.Folders)
 }
 
-// CanSee reports whether the user may see a folder.
+// CanSee reports whether the user may see a folder. The internal folder,
+// and its runs, are the admins'.
 func (u *User) CanSee(folder string) bool {
 	if u == nil {
 		return false
+	}
+	if IsInternal(folder) {
+		return u.Role == RoleAdmin
 	}
 	list := u.FolderList()
 	return len(list) == 0 || slices.Contains(list, folder)

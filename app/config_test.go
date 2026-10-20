@@ -54,6 +54,27 @@ func TestNewConfig(t *testing.T) {
 	assert.True(t, flagged.PrintBuildInfo)
 }
 
+// The agent job is the internal folder's notes job unless set; set empty,
+// instructions wait for an agent over MCP.
+func TestNewConfig_AgentJob(t *testing.T) {
+	t.Setenv("TASK_UI_ROOT", t.TempDir())
+	t.Setenv("TASK_UI_AGENT_JOB", "")
+	assert.NoError(t, os.Unsetenv("TASK_UI_AGENT_JOB"))
+	cfg, err := app.NewConfig(nil)
+	assert.NoError(t, err)
+	assert.Equal(t, "internal/claude-note", cfg.AgentJob)
+
+	t.Setenv("TASK_UI_AGENT_JOB", "")
+	cfg, err = app.NewConfig(nil)
+	assert.NoError(t, err)
+	assert.Equal(t, "", cfg.AgentJob)
+
+	t.Setenv("TASK_UI_AGENT_JOB", "deploy/agent")
+	cfg, err = app.NewConfig(nil)
+	assert.NoError(t, err)
+	assert.Equal(t, "deploy/agent", cfg.AgentJob)
+}
+
 func TestNewConfig_Errors(t *testing.T) {
 	t.Setenv("TASK_UI_ROOT", filepath.Join(t.TempDir(), "missing"))
 	_, err := app.NewConfig(nil)

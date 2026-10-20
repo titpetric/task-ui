@@ -60,8 +60,9 @@ type Config struct {
 	// instruction to run. TASK_UI_AGENT; empty turns instructions off.
 	Agent string
 	// AgentJob is the job an instruction runs, as folder/job, as the
-	// agent's user. TASK_UI_AGENT_JOB; empty leaves instructions open for
-	// an agent that reads the board over MCP.
+	// agent's user. TASK_UI_AGENT_JOB, default internal/claude-note; set
+	// empty, it leaves instructions open for an agent that reads the
+	// board over MCP.
 	AgentJob string
 	// ArtifactHistory is how many versions the artifact history keeps
 	// before it squashes to one. TASK_UI_ARTIFACT_HISTORY, default 50; 0
@@ -85,6 +86,15 @@ func (c *Config) Clock() func() time.Time {
 
 func env(name, fallback string) string {
 	if value, ok := os.LookupEnv(name); ok && value != "" {
+		return value
+	}
+	return fallback
+}
+
+// envSet reads a variable whose empty value means something of its own:
+// the fallback applies only to a variable not set at all.
+func envSet(name, fallback string) string {
+	if value, ok := os.LookupEnv(name); ok {
 		return value
 	}
 	return fallback
@@ -136,7 +146,7 @@ func NewConfig(args []string) (*Config, error) {
 		Secret:    env("TASK_UI_SECRET", ""),
 		AutoLogin: env("TASK_UI_AUTOLOGIN", ""),
 		Agent:     env("TASK_UI_AGENT", ""),
-		AgentJob:  env("TASK_UI_AGENT_JOB", ""),
+		AgentJob:  envSet("TASK_UI_AGENT_JOB", "internal/claude-note"),
 	}
 	var err error
 	if cfg.SessionTTL, err = envDuration("TASK_UI_SESSION_TTL", 12*time.Hour); err != nil {

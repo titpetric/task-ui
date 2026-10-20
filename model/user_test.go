@@ -37,6 +37,15 @@ func TestUser_CanSee(t *testing.T) {
 	assert.True(t, scoped.CanSee("web"))
 	assert.True(t, guest.CanSee("infra"))
 	assert.False(t, (*model.User)(nil).CanSee("web"))
+
+	// The internal folder is the admins', whatever the folder list says.
+	admin := &model.User{Name: "root", Role: model.RoleAdmin, Folders: `["web"]`}
+	ops := &model.User{Name: "ops", Role: model.RoleRunner}
+	assert.True(t, admin.CanSee(model.Internal))
+	assert.True(t, admin.CanSee("internal/tools"))
+	assert.False(t, ops.CanSee(model.Internal))
+	assert.False(t, guest.CanSee("internal/tools"))
+	assert.False(t, (&model.User{Role: model.RoleRunner, Folders: `["internal"]`}).CanSee(model.Internal))
 }
 
 func TestUser_CanRun(t *testing.T) {
