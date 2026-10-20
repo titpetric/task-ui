@@ -3646,8 +3646,20 @@ dialog.run-summary .preview-doc {
    as wide as its buttons. */
 .table.control th.col {
   vertical-align: bottom;
-  padding-top: 0.6rem;
-  padding-bottom: 0.6rem;
+  padding: 0.5rem 0.3rem;
+}
+
+/* The cells hold icons, so they sit close: a hair around each button,
+   and the rows only as tall as a button. The folder's name keeps its
+   room on the left. */
+.table.control td {
+  padding-top: 0.2rem;
+  padding-bottom: 0.2rem;
+}
+
+.table.control td.col {
+  padding-left: 0.3rem;
+  padding-right: 0.3rem;
 }
 
 .table.control th.col > span {
@@ -3669,11 +3681,6 @@ dialog.run-summary .preview-doc {
 
 /* Other: one button, a menu of the folder's other jobs under it, each a
    row with its action and name; the button shows a run going in it. */
-.table.control td.other,
-.table.control th:last-child {
-  text-align: center;
-}
-
 .cc-more {
   position: relative;
   display: inline-block;
