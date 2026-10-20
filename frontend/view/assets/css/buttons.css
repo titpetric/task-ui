@@ -1,0 +1,97 @@
+/* ----------------------------------------------------------------- buttons */
+
+/* One height for every control in a row: a text field, a select and a
+   button line up, and a small button is the small height. The caption
+   is uppercase, which has no descenders, so it sits a hair lower than
+   the line box's middle to look centred. */
+:root {
+  --control: 2.3rem;
+  --control-sm: 1.75rem;
+}
+
+input[type="text"],
+input[type="password"],
+input[type="email"],
+input[type="number"],
+input[type="search"],
+input[type="url"],
+select {
+  height: var(--control);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  height: var(--control);
+  padding: 0.12em 0.9rem 0;
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius);
+  background: var(--ink-2);
+  color: var(--text);
+  font: 500 0.78rem/1 var(--font);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.btn:hover {
+  text-decoration: none;
+  border-color: var(--text-faint);
+  background: var(--ink-3);
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: var(--signal);
+  border-color: var(--signal);
+  color: var(--signal-ink);
+  font-weight: 600;
+}
+
+.btn-primary:hover {
+  background: var(--signal);
+  border-color: var(--text);
+  filter: brightness(1.08);
+}
+
+.btn-danger {
+  color: var(--bad);
+  border-color: color-mix(in srgb, var(--bad) 55%, var(--line-2));
+  background: transparent;
+}
+
+.btn-danger:hover {
+  background: var(--bad-wash);
+  border-color: var(--bad);
+}
+
+.btn-ghost {
+  background: transparent;
+  border-color: transparent;
+  color: var(--text-dim);
+}
+
+.btn-ghost:hover {
+  background: var(--ink-2);
+  border-color: var(--line);
+  color: var(--text);
+}
+
+.btn-sm {
+  height: var(--control-sm);
+  padding: 0.12em 0.55rem 0;
+  font-size: 0.68rem;
+}
+
+.btn-group {
+  display: inline-flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}

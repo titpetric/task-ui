@@ -1,0 +1,43 @@
+/* ------------------------------------------------------------------ footer */
+
+footer {
+  margin-top: auto;
+  position: relative;
+  z-index: 1;
+  padding: 0.8rem 1.25rem;
+  border-top: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--text-faint);
+  font-size: 0.68rem;
+  text-align: center;
+}
+
+footer .credit {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.4em;
+  white-space: nowrap;
+}
+
+footer .credit a {
+  color: var(--text-dim);
+}
+
+footer .credit .wordmark {
+  color: var(--text);
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+}
+
+footer .credit .sep {
+  color: var(--text-faint);
+}
+
+footer .credit a:hover {
+  color: var(--signal);
+}

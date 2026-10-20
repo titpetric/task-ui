@@ -1,0 +1,39 @@
+/* ----------------------------------------------------------------- metrics */
+
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  margin-bottom: 1.4rem;
+  background: var(--ink-1);
+}
+
+.metrics > div {
+  padding: 0.55rem 0.8rem;
+  border-right: 1px solid var(--line);
+}
+
+.metrics > div:last-child {
+  border-right: 0;
+}
+
+.metrics b {
+  display: block;
+  color: var(--text-faint);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.metrics span {
+  font-size: 1.1rem;
+  color: var(--text);
+}
+
+.metrics small {
+  margin-left: 0.35rem;
+  color: var(--text-faint);
+  font-size: 0.75rem;
+}

@@ -1,0 +1,142 @@
+/* The control centre: a folder a row, a shared job a column, a button
+   in each cell the folder has the job for. */
+.table.control th.col,
+.table.control td.col {
+  width: 1%;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* A column's name stands on end, read from the bottom up, so a column is
+   as wide as its buttons. */
+.table.control th.col {
+  vertical-align: bottom;
+  padding: 0.5rem 0.3rem;
+}
+
+/* The cells hold icons, so they sit close: a hair around each button,
+   and the rows only as tall as a button. The folder's name keeps its
+   room on the left. */
+.table.control td {
+  padding-top: 0.2rem;
+  padding-bottom: 0.2rem;
+}
+
+.table.control td.col {
+  padding-left: 0.3rem;
+  padding-right: 0.3rem;
+}
+
+.table.control th.col > span {
+  display: inline-block;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+}
+
+.cc-slot {
+  display: contents;
+}
+
+.table.control td > div {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.3rem;
+}
+
+/* Other: one button, a menu of the folder's other jobs under it, each a
+   row with its action and name; the button shows a run going in it. */
+.cc-more {
+  position: relative;
+  display: inline-block;
+}
+
+.cc-more > summary {
+  list-style: none;
+}
+
+.cc-more > summary::-webkit-details-marker {
+  display: none;
+}
+
+.cc-more:has(.cc.running) > summary {
+  color: var(--signal);
+  border-color: var(--signal);
+}
+
+.cc-more[open] > summary {
+  border-color: var(--signal);
+}
+
+.cc-menu {
+  position: fixed;
+  z-index: 40;
+  display: grid;
+  gap: 0.15rem;
+  min-width: 12rem;
+  max-height: 18rem;
+  overflow-y: auto;
+  padding: 0.25rem;
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius);
+  background: var(--ink-1);
+  box-shadow: 0 0.75rem 2rem rgba(0, 0, 0, 0.35);
+}
+
+.cc-menu .cc {
+  justify-content: flex-start;
+  width: 100%;
+  height: 1.9rem;
+  border-color: transparent;
+  text-align: left;
+}
+
+.cc-menu .cc span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cc {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  min-width: 1.8rem;
+  height: 1.6rem;
+  padding: 0 0.4rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--text-dim);
+  font: inherit;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+
+.cc .ic {
+  width: 0.75rem;
+  height: 0.75rem;
+}
+
+.cc:hover {
+  color: var(--signal-ink);
+  background: var(--signal);
+  border-color: var(--signal);
+  text-decoration: none;
+}
+
+.cc.running {
+  color: var(--signal);
+  border-color: var(--signal);
+}
+
+.cc.idle {
+  border-color: transparent;
+  cursor: default;
+}
+
+.cc.idle:hover {
+  color: var(--text-dim);
+  background: transparent;
+}

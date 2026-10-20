@@ -255,7 +255,15 @@ func TestRoutes_Assets(t *testing.T) {
 	assert.Equal(t, http.StatusOK, css.Status)
 	assert.True(t, strings.HasPrefix(css.Headers.Get("Content-Type"), "text/css"))
 	assert.Equal(t, "public, max-age=3600", css.Headers.Get("Cache-Control"))
-	assert.Contains(t, css.Body, "--signal")
+	// The stylesheet is a list of imports, each carrying the version.
+	assert.Contains(t, css.Body, `@import url("css/forms.css?v=`+view.AssetVersion()+`")`)
+	forms := f.get(t, "", "/static/css/forms.css")
+	assert.Equal(t, http.StatusOK, forms.Status)
+	assert.True(t, strings.HasPrefix(forms.Headers.Get("Content-Type"), "text/css"))
+	assert.Equal(t, "public, max-age=3600", forms.Headers.Get("Cache-Control"))
+	tokens := f.get(t, "", "/static/css/tokens.css")
+	assert.Contains(t, tokens.Body, "--signal")
+	assert.Contains(t, tokens.Body, `url("../fonts/Inter-Regular.woff2")`)
 	// The URLs carry a hash of the assets, so a deploy that changes them
 	// changes the URLs; the build version is "dev" for every go install.
 	assert.Contains(t, f.page(t, asViewer, "/"), `href="/static/task-ui.css?v=`+view.AssetVersion()+`"`)

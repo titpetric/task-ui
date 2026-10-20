@@ -81,11 +81,17 @@ func (h *Handlers) Routes() http.Handler {
 	return r
 }
 
-// assets serves the embedded assets, cacheable for an hour.
+// assets serves the embedded assets, cacheable for an hour. The
+// stylesheet comes from view.Stylesheet, its imports versioned.
 func assets() http.Handler {
 	files := http.StripPrefix(view.AssetPrefix, http.FileServerFS(view.AssetsFS()))
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Cache-Control", "public, max-age=3600")
+		if r.URL.Path == view.AssetPrefix+"task-ui.css" {
+			w.Header().Set("Content-Type", "text/css; charset=utf-8")
+			_, _ = w.Write(view.Stylesheet())
+			return
+		}
 		files.ServeHTTP(w, r)
 	})
 }

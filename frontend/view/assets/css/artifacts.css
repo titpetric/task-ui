@@ -1,0 +1,35 @@
+/* The artifact files: a row per file or folder, its actions on the right. */
+.block-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.6rem;
+}
+
+.block-head h3 {
+  margin: 0;
+}
+
+.block-head .actions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.artifact-files td.key .ic {
+  width: 0.9rem;
+  height: 0.9rem;
+  margin-right: 0.35rem;
+  vertical-align: -0.12rem;
+  color: var(--text-faint);
+}
+
+.artifact-files td.key .ic.dir {
+  color: var(--signal);
+}
+
+.artifact-files .num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}

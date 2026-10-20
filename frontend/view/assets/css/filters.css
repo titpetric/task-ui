@@ -1,0 +1,74 @@
+/* ---------------------------------------------------------------- filters */
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.6rem 0.8rem;
+  margin-bottom: 1rem;
+}
+
+.filters label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  color: var(--text-faint);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.filters input,
+.filters select {
+  width: 12rem;
+  padding: 0 0.55rem;
+}
+
+/* Previous on the left, Next on the right, under a table of runs. */
+.pager {
+  display: flex;
+  gap: 0.6rem;
+  margin-top: 0.8rem;
+}
+
+.pager [rel="next"] {
+  margin-left: auto;
+}
+
+.form.inline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.6rem 0.8rem;
+  max-width: none;
+  margin: 0.8rem 0 1.4rem;
+}
+
+.form.inline .field {
+  flex: 1 1 14rem;
+  margin: 0;
+}
+
+.form.inline .form-foot {
+  margin: 0;
+}
+
+.form-error {
+  margin: 0 0 0.8rem;
+  padding: 0.5rem 0.7rem;
+  background: var(--bad-wash);
+  border: 1px solid var(--bad);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-size: 0.8125rem;
+  white-space: pre-wrap;
+}
+
+.form-error:empty {
+  display: none;
+}
+
+.table td.actions form {
+  display: inline;
+}

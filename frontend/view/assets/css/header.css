@@ -1,0 +1,177 @@
+/* ------------------------------------------------------------------ header */
+
+header.top {
+  position: relative;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.55rem 1.25rem;
+  border-bottom: 1px solid var(--line-2);
+  background: var(--ink-0);
+}
+
+header.top h1 {
+  font-family: var(--font);
+  font-size: 0.95rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+header.top h1 a {
+  color: var(--text);
+}
+
+header.top h1 a:hover {
+  text-decoration: none;
+}
+
+/* The logo after the name is the favicon as a prompt: a terminal tile, the
+   amber chevron, and a cursor that blinks the way a shell's does. The tile
+   stays dark in the light theme, as a terminal does. */
+header.top h1 a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* The letter spacing trails the last letter too; take it back so the gap
+   to the logo is the gap. */
+header.top h1 a span {
+  margin-right: -0.24em;
+}
+
+header.top h1 .logo {
+  width: 1.3rem;
+  height: 1.3rem;
+}
+
+header.top h1 .logo rect {
+  fill: #0b0f14;
+  stroke: var(--line-2);
+  stroke-width: 1;
+}
+
+header.top h1 .logo .prompt {
+  fill: none;
+  stroke: var(--signal);
+  stroke-width: 3;
+  stroke-linecap: square;
+}
+
+header.top h1 .logo .cursor {
+  stroke: #d5dee7;
+  stroke-width: 3;
+  animation: cursor-blink 1.06s steps(1, end) infinite;
+}
+
+@keyframes cursor-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+header.top .spacer {
+  flex: 1;
+}
+
+header.login-top {
+  justify-content: center;
+}
+
+/* The signed in user: a circle with their initials, and a disclosure menu
+   under it. A details element, so it needs no script and closes on Escape. */
+details.user {
+  position: relative;
+}
+
+details.user summary {
+  list-style: none;
+  cursor: pointer;
+  display: block;
+}
+
+details.user summary::marker,
+details.user summary::-webkit-details-marker {
+  display: none;
+}
+
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  border: 1px solid var(--line-2);
+  background: var(--ink-2);
+  color: var(--text);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+
+details.user summary:hover .avatar,
+details[open].user .avatar {
+  border-color: var(--signal);
+  color: var(--signal);
+  background: var(--signal-wash);
+}
+
+.user-menu {
+  position: absolute;
+  z-index: 25;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  min-width: 13rem;
+  padding: 0.25rem 0;
+  background: var(--ink-1);
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius);
+  box-shadow: 0 18px 36px rgba(0, 0, 0, 0.55), 0 4px 10px rgba(0, 0, 0, 0.4);
+}
+
+.user-menu .who {
+  display: flex;
+  flex-direction: column;
+  padding: 0.45rem 0.8rem 0.5rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.user-menu .who b {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.user-menu .who span {
+  color: var(--text-faint);
+  font-size: 0.68rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.user-menu a,
+.user-menu button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.4rem 0.8rem;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.user-menu a:hover,
+.user-menu button:hover {
+  background: var(--ink-2);
+  text-decoration: none;
+}
+
+.user-menu form {
+  margin: 0;
+}

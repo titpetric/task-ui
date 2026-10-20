@@ -2,6 +2,8 @@ package view_test
 
 import (
 	"io/fs"
+	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/titpetric/task-ui/frontend/view"
@@ -29,4 +31,30 @@ func TestAssetVersion(t *testing.T) {
 	v := view.AssetVersion()
 	assert.Len(t, v, 12)
 	assert.Equal(t, v, view.AssetVersion())
+}
+
+// The stylesheet imports every file in css/ once, each with the version
+// of the assets, and nothing in css/ goes without it.
+func TestStylesheet(t *testing.T) {
+	t.Parallel()
+
+	css := string(view.Stylesheet())
+	assert.Equal(t, css, string(view.Stylesheet()))
+
+	files, err := fs.Glob(view.AssetsFS(), "css/*.css")
+	assert.NoError(t, err)
+	assert.NotEmpty(t, files)
+	for _, name := range files {
+		assert.Equal(t, 1, strings.Count(css, `"`+name+`?v=`+view.AssetVersion()+`"`), name)
+	}
+
+	imports := regexp.MustCompile(`@import url\("([^"]+)"\);`).FindAllStringSubmatch(css, -1)
+	assert.Len(t, imports, len(files))
+	for _, m := range imports {
+		assert.True(t, strings.HasSuffix(m[1], "?v="+view.AssetVersion()), m[1])
+		data, err := fs.ReadFile(view.AssetsFS(), strings.TrimSuffix(m[1], "?v="+view.AssetVersion()))
+		assert.NoError(t, err, m[1])
+		assert.NotEmpty(t, data, m[1])
+	}
+	assert.NotContains(t, css, `css/forms.css"`)
 }
