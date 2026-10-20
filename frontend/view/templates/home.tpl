@@ -52,7 +52,16 @@
 				{{- /* One job is a bare button; several of a name carry their kinds. */}}
 				<td class="col" data-label="{{ index $c.Columns $i }}">{{ if $cell }}<div>{{ range $cell }}{{ template "controljob" (list $ $row.Folder . (gt (len $cell) 1)) }}{{ end }}</div>{{ end }}</td>
 				{{- end }}
-				<td class="other" data-label="Other"><div>{{ range $row.Extra }}{{ template "controljob" (list $ $row.Folder . true) }}{{ end }}</div></td>
+				<td class="other" data-label="Other">
+					{{- /* The rest of a folder's jobs behind one button: a menu of
+					     them, each with its own action, live as the slots are. */}}
+					{{- with $row.Extra }}
+					<details class="cc-more">
+						<summary class="cc" title="{{ len . }} more job{{ if ne (len .) 1 }}s{{ end }} of {{ $row.Folder.ID }}" aria-label="{{ len . }} more jobs of {{ $row.Folder.ID }}"><svg class="ic"><use href="#i-more"/></svg></summary>
+						<div class="cc-menu" role="menu">{{ range . }}{{ template "controljob" (list $ $row.Folder . true) }}{{ end }}</div>
+					</details>
+					{{- end }}
+				</td>
 			</tr>
 		{{- else }}
 			<tr class="empty"><td colspan="{{ add (len $c.Columns) 2 }}">No jobs yet. Add a project from a git repository in Settings, or put a folder with something to run under the root.</td></tr>

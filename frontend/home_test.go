@@ -32,7 +32,7 @@ func TestHome(t *testing.T) {
 }
 
 // In the control centre deploy, which private and infra/edge share, has a
-// column; infra's own jobs are under other, each a button by name.
+// column; infra's own jobs are in the other menu, each a button by name.
 func TestHome_Control(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
@@ -49,7 +49,10 @@ func TestHome_Control(t *testing.T) {
 	infra := body[strings.Index(body, `<td class="key nowrap"><a href="/f/infra">infra</a>`):]
 	infra = infra[:strings.Index(infra, "</tr>")]
 	assert.Contains(t, infra, `<td class="col" data-label="deploy"></td>`) // infra has no deploy
-	assert.Contains(t, infra, `<td class="other" data-label="Other"><div>`)
+	// Other is one ⋯ button: a menu of infra's other jobs.
+	assert.Contains(t, infra, `<details class="cc-more">`)
+	assert.Contains(t, infra, `<summary class="cc" title="3 more jobs of infra"`)
+	assert.Contains(t, infra, `<div class="cc-menu" role="menu">`)
 	assert.Contains(t, infra, `class="cc named" data-run data-folder="infra" data-job="plan"`)
 	assert.Contains(t, infra, `<span>plan</span>`)
 	assert.Contains(t, infra, `<a class="cc named running" href="/runs/`+session.ID()+`"`) // slow runs

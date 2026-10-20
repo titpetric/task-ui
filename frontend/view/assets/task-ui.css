@@ -3667,8 +3667,62 @@ dialog.run-summary .preview-doc {
   gap: 0.3rem;
 }
 
-.table.control td.other > div {
+/* Other: one button, a menu of the folder's other jobs under it, each a
+   row with its action and name; the button shows a run going in it. */
+.table.control td.other,
+.table.control th:last-child {
+  text-align: center;
+}
+
+.cc-more {
+  position: relative;
+  display: inline-block;
+}
+
+.cc-more > summary {
+  list-style: none;
+}
+
+.cc-more > summary::-webkit-details-marker {
+  display: none;
+}
+
+.cc-more:has(.cc.running) > summary {
+  color: var(--signal);
+  border-color: var(--signal);
+}
+
+.cc-more[open] > summary {
+  border-color: var(--signal);
+}
+
+.cc-menu {
+  position: fixed;
+  z-index: 40;
+  display: grid;
+  gap: 0.15rem;
+  min-width: 12rem;
+  max-height: 18rem;
+  overflow-y: auto;
+  padding: 0.25rem;
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius);
+  background: var(--ink-1);
+  box-shadow: 0 0.75rem 2rem rgba(0, 0, 0, 0.35);
+}
+
+.cc-menu .cc {
   justify-content: flex-start;
+  width: 100%;
+  height: 1.9rem;
+  border-color: transparent;
+  text-align: left;
+}
+
+.cc-menu .cc span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .cc {
