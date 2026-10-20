@@ -88,8 +88,9 @@ keys stay in memory and the agent ends with the run; the terminal says
 which keys it loaded, or `(none)`. A run with no key has an empty
 `SSH_AUTH_SOCK`, never the server's own.
 
-`git` in a job uses `GIT_SSH_COMMAND` with `IdentityFile=none`, so it
-offers the agent's keys and no key file, and the instance `known_hosts`.
+`ssh` and `git` in a job also offer the server's own keys in `~/.ssh`,
+the identity of the host task-ui runs on, such as the key it pulls with.
+terraform's agent authentication uses only the agent.
 
 A checkout's `.ssh/` folder is not loaded. The SSH keys page warns about
 one with private keys in it: upload a key the project needs as an

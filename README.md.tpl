@@ -284,8 +284,8 @@ A run gets SSH keys only through an ssh agent that task-ui serves for the
 run alone, with the instance keys whose policies name the role or the
 name of whoever started it; a scheduled run gets its creator's. The job
 gets `SSH_AUTH_SOCK`, so `ssh`, `git`, `rsync` and terraform's agent
-authentication use them, and `git` gets a `GIT_SSH_COMMAND` that offers no
-key file. The keys stay in memory and the agent ends with the run; the
+authentication use them. `ssh` and `git` in a job also use the
+container's own `~/.ssh` keys, the host's identity. The keys stay in memory and the agent ends with the run; the
 terminal says which keys were loaded, or `(none)`. A checkout's `.ssh/`
 folder is not loaded: upload a key a project needs and give it by policy.
 

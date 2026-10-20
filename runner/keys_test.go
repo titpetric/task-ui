@@ -80,16 +80,3 @@ func TestManager_PolicyKeys(t *testing.T) {
 	assert.Contains(t, out, "ssh-agent: id_ed25519")
 	assert.Contains(t, out, "agent-ok")
 }
-
-// git in a job offers only the agent's keys, never a key file, and reads
-// the instance known_hosts.
-func TestManager_GitSSHCommand(t *testing.T) {
-	t.Parallel()
-	f := newFixture(t)
-	session, err := f.manager.Start(context.Background(), f.shellJob("git-ssh", `echo "cmd=[$GIT_SSH_COMMAND]"`, false))
-	assert.NoError(t, err)
-	out, status := collect(t, session.Attach(false))
-	assert.Equal(t, model.StateOK, status.State, out)
-	assert.Contains(t, out, "cmd=[ssh -o IdentityFile=none -o UserKnownHostsFile='")
-	assert.Contains(t, out, "/known_hosts']")
-}

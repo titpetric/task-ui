@@ -86,9 +86,7 @@ A run starts in its folder, as a login shell, with:
 - an ssh agent, through `SSH_AUTH_SOCK`, with the instance keys whose
   policies name the role or the name of whoever started the run (see
   [Projects and jobs](projects.md#keys-for-a-run)); the terminal says
-  which, or `(none)`;
-- `GIT_SSH_COMMAND`, so `git` offers only the agent's keys and reads the
-  instance `known_hosts`.
+  which, or `(none)`.
 
 Before the job, a folder in a git checkout pulls it, in the run's own
 terminal; a pull that fails fails the run.
