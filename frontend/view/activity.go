@@ -111,7 +111,7 @@ type Activity struct {
 	DayLines  *ActivityLines
 	HourLines *ActivityLines
 	// DayTicks mark a day a week, today the last; HourTicks every third
-	// hour, 00:00 to 21:00.
+	// hour, labelled at 03:00, 09:00, 15:00 and 21:00.
 	DayTicks  []ActivityTick
 	HourTicks []ActivityTick
 	Total     int
@@ -150,7 +150,11 @@ func NewActivity(runs []ActivityRun, now time.Time, days int) *Activity {
 		a.DayTicks = append([]ActivityTick{{Label: day.Format("Jan 2"), At: svgNumber((float64(i) + 0.5) * 100 / float64(days))}}, a.DayTicks...)
 	}
 	for h := 0; h < 24; h += 3 {
-		a.HourTicks = append(a.HourTicks, ActivityTick{Label: twoDigits(h) + ":00", At: svgNumber((float64(h) + 0.5) * 100 / 24)})
+		tick := ActivityTick{At: svgNumber((float64(h) + 0.5) * 100 / 24)}
+		if h%6 == 3 {
+			tick.Label = twoDigits(h) + ":00"
+		}
+		a.HourTicks = append(a.HourTicks, tick)
 	}
 
 	var finished []ActivityRun
