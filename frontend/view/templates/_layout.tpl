@@ -232,7 +232,7 @@
 	<div class="run-body preview-body"><img id="preview-image" alt=""><div id="preview-doc" class="preview-doc" hidden></div></div>
 </dialog>
 {{- /* The summary window: Claude's summary of a run's output. */}}
-<dialog class="run preview summary" id="summary-dialog" aria-labelledby="summary-title">
+<dialog class="run preview run-summary" id="summary-dialog" aria-labelledby="summary-title">
 	<div class="run-head">
 		<span class="label">Summary</span>
 		<h3 id="summary-title"></h3>

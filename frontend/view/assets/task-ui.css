@@ -3141,6 +3141,24 @@ dialog.preview #preview-version {
   max-width: 22rem;
 }
 
+/* The summary window: centred like the others, one size from the wait to
+   the answer, the answer scrolling inside it. */
+dialog.run-summary {
+  width: min(56rem, calc(100vw - 2rem));
+  height: min(46rem, calc(100vh - 4rem));
+}
+
+dialog.run-summary .preview-body {
+  display: block;
+  overflow: auto;
+}
+
+dialog.run-summary .preview-doc {
+  max-height: none;
+  margin: 0 auto;
+  overflow: visible;
+}
+
 .summary-meta {
   margin-top: 1rem;
   font-size: 0.75rem;
