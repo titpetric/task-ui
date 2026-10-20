@@ -43,7 +43,7 @@
 				<td class="nowrap" data-label="Started" title="{{ stamp .StartedAt }}">{{ ago .StartedAt }}</td>
 				<td data-label="Folder"><a href="/f/{{ .Folder }}">{{ .Folder }}</a></td>
 				<td class="key"><a href="/f/{{ .Folder }}/{{ .Job }}">{{ .Job }}</a></td>
-				<td data-label="By">{{ template "who" . }}</td>
+				<td data-label="By">{{ template "who" (list $ .) }}</td>
 				<td class="nowrap" data-label="Took" data-took>{{ duration .Elapsed }}</td>
 				<td data-label="Result" data-result>{{ template "state" . }}{{ if .Attached }} <span class="faint">{{ .Attached }} watching</span>{{ end }}</td>
 				<td class="actions" data-actions>

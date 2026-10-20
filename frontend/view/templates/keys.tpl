@@ -23,7 +23,7 @@
 				<td class="key">{{ .Comment }} <span class="badge">{{ .Name }}</span>{{ range $.Encryption }}{{ if eq . $name }} <span class="badge signal" title="The secrets are encrypted with this key"><svg class="ic"><use href="#i-secret"/></svg> secrets</span>{{ end }}{{ end }}</td>
 				<td class="fingerprint"><span class="kind dim">{{ .Type }}</span>{{ .Fingerprint }}</td>
 				{{- $roles := index $.KeyPolicies .Name }}{{ $users := index $.KeyUsers .Name }}
-				<td class="nowrap">{{ range $roles }}<span class="badge">{{ . }}</span> {{ end }}{{ range $users }}<span class="avatar sm" title="{{ . }}">{{ initials . }}</span> {{ end }}{{ if not (or $roles $users) }}<span class="faint">none</span>{{ end }}</td>
+				<td class="nowrap">{{ range $roles }}<span class="badge">{{ . }}</span> {{ end }}{{ range $users }}{{ template "avatar" (list $ .) }} {{ end }}{{ if not (or $roles $users) }}<span class="faint">none</span>{{ end }}</td>
 				<td class="nowrap" title="{{ stamp .Modified }}">{{ ago .Modified }}</td>
 				<td class="actions">
 					<button type="button" class="btn-icon" data-copy="{{ .PublicKey }}" title="Copy public key" aria-label="Copy public key"><svg class="ic"><use href="#i-copy"/></svg></button>
@@ -58,7 +58,7 @@
 		{{- range .KeyHolders }}
 			<tr>
 				{{- if .User }}
-				<td class="nowrap"><span class="avatar sm">{{ .User.Initials }}</span> {{ .User.Name }} <span class="faint">{{ .Role }}</span></td>
+				<td class="nowrap">{{ template "avatar" (list $ .User.Name) }} {{ .User.Name }} <span class="faint">{{ .Role }}</span></td>
 				{{- else }}
 				<td class="nowrap"><span class="badge">{{ .Role }}</span> <span class="faint">every {{ .Role }}</span></td>
 				{{- end }}

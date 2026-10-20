@@ -21,7 +21,7 @@
 	<tbody>
 	{{- range .Users }}
 		<tr>
-			<td class="key nowrap"><span class="avatar sm">{{ .Initials }}</span> {{ .Name }}</td>
+			<td class="key nowrap">{{ template "avatar" (list $ .Name) }} {{ .Name }}</td>
 			<td data-label="Role"><span class="badge{{ if .CanAdmin }} signal{{ end }}">{{ .Role }}</span></td>
 			<td class="desc" data-label="Folders">{{ with .FolderList }}{{ join . ", " }}{{ else }}<span class="faint">all</span>{{ end }}</td>
 			<td class="nowrap" data-label="Since" title="{{ stamp .CreatedAt }}">{{ ago .CreatedAt }}</td>

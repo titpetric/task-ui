@@ -19,14 +19,17 @@ func TestPage_Chrome(t *testing.T) {
 	f.run(t, "private", "deploy", "admin", model.StateFailed)
 
 	body := f.page(t, asAdmin, "/")
-	assert.Contains(t, body, `class="avatar">AD<`)
+	assert.Contains(t, body, `class="avatar role-admin">AD<`)
 	assert.Contains(t, body, "Settings")
 	assert.Contains(t, body, "Logout")
 	assert.Contains(t, body, `data-folder="infra"`)
 	assert.Contains(t, body, `data-folder="private"`)
 	assert.Contains(t, body, "Recents")
-	assert.Contains(t, body, `class="avatar sm" title="ops">OP<`)
-	assert.Contains(t, body, `class="avatar sm" title="admin">AD<`)
+	assert.Contains(t, body, `class="avatar sm role-runner" title="ops">OP<`)
+	assert.Contains(t, body, `class="avatar sm role-admin" title="admin">AD<`)
+	// The body carries each user's role by name, and nothing else, for
+	// the avatars the script draws.
+	assert.Contains(t, body, `<body data-roles='{&#34;admin&#34;:&#34;admin&#34;,&#34;limited&#34;:&#34;runner&#34;,&#34;ops&#34;:&#34;runner&#34;,&#34;viewer&#34;:&#34;viewer&#34;}'>`)
 
 	limited := f.page(t, asLimited, "/")
 	assert.NotContains(t, limited, "Settings</a>")

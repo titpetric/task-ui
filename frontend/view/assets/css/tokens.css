@@ -72,6 +72,11 @@
   --bad: #e06c6c;
   --bad-wash: rgba(224, 108, 108, 0.1);
 
+  /* The ring of an avatar says the user's role. */
+  --role-admin: var(--signal);
+  --role-runner: var(--ok);
+  --role-viewer: var(--text-faint);
+
   --term-bg: #090c10;
   --term-fg: #d5dee7;
 

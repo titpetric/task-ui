@@ -66,6 +66,7 @@ func TestRun(t *testing.T) {
 	assert.Contains(t, body, `href="/api/runs/`+run.ID+`/cast"`)
 	assert.Contains(t, body, "report.txt")
 	assert.Contains(t, body, "2.0 KB")
+	assert.Contains(t, body, `<span class="who-ran"><span class="avatar sm role-runner" title="ops">OP</span> ops</span>`)
 	assert.NotContains(t, body, "data-frame")
 	assert.NotContains(t, body, "data-delete")
 
