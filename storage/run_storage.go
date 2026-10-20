@@ -139,6 +139,25 @@ func (s *RunStorage) Last(ctx context.Context, filter RunFilter) (*model.Run, er
 	return &runs[0], nil
 }
 
+// Latest returns the latest finished run of every job of the folders,
+// every folder for none, a run per folder and job.
+func (s *RunStorage) Latest(ctx context.Context, folders []string) ([]model.Run, error) {
+	where := "state != ?"
+	args := []any{model.StateRunning}
+	if len(folders) > 0 {
+		where += " AND folder IN (?" + strings.Repeat(", ?", len(folders)-1) + ")"
+		for _, folder := range folders {
+			args = append(args, folder)
+		}
+	}
+	return client(s.db).Select[model.Run](ctx, `SELECT * FROM run WHERE id IN (
+		SELECT id FROM (
+			SELECT id, ROW_NUMBER() OVER (PARTITION BY folder, job ORDER BY started_at DESC, id DESC) AS latest
+			FROM run WHERE `+where+`
+		) WHERE latest = 1
+	) ORDER BY folder, job`, args...)
+}
+
 // Update writes a run back, by ID.
 func (s *RunStorage) Update(ctx context.Context, run *model.Run) error {
 	run.UpdatedAt = stamp()

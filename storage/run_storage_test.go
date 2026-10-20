@@ -104,6 +104,37 @@ func TestRunStorage_Last(t *testing.T) {
 	assert.Equal(t, "new", last.UserName)
 }
 
+func TestRunStorage_Latest(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	runs := storage.NewRunStorage(newDB(t))
+	base := time.Now().Add(-time.Hour)
+	for i, run := range []model.Run{
+		{Folder: "infra", Job: "deploy", State: model.StateFailed},
+		{Folder: "infra", Job: "deploy", State: model.StateOK},
+		{Folder: "infra", Job: "deploy"},
+		{Folder: "infra", Job: "plan", State: model.StateKilled},
+		{Folder: "web", Job: "build", State: model.StateOK},
+	} {
+		started := base.Add(time.Duration(i) * time.Minute)
+		run.StartedAt = &started
+		assert.NoError(t, runs.Create(ctx, &run))
+	}
+
+	latest, err := runs.Latest(ctx, []string{"infra"})
+	assert.NoError(t, err)
+	assert.Len(t, latest, 2)
+	assert.Equal(t, "infra/deploy", latest[0].Key())
+	assert.Equal(t, model.StateOK, latest[0].State, "the running one is not finished")
+	assert.Equal(t, "infra/plan", latest[1].Key())
+	assert.Equal(t, model.StateKilled, latest[1].State)
+
+	all, err := runs.Latest(ctx, nil)
+	assert.NoError(t, err)
+	assert.Len(t, all, 3)
+	assert.Equal(t, "web/build", all[2].Key())
+}
+
 func TestRunStorage_Update(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()

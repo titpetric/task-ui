@@ -1788,7 +1788,8 @@
   // The dashboard follows the runs topic too: a run that starts adds its
   // tile, polled for its frame; one that ends marks its tile and the last
   // frame is fetched. The running count and the control centre's buttons
-  // follow: an eye on the job running, Run again when it ended.
+  // follow: an eye on the job running, Run again when it ended, in the
+  // colour of how it ended. A slot keeps that colour in data-last.
   var dashboard = document.querySelector('[data-sse="runs"][data-dashboard]');
   if (dashboard && window.EventSource) {
     var tiles = dashboard.querySelector("[data-tiles]");
@@ -1802,16 +1803,18 @@
     var slotHTML = function (slot, run) {
       var label = slot.dataset.label ? "<span>" + escapeHTML(slot.dataset.label) + "</span>" : "";
       var named = slot.dataset.label ? " named" : "";
+      if (run && run.state && run.state !== "running") slot.dataset.last = run.state === "ok" ? "ok" : "bad";
+      var last = " " + escapeHTML(slot.dataset.last || "never");
       var what = escapeHTML(slot.dataset.folder + " / " + slot.dataset.name);
       if (run && run.state === "running") {
         return '<a class="cc' + named + ' running" href="/runs/' + escapeHTML(run.id) + '" data-attach="' + escapeHTML(run.id) +
           '" title="Attach to ' + what + ', running"><svg class="ic"><use href="#i-eye"/></svg>' + label + "</a>";
       }
       if (slot.hasAttribute("data-can")) {
-        return '<button type="button" class="cc' + named + '" data-run data-folder="' + escapeHTML(slot.dataset.folder) + '" data-job="' +
+        return '<button type="button" class="cc' + named + last + '" data-run data-folder="' + escapeHTML(slot.dataset.folder) + '" data-job="' +
           escapeHTML(slot.dataset.job) + '" data-title="' + what + '" title="Run ' + what + '"><svg class="ic"><use href="#i-play"/></svg>' + label + "</button>";
       }
-      return '<a class="cc' + named + ' idle" href="/f/' + escapeHTML(slot.dataset.folder) + "/" + escapeHTML(slot.dataset.job) + '" title="' + what +
+      return '<a class="cc' + named + " idle" + last + '" href="/f/' + escapeHTML(slot.dataset.folder) + "/" + escapeHTML(slot.dataset.job) + '" title="' + what +
         ': your role may not run it"><i class="shebang" aria-hidden="true">#!</i>' + label + "</a>";
     };
     onRuns(function (run) {
@@ -1845,6 +1848,27 @@
       countRunning();
     });
   }
+
+  // A table with col-hover lights the column under the pointer, every
+  // cell of it, so a job is easy to follow down the folders.
+  document.querySelectorAll("table.col-hover").forEach(function (table) {
+    var hot = -1;
+    var light = function (index) {
+      if (index === hot) return;
+      hot = index;
+      table.querySelectorAll(".col-hot").forEach(function (cell) { cell.classList.remove("col-hot"); });
+      if (index < 0) return;
+      Array.prototype.forEach.call(table.rows, function (row) {
+        var cell = row.cells[index];
+        if (cell && row.cells.length > 1) cell.classList.add("col-hot");
+      });
+    };
+    table.addEventListener("mouseover", function (event) {
+      var cell = event.target.closest("td, th");
+      if (cell && table.contains(cell)) light(cell.cellIndex);
+    });
+    table.addEventListener("mouseleave", function () { light(-1); });
+  });
 
   // A file picker fills the field it names, so a key can be chosen or pasted.
   document.addEventListener("change", function (event) {

@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/titpetric/task-ui/access"
+	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/frontend/view"
 	"github.com/titpetric/task-ui/model"
 )
@@ -15,6 +16,7 @@ func (h *Handlers) home(w http.ResponseWriter, r *http.Request) {
 	p := h.page(r, "Dashboard")
 	p.Runs = h.live(user)
 	p.Control = view.NewControl(p.Folders, view.ControlRepeats)
+	p.Last = h.latestRuns(r, p.Folders)
 	schedules, _ := h.opts.Schedules.List(r.Context())
 	for _, schedule := range schedules {
 		if user.CanSee(schedule.Folder) {
@@ -22,6 +24,27 @@ func (h *Handlers) home(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	h.render(w, http.StatusOK, "home", p)
+}
+
+// latestRuns returns the latest finished run of each job of the folders,
+// by job key, for the control centre to colour its buttons by.
+func (h *Handlers) latestRuns(r *http.Request, folders []*folder.Folder) map[string]view.Run {
+	if len(folders) == 0 {
+		return nil
+	}
+	ids := make([]string, 0, len(folders))
+	for _, f := range folders {
+		ids = append(ids, f.ID)
+	}
+	runs, err := h.opts.Runs.Latest(r.Context(), ids)
+	if err != nil {
+		return nil
+	}
+	last := make(map[string]view.Run, len(runs))
+	for _, run := range runs {
+		last[run.Key()] = h.runView(run)
+	}
+	return last
 }
 
 // visibleSchedules returns the schedules of a folder, or of a job of it.
