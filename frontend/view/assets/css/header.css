@@ -97,10 +97,18 @@ details.user summary::-webkit-details-marker {
   display: none;
 }
 
+/* The initials sit in the middle of the disc as the blog's account disc
+   has them: a grid cell, one line high, beside the text it goes with.
+   The capitals of the mono face sit high in its line, which the padding
+   on top evens out; the indent matches the spacing the last letter
+   trails. */
 .avatar {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  line-height: 1;
+  padding-top: 0.15em;
+  vertical-align: middle;
   width: 2rem;
   height: 2rem;
   border-radius: 50%;
@@ -110,6 +118,19 @@ details.user summary::-webkit-details-marker {
   font-size: 0.7rem;
   font-weight: 600;
   letter-spacing: 0.08em;
+  text-indent: 0.08em;
+}
+
+.avatar.role-admin {
+  border-color: var(--role-admin);
+}
+
+.avatar.role-runner {
+  border-color: var(--role-runner);
+}
+
+.avatar.role-viewer {
+  border-color: var(--role-viewer);
 }
 
 details.user summary:hover .avatar,

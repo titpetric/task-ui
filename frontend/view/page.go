@@ -25,6 +25,9 @@ type Page struct {
 	Version       string
 	// Now is the moment the page is for: the hours read against it.
 	Now time.Time
+	// Roles are the role of each user by name, for the colour of an
+	// avatar; the body carries them for the avatars the script draws.
+	Roles map[string]string
 
 	// Folders are the folders the user may see.
 	Folders []*folder.Folder

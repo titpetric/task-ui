@@ -1,6 +1,7 @@
 package view
 
 import (
+	"encoding/json"
 	"fmt"
 	"html/template"
 	"strings"
@@ -34,7 +35,18 @@ func Funcs() template.FuncMap {
 		"groups":       Groups,
 		"hasPrefix":    strings.HasPrefix,
 		"message":      Message,
+		"json":         JSON,
 	}
+}
+
+// JSON encodes a value for an attribute a script reads; a value that
+// does not encode is null.
+func JSON(v any) string {
+	data, err := json.Marshal(v)
+	if err != nil {
+		return "null"
+	}
+	return string(data)
 }
 
 // Tone names the badge class of a run state: ok, signal while running,

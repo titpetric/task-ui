@@ -5,7 +5,7 @@
 	<div>
 		<h2>{{ .Title }}</h2>
 		{{- if $u }}
-		<p><span class="avatar sm">{{ $u.Initials }}</span> <b>{{ $u.Name }}</b>, <span class="badge{{ if $u.CanAdmin }} signal{{ end }}">{{ $u.Role }}</span>. The name and the password come from the password file, the role from <code>TASK_UI_ADMINS</code> and <code>TASK_UI_VIEWERS</code>; here you pick the folders {{ $u.Name }} sees.</p>
+		<p>{{ template "avatar" (list $ $u.Name) }} <b>{{ $u.Name }}</b>, <span class="badge{{ if $u.CanAdmin }} signal{{ end }}">{{ $u.Role }}</span>. The name and the password come from the password file, the role from <code>TASK_UI_ADMINS</code> and <code>TASK_UI_VIEWERS</code>; here you pick the folders {{ $u.Name }} sees.</p>
 		{{- else }}
 		<p>Adds a user to the password file, who can sign in at once. They are a runner unless <code>TASK_UI_ADMINS</code> or <code>TASK_UI_VIEWERS</code> names them.</p>
 		{{- end }}

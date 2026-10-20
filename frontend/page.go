@@ -46,6 +46,7 @@ func (h *Handlers) page(r *http.Request, title string) *view.Page {
 		}
 	}
 	p.SideFolders = h.sideFolders(r.Context(), p.Folders)
+	p.Roles = h.roles(r.Context(), user)
 	p.Running = h.running(user)
 	runs := h.visibleRuns(r.Context(), user, storage.RunFilter{Limit: 2 * recentCount})
 	// The headings read against the wall clock, as "ago" does; the page's
@@ -53,6 +54,23 @@ func (h *Handlers) page(r *http.Request, title string) *view.Page {
 	p.Recents = view.GroupRecents(time.Now(), view.Recents(runs, h.visibleFlowRuns(r.Context(), user, recentCount), recentCount))
 	p.SideWorkflows = h.visibleWorkflows(r.Context(), p)
 	return p
+}
+
+// roles returns the role of each user by name, for a signed in user
+// only: who someone is goes no further than the page needs.
+func (h *Handlers) roles(ctx context.Context, user *model.User) map[string]string {
+	roles := map[string]string{}
+	if user == nil || h.opts.Users == nil {
+		return roles
+	}
+	users, err := h.opts.Users.List(ctx)
+	if err != nil {
+		return roles
+	}
+	for _, u := range users {
+		roles[u.Name] = u.Role
+	}
+	return roles
 }
 
 // visibleFlowRuns returns the latest runs of workflows the user may

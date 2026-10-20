@@ -19,6 +19,8 @@ func TestFuncs(t *testing.T) {
 	assert.Equal(t, 2, funcs["sub"].(func(a, b int) int)(5, 3))
 	assert.Equal(t, "OP", funcs["initials"].(func(string) string)("ops"))
 	assert.Len(t, funcs["list"].(func(...any) []any)(1, "a"), 2)
+	assert.Equal(t, `{"ops":"runner"}`, funcs["json"].(func(any) string)(map[string]string{"ops": "runner"}))
+	assert.Equal(t, "null", view.JSON(func() {}))
 }
 
 func TestAgo(t *testing.T) {

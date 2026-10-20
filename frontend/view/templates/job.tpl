@@ -58,7 +58,7 @@
 		{{- range .Runs }}
 			<tr>
 				<td class="nowrap key" title="{{ ago .StartedAt }}">{{ stamp .StartedAt }}</td>
-				<td data-label="By">{{ template "who" . }}</td>
+				<td data-label="By">{{ template "who" (list $ .) }}</td>
 				<td class="nowrap" data-label="Took">{{ duration .Elapsed }}</td>
 				<td data-label="Result">{{ template "state" . }}</td>
 				<td class="actions">

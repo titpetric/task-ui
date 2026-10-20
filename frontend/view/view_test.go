@@ -71,7 +71,7 @@ func TestView_Render(t *testing.T) {
 		assert.Contains(t, buf.String(), "<!DOCTYPE html>", name)
 		assert.Contains(t, buf.String(), "blacksky.digital", name)
 		if name != "login" {
-			assert.Contains(t, buf.String(), `class="avatar"`, name)
+			assert.Contains(t, buf.String(), `class="avatar role-admin"`, name)
 			assert.Contains(t, buf.String(), "Recents", name)
 		}
 	}

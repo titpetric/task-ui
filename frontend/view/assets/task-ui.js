@@ -54,9 +54,25 @@
   }
 
   function initials(name) {
-    var words = String(name || "?").trim().split(/[\s._-]+/).filter(Boolean);
+    var words = String(name || "?").trim().split(/[\s._@-]+/).filter(Boolean);
     var text = words.length >= 2 ? words[0].charAt(0) + words[1].charAt(0) : (words[0] || "?").slice(0, 2);
     return text.toUpperCase();
+  }
+
+  // The role of each user by name, which the page carries on its body.
+  var roles = (function () {
+    try {
+      return JSON.parse(document.body.dataset.roles || "{}") || {};
+    } catch (e) {
+      return {};
+    }
+  })();
+
+  // avatarHTML draws the initials of a user in the colour of their role,
+  // as the avatar template does.
+  function avatarHTML(name) {
+    var role = Object.prototype.hasOwnProperty.call(roles, name) ? roles[name] : "";
+    return '<span class="avatar sm' + (role ? " role-" + escapeHTML(role) : "") + '" title="' + escapeHTML(name) + '">' + escapeHTML(initials(name)) + "</span>";
   }
 
   // ------------------------------------------------------------- terminal
@@ -1740,7 +1756,7 @@
       return html;
     };
     var whoHTML = function (run) {
-      return '<span class="who-ran"><span class="avatar sm" title="' + escapeHTML(run.user_name) + '">' + escapeHTML(initials(run.user_name)) + "</span> " +
+      return '<span class="who-ran">' + avatarHTML(run.user_name) + " " +
         escapeHTML(run.user_name) + (run.scheduled ? ' <span class="badge">scheduled</span>' : "") +
         (run.reason ? ' <span class="badge bad" title="' + escapeHTML(run.reason) + '">out of hours</span>' : run.forced ? ' <span class="badge signal">forced</span>' : "") + "</span>";
     };
@@ -1827,7 +1843,7 @@
         tile.dataset.tile = run.id;
         tile.innerHTML = '<div class="tile-head"><i class="dot running"></i><b>' + escapeHTML(run.folder + " / " + run.job) + "</b>" +
           '<span class="spacer"></span><span class="faint"></span>' +
-          '<span class="avatar sm" title="' + escapeHTML(run.user_name) + '">' + escapeHTML(initials(run.user_name)) + "</span></div>" +
+          avatarHTML(run.user_name) + "</div>" +
           '<div class="frame" data-frame="' + escapeHTML(run.id) + '" role="img" aria-label="Terminal of ' + escapeHTML(run.folder + " / " + run.job) + '"></div>';
         tiles.insertBefore(tile, tiles.firstChild);
         watchFrames();
@@ -2172,7 +2188,7 @@
         '<i class="dot ' + escapeHTML(f.state) + '"></i>' +
         '<span class="what"><b>' + escapeHTML(f.name) + '</b><small><svg class="ic"><use href="#i-flow"/></svg>workflow</small></span>' +
         (f.state === "running" ? '<svg class="ic act"><use href="#i-eye"/></svg>' : "") +
-        '<span class="avatar sm" title="' + escapeHTML(f.user_name) + '">' + escapeHTML(initials(f.user_name)) + '</span></a>';
+        avatarHTML(f.user_name) + "</a>";
     }
     var r = e.run;
     var running = r.state === "running";
@@ -2182,7 +2198,7 @@
       '<i class="dot ' + escapeHTML(r.state) + '"></i>' +
       '<span class="what"><b>' + escapeHTML(r.job) + '</b><small>' + escapeHTML(r.folder) + '</small></span>' +
       (running ? '<svg class="ic act"><use href="#i-' + (r.can_run ? "play" : "eye") + '"/></svg>' : "") +
-      '<span class="avatar sm" title="' + escapeHTML(r.user_name) + '">' + escapeHTML(initials(r.user_name)) + '</span></a>';
+      avatarHTML(r.user_name) + "</a>";
   }
 
   function poll() {

@@ -10,7 +10,7 @@
 	<link rel="stylesheet" href="/static/vendor/xterm.css?v={{ assetVersion }}">
 	<link rel="stylesheet" href="/static/task-ui.css?v={{ assetVersion }}">
 </head>
-<body>
+<body data-roles='{{ json .Roles }}'>
 {{ template "icons" . }}
 {{- if not .User }}
 	<header class="top login-top">
@@ -23,7 +23,7 @@
 		<h1><a href="/"><span>TaskUI</span>{{ template "logo" }}</a></h1>
 		<span class="spacer"></span>
 		<details class="user" id="user-menu">
-			<summary aria-label="{{ .User.Name }}, {{ .User.Role }}" title="{{ .User.Name }}"><span class="avatar">{{ .User.Initials }}</span></summary>
+			<summary aria-label="{{ .User.Name }}, {{ .User.Role }}" title="{{ .User.Name }}"><span class="avatar role-{{ .User.Role }}">{{ .User.Initials }}</span></summary>
 			<div class="user-menu">
 				<div class="who"><b>{{ .User.Name }}</b><span>{{ .User.Role }}</span></div>
 				<a href="/keys"><svg class="ic"><use href="#i-key"/></svg>SSH keys</a>
@@ -117,7 +117,7 @@
 						<i class="dot {{ .State }}"></i>
 						<span class="what"><b>{{ .Name }}</b><small><svg class="ic"><use href="#i-flow"/></svg>workflow</small></span>
 						{{- if eq .State "running" }}<svg class="ic act"><use href="#i-eye"/></svg>{{ end }}
-						<span class="avatar sm" title="{{ .UserName }}">{{ $e.Initials }}</span>
+						{{ template "avatar" (list $ .UserName) }}
 					</a>
 					{{- end }}
 					{{- with $e.Run }}
@@ -126,7 +126,7 @@
 						<i class="dot {{ .State }}"></i>
 						<span class="what"><b>{{ .Job }}</b><small>{{ .Folder }}</small></span>
 						{{- if eq .State "running" }}<svg class="ic act"><use href="#i-{{ if $can }}play{{ else }}eye{{ end }}"/></svg>{{ end }}
-						<span class="avatar sm" title="{{ .UserName }}">{{ .Initials }}</span>
+						{{ template "avatar" (list $ .UserName) }}
 					</a>
 					{{- end }}
 					{{- end }}
@@ -312,7 +312,11 @@
 	</label>
 {{- end }}
 
-{{ define "who" }}<span class="who-ran"><span class="avatar sm" title="{{ .UserName }}">{{ .Initials }}</span> {{ .UserName }}{{ if .IsScheduled }} <span class="badge">scheduled</span>{{ end }}{{ if .Reason }} <span class="badge bad" title="{{ .Reason }}">out of hours</span>{{ else if .IsForced }} <span class="badge signal">forced</span>{{ end }}</span>{{ end }}
+{{/* avatar takes (list $ name): the initials of a user in the colour of their role. */}}
+{{ define "avatar" }}{{ $role := index (index . 0).Roles (index . 1) }}<span class="avatar sm{{ with $role }} role-{{ . }}{{ end }}" title="{{ index . 1 }}">{{ initials (index . 1) }}</span>{{ end }}
+
+{{/* who takes (list $ run): who started a run, and how. */}}
+{{ define "who" }}{{ $p := index . 0 }}{{ with index . 1 }}<span class="who-ran">{{ template "avatar" (list $p .UserName) }} {{ .UserName }}{{ if .IsScheduled }} <span class="badge">scheduled</span>{{ end }}{{ if .Reason }} <span class="badge bad" title="{{ .Reason }}">out of hours</span>{{ else if .IsForced }} <span class="badge signal">forced</span>{{ end }}</span>{{ end }}{{ end }}
 
 {{ define "hours" }}{{ $text := index . 0 }}{{ $page := index . 1 }}{{ if $text }}{{ hoursLine $text }} {{ if $page.InHours $text }}<span class="badge ok">open now</span>{{ else }}<span class="badge bad">out of hours now</span>{{ end }}{{ else }}<span class="faint">always</span>{{ end }}{{ end }}
 

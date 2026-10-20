@@ -29,7 +29,7 @@
 				<b>{{ .Folder }} / {{ .Job }}</b>
 				<span class="spacer"></span>
 				<span class="faint">{{ if .Attached }}{{ .Attached }} watching{{ end }}</span>
-				<span class="avatar sm" title="{{ .UserName }}">{{ .Initials }}</span>
+				{{ template "avatar" (list $ .UserName) }}
 			</div>
 			<div class="frame"{{ if eq .State "running" }} data-frame="{{ .ID }}"{{ end }} role="img" aria-label="Terminal of {{ .Folder }} / {{ .Job }}">{{ .FrameSVG }}</div>
 		</a>
