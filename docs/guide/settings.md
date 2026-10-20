@@ -58,6 +58,8 @@ This page sets which folders a user sees: open a user, then pick **All
 projects**, or **Custom** and check the folders. A user's name and role
 show as text: the password file and the role lists set them.
 
+![Create user](../assets/user-new-dark.png)
+
 A client that is not a browser, such as an agent over [MCP](mcp.md),
 signs in with a token instead: `task-ui token <user> <name>` on the
 server prints one, once.
@@ -115,6 +117,8 @@ encrypt the secrets.
   server or its image, and change there.
 
 ## Integrations
+
+![Integrations](../assets/integrations-dark.png)
 
 The services task-ui talks to, with their API keys and tokens. task-ui
 encrypts them with the instance keys, as it does the secrets, and never
