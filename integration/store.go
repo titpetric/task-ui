@@ -144,10 +144,11 @@ func Internal(scope string) bool {
 	return strings.HasPrefix(scope, ScopePrefix)
 }
 
-// Configured reports whether every setting of an integration has a value.
+// Configured reports whether every setting of an integration that is not
+// optional has a value.
 func Configured(kind Kind, values map[string]string) bool {
 	for _, field := range kind.Fields {
-		if values[field.Name] == "" {
+		if !field.Optional && values[field.Name] == "" {
 			return false
 		}
 	}

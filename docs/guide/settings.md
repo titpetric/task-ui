@@ -113,14 +113,17 @@ The services task-ui talks to, with their API keys and tokens. task-ui
 encrypts them with the instance keys, as it does the secrets, and never
 shows them again: a form marks a secret with a value as **set**, and an empty secret
 field keeps it on save. The Secrets page leaves them out, and no run sees
-them as secrets.
+them as secrets. A switch beside each integration's name shows or hides
+its form, and the browser keeps the choice. **Clear** deletes every
+setting of an integration.
 
 - **Claude Code**: the token Claude Code signs in with, from
-  `claude setup-token`, for the whole instance, and **Who**: the users or
-  roles whose runs get it as `CLAUDE_CODE_OAUTH_TOKEN`, such as
-  `admin, claude`. Name the agent's user too: the agent job of the
-  [Notes](notes.md) board runs as that user. With nobody named, every run
-  gets it.
+  `claude setup-token`, for the whole instance, and **Who**: a box for
+  each role and each user, checked for those whose runs get it as
+  `CLAUDE_CODE_OAUTH_TOKEN`, such as the admin role and the user
+  `claude`. Check the agent's user too: the agent job of the
+  [Notes](notes.md) board runs as that user. With no box checked, every
+  run gets it. The token alone sets the integration up.
 - **Beszel**: the hub's URL, as task-ui reaches it, and a token, for the
   [Inventory](inventory.md) page.
 

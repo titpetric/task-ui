@@ -440,11 +440,18 @@
   // serialize reads a form into the JSON the API takes. data-type says
   // what a field is: a list splits on commas, a bool parses, an int too.
   function serialize(form) {
-    var body = {};
+    var body = {}, joined = {};
     Array.prototype.forEach.call(form.elements, function (el) {
       if (!el.name || el.disabled) return;
       // A set is the checked values of the boxes that share a name: a
       // list, empty when none is checked.
+      // A joined set is the same, as one comma separated value: a
+      // setting of a "map.key" form.
+      if (el.dataset.type === "joined") {
+        joined[el.name] = joined[el.name] || [];
+        if (el.checked) joined[el.name].push(el.value);
+        return;
+      }
       if (el.dataset.type === "set") {
         body[el.name] = body[el.name] || [];
         if (el.checked) body[el.name].push(el.value);
@@ -474,8 +481,28 @@
       }
       body[el.name] = value;
     });
+    Object.keys(joined).forEach(function (name) {
+      var dot = name.indexOf("."), value = joined[name].join(", ");
+      if (dot < 0) { body[name] = value; return; }
+      if (!value) return;
+      var map = name.slice(0, dot);
+      body[map] = body[map] || {};
+      body[map][name.slice(dot + 1)] = value;
+    });
     return body;
   }
+
+  // A show/hide switch remembers its choice, in this browser.
+  Array.prototype.forEach.call(document.querySelectorAll("input[data-peek]"), function (input) {
+    var key = "task-ui.peek." + input.dataset.peek;
+    try {
+      var saved = localStorage.getItem(key);
+      if (saved !== null) input.checked = saved === "1";
+    } catch (e) { /* no storage: the default stands */ }
+    input.addEventListener("change", function () {
+      try { localStorage.setItem(key, input.checked ? "1" : "0"); } catch (e) { /* not remembered */ }
+    });
+  });
 
   function formError(form, text) {
     var box = form.querySelector(".form-error");
