@@ -1501,12 +1501,37 @@
             return "<tr>" +
               '<td class="nowrap"><code>' + escapeHTML(r.login || r.host) + "</code></td>" +
               '<td class="nowrap"><span class="badge ' + (ok ? "ok" : "bad") + '">' + state + '</span> <span class="faint">' + took + "</span></td>" +
-              '<td class="run-output">' + (r.error ? '<div class="run-error">' + escapeHTML(r.error) + "</div>" : "") + ansiHTML(r.output || "") + "</td>" +
+              '<td class="run-output">' + (r.error ? '<div class="run-error">' + escapeHTML(r.error) + "</div>" : "") + outputHTML(r.output || "") + "</td>" +
               "</tr>";
           }).join("") + "</tbody></table></div>";
       });
     });
   }
+
+  // outputHTML shows a host's output as its last screen, the final
+  // screenLines lines, and the whole of it behind Expand, as a job run's
+  // step does; output that fits a screen shows whole.
+  var screenLines = 24;
+  function outputHTML(output) {
+    var lines = output.replace(/\n+$/, "").split("\n");
+    if (lines.length <= screenLines) return ansiHTML(output);
+    return '<button type="button" class="btn btn-sm output-toggle" data-output-expand aria-expanded="false">' +
+      '<svg class="ic"><use href="#i-expand"/></svg><span>Expand ' + lines.length + " lines</span></button>" +
+      '<div class="output-screen">' + ansiHTML(lines.slice(-screenLines).join("\n")) + "</div>" +
+      '<div class="output-all" hidden>' + ansiHTML(output) + "</div>";
+  }
+  document.addEventListener("click", function (event) {
+    var btn = event.target.closest("[data-output-expand]");
+    if (!btn) return;
+    var cell = btn.closest(".run-output");
+    var open = btn.getAttribute("aria-expanded") !== "true";
+    cell.querySelector(".output-screen").hidden = open;
+    cell.querySelector(".output-all").hidden = !open;
+    btn.setAttribute("aria-expanded", open ? "true" : "false");
+    if (!btn.dataset.label) btn.dataset.label = btn.querySelector("span").textContent;
+    btn.querySelector("use").setAttribute("href", open ? "#i-collapse" : "#i-expand");
+    btn.querySelector("span").textContent = open ? "Collapse" : btn.dataset.label;
+  });
 
   // runSummary shows Claude's summary of a run on the hosts, with the
   // report it read to download; a run without one shows nothing.
