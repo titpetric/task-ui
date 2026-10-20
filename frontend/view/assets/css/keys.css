@@ -8,15 +8,15 @@
   border-radius: var(--radius);
   color: var(--text);
   font-family: var(--font);
-  font-size: 0.8rem;
-}
+  font-size: var(--fs-data);
 
-.key-chip:hover {
-  text-decoration: none;
-  border-color: var(--signal);
-}
+  &:hover {
+    text-decoration: none;
+    border-color: var(--signal);
+  }
 
-.key-chip.faint {
-  border-style: dashed;
-  color: var(--text-dim);
+  &.faint {
+    border-style: dashed;
+    color: var(--text-dim);
+  }
 }
