@@ -2,57 +2,59 @@
    the cores centred, the sizes left-aligned, digits of one width. Every
    cell is the mono face at one size, aligned to the top, and what sits in
    a cell (badge, copy button, meter) is one line tall. */
-.table.hosts td {
-  font: 400 0.8rem/1.5rem var(--font);
-  vertical-align: top;
-}
+.table.hosts {
+  & td {
+    font: 400 var(--fs-data)/var(--control-xs) var(--font);
+    vertical-align: top;
+  }
 
-.table.hosts td.key {
-  font-weight: 600;
-}
+  & td.key {
+    font-weight: 600;
+  }
 
-.table.hosts .badge {
-  padding-block: 0;
-  font-size: inherit;
-  line-height: calc(1.5rem - 2px);
-  letter-spacing: 0.05em;
-  vertical-align: top;
-}
+  & .badge {
+    padding-block: 0;
+    font-size: inherit;
+    line-height: calc(var(--control-xs) - 2px);
+    letter-spacing: 0.05em;
+    vertical-align: top;
+  }
 
-.table.hosts .btn-icon {
-  width: 1.5rem;
-  height: 1.5rem;
-  vertical-align: top;
-}
+  & .btn-icon {
+    width: var(--control-xs);
+    height: var(--control-xs);
+    vertical-align: top;
+  }
 
-.table.hosts .meter {
-  height: 1.5rem;
-  vertical-align: top;
+  & .meter {
+    height: var(--control-xs);
+    vertical-align: top;
+  }
+
+  /* A host's icon says its state: green up, red anything else. */
+  & td .ic.host-state.up {
+    color: var(--ok);
+  }
+
+  & td .ic.host-state.down {
+    color: var(--bad);
+  }
+
+  & .center {
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+  }
+
+  & .size {
+    text-align: start;
+    font-variant-numeric: tabular-nums;
+  }
 }
 
 .live-stamp {
   margin: 0.4rem 0 0;
-  font-size: 0.75rem;
-  text-align: right;
-}
-
-/* A host's icon says its state: green up, red anything else. */
-.table.hosts td .ic.host-state.up {
-  color: var(--ok);
-}
-
-.table.hosts td .ic.host-state.down {
-  color: var(--bad);
-}
-
-.table.hosts .center {
-  text-align: center;
-  font-variant-numeric: tabular-nums;
-}
-
-.table.hosts .size {
-  text-align: left;
-  font-variant-numeric: tabular-nums;
+  font-size: var(--fs-xs);
+  text-align: end;
 }
 
 .meter {
@@ -60,21 +62,21 @@
   align-items: center;
   gap: 0.5rem;
   font-variant-numeric: tabular-nums;
-}
 
-.meter .spacebar-track {
-  width: 3rem;
-  height: 0.45rem;
-}
+  & .spacebar-track {
+    width: 3rem;
+    height: 0.45rem;
+  }
 
-.meter.warm .spacebar-track i.files {
-  background: var(--signal);
-}
+  &.warm .spacebar-track i.files {
+    background: var(--signal);
+  }
 
-.meter.high .spacebar-track i.files {
-  background: var(--bad);
-}
+  &.high .spacebar-track i.files {
+    background: var(--bad);
+  }
 
-.meter:not(.warm):not(.high) .spacebar-track i.files {
-  background: var(--ok);
+  &:not(.warm):not(.high) .spacebar-track i.files {
+    background: var(--ok);
+  }
 }
