@@ -37,6 +37,7 @@ import (
 	"github.com/titpetric/task-ui/sshprobe"
 	"github.com/titpetric/task-ui/storage"
 	"github.com/titpetric/task-ui/workflow"
+	"github.com/titpetric/task-ui/workspace"
 )
 
 // catalogue is a fixed set of folders.
@@ -139,6 +140,8 @@ func newFixture(t *testing.T) *fixture {
 		Users:         users,
 		Projects:      storage.NewProjectStorage(db),
 		Workspaces:    storage.NewWorkspaceStorage(db),
+		WorkspaceKeys: &workspace.Keyring{Data: t.TempDir()},
+		KeyGrants:     storage.NewWorkspaceKeyGrantStorage(db),
 		Runs:          runs,
 		Artifacts:     artifacts,
 		ArtifactStore: &artifactstore.Store{Dir: filepath.Join(t.TempDir(), "tree")},

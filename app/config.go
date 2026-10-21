@@ -13,6 +13,8 @@ import (
 	"time"
 
 	"github.com/spf13/pflag"
+
+	"github.com/titpetric/task-ui/workspace"
 )
 
 // Config is the instance configuration. Every field comes from a TASK_UI_*
@@ -210,6 +212,11 @@ func (c *Config) ArtifactTree() string {
 // ArtifactsDir is where the runs write their artifacts while they run.
 func (c *Config) ArtifactsDir() string {
 	return filepath.Join(c.DataDir, "artifacts")
+}
+
+// Keyring keeps the workspaces' keys, under the data directory.
+func (c *Config) Keyring() *workspace.Keyring {
+	return &workspace.Keyring{Data: c.DataDir}
 }
 
 // envInt reads a whole number from the environment, or the fallback.

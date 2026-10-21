@@ -116,6 +116,7 @@ func (m *Manager) Start(ctx context.Context, req Request) (*Session, error) {
 	session := newSession(run, req.Folder, req.Job)
 	session.env = req.Env
 	session.workspaceName, session.workspace = m.workspace(ctx, req)
+	session.workspaceID = m.workspaceID(ctx, session.workspaceName)
 	if req.User != nil {
 		session.role = req.User.Role
 	}
@@ -431,6 +432,19 @@ func (m *Manager) workspace(ctx context.Context, req Request) (string, string) {
 		return "", ""
 	}
 	return model.Default, m.opts.Root
+}
+
+// workspaceID returns the ID of the workspace row of a folder, "" for
+// none or with no workspaces known.
+func (m *Manager) workspaceID(ctx context.Context, name string) string {
+	if name == "" || m.opts.Workspaces == nil {
+		return ""
+	}
+	workspace, err := m.opts.Workspaces.GetByFolder(ctx, name)
+	if err != nil {
+		return ""
+	}
+	return workspace.ID
 }
 
 func (m *Manager) artifactDir(run *model.Run) string {

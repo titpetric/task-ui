@@ -19,6 +19,7 @@ import (
 	"github.com/titpetric/task-ui/sshprobe"
 	"github.com/titpetric/task-ui/storage"
 	"github.com/titpetric/task-ui/workflow"
+	"github.com/titpetric/task-ui/workspace"
 )
 
 // Options are what the pages read from.
@@ -29,12 +30,16 @@ type Options struct {
 
 	Users    *storage.UserStorage
 	Projects *storage.ProjectStorage
-	// Workspaces are the checkouts the projects may clone inside.
-	Workspaces *storage.WorkspaceStorage
-	Runs       *storage.RunStorage
-	Artifacts  *storage.ArtifactStorage
-	Schedules  *storage.ScheduleStorage
-	Secrets    *secret.Store
+	// Workspaces are the checkouts the projects may clone inside,
+	// WorkspaceKeys their keys, and KeyGrants whose runs get each of a
+	// workspace's SSH keys.
+	Workspaces    *storage.WorkspaceStorage
+	WorkspaceKeys *workspace.Keyring
+	KeyGrants     *storage.WorkspaceKeyGrantStorage
+	Runs          *storage.RunStorage
+	Artifacts     *storage.ArtifactStorage
+	Schedules     *storage.ScheduleStorage
+	Secrets       *secret.Store
 
 	Workflows    *storage.WorkflowStorage
 	WorkflowRuns *storage.WorkflowRunStorage

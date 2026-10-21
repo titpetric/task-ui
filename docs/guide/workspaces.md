@@ -117,6 +117,47 @@ project's, so the shared tooling is current when the job starts. When
 either pull fails, the run fails with it. The default workspace's root
 isn't pulled.
 
+## Keys
+
+Every workspace has keys of its own, under the data directory and out
+of its checkout, where a `git add -A` would publish them:
+`TASK_UI_DATA/workspaces/<workspace id>/encrypt` and `/ssh`. The
+directories are `0700` and the key files `0600`. The **Keys** section of
+a workspace's configure page, `/settings/workspaces/malta`, lists them
+with their fingerprints, never a private key.
+
+- The **encryption key**, an ed25519 key, is for the workspace's
+  secrets. task-ui generates it when it adds a workspace, and at start
+  for every workspace without one, `_` among them. Rotate makes a new
+  one and upload takes one you have; the previous key stays as a
+  backup. No run gets it.
+- The **SSH keys** are for the workspace's runs. Generate or upload any
+  number, each named `id_<type>_<name>`. A key without a grant goes to
+  every run in the workspace; checking roles or users narrows it to
+  their runs. A rotation keeps a key's grants, and delete takes the key
+  and its grants.
+
+A run gets the instance keys its policies name it for (see
+[Settings](settings.md)), then its workspace's SSH keys, and the first
+line of its terminal names each: `$ ssh-agent: id_ed25519,
+ws:id_ed25519_deploy`. A project at the root gets the keys of `_`. The
+runs run as the server's OS user, so a job can read every workspace's
+key files on disk: the grants decide what reaches a run's agent, not
+what a job could open.
+
+```sh
+curl -s -X POST https://task.example.com/api/workspaces/malta/keys/generate \
+  -H "Authorization: Bearer $TOKEN" \
+  -d '{"type": "ed25519", "name": "deploy", "policies": ["admin"]}'
+curl -s https://task.example.com/api/workspaces/malta/keys \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+`PUT /api/workspaces/malta/keys/id_ed25519_deploy` with `{policies,
+users}` sets the grants, empty for every run, and `DELETE` removes the
+key. `"encrypt": true` on `generate` or `upload` rotates or replaces the
+encryption key. The key routes are for admins.
+
 ## A prompt against a workspace
 
 A workspace's folder page, `/f/malta`, carries a **Prompt** block for an

@@ -80,3 +80,59 @@ func TestManager_PolicyKeys(t *testing.T) {
 	assert.Contains(t, out, "ssh-agent: id_ed25519")
 	assert.Contains(t, out, "agent-ok")
 }
+
+// A run gets its workspace's SSH keys beside the instance ones, each as
+// ws:<name>: a key without a grant goes to every run in the workspace, a
+// key granted to admins skips a runner's run, and the encryption key
+// goes to none. A run in _ gets _'s keys, and a run in another
+// workspace none of these.
+func TestManager_WorkspaceKeys(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	ctx := context.Background()
+	assert.NoError(t, f.policies.Set(ctx, "id_ed25519", []string{model.RoleRunner, model.RoleAdmin}))
+	assert.NoError(t, f.workspaces.Create(ctx, &model.Workspace{Folder: "ws"}))
+	assert.NoError(t, f.workspaces.EnsureDefault(ctx))
+	ws, err := f.workspaces.GetByFolder(ctx, "ws")
+	assert.NoError(t, err)
+	_, err = f.keys.Ensure(ws.ID, "encrypt")
+	assert.NoError(t, err)
+	encrypt := f.keys.EncryptKey(ws.ID)
+	deploy, err := f.keys.SSH(ws.ID).GenerateAs("ed25519", "deploy", "deploy")
+	assert.NoError(t, err)
+	admin, err := f.keys.SSH(ws.ID).GenerateAs("ed25519", "admin", "admin")
+	assert.NoError(t, err)
+	assert.NoError(t, f.grants.Set(ctx, ws.ID, admin.Name, []string{model.RoleAdmin}, nil))
+	script := `ssh-add -l; ssh-add -L`
+
+	run := func(id, role string) string {
+		t.Helper()
+		req := f.shellJob(id, script, false)
+		req.User = &model.User{ID: "u1", Name: "ops", Role: role}
+		session, err := f.manager.Start(ctx, req)
+		assert.NoError(t, err)
+		out, _ := collect(t, session.Attach(false))
+		return out
+	}
+
+	out := run("ws/runner", model.RoleRunner)
+	assert.Contains(t, out, "ssh-agent: id_ed25519, ws:id_ed25519_deploy\x1b")
+	assert.Contains(t, out, "id_ed25519 (ED25519)")
+	assert.Contains(t, out, deploy.Fingerprint)
+	assert.NotContains(t, out, admin.Fingerprint)
+	assert.NotContains(t, out, encrypt.Fingerprint)
+
+	out = run("ws/admin", model.RoleAdmin)
+	assert.Contains(t, out, "ssh-agent: id_ed25519, ws:id_ed25519_deploy, ws:id_ed25519_admin\x1b")
+	assert.Contains(t, out, admin.Fingerprint)
+	assert.NotContains(t, out, encrypt.Fingerprint)
+
+	// The default workspace's own keys, and none of ws's.
+	root, err := f.workspaces.GetByFolder(ctx, model.Default)
+	assert.NoError(t, err)
+	_, err = f.keys.SSH(root.ID).GenerateAs("ed25519", "root", "root")
+	assert.NoError(t, err)
+	out = run("plain", model.RoleViewer)
+	assert.Contains(t, out, "ssh-agent: ws:id_ed25519_root\x1b")
+	assert.NotContains(t, out, deploy.Fingerprint)
+}

@@ -32,6 +32,10 @@ var Types = map[string]string{
 // be undone by hand.
 type Store struct {
 	Dir string
+	// PublicMode is the mode the store writes a public key file with;
+	// zero is 0644. A store whose folder is private to the server
+	// writes 0600.
+	PublicMode os.FileMode
 }
 
 var keyName = regexp.MustCompile(`^id_[a-z0-9]+(_[a-z0-9][a-z0-9-]*)?(\.bak-[0-9]{8}T[0-9]{6})?$`)
@@ -253,7 +257,11 @@ func (k *Store) write(name string, privatePEM []byte, private any, comment strin
 		return Key{}, err
 	}
 	public := strings.TrimSpace(string(ssh.MarshalAuthorizedKey(signer.PublicKey()))) + commentSuffix(comment) + "\n"
-	if err := os.WriteFile(path+".pub", []byte(public), 0o644); err != nil {
+	mode := k.PublicMode
+	if mode == 0 {
+		mode = 0o644
+	}
+	if err := os.WriteFile(path+".pub", []byte(public), mode); err != nil {
 		return Key{}, err
 	}
 	return k.describe(name)

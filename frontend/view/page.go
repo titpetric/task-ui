@@ -136,8 +136,10 @@ type Page struct {
 	// KeyHolders are the roles and the users, and the keys each gets.
 	KeyHolders []KeyHolder
 	Key        *sshkey.Key
-	// Encryption names the keys that encrypt the secrets.
+	// Encryption names the keys that encrypt the secrets, and
+	// EncryptKey is a workspace's encryption key, on its pages.
 	Encryption []string
+	EncryptKey *sshkey.Key
 	Users      []model.User
 	// Account is the user a form edits.
 	Account *model.User

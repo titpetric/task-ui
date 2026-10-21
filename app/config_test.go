@@ -36,6 +36,7 @@ func TestNewConfig(t *testing.T) {
 	assert.Equal(t, filepath.Join(root, "data", "recordings"), cfg.RecordingsDir())
 	assert.Equal(t, filepath.Join(root, "data", "artifacts"), cfg.ArtifactsDir())
 	assert.Equal(t, filepath.Join(root, "data", "artifacts", "tree"), cfg.ArtifactTree())
+	assert.Equal(t, filepath.Join(root, "data", "workspaces", "_id"), cfg.Keyring().Dir("_id"))
 	assert.Equal(t, 7, cfg.ArtifactHistory)
 	assert.Equal(t, time.Hour, cfg.SessionTTL)
 	assert.Equal(t, 2*time.Minute, cfg.Keep)

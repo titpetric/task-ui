@@ -33,8 +33,8 @@ func (h *Handlers) workspaceNew(w http.ResponseWriter, r *http.Request) {
 	h.render(w, http.StatusOK, "workspace_new", p)
 }
 
-// workspaceEdit shows a workspace's title and description, and its
-// delete, which names the projects that go with it.
+// workspaceEdit shows a workspace's title and description, its keys,
+// and its delete, which names the projects that go with it.
 func (h *Handlers) workspaceEdit(w http.ResponseWriter, r *http.Request) {
 	if !h.requireAdmin(w, r) {
 		return
@@ -58,6 +58,7 @@ func (h *Handlers) workspaceEdit(w http.ResponseWriter, r *http.Request) {
 		"title":       workspace.Title,
 		"description": workspace.Description,
 	}
+	h.workspaceKeys(r, p)
 	h.render(w, http.StatusOK, "workspace_edit", p)
 }
 

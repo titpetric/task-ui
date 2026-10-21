@@ -1919,6 +1919,74 @@ var WorkspaceFields = []string{"id", "folder", "title", "description", "source_u
 // WorkspacePrimaryFields are the primary key fields in the DB table.
 var WorkspacePrimaryFields = []string{"id"}
 
+// WorkspaceKeyGrant generated for db table `workspace_key_grant`.
+//
+// Workspace Key Grant.
+type WorkspaceKeyGrant struct {
+	// ID
+	ID string `db:"id" json:"id"`
+
+	// Workspace ID
+	WorkspaceID string `db:"workspace_id" json:"workspace_id"`
+
+	// Key Name
+	KeyName string `db:"key_name" json:"key_name"`
+
+	// Role
+	Role string `db:"role" json:"role"`
+
+	// User Name
+	UserName string `db:"user_name" json:"user_name"`
+
+	// Created At
+	CreatedAt *time.Time `db:"created_at" json:"created_at"`
+}
+
+// GetID will return the value of ID.
+func (w *WorkspaceKeyGrant) GetID() string { return w.ID }
+
+// SetID sets ID to the provided value.
+func (w *WorkspaceKeyGrant) SetID(val string) { w.ID = val }
+
+// GetWorkspaceID will return the value of WorkspaceID.
+func (w *WorkspaceKeyGrant) GetWorkspaceID() string { return w.WorkspaceID }
+
+// SetWorkspaceID sets WorkspaceID to the provided value.
+func (w *WorkspaceKeyGrant) SetWorkspaceID(val string) { w.WorkspaceID = val }
+
+// GetKeyName will return the value of KeyName.
+func (w *WorkspaceKeyGrant) GetKeyName() string { return w.KeyName }
+
+// SetKeyName sets KeyName to the provided value.
+func (w *WorkspaceKeyGrant) SetKeyName(val string) { w.KeyName = val }
+
+// GetRole will return the value of Role.
+func (w *WorkspaceKeyGrant) GetRole() string { return w.Role }
+
+// SetRole sets Role to the provided value.
+func (w *WorkspaceKeyGrant) SetRole(val string) { w.Role = val }
+
+// GetUserName will return the value of UserName.
+func (w *WorkspaceKeyGrant) GetUserName() string { return w.UserName }
+
+// SetUserName sets UserName to the provided value.
+func (w *WorkspaceKeyGrant) SetUserName(val string) { w.UserName = val }
+
+// GetCreatedAt will return the value of CreatedAt.
+func (w *WorkspaceKeyGrant) GetCreatedAt() *time.Time { return w.CreatedAt }
+
+// SetCreatedAt sets CreatedAt to the provided value.
+func (w *WorkspaceKeyGrant) SetCreatedAt(stamp time.Time) { w.CreatedAt = &stamp }
+
+// WorkspaceKeyGrantTable is the name of the table in the DB.
+const WorkspaceKeyGrantTable = "`workspace_key_grant`"
+
+// WorkspaceKeyGrantFields is a list of all columns in the DB table.
+var WorkspaceKeyGrantFields = []string{"id", "workspace_id", "key_name", "role", "user_name", "created_at"}
+
+// WorkspaceKeyGrantPrimaryFields are the primary key fields in the DB table.
+var WorkspaceKeyGrantPrimaryFields = []string{"id"}
+
 // Insert starts building an INSERT INTO query.
 func (a *Artifact) Insert(opts ...QueryOption) string {
 	cfg := (&QueryConfig{Table: ArtifactTable, Statement: "INSERT INTO"}).Apply(opts...)
@@ -3193,6 +3261,67 @@ func (w *Workspace) Update(opts ...QueryOption) string {
 // Delete starts building a DELETE query.
 func (w *Workspace) Delete(opts ...QueryOption) string {
 	cfg := (&QueryConfig{Table: WorkspaceTable}).Apply(opts...)
+	query := fmt.Sprintf("DELETE FROM %s", cfg.Table)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	return query
+}
+
+// Insert starts building an INSERT INTO query.
+func (w *WorkspaceKeyGrant) Insert(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: WorkspaceKeyGrantTable, Statement: "INSERT INTO"}).Apply(opts...)
+	cols := WorkspaceKeyGrantFields
+	if len(cfg.Columns) > 0 {
+		cols = cfg.Columns
+	}
+	return fmt.Sprintf("%s %s (%s) VALUES (:%s)", cfg.Statement, cfg.Table, strings.Join(cols, ", "), strings.Join(cols, ", :"))
+}
+
+// Select starts building a SELECT query.
+func (w *WorkspaceKeyGrant) Select(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: WorkspaceKeyGrantTable}).Apply(opts...)
+	cols := "*"
+	if len(cfg.Columns) > 0 {
+		cols = strings.Join(cfg.Columns, ", ")
+	}
+	query := fmt.Sprintf("SELECT %s FROM %s", cols, cfg.Table)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	if cfg.OrderBy != "" {
+		query += " ORDER BY " + cfg.OrderBy
+	}
+	if cfg.LimitOffset > 0 {
+		query += fmt.Sprintf(" LIMIT %d, %d", cfg.LimitStart, cfg.LimitOffset)
+	}
+	return query
+}
+
+// Update starts building a UPDATE query.
+func (w *WorkspaceKeyGrant) Update(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: WorkspaceKeyGrantTable}).Apply(opts...)
+	cols := WorkspaceKeyGrantFields
+	if len(cfg.Columns) > 0 {
+		cols = cfg.Columns
+	}
+	setClause := ""
+	for i, col := range cols {
+		if i > 0 {
+			setClause += ", "
+		}
+		setClause += col + "=:" + col
+	}
+	query := fmt.Sprintf("UPDATE %s SET %s", cfg.Table, setClause)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	return query
+}
+
+// Delete starts building a DELETE query.
+func (w *WorkspaceKeyGrant) Delete(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: WorkspaceKeyGrantTable}).Apply(opts...)
 	query := fmt.Sprintf("DELETE FROM %s", cfg.Table)
 	if cfg.Where != "" {
 		query += " WHERE " + cfg.Where
