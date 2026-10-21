@@ -115,7 +115,7 @@ func (m *Manager) Start(ctx context.Context, req Request) (*Session, error) {
 	}
 	session := newSession(run, req.Folder, req.Job)
 	session.env = req.Env
-	session.workspace = m.workspace(ctx, req)
+	session.workspaceName, session.workspace = m.workspace(ctx, req)
 	if req.User != nil {
 		session.role = req.User.Role
 	}
@@ -393,7 +393,7 @@ func (m *Manager) command(ctx context.Context, session *Session) (*exec.Cmd, err
 	)
 	if session.workspace != "" {
 		cmd.Env = append(cmd.Env,
-			"TASK_UI_WORKSPACE="+filepath.Base(session.workspace),
+			"TASK_UI_WORKSPACE="+session.workspaceName,
 			"TASK_UI_WORKSPACE_DIR="+session.workspace,
 		)
 	}
@@ -406,21 +406,31 @@ func (m *Manager) command(ctx context.Context, session *Session) (*exec.Cmd, err
 	return cmd, nil
 }
 
-// workspace returns the directory of the request's workspace: the one it
-// names, or the workspace of the folder's first segment under the root.
-// "" for a folder in none.
-func (m *Manager) workspace(ctx context.Context, req Request) string {
+// workspace returns the folder and the directory of the request's
+// workspace: the one it names, or the workspace of the folder's first
+// segment under the root, or the default workspace, _ at the root, for a
+// folder in no named one. Empty for an internal folder, or with no
+// workspace known.
+func (m *Manager) workspace(ctx context.Context, req Request) (string, string) {
 	if req.Workspace != "" {
-		return req.Workspace
+		if m.opts.Root != "" && filepath.Clean(req.Workspace) == filepath.Clean(m.opts.Root) {
+			return model.Default, req.Workspace
+		}
+		return filepath.Base(req.Workspace), req.Workspace
 	}
-	if m.opts.Workspaces == nil {
-		return ""
+	if m.opts.Workspaces == nil || model.IsInternal(req.Folder.ID) {
+		return "", ""
 	}
 	top, _, _ := strings.Cut(req.Folder.ID, "/")
-	if _, err := m.opts.Workspaces.GetByFolder(ctx, top); err != nil {
-		return ""
+	if top != model.Default {
+		if _, err := m.opts.Workspaces.GetByFolder(ctx, top); err == nil {
+			return top, filepath.Join(m.opts.Root, top)
+		}
 	}
-	return filepath.Join(m.opts.Root, top)
+	if _, err := m.opts.Workspaces.GetByFolder(ctx, model.Default); err != nil {
+		return "", ""
+	}
+	return model.Default, m.opts.Root
 }
 
 func (m *Manager) artifactDir(run *model.Run) string {

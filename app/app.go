@@ -98,12 +98,16 @@ func openStorage(ctx context.Context, cfg *Config) (storage.DB, error) {
 	return db, nil
 }
 
-// prepare reads the users and settles what the previous process left.
+// prepare reads the users, adds the default workspace, and settles what
+// the previous process left.
 func (a *App) prepare(ctx context.Context) error {
 	if err := a.seed(ctx); err != nil {
 		return err
 	}
 	if err := a.autoLogin(ctx); err != nil {
+		return err
+	}
+	if err := storage.NewWorkspaceStorage(a.DB).EnsureDefault(ctx); err != nil {
 		return err
 	}
 	n, err := storage.NewRunStorage(a.DB).KillActive(ctx)

@@ -35,8 +35,8 @@
 	<div class="table-wrap">
 	<table class="table table-kv">
 		<tbody>
-			<tr><th>Folder</th><td><a href="/f/{{ $run.Folder }}"><svg class="ic"><use href="#i-folder"/></svg> {{ $run.Folder }}</a></td></tr>
-			<tr><th>Job</th><td><a href="/f/{{ $run.Folder }}/{{ $run.Job }}">{{ $run.Job }}</a></td></tr>
+			<tr><th>Folder</th><td><a href="{{ $.Href $run.Folder }}"><svg class="ic"><use href="#i-folder"/></svg> {{ $run.Folder }}</a></td></tr>
+			<tr><th>Job</th><td><a href="{{ $.Href $run.Folder }}/{{ $run.Job }}">{{ $run.Job }}</a></td></tr>
 			<tr><th>By</th><td>{{ template "who" (list $ $run) }}</td></tr>
 			<tr><th>Started</th><td>{{ stamp $run.StartedAt }}</td></tr>
 			<tr><th>Finished</th><td>{{ if $run.FinishedAt }}{{ stamp $run.FinishedAt }}{{ else }}<span class="faint">in progress</span>{{ end }}</td></tr>

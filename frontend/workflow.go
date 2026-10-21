@@ -174,8 +174,8 @@ func (h *Handlers) workflow(w http.ResponseWriter, r *http.Request) {
 	}
 	p.Activity = h.workflowActivity(r.Context(), p.Workflow.ID, p.Now)
 	p.Summarize = h.claudeFor(r, p.User)
-	p.Pipeline = view.Pipeline(p.Workflow.Steps, latest)
-	h.frames(r.Context(), p.Pipeline, names, true)
+	p.Pipeline = view.Pipeline(p.Workflow.Steps, latest, p.Workspaces)
+	h.frames(r.Context(), p.Pipeline, names, p.Workspaces, true)
 	h.render(w, http.StatusOK, "workflow", p)
 }
 
@@ -194,8 +194,8 @@ func (h *Handlers) workflowRun(w http.ResponseWriter, r *http.Request) {
 	}
 	rows, _ := h.opts.WorkflowRuns.Steps(r.Context(), run.ID)
 	p.WorkflowRuns = []view.WorkflowRun{{WorkflowRun: *run, Steps: viewRunSteps(rows, names)}}
-	p.Pipeline = view.Chain(p.WorkflowRuns[0].Steps)
-	h.frames(r.Context(), p.Pipeline, names, true)
+	p.Pipeline = view.Chain(p.WorkflowRuns[0].Steps, p.Workspaces)
+	h.frames(r.Context(), p.Pipeline, names, p.Workspaces, true)
 	p.Crumbs = view.Crumbs("Workflows", "/workflows", p.Workflow.Name, "/workflows/"+p.Workflow.ID, "Run")
 	h.render(w, http.StatusOK, "workflow_run", p)
 }
@@ -203,7 +203,7 @@ func (h *Handlers) workflowRun(w http.ResponseWriter, r *http.Request) {
 // frames puts on each step of a run's chain the screen its run ended
 // on, and under a step that ran a workflow the chain of that run, one
 // level down.
-func (h *Handlers) frames(ctx context.Context, links []view.Link, names map[string]string, deeper bool) {
+func (h *Handlers) frames(ctx context.Context, links []view.Link, names map[string]string, workspaces map[string]int, deeper bool) {
 	for i := range links {
 		if links[i].RunID != "" {
 			links[i].FrameSVG, links[i].Lines, links[i].Complete = h.frameOf(ctx, links[i].RunID)
@@ -213,8 +213,8 @@ func (h *Handlers) frames(ctx context.Context, links []view.Link, names map[stri
 			if err != nil {
 				continue
 			}
-			links[i].Sub = view.Chain(viewRunSteps(rows, names))
-			h.frames(ctx, links[i].Sub, names, false)
+			links[i].Sub = view.Chain(viewRunSteps(rows, names), workspaces)
+			h.frames(ctx, links[i].Sub, names, workspaces, false)
 		}
 	}
 }

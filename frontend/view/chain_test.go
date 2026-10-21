@@ -8,7 +8,8 @@ import (
 )
 
 // A chain names the folder once for the steps that follow in it, and a
-// workflow step by its name.
+// workflow step by its name. A job of a project at the root links under
+// /f/_/, one of a workspace by its folder.
 func TestChain(t *testing.T) {
 	t.Parallel()
 	links := view.Chain([]view.Step{
@@ -17,14 +18,14 @@ func TestChain(t *testing.T) {
 		{Folder: "deploy/terraform", Job: "fmt"},
 		{WorkflowID: "w1", WorkflowName: "release"},
 		{Folder: "deploy/terraform", Job: "apply", State: "ok", RunID: "r1"},
-	})
+	}, map[string]int{"deploy": 0})
 	texts, hrefs := []string{}, []string{}
 	for _, l := range links {
 		texts = append(texts, l.Text)
 		hrefs = append(hrefs, l.Href)
 	}
 	assert.Equal(t, []string{"dockerfiles / build", "push", "deploy/terraform / fmt", "release", "deploy/terraform / apply"}, texts)
-	assert.Equal(t, []string{"/f/dockerfiles/build", "/f/dockerfiles/push", "/f/deploy/terraform/fmt", "/workflows/w1", "/runs/r1"}, hrefs)
+	assert.Equal(t, []string{"/f/_/dockerfiles/build", "/f/_/dockerfiles/push", "/f/deploy/terraform/fmt", "/workflows/w1", "/runs/r1"}, hrefs)
 	assert.True(t, links[3].Workflow)
 	assert.Equal(t, "ok", links[4].State)
 }
@@ -36,7 +37,7 @@ func TestLink(t *testing.T) {
 	links := view.Chain([]view.Step{
 		{Folder: "infra", Job: "plan", State: "ok", RunID: "r1"},
 		{WorkflowID: "w1", WorkflowName: "release", State: "running", WorkflowRunID: "wr1"},
-	})
+	}, nil)
 	var job, flow view.Link = links[0], links[1]
 	assert.Equal(t, "r1", job.RunID)
 	assert.False(t, job.Workflow)

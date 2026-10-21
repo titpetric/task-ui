@@ -19,7 +19,8 @@ type Request struct {
 	// Env adds NAME=value pairs to the run's environment, after the
 	// secrets and before the TASK_UI_ variables, which win.
 	Env []string
-	// Workspace is the directory of the workspace the run belongs to. Empty
-	// takes the workspace of the folder's first segment, when there is one.
+	// Workspace is the directory of the workspace the run belongs to, the
+	// root for the default one. Empty takes the workspace of the folder's
+	// first segment, or the default workspace for a folder in none.
 	Workspace string
 }

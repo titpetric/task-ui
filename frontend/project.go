@@ -75,8 +75,8 @@ func (h *Handlers) projectEdit(w http.ResponseWriter, r *http.Request) {
 	h.render(w, http.StatusOK, "project_edit", p)
 }
 
-// workspaceFolders returns the folder of every workspace, none without
-// the storage or on an error.
+// workspaceFolders returns the folder of every named workspace, none
+// without the storage or on an error.
 func (h *Handlers) workspaceFolders(ctx context.Context) []string {
 	if h.opts.Workspaces == nil {
 		return nil

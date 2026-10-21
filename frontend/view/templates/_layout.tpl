@@ -10,7 +10,7 @@
 	<link rel="stylesheet" href="/static/vendor/xterm.css?v={{ assetVersion }}">
 	<link rel="stylesheet" href="/static/task-ui.css?v={{ assetVersion }}">
 </head>
-<body data-roles='{{ json .Roles }}'>
+<body data-roles='{{ json .Roles }}' data-workspaces='{{ json .Workspaces }}'>
 {{ template "icons" . }}
 {{- if not .User }}
 	<header class="top login-top">
@@ -50,7 +50,7 @@
 					{{- range .SideWorkflows }}{{ if not .SidebarHidden }}
 					<div class="flow{{ if $.IsPath (print "/workflows/" .ID) }} active{{ end }}">
 						<i class="shebang{{ if .Running }} running{{ end }}" aria-hidden="true">#!</i>
-						<a class="name" href="/workflows/{{ .ID }}" title="{{ range $i, $l := chain .Steps }}{{ if $i }} → {{ end }}{{ $l.Text }}{{ end }}">{{ .Name }}</a>
+						<a class="name" href="/workflows/{{ .ID }}" title="{{ range $i, $l := $.Links .Steps }}{{ if $i }} → {{ end }}{{ $l.Text }}{{ end }}">{{ .Name }}</a>
 						{{- if .Running }}
 						<a class="play" href="/workflows/{{ .ID }}" title="{{ .Name }}, running" aria-label="Watch {{ .Name }}"><svg class="ic"><use href="#i-eye"/></svg></a>
 						{{- else if .CanRun }}
@@ -354,7 +354,8 @@
 {{/* chain draws a workflow's steps, or a run's: a folder once for the
      steps that follow in it, a workflow step by its name, each linked. */}}
 {{- define "chain" }}
-{{- range $i, $l := chain . }}{{ if $i }}<span class="faint"> → </span>{{ end }}<a class="nowrap" href="{{ $l.Href }}">{{ if $l.State }}<i class="dot {{ $l.State }}"></i>{{ end }}{{ if $l.Workflow }}<svg class="ic"><use href="#i-flow"/></svg>{{ end }}{{ $l.Text }}</a>{{ end }}
+{{- $ := index . 0 }}
+{{- range $i, $l := $.Links (index . 1) }}{{ if $i }}<span class="faint"> → </span>{{ end }}<a class="nowrap" href="{{ $l.Href }}">{{ if $l.State }}<i class="dot {{ $l.State }}"></i>{{ end }}{{ if $l.Workflow }}<svg class="ic"><use href="#i-flow"/></svg>{{ end }}{{ $l.Text }}</a>{{ end }}
 {{- end }}
 
 {{- /* sideproject is a project in the sidebar: its row, its jobs and
@@ -368,7 +369,7 @@
 				{{- $here := and $.Folder (eq $.Folder.ID $p.ID) }}
 				<details class="project{{ if $active }} active{{ end }}" data-project="{{ $p.ID }}" open>
 					<summary{{ if $here }} class="active"{{ end }} title="{{ $p.ID }}/{{ range $i, $s := $p.Sources }}{{ if $i }}, {{ end }}{{ $s.File }}{{ end }}">
-						<a class="section{{ if $here }} active{{ end }}" href="/f/{{ $p.ID }}" data-folder="{{ $p.ID }}">
+						<a class="section{{ if $here }} active{{ end }}" href="{{ $.Href $p.ID }}" data-folder="{{ $p.ID }}">
 							<svg class="ic"><use href="#i-project"/></svg><span>{{ $p.Name }}</span>
 							{{- if $p.Error }}<small class="bad">!</small>{{ else if $p.Jobs }}<small>{{ len $p.Jobs }}</small>{{ end }}
 						</a>
@@ -397,7 +398,7 @@
 <details class="workspace{{ if $active }} active{{ end }}" data-project="{{ $p.ID }}" open>
 	<summary{{ if $here }} class="active"{{ end }} title="{{ $p.ID }}/{{ range $i, $s := $p.Sources }}{{ if $i }}, {{ end }}{{ $s.File }}{{ end }}">
 		<svg class="ic chev"><use href="#i-chev"/></svg>
-		<a class="section{{ if $here }} active{{ end }}" href="/f/{{ $p.ID }}" data-folder="{{ $p.ID }}">
+		<a class="section{{ if $here }} active{{ end }}" href="{{ $.Href $p.ID }}" data-folder="{{ $p.ID }}">
 			<span>{{ $p.Name }}</span>
 			{{- if $p.Error }}<small class="bad">!</small>{{ else }}<small>{{ len $g.Projects }}</small>{{ end }}
 		</a>
@@ -422,7 +423,7 @@
 {{- $active := and $.Folder (eq $.Folder.ID $p.ID) }}
 <details class="folder{{ if $active }} active{{ end }}" data-folder="{{ $p.ID }}"{{ if or $active (le $total 24) }} open{{ end }}>
 	<summary title="{{ $p.ID }}/{{ range $i, $s := $p.Sources }}{{ if $i }}, {{ end }}{{ $s.File }}{{ end }}">
-		<a href="/f/{{ $p.ID }}"><svg class="ic"><use href="#i-folder{{ if $active }}-open{{ end }}"/></svg><span>{{ with folderDir $p.ID $top }}<i>{{ . }}/</i>{{ end }}<b>{{ $p.Name }}</b></span></a>
+		<a href="{{ $.Href $p.ID }}"><svg class="ic"><use href="#i-folder{{ if $active }}-open{{ end }}"/></svg><span>{{ with folderDir $p.ID $top }}<i>{{ . }}/</i>{{ end }}<b>{{ $p.Name }}</b></span></a>
 		<i class="dot"></i>
 		{{- if $p.Error }}<small class="bad">!</small>{{ else }}<small>{{ len $p.Jobs }}</small>{{ end }}
 		<svg class="ic chev"><use href="#i-chev"/></svg>
@@ -492,7 +493,7 @@
 {{- $run := $.RunningRun $r.Key }}
 <div class="job{{ if and $.Job (eq $.Job.Key $r.Key) }} active{{ end }}" data-job-key="{{ $r.Key }}">
 	<i class="shebang{{ if $run }} running{{ end }}" aria-hidden="true">#!</i>
-	<a href="/f/{{ $p.ID }}/{{ $r.ID }}">{{ if ne $r.ID $r.Name }}<i>{{ index (split $r.ID ":") 0 }}:</i>{{ end }}{{ $r.Name }}</a>
+	<a href="{{ $.Href $p.ID }}/{{ $r.ID }}">{{ if ne $r.ID $r.Name }}<i>{{ index (split $r.ID ":") 0 }}:</i>{{ end }}{{ $r.Name }}</a>
 	{{- if $run }}
 	<button type="button" class="play" data-attach="{{ $run.ID }}" title="Attach to {{ $r.Name }}, running" aria-label="Attach to {{ $r.Name }}"><svg class="ic"><use href="#i-eye"/></svg></button>
 	{{- else if $.CanRun $p $r }}

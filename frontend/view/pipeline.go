@@ -2,8 +2,9 @@ package view
 
 // Pipeline is the workflow's steps as the page draws them top to
 // bottom, with the states of its latest run when that run had the same
-// steps. A run of an older chain lends no states.
-func Pipeline(steps, last []Step) []Link {
+// steps. A run of an older chain lends no states. The workspaces place
+// the jobs' links, as in Chain.
+func Pipeline(steps, last []Step, workspaces map[string]int) []Link {
 	if len(last) == len(steps) && len(steps) > 0 {
 		same := true
 		for i := range steps {
@@ -13,8 +14,8 @@ func Pipeline(steps, last []Step) []Link {
 			}
 		}
 		if same {
-			return Chain(last)
+			return Chain(last, workspaces)
 		}
 	}
-	return Chain(steps)
+	return Chain(steps, workspaces)
 }

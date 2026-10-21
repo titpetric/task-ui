@@ -41,8 +41,8 @@
 	<tbody>
 	{{- range .Schedules }}
 		<tr>
-			<td><a href="/f/{{ .Folder }}">{{ .Folder }}</a></td>
-			<td class="key"><a href="/f/{{ .Folder }}/{{ .Job }}">{{ .Job }}</a></td>
+			<td><a href="{{ $.Href .Folder }}">{{ .Folder }}</a></td>
+			<td class="key"><a href="{{ $.Href .Folder }}/{{ .Job }}">{{ .Job }}</a></td>
 			<td><code>{{ .Expression }}</code></td>
 			<td class="nowrap">{{ if .IsEnabled }}{{ stamp .NextRunAt }}{{ else }}<span class="faint">-</span>{{ end }}</td>
 			<td class="nowrap">{{ if .LastRunAt }}{{ ago .LastRunAt }}{{ else }}<span class="faint">never</span>{{ end }}</td>

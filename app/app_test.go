@@ -128,8 +128,15 @@ func TestApp_Handler(t *testing.T) {
 	assert.True(t, strings.HasPrefix(headers.Get("Content-Type"), "application/json"))
 	assert.Contains(t, body, `"runs":[]`)
 
-	status, _, _ = get(t, signedIn.Handler(), "/f/site")
+	status, _, _ = get(t, signedIn.Handler(), "/f/_/site")
 	assert.Equal(t, http.StatusOK, status)
+	// The default workspace is there from the start, and holds site.
+	status, body, _ = get(t, signedIn.Handler(), "/api/workspaces")
+	assert.Equal(t, http.StatusOK, status)
+	assert.Contains(t, body, `"folder":"_"`)
+	status, body, _ = get(t, signedIn.Handler(), "/f/_")
+	assert.Equal(t, http.StatusOK, status)
+	assert.Contains(t, body, `href="/f/_/site"`)
 
 	// Without a session the pages redirect and the API refuses.
 	anonymous := newApp(t, "")

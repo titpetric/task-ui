@@ -68,6 +68,25 @@
     }
   })();
 
+  // The named workspaces, which the page carries on its body.
+  var workspaces = (function () {
+    try {
+      return JSON.parse(document.body.dataset.workspaces || "{}") || {};
+    } catch (e) {
+      return {};
+    }
+  })();
+
+  // folderHref returns the path of a folder's page, as Page.Href does: a
+  // folder of a named workspace, or of internal, by its ID, a project at
+  // the root under /f/_/.
+  function folderHref(id) {
+    var top = String(id).split("/")[0];
+    if (id === "_") return "/f/_";
+    if (top === "internal" || Object.prototype.hasOwnProperty.call(workspaces, top)) return "/f/" + id;
+    return "/f/_/" + id;
+  }
+
   // avatarHTML draws the initials of a user in the colour of their role,
   // as the avatar template does.
   function avatarHTML(name) {
@@ -936,7 +955,8 @@
     btn.disabled = true;
     api("GET", "/api/workspaces").then(function (res) {
       if (res.status >= 300) throw new Error(res.data.error || ("HTTP " + res.status));
-      var list = res.data.workspaces;
+      // The default workspace keeps its place, first; the rest swap.
+      var list = res.data.workspaces.filter(function (ws) { return ws.folder !== "_"; });
       var i = list.findIndex(function (ws) { return ws.folder === btn.dataset.folder; });
       var j = btn.dataset.workspaceMove === "up" ? i - 1 : i + 1;
       if (i < 0 || j < 0 || j >= list.length) return null;
@@ -1197,7 +1217,7 @@
           a.appendChild(icon("i-flow"));
           a.appendChild(document.createTextNode("workflow"));
         } else {
-          a.href = "/f/" + data.folder + "/" + data.job;
+          a.href = folderHref(data.folder) + "/" + data.job;
           a.textContent = data.folder + " / " + data.job;
         }
         var head = el("div", "step-head");
@@ -1819,8 +1839,8 @@
       var folder = escapeHTML(run.folder), job = escapeHTML(run.job);
       row.innerHTML =
         '<td class="nowrap" data-label="Started">just now</td>' +
-        '<td data-label="Folder"><a href="/f/' + folder + '">' + folder + "</a></td>" +
-        '<td class="key"><a href="/f/' + folder + "/" + job + '">' + job + "</a></td>" +
+        '<td data-label="Folder"><a href="' + folderHref(folder) + '">' + folder + "</a></td>" +
+        '<td class="key"><a href="' + folderHref(folder) + "/" + job + '">' + job + "</a></td>" +
         '<td data-label="By">' + whoHTML(run) + "</td>" +
         '<td class="nowrap" data-label="Took" data-took>' + took(run) + "</td>" +
         '<td data-label="Result" data-result>' + stateHTML(run) + "</td>" +
@@ -1871,7 +1891,7 @@
         return '<button type="button" class="cc' + named + last + '" data-run data-folder="' + escapeHTML(slot.dataset.folder) + '" data-job="' +
           escapeHTML(slot.dataset.job) + '" data-title="' + what + '" title="Run ' + what + '"><svg class="ic"><use href="#i-play"/></svg>' + label + "</button>";
       }
-      return '<a class="cc' + named + " idle" + last + '" href="/f/' + escapeHTML(slot.dataset.folder) + "/" + escapeHTML(slot.dataset.job) + '" title="' + what +
+      return '<a class="cc' + named + " idle" + last + '" href="' + escapeHTML(folderHref(slot.dataset.folder)) + "/" + escapeHTML(slot.dataset.job) + '" title="' + what +
         ': your role may not run it"><i class="shebang" aria-hidden="true">#!</i>' + label + "</a>";
     };
     onRuns(function (run) {

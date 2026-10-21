@@ -28,8 +28,8 @@ func TestRuns(t *testing.T) {
 	// Only the View button opens the window: the row is not a Run button,
 	// the folder and the job are plain links to their pages.
 	assert.NotContains(t, body, `<tr data-run=`)
-	assert.Contains(t, body, `<td data-label="Folder"><a href="/f/infra">infra</a></td>`)
-	assert.Contains(t, body, `<td class="key"><a href="/f/infra/plan">plan</a></td>`)
+	assert.Contains(t, body, `<td data-label="Folder"><a href="/f/_/infra">infra</a></td>`)
+	assert.Contains(t, body, `<td class="key"><a href="/f/_/infra/plan">plan</a></td>`)
 	assert.NotContains(t, body, `data-live`)
 
 	// The sidebar lists every recent run; the table only the filtered ones.

@@ -30,8 +30,10 @@ type Session struct {
 	role string
 	// env is what the request adds to the run's environment.
 	env []string
-	// workspace is the directory of the run's workspace, "" for none.
-	workspace string
+	// workspace is the directory of the run's workspace, "" for none, and
+	// workspaceName its folder: _ for the default workspace, the root.
+	workspace     string
+	workspaceName string
 
 	mu   sync.Mutex
 	term vt10x.Terminal

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -20,7 +21,8 @@ type ProjectCloneRequest struct {
 	ID     string `json:"id"`
 	Branch string `json:"branch"`
 	// Workspace clones the project inside that workspace's checkout:
-	// the folder becomes <workspace>/<id>. Empty clones into the root.
+	// the folder becomes <workspace>/<id>. Empty or _, the default
+	// workspace, clones into the root.
 	Workspace string `json:"workspace,omitempty"`
 	// Recursive lists the folders inside the checkout too, the default;
 	// false lists the project's own jobs alone.
@@ -95,8 +97,8 @@ func (h *Handlers) listProjects(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"entries": entries, "projects": projects})
 }
 
-// internalRefused refuses a project in the internal namespace.
-const internalRefused = "internal is task-ui's own namespace: name the folder otherwise"
+// internalRefused refuses a project in the internal namespace, or in _.
+const internalRefused = "internal and _ are task-ui's own namespaces: name the folder otherwise"
 
 // folderIDFromURL derives a folder name from a repository URL.
 func folderIDFromURL(repo string) string {
@@ -132,17 +134,23 @@ func (h *Handlers) cloneProject(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	req.Workspace = strings.TrimSpace(req.Workspace)
-	if model.IsInternal(req.ID) || model.IsInternal(req.Workspace) {
+	if req.Workspace == "" {
+		req.Workspace = model.Default
+	}
+	if model.IsReserved(req.ID) || model.IsInternal(req.Workspace) {
 		fail(w, http.StatusBadRequest, internalRefused)
 		return
 	}
 	id := req.ID
-	if req.Workspace != "" {
+	if req.Workspace != model.Default {
 		if _, err := h.opts.Workspaces.GetByFolder(r.Context(), req.Workspace); err != nil {
 			fail(w, http.StatusBadRequest, "there is no workspace named "+req.Workspace)
 			return
 		}
 		id = req.Workspace + "/" + req.ID
+	} else if problem := h.rootTaken(r, id); problem != "" {
+		fail(w, http.StatusConflict, problem)
+		return
 	}
 	dir := filepath.Join(h.opts.Root, filepath.FromSlash(id))
 	output, err := h.opts.Git.Clone(r.Context(), req.URL, dir, req.Branch)
@@ -160,6 +168,20 @@ func (h *Handlers) cloneProject(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusCreated, map[string]any{"project": project, "runnable": detector.Any(dir), "output": output})
+}
+
+// rootTaken says why a project cloned into the root may not take a
+// folder: a workspace holds its first segment, or a directory is there.
+// "" for a free folder.
+func (h *Handlers) rootTaken(r *http.Request, id string) string {
+	top, _, _ := strings.Cut(id, "/")
+	if _, err := h.opts.Workspaces.GetByFolder(r.Context(), top); err == nil {
+		return "a workspace named " + top + " exists already: clone into it, or name the folder otherwise"
+	}
+	if _, err := os.Stat(filepath.Join(h.opts.Root, filepath.FromSlash(id))); err == nil {
+		return id + " exists under the root already"
+	}
+	return ""
 }
 
 // getProject returns the project row of a folder.
@@ -186,7 +208,7 @@ func (h *Handlers) updateProject(w http.ResponseWriter, r *http.Request) {
 		fail(w, http.StatusBadRequest, "invalid folder name")
 		return
 	}
-	if model.IsInternal(id) {
+	if model.IsReserved(id) {
 		fail(w, http.StatusBadRequest, internalRefused)
 		return
 	}
