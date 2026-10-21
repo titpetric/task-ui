@@ -2,7 +2,7 @@
 <div class="page-head">
 	<div>
 		<h2>Settings</h2>
-		<p>What the instance brings to every run: the projects it keeps up to date, the SSH keys it authenticates with, the secrets it adds to the environment, and who may sign in.</p>
+		<p>What the instance brings to every run: the projects it keeps up to date, the workspaces that hold them, the SSH keys it authenticates with, the secrets it adds to the environment, and who may sign in.</p>
 	</div>
 </div>
 
@@ -15,6 +15,12 @@
 			<td class="desc">The folders under the root. Add one from a git repository; a checkout is pulled before every run.</td>
 			<td class="nowrap dim">{{ len .Entries }} {{ if eq (len .Entries) 1 }}folder{{ else }}folders{{ end }}</td>
 			<td class="actions"><a class="btn btn-sm" href="/settings/projects">Open</a></td>
+		</tr>
+		<tr>
+			<td class="key nowrap"><a href="/settings/workspaces"><svg class="ic"><use href="#i-folder-open"/></svg> Workspaces</a></td>
+			<td class="desc">Checkouts that hold projects: an organisation's tooling, with the projects cloned inside it under the workspace's folder.</td>
+			<td class="nowrap dim">{{ len .WorkspaceList }} {{ if eq (len .WorkspaceList) 1 }}workspace{{ else }}workspaces{{ end }}</td>
+			<td class="actions"><a class="btn btn-sm" href="/settings/workspaces">Open</a></td>
 		</tr>
 		<tr>
 			<td class="key nowrap"><a href="/settings/keys"><svg class="ic"><use href="#i-key"/></svg> SSH keys</a></td>

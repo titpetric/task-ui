@@ -108,6 +108,12 @@ type Page struct {
 	Projects    []model.Project
 	// Project is the row a configure page edits, nil for a fresh folder.
 	Project *model.Project
+	// WorkspaceList are the workspaces, for their page and the clone
+	// form; Workspace is the one a configure page edits.
+	WorkspaceList []model.Workspace
+	Workspace     *model.Workspace
+	// Nested are the project rows inside each workspace, by its folder.
+	Nested  map[string][]string
 	Keys    []sshkey.Key
 	KeysDir string
 	// HomeKeys are the key pairs in ~/.ssh of the user task-ui runs as.

@@ -36,6 +36,7 @@ func admin(t *testing.T) *view.Page {
 		EnvFile:       &envfile.File{Folder: "infra", Path: ".env", Content: "A=1\n"},
 		Secret:        &model.Secret{Scope: "all", Name: "TOKEN"},
 		Account:       &model.User{ID: "u1", Name: "ops", Role: model.RoleRunner},
+		Workspace:     &model.Workspace{Folder: "malta", SourceURL: "git@example.com:org/workspace.git"},
 	}
 }
 
