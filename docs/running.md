@@ -28,6 +28,12 @@ the users sign in from `/app/.htpasswd`. The image bundles `task`,
 - Mount `/keys` with `TASK_UI_SSH_DIR` to keep the SSH keys managed from
   the UI. Keep it out of `/root/.ssh`, so `ssh` in a job does not find
   them by default; a run receives the keys its policies grant it.
+- The keys that encrypt live under `/data`, apart from the SSH keys:
+  `TASK_UI_DATA/instance/encrypt/id_ed25519` encrypts the integrations'
+  settings, and `TASK_UI_DATA/workspaces/<id>/encrypt` each workspace's
+  secrets. task-ui makes them at start, directories `0700` and files
+  `0600`. Back up `/data` with the database: without these keys the
+  secrets don't open.
 
 ## Configuration
 
@@ -41,9 +47,9 @@ The environment sets the whole configuration:
 | `TASK_UI_HTPASSWD`    | `.htpasswd`          | The password file, looked up in the root                          |
 | `TASK_UI_ADMINS`      |                      | Users with the admin role, comma separated                        |
 | `TASK_UI_VIEWERS`     |                      | Users with the viewer role, comma separated; the rest are runners |
-| `TASK_UI_DATA`        | `data`               | Database, recordings, artifacts and workspace keys                |
+| `TASK_UI_DATA`        | `data`               | Database, recordings, artifacts, workspace keys and the encryption key |
 | `TASK_UI_DB`          | `<data>/task-ui.db`  | Database file (sqlite)                                            |
-| `TASK_UI_SSH_DIR`     | `$HOME/.ssh`         | Folder the SSH key settings manage                                |
+| `TASK_UI_SSH_DIR`     | `$HOME/.ssh`         | Folder the SSH key settings manage; its keys only authenticate    |
 | `TASK_UI_SESSION_TTL` | `12h`                | How long a sign in lasts                                          |
 | `TASK_UI_KEEP`        | `15m`                | How long a finished run stays attachable with its frame in memory |
 | `TASK_UI_GRACE`       | `10s`                | How long a stopped process gets before task-ui kills it           |

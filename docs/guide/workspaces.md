@@ -143,6 +143,14 @@ with their fingerprints, never a private key.
   their runs. A rotation keeps a key's grants, and delete takes the key
   and its grants.
 
+A key has one use (see [One key, one use](settings.md#one-key-one-use)).
+An upload refuses key material that another store holds for the other
+use, in this workspace, another one or the instance, with `409`: an SSH
+key that is an encryption key anywhere, an encryption key that is an SSH
+key anywhere. An encryption key has one holder, so an upload of an
+encryption key another workspace or the instance holds answers `409`
+too; a backup of the workspace's own may come back.
+
 ![A workspace's configure page: its keys, and Export](../assets/workspace-edit-dark.png)
 
 A run gets the instance keys its policies name it for (see
@@ -196,7 +204,7 @@ The bundle carries:
 - its key files, backups among them, and the grants of its SSH keys.
 
 Schedules, workflows, runs and artifacts stay on the instance, as do the
-integrations, which the instance key encrypts. The bundle of `_` leaves
+integrations, which the instance's encryption key encrypts. The bundle of `_` leaves
 out the named workspaces and `internal`.
 
 **Export** on a workspace's configure page takes the passphrase and
@@ -211,6 +219,14 @@ row, and the import reports git's output for it. Any failure before the
 projects keeps nothing: no checkout, no keys, no rows. Env files and
 secrets that a removed workspace of the same folder left behind take
 the bundle's content.
+
+The import keeps a key to one use too. A bundle whose encryption key a
+workspace on this instance holds answers `409` before it clones anything,
+so a workspace exported and imported again on the same instance needs
+the original removed first, or another instance. Two workspaces never
+share an encryption key, and rotating one never leaves the other on the
+old key. The same goes for a bundled key that this instance holds for
+the other use. The bundle's SSH keys may also be SSH keys here.
 
 The bundle of the default workspace, `_`, imports as a named workspace,
 so it needs a folder, such as `legacy`. Its projects move under that
@@ -231,8 +247,8 @@ with `cloned` and git's `output`, and the users the grants name that the
 instance doesn't have. Their grants stay and reach a run once a user of
 that name exists. A wrong passphrase, a file that is not a bundle, an
 entry outside `manifest.json`, `keys/encrypt` and `keys/ssh`, and a
-secret the bundled key does not open answer `400`; a file over the
-upload limit answers `413`. Both routes are for admins.
+secret the bundled key does not open answer `400`; bundled keys refused
+for their use answer `409`, and a file over the upload limit `413`. Both routes are for admins.
 
 | Limit | Size |
 |-------|------|
@@ -249,7 +265,8 @@ sandbox. Every run runs as the server's OS user, in every workspace, so
 a job can read what that user can:
 
 - every workspace's key files under `TASK_UI_DATA/workspaces/`, the
-  encryption keys among them, and the instance keys;
+  encryption keys among them, the instance's encryption key under
+  `TASK_UI_DATA/instance/encrypt`, and the instance's SSH keys;
 - the database, with every workspace's secrets as ciphertext, which the
   keys beside it open;
 - every checkout under the root, sealed entries such as `.git` and

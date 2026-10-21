@@ -2,13 +2,17 @@
 <div class="page-head">
 	<div>
 		<h2>SSH keys</h2>
-		<p>The key pairs jobs use to reach other hosts, git remotes and services, and what the integrations' settings are encrypted with{{ if .Encryption }}: <b>{{ join .Encryption ", " }}</b>{{ end }}; each workspace's secrets have a key of their own. Add the public key where it should be accepted. Rotating a key writes the integrations' settings again for the new one; the last key that opens them cannot be deleted. A key's policies are the roles and the users whose runs get it in their ssh agent; a key made for someone carries their name, id_ed25519_alice.</p>
+		<p>The key pairs jobs use to reach other hosts, git remotes and services. Add the public key where it should be accepted. A key's policies are the roles and the users whose runs get it in their ssh agent; a key made for someone carries their name, id_ed25519_alice. These keys only authenticate: the integrations' settings are encrypted with the instance's encryption key below, and each workspace's secrets with a key of their own. A key is never both, and an upload of an encryption key here is refused.</p>
 	</div>
 	<div class="actions">
 		<a class="btn" href="/settings/keys/upload">Upload key</a>
 		<a class="btn btn-primary" href="/settings/keys/generate">Generate key</a>
 	</div>
 </div>
+
+{{- range .KeyOverlaps }}
+<div class="alert bad"><svg class="ic"><use href="#i-secret"/></svg> The key <b>{{ .Fingerprint }}</b> is both an encryption key, <span class="mono-break">{{ join .Encrypt ", " }}</span>, and an SSH key, <span class="mono-break">{{ join .Access ", " }}</span>. Runs and git leave it out, so it is not listed here. Remove the SSH copy, or give the SSH use a key of its own.</div>
+{{- end }}
 
 <section class="block">
 	<h3>Keys <small>{{ .KeysDir }}</small></h3>
@@ -19,8 +23,7 @@
 		{{- $any := false }}
 		{{- range .Keys }}{{ if not .Backup }}{{ $any = true }}
 			<tr>
-				{{- $name := .Name }}
-				<td class="key">{{ .Comment }} <span class="badge">{{ .Name }}</span>{{ range $.Encryption }}{{ if eq . $name }} <span class="badge signal" title="The integrations' settings are encrypted with this key"><svg class="ic"><use href="#i-secret"/></svg> integrations</span>{{ end }}{{ end }}</td>
+				<td class="key">{{ .Comment }} <span class="badge">{{ .Name }}</span></td>
 				<td class="fingerprint"><span class="kind dim">{{ .Type }}</span>{{ .Fingerprint }}</td>
 				{{- $roles := index $.KeyPolicies .Name }}{{ $users := index $.KeyUsers .Name }}
 				<td class="nowrap">{{ range $roles }}<span class="badge">{{ . }}</span> {{ end }}{{ range $users }}{{ template "avatar" (list $ .) }} {{ end }}{{ if not (or $roles $users) }}<span class="faint">none</span>{{ end }}</td>
@@ -48,6 +51,32 @@
 	</table>
 	</div>
 </section>
+
+{{- with .InstanceKey }}
+<section class="block encryption">
+	<h3>Encryption <small>{{ $.InstanceKeyDir }}</small></h3>
+	<p class="dim">The instance's encryption key: the integrations' settings are encrypted with it, and with nothing else. No run, no git remote and no SSH connection gets it. Rotating it writes the integrations' settings again for the new key and keeps the old one beside it as a backup.</p>
+	<div class="table-wrap">
+	<table class="table keys">
+		<thead><tr><th>Comment</th><th>Fingerprint</th><th>Who gets it</th><th>Date</th><th>Actions</th></tr></thead>
+		<tbody>
+			<tr class="encrypt-key">
+				<td class="key">{{ .Comment }} <span class="badge">{{ .Name }}</span> <span class="badge signal" title="The integrations' settings are encrypted with this key"><svg class="ic"><use href="#i-secret"/></svg> encryption</span></td>
+				<td class="fingerprint"><span class="kind dim">{{ .Type }}</span>{{ .Fingerprint }}</td>
+				<td class="nowrap"><span class="faint">no run</span></td>
+				<td class="nowrap" title="{{ stamp .Modified }}">{{ ago .Modified }}</td>
+				<td class="actions">
+					<button type="button" class="btn-icon" data-copy="{{ .PublicKey }}" title="Copy public key" aria-label="Copy public key"><svg class="ic"><use href="#i-copy"/></svg></button>
+					<form data-api="/api/keys/encrypt/rotate" data-method="POST" data-next="reload" data-confirm="Rotate the instance's encryption key? The current key is kept as a backup, and the integrations' settings are written again for the new one." data-confirm-ok="Rotate">
+						<button class="btn-icon" type="submit" title="Rotate: generate a new encryption key" aria-label="Rotate the encryption key"><svg class="ic"><use href="#i-rotate"/></svg></button>
+					</form>
+				</td>
+			</tr>
+		</tbody>
+	</table>
+	</div>
+</section>
+{{- end }}
 
 <section class="block">
 	<h3>Who gets which key <small>through the ssh agent of their runs</small></h3>

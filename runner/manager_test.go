@@ -43,6 +43,8 @@ type fixture struct {
 	workspaces *storage.WorkspaceStorage
 	keys       *workspace.Keyring
 	grants     *storage.WorkspaceKeyGrantStorage
+	// keyDir is the instance's SSH folder, the policies' keys.
+	keyDir string
 }
 
 func newFixture(t *testing.T) *fixture {
@@ -55,11 +57,14 @@ func newFixture(t *testing.T) *fixture {
 	keys := &sshkey.Store{Dir: t.TempDir()}
 	_, err = keys.Generate("ed25519", "test")
 	assert.NoError(t, err)
-	secrets := secret.New(storage.NewSecretStorage(db), secret.NewVault(keys))
+	keyring := &workspace.Keyring{Data: t.TempDir(), Access: []*sshkey.Store{keys}}
+	_, err = keyring.EnsureInstance("instance")
+	assert.NoError(t, err)
+	secrets := secret.New(storage.NewSecretStorage(db), secret.NewVault(keyring.Instance()))
 	f := &fixture{
 		runs: runs, files: artifacts, secrets: secrets, root: t.TempDir(),
 		policies: storage.NewSSHKeyPolicyStorage(db), workspaces: storage.NewWorkspaceStorage(db),
-		keys: &workspace.Keyring{Data: t.TempDir()}, grants: storage.NewWorkspaceKeyGrantStorage(db),
+		keys: keyring, grants: storage.NewWorkspaceKeyGrantStorage(db), keyDir: keys.Dir,
 	}
 	manager := runner.New(runner.Options{
 		Now: func() time.Time {

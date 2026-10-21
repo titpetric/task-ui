@@ -118,8 +118,9 @@ api PUT /projects/website -d '{"hours":"mon-fri 9-17\nfri 9-13"}'
 # the package scripts and the scripts folder too.
 api PUT /projects/tools -d '{"sources":["make","npm","script"]}'
 
-# A key first: the secrets are encrypted with it. Then secrets and a
-# managed env file, so the runs and the pages have them.
+# An SSH key for the keys page; the encryption keys come with the start.
+# Then secrets and a managed env file, so the runs and the pages have
+# them.
 api POST /keys/generate -d '{"type":"ed25519","comment":"task-ui"}'
 api POST /secrets -d '{"scope":"all","name":"CDN_PURGE_URL","content":"https://cdn.example/purge"}'
 api POST /secrets -d '{"scope":"infra","name":"REGION","content":"eu-central-1"}'

@@ -16,11 +16,13 @@ import (
 
 // spaces is a store over a private database that keeps the secrets per
 // workspace: the default one, _, and acme, each with its encryption
-// key, beside an instance key for the services.
+// key, beside the instance's encryption key for the services and the
+// legacy SSH keys the migrations read.
 type spaces struct {
 	store    *secret.Store
 	rows     *storage.SecretStorage
 	instance *sshkey.Store
+	legacy   *sshkey.Store
 	keyring  *workspace.Keyring
 	ids      map[string]string
 }
@@ -31,14 +33,17 @@ func newSpaces(t *testing.T) *spaces {
 	db, err := storage.OpenAndMigrate(ctx, ":memory:")
 	assert.NoError(t, err)
 	t.Cleanup(func() { db.Close() })
-	instance := newKeys(t)
-	_, err = instance.Generate("ed25519", "instance")
+	legacy := newKeys(t)
+	_, err = legacy.Generate("ed25519", "legacy")
 	assert.NoError(t, err)
 
 	workspaces := storage.NewWorkspaceStorage(db)
 	assert.NoError(t, workspaces.EnsureDefault(ctx))
 	assert.NoError(t, workspaces.Create(ctx, &model.Workspace{Folder: "acme"}))
-	keyring := &workspace.Keyring{Data: t.TempDir()}
+	keyring := &workspace.Keyring{Data: t.TempDir(), Access: []*sshkey.Store{legacy}}
+	_, err = keyring.EnsureInstance("instance")
+	assert.NoError(t, err)
+	instance := keyring.Instance()
 	ids := map[string]string{}
 	list, err := workspaces.List(ctx)
 	assert.NoError(t, err)
@@ -51,15 +56,16 @@ func newSpaces(t *testing.T) *spaces {
 	rows := storage.NewSecretStorage(db)
 	store := secret.New(rows, secret.NewVault(instance))
 	store.Workspaces = &secret.Workspaces{Rows: workspaces, Keys: keyring}
-	return &spaces{store: store, rows: rows, instance: instance, keyring: keyring, ids: ids}
+	store.Legacy = secret.NewVault(legacy)
+	return &spaces{store: store, rows: rows, instance: instance, legacy: legacy, keyring: keyring, ids: ids}
 }
 
-// hideInstance moves the instance key pair away until the test ends.
-func (s *spaces) hideInstance(t *testing.T) {
+// hide moves a store's ed25519 pair away until the test ends.
+func hide(t *testing.T, keys *sshkey.Store) {
 	t.Helper()
 	away := t.TempDir()
 	for _, name := range []string{"id_ed25519", "id_ed25519.pub"} {
-		assert.NoError(t, os.Rename(filepath.Join(s.instance.Dir, name), filepath.Join(away, name)))
+		assert.NoError(t, os.Rename(filepath.Join(keys.Dir, name), filepath.Join(away, name)))
 	}
 }
 
@@ -128,7 +134,7 @@ func TestStore_Workspaces(t *testing.T) {
 
 	// With the instance key away the workspaces' secrets still open,
 	// the integrations' do not.
-	s.hideInstance(t)
+	hide(t, s.instance)
 	web, err = s.store.For(ctx, "web")
 	assert.NoError(t, err)
 	assert.Equal(t, "root", web["SHARED"])

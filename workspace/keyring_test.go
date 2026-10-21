@@ -97,8 +97,9 @@ func TestKeyring_RotateEncrypt(t *testing.T) {
 }
 
 // Files reads every key file, backups among them, and Restore writes
-// them back 0600 for another workspace, byte for byte; it refuses a
-// workspace with keys and a name that leaves its directory.
+// them back 0600 for a workspace on another instance, byte for byte;
+// it refuses a workspace with keys and a name that leaves its
+// directory.
 func TestKeyring_FilesRestore(t *testing.T) {
 	t.Parallel()
 	k := &workspace.Keyring{Data: t.TempDir()}
@@ -112,17 +113,18 @@ func TestKeyring_FilesRestore(t *testing.T) {
 	assert.NotNil(t, files["encrypt/id_ed25519"])
 	assert.NotNil(t, files["ssh/id_ed25519.pub"])
 
-	assert.NoError(t, k.Restore("01to", files))
-	again, err := k.Files("01to")
+	other := &workspace.Keyring{Data: t.TempDir()}
+	assert.NoError(t, other.Restore("01to", files))
+	again, err := other.Files("01to")
 	assert.NoError(t, err)
 	for name, data := range files {
 		assert.Equal(t, string(data), string(again[name]), name)
-		assert.Equal(t, os.FileMode(0o600), mode(t, filepath.Join(k.Dir("01to"), filepath.FromSlash(name))), name)
+		assert.Equal(t, os.FileMode(0o600), mode(t, filepath.Join(other.Dir("01to"), filepath.FromSlash(name))), name)
 	}
-	assert.Equal(t, os.FileMode(0o700), mode(t, k.Dir("01to")))
-	assert.Equal(t, k.EncryptKey("01from").Fingerprint, k.EncryptKey("01to").Fingerprint)
+	assert.Equal(t, os.FileMode(0o700), mode(t, other.Dir("01to")))
+	assert.Equal(t, k.EncryptKey("01from").Fingerprint, other.EncryptKey("01to").Fingerprint)
 
-	assert.Error(t, k.Restore("01to", files), "keys there already")
+	assert.Error(t, other.Restore("01to", files), "keys there already")
 	assert.Error(t, k.Restore("01bad", map[string][]byte{"ssh/../../x": nil}))
 	assert.Error(t, k.Restore("01bad2", map[string][]byte{"other/x": nil}))
 	empty, err := k.Files("01none")

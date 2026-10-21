@@ -26,6 +26,7 @@ import (
 	"github.com/titpetric/task-ui/runner"
 	"github.com/titpetric/task-ui/secret"
 	"github.com/titpetric/task-ui/storage"
+	"github.com/titpetric/task-ui/workspace"
 )
 
 // Handlers serves the API.
@@ -128,6 +129,7 @@ func (h *Handlers) Routes() http.Handler {
 	r.Get("/keys", h.listKeys)
 	r.Post("/keys/generate", h.generateKey)
 	r.Post("/keys/upload", h.uploadKey)
+	r.Post("/keys/encrypt/rotate", h.rotateEncryptKey)
 	r.Put("/keys/{name}", h.updateKey)
 	r.Delete("/keys/{name}", h.deleteKey)
 
@@ -192,7 +194,7 @@ func statusOf(err error) int {
 		return http.StatusConflict
 	case errors.Is(err, runner.ErrOutOfHours):
 		return http.StatusForbidden
-	case errors.Is(err, secret.ErrNoKey):
+	case errors.Is(err, secret.ErrNoKey), errors.Is(err, workspace.ErrRole):
 		return http.StatusConflict
 	case errors.Is(err, runner.ErrReasonNeeded), errors.Is(err, hours.ErrInvalid), errors.Is(err, note.ErrInvalid), errors.Is(err, integration.ErrUnknown):
 		return http.StatusBadRequest
@@ -201,6 +203,10 @@ func statusOf(err error) int {
 	}
 	return http.StatusInternalServerError
 }
+
+// keyRole is the error of a key held for the other use, named for the
+// handlers whose workspace variable hides the package.
+var keyRole = workspace.ErrRole
 
 // storageNotFound is the not found error, named for the handlers that
 // find nothing themselves.

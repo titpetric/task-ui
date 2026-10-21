@@ -1,12 +1,11 @@
 package api
 
 import (
-	"context"
-	"errors"
-	"fmt"
 	"net/http"
+	"path/filepath"
 	"strings"
 
+	"github.com/titpetric/task-ui/sshkey"
 	"github.com/titpetric/task-ui/storage"
 )
 
@@ -29,7 +28,9 @@ type KeyRequest struct {
 	Users []string `json:"users"`
 }
 
-// listKeys returns the key pairs of the instance SSH folder. Admins only.
+// listKeys returns the SSH key pairs of the instance SSH folder, the
+// encryption keys left out, beside the instance's encryption key and
+// the keys held for both uses. Admins only.
 func (h *Handlers) listKeys(w http.ResponseWriter, r *http.Request) {
 	if !requireAdmin(w, r) {
 		return
@@ -44,7 +45,36 @@ func (h *Handlers) listKeys(w http.ResponseWriter, r *http.Request) {
 		failErr(w, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, map[string]any{"keys": h.opts.Keys.List(), "dir": h.opts.Keys.Dir, "policies": policies, "users": users})
+	body := map[string]any{"keys": h.accessKeys(), "dir": h.opts.Keys.Dir, "policies": policies, "users": users}
+	if keyring := h.opts.WorkspaceKeys; keyring != nil {
+		body["encrypt"], body["overlaps"] = keyring.InstanceKey(), keyring.Overlaps()
+	}
+	writeJSON(w, http.StatusOK, body)
+}
+
+// accessKeys returns the key pairs of the instance SSH folder, backups
+// among them, without a key that encrypts: a copy of an encryption key
+// is no SSH key, whatever folder holds it.
+func (h *Handlers) accessKeys() []sshkey.Key {
+	keys := h.opts.Keys.List()
+	if h.opts.WorkspaceKeys == nil {
+		return keys
+	}
+	result := []sshkey.Key{}
+	for _, key := range keys {
+		if !h.opts.WorkspaceKeys.Encrypts(filepath.Join(h.opts.Keys.Dir, key.Name)) {
+			result = append(result, key)
+		}
+	}
+	return result
+}
+
+// checkAccess refuses an upload that is an encryption key, ErrRole.
+func (h *Handlers) checkAccess(content string) error {
+	if h.opts.WorkspaceKeys == nil {
+		return nil
+	}
+	return h.opts.WorkspaceKeys.CheckAccess([]byte(content))
 }
 
 // setPolicies sets the roles and the users whose runs get a key, each
@@ -72,7 +102,7 @@ func (h *Handlers) updateKey(w http.ResponseWriter, r *http.Request) {
 	}
 	name := param(r, "name")
 	found := false
-	for _, key := range h.opts.Keys.List() {
+	for _, key := range h.accessKeys() {
 		found = found || (key.Name == name && !key.Backup)
 	}
 	if !found {
@@ -98,7 +128,7 @@ func (h *Handlers) updateKey(w http.ResponseWriter, r *http.Request) {
 }
 
 // generateKey makes a new pair. It keeps the existing pair of the same
-// type as a backup.
+// type as a backup. An SSH key encrypts nothing, so no secret changes.
 func (h *Handlers) generateKey(w http.ResponseWriter, r *http.Request) {
 	if !requireAdmin(w, r) {
 		return
@@ -117,24 +147,11 @@ func (h *Handlers) generateKey(w http.ResponseWriter, r *http.Request) {
 		fail(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	h.rekeyed(w, r, http.StatusCreated, key)
+	writeJSON(w, http.StatusCreated, map[string]any{"key": key})
 }
 
-// rekeyed answers a key change with the key and the count of secrets
-// on the instance key, the services', written again for the keys now
-// current. A rekey that fails is in the
-// answer, not a failure: the key is there, the backups still open the
-// secrets.
-func (h *Handlers) rekeyed(w http.ResponseWriter, r *http.Request, status int, key any) {
-	n, err := h.opts.Secrets.RekeyInstance(r.Context())
-	body := map[string]any{"key": key, "rekeyed": n}
-	if err != nil {
-		body["rekey_error"] = err.Error()
-	}
-	writeJSON(w, status, body)
-}
-
-// uploadKey stores a private key as the pair of its type.
+// uploadKey stores a private key as the pair of its type. A key the
+// instance or a workspace encrypts with answers 409.
 func (h *Handlers) uploadKey(w http.ResponseWriter, r *http.Request) {
 	if !requireAdmin(w, r) {
 		return
@@ -142,6 +159,10 @@ func (h *Handlers) uploadKey(w http.ResponseWriter, r *http.Request) {
 	var req KeyRequest
 	if err := readJSON(r, &req); err != nil {
 		fail(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	if err := h.checkAccess(req.Content); err != nil {
+		failErr(w, err)
 		return
 	}
 	key, err := h.opts.Keys.UploadAs([]byte(req.Content), strings.TrimSpace(req.Name), strings.TrimSpace(req.Comment))
@@ -153,21 +174,15 @@ func (h *Handlers) uploadKey(w http.ResponseWriter, r *http.Request) {
 		fail(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	h.rekeyed(w, r, http.StatusCreated, key)
+	writeJSON(w, http.StatusCreated, map[string]any{"key": key})
 }
 
-// deleteKey removes a pair, or a backup. It first writes the secrets
-// again for the keys that remain; the last key that can encrypt them
-// stays until another is there.
+// deleteKey removes a pair, or a backup, and its policies.
 func (h *Handlers) deleteKey(w http.ResponseWriter, r *http.Request) {
 	if !requireAdmin(w, r) {
 		return
 	}
 	name := param(r, "name")
-	if err := h.releaseKey(r.Context(), name); err != nil {
-		fail(w, http.StatusConflict, err.Error())
-		return
-	}
 	if err := h.opts.Keys.Delete(name); err != nil {
 		failErr(w, err)
 		return
@@ -179,20 +194,31 @@ func (h *Handlers) deleteKey(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-// releaseKey writes the secrets on the instance key, the services', for
-// the other keys before one goes. The last key that can encrypt them
-// cannot go while there are any.
-func (h *Handlers) releaseKey(ctx context.Context, name string) error {
-	count, err := h.opts.Secrets.OnInstance(ctx)
-	if err != nil || count == 0 {
-		return err
+// rotateEncryptKey generates a new encryption key for the instance and
+// writes the services' secrets, the integrations' settings, again for
+// it. The previous key stays as a backup and still opens them, so a
+// rekey that fails sets rekey_error. Admins only.
+func (h *Handlers) rotateEncryptKey(w http.ResponseWriter, r *http.Request) {
+	if !requireAdmin(w, r) {
+		return
 	}
-	vault := h.opts.Secrets.Vault
-	if len(vault.Recipients(name)) == 0 && len(vault.Recipients()) > 0 {
-		return errors.New("the secrets are encrypted with this key: generate or upload another before deleting it")
+	if h.opts.WorkspaceKeys == nil {
+		fail(w, http.StatusNotFound, "the keyring is off")
+		return
 	}
-	if _, err := h.opts.Secrets.RekeyInstance(ctx, name); err != nil {
-		return fmt.Errorf("the secrets cannot be written for the other keys: %w", err)
+	comment := "task-ui instance"
+	if key := h.opts.WorkspaceKeys.InstanceKey(); key != nil && key.Comment != "" {
+		comment = key.Comment
 	}
-	return nil
+	key, err := h.opts.WorkspaceKeys.RotateInstance(comment)
+	if err != nil {
+		failErr(w, err)
+		return
+	}
+	n, err := h.opts.Secrets.RekeyInstance(r.Context())
+	body := map[string]any{"key": key, "rekeyed": n}
+	if err != nil {
+		body["rekey_error"] = err.Error()
+	}
+	writeJSON(w, http.StatusCreated, body)
 }

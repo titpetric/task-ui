@@ -19,6 +19,9 @@ import (
 // the keys in SSHDir, the ones the settings manage.
 type Git struct {
 	SSHDir string
+	// Withhold reports a key file of SSHDir that git leaves out: a copy
+	// of an encryption key, which never authenticates.
+	Withhold func(path string) bool
 }
 
 // ErrNotRepo reports a folder without a .git directory.
@@ -58,8 +61,9 @@ func (g *Git) env() []string {
 	return env
 }
 
-// sshCommand builds the ssh command for git: every private key in SSHDir,
-// and a known_hosts file next to them that accepts a host on first contact.
+// sshCommand builds the ssh command for git: every private key in SSHDir
+// that Withhold lets through, and a known_hosts file next to them that
+// accepts a host on first contact.
 func (g *Git) sshCommand() string {
 	if g.SSHDir == "" {
 		return ""
@@ -74,7 +78,11 @@ func (g *Git) sshCommand() string {
 		if entry.IsDir() || !strings.HasPrefix(name, "id_") || strings.HasSuffix(name, ".pub") || strings.Contains(name, ".bak-") {
 			continue
 		}
-		keys = append(keys, filepath.Join(g.SSHDir, name))
+		path := filepath.Join(g.SSHDir, name)
+		if g.Withhold != nil && g.Withhold(path) {
+			continue
+		}
+		keys = append(keys, path)
 	}
 	if len(keys) == 0 {
 		return ""

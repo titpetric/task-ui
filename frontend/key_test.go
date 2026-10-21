@@ -49,19 +49,34 @@ func TestKeyForms(t *testing.T) {
 	assert.Contains(t, upload, `data-api="/api/keys/upload"`)
 }
 
-func TestKeys_Encrypting(t *testing.T) {
+// The SSH keys list only SSH keys; the instance's encryption key has a
+// box of its own with its fingerprint and a rotation. A copy of it in
+// the SSH folder stays off the list, and a warning names it.
+func TestKeys_Encryption(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
-	_, err := f.opts.Keys.Generate("ed25519", "deploy")
-	assert.NoError(t, err)
-	_, err = f.opts.Keys.Generate("ecdsa", "curve")
-	assert.NoError(t, err)
+	f.withKey(t)
+	instance := f.opts.WorkspaceKeys.InstanceKey()
+	fingerprint := strings.ReplaceAll(instance.Fingerprint, "+", "&#43;")
 
 	body := f.page(t, asAdmin, "/settings/keys")
 	assert.Contains(t, body, `<span class="badge">id_ed25519</span>`)
-	assert.Contains(t, body, `title="The integrations' settings are encrypted with this key"`)
-	// One badge: the ECDSA key does not encrypt.
-	assert.Equal(t, 1, strings.Count(body, "integrations</span>"))
+	assert.Contains(t, body, "<h3>Encryption <small>"+f.opts.WorkspaceKeys.Instance().Dir+"</small></h3>")
+	assert.Contains(t, body, fingerprint)
+	assert.Contains(t, body, `data-api="/api/keys/encrypt/rotate"`)
+	assert.Equal(t, 1, strings.Count(body, "encryption</span>"))
+	assert.NotContains(t, body, `class="alert bad"`)
+
+	for _, suffix := range []string{"", ".pub"} {
+		data, err := os.ReadFile(filepath.Join(f.opts.WorkspaceKeys.Instance().Dir, "id_ed25519"+suffix))
+		assert.NoError(t, err)
+		assert.NoError(t, os.WriteFile(filepath.Join(f.opts.Keys.Dir, "id_ed25519_copy"+suffix), data, 0o600))
+	}
+	body = f.page(t, asAdmin, "/settings/keys")
+	assert.NotContains(t, body, `<span class="badge">id_ed25519_copy</span>`)
+	assert.Contains(t, body, `class="alert bad"`)
+	assert.Contains(t, body, filepath.Join(f.opts.Keys.Dir, "id_ed25519_copy"))
+	assert.Equal(t, http.StatusNotFound, f.get(t, asAdmin, "/settings/keys/id_ed25519_copy").Status)
 }
 
 // A project that is a checkout with keys in its .ssh/ folder gets a

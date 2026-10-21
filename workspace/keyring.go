@@ -1,6 +1,7 @@
 // Package workspace keeps what a workspace holds beside its checkout:
 // its keys, under the data directory, out of the checkout, where one
-// git add would publish them, and out of the database.
+// git add would publish them, and out of the database. The instance's
+// encryption key lives beside them.
 package workspace
 
 import (
@@ -9,6 +10,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"golang.org/x/crypto/ssh"
@@ -16,14 +18,17 @@ import (
 	"github.com/titpetric/task-ui/sshkey"
 )
 
-// Keyring keeps the keys of every workspace, a directory per workspace
-// ID under Data/workspaces: encrypt/ holds the ed25519 key that
-// encrypts its secrets, which no run gets, and ssh/ the SSH keys its
-// runs get through their ssh agent. The directories are 0700, the key files
-// 0600.
+// Keyring keeps the keys of every workspace under Data/workspaces/<id>:
+// encrypt/ holds the ed25519 key of its secrets, ssh/ the SSH keys of
+// its runs. Data/instance/encrypt holds the integrations' key. A key
+// has one use, encryption or SSH, and the keyring refuses it for the
+// other. The directories are 0700, the key files 0600.
 type Keyring struct {
 	// Data is the data directory, TASK_UI_DATA.
 	Data string
+	// Access are the stores of the instance's SSH keys, outside the
+	// keyring: TASK_UI_SSH_DIR and the server user's ~/.ssh.
+	Access []*sshkey.Store
 }
 
 // encryptKind is the key type a workspace encrypts with.
@@ -76,7 +81,12 @@ func (k *Keyring) dirs(id string) error {
 	if err := validID(id); err != nil {
 		return err
 	}
-	for _, dir := range []string{k.Dir(id), k.Encrypt(id).Dir, k.SSH(id).Dir} {
+	return private(k.Dir(id), k.Encrypt(id).Dir, k.SSH(id).Dir)
+}
+
+// private makes directories, 0700.
+func private(dirs ...string) error {
+	for _, dir := range dirs {
 		if err := os.MkdirAll(dir, 0o700); err != nil {
 			return err
 		}
@@ -108,8 +118,13 @@ func (k *Keyring) RotateEncrypt(id, comment string) (sshkey.Key, error) {
 var ErrEncryptKind = errors.New("a workspace's encryption key is ed25519")
 
 // UploadEncrypt stores an ed25519 private key as a workspace's
-// encryption key; the previous one stays beside it as a backup.
+// encryption key; the previous one stays beside it as a backup. It
+// refuses a key that is an SSH key anywhere or another's encryption
+// key, ErrRole.
 func (k *Keyring) UploadEncrypt(id string, data []byte, comment string) (sshkey.Key, error) {
+	if err := k.CheckEncrypt(id, data); err != nil {
+		return sshkey.Key{}, err
+	}
 	if private, err := ssh.ParseRawPrivateKey(data); err == nil {
 		switch private.(type) {
 		case ed25519.PrivateKey, *ed25519.PrivateKey:
@@ -163,13 +178,19 @@ func (k *Keyring) Files(id string) (map[string][]byte, error) {
 
 // Restore writes the key files of a bundle as a workspace's keys,
 // 0600, into its private directories; Files names them. A workspace
-// that has keys already keeps them: Restore refuses it.
+// that has keys already keeps them: Restore refuses it. It refuses a
+// bundle whose keys break their one use, ErrRole: an encryption key
+// another workspace or the instance holds, or that is an SSH key
+// anywhere, the bundle's own among them, and an SSH key that encrypts.
 func (k *Keyring) Restore(id string, files map[string][]byte) error {
 	if err := validID(id); err != nil {
 		return err
 	}
 	if _, err := os.Stat(k.Dir(id)); err == nil {
 		return fmt.Errorf("workspace %s has keys already", id)
+	}
+	if err := k.CheckBundle(files); err != nil {
+		return err
 	}
 	if err := k.dirs(id); err != nil {
 		return err
@@ -184,4 +205,32 @@ func (k *Keyring) Restore(id string, files map[string][]byte) error {
 		}
 	}
 	return nil
+}
+
+// Encrypts reports whether the key in a file is an encryption key: one
+// the instance or a workspace encrypts with, wherever the file is. A
+// run's ssh agent and git leave such a key out.
+func (k *Keyring) Encrypts(path string) bool {
+	fp, err := sshkey.FileFingerprint(path)
+	if err != nil {
+		return false
+	}
+	return len(k.encryption()[fp]) > 0
+}
+
+// Overlaps returns the keys held for both uses, by fingerprint: in an
+// encryption store and in a store of SSH keys. Every file stays; an
+// admin decides which copy goes.
+func (k *Keyring) Overlaps() []Overlap {
+	access := paths(k.accessStores()...)
+	var result []Overlap
+	for fp, encrypt := range k.encryption() {
+		if held := access[fp]; len(held) > 0 {
+			sort.Strings(encrypt)
+			sort.Strings(held)
+			result = append(result, Overlap{Fingerprint: fp, Encrypt: encrypt, Access: held})
+		}
+	}
+	sort.Slice(result, func(i, j int) bool { return result[i].Fingerprint < result[j].Fingerprint })
+	return result
 }

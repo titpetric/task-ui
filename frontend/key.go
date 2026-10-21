@@ -16,10 +16,10 @@ func (h *Handlers) keys(w http.ResponseWriter, r *http.Request) {
 	}
 	p := h.page(r, "SSH keys")
 	p.Crumbs = view.Crumbs("Settings", "/settings", "SSH keys")
-	p.Keys, p.KeysDir = h.opts.Keys.List(), h.opts.Keys.Dir
+	p.Keys, p.KeysDir = h.accessKeys(h.opts.Keys), h.opts.Keys.Dir
 	p.KeyFolders = h.keyFolders()
 	if h.opts.HomeKeys != nil {
-		for _, key := range h.opts.HomeKeys.List() {
+		for _, key := range h.accessKeys(h.opts.HomeKeys) {
 			if !key.Backup {
 				p.HomeKeys = append(p.HomeKeys, key)
 			}
@@ -29,8 +29,35 @@ func (h *Handlers) keys(w http.ResponseWriter, r *http.Request) {
 	p.KeyPolicies, p.KeyUsers = h.keyPolicies(r), h.keyUsers(r)
 	users, _ := h.opts.Users.List(r.Context())
 	p.KeyHolders = view.KeyHolders(p.Keys, p.KeyPolicies, p.KeyUsers, users)
-	p.Encryption = h.opts.Secrets.Vault.Recipients()
+	h.instanceKey(p)
+	if h.opts.WorkspaceKeys != nil {
+		p.KeyOverlaps = h.opts.WorkspaceKeys.Overlaps()
+	}
 	h.render(w, http.StatusOK, "keys", p)
+}
+
+// instanceKey puts the instance's encryption key on a page.
+func (h *Handlers) instanceKey(p *view.Page) {
+	if h.opts.WorkspaceKeys != nil {
+		p.InstanceKey, p.InstanceKeyDir = h.opts.WorkspaceKeys.InstanceKey(), h.opts.WorkspaceKeys.Instance().Dir
+	}
+}
+
+// accessKeys returns the key pairs of an SSH folder, backups among
+// them, without a copy of an encryption key: that is no SSH key,
+// whatever folder holds it.
+func (h *Handlers) accessKeys(store *sshkey.Store) []sshkey.Key {
+	keys := store.List()
+	if h.opts.WorkspaceKeys == nil {
+		return keys
+	}
+	result := []sshkey.Key{}
+	for _, key := range keys {
+		if !h.opts.WorkspaceKeys.Encrypts(filepath.Join(store.Dir, key.Name)) {
+			result = append(result, key)
+		}
+	}
+	return result
 }
 
 // keyGenerate shows the generate form.
@@ -96,7 +123,7 @@ func (h *Handlers) keyEdit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	name := param(r, "name")
-	for _, key := range h.opts.Keys.List() {
+	for _, key := range h.accessKeys(h.opts.Keys) {
 		if key.Name != name || key.Backup {
 			continue
 		}
@@ -132,7 +159,7 @@ func (h *Handlers) myKeys(w http.ResponseWriter, r *http.Request) {
 	if h.opts.KeyPolicies != nil && p.User != nil {
 		names, err := h.opts.KeyPolicies.For(r.Context(), p.User.Role, p.User.Name)
 		if err == nil {
-			for _, key := range h.opts.Keys.List() {
+			for _, key := range h.accessKeys(h.opts.Keys) {
 				if !key.Backup && slices.Contains(names, key.Name) {
 					p.Keys = append(p.Keys, key)
 				}

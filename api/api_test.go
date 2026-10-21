@@ -126,7 +126,10 @@ func newFixture(t *testing.T) *fixture {
 	}
 
 	keys := &sshkey.Store{Dir: t.TempDir()}
-	secrets := secret.New(storage.NewSecretStorage(db), secret.NewVault(keys))
+	keyring := &workspace.Keyring{Data: t.TempDir(), Access: []*sshkey.Store{keys}}
+	_, err = keyring.EnsureInstance("task-ui instance")
+	assert.NoError(t, err)
+	secrets := secret.New(storage.NewSecretStorage(db), secret.NewVault(keyring.Instance()))
 	cat := catalogue{"infra": infra, "private": private, "infra/edge": edge}
 	workflows, workflowRuns := storage.NewWorkflowStorage(db), storage.NewWorkflowRunStorage(db)
 	flows := workflow.New(workflows, workflowRuns, cat, manager)
@@ -140,7 +143,7 @@ func newFixture(t *testing.T) *fixture {
 		Users:         users,
 		Projects:      storage.NewProjectStorage(db),
 		Workspaces:    storage.NewWorkspaceStorage(db),
-		WorkspaceKeys: &workspace.Keyring{Data: t.TempDir()},
+		WorkspaceKeys: keyring,
 		KeyGrants:     storage.NewWorkspaceKeyGrantStorage(db),
 		Runs:          runs,
 		Artifacts:     artifacts,

@@ -10,7 +10,7 @@
 	</div>
 </div>
 
-<div class="alert"><svg class="ic"><use href="#i-secret"/></svg> Encrypted at rest with each workspace's own key, which its <a href="/settings/workspaces">Keys</a> section rotates; a rotation keeps the old key as a backup and writes the workspace's secrets again. The instance SSH key{{ with .Encryption }} <b>{{ join . ", " }}</b>{{ end }} encrypts only the settings of the integrations.</div>
+<div class="alert"><svg class="ic"><use href="#i-secret"/></svg> Encrypted at rest with each workspace's own key, which its <a href="/settings/workspaces">Keys</a> section rotates; a rotation keeps the old key as a backup and writes the workspace's secrets again. The instance's encryption key{{ with .InstanceKey }} <b>{{ .Fingerprint }}</b>{{ end }}, under <a href="/settings/keys">SSH keys</a>, encrypts only the settings of the integrations. No SSH key encrypts a secret.</div>
 
 {{- range .SecretGroups }}
 {{- $g := . }}

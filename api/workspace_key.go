@@ -66,12 +66,17 @@ func (h *Handlers) generateWorkspaceKey(w http.ResponseWriter, r *http.Request) 
 }
 
 // uploadWorkspaceKey stores a private key as a workspace's SSH key of
-// its type, or as its encryption key.
+// its type, or as its encryption key. A key held for the other use, by
+// the instance or any workspace, or another's encryption key, answers
+// 409.
 func (h *Handlers) uploadWorkspaceKey(w http.ResponseWriter, r *http.Request) {
 	h.addWorkspaceKey(w, r, func(workspace *model.Workspace, req WorkspaceKeyRequest) (sshkey.Key, error) {
 		comment := strings.TrimSpace(req.Comment)
 		if req.Encrypt {
 			return h.opts.WorkspaceKeys.UploadEncrypt(workspace.ID, []byte(req.Content), comment)
+		}
+		if err := h.opts.WorkspaceKeys.CheckAccess([]byte(req.Content)); err != nil {
+			return sshkey.Key{}, err
 		}
 		return h.opts.WorkspaceKeys.SSH(workspace.ID).UploadAs([]byte(req.Content), strings.TrimSpace(req.Name), comment)
 	})
@@ -91,6 +96,10 @@ func (h *Handlers) addWorkspaceKey(w http.ResponseWriter, r *http.Request, add f
 		return
 	}
 	key, err := add(workspace, req)
+	if errors.Is(err, keyRole) {
+		failErr(w, err)
+		return
+	}
 	if err != nil {
 		fail(w, http.StatusBadRequest, err.Error())
 		return

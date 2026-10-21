@@ -11,6 +11,7 @@ import (
 	"github.com/titpetric/task-ui/git"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/sshkey"
+	"github.com/titpetric/task-ui/workspace"
 )
 
 // Page is what a template binds to: the chrome every page shares, and
@@ -147,12 +148,16 @@ type Page struct {
 	// KeyHolders are the roles and the users, and the keys each gets.
 	KeyHolders []KeyHolder
 	Key        *sshkey.Key
-	// Encryption names the instance keys that encrypt the services'
-	// secrets, such as the integrations' settings, and
+	// InstanceKey is the instance's encryption key, the services'
+	// secrets', such as the integrations' settings, in InstanceKeyDir;
 	// EncryptKey is a workspace's encryption key, on its pages.
-	Encryption []string
-	EncryptKey *sshkey.Key
-	Users      []model.User
+	InstanceKey    *sshkey.Key
+	InstanceKeyDir string
+	EncryptKey     *sshkey.Key
+	// KeyOverlaps are the keys held both as an encryption key and as an
+	// SSH key, which runs and git leave out.
+	KeyOverlaps []workspace.Overlap
+	Users       []model.User
 	// Account is the user a form edits.
 	Account *model.User
 	// AllowChoices are the boxes of a project's "who may run", and
