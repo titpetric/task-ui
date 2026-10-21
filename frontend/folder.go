@@ -141,12 +141,17 @@ func fileJob(f *folder.Folder, rel string) string {
 }
 
 // browse shows a directory inside a folder that is not a folder itself:
+// the targets of its own that run there, as Folder.Sub reads them, and
 // what it holds, to go on into.
 func (h *Handlers) browse(w http.ResponseWriter, r *http.Request, f *folder.Folder, rel string) {
 	p := h.page(r, path.Base(rel))
 	p.Folder = f
 	p.Browse = rel + "/"
 	dir, _ := f.Path(rel)
+	if sub := f.Sub(rel); sub != nil && len(sub.Sources) > 0 {
+		p.Place = sub
+		p.Last = h.lastRuns(r, sub)
+	}
 	p.Tree = h.checkoutTree(p, f, rel, folder.Listing(dir))
 	p.Up = p.Href(f.ID)
 	if parent := path.Dir(rel); parent != "." {

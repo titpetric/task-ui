@@ -52,7 +52,10 @@ type Page struct {
 	// Last holds the latest run of each job the page lists, by job key.
 	Last map[string]Run
 
-	Folder   *folder.Folder
+	Folder *folder.Folder
+	// Place is the folder of the directory browsed inside Folder, as
+	// Folder.Sub reads it, when it has targets of its own.
+	Place    *folder.Folder
 	Job      *folder.Job
 	Checkout *git.Info
 	// Tree is what the folder, or the directory browsed in it, holds.

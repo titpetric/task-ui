@@ -30,6 +30,10 @@ type Session struct {
 	role string
 	// env is what the request adds to the run's environment.
 	env []string
+	// dir is where the process starts, "" for the folder's directory,
+	// and args what follows the job's argv after --.
+	dir  string
+	args []string
 	// workspace is the directory of the run's workspace, "" for none, and
 	// workspaceName its folder: _ for the default workspace, the root.
 	// workspaceID is its row's ID, whose keys the run gets; "" without
@@ -72,7 +76,7 @@ func (s *Session) ID() string {
 	return s.Run.ID
 }
 
-// Key is the lock key: one session per job per folder.
+// Key is the lock key: one session per job per folder and directory.
 func (s *Session) Key() string {
 	return s.Run.Key()
 }

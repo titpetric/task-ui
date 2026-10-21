@@ -268,3 +268,53 @@ func TestFrame_FromRecording(t *testing.T) {
 	assert.NoError(t, f.opts.Runs.Create(context.Background(), bare))
 	assert.Equal(t, http.StatusNotFound, f.call(t, asOps, http.MethodGet, "/runs/"+bare.ID+"/frame.txt", nil).Status)
 }
+
+// A run names a directory inside the folder with dir: the job is one of
+// that directory's own targets, runs in it, and the row keeps the dir.
+// A directory Path refuses is not there; args reach only a job that
+// takes them.
+func TestRun_StartInDir(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	images := filepath.Join(f.root, "infra", "images")
+	assert.NoError(t, os.MkdirAll(filepath.Join(images, "scripts"), 0o755))
+	assert.NoError(t, os.WriteFile(filepath.Join(images, "scripts", "where.sh"), []byte("# Where it runs\npwd -P\n"), 0o644))
+	assert.NoError(t, os.MkdirAll(filepath.Join(f.root, "infra", ".git"), 0o755))
+	assert.NoError(t, os.Symlink(f.root, filepath.Join(f.root, "infra", "up")))
+
+	res := f.call(t, asOps, http.MethodPost, "/runs", api.RunRequest{Folder: "infra", Dir: "images", Job: "where", Cols: 80, Rows: 24})
+	assert.Equal(t, http.StatusCreated, res.Status, string(res.Raw))
+	assert.Equal(t, "images", res.str("dir"))
+	assert.Equal(t, true, res.get("can_run"))
+	run := f.finished(t, res.str("id"))
+	assert.Equal(t, model.StateOK, run.State)
+	assert.Equal(t, "images", run.Dir)
+	assert.Equal(t, "infra/images/where", run.Key())
+	real, err := filepath.EvalSymlinks(images)
+	assert.NoError(t, err)
+	text := f.call(t, asViewer, http.MethodGet, "/runs/"+run.ID+"/frame.txt", nil)
+	assert.Contains(t, string(text.Raw), real)
+	got := f.call(t, asOps, http.MethodGet, "/runs/"+run.ID, nil)
+	assert.Equal(t, "images", got.str("dir"))
+	assert.Equal(t, true, got.get("can_run"))
+
+	for _, dir := range []string{"..", "images/..", ".git", "up", "missing", "/etc", "images/scripts/where.sh"} {
+		res := f.call(t, asOps, http.MethodPost, "/runs", api.RunRequest{Folder: "infra", Dir: dir, Job: "where"})
+		assert.Equal(t, http.StatusNotFound, res.Status, dir)
+	}
+	viewer := f.call(t, asViewer, http.MethodPost, "/runs", api.RunRequest{Folder: "infra", Dir: "images", Job: "where"})
+	assert.Equal(t, http.StatusForbidden, viewer.Status)
+
+	refused := f.call(t, asOps, http.MethodPost, "/runs", map[string]any{"folder": "infra", "dir": "images", "job": "where", "args": "ps -a"})
+	assert.Equal(t, http.StatusBadRequest, refused.Status, string(refused.Raw))
+	plain := f.call(t, asOps, http.MethodPost, "/runs", map[string]any{"folder": "infra", "job": "plan", "args": []string{"x"}})
+	assert.Equal(t, http.StatusBadRequest, plain.Status)
+	bad := f.call(t, asOps, http.MethodPost, "/runs", map[string]any{"folder": "infra", "job": "plan", "args": "'open"})
+	assert.Equal(t, http.StatusBadRequest, bad.Status)
+
+	assert.NoError(t, os.WriteFile(filepath.Join(images, "atkins.yml"), []byte("jobs:\n  custom:\n    desc: Custom\n    args: true\n    steps:\n      - run: echo\n"), 0o644))
+	taken := f.call(t, asOps, http.MethodPost, "/runs", map[string]any{"folder": "infra", "dir": "images", "job": "custom", "args": `ps "; id"`})
+	assert.Equal(t, http.StatusCreated, taken.Status, string(taken.Raw))
+	row := f.finished(t, taken.str("id"))
+	assert.Equal(t, []string{"ps", "; id"}, row.ArgList())
+}

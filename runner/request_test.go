@@ -54,3 +54,62 @@ func TestManager_Workspace(t *testing.T) {
 	req.Workspace = f.root
 	assert.Contains(t, run(req), "ws=[_] dir=["+f.root+"]")
 }
+
+// A request's Dir is where the process starts, and its job's Dir what
+// the row and the lock know: the same job in two directories runs
+// twice at once, in one directory once. Args follow the argv after --
+// as they are, for a job that takes them, and a job that does not
+// refuses them.
+func TestManager_DirArgs(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	ctx := context.Background()
+
+	req := f.shellJob("site", `pwd -P; printf '[%s]' "$@"; sleep 1`, false)
+	sub := func(rel string) runner.Request {
+		dir := filepath.Join(req.Folder.Dir, rel)
+		assert.NoError(t, os.MkdirAll(dir, 0o755))
+		job := *req.Job
+		job.Dir = rel
+		next := req
+		next.Job, next.Dir = &job, dir
+		return next
+	}
+	images, docs := sub("images"), sub("docs")
+
+	first, err := f.manager.Start(ctx, images)
+	assert.NoError(t, err)
+	second, err := f.manager.Start(ctx, docs)
+	assert.NoError(t, err, "another directory runs at once")
+	_, err = f.manager.Start(ctx, images)
+	assert.ErrorIs(t, err, runner.ErrBusy)
+
+	out, status := collect(t, first.Attach(true))
+	assert.Equal(t, model.StateOK, status.State, out)
+	real, err := filepath.EvalSymlinks(images.Dir)
+	assert.NoError(t, err)
+	assert.Contains(t, out, real)
+	_, _ = collect(t, second.Attach(true))
+	row, err := f.runs.Get(ctx, first.ID())
+	assert.NoError(t, err)
+	assert.Equal(t, "images", row.Dir)
+	assert.Equal(t, "site/images/run", row.Key())
+	assert.Equal(t, "[]", row.Args)
+
+	withArgs := sub("args")
+	withArgs.Job.TakesArgs = true
+	withArgs.Args = []string{"ps", "-a", "; id", "$HOME"}
+	session, err := f.manager.Start(ctx, withArgs)
+	assert.NoError(t, err)
+	out, status = collect(t, session.Attach(true))
+	assert.Equal(t, model.StateOK, status.State, out)
+	assert.Contains(t, out, "[ps][-a][; id][$HOME]")
+	row, err = f.runs.Get(ctx, session.ID())
+	assert.NoError(t, err)
+	assert.Equal(t, []string{"ps", "-a", "; id", "$HOME"}, row.ArgList())
+
+	refused := f.shellJob("plain", "true", false)
+	refused.Args = []string{"x"}
+	_, err = f.manager.Start(ctx, refused)
+	assert.ErrorIs(t, err, runner.ErrNoArgs)
+}

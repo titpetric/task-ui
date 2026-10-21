@@ -25,6 +25,9 @@ type Folder struct {
 
 	// Dir is the working directory the jobs run in.
 	Dir string `json:"-"`
+	// Rel is the directory inside the folder ID names that Dir is, for
+	// the folder of a directory Sub returns; empty for the folder itself.
+	Rel string `json:"rel,omitempty"`
 
 	// Sources are the conventions detected in the folder, in detection
 	// order: pipeline files first, then build files, then scripts.

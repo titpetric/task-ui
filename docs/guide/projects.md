@@ -114,6 +114,13 @@ Open a folder from the sidebar:
   of its own; a file opens in a window, an image shown, markdown
   rendered, text coloured and cut past 1 MiB, with **Download** beside
   and in the row.
+  A directory with targets of its own, a pipeline file, Makefile,
+  package scripts or scripts folder read as a folder's are, lists them
+  as job cards on its page, such as `default`, `build` and `push` of
+  `/f/malta/dockerfiles`, which the checkout of `malta` holds but
+  discovery leaves out. They run in that directory under the folder's
+  allow rules and hours, and pull the folder's checkout; the API names
+  them with `dir` (see [Runs](runs.md#what-a-job-gets)).
   A file that runs, executable or with a shebang on its first line,
   carries `#!` and **exec**, and **Run** for those the folder lets run,
   in the row and in the file's window: it starts the file as the job

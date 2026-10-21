@@ -198,7 +198,7 @@ func statusOf(err error) int {
 		return http.StatusConflict
 	case errors.Is(err, runner.ErrReasonNeeded), errors.Is(err, hours.ErrInvalid), errors.Is(err, note.ErrInvalid), errors.Is(err, integration.ErrUnknown):
 		return http.StatusBadRequest
-	case errors.Is(err, runner.ErrNotInteractive), errors.Is(err, runner.ErrNotRunning), errors.Is(err, storage.ErrInvalidName):
+	case errors.Is(err, runner.ErrNotInteractive), errors.Is(err, runner.ErrNotRunning), errors.Is(err, runner.ErrNoArgs), errors.Is(err, storage.ErrInvalidName):
 		return http.StatusBadRequest
 	}
 	return http.StatusInternalServerError

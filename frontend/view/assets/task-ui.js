@@ -228,6 +228,10 @@
     s.spec = spec;
     setState("running", "starting");
     var body = { folder: spec.folder, job: spec.job, force: !!spec.force, reason: spec.reason || "", cols: s.term.cols, rows: s.term.rows };
+    // A job of a directory inside the folder names it; arguments go as
+    // the list a run row keeps, or the line typed.
+    if (spec.dir) body.dir = spec.dir;
+    if (spec.args && spec.args.length) body.args = spec.args;
     api("POST", "/api/runs", body).then(function (res) {
       if (session !== s) return;
       if (res.status === 201) {
@@ -278,9 +282,9 @@
         return;
       }
       var run = res.data;
-      els.title.textContent = run.folder + " / " + run.job;
+      els.title.textContent = runTitle(run);
       els.who.textContent = run.user_name || "";
-      s.spec = { folder: run.folder, job: run.job, title: run.folder + " / " + run.job };
+      s.spec = { folder: run.folder, dir: run.dir || "", job: run.job, args: runArgs(run), title: runTitle(run) };
       // A finished run stays live in memory for a while, for the windows
       // on it; opened afterwards it is history, not something to attach to.
       if (run.live && run.state === "running") {
@@ -291,10 +295,21 @@
     });
   }
 
+  // runTitle names a run as its window does: folder, the directory
+  // inside it when the job is one of that directory's, and the job.
+  function runTitle(run) {
+    return run.folder + (run.dir ? "/" + run.dir : "") + " / " + run.job;
+  }
+
+  // runArgs reads the arguments a run row keeps, a JSON list.
+  function runArgs(run) {
+    try { return JSON.parse(run.args || "[]"); } catch (e) { return []; }
+  }
+
   // connect attaches the terminal to a live run over the socket.
   function connect(s, run) {
     s.run = run;
-    els.title.textContent = run.folder + " / " + run.job;
+    els.title.textContent = runTitle(run);
     els.who.textContent = run.user_name || "";
     var term = s.term;
     var proto = location.protocol === "https:" ? "wss:" : "ws:";
@@ -2191,6 +2206,7 @@
     }
     start({
       folder: btn.dataset.folder,
+      dir: btn.dataset.dir || "",
       job: btn.dataset.job,
       title: btn.dataset.title || (btn.dataset.folder + " / " + btn.dataset.job),
       force: btn.hasAttribute("data-force"),

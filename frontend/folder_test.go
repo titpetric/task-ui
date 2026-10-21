@@ -386,3 +386,29 @@ func card(body, job string) string {
 	rest, _, _ = strings.Cut(rest, "</article>")
 	return `<a class="name">` + rest
 }
+
+// A directory browsed inside a folder lists its own targets as job
+// cards, with Run naming the directory and no job page to link; a run
+// there shows on its card.
+func TestFolder_BrowseJobs(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	images := filepath.Join(f.infra.Dir, "images")
+	assert.NoError(t, os.MkdirAll(images, 0o755))
+	assert.NoError(t, os.WriteFile(filepath.Join(images, "atkins.yml"), []byte("jobs:\n  default:\n    desc: Every image\n    steps:\n      - run: atkins build\n  build:\n    desc: Build one\n    steps:\n      - run: docker compose build\n  push:\n    desc: Push one\n    steps:\n      - run: docker compose push\n"), 0o644))
+	run := f.run(t, "infra", "build", "ops", model.StateFailed)
+	run.Dir = "images"
+	assert.NoError(t, f.opts.Runs.Update(context.Background(), run))
+
+	body := f.page(t, asOps, "/f/_/infra/images")
+	assert.Contains(t, body, "Its jobs run in infra/images/")
+	assert.NotContains(t, body, "Nothing to run here")
+	for _, job := range []string{"default", "build", "push"} {
+		assert.Contains(t, body, `<span class="name">`+job+`</span>`)
+		assert.Contains(t, body, `data-folder="infra" data-dir="images" data-job="`+job+`" data-title="infra/images / `+job+`"`)
+	}
+	assert.Contains(t, body, `<i class="dot failed"></i>`)
+	assert.Contains(t, body, "atkins -f atkins.yml")
+	assert.Contains(t, f.page(t, asViewer, "/f/_/infra/images"), `<span class="name">build</span>`)
+	assert.NotContains(t, f.page(t, asViewer, "/f/_/infra/images"), `data-dir="images"`)
+}

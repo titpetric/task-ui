@@ -119,3 +119,36 @@ func TestListing_Sealed(t *testing.T) {
 	}
 	assert.Equal(t, map[string]bool{"CLAUDE.md": false, ".secret": true, ".run": true}, inner)
 }
+
+// Sub reads a directory inside the folder as Load does, its jobs keyed
+// and run by that directory under the folder's ID and rules; a path
+// Path refuses, a file, or a path out by a symlink is none.
+func TestFolder_Sub(t *testing.T) {
+	t.Parallel()
+	f := checkout(t)
+	f.Allow, f.Hours = []string{"ops"}, "Mon-Fri 08-18"
+	images := filepath.Join(f.Dir, "images")
+	assert.NoError(t, os.MkdirAll(images, 0o755))
+	assert.NoError(t, os.WriteFile(filepath.Join(images, "atkins.yml"), []byte("jobs:\n  default:\n    desc: All\n    steps:\n      - run: echo all\n  custom:\n    desc: Custom\n    args: true\n    steps:\n      - run: echo\n"), 0o644))
+	assert.NoError(t, os.Symlink(filepath.Dir(f.Dir), filepath.Join(f.Dir, "out")))
+
+	assert.Equal(t, f, f.Sub(""))
+	sub := f.Sub("images/")
+	assert.NotNil(t, sub)
+	assert.Equal(t, "acme/api", sub.ID)
+	assert.Equal(t, "images", sub.Rel)
+	assert.Equal(t, []string{"ops"}, sub.Allow)
+	assert.Equal(t, "Mon-Fri 08-18", sub.Hours)
+	job := sub.Job("default")
+	assert.NotNil(t, job)
+	assert.Equal(t, "images", job.Dir)
+	assert.Equal(t, "acme/api/images/default", job.Key())
+	assert.Equal(t, []string{"atkins", "-f", "atkins.yml", "default"}, job.Command)
+	assert.True(t, sub.Job("custom").TakesArgs)
+	assert.False(t, job.TakesArgs)
+
+	for _, rel := range []string{"..", "images/..", "./images", ".git", "repo", "escape", "out", "README.md", "missing", "/etc"} {
+		assert.Nil(t, f.Sub(rel), rel)
+	}
+	assert.Nil(t, (*folder.Folder)(nil).Sub("images"))
+}

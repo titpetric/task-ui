@@ -379,6 +379,14 @@
       type: timestamp
       comment: Updated At
       datatype: datetime
+    - name: dir
+      type: text
+      comment: Dir
+      datatype: varchar
+    - name: args
+      type: text
+      comment: Args
+      datatype: varchar
   indexes:
     - name: sqlite_autoindex_run_1
       columns:

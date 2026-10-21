@@ -4,9 +4,24 @@ import (
 	"time"
 )
 
-// Key is the identity the run lock uses: one run per job per folder.
+// Key is the identity the run lock uses: one run per job per folder
+// and directory inside it.
 func (r *Run) Key() string {
-	return r.Folder + "/" + r.Job
+	return RunKey(r.Folder, r.Dir, r.Job)
+}
+
+// RunKey is the key of a job: folder/job, or folder/dir/job for a job
+// of a directory inside the folder.
+func RunKey(folder, dir, job string) string {
+	if dir != "" {
+		return folder + "/" + dir + "/" + job
+	}
+	return folder + "/" + job
+}
+
+// ArgList returns the arguments the run passed the job, after --.
+func (r *Run) ArgList() []string {
+	return DecodeList(r.Args)
 }
 
 // Finished reports whether the run ended.

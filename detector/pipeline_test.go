@@ -3,6 +3,7 @@ package detector
 import (
 	"path/filepath"
 	"slices"
+	"strings"
 	"testing"
 )
 
@@ -163,5 +164,22 @@ func TestPipelineDetectorInvalid(t *testing.T) {
 	}
 	if (pipelineDetector{kind: "task", names: taskfileNames}).Detect(dir) != nil {
 		t.Fatal("Taskfile detected without one")
+	}
+}
+
+// An atkins job with `args: true` takes arguments; a Taskfile task
+// with the same key does not, and neither does a job without it.
+func TestPipelineDetectorTakesArgs(t *testing.T) {
+	dir := t.TempDir()
+	body := "jobs:\n  custom:\n    desc: Compose\n    args: true\n    steps:\n      - run: docker compose\n  up:\n    desc: Up\n    steps:\n      - run: docker compose up\n"
+	write(t, filepath.Join(dir, "atkins.yml"), body)
+	write(t, filepath.Join(dir, "Taskfile.yml"), strings.ReplaceAll(body, "jobs:", "tasks:"))
+	atkins := (pipelineDetector{kind: "atkins", names: atkinsNames}).Detect(dir)
+	if !atkins.Target("custom").TakesArgs || atkins.Target("up").TakesArgs {
+		t.Fatalf("atkins args: %+v", atkins.Targets)
+	}
+	task := (pipelineDetector{kind: "task", names: taskfileNames}).Detect(dir)
+	if task.Target("custom").TakesArgs {
+		t.Fatal("a Taskfile task takes no args")
 	}
 }

@@ -512,12 +512,69 @@
 <button type="button" class="btn btn-sm show-source" data-source="{{ $folder.ID }}" data-file="{{ $file }}" aria-haspopup="dialog"><svg class="ic"><use href="#i-file"/></svg><span>Show {{ $lines }} line{{ if ne $lines 1 }}s{{ end }}</span></button>
 {{- end }}
 
+{{/* sources are the job cards of a folder, a section per source: the
+     folder's own, or those of a directory inside it (Folder.Sub), whose
+     jobs run there and have no page of their own yet. */}}
+{{- define "sources" }}
+{{- $ := index . 0 }}{{ $p := index . 1 }}
+{{- range $s := $p.Sources }}
+<section class="block" data-live>
+	<h3>{{ if eq (len $p.Sources) 1 }}Jobs{{ else }}{{ $s.Kind }}{{ end }} <small>{{ $s.File }}{{ if $s.Command }} · {{ join $s.Command " " }}{{ end }}</small></h3>
+	<div class="jobcards">
+	{{- range $r := $p.SourceJobs $s }}
+		{{- $run := $.RunningRun $r.Key }}{{ $can := $.CanRun $p $r }}
+		{{- /* A card is four rows the cards of a grid row share: the name, its kind
+		     and Run; what it does, unless that repeats the name or the first
+		     step; how it last went; what it runs, numbered, the first three
+		     lines and the rest behind "show N more". */}}
+		<article class="jobcard{{ if $run }} running{{ end }}">
+			<header>
+				{{- if $r.Dir }}<span class="name">{{ $r.Name }}</span>{{ else }}<a class="name" href="{{ $.Href $p.ID }}/{{ $r.ID }}">{{ $r.Name }}</a>{{ end }}
+				<span class="badge">{{ $r.Kind }}</span>
+				{{- if $r.Interactive }}<span class="badge">interactive</span>{{ end }}
+				<span class="actions">
+					{{- if $run }}
+					<a class="btn btn-sm" href="/runs/{{ $run.ID }}" data-attach="{{ $run.ID }}"><svg class="ic"><use href="#i-eye"/></svg>Attach</a>
+					{{- if $can }}<button type="button" class="btn-icon danger" data-kill="{{ $run.ID }}" title="Kill the run" aria-label="Kill the run"><svg class="ic"><use href="#i-stop"/></svg></button>{{ end }}
+					{{- else if $can }}{{ template "runButtons" (list $p $r) }}
+					{{- else if not $r.Dir }}<a class="btn btn-sm" href="{{ $.Href $p.ID }}/{{ $r.ID }}">History</a>{{ end -}}
+				</span>
+			</header>
+			<p class="desc">{{ if and $r.Description (ne $r.Description $r.Name) (not (and $r.Steps (eq $r.Description (index $r.Steps 0)))) }}{{ $r.Description }}{{ end }}</p>
+			<div class="meta">
+				{{- with $run }}<i class="dot running"></i><span class="state-label">running</span><span class="when">{{ ago .StartedAt }}</span><span class="who-ran">{{ template "avatar" (list $ .UserName) }} {{ .UserName }}</span>
+				{{- else }}{{ with $.LastRun $r.Key }}<i class="dot {{ .State }}"></i><span class="state-label">{{ .State }}{{ if ne .State "ok" }} <span class="faint">({{ .ExitCode }})</span>{{ end }}</span><span class="when">{{ ago .StartedAt }}</span><span class="who-ran">{{ template "avatar" (list $ .UserName) }} {{ .UserName }}</span>
+				{{- else }}<i class="dot pending"></i><span class="state-label faint">never run</span>{{ end }}{{ end -}}
+			</div>
+			<div class="code">
+				{{- if $r.DependsOn }}<div class="comment"># after {{ join $r.DependsOn ", " }}</div>{{ end }}
+				<ol>
+					{{- range $i, $step := $r.Steps }}{{ if lt $i 3 }}<li>{{ $step }}</li>{{ end }}{{ else }}<li>{{ join $r.Command " " }}</li>{{ end -}}
+				</ol>
+				{{- if gt (len $r.Steps) 3 }}
+				<details>
+					<summary><span class="more">show {{ sub (len $r.Steps) 3 }} more</span><span class="less">show less</span></summary>
+					<ol start="4">
+						{{- range $i, $step := $r.Steps }}{{ if ge $i 3 }}<li>{{ $step }}</li>{{ end }}{{ end -}}
+					</ol>
+				</details>
+				{{- end }}
+			</div>
+		</article>
+	{{- else }}
+		<div class="alert">{{ if $s.Error }}{{ $s.Error }}{{ else }}No targets in {{ $s.File }}.{{ end }}</div>
+	{{- end }}
+	</div>
+</section>
+{{- end }}
+{{- end }}
+
 {{ define "runButtons" }}
 {{- $p := index . 0 }}{{ $r := index . 1 -}}
-<button type="button" class="btn btn-primary btn-sm" data-run data-folder="{{ $p.ID }}" data-job="{{ $r.ID }}" data-title="{{ $p.ID }} / {{ $r.Name }}"><svg class="ic"><use href="#i-play"/></svg>Run</button>
+<button type="button" class="btn btn-primary btn-sm" data-run data-folder="{{ $p.ID }}"{{ with $r.Dir }} data-dir="{{ . }}"{{ end }} data-job="{{ $r.ID }}" data-title="{{ $p.ID }}{{ with $r.Dir }}/{{ . }}{{ end }} / {{ $r.Name }}"><svg class="ic"><use href="#i-play"/></svg>Run</button>
 {{- /* Run force stands beside Run only where a plain run can be refused: a job with hours. A run that failed is forced from its window. */}}
 {{- if $p.HoursOf $r }}
-<button type="button" class="btn btn-danger btn-sm" data-run data-force data-folder="{{ $p.ID }}" data-job="{{ $r.ID }}" data-title="{{ $p.ID }} / {{ $r.Name }}" title="Run out of hours, with a reason">Run force</button>
+<button type="button" class="btn btn-danger btn-sm" data-run data-force data-folder="{{ $p.ID }}"{{ with $r.Dir }} data-dir="{{ . }}"{{ end }} data-job="{{ $r.ID }}" data-title="{{ $p.ID }}{{ with $r.Dir }}/{{ . }}{{ end }} / {{ $r.Name }}" title="Run out of hours, with a reason">Run force</button>
 {{- end }}
 {{- end }}
 

@@ -2,7 +2,7 @@
 {{- $run := .Run }}{{ $can := .CanRun .Folder .Job }}
 <div class="page-head">
 	<div>
-		<h2>{{ $run.Folder }} / {{ $run.Job }} <span class="badge {{ tone $run.State }}">{{ $run.State }}{{ if and (ne $run.State "ok") (ne $run.State "running") }} {{ $run.ExitCode }}{{ end }}</span></h2>
+		<h2>{{ $run.Folder }}{{ with $run.Dir }}/{{ . }}{{ end }} / {{ $run.Job }} <span class="badge {{ tone $run.State }}">{{ $run.State }}{{ if and (ne $run.State "ok") (ne $run.State "running") }} {{ $run.ExitCode }}{{ end }}</span></h2>
 		<p>Started by {{ $run.UserName }} {{ ago $run.StartedAt }}{{ if $run.IsScheduled }} by the scheduler{{ end }}{{ if $run.IsForced }}, with Run force{{ end }}.{{ if eq $run.State "running" }} The session is live: attach to follow it{{ if $can }}, or end it{{ end }}.{{ else }} The run is over; everything it printed is below.{{ end }}</p>
 	</div>
 	<div class="actions">
@@ -36,7 +36,9 @@
 	<table class="table table-kv">
 		<tbody>
 			<tr><th>Folder</th><td><a href="{{ $.Href $run.Folder }}"><svg class="ic"><use href="#i-folder"/></svg> {{ $run.Folder }}</a></td></tr>
-			<tr><th>Job</th><td><a href="{{ $.Href $run.Folder }}/{{ $run.Job }}">{{ $run.Job }}</a></td></tr>
+			{{- with $run.Dir }}<tr><th>Directory</th><td><a href="{{ $.Href $run.Folder }}/{{ . }}"><svg class="ic"><use href="#i-folder-open"/></svg> {{ . }}/</a> <span class="dim">the job ran here</span></td></tr>{{ end }}
+			<tr><th>Job</th><td>{{ if $run.Dir }}{{ $run.Job }}{{ else }}<a href="{{ $.Href $run.Folder }}/{{ $run.Job }}">{{ $run.Job }}</a>{{ end }}</td></tr>
+			{{- with $run.ArgList }}<tr><th>Arguments</th><td>{{ range . }}<code>{{ . }}</code> {{ end }}<span class="dim">after --, one argument each</span></td></tr>{{ end }}
 			<tr><th>By</th><td>{{ template "who" (list $ $run) }}</td></tr>
 			<tr><th>Started</th><td>{{ stamp $run.StartedAt }}</td></tr>
 			<tr><th>Finished</th><td>{{ if $run.FinishedAt }}{{ stamp $run.FinishedAt }}{{ else }}<span class="faint">in progress</span>{{ end }}</td></tr>

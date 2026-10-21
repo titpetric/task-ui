@@ -8,6 +8,10 @@ type Target struct {
 	Summary     string   `json:"summary,omitempty"`
 	Aliases     []string `json:"aliases,omitempty"`
 	Interactive bool     `json:"interactive,omitempty"`
+	// TakesArgs says the target takes arguments from the command line,
+	// after --: an atkins job with `args: true`. A run of any other
+	// target takes none.
+	TakesArgs bool `json:"takes_args,omitempty"`
 
 	// Args follow the source command: the target name for most
 	// conventions, the script path for a script. Empty means the name.

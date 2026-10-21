@@ -67,7 +67,7 @@ func (h *Handlers) serveAttach(ws *websocket.Conn) {
 		sendControl(ws, control{Type: "status", State: run.State, ExitCode: int(run.ExitCode), Message: "the run is over, see its recording"})
 		return
 	}
-	f, job, _ := h.target(r, run.Folder, run.Job)
+	f, job, _, _ := h.targetIn(r, run.Folder, run.Dir, run.Job)
 	h.window(ws, session, !canRun(access.UserFrom(r.Context()), f, job))
 }
 
