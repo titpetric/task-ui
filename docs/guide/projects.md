@@ -25,6 +25,49 @@ An admin adds a project from a git repository on **Add project** (see
 project at the top of the root, `_`, or inside a named workspace (see
 [Workspaces](workspaces.md#clone-a-project-into-one)).
 
+## Move a project to another workspace
+
+A project's configure page, **Settings**, **Projects**, then the
+project, has the same **Workspace** select, on the workspace the
+project is in. Pick another one and **Save** moves it: `web` in `_`
+becomes `acme/web` in `acme`, and `acme/web` picked back to `_` becomes
+`web`. Before the move a dialog names the new ID and every row that
+stays behind.
+
+What moves and what stays:
+
+- the checkout moves, renamed in place, with the folders inside it;
+- the project row moves, with its title, allow lists and hours;
+- the users whose folder list names the project, or a folder inside it,
+  get the new ID in its place, so access follows the project;
+- the runs stay under the old ID: their pages, recordings and artifacts
+  still open from the Runs page;
+- schedules, secrets, env files and workflow steps that name the old ID
+  stay behind. The dialog lists them, as does `left` in the API's
+  answer; change them to the new ID, or move the project back, to
+  bring them along.
+
+A move refuses with `409` while a run of the project, or of a folder
+inside it, is going, and while the project is moving already. It also
+refuses a workspace itself, a workspace that does not exist, an ID
+that a project, a workspace or a directory holds, and a workspace on
+another file system, as a move renames and does not copy. Only a
+project at the top of a workspace moves; a folder inside a project
+stays with it.
+
+To move one through the API, name the workspace on the configure
+request:
+
+```sh
+curl -X PUT -H "Authorization: Bearer $TOKEN" \
+  -d '{"title": "Web", "workspace": "acme"}' \
+  https://task.example.com/api/projects/web
+```
+
+The request configures as well, so send the fields the project has.
+It responds with the project row under its new ID, and `left`: each
+row that still names the old ID, as `{kind, id, folder, name}`.
+
 ## Where the jobs come from
 
 task-ui reads the files a folder has and lists their targets. It never

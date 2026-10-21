@@ -147,6 +147,7 @@ func newFixture(t *testing.T) *fixture {
 		ArtifactStore: &artifactstore.Store{Dir: filepath.Join(t.TempDir(), "tree")},
 		Schedules:     storage.NewScheduleStorage(db),
 		Secrets:       secrets,
+		FolderRefs:    storage.NewFolderRefStorage(db),
 		Runner:        manager,
 		Catalogue:     cat,
 		Git:           &git.Git{},

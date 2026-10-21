@@ -38,6 +38,8 @@ type Options struct {
 	ArtifactStore *artifactstore.Store
 	Schedules     *storage.ScheduleStorage
 	Secrets       *secret.Store
+	// FolderRefs find the rows that name a folder, which a move leaves.
+	FolderRefs *storage.FolderRefStorage
 
 	Workflows    *storage.WorkflowStorage
 	WorkflowRuns *storage.WorkflowRunStorage

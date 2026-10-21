@@ -20,6 +20,17 @@
 		<span class="label">Who may run <span class="faint">none checked is every runner</span></span>
 		{{- template "whopicker" (list "allow" .AllowChoices) }}
 	</div>
+	{{- if .MoveFrom }}
+	<div class="field">
+		<label for="pe-workspace">Workspace <span class="faint">another one moves the checkout there, with the folder grants of the users; the runs stay under {{ $p.ID }}</span></label>
+		<select id="pe-workspace" name="workspace" data-move="{{ $p.ID }}" data-move-from="{{ .MoveFrom }}" data-move-left="{{ join .MoveLeft "; " }}">
+			<option value="_"{{ if eq .MoveFrom "_" }} selected{{ end }}>_ · the root</option>
+			{{- range .WorkspaceList }}{{ if ne .Folder "_" }}
+			<option value="{{ .Folder }}"{{ if eq .Folder $.MoveFrom }} selected{{ end }}>{{ .Folder }}{{ with .Title }} · {{ . }}{{ end }}</option>
+			{{- end }}{{ end }}
+		</select>
+	</div>
+	{{- end }}
 	<div class="field">
 		<label for="pe-sources">Sources <span class="faint">files to read, comma separated; empty detects them</span></label>
 		<input type="text" id="pe-sources" name="sources" data-type="list" value="{{ index .Form "sources" }}" placeholder="atkins.yml, Makefile" spellcheck="false" autocomplete="off">

@@ -117,6 +117,11 @@ type Page struct {
 	// folder page takes a prompt against.
 	WorkspaceList []model.Workspace
 	Workspace     *model.Workspace
+	// MoveFrom is the workspace a configure page's project is in, which
+	// its Workspace select starts on; empty for a folder that does not
+	// move. MoveLeft names the rows that stay behind on a move.
+	MoveFrom string
+	MoveLeft []string
 	// Nested are the project rows inside each workspace, by its folder.
 	Nested  map[string][]string
 	Keys    []sshkey.Key

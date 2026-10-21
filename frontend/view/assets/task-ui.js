@@ -546,6 +546,28 @@
     radio.closest("[data-folder-pick]").querySelectorAll("input[name=folders]").forEach(function (box) { box.disabled = !custom; });
   });
 
+  // A project's Workspace select moves it: picking another workspace
+  // makes the save ask first, naming the new ID and the rows that stay
+  // behind under the old one.
+  document.addEventListener("change", function (event) {
+    var pick = event.target.closest("select[data-move]");
+    if (!pick) return;
+    var form = pick.form, id = pick.dataset.move;
+    if (pick.value === pick.dataset.moveFrom) {
+      delete form.dataset.confirm;
+      delete form.dataset.confirmOk;
+      form.dataset.next = "/settings/projects?notice=Saved";
+      return;
+    }
+    var last = id.slice(id.lastIndexOf("/") + 1);
+    var to = pick.value === "_" ? last : pick.value + "/" + last;
+    var left = pick.dataset.moveLeft;
+    form.dataset.confirm = "Move " + id + " to " + to + "? The checkout, the project and the users' folder grants move; the runs stay under " + id + ". " +
+      (left ? "These still name " + id + " and stay behind: " + left + "." : "Nothing else names " + id + ".");
+    form.dataset.confirmOk = "Move";
+    form.dataset.next = "/settings/projects?notice=" + encodeURIComponent("Moved to " + to);
+  });
+
   // A new key made for a user takes their name: id_<type>_<user>.
   document.addEventListener("change", function (event) {
     var pick = event.target.closest("select[data-key-for]");
