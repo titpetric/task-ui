@@ -38,7 +38,8 @@ func TestGroups(t *testing.T) {
 
 // A workspace holds its projects, ws/project, each a group with the
 // folders inside it; a folder whose project is not listed stands in a
-// project of its own, without a top. The other groups stay as they are.
+// project of its own, without a top. The projects at the root come
+// first, the workspaces after them by rank.
 func TestGroups_workspace(t *testing.T) {
 	t.Parallel()
 	ids := []string{"apps", "apps/blog", "malta", "malta/deploy", "malta/deploy/web", "malta/deploy/web/edge", "malta/pkg", "malta/vhosts/site", "lab/deep"}
@@ -47,7 +48,7 @@ func TestGroups_workspace(t *testing.T) {
 		folders = append(folders, &folder.Folder{ID: id})
 	}
 
-	groups := view.Groups(folders, map[string]bool{"malta": true, "lab": true})
+	groups := view.Groups(folders, map[string]int{"malta": 0, "lab": 1})
 	assert.Len(t, groups, 3)
 	assert.Equal(t, "apps", groups[0].Top.ID)
 	assert.False(t, groups[0].Workspace)
@@ -92,4 +93,50 @@ func TestGroup(t *testing.T) {
 	assert.Equal(t, "deploy", g.ID)
 	assert.Equal(t, "deploy", g.Top.ID)
 	assert.Equal(t, []string{"deploy/terraform"}, idsOf(g.Nested))
+}
+
+// The top-level projects come first, in their order, and the workspaces
+// after them: a project cloned at the root lists above every workspace,
+// whatever its name, and none of it falls under a workspace's fold.
+func TestGroups_newProject(t *testing.T) {
+	t.Parallel()
+	ids := []string{"acme", "acme/api", "alpha", "beta", "beta/app", "infra", "zeta"}
+	folders := make([]*folder.Folder, 0, len(ids))
+	for _, id := range ids {
+		folders = append(folders, &folder.Folder{ID: id})
+	}
+
+	groups := view.Groups(folders, map[string]int{"acme": 0, "beta": 1})
+	order := []string{}
+	for _, g := range groups {
+		order = append(order, g.ID)
+	}
+	assert.Equal(t, []string{"alpha", "infra", "zeta", "acme", "beta"}, order)
+}
+
+// The workspaces go by rank, then by folder; a project at the root
+// whose top is not listed keeps its place among the others, and a user
+// who sees a workspace's project but not the workspace finds it under
+// the workspace, in the workspace's place.
+func TestGroups_order(t *testing.T) {
+	t.Parallel()
+	ids := []string{"acme/api", "apps/blog", "beta", "beta/app", "cobalt", "infra", "zeta"}
+	folders := make([]*folder.Folder, 0, len(ids))
+	for _, id := range ids {
+		folders = append(folders, &folder.Folder{ID: id})
+	}
+
+	groups := view.Groups(folders, map[string]int{"acme": 1, "beta": 1, "zeta": 0})
+	order := []string{}
+	for _, g := range groups {
+		order = append(order, g.ID)
+	}
+	assert.Equal(t, []string{"apps", "cobalt", "infra", "zeta", "acme", "beta"}, order)
+	assert.True(t, groups[0].Top == nil, "apps is not listed")
+	assert.Equal(t, []string{"apps/blog"}, idsOf(groups[0].Nested))
+	acme := groups[4]
+	assert.True(t, acme.Workspace)
+	assert.True(t, acme.Top == nil, "acme is not listed")
+	assert.Len(t, acme.Projects, 1)
+	assert.Equal(t, "acme/api", acme.Projects[0].Top.ID)
 }

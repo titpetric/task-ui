@@ -13,7 +13,8 @@
 <table class="table">
 	<thead><tr><th>Folder</th><th>Title</th><th>Repository</th><th class="hide-sm">Projects</th><th></th></tr></thead>
 	<tbody>
-	{{- range .WorkspaceList }}
+	{{- $last := len .WorkspaceList }}
+	{{- range $i, $ws := .WorkspaceList }}
 		{{- $nested := index $.Nested .Folder }}
 		<tr>
 			<td class="key nowrap"><a href="/f/{{ .Folder }}"><svg class="ic"><use href="#i-folder-open"/></svg> {{ .Folder }}</a></td>
@@ -21,6 +22,8 @@
 			<td class="mono-break">{{ .SourceURL }}{{ with .Branch }} <span class="badge">{{ . }}</span>{{ end }}</td>
 			<td class="hide-sm">{{ range $i, $id := $nested }}{{ if $i }}, {{ end }}<a href="/f/{{ $id }}">{{ $id }}</a>{{ else }}<span class="faint">none yet</span>{{ end }}</td>
 			<td class="actions">
+				<button type="button" class="btn-icon" data-workspace-move="up" data-folder="{{ .Folder }}" title="Move up" aria-label="Move {{ .Folder }} up"{{ if eq $i 0 }} disabled{{ end }}>↑</button>
+				<button type="button" class="btn-icon" data-workspace-move="down" data-folder="{{ .Folder }}" title="Move down" aria-label="Move {{ .Folder }} down"{{ if eq (add $i 1) $last }} disabled{{ end }}>↓</button>
 				<a class="btn-icon" href="/settings/workspaces/{{ .Folder }}" title="Configure {{ .Folder }}" aria-label="Configure {{ .Folder }}"><svg class="ic"><use href="#i-edit"/></svg></a>
 				{{- template "workspacedelete" (list . $nested "reload") }}
 			</td>

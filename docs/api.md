@@ -19,6 +19,7 @@ route or a tool only for a need these cannot serve, and states the reason.
 | `/api/integrations`, `/api/inventory` | Settings, Integrations, which keeps the services' tokens encrypted, the inventory from Beszel, and commands run on its hosts |
 | `/api/workspaces`, `workspace` on `POST /api/projects` | Workspaces: a checkout whose folder is the namespace of the projects cloned inside it, a resource the project routes cannot express. Any number of workspaces may share a repository, and deleting one takes its projects with it |
 | `POST /api/workspaces/{folder}/prompt` | **Prompt** on a workspace's folder page: Claude Code on a prompt in the workspace's checkout, a run of `internal/claude-prompt` whose environment, `TASK_UI_PROMPT` and the workspace, `POST /api/runs` cannot carry |
+| `sort` on `PUT /api/workspaces/{folder}` | **Move up** and **Move down** on the Workspaces page: the order of the workspaces in the sidebar, which no field held |
 | `summarize` on `POST /api/inventory/run` | **Run and summarize** on the Inventory page: Claude reads every host's output as one report, after the run, in the same request |
 
 | Method | Path | Does |
@@ -45,7 +46,7 @@ route or a tool only for a need these cannot serve, and states the reason.
 | `GET` | `/api/inventory` | the hosts of the Beszel integration, largest first; 404 without it |
 | `POST` | `/api/inventory/run` | `{command, hosts, summarize}`: runs the command on the hosts over their ssh logins at once, every host with a login when `hosts` is empty; each host's `output`, `exit_code` and `error` (admins). With `summarize`, also the markdown `report` of every output and Claude's `summary` of it, or `summary_error` |
 | `GET` `POST` `PUT` `DELETE` | `/api/projects`, `/api/projects/{folder}` | clone `{url, id, branch, workspace}`, into `<workspace>/<id>` when `workspace` names one; configure `{title, description, allow, sources, commands, job_allow, hours, job_hours}` |
-| `GET` `POST` `PUT` `DELETE` | `/api/workspaces`, `/api/workspaces/{folder}` | clone `{url, folder, title, description, branch}` into `<root>/<folder>`; `409` for a folder a workspace, a project or a directory holds; `PUT {title, description}`; `DELETE` removes the checkout, the projects inside it and their rows (admins) |
+| `GET` `POST` `PUT` `DELETE` | `/api/workspaces`, `/api/workspaces/{folder}` | clone `{url, folder, title, description, branch}` into `<root>/<folder>`; `409` for a folder a workspace, a project or a directory holds; `PUT {title, description, sort}`, the lowest sort first, left out it stays; `DELETE` removes the checkout, the projects inside it and their rows (admins) |
 | `POST` | `/api/workspaces/{folder}/prompt` `{prompt, cols, rows}` | starts `internal/claude-prompt` as you, with `TASK_UI_PROMPT` and the workspace in `TASK_UI_WORKSPACE_DIR`, and answers `201` with the run; `400` for an empty prompt, `409` while a prompt runs (admins) |
 | `GET` `POST` `PUT` | `/api/users`, `/api/users/{id}` | `POST {name, password, folders}` adds a user to the password file (admins; `409` for a name it holds); `PUT {folders}`; roles come from the role lists, and removing a user is removing its line |
 | `GET` `POST` `DELETE` | `/api/secrets`, `/api/secrets/{id}` | `{scope, name, content}`; content is never returned; `409` without a key to encrypt with |

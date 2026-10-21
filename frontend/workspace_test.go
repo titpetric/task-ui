@@ -3,6 +3,7 @@ package frontend_test
 import (
 	"context"
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/titpetric/task-ui/internal/assert"
@@ -26,10 +27,22 @@ func TestWorkspaces(t *testing.T) {
 	assert.Contains(t, body, "git@example.com:org/workspace.git")
 	assert.Contains(t, body, `href="/settings/workspaces/malta"`)
 	assert.Contains(t, body, `data-delete="/api/workspaces/malta"`)
+	// One workspace has nowhere to move.
+	assert.Contains(t, body, `data-workspace-move="up" data-folder="malta" title="Move up" aria-label="Move malta up" disabled>`)
+	assert.Contains(t, body, `data-workspace-move="down" data-folder="malta" title="Move down" aria-label="Move malta down" disabled>`)
 
 	settings := f.page(t, asAdmin, "/settings")
 	assert.Contains(t, settings, `href="/settings/workspaces"`)
 	assert.Contains(t, settings, "1 workspace<")
+
+	// The workspaces list in their order, each movable toward the other.
+	assert.NoError(t, f.opts.Workspaces.Create(ctx, &model.Workspace{Folder: "gozo", Title: "Gozo"}))
+	body = f.page(t, asAdmin, "/settings/workspaces")
+	assert.True(t, strings.Index(body, `href="/f/malta"`) < strings.Index(body, `href="/f/gozo"`), "malta, added first, lists first")
+	assert.Contains(t, body, `data-workspace-move="up" data-folder="malta" title="Move up" aria-label="Move malta up" disabled>`)
+	assert.Contains(t, body, `data-workspace-move="down" data-folder="malta" title="Move down" aria-label="Move malta down">`)
+	assert.Contains(t, body, `data-workspace-move="up" data-folder="gozo" title="Move up" aria-label="Move gozo up">`)
+	assert.Contains(t, body, `data-workspace-move="down" data-folder="gozo" title="Move down" aria-label="Move gozo down" disabled>`)
 
 	form := f.page(t, asAdmin, "/settings/workspaces/new")
 	assert.Contains(t, form, `data-api="/api/workspaces"`)

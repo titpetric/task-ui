@@ -54,14 +54,29 @@ func TestWorkspaceStorage_List(t *testing.T) {
 	for _, folder := range []string{"malta", "gozo"} {
 		assert.NoError(t, workspaces.Create(ctx, &model.Workspace{Folder: folder}))
 	}
+	// An added workspace goes last.
 	list, err := workspaces.List(ctx)
 	assert.NoError(t, err)
 	assert.Len(t, list, 2)
-	assert.Equal(t, "gozo", list[0].Folder)
+	assert.Equal(t, "malta", list[0].Folder)
+	assert.Equal(t, int64(0), list[0].Sort)
+	assert.Equal(t, int64(1), list[1].Sort)
 
 	folders, err := workspaces.Folders(ctx)
 	assert.NoError(t, err)
+	assert.Equal(t, []string{"malta", "gozo"}, folders)
+
+	// The sort orders them, the folder breaks a tie.
+	list[1].Sort = 0
+	assert.NoError(t, workspaces.Update(ctx, &list[1]))
+	folders, err = workspaces.Folders(ctx)
+	assert.NoError(t, err)
 	assert.Equal(t, []string{"gozo", "malta"}, folders)
+	list[0].Sort = -1
+	assert.NoError(t, workspaces.Update(ctx, &list[0]))
+	folders, err = workspaces.Folders(ctx)
+	assert.NoError(t, err)
+	assert.Equal(t, []string{"malta", "gozo"}, folders)
 }
 
 func TestWorkspaceStorage_Update(t *testing.T) {

@@ -52,7 +52,7 @@ func TestWorkspace_CRUD(t *testing.T) {
 
 	list := f.call(t, asAdmin, http.MethodGet, "/workspaces", nil)
 	assert.Len(t, list.list("workspaces"), 2)
-	assert.Equal(t, "gozo", list.list("workspaces")[0].(map[string]any)["folder"])
+	assert.Equal(t, "malta", list.list("workspaces")[0].(map[string]any)["folder"], "an added workspace goes last")
 
 	got := f.call(t, asAdmin, http.MethodGet, "/workspaces/malta", nil)
 	assert.Equal(t, http.StatusOK, got.Status)
@@ -64,6 +64,17 @@ func TestWorkspace_CRUD(t *testing.T) {
 	assert.Equal(t, "org tooling", updated.str("description"))
 	assert.Equal(t, repo, updated.str("source_url"), "an update keeps the repository")
 	assert.Equal(t, got.str("id"), updated.str("id"))
+	assert.Equal(t, float64(0), updated.get("sort"))
+
+	// A sort places the workspace; left out, it stays.
+	sort := int64(5)
+	sorted := f.call(t, asAdmin, http.MethodPut, "/workspaces/malta", api.WorkspaceRequest{Title: "The island", Sort: &sort})
+	assert.Equal(t, http.StatusOK, sorted.Status, string(sorted.Raw))
+	assert.Equal(t, float64(5), sorted.get("sort"))
+	list = f.call(t, asAdmin, http.MethodGet, "/workspaces", nil)
+	assert.Equal(t, "gozo", list.list("workspaces")[0].(map[string]any)["folder"])
+	kept := f.call(t, asAdmin, http.MethodPut, "/workspaces/malta", api.WorkspaceRequest{Title: "The island"})
+	assert.Equal(t, float64(5), kept.get("sort"))
 
 	deleted := f.call(t, asAdmin, http.MethodDelete, "/workspaces/malta", nil)
 	assert.Equal(t, http.StatusNoContent, deleted.Status)
