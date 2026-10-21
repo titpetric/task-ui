@@ -105,6 +105,8 @@ went.
 
 Open a folder from the sidebar:
 
+- **Actions**: a bar under the title, on a folder's page and on the page
+  of a directory inside it (see [Actions](#actions)).
 - **Jobs**: a card each, with what it does, its first steps, how it last
   went, **Run** and **Run force**. **Run all** starts every job of the
   folder in the background. A folder with more than one source has a section
@@ -120,7 +122,9 @@ Open a folder from the sidebar:
   `/f/malta/dockerfiles`, which the checkout of `malta` holds but
   discovery leaves out. They run in that directory under the folder's
   allow rules and hours, and pull the folder's checkout; the API names
-  them with `dir` (see [Runs](runs.md#what-a-job-gets)).
+  them with `dir` (see [Runs](runs.md#what-a-job-gets)). Each has its
+  page and history under the directory, such as
+  `/f/malta/dockerfiles/build`.
   A file that runs, executable or with a shebang on its first line,
   carries `#!` and **exec**, and **Run** for those the folder lets run,
   in the row and in the file's window: it starts the file as the job
@@ -149,6 +153,52 @@ Open a folder from the sidebar:
 A link to the folder's page with `#file=<name>`, such as
 `/f/acme/api#file=README.md`, opens that file of its Files in the window
 on load.
+
+## Actions
+
+![The actions bar of a directory: the git line, then git, compose and dockerfile chips](../assets/actions-dark.png)
+
+The bar under a folder's title, and under a directory's inside a folder,
+has two parts:
+
+- **The git line**: `⎇ main ↑1 ↓3 ●2 · malta/dockerfiles`. The branch of
+  the checkout the page is in, the nearest one up from it and no higher
+  than the root, or the commit of a detached checkout; `↑` the commits
+  to push, `↓` those to pull from its upstream as last fetched, `●` the
+  files changed or untracked; then where the checkout is. Hover it for
+  the upstream. The line reads `git status` and stays good for 5 seconds.
+- **Chips**: one per [atkins](https://github.com/titpetric/atkins) skill
+  that applies there, such as `[git: pull · rebase · status]` or
+  `[compose: build · custom · down · pull · up]`, and an `[atkins: default · build]`
+  chip of the place's own pipeline jobs. task-ui asks
+  `atkins -l --json --all` in the directory, as a page opens, and keeps
+  what it lists for 30 seconds, or until the pipeline file or a skill file
+  changes; an atkins that is missing, fails or takes longer than 3
+  seconds shows no chips. A skill comes from a `.atkins/skills/` folder
+  of the directory or of any directory above it, and applies where its
+  `when:` holds; a job of it with a `when:` of its own that fails, such
+  as `compose: build` beside a compose file that builds nothing, has no
+  chip. Hover a chip for what the skill is and the file its `when:`
+  matched.
+
+Each job of a chip is a **Run**, which opens the run's window as a job
+card's does, and **Attach** while it runs; a user who may not run it gets
+a link to its page. A skill job is the job `@<skill>:<job>` of the
+folder, such as `@git:status`: it runs `atkins git:status` in the
+directory of the file the skill's `when:` matched, the checkout for git,
+the directory of the compose file for compose, under the folder's allow
+rules and hours, and keeps its history under that directory. A skill
+that matched above the folder runs in the folder's own directory, where
+atkins finds it again.
+
+**compose up** and **down** of the compose project task-ui itself runs
+in ask first: they stop or recreate the instance and every run in it.
+task-ui reads its project from the compose label of its container, or
+from `TASK_UI_COMPOSE_PROJECT`, and a compose file's project is its
+`name:`, or its directory's name.
+
+The API answers the bar with `GET /api/folders/{id}/actions?dir=`, for
+whoever sees the folder.
 
 ## A job's page
 

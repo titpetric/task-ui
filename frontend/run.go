@@ -64,7 +64,7 @@ func (h *Handlers) runs(w http.ResponseWriter, r *http.Request) {
 	n := pageSize(q)
 	p.Form = map[string]string{"folder": q.Get("folder"), "job": q.Get("job"), "state": q.Get("state"), "n": q.Get("n")}
 	filter := storage.RunFilter{
-		Folder: q.Get("folder"), Folders: user.FolderList(), Job: q.Get("job"), State: q.Get("state"),
+		Folder: q.Get("folder"), Folders: user.FolderList(), Job: q.Get("job"), Dir: q.Get("dir"), State: q.Get("state"),
 		Before: q.Get("before"), After: q.Get("after"), Limit: n + 1,
 	}
 	runs := h.visibleRuns(r.Context(), user, filter)

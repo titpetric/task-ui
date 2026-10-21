@@ -42,3 +42,10 @@ func TestRun_Elapsed(t *testing.T) {
 	assert.Equal(t, 10*time.Second, (&model.Run{StartedAt: &start, FinishedAt: &end}).Elapsed())
 	assert.GreaterOrEqual(t, (&model.Run{StartedAt: &start}).Elapsed(), time.Minute)
 }
+
+// Where names the folder, and the directory of a job of a directory.
+func TestRun_Where(t *testing.T) {
+	t.Parallel()
+	assert.Equal(t, "malta", model.Run{Folder: "malta", Job: "build"}.Where())
+	assert.Equal(t, "malta/dockerfiles", model.Run{Folder: "malta", Dir: "dockerfiles", Job: "build"}.Where())
+}

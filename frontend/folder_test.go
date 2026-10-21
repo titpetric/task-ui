@@ -4,13 +4,16 @@ import (
 	"context"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
 
+	"github.com/titpetric/task-ui/frontend"
 	"github.com/titpetric/task-ui/integration"
 	"github.com/titpetric/task-ui/internal/assert"
 	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/skills/skillstest"
 )
 
 func TestFolder(t *testing.T) {
@@ -388,8 +391,9 @@ func card(body, job string) string {
 }
 
 // A directory browsed inside a folder lists its own targets as job
-// cards, with Run naming the directory and no job page to link; a run
-// there shows on its card.
+// cards, with Run naming the directory and the job's page under it; a
+// run there shows on its card and in that page's history, not in the
+// history of the folder's job of the same name.
 func TestFolder_BrowseJobs(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
@@ -404,11 +408,104 @@ func TestFolder_BrowseJobs(t *testing.T) {
 	assert.Contains(t, body, "Its jobs run in infra/images/")
 	assert.NotContains(t, body, "Nothing to run here")
 	for _, job := range []string{"default", "build", "push"} {
-		assert.Contains(t, body, `<span class="name">`+job+`</span>`)
+		assert.Contains(t, body, `<a class="name" href="/f/_/infra/images/`+job+`">`+job+`</a>`)
 		assert.Contains(t, body, `data-folder="infra" data-dir="images" data-job="`+job+`" data-title="infra/images / `+job+`"`)
 	}
 	assert.Contains(t, body, `<i class="dot failed"></i>`)
 	assert.Contains(t, body, "atkins -f atkins.yml")
-	assert.Contains(t, f.page(t, asViewer, "/f/_/infra/images"), `<span class="name">build</span>`)
-	assert.NotContains(t, f.page(t, asViewer, "/f/_/infra/images"), `data-dir="images"`)
+	viewer := f.page(t, asViewer, "/f/_/infra/images")
+	assert.Contains(t, viewer, `<a class="btn btn-sm" href="/f/_/infra/images/build">History</a>`)
+	assert.NotContains(t, viewer, `data-dir="images"`)
+
+	page := f.page(t, asOps, "/f/_/infra/images/build")
+	assert.Contains(t, page, "infra/images / build")
+	assert.Contains(t, page, `data-attach="`+run.ID+`"`)
+	assert.Contains(t, page, "the job runs here")
+	assert.NotContains(t, page, "<h3>Scheduled")
+	own := f.run(t, "infra", "plan", "ops", model.StateOK)
+	inDir := f.run(t, "infra", "plan", "ops", model.StateOK)
+	inDir.Dir = "images"
+	assert.NoError(t, f.opts.Runs.Update(context.Background(), inDir))
+	_, plan, _ := strings.Cut(f.page(t, asOps, "/f/_/infra/plan"), "<h3>History")
+	plan, _, _ = strings.Cut(plan, "</section>")
+	assert.Contains(t, plan, `data-attach="`+own.ID+`"`)
+	assert.NotContains(t, plan, `data-attach="`+inDir.ID+`"`)
+	assert.Equal(t, http.StatusNotFound, f.get(t, asOps, "/f/_/infra/images/nothing").Status)
+}
+
+// actionsBar cuts the actions bar out of a page.
+func actionsBar(body string) string {
+	_, rest, ok := strings.Cut(body, `<div class="actionsbar"`)
+	if !ok {
+		return ""
+	}
+	bar, _, _ := strings.Cut(rest, "\n</div>")
+	return bar
+}
+
+// A folder page and a directory browsed inside a folder carry the
+// actions bar: the git line of the checkout, a chip per skill atkins
+// applies there, each job a Run of the folder in the directory the job
+// runs in, and a chip of the place's own atkins jobs. A viewer gets the
+// job pages instead; compose up and down of task-ui's own project ask
+// first.
+func TestFolder_Actions(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	probe, _ := skillstest.Prober(t)
+	f.infra.Probe = probe
+	out, err := exec.Command("git", "-c", "init.defaultBranch=main", "init", "-q", f.infra.Dir).CombinedOutput()
+	assert.NoError(t, err, string(out))
+	app := filepath.Join(f.infra.Dir, "app")
+	assert.NoError(t, os.MkdirAll(app, 0o755))
+	assert.NoError(t, os.WriteFile(filepath.Join(app, "compose.yml"), []byte("services:\n  a:\n    build: .\n"), 0o644))
+	assert.NoError(t, os.WriteFile(filepath.Join(app, "atkins.yml"), []byte("jobs:\n  default:\n    steps:\n      - run: echo hi\n"), 0o644))
+	assert.NoError(t, os.WriteFile(filepath.Join(f.infra.Dir, "new.txt"), []byte("x\n"), 0o644))
+
+	top := actionsBar(f.page(t, asOps, "/f/_/infra"))
+	assert.Contains(t, top, `<span class="glyph" aria-hidden="true">⎇</span> main`)
+	assert.Contains(t, top, `●2`, "new.txt and app/")
+	assert.Contains(t, top, `· infra`)
+	assert.Contains(t, top, `<span class="chip-name">git</span>`)
+	assert.Contains(t, top, `data-folder="infra" data-job="@git:pull" data-title="infra / pull"`)
+	assert.NotContains(t, top, "compose")
+
+	bar := actionsBar(f.page(t, asOps, "/f/_/infra/app"))
+	assert.Contains(t, bar, `⎇</span> main`)
+	assert.Contains(t, bar, `data-folder="infra" data-job="@git:status" data-title="infra / status"`, "git runs in the checkout")
+	assert.Contains(t, bar, `data-folder="infra" data-dir="app" data-job="@compose:build" data-title="infra/app / build"`)
+	assert.Contains(t, bar, `data-dir="app" data-job="@compose:up"`)
+	assert.Contains(t, bar, `when compose.yml here, matched compose.yml; runs in app/`)
+	assert.Contains(t, bar, `<span class="chip-name">atkins</span>`)
+	assert.Contains(t, f.page(t, asOps, "/f/_/infra/app"), "Its jobs run in infra/app/")
+	deploy := filepath.Join(f.infra.Dir, "deploy")
+	assert.NoError(t, os.MkdirAll(deploy, 0o755))
+	assert.NoError(t, os.WriteFile(filepath.Join(deploy, "compose.yml"), []byte("services:\n  a:\n    image: x\n"), 0o644))
+	skillsOnly := f.page(t, asOps, "/f/_/infra/deploy")
+	assert.Contains(t, skillsOnly, "the skills below run here")
+	assert.NotContains(t, actionsBar(skillsOnly), "@compose:build")
+	assert.Contains(t, bar, `data-folder="infra" data-dir="app" data-job="default"`)
+	assert.NotContains(t, bar, "data-confirm")
+
+	viewer := actionsBar(f.page(t, asViewer, "/f/_/infra/app"))
+	assert.Contains(t, viewer, `<a class="chip-act" href="/f/_/infra/app/@compose:up"`)
+	assert.Contains(t, viewer, `<a class="chip-act" href="/f/_/infra/@git:status"`)
+	assert.NotContains(t, viewer, "data-run")
+	page := f.page(t, asViewer, "/f/_/infra/app/@compose:up")
+	assert.Contains(t, page, "infra/app / up")
+	assert.Contains(t, page, "atkins compose:up")
+	assert.Contains(t, f.page(t, asViewer, "/f/_/infra/@git:status"), "Show the branch")
+
+	// The project task-ui runs in: up and down ask first.
+	f.opts.ComposeProject = "app"
+	h, err := frontend.New(f.opts)
+	assert.NoError(t, err)
+	f.server.Config.Handler = h.Routes()
+	bar = actionsBar(f.page(t, asOps, "/f/_/infra/app"))
+	assert.Contains(t, bar, `data-job="@compose:up" data-title="infra/app / up" data-confirm="Run compose up for app?`)
+	assert.Contains(t, bar, `data-job="@compose:down" data-title="infra/app / down" data-confirm="Run compose down for app?`)
+	assert.NotContains(t, bar, `data-job="@compose:build" data-title="infra/app / build" data-confirm`)
+
+	// No checkout and no skills: no bar.
+	assert.Equal(t, "", actionsBar(f.page(t, asOps, "/f/_/private")))
 }

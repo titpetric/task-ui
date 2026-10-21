@@ -1,0 +1,22 @@
+name: Dockerfile
+help: >-
+  Builds and pushes the image of the Dockerfile in the current folder.
+  dockerfile:build tags it IMAGE, or local/<folder> without one;
+  dockerfile:push needs IMAGE.
+when:
+  files: [Dockerfile]
+  here: true
+
+jobs:
+  build:
+    desc: Build the image, tagged IMAGE or local/<folder>
+    cmd: docker buildx build --load -t "${IMAGE:-local/${PWD##*/}}" .
+
+  push:
+    desc: Push the image named by IMAGE
+    cmd: |
+      if [ -z "${IMAGE:-}" ]; then
+        echo "dockerfile:push: set IMAGE to the image to push" >&2
+        exit 1
+      fi
+      docker push "$IMAGE"

@@ -2,7 +2,7 @@
 {{- $run := .Run }}{{ $can := .CanRun .Folder .Job }}
 <div class="page-head">
 	<div>
-		<h2>{{ $run.Folder }}{{ with $run.Dir }}/{{ . }}{{ end }} / {{ $run.Job }} <span class="badge {{ tone $run.State }}">{{ $run.State }}{{ if and (ne $run.State "ok") (ne $run.State "running") }} {{ $run.ExitCode }}{{ end }}</span></h2>
+		<h2>{{ $run.Where }} / {{ $run.Job }} <span class="badge {{ tone $run.State }}">{{ $run.State }}{{ if and (ne $run.State "ok") (ne $run.State "running") }} {{ $run.ExitCode }}{{ end }}</span></h2>
 		<p>Started by {{ $run.UserName }} {{ ago $run.StartedAt }}{{ if $run.IsScheduled }} by the scheduler{{ end }}{{ if $run.IsForced }}, with Run force{{ end }}.{{ if eq $run.State "running" }} The session is live: attach to follow it{{ if $can }}, or end it{{ end }}.{{ else }} The run is over; everything it printed is below.{{ end }}</p>
 	</div>
 	<div class="actions">
@@ -18,7 +18,7 @@
 {{- if and $run.Live (eq $run.State "running") }}
 <section class="block" data-live>
 	<h3>Terminal <small>as it looks now, {{ if $run.Attached }}{{ $run.Attached }} watching{{ else }}nobody attached{{ end }}</small></h3>
-	<a class="tile wide" href="#" data-attach="{{ $run.ID }}"><div class="frame" data-frame="{{ $run.ID }}" role="img" aria-label="Terminal of {{ $run.Folder }} / {{ $run.Job }}">{{ $run.FrameSVG }}</div></a>
+	<a class="tile wide" href="#" data-attach="{{ $run.ID }}"><div class="frame" data-frame="{{ $run.ID }}" role="img" aria-label="Terminal of {{ $run.Where }} / {{ $run.Job }}">{{ $run.FrameSVG }}</div></a>
 </section>
 {{- end }}
 
@@ -37,7 +37,7 @@
 		<tbody>
 			<tr><th>Folder</th><td><a href="{{ $.Href $run.Folder }}"><svg class="ic"><use href="#i-folder"/></svg> {{ $run.Folder }}</a></td></tr>
 			{{- with $run.Dir }}<tr><th>Directory</th><td><a href="{{ $.Href $run.Folder }}/{{ . }}"><svg class="ic"><use href="#i-folder-open"/></svg> {{ . }}/</a> <span class="dim">the job ran here</span></td></tr>{{ end }}
-			<tr><th>Job</th><td>{{ if $run.Dir }}{{ $run.Job }}{{ else }}<a href="{{ $.Href $run.Folder }}/{{ $run.Job }}">{{ $run.Job }}</a>{{ end }}</td></tr>
+			<tr><th>Job</th><td><a href="{{ $.Href $run.Folder }}/{{ with $run.Dir }}{{ . }}/{{ end }}{{ $run.Job }}">{{ $run.Job }}</a></td></tr>
 			{{- with $run.ArgList }}<tr><th>Arguments</th><td>{{ range . }}<code>{{ . }}</code> {{ end }}<span class="dim">after --, one argument each</span></td></tr>{{ end }}
 			<tr><th>By</th><td>{{ template "who" (list $ $run) }}</td></tr>
 			<tr><th>Started</th><td>{{ stamp $run.StartedAt }}</td></tr>

@@ -1,6 +1,8 @@
 package view_test
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -81,13 +83,39 @@ func TestPage_CanRunJob(t *testing.T) {
 	p := admin(t)
 
 	assert.True(t, p.CanRunAny(p.Folder))
-	assert.True(t, p.CanRunJob("infra", "plan"))
-	assert.False(t, p.CanRunJob("infra", "nothing"))
-	assert.False(t, p.CanRunJob("nowhere", "plan"))
+	assert.True(t, p.CanRunJob("infra", "", "plan"))
+	assert.False(t, p.CanRunJob("infra", "", "nothing"))
+	assert.False(t, p.CanRunJob("nowhere", "", "plan"))
+
+	// A run of a directory's job names the directory: its job is one of
+	// that directory's own targets.
+	p.Folder.Dir = t.TempDir()
+	images := filepath.Join(p.Folder.Dir, "images")
+	assert.NoError(t, os.MkdirAll(images, 0o755))
+	assert.NoError(t, os.WriteFile(filepath.Join(images, "atkins.yml"), []byte("jobs:\n  build:\n    steps:\n      - run: echo\n"), 0o644))
+	assert.True(t, p.CanRunJob("infra", "images", "build"))
+	assert.False(t, p.CanRunJob("infra", "", "build"))
+	assert.False(t, p.CanRunJob("infra", "images", "plan"))
+	assert.False(t, p.CanRunJob("infra", "..", "plan"))
 
 	p.User = &model.User{Name: "guest", Role: model.RoleViewer}
 	assert.False(t, p.CanRunAny(p.Folder))
-	assert.False(t, p.CanRunJob("infra", "plan"))
+	assert.False(t, p.CanRunJob("infra", "", "plan"))
+	assert.False(t, p.CanRunJob("infra", "images", "build"))
+}
+
+// A job's page is under its folder's, after its directory for a job of
+// a directory inside the folder.
+func TestPage_JobHref(t *testing.T) {
+	t.Parallel()
+	p := &view.Page{Workspaces: map[string]int{"malta": 0}}
+	f := &folder.Folder{ID: "malta"}
+	job := &folder.Job{ID: "build"}
+	assert.Equal(t, "/f/malta/build", p.JobHref(f, job))
+	job.Dir = "dockerfiles/blog"
+	assert.Equal(t, "/f/malta/dockerfiles/blog/build", p.JobHref(f, job))
+	assert.Equal(t, "/f/_/acme/@git:status", p.JobHref(&folder.Folder{ID: "acme"}, &folder.Job{ID: "@git:status"}))
+	assert.Equal(t, "", p.JobHref(nil, job))
 }
 
 // The sidebar's groups come from the folders it lists and the

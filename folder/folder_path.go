@@ -106,7 +106,7 @@ func (f *Folder) Sub(rel string) *Folder {
 	sub := Load(f.ID, dir)
 	sub.Title = f.ID + "/" + rel
 	sub.Rel = rel
-	sub.Allow, sub.Hours = f.Allow, f.Hours
+	sub.Allow, sub.Hours, sub.Probe = f.Allow, f.Hours, f.Probe
 	for _, job := range sub.Jobs {
 		job.Dir = rel
 	}

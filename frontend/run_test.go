@@ -194,8 +194,8 @@ func TestRuns_Pages(t *testing.T) {
 	assert.Contains(t, back, `rel="next"`)
 }
 
-// A run of a directory's job names the directory, links it, and lists
-// the arguments it passed, one each.
+// A run of a directory's job names the directory, links it and the job's
+// page under it, and lists the arguments it passed, one each.
 func TestRun_Dir(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
@@ -206,7 +206,7 @@ func TestRun_Dir(t *testing.T) {
 	body := f.page(t, asViewer, "/runs/"+run.ID)
 	assert.Contains(t, body, `<h2>infra/images / custom <span`)
 	assert.Contains(t, body, `<th>Directory</th><td><a href="/f/_/infra/images">`)
-	assert.Contains(t, body, `<th>Job</th><td>custom</td>`)
+	assert.Contains(t, body, `<th>Job</th><td><a href="/f/_/infra/images/custom">custom</a></td>`)
 	assert.Contains(t, body, `<code>ps</code> <code>; id</code>`)
 
 	plain := f.page(t, asViewer, "/runs/"+f.run(t, "infra", "plan", "ops", model.StateOK).ID)

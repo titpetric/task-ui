@@ -58,7 +58,7 @@ func (h *Handlers) view(r *http.Request, run model.Run) RunView {
 func (h *Handlers) listRuns(w http.ResponseWriter, r *http.Request) {
 	user := access.UserFrom(r.Context())
 	q := r.URL.Query()
-	filter := storage.RunFilter{Folder: q.Get("folder"), Folders: user.FolderList(), Job: q.Get("job"), State: q.Get("state"), Limit: queryInt(r, "limit", 50)}
+	filter := storage.RunFilter{Folder: q.Get("folder"), Folders: user.FolderList(), Job: q.Get("job"), Dir: q.Get("dir"), State: q.Get("state"), Limit: queryInt(r, "limit", 50)}
 	runs, err := h.opts.Runs.List(r.Context(), filter)
 	if err != nil {
 		failErr(w, err)

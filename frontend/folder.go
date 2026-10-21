@@ -68,6 +68,8 @@ func (h *Handlers) folderAt(w http.ResponseWriter, r *http.Request, path string)
 		h.browse(w, r, f, rest)
 	case fileJob(f, rest) != "":
 		h.job(w, r, f, fileJob(f, rest))
+	case dirJob(f, rest) != nil:
+		h.job(w, r, dirJob(f, rest), rest[strings.LastIndex(rest, "/")+1:])
 	case !strings.Contains(rest, "/"):
 		h.job(w, r, f, rest)
 	default:
@@ -140,6 +142,37 @@ func fileJob(f *folder.Folder, rel string) string {
 	return id
 }
 
+// dirJob returns the folder of the directory a job's path names, dir/job,
+// when the job is one of that directory's, as Folder.Sub reads it, or a
+// skill atkins applies there; nil otherwise.
+func dirJob(f *folder.Folder, rest string) *folder.Folder {
+	dir, id := path.Split(rest)
+	if dir == "" || id == "" {
+		return nil
+	}
+	sub := f.Sub(strings.TrimSuffix(dir, "/"))
+	if sub == nil || sub.Job(id) == nil {
+		return nil
+	}
+	return sub
+}
+
+// actions builds the actions bar of a place, a folder or the folder of a
+// directory inside one: the git line of its checkout, its skills and its
+// own atkins jobs.
+func (h *Handlers) actions(place *folder.Folder) *view.Actions {
+	a := &view.Actions{Place: place, Self: h.opts.ComposeProject, Skills: place.Skills()}
+	if h.opts.Git != nil && h.opts.Root != "" {
+		a.Git = h.opts.Git.Status(place.Dir, h.opts.Root)
+	}
+	for _, job := range place.Jobs {
+		if job.Kind == "atkins" {
+			a.Pipeline = append(a.Pipeline, job)
+		}
+	}
+	return a
+}
+
 // browse shows a directory inside a folder that is not a folder itself:
 // the targets of its own that run there, as Folder.Sub reads them, and
 // what it holds, to go on into.
@@ -148,9 +181,12 @@ func (h *Handlers) browse(w http.ResponseWriter, r *http.Request, f *folder.Fold
 	p.Folder = f
 	p.Browse = rel + "/"
 	dir, _ := f.Path(rel)
-	if sub := f.Sub(rel); sub != nil && len(sub.Sources) > 0 {
-		p.Place = sub
-		p.Last = h.lastRuns(r, sub)
+	if sub := f.Sub(rel); sub != nil {
+		p.Actions = h.actions(sub)
+		if len(sub.Sources) > 0 {
+			p.Place = sub
+			p.Last = h.lastRuns(r, sub)
+		}
 	}
 	p.Tree = h.checkoutTree(p, f, rel, folder.Listing(dir))
 	p.Up = p.Href(f.ID)
@@ -172,6 +208,7 @@ func (h *Handlers) folder(w http.ResponseWriter, r *http.Request, f *folder.Fold
 		p.Up = p.Href(parent)
 	}
 	p.Crumbs = crumbsOf(f.ID, "", p.Workspaces)
+	p.Actions = h.actions(f)
 	if h.opts.Git != nil && h.opts.Git.IsRepo(f.Dir) {
 		p.Checkout = h.opts.Git.Info(f.Dir)
 		if h.opts.Disk != nil {

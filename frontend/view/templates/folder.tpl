@@ -9,6 +9,7 @@
 		<span class="dim nowrap">{{ range $p.Sources }}<span class="badge">{{ .Kind }}</span> {{ end }}</span>
 	</div>
 </div>
+{{- template "actions" $ }}
 
 {{- if $p.Error }}
 <div class="alert bad"><b>Could not read a source.</b> {{ $p.Error }}</div>

@@ -1,0 +1,7 @@
+services:
+  api:
+    build: .
+    image: registry.acme.example/api:latest
+    restart: always
+    ports:
+      - "8080:8080"

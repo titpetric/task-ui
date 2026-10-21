@@ -1,0 +1,28 @@
+name: Docker Compose
+help: >-
+  Runs docker compose on the compose file in the current folder.
+  compose:build shows only where the compose file builds an image.
+when:
+  files: [compose.yml, compose.yaml]
+  here: true
+
+jobs:
+  up:
+    desc: Start the services
+    cmd: docker compose up -d --remove-orphans
+
+  down:
+    desc: Stop and remove the services
+    cmd: docker compose down
+
+  pull:
+    desc: Pull the service images
+    cmd: docker compose pull
+
+  build:
+    desc: Build the service images
+    when:
+      files: [compose.yml, compose.yaml]
+      here: true
+      contains: '(?m)^\s+build:'
+    cmd: docker compose build

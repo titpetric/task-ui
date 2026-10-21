@@ -72,6 +72,9 @@ type Options struct {
 	// Disk measures the space the artifacts and the checkouts take. Nil
 	// leaves the space bars out.
 	Disk *diskusage.Meter
+	// ComposeProject is the docker compose project task-ui runs in: up
+	// and down of it on the actions bar ask first.
+	ComposeProject string
 	// AddUsers lets an admin make users: the server writes a password
 	// file.
 	AddUsers bool

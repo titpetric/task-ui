@@ -256,6 +256,10 @@ shot workspace-prompt-dark /f/acme dark
 # and its README in the preview window.
 shot files-dark /f/acme/api dark
 shot file-dark "/f/acme/api#file=README.md" dark
+# The actions bar of a directory inside the api project: the git line of
+# its checkout, and the git, compose and dockerfile skills of acme's
+# .atkins/skills that apply there.
+shot actions-dark /f/acme/api/deploy dark 1440x700
 
 # A second workspace, labs, with no encryption key and no SSH key, so the
 # keys and secrets pages show both states: it stores no secrets until an

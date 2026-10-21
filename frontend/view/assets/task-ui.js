@@ -2003,7 +2003,7 @@
           '<button type="button" class="btn-icon danger" data-kill="' + id + '" title="Kill the run" aria-label="Kill the run"><svg class="ic"><use href="#i-trash"/></svg></button>';
       }
       if (run.state !== "running" && runsTable.hasAttribute("data-summarize")) {
-        html += '<button type="button" class="btn btn-sm" data-summary="/api/runs/' + id + '/summary" data-summary-page="/runs/' + id + '" data-summary-title="' + escapeHTML(run.folder + " / " + run.job) +
+        html += '<button type="button" class="btn btn-sm" data-summary="/api/runs/' + id + '/summary" data-summary-page="/runs/' + id + '" data-summary-title="' + escapeHTML(runTitle(run)) +
           '" title="Claude\'s summary of the output, written once and kept">Summary</button>';
       }
       return html;
@@ -2029,10 +2029,12 @@
       row = document.createElement("tr");
       row.dataset.runId = run.id;
       var folder = escapeHTML(run.folder), job = escapeHTML(run.job);
+      var dir = run.dir ? escapeHTML(run.dir) : "";
+      var place = folderHref(folder) + (dir ? "/" + dir : "");
       row.innerHTML =
         '<td class="nowrap" data-label="Started">just now</td>' +
-        '<td data-label="Folder"><a href="' + folderHref(folder) + '">' + folder + "</a></td>" +
-        '<td class="key"><a href="' + folderHref(folder) + "/" + job + '">' + job + "</a></td>" +
+        '<td data-label="Folder"><a href="' + place + '">' + folder + (dir ? "/" + dir : "") + "</a></td>" +
+        '<td class="key"><a href="' + place + "/" + job + '">' + job + "</a></td>" +
         '<td data-label="By">' + whoHTML(run) + "</td>" +
         '<td class="nowrap" data-label="Took" data-took>' + took(run) + "</td>" +
         '<td data-label="Result" data-result>' + stateHTML(run) + "</td>" +
@@ -2094,10 +2096,10 @@
         tile.href = "/runs/" + run.id;
         tile.dataset.attach = run.id;
         tile.dataset.tile = run.id;
-        tile.innerHTML = '<div class="tile-head"><i class="dot running"></i><b>' + escapeHTML(run.folder + " / " + run.job) + "</b>" +
+        tile.innerHTML = '<div class="tile-head"><i class="dot running"></i><b>' + escapeHTML(runTitle(run)) + "</b>" +
           '<span class="spacer"></span><span class="faint"></span>' +
           avatarHTML(run.user_name) + "</div>" +
-          '<div class="frame" data-frame="' + escapeHTML(run.id) + '" role="img" aria-label="Terminal of ' + escapeHTML(run.folder + " / " + run.job) + '"></div>';
+          '<div class="frame" data-frame="' + escapeHTML(run.id) + '" role="img" aria-label="Terminal of ' + escapeHTML(runTitle(run)) + '"></div>';
         tiles.insertBefore(tile, tiles.firstChild);
         watchFrames();
       } else if (tile) {
@@ -2204,13 +2206,20 @@
       attach(btn.dataset.attach);
       return;
     }
-    start({
+    var spec = {
       folder: btn.dataset.folder,
       dir: btn.dataset.dir || "",
       job: btn.dataset.job,
       title: btn.dataset.title || (btn.dataset.folder + " / " + btn.dataset.job),
       force: btn.hasAttribute("data-force"),
-    });
+    };
+    // A Run that stops task-ui itself, compose up or down of its own
+    // project, asks first.
+    if (btn.dataset.confirm) {
+      confirm(btn.dataset.confirm, btn.dataset.confirmOk || "Run").then(function (ok) { if (ok) start(spec); });
+      return;
+    }
+    start(spec);
   });
 
   // ------------------------------------------------------------- output
@@ -2449,9 +2458,9 @@
     var running = r.state === "running";
     var verb = !running ? "View" : r.can_run ? "Attach to" : "Watch";
     return '<a href="/runs/' + encodeURIComponent(r.id) + '" data-attach="' + escapeHTML(r.id) + '" class="recent" title="' +
-      escapeHTML(verb + " " + r.folder + " / " + r.job + ", " + r.user_name + ", " + r.state) + '">' +
+      escapeHTML(verb + " " + runTitle(r) + ", " + r.user_name + ", " + r.state) + '">' +
       '<i class="dot ' + escapeHTML(r.state) + '"></i>' +
-      '<span class="what"><b>' + escapeHTML(r.job) + '</b><small>' + escapeHTML(r.folder) + '</small></span>' +
+      '<span class="what"><b>' + escapeHTML(r.job) + '</b><small>' + escapeHTML(r.folder + (r.dir ? "/" + r.dir : "")) + '</small></span>' +
       (running ? '<svg class="ic act"><use href="#i-' + (r.can_run ? "play" : "eye") + '"/></svg>' : "") +
       avatarHTML(r.user_name) + "</a>";
   }
@@ -2467,7 +2476,7 @@
       runs.forEach(function (r) {
         if (r.state !== "running") return;
         running[r.folder] = true;
-        runningJobs[r.folder + "/" + r.job] = true;
+        runningJobs[r.folder + (r.dir ? "/" + r.dir : "") + "/" + r.job] = true;
       });
       document.querySelectorAll(".side [data-folder] > summary .dot").forEach(function (dot) {
         dot.classList.toggle("running", !!running[dot.closest("[data-folder]").dataset.folder]);

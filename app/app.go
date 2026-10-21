@@ -32,6 +32,7 @@ import (
 	"github.com/titpetric/task-ui/recording"
 	"github.com/titpetric/task-ui/runner"
 	"github.com/titpetric/task-ui/scheduler"
+	"github.com/titpetric/task-ui/skills"
 	"github.com/titpetric/task-ui/sshkey"
 	"github.com/titpetric/task-ui/sshprobe"
 	"github.com/titpetric/task-ui/storage"
@@ -248,6 +249,11 @@ func (a *App) wire(version string) error {
 
 	a.Catalogue = NewCatalogue(cfg.Root, cfg.Discover, projects)
 	a.Catalogue.Agent = cfg.Agent
+	a.Catalogue.Skills = &skills.Prober{Timeout: 3 * time.Second, TTL: 30 * time.Second}
+	self := cfg.ComposeProject
+	if self == "" {
+		self = ComposeProject("docker")
+	}
 	store := &artifactstore.Store{Dir: cfg.ArtifactTree(), Keep: cfg.ArtifactHistory}
 	a.Runner = runner.New(runner.Options{
 		KeyDir: keys.Dir, KeyPolicies: keyPolicies,
@@ -304,7 +310,7 @@ func (a *App) wire(version string) error {
 		FolderRefs: refs, WorkspaceKeys: keyring, KeyGrants: grants,
 		Workflows: workflows, WorkflowRuns: workflowRuns, Flows: a.Workflows,
 		Runner: a.Runner, Catalogue: a.Catalogue, Git: g, Keys: keys, HomeKeys: homeKeys, KeyPolicies: keyPolicies, Env: env, Recordings: recordings, Root: cfg.Root, Version: version, Now: cfg.Clock(),
-		ArtifactStore: store, Disk: &diskusage.Meter{TTL: 10 * time.Minute}, Board: a.Board,
+		ArtifactStore: store, Disk: &diskusage.Meter{TTL: 10 * time.Minute}, Board: a.Board, ComposeProject: self,
 		Integrations: integrations, Hosts: hosts,
 		SSH: prober, AddUsers: a.UsersFile != nil,
 	})

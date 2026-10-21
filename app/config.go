@@ -60,6 +60,11 @@ type Config struct {
 	// Agent is the user a note on the board names with @ to make it an
 	// instruction to run. TASK_UI_AGENT; empty turns instructions off.
 	Agent string
+	// ComposeProject is the docker compose project task-ui runs in, whose
+	// compose up and down ask first on the actions bar.
+	// TASK_UI_COMPOSE_PROJECT; empty reads the compose label of the
+	// container task-ui runs in, if it runs in one.
+	ComposeProject string
 	// AgentJob is the job an instruction runs, as folder/job, as the
 	// agent's user. TASK_UI_AGENT_JOB, default internal/claude-note; set
 	// empty, it leaves instructions open for an agent that reads the
@@ -147,6 +152,8 @@ func NewConfig(args []string) (*Config, error) {
 		AutoLogin: env("TASK_UI_AUTOLOGIN", ""),
 		Agent:     env("TASK_UI_AGENT", ""),
 		AgentJob:  envSet("TASK_UI_AGENT_JOB", "internal/claude-note"),
+
+		ComposeProject: env("TASK_UI_COMPOSE_PROJECT", ""),
 	}
 	var err error
 	if cfg.SessionTTL, err = envDuration("TASK_UI_SESSION_TTL", 12*time.Hour); err != nil {

@@ -41,15 +41,15 @@
 		{{- range .Runs }}
 			<tr data-run-id="{{ .ID }}">
 				<td class="nowrap" data-label="Started" title="{{ stamp .StartedAt }}">{{ ago .StartedAt }}</td>
-				<td data-label="Folder"><a href="{{ $.Href .Folder }}">{{ .Folder }}</a></td>
-				<td class="key"><a href="{{ $.Href .Folder }}/{{ .Job }}">{{ .Job }}</a></td>
+				<td data-label="Folder"><a href="{{ $.Href .Folder }}{{ with .Dir }}/{{ . }}{{ end }}">{{ .Where }}</a></td>
+				<td class="key"><a href="{{ $.Href .Folder }}/{{ with .Dir }}{{ . }}/{{ end }}{{ .Job }}">{{ .Job }}</a></td>
 				<td data-label="By">{{ template "who" (list $ .) }}</td>
 				<td class="nowrap" data-label="Took" data-took>{{ duration .Elapsed }}</td>
 				<td data-label="Result" data-result>{{ template "state" . }}{{ if .Attached }} <span class="faint">{{ .Attached }} watching</span>{{ end }}</td>
 				<td class="actions" data-actions>
 					<a class="btn btn-sm" href="/runs/{{ .ID }}" data-attach="{{ .ID }}">{{ if eq .State "running" }}Attach{{ else }}View{{ end }}</a>
 					{{- if and $.Summarize (ne .State "running") }}
-					<button type="button" class="btn btn-sm" data-summary="/api/runs/{{ .ID }}/summary" data-summary-page="/runs/{{ .ID }}" data-summary-title="{{ .Folder }} / {{ .Job }}" title="Claude's summary of the output, written once and kept">Summary</button>
+					<button type="button" class="btn btn-sm" data-summary="/api/runs/{{ .ID }}/summary" data-summary-page="/runs/{{ .ID }}" data-summary-title="{{ .Where }} / {{ .Job }}" title="Claude's summary of the output, written once and kept">Summary</button>
 					{{- end }}
 					{{- if and .Live (eq .State "running") }}
 					<button type="button" class="btn-icon" data-stop="{{ .ID }}" title="Stop the run" aria-label="Stop the run"><svg class="ic"><use href="#i-stop"/></svg></button>
