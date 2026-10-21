@@ -112,7 +112,8 @@ Open a folder from the sidebar:
 - **Files**: what the folder holds, dot entries too, each with its size
   and when it changed, and `..` up a level. A directory opens as a page
   of its own; a file opens in a window, an image shown, markdown
-  rendered, text coloured and cut past 1 MiB, with **Download** beside.
+  rendered, text coloured and cut past 1 MiB, with **Download** beside
+  and in the row.
   A file that runs, executable or with a shebang on its first line,
   carries `#!` and **exec**, and **Run** for those the folder lets run:
   it starts the file as the job `./<path>`, from the folder, and opens
@@ -120,13 +121,22 @@ Open a folder from the sidebar:
 - **Sealed entries**: `.git`, `.env`, `.env.*`, `.htpasswd` and
   `.htaccess` list with a lock and open nothing, nor does a path through
   them, on the page or over the API. Nor does a symlink that leads out
-  of the checkout. Whoever has the server reaches them there.
+  of the checkout. Whoever has the server reaches them there, and so
+  does a job, which runs as the server's user.
 - **Folder**: its path, its sources, who can run it, its hours, the
   files it includes, its schedules. **Show** beside a pipeline file opens
   it, coloured, in a window. A folder in a git checkout also shows the
   checkout's size: its files, and the history in `.git`.
 - **Environment**: the dotenv files the pipeline reads (see
   [Settings](settings.md#env-files)).
+
+![A project's Files: .git and .env sealed, ./serve marked to run](../assets/files-dark.png)
+
+![A file of the checkout in the preview window](../assets/file-dark.png)
+
+A link to the folder's page with `#file=<name>`, such as
+`/f/acme/api#file=README.md`, opens that file of its Files in the window
+on load.
 
 ## A job's page
 

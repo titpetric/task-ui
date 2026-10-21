@@ -53,10 +53,14 @@ run and when, per job.
 
 Checkouts under the root that hold projects: an organisation's tooling,
 with the projects cloned inside it. **Add workspace** clones one under
-the folder you name, **Configure** changes its title and description,
-and the remove button deletes it with the projects inside it.
-[Workspaces](workspaces.md) covers them, their runs and the prompt
-against a workspace.
+the folder you name, **Move up** and **Move down** order them, and the
+remove button deletes one with the projects inside it. **Configure**
+changes a workspace's title and description, and holds its **Keys**, the
+encryption key of its secrets and the SSH keys of its runs, and
+**Export**, which **Import** on another instance reads.
+[Workspaces](workspaces.md) covers them, their keys and runs, the move
+between instances, what they keep apart, and the prompt against a
+workspace.
 
 ## Users
 
@@ -86,7 +90,7 @@ Variables added to the environment of every run, kept per
 [workspace](workspaces.md). A secret has a scope:
 
 - `workspace:<name>`, a workspace's shared secret, reaches every folder
-  in that workspace and no folder in another one. **Every folder in _**,
+  in that workspace and no folder in another one. "every folder in _",
   `workspace:_`, reaches the projects at the root; a project in a named
   workspace doesn't get it.
 - a folder, `malta/deploy`, reaches that folder's jobs and wins over its
@@ -94,9 +98,14 @@ Variables added to the environment of every run, kept per
 
 A value is never shown again once saved. The page groups the secrets by
 workspace, each with an **Add secret** of its own, and the form's scope
-lists each workspace's shared scope and its folders.
+lists each workspace's shared scope and its folders. In the API, the
+scope `all`, or none, is `workspace:_`.
 
-![Secrets](../assets/secrets-dark.png)
+The scopes keep a workspace's secrets out of the environment of
+another workspace's runs, not out of their reach on disk (see
+[What a workspace keeps apart](workspaces.md#what-a-workspace-keeps-apart)).
+
+![Secrets, grouped by workspace](../assets/secrets-dark.png)
 
 Each workspace's encryption key encrypts its secrets at rest (see
 [Keys](workspaces.md#keys)): the shared ones, and those of every folder

@@ -1548,6 +1548,16 @@
       event.preventDefault();
       openCheckout(checkout.getAttribute("href"), checkout.dataset.file);
     });
+
+    // #file=<path> opens a file of the Files panel on load, so a preview
+    // can be shared.
+    var fileHash = /^#file=(.+)$/.exec(location.hash);
+    if (fileHash) {
+      var listed = Array.prototype.find.call(document.querySelectorAll("a[data-file]"), function (a) {
+        return a.dataset.file === decodeURIComponent(fileHash[1]);
+      });
+      if (listed) openCheckout(listed.getAttribute("href"), listed.dataset.file);
+    }
   }
 
   // View on a workflow run opens its pipeline in a window: the run's page,

@@ -57,9 +57,12 @@ the sidebar's order.
   the sidebar and on the page. An added workspace goes last. The default
   workspace lists first and keeps its place.
 - The remove button deletes the checkout, every project inside it and
-  their rows, the env files task-ui keeps for them, and its confirm
-  names those projects first. The default
-  workspace has none: `DELETE /api/workspaces/_` answers `409`.
+  their rows, the env files task-ui keeps for them, the workspace's
+  secrets and its keys, and its confirm names those projects first. The
+  default workspace has none: `DELETE /api/workspaces/_` answers `409`.
+- **Import**, under the list, adds a workspace from a bundle another
+  instance exported (see [Move to another
+  instance](#move-to-another-instance)).
 
 ## Clone a project into one
 
@@ -100,7 +103,7 @@ workspace's name, the count of its projects and a chevron that points
 down while it's open. Under it come the workspace's own jobs, then its
 projects, each with a fold of its own. This browser remembers each fold
 apart, so `malta` and `malta/dockerfiles` open and close on their own.
-Without a workspace, the sidebar lists the projects alone (see
+With no named workspace, the sidebar lists the projects alone (see
 [Projects and jobs](projects.md)).
 
 ## Runs in a workspace
@@ -140,13 +143,14 @@ with their fingerprints, never a private key.
   their runs. A rotation keeps a key's grants, and delete takes the key
   and its grants.
 
+![A workspace's configure page: its keys, and Export](../assets/workspace-edit-dark.png)
+
 A run gets the instance keys its policies name it for (see
-[Settings](settings.md)), then its workspace's SSH keys, and the first
+[Settings](settings.md#ssh-keys)), then its workspace's SSH keys, and the first
 line of its terminal names each: `$ ssh-agent: id_ed25519,
-ws:id_ed25519_deploy`. A project at the root gets the keys of `_`. The
-runs run as the server's OS user, so a job can read every workspace's
-key files on disk: the grants decide what reaches a run's agent, not
-what a job could open.
+ws:id_ed25519_deploy`. A project at the root gets the keys of `_`. The grants
+decide what reaches a run's agent, not what a job can open on disk (see
+[What a workspace keeps apart](#what-a-workspace-keeps-apart)).
 
 ```sh
 curl -s -X POST https://task.example.com/api/workspaces/malta/keys/generate \
@@ -161,6 +165,17 @@ users}` sets the grants, empty for every run, and `DELETE` removes the
 key. `"encrypt": true` on `generate` or `upload` rotates or replaces the
 encryption key; `rekeyed` counts the secrets task-ui wrote again for
 it. The key routes are for admins.
+
+## Secrets
+
+A workspace's secrets reach its runs as variables (see
+[Settings](settings.md#secrets)). Its **shared** secrets, scope
+`workspace:malta`, reach every folder in it; a folder's own, scope
+`malta/deploy`, reach that folder and win over a shared one of the same
+name. The shared secrets of `_` reach the projects at the root and no
+named workspace: a project in `malta` gets `malta`'s shared secrets and
+its own, never `_`'s. The workspace's encryption key encrypts them all,
+and the Secrets page groups them by workspace.
 
 ## Move to another instance
 
@@ -225,6 +240,27 @@ upload limit answers `413`. Both routes are for admins.
 | `manifest.json` | 16 MiB |
 | Each key file | 1 MiB |
 | Entries | 1024 |
+
+## What a workspace keeps apart
+
+A workspace decides what task-ui puts into a run: which secrets go into
+its environment and which SSH keys go into its agent. That is no
+sandbox. Every run runs as the server's OS user, in every workspace, so
+a job can read what that user can:
+
+- every workspace's key files under `TASK_UI_DATA/workspaces/`, the
+  encryption keys among them, and the instance keys;
+- the database, with every workspace's secrets as ciphertext, which the
+  keys beside it open;
+- every checkout under the root, sealed entries such as `.git` and
+  `.env` included: sealing keeps them off the pages and the API, not
+  out of a job's reach.
+
+A job that someone in one workspace can change can read another
+workspace's secrets. Runner rights, and the right to push to a
+workspace's repositories, belong with people you would trust with every
+workspace on the instance; where that does not hold, run one instance
+per trust boundary.
 
 ## A prompt against a workspace
 
