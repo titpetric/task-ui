@@ -1,0 +1,12 @@
+name: Acme
+help: The tooling every Acme project shares.
+
+jobs:
+  bootstrap:
+    desc: "Check out every Acme project next to this one"
+    steps:
+      - run: 'for p in api web; do echo "git clone git@git.acme.example:acme/$p.git $p"; done'
+  policy:
+    desc: "Check the projects against the organisation's policies"
+    steps:
+      - run: 'echo "api: ok"; echo "web: ok"'

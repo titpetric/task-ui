@@ -47,72 +47,12 @@ run and when, per job.
 
 ## Workspaces
 
-A workspace is a checkout under the root that holds projects: the
-tooling of an organisation, such as `.atkins/skills`, `.claude/` and its
-policies, with the projects cloned inside it. You name its folder, and
-the folder is the namespace of its projects: `dockerfiles` cloned into
-the workspace `malta` lives at `<root>/malta/dockerfiles` and opens at
-`/f/malta/dockerfiles`. Any number of workspaces may come from one
-repository, each under its own name.
-
-**Add workspace** on the Workspaces page clones a repository into the
-root, under the folder you name. The clone works, or the page shows git's
-output and keeps nothing. task-ui refuses a folder that a workspace, a
-project or a directory under the root holds already, and `internal`,
-its own. The page lists each workspace with its repository and the
-projects cloned inside it.
-
-A project joins a workspace on **Add project**: pick it under
-**Workspace**, and the clone goes inside it. The select shows once there
-is a workspace, and none is the default.
-
-**Configure** on a workspace changes its title and description; the
-repository and the folder stay. The remove button deletes the checkout,
-every project inside it and their rows, and its confirm names those
-projects first.
-
-The API does the same, with a token from `task-ui token`:
-
-```sh
-curl -s -X POST https://task.example.com/api/workspaces \
-  -H "Authorization: Bearer $TOKEN" \
-  -d '{"url": "git@example.com:org/workspace.git", "folder": "malta", "title": "Malta"}'
-curl -s -X POST https://task.example.com/api/projects \
-  -H "Authorization: Bearer $TOKEN" \
-  -d '{"url": "git@example.com:org/dockerfiles.git", "workspace": "malta"}'
-```
-
-A taken folder answers `409`.
-
-The project lists with the folders inside it, whatever the workspace's
-`.gitignore` says, and the Projects page shows it as `malta/dockerfiles`.
-Its runs name the workspace in `TASK_UI_WORKSPACE` and
-`TASK_UI_WORKSPACE_DIR`, and pull the workspace's checkout before the
-project's (see [Runs](runs.md#what-a-job-gets)).
-
-`PUT /api/workspaces/malta` with `{title, description}` changes its
-text, and `DELETE /api/workspaces/malta` removes it.
-
-### A prompt against a workspace
-
-A workspace's folder page, `/f/malta`, carries a **Prompt** block for an
-admin once the [Claude Code integration](#integrations) has a token for
-them. The prompt runs `internal/claude-prompt` as you, and its window
-opens on the run. Claude Code works in the workspace's checkout, so it
-reads the workspace's `CLAUDE.md` and `.claude/`; the run's environment
-holds the prompt in `TASK_UI_PROMPT` and the checkout in
-`TASK_UI_WORKSPACE_DIR`, and `task-ui agent prompt` exits with an error
-when either is empty. The run lists under Runs like any other, in the internal
-folder only admins see.
-
-```sh
-curl -s -X POST https://task.example.com/api/workspaces/malta/prompt \
-  -H "Authorization: Bearer $TOKEN" \
-  -d '{"prompt": "list the skills this workspace carries"}'
-```
-
-The reply is the run, with its `id`; `GET /api/runs/{id}` and the
-recording follow it. A second prompt while one runs answers `409`.
+Checkouts under the root that hold projects: an organisation's tooling,
+with the projects cloned inside it. **Add workspace** clones one under
+the folder you name, **Configure** changes its title and description,
+and the remove button deletes it with the projects inside it.
+[Workspaces](workspaces.md) covers them, their runs and the prompt
+against a workspace.
 
 ## Users
 

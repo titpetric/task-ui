@@ -43,13 +43,26 @@ done
 # The infra folder comes from a git repository, so the Projects page has
 # a checkout to show and every run of it pulls first.
 git() { command git -c user.name=demo -c user.email=demo@example -c init.defaultBranch=main "$@"; }
+# repo commits $work/repos/<name> and serves it bare beside it.
+repo() {
+  git -C "$work/repos/$1" init -q
+  git -C "$work/repos/$1" add .
+  git -C "$work/repos/$1" commit -q -m "$2"
+  git clone -q --bare "$work/repos/$1" "$work/repos/$1.git"
+}
 mkdir -p "$work/repos"
 mv "$work/demo/infra" "$work/repos/infra"
 printf '.env\n' >"$work/repos/infra/.gitignore"
-git -C "$work/repos/infra" init -q
-git -C "$work/repos/infra" add .
-git -C "$work/repos/infra" commit -q -m "Provisioning and deploy jobs"
-git clone -q --bare "$work/repos/infra" "$work/repos/infra.git"
+repo infra "Provisioning and deploy jobs"
+
+# The acme workspace and its two projects are repositories of their own:
+# the projects clone inside the workspace's checkout once it is added.
+mv "$work/demo/acme" "$work/repos/acme"
+mv "$work/repos/acme/api" "$work/repos/acme-api"
+mv "$work/repos/acme/web" "$work/repos/acme-web"
+repo acme "The tooling every Acme project shares"
+repo acme-api "The API's jobs"
+repo acme-web "The front end's targets"
 
 # serve starts an instance on a port over the shared database and waits
 # for it to answer. Extra arguments are KEY=value. Every instance starts
@@ -146,9 +159,6 @@ for _ in $(seq 1 200); do
   sleep 0.3
 done
 
-# Every link on every page answers.
-scripts/crawl.sh
-
 # The newest deploy run, for the run page and the dialog.
 run="$(curl -fsS "${TASK_UI_BASE}/api/runs?folder=infra&job=deploy&limit=1" | grep -o '"id":"[a-z0-9]*"' | head -1 | cut -d'"' -f4)"
 
@@ -214,6 +224,22 @@ TASK_UI_BASE="http://127.0.0.1:${viewer}" shot viewer-job-dark /f/infra/deploy d
 for theme in dark light; do
   TASK_UI_BASE="http://127.0.0.1:${login}" shot "login-${theme}" /login "$theme"
 done
+
+# The workspace comes last, so the shots above keep a sidebar without
+# one: the acme checkout, its two projects cloned inside it, and a Claude
+# token for the admin, which the Prompt block on the workspace's page
+# needs. The demo shows the form and runs no prompt.
+api POST /workspaces -d "{\"url\":\"file://$work/repos/acme.git\",\"folder\":\"acme\",\"title\":\"Acme\",\"description\":\"The tooling every Acme project shares\"}"
+api POST /projects -d "{\"url\":\"file://$work/repos/acme-api.git\",\"id\":\"api\",\"workspace\":\"acme\"}"
+api POST /projects -d "{\"url\":\"file://$work/repos/acme-web.git\",\"id\":\"web\",\"workspace\":\"acme\"}"
+api PUT /integrations/claude -d '{"values":{"token":"sk-ant-oat01-demo","who":"admin"}}'
+
+# Every link on every page answers, the workspace's included.
+scripts/crawl.sh
+
+shot workspaces-dark /settings/workspaces dark
+shot sidebar-workspace-dark /f/acme/api dark
+shot workspace-prompt-dark /f/acme dark
 
 mkdir -p docs/assets
 rm -f docs/assets/*.png

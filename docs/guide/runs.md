@@ -110,7 +110,7 @@ A run starts in its folder, as a login shell, with:
 
 - `TASK_UI=1`, `TASK_UI_USER`, `TASK_UI_FOLDER`, `TASK_UI_JOB`,
   `TASK_UI_RUN_ID`, and `TASK_UI_ARTIFACTS`, a directory for its files;
-- in a [workspace](settings.md#workspaces), `TASK_UI_WORKSPACE`, its
+- in a [workspace](workspaces.md), `TASK_UI_WORKSPACE`, its
   name, and `TASK_UI_WORKSPACE_DIR`, its checkout; `HOME` stays the
   server's;
 - the secrets of its folder (see [Settings](settings.md#secrets));

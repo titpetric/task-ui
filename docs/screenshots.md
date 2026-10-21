@@ -16,6 +16,8 @@ it with headless chromium; `task docs:shots` regenerates them into
 | ![Artifacts](assets/artifacts-dark.png) | ![Scheduled](assets/schedules-dark.png) |
 | ![Settings](assets/settings-dark.png) | ![Projects](assets/projects-dark.png) |
 | ![Add a project from git](assets/project-new-dark.png) | ![Configure a folder](assets/project-edit-dark.png) |
+| ![Workspaces: checkouts that hold projects](assets/workspaces-dark.png) | ![The sidebar with a workspace open, its projects under it](assets/sidebar-workspace-dark.png) |
+| ![A workspace's page, with the Prompt block](assets/workspace-prompt-dark.png) | |
 | ![Users, from the password file](assets/users-dark.png) | ![Secrets, encrypted with the SSH keys](assets/secrets-dark.png) |
 | ![Add a secret](assets/secret-new-dark.png) | ![An env file](assets/envfile-dark.png) |
 | ![SSH keys](assets/keys-dark.png) | ![Generate a key](assets/keys-generate-dark.png) |
