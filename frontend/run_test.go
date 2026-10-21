@@ -193,3 +193,23 @@ func TestRuns_Pages(t *testing.T) {
 	assert.NotContains(t, back, `rel="prev"`)
 	assert.Contains(t, back, `rel="next"`)
 }
+
+// A run of a directory's job names the directory, links it, and lists
+// the arguments it passed, one each.
+func TestRun_Dir(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	run := f.run(t, "infra", "custom", "ops", model.StateOK)
+	run.Dir, run.Args = "images", model.EncodeList([]string{"ps", "; id"})
+	assert.NoError(t, f.opts.Runs.Update(context.Background(), run))
+
+	body := f.page(t, asViewer, "/runs/"+run.ID)
+	assert.Contains(t, body, `<h2>infra/images / custom <span`)
+	assert.Contains(t, body, `<th>Directory</th><td><a href="/f/_/infra/images">`)
+	assert.Contains(t, body, `<th>Job</th><td>custom</td>`)
+	assert.Contains(t, body, `<code>ps</code> <code>; id</code>`)
+
+	plain := f.page(t, asViewer, "/runs/"+f.run(t, "infra", "plan", "ops", model.StateOK).ID)
+	assert.NotContains(t, plain, "<th>Directory</th>")
+	assert.NotContains(t, plain, "<th>Arguments</th>")
+}

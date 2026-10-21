@@ -79,3 +79,36 @@ func (f *Folder) FileJob(rel string) *Job {
 		Command: target.Argv(),
 	}
 }
+
+// Sub returns the folder of a directory inside this one, rel to it, as
+// Load reads that directory: its own targets, each job with Dir set to
+// rel, run in that directory under this folder's ID, allow rules and
+// hours. The empty rel is the folder itself. Nil for a path Path
+// refuses or one that is not a directory.
+func (f *Folder) Sub(rel string) *Folder {
+	if f == nil {
+		return nil
+	}
+	rel = strings.Trim(rel, "/")
+	if rel == "" {
+		return f
+	}
+	if path.Clean(rel) != rel {
+		return nil
+	}
+	dir, ok := f.Path(rel)
+	if !ok {
+		return nil
+	}
+	if info, err := os.Stat(dir); err != nil || !info.IsDir() {
+		return nil
+	}
+	sub := Load(f.ID, dir)
+	sub.Title = f.ID + "/" + rel
+	sub.Rel = rel
+	sub.Allow, sub.Hours = f.Allow, f.Hours
+	for _, job := range sub.Jobs {
+		job.Dir = rel
+	}
+	return sub
+}

@@ -87,11 +87,20 @@ func (h *Handlers) run(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	run := h.framed(h.runView(*row))
-	p := h.page(r, run.Folder+" / "+run.Job)
+	where := run.Folder
+	if run.Dir != "" {
+		where += "/" + run.Dir
+	}
+	p := h.page(r, where+" / "+run.Job)
 	p.Run = &run
-	p.Crumbs = view.Crumbs("Runs", "/runs", run.Folder+" / "+run.Job)
+	p.Crumbs = view.Crumbs("Runs", "/runs", where+" / "+run.Job)
+	// A run of a directory's job finds the job there; the folder's rules
+	// stand for it.
 	if f := h.opts.Catalogue.Find(run.Folder); f != nil {
-		p.Folder, p.Job = f, f.Job(run.Job)
+		p.Folder = f
+		if sub := f.Sub(run.Dir); sub != nil {
+			p.Job = sub.Job(run.Job)
+		}
 	}
 	artifacts, _ := h.opts.Artifacts.List(r.Context(), storage.ArtifactFilter{RunID: run.ID, Limit: 200})
 	p.Artifacts = artifacts

@@ -15,8 +15,13 @@ import (
 // RunRequest is what starts a run.
 type RunRequest struct {
 	Folder string `json:"folder"`
-	Job    string `json:"job"`
-	Force  bool   `json:"force"`
+	// Dir is a directory inside the folder, a slash path: the job is one
+	// of its own targets and runs there. Empty is the folder itself.
+	Dir   string `json:"dir"`
+	Job   string `json:"job"`
+	Force bool   `json:"force"`
+	// Args follow the job's argv after --, for a job that takes args.
+	Args RunArgs `json:"args"`
 	// Reason says why the user forces the run out of hours. Required then.
 	Reason string `json:"reason"`
 	Cols   int    `json:"cols"`
@@ -44,7 +49,7 @@ func (h *Handlers) view(r *http.Request, run model.Run) RunView {
 		v.Live, v.Attached, v.Status = true, session.Attached(), &status
 		v.Run = session.Snapshot()
 	}
-	f, job, _ := h.target(r, run.Folder, run.Job)
+	f, job, _, _ := h.targetIn(r, run.Folder, run.Dir, run.Job)
 	v.CanRun = canRun(access.UserFrom(r.Context()), f, job)
 	return v
 }
@@ -77,7 +82,7 @@ func (h *Handlers) startRun(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	user := access.UserFrom(r.Context())
-	f, job, problem := h.target(r, req.Folder, req.Job)
+	f, job, dir, problem := h.targetIn(r, req.Folder, req.Dir, req.Job)
 	if problem != "" {
 		fail(w, http.StatusNotFound, problem)
 		return
@@ -86,7 +91,11 @@ func (h *Handlers) startRun(w http.ResponseWriter, r *http.Request) {
 		fail(w, http.StatusForbidden, "your role may view this job, but not run it")
 		return
 	}
-	session, err := h.opts.Runner.Start(r.Context(), runner.Request{Folder: f, Job: job, User: user, Force: req.Force, Reason: req.Reason, Cols: req.Cols, Rows: req.Rows})
+	if len(req.Args) > 0 && !job.TakesArgs {
+		fail(w, http.StatusBadRequest, runner.ErrNoArgs.Error())
+		return
+	}
+	session, err := h.opts.Runner.Start(r.Context(), runner.Request{Folder: f, Job: job, User: user, Force: req.Force, Reason: req.Reason, Cols: req.Cols, Rows: req.Rows, Dir: dir, Args: req.Args})
 	if errors.Is(err, runner.ErrBusy) {
 		writeJSON(w, http.StatusConflict, map[string]any{"error": "already running", "run": h.view(r, session.Snapshot())})
 		return
@@ -133,7 +142,7 @@ func (h *Handlers) endRun(w http.ResponseWriter, r *http.Request, kill bool) {
 		failErr(w, err)
 		return
 	}
-	f, job, problem := h.target(r, run.Folder, run.Job)
+	f, job, _, problem := h.targetIn(r, run.Folder, run.Dir, run.Job)
 	if problem != "" || !canRun(access.UserFrom(r.Context()), f, job) {
 		fail(w, http.StatusForbidden, "your role may view this run, but not end it")
 		return

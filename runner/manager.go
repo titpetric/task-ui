@@ -36,6 +36,8 @@ var (
 	// ErrMoving refuses a run of a folder whose project is moving, and a
 	// second move of it.
 	ErrMoving = errors.New("the project is moving")
+	// ErrNoArgs refuses arguments for a job that takes none.
+	ErrNoArgs = errors.New("the job takes no arguments")
 )
 
 // Manager starts runs and holds their sessions.
@@ -104,6 +106,9 @@ func (m *Manager) Start(ctx context.Context, req Request) (*Session, error) {
 	if req.Folder == nil || req.Job == nil {
 		return nil, errors.New("a run needs a folder and a job")
 	}
+	if len(req.Args) > 0 && !req.Job.TakesArgs {
+		return nil, ErrNoArgs
+	}
 	outOfHours, err := m.gate(req)
 	if err != nil {
 		return nil, err
@@ -121,6 +126,7 @@ func (m *Manager) Start(ctx context.Context, req Request) (*Session, error) {
 	}
 	session := newSession(run, req.Folder, req.Job)
 	session.env = req.Env
+	session.dir, session.args = req.Dir, req.Args
 	session.workspaceName, session.workspace = m.workspace(ctx, req)
 	session.workspaceID = m.workspaceID(ctx, session.workspaceName)
 	if req.User != nil {
@@ -149,6 +155,8 @@ func (m *Manager) newRun(req Request) *model.Run {
 	run := &model.Run{
 		Folder:   req.Folder.ID,
 		Job:      req.Job.ID,
+		Dir:      req.Job.Dir,
+		Args:     model.EncodeList(req.Args),
 		TermCols: int64(req.Cols),
 		TermRows: int64(req.Rows),
 	}
@@ -364,14 +372,21 @@ func pump(proc *Process, session *Session) {
 }
 
 // command builds the process: bash -l for the login environment, the
-// job's argv passed as arguments so the shell never parses a name, the
-// secrets and the run facts in the environment, the artifact directory
-// ready.
+// job's argv passed as arguments so the shell never parses a name, and
+// the request's args after --, the same way; the secrets and the run
+// facts in the environment, the artifact directory ready. The process
+// starts in the request's directory, or the folder's.
 func (m *Manager) command(ctx context.Context, session *Session) (*exec.Cmd, error) {
 	f, job, run := session.Folder, session.Job, session.Run
 	args := append([]string{"-l", "-c", `exec "$0" "$@"`}, job.Command...)
+	if len(session.args) > 0 {
+		args = append(append(args, "--"), session.args...)
+	}
 	cmd := exec.Command("bash", args...)
 	cmd.Dir = f.Dir
+	if session.dir != "" {
+		cmd.Dir = session.dir
+	}
 	cmd.Env = os.Environ()
 	if m.opts.Secrets != nil {
 		secrets, err := m.opts.Secrets.For(ctx, f.ID)

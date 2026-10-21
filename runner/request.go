@@ -23,4 +23,11 @@ type Request struct {
 	// root for the default one. Empty takes the workspace of the folder's
 	// first segment, or the default workspace for a folder in none.
 	Workspace string
+	// Dir is the directory the job runs in, absolute: a directory inside
+	// the folder, which the caller holds to the folder's rules, for a job
+	// of Folder.Sub. Empty runs in the folder's own directory.
+	Dir string
+	// Args follow the job's argv after --, as argv and never through a
+	// shell: only for a job that takes args.
+	Args []string
 }

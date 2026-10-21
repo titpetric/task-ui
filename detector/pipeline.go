@@ -99,6 +99,7 @@ func (d pipelineDetector) detectFile(dir, name string) *Source {
 			Summary:     strings.TrimSpace(job.Summary),
 			Aliases:     job.Aliases,
 			Interactive: job.Interactive,
+			TakesArgs:   job.Args && d.kind == "atkins",
 			DependsOn:   job.DependsOn,
 			EnvFiles:    job.Env.Include,
 		}

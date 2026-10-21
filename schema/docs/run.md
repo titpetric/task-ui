@@ -21,3 +21,5 @@ Run.
 | finished_at | datetime |     | Finished At |
 | created_at  | datetime |     | Created At  |
 | updated_at  | datetime |     | Updated At  |
+| dir         | varchar  |     | Dir         |
+| args        | varchar  |     | Args        |

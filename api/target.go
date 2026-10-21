@@ -25,16 +25,34 @@ func canRun(user *model.User, f *folder.Folder, job *folder.Job) bool {
 // target resolves the folder and job a request names, as the user may
 // see them. The third result says what is wrong when it cannot.
 func (h *Handlers) target(r *http.Request, folderID, jobID string) (*folder.Folder, *folder.Job, string) {
+	f, job, _, problem := h.targetIn(r, folderID, "", jobID)
+	return f, job, problem
+}
+
+// targetIn resolves a job of a directory inside a folder, as target
+// does: dir is a slash path inside the folder, and the job one of the
+// targets Folder.Sub reads there. It returns the folder itself, whose
+// rules and checkout the run takes, the job, and the directory the job
+// runs in, "" for the folder's own. A directory Path refuses, sealed,
+// through .git or out by a symlink, is no such directory.
+func (h *Handlers) targetIn(r *http.Request, folderID, dir, jobID string) (*folder.Folder, *folder.Job, string, string) {
 	user := access.UserFrom(r.Context())
 	f := h.visibleFolder(user, folderID)
 	if f == nil {
-		return nil, nil, "no such folder"
+		return nil, nil, "", "no such folder"
 	}
-	job := f.Job(jobID)
+	sub := f.Sub(dir)
+	if sub == nil {
+		return f, nil, "", "no such directory"
+	}
+	job := sub.Job(jobID)
 	if job == nil {
-		return f, nil, "no such job"
+		return f, nil, "", "no such job"
 	}
-	return f, job, ""
+	if sub == f {
+		return f, job, "", ""
+	}
+	return f, job, sub.Dir, ""
 }
 
 // requireAdmin answers anyone but an admin with 403 and reports it.

@@ -69,6 +69,7 @@ type jobSpec struct {
 	Aliases     []string   `yaml:"aliases"`
 	Internal    bool       `yaml:"internal"`
 	Interactive bool       `yaml:"interactive"`
+	Args        bool       `yaml:"args"`
 	Show        *bool      `yaml:"show"`
 	Run         string     `yaml:"run"`
 	Cmd         string     `yaml:"cmd"`

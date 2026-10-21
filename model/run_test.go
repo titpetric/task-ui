@@ -11,6 +11,19 @@ import (
 func TestRun_Key(t *testing.T) {
 	t.Parallel()
 	assert.Equal(t, "infra/make:build", (&model.Run{Folder: "infra", Job: "make:build"}).Key())
+	assert.Equal(t, "malta/dockerfiles/build", (&model.Run{Folder: "malta", Dir: "dockerfiles", Job: "build"}).Key())
+}
+
+func TestRunKey(t *testing.T) {
+	t.Parallel()
+	assert.Equal(t, "infra/plan", model.RunKey("infra", "", "plan"))
+	assert.Equal(t, "infra/images/plan", model.RunKey("infra", "images", "plan"))
+}
+
+func TestRun_ArgList(t *testing.T) {
+	t.Parallel()
+	assert.Equal(t, []string{"ps", "; id"}, (&model.Run{Args: `["ps","; id"]`}).ArgList())
+	assert.Empty(t, (&model.Run{}).ArgList())
 }
 
 func TestRun_Finished(t *testing.T) {

@@ -2,6 +2,7 @@ package folder
 
 import (
 	"github.com/titpetric/task-ui/detector"
+	"github.com/titpetric/task-ui/model"
 )
 
 // Job is one runnable target of a folder.
@@ -9,6 +10,10 @@ type Job struct {
 	detector.Target
 
 	Folder string `json:"folder"`
+	// Dir is the directory inside the folder the job runs in, a slash
+	// path: empty for a job of the folder itself, set for a job of a
+	// directory inside it (see Folder.Sub).
+	Dir string `json:"dir,omitempty"`
 	// ID is the job's name within the folder: the target name when the
 	// folder follows one convention, kind:name when it follows more than one,
 	// so `make build` and `npm run build` stay apart.
@@ -29,7 +34,7 @@ type Job struct {
 }
 
 // Key is the identity used for the run lock and the history: one run per
-// job per folder, across the instance.
+// job per folder and directory, across the instance.
 func (j *Job) Key() string {
-	return j.Folder + "/" + j.ID
+	return model.RunKey(j.Folder, j.Dir, j.ID)
 }

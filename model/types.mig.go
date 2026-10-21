@@ -661,6 +661,12 @@ type Run struct {
 
 	// Updated At
 	UpdatedAt *time.Time `db:"updated_at" json:"updated_at"`
+
+	// Dir
+	Dir string `db:"dir" json:"dir"`
+
+	// Args
+	Args string `db:"args" json:"args"`
 }
 
 // GetID will return the value of ID.
@@ -765,11 +771,23 @@ func (r *Run) GetUpdatedAt() *time.Time { return r.UpdatedAt }
 // SetUpdatedAt sets UpdatedAt to the provided value.
 func (r *Run) SetUpdatedAt(stamp time.Time) { r.UpdatedAt = &stamp }
 
+// GetDir will return the value of Dir.
+func (r *Run) GetDir() string { return r.Dir }
+
+// SetDir sets Dir to the provided value.
+func (r *Run) SetDir(val string) { r.Dir = val }
+
+// GetArgs will return the value of Args.
+func (r *Run) GetArgs() string { return r.Args }
+
+// SetArgs sets Args to the provided value.
+func (r *Run) SetArgs(val string) { r.Args = val }
+
 // RunTable is the name of the table in the DB.
 const RunTable = "`run`"
 
 // RunFields is a list of all columns in the DB table.
-var RunFields = []string{"id", "folder", "job", "user_id", "user_name", "state", "exit_code", "forced", "scheduled", "term_cols", "term_rows", "cast_path", "reason", "started_at", "finished_at", "created_at", "updated_at"}
+var RunFields = []string{"id", "folder", "job", "user_id", "user_name", "state", "exit_code", "forced", "scheduled", "term_cols", "term_rows", "cast_path", "reason", "started_at", "finished_at", "created_at", "updated_at", "dir", "args"}
 
 // RunPrimaryFields are the primary key fields in the DB table.
 var RunPrimaryFields = []string{"id"}

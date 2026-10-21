@@ -72,7 +72,9 @@ again** for whoever may run it.
 
 ### One run per job
 
-A job runs once at a time across the instance. Starting a job that runs
+A job runs once at a time across the instance; the same target of two
+directories in one folder, such as `build` in `images/` and in
+`docs/`, is two jobs. Starting a job that runs
 already attaches to the run in the way. **Run force** kills that run and
 starts again; out of a folder's hours it also asks why, and keeps the
 reason with the run (see [Projects and jobs](projects.md#hours)).
@@ -96,7 +98,9 @@ attaches to it.
   so what redraws itself, a progress bar or a pipeline tree, shows its
   last frame.
 - **Run**: folder, job, who and when, how long, how it ended, and the
-  reason for a run forced out of hours.
+  reason for a run forced out of hours. A run of a directory's job names
+  the directory, linked to its page, and a run given arguments lists
+  them, one each.
 - **Artifacts**: the files the run left (see [Artifacts](artifacts.md)).
 - **Recording** downloads the run as an asciicast file, for `asciinema
   play`.
@@ -106,7 +110,8 @@ and **Attach**, **Stop** and **Kill** instead.
 
 ## What a job gets
 
-A run starts in its folder, as a login shell, with:
+A run starts in its folder, or in the directory inside it whose job it
+runs, as a login shell, with:
 
 - `TASK_UI=1`, `TASK_UI_USER`, `TASK_UI_FOLDER`, `TASK_UI_JOB`,
   `TASK_UI_RUN_ID`, and `TASK_UI_ARTIFACTS`, a directory for its files;
@@ -121,6 +126,13 @@ A run starts in its folder, as a login shell, with:
   its workspace its grants let through, as `ws:<name>` (see
   [Workspaces](workspaces.md#keys)); the terminal says which, or
   `(none)`.
+
+A job that takes arguments, an atkins job with `args: true`, gets them
+after `--`, as argv: `POST /api/runs` with `"args": "ps -a"` runs
+`atkins -f atkins.yml custom -- ps -a`. The line splits as a shell
+splits words, with quotes and backslashes, and nothing in it expands:
+`"; id"` reaches the job as one argument, `; id`. Every other job
+refuses arguments.
 
 Before the job, a folder in a git checkout pulls it, in the run's own
 terminal; when the pull fails, the run fails with it. A folder in a
