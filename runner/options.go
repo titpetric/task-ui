@@ -42,4 +42,9 @@ type Options struct {
 	Keep time.Duration
 	// Now is the clock the hours gate reads. Nil is time.Now.
 	Now func() time.Time
+	// Root is where the folders are, and Workspaces the checkouts under it
+	// whose folder is a namespace: a run of a folder inside one names the
+	// workspace in its environment. Nil Workspaces knows none.
+	Root       string
+	Workspaces *storage.WorkspaceStorage
 }

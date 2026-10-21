@@ -74,6 +74,12 @@ curl -s -X POST https://task.example.com/api/projects \
   -d '{"url": "git@example.com:org/dockerfiles.git", "workspace": "malta"}'
 ```
 
+The project lists with the folders inside it, whatever the workspace's
+`.gitignore` says, and the Projects page shows it as `malta/dockerfiles`.
+Its runs name the workspace in `TASK_UI_WORKSPACE` and
+`TASK_UI_WORKSPACE_DIR`, and pull the workspace's checkout before the
+project's (see [Runs](runs.md#what-a-job-gets)).
+
 `PUT /api/workspaces/malta` with `{title, description}` changes its
 text; the repository and the folder stay. `DELETE /api/workspaces/malta`
 removes the checkout, every project inside it and their rows.

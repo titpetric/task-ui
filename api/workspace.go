@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -159,4 +160,14 @@ func (h *Handlers) deleteWorkspace(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
+}
+
+// workspaceFolders returns the folder of every workspace, none without
+// the storage or on an error.
+func (h *Handlers) workspaceFolders(ctx context.Context) []string {
+	if h.opts.Workspaces == nil {
+		return nil
+	}
+	folders, _ := h.opts.Workspaces.Folders(ctx)
+	return folders
 }

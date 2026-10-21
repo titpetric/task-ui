@@ -27,12 +27,14 @@ type Options struct {
 	// Auth checks the sign in form.
 	Auth *access.Authenticator
 
-	Users     *storage.UserStorage
-	Projects  *storage.ProjectStorage
-	Runs      *storage.RunStorage
-	Artifacts *storage.ArtifactStorage
-	Schedules *storage.ScheduleStorage
-	Secrets   *secret.Store
+	Users    *storage.UserStorage
+	Projects *storage.ProjectStorage
+	// Workspaces are the checkouts the projects may clone inside.
+	Workspaces *storage.WorkspaceStorage
+	Runs       *storage.RunStorage
+	Artifacts  *storage.ArtifactStorage
+	Schedules  *storage.ScheduleStorage
+	Secrets    *secret.Store
 
 	Workflows    *storage.WorkflowStorage
 	WorkflowRuns *storage.WorkflowRunStorage

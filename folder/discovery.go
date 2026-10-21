@@ -117,20 +117,23 @@ func isFile(path string) bool {
 
 // discover adds the root when it has something to run, and walks the
 // tree below it, not into a root-only project. A directory of the root
-// named internal lists nothing: the namespace is task-ui's own.
+// named internal lists nothing: the namespace is task-ui's own. The walk
+// goes into every configured folder, even one a checkout ignores, such
+// as a project cloned inside a workspace.
 func (d *Discovery) discover(root string, c *catalogue) {
 	if !c.seen(root) && detector.Any(root) {
 		if f := Load(SafeID(filepath.Base(root)), root); runnable(f) {
 			c.add(f)
 		}
 	}
-	stop := map[string]bool{}
+	stop, keep := map[string]bool{}, map[string]bool{}
 	for _, cfg := range d.Config {
+		keep[cfg.dir(root)] = true
 		if cfg.RootOnly {
 			stop[cfg.dir(root)] = true
 		}
 	}
-	walk(root, "", 1, detector.HasPipeline(root), gitIgnored(root, nil), stop, func(id, dir string) {
+	walk(root, "", 1, detector.HasPipeline(root), gitIgnored(root, nil), stop, keep, func(id, dir string) {
 		if c.seen(dir) || model.IsInternal(id) {
 			return
 		}
@@ -196,9 +199,10 @@ func gitIgnored(dir string, ignored map[string]bool) map[string]bool {
 // walk visits the directories below dir, in name order, and reports the
 // ones with something to run. Below a pipeline folder walk reports only a
 // folder with a pipeline file, but goes on through the rest.
-// Directories a git checkout ignores are not visited, and the walk does
-// not go into a directory in stop: a root-only project.
-func walk(dir, id string, depth int, underPipeline bool, ignored, stop map[string]bool, found func(id, dir string)) {
+// Directories a git checkout ignores are not visited unless keep holds
+// them, and the walk does not go into a directory in stop: a root-only
+// project.
+func walk(dir, id string, depth int, underPipeline bool, ignored, stop, keep map[string]bool, found func(id, dir string)) {
 	if depth > maxDepth {
 		return
 	}
@@ -209,7 +213,7 @@ func walk(dir, id string, depth int, underPipeline bool, ignored, stop map[strin
 			continue
 		}
 		sub := filepath.Join(dir, name)
-		if ignored[sub] {
+		if ignored[sub] && !keep[sub] {
 			continue
 		}
 		ignored := gitIgnored(sub, ignored)
@@ -224,7 +228,7 @@ func walk(dir, id string, depth int, underPipeline bool, ignored, stop map[strin
 		if stop[sub] {
 			continue
 		}
-		walk(sub, subID, depth+1, underPipeline || pipeline, ignored, stop, found)
+		walk(sub, subID, depth+1, underPipeline || pipeline, ignored, stop, keep, found)
 	}
 }
 

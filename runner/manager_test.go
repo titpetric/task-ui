@@ -37,6 +37,8 @@ type fixture struct {
 	policies *storage.SSHKeyPolicyStorage
 	// now is what the manager's clock reads; zero is the real time.
 	now time.Time
+	// workspaces are the workspaces under root the manager knows.
+	workspaces *storage.WorkspaceStorage
 }
 
 func newFixture(t *testing.T) *fixture {
@@ -50,7 +52,10 @@ func newFixture(t *testing.T) *fixture {
 	_, err = keys.Generate("ed25519", "test")
 	assert.NoError(t, err)
 	secrets := secret.New(storage.NewSecretStorage(db), secret.NewVault(keys))
-	f := &fixture{runs: runs, files: artifacts, secrets: secrets, root: t.TempDir(), policies: storage.NewSSHKeyPolicyStorage(db)}
+	f := &fixture{
+		runs: runs, files: artifacts, secrets: secrets, root: t.TempDir(),
+		policies: storage.NewSSHKeyPolicyStorage(db), workspaces: storage.NewWorkspaceStorage(db),
+	}
 	manager := runner.New(runner.Options{
 		Now: func() time.Time {
 			if f.now.IsZero() {
@@ -70,6 +75,8 @@ func newFixture(t *testing.T) *fixture {
 		Keep:         time.Minute,
 		KeyDir:       keys.Dir,
 		KeyPolicies:  f.policies,
+		Root:         f.root,
+		Workspaces:   f.workspaces,
 	})
 	f.manager = manager
 	return f

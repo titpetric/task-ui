@@ -204,6 +204,8 @@ func (a *App) wire(version string) error {
 		KillTimeout:   cfg.Grace + 5*time.Second,
 		Keep:          cfg.Keep,
 		Now:           cfg.Clock(),
+		Root:          cfg.Root,
+		Workspaces:    workspaces,
 	})
 	a.Scheduler = scheduler.NewLoop(schedules, a.Users, a.Catalogue, a.Runner)
 	a.Workflows = workflow.New(workflows, workflowRuns, a.Catalogue, a.Runner)
@@ -235,7 +237,7 @@ func (a *App) wire(version string) error {
 		AddUser: addUser, Summaries: storage.NewRunSummaryStorage(a.DB),
 	})
 	pages, err := frontend.New(frontend.Options{
-		Guard: a.Guard, Auth: access.NewAuthenticator(a.Users, a.Emails, a.Passwords), Users: a.Users, Projects: projects, Runs: runs, Artifacts: artifacts, Schedules: schedules, Secrets: secrets,
+		Guard: a.Guard, Auth: access.NewAuthenticator(a.Users, a.Emails, a.Passwords), Users: a.Users, Projects: projects, Workspaces: workspaces, Runs: runs, Artifacts: artifacts, Schedules: schedules, Secrets: secrets,
 		Workflows: workflows, WorkflowRuns: workflowRuns, Flows: a.Workflows,
 		Runner: a.Runner, Catalogue: a.Catalogue, Git: g, Keys: keys, HomeKeys: homeKeys, KeyPolicies: keyPolicies, Env: env, Recordings: recordings, Root: cfg.Root, Version: version, Now: cfg.Clock(),
 		ArtifactStore: store, Disk: &diskusage.Meter{TTL: 10 * time.Minute}, Board: a.Board,

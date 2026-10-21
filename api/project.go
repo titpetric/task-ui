@@ -86,7 +86,7 @@ func (h *Handlers) listProjects(w http.ResponseWriter, r *http.Request) {
 	if !requireAdmin(w, r) {
 		return
 	}
-	entries := folder.Entries(h.opts.Root, h.opts.Git)
+	entries := folder.Entries(h.opts.Root, h.opts.Git, h.workspaceFolders(r.Context()))
 	projects, err := h.opts.Projects.List(r.Context())
 	if err != nil {
 		failErr(w, err)
