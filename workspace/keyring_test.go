@@ -131,3 +131,15 @@ func TestKeyring_FilesRestore(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Len(t, empty, 0)
 }
+
+// Prepare makes the private key directories and no key.
+func TestKeyring_Prepare(t *testing.T) {
+	t.Parallel()
+	k := &workspace.Keyring{Data: t.TempDir()}
+	assert.NoError(t, k.Prepare("01ws"))
+	assert.Nil(t, k.EncryptKey("01ws"))
+	for _, dir := range []string{k.Dir("01ws"), k.Encrypt("01ws").Dir, k.SSH("01ws").Dir} {
+		assert.Equal(t, os.FileMode(0o700), mode(t, dir), dir)
+	}
+	assert.Error(t, k.Prepare("../x"))
+}

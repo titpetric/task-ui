@@ -1,6 +1,8 @@
 package view
 
 import (
+	"sort"
+
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/sshkey"
 )
@@ -22,4 +24,37 @@ type SecretGroup struct {
 // folders.
 func (g SecretGroup) Shared() string {
 	return "workspace:" + g.Workspace
+}
+
+// SharedSecrets returns the secrets the workspace shares with every
+// folder in it.
+func (g SecretGroup) SharedSecrets() []model.Secret {
+	var result []model.Secret
+	for _, secret := range g.Secrets {
+		if secret.Scope == g.Shared() {
+			result = append(result, secret)
+		}
+	}
+	return result
+}
+
+// Projects returns the folders that have secrets of their own, by
+// folder, each with its secrets.
+func (g SecretGroup) Projects() []SecretProject {
+	index := map[string]int{}
+	var result []SecretProject
+	for _, secret := range g.Secrets {
+		if secret.Scope == g.Shared() {
+			continue
+		}
+		i, ok := index[secret.Scope]
+		if !ok {
+			i = len(result)
+			index[secret.Scope] = i
+			result = append(result, SecretProject{Folder: secret.Scope})
+		}
+		result[i].Secrets = append(result[i].Secrets, secret)
+	}
+	sort.Slice(result, func(i, j int) bool { return result[i].Folder < result[j].Folder })
+	return result
 }

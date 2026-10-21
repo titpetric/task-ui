@@ -3,7 +3,7 @@
 <div class="page-head">
 	<div>
 		<h2>{{ .Title }}</h2>
-		<p>The value is encrypted with the key of the workspace its scope is in and never shown again in full. A secret for a workspace reaches every folder in it and no other workspace. Saving a name that exists replaces its value.</p>
+		<p>The value is encrypted with the key of its workspace and never shown again. A secret for a workspace reaches every project in it and no other workspace. Saving a name that exists replaces its value. A workspace without an encryption key stores no secrets: add one under <a href="/settings/keys">Keys</a>.</p>
 	</div>
 </div>
 
@@ -12,10 +12,11 @@
 		<label for="s-scope">Scope</label>
 		<select id="s-scope" name="scope">
 			{{- range .SecretGroups }}
-			<optgroup label="{{ .Title }}">
-				<option value="{{ .Shared }}"{{ if eq $s.Scope .Shared }} selected{{ end }}>every folder in {{ .Workspace }}</option>
+			{{- $off := not .Key }}
+			<optgroup label="{{ .Title }}{{ if $off }}: no encryption key{{ end }}"{{ if $off }} disabled{{ end }}>
+				<option value="{{ .Shared }}"{{ if eq $s.Scope .Shared }} selected{{ end }}{{ if $off }} disabled{{ end }}>every project in {{ .Workspace }}</option>
 				{{- range .Folders }}
-				<option value="{{ . }}"{{ if eq $s.Scope . }} selected{{ end }}>{{ . }}</option>
+				<option value="{{ . }}"{{ if eq $s.Scope . }} selected{{ end }}{{ if $off }} disabled{{ end }}>{{ . }}</option>
 				{{- end }}
 			</optgroup>
 			{{- end }}

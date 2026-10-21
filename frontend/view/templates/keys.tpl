@@ -1,12 +1,8 @@
 {{ define "content" }}
 <div class="page-head">
 	<div>
-		<h2>SSH keys</h2>
-		<p>The key pairs jobs use to reach other hosts, git remotes and services. Add the public key where it should be accepted. A key's policies are the roles and the users whose runs get it in their ssh agent; a key made for someone carries their name, id_ed25519_alice. These keys only authenticate: the integrations' settings are encrypted with the instance's encryption key below, and each workspace's secrets with a key of their own. A key is never both, and an upload of an encryption key here is refused.</p>
-	</div>
-	<div class="actions">
-		<a class="btn" href="/settings/keys/upload">Upload key</a>
-		<a class="btn btn-primary" href="/settings/keys/generate">Generate key</a>
+		<h2>Keys</h2>
+		<p>Two kinds of key, and no key is both. An <b>encryption key</b> stores secrets: the instance has one for the integrations, and each workspace one for its secrets; a workspace without it stores no secrets. <b>SSH keys</b> connect runs and git to hosts and remotes: the instance's go to runs by policy, a workspace's to its own runs.</p>
 	</div>
 </div>
 
@@ -14,8 +10,88 @@
 <div class="alert bad"><svg class="ic"><use href="#i-secret"/></svg> The key <b>{{ .Fingerprint }}</b> is both an encryption key, <span class="mono-break">{{ join .Encrypt ", " }}</span>, and an SSH key, <span class="mono-break">{{ join .Access ", " }}</span>. Runs and git leave it out, so it is not listed here. Remove the SSH copy, or give the SSH use a key of its own.</div>
 {{- end }}
 
-<section class="block">
-	<h3>Keys <small>{{ .KeysDir }}</small></h3>
+<section class="block key-overview">
+	<div class="table-wrap">
+	<table class="table key-purposes">
+		<thead><tr><th>Scope</th><th>Secrets</th><th>Encryption key</th><th>SSH keys</th></tr></thead>
+		<tbody>
+			{{- $instance := 0 }}{{ range .Keys }}{{ if not .Backup }}{{ $instance = add $instance 1 }}{{ end }}{{ end }}
+			<tr class="key-instance" id="instance">
+				<td><b>Instance</b><div class="faint">every run, by policy</div></td>
+				<td><a href="/settings/integrations">integrations</a><div class="faint">their settings</div></td>
+				<td>
+					{{- with .InstanceKey }}
+					<span class="badge ok">set</span>
+					<form class="inline" data-api="/api/keys/encrypt/rotate" data-method="POST" data-next="/settings/keys?rekeyed={rekeyed}&what=integration+setting" data-confirm="Rotate the instance's encryption key? task-ui generates a new key, keeps the current one as a backup, and re-encrypts the integrations' settings." data-confirm-ok="Rotate">
+						<button class="btn btn-sm" type="submit" title="Generate a new encryption key"><svg class="ic"><use href="#i-rotate"/></svg> Rotate</button>
+					</form>
+					<div class="key-fp faint" title="{{ $.InstanceKeyDir }}">{{ .Fingerprint }}</div>
+					{{- else }}
+					<span class="badge bad">missing</span> <span class="faint">task-ui makes it at start</span>
+					{{- end }}
+				</td>
+				<td>
+					{{- if $instance }}
+					<a href="#instance-ssh">{{ $instance }} key{{ if ne $instance 1 }}s{{ end }}</a>
+					<div class="key-names">{{ range .Keys }}{{ if not .Backup }}<a class="key-chip" href="/settings/keys/{{ .Name }}" title="Policies of {{ .Name }}">{{ .Name }}</a>{{ end }}{{ end }}</div>
+					{{- else }}
+					<span class="faint">none: runs get no SSH key from the instance</span> <a href="/settings/keys/generate">Generate</a>
+					{{- end }}
+				</td>
+			</tr>
+			{{- range .KeyWorkspaces }}
+			{{- $ws := .Workspace }}{{ $api := printf "/api/workspaces/%s/keys" $ws.Folder }}{{ $base := printf "/settings/workspaces/%s" $ws.Folder }}
+			<tr id="ws-{{ $ws.Folder }}"{{ if not .Encrypt }} class="key-missing"{{ end }}>
+				<td>
+					<a href="{{ $base }}"><b>{{ or $ws.Title $ws.Folder }}</b></a>{{ if and $ws.Title (ne $ws.Title $ws.Folder) }} <span class="badge">{{ $ws.Folder }}</span>{{ end }}
+					<div class="faint key-projects">{{ if .Projects }}{{ join .Projects ", " }}{{ else }}no projects{{ end }}</div>
+				</td>
+				<td>{{ if .Secrets }}<a href="/settings/secrets?workspace={{ $ws.Folder }}">{{ .Secrets }} secret{{ if ne .Secrets 1 }}s{{ end }}</a>{{ else if .Encrypt }}<a class="faint" href="/settings/secrets?workspace={{ $ws.Folder }}">none</a>{{ else }}<span class="faint">none</span>{{ end }}</td>
+				<td>
+					{{- with .Encrypt }}
+					<span class="badge ok">set</span>
+					<form class="inline" data-api="{{ $api }}/generate" data-method="POST" data-next="/settings/keys?rekeyed={rekeyed}#ws-{{ $ws.Folder }}" data-confirm="Rotate the encryption key of {{ $ws.Folder }}? task-ui generates a new key, keeps the current one as a backup, and re-encrypts the workspace's secrets." data-confirm-ok="Rotate">
+						<input type="hidden" name="encrypt" value="true" data-type="bool">
+						<input type="hidden" name="comment" value="{{ .Comment }}">
+						<button class="btn btn-sm" type="submit" title="Generate a new encryption key"><svg class="ic"><use href="#i-rotate"/></svg> Rotate</button>
+					</form>
+					<div class="key-fp faint">{{ .Fingerprint }}</div>
+					{{- else }}
+					<span class="badge bad">missing</span>
+					<form class="inline" data-api="{{ $api }}/generate" data-method="POST" data-next="/settings/keys?notice=Encryption+key+added+to+{{ $ws.Folder }}#ws-{{ $ws.Folder }}">
+						<input type="hidden" name="encrypt" value="true" data-type="bool">
+						<input type="hidden" name="comment" value="task-ui {{ $ws.Folder }}">
+						<button class="btn btn-sm btn-primary" type="submit">Generate</button>
+					</form>
+					<a class="btn btn-sm" href="{{ $base }}/keys/upload?encrypt=1">Upload</a>
+					<div class="warn">No secrets can be added.</div>
+					{{- end }}
+				</td>
+				<td>
+					{{- if .SSH }}
+					<a href="{{ $base }}#keys">{{ len .SSH }} key{{ if ne (len .SSH) 1 }}s{{ end }}</a>
+					<div class="key-names">{{ range .SSH }}<a class="key-chip" href="{{ $base }}/keys/{{ .Name }}" title="Grants of {{ .Name }}">{{ .Name }}</a>{{ end }}</div>
+					{{- else }}
+					<span class="faint">none</span> <a href="{{ $base }}/keys/generate">Generate</a> · <a href="{{ $base }}/keys/upload">Upload</a>
+					<div class="faint">task-ui can't SSH to this workspace's hosts with a key of its own: its runs get only the instance SSH keys their policies grant.</div>
+					{{- end }}
+				</td>
+			</tr>
+			{{- end }}
+		</tbody>
+	</table>
+	</div>
+</section>
+
+<section class="block" id="instance-ssh">
+	<div class="block-head">
+		<h3>Instance SSH keys <small>{{ .KeysDir }}</small></h3>
+		<div class="actions">
+			<a class="btn btn-sm" href="/settings/keys/upload">Upload key</a>
+			<a class="btn btn-sm btn-primary" href="/settings/keys/generate">Generate key</a>
+		</div>
+	</div>
+	<p class="dim">The keys runs and git use to reach other hosts, git remotes and services. A key's policies are the roles and the users whose runs get it in their ssh agent; a key made for someone carries their name, id_ed25519_alice. A key without a policy stays the instance's: git and the inventory's logins use it, runs don't.</p>
 	<div class="table-wrap">
 	<table class="table keys">
 		<thead><tr><th>Comment</th><th>Fingerprint</th><th>Policies</th><th>Date</th><th>Actions</th></tr></thead>
@@ -51,32 +127,6 @@
 	</table>
 	</div>
 </section>
-
-{{- with .InstanceKey }}
-<section class="block encryption">
-	<h3>Encryption <small>{{ $.InstanceKeyDir }}</small></h3>
-	<p class="dim">The instance's encryption key: the integrations' settings are encrypted with it, and with nothing else. No run, no git remote and no SSH connection gets it. Rotating it writes the integrations' settings again for the new key and keeps the old one beside it as a backup.</p>
-	<div class="table-wrap">
-	<table class="table keys">
-		<thead><tr><th>Comment</th><th>Fingerprint</th><th>Who gets it</th><th>Date</th><th>Actions</th></tr></thead>
-		<tbody>
-			<tr class="encrypt-key">
-				<td class="key">{{ .Comment }} <span class="badge">{{ .Name }}</span> <span class="badge signal" title="The integrations' settings are encrypted with this key"><svg class="ic"><use href="#i-secret"/></svg> encryption</span></td>
-				<td class="fingerprint"><span class="kind dim">{{ .Type }}</span>{{ .Fingerprint }}</td>
-				<td class="nowrap"><span class="faint">no run</span></td>
-				<td class="nowrap" title="{{ stamp .Modified }}">{{ ago .Modified }}</td>
-				<td class="actions">
-					<button type="button" class="btn-icon" data-copy="{{ .PublicKey }}" title="Copy public key" aria-label="Copy public key"><svg class="ic"><use href="#i-copy"/></svg></button>
-					<form data-api="/api/keys/encrypt/rotate" data-method="POST" data-next="reload" data-confirm="Rotate the instance's encryption key? The current key is kept as a backup, and the integrations' settings are written again for the new one." data-confirm-ok="Rotate">
-						<button class="btn-icon" type="submit" title="Rotate: generate a new encryption key" aria-label="Rotate the encryption key"><svg class="ic"><use href="#i-rotate"/></svg></button>
-					</form>
-				</td>
-			</tr>
-		</tbody>
-	</table>
-	</div>
-</section>
-{{- end }}
 
 <section class="block">
 	<h3>Who gets which key <small>through the ssh agent of their runs</small></h3>

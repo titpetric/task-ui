@@ -3,6 +3,7 @@ package frontend
 import (
 	"context"
 	"net/http"
+	"strconv"
 
 	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/frontend/view"
@@ -12,21 +13,45 @@ import (
 	"github.com/titpetric/task-ui/storage"
 )
 
-// secrets lists the secrets, values masked.
+// secrets lists the secrets by workspace, values withheld; ?workspace=
+// shows one workspace alone.
 func (h *Handlers) secrets(w http.ResponseWriter, r *http.Request) {
 	if !h.requireAdmin(w, r) {
 		return
 	}
 	p := h.page(r, "Secrets")
 	p.Crumbs = view.Crumbs("Settings", "/settings", "Secrets")
-	h.instanceKey(p)
 	secrets, err := h.opts.Secrets.List(r.Context())
 	p.Secrets = userSecrets(secrets)
 	if err != nil {
 		p.Error = err.Error()
 	}
 	p.SecretGroups = h.secretGroups(r.Context(), p.Secrets, p.Folders)
+	if only := r.URL.Query().Get("workspace"); only != "" {
+		for _, group := range p.SecretGroups {
+			if group.Workspace == only {
+				p.SecretWorkspace, p.SecretGroups = only, []view.SecretGroup{group}
+				break
+			}
+		}
+	}
 	h.render(w, http.StatusOK, "secrets", p)
+}
+
+// rekeyedNotice is the notice after a rotation wrote n secrets again,
+// or n of what, such as integration settings; "" without a count.
+func rekeyedNotice(n, what string) string {
+	count, err := strconv.Atoi(n)
+	if err != nil || count < 0 {
+		return ""
+	}
+	if what != "integration setting" {
+		what = "secret"
+	}
+	if count != 1 {
+		what += "s"
+	}
+	return "Encryption key rotated. Re-encrypted " + strconv.Itoa(count) + " " + what + "."
 }
 
 // secretNew shows the form for a new secret, scoped by the query.
@@ -40,10 +65,32 @@ func (h *Handlers) secretNew(w http.ResponseWriter, r *http.Request) {
 	}
 	p := h.page(r, "Add secret")
 	p.Crumbs = view.Crumbs("Settings", "/settings", "Secrets", "/settings/secrets", "Add")
-	h.instanceKey(p)
-	p.Secret = &model.Secret{Scope: scope}
 	p.SecretGroups = h.secretGroups(r.Context(), nil, p.Folders)
+	p.Secret = &model.Secret{Scope: keyedScope(p.SecretGroups, scope, h.workspaceOf(r.Context(), scope))}
 	h.render(w, http.StatusOK, "secret_form", p)
+}
+
+// workspaceOf returns the folder of the workspace a scope is in.
+func (h *Handlers) workspaceOf(ctx context.Context, scope string) string {
+	name, _ := h.opts.Secrets.Workspace(ctx, scope)
+	return name
+}
+
+// keyedScope keeps a scope whose workspace has an encryption key, else
+// picks the shared scope of the first workspace with one: a workspace
+// without a key stores no secret.
+func keyedScope(groups []view.SecretGroup, scope, workspace string) string {
+	for _, group := range groups {
+		if group.Workspace == workspace && group.Key != nil {
+			return scope
+		}
+	}
+	for _, group := range groups {
+		if group.Key != nil {
+			return group.Shared()
+		}
+	}
+	return scope
 }
 
 // secretEdit shows the form to replace a secret's value.
@@ -58,7 +105,6 @@ func (h *Handlers) secretEdit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	p := h.page(r, "Replace "+secret.Name)
-	h.instanceKey(p)
 	p.Crumbs = view.Crumbs("Settings", "/settings", "Secrets", "/settings/secrets", secret.Name)
 	p.Secret = &model.Secret{ID: secret.ID, Scope: secret.Scope, Name: secret.Name}
 	p.SecretGroups = h.secretGroups(r.Context(), nil, p.Folders)

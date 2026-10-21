@@ -20,3 +20,140 @@
     color: var(--text-dim);
   }
 }
+
+/* The keys page's table of purposes: a row for the instance, then one
+   per workspace, with its secrets, its one encryption key and its SSH
+   keys. A missing encryption key marks its row. */
+.key-purposes {
+  & td {
+    vertical-align: top;
+  }
+
+  & form.inline {
+    display: inline;
+  }
+
+  & .badge {
+    margin-right: 0.35rem;
+  }
+
+  & .key-projects {
+    max-width: 22rem;
+    font-size: var(--fs-xs);
+  }
+
+  & .key-fp {
+    margin-top: 0.25rem;
+    font-family: var(--font);
+    font-size: var(--fs-caption);
+    overflow-wrap: anywhere;
+  }
+
+  & .key-names {
+    margin-top: 0.2rem;
+  }
+
+  & .warn {
+    margin-top: 0.25rem;
+    color: var(--bad);
+    font-size: var(--fs-xs);
+  }
+
+  & tr.key-missing > td:first-child {
+    box-shadow: inset 2px 0 0 var(--bad);
+  }
+
+  & tr.key-instance > td {
+    background: var(--ink-1);
+  }
+}
+
+/* The secrets page: a workspace's secrets, those for every project in
+   it first, then each project's under its name. */
+.table.secrets {
+  table-layout: fixed;
+
+  & th:nth-child(1) { width: 38%; }
+  & th:nth-child(2) { width: 30%; }
+  & th:nth-child(3) { width: 18%; }
+  & th:nth-child(4) { width: 14%; }
+
+  & td {
+    overflow-wrap: anywhere;
+  }
+
+  & tr.secret-scope > th {
+    padding-top: 0.6rem;
+    color: var(--text-dim);
+    font-size: var(--fs-xs);
+    font-weight: 500;
+    text-align: start;
+    text-transform: none;
+    letter-spacing: 0;
+  }
+
+  & td.scope {
+    font-family: var(--font);
+    font-size: var(--fs-xs);
+  }
+}
+
+.secret-filter {
+  margin-bottom: 0.75rem;
+}
+
+/* A quiet menu behind a ⋯ button, for an action a block seldom needs,
+   such as rotating a workspace's encryption key. */
+.more-menu {
+  position: relative;
+  display: inline-block;
+
+  & > summary {
+    list-style: none;
+    cursor: pointer;
+
+    &::-webkit-details-marker {
+      display: none;
+    }
+  }
+
+  &[open] > summary {
+    border-color: var(--signal);
+  }
+}
+
+.more-list {
+  position: absolute;
+  top: calc(100% + 0.25rem);
+  right: 0;
+  z-index: 40;
+  display: grid;
+  min-width: 14rem;
+  padding: 0.25rem;
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius);
+  background: var(--ink-1);
+  box-shadow: var(--shadow-pop);
+}
+
+.more-item {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  width: 100%;
+  padding: 0.35rem 0.5rem;
+  border: 0;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: var(--fs-sm);
+  text-align: start;
+  cursor: pointer;
+
+  &:hover,
+  &:focus-visible {
+    background: var(--ink-2);
+    color: var(--signal);
+  }
+}

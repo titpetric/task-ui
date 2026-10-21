@@ -36,6 +36,8 @@ func (f *fixture) acme(t *testing.T) string {
 	assert.Equal(t, http.StatusCreated, res.Status, string(res.Raw))
 	res = f.call(t, asAdmin, http.MethodPost, "/workspaces/acme/keys/generate", api.WorkspaceKeyRequest{Type: "ed25519", Name: "deploy", Users: []string{asOps, "ghost"}})
 	assert.Equal(t, http.StatusCreated, res.Status, string(res.Raw))
+	res = f.call(t, asAdmin, http.MethodPost, "/workspaces/acme/keys/generate", api.WorkspaceKeyRequest{Encrypt: true})
+	assert.Equal(t, http.StatusCreated, res.Status, string(res.Raw))
 	assert.NoError(t, f.opts.Secrets.Set(ctx, &model.Secret{Scope: "workspace:acme", Name: "TOKEN", Content: "shared value"}))
 	assert.NoError(t, f.opts.Secrets.Set(ctx, &model.Secret{Scope: "acme/api", Name: "OWN", Content: "own value"}))
 	assert.NoError(t, f.opts.Env.Managed.Create(ctx, &model.EnvFile{Folder: "acme/api", Path: ".env", Content: "MODE=prod\n"}))

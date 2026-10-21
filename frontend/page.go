@@ -37,6 +37,9 @@ func (h *Handlers) page(r *http.Request, title string) *view.Page {
 		Error:         q.Get("error"),
 		Now:           time.Now(),
 	}
+	if p.Notice == "" {
+		p.Notice = rekeyedNotice(q.Get("rekeyed"), q.Get("what"))
+	}
 	if h.opts.Now != nil {
 		p.Now = h.opts.Now()
 	}

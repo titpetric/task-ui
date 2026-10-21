@@ -73,7 +73,7 @@ func (h *Handlers) createWorkspace(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if h.opts.WorkspaceKeys != nil {
-		if _, err := h.opts.WorkspaceKeys.Ensure(workspace.ID, "task-ui "+workspace.Folder); err != nil {
+		if err := h.opts.WorkspaceKeys.Prepare(workspace.ID); err != nil {
 			failErr(w, err)
 			return
 		}

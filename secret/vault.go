@@ -25,7 +25,7 @@ import (
 )
 
 // ErrNoKey reports that no key in the vault's store can encrypt.
-var ErrNoKey = errors.New("no encryption key to encrypt the secrets with: rotate it in Settings, SSH keys, Encryption")
+var ErrNoKey = errors.New("no encryption key to encrypt the secrets with: rotate it in Settings, Keys")
 
 // Vault encrypts and decrypts with the keys of one encryption store.
 type Vault struct {

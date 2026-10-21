@@ -56,7 +56,8 @@ with the projects cloned inside it. **Add workspace** clones one under
 the folder you name, **Move up** and **Move down** order them, and the
 remove button deletes one with the projects inside it. **Configure**
 changes a workspace's title and description, and holds its **Keys**, the
-encryption key of its secrets and the SSH keys of its runs, and
+encryption key of its secrets and the SSH keys of its runs, which the
+[Keys](#keys) page also lists, and
 **Export**, which **Import** on another instance reads.
 [Workspaces](workspaces.md) covers them, their keys and runs, the move
 between instances, what they keep apart, and the prompt against a
@@ -86,61 +87,110 @@ server prints one, once.
 
 ## Secrets
 
-Variables added to the environment of every run, kept per
-[workspace](workspaces.md). A secret has a scope:
+Variables added to the environment of the runs in a
+[workspace](workspaces.md). The page does one thing, managing them, and
+groups them by workspace: first the secrets for every project in it,
+then each project's own under the project's name. A row shows the
+secret's name, its scope, when it changed, and two buttons, replace the
+value and delete. A value is never shown again once saved.
 
-- `workspace:<name>`, a workspace's shared secret, reaches every folder
-  in that workspace and no folder in another one. "every folder in _",
-  `workspace:_`, reaches the projects at the root; a project in a named
-  workspace doesn't get it.
+A secret has a scope:
+
+- `workspace:<name>`, a workspace's shared secret, reaches every project
+  in that workspace and no project in another one. "every project in
+  _", `workspace:_`, reaches the projects at the root; a project in a
+  named workspace doesn't get it.
 - a folder, `malta/deploy`, reaches that folder's jobs and wins over its
   workspace's shared secret of the same name.
 
-A value is never shown again once saved. The page groups the secrets by
-workspace, each with an **Add secret** of its own, and the form's scope
-lists each workspace's shared scope and its folders. In the API, the
-scope `all`, or none, is `workspace:_`.
+**Add secret** at the top opens the form with a scope picker; each
+workspace has an **Add secret** of its own that starts on its shared
+scope. In the API, the scope `all`, or none, is `workspace:_`.
+`/settings/secrets?workspace=malta` shows one workspace alone; the keys
+page links each workspace's count of secrets there.
+
+![Secrets, grouped by workspace](../assets/secrets-dark.png)
+
+A workspace stores secrets once it has an encryption key (see
+[Keys](#keys)). Without one, its group says **Add an encryption key to
+store secrets**, with a link to the keys page, its **Add secret** is
+off, the form leaves its scopes out, and `POST /api/secrets` answers
+`409`:
+
+```json
+{"error": "the workspace acme has no encryption key, so it stores no secrets: generate or upload one in Settings, Keys"}
+```
+
+The ⋯ menu of a workspace with a key holds **Rotate encryption key**.
+After a confirmation, task-ui generates a new key, keeps the current one
+beside it as a backup, `id_ed25519.bak-<time>`, re-encrypts the
+workspace's secrets, and the page says how many: **Re-encrypted 3
+secrets.** Runs see no change.
 
 The scopes keep a workspace's secrets out of the environment of
 another workspace's runs, not out of their reach on disk (see
 [What a workspace keeps apart](workspaces.md#what-a-workspace-keeps-apart)).
-
-![Secrets, grouped by workspace](../assets/secrets-dark.png)
-
-Each workspace's encryption key encrypts its secrets at rest (see
-[Keys](workspaces.md#keys)): the shared ones, and those of every folder
-in it. A folder's workspace is its first segment when that's a named
-workspace, else `_`. A secret needs its workspace's key, which task-ui
-makes for every workspace. **Re-encrypt** writes every secret again for
-its workspace's current key, and rotating a workspace's key does it for
-that workspace. Removing a workspace removes its secrets with its keys.
-
-The instance's encryption key, `TASK_UI_DATA/instance/encrypt/id_ed25519`,
-encrypts only the settings of the [integrations](#integrations): with it
-gone the workspaces' secrets still open. task-ui makes it at start when
-it's missing. No SSH key encrypts or decrypts a secret (see
-[One key, one use](#one-key-one-use)).
+A folder's workspace is its first segment when that's a named
+workspace, else `_`. Removing a workspace removes its secrets with its
+keys. The integrations' settings aren't on this page: the
+[Integrations](#integrations) page holds them, on the instance's
+encryption key.
 
 At start, task-ui moves the secrets of an instance that kept them all on
 its SSH key, the `id_ed25519` or `id_rsa` of `TASK_UI_SSH_DIR`: a secret
 for all folders, scope `all`, becomes `_`'s shared secret,
 `workspace:_`, and task-ui writes every other secret again for its
-workspace's key. Before it writes anything it copies the database to
-`task-ui.db.pre-workspace-keys`. Then it writes every integration
-setting the instance's encryption key can't open again for that key,
-after a copy to `task-ui.db.pre-keysplit`; it reads each one back before
-it keeps it. A secret no key opens stays untouched, and the log names
-it. The log lines `secrets on their workspace's key` and `integrations on
-the instance's encryption key` count what moved. These moves are the
-only reads with the SSH keys; after them the SSH keys can go and every
-secret still opens.
+workspace's key. A workspace that holds secrets and has no encryption
+key gets one for them first. Before it writes anything it copies the
+database to `task-ui.db.pre-workspace-keys`. Then it writes every
+integration setting the instance's encryption key can't open again for
+that key, after a copy to `task-ui.db.pre-keysplit`; it reads each one
+back before it keeps it. A secret no key opens stays untouched, and the
+log names it. The log lines `secrets on their workspace's key` and
+`integrations on the instance's encryption key` count what moved. These
+moves are the only reads with the SSH keys; after them the SSH keys can
+go and every secret still opens.
 
-## SSH keys
+## Keys
 
-The key pairs the jobs and git use to reach other hosts, and in a box
-of its own, **Encryption**, the instance's encryption key.
+Keys have two purposes, and no key serves both:
 
-![SSH keys](../assets/keys-dark.png)
+- an **encryption key** stores secrets. Each workspace has exactly one,
+  for its secrets; the instance has one, for the integrations' settings.
+  A workspace without one stores no secrets.
+- **SSH keys** connect runs and git to hosts and remotes. A workspace has
+  any number, for its own runs; the instance's go to runs by policy.
+
+![Keys](../assets/keys-dark.png)
+
+The page opens on one table, a row for the instance and one per
+workspace:
+
+- **Scope**: the instance, or the workspace with its projects under its
+  name. The name links to the workspace's configure page.
+- **Secrets**: how many the workspace stores, linked to
+  `/settings/secrets?workspace=<name>`. For the instance, the
+  integrations.
+- **Encryption key**: **set**, with **Rotate** and the key's fingerprint
+  in small type, or **missing**, in red, with **Generate** and
+  **Upload**. Without the key, the workspace stores no secrets. Rotate keeps
+  the old key as a backup and re-encrypts what it encrypted: the
+  workspace's secrets, or the integrations' settings for the instance's
+  key, and the page says how many.
+- **SSH keys**: how many, and their names, each linked to its grants or
+  policies. A workspace with none reads "task-ui can't SSH to this
+  workspace's hosts with a key of its own: its runs get only the instance
+  SSH keys their policies grant", with **Generate** and **Upload**.
+
+A workspace starts without an encryption key: an admin adds one on this
+page, generated or uploaded, before it stores a secret. The only key
+task-ui makes on its own is the instance's, at start when it's missing,
+and a workspace's when it holds secrets and has no key, so they open.
+The workspace's configure page has the same keys in its
+[Keys](workspaces.md#keys) section.
+
+Under the table, **Instance SSH keys** are the key pairs of
+`TASK_UI_SSH_DIR`:
 
 - **Generate key** makes a new pair (ed25519, ECDSA or RSA), **Upload key**
   takes a private key you already use, unencrypted.
@@ -173,12 +223,11 @@ of its own, **Encryption**, the instance's encryption key.
   default, in every run, for git remotes and for the inventory's logins.
   The page shows them read-only, with the copy button: they come with the
   server or its image, and change there.
-- **Encryption** shows the instance's encryption key, read-only: its
-  fingerprint, the copy button and **Rotate**, which makes a new key,
-  keeps the old one beside it as a backup, `id_ed25519.bak-<time>`, and
-  writes the integrations' settings again for the new key. No run, git
-  remote or SSH connection gets it. `POST /api/keys/encrypt/rotate` does
-  the same.
+
+The instance's encryption key is `TASK_UI_DATA/instance/encrypt/id_ed25519`.
+No run, git remote or SSH connection gets it, and with it gone the
+workspaces' secrets still open. `POST /api/keys/encrypt/rotate` rotates
+it.
 
 ### One key, one use
 
@@ -198,7 +247,7 @@ user's `~/.ssh` and each workspace's `ssh/`.
   is new, so it never collides.
 - At start, task-ui looks for a key both an encryption store and an SSH
   store hold, by fingerprint, and logs a warning naming both paths; the
-  SSH keys page shows it in red. task-ui deletes no key: remove the SSH
+  keys page shows it in red. task-ui deletes no key: remove the SSH
   copy, or generate a new SSH key in its place.
 
 ```sh

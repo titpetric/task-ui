@@ -128,8 +128,11 @@ func (a *App) prepare(ctx context.Context) error {
 }
 
 // ensureKeys makes the instance's encryption key and the key
-// directories of every workspace, the default one among them, with its
-// encryption key, each when there is none. It warns of a key held for
+// directories of every workspace, the default one among them. A
+// workspace gets an encryption key from an admin, generated or
+// uploaded; only one that holds secrets and has no key, such as the
+// default workspace of an instance that kept its secrets on an SSH key,
+// gets one here, so its secrets open. It warns of a key held for
 // both uses, encryption and SSH, and removes nothing.
 func (a *App) ensureKeys(ctx context.Context) error {
 	workspaces, err := storage.NewWorkspaceStorage(a.DB).List(ctx)
@@ -150,13 +153,24 @@ func (a *App) ensureKeys(ctx context.Context) error {
 				"fingerprint", overlap.Fingerprint, "encrypt", strings.Join(overlap.Encrypt, ","), "ssh", strings.Join(overlap.Access, ","))
 		}
 	}()
+	store := a.secrets()
 	for _, ws := range workspaces {
+		if err := keyring.Prepare(ws.ID); err != nil {
+			return fmt.Errorf("the keys of workspace %s: %w", ws.Folder, err)
+		}
+		held, err := store.Encrypted(ctx, ws.Folder)
+		if err != nil {
+			return err
+		}
+		if len(held) == 0 {
+			continue
+		}
 		made, err := keyring.Ensure(ws.ID, "task-ui "+ws.Folder)
 		if err != nil {
 			return fmt.Errorf("the keys of workspace %s: %w", ws.Folder, err)
 		}
 		if made {
-			slog.Info("workspace encryption key generated", "workspace", ws.Folder, "dir", keyring.Dir(ws.ID))
+			slog.Info("workspace encryption key generated for the secrets it holds", "workspace", ws.Folder, "dir", keyring.Dir(ws.ID))
 		}
 	}
 	return nil

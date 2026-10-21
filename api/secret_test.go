@@ -193,3 +193,25 @@ func TestSecret_WorkspaceScope(t *testing.T) {
 	assert.Len(t, left, 1)
 	assert.Equal(t, "ROOT", left[0].Name)
 }
+
+// A workspace without an encryption key stores no secret: the API
+// answers 409 and says to add a key, and stores the secret once the
+// workspace has one.
+func TestSecret_NoKey(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	ctx := context.Background()
+	assert.NoError(t, f.opts.Workspaces.EnsureDefault(ctx))
+	assert.NoError(t, f.opts.Workspaces.Create(ctx, &model.Workspace{Folder: "acme"}))
+	f.opts.Secrets.Workspaces = &secret.Workspaces{Rows: f.opts.Workspaces, Keys: f.opts.WorkspaceKeys}
+
+	refused := f.call(t, asAdmin, http.MethodPost, "/secrets", api.SecretRequest{Scope: "workspace:acme", Name: "TOKEN", Content: "x"})
+	assert.Equal(t, http.StatusConflict, refused.Status, string(refused.Raw))
+	assert.Contains(t, refused.str("error"), "the workspace acme has no encryption key")
+	assert.Contains(t, refused.str("error"), "Settings, Keys")
+
+	made := f.call(t, asAdmin, http.MethodPost, "/workspaces/acme/keys/generate", api.WorkspaceKeyRequest{Encrypt: true})
+	assert.Equal(t, http.StatusCreated, made.Status, string(made.Raw))
+	stored := f.call(t, asAdmin, http.MethodPost, "/secrets", api.SecretRequest{Scope: "workspace:acme", Name: "TOKEN", Content: "x"})
+	assert.Equal(t, http.StatusOK, stored.Status, string(stored.Raw))
+}
