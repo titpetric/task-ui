@@ -86,6 +86,14 @@ connected.
 A run started over MCP is like any other: it shows in the history, anyone
 allowed can watch it, and it goes on if the agent stops waiting.
 
+`run_job` takes the job IDs the folder's page runs: a job of
+`list_jobs`, `./<path>` for a file of the folder that runs, and
+`@<skill>:<job>` for a job of an atkins skill that applies in the
+folder's own directory, such as `@git:status`. It has no `dir` and no
+`args`: the targets of a directory inside a folder and a job's arguments
+start from the browser or `POST /api/runs`. `@shell`, the interactive
+shell of **Enter Shell**, answers `403` to every token but an admin's.
+
 ## A frozen surface
 
 These nine tools, like the JSON API behind them, are the whole surface,

@@ -2440,6 +2440,24 @@
     }
   })();
 
+  // #args=<job>[;<line>] opens the arguments field of a job on the page,
+  // the line typed in, so the field and what it runs can be shared.
+  (function openArgsFromHash() {
+    var match = /^#args=([^;]+)(?:;(.*))?$/.exec(location.hash);
+    if (!match) return;
+    var job = decodeURIComponent(match[1]);
+    var btn = Array.prototype.find.call(document.querySelectorAll("[data-run][data-args]"), function (b) {
+      return b.dataset.job === job;
+    });
+    if (!btn) return;
+    btn.click();
+    var input = document.querySelector("form.argsline input");
+    if (input && match[2]) {
+      input.value = decodeURIComponent(match[2]);
+      input.dispatchEvent(new Event("input"));
+    }
+  })();
+
   // The sidebar is a drawer under the breakpoint. #menu opens it on load.
   var menuToggle = document.getElementById("menu-toggle");
   if (menuToggle) {

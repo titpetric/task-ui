@@ -159,37 +159,44 @@ on load.
 ![The actions bar of a directory: the git line, then git, compose and dockerfile chips](../assets/actions-dark.png)
 
 The bar under a folder's title, and under a directory's inside a folder,
-has two parts:
+has two parts, and **Enter Shell** at its top right for an admin:
 
-- **The git line**: `⎇ main ↑1 ↓3 ●2 · malta/dockerfiles`. The branch of
-  the checkout the page is in, the nearest one up from it and no higher
-  than the root, or the commit of a detached checkout; `↑` the commits
-  to push, `↓` those to pull from its upstream as last fetched, `●` the
-  files changed or untracked; then where the checkout is. Hover it for
-  the upstream. The line reads `git status` and stays good for 5 seconds.
+- **The git line**: `⎇ main ↑1 ↓3 ●2 · malta/dockerfiles`. It reads the
+  checkout the page is in, the nearest one up from it and no higher than
+  the root: its branch, or `detached` and the commit of a checkout off any
+  branch; `↑` the commits to push and `↓` those to pull from its upstream,
+  as last fetched; `●` the files changed or untracked; then where the
+  checkout is. A checkout level with its upstream and with nothing changed
+  reads `up to date`. Hover it for the upstream. The line reads
+  `git status` and stays good for 5 seconds; it changes nothing, and the
+  pulls are jobs of the git chip.
 - **Chips**: one per [atkins](https://github.com/titpetric/atkins) skill
   that applies there, such as `[git: pull · rebase · status]` or
-  `[compose: build · custom · down · pull · up]`, and an `[atkins: default · build]`
-  chip of the place's own pipeline jobs. task-ui asks
-  `atkins -l --json --all` in the directory, as a page opens, and keeps
-  what it lists for 30 seconds, or until the pipeline file or a skill file
-  changes; an atkins that is missing, fails or takes longer than 3
-  seconds shows no chips. A skill comes from a `.atkins/skills/` folder
-  of the directory or of any directory above it, and applies where its
+  `[compose: build · custom... · down · pull · up]`, and an
+  `[atkins: default · build]` chip of the place's own pipeline jobs.
+  A skill comes from a `.atkins/skills/` folder of the directory or of any
+  directory above it, a workspace's among them, and applies where its
   `when:` holds; a job of it with a `when:` of its own that fails, such
   as `compose: build` beside a compose file that builds nothing, has no
-  chip. Hover a chip for what the skill is and the file its `when:`
-  matched.
+  chip ([Workspaces](workspaces.md#skills) shows how to write one).
+  Hover a chip for what the skill is and the file its `when:` matched.
+  task-ui asks `atkins -l --json --all` in the directory as a page opens,
+  and keeps what it lists for 30 seconds, or until the pipeline file or a
+  skill file changes; an atkins that is missing, fails or takes longer
+  than 3 seconds shows no chips.
 
 Each job of a chip is a **Run**, which opens the run's window as a job
 card's does, and **Attach** while it runs; a user who may not run it gets
-a link to its page. A skill job is the job `@<skill>:<job>` of the
-folder, such as `@git:status`: it runs `atkins git:status` in the
-directory of the file the skill's `when:` matched, the checkout for git,
-the directory of the compose file for compose, under the folder's allow
-rules and hours, and keeps its history under that directory. A skill
-that matched above the folder runs in the folder's own directory, where
-atkins finds it again.
+a link to its page. A job whose name ends in `...`, such as
+`compose: custom...`, takes arguments: its Run opens a field for them
+first (see [Runs](runs.md#what-a-job-gets)).
+
+A skill job is the job `@<skill>:<job>` of the folder, such as
+`@git:status`: it runs `atkins git:status` in the directory of the file
+the skill's `when:` matched, the checkout for git, the directory of the
+compose file for compose, under the folder's allow rules and hours, and
+keeps its history under that directory. A skill that matched above the
+folder runs in the directory of the page, where atkins finds it again.
 
 **compose up** and **down** of the compose project task-ui itself runs
 in ask first: they stop or recreate the instance and every run in it.
@@ -219,10 +226,11 @@ button shows to admins alone. No schedule or workflow step takes
 
 An admin with a token in the [Claude Code integration](settings.md#integrations)
 gets a **Prompt** box under the bar of every folder page and every
-directory inside a folder, folded until clicked. The prompt runs
-`internal/claude-prompt` as you, with Claude Code in that directory, so it
-reads the `CLAUDE.md` and `.claude/` there and above, and its window opens
-on the run.
+directory inside a folder: open on a workspace's page and on `/f/_`,
+which prompts at the root, and folded elsewhere until clicked. The
+prompt runs `internal/claude-prompt` as you, with Claude Code in that
+directory, so it reads the `CLAUDE.md` and `.claude/` there and above,
+and its window opens on the run.
 
 ```sh
 curl -s -X POST https://task.example.com/api/prompts \
@@ -230,11 +238,12 @@ curl -s -X POST https://task.example.com/api/prompts \
   -d '{"folder": "malta", "dir": "dockerfiles/blog", "prompt": "what does this image build"}'
 ```
 
-The run is `internal/claude-prompt` of that directory under the root,
-such as `internal/malta/dockerfiles/blog`, and the directory in
-`TASK_UI_PROMPT_DIR`. One prompt runs per directory: a second there
+The run is `internal/claude-prompt` with the directory under the root as
+its `dir`, such as `malta/dockerfiles/blog`, and the absolute directory
+in `TASK_UI_PROMPT_DIR`. One prompt runs per directory: a second there
 answers `409` with the run in the way, and prompts in two directories
-run at once.
+run at once. A workspace's prompt route works the same way (see
+[Workspaces](workspaces.md#a-prompt-against-a-workspace)).
 
 ## A job's page
 

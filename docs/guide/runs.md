@@ -141,7 +141,11 @@ as `docker compose`, or the job's own argv and `--`. Below it, task-ui
 shows the whole command as each word reaches it, `docker compose ps -a '; id'`,
 or says a quote does not close; **Run** sends the line, Esc or **Cancel**
 closes the field. The job's `exec` in `GET /api/folders` is the same
-command.
+command. A link to the page with `#args=<job>;<line>`, such as
+`/f/acme/api/deploy#args=@compose:custom;ps%20-a`, opens the field of
+that job on load with the line typed in.
+
+![The field of compose: custom..., and the argv it runs](../assets/args-dark.png)
 
 Before the job, a folder in a git checkout pulls it, in the run's own
 terminal; when the pull fails, the run fails with it. A folder in a
