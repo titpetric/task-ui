@@ -110,6 +110,9 @@ A run starts in its folder, as a login shell, with:
 
 - `TASK_UI=1`, `TASK_UI_USER`, `TASK_UI_FOLDER`, `TASK_UI_JOB`,
   `TASK_UI_RUN_ID`, and `TASK_UI_ARTIFACTS`, a directory for its files;
+- in a [workspace](settings.md#workspaces), `TASK_UI_WORKSPACE`, its
+  name, and `TASK_UI_WORKSPACE_DIR`, its checkout; `HOME` stays the
+  server's;
 - the secrets of its folder (see [Settings](settings.md#secrets));
 - an ssh agent, through `SSH_AUTH_SOCK`, with the instance keys whose
   policies name the role or the name of whoever started the run (see
@@ -117,7 +120,8 @@ A run starts in its folder, as a login shell, with:
   which, or `(none)`.
 
 Before the job, a folder in a git checkout pulls it, in the run's own
-terminal; when the pull fails, the run fails with it.
+terminal; when the pull fails, the run fails with it. A folder in a
+workspace pulls the workspace's checkout first, then its own.
 
 ---
 

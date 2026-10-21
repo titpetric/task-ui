@@ -31,7 +31,7 @@ func TestEntries(t *testing.T) {
 		}
 	}
 
-	entries := Entries(root, &git.Git{})
+	entries := Entries(root, &git.Git{}, nil)
 	byID := map[string]Entry{}
 	for _, entry := range entries {
 		byID[entry.ID] = entry
@@ -55,5 +55,40 @@ func TestEntries(t *testing.T) {
 	}
 	if entry := byID["repo"]; entry.Checkout == nil || entry.Checkout.Subject != "first" || entry.Jobs != 1 {
 		t.Fatalf("repo: %+v", entry)
+	}
+}
+
+// A workspace's checkouts list as entries of their own, ws/name, though
+// the workspace's .gitignore hides them; its other directories do not.
+func TestEntries_Workspace(t *testing.T) {
+	t.Parallel()
+	root := t.TempDir()
+	ws := filepath.Join(root, "malta")
+	gitInit(t, ws)
+	write(t, filepath.Join(ws, ".gitignore"), "/dockerfiles\n")
+	write(t, filepath.Join(ws, "atkins.yml"), "jobs:\n  setup: echo setup\n")
+	write(t, filepath.Join(ws, "policies", "README.md"), "policies")
+	project := filepath.Join(ws, "dockerfiles")
+	gitInit(t, project)
+	write(t, filepath.Join(project, "atkins.yml"), "jobs:\n  build: echo build\n")
+	write(t, filepath.Join(project, "task", "atkins.yml"), "jobs:\n  push: echo push\n")
+
+	byID := map[string]Entry{}
+	ids := []string{}
+	for _, entry := range Entries(root, &git.Git{}, []string{"malta"}) {
+		byID[entry.ID] = entry
+		ids = append(ids, entry.ID)
+	}
+	if want := []string{"malta", "malta/dockerfiles"}; !slices.Equal(ids, want) {
+		t.Fatalf("entries: got %v, want %v", ids, want)
+	}
+	if entry := byID["malta/dockerfiles"]; entry.Dir != project || entry.Jobs != 2 || entry.Checkout == nil {
+		t.Fatalf("malta/dockerfiles: %+v", entry)
+	}
+	if entry := byID["malta"]; entry.Jobs != 3 {
+		t.Fatalf("malta counts its projects' jobs: %+v", entry)
+	}
+	if ids := Entries(root, &git.Git{}, nil); len(ids) != 1 {
+		t.Fatalf("without the workspace: %+v", ids)
 	}
 }

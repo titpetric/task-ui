@@ -1,6 +1,7 @@
 package frontend
 
 import (
+	"context"
 	"net/http"
 	"strings"
 
@@ -17,7 +18,7 @@ func (h *Handlers) projects(w http.ResponseWriter, r *http.Request) {
 	p := h.page(r, "Projects")
 	p.Crumbs = view.Crumbs("Settings", "/settings", "Projects")
 	p.Root = h.opts.Root
-	p.Entries = folder.Entries(h.opts.Root, h.opts.Git)
+	p.Entries = folder.Entries(h.opts.Root, h.opts.Git, h.workspaceFolders(r.Context()))
 	if h.opts.Disk != nil {
 		p.Spaces = map[string]diskusage.Usage{}
 		for _, entry := range p.Entries {
@@ -71,4 +72,14 @@ func (h *Handlers) projectEdit(w http.ResponseWriter, r *http.Request) {
 		p.JobAllowChoices[job.ID] = view.WhoChoices(jobAllow[job.ID], users)
 	}
 	h.render(w, http.StatusOK, "project_edit", p)
+}
+
+// workspaceFolders returns the folder of every workspace, none without
+// the storage or on an error.
+func (h *Handlers) workspaceFolders(ctx context.Context) []string {
+	if h.opts.Workspaces == nil {
+		return nil
+	}
+	folders, _ := h.opts.Workspaces.Folders(ctx)
+	return folders
 }

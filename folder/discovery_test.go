@@ -220,3 +220,39 @@ func TestDiscovery_SkipsInternal(t *testing.T) {
 		t.Fatalf("folders: got %v, want %v", ids, want)
 	}
 }
+
+// A project cloned inside a workspace lists, with the folders inside it,
+// though the workspace's .gitignore ignores it: the walk goes into every
+// configured folder.
+func TestDiscovery_Workspace(t *testing.T) {
+	t.Parallel()
+	root := t.TempDir()
+	ws := filepath.Join(root, "ws")
+	gitInit(t, ws)
+	write(t, filepath.Join(ws, ".gitignore"), "/project\n/scratch\n")
+	write(t, filepath.Join(ws, "atkins.yml"), "jobs:\n  setup: echo setup\n")
+	project := filepath.Join(ws, "project")
+	gitInit(t, project)
+	write(t, filepath.Join(project, "atkins.yml"), "jobs:\n  build: echo build\n")
+	write(t, filepath.Join(project, "sub", "atkins.yml"), "jobs:\n  test: echo test\n")
+	write(t, filepath.Join(ws, "scratch", "atkins.yml"), "jobs:\n  tmp: echo tmp\n")
+
+	list := func(d *Discovery) []string {
+		ids := []string{}
+		for _, f := range d.List() {
+			ids = append(ids, f.ID)
+		}
+		return ids
+	}
+	d := &Discovery{Root: root, Discover: true, Config: []Config{{ID: "ws/project"}}}
+	if got, want := list(d), []string{"ws", "ws/project", "ws/project/sub"}; !slices.Equal(got, want) {
+		t.Fatalf("folders: got %v, want %v", got, want)
+	}
+	if sub := d.Find("ws/project/sub"); sub == nil || sub.Job("test") == nil {
+		t.Fatalf("ws/project/sub: %+v", sub)
+	}
+	// Unconfigured, the ignored project stays out.
+	if got, want := list(&Discovery{Root: root, Discover: true}), []string{"ws"}; !slices.Equal(got, want) {
+		t.Fatalf("folders: got %v, want %v", got, want)
+	}
+}

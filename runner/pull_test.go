@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/titpetric/task-ui/folder"
@@ -73,4 +74,42 @@ func TestManager_NoPull(t *testing.T) {
 	out, status := collect(t, session.Attach(false))
 	assert.Equal(t, model.StateOK, status.State)
 	assert.NotContains(t, out, "git pull")
+}
+
+// A run inside a workspace pulls the workspace's checkout first, then
+// its project's, and sees both up to date.
+func TestManager_PullWorkspaceFirst(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	ctx := context.Background()
+	assert.NoError(t, f.workspaces.Create(ctx, &model.Workspace{Folder: "ws"}))
+
+	// The workspace and a project inside it, each a clone of its own origin.
+	clone := func(name, dir string) string {
+		origin := filepath.Join(f.root, "origin", name)
+		assert.NoError(t, os.MkdirAll(origin, 0o755))
+		gitRun(t, origin, "init", "-q")
+		assert.NoError(t, os.WriteFile(filepath.Join(origin, name+".txt"), []byte(name+" v1\n"), 0o644))
+		gitRun(t, origin, "add", ".")
+		gitRun(t, origin, "commit", "-q", "-m", "first")
+		gitRun(t, f.root, "clone", "-q", origin, dir)
+		assert.NoError(t, os.WriteFile(filepath.Join(origin, name+".txt"), []byte(name+" v2\n"), 0o644))
+		gitRun(t, origin, "commit", "-q", "-am", "second")
+		return origin
+	}
+	ws := filepath.Join(f.root, "ws")
+	clone("ws", ws)
+	assert.NoError(t, os.WriteFile(filepath.Join(ws, ".git", "info", "exclude"), []byte("/project\n"), 0o644))
+	clone("project", filepath.Join(ws, "project"))
+
+	req := f.shellJob("ws/project", "cat ../ws.txt project.txt", false)
+	session, err := f.manager.Start(ctx, req)
+	assert.NoError(t, err)
+	out, status := collect(t, session.Attach(true))
+	assert.Equal(t, model.StateOK, status.State, out)
+	first := strings.Index(out, "git -C "+ws+" pull --ff-only")
+	second := strings.Index(out, "$ git pull --ff-only")
+	assert.True(t, first >= 0 && second > first, out)
+	assert.Contains(t, out, "ws v2")
+	assert.Contains(t, out, "project v2")
 }

@@ -115,6 +115,7 @@ func (m *Manager) Start(ctx context.Context, req Request) (*Session, error) {
 	}
 	session := newSession(run, req.Folder, req.Job)
 	session.env = req.Env
+	session.workspace = m.workspace(ctx, req)
 	if req.User != nil {
 		session.role = req.User.Role
 	}
@@ -390,6 +391,12 @@ func (m *Manager) command(ctx context.Context, session *Session) (*exec.Cmd, err
 		"TASK_UI_JOB="+job.ID,
 		"TASK_UI_RUN_ID="+run.ID,
 	)
+	if session.workspace != "" {
+		cmd.Env = append(cmd.Env,
+			"TASK_UI_WORKSPACE="+filepath.Base(session.workspace),
+			"TASK_UI_WORKSPACE_DIR="+session.workspace,
+		)
+	}
 	if dir := m.artifactDir(run); dir != "" {
 		if err := os.MkdirAll(dir, 0o755); err != nil {
 			return nil, err
@@ -397,6 +404,23 @@ func (m *Manager) command(ctx context.Context, session *Session) (*exec.Cmd, err
 		cmd.Env = append(cmd.Env, "TASK_UI_ARTIFACTS="+dir)
 	}
 	return cmd, nil
+}
+
+// workspace returns the directory of the request's workspace: the one it
+// names, or the workspace of the folder's first segment under the root.
+// "" for a folder in none.
+func (m *Manager) workspace(ctx context.Context, req Request) string {
+	if req.Workspace != "" {
+		return req.Workspace
+	}
+	if m.opts.Workspaces == nil {
+		return ""
+	}
+	top, _, _ := strings.Cut(req.Folder.ID, "/")
+	if _, err := m.opts.Workspaces.GetByFolder(ctx, top); err != nil {
+		return ""
+	}
+	return filepath.Join(m.opts.Root, top)
 }
 
 func (m *Manager) artifactDir(run *model.Run) string {
