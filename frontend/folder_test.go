@@ -31,7 +31,7 @@ func TestFolder(t *testing.T) {
 	assert.Contains(t, body, `data-run data-folder="infra" data-job="plan"`)
 	assert.Contains(t, body, `data-force data-folder="infra" data-job="plan"`)
 	assert.Equal(t, 1, strings.Count(body, "data-force"), "only plan has hours")
-	assert.Contains(t, body, `<i class="dot failed"></i>failed`)
+	assert.Contains(t, body, `<i class="dot failed"></i><span class="state-label">failed`)
 	assert.Contains(t, body, ".env")
 	assert.Contains(t, body, `class="badge bad">missing`)
 	assert.NotContains(t, body, "/f/_/infra/env/.env") // admins edit env files
@@ -74,7 +74,8 @@ func TestFolder_Running(t *testing.T) {
 	session := f.start(t, f.infra, "slow")
 
 	body := f.page(t, asOps, "/f/_/infra")
-	assert.Contains(t, body, "running, ops")
+	assert.Contains(t, body, `<i class="dot running"></i><span class="state-label">running</span>`)
+	assert.Contains(t, body, `<span class="when">just now</span><span class="who-ran"><span class="avatar sm role-runner" title="ops">OP</span> ops</span></div>`)
 	assert.Contains(t, body, `data-attach="`+session.ID()+`"`)
 	assert.Contains(t, body, `data-kill="`+session.ID()+`"`)
 
@@ -338,4 +339,50 @@ func TestFolder_Namespace(t *testing.T) {
 	assert.Contains(t, admin, `<a href="/f/_/private">`)
 	assert.Contains(t, admin, "the root</small>")
 	assert.Contains(t, admin, `<a href="/f/acme">acme</a>`)
+}
+
+// A job card names the job once, with its kind beside it; it numbers
+// the lines it runs, shows the first three and keeps the rest behind
+// "show N more"; it drops a description that repeats the name or the
+// first step.
+func TestFolder_JobCard(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	plan := f.infra.Job("plan")
+	plan.Description = "Show the plan"
+	plan.Steps = []string{"task setup:checkout", "go build ./...", "go test ./...", "docker build .", "docker push"}
+	plan.DependsOn = []string{"lint"}
+	f.infra.Job("slow").Description = "slow"
+	f.infra.Job("many").Description = "seq 1 200"
+	f.infra.Job("many").Steps = []string{"seq 1 200"}
+
+	body := f.page(t, asOps, "/f/_/infra")
+	assert.Contains(t, body, `<a class="name" href="/f/_/infra/plan">plan</a>
+				<span class="badge">script</span>`)
+	assert.Contains(t, body, `<p class="desc">Show the plan</p>`)
+	assert.Contains(t, body, `<div class="code"><div class="comment"># after lint</div>
+				<ol><li>task setup:checkout</li><li>go build ./...</li><li>go test ./...</li></ol>
+				<details>
+					<summary><span class="more">show 2 more</span><span class="less">show less</span></summary>
+					<ol start="4"><li>docker build .</li><li>docker push</li></ol>
+				</details>`)
+	// The name and the first step are not said twice.
+	slow := card(body, "slow")
+	assert.Equal(t, 1, strings.Count(slow, ">slow<"))
+	assert.Contains(t, slow, `<p class="desc"></p>`)
+	many := card(body, "many")
+	assert.Equal(t, 1, strings.Count(many, "seq 1 200"))
+	assert.Contains(t, many, `<p class="desc"></p>`)
+	// Three lines or fewer have no control; a job without steps shows its command.
+	assert.Equal(t, 1, strings.Count(body, "<details>"))
+	assert.Contains(t, body, `<ol><li>sh -c sleep 30</li></ol>`)
+	// One meta row: the state, then when, then who.
+	assert.Contains(t, body, `<div class="meta"><i class="dot pending"></i><span class="state-label faint">never run</span></div>`)
+}
+
+// card cuts the job card of a job out of a folder page.
+func card(body, job string) string {
+	_, rest, _ := strings.Cut(body, `<a class="name" href="/f/_/infra/`+job+`">`)
+	rest, _, _ = strings.Cut(rest, "</article>")
+	return `<a class="name">` + rest
 }

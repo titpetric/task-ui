@@ -2453,6 +2453,16 @@
     return "/api/runs/" + encodeURIComponent(runId) + "/frame.svg" + (all ? "?all=1" : "");
   }
 
+  // A job card's "show N more" is a details element, open without a
+  // script; its summary says aloud whether the lines past the third show.
+  function syncMore(details) {
+    details.querySelector(":scope > summary").setAttribute("aria-expanded", details.open ? "true" : "false");
+  }
+  document.querySelectorAll(".jobcard .code details").forEach(syncMore);
+  document.addEventListener("toggle", function (event) {
+    if (event.target.matches && event.target.matches(".jobcard .code details")) syncMore(event.target);
+  }, true);
+
   // Expand on a step's row asks the API for the run's whole output and
   // shows it in place of the last screen; Collapse puts back the screen
   // it kept, with no request.
