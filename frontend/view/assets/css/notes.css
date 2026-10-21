@@ -71,6 +71,11 @@
   font-size: var(--fs-sm);
 }
 
+/* The author is a line of text, so the avatar sits on its x-height. */
+.note header .author {
+  white-space: nowrap;
+}
+
 .note header .spacer {
   flex: 1;
 }

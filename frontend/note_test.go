@@ -29,7 +29,7 @@ func TestNotes(t *testing.T) {
 	assert.Contains(t, body, `class="badge note-state open">open</span>`)
 	assert.Contains(t, body, "and push it")
 	assert.Contains(t, body, `<span class="avatar sm role-runner" title="ops">OP</span>`)
-	assert.Contains(t, body, `<header><span class="avatar sm role-admin" title="admin">AD</span><b>admin</b>`)
+	assert.Contains(t, body, `<header><span class="author"><span class="avatar sm role-admin" title="admin">AD</span> <b>admin</b></span>`)
 	assert.Contains(t, body, `data-delete="/api/notes/`+first.ID+`"`)
 	// A reply deletes on its own, by its author or an admin: ops did not
 	// write it, an admin may.

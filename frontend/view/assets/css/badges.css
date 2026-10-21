@@ -1,8 +1,14 @@
 /* ------------------------------------------------------------------ badges */
 
+/* A badge centres its capitals the way an avatar does: a whole number of
+   pixels high, the label trimmed to its cap height with its baseline on
+   a whole pixel, the box on the middle of the x-height beside it. */
 .badge {
+  --badge-size: round(1.25rem, 1px);
   display: inline-block;
-  padding: 0.05rem 0.45rem;
+  height: var(--badge-size);
+  padding: 0 0.45rem;
+  line-height: calc(var(--badge-size) - 2px);
   border: 1px solid var(--line-2);
   border-radius: var(--radius);
   color: var(--text-dim);
@@ -11,6 +17,12 @@
   text-transform: uppercase;
   vertical-align: middle;
   white-space: nowrap;
+
+  @supports (text-box: trim-both cap alphabetic) {
+    line-height: 1;
+    text-box: trim-both cap alphabetic;
+    padding-top: calc(round((var(--badge-size) + 1cap) / 2, 1px) - 1cap - 1px);
+  }
 
   &.signal { color: var(--signal); border-color: var(--signal); background: var(--signal-wash); }
   &.ok { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 50%, transparent); background: var(--ok-wash); }

@@ -15,8 +15,7 @@
 	{{- range .Threads }}
 	<article class="note{{ if .State }} instruction {{ .State }}{{ end }}" id="note-{{ .ID }}">
 		<header>
-			{{ template "avatar" (list $ .UserName) }}
-			<b>{{ .UserName }}</b>
+			<span class="author">{{ template "avatar" (list $ .UserName) }} <b>{{ .UserName }}</b></span>
 			<span class="faint" title="{{ stamp .CreatedAt }}">{{ ago .CreatedAt }}</span>
 			{{- if .State }} <span class="badge note-state {{ .State }}">{{ .State }}</span>{{ end }}
 			{{- if .RunID }} <a class="faint mono" href="/runs/{{ .RunID }}" title="The run the agent worked in">run {{ slice .RunID 0 8 }}</a>{{ end }}
@@ -28,7 +27,7 @@
 		<ol class="replies">
 			{{- range .Replies }}
 			<li>
-				<header>{{ template "avatar" (list $ .UserName) }}<b>{{ .UserName }}</b> <span class="faint" title="{{ stamp .CreatedAt }}">{{ ago .CreatedAt }}</span>{{ if .RunID }} <a class="faint mono" href="/runs/{{ .RunID }}" title="The run this reply comes from">run {{ slice .RunID 0 8 }}</a>{{ end }}<span class="spacer"></span>{{ if or (eq .UserName $.User.Name) $.User.CanAdmin }}<button type="button" class="btn-icon danger" data-delete="/api/notes/{{ .ID }}" data-confirm="Delete this reply of {{ .UserName }}?" data-next="reload" title="Delete the reply" aria-label="Delete the reply"><svg class="ic"><use href="#i-trash"/></svg></button>{{ end }}</header>
+				<header><span class="author">{{ template "avatar" (list $ .UserName) }} <b>{{ .UserName }}</b></span> <span class="faint" title="{{ stamp .CreatedAt }}">{{ ago .CreatedAt }}</span>{{ if .RunID }} <a class="faint mono" href="/runs/{{ .RunID }}" title="The run this reply comes from">run {{ slice .RunID 0 8 }}</a>{{ end }}<span class="spacer"></span>{{ if or (eq .UserName $.User.Name) $.User.CanAdmin }}<button type="button" class="btn-icon danger" data-delete="/api/notes/{{ .ID }}" data-confirm="Delete this reply of {{ .UserName }}?" data-next="reload" title="Delete the reply" aria-label="Delete the reply"><svg class="ic"><use href="#i-trash"/></svg></button>{{ end }}</header>
 				<div class="note-body">{{ message .Body }}</div>
 			</li>
 			{{- end }}
