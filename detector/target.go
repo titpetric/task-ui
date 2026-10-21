@@ -12,6 +12,10 @@ type Target struct {
 	// after --: an atkins job with `args: true`. A run of any other
 	// target takes none.
 	TakesArgs bool `json:"takes_args,omitempty"`
+	// Exec is the command the arguments of a target that takes them
+	// follow, the argv of its exec: step, for a page to show what runs.
+	// Empty when the target has none: the arguments follow its argv.
+	Exec []string `json:"exec,omitempty"`
 
 	// Args follow the source command: the target name for most
 	// conventions, the script path for a script. Empty means the name.

@@ -180,3 +180,61 @@ a.chip-act:not(.running) {
     transform: rotate(90deg);
   }
 }
+
+/* ------------------------------------------------------------- args line */
+
+/* The arguments of a job that takes them, under its chips, its card's
+   head or the page's head: the command they follow, the field, and what
+   runs, each word one argument. */
+.argsline {
+  display: grid;
+  flex-basis: 100%;
+  gap: 0.45rem;
+  margin: 0.2rem 0 0.6rem;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid var(--signal);
+  border-radius: var(--radius);
+  background: var(--ink-1);
+  font-family: var(--font);
+  font-size: var(--fs-data);
+
+  & .argsline-field {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 0;
+  }
+
+  & .argsline-cmd {
+    white-space: nowrap;
+    color: var(--text-dim);
+  }
+
+  & input {
+    flex: 1;
+    min-width: 0;
+    height: var(--control-sm);
+  }
+
+  & .argsline-foot {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  & .argsline-preview {
+    flex: 1;
+    min-width: 12rem;
+    color: var(--text-faint);
+    overflow-wrap: anywhere;
+
+    & code {
+      color: var(--text);
+    }
+
+    &.bad {
+      color: var(--bad);
+    }
+  }
+}

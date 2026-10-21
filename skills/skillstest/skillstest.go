@@ -36,7 +36,7 @@ fi
 if [ -f "$here/compose.yml" ]; then
   build=false
   grep -q 'build:' "$here/compose.yml" && build=true
-  printf '%s{"id":"compose","kind":"skill","path":"/ws/.atkins/skills/compose.yml","dir":"%s","active":true,"when":{"files":["compose.yml"],"here":true,"matched":"%s/compose.yml"},"desc":"Docker Compose","cmds":[{"id":"compose:build","name":"build","cmd":"atkins compose:build","active":%s},{"id":"compose:custom","name":"custom","cmd":"atkins compose:custom","args":true,"active":true},{"id":"compose:down","name":"down","cmd":"atkins compose:down","active":true},{"id":"compose:up","name":"up","cmd":"atkins compose:up","active":true}]}' "$sep" "$here" "$here" "$build"
+  printf '%s{"id":"compose","kind":"skill","path":"/ws/.atkins/skills/compose.yml","dir":"%s","active":true,"when":{"files":["compose.yml"],"here":true,"matched":"%s/compose.yml"},"desc":"Docker Compose","cmds":[{"id":"compose:build","name":"build","cmd":"atkins compose:build","active":%s},{"id":"compose:custom","name":"custom","cmd":"atkins compose:custom","args":true,"exec":["docker","compose"],"active":true},{"id":"compose:down","name":"down","cmd":"atkins compose:down","active":true},{"id":"compose:up","name":"up","cmd":"atkins compose:up","active":true}]}' "$sep" "$here" "$here" "$build"
   sep=,
 fi
 printf '%s{"id":"go","kind":"skill","path":"/ws/.atkins/skills/go.yml","active":false,"cmds":[{"id":"go:test","name":"test","cmd":"atkins go:test","active":false}]}]\n' "$sep"

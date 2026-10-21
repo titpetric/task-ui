@@ -1,6 +1,8 @@
 package folder
 
 import (
+	"strings"
+
 	"github.com/titpetric/task-ui/detector"
 	"github.com/titpetric/task-ui/model"
 )
@@ -37,4 +39,18 @@ type Job struct {
 // job per folder and directory, across the instance.
 func (j *Job) Key() string {
 	return model.RunKey(j.Folder, j.Dir, j.ID)
+}
+
+// ArgsCommand is what a run of a job that takes args starts, as a page
+// shows it before the arguments: the argv of its exec: step, which the
+// arguments follow, or the job's own argv and --. Empty for a job that
+// takes none.
+func (j *Job) ArgsCommand() string {
+	if j == nil || !j.TakesArgs {
+		return ""
+	}
+	if len(j.Exec) > 0 {
+		return strings.Join(j.Exec, " ")
+	}
+	return strings.Join(j.Command, " ") + " --"
 }

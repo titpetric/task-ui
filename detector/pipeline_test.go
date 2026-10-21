@@ -171,12 +171,19 @@ func TestPipelineDetectorInvalid(t *testing.T) {
 // with the same key does not, and neither does a job without it.
 func TestPipelineDetectorTakesArgs(t *testing.T) {
 	dir := t.TempDir()
-	body := "jobs:\n  custom:\n    desc: Compose\n    args: true\n    steps:\n      - run: docker compose\n  up:\n    desc: Up\n    steps:\n      - run: docker compose up\n"
+	body := "jobs:\n  custom:\n    desc: Compose\n    args: true\n    steps:\n      - run: echo first\n      - exec: [docker, compose]\n  up:\n    desc: Up\n    steps:\n      - run: docker compose up\n"
 	write(t, filepath.Join(dir, "atkins.yml"), body)
 	write(t, filepath.Join(dir, "Taskfile.yml"), strings.ReplaceAll(body, "jobs:", "tasks:"))
 	atkins := (pipelineDetector{kind: "atkins", names: atkinsNames}).Detect(dir)
 	if !atkins.Target("custom").TakesArgs || atkins.Target("up").TakesArgs {
 		t.Fatalf("atkins args: %+v", atkins.Targets)
+	}
+	// The command the arguments follow is the first exec: step's argv.
+	if got := strings.Join(atkins.Target("custom").Exec, " "); got != "docker compose" {
+		t.Fatalf("atkins exec: %q", got)
+	}
+	if steps := atkins.Target("custom").Steps; len(steps) != 2 || steps[1] != "exec: docker compose" {
+		t.Fatalf("atkins steps: %q", steps)
 	}
 	task := (pipelineDetector{kind: "task", names: taskfileNames}).Detect(dir)
 	if task.Target("custom").TakesArgs {

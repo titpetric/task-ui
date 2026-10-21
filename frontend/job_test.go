@@ -76,3 +76,24 @@ func TestJob_ShowSource(t *testing.T) {
 	assert.Contains(t, folder, `data-source="infra" data-file="atkins.yml"`)
 	assert.Contains(t, folder, `data-source="infra" data-file="vars.yml"`)
 }
+
+// Run of an atkins job that takes args names the command the arguments
+// follow, on its card and on its page, for the field that takes them;
+// a job that takes none runs at once.
+func TestJob_Args(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	dir := filepath.Join(f.infra.Dir, "stack")
+	assert.NoError(t, os.MkdirAll(dir, 0o755))
+	assert.NoError(t, os.WriteFile(filepath.Join(dir, "atkins.yml"), []byte("jobs:\n  custom:\n    desc: Compose with arguments\n    args: true\n    steps:\n      - exec: [docker, compose]\n  logs:\n    desc: Logs with arguments\n    args: true\n    steps:\n      - run: docker compose logs\n  up:\n    desc: Up\n    steps:\n      - run: docker compose up -d\n"), 0o644))
+
+	body := f.page(t, asOps, "/f/_/infra/stack")
+	assert.Contains(t, body, `data-job="custom" data-title="infra/stack / custom" data-args="docker compose" title="Run with arguments after docker compose"`)
+	assert.Contains(t, body, `data-job="logs" data-title="infra/stack / logs" data-args="atkins -f atkins.yml logs --"`)
+	assert.Contains(t, body, `<li>exec: docker compose</li>`)
+	assert.NotContains(t, body, `data-job="up" data-title="infra/stack / up" data-args`)
+
+	page := f.page(t, asOps, "/f/_/infra/stack/custom")
+	assert.Contains(t, page, `data-args="docker compose"`)
+	assert.Contains(t, page, `Run...</button>`)
+}

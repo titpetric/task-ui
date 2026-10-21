@@ -47,7 +47,8 @@
 {{- end }}
 
 {{/* chipAction is one job of a chip: Run, Attach while it runs, or a link
-     to its page for a user who may not run it. */}}
+     to its page for a user who may not run it. A job that takes args
+     opens a field for them under the chips first. */}}
 {{- define "chipAction" }}
 {{- $ := index . 0 }}{{ $p := index . 1 }}{{ $r := index . 2 }}{{ $confirm := index . 3 }}
 {{- $run := $.RunningRun $r.Key }}
@@ -55,7 +56,7 @@
 {{- if $run -}}
 <a class="chip-act running" href="/runs/{{ $run.ID }}" data-attach="{{ $run.ID }}" title="Attach to {{ $what }}, running"><i class="dot running"></i>{{ $r.Name }}</a>
 {{- else if $.CanRun $p $r -}}
-<button type="button" class="chip-act" data-run data-folder="{{ $p.ID }}"{{ with $r.Dir }} data-dir="{{ . }}"{{ end }} data-job="{{ $r.ID }}" data-title="{{ $what }}"{{ with $confirm }} data-confirm="{{ . }}" data-confirm-ok="Run {{ $r.Name }}"{{ end }} title="{{ with $r.Description }}{{ . }}{{ else }}Run {{ $what }}{{ end }}">{{ $r.Name }}</button>
+<button type="button" class="chip-act" data-run data-folder="{{ $p.ID }}"{{ with $r.Dir }} data-dir="{{ . }}"{{ end }} data-job="{{ $r.ID }}" data-title="{{ $what }}"{{ with $confirm }} data-confirm="{{ . }}" data-confirm-ok="Run {{ $r.Name }}"{{ end }}{{ with $r.ArgsCommand }} data-args="{{ . }}"{{ end }} title="{{ with $r.Description }}{{ . }}{{ else }}Run {{ $what }}{{ end }}{{ with $r.ArgsCommand }}: arguments after {{ . }}{{ end }}">{{ $r.Name }}{{ if $r.TakesArgs }}...{{ end }}</button>
 {{- else -}}
 <a class="chip-act" href="{{ $.JobHref $p $r }}" title="{{ $what }}: its page and history">{{ $r.Name }}</a>
 {{- end }}

@@ -61,6 +61,7 @@ func TestFolder_Skills(t *testing.T) {
 	assert.Equal(t, "images/app", up.Dir)
 	assert.Equal(t, "acme/api/images/app/@compose:up", up.Key())
 	assert.True(t, sub.Job("@compose:custom").TakesArgs)
+	assert.Equal(t, []string{"docker", "compose"}, sub.Job("@compose:custom").Exec)
 	assert.False(t, up.TakesArgs)
 
 	plainSub := f.Sub("images/plain")

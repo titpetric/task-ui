@@ -1,7 +1,8 @@
 name: Docker Compose
 help: >-
   Runs docker compose on the compose file in the current folder.
-  compose:build shows only where the compose file builds an image.
+  compose:build shows only where the compose file builds an image;
+  compose:custom passes the arguments after -- to docker compose.
 when:
   files: [compose.yml, compose.yaml]
   here: true
@@ -26,3 +27,9 @@ jobs:
       here: true
       contains: '(?m)^\s+build:'
     cmd: docker compose build
+
+  custom:
+    desc: Run docker compose with arguments
+    args: true
+    steps:
+      - exec: [docker, compose]
