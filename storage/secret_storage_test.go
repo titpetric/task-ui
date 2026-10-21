@@ -50,25 +50,20 @@ func TestSecretStorage_List(t *testing.T) {
 	assert.NoError(t, secrets.Create(ctx, &model.Secret{Scope: "infra", Name: "REGION", Content: "eu"}))
 	assert.NoError(t, secrets.Create(ctx, &model.Secret{Scope: storage.ScopeAll, Name: "TOKEN", Content: "shared"}))
 	assert.NoError(t, secrets.Create(ctx, &model.Secret{Scope: "web", Name: "CDN", Content: "c"}))
+	assert.NoError(t, secrets.Create(ctx, &model.Secret{Scope: storage.SharedScope("acme"), Name: "ACME", Content: "a"}))
 
 	list, err := secrets.List(ctx)
 	assert.NoError(t, err)
-	assert.Len(t, list, 4)
+	assert.Len(t, list, 5)
 	assert.Equal(t, storage.ScopeAll, list[0].Scope, "shared first")
-	assert.Equal(t, "REGION", list[1].Name, "then by folder and name")
+	assert.Equal(t, "workspace:acme", list[1].Scope, "a workspace's shared ones too")
+	assert.Equal(t, "REGION", list[2].Name, "then by folder and name")
 
-	scoped, err := secrets.Scoped(ctx, "infra")
+	scoped, err := secrets.Scoped(ctx, storage.ScopeAll, "infra")
 	assert.NoError(t, err)
 	assert.Len(t, scoped, 3)
-
-	vars, err := secrets.For(ctx, "infra")
-	assert.NoError(t, err)
-	assert.Equal(t, "mine", vars["TOKEN"], "the folder's own wins")
-	assert.Equal(t, "eu", vars["REGION"])
-	other, err := secrets.For(ctx, "web")
-	assert.NoError(t, err)
-	assert.Equal(t, "shared", other["TOKEN"])
-	assert.Equal(t, "c", other["CDN"])
+	assert.Equal(t, storage.ScopeAll, scoped[0].Scope, "in the order of the scopes")
+	assert.Equal(t, "REGION", scoped[1].Name, "then by name")
 }
 
 func TestSecretStorage_Set(t *testing.T) {

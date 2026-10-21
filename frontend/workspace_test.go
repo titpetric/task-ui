@@ -77,7 +77,7 @@ func TestWorkspaceEdit_DeleteNamesProjects(t *testing.T) {
 	for _, folder := range []string{"malta/deploy", "malta/dockerfiles", "maltese", "infra"} {
 		assert.NoError(t, f.opts.Projects.Create(ctx, &model.Project{Folder: folder}))
 	}
-	confirm := "and its checkout, with the projects inside it: malta/deploy, malta/dockerfiles?"
+	confirm := "its checkout, its keys and its secrets, with the projects inside it: malta/deploy, malta/dockerfiles?"
 	for _, path := range []string{"/settings/workspaces/malta", "/settings/workspaces"} {
 		body := f.page(t, asAdmin, path)
 		assert.Contains(t, body, confirm)

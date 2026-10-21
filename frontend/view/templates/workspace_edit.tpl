@@ -67,7 +67,7 @@
 				<td class="actions">
 					<button type="button" class="btn-icon" data-copy="{{ .PublicKey }}" title="Copy public key" aria-label="Copy public key"><svg class="ic"><use href="#i-copy"/></svg></button>
 					<a class="btn-icon" href="{{ $base }}/upload?encrypt=1" title="Upload: replace it with a key you have" aria-label="Upload an encryption key"><svg class="ic"><use href="#i-download"/></svg></a>
-					<form data-api="{{ $api }}/generate" data-method="POST" data-next="reload" data-confirm="Rotate the encryption key of {{ $ws.Folder }}? The current key is kept as a backup." data-confirm-ok="Rotate">
+					<form data-api="{{ $api }}/generate" data-method="POST" data-next="reload" data-confirm="Rotate the encryption key of {{ $ws.Folder }}? The current key is kept as a backup, and the workspace's secrets are written again for the new one." data-confirm-ok="Rotate">
 						<input type="hidden" name="encrypt" value="true" data-type="bool">
 						<input type="hidden" name="comment" value="{{ .Comment }}">
 						<button class="btn-icon" type="submit" title="Rotate: generate a new encryption key" aria-label="Rotate the encryption key"><svg class="ic"><use href="#i-rotate"/></svg></button>

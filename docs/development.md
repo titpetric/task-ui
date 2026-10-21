@@ -36,7 +36,7 @@ domains, the domains to `model` and `storage`, `model` to nothing of ours.
 | `hours`     | the office hours `Rules` a folder or job may run in                          |
 | `recording` | the asciicast files                                                          |
 | `access`    | who may do what: the password file, `Sessions`, tokens, the `Guard`          |
-| `secret`    | the secrets, encrypted at rest with the SSH keys through the `Vault`         |
+| `secret`    | the secrets, encrypted at rest per workspace, through each one's `Vault`     |
 | `envfile`   | the dotenv files a folder reads, as task-ui manages and generates them       |
 | `sshkey`, `git`, `dotenv` | the key pairs, the checkouts, the file format                 |
 | `api`       | the JSON endpoints and the attach socket                                     |

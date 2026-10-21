@@ -126,11 +126,13 @@ directories are `0700` and the key files `0600`. The **Keys** section of
 a workspace's configure page, `/settings/workspaces/malta`, lists them
 with their fingerprints, never a private key.
 
-- The **encryption key**, an ed25519 key, is for the workspace's
-  secrets. task-ui generates it when it adds a workspace, and at start
-  for every workspace without one, `_` among them. Rotate makes a new
-  one and upload takes one you have; the previous key stays as a
-  backup. No run gets it.
+- The **encryption key**, an ed25519 key, encrypts the workspace's
+  [secrets](settings.md#secrets): its shared ones and its folders'.
+  task-ui generates it when it adds a workspace, and at start for every
+  workspace without one, `_` among them. Rotate makes a new one and
+  upload takes one you have; the previous key stays as a backup, and
+  task-ui writes the workspace's secrets again for the new key. No run
+  gets it.
 - The **SSH keys** are for the workspace's runs. Generate or upload any
   number, each named `id_<type>_<name>`. A key without a grant goes to
   every run in the workspace; checking roles or users narrows it to
@@ -156,7 +158,8 @@ curl -s https://task.example.com/api/workspaces/malta/keys \
 `PUT /api/workspaces/malta/keys/id_ed25519_deploy` with `{policies,
 users}` sets the grants, empty for every run, and `DELETE` removes the
 key. `"encrypt": true` on `generate` or `upload` rotates or replaces the
-encryption key. The key routes are for admins.
+encryption key; `rekeyed` counts the secrets task-ui wrote again for
+it. The key routes are for admins.
 
 ## A prompt against a workspace
 

@@ -51,6 +51,34 @@ func TestStore_Generate(t *testing.T) {
 	}
 }
 
+func TestStore_BackupSameSecond(t *testing.T) {
+	t.Parallel()
+	s := &Store{Dir: t.TempDir()}
+	seen := map[string]bool{}
+	for i := 0; i < 4; i++ {
+		key, err := s.Generate("ed25519", "")
+		if err != nil {
+			t.Fatal(err)
+		}
+		seen[key.Fingerprint] = true
+	}
+	list := s.List()
+	if len(list) != 4 || len(seen) != 4 {
+		t.Fatalf("four rotations in a second keep every key: %+v", list)
+	}
+	for _, key := range list {
+		if !seen[key.Fingerprint] {
+			t.Fatalf("unknown key %+v", key)
+		}
+		if key.Backup && (!strings.Contains(key.PublicKey, "ssh-ed25519") || KindOf(key.Name) != "") {
+			t.Fatalf("backup %+v", key)
+		}
+	}
+	if err := s.Delete(list[3].Name); err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestStore_Delete(t *testing.T) {
 	s := &Store{Dir: t.TempDir()}
 	if _, err := s.Generate("ed25519", "a"); err != nil {

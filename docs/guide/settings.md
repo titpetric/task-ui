@@ -82,21 +82,46 @@ server prints one, once.
 
 ## Secrets
 
-Variables added to the environment of every run. A secret for all folders
-reaches every job; a secret for one folder reaches that folder's jobs and
-wins over the shared one. A value is never shown again once saved.
+Variables added to the environment of every run, kept per
+[workspace](workspaces.md). A secret has a scope:
+
+- `workspace:<name>`, a workspace's shared secret, reaches every folder
+  in that workspace and no folder in another one. **Every folder in _**,
+  `workspace:_`, reaches the projects at the root; a project in a named
+  workspace doesn't get it.
+- a folder, `malta/deploy`, reaches that folder's jobs and wins over its
+  workspace's shared secret of the same name.
+
+A value is never shown again once saved. The page groups the secrets by
+workspace, each with an **Add secret** of its own, and the form's scope
+lists each workspace's shared scope and its folders.
 
 ![Secrets](../assets/secrets-dark.png)
 
-One key encrypts the secrets at rest, the instance key: `id_ed25519`,
-or `id_rsa` when there is no ed25519 key. A key made for someone or for a
-use, such as `id_rsa_deploy`, never does. A secret needs the instance key
-first. **Re-encrypt** writes every secret again for the instance key.
+Each workspace's encryption key encrypts its secrets at rest (see
+[Keys](workspaces.md#keys)): the shared ones, and those of every folder
+in it. A folder's workspace is its first segment when that's a named
+workspace, else `_`. A secret needs its workspace's key, which task-ui
+makes for every workspace. **Re-encrypt** writes every secret again for
+its workspace's current key, and rotating a workspace's key does it for
+that workspace. Removing a workspace removes its secrets with its keys.
+
+The instance key, `id_ed25519` or `id_rsa` when there is no ed25519 key,
+encrypts only the settings of the [integrations](#integrations): with it
+gone the workspaces' secrets still open.
+
+At start, task-ui moves the secrets of an instance that kept them all on
+the instance key: a secret for all folders, scope `all`, becomes `_`'s
+shared secret, `workspace:_`, and task-ui writes every other secret
+again for its workspace's key. Before it writes anything it copies the
+database to `task-ui.db.pre-workspace-keys`; a secret the instance key
+can't open stays untouched, and the log names it. The log line `secrets on
+their workspace's key` counts what moved.
 
 ## SSH keys
 
 The key pairs the jobs and git use to reach other hosts, and the instance
-key that encrypts the secrets, marked **secrets**.
+key that encrypts the integrations' settings, marked **integrations**.
 
 ![SSH keys](../assets/keys-dark.png)
 
@@ -105,14 +130,14 @@ key that encrypts the secrets, marked **secrets**.
 - The copy button copies a public key, to add on the hosts that
   accept it.
 - **Rotate** makes a new pair of the same type; task-ui keeps the old one as a
-  backup, so the secrets still open, and writes the secrets again
-  for the new key. Nobody can delete the last key that opens the secrets.
+  backup, so the integrations' settings still open, and writes them again
+  for the new key. Nobody can delete the last key that opens them.
 - **Who gets it** picks whose runs get a key, in a **Roles** row and a **Users** row of boxes. A run
   started by someone with one of the key's roles, or by one of its users,
   has it in the run's ssh agent, and nothing else does: that agent is the
   only way a key reaches a run. Pick them when you generate or upload a key, or later with the
   edit button on its row. A key can have more than one, and a key with none
-  stays the instance's: git and the secrets use it, runs do not get it.
+  stays the instance's: git and the integrations use it, runs do not get it.
 - **A key for someone**: pick the user under **For** when you generate or
   upload it, `alice`, and task-ui stores it as `id_ed25519_alice` beside
   the type's own key and grants it to alice. She finds it under **SSH keys** in her user
@@ -138,7 +163,8 @@ key that encrypts the secrets, marked **secrets**.
 ![Integrations](../assets/integrations-dark.png)
 
 The services task-ui talks to, with their API keys and tokens. task-ui
-encrypts them with the instance keys, as it does the secrets, and never
+encrypts them with the instance key, which the workspaces' secrets don't
+use, and never
 shows them again: a form marks a secret with a value as **set**, and an empty secret
 field keeps it on save. The Secrets page leaves them out, and no run sees
 them as secrets. A switch beside each integration's name shows or hides

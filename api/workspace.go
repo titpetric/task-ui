@@ -139,7 +139,8 @@ func (h *Handlers) updateWorkspace(w http.ResponseWriter, r *http.Request) {
 }
 
 // deleteWorkspace removes a workspace's checkout, the projects cloned
-// inside it with their rows, its row, and its keys with their grants.
+// inside it with their rows, its secrets, its row, and its keys with
+// their grants.
 // A workspace whose folder is not a checkout keeps its files; only the
 // rows and the keys go. The default workspace, the root, stays.
 func (h *Handlers) deleteWorkspace(w http.ResponseWriter, r *http.Request) {
@@ -173,6 +174,12 @@ func (h *Handlers) deleteWorkspace(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 		if err := h.opts.Projects.Delete(ctx, project.ID); err != nil {
+			failErr(w, err)
+			return
+		}
+	}
+	if h.opts.Secrets != nil {
+		if _, err := h.opts.Secrets.Forget(ctx, workspace.Folder); err != nil {
 			failErr(w, err)
 			return
 		}

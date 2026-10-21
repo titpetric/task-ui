@@ -38,7 +38,7 @@ type Store struct {
 	PublicMode os.FileMode
 }
 
-var keyName = regexp.MustCompile(`^id_[a-z0-9]+(_[a-z0-9][a-z0-9-]*)?(\.bak-[0-9]{8}T[0-9]{6})?$`)
+var keyName = regexp.MustCompile(`^id_[a-z0-9]+(_[a-z0-9][a-z0-9-]*)?(\.bak-[0-9]{8}T[0-9]{6}(-[0-9]+)?)?$`)
 
 // keyLabel is what may follow the type in a key's name: id_ed25519_alice.
 var keyLabel = regexp.MustCompile(`^[a-z0-9][a-z0-9-]{0,31}$`)
@@ -267,13 +267,19 @@ func (k *Store) write(name string, privatePEM []byte, private any, comment strin
 	return k.describe(name)
 }
 
-// backup moves an existing key pair aside.
+// backup moves an existing key pair aside, under the current second; a
+// second backup in the same second takes a counter, -2, -3, so no
+// backup ever replaces another.
 func (k *Store) backup(name string) error {
 	path := filepath.Join(k.Dir, name)
 	if _, err := os.Stat(path); errors.Is(err, os.ErrNotExist) {
 		return nil
 	}
-	suffix := ".bak-" + time.Now().UTC().Format("20060102T150405")
+	stamp := ".bak-" + time.Now().UTC().Format("20060102T150405")
+	suffix := stamp
+	for n := 2; exists(path+suffix) || exists(path+suffix+".pub"); n++ {
+		suffix = fmt.Sprintf("%s-%d", stamp, n)
+	}
 	if err := os.Rename(path, path+suffix); err != nil {
 		return err
 	}
@@ -281,6 +287,12 @@ func (k *Store) backup(name string) error {
 		return os.Rename(path+".pub", path+suffix+".pub")
 	}
 	return nil
+}
+
+// exists reports whether a file is there.
+func exists(path string) bool {
+	_, err := os.Lstat(path)
+	return err == nil
 }
 
 // Delete removes a key pair or a backup.

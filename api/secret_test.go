@@ -10,7 +10,6 @@ import (
 	"github.com/titpetric/task-ui/internal/assert"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/secret"
-	"github.com/titpetric/task-ui/storage"
 )
 
 func TestSecret_AdminOnly(t *testing.T) {
@@ -37,7 +36,7 @@ func TestSecret_Set(t *testing.T) {
 
 	var view api.SecretView
 	assert.NoError(t, json.Unmarshal(res.Raw, &view))
-	assert.Equal(t, storage.ScopeAll, view.Scope)
+	assert.Equal(t, "workspace:_", view.Scope, "no scope is the default workspace's shared one")
 	assert.Equal(t, "API_TOKEN", view.Name)
 	assert.True(t, model.ValidID(view.ID))
 	assert.False(t, string(res.Raw) != "" && contains(res.Raw, "hunter2"))
@@ -116,4 +115,75 @@ func TestSecret_Encryption(t *testing.T) {
 	assert.Equal(t, http.StatusOK, rekeyed.Status, string(rekeyed.Raw))
 	assert.Equal(t, float64(1), rekeyed.get("rekeyed"))
 	assert.Len(t, rekeyed.list("keys"), 1)
+}
+
+// withWorkspaces keeps the fixture's secrets per workspace: the default
+// one and acme, each with its encryption key.
+func (f *fixture) withWorkspaces(t *testing.T) {
+	t.Helper()
+	ctx := context.Background()
+	assert.NoError(t, f.opts.Workspaces.EnsureDefault(ctx))
+	assert.NoError(t, f.opts.Workspaces.Create(ctx, &model.Workspace{Folder: "acme"}))
+	list, err := f.opts.Workspaces.List(ctx)
+	assert.NoError(t, err)
+	for _, ws := range list {
+		_, err := f.opts.WorkspaceKeys.Ensure(ws.ID, "task-ui "+ws.Folder)
+		assert.NoError(t, err)
+	}
+	f.opts.Secrets.Workspaces = &secret.Workspaces{Rows: f.opts.Workspaces, Keys: f.opts.WorkspaceKeys}
+}
+
+// A secret scoped to a workspace reaches its folders; all is the
+// default workspace's; the API refuses a workspace that is not there. A
+// rotation and a rekey write the secrets again; removing the workspace
+// removes its secrets.
+func TestSecret_WorkspaceScope(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	f.withWorkspaces(t)
+
+	all := f.call(t, asAdmin, http.MethodPost, "/secrets", api.SecretRequest{Scope: "all", Name: "ROOT", Content: "r"})
+	assert.Equal(t, http.StatusOK, all.Status, string(all.Raw))
+	assert.Equal(t, "workspace:_", all.str("scope"))
+	acme := f.call(t, asAdmin, http.MethodPost, "/secrets", api.SecretRequest{Scope: "workspace:acme", Name: "ACME", Content: "a"})
+	assert.Equal(t, http.StatusOK, acme.Status, string(acme.Raw))
+	assert.Equal(t, "workspace:acme", acme.str("scope"))
+
+	unknown := f.call(t, asAdmin, http.MethodPost, "/secrets", api.SecretRequest{Scope: "workspace:nope", Name: "X", Content: "x"})
+	assert.Equal(t, http.StatusBadRequest, unknown.Status)
+	assert.Contains(t, unknown.str("error"), "unknown workspace nope")
+
+	infra, err := f.opts.Secrets.For(context.Background(), "infra")
+	assert.NoError(t, err)
+	assert.Equal(t, map[string]string{"ROOT": "r"}, infra)
+	inAcme, err := f.opts.Secrets.For(context.Background(), "acme/api")
+	assert.NoError(t, err)
+	assert.Equal(t, map[string]string{"ACME": "a"}, inAcme)
+
+	// Rotating acme's key writes its secret again; the backup can go.
+	rotated := f.call(t, asAdmin, http.MethodPost, "/workspaces/acme/keys/generate", api.WorkspaceKeyRequest{Encrypt: true})
+	assert.Equal(t, http.StatusCreated, rotated.Status, string(rotated.Raw))
+	assert.Equal(t, float64(1), rotated.get("rekeyed"))
+	ws, err := f.opts.Workspaces.GetByFolder(context.Background(), "acme")
+	assert.NoError(t, err)
+	keys := f.opts.WorkspaceKeys.Encrypt(ws.ID)
+	for _, key := range keys.List() {
+		if key.Backup {
+			assert.NoError(t, keys.Delete(key.Name))
+		}
+	}
+	inAcme, err = f.opts.Secrets.For(context.Background(), "acme/api")
+	assert.NoError(t, err)
+	assert.Equal(t, "a", inAcme["ACME"])
+
+	rekeyed := f.call(t, asAdmin, http.MethodPost, "/secrets/rekey", map[string]any{})
+	assert.Equal(t, http.StatusOK, rekeyed.Status, string(rekeyed.Raw))
+	assert.Equal(t, float64(2), rekeyed.get("rekeyed"))
+
+	// Removing acme takes its secrets, which nothing opens after.
+	assert.Equal(t, http.StatusNoContent, f.call(t, asAdmin, http.MethodDelete, "/workspaces/acme", nil).Status)
+	left, err := f.opts.Secrets.List(context.Background())
+	assert.NoError(t, err)
+	assert.Len(t, left, 1)
+	assert.Equal(t, "ROOT", left[0].Name)
 }

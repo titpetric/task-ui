@@ -1,6 +1,7 @@
 package api
 
 import (
+	"errors"
 	"net/http"
 	"strings"
 
@@ -54,11 +55,11 @@ func (h *Handlers) setSecret(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	req.Scope = strings.TrimSpace(req.Scope)
-	if req.Scope == "" {
-		req.Scope = storage.ScopeAll
+	if req.Scope == "" || req.Scope == storage.ScopeAll {
+		req.Scope = storage.SharedScope(model.Default)
 	}
-	if req.Scope != storage.ScopeAll && h.opts.Catalogue.Find(req.Scope) == nil {
-		fail(w, http.StatusBadRequest, "unknown folder "+req.Scope)
+	if err := h.secretScope(r, req.Scope); err != nil {
+		fail(w, http.StatusBadRequest, err.Error())
 		return
 	}
 	secret := &model.Secret{Scope: req.Scope, Name: strings.TrimSpace(req.Name), Content: req.Content}
@@ -69,7 +70,26 @@ func (h *Handlers) setSecret(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, SecretView{ID: secret.ID, Scope: secret.Scope, Name: secret.Name})
 }
 
-// rekeySecrets writes every secret again for the current keys.
+// secretScope refuses a scope that is not a workspace's shared scope,
+// workspace:<folder>, or a folder.
+func (h *Handlers) secretScope(r *http.Request, scope string) error {
+	if name, ok := strings.CutPrefix(scope, storage.ScopeWorkspace); ok {
+		if name == model.Default || h.opts.Workspaces == nil {
+			return nil
+		}
+		if _, err := h.opts.Workspaces.GetByFolder(r.Context(), name); err != nil {
+			return errors.New("unknown workspace " + name)
+		}
+		return nil
+	}
+	if h.opts.Catalogue.Find(scope) == nil {
+		return errors.New("unknown folder " + scope)
+	}
+	return nil
+}
+
+// rekeySecrets writes every secret again for the current key of its
+// scope: a workspace's, or the instance key for the services'.
 func (h *Handlers) rekeySecrets(w http.ResponseWriter, r *http.Request) {
 	if !requireAdmin(w, r) {
 		return
