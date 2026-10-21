@@ -156,11 +156,13 @@ func Size(n int64) string {
 	return fmt.Sprintf("%.1f %s", value, suffix)
 }
 
-// FolderDir is where a folder sits under its top level folder, which the
-// sidebar shows as a heading: "dockerfiles" for deploy/dockerfiles/blog,
-// "" for deploy/dockerfiles and for deploy itself.
-func FolderDir(id string) string {
-	_, rest, ok := strings.Cut(id, "/")
+// FolderDir is where a folder sits under the project top, which the
+// sidebar shows as a heading: "dockerfiles" for deploy/dockerfiles/blog
+// under deploy, "" for deploy/dockerfiles and for deploy itself. In a
+// workspace the project is two segments deep: malta/deploy/web/blog
+// under malta/deploy sits in "web".
+func FolderDir(id, top string) string {
+	rest, ok := strings.CutPrefix(id, top+"/")
 	if !ok {
 		return ""
 	}

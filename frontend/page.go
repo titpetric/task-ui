@@ -46,6 +46,10 @@ func (h *Handlers) page(r *http.Request, title string) *view.Page {
 		}
 	}
 	p.SideFolders = h.sideFolders(r.Context(), p.Folders)
+	p.Workspaces = map[string]bool{}
+	for _, ws := range h.workspaceFolders(r.Context()) {
+		p.Workspaces[ws] = true
+	}
 	p.Roles = h.roles(r.Context(), user)
 	p.Running = h.running(user)
 	runs := h.visibleRuns(r.Context(), user, storage.RunFilter{Limit: 2 * recentCount})
@@ -127,12 +131,26 @@ func (h *Handlers) sideFolders(ctx context.Context, folders []*folder.Folder) []
 	}
 	side := make([]*folder.Folder, 0, len(folders))
 	for _, f := range folders {
-		top, _, _ := strings.Cut(f.ID, "/")
-		if !hidden[f.ID] && !hidden[top] {
+		if !hiddenUnder(hidden, f.ID) {
 			side = append(side, f)
 		}
 	}
 	return side
+}
+
+// hiddenUnder reports whether the sidebar hides a folder or one above it:
+// hidden project hides its folders, in a workspace too.
+func hiddenUnder(hidden map[string]bool, id string) bool {
+	for {
+		if hidden[id] {
+			return true
+		}
+		i := strings.LastIndex(id, "/")
+		if i < 0 {
+			return false
+		}
+		id = id[:i]
+	}
 }
 
 // running returns the live runs the user may see, by job key.

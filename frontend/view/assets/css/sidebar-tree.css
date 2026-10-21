@@ -86,6 +86,88 @@
   transform: rotate(90deg);
 }
 
+/* A workspace is a disclosure above its projects: a label row with the
+   chevron in the project icons' column, pointing down while open. The
+   row opens the workspace; the chevron folds its projects, each of
+   which keeps a fold of its own. A rule above and below sets the
+   workspace apart from the projects around it. */
+.folders details.workspace {
+  --ws-chev: 0.85rem;
+  --ws-centre: calc((var(--tree-icon) - var(--ws-chev)) / 2);
+  margin-top: 0.6rem;
+  padding-block: 0.4rem;
+  border-block: 1px solid var(--line);
+
+  & + & {
+    margin-top: 0;
+    border-top: 0;
+  }
+
+  & > summary {
+    display: flex;
+    align-items: center;
+    list-style: none;
+    cursor: pointer;
+    border-inline-start: 2px solid transparent;
+
+    &:hover {
+      background: var(--ink-2);
+    }
+
+    &.active {
+      background: var(--signal-wash);
+      border-inline-start-color: var(--signal);
+    }
+
+    &::marker,
+    &::-webkit-details-marker {
+      display: none;
+    }
+
+    & .chev {
+      flex: none;
+      width: var(--ws-chev);
+      height: var(--ws-chev);
+      margin-inline-start: calc(var(--tree-0) + var(--ws-centre));
+      color: var(--text-faint);
+      transition: transform 0.15s ease-out;
+    }
+
+    &:hover .chev {
+      color: var(--text);
+    }
+
+    & a.section {
+      padding-inline-start: calc(var(--ws-centre) + var(--tree-gap));
+      color: var(--text-dim);
+      font-size: var(--fs-xs);
+      letter-spacing: var(--ls-label);
+      text-transform: uppercase;
+    }
+
+    &.active a.section {
+      color: var(--text);
+    }
+  }
+
+  &:first-child {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: 0;
+  }
+
+  &[open] > summary .chev {
+    transform: rotate(90deg);
+  }
+
+  /* Its projects follow the label closely; the next workspace or project
+     after it keeps the usual gap. */
+  & > .jobs.top + details.project > summary,
+  & > summary + details.project > summary {
+    margin-top: 0.2rem;
+  }
+}
+
 .folders a.section {
   display: flex;
   flex: 1;

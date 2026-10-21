@@ -61,6 +61,8 @@ func TestPage_ProjectsFold(t *testing.T) {
 	chev := body[infra : strings.Index(body[infra:], "</summary>")+infra]
 	assert.Contains(t, chev, `<a class="section" href="/f/infra" data-folder="infra"`)
 	assert.Contains(t, chev, `<svg class="ic chev"><use href="#i-chev"/></svg>`)
+	// Without a workspace the sidebar has none to fold.
+	assert.NotContains(t, body, `class="workspace`)
 
 	// The sidebar leaves out a project set not to show there, with the
 	// folders inside it; its pages stay.
@@ -124,4 +126,70 @@ func TestPage_internal(t *testing.T) {
 		assert.Equal(t, http.StatusNotFound, f.get(t, user, "/f/internal").Status, user)
 		assert.Equal(t, http.StatusNotFound, f.get(t, user, "/f/internal/claude-note").Status, user)
 	}
+}
+
+// A workspace in the sidebar folds its projects under it, each a project
+// with its own fold and its folders; the fold keys are the full IDs and
+// the links carry the namespace. Until an admin makes the workspace, its
+// checkout is a project like any other.
+func TestPage_Workspaces(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	cat := f.opts.Catalogue.(catalogue)
+	for _, id := range []string{"malta", "malta/deploy", "malta/deploy/web", "malta/apps"} {
+		cat[id] = shellFolder(t, f.root, id, map[string]string{"build": "echo " + id})
+	}
+
+	plain := f.page(t, asAdmin, "/")
+	assert.Contains(t, plain, `<details class="project" data-project="malta" open>`)
+	assert.Contains(t, plain, `<details class="folder" data-folder="malta/deploy"`)
+	assert.NotContains(t, plain, `class="workspace`)
+
+	ctx := context.Background()
+	assert.NoError(t, f.opts.Workspaces.Create(ctx, &model.Workspace{Folder: "malta", Title: "Malta"}))
+	body := f.page(t, asAdmin, "/")
+	ws := strings.Index(body, `<details class="workspace" data-project="malta" open>`)
+	deploy := strings.Index(body, `<details class="project" data-project="malta/deploy" open>`)
+	web := strings.Index(body, `<details class="folder" data-folder="malta/deploy/web"`)
+	apps := strings.Index(body, `<details class="project" data-project="malta/apps" open>`)
+	assert.True(t, ws >= 0 && apps > ws && deploy > apps && web > deploy, "malta holds malta/apps, then malta/deploy with malta/deploy/web")
+	assert.NotContains(t, body, `<details class="project" data-project="malta" open>`)
+	assert.NotContains(t, body, `data-project="malta/deploy/web"`)
+	summary := body[ws : strings.Index(body[ws:], "</summary>")+ws]
+	assert.Contains(t, summary, `<svg class="ic chev"><use href="#i-chev"/></svg>`)
+	assert.Contains(t, summary, `<a class="section" href="/f/malta" data-folder="malta">`)
+	assert.Contains(t, summary, `<small>2</small>`)
+	assert.Contains(t, body, `<a class="section" href="/f/malta/deploy" data-folder="malta/deploy">`)
+	assert.Contains(t, body, `<a class="section" href="/f/malta/apps" data-folder="malta/apps">`)
+	// The sidebar names a folder in a workspace's project below the project.
+	assert.Contains(t, body, `<a href="/f/malta/deploy/web"><svg class="ic"><use href="#i-folder"/></svg><span><b>web</b></span></a>`)
+	// The workspace closes after its last project.
+	closes := ws
+	for range 4 {
+		closes += strings.Index(body[closes:], "</details>") + len("</details>")
+	}
+	assert.True(t, closes > web, "the workspace closes after malta/deploy/web")
+
+	// The sidebar marks the open page's workspace and project, and lights the folder's row.
+	page := f.page(t, asAdmin, "/f/malta/deploy/web")
+	assert.Contains(t, page, `<details class="workspace active" data-project="malta" open>`)
+	assert.Contains(t, page, `<details class="project active" data-project="malta/deploy" open>`)
+	assert.Contains(t, page, `<details class="folder active" data-folder="malta/deploy/web" open>`)
+	// The crumbs walk the namespace.
+	assert.Contains(t, page, `<div class="crumbs"><a href="/">Dashboard</a><span><a href="/f/malta">malta</a></span><span><a href="/f/malta/deploy">deploy</a></span><span>web</span></div>`)
+
+	// A project of a workspace set not to show leaves with its folders.
+	assert.NoError(t, f.opts.Projects.Create(ctx, &model.Project{Folder: "malta/deploy", SidebarHidden: true}))
+	hidden := sidebar(f.page(t, asAdmin, "/"))
+	assert.Contains(t, hidden, `data-project="malta"`)
+	assert.Contains(t, hidden, `data-project="malta/apps"`)
+	assert.NotContains(t, hidden, `data-project="malta/deploy"`)
+	assert.NotContains(t, hidden, `data-folder="malta/deploy/web"`)
+}
+
+// sidebar is the folders part of a page's sidebar.
+func sidebar(body string) string {
+	start := strings.Index(body, `<nav class="folders">`)
+	end := strings.Index(body[start:], "</nav>")
+	return body[start : start+end]
 }
