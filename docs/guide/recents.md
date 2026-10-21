@@ -27,4 +27,4 @@ Recents follow the runs as they start and end, with no reload.
 
 ---
 
-Previous: [Projects and jobs](projects.md) · Next: [Settings](settings.md) · [Contents](../README.md)
+Previous: [Workspaces](workspaces.md) · Next: [Settings](settings.md) · [Contents](../README.md)

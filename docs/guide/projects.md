@@ -12,20 +12,17 @@ that runs has an eye instead, to watch it. A project folds on its
 chevron, and this browser remembers the folded ones. The project of the
 page you are on stays open.
 
-A [workspace](settings.md#workspaces) adds a level above its projects:
-a label row with the workspace's name, the count of its projects and a
-chevron that points down while it's open. Under it come the workspace's
-own jobs, then its projects, each a project as above with a fold of its
-own. Their links carry the workspace, as `/f/malta/dockerfiles`. Without
-a workspace, the sidebar lists the projects alone.
+A [workspace](workspaces.md) adds a level above its projects: a label
+row with the workspace's name, and its projects folded under it. Their
+links carry the workspace, as `/f/malta/dockerfiles`. Without a
+workspace, the sidebar lists the projects alone.
 
 ![A folder: its jobs, files and environment](../assets/folder-dark.png)
 
 An admin adds a project from a git repository on **Add project** (see
 [Settings](settings.md#projects)). With a workspace, the form has a
-**Workspace** select: none clones the project at the top of the root,
-and a workspace clones it inside that workspace, as `malta/dockerfiles`
-(see [Settings](settings.md#workspaces)).
+**Workspace** select that clones the project inside it (see
+[Workspaces](workspaces.md#clone-a-project-into-one)).
 
 ## Where the jobs come from
 
@@ -96,7 +93,8 @@ duration.
 A folder in a git checkout pulls it with `git pull --ff-only` before every
 run, in the run's own terminal, so a job always runs the latest version.
 A folder inside a checkout pulls the checkout. When the pull fails, the
-run fails with it.
+run fails with it. A project in a workspace pulls the workspace's
+checkout first (see [Workspaces](workspaces.md#runs-in-a-workspace)).
 
 ## Keys for a run
 
@@ -135,4 +133,4 @@ Settings, Users.
 
 ---
 
-Previous: [Notes](notes.md) · Next: [Recents](recents.md) · [Contents](../README.md)
+Previous: [Notes](notes.md) · Next: [Workspaces](workspaces.md) · [Contents](../README.md)

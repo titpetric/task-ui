@@ -15,6 +15,7 @@ section of the sidebar: the [dashboard](docs/guide/dashboard.md),
 [workflows](docs/guide/workflows.md), [runs](docs/guide/runs.md),
 [artifacts](docs/guide/artifacts.md), [schedules](docs/guide/scheduled.md),
 the [projects and their jobs](docs/guide/projects.md), the
+[workspaces](docs/guide/workspaces.md) that hold projects, the
 [recents](docs/guide/recents.md), the [settings](docs/guide/settings.md),
 and [MCP](docs/guide/mcp.md), for an agent that runs jobs. This README
 links to the rest.

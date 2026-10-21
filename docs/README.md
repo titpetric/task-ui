@@ -19,7 +19,8 @@ The page has three parts.
      **Workflows** (with the workflows listed under it), **Runs**,
      **Artifacts**, **Scheduled** and **Notes**;
   2. the **projects**, each a folder at the top of the root, with their
-     jobs and the folders inside them, as a tree.
+     jobs and the folders inside them, as a tree; a **workspace** folds
+     the projects cloned inside it under its own row.
 - **Recents**, on a wide screen, a rail on the right: the latest runs and
   workflow runs by anyone. A narrower screen leaves it out; **Runs** lists
   the same runs.
@@ -56,8 +57,9 @@ and red for failed or killed, and pulsing amber while it runs.
 | [Scheduled](guide/scheduled.md)      | Scheduled                              | Jobs on a cron expression                                   |
 | [Notes](guide/notes.md)              | Notes                                  | Messages, replies, and instructions to the agent            |
 | [Projects and jobs](guide/projects.md) | The tree of projects, folders, jobs  | Folders, the conventions, a job's page, pulls, keys, hours  |
+| [Workspaces](guide/workspaces.md)    | A workspace's row, its projects under it | Shared tooling, cloning into one, its runs, the prompt   |
 | [Recents](guide/recents.md)          | Recents                                | The latest runs, by anyone                                  |
-| [Settings](guide/settings.md)        | The user menu, Settings                | Projects, users, secrets, SSH keys, env files               |
+| [Settings](guide/settings.md)        | The user menu, Settings                | Projects, workspaces, users, secrets, SSH keys, env files   |
 | [MCP](guide/mcp.md)                  |                                        | Tokens, and the tools an agent runs jobs with               |
 | [Screenshots](screenshots.md)        |                                        | Every view, in both themes and on a phone                   |
 
