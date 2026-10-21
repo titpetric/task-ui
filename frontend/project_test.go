@@ -118,3 +118,22 @@ func TestProjectNew_Workspace(t *testing.T) {
 	assert.Contains(t, form, `<option value="_" selected>`)
 	assert.Contains(t, form, `<option value="malta">malta · Malta</option>`)
 }
+
+// A project at the top of a workspace gets a Workspace select on its
+// configure page, on the workspace that holds it, naming what a move leaves
+// behind; a folder inside a project gets none.
+func TestProjectEdit_Move(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	ctx := context.Background()
+	assert.NoError(t, f.opts.Workspaces.Create(ctx, &model.Workspace{Folder: "acme", Title: "Acme"}))
+	assert.NoError(t, f.opts.Schedules.Create(ctx, &model.Schedule{Folder: "infra", Job: "plan", Expression: "@hourly"}))
+
+	body := f.page(t, asAdmin, "/settings/projects/infra")
+	assert.Contains(t, body, `data-move="infra" data-move-from="_" data-move-left="schedule infra · plan"`)
+	assert.Contains(t, body, `<option value="_" selected>`)
+	assert.Contains(t, body, `<option value="acme">acme · Acme</option>`)
+
+	assert.NotContains(t, f.page(t, asAdmin, "/settings/projects/infra/edge"), `data-move=`)
+	assert.NotContains(t, f.page(t, asAdmin, "/settings/projects/acme"), `data-move=`)
+}

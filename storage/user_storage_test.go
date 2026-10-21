@@ -109,3 +109,23 @@ func TestUserStorage_Delete(t *testing.T) {
 	assert.ErrorIs(t, err, storage.ErrNotFound)
 	assert.NoError(t, users.Delete(ctx, user.ID), "deleting twice is fine")
 }
+
+func TestUserStorage_MoveFolder(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	users := storage.NewUserStorage(newDB(t))
+	limited := &model.User{Name: "dev", Role: model.RoleRunner, Folders: model.EncodeList([]string{"web", "web/docs", "website"})}
+	everyone := &model.User{Name: "ops", Role: model.RoleRunner}
+	assert.NoError(t, users.Create(ctx, limited))
+	assert.NoError(t, users.Create(ctx, everyone))
+
+	changed, err := users.MoveFolder(ctx, "web", "acme/web")
+	assert.NoError(t, err)
+	assert.Equal(t, 1, changed)
+	got, err := users.Get(ctx, limited.ID)
+	assert.NoError(t, err)
+	assert.Equal(t, []string{"acme/web", "acme/web/docs", "website"}, got.FolderList())
+	got, err = users.Get(ctx, everyone.ID)
+	assert.NoError(t, err)
+	assert.Len(t, got.FolderList(), 0, "a user who sees every folder keeps seeing them")
+}

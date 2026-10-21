@@ -37,7 +37,11 @@ stay as they are:
 
   runs Monday to Thursday nine to five, Friday mornings, and never on the
   weekend. Days are names or ranges (`mon-fri`, `sat,sun`, `weekdays`,
-  `daily`); spans are hours or `hh:mm`.
+  `daily`); spans are hours or `hh:mm`;
+- the **workspace** a project at the top of one is in: another one moves
+  the project there, as
+  [Move a project](projects.md#move-a-project-to-another-workspace)
+  describes.
 
 The API sets three more on a project: `commands`, the program a kind of
 job runs with (`make: gmake`), and `job_allow` and `job_hours`, who may

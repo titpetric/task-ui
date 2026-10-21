@@ -190,6 +190,7 @@ func (a *App) wire(version string) error {
 	schedules := storage.NewScheduleStorage(db)
 	workflows := storage.NewWorkflowStorage(db)
 	workflowRuns := storage.NewWorkflowRunStorage(db)
+	refs := storage.NewFolderRefStorage(db)
 	g := &git.Git{SSHDir: cfg.SSHDir}
 	keys := &sshkey.Store{Dir: cfg.SSHDir}
 	var homeKeys *sshkey.Store
@@ -259,7 +260,7 @@ func (a *App) wire(version string) error {
 	}
 	apiHandlers := api.New(api.Options{
 		Users: a.Users, Projects: projects, Workspaces: workspaces, Runs: runs, Artifacts: artifacts, ArtifactStore: store, Schedules: schedules, Secrets: secrets,
-		WorkspaceKeys: keyring, KeyGrants: grants,
+		FolderRefs: refs, WorkspaceKeys: keyring, KeyGrants: grants,
 		Workflows: workflows, WorkflowRuns: workflowRuns, Flows: a.Workflows, Events: events,
 		Runner: a.Runner, Catalogue: a.Catalogue, Git: g, Keys: keys, KeyPolicies: keyPolicies, Env: env, Recordings: recordings, Root: cfg.Root, Board: a.Board,
 		Integrations: integrations, Hosts: hosts, SSH: prober, Summarizer: &claude.Summarizer{Timeout: 3 * time.Minute},
@@ -267,7 +268,7 @@ func (a *App) wire(version string) error {
 	})
 	pages, err := frontend.New(frontend.Options{
 		Guard: a.Guard, Auth: access.NewAuthenticator(a.Users, a.Emails, a.Passwords), Users: a.Users, Projects: projects, Workspaces: workspaces, Runs: runs, Artifacts: artifacts, Schedules: schedules, Secrets: secrets,
-		WorkspaceKeys: keyring, KeyGrants: grants,
+		FolderRefs: refs, WorkspaceKeys: keyring, KeyGrants: grants,
 		Workflows: workflows, WorkflowRuns: workflowRuns, Flows: a.Workflows,
 		Runner: a.Runner, Catalogue: a.Catalogue, Git: g, Keys: keys, HomeKeys: homeKeys, KeyPolicies: keyPolicies, Env: env, Recordings: recordings, Root: cfg.Root, Version: version, Now: cfg.Clock(),
 		ArtifactStore: store, Disk: &diskusage.Meter{TTL: 10 * time.Minute}, Board: a.Board,

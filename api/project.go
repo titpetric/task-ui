@@ -50,6 +50,11 @@ type ProjectRequest struct {
 	// Sidebar lists the project in the sidebar, the default; false keeps
 	// it, and the folders inside it, out. Left out, it stays unchanged.
 	Sidebar *bool `json:"sidebar,omitempty"`
+	// Workspace moves the project into that workspace, _ for the root:
+	// the checkout and the row take the ID <workspace>/<last segment>,
+	// or the last segment alone in _. Left out, or naming the workspace
+	// that holds it, the project stays.
+	Workspace *string `json:"workspace,omitempty"`
 }
 
 // validHours checks the hours of the folder and of its jobs.
@@ -221,6 +226,15 @@ func (h *Handlers) updateProject(w http.ResponseWriter, r *http.Request) {
 		fail(w, http.StatusBadRequest, err.Error())
 		return
 	}
+	to := id
+	if req.Workspace != nil {
+		var status int
+		var problem string
+		if to, status, problem = h.moveTarget(r, id, strings.TrimSpace(*req.Workspace)); problem != "" {
+			fail(w, status, problem)
+			return
+		}
+	}
 	project, err := h.opts.Projects.GetByFolder(r.Context(), id)
 	if errors.Is(err, storage.ErrNotFound) {
 		project = &model.Project{Folder: id}
@@ -229,6 +243,10 @@ func (h *Handlers) updateProject(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	req.apply(project)
+	if to != id {
+		h.moveProject(w, r, project, to)
+		return
+	}
 	if err := h.opts.Projects.Upsert(r.Context(), project); err != nil {
 		failErr(w, err)
 		return

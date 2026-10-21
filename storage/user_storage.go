@@ -85,3 +85,31 @@ func (s *UserStorage) Delete(ctx context.Context, id string) error {
 	}
 	return client(s.db).Exec(ctx, "DELETE FROM user WHERE id = ?", id)
 }
+
+// MoveFolder rewrites the folder lists of the users that name a folder,
+// or one inside it, to name it under its new ID: access follows a
+// project that moves. It returns how many users changed.
+func (s *UserStorage) MoveFolder(ctx context.Context, from, to string) (int, error) {
+	users, err := s.List(ctx)
+	if err != nil {
+		return 0, err
+	}
+	changed := 0
+	for i := range users {
+		list, moved := users[i].FolderList(), false
+		for j, folder := range list {
+			if id, ok := model.Moved(folder, from, to); ok {
+				list[j], moved = id, true
+			}
+		}
+		if !moved {
+			continue
+		}
+		users[i].Folders = model.EncodeList(list)
+		if err := s.Update(ctx, &users[i]); err != nil {
+			return changed, err
+		}
+		changed++
+	}
+	return changed, nil
+}

@@ -33,6 +33,9 @@ var (
 	ErrNotInteractive = errors.New("the job takes no input")
 	// ErrNotFound reports a session that does not exist.
 	ErrNotFound = errors.New("no such run")
+	// ErrMoving refuses a run of a folder whose project is moving, and a
+	// second move of it.
+	ErrMoving = errors.New("the project is moving")
 )
 
 // Manager starts runs and holds their sessions.
@@ -47,6 +50,9 @@ type Manager struct {
 	byKey    map[string]*Session
 	// pulls holds one lock per checkout, so its runs pull one at a time.
 	pulls map[string]*sync.Mutex
+	// frozen are the folders that are moving: no run of them or of a
+	// folder inside them starts.
+	frozen map[string]bool
 }
 
 // New returns a manager. Zero durations get defaults.
@@ -106,7 +112,7 @@ func (m *Manager) Start(ctx context.Context, req Request) (*Session, error) {
 	if outOfHours {
 		run.Reason = strings.TrimSpace(req.Reason)
 	}
-	if current, err := m.acquire(run.Key(), req.Force); err != nil {
+	if current, err := m.acquire(run.Key(), run.Folder, req.Force); err != nil {
 		return current, err
 	}
 	if err := m.opts.Runs.Create(ctx, run); err != nil {
@@ -164,11 +170,16 @@ func (m *Manager) newRun(req Request) *model.Run {
 	return run
 }
 
-// acquire takes the lock of a key, killing the holder when forced.
-func (m *Manager) acquire(key string, force bool) (*Session, error) {
+// acquire takes the lock of a key, killing the holder when forced. A
+// folder that is moving takes none.
+func (m *Manager) acquire(key, folder string, force bool) (*Session, error) {
 	deadline := time.Now().Add(m.opts.KillTimeout)
 	for {
 		m.mu.Lock()
+		if m.isFrozen(folder) {
+			m.mu.Unlock()
+			return nil, ErrMoving
+		}
 		current, busy := m.byKey[key]
 		if !busy {
 			m.byKey[key] = nil

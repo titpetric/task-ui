@@ -185,7 +185,7 @@ func statusOf(err error) int {
 	switch {
 	case errors.Is(err, storage.ErrNotFound), errors.Is(err, runner.ErrNotFound), errors.Is(err, fs.ErrNotExist):
 		return http.StatusNotFound
-	case errors.Is(err, runner.ErrBusy):
+	case errors.Is(err, runner.ErrBusy), errors.Is(err, runner.ErrMoving):
 		return http.StatusConflict
 	case errors.Is(err, runner.ErrOutOfHours):
 		return http.StatusForbidden
