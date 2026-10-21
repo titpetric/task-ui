@@ -77,7 +77,7 @@ connected.
 | `list_workflows`     |                                                  | The workflows, their steps and their last run |
 | `run_job`            | `folder`, `job`, `force`, `reason`, `wait`, `lines` | Starts a job; with `wait`, up to 900 seconds, returns how it ended and the end of its output |
 | `run_workflow`       | `workflow`, `wait`                               | Starts a workflow by ID or name; with `wait`, returns how each step went |
-| `list_runs`          | `folder`, `job`, `state`, `limit`                | The latest runs, newest first |
+| `list_runs`          | `folder`, `job`, `state`, `limit`                | The latest runs, newest first, a directory's run as `folder/dir/job` |
 | `get_run`            | `id`, `lines`                                    | A run and the end of its output, as the terminal showed it |
 | `list_workflow_runs` | `workflow`, `limit`                              | A workflow's latest runs and their steps |
 | `list_notes`         | `mention`, `state`, `limit`                      | The notes with their replies; by default the open ones that name you |
@@ -91,7 +91,8 @@ allowed can watch it, and it goes on if the agent stops waiting.
 `@<skill>:<job>` for a job of an atkins skill that applies in the
 folder's own directory, such as `@git:status`. It has no `dir` and no
 `args`: the targets of a directory inside a folder and a job's arguments
-start from the browser or `POST /api/runs`. `@shell`, the interactive
+start from the browser or `POST /api/runs`, and `list_runs` and
+`get_run` name such a run `folder/dir/job`, as `malta/dockerfiles/blog/build`. `@shell`, the interactive
 shell of **Enter Shell**, answers `403` to every token but an admin's.
 
 ## A frozen surface
