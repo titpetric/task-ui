@@ -98,3 +98,18 @@ func TestProject_RecursiveToggle(t *testing.T) {
 	assert.Contains(t, rootOnly, `type="checkbox" id="pe-recursive" name="recursive">`)
 	assert.NotContains(t, rootOnly, `name="recursive" checked`)
 }
+
+// The clone form lists the workspaces in a select, none chosen, and
+// leaves the select out while there are none.
+func TestProjectNew_Workspace(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+
+	assert.NotContains(t, f.page(t, asAdmin, "/settings/projects/new"), `name="workspace"`)
+
+	assert.NoError(t, f.opts.Workspaces.Create(context.Background(), &model.Workspace{Folder: "malta", Title: "Malta"}))
+	form := f.page(t, asAdmin, "/settings/projects/new")
+	assert.Contains(t, form, `<select id="p-workspace" name="workspace">`)
+	assert.Contains(t, form, `<option value="" selected>`)
+	assert.Contains(t, form, `<option value="malta">malta · Malta</option>`)
+}

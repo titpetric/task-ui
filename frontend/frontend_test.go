@@ -121,6 +121,7 @@ func newFixture(t *testing.T) *fixture {
 		Auth:          access.NewAuthenticator(users, storage.NewUserEmailStorage(db), storage.NewUserAuthPasswordStorage(db)),
 		Users:         users,
 		Projects:      storage.NewProjectStorage(db),
+		Workspaces:    storage.NewWorkspaceStorage(db),
 		Runs:          runs,
 		Artifacts:     storage.NewArtifactStorage(db),
 		Schedules:     storage.NewScheduleStorage(db),

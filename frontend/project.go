@@ -35,6 +35,7 @@ func (h *Handlers) projectNew(w http.ResponseWriter, r *http.Request) {
 	}
 	p := h.page(r, "Add project")
 	p.Crumbs = view.Crumbs("Settings", "/settings", "Projects", "/settings/projects", "Add")
+	p.WorkspaceList = h.workspaceList(r.Context())
 	h.render(w, http.StatusOK, "project_new", p)
 }
 

@@ -512,6 +512,13 @@
 </div>
 {{- end }}
 
+{{- /* workspacedelete removes a workspace: the workspace, the folders
+     of the projects inside it that go with it, and where to go after. */}}
+{{- define "workspacedelete" }}
+{{- $ws := index . 0 }}{{ $nested := index . 1 }}
+<button type="button" class="btn-icon danger" data-delete="/api/workspaces/{{ $ws.Folder }}" data-confirm="Remove the workspace {{ $ws.Folder }} and its checkout{{ with $nested }}, with the projects inside it: {{ join . ", " }}{{ end }}? It can be cloned again from {{ $ws.SourceURL }}." data-confirm-ok="Remove" data-next="{{ index . 2 }}" title="Remove the workspace" aria-label="Remove {{ $ws.Folder }}"><svg class="ic"><use href="#i-trash"/></svg></button>
+{{- end }}
+
 {{- define "keypolicies" }}
 {{- $roles := index . 0 }}{{ $users := index . 1 }}{{ $all := index . 2 }}
 <div class="field">

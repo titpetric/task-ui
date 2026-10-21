@@ -2,7 +2,7 @@
 <div class="page-head">
 	<div>
 		<h2>Add project</h2>
-		<p>Clones the repository into the root. The clone is the test: it either succeeds and the folder appears, or git's output is shown here and nothing is kept. Private repositories are reached with the instance SSH keys.</p>
+		<p>Clones the repository into the root, or into a workspace. The clone is the test: it either succeeds and the folder appears, or git's output is shown here and nothing is kept. Private repositories are reached with the instance SSH keys.</p>
 	</div>
 </div>
 
@@ -15,6 +15,17 @@
 		<label for="p-id">Folder <span class="faint">optional, the repository name by default</span></label>
 		<input type="text" id="p-id" name="id" pattern="[A-Za-z0-9._-]+" spellcheck="false" autocomplete="off">
 	</div>
+	{{- with .WorkspaceList }}
+	<div class="field">
+		<label for="p-workspace">Workspace <span class="faint">optional, clones the project inside it, as workspace/folder</span></label>
+		<select id="p-workspace" name="workspace">
+			<option value="" selected>None, at the top of the root</option>
+			{{- range . }}
+			<option value="{{ .Folder }}">{{ .Folder }}{{ with .Title }} · {{ . }}{{ end }}</option>
+			{{- end }}
+		</select>
+	</div>
+	{{- end }}
 	<div class="field">
 		<label for="p-branch">Branch <span class="faint">optional, the default branch otherwise</span></label>
 		<input type="text" id="p-branch" name="branch" spellcheck="false" autocomplete="off">

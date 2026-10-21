@@ -14,6 +14,12 @@ page you are on stays open.
 
 ![A folder: its jobs, files and environment](../assets/folder-dark.png)
 
+An admin adds a project from a git repository on **Add project** (see
+[Settings](settings.md#projects)). With a workspace, the form has a
+**Workspace** select: none clones the project at the top of the root,
+and a workspace clones it inside that workspace, as `malta/dockerfiles`
+(see [Settings](settings.md#workspaces)).
+
 ## Where the jobs come from
 
 task-ui reads the files a folder has and lists their targets. It never

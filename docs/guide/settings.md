@@ -55,24 +55,34 @@ the workspace `malta` lives at `<root>/malta/dockerfiles` and opens at
 `/f/malta/dockerfiles`. Any number of workspaces may come from one
 repository, each under its own name.
 
-An admin adds one over the API, with a token from `task-ui token`:
+**Add workspace** on the Workspaces page clones a repository into the
+root, under the folder you name. The clone works, or the page shows git's
+output and keeps nothing. task-ui refuses a folder that a workspace, a
+project or a directory under the root holds already, and `internal`,
+its own. The page lists each workspace with its repository and the
+projects cloned inside it.
+
+A project joins a workspace on **Add project**: pick it under
+**Workspace**, and the clone goes inside it. The select shows once there
+is a workspace, and none is the default.
+
+**Configure** on a workspace changes its title and description; the
+repository and the folder stay. The remove button deletes the checkout,
+every project inside it and their rows, and its confirm names those
+projects first.
+
+The API does the same, with a token from `task-ui token`:
 
 ```sh
 curl -s -X POST https://task.example.com/api/workspaces \
   -H "Authorization: Bearer $TOKEN" \
   -d '{"url": "git@example.com:org/workspace.git", "folder": "malta", "title": "Malta"}'
-```
-
-The clone works or answers with git's output and keeps nothing. A folder
-that a workspace, a project or a directory under the root holds already
-answers `409`, and `internal` is task-ui's own. A project joins a
-workspace when its clone names it:
-
-```sh
 curl -s -X POST https://task.example.com/api/projects \
   -H "Authorization: Bearer $TOKEN" \
   -d '{"url": "git@example.com:org/dockerfiles.git", "workspace": "malta"}'
 ```
+
+A taken folder answers `409`.
 
 The project lists with the folders inside it, whatever the workspace's
 `.gitignore` says, and the Projects page shows it as `malta/dockerfiles`.
@@ -81,8 +91,7 @@ Its runs name the workspace in `TASK_UI_WORKSPACE` and
 project's (see [Runs](runs.md#what-a-job-gets)).
 
 `PUT /api/workspaces/malta` with `{title, description}` changes its
-text; the repository and the folder stay. `DELETE /api/workspaces/malta`
-removes the checkout, every project inside it and their rows.
+text, and `DELETE /api/workspaces/malta` removes it.
 
 ## Users
 
