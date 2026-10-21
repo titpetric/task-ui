@@ -33,6 +33,18 @@
     text-decoration: none;
   }
 
+  /* As .btn: a move with nowhere to go, the first row's Move up. */
+  &:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+
+    &:hover {
+      color: var(--text-dim);
+      border-color: transparent;
+      background: transparent;
+    }
+  }
+
   /* Destructive actions wear the one red on the page. */
   &.danger {
     color: var(--bad);

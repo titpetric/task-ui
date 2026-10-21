@@ -97,7 +97,7 @@ func TestPage_Groups(t *testing.T) {
 	p := &view.Page{SideFolders: []*folder.Folder{{ID: "malta"}, {ID: "malta/deploy"}}}
 	assert.Equal(t, []string{"malta/deploy"}, idsOf(p.Groups()[0].Nested))
 
-	p.Workspaces = map[string]bool{"malta": true}
+	p.Workspaces = map[string]int{"malta": 0}
 	groups := p.Groups()
 	assert.Len(t, groups, 1)
 	assert.True(t, groups[0].Workspace)

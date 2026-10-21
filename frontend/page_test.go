@@ -170,6 +170,13 @@ func TestPage_Workspaces(t *testing.T) {
 	}
 	assert.True(t, closes > web, "the workspace closes after malta/deploy/web")
 
+	// A project at the root lists above the workspaces, whatever its name.
+	cat["zeta"] = shellFolder(t, f.root, "zeta", map[string]string{"build": "echo zeta"})
+	body = f.page(t, asAdmin, "/")
+	zeta := strings.Index(body, `<details class="project" data-project="zeta" open>`)
+	ws = strings.Index(body, `<details class="workspace" data-project="malta" open>`)
+	assert.True(t, zeta >= 0 && zeta < ws, "zeta lists above malta")
+
 	// The sidebar marks the open page's workspace and project, and lights the folder's row.
 	page := f.page(t, asAdmin, "/f/malta/deploy/web")
 	assert.Contains(t, page, `<details class="workspace active" data-project="malta" open>`)

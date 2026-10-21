@@ -1093,6 +1093,11 @@
       type: timestamp
       comment: Updated At
       datatype: datetime
+    - name: sort
+      type: integer
+      comment: Sort
+      datatype: bigint
+      size: 8
   indexes:
     - name: sqlite_autoindex_workspace_1
       columns:

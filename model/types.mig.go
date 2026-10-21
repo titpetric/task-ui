@@ -1851,6 +1851,9 @@ type Workspace struct {
 
 	// Updated At
 	UpdatedAt *time.Time `db:"updated_at" json:"updated_at"`
+
+	// Sort
+	Sort int64 `db:"sort" json:"sort"`
 }
 
 // GetID will return the value of ID.
@@ -1901,11 +1904,17 @@ func (w *Workspace) GetUpdatedAt() *time.Time { return w.UpdatedAt }
 // SetUpdatedAt sets UpdatedAt to the provided value.
 func (w *Workspace) SetUpdatedAt(stamp time.Time) { w.UpdatedAt = &stamp }
 
+// GetSort will return the value of Sort.
+func (w *Workspace) GetSort() int64 { return w.Sort }
+
+// SetSort sets Sort to the provided value.
+func (w *Workspace) SetSort(val int64) { w.Sort = val }
+
 // WorkspaceTable is the name of the table in the DB.
 const WorkspaceTable = "`workspace`"
 
 // WorkspaceFields is a list of all columns in the DB table.
-var WorkspaceFields = []string{"id", "folder", "title", "description", "source_url", "branch", "created_at", "updated_at"}
+var WorkspaceFields = []string{"id", "folder", "title", "description", "source_url", "branch", "created_at", "updated_at", "sort"}
 
 // WorkspacePrimaryFields are the primary key fields in the DB table.
 var WorkspacePrimaryFields = []string{"id"}

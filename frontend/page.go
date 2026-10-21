@@ -46,9 +46,9 @@ func (h *Handlers) page(r *http.Request, title string) *view.Page {
 		}
 	}
 	p.SideFolders = h.sideFolders(r.Context(), p.Folders)
-	p.Workspaces = map[string]bool{}
-	for _, ws := range h.workspaceFolders(r.Context()) {
-		p.Workspaces[ws] = true
+	p.Workspaces = map[string]int{}
+	for i, ws := range h.workspaceFolders(r.Context()) {
+		p.Workspaces[ws] = i
 	}
 	p.Roles = h.roles(r.Context(), user)
 	p.Running = h.running(user)

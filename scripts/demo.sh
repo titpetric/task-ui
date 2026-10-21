@@ -237,7 +237,9 @@ api PUT /integrations/claude -d '{"values":{"token":"sk-ant-oat01-demo","who":"a
 scripts/crawl.sh
 
 shot workspaces-dark /settings/workspaces dark
-shot sidebar-workspace-dark /f/acme/api dark
+# The workspaces list after the projects at the root: a window tall
+# enough for the sidebar to reach acme and its projects.
+shot sidebar-workspace-dark /f/acme/api dark 1440x1900
 shot workspace-prompt-dark /f/acme dark
 
 mkdir -p docs/assets

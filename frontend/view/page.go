@@ -34,9 +34,10 @@ type Page struct {
 	// SideFolders are the folders the sidebar lists: Folders less the
 	// projects set not to show there.
 	SideFolders []*folder.Folder
-	// Workspaces are the folders of the workspaces, which the sidebar
-	// lists with their projects under them.
-	Workspaces map[string]bool
+	// Workspaces are the folders of the workspaces, each with its rank,
+	// which the sidebar lists in that order, after the projects at the
+	// root, with their projects under them.
+	Workspaces map[string]int
 	// Recents are the latest runs of jobs and of workflows the user may
 	// see, newest first, for the sidebar.
 	Recents []RecentGroup

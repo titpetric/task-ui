@@ -28,7 +28,8 @@ find the workspace's files by looking in the folders above the project:
 ## Add, edit and delete
 
 Admins manage workspaces under Settings, **Workspaces**. The page lists
-each workspace with its repository and the projects cloned inside it.
+each workspace with its repository and the projects cloned inside it, in
+the sidebar's order.
 
 ![Workspaces, each with its repository and projects](../assets/workspaces-dark.png)
 
@@ -41,6 +42,8 @@ each workspace with its repository and the projects cloned inside it.
   different projects into it.
 - **Configure** changes a workspace's title and description; the
   repository and the folder stay.
+- **Move up** and **Move down** change the order of the workspaces, in
+  the sidebar and on the page. An added workspace goes last.
 - The remove button deletes the checkout, every project inside it and
   their rows, and its confirm names those projects first.
 
@@ -68,11 +71,15 @@ curl -s -X POST https://task.example.com/api/projects \
 
 A taken folder answers `409`. `PUT /api/workspaces/malta` with
 `{title, description}` changes its text, and `DELETE /api/workspaces/malta`
-removes it.
+removes it. A `sort` in the `PUT` places the workspace: the lowest comes
+first, and workspaces of one sort go by folder. Left out, the sort
+stays.
 
 ## In the sidebar
 
-A workspace adds a level above its projects: a label row with the
+The projects at the top of the root come first, by name, and the
+workspaces follow them, in their order. A workspace adds a level above
+its projects: a label row with the
 workspace's name, the count of its projects and a chevron that points
 down while it's open. Under it come the workspace's own jobs, then its
 projects, each with a fold of its own. This browser remembers each fold

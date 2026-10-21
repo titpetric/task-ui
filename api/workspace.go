@@ -120,6 +120,9 @@ func (h *Handlers) updateWorkspace(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	workspace.Title, workspace.Description = req.Title, req.Description
+	if req.Sort != nil {
+		workspace.Sort = *req.Sort
+	}
 	if err := h.opts.Workspaces.Update(r.Context(), workspace); err != nil {
 		failErr(w, err)
 		return

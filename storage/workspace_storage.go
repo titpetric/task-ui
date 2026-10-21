@@ -19,13 +19,21 @@ func NewWorkspaceStorage(db DB) *WorkspaceStorage {
 }
 
 // Create inserts a workspace. The folder is its identity; any number
-// of workspaces may share a repository.
+// of workspaces may share a repository. One without a sort goes after
+// the others.
 func (s *WorkspaceStorage) Create(ctx context.Context, workspace *model.Workspace) error {
 	if workspace.Folder == "" {
 		return errors.New("a workspace needs a folder")
 	}
 	if workspace.ID == "" {
 		workspace.ID = model.NewID()
+	}
+	if workspace.Sort == 0 {
+		next, err := client(s.db).Get[int64](ctx, "SELECT COALESCE(MAX(sort) + 1, 0) FROM workspace")
+		if err != nil {
+			return err
+		}
+		workspace.Sort = *next
 	}
 	workspace.CreatedAt = stamp()
 	workspace.UpdatedAt = workspace.CreatedAt
@@ -44,12 +52,12 @@ func (s *WorkspaceStorage) GetByFolder(ctx context.Context, folder string) (*mod
 	return workspace, notFound(err)
 }
 
-// List returns every workspace, by folder.
+// List returns every workspace, by sort, then by folder.
 func (s *WorkspaceStorage) List(ctx context.Context) ([]model.Workspace, error) {
-	return client(s.db).Select[model.Workspace](ctx, "SELECT * FROM workspace ORDER BY folder")
+	return client(s.db).Select[model.Workspace](ctx, "SELECT * FROM workspace ORDER BY sort, folder")
 }
 
-// Folders returns the folder of every workspace, sorted.
+// Folders returns the folder of every workspace, in List's order.
 func (s *WorkspaceStorage) Folders(ctx context.Context) ([]string, error) {
 	workspaces, err := s.List(ctx)
 	if err != nil {

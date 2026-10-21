@@ -925,6 +925,38 @@
     });
   });
 
+  // Move up and Move down on the Workspaces page: the workspace trades
+  // places with its neighbour, and every workspace whose sort is not its
+  // place in the new order gets it, which is the two of them once the
+  // sorts are 0, 1, 2 and on.
+  document.addEventListener("click", function (event) {
+    var btn = event.target.closest("[data-workspace-move]");
+    if (!btn) return;
+    event.preventDefault();
+    btn.disabled = true;
+    api("GET", "/api/workspaces").then(function (res) {
+      if (res.status >= 300) throw new Error(res.data.error || ("HTTP " + res.status));
+      var list = res.data.workspaces;
+      var i = list.findIndex(function (ws) { return ws.folder === btn.dataset.folder; });
+      var j = btn.dataset.workspaceMove === "up" ? i - 1 : i + 1;
+      if (i < 0 || j < 0 || j >= list.length) return null;
+      var moved = list[i];
+      list[i] = list[j];
+      list[j] = moved;
+      return Promise.all(list.map(function (ws, sort) {
+        if (ws.sort === sort) return null;
+        return api("PUT", "/api/workspaces/" + encodeURIComponent(ws.folder), { title: ws.title, description: ws.description, sort: sort });
+      }));
+    }).then(function (results) {
+      var failed = (results || []).find(function (res) { return res && res.status >= 300; });
+      if (failed) throw new Error(failed.data.error || ("HTTP " + failed.status));
+      next("reload");
+    }).catch(function (err) {
+      btn.disabled = false;
+      window.alert(err.message);
+    });
+  });
+
   // The workflow page follows its topic; live says so, below. Any page
   // that follows a topic draws its changes and is never reloaded.
   var live = document.querySelector('[data-sse^="workflow:"]');
