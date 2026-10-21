@@ -161,6 +161,70 @@ key. `"encrypt": true` on `generate` or `upload` rotates or replaces the
 encryption key; `rekeyed` counts the secrets task-ui wrote again for
 it. The key routes are for admins.
 
+## Move to another instance
+
+A workspace moves to another task-ui as a bundle, `<folder>.taskui-ws`:
+a tar.gz of `manifest.json` and `keys/`, encrypted with
+[age](https://age-encryption.org) to a passphrase. Every bundle needs
+one, and whoever holds the file and the passphrase holds the
+workspace's keys.
+
+The bundle carries:
+
+- the workspace's row: title, description, repository, branch and sort;
+- its projects, by folder relative to the workspace, with their
+  repository, branch and settings;
+- its env files, by folder and path;
+- its secrets as ciphertext: the bundled encryption key opens them, so
+  their values never leave it;
+- its key files, backups among them, and the grants of its SSH keys.
+
+Schedules, workflows, runs and artifacts stay on the instance, as do the
+integrations, which the instance key encrypts. The bundle of `_` leaves
+out the named workspaces and `internal`.
+
+**Export** on a workspace's configure page takes the passphrase and
+downloads the bundle. **Import** on the Workspaces page takes the file,
+the passphrase and the folder to import it as, the bundle's own when
+left out. The folder must be free, as for Add workspace: a folder held
+answers `409`. The import clones the workspace's repository, or makes
+its directory when it has none, writes the keys `0600`, adds the rows
+under the folder, clones each project, then writes the env files into
+the folders the clones made. A project that does not clone keeps its
+row, and the import reports git's output for it. Any failure before the
+projects keeps nothing: no checkout, no keys, no rows. Env files and
+secrets that a removed workspace of the same folder left behind take
+the bundle's content.
+
+The bundle of the default workspace, `_`, imports as a named workspace,
+so it needs a folder, such as `legacy`. Its projects move under that
+folder, `web` becomes `legacy/web`, and its shared secrets become
+`legacy`'s; the workspace's title is the folder.
+
+```sh
+curl -s -X POST https://task.example.com/api/workspaces/malta/export \
+  -H "Authorization: Bearer $TOKEN" \
+  -d '{"passphrase": "correct horse battery"}' -o malta.taskui-ws
+curl -s -X POST https://other.example.com/api/workspaces/import \
+  -H "Authorization: Bearer $OTHER_TOKEN" \
+  -F bundle=@malta.taskui-ws -F passphrase='correct horse battery' -F folder=malta
+```
+
+The import answers `{workspace, projects, unknown_users}`: each project
+with `cloned` and git's `output`, and the users the grants name that the
+instance doesn't have. Their grants stay and reach a run once a user of
+that name exists. A wrong passphrase, a file that is not a bundle, an
+entry outside `manifest.json`, `keys/encrypt` and `keys/ssh`, and a
+secret the bundled key does not open answer `400`; a file over the
+upload limit answers `413`. Both routes are for admins.
+
+| Limit | Size |
+|-------|------|
+| The bundle file | 64 MiB |
+| `manifest.json` | 16 MiB |
+| Each key file | 1 MiB |
+| Entries | 1024 |
+
 ## A prompt against a workspace
 
 A workspace's folder page, `/f/malta`, carries a **Prompt** block for an

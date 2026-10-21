@@ -130,3 +130,58 @@ func (k *Keyring) Remove(id string) error {
 	}
 	return os.RemoveAll(k.Dir(id))
 }
+
+// Files returns every file of a workspace's keys, backups among them,
+// by its path in the workspace's directory: encrypt/<name> and
+// ssh/<name>. An export bundles them.
+func (k *Keyring) Files(id string) (map[string][]byte, error) {
+	if err := validID(id); err != nil {
+		return nil, err
+	}
+	files := map[string][]byte{}
+	for _, sub := range []string{"encrypt", "ssh"} {
+		entries, err := os.ReadDir(filepath.Join(k.Dir(id), sub))
+		if errors.Is(err, os.ErrNotExist) {
+			continue
+		}
+		if err != nil {
+			return nil, err
+		}
+		for _, entry := range entries {
+			if !entry.Type().IsRegular() {
+				continue
+			}
+			data, err := os.ReadFile(filepath.Join(k.Dir(id), sub, entry.Name()))
+			if err != nil {
+				return nil, err
+			}
+			files[sub+"/"+entry.Name()] = data
+		}
+	}
+	return files, nil
+}
+
+// Restore writes the key files of a bundle as a workspace's keys,
+// 0600, into its private directories; Files names them. A workspace
+// that has keys already keeps them: Restore refuses it.
+func (k *Keyring) Restore(id string, files map[string][]byte) error {
+	if err := validID(id); err != nil {
+		return err
+	}
+	if _, err := os.Stat(k.Dir(id)); err == nil {
+		return fmt.Errorf("workspace %s has keys already", id)
+	}
+	if err := k.dirs(id); err != nil {
+		return err
+	}
+	for name, data := range files {
+		sub, base, ok := strings.Cut(name, "/")
+		if !ok || (sub != "encrypt" && sub != "ssh") || base == "" || strings.ContainsAny(base, `/\`) || strings.HasPrefix(base, ".") {
+			return fmt.Errorf("invalid key file %q", name)
+		}
+		if err := os.WriteFile(filepath.Join(k.Dir(id), sub, base), data, 0o600); err != nil {
+			return err
+		}
+	}
+	return nil
+}

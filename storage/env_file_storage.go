@@ -42,6 +42,11 @@ func (s *EnvFileStorage) List(ctx context.Context, folder string) ([]model.EnvFi
 	return client(s.db).Select[model.EnvFile](ctx, "SELECT * FROM env_file WHERE folder = ? ORDER BY path", folder)
 }
 
+// All returns every env file, by folder and path.
+func (s *EnvFileStorage) All(ctx context.Context) ([]model.EnvFile, error) {
+	return client(s.db).Select[model.EnvFile](ctx, "SELECT * FROM env_file ORDER BY folder, path")
+}
+
 // Set creates an env file, or replaces the content of the one at the
 // same folder and path.
 func (s *EnvFileStorage) Set(ctx context.Context, file *model.EnvFile) error {

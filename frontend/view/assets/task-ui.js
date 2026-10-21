@@ -642,6 +642,88 @@
     submit(form);
   });
 
+  // A workspace's Export posts the passphrase, which keeps it out of the
+  // URL, and saves the bundle the answer carries under its file name.
+  document.addEventListener("submit", function (event) {
+    var form = event.target.closest("form[data-export]");
+    if (!form) return;
+    event.preventDefault();
+    var button = form.querySelector("[type=submit]");
+    button.disabled = true;
+    formError(form, "");
+    fetch(form.dataset.export, {
+      method: "POST", credentials: "same-origin",
+      headers: { "Content-Type": "application/json", Accept: "application/octet-stream" },
+      body: JSON.stringify({ passphrase: form.elements.passphrase.value })
+    }).then(function (res) {
+      if (!res.ok) {
+        return res.text().then(function (text) {
+          var data = {};
+          try { data = JSON.parse(text); } catch (e) { data = { error: text }; }
+          throw new Error(data.error || ("HTTP " + res.status));
+        });
+      }
+      var name = (/filename="?([^";]+)"?/.exec(res.headers.get("Content-Disposition") || "") || [])[1] || "workspace.taskui-ws";
+      return res.blob().then(function (blob) {
+        var link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = name;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        setTimeout(function () { URL.revokeObjectURL(link.href); }, 1000);
+        form.reset();
+      });
+    }).catch(function (err) {
+      formError(form, err.message);
+    }).then(function () {
+      button.disabled = false;
+    });
+  });
+
+  // Import sends the bundle as a multipart form. A workspace whose every
+  // project cloned opens its configure page; otherwise the form names
+  // the projects that did not clone, with git's output, and the users
+  // its grants name that this instance does not have.
+  document.addEventListener("submit", function (event) {
+    var form = event.target.closest("form[data-import]");
+    if (!form) return;
+    event.preventDefault();
+    var button = form.querySelector("[type=submit]");
+    button.disabled = true;
+    formError(form, "");
+    fetch(form.dataset.import, {
+      method: "POST", credentials: "same-origin", headers: { Accept: "application/json" }, body: new FormData(form)
+    }).then(function (res) {
+      return res.text().then(function (text) {
+        var data = {};
+        try { data = text ? JSON.parse(text) : {}; } catch (e) { data = { error: text }; }
+        return { status: res.status, data: data };
+      });
+    }).then(function (res) {
+      button.disabled = false;
+      if (res.status >= 300) {
+        formError(form, (res.data.error || ("HTTP " + res.status)) + (res.data.output ? "\n\n" + res.data.output : ""));
+        return;
+      }
+      var folder = res.data.workspace.folder;
+      var failed = (res.data.projects || []).filter(function (p) { return !p.cloned && p.output; });
+      var unknown = res.data.unknown_users || [];
+      if (!failed.length && !unknown.length) {
+        next("/settings/workspaces/" + encodeURIComponent(folder) + "?notice=Imported");
+        return;
+      }
+      var lines = ["Imported " + folder + "."];
+      failed.forEach(function (p) { lines.push(p.folder + " did not clone, its row stays:\n" + p.output); });
+      if (unknown.length) lines.push("Grants name users this instance does not have: " + unknown.join(", ") + ".");
+      form.reset();
+      formError(form, lines.join("\n\n"));
+    }).catch(function (err) {
+      button.disabled = false;
+      formError(form, err.message);
+    });
+  });
+
   // A select that narrows another keeps only the options of its folder:
   // the job list follows the folder picked for a schedule.
   function narrow(select) {

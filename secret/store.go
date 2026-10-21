@@ -194,6 +194,13 @@ func (s *Store) inWorkspace(ctx context.Context, workspace string) ([]model.Secr
 	})
 }
 
+// Encrypted returns the rows of a workspace's secrets as storage keeps
+// them, encrypted to its key: its shared ones and its folders'. An
+// export carries them unchanged.
+func (s *Store) Encrypted(ctx context.Context, workspace string) ([]model.Secret, error) {
+	return s.inWorkspace(ctx, workspace)
+}
+
 // Rekey writes every secret again for its scope's current key, the
 // excluded names of the instance key left out: after a rotation, or
 // before a key goes. It returns the number it wrote.

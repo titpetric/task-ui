@@ -32,6 +32,8 @@ func TestWorkspaceKeys(t *testing.T) {
 
 	body := f.page(t, asAdmin, "/settings/workspaces/malta")
 	assert.Contains(t, body, `<section class="block workspace-keys">`)
+	assert.Contains(t, body, `<form class="form" data-export="/api/workspaces/malta/export">`)
+	assert.Contains(t, body, `name="passphrase" autocomplete="new-password" required`)
 	assert.Contains(t, body, html(encrypt.Fingerprint))
 	assert.Contains(t, body, `href="/settings/workspaces/malta/keys/upload?encrypt=1"`)
 	assert.Contains(t, body, `<input type="hidden" name="encrypt" value="true" data-type="bool">`)
