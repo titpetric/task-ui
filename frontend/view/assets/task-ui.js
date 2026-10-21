@@ -574,6 +574,15 @@
         formError(form, (res.data.error || ("HTTP " + res.status)) + (res.data.output ? "\n\n" + res.data.output : ""));
         return;
       }
+      // A form that starts a run opens its window, the one submit that
+      // does: a prompt against a workspace.
+      if (form.hasAttribute("data-attach-result") && res.data.id) {
+        if (button) button.disabled = false;
+        form.reset();
+        if (dialog && window.Terminal) attach(res.data.id);
+        else window.location.href = "/runs/" + encodeURIComponent(res.data.id);
+        return;
+      }
       next(form.dataset.next);
     }).catch(function (err) {
       if (button) button.disabled = false;
