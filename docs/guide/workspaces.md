@@ -130,18 +130,22 @@ directories are `0700` and the key files `0600`. The **Keys** section of
 a workspace's configure page, `/settings/workspaces/malta`, lists them
 with their fingerprints, never a private key.
 
-- The **encryption key**, an ed25519 key, encrypts the workspace's
-  [secrets](settings.md#secrets): its shared ones and its folders'.
-  task-ui generates it when it adds a workspace, and at start for every
-  workspace without one, `_` among them. Rotate makes a new one and
-  upload takes one you have; the previous key stays as a backup, and
-  task-ui writes the workspace's secrets again for the new key. No run
+- The **encryption key**, an ed25519 key, exactly one, encrypts the
+  workspace's [secrets](settings.md#secrets): its shared ones and its
+  projects'. A workspace starts without one and stores no secrets until
+  an admin adds it: **Generate** makes one, **Upload** takes one you
+  have, on this page or on the [Keys](settings.md#keys) page. Rotate
+  makes a new one, here, on the Keys page or from the ⋯ menu of the
+  workspace on the Secrets page; the previous key stays as a backup, and
+  task-ui re-encrypts the workspace's secrets for the new key. No run
   gets it.
-- The **SSH keys** are for the workspace's runs. Generate or upload any
-  number, each named `id_<type>_<name>`. A key without a grant goes to
-  every run in the workspace; checking roles or users narrows it to
-  their runs. A rotation keeps a key's grants, and delete takes the key
-  and its grants.
+- The **SSH keys**, zero or more, are for the workspace's runs.
+  Generate or upload any number, each named `id_<type>_<name>`. A key
+  without a grant goes to every run in the workspace; checking roles or
+  users narrows it to their runs. A rotation keeps a key's grants, and
+  delete takes the key and its grants. With none, task-ui can't SSH to
+  the workspace's hosts with a key of its own: its runs get only the
+  instance SSH keys their policies grant.
 
 A key has one use (see [One key, one use](settings.md#one-key-one-use)).
 An upload refuses key material that another store holds for the other
@@ -154,7 +158,7 @@ too; a backup of the workspace's own may come back.
 ![A workspace's configure page: its keys, and Export](../assets/workspace-edit-dark.png)
 
 A run gets the instance keys its policies name it for (see
-[Settings](settings.md#ssh-keys)), then its workspace's SSH keys, and the first
+[Settings](settings.md#keys)), then its workspace's SSH keys, and the first
 line of its terminal names each: `$ ssh-agent: id_ed25519,
 ws:id_ed25519_deploy`. A project at the root gets the keys of `_`. The grants
 decide what reaches a run's agent, not what a job can open on disk (see
@@ -178,12 +182,14 @@ it. The key routes are for admins.
 
 A workspace's secrets reach its runs as variables (see
 [Settings](settings.md#secrets)). Its **shared** secrets, scope
-`workspace:malta`, reach every folder in it; a folder's own, scope
-`malta/deploy`, reach that folder and win over a shared one of the same
+`workspace:malta`, reach every project in it; a project's own, scope
+`malta/deploy`, reach that project and win over a shared one of the same
 name. The shared secrets of `_` reach the projects at the root and no
 named workspace: a project in `malta` gets `malta`'s shared secrets and
 its own, never `_`'s. The workspace's encryption key encrypts them all,
-and the Secrets page groups them by workspace.
+and a workspace without one stores none: the Secrets page turns its
+**Add secret** off and the API answers `409`. The Secrets page groups
+them by workspace, each project's under its name.
 
 ## Move to another instance
 

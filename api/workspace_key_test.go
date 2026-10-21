@@ -34,9 +34,9 @@ func TestWorkspaceKey_AdminOnly(t *testing.T) {
 	assert.Equal(t, http.StatusNotFound, f.call(t, asAdmin, http.MethodGet, "/workspaces/nope/keys", nil).Status)
 }
 
-// A workspace made gets its encryption key; an admin generates,
-// uploads, grants and deletes its SSH keys, and no answer carries a
-// private key.
+// A workspace made has its key directories and no encryption key until
+// an admin generates or uploads one; an admin generates, uploads,
+// grants and deletes its SSH keys, and no answer carries a private key.
 // Deleting the workspace takes its keys.
 func TestWorkspaceKey_CRUD(t *testing.T) {
 	t.Parallel()
@@ -46,6 +46,10 @@ func TestWorkspaceKey_CRUD(t *testing.T) {
 	assert.Equal(t, http.StatusCreated, created.Status, string(created.Raw))
 	id := created.str("workspace", "id")
 	keyring := f.opts.WorkspaceKeys
+	assert.DirExists(t, filepath.Join(keyring.Dir(id), "encrypt"))
+	assert.Nil(t, keyring.EncryptKey(id))
+	made := f.call(t, asAdmin, http.MethodPost, "/workspaces/malta/keys/generate", api.WorkspaceKeyRequest{Encrypt: true, Comment: "task-ui malta"})
+	assert.Equal(t, http.StatusCreated, made.Status, string(made.Raw))
 	assert.FileExists(t, filepath.Join(keyring.Dir(id), "encrypt", "id_ed25519"))
 
 	private := func(res response) {

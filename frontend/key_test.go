@@ -9,6 +9,8 @@ import (
 	"testing"
 
 	"github.com/titpetric/task-ui/internal/assert"
+	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/secret"
 	"github.com/titpetric/task-ui/sshkey"
 )
 
@@ -17,7 +19,7 @@ func TestKeys(t *testing.T) {
 	f := newFixture(t)
 
 	empty := f.page(t, asAdmin, "/settings/keys")
-	assert.Contains(t, empty, "<h2>SSH keys</h2>")
+	assert.Contains(t, empty, "<h2>Keys</h2>")
 	assert.Contains(t, empty, "No key pair yet")
 
 	key, err := f.opts.Keys.Generate("ed25519", "deploy")
@@ -61,10 +63,11 @@ func TestKeys_Encryption(t *testing.T) {
 
 	body := f.page(t, asAdmin, "/settings/keys")
 	assert.Contains(t, body, `<span class="badge">id_ed25519</span>`)
-	assert.Contains(t, body, "<h3>Encryption <small>"+f.opts.WorkspaceKeys.Instance().Dir+"</small></h3>")
-	assert.Contains(t, body, fingerprint)
+	assert.Contains(t, body, `<tr class="key-instance" id="instance">`)
+	assert.Contains(t, body, `<div class="key-fp faint" title="`+f.opts.WorkspaceKeys.Instance().Dir+`">`+fingerprint+`</div>`)
 	assert.Contains(t, body, `data-api="/api/keys/encrypt/rotate"`)
-	assert.Equal(t, 1, strings.Count(body, "encryption</span>"))
+	assert.Contains(t, body, `data-next="/settings/keys?rekeyed={rekeyed}&what=integration+setting"`)
+	assert.Equal(t, 1, strings.Count(body, `<a class="key-chip" href="/settings/keys/id_ed25519"`))
 	assert.NotContains(t, body, `class="alert bad"`)
 
 	for _, suffix := range []string{"", ".pub"} {
@@ -176,4 +179,36 @@ func TestKeys_HomeKeys(t *testing.T) {
 	assert.Contains(t, body, "Server user's keys <small>"+f.opts.HomeKeys.Dir+"</small>")
 	assert.Contains(t, body, `data-copy="ssh-ed25519`)
 	assert.NotContains(t, body, `data-delete="/api/keys/id_ed25519"`)
+}
+
+// The keys page has a row per workspace: its projects, a count of its
+// secrets linked to them, its encryption key, set or missing, and its
+// SSH keys, or what having none means.
+func TestKeys_Workspaces(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	f.withKey(t)
+	ctx := context.Background()
+	assert.NoError(t, f.opts.Workspaces.EnsureDefault(ctx))
+	assert.NoError(t, f.opts.Workspaces.Create(ctx, &model.Workspace{Folder: "acme", Title: "Acme"}))
+	acme, err := f.opts.Workspaces.GetByFolder(ctx, "acme")
+	assert.NoError(t, err)
+	_, err = f.opts.WorkspaceKeys.Ensure(acme.ID, "task-ui acme")
+	assert.NoError(t, err)
+	_, err = f.opts.WorkspaceKeys.SSH(acme.ID).GenerateAs("ed25519", "deploy", "deploy")
+	assert.NoError(t, err)
+	f.opts.Secrets.Workspaces = &secret.Workspaces{Rows: f.opts.Workspaces, Keys: f.opts.WorkspaceKeys}
+	assert.NoError(t, f.opts.Secrets.Set(ctx, &model.Secret{Scope: "workspace:acme", Name: "TOKEN", Content: "x"}))
+	assert.NoError(t, f.opts.Secrets.Set(ctx, &model.Secret{Scope: "workspace:acme", Name: "OTHER", Content: "y"}))
+
+	body := f.page(t, asAdmin, "/settings/keys")
+	assert.Contains(t, body, `<tr id="ws-acme">`)
+	assert.Contains(t, body, `<a href="/settings/secrets?workspace=acme">2 secrets</a>`)
+	assert.Contains(t, body, `<a class="key-chip" href="/settings/workspaces/acme/keys/id_ed25519_deploy"`)
+	assert.Contains(t, body, html(f.opts.WorkspaceKeys.EncryptKey(acme.ID).Fingerprint))
+	assert.Contains(t, body, `<tr id="ws-_" class="key-missing">`)
+	assert.Contains(t, body, "No secrets can be added.")
+	assert.Contains(t, body, "task-ui can't SSH to this workspace's hosts with a key of its own")
+	assert.Contains(t, body, `href="/settings/workspaces/_/keys/upload?encrypt=1"`)
+	assert.Contains(t, body, `<div class="faint key-projects">infra, private</div>`, "the root's projects are the default workspace's")
 }

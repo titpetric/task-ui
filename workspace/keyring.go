@@ -60,6 +60,13 @@ func (k *Keyring) EncryptKey(id string) *sshkey.Key {
 	return nil
 }
 
+// Prepare makes a workspace's key directories, private to the server,
+// and no key: an admin adds the encryption key, generated or uploaded,
+// before the workspace stores a secret.
+func (k *Keyring) Prepare(id string) error {
+	return k.dirs(id)
+}
+
 // Ensure makes a workspace's key directories and its encryption key
 // when it has none. It reports whether it generated the key; one there
 // already stays.

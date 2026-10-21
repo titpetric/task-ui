@@ -67,7 +67,7 @@
      to every run in the workspace or to the roles and users granted. */}}
 {{- define "workspacekeys" }}
 {{- $ws := .Workspace }}{{ $base := printf "/settings/workspaces/%s/keys" $ws.Folder }}{{ $api := printf "/api/workspaces/%s/keys" $ws.Folder }}
-<section class="block workspace-keys">
+<section class="block workspace-keys" id="keys">
 	<div class="block-head">
 		<h3>Keys</h3>
 		<div class="actions">
@@ -89,10 +89,23 @@
 				<td class="actions">
 					<button type="button" class="btn-icon" data-copy="{{ .PublicKey }}" title="Copy public key" aria-label="Copy public key"><svg class="ic"><use href="#i-copy"/></svg></button>
 					<a class="btn-icon" href="{{ $base }}/upload?encrypt=1" title="Upload: replace it with a key you have" aria-label="Upload an encryption key"><svg class="ic"><use href="#i-download"/></svg></a>
-					<form data-api="{{ $api }}/generate" data-method="POST" data-next="reload" data-confirm="Rotate the encryption key of {{ $ws.Folder }}? The current key is kept as a backup, and the workspace's secrets are written again for the new one." data-confirm-ok="Rotate">
+					<form data-api="{{ $api }}/generate" data-method="POST" data-next="/settings/workspaces/{{ $ws.Folder }}?rekeyed={rekeyed}#keys" data-confirm="Rotate the encryption key of {{ $ws.Folder }}? The current key is kept as a backup, and the workspace's secrets are written again for the new one." data-confirm-ok="Rotate">
 						<input type="hidden" name="encrypt" value="true" data-type="bool">
 						<input type="hidden" name="comment" value="{{ .Comment }}">
 						<button class="btn-icon" type="submit" title="Rotate: generate a new encryption key" aria-label="Rotate the encryption key"><svg class="ic"><use href="#i-rotate"/></svg></button>
+					</form>
+				</td>
+			</tr>
+		{{- else }}
+			<tr class="encrypt-key">
+				<td class="key"><span class="badge bad">missing</span> <span class="badge signal"><svg class="ic"><use href="#i-secret"/></svg> encryption</span></td>
+				<td colspan="3" class="dim">No encryption key: the workspace stores no secrets until it has one.</td>
+				<td class="actions">
+					<a class="btn-icon" href="{{ $base }}/upload?encrypt=1" title="Upload an encryption key you have" aria-label="Upload an encryption key"><svg class="ic"><use href="#i-download"/></svg></a>
+					<form data-api="{{ $api }}/generate" data-method="POST" data-next="/settings/workspaces/{{ $ws.Folder }}?notice=Encryption+key+added#keys">
+						<input type="hidden" name="encrypt" value="true" data-type="bool">
+						<input type="hidden" name="comment" value="task-ui {{ $ws.Folder }}">
+						<button class="btn-icon" type="submit" title="Generate an encryption key" aria-label="Generate an encryption key"><svg class="ic"><use href="#i-key"/></svg></button>
 					</form>
 				</td>
 			</tr>

@@ -118,10 +118,11 @@ api PUT /projects/website -d '{"hours":"mon-fri 9-17\nfri 9-13"}'
 # the package scripts and the scripts folder too.
 api PUT /projects/tools -d '{"sources":["make","npm","script"]}'
 
-# An SSH key for the keys page; the encryption keys come with the start.
-# Then secrets and a managed env file, so the runs and the pages have
-# them.
+# An SSH key for the keys page, and the default workspace's encryption
+# key, which its secrets need: a workspace starts without one. Then
+# secrets and a managed env file, so the runs and the pages have them.
 api POST /keys/generate -d '{"type":"ed25519","comment":"task-ui"}'
+api POST /workspaces/_/keys/generate -d '{"encrypt":true,"comment":"task-ui _"}'
 api POST /secrets -d '{"scope":"all","name":"CDN_PURGE_URL","content":"https://cdn.example/purge"}'
 api POST /secrets -d '{"scope":"infra","name":"REGION","content":"eu-central-1"}'
 api POST /secrets -d '{"scope":"infra","name":"DEPLOY_TOKEN","content":"s3cret"}'
@@ -202,7 +203,6 @@ shot settings-dark /settings dark
 shot projects-dark /settings/projects dark
 shot project-new-dark /settings/projects/new dark
 shot project-edit-dark /settings/projects/infra dark
-shot keys-dark /settings/keys dark
 shot keys-generate-dark /settings/keys/generate dark
 shot keys-upload-dark /settings/keys/upload dark
 shot secret-new-dark "/settings/secrets/new?scope=infra" dark
@@ -232,10 +232,11 @@ api POST /workspaces -d "{\"url\":\"file://$work/repos/acme.git\",\"folder\":\"a
 api POST /projects -d "{\"url\":\"file://$work/repos/acme-api.git\",\"id\":\"api\",\"workspace\":\"acme\"}"
 api POST /projects -d "{\"url\":\"file://$work/repos/acme-web.git\",\"id\":\"web\",\"workspace\":\"acme\"}"
 api PUT /integrations/claude -d '{"values":{"token":"sk-ant-oat01-demo","who":"admin"}}'
-# The workspace's own: a shared secret and one of a project, on acme's
-# encryption key, an SSH key every run in acme gets and one only the
+# The workspace's own: its encryption key, a shared secret and one of a
+# project on it, an SSH key every run in acme gets and one only the
 # admins' runs get, and a local .env in the api checkout, which its
 # Files panel lists sealed.
+api POST /workspaces/acme/keys/generate -d '{"encrypt":true,"comment":"task-ui acme"}'
 api POST /secrets -d '{"scope":"workspace:acme","name":"REGISTRY_URL","content":"registry.acme.example"}'
 api POST /secrets -d '{"scope":"acme/api","name":"DATABASE_URL","content":"postgres://api@db/api"}'
 api POST /workspaces/acme/keys/generate -d '{"type":"ed25519","name":"git","comment":"acme git"}'
@@ -247,7 +248,6 @@ scripts/crawl.sh
 
 shot workspaces-dark /settings/workspaces dark 1440x1000
 shot workspace-edit-dark /settings/workspaces/acme dark 1440x1300
-shot secrets-dark /settings/secrets dark
 # The workspaces list after the projects at the root: a window tall
 # enough for the sidebar to reach acme and its projects.
 shot sidebar-workspace-dark /f/acme/api dark 1440x1900
@@ -256,6 +256,16 @@ shot workspace-prompt-dark /f/acme dark
 # and its README in the preview window.
 shot files-dark /f/acme/api dark
 shot file-dark "/f/acme/api#file=README.md" dark
+
+# A second workspace, labs, with no encryption key and no SSH key, so the
+# keys and secrets pages show both states: it stores no secrets until an
+# admin adds its key.
+mkdir -p "$work/repos/labs"
+printf '# Labs\n\nExperiments that share nothing yet.\n' >"$work/repos/labs/README.md"
+repo labs "Experiments"
+api POST /workspaces -d "{\"url\":\"file://$work/repos/labs.git\",\"folder\":\"labs\",\"title\":\"Labs\"}"
+shot keys-dark /settings/keys dark 1440x1100
+shot secrets-dark /settings/secrets dark 1440x1300
 
 mkdir -p docs/assets
 rm -f docs/assets/*.png

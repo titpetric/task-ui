@@ -172,7 +172,7 @@ func (h *Handlers) restore(ctx context.Context, bundle *workspace.Bundle, target
 		}
 		return nil, nil, "", fmt.Errorf("%w: %v", errImport, err)
 	}
-	if _, err := h.opts.WorkspaceKeys.Ensure(row.ID, "task-ui "+target); err != nil {
+	if err := h.opts.WorkspaceKeys.Prepare(row.ID); err != nil {
 		return nil, nil, "", err
 	}
 	if err := h.restoreGrants(ctx, row, manifest.Grants, undo); err != nil {

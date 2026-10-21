@@ -2,7 +2,7 @@
 <div class="page-head">
 	<div>
 		<h2>Settings</h2>
-		<p>What the instance brings to every run: the projects it keeps up to date, the workspaces that hold them, the SSH keys it authenticates with, the secrets it adds to the environment, and who may sign in.</p>
+		<p>What the instance brings to every run: the projects it keeps up to date, the workspaces that hold them, its encryption and SSH keys, the secrets it adds to the environment, and who may sign in.</p>
 	</div>
 </div>
 
@@ -23,14 +23,14 @@
 			<td class="actions"><a class="btn btn-sm" href="/settings/workspaces">Open</a></td>
 		</tr>
 		<tr>
-			<td class="key nowrap"><a href="/settings/keys"><svg class="ic"><use href="#i-key"/></svg> SSH keys</a></td>
-			<td class="desc">Key pairs the jobs use to reach hosts, git remotes and services. Generate, rotate or upload them.</td>
+			<td class="key nowrap"><a href="/settings/keys"><svg class="ic"><use href="#i-key"/></svg> Keys</a></td>
+			<td class="desc">Each workspace's encryption key, which stores its secrets, and SSH keys, which connect runs and git to hosts; the instance's, for the integrations and by policy.</td>
 			<td class="nowrap dim">{{ $keys }} {{ if eq $keys 1 }}key{{ else }}keys{{ end }} <span class="faint">{{ .KeysDir }}</span></td>
 			<td class="actions"><a class="btn btn-sm" href="/settings/keys">Open</a></td>
 		</tr>
 		<tr>
 			<td class="key nowrap"><a href="/settings/secrets"><svg class="ic"><use href="#i-secret"/></svg> Secrets</a></td>
-			<td class="desc">Variables added to the environment of every run, for all folders or for one, and written into the env files the pipelines read.</td>
+			<td class="desc">Variables added to the environment of the runs in a workspace, for every project in it or for one, and written into the env files the pipelines read.</td>
 			<td class="nowrap dim">{{ len .Secrets }} {{ if eq (len .Secrets) 1 }}secret{{ else }}secrets{{ end }}</td>
 			<td class="actions"><a class="btn btn-sm" href="/settings/secrets">Open</a></td>
 		</tr>

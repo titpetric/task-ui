@@ -22,7 +22,7 @@
 				</td>
 			</tr>
 		{{- else }}
-			<tr class="empty"><td colspan="4">No key is given to you or your role. An admin gives one under Settings, SSH keys.</td></tr>
+			<tr class="empty"><td colspan="4">No key is given to you or your role. An admin gives one under Settings, Keys.</td></tr>
 		{{- end }}
 		</tbody>
 	</table>

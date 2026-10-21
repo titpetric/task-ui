@@ -602,6 +602,15 @@
     else window.location.href = target;
   }
 
+  // filled puts the answer's fields into a data-next: {rekeyed} becomes
+  // the count of secrets a rotation wrote again.
+  function filled(target, data) {
+    if (!target) return target;
+    return target.replace(/\{(\w+)\}/g, function (all, name) {
+      return data && data[name] !== undefined ? encodeURIComponent(data[name]) : "";
+    });
+  }
+
   function submit(form) {
     var method = (form.dataset.method || "POST").toUpperCase();
     var button = form.querySelector("[type=submit]");
@@ -624,7 +633,7 @@
         else window.location.href = "/runs/" + encodeURIComponent(res.data.id);
         return;
       }
-      next(form.dataset.next);
+      next(filled(form.dataset.next, res.data));
     }).catch(function (err) {
       if (button) button.disabled = false;
       formError(form, err.message);
@@ -767,6 +776,21 @@
   document.addEventListener("keydown", function (event) {
     if (event.key !== "Escape") return;
     document.querySelectorAll("details.cc-more[open]").forEach(function (menu) {
+      menu.removeAttribute("open");
+      menu.querySelector("summary").focus();
+    });
+  });
+
+  // A ⋯ menu closes on a click outside it, on Escape, and once one of
+  // its items is picked, before the item's confirm opens.
+  document.addEventListener("click", function (event) {
+    document.querySelectorAll("details.more-menu[open]").forEach(function (menu) {
+      if (!menu.contains(event.target) || event.target.closest(".more-item")) menu.removeAttribute("open");
+    });
+  });
+  document.addEventListener("keydown", function (event) {
+    if (event.key !== "Escape") return;
+    document.querySelectorAll("details.more-menu[open]").forEach(function (menu) {
       menu.removeAttribute("open");
       menu.querySelector("summary").focus();
     });

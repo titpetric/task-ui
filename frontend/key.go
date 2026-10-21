@@ -1,21 +1,26 @@
 package frontend
 
 import (
+	"context"
 	"net/http"
 	"path/filepath"
 	"slices"
 
+	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/frontend/view"
+	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/sshkey"
 )
 
-// keys lists the key pairs of the instance.
+// keys lists the keys by purpose: the instance's and each workspace's
+// encryption key, which stores secrets, and their SSH keys, which
+// connect to hosts; then the instance's SSH keys with their policies.
 func (h *Handlers) keys(w http.ResponseWriter, r *http.Request) {
 	if !h.requireAdmin(w, r) {
 		return
 	}
-	p := h.page(r, "SSH keys")
-	p.Crumbs = view.Crumbs("Settings", "/settings", "SSH keys")
+	p := h.page(r, "Keys")
+	p.Crumbs = view.Crumbs("Settings", "/settings", "Keys")
 	p.Keys, p.KeysDir = h.accessKeys(h.opts.Keys), h.opts.Keys.Dir
 	p.KeyFolders = h.keyFolders()
 	if h.opts.HomeKeys != nil {
@@ -33,7 +38,61 @@ func (h *Handlers) keys(w http.ResponseWriter, r *http.Request) {
 	if h.opts.WorkspaceKeys != nil {
 		p.KeyOverlaps = h.opts.WorkspaceKeys.Overlaps()
 	}
+	p.KeyWorkspaces = h.keyWorkspaces(r.Context(), p.Folders)
 	h.render(w, http.StatusOK, "keys", p)
+}
+
+// keyWorkspaces returns a row per workspace, the default one first: its
+// projects, the count of its secrets, its encryption key and its SSH
+// keys.
+func (h *Handlers) keyWorkspaces(ctx context.Context, folders []*folder.Folder) []view.KeyWorkspace {
+	if h.opts.Workspaces == nil || h.opts.WorkspaceKeys == nil {
+		return nil
+	}
+	workspaces, err := h.opts.Workspaces.List(ctx)
+	if err != nil {
+		return nil
+	}
+	rows := make([]view.KeyWorkspace, 0, len(workspaces))
+	index := map[string]int{}
+	for _, ws := range workspaces {
+		index[ws.Folder] = len(rows)
+		row := view.KeyWorkspace{Workspace: ws, Encrypt: h.opts.WorkspaceKeys.EncryptKey(ws.ID)}
+		for _, key := range h.opts.WorkspaceKeys.SSH(ws.ID).List() {
+			if !key.Backup {
+				row.SSH = append(row.SSH, key)
+			}
+		}
+		rows = append(rows, row)
+	}
+	for _, f := range folders {
+		name := h.workspaceOf(ctx, f.ID)
+		i, ok := index[name]
+		if !ok || !project(f, name, index) {
+			continue
+		}
+		rows[i].Projects = append(rows[i].Projects, f.ID)
+	}
+	if h.opts.Secrets != nil {
+		secrets, _ := h.opts.Secrets.List(ctx)
+		for _, secret := range userSecrets(secrets) {
+			if i, ok := index[h.workspaceOf(ctx, secret.Scope)]; ok {
+				rows[i].Secrets++
+			}
+		}
+	}
+	return rows
+}
+
+// project reports whether a folder is a project of the workspace: one
+// level inside a named workspace, or at the root, and no workspace, for
+// the default one.
+func project(f *folder.Folder, workspace string, workspaces map[string]int) bool {
+	if workspace != model.Default {
+		return f.Depth() == 1
+	}
+	_, named := workspaces[f.ID]
+	return f.Depth() == 0 && !named
 }
 
 // instanceKey puts the instance's encryption key on a page.
@@ -66,7 +125,7 @@ func (h *Handlers) keyGenerate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	p := h.page(r, "Generate key")
-	p.Crumbs = view.Crumbs("Settings", "/settings", "SSH keys", "/settings/keys", "Generate")
+	p.Crumbs = view.Crumbs("Settings", "/settings", "Keys", "/settings/keys", "Generate")
 	p.KeysDir = h.opts.Keys.Dir
 	p.Users, _ = h.opts.Users.List(r.Context())
 	h.render(w, http.StatusOK, "key_generate", p)
@@ -78,7 +137,7 @@ func (h *Handlers) keyUpload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	p := h.page(r, "Upload key")
-	p.Crumbs = view.Crumbs("Settings", "/settings", "SSH keys", "/settings/keys", "Upload")
+	p.Crumbs = view.Crumbs("Settings", "/settings", "Keys", "/settings/keys", "Upload")
 	p.KeysDir = h.opts.Keys.Dir
 	p.Users, _ = h.opts.Users.List(r.Context())
 	h.render(w, http.StatusOK, "key_upload", p)
@@ -128,7 +187,7 @@ func (h *Handlers) keyEdit(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 		p := h.page(r, key.Name)
-		p.Crumbs = view.Crumbs("Settings", "/settings", "SSH keys", "/settings/keys", key.Name)
+		p.Crumbs = view.Crumbs("Settings", "/settings", "Keys", "/settings/keys", key.Name)
 		p.Key, p.KeyPolicies, p.KeyUsers = &key, h.keyPolicies(r), h.keyUsers(r)
 		p.Users, _ = h.opts.Users.List(r.Context())
 		h.render(w, http.StatusOK, "key_edit", p)

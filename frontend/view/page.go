@@ -115,8 +115,13 @@ type Page struct {
 	// SecretGroups are the workspaces on the secrets pages, each with
 	// its secrets and its folders.
 	SecretGroups []SecretGroup
-	Entries      []folder.Entry
-	Projects     []model.Project
+	// SecretWorkspace is the workspace the secrets page shows alone,
+	// empty for every one.
+	SecretWorkspace string
+	// KeyWorkspaces are the rows of the keys page, one per workspace.
+	KeyWorkspaces []KeyWorkspace
+	Entries       []folder.Entry
+	Projects      []model.Project
 	// Project is the row a configure page edits, nil for a fresh folder.
 	Project *model.Project
 	// WorkspaceList are the workspaces, for their page and the clone
