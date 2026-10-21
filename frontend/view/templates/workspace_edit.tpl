@@ -37,8 +37,30 @@
 </form>
 {{- if .KeysDir }}
 {{ template "workspacekeys" . }}
+{{ template "workspaceexport" . }}
 {{- end }}
 {{ end }}
+
+{{- /* workspaceexport downloads a workspace as a bundle another task-ui
+     imports, encrypted to a passphrase. */}}
+{{- define "workspaceexport" }}
+{{- $ws := .Workspace }}
+<section class="block workspace-export">
+	<div class="block-head">
+		<h3>Export</h3>
+	</div>
+	<p class="dim">Downloads <span class="mono-break">{{ $ws.Folder }}.taskui-ws</span>, which Import on another task-ui's Workspaces page reads: the workspace, its projects, its env files, its secrets as they are encrypted, and its keys with their grants. The file is encrypted to the passphrase; anyone with both holds the keys. Schedules, workflows, runs and artifacts stay here.</p>
+	<form class="form" data-export="/api/workspaces/{{ $ws.Folder }}/export">
+		<div class="field">
+			<label for="wx-passphrase">Passphrase <span class="faint">the import asks for it</span></label>
+			<input type="password" id="wx-passphrase" name="passphrase" autocomplete="new-password" required>
+		</div>
+		<div class="form-foot">
+			<button class="btn btn-primary" type="submit"><svg class="ic"><use href="#i-download"/></svg>Export</button>
+		</div>
+	</form>
+</section>
+{{- end }}
 
 {{- /* workspacekeys are a workspace's keys: the encryption key its
      secrets use, which no run gets, and the SSH keys its runs get, each

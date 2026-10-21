@@ -73,4 +73,9 @@ type Options struct {
 	Summaries *storage.RunSummaryStorage
 	// Summarizer writes the summary of a run on the hosts with Claude.
 	Summarizer *claude.Summarizer
+	// Version is the task-ui an export names in its manifest.
+	Version string
+	// ExportWorkFactor is the scrypt work factor of an export's
+	// passphrase, log2 of N; zero is age's default.
+	ExportWorkFactor int
 }

@@ -18,6 +18,8 @@ func TestWorkspaces(t *testing.T) {
 	assert.Contains(t, empty, "<h2>Workspaces</h2>")
 	assert.Contains(t, empty, "No workspaces yet.")
 	assert.Contains(t, empty, `href="/settings/workspaces/new"`)
+	assert.Contains(t, empty, `<form class="form" data-import="/api/workspaces/import">`)
+	assert.Contains(t, empty, `type="file" id="wi-bundle" name="bundle"`)
 
 	ctx := context.Background()
 	assert.NoError(t, f.opts.Workspaces.Create(ctx, &model.Workspace{Folder: "malta", Title: "Malta", SourceURL: "git@example.com:org/workspace.git", Branch: "main"}))

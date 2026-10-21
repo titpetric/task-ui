@@ -38,4 +38,28 @@
 </table>
 </div>
 <p class="faint" style="margin-top:0.6rem">Root: {{ .Root }}</p>
+
+<section class="block workspace-import">
+	<div class="block-head">
+		<h3>Import</h3>
+	</div>
+	<p class="dim">Adds a workspace from a bundle another task-ui exported. It clones the workspace's repository under the folder, writes its keys, adds its projects, env files, secrets and grants, then clones each project; a project that does not clone stays, with git's output shown. Up to the projects, a failure keeps nothing. A bundle of the default workspace, _, imports as a named one: name its folder.</p>
+	<form class="form" data-import="/api/workspaces/import">
+		<div class="field">
+			<label for="wi-bundle">Bundle <span class="faint">a .taskui-ws file</span></label>
+			<input type="file" id="wi-bundle" name="bundle" accept=".taskui-ws" required>
+		</div>
+		<div class="field">
+			<label for="wi-passphrase">Passphrase</label>
+			<input type="password" id="wi-passphrase" name="passphrase" autocomplete="off" required>
+		</div>
+		<div class="field">
+			<label for="wi-folder">Folder <span class="faint">optional, the bundle's own otherwise; one name, no slashes</span></label>
+			<input type="text" id="wi-folder" name="folder" pattern="[A-Za-z0-9._-]+" spellcheck="false" autocomplete="off">
+		</div>
+		<div class="form-foot">
+			<button class="btn btn-primary" type="submit">Import</button>
+		</div>
+	</form>
+</section>
 {{ end }}

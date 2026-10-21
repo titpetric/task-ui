@@ -209,3 +209,26 @@ func TestStore_RekeyInstance(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "acme", name)
 }
+
+// Encrypted returns a workspace's rows as stored, its shared ones and
+// its folders', none of another workspace's or a service's.
+func TestStore_Encrypted(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	s := newSpaces(t)
+	for _, row := range []model.Secret{
+		{Scope: "workspace:acme", Name: "SHARED", Content: "s"},
+		{Scope: "acme/api", Name: "OWN", Content: "o"},
+		{Scope: "web", Name: "ROOT", Content: "r"},
+		{Scope: "integration:beszel", Name: "TOKEN", Content: "t"},
+	} {
+		assert.NoError(t, s.store.Set(ctx, &row))
+	}
+	rows, err := s.store.Encrypted(ctx, "acme")
+	assert.NoError(t, err)
+	assert.Len(t, rows, 2)
+	for _, row := range rows {
+		assert.True(t, secret.Encrypted(row.Content), row.Name)
+		assert.True(t, row.Scope == "workspace:acme" || row.Scope == "acme/api", row.Scope)
+	}
+}

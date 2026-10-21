@@ -53,28 +53,12 @@ func (h *Handlers) createWorkspace(w http.ResponseWriter, r *http.Request) {
 		fail(w, http.StatusBadRequest, "enter a git URL: https://, ssh://, git@host:path or file://")
 		return
 	}
-	if !folder.ValidID(req.Folder) || strings.Contains(req.Folder, "/") {
-		fail(w, http.StatusBadRequest, "name the workspace's folder: letters, digits, dots, dashes and underscores, no slashes")
-		return
-	}
-	if model.IsReserved(req.Folder) {
-		fail(w, http.StatusBadRequest, internalRefused)
-		return
-	}
 	ctx := r.Context()
-	if _, err := h.opts.Workspaces.GetByFolder(ctx, req.Folder); err == nil {
-		fail(w, http.StatusConflict, "a workspace named "+req.Folder+" exists already")
-		return
-	}
-	if _, err := h.opts.Projects.GetByFolder(ctx, req.Folder); err == nil {
-		fail(w, http.StatusConflict, "a project named "+req.Folder+" exists already")
+	if status, problem := h.freeWorkspace(ctx, req.Folder); problem != "" {
+		fail(w, status, problem)
 		return
 	}
 	dir := filepath.Join(h.opts.Root, req.Folder)
-	if _, err := os.Stat(dir); err == nil {
-		fail(w, http.StatusConflict, req.Folder+" exists under the root already")
-		return
-	}
 	output, err := h.opts.Git.Clone(ctx, req.URL, dir, req.Branch)
 	if err != nil {
 		writeJSON(w, http.StatusBadGateway, map[string]string{"error": err.Error(), "output": output})
@@ -95,6 +79,29 @@ func (h *Handlers) createWorkspace(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	writeJSON(w, http.StatusCreated, map[string]any{"workspace": workspace, "output": output})
+}
+
+// freeWorkspace says why a new workspace may not take a folder, with
+// the status to answer: 400 for a name that is not one segment or that
+// task-ui keeps, 409 for a folder a workspace, a project or a directory
+// under the root holds. "" for a free folder.
+func (h *Handlers) freeWorkspace(ctx context.Context, name string) (int, string) {
+	if !folder.ValidID(name) || strings.Contains(name, "/") {
+		return http.StatusBadRequest, "name the workspace's folder: letters, digits, dots, dashes and underscores, no slashes"
+	}
+	if model.IsReserved(name) {
+		return http.StatusBadRequest, internalRefused
+	}
+	if _, err := h.opts.Workspaces.GetByFolder(ctx, name); err == nil {
+		return http.StatusConflict, "a workspace named " + name + " exists already"
+	}
+	if _, err := h.opts.Projects.GetByFolder(ctx, name); err == nil {
+		return http.StatusConflict, "a project named " + name + " exists already"
+	}
+	if _, err := os.Stat(filepath.Join(h.opts.Root, name)); err == nil {
+		return http.StatusConflict, name + " exists under the root already"
+	}
+	return 0, ""
 }
 
 // getWorkspace returns the workspace of a folder.

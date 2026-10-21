@@ -157,7 +157,9 @@ func newFixture(t *testing.T) *fixture {
 		Recordings:    recordings,
 		Root:          root,
 		Integrations:  &integration.Store{Secrets: secrets},
-		Board:         &note.Board{Notes: storage.NewNoteStorage(db), Users: users, Catalogue: cat, Runner: manager, Recordings: recordings, Events: flows.Events, Agent: "claude"},
+		// A cheap scrypt keeps the exports quick under -race.
+		ExportWorkFactor: 10,
+		Board:            &note.Board{Notes: storage.NewNoteStorage(db), Users: users, Catalogue: cat, Runner: manager, Recordings: recordings, Events: flows.Events, Agent: "claude"},
 	}
 	f.opts.Hosts = &beszel.Inventory{TTL: time.Minute, Settings: func(ctx context.Context) (string, string, error) {
 		values, err := f.opts.Integrations.Values(ctx, integration.Beszel)
@@ -254,6 +256,12 @@ func (f *fixture) call(t *testing.T, user, method, path string, body any) respon
 	req, err := http.NewRequest(method, f.server.URL+path, reader)
 	assert.NoError(t, err)
 	req.Header.Set("X-User", user)
+	return f.do(t, req)
+}
+
+// do sends a request and decodes the reply.
+func (f *fixture) do(t *testing.T, req *http.Request) response {
+	t.Helper()
 	res, err := http.DefaultClient.Do(req)
 	assert.NoError(t, err)
 	defer res.Body.Close()

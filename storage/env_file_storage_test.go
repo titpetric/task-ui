@@ -82,3 +82,15 @@ func TestEnvFileStorage_Delete(t *testing.T) {
 	_, err := files.Get(ctx, *file)
 	assert.ErrorIs(t, err, storage.ErrNotFound)
 }
+
+func TestEnvFileStorage_All(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	files := storage.NewEnvFileStorage(newDB(t))
+	assert.NoError(t, files.Create(ctx, &model.EnvFile{Folder: "web", Path: ".env"}))
+	assert.NoError(t, files.Create(ctx, &model.EnvFile{Folder: "acme/api", Path: ".env"}))
+	all, err := files.All(ctx)
+	assert.NoError(t, err)
+	assert.Len(t, all, 2)
+	assert.Equal(t, "acme/api", all[0].Folder)
+}
