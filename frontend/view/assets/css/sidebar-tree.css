@@ -200,6 +200,14 @@
   &.active .ic {
     color: var(--signal);
   }
+
+  /* In a project's or a workspace's row the summary is lit: one wash
+     and one bar at the row's edge. The link adds neither, or the wash
+     doubles and a workspace's bar lands after its chevron. */
+  summary &.active {
+    background: none;
+    border-inline-start-color: transparent;
+  }
 }
 
 /* The folders of a project, one step in, named by their path below the
