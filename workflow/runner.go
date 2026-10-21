@@ -96,6 +96,9 @@ func (r *Runner) Resolve(ctx context.Context, steps []model.WorkflowStep) ([]Ste
 		if job == nil {
 			return nil, fmt.Errorf("no job %s / %s", step.Folder, step.Job)
 		}
+		if job.IsShell() {
+			return nil, fmt.Errorf("%s / %s: %w", step.Folder, step.Job, folder.ErrShellUnattended)
+		}
 		resolved = append(resolved, Step{Folder: f, Job: job})
 	}
 	return resolved, nil

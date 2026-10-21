@@ -23,6 +23,10 @@ type Request struct {
 	// root for the default one. Empty takes the workspace of the folder's
 	// first segment, or the default workspace for a folder in none.
 	Workspace string
+	// WorkspaceOf is a folder ID whose workspace the run takes when
+	// Workspace is empty: for an internal job run for a folder, such as a
+	// prompt in it. Empty takes the workspace of the run's own folder.
+	WorkspaceOf string
 	// Dir is the directory the job runs in, absolute: a directory inside
 	// the folder, which the caller holds to the folder's rules, for a job
 	// of Folder.Sub. Empty runs in the folder's own directory.

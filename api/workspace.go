@@ -2,19 +2,17 @@ package api
 
 import (
 	"context"
-	"errors"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
 
-	"github.com/titpetric/task-ui/access"
 	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/runner"
 )
 
-// promptJob is the internal job a prompt against a workspace runs.
+// promptJob is the internal job a prompt runs.
 const promptJob = "claude-prompt"
 
 // listWorkspaces returns every workspace, the default first, then in
@@ -216,8 +214,9 @@ func (h *Handlers) deleteWorkspace(w http.ResponseWriter, r *http.Request) {
 
 // promptWorkspace runs a prompt against a workspace: internal/claude-prompt
 // as the user, with TASK_UI_PROMPT and the workspace's checkout in
-// TASK_UI_WORKSPACE_DIR, which Claude Code works in. It answers with the
-// run, for the window to attach to.
+// TASK_UI_WORKSPACE_DIR, which Claude Code works in: a prompt in the
+// workspace's directory, as POST /api/prompts starts one, and answers
+// the same: the run, for the window to attach to.
 func (h *Handlers) promptWorkspace(w http.ResponseWriter, r *http.Request) {
 	if !requireAdmin(w, r) {
 		return
@@ -232,35 +231,8 @@ func (h *Handlers) promptWorkspace(w http.ResponseWriter, r *http.Request) {
 		failErr(w, err)
 		return
 	}
-	prompt := strings.TrimSpace(req.Prompt)
-	if prompt == "" {
-		fail(w, http.StatusBadRequest, "write a prompt")
-		return
-	}
-	user := access.UserFrom(r.Context())
-	f, job, problem := h.target(r, model.Internal, promptJob)
-	if problem != "" {
-		fail(w, http.StatusNotFound, problem)
-		return
-	}
-	if !canRun(user, f, job) {
-		fail(w, http.StatusForbidden, "your role may view this job, but not run it")
-		return
-	}
-	session, err := h.opts.Runner.Start(r.Context(), runner.Request{
-		Folder: f, Job: job, User: user, Cols: req.Cols, Rows: req.Rows,
-		Workspace: workspace.Dir(h.opts.Root),
-		Env:       []string{"TASK_UI_PROMPT=" + prompt},
-	})
-	if errors.Is(err, runner.ErrBusy) {
-		writeJSON(w, http.StatusConflict, map[string]any{"error": "a prompt is running already", "run": h.view(r, session.Snapshot())})
-		return
-	}
-	if err != nil {
-		failErr(w, err)
-		return
-	}
-	writeJSON(w, http.StatusCreated, h.view(r, session.Snapshot()))
+	dir := workspace.Dir(h.opts.Root)
+	h.prompt(w, r, req, dir, runner.Request{Workspace: dir})
 }
 
 // workspaceFolders returns the folder of every named workspace, none

@@ -13,7 +13,9 @@ const Namespace = model.Internal
 
 // Folder returns the internal folder: the host commands as jobs that run
 // task-ui agent in the root. The notes agent's job allows the agent's
-// user, the other two admins; only admins see the folder at all.
+// user, the other two admins; only admins see the folder at all. The
+// jobs are host commands: a run of one in a directory under the root
+// runs there, as claude-prompt does for a prompt in a folder.
 func Folder(root, agentUser string) *folder.Folder {
 	exe, err := os.Executable()
 	if err != nil {
@@ -36,7 +38,7 @@ func Folder(root, agentUser string) *folder.Folder {
 		},
 	}
 	allow := map[string][]string{"claude-note": noteAllow, "claude-prompt": {model.RoleAdmin}, "claude": {model.RoleAdmin}}
-	f := &folder.Folder{ID: Namespace, Title: Namespace, Description: source.Description, Dir: root, Sources: []*detector.Source{source}}
+	f := &folder.Folder{ID: Namespace, Title: Namespace, Description: source.Description, Dir: root, Sources: []*detector.Source{source}, HostJobs: true}
 	for _, target := range source.Targets {
 		f.Jobs = append(f.Jobs, &folder.Job{
 			Target:  *target,

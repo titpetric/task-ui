@@ -12,6 +12,7 @@
 	{{- end }}
 </div>
 {{- template "actions" $ }}
+{{- template "promptbox" $ }}
 
 {{- with $.Place }}
 {{- if .Error }}

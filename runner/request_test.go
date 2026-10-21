@@ -14,7 +14,7 @@ import (
 // A run of a folder inside a workspace names the workspace and its
 // directory; HOME stays the server's. A run outside a named one gets the
 // default workspace, _ at the root, once there is one, and a request's
-// Workspace wins over the folder's.
+// Workspace, or WorkspaceOf's, wins over the folder's.
 func TestManager_Workspace(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
@@ -53,6 +53,10 @@ func TestManager_Workspace(t *testing.T) {
 	req = f.shellJob("internal/prompt", script, false)
 	req.Workspace = f.root
 	assert.Contains(t, run(req), "ws=[_] dir=["+f.root+"]")
+	// An internal job run for a folder takes that folder's workspace.
+	req = f.shellJob("internal/prompt", script, false)
+	req.WorkspaceOf = "ws/project"
+	assert.Contains(t, run(req), "ws=[ws] dir=["+filepath.Join(f.root, "ws")+"]")
 }
 
 // A request's Dir is where the process starts, and its job's Dir what

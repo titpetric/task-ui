@@ -115,7 +115,7 @@ func (h *Handlers) defaultWorkspace(w http.ResponseWriter, r *http.Request) {
 			p.Tree = append(p.Tree, item)
 		}
 		if workspace != nil && h.claudeFor(r, p.User) {
-			p.Workspace = workspace
+			p.Prompt = &view.Prompt{API: "/api/workspaces/" + model.Default + "/prompt", Where: "the root", Open: true}
 		}
 	}
 	h.render(w, http.StatusOK, "folder", p)
@@ -157,22 +157,6 @@ func dirJob(f *folder.Folder, rest string) *folder.Folder {
 	return sub
 }
 
-// actions builds the actions bar of a place, a folder or the folder of a
-// directory inside one: the git line of its checkout, its skills and its
-// own atkins jobs.
-func (h *Handlers) actions(place *folder.Folder) *view.Actions {
-	a := &view.Actions{Place: place, Self: h.opts.ComposeProject, Skills: place.Skills()}
-	if h.opts.Git != nil && h.opts.Root != "" {
-		a.Git = h.opts.Git.Status(place.Dir, h.opts.Root)
-	}
-	for _, job := range place.Jobs {
-		if job.Kind == "atkins" {
-			a.Pipeline = append(a.Pipeline, job)
-		}
-	}
-	return a
-}
-
 // browse shows a directory inside a folder that is not a folder itself:
 // the targets of its own that run there, as Folder.Sub reads them, and
 // what it holds, to go on into.
@@ -182,7 +166,8 @@ func (h *Handlers) browse(w http.ResponseWriter, r *http.Request, f *folder.Fold
 	p.Browse = rel + "/"
 	dir, _ := f.Path(rel)
 	if sub := f.Sub(rel); sub != nil {
-		p.Actions = h.actions(sub)
+		p.Actions = h.actions(p, sub)
+		p.Prompt = h.prompt(r, p, f, rel)
 		if len(sub.Sources) > 0 {
 			p.Place = sub
 			p.Last = h.lastRuns(r, sub)
@@ -208,7 +193,8 @@ func (h *Handlers) folder(w http.ResponseWriter, r *http.Request, f *folder.Fold
 		p.Up = p.Href(parent)
 	}
 	p.Crumbs = crumbsOf(f.ID, "", p.Workspaces)
-	p.Actions = h.actions(f)
+	p.Actions = h.actions(p, f)
+	p.Prompt = h.prompt(r, p, f, "")
 	if h.opts.Git != nil && h.opts.Git.IsRepo(f.Dir) {
 		p.Checkout = h.opts.Git.Info(f.Dir)
 		if h.opts.Disk != nil {
@@ -228,11 +214,9 @@ func (h *Handlers) folder(w http.ResponseWriter, r *http.Request, f *folder.Fold
 			p.SubFolders = append(p.SubFolders, sub)
 		}
 	}
-	// A workspace takes a prompt from an admin with a Claude token.
-	if _, ok := p.Workspaces[f.ID]; ok && p.User.CanAdmin() && h.claudeFor(r, p.User) {
-		if workspace, err := h.opts.Workspaces.GetByFolder(r.Context(), f.ID); err == nil {
-			p.Workspace = workspace
-		}
+	// A workspace's page shows its prompt box open.
+	if _, ok := p.Workspaces[f.ID]; ok && p.Prompt != nil {
+		p.Prompt.Open = true
 	}
 	h.render(w, http.StatusOK, "folder", p)
 }

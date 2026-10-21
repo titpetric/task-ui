@@ -87,6 +87,10 @@ func (h *Handlers) startRun(w http.ResponseWriter, r *http.Request) {
 		fail(w, http.StatusNotFound, problem)
 		return
 	}
+	if job.IsShell() && !user.CanAdmin() {
+		fail(w, http.StatusForbidden, "an interactive shell is for admins")
+		return
+	}
 	if !canRun(user, f, job) {
 		fail(w, http.StatusForbidden, "your role may view this job, but not run it")
 		return

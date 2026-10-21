@@ -83,8 +83,9 @@ func (f *Folder) FileJob(rel string) *Job {
 // Sub returns the folder of a directory inside this one, rel to it, as
 // Load reads that directory: its own targets, each job with Dir set to
 // rel, run in that directory under this folder's ID, allow rules and
-// hours. The empty rel is the folder itself. Nil for a path Path
-// refuses or one that is not a directory.
+// hours; for a folder of HostJobs, its own jobs, run there. The empty
+// rel is the folder itself. Nil for a path Path refuses or one that is
+// not a directory.
 func (f *Folder) Sub(rel string) *Folder {
 	if f == nil {
 		return nil
@@ -103,6 +104,9 @@ func (f *Folder) Sub(rel string) *Folder {
 	if info, err := os.Stat(dir); err != nil || !info.IsDir() {
 		return nil
 	}
+	if f.HostJobs {
+		return f.hostSub(rel, dir)
+	}
 	sub := Load(f.ID, dir)
 	sub.Title = f.ID + "/" + rel
 	sub.Rel = rel
@@ -111,4 +115,17 @@ func (f *Folder) Sub(rel string) *Folder {
 		job.Dir = rel
 	}
 	return sub
+}
+
+// hostSub returns the folder of a directory for a folder of host
+// commands: the same sources and jobs, each run in that directory.
+func (f *Folder) hostSub(rel, dir string) *Folder {
+	sub := *f
+	sub.Title, sub.Dir, sub.Rel, sub.Jobs = f.ID+"/"+rel, dir, rel, make([]*Job, 0, len(f.Jobs))
+	for _, job := range f.Jobs {
+		moved := *job
+		moved.Dir = rel
+		sub.Jobs = append(sub.Jobs, &moved)
+	}
+	return &sub
 }

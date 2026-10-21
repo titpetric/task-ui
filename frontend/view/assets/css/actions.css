@@ -131,3 +131,52 @@
 a.chip-act:not(.running) {
   color: var(--text-dim);
 }
+
+/* Enter Shell: the top right of the bar, the chips on the line below. */
+.shell-enter {
+  margin-left: auto;
+}
+
+.actionsbar:has(.shell-enter) .chips {
+  flex-basis: 100%;
+}
+
+/* ------------------------------------------------------------ prompt box */
+
+/* The prompt box under the bar: a section title that folds the form
+   away, open on a workspace's page. */
+.promptbox {
+  margin-bottom: 1.6rem;
+
+  & > summary {
+    list-style: none;
+    cursor: pointer;
+
+    &::-webkit-details-marker {
+      display: none;
+    }
+
+    &:hover .section-title {
+      color: var(--signal);
+    }
+  }
+
+  & .section-title {
+    align-items: center;
+
+    & small {
+      color: var(--text-faint);
+      font-weight: 400;
+      letter-spacing: var(--ls-xs);
+      text-transform: none;
+    }
+  }
+
+  & .chev {
+    transition: transform 0.15s;
+  }
+
+  &[open] .chev {
+    transform: rotate(90deg);
+  }
+}

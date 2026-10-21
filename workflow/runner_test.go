@@ -299,6 +299,8 @@ func TestRunner_Resolve(t *testing.T) {
 	assert.ErrorContains(t, err, "no job nowhere / build")
 	_, err = f.runner.Resolve(ctx, []model.WorkflowStep{{WorkflowRef: model.NewID()}})
 	assert.ErrorContains(t, err, "no workflow")
+	_, err = f.runner.Resolve(ctx, []model.WorkflowStep{{Folder: "infra", Job: folder.ShellID}})
+	assert.ErrorIs(t, err, folder.ErrShellUnattended)
 }
 
 // A step is a job of a folder, or a workflow in its place.

@@ -296,10 +296,13 @@ window opens on the run.
 
 Claude Code works in the workspace's checkout, so it reads the
 workspace's `CLAUDE.md` and `.claude/`. The run's environment holds the
-prompt in `TASK_UI_PROMPT` and the checkout in `TASK_UI_WORKSPACE_DIR`,
-and `task-ui agent prompt` exits with an error when either is empty. The
-run lists under Runs like any other, in the internal folder only admins
-see.
+prompt in `TASK_UI_PROMPT` and the checkout in `TASK_UI_WORKSPACE_DIR`;
+`task-ui agent prompt` works in `TASK_UI_PROMPT_DIR` when a prompt names
+a directory, and exits with an error when the prompt or both directories
+are empty. The run lists under Runs like any other, in the internal
+folder only admins see. Every folder page, and every directory inside a
+folder, takes a prompt the same way: see
+[Prompt](projects.md#prompt).
 
 ```sh
 curl -s -X POST https://task.example.com/api/workspaces/malta/prompt \
@@ -308,7 +311,9 @@ curl -s -X POST https://task.example.com/api/workspaces/malta/prompt \
 ```
 
 The reply is the run, with its `id`; `GET /api/runs/{id}` and the
-recording follow it. A second prompt while one runs answers `409`.
+recording follow it. A second prompt in the workspace while one runs
+there answers `409`. The route is `POST /api/prompts` for the workspace's
+own directory.
 
 ---
 

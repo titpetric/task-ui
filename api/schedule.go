@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/titpetric/task-ui/access"
+	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/scheduler"
 	"github.com/titpetric/task-ui/storage"
@@ -46,6 +47,10 @@ func (h *Handlers) createSchedule(w http.ResponseWriter, r *http.Request) {
 	f, job, problem := h.target(r, req.Folder, req.Job)
 	if problem != "" {
 		fail(w, http.StatusNotFound, problem)
+		return
+	}
+	if job.IsShell() {
+		fail(w, http.StatusBadRequest, folder.ErrShellUnattended.Error())
 		return
 	}
 	if !canRun(user, f, job) {

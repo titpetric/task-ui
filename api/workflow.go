@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/titpetric/task-ui/access"
+	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/storage"
 	"github.com/titpetric/task-ui/workflow"
@@ -118,6 +119,9 @@ func (h *Handlers) checkSteps(r *http.Request, req WorkflowRequest) ([]model.Wor
 		f, job, problem := h.target(r, step.Folder, step.Job)
 		if problem != "" {
 			return nil, fmt.Errorf("step %d, %s / %s: %s", i+1, step.Folder, step.Job, problem)
+		}
+		if job.IsShell() {
+			return nil, fmt.Errorf("step %d, %s / %s: %w", i+1, step.Folder, step.Job, folder.ErrShellUnattended)
 		}
 		steps = append(steps, model.WorkflowStep{Folder: f.ID, Job: job.ID})
 	}

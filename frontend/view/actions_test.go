@@ -37,4 +37,5 @@ func TestActions_Empty(t *testing.T) {
 	assert.True(t, (&view.Actions{}).Empty())
 	assert.False(t, (&view.Actions{Git: &git.Status{Branch: "main"}}).Empty())
 	assert.False(t, (&view.Actions{Skills: []*folder.Skill{{ID: "git"}}}).Empty())
+	assert.False(t, (&view.Actions{Shell: (&folder.Folder{ID: "site"}).ShellJob()}).Empty())
 }

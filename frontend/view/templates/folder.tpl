@@ -15,15 +15,7 @@
 <div class="alert bad"><b>Could not read a source.</b> {{ $p.Error }}</div>
 {{- end }}
 
-{{- with $.Workspace }}
-<section class="block">
-	<h3>Prompt <small>Claude Code in {{ .Folder }}/, with its CLAUDE.md and .claude/</small></h3>
-	<form class="note-form" data-api="/api/workspaces/{{ .Folder }}/prompt" data-attach-result>
-		<textarea name="prompt" rows="3" required spellcheck="false" placeholder="list the skills this workspace carries" aria-label="The prompt"></textarea>
-		<div class="note-form-foot"><span class="faint">Runs internal/claude-prompt as you, and opens its window.</span><button class="btn btn-primary" type="submit"><svg class="ic"><use href="#i-play"/></svg>Run prompt</button></div>
-	</form>
-</section>
-{{- end }}
+{{- template "promptbox" $ }}
 
 {{- if $p.Sources }}
 {{- template "sources" (list $ $p) }}

@@ -434,10 +434,10 @@ func (m *Manager) command(ctx context.Context, session *Session) (*exec.Cmd, err
 }
 
 // workspace returns the folder and the directory of the request's
-// workspace: the one it names, or the workspace of the folder's first
-// segment under the root, or the default workspace, _ at the root, for a
-// folder in no named one. Empty for an internal folder, or with no
-// workspace known.
+// workspace: the one it names, or the workspace of the first segment
+// of WorkspaceOf, else of the folder, under the root, or the default
+// workspace, _ at the root, for a folder in no named one. Empty for an
+// internal folder, or with no workspace known.
 func (m *Manager) workspace(ctx context.Context, req Request) (string, string) {
 	if req.Workspace != "" {
 		if m.opts.Root != "" && filepath.Clean(req.Workspace) == filepath.Clean(m.opts.Root) {
@@ -445,10 +445,14 @@ func (m *Manager) workspace(ctx context.Context, req Request) (string, string) {
 		}
 		return filepath.Base(req.Workspace), req.Workspace
 	}
-	if m.opts.Workspaces == nil || model.IsInternal(req.Folder.ID) {
+	of := req.Folder.ID
+	if req.WorkspaceOf != "" {
+		of = req.WorkspaceOf
+	}
+	if m.opts.Workspaces == nil || model.IsInternal(of) {
 		return "", ""
 	}
-	top, _, _ := strings.Cut(req.Folder.ID, "/")
+	top, _, _ := strings.Cut(of, "/")
 	if top != model.Default {
 		if _, err := m.opts.Workspaces.GetByFolder(ctx, top); err == nil {
 			return top, filepath.Join(m.opts.Root, top)

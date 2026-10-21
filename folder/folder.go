@@ -54,6 +54,11 @@ type Folder struct {
 	// SkillJob resolves. Nil lists none.
 	Probe *skills.Prober `json:"-"`
 
+	// HostJobs says the jobs are host commands, not targets read from
+	// Dir: Sub of a directory keeps them, each run there, where it
+	// would read that directory's own targets.
+	HostJobs bool `json:"-"`
+
 	// Error holds the parse errors of the sources, so a folder with a
 	// broken file still shows in the listing and says what is wrong.
 	Error string `json:"error,omitempty"`
@@ -61,11 +66,15 @@ type Folder struct {
 
 // Job returns the job by ID, name or alias, or nil. The ID is what URLs
 // and history use; the name is the target as its file spells it. An ID
-// that starts with ./ is the job of a file that runs: see FileJob; one
-// that starts with @ the job of an atkins skill: see SkillJob.
+// that starts with ./ is the job of a file that runs: see FileJob; @shell
+// is the shell job, see ShellJob; any other that starts with @ the job of
+// an atkins skill: see SkillJob.
 func (f *Folder) Job(id string) *Job {
 	if f == nil {
 		return nil
+	}
+	if id == ShellID {
+		return f.ShellJob()
 	}
 	if rel, ok := strings.CutPrefix(id, FilePrefix); ok {
 		return f.FileJob(rel)
