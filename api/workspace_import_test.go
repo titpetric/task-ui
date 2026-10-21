@@ -15,6 +15,7 @@ import (
 	"github.com/titpetric/task-ui/api"
 	"github.com/titpetric/task-ui/internal/assert"
 	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/storage"
 	"github.com/titpetric/task-ui/workspace"
 )
 
@@ -104,10 +105,15 @@ func TestWorkspaceImport(t *testing.T) {
 	assert.Equal(t, http.StatusCreated, same.Status, string(same.Raw))
 	assert.Equal(t, "acme", same.str("workspace", "folder"))
 
-	// A removed workspace leaves its env files; importing it again
-	// takes them over.
+	// A removed workspace takes its env files with it; importing it
+	// again brings them back.
 	removed := to.call(t, asAdmin, http.MethodDelete, "/workspaces/acme2", nil)
 	assert.Equal(t, http.StatusNoContent, removed.Status, string(removed.Raw))
+	_, err = to.opts.Env.Managed.Get(ctx, model.EnvFile{Folder: "acme2/api", Path: ".env"})
+	assert.ErrorIs(t, err, storage.ErrNotFound)
+	kept, err := to.opts.Env.Managed.Get(ctx, model.EnvFile{Folder: "acme/api", Path: ".env"})
+	assert.NoError(t, err, "another workspace keeps its env files")
+	assert.Equal(t, "MODE=prod\n", kept.Content)
 	again := to.importBundle(t, asAdmin, bundle, passphrase, "acme2")
 	assert.Equal(t, http.StatusCreated, again.Status, string(again.Raw))
 	secrets, err = to.opts.Secrets.For(ctx, "acme2/api")

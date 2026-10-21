@@ -57,7 +57,8 @@ the sidebar's order.
   the sidebar and on the page. An added workspace goes last. The default
   workspace lists first and keeps its place.
 - The remove button deletes the checkout, every project inside it and
-  their rows, and its confirm names those projects first. The default
+  their rows, the env files task-ui keeps for them, and its confirm
+  names those projects first. The default
   workspace has none: `DELETE /api/workspaces/_` answers `409`.
 
 ## Clone a project into one

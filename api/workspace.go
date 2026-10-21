@@ -191,6 +191,10 @@ func (h *Handlers) deleteWorkspace(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+	if err := h.forgetEnvFiles(ctx, workspace.Folder); err != nil {
+		failErr(w, err)
+		return
+	}
 	if err := h.opts.Workspaces.Delete(ctx, workspace.ID); err != nil {
 		failErr(w, err)
 		return
@@ -267,4 +271,25 @@ func (h *Handlers) workspaceFolders(ctx context.Context) []string {
 	}
 	folders, _ := h.opts.Workspaces.Folders(ctx)
 	return folders
+}
+
+// forgetEnvFiles deletes the managed env files of a named workspace's
+// folders: the workspace's own and its projects'.
+func (h *Handlers) forgetEnvFiles(ctx context.Context, name string) error {
+	if h.opts.Env == nil {
+		return nil
+	}
+	files, err := h.opts.Env.Managed.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, file := range files {
+		if top, _, _ := strings.Cut(file.Folder, "/"); top != name {
+			continue
+		}
+		if err := h.opts.Env.Managed.Delete(ctx, file.ID); err != nil {
+			return err
+		}
+	}
+	return nil
 }
