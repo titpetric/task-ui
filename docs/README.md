@@ -57,8 +57,8 @@ and red for failed or killed, and pulsing amber while it runs.
 | [Artifacts](guide/artifacts.md)      | Artifacts                              | Files the runs leave behind                                 |
 | [Scheduled](guide/scheduled.md)      | Scheduled                              | Jobs on a cron expression                                   |
 | [Notes](guide/notes.md)              | Notes                                  | Messages, replies, and instructions to the agent            |
-| [Projects and jobs](guide/projects.md) | The tree of projects, folders, jobs  | Folders, the conventions, files, a job's page, moving a project, pulls, keys, hours |
-| [Workspaces](guide/workspaces.md)    | A workspace's row, its projects under it | Shared tooling, cloning into one, keys, secrets, export and import, what it keeps apart, the prompt |
+| [Projects and jobs](guide/projects.md) | The tree of projects, folders, jobs  | Folders, the conventions, files, the actions bar, Enter Shell, the prompt, a job's page, moving a project, pulls, keys, hours |
+| [Workspaces](guide/workspaces.md)    | A workspace's row, its projects under it | Shared tooling, skills, cloning into one, keys, secrets, export and import, what it keeps apart, the prompt |
 | [Recents](guide/recents.md)          | Recents                                | The latest runs, by anyone                                  |
 | [Settings](guide/settings.md)        | The user menu, Settings                | Projects, workspaces, users, secrets, SSH keys, integrations, env files |
 | [MCP](guide/mcp.md)                  |                                        | Tokens, and the tools an agent runs jobs with               |

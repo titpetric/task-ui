@@ -12,7 +12,10 @@ Projects live in workspaces: a checkout of shared tooling with the
 projects cloned inside it, its own secrets and SSH keys, and an export
 that moves it, keys and all, to another instance. A project's Files
 panel browses its checkout like a file manager: a file opens in a
-preview window, and a file that runs gets a Run button.
+preview window, and a file that runs gets a Run button. Every folder
+and directory has an actions bar: the git state of its checkout, a chip
+per atkins skill that applies there, and, for an admin, a shell and a
+Claude Code prompt in that directory.
 
 ![The dashboard: every terminal in progress, as it looks right now](https://raw.githubusercontent.com/titpetric/task-ui/main/docs/assets/task-ui.png)
 

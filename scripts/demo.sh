@@ -226,8 +226,9 @@ done
 
 # The workspace comes last, so the shots above keep a sidebar without
 # one: the acme checkout, its two projects cloned inside it, and a Claude
-# token for the admin, which the Prompt block on the workspace's page
-# needs. The demo shows the form and runs no prompt.
+# token for the admin, which the Prompt box needs: open on the
+# workspace's page, folded on every other. The demo shows the box and
+# runs no prompt.
 api POST /workspaces -d "{\"url\":\"file://$work/repos/acme.git\",\"folder\":\"acme\",\"title\":\"Acme\",\"description\":\"The tooling every Acme project shares\"}"
 api POST /projects -d "{\"url\":\"file://$work/repos/acme-api.git\",\"id\":\"api\",\"workspace\":\"acme\"}"
 api POST /projects -d "{\"url\":\"file://$work/repos/acme-web.git\",\"id\":\"web\",\"workspace\":\"acme\"}"
@@ -257,9 +258,12 @@ shot workspace-prompt-dark /f/acme dark
 shot files-dark /f/acme/api dark
 shot file-dark "/f/acme/api#file=README.md" dark
 # The actions bar of a directory inside the api project: the git line of
-# its checkout, and the git, compose and dockerfile skills of acme's
-# .atkins/skills that apply there.
+# its checkout, the git, compose and dockerfile skills of acme's
+# .atkins/skills that apply there, and Enter Shell, which the admin gets.
+# Then the field of compose: custom... with a line typed in, and what it
+# runs as argv under it.
 shot actions-dark /f/acme/api/deploy dark 1440x700
+shot args-dark "/f/acme/api/deploy#args=@compose:custom;ps%20-a%20%27;%20id%27" dark 1440x700
 
 # A second workspace, labs, with no encryption key and no SSH key, so the
 # keys and secrets pages show both states: it stores no secrets until an

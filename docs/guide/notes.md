@@ -55,7 +55,7 @@ jobs, the agent's included. No checkout or project takes the name.
 | Job             | Runs                         | What it does                                                                                     |
 |-----------------|------------------------------|--------------------------------------------------------------------------------------------------|
 | `claude-note`   | `task-ui agent note`         | Claude Code on the thread in `TASK_UI_NOTE`, in the root; its answer goes to `TASK_UI_NOTE_REPLY` |
-| `claude-prompt` | `task-ui agent prompt`       | Claude Code on `TASK_UI_PROMPT`, in the workspace checkout `TASK_UI_WORKSPACE_DIR`                |
+| `claude-prompt` | `task-ui agent prompt`       | Claude Code on `TASK_UI_PROMPT`, in `TASK_UI_PROMPT_DIR`, or else the workspace checkout `TASK_UI_WORKSPACE_DIR` |
 | `claude`        | `task-ui agent shell [args]` | Claude Code in a terminal, in the root, for an admin at the keyboard                             |
 
 Each signs in with `CLAUDE_CODE_OAUTH_TOKEN` from the Claude Code

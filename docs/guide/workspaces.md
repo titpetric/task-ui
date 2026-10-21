@@ -28,12 +28,80 @@ find the workspace's files by looking in the folders above the project:
 - **Claude Code** reads the `CLAUDE.md` and `.claude/` of the folders
   above its working directory, so a run in `malta/dockerfiles` reads the
   workspace's as well as the project's own.
-- **atkins** looks for its configuration from the working directory up,
-  and stops at the first folder with an `atkins.yml`, an `.atkins.yml` or
-  an `.atkins/` folder. A project without one uses the workspace's
-  pipeline and its `.atkins/skills`. A project with its own `atkins.yml`
-  stops there: atkins reads the skills in the project's `.atkins/skills`
-  and in `$HOME/.atkins/skills`, and not the workspace's.
+- **atkins** looks for its pipeline from the working directory up, and
+  stops at the first folder with an `atkins.yml`, an `.atkins.yml` or an
+  `.atkins/` folder: a project without one runs the workspace's pipeline.
+  Its skills come from further: the `.atkins/skills` of the working
+  directory and of every folder above it, nearest first, then
+  `$HOME/.atkins/skills`. A project with a pipeline of its own still gets
+  the workspace's skills, and a project skill of the same name shadows
+  the workspace's.
+
+## Skills
+
+The skills of a workspace's `.atkins/skills/` put chips on the [actions
+bar](projects.md#actions) of every project and directory inside it:
+`[git: pull · rebase]` on each checkout, `[compose: down · up]` beside
+a compose file. A skill is an atkins
+pipeline file, `<name>.yml`, its jobs named `<name>:<job>`, and its
+`when:` decides where it applies:
+
+- `files:` lists the files that turn it on, any one of them, looked for
+  in the directory and then in each folder above it. A name with `*`,
+  `?` or `[...]` is a glob. A skill without `when:` applies everywhere.
+- `here: true` looks in the directory alone, so a compose skill shows on
+  the directory holding `compose.yml` and not on the folders under it.
+- `contains:` is a regular expression the matched file must match, such
+  as a compose file with a `build:` key.
+- A job takes a `when:` of its own, with the same keys. Where it fails,
+  the job has no chip and a run of it fails, and the rest of the skill
+  stays.
+- `args: true` on a job takes arguments after `--`, which atkins appends
+  to the job's `exec:` steps as argv, with no shell between. Its chip
+  reads `custom...` and opens a field for them (see
+  [Runs](runs.md#what-a-job-gets)).
+
+A skill job runs in the directory of the file its `when:` matched, so
+`git: pull` runs at the top of the checkout and `compose: up` beside the
+compose file. One without `when:` runs in the folder that holds its
+`.atkins/`.
+
+`<workspace>/.atkins/skills/compose.yml`:
+
+```yaml
+name: Docker Compose
+when:
+  files: [compose.yml, compose.yaml]
+  here: true
+
+jobs:
+  up:
+    desc: Start the services
+    cmd: docker compose up -d --remove-orphans
+  down:
+    desc: Stop and remove the services
+    cmd: docker compose down
+  build:
+    desc: Build the service images
+    when:
+      files: [compose.yml, compose.yaml]
+      here: true
+      contains: '(?m)^\s+build:'
+    cmd: docker compose build
+  custom:
+    desc: Run docker compose with arguments
+    args: true
+    steps:
+      - exec: [docker, compose]
+```
+
+In a directory whose `compose.yml` builds an image, the chip reads
+`[compose: build · custom... · down · up]`; beside one that only pulls
+images, the chip leaves `build` out. `atkins -l` in a directory lists what applies
+there, as the bar does. The atkins [skills
+guide](https://github.com/titpetric/atkins/blob/main/docs/content/usage/skills.md)
+covers the rest: aliases, `help:`, the `-l --json` fields task-ui reads,
+vendoring.
 
 ## Add, edit and delete
 
@@ -287,22 +355,22 @@ per trust boundary.
 
 ## A prompt against a workspace
 
-A workspace's folder page, `/f/malta`, carries a **Prompt** block for an
-admin once the [Claude Code integration](settings.md#integrations) has a
-token for them. The prompt runs `internal/claude-prompt` as you, and its
-window opens on the run.
+A workspace's folder page, `/f/malta`, carries the **Prompt** box open
+for an admin once the [Claude Code integration](settings.md#integrations)
+has a token for them; every other folder page, and every directory inside
+a folder, carries it folded (see [Prompt](projects.md#prompt)). The
+prompt runs `internal/claude-prompt` as you, and its window opens on the
+run.
 
-![The Prompt block on a workspace's page](../assets/workspace-prompt-dark.png)
+![The Prompt box on a workspace's page](../assets/workspace-prompt-dark.png)
 
 Claude Code works in the workspace's checkout, so it reads the
 workspace's `CLAUDE.md` and `.claude/`. The run's environment holds the
-prompt in `TASK_UI_PROMPT` and the checkout in `TASK_UI_WORKSPACE_DIR`;
-`task-ui agent prompt` works in `TASK_UI_PROMPT_DIR` when a prompt names
-a directory, and exits with an error when the prompt or both directories
-are empty. The run lists under Runs like any other, in the internal
-folder only admins see. Every folder page, and every directory inside a
-folder, takes a prompt the same way: see
-[Prompt](projects.md#prompt).
+prompt in `TASK_UI_PROMPT` and the checkout in `TASK_UI_WORKSPACE_DIR`.
+`task-ui agent prompt` works in `TASK_UI_PROMPT_DIR`, which a prompt of a
+folder or a directory sets, or else in `TASK_UI_WORKSPACE_DIR`, and exits
+with an error when the prompt or both directories are empty. The run
+lists under Runs like any other, in the internal folder only admins see.
 
 ```sh
 curl -s -X POST https://task.example.com/api/workspaces/malta/prompt \
@@ -311,9 +379,10 @@ curl -s -X POST https://task.example.com/api/workspaces/malta/prompt \
 ```
 
 The reply is the run, with its `id`; `GET /api/runs/{id}` and the
-recording follow it. A second prompt in the workspace while one runs
-there answers `409`. The route is `POST /api/prompts` for the workspace's
-own directory.
+recording follow it. The run starts in the workspace's checkout and
+holds that directory as `POST /api/prompts` holds one: a second prompt
+there while one runs answers `409`, and a prompt in a project of the
+workspace runs beside it.
 
 ---
 
