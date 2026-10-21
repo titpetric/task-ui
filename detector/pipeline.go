@@ -103,6 +103,9 @@ func (d pipelineDetector) detectFile(dir, name string) *Source {
 			DependsOn:   job.DependsOn,
 			EnvFiles:    job.Env.Include,
 		}
+		if j.TakesArgs {
+			j.Exec = job.exec()
+		}
 		for _, dep := range job.Deps {
 			if dep.Task != "" {
 				j.DependsOn = append(j.DependsOn, dep.Task)

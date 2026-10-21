@@ -570,9 +570,12 @@
 {{- end }}
 {{- end }}
 
+{{- /* runButtons are Run, and Run force for a job with hours. Run of a job
+     that takes args opens a field for them under its card or head first,
+     with the command they follow. */}}
 {{ define "runButtons" }}
 {{- $p := index . 0 }}{{ $r := index . 1 -}}
-<button type="button" class="btn btn-primary btn-sm" data-run data-folder="{{ $p.ID }}"{{ with $r.Dir }} data-dir="{{ . }}"{{ end }} data-job="{{ $r.ID }}" data-title="{{ $p.ID }}{{ with $r.Dir }}/{{ . }}{{ end }} / {{ $r.Name }}"><svg class="ic"><use href="#i-play"/></svg>Run</button>
+<button type="button" class="btn btn-primary btn-sm" data-run data-folder="{{ $p.ID }}"{{ with $r.Dir }} data-dir="{{ . }}"{{ end }} data-job="{{ $r.ID }}" data-title="{{ $p.ID }}{{ with $r.Dir }}/{{ . }}{{ end }} / {{ $r.Name }}"{{ with $r.ArgsCommand }} data-args="{{ . }}" title="Run with arguments after {{ . }}"{{ end }}><svg class="ic"><use href="#i-play"/></svg>Run{{ if $r.TakesArgs }}...{{ end }}</button>
 {{- /* Run force stands beside Run only where a plain run can be refused: a job with hours. A run that failed is forced from its window. */}}
 {{- if $p.HoursOf $r }}
 <button type="button" class="btn btn-danger btn-sm" data-run data-force data-folder="{{ $p.ID }}"{{ with $r.Dir }} data-dir="{{ . }}"{{ end }} data-job="{{ $r.ID }}" data-title="{{ $p.ID }}{{ with $r.Dir }}/{{ . }}{{ end }} / {{ $r.Name }}" title="Run out of hours, with a reason">Run force</button>

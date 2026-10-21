@@ -134,9 +134,19 @@ splits words, with quotes and backslashes, and nothing in it expands:
 `"; id"` reaches the job as one argument, `; id`. Every other job
 refuses arguments.
 
+On a page, **Run...** of such a job, on its card, its page or a chip such
+as `compose: custom...`, opens a field under it first. The field starts
+with the command the arguments follow: the `exec:` step of the job, such
+as `docker compose`, or the job's own argv and `--`. Below it, task-ui
+shows the whole command as each word reaches it, `docker compose ps -a '; id'`,
+or says a quote does not close; **Run** sends the line, Esc or **Cancel**
+closes the field. The job's `exec` in `GET /api/folders` is the same
+command.
+
 Before the job, a folder in a git checkout pulls it, in the run's own
 terminal; when the pull fails, the run fails with it. A folder in a
-workspace pulls the workspace's checkout first, then its own.
+workspace pulls the workspace's checkout first, then its own. A shell,
+`@shell`, pulls nothing: it opens on the checkout as it stands.
 
 ---
 

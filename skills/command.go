@@ -9,7 +9,10 @@ type Command struct {
 	Cmd         string `json:"cmd"`
 	Interactive bool   `json:"interactive"`
 	// Args says the job takes arguments, after --.
-	Args   bool  `json:"args"`
-	Active bool  `json:"active"`
-	When   *When `json:"when,omitempty"`
+	Args bool `json:"args"`
+	// Exec is the argv of the first exec: step of a job that takes
+	// args: the command the arguments follow.
+	Exec   []string `json:"exec,omitempty"`
+	Active bool     `json:"active"`
+	When   *When    `json:"when,omitempty"`
 }

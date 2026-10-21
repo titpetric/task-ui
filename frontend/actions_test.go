@@ -57,6 +57,11 @@ func TestFolder_Actions(t *testing.T) {
 	assert.Contains(t, bar, `data-folder="infra" data-job="@git:status" data-title="infra / status"`, "git runs in the checkout")
 	assert.Contains(t, bar, `data-folder="infra" data-dir="app" data-job="@compose:build" data-title="infra/app / build"`)
 	assert.Contains(t, bar, `data-dir="app" data-job="@compose:up"`)
+	// compose custom takes args: its Run opens a field naming what they
+	// follow first.
+	assert.Contains(t, bar, `data-job="@compose:custom" data-title="infra/app / custom" data-args="docker compose" title=`)
+	assert.Contains(t, bar, `>custom...</button>`)
+	assert.NotContains(t, bar, `data-job="@compose:up" data-title="infra/app / up" data-args`)
 	assert.Contains(t, bar, `when compose.yml here, matched compose.yml; runs in app/`)
 	assert.Contains(t, bar, `<span class="chip-name">atkins</span>`)
 	assert.Contains(t, f.page(t, asOps, "/f/_/infra/app"), "Its jobs run in infra/app/")

@@ -89,6 +89,7 @@ func (f *Folder) skillJob(skill *Skill, section skills.Section, cmd skills.Comma
 			Description: cmd.Desc,
 			Interactive: cmd.Interactive,
 			TakesArgs:   cmd.Args,
+			Exec:        cmd.Exec,
 			Steps:       []string{cmd.Cmd},
 		},
 		Folder:  f.ID,

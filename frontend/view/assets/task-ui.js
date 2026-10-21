@@ -2213,6 +2213,12 @@
       title: btn.dataset.title || (btn.dataset.folder + " / " + btn.dataset.job),
       force: btn.hasAttribute("data-force"),
     };
+    // A job that takes args opens a field for them first, under its
+    // card or chips.
+    if (btn.hasAttribute("data-args") && !spec.force) {
+      argsLine(btn, spec);
+      return;
+    }
     // A Run that stops task-ui itself, compose up or down of its own
     // project, asks first.
     if (btn.dataset.confirm) {
@@ -2221,6 +2227,106 @@
     }
     start(spec);
   });
+
+  // ------------------------------------------------------------ args line
+
+  // splitArgs reads a line as the server's argv.Split does, to show what
+  // runs: blanks separate, quotes and backslashes group, nothing expands.
+  // It returns the words, or null for a quote that does not close. The
+  // server splits the line again and is the one that counts.
+  function splitArgs(line) {
+    var args = [], cur = "", started = false, quote = "", escaped = false;
+    for (var i = 0; i < line.length; i++) {
+      var c = line.charAt(i);
+      if (escaped) {
+        if (quote === '"' && c !== '"' && c !== "\\") cur += "\\";
+        cur += c;
+        escaped = false;
+      } else if (quote === "'") {
+        if (c === "'") quote = ""; else cur += c;
+      } else if (c === "\\") {
+        escaped = started = true;
+      } else if (quote === '"') {
+        if (c === '"') quote = ""; else cur += c;
+      } else if (c === "'" || c === '"') {
+        quote = c;
+        started = true;
+      } else if (c === " " || c === "\t") {
+        if (started) { args.push(cur); cur = ""; started = false; }
+      } else {
+        cur += c;
+        started = true;
+      }
+    }
+    if (quote || escaped) return null;
+    if (started) args.push(cur);
+    return args;
+  }
+
+  // shownArg quotes a word that a shell would read otherwise, so the
+  // preview reads as the argv it is.
+  function shownArg(word) {
+    if (/^[A-Za-z0-9_@%+=:,.\/-]+$/.test(word)) return word;
+    return "'" + word.replace(/'/g, "'\\''") + "'";
+  }
+
+  // argsLine opens the field for the arguments of a job under its chips,
+  // its card's head or the page's head: what the job runs, the words
+  // typed after it as they reach it, and Run.
+  function argsLine(btn, spec) {
+    var anchor = btn.closest(".chips, .jobcard > header, .page-head") || btn.parentNode;
+    var open = document.querySelector("form.argsline");
+    if (open) {
+      var same = open.dataset.job === spec.job && open.dataset.dir === spec.dir && open.dataset.folder === spec.folder;
+      open.remove();
+      if (same) return;
+    }
+    var cmd = btn.dataset.args;
+    var form = document.createElement("form");
+    form.className = "argsline";
+    form.dataset.folder = spec.folder;
+    form.dataset.dir = spec.dir;
+    form.dataset.job = spec.job;
+    form.innerHTML =
+      '<div class="argsline-field"><code class="argsline-cmd"></code>' +
+      '<input type="text" name="args" spellcheck="false" autocomplete="off" placeholder="arguments"></div>' +
+      '<div class="argsline-foot"><span class="argsline-preview"></span>' +
+      '<button type="button" class="btn btn-sm" data-args-cancel>Cancel</button>' +
+      '<button type="submit" class="btn btn-primary btn-sm"><svg class="ic"><use href="#i-play"/></svg>Run</button></div>';
+    form.querySelector(".argsline-cmd").textContent = cmd;
+    var input = form.querySelector("input");
+    input.setAttribute("aria-label", "Arguments for " + spec.title);
+    var preview = form.querySelector(".argsline-preview");
+    var show = function () {
+      var words = splitArgs(input.value);
+      preview.classList.toggle("bad", words === null);
+      if (words === null) {
+        preview.textContent = "A quote does not close.";
+        return;
+      }
+      preview.innerHTML = "Runs <code></code>, each word one argument: no variable, glob or pipe expands.";
+      preview.querySelector("code").textContent = [cmd].concat(words.map(shownArg)).join(" ");
+    };
+    input.addEventListener("input", show);
+    input.addEventListener("keydown", function (event) {
+      if (event.key === "Escape") form.remove();
+    });
+    form.querySelector("[data-args-cancel]").addEventListener("click", function () { form.remove(); });
+    form.addEventListener("submit", function (event) {
+      event.preventDefault();
+      if (splitArgs(input.value) === null) return;
+      var run = Object.assign({}, spec, { args: input.value.trim() });
+      form.remove();
+      if (btn.dataset.confirm) {
+        confirm(btn.dataset.confirm, btn.dataset.confirmOk || "Run").then(function (ok) { if (ok) start(run); });
+        return;
+      }
+      start(run);
+    });
+    anchor.insertAdjacentElement("afterend", form);
+    show();
+    input.focus();
+  }
 
   // ------------------------------------------------------------- output
 

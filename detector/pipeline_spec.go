@@ -123,6 +123,17 @@ func (j *jobSpec) firstLabel() string {
 	return ""
 }
 
+// exec returns the argv of the job's first exec: step, the command the
+// arguments of a job that takes them follow; nil without one.
+func (j *jobSpec) exec() []string {
+	for _, step := range j.steps() {
+		if len(step.Exec) > 0 {
+			return step.Exec
+		}
+	}
+	return nil
+}
+
 func (j *jobSpec) steps() []stepSpec {
 	if len(j.Steps) > 0 {
 		return j.Steps
@@ -138,6 +149,7 @@ type stepSpec struct {
 	Run      string   `yaml:"run"`
 	Cmd      string   `yaml:"cmd"`
 	Cmds     []string `yaml:"cmds"`
+	Exec     []string `yaml:"exec"`
 	Task     string   `yaml:"task"`
 	Defer    string   `yaml:"defer"`
 	Deferred bool     `yaml:"deferred"`
@@ -186,6 +198,8 @@ func (s *stepSpec) Label() string {
 		label = "cmd: " + strings.TrimSpace(s.Cmd)
 	case len(s.Cmds) > 0:
 		label = fmt.Sprintf("cmds: <%d commands>", len(s.Cmds))
+	case len(s.Exec) > 0:
+		label = "exec: " + strings.Join(s.Exec, " ")
 	}
 	if s.Deferred && label != "" {
 		label = "defer: " + strings.TrimPrefix(label, "run: ")
