@@ -3,7 +3,7 @@
      chip per atkins skill that applies there, and a chip of the place's own
      atkins jobs. Every action is a Run of the place's folder, run where the
      job runs; a running one attaches, one the user may not run links to
-     its page. */}}
+     its page. Enter Shell, an admin's alone, sits at the top right. */}}
 {{- define "actions" }}
 {{- with .Actions }}{{ if not .Empty }}
 {{- $a := . }}
@@ -17,6 +17,14 @@
 		{{- if and .Upstream (not .Ahead) (not .Behind) (not .Dirty) }}<span class="clean">up to date</span>{{ end }}
 		<span class="where">· {{ if .Checkout }}{{ .Checkout }}{{ else }}the root{{ end }}</span>
 	</div>
+	{{- end }}
+	{{- with .Shell }}
+	{{- $where := print $a.Place.ID (or (and .Dir (print "/" .Dir)) "") }}
+	{{- with $.RunningRun .Key }}
+	<a class="btn btn-sm shell-enter running" href="/runs/{{ .ID }}" data-attach="{{ .ID }}" title="Attach to the shell in {{ $where }}/, running"><i class="dot running"></i>Shell</a>
+	{{- else }}
+	<button type="button" class="btn btn-sm shell-enter" data-run data-folder="{{ $a.Place.ID }}"{{ with .Dir }} data-dir="{{ . }}"{{ end }} data-job="{{ .ID }}" data-title="{{ $where }} / shell" title="bash -l in {{ $where }}/, as task-ui runs its jobs"><svg class="ic"><use href="#i-terminal"/></svg>Enter Shell</button>
+	{{- end }}
 	{{- end }}
 	{{- if or .Skills .Pipeline }}
 	<div class="chips">

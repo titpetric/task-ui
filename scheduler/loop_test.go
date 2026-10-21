@@ -204,11 +204,12 @@ func TestLoop_TickGone(t *testing.T) {
 	ctx := context.Background()
 	missing := f.schedule(t, "nothing", "@hourly")
 	bad := f.schedule(t, "plan", "0 0 31 2 *")
+	shell := f.schedule(t, "@shell", "@hourly")
 
 	started, err := f.loop.Tick(ctx)
 	assert.Error(t, err, "the schedule that never fires is reported")
 	assert.Equal(t, 0, started)
-	for _, id := range []string{missing.ID, bad.ID} {
+	for _, id := range []string{missing.ID, bad.ID, shell.ID} {
 		got, err := f.schedules.Get(ctx, id)
 		assert.NoError(t, err)
 		assert.False(t, got.IsEnabled(), "disabled rather than asked again")

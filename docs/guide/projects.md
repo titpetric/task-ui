@@ -200,6 +200,42 @@ from `TASK_UI_COMPOSE_PROJECT`, and a compose file's project is its
 The API answers the bar with `GET /api/folders/{id}/actions?dir=`, for
 whoever sees the folder.
 
+### Enter Shell
+
+An admin gets **Enter Shell** at the top right of the bar: `bash -l` in
+the folder's directory, or in the directory the page browses, with the
+run's window attached and the keyboard yours: the job `@shell` of the
+folder, run with the environment, secrets and keys of any job there,
+and its history keeps under that directory. Close the window and the
+shell keeps running; **Attach** in its place opens it again, `exit` ends
+it.
+
+Only an admin starts a shell: `POST /api/runs` with `@shell` answers
+`403` to anyone else, whatever the folder's allow rules say, and the
+button shows to admins alone. No schedule or workflow step takes
+`@shell`: there is no one at its keyboard.
+
+### Prompt
+
+An admin with a token in the [Claude Code integration](settings.md#integrations)
+gets a **Prompt** box under the bar of every folder page and every
+directory inside a folder, folded until clicked. The prompt runs
+`internal/claude-prompt` as you, with Claude Code in that directory, so it
+reads the `CLAUDE.md` and `.claude/` there and above, and its window opens
+on the run.
+
+```sh
+curl -s -X POST https://task.example.com/api/prompts \
+  -H "Authorization: Bearer $TOKEN" \
+  -d '{"folder": "malta", "dir": "dockerfiles/blog", "prompt": "what does this image build"}'
+```
+
+The run is `internal/claude-prompt` of that directory under the root,
+such as `internal/malta/dockerfiles/blog`, and the directory in
+`TASK_UI_PROMPT_DIR`. One prompt runs per directory: a second there
+answers `409` with the run in the way, and prompts in two directories
+run at once.
+
 ## A job's page
 
 ![A job: what it runs, its history and schedules](../assets/job-dark.png)

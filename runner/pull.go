@@ -22,8 +22,10 @@ func (m *Manager) checkout(session *Session) string {
 // folder's when that differs; a folder inside a checkout pulls the
 // checkout. Runs of one checkout pull one at a time: two pulls at once
 // fight over the index lock, and a workflow starts them one after another.
+// A shell pulls nothing: it opens on the checkout as it stands, the place
+// to mend one a pull fails in.
 func (m *Manager) pull(ctx context.Context, session *Session) error {
-	if m.opts.Git == nil {
+	if m.opts.Git == nil || session.Job.IsShell() {
 		return nil
 	}
 	ws := session.workspace

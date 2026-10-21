@@ -41,6 +41,7 @@ func TestSchedule_CreateRefused(t *testing.T) {
 		{"not allowed", asOps, api.ScheduleRequest{Folder: "private", Job: "deploy", Expression: "@daily"}, http.StatusForbidden},
 		{"no folder", asOps, api.ScheduleRequest{Folder: "nowhere", Job: "plan", Expression: "@daily"}, http.StatusNotFound},
 		{"no job", asOps, api.ScheduleRequest{Folder: "infra", Job: "nothing", Expression: "@daily"}, http.StatusNotFound},
+		{"a shell", asAdmin, api.ScheduleRequest{Folder: "infra", Job: "@shell", Expression: "@daily"}, http.StatusBadRequest},
 		{"bad expression", asOps, api.ScheduleRequest{Folder: "infra", Job: "plan", Expression: "every day"}, http.StatusBadRequest},
 	}
 	for _, c := range cases {

@@ -64,6 +64,25 @@ func TestManager_PullOneAtATime(t *testing.T) {
 	}
 }
 
+// A shell opens on the checkout as it stands: no pull, even one that
+// would fail.
+func TestManager_ShellNoPull(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	dir := checkout(t)
+	gitRun(t, dir, "remote", "set-url", "origin", filepath.Join(dir, "gone"))
+	fold := &folder.Folder{ID: "repo", Dir: dir}
+	job := fold.ShellJob()
+	job.Command = []string{"sh", "-c", "cat README"}
+
+	session, err := f.manager.Start(context.Background(), runner.Request{Folder: fold, Job: job, User: &model.User{ID: "u1", Name: "admin", Role: model.RoleAdmin}, Cols: 80, Rows: 24})
+	assert.NoError(t, err)
+	out, status := collect(t, session.Attach(false))
+	assert.Equal(t, model.StateOK, status.State, out)
+	assert.NotContains(t, out, "git pull")
+	assert.Contains(t, out, "hello")
+}
+
 // A folder that is not a checkout is not pulled.
 func TestManager_NoPull(t *testing.T) {
 	t.Parallel()

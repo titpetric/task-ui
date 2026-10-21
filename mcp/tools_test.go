@@ -41,6 +41,13 @@ func TestTools_Jobs(t *testing.T) {
 
 	_, failed = f.tool(t, "admin", "get_run", map[string]any{"id": "nothing"})
 	assert.True(t, failed)
+
+	// An interactive shell is an admin's alone.
+	for _, user := range []string{"ops", "guest"} {
+		text, failed = f.tool(t, user, "run_job", map[string]any{"folder": "site", "job": "@shell"})
+		assert.True(t, failed, user)
+		assert.Contains(t, text, "(403)", user)
+	}
 }
 
 // The tools list a workflow, run it by name, wait for it and list its runs.

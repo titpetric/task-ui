@@ -17,8 +17,12 @@ func (h *Handlers) visibleFolder(user *model.User, id string) *folder.Folder {
 	return f
 }
 
-// canRun reports whether the user may run a job of a folder.
+// canRun reports whether the user may run a job of a folder. A shell
+// job is an admin's alone, whatever the folder allows.
 func canRun(user *model.User, f *folder.Folder, job *folder.Job) bool {
+	if job.IsShell() && !user.CanAdmin() {
+		return false
+	}
 	return f != nil && job != nil && user.CanRun(f.ID, f.Allow, job.Allow)
 }
 

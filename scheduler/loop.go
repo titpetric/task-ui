@@ -117,13 +117,18 @@ func (l *Loop) fire(ctx context.Context, schedule *model.Schedule, now time.Time
 	return err == nil, err
 }
 
-// target resolves the folder and job a schedule names.
+// target resolves the folder and job a schedule names. A shell job is
+// none: it runs with an admin at the keyboard, never on a schedule.
 func (l *Loop) target(schedule *model.Schedule) (*folder.Folder, *folder.Job) {
 	f := l.Catalogue.Find(schedule.Folder)
 	if f == nil {
 		return nil, nil
 	}
-	return f, f.Job(schedule.Job)
+	job := f.Job(schedule.Job)
+	if job.IsShell() {
+		return f, nil
+	}
+	return f, job
 }
 
 // user resolves whom to attribute the run to: the schedule's user when

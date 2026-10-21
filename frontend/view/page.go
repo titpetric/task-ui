@@ -58,7 +58,10 @@ type Page struct {
 	Place *folder.Folder
 	Job   *folder.Job
 	// Actions are the actions bar of the folder or the directory browsed.
-	Actions  *Actions
+	Actions *Actions
+	// Prompt is the prompt box of the folder or the directory browsed,
+	// for an admin with a Claude token.
+	Prompt   *Prompt
 	Checkout *git.Info
 	// Tree is what the folder, or the directory browsed in it, holds.
 	Tree []folder.Item

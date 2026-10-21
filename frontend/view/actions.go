@@ -19,6 +19,9 @@ type Actions struct {
 	// Self is the compose project task-ui itself runs in: compose up and
 	// down there ask first.
 	Self string
+	// Shell is the place's shell job, Enter Shell at the right of the
+	// bar: set for an admin alone.
+	Shell *folder.Job
 }
 
 // Confirm returns what a job of a skill asks before it runs, or "": up
@@ -39,5 +42,5 @@ func (a *Actions) Confirm(skill *folder.Skill, job *folder.Job) string {
 
 // Empty reports whether the bar has nothing to show.
 func (a *Actions) Empty() bool {
-	return a == nil || (a.Git == nil && len(a.Skills) == 0 && len(a.Pipeline) == 0)
+	return a == nil || (a.Git == nil && len(a.Skills) == 0 && len(a.Pipeline) == 0 && a.Shell == nil)
 }

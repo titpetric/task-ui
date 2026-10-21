@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/titpetric/task-ui/api"
+	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/internal/assert"
 	"github.com/titpetric/task-ui/model"
 )
@@ -190,13 +191,8 @@ func TestWorkspace_Prompt(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
 	repo := "file://" + localRepo(t)
-	// The internal job stands in for task-ui agent prompt: it writes its
-	// environment to a file.
-	internal := shellFolder(t, f.root, model.Internal, map[string]string{
-		"claude-prompt": `env | grep '^TASK_UI_\(PROMPT\|WORKSPACE\)' | sort > "$PWD/env.out"`,
-	})
-	internal.Job("claude-prompt").Allow = []string{model.RoleAdmin}
-	f.opts.Catalogue.(catalogue)[model.Internal] = internal
+	promptFolder(t, f)
+	out := filepath.Join(f.root, model.Internal, "env.out")
 
 	assert.Equal(t, http.StatusCreated, f.call(t, asAdmin, http.MethodPost, "/workspaces", api.WorkspaceRequest{URL: repo, Folder: "malta"}).Status)
 
@@ -208,10 +204,10 @@ func TestWorkspace_Prompt(t *testing.T) {
 	assert.Equal(t, model.StateOK, run.State)
 	assert.Equal(t, asAdmin, run.UserName)
 
-	env, err := os.ReadFile(filepath.Join(internal.Dir, "env.out"))
+	env, err := os.ReadFile(out)
 	assert.NoError(t, err)
 	dir := filepath.Join(f.root, "malta")
-	assert.Equal(t, "TASK_UI_PROMPT=list the skills\nTASK_UI_WORKSPACE=malta\nTASK_UI_WORKSPACE_DIR="+dir+"\n", string(env))
+	assert.Equal(t, "TASK_UI_PROMPT=list the skills\nTASK_UI_WORKSPACE=malta\nTASK_UI_WORKSPACE_DIR="+dir+"\npwd="+dir+"\n", string(env))
 
 	empty := f.call(t, asAdmin, http.MethodPost, "/workspaces/malta/prompt", api.PromptRequest{Prompt: "  "})
 	assert.Equal(t, http.StatusBadRequest, empty.Status)
@@ -221,6 +217,23 @@ func TestWorkspace_Prompt(t *testing.T) {
 		refused := f.call(t, user, http.MethodPost, "/workspaces/malta/prompt", api.PromptRequest{Prompt: "hello"})
 		assert.Equal(t, http.StatusForbidden, refused.Status, user)
 	}
+}
+
+// promptFolder puts an internal folder in the fixture's catalogue whose
+// claude-prompt stands in for task-ui agent prompt: it writes the
+// prompt's environment and where it runs to internal/env.out,
+// then waits for a file named release in the directory it runs in, when
+// that directory holds a file named hold.
+func promptFolder(t *testing.T, f *fixture) *folder.Folder {
+	t.Helper()
+	internal := shellFolder(t, f.root, model.Internal, map[string]string{
+		"claude-prompt": `{ env | grep '^TASK_UI_\(PROMPT\|WORKSPACE\|WORKSPACE_DIR\|PROMPT_DIR\)=' | sort; echo "pwd=$(pwd -P)"; } > "` + filepath.Join(f.root, model.Internal, "env.out") + `"; while [ -e hold ] && [ ! -e release ]; do sleep 0.05; done`,
+	})
+	// The internal folder's directory is the root, as agent.Folder's.
+	internal.Dir, internal.HostJobs = f.root, true
+	internal.Job("claude-prompt").Allow = []string{model.RoleAdmin}
+	f.opts.Catalogue.(catalogue)[model.Internal] = internal
+	return internal
 }
 
 // The default workspace, _, is the root: it lists first, takes a title,

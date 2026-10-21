@@ -110,6 +110,7 @@ func (h *Handlers) Routes() http.Handler {
 	r.Put("/workspaces/{folder}", h.updateWorkspace)
 	r.Delete("/workspaces/{folder}", h.deleteWorkspace)
 	r.Post("/workspaces/{folder}/prompt", h.promptWorkspace)
+	r.Post("/prompts", h.startPrompt)
 	r.Post("/workspaces/{folder}/export", h.exportWorkspace)
 	r.Get("/workspaces/{folder}/keys", h.listWorkspaceKeys)
 	r.Post("/workspaces/{folder}/keys/generate", h.generateWorkspaceKey)

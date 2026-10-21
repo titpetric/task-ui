@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/titpetric/task-ui/api"
+	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/internal/assert"
 	"github.com/titpetric/task-ui/model"
 )
@@ -317,4 +318,32 @@ func TestRun_StartInDir(t *testing.T) {
 	assert.Equal(t, http.StatusCreated, taken.Status, string(taken.Raw))
 	row := f.finished(t, taken.str("id"))
 	assert.Equal(t, []string{"ps", "; id"}, row.ArgList())
+}
+
+// @shell is bash -l with a terminal in the folder's directory, or a
+// directory inside it: an admin's alone, 403 for a runner, whatever the
+// folder allows, and for a viewer. The admin types into it.
+func TestRun_Shell(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	assert.NoError(t, os.MkdirAll(filepath.Join(f.root, "infra", "images"), 0o755))
+
+	for _, user := range []string{asOps, asViewer, asLimited} {
+		for _, dir := range []string{"", "images"} {
+			res := f.call(t, user, http.MethodPost, "/runs", api.RunRequest{Folder: "infra", Dir: dir, Job: folder.ShellID})
+			assert.Equal(t, http.StatusForbidden, res.Status, user+" "+dir)
+		}
+	}
+
+	res := f.call(t, asAdmin, http.MethodPost, "/runs", api.RunRequest{Folder: "infra", Dir: "images", Job: folder.ShellID, Cols: 80, Rows: 24})
+	assert.Equal(t, http.StatusCreated, res.Status, string(res.Raw))
+	assert.Equal(t, "images", res.str("dir"))
+	assert.Equal(t, false, f.call(t, asOps, http.MethodGet, "/runs/"+res.str("id"), nil).get("can_run"))
+	ws := f.attach(t, asAdmin, res.str("id"))
+	send(t, ws, map[string]any{"type": "input", "message": "cd \"$(pwd -P)\" && echo \"at=$PWD\" && exit 7\n"})
+	out, status := untilStatus(t, ws)
+	want, err := filepath.EvalSymlinks(filepath.Join(f.root, "infra", "images"))
+	assert.NoError(t, err)
+	assert.Contains(t, out, "at="+want)
+	assert.Equal(t, 7, status.ExitCode)
 }

@@ -79,6 +79,7 @@ func TestWorkflow_Create(t *testing.T) {
 		{"no such job", asOps, api.WorkflowRequest{Name: "x", Steps: chain("infra", "nope")}},
 		{"no such folder", asOps, api.WorkflowRequest{Name: "x", Steps: chain("nowhere", "plan")}},
 		{"a folder the user can not see", asLimited, api.WorkflowRequest{Name: "x", Steps: chain("private", "deploy")}},
+		{"a shell", asAdmin, api.WorkflowRequest{Name: "x", Steps: chain("infra", "plan", "infra", "@shell")}},
 	}
 	for _, c := range cases {
 		res := f.call(t, c.user, http.MethodPost, "/workflows", c.req)
