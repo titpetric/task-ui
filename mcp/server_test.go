@@ -26,6 +26,7 @@ import (
 type fixture struct {
 	server *httptest.Server
 	tokens map[string]string
+	root   string
 }
 
 func newFixture(t *testing.T) *fixture {
@@ -51,7 +52,7 @@ func newFixture(t *testing.T) *fixture {
 	assert.NoError(t, err)
 	t.Cleanup(func() { a.Close() })
 
-	f := &fixture{server: httptest.NewServer(a.Handler()), tokens: map[string]string{}}
+	f := &fixture{server: httptest.NewServer(a.Handler()), tokens: map[string]string{}, root: root}
 	t.Cleanup(f.server.Close)
 	tokens := storage.NewUserAuthTokenStorage(a.DB)
 	for _, name := range []string{"admin", "guest", "ops"} {
