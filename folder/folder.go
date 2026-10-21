@@ -52,10 +52,14 @@ type Folder struct {
 }
 
 // Job returns the job by ID, name or alias, or nil. The ID is what URLs
-// and history use; the name is the target as its file spells it.
+// and history use; the name is the target as its file spells it. An ID
+// that starts with ./ is the job of a file that runs: see FileJob.
 func (f *Folder) Job(id string) *Job {
 	if f == nil {
 		return nil
+	}
+	if rel, ok := strings.CutPrefix(id, FilePrefix); ok {
+		return f.FileJob(rel)
 	}
 	for _, j := range f.Jobs {
 		if j.ID == id {

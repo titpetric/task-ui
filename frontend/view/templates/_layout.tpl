@@ -202,7 +202,7 @@
      fit, in place of a download. */}}
 <dialog class="run preview" id="preview-dialog" aria-labelledby="preview-title">
 	<div class="run-head">
-		<span class="label">Artifact</span>
+		<span class="label" id="preview-label">Artifact</span>
 		<h3 id="preview-title"></h3>
 	</div>
 	<div class="run-body preview-body"><img id="preview-image" alt=""><div id="preview-doc" class="preview-doc" hidden></div></div>
@@ -434,22 +434,54 @@
 </details>
 {{- end }}
 
-{{/* tree lists what the folder page's directory holds: the directories
-     first, linked into, then the files, plain. */}}
+{{/* tree is the Files panel of a folder page: .. up a level, the
+     directories first, linked into, then the files, each opening in the
+     preview window. A file that runs carries #! and exec, and Run for
+     those who may run it. A sealed entry is listed, plain and locked. */}}
 {{- define "tree" }}
-<ul class="tree">
-	{{- range .Tree }}
-	<li class="{{ if .Dir }}dir{{ else }}file{{ end }}">
-		<svg class="ic"><use href="#i-{{ if .Dir }}folder{{ else }}file{{ end }}"/></svg>
-		{{- if .Preview }}<a href="{{ .Href }}" data-preview="{{ .Href }}" data-preview-title="{{ .Name }}">{{ .Name }}</a>
-		{{- else if .Href }}<a href="{{ .Href }}">{{ .Name }}</a>
-		{{- else }}<span>{{ .Name }}</span>{{ end }}
-		<small class="meta">{{ if not .Dir }}{{ size .Size }} · {{ end }}<span title="{{ stamp .ModTime }}">{{ ago .ModTime }}</span></small>
-	</li>
-	{{- else }}
-	<li class="empty">Empty.</li>
+<div class="table-wrap">
+<table class="table file-table">
+	<thead><tr><th>Name</th><th class="num">Size</th><th class="hide-sm">Changed</th><th></th></tr></thead>
+	<tbody>
+	{{- with $.Up }}
+		<tr class="up"><td class="key"><svg class="ic dir"><use href="#i-folder"/></svg> <a href="{{ . }}" title="Up a level">..</a></td><td></td><td class="hide-sm"></td><td></td></tr>
 	{{- end }}
-</ul>
+	{{- range .Tree }}
+		{{- if .Sealed }}
+		<tr class="sealed" aria-disabled="true" title="{{ .Name }} is listed, but task-ui does not open it">
+			<td class="key"><svg class="ic"><use href="#i-secret"/></svg> <span>{{ .Name }}</span></td>
+			<td class="num nowrap">{{ if not .Dir }}{{ size .Size }}{{ end }}</td>
+			<td class="hide-sm nowrap" title="{{ stamp .ModTime }}">{{ ago .ModTime }}</td>
+			<td></td>
+		</tr>
+		{{- else }}
+		<tr class="{{ if .Dir }}dir{{ else }}file{{ end }}">
+			<td class="key">
+				{{- if .Exec }}<i class="shebang" aria-hidden="true">#!</i>{{ else }}<svg class="ic{{ if .Dir }} dir{{ end }}"><use href="#i-{{ if .Dir }}folder{{ else }}file{{ end }}"/></svg>{{ end }}
+				{{- if .Dir }}{{ if .Href }} <a href="{{ .Href }}">{{ .Name }}</a>{{ else }} <span>{{ .Name }}</span>{{ end }}
+				{{- else if .Href }} <a href="{{ .Href }}" data-file="{{ .Path }}">{{ .Name }}</a>
+				{{- else }} <span>{{ .Name }}</span>{{ end }}
+				{{- if .Exec }} <span class="badge exec" title="Runs: executable, or a shebang on its first line">exec</span>{{ end }}</td>
+			<td class="num nowrap">{{ if not .Dir }}{{ size .Size }}{{ end }}</td>
+			<td class="hide-sm nowrap" title="{{ stamp .ModTime }}">{{ ago .ModTime }}</td>
+			<td class="actions">
+				{{- if and .Exec .Path }}{{ with $.Folder.Job (print "./" .Path) }}
+				{{- $run := $.RunningRun .Key }}
+				{{- if $run }}<a class="btn btn-sm" href="/runs/{{ $run.ID }}" data-attach="{{ $run.ID }}"><svg class="ic"><use href="#i-eye"/></svg>Attach</a>
+				{{- else if $.CanRun $.Folder . }}{{ template "runButtons" (list $.Folder .) }}{{ end }}
+				{{- end }}{{ end }}
+				{{- if and (not .Dir) .Href }}
+				<a class="btn-icon" href="{{ .Href }}?download" title="Download {{ .Name }}" aria-label="Download {{ .Name }}"><svg class="ic"><use href="#i-download"/></svg></a>
+				{{- end }}
+			</td>
+		</tr>
+		{{- end }}
+	{{- else }}
+		<tr class="empty"><td colspan="4">Empty.</td></tr>
+	{{- end }}
+	</tbody>
+</table>
+</div>
 {{- end }}
 
 {{/* spacebar is the space a directory takes: its files, and the git

@@ -1,4 +1,4 @@
-/* The artifact files: a row per file or folder, its actions on the right. */
+/* A block head: the title of a block and its actions on the right. */
 .block-head {
   display: flex;
   align-items: center;
@@ -14,24 +14,5 @@
     display: flex;
     align-items: center;
     gap: 0.4rem;
-  }
-}
-
-.artifact-files {
-  & td.key .ic {
-    width: 0.9rem;
-    height: 0.9rem;
-    margin-inline-end: 0.35rem;
-    vertical-align: -0.12rem;
-    color: var(--text-faint);
-
-    &.dir {
-      color: var(--signal);
-    }
-  }
-
-  & .num {
-    text-align: end;
-    font-variant-numeric: tabular-nums;
   }
 }

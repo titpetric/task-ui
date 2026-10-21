@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="360" height="140" viewBox="0 0 360 140" font-family="sans-serif" font-size="13">
+  <rect width="360" height="140" fill="#14161a"/>
+  <g fill="none" stroke="#f5a524" stroke-width="1.5">
+    <rect x="16" y="40" width="96" height="56" rx="4"/>
+    <rect x="132" y="40" width="96" height="56" rx="4"/>
+    <rect x="248" y="40" width="96" height="56" rx="4"/>
+    <path d="M112 68h20M228 68h20"/>
+  </g>
+  <g fill="#e6e6e6" text-anchor="middle">
+    <text x="64" y="73">accounts</text>
+    <text x="180" y="73">orders</text>
+    <text x="296" y="73">invoices</text>
+  </g>
+</svg>

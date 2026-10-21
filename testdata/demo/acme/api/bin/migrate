@@ -1,0 +1,7 @@
+#!/bin/sh
+# Bring the database up to the latest schema
+set -e
+for step in 0001_accounts 0002_orders 0003_invoices; do
+  echo "apply $step"
+done
+echo "schema at 0003, nothing left to apply"

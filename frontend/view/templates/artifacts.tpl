@@ -27,7 +27,7 @@
 		</div>
 	</div>
 	<div class="table-wrap">
-	<table class="table artifact-files">
+	<table class="table file-table">
 		<thead><tr><th>Name</th><th class="num">Size</th><th class="hide-sm">Changed</th><th></th></tr></thead>
 		<tbody>
 		{{- range .Tree }}
