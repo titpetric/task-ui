@@ -101,7 +101,9 @@ checkout first (see [Workspaces](workspaces.md#runs-in-a-workspace)).
 
 A run gets SSH keys only through an ssh agent served for that run alone:
 the instance keys whose policies name the role of whoever started it, or
-them by name (see [Settings](settings.md#ssh-keys)). A scheduled run gets
+them by name (see [Settings](settings.md#ssh-keys)), and the SSH keys of
+its workspace that its grants let through (see
+[Workspaces](workspaces.md#keys)). A scheduled run gets
 the keys of the schedule's creator. The job gets `SSH_AUTH_SOCK`, and
 `ssh`, `git`, `rsync` and terraform's agent authentication use it. The
 keys stay in memory and the agent ends with the run; the terminal says

@@ -1108,3 +1108,51 @@
       columns:
         - folder
       unique: true
+- name: workspace_key_grant
+  comment: Workspace Key Grant
+  columns:
+    - name: id
+      type: text
+      key: PRI
+      comment: ID
+      datatype: char(26)
+    - name: workspace_id
+      type: text
+      key: MUL
+      comment: Workspace ID
+      datatype: char(26)
+    - name: key_name
+      type: text
+      key: MUL
+      comment: Key Name
+      datatype: varchar
+    - name: role
+      type: text
+      key: MUL
+      comment: Role
+      datatype: varchar
+    - name: user_name
+      type: text
+      key: MUL
+      comment: User Name
+      datatype: varchar
+    - name: created_at
+      type: timestamp
+      comment: Created At
+      datatype: datetime
+  indexes:
+    - name: sqlite_autoindex_workspace_key_grant_1
+      columns:
+        - id
+      primary: true
+      unique: true
+    - name: idx_workspace_key_grant_workspace_id
+      columns:
+        - workspace_id
+    - name: idx_workspace_key_grant_key
+      columns:
+        - workspace_id
+        - key_name
+        - role
+        - user_name
+      unique: true

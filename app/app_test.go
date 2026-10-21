@@ -16,6 +16,7 @@ import (
 	"github.com/titpetric/task-ui/app"
 	"github.com/titpetric/task-ui/internal/assert"
 	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/storage"
 )
 
 // newApp builds an instance over a root with one folder, an in-memory
@@ -107,6 +108,10 @@ func TestNew_Errors(t *testing.T) {
 	assert.Equal(t, model.RoleAdmin, dev.Role)
 	status, _, _ := get(t, a.Handler(), "/")
 	assert.Equal(t, http.StatusOK, status)
+	// The default workspace has its encryption key from the start.
+	root, err := storage.NewWorkspaceStorage(a.DB).GetByFolder(context.Background(), model.Default)
+	assert.NoError(t, err)
+	assert.NotNil(t, none.Keyring().EncryptKey(root.ID))
 	a.Close()
 
 	unwritable := &app.Config{Root: t.TempDir(), DataDir: "/proc/task-ui-nope", DB: ":memory:", SessionTTL: time.Hour}

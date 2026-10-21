@@ -38,6 +38,7 @@ func (h *Handlers) listWorkspaces(w http.ResponseWriter, r *http.Request) {
 // it. The folder is the user's to name, one segment that no workspace,
 // project or directory under the root holds yet. As with a project, the
 // clone is the test: a failure reports git's output and keeps nothing.
+// A workspace made gets its encryption key.
 func (h *Handlers) createWorkspace(w http.ResponseWriter, r *http.Request) {
 	if !requireAdmin(w, r) {
 		return
@@ -87,6 +88,12 @@ func (h *Handlers) createWorkspace(w http.ResponseWriter, r *http.Request) {
 		failErr(w, err)
 		return
 	}
+	if h.opts.WorkspaceKeys != nil {
+		if _, err := h.opts.WorkspaceKeys.Ensure(workspace.ID, "task-ui "+workspace.Folder); err != nil {
+			failErr(w, err)
+			return
+		}
+	}
 	writeJSON(w, http.StatusCreated, map[string]any{"workspace": workspace, "output": output})
 }
 
@@ -132,9 +139,9 @@ func (h *Handlers) updateWorkspace(w http.ResponseWriter, r *http.Request) {
 }
 
 // deleteWorkspace removes a workspace's checkout, the projects cloned
-// inside it with their rows, and its row. A workspace whose folder is
-// not a checkout keeps its files; only the rows go. The default
-// workspace, the root, stays.
+// inside it with their rows, its row, and its keys with their grants.
+// A workspace whose folder is not a checkout keeps its files; only the
+// rows and the keys go. The default workspace, the root, stays.
 func (h *Handlers) deleteWorkspace(w http.ResponseWriter, r *http.Request) {
 	if !requireAdmin(w, r) {
 		return
@@ -173,6 +180,18 @@ func (h *Handlers) deleteWorkspace(w http.ResponseWriter, r *http.Request) {
 	if err := h.opts.Workspaces.Delete(ctx, workspace.ID); err != nil {
 		failErr(w, err)
 		return
+	}
+	if h.opts.KeyGrants != nil {
+		if err := h.opts.KeyGrants.DeleteWorkspace(ctx, workspace.ID); err != nil {
+			failErr(w, err)
+			return
+		}
+	}
+	if h.opts.WorkspaceKeys != nil {
+		if err := h.opts.WorkspaceKeys.Remove(workspace.ID); err != nil {
+			failErr(w, err)
+			return
+		}
 	}
 	w.WriteHeader(http.StatusNoContent)
 }

@@ -116,8 +116,10 @@ A run starts in its folder, as a login shell, with:
 - the secrets of its folder (see [Settings](settings.md#secrets));
 - an ssh agent, through `SSH_AUTH_SOCK`, with the instance keys whose
   policies name the role or the name of whoever started the run (see
-  [Projects and jobs](projects.md#keys-for-a-run)); the terminal says
-  which, or `(none)`.
+  [Projects and jobs](projects.md#keys-for-a-run)), and the SSH keys of
+  its workspace its grants let through, as `ws:<name>` (see
+  [Workspaces](workspaces.md#keys)); the terminal says which, or
+  `(none)`.
 
 Before the job, a folder in a git checkout pulls it, in the run's own
 terminal; when the pull fails, the run fails with it. A folder in a

@@ -558,9 +558,25 @@
 {{- end }}
 
 {{- define "keypolicies" }}
-{{- $roles := index . 0 }}{{ $users := index . 1 }}{{ $all := index . 2 }}
 <div class="field">
 	<span class="label">Who gets it <span class="faint">through the ssh agent of their runs; a key can go to several roles and users</span></span>
+	{{- template "keychecks" . }}
+</div>
+{{- end }}
+
+{{- /* keygrants is who gets a workspace's SSH key: the roles and the
+     users checked, or every run in the workspace with none checked. */}}
+{{- define "keygrants" }}
+<div class="field">
+	<span class="label">Who gets it <span class="faint">none checked is every run in the workspace; a check narrows it to the runs of those roles and users</span></span>
+	{{- template "keychecks" . }}
+</div>
+{{- end }}
+
+{{- /* keychecks are a key's roles and users as boxes: the roles and the
+     users it goes to, and every user to choose from. */}}
+{{- define "keychecks" }}
+{{- $roles := index . 0 }}{{ $users := index . 1 }}{{ $all := index . 2 }}
 	<div class="checks who">
 		<span class="faint">Roles</span>
 		{{- range roles }}
@@ -575,7 +591,6 @@
 		<label class="check"><input type="checkbox" name="users" value="{{ $name }}" data-type="set"{{ if $on }} checked{{ end }}> {{ $name }} <span class="faint">{{ .Role }}</span></label>
 		{{- end }}
 	</div>
-</div>
 {{- end }}
 
 {{- /* When runs ran: a bar per day and per hour of the last 24, each split

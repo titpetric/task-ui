@@ -110,6 +110,9 @@ func (a *App) prepare(ctx context.Context) error {
 	if err := storage.NewWorkspaceStorage(a.DB).EnsureDefault(ctx); err != nil {
 		return err
 	}
+	if err := a.ensureKeys(ctx); err != nil {
+		return err
+	}
 	n, err := storage.NewRunStorage(a.DB).KillActive(ctx)
 	if err != nil {
 		return err
@@ -118,6 +121,26 @@ func (a *App) prepare(ctx context.Context) error {
 		slog.Warn("runs left running by the previous process marked killed", "count", n)
 	}
 	return storage.NewWorkflowRunStorage(a.DB).Interrupt(ctx, "task-ui restarted while it ran")
+}
+
+// ensureKeys makes the key directories of every workspace, the default
+// one among them, and its encryption key when it has none.
+func (a *App) ensureKeys(ctx context.Context) error {
+	workspaces, err := storage.NewWorkspaceStorage(a.DB).List(ctx)
+	if err != nil {
+		return err
+	}
+	keyring := a.Config.Keyring()
+	for _, ws := range workspaces {
+		made, err := keyring.Ensure(ws.ID, "task-ui "+ws.Folder)
+		if err != nil {
+			return fmt.Errorf("the keys of workspace %s: %w", ws.Folder, err)
+		}
+		if made {
+			slog.Info("workspace encryption key generated", "workspace", ws.Folder, "dir", keyring.Dir(ws.ID))
+		}
+	}
+	return nil
 }
 
 // seed writes the password file to storage, when there is one. Without
@@ -174,6 +197,7 @@ func (a *App) wire(version string) error {
 		homeKeys = &sshkey.Store{Dir: dir}
 	}
 	keyPolicies := storage.NewSSHKeyPolicyStorage(db)
+	keyring, grants := cfg.Keyring(), storage.NewWorkspaceKeyGrantStorage(db)
 	secrets := secret.New(storage.NewSecretStorage(db), secret.NewVault(keys))
 	env := envfile.New(storage.NewEnvFileStorage(db), secrets)
 	integrations := &integration.Store{Secrets: secrets}
@@ -208,6 +232,8 @@ func (a *App) wire(version string) error {
 		Now:           cfg.Clock(),
 		Root:          cfg.Root,
 		Workspaces:    workspaces,
+		WorkspaceKeys: keyring,
+		KeyGrants:     grants,
 	})
 	a.Scheduler = scheduler.NewLoop(schedules, a.Users, a.Catalogue, a.Runner)
 	a.Workflows = workflow.New(workflows, workflowRuns, a.Catalogue, a.Runner)
@@ -233,6 +259,7 @@ func (a *App) wire(version string) error {
 	}
 	apiHandlers := api.New(api.Options{
 		Users: a.Users, Projects: projects, Workspaces: workspaces, Runs: runs, Artifacts: artifacts, ArtifactStore: store, Schedules: schedules, Secrets: secrets,
+		WorkspaceKeys: keyring, KeyGrants: grants,
 		Workflows: workflows, WorkflowRuns: workflowRuns, Flows: a.Workflows, Events: events,
 		Runner: a.Runner, Catalogue: a.Catalogue, Git: g, Keys: keys, KeyPolicies: keyPolicies, Env: env, Recordings: recordings, Root: cfg.Root, Board: a.Board,
 		Integrations: integrations, Hosts: hosts, SSH: prober, Summarizer: &claude.Summarizer{Timeout: 3 * time.Minute},
@@ -240,6 +267,7 @@ func (a *App) wire(version string) error {
 	})
 	pages, err := frontend.New(frontend.Options{
 		Guard: a.Guard, Auth: access.NewAuthenticator(a.Users, a.Emails, a.Passwords), Users: a.Users, Projects: projects, Workspaces: workspaces, Runs: runs, Artifacts: artifacts, Schedules: schedules, Secrets: secrets,
+		WorkspaceKeys: keyring, KeyGrants: grants,
 		Workflows: workflows, WorkflowRuns: workflowRuns, Flows: a.Workflows,
 		Runner: a.Runner, Catalogue: a.Catalogue, Git: g, Keys: keys, HomeKeys: homeKeys, KeyPolicies: keyPolicies, Env: env, Recordings: recordings, Root: cfg.Root, Version: version, Now: cfg.Clock(),
 		ArtifactStore: store, Disk: &diskusage.Meter{TTL: 10 * time.Minute}, Board: a.Board,

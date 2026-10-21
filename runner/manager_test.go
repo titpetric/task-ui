@@ -24,6 +24,7 @@ import (
 	"github.com/titpetric/task-ui/secret"
 	"github.com/titpetric/task-ui/sshkey"
 	"github.com/titpetric/task-ui/storage"
+	"github.com/titpetric/task-ui/workspace"
 )
 
 // fixture is a manager over a private database and temporary folders.
@@ -37,8 +38,11 @@ type fixture struct {
 	policies *storage.SSHKeyPolicyStorage
 	// now is what the manager's clock reads; zero is the real time.
 	now time.Time
-	// workspaces are the workspaces under root the manager knows.
+	// workspaces are the workspaces under root the manager knows, keys
+	// their keys and grants whose runs get each SSH key.
 	workspaces *storage.WorkspaceStorage
+	keys       *workspace.Keyring
+	grants     *storage.WorkspaceKeyGrantStorage
 }
 
 func newFixture(t *testing.T) *fixture {
@@ -55,6 +59,7 @@ func newFixture(t *testing.T) *fixture {
 	f := &fixture{
 		runs: runs, files: artifacts, secrets: secrets, root: t.TempDir(),
 		policies: storage.NewSSHKeyPolicyStorage(db), workspaces: storage.NewWorkspaceStorage(db),
+		keys: &workspace.Keyring{Data: t.TempDir()}, grants: storage.NewWorkspaceKeyGrantStorage(db),
 	}
 	manager := runner.New(runner.Options{
 		Now: func() time.Time {
@@ -63,20 +68,22 @@ func newFixture(t *testing.T) *fixture {
 			}
 			return f.now
 		},
-		Runs:         runs,
-		Artifacts:    artifacts,
-		Secrets:      secrets,
-		Env:          envfile.New(storage.NewEnvFileStorage(db), secrets),
-		Git:          &git.Git{},
-		Recordings:   &recording.Store{Root: t.TempDir()},
-		ArtifactRoot: t.TempDir(),
-		Grace:        time.Second,
-		KillTimeout:  5 * time.Second,
-		Keep:         time.Minute,
-		KeyDir:       keys.Dir,
-		KeyPolicies:  f.policies,
-		Root:         f.root,
-		Workspaces:   f.workspaces,
+		Runs:          runs,
+		Artifacts:     artifacts,
+		Secrets:       secrets,
+		Env:           envfile.New(storage.NewEnvFileStorage(db), secrets),
+		Git:           &git.Git{},
+		Recordings:    &recording.Store{Root: t.TempDir()},
+		ArtifactRoot:  t.TempDir(),
+		Grace:         time.Second,
+		KillTimeout:   5 * time.Second,
+		Keep:          time.Minute,
+		KeyDir:        keys.Dir,
+		KeyPolicies:   f.policies,
+		Root:          f.root,
+		Workspaces:    f.workspaces,
+		WorkspaceKeys: f.keys,
+		KeyGrants:     f.grants,
 	})
 	f.manager = manager
 	return f

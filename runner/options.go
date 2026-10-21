@@ -9,6 +9,7 @@ import (
 	"github.com/titpetric/task-ui/recording"
 	"github.com/titpetric/task-ui/secret"
 	"github.com/titpetric/task-ui/storage"
+	"github.com/titpetric/task-ui/workspace"
 )
 
 // Options configure the manager.
@@ -47,4 +48,10 @@ type Options struct {
 	// workspace in its environment. Nil Workspaces knows none.
 	Root       string
 	Workspaces *storage.WorkspaceStorage
+	// WorkspaceKeys are the keys of the workspaces, and KeyGrants whose
+	// runs get each of a workspace's SSH keys: a run gets its
+	// workspace's keys beside the instance ones. Nil WorkspaceKeys adds
+	// none; with nil KeyGrants every run gets every key.
+	WorkspaceKeys *workspace.Keyring
+	KeyGrants     *storage.WorkspaceKeyGrantStorage
 }
