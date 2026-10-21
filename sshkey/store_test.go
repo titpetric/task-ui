@@ -204,3 +204,32 @@ func TestStore_UploadAs(t *testing.T) {
 		t.Fatal("a bad label is refused")
 	}
 }
+
+// A key's fingerprint is the same from its private half, its public
+// line and its file; anything else is no key.
+func TestFingerprint(t *testing.T) {
+	t.Parallel()
+	s := &Store{Dir: t.TempDir()}
+	key, err := s.Generate("ed25519", "fp")
+	if err != nil {
+		t.Fatal(err)
+	}
+	private, err := os.ReadFile(filepath.Join(s.Dir, key.Name))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for name, data := range map[string][]byte{"private": private, "public": []byte(key.PublicKey + "\r\n")} {
+		if fp, err := Fingerprint(data); err != nil || fp != key.Fingerprint {
+			t.Fatalf("%s: %q %v, want %q", name, fp, err, key.Fingerprint)
+		}
+	}
+	if fp, err := FileFingerprint(filepath.Join(s.Dir, key.Name)); err != nil || fp != key.Fingerprint {
+		t.Fatalf("file: %q %v", fp, err)
+	}
+	if _, err := Fingerprint([]byte("not a key")); err == nil {
+		t.Fatal("a fingerprint of no key")
+	}
+	if _, err := FileFingerprint(filepath.Join(s.Dir, "id_rsa")); err == nil {
+		t.Fatal("a fingerprint of a missing file")
+	}
+}

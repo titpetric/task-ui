@@ -11,6 +11,7 @@ import (
 	"github.com/titpetric/task-ui/api"
 	"github.com/titpetric/task-ui/internal/assert"
 	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/sshkey"
 )
 
 func TestWorkspaceKey_AdminOnly(t *testing.T) {
@@ -72,8 +73,33 @@ func TestWorkspaceKey_CRUD(t *testing.T) {
 		assert.Equal(t, os.FileMode(0o600), info.Mode().Perm())
 	}
 
+	// An encryption key is no SSH key, and an SSH key no encryption
+	// key: the workspace's, the instance's, the instance's SSH key.
+	f.withKey(t)
+	for _, c := range []struct {
+		path    string
+		encrypt bool
+	}{
+		{filepath.Join(keyring.Encrypt(id).Dir, "id_ed25519"), false},
+		{filepath.Join(keyring.Instance().Dir, "id_ed25519"), false},
+		{filepath.Join(keyring.Instance().Dir, "id_ed25519"), true},
+		{filepath.Join(f.opts.Keys.Dir, "id_ed25519"), true},
+		{filepath.Join(keyring.SSH(id).Dir, "id_ed25519_deploy"), true},
+	} {
+		data, err := os.ReadFile(c.path)
+		assert.NoError(t, err)
+		refused := f.call(t, asAdmin, http.MethodPost, "/workspaces/malta/keys/upload", api.WorkspaceKeyRequest{Content: string(data), Name: "copy", Encrypt: c.encrypt})
+		assert.Equal(t, http.StatusConflict, refused.Status, c.path)
+		assert.Contains(t, refused.str("error"), "never both")
+	}
+	assert.Equal(t, keyring.EncryptKey(id).Name, "id_ed25519")
+	assert.Len(t, keyring.Encrypt(id).List(), 1, "a refused encryption key moves nothing aside")
+
 	// An upload: the private key of another pair.
-	data, err := os.ReadFile(filepath.Join(keyring.Encrypt(id).Dir, "id_ed25519"))
+	other := &sshkey.Store{Dir: t.TempDir()}
+	_, err := other.Generate("ed25519", "other")
+	assert.NoError(t, err)
+	data, err := os.ReadFile(filepath.Join(other.Dir, "id_ed25519"))
 	assert.NoError(t, err)
 	uploaded := f.call(t, asAdmin, http.MethodPost, "/workspaces/malta/keys/upload", api.WorkspaceKeyRequest{Content: string(data), Name: "copy"})
 	assert.Equal(t, http.StatusCreated, uploaded.Status, string(uploaded.Raw))

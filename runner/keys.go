@@ -3,6 +3,7 @@ package runner
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"path/filepath"
 	"strings"
 
@@ -12,9 +13,10 @@ import (
 // agent loads the keys a run gets into an ssh agent for it, and says so
 // in the terminal: the instance keys the policies grant whoever started
 // the run, by their role or by name, then the SSH keys of the run's
-// workspace its grants let through, each as ws:<name>. A workspace's
-// encryption key and a checkout's .ssh/ folder are not loaded. No key
-// is no agent and no error, told as (none); the caller closes the agent.
+// workspace its grants let through, each as ws:<name>. It loads no
+// encryption key, the instance's or a workspace's, nor a copy of one in
+// an SSH folder, and no key of a checkout's .ssh/ folder. No key is no
+// agent and no error, told as (none); the caller closes the agent.
 func (m *Manager) agent(ctx context.Context, session *Session) (*sshagent.Agent, error) {
 	var paths []string
 	from := map[string]string{}
@@ -25,6 +27,9 @@ func (m *Manager) agent(ctx context.Context, session *Session) (*sshagent.Agent,
 		}
 		for _, name := range names {
 			path := filepath.Join(m.opts.KeyDir, name)
+			if m.encrypts(path) {
+				continue
+			}
 			paths = append(paths, path)
 			from[path] = name
 		}
@@ -35,6 +40,9 @@ func (m *Manager) agent(ctx context.Context, session *Session) (*sshagent.Agent,
 	}
 	for _, name := range more {
 		path := filepath.Join(m.opts.WorkspaceKeys.SSH(session.workspaceID).Dir, name)
+		if m.encrypts(path) {
+			continue
+		}
 		paths = append(paths, path)
 		from[path] = "ws:" + name
 	}
@@ -78,4 +86,14 @@ func (m *Manager) workspaceKeys(ctx context.Context, session *Session) ([]string
 		return nil, fmt.Errorf("reading the workspace's key grants: %w", err)
 	}
 	return names, nil
+}
+
+// encrypts reports whether a key file is an encryption key, which no
+// run gets; it logs the one it withholds.
+func (m *Manager) encrypts(path string) bool {
+	if m.opts.WorkspaceKeys == nil || !m.opts.WorkspaceKeys.Encrypts(path) {
+		return false
+	}
+	slog.Warn("an encryption key in an SSH folder is not loaded into the run's agent", "key", path)
+	return true
 }

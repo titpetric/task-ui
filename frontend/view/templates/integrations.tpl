@@ -2,7 +2,7 @@
 <div class="page-head">
 	<div>
 		<h2>Integrations</h2>
-		<p>The services task-ui talks to. Their keys and tokens are encrypted with the instance SSH {{ if eq (len .Encryption) 1 }}key{{ else }}keys{{ end }} {{ if .Encryption }}<b>{{ join .Encryption ", " }}</b>{{ else }}<span class="badge bad">none yet</span>{{ end }}, which the workspaces' secrets do not use, and never shown again; leave a secret empty to keep it.</p>
+		<p>The services task-ui talks to. Their keys and tokens are encrypted with the instance's encryption key {{ with .InstanceKey }}<b>{{ .Fingerprint }}</b>{{ else }}<span class="badge bad">none yet</span>{{ end }}, which only they use, and never shown again; leave a secret empty to keep it.</p>
 	</div>
 </div>
 

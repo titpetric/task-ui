@@ -106,7 +106,8 @@ func newFixture(t *testing.T) *fixture {
 
 	runs := storage.NewRunStorage(db)
 	keys := &sshkey.Store{Dir: t.TempDir()}
-	secrets := secret.New(storage.NewSecretStorage(db), secret.NewVault(keys))
+	keyring := &workspace.Keyring{Data: t.TempDir(), Access: []*sshkey.Store{keys}}
+	secrets := secret.New(storage.NewSecretStorage(db), secret.NewVault(keyring.Instance()))
 	recordings := &recording.Store{Root: t.TempDir()}
 	manager := runner.New(runner.Options{Runs: runs, Recordings: recordings, Grace: time.Second, Keep: time.Minute})
 	t.Cleanup(func() { manager.Shutdown(context.Background()) })
@@ -123,7 +124,7 @@ func newFixture(t *testing.T) *fixture {
 		Users:         users,
 		Projects:      storage.NewProjectStorage(db),
 		Workspaces:    storage.NewWorkspaceStorage(db),
-		WorkspaceKeys: &workspace.Keyring{Data: t.TempDir()},
+		WorkspaceKeys: keyring,
 		KeyGrants:     storage.NewWorkspaceKeyGrantStorage(db),
 		Runs:          runs,
 		Artifacts:     storage.NewArtifactStorage(db),
@@ -216,10 +217,13 @@ func (f *fixture) page(t *testing.T, user, path string) string {
 	return res.Body
 }
 
-// withKey puts an ed25519 key in the SSH folder, so the vault can keep secrets.
+// withKey puts an ed25519 key in the SSH folder and makes the
+// instance's encryption key, so the vault can keep secrets.
 func (f *fixture) withKey(t *testing.T) {
 	t.Helper()
 	_, err := f.opts.Keys.Generate("ed25519", "test")
+	assert.NoError(t, err)
+	_, err = f.opts.WorkspaceKeys.EnsureInstance("task-ui instance")
 	assert.NoError(t, err)
 }
 

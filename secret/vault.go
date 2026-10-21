@@ -1,7 +1,10 @@
-// Package secret keeps the secrets encrypted at rest with the instance
-// SSH keys: the public keys encrypt, the private key files decrypt. A
-// rotation keeps the old pair as a backup, so what it encrypted still
-// opens, and a rekey writes everything to the current keys again.
+// Package secret keeps the secrets encrypted at rest with age, to
+// ed25519 or RSA keys kept for nothing else: the instance's encryption
+// key for the services' secrets, each workspace's for its own. The
+// public key encrypts, the private key file decrypts. A rotation keeps
+// the old pair as a backup, so what it encrypted still opens, and a
+// rekey writes everything to the current keys again. No SSH key, the
+// ones runs and git authenticate with, encrypts or decrypts.
 package secret
 
 import (
@@ -21,10 +24,10 @@ import (
 	"github.com/titpetric/task-ui/sshkey"
 )
 
-// ErrNoKey reports that no key in the SSH folder can encrypt.
-var ErrNoKey = errors.New("no SSH key to encrypt the secrets with: generate an ed25519 or RSA key in Settings, SSH keys")
+// ErrNoKey reports that no key in the vault's store can encrypt.
+var ErrNoKey = errors.New("no encryption key to encrypt the secrets with: rotate it in Settings, SSH keys, Encryption")
 
-// Vault encrypts and decrypts with the keys of the SSH folder.
+// Vault encrypts and decrypts with the keys of one encryption store.
 type Vault struct {
 	Keys *sshkey.Store
 }
@@ -39,8 +42,8 @@ func Encrypted(text string) bool {
 	return strings.HasPrefix(text, armor.Header)
 }
 
-// Recipients returns the instance key, by name, the one key that encrypts
-// the secrets, or none; it skips the names excluded.
+// Recipients returns the store's key, by name, the one key that
+// encrypts the secrets, or none; it skips the names excluded.
 func (v *Vault) Recipients(exclude ...string) []string {
 	if key, _, ok := v.instanceKey(exclude); ok {
 		return []string{key.Name}
@@ -80,7 +83,7 @@ func recipient(key sshkey.Key) (age.Recipient, error) {
 	return nil, fmt.Errorf("%s keys cannot encrypt", pub.Type())
 }
 
-// identities returns every private key in the folder that can decrypt,
+// identities returns every private key in the store that can decrypt,
 // backups included.
 func (v *Vault) identities() []age.Identity {
 	var result []age.Identity
@@ -96,8 +99,8 @@ func (v *Vault) identities() []age.Identity {
 	return result
 }
 
-// Encrypt writes a value for the instance key, the excluded names passed
-// over, as armored text.
+// Encrypt writes a value for the store's key, the excluded names
+// passed over, as armored text.
 func (v *Vault) Encrypt(plain string, exclude ...string) (string, error) {
 	_, r, ok := v.instanceKey(exclude)
 	if !ok {
@@ -129,7 +132,7 @@ func (v *Vault) Decrypt(text string) (string, error) {
 	}
 	identities := v.identities()
 	if len(identities) == 0 {
-		return "", errors.New("no SSH key opens the secret")
+		return "", errors.New("no key opens the secret")
 	}
 	r, err := age.Decrypt(armor.NewReader(strings.NewReader(text)), identities...)
 	if err != nil {

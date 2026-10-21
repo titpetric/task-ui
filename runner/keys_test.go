@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/titpetric/task-ui/folder"
@@ -135,4 +136,45 @@ func TestManager_WorkspaceKeys(t *testing.T) {
 	out = run("plain", model.RoleViewer)
 	assert.Contains(t, out, "ssh-agent: ws:id_ed25519_root\x1b")
 	assert.NotContains(t, out, deploy.Fingerprint)
+}
+
+// copyKey copies a key pair under another name.
+func copyKey(t *testing.T, from, to string) {
+	t.Helper()
+	for _, suffix := range []string{"", ".pub"} {
+		data, err := os.ReadFile(from + suffix)
+		assert.NoError(t, err)
+		assert.NoError(t, os.WriteFile(to+suffix, data, 0o600))
+	}
+}
+
+// No run gets an encryption key in its agent: not a copy of the
+// instance's in the SSH folder that a policy grants, not a copy of a
+// workspace's among its SSH keys. The other keys still load.
+func TestManager_EncryptionKeysWithheld(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	ctx := context.Background()
+	assert.NoError(t, f.workspaces.Create(ctx, &model.Workspace{Folder: "ws"}))
+	ws, err := f.workspaces.GetByFolder(ctx, "ws")
+	assert.NoError(t, err)
+	_, err = f.keys.Ensure(ws.ID, "encrypt")
+	assert.NoError(t, err)
+	copyKey(t, filepath.Join(f.keys.Instance().Dir, "id_ed25519"), filepath.Join(f.keyDir, "id_ed25519_copy"))
+	copyKey(t, filepath.Join(f.keys.Encrypt(ws.ID).Dir, "id_ed25519"), filepath.Join(f.keys.SSH(ws.ID).Dir, "id_ed25519_enc"))
+	assert.NoError(t, f.policies.Set(ctx, "id_ed25519", []string{model.RoleRunner}))
+	assert.NoError(t, f.policies.Set(ctx, "id_ed25519_copy", []string{model.RoleRunner}))
+
+	req := f.shellJob("ws/run", `ssh-add -L`, false)
+	req.User = &model.User{ID: "u1", Name: "ops", Role: model.RoleRunner}
+	session, err := f.manager.Start(ctx, req)
+	assert.NoError(t, err)
+	out, _ := collect(t, session.Attach(false))
+	assert.Contains(t, out, "ssh-agent: id_ed25519\x1b")
+	assert.NotContains(t, out, "id_ed25519_copy")
+	assert.NotContains(t, out, "id_ed25519_enc")
+	for _, key := range []*sshkey.Key{f.keys.InstanceKey(), f.keys.EncryptKey(ws.ID)} {
+		pub := strings.Fields(key.PublicKey)[1]
+		assert.NotContains(t, out, pub)
+	}
 }

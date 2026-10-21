@@ -198,3 +198,38 @@ func TestGit_Checkout(t *testing.T) {
 		}
 	}
 }
+
+// git's ssh takes every key of SSHDir but the backups, the public
+// halves and the ones Withhold names, such as a copy of an encryption
+// key; a pull or a clone over ssh authenticates with no other.
+func TestGit_SSHCommand(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	for _, name := range []string{"id_ed25519", "id_ed25519.pub", "id_rsa_deploy", "id_ed25519_secrets", "id_rsa.bak-20260101T000000", "known_hosts"} {
+		if err := os.WriteFile(filepath.Join(dir, name), nil, 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	g := &Git{SSHDir: dir, Withhold: func(path string) bool { return filepath.Base(path) == "id_ed25519_secrets" }}
+	cmd := g.sshCommand()
+	for _, want := range []string{"-i '" + filepath.Join(dir, "id_ed25519") + "'", "-i '" + filepath.Join(dir, "id_rsa_deploy") + "'", "IdentitiesOnly=yes"} {
+		if !strings.Contains(cmd, want) {
+			t.Fatalf("%q lacks %q", cmd, want)
+		}
+	}
+	for _, not := range []string{"id_ed25519_secrets", ".pub", ".bak-"} {
+		if strings.Contains(cmd, not) {
+			t.Fatalf("%q offers %q", cmd, not)
+		}
+	}
+	found := false
+	for _, env := range g.env() {
+		found = found || env == "GIT_SSH_COMMAND="+cmd
+	}
+	if !found {
+		t.Fatal("git runs without the ssh command")
+	}
+	if (&Git{SSHDir: t.TempDir()}).sshCommand() != "" {
+		t.Fatal("an ssh command without keys")
+	}
+}

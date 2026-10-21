@@ -9,6 +9,7 @@ import (
 
 	"github.com/titpetric/task-ui/api"
 	"github.com/titpetric/task-ui/internal/assert"
+	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/sshkey"
 )
 
@@ -41,10 +42,13 @@ func TestKey_GenerateAndList(t *testing.T) {
 	assert.Equal(t, "id_ed25519", res.str("key", "name"))
 	assert.Equal(t, "deploy", res.str("key", "comment"))
 	assert.Contains(t, res.str("key", "public_key"), "ssh-ed25519")
-	assert.Equal(t, float64(0), res.get("rekeyed"))
+	assert.Nil(t, res.get("rekeyed"), "an SSH key encrypts nothing")
 
 	list := f.call(t, asAdmin, http.MethodGet, "/keys", nil)
 	assert.Len(t, list.list("keys"), 1)
+	assert.Equal(t, f.opts.WorkspaceKeys.InstanceKey().Fingerprint, list.str("encrypt", "fingerprint"))
+	assert.NotContains(t, string(list.Raw), "PRIVATE KEY")
+	assert.Len(t, list.list("overlaps"), 0)
 
 	// Generating again keeps the old pair as a backup.
 	again := f.call(t, asAdmin, http.MethodPost, "/keys/generate", api.KeyRequest{Type: "ed25519"})
@@ -72,6 +76,23 @@ func TestKey_Upload(t *testing.T) {
 
 	bad := f.call(t, asAdmin, http.MethodPost, "/keys/upload", api.KeyRequest{Content: "not a key"})
 	assert.Equal(t, http.StatusBadRequest, bad.Status)
+
+	// An encryption key is no SSH key: the instance's, by its private
+	// or its public half, or a workspace's.
+	_, err = f.opts.WorkspaceKeys.Ensure("01ws", "task-ui ws")
+	assert.NoError(t, err)
+	for _, path := range []string{
+		filepath.Join(f.opts.WorkspaceKeys.Instance().Dir, "id_ed25519"),
+		filepath.Join(f.opts.WorkspaceKeys.Instance().Dir, "id_ed25519.pub"),
+		filepath.Join(f.opts.WorkspaceKeys.Encrypt("01ws").Dir, "id_ed25519"),
+	} {
+		data, err := os.ReadFile(path)
+		assert.NoError(t, err)
+		refused := f.call(t, asAdmin, http.MethodPost, "/keys/upload", api.KeyRequest{Content: string(data), Name: "copy"})
+		assert.Equal(t, http.StatusConflict, refused.Status, path)
+		assert.Contains(t, refused.str("error"), "never both")
+	}
+	assert.NoFileExists(t, filepath.Join(f.opts.Keys.Dir, "id_ed25519_copy"))
 }
 
 func TestKey_Delete(t *testing.T) {
@@ -89,41 +110,42 @@ func TestKey_Delete(t *testing.T) {
 	assert.Equal(t, http.StatusNotFound, missing.Status)
 }
 
-// A new key writes the secrets again for it; the last key that opens
-// them stays until another is there; a backup goes after a rekey.
+// An SSH key encrypts nothing: generating and deleting one leaves the
+// integrations' settings as they are. Rotating the instance's
+// encryption key writes them again for the new one and keeps the old
+// as a backup; with the backup gone they still open.
 func TestKey_Secrets(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
+	ctx := context.Background()
 	f.withKey(t)
-	assert.Equal(t, http.StatusOK, f.call(t, asAdmin, http.MethodPost, "/secrets", api.SecretRequest{Name: "TOKEN", Content: "hunter2"}).Status)
+	assert.NoError(t, f.opts.Secrets.Set(ctx, &model.Secret{Scope: "integration:beszel", Name: "token", Content: "hunter2"}))
+	before, err := f.opts.Secrets.Secrets.Get(ctx, model.Secret{Scope: "integration:beszel", Name: "token"})
+	assert.NoError(t, err)
 
 	rotated := f.call(t, asAdmin, http.MethodPost, "/keys/generate", api.KeyRequest{Type: "ed25519", Comment: "rotated"})
 	assert.Equal(t, http.StatusCreated, rotated.Status, string(rotated.Raw))
-	assert.Equal(t, float64(1), rotated.get("rekeyed"))
-	assert.Equal(t, "id_ed25519", rotated.str("key", "name"))
-
-	last := f.call(t, asAdmin, http.MethodDelete, "/keys/id_ed25519", nil)
-	assert.Equal(t, http.StatusConflict, last.Status)
-	assert.Contains(t, last.str("error"), "generate or upload another")
-
-	var backup string
-	for _, key := range f.opts.Keys.List() {
-		if key.Backup {
-			backup = key.Name
-		}
-	}
-	assert.Equal(t, http.StatusNoContent, f.call(t, asAdmin, http.MethodDelete, "/keys/"+backup, nil).Status)
-	secrets, err := f.opts.Secrets.For(context.Background(), "infra")
-	assert.NoError(t, err)
-	assert.Equal(t, "hunter2", secrets["TOKEN"])
-
-	// Another key, then the first can go: the secrets follow.
-	other := f.call(t, asAdmin, http.MethodPost, "/keys/generate", api.KeyRequest{Type: "rsa"})
-	assert.Equal(t, http.StatusCreated, other.Status)
 	assert.Equal(t, http.StatusNoContent, f.call(t, asAdmin, http.MethodDelete, "/keys/id_ed25519", nil).Status)
-	secrets, err = f.opts.Secrets.For(context.Background(), "infra")
+	after, err := f.opts.Secrets.Secrets.Get(ctx, model.Secret{Scope: "integration:beszel", Name: "token"})
 	assert.NoError(t, err)
-	assert.Equal(t, "hunter2", secrets["TOKEN"])
+	assert.Equal(t, before.Content, after.Content)
+
+	old := f.opts.WorkspaceKeys.InstanceKey()
+	res := f.call(t, asAdmin, http.MethodPost, "/keys/encrypt/rotate", nil)
+	assert.Equal(t, http.StatusCreated, res.Status, string(res.Raw))
+	assert.NotContains(t, string(res.Raw), "PRIVATE KEY")
+	assert.Equal(t, float64(1), res.get("rekeyed"))
+	assert.NotEqual(t, old.Fingerprint, res.str("key", "fingerprint"))
+	assert.Equal(t, old.Comment, res.str("key", "comment"))
+	keys := f.opts.WorkspaceKeys.Instance().List()
+	assert.Len(t, keys, 2)
+	assert.True(t, keys[1].Backup)
+	assert.NoError(t, f.opts.WorkspaceKeys.Instance().Delete(keys[1].Name))
+	got, err := f.opts.Secrets.Get(ctx, model.Secret{Scope: "integration:beszel", Name: "token"})
+	assert.NoError(t, err)
+	assert.Equal(t, "hunter2", got.Content)
+
+	assert.Equal(t, http.StatusForbidden, f.call(t, asOps, http.MethodPost, "/keys/encrypt/rotate", nil).Status)
 }
 
 // A key carries the roles whose runs get it: set on generate, changed on

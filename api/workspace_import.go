@@ -142,6 +142,9 @@ func (h *Handlers) restore(ctx context.Context, bundle *workspace.Bundle, target
 	manifest := bundle.Manifest
 	source := manifest.Workspace
 	dir := filepath.Join(h.opts.Root, target)
+	if err := h.opts.WorkspaceKeys.CheckBundle(bundle.Keys); err != nil {
+		return nil, nil, "", err
+	}
 	if source.SourceURL != "" {
 		if output, err := h.opts.Git.Clone(ctx, source.SourceURL, dir, source.Branch); err != nil {
 			return nil, nil, output, err
@@ -164,6 +167,9 @@ func (h *Handlers) restore(ctx context.Context, bundle *workspace.Bundle, target
 	undo.add(func() { _ = h.opts.Workspaces.Delete(context.WithoutCancel(ctx), row.ID) })
 	undo.add(func() { _ = h.opts.WorkspaceKeys.Remove(row.ID) })
 	if err := h.opts.WorkspaceKeys.Restore(row.ID, bundle.Keys); err != nil {
+		if errors.Is(err, workspace.ErrRole) {
+			return nil, nil, "", err
+		}
 		return nil, nil, "", fmt.Errorf("%w: %v", errImport, err)
 	}
 	if _, err := h.opts.WorkspaceKeys.Ensure(row.ID, "task-ui "+target); err != nil {

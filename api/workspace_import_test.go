@@ -97,26 +97,29 @@ func TestWorkspaceImport(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Contains(t, row.SourceURL, "file://")
 
-	// Over a folder held, the import answers 409; the bundle's own name
-	// is free on the other instance.
+	// Over a folder held, the import answers 409. The bundle's own name
+	// is free on this instance, but its encryption key is acme2's, and an
+	// encryption key has one holder: 409, before the import clones anything.
 	held := to.importBundle(t, asAdmin, bundle, passphrase, "acme2")
 	assert.Equal(t, http.StatusConflict, held.Status, string(held.Raw))
 	same := to.importBundle(t, asAdmin, bundle, passphrase, "")
-	assert.Equal(t, http.StatusCreated, same.Status, string(same.Raw))
-	assert.Equal(t, "acme", same.str("workspace", "folder"))
+	assert.Equal(t, http.StatusConflict, same.Status, string(same.Raw))
+	assert.Contains(t, same.str("error"), "encrypts with this key already")
+	assert.NoDirExists(t, filepath.Join(to.root, "acme"))
 
-	// A removed workspace takes its env files with it; importing it
-	// again brings them back.
+	// A removed workspace takes its env files and its keys with it;
+	// importing it again brings them back.
 	removed := to.call(t, asAdmin, http.MethodDelete, "/workspaces/acme2", nil)
 	assert.Equal(t, http.StatusNoContent, removed.Status, string(removed.Raw))
 	_, err = to.opts.Env.Managed.Get(ctx, model.EnvFile{Folder: "acme2/api", Path: ".env"})
 	assert.ErrorIs(t, err, storage.ErrNotFound)
-	kept, err := to.opts.Env.Managed.Get(ctx, model.EnvFile{Folder: "acme/api", Path: ".env"})
-	assert.NoError(t, err, "another workspace keeps its env files")
-	assert.Equal(t, "MODE=prod\n", kept.Content)
-	again := to.importBundle(t, asAdmin, bundle, passphrase, "acme2")
+	again := to.importBundle(t, asAdmin, bundle, passphrase, "")
 	assert.Equal(t, http.StatusCreated, again.Status, string(again.Raw))
-	secrets, err = to.opts.Secrets.For(ctx, "acme2/api")
+	assert.Equal(t, "acme", again.str("workspace", "folder"))
+	kept, err := to.opts.Env.Managed.Get(ctx, model.EnvFile{Folder: "acme/api", Path: ".env"})
+	assert.NoError(t, err)
+	assert.Equal(t, "MODE=prod\n", kept.Content)
+	secrets, err = to.opts.Secrets.For(ctx, "acme/api")
 	assert.NoError(t, err)
 	assert.Equal(t, "own value", secrets["OWN"])
 }
@@ -143,8 +146,9 @@ func nothing(t *testing.T, f *fixture, name string) {
 }
 
 // A wrong passphrase, a hand made tar that leaves keys/, and a bundle
-// whose secrets the bundled key does not open answer 400 and
-// leave nothing.
+// whose secrets the bundled key does not open answer 400 and leave
+// nothing; a bundle whose encryption key a workspace here holds answers
+// 409 and leaves nothing.
 func TestWorkspaceImport_Refused(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
@@ -166,17 +170,25 @@ func TestWorkspaceImport_Refused(t *testing.T) {
 	assert.NoFileExists(t, filepath.Join(filepath.Dir(f.root), "escape"))
 	nothing(t, f, "acme3")
 
+	held := f.importBundle(t, asAdmin, bundle, passphrase, "acme3")
+	assert.Equal(t, http.StatusConflict, held.Status, string(held.Raw))
+	nothing(t, f, "acme3")
+
 	// Every secret must open with the bundled key; one that does not
-	// undoes the checkout, the row, the keys and the rows made.
+	// undoes the checkout, the row, the keys and the rows made, on an
+	// instance where the bundle's key is free.
+	other := newFixture(t)
+	other.withKeyring(t)
+	other.acme(t)
 	read, err := workspace.ReadBundle(bytes.NewReader(bundle), passphrase)
 	assert.NoError(t, err)
 	read.Manifest.Secrets[len(read.Manifest.Secrets)-1].Content = "not a ciphertext"
 	read.WorkFactor = 10
 	var broken bytes.Buffer
 	assert.NoError(t, read.Write(&broken, passphrase))
-	res := f.importBundle(t, asAdmin, broken.Bytes(), passphrase, "acme3")
+	res := other.importBundle(t, asAdmin, broken.Bytes(), passphrase, "acme3")
 	assert.Equal(t, http.StatusBadRequest, res.Status, string(res.Raw))
-	nothing(t, f, "acme3")
+	nothing(t, other, "acme3")
 
 	reserved := f.importBundle(t, asAdmin, bundle, passphrase, "internal")
 	assert.Equal(t, http.StatusBadRequest, reserved.Status)

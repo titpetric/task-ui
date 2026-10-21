@@ -65,9 +65,11 @@ func TestSecrets_Encryption(t *testing.T) {
 
 	f.withKey(t)
 	body := f.page(t, asAdmin, "/settings/secrets")
-	assert.Contains(t, body, "The instance SSH key <b>id_ed25519</b> encrypts only the settings of the integrations")
+	instance := strings.ReplaceAll(f.opts.WorkspaceKeys.InstanceKey().Fingerprint, "+", "&#43;")
+	assert.Contains(t, body, "The instance's encryption key <b>"+instance+"</b>")
+	assert.Contains(t, body, "encrypts only the settings of the integrations")
 	assert.Contains(t, body, `data-api="/api/secrets/rekey"`)
-	assert.Contains(t, f.page(t, asAdmin, "/settings/keys"), "encrypted with: <b>id_ed25519</b>")
+	assert.Contains(t, f.page(t, asAdmin, "/settings/integrations"), "the instance's encryption key <b>"+instance+"</b>")
 
 	form := f.page(t, asAdmin, "/settings/secrets/new?scope=workspace:acme")
 	assert.Contains(t, form, `<optgroup label="Acme">`)

@@ -309,3 +309,29 @@ func (k *Store) Delete(name string) error {
 	}
 	return nil
 }
+
+// Fingerprint returns the SHA256 fingerprint of a key, as the store
+// lists it: of a private key's public half, in PEM or OpenSSH format,
+// or of a public key in authorized_keys format.
+func Fingerprint(data []byte) (string, error) {
+	text := []byte(strings.TrimSpace(strings.ReplaceAll(string(data), "\r\n", "\n")) + "\n")
+	if pub, _, _, _, err := ssh.ParseAuthorizedKey(text); err == nil {
+		return ssh.FingerprintSHA256(pub), nil
+	}
+	signer, err := ssh.ParsePrivateKey(text)
+	if err != nil {
+		var missing *ssh.PassphraseMissingError
+		if errors.As(err, &missing) && missing.PublicKey != nil {
+			return ssh.FingerprintSHA256(missing.PublicKey), nil
+		}
+		return "", fmt.Errorf("not a key: %w", err)
+	}
+	return ssh.FingerprintSHA256(signer.PublicKey()), nil
+}
+
+// FileFingerprint returns the fingerprint of the key in a file, from
+// its .pub sibling or the private key itself.
+func FileFingerprint(path string) (string, error) {
+	key, err := (&Store{Dir: filepath.Dir(path)}).describe(filepath.Base(path))
+	return key.Fingerprint, err
+}

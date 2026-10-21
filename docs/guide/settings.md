@@ -115,22 +115,30 @@ makes for every workspace. **Re-encrypt** writes every secret again for
 its workspace's current key, and rotating a workspace's key does it for
 that workspace. Removing a workspace removes its secrets with its keys.
 
-The instance key, `id_ed25519` or `id_rsa` when there is no ed25519 key,
+The instance's encryption key, `TASK_UI_DATA/instance/encrypt/id_ed25519`,
 encrypts only the settings of the [integrations](#integrations): with it
-gone the workspaces' secrets still open.
+gone the workspaces' secrets still open. task-ui makes it at start when
+it's missing. No SSH key encrypts or decrypts a secret (see
+[One key, one use](#one-key-one-use)).
 
 At start, task-ui moves the secrets of an instance that kept them all on
-the instance key: a secret for all folders, scope `all`, becomes `_`'s
-shared secret, `workspace:_`, and task-ui writes every other secret
-again for its workspace's key. Before it writes anything it copies the
-database to `task-ui.db.pre-workspace-keys`; a secret the instance key
-can't open stays untouched, and the log names it. The log line `secrets on
-their workspace's key` counts what moved.
+its SSH key, the `id_ed25519` or `id_rsa` of `TASK_UI_SSH_DIR`: a secret
+for all folders, scope `all`, becomes `_`'s shared secret,
+`workspace:_`, and task-ui writes every other secret again for its
+workspace's key. Before it writes anything it copies the database to
+`task-ui.db.pre-workspace-keys`. Then it writes every integration
+setting the instance's encryption key can't open again for that key,
+after a copy to `task-ui.db.pre-keysplit`; it reads each one back before
+it keeps it. A secret no key opens stays untouched, and the log names
+it. The log lines `secrets on their workspace's key` and `integrations on
+the instance's encryption key` count what moved. These moves are the
+only reads with the SSH keys; after them the SSH keys can go and every
+secret still opens.
 
 ## SSH keys
 
-The key pairs the jobs and git use to reach other hosts, and the instance
-key that encrypts the integrations' settings, marked **integrations**.
+The key pairs the jobs and git use to reach other hosts, and in a box
+of its own, **Encryption**, the instance's encryption key.
 
 ![SSH keys](../assets/keys-dark.png)
 
@@ -138,15 +146,14 @@ key that encrypts the integrations' settings, marked **integrations**.
   takes a private key you already use, unencrypted.
 - The copy button copies a public key, to add on the hosts that
   accept it.
-- **Rotate** makes a new pair of the same type; task-ui keeps the old one as a
-  backup, so the integrations' settings still open, and writes them again
-  for the new key. Nobody can delete the last key that opens them.
+- **Rotate** makes a new pair of the same type and keeps the old one as
+  a backup. An SSH key encrypts nothing, so no secret changes.
 - **Who gets it** picks whose runs get a key, in a **Roles** row and a **Users** row of boxes. A run
   started by someone with one of the key's roles, or by one of its users,
   has it in the run's ssh agent, and nothing else does: that agent is the
   only way a key reaches a run. Pick them when you generate or upload a key, or later with the
   edit button on its row. A key can have more than one, and a key with none
-  stays the instance's: git and the integrations use it, runs do not get it.
+  stays the instance's: git and the inventory's logins use it, runs do not get it.
 - **A key for someone**: pick the user under **For** when you generate or
   upload it, `alice`, and task-ui stores it as `id_ed25519_alice` beside
   the type's own key and grants it to alice. She finds it under **SSH keys** in her user
@@ -166,14 +173,52 @@ key that encrypts the integrations' settings, marked **integrations**.
   default, in every run, for git remotes and for the inventory's logins.
   The page shows them read-only, with the copy button: they come with the
   server or its image, and change there.
+- **Encryption** shows the instance's encryption key, read-only: its
+  fingerprint, the copy button and **Rotate**, which makes a new key,
+  keeps the old one beside it as a backup, `id_ed25519.bak-<time>`, and
+  writes the integrations' settings again for the new key. No run, git
+  remote or SSH connection gets it. `POST /api/keys/encrypt/rotate` does
+  the same.
+
+### One key, one use
+
+A key either encrypts secrets or authenticates SSH connections, never
+both. The encryption keys are the instance's and each workspace's
+`encrypt/` key; the SSH keys are those of `TASK_UI_SSH_DIR`, the server
+user's `~/.ssh` and each workspace's `ssh/`.
+
+- No encryption key goes into a run's ssh agent, into git's ssh command,
+  into a policy or a grant, or onto the SSH key lists, wherever a copy of
+  it lies.
+- No SSH key is an age recipient or opens a secret.
+- An upload of key material, its private or its public half, that
+  another store holds for the other use, in the instance or in any
+  workspace, answers `409` and writes nothing. So does an encryption
+  key another workspace or the instance holds already. A generated key
+  is new, so it never collides.
+- At start, task-ui looks for a key both an encryption store and an SSH
+  store hold, by fingerprint, and logs a warning naming both paths; the
+  SSH keys page shows it in red. task-ui deletes no key: remove the SSH
+  copy, or generate a new SSH key in its place.
+
+```sh
+curl -s https://task.example.com/api/keys -H "Authorization: Bearer $TOKEN"
+curl -s -X POST https://task.example.com/api/keys/encrypt/rotate \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+`GET /api/keys` lists the SSH keys, the instance's encryption key as
+`encrypt`, public half and fingerprint, and the keys held for both uses
+as `overlaps`. The rotation answers the new key and `rekeyed`, the
+count of integration settings task-ui wrote again.
 
 ## Integrations
 
 ![Integrations](../assets/integrations-dark.png)
 
 The services task-ui talks to, with their API keys and tokens. task-ui
-encrypts them with the instance key, which the workspaces' secrets don't
-use, and never
+encrypts them with the instance's encryption key, which the workspaces'
+secrets don't use, and never
 shows them again: a form marks a secret with a value as **set**, and an empty secret
 field keeps it on save. The Secrets page leaves them out, and no run sees
 them as secrets. A switch beside each integration's name shows or hides

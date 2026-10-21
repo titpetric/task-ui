@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"os"
 	"testing"
 
 	"github.com/titpetric/task-ui/api"
@@ -93,17 +94,22 @@ func TestSecret_ListAndDelete(t *testing.T) {
 	assert.Equal(t, http.StatusNoContent, again.Status)
 }
 
-// Without a key to encrypt with the store keeps no secret; a rekey writes every
-// secret again for the current keys.
+// Without an encryption key the store keeps no secret, whatever SSH
+// keys there are; a rekey writes every secret again for the current
+// keys.
 func TestSecret_Encryption(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
+	assert.NoError(t, os.RemoveAll(f.opts.WorkspaceKeys.Instance().Dir))
 
 	none := f.call(t, asAdmin, http.MethodPost, "/secrets", api.SecretRequest{Name: "TOKEN", Content: "x"})
 	assert.Equal(t, http.StatusConflict, none.Status)
-	assert.Contains(t, none.str("error"), "generate an ed25519 or RSA key")
+	assert.Contains(t, none.str("error"), "no encryption key")
 
 	f.withKey(t)
+	assert.Equal(t, http.StatusConflict, f.call(t, asAdmin, http.MethodPost, "/secrets", api.SecretRequest{Name: "TOKEN", Content: "x"}).Status, "an SSH key does not encrypt")
+	_, err := f.opts.WorkspaceKeys.EnsureInstance("task-ui instance")
+	assert.NoError(t, err)
 	assert.Equal(t, http.StatusOK, f.call(t, asAdmin, http.MethodPost, "/secrets", api.SecretRequest{Name: "TOKEN", Content: "x"}).Status)
 	raw, err := f.opts.Secrets.Secrets.List(context.Background())
 	assert.NoError(t, err)

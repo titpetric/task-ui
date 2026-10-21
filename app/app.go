@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync/atomic"
 	"time"
 
@@ -126,14 +127,29 @@ func (a *App) prepare(ctx context.Context) error {
 	return storage.NewWorkflowRunStorage(a.DB).Interrupt(ctx, "task-ui restarted while it ran")
 }
 
-// ensureKeys makes the key directories of every workspace, the default
-// one among them, and its encryption key when it has none.
+// ensureKeys makes the instance's encryption key and the key
+// directories of every workspace, the default one among them, with its
+// encryption key, each when there is none. It warns of a key held for
+// both uses, encryption and SSH, and removes nothing.
 func (a *App) ensureKeys(ctx context.Context) error {
 	workspaces, err := storage.NewWorkspaceStorage(a.DB).List(ctx)
 	if err != nil {
 		return err
 	}
 	keyring := a.Config.Keyring()
+	made, err := keyring.EnsureInstance("task-ui instance")
+	if err != nil {
+		return fmt.Errorf("the instance's encryption key: %w", err)
+	}
+	if made {
+		slog.Info("instance encryption key generated", "dir", keyring.Instance().Dir)
+	}
+	defer func() {
+		for _, overlap := range keyring.Overlaps() {
+			slog.Warn("a key is both an encryption key and an SSH key: runs and git leave it out; remove one of the copies",
+				"fingerprint", overlap.Fingerprint, "encrypt", strings.Join(overlap.Encrypt, ","), "ssh", strings.Join(overlap.Access, ","))
+		}
+	}()
 	for _, ws := range workspaces {
 		made, err := keyring.Ensure(ws.ID, "task-ui "+ws.Folder)
 		if err != nil {
@@ -194,15 +210,15 @@ func (a *App) wire(version string) error {
 	workflows := storage.NewWorkflowStorage(db)
 	workflowRuns := storage.NewWorkflowRunStorage(db)
 	refs := storage.NewFolderRefStorage(db)
-	g := &git.Git{SSHDir: cfg.SSHDir}
+	keyring, grants := cfg.Keyring(), storage.NewWorkspaceKeyGrantStorage(db)
+	g := &git.Git{SSHDir: cfg.SSHDir, Withhold: keyring.Encrypts}
 	keys := &sshkey.Store{Dir: cfg.SSHDir}
 	var homeKeys *sshkey.Store
 	if dir := filepath.Join(home(), ".ssh"); filepath.Clean(dir) != filepath.Clean(cfg.SSHDir) {
 		homeKeys = &sshkey.Store{Dir: dir}
 	}
 	keyPolicies := storage.NewSSHKeyPolicyStorage(db)
-	keyring, grants := cfg.Keyring(), storage.NewWorkspaceKeyGrantStorage(db)
-	secrets := a.secrets(keys)
+	secrets := a.secrets()
 	env := envfile.New(storage.NewEnvFileStorage(db), secrets)
 	integrations := &integration.Store{Secrets: secrets}
 	prober := &sshprobe.Prober{

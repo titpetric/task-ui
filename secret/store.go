@@ -22,6 +22,11 @@ type Store struct {
 	// vault of its key. Nil keeps every secret on Vault and every
 	// folder in the default workspace.
 	Workspaces *Workspaces
+	// Legacy is the vault over the SSH keys that encrypted the secrets
+	// before encryption had keys of its own. Only the migrations read
+	// with it, and nothing writes for it; the store that serves
+	// requests has none.
+	Legacy *Vault
 }
 
 // New returns a store over the rows and the instance vault.
