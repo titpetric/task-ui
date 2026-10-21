@@ -132,6 +132,7 @@ func (h *Handlers) Routes() http.Handler {
 	r.Delete("/keys/{name}", h.deleteKey)
 
 	r.Get("/sources/*", h.getSource)
+	r.Get("/files/*", h.viewFile)
 	r.Get("/env/*", h.getEnv)
 	r.Put("/env/*", h.putEnv)
 

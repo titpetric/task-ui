@@ -16,7 +16,6 @@ import (
 
 	"github.com/titpetric/task-ui/access"
 	"github.com/titpetric/task-ui/diskusage"
-	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/frontend/view"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/runner"
@@ -145,15 +144,21 @@ func (h *Handlers) artifactVersion(w http.ResponseWriter, r *http.Request, rel, 
 // serveArtifact writes a file of the artifact tree, inline unless the
 // query carries ?download.
 func serveArtifact(w http.ResponseWriter, r *http.Request, rel string, modified time.Time, content io.ReadSeeker) {
+	serveFile(w, r, rel, runner.ContentType(rel), modified, content)
+}
+
+// serveFile writes a file a run or a checkout holds as its type says,
+// inline unless the query carries ?download.
+func serveFile(w http.ResponseWriter, r *http.Request, rel, contentType string, modified time.Time, content io.ReadSeeker) {
 	disposition := "inline"
 	if _, ok := r.URL.Query()["download"]; ok {
 		disposition = "attachment"
 	}
-	w.Header().Set("Content-Type", runner.ContentType(rel))
+	w.Header().Set("Content-Type", contentType)
 	w.Header().Set("Content-Disposition", disposition+`; filename="`+strings.ReplaceAll(path.Base(rel), `"`, "")+`"`)
 	w.Header().Set("X-Content-Type-Options", "nosniff")
-	// A run wrote the file: an svg or an html page opens without its
-	// scripts, in a sandbox of its own.
+	// A run or a commit wrote the file: an svg or an html page opens
+	// without its scripts, in a sandbox of its own.
 	w.Header().Set("Content-Security-Policy", "default-src 'none'; img-src 'self' data:; style-src 'unsafe-inline'; sandbox")
 	w.Header().Set("Cache-Control", "no-cache")
 	http.ServeContent(w, r, "", modified, content)
@@ -210,16 +215,6 @@ func escapePath(p string) string {
 		parts[i] = url.PathEscape(part)
 	}
 	return strings.Join(parts, "/")
-}
-
-// linkTree links each directory of a listing inside a folder to its page.
-func linkTree(items []folder.Item, base string) []folder.Item {
-	for i := range items {
-		if items[i].Dir {
-			items[i].Href = base + escapePath(items[i].Name)
-		}
-	}
-	return items
 }
 
 // artifactArchive serves a directory of the artifact tree as a gzipped

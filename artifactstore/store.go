@@ -179,13 +179,20 @@ func (s *Store) Path(rel string) (string, error) {
 }
 
 // List returns what a directory of the tree holds, the latest versions,
-// directories first. The repository itself is not listed.
+// directories first. The repository itself and the other dot entries are
+// not listed.
 func (s *Store) List(rel string) []folder.Item {
 	dir, err := s.Path(rel)
 	if err != nil {
 		return nil
 	}
-	return folder.Listing(dir)
+	items := []folder.Item{}
+	for _, item := range folder.Listing(dir) {
+		if !strings.HasPrefix(item.Name, ".") {
+			items = append(items, item)
+		}
+	}
+	return items
 }
 
 // Empty deletes the tree and its history; the next Ingest starts over.

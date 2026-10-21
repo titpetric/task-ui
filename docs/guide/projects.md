@@ -109,8 +109,18 @@ Open a folder from the sidebar:
   went, **Run** and **Run force**. **Run all** starts every job of the
   folder in the background. A folder with more than one source has a section
   per source.
-- **Files**: what the folder holds, each with its size and when it
-  changed; a directory opens.
+- **Files**: what the folder holds, dot entries too, each with its size
+  and when it changed, and `..` up a level. A directory opens as a page
+  of its own; a file opens in a window, an image shown, markdown
+  rendered, text coloured and cut past 1 MiB, with **Download** beside.
+  A file that runs, executable or with a shebang on its first line,
+  carries `#!` and **exec**, and **Run** for those the folder lets run:
+  it starts the file as the job `./<path>`, from the folder, and opens
+  the run's window. Its history is at the file's path under the folder.
+- **Sealed entries**: `.git`, `.env`, `.env.*`, `.htpasswd` and
+  `.htaccess` list with a lock and open nothing, nor does a path through
+  them, on the page or over the API. Nor does a symlink that leads out
+  of the checkout. Whoever has the server reaches them there.
 - **Folder**: its path, its sources, who can run it, its hours, the
   files it includes, its schedules. **Show** beside a pipeline file opens
   it, coloured, in a window. A folder in a git checkout also shows the

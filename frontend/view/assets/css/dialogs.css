@@ -115,7 +115,11 @@ pre.code {
   line-height: 1.5;
   white-space: pre;
   tab-size: 4;
+}
 
+/* The highlight package's classes, in the source window and in a text
+   file of a checkout in the preview window. */
+:is(pre.code, .preview-doc.text pre) {
   & .k { color: #7cb7e8; }
   & .c { color: var(--text-faint); font-style: italic; }
   & .s { color: var(--ok); }

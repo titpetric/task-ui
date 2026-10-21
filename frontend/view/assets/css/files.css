@@ -1,65 +1,52 @@
-/* What a folder holds: directories first, then files, each with its
-   size and when it changed; a name that links opens the directory or the
-   file. */
-.tree {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));
-  gap: 0.1rem 1.5rem;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  font-family: var(--font);
-  font-size: var(--fs-sm);
-}
+/* What a directory holds, the artifact tree's or a checkout's: a row per
+   directory or file, its size, when it changed and its actions on the
+   right. A file that runs carries #! in the icon's column; a sealed
+   entry is listed muted, locked, with nothing to click. */
+.file-table {
+  & td.key {
+    & .ic,
+    & .shebang {
+      width: 0.9rem;
+      margin-inline-end: 0.35rem;
+      vertical-align: -0.12rem;
+    }
 
-.tree li {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  min-width: 0;
-  padding: 0.25rem 0;
-  border-bottom: 1px solid var(--line);
-  color: var(--text-dim);
+    & .ic {
+      height: 0.9rem;
+      color: var(--text-faint);
 
-  & .ic {
-    flex: none;
-    width: 0.9rem;
-    height: 0.9rem;
-    color: var(--text-faint);
-  }
+      &.dir {
+        color: var(--signal);
+      }
+    }
 
-  &.dir .ic {
-    color: var(--signal);
-  }
-
-  & a,
-  & > span {
-    flex: 1;
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  & a {
-    color: var(--text);
-
-    &:hover {
+    & .shebang {
+      vertical-align: 0;
       color: var(--signal);
+    }
+
+    & .badge {
+      margin-inline-start: 0.4rem;
     }
   }
 
-  & .meta {
-    flex: none;
-    color: var(--text-faint);
-    font-size: var(--fs-xs);
+  & .num {
+    text-align: end;
     font-variant-numeric: tabular-nums;
-    white-space: nowrap;
   }
 
-  &.empty {
-    color: var(--text-faint);
-    border-bottom: 0;
+  & tr.sealed {
+    cursor: not-allowed;
+
+    & td,
+    & td.key .ic {
+      color: var(--text-faint);
+    }
+  }
+
+  & .badge.exec {
+    color: var(--signal);
+    border-color: color-mix(in srgb, var(--signal) 50%, transparent);
   }
 }
 

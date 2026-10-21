@@ -24,13 +24,15 @@ route or a tool only for a need these cannot serve, and states the reason.
 | `workspace` on `PUT /api/projects/{folder}` | **Workspace** on a project's configure page: moves the project's checkout, row and the users' folder grants to another workspace. No route changed a folder's ID. `left` lists the schedules, secrets, env files and workflow steps that still name the old one |
 | `workspace:<name>` scope on `/api/secrets`, `rekeyed` on `POST /api/workspaces/{folder}/keys/generate` and `/upload` | Secrets per workspace: a workspace's shared secrets, encrypted with its key and kept from every other workspace. `all` or no scope is the default workspace's, `workspace:_`; a rotation of a workspace's key writes its secrets again |
 | `POST /api/workspaces/{folder}/export`, `POST /api/workspaces/import` | **Export** on a workspace's configure page and **Import** on the Workspaces page: a workspace moves between instances with its keys, its grants and its secrets' ciphertext, which no route hands out. A POST keeps the passphrase out of the URL |
+| `GET /api/files/{folder}/{path}` | The preview window on a folder page's **Files**: a file of the checkout, rendered as `/api/artifacts/files/{path}` renders an artifact. `/api/sources` serves only the files a pipeline reads, and no route served the rest |
+| `./<path>` as `job` on `POST /api/runs` | **Run** beside a file that runs on a folder page's **Files**: the file as a job of its folder, under the folder's allow rules and hours, with the env, keys and pull of any job. A file outside the scripts folder had no job ID. `run_job`, schedules and workflow steps resolve a job the same way and take it too |
 | `summarize` on `POST /api/inventory/run` | **Run and summarize** on the Inventory page: Claude reads every host's output as one report, after the run, in the same request |
 
 | Method | Path | Does |
 |--------|------|------|
 | `GET` | `/api/folders?folder=` | the folders you can see and their jobs, with `can_run` and `last_run` |
 | `GET` | `/api/runs?folder=&job=&state=&limit=` | the runs, newest first, with `live`, `attached` and `can_run` |
-| `POST` | `/api/runs` `{folder, job, force, reason, cols, rows}` | starts a run; `409` with the run in the way unless forced; `403` out of hours unless forced with a reason |
+| `POST` | `/api/runs` `{folder, job, force, reason, cols, rows}` | starts a run; `job` is a job's ID, or `./<path>` for a file of the folder that runs, executable or with a shebang; `409` with the run in the way unless forced; `403` out of hours unless forced with a reason |
 | `GET` | `/api/runs/{id}` | one run |
 | `POST` | `/api/runs/{id}/stop`, `/kill` | ends a run |
 | `GET` | `/api/runs/{id}/frame.svg`, `/frame.txt`, `/cast` | the last frame, the recording |
@@ -59,6 +61,7 @@ route or a tool only for a need these cannot serve, and states the reason.
 | `POST` | `/api/secrets/rekey` | writes every secret again for its scope's current key, a workspace's or, for the integrations, the instance key |
 | `GET` `POST` `PUT` `DELETE` | `/api/keys`, `/api/keys/generate`, `/api/keys/upload`, `/api/keys/{name}` | `{type, name, comment, policies, users}`, `{content, name, comment, policies, users}`; `name` makes `id_<type>_<name>` for someone; `PUT` sets a key's `{policies, users}`, the roles and users whose runs get it; a new key rekeys the secrets, the last key that opens them cannot go |
 | `GET` `PUT` | `/api/env/{folder}`, `/api/env/{folder}/{path}` | the env files; `{content}` saves and generates |
+| `GET` | `/api/files/{folder}/{path}` | a file of a folder's checkout, for whoever sees the folder: `kind` (`image`, `markdown`, `text` or `file`), markdown as `html`, text as `text` and coloured as `html`, `truncated` past 1 MiB; `404` for a directory, a path with `..`, a symlink out of the checkout, and `.git`, `.env`, `.env.*`, `.htpasswd`, `.htaccess` or a path through one. `/files/{folder}/{path}` is the file itself, `?download` to save it |
 
 ## MCP
 

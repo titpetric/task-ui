@@ -1452,10 +1452,10 @@
       });
   });
 
-  // The preview window: an image of a folder's tree, scaled to fit, or a
-  // file of the artifact tree, an image, markdown rendered, or text, with
-  // a pick of the versions the runs wrote. The link still opens the file
-  // on its own with Ctrl or a middle click.
+  // The preview window: a file of the artifact tree, an image scaled to
+  // fit, markdown rendered, or text, with a pick of the versions the runs
+  // wrote, or a file of a checkout the same way, without versions. The link still opens the file on its own
+  // with Ctrl or a middle click.
   var previewDialog = document.getElementById("preview-dialog");
   if (previewDialog) {
     var previewImage = document.getElementById("preview-image");
@@ -1481,8 +1481,39 @@
       previewDoc.className = "preview-doc " + kind;
       previewDoc.innerHTML = html;
     };
+    var previewLabel = document.getElementById("preview-label");
+    var showView = function (view, src) {
+      previewDownload.setAttribute("href", src + (src.indexOf("?") < 0 ? "?" : "&") + "download");
+      if (view.kind === "image") showImage(src);
+      else if (view.kind === "markdown") showDoc(view.html, "markdown");
+      else if (view.kind === "text") {
+        var cut = view.truncated ? '<p class="faint">The first ' + escapeHTML(String(view.text.length)) + " characters of " +
+          escapeHTML(String(view.byte_size)) + ' bytes. Download it for the rest.</p>' : "";
+        showDoc(cut + "<pre>" + (view.html || escapeHTML(view.text)) + "</pre>", "text");
+      }
+      else showDoc('<p class="faint">No preview for this file, ' + escapeHTML(view.content_type) + ". Download it to open it.</p>", "text");
+    };
+    // openCheckout opens a file of a folder's checkout: its link is where
+    // it opens on its own, and the API answers the same path.
+    var openCheckout = function (href, rel) {
+      previewPath = href;
+      previewLabel.textContent = "File";
+      previewVersion.hidden = true;
+      document.getElementById("preview-title").textContent = rel;
+      showDoc('<p class="faint">Loading…</p>', "text");
+      if (!previewDialog.open) previewDialog.showModal();
+      api("GET", "/api" + href).then(function (res) {
+        if (href !== previewPath) return;
+        if (res.status !== 200) {
+          showDoc('<p class="form-error">' + escapeHTML(res.data.error || ("HTTP " + res.status)) + "</p>", "text");
+          return;
+        }
+        showView(res.data, href);
+      });
+    };
     var openFile = function (rel, version) {
       previewPath = rel;
+      previewLabel.textContent = "Artifact";
       document.getElementById("preview-title").textContent = rel;
       showDoc('<p class="faint">Loading…</p>', "text");
       if (!previewDialog.open) previewDialog.showModal();
@@ -1499,12 +1530,7 @@
             escapeHTML((i === 0 ? "latest · " : "") + when + " · " + v.folder + "/" + v.job) + "</option>";
         }).join("");
         previewVersion.hidden = view.versions.length < 2;
-        var src = fileURL(rel, view.version);
-        previewDownload.setAttribute("href", src + (src.indexOf("?") < 0 ? "?" : "&") + "download");
-        if (view.kind === "image") showImage(src);
-        else if (view.kind === "markdown") showDoc(view.html, "markdown");
-        else if (view.kind === "text") showDoc("<pre>" + escapeHTML(view.text) + "</pre>", "text");
-        else showDoc('<p class="faint">No preview for this file, ' + escapeHTML(view.content_type) + ". Download it to open it.</p>", "text");
+        showView(view, fileURL(rel, view.version));
       });
     };
     previewVersion.addEventListener("change", function () { openFile(previewPath, previewVersion.value); });
@@ -1517,17 +1543,10 @@
         openFile(artifact.dataset.artifact, artifact.dataset.version || "");
         return;
       }
-      var link = event.target.closest("a[data-preview]");
-      if (!link) return;
+      var checkout = event.target.closest("a[data-file]");
+      if (!checkout) return;
       event.preventDefault();
-      previewPath = "";
-      var title = link.dataset.previewTitle || link.textContent;
-      document.getElementById("preview-title").textContent = title;
-      previewDownload.setAttribute("href", link.dataset.preview + "?download");
-      previewVersion.hidden = true;
-      previewImage.alt = title;
-      showImage(link.dataset.preview);
-      previewDialog.showModal();
+      openCheckout(checkout.getAttribute("href"), checkout.dataset.file);
     });
   }
 

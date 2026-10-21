@@ -4,7 +4,6 @@ import (
 	"net/http"
 	"os"
 	"path"
-	"path/filepath"
 	"strings"
 
 	"github.com/titpetric/task-ui/access"
@@ -65,8 +64,10 @@ func (h *Handlers) folderAt(w http.ResponseWriter, r *http.Request, path string)
 		h.envFile(w, r, f, strings.TrimPrefix(rest, "env/"))
 	case !strings.Contains(rest, "/") && f.Job(rest) != nil:
 		h.job(w, r, f, rest)
-	case isDirIn(f.Dir, rest):
+	case isDirIn(f, rest):
 		h.browse(w, r, f, rest)
+	case fileJob(f, rest) != "":
+		h.job(w, r, f, fileJob(f, rest))
 	case !strings.Contains(rest, "/"):
 		h.job(w, r, f, rest)
 	default:
@@ -118,16 +119,25 @@ func (h *Handlers) defaultWorkspace(w http.ResponseWriter, r *http.Request) {
 	h.render(w, http.StatusOK, "folder", p)
 }
 
-// isDirIn reports whether rel names a directory inside dir, without
-// leaving it.
-func isDirIn(dir, rel string) bool {
-	for _, segment := range strings.Split(rel, "/") {
-		if segment == "" || segment == "." || segment == ".." {
-			return false
-		}
+// isDirIn reports whether rel names a directory inside the folder that
+// task-ui opens: not sealed, not reached through a symlink out of it.
+func isDirIn(f *folder.Folder, rel string) bool {
+	dir, ok := f.Path(rel)
+	if !ok || rel == "" {
+		return false
 	}
-	info, err := os.Stat(filepath.Join(dir, filepath.FromSlash(rel)))
+	info, err := os.Stat(dir)
 	return err == nil && info.IsDir()
+}
+
+// fileJob returns the ID of the job that runs the file rel names, with
+// or without the ./ of its ID, or "" when the file does not run.
+func fileJob(f *folder.Folder, rel string) string {
+	id := folder.FilePrefix + strings.TrimPrefix(rel, folder.FilePrefix)
+	if f.Job(id) == nil {
+		return ""
+	}
+	return id
 }
 
 // browse shows a directory inside a folder that is not a folder itself:
@@ -136,7 +146,12 @@ func (h *Handlers) browse(w http.ResponseWriter, r *http.Request, f *folder.Fold
 	p := h.page(r, path.Base(rel))
 	p.Folder = f
 	p.Browse = rel + "/"
-	p.Tree = linkTree(folder.Listing(filepath.Join(f.Dir, filepath.FromSlash(rel))), p.Href(f.ID)+"/"+escapePath(rel)+"/")
+	dir, _ := f.Path(rel)
+	p.Tree = h.checkoutTree(p, f, rel, folder.Listing(dir))
+	p.Up = p.Href(f.ID)
+	if parent := path.Dir(rel); parent != "." {
+		p.Up += "/" + escapePath(parent)
+	}
 	p.Crumbs = crumbsOf(f.ID+"/"+rel, "", p.Workspaces)
 	h.render(w, http.StatusOK, "browse", p)
 }
@@ -146,7 +161,11 @@ func (h *Handlers) browse(w http.ResponseWriter, r *http.Request, f *folder.Fold
 func (h *Handlers) folder(w http.ResponseWriter, r *http.Request, f *folder.Folder) {
 	p := h.page(r, f.Title)
 	p.Folder = f
-	p.Tree = linkTree(folder.Listing(f.Dir), p.Href(f.ID)+"/")
+	p.Tree = h.checkoutTree(p, f, "", folder.Listing(f.Dir))
+	p.Up = "/f/" + model.Default
+	if parent := f.Parent(); parent != "" {
+		p.Up = p.Href(parent)
+	}
 	p.Crumbs = crumbsOf(f.ID, "", p.Workspaces)
 	if h.opts.Git != nil && h.opts.Git.IsRepo(f.Dir) {
 		p.Checkout = h.opts.Git.Info(f.Dir)

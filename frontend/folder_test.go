@@ -94,8 +94,9 @@ func TestFolder_Missing(t *testing.T) {
 }
 
 // The folder page lists what the folder holds, directories first and
-// linked, files after and plain; a directory with nothing to run opens
-// as a page of its own, down to any depth.
+// linked, files after, each opening in the preview window; a directory
+// with nothing to run opens as a page of its own, down to any depth,
+// with .. up a level.
 func TestFolder_Tree(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
@@ -106,22 +107,92 @@ func TestFolder_Tree(t *testing.T) {
 	body := f.page(t, asOps, "/f/_/infra")
 	assert.Contains(t, body, `<a href="/f/_/infra/edge">edge</a>`) // a folder of the catalogue
 	assert.Contains(t, body, `<a href="/f/_/infra/terraform">terraform</a>`)
-	assert.Contains(t, body, `<span>README.md</span>`)
-	assert.NotContains(t, body, `href="/f/_/infra/README.md"`)
-	assert.True(t, strings.Index(body, `>terraform</a>`) < strings.Index(body, `<span>README.md</span>`), "folders before files")
+	assert.Contains(t, body, `<a href="/files/infra/README.md" data-file="README.md">README.md</a>`)
+	assert.Contains(t, body, `href="/files/infra/README.md?download"`)
+	assert.Contains(t, body, `<a href="/f/_" title="Up a level">..</a>`)
+	assert.True(t, strings.Index(body, `>terraform</a>`) < strings.Index(body, `>README.md</a>`), "folders before files")
 
 	sub := f.page(t, asOps, "/f/_/infra/terraform")
 	assert.Contains(t, sub, "<h2>")
 	assert.Contains(t, sub, `<a href="/f/_/infra/terraform/modules">modules</a>`)
-	assert.Contains(t, sub, `<span>main.tf</span>`)
+	assert.Contains(t, sub, `<a href="/files/infra/terraform/main.tf" data-file="terraform/main.tf">main.tf</a>`)
 	assert.Contains(t, sub, `<a href="/f/_/infra">infra</a>`) // the crumb back
+	assert.Contains(t, sub, `<a href="/f/_/infra" title="Up a level">..</a>`)
 	assert.Contains(t, sub, "Nothing to run")
 	deep := f.page(t, asOps, "/f/_/infra/terraform/modules")
 	assert.Contains(t, deep, `<a href="/f/_/infra/terraform">terraform</a>`)
+	assert.Contains(t, deep, `<a href="/f/_/infra/terraform" title="Up a level">..</a>`)
+	edge := f.page(t, asOps, "/f/_/infra/edge")
+	assert.Contains(t, edge, `<a href="/f/_/infra" title="Up a level">..</a>`)
 
 	assert.Equal(t, http.StatusNotFound, f.get(t, asOps, "/f/_/infra/nowhere").Status)
 	assert.Equal(t, http.StatusNotFound, f.get(t, asOps, "/f/_/infra/terraform/README.md").Status) // a file is not a page
 	assert.Equal(t, http.StatusNotFound, f.get(t, asLimited, "/f/_/private/anything").Status)
+}
+
+// The page lists dot entries; the sealed ones, .git, .env and the like,
+// list muted, with no link, and neither the pages nor /files/ open
+// them or anything through them. A symlink out of the checkout opens
+// nothing either.
+func TestFolder_Sealed(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	dir := f.infra.Dir
+	for name, content := range map[string]string{".git/config": "[core]\n", ".env": "A=1\n", ".env.local": "B=2\n", "web/.htaccess": "deny\n", ".claude/settings.json": "{}\n", ".gitignore": "x\n"} {
+		assert.NoError(t, os.MkdirAll(filepath.Join(dir, filepath.Dir(name)), 0o755))
+		assert.NoError(t, os.WriteFile(filepath.Join(dir, name), []byte(content), 0o644))
+	}
+	assert.NoError(t, os.WriteFile(filepath.Join(f.root, "outside.txt"), []byte("outside\n"), 0o644))
+	assert.NoError(t, os.Symlink(filepath.Join(f.root, "outside.txt"), filepath.Join(dir, "escape.txt")))
+	assert.NoError(t, os.Symlink(f.root, filepath.Join(dir, "rootlink")))
+
+	body := f.page(t, asOps, "/f/_/infra")
+	assert.Contains(t, body, `<tr class="sealed" aria-disabled="true" title=".git is listed, but task-ui does not open it">`)
+	assert.Contains(t, body, `<span>.git</span>`)
+	assert.Contains(t, body, `<span>.env</span>`)
+	assert.Contains(t, body, `<span>.env.local</span>`)
+	assert.NotContains(t, body, `href="/f/_/infra/.git"`)
+	assert.NotContains(t, body, `/files/infra/.env`)
+	assert.Contains(t, body, `<a href="/f/_/infra/.claude">.claude</a>`)
+	assert.Contains(t, body, `data-file=".gitignore"`)
+	assert.Contains(t, body, `<span>escape.txt</span>`)
+	assert.NotContains(t, body, `/files/infra/escape.txt`)
+	assert.Contains(t, f.page(t, asOps, "/f/_/infra/web"), `<span>.htaccess</span>`)
+
+	for _, path := range []string{"/f/_/infra/.git", "/f/_/infra/rootlink", "/f/_/infra/web/.htaccess"} {
+		assert.Equal(t, http.StatusNotFound, f.get(t, asOps, path).Status, path)
+	}
+	for _, path := range []string{
+		"/files/infra/.git/config", "/files/infra/.env", "/files/infra/.env.local", "/files/infra/web/.htaccess",
+		"/files/infra/escape.txt", "/files/infra/rootlink/outside.txt", "/files/infra/../outside.txt", "/files/infra/web/../.env",
+	} {
+		assert.Equal(t, http.StatusNotFound, f.get(t, asOps, path).Status, path)
+	}
+}
+
+// A file that runs carries #! and exec, and has Run for those the
+// folder lets run, which starts the job ./<path>; its history opens by
+// its path.
+func TestFolder_Executable(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	assert.NoError(t, os.MkdirAll(filepath.Join(f.infra.Dir, "bin"), 0o755))
+	assert.NoError(t, os.WriteFile(filepath.Join(f.infra.Dir, "bin", "hello"), []byte("#!/bin/sh\necho hello\n"), 0o755))
+	assert.NoError(t, os.WriteFile(filepath.Join(f.infra.Dir, "tool.py"), []byte("#!/usr/bin/env python3\n"), 0o644))
+
+	ops := f.page(t, asOps, "/f/_/infra/bin")
+	assert.Contains(t, ops, `<i class="shebang" aria-hidden="true">#!</i> <a href="/files/infra/bin/hello" data-file="bin/hello">hello</a> <span class="badge exec"`)
+	assert.Contains(t, ops, `data-run data-folder="infra" data-job="./bin/hello" data-title="infra / bin/hello"`)
+	assert.Contains(t, f.page(t, asOps, "/f/_/infra"), `data-job="./tool.py"`)
+
+	viewer := f.page(t, asViewer, "/f/_/infra/bin")
+	assert.Contains(t, viewer, `<span class="badge exec"`)
+	assert.NotContains(t, viewer, `data-job="./bin/hello"`)
+
+	job := f.get(t, asOps, "/f/_/infra/bin/hello")
+	assert.Equal(t, http.StatusOK, job.Status)
+	assert.Contains(t, job.Body, "<h2>bin/hello")
+	assert.Equal(t, http.StatusOK, f.get(t, asOps, "/f/_/infra/./bin/hello").Status)
 }
 
 // The sidebar heads each top level folder with its name and its jobs,
