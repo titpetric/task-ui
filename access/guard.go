@@ -51,11 +51,11 @@ func (g *Guard) User(r *http.Request) *model.User {
 	if err != nil {
 		return nil
 	}
-	name, err := g.Sessions.Verify(cookie.Value)
+	user, err := g.Sessions.Resolve(r.Context(), cookie.Value)
 	if err != nil {
 		return nil
 	}
-	return g.lookup(r.Context(), name)
+	return user
 }
 
 // bearer resolves the user of a token, and records its use.
@@ -107,31 +107,41 @@ func (g *Guard) wantsPage(r *http.Request) bool {
 		!strings.HasPrefix(r.URL.Path, "/api/") && !strings.HasPrefix(r.URL.Path, "/ws/")
 }
 
-// SetCookie issues the session cookie of a user.
-func (g *Guard) SetCookie(w http.ResponseWriter, r *http.Request, user *model.User) {
+// SetCookie opens a session for a user and issues its cookie.
+func (g *Guard) SetCookie(w http.ResponseWriter, r *http.Request, user *model.User) error {
+	token, err := g.Sessions.Issue(r.Context(), user)
+	if err != nil {
+		return err
+	}
 	http.SetCookie(w, &http.Cookie{
 		Name:     Cookie,
-		Value:    g.Sessions.Issue(user.Name),
+		Value:    token,
 		Path:     "/",
 		HttpOnly: true,
 		Secure:   IsHTTPS(r),
 		SameSite: http.SameSiteStrictMode,
 		MaxAge:   int(g.Sessions.TTL().Seconds()),
 	})
+	return nil
 }
 
-// ClearCookie ends the session. Secure says whether the site runs
-// over https, which IsHTTPS tells from the request.
-func (g *Guard) ClearCookie(w http.ResponseWriter, secure bool) {
+// ClearCookie ends the session of a request: it deletes the session, so
+// the old cookie signs in nobody, and clears the cookie.
+func (g *Guard) ClearCookie(w http.ResponseWriter, r *http.Request) error {
+	var err error
+	if cookie, cerr := r.Cookie(Cookie); cerr == nil {
+		err = g.Sessions.Revoke(r.Context(), cookie.Value)
+	}
 	http.SetCookie(w, &http.Cookie{
 		Name:     Cookie,
 		Value:    "",
 		Path:     "/",
 		HttpOnly: true,
-		Secure:   secure,
+		Secure:   IsHTTPS(r),
 		SameSite: http.SameSiteStrictMode,
 		MaxAge:   -1,
 	})
+	return err
 }
 
 // IsHTTPS reports whether the request came over TLS, directly or through

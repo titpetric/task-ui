@@ -60,7 +60,11 @@ func TestNewUsersFile(t *testing.T) {
 func TestUsersFile_Sync(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
-	users, passwords := newUsers(t)
+	db, err := storage.OpenAndMigrate(ctx, ":memory:")
+	assert.NoError(t, err)
+	t.Cleanup(func() { db.Close() })
+	users, passwords := storage.NewUserStorage(db), storage.NewUserAuthPasswordStorage(db)
+	sessions := access.NewSessions(storage.NewUserSessionStorage(db), users, time.Hour)
 	path := htpasswdFile(t, "admin", "ops", "guest")
 	f := app.NewUsersFile(path, []string{"admin"}, []string{"guest"})
 
@@ -76,6 +80,13 @@ func TestUsersFile_Sync(t *testing.T) {
 	assert.True(t, signsIn(t, passwords, admin, "demo"))
 	assert.Equal(t, model.RoleRunner, mustUser(t, users, "ops").Role)
 	assert.Equal(t, model.RoleViewer, mustUser(t, users, "guest").Role)
+
+	// Everyone signs in once.
+	tokens := map[string]string{}
+	for _, name := range []string{"admin", "ops", "guest"} {
+		tokens[name], err = sessions.Issue(ctx, mustUser(t, users, name))
+		assert.NoError(t, err)
+	}
 
 	// A changed file: ops gets a new password and leaves the viewers,
 	// guest leaves, a newcomer arrives; folders set in the UI stay.
@@ -100,6 +111,14 @@ func TestUsersFile_Sync(t *testing.T) {
 	assert.Equal(t, admin.ID, mustUser(t, users, "admin").ID)
 	_, err = users.GetByName(ctx, "guest")
 	assert.ErrorIs(t, err, storage.ErrNotFound)
+
+	// The new password and the removal end those sessions; admin's stays.
+	_, err = sessions.Resolve(ctx, tokens["ops"])
+	assert.ErrorIs(t, err, access.ErrInvalidToken)
+	_, err = sessions.Resolve(ctx, tokens["guest"])
+	assert.ErrorIs(t, err, access.ErrInvalidToken)
+	_, err = sessions.Resolve(ctx, tokens["admin"])
+	assert.NoError(t, err)
 
 	// A missing or broken file syncs nothing.
 	f.Path = filepath.Join(t.TempDir(), "missing")

@@ -3,6 +3,7 @@ package storage_test
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/titpetric/task-ui/internal/assert"
 	"github.com/titpetric/task-ui/model"
@@ -91,14 +92,20 @@ func TestUserStorage_Update(t *testing.T) {
 	assert.Error(t, users.Update(ctx, user))
 }
 
+// Deleting a user ends their sessions with them.
 func TestUserStorage_Delete(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
-	users := storage.NewUserStorage(newDB(t))
+	db := newDB(t)
+	users, sessions := storage.NewUserStorage(db), storage.NewUserSessionStorage(db)
 	user := &model.User{Name: "ops", Role: model.RoleRunner}
 	assert.NoError(t, users.Create(ctx, user))
+	_, err := sessions.Create(ctx, user.ID, "h1", time.Now().Add(time.Hour))
+	assert.NoError(t, err)
 	assert.NoError(t, users.Delete(ctx, user.ID))
-	_, err := users.Get(ctx, user.ID)
+	_, err = users.Get(ctx, user.ID)
+	assert.ErrorIs(t, err, storage.ErrNotFound)
+	_, err = sessions.Find(ctx, "h1")
 	assert.ErrorIs(t, err, storage.ErrNotFound)
 	assert.NoError(t, users.Delete(ctx, user.ID), "deleting twice is fine")
 }

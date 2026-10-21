@@ -74,7 +74,6 @@ serve() {
     TASK_UI_LISTEN="127.0.0.1:${port}" \
     TASK_UI_DATA="$work/data" \
     TASK_UI_SSH_DIR="$work/ssh" \
-    TASK_UI_SECRET=demo \
     TASK_UI_ADMINS=admin \
     TASK_UI_VIEWERS=guest \
     "$@" "$work/task-ui" >"$work/task-ui-${port}.log" 2>&1 &

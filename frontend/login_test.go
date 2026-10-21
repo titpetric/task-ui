@@ -52,6 +52,10 @@ func TestLogin(t *testing.T) {
 	}
 	assert.NotNil(t, cookie)
 	assert.True(t, cookie.HttpOnly)
+	assert.False(t, strings.Contains(cookie.Value, "."), "an opaque token, not a JWT")
+	user, err := f.opts.Guard.Sessions.Resolve(ctx, cookie.Value)
+	assert.NoError(t, err)
+	assert.Equal(t, admin.ID, user.ID)
 
 	// The cookie signs the next request in.
 	req, _ := http.NewRequest(http.MethodGet, f.server.URL+"/", nil)
@@ -84,11 +88,29 @@ func TestLogin_SignedIn(t *testing.T) {
 	assert.Equal(t, "/", res.Location)
 }
 
+// Logout ends the session on the server: the old cookie signs in
+// nobody afterwards.
 func TestLogout(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
+	token, err := f.opts.Guard.Sessions.Issue(context.Background(), f.users[asOps])
+	assert.NoError(t, err)
+	session := &http.Cookie{Name: access.Cookie, Value: token}
+	home := func() *http.Response {
+		req, _ := http.NewRequest(http.MethodGet, f.server.URL+"/", nil)
+		req.AddCookie(session)
+		res, err := client().Do(req)
+		assert.NoError(t, err)
+		res.Body.Close()
+		return res
+	}
+	assert.Equal(t, http.StatusOK, home().StatusCode)
 
-	res := f.post(t, "/logout", nil)
+	req, _ := http.NewRequest(http.MethodPost, f.server.URL+"/logout", nil)
+	req.AddCookie(session)
+	res, err := client().Do(req)
+	assert.NoError(t, err)
+	res.Body.Close()
 	assert.Equal(t, http.StatusSeeOther, res.StatusCode)
 	assert.Equal(t, "/login", res.Header.Get("Location"))
 	for _, c := range res.Cookies() {
@@ -96,6 +118,14 @@ func TestLogout(t *testing.T) {
 			assert.Equal(t, -1, c.MaxAge)
 		}
 	}
+
+	again := home()
+	assert.Equal(t, http.StatusSeeOther, again.StatusCode)
+	assert.True(t, strings.HasPrefix(again.Header.Get("Location"), "/login"))
+
+	// Without a session, logout still lands on the login page.
+	res = f.post(t, "/logout", nil)
+	assert.Equal(t, http.StatusSeeOther, res.StatusCode)
 }
 
 // An email address signs in as the user it belongs to, and a backup

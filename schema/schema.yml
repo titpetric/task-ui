@@ -785,6 +785,53 @@
     - name: idx_user_email_user_id
       columns:
         - user_id
+- name: user_session
+  comment: User Session
+  columns:
+    - name: id
+      type: text
+      key: PRI
+      comment: ID
+      datatype: char(26)
+    - name: user_id
+      type: text
+      key: MUL
+      comment: User ID
+      datatype: char(26)
+    - name: hash
+      type: text
+      key: MUL
+      comment: Hash
+      datatype: varchar
+    - name: expires_at
+      type: timestamp
+      comment: Expires At
+      datatype: datetime
+    - name: used_at
+      type: timestamp
+      comment: Used At
+      datatype: datetime
+    - name: created_at
+      type: timestamp
+      comment: Created At
+      datatype: datetime
+    - name: updated_at
+      type: timestamp
+      comment: Updated At
+      datatype: datetime
+  indexes:
+    - name: sqlite_autoindex_user_session_1
+      columns:
+        - id
+      primary: true
+      unique: true
+    - name: idx_user_session_hash
+      columns:
+        - hash
+      unique: true
+    - name: idx_user_session_user_id
+      columns:
+        - user_id
 - name: workflow
   comment: Workflow
   columns:

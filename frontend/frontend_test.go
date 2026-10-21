@@ -117,7 +117,7 @@ func newFixture(t *testing.T) *fixture {
 		Workflows:     workflows,
 		WorkflowRuns:  workflowRuns,
 		Flows:         workflow.New(workflows, workflowRuns, cat, manager),
-		Guard:         access.NewGuard(users, access.NewSessions("test-secret", time.Hour)),
+		Guard:         access.NewGuard(users, access.NewSessions(storage.NewUserSessionStorage(db), users, time.Hour)),
 		Auth:          access.NewAuthenticator(users, storage.NewUserEmailStorage(db), storage.NewUserAuthPasswordStorage(db)),
 		Users:         users,
 		Projects:      storage.NewProjectStorage(db),
@@ -191,7 +191,9 @@ func (f *fixture) get(t *testing.T, user, path string) response {
 	req, err := http.NewRequest(http.MethodGet, f.server.URL+path, nil)
 	assert.NoError(t, err)
 	if user != "" {
-		req.AddCookie(&http.Cookie{Name: access.Cookie, Value: f.opts.Guard.Sessions.Issue(user)})
+		token, err := f.opts.Guard.Sessions.Issue(context.Background(), f.users[user])
+		assert.NoError(t, err)
+		req.AddCookie(&http.Cookie{Name: access.Cookie, Value: token})
 	}
 	res, err := client().Do(req)
 	assert.NoError(t, err)

@@ -3,6 +3,7 @@ package storage_test
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/titpetric/task-ui/internal/assert"
 	"github.com/titpetric/task-ui/model"
@@ -22,7 +23,13 @@ func TestUserAuthPasswordStorage(t *testing.T) {
 	assert.Equal(t, "", hash)
 
 	assert.NoError(t, passwords.SetPassword(ctx, user.ID, "$2first"))
+	// A new password ends the sessions the old one opened.
+	sessions := storage.NewUserSessionStorage(db)
+	_, err = sessions.Create(ctx, user.ID, "h1", time.Now().Add(time.Hour))
+	assert.NoError(t, err)
 	assert.NoError(t, passwords.SetPassword(ctx, user.ID, "$2second"))
+	_, err = sessions.Find(ctx, "h1")
+	assert.ErrorIs(t, err, storage.ErrNotFound)
 	hash, err = passwords.PasswordHash(ctx, user.ID)
 	assert.NoError(t, err)
 	assert.Equal(t, "$2second", hash)

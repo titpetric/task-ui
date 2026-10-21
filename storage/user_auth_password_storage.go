@@ -37,9 +37,13 @@ func (s *UserAuthPasswordStorage) PasswordHash(ctx context.Context, userID strin
 	return *hash, nil
 }
 
-// SetPassword replaces a user's password with a hash.
+// SetPassword replaces a user's password with a hash, and ends the
+// sessions the old one opened.
 func (s *UserAuthPasswordStorage) SetPassword(ctx context.Context, userID, hash string) error {
-	return s.replace(ctx, userID, model.AuthPassword, []string{hash})
+	if err := s.replace(ctx, userID, model.AuthPassword, []string{hash}); err != nil {
+		return err
+	}
+	return NewUserSessionStorage(s.db).DeleteByUser(ctx, userID)
 }
 
 // SetBackups replaces a user's backup passwords with hashes, used or not.

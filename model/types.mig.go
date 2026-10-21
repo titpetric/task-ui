@@ -1380,6 +1380,83 @@ var UserEmailFields = []string{"id", "user_id", "email", "created_at", "updated_
 // UserEmailPrimaryFields are the primary key fields in the DB table.
 var UserEmailPrimaryFields = []string{"id"}
 
+// UserSession generated for db table `user_session`.
+//
+// User Session.
+type UserSession struct {
+	// ID
+	ID string `db:"id" json:"id"`
+
+	// User ID
+	UserID string `db:"user_id" json:"user_id"`
+
+	// Hash
+	Hash string `db:"hash" json:"hash"`
+
+	// Expires At
+	ExpiresAt *time.Time `db:"expires_at" json:"expires_at"`
+
+	// Used At
+	UsedAt *time.Time `db:"used_at" json:"used_at"`
+
+	// Created At
+	CreatedAt *time.Time `db:"created_at" json:"created_at"`
+
+	// Updated At
+	UpdatedAt *time.Time `db:"updated_at" json:"updated_at"`
+}
+
+// GetID will return the value of ID.
+func (u *UserSession) GetID() string { return u.ID }
+
+// SetID sets ID to the provided value.
+func (u *UserSession) SetID(val string) { u.ID = val }
+
+// GetUserID will return the value of UserID.
+func (u *UserSession) GetUserID() string { return u.UserID }
+
+// SetUserID sets UserID to the provided value.
+func (u *UserSession) SetUserID(val string) { u.UserID = val }
+
+// GetHash will return the value of Hash.
+func (u *UserSession) GetHash() string { return u.Hash }
+
+// SetHash sets Hash to the provided value.
+func (u *UserSession) SetHash(val string) { u.Hash = val }
+
+// GetExpiresAt will return the value of ExpiresAt.
+func (u *UserSession) GetExpiresAt() *time.Time { return u.ExpiresAt }
+
+// SetExpiresAt sets ExpiresAt to the provided value.
+func (u *UserSession) SetExpiresAt(stamp time.Time) { u.ExpiresAt = &stamp }
+
+// GetUsedAt will return the value of UsedAt.
+func (u *UserSession) GetUsedAt() *time.Time { return u.UsedAt }
+
+// SetUsedAt sets UsedAt to the provided value.
+func (u *UserSession) SetUsedAt(stamp time.Time) { u.UsedAt = &stamp }
+
+// GetCreatedAt will return the value of CreatedAt.
+func (u *UserSession) GetCreatedAt() *time.Time { return u.CreatedAt }
+
+// SetCreatedAt sets CreatedAt to the provided value.
+func (u *UserSession) SetCreatedAt(stamp time.Time) { u.CreatedAt = &stamp }
+
+// GetUpdatedAt will return the value of UpdatedAt.
+func (u *UserSession) GetUpdatedAt() *time.Time { return u.UpdatedAt }
+
+// SetUpdatedAt sets UpdatedAt to the provided value.
+func (u *UserSession) SetUpdatedAt(stamp time.Time) { u.UpdatedAt = &stamp }
+
+// UserSessionTable is the name of the table in the DB.
+const UserSessionTable = "`user_session`"
+
+// UserSessionFields is a list of all columns in the DB table.
+var UserSessionFields = []string{"id", "user_id", "hash", "expires_at", "used_at", "created_at", "updated_at"}
+
+// UserSessionPrimaryFields are the primary key fields in the DB table.
+var UserSessionPrimaryFields = []string{"id"}
+
 // Workflow generated for db table `workflow`.
 type Workflow struct {
 	// ID
@@ -2741,6 +2818,67 @@ func (u *UserEmail) Update(opts ...QueryOption) string {
 // Delete starts building a DELETE query.
 func (u *UserEmail) Delete(opts ...QueryOption) string {
 	cfg := (&QueryConfig{Table: UserEmailTable}).Apply(opts...)
+	query := fmt.Sprintf("DELETE FROM %s", cfg.Table)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	return query
+}
+
+// Insert starts building an INSERT INTO query.
+func (u *UserSession) Insert(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: UserSessionTable, Statement: "INSERT INTO"}).Apply(opts...)
+	cols := UserSessionFields
+	if len(cfg.Columns) > 0 {
+		cols = cfg.Columns
+	}
+	return fmt.Sprintf("%s %s (%s) VALUES (:%s)", cfg.Statement, cfg.Table, strings.Join(cols, ", "), strings.Join(cols, ", :"))
+}
+
+// Select starts building a SELECT query.
+func (u *UserSession) Select(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: UserSessionTable}).Apply(opts...)
+	cols := "*"
+	if len(cfg.Columns) > 0 {
+		cols = strings.Join(cfg.Columns, ", ")
+	}
+	query := fmt.Sprintf("SELECT %s FROM %s", cols, cfg.Table)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	if cfg.OrderBy != "" {
+		query += " ORDER BY " + cfg.OrderBy
+	}
+	if cfg.LimitOffset > 0 {
+		query += fmt.Sprintf(" LIMIT %d, %d", cfg.LimitStart, cfg.LimitOffset)
+	}
+	return query
+}
+
+// Update starts building a UPDATE query.
+func (u *UserSession) Update(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: UserSessionTable}).Apply(opts...)
+	cols := UserSessionFields
+	if len(cfg.Columns) > 0 {
+		cols = cfg.Columns
+	}
+	setClause := ""
+	for i, col := range cols {
+		if i > 0 {
+			setClause += ", "
+		}
+		setClause += col + "=:" + col
+	}
+	query := fmt.Sprintf("UPDATE %s SET %s", cfg.Table, setClause)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	return query
+}
+
+// Delete starts building a DELETE query.
+func (u *UserSession) Delete(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: UserSessionTable}).Apply(opts...)
 	query := fmt.Sprintf("DELETE FROM %s", cfg.Table)
 	if cfg.Where != "" {
 		query += " WHERE " + cfg.Where

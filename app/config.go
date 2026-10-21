@@ -42,9 +42,6 @@ type Config struct {
 	// SSHDir is the directory the key settings manage. TASK_UI_SSH_DIR,
 	// default $HOME/.ssh.
 	SSHDir string
-	// Secret signs the session cookies. TASK_UI_SECRET. Empty generates
-	// one per process, so sessions do not survive a restart.
-	Secret string
 	// SessionTTL is the session lifetime. TASK_UI_SESSION_TTL, default 12h.
 	SessionTTL time.Duration
 	// AutoLogin signs every request in as this user, without a password.
@@ -143,7 +140,6 @@ func NewConfig(args []string) (*Config, error) {
 		DataDir:   env("TASK_UI_DATA", "data"),
 		DB:        env("TASK_UI_DB", ""),
 		SSHDir:    env("TASK_UI_SSH_DIR", filepath.Join(home, ".ssh")),
-		Secret:    env("TASK_UI_SECRET", ""),
 		AutoLogin: env("TASK_UI_AUTOLOGIN", ""),
 		Agent:     env("TASK_UI_AGENT", ""),
 		AgentJob:  envSet("TASK_UI_AGENT_JOB", "internal/claude-note"),

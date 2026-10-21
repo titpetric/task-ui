@@ -8,7 +8,6 @@ services:
     image: titpetric/task-ui
     restart: always
     environment:
-      TASK_UI_SECRET: change-me
       TASK_UI_SSH_DIR: /keys
     ports:
     - 3000:3000
@@ -45,8 +44,7 @@ The environment sets the whole configuration:
 | `TASK_UI_DATA`        | `data`               | Database, recordings and artifacts                                |
 | `TASK_UI_DB`          | `<data>/task-ui.db`  | Database file (sqlite)                                            |
 | `TASK_UI_SSH_DIR`     | `$HOME/.ssh`         | Folder the SSH key settings manage                                |
-| `TASK_UI_SECRET`      | random per process   | Signs the session cookie, set it to keep sessions over restarts   |
-| `TASK_UI_SESSION_TTL` | `12h`                | Session lifetime                                                  |
+| `TASK_UI_SESSION_TTL` | `12h`                | How long a sign in lasts                                          |
 | `TASK_UI_KEEP`        | `15m`                | How long a finished run stays attachable with its frame in memory |
 | `TASK_UI_GRACE`       | `10s`                | How long a stopped process gets before task-ui kills it           |
 | `TASK_UI_ARTIFACT_HISTORY` | `50`            | Commits the artifact history keeps before it squashes; 0 keeps all |
@@ -69,6 +67,12 @@ removing a user needs no restart: a user not in the file cannot sign in
 and the instance removes them. A file that is not there yet is a
 warning, not an error: the instance reads it once `task-ui passwd` makes
 it.
+
+A sign in sets a session cookie that holds a random token and nothing
+else. The database keeps the hash of the token, the user and the expiry,
+so a session survives a restart of the server and ends when it expires,
+on sign out, when the file removes the user, or when the user gets a new
+password.
 
 ```sh
 task-ui passwd alice                         # add or reset; the password from stdin

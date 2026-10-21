@@ -1,81 +1,93 @@
 package access
 
 import (
-	"crypto/hmac"
+	"context"
 	"crypto/rand"
-	"crypto/sha256"
 	"encoding/base64"
-	"encoding/json"
 	"errors"
-	"strings"
 	"time"
+
+	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/storage"
 )
 
-// ErrInvalidToken reports a session token that does not verify, or one
+// ErrInvalidToken reports a session token that names no session, or one
 // that has expired.
 var ErrInvalidToken = errors.New("invalid session")
 
-// Sessions signs and verifies the session cookie: an HS256 JWT holding the
-// username. Every request looks up the role from the configuration,
-// so a user removed from the password file loses access on their next click.
+// touchEvery is how stale a session's last use gets before a request
+// records it again, so page loads do not write on every click.
+const touchEvery = time.Minute
+
+// Sessions issues and resolves the session cookie: an opaque random
+// token the server looks up by its hash. The database holds the hash
+// alone, and the user it names, so a user removed or given a new
+// password loses their sessions with it.
 type Sessions struct {
-	secret []byte
-	ttl    time.Duration
+	Store *storage.UserSessionStorage
+	Users *storage.UserStorage
+	ttl   time.Duration
 	// Now is the clock; tests move it.
 	Now func() time.Time
 }
 
-// NewSessions builds the signer. An empty secret generates one per
-// process, so sessions do not survive a restart.
-func NewSessions(secret string, ttl time.Duration) *Sessions {
-	key := []byte(secret)
-	if len(key) == 0 {
-		key = make([]byte, 32)
-		_, _ = rand.Read(key)
-	}
-	return &Sessions{secret: key, ttl: ttl, Now: time.Now}
+// NewSessions returns the sessions over their storage and the users.
+func NewSessions(store *storage.UserSessionStorage, users *storage.UserStorage, ttl time.Duration) *Sessions {
+	return &Sessions{Store: store, Users: users, ttl: ttl, Now: time.Now}
 }
 
-func segment(v any) string {
-	data, _ := json.Marshal(v)
-	return base64.RawURLEncoding.EncodeToString(data)
-}
-
-func (s *Sessions) sign(input string) string {
-	mac := hmac.New(sha256.New, s.secret)
-	mac.Write([]byte(input))
-	return base64.RawURLEncoding.EncodeToString(mac.Sum(nil))
-}
-
-// Issue returns a session token for a user.
-func (s *Sessions) Issue(username string) string {
+// Issue opens a session for a user and returns its token, 256 random
+// bits. It prunes the expired sessions on the way.
+func (s *Sessions) Issue(ctx context.Context, user *model.User) (string, error) {
 	now := s.Now()
-	signed := segment(map[string]string{"alg": "HS256", "typ": "JWT"}) + "." +
-		segment(map[string]any{"sub": username, "iat": now.Unix(), "exp": now.Add(s.ttl).Unix()})
-	return signed + "." + s.sign(signed)
+	if err := s.Store.DeleteExpired(ctx, now); err != nil {
+		return "", err
+	}
+	buf := make([]byte, 32)
+	if _, err := rand.Read(buf); err != nil {
+		return "", err
+	}
+	token := base64.RawURLEncoding.EncodeToString(buf)
+	if _, err := s.Store.Create(ctx, user.ID, HashToken(token), now.Add(s.ttl)); err != nil {
+		return "", err
+	}
+	return token, nil
 }
 
-// Verify returns the username a token holds.
-func (s *Sessions) Verify(token string) (string, error) {
-	parts := strings.Split(token, ".")
-	if len(parts) != 3 || !hmac.Equal([]byte(s.sign(parts[0]+"."+parts[1])), []byte(parts[2])) {
-		return "", ErrInvalidToken
+// Resolve returns the user of a session token, and records the use at
+// most once a minute.
+func (s *Sessions) Resolve(ctx context.Context, token string) (*model.User, error) {
+	if token == "" {
+		return nil, ErrInvalidToken
 	}
-	data, err := base64.RawURLEncoding.DecodeString(parts[1])
-	if err != nil {
-		return "", ErrInvalidToken
+	row, err := s.Store.Find(ctx, HashToken(token))
+	if errors.Is(err, storage.ErrNotFound) {
+		return nil, ErrInvalidToken
+	} else if err != nil {
+		return nil, err
 	}
-	var claims struct {
-		Sub string `json:"sub"`
-		Exp int64  `json:"exp"`
+	now := s.Now()
+	if row.ExpiresAt == nil || !now.Before(*row.ExpiresAt) {
+		return nil, ErrInvalidToken
 	}
-	if err := json.Unmarshal(data, &claims); err != nil || claims.Sub == "" {
-		return "", ErrInvalidToken
+	user, err := s.Users.Get(ctx, row.UserID)
+	if errors.Is(err, storage.ErrNotFound) {
+		return nil, ErrInvalidToken
+	} else if err != nil {
+		return nil, err
 	}
-	if claims.Exp != 0 && s.Now().Unix() >= claims.Exp {
-		return "", ErrInvalidToken
+	if row.UsedAt == nil || now.Sub(*row.UsedAt) >= touchEvery {
+		_ = s.Store.Touch(ctx, row.ID)
 	}
-	return claims.Sub, nil
+	return user, nil
+}
+
+// Revoke ends the session of a token. A token that names none is fine.
+func (s *Sessions) Revoke(ctx context.Context, token string) error {
+	if token == "" {
+		return nil
+	}
+	return s.Store.Delete(ctx, HashToken(token))
 }
 
 // TTL is how long an issued session stays valid.
