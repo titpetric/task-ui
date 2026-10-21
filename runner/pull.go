@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"sync"
+
+	"github.com/titpetric/task-ui/model"
 )
 
 // checkout returns the checkout the run's folder belongs to: the folder
@@ -16,7 +18,7 @@ func (m *Manager) checkout(session *Session) string {
 }
 
 // pull brings the checkouts of the run up to date, in the run's own
-// terminal: the workspace's first, so its tooling is current, then the
+// terminal: a named workspace's first, so its tooling is current, then the
 // folder's when that differs; a folder inside a checkout pulls the
 // checkout. Runs of one checkout pull one at a time: two pulls at once
 // fight over the index lock, and a workflow starts them one after another.
@@ -25,6 +27,9 @@ func (m *Manager) pull(ctx context.Context, session *Session) error {
 		return nil
 	}
 	ws := session.workspace
+	if session.workspaceName == model.Default {
+		ws = ""
+	}
 	if ws != "" && m.opts.Git.IsRepo(ws) {
 		if err := m.pullDir(ctx, session, ws, "git -C "+ws+" pull --ff-only"); err != nil {
 			return err

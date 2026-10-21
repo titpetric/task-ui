@@ -222,3 +222,62 @@ func TestWorkspace_Prompt(t *testing.T) {
 		assert.Equal(t, http.StatusForbidden, refused.Status, user)
 	}
 }
+
+// The default workspace, _, is the root: it lists first, takes a title,
+// keeps its place, and stays. No workspace or project takes its name.
+func TestWorkspace_Default(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	ctx := context.Background()
+	repo := "file://" + localRepo(t)
+	assert.NoError(t, f.opts.Workspaces.EnsureDefault(ctx))
+	assert.Equal(t, http.StatusCreated, f.call(t, asAdmin, http.MethodPost, "/workspaces", api.WorkspaceRequest{URL: repo, Folder: "malta"}).Status)
+
+	list := f.call(t, asAdmin, http.MethodGet, "/workspaces", nil)
+	assert.Len(t, list.list("workspaces"), 2)
+	assert.Equal(t, model.Default, list.list("workspaces")[0].(map[string]any)["folder"])
+
+	sort := int64(9)
+	updated := f.call(t, asAdmin, http.MethodPut, "/workspaces/_", api.WorkspaceRequest{Title: "Root", Sort: &sort})
+	assert.Equal(t, http.StatusOK, updated.Status, string(updated.Raw))
+	assert.Equal(t, "Root", updated.str("title"))
+	assert.NotEqual(t, float64(9), updated.get("sort"), "the default keeps its place")
+
+	refused := f.call(t, asAdmin, http.MethodDelete, "/workspaces/_", nil)
+	assert.Equal(t, http.StatusConflict, refused.Status)
+	assert.Equal(t, http.StatusOK, f.call(t, asAdmin, http.MethodGet, "/workspaces/_", nil).Status)
+	assert.DirExists(t, f.root)
+
+	taken := f.call(t, asAdmin, http.MethodPost, "/workspaces", api.WorkspaceRequest{URL: repo, Folder: model.Default})
+	assert.Equal(t, http.StatusBadRequest, taken.Status)
+	for _, id := range []string{"_", "_/web"} {
+		res := f.call(t, asAdmin, http.MethodPost, "/projects", api.ProjectCloneRequest{URL: repo, ID: id})
+		assert.Equal(t, http.StatusBadRequest, res.Status, id)
+		assert.Equal(t, http.StatusBadRequest, f.call(t, asAdmin, http.MethodPut, "/projects/"+id, api.ProjectRequest{Title: "Mine"}).Status, id)
+	}
+	assert.NoDirExists(t, filepath.Join(f.root, model.Default))
+
+	// _ clones into the root, as no workspace does.
+	root := f.call(t, asAdmin, http.MethodPost, "/projects", api.ProjectCloneRequest{URL: repo, ID: "site", Workspace: model.Default})
+	assert.Equal(t, http.StatusCreated, root.Status, string(root.Raw))
+	assert.Equal(t, "site", root.str("project", "folder"))
+	assert.FileExists(t, filepath.Join(f.root, "site", "Makefile"))
+}
+
+// A project cloned into the root may not take a workspace's name, or
+// one a directory holds, and git does not run: a repository that is not
+// there would answer 502.
+func TestWorkspace_RootCloneTaken(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	repo := "file://" + localRepo(t)
+	nothing := "file://" + filepath.Join(t.TempDir(), "nothing.git")
+	assert.Equal(t, http.StatusCreated, f.call(t, asAdmin, http.MethodPost, "/workspaces", api.WorkspaceRequest{URL: repo, Folder: "malta"}).Status)
+
+	for _, id := range []string{"malta", "malta/x", "infra"} {
+		res := f.call(t, asAdmin, http.MethodPost, "/projects", api.ProjectCloneRequest{URL: nothing, ID: id})
+		assert.Equal(t, http.StatusConflict, res.Status, id)
+		assert.Equal(t, "", res.str("output"), id)
+	}
+	assert.NoDirExists(t, filepath.Join(f.root, "malta", "x"))
+}

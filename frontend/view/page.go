@@ -164,6 +164,18 @@ func (p *Page) Groups() []Group {
 	return Groups(p.SideFolders, p.Workspaces)
 }
 
+// Href returns the path of a folder's page, as FolderHref places it
+// among the page's workspaces.
+func (p *Page) Href(id string) string {
+	return FolderHref(id, p.Workspaces)
+}
+
+// Links turns steps into links, as Chain does among the page's
+// workspaces.
+func (p *Page) Links(steps []Step) []Link {
+	return Chain(steps, p.Workspaces)
+}
+
 // CanRun reports whether the signed in user may run a job.
 func (p *Page) CanRun(f *folder.Folder, job *folder.Job) bool {
 	return f != nil && job != nil && p.User.CanRun(f.ID, f.Allow, job.Allow)

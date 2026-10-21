@@ -19,7 +19,7 @@ func TestWorkflow(t *testing.T) {
 		CanRun:   true,
 	}
 	assert.Equal(t, "release", w.Name)
-	assert.Equal(t, "push", view.Chain(w.Steps)[1].Text)
+	assert.Equal(t, "push", view.Chain(w.Steps, nil)[1].Text)
 	assert.True(t, w.CanRun)
 	assert.False(t, w.CanChange)
 }
@@ -32,7 +32,7 @@ func TestWorkflowRun(t *testing.T) {
 		Steps:       []view.Step{{Folder: "infra", Job: "plan", State: "ok"}, {Folder: "infra", Job: "apply", State: "failed"}},
 	}
 	assert.Equal(t, "wr1", r.ID)
-	assert.Equal(t, "failed", view.Chain(r.Steps)[1].State)
+	assert.Equal(t, "failed", view.Chain(r.Steps, nil)[1].State)
 }
 
 func TestWorkflowRun_Took(t *testing.T) {

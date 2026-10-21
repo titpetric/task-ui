@@ -66,7 +66,7 @@ func TestActivity_Job(t *testing.T) {
 	f.ran(t, "infra", "plan", model.StateFailed, clock.Add(-time.Hour), 4*time.Second)
 	f.ran(t, "infra", "slow", model.StateOK, clock.Add(-time.Hour), time.Minute)
 
-	body := f.page(t, asOps, "/f/infra/plan")
+	body := f.page(t, asOps, "/f/_/infra/plan")
 	assert.Contains(t, body, "2 runs in 30 days")
 	assert.Contains(t, body, "median 3.0s")
 	assert.Contains(t, body, `class="activity-line"`)
@@ -75,7 +75,7 @@ func TestActivity_Job(t *testing.T) {
 	assert.Contains(t, body, `class="activity-line durations"`)
 	assert.Contains(t, body, `data-tip="avg 3.0s · min 2.0s · max 4.0s over 2 runs, Fri 2026-10-16"`)
 
-	quiet := f.page(t, asOps, "/f/infra/many")
+	quiet := f.page(t, asOps, "/f/_/infra/many")
 	assert.NotContains(t, quiet, `class="activity"`)
 }
 

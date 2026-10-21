@@ -103,3 +103,21 @@ func TestPage_Groups(t *testing.T) {
 	assert.True(t, groups[0].Workspace)
 	assert.Equal(t, "malta/deploy", groups[0].Projects[0].Top.ID)
 }
+
+// A page links a folder among its workspaces: a named one by its folder,
+// a project at the root under /f/_/.
+func TestPage_Href(t *testing.T) {
+	t.Parallel()
+	p := &view.Page{Workspaces: map[string]int{"acme": 0}}
+	assert.Equal(t, "/f/acme/api", p.Href("acme/api"))
+	assert.Equal(t, "/f/_/infra", p.Href("infra"))
+	assert.Equal(t, "/f/_/infra", (&view.Page{}).Href("infra"))
+}
+
+func TestPage_Links(t *testing.T) {
+	t.Parallel()
+	p := &view.Page{Workspaces: map[string]int{"acme": 0}}
+	links := p.Links([]view.Step{{Folder: "acme/api", Job: "build"}, {Folder: "infra", Job: "plan"}})
+	assert.Equal(t, "/f/acme/api/build", links[0].Href)
+	assert.Equal(t, "/f/_/infra/plan", links[1].Href)
+}

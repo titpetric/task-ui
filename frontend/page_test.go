@@ -30,7 +30,7 @@ func TestPage_Chrome(t *testing.T) {
 	assert.Contains(t, body, `class="avatar sm role-admin" title="admin">AD<`)
 	// The body carries each user's role by name, and nothing else, for
 	// the avatars the script draws.
-	assert.Contains(t, body, `<body data-roles='{&#34;admin&#34;:&#34;admin&#34;,&#34;limited&#34;:&#34;runner&#34;,&#34;ops&#34;:&#34;runner&#34;,&#34;viewer&#34;:&#34;viewer&#34;}'>`)
+	assert.Contains(t, body, `<body data-roles='{&#34;admin&#34;:&#34;admin&#34;,&#34;limited&#34;:&#34;runner&#34;,&#34;ops&#34;:&#34;runner&#34;,&#34;viewer&#34;:&#34;viewer&#34;}' data-workspaces='{}'>`)
 
 	limited := f.page(t, asLimited, "/")
 	assert.NotContains(t, limited, "Settings</a>")
@@ -59,7 +59,7 @@ func TestPage_ProjectsFold(t *testing.T) {
 	assert.True(t, infra >= 0 && edge > infra && private > edge, "infra holds infra/edge, then private")
 	assert.True(t, strings.Index(body[infra:], "</details>") > edge-infra, "infra closes after infra/edge")
 	chev := body[infra : strings.Index(body[infra:], "</summary>")+infra]
-	assert.Contains(t, chev, `<a class="section" href="/f/infra" data-folder="infra"`)
+	assert.Contains(t, chev, `<a class="section" href="/f/_/infra" data-folder="infra"`)
 	assert.Contains(t, chev, `<svg class="ic chev"><use href="#i-chev"/></svg>`)
 	// Without a workspace the sidebar has none to fold.
 	assert.NotContains(t, body, `class="workspace`)
@@ -71,16 +71,16 @@ func TestPage_ProjectsFold(t *testing.T) {
 	assert.NotContains(t, hidden, `data-project="infra"`)
 	assert.NotContains(t, hidden, `<details class="folder" data-folder="infra/edge"`)
 	assert.Contains(t, hidden, `data-project="private"`)
-	assert.Equal(t, http.StatusOK, f.get(t, asAdmin, "/f/infra").Status)
+	assert.Equal(t, http.StatusOK, f.get(t, asAdmin, "/f/_/infra").Status)
 	assert.NoError(t, f.opts.Projects.Delete(context.Background(), mustProject(t, f, "infra").ID))
 
 	// The sidebar marks the open project, on the project and its whole row.
-	page := f.page(t, asAdmin, "/f/infra")
+	page := f.page(t, asAdmin, "/f/_/infra")
 	assert.Contains(t, page, `<details class="project active" data-project="infra" open>`)
 	assert.Contains(t, page, `<summary class="active" title="infra/`)
-	assert.Contains(t, page, `<a class="section active" href="/f/infra"`)
+	assert.Contains(t, page, `<a class="section active" href="/f/_/infra"`)
 	// A folder inside it keeps the project open, and lights its own row only.
-	edgePage := f.page(t, asAdmin, "/f/infra/edge")
+	edgePage := f.page(t, asAdmin, "/f/_/infra/edge")
 	assert.Contains(t, edgePage, `<details class="project active" data-project="infra" open>`)
 	assert.NotContains(t, edgePage, `<summary class="active"`)
 }
@@ -98,7 +98,7 @@ func TestPage_AdminOnly(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
 
-	for _, path := range []string{"/settings", "/settings/projects", "/settings/keys", "/settings/secrets", "/settings/users", "/f/infra/env/.env"} {
+	for _, path := range []string{"/settings", "/settings/projects", "/settings/keys", "/settings/secrets", "/settings/users", "/f/_/infra/env/.env"} {
 		res := f.get(t, asOps, path)
 		assert.Equal(t, http.StatusForbidden, res.Status, path)
 		assert.Contains(t, res.Body, "Settings are for admins.")

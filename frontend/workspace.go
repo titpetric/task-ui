@@ -3,6 +3,7 @@ package frontend
 import (
 	"context"
 	"net/http"
+	"slices"
 	"strings"
 
 	"github.com/titpetric/task-ui/frontend/view"
@@ -51,6 +52,7 @@ func (h *Handlers) workspaceEdit(w http.ResponseWriter, r *http.Request) {
 	p := h.page(r, "Configure "+workspace.Folder)
 	p.Crumbs = view.Crumbs("Settings", "/settings", "Workspaces", "/settings/workspaces", workspace.Folder)
 	p.Workspace = workspace
+	p.Root = h.opts.Root
 	p.Nested = h.nestedProjects(r.Context())
 	p.Form = map[string]string{
 		"title":       workspace.Title,
@@ -70,11 +72,19 @@ func (h *Handlers) workspaceList(ctx context.Context) []model.Workspace {
 }
 
 // nestedProjects returns the folders of the project rows inside each
-// workspace, by workspace folder: the projects a delete removes.
+// workspace, by workspace folder: the projects a delete removes. The
+// default workspace holds the rows at the top of the root.
 func (h *Handlers) nestedProjects(ctx context.Context) map[string][]string {
 	nested := map[string][]string{}
 	projects, _ := h.opts.Projects.List(ctx)
-	for _, ws := range h.workspaceFolders(ctx) {
+	named := h.workspaceFolders(ctx)
+	for _, project := range projects {
+		top, _, _ := strings.Cut(project.Folder, "/")
+		if !slices.Contains(named, top) && !strings.Contains(project.Folder, "/") && !model.IsReserved(top) {
+			nested[model.Default] = append(nested[model.Default], project.Folder)
+		}
+	}
+	for _, ws := range named {
 		for _, project := range projects {
 			if strings.HasPrefix(project.Folder, ws+"/") {
 				nested[ws] = append(nested[ws], project.Folder)

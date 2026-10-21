@@ -47,7 +47,7 @@
 		<tbody>
 		{{- range $row := $c.Rows }}
 			<tr>
-				<td class="key nowrap"><a href="/f/{{ $row.Folder.ID }}">{{ $row.Folder.ID }}</a></td>
+				<td class="key nowrap"><a href="{{ $.Href $row.Folder.ID }}">{{ $row.Folder.ID }}</a></td>
 				{{- range $i, $cell := $row.Cells }}
 				{{- /* One job is a bare button; several of a name carry their kinds. */}}
 				<td class="col" data-label="{{ index $c.Columns $i }}">{{ if $cell }}<div>{{ range $cell }}{{ template "controljob" (list $ $row.Folder . (gt (len $cell) 1)) }}{{ end }}</div>{{ end }}</td>
@@ -92,7 +92,7 @@
 {{- else if $.CanRun $f $r -}}
 <button type="button" class="cc{{ if $named }} named{{ end }} {{ $last }}" data-run data-folder="{{ $f.ID }}" data-job="{{ $r.ID }}" data-title="{{ $f.ID }} / {{ $r.Name }}" title="Run {{ $f.ID }} / {{ $r.Name }}"><svg class="ic"><use href="#i-play"/></svg>{{ if $named }}<span>{{ $label }}</span>{{ end }}</button>
 {{- else -}}
-<a class="cc{{ if $named }} named{{ end }} idle {{ $last }}" href="/f/{{ $f.ID }}/{{ $r.ID }}" title="{{ $f.ID }} / {{ $r.Name }}: your role may not run it"><i class="shebang" aria-hidden="true">#!</i>{{ if $named }}<span>{{ $label }}</span>{{ end }}</a>
+<a class="cc{{ if $named }} named{{ end }} idle {{ $last }}" href="{{ $.Href $f.ID }}/{{ $r.ID }}" title="{{ $f.ID }} / {{ $r.Name }}: your role may not run it"><i class="shebang" aria-hidden="true">#!</i>{{ if $named }}<span>{{ $label }}</span>{{ end }}</a>
 {{- end -}}
 </span>
 {{- end }}

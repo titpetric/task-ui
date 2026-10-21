@@ -1,5 +1,5 @@
 {{ define "content" }}
-{{- $p := .Folder }}
+{{- $p := .Folder }}{{ $default := eq $p.ID "_" }}
 <div class="page-head">
 	<div>
 		<h2><svg class="ic"><use href="#i-folder-open"/></svg> {{ $p.Title }}</h2>
@@ -33,7 +33,7 @@
 		<article class="jobcard{{ if $run }} running{{ end }}">
 			<header>
 				<i class="shebang{{ if $run }} running{{ else }}{{ with $.LastRun $r.Key }} {{ .State }}{{ end }}{{ end }}" aria-hidden="true">#!</i>
-				<a class="name" href="/f/{{ $p.ID }}/{{ $r.ID }}">{{ $r.Name }}</a>
+				<a class="name" href="{{ $.Href $p.ID }}/{{ $r.ID }}">{{ $r.Name }}</a>
 				{{- if $r.Interactive }}<span class="badge">interactive</span>{{ end }}
 			</header>
 			{{- if $r.Description }}<p class="desc">{{ $r.Description }}</p>{{ end }}
@@ -52,7 +52,7 @@
 					<a class="btn btn-sm" href="/runs/{{ $run.ID }}" data-attach="{{ $run.ID }}"><svg class="ic"><use href="#i-eye"/></svg>Attach</a>
 					{{- if $can }}<button type="button" class="btn-icon danger" data-kill="{{ $run.ID }}" title="Kill the run" aria-label="Kill the run"><svg class="ic"><use href="#i-stop"/></svg></button>{{ end }}
 					{{- else if $can }}{{ template "runButtons" (list $p $r) }}
-					{{- else }}<a class="btn btn-sm" href="/f/{{ $p.ID }}/{{ $r.ID }}">History</a>{{ end -}}
+					{{- else }}<a class="btn btn-sm" href="{{ $.Href $p.ID }}/{{ $r.ID }}">History</a>{{ end -}}
 				</span>
 			</footer>
 		</article>
@@ -62,7 +62,7 @@
 	</div>
 </section>
 {{- else }}
-{{- if not $.SubFolders }}
+{{- if and (not $.SubFolders) (not $default) }}
 <div class="alert">Nothing to run was found in this folder: no pipeline file, Makefile, package scripts or scripts folder.</div>
 {{- end }}
 {{- end }}
@@ -76,7 +76,7 @@
 		<tbody>
 		{{- range . }}
 			<tr>
-				<td class="key nowrap"><svg class="ic dir"><use href="#i-folder"/></svg> <a href="/f/{{ .ID }}">{{ .Title }}</a></td>
+				<td class="key nowrap"><svg class="ic dir"><use href="#i-folder"/></svg> <a href="{{ $.Href .ID }}">{{ .Title }}</a></td>
 				<td class="nowrap">{{ len .Jobs }}</td>
 				<td class="hide-sm">{{ range .Sources }}<span class="badge">{{ .Kind }}</span> {{ end }}{{ with .Error }}<span class="badge bad" title="{{ . }}">error</span>{{ end }}</td>
 			</tr>
@@ -87,11 +87,14 @@
 </section>
 {{- end }}
 
+{{- if or (not $default) $.Tree }}
 <section class="block">
-	<h3>Files <small>{{ $p.ID }}/</small></h3>
+	<h3>Files <small>{{ if $default }}the root{{ else }}{{ $p.ID }}/{{ end }}</small></h3>
 	{{ template "tree" $ }}
 </section>
+{{- end }}
 
+{{- if not $default }}
 <div class="grid-2">
 <section class="block">
 	<h3>Folder</h3>
@@ -123,7 +126,7 @@
 				<td class="desc">{{ if .Keys }}{{ join .Keys ", " }}{{ else }}<span class="faint">none</span>{{ end }}</td>
 				<td>{{ if .Managed }}<span class="badge ok">managed</span>{{ else if .Exists }}<span class="badge">in folder</span>{{ else }}<span class="badge bad">missing</span>{{ end }}</td>
 				{{- if $.User.CanAdmin }}
-				<td class="actions"><a class="btn-icon" href="/f/{{ $p.ID }}/env/{{ .Path }}" title="Edit {{ .Path }}" aria-label="Edit {{ .Path }}"><svg class="ic"><use href="#i-edit"/></svg></a></td>
+				<td class="actions"><a class="btn-icon" href="{{ $.Href $p.ID }}/env/{{ .Path }}" title="Edit {{ .Path }}" aria-label="Edit {{ .Path }}"><svg class="ic"><use href="#i-edit"/></svg></a></td>
 				{{- end }}
 			</tr>
 		{{- else }}
@@ -134,4 +137,5 @@
 	</div>
 </section>
 </div>
+{{- end }}
 {{ end }}

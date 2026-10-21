@@ -104,3 +104,30 @@ func TestWorkspaceStorage_Delete(t *testing.T) {
 	_, err := workspaces.Get(ctx, workspace.ID)
 	assert.ErrorIs(t, err, storage.ErrNotFound)
 }
+
+func TestWorkspaceStorage_EnsureDefault(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	workspaces := storage.NewWorkspaceStorage(newDB(t))
+	assert.NoError(t, workspaces.Create(ctx, &model.Workspace{Folder: "malta"}))
+
+	assert.NoError(t, workspaces.EnsureDefault(ctx))
+	def, err := workspaces.GetByFolder(ctx, model.Default)
+	assert.NoError(t, err)
+	assert.Equal(t, "Default", def.Title)
+
+	// Again, it keeps the row and its title.
+	def.Title = "The root"
+	assert.NoError(t, workspaces.Update(ctx, def))
+	assert.NoError(t, workspaces.EnsureDefault(ctx))
+	list, err := workspaces.List(ctx)
+	assert.NoError(t, err)
+	assert.Len(t, list, 2)
+	// The default comes first whatever its sort, and Folders leaves it out.
+	assert.Equal(t, model.Default, list[0].Folder)
+	assert.Equal(t, def.ID, list[0].ID)
+	assert.Equal(t, "The root", list[0].Title)
+	folders, err := workspaces.Folders(ctx)
+	assert.NoError(t, err)
+	assert.Equal(t, []string{"malta"}, folders)
+}

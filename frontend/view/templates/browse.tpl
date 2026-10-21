@@ -3,7 +3,7 @@
 <div class="page-head">
 	<div>
 		<h2><svg class="ic"><use href="#i-folder-open"/></svg> {{ .Title }}</h2>
-		<p>A directory of <a href="/f/{{ $p.ID }}">{{ $p.ID }}</a>. Nothing to run here: no pipeline file, Makefile, package scripts or scripts folder.</p>
+		<p>A directory of <a href="{{ $.Href $p.ID }}">{{ $p.ID }}</a>. Nothing to run here: no pipeline file, Makefile, package scripts or scripts folder.</p>
 	</div>
 </div>
 

@@ -79,8 +79,8 @@
 		{{- range .Artifacts }}
 			<tr>
 				<td class="nowrap" title="{{ stamp .CreatedAt }}">{{ ago .CreatedAt }}</td>
-				<td><a href="/f/{{ .Folder }}">{{ .Folder }}</a></td>
-				<td><a href="/f/{{ .Folder }}/{{ .Job }}">{{ .Job }}</a></td>
+				<td><a href="{{ $.Href .Folder }}">{{ .Folder }}</a></td>
+				<td><a href="{{ $.Href .Folder }}/{{ .Job }}">{{ .Job }}</a></td>
 				<td><a class="faint mono" href="/runs/{{ .RunID }}" title="{{ .RunID }}">{{ slice .RunID 0 8 }}</a></td>
 				<td class="key">{{ if .CommitID }}<a href="/artifacts/files/{{ .Path }}?version={{ .CommitID }}" data-artifact="{{ .Path }}" data-version="{{ .CommitID }}" title="View this version">{{ .Name }}</a>{{ else }}<a href="/api/artifacts/{{ .ID }}">{{ .Name }}</a>{{ end }}</td>
 				<td class="hide-sm">{{ if .CommitID }}<span class="faint mono" title="{{ .CommitID }}">{{ slice .CommitID 0 7 }}</span>{{ else }}<span class="faint">kept apart</span>{{ end }}</td>

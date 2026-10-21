@@ -117,7 +117,7 @@ func isFile(path string) bool {
 
 // discover adds the root when it has something to run, and walks the
 // tree below it, not into a root-only project. A directory of the root
-// named internal lists nothing: the namespace is task-ui's own. The walk
+// named internal or _ lists nothing: the names are task-ui's own. The walk
 // goes into every configured folder, even one a checkout ignores, such
 // as a project cloned inside a workspace.
 func (d *Discovery) discover(root string, c *catalogue) {
@@ -134,7 +134,7 @@ func (d *Discovery) discover(root string, c *catalogue) {
 		}
 	}
 	walk(root, "", 1, detector.HasPipeline(root), gitIgnored(root, nil), stop, keep, func(id, dir string) {
-		if c.seen(dir) || model.IsInternal(id) {
+		if c.seen(dir) || model.IsReserved(id) {
 			return
 		}
 		if f := Load(id, dir); runnable(f) {
@@ -153,7 +153,7 @@ func sections(root string, c *catalogue) {
 	}
 	for _, id := range ids {
 		top, _, nested := strings.Cut(id, "/")
-		if !nested || model.IsInternal(top) {
+		if !nested || model.IsReserved(top) {
 			continue
 		}
 		if dir := filepath.Join(root, top); !c.seen(dir) {

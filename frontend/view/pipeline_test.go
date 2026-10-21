@@ -15,7 +15,7 @@ func TestPipeline(t *testing.T) {
 	def := []view.Step{{Folder: "infra", Job: "plan"}, {WorkflowID: "w", WorkflowName: "release"}}
 	last := []view.Step{{Folder: "infra", Job: "plan", State: "ok", RunID: "r1"}, {WorkflowID: "w", WorkflowName: "release", State: "running", WorkflowRunID: "wr"}}
 
-	links := view.Pipeline(def, last)
+	links := view.Pipeline(def, last, nil)
 	assert.Len(t, links, 2)
 	assert.Equal(t, "ok", links[0].State)
 	assert.Equal(t, "/runs/r1", links[0].Href)
@@ -25,11 +25,11 @@ func TestPipeline(t *testing.T) {
 	assert.Equal(t, "wr", links[1].WorkflowRunID)
 
 	older := []view.Step{{Folder: "infra", Job: "deploy", State: "ok", RunID: "r0"}}
-	links = view.Pipeline(def, older)
+	links = view.Pipeline(def, older, map[string]int{"infra": 0})
 	assert.Equal(t, "", links[0].State)
 	assert.Equal(t, "/f/infra/plan", links[0].Href)
 
-	links = view.Pipeline(def, nil)
+	links = view.Pipeline(def, nil, nil)
 	assert.Len(t, links, 2)
 	assert.Equal(t, "", links[1].State)
 }

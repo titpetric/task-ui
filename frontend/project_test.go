@@ -3,6 +3,7 @@ package frontend_test
 import (
 	"context"
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/titpetric/task-ui/internal/assert"
@@ -99,17 +100,21 @@ func TestProject_RecursiveToggle(t *testing.T) {
 	assert.NotContains(t, rootOnly, `name="recursive" checked`)
 }
 
-// The clone form lists the workspaces in a select, none chosen, and
-// leaves the select out while there are none.
+// The clone form always has a Workspace select, the default one, _,
+// chosen, and lists the named ones after it.
 func TestProjectNew_Workspace(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
+	ctx := context.Background()
 
-	assert.NotContains(t, f.page(t, asAdmin, "/settings/projects/new"), `name="workspace"`)
+	alone := f.page(t, asAdmin, "/settings/projects/new")
+	assert.Contains(t, alone, `<select id="p-workspace" name="workspace">`)
+	assert.Contains(t, alone, `<option value="_" selected>`)
 
-	assert.NoError(t, f.opts.Workspaces.Create(context.Background(), &model.Workspace{Folder: "malta", Title: "Malta"}))
+	assert.NoError(t, f.opts.Workspaces.EnsureDefault(ctx))
+	assert.NoError(t, f.opts.Workspaces.Create(ctx, &model.Workspace{Folder: "malta", Title: "Malta"}))
 	form := f.page(t, asAdmin, "/settings/projects/new")
-	assert.Contains(t, form, `<select id="p-workspace" name="workspace">`)
-	assert.Contains(t, form, `<option value="" selected>`)
+	assert.Equal(t, 1, strings.Count(form, `<option value="_"`))
+	assert.Contains(t, form, `<option value="_" selected>`)
 	assert.Contains(t, form, `<option value="malta">malta · Malta</option>`)
 }

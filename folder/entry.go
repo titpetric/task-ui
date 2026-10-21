@@ -8,6 +8,7 @@ import (
 
 	"github.com/titpetric/task-ui/detector"
 	"github.com/titpetric/task-ui/git"
+	"github.com/titpetric/task-ui/model"
 )
 
 // Entry is one directory under the root, as the settings list it: with or
@@ -25,7 +26,7 @@ type Entry struct {
 	Error string `json:"error,omitempty"`
 }
 
-// Entries lists the directories under root, and the checkouts inside each
+// Entries lists the directories under root, less internal and _, and the checkouts inside each
 // workspace as `<workspace>/<name>`. Jobs counts the jobs of the directory
 // and of the folders discovered inside it.
 func Entries(root string, g *git.Git, workspaces []string) []Entry {
@@ -36,6 +37,9 @@ func Entries(root string, g *git.Git, workspaces []string) []Entry {
 		ids = append(ids, id)
 	}
 	for _, name := range subdirs(root) {
+		if model.IsReserved(SafeID(name)) {
+			continue
+		}
 		add(SafeID(name), filepath.Join(root, name))
 	}
 	d := &Discovery{Root: root, Discover: true}

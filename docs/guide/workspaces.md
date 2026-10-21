@@ -8,6 +8,16 @@ namespace of its projects: `dockerfiles` cloned into the workspace
 `malta` lives at `<root>/malta/dockerfiles`, its folder ID is
 `malta/dockerfiles`, and it opens at `/f/malta/dockerfiles`.
 
+Every project is in a workspace. The **default workspace**, `_`, is the
+root itself: it holds the projects cloned at the top of the root, and
+their pages open under `/f/_/`, so `infra` opens at `/f/_/infra`. A link
+without the `_`, such as a bookmarked `/f/infra`, redirects there for
+good, its query kept. `/f/_` lists the projects at the root you can see.
+task-ui adds the default workspace when it starts, and nobody can
+remove it. No workspace, project or directory under the root takes the
+name `_`, nor `internal`; discovery skips a directory of the root with
+either name.
+
 ![The sidebar with the workspace acme open, its projects api and web under it](../assets/sidebar-workspace-dark.png)
 
 ## Tooling from the folders above
@@ -36,23 +46,28 @@ the sidebar's order.
 - **Add workspace** clones a repository into the root, under the folder
   you name. The clone works, or the page shows git's output and keeps
   nothing. task-ui refuses a folder that a workspace, a project or a
-  directory under the root holds already, and `internal`, its own.
+  directory under the root holds already, and `internal` and `_`, its
+  own.
 - Any number of workspaces may come from one repository, each under its
   own folder: two teams can start from the same tooling and clone
   different projects into it.
 - **Configure** changes a workspace's title and description; the
   repository and the folder stay.
 - **Move up** and **Move down** change the order of the workspaces, in
-  the sidebar and on the page. An added workspace goes last.
+  the sidebar and on the page. An added workspace goes last. The default
+  workspace lists first and keeps its place.
 - The remove button deletes the checkout, every project inside it and
-  their rows, and its confirm names those projects first.
+  their rows, and its confirm names those projects first. The default
+  workspace has none: `DELETE /api/workspaces/_` answers `409`.
 
 ## Clone a project into one
 
-**Add project** under Settings, Projects has a **Workspace** select once
-there is a workspace. None, the default, clones the project at the top
-of the root; a workspace clones it inside that workspace, as
-`malta/dockerfiles`. The Projects page lists it under that name.
+**Add project** under Settings, Projects has a **Workspace** select.
+`_`, the default, clones the project at the top of the root; a named
+workspace clones it inside, as `malta/dockerfiles`. The Projects page
+lists it under that name. In the API an empty `workspace` means `_`. A
+project cloned at the root may not take a workspace's name or a
+directory that's there already: that answers `409` before git runs.
 
 The project lists with the folders inside it whatever the workspace's
 `.gitignore` says, so a workspace that ignores its projects' folders, as
@@ -92,12 +107,15 @@ Without a workspace, the sidebar lists the projects alone (see
 A run of a job in the workspace or in one of its projects gets two more
 variables (see [Runs](runs.md#what-a-job-gets)):
 
-- `TASK_UI_WORKSPACE`, the workspace's folder, such as `malta`;
-- `TASK_UI_WORKSPACE_DIR`, its checkout, such as `<root>/malta`.
+- `TASK_UI_WORKSPACE`, the workspace's folder, such as `malta`, or `_`
+  for a project at the root;
+- `TASK_UI_WORKSPACE_DIR`, its checkout, such as `<root>/malta`, or the
+  root for `_`.
 
-Before the job, the run pulls the workspace's checkout, then the
+Before the job, the run pulls a named workspace's checkout, then the
 project's, so the shared tooling is current when the job starts. When
-either pull fails, the run fails with it.
+either pull fails, the run fails with it. The default workspace's root
+isn't pulled.
 
 ## A prompt against a workspace
 

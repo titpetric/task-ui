@@ -17,9 +17,42 @@ import (
 // folderPath serves everything under /f: the folder a path names, a
 // job of it, one of its env files, or a directory inside it with
 // nothing to run, which opens as a page to browse. Folders nest, so the
-// longest folder that starts the path is the one meant.
+// longest folder that starts the path is the one meant. A path starts
+// with its workspace: a named one, or _ for the projects at the root;
+// internal is task-ui's own. /f/_ is the default workspace itself, and a
+// path that starts with none moves, for good, under /f/_/.
 func (h *Handlers) folderPath(w http.ResponseWriter, r *http.Request) {
-	path := param(r, "*")
+	path := strings.Trim(param(r, "*"), "/")
+	named := map[string]bool{}
+	for _, ws := range h.workspaceFolders(r.Context()) {
+		named[ws] = true
+	}
+	top, rest, _ := strings.Cut(path, "/")
+	switch {
+	case top == model.Default && rest == "":
+		h.defaultWorkspace(w, r)
+		return
+	case top == model.Default:
+		inner, _, _ := strings.Cut(rest, "/")
+		if named[inner] || model.IsReserved(inner) {
+			h.missing(w, r, "No folder named "+path+".")
+			return
+		}
+		path = rest
+	case !named[top] && top != model.Internal:
+		target := "/f/" + model.Default + "/" + escapePath(path)
+		if r.URL.RawQuery != "" {
+			target += "?" + r.URL.RawQuery
+		}
+		http.Redirect(w, r, target, http.StatusMovedPermanently)
+		return
+	}
+	h.folderAt(w, r, path)
+}
+
+// folderAt serves the path of a folder, its workspace's prefix taken off
+// for one at the root.
+func (h *Handlers) folderAt(w http.ResponseWriter, r *http.Request, path string) {
 	f, rest := folder.Resolve(h.opts.Catalogue, path)
 	if f == nil || !access.UserFrom(r.Context()).CanSee(f.ID) {
 		h.missing(w, r, "No folder named "+path+".")
@@ -37,8 +70,52 @@ func (h *Handlers) folderPath(w http.ResponseWriter, r *http.Request) {
 	case !strings.Contains(rest, "/"):
 		h.job(w, r, f, rest)
 	default:
-		h.missing(w, r, "There is nothing at /f/"+path+".")
+		h.missing(w, r, "There is nothing at "+r.URL.Path+".")
 	}
+}
+
+// defaultWorkspace shows the default workspace, the root: the projects
+// in it the user may see, and for an admin its prompt and what the root
+// holds, each project and workspace linked.
+func (h *Handlers) defaultWorkspace(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	f := &folder.Folder{ID: model.Default, Title: "Default", Dir: h.opts.Root}
+	var workspace *model.Workspace
+	if h.opts.Workspaces != nil {
+		if row, err := h.opts.Workspaces.GetByFolder(ctx, model.Default); err == nil {
+			workspace = row
+		}
+	}
+	if workspace != nil {
+		f.Title, f.Description = workspace.Title, workspace.Description
+	}
+	p := h.page(r, f.Title)
+	p.Folder = f
+	p.Crumbs = view.Crumbs(model.Default)
+	projects := map[string]bool{}
+	for _, sub := range p.Folders {
+		top, _, _ := strings.Cut(sub.ID, "/")
+		if _, named := p.Workspaces[top]; named || model.IsReserved(top) {
+			continue
+		}
+		if !strings.Contains(sub.ID, "/") {
+			p.SubFolders = append(p.SubFolders, sub)
+			projects[sub.ID] = true
+		}
+	}
+	if p.User.CanAdmin() {
+		for _, item := range folder.Listing(h.opts.Root) {
+			id := folder.SafeID(item.Name)
+			if _, named := p.Workspaces[id]; item.Dir && (projects[id] || named) {
+				item.Href = p.Href(id)
+			}
+			p.Tree = append(p.Tree, item)
+		}
+		if workspace != nil && h.claudeFor(r, p.User) {
+			p.Workspace = workspace
+		}
+	}
+	h.render(w, http.StatusOK, "folder", p)
 }
 
 // isDirIn reports whether rel names a directory inside dir, without
@@ -59,8 +136,8 @@ func (h *Handlers) browse(w http.ResponseWriter, r *http.Request, f *folder.Fold
 	p := h.page(r, path.Base(rel))
 	p.Folder = f
 	p.Browse = rel + "/"
-	p.Tree = linkTree(folder.Listing(filepath.Join(f.Dir, filepath.FromSlash(rel))), "/f/"+f.ID+"/"+escapePath(rel)+"/")
-	p.Crumbs = crumbsOf(f.ID+"/"+rel, "")
+	p.Tree = linkTree(folder.Listing(filepath.Join(f.Dir, filepath.FromSlash(rel))), p.Href(f.ID)+"/"+escapePath(rel)+"/")
+	p.Crumbs = crumbsOf(f.ID+"/"+rel, "", p.Workspaces)
 	h.render(w, http.StatusOK, "browse", p)
 }
 
@@ -69,8 +146,8 @@ func (h *Handlers) browse(w http.ResponseWriter, r *http.Request, f *folder.Fold
 func (h *Handlers) folder(w http.ResponseWriter, r *http.Request, f *folder.Folder) {
 	p := h.page(r, f.Title)
 	p.Folder = f
-	p.Tree = linkTree(folder.Listing(f.Dir), "/f/"+f.ID+"/")
-	p.Crumbs = crumbsOf(f.ID, "")
+	p.Tree = linkTree(folder.Listing(f.Dir), p.Href(f.ID)+"/")
+	p.Crumbs = crumbsOf(f.ID, "", p.Workspaces)
 	if h.opts.Git != nil && h.opts.Git.IsRepo(f.Dir) {
 		p.Checkout = h.opts.Git.Info(f.Dir)
 		if h.opts.Disk != nil {

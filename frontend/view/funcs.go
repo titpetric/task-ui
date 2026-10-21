@@ -31,7 +31,6 @@ func Funcs() template.FuncMap {
 		"tone":         Tone,
 		"assetVersion": AssetVersion,
 		"folderDir":    FolderDir,
-		"chain":        Chain,
 		"groups":       Groups,
 		"hasPrefix":    strings.HasPrefix,
 		"message":      Message,

@@ -24,7 +24,7 @@
 	<tbody>
 	{{- range .Secrets }}
 		<tr>
-			<td class="nowrap">{{ if eq .Scope "all" }}<span class="badge signal">all folders</span>{{ else }}<a href="/f/{{ .Scope }}"><svg class="ic"><use href="#i-folder"/></svg> {{ .Scope }}</a>{{ end }}</td>
+			<td class="nowrap">{{ if eq .Scope "all" }}<span class="badge signal">all folders</span>{{ else }}<a href="{{ $.Href .Scope }}"><svg class="ic"><use href="#i-folder"/></svg> {{ .Scope }}</a>{{ end }}</td>
 			<td class="key">{{ .Name }}</td>
 			<td class="faint"><svg class="ic"><use href="#i-secret"/></svg> {{ len .Content }} characters</td>
 			<td class="nowrap" title="{{ stamp .UpdatedAt }}">{{ ago .UpdatedAt }}</td>

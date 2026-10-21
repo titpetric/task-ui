@@ -100,3 +100,27 @@ func TestWorkspaces_AdminOnly(t *testing.T) {
 		}
 	}
 }
+
+// The default workspace lists first, links to /f/_, and neither moves
+// nor goes; the first named workspace has nowhere up to go.
+func TestWorkspaces_Default(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	ctx := context.Background()
+	assert.NoError(t, f.opts.Workspaces.EnsureDefault(ctx))
+	assert.NoError(t, f.opts.Workspaces.Create(ctx, &model.Workspace{Folder: "malta", Title: "Malta"}))
+	assert.NoError(t, f.opts.Projects.Create(ctx, &model.Project{Folder: "site"}))
+
+	body := f.page(t, asAdmin, "/settings/workspaces")
+	assert.True(t, strings.Index(body, `href="/f/_"`) < strings.Index(body, `href="/f/malta"`), "_ lists first")
+	assert.Contains(t, body, `<a href="/f/_/site">site</a>`)
+	assert.NotContains(t, body, `data-delete="/api/workspaces/_"`)
+	assert.NotContains(t, body, `data-folder="_" title="Move`)
+	assert.Contains(t, body, `data-workspace-move="up" data-folder="malta" title="Move up" aria-label="Move malta up" disabled>`)
+	assert.Contains(t, body, `data-delete="/api/workspaces/malta"`)
+
+	edit := f.page(t, asAdmin, "/settings/workspaces/_")
+	assert.Contains(t, edit, `data-api="/api/workspaces/_"`)
+	assert.Contains(t, edit, "the root, "+f.root)
+	assert.NotContains(t, edit, "data-delete=")
+}

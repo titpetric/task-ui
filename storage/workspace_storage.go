@@ -52,12 +52,24 @@ func (s *WorkspaceStorage) GetByFolder(ctx context.Context, folder string) (*mod
 	return workspace, notFound(err)
 }
 
-// List returns every workspace, by sort, then by folder.
-func (s *WorkspaceStorage) List(ctx context.Context) ([]model.Workspace, error) {
-	return client(s.db).Select[model.Workspace](ctx, "SELECT * FROM workspace ORDER BY sort, folder")
+// EnsureDefault adds the default workspace, whose directory is the
+// root, when the row is missing. A default workspace already there keeps
+// its row unchanged.
+func (s *WorkspaceStorage) EnsureDefault(ctx context.Context) error {
+	if _, err := s.GetByFolder(ctx, model.Default); !errors.Is(err, ErrNotFound) {
+		return err
+	}
+	return s.Create(ctx, &model.Workspace{Folder: model.Default, Title: "Default"})
 }
 
-// Folders returns the folder of every workspace, in List's order.
+// List returns every workspace: the default first, then by sort, then
+// by folder.
+func (s *WorkspaceStorage) List(ctx context.Context) ([]model.Workspace, error) {
+	return client(s.db).Select[model.Workspace](ctx, "SELECT * FROM workspace ORDER BY CASE WHEN folder = ? THEN 0 ELSE 1 END, sort, folder", model.Default)
+}
+
+// Folders returns the folder of every named workspace, in List's order,
+// without the default workspace: its projects are the root's.
 func (s *WorkspaceStorage) Folders(ctx context.Context) ([]string, error) {
 	workspaces, err := s.List(ctx)
 	if err != nil {
@@ -65,7 +77,9 @@ func (s *WorkspaceStorage) Folders(ctx context.Context) ([]string, error) {
 	}
 	folders := make([]string, 0, len(workspaces))
 	for _, workspace := range workspaces {
-		folders = append(folders, workspace.Folder)
+		if workspace.Folder != model.Default {
+			folders = append(folders, workspace.Folder)
+		}
 	}
 	return folders, nil
 }

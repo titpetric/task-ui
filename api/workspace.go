@@ -17,7 +17,8 @@ import (
 // promptJob is the internal job a prompt against a workspace runs.
 const promptJob = "claude-prompt"
 
-// listWorkspaces returns every workspace, by folder. Admins only.
+// listWorkspaces returns every workspace, the default first, then in
+// their order. Admins only.
 func (h *Handlers) listWorkspaces(w http.ResponseWriter, r *http.Request) {
 	if !requireAdmin(w, r) {
 		return
@@ -55,7 +56,7 @@ func (h *Handlers) createWorkspace(w http.ResponseWriter, r *http.Request) {
 		fail(w, http.StatusBadRequest, "name the workspace's folder: letters, digits, dots, dashes and underscores, no slashes")
 		return
 	}
-	if model.IsInternal(req.Folder) {
+	if model.IsReserved(req.Folder) {
 		fail(w, http.StatusBadRequest, internalRefused)
 		return
 	}
@@ -104,7 +105,7 @@ func (h *Handlers) getWorkspace(w http.ResponseWriter, r *http.Request) {
 
 // updateWorkspace writes a workspace's title and description. Its
 // folder, repository and branch stay: another checkout is another
-// workspace.
+// workspace. The default workspace keeps its place, first.
 func (h *Handlers) updateWorkspace(w http.ResponseWriter, r *http.Request) {
 	if !requireAdmin(w, r) {
 		return
@@ -120,7 +121,7 @@ func (h *Handlers) updateWorkspace(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	workspace.Title, workspace.Description = req.Title, req.Description
-	if req.Sort != nil {
+	if req.Sort != nil && workspace.Folder != model.Default {
 		workspace.Sort = *req.Sort
 	}
 	if err := h.opts.Workspaces.Update(r.Context(), workspace); err != nil {
@@ -132,7 +133,8 @@ func (h *Handlers) updateWorkspace(w http.ResponseWriter, r *http.Request) {
 
 // deleteWorkspace removes a workspace's checkout, the projects cloned
 // inside it with their rows, and its row. A workspace whose folder is
-// not a checkout keeps its files; only the rows go.
+// not a checkout keeps its files; only the rows go. The default
+// workspace, the root, stays.
 func (h *Handlers) deleteWorkspace(w http.ResponseWriter, r *http.Request) {
 	if !requireAdmin(w, r) {
 		return
@@ -143,7 +145,11 @@ func (h *Handlers) deleteWorkspace(w http.ResponseWriter, r *http.Request) {
 		failErr(w, err)
 		return
 	}
-	dir := filepath.Join(h.opts.Root, workspace.Folder)
+	if workspace.Folder == model.Default {
+		fail(w, http.StatusConflict, "the default workspace holds the projects at the root: it stays")
+		return
+	}
+	dir := workspace.Dir(h.opts.Root)
 	if h.opts.Git.IsRepo(dir) {
 		if err := h.opts.Git.Remove(dir); err != nil {
 			failErr(w, err)
@@ -206,7 +212,7 @@ func (h *Handlers) promptWorkspace(w http.ResponseWriter, r *http.Request) {
 	}
 	session, err := h.opts.Runner.Start(r.Context(), runner.Request{
 		Folder: f, Job: job, User: user, Cols: req.Cols, Rows: req.Rows,
-		Workspace: filepath.Join(h.opts.Root, workspace.Folder),
+		Workspace: workspace.Dir(h.opts.Root),
 		Env:       []string{"TASK_UI_PROMPT=" + prompt},
 	})
 	if errors.Is(err, runner.ErrBusy) {
@@ -220,8 +226,8 @@ func (h *Handlers) promptWorkspace(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusCreated, h.view(r, session.Snapshot()))
 }
 
-// workspaceFolders returns the folder of every workspace, none without
-// the storage or on an error.
+// workspaceFolders returns the folder of every named workspace, none
+// without the storage or on an error.
 func (h *Handlers) workspaceFolders(ctx context.Context) []string {
 	if h.opts.Workspaces == nil {
 		return nil

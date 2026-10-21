@@ -187,11 +187,11 @@ shot runs-dark /runs dark 1440x1500
 scripts/run.sh tools make:build >/dev/null 2>&1
 
 for theme in dark light; do
-  shot "folder-${theme}" /f/infra "$theme"
-  shot "job-${theme}" /f/infra/deploy "$theme"
+  shot "folder-${theme}" /f/_/infra "$theme"
+  shot "job-${theme}" /f/_/infra/deploy "$theme"
   shot "run-${theme}" "/runs/${run}#run=${run}" "$theme" 1440x900 2500
 done
-shot tools-dark /f/tools dark 1440x1000
+shot tools-dark /f/_/tools dark 1440x1000
 shot run-page-dark "/runs/${run}" dark
 shot artifacts-dark /artifacts dark
 shot schedules-dark /schedules dark
@@ -210,14 +210,14 @@ shot users-dark /settings/users dark
 shot user-new-dark /settings/users/new dark
 shot integrations-dark /settings/integrations dark
 shot notes-dark /notes dark
-shot envfile-dark /f/infra/env/.env dark
-shot out-of-hours-dark "/f/website#start=website/lint" dark 1440x900 2000
+shot envfile-dark /f/_/infra/env/.env dark
+shot out-of-hours-dark "/f/_/website#start=website/lint" dark 1440x900 2000
 shot mobile-dashboard-dark / dark 390x844
-shot mobile-menu-dark "/f/infra#menu" dark 390x844
-shot mobile-folder-dark /f/infra dark 390x1100
+shot mobile-menu-dark "/f/_/infra#menu" dark 390x844
+shot mobile-folder-dark /f/_/infra dark 390x1100
 
 # The viewer's instance over the same database: it attaches read only.
-TASK_UI_BASE="http://127.0.0.1:${viewer}" shot viewer-job-dark /f/infra/deploy dark
+TASK_UI_BASE="http://127.0.0.1:${viewer}" shot viewer-job-dark /f/_/infra/deploy dark
 
 # The instance nobody is signed in to, for the sign in screen.
 for theme in dark light; do

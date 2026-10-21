@@ -14,14 +14,15 @@ page you are on stays open.
 
 A [workspace](workspaces.md) adds a level above its projects: a label
 row with the workspace's name, and its projects folded under it. Their
-links carry the workspace, as `/f/malta/dockerfiles`. Without a
-workspace, the sidebar lists the projects alone.
+links carry the workspace, as `/f/malta/dockerfiles`. The projects at
+the top of the root are in the default workspace, `_`, and list first,
+without a label row; their links carry `_`, as `/f/_/infra`.
 
 ![A folder: its jobs, files and environment](../assets/folder-dark.png)
 
 An admin adds a project from a git repository on **Add project** (see
-[Settings](settings.md#projects)). With a workspace, the form has a
-**Workspace** select that clones the project inside it (see
+[Settings](settings.md#projects)). Its **Workspace** select clones the
+project at the top of the root, `_`, or inside a named workspace (see
 [Workspaces](workspaces.md#clone-a-project-into-one)).
 
 ## Where the jobs come from

@@ -143,10 +143,10 @@ git() { command git -c user.name=smoke -c user.email=smoke@example -c init.defau
 mkdir -p "$work/repo" && printf 'build:\n\techo built\n' >"$work/repo/Makefile"
 git -C "$work/repo" init -q && git -C "$work/repo" add . && git -C "$work/repo" commit -q -m init
 check "a repository clones into the root" '"runnable":true' api POST /projects "{\"url\":\"file://$work/repo\",\"id\":\"cloned\"}"
-check "the clone is a folder with its targets" '"id":"cloned"' bash -c "curl -sS '${TASK_UI_BASE}/f/cloned' | grep -o 'data-folder=\"cloned\"' | head -1 | sed 's/data-folder=/\"id\":/'"
+check "the clone is a folder with its targets" '"id":"cloned"' bash -c "curl -sS '${TASK_UI_BASE}/f/_/cloned' | grep -o 'data-folder=\"cloned\"' | head -1 | sed 's/data-folder=/\"id\":/'"
 check "a bad URL is refused" 'enter a git URL' api POST /projects '{"url":"not a url"}'
 check "the clone can be removed" '204' curl -sS -o /dev/null -w '%{http_code}' -X DELETE -H "Origin: ${TASK_UI_BASE}" "${TASK_UI_BASE}/api/projects/cloned"
-check "and is gone" '404' curl -sS -o /dev/null -w '%{http_code}' "${TASK_UI_BASE}/f/cloned"
+check "and is gone" '404' curl -sS -o /dev/null -w '%{http_code}' "${TASK_UI_BASE}/f/_/cloned"
 
 # ---- artifacts
 # tools reads its Makefile alone by default; its sources add the scripts.
@@ -165,17 +165,17 @@ console() {
   timeout 45 chromium --headless --no-sandbox --disable-gpu --enable-logging=stderr --v=0 --virtual-time-budget=3000 \
     --dump-dom "${TASK_UI_BASE}$1" 2>&1 | grep -E 'CONSOLE|Uncaught' | grep -vi 'deprecat' || true
 }
-for path in / /runs /f/infra /f/infra/deploy /settings/projects/infra /schedules '/f/website#start=website/lint'; do
+for path in / /runs /f/_/infra /f/_/infra/deploy /settings/projects/infra /schedules '/f/_/website#start=website/lint'; do
   check "no console errors on ${path}" '' bash -c "out=\"\$(console '$path')\"; [ -z \"\$out\" ] && echo ok || echo \"\$out\""
 done
-check "the sidebar runs a job in place" 'class="play" data-run="" data-folder="infra" data-job="plan"' bash -c "timeout 45 chromium --headless --no-sandbox --disable-gpu --virtual-time-budget=2000 --dump-dom '${TASK_UI_BASE}/f/infra' 2>/dev/null"
-check "the out of hours window asks why" 'id="run-reason-text"' bash -c "timeout 45 chromium --headless --no-sandbox --disable-gpu --virtual-time-budget=3000 --dump-dom '${TASK_UI_BASE}/f/website#start=website/lint' 2>/dev/null | grep -A2 'run-reason\"' | grep -v hidden"
+check "the sidebar runs a job in place" 'class="play" data-run="" data-folder="infra" data-job="plan"' bash -c "timeout 45 chromium --headless --no-sandbox --disable-gpu --virtual-time-budget=2000 --dump-dom '${TASK_UI_BASE}/f/_/infra' 2>/dev/null"
+check "the out of hours window asks why" 'id="run-reason-text"' bash -c "timeout 45 chromium --headless --no-sandbox --disable-gpu --virtual-time-budget=3000 --dump-dom '${TASK_UI_BASE}/f/_/website#start=website/lint' 2>/dev/null | grep -A2 'run-reason\"' | grep -v hidden"
 
 # The window itself: started from the page and attached over the socket
 # in the browser. The hint is what the window says once the start answered
 # and the socket opened; the run's end is read back from the API, since
 # the browser's virtual time runs out before real time delivers it.
-check "the window starts the run and attaches over the socket" 'Stop ends it, Kill ends it now.' bash -c "timeout 60 chromium --headless --no-sandbox --disable-gpu --virtual-time-budget=6000 --dump-dom '${TASK_UI_BASE}/f/infra#start=infra/plan' 2>/dev/null"
+check "the window starts the run and attaches over the socket" 'Stop ends it, Kill ends it now.' bash -c "timeout 60 chromium --headless --no-sandbox --disable-gpu --virtual-time-budget=6000 --dump-dom '${TASK_UI_BASE}/f/_/infra#start=infra/plan' 2>/dev/null"
 last="$(api GET '/runs?folder=infra&job=plan&limit=1' | field id)"
 for _ in $(seq 1 40); do
   [ "$(api GET "/runs/${last}" | field state)" != "running" ] && break

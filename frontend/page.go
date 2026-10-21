@@ -291,16 +291,20 @@ func (h *Handlers) requireAdmin(w http.ResponseWriter, r *http.Request) bool {
 }
 
 // crumbsOf walks a nested folder ID into a breadcrumb, one step per
-// segment, with a last step that has no link when given.
-func crumbsOf(id, last string) []view.Crumb {
+// segment, with a last step that has no link when given. A folder in no
+// named workspace starts at the default workspace's _.
+func crumbsOf(id, last string, workspaces map[string]int) []view.Crumb {
 	var crumbs []view.Crumb
+	if strings.HasPrefix(view.FolderHref(id, workspaces), "/f/"+model.Default+"/") {
+		crumbs = append(crumbs, view.Crumb{Text: model.Default, Href: view.FolderHref(model.Default, workspaces)})
+	}
 	path := ""
 	for _, segment := range strings.Split(id, "/") {
 		if path != "" {
 			path += "/"
 		}
 		path += segment
-		crumbs = append(crumbs, view.Crumb{Text: segment, Href: "/f/" + path})
+		crumbs = append(crumbs, view.Crumb{Text: segment, Href: view.FolderHref(path, workspaces)})
 	}
 	if last != "" {
 		crumbs = append(crumbs, view.Crumb{Text: last})

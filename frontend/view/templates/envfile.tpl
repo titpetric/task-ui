@@ -9,13 +9,13 @@
 </div>
 
 <div class="grid-2 wide">
-<form class="form" data-api="/api/env/{{ $p.ID }}/{{ $f.Path }}" data-method="PUT" data-next="/f/{{ $p.ID }}?notice=Saved+and+generated+{{ $f.Path }}">
+<form class="form" data-api="/api/env/{{ $p.ID }}/{{ $f.Path }}" data-method="PUT" data-next="{{ $.Href $p.ID }}?notice=Saved+and+generated+{{ $f.Path }}">
 	<div class="field">
 		<label for="env-content">Content <span class="faint">KEY=value, one per line, # comments</span></label>
 		<textarea id="env-content" name="content" rows="18" spellcheck="false" autocomplete="off">{{ $f.Content }}</textarea>
 	</div>
 	<div class="form-foot">
-		<a class="btn" href="/f/{{ $p.ID }}">Cancel</a>
+		<a class="btn" href="{{ $.Href $p.ID }}">Cancel</a>
 		<button class="btn btn-primary" type="submit">Save and generate</button>
 	</div>
 </form>
