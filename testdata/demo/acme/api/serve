@@ -1,0 +1,3 @@
+#!/bin/sh
+# Serve the API on :8080 against the local database
+echo "acme/api listening on :8080"

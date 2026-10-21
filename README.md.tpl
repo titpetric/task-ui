@@ -8,13 +8,20 @@ Makefile targets, package.json and composer.json scripts, and a
 terminal that anyone allowed can attach to, from any window, for as long
 as it runs.
 
+Projects live in workspaces: a checkout of shared tooling with the
+projects cloned inside it, its own secrets and SSH keys, and an export
+that moves it, keys and all, to another instance. A project's Files
+panel browses its checkout like a file manager: a file opens in a
+preview window, and a file that runs gets a Run button.
+
 ![The dashboard: every terminal in progress, as it looks right now](https://raw.githubusercontent.com/titpetric/task-ui/main/docs/assets/task-ui.png)
 
 The [usage guide](docs/README.md) shows how to use it, a chapter per
-section of the sidebar: the [dashboard](docs/guide/dashboard.md),
-[workflows](docs/guide/workflows.md), [runs](docs/guide/runs.md),
-[artifacts](docs/guide/artifacts.md), [schedules](docs/guide/scheduled.md),
-the [projects and their jobs](docs/guide/projects.md), the
+section of the sidebar: the [dashboard](docs/guide/dashboard.md), the
+[inventory](docs/guide/inventory.md), [workflows](docs/guide/workflows.md),
+[runs](docs/guide/runs.md), [artifacts](docs/guide/artifacts.md),
+[schedules](docs/guide/scheduled.md), [notes](docs/guide/notes.md), the
+[projects and their jobs](docs/guide/projects.md), the
 [workspaces](docs/guide/workspaces.md) that hold projects, the
 [recents](docs/guide/recents.md), the [settings](docs/guide/settings.md),
 and [MCP](docs/guide/mcp.md), for an agent that runs jobs. This README

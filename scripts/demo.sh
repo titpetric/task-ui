@@ -204,7 +204,6 @@ shot project-edit-dark /settings/projects/infra dark
 shot keys-dark /settings/keys dark
 shot keys-generate-dark /settings/keys/generate dark
 shot keys-upload-dark /settings/keys/upload dark
-shot secrets-dark /settings/secrets dark
 shot secret-new-dark "/settings/secrets/new?scope=infra" dark
 shot users-dark /settings/users dark
 shot user-new-dark /settings/users/new dark
@@ -232,15 +231,30 @@ api POST /workspaces -d "{\"url\":\"file://$work/repos/acme.git\",\"folder\":\"a
 api POST /projects -d "{\"url\":\"file://$work/repos/acme-api.git\",\"id\":\"api\",\"workspace\":\"acme\"}"
 api POST /projects -d "{\"url\":\"file://$work/repos/acme-web.git\",\"id\":\"web\",\"workspace\":\"acme\"}"
 api PUT /integrations/claude -d '{"values":{"token":"sk-ant-oat01-demo","who":"admin"}}'
+# The workspace's own: a shared secret and one of a project, on acme's
+# encryption key, an SSH key every run in acme gets and one only the
+# admins' runs get, and a local .env in the api checkout, which its
+# Files panel lists sealed.
+api POST /secrets -d '{"scope":"workspace:acme","name":"REGISTRY_URL","content":"registry.acme.example"}'
+api POST /secrets -d '{"scope":"acme/api","name":"DATABASE_URL","content":"postgres://api@db/api"}'
+api POST /workspaces/acme/keys/generate -d '{"type":"ed25519","name":"git","comment":"acme git"}'
+api POST /workspaces/acme/keys/generate -d '{"type":"ed25519","name":"deploy","comment":"acme deploy","policies":["admin"]}'
+printf 'DATABASE_URL=postgres://localhost/api\n' >"$work/demo/acme/api/.env"
 
 # Every link on every page answers, the workspace's included.
 scripts/crawl.sh
 
-shot workspaces-dark /settings/workspaces dark
+shot workspaces-dark /settings/workspaces dark 1440x1000
+shot workspace-edit-dark /settings/workspaces/acme dark 1440x1300
+shot secrets-dark /settings/secrets dark
 # The workspaces list after the projects at the root: a window tall
 # enough for the sidebar to reach acme and its projects.
 shot sidebar-workspace-dark /f/acme/api dark 1440x1900
 shot workspace-prompt-dark /f/acme dark
+# The api project's Files: .git and .env sealed, ./serve marked to run,
+# and its README in the preview window.
+shot files-dark /f/acme/api dark
+shot file-dark "/f/acme/api#file=README.md" dark
 
 mkdir -p docs/assets
 rm -f docs/assets/*.png

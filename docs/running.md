@@ -41,7 +41,7 @@ The environment sets the whole configuration:
 | `TASK_UI_HTPASSWD`    | `.htpasswd`          | The password file, looked up in the root                          |
 | `TASK_UI_ADMINS`      |                      | Users with the admin role, comma separated                        |
 | `TASK_UI_VIEWERS`     |                      | Users with the viewer role, comma separated; the rest are runners |
-| `TASK_UI_DATA`        | `data`               | Database, recordings and artifacts                                |
+| `TASK_UI_DATA`        | `data`               | Database, recordings, artifacts and workspace keys                |
 | `TASK_UI_DB`          | `<data>/task-ui.db`  | Database file (sqlite)                                            |
 | `TASK_UI_SSH_DIR`     | `$HOME/.ssh`         | Folder the SSH key settings manage                                |
 | `TASK_UI_SESSION_TTL` | `12h`                | How long a sign in lasts                                          |
