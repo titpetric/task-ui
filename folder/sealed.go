@@ -5,37 +5,27 @@ import (
 	"strings"
 )
 
-// sealedNames are the entries task-ui lists but never opens: the git
-// repository and the files that hold credentials or a web server's
-// access rules. A name that starts with a prefix in sealedPrefixes
-// counts too.
-var (
-	sealedNames    = []string{".git", ".env", ".htpasswd", ".htaccess"}
-	sealedPrefixes = []string{".env."}
-)
+// repository is the directory task-ui lists but never goes into: the git
+// repository of a checkout.
+const repository = ".git"
 
 // Sealed reports whether an entry of a checkout is one task-ui lists but
-// does not open, show or go into: .git, .env and .env.*, .htpasswd and
-// .htaccess.
-func Sealed(name string) bool {
-	for _, sealed := range sealedNames {
-		if name == sealed {
-			return true
-		}
-	}
-	for _, prefix := range sealedPrefixes {
-		if strings.HasPrefix(name, prefix) {
-			return true
-		}
-	}
-	return false
+// does not open, show, run or go into: .git, and any dot file, a file
+// whose name starts with a dot. dir says the entry is a directory, or a
+// symlink to one: a dot directory other than .git opens, the dot files
+// in it stay sealed.
+func Sealed(name string, dir bool) bool {
+	return name == repository || (!dir && strings.HasPrefix(name, ".") && name != "." && name != "..")
 }
 
 // SealedPath reports whether a slash path names a sealed entry or goes
-// through one: .git/config and sub/.env.local are both sealed.
-func SealedPath(rel string) bool {
-	for _, segment := range strings.Split(path.Clean("/"+rel), "/") {
-		if Sealed(segment) {
+// through .git: it takes .git/config, sub/.env and .claude/.secret, and
+// leaves .claude/CLAUDE.md. dir says the last entry is a directory; the
+// ones before it are.
+func SealedPath(rel string, dir bool) bool {
+	segments := strings.Split(strings.TrimPrefix(path.Clean("/"+rel), "/"), "/")
+	for i, segment := range segments {
+		if Sealed(segment, dir || i < len(segments)-1) {
 			return true
 		}
 	}
