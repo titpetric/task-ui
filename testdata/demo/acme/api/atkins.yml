@@ -1,0 +1,12 @@
+name: API
+help: The public HTTP API.
+
+jobs:
+  test:
+    desc: "Run the API's tests"
+    steps:
+      - run: echo "ok  acme/api  0.412s"
+  release:
+    desc: "Build and push the API image"
+    steps:
+      - run: echo "push registry.acme.example/api:latest"
