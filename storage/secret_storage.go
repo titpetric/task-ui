@@ -8,8 +8,19 @@ import (
 	"github.com/titpetric/task-ui/model"
 )
 
-// ScopeAll is the secret scope that applies to every folder.
+// ScopeAll is the scope the API reads as the default workspace's
+// shared scope, workspace:_, and the scope of the shared secrets of an
+// instance that predates workspaces.
 const ScopeAll = "all"
+
+// ScopeWorkspace starts the scope of the secrets a workspace shares with
+// every folder in it: workspace:<folder>.
+const ScopeWorkspace = "workspace:"
+
+// SharedScope returns the scope of a workspace's shared secrets.
+func SharedScope(workspace string) string {
+	return ScopeWorkspace + workspace
+}
 
 var validName = regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_]*$`)
 
@@ -53,27 +64,21 @@ func (s *SecretStorage) Get(ctx context.Context, ref model.Secret) (*model.Secre
 	return secret, notFound(err)
 }
 
-// List returns every secret, shared ones first, then by folder and name.
+// List returns every secret, shared ones first, then by scope and name.
 func (s *SecretStorage) List(ctx context.Context) ([]model.Secret, error) {
-	return client(s.db).Select[model.Secret](ctx, "SELECT * FROM secret ORDER BY CASE WHEN scope = ? THEN 0 ELSE 1 END, scope, name", ScopeAll)
+	return client(s.db).Select[model.Secret](ctx, "SELECT * FROM secret ORDER BY CASE WHEN scope = ? OR scope LIKE ? THEN 0 ELSE 1 END, scope, name", ScopeAll, ScopeWorkspace+"%")
 }
 
-// Scoped returns the secrets that reach a folder: the shared ones and
-// the folder's own.
-func (s *SecretStorage) Scoped(ctx context.Context, folder string) ([]model.Secret, error) {
-	return client(s.db).Select[model.Secret](ctx, "SELECT * FROM secret WHERE scope IN (?, ?) ORDER BY CASE WHEN scope = ? THEN 0 ELSE 1 END, name", ScopeAll, folder, ScopeAll)
-}
-
-// For returns the variables a folder's runs receive: the shared ones,
-// then the folder's own, which win.
-func (s *SecretStorage) For(ctx context.Context, folder string) (map[string]string, error) {
-	secrets, err := s.Scoped(ctx, folder)
-	if err != nil {
-		return nil, err
-	}
-	result := map[string]string{}
-	for _, secret := range secrets {
-		result[secret.Name] = secret.Content
+// Scoped returns the secrets of the scopes given, in their order, then
+// by name.
+func (s *SecretStorage) Scoped(ctx context.Context, scopes ...string) ([]model.Secret, error) {
+	var result []model.Secret
+	for _, scope := range scopes {
+		secrets, err := client(s.db).Select[model.Secret](ctx, "SELECT * FROM secret WHERE scope = ? ORDER BY name", scope)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, secrets...)
 	}
 	return result, nil
 }

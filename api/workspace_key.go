@@ -53,7 +53,8 @@ func (h *Handlers) listWorkspaceKeys(w http.ResponseWriter, r *http.Request) {
 }
 
 // generateWorkspaceKey makes a new SSH key pair for a workspace, or a
-// new encryption key; the previous pair of the name stays as a backup.
+// new encryption key, for which it writes the workspace's secrets
+// again; the previous pair of the name stays as a backup.
 func (h *Handlers) generateWorkspaceKey(w http.ResponseWriter, r *http.Request) {
 	h.addWorkspaceKey(w, r, func(workspace *model.Workspace, req WorkspaceKeyRequest) (sshkey.Key, error) {
 		comment := strings.TrimSpace(req.Comment)
@@ -100,7 +101,23 @@ func (h *Handlers) addWorkspaceKey(w http.ResponseWriter, r *http.Request, add f
 			return
 		}
 	}
-	writeJSON(w, http.StatusCreated, map[string]any{"key": key})
+	body := map[string]any{"key": key}
+	if req.Encrypt && h.opts.Secrets != nil {
+		h.rekeyWorkspace(r, workspace, body)
+	}
+	writeJSON(w, http.StatusCreated, body)
+}
+
+// rekeyWorkspace writes a workspace's secrets again for its new
+// encryption key and adds the count to the body. The previous key
+// stays as a backup, so a rekey that fails is a field of the body, not
+// a failure: the backup still opens the secrets.
+func (h *Handlers) rekeyWorkspace(r *http.Request, workspace *model.Workspace, body map[string]any) {
+	n, err := h.opts.Secrets.RekeyWorkspace(r.Context(), workspace.Folder)
+	body["rekeyed"] = n
+	if err != nil {
+		body["rekey_error"] = err.Error()
+	}
 }
 
 // grantWorkspaceKey sets the roles and the users whose runs get one of

@@ -108,8 +108,11 @@ type Page struct {
 	SecretNames []string
 	Secrets     []model.Secret
 	Secret      *model.Secret
-	Entries     []folder.Entry
-	Projects    []model.Project
+	// SecretGroups are the workspaces on the secrets pages, each with
+	// its secrets and its folders.
+	SecretGroups []SecretGroup
+	Entries      []folder.Entry
+	Projects     []model.Project
 	// Project is the row a configure page edits, nil for a fresh folder.
 	Project *model.Project
 	// WorkspaceList are the workspaces, for their page and the clone
@@ -141,7 +144,8 @@ type Page struct {
 	// KeyHolders are the roles and the users, and the keys each gets.
 	KeyHolders []KeyHolder
 	Key        *sshkey.Key
-	// Encryption names the keys that encrypt the secrets, and
+	// Encryption names the instance keys that encrypt the services'
+	// secrets, such as the integrations' settings, and
 	// EncryptKey is a workspace's encryption key, on its pages.
 	Encryption []string
 	EncryptKey *sshkey.Key

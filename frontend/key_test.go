@@ -59,9 +59,9 @@ func TestKeys_Encrypting(t *testing.T) {
 
 	body := f.page(t, asAdmin, "/settings/keys")
 	assert.Contains(t, body, `<span class="badge">id_ed25519</span>`)
-	assert.Contains(t, body, `title="The secrets are encrypted with this key"`)
+	assert.Contains(t, body, `title="The integrations' settings are encrypted with this key"`)
 	// One badge: the ECDSA key does not encrypt.
-	assert.Equal(t, 1, strings.Count(body, "secrets</span>"))
+	assert.Equal(t, 1, strings.Count(body, "integrations</span>"))
 }
 
 // A project that is a checkout with keys in its .ssh/ folder gets a

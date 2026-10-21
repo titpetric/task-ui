@@ -2,7 +2,7 @@
 <div class="page-head">
 	<div>
 		<h2>SSH keys</h2>
-		<p>The key pairs jobs use to reach other hosts, git remotes and services, and what the secrets are encrypted with{{ if .Encryption }}: <b>{{ join .Encryption ", " }}</b>{{ end }}. Add the public key where it should be accepted. Rotating a key writes the secrets again for the new one; the last key that opens them cannot be deleted. A key's policies are the roles and the users whose runs get it in their ssh agent; a key made for someone carries their name, id_ed25519_alice.</p>
+		<p>The key pairs jobs use to reach other hosts, git remotes and services, and what the integrations' settings are encrypted with{{ if .Encryption }}: <b>{{ join .Encryption ", " }}</b>{{ end }}; each workspace's secrets have a key of their own. Add the public key where it should be accepted. Rotating a key writes the integrations' settings again for the new one; the last key that opens them cannot be deleted. A key's policies are the roles and the users whose runs get it in their ssh agent; a key made for someone carries their name, id_ed25519_alice.</p>
 	</div>
 	<div class="actions">
 		<a class="btn" href="/settings/keys/upload">Upload key</a>
@@ -20,7 +20,7 @@
 		{{- range .Keys }}{{ if not .Backup }}{{ $any = true }}
 			<tr>
 				{{- $name := .Name }}
-				<td class="key">{{ .Comment }} <span class="badge">{{ .Name }}</span>{{ range $.Encryption }}{{ if eq . $name }} <span class="badge signal" title="The secrets are encrypted with this key"><svg class="ic"><use href="#i-secret"/></svg> secrets</span>{{ end }}{{ end }}</td>
+				<td class="key">{{ .Comment }} <span class="badge">{{ .Name }}</span>{{ range $.Encryption }}{{ if eq . $name }} <span class="badge signal" title="The integrations' settings are encrypted with this key"><svg class="ic"><use href="#i-secret"/></svg> integrations</span>{{ end }}{{ end }}</td>
 				<td class="fingerprint"><span class="kind dim">{{ .Type }}</span>{{ .Fingerprint }}</td>
 				{{- $roles := index $.KeyPolicies .Name }}{{ $users := index $.KeyUsers .Name }}
 				<td class="nowrap">{{ range $roles }}<span class="badge">{{ . }}</span> {{ end }}{{ range $users }}{{ template "avatar" (list $ .) }} {{ end }}{{ if not (or $roles $users) }}<span class="faint">none</span>{{ end }}</td>

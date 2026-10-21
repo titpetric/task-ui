@@ -121,11 +121,12 @@ func (h *Handlers) generateKey(w http.ResponseWriter, r *http.Request) {
 }
 
 // rekeyed answers a key change with the key and the count of secrets
-// written again for the keys now current. A rekey that fails is in the
+// on the instance key, the services', written again for the keys now
+// current. A rekey that fails is in the
 // answer, not a failure: the key is there, the backups still open the
 // secrets.
 func (h *Handlers) rekeyed(w http.ResponseWriter, r *http.Request, status int, key any) {
-	n, err := h.opts.Secrets.Rekey(r.Context())
+	n, err := h.opts.Secrets.RekeyInstance(r.Context())
 	body := map[string]any{"key": key, "rekeyed": n}
 	if err != nil {
 		body["rekey_error"] = err.Error()
@@ -178,10 +179,11 @@ func (h *Handlers) deleteKey(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-// releaseKey writes the secrets for the other keys before one goes. The
-// last key that can encrypt them cannot go while there are any.
+// releaseKey writes the secrets on the instance key, the services', for
+// the other keys before one goes. The last key that can encrypt them
+// cannot go while there are any.
 func (h *Handlers) releaseKey(ctx context.Context, name string) error {
-	count, err := h.opts.Secrets.Count(ctx)
+	count, err := h.opts.Secrets.OnInstance(ctx)
 	if err != nil || count == 0 {
 		return err
 	}
@@ -189,7 +191,7 @@ func (h *Handlers) releaseKey(ctx context.Context, name string) error {
 	if len(vault.Recipients(name)) == 0 && len(vault.Recipients()) > 0 {
 		return errors.New("the secrets are encrypted with this key: generate or upload another before deleting it")
 	}
-	if _, err := h.opts.Secrets.Rekey(ctx, name); err != nil {
+	if _, err := h.opts.Secrets.RekeyInstance(ctx, name); err != nil {
 		return fmt.Errorf("the secrets cannot be written for the other keys: %w", err)
 	}
 	return nil

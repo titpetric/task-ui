@@ -1,7 +1,8 @@
 // Package integration keeps the settings of the services task-ui talks
 // to, such as Claude Code and Beszel: API keys, tokens, addresses. They are
 // secrets in a scope of their own, integration:<kind>, encrypted with the
-// instance keys like every secret, and rekeyed with them. That scope never
+// instance key, which the workspaces' secrets do not use, and rekeyed
+// with it. That scope never
 // matches a folder, so no run sees them as secrets; an integration passes
 // its settings to the runs it serves.
 package integration
@@ -32,15 +33,13 @@ func (s *Store) Values(ctx context.Context, id string) (map[string]string, error
 	if KindOf(id) == nil {
 		return nil, ErrUnknown
 	}
-	all, err := s.Secrets.List(ctx)
+	rows, err := s.Secrets.Scope(ctx, ScopePrefix+id)
 	if err != nil {
 		return nil, err
 	}
 	values := map[string]string{}
-	for _, row := range all {
-		if row.Scope == ScopePrefix+id {
-			values[row.Name] = row.Content
-		}
+	for _, row := range rows {
+		values[row.Name] = row.Content
 	}
 	return values, nil
 }

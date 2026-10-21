@@ -3,17 +3,21 @@
 <div class="page-head">
 	<div>
 		<h2>{{ .Title }}</h2>
-		<p>The value is encrypted with the instance SSH {{ if eq (len .Encryption) 1 }}key{{ else }}keys{{ end }} {{ if .Encryption }}<b>{{ join .Encryption ", " }}</b>{{ else }}<span class="badge bad">none yet</span>{{ end }} and never shown again in full. Saving a name that exists replaces its value.</p>
+		<p>The value is encrypted with the key of the workspace its scope is in and never shown again in full. A secret for a workspace reaches every folder in it and no other workspace. Saving a name that exists replaces its value.</p>
 	</div>
 </div>
 
 <form class="form" data-api="/api/secrets" data-method="POST" data-next="/settings/secrets?notice=Secret+saved">
 	<div class="field">
-		<label for="s-scope">Folder</label>
+		<label for="s-scope">Scope</label>
 		<select id="s-scope" name="scope">
-			<option value="all"{{ if eq $s.Scope "all" }} selected{{ end }}>all folders</option>
-			{{- range .Folders }}
-			<option value="{{ .ID }}"{{ if eq $s.Scope .ID }} selected{{ end }}>{{ .ID }}</option>
+			{{- range .SecretGroups }}
+			<optgroup label="{{ .Title }}">
+				<option value="{{ .Shared }}"{{ if eq $s.Scope .Shared }} selected{{ end }}>every folder in {{ .Workspace }}</option>
+				{{- range .Folders }}
+				<option value="{{ . }}"{{ if eq $s.Scope . }} selected{{ end }}>{{ . }}</option>
+				{{- end }}
+			</optgroup>
 			{{- end }}
 		</select>
 	</div>

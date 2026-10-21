@@ -113,7 +113,8 @@ A run starts in its folder, as a login shell, with:
 - `TASK_UI_WORKSPACE`, the name of its [workspace](workspaces.md),
   `_` at the top of the root, and `TASK_UI_WORKSPACE_DIR`, its checkout,
   the root for `_`; `HOME` stays the server's;
-- the secrets of its folder (see [Settings](settings.md#secrets));
+- the secrets of its folder and its workspace's shared secrets, never
+  another workspace's (see [Settings](settings.md#secrets));
 - an ssh agent, through `SSH_AUTH_SOCK`, with the instance keys whose
   policies name the role or the name of whoever started the run (see
   [Projects and jobs](projects.md#keys-for-a-run)), and the SSH keys of

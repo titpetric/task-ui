@@ -38,7 +38,7 @@ func TestStore_SetAndRead(t *testing.T) {
 	ctx := context.Background()
 	s, rows := newStore(t)
 
-	token := &model.Secret{Scope: storage.ScopeAll, Name: "TOKEN", Content: "hunter2"}
+	token := &model.Secret{Scope: storage.SharedScope(model.Default), Name: "TOKEN", Content: "hunter2"}
 	assert.NoError(t, s.Set(ctx, token))
 	assert.True(t, model.ValidID(token.ID))
 	assert.Equal(t, "hunter2", token.Content)
@@ -46,12 +46,12 @@ func TestStore_SetAndRead(t *testing.T) {
 	assert.NoError(t, s.Set(ctx, &model.Secret{Scope: "infra", Name: "REGION", Content: "eu"}))
 
 	// At rest the store keeps the content armored; every way out decrypts.
-	raw, err := rows.Get(ctx, model.Secret{Scope: storage.ScopeAll, Name: "TOKEN"})
+	raw, err := rows.Get(ctx, model.Secret{Scope: storage.SharedScope(model.Default), Name: "TOKEN"})
 	assert.NoError(t, err)
 	assert.True(t, secret.Encrypted(raw.Content))
 	assert.NotContains(t, raw.Content, "hunter2")
 
-	got, err := s.Get(ctx, model.Secret{Scope: storage.ScopeAll, Name: "TOKEN"})
+	got, err := s.Get(ctx, model.Secret{Scope: storage.SharedScope(model.Default), Name: "TOKEN"})
 	assert.NoError(t, err)
 	assert.Equal(t, "hunter2", got.Content)
 
@@ -74,12 +74,12 @@ func TestStore_SetAndRead(t *testing.T) {
 	assert.Equal(t, 3, count)
 
 	// Replacing keeps the row, deleting removes it.
-	assert.NoError(t, s.Set(ctx, &model.Secret{Scope: storage.ScopeAll, Name: "TOKEN", Content: "changed"}))
-	got, _ = s.Get(ctx, model.Secret{Scope: storage.ScopeAll, Name: "TOKEN"})
+	assert.NoError(t, s.Set(ctx, &model.Secret{Scope: storage.SharedScope(model.Default), Name: "TOKEN", Content: "changed"}))
+	got, _ = s.Get(ctx, model.Secret{Scope: storage.SharedScope(model.Default), Name: "TOKEN"})
 	assert.Equal(t, token.ID, got.ID)
 	assert.Equal(t, "changed", got.Content)
 	assert.NoError(t, s.Delete(ctx, token.ID))
-	_, err = s.Get(ctx, model.Secret{Scope: storage.ScopeAll, Name: "TOKEN"})
+	_, err = s.Get(ctx, model.Secret{Scope: storage.SharedScope(model.Default), Name: "TOKEN"})
 	assert.ErrorIs(t, err, storage.ErrNotFound)
 
 	_, err = s.Get(ctx, model.Secret{Scope: "x", Name: "NOPE"})
@@ -94,7 +94,7 @@ func TestStore_Rekey(t *testing.T) {
 	ctx := context.Background()
 	s, rows := newStore(t)
 	keys := s.Vault.Keys
-	assert.NoError(t, s.Set(ctx, &model.Secret{Scope: storage.ScopeAll, Name: "A", Content: "one"}))
+	assert.NoError(t, s.Set(ctx, &model.Secret{Scope: storage.SharedScope(model.Default), Name: "A", Content: "one"}))
 	assert.NoError(t, s.Set(ctx, &model.Secret{Scope: "infra", Name: "B", Content: "two"}))
 	before, _ := rows.List(ctx)
 
@@ -132,7 +132,7 @@ func TestStore_Rekey(t *testing.T) {
 		}
 	}
 	_, err = s.List(ctx)
-	assert.ErrorContains(t, err, "secret A for all")
+	assert.ErrorContains(t, err, "secret A for workspace:_")
 	_, err = s.For(ctx, "infra")
 	assert.Error(t, err)
 	_, err = s.Rekey(ctx)

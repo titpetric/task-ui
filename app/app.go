@@ -31,7 +31,6 @@ import (
 	"github.com/titpetric/task-ui/recording"
 	"github.com/titpetric/task-ui/runner"
 	"github.com/titpetric/task-ui/scheduler"
-	"github.com/titpetric/task-ui/secret"
 	"github.com/titpetric/task-ui/sshkey"
 	"github.com/titpetric/task-ui/sshprobe"
 	"github.com/titpetric/task-ui/storage"
@@ -98,8 +97,9 @@ func openStorage(ctx context.Context, cfg *Config) (storage.DB, error) {
 	return db, nil
 }
 
-// prepare reads the users, adds the default workspace, and settles what
-// the previous process left.
+// prepare reads the users, adds the default workspace, puts the
+// workspaces' secrets on their keys, and settles what the previous
+// process left.
 func (a *App) prepare(ctx context.Context) error {
 	if err := a.seed(ctx); err != nil {
 		return err
@@ -111,6 +111,9 @@ func (a *App) prepare(ctx context.Context) error {
 		return err
 	}
 	if err := a.ensureKeys(ctx); err != nil {
+		return err
+	}
+	if err := a.migrateSecrets(ctx); err != nil {
 		return err
 	}
 	n, err := storage.NewRunStorage(a.DB).KillActive(ctx)
@@ -199,7 +202,7 @@ func (a *App) wire(version string) error {
 	}
 	keyPolicies := storage.NewSSHKeyPolicyStorage(db)
 	keyring, grants := cfg.Keyring(), storage.NewWorkspaceKeyGrantStorage(db)
-	secrets := secret.New(storage.NewSecretStorage(db), secret.NewVault(keys))
+	secrets := a.secrets(keys)
 	env := envfile.New(storage.NewEnvFileStorage(db), secrets)
 	integrations := &integration.Store{Secrets: secrets}
 	prober := &sshprobe.Prober{
