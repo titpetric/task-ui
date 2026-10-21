@@ -19,7 +19,7 @@ func TestGroups(t *testing.T) {
 		folders = append(folders, &folder.Folder{ID: id})
 	}
 
-	groups := view.Groups(folders)
+	groups := view.Groups(folders, nil)
 	assert.Len(t, groups, 4)
 	assert.Equal(t, "apps", groups[0].Top.ID)
 	assert.Equal(t, []string{"apps/blog", "apps/lib/web"}, idsOf(groups[0].Nested))
@@ -28,7 +28,53 @@ func TestGroups(t *testing.T) {
 	assert.Equal(t, "infra", groups[2].Top.ID)
 	assert.Equal(t, []string{"infra/edge"}, idsOf(groups[2].Nested))
 	assert.True(t, groups[3].Top == nil, "private is not listed")
+	assert.Equal(t, "private", groups[3].ID)
 	assert.Equal(t, []string{"private/deep"}, idsOf(groups[3].Nested))
+	for _, g := range groups {
+		assert.False(t, g.Workspace, g.ID)
+		assert.Len(t, g.Projects, 0)
+	}
+}
+
+// A workspace holds its projects, ws/project, each a group with the
+// folders inside it; a folder whose project is not listed stands in a
+// project of its own, without a top. The other groups stay as they are.
+func TestGroups_workspace(t *testing.T) {
+	t.Parallel()
+	ids := []string{"apps", "apps/blog", "malta", "malta/deploy", "malta/deploy/web", "malta/deploy/web/edge", "malta/pkg", "malta/vhosts/site", "lab/deep"}
+	folders := make([]*folder.Folder, 0, len(ids))
+	for _, id := range ids {
+		folders = append(folders, &folder.Folder{ID: id})
+	}
+
+	groups := view.Groups(folders, map[string]bool{"malta": true, "lab": true})
+	assert.Len(t, groups, 3)
+	assert.Equal(t, "apps", groups[0].Top.ID)
+	assert.False(t, groups[0].Workspace)
+	assert.Equal(t, []string{"apps/blog"}, idsOf(groups[0].Nested))
+
+	malta := groups[1]
+	assert.True(t, malta.Workspace)
+	assert.Equal(t, "malta", malta.Top.ID)
+	assert.Len(t, malta.Nested, 0)
+	assert.Len(t, malta.Projects, 3)
+	assert.Equal(t, "malta/deploy", malta.Projects[0].Top.ID)
+	assert.Equal(t, []string{"malta/deploy/web", "malta/deploy/web/edge"}, idsOf(malta.Projects[0].Nested))
+	assert.Equal(t, "malta/pkg", malta.Projects[1].Top.ID)
+	assert.Len(t, malta.Projects[1].Nested, 0)
+	assert.True(t, malta.Projects[2].Top == nil, "malta/vhosts is not listed")
+	assert.Equal(t, "malta/vhosts", malta.Projects[2].ID)
+	assert.Equal(t, []string{"malta/vhosts/site"}, idsOf(malta.Projects[2].Nested))
+	for _, p := range malta.Projects {
+		assert.False(t, p.Workspace, p.ID)
+	}
+
+	// A workspace whose own folder is not listed still holds its projects.
+	lab := groups[2]
+	assert.True(t, lab.Workspace)
+	assert.True(t, lab.Top == nil, "lab is not listed")
+	assert.Len(t, lab.Projects, 1)
+	assert.Equal(t, "lab/deep", lab.Projects[0].Top.ID)
 }
 
 func idsOf(folders []*folder.Folder) []string {
@@ -42,7 +88,8 @@ func idsOf(folders []*folder.Folder) []string {
 // A group is a project: its top folder, and the folders inside it.
 func TestGroup(t *testing.T) {
 	t.Parallel()
-	var g view.Group = view.Groups([]*folder.Folder{{ID: "deploy"}, {ID: "deploy/terraform"}})[0]
+	var g view.Group = view.Groups([]*folder.Folder{{ID: "deploy"}, {ID: "deploy/terraform"}}, nil)[0]
+	assert.Equal(t, "deploy", g.ID)
 	assert.Equal(t, "deploy", g.Top.ID)
 	assert.Equal(t, []string{"deploy/terraform"}, idsOf(g.Nested))
 }

@@ -67,29 +67,8 @@
 			</nav>
 			<nav class="folders">
 				{{- $total := 0 }}{{ range .SideFolders }}{{ $total = len .Jobs | add $total }}{{ end }}
-				{{- range $g := groups .SideFolders }}
-				{{- with $p := $g.Top }}
-				{{- /* A project folds on its chevron; the row opens it. The open page's project is marked and stays open. */}}
-				{{- $active := and $.Folder (or (eq $.Folder.ID $p.ID) (hasPrefix $.Folder.ID (print $p.ID "/"))) }}
-				{{- $here := and $.Folder (eq $.Folder.ID $p.ID) }}
-				<details class="project{{ if $active }} active{{ end }}" data-project="{{ $p.ID }}" open>
-					<summary{{ if $here }} class="active"{{ end }} title="{{ $p.ID }}/{{ range $i, $s := $p.Sources }}{{ if $i }}, {{ end }}{{ $s.File }}{{ end }}">
-						<a class="section{{ if $here }} active{{ end }}" href="/f/{{ $p.ID }}" data-folder="{{ $p.ID }}">
-							<svg class="ic"><use href="#i-project"/></svg><span>{{ $p.Name }}</span>
-							{{- if $p.Error }}<small class="bad">!</small>{{ else if $p.Jobs }}<small>{{ len $p.Jobs }}</small>{{ end }}
-						</a>
-						<svg class="ic chev"><use href="#i-chev"/></svg>
-					</summary>
-					{{- if $p.Jobs }}
-					<div class="jobs top">
-						{{- template "sidejobs" (list $ $p) }}
-					</div>
-					{{- end }}
-					{{- range $g.Nested }}{{ template "sidefolder" (list $ . $total) }}{{ end }}
-				</details>
-				{{- else }}
-				{{- range $g.Nested }}{{ template "sidefolder" (list $ . $total) }}{{ end }}
-				{{- end }}
+				{{- range $g := .Groups }}
+				{{- if $g.Workspace }}{{ template "sideworkspace" (list $ $g $total) }}{{ else }}{{ template "sideproject" (list $ $g $total) }}{{ end }}
 				{{- else }}
 				<div class="empty">No folders. Add one from a git repository in Settings, or put a folder with something to run under the root.</div>
 				{{- end }}
@@ -378,14 +357,72 @@
 {{- range $i, $l := chain . }}{{ if $i }}<span class="faint"> → </span>{{ end }}<a class="nowrap" href="{{ $l.Href }}">{{ if $l.State }}<i class="dot {{ $l.State }}"></i>{{ end }}{{ if $l.Workflow }}<svg class="ic"><use href="#i-flow"/></svg>{{ end }}{{ $l.Text }}</a>{{ end }}
 {{- end }}
 
+{{- /* sideproject is a project in the sidebar: its row, its jobs and
+     the folders inside it. A project folds on its chevron; the row opens
+     it. The open page's project is marked and stays open. Without its
+     top folder listed, the folders stand on their own. */}}
+{{- define "sideproject" }}
+{{- $ := index . 0 }}{{ $g := index . 1 }}{{ $total := index . 2 }}
+{{- with $p := $g.Top }}
+				{{- $active := and $.Folder (or (eq $.Folder.ID $p.ID) (hasPrefix $.Folder.ID (print $p.ID "/"))) }}
+				{{- $here := and $.Folder (eq $.Folder.ID $p.ID) }}
+				<details class="project{{ if $active }} active{{ end }}" data-project="{{ $p.ID }}" open>
+					<summary{{ if $here }} class="active"{{ end }} title="{{ $p.ID }}/{{ range $i, $s := $p.Sources }}{{ if $i }}, {{ end }}{{ $s.File }}{{ end }}">
+						<a class="section{{ if $here }} active{{ end }}" href="/f/{{ $p.ID }}" data-folder="{{ $p.ID }}">
+							<svg class="ic"><use href="#i-project"/></svg><span>{{ $p.Name }}</span>
+							{{- if $p.Error }}<small class="bad">!</small>{{ else if $p.Jobs }}<small>{{ len $p.Jobs }}</small>{{ end }}
+						</a>
+						<svg class="ic chev"><use href="#i-chev"/></svg>
+					</summary>
+					{{- if $p.Jobs }}
+					<div class="jobs top">
+						{{- template "sidejobs" (list $ $p) }}
+					</div>
+					{{- end }}
+					{{- range $g.Nested }}{{ template "sidefolder" (list $ . $total $g.ID) }}{{ end }}
+				</details>
+{{- else }}
+{{- range $g.Nested }}{{ template "sidefolder" (list $ . $total $g.ID) }}{{ end }}
+{{- end }}
+{{- end }}
+
+{{- /* sideworkspace is a workspace in the sidebar: its row folds the
+     projects under it, each a project with its own fold. Without its top
+     folder listed, the projects stand on their own. */}}
+{{- define "sideworkspace" }}
+{{- $ := index . 0 }}{{ $g := index . 1 }}{{ $total := index . 2 }}
+{{- with $p := $g.Top }}
+{{- $active := and $.Folder (or (eq $.Folder.ID $p.ID) (hasPrefix $.Folder.ID (print $p.ID "/"))) }}
+{{- $here := and $.Folder (eq $.Folder.ID $p.ID) }}
+<details class="workspace{{ if $active }} active{{ end }}" data-project="{{ $p.ID }}" open>
+	<summary{{ if $here }} class="active"{{ end }} title="{{ $p.ID }}/{{ range $i, $s := $p.Sources }}{{ if $i }}, {{ end }}{{ $s.File }}{{ end }}">
+		<svg class="ic chev"><use href="#i-chev"/></svg>
+		<a class="section{{ if $here }} active{{ end }}" href="/f/{{ $p.ID }}" data-folder="{{ $p.ID }}">
+			<span>{{ $p.Name }}</span>
+			{{- if $p.Error }}<small class="bad">!</small>{{ else }}<small>{{ len $g.Projects }}</small>{{ end }}
+		</a>
+	</summary>
+	{{- if $p.Jobs }}
+	<div class="jobs top">
+		{{- template "sidejobs" (list $ $p) }}
+	</div>
+	{{- end }}
+	{{- range $g.Projects }}{{ template "sideproject" (list $ . $total) }}{{ end }}
+</details>
+{{- else }}
+{{- range $g.Projects }}{{ template "sideproject" (list $ . $total) }}{{ end }}
+{{- end }}
+{{- end }}
+
 {{/* sidefolder is a folder inside a project in the sidebar: a disclosure
-     of its jobs, open when it is the page's or the tree is small. */}}
+     of its jobs, open when it is the page's or the tree is small. It
+     names its path below its project. */}}
 {{- define "sidefolder" }}
-{{- $ := index . 0 }}{{ $p := index . 1 }}{{ $total := index . 2 }}
+{{- $ := index . 0 }}{{ $p := index . 1 }}{{ $total := index . 2 }}{{ $top := index . 3 }}
 {{- $active := and $.Folder (eq $.Folder.ID $p.ID) }}
 <details class="folder{{ if $active }} active{{ end }}" data-folder="{{ $p.ID }}"{{ if or $active (le $total 24) }} open{{ end }}>
 	<summary title="{{ $p.ID }}/{{ range $i, $s := $p.Sources }}{{ if $i }}, {{ end }}{{ $s.File }}{{ end }}">
-		<a href="/f/{{ $p.ID }}"><svg class="ic"><use href="#i-folder{{ if $active }}-open{{ end }}"/></svg><span>{{ with folderDir $p.ID }}<i>{{ . }}/</i>{{ end }}<b>{{ $p.Name }}</b></span></a>
+		<a href="/f/{{ $p.ID }}"><svg class="ic"><use href="#i-folder{{ if $active }}-open{{ end }}"/></svg><span>{{ with folderDir $p.ID $top }}<i>{{ . }}/</i>{{ end }}<b>{{ $p.Name }}</b></span></a>
 		<i class="dot"></i>
 		{{- if $p.Error }}<small class="bad">!</small>{{ else }}<small>{{ len $p.Jobs }}</small>{{ end }}
 		<svg class="ic chev"><use href="#i-chev"/></svg>

@@ -89,3 +89,17 @@ func TestPage_CanRunJob(t *testing.T) {
 	assert.False(t, p.CanRunAny(p.Folder))
 	assert.False(t, p.CanRunJob("infra", "plan"))
 }
+
+// The sidebar's groups come from the folders it lists and the
+// workspaces: a workspace holds its projects.
+func TestPage_Groups(t *testing.T) {
+	t.Parallel()
+	p := &view.Page{SideFolders: []*folder.Folder{{ID: "malta"}, {ID: "malta/deploy"}}}
+	assert.Equal(t, []string{"malta/deploy"}, idsOf(p.Groups()[0].Nested))
+
+	p.Workspaces = map[string]bool{"malta": true}
+	groups := p.Groups()
+	assert.Len(t, groups, 1)
+	assert.True(t, groups[0].Workspace)
+	assert.Equal(t, "malta/deploy", groups[0].Projects[0].Top.ID)
+}

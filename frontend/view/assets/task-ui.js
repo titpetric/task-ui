@@ -2090,13 +2090,14 @@
     }
   }
 
-  // The projects in the sidebar fold on their chevron, and the folded
-  // ones are remembered in this browser. The open page's project stays
-  // open.
+  // The workspaces and projects in the sidebar fold on their chevron,
+  // and the folded ones are remembered in this browser by their full
+  // ID, so a workspace and a project in it fold apart. The open page's
+  // project stays open.
   var FOLDED = "task-ui.folded";
   var folded = [];
   try { folded = JSON.parse(localStorage.getItem(FOLDED) || "[]"); } catch (e) { folded = []; }
-  document.querySelectorAll(".folders details.project").forEach(function (project) {
+  document.querySelectorAll(".folders details[data-project]").forEach(function (project) {
     var id = project.dataset.project;
     if (folded.indexOf(id) >= 0 && !project.classList.contains("active")) project.open = false;
     project.addEventListener("toggle", function () {

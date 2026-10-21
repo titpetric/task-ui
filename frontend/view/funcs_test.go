@@ -1,6 +1,7 @@
 package view_test
 
 import (
+	"strings"
 	"testing"
 	"time"
 
@@ -102,6 +103,11 @@ func TestFolderDir(t *testing.T) {
 		"deploy/dockerfiles/atkins-docs": "dockerfiles",
 		"a/b/c/d":                        "b/c",
 	} {
-		assert.Equal(t, want, view.FolderDir(id), id)
+		top, _, _ := strings.Cut(id, "/")
+		assert.Equal(t, want, view.FolderDir(id, top), id)
 	}
+	// A workspace's project is two segments deep.
+	assert.Equal(t, "", view.FolderDir("malta/deploy/blog", "malta/deploy"))
+	assert.Equal(t, "web", view.FolderDir("malta/deploy/web/blog", "malta/deploy"))
+	assert.Equal(t, "", view.FolderDir("malta/deploy", "malta/deploy"))
 }

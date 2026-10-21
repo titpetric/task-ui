@@ -34,6 +34,9 @@ type Page struct {
 	// SideFolders are the folders the sidebar lists: Folders less the
 	// projects set not to show there.
 	SideFolders []*folder.Folder
+	// Workspaces are the folders of the workspaces, which the sidebar
+	// lists with their projects under them.
+	Workspaces map[string]bool
 	// Recents are the latest runs of jobs and of workflows the user may
 	// see, newest first, for the sidebar.
 	Recents []RecentGroup
@@ -152,6 +155,11 @@ type Page struct {
 	Notice string
 	Back   string
 	Crumbs []Crumb
+}
+
+// Groups are the sidebar's projects, and the workspaces with theirs.
+func (p *Page) Groups() []Group {
+	return Groups(p.SideFolders, p.Workspaces)
 }
 
 // CanRun reports whether the signed in user may run a job.

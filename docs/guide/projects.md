@@ -12,6 +12,13 @@ that runs has an eye instead, to watch it. A project folds on its
 chevron, and this browser remembers the folded ones. The project of the
 page you are on stays open.
 
+A [workspace](settings.md#workspaces) adds a level above its projects:
+a label row with the workspace's name, the count of its projects and a
+chevron that points down while it's open. Under it come the workspace's
+own jobs, then its projects, each a project as above with a fold of its
+own. Their links carry the workspace, as `/f/malta/dockerfiles`. Without
+a workspace, the sidebar lists the projects alone.
+
 ![A folder: its jobs, files and environment](../assets/folder-dark.png)
 
 An admin adds a project from a git repository on **Add project** (see
