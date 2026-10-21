@@ -13,9 +13,8 @@
   }
 
   & .badge {
-    padding-block: 0;
+    --badge-size: var(--control-xs);
     font-size: inherit;
-    line-height: calc(var(--control-xs) - 2px);
     letter-spacing: 0.05em;
     vertical-align: top;
   }

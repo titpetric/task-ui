@@ -187,16 +187,13 @@
 }
 
 .avatar.sm {
-  width: 1.45rem;
-  height: 1.45rem;
+  --avatar-size: round(1.45rem, 1px);
   font-size: 0.55rem;
   letter-spacing: var(--ls-xs);
   text-indent: var(--ls-xs);
 }
 
+/* Who ran it is a line of text, so the avatar sits on its x-height. */
 .who-ran {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
   white-space: nowrap;
 }

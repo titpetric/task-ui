@@ -97,20 +97,21 @@ details.user summary {
   }
 }
 
-/* The initials sit in the middle of the disc as the blog's account disc
-   has them: a grid cell, one line high, beside the text it goes with.
-   The capitals of the mono face sit high in its line, which the padding
-   on top evens out; the indent matches the spacing the last letter
-   trails. */
+/* The initials sit in the middle of the disc: a disc a whole number of
+   pixels across, and the capitals trimmed to their cap height with their
+   baseline on a whole pixel, so the disc and the letters land on the
+   same pixel grid wherever the row puts them. Next to text the disc
+   sits on the middle of its x-height, as vertical-align: middle has it;
+   the indent matches the spacing the last letter trails. */
 .avatar {
-  display: inline-grid;
-  place-items: center;
+  --avatar-size: round(2rem, 1px);
+  display: inline-block;
   flex: 0 0 auto;
-  line-height: 1;
-  padding-top: 0.15em;
+  width: var(--avatar-size);
+  height: var(--avatar-size);
+  line-height: calc(var(--avatar-size) - 2px);
+  text-align: center;
   vertical-align: middle;
-  width: 2rem;
-  height: 2rem;
   border-radius: var(--radius-round);
   border: 1px solid var(--line-2);
   background: var(--ink-2);
@@ -119,6 +120,12 @@ details.user summary {
   font-weight: 600;
   letter-spacing: var(--ls-sm);
   text-indent: var(--ls-sm);
+
+  @supports (text-box: trim-both cap alphabetic) {
+    line-height: 1;
+    text-box: trim-both cap alphabetic;
+    padding-top: calc(round((var(--avatar-size) + 1cap) / 2, 1px) - 1cap - 1px);
+  }
 
   &.role-admin {
     border-color: var(--role-admin);
