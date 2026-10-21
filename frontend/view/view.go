@@ -18,8 +18,10 @@ import (
 //go:embed templates/*.tpl
 var templates embed.FS
 
-// layoutFile holds the layout and the partials every page shares.
-const layoutFile = "_layout.tpl"
+// partialPrefix starts the files every page shares: _layout.tpl, the
+// layout and most partials, and a file per partial of its own size, such
+// as _actions.tpl.
+const partialPrefix = "_"
 
 // View holds the parsed pages, one template set per page over the
 // shared layout.
@@ -33,14 +35,14 @@ func New() (*View, error) {
 	if err != nil {
 		return nil, err
 	}
-	layout, err := template.New("layout").Funcs(Funcs()).ParseFS(templates, path.Join("templates", layoutFile))
+	layout, err := template.New("layout").Funcs(Funcs()).ParseFS(templates, path.Join("templates", partialPrefix+"*.tpl"))
 	if err != nil {
 		return nil, err
 	}
 	v := &View{pages: map[string]*template.Template{}}
 	for _, entry := range entries {
 		name := entry.Name()
-		if name == layoutFile || !strings.HasSuffix(name, ".tpl") {
+		if strings.HasPrefix(name, partialPrefix) || !strings.HasSuffix(name, ".tpl") {
 			continue
 		}
 		page, err := layout.Clone()

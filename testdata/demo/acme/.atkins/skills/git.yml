@@ -1,0 +1,17 @@
+name: Git
+help: Updates and inspects the checkout holding the current folder.
+when:
+  files: [.git]
+
+jobs:
+  pull:
+    desc: Pull the checkout
+    cmd: git pull --ff-only
+
+  rebase:
+    desc: Pull the checkout with --rebase
+    cmd: git pull --rebase
+
+  status:
+    desc: Show the branch and changes of the checkout
+    cmd: git status -sb

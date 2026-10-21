@@ -33,10 +33,11 @@
 	<table class="table table-kv">
 		<tbody>
 			<tr><th>Folder</th><td><a href="{{ $.Href $p.ID }}"><svg class="ic"><use href="#i-folder"/></svg> {{ $p.ID }}</a> <span class="dim">{{ $p.Title }}</span></td></tr>
-			<tr><th>Source</th><td><svg class="ic"><use href="#i-file"/></svg> {{ $r.Source }}{{ if ne $r.Kind "script" }}{{ template "showsource" (list $p $r.Source) }}{{ end }}</td></tr>
+			{{- with $r.Dir }}<tr><th>Directory</th><td><a href="{{ $.Href $p.ID }}/{{ . }}"><svg class="ic"><use href="#i-folder-open"/></svg> {{ . }}/</a> <span class="dim">the job runs here</span></td></tr>{{ end }}
+			<tr><th>Source</th><td><svg class="ic"><use href="#i-file"/></svg> {{ $r.Source }}{{ if and (ne $r.Kind "script") (ne $r.Kind "skill") (not $r.Dir) }}{{ template "showsource" (list $p $r.Source) }}{{ end }}</td></tr>
 			{{- if $p.Includes }}<tr><th>Includes</th><td>{{ range $p.Includes }}<div><svg class="ic"><use href="#i-file"/></svg> {{ . }}{{ template "showsource" (list $p .) }}</div>{{ end }}</td></tr>{{ end }}
 			<tr><th>Command</th><td><code>{{ join $r.Command " " }}</code></td></tr>
-			{{- if $r.DependsOn }}<tr><th>Depends on</th><td>{{ range $r.DependsOn }}{{ with $p.Job . }}<a href="{{ $.Href $p.ID }}/{{ .ID }}">{{ .Name }}</a>{{ else }}{{ . }}{{ end }} {{ end }}</td></tr>{{ end }}
+			{{- if $r.DependsOn }}<tr><th>Depends on</th><td>{{ range $r.DependsOn }}{{ with $p.Job . }}<a href="{{ $.JobHref $p . }}">{{ .Name }}</a>{{ else }}{{ . }}{{ end }} {{ end }}</td></tr>{{ end }}
 			<tr><th>Steps</th><td class="steps">{{ range $r.Steps }}<code>{{ . }}</code>{{ else }}<span class="faint">none listed</span>{{ end }}</td></tr>
 			{{- if $r.Aliases }}<tr><th>Aliases</th><td>{{ range $r.Aliases }}<span class="badge">{{ . }}</span> {{ end }}</td></tr>{{ end }}
 			{{- if $r.EnvFiles }}<tr><th>Env files</th><td>{{ range $r.EnvFiles }}<div><svg class="ic"><use href="#i-file"/></svg> {{ . }}</div>{{ end }}</td></tr>{{ end }}
@@ -74,6 +75,7 @@
 	</div>
 </section>
 
+{{- if not $r.Dir }}
 <section class="block">
 	<h3>Scheduled <small>cron expressions, in the server's time zone</small></h3>
 	<div class="table-wrap">
@@ -114,4 +116,5 @@
 	</form>
 	{{- end }}
 </section>
+{{- end }}
 {{ end }}

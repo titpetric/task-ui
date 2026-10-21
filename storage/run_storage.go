@@ -27,11 +27,15 @@ type RunFilter struct {
 	Folder  string
 	Folders []string
 	Job     string
-	State   model.State
-	UserID  string
-	Before  string
-	After   string
-	Limit   int
+	// Dir is the directory inside the folder of the job, with Job: ""
+	// keeps the runs of the folder's own job, not those of the job of a
+	// directory inside it with the same name.
+	Dir    string
+	State  model.State
+	UserID string
+	Before string
+	After  string
+	Limit  int
 }
 
 // Create inserts a run as running, started now.
@@ -97,6 +101,10 @@ func runQuery(filter RunFilter) (string, []any) {
 	}
 	add("folder", filter.Folder)
 	add("job", filter.Job)
+	if filter.Job != "" {
+		where = append(where, "dir = ?")
+		args = append(args, filter.Dir)
+	}
 	add("state", filter.State)
 	add("user_id", filter.UserID)
 	if len(filter.Folders) > 0 {
@@ -140,7 +148,7 @@ func (s *RunStorage) Last(ctx context.Context, filter RunFilter) (*model.Run, er
 }
 
 // Latest returns the latest finished run of every job of the folders,
-// every folder for none, a run per folder and job.
+// every folder for none, a run per folder, directory and job.
 func (s *RunStorage) Latest(ctx context.Context, folders []string) ([]model.Run, error) {
 	where := "state != ?"
 	args := []any{model.StateRunning}
@@ -152,10 +160,10 @@ func (s *RunStorage) Latest(ctx context.Context, folders []string) ([]model.Run,
 	}
 	return client(s.db).Select[model.Run](ctx, `SELECT * FROM run WHERE id IN (
 		SELECT id FROM (
-			SELECT id, ROW_NUMBER() OVER (PARTITION BY folder, job ORDER BY started_at DESC, id DESC) AS latest
+			SELECT id, ROW_NUMBER() OVER (PARTITION BY folder, dir, job ORDER BY started_at DESC, id DESC) AS latest
 			FROM run WHERE `+where+`
 		) WHERE latest = 1
-	) ORDER BY folder, job`, args...)
+	) ORDER BY folder, dir, job`, args...)
 }
 
 // Update writes a run back, by ID.

@@ -46,6 +46,7 @@ func (h *Handlers) Routes() http.Handler {
 	r := chi.NewRouter()
 
 	r.Get("/folders", h.listFolders)
+	r.Get("/folders/*", h.folderActions)
 
 	r.Get("/runs", h.listRuns)
 	r.Post("/runs", h.startRun)

@@ -7,6 +7,7 @@ import (
 	"github.com/titpetric/task-ui/agent"
 	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/skills"
 	"github.com/titpetric/task-ui/storage"
 )
 
@@ -20,6 +21,9 @@ type Catalogue struct {
 	// Agent is the notes agent's user, whose job in the internal folder
 	// allows it.
 	Agent string
+	// Skills asks atkins for the skills of a folder's directory, for
+	// every folder the catalogue lists.
+	Skills *skills.Prober
 }
 
 // NewCatalogue returns a catalogue over the root and the project rows.
@@ -29,7 +33,7 @@ func NewCatalogue(root string, discover bool, projects *storage.ProjectStorage) 
 
 // discovery builds the discovery of the moment.
 func (c *Catalogue) discovery() *folder.Discovery {
-	d := &folder.Discovery{Root: c.Root, Discover: c.Discover}
+	d := &folder.Discovery{Root: c.Root, Discover: c.Discover, Probe: c.Skills}
 	if c.Projects != nil {
 		projects, err := c.Projects.List(context.Background())
 		if err != nil {

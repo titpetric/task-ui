@@ -31,10 +31,12 @@ func (h *Handlers) target(r *http.Request, folderID, jobID string) (*folder.Fold
 
 // targetIn resolves a job of a directory inside a folder, as target
 // does: dir is a slash path inside the folder, and the job one of the
-// targets Folder.Sub reads there. It returns the folder itself, whose
-// rules and checkout the run takes, the job, and the directory the job
-// runs in, "" for the folder's own. A directory Path refuses, sealed,
-// through .git or out by a symlink, is no such directory.
+// targets Folder.Sub reads there, or a skill atkins applies there. It
+// returns the folder itself, whose rules and checkout the run takes, the
+// job, and the directory the job runs in, its own Dir, "" for the
+// folder's: a skill matched in a parent runs in that parent. A directory
+// Path refuses, sealed, through .git or out by a symlink, is no such
+// directory.
 func (h *Handlers) targetIn(r *http.Request, folderID, dir, jobID string) (*folder.Folder, *folder.Job, string, string) {
 	user := access.UserFrom(r.Context())
 	f := h.visibleFolder(user, folderID)
@@ -49,10 +51,14 @@ func (h *Handlers) targetIn(r *http.Request, folderID, dir, jobID string) (*fold
 	if job == nil {
 		return f, nil, "", "no such job"
 	}
-	if sub == f {
+	if job.Dir == "" {
 		return f, job, "", ""
 	}
-	return f, job, sub.Dir, ""
+	at, ok := f.Path(job.Dir)
+	if !ok {
+		return f, nil, "", "no such directory"
+	}
+	return f, job, at, ""
 }
 
 // requireAdmin answers anyone but an admin with 403 and reports it.

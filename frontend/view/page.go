@@ -55,8 +55,10 @@ type Page struct {
 	Folder *folder.Folder
 	// Place is the folder of the directory browsed inside Folder, as
 	// Folder.Sub reads it, when it has targets of its own.
-	Place    *folder.Folder
-	Job      *folder.Job
+	Place *folder.Folder
+	Job   *folder.Job
+	// Actions are the actions bar of the folder or the directory browsed.
+	Actions  *Actions
 	Checkout *git.Info
 	// Tree is what the folder, or the directory browsed in it, holds.
 	Tree []folder.Item
@@ -219,14 +221,28 @@ func (p *Page) CanRunAny(f *folder.Folder) bool {
 }
 
 // CanRunJob reports whether the signed in user may run a job named by
-// the IDs of its folder and itself, as a run names them.
-func (p *Page) CanRunJob(folderID, jobID string) bool {
+// the IDs of its folder and itself and the directory inside the folder
+// it runs in, as a run names them.
+func (p *Page) CanRunJob(folderID, dir, jobID string) bool {
 	for _, f := range p.Folders {
 		if f.ID == folderID {
-			return p.CanRun(f, f.Job(jobID))
+			return p.CanRun(f, f.Sub(dir).Job(jobID))
 		}
 	}
 	return false
+}
+
+// JobHref returns the path of a job's page: under its folder's, after
+// the directory it runs in for a job of a directory inside the folder.
+func (p *Page) JobHref(f *folder.Folder, job *folder.Job) string {
+	if f == nil || job == nil {
+		return ""
+	}
+	href := p.Href(f.ID) + "/"
+	if job.Dir != "" {
+		href += job.Dir + "/"
+	}
+	return href + job.ID
 }
 
 // RunningRun returns the run in progress of a job, or nil.

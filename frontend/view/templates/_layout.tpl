@@ -100,10 +100,10 @@
 					</a>
 					{{- end }}
 					{{- with $e.Run }}
-					{{- $can := $.CanRunJob .Folder .Job }}
-					<a href="/runs/{{ .ID }}" data-attach="{{ .ID }}" class="recent" title="{{ if ne .State "running" }}View{{ else if $can }}Attach to{{ else }}Watch{{ end }} {{ .Folder }} / {{ .Job }}, {{ .UserName }}, {{ .State }}">
+					{{- $can := $.CanRunJob .Folder .Dir .Job }}
+					<a href="/runs/{{ .ID }}" data-attach="{{ .ID }}" class="recent" title="{{ if ne .State "running" }}View{{ else if $can }}Attach to{{ else }}Watch{{ end }} {{ .Where }} / {{ .Job }}, {{ .UserName }}, {{ .State }}">
 						<i class="dot {{ .State }}"></i>
-						<span class="what"><b>{{ .Job }}</b><small>{{ .Folder }}</small></span>
+						<span class="what"><b>{{ .Job }}</b><small>{{ .Where }}</small></span>
 						{{- if eq .State "running" }}<svg class="ic act"><use href="#i-{{ if $can }}play{{ else }}eye{{ end }}"/></svg>{{ end }}
 						{{ template "avatar" (list $ .UserName) }}
 					</a>
@@ -514,7 +514,7 @@
 
 {{/* sources are the job cards of a folder, a section per source: the
      folder's own, or those of a directory inside it (Folder.Sub), whose
-     jobs run there and have no page of their own yet. */}}
+     jobs run there and have their page under it. */}}
 {{- define "sources" }}
 {{- $ := index . 0 }}{{ $p := index . 1 }}
 {{- range $s := $p.Sources }}
@@ -529,7 +529,7 @@
 		     lines and the rest behind "show N more". */}}
 		<article class="jobcard{{ if $run }} running{{ end }}">
 			<header>
-				{{- if $r.Dir }}<span class="name">{{ $r.Name }}</span>{{ else }}<a class="name" href="{{ $.Href $p.ID }}/{{ $r.ID }}">{{ $r.Name }}</a>{{ end }}
+				<a class="name" href="{{ $.JobHref $p $r }}">{{ $r.Name }}</a>
 				<span class="badge">{{ $r.Kind }}</span>
 				{{- if $r.Interactive }}<span class="badge">interactive</span>{{ end }}
 				<span class="actions">
@@ -537,7 +537,7 @@
 					<a class="btn btn-sm" href="/runs/{{ $run.ID }}" data-attach="{{ $run.ID }}"><svg class="ic"><use href="#i-eye"/></svg>Attach</a>
 					{{- if $can }}<button type="button" class="btn-icon danger" data-kill="{{ $run.ID }}" title="Kill the run" aria-label="Kill the run"><svg class="ic"><use href="#i-stop"/></svg></button>{{ end }}
 					{{- else if $can }}{{ template "runButtons" (list $p $r) }}
-					{{- else if not $r.Dir }}<a class="btn btn-sm" href="{{ $.Href $p.ID }}/{{ $r.ID }}">History</a>{{ end -}}
+					{{- else }}<a class="btn btn-sm" href="{{ $.JobHref $p $r }}">History</a>{{ end -}}
 				</span>
 			</header>
 			<p class="desc">{{ if and $r.Description (ne $r.Description $r.Name) (not (and $r.Steps (eq $r.Description (index $r.Steps 0)))) }}{{ $r.Description }}{{ end }}</p>

@@ -59,7 +59,7 @@ func (h *Handlers) workflowView(ctx context.Context, p *view.Page, wf model.Work
 		if !user.CanSee(step.Folder) {
 			return nil
 		}
-		if !p.CanRunJob(step.Folder, step.Job) {
+		if !p.CanRunJob(step.Folder, "", step.Job) {
 			v.CanRun = false
 		}
 	}

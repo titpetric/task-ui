@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/titpetric/task-ui/detector"
+	"github.com/titpetric/task-ui/skills"
 )
 
 // Folder is a working directory and the conventions detected in it. Each
@@ -49,6 +50,10 @@ type Folder struct {
 	// Jobs are every source's jobs, in source order.
 	Jobs []*Job `json:"jobs"`
 
+	// Probe asks atkins for the skills that apply in Dir, the jobs
+	// SkillJob resolves. Nil lists none.
+	Probe *skills.Prober `json:"-"`
+
 	// Error holds the parse errors of the sources, so a folder with a
 	// broken file still shows in the listing and says what is wrong.
 	Error string `json:"error,omitempty"`
@@ -56,13 +61,17 @@ type Folder struct {
 
 // Job returns the job by ID, name or alias, or nil. The ID is what URLs
 // and history use; the name is the target as its file spells it. An ID
-// that starts with ./ is the job of a file that runs: see FileJob.
+// that starts with ./ is the job of a file that runs: see FileJob; one
+// that starts with @ the job of an atkins skill: see SkillJob.
 func (f *Folder) Job(id string) *Job {
 	if f == nil {
 		return nil
 	}
 	if rel, ok := strings.CutPrefix(id, FilePrefix); ok {
 		return f.FileJob(rel)
+	}
+	if name, ok := strings.CutPrefix(id, SkillPrefix); ok {
+		return f.SkillJob(name)
 	}
 	for _, j := range f.Jobs {
 		if j.ID == id {

@@ -10,6 +10,7 @@ import (
 
 	"github.com/titpetric/task-ui/detector"
 	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/skills"
 )
 
 // maxDepth bounds how far discovery descends below the root.
@@ -28,6 +29,8 @@ type Discovery struct {
 	Root     string
 	Discover bool
 	Config   []Config
+	// Probe is every folder's Probe, for the skills atkins applies in it.
+	Probe *skills.Prober
 }
 
 // catalogue collects folders by ID and by directory, the first of each
@@ -69,6 +72,7 @@ func (d *Discovery) List() []*Folder {
 
 	result := make([]*Folder, 0, len(c.byID))
 	for _, f := range c.byID {
+		f.Probe = d.Probe
 		result = append(result, f)
 	}
 	sort.Slice(result, func(i, j int) bool {

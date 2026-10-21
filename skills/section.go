@@ -1,0 +1,27 @@
+package skills
+
+// Section is one file of jobs atkins found for a directory: the pipeline
+// of the directory, or a skill from a .atkins/skills folder of it or a
+// parent. Dir is where its jobs run, the directory of the file a skill's
+// condition matched; Active says the condition holds.
+type Section struct {
+	ID     string    `json:"id"`
+	Kind   string    `json:"kind"`
+	Path   string    `json:"path"`
+	Dir    string    `json:"dir,omitempty"`
+	Active bool      `json:"active"`
+	When   *When     `json:"when,omitempty"`
+	Desc   string    `json:"desc,omitempty"`
+	Cmds   []Command `json:"cmds"`
+}
+
+// Kinds of section.
+const (
+	KindPipeline = "pipeline"
+	KindSkill    = "skill"
+)
+
+// IsSkill reports whether the section is a skill that applies here.
+func (s *Section) IsSkill() bool {
+	return s.Kind == KindSkill && s.Active
+}
