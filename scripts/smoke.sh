@@ -32,7 +32,7 @@ done
 port=3301
 export TASK_UI_BASE="http://127.0.0.1:${port}"
 env TASK_UI_ROOT="$work/demo" TASK_UI_LISTEN="127.0.0.1:${port}" TASK_UI_DATA="$work/data" \
-  TASK_UI_SSH_DIR="$work/ssh" TASK_UI_SECRET=smoke TASK_UI_ADMINS=admin TASK_UI_VIEWERS=guest \
+  TASK_UI_SSH_DIR="$work/ssh" TASK_UI_ADMINS=admin TASK_UI_VIEWERS=guest \
   TASK_UI_AUTOLOGIN=admin TASK_UI_NOW=2026-10-16T22:00:00+02:00 \
   "$work/task-ui" >"$work/task-ui.log" 2>&1 &
 pids+=("$!")

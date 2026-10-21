@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -23,7 +24,15 @@ func newGuard(t *testing.T) (*access.Guard, *model.User) {
 	users := storage.NewUserStorage(db)
 	ops := &model.User{Name: "ops", Role: model.RoleRunner}
 	assert.NoError(t, users.Create(context.Background(), ops))
-	return access.NewGuard(users, access.NewSessions("secret", time.Hour)), ops
+	return access.NewGuard(users, access.NewSessions(storage.NewUserSessionStorage(db), users, time.Hour)), ops
+}
+
+// issue opens a session for a user and returns its token.
+func issue(t *testing.T, guard *access.Guard, user *model.User) string {
+	t.Helper()
+	token, err := guard.Sessions.Issue(context.Background(), user)
+	assert.NoError(t, err)
+	return token
 }
 
 // hello is a handler that names the user on the request context.
@@ -50,10 +59,10 @@ func TestGuard_User(t *testing.T) {
 	assert.Nil(t, guard.User(r), "forged cookie")
 
 	r = httptest.NewRequest(http.MethodGet, "/", nil)
-	r.AddCookie(&http.Cookie{Name: access.Cookie, Value: guard.Sessions.Issue("ops")})
+	r.AddCookie(&http.Cookie{Name: access.Cookie, Value: issue(t, guard, ops)})
 	assert.Equal(t, ops.ID, guard.User(r).ID)
 	r = httptest.NewRequest(http.MethodGet, "/", nil)
-	r.AddCookie(&http.Cookie{Name: access.Cookie, Value: guard.Sessions.Issue("gone")})
+	r.AddCookie(&http.Cookie{Name: access.Cookie, Value: issue(t, guard, &model.User{ID: model.NewID(), Name: "gone"})})
 	assert.Nil(t, guard.User(r), "a session of a user that was removed")
 
 	guard.AutoLogin = "ops"
@@ -64,7 +73,7 @@ func TestGuard_User(t *testing.T) {
 
 func TestGuard_Require(t *testing.T) {
 	t.Parallel()
-	guard, _ := newGuard(t)
+	guard, ops := newGuard(t)
 	handler := guard.Require(hello)
 
 	w := httptest.NewRecorder()
@@ -79,12 +88,30 @@ func TestGuard_Require(t *testing.T) {
 	handler.ServeHTTP(w, httptest.NewRequest(http.MethodPost, "/f/echo", nil))
 	assert.Equal(t, http.StatusUnauthorized, w.Code)
 
+	token := issue(t, guard, ops)
 	r := httptest.NewRequest(http.MethodGet, "/f/echo", nil)
-	r.AddCookie(&http.Cookie{Name: access.Cookie, Value: guard.Sessions.Issue("ops")})
+	r.AddCookie(&http.Cookie{Name: access.Cookie, Value: token})
 	w = httptest.NewRecorder()
 	handler.ServeHTTP(w, r)
 	assert.Equal(t, http.StatusOK, w.Code)
 	assert.Equal(t, "hello ops", w.Body.String())
+
+	// A tampered or unknown cookie gets the login page, or a 401.
+	for _, bad := range []string{token[:len(token)-1] + "A", "unknown"} {
+		if bad == token {
+			continue
+		}
+		r = httptest.NewRequest(http.MethodGet, "/f/echo", nil)
+		r.AddCookie(&http.Cookie{Name: access.Cookie, Value: bad})
+		w = httptest.NewRecorder()
+		handler.ServeHTTP(w, r)
+		assert.Equal(t, http.StatusSeeOther, w.Code)
+		r = httptest.NewRequest(http.MethodGet, "/api/runs", nil)
+		r.AddCookie(&http.Cookie{Name: access.Cookie, Value: bad})
+		w = httptest.NewRecorder()
+		handler.ServeHTTP(w, r)
+		assert.Equal(t, http.StatusUnauthorized, w.Code)
+	}
 }
 
 func TestGuard_SetCookie(t *testing.T) {
@@ -100,20 +127,29 @@ func TestGuard_SetCookie(t *testing.T) {
 	assert.True(t, cookies[0].Secure)
 	assert.True(t, cookies[0].HttpOnly)
 	assert.Equal(t, 3600, cookies[0].MaxAge)
-	name, err := guard.Sessions.Verify(cookies[0].Value)
+	assert.False(t, strings.Contains(cookies[0].Value, "."), "opaque, not a JWT")
+	user, err := guard.Sessions.Resolve(r.Context(), cookies[0].Value)
 	assert.NoError(t, err)
-	assert.Equal(t, "ops", name)
+	assert.Equal(t, ops.ID, user.ID)
 }
 
+// Clearing the cookie ends the session: the old cookie signs in nobody.
 func TestGuard_ClearCookie(t *testing.T) {
 	t.Parallel()
-	guard, _ := newGuard(t)
+	guard, ops := newGuard(t)
+	token := issue(t, guard, ops)
+	r := httptest.NewRequest(http.MethodPost, "/logout", nil)
+	r.AddCookie(&http.Cookie{Name: access.Cookie, Value: token})
 	w := httptest.NewRecorder()
-	guard.ClearCookie(w, false)
+	assert.NoError(t, guard.ClearCookie(w, r))
 	cookies := w.Result().Cookies()
 	assert.Len(t, cookies, 1)
 	assert.Equal(t, -1, cookies[0].MaxAge)
 	assert.False(t, cookies[0].Secure)
+	assert.Nil(t, guard.User(r))
+
+	// Without a cookie there is nothing to end.
+	assert.NoError(t, guard.ClearCookie(httptest.NewRecorder(), httptest.NewRequest(http.MethodPost, "/logout", nil)))
 }
 
 func TestIsHTTPS(t *testing.T) {
@@ -136,7 +172,7 @@ func TestGuard_UserBearer(t *testing.T) {
 	users := storage.NewUserStorage(db)
 	ops := &model.User{Name: "ops", Role: model.RoleRunner}
 	assert.NoError(t, users.Create(ctx, ops))
-	guard := access.NewGuard(users, access.NewSessions("secret", time.Hour))
+	guard := access.NewGuard(users, access.NewSessions(storage.NewUserSessionStorage(db), users, time.Hour))
 
 	bearer := func(token string) *http.Request {
 		r := httptest.NewRequest(http.MethodGet, "/", nil)
@@ -156,7 +192,7 @@ func TestGuard_UserBearer(t *testing.T) {
 	assert.NotNil(t, row.UsedAt)
 
 	r := bearer("tui_wrong")
-	r.AddCookie(&http.Cookie{Name: access.Cookie, Value: guard.Sessions.Issue("ops")})
+	r.AddCookie(&http.Cookie{Name: access.Cookie, Value: issue(t, guard, ops)})
 	assert.Nil(t, guard.User(r))
 
 	w := httptest.NewRecorder()

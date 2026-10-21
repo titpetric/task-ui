@@ -2,8 +2,6 @@ package app
 
 import (
 	"context"
-	"crypto/rand"
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -212,7 +210,7 @@ func (a *App) wire(version string) error {
 	events := event.NewBus()
 	a.Workflows.Events = events
 	a.Runner.Events = events
-	a.Guard = access.NewGuard(a.Users, access.NewSessions(sessionSecret(cfg), cfg.SessionTTL))
+	a.Guard = access.NewGuard(a.Users, access.NewSessions(storage.NewUserSessionStorage(a.DB), a.Users, cfg.SessionTTL))
 	a.Guard.AutoLogin = cfg.AutoLogin
 	a.Guard.Tokens = storage.NewUserAuthTokenStorage(a.DB)
 	a.Board = &note.Board{
@@ -257,16 +255,6 @@ func (a *App) wire(version string) error {
 	r.Mount("/", pages.Routes())
 	a.handler = r
 	return nil
-}
-
-// sessionSecret is the configured secret, or one for this process.
-func sessionSecret(cfg *Config) string {
-	if cfg.Secret != "" {
-		return cfg.Secret
-	}
-	buf := make([]byte, 32)
-	_, _ = rand.Read(buf)
-	return hex.EncodeToString(buf)
 }
 
 // Handler returns what serves the API and the pages.

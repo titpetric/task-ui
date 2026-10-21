@@ -32,12 +32,19 @@ func (h *Handlers) login(w http.ResponseWriter, r *http.Request) {
 		h.render(w, http.StatusUnauthorized, "login", p)
 		return
 	}
-	h.opts.Guard.SetCookie(w, r, user)
+	if err := h.opts.Guard.SetCookie(w, r, user); err != nil {
+		http.Error(w, "sign in failed", http.StatusInternalServerError)
+		return
+	}
 	http.Redirect(w, r, back, http.StatusSeeOther)
 }
 
-// logout ends the session.
+// logout ends the session: the server forgets it and the browser
+// drops the cookie.
 func (h *Handlers) logout(w http.ResponseWriter, r *http.Request) {
-	h.opts.Guard.ClearCookie(w, access.IsHTTPS(r))
+	if err := h.opts.Guard.ClearCookie(w, r); err != nil {
+		http.Error(w, "sign out failed", http.StatusInternalServerError)
+		return
+	}
 	http.Redirect(w, r, "/login", http.StatusSeeOther)
 }

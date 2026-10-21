@@ -72,9 +72,12 @@ func (s *UserStorage) Update(ctx context.Context, user *model.User) error {
 }
 
 // Delete removes a user by ID, with the email addresses and passwords
-// it signs in with.
+// it signs in with, and the sessions it has open.
 func (s *UserStorage) Delete(ctx context.Context, id string) error {
 	if err := NewUserEmailStorage(s.db).DeleteByUser(ctx, id); err != nil {
+		return err
+	}
+	if err := NewUserSessionStorage(s.db).DeleteByUser(ctx, id); err != nil {
 		return err
 	}
 	if err := NewUserAuthPasswordStorage(s.db).DeleteByUser(ctx, id); err != nil {
