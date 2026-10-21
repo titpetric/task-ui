@@ -9,6 +9,7 @@ import (
 
 	"github.com/titpetric/task-ui/api"
 	"github.com/titpetric/task-ui/internal/assert"
+	"github.com/titpetric/task-ui/model"
 )
 
 func TestWorkspace_AdminOnly(t *testing.T) {
@@ -21,6 +22,7 @@ func TestWorkspace_AdminOnly(t *testing.T) {
 		{http.MethodGet, "/workspaces/malta"},
 		{http.MethodPut, "/workspaces/malta"},
 		{http.MethodDelete, "/workspaces/malta"},
+		{http.MethodPost, "/workspaces/malta/prompt"},
 	} {
 		for _, user := range []string{asOps, asViewer, asLimited} {
 			res := f.call(t, user, c.method, c.path, map[string]any{})
@@ -171,4 +173,41 @@ func TestWorkspace_DeleteNested(t *testing.T) {
 	assert.NoError(t, os.RemoveAll(filepath.Join(f.root, "gozo")))
 	assert.Equal(t, http.StatusNoContent, f.call(t, asAdmin, http.MethodDelete, "/workspaces/gozo", nil).Status)
 	assert.Equal(t, http.StatusNotFound, f.call(t, asAdmin, http.MethodGet, "/workspaces/gozo", nil).Status)
+}
+
+func TestWorkspace_Prompt(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	repo := "file://" + localRepo(t)
+	// The internal job stands in for task-ui agent prompt: it writes its
+	// environment to a file.
+	internal := shellFolder(t, f.root, model.Internal, map[string]string{
+		"claude-prompt": `env | grep '^TASK_UI_\(PROMPT\|WORKSPACE\)' | sort > "$PWD/env.out"`,
+	})
+	internal.Job("claude-prompt").Allow = []string{model.RoleAdmin}
+	f.opts.Catalogue.(catalogue)[model.Internal] = internal
+
+	assert.Equal(t, http.StatusCreated, f.call(t, asAdmin, http.MethodPost, "/workspaces", api.WorkspaceRequest{URL: repo, Folder: "malta"}).Status)
+
+	res := f.call(t, asAdmin, http.MethodPost, "/workspaces/malta/prompt", api.PromptRequest{Prompt: " list the skills ", Cols: 80, Rows: 24})
+	assert.Equal(t, http.StatusCreated, res.Status, string(res.Raw))
+	assert.Equal(t, model.Internal, res.str("folder"))
+	assert.Equal(t, "claude-prompt", res.str("job"))
+	run := f.finished(t, res.str("id"))
+	assert.Equal(t, model.StateOK, run.State)
+	assert.Equal(t, asAdmin, run.UserName)
+
+	env, err := os.ReadFile(filepath.Join(internal.Dir, "env.out"))
+	assert.NoError(t, err)
+	dir := filepath.Join(f.root, "malta")
+	assert.Equal(t, "TASK_UI_PROMPT=list the skills\nTASK_UI_WORKSPACE=malta\nTASK_UI_WORKSPACE_DIR="+dir+"\n", string(env))
+
+	empty := f.call(t, asAdmin, http.MethodPost, "/workspaces/malta/prompt", api.PromptRequest{Prompt: "  "})
+	assert.Equal(t, http.StatusBadRequest, empty.Status)
+	missing := f.call(t, asAdmin, http.MethodPost, "/workspaces/gozo/prompt", api.PromptRequest{Prompt: "hello"})
+	assert.Equal(t, http.StatusNotFound, missing.Status)
+	for _, user := range []string{asOps, asViewer, asLimited} {
+		refused := f.call(t, user, http.MethodPost, "/workspaces/malta/prompt", api.PromptRequest{Prompt: "hello"})
+		assert.Equal(t, http.StatusForbidden, refused.Status, user)
+	}
 }

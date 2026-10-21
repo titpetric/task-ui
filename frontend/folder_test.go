@@ -1,12 +1,14 @@
 package frontend_test
 
 import (
+	"context"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 
+	"github.com/titpetric/task-ui/integration"
 	"github.com/titpetric/task-ui/internal/assert"
 	"github.com/titpetric/task-ui/model"
 )
@@ -41,6 +43,29 @@ func TestFolder(t *testing.T) {
 
 	admin := f.page(t, asAdmin, "/f/infra")
 	assert.Contains(t, admin, `href="/f/infra/env/.env"`)
+}
+
+func TestFolder_Prompt(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	ctx := context.Background()
+	const block = `data-api="/api/workspaces/infra/prompt" data-attach-result`
+
+	// infra is a workspace; without a Claude token there is no prompt.
+	assert.NoError(t, f.opts.Workspaces.Create(ctx, &model.Workspace{Folder: "infra", Title: "Infra"}))
+	assert.NotContains(t, f.page(t, asAdmin, "/f/infra"), block)
+
+	// The token reaches everyone; the prompt is the admins'.
+	f.withKey(t)
+	assert.NoError(t, f.opts.Integrations.Save(ctx, integration.Claude, map[string]string{"token": "sk-1"}))
+	admin := f.page(t, asAdmin, "/f/infra")
+	assert.Contains(t, admin, block)
+	assert.Contains(t, admin, `<textarea name="prompt"`)
+	assert.NotContains(t, f.page(t, asOps, "/f/infra"), block)
+	assert.NotContains(t, f.page(t, asViewer, "/f/infra"), block)
+
+	// A folder that is not a workspace takes none.
+	assert.NotContains(t, f.page(t, asAdmin, "/f/private"), "/prompt")
 }
 
 func TestFolder_Running(t *testing.T) {

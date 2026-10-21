@@ -14,6 +14,16 @@
 <div class="alert bad"><b>Could not read a source.</b> {{ $p.Error }}</div>
 {{- end }}
 
+{{- with $.Workspace }}
+<section class="block">
+	<h3>Prompt <small>Claude Code in {{ .Folder }}/, with its CLAUDE.md and .claude/</small></h3>
+	<form class="note-form" data-api="/api/workspaces/{{ .Folder }}/prompt" data-attach-result>
+		<textarea name="prompt" rows="3" required spellcheck="false" placeholder="list the skills this workspace carries" aria-label="The prompt"></textarea>
+		<div class="note-form-foot"><span class="faint">Runs internal/claude-prompt as you, and opens its window.</span><button class="btn btn-primary" type="submit"><svg class="ic"><use href="#i-play"/></svg>Run prompt</button></div>
+	</form>
+</section>
+{{- end }}
+
 {{- range $s := $p.Sources }}
 <section class="block" data-live>
 	<h3>{{ if eq (len $p.Sources) 1 }}Jobs{{ else }}{{ $s.Kind }}{{ end }} <small>{{ $s.File }}{{ if $s.Command }} · {{ join $s.Command " " }}{{ end }}</small></h3>

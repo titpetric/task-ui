@@ -112,7 +112,8 @@ type Page struct {
 	// Project is the row a configure page edits, nil for a fresh folder.
 	Project *model.Project
 	// WorkspaceList are the workspaces, for their page and the clone
-	// form; Workspace is the one a configure page edits.
+	// form; Workspace is the one a configure page edits, and the one a
+	// folder page takes a prompt against.
 	WorkspaceList []model.Workspace
 	Workspace     *model.Workspace
 	// Nested are the project rows inside each workspace, by its folder.

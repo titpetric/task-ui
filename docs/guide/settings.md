@@ -93,6 +93,27 @@ project's (see [Runs](runs.md#what-a-job-gets)).
 `PUT /api/workspaces/malta` with `{title, description}` changes its
 text, and `DELETE /api/workspaces/malta` removes it.
 
+### A prompt against a workspace
+
+A workspace's folder page, `/f/malta`, carries a **Prompt** block for an
+admin once the [Claude Code integration](#integrations) has a token for
+them. The prompt runs `internal/claude-prompt` as you, and its window
+opens on the run. Claude Code works in the workspace's checkout, so it
+reads the workspace's `CLAUDE.md` and `.claude/`; the run's environment
+holds the prompt in `TASK_UI_PROMPT` and the checkout in
+`TASK_UI_WORKSPACE_DIR`, and `task-ui agent prompt` exits with an error
+when either is empty. The run lists under Runs like any other, in the internal
+folder only admins see.
+
+```sh
+curl -s -X POST https://task.example.com/api/workspaces/malta/prompt \
+  -H "Authorization: Bearer $TOKEN" \
+  -d '{"prompt": "list the skills this workspace carries"}'
+```
+
+The reply is the run, with its `id`; `GET /api/runs/{id}` and the
+recording follow it. A second prompt while one runs answers `409`.
+
 ## Users
 
 Who may sign in comes from the password file on the server. **Create

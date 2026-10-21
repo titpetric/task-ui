@@ -106,6 +106,7 @@ func (h *Handlers) Routes() http.Handler {
 	r.Get("/workspaces/{folder}", h.getWorkspace)
 	r.Put("/workspaces/{folder}", h.updateWorkspace)
 	r.Delete("/workspaces/{folder}", h.deleteWorkspace)
+	r.Post("/workspaces/{folder}/prompt", h.promptWorkspace)
 
 	r.Get("/users", h.listUsers)
 	r.Post("/users", h.createUser)

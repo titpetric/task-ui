@@ -90,6 +90,12 @@ func (h *Handlers) folder(w http.ResponseWriter, r *http.Request, f *folder.Fold
 			p.SubFolders = append(p.SubFolders, sub)
 		}
 	}
+	// A workspace takes a prompt from an admin with a Claude token.
+	if p.Workspaces[f.ID] && p.User.CanAdmin() && h.claudeFor(r, p.User) {
+		if workspace, err := h.opts.Workspaces.GetByFolder(r.Context(), f.ID); err == nil {
+			p.Workspace = workspace
+		}
+	}
 	h.render(w, http.StatusOK, "folder", p)
 }
 
