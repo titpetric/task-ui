@@ -115,14 +115,19 @@ Open a folder from the sidebar:
   rendered, text coloured and cut past 1 MiB, with **Download** beside
   and in the row.
   A file that runs, executable or with a shebang on its first line,
-  carries `#!` and **exec**, and **Run** for those the folder lets run:
-  it starts the file as the job `./<path>`, from the folder, and opens
-  the run's window. Its history is at the file's path under the folder.
-- **Sealed entries**: `.git`, `.env`, `.env.*`, `.htpasswd` and
-  `.htaccess` list with a lock and open nothing, nor does a path through
-  them, on the page or over the API. Nor does a symlink that leads out
-  of the checkout. Whoever has the server reaches them there, and so
-  does a job, which runs as the server's user.
+  carries `#!` and **exec**, and **Run** for those the folder lets run,
+  in the row and in the file's window: it starts the file as the job
+  `./<path>`, from the top of the folder, and opens the run's window.
+  Its history is at the file's path under the folder.
+- **Sealed entries**: `.git` and every dot file, such as `.env`,
+  `.gitignore` or `.claude/.secret`, list with a lock and open nothing,
+  on the page or over the API, nor does a path through `.git` or a
+  symlink to a dot file. A dot file never runs as a job. A dot directory
+  other than `.git`, such as `.claude/` or `.atkins/`, opens as any
+  directory does, and so do the files in it whose names have no dot in
+  front. A symlink that leads out of the checkout opens nothing either.
+  Whoever has the server reaches the sealed entries there, and so does
+  a job, which runs as the server's user.
 - **Folder**: its path, its sources, who can run it, its hours, the
   files it includes, its schedules. **Show** beside a pipeline file opens
   it, coloured, in a window. A folder in a git checkout also shows the

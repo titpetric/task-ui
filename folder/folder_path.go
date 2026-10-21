@@ -15,9 +15,10 @@ const FilePrefix = "./"
 
 // Path returns where a slash path inside the folder is on disk, with its
 // symlinks resolved, and whether task-ui may open it: it exists, has no
-// .. in it, is not sealed nor reached through a sealed entry, and stays
-// inside the folder once Path follows its symlinks. The empty path is
-// the folder itself.
+// .. in it, is not sealed nor reached through .git, and stays inside
+// the folder once Path follows its symlinks. Path holds where a symlink
+// leads to the same rules: a link to a dot file opens no more than the
+// dot file does. The empty path is the folder itself.
 func (f *Folder) Path(rel string) (string, bool) {
 	if f == nil || strings.HasPrefix(rel, "/") || strings.Contains(rel, "\\") {
 		return "", false
@@ -27,7 +28,7 @@ func (f *Folder) Path(rel string) (string, bool) {
 			return "", false
 		}
 	}
-	if SealedPath(rel) {
+	if SealedPath(rel, true) {
 		return "", false
 	}
 	root, err := filepath.EvalSymlinks(f.Dir)
@@ -42,7 +43,11 @@ func (f *Folder) Path(rel string) (string, bool) {
 	if err != nil || inner == ".." || strings.HasPrefix(inner, ".."+string(filepath.Separator)) {
 		return "", false
 	}
-	if inner != "." && SealedPath(filepath.ToSlash(inner)) {
+	info, err := os.Stat(resolved)
+	if err != nil {
+		return "", false
+	}
+	if SealedPath(rel, info.IsDir()) || (inner != "." && SealedPath(filepath.ToSlash(inner), info.IsDir())) {
 		return "", false
 	}
 	return resolved, true

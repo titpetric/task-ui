@@ -9,8 +9,8 @@ import (
 	"github.com/titpetric/task-ui/internal/assert"
 )
 
-// checkout is a folder with a file, an executable, a sealed directory
-// and file, and symlinks inside and out of it.
+// checkout is a folder with a file, an executable, .git, dot files and
+// dot directories, and symlinks inside and out of it.
 func checkout(t *testing.T) *folder.Folder {
 	t.Helper()
 	dir := filepath.Join(t.TempDir(), "api")
@@ -25,19 +25,35 @@ func checkout(t *testing.T) *folder.Folder {
 	assert.NoError(t, os.Symlink(outside, filepath.Join(dir, "escape")))
 	assert.NoError(t, os.Symlink("README.md", filepath.Join(dir, "readme")))
 	assert.NoError(t, os.Symlink(".git/config", filepath.Join(dir, "config")))
+	for name, body := range map[string]string{".claude/CLAUDE.md": "# claude\n", ".claude/.secret": "s\n", ".atkins/skills/x.yml": "x: 1\n", ".gitignore": "x\n"} {
+		assert.NoError(t, os.MkdirAll(filepath.Join(dir, filepath.Dir(name)), 0o755))
+		assert.NoError(t, os.WriteFile(filepath.Join(dir, name), []byte(body), 0o644))
+	}
+	assert.NoError(t, os.WriteFile(filepath.Join(dir, ".hook"), []byte("#!/bin/sh\necho hook\n"), 0o755))
+	assert.NoError(t, os.WriteFile(filepath.Join(dir, ".claude", ".run"), []byte("#!/bin/sh\necho run\n"), 0o755))
+	assert.NoError(t, os.Symlink(".env", filepath.Join(dir, "envlink")))
+	assert.NoError(t, os.Symlink(".hook", filepath.Join(dir, "hook")))
+	assert.NoError(t, os.Symlink("README.md", filepath.Join(dir, ".readme")))
+	assert.NoError(t, os.Symlink(".claude", filepath.Join(dir, "claude")))
+	assert.NoError(t, os.Symlink(".git", filepath.Join(dir, "repo")))
+	assert.NoError(t, os.Symlink("nowhere", filepath.Join(dir, ".gone")))
 	return &folder.Folder{ID: "acme/api", Dir: dir}
 }
 
 // Path opens what is inside the folder and nothing else: no .., no
-// symlink out, nothing sealed or through a seal, even by a symlink.
+// symlink out, no dot file, nothing in .git, nor any of them by a
+// symlink. A dot directory other than .git opens, and what is in it
+// but its dot files.
 func TestFolder_Path(t *testing.T) {
 	t.Parallel()
 	f := checkout(t)
-	for _, rel := range []string{"", "README.md", "bin", "bin/deploy", "readme", "./README.md"} {
+	for _, rel := range []string{"", "README.md", "bin", "bin/deploy", "readme", "./README.md",
+		".claude", ".claude/CLAUDE.md", ".atkins/skills/x.yml", "claude", "claude/CLAUDE.md"} {
 		_, ok := f.Path(rel)
 		assert.True(t, ok, rel)
 	}
-	for _, rel := range []string{"../secret.txt", "bin/../README.md", "escape", ".git", ".git/config", ".env", "config", "/etc/passwd", "missing"} {
+	for _, rel := range []string{"../secret.txt", "bin/../README.md", "escape", ".git", ".git/config", ".env", "config", "/etc/passwd", "missing",
+		".gitignore", ".hook", ".claude/.secret", ".claude/.run", "claude/.secret", "envlink", "hook", ".readme", "repo", "repo/config", ".gone"} {
 		_, ok := f.Path(rel)
 		assert.False(t, ok, rel)
 	}
@@ -57,6 +73,9 @@ func TestFolder_FileJob(t *testing.T) {
 	assert.Nil(t, f.Job("./bin"))
 	assert.Nil(t, f.Job("./bin/../bin/deploy"))
 	assert.Nil(t, f.Job("./escape"))
+	for _, id := range []string{"./.hook", "./hook", "./.claude/.run", "./claude/.run"} {
+		assert.Nil(t, f.Job(id), id)
+	}
 }
 
 // A listing marks the files that run and lists a symlink as what it
@@ -74,4 +93,29 @@ func TestListing_Exec(t *testing.T) {
 	items := folder.Listing(filepath.Join(f.Dir, "bin"))
 	assert.Len(t, items, 1)
 	assert.True(t, items[0].Exec)
+}
+
+// A listing seals .git and the dot files, a symlink to either and a
+// dangling dot link, and no dot directory; a sealed file does not run.
+func TestListing_Sealed(t *testing.T) {
+	t.Parallel()
+	f := checkout(t)
+	sealed, exec := map[string]bool{}, map[string]bool{}
+	for _, item := range folder.Listing(f.Dir) {
+		sealed[item.Name], exec[item.Name] = item.Sealed, item.Exec
+	}
+	for _, name := range []string{".git", ".env", ".gitignore", ".hook", ".readme", ".gone", "envlink", "hook", "config", "repo"} {
+		assert.True(t, sealed[name], name)
+	}
+	for _, name := range []string{".claude", ".atkins", "claude", "bin", "README.md", "readme", "escape"} {
+		assert.False(t, sealed[name], name)
+	}
+	assert.False(t, exec[".hook"])
+	assert.False(t, exec["hook"])
+	inner := map[string]bool{}
+	for _, item := range folder.Listing(filepath.Join(f.Dir, ".claude")) {
+		inner[item.Name] = item.Sealed
+		assert.False(t, item.Exec, item.Name)
+	}
+	assert.Equal(t, map[string]bool{"CLAUDE.md": false, ".secret": true, ".run": true}, inner)
 }

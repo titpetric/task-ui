@@ -130,21 +130,24 @@ func TestFolder_Tree(t *testing.T) {
 	assert.Equal(t, http.StatusNotFound, f.get(t, asLimited, "/f/_/private/anything").Status)
 }
 
-// The page lists dot entries; the sealed ones, .git, .env and the like,
-// list muted, with no link, and neither the pages nor /files/ open
-// them or anything through them. A symlink out of the checkout opens
-// nothing either.
+// The page lists dot entries; the sealed ones, .git and every dot
+// file, list muted, with no link and no Run, and neither the pages nor
+// /files/ open them, anything in .git, or a symlink to either. A dot
+// directory opens, and what is in it but its dot files. A symlink out
+// of the checkout opens nothing either.
 func TestFolder_Sealed(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
 	dir := f.infra.Dir
-	for name, content := range map[string]string{".git/config": "[core]\n", ".env": "A=1\n", ".env.local": "B=2\n", "web/.htaccess": "deny\n", ".claude/settings.json": "{}\n", ".gitignore": "x\n"} {
+	for name, content := range map[string]string{".git/config": "[core]\n", ".env": "A=1\n", ".env.local": "B=2\n", "web/.htaccess": "deny\n", ".claude/settings.json": "{}\n", ".claude/.secret": "s\n", ".gitignore": "x\n"} {
 		assert.NoError(t, os.MkdirAll(filepath.Join(dir, filepath.Dir(name)), 0o755))
 		assert.NoError(t, os.WriteFile(filepath.Join(dir, name), []byte(content), 0o644))
 	}
 	assert.NoError(t, os.WriteFile(filepath.Join(f.root, "outside.txt"), []byte("outside\n"), 0o644))
 	assert.NoError(t, os.Symlink(filepath.Join(f.root, "outside.txt"), filepath.Join(dir, "escape.txt")))
 	assert.NoError(t, os.Symlink(f.root, filepath.Join(dir, "rootlink")))
+	assert.NoError(t, os.WriteFile(filepath.Join(dir, ".hook"), []byte("#!/bin/sh\necho hook\n"), 0o755))
+	assert.NoError(t, os.Symlink(".env", filepath.Join(dir, "envlink")))
 
 	body := f.page(t, asOps, "/f/_/infra")
 	assert.Contains(t, body, `<tr class="sealed" aria-disabled="true" title=".git is listed, but task-ui does not open it">`)
@@ -154,17 +157,26 @@ func TestFolder_Sealed(t *testing.T) {
 	assert.NotContains(t, body, `href="/f/_/infra/.git"`)
 	assert.NotContains(t, body, `/files/infra/.env`)
 	assert.Contains(t, body, `<a href="/f/_/infra/.claude">.claude</a>`)
-	assert.Contains(t, body, `data-file=".gitignore"`)
+	assert.Contains(t, body, `<span>.gitignore</span>`)
+	assert.Contains(t, body, `<span>.hook</span>`)
+	assert.Contains(t, body, `<span>envlink</span>`)
+	assert.NotContains(t, body, `data-job="./.hook"`)
+	assert.NotContains(t, body, `/files/infra/envlink`)
+	claude := f.page(t, asOps, "/f/_/infra/.claude")
+	assert.Contains(t, claude, `data-file=".claude/settings.json"`)
+	assert.Contains(t, claude, `<span>.secret</span>`)
+	assert.Equal(t, http.StatusOK, f.get(t, asOps, "/files/infra/.claude/settings.json").Status)
 	assert.Contains(t, body, `<span>escape.txt</span>`)
 	assert.NotContains(t, body, `/files/infra/escape.txt`)
 	assert.Contains(t, f.page(t, asOps, "/f/_/infra/web"), `<span>.htaccess</span>`)
 
-	for _, path := range []string{"/f/_/infra/.git", "/f/_/infra/rootlink", "/f/_/infra/web/.htaccess"} {
+	for _, path := range []string{"/f/_/infra/.git", "/f/_/infra/rootlink", "/f/_/infra/web/.htaccess", "/f/_/infra/.hook", "/f/_/infra/./.hook"} {
 		assert.Equal(t, http.StatusNotFound, f.get(t, asOps, path).Status, path)
 	}
 	for _, path := range []string{
 		"/files/infra/.git/config", "/files/infra/.env", "/files/infra/.env.local", "/files/infra/web/.htaccess",
 		"/files/infra/escape.txt", "/files/infra/rootlink/outside.txt", "/files/infra/../outside.txt", "/files/infra/web/../.env",
+		"/files/infra/.gitignore", "/files/infra/.hook", "/files/infra/envlink", "/files/infra/.claude/.secret",
 	} {
 		assert.Equal(t, http.StatusNotFound, f.get(t, asOps, path).Status, path)
 	}

@@ -199,7 +199,8 @@
 	</div>
 </dialog>
 {{- /* The image window: an image or an svg of the artifacts, scaled to
-     fit, in place of a download. */}}
+     fit, in place of a download. A file of a checkout that runs carries
+     the Run or Attach of its row in the foot. */}}
 <dialog class="run preview" id="preview-dialog" aria-labelledby="preview-title">
 	<div class="run-head">
 		<span class="label" id="preview-label">Artifact</span>
@@ -209,6 +210,7 @@
 	<div class="run-foot">
 		<span class="hint"><select id="preview-version" aria-label="Version" hidden></select></span>
 		<a class="btn" id="preview-download" href="#" download>Download</a>
+		<span class="preview-actions" id="preview-actions"></span>
 		<button type="button" class="btn" id="preview-close" aria-label="Close">Close</button>
 	</div>
 </dialog>

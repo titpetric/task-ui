@@ -1493,12 +1493,31 @@
       }
       else showDoc('<p class="faint">No preview for this file, ' + escapeHTML(view.content_type) + ". Download it to open it.</p>", "text");
     };
+    // previewActions carries a file's Run, Run force or Attach from its
+    // row of the Files panel into the window's foot; the window closes for
+    // the run window to open.
+    var previewActions = document.getElementById("preview-actions");
+    previewActions.addEventListener("click", function () { previewDialog.close(); });
+    var showActions = function (href) {
+      previewActions.innerHTML = "";
+      var link = Array.prototype.find.call(document.querySelectorAll("a[data-file]"), function (a) {
+        return a.getAttribute("href") === href;
+      });
+      var row = link && link.closest("tr");
+      if (!row) return;
+      row.querySelectorAll(".actions [data-run], .actions [data-attach]").forEach(function (btn) {
+        var copy = btn.cloneNode(true);
+        copy.classList.remove("btn-sm");
+        previewActions.appendChild(copy);
+      });
+    };
     // openCheckout opens a file of a folder's checkout: its link is where
     // it opens on its own, and the API answers the same path.
     var openCheckout = function (href, rel) {
       previewPath = href;
       previewLabel.textContent = "File";
       previewVersion.hidden = true;
+      showActions(href);
       document.getElementById("preview-title").textContent = rel;
       showDoc('<p class="faint">Loading…</p>', "text");
       if (!previewDialog.open) previewDialog.showModal();
@@ -1514,6 +1533,7 @@
     var openFile = function (rel, version) {
       previewPath = rel;
       previewLabel.textContent = "Artifact";
+      previewActions.innerHTML = "";
       document.getElementById("preview-title").textContent = rel;
       showDoc('<p class="faint">Loading…</p>', "text");
       if (!previewDialog.open) previewDialog.showModal();
