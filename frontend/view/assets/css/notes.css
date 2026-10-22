@@ -195,6 +195,26 @@
   color: var(--signal);
 }
 
+/* A note its author may edit opens in a field on a click. */
+.note-body[data-edit] {
+  cursor: text;
+  border-radius: var(--radius);
+
+  &:hover {
+    background: var(--ink-3);
+  }
+}
+
+.note-edit {
+  margin: 0.4rem 0 0;
+}
+
+/* An answer that runs again keeps its old text, dimmed, until the new
+   one lands. */
+.replies .rerun > .note-body {
+  opacity: 0.5;
+}
+
 .replies {
   display: grid;
   grid-template-columns: minmax(0, 1fr);

@@ -16,6 +16,9 @@ import (
 type Options struct {
 	Runs      *storage.RunStorage
 	Artifacts *storage.ArtifactStorage
+	// Summaries are Claude's summaries of the runs; a run started again
+	// under its ID drops its own. Nil keeps none.
+	Summaries *storage.RunSummaryStorage
 	Secrets   *secret.Store
 	Env       *envfile.Store
 	// Integrations add to a run what an integration has for its folder,

@@ -120,8 +120,37 @@ func (s *NoteStorage) Replies(ctx context.Context, ids []string) (map[string][]m
 
 // SetState records how the agent's work on a note goes, and the run.
 func (s *NoteStorage) SetState(ctx context.Context, id, state, runID string) error {
+	return s.change(ctx, "UPDATE note SET state = ?, run_id = CASE WHEN ? = '' THEN run_id ELSE ? END, updated_at = ? WHERE id = ?", state, runID, runID, stamp(), id)
+}
+
+// Edit puts a new body in a note, with its mentions, and marks it
+// edited now.
+func (s *NoteStorage) Edit(ctx context.Context, id, body string) error {
+	body = strings.TrimSpace(body)
+	if body == "" {
+		return errors.New("a note needs some text")
+	}
+	now := stamp()
+	return s.change(ctx, "UPDATE note SET body = ?, mentions = ?, edited_at = ?, updated_at = ? WHERE id = ?",
+		body, model.EncodeMentions(model.Mentions(body)), now, now, id)
+}
+
+// Answer puts the agent's answer in its reply, in place of the one it
+// had, with the run it comes from and a state: working while a run
+// answers it again, empty once it has.
+func (s *NoteStorage) Answer(ctx context.Context, id, body, state, runID string) error {
+	body = strings.TrimSpace(body)
+	if body == "" {
+		return errors.New("a note needs some text")
+	}
+	return s.change(ctx, "UPDATE note SET body = ?, mentions = ?, state = ?, run_id = CASE WHEN ? = '' THEN run_id ELSE ? END, updated_at = ? WHERE id = ?",
+		body, model.EncodeMentions(model.Mentions(body)), state, runID, runID, stamp(), id)
+}
+
+// change runs an update of one note, ErrNotFound when there is none.
+func (s *NoteStorage) change(ctx context.Context, query string, args ...any) error {
 	db := client(s.db)
-	if err := db.Exec(ctx, "UPDATE note SET state = ?, run_id = CASE WHEN ? = '' THEN run_id ELSE ? END, updated_at = ? WHERE id = ?", state, runID, runID, stamp(), id); err != nil {
+	if err := db.Exec(ctx, query, args...); err != nil {
 		return err
 	}
 	if db.RowsAffected() == 0 {

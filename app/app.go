@@ -255,10 +255,12 @@ func (a *App) wire(version string) error {
 		self = ComposeProject("docker")
 	}
 	store := &artifactstore.Store{Dir: cfg.ArtifactTree(), Keep: cfg.ArtifactHistory}
+	summaries := storage.NewRunSummaryStorage(a.DB)
 	a.Runner = runner.New(runner.Options{
 		KeyDir: keys.Dir, KeyPolicies: keyPolicies,
 		Runs:          runs,
 		Artifacts:     artifacts,
+		Summaries:     summaries,
 		Secrets:       secrets,
 		Env:           env,
 		Git:           g,
@@ -304,7 +306,7 @@ func (a *App) wire(version string) error {
 		Workflows: workflows, WorkflowRuns: workflowRuns, Flows: a.Workflows, Events: events,
 		Runner: a.Runner, Catalogue: a.Catalogue, Git: g, Keys: keys, KeyPolicies: keyPolicies, Env: env, Recordings: recordings, Root: cfg.Root, Board: a.Board,
 		Integrations: integrations, Hosts: hosts, SSH: prober, Summarizer: &claude.Summarizer{Timeout: 3 * time.Minute},
-		AddUser: addUser, Summaries: storage.NewRunSummaryStorage(a.DB), Version: version,
+		AddUser: addUser, Summaries: summaries, Version: version,
 	})
 	pages, err := frontend.New(frontend.Options{
 		Guard: a.Guard, Auth: access.NewAuthenticator(a.Users, a.Emails, a.Passwords), Users: a.Users, Projects: projects, Workspaces: workspaces, Runs: runs, Artifacts: artifacts, Schedules: schedules, Secrets: secrets,

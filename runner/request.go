@@ -34,4 +34,38 @@ type Request struct {
 	// Args follow the job's argv after --, as argv and never through a
 	// shell: only for a job that takes args.
 	Args []string
+	// ID runs the request again under the ID of a run of the same job,
+	// in the same directory: the new attempt replaces the run's row,
+	// recording, summary and artifacts. Empty takes a new ID.
+	ID string
+}
+
+// newRun is the row of the run a request starts, under its ID or, when
+// it has none, a new one the storage sets.
+func (req Request) newRun() *model.Run {
+	run := &model.Run{
+		ID:       req.ID,
+		Folder:   req.Folder.ID,
+		Job:      req.Job.ID,
+		Dir:      req.Job.Dir,
+		Args:     model.EncodeList(req.Args),
+		TermCols: int64(req.Cols),
+		TermRows: int64(req.Rows),
+	}
+	if req.User != nil {
+		run.UserID, run.UserName = req.User.ID, req.User.Name
+	}
+	if req.Force {
+		run.Forced = 1
+	}
+	if req.Scheduled {
+		run.Scheduled = 1
+	}
+	if run.TermCols < 20 || run.TermCols > 500 {
+		run.TermCols = 120
+	}
+	if run.TermRows < 5 || run.TermRows > 200 {
+		run.TermRows = 30
+	}
+	return run
 }

@@ -31,7 +31,24 @@ To follow up, reply on the note and name the agent again: it works from
 the thread, its own replies included. A viewer's note to the agent stays a
 message.
 
-The author of a note, or an admin, deletes it with its replies, and the author of a reply, or an admin, deletes that reply alone. The form
+To change what you asked, click the text of the note, or of your reply,
+and edit it in place: **Save** or Ctrl+Enter puts it, Esc cancels. An
+instruction runs again on the edited text, with the thread up to the
+agent's answer to it, and that answer changes in place: its old text
+stays, dimmed and marked `working`, until the new one lands. The thread
+gets no new reply, and the run keeps its ID, so the run link opens the latest
+attempt; the attempt before goes with its recording, summary and
+artifacts. An edit while the run goes waits for it, then runs again. The
+agent's own answers change only that way. A plain message just
+changes; an edited note shows `edited` beside its time.
+
+```sh
+curl -s -X PUT https://task.example.com/api/notes/$ID \
+  -H "Authorization: Bearer $TOKEN" \
+  -d '{"body": "@claude update the weather job, and add Lisbon"}'
+```
+
+The author of a note, or an admin, edits it and deletes it with its replies, and the author of a reply, or an admin, deletes that reply alone. The form
 posts with **Post note** or Ctrl+Enter; a reply opens under **Reply**.
 A note and a reply are markdown: `**bold**`, `*italic*`, lists, headings,
 links, quotes, tables, `` `code` `` and ```` ``` ```` blocks. A line break

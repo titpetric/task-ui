@@ -35,7 +35,7 @@ func (h *Handlers) threads(r *http.Request, filter storage.NoteFilter) []view.Th
 	sees := h.seesRun(r)
 	threads := make([]view.Thread, 0, len(notes))
 	for _, note := range notes {
-		thread := view.Thread{Note: note, Replies: replies[note.ID]}
+		thread := view.Thread{Note: note, Replies: replies[note.ID], Answerer: h.opts.Board.Answerer()}
 		if !sees(thread.RunID) {
 			thread.RunID = ""
 		}

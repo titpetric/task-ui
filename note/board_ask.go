@@ -77,7 +77,7 @@ func (b *Board) Ask(ctx context.Context, user *model.User, parentID, dir, body s
 		parent.State = model.NoteOpen
 		b.publish(parent)
 	}
-	b.dispatchPrompt(thread, req)
+	b.dispatchPrompt(thread, req, nil)
 	return note, nil
 }
 
@@ -85,30 +85,32 @@ func (b *Board) Ask(ctx context.Context, user *model.User, parentID, dir, body s
 func (b *Board) reask(ctx context.Context, note *model.Note) {
 	user, err := b.Users.Get(ctx, note.UserID)
 	if err != nil {
-		b.finish(ctx, note, model.NoteFailed, "The user "+note.UserName+" who asked is not there any more.")
+		b.finish(ctx, note, model.NoteFailed, "The user "+note.UserName+" who asked is not there any more.", nil)
 		return
 	}
 	req, err := b.promptRequest(ctx, user, note.Dir)
 	if err != nil {
-		b.finish(ctx, note, model.NoteFailed, "The prompt did not start: "+err.Error())
+		b.finish(ctx, note, model.NoteFailed, "The prompt did not start: "+err.Error(), nil)
 		return
 	}
-	b.dispatchPrompt(note, req)
+	b.dispatchPrompt(note, req, nil)
 }
 
 // dispatchPrompt starts the prompt job on a prompt's thread, in the
-// background, and replies with Claude's answer when the run ends.
-func (b *Board) dispatchPrompt(note *model.Note, req runner.Request) {
+// background, and replies with Claude's answer when the run ends: in a
+// new reply, or in again, the reply to rewrite, from the thread before
+// it.
+func (b *Board) dispatchPrompt(note *model.Note, req runner.Request, again *model.Note) {
 	ctx := context.Background()
 	answer, err := replyFile()
 	if err != nil {
-		b.finish(ctx, note, model.NoteFailed, "The reply file was not made: "+err.Error())
+		b.finish(ctx, note, model.NoteFailed, "The reply file was not made: "+err.Error(), again)
 		return
 	}
-	req.Env = append(append([]string{}, req.Env...), "TASK_UI_PROMPT="+b.thread(ctx, note), "TASK_UI_PROMPT_REPLY="+answer)
+	req.Env = append(append([]string{}, req.Env...), "TASK_UI_PROMPT="+b.thread(ctx, note, again), "TASK_UI_PROMPT_REPLY="+answer)
 	go func() {
 		req.Env = append(req.Env, b.hosts(ctx)...)
-		b.run(note, req, answer, "The prompt")
+		b.run(note, req, answer, "The prompt", again)
 	}()
 }
 

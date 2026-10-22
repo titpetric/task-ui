@@ -196,6 +196,10 @@
       type: timestamp
       comment: Updated At
       datatype: datetime
+    - name: edited_at
+      type: timestamp
+      comment: Edited At
+      datatype: datetime
     - name: workspace_id
       type: text
       key: MUL

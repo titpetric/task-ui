@@ -243,6 +243,14 @@ reads the whole thread, its earlier answers among them. The box lists
 the last 20 threads of its directory, for admins; the Notes board lists
 none of them.
 
+Click a question, or a reply of yours, to edit it: add what you need and
+**Save**, or Ctrl+Enter; Esc cancels. The question runs again on the
+edited text, with the thread up to Claude's answer to it, and that answer
+changes in place: its old text stays, dimmed and marked `working`, until
+the new one lands. The thread gets no new reply, and the run keeps its ID, so the
+run link opens the latest attempt; the attempt before goes with its
+recording and artifacts. The question shows `edited` beside its time.
+
 ```sh
 curl -s -X POST https://task.example.com/api/prompts \
   -H "Authorization: Bearer $TOKEN" \
