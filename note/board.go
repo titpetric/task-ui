@@ -48,8 +48,10 @@ const tail = 30
 
 // Board posts notes and replies, and starts the agent on its notes.
 type Board struct {
-	Notes      *storage.NoteStorage
-	Users      *storage.UserStorage
+	Notes *storage.NoteStorage
+	Users *storage.UserStorage
+	// Runs reads the run a prompt asks about; nil turns those off.
+	Runs       *storage.RunStorage
 	Catalogue  folder.Catalogue
 	Runner     *runner.Manager
 	Recordings *recording.Store
@@ -92,7 +94,7 @@ func (b *Board) Post(ctx context.Context, user *model.User, parentID, body strin
 	}
 	note := &model.Note{Channel: model.ChannelNotes, ParentID: parentID, UserID: user.ID, UserName: user.Name, Body: body}
 	if parent != nil && parent.IsPrompt() {
-		note.WorkspaceID, note.Dir = parent.WorkspaceID, parent.Dir
+		note.WorkspaceID, note.Dir, note.AboutRunID = parent.WorkspaceID, parent.Dir, parent.AboutRunID
 		if err := b.Notes.Create(ctx, note); err != nil {
 			return nil, err
 		}
@@ -404,7 +406,7 @@ func (b *Board) answer(ctx context.Context, note, again *model.Note, body string
 
 // reply replies to a note as the agent, with the note's run.
 func (b *Board) reply(ctx context.Context, note *model.Note, body string) {
-	reply := &model.Note{Channel: note.Channel, ParentID: note.ID, UserName: b.Answerer(), Body: body, RunID: note.RunID, WorkspaceID: note.WorkspaceID, Dir: note.Dir}
+	reply := &model.Note{Channel: note.Channel, ParentID: note.ID, UserName: b.Answerer(), Body: body, RunID: note.RunID, WorkspaceID: note.WorkspaceID, Dir: note.Dir, AboutRunID: note.AboutRunID}
 	if agent, err := b.Users.GetByName(ctx, reply.UserName); err == nil {
 		reply.UserID = agent.ID
 	}

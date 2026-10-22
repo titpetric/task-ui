@@ -33,6 +33,12 @@ var ErrNoPrompt = errors.New("no prompt runs here")
 // and replies with Claude's answer when the run ends. Asking takes
 // prompt/edit.
 func (b *Board) Ask(ctx context.Context, user *model.User, parentID, dir, body string) (*model.Note, error) {
+	return b.ask(ctx, user, parentID, dir, "", body)
+}
+
+// ask puts a prompt as Ask does, a new thread about the run aboutRun
+// names when it names one; a reply keeps its thread's run.
+func (b *Board) ask(ctx context.Context, user *model.User, parentID, dir, aboutRun, body string) (*model.Note, error) {
 	if user == nil || strings.TrimSpace(body) == "" {
 		return nil, fmt.Errorf("%w: a prompt needs an author and some text", ErrInvalid)
 	}
@@ -48,13 +54,13 @@ func (b *Board) Ask(ctx context.Context, user *model.User, parentID, dir, body s
 		if parent.ParentID != "" || !parent.IsPrompt() {
 			return nil, fmt.Errorf("%w: a reply to a prompt goes to the prompt", ErrInvalid)
 		}
-		dir = parent.Dir
+		dir, aboutRun = parent.Dir, parent.AboutRunID
 	}
 	req, err := b.promptRequest(ctx, user, dir)
 	if err != nil {
 		return nil, err
 	}
-	note := &model.Note{Channel: model.ChannelNotes, ParentID: parentID, UserID: user.ID, UserName: user.Name, Body: body, Dir: dir}
+	note := &model.Note{Channel: model.ChannelNotes, ParentID: parentID, UserID: user.ID, UserName: user.Name, Body: body, Dir: dir, AboutRunID: aboutRun}
 	thread := note
 	if parent != nil {
 		note.WorkspaceID = parent.WorkspaceID
@@ -77,8 +83,11 @@ func (b *Board) Ask(ctx context.Context, user *model.User, parentID, dir, body s
 		parent.State = model.NoteOpen
 		b.publish(parent)
 	}
+	// The thread's run changes the note it holds; the caller gets it as
+	// asked.
+	asked := *note
 	b.dispatchPrompt(thread, req, nil)
-	return note, nil
+	return &asked, nil
 }
 
 // reask starts the prompt of an open prompt note as its author.
@@ -99,7 +108,8 @@ func (b *Board) reask(ctx context.Context, note *model.Note) {
 // dispatchPrompt starts the prompt job on a prompt's thread, in the
 // background, and replies with Claude's answer when the run ends: in a
 // new reply, or in again, the reply to rewrite, from the thread before
-// it.
+// it. A thread about a run gets the run in a file, TASK_UI_PROMPT_RUN,
+// as its output may pass what an environment variable holds.
 func (b *Board) dispatchPrompt(note *model.Note, req runner.Request, again *model.Note) {
 	ctx := context.Background()
 	answer, err := replyFile()
@@ -108,7 +118,19 @@ func (b *Board) dispatchPrompt(note *model.Note, req runner.Request, again *mode
 		return
 	}
 	req.Env = append(append([]string{}, req.Env...), "TASK_UI_PROMPT="+b.thread(ctx, note, again), "TASK_UI_PROMPT_REPLY="+answer)
+	about := ""
+	if note.AboutRunID != "" {
+		if about, err = b.aboutRun(ctx, note.AboutRunID); err != nil {
+			os.Remove(answer)
+			b.finish(ctx, note, model.NoteFailed, "The run "+note.AboutRunID+" is not there to ask about: "+err.Error(), again)
+			return
+		}
+		req.Env = append(req.Env, "TASK_UI_PROMPT_RUN="+about)
+	}
 	go func() {
+		if about != "" {
+			defer os.Remove(about)
+		}
 		req.Env = append(req.Env, b.hosts(ctx)...)
 		b.run(note, req, answer, "The prompt", again)
 	}()

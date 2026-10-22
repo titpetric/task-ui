@@ -8,6 +8,7 @@ import (
 
 	"github.com/titpetric/task-ui/access"
 	"github.com/titpetric/task-ui/frontend/view"
+	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/storage"
 )
 
@@ -104,5 +105,25 @@ func (h *Handlers) run(w http.ResponseWriter, r *http.Request) {
 	}
 	artifacts, _ := h.opts.Artifacts.List(r.Context(), storage.ArtifactFilter{RunID: run.ID, Limit: 200})
 	p.Artifacts = artifacts
+	p.Prompt = h.runPrompt(r, p, &run)
 	h.render(w, http.StatusOK, "run", p)
+}
+
+// runPrompt returns the prompt box of a run's page with the threads
+// about the run: to ask, for a user with prompt/edit and a Claude token
+// once the run ended; to read them only, with prompt/view. None for a
+// run of the internal folder, a prompt's own run among them.
+func (h *Handlers) runPrompt(r *http.Request, p *view.Page, run *view.Run) *view.Prompt {
+	if h.opts.Board == nil || model.IsInternal(run.Folder) || !p.Can("prompt/view") {
+		return nil
+	}
+	prompt := view.PromptAbout(run.ID, run.Where())
+	prompt.Threads = h.threads(r, storage.NoteFilter{Prompts: true, AboutRunID: run.ID, Limit: 20})
+	if run.State == model.StateRunning || !p.Can("prompt/edit") || !h.claudeFor(r, p.User) {
+		if len(prompt.Threads) == 0 {
+			return nil
+		}
+		prompt.Watch = true
+	}
+	return prompt
 }

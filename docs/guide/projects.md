@@ -275,6 +275,9 @@ the run, so a question such as "list running containers on all hosts,
 check for any usage of php or frankenphp images" gets an answer per
 host.
 
+A run's page has a prompt of its own, about the run and its output,
+with its threads kept on that page (see [Runs](runs.md#a-prompt-about-a-run)).
+
 ## A job's page
 
 ![A job: what it runs, its history and schedules](../assets/job-dark.png)

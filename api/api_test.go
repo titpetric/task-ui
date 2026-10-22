@@ -162,7 +162,7 @@ func newFixture(t *testing.T) *fixture {
 		Integrations:  &integration.Store{Secrets: secrets},
 		// A cheap scrypt keeps the exports quick under -race.
 		ExportWorkFactor: 10,
-		Board:            &note.Board{Notes: storage.NewNoteStorage(db), Users: users, Catalogue: cat, Runner: manager, Recordings: recordings, Events: flows.Events, Agent: "claude", Root: root},
+		Board:            &note.Board{Notes: storage.NewNoteStorage(db), Users: users, Runs: runs, Catalogue: cat, Runner: manager, Recordings: recordings, Events: flows.Events, Agent: "claude", Root: root},
 	}
 	f.opts.Hosts = &beszel.Inventory{TTL: time.Minute, Settings: func(ctx context.Context) (string, string, error) {
 		values, err := f.opts.Integrations.Values(ctx, integration.Beszel)

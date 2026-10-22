@@ -286,7 +286,7 @@ func (a *App) wire(version string) error {
 	a.Guard.AutoLogin = cfg.AutoLogin
 	a.Guard.Tokens = storage.NewUserAuthTokenStorage(a.DB)
 	a.Board = &note.Board{
-		Notes: storage.NewNoteStorage(a.DB), Users: a.Users, Catalogue: a.Catalogue, Runner: a.Runner,
+		Notes: storage.NewNoteStorage(a.DB), Users: a.Users, Runs: runs, Catalogue: a.Catalogue, Runner: a.Runner,
 		Recordings: recordings, Events: events, Agent: cfg.Agent, AgentJob: cfg.AgentJob, Root: cfg.Root,
 		Hosts: promptHosts(hosts, prober),
 	}

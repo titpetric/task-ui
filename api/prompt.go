@@ -14,7 +14,9 @@ import (
 // inside one: a note of the folder's workspace, which the board answers
 // by running internal/claude-prompt there as the user, with the thread in
 // TASK_UI_PROMPT and the directory in TASK_UI_PROMPT_DIR. It answers with
-// the note; Claude's answer is a reply to it once the run ends.
+// the note; Claude's answer is a reply to it once the run ends. With
+// run, the prompt asks about that run, in its folder and directory, and
+// Claude gets the run and the end of its output.
 func (h *Handlers) startPrompt(w http.ResponseWriter, r *http.Request) {
 	if !h.require(w, r, "prompt/edit") || !h.board(w) {
 		return
@@ -22,6 +24,10 @@ func (h *Handlers) startPrompt(w http.ResponseWriter, r *http.Request) {
 	var req PromptRequest
 	if err := readJSON(r, &req); err != nil {
 		fail(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	if req.Run != "" && req.Parent == "" {
+		h.askRun(w, r, req)
 		return
 	}
 	where := ""
@@ -71,14 +77,39 @@ func (h *Handlers) ask(w http.ResponseWriter, r *http.Request, req PromptRequest
 	writeJSON(w, http.StatusCreated, note)
 }
 
+// askRun puts the request's prompt about its run to the board, and
+// answers 201 with the note.
+func (h *Handlers) askRun(w http.ResponseWriter, r *http.Request, req PromptRequest) {
+	prompt := strings.TrimSpace(req.Prompt)
+	if prompt == "" {
+		fail(w, http.StatusBadRequest, "write a prompt")
+		return
+	}
+	note, err := h.opts.Board.AskRun(r.Context(), access.UserFrom(r.Context()), req.Run, prompt)
+	if err != nil {
+		failErr(w, err)
+		return
+	}
+	writeJSON(w, http.StatusCreated, note)
+}
+
 // listPrompts returns the prompt threads of a folder, or of ?dir= inside
-// it, ?folder=_ for the root, newest first, each with its replies:
-// ?limit=. Takes prompt/view.
+// it, ?folder=_ for the root, or those about a run the user sees, ?run=,
+// newest first, each with its replies: ?limit=. Takes prompt/view.
 func (h *Handlers) listPrompts(w http.ResponseWriter, r *http.Request) {
 	if !h.require(w, r, "prompt/view") || !h.board(w) {
 		return
 	}
 	q := r.URL.Query()
+	if id := q.Get("run"); id != "" {
+		run, err := h.opts.Runs.Get(r.Context(), id)
+		if err != nil || !access.UserFrom(r.Context()).CanSee(run.Folder) {
+			fail(w, http.StatusNotFound, "no such run")
+			return
+		}
+		h.writeThreads(w, r, storage.NoteFilter{Prompts: true, AboutRunID: run.ID, Limit: queryInt(r, "limit", 20)})
+		return
+	}
 	where, problem := h.promptPlace(r, q.Get("folder"), q.Get("dir"))
 	if problem != "" {
 		fail(w, http.StatusNotFound, problem)

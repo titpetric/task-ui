@@ -213,3 +213,42 @@ func TestRun_Dir(t *testing.T) {
 	assert.NotContains(t, plain, "<th>Directory</th>")
 	assert.NotContains(t, plain, "<th>Arguments</th>")
 }
+
+// A finished run's page holds a prompt about the run, under its output,
+// for a user with prompt/edit and a Claude token, and lists the threads
+// about the run: read-only with prompt/view. A prompt's own run, in the
+// internal folder, has none.
+func TestRun_Prompt(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	ctx := context.Background()
+	const box = `<input type="hidden" name="run" value="`
+	run := f.run(t, "infra", "plan", "ops", model.StateFailed)
+	assert.NotContains(t, f.page(t, asAdmin, "/runs/"+run.ID), box, "no Claude token, no prompt")
+
+	f.withKey(t)
+	assert.NoError(t, f.opts.Integrations.Save(ctx, integration.Claude, map[string]string{"token": "sk-1"}))
+	admin := f.page(t, asAdmin, "/runs/"+run.ID)
+	assert.Contains(t, admin, `<details class="promptbox" open>`)
+	assert.Contains(t, admin, box+run.ID+`">`)
+	assert.Contains(t, admin, "Claude Code on this run and its output, in infra/")
+	assert.Contains(t, admin, `data-notes data-dir="infra"`)
+	assert.NotContains(t, f.page(t, asViewer, "/runs/"+run.ID), "promptbox")
+
+	// The threads about the run list on its page alone.
+	thread := &model.Note{UserName: "admin", Body: "why did it fail", State: model.NoteDone, WorkspaceID: "ws", Dir: "infra", AboutRunID: run.ID}
+	assert.NoError(t, f.opts.Board.Notes.Create(ctx, thread))
+	assert.NoError(t, f.opts.Board.Notes.Create(ctx, &model.Note{UserName: "admin", Body: "what builds here", WorkspaceID: "ws", Dir: "infra"}))
+	admin = f.page(t, asAdmin, "/runs/"+run.ID)
+	assert.Contains(t, admin, `id="note-`+thread.ID+`"`)
+	assert.NotContains(t, admin, "what builds here")
+	assert.NotContains(t, f.page(t, asAdmin, "/f/_/infra"), "why did it fail")
+
+	assert.NoError(t, f.opts.Users.Policies().Put(ctx, "user", asViewer, "prompt/view", "allow"))
+	viewer := f.page(t, asViewer, "/runs/"+run.ID)
+	assert.Contains(t, viewer, `id="note-`+thread.ID+`"`)
+	assert.NotContains(t, viewer, box)
+
+	prompt := f.run(t, model.Internal, "claude-prompt", "admin", model.StateOK)
+	assert.NotContains(t, f.page(t, asAdmin, "/runs/"+prompt.ID), "promptbox")
+}

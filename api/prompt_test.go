@@ -146,3 +146,68 @@ func TestPrompts_ByPermission(t *testing.T) {
 	assert.Equal(t, http.StatusNotFound, f.call(t, asViewer, http.MethodGet, "/runs/"+asked.RunID, nil).Status)
 	assert.Equal(t, http.StatusForbidden, f.call(t, asOps, http.MethodPost, "/runs/"+asked.RunID+"/stop", nil).Status)
 }
+
+// POST /api/prompts with run asks about a run, in its folder and
+// directory: Claude gets the run, the job's command and the end of its
+// output, cut to 2000 lines, and the thread lists by the run, apart
+// from its directory's prompts.
+func TestPrompts_AboutRun(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	promptFolder(t, f)
+	f.opts.Catalogue.(catalogue)["logs"] = shellFolder(t, f.root, "logs", map[string]string{"long": "seq 1 2600; exit 4"})
+	about := f.finished(t, f.start(t, asAdmin, "logs", "long"))
+	assert.Equal(t, model.StateFailed, about.State)
+
+	for _, user := range []string{asOps, asViewer} {
+		res := f.call(t, user, http.MethodPost, "/prompts", api.PromptRequest{Run: about.ID, Prompt: "why"})
+		assert.Equal(t, http.StatusForbidden, res.Status, user)
+		assert.Equal(t, http.StatusForbidden, f.call(t, user, http.MethodGet, "/prompts?run="+about.ID, nil).Status, user)
+	}
+
+	res := f.call(t, asAdmin, http.MethodPost, "/prompts", api.PromptRequest{Run: about.ID, Prompt: "why did it end so"})
+	assert.Equal(t, http.StatusCreated, res.Status, string(res.Raw))
+	assert.Equal(t, "logs", res.str("dir"))
+	assert.Equal(t, about.ID, res.str("about_run_id"))
+	asked := f.answered(t, res.str("id"))
+	assert.Equal(t, model.NoteDone, asked.State)
+	prompt := f.finished(t, asked.RunID)
+	assert.Equal(t, "claude-prompt", prompt.Job)
+	assert.Equal(t, "logs", prompt.Dir)
+
+	text, err := os.ReadFile(filepath.Join(f.root, model.Internal, "run.out"))
+	assert.NoError(t, err)
+	got := string(text)
+	assert.Contains(t, got, "Run "+about.ID+" of the job long in logs, by admin.\nState: failed, exit code 4.\n")
+	assert.Contains(t, got, "The job's command: sh -c seq 1 2600; exit 4\n")
+	assert.Contains(t, got, "cut to its last 2000 lines or 256 KiB:\n\n```\n601\n602\n")
+	assert.Contains(t, got, "\n2600\n```\n")
+	assert.NotContains(t, got, "\n600\n")
+
+	listed := f.call(t, asAdmin, http.MethodGet, "/prompts?run="+about.ID, nil)
+	assert.Equal(t, http.StatusOK, listed.Status, string(listed.Raw))
+	assert.Len(t, listed.list("notes"), 1)
+	assert.Len(t, f.call(t, asAdmin, http.MethodGet, "/prompts?folder=logs", nil).list("notes"), 0, "the directory lists its own prompts")
+
+	// A reply asks again about the same run.
+	assert.NoError(t, os.Remove(filepath.Join(f.root, model.Internal, "run.out")))
+	again := f.call(t, asAdmin, http.MethodPost, "/prompts", api.PromptRequest{Parent: asked.ID, Prompt: "and then"})
+	assert.Equal(t, http.StatusCreated, again.Status, string(again.Raw))
+	assert.Equal(t, about.ID, again.str("about_run_id"))
+	assert.Eventually(t, func() bool {
+		replies := f.call(t, asAdmin, http.MethodGet, "/prompts?run="+about.ID, nil).list("notes")[0].(map[string]any)["replies"].([]any)
+		return len(replies) == 3
+	}, 10*time.Second, 20*time.Millisecond)
+	assert.FileExists(t, filepath.Join(f.root, model.Internal, "run.out"))
+
+	// A run the user does not see, or one of the internal folder, has no
+	// prompt.
+	for _, rule := range []string{"prompt/view", "prompt/edit"} {
+		assert.NoError(t, f.opts.Users.Policies().Put(t.Context(), "user", asLimited, rule, "allow"))
+	}
+	assert.Equal(t, http.StatusNotFound, f.call(t, asLimited, http.MethodPost, "/prompts", api.PromptRequest{Run: about.ID, Prompt: "x"}).Status)
+	assert.Equal(t, http.StatusNotFound, f.call(t, asLimited, http.MethodGet, "/prompts?run="+about.ID, nil).Status)
+	assert.Equal(t, http.StatusNotFound, f.call(t, asAdmin, http.MethodPost, "/prompts", api.PromptRequest{Run: asked.RunID, Prompt: "x"}).Status)
+	assert.Equal(t, http.StatusNotFound, f.call(t, asAdmin, http.MethodPost, "/prompts", api.PromptRequest{Run: "nothing", Prompt: "x"}).Status)
+	assert.Equal(t, http.StatusBadRequest, f.call(t, asAdmin, http.MethodPost, "/prompts", api.PromptRequest{Run: about.ID, Prompt: " "}).Status)
+}

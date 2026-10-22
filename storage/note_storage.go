@@ -33,6 +33,9 @@ type NoteFilter struct {
 	// place they ran, as Note.Dir holds it.
 	WorkspaceID string
 	Dir         string
+	// AboutRunID narrows the prompts to the threads about a run; without
+	// it, a filter by Dir leaves those out, as the run's page lists them.
+	AboutRunID string
 	// Limit keeps the newest; zero keeps them all.
 	Limit int
 }
@@ -88,6 +91,10 @@ func (s *NoteStorage) List(ctx context.Context, filter NoteFilter) ([]model.Note
 		if filter.Dir != "" {
 			where = append(where, "dir = ?")
 			args = append(args, filter.Dir)
+		}
+		if filter.AboutRunID != "" || filter.Dir != "" {
+			where = append(where, "about_run_id = ?")
+			args = append(args, filter.AboutRunID)
 		}
 	}
 	query := "SELECT * FROM note WHERE " + strings.Join(where, " AND ") + " ORDER BY rowid DESC"

@@ -83,3 +83,24 @@ func TestAgent_Prompt_hosts(t *testing.T) {
 	assert.NoError(t, a.Run(context.Background(), []string{"prompt"}))
 	assert.NotContains(t, out.String(), "--append-system-prompt")
 }
+
+// A thread from a run's page reaches Claude after the run, from the
+// file TASK_UI_PROMPT_RUN names, with how to treat a fix; a file that is
+// not there fails the prompt.
+func TestAgent_Prompt_run(t *testing.T) {
+	t.Parallel()
+	here := realDir(t)
+	run := filepath.Join(t.TempDir(), "run.md")
+	assert.NoError(t, os.WriteFile(run, []byte("Run 01 of the job build in infra, by ops.\nState: failed, exit code 2.\n"), 0o644))
+	var out bytes.Buffer
+	env := []string{"PATH=" + fakeClaude(t), "CLAUDE_CODE_OAUTH_TOKEN=sk-1", "TASK_UI_PROMPT_DIR=" + here, "TASK_UI_PROMPT=why did it fail"}
+	a := &agent.Agent{Stdout: &out, Stderr: io.Discard, Env: append(env, "TASK_UI_PROMPT_RUN="+run)}
+	assert.NoError(t, a.Run(context.Background(), []string{"prompt"}))
+	text := out.String()
+	assert.Contains(t, text, "arg=A prompt from the page of a task-ui run, about that run. The run:\n\nRun 01 of the job build in infra, by ops.\nState: failed, exit code 2.\n\nThe question is about this run.")
+	assert.Contains(t, text, "commit it to main and push it")
+	assert.Contains(t, text, "the last message is the question:\n\nwhy did it fail\n\nYour final message is the answer, in markdown, shown under the question on the run's page.")
+
+	a.Env = append(env, "TASK_UI_PROMPT_RUN="+filepath.Join(here, "gone.md"))
+	assert.Error(t, a.Run(context.Background(), []string{"prompt"}))
+}

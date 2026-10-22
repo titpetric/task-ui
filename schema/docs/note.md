@@ -15,6 +15,7 @@ Note.
 | run_id       | char(26) | MUL | Run ID       |
 | created_at   | datetime |     | Created At   |
 | updated_at   | datetime |     | Updated At   |
+| about_run_id | char(26) | MUL | About Run ID |
 | edited_at    | datetime |     | Edited At    |
 | workspace_id | char(26) | MUL | Workspace ID |
 | dir          | varchar  | MUL | Dir          |

@@ -29,6 +29,8 @@
 </section>
 {{- end }}
 
+{{- template "promptbox" . }}
+
 <div class="grid-2">
 <section class="block">
 	<h3>Run</h3>
