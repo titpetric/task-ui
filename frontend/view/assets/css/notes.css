@@ -195,6 +195,88 @@
   color: var(--signal);
 }
 
+a.mention:hover {
+  text-decoration: underline;
+}
+
+/* A note's field draws its text on a layer behind it, the field's own
+   text clear, so a mention of a user wears the colour of a link while
+   the caret and the selection stay the field's. */
+.mention-field {
+  position: relative;
+  display: grid;
+
+  & textarea {
+    position: relative;
+    z-index: 1;
+    background: transparent;
+    color: transparent;
+    caret-color: var(--text);
+
+    &::placeholder {
+      color: var(--text-faint);
+    }
+
+    &::selection {
+      background: var(--signal-wash);
+      color: transparent;
+    }
+  }
+}
+
+.mention-backdrop {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-color: transparent;
+  background: var(--ink-0);
+  color: var(--text);
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  pointer-events: none;
+
+  & .mention-hl {
+    color: var(--signal);
+  }
+}
+
+/* The users a mention may name, under the caret. */
+.mention-list {
+  position: fixed;
+  z-index: 60;
+  display: grid;
+  min-width: 14rem;
+  max-width: calc(100vw - 1rem);
+  margin: 0;
+  padding: 0.25rem;
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius);
+  background: var(--ink-1);
+  box-shadow: var(--shadow-pop);
+  list-style: none;
+
+  & li {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.3rem 0.5rem;
+    border-radius: var(--radius);
+    color: var(--text);
+    font-size: var(--fs-sm);
+    cursor: pointer;
+
+    &[aria-selected="true"] {
+      background: var(--signal-wash);
+    }
+  }
+
+  & .role {
+    margin-left: auto;
+    color: var(--text-faint);
+    font-size: var(--fs-xs);
+  }
+}
+
 /* A note its author may edit opens in a field on a click. */
 .note-body[data-edit] {
   cursor: text;

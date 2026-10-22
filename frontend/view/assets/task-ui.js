@@ -1917,6 +1917,7 @@
           form.elements.body.value = drafts[parent];
           form.closest("details").open = true;
         });
+        mentionFields(notesList);
         Object.keys(edits).forEach(function (id) {
           var body = notesList.querySelector('[data-edit="' + id + '"]');
           if (body) editNote(body, edits[id]);
@@ -1939,6 +1940,7 @@
           return;
         }
         form.elements.body.value = "";
+        if (form.elements.body.hasAttribute("data-mentions")) paintMentions(form.elements.body);
         refreshNotes();
       });
   });
@@ -1949,12 +1951,13 @@
     var form = document.createElement("form");
     form.className = "note-form note-edit";
     form.dataset.noteEdit = body.dataset.edit;
-    form.innerHTML = '<textarea name="body" rows="3" required aria-label="The note"></textarea>' +
+    form.innerHTML = '<textarea name="body" rows="3" required data-mentions aria-label="The note"></textarea>' +
       '<div class="note-form-foot"><span class="faint">Ctrl+Enter saves, Esc cancels.</span>' +
       '<span><button class="btn" type="button" data-edit-cancel>Cancel</button> <button class="btn btn-primary" type="submit">Save</button></span></div>';
     form.elements.body.value = value === undefined ? body.dataset.body : value;
     body.hidden = true;
     body.after(form);
+    mentionField(form.elements.body);
     form.elements.body.focus();
   }
   function closeEdit(form) {
@@ -2011,6 +2014,197 @@
       area.form.requestSubmit();
     }
   });
+  // A note's field, data-mentions, lists the users whose name follows an
+  // @ as model.Mentions reads one, and draws a mention of a user in the
+  // colour of a link on a layer behind its clear text. The list opens
+  // under the caret: up and down move, Enter or Tab takes a name, Esc
+  // closes it.
+  var mentionAt = /(?:^|[\s(\[{,;])@([A-Za-z0-9._-]*)$/;
+  var mentionAll = /(^|[\s(\[{,;])@([A-Za-z0-9][A-Za-z0-9._-]*)/g;
+  var mentionCopy = ["boxSizing", "width", "fontFamily", "fontSize", "fontWeight", "fontStyle", "lineHeight", "letterSpacing", "wordSpacing", "tabSize", "textIndent", "textTransform",
+    "paddingTop", "paddingRight", "paddingBottom", "paddingLeft", "borderTopWidth", "borderRightWidth", "borderBottomWidth", "borderLeftWidth", "borderStyle", "borderRadius"];
+  var mention = { list: null, area: null, start: 0, names: [], at: 0 };
+
+  function knownUser(name) {
+    return Object.prototype.hasOwnProperty.call(roles, name);
+  }
+
+  // mentionField wraps a field once with its layer and draws it.
+  function mentionField(area) {
+    if (!area.parentNode.classList.contains("mention-field")) {
+      var wrap = document.createElement("div");
+      wrap.className = "mention-field";
+      var back = document.createElement("div");
+      back.className = "mention-backdrop";
+      back.setAttribute("aria-hidden", "true");
+      area.before(wrap);
+      wrap.append(back, area);
+      area.setAttribute("aria-autocomplete", "list");
+      area.addEventListener("scroll", function () { back.scrollTop = area.scrollTop; back.scrollLeft = area.scrollLeft; });
+      if (window.ResizeObserver) new ResizeObserver(function () { paintMentions(area); }).observe(area);
+    }
+    paintMentions(area);
+  }
+  function mentionFields(root) {
+    root.querySelectorAll("textarea[data-mentions]").forEach(mentionField);
+  }
+
+  // paintMentions draws the text of a field on its layer, a mention of a
+  // user marked, in the field's own font, box and scroll.
+  function paintMentions(area) {
+    var back = area.previousElementSibling;
+    if (!back || !back.classList.contains("mention-backdrop")) return;
+    var style = getComputedStyle(area);
+    mentionCopy.forEach(function (prop) { if (prop !== "width") back.style[prop] = style[prop]; });
+    // A scroll bar narrows the field's text; the layer leaves its room.
+    var bar = area.offsetWidth - area.clientWidth - parseFloat(style.borderLeftWidth) - parseFloat(style.borderRightWidth);
+    back.style.paddingRight = parseFloat(style.paddingRight) + Math.max(0, bar) + "px";
+    var text = escapeHTML(area.value).replace(mentionAll, function (m, lead, name) {
+      var bare = name.replace(/[.-]+$/, "");
+      if (!knownUser(bare)) return m;
+      return lead + '<span class="mention-hl">@' + bare + "</span>" + name.slice(bare.length);
+    });
+    back.innerHTML = text + "\n";
+    back.scrollTop = area.scrollTop;
+    back.scrollLeft = area.scrollLeft;
+  }
+
+  // caretPoint returns where the caret of a field is on the screen, from
+  // a copy of the field's text up to it in a hidden element of its box.
+  function caretPoint(area, at) {
+    var style = getComputedStyle(area), copy = document.createElement("div");
+    mentionCopy.forEach(function (prop) { copy.style[prop] = style[prop]; });
+    copy.style.position = "absolute";
+    copy.style.visibility = "hidden";
+    copy.style.top = "0";
+    copy.style.left = "-9999px";
+    copy.style.whiteSpace = "pre-wrap";
+    copy.style.overflowWrap = "break-word";
+    copy.style.width = area.clientWidth + parseFloat(style.borderLeftWidth) + parseFloat(style.borderRightWidth) + "px";
+    copy.textContent = area.value.slice(0, at);
+    var mark = document.createElement("span");
+    mark.textContent = area.value.slice(at) || ".";
+    copy.append(mark);
+    document.body.append(copy);
+    var box = area.getBoundingClientRect(), line = parseFloat(style.lineHeight) || parseFloat(style.fontSize) * 1.4;
+    var point = { left: box.left + mark.offsetLeft - area.scrollLeft, top: box.top + mark.offsetTop - area.scrollTop + line };
+    copy.remove();
+    return point;
+  }
+
+  function closeMentions() {
+    if (mention.area) {
+      mention.area.removeAttribute("aria-activedescendant");
+      mention.area.removeAttribute("aria-controls");
+    }
+    if (mention.list) mention.list.hidden = true;
+    mention.area = null;
+  }
+
+  // findMentions lists the users a word after an @ names: those whose
+  // name starts with it first, then those holding it, eight at most.
+  function findMentions(query) {
+    var q = query.toLowerCase(), names = Object.keys(roles).sort();
+    var starts = names.filter(function (n) { return n.toLowerCase().indexOf(q) === 0; });
+    var holds = names.filter(function (n) { return n.toLowerCase().indexOf(q) > 0; });
+    return starts.concat(holds).slice(0, 8);
+  }
+
+  function showMentions(area) {
+    var at = area.selectionStart;
+    var found = area.selectionStart === area.selectionEnd && mentionAt.exec(area.value.slice(0, at));
+    var names = found ? findMentions(found[1]) : [];
+    if (!names.length) {
+      closeMentions();
+      return;
+    }
+    if (!mention.list) {
+      mention.list = document.createElement("ul");
+      mention.list.id = "mention-list";
+      mention.list.className = "mention-list";
+      mention.list.setAttribute("role", "listbox");
+      mention.list.setAttribute("aria-label", "Users");
+      mention.list.addEventListener("mousedown", function (event) {
+        var item = event.target.closest("li");
+        event.preventDefault();
+        if (item) takeMention(Number(item.dataset.at));
+      });
+      document.body.append(mention.list);
+    }
+    var same = mention.area === area && mention.names.join(" ") === names.join(" ");
+    mention.area = area;
+    mention.start = at - found[1].length - 1;
+    mention.names = names;
+    if (!same) mention.at = 0;
+    mention.list.innerHTML = names.map(function (name, i) {
+      var role = roles[name] || "";
+      return '<li role="option" id="mention-opt-' + i + '" data-at="' + i + '" aria-selected="' + (i === mention.at) + '">' +
+        avatarHTML(name) + " <span>" + escapeHTML(name) + '</span><span class="role">' + escapeHTML(role) + "</span></li>";
+    }).join("");
+    mention.list.hidden = false;
+    var point = caretPoint(area, mention.start);
+    mention.list.style.top = point.top + 4 + "px";
+    mention.list.style.left = Math.max(8, Math.min(point.left, window.innerWidth - mention.list.offsetWidth - 8)) + "px";
+    area.setAttribute("aria-controls", "mention-list");
+    area.setAttribute("aria-activedescendant", "mention-opt-" + mention.at);
+  }
+
+  function moveMention(by) {
+    var n = mention.names.length;
+    mention.at = (mention.at + by + n) % n;
+    mention.list.querySelectorAll("li").forEach(function (li, i) { li.setAttribute("aria-selected", String(i === mention.at)); });
+    mention.area.setAttribute("aria-activedescendant", "mention-opt-" + mention.at);
+  }
+
+  // takeMention puts @name and a space in place of the word being typed.
+  function takeMention(i) {
+    var area = mention.area, name = mention.names[i];
+    if (!area || !name) return;
+    var end = area.selectionStart, rest = /^[A-Za-z0-9._-]*/.exec(area.value.slice(end))[0];
+    area.setRangeText("@" + name + " ", mention.start, end + rest.length, "end");
+    closeMentions();
+    paintMentions(area);
+    area.focus();
+  }
+
+  mentionFields(document);
+  document.addEventListener("input", function (event) {
+    var area = event.target;
+    if (!area.matches || !area.matches("textarea[data-mentions]")) return;
+    paintMentions(area);
+    showMentions(area);
+  });
+  document.addEventListener("click", function (event) {
+    if (event.target.matches && event.target.matches("textarea[data-mentions]")) showMentions(event.target);
+  });
+  document.addEventListener("focusout", function (event) {
+    if (event.target === mention.area) closeMentions();
+  });
+  window.addEventListener("scroll", function (event) { if (mention.area && event.target !== mention.area) closeMentions(); }, true);
+  window.addEventListener("resize", closeMentions);
+  // The list takes its keys before the field's own: Enter does not post,
+  // Esc does not cancel an edit, while it is open.
+  document.addEventListener("keydown", function (event) {
+    if (!mention.area || event.target !== mention.area || mention.list.hidden) return;
+    var key = event.key;
+    if (key === "ArrowDown" || key === "ArrowUp") {
+      moveMention(key === "ArrowDown" ? 1 : -1);
+    } else if ((key === "Enter" && !event.ctrlKey && !event.metaKey) || key === "Tab") {
+      takeMention(mention.at);
+    } else if (key === "Escape") {
+      closeMentions();
+    } else {
+      return;
+    }
+    event.preventDefault();
+    event.stopPropagation();
+  }, true);
+  document.addEventListener("keyup", function (event) {
+    var area = event.target;
+    if (event.key !== "ArrowLeft" && event.key !== "ArrowRight" && event.key !== "Home" && event.key !== "End") return;
+    if (area.matches && area.matches("textarea[data-mentions]")) showMentions(area);
+  });
+
   // The board follows its own notes, a prompt box the notes of its
   // place, data-dir, as the note's dir names it.
   if (notesList && window.EventSource) {

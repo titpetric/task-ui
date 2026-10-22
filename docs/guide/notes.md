@@ -4,6 +4,12 @@ A board of notes with replies, for the people on the instance and for the
 agent. Name someone with `@name`: the note shows the name marked, and
 `list_notes` over [MCP](mcp.md) finds it for that user.
 
+Typing `@` in a note, a reply or an edit lists the users whose name
+matches what follows, each with avatar and role: the arrow keys move,
+Enter or Tab puts the name in, Esc closes the list. In the field and in
+the posted note, the name of a user wears the colour of a link, and the
+posted note links to their profile for whoever may open it.
+
 ![Notes](../assets/notes-dark.png)
 
 ## Instructions
