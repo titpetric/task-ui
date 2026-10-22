@@ -119,3 +119,75 @@ table.table-kv th {
   width: 9rem;
   background: transparent;
 }
+
+/* A table that fits its box, whatever the sidebars leave it: past 56rem
+   wide it shows every column; narrower, it leaves out its .hide-narrow
+   columns and the avatar and menu of who a row runs as; narrower than
+   46rem, each row is a card, its cells labelled, as a phone shows
+   .table.cards. */
+.table-wrap.fit {
+  container-type: inline-size;
+}
+
+@container (max-width: 56rem) {
+  .table.fit-cards {
+    & .hide-narrow,
+    & .run-as :is(.avatar, .user-more) {
+      display: none;
+    }
+  }
+}
+
+@container (max-width: 46rem) {
+  .table.fit-cards {
+    &,
+    & tbody,
+    & tr {
+      display: block;
+    }
+
+    & thead {
+      display: none;
+    }
+
+    & tr {
+      padding: 0.55rem 0.7rem;
+      border-bottom: 1px solid var(--line);
+
+      &:last-child {
+        border-bottom: 0;
+      }
+    }
+
+    & tbody tr:hover td {
+      background: transparent;
+    }
+
+    & td,
+    & td.hide-narrow {
+      display: flex;
+      align-items: baseline;
+      gap: 0.6rem;
+      padding: 0.15rem 0;
+      border: 0;
+      white-space: normal;
+    }
+
+    & td[data-label]::before {
+      content: attr(data-label);
+      flex: 0 0 5.5rem;
+      color: var(--text-faint);
+      font-family: var(--font);
+      font-size: var(--fs-label);
+      font-weight: 600;
+      letter-spacing: var(--ls-label);
+      text-transform: uppercase;
+    }
+
+    & td.actions {
+      justify-content: flex-start;
+      width: auto;
+      padding-top: 0.35rem;
+    }
+  }
+}

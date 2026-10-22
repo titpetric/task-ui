@@ -17,8 +17,14 @@ func TestSchedules(t *testing.T) {
 
 	body := f.page(t, asAdmin, "/schedules")
 	assert.Contains(t, body, "<h2>Scheduled</h2>")
-	assert.Contains(t, body, "<code>@hourly</code>")
-	assert.Contains(t, body, "<code>0 3 * * *</code>")
+	assert.Contains(t, body, `<code class="nowrap">@hourly</code>`)
+	assert.Contains(t, body, `<code class="nowrap">0 3 * * *</code>`)
+	// The table fits its box: Last run goes on a narrow one, and a
+	// narrower one shows each schedule as a card, State kept.
+	assert.Contains(t, body, `<div class="table-wrap fit">
+<table class="table fit-cards">`)
+	assert.Contains(t, body, `<th class="hide-narrow">Last run</th>`)
+	assert.Contains(t, body, `<td data-label="State"><span class="badge ok">enabled</span></td>`)
 	assert.Contains(t, body, `class="badge">disabled`)
 	assert.Contains(t, body, `<option value="deploy" data-folder="private">`)
 	assert.Contains(t, body, `<option value="plan" data-folder="infra">`)
@@ -29,10 +35,10 @@ func TestSchedules(t *testing.T) {
 
 	viewer := f.page(t, asViewer, "/schedules")
 	assert.NotContains(t, viewer, `data-api="/api/schedules"`)
-	assert.Contains(t, viewer, "<code>@hourly</code>")
+	assert.Contains(t, viewer, `<code class="nowrap">@hourly</code>`)
 
 	limited := f.page(t, asLimited, "/schedules")
-	assert.NotContains(t, limited, "<code>0 3 * * *</code>")
+	assert.NotContains(t, limited, `<code class="nowrap">0 3 * * *</code>`)
 }
 
 // The folder select narrows the job select; viewers get neither.

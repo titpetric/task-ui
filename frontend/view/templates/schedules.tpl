@@ -36,19 +36,19 @@
 </form>
 {{- end }}
 
-<div class="table-wrap">
-<table class="table">
-	<thead><tr><th>Folder</th><th>Job</th><th>Expression</th><th>Next run</th><th>Last run</th><th>Runs as</th><th>State</th><th></th></tr></thead>
+<div class="table-wrap fit">
+<table class="table fit-cards">
+	<thead><tr><th>Folder</th><th>Job</th><th>Expression</th><th>Next run</th><th class="hide-narrow">Last run</th><th>Runs as</th><th>State</th><th></th></tr></thead>
 	<tbody>
 	{{- range .Schedules }}
 		<tr>
-			<td><a href="{{ $.Href .Folder }}">{{ .Folder }}</a></td>
-			<td class="key"><a href="{{ $.Href .Folder }}/{{ .Job }}">{{ .Job }}</a></td>
-			<td><code>{{ .Expression }}</code></td>
-			<td class="nowrap">{{ if .IsEnabled }}{{ stamp .NextRunAt }}{{ else }}<span class="faint">-</span>{{ end }}</td>
-			<td class="nowrap">{{ if .LastRunAt }}{{ ago .LastRunAt }}{{ else }}<span class="faint">never</span>{{ end }}</td>
-			<td>{{ template "runas-row" (list $ .) }}</td>
-			<td>{{ if .IsEnabled }}<span class="badge ok">enabled</span>{{ else }}<span class="badge">disabled</span>{{ end }}</td>
+			<td data-label="Folder"><a href="{{ $.Href .Folder }}">{{ .Folder }}</a></td>
+			<td class="key" data-label="Job"><a href="{{ $.Href .Folder }}/{{ .Job }}">{{ .Job }}</a></td>
+			<td data-label="Expression"><code class="nowrap">{{ .Expression }}</code></td>
+			<td data-label="Next run">{{ template "nextrun" . }}</td>
+			<td class="nowrap hide-narrow" data-label="Last run">{{ if .LastRunAt }}{{ ago .LastRunAt }}{{ else }}<span class="faint">never</span>{{ end }}</td>
+			<td data-label="Runs as">{{ template "runas-row" (list $ .) }}</td>
+			<td data-label="State">{{ if .IsEnabled }}<span class="badge ok">enabled</span>{{ else }}<span class="badge">disabled</span>{{ end }}</td>
 			<td class="actions">
 				<form data-api="/api/schedules/{{ .ID }}" data-method="PUT" data-next="reload"><input type="hidden" name="enabled" data-type="bool" value="{{ if .IsEnabled }}false{{ else }}true{{ end }}"><button class="btn btn-sm" type="submit">{{ if .IsEnabled }}Disable{{ else }}Enable{{ end }}</button></form>
 				<button type="button" class="btn-icon danger" data-delete="/api/schedules/{{ .ID }}" data-confirm="Delete the schedule {{ .Expression }} for {{ .Folder }} / {{ .Job }}?" data-next="reload" title="Delete" aria-label="Delete schedule"><svg class="ic"><use href="#i-trash"/></svg></button>

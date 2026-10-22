@@ -96,3 +96,8 @@
 {{- if $m.Editable }}<input type="hidden" name="{{ $c.Path }}" value="{{ $c.Effect }}" data-was="{{ $c.Effect }}" disabled>{{ end }}
 {{- if and $m.Effective $c.Checked }}<span class="eff {{ if $c.Allowed }}ok{{ else }}bad{{ end }}" title="Result: {{ if $c.Allowed }}allowed{{ else }}denied{{ end }}">{{ if $c.Allowed }}✓{{ else }}✕{{ end }}</span>{{ end }}</span>
 {{- end }}
+
+{{/* nextrun takes a schedule: when it runs next, the day and the time
+     apart so a narrow column wraps between them; a dash for one turned
+     off. */}}
+{{ define "nextrun" }}{{ if .IsEnabled }}{{ $at := split (stamp .NextRunAt) " " }}{{ range $at }}<span class="nowrap">{{ . }}</span> {{ end }}{{ else }}<span class="faint">-</span>{{ end }}{{ end }}
