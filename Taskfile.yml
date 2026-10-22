@@ -1,6 +1,11 @@
 ---
 version: "3"
 
+# Every go command here runs with a 1 GiB soft memory limit: a race-enabled
+# test binary can grow past what the machine has.
+env:
+  GOMEMLIMIT: 1GiB
+
 includes:
   docker: docker/Taskfile.yml
 
