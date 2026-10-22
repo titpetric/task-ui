@@ -53,7 +53,7 @@ func (h *Handlers) profile(w http.ResponseWriter, r *http.Request) {
 // prompt/view in places they see.
 func (h *Handlers) activityOf(r *http.Request, p *view.Page, user *model.User) {
 	ctx, viewer, pr := r.Context(), p.User, p.Profile
-	pr.Runs = h.visibleRuns(ctx, viewer, storage.RunFilter{UserName: user.Name, Folders: viewer.FolderList(), Limit: profileCount})
+	pr.Runs = h.visibleRuns(ctx, h.runSeer(r), storage.RunFilter{UserName: user.Name, Folders: viewer.FolderList(), Limit: profileCount})
 	if h.opts.WorkflowRuns != nil {
 		runs, _ := h.opts.WorkflowRuns.List(ctx, 50*profileCount)
 		for _, run := range runs {

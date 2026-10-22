@@ -68,12 +68,12 @@ func (h *Handlers) runs(w http.ResponseWriter, r *http.Request) {
 		Folder: q.Get("folder"), Folders: user.FolderList(), Job: q.Get("job"), Dir: q.Get("dir"), State: q.Get("state"), UserName: q.Get("user"),
 		Before: q.Get("before"), After: q.Get("after"), Limit: n + 1,
 	}
-	runs := h.visibleRuns(r.Context(), user, filter)
+	runs := h.visibleRuns(r.Context(), h.runSeer(r), filter)
 	var prev, next string
 	p.Runs, prev, next = paged(runs, n, filter.Before, filter.After, func(run view.Run) string { return run.ID })
 	p.Pager = view.NewPager("/runs", q, prev, next)
 	filter.Before, filter.After, filter.Limit = "", "", activityLimit
-	p.Activity = h.activity(r.Context(), user, filter, p.Now, false)
+	p.Activity = h.activity(r.Context(), h.runSeer(r), filter, p.Now, false)
 	p.Summarize = h.claudeFor(r, p.User)
 	h.render(w, http.StatusOK, "runs", p)
 }
@@ -81,9 +81,8 @@ func (h *Handlers) runs(w http.ResponseWriter, r *http.Request) {
 // run shows one run: its terminal while live, its details and its
 // artifacts.
 func (h *Handlers) run(w http.ResponseWriter, r *http.Request) {
-	user := access.UserFrom(r.Context())
 	row, err := h.opts.Runs.Get(r.Context(), param(r, "id"))
-	if err != nil || !user.CanSee(row.Folder) {
+	if err != nil || !h.runSeer(r)(row) {
 		h.missing(w, r, "No run with that ID.")
 		return
 	}
@@ -112,9 +111,9 @@ func (h *Handlers) run(w http.ResponseWriter, r *http.Request) {
 // runPrompt returns the prompt box of a run's page with the threads
 // about the run: to ask, for a user with prompt/edit and a Claude token
 // once the run ended; to read them only, with prompt/view. None for a
-// run of the internal folder, a prompt's own run among them.
+// run of the internal folder, nor for a prompt's own run.
 func (h *Handlers) runPrompt(r *http.Request, p *view.Page, run *view.Run) *view.Prompt {
-	if h.opts.Board == nil || model.IsInternal(run.Folder) || !p.Can("prompt/view") {
+	if h.opts.Board == nil || model.IsInternal(run.Folder) || run.IsPrompt() || !p.Can("prompt/view") {
 		return nil
 	}
 	prompt := view.PromptAbout(run.ID, run.Where())

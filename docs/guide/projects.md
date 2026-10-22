@@ -238,9 +238,9 @@ An admin with a token in the [Claude Code integration](settings.md#integrations)
 gets a **Prompt** box under the bar of every folder page and every
 directory inside a folder: open on a workspace's page, on `/f/_`,
 which prompts at the root, and wherever its directory holds a prompt, folded
-elsewhere until clicked. The prompt runs `internal/claude-prompt` as
-you, with Claude Code in that directory, so it reads the `CLAUDE.md` and
-`.claude/` there and above.
+elsewhere until clicked. The prompt runs `@claude-prompt` of that
+folder and directory as you, with Claude Code there, so it reads the
+`CLAUDE.md` and `.claude/` there and above.
 
 No window opens. The question shows under the box at once, `open`, then
 `working` while the run goes, and Claude's answer, in markdown, lands
@@ -268,11 +268,17 @@ curl -s "https://task.example.com/api/prompts?folder=malta&dir=dockerfiles/blog"
 
 The reply is the note, with `dir` `malta/dockerfiles/blog`; `GET
 /api/prompts` lists the threads there, each with its `replies`, and
-`parent` on the POST replies in a thread. The run is
-`internal/claude-prompt` with the directory under the root as its `dir`,
-and the absolute directory in `TASK_UI_PROMPT_DIR`. One prompt runs per
-directory: another there waits for it, and prompts in two directories
-run at once. A workspace's prompt route works the same way (see
+`parent` on the POST replies in a thread. The run is the folder's, as
+its `@shell` is: `malta/dockerfiles/blog/@claude-prompt`, folder `malta`,
+`dir` `dockerfiles/blog` and job `@claude-prompt`, with the absolute
+directory in `TASK_UI_PROMPT_DIR`; the recents and the runs list show it
+under the folder. A prompt at the root runs as `_/@claude-prompt`. The
+run takes no hours or secrets of the folder: it gets the environment of
+`internal/claude-prompt`, whose command it runs, and no `POST /api/runs`
+starts it, as a prompt needs its thread. Who sees the folder sees its
+prompt runs with the `prompt/view` permission; who asks always sees
+theirs, and may stop it. One prompt runs per directory: another there
+waits for it, and prompts in two directories run at once. A workspace's prompt route works the same way (see
 [Workspaces](workspaces.md#a-prompt-against-a-workspace)).
 
 Enter at the header's prompt, after the logo, asks at the root, as

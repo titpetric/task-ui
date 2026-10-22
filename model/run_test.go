@@ -49,3 +49,12 @@ func TestRun_Where(t *testing.T) {
 	assert.Equal(t, "malta", model.Run{Folder: "malta", Job: "build"}.Where())
 	assert.Equal(t, "malta/dockerfiles", model.Run{Folder: "malta", Dir: "dockerfiles", Job: "build"}.Where())
 }
+
+func TestRun_IsPrompt(t *testing.T) {
+	t.Parallel()
+	assert.True(t, (&model.Run{Folder: "malta", Dir: "dockerfiles", Job: model.PromptJob}).IsPrompt())
+	assert.True(t, (&model.Run{Folder: "internal/malta", Job: "claude-prompt"}).IsPrompt(), "an older prompt's run")
+	assert.False(t, (&model.Run{Folder: "malta", Job: "claude-prompt"}).IsPrompt())
+	assert.False(t, (&model.Run{Folder: "malta", Job: "@shell"}).IsPrompt())
+	assert.False(t, (*model.Run)(nil).IsPrompt())
+}

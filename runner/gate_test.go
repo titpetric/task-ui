@@ -5,9 +5,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/internal/assert"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/runner"
+	"github.com/titpetric/task-ui/storage"
 )
 
 // A job with hours runs inside them, refuses outside them, and runs
@@ -72,4 +74,33 @@ func TestManager_GateJobAndSchedule(t *testing.T) {
 	req.Folder.Hours = "someday 9-17"
 	_, err = f.manager.Start(context.Background(), req)
 	assert.ErrorContains(t, err, "invalid hours")
+}
+
+// A prompt's run, @claude-prompt in the folder it asks in, takes no
+// hours of the folder and gets the internal folder's secrets, not the
+// folder's own; its row names the folder, the directory and the job.
+func TestManager_PromptJob(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	ctx := context.Background()
+	assert.NoError(t, f.secrets.Set(ctx, &model.Secret{Scope: storage.ScopeAll, Name: "SHARED", Content: "shared"}))
+	assert.NoError(t, f.secrets.Set(ctx, &model.Secret{Scope: "asked", Name: "OWN", Content: "own"}))
+
+	req := f.shellJob("asked", "", false)
+	req.Folder.Hours = "sun 0-1"
+	f.now = time.Date(2026, time.October, 14, 12, 0, 0, 0, time.Local)
+	job := req.Folder.PromptJob()
+	assert.True(t, job.IsPrompt())
+	job.Command = []string{"sh", "-c", `echo "[$SHARED][$OWN] $TASK_UI_JOB"`}
+	req.Job = job
+
+	session, err := f.manager.Start(ctx, req)
+	assert.NoError(t, err, "out of the folder's hours")
+	out, status := collect(t, session.Attach(true))
+	assert.Equal(t, model.StateOK, status.State)
+	assert.Contains(t, out, "[shared][] @claude-prompt")
+	run := session.Snapshot()
+	assert.Equal(t, "asked", run.Folder)
+	assert.Equal(t, folder.PromptID, run.Job)
+	assert.True(t, run.IsPrompt())
 }

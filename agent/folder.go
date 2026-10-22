@@ -15,7 +15,8 @@ const Namespace = model.Internal
 // task-ui agent in the root. The notes agent's job allows the agent's
 // user, the other two admins; only admins see the folder at all. The
 // jobs are host commands: a run of one in a directory under the root
-// runs there, as claude-prompt does for a prompt in a folder.
+// runs there. A prompt runs claude-prompt's command as the job
+// @claude-prompt of the place it asks in.
 func Folder(root, agentUser string) *folder.Folder {
 	exe, err := os.Executable()
 	if err != nil {

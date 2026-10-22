@@ -116,9 +116,9 @@ and **Attach**, **Stop** and **Kill** instead.
 With the `prompt/edit` permission and a token in the [Claude Code
 integration](settings.md#integrations), a finished run's page has a
 **Prompt** box under its output: ask why the run ended the way it did,
-or for a fix to its job or pipeline. The prompt runs
-`internal/claude-prompt` as you in the run's folder, or the directory
-inside it the job ran in, as a folder's prompt does (see [Projects and
+or for a fix to its job or pipeline. The prompt runs `@claude-prompt`
+as you in the run's folder, or the directory inside it the job ran in,
+as a folder's prompt does (see [Projects and
 jobs](projects.md#prompt)). Claude gets the run with the question: its
 ID, folder, directory and job, who started it, how it ended and its exit
 code, when it started and how long it took, the job's command, and the

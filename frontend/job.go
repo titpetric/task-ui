@@ -3,7 +3,6 @@ package frontend
 import (
 	"net/http"
 
-	"github.com/titpetric/task-ui/access"
 	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/storage"
 )
@@ -23,8 +22,8 @@ func (h *Handlers) job(w http.ResponseWriter, r *http.Request, f *folder.Folder,
 	p := h.page(r, where+" / "+job.Name)
 	p.Folder, p.Job = f, job
 	p.Crumbs = crumbsOf(where, job.Name, p.Workspaces)
-	p.Runs = h.visibleRuns(r.Context(), access.UserFrom(r.Context()), storage.RunFilter{Folder: f.ID, Dir: job.Dir, Job: job.ID, Limit: 100})
-	p.Activity = h.activity(r.Context(), access.UserFrom(r.Context()), storage.RunFilter{Folder: f.ID, Dir: job.Dir, Job: job.ID, Limit: activityLimit}, p.Now, true)
+	p.Runs = h.visibleRuns(r.Context(), h.runSeer(r), storage.RunFilter{Folder: f.ID, Dir: job.Dir, Job: job.ID, Limit: 100})
+	p.Activity = h.activity(r.Context(), h.runSeer(r), storage.RunFilter{Folder: f.ID, Dir: job.Dir, Job: job.ID, Limit: activityLimit}, p.Now, true)
 	// A schedule names a folder's job: a directory's job has none.
 	if job.Dir == "" {
 		p.Schedules = h.visibleSchedules(r, f.ID, job.ID)

@@ -365,8 +365,14 @@ func (m *Manager) command(ctx context.Context, session *Session) (*exec.Cmd, err
 		cmd.Dir = session.dir
 	}
 	cmd.Env = os.Environ()
+	// A prompt's run gets the internal folder's secrets, not those of
+	// the folder it asks in.
 	if m.opts.Secrets != nil {
-		secrets, err := m.opts.Secrets.For(ctx, f.ID)
+		scope := f.ID
+		if job.IsPrompt() {
+			scope = model.Internal
+		}
+		secrets, err := m.opts.Secrets.For(ctx, scope)
 		if err != nil {
 			return nil, err
 		}

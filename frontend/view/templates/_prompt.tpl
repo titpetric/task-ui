@@ -1,7 +1,7 @@
 {{/* promptbox is the prompt box of a folder page, of a directory browsed
      inside a folder and of a run's page, for a user with prompt/edit and
      a Claude token: Claude Code on a prompt in that directory, a run of
-     internal/claude-prompt, and the threads asked there under it, each
+     @claude-prompt there, and the threads asked there under it, each
      question with Claude's answer once its run ends. A run's box asks
      about the run, with its output, and lists the threads about it; one
      who only reads prompts sees those threads without the box. Open on a
@@ -20,14 +20,14 @@
 		{{- if .Run }}
 		<input type="hidden" name="run" value="{{ .Run }}">
 		<textarea name="prompt" rows="3" required spellcheck="false" placeholder="why did this run end the way it did" aria-label="The prompt"></textarea>
-		<div class="note-form-foot"><span class="faint">Runs internal/claude-prompt as you in {{ .Where }}, with this run's output; a fix it makes goes to main. Claude's answer shows under the question.</span><button class="btn btn-primary" type="submit"><svg class="ic"><use href="#i-play"/></svg>Run prompt</button></div>
+		<div class="note-form-foot"><span class="faint">Runs @claude-prompt as you in {{ .Where }}, with this run's output; a fix it makes goes to main. Claude's answer shows under the question.</span><button class="btn btn-primary" type="submit"><svg class="ic"><use href="#i-play"/></svg>Run prompt</button></div>
 		{{- else }}
 		{{- if .Folder }}
 		<input type="hidden" name="folder" value="{{ .Folder }}">
 		<input type="hidden" name="dir" value="{{ .Dir }}">
 		{{- end }}
 		<textarea name="prompt" rows="3" required spellcheck="false" placeholder="what does this directory build, and how" aria-label="The prompt"></textarea>
-		<div class="note-form-foot"><span class="faint">Runs internal/claude-prompt as you, one at a time in {{ .Where }}; Claude's answer shows under the question.</span><button class="btn btn-primary" type="submit"><svg class="ic"><use href="#i-play"/></svg>Run prompt</button></div>
+		<div class="note-form-foot"><span class="faint">Runs @claude-prompt as you, one at a time in {{ .Where }}; Claude's answer shows under the question.</span><button class="btn btn-primary" type="submit"><svg class="ic"><use href="#i-play"/></svg>Run prompt</button></div>
 		{{- end }}
 	</form>
 	{{- end }}

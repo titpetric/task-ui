@@ -49,9 +49,20 @@ func (h *Handlers) view(r *http.Request, run model.Run) RunView {
 		v.Live, v.Attached, v.Status = true, session.Attached(), &status
 		v.Run = session.Snapshot()
 	}
+	if run.IsPrompt() {
+		v.CanRun = h.endsPrompt(r, &run)
+		return v
+	}
 	f, job, _, _ := h.targetIn(r, run.Folder, run.Dir, run.Job)
 	v.CanRun = h.canRun(r, f, job)
 	return v
+}
+
+// endsPrompt reports whether the user of a request may end a prompt's
+// run: the asker, or an admin, with prompt/edit.
+func (h *Handlers) endsPrompt(r *http.Request, run *model.Run) bool {
+	user := access.UserFrom(r.Context())
+	return user != nil && (run.UserID == user.ID || user.CanAdmin()) && h.can(r, "prompt/edit")
 }
 
 // listRuns returns the runs the user may see, newest first.
@@ -65,8 +76,9 @@ func (h *Handlers) listRuns(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	views := []RunView{}
+	prompts := h.can(r, "prompt/view")
 	for _, run := range runs {
-		if user.CanSee(run.Folder) {
+		if user.SeesRun(&run, prompts) {
 			views = append(views, h.view(r, run))
 		}
 	}
@@ -82,6 +94,10 @@ func (h *Handlers) startRun(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	user := access.UserFrom(r.Context())
+	if req.Job == model.PromptJob {
+		fail(w, http.StatusBadRequest, "a prompt starts from /api/prompts, with its text")
+		return
+	}
 	f, job, dir, problem := h.targetIn(r, req.Folder, req.Dir, req.Job)
 	if problem != "" {
 		fail(w, http.StatusNotFound, problem)
@@ -118,16 +134,14 @@ func (h *Handlers) startRun(w http.ResponseWriter, r *http.Request) {
 }
 
 // runOf returns the run a route names, when the user may see it: a run
-// of a folder the user sees, or one the user started in the internal
-// folder, such as the run of a prompt the user asked.
+// of a folder the user sees, a prompt's run there with prompt/view, or
+// the run of a prompt the user asked.
 func (h *Handlers) runOf(r *http.Request) (*model.Run, error) {
 	run, err := h.opts.Runs.Get(r.Context(), param(r, "id"))
 	if err != nil {
 		return nil, err
 	}
-	user := access.UserFrom(r.Context())
-	own := user != nil && model.IsInternal(run.Folder) && run.UserID == user.ID
-	if !user.CanSee(run.Folder) && !own {
+	if !access.UserFrom(r.Context()).SeesRun(run, h.can(r, "prompt/view")) {
 		return nil, storage.ErrNotFound
 	}
 	return run, nil
@@ -143,15 +157,15 @@ func (h *Handlers) getRun(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, h.view(r, *run))
 }
 
-// endRun stops or kills a run, for a user allowed to run its job.
+// endRun stops or kills a run, for a user allowed to run its job, or
+// to end a prompt's run.
 func (h *Handlers) endRun(w http.ResponseWriter, r *http.Request, kill bool) {
 	run, err := h.runOf(r)
 	if err != nil {
 		failErr(w, err)
 		return
 	}
-	f, job, _, problem := h.targetIn(r, run.Folder, run.Dir, run.Job)
-	if problem != "" || !h.canRun(r, f, job) {
+	if !h.view(r, *run).CanRun {
 		fail(w, http.StatusForbidden, "your role may view this run, but not end it")
 		return
 	}

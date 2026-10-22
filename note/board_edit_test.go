@@ -173,7 +173,7 @@ func TestBoard_EditPrompt(t *testing.T) {
 	assert.NotEqual(t, first.RunID, moved.RunID, "another job's run is no run to reuse")
 	kept, ok := f.board.Runner.Get(first.RunID)
 	assert.True(t, ok)
-	assert.Equal(t, model.Internal, kept.Snapshot().Folder, "the prompt's run stays")
+	assert.Equal(t, "proj/"+model.PromptJob, snapshotKey(kept), "the prompt's run stays")
 }
 
 // The agent's replies carry its user name, or claude with no agent.

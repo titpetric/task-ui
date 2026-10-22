@@ -4,6 +4,19 @@ import (
 	"time"
 )
 
+// PromptJob is the job ID of a prompt's run, in the folder and the
+// directory the prompt asks in, as @shell is a folder's shell.
+const PromptJob = "@claude-prompt"
+
+// IsPrompt reports whether the run is a prompt's: @claude-prompt, or
+// internal/claude-prompt, which ran the prompts of older threads.
+func (r *Run) IsPrompt() bool {
+	if r == nil {
+		return false
+	}
+	return r.Job == PromptJob || (IsInternal(r.Folder) && r.Job == "claude-prompt")
+}
+
 // Key is the identity the run lock uses: one run per job per folder
 // and directory inside it.
 func (r *Run) Key() string {

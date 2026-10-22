@@ -210,7 +210,7 @@ func (h *Handlers) deleteWorkspace(w http.ResponseWriter, r *http.Request) {
 
 // promptWorkspace puts a prompt to Claude in a workspace's checkout, as
 // POST /api/prompts does in a folder, and answers the same: the note,
-// which the board answers by running internal/claude-prompt as the user,
+// which the board answers by running @claude-prompt there as the user,
 // with the checkout in TASK_UI_WORKSPACE_DIR, which Claude Code works in.
 func (h *Handlers) promptWorkspace(w http.ResponseWriter, r *http.Request) {
 	if !h.require(w, r, "prompt/edit") || !h.board(w) {
