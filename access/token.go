@@ -23,7 +23,7 @@ const (
 
 // ErrTokenExpired reports a token past its expiry: it signs in nobody
 // until its user rotates it.
-var ErrTokenExpired = errors.New("token expired, rotate it on your user settings")
+var ErrTokenExpired = errors.New("the token has expired; rotate it on your profile")
 
 // NewToken returns a new token for a client, 256 random bits, and its
 // hash. The caller shows the token once and keeps only the hash.

@@ -6,21 +6,21 @@
 		<span class="avatar lg role-{{ $u.Role }}" aria-hidden="true">{{ $u.Initials }}</span>
 		<div>
 			<h2>{{ $u.Name }} <span class="badge{{ if $u.CanAdmin }} signal{{ end }}">{{ $u.Role }}</span></h2>
-			<p>{{ if $pr.Own }}Your profile: what{{ else }}What{{ end }} {{ $u.Name }} ran and wrote lately, as far as you see it, with the folders and the permissions {{ if $pr.Own }}you hold{{ else }}they hold{{ end }}. Added {{ ago $u.CreatedAt }}.</p>
+			<p>{{ if $pr.Own }}Your recent runs and notes, your folders and your permissions.{{ else }}Recent runs and notes by {{ $u.Name }} that you can see, their folders and their permissions.{{ end }} Added {{ ago $u.CreatedAt }}.</p>
 		</div>
 	</div>
 	<div class="actions">
 		<a class="btn" href="/runs?user={{ $u.Name }}"><svg class="ic"><use href="#i-list"/></svg>Runs</a>
 		{{- if and .CanAddUsers (.Can "user/delete") (not $u.CanAdmin) .User (ne $u.ID .User.ID) }}
-		<button type="button" class="btn btn-danger" data-delete="/api/users/{{ $u.ID }}" data-confirm="Delete the user {{ $u.Name }}? Their line leaves the password file, and their sessions and tokens end at once. Runs, notes and history keep the name." data-confirm-ok="Delete" data-next="/settings/users?notice=User+deleted"><svg class="ic"><use href="#i-trash"/></svg>Delete user</button>
+		<button type="button" class="btn btn-danger" data-delete="/api/users/{{ $u.ID }}" data-confirm="Delete the user {{ $u.Name }}? This removes them from the password file and ends their sessions and tokens right away. Their runs, notes and history keep the name." data-confirm-ok="Delete" data-next="/settings/users?notice=User+deleted"><svg class="ic"><use href="#i-trash"/></svg>Delete user</button>
 		{{- end }}
 	</div>
 </div>
 
 <section class="block profile-activity">
-	<h3>Activity <small>the latest, in folders you see</small></h3>
+	<h3>Activity <small>the latest, in folders you can see</small></h3>
 	{{- if not $pr.Activity }}
-	<p class="faint">Nothing yet that you may see.</p>
+	<p class="faint">Nothing you can see yet.</p>
 	{{- end }}
 	{{- with $pr.Runs }}
 	<h4>Runs</h4>
@@ -70,7 +70,7 @@
 </section>
 
 <section class="block" id="folders">
-	<h3>Folders <small>what {{ $u.Name }} sees</small></h3>
+	<h3>Folders <small>what {{ $u.Name }} can see</small></h3>
 	{{- if .Can "user/edit" }}
 	<form class="form" data-api="/api/users/{{ $u.ID }}" data-method="PUT" data-next="/users/{{ $u.Name }}?notice=Folders+saved#folders">
 		{{- template "folder-pick" (list .FolderChoices $all false) }}
@@ -85,8 +85,8 @@
 
 {{- with $pr.Matrix }}
 <section class="block" id="permissions">
-	<h3>Permissions <small>{{ $u.Name }}'s own policy, over the {{ $u.Role }} role's</small></h3>
-	<p>The role comes from <code>TASK_UI_ADMINS</code> and <code>TASK_UI_VIEWERS</code>; everyone else is a runner. {{ if $.Can "user/view" }}<a href="/settings/permissions#role-{{ $u.Role }}">The {{ $u.Role }} role's policy</a>{{ else }}The {{ $u.Role }} role's policy{{ end }} applies first; a cell here adds an allow or a deny of {{ $u.Name }}'s own, and a deny in either wins. The mark after each cell is the result.{{ if .Fixed }} An admin may do everything, and no policy changes that.{{ end }}</p>
+	<h3>Permissions <small>{{ $u.Name }}'s own settings, on top of the {{ $u.Role }} role</small></h3>
+	<p>The role comes from <code>TASK_UI_ADMINS</code> and <code>TASK_UI_VIEWERS</code>; everyone else is a runner. {{ if $.Can "user/view" }}<a href="/settings/permissions#role-{{ $u.Role }}">The {{ $u.Role }} role's settings</a>{{ else }}The {{ $u.Role }} role's settings{{ end }} apply first. A box here adds an allow or a deny for {{ $u.Name }} alone, and a deny in either place wins. The mark after each box shows the result.{{ if .Fixed }} Admins can do everything; you can't change that.{{ end }}</p>
 	{{- template "matrix" (list $ .) }}
 </section>
 {{- end }}

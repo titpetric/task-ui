@@ -46,7 +46,7 @@ func (b *Board) PromptPlace(ctx context.Context, user *model.User, place string)
 func (b *Board) AskWorkflow(stop context.Context, user *model.User, run *model.WorkflowRun, wf *model.Workflow, input string) error {
 	ctx := context.Background()
 	if b.WorkflowRuns == nil {
-		return fmt.Errorf("%w: workflow prompts are off", ErrNoPrompt)
+		return fmt.Errorf("%w: workflow prompts aren't available on this instance", ErrNoPrompt)
 	}
 	body := WorkflowQuestion(wf.Prompt, input)
 	if user == nil || body == "" {
@@ -93,7 +93,7 @@ func (b *Board) AskWorkflow(stop context.Context, user *model.User, run *model.W
 // path.
 func (b *Board) aboutWorkflowRun(ctx context.Context, id string) (string, error) {
 	if b.WorkflowRuns == nil || b.Runs == nil {
-		return "", fmt.Errorf("%w: workflow prompts are off", ErrNoPrompt)
+		return "", fmt.Errorf("%w: workflow prompts aren't available on this instance", ErrNoPrompt)
 	}
 	run, err := b.WorkflowRuns.Get(ctx, id)
 	if err != nil {

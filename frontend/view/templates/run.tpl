@@ -3,7 +3,7 @@
 <div class="page-head">
 	<div>
 		<h2>{{ $run.Name }} <span class="badge {{ tone $run.State }}">{{ $run.State }}{{ if and (ne $run.State "ok") (ne $run.State "running") }} {{ $run.ExitCode }}{{ end }}</span></h2>
-		<p>Started by {{ $run.UserName }} {{ ago $run.StartedAt }}{{ if $run.IsScheduled }} by the scheduler{{ end }}{{ if $run.IsForced }}, with Run force{{ end }}.{{ if eq $run.State "running" }} The session is live: attach to follow it{{ if $can }}, or end it{{ end }}.{{ else }} The run is over; everything it printed is below.{{ end }}</p>
+		<p>Started by {{ $run.UserName }} {{ ago $run.StartedAt }}{{ if $run.IsScheduled }} by the scheduler{{ end }}{{ if $run.IsForced }}, with Run force{{ end }}.{{ if eq $run.State "running" }} It's still running: attach to follow it{{ if $can }}, or stop it{{ end }}.{{ else }} The run has finished; its full output is below.{{ end }}</p>
 	</div>
 	<div class="actions">
 		<button type="button" class="btn btn-primary" data-attach="{{ $run.ID }}">{{ if eq $run.State "running" }}Attach{{ else }}View{{ end }}</button>
@@ -71,7 +71,7 @@
 				</td>
 			</tr>
 		{{- else }}
-			<tr class="empty"><td colspan="4">No artifacts. A job writes files to the directory in $TASK_UI_ARTIFACTS to leave some.</td></tr>
+			<tr class="empty"><td colspan="4">No artifacts. To keep files from a run, the job writes them to the directory in $TASK_UI_ARTIFACTS.</td></tr>
 		{{- end }}
 		</tbody>
 	</table>

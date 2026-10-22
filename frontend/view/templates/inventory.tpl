@@ -2,12 +2,12 @@
 <div class="page-head">
 	<div>
 		<h2>Inventory</h2>
-		<p>The hosts Beszel monitors, largest first: whether each is up, who task-ui signs in to it as over ssh, its cores, and how busy its CPU, memory and disk are, with their sizes. An admin runs a command on them all at once, like pssh.</p>
+		<p>The hosts Beszel monitors, largest first. For each host: whether it's up, the ssh login task-ui uses, its cores, and how busy its CPU, memory and disk are. With Run on Hosts, you can run a command on many hosts at once, like pssh.</p>
 	</div>
 </div>
 
 {{- if .HostsOff }}
-<p class="empty-state">The Beszel integration is not set up.{{ if .Can "integration/view" }} Add its URL and token under <a href="/settings/integrations#beszel">Settings, Integrations</a>.{{ end }}</p>
+<p class="empty-state">The Beszel integration isn't set up yet.{{ if .Can "integration/view" }} Add its URL and token under <a href="/settings/integrations#beszel">Settings, Integrations</a>.{{ end }}</p>
 {{- else }}
 {{- if and (.Can "hosts") .Logins }}
 <section class="block inventory-run">
@@ -18,7 +18,7 @@
 			<button type="button" class="btn btn-sm" data-command="{{ . }}">{{ . }}</button>
 			{{- end }}
 		</div>
-		<textarea name="command" rows="2" required spellcheck="false" placeholder="a shell command, run on each host at once" aria-label="The command"></textarea>
+		<textarea name="command" rows="2" required spellcheck="false" placeholder="a shell command to run on every picked host" aria-label="The command"></textarea>
 		<div class="run-hosts" data-host-picker>
 			<div class="host-tools">
 				<span class="faint" data-host-count></span>
@@ -38,7 +38,7 @@
 </section>
 {{- end }}
 {{- /* The hosts follow Beszel: the page fetches itself once a minute and
-     puts this section back, the time it was drawn under the table. */}}
+     puts this section back, with the time of the fetch under the table. */}}
 <section class="block" data-hosts-live>
 <h3>Hosts</h3>
 <div class="table-wrap">
@@ -59,12 +59,12 @@
 			<td class="size faint nowrap">{{ with .Stats }}{{ printf "%.0f" .DiskUsed }} / {{ printf "%.0f" .Disk }} GB{{ end }}</td>
 		</tr>
 	{{- else }}
-		<tr class="empty"><td colspan="8">Beszel monitors no hosts.</td></tr>
+		<tr class="empty"><td colspan="8">Beszel isn't monitoring any hosts.</td></tr>
 	{{- end }}
 	</tbody>
 </table>
 </div>
-<p class="faint live-stamp">Live updated: {{ .Now.Format "15:04" }}</p>
+<p class="faint live-stamp">Updated {{ .Now.Format "15:04" }}</p>
 </section>
 {{- end }}
 {{ end }}

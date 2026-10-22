@@ -25,7 +25,7 @@ func (h *Handlers) exportWorkspace(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if req.Passphrase == "" {
-		fail(w, http.StatusBadRequest, "a bundle needs a passphrase")
+		fail(w, http.StatusBadRequest, "enter the bundle's passphrase")
 		return
 	}
 	row, err := h.opts.Workspaces.GetByFolder(r.Context(), param(r, "folder"))

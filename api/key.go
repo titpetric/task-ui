@@ -203,7 +203,7 @@ func (h *Handlers) rotateEncryptKey(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if h.opts.WorkspaceKeys == nil {
-		fail(w, http.StatusNotFound, "the keyring is off")
+		fail(w, http.StatusNotFound, "the keyring isn't available on this instance")
 		return
 	}
 	comment := "task-ui instance"

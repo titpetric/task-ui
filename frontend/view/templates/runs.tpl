@@ -2,7 +2,7 @@
 <div class="page-head">
 	<div>
 		<h2>Runs</h2>
-		<p>Every run, by anyone, newest first. A run in progress can be attached to from here; closing the window leaves it running.</p>
+		<p>Every run, by anyone, newest first. Attach to a running job from here; closing the window doesn't stop it.</p>
 	</div>
 </div>
 
@@ -37,8 +37,8 @@
 </section>
 {{- end }}
 
-{{- /* The table follows the runs topic: a run that starts is added on
-     top, one that ends is updated in place, no reload. */}}
+{{- /* The table follows the runs topic: a run that starts goes on top,
+     one that ends changes in place, no reload. */}}
 <section class="block" data-sse="runs">
 	<div class="table-wrap">
 	<table class="table cards">
@@ -55,7 +55,7 @@
 				<td class="actions" data-actions>
 					<a class="btn btn-sm" href="/runs/{{ .ID }}" data-attach="{{ .ID }}">{{ if eq .State "running" }}Attach{{ else }}View{{ end }}</a>
 					{{- if and $.Summarize (ne .State "running") }}
-					<button type="button" class="btn btn-sm" data-summary="/api/runs/{{ .ID }}/summary" data-summary-page="/runs/{{ .ID }}" data-summary-title="{{ .Name }}" title="Claude's summary of the output, written once and kept">Summary</button>
+					<button type="button" class="btn btn-sm" data-summary="/api/runs/{{ .ID }}/summary" data-summary-page="/runs/{{ .ID }}" data-summary-title="{{ .Name }}" title="Claude's summary of the output">Summary</button>
 					{{- end }}
 					{{- if and .Live (eq .State "running") }}
 					<button type="button" class="btn-icon" data-stop="{{ .ID }}" title="Stop the run" aria-label="Stop the run"><svg class="ic"><use href="#i-stop"/></svg></button>
@@ -64,7 +64,7 @@
 				</td>
 			</tr>
 		{{- else }}
-			<tr class="empty"><td colspan="7">No runs match. Run a job from its folder and it shows up here.</td></tr>
+			<tr class="empty"><td colspan="7">No runs match. Run a job from its folder and it appears here.</td></tr>
 		{{- end }}
 		</tbody>
 	</table>

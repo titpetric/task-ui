@@ -28,7 +28,7 @@ var (
 	// ErrBusy reports a job that is already running.
 	ErrBusy = errors.New("already running")
 	// ErrNotRunning refuses input to a run that is not running.
-	ErrNotRunning = errors.New("the run is not running")
+	ErrNotRunning = errors.New("the run has already ended")
 	// ErrNotInteractive refuses input to a job that takes none.
 	ErrNotInteractive = errors.New("the job takes no input")
 	// ErrNotFound reports a session that does not exist.

@@ -2,7 +2,7 @@
 <div class="page-head">
 	<div>
 		<h2>Add project</h2>
-		<p>Clones the repository into a workspace: the default one, _, is the root. The clone is the test: it either succeeds and the folder appears, or git's output is shown here and nothing is kept. Private repositories are reached with the instance SSH keys.</p>
+		<p>Clones the repository into a workspace; the default workspace, _, is the root. If the clone works, the folder appears. If it fails, you see git's output here and task-ui keeps nothing. task-ui uses the instance SSH keys to reach private repositories.</p>
 	</div>
 </div>
 
@@ -12,11 +12,11 @@
 		<input type="text" id="p-url" name="url" placeholder="git@github.com:org/infra.git" spellcheck="false" autocomplete="off" required autofocus>
 	</div>
 	<div class="field">
-		<label for="p-id">Folder <span class="faint">optional, the repository name by default</span></label>
+		<label for="p-id">Folder <span class="faint">optional, defaults to the repository name</span></label>
 		<input type="text" id="p-id" name="id" pattern="[A-Za-z0-9._-]+" spellcheck="false" autocomplete="off">
 	</div>
 	<div class="field">
-		<label for="p-workspace">Workspace <span class="faint">_ clones the project at the top of the root; a named one clones it inside, as workspace/folder</span></label>
+		<label for="p-workspace">Workspace <span class="faint">_ clones the project at the top of the root; any other clones it inside that workspace, as workspace/folder</span></label>
 		<select id="p-workspace" name="workspace">
 			<option value="_" selected>_ · the root</option>
 			{{- range .WorkspaceList }}{{ if ne .Folder "_" }}
@@ -25,12 +25,12 @@
 		</select>
 	</div>
 	<div class="field">
-		<label for="p-branch">Branch <span class="faint">optional, the default branch otherwise</span></label>
+		<label for="p-branch">Branch <span class="faint">optional, defaults to the repository's default branch</span></label>
 		<input type="text" id="p-branch" name="branch" spellcheck="false" autocomplete="off">
 	</div>
 	{{- template "recursivefield" (list "p-recursive" true) }}
 	<div class="field">
-		<label class="check"><input type="checkbox" id="p-sidebar" name="sidebar" checked> Show in sidebar <span class="faint">off keeps the project out of the sidebar; its pages stay</span></label>
+		<label class="check"><input type="checkbox" id="p-sidebar" name="sidebar" checked> Show in sidebar <span class="faint">off hides the project from the sidebar; its pages still work</span></label>
 	</div>
 	<div class="form-foot">
 		<a class="btn" href="/settings/projects">Cancel</a>

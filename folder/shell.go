@@ -33,7 +33,7 @@ func (f *Folder) ShellJob() *Job {
 
 // ErrShellUnattended refuses a shell job where no one is at the
 // keyboard: a schedule or a workflow step.
-var ErrShellUnattended = errors.New("an interactive shell runs with an admin at the keyboard: no schedule or workflow step takes it")
+var ErrShellUnattended = errors.New("an interactive shell needs someone at the keyboard, so a schedule or workflow step can't run it")
 
 // IsShell reports whether the job is one of a folder's shells, @shell or
 // @claude: a terminal for an admin, which the shell permission gates.

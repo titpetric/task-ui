@@ -2,7 +2,7 @@
 <div class="page-head">
 	<div>
 		<h2>Workflows</h2>
-		<p>Jobs from any folders, chained: Run starts the first, and each next one when the one before ended ok. The first that does not end ok ends the workflow, and the rest are skipped. A step can run another workflow in place of a job. Anyone can make one; running it needs the right to run every step.</p>
+		<p>A workflow runs jobs from any folders, one after another. Run starts the first step; each next step starts when the one before it ends ok. If a step fails, the workflow stops and skips the rest. A step can also run another workflow. Anyone can create a workflow, but to run it you need permission to run every step.</p>
 	</div>
 	<div class="actions">
 		<a class="btn btn-primary" href="/workflows/new">Add workflow</a>
@@ -29,7 +29,7 @@
 			</td>
 		</tr>
 	{{- else }}
-		<tr class="empty"><td colspan="5">No workflows yet. Add one: a name and its jobs, in order.</td></tr>
+		<tr class="empty"><td colspan="5">No workflows yet. Add one with a name and its jobs, in order.</td></tr>
 	{{- end }}
 	</tbody>
 </table>

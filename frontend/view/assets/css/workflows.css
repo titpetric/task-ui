@@ -9,6 +9,11 @@
   margin-right: 0.3rem;
 }
 
+/* The arrow between two steps of a chain. */
+.then::before {
+  content: "\00a0\2192\00a0";
+}
+
 /* The workflow page's pipeline: the steps top to bottom on a rail, the
    dot of each on it in the state of the latest run. */
 .pipeline {

@@ -15,7 +15,7 @@ import (
 )
 
 // ErrForbidden reports a prompt from someone without prompt/edit.
-var ErrForbidden = errors.New("needs prompt/edit to prompt Claude")
+var ErrForbidden = errors.New("you need the prompt/edit permission to prompt Claude")
 
 // ErrNoPrompt reports a place no prompt runs in: a directory that is
 // not there.
@@ -194,7 +194,7 @@ func (b *Board) hosts(ctx context.Context) []string {
 func (b *Board) promptRequest(ctx context.Context, user *model.User, dir string) (runner.Request, error) {
 	var req runner.Request
 	if b.Catalogue == nil || b.Runner == nil {
-		return req, fmt.Errorf("%w: prompts are off", ErrNoPrompt)
+		return req, fmt.Errorf("%w: prompts aren't available on this instance", ErrNoPrompt)
 	}
 	var place *folder.Folder
 	at, inside := b.Root, ""

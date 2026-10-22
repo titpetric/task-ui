@@ -53,11 +53,11 @@ func TestFolder_FilesDashboard(t *testing.T) {
 	for i := 1; i < len(order); i++ {
 		assert.True(t, order[0] > 0 && order[i-1] < order[i], "default first, the rest by name, case aside")
 	}
-	assert.Contains(t, webRow, `<tr class="idle" aria-disabled="true" title="Your role may not run zap"><td class="glyph"><i class="shebang" aria-hidden="true">#!</i></td><td class="name">zap</td>`)
+	assert.Contains(t, webRow, `<tr class="idle" aria-disabled="true" title="No permission to run zap"><td class="glyph"><i class="shebang" aria-hidden="true">#!</i></td><td class="name">zap</td>`)
 	assert.Contains(t, body, `<td class="jobs"><div class="actions"><button type="button" class="btn btn-primary btn-sm" data-run data-folder="infra" data-job="./tool.py"`)
 
 	viewer := f.page(t, asViewer, "/f/_/infra")
-	assert.Contains(t, treeRow(t, viewer, "edge"), `<a class="btn btn-sm" href="/f/_/infra/edge/deploy" title="Your role may not run deploy"><i class="dot ok"></i>History</a>`)
+	assert.Contains(t, treeRow(t, viewer, "edge"), `<a class="btn btn-sm" href="/f/_/infra/edge/deploy" title="No permission to run deploy"><i class="dot ok"></i>History</a>`)
 
 	js := f.get(t, asOps, "/static/task-ui.js").Body
 	assert.Contains(t, js, `if (document.querySelector(".runsplit[data-key]") && window.EventSource) {`)

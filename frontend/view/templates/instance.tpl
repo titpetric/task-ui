@@ -2,7 +2,7 @@
 <div class="page-head">
 	<div>
 		<h2>Instance</h2>
-		<p>What the server runs with. The environment and the command line set these values; change them there and restart task-ui. This page never shows a password, token or key.</p>
+		<p>The settings the server runs with. The environment and the command line set these values; to change one, change it there and restart task-ui. This page never shows a password, token or key.</p>
 	</div>
 </div>
 

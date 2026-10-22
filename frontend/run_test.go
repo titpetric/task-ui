@@ -236,7 +236,7 @@ func TestRun_Prompt(t *testing.T) {
 	admin := f.page(t, asAdmin, "/runs/"+run.ID)
 	assert.Contains(t, admin, `<details class="promptbox" open>`)
 	assert.Contains(t, admin, box+run.ID+`">`)
-	assert.Contains(t, admin, "Claude Code on this run and its output, in infra/")
+	assert.Contains(t, admin, "ask Claude Code about this run and its output, in infra/")
 	assert.Contains(t, admin, `data-notes data-dir="infra"`)
 	assert.NotContains(t, f.page(t, asViewer, "/runs/"+run.ID), "promptbox")
 

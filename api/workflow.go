@@ -163,15 +163,15 @@ func (h *Handlers) checkWorkflow(w http.ResponseWriter, r *http.Request, req Wor
 		return steps, true
 	}
 	if !h.can(r, "prompt/edit") {
-		fail(w, http.StatusForbidden, "your role may not prompt Claude")
+		fail(w, http.StatusForbidden, "you don't have permission to prompt Claude")
 		return nil, false
 	}
 	if h.opts.Board == nil {
-		fail(w, http.StatusBadRequest, "prompts are off")
+		fail(w, http.StatusBadRequest, "prompts aren't available on this instance")
 		return nil, false
 	}
 	if err := h.opts.Board.PromptPlace(r.Context(), access.UserFrom(r.Context()), wf.PromptPlace()); err != nil {
-		fail(w, http.StatusBadRequest, "run the prompt in: "+err.Error())
+		fail(w, http.StatusBadRequest, "can't run the prompt there: "+err.Error())
 		return nil, false
 	}
 	return steps, true
@@ -263,7 +263,7 @@ func (h *Handlers) updateWorkflow(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if !h.mayChangeWorkflow(r, wf, false) {
-		fail(w, http.StatusForbidden, "not your workflow")
+		fail(w, http.StatusForbidden, "only its owner or an admin can change this workflow")
 		return
 	}
 	var req WorkflowRequest
@@ -295,7 +295,7 @@ func (h *Handlers) deleteWorkflow(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if !h.mayChangeWorkflow(r, wf, true) {
-		fail(w, http.StatusForbidden, "not your workflow")
+		fail(w, http.StatusForbidden, "only its owner or an admin can change this workflow")
 		return
 	}
 	err = h.opts.Workflows.Delete(r.Context(), wf.ID)
@@ -325,11 +325,11 @@ func (h *Handlers) startWorkflow(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if step := h.mayRun(r, steps); step != "" {
-		fail(w, http.StatusForbidden, "your role may not run "+step)
+		fail(w, http.StatusForbidden, "you don't have permission to run "+step)
 		return
 	}
 	if wf.HasPrompt() && !h.can(r, "prompt/edit") {
-		fail(w, http.StatusForbidden, "your role may not prompt Claude, which the workflow asks")
+		fail(w, http.StatusForbidden, "the workflow ends with a prompt, and you don't have permission to prompt Claude")
 		return
 	}
 	run, err := h.opts.Flows.Start(r.Context(), wf, access.UserFrom(r.Context()), req.Input)
@@ -428,7 +428,7 @@ func (h *Handlers) stopWorkflowRun(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if step := h.mayRun(r, steps); step != "" {
-		fail(w, http.StatusForbidden, "your role may not run "+step)
+		fail(w, http.StatusForbidden, "you don't have permission to run "+step)
 		return
 	}
 	if err := h.opts.Flows.Stop(run.ID); err != nil {

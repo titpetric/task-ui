@@ -439,7 +439,7 @@ func TestRunner_Prompt(t *testing.T) {
 	f.runner.Prompter = nil
 	run, err = f.runner.Start(ctx, alone, ops, "")
 	assert.NoError(t, err)
-	assert.Equal(t, "the prompt: prompts are off", f.wait(t, run.ID).Message)
+	assert.Equal(t, "the prompt: prompts aren't available on this instance", f.wait(t, run.ID).Message)
 }
 
 // A stop while the prompt runs stops it, and the run.

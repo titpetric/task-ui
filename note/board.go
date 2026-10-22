@@ -44,7 +44,7 @@ var ErrInvalid = errors.New("invalid note")
 
 // ErrNotAssigned reports a state set by someone the instruction does not
 // name, who is neither its author nor an admin.
-var ErrNotAssigned = errors.New("only a user the note names, its author or an admin sets its state")
+var ErrNotAssigned = errors.New("only a user the note names, its author or an admin can set its state")
 
 // answerer names Claude's replies to prompts without an agent.
 const answerer = "claude"
@@ -167,7 +167,7 @@ func (b *Board) Comment(ctx context.Context, user *model.User, id, body, state s
 		return nil, fmt.Errorf("%w: no state %q", ErrInvalid, state)
 	}
 	if state != "" && note.State == "" {
-		return nil, fmt.Errorf("%w: the note is not an instruction", ErrInvalid)
+		return nil, fmt.Errorf("%w: the note isn't an instruction", ErrInvalid)
 	}
 	if state != "" && !b.assigned(ctx, user, note) {
 		return nil, ErrNotAssigned

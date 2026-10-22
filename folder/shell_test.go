@@ -35,5 +35,5 @@ func TestFolder_ShellJob(t *testing.T) {
 	assert.False(t, f.Job("@git:status").IsShell())
 	assert.False(t, (*folder.Job)(nil).IsShell())
 	assert.True(t, (*folder.Folder)(nil).ShellJob() == nil)
-	assert.Contains(t, folder.ErrShellUnattended.Error(), "no schedule or workflow step")
+	assert.Contains(t, folder.ErrShellUnattended.Error(), "a schedule or workflow step can't run it")
 }

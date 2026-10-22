@@ -68,7 +68,7 @@ func (s *PermissionPolicyStorage) Put(ctx context.Context, kind, subject, path, 
 	case kind == permission.KindRole && !model.ValidRole(subject):
 		return errors.New("unknown role " + subject)
 	case kind == permission.KindRole && subject == model.RoleAdmin:
-		return errors.New("the admin role allows everything and holds no policy")
+		return errors.New("the admin role can do everything and has no policy to change")
 	case !config.Default().Valid(path):
 		return fmt.Errorf("%w: %q", config.ErrUnknown, path)
 	case effect != "" && effect != permission.Allow && effect != permission.Deny:

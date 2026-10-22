@@ -37,12 +37,12 @@ var setupOrder = []struct {
 	step  SetupStep
 	opens func(p *Page) bool
 }{
-	{SetupStep{Name: StepInstance, Href: "/settings/instance", Icon: "settings", Desc: "What the server runs with: its link, version, folders, admins and viewers, and the agent job. You can read it here; the environment sets it."}, (*Page).CanSettings},
+	{SetupStep{Name: StepInstance, Href: "/settings/instance", Icon: "settings", Desc: "What the server runs with: its link, version, folders, admins and viewers, and the agent job. Read only here: the environment sets it."}, (*Page).CanSettings},
 	{SetupStep{Name: StepKeys, Href: "/settings/keys", Icon: "key", Desc: "The encryption key of each workspace, which stores its secrets, and the SSH keys that connect runs and git to hosts."}, func(p *Page) bool { return p.Can("key/view") }},
 	{SetupStep{Name: StepSecrets, Href: "/settings/secrets", Icon: "secret", Desc: "Variables that runs in a workspace get in their environment, for every project in it or for one. Secrets need an encryption key."}, func(p *Page) bool { return p.Can("secret/view") }},
 	{SetupStep{Name: StepIntegrations, Href: "/settings/integrations", Icon: "plug", Desc: "The services task-ui talks to, Claude Code and Beszel, with their API keys and tokens, encrypted with the instance key."}, func(p *Page) bool { return p.Can("integration/view") }},
-	{SetupStep{Name: StepUsers, Href: "/settings/users", Icon: "users", Desc: "Who may sign in, with the role and the folders of each user."}, func(p *Page) bool { return p.Can("user/view") }},
-	{SetupStep{Name: StepPermissions, Href: "/settings/permissions", Icon: "key", Desc: "What each role may do, rule by rule: inherit, allow or deny. Each user's profile holds their own policy."}, func(p *Page) bool { return p.Can("user/view") }},
+	{SetupStep{Name: StepUsers, Href: "/settings/users", Icon: "users", Desc: "Who can sign in, with each user's role and folders."}, func(p *Page) bool { return p.Can("user/view") }},
+	{SetupStep{Name: StepPermissions, Href: "/settings/permissions", Icon: "key", Desc: "What each role can do, rule by rule: inherit, allow or deny. Each user's profile holds their own settings."}, func(p *Page) bool { return p.Can("user/view") }},
 	{SetupStep{Name: StepWorkflows, Href: "/workflows", Icon: "flow", Desc: "Chains of jobs that run one after another, started by hand, on a schedule or from a webhook."}, func(p *Page) bool { return p.Can("workflow/view") }},
 	{SetupStep{Name: StepWorkspaces, Href: "/settings/workspaces", Icon: "folder-open", Desc: "Checkouts that hold projects: an organisation's tooling, with its projects cloned inside the workspace's folder."}, func(p *Page) bool { return p.Can("workspace/view") }},
 	{SetupStep{Name: StepProjects, Href: "/settings/projects", Icon: "folder", Desc: "The folders under the root. Add one from a git repository; task-ui pulls the checkout before every run."}, func(p *Page) bool { return p.Can("project/view") }},

@@ -2,7 +2,7 @@
 <div class="page-head">
 	<div>
 		<h2>Upload key</h2>
-		<p>Stores a private key you already use as the pair of its type, in {{ .KeysDir }}. The public key is derived from it. A pair of the same type, for the same user, is moved aside as a backup.</p>
+		<p>Saves a private key you already use in {{ .KeysDir }}, as the pair of its type. task-ui works out the public key from it. If a pair of the same type for the same user exists, task-ui keeps it as a backup.</p>
 	</div>
 </div>
 

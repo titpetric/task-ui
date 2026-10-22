@@ -2,12 +2,12 @@
 <div class="page-head">
 	<div>
 		<h2>Keys</h2>
-		<p>Two kinds of key, and no key is both. An <b>encryption key</b> stores secrets: the instance has one for the integrations, and each workspace one for its secrets; a workspace without it stores no secrets. <b>SSH keys</b> connect runs and git to hosts and remotes: the instance's go to runs by policy, a workspace's to its own runs.</p>
+		<p>There are two kinds of key, and a key can't be both. An <b>encryption key</b> protects secrets. The instance has one for the integrations, and each workspace has one for its secrets; without it, a workspace can't store secrets. <b>SSH keys</b> let runs and git connect to hosts and remotes. Instance SSH keys go to the runs their policies name; a workspace's SSH keys go to that workspace's runs.</p>
 	</div>
 </div>
 
 {{- range .KeyOverlaps }}
-<div class="alert bad"><svg class="ic"><use href="#i-secret"/></svg> The key <b>{{ .Fingerprint }}</b> is both an encryption key, <span class="mono-break">{{ join .Encrypt ", " }}</span>, and an SSH key, <span class="mono-break">{{ join .Access ", " }}</span>. Runs and git leave it out, so it is not listed here. Remove the SSH copy, or give the SSH use a key of its own.</div>
+<div class="alert bad"><svg class="ic"><use href="#i-secret"/></svg> The key <b>{{ .Fingerprint }}</b> is both an encryption key, <span class="mono-break">{{ join .Encrypt ", " }}</span>, and an SSH key, <span class="mono-break">{{ join .Access ", " }}</span>. Runs and git skip it, so this page leaves it out. Remove the SSH copy, or use a separate key for SSH.</div>
 {{- end }}
 
 <section class="block key-overview">
@@ -27,7 +27,7 @@
 					</form>
 					<div class="key-fp faint" title="{{ $.InstanceKeyDir }}">{{ .Fingerprint }}</div>
 					{{- else }}
-					<span class="badge bad">missing</span> <span class="faint">task-ui makes it at start</span>
+					<span class="badge bad">missing</span> <span class="faint">task-ui creates it on start</span>
 					{{- end }}
 				</td>
 				<td>
@@ -64,7 +64,7 @@
 						<button class="btn btn-sm btn-primary" type="submit">Generate</button>
 					</form>
 					<a class="btn btn-sm" href="{{ $base }}/keys/upload?encrypt=1">Upload</a>
-					<div class="warn">No secrets can be added.</div>
+					<div class="warn">You can't add secrets until it has one.</div>
 					{{- end }}
 				</td>
 				<td>
@@ -73,7 +73,7 @@
 					<div class="key-names">{{ range .SSH }}<a class="key-chip" href="{{ $base }}/keys/{{ .Name }}" title="Grants of {{ .Name }}">{{ .Name }}</a>{{ end }}</div>
 					{{- else }}
 					<span class="faint">none</span> <a href="{{ $base }}/keys/generate">Generate</a> · <a href="{{ $base }}/keys/upload">Upload</a>
-					<div class="faint">task-ui can't SSH to this workspace's hosts with a key of its own: its runs get only the instance SSH keys their policies grant.</div>
+					<div class="faint">This workspace has no SSH key of its own. Its runs get only the instance SSH keys their policies grant.</div>
 					{{- end }}
 				</td>
 			</tr>
@@ -91,7 +91,7 @@
 			<a class="btn btn-sm btn-primary" href="/settings/keys/generate">Generate key</a>
 		</div>
 	</div>
-	<p class="dim">The keys runs and git use to reach other hosts, git remotes and services. A key's policies are the roles and the users whose runs get it in their ssh agent; a key made for someone carries their name, id_ed25519_alice. A key without a policy stays the instance's: git and the inventory's logins use it, runs don't.</p>
+	<p class="dim">Runs and git use these keys to reach hosts, git remotes and services. A key's policies list the roles and users whose runs get it in their ssh agent. A key made for one user carries their name, such as id_ed25519_alice. A key with no policy stays with the instance: git and the inventory's logins use it, runs don't.</p>
 	<div class="table-wrap">
 	<table class="table keys">
 		<thead><tr><th>Comment</th><th>Fingerprint</th><th>Policies</th><th>Date</th><th>Actions</th></tr></thead>
@@ -109,14 +109,14 @@
 					<a class="btn-icon" href="/settings/keys/{{ .Name }}" title="Policies: the roles whose runs get it" aria-label="Edit policies"><svg class="ic"><use href="#i-edit"/></svg></a>
 					{{- $kind := .Kind }}
 					{{- if $kind }}
-					<form data-api="/api/keys/generate" data-method="POST" data-next="reload" data-confirm="Rotate {{ .Name }}? The current pair is kept as a backup. Hosts that trust it need the new public key." data-confirm-ok="Rotate">
+					<form data-api="/api/keys/generate" data-method="POST" data-next="reload" data-confirm="Rotate {{ .Name }}? task-ui keeps the current pair as a backup. Hosts that trust it need the new public key." data-confirm-ok="Rotate">
 						<input type="hidden" name="type" value="{{ $kind }}">
 						<input type="hidden" name="name" value="{{ .Label }}">
 						<input type="hidden" name="comment" value="{{ .Comment }}">
 						<button class="btn-icon" type="submit" title="Rotate: generate a new pair" aria-label="Rotate key"><svg class="ic"><use href="#i-rotate"/></svg></button>
 					</form>
 					{{- end }}
-					<button type="button" class="btn-icon danger" data-delete="/api/keys/{{ .Name }}" data-confirm="Delete {{ .Name }}? Jobs using it lose access." data-next="reload" title="Delete key" aria-label="Delete key"><svg class="ic"><use href="#i-trash"/></svg></button>
+					<button type="button" class="btn-icon danger" data-delete="/api/keys/{{ .Name }}" data-confirm="Delete {{ .Name }}? Jobs that use it lose access." data-next="reload" title="Delete key" aria-label="Delete key"><svg class="ic"><use href="#i-trash"/></svg></button>
 				</td>
 			</tr>
 		{{- end }}{{ end }}
@@ -157,7 +157,7 @@
 {{- if .HomeKeys }}
 <section class="block">
 	<h3>Server user's keys <small>{{ .HomeKeysDir }}</small></h3>
-	<p class="dim">The keys of the user task-ui runs as. ssh and git take them by default: in every run, for git remotes, and for the inventory's logins. They come with the image, so they change there, not here.</p>
+	<p class="dim">The keys of the system user task-ui runs as. ssh and git use them by default: in every run, for git remotes and for the inventory's logins. They come with the image; change them there, not here.</p>
 	<div class="table-wrap">
 	<table class="table keys">
 		<thead><tr><th>Comment</th><th>Fingerprint</th><th>Date</th><th>Actions</th></tr></thead>
@@ -179,13 +179,13 @@
 {{- end }}
 
 {{- range .KeyFolders }}
-<div class="alert signal"><b>{{ .Project }}</b> has private keys in <b>{{ .Dir }}</b>: {{ range $i, $k := .Keys }}{{ if $i }}, {{ end }}{{ $k.Name }}{{ end }}. They are not loaded into its runs. Upload a key the project needs as an instance key and give it to the roles or users by policy.</div>
+<div class="alert signal"><b>{{ .Project }}</b> has private keys in <b>{{ .Dir }}</b>: {{ range $i, $k := .Keys }}{{ if $i }}, {{ end }}{{ $k.Name }}{{ end }}. Its runs don't get them. Upload a key the project needs as an instance key, then grant it to roles or users with a policy.</div>
 {{- end }}
 
 {{- $backups := false }}{{ range .Keys }}{{ if .Backup }}{{ $backups = true }}{{ end }}{{ end }}
 {{- if $backups }}
 <section class="block">
-	<h3>Backups <small>pairs moved aside by a rotation or upload</small></h3>
+	<h3>Backups <small>pairs a rotation or upload set aside</small></h3>
 	<div class="table-wrap">
 	<table class="table keys">
 		<thead><tr><th>Comment</th><th>Fingerprint</th><th>Date</th><th>Actions</th></tr></thead>

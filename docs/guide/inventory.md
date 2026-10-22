@@ -67,8 +67,8 @@ all the same, and Claude reads that task-ui got no inventory. The
 notes agent, `@claude` on the Notes board, gets no inventory.
 
 task-ui reads the hub at most once a minute, and the page fetches the
-hosts again each minute on its own, the time it drew them under the
-table as **Live updated**. The page needs the Beszel
+hosts again each minute on its own, with the time of the fetch under the
+table as **Updated**. The page needs the Beszel
 integration: its URL and a token (see [Settings](settings.md#integrations)).
 Without one, the page says so.
 

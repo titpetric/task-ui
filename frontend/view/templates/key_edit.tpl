@@ -3,7 +3,7 @@
 <div class="page-head">
 	<div>
 		<h2>{{ $k.Name }}</h2>
-		<p>{{ if $k.Comment }}{{ $k.Comment }}, {{ end }}<span class="dim">{{ $k.Type }}</span> {{ $k.Fingerprint }}. Pick whose runs get it: a run started by someone with a checked role, or by a checked user, has it in its ssh agent. A user sees the keys given to them under SSH keys in their menu.</p>
+		<p>{{ if $k.Comment }}{{ $k.Comment }}, {{ end }}<span class="dim">{{ $k.Type }}</span> {{ $k.Fingerprint }}. Choose whose runs get it: runs started by a checked user, or by anyone with a checked role, have it in their ssh agent. Users see their keys under SSH keys in their menu.</p>
 	</div>
 </div>
 

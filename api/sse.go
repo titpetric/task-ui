@@ -77,7 +77,7 @@ func (h *Handlers) sse(w http.ResponseWriter, r *http.Request) {
 	}
 	flusher, ok := w.(http.Flusher)
 	if !ok || h.opts.Events == nil {
-		fail(w, http.StatusNotImplemented, "events are not available")
+		fail(w, http.StatusNotImplemented, "live events aren't available on this instance")
 		return
 	}
 

@@ -78,7 +78,7 @@ func (h *Handlers) moveProject(w http.ResponseWriter, r *http.Request, project *
 	if h.opts.Runner != nil {
 		release, err := h.opts.Runner.Freeze(from)
 		if errors.Is(err, runner.ErrBusy) {
-			fail(w, http.StatusConflict, from+" has a run going: move it once the run ends")
+			fail(w, http.StatusConflict, from+" has a run in progress: move it after the run ends")
 			return
 		}
 		if err != nil {
@@ -91,7 +91,7 @@ func (h *Handlers) moveProject(w http.ResponseWriter, r *http.Request, project *
 	dst := filepath.Join(h.opts.Root, filepath.FromSlash(to))
 	if err := os.Rename(src, dst); err != nil {
 		if errors.Is(err, syscall.EXDEV) {
-			fail(w, http.StatusConflict, "the workspace is on another file system: a move renames, it does not copy")
+			fail(w, http.StatusConflict, "the workspace is on another file system; task-ui moves a project by renaming it and can't copy it")
 			return
 		}
 		failErr(w, err)

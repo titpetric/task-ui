@@ -26,7 +26,7 @@ func TestTools_Jobs(t *testing.T) {
 
 	text, failed = f.tool(t, "guest", "run_job", map[string]any{"folder": "site", "job": "build"})
 	assert.True(t, failed)
-	assert.Contains(t, text, "not run it (403)")
+	assert.Contains(t, text, "permission to run it (403)")
 
 	text, failed = f.tool(t, "admin", "run_job", map[string]any{"folder": "site", "job": "build", "wait": 20})
 	assert.False(t, failed, text)

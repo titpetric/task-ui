@@ -15,7 +15,7 @@ var (
 	ErrOutOfHours = errors.New("out of hours")
 	// ErrReasonNeeded refuses a forced run out of hours that does not
 	// say why.
-	ErrReasonNeeded = errors.New("a reason is needed to run out of hours")
+	ErrReasonNeeded = errors.New("enter a reason to run outside its hours")
 )
 
 // gate checks the hours of the job: inside them a run goes ahead; outside

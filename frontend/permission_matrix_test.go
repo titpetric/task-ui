@@ -24,7 +24,7 @@ func TestPermissionMatrix(t *testing.T) {
 	assert.Contains(t, body, `data-api="/api/permissions/roles/runner" data-method="PUT"`)
 	assert.Contains(t, body, `data-api="/api/permissions/roles/viewer" data-method="PUT"`)
 	assert.Contains(t, body, `<input type="hidden" name="run" value="allow" data-was="allow" disabled>`)
-	assert.Contains(t, body, "everything, fixed")
+	assert.Contains(t, body, "<small>can do everything</small>")
 	assert.Contains(t, f.page(t, asAdmin, "/settings"), `href="/settings/permissions"`)
 
 	assert.Equal(t, http.StatusForbidden, f.get(t, asOps, "/settings/permissions").Status)

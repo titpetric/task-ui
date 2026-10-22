@@ -13,7 +13,7 @@ import (
 
 // ErrReuse refuses a run under the ID of a run of another job or
 // directory, or under an ID that is no run ID.
-var ErrReuse = errors.New("the run is of another job")
+var ErrReuse = errors.New("the run belongs to another job")
 
 // replace clears what a run under the ID a new run reuses left: its row,
 // its recording, its summary, and its artifacts' records and directory.

@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 )
 
-// Tool is one thing a client can call: its name, what it does, the shape
+// Tool is a call a client can make: its name, what it does, the shape
 // of its arguments, and the call.
 type Tool struct {
 	Name        string `json:"name"`

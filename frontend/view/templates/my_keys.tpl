@@ -2,7 +2,7 @@
 <div class="page-head">
 	<div>
 		<h2>Your SSH keys</h2>
-		<p>The keys your runs get through their ssh agent: those an admin made for you, and those given to your role{{ if .User }}, {{ .User.Role }}{{ end }}. Copy a public key to where it should be accepted, a git host or a server; the private half stays on the server.</p>
+		<p>The keys your runs get through their ssh agent: keys made for you, and keys granted to your role{{ if .User }}, {{ .User.Role }}{{ end }}. Copy a public key to a git host or a server that needs to trust it. The private key stays on the task-ui server.</p>
 	</div>
 </div>
 
@@ -22,7 +22,7 @@
 				</td>
 			</tr>
 		{{- else }}
-			<tr class="empty"><td colspan="4">No key is given to you or your role. An admin gives one under Settings, Keys.</td></tr>
+			<tr class="empty"><td colspan="4">No keys for you or your role yet. Someone with Allow Edits on Instance Keys can grant one under Settings, Keys.</td></tr>
 		{{- end }}
 		</tbody>
 	</table>

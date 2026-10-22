@@ -236,7 +236,7 @@ func TestGuard_UserBearerExpiry(t *testing.T) {
 	now = now.Add(access.MCPTokenTTL)
 	expired := call(mcp)
 	assert.Equal(t, http.StatusUnauthorized, expired.Code)
-	assert.Contains(t, expired.Body.String(), "token expired, rotate it on your user settings")
+	assert.Contains(t, expired.Body.String(), "the token has expired; rotate it on your profile")
 	assert.Equal(t, "hello ops", call(cli).Body.String())
 	wrong := call("tui_wrong")
 	assert.Equal(t, http.StatusUnauthorized, wrong.Code)

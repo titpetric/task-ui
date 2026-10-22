@@ -159,7 +159,7 @@ func (h *Handlers) deleteWorkspace(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if workspace.Folder == model.Default {
-		fail(w, http.StatusConflict, "the default workspace holds the projects at the root: it stays")
+		fail(w, http.StatusConflict, "you can't remove the default workspace: it holds the projects at the root")
 		return
 	}
 	dir := workspace.Dir(h.opts.Root)

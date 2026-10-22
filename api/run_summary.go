@@ -29,7 +29,7 @@ func (h *Handlers) runSummary(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if h.opts.Summaries == nil {
-		fail(w, http.StatusNotFound, "no summaries here")
+		fail(w, http.StatusNotFound, "summaries aren't available on this instance")
 		return
 	}
 	summary, err := h.opts.Summaries.Get(r.Context(), run.ID)
@@ -49,7 +49,7 @@ func (h *Handlers) summarizeRun(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if h.opts.Summaries == nil {
-		fail(w, http.StatusNotFound, "no summaries here")
+		fail(w, http.StatusNotFound, "summaries aren't available on this instance")
 		return
 	}
 	if kept, err := h.opts.Summaries.Get(r.Context(), run.ID); err == nil {
@@ -57,7 +57,7 @@ func (h *Handlers) summarizeRun(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if run.State == model.StateRunning {
-		fail(w, http.StatusConflict, "the run is still going; summarize it when it ends")
+		fail(w, http.StatusConflict, "the run is still running; summarize it after it ends")
 		return
 	}
 	output, err := h.runOutput(run)

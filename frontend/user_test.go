@@ -114,7 +114,7 @@ func TestUserForm_MCP(t *testing.T) {
 	// form and no Enable; another user's stays closed.
 	mine := f.page(t, asOps, own)
 	assert.Contains(t, mine, "MCP access")
-	assert.Contains(t, mine, "ask an admin")
+	assert.Contains(t, mine, "Ask someone who has it")
 	assert.NotContains(t, mine, "Enable MCP</button>")
 	assert.NotContains(t, mine, `name="folders"`)
 	assert.Equal(t, http.StatusForbidden, f.get(t, asOps, "/users/"+asViewer).Status)

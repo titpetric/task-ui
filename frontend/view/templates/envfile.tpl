@@ -3,7 +3,7 @@
 <div class="page-head">
 	<div>
 		<h2><svg class="ic"><use href="#i-file"/></svg> {{ $f.Path }}</h2>
-		<p>What the pipeline reads with env.include. Saving writes the file into the folder with the secrets below appended; the same happens before every run.</p>
+		<p>The file the pipeline reads with env.include. Save writes it into the folder with the secrets below added at the end. task-ui does the same before every run.</p>
 	</div>
 	<div class="dim nowrap">{{ if $f.Managed }}<span class="badge ok">managed</span>{{ else if $f.Exists }}<span class="badge">from the folder</span>{{ else }}<span class="badge bad">missing</span>{{ end }}</div>
 </div>
@@ -21,7 +21,7 @@
 </form>
 
 <section class="block">
-	<h3>Appended secrets <small>at generation time</small></h3>
+	<h3>Appended secrets <small>added each time task-ui writes the file</small></h3>
 	<div class="table-wrap">
 	<table class="table">
 		<thead><tr><th>Name</th></tr></thead>

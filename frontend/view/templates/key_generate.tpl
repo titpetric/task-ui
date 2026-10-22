@@ -2,7 +2,7 @@
 <div class="page-head">
 	<div>
 		<h2>Generate key</h2>
-		<p>Creates a new pair in {{ .KeysDir }}. An existing pair of the same type, for the same user, is moved aside as a backup.</p>
+		<p>Creates a new key pair in {{ .KeysDir }}. If a pair of the same type for the same user exists, task-ui keeps it as a backup.</p>
 	</div>
 </div>
 

@@ -137,7 +137,7 @@ func (h *Handlers) runOnHosts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if strings.TrimSpace(req.Command) == "" {
-		fail(w, http.StatusBadRequest, "a command is needed")
+		fail(w, http.StatusBadRequest, "enter a command")
 		return
 	}
 	systems, err := h.opts.Hosts.Systems(r.Context())

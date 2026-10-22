@@ -44,7 +44,7 @@ func (h *Handlers) summarizeWorkflowRun(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	if run.State == model.StateRunning {
-		fail(w, http.StatusConflict, "the workflow is still going; summarize it when it ends")
+		fail(w, http.StatusConflict, "the workflow is still running; summarize it after it ends")
 		return
 	}
 	steps, err := h.opts.WorkflowRuns.Steps(r.Context(), run.ID)
@@ -69,7 +69,7 @@ func (h *Handlers) summarizeWorkflowRun(w http.ResponseWriter, r *http.Request) 
 // the user may see every step of it and the API keeps summaries.
 func (h *Handlers) summaryWorkflowRun(w http.ResponseWriter, r *http.Request) (*model.WorkflowRun, bool) {
 	if h.opts.Summaries == nil {
-		fail(w, http.StatusNotFound, "no summaries here")
+		fail(w, http.StatusNotFound, "summaries aren't available on this instance")
 		return nil, false
 	}
 	run, err := h.opts.WorkflowRuns.Get(r.Context(), param(r, "id"))

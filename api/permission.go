@@ -47,11 +47,11 @@ func (h *Handlers) putRolePolicy(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if role == model.RoleAdmin {
-		fail(w, http.StatusConflict, "the admin role allows everything and holds no policy")
+		fail(w, http.StatusConflict, "the admin role can do everything and has no policy to change")
 		return
 	}
 	if role == access.UserFrom(r.Context()).Role && !h.editsUsersByRole(r) {
-		fail(w, http.StatusForbidden, "changing your own role's policy takes user/edit through that role")
+		fail(w, http.StatusForbidden, "to change your own role's policy, your role needs user/edit")
 		return
 	}
 	if !h.putPolicy(w, r, permission.KindRole, role) {
@@ -88,11 +88,11 @@ func (h *Handlers) putUserPolicy(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if user.CanAdmin() {
-		fail(w, http.StatusConflict, "an admin may do everything and holds no policy")
+		fail(w, http.StatusConflict, "an admin can do everything and has no policy to change")
 		return
 	}
 	if user.Name == access.UserFrom(r.Context()).Name && !h.editsUsersByRole(r) {
-		fail(w, http.StatusForbidden, "changing your own policy takes user/edit through your role")
+		fail(w, http.StatusForbidden, "to change your own policy, your role needs user/edit")
 		return
 	}
 	if !h.putPolicy(w, r, permission.KindUser, user.Name) {

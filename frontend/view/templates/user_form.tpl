@@ -2,7 +2,7 @@
 <div class="page-head">
 	<div>
 		<h2>{{ .Title }}</h2>
-		<p>Adds a user to the password file, who can sign in at once. They are a runner unless <code>TASK_UI_ADMINS</code> or <code>TASK_UI_VIEWERS</code> names them.</p>
+		<p>Adds a user to the password file. They can sign in right away. They're a runner unless <code>TASK_UI_ADMINS</code> or <code>TASK_UI_VIEWERS</code> names them.</p>
 	</div>
 </div>
 

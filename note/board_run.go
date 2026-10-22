@@ -26,7 +26,7 @@ const (
 // the thread as parent replies in it.
 func (b *Board) AskRun(ctx context.Context, user *model.User, runID, body string) (*model.Note, error) {
 	if b.Runs == nil {
-		return nil, fmt.Errorf("%w: prompts about runs are off", ErrNoPrompt)
+		return nil, fmt.Errorf("%w: prompts about runs aren't available on this instance", ErrNoPrompt)
 	}
 	if user == nil {
 		return nil, fmt.Errorf("%w: a prompt needs an author and some text", ErrInvalid)
@@ -67,7 +67,7 @@ func instructions(note *model.Note, thread string) []string {
 // of its output. It returns the file's path.
 func (b *Board) aboutRun(ctx context.Context, runID string) (string, error) {
 	if b.Runs == nil {
-		return "", fmt.Errorf("%w: prompts about runs are off", ErrNoPrompt)
+		return "", fmt.Errorf("%w: prompts about runs aren't available on this instance", ErrNoPrompt)
 	}
 	run, err := b.Runs.Get(ctx, runID)
 	if err != nil {
