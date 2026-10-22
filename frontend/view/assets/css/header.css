@@ -47,6 +47,27 @@ header.top h1 .logo {
   height: 1.3rem;
 }
 
+/* For prompt/edit the logo is a button of its own after the name, which
+   opens and closes the prompt's panel; the name still links home. */
+header.top h1:has(.logo-toggle) {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+header.top .logo-toggle {
+  display: inline-flex;
+  padding: 0;
+  border: 0;
+  background: none;
+  line-height: 0;
+  cursor: pointer;
+
+  &[aria-expanded="true"] .logo rect {
+    stroke: var(--signal);
+  }
+}
+
 header.top h1 .logo rect {
   fill: var(--logo-bg);
   stroke: var(--line-2);
@@ -79,8 +100,8 @@ header.top .spacer {
 /* The header's prompt: a field in the header's empty space after the
    logo, the header's own colour until it has focus or text, then typed
    at the logo's prompt, amber and monospace, while the logo's cursor
-   holds still. Enter asks Claude at the root; the answer drops under
-   the header in a terminal panel. */
+   holds still. Enter asks Claude where the page is; the answer drops
+   under the header in a terminal panel. */
 header.top .header-prompt {
   flex: 1;
   min-width: 0;
@@ -132,6 +153,16 @@ header.top .header-answer {
   font-size: var(--fs-sm);
   box-shadow: var(--shadow-menu);
 
+  & .place {
+    margin: 0 0 0.5rem;
+    color: var(--logo-muted);
+    font-size: var(--fs-xs);
+
+    & a {
+      color: inherit;
+    }
+  }
+
   & .question {
     margin: 0 0 0.5rem;
     white-space: pre-wrap;
@@ -156,6 +187,11 @@ header.top .header-answer {
 
   & .answer pre {
     white-space: pre-wrap;
+  }
+
+  & .answer code {
+    background: color-mix(in srgb, var(--logo-fg) 12%, transparent);
+    color: var(--logo-fg);
   }
 
   & a.thread {

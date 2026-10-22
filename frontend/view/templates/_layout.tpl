@@ -18,9 +18,17 @@
 	</header>
 	{{ template "content" . }}
 {{- else }}
+	{{- if .Can "prompt/edit" }}
+	{{- $ask := .HeaderPrompt }}
+	<header class="top" data-prompt-folder="{{ $ask.Folder }}" data-prompt-dir="{{ $ask.Dir }}" data-prompt-run="{{ $ask.Run }}" data-prompt-label="{{ $ask.Label }}" data-prompt-href="{{ $ask.Href }}">
+		<button type="button" class="btn-icon menu-toggle" id="menu-toggle" aria-label="Menu" aria-controls="side" aria-expanded="false"><svg class="ic"><use href="#i-menu"/></svg></button>
+		{{- /* The logo toggles the prompt's panel; the name links home. */}}
+		<h1><a href="/"><span>TaskUI</span></a><button type="button" class="logo-toggle" id="header-toggle" tabindex="-1" aria-label="Prompt" aria-controls="header-answer" aria-expanded="false">{{ template "logo" }}</button></h1>
+	{{- else }}
 	<header class="top">
 		<button type="button" class="btn-icon menu-toggle" id="menu-toggle" aria-label="Menu" aria-controls="side" aria-expanded="false"><svg class="ic"><use href="#i-menu"/></svg></button>
 		<h1><a href="/"><span>TaskUI</span>{{ template "logo" }}</a></h1>
+	{{- end }}
 		{{- if .Can "prompt/edit" }}
 		<input type="text" class="header-prompt" id="header-prompt" tabindex="-1" autocomplete="off" spellcheck="false">
 		<div class="header-answer" id="header-answer" hidden></div>

@@ -3,6 +3,12 @@
 Every run, by anyone, newest first. A dot beside **Runs** in the sidebar
 pulses while something runs.
 
+A prompt runs as `@claude-prompt` of the folder and directory it asks
+in, such as `malta/dockerfiles/@claude-prompt`, and lists under that
+folder here and in the recents. Another user's prompt runs list with
+the `prompt/view` permission; your own always do (see
+[Prompt](projects.md#prompt)).
+
 ![The runs](../assets/runs-dark.png)
 
 ## Activity
@@ -137,7 +143,7 @@ the run's history of questions and fixes. They stay off the folder's
 prompt box. **Reply** asks again about the same run, and a click on a
 question edits it and runs it again, as on a folder page. With
 `prompt/view` alone you read the threads, without the box. A prompt's
-own run, in the internal folder, has no prompt.
+own run has no prompt.
 
 ```sh
 curl -s -X POST https://task.example.com/api/prompts \
