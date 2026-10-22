@@ -39,6 +39,25 @@ domains, the domains to `model` and `storage`, `model` to nothing of ours.
 | `secret`    | the secrets, encrypted at rest per workspace, through each one's `Vault`     |
 | `envfile`   | the dotenv files a folder reads, as task-ui manages and generates them       |
 | `sshkey`, `git`, `dotenv` | the key pairs, the checkouts, the file format                 |
+| `permission` | what a user may do, from `config/permissions.yml` and the policies of the user and the role |
+| `config`    | the embedded configuration: `permissions.yml` and `context.md`               |
+| `note`      | the notes board: messages, replies and the notes that hand someone an instruction |
+| `workflow`  | workflows: named chains of jobs, started one after another as ordinary runs  |
+| `workspace` | what a workspace holds beside its checkout: its keys, and its export bundle  |
+| `agent`     | the host commands of the Claude built-ins, `task-ui agent note\|prompt\|shell` |
+| `claude`    | Claude Code for task-ui's own uses, such as the summary of the hosts' output |
+| `integration` | the settings of the services task-ui talks to, encrypted with the instance key |
+| `beszel`    | the client of a Beszel hub, for the host inventory                           |
+| `artifactstore` | the files runs leave, as one tree with its history in git                    |
+| `event`     | the in-memory bus the pages follow, by topic                                 |
+| `sshagent`  | an ssh agent on a socket of its own, serving keys from memory to a run       |
+| `sshprobe`  | who task-ui signs in to a host as over ssh                                   |
+| `skills`    | asks atkins what runs in a directory: its pipeline and the skills that apply |
+| `markdown`  | markdown rendered as HTML                                                    |
+| `highlight` | the coloured HTML of the files a pipeline reads                              |
+| `diskusage` | how much space a directory takes, files and git history apart                |
+| `argv`      | the arguments a user types for a job, split as a shell splits words          |
+| `internal/rulelint` | matches the permission checks of the code against `config/permissions.yml`   |
 | `api`       | the JSON endpoints and the attach socket                                     |
 | `mcp`       | the MCP server: JSON-RPC tools that call the API as the token's user         |
 | `frontend`  | the pages; `frontend/view` renders them from embedded templates and assets   |

@@ -81,22 +81,24 @@ arrive the moment someone sends them.
 
 ## The agent
 
-`TASK_UI_AGENT` names the agent's user and `TASK_UI_AGENT_JOB` its job, as
-`folder/job` (see [Running the server](../running.md)). The agent's user
+`TASK_UI_AGENT` names the agent's user and `TASK_UI_AGENT_JOB` its job,
+`@claude-note` unless set, or a job of a folder as `folder/job` (see
+[Running the server](../running.md)). The agent's user
 has to exist in the password file, and its role decides what its runs may
 reach. The Claude Code integration under [Settings](settings.md#integrations)
 holds its token.
 
 ### The Claude jobs
 
-Every folder has the Claude jobs beside `@shell`, built into task-ui, as
-host commands that run `task-ui agent`:
+The Claude jobs sit beside `@shell`, built into task-ui, as host
+commands that run `task-ui agent`: `@claude-prompt` and `@claude` in
+every folder, and `@claude-note` in the root, `_`, alone:
 
 | Job              | Runs                         | What it does                                                                                     |
 |------------------|------------------------------|--------------------------------------------------------------------------------------------------|
 | `@claude-note`   | `task-ui agent note`         | The Notes agent: Claude Code on the thread in `TASK_UI_NOTE`, in the root; its answer goes to `TASK_UI_NOTE_REPLY` |
-| `@claude-prompt` | `task-ui agent prompt`       | Claude Code on the thread in `TASK_UI_PROMPT`, in `TASK_UI_PROMPT_DIR`, or else the workspace checkout `TASK_UI_WORKSPACE_DIR`; its answer goes to `TASK_UI_PROMPT_REPLY` |
-| `@claude`        | `task-ui agent shell [args]` | Claude Code in a terminal in the folder, or a directory inside it, for an admin at the keyboard: **Enter Claude** |
+| `@claude-prompt` | `task-ui agent prompt`       | Claude Code on the thread in `TASK_UI_PROMPT`, in `TASK_UI_PROMPT_DIR`, or else the workspace checkout `TASK_UI_WORKSPACE_DIR`; its answer goes to `TASK_UI_PROMPT_REPLY`. A prompt about a run gets the run and the end of its output in the file `TASK_UI_PROMPT_RUN` names, a workflow's prompt the steps of its run in `TASK_UI_PROMPT_WORKFLOW`, and **|>summarize** the shape of the summary in `TASK_UI_PROMPT_INSTRUCTIONS`, which goes to the system prompt. With an inventory, `TASK_UI_HOSTS` lists its hosts and their logins |
+| `@claude`        | `task-ui agent shell [args]` | Claude Code in a terminal in the folder, or a directory inside it, for a user at the keyboard with the `shell` permission, Enter Shell: **Enter Claude** |
 
 Each signs in with `CLAUDE_CODE_OAUTH_TOKEN` from the Claude Code
 integration and stops without it. Each reads, after Claude's own system

@@ -1,7 +1,9 @@
 # Settings
 
 Not in the sidebar but in the user menu, behind your initials in the
-header, for admins: what the instance brings to every run. The page
+header, for whoever holds Allow View on any of its sections: Workspaces,
+Projects, Instance Keys, Secrets, Integrations or Users. It holds what
+the instance brings to every run. The page
 lists the steps in the order you set up an instance, numbered, and
 each step's page ends with a footer: **Previous** on the left,
 **Next** on the right, and the steps between them as links, with the
@@ -67,8 +69,8 @@ workspace:
   workspace's hosts with a key of its own: its runs get only the instance
   SSH keys their policies grant", with **Generate** and **Upload**.
 
-A workspace starts without an encryption key: an admin adds one on this
-page, generated or uploaded, before it stores a secret. The only key
+A workspace starts without an encryption key: a user with Allow Edits
+on Workspaces, `workspace/edit`, adds one on this page, generated or uploaded, before it stores a secret. The only key
 task-ui makes on its own is the instance's, at start when it's missing,
 and a workspace's when it holds secrets and has no key, so they open.
 The workspace's configure page has the same keys in its
@@ -149,8 +151,8 @@ count of integration settings task-ui wrote again.
 ## Secrets
 
 Variables added to the environment of the runs in a
-[workspace](workspaces.md). The page does one thing, managing them, and
-groups them by workspace: first the secrets for every project in it,
+[workspace](workspaces.md). The page manages them and groups them by
+workspace: first the secrets for every project in it,
 then each project's own under the project's name. A row shows the
 secret's name, its scope, when it changed, and two buttons, replace the
 value and delete. A value is never shown again once saved.
@@ -257,7 +259,8 @@ characters, and they can sign in at once; `task-ui passwd <user>` on the
 server adds or resets one too. **Delete** on a user's row or page
 removes one who is no admin and not you: their line leaves the file, and
 their sessions, tokens and policy end at once, while runs, notes and
-history keep their name. Removing the line on the server does the same,
+history keep their name. Deleting takes Allow Deletes on Users,
+`user/delete`. Removing the line on the server does the same,
 and task-ui reads the file again whenever it changes. The roles
 come from the server's `TASK_UI_ADMINS` and `TASK_UI_VIEWERS`; everyone
 else is a runner.
@@ -267,7 +270,8 @@ What a role may do comes from permission policies over the rules of
 admin may do everything. A runner runs jobs, and reads and writes notes,
 workflows and schedules; a viewer does the same without running; both
 read artifacts and the inventory. A policy of a user's own adds to the
-role's, and a deny in either wins.
+role's, and a deny in either wins; [Permissions](#permissions) lists
+what each role starts with.
 
 ![Users](../assets/users-dark.png)
 
@@ -334,6 +338,27 @@ Allow Edits on Users through your role, so no one grants themselves
 more.
 
 ![A profile's permissions: shell denied, the secrets readable](../assets/profile-permissions-dark.png)
+
+The application's permissions gate what the sections do not:
+
+| Permission   | Rule    | Gates |
+|--------------|---------|-------|
+| Run Jobs     | `run`   | starting a folder's jobs and ending their runs, from the pages, the API and `run_job`; a workflow takes it for every step, and a schedule for its job |
+| Enter Shell  | `shell` | **Enter Shell**, the job `@shell`, an interactive `bash -l`, and **Enter Claude**, the job `@claude`, which also takes a Claude token |
+| Run on Hosts | `hosts` | the command form of [Inventory](inventory.md), which runs a command on its hosts over ssh, and its **Run and summarize** |
+
+The admin role may do everything and holds no policy. The other roles,
+and the `claude` user, start with these policies; everything else they
+lack until a policy allows it:
+
+| Subject       | Allowed at the start |
+|---------------|----------------------|
+| runner role   | Run Jobs; view, edit and delete on Notes, Workflows and Schedules; Allow View on Artifacts and Inventory |
+| viewer role   | the runner's, without Run Jobs |
+| `claude` user | Run Jobs; Allow View and Allow Edits on Notes and on Prompts |
+
+So no role but admin starts with Enter Shell, Run on Hosts, the
+prompts or any section of the settings.
 
 Folder visibility and the allow lists of jobs still apply over the
 permissions: a user runs a job with Run Jobs, in a folder they see, when
@@ -410,8 +435,9 @@ run and when, per job.
 
 ## Env files
 
-A folder's page lists the dotenv files its pipeline reads. An admin edits
-one from there: on saving, and again before every run, task-ui writes the file in the
+A folder's page lists the dotenv files its pipeline reads. A user with
+Allow View on Env Files, `env/view`, opens one, and with Allow Edits,
+`env/edit`, edits it there: on saving, and again before every run, task-ui writes the file in the
 folder from it with the secrets appended. For a file nobody has
 edited, task-ui reads the one in the folder unchanged.
 

@@ -90,18 +90,29 @@ task-ui hash s3cret                          # a hash, for editing the file by h
 task-ui email alice add alice@example.com    # an address alice signs in with; `rm` removes
 task-ui backup alice                         # ten backup passwords, each signs in once
 task-ui token alice cli                      # a token for a client such as an MCP agent
+task-ui token alice                          # the names of alice's tokens, and when each was last used
+task-ui token alice rm cli                   # removes a token
+task-ui -v                                   # the version and the commit
 ```
+
+`task-ui agent note|prompt|shell [args]` are the host commands of the
+Claude built-ins, `@claude-note`, `@claude-prompt` and `@claude`: the
+server runs them in a run's terminal, and they read the run's environment
+(see [Notes](guide/notes.md#the-claude-jobs)).
 
 task-ui keeps what a user signs in with apart from the user row, so nothing
 that reads a user, the API included, carries a credential:
 `user_auth_password` holds the password hashes, `user_email` the
 addresses and `user_auth_token` the token hashes. The `email`, `backup`
 and `token` commands work on the database of a user the server has read
-from the password file. To remove a user, delete the line.
+from the password file. To remove a user, delete the line, or
+**Delete** the user on Settings, **Users**, or call `DELETE
+/api/users/{id}`; both take Allow Deletes on Users, `user/delete`, and
+remove the line and the user's sessions, tokens and policy at once.
 
 `TASK_UI_ADMINS=alice,bob` makes those two admins, `TASK_UI_VIEWERS=support`
 a viewer, and everyone else in the file is a runner; what each role may
-do is in [the guide](guide/projects.md#who-may-run-what).
+do is in [Settings, Permissions](guide/settings.md#permissions).
 
 ---
 

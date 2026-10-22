@@ -13,7 +13,8 @@ reaches slowly fills in on the next view.
 
 ## Running a command on the hosts
 
-An admin runs a shell command on the hosts at once, like pssh: pick the
+A user with the `hosts` permission, Run on Hosts, runs a shell command
+on the hosts at once, like pssh: pick the
 hosts, by default every one with an ssh login (**All**, **None** and
 **Invert** set them at once), write the command or take a
 quick one (`uptime`, `df -h /`, `free -h`, the containers, the kernel, the
@@ -34,7 +35,11 @@ Claude Code integration has a token for you (see
 [Settings](settings.md#integrations)); Claude only reads the report and
 runs no tools, for at most three minutes.
 
-The logins sign in as `debian` or `root`, so the panel is for admins alone.
+The logins sign in as `debian` or `root`, so the panel shows only with
+`hosts`, which no role but admin holds until
+[Settings, Permissions](settings.md#permissions) grants it. The page
+itself takes Allow View on Inventory, `inventory/view`, which the runner
+and viewer roles hold.
 
 ## Prompts on the hosts
 
