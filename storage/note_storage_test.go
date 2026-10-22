@@ -33,6 +33,10 @@ func TestNoteStorage(t *testing.T) {
 	assert.Len(t, board, 2)
 	assert.Equal(t, other.ID, board[0].ID, "newest first")
 
+	byAlice, _ := notes.List(ctx, storage.NoteFilter{UserName: "alice"})
+	assert.Len(t, byAlice, 1)
+	assert.Equal(t, chat.ID, byAlice[0].ID)
+
 	mine, _ := notes.List(ctx, storage.NoteFilter{Mention: "claude", State: model.NoteOpen})
 	assert.Len(t, mine, 1)
 	assert.Equal(t, task.ID, mine[0].ID)

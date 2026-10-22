@@ -22,7 +22,7 @@ func TestUsers(t *testing.T) {
 	assert.Contains(t, body, "task-ui passwd")
 	assert.Contains(t, body, "TASK_UI_ADMINS")
 	for _, name := range []string{asAdmin, asOps, asViewer, asLimited} {
-		assert.Contains(t, body, `href="/settings/users/`+f.users[name].ID+`"`)
+		assert.Contains(t, body, `href="/users/`+name+`" title="Profile of `+name+`"`)
 	}
 	// The page removes no user, and makes one only with a password file
 	// to write.
@@ -54,7 +54,7 @@ func TestUsers_MCP(t *testing.T) {
 	assert.Contains(t, derived, "Connect an MCP client")
 	assert.Contains(t, derived, `data-copy="https://task.example.com"`)
 	assert.Contains(t, derived, `data-copy="https://task.example.com/api/mcp"`)
-	assert.Contains(t, derived, `href="/settings/users/`+f.users[asAdmin].ID+`#mcp">your user settings</a>`)
+	assert.Contains(t, derived, `href="/users/`+asAdmin+`#mcp">your profile</a>`)
 	assert.NotContains(t, derived, access.TokenPrefix)
 
 	f.opts.BaseURL = "https://task.cdn.si"
@@ -73,22 +73,13 @@ func TestUserForm(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
 
-	edit := f.page(t, asAdmin, "/settings/users/"+f.users[asLimited].ID)
-	assert.Contains(t, edit, "<h2>Folders of limited</h2>")
-	assert.Contains(t, edit, `data-api="/api/users/`+f.users[asLimited].ID+`" data-method="PUT"`)
-	// The name and the role are text, not fields; the folders are Custom,
-	// infra checked.
-	assert.NotContains(t, edit, `id="u-name"`)
-	assert.Contains(t, edit, `<span class="badge">`+model.RoleRunner+`</span>`)
-	assert.Contains(t, edit, `<input type="radio" name="scope" value="custom" checked>`)
-	assert.Contains(t, edit, `name="folders" value="infra" data-type="set" checked>`)
-	assert.NotContains(t, edit, `name="password"`)
-	assert.NotContains(t, edit, `name="role"`)
-	// All projects: the boxes go off, none sent.
-	all := f.page(t, asAdmin, "/settings/users/"+f.users[asOps].ID)
-	assert.Contains(t, all, `<input type="radio" name="scope" value="all" checked>`)
-	assert.Contains(t, all, `name="folders" value="infra" data-type="set" disabled>`)
-
+	// The settings link of a user opens their profile, which holds the
+	// folders; your own opens without user/view.
+	res := f.get(t, asAdmin, "/settings/users/"+f.users[asLimited].ID)
+	assert.Equal(t, http.StatusFound, res.Status)
+	assert.Equal(t, "/users/limited", res.Location)
+	assert.Equal(t, "/users/ops", f.get(t, asOps, "/settings/users/"+f.users[asOps].ID).Location)
+	assert.Equal(t, http.StatusForbidden, f.get(t, asOps, "/users/"+asViewer).Status)
 	assert.Equal(t, http.StatusNotFound, f.get(t, asAdmin, "/settings/users/"+model.NewID()).Status)
 	assert.Equal(t, http.StatusNotFound, f.get(t, asAdmin, "/settings/users/new").Status)
 
@@ -101,6 +92,7 @@ func TestUserForm(t *testing.T) {
 	created := f.page(t, asAdmin, "/settings/users/new")
 	assert.Contains(t, created, `data-api="/api/users" data-method="POST"`)
 	assert.Contains(t, created, `name="password" required minlength="8"`)
+	assert.Contains(t, created, `<input type="radio" name="scope" value="all" checked>`)
 }
 
 // A user's page shows their MCP access: Enable for user/edit, the dates
@@ -110,7 +102,7 @@ func TestUserForm_MCP(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
 	ops := f.users[asOps]
-	own := "/settings/users/" + ops.ID
+	own := "/users/" + ops.Name
 
 	off := f.page(t, asAdmin, own)
 	assert.Contains(t, off, "MCP access")
@@ -118,14 +110,14 @@ func TestUserForm_MCP(t *testing.T) {
 	assert.Contains(t, off, "Enable MCP</button>")
 	assert.Contains(t, off, `data-fill="claude mcp add --transport http --scope user task http://127.0.0.1`)
 
-	// Their own page opens for ops without user/view, with no folders
-	// form and no Enable; another user's page stays closed.
+	// Their own profile opens for ops without user/view, with no folders
+	// form and no Enable; another user's stays closed.
 	mine := f.page(t, asOps, own)
 	assert.Contains(t, mine, "MCP access")
 	assert.Contains(t, mine, "ask an admin")
 	assert.NotContains(t, mine, "Enable MCP</button>")
 	assert.NotContains(t, mine, `name="folders"`)
-	assert.Equal(t, http.StatusForbidden, f.get(t, asOps, "/settings/users/"+f.users[asViewer].ID).Status)
+	assert.Equal(t, http.StatusForbidden, f.get(t, asOps, "/users/"+asViewer).Status)
 
 	token, hash, err := access.NewToken()
 	assert.NoError(t, err)

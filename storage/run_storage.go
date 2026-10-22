@@ -33,9 +33,12 @@ type RunFilter struct {
 	Dir    string
 	State  model.State
 	UserID string
-	Before string
-	After  string
-	Limit  int
+	// UserName narrows to the runs a user started, by name, which a run
+	// keeps after its user leaves.
+	UserName string
+	Before   string
+	After    string
+	Limit    int
 }
 
 // Create inserts a run as running, started now.
@@ -107,6 +110,7 @@ func runQuery(filter RunFilter) (string, []any) {
 	}
 	add("state", filter.State)
 	add("user_id", filter.UserID)
+	add("user_name", filter.UserName)
 	if len(filter.Folders) > 0 {
 		where = append(where, "folder IN (?"+strings.Repeat(", ?", len(filter.Folders)-1)+")")
 		for _, folder := range filter.Folders {

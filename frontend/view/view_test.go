@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/titpetric/task-ui/config"
 	"github.com/titpetric/task-ui/envfile"
 	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/frontend/view"
@@ -23,6 +24,8 @@ func admin(t *testing.T) *view.Page {
 	f.Jobs = []*folder.Job{job}
 	run := view.Run{Run: model.Run{ID: model.NewID(), Folder: "infra", Job: "plan", UserName: "ops", State: model.StateRunning, StartedAt: &now}, Live: true}
 	user := &model.User{Name: "admin", Role: model.RoleAdmin}
+	matrix := view.NewMatrix(config.Default(), permission.Policy{"run": permission.Deny}, nil, false)
+	matrix.Editable, matrix.Effective = true, true
 	return &view.Page{
 		Title:         "Test",
 		Path:          "/",
@@ -39,6 +42,8 @@ func admin(t *testing.T) *view.Page {
 		EnvFile:       &envfile.File{Folder: "infra", Path: ".env", Content: "A=1\n"},
 		Secret:        &model.Secret{Scope: "all", Name: "TOKEN"},
 		Account:       &model.User{ID: "u1", Name: "ops", Role: model.RoleRunner},
+		Profile:       &view.Profile{Runs: []view.Run{run}, Prompts: []model.Note{{ID: "n1", Body: "why", Dir: "infra"}}, Matrix: &matrix},
+		Matrices:      []view.Matrix{matrix},
 		Workspace:     &model.Workspace{Folder: "malta", SourceURL: "git@example.com:org/workspace.git"},
 	}
 }

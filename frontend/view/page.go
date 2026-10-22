@@ -1,6 +1,7 @@
 package view
 
 import (
+	"sort"
 	"strings"
 	"time"
 
@@ -174,9 +175,14 @@ type Page struct {
 	// SSH key, which runs and git leave out.
 	KeyOverlaps []workspace.Overlap
 	Users       []model.User
-	// Account is the user a form edits, and AccountMCP their MCP token.
+	// Account is the user a form or a profile shows, and AccountMCP
+	// their MCP token.
 	Account    *model.User
 	AccountMCP MCPAccess
+	// Profile is the rest of a user's profile.
+	Profile *Profile
+	// Matrices are the roles' policies on the permissions page.
+	Matrices []Matrix
 	// AllowChoices are the boxes of a project's "who may run", and
 	// JobAllowChoices those of each job, by job ID.
 	AllowChoices    []WhoChoice
@@ -209,6 +215,25 @@ func (p *Page) Href(id string) string {
 	return FolderHref(id, p.Workspaces)
 }
 
+// PlaceHref returns the page of the place a prompt ran in, as a note's
+// Dir holds it: under the folder that holds it among the page's
+// folders, or the root's for _. Empty for a place in no such folder.
+func (p *Page) PlaceHref(place string) string {
+	if place == model.Default {
+		return "/f/" + model.Default
+	}
+	best := ""
+	for _, f := range p.Folders {
+		if (place == f.ID || strings.HasPrefix(place, f.ID+"/")) && len(f.ID) > len(best) {
+			best = f.ID
+		}
+	}
+	if best == "" {
+		return ""
+	}
+	return p.Href(best) + strings.TrimPrefix(place, best)
+}
+
 // Links turns steps into links, as Chain does among the page's
 // workspaces.
 func (p *Page) Links(steps []Step) []Link {
@@ -234,6 +259,33 @@ func (p *Page) permissions() permission.Set {
 // settings: any of the sections they list.
 func (p *Page) CanSettings() bool {
 	return p.Can("workspace/view") || p.Can("project/view") || p.Can("key/view") || p.Can("secret/view") || p.Can("integration/view") || p.Can("user/view")
+}
+
+// CanProfile reports whether the signed in user may open the profile
+// of a user, by name: their own, or anyone's with user/view. A name no
+// user holds, such as the agent a note names, has none.
+func (p *Page) CanProfile(name string) bool {
+	if _, ok := p.Roles[name]; !ok || p.User == nil {
+		return false
+	}
+	return p.User.Name == name || p.Can("user/view")
+}
+
+// CanPermissions reports whether the menu of a user, by name, links
+// their permissions: a user, for a signed in user with user/edit.
+func (p *Page) CanPermissions(name string) bool {
+	_, ok := p.Roles[name]
+	return ok && p.Can("user/edit")
+}
+
+// UserNames returns the names of the users, sorted, for a filter.
+func (p *Page) UserNames() []string {
+	names := make([]string, 0, len(p.Roles))
+	for name := range p.Roles {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	return names
 }
 
 // CanRun reports whether the signed in user may run a job: a shell job

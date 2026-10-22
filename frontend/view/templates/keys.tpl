@@ -137,7 +137,7 @@
 		{{- range .KeyHolders }}
 			<tr>
 				{{- if .User }}
-				<td class="nowrap">{{ template "avatar" (list $ .User.Name) }} {{ .User.Name }} <span class="faint">{{ .Role }}</span></td>
+				<td class="nowrap">{{ template "user" (list $ .User.Name) }} <span class="faint">{{ .Role }}</span></td>
 				{{- else }}
 				<td class="nowrap"><span class="badge">{{ .Role }}</span> <span class="faint">every {{ .Role }}</span></td>
 				{{- end }}

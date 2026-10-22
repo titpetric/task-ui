@@ -82,6 +82,8 @@ func (h *Handlers) Routes() http.Handler {
 		r.Get("/settings/users", h.users)
 		r.Get("/settings/users/new", h.userNew)
 		r.Get("/settings/users/{id}", h.userEdit)
+		r.Get("/settings/permissions", h.permissionMatrix)
+		r.Get("/users/{name}", h.profile)
 	})
 	r.NotFound(h.opts.Guard.Require(http.HandlerFunc(h.notFound)).ServeHTTP)
 

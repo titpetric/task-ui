@@ -213,3 +213,46 @@ func TestPage_Edits(t *testing.T) {
 	assert.True(t, p.Edits(thread.Note, thread))
 	assert.False(t, p.Edits(model.Note{ID: "n2", UserName: "dev"}, thread))
 }
+
+func TestPage_CanProfile(t *testing.T) {
+	t.Parallel()
+	p := admin(t)
+	p.Roles = map[string]string{"ops": model.RoleRunner, "admin": model.RoleAdmin}
+	assert.True(t, p.CanProfile("ops"))
+	assert.False(t, p.CanProfile("claude"), "no user by that name")
+
+	signIn(p, &model.User{Name: "ops", Role: model.RoleRunner}, permission.Policy{"run": permission.Allow})
+	assert.True(t, p.CanProfile("ops"), "your own")
+	assert.False(t, p.CanProfile("admin"))
+	signIn(p, p.User, permission.Policy{"user/view": permission.Allow})
+	assert.True(t, p.CanProfile("admin"))
+	assert.False(t, (&view.Page{}).CanProfile("ops"))
+}
+
+func TestPage_UserNames(t *testing.T) {
+	t.Parallel()
+	p := &view.Page{Roles: map[string]string{"ops": model.RoleRunner, "admin": model.RoleAdmin}}
+	assert.Equal(t, []string{"admin", "ops"}, p.UserNames())
+}
+
+// A prompt's place links under the folder that holds it, the deepest
+// one the page lists; the root is _.
+func TestPage_PlaceHref(t *testing.T) {
+	t.Parallel()
+	p := &view.Page{Folders: []*folder.Folder{{ID: "malta"}, {ID: "malta/vhosts"}}, Workspaces: map[string]int{"malta": 0}}
+	assert.Equal(t, "/f/_", p.PlaceHref("_"))
+	assert.Equal(t, "/f/malta", p.PlaceHref("malta"))
+	assert.Equal(t, "/f/malta/vhosts/www", p.PlaceHref("malta/vhosts/www"))
+	assert.Equal(t, "/f/malta/docs", p.PlaceHref("malta/docs"))
+	assert.Equal(t, "", p.PlaceHref("private/x"))
+}
+
+func TestPage_CanPermissions(t *testing.T) {
+	t.Parallel()
+	p := admin(t)
+	p.Roles = map[string]string{"ops": model.RoleRunner}
+	assert.True(t, p.CanPermissions("ops"))
+	assert.False(t, p.CanPermissions("claude"))
+	signIn(p, &model.User{Name: "ops", Role: model.RoleRunner}, permission.Policy{"user/view": permission.Allow})
+	assert.False(t, p.CanPermissions("ops"))
+}

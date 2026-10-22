@@ -52,7 +52,7 @@ func TestFolder_Running(t *testing.T) {
 
 	body := f.page(t, asOps, "/f/_/infra")
 	assert.Contains(t, body, `<i class="dot running"></i><span class="state-label">running</span>`)
-	assert.Contains(t, body, `<span class="when">just now</span><span class="who-ran"><span class="avatar sm role-runner" title="ops">OP</span> ops</span></div>`)
+	assert.Contains(t, body, `<span class="when">just now</span><span class="who-ran"><span class="user-ref"><span class="avatar sm role-runner" title="ops">OP</span> <span class="user-name">ops</span><details class="more-menu user-more">`)
 	assert.Contains(t, body, `data-attach="`+session.ID()+`"`)
 	assert.Contains(t, body, `data-kill="`+session.ID()+`"`)
 

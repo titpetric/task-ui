@@ -36,7 +36,7 @@ func TestPage_Chrome(t *testing.T) {
 	assert.Contains(t, body, `class="avatar sm role-admin" title="admin">AD<`)
 	// The body carries each user's role by name, and nothing else, for
 	// the avatars the script draws.
-	assert.Contains(t, body, `<body data-roles='{&#34;admin&#34;:&#34;admin&#34;,&#34;limited&#34;:&#34;runner&#34;,&#34;ops&#34;:&#34;runner&#34;,&#34;viewer&#34;:&#34;viewer&#34;}' data-workspaces='{}'>`)
+	assert.Contains(t, body, `<body data-roles='{&#34;admin&#34;:&#34;admin&#34;,&#34;limited&#34;:&#34;runner&#34;,&#34;ops&#34;:&#34;runner&#34;,&#34;viewer&#34;:&#34;viewer&#34;}' data-workspaces='{}' data-me="admin" data-user-menu="edit">`)
 
 	// The header's prompt, for prompt/edit: a bare field with nothing
 	// that names it.

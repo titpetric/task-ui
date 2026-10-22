@@ -36,6 +36,8 @@ type NoteFilter struct {
 	// AboutRunID narrows the prompts to the threads about a run; without
 	// it, a filter by Dir leaves those out, as the run's page lists them.
 	AboutRunID string
+	// UserName narrows to the threads a user started.
+	UserName string
 	// Limit keeps the newest; zero keeps them all.
 	Limit int
 }
@@ -79,6 +81,10 @@ func (s *NoteStorage) List(ctx context.Context, filter NoteFilter) ([]model.Note
 	if filter.State != "" {
 		where = append(where, "state = ?")
 		args = append(args, filter.State)
+	}
+	if filter.UserName != "" {
+		where = append(where, "user_name = ?")
+		args = append(args, filter.UserName)
 	}
 	if !filter.Prompts {
 		where = append(where, "workspace_id = ''")

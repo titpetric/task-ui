@@ -1,0 +1,215 @@
+/* Users: the [...] menu next to a user's name, the profile, and the
+   permission matrices of roles and users. */
+
+/* A user's avatar and name with the menu after them, quiet until
+   hovered. The menu opens fixed, placed by the script, so a row that
+   scrolls sideways does not clip it. */
+.user-ref {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  white-space: nowrap;
+
+  & .user-more > summary {
+    width: 1.3rem;
+    height: 1.3rem;
+    opacity: 0.55;
+
+    & .ic {
+      width: 0.85rem;
+      height: 0.85rem;
+    }
+  }
+
+  &:hover .user-more > summary,
+  & .user-more[open] > summary,
+  & .user-more > summary:focus-visible {
+    opacity: 1;
+  }
+
+  & .user-more .more-list {
+    position: fixed;
+    right: auto;
+    min-width: 12rem;
+    white-space: nowrap;
+  }
+}
+
+.author .user-name {
+  color: var(--text);
+  font-weight: 600;
+}
+
+/* The profile: a large avatar beside the name and the role. */
+.avatar.lg {
+  --avatar-size: round(3rem, 1px);
+  font-size: var(--fs-md);
+}
+
+.profile-who {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.9rem;
+
+  & h2 .badge {
+    vertical-align: middle;
+  }
+}
+
+.profile-activity {
+  & h4 {
+    margin: 1rem 0 0.4rem;
+    color: var(--text-dim);
+    font-size: var(--fs-label);
+    font-weight: 600;
+    letter-spacing: var(--ls-label);
+    text-transform: uppercase;
+  }
+
+  & .more-link {
+    margin: 0.4rem 0 0;
+    font-size: var(--fs-sm);
+  }
+}
+
+.profile-list {
+  display: grid;
+  gap: 0.1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  & li {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    min-width: 0;
+    padding: 0.3rem 0;
+    border-bottom: 1px solid var(--line);
+    font-size: var(--fs-sm);
+  }
+
+  & .excerpt {
+    overflow: hidden;
+    min-width: 0;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  & .when {
+    margin-inline-start: auto;
+    padding-inline-start: 0.5rem;
+    white-space: nowrap;
+  }
+}
+
+/* A permission matrix: a row per section, a column per rule. A cell is
+   a square that cycles inherit (empty), allow (green ✓) and deny
+   (red ✕); the mark after it, muted, is what the user may do. */
+table.matrix {
+  width: auto;
+  min-width: 100%;
+
+  & th,
+  & td {
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  & th[scope="row"] {
+    color: var(--text);
+    font-weight: 500;
+    text-align: start;
+  }
+
+  & thead th:first-child {
+    text-align: start;
+  }
+
+  & tr.group th {
+    padding-top: 0.9rem;
+    color: var(--text-dim);
+    font-size: var(--fs-label);
+    letter-spacing: var(--ls-label);
+    text-align: start;
+    text-transform: uppercase;
+  }
+
+  & td[colspan] {
+    text-align: start;
+  }
+}
+
+.tri-cell {
+  display: inline-flex;
+  vertical-align: middle;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.tri {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  padding: 0;
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius);
+  background: var(--ink-2);
+  color: var(--text);
+  font: inherit;
+  font-size: var(--fs-md);
+  font-weight: 700;
+  line-height: 1;
+  vertical-align: middle;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    border-color: var(--signal);
+  }
+
+  &[data-tri="allow"] {
+    border-color: var(--ok);
+    background: var(--ok-wash);
+    color: var(--ok);
+  }
+
+  &[data-tri="deny"] {
+    border-color: var(--bad);
+    background: var(--bad-wash);
+    color: var(--bad);
+  }
+
+  &:disabled {
+    cursor: default;
+    opacity: 0.7;
+  }
+}
+
+.eff {
+  width: 0.8rem;
+  font-size: var(--fs-xs);
+  opacity: 0.7;
+
+  &.ok {
+    color: var(--ok);
+  }
+
+  &.bad {
+    color: var(--text-faint);
+  }
+}
+
+.matrix-form {
+  & .form-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 0.75rem;
+  }
+}
+
+.matrix-role h3 .avatar {
+  margin-inline-end: 0.2rem;
+}

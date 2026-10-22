@@ -10,7 +10,7 @@
 	<link rel="stylesheet" href="/static/vendor/xterm.css?v={{ assetVersion }}">
 	<link rel="stylesheet" href="/static/task-ui.css?v={{ assetVersion }}">
 </head>
-<body data-roles='{{ json .Roles }}' data-workspaces='{{ json .Workspaces }}'>
+<body data-roles='{{ json .Roles }}' data-workspaces='{{ json .Workspaces }}'{{ with .User }} data-me="{{ .Name }}"{{ end }} data-user-menu="{{ if .Can "user/edit" }}edit{{ else if .Can "user/view" }}view{{ end }}">
 {{ template "icons" . }}
 {{- if not .User }}
 	<header class="top login-top">
@@ -304,7 +304,7 @@
 {{ define "avatar" }}{{ $role := index (index . 0).Roles (index . 1) }}<span class="avatar sm{{ with $role }} role-{{ . }}{{ end }}" title="{{ index . 1 }}">{{ initials (index . 1) }}</span>{{ end }}
 
 {{/* who takes (list $ run): who started a run, and how. */}}
-{{ define "who" }}{{ $p := index . 0 }}{{ with index . 1 }}<span class="who-ran">{{ template "avatar" (list $p .UserName) }} {{ .UserName }}{{ if .IsScheduled }} <span class="badge">scheduled</span>{{ end }}{{ if .Reason }} <span class="badge bad" title="{{ .Reason }}">out of hours</span>{{ else if .IsForced }} <span class="badge signal">forced</span>{{ end }}</span>{{ end }}{{ end }}
+{{ define "who" }}{{ $p := index . 0 }}{{ with index . 1 }}<span class="who-ran">{{ template "user" (list $p .UserName) }}{{ if .IsScheduled }} <span class="badge">scheduled</span>{{ end }}{{ if .Reason }} <span class="badge bad" title="{{ .Reason }}">out of hours</span>{{ else if .IsForced }} <span class="badge signal">forced</span>{{ end }}</span>{{ end }}{{ end }}
 
 {{ define "hours" }}{{ $text := index . 0 }}{{ $page := index . 1 }}{{ if $text }}{{ hoursLine $text }} {{ if $page.InHours $text }}<span class="badge ok">open now</span>{{ else }}<span class="badge bad">out of hours now</span>{{ end }}{{ else }}<span class="faint">always</span>{{ end }}{{ end }}
 
@@ -549,8 +549,8 @@
 			</header>
 			<p class="desc">{{ if and $r.Description (ne $r.Description $r.Name) (not (and $r.Steps (eq $r.Description (index $r.Steps 0)))) }}{{ $r.Description }}{{ end }}</p>
 			<div class="meta">
-				{{- with $run }}<i class="dot running"></i><span class="state-label">running</span><span class="when">{{ ago .StartedAt }}</span><span class="who-ran">{{ template "avatar" (list $ .UserName) }} {{ .UserName }}</span>
-				{{- else }}{{ with $.LastRun $r.Key }}<i class="dot {{ .State }}"></i><span class="state-label">{{ .State }}{{ if ne .State "ok" }} <span class="faint">({{ .ExitCode }})</span>{{ end }}</span><span class="when">{{ ago .StartedAt }}</span><span class="who-ran">{{ template "avatar" (list $ .UserName) }} {{ .UserName }}</span>
+				{{- with $run }}<i class="dot running"></i><span class="state-label">running</span><span class="when">{{ ago .StartedAt }}</span><span class="who-ran">{{ template "user" (list $ .UserName) }}</span>
+				{{- else }}{{ with $.LastRun $r.Key }}<i class="dot {{ .State }}"></i><span class="state-label">{{ .State }}{{ if ne .State "ok" }} <span class="faint">({{ .ExitCode }})</span>{{ end }}</span><span class="when">{{ ago .StartedAt }}</span><span class="who-ran">{{ template "user" (list $ .UserName) }}</span>
 				{{- else }}<i class="dot pending"></i><span class="state-label faint">never run</span>{{ end }}{{ end -}}
 			</div>
 			<div class="code">

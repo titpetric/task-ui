@@ -17,7 +17,7 @@
 		<dd>{{ template "copy-line" (list (printf "%s/api/mcp" $base) "the MCP endpoint") }}</dd>
 	</dl>
 	<ol class="mcp-steps">
-		<li>{{ if .User }}Enable MCP on <a href="/settings/users/{{ .User.ID }}#mcp">your user settings</a>{{ else }}Enable MCP on your user settings{{ end }} and copy the token: it shows once and lasts 30 days, until you rotate it there. Enabling takes Allow Edits on Users, so an admin may do it for you.</li>
+		<li>{{ if .User }}Enable MCP on <a href="/users/{{ .User.Name }}#mcp">your profile</a>{{ else }}Enable MCP on your profile{{ end }} and copy the token: it shows once and lasts 30 days, until you rotate it there. Enabling takes Allow Edits on Users, so an admin may do it for you.</li>
 		<li>Add the server to Claude Code:
 			{{ template "copy-line" (list (printf "claude mcp add --transport http --scope user task %s/api/mcp --header \"Authorization: Bearer <token>\"" $base) "the claude mcp add command") }}</li>
 		<li>Any other client takes the endpoint over HTTP and the header <code>Authorization: Bearer &lt;token&gt;</code>. <code>claude mcp list</code> shows <code>task</code> as connected.</li>
@@ -27,7 +27,7 @@
 {{- end }}
 
 
-{{/* mcp-access is a user's MCP token on their settings page: (list page user). The token shows once, in #mcp-token, from the answer of Enable or Rotate. */}}
+{{/* mcp-access is a user's MCP token on their profile: (list page user). The token shows once, in #mcp-token, from the answer of Enable or Rotate. */}}
 {{ define "mcp-access" }}
 {{- $p := index . 0 }}{{ $u := index . 1 }}{{ $m := $p.AccountMCP }}
 {{- $api := printf "/api/users/%s/mcp" $u.ID }}
@@ -65,7 +65,7 @@
 			{{- $add := printf "claude mcp add --transport http --scope user task %s/api/mcp --header \"Authorization: Bearer {token}\"" $p.BaseURL }}
 			<dd><div class="copy-line"><code data-fill="{{ $add }}"></code><button type="button" class="btn-icon" data-copy="" data-fill="{{ $add }}" title="Copy the claude mcp add command" aria-label="Copy the claude mcp add command"><svg class="ic"><use href="#i-copy"/></svg></button></div></dd>
 		</dl>
-		<a class="btn" href="/settings/users/{{ $u.ID }}">Done</a>
+		<a class="btn" href="/users/{{ $u.Name }}#mcp">Done</a>
 	</div>
 </section>
 {{- end }}

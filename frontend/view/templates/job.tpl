@@ -87,7 +87,7 @@
 				<td class="key"><code>{{ .Expression }}</code></td>
 				<td class="nowrap">{{ if .IsEnabled }}{{ stamp .NextRunAt }}{{ else }}<span class="faint">-</span>{{ end }}</td>
 				<td class="nowrap">{{ if .LastRunAt }}{{ ago .LastRunAt }}{{ else }}<span class="faint">never</span>{{ end }}</td>
-				<td>{{ .UserName }}</td>
+				<td>{{ template "user" (list $ .UserName) }}</td>
 				<td>{{ if .IsEnabled }}<span class="badge ok">enabled</span>{{ else }}<span class="badge">disabled</span>{{ end }}</td>
 				<td class="actions">
 					{{- if $can }}

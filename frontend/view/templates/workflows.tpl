@@ -18,7 +18,7 @@
 			<td class="key"><a href="/workflows/{{ .ID }}">{{ .Name }}</a></td>
 			<td data-label="Steps"><span class="chain">{{ template "chain" (list $ .Steps) }}</span></td>
 			<td class="nowrap" data-label="Last run">{{ if .Running }}<span class="state"><i class="dot running"></i>running</span>{{ else if .LastRun }}<span class="state"><i class="dot {{ .LastRun.State }}"></i>{{ .LastRun.State }}</span> <span class="faint" title="{{ stamp .LastRun.StartedAt }}">{{ ago .LastRun.StartedAt }}</span>{{ else }}<span class="faint">never run</span>{{ end }}</td>
-			<td data-label="By">{{ .UserName }}</td>
+			<td data-label="By">{{ template "user" (list $ .UserName) }}</td>
 			<td class="actions">
 				{{- if .CanRun }}{{ if .Running }}
 				<button type="button" class="btn btn-sm" data-workflow-stop="{{ .Running }}"><svg class="ic"><use href="#i-stop"/></svg>Stop</button>

@@ -46,6 +46,12 @@
 			<td class="nowrap dim">{{ len .Users }} {{ if eq (len .Users) 1 }}user{{ else }}users{{ end }}</td>
 			<td class="actions"><a class="btn btn-sm" href="/settings/users">Open</a></td>
 		</tr>
+		<tr>
+			<td class="key nowrap"><a href="/settings/permissions"><svg class="ic"><use href="#i-key"/></svg> Permissions</a></td>
+			<td class="desc">What each role may do, rule by rule: inherit, allow or deny. A user's own policy is on their profile.</td>
+			<td class="nowrap dim">{{ len roles }} roles</td>
+			<td class="actions"><a class="btn btn-sm" href="/settings/permissions">Open</a></td>
+		</tr>
 	</tbody>
 </table>
 </div>
