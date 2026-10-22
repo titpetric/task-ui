@@ -151,6 +151,7 @@ func newFixture(t *testing.T) *fixture {
 		values, err := f.opts.Integrations.Values(ctx, integration.Beszel)
 		return values["url"], values["token"], err
 	}}
+	f.opts.Guard.Tokens = storage.NewUserAuthTokenStorage(db)
 	h, err := frontend.New(f.opts)
 	assert.NoError(t, err)
 	f.server = httptest.NewServer(h.Routes())

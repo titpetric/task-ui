@@ -171,6 +171,7 @@ func newFixture(t *testing.T) *fixture {
 	f.opts.SSH = &sshprobe.Prober{Users: []string{"debian"}, Timeout: 2 * time.Second, TTL: time.Hour, Command: fakeSSH(t)}
 	f.opts.Summarizer = &claude.Summarizer{Command: fakeClaude(t), Timeout: 10 * time.Second}
 	f.opts.Summaries = storage.NewRunSummaryStorage(db)
+	f.opts.Tokens = storage.NewUserAuthTokenStorage(db)
 	// AddUser stands in for the password file: a new name becomes a runner.
 	f.opts.AddUser = func(ctx context.Context, name, password string) error {
 		if _, err := users.GetByName(ctx, name); err == nil {

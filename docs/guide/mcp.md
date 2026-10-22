@@ -8,12 +8,10 @@ and hours.
 
 ## Install
 
-Each step runs on the server, in the task-ui container when task-ui runs
-in Docker (`docker exec task task-ui ...`).
-
 1. Pick the user the agent signs in as. A runner suits an agent that runs
    jobs; a viewer only reads. Add one to the password file if the agent
-   gets a user of its own, and wait for task-ui to read the file:
+   gets a user of its own: **Create user** on Settings, Users, or on the
+   server:
 
    ```bash
    task-ui passwd claude
@@ -22,23 +20,25 @@ in Docker (`docker exec task task-ui ...`).
    `TASK_UI_ADMINS` and `TASK_UI_VIEWERS` set the role; every other user
    is a runner (see [Running the server](../running.md)).
 
-2. Create a token for that user, under a name of your choosing, and keep
-   it in a file only root reads:
+2. Open the user on Settings, Users, and press **Enable MCP** under **MCP
+   access**. task-ui makes a token that lasts 30 days and shows it once,
+   beside the ready `claude mcp add` command; copy both before you leave
+   the page, which keeps only the token's hash. The section shows the
+   token's creation, its expiry, in amber within a week and red once
+   past, and its last use. **Rotate** makes a new token and
+   the old one stops working at once; **Disable** removes it.
 
-   ```bash
-   docker exec task task-ui token claude claude-code > /root/task.token
-   chmod 600 /root/task.token
-   ```
-
-   task-ui prints the token once and keeps only its hash. A new token
-   under the same name replaces it, and the old one stops working.
+   Enabling takes Allow Edits on Users, which admins hold; a user rotates
+   or disables their own token once on, from their own page. A
+   token past its expiry gets `401` "token expired, rotate it on your user
+   settings".
 
 3. Add the server to the agent, on the machine the agent runs on. For
    Claude Code:
 
    ```bash
    claude mcp add --transport http --scope user task https://task.example.com/api/mcp \
-     --header "Authorization: Bearer $(cat /root/task.token)"
+     --header "Authorization: Bearer <token>"
    ```
 
    Any other MCP client takes the same two things: the URL of `/api/mcp`
@@ -50,6 +50,18 @@ in Docker (`docker exec task task-ui ...`).
 4. Check it: `claude mcp list` shows `task` as connected, and a new
    session lists the tools below. Without a token, or with a wrong one,
    `/api/mcp` answers 401.
+
+On the server, the CLI makes tokens without an expiry, under a name of
+your choosing, for an agent that runs unattended: in the task-ui
+container when task-ui runs in Docker:
+
+```bash
+docker exec task task-ui token claude claude-code > /root/task.token
+chmod 600 /root/task.token
+```
+
+task-ui prints the token once and keeps only its hash. A new token under
+the same name replaces it, and the old one stops working.
 
 To list the tokens of a user with the last use of each, run
 `task-ui token claude`; `task-ui token claude rm claude-code` removes one.

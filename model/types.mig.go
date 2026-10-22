@@ -1390,6 +1390,9 @@ type UserAuthToken struct {
 
 	// Updated At
 	UpdatedAt *time.Time `db:"updated_at" json:"updated_at"`
+
+	// Expires At
+	ExpiresAt *time.Time `db:"expires_at" json:"expires_at"`
 }
 
 // GetID will return the value of ID.
@@ -1434,11 +1437,17 @@ func (u *UserAuthToken) GetUpdatedAt() *time.Time { return u.UpdatedAt }
 // SetUpdatedAt sets UpdatedAt to the provided value.
 func (u *UserAuthToken) SetUpdatedAt(stamp time.Time) { u.UpdatedAt = &stamp }
 
+// GetExpiresAt will return the value of ExpiresAt.
+func (u *UserAuthToken) GetExpiresAt() *time.Time { return u.ExpiresAt }
+
+// SetExpiresAt sets ExpiresAt to the provided value.
+func (u *UserAuthToken) SetExpiresAt(stamp time.Time) { u.ExpiresAt = &stamp }
+
 // UserAuthTokenTable is the name of the table in the DB.
 const UserAuthTokenTable = "`user_auth_token`"
 
 // UserAuthTokenFields is a list of all columns in the DB table.
-var UserAuthTokenFields = []string{"id", "user_id", "name", "hash", "used_at", "created_at", "updated_at"}
+var UserAuthTokenFields = []string{"id", "user_id", "name", "hash", "used_at", "created_at", "updated_at", "expires_at"}
 
 // UserAuthTokenPrimaryFields are the primary key fields in the DB table.
 var UserAuthTokenPrimaryFields = []string{"id"}

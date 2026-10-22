@@ -814,6 +814,10 @@
       type: timestamp
       comment: Updated At
       datatype: datetime
+    - name: expires_at
+      type: timestamp
+      comment: Expires At
+      datatype: datetime
   indexes:
     - name: sqlite_autoindex_user_auth_token_1
       columns:

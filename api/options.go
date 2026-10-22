@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"time"
 
 	"github.com/titpetric/task-ui/artifactstore"
 	"github.com/titpetric/task-ui/beszel"
@@ -69,6 +70,12 @@ type Options struct {
 	// AddUser puts a new user in the password file; nil leaves users to
 	// the file and task-ui passwd.
 	AddUser func(ctx context.Context, name, password string) error
+	// Tokens keep the tokens clients sign in with; a user's MCP token
+	// is one. Nil turns MCP access from the settings off.
+	Tokens *storage.UserAuthTokenStorage
+	// Now is the clock a token's expiry starts from; nil is the real
+	// time.
+	Now func() time.Time
 	// Summaries keep Claude's summary of each run that has one.
 	Summaries *storage.RunSummaryStorage
 	// Summarizer writes the summary of a run on the hosts with Claude.

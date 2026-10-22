@@ -639,6 +639,28 @@
     });
   }
 
+  // reveal shows what an answer holds once, such as a new token, in the
+  // block a form's data-reveal names, and hides what it replaces: the
+  // block's section's [data-before-reveal]. Each [data-fill] there takes
+  // its template with the answer's fields put in; a copy button takes it
+  // as what it copies. Nothing keeps the answer: a reload shows it no more.
+  function reveal(selector, data) {
+    var target = document.querySelector(selector);
+    if (!target) return;
+    var section = target.closest("section") || target.parentNode;
+    section.querySelectorAll("[data-before-reveal]").forEach(function (el) { el.hidden = true; });
+    target.querySelectorAll("[data-fill]").forEach(function (el) {
+      var value = el.dataset.fill.replace(/\{(\w+)\}/g, function (all, name) {
+        var v = data && data[name] !== undefined && data[name] !== null ? String(data[name]) : "";
+        if (/_at$/.test(name) && v) v = new Date(v).toLocaleString();
+        return v;
+      });
+      if (el.hasAttribute("data-copy")) el.setAttribute("data-copy", value);
+      else el.textContent = value;
+    });
+    target.hidden = false;
+  }
+
   function submit(form) {
     var method = (form.dataset.method || "POST").toUpperCase();
     var button = form.querySelector("[type=submit]");
@@ -658,6 +680,10 @@
         if (button) button.disabled = false;
         form.reset();
         refreshNotes();
+        return;
+      }
+      if (form.dataset.reveal) {
+        reveal(form.dataset.reveal, res.data);
         return;
       }
       next(filled(form.dataset.next, res.data));

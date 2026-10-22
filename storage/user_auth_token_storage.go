@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/titpetric/task-ui/model"
 )
@@ -19,16 +20,35 @@ func NewUserAuthTokenStorage(db DB) *UserAuthTokenStorage {
 }
 
 // Set stores a token for a user under a name, in place of the one it had.
+// It never expires.
 func (s *UserAuthTokenStorage) Set(ctx context.Context, userID, name, hash string) error {
+	_, err := s.set(ctx, userID, name, hash, nil)
+	return err
+}
+
+// SetUntil stores a token like Set, one that stops signing in at
+// expires, and returns its row.
+func (s *UserAuthTokenStorage) SetUntil(ctx context.Context, userID, name, hash string, expires time.Time) (*model.UserAuthToken, error) {
+	expires = expires.UTC().Truncate(time.Millisecond)
+	return s.set(ctx, userID, name, hash, &expires)
+}
+
+func (s *UserAuthTokenStorage) set(ctx context.Context, userID, name, hash string, expires *time.Time) (*model.UserAuthToken, error) {
 	if userID == "" || name == "" || hash == "" {
-		return errors.New("a token needs a user, a name and a hash")
+		return nil, errors.New("a token needs a user, a name and a hash")
 	}
 	if err := s.Delete(ctx, userID, name); err != nil {
-		return err
+		return nil, err
 	}
-	row := &model.UserAuthToken{ID: model.NewID(), UserID: userID, Name: name, Hash: hash, CreatedAt: stamp()}
+	row := &model.UserAuthToken{ID: model.NewID(), UserID: userID, Name: name, Hash: hash, CreatedAt: stamp(), ExpiresAt: expires}
 	row.UpdatedAt = row.CreatedAt
-	return client(s.db).Insert(ctx, model.UserAuthTokenTable, row)
+	return row, client(s.db).Insert(ctx, model.UserAuthTokenTable, row)
+}
+
+// Get returns a user's token by name, or ErrNotFound.
+func (s *UserAuthTokenStorage) Get(ctx context.Context, userID, name string) (*model.UserAuthToken, error) {
+	token, err := client(s.db).Get[model.UserAuthToken](ctx, "SELECT * FROM user_auth_token WHERE user_id = ? AND name = ?", userID, name)
+	return token, notFound(err)
 }
 
 // Find returns the token with a hash, or ErrNotFound.
@@ -51,4 +71,9 @@ func (s *UserAuthTokenStorage) List(ctx context.Context, userID string) ([]model
 // Delete removes a user's token by name.
 func (s *UserAuthTokenStorage) Delete(ctx context.Context, userID, name string) error {
 	return client(s.db).Exec(ctx, "DELETE FROM user_auth_token WHERE user_id = ? AND name = ?", userID, name)
+}
+
+// DeleteByUser removes every token of a user.
+func (s *UserAuthTokenStorage) DeleteByUser(ctx context.Context, userID string) error {
+	return client(s.db).Exec(ctx, "DELETE FROM user_auth_token WHERE user_id = ?", userID)
 }

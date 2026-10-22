@@ -285,6 +285,7 @@ func (a *App) wire(version string) error {
 	a.Guard = access.NewGuard(a.Users, access.NewSessions(storage.NewUserSessionStorage(a.DB), a.Users, cfg.SessionTTL))
 	a.Guard.AutoLogin = cfg.AutoLogin
 	a.Guard.Tokens = storage.NewUserAuthTokenStorage(a.DB)
+	a.Guard.Now = cfg.Clock()
 	a.Board = &note.Board{
 		Notes: storage.NewNoteStorage(a.DB), Users: a.Users, Runs: runs, Catalogue: a.Catalogue, Runner: a.Runner,
 		Recordings: recordings, Events: events, Agent: cfg.Agent, AgentJob: cfg.AgentJob, Root: cfg.Root,
@@ -306,7 +307,7 @@ func (a *App) wire(version string) error {
 		Workflows: workflows, WorkflowRuns: workflowRuns, Flows: a.Workflows, Events: events,
 		Runner: a.Runner, Catalogue: a.Catalogue, Git: g, Keys: keys, KeyPolicies: keyPolicies, Env: env, Recordings: recordings, Root: cfg.Root, Board: a.Board,
 		Integrations: integrations, Hosts: hosts, SSH: prober, Summarizer: &claude.Summarizer{Timeout: 3 * time.Minute},
-		AddUser: addUser, Summaries: summaries, Version: version,
+		AddUser: addUser, Tokens: a.Guard.Tokens, Now: cfg.Clock(), Summaries: summaries, Version: version,
 	})
 	pages, err := frontend.New(frontend.Options{
 		Guard: a.Guard, Auth: access.NewAuthenticator(a.Users, a.Emails, a.Passwords), Users: a.Users, Projects: projects, Workspaces: workspaces, Runs: runs, Artifacts: artifacts, Schedules: schedules, Secrets: secrets,

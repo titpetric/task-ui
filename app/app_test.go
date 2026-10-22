@@ -2,6 +2,7 @@ package app_test
 
 import (
 	"context"
+	"encoding/json"
 	"io"
 	"net"
 	"net/http"
@@ -212,4 +213,69 @@ func TestApp_Run(t *testing.T) {
 	taken := newApp(t, "guest")
 	taken.Config.Listen = "256.256.256.256:1"
 	assert.Error(t, taken.Run(context.Background()))
+}
+
+// An MCP token made from the settings signs in to /api/mcp; a rotation
+// ends the old one at once, and the CLI's token, without an expiry,
+// keeps working throughout.
+func TestApp_MCPToken(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	a := newApp(t, "")
+	handler := a.Handler()
+	admin, err := a.Users.GetByName(ctx, "admin")
+	assert.NoError(t, err)
+	guest, err := a.Users.GetByName(ctx, "guest")
+	assert.NoError(t, err)
+	cli, hash, err := access.NewToken()
+	assert.NoError(t, err)
+	assert.NoError(t, a.Guard.Tokens.Set(ctx, admin.ID, "cli", hash))
+
+	call := func(token, method, path, body string) (int, string) {
+		req := httptest.NewRequest(method, path, strings.NewReader(body))
+		req.Header.Set("Authorization", "Bearer "+token)
+		req.Header.Set("Content-Type", "application/json")
+		rec := httptest.NewRecorder()
+		handler.ServeHTTP(rec, req)
+		raw, _ := io.ReadAll(rec.Body)
+		return rec.Code, string(raw)
+	}
+	initialize := `{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-03-26"}}`
+	enable := func() string {
+		status, raw := call(cli, http.MethodPost, "/api/users/"+guest.ID+"/mcp", "")
+		assert.Equal(t, http.StatusCreated, status, raw)
+		var answer struct {
+			Token     string `json:"token"`
+			ExpiresAt string `json:"expires_at"`
+		}
+		assert.NoError(t, json.Unmarshal([]byte(raw), &answer))
+		assert.True(t, strings.HasPrefix(answer.Token, access.TokenPrefix))
+		assert.NotEqual(t, "", answer.ExpiresAt)
+		return answer.Token
+	}
+
+	first := enable()
+	status, _ := call(first, http.MethodPost, "/api/mcp", initialize)
+	assert.Equal(t, http.StatusOK, status)
+
+	second := enable()
+	status, _ = call(first, http.MethodPost, "/api/mcp", initialize)
+	assert.Equal(t, http.StatusUnauthorized, status)
+	status, _ = call(second, http.MethodPost, "/api/mcp", initialize)
+	assert.Equal(t, http.StatusOK, status)
+	status, _ = call(cli, http.MethodPost, "/api/mcp", initialize)
+	assert.Equal(t, http.StatusOK, status)
+
+	// The listing tells MCP is on, with no token.
+	status, raw := call(cli, http.MethodGet, "/api/users", "")
+	assert.Equal(t, http.StatusOK, status)
+	assert.Contains(t, raw, `"mcp":{"enabled":true`)
+	assert.NotContains(t, raw, second)
+	assert.NotContains(t, raw, access.HashToken(second))
+	assert.NotContains(t, raw, access.TokenPrefix)
+
+	status, _ = call(cli, http.MethodDelete, "/api/users/"+guest.ID+"/mcp", "")
+	assert.Equal(t, http.StatusNoContent, status)
+	status, _ = call(second, http.MethodPost, "/api/mcp", initialize)
+	assert.Equal(t, http.StatusUnauthorized, status)
 }

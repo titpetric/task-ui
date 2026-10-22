@@ -11,3 +11,4 @@ User Auth Token.
 | used_at    | datetime |     | Used At    |
 | created_at | datetime |     | Created At |
 | updated_at | datetime |     | Updated At |
+| expires_at | datetime |     | Expires At |

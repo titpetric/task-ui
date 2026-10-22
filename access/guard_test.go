@@ -199,3 +199,46 @@ func TestGuard_UserBearer(t *testing.T) {
 	guard.Require(hello).ServeHTTP(w, bearer(token))
 	assert.Equal(t, "hello ops", w.Body.String())
 }
+
+// A token with an expiry signs in until then, and after it Require
+// answers 401 with what to do; a token without one keeps signing in.
+func TestGuard_UserBearerExpiry(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	db, err := storage.OpenAndMigrate(ctx, ":memory:")
+	assert.NoError(t, err)
+	t.Cleanup(func() { db.Close() })
+	users := storage.NewUserStorage(db)
+	ops := &model.User{Name: "ops", Role: model.RoleRunner}
+	assert.NoError(t, users.Create(ctx, ops))
+	guard := access.NewGuard(users, access.NewSessions(storage.NewUserSessionStorage(db), users, time.Hour))
+	now := time.Date(2026, time.October, 22, 12, 0, 0, 0, time.UTC)
+	guard.Now = func() time.Time { return now }
+	guard.Tokens = storage.NewUserAuthTokenStorage(db)
+
+	mcp, mcpHash, err := access.NewToken()
+	assert.NoError(t, err)
+	_, err = guard.Tokens.SetUntil(ctx, ops.ID, access.MCPToken, mcpHash, now.Add(access.MCPTokenTTL))
+	assert.NoError(t, err)
+	cli, cliHash, err := access.NewToken()
+	assert.NoError(t, err)
+	assert.NoError(t, guard.Tokens.Set(ctx, ops.ID, "cli", cliHash))
+
+	call := func(token string) *httptest.ResponseRecorder {
+		r := httptest.NewRequest(http.MethodGet, "/api/mcp", nil)
+		r.Header.Set("Authorization", "Bearer "+token)
+		w := httptest.NewRecorder()
+		guard.Require(hello).ServeHTTP(w, r)
+		return w
+	}
+	assert.Equal(t, "hello ops", call(mcp).Body.String())
+
+	now = now.Add(access.MCPTokenTTL)
+	expired := call(mcp)
+	assert.Equal(t, http.StatusUnauthorized, expired.Code)
+	assert.Contains(t, expired.Body.String(), "token expired, rotate it on your user settings")
+	assert.Equal(t, "hello ops", call(cli).Body.String())
+	wrong := call("tui_wrong")
+	assert.Equal(t, http.StatusUnauthorized, wrong.Code)
+	assert.NotContains(t, wrong.Body.String(), "expired")
+}

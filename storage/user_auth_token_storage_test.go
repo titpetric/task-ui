@@ -3,6 +3,7 @@ package storage_test
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/titpetric/task-ui/internal/assert"
 	"github.com/titpetric/task-ui/storage"
@@ -40,4 +41,27 @@ func TestUserAuthTokenStorage(t *testing.T) {
 	assert.NoError(t, tokens.Delete(ctx, "u1", "mcp"))
 	_, err = tokens.Find(ctx, "h2")
 	assert.ErrorIs(t, err, storage.ErrNotFound)
+	_, err = tokens.Get(ctx, "u1", "mcp")
+	assert.ErrorIs(t, err, storage.ErrNotFound)
+	assert.Nil(t, list[0].ExpiresAt, "a token of Set never expires")
+
+	// SetUntil keeps an expiry; Get finds the token by name.
+	expires := time.Date(2026, time.November, 21, 10, 0, 0, 0, time.UTC)
+	row, err := tokens.SetUntil(ctx, "u1", "mcp", "h4", expires)
+	assert.NoError(t, err)
+	assert.Equal(t, expires, *row.ExpiresAt)
+	got, err := tokens.Get(ctx, "u1", "mcp")
+	assert.NoError(t, err)
+	assert.Equal(t, row.ID, got.ID)
+	assert.True(t, expires.Equal(*got.ExpiresAt))
+	_, err = tokens.SetUntil(ctx, "", "mcp", "h5", expires)
+	assert.Error(t, err)
+
+	assert.NoError(t, tokens.Set(ctx, "u2", "cli", "h6"))
+	assert.NoError(t, tokens.DeleteByUser(ctx, "u1"))
+	list, err = tokens.List(ctx, "u1")
+	assert.NoError(t, err)
+	assert.Len(t, list, 0)
+	_, err = tokens.Find(ctx, "h6")
+	assert.NoError(t, err, "another user's token stays")
 }

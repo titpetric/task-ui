@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"testing"
+	"time"
 
 	"github.com/titpetric/task-ui/access"
 	"github.com/titpetric/task-ui/frontend"
@@ -53,7 +54,7 @@ func TestUsers_MCP(t *testing.T) {
 	assert.Contains(t, derived, "Connect an MCP client")
 	assert.Contains(t, derived, `data-copy="https://task.example.com"`)
 	assert.Contains(t, derived, `data-copy="https://task.example.com/api/mcp"`)
-	assert.Contains(t, derived, "task-ui token admin mcp")
+	assert.Contains(t, derived, `href="/settings/users/`+f.users[asAdmin].ID+`#mcp">your user settings</a>`)
 	assert.NotContains(t, derived, access.TokenPrefix)
 
 	f.opts.BaseURL = "https://task.cdn.si"
@@ -100,4 +101,51 @@ func TestUserForm(t *testing.T) {
 	created := f.page(t, asAdmin, "/settings/users/new")
 	assert.Contains(t, created, `data-api="/api/users" data-method="POST"`)
 	assert.Contains(t, created, `name="password" required minlength="8"`)
+}
+
+// A user's page shows their MCP access: Enable for user/edit, the dates
+// with Rotate and Disable once on, for its own user too, and never the
+// token. The expiry turns amber within a week and red when past.
+func TestUserForm_MCP(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	ops := f.users[asOps]
+	own := "/settings/users/" + ops.ID
+
+	off := f.page(t, asAdmin, own)
+	assert.Contains(t, off, "MCP access")
+	assert.Contains(t, off, `data-api="/api/users/`+ops.ID+`/mcp" data-method="POST" data-reveal="#mcp-token"`)
+	assert.Contains(t, off, "Enable MCP</button>")
+	assert.Contains(t, off, `data-fill="claude mcp add --transport http --scope user task http://127.0.0.1`)
+
+	// Their own page opens for ops without user/view, with no folders
+	// form and no Enable; another user's page stays closed.
+	mine := f.page(t, asOps, own)
+	assert.Contains(t, mine, "MCP access")
+	assert.Contains(t, mine, "ask an admin")
+	assert.NotContains(t, mine, "Enable MCP</button>")
+	assert.NotContains(t, mine, `name="folders"`)
+	assert.Equal(t, http.StatusForbidden, f.get(t, asOps, "/settings/users/"+f.users[asViewer].ID).Status)
+
+	token, hash, err := access.NewToken()
+	assert.NoError(t, err)
+	expires := f.opts.Now().Add(access.MCPTokenTTL)
+	_, err = f.opts.Guard.Tokens.SetUntil(context.Background(), ops.ID, access.MCPToken, hash, expires)
+	assert.NoError(t, err)
+	on := f.page(t, asOps, own)
+	assert.Contains(t, on, "Rotate</button>")
+	assert.Contains(t, on, `data-delete="/api/users/`+ops.ID+`/mcp"`)
+	assert.Contains(t, on, `<span class="badge" title=`)
+	assert.NotContains(t, on, token)
+	assert.NotContains(t, on, hash)
+	assert.NotContains(t, f.page(t, asAdmin, own), token)
+
+	_, err = f.opts.Guard.Tokens.SetUntil(context.Background(), ops.ID, access.MCPToken, hash, f.opts.Now().Add(3*24*time.Hour))
+	assert.NoError(t, err)
+	assert.Contains(t, f.page(t, asOps, own), `<span class="badge signal" title=`)
+	_, err = f.opts.Guard.Tokens.SetUntil(context.Background(), ops.ID, access.MCPToken, hash, f.opts.Now().Add(-time.Hour))
+	assert.NoError(t, err)
+	expired := f.page(t, asOps, own)
+	assert.Contains(t, expired, `<span class="badge bad" title=`)
+	assert.Contains(t, expired, ">expired ")
 }

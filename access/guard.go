@@ -2,9 +2,11 @@ package access
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/storage"
@@ -25,6 +27,8 @@ type Guard struct {
 	AutoLogin string
 	// LoginPath is where the guard sends a browser without a session.
 	LoginPath string
+	// Now is the clock a token's expiry reads; nil is the real time.
+	Now func() time.Time
 }
 
 // NewGuard returns a guard over the users and the sessions.
@@ -41,38 +45,57 @@ func (g *Guard) LoginRequired() bool {
 // or the session cookie. Nobody is nil, and so is a request with a token
 // that signs in nobody, whatever else it carries.
 func (g *Guard) User(r *http.Request) *model.User {
+	user, _ := g.resolve(r)
+	return user
+}
+
+// resolve is User, with why a bearer token signs in nobody:
+// ErrTokenExpired for one past its expiry.
+func (g *Guard) resolve(r *http.Request) (*model.User, error) {
 	if token := BearerToken(r); token != "" {
 		return g.bearer(r.Context(), token)
 	}
 	if !g.LoginRequired() {
-		return g.lookup(r.Context(), g.AutoLogin)
+		return g.lookup(r.Context(), g.AutoLogin), nil
 	}
 	cookie, err := r.Cookie(Cookie)
 	if err != nil {
-		return nil
+		return nil, nil
 	}
 	user, err := g.Sessions.Resolve(r.Context(), cookie.Value)
 	if err != nil {
-		return nil
+		return nil, nil
 	}
-	return user
+	return user, nil
 }
 
-// bearer resolves the user of a token, and records its use.
-func (g *Guard) bearer(ctx context.Context, token string) *model.User {
+// bearer resolves the user of a token, and records its use. A token
+// with an expiry signs in until then; one without signs in until a
+// delete.
+func (g *Guard) bearer(ctx context.Context, token string) (*model.User, error) {
 	if g.Tokens == nil {
-		return nil
+		return nil, nil
 	}
 	row, err := g.Tokens.Find(ctx, HashToken(token))
 	if err != nil {
-		return nil
+		return nil, nil
+	}
+	if row.ExpiresAt != nil && !g.now().Before(*row.ExpiresAt) {
+		return nil, ErrTokenExpired
 	}
 	user, err := g.Users.Get(ctx, row.UserID)
 	if err != nil {
-		return nil
+		return nil, nil
 	}
 	_ = g.Tokens.Touch(ctx, row.ID)
-	return user
+	return user, nil
+}
+
+func (g *Guard) now() time.Time {
+	if g.Now != nil {
+		return g.Now()
+	}
+	return time.Now()
 }
 
 func (g *Guard) lookup(ctx context.Context, name string) *model.User {
@@ -87,8 +110,12 @@ func (g *Guard) lookup(ctx context.Context, name string) *model.User {
 // answers API and websocket requests with 401.
 func (g *Guard) Require(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		user := g.User(r)
+		user, err := g.resolve(r)
 		if user == nil {
+			if errors.Is(err, ErrTokenExpired) {
+				http.Error(w, err.Error(), http.StatusUnauthorized)
+				return
+			}
 			if g.wantsPage(r) {
 				http.Redirect(w, r, g.LoginPath+"?back="+url.QueryEscape(r.URL.RequestURI()), http.StatusSeeOther)
 				return
