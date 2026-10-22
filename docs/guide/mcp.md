@@ -28,7 +28,9 @@ and hours.
    past, and its last use. **Rotate** makes a new token and
    the old one stops working at once; **Disable** removes it.
 
-   Enabling takes Allow Edits on Users, which admins hold; a user rotates
+   Enabling takes Allow Edits on Users, `user/edit`, which the admin role
+   holds and a policy can grant (see
+   [Settings](settings.md#permissions)); a user rotates
    or disables their own token once on, from their own profile. A
    token past its expiry gets `401` "token expired, rotate it on your user
    settings".
@@ -129,8 +131,8 @@ Each tool takes the permissions of the token's user, the ones a page
 takes in the browser: the role's policy and the user's own, which
 Settings, Permissions and the user's profile set (see
 [Settings](settings.md#permissions)). An agent that should post notes or
-ask prompts without being an admin gets Allow Edits on Notes or on
-Prompts in its own policy. A note from `post_note` and a prompt from
+ask prompts gets Allow Edits on Notes or on Prompts in its own policy;
+the `claude` user starts with both. A note from `post_note` and a prompt from
 `ask_prompt` carry that user's name. A user with `prompt/edit` asks in
 the folders the user sees, and reads the runs of the prompts the user
 asked with `get_run`: `@claude-prompt` of the folder asked in. Other
@@ -151,7 +153,7 @@ folder's own directory, such as `@git:status`. It has no `dir` and no
 start from the browser or `POST /api/runs`, and `list_runs` and
 `get_run` name such a run `folder/dir/job`, as `malta/dockerfiles/blog/build`. `@shell`, the interactive
 shell of **Enter Shell**, and `@claude`, Claude Code in one, answer `403`
-to every token but an admin's; `@claude-note` and `@claude-prompt` start
+to every token whose user lacks the `shell` permission, Enter Shell; `@claude-note` and `@claude-prompt` start
 from the Notes board and the prompt routes alone. The Notes agent's runs,
 `@claude-note`, list with `note/view`, and to the agent's user always.
 

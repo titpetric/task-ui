@@ -10,11 +10,15 @@ the whole first, then one chapter per section, top to bottom.
 
 The page has three parts.
 
-- **The header.** The name and its prompt logo go home to the dashboard.
-  Your initials, on the right, open the user menu: who you are, your role,
-  **Profile**, your activity, folders, permissions and MCP access,
-  **Settings** for admins, and **Sign out**. On a phone a menu button on
-  the left opens the sidebar as a drawer.
+- **The header.** The name goes home to the dashboard. With Allow Edits
+  on Prompts, `prompt/edit`, a prompt field follows it: Enter asks Claude
+  about the page you are on, and the logo opens and closes the panel with
+  Claude's reply (see [the prompt](guide/projects.md#prompt)); without it,
+  the logo goes home too. Your initials, on the right, open the user
+  menu: who you are, your role, **Profile**, with your activity,
+  folders, permissions and MCP access, **SSH keys**, **Settings** with
+  the view permission of any of its sections, and **Logout**. On a phone
+  a menu button on the left opens the sidebar as a drawer.
 - **The sidebar.** Everything you can open, in a fixed order:
   1. the views across all folders: **Dashboard**, **Inventory**,
      **Workflows** (with the workflows listed under it), **Runs**,
@@ -34,14 +38,16 @@ Three ideas carry the rest of the guide.
 
 - **A job** is a target a folder declares: an atkins or Taskfile job, a
   Makefile target, a package script, a file under `scripts/`. task-ui
-  reads the files and lists what they declare; it never writes them.
+  reads the files and lists what they declare; task-ui itself never
+  edits them, though a job or a Claude run may change files when asked.
 - **A run** is a job running on the server, on a terminal of its own. It
   belongs to no window: anyone allowed attaches to it, and it goes on when
   you close every window. One job runs once at a time across the
   instance; different jobs run side by side.
-- **A role** decides what you can do. Viewers watch and read history,
-  runners start the jobs the allow lists let them, admins also manage the
-  instance under Settings.
+- **A role** decides what you can do, with each user's own policy on
+  top. Viewers watch and read history, runners start the jobs the allow
+  lists let them, and admins may do everything; what each role may do is
+  in [Settings, Permissions](guide/settings.md#permissions).
 
 Every list marks a job, a workflow or a run with `#!`: faint
 until it has run, then in the colour of how it last ended, green for ok

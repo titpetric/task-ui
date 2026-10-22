@@ -14,8 +14,10 @@ such as `note` stands for its rules `note/view`, `note/edit` and
 
 A folder is a directory under the root with something to run, and a
 project is a folder at the top, most often a git checkout. task-ui reads
-the jobs from the folder's sources and never changes the files: atkins
-(`atkins.yml`), Taskfile, make, npm, composer and `scripts/*`. A pipeline
+the jobs from the folder's sources, atkins (`atkins.yml`), Taskfile,
+make, npm, composer and `scripts/*`, and does not edit them itself. The
+jobs it runs, and Claude in a run, work in the folder and may change its
+files when asked to. A pipeline
 file speaks for its folder. **Recursive**, on by default, lists the
 folders inside a project as deep as they go; off lists the project and
 its top-level folders alone. Discovery skips what `.gitignore` ignores,
@@ -157,5 +159,6 @@ The MCP server at `/api/mcp` calls the API as the token's user, with
 the same permissions. Its tools: `whoami`, `list_jobs`, `run_job`,
 `list_runs`, `get_run`, `list_workflows`, `run_workflow`,
 `list_workflow_runs`, `list_notes`, `note_comment`, `post_note` and
-`ask_prompt`. An admin enables a token on a user's profile; it lasts 30
-days. A refused call names the permission it needs.
+`ask_prompt`. A user with `user/edit` enables a token on a user's
+profile; it lasts 30 days, and its user rotates or disables it. A
+refused call names the permission it needs.

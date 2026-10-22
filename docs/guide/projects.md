@@ -20,7 +20,7 @@ without a label row; their links carry `_`, as `/f/_/infra`.
 
 ![A folder: its jobs, files and environment](../assets/folder-dark.png)
 
-An admin adds a project from a git repository on **Add project** (see
+A user with Allow Edits on Projects, `project/edit`, adds a project from a git repository on **Add project** (see
 [Settings](settings.md#projects)). Its **Workspace** select clones the
 project at the top of the root, `_`, or inside a named workspace (see
 [Workspaces](workspaces.md#clone-a-project-into-one)).
@@ -70,8 +70,9 @@ row that still names the old ID, as `{kind, id, folder, name}`.
 
 ## Where the jobs come from
 
-task-ui reads the files a folder has and lists their targets. It never
-changes them.
+task-ui reads the files a folder has and lists their targets; task-ui
+itself never edits them. A job, or a Claude run, may change files in
+the folder when you ask it to.
 
 | Source   | File                                  | A job is                                              |
 |----------|---------------------------------------|-------------------------------------------------------|
@@ -127,9 +128,9 @@ Open a folder from the sidebar:
 - **Jobs**: a card each, `default` first, with what it does, its first
   steps, how it last went, **Run**, **|>summarize**, which runs the job
   and has Claude summarise the run on its page when it ends (see
-  [Runs](runs.md#run-and-summarize)), and **Run force**. **Run all** starts every job of the
-  folder in the background. A folder with more than one source has a section
-  per source.
+  [Runs](runs.md#run-and-summarize)), and, on a job with hours, **Run
+  force**; any other job forces from its run's window. A folder with more
+  than one source has a section per source.
 - **Files**: what the folder holds, dot entries too, the directories
   first, each with its size and when it changed, and `..` up a level:
   the folder's dashboard. A directory opens as a page of its own; a file
@@ -184,8 +185,6 @@ Open a folder from the sidebar:
 
 ![A project's Files: .git and .env sealed, ./serve marked to run](../assets/files-dark.png)
 
-![The root's page: each project in Files with Run and |>summarize beside it](../assets/folder-dashboard-dark.png)
-
 ![The default workspace's Files: each project with Run and |>summarize, a dot of how the default last ran](../assets/folder-dashboard-dark.png)
 
 ![A file of the checkout in the preview window](../assets/file-dark.png)
@@ -199,11 +198,12 @@ on load.
 ![The actions bar of a directory: the git line, then git, compose and dockerfile chips](../assets/actions-dark.png)
 
 The bar under a folder's title, and under a directory's inside a folder,
-has two parts, and at its top right for an admin **Enter Shell** and,
-with a Claude token, **Enter Claude**, with
-**Workspace Settings** on a workspace's own page, `/f/_` among them, and
-**Project Settings** on a project's own page, links to their settings
-pages. A directory inside them has neither link.
+has two parts, and at its top right, with the `shell` permission, Enter
+Shell, **Enter Shell** and, with a Claude token besides, **Enter
+Claude**. **Workspace Settings** on a workspace's own page, `/f/_` among
+them, for a user with `workspace/view`, and **Project Settings** on a
+project's own page, for a user with `project/view`, link to their
+settings pages. A directory inside them has neither link.
 
 - **The git line**: `⎇ main ↑1 ↓3 ●2 · malta/dockerfiles`. It reads the
   checkout the page is in, the nearest one up from it and no higher than
@@ -253,7 +253,7 @@ whoever sees the folder.
 
 ### Enter Shell
 
-An admin gets **Enter Shell** at the top right of the bar: `bash -l` in
+A user with the `shell` permission, Enter Shell in [Settings, Permissions](settings.md#permissions), gets **Enter Shell** at the top right of the bar: `bash -l` in
 the folder's directory, or in the directory the page browses, with the
 run's window attached and the keyboard yours: the job `@shell` of the
 folder, run with the environment, secrets and keys of any job there,
@@ -261,14 +261,14 @@ and its history keeps under that directory. Close the window and the
 shell keeps running; **Attach** in its place opens it again, `exit` ends
 it.
 
-Only an admin starts a shell: `POST /api/runs` with `@shell` answers
-`403` to anyone else, whatever the folder's allow rules say, and the
-button shows to admins alone. No schedule or workflow step takes
+Only a user with `shell` starts a shell: `POST /api/runs` with `@shell`
+answers `403` to anyone else, whatever the folder's allow rules say, and
+the button shows to those users alone. No schedule or workflow step takes
 `@shell`: there is no one at its keyboard.
 
 ### Enter Claude
 
-Beside it, an admin with a token in the
+Beside it, a user with `shell` and a token in the
 [Claude Code integration](settings.md#integrations) gets **Enter
 Claude**: Claude Code in a terminal in the folder's directory, or in the
 directory the page browses, the job `@claude` of the folder, which runs
@@ -280,8 +280,8 @@ and above, and the run's history keeps under the directory.
 
 ### Prompt
 
-An admin with a token in the [Claude Code integration](settings.md#integrations)
-gets a **Prompt** box under the bar of every folder page and every
+A user with Allow Edits on Prompts, `prompt/edit`, and a token in the
+[Claude Code integration](settings.md#integrations) gets a **Prompt** box under the bar of every folder page and every
 directory inside a folder: open on a workspace's page, on `/f/_`,
 which prompts at the root, and wherever its directory holds a prompt, folded
 elsewhere until clicked. The prompt runs `@claude-prompt` of that
@@ -298,8 +298,8 @@ No window opens. The question shows under the box at once, `open`, then
 under it when the run ends, without a reload. Each thread links its
 run, which keeps the output. **Reply** under a thread asks again: Claude
 reads the whole thread, its earlier answers among them. The box lists
-the last 20 threads of its directory, for admins; the Notes board lists
-none of them.
+the last 20 threads asked in its directory, by anyone; the Notes board
+lists none of them.
 
 Click a question, or a reply of yours, to edit it: add what you need and
 **Save**, or Ctrl+Enter; Esc cancels. The question runs again on the
@@ -396,7 +396,7 @@ instance key and grant it by policy.
 
 ## Hours
 
-An admin can limit a folder or a job to office hours (see
+A user with `project/edit` can limit a folder or a job to office hours (see
 [Settings](settings.md#projects)). Out of hours **Run** fails.
 **Run force** still works, but asks why: it needs a reason, keeps it
 with the run, and every list of runs shows it.
@@ -409,7 +409,8 @@ An admin runs everything. A runner runs a folder's jobs unless its allow
 list names other users or roles. A viewer runs nothing, but sees the jobs
 and watches the runs. Run Jobs, a permission of
 [Settings, Permissions](settings.md#permissions), decides who runs at
-all; an admin sets which folders each user sees on the user's profile.
+all, Enter Shell who starts `@shell` and `@claude`; a user with
+`user/edit` sets which folders each user sees on the user's profile.
 
 ---
 

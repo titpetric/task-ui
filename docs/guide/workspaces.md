@@ -105,7 +105,10 @@ vendoring.
 
 ## Add, edit and delete
 
-Admins manage workspaces under Settings, **Workspaces**. The page lists
+Settings, **Workspaces** manages them: Allow View on Workspaces,
+`workspace/view`, opens the page, Allow Edits, `workspace/edit`, adds,
+configures, orders, exports and imports, and Allow Deletes,
+`workspace/delete`, removes one. The page lists
 each workspace with its repository and the projects cloned inside it, in
 the sidebar's order.
 
@@ -119,8 +122,10 @@ the sidebar's order.
 - Any number of workspaces may come from one repository, each under its
   own folder: two teams can start from the same tooling and clone
   different projects into it.
-- **Configure** changes a workspace's title and description; the
-  repository and the folder stay.
+- **Configure** changes a workspace's title, description and
+  **Recursive**, which, as a project's does, lists the folders inside it
+  as deep as they go, or, off, the workspace and its top-level folders
+  alone; the repository and the folder stay.
 - **Move up** and **Move down** change the order of the workspaces, in
   the sidebar and on the page. An added workspace goes last. The default
   workspace lists first and keeps its place.
@@ -210,7 +215,7 @@ with their fingerprints, never a private key.
 - The **encryption key**, an ed25519 key, exactly one, encrypts the
   workspace's [secrets](settings.md#secrets): its shared ones and its
   projects'. A workspace starts without one and stores no secrets until
-  an admin adds it: **Generate** makes one, **Upload** takes one you
+  a user with `workspace/edit` adds it: **Generate** makes one, **Upload** takes one you
   have, on this page or on the [Keys](settings.md#keys) page. Rotate
   makes a new one, here, on the Keys page or from the ⋯ menu of the
   workspace on the Secrets page; the previous key stays as a backup, and
@@ -253,7 +258,8 @@ curl -s https://task.example.com/api/workspaces/malta/keys \
 users}` sets the grants, empty for every run, and `DELETE` removes the
 key. `"encrypt": true` on `generate` or `upload` rotates or replaces the
 encryption key; `rekeyed` counts the secrets task-ui wrote again for
-it. The key routes are for admins.
+it. Listing the keys takes `workspace/view`; the other key routes take
+`workspace/edit`.
 
 ## Secrets
 
@@ -278,7 +284,8 @@ workspace's keys.
 
 The bundle carries:
 
-- the workspace's row: title, description, repository, branch and sort;
+- the workspace's row: title, description, repository, branch, sort
+  and Recursive, as `shallow`;
 - its projects, by folder relative to the workspace, with their
   repository, branch and settings;
 - its env files, by folder and path;
@@ -331,7 +338,8 @@ instance doesn't have. Their grants stay and reach a run once a user of
 that name exists. A wrong passphrase, a file that is not a bundle, an
 entry outside `manifest.json`, `keys/encrypt` and `keys/ssh`, and a
 secret the bundled key does not open answer `400`; bundled keys refused
-for their use answer `409`, and a file over the upload limit `413`. Both routes are for admins.
+for their use answer `409`, and a file over the upload limit `413`. Both routes take
+`workspace/edit`.
 
 | Limit | Size |
 |-------|------|
@@ -365,8 +373,9 @@ per trust boundary.
 ## A prompt against a workspace
 
 A workspace's folder page, `/f/malta`, carries the **Prompt** box open
-for an admin once the [Claude Code integration](settings.md#integrations)
-has a token for them; every other folder page, and every directory inside
+for a user with Allow Edits on Prompts, `prompt/edit`, once the
+[Claude Code integration](settings.md#integrations) has a token for
+them; every other folder page, and every directory inside
 a folder, carries it folded until its directory holds a prompt (see
 [Prompt](projects.md#prompt)). The prompt runs `@claude-prompt` of the
 workspace as you, and Claude's answer shows under the question when the

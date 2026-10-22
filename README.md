@@ -14,8 +14,20 @@ that moves it, keys and all, to another instance. A project's Files
 panel browses its checkout like a file manager: a file opens in a
 preview window, and a file that runs gets a Run button. Every folder
 and directory has an actions bar: the git state of its checkout, a chip
-per atkins skill that applies there, and, for an admin, a shell and a
-Claude Code prompt in that directory.
+per atkins skill that applies there, and, with the Enter Shell
+permission, a shell and Claude Code in a terminal in that directory.
+
+Claude works beside the jobs. A prompt asks Claude Code in a folder, a
+directory, about a run, from the header on any page, or at the end of a
+workflow, and Claude's reply lands under the question. **|>summarize** runs
+a job and has Claude summarise the run. The Notes board takes messages
+and replies, and a note naming a user with `@name` is an instruction to
+that user: to the agent, which works on it at once, or to
+an agent elsewhere over MCP. The MCP server at `/api/mcp` serves an
+agent the same jobs, runs, notes and prompts, as a user with a token of
+its own. Permissions decide, per role and per user, what each may view,
+edit, delete and run. The inventory lists the hosts Beszel watches and
+runs a command on every one at once.
 
 ![The dashboard: every terminal in progress, as it looks right now](https://raw.githubusercontent.com/titpetric/task-ui/main/docs/assets/task-ui.png)
 
@@ -61,7 +73,7 @@ task: Available tasks for this project:
 * default:            Run everything
 * fix:                Fix code
 * install:            Install task-ui
-* lint:               Lint with splint, zero findings is the bar
+* lint:               Lint with splint and rulelint, zero findings is the bar
 * run:                Run task-ui over the demo projects
 * smoke:              Exercise a fresh instance end to end, the browser console included
 * test:               Test task-ui
@@ -111,10 +123,11 @@ commands:
 
 ## task: lint
 
-Lint with splint, zero findings is the bar
+Lint with splint and rulelint, zero findings is the bar
 
 commands:
 - `splint ./...`
+- `go run ./internal/cmd/rulelint`
 
 ## task: install
 
