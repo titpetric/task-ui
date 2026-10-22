@@ -65,8 +65,11 @@ type Page struct {
 	Actions *Actions
 	// Prompt is the prompt box of the folder or the directory browsed,
 	// for a user with prompt/edit and a Claude token.
-	Prompt   *Prompt
-	Checkout *git.Info
+	Prompt *Prompt
+	// Summaries says the user may Run and summarize: prompt/edit, a
+	// Claude token and prompts on.
+	Summaries bool
+	Checkout  *git.Info
 	// Tree is what the folder, or the directory browsed in it, holds.
 	Tree []folder.Item
 	// Browse is the directory open inside the folder, or in the artifact
@@ -318,6 +321,13 @@ func (p *Page) CanRun(f *folder.Folder, job *folder.Job) bool {
 		return false
 	}
 	return p.permissions().Run(f.ID, f.Allow, job.Allow)
+}
+
+// Summarizes reports whether a job's Run has |>summarize beside it: for
+// a user with Summaries, on a job that runs to an end of its own, no
+// shell, prompt, Notes agent or interactive job.
+func (p *Page) Summarizes(job *folder.Job) bool {
+	return p.Summaries && job != nil && !job.IsShell() && !job.IsPrompt() && !job.IsNote() && !job.Interactive
 }
 
 // Deletes reports whether the signed in user may delete a note: their

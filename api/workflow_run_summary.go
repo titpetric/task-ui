@@ -7,14 +7,14 @@ import (
 	"time"
 
 	"github.com/titpetric/task-ui/access"
+	"github.com/titpetric/task-ui/claude"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/storage"
 )
 
 // workflowSummaryPrompt is what Claude reads a workflow run's report with.
 const workflowSummaryPrompt = "The input is a markdown report of one run of a workflow in task-ui, a CI and task runner: the workflow, how it ended, and each step in order with the job it ran, how that ended and the end of its terminal output. " +
-	"Summarize it for the operator in markdown. For a failed run, lead with the step that failed and why, quoting the decisive error lines, then what to try. " +
-	"For a passing run, say what each step did and anything worth a look, such as warnings. Keep it brief, and say only what the report shows."
+	claude.RunSummary
 
 // workflowRunSummary returns the summary a workflow run has, from
 // storage: 404 without one.

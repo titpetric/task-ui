@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/titpetric/task-ui/agent"
+	"github.com/titpetric/task-ui/claude"
 	"github.com/titpetric/task-ui/internal/assert"
 )
 
@@ -103,4 +104,20 @@ func TestAgent_Prompt_run(t *testing.T) {
 
 	a.Env = append(env, "TASK_UI_PROMPT_RUN="+filepath.Join(here, "gone.md"))
 	assert.Error(t, a.Run(context.Background(), []string{"prompt"}))
+}
+
+// TASK_UI_PROMPT_INSTRUCTIONS goes to the system prompt, ahead of the
+// hosts, and the question stays the thread's.
+func TestAgent_Prompt_instructions(t *testing.T) {
+	t.Parallel()
+	here := realDir(t)
+	var out bytes.Buffer
+	a := &agent.Agent{Stdout: &out, Stderr: io.Discard, Env: []string{
+		"PATH=" + fakeClaude(t), "CLAUDE_CODE_OAUTH_TOKEN=sk-1", "TASK_UI_PROMPT_DIR=" + here, "TASK_UI_PROMPT=Summarize this run.",
+		"TASK_UI_PROMPT_INSTRUCTIONS=" + claude.RunSummary, "TASK_UI_HOSTS=web",
+	}}
+	assert.NoError(t, a.Run(context.Background(), []string{"prompt"}))
+	text := out.String()
+	assert.Contains(t, text, "arg=--append-system-prompt\narg="+claude.RunSummary+"\n\ntask-ui's inventory of hosts: web\n")
+	assert.Contains(t, text, "the last message is the question:\n\nSummarize this run.\n\n")
 }

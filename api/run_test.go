@@ -12,9 +12,11 @@ import (
 	"time"
 
 	"github.com/titpetric/task-ui/api"
+	"github.com/titpetric/task-ui/claude"
 	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/internal/assert"
 	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/note"
 )
 
 func TestRun_Start(t *testing.T) {
@@ -419,4 +421,46 @@ func TestRun_NoteVisibility(t *testing.T) {
 	assert.Equal(t, http.StatusOK, f.call(t, asAdmin, http.MethodGet, "/runs/"+older.ID, nil).Status)
 	assert.Equal(t, http.StatusOK, f.call(t, asOps, http.MethodGet, "/runs/"+older.ID, nil).Status)
 	assert.Equal(t, http.StatusNotFound, f.call(t, asViewer, http.MethodGet, "/runs/"+older.ID, nil).Status)
+}
+
+// POST /api/runs with summarize runs the job as usual, then asks Claude
+// for its summary in a thread about the run, as the user who started it,
+// with the summary's shape beside the short question. It takes
+// prompt/edit, and no interactive job has one.
+func TestRuns_Summarize(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	assert.NoError(t, os.MkdirAll(promptOut(f, ""), 0o755))
+	f.opts.Board.AgentCommand = []string{"sh", "-c", `printf '%s' "$TASK_UI_PROMPT_INSTRUCTIONS" > "` + promptOut(f, "instructions.out") + `"; printf 'Summary of: %s' "$TASK_UI_PROMPT" > "$TASK_UI_PROMPT_REPLY"`}
+
+	refused := f.call(t, asOps, http.MethodPost, "/runs", api.RunRequest{Folder: "infra", Job: "plan", Summarize: true})
+	assert.Equal(t, http.StatusForbidden, refused.Status, string(refused.Raw))
+	runs := f.call(t, asAdmin, http.MethodGet, "/runs?folder=infra&job=plan", nil)
+	assert.Len(t, runs.list("runs"), 0, "a refused summary starts no run")
+	for _, job := range []string{"@shell", "echo"} {
+		res := f.call(t, asAdmin, http.MethodPost, "/runs", api.RunRequest{Folder: "infra", Job: job, Summarize: true})
+		assert.Equal(t, http.StatusBadRequest, res.Status, job)
+	}
+
+	started := f.call(t, asAdmin, http.MethodPost, "/runs", api.RunRequest{Folder: "infra", Job: "plan", Summarize: true, Cols: 80, Rows: 24})
+	assert.Equal(t, http.StatusCreated, started.Status, string(started.Raw))
+	id := started.str("id")
+	var thread map[string]any
+	assert.Eventually(t, func() bool {
+		notes := f.call(t, asAdmin, http.MethodGet, "/prompts?run="+id, nil).list("notes")
+		if len(notes) != 1 {
+			return false
+		}
+		thread = notes[0].(map[string]any)
+		replies, _ := thread["replies"].([]any)
+		return len(replies) == 1
+	}, 10*time.Second, 20*time.Millisecond)
+	assert.Equal(t, note.SummaryQuestion, thread["body"])
+	assert.Equal(t, id, thread["about_run_id"])
+	assert.Equal(t, asAdmin, thread["user_name"])
+	assert.Equal(t, model.NoteDone, thread["state"])
+	assert.Equal(t, "Summary of: "+note.SummaryQuestion, thread["replies"].([]any)[0].(map[string]any)["body"])
+	instructions, err := os.ReadFile(promptOut(f, "instructions.out"))
+	assert.NoError(t, err)
+	assert.Equal(t, claude.RunSummary, string(instructions))
 }

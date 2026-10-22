@@ -21,6 +21,7 @@ func (h *Handlers) job(w http.ResponseWriter, r *http.Request, f *folder.Folder,
 	}
 	p := h.page(r, where+" / "+job.Name)
 	p.Folder, p.Job = f, job
+	p.Summaries = h.summaries(r, p)
 	p.Crumbs = crumbsOf(where, job.Name, p.Workspaces)
 	p.Runs = h.visibleRuns(r.Context(), h.runSeer(r), storage.RunFilter{Folder: f.ID, Dir: job.Dir, Job: job.ID, Limit: 100})
 	p.Activity = h.activity(r.Context(), h.runSeer(r), storage.RunFilter{Folder: f.ID, Dir: job.Dir, Job: job.ID, Limit: activityLimit}, p.Now, true)

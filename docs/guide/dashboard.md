@@ -29,7 +29,7 @@ a script.
 
 Every folder's jobs in one table, a button each. A job name that repeats
 across folders gets a column of its own (`build`, `push`, `plan`), so the
-same step of every project lines up; the names that do not repeat sit
+same step of every project lines up, `default` first; the names that do not repeat sit
 behind the ⋯ button under **Other**, a menu of the folder's other jobs
 with the action of each. The button takes the running colour while one
 of them runs. A folder with more than one source shows the kind on the

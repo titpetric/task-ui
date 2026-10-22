@@ -1,6 +1,7 @@
 package folder
 
 import (
+	"sort"
 	"strings"
 
 	"github.com/titpetric/task-ui/detector"
@@ -53,4 +54,24 @@ func (j *Job) ArgsCommand() string {
 		return strings.Join(j.Exec, " ")
 	}
 	return strings.Join(j.Command, " ") + " --"
+}
+
+// IsDefault reports whether the job is a default target: an ID of
+// default, after the kind or skill in front of it when it has one.
+func (j *Job) IsDefault() bool {
+	if j == nil {
+		return false
+	}
+	id := strings.TrimPrefix(j.ID, SkillPrefix)
+	return id == "default" || strings.HasSuffix(id, ":default")
+}
+
+// DefaultFirst moves the default jobs to the front of a list, in
+// place, the rest keeping their order. Load and Skills order a folder's
+// jobs with it, so default is the first job everywhere.
+func DefaultFirst(jobs []*Job) []*Job {
+	sort.SliceStable(jobs, func(a, b int) bool {
+		return jobs[a].IsDefault() && !jobs[b].IsDefault()
+	})
+	return jobs
 }

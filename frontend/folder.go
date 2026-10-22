@@ -177,6 +177,7 @@ func (h *Handlers) browse(w http.ResponseWriter, r *http.Request, f *folder.Fold
 	if sub := f.Sub(rel); sub != nil {
 		p.Actions = h.actions(r, p, sub)
 		p.Prompt = h.prompt(r, p, f, rel)
+		p.Summaries = h.summaries(r, p)
 		if len(sub.Sources) > 0 {
 			p.Place = sub
 			p.Last = h.lastRuns(r, sub)
@@ -205,6 +206,7 @@ func (h *Handlers) folder(w http.ResponseWriter, r *http.Request, f *folder.Fold
 	p.Actions = h.actions(r, p, f)
 	h.settingsLinks(r, p, f)
 	p.Prompt = h.prompt(r, p, f, "")
+	p.Summaries = h.summaries(r, p)
 	if h.opts.Git != nil && h.opts.Git.IsRepo(f.Dir) {
 		p.Checkout = h.opts.Git.Info(f.Dir)
 		if h.opts.Disk != nil {

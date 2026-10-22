@@ -105,7 +105,8 @@ func (b *Board) reask(ctx context.Context, note *model.Note) {
 // background, and replies with Claude's answer when the run ends: in a
 // new reply, or in again, the reply to rewrite, from the thread before
 // it. A thread about a run gets the run in a file, TASK_UI_PROMPT_RUN,
-// as its output may pass what an environment variable holds.
+// as its output may pass what an environment variable holds, and the
+// summary of Run and summarize its shape in TASK_UI_PROMPT_INSTRUCTIONS.
 func (b *Board) dispatchPrompt(note *model.Note, req runner.Request, again *model.Note) {
 	ctx := context.Background()
 	answer, err := replyFile()
@@ -113,7 +114,9 @@ func (b *Board) dispatchPrompt(note *model.Note, req runner.Request, again *mode
 		b.finish(ctx, note, model.NoteFailed, "The reply file was not made: "+err.Error(), again)
 		return
 	}
-	req.Env = append(append([]string{}, req.Env...), "TASK_UI_PROMPT="+b.thread(ctx, note, again), "TASK_UI_PROMPT_REPLY="+answer)
+	thread := b.thread(ctx, note, again)
+	req.Env = append(append([]string{}, req.Env...), "TASK_UI_PROMPT="+thread, "TASK_UI_PROMPT_REPLY="+answer)
+	req.Env = append(req.Env, instructions(note, thread)...)
 	about := ""
 	if note.AboutRunID != "" {
 		if about, err = b.aboutRun(ctx, note.AboutRunID); err != nil {

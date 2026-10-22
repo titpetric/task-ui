@@ -486,7 +486,7 @@
 				{{- if and .Exec .Path }}{{ with $.Folder.Job (print "./" .Path) }}
 				{{- $run := $.RunningRun .Key }}
 				{{- if $run }}<a class="btn btn-sm" href="/runs/{{ $run.ID }}" data-attach="{{ $run.ID }}"><svg class="ic"><use href="#i-eye"/></svg>Attach</a>
-				{{- else if $.CanRun $.Folder . }}{{ template "runButtons" (list $.Folder .) }}{{ end }}
+				{{- else if $.CanRun $.Folder . }}{{ template "runButtons" (list $ $.Folder .) }}{{ end }}
 				{{- end }}{{ end }}
 				{{- if and (not .Dir) .Href }}
 				<a class="btn-icon" href="{{ .Href }}?download" title="Download {{ .Name }}" aria-label="Download {{ .Name }}"><svg class="ic"><use href="#i-download"/></svg></a>
@@ -552,7 +552,7 @@
 					{{- if $run }}
 					<a class="btn btn-sm" href="/runs/{{ $run.ID }}" data-attach="{{ $run.ID }}"><svg class="ic"><use href="#i-eye"/></svg>Attach</a>
 					{{- if $can }}<button type="button" class="btn-icon danger" data-kill="{{ $run.ID }}" title="Kill the run" aria-label="Kill the run"><svg class="ic"><use href="#i-stop"/></svg></button>{{ end }}
-					{{- else if $can }}{{ template "runButtons" (list $p $r) }}
+					{{- else if $can }}{{ template "runButtons" (list $ $p $r) }}
 					{{- else }}<a class="btn btn-sm" href="{{ $.JobHref $p $r }}">History</a>{{ end -}}
 				</span>
 			</header>
@@ -585,12 +585,17 @@
 {{- end }}
 {{- end }}
 
-{{- /* runButtons are Run, and Run force for a job with hours. Run of a job
-     that takes args opens a field for them under its card or head first,
-     with the command they follow. */}}
+{{- /* runButtons are Run, |>summarize, and Run force for a job with
+     hours. Run of a job that takes args opens a field for them under its
+     card or head first, with the command they follow. |>summarize runs
+     the job the same way, and Claude summarises the run on its page when
+     it ends. */}}
 {{ define "runButtons" }}
-{{- $p := index . 0 }}{{ $r := index . 1 -}}
+{{- $ := index . 0 }}{{ $p := index . 1 }}{{ $r := index . 2 -}}
 <button type="button" class="btn btn-primary btn-sm" data-run data-folder="{{ $p.ID }}"{{ with $r.Dir }} data-dir="{{ . }}"{{ end }} data-job="{{ $r.ID }}" data-title="{{ $p.ID }}{{ with $r.Dir }}/{{ . }}{{ end }} / {{ $r.Name }}"{{ with $r.ArgsCommand }} data-args="{{ . }}" title="Run with arguments after {{ . }}"{{ end }}><svg class="ic"><use href="#i-play"/></svg>Run{{ if $r.TakesArgs }}...{{ end }}</button>
+{{- if $.Summarizes $r }}
+<button type="button" class="btn btn-sm" data-run data-summarize data-folder="{{ $p.ID }}"{{ with $r.Dir }} data-dir="{{ . }}"{{ end }} data-job="{{ $r.ID }}" data-title="{{ $p.ID }}{{ with $r.Dir }}/{{ . }}{{ end }} / {{ $r.Name }}"{{ with $r.ArgsCommand }} data-args="{{ . }}"{{ end }} title="Run and summarize">|&gt;summarize</button>
+{{- end }}
 {{- /* Run force stands beside Run only where a plain run can be refused: a job with hours. A run that failed is forced from its window. */}}
 {{- if $p.HoursOf $r }}
 <button type="button" class="btn btn-danger btn-sm" data-run data-force data-folder="{{ $p.ID }}"{{ with $r.Dir }} data-dir="{{ . }}"{{ end }} data-job="{{ $r.ID }}" data-title="{{ $p.ID }}{{ with $r.Dir }}/{{ . }}{{ end }} / {{ $r.Name }}" title="Run out of hours, with a reason">Run force</button>

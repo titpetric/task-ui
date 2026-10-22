@@ -36,6 +36,23 @@ func signIn(p *view.Page, user *model.User, role permission.Policy) {
 	p.User, p.Permissions = user, permission.Set{User: user, Role: role}
 }
 
+// |>summarize takes Summaries, on a job that ends on its own.
+func TestPage_Summarizes(t *testing.T) {
+	t.Parallel()
+	f := &folder.Folder{ID: "infra", Dir: t.TempDir()}
+	plan := &folder.Job{ID: "plan"}
+	p := &view.Page{}
+	assert.False(t, p.Summarizes(plan))
+	p.Summaries = true
+	assert.True(t, p.Summarizes(plan))
+	assert.False(t, p.Summarizes(nil))
+	assert.False(t, p.Summarizes(f.ShellJob()))
+	assert.False(t, p.Summarizes(f.PromptJob()))
+	interactive := &folder.Job{ID: "console"}
+	interactive.Interactive = true
+	assert.False(t, p.Summarizes(interactive))
+}
+
 func TestPage_Runs(t *testing.T) {
 	t.Parallel()
 	p := admin(t)

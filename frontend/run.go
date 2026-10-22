@@ -110,8 +110,10 @@ func (h *Handlers) run(w http.ResponseWriter, r *http.Request) {
 
 // runPrompt returns the prompt box of a run's page with the threads
 // about the run: to ask, for a user with prompt/edit and a Claude token
-// once the run ended; to read them only, with prompt/view. None for one
-// of Claude's own runs.
+// once the run ended; to read them only, with prompt/view. A running
+// run's box follows its threads, hidden while it has none, for the
+// summary Run and summarize asks once it ends. None for one of Claude's
+// own runs.
 func (h *Handlers) runPrompt(r *http.Request, p *view.Page, run *view.Run) *view.Prompt {
 	if h.opts.Board == nil || run.IsClaude() || !p.Can("prompt/view") {
 		return nil
@@ -119,7 +121,7 @@ func (h *Handlers) runPrompt(r *http.Request, p *view.Page, run *view.Run) *view
 	prompt := view.PromptAbout(run.ID, run.Where())
 	prompt.Threads = h.threads(r, storage.NoteFilter{Prompts: true, AboutRunID: run.ID, Limit: 20})
 	if run.State == model.StateRunning || !p.Can("prompt/edit") || !h.claudeFor(r, p.User) {
-		if len(prompt.Threads) == 0 {
+		if len(prompt.Threads) == 0 && run.State != model.StateRunning {
 			return nil
 		}
 		prompt.Watch = true

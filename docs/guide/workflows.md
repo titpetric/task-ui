@@ -39,7 +39,8 @@ last runs.
   With the Claude Code integration set up for you, a finished run also
   has **Summary**: Claude reads every step, its job, how it ended and the
   end of its output, and writes what the workflow did or where and why it
-  failed. task-ui keeps the summary, as for a single run (see
+  failed, in one or two short paragraphs and a table of the values worth
+  a glance, such as failures per step. task-ui keeps the summary, as for a single run (see
   [Runs](runs.md#the-list)).
   The runs come a page at a time, as on [Runs](runs.md#the-list):
   **Page size** picks 15, 50 or 100 rows, and **Previous** and **Next**

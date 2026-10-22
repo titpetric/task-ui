@@ -114,8 +114,10 @@ Open a folder from the sidebar:
 
 - **Actions**: a bar under the title, on a folder's page and on the page
   of a directory inside it (see [Actions](#actions)).
-- **Jobs**: a card each, with what it does, its first steps, how it last
-  went, **Run** and **Run force**. **Run all** starts every job of the
+- **Jobs**: a card each, `default` first, with what it does, its first
+  steps, how it last went, **Run**, **|>summarize**, which runs the job
+  and has Claude summarise the run on its page when it ends (see
+  [Runs](runs.md#run-and-summarize)), and **Run force**. **Run all** starts every job of the
   folder in the background. A folder with more than one source has a section
   per source.
 - **Files**: what the folder holds, dot entries too, each with its size
@@ -196,8 +198,8 @@ pages. A directory inside them has neither link.
   skill file changes; an atkins that is missing, fails or takes longer
   than 3 seconds shows no chips.
 
-Each job of a chip is a **Run**, which opens the run's window as a job
-card's does, and **Attach** while it runs; a user who may not run it gets
+Each job of a chip, `default` first, is a **Run**, which opens the run's
+window as a job card's does, and **Attach** while it runs; a user who may not run it gets
 a link to its page. A job whose name ends in `...`, such as
 `compose: custom...`, takes arguments: its Run opens a field for them
 first (see [Runs](runs.md#what-a-job-gets)).

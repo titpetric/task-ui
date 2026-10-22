@@ -1,12 +1,15 @@
 package api
 
 import (
+	"context"
 	"errors"
+	"log/slog"
 	"net/http"
 	"path/filepath"
 	"strconv"
 
 	"github.com/titpetric/task-ui/access"
+	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/runner"
 	"github.com/titpetric/task-ui/storage"
@@ -26,6 +29,9 @@ type RunRequest struct {
 	Reason string `json:"reason"`
 	Cols   int    `json:"cols"`
 	Rows   int    `json:"rows"`
+	// Summarize asks Claude, when the run ends, for its summary in a
+	// prompt about the run, as the user who starts it: prompt/edit.
+	Summarize bool `json:"summarize"`
 }
 
 // RunView is a run as the API shows it: the row, and the live status
@@ -131,6 +137,9 @@ func (h *Handlers) startRun(w http.ResponseWriter, r *http.Request) {
 		fail(w, http.StatusBadRequest, runner.ErrNoArgs.Error())
 		return
 	}
+	if req.Summarize && !h.summarizes(w, r, job) {
+		return
+	}
 	session, err := h.opts.Runner.Start(r.Context(), runner.Request{Folder: f, Job: job, User: user, Force: req.Force, Reason: req.Reason, Cols: req.Cols, Rows: req.Rows, Dir: dir, Args: req.Args})
 	if errors.Is(err, runner.ErrBusy) {
 		writeJSON(w, http.StatusConflict, map[string]any{"error": "already running", "run": h.view(r, session.Snapshot())})
@@ -146,7 +155,39 @@ func (h *Handlers) startRun(w http.ResponseWriter, r *http.Request) {
 		failErr(w, err)
 		return
 	}
+	if req.Summarize {
+		go h.summarizeAfter(user, session)
+	}
 	writeJSON(w, http.StatusCreated, h.view(r, session.Snapshot()))
+}
+
+// summarizes reports whether a run of the job may take a summary when
+// it ends: with prompt/edit and prompts on, for a job that runs to
+// an end of its own, no shell, Claude or interactive job. It answers the
+// request when not.
+func (h *Handlers) summarizes(w http.ResponseWriter, r *http.Request, job *folder.Job) bool {
+	switch {
+	case !h.can(r, "prompt/edit"):
+		fail(w, http.StatusForbidden, "a run and its summary take prompt/edit")
+		return false
+	case h.opts.Board == nil:
+		fail(w, http.StatusNotFound, "prompts are off")
+		return false
+	case job.IsShell() || job.Interactive:
+		fail(w, http.StatusBadRequest, "an interactive job has no summary to ask for")
+		return false
+	}
+	return true
+}
+
+// summarizeAfter waits for a run to end, then asks Claude for its
+// summary, as the user who started it: a thread on the run's page. A restart
+// before the run ends asks nothing.
+func (h *Handlers) summarizeAfter(user *model.User, session *runner.Session) {
+	<-session.Done()
+	if _, err := h.opts.Board.SummarizeRun(context.Background(), user, session.ID()); err != nil {
+		slog.Warn("run summary not asked", "run", session.ID(), "err", err)
+	}
 }
 
 // runOf returns the run a route names, when the user may see it: a run

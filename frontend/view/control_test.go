@@ -74,6 +74,10 @@ func TestControl(t *testing.T) {
 	assert.Equal(t, []string{"make:release", "script:release"}, names(tools.Cells[3]))
 	assert.Equal(t, []string{"make:lint"}, names(tools.Cells[2]))
 	assert.Len(t, tools.Extra, 0)
+
+	// default leads, whatever the counts.
+	lead := view.NewControl([]*folder.Folder{jobs("a", "build", "test", "default"), jobs("b", "build", "test", "default"), jobs("c", "build")}, 2)
+	assert.Equal(t, []string{"default", "build", "test"}, lead.Columns)
 }
 
 func names(js []*folder.Job) []string {

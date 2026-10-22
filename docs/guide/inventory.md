@@ -27,7 +27,8 @@ the final 24 lines; **Expand** shows the whole output, as on a job run's steps. 
 **Run and summarize** runs the command the same way, and after the last
 host finishes, sends Claude every output as one markdown report: a
 section a host with its login, exit code and output, without colours.
-Claude's summary leads with what needs attention, and shows above the
+Claude's summary, one or two short paragraphs and a table with a row a
+host when that helps, leads with what needs attention, and shows above the
 rows, with the report to download as `.md`. The button shows when the
 Claude Code integration has a token for you (see
 [Settings](settings.md#integrations)); Claude only reads the report and
