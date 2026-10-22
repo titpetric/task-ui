@@ -97,6 +97,13 @@ pipeline of their own, so the Makefiles of a Go tree do not
 become folders; under a plain folder they do. Hidden directories, `node_modules`, `vendor` and
 `testdata` are never looked into.
 
+A project with **Recursive** off in its settings lists itself and its
+top-level folders alone, `web` and `web/api` but not `web/api/v1`,
+counted from the project's own folder, in a workspace as at the root.
+The deeper folders leave the sidebar, the folder pages, the dashboard
+and `list_jobs`; their `/f/` path opens as a directory of the folder
+above, to browse, and **Files** still holds the whole checkout.
+
 An agent sees the same list over [MCP](mcp.md): `list_jobs` returns the
 folders, their jobs, whether its user may run each, and how each last
 went.

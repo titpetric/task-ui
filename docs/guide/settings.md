@@ -38,6 +38,10 @@ stay as they are:
   runs Monday to Thursday nine to five, Friday mornings, and never on the
   weekend. Days are names or ranges (`mon-fri`, `sat,sun`, `weekdays`,
   `daily`); spans are hours or `hh:mm`;
+- **Recursive**, on by default, lists the folders inside the project as
+  deep as they go; off lists the project and its top-level folders
+  alone, to keep a tree's nested folders out of the catalogue (see
+  [Projects and jobs](projects.md#where-the-jobs-come-from));
 - the **workspace** a project at the top of one is in: another one moves
   the project there, as
   [Move a project](projects.md#move-a-project-to-another-workspace)

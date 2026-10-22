@@ -56,6 +56,32 @@ func TestCatalogue(t *testing.T) {
 	assert.Len(t, bare.List(), 3)
 }
 
+// A shallow project row cuts the catalogue at the project's top-level
+// folders, on the next call: a deeper path resolves to the folder above
+// it, whose page browses the directory.
+func TestCatalogue_Shallow(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	db, err := storage.OpenAndMigrate(ctx, ":memory:")
+	assert.NoError(t, err)
+	t.Cleanup(func() { db.Close() })
+	root := t.TempDir()
+	makeFolder(t, root, "mono")
+	makeFolder(t, root, "mono/blog")
+	makeFolder(t, root, "mono/blog/admin")
+
+	projects := storage.NewProjectStorage(db)
+	c := app.NewCatalogue(root, true, projects)
+	assert.NotNil(t, c.Find("mono/blog/admin"))
+
+	assert.NoError(t, projects.Create(ctx, &model.Project{Folder: "mono", Shallow: true}))
+	assert.NotNil(t, c.Find("mono/blog"))
+	assert.Nil(t, c.Find("mono/blog/admin"))
+	f, rest := folder.Resolve(c, "mono/blog/admin")
+	assert.Equal(t, "mono/blog", f.ID)
+	assert.Equal(t, "admin", rest)
+}
+
 // The internal folder holds the host commands, with the agent's user on
 // the notes job; no directory or project row takes its place.
 func TestCatalogue_internal(t *testing.T) {

@@ -24,8 +24,8 @@ type ProjectCloneRequest struct {
 	// the folder becomes <workspace>/<id>. Empty or _, the default
 	// workspace, clones into the root.
 	Workspace string `json:"workspace,omitempty"`
-	// Recursive lists the folders inside the checkout too, the default;
-	// false lists the project's own jobs alone.
+	// Recursive lists the folders inside the checkout as deep as they go,
+	// the default; false lists the project and its top-level folders alone.
 	Recursive *bool `json:"recursive,omitempty"`
 	// Sidebar lists the project in the sidebar, the default; false keeps
 	// it, and the folders inside it, out. Its pages stay.
@@ -44,8 +44,9 @@ type ProjectRequest struct {
 	// reads them; JobHours does so per job.
 	Hours    string            `json:"hours"`
 	JobHours map[string]string `json:"job_hours"`
-	// Recursive lists the folders inside the project too, the default;
-	// false lists its own jobs alone. Left out, it stays unchanged.
+	// Recursive lists the folders inside the project as deep as they go,
+	// the default; false lists the project and its top-level folders alone.
+	// Left out, it stays unchanged.
 	Recursive *bool `json:"recursive,omitempty"`
 	// Sidebar lists the project in the sidebar, the default; false keeps
 	// it, and the folders inside it, out. Left out, it stays unchanged.
@@ -80,7 +81,7 @@ func (req ProjectRequest) apply(project *model.Project) {
 	project.Hours = strings.TrimSpace(req.Hours)
 	project.JobHours = model.EncodeStrings(req.JobHours)
 	if req.Recursive != nil {
-		project.RootOnly = !*req.Recursive
+		project.Shallow = !*req.Recursive
 	}
 	if req.Sidebar != nil {
 		project.SidebarHidden = !*req.Sidebar
@@ -165,7 +166,7 @@ func (h *Handlers) cloneProject(w http.ResponseWriter, r *http.Request) {
 	}
 	project := &model.Project{
 		Folder: id, SourceURL: req.URL, Branch: req.Branch,
-		RootOnly:      req.Recursive != nil && !*req.Recursive,
+		Shallow:       req.Recursive != nil && !*req.Recursive,
 		SidebarHidden: req.Sidebar != nil && !*req.Sidebar,
 	}
 	if err := h.opts.Projects.Upsert(r.Context(), project); err != nil {

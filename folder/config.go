@@ -27,9 +27,10 @@ type Config struct {
 	// Hours says when the folder's jobs may run; JobHours does so per job.
 	Hours    string            `yaml:"hours"`
 	JobHours map[string]string `yaml:"job_hours"`
-	// RootOnly lists the folder's own jobs alone: discovery does not go
-	// into it. Off, the default, the listing shows the folders inside it too.
-	RootOnly bool `yaml:"root_only"`
+	// Shallow lists the folder and its top-level folders alone:
+	// discovery goes one level into it, no deeper. Off, the default, the
+	// listing shows the folders inside it as deep as they go.
+	Shallow bool `yaml:"shallow"`
 }
 
 // dir returns the directory the configuration names, under root.
@@ -100,7 +101,7 @@ func ConfigOf(p *model.Project) Config {
 		Jobs:        p.JobAllowMap(),
 		Hours:       p.Hours,
 		JobHours:    p.JobHoursMap(),
-		RootOnly:    p.RootOnly,
+		Shallow:     p.Shallow,
 	}
 }
 
