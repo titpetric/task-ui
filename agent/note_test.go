@@ -20,13 +20,16 @@ func TestAgent_Note(t *testing.T) {
 	a := &agent.Agent{Stdout: &out, Stderr: io.Discard, Env: []string{
 		"PATH=" + fakeClaude(t), "HOME=/home/server", "CLAUDE_CODE_OAUTH_TOKEN=sk-1", "TASK_UI_ROOT=" + root,
 		"TASK_UI_NOTE=ops:\n@claude bump it", "TASK_UI_NOTE_ID=n1", "TASK_UI_NOTE_AUTHOR=ops", "TASK_UI_NOTE_REPLY=" + reply,
+		"TASK_UI_USER=claude", "TASK_UI_ROLE=runner",
 	}}
 	assert.NoError(t, a.Run(context.Background(), []string{"note"}))
 	text := out.String()
 	assert.Contains(t, text, "cwd="+root+"\n")
 	assert.Contains(t, text, "sandbox=1\n")
 	assert.Contains(t, text, "home=/home/server\n")
-	assert.Contains(t, text, "arg=-p\narg=--dangerously-skip-permissions\narg=--output-format\narg=text\narg=An instruction on the task-ui Notes board, note n1 by ops.")
+	assert.Contains(t, text, "arg=-p\narg=--dangerously-skip-permissions\narg=--output-format\narg=text\narg=--append-system-prompt\narg=You work in task-ui for the user claude, role runner.", "the context goes to the system prompt")
+	assert.Contains(t, text, "## Artifacts (`artifact`)")
+	assert.Contains(t, text, "\narg=An instruction on the task-ui Notes board, note n1 by ops.")
 	assert.Contains(t, text, "ops:\n@claude bump it\n\nThe working directory holds the projects")
 
 	// The reply file holds what the terminal shows.

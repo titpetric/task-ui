@@ -277,6 +277,7 @@ func (a *App) wire(version string) error {
 		Workspaces:    workspaces,
 		WorkspaceKeys: keyring,
 		KeyGrants:     grants,
+		Users:         a.Users,
 	})
 	a.Scheduler = scheduler.NewLoop(schedules, a.Users, a.Catalogue, a.Runner)
 	a.Workflows = workflow.New(workflows, workflowRuns, a.Catalogue, a.Runner)

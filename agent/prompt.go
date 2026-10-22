@@ -14,7 +14,7 @@ import (
 // terminal and to TASK_UI_PROMPT_REPLY. TASK_UI_PROMPT_RUN names a file
 // with the run a thread is about, TASK_UI_PROMPT_WORKFLOW one with a
 // workflow run's steps; TASK_UI_PROMPT_INSTRUCTIONS goes to the system
-// prompt, ahead of the hosts of TASK_UI_HOSTS.
+// prompt, ahead of the hosts of TASK_UI_HOSTS and of the context.
 func (a *Agent) Prompt(ctx context.Context) error {
 	thread := a.getenv("TASK_UI_PROMPT")
 	if thread == "" {
@@ -57,7 +57,7 @@ func (a *Agent) Prompt(ctx context.Context) error {
 		defer reply.Close()
 		out = io.MultiWriter(a.Stdout, reply)
 	}
-	return a.ask(ctx, dir, prompt, system(a.getenv("TASK_UI_PROMPT_INSTRUCTIONS"), inventory(a.getenv("TASK_UI_HOSTS"))), out)
+	return a.ask(ctx, dir, prompt, system(a.getenv("TASK_UI_PROMPT_INSTRUCTIONS"), inventory(a.getenv("TASK_UI_HOSTS")), a.context()), out)
 }
 
 // system joins what goes after Claude's own system prompt, the parts

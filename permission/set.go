@@ -1,6 +1,8 @@
 package permission
 
 import (
+	"strings"
+
 	"github.com/titpetric/task-ui/config"
 	"github.com/titpetric/task-ui/model"
 )
@@ -32,6 +34,32 @@ func (s Set) Effective() map[string]bool {
 		}
 	}
 	return out
+}
+
+// Allows lists the paths a check may name that the set allows, in the
+// order of permissions.yml.
+func (s Set) Allows() []string {
+	var paths []string
+	p := config.Default()
+	for _, path := range p.Paths() {
+		if p.Checkable(path) && s.decide(path) {
+			paths = append(paths, path)
+		}
+	}
+	return paths
+}
+
+// Summary says in a line what the set allows, for an agent: everything
+// for an admin, else the paths it allows, the rest denied.
+func (s Set) Summary() string {
+	switch allows := s.Allows(); {
+	case s.User.CanAdmin():
+		return "everything, as an admin"
+	case len(allows) == 0:
+		return "nothing"
+	default:
+		return strings.Join(allows, ", ") + "; everything else is denied"
+	}
 }
 
 // decide answers as Allowed does, for any path.

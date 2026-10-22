@@ -34,12 +34,12 @@ func (h *Handlers) can(r *http.Request, path string) bool {
 }
 
 // require answers a request whose user may not do what a path names
-// with 403, and reports whether the user may.
+// with 403, naming the path, and reports whether the user may.
 func (h *Handlers) require(w http.ResponseWriter, r *http.Request, path string) bool {
 	if h.can(r, path) {
 		return true
 	}
-	fail(w, http.StatusForbidden, "admin role required")
+	fail(w, http.StatusForbidden, "needs "+path)
 	return false
 }
 

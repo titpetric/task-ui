@@ -22,7 +22,8 @@ func TestAgent_Shell(t *testing.T) {
 	assert.NoError(t, err, out)
 	assert.Contains(t, out, "cwd="+dir+"\n", "Claude starts where the run does, not in the root")
 	assert.Contains(t, out, "sandbox=1\n")
-	assert.Contains(t, out, "arg=--dangerously-skip-permissions\narg=--resume\narg=x\n")
+	assert.Contains(t, out, "arg=--dangerously-skip-permissions\narg=--append-system-prompt\narg=# task-ui\n", "the context goes to the system prompt")
+	assert.Contains(t, out, "arg=--resume\narg=x\n")
 
 	out, err = shell("AGENT_TEST_SHELL=", "PATH="+fakeClaude(t), "CLAUDE_CODE_OAUTH_TOKEN=")
 	assert.Error(t, err)

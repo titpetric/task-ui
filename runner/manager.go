@@ -135,6 +135,9 @@ func (m *Manager) Start(ctx context.Context, req Request) (*Session, error) {
 	session.workspaceID = m.workspaceID(ctx, session.workspaceName)
 	if req.User != nil {
 		session.role = req.User.Role
+		if m.opts.Users != nil {
+			session.permissions = m.opts.Users.Permissions(ctx, req.User).Summary()
+		}
 	}
 	m.mu.Lock()
 	m.sessions[run.ID] = session
@@ -392,10 +395,14 @@ func (m *Manager) command(ctx context.Context, session *Session) (*exec.Cmd, err
 		"LINES="+strconv.Itoa(int(run.TermRows)),
 		"TASK_UI=1",
 		"TASK_UI_USER="+run.UserName,
+		"TASK_UI_ROLE="+session.role,
 		"TASK_UI_FOLDER="+f.ID,
 		"TASK_UI_JOB="+job.ID,
 		"TASK_UI_RUN_ID="+run.ID,
 	)
+	if session.permissions != "" {
+		cmd.Env = append(cmd.Env, "TASK_UI_PERMISSIONS="+session.permissions)
+	}
 	if session.workspace != "" {
 		cmd.Env = append(cmd.Env,
 			"TASK_UI_WORKSPACE="+session.workspaceName,

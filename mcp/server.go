@@ -11,6 +11,8 @@ import (
 	"io"
 	"net/http"
 	"slices"
+
+	"github.com/titpetric/task-ui/config"
 )
 
 // protocolVersions are the revisions of the protocol this server speaks,
@@ -86,7 +88,8 @@ type toolsCapability struct {
 }
 
 type capabilities struct {
-	Tools toolsCapability `json:"tools"`
+	Tools     toolsCapability `json:"tools"`
+	Resources struct{}        `json:"resources"`
 }
 
 type initializeResult struct {
@@ -118,13 +121,20 @@ type callResult struct {
 // empty is the result of ping.
 type empty struct{}
 
-// instructions tell a client what the server is for.
-const instructions = "task-ui runs the jobs of folders (atkins, Taskfile, make, npm, scripts) and workflows, a chain of jobs, " +
+// instructions tell a client what task-ui is, from `config/context.md`,
+// and what the tools are for.
+func instructions() string {
+	return config.Context() + "\n\n" + toolGuide
+}
+
+// toolGuide tells a client what the tools are for.
+const toolGuide = "task-ui runs the jobs of folders (atkins, Taskfile, make, npm, scripts) and workflows, a chain of jobs, " +
 	"as the user of the token. list_jobs and list_workflows show what there is, run_job and run_workflow start one " +
 	"and can wait for the outcome, list_runs and get_run show how runs went and their output. " +
 	"list_notes and note_comment read and answer the notes that name you, each an instruction to you to report on, " +
 	"post_note leaves one for whoever it names, " +
-	"and ask_prompt asks Claude in a folder and can wait for the answer."
+	"and ask_prompt asks Claude in a folder and can wait for the answer. " +
+	"Call whoami to see what you may do: your role, your permissions and the folders you see."
 
 // ServeHTTP answers one JSON-RPC message per POST, in JSON. There is no
 // stream to open with GET and no session to end with DELETE.
@@ -181,10 +191,14 @@ func (s *Server) handle(r *http.Request, req request) (any, *rpcError) {
 		return initializeResult{
 			ProtocolVersion: version,
 			ServerInfo:      serverInfo{Name: "task-ui", Version: s.Version},
-			Instructions:    instructions,
+			Instructions:    instructions(),
 		}, nil
 	case "ping":
 		return empty{}, nil
+	case "resources/list":
+		return resourcesListResult{Resources: resources()}, nil
+	case "resources/read":
+		return readResource(req.Params)
 	case "tools/list":
 		return toolsListResult{Tools: s.tools}, nil
 	case "tools/call":

@@ -8,6 +8,8 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+
+	"github.com/titpetric/task-ui/claude"
 )
 
 // errNoToken stops a command without a Claude Code token to sign in with.
@@ -29,6 +31,19 @@ func (a *Agent) getenv(name string) string {
 // skip the permission prompts as root in the task container.
 func (a *Agent) environ() []string {
 	return append(append([]string{}, a.Env...), "IS_SANDBOX=1")
+}
+
+// context is what every Claude run here reads after the instructions
+// of its own: where the run's artifacts go, then claude.Context, the
+// user of the run with the role and what the user may do, from
+// TASK_UI_USER, TASK_UI_ROLE and TASK_UI_PERMISSIONS, and what task-ui is.
+func (a *Agent) context() string {
+	artifacts := ""
+	if dir := a.getenv("TASK_UI_ARTIFACTS"); dir != "" {
+		artifacts = "This run's artifact directory is $TASK_UI_ARTIFACTS, " + dir + ": a file you write there, such as a report or an image, " +
+			"moves into task-ui's artifact tree at the same path when the run ends, for the Artifacts page."
+	}
+	return system(artifacts, claude.Context(a.getenv("TASK_UI_USER"), a.getenv("TASK_UI_ROLE"), a.getenv("TASK_UI_PERMISSIONS")))
 }
 
 // claudePath finds claude in the PATH of the environment.

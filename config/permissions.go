@@ -1,5 +1,6 @@
 // Package config holds the configuration task-ui embeds: the rules of
-// permissions.yml, which every permission check names.
+// permissions.yml, which every permission check names, and context.md,
+// what task-ui is, for an agent.
 package config
 
 import (
@@ -12,7 +13,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-//go:embed permissions.yml
+//go:embed permissions.yml context.md
 var files embed.FS
 
 // All is the rule that stands for every rule of a section in a policy.

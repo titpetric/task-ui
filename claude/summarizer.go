@@ -27,8 +27,9 @@ type Summarizer struct {
 }
 
 // Summarize sends the document on stdin with the prompt, signed in with
-// the token, and returns what Claude writes.
-func (s *Summarizer) Summarize(ctx context.Context, token, prompt, document string) (string, error) {
+// the token, with system, when not empty, after Claude's own system
+// prompt, and returns what Claude writes.
+func (s *Summarizer) Summarize(ctx context.Context, token, system, prompt, document string) (string, error) {
 	if token == "" {
 		return "", ErrNoToken
 	}
@@ -38,7 +39,11 @@ func (s *Summarizer) Summarize(ctx context.Context, token, prompt, document stri
 	if command == "" {
 		command = "claude"
 	}
-	cmd := exec.CommandContext(run, command, "-p", "--output-format", "text", prompt)
+	args := []string{"-p", "--output-format", "text"}
+	if system != "" {
+		args = append(args, "--append-system-prompt", system)
+	}
+	cmd := exec.CommandContext(run, command, append(args, prompt)...)
 	cmd.Env = append(os.Environ(), "CLAUDE_CODE_OAUTH_TOKEN="+token)
 	cmd.Stdin = strings.NewReader(document)
 	var out, errOut bytes.Buffer

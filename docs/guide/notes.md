@@ -99,7 +99,11 @@ host commands that run `task-ui agent`:
 | `@claude`        | `task-ui agent shell [args]` | Claude Code in a terminal in the folder, or a directory inside it, for an admin at the keyboard: **Enter Claude** |
 
 Each signs in with `CLAUDE_CODE_OAUTH_TOKEN` from the Claude Code
-integration and stops without it. They run `claude` from the `PATH` with
+integration and stops without it. Each reads, after Claude's own system
+prompt, what task-ui is, from `config/context.md`, with the user it
+works for, the role and what the user may do, and the run's
+`$TASK_UI_ARTIFACTS`, where a file it writes stays as an artifact (see
+[MCP](mcp.md#what-task-ui-is)). They run `claude` from the `PATH` with
 `IS_SANDBOX=1` and `--dangerously-skip-permissions`, so Claude skips the
 permission prompts. Each run gets the secrets of its folder, as any job
 there does; the Notes agent's, of the root's, `_`.

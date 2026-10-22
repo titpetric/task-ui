@@ -84,6 +84,13 @@ The configuration sits in `CLAUDE_CONFIG_DIR`; keep that on a volume so
 it outlives the container. `claude mcp list` shows the server as
 connected.
 
+Every Claude task-ui starts reads `config/context.md` after its own
+system prompt, with a line naming the user it works for, the role and
+what the user may do, from the run's `TASK_UI_USER`, `TASK_UI_ROLE` and
+`TASK_UI_PERMISSIONS`, and the run's `$TASK_UI_ARTIFACTS`: the prompts,
+the Notes agent, **Enter Claude**, and the summaries of runs, workflow
+runs and the inventory.
+
 ## An agent elsewhere
 
 An MCP client on another machine, with a token of its own user, such as
@@ -105,6 +112,7 @@ author and an admin; anyone who may post replies.
 
 | Tool                 | Arguments                                        | What it does |
 |----------------------|--------------------------------------------------|--------------|
+| `whoami`             |                                                  | Who you are: your role, the permissions you hold, each area of task-ui with a line on its purpose and what you may do there, and the folders you see |
 | `list_jobs`          | `folder`                                         | The folders and their jobs, `default` first, whether you may run each, how it last went |
 | `list_workflows`     |                                                  | The workflows, their steps and their last run |
 | `run_job`            | `folder`, `job`, `force`, `reason`, `wait`, `lines` | Starts a job; with `wait`, up to 900 seconds, returns how it ended and the end of its output |
@@ -128,6 +136,10 @@ the folders the user sees, and reads the runs of the prompts the user
 asked with `get_run`: `@claude-prompt` of the folder asked in. Other
 users' prompt runs list in `list_runs` and `get_run` with `prompt/view`.
 
+A call your permissions refuse fails with the permission it needs and a
+pointer to `whoami`, as `needs prompt/edit (403); call whoami to see what
+you may do`.
+
 A run started over MCP is like any other: it shows in the history, anyone
 allowed can watch it, and it goes on if the agent stops waiting.
 
@@ -143,10 +155,22 @@ to every token but an admin's; `@claude-note` and `@claude-prompt` start
 from the Notes board and the prompt routes alone. The Notes agent's runs,
 `@claude-note`, list with `note/view`, and to the agent's user always.
 
+## What task-ui is
+
+`initialize` returns the server's instructions: `config/context.md`,
+which task-ui embeds, then what the tools are for and "Call whoami to
+see what you may do". `context.md` describes task-ui for an agent, an
+area at a time, such as artifacts, notes or secrets: its purpose, its
+page and its API route or tool, and the permission that governs it. The
+same text is the resource `taskui://context`, `text/markdown`, for
+`resources/list` and `resources/read`, and `whoami` returns one line of
+it per area beside what you may do there. `GET /api/me` answers the same as JSON (see
+[API](../api.md)).
+
 ## A frozen surface
 
-These eleven tools, like the JSON API behind them, are the whole surface,
-and the surface stays frozen. An agent can see what there is, run it, read
+These twelve tools, like the JSON API behind them, are the whole surface,
+and the surface stays frozen. An agent can see what it may do and what there is, run it, read
 how it went, work through the notes that name it, leave notes and ask
 Claude in a folder; ending runs, schedules, artifacts, secrets, keys, users and
 changing workflows stay with people, in the browser. A new tool or

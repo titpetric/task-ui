@@ -47,6 +47,7 @@ route or a tool only for a need these cannot serve, and states the reason.
 | `post_note`, `ask_prompt` | An agent posting and asking as its own user, by its permissions: `note_comment` answers a note and `list_notes` reads them, and no tool left a note or put a prompt to Claude in a folder |
 | `prompt`, `prompt_folder` on workflows and `/api/workflows`, `enabled` on a step of `/api/workflows` and `disabled` on workflow steps, `input` on `POST /api/workflows/{id}/runs` and `run_workflow`, `workflow_run` on `GET /api/prompts`, `about_workflow_run_id` on notes | A workflow with a prompt: Claude gets the steps' output once they end, which no route asked, so a workflow summarises itself or acts on what the steps printed, or is a prompt alone. A step that stays in the chain and a run skips had no field, and a prompt takes text at run time, which the start had no body for. The prompt's thread is a note about the workflow run, listed by it and on its page, apart from its place's prompts. A workflow with no enabled step and no prompt answers `400`; a prompt takes `prompt/edit` to save and to run. Schema `workflow_prompt`, `workflow_step_enabled` and `note_about_workflow_run` add the columns |
 | `user` on `POST` and `PUT /api/schedules` | **Run as** on the schedule forms: a schedule runs as a user an admin picks, by name or ID, where it ran as whoever made it. Anyone but an admin names only themselves (`403`); a user nobody holds, or one who may not run the job, answers `400`. The scheduler checks again when it fires and skips a job its user may not run at that time |
+| `GET /api/me`, `whoami`, the resource `taskui://context` | An agent can't tell what it may do without trying: `whoami` and `/api/me` say who the token's user is, the role, the permissions the user holds, each area of task-ui with a line on its purpose, from `config/context.md`, and the folders the user sees. The resource is `context.md` whole, as the MCP instructions carry it. A `403` names the permission it needs, and over MCP points to `whoami` |
 
 | Method | Path | Does |
 |--------|------|------|
@@ -83,6 +84,7 @@ route or a tool only for a need these cannot serve, and states the reason.
 | `GET` `POST` `PUT` `DELETE` | `/api/users`, `/api/users/{id}` | `POST {name, password, folders}` adds a user to the password file (admins; `409` for a name it holds); `PUT {folders}`; roles come from the role lists. `DELETE` takes `user/delete` and removes the user's line and the user, with their sessions, tokens and policy, at once, `204`; `403` for an admin and for yourself, `404` for a user it does not hold, `405` without a password file to write, where removing a user is removing its line |
 | `POST` `DELETE` | `/api/users/{id}/mcp` | a user's MCP token: `POST` makes one in place of the one they had, which stops signing in at once, and answers `201 {token, expires_at}`, the one answer that holds a token; `DELETE` removes it, `204`. `user/edit` manages anyone's; a user rotates or disables their own once on, and enabling your own takes `user/edit`; `403` otherwise, `404` for a user it does not hold. A user as `/api/users` shows one has `mcp: {enabled, created_at, expires_at, used_at}`, never the hash |
 | `GET` | `/api/permissions` | the rules of `config/permissions.yml` for the permission matrix: `rules`, `sections` and `permissions`, each `{key, title}` in file order, `paths`, every path a policy sets, and `roles` (`user/view`) |
+| `GET` | `/api/me` | what you may do: `{name, role, admin, allowed, summary, sections, permissions, folder_count, folders}`, `allowed` the paths of `config/permissions.yml` you hold, `summary` them in a line, each of `sections` and `permissions` an area `{key, title, about, rules, allowed}` with the sentence of `config/context.md` on it, and the first 100 folders you see; for anyone signed in |
 | `GET` `PUT` | `/api/permissions/roles/{role}`, `/api/permissions/users/{name}` | a role's or a user's policy: `{kind, subject, role, fixed, policy, role_policy, effective}`, `policy` a path to `allow` or `deny`, a user's with its role's in `role_policy`, `effective` what the subject may do by every path a check names. `PUT {path: "allow" \| "deny" \| ""}` sets entries, `""` inherits again, `400` for a path or an effect it does not know, and changes nothing then. The admin role, and a user who holds it, may do everything, `fixed`, and `PUT` answers `409`. `GET` takes `user/view`, `PUT` `user/edit`, and your own policy or your own role's takes `user/edit` through your role, `403` otherwise; `404` for a role or a user it does not hold |
 | `GET` `POST` `DELETE` | `/api/secrets`, `/api/secrets/{id}` | `{scope, name, content}`; `scope` is `workspace:<name>`, shared within the workspace, or a folder; `all` or empty is `workspace:_`; `400` for an unknown workspace or folder; content is never returned; `409` for a scope whose workspace has no encryption key yet |
 | `POST` | `/api/secrets/rekey` | writes every secret again for its scope's current key, a workspace's or, for the integrations, the instance's encryption key |
@@ -93,9 +95,14 @@ route or a tool only for a need these cannot serve, and states the reason.
 
 ## MCP
 
-`/api/mcp` is an MCP server over the streamable HTTP transport: eleven
-tools to list jobs and workflows, run them, read the runs, read, leave
-and answer the notes, and ask Claude in a folder, as the token's user. Its use is in [the MCP chapter](guide/mcp.md).
+`/api/mcp` is an MCP server over the streamable HTTP transport: twelve
+tools to say what the token's user may do, list jobs and workflows, run
+them, read the runs, read, leave and answer the notes, and ask Claude in
+a folder, as the token's user, and one resource, `taskui://context`.
+Its use is in [the MCP chapter](guide/mcp.md).
+
+A request your permissions refuse answers `403` with the permission it
+needs, as `{"error": "needs artifact/view"}`.
 
 ---
 

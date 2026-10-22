@@ -288,6 +288,11 @@ elsewhere until clicked. The prompt runs `@claude-prompt` of that
 folder and directory as you, with Claude Code there, so it reads the
 `CLAUDE.md` and `.claude/` there and above.
 
+Claude also reads what task-ui is, from `config/context.md`, with your
+name, role and permissions, which say what you may do, and the rule that a
+file it writes to `$TASK_UI_ARTIFACTS` stays as an artifact (see
+[MCP](mcp.md#what-task-ui-is)).
+
 No window opens. The question shows under the box at once, `open`, then
 `working` while the run goes, and Claude's answer, in markdown, lands
 under it when the run ends, without a reload. Each thread links its

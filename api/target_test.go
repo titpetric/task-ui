@@ -27,8 +27,8 @@ func TestTarget(t *testing.T) {
 	assert.Equal(t, http.StatusForbidden, denied.Status)
 	assert.Contains(t, denied.str("error"), "not run")
 
-	// Admin only routes say so.
+	// A refusal names the permission it needs.
 	admin := f.call(t, asViewer, http.MethodGet, "/users", nil)
 	assert.Equal(t, http.StatusForbidden, admin.Status)
-	assert.Equal(t, "admin role required", admin.str("error"))
+	assert.Equal(t, "needs user/view", admin.str("error"))
 }
