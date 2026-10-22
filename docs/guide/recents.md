@@ -15,13 +15,13 @@ started it, as their initials. A workflow run shows the workflow's name
 and marks itself as a workflow. A run in progress carries a play or an
 eye:
 
-- **play** when you may run the job: open it to attach, type into it and
-  end it;
+- **play** when you may run the job: attach on its page to type into it
+  and end it;
 - **eye** when you may only watch.
 
-A run in progress opens in its window, attached. A finished one opens as
-history, its whole output played back (see [Runs](runs.md)). A
-workflow run opens its workflow's page.
+An entry links to its run's page, `/runs/<id>`, where **Attach** or
+**View** opens the run window (see [Runs](runs.md)). A workflow run
+links to its workflow's page.
 
 Recents follow the runs as they start and end, with no reload.
 

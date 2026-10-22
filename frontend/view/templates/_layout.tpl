@@ -101,7 +101,7 @@
 					{{- end }}
 					{{- with $e.Run }}
 					{{- $can := $.CanRunJob .Folder .Dir .Job }}
-					<a href="/runs/{{ .ID }}" data-attach="{{ .ID }}" class="recent" title="{{ if ne .State "running" }}View{{ else if $can }}Attach to{{ else }}Watch{{ end }} {{ .Where }} / {{ .Job }}, {{ .UserName }}, {{ .State }}">
+					<a href="/runs/{{ .ID }}" class="recent" title="Open {{ .Where }} / {{ .Job }}, {{ .UserName }}, {{ .State }}">
 						<i class="dot {{ .State }}"></i>
 						<span class="what"><b>{{ .Job }}</b><small>{{ .Where }}</small></span>
 						{{- if eq .State "running" }}<svg class="ic act"><use href="#i-{{ if $can }}play{{ else }}eye{{ end }}"/></svg>{{ end }}
@@ -180,6 +180,7 @@
 		<span class="dim" id="run-who"></span>
 		<span class="elapsed" id="run-elapsed"></span>
 		<span class="state" id="run-state"></span>
+		<a class="btn btn-sm" id="run-page" href="/runs" hidden>Open run page</a>
 	</div>
 	<div class="run-body">
 		<div class="terminal-host" id="run-terminal"></div>
