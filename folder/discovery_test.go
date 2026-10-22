@@ -279,7 +279,7 @@ func TestDiscovery_Workspace(t *testing.T) {
 }
 
 // A directory a workspace's checkout ignores, right below it, lists
-// when it holds a job source of its own, such as another
+// when it holds a job source, on top or further in, such as another
 // checkout; the folders inside it follow the workspace's Recursive. One
 // with no job source stays out, as does an ignored directory deeper
 // down. A project row on the directory wins over the discovered one.
@@ -288,13 +288,16 @@ func TestDiscovery_IgnoredCheckouts(t *testing.T) {
 	root := t.TempDir()
 	ws := filepath.Join(root, "ws")
 	gitInit(t, ws)
-	write(t, filepath.Join(ws, ".gitignore"), "/deploy\n/empty\n/lib/cache\n")
+	write(t, filepath.Join(ws, ".gitignore"), "/deploy\n/empty\n/lib/cache\n/ops\n")
 	write(t, filepath.Join(ws, "atkins.yml"), "jobs:\n  setup: echo setup\n")
 	deploy := filepath.Join(ws, "deploy")
 	gitInit(t, deploy)
 	write(t, filepath.Join(deploy, "Taskfile.yml"), "tasks:\n  up:\n    desc: Up\n")
 	write(t, filepath.Join(deploy, "web", "atkins.yml"), "jobs:\n  ship: echo ship\n")
-	write(t, filepath.Join(ws, "empty", "inner", "atkins.yml"), "jobs:\n  x: echo x\n")
+	write(t, filepath.Join(ws, "empty", "inner", "README.md"), "nothing to run\n")
+	ops := filepath.Join(ws, "ops")
+	gitInit(t, ops)
+	write(t, filepath.Join(ops, "scripts", "atkins.yml"), "jobs:\n  apply: echo apply\n")
 	write(t, filepath.Join(ws, "lib", "cache", "atkins.yml"), "jobs:\n  y: echo y\n")
 
 	list := func(d *Discovery) []string {
@@ -305,11 +308,14 @@ func TestDiscovery_IgnoredCheckouts(t *testing.T) {
 		return ids
 	}
 	d := &Discovery{Root: root, Discover: true, Workspaces: []Config{{ID: "ws"}}}
-	if got, want := list(d), []string{"ws", "ws/deploy", "ws/deploy/web"}; !slices.Equal(got, want) {
+	if got, want := list(d), []string{"ws", "ws/deploy", "ws/deploy/web", "ws/ops/scripts"}; !slices.Equal(got, want) {
 		t.Fatalf("folders: got %v, want %v", got, want)
 	}
 	if f := d.Find("ws/deploy"); f == nil || f.Job("up") == nil {
 		t.Fatalf("ws/deploy: %+v", f)
+	}
+	if f := d.Find("ws/ops/scripts"); f == nil || f.Job("apply") == nil {
+		t.Fatalf("ws/ops/scripts: %+v", f)
 	}
 
 	shallow := &Discovery{Root: root, Discover: true, Workspaces: []Config{{ID: "ws", Shallow: true}}}

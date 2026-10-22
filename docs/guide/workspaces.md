@@ -145,9 +145,9 @@ The project lists with the folders inside it whatever the workspace's
 `.gitignore` says, so a workspace that ignores its projects' folders, as
 one that clones them itself should, still shows them. A checkout the
 workspace ignores without a project row lists too, when it holds a job
-source at its top, such as `malta/deploy` with its `atkins.yml`: it
-opens at `/f/malta/deploy` with its jobs and the folders inside it, as a
-project does (see [Where the jobs come from](projects.md#where-the-jobs-come-from)).
+source anywhere inside it, such as `malta/deploy` with its
+`scripts/atkins.yml`: it opens at `/f/malta/deploy` with its jobs and the
+folders inside it, as a project does (see [Where the jobs come from](projects.md#where-the-jobs-come-from)).
 
 **Recursive**, on the workspace's add and configure forms as on a
 project's, is on by default: discovery lists the folders inside the
