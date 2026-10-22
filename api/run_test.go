@@ -453,7 +453,7 @@ func TestRuns_Summarize(t *testing.T) {
 		}
 		thread = notes[0].(map[string]any)
 		replies, _ := thread["replies"].([]any)
-		return len(replies) == 1
+		return len(replies) == 1 && thread["state"] == model.NoteDone
 	}, 10*time.Second, 20*time.Millisecond)
 	assert.Equal(t, note.SummaryQuestion, thread["body"])
 	assert.Equal(t, id, thread["about_run_id"])

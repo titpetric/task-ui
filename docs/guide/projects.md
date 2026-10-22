@@ -100,8 +100,9 @@ become folders; under a plain folder they do. Hidden directories, `node_modules`
 Discovery skips what a checkout's `.gitignore` ignores: build copies,
 caches, dependencies. One kind of ignored directory lists all the same:
 a directory right below a workspace or a project that holds a job
-source of its own, an `atkins.yml`, a Taskfile, a Makefile, `package.json`
-scripts, such as a checkout the workspace keeps beside its files. The
+source, an `atkins.yml`, a Taskfile, a Makefile, `package.json`
+scripts, at its top or in a directory inside it, such as a checkout the
+workspace keeps beside its files with its jobs in `scripts/`. The
 folders inside it follow the Recursive of the workspace or project above
 it. An ignored directory with nothing to run, or one deeper down, stays
 out; a project row on the directory configures it, as on any folder.

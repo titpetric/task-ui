@@ -28,7 +28,7 @@ var skipped = map[string]bool{"node_modules": true, "vendor": true, "testdata": 
 //
 // The root, the workspaces and the configured folders are roots: a
 // directory right below one that its checkout ignores, such as another
-// checkout, lists when it holds a job source of its own.
+// checkout, lists when it holds a job source, on top or further in.
 type Discovery struct {
 	Root     string
 	Discover bool
@@ -134,7 +134,8 @@ func isFile(path string) bool {
 // directory of the root named internal or _ lists nothing: the names are
 // task-ui's own. The walk goes into every configured folder, even one a
 // checkout ignores, such as a project cloned inside a workspace, and into
-// an ignored directory right below a root that holds a job source.
+// an ignored directory right below a root that holds a job source
+// anywhere inside it.
 func (d *Discovery) discover(root string, c *catalogue) {
 	if !c.seen(root) && detector.Any(root) {
 		if f := Load(SafeID(filepath.Base(root)), root); runnable(f) {
@@ -221,7 +222,7 @@ func gitIgnored(dir string, ignored map[string]bool) map[string]bool {
 // walker visits the directories below the root and reports the ones
 // with something to run to found. Directories a git checkout ignores are
 // not visited unless keep holds them or they sit right below a directory
-// of roots with a job source of their own, and the walk goes one level
+// of roots with a job source inside them, and the walk goes one level
 // into a directory in shallow, a shallow project or workspace, and no
 // deeper, but for the roots below it.
 type walker struct {
@@ -244,7 +245,7 @@ func (w walker) walk(dir, id string, depth int, underPipeline bool, ignored map[
 			continue
 		}
 		sub := filepath.Join(dir, name)
-		if ignored[sub] && !w.keep[sub] && !(w.roots[dir] && detector.Any(sub)) {
+		if ignored[sub] && !w.keep[sub] && !(w.roots[dir] && holdsJobs(sub, depth)) {
 			continue
 		}
 		ignored := gitIgnored(sub, ignored)
@@ -261,6 +262,29 @@ func (w walker) walk(dir, id string, depth int, underPipeline bool, ignored map[
 		}
 		w.walk(sub, subID, depth+1, underPipeline || pipeline, ignored, w.shallow[sub])
 	}
+}
+
+// holdsJobs reports whether dir, at depth below the root, or a
+// directory inside it within maxDepth follows a convention: an ignored
+// checkout with its job file in scripts/ lists as one with it on top.
+func holdsJobs(dir string, depth int) bool {
+	if detector.Any(dir) {
+		return true
+	}
+	if depth >= maxDepth {
+		return false
+	}
+	entries, _ := os.ReadDir(dir)
+	for _, entry := range entries {
+		name := entry.Name()
+		if !entry.IsDir() || strings.HasPrefix(name, ".") || skipped[name] {
+			continue
+		}
+		if holdsJobs(filepath.Join(dir, name), depth+1) {
+			return true
+		}
+	}
+	return false
 }
 
 // Find returns a folder by ID, or nil.
