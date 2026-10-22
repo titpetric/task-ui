@@ -73,3 +73,33 @@ func TestSetHtpasswd(t *testing.T) {
 	assert.Error(t, access.SetHtpasswd(path, "a:b", first))
 	assert.Error(t, access.SetHtpasswd(path, "ops", "plain"))
 }
+
+func TestRemoveHtpasswd(t *testing.T) {
+	t.Parallel()
+	hash, _ := access.HashPassword("one")
+	path := filepath.Join(t.TempDir(), ".htpasswd")
+
+	removed, err := access.RemoveHtpasswd(path, "ops")
+	assert.NoError(t, err)
+	assert.False(t, removed, "a missing file holds nobody")
+
+	assert.NoError(t, os.WriteFile(path, []byte("# people\n\nadmin:"+hash+"\nops:"+hash+"\n# ops:kept\n"), 0o600))
+	removed, err = access.RemoveHtpasswd(path, "ops")
+	assert.NoError(t, err)
+	assert.True(t, removed)
+	data, _ := os.ReadFile(path)
+	assert.Equal(t, "# people\n\nadmin:"+hash+"\n# ops:kept\n", string(data))
+
+	removed, err = access.RemoveHtpasswd(path, "ops")
+	assert.NoError(t, err)
+	assert.False(t, removed)
+	_, err = access.RemoveHtpasswd(path, " ")
+	assert.Error(t, err)
+
+	removed, err = access.RemoveHtpasswd(path, "admin")
+	assert.NoError(t, err)
+	assert.True(t, removed)
+	creds, err := access.LoadHtpasswd(path)
+	assert.NoError(t, err)
+	assert.Len(t, creds, 0)
+}

@@ -7,6 +7,7 @@ import (
 
 	"github.com/titpetric/task-ui/internal/assert"
 	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/permission"
 	"github.com/titpetric/task-ui/storage"
 )
 
@@ -102,11 +103,20 @@ func TestUserStorage_Delete(t *testing.T) {
 	assert.NoError(t, users.Create(ctx, user))
 	_, err := sessions.Create(ctx, user.ID, "h1", time.Now().Add(time.Hour))
 	assert.NoError(t, err)
+	tokens := storage.NewUserAuthTokenStorage(db)
+	assert.NoError(t, tokens.Set(ctx, user.ID, "cli", "t1"))
+	assert.NoError(t, users.Policies().Put(ctx, permission.KindUser, "ops", "note/view", permission.Deny))
+	assert.False(t, users.Permissions(ctx, user).Allowed("note/view"))
 	assert.NoError(t, users.Delete(ctx, user.ID))
 	_, err = users.Get(ctx, user.ID)
 	assert.ErrorIs(t, err, storage.ErrNotFound)
 	_, err = sessions.Find(ctx, "h1")
 	assert.ErrorIs(t, err, storage.ErrNotFound)
+	_, err = tokens.Find(ctx, "t1")
+	assert.ErrorIs(t, err, storage.ErrNotFound)
+	policy, err := users.Policies().Policy(ctx, permission.KindUser, "ops")
+	assert.NoError(t, err)
+	assert.Len(t, policy, 0)
 	assert.NoError(t, users.Delete(ctx, user.ID), "deleting twice is fine")
 }
 

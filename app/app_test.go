@@ -279,3 +279,47 @@ func TestApp_MCPToken(t *testing.T) {
 	status, _ = call(second, http.MethodPost, "/api/mcp", initialize)
 	assert.Equal(t, http.StatusUnauthorized, status)
 }
+
+// Deleting a user takes their line out of the password file and ends
+// their tokens at once; their runs keep the name.
+func TestApp_DeleteUser(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	a := newApp(t, "")
+	handler := a.Handler()
+	admin, err := a.Users.GetByName(ctx, "admin")
+	assert.NoError(t, err)
+	guest, err := a.Users.GetByName(ctx, "guest")
+	assert.NoError(t, err)
+	adminToken, adminHash, err := access.NewToken()
+	assert.NoError(t, err)
+	assert.NoError(t, a.Guard.Tokens.Set(ctx, admin.ID, "cli", adminHash))
+	guestToken, guestHash, err := access.NewToken()
+	assert.NoError(t, err)
+	assert.NoError(t, a.Guard.Tokens.Set(ctx, guest.ID, "cli", guestHash))
+	runs := storage.NewRunStorage(a.DB)
+	run := &model.Run{Folder: "site", Job: "build", UserID: guest.ID, UserName: guest.Name, State: model.StateOK}
+	assert.NoError(t, runs.Create(ctx, run))
+
+	call := func(token, method, path string) int {
+		req := httptest.NewRequest(method, path, nil)
+		req.Header.Set("Authorization", "Bearer "+token)
+		rec := httptest.NewRecorder()
+		handler.ServeHTTP(rec, req)
+		return rec.Code
+	}
+	assert.Equal(t, http.StatusOK, call(guestToken, http.MethodGet, "/api/runs"))
+	assert.Equal(t, http.StatusForbidden, call(adminToken, http.MethodDelete, "/api/users/"+admin.ID))
+	assert.Equal(t, http.StatusNoContent, call(adminToken, http.MethodDelete, "/api/users/"+guest.ID))
+	assert.Equal(t, http.StatusUnauthorized, call(guestToken, http.MethodGet, "/api/runs"))
+
+	creds, err := access.LoadHtpasswd(a.Config.Htpasswd)
+	assert.NoError(t, err)
+	assert.Len(t, creds, 1)
+	assert.Equal(t, "admin", creds[0].Name)
+	kept, err := runs.Get(ctx, run.ID)
+	assert.NoError(t, err)
+	assert.Equal(t, "guest", kept.UserName)
+	assert.Equal(t, http.StatusNotFound, call(adminToken, http.MethodDelete, "/api/users/"+guest.ID))
+	assert.False(t, a.UsersFile.Changed(), "the watcher finds nothing to remove")
+}

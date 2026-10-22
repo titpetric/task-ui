@@ -72,6 +72,31 @@ func (f *UsersFile) Add(ctx context.Context, users *storage.UserStorage, passwor
 	return err
 }
 
+// Remove takes a user's line out of the file and the user out of
+// storage at once, with their sessions, tokens and policy, so no request
+// of theirs passes after it. A name the file does not hold is
+// storage.ErrNotFound.
+func (f *UsersFile) Remove(ctx context.Context, users *storage.UserStorage, passwords *storage.UserAuthPasswordStorage, name string) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	removed, err := access.RemoveHtpasswd(f.Path, name)
+	if err != nil {
+		return err
+	}
+	user, err := users.GetByName(ctx, name)
+	if err != nil {
+		return err
+	}
+	if !removed {
+		return storage.ErrNotFound
+	}
+	if err := users.Delete(ctx, user.ID); err != nil {
+		return err
+	}
+	_, _, err = f.sync(ctx, users, passwords)
+	return err
+}
+
 // NewUsersFile returns the file with the role lists.
 func NewUsersFile(path string, admins, viewers []string) *UsersFile {
 	return &UsersFile{Path: path, Admins: admins, Viewers: viewers, Interval: 5 * time.Second}

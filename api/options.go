@@ -70,6 +70,9 @@ type Options struct {
 	// AddUser puts a new user in the password file; nil leaves users to
 	// the file and task-ui passwd.
 	AddUser func(ctx context.Context, name, password string) error
+	// RemoveUser takes a user out of the password file and storage at
+	// once; nil leaves removing to the file.
+	RemoveUser func(ctx context.Context, name string) error
 	// Tokens keep the tokens clients sign in with; a user's MCP token
 	// is one. Nil turns MCP access from the settings off.
 	Tokens *storage.UserAuthTokenStorage

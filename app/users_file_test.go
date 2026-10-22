@@ -241,3 +241,25 @@ func TestUsersFile_Add(t *testing.T) {
 	fresh := app.NewUsersFile(filepath.Join(t.TempDir(), ".htpasswd"), nil, nil)
 	assert.NoError(t, fresh.Add(ctx, users, passwords, "carol", "correct horse"))
 }
+
+// Remove takes a user out of the file and storage at once; a name the
+// file does not hold is not found.
+func TestUsersFile_Remove(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	users, passwords := newUsers(t)
+	f := app.NewUsersFile(htpasswdFile(t, "admin", "ops"), []string{"admin"}, nil)
+	_, _, err := f.Sync(ctx, users, passwords)
+	assert.NoError(t, err)
+
+	assert.NoError(t, f.Remove(ctx, users, passwords, "ops"))
+	_, err = users.GetByName(ctx, "ops")
+	assert.ErrorIs(t, err, storage.ErrNotFound)
+	creds, err := access.LoadHtpasswd(f.Path)
+	assert.NoError(t, err)
+	assert.Len(t, creds, 1)
+	assert.False(t, f.Changed())
+
+	assert.ErrorIs(t, f.Remove(ctx, users, passwords, "ops"), storage.ErrNotFound)
+	assert.Error(t, f.Remove(ctx, users, passwords, ""))
+}

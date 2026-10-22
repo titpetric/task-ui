@@ -84,8 +84,9 @@ func (s *UserStorage) Update(ctx context.Context, user *model.User) error {
 	return client(s.db).Update(ctx, model.UserTable, user, "id")
 }
 
-// Delete removes a user by ID, with the email addresses and passwords
-// it signs in with, and the sessions it has open.
+// Delete removes a user by ID, with the email addresses, passwords and
+// tokens it signs in with, the sessions it has open and its permission
+// policy. Runs, notes and history keep its name as text.
 func (s *UserStorage) Delete(ctx context.Context, id string) error {
 	if err := NewUserEmailStorage(s.db).DeleteByUser(ctx, id); err != nil {
 		return err
@@ -95,6 +96,14 @@ func (s *UserStorage) Delete(ctx context.Context, id string) error {
 	}
 	if err := NewUserAuthPasswordStorage(s.db).DeleteByUser(ctx, id); err != nil {
 		return err
+	}
+	if err := NewUserAuthTokenStorage(s.db).DeleteByUser(ctx, id); err != nil {
+		return err
+	}
+	if user, err := s.Get(ctx, id); err == nil {
+		if err := s.policies.DeleteSubject(ctx, permission.KindUser, user.Name); err != nil {
+			return err
+		}
 	}
 	return client(s.db).Exec(ctx, "DELETE FROM user WHERE id = ?", id)
 }

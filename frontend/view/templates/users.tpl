@@ -12,7 +12,7 @@
 </div>
 
 <div class="alert">
-	Users live in the password file, htpasswd style, read again whenever it changes. <b>Create user</b> adds one, as does <code>task-ui passwd &lt;user&gt;</code>, which also resets a password; removing the line removes the user. The roles come from <code>TASK_UI_ADMINS</code> and <code>TASK_UI_VIEWERS</code>; everyone else is a runner.
+	Users live in the password file, htpasswd style, read again whenever it changes. <b>Create user</b> adds one, as does <code>task-ui passwd &lt;user&gt;</code>, which also resets a password; removing the line, or <b>Delete</b> on a user who is no admin, removes the user. The roles come from <code>TASK_UI_ADMINS</code> and <code>TASK_UI_VIEWERS</code>; everyone else is a runner.
 </div>
 
 <div class="table-wrap">
@@ -27,6 +27,9 @@
 			<td class="nowrap" data-label="Since" title="{{ stamp .CreatedAt }}">{{ ago .CreatedAt }}</td>
 			<td class="actions">
 				<a class="btn-icon" href="/settings/users/{{ .ID }}" title="Folders of {{ .Name }}" aria-label="Folders of {{ .Name }}"><svg class="ic"><use href="#i-edit"/></svg></a>
+				{{- if and $.CanAddUsers ($.Can "user/delete") (not .CanAdmin) $.User (ne .ID $.User.ID) }}
+				<button type="button" class="btn-icon danger" data-delete="/api/users/{{ .ID }}" data-confirm="Delete the user {{ .Name }}? Their line leaves the password file, and their sessions and tokens end at once. Runs, notes and history keep the name." data-confirm-ok="Delete" data-next="/settings/users?notice=User+deleted" title="Delete {{ .Name }}" aria-label="Delete {{ .Name }}"><svg class="ic"><use href="#i-trash"/></svg></button>
+				{{- end }}
 			</td>
 		</tr>
 	{{- else }}

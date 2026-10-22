@@ -86,6 +86,13 @@ func (s *PermissionPolicyStorage) Put(ctx context.Context, kind, subject, path, 
 	return db.Insert(ctx, model.PermissionPolicyTable, row)
 }
 
+// DeleteSubject removes every entry of a subject, as when its user
+// goes.
+func (s *PermissionPolicyStorage) DeleteSubject(ctx context.Context, kind, subject string) error {
+	defer s.forget(kind, subject)
+	return client(s.db).Exec(ctx, "DELETE FROM permission_policy WHERE subject_kind = ? AND subject = ?", kind, subject)
+}
+
 // forget drops a subject's cached policy.
 func (s *PermissionPolicyStorage) forget(kind, subject string) {
 	s.mu.Lock()

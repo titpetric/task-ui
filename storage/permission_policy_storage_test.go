@@ -125,3 +125,22 @@ func TestPermissionPolicyStorage_For_run(t *testing.T) {
 	assert.True(t, can(guest, "web", nil, nil), "a viewer allowed to run")
 	assert.False(t, can(guest, "infra", locked, nil), "still as the allow lists say")
 }
+
+func TestPermissionPolicyStorage_DeleteSubject(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	policies := storage.NewPermissionPolicyStorage(newDB(t))
+	assert.NoError(t, policies.Put(ctx, permission.KindUser, "ops", "note/view", permission.Allow))
+	assert.NoError(t, policies.Put(ctx, permission.KindUser, "dev", "note/view", permission.Allow))
+	policy, err := policies.Policy(ctx, permission.KindUser, "ops")
+	assert.NoError(t, err)
+	assert.Len(t, policy, 1)
+
+	assert.NoError(t, policies.DeleteSubject(ctx, permission.KindUser, "ops"))
+	policy, err = policies.Policy(ctx, permission.KindUser, "ops")
+	assert.NoError(t, err)
+	assert.Len(t, policy, 0)
+	policy, err = policies.Policy(ctx, permission.KindUser, "dev")
+	assert.NoError(t, err)
+	assert.Len(t, policy, 1, "another subject keeps its entries")
+}

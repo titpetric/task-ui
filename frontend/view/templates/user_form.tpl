@@ -10,6 +10,11 @@
 		<p>Adds a user to the password file, who can sign in at once. They are a runner unless <code>TASK_UI_ADMINS</code> or <code>TASK_UI_VIEWERS</code> names them.</p>
 		{{- end }}
 	</div>
+	{{- if and $u .CanAddUsers (.Can "user/delete") (not $u.CanAdmin) .User (ne $u.ID .User.ID) }}
+	<div class="actions">
+		<button type="button" class="btn btn-danger" data-delete="/api/users/{{ $u.ID }}" data-confirm="Delete the user {{ $u.Name }}? Their line leaves the password file, and their sessions and tokens end at once. Runs, notes and history keep the name." data-confirm-ok="Delete" data-next="/settings/users?notice=User+deleted"><svg class="ic"><use href="#i-trash"/></svg>Delete user</button>
+	</div>
+	{{- end }}
 </div>
 
 {{- if or (not $u) (.Can "user/view") }}
