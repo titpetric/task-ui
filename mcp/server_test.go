@@ -9,6 +9,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -104,7 +105,15 @@ func (f *fixture) send(t *testing.T, method, token, path string, body any) (int,
 type reply struct {
 	Result struct {
 		ProtocolVersion string `json:"protocolVersion"`
-		Tools           []struct {
+		Instructions    string `json:"instructions"`
+		Resources       []struct {
+			URI string `json:"uri"`
+		} `json:"resources"`
+		Contents []struct {
+			MimeType string `json:"mimeType"`
+			Text     string `json:"text"`
+		} `json:"contents"`
+		Tools []struct {
 			Name string `json:"name"`
 		} `json:"tools"`
 		Content []struct {
@@ -145,7 +154,7 @@ func TestNew(t *testing.T) {
 		names = append(names, tool.Name)
 		assert.Equal(t, "object", tool.InputSchema.Type)
 	}
-	assert.Equal(t, []string{"list_jobs", "list_workflows", "run_job", "run_workflow", "list_runs", "get_run", "list_notes", "note_comment", "list_workflow_runs", "post_note", "ask_prompt"}, names)
+	assert.Equal(t, []string{"list_jobs", "list_workflows", "run_job", "run_workflow", "list_runs", "get_run", "list_notes", "note_comment", "list_workflow_runs", "post_note", "ask_prompt", "whoami"}, names)
 }
 
 // Only a token of a user gets in.
@@ -179,13 +188,17 @@ func TestServer_ServeHTTP(t *testing.T) {
 	assert.Equal(t, "2025-03-26", r.Result.ProtocolVersion)
 	r = f.rpc(t, "admin", "initialize", map[string]any{"protocolVersion": "1999-01-01"})
 	assert.Equal(t, "2025-06-18", r.Result.ProtocolVersion)
+	// The instructions carry context.md, then the tools and whoami.
+	assert.True(t, strings.HasPrefix(r.Result.Instructions, "# task-ui\n"))
+	assert.Contains(t, r.Result.Instructions, "## Artifacts (`artifact`)")
+	assert.Contains(t, r.Result.Instructions, "Call whoami to see what you may do")
 
 	status, raw := f.post(t, f.tokens["admin"], "/api/mcp", map[string]any{"jsonrpc": "2.0", "method": "notifications/initialized"})
 	assert.Equal(t, http.StatusAccepted, status)
 	assert.Len(t, raw, 0)
 
-	assert.Len(t, f.rpc(t, "admin", "tools/list", nil).Result.Tools, 11)
-	assert.Equal(t, -32601, f.rpc(t, "admin", "resources/list", nil).Error.Code)
+	assert.Len(t, f.rpc(t, "admin", "tools/list", nil).Result.Tools, 12)
+	assert.Equal(t, -32601, f.rpc(t, "admin", "prompts/list", nil).Error.Code)
 	assert.Equal(t, -32602, f.rpc(t, "admin", "tools/call", map[string]any{"name": "nothing"}).Error.Code)
 
 	status, raw = f.post(t, f.tokens["admin"], "/api/mcp", "not an object")

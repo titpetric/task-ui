@@ -15,7 +15,7 @@ import (
 )
 
 // ErrForbidden reports a prompt from someone without prompt/edit.
-var ErrForbidden = errors.New("only an admin prompts Claude")
+var ErrForbidden = errors.New("needs prompt/edit to prompt Claude")
 
 // ErrNoPrompt reports a place no prompt runs in: a directory that is
 // not there.

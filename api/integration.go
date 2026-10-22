@@ -192,7 +192,8 @@ const summaryPrompt = "The input is a markdown report of one shell command run o
 	"Then, only if it helps, a markdown table with a row a host. No preamble, no headings, don't explain the obvious, and say only what the report shows."
 
 // summarize sends the report to Claude, signed in with the token the
-// Claude integration holds for the user.
+// Claude integration holds for the user, with task-ui's context and
+// what the user may do in its system prompt.
 func (h *Handlers) summarize(r *http.Request, prompt, report string) (string, error) {
 	if h.opts.Summarizer == nil || h.opts.Integrations == nil {
 		return "", claude.ErrNoToken
@@ -202,5 +203,6 @@ func (h *Handlers) summarize(r *http.Request, prompt, report string) (string, er
 	if err != nil {
 		return "", err
 	}
-	return h.opts.Summarizer.Summarize(r.Context(), env["CLAUDE_CODE_OAUTH_TOKEN"], prompt, report)
+	system := claude.Context(user.Name, user.Role, h.permissions(r).Summary())
+	return h.opts.Summarizer.Summarize(r.Context(), env["CLAUDE_CODE_OAUTH_TOKEN"], system, prompt, report)
 }

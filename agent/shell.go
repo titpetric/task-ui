@@ -8,7 +8,7 @@ import (
 // directory it starts in, with the arguments given: the pty is Claude's
 // own. As a folder's @claude it starts in the folder, or in the
 // directory inside it the run is of. A development tool with you at the
-// keyboard.
+// keyboard, with the context in its system prompt.
 func (a *Agent) Shell(args []string) error {
 	if a.getenv("CLAUDE_CODE_OAUTH_TOKEN") == "" {
 		return errNoToken
@@ -17,6 +17,6 @@ func (a *Agent) Shell(args []string) error {
 	if err != nil {
 		return err
 	}
-	argv := append([]string{"claude", "--dangerously-skip-permissions"}, args...)
+	argv := append([]string{"claude", "--dangerously-skip-permissions", "--append-system-prompt", a.context()}, args...)
 	return syscall.Exec(path, argv, a.environ())
 }

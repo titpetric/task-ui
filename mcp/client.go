@@ -34,7 +34,8 @@ type errorBody struct {
 }
 
 // call sends a request to the API and returns the body of a success, or
-// an apiError with the API's message.
+// an apiError with the API's message; a refusal, which names the
+// permission it needs, points to whoami.
 func (c *client) call(ctx context.Context, method, path string, body any) ([]byte, error) {
 	var payload bytes.Buffer
 	if body != nil {
@@ -60,7 +61,11 @@ func (c *client) call(ctx context.Context, method, path string, body any) ([]byt
 		if json.Unmarshal(data, &e) != nil || e.Error == "" {
 			e.Error = strings.TrimSpace(string(data))
 		}
-		return nil, &apiError{Status: rec.Code, Message: fmt.Sprintf("%s (%d)", e.Error, rec.Code), Body: data}
+		message := fmt.Sprintf("%s (%d)", e.Error, rec.Code)
+		if rec.Code == http.StatusForbidden {
+			message += "; call whoami to see what you may do"
+		}
+		return nil, &apiError{Status: rec.Code, Message: message, Body: data}
 	}
 	return data, nil
 }

@@ -58,3 +58,17 @@ func TestSet_Effective(t *testing.T) {
 	assert.False(t, ok, "no check names all")
 	assert.True(t, permission.Set{User: &model.User{Role: model.RoleAdmin}}.Effective()["shell"])
 }
+
+func TestSet_Allows(t *testing.T) {
+	t.Parallel()
+	set := permission.Set{User: &model.User{Name: "ops", Role: model.RoleRunner}, Role: permission.Policy{"note/all": permission.Allow, "run": permission.Allow}, Own: permission.Policy{"note/delete": permission.Deny}}
+	assert.Equal(t, []string{"note/view", "note/edit", "run"}, set.Allows())
+}
+
+func TestSet_Summary(t *testing.T) {
+	t.Parallel()
+	set := permission.Set{User: &model.User{Name: "ops", Role: model.RoleRunner}, Role: permission.Policy{"note/view": permission.Allow, "run": permission.Allow}}
+	assert.Equal(t, "note/view, run; everything else is denied", set.Summary())
+	assert.Equal(t, "nothing", permission.Set{User: &model.User{Name: "guest", Role: model.RoleViewer}}.Summary())
+	assert.Equal(t, "everything, as an admin", permission.Set{User: &model.User{Role: model.RoleAdmin}}.Summary())
+}

@@ -57,4 +57,7 @@ type Options struct {
 	// none; with nil KeyGrants every run gets every key.
 	WorkspaceKeys *workspace.Keyring
 	KeyGrants     *storage.WorkspaceKeyGrantStorage
+	// Users say what the user of a run may do, which the run reads in
+	// TASK_UI_PERMISSIONS, so Claude in it knows. Nil leaves it out.
+	Users *storage.UserStorage
 }

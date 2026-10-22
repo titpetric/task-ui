@@ -114,7 +114,7 @@ func tools() []Tool {
 			}, "workflow"),
 			call: listWorkflowRuns,
 		},
-	}, noteTools()...)
+	}, append(noteTools(), whoamiTool())...)
 }
 
 // decode reads a tool's arguments into v; none is an empty object.

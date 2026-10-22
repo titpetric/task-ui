@@ -25,7 +25,8 @@ func TestAgent_Prompt(t *testing.T) {
 	text := out.String()
 	assert.Contains(t, text, "cwd="+workspace+"\n")
 	assert.Contains(t, text, "home=/home/server\n", "the server's HOME stays")
-	assert.Contains(t, text, "arg=--output-format\narg=text\narg=A prompt from a task-ui folder page.")
+	assert.Contains(t, text, "arg=--output-format\narg=text\narg=--append-system-prompt\narg=# task-ui\n")
+	assert.Contains(t, text, "\narg=A prompt from a task-ui folder page.")
 	assert.Contains(t, text, "the last message is the question:\n\nList the skills.\n\nYour final message is the answer, in markdown")
 
 	// TASK_UI_PROMPT_DIR, a folder or a directory inside one, wins over
@@ -60,7 +61,7 @@ func TestAgent_Prompt_reply(t *testing.T) {
 }
 
 // With TASK_UI_HOSTS, Claude's system prompt gets the hosts and how to
-// reach them over ssh; without it, there is no system prompt.
+// reach them over ssh; without it, the system prompt is the context.
 func TestAgent_Prompt_hosts(t *testing.T) {
 	t.Parallel()
 	here := realDir(t)
@@ -82,7 +83,25 @@ func TestAgent_Prompt_hosts(t *testing.T) {
 	out.Reset()
 	a.Env = env
 	assert.NoError(t, a.Run(context.Background(), []string{"prompt"}))
-	assert.NotContains(t, out.String(), "--append-system-prompt")
+	assert.Contains(t, out.String(), "arg=--append-system-prompt\narg=# task-ui\n")
+	assert.NotContains(t, out.String(), "task-ui's inventory")
+}
+
+// The system prompt ends with the context: the run's artifact
+// directory, the user with the role and what the user may do, and
+// context.md.
+func TestAgent_Prompt_context(t *testing.T) {
+	t.Parallel()
+	here := realDir(t)
+	var out bytes.Buffer
+	a := &agent.Agent{Stdout: &out, Stderr: io.Discard, Env: []string{
+		"PATH=" + fakeClaude(t), "CLAUDE_CODE_OAUTH_TOKEN=sk-1", "TASK_UI_PROMPT_DIR=" + here, "TASK_UI_PROMPT=what are artifacts",
+		"TASK_UI_ARTIFACTS=/data/artifacts/01", "TASK_UI_USER=claude", "TASK_UI_ROLE=runner", "TASK_UI_PERMISSIONS=note/view, run; everything else is denied",
+	}}
+	assert.NoError(t, a.Run(context.Background(), []string{"prompt"}))
+	text := out.String()
+	assert.Contains(t, text, "arg=--append-system-prompt\narg=This run's artifact directory is $TASK_UI_ARTIFACTS, /data/artifacts/01:")
+	assert.Contains(t, text, "\n\n"+claude.Context("claude", "runner", "note/view, run; everything else is denied")+"\n")
 }
 
 // A thread from a run's page reaches Claude after the run, from the

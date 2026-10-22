@@ -94,6 +94,7 @@ func newFixture(t *testing.T) *fixture {
 		Workspaces:    f.workspaces,
 		WorkspaceKeys: f.keys,
 		KeyGrants:     f.grants,
+		Users:         storage.NewUserStorage(db),
 	})
 	f.manager = manager
 	return f

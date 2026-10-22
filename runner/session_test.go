@@ -170,3 +170,17 @@ func TestSession_InputBeforeStart(t *testing.T) {
 	assert.Equal(t, model.StateOK, status.State)
 	assert.ErrorIs(t, session.Input([]byte("late\n")), runner.ErrNotRunning)
 }
+
+// A run knows its user's role and what the user may do, for Claude in it.
+func TestManager_Permissions(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	req := f.shellJob("perm", `echo "role=$TASK_UI_ROLE may=$TASK_UI_PERMISSIONS"`, false)
+	req.User.Role = model.RoleRunner
+	session, err := f.manager.Start(context.Background(), req)
+	assert.NoError(t, err)
+	out, status := collect(t, session.Attach(true))
+	assert.Equal(t, model.StateOK, status.State)
+	assert.Contains(t, out, "role=runner may=")
+	assert.Contains(t, out, "run; everything else is denied")
+}

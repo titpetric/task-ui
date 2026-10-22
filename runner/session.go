@@ -28,6 +28,8 @@ type Session struct {
 	// role is the role of the user who started the run, for the instance
 	// keys its runs get.
 	role string
+	// permissions say in a line what that user may do.
+	permissions string
 	// env is what the request adds to the run's environment.
 	env []string
 	// dir is where the process starts, "" for the folder's directory,
