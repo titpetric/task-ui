@@ -8,6 +8,7 @@ import (
 	"github.com/titpetric/task-ui/internal/assert"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/note"
+	"github.com/titpetric/task-ui/runner"
 	"github.com/titpetric/task-ui/storage"
 )
 
@@ -112,4 +113,32 @@ func TestBoard_RecoverExternal(t *testing.T) {
 	got, _ = f.board.Notes.Get(ctx, open.ID)
 	assert.Equal(t, model.NoteOpen, got.State)
 	assert.Equal(t, "", got.RunID)
+}
+
+// A thread the agent answered keeps its run; a reply that names
+// another user, who sets it working, lets go of that run, so the note
+// stays working for that user across a restart.
+func TestBoard_RecoverHandedOver(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t, "agent/run")
+	ctx := context.Background()
+	consuela := f.users(t, "consuela")[0]
+	first, err := f.board.Post(ctx, f.ops, "", "@claude update the weather job")
+	assert.NoError(t, err)
+	assert.NotEqual(t, "", f.settled(t, first.ID).RunID)
+
+	_, err = f.board.Post(ctx, f.ops, first.ID, "@consuela check what it did")
+	assert.NoError(t, err)
+	_, err = f.board.Comment(ctx, consuela, first.ID, "", model.NoteWorking)
+	assert.NoError(t, err)
+	got, _ := f.board.Notes.Get(ctx, first.ID)
+	assert.Equal(t, "", got.RunID, "no run of the board's works on it")
+
+	restarted := *f.board
+	restarted.Runner = runner.New(runner.Options{Runs: f.board.Runs, Grace: time.Second, KillTimeout: time.Second, Keep: time.Minute})
+	assert.NoError(t, restarted.Recover(ctx))
+	time.Sleep(100 * time.Millisecond)
+	got, _ = f.board.Notes.Get(ctx, first.ID)
+	assert.Equal(t, model.NoteWorking, got.State)
+	assert.Len(t, replies(t, f, first.ID), 2, "nothing fails the note")
 }
