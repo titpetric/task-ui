@@ -136,3 +136,16 @@ func TestLoad_LooseScripts(t *testing.T) {
 		t.Fatalf("bash: %+v", bash)
 	}
 }
+
+// default is the first job of a folder, wherever its file has it.
+func TestLoad_DefaultFirst(t *testing.T) {
+	dir := t.TempDir()
+	write(t, filepath.Join(dir, "Taskfile.yml"), "tasks:\n  build:\n    desc: Build\n  test:\n    desc: Test\n  default:\n    desc: Vet\n")
+	ids := []string{}
+	for _, job := range Load("site", dir).Jobs {
+		ids = append(ids, job.ID)
+	}
+	if len(ids) != 3 || ids[0] != "default" {
+		t.Fatalf("ids: %v", ids)
+	}
+}

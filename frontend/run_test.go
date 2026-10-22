@@ -254,6 +254,13 @@ func TestRun_Prompt(t *testing.T) {
 	assert.Contains(t, viewer, `id="note-`+thread.ID+`"`)
 	assert.NotContains(t, viewer, box)
 
+	// A running run's box follows its threads, hidden while it has none:
+	// the summary of Run and summarize comes when it ends.
+	running := f.run(t, "infra", "slow", "ops", model.StateRunning)
+	live := f.page(t, asAdmin, "/runs/"+running.ID)
+	assert.Contains(t, live, `<details class="promptbox" open hidden>`)
+	assert.NotContains(t, live, box)
+
 	prompt := f.run(t, model.Internal, "claude-prompt", "admin", model.StateOK)
 	assert.NotContains(t, f.page(t, asAdmin, "/runs/"+prompt.ID), "promptbox", "an older prompt's run renders, with no box")
 

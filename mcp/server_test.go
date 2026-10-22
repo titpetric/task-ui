@@ -35,7 +35,7 @@ func newFixture(t *testing.T) *fixture {
 	ctx := context.Background()
 	root := t.TempDir()
 	assert.NoError(t, os.MkdirAll(filepath.Join(root, "site"), 0o755))
-	assert.NoError(t, os.WriteFile(filepath.Join(root, "site", "Makefile"), []byte("build: ## Build the site\n\techo built\n"), 0o644))
+	assert.NoError(t, os.WriteFile(filepath.Join(root, "site", "Makefile"), []byte("build: ## Build the site\n\techo built\ndefault: ## Check the site\n\techo checked\n"), 0o644))
 
 	hash, err := access.HashPassword("demo")
 	assert.NoError(t, err)

@@ -277,6 +277,9 @@
     // the list a run row keeps, or the line typed.
     if (spec.dir) body.dir = spec.dir;
     if (spec.args && spec.args.length) body.args = spec.args;
+    // Run and summarize: Claude summarises the run on its page when it
+    // ends.
+    if (spec.summarize) body.summarize = true;
     api("POST", "/api/runs", body).then(function (res) {
       if (session !== s) return;
       if (res.status === 201) {
@@ -419,7 +422,9 @@
     else if (msg.state === "failed") notice(msg.message || ("The job exited with status " + msg.exit_code + "."), "bad");
     else if (msg.state === "stopped") notice("Stopped.", "");
     else notice("");
-    els.hint.textContent = "Finished. The run and its recording are in the history.";
+    els.hint.textContent = s.spec && s.spec.summarize
+      ? "Finished. Claude summarises it on the run's page, under the output."
+      : "Finished. The run and its recording are in the history.";
     // A run that ended well is run again; one that did not is forced,
     // which also gets past what refused it.
     var can = s.run && s.run.can_run;
@@ -1792,6 +1797,9 @@
           edits[form.dataset.noteEdit] = form.elements.body.value;
         });
         notesList.innerHTML = fresh.innerHTML;
+        // A hidden box, a running run's, shows once a thread comes.
+        var box = notesList.closest(".promptbox");
+        if (box && box.hidden && notesList.children.length) box.hidden = false;
         Object.keys(drafts).forEach(function (parent) {
           var form = notesList.querySelector('form[data-parent="' + parent + '"]');
           if (!form) return;
@@ -2575,6 +2583,7 @@
       job: btn.dataset.job,
       title: btn.dataset.title || (btn.dataset.folder + " / " + btn.dataset.job),
       force: btn.hasAttribute("data-force"),
+      summarize: btn.hasAttribute("data-summarize"),
     };
     // A job that takes args opens a field for them first, under its
     // card or chips.

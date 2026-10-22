@@ -60,6 +60,7 @@ func (f *Folder) Skills() []*Skill {
 			skill.Jobs = append(skill.Jobs, f.skillJob(skill, section, cmd))
 		}
 		if len(skill.Jobs) > 0 {
+			DefaultFirst(skill.Jobs)
 			list = append(list, skill)
 		}
 	}

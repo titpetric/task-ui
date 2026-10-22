@@ -21,7 +21,7 @@ func TestTools_Jobs(t *testing.T) {
 
 	text, failed := f.tool(t, "admin", "list_jobs", nil)
 	assert.False(t, failed)
-	assert.Contains(t, text, "site\n  build - Build the site")
+	assert.Contains(t, text, "site\n  default - Check the site\n  build - Build the site", "default first")
 
 	text, failed = f.tool(t, "guest", "run_job", map[string]any{"folder": "site", "job": "build"})
 	assert.True(t, failed)

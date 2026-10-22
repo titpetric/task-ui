@@ -188,8 +188,8 @@ func (h *Handlers) runOnHosts(w http.ResponseWriter, r *http.Request) {
 
 // summaryPrompt is what Claude reads the report with.
 const summaryPrompt = "The input is a markdown report of one shell command run on several hosts over ssh: a section a host, with its exit code and output. " +
-	"Summarize it for the operator in markdown: lead with what needs attention (failures, hosts that differ, warnings, anything near a limit), " +
-	"then a short line on what's fine. Name the hosts. Keep it brief, and say only what the report shows."
+	"Summarise it for the operator in one or two short paragraphs: lead with what needs attention (failures, hosts that differ, warnings, anything near a limit), then a line on what is fine, naming the hosts. " +
+	"Then, only if it helps, a markdown table with a row a host. No preamble, no headings, don't explain the obvious, and say only what the report shows."
 
 // summarize sends the report to Claude, signed in with the token the
 // Claude integration holds for the user.

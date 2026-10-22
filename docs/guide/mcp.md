@@ -105,7 +105,7 @@ author and an admin; anyone who may post replies.
 
 | Tool                 | Arguments                                        | What it does |
 |----------------------|--------------------------------------------------|--------------|
-| `list_jobs`          | `folder`                                         | The folders and their jobs, whether you may run each, how it last went |
+| `list_jobs`          | `folder`                                         | The folders and their jobs, `default` first, whether you may run each, how it last went |
 | `list_workflows`     |                                                  | The workflows, their steps and their last run |
 | `run_job`            | `folder`, `job`, `force`, `reason`, `wait`, `lines` | Starts a job; with `wait`, up to 900 seconds, returns how it ended and the end of its output |
 | `run_workflow`       | `workflow`, `wait`                               | Starts a workflow by ID or name; with `wait`, returns how each step went |

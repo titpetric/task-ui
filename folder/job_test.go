@@ -1,6 +1,7 @@
 package folder
 
 import (
+	"strings"
 	"testing"
 )
 
@@ -26,5 +27,19 @@ func TestJob_ArgsCommand(t *testing.T) {
 	}
 	if (*Job)(nil).ArgsCommand() != "" {
 		t.Fatal("nil job")
+	}
+}
+
+func TestDefaultFirst(t *testing.T) {
+	jobs := []*Job{{ID: "build"}, {ID: "test"}, {ID: "task:default"}, {ID: "lint"}, {ID: "@git:default"}}
+	got := []string{}
+	for _, job := range DefaultFirst(jobs) {
+		got = append(got, job.ID)
+	}
+	if strings.Join(got, " ") != "task:default @git:default build test lint" {
+		t.Fatalf("order: %v", got)
+	}
+	if !(&Job{ID: "default"}).IsDefault() || (&Job{ID: "defaults"}).IsDefault() || (*Job)(nil).IsDefault() {
+		t.Fatal("IsDefault")
 	}
 }

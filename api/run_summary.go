@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/titpetric/task-ui/access"
+	"github.com/titpetric/task-ui/claude"
 	"github.com/titpetric/task-ui/markdown"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/runner"
@@ -18,8 +19,7 @@ const summaryLines = 2000
 
 // runSummaryPrompt is what Claude reads a run's output with.
 const runSummaryPrompt = "The input is a markdown report of one run of a job in task-ui, a CI and task runner: the job, how it ended, and the end of its terminal output. " +
-	"Summarize it for the operator in markdown. For a failed run, lead with why it failed, quoting the decisive error lines, and what to try. " +
-	"For a passing run, say what it did and anything worth a look, such as warnings. Keep it brief, and say only what the output shows."
+	claude.RunSummary
 
 // runSummary returns the summary a run has, from storage: 404 without one.
 func (h *Handlers) runSummary(w http.ResponseWriter, r *http.Request) {

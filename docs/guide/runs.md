@@ -52,7 +52,10 @@ place.
 With the Claude Code integration set up for you (see
 [Settings](settings.md#integrations)), a finished run also has
 **Summary**: Claude reads the end of its output, up to 2000 lines, and
-writes what it did or why it failed, in a window. task-ui keeps the
+writes one or two short paragraphs on what it did and how it ended, the
+cause when it failed, then a markdown table of the values worth a
+glance, such as versions, images, counts or durations, when the output
+has any, in a window. task-ui keeps the
 summary by run, so the next **Summary** of that run, by anyone, shows
 the kept one at once, without asking Claude again.
 
@@ -149,6 +152,31 @@ own run has no prompt.
 curl -s -X POST https://task.example.com/api/prompts \
   -H "Authorization: Bearer $TOKEN" \
   -d '{"run": "<run id>", "prompt": "why did this run fail"}'
+curl -s "https://task.example.com/api/prompts?run=<run id>" \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+### Run and summarize
+
+**|>summarize**, beside **Run** on a job's card and page, runs the job
+as **Run** does, in its window, and when the run ends, in any state,
+task-ui asks Claude about it on the run's page, as you: a thread whose
+question reads "Summarize this run.", answered in the shape of a
+**Summary**, one or two paragraphs and a table of the values worth a
+glance. Claude gets that shape with the question, and changes nothing.
+The thread shows under the output as it gets answered, and **Reply**
+asks more about the run. The button shows with `prompt/edit` and a
+Claude Code token, on jobs that end on their own: not `@shell`,
+`@claude` or an interactive job. **Run again** in the window brings
+another summary.
+
+task-ui waits for the run in memory: when the server restarts before
+the run ends, no summary comes. The API takes `summarize` on a run:
+
+```sh
+curl -s -X POST https://task.example.com/api/runs \
+  -H "Authorization: Bearer $TOKEN" \
+  -d '{"folder": "malta", "dir": "dockerfiles", "job": "@git:status", "summarize": true}'
 curl -s "https://task.example.com/api/prompts?run=<run id>" \
   -H "Authorization: Bearer $TOKEN"
 ```

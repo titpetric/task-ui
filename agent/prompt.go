@@ -16,6 +16,8 @@ import (
 // last is the question. Claude's answer goes to the terminal and to the file
 // TASK_UI_PROMPT_REPLY names, which the board replies with. A thread
 // from a run's page has the run in the file TASK_UI_PROMPT_RUN names.
+// TASK_UI_PROMPT_INSTRUCTIONS, such as the shape of a run's summary, goes
+// to Claude's system prompt, ahead of the inventory of TASK_UI_HOSTS.
 func (a *Agent) Prompt(ctx context.Context) error {
 	thread := a.getenv("TASK_UI_PROMPT")
 	if thread == "" {
@@ -51,7 +53,19 @@ func (a *Agent) Prompt(ctx context.Context) error {
 		defer reply.Close()
 		out = io.MultiWriter(a.Stdout, reply)
 	}
-	return a.ask(ctx, dir, prompt, inventory(a.getenv("TASK_UI_HOSTS")), out)
+	return a.ask(ctx, dir, prompt, system(a.getenv("TASK_UI_PROMPT_INSTRUCTIONS"), inventory(a.getenv("TASK_UI_HOSTS"))), out)
+}
+
+// system joins what goes after Claude's own system prompt, the parts
+// that are not empty, a blank line between them.
+func system(parts ...string) string {
+	kept := parts[:0]
+	for _, part := range parts {
+		if part != "" {
+			kept = append(kept, part)
+		}
+	}
+	return strings.Join(kept, "\n\n")
 }
 
 // aboutRun is the prompt of a thread from a run's page: the run, as

@@ -92,6 +92,7 @@ func finish(f *Folder) {
 			f.Jobs = append(f.Jobs, job)
 		}
 	}
+	DefaultFirst(f.Jobs)
 	if f.Error == "" && len(failures) > 0 {
 		f.Error = strings.Join(failures, "\n")
 	}

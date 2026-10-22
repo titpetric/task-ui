@@ -212,3 +212,24 @@ func TestFolder_SettingsLinks(t *testing.T) {
 		}
 	}
 }
+
+// |>summarize stands beside Run for a user with prompt/edit and a
+// Claude token, on the folder's cards and the job's page; no one else
+// gets it, and neither does an interactive job.
+func TestFolder_Summarize(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	ctx := context.Background()
+	const button = `data-run data-summarize data-folder="infra" data-job="plan" data-title="infra / plan" title="Run and summarize">|&gt;summarize</button>`
+
+	assert.NotContains(t, f.page(t, asAdmin, "/f/_/infra"), "data-summarize", "no Claude token")
+	f.withKey(t)
+	assert.NoError(t, f.opts.Integrations.Save(ctx, integration.Claude, map[string]string{"token": "sk-1"}))
+	assert.Contains(t, f.page(t, asAdmin, "/f/_/infra"), button)
+	assert.Contains(t, f.page(t, asAdmin, "/f/_/infra/plan"), button)
+	for _, user := range []string{asOps, asViewer, asLimited} {
+		assert.NotContains(t, f.page(t, user, "/f/_/infra"), "data-summarize", user)
+	}
+	f.infra.Job("many").Interactive = true
+	assert.NotContains(t, f.page(t, asAdmin, "/f/_/infra"), `data-summarize data-folder="infra" data-job="many"`)
+}

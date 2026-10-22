@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/titpetric/task-ui/claude"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/runner"
 )
@@ -38,6 +39,27 @@ func (b *Board) AskRun(ctx context.Context, user *model.User, runID, body string
 		return nil, fmt.Errorf("%w: no such run", ErrNoPrompt)
 	}
 	return b.ask(ctx, user, "", run.Where(), run.ID, body)
+}
+
+// SummaryQuestion is the question of the thread Run and summarize
+// asks about its run; its prompt run sets claude.RunSummary beside it.
+const SummaryQuestion = "Summarize this run."
+
+// SummarizeRun asks Claude for the summary of a run that ended, as AskRun
+// does, from the user who started it: a thread about the run that
+// reads SummaryQuestion, answered in the shape claude.RunSummary sets.
+func (b *Board) SummarizeRun(ctx context.Context, user *model.User, runID string) (*model.Note, error) {
+	return b.AskRun(ctx, user, runID, SummaryQuestion)
+}
+
+// instructions are what a prompt's run tells Claude besides the
+// thread, TASK_UI_PROMPT_INSTRUCTIONS: the summary's shape for the
+// question of SummarizeRun alone in its thread; nothing otherwise.
+func instructions(note *model.Note, thread string) []string {
+	if note.AboutRunID == "" || note.Body != SummaryQuestion || thread != note.Body {
+		return nil
+	}
+	return []string{"TASK_UI_PROMPT_INSTRUCTIONS=" + claude.RunSummary}
 }
 
 // aboutRun writes what a prompt about a run tells Claude of it to a

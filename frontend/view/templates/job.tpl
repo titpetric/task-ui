@@ -9,7 +9,7 @@
 		{{- if $run }}
 		<a class="btn btn-primary" href="/runs/{{ $run.ID }}" data-attach="{{ $run.ID }}">Attach</a>
 		{{- if $can }}<button type="button" class="btn btn-danger" data-kill="{{ $run.ID }}">Kill</button>{{ end }}
-		{{- else if $can }}{{ template "runButtons" (list $p $r) }}{{ end }}
+		{{- else if $can }}{{ template "runButtons" (list $ $p $r) }}{{ end }}
 	</div>
 </div>
 

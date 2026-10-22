@@ -41,6 +41,13 @@ func (h *Handlers) prompt(r *http.Request, p *view.Page, f *folder.Folder, rel s
 	return h.withThreads(r, view.PromptIn(f.ID, rel))
 }
 
+// summaries reports whether the user may Run and summarize: prompts on,
+// prompt/edit and a Claude token, as the prompt box of a run's page
+// takes.
+func (h *Handlers) summaries(r *http.Request, p *view.Page) bool {
+	return h.opts.Board != nil && p.Can("prompt/edit") && h.claudeFor(r, p.User)
+}
+
 // withThreads fills a prompt box with the last threads of its place.
 func (h *Handlers) withThreads(r *http.Request, prompt *view.Prompt) *view.Prompt {
 	if h.opts.Board != nil {
