@@ -27,6 +27,7 @@
 		<label for="w-branch">Branch <span class="faint">optional, the default branch otherwise</span></label>
 		<input type="text" id="w-branch" name="branch" spellcheck="false" autocomplete="off">
 	</div>
+	{{- template "recursivefield" (list "w-recursive" true) }}
 	<div class="form-foot">
 		<a class="btn" href="/settings/workspaces">Cancel</a>
 		<button class="btn btn-primary" type="submit">Clone</button>

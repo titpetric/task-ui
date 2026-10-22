@@ -1180,6 +1180,10 @@
       type: timestamp
       comment: Updated At
       datatype: datetime
+    - name: shallow
+      type: boolean
+      comment: Shallow
+      datatype: boolean
     - name: sort
       type: integer
       comment: Sort

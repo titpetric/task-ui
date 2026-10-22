@@ -59,7 +59,8 @@ Checkouts under the root that hold projects: an organisation's tooling,
 with the projects cloned inside it. **Add workspace** clones one under
 the folder you name, **Move up** and **Move down** order them, and the
 remove button deletes one with the projects inside it. **Configure**
-changes a workspace's title and description, and holds its **Keys**, the
+changes a workspace's title, description and **Recursive**, the toggle
+a project has, and holds its **Keys**, the
 encryption key of its secrets and the SSH keys of its runs, which the
 [Keys](#keys) page also lists, and
 **Export**, which **Import** on another instance reads.

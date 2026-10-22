@@ -4,7 +4,7 @@
 <div class="page-head">
 	<div>
 		<h2>Configure {{ $ws.Folder }}</h2>
-		<p>A workspace's title and description. Its folder, repository and branch stay: another checkout is another workspace.{{ if $default }} The default workspace is the root, and stays.{{ end }}</p>
+		<p>A workspace's title, description and Recursive. Its folder, repository and branch stay: another checkout is another workspace.{{ if $default }} The default workspace is the root, and stays.{{ end }}</p>
 	</div>
 	{{- if not $default }}
 	<div class="actions">
@@ -26,6 +26,7 @@
 		<label for="we-description">Description</label>
 		<input type="text" id="we-description" name="description" value="{{ index .Form "description" }}" autocomplete="off">
 	</div>
+	{{- template "recursivefield" (list "we-recursive" (not $ws.Shallow)) }}
 	<div class="field">
 		<span class="label">Projects <span class="faint">{{ if $default }}at the top of the root{{ else }}cloned inside it; removing the workspace removes them{{ end }}</span></span>
 		<span>{{ range $i, $id := $nested }}{{ if $i }}, {{ end }}<a href="/settings/projects/{{ $id }}">{{ $id }}</a>{{ else }}<span class="faint">none yet</span>{{ end }}</span>

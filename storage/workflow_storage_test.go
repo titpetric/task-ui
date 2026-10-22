@@ -107,8 +107,9 @@ func TestWorkflowRunStorage(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Len(t, list, 1)
 
-	// The runs of every workflow, newest first, for the sidebar.
-	other := &model.WorkflowRun{WorkflowID: "wf2", Name: "release", UserName: "ops"}
+	// The runs of every workflow, newest first, for the sidebar. Its ID
+	// sorts later, for a start in the same millisecond.
+	other := &model.WorkflowRun{ID: model.NewIDAt(time.Now().Add(time.Second)), WorkflowID: "wf2", Name: "release", UserName: "ops"}
 	assert.NoError(t, runs.Create(ctx, other, steps("a", "build")))
 	all, err := runs.List(ctx, 10)
 	assert.NoError(t, err)

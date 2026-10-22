@@ -39,9 +39,7 @@
 		<label for="pe-hours">Hours <span class="faint">when the jobs may run, one rule per line; the last rule for a day wins; empty is always</span></label>
 		<textarea id="pe-hours" name="hours" rows="3" spellcheck="false" autocomplete="off" placeholder="mon-fri 9-17&#10;fri 9-13">{{ index .Form "hours" }}</textarea>
 	</div>
-	<div class="field">
-		<label class="check"><input type="checkbox" id="pe-recursive" name="recursive"{{ if or (not $.Project) (not $.Project.Shallow) }} checked{{ end }}> Recursive <span class="faint">Off: only the project and its top-level folders</span></label>
-	</div>
+	{{- template "recursivefield" (list "pe-recursive" (or (not $.Project) (not $.Project.Shallow))) }}
 	<div class="field">
 		<label class="check"><input type="checkbox" id="pe-sidebar" name="sidebar"{{ if or (not $.Project) (not $.Project.SidebarHidden) }} checked{{ end }}> Show in sidebar <span class="faint">off keeps the project and its folders out of the sidebar; their pages stay</span></label>
 	</div>

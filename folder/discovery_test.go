@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"slices"
 	"testing"
+
+	"github.com/titpetric/task-ui/model"
 )
 
 func TestDiscovery(t *testing.T) {
@@ -273,5 +275,60 @@ func TestDiscovery_Workspace(t *testing.T) {
 	// Unconfigured, the ignored project stays out.
 	if got, want := list(&Discovery{Root: root, Discover: true}), []string{"ws"}; !slices.Equal(got, want) {
 		t.Fatalf("folders: got %v, want %v", got, want)
+	}
+}
+
+// A directory a workspace's checkout ignores, right below it, lists
+// when it holds a job source of its own, such as another
+// checkout; the folders inside it follow the workspace's Recursive. One
+// with no job source stays out, as does an ignored directory deeper
+// down. A project row on the directory wins over the discovered one.
+func TestDiscovery_IgnoredCheckouts(t *testing.T) {
+	t.Parallel()
+	root := t.TempDir()
+	ws := filepath.Join(root, "ws")
+	gitInit(t, ws)
+	write(t, filepath.Join(ws, ".gitignore"), "/deploy\n/empty\n/lib/cache\n")
+	write(t, filepath.Join(ws, "atkins.yml"), "jobs:\n  setup: echo setup\n")
+	deploy := filepath.Join(ws, "deploy")
+	gitInit(t, deploy)
+	write(t, filepath.Join(deploy, "Taskfile.yml"), "tasks:\n  up:\n    desc: Up\n")
+	write(t, filepath.Join(deploy, "web", "atkins.yml"), "jobs:\n  ship: echo ship\n")
+	write(t, filepath.Join(ws, "empty", "inner", "atkins.yml"), "jobs:\n  x: echo x\n")
+	write(t, filepath.Join(ws, "lib", "cache", "atkins.yml"), "jobs:\n  y: echo y\n")
+
+	list := func(d *Discovery) []string {
+		ids := []string{}
+		for _, f := range d.List() {
+			ids = append(ids, f.ID)
+		}
+		return ids
+	}
+	d := &Discovery{Root: root, Discover: true, Workspaces: []Config{{ID: "ws"}}}
+	if got, want := list(d), []string{"ws", "ws/deploy", "ws/deploy/web"}; !slices.Equal(got, want) {
+		t.Fatalf("folders: got %v, want %v", got, want)
+	}
+	if f := d.Find("ws/deploy"); f == nil || f.Job("up") == nil {
+		t.Fatalf("ws/deploy: %+v", f)
+	}
+
+	shallow := &Discovery{Root: root, Discover: true, Workspaces: []Config{{ID: "ws", Shallow: true}}}
+	if got, want := list(shallow), []string{"ws", "ws/deploy"}; !slices.Equal(got, want) {
+		t.Fatalf("shallow: got %v, want %v", got, want)
+	}
+
+	configured := &Discovery{Root: root, Discover: true, Workspaces: []Config{{ID: "ws"}}, Config: []Config{{ID: "ws/deploy", Title: "Deploy"}}}
+	if f := configured.Find("ws/deploy"); f == nil || f.Title != "Deploy" {
+		t.Fatalf("project row: %+v", f)
+	}
+
+	// The default workspace is the root, by Path.
+	other := t.TempDir()
+	gitInit(t, other)
+	write(t, filepath.Join(other, ".gitignore"), "/tools\n")
+	write(t, filepath.Join(other, "tools", "Makefile"), "## Build\nbuild:\n\techo build\n")
+	top := &Discovery{Root: other, Discover: true, Workspaces: WorkspaceConfigsOf([]model.Workspace{{Folder: model.Default}})}
+	if got, want := list(top), []string{"tools"}; !slices.Equal(got, want) {
+		t.Fatalf("root: got %v, want %v", got, want)
 	}
 }

@@ -28,9 +28,7 @@
 		<label for="p-branch">Branch <span class="faint">optional, the default branch otherwise</span></label>
 		<input type="text" id="p-branch" name="branch" spellcheck="false" autocomplete="off">
 	</div>
-	<div class="field">
-		<label class="check"><input type="checkbox" id="p-recursive" name="recursive" checked> Recursive <span class="faint">Off: only the project and its top-level folders</span></label>
-	</div>
+	{{- template "recursivefield" (list "p-recursive" true) }}
 	<div class="field">
 		<label class="check"><input type="checkbox" id="p-sidebar" name="sidebar" checked> Show in sidebar <span class="faint">off keeps the project out of the sidebar; its pages stay</span></label>
 	</div>

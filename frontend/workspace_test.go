@@ -64,6 +64,13 @@ func TestWorkspaceEdit(t *testing.T) {
 	assert.Contains(t, body, `value="Malta"`)
 	assert.Contains(t, body, `value="The org"`)
 	assert.Contains(t, body, "none yet")
+	assert.Contains(t, body, `type="checkbox" id="we-recursive" name="recursive" checked`)
+	assert.Contains(t, f.page(t, asAdmin, "/settings/workspaces/new"), `type="checkbox" id="w-recursive" name="recursive" checked`)
+
+	assert.NoError(t, f.opts.Workspaces.Create(ctx, &model.Workspace{Folder: "gozo", Shallow: true}))
+	shallow := f.page(t, asAdmin, "/settings/workspaces/gozo")
+	assert.Contains(t, shallow, `type="checkbox" id="we-recursive" name="recursive">`)
+	assert.Contains(t, shallow, "Off: only the folder and its top-level folders")
 
 	assert.Equal(t, http.StatusNotFound, f.get(t, asAdmin, "/settings/workspaces/nope").Status)
 }

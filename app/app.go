@@ -248,6 +248,7 @@ func (a *App) wire(version string) error {
 	recordings := &recording.Store{Root: cfg.RecordingsDir()}
 
 	a.Catalogue = NewCatalogue(cfg.Root, cfg.Discover, projects)
+	a.Catalogue.Workspaces = workspaces
 	a.Catalogue.Skills = &skills.Prober{Timeout: 3 * time.Second, TTL: 30 * time.Second}
 	self := cfg.ComposeProject
 	if self == "" {
