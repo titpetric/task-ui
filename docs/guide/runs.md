@@ -30,8 +30,10 @@ run count, how many failed and the median duration.
 ## The list
 
 Each row is a run: when it started, the folder and job, who started it,
-how long it took and how it ended. **Filter** narrows it by folder, job
-and state. A run in progress has **Attach**, a finished one **View**.
+how long it took and how it ended. **Filter** narrows it by folder, job,
+state and who started it, **By**. The **⋯** next to a name opens that
+user's menu: their profile, their runs, and their permissions for those
+who may change them. A run in progress has **Attach**, a finished one **View**.
 
 The list shows a page of runs at a time. **Page size** picks 15, the
 default, 50 or 100 rows. Under the table, **Next** goes to older runs

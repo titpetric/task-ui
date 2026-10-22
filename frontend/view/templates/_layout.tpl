@@ -31,6 +31,7 @@
 			<summary aria-label="{{ .User.Name }}, {{ .User.Role }}" title="{{ .User.Name }}"><span class="avatar role-{{ .User.Role }}">{{ .User.Initials }}</span></summary>
 			<div class="user-menu">
 				<div class="who"><b>{{ .User.Name }}</b><span>{{ .User.Role }}</span></div>
+				<a href="/users/{{ .User.Name }}"><svg class="ic"><use href="#i-users"/></svg>Profile</a>
 				<a href="/keys"><svg class="ic"><use href="#i-key"/></svg>SSH keys</a>
 				{{- if .CanSettings }}
 				<a href="/settings"><svg class="ic"><use href="#i-settings"/></svg>Settings</a>

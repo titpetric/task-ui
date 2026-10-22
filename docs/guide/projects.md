@@ -344,8 +344,9 @@ with the run, and every list of runs shows it.
 
 An admin runs everything. A runner runs a folder's jobs unless its allow
 list names other users or roles. A viewer runs nothing, but sees the jobs
-and watches the runs. An admin sets which folders each user sees at all under
-Settings, Users.
+and watches the runs. Run Jobs, a permission of
+[Settings, Permissions](settings.md#permissions), decides who runs at
+all; an admin sets which folders each user sees on the user's profile.
 
 ---
 
