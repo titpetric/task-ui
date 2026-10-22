@@ -167,19 +167,71 @@
   gap: 0.5rem;
   counter-increment: step;
 
-  /* A step toggled off stays in the chain, dimmed: a run skips it. */
-  &.disabled > :not(.toggle) {
-    opacity: 0.5;
+  /* The switch leads the row; the heading shows only while the step is
+     off, in place of its selects. */
+  & .switch {
+    order: -1;
   }
 
-  & .toggle {
-    display: flex;
-    align-items: center;
+  & .step-head {
+    display: none;
+    grid-column: span 2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-family: var(--font);
+    font-size: var(--fs-data);
+  }
 
-    & input {
-      width: 1rem;
-      height: 1rem;
-      accent-color: var(--signal);
+  /* A step switched off stays in the chain, dimmed: a run skips it. */
+  &.off {
+    & > :is(.dd, select) {
+      display: none;
+    }
+
+    & .step-head {
+      display: block;
+    }
+
+    & > :not(.switch) {
+      opacity: 0.5;
+    }
+  }
+}
+
+/* The switch leads a part of the workflow form: switched off, the part
+   collapses to its heading. */
+.workflow-form .switch {
+  margin-inline-start: 0;
+}
+
+.workflow-form .switch-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.3rem 0.6rem;
+  margin-bottom: 0.4rem;
+
+  & .switch {
+    align-self: center;
+  }
+
+  & .label {
+    display: inline;
+    margin: 0;
+  }
+}
+
+.workflow-form .prompt-section {
+  margin: 0 0 1rem;
+
+  &.off {
+    & .switch-body {
+      display: none;
+    }
+
+    & .switch-head > :not(.switch) {
+      opacity: 0.6;
     }
   }
 }
