@@ -118,7 +118,7 @@ func TestUser_Delete(t *testing.T) {
 	assert.NoError(t, f.opts.Users.Create(ctx, other))
 	refused := f.call(t, asAdmin, http.MethodDelete, "/users/"+other.ID, nil)
 	assert.Equal(t, http.StatusForbidden, refused.Status)
-	assert.Equal(t, "an admin can't be deleted here", refused.str("error"))
+	assert.Equal(t, "you can't delete an admin here", refused.str("error"))
 
 	deleted := f.call(t, asAdmin, http.MethodDelete, "/users/"+limited.ID, nil)
 	assert.Equal(t, http.StatusNoContent, deleted.Status, string(deleted.Raw))

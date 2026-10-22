@@ -3,7 +3,7 @@
 <div class="page-head">
 	<div>
 		<h2>{{ if $encrypt }}Upload encryption key{{ else }}Upload key{{ end }}</h2>
-		<p>{{ if $encrypt }}Stores an ed25519 private key as the key the secrets of {{ $ws.Folder }} are encrypted with. No run gets it.{{ else }}Stores a private key you already use as an SSH key of the workspace {{ $ws.Folder }}, whose runs get it as ws:&lt;name&gt;.{{ end }} The public key is derived from it, and a pair of the same name is moved aside as a backup, in {{ .KeysDir }}.</p>
+		<p>{{ if $encrypt }}Saves an ed25519 private key as the key that encrypts the secrets of {{ $ws.Folder }}. No run gets it.{{ else }}Saves a private key you already use as an SSH key of the workspace {{ $ws.Folder }}. Its runs get it as ws:&lt;name&gt;.{{ end }} task-ui works out the public key from it and stores both in {{ .KeysDir }}. If a pair with the same name exists, task-ui keeps it as a backup.</p>
 	</div>
 </div>
 
@@ -30,7 +30,7 @@
 		<input type="text" id="wk-comment" name="comment" value="task-ui {{ $ws.Folder }}">
 	</div>
 	{{- if not $encrypt }}
-	{{- template "keygrants" (list nil nil .Users) }}
+	{{- template "keygrants" (list (list) nil .Users) }}
 	{{- end }}
 	<div class="form-foot">
 		<a class="btn" href="/settings/workspaces/{{ $ws.Folder }}">Cancel</a>

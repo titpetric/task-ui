@@ -2,7 +2,7 @@
 <div class="page-head">
 	<div>
 		<h2>Projects</h2>
-		<p>The folders under the root. A folder with something to run shows up in the sidebar; one cloned from a git repository is pulled before every run.</p>
+		<p>The folders under the root. A folder with jobs appears in the sidebar. task-ui pulls a folder cloned from git before every run.</p>
 	</div>
 	<div class="actions">
 		<a class="btn btn-primary" href="/settings/projects/new">Add project</a>
@@ -23,12 +23,12 @@
 			<td class="actions">
 				<a class="btn-icon" href="/settings/projects/{{ .ID }}" title="Configure {{ .ID }}" aria-label="Configure {{ .ID }}"><svg class="ic"><use href="#i-edit"/></svg></a>
 				{{- if .Checkout }}
-				<button type="button" class="btn-icon danger" data-delete="/api/projects/{{ .ID }}" data-confirm="Remove the folder {{ .ID }} and its checkout? It can be cloned again from {{ .Checkout.Remote }}." data-confirm-ok="Remove" data-next="reload" title="Remove the checkout" aria-label="Remove {{ .ID }}"><svg class="ic"><use href="#i-trash"/></svg></button>
+				<button type="button" class="btn-icon danger" data-delete="/api/projects/{{ .ID }}" data-confirm="Remove the folder {{ .ID }} and its checkout? You can clone it again from {{ .Checkout.Remote }}." data-confirm-ok="Remove" data-next="reload" title="Remove the checkout" aria-label="Remove {{ .ID }}"><svg class="ic"><use href="#i-trash"/></svg></button>
 				{{- end }}
 			</td>
 		</tr>
 	{{- else }}
-		<tr class="empty"><td colspan="6">The root is empty. Add a project from a git repository, or put a folder with something to run under {{ $.Root }}.</td></tr>
+		<tr class="empty"><td colspan="6">The root is empty. Add a project from a git repository, or put a folder with jobs under {{ $.Root }}.</td></tr>
 	{{- end }}
 	</tbody>
 </table>

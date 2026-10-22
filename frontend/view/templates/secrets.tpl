@@ -3,7 +3,7 @@
 <div class="page-head">
 	<div>
 		<h2>Secrets</h2>
-		<p>Variables added to the environment of the runs in a workspace. A workspace's secret reaches every project in it; a project's own secret reaches that project and wins over the workspace's of the same name. A value is never shown again once saved.</p>
+		<p>Secrets are variables added to the environment of runs. A workspace secret goes to every project in the workspace. A project secret goes only to that project, and replaces a workspace secret with the same name. After you save a value, task-ui never shows it again.</p>
 	</div>
 	<div class="actions">
 		{{- if $keyed }}
@@ -82,7 +82,7 @@
 				<td class="nowrap" title="{{ stamp $s.UpdatedAt }}">{{ ago $s.UpdatedAt }}</td>
 				<td class="actions">
 					<a class="btn-icon" href="/settings/secrets/edit?scope={{ $s.Scope }}&name={{ $s.Name }}" title="Replace the value" aria-label="Replace {{ $s.Name }}"><svg class="ic"><use href="#i-edit"/></svg></a>
-					<button type="button" class="btn-icon danger" data-delete="/api/secrets/{{ $s.ID }}" data-confirm="Delete {{ $s.Name }} from {{ if eq $s.Scope $g.Shared }}every project in {{ $g.Workspace }}{{ else }}{{ $s.Scope }}{{ end }}? Runs stop receiving it." data-next="reload" title="Delete" aria-label="Delete {{ $s.Name }}"><svg class="ic"><use href="#i-trash"/></svg></button>
+					<button type="button" class="btn-icon danger" data-delete="/api/secrets/{{ $s.ID }}" data-confirm="Delete {{ $s.Name }} from {{ if eq $s.Scope $g.Shared }}every project in {{ $g.Workspace }}{{ else }}{{ $s.Scope }}{{ end }}? Runs no longer get it." data-next="reload" title="Delete" aria-label="Delete {{ $s.Name }}"><svg class="ic"><use href="#i-trash"/></svg></button>
 				</td>
 			</tr>
 {{- end }}

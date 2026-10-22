@@ -339,8 +339,8 @@ func (h *Handlers) require(w http.ResponseWriter, r *http.Request, path string) 
 
 // refuse renders the refusal of a page the user may not see.
 func (h *Handlers) refuse(w http.ResponseWriter, r *http.Request) {
-	p := h.page(r, "Admins only")
-	p.Error = "Settings are for admins."
+	p := h.page(r, "Not allowed")
+	p.Error = "You need permission to open this page."
 	h.render(w, http.StatusForbidden, "notfound", p)
 }
 

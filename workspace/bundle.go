@@ -57,7 +57,7 @@ type Bundle struct {
 // Write encrypts the bundle to a passphrase into w.
 func (b *Bundle) Write(w io.Writer, passphrase string) error {
 	if passphrase == "" {
-		return errors.New("a bundle needs a passphrase")
+		return errors.New("enter the bundle's passphrase")
 	}
 	recipient, err := age.NewScryptRecipient(passphrase)
 	if err != nil {

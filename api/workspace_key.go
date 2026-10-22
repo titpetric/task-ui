@@ -15,7 +15,7 @@ import (
 // the permission first.
 func (h *Handlers) keysWorkspace(w http.ResponseWriter, r *http.Request) *model.Workspace {
 	if h.opts.WorkspaceKeys == nil {
-		fail(w, http.StatusNotFound, "workspace keys are off")
+		fail(w, http.StatusNotFound, "workspace keys aren't available on this instance")
 		return nil
 	}
 	workspace, err := h.opts.Workspaces.GetByFolder(r.Context(), param(r, "folder"))

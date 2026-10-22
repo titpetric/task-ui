@@ -2,7 +2,7 @@
 <div class="page-head">
 	<div>
 		<h2>Workspaces</h2>
-		<p>Checkouts under the root that hold projects: an organisation's tooling, with the projects cloned inside it. The folder is the namespace of its projects; any number of workspaces may come from one repository. The default workspace, _, is the root itself: it holds the projects cloned at the top, comes first, and stays.</p>
+		<p>A workspace is a git checkout under the root that holds projects, such as an organisation's tooling with its projects cloned inside. Its folder name is the namespace of its projects, and you can add one repository as more than one workspace. The default workspace, _, is the root itself. It holds the projects cloned at the top, always comes first, and you can't remove it.</p>
 	</div>
 	<div class="actions">
 		<a class="btn btn-primary" href="/settings/workspaces/new">Add workspace</a>
@@ -32,7 +32,7 @@
 			</td>
 		</tr>
 	{{- else }}
-		<tr class="empty"><td colspan="5">No workspaces yet. Add one from a git repository, then clone projects into it from Add project.</td></tr>
+		<tr class="empty"><td colspan="5">No workspaces yet. Add one from a git repository, then clone projects into it with Add project.</td></tr>
 	{{- end }}
 	</tbody>
 </table>
@@ -43,7 +43,7 @@
 	<div class="block-head">
 		<h3>Import</h3>
 	</div>
-	<p class="dim">Adds a workspace from a bundle another task-ui exported. It clones the workspace's repository under the folder, writes its keys, adds its projects, env files, secrets and grants, then clones each project; a project that does not clone stays, with git's output shown. Up to the projects, a failure keeps nothing. A bundle of the default workspace, _, imports as a named one: name its folder.</p>
+	<p class="dim">Add a workspace from a bundle that another task-ui exported. Import clones the workspace's repository into the folder, writes its keys, adds its projects, env files, secrets and grants, and then clones each project. If a project fails to clone, it stays listed with git's output. If anything before the projects fails, task-ui keeps nothing. To import a bundle of the default workspace, _, enter a folder name.</p>
 	<form class="form" data-import="/api/workspaces/import">
 		<div class="field">
 			<label for="wi-bundle">Bundle <span class="faint">a .taskui-ws file</span></label>
@@ -54,7 +54,7 @@
 			<input type="password" id="wi-passphrase" name="passphrase" autocomplete="off" required>
 		</div>
 		<div class="field">
-			<label for="wi-folder">Folder <span class="faint">optional, the bundle's own otherwise; one name, no slashes</span></label>
+			<label for="wi-folder">Folder <span class="faint">optional, defaults to the bundle's folder; one name, no slashes</span></label>
 			<input type="text" id="wi-folder" name="folder" pattern="[A-Za-z0-9._-]+" spellcheck="false" autocomplete="off">
 		</div>
 		<div class="form-foot">

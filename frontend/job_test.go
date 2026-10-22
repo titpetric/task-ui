@@ -31,7 +31,7 @@ func TestJob(t *testing.T) {
 	assert.Contains(t, body, "admin, runner")
 
 	viewer := f.page(t, asViewer, "/f/_/infra/plan")
-	assert.Contains(t, viewer, "is not allowed to run it")
+	assert.Contains(t, viewer, "you don't have permission to run it")
 	assert.NotContains(t, viewer, `data-api="/api/schedules"`)
 }
 

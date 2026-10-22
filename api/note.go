@@ -11,7 +11,7 @@ import (
 // board returns the notes board, or answers 404 when notes are off.
 func (h *Handlers) board(w http.ResponseWriter) bool {
 	if h.opts.Board == nil {
-		fail(w, http.StatusNotFound, "notes are off")
+		fail(w, http.StatusNotFound, "notes aren't available on this instance")
 		return false
 	}
 	return true
@@ -140,7 +140,7 @@ func (h *Handlers) deleteNote(w http.ResponseWriter, r *http.Request) {
 		allowed = h.can(r, "prompt/delete")
 	}
 	if !allowed || (note.UserName != user.Name && !user.CanAdmin()) {
-		fail(w, http.StatusForbidden, "only its author or an admin deletes a note")
+		fail(w, http.StatusForbidden, "only the note's author or an admin can delete it")
 		return
 	}
 	if err := h.opts.Board.Notes.Delete(r.Context(), note.ID); err != nil {

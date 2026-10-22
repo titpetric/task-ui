@@ -84,7 +84,7 @@
 				{{- range $g := .Groups }}
 				{{- if $g.Workspace }}{{ template "sideworkspace" (list $ $g $total) }}{{ else }}{{ template "sideproject" (list $ $g $total) }}{{ end }}
 				{{- else }}
-				<div class="empty">No folders. Add one from a git repository in Settings, or put a folder with something to run under the root.</div>
+				<div class="empty">No folders yet. Add a git repository in Settings, or put a folder with jobs under the root.</div>
 				{{- end }}
 			</nav>
 		</aside>
@@ -202,11 +202,11 @@
 	</div>
 	<p class="run-notice" id="run-notice" role="status"></p>
 	<div class="run-reason" id="run-reason" hidden>
-		<label for="run-reason-text">Why does this have to run out of hours? The reason is kept with the run.</label>
+		<label for="run-reason-text">Why does this need to run outside its hours? task-ui saves your reason with the run.</label>
 		<input type="text" id="run-reason-text" placeholder="customer is waiting on the hotfix" autocomplete="off" maxlength="200">
 	</div>
 	<div class="run-foot">
-		<span class="hint" id="run-hint">Closing this window leaves the run running.</span>
+		<span class="hint" id="run-hint">Closing this window doesn't stop the run.</span>
 		<button type="button" class="btn" id="run-attach" hidden>Attach</button>
 		<button type="button" class="btn btn-primary" id="run-force" hidden>Run force</button>
 		<button type="button" class="btn" id="run-again" hidden>Run again</button>
@@ -278,7 +278,7 @@
 <dialog class="confirm" id="workflow-input-dialog" aria-labelledby="workflow-input-title">
 	<form method="dialog" data-workflow-input>
 		<h3 id="workflow-input-title">Run</h3>
-		<p>Input for the workflow's prompt, optional: Claude reads it after the prompt, under the line <code>Input:</code>.</p>
+		<p>Optional input for the workflow's prompt. Claude reads it after the prompt, under the line <code>Input:</code>.</p>
 		<textarea name="input" rows="3" spellcheck="false" aria-label="Input for the prompt"></textarea>
 		<div class="confirm-foot">
 			<button type="button" class="btn" data-workflow-input-cancel>Cancel</button>
@@ -347,7 +347,7 @@
      with its toggle, and for a user with prompt/edit the prompt Claude
      gets once they end and where it runs. list: page, workflow (nil for
      a new one), API path, method, where to go after, the submit label. A
-     step offers every job the user sees. */}}
+     step lists every job the user sees. */}}
 {{ define "stepeditor" }}
 {{- $p := index . 0 }}{{ $w := index . 1 }}{{ $api := index . 2 }}{{ $method := index . 3 }}{{ $next := index . 4 }}{{ $label := index . 5 -}}
 <form class="form workflow-form" data-workflow data-api="{{ $api }}{{ if $w }}{{ $w.ID }}{{ end }}" data-method="{{ $method }}" data-next="{{ $next }}">
@@ -356,7 +356,7 @@
 		<input type="text" id="wf-name{{ if $w }}-{{ $w.ID }}{{ end }}" name="name" value="{{ if $w }}{{ $w.Name }}{{ end }}" placeholder="deploy" autocomplete="off" required>
 	</div>
 	<div class="field">
-		<label class="check"><input type="checkbox" id="wf-sidebar{{ if $w }}-{{ $w.ID }}{{ end }}" name="sidebar"{{ if or (not $w) (not $w.SidebarHidden) }} checked{{ end }}> Show in sidebar <span class="faint">off for a workflow that is a step of others</span></label>
+		<label class="check"><input type="checkbox" id="wf-sidebar{{ if $w }}-{{ $w.ID }}{{ end }}" name="sidebar"{{ if or (not $w) (not $w.SidebarHidden) }} checked{{ end }}> Show in sidebar <span class="faint">turn off for a workflow you only use as a step of others</span></label>
 	</div>
 	<ol class="steps" data-steps>
 		{{- if $w }}{{ range $w.Steps }}{{ template "steprow" (list $p .Folder .Job .WorkflowID .Disabled) }}{{ end }}{{ else }}{{ template "steprow" (list $p "" "" "" false) }}{{ end }}
@@ -369,7 +369,7 @@
 		<div class="switch-head">
 			{{- template "switch" (list $on "Ask Claude once the steps end") }}
 			<label class="label" for="wf-prompt{{ $id }}">Prompt</label>
-			<span class="faint">Claude gets it once the steps end, with their output; a workflow with no step to run is the prompt alone</span>
+			<span class="faint">Claude gets the prompt after the steps finish, with their output. With every step off, the workflow runs the prompt alone.</span>
 		</div>
 		<div class="switch-body">
 			<div class="field">
@@ -377,7 +377,7 @@
 				<div class="field-tools"><button type="button" class="btn btn-sm" data-workflow-preset="{{ summaryPrompt }}" title="Fill the prompt with the short summary of Run and summarize">Summarize</button></div>
 			</div>
 			<div class="field">
-				<label for="wf-prompt-folder{{ $id }}">Run in <span class="faint">where Claude runs the prompt, as you</span></label>
+				<label for="wf-prompt-folder{{ $id }}">Run in <span class="faint">the folder Claude works in, as you</span></label>
 				<select id="wf-prompt-folder{{ $id }}" name="prompt_folder"{{ if not $on }} disabled{{ end }}>
 					<option value="">the root</option>
 					{{- range $p.Folders }}
@@ -440,12 +440,12 @@
      steps that follow in it, a workflow step by its name, each linked. */}}
 {{- define "chain" }}
 {{- $ := index . 0 }}
-{{- range $i, $l := $.Links (index . 1) }}{{ if $i }}<span class="faint"> → </span>{{ end }}<a class="nowrap" href="{{ $l.Href }}">{{ if $l.State }}<i class="dot {{ $l.State }}"></i>{{ end }}{{ if $l.Workflow }}<svg class="ic"><use href="#i-flow"/></svg>{{ end }}{{ $l.Text }}</a>{{ end }}
+{{- range $i, $l := $.Links (index . 1) }}{{ if $i }}<span class="faint then" aria-hidden="true"></span>{{ end }}<a class="nowrap" href="{{ $l.Href }}">{{ if $l.State }}<i class="dot {{ $l.State }}"></i>{{ end }}{{ if $l.Workflow }}<svg class="ic"><use href="#i-flow"/></svg>{{ end }}{{ $l.Text }}</a>{{ end }}
 {{- end }}
 
 {{- /* sideproject is a project in the sidebar: its row, its jobs and
      the folders inside it. A project folds on its chevron; the row opens
-     it. The open page's project is marked and stays open. Without its
+     it. The project of the open page shows as active and stays open. Without its
      top folder listed, the folders stand on their own. */}}
 {{- define "sideproject" }}
 {{- $ := index . 0 }}{{ $g := index . 1 }}{{ $total := index . 2 }}
@@ -501,7 +501,7 @@
 {{- end }}
 
 {{/* sidefolder is a folder inside a project in the sidebar: a disclosure
-     of its jobs, open when it is the page's or the tree is small. It
+     of its jobs, open on its own page or when the tree is small. It
      names its path below its project. */}}
 {{- define "sidefolder" }}
 {{- $ := index . 0 }}{{ $p := index . 1 }}{{ $total := index . 2 }}{{ $top := index . 3 }}
@@ -526,7 +526,7 @@
      a job source at its top, and a file that is a job source have Run and
      |>summarize in Jobs, with a menu of the targets (TreeMenus). A file
      that runs carries #! and exec, and Run in Jobs for those who may run
-     it. A sealed entry is listed, plain and locked. */}}
+     it. A sealed entry shows plain and locked. */}}
 {{- define "tree" }}
 <div class="table-wrap">
 <table class="table file-table col-hover">
@@ -537,7 +537,7 @@
 	{{- end }}
 	{{- range .Tree }}
 		{{- if .Sealed }}
-		<tr class="sealed" aria-disabled="true" title="{{ .Name }} is listed, but task-ui does not open it">
+		<tr class="sealed" aria-disabled="true" title="task-ui lists {{ .Name }} but does not open it">
 			<td class="key"><svg class="ic"><use href="#i-secret"/></svg> <span>{{ .Name }}</span></td>
 			<td></td>
 			<td class="num nowrap">{{ if not .Dir }}{{ size .Size }}{{ end }}</td>
@@ -570,7 +570,7 @@
 		</tr>
 		{{- end }}
 	{{- else }}
-		<tr class="empty"><td colspan="5">Empty.</td></tr>
+		<tr class="empty"><td colspan="5">This directory is empty.</td></tr>
 	{{- end }}
 	</tbody>
 </table>
@@ -578,8 +578,8 @@
 {{- end }}
 
 {{/* spacebar is the space a directory takes: its files, and the git
-     history beside them, as one bar with a legend; what git ignores is
-     left out of the bar and named apart. */}}
+     history beside them, as one bar with a legend; the bar leaves out
+     what git ignores, and the legend names it apart. */}}
 {{- define "spacebar" }}
 <div class="spacebar" role="img" aria-label="{{ size .Total }} in all: {{ size .Files }} of files, {{ size .History }} of history">
 	<div class="spacebar-track"><i class="files" style="width: {{ printf "%.2f" .FilesPercent }}%"></i><i class="history" style="width: {{ printf "%.2f" .HistoryPercent }}%"></i></div>
@@ -660,7 +660,7 @@
 {{- end }}
 {{- end }}
 
-{{- /* runmenus are Run and |>summarize of a Files list row, from its
+{{- /* runmenus holds Run and |>summarize of a Files list row, from its
      RunMenu, and Run force beside them for a default with hours; for a
      user who may run none of the jobs, the default's History. (list $
      menu) */}}
@@ -675,11 +675,11 @@
 	{{- end }}{{ end }}
 </div>
 {{- else }}{{ with $m.Main }}
-<a class="btn btn-sm" href="{{ $.JobHref $f . }}" title="Your role may not run {{ .ID }}"><i class="dot {{ $.LastState . }}"></i>History</a>
+<a class="btn btn-sm" href="{{ $.JobHref $f . }}" title="No permission to run {{ .ID }}"><i class="dot {{ $.LastState . }}"></i>History</a>
 {{- end }}{{ end }}
 {{- end }}
 
-{{- /* runsplit is Run, or |>summarize with summarize, as a split
+{{- /* runsplit holds Run, or |>summarize with summarize, as a split
      button: the button runs the menu's Main, an eye on it while it runs,
      and the dot on Run is how it last ended; the chevron beside it opens
      the menu, a table of the targets, each row runs one, its play glyph
@@ -706,7 +706,7 @@
 				{{- else if $.CanRun $f . }}
 				<tr role="menuitem" tabindex="0" data-run{{ if $sum }} data-summarize{{ end }} data-folder="{{ $f.ID }}"{{ with .Dir }} data-dir="{{ . }}"{{ end }} data-job="{{ .ID }}" data-title="{{ $f.ID }}{{ with .Dir }}/{{ . }}{{ end }} / {{ .Name }}"{{ with .ArgsCommand }} data-args="{{ . }}"{{ end }}><td class="glyph {{ $.LastState . }}" title="Last run: {{ $.LastState . }}"><svg class="ic"><use href="#i-play"/></svg></td><td class="name">{{ .ID }}</td><td class="desc">{{ $m.Describe . }}</td></tr>
 				{{- else }}
-				<tr class="idle" aria-disabled="true" title="Your role may not run {{ .ID }}"><td class="glyph"><i class="shebang" aria-hidden="true">#!</i></td><td class="name">{{ .ID }}</td><td class="desc">{{ $m.Describe . }}</td></tr>
+				<tr class="idle" aria-disabled="true" title="No permission to run {{ .ID }}"><td class="glyph"><i class="shebang" aria-hidden="true">#!</i></td><td class="name">{{ .ID }}</td><td class="desc">{{ $m.Describe . }}</td></tr>
 				{{- end }}
 			{{- end }}
 			</tbody></table>
@@ -716,7 +716,7 @@
 </span>
 {{- end }}
 
-{{- /* runButtons are Run, |>summarize, and Run force for a job with
+{{- /* runButtons hold Run, |>summarize, and Run force for a job with
      hours. Run of a job that takes args opens a field for them under its
      card or head first, with the command they follow. |>summarize runs
      the job the same way, and Claude summarises the run on its page when
@@ -727,7 +727,7 @@
 {{- if $.Summarizes $r }}
 <button type="button" class="btn btn-sm" data-run data-summarize data-folder="{{ $p.ID }}"{{ with $r.Dir }} data-dir="{{ . }}"{{ end }} data-job="{{ $r.ID }}" data-title="{{ $p.ID }}{{ with $r.Dir }}/{{ . }}{{ end }} / {{ $r.Name }}"{{ with $r.ArgsCommand }} data-args="{{ . }}"{{ end }} title="Run and summarize">|&gt;summarize</button>
 {{- end }}
-{{- /* Run force stands beside Run only where a plain run can be refused: a job with hours. A run that failed is forced from its window. */}}
+{{- /* Run force stands beside Run only for a job with hours, where task-ui refuses a plain run outside them. To force a run that failed, use its window. */}}
 {{- if $p.HoursOf $r }}
 <button type="button" class="btn btn-danger btn-sm" data-run data-force data-folder="{{ $p.ID }}"{{ with $r.Dir }} data-dir="{{ . }}"{{ end }} data-job="{{ $r.ID }}" data-title="{{ $p.ID }}{{ with $r.Dir }}/{{ . }}{{ end }} / {{ $r.Name }}" title="Run out of hours, with a reason">Run force</button>
 {{- end }}
@@ -753,16 +753,16 @@
 
 {{- define "logo" }}<svg class="logo" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="3"/><path class="prompt" d="M8 10l6 6-6 6"/><path class="cursor" d="M16 23h8"/></svg>{{ end }}
 
-{{- /* keyfor is the start of a new key's policies: who it is made for,
-     one user or the instance, and the roles whose runs get it. A key for
-     a user is named for them, id_<type>_<user>, and given to them. */}}
+{{- /* keyfor is the start of a new key's policies: who it belongs to,
+     one user or the instance, and the roles whose runs get it. A user's
+     key takes their name, id_<type>_<user>, and goes to them. */}}
 {{- define "keyfor" }}
 <div class="field">
-	<span class="label">Who gets it <span class="faint">a key for a user is named for them; roles get it through the ssh agent of their runs</span></span>
+	<span class="label">Who gets it <span class="faint">a user's key carries their name; runs of the checked roles get it through their ssh agent</span></span>
 	<div class="checks who">
 		<label class="faint" for="key-for">User</label>
 		<select id="key-for" name="users" data-type="list" data-key-for>
-			<option value="">none, a key of the instance</option>
+			<option value="">none: an instance key</option>
 			{{- template "user-options" (list . "") }}
 		</select>
 		<input type="hidden" name="name" value="">
@@ -798,12 +798,12 @@
      of the projects inside it that go with it, and where to go after. */}}
 {{- define "workspacedelete" }}
 {{- $ws := index . 0 }}{{ $nested := index . 1 }}
-<button type="button" class="btn-icon danger" data-delete="/api/workspaces/{{ $ws.Folder }}" data-confirm="Remove the workspace {{ $ws.Folder }}, its checkout, its keys and its secrets{{ with $nested }}, with the projects inside it: {{ join . ", " }}{{ end }}? It can be cloned again from {{ $ws.SourceURL }}." data-confirm-ok="Remove" data-next="{{ index . 2 }}" title="Remove the workspace" aria-label="Remove {{ $ws.Folder }}"><svg class="ic"><use href="#i-trash"/></svg></button>
+<button type="button" class="btn-icon danger" data-delete="/api/workspaces/{{ $ws.Folder }}" data-confirm="Remove the workspace {{ $ws.Folder }} with its checkout, keys and secrets{{ with $nested }}, and the projects inside it: {{ join . ", " }}{{ end }}? You can clone it again from {{ $ws.SourceURL }}." data-confirm-ok="Remove" data-next="{{ index . 2 }}" title="Remove the workspace" aria-label="Remove {{ $ws.Folder }}"><svg class="ic"><use href="#i-trash"/></svg></button>
 {{- end }}
 
 {{- define "keypolicies" }}
 <div class="field">
-	<span class="label">Who gets it <span class="faint">through the ssh agent of their runs; a key can go to several roles and users</span></span>
+	<span class="label">Who gets it <span class="faint">their runs get the key through the ssh agent; check any roles and users</span></span>
 	{{- template "keychecks" . }}
 </div>
 {{- end }}
@@ -812,7 +812,7 @@
      users checked, or every run in the workspace with none checked. */}}
 {{- define "keygrants" }}
 <div class="field">
-	<span class="label">Who gets it <span class="faint">none checked is every run in the workspace; a check narrows it to the runs of those roles and users</span></span>
+	<span class="label">Who gets it <span class="faint">with nothing checked, every run in the workspace gets it; check roles or users to limit it to their runs</span></span>
 	{{- template "keychecks" . }}
 </div>
 {{- end }}
@@ -901,7 +901,7 @@
 			<a href="{{ $l.Href }}"{{ if $l.RunID }} data-run-link="{{ $l.RunID }}"{{ end }}>{{ if $l.Workflow }}<svg class="ic"><use href="#i-flow"/></svg>{{ end }}{{ $l.Text }}</a>
 			{{- if and $l.RunID (not $l.Complete) }}<button type="button" class="btn btn-sm" data-expand="{{ $l.RunID }}" aria-expanded="false"><svg class="ic"><use href="#i-expand"/></svg><span>Expand{{ with $l.Lines }} {{ . }} lines{{ end }}</span></button>{{ end }}
 		</div>
-		<small>{{ if $l.State }}{{ $l.State }}{{ else if $l.Disabled }}step {{ add $i 1 }}, disabled: a run skips it{{ else }}step {{ add $i 1 }}{{ end }}</small>
+		<small>{{ if $l.State }}{{ $l.State }}{{ else if $l.Disabled }}step {{ add $i 1 }}, off: runs skip it{{ else }}step {{ add $i 1 }}{{ end }}</small>
 		{{- if $l.RunID }}<a class="frame" href="/runs/{{ $l.RunID }}" data-attach="{{ $l.RunID }}"{{ if eq $l.State "running" }} data-frame="{{ $l.RunID }}"{{ end }} role="img" aria-label="Terminal of {{ $l.Text }}">{{ $l.FrameSVG }}</a>{{ end }}
 		{{- if $l.WorkflowRunID }}
 		<ol class="pipeline sub" data-sub="{{ $l.WorkflowRunID }}" data-workflow="{{ $l.WorkflowID }}">

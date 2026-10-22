@@ -4,7 +4,7 @@
 <div class="page-head">
 	<div>
 		<h2>{{ $k.Name }}</h2>
-		<p>{{ if $k.Comment }}{{ $k.Comment }}, {{ end }}<span class="dim">{{ $k.Type }}</span> {{ $k.Fingerprint }}, an SSH key of the workspace {{ $ws.Folder }}. Pick whose runs in the workspace get it: with nothing checked every run does; a checked role or user narrows it to theirs.</p>
+		<p>{{ if $k.Comment }}{{ $k.Comment }}, {{ end }}<span class="dim">{{ $k.Type }}</span> {{ $k.Fingerprint }}, an SSH key of the workspace {{ $ws.Folder }}. Choose whose runs in the workspace get it. With nothing checked, every run does; check roles or users to limit it to their runs.</p>
 	</div>
 </div>
 

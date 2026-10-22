@@ -60,7 +60,7 @@ func LoadHtpasswd(path string) ([]Credential, error) {
 func SetHtpasswd(path, name, hash string) error {
 	name = strings.TrimSpace(name)
 	if name == "" || strings.ContainsAny(name, ":\n") {
-		return errors.New("a user name may not be empty or hold a colon")
+		return errors.New("a user name can't be empty or contain a colon")
 	}
 	if !Hashed(hash) {
 		return errors.New("the hash is not a bcrypt hash")
@@ -98,7 +98,7 @@ func SetHtpasswd(path, name, hash string) error {
 func RemoveHtpasswd(path, name string) (bool, error) {
 	name = strings.TrimSpace(name)
 	if name == "" {
-		return false, errors.New("a user name may not be empty")
+		return false, errors.New("a user name can't be empty")
 	}
 	data, err := os.ReadFile(path)
 	if errors.Is(err, os.ErrNotExist) {

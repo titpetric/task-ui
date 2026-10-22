@@ -243,7 +243,7 @@
     els.title.textContent = title;
     els.who.textContent = who || "";
     els.elapsed.textContent = "";
-    els.hint.textContent = "Closing this window leaves the run running.";
+    els.hint.textContent = "Closing this window doesn't stop the run.";
     setState(null);
     notice("");
     buttons({});
@@ -292,8 +292,8 @@
         // which the run keeps: the log entry of why.
         s.outOfHours = true;
         setState("busy", "out of hours");
-        notice("Out of hours: " + spec.title + " runs " + (res.data.hours || "never").replace(/\n/g, ", ") + ". Run force needs a reason.", "signal");
-        els.hint.textContent = "The reason is recorded with the run, for everyone to see.";
+        notice("Out of hours: " + spec.title + " runs " + (res.data.hours || "never").replace(/\n/g, ", ") + ". To run it anyway, give a reason and press Run force.", "signal");
+        els.hint.textContent = "task-ui saves the reason with the run, and everyone can see it.";
         els.reason.hidden = false;
         els.reasonText.focus();
         buttons({ force: true });
@@ -302,7 +302,7 @@
       if (res.status === 409 && res.data.run) {
         s.run = res.data.run;
         setState("busy", "already running");
-        notice("Already running, started by " + (res.data.run.user_name || "someone") + ". Attach to follow it, or Run force to kill it and start again.", "signal");
+        notice("Already running, started by " + (res.data.run.user_name || "someone") + ". Attach to follow it, or press Run force to kill it and start over.", "signal");
         buttons({ attach: true, force: true });
         return;
       }
@@ -378,8 +378,8 @@
     setState("running", "attaching");
     buttons({ stop: run.can_run, kill: run.can_run });
     els.hint.textContent = run.can_run
-      ? "Closing this window leaves the run running. Stop ends it, Kill ends it now."
-      : "You are watching: your role cannot type into it or end it. Closing this window leaves it running.";
+      ? "Closing this window doesn't stop the run. Stop ends it; Kill ends it right away."
+      : "You're watching. You don't have permission to type into this run or end it. Closing this window doesn't stop it.";
 
     term.onData(function (data) {
       if (ws.readyState === 1) ws.send(JSON.stringify({ type: "input", message: data }));
@@ -409,7 +409,7 @@
       s.finished = true;
       stopClock();
       setState("error", "detached");
-      notice("The connection closed. The run goes on; attach again to follow it.", "bad");
+      notice("The connection closed, but the run continues. Attach again to follow it.", "bad");
       buttons({ attach: true, again: run.can_run });
     };
   }
@@ -427,13 +427,13 @@
       return;
     }
     setState(msg.state, msg.state === "ok" ? "ok" : msg.state + (msg.exit_code ? " " + msg.exit_code : ""));
-    if (msg.state === "killed") notice("Killed: ended from another window, by Run force, or by the server.", "bad");
+    if (msg.state === "killed") notice("Killed from another window, by Run force, or by the server.", "bad");
     else if (msg.state === "failed") notice(msg.message || ("The job exited with status " + msg.exit_code + "."), "bad");
     else if (msg.state === "stopped") notice("Stopped.", "");
     else notice("");
     els.hint.textContent = s.spec && s.spec.summarize
-      ? "Finished. Claude summarises it on the run's page, under the output."
-      : "Finished. The run and its recording are in the history.";
+      ? "Finished. Claude writes a summary on the run's page, under the output."
+      : "Finished. You can find the run and its recording in the history.";
     // A run that ended well is run again; one that did not is forced,
     // which also gets past what refused it.
     var can = s.run && s.run.can_run;
@@ -469,7 +469,7 @@
       .catch(function (err) {
         if (session !== s) return;
         setState(run.state);
-        notice("Could not load the recording: " + err.message, "bad");
+        notice("Couldn't load the recording: " + err.message, "bad");
       });
   }
 
@@ -504,7 +504,7 @@
       if (!spec) return;
       var reason = els.reasonText.value.trim();
       if (session.outOfHours && !reason) {
-        notice("Say why this has to run out of hours.", "bad");
+        notice("Enter a reason to run outside its hours.", "bad");
         els.reasonText.focus();
         return;
       }
@@ -639,8 +639,8 @@
     var last = id.slice(id.lastIndexOf("/") + 1);
     var to = pick.value === "_" ? last : pick.value + "/" + last;
     var left = pick.dataset.moveLeft;
-    form.dataset.confirm = "Move " + id + " to " + to + "? The checkout, the project and the users' folder grants move; the runs stay under " + id + ". " +
-      (left ? "These still name " + id + " and stay behind: " + left + "." : "Nothing else names " + id + ".");
+    form.dataset.confirm = "Move " + id + " to " + to + "? The checkout, the project and the users' folder access move with it; earlier runs stay under " + id + ". " +
+      (left ? "These still point to " + id + " and won't move: " + left + "." : "Nothing else points to " + id + ".");
     form.dataset.confirmOk = "Move";
     form.dataset.next = "/settings/projects?notice=" + encodeURIComponent("Moved to " + to);
   });
@@ -825,8 +825,8 @@
         return;
       }
       var lines = ["Imported " + folder + "."];
-      failed.forEach(function (p) { lines.push(p.folder + " did not clone, its row stays:\n" + p.output); });
-      if (unknown.length) lines.push("Grants name users this instance does not have: " + unknown.join(", ") + ".");
+      failed.forEach(function (p) { lines.push(p.folder + " didn't clone; it stays listed:\n" + p.output); });
+      if (unknown.length) lines.push("Some grants name users this instance doesn't have: " + unknown.join(", ") + ".");
       form.reset();
       formError(form, lines.join("\n\n"));
     }).catch(function (err) {
@@ -948,7 +948,7 @@
     field.disabled = next === field.dataset.was;
     var form = cell.closest("form"), changed = form.querySelectorAll("input[type=hidden]:not([disabled])").length;
     var note = form.querySelector("[data-matrix-changed]");
-    if (note) note.textContent = changed ? changed + (changed === 1 ? " change" : " changes") + " to save." : "No changes.";
+    if (note) note.textContent = changed ? changed + (changed === 1 ? " change" : " changes") + " to save." : "No changes yet.";
   });
 
   // ------------------------------------------------------------- dropdowns
@@ -1432,7 +1432,7 @@
         steps.dataset.label = "Steps";
         var chain = el("span", "chain");
         nodes.forEach(function (node, i) {
-          if (i) chain.appendChild(el("span", "faint", " → "));
+          if (i) chain.appendChild(el("span", "faint then"));
           var link = node.querySelector("a");
           var a = el("a", "nowrap");
           a.href = link.dataset.target || link.getAttribute("href");
@@ -2681,7 +2681,7 @@
       }
       if (run.state !== "running" && runsTable.hasAttribute("data-summarize")) {
         html += '<button type="button" class="btn btn-sm" data-summary="/api/runs/' + id + '/summary" data-summary-page="/runs/' + id + '" data-summary-title="' + escapeHTML(runTitle(run)) +
-          '" title="Claude\'s summary of the output, written once and kept">Summary</button>';
+          '" title="Claude\'s summary of the output">Summary</button>';
       }
       return html;
     };
@@ -2751,7 +2751,7 @@
         escapeHTML(slot.dataset.job) + '" data-title="' + what + '" title="Run ' + what + '"><svg class="ic"><use href="#i-play"/></svg>' + label + "</button>";
     }
     return '<a class="cc' + named + " idle" + last + '" href="' + escapeHTML(folderHref(slot.dataset.folder)) + "/" + escapeHTML(slot.dataset.job) + '" title="' + what +
-      ': your role may not run it"><i class="shebang" aria-hidden="true">#!</i>' + label + "</a>";
+      ': no permission to run it"><i class="shebang" aria-hidden="true">#!</i>' + label + "</a>";
   }
   if (document.querySelector(".cc-slot") && window.EventSource) {
     onRuns(function (run) {
@@ -2890,7 +2890,7 @@
     }
     if (btn.hasAttribute("data-kill")) {
       event.preventDefault();
-      confirm("Kill the run? It ends now, as killed.", "Kill").then(function (ok) { if (ok) endRun(btn.dataset.kill, "kill"); });
+      confirm("Kill the run? It stops right away and shows as killed.", "Kill").then(function (ok) { if (ok) endRun(btn.dataset.kill, "kill"); });
       return;
     }
 
@@ -2997,10 +2997,10 @@
       var words = splitArgs(input.value);
       preview.classList.toggle("bad", words === null);
       if (words === null) {
-        preview.textContent = "A quote does not close.";
+        preview.textContent = "A quote isn't closed.";
         return;
       }
-      preview.innerHTML = "Runs <code></code>, each word one argument: no variable, glob or pipe expands.";
+      preview.innerHTML = "Runs <code></code>. Each word is one argument; variables, globs and pipes don't expand.";
       preview.querySelector("code").textContent = [cmd].concat(words.map(shownArg)).join(" ");
     };
     input.addEventListener("input", show);

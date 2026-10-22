@@ -18,7 +18,7 @@
 </div>
 
 {{- /* The page follows the workflow's topic: data-sse names it, and the
-     parts below are updated in place from the events, no fetch. */}}
+     events update the parts below in place, no fetch. */}}
 <section class="block" data-sse="workflow:{{ $w.ID }}" data-user="{{ $.User.Name }}">
 	<h3>Pipeline</h3>
 	{{- /* The steps; while a run is going, its states and screens live. A
@@ -32,7 +32,7 @@
 		{{- range $i, $l := $.Pipeline }}{{ template "pipenode" (list $l $i) }}{{ end }}
 	</ol>
 	{{- if $w.Prompted }}
-	<h3 class="workflow-prompt-head">Prompt <small>Claude gets it in {{ $w.PromptWhere }} once the steps end, with their output{{ if $w.CanRun }}; Run asks for input to add{{ end }}</small></h3>
+	<h3 class="workflow-prompt-head">Prompt <small>Claude gets this in {{ $w.PromptWhere }} after the steps finish, with their output.{{ if $w.CanRun }} Run lets you add input.{{ end }}</small></h3>
 	<p class="workflow-prompt" data-workflow-prompt-shown>{{ $w.Prompt }}</p>
 	{{- end }}
 </section>
@@ -53,9 +53,9 @@
 				<td class="nowrap" data-label="Started" title="{{ stamp .StartedAt }}">{{ ago .StartedAt }}</td>
 				<td data-label="By">{{ template "user" (list $ .UserName) }}</td>
 				<td data-label="Result" data-result><span class="state"><i class="dot {{ .State }}"></i>{{ .State }}</span>{{ if .Message }} <span class="faint">{{ .Message }}</span>{{ end }}</td>
-				<td data-label="Steps"><span class="chain">{{ range $i, $l := $.Links .Steps }}{{ if $i }}<span class="faint"> → </span>{{ end }}<a class="nowrap" href="{{ $l.Href }}" data-pos="{{ $i }}"><i class="dot {{ $l.State }}"></i>{{ if $l.Workflow }}<svg class="ic"><use href="#i-flow"/></svg>{{ end }}{{ $l.Text }}</a>{{ end }}</span></td>
+				<td data-label="Steps"><span class="chain">{{ range $i, $l := $.Links .Steps }}{{ if $i }}<span class="faint then" aria-hidden="true"></span>{{ end }}<a class="nowrap" href="{{ $l.Href }}" data-pos="{{ $i }}"><i class="dot {{ $l.State }}"></i>{{ if $l.Workflow }}<svg class="ic"><use href="#i-flow"/></svg>{{ end }}{{ $l.Text }}</a>{{ end }}</span></td>
 				<td class="actions"><a class="btn btn-sm" href="/workflows/{{ $w.ID }}/runs/{{ .ID }}" data-workflow-view>View</a>
-					{{- if and $.Summarize (ne .State "running") }}<button type="button" class="btn btn-sm" data-summary="/api/workflow-runs/{{ .ID }}/summary" data-summary-page="/workflows/{{ $w.ID }}/runs/{{ .ID }}" data-summary-title="{{ $w.Name }}" title="Claude's summary of every step's output, written once and kept">Summary</button>{{ end }}</td>
+					{{- if and $.Summarize (ne .State "running") }}<button type="button" class="btn btn-sm" data-summary="/api/workflow-runs/{{ .ID }}/summary" data-summary-page="/workflows/{{ $w.ID }}/runs/{{ .ID }}" data-summary-title="{{ $w.Name }}" title="Claude's summary of every step's output">Summary</button>{{ end }}</td>
 			</tr>
 		{{- else }}
 			<tr class="empty"><td colspan="5">Not run yet.</td></tr>

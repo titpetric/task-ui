@@ -64,7 +64,7 @@ func (h *Handlers) createSchedule(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if !h.canRun(r, f, job) {
-		fail(w, http.StatusForbidden, "your role may view this job, but not schedule it")
+		fail(w, http.StatusForbidden, "you can view this job, but you don't have permission to schedule it")
 		return
 	}
 	runAs, status, problem := h.runAs(r, req.User, f.ID, job.ID)
@@ -168,7 +168,7 @@ func (h *Handlers) updateSchedule(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if !h.mayChange(r, schedule) {
-		fail(w, http.StatusForbidden, "not your schedule")
+		fail(w, http.StatusForbidden, "only its owner, or someone who can run its job, can change this schedule")
 		return
 	}
 	var req ScheduleRequest
@@ -216,7 +216,7 @@ func (h *Handlers) deleteSchedule(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if !h.mayChange(r, schedule) {
-		fail(w, http.StatusForbidden, "not your schedule")
+		fail(w, http.StatusForbidden, "only its owner, or someone who can run its job, can change this schedule")
 		return
 	}
 	if err := h.opts.Schedules.Delete(r.Context(), schedule.ID); err != nil {

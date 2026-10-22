@@ -39,7 +39,7 @@ func TestInventory(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
 	f.withKey(t)
-	assert.Contains(t, f.page(t, asAdmin, "/inventory"), "The Beszel integration is not set up")
+	assert.Contains(t, f.page(t, asAdmin, "/inventory"), "The Beszel integration isn't set up yet")
 
 	hub := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/api/collections/system_stats/records" {
@@ -66,7 +66,7 @@ func TestInventory(t *testing.T) {
 	assert.NotContains(t, body, `<th>State</th>`)
 	// The hosts refresh themselves, and say the time of their drawing.
 	assert.Contains(t, body, `<section class="block" data-hosts-live>`)
-	assert.Contains(t, body, `<p class="faint live-stamp">Live updated: 22:00</p>`)
+	assert.Contains(t, body, `<p class="faint live-stamp">Updated 22:00</p>`)
 	assert.Contains(t, body, `class="meter high"`)
 	assert.Contains(t, body, `class="meter warm"`)
 	assert.Contains(t, body, `<td class="center">4</td>`)

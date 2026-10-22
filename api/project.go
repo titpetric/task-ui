@@ -136,7 +136,7 @@ func (h *Handlers) cloneProject(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if !folder.ValidID(req.ID) {
-		fail(w, http.StatusBadRequest, "the folder name may hold letters, digits, dots, dashes and underscores")
+		fail(w, http.StatusBadRequest, "a folder name can use only letters, digits, dots, dashes and underscores")
 		return
 	}
 	req.Workspace = strings.TrimSpace(req.Workspace)

@@ -50,7 +50,7 @@ func TestWorkspaceKeys(t *testing.T) {
 
 	generate := f.page(t, asAdmin, "/settings/workspaces/malta/keys/generate")
 	assert.Contains(t, generate, `data-api="/api/workspaces/malta/keys/generate"`)
-	assert.Contains(t, generate, "none checked is every run in the workspace")
+	assert.Contains(t, generate, "with nothing checked, every run in the workspace gets it")
 	assert.Contains(t, generate, `name="policies" value="admin"`)
 
 	upload := f.page(t, asAdmin, "/settings/workspaces/malta/keys/upload")

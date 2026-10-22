@@ -63,7 +63,7 @@ func (c *client) call(ctx context.Context, method, path string, body any) ([]byt
 		}
 		message := fmt.Sprintf("%s (%d)", e.Error, rec.Code)
 		if rec.Code == http.StatusForbidden {
-			message += "; call whoami to see what you may do"
+			message += "; call whoami to see what you can do"
 		}
 		return nil, &apiError{Status: rec.Code, Message: message, Body: data}
 	}

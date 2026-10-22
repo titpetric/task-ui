@@ -1,6 +1,6 @@
 package detector
 
-// Target is one thing a source can run: a job of a pipeline, a target of a
+// Target is an entry a source can run: a job of a pipeline, a target of a
 // Makefile, a script.
 type Target struct {
 	Name        string   `json:"name"`

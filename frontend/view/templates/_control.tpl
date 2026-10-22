@@ -10,7 +10,7 @@
 {{- define "controljob" }}
 {{- $ := index . 0 }}{{ $f := index . 1 }}{{ $r := index . 2 }}{{ $named := index . 3 }}
 {{- $run := $.RunningRun $r.Key }}
-{{- /* A name two sources share is told apart by its kind, as in the sidebar. */}}
+{{- /* When two sources share a name, the kind tells them apart, as in the sidebar. */}}
 {{- $label := $r.Name }}{{ if ne $r.ID $r.Name }}{{ $label = $r.ID }}{{ end }}
 {{- $last := "never" }}{{ with $.LastRun $r.Key }}{{ $last = "bad" }}{{ if eq .State "ok" }}{{ $last = "ok" }}{{ end }}{{ end }}
 <span class="cc-slot" data-cc="{{ $r.Key }}" data-folder="{{ $f.ID }}" data-job="{{ $r.ID }}" data-name="{{ $r.Name }}" data-label="{{ if $named }}{{ $label }}{{ end }}" data-last="{{ $last }}"{{ if $.CanRun $f $r }} data-can{{ end }}>
@@ -19,7 +19,7 @@
 {{- else if $.CanRun $f $r -}}
 <button type="button" class="cc{{ if $named }} named{{ end }} {{ $last }}" data-run data-folder="{{ $f.ID }}" data-job="{{ $r.ID }}" data-title="{{ $f.ID }} / {{ $r.Name }}" title="Run {{ $f.ID }} / {{ $r.Name }}"><svg class="ic"><use href="#i-play"/></svg>{{ if $named }}<span>{{ $label }}</span>{{ end }}</button>
 {{- else -}}
-<a class="cc{{ if $named }} named{{ end }} idle {{ $last }}" href="{{ $.Href $f.ID }}/{{ $r.ID }}" title="{{ $f.ID }} / {{ $r.Name }}: your role may not run it"><i class="shebang" aria-hidden="true">#!</i>{{ if $named }}<span>{{ $label }}</span>{{ end }}</a>
+<a class="cc{{ if $named }} named{{ end }} idle {{ $last }}" href="{{ $.Href $f.ID }}/{{ $r.ID }}" title="{{ $f.ID }} / {{ $r.Name }}: no permission to run it"><i class="shebang" aria-hidden="true">#!</i>{{ if $named }}<span>{{ $label }}</span>{{ end }}</a>
 {{- end -}}
 </span>
 {{- end }}

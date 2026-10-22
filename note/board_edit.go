@@ -12,7 +12,7 @@ import (
 
 // ErrNotAuthor reports an edit of a note by someone who is neither its
 // author nor an admin.
-var ErrNotAuthor = errors.New("only its author or an admin edits a note")
+var ErrNotAuthor = errors.New("only the note's author or an admin can edit it")
 
 // Edit puts a new body in a note or a reply, its author's or any for an
 // admin, and marks it edited. An instruction runs again on the edited
@@ -40,7 +40,7 @@ func (b *Board) Edit(ctx context.Context, user *model.User, id, body string) (*m
 			return nil, err
 		}
 		if thread.State != "" && note.UserName == b.Answerer() {
-			return nil, fmt.Errorf("%w: the agent's answer changes when its question runs again", ErrInvalid)
+			return nil, fmt.Errorf("%w: you can't edit the agent's answer; it changes when its question runs again", ErrInvalid)
 		}
 	}
 	var req runner.Request

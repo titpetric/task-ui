@@ -2,7 +2,7 @@
 <div class="page-head">
 	<div>
 		<h2>Users</h2>
-		<p>Who may sign in, from the password file. Viewers read history and watch runs, runners start them where the allow lists permit, admins manage the instance. A user's profile sets which folders they see and their own permissions over their role's.</p>
+		<p>Who can sign in, from the password file. Viewers read history and watch runs. Runners also start runs where the allow lists permit. Admins manage the instance. On a user's profile, you set which folders they see and their own permissions on top of their role's.</p>
 	</div>
 	{{- if .CanAddUsers }}
 	<div class="actions">
@@ -12,7 +12,7 @@
 </div>
 
 <div class="alert">
-	Users live in the password file, htpasswd style, read again whenever it changes. <b>Create user</b> adds one, as does <code>task-ui passwd &lt;user&gt;</code>, which also resets a password; removing the line, or <b>Delete</b> on a user who is no admin, removes the user. The roles come from <code>TASK_UI_ADMINS</code> and <code>TASK_UI_VIEWERS</code>; everyone else is a runner. <a href="/settings/permissions">Permissions</a> sets what each role may do.
+	Users live in the password file (htpasswd format), and task-ui reads it again whenever it changes. <b>Create user</b> adds a user, and so does <code>task-ui passwd &lt;user&gt;</code>, which also resets a password. To remove a user, delete their line from the file, or use <b>Delete</b> here (not for admins). Roles come from <code>TASK_UI_ADMINS</code> and <code>TASK_UI_VIEWERS</code>; everyone else is a runner. <a href="/settings/permissions">Permissions</a> sets what each role can do.
 </div>
 
 <div class="table-wrap">
@@ -28,12 +28,12 @@
 			<td class="actions">
 				<a class="btn-icon" href="/users/{{ .Name }}" title="Profile of {{ .Name }}" aria-label="Profile of {{ .Name }}"><svg class="ic"><use href="#i-edit"/></svg></a>
 				{{- if and $.CanAddUsers ($.Can "user/delete") (not .CanAdmin) $.User (ne .ID $.User.ID) }}
-				<button type="button" class="btn-icon danger" data-delete="/api/users/{{ .ID }}" data-confirm="Delete the user {{ .Name }}? Their line leaves the password file, and their sessions and tokens end at once. Runs, notes and history keep the name." data-confirm-ok="Delete" data-next="/settings/users?notice=User+deleted" title="Delete {{ .Name }}" aria-label="Delete {{ .Name }}"><svg class="ic"><use href="#i-trash"/></svg></button>
+				<button type="button" class="btn-icon danger" data-delete="/api/users/{{ .ID }}" data-confirm="Delete the user {{ .Name }}? This removes them from the password file and ends their sessions and tokens right away. Their runs, notes and history keep the name." data-confirm-ok="Delete" data-next="/settings/users?notice=User+deleted" title="Delete {{ .Name }}" aria-label="Delete {{ .Name }}"><svg class="ic"><use href="#i-trash"/></svg></button>
 				{{- end }}
 			</td>
 		</tr>
 	{{- else }}
-		<tr class="empty"><td colspan="5">No users. Add one with <code>task-ui passwd &lt;user&gt;</code> and it shows up here.</td></tr>
+		<tr class="empty"><td colspan="5">No users yet. Add one with <code>task-ui passwd &lt;user&gt;</code> and it appears here.</td></tr>
 	{{- end }}
 	</tbody>
 </table>

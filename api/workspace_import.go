@@ -44,7 +44,7 @@ func (h *Handlers) importWorkspace(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if h.opts.WorkspaceKeys == nil {
-		fail(w, http.StatusNotFound, "workspace keys are off")
+		fail(w, http.StatusNotFound, "workspace keys aren't available on this instance")
 		return
 	}
 	bundle, target, status, problem := h.readImport(w, r)

@@ -56,7 +56,7 @@ func TestProfile(t *testing.T) {
 
 	assert.Equal(t, http.StatusNotFound, f.get(t, asAdmin, "/users/nobody").Status)
 	assert.Equal(t, http.StatusForbidden, f.get(t, asViewer, "/users/ops").Status)
-	assert.Contains(t, f.page(t, asViewer, "/users/viewer"), "Nothing yet that you may see.")
+	assert.Contains(t, f.page(t, asViewer, "/users/viewer"), "Nothing you can see yet.")
 }
 
 // A profile's matrix is the user's own policy with what they may do; it
@@ -82,7 +82,7 @@ func TestProfile_Permissions(t *testing.T) {
 	assert.Contains(t, own, `title="Enter Shell: deny" aria-label="Enter Shell: deny" disabled>`)
 
 	admin := f.page(t, asAdmin, "/users/admin")
-	assert.Contains(t, admin, "An admin may do everything")
+	assert.Contains(t, admin, "Admins can do everything;")
 	assert.NotContains(t, admin, "data-matrix")
 	assert.NotContains(t, admin, "Delete user")
 }

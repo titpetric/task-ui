@@ -294,7 +294,7 @@ func (r *Runner) prompt(ctx context.Context, a *active, user *model.User) {
 	run := a.run
 	var err error
 	if r.Prompter == nil {
-		err = errors.New("prompts are off")
+		err = errors.New("prompts aren't available on this instance")
 	} else {
 		err = r.Prompter.AskWorkflow(ctx, user, run, a.workflow, a.input)
 	}

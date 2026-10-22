@@ -2,13 +2,13 @@
 <div class="page-head">
 	<div>
 		<h2>Dashboard</h2>
-		<p>Every terminal in progress, as it looks right now, for everyone. Open one to attach, or open a folder on the left to start a run.</p>
+		<p>Every running terminal, live, for everyone to see. Open one to attach, or pick a folder on the left to start a run.</p>
 	</div>
 </div>
 
 {{- /* The dashboard follows the runs topic: a run that starts adds its
-     tile, one that ends marks it, the count and the control centre's
-     buttons follow; no reload. */}}
+     tile, one that ends marks it, and the count and the control centre's
+     buttons keep up; no reload. */}}
 <div data-sse="runs" data-dashboard>
 {{- $jobs := 0 }}{{ range .Folders }}{{ $jobs = len .Jobs | add $jobs }}{{ end }}
 <div class="metrics">
@@ -20,7 +20,7 @@
 </div>
 
 <section class="block">
-	<h3>Running now <small>one run per job, instance wide</small></h3>
+	<h3>Running now <small>each job runs once at a time, across the instance</small></h3>
 	<div class="tiles" data-tiles>
 	{{- range .Runs }}
 		<a class="tile" href="/runs/{{ .ID }}" data-attach="{{ .ID }}" data-tile="{{ .ID }}">
@@ -35,11 +35,11 @@
 		</a>
 	{{- end }}
 	</div>
-	<div class="alert" data-tiles-empty{{ if .Runs }} hidden{{ end }}>Nothing is running. Open a folder and press Run, or run a workflow, and the terminal shows up here for everyone.</div>
+	<div class="alert" data-tiles-empty{{ if .Runs }} hidden{{ end }}>Nothing is running. Open a folder and press Run, or run a workflow, and its terminal appears here for everyone.</div>
 </section>
 
 <section class="block">
-	<h3>Control centre <small>a job name that repeats gets a column; the rest are under other</small></h3>
+	<h3>Control centre <small>job names that many folders share get a column; the rest go under other</small></h3>
 	{{- with $c := .Control }}
 	<div class="table-wrap">
 	<table class="table control col-hover">
@@ -49,7 +49,7 @@
 			<tr>
 				<td class="key nowrap"><a href="{{ $.Href $row.Folder.ID }}">{{ $row.Folder.ID }}</a></td>
 				{{- range $i, $cell := $row.Cells }}
-				{{- /* One job is a bare button; several of a name carry their kinds. */}}
+				{{- /* One job is a bare button; jobs that share a name carry their kinds. */}}
 				<td class="col" data-label="{{ index $c.Columns $i }}">{{ if $cell }}<div>{{ range $cell }}{{ template "controljob" (list $ $row.Folder . (gt (len $cell) 1)) }}{{ end }}</div>{{ end }}</td>
 				{{- end }}
 				<td class="col other" data-label="Other">
@@ -57,7 +57,7 @@
 				</td>
 			</tr>
 		{{- else }}
-			<tr class="empty"><td colspan="{{ add (len $c.Columns) 2 }}">No jobs yet. Add a project from a git repository in Settings, or put a folder with something to run under the root.</td></tr>
+			<tr class="empty"><td colspan="{{ add (len $c.Columns) 2 }}">No jobs yet. Add a project from a git repository in Settings, or put a folder with jobs under the root.</td></tr>
 		{{- end }}
 		</tbody>
 	</table>

@@ -127,7 +127,7 @@ func (h *Handlers) deleteUser(w http.ResponseWriter, r *http.Request) {
 		fail(w, http.StatusForbidden, "you can't delete yourself")
 		return
 	case user.CanAdmin():
-		fail(w, http.StatusForbidden, "an admin can't be deleted here")
+		fail(w, http.StatusForbidden, "you can't delete an admin here")
 		return
 	}
 	if err := h.opts.RemoveUser(r.Context(), user.Name); err != nil {

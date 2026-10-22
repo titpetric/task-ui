@@ -2,7 +2,7 @@
 <div class="page-head">
 	<div>
 		<h2>Scheduled</h2>
-		<p>Jobs that run on a cron expression, in the background, as the user each schedule names: whoever made it, or the user an admin picks under Run as. The scheduler skips a job that is still running when its time comes, and a job its user may not run at that time.</p>
+		<p>Jobs that run in the background on a cron expression. Each schedule runs as its user: whoever created it, or the user an admin picks under Run as. The scheduler skips a job if it's still running when its time comes, or if its user can't run it at that time.</p>
 	</div>
 </div>
 
@@ -55,7 +55,7 @@
 			</td>
 		</tr>
 	{{- else }}
-		<tr class="empty"><td colspan="8">Nothing is scheduled.{{ if $any }} Pick a job and an expression above.{{ end }}</td></tr>
+		<tr class="empty"><td colspan="8">No schedules yet.{{ if $any }} Pick a job and a cron expression above.{{ end }}</td></tr>
 	{{- end }}
 	</tbody>
 </table>

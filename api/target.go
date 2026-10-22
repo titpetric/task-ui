@@ -39,7 +39,7 @@ func (h *Handlers) require(w http.ResponseWriter, r *http.Request, path string) 
 	if h.can(r, path) {
 		return true
 	}
-	fail(w, http.StatusForbidden, "needs "+path)
+	fail(w, http.StatusForbidden, "you need the "+path+" permission")
 	return false
 }
 

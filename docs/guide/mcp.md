@@ -32,8 +32,8 @@ and hours.
    holds and a policy can grant (see
    [Settings](settings.md#permissions)); a user rotates
    or disables their own token once on, from their own profile. A
-   token past its expiry gets `401` "token expired, rotate it on your user
-   settings".
+   token past its expiry gets `401` "the token has expired; rotate it on
+   your profile".
 
 3. Add the server to the agent, on the machine the agent runs on. For
    Claude Code:
@@ -139,8 +139,8 @@ asked with `get_run`: `@claude-prompt` of the folder asked in. Other
 users' prompt runs list in `list_runs` and `get_run` with `prompt/view`.
 
 A call your permissions refuse fails with the permission it needs and a
-pointer to `whoami`, as `needs prompt/edit (403); call whoami to see what
-you may do`.
+pointer to `whoami`, as `you need the prompt/edit permission (403); call
+whoami to see what you can do`.
 
 A run started over MCP is like any other: it shows in the history, anyone
 allowed can watch it, and it goes on if the agent stops waiting.

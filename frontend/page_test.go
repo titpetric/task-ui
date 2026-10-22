@@ -145,7 +145,7 @@ func TestPage_AdminOnly(t *testing.T) {
 	for _, path := range []string{"/settings", "/settings/projects", "/settings/keys", "/settings/secrets", "/settings/users", "/f/_/infra/env/.env"} {
 		res := f.get(t, asOps, path)
 		assert.Equal(t, http.StatusForbidden, res.Status, path)
-		assert.Contains(t, res.Body, "Settings are for admins.")
+		assert.Contains(t, res.Body, "You need permission to open this page.")
 	}
 }
 

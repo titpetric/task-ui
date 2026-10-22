@@ -70,7 +70,7 @@ func TestWorkspaceEdit(t *testing.T) {
 	assert.NoError(t, f.opts.Workspaces.Create(ctx, &model.Workspace{Folder: "gozo", Shallow: true}))
 	shallow := f.page(t, asAdmin, "/settings/workspaces/gozo")
 	assert.Contains(t, shallow, `type="checkbox" id="we-recursive" name="recursive">`)
-	assert.Contains(t, shallow, "Off: only the folder and its top-level folders")
+	assert.Contains(t, shallow, "off lists only the folder and its top-level folders")
 
 	assert.Equal(t, http.StatusNotFound, f.get(t, asAdmin, "/settings/workspaces/nope").Status)
 }
@@ -86,7 +86,7 @@ func TestWorkspaceEdit_DeleteNamesProjects(t *testing.T) {
 	for _, folder := range []string{"malta/deploy", "malta/dockerfiles", "maltese", "infra"} {
 		assert.NoError(t, f.opts.Projects.Create(ctx, &model.Project{Folder: folder}))
 	}
-	confirm := "its checkout, its keys and its secrets, with the projects inside it: malta/deploy, malta/dockerfiles?"
+	confirm := "with its checkout, keys and secrets, and the projects inside it: malta/deploy, malta/dockerfiles?"
 	for _, path := range []string{"/settings/workspaces/malta", "/settings/workspaces"} {
 		body := f.page(t, asAdmin, path)
 		assert.Contains(t, body, confirm)
@@ -105,7 +105,7 @@ func TestWorkspaces_AdminOnly(t *testing.T) {
 		for _, user := range []string{asOps, asViewer} {
 			res := f.get(t, user, path)
 			assert.Equal(t, http.StatusForbidden, res.Status, path)
-			assert.Contains(t, res.Body, "Settings are for admins.")
+			assert.Contains(t, res.Body, "You need permission to open this page.")
 		}
 	}
 }

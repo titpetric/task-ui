@@ -20,7 +20,7 @@
 {{- if $p.Sources }}
 {{- template "sources" (list $ $p) }}
 {{- else if and (not $.SubFolders) (not $default) }}
-<div class="alert">Nothing to run was found in this folder: no pipeline file, Makefile, package scripts or scripts folder.</div>
+<div class="alert">task-ui found nothing to run in this folder: no pipeline file, Makefile, package scripts or scripts folder.</div>
 {{- end }}
 
 {{- if or (not $default) $.Tree }}
@@ -66,7 +66,7 @@
 				{{- end }}
 			</tr>
 		{{- else }}
-			<tr class="empty"><td colspan="4">No source declares an env file. Secrets still reach the runs through the environment.</td></tr>
+			<tr class="empty"><td colspan="4">No source uses an env file. Runs still get secrets through their environment.</td></tr>
 		{{- end }}
 		</tbody>
 	</table>

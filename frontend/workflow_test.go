@@ -376,9 +376,9 @@ func TestWorkflow_PromptEditor(t *testing.T) {
 	page := f.page(t, asAdmin, "/workflows/"+wf.ID)
 	assert.Contains(t, page, `data-workflow-run="`+wf.ID+`" data-workflow-prompt="summed"`)
 	assert.Contains(t, page, `<p class="workflow-prompt" data-workflow-prompt-shown>summarize, change nothing</p>`)
-	assert.Contains(t, page, "Claude gets it in infra/ once the steps end")
+	assert.Contains(t, page, "Claude gets this in infra/ after the steps finish")
 	assert.Contains(t, page, `<li class="node disabled" data-step="1">`)
-	assert.Contains(t, page, "step 2, disabled: a run skips it")
+	assert.Contains(t, page, "step 2, off: runs skip it")
 	assert.Contains(t, page, `id="workflow-input-dialog"`)
 
 	plain := f.workflow(t, asOps, "plain", "infra", "plan")
@@ -408,7 +408,7 @@ func TestWorkflow_RunPromptThread(t *testing.T) {
 
 	page := f.page(t, asAdmin, "/workflows/"+wf.ID+"/runs/"+run.ID)
 	assert.Contains(t, page, "<small>skipped</small>")
-	assert.Contains(t, page, "the workflow's prompt, asked in the root once the steps ended")
+	assert.Contains(t, page, "the workflow's prompt, run in the root after the steps")
 	assert.Contains(t, page, `data-notes data-dir="_"`)
 	assert.Contains(t, page, "for 1.2")
 	assert.Contains(t, page, "<strong>quiet</strong>")

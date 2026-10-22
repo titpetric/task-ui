@@ -114,10 +114,10 @@ func (h *Handlers) startRun(w http.ResponseWriter, r *http.Request) {
 	user := access.UserFrom(r.Context())
 	switch req.Job {
 	case model.PromptJob:
-		fail(w, http.StatusBadRequest, "a prompt starts from /api/prompts, with its text")
+		fail(w, http.StatusBadRequest, "start a prompt with POST /api/prompts and its text")
 		return
 	case model.NoteJob:
-		fail(w, http.StatusBadRequest, "the Notes agent starts from the Notes board, on a note that names it")
+		fail(w, http.StatusBadRequest, "start the Notes agent from the Notes board, with a note that names it")
 		return
 	}
 	f, job, dir, problem := h.targetIn(r, req.Folder, req.Dir, req.Job)
@@ -126,11 +126,11 @@ func (h *Handlers) startRun(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if job.IsShell() && !h.can(r, "shell") {
-		fail(w, http.StatusForbidden, "an interactive shell, or Claude in one, is for admins")
+		fail(w, http.StatusForbidden, "an interactive shell or Claude terminal needs the shell permission")
 		return
 	}
 	if !h.canRun(r, f, job) {
-		fail(w, http.StatusForbidden, "your role may view this job, but not run it")
+		fail(w, http.StatusForbidden, "you can view this job, but you don't have permission to run it")
 		return
 	}
 	if len(req.Args) > 0 && !job.TakesArgs {
@@ -168,13 +168,13 @@ func (h *Handlers) startRun(w http.ResponseWriter, r *http.Request) {
 func (h *Handlers) summarizes(w http.ResponseWriter, r *http.Request, job *folder.Job) bool {
 	switch {
 	case !h.can(r, "prompt/edit"):
-		fail(w, http.StatusForbidden, "a run and its summary take prompt/edit")
+		fail(w, http.StatusForbidden, "a summarized run needs prompt/edit")
 		return false
 	case h.opts.Board == nil:
-		fail(w, http.StatusNotFound, "prompts are off")
+		fail(w, http.StatusNotFound, "prompts aren't available on this instance")
 		return false
 	case job.IsShell() || job.Interactive:
-		fail(w, http.StatusBadRequest, "an interactive job has no summary to ask for")
+		fail(w, http.StatusBadRequest, "an interactive job can't have a summary")
 		return false
 	}
 	return true
@@ -223,7 +223,7 @@ func (h *Handlers) endRun(w http.ResponseWriter, r *http.Request, kill bool) {
 		return
 	}
 	if !h.view(r, *run).CanRun {
-		fail(w, http.StatusForbidden, "your role may view this run, but not end it")
+		fail(w, http.StatusForbidden, "you can view this run, but you don't have permission to end it")
 		return
 	}
 	if kill {

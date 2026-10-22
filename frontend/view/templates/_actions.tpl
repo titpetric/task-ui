@@ -3,9 +3,10 @@
      chip per atkins skill that applies there, and a chip of the place's own
      atkins jobs. Every action is a Run of the place's folder, run where the
      job runs; a running one attaches, one the user may not run links to
-     its page. At the top right, an admin's alone: the links to the
-     settings of the workspace or project the folder page is of, Enter
-     Shell and Enter Claude. */}}
+     its page. At the top right, each behind its permission: the links to
+     the settings of the folder page's workspace (workspace/view) or
+     project (project/view), Enter Shell (shell) and Enter Claude (shell
+     and a Claude token). */}}
 {{- define "actions" }}
 {{- with .Actions }}{{ if not .Empty }}
 {{- $a := . }}
@@ -64,7 +65,7 @@
 {{- else if $.CanRun $p $r -}}
 <button type="button" class="chip-act" data-run data-folder="{{ $p.ID }}"{{ with $r.Dir }} data-dir="{{ . }}"{{ end }} data-job="{{ $r.ID }}" data-title="{{ $what }}"{{ with $confirm }} data-confirm="{{ . }}" data-confirm-ok="Run {{ $r.Name }}"{{ end }}{{ with $r.ArgsCommand }} data-args="{{ . }}"{{ end }} title="{{ with $r.Description }}{{ . }}{{ else }}Run {{ $what }}{{ end }}{{ with $r.ArgsCommand }}: arguments after {{ . }}{{ end }}">{{ $r.Name }}{{ if $r.TakesArgs }}...{{ end }}</button>
 {{- else -}}
-<a class="chip-act" href="{{ $.JobHref $p $r }}" title="{{ $what }}: its page and history">{{ $r.Name }}</a>
+<a class="chip-act" href="{{ $.JobHref $p $r }}" title="{{ $what }}: open its page and history">{{ $r.Name }}</a>
 {{- end }}
 {{- end }}
 
@@ -76,6 +77,6 @@
 {{- with $.RunningRun $j.Key }}
 		<a class="btn btn-sm shell-enter running" href="/runs/{{ .ID }}" data-attach="{{ .ID }}" title="Attach to {{ $what }} in {{ $where }}/, running"><i class="dot running"></i>{{ $label }}</a>
 {{- else }}
-		<button type="button" class="btn btn-sm shell-enter" data-run data-folder="{{ $p.ID }}"{{ with $j.Dir }} data-dir="{{ . }}"{{ end }} data-job="{{ $j.ID }}" data-title="{{ $where }} / {{ $j.Name }}" title="{{ $what }} in {{ $where }}/, as task-ui runs its jobs"><svg class="ic"><use href="#i-terminal"/></svg>Enter {{ $label }}</button>
+		<button type="button" class="btn btn-sm shell-enter" data-run data-folder="{{ $p.ID }}"{{ with $j.Dir }} data-dir="{{ . }}"{{ end }} data-job="{{ $j.ID }}" data-title="{{ $where }} / {{ $j.Name }}" title="{{ $what }} in {{ $where }}/, with the same setup as its jobs"><svg class="ic"><use href="#i-terminal"/></svg>Enter {{ $label }}</button>
 {{- end }}
 {{- end }}

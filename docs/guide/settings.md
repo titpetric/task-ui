@@ -401,7 +401,7 @@ keys.
 stay as they are:
 
 - a title and a description;
-- **who may run it**: a box for each role that runs, admin and runner,
+- **who can run it**: a box for each role that runs, admin and runner,
   and each user who is no viewer; none checked is every runner. Each job
   has the same boxes in the per-job table, over the folder's, and none
   checked there inherits;

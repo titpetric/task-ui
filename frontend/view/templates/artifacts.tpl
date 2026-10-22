@@ -2,11 +2,11 @@
 <div class="page-head">
 	<div>
 		<h2>Artifacts</h2>
-		<p>The files the runs leave in <code>$TASK_UI_ARTIFACTS</code>, gathered into one tree: a run that writes a file again replaces it, and the history keeps the version before.</p>
+		<p>Files that runs write to <code>$TASK_UI_ARTIFACTS</code>, collected into one tree. When a run writes the same file again, the new file replaces it, and the history keeps the earlier version.</p>
 	</div>
 	{{- if .Can "artifact/delete" }}
 	<div class="actions">
-		<button type="button" class="btn btn-danger" data-delete="/api/artifacts" data-confirm="Delete all the artifacts? Every file, its history and the record of every version go." data-confirm-ok="Delete all" data-next="reload"><svg class="ic"><use href="#i-trash"/></svg>Delete all</button>
+		<button type="button" class="btn btn-danger" data-delete="/api/artifacts" data-confirm="Delete all artifacts? This removes every file, its history and the record of every version." data-confirm-ok="Delete all" data-next="reload"><svg class="ic"><use href="#i-trash"/></svg>Delete all</button>
 	</div>
 	{{- end }}
 </div>
@@ -52,7 +52,7 @@
 				</td>
 			</tr>
 		{{- else }}
-			<tr class="empty"><td colspan="4">Empty.</td></tr>
+			<tr class="empty"><td colspan="4">This folder is empty.</td></tr>
 		{{- end }}
 		</tbody>
 	</table>
@@ -91,7 +91,7 @@
 				</td>
 			</tr>
 		{{- else }}
-			<tr class="empty"><td colspan="8">No artifacts yet. A job that writes to <code>$TASK_UI_ARTIFACTS</code> leaves its files here.</td></tr>
+			<tr class="empty"><td colspan="8">No artifacts yet. Files a job writes to <code>$TASK_UI_ARTIFACTS</code> appear here.</td></tr>
 		{{- end }}
 		</tbody>
 	</table>

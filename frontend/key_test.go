@@ -97,7 +97,7 @@ func TestKeys_ProjectFolders(t *testing.T) {
 
 	assert.NoError(t, os.MkdirAll(filepath.Join(f.infra.Dir, ".git"), 0o755))
 	body := f.page(t, asAdmin, "/settings/keys")
-	assert.Contains(t, body, "<b>infra</b> has private keys in <b>"+dir+"</b>: id_rsa. They are not loaded into its runs.")
+	assert.Contains(t, body, "<b>infra</b> has private keys in <b>"+dir+"</b>: id_rsa. Its runs don't get them.")
 	assert.NotContains(t, body, `data-copy="ssh-rsa`)
 	assert.NotContains(t, body, `data-delete="/api/keys/id_rsa"`)
 }
@@ -164,7 +164,7 @@ func TestKeys_ForAUser(t *testing.T) {
 	assert.Contains(t, ops, `href="/keys"`)
 
 	viewer := f.page(t, asViewer, "/keys")
-	assert.Contains(t, viewer, "No key is given to you or your role")
+	assert.Contains(t, viewer, "No keys for you or your role yet")
 }
 
 // The server user's own keys, in its ~/.ssh, show apart and read-only:
@@ -207,8 +207,8 @@ func TestKeys_Workspaces(t *testing.T) {
 	assert.Contains(t, body, `<a class="key-chip" href="/settings/workspaces/acme/keys/id_ed25519_deploy"`)
 	assert.Contains(t, body, html(f.opts.WorkspaceKeys.EncryptKey(acme.ID).Fingerprint))
 	assert.Contains(t, body, `<tr id="ws-_" class="key-missing">`)
-	assert.Contains(t, body, "No secrets can be added.")
-	assert.Contains(t, body, "task-ui can't SSH to this workspace's hosts with a key of its own")
+	assert.Contains(t, body, "You can't add secrets until it has one.")
+	assert.Contains(t, body, "This workspace has no SSH key of its own")
 	assert.Contains(t, body, `href="/settings/workspaces/_/keys/upload?encrypt=1"`)
 	assert.Contains(t, body, `<div class="faint key-projects">infra, private</div>`, "the root's projects are the default workspace's")
 }

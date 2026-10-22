@@ -25,7 +25,7 @@ type UserMCP struct {
 // disable their own once on. It answers the request itself when not.
 func (h *Handlers) mcpUser(w http.ResponseWriter, r *http.Request) *model.User {
 	if h.opts.Tokens == nil {
-		fail(w, http.StatusMethodNotAllowed, "tokens are off")
+		fail(w, http.StatusMethodNotAllowed, "tokens aren't available on this instance")
 		return nil
 	}
 	user, err := h.opts.Users.Get(r.Context(), param(r, "id"))

@@ -26,7 +26,7 @@ func TestFolder(t *testing.T) {
 	assert.Contains(t, body, "The servers")
 	// The page lists the folders under it, each linked, with its job count.
 	assert.Contains(t, body, `<a href="/f/_/infra/edge">`)
-	assert.NotContains(t, body, "Nothing to run was found")
+	assert.NotContains(t, body, "task-ui found nothing to run")
 	assert.NotContains(t, body, "data-run-all") // workflows chain jobs instead
 	assert.Contains(t, body, `data-run data-folder="infra" data-job="plan"`)
 	assert.Contains(t, body, `data-force data-folder="infra" data-job="plan"`)
@@ -128,7 +128,7 @@ func TestFolder_Sealed(t *testing.T) {
 	assert.NoError(t, os.Symlink(".env", filepath.Join(dir, "envlink")))
 
 	body := f.page(t, asOps, "/f/_/infra")
-	assert.Contains(t, body, `<tr class="sealed" aria-disabled="true" title=".git is listed, but task-ui does not open it">`)
+	assert.Contains(t, body, `<tr class="sealed" aria-disabled="true" title="task-ui lists .git but does not open it">`)
 	assert.Contains(t, body, `<span>.git</span>`)
 	assert.Contains(t, body, `<span>.env</span>`)
 	assert.Contains(t, body, `<span>.env.local</span>`)

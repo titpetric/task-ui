@@ -20,7 +20,7 @@
 </div>
 {{- end }}
 {{- if not $can }}
-<div class="alert">You can read this job and its history. Your role, <b>{{ .User.Role }}</b>, is not allowed to run it.</div>
+<div class="alert">You can see this job and its history, but you don't have permission to run it.</div>
 {{- end }}
 
 {{- if $r.Summary }}
@@ -43,7 +43,7 @@
 			{{- if $r.EnvFiles }}<tr><th>Env files</th><td>{{ range $r.EnvFiles }}<div><svg class="ic"><use href="#i-file"/></svg> {{ . }}</div>{{ end }}</td></tr>{{ end }}
 			<tr><th>Who can run</th><td>{{ .WhoCanRun $p $r }}</td></tr>
 			<tr><th>Hours</th><td>{{ template "hours" (list ($p.HoursOf $r) $) }}{{ if and $r.Hours $p.Hours }} <span class="faint">(the job's own; the folder runs {{ hoursLine $p.Hours }})</span>{{ end }}</td></tr>
-			<tr><th>Input</th><td>{{ if $r.Interactive }}keyboard input is sent to the job{{ else }}output only{{ end }}</td></tr>
+			<tr><th>Input</th><td>{{ if $r.Interactive }}the job takes keyboard input{{ else }}output only{{ end }}</td></tr>
 		</tbody>
 	</table>
 	</div>
@@ -97,7 +97,7 @@
 				</td>
 			</tr>
 		{{- else }}
-			<tr class="empty"><td colspan="6">Not scheduled.{{ if $can }} Add an expression below to run it on a schedule{{ if $.Users }}, as the user you pick{{ else }}, as you{{ end }}.{{ end }}</td></tr>
+			<tr class="empty"><td colspan="6">Not scheduled.{{ if $can }} Add a cron expression below to run it on a schedule{{ if $.Users }}, as the user you pick{{ else }}, as you{{ end }}.{{ end }}</td></tr>
 		{{- end }}
 		</tbody>
 	</table>

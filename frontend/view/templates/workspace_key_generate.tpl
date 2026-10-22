@@ -3,7 +3,7 @@
 <div class="page-head">
 	<div>
 		<h2>Generate key</h2>
-		<p>Creates a new SSH key pair for the workspace {{ $ws.Folder }}, in {{ .KeysDir }}. Its runs get it in their ssh agent as ws:&lt;name&gt;. A pair of the same name is moved aside as a backup.</p>
+		<p>Creates a new SSH key pair for the workspace {{ $ws.Folder }}, in {{ .KeysDir }}. Its runs get it in their ssh agent as ws:&lt;name&gt;. If a pair with the same name exists, task-ui keeps it as a backup.</p>
 	</div>
 </div>
 
@@ -24,7 +24,7 @@
 		<label for="wk-comment">Comment</label>
 		<input type="text" id="wk-comment" name="comment" value="task-ui {{ $ws.Folder }}">
 	</div>
-	{{- template "keygrants" (list nil nil .Users) }}
+	{{- template "keygrants" (list (list) nil .Users) }}
 	<div class="form-foot">
 		<a class="btn" href="/settings/workspaces/{{ $ws.Folder }}">Cancel</a>
 		<button class="btn btn-primary" type="submit">Generate</button>

@@ -41,5 +41,5 @@ func TestTools_whoami(t *testing.T) {
 	// A refusal names the permission and whoami.
 	text, failed = f.tool(t, "ops", "ask_prompt", map[string]any{"folder": "site", "prompt": "what builds here"})
 	assert.True(t, failed)
-	assert.Contains(t, text, "needs prompt/edit (403); call whoami to see what you may do")
+	assert.Contains(t, text, "you need the prompt/edit permission (403); call whoami to see what you can do")
 }
