@@ -37,6 +37,7 @@ func TestLogin(t *testing.T) {
 	assert.Contains(t, form.Body, "Sign in")
 	assert.Contains(t, form.Body, `name="back" value="/f/_/infra"`)
 	assert.NotContains(t, form.Body, "Recents")
+	assert.NotContains(t, form.Body, "header-prompt")
 
 	wrong := f.post(t, "/login", url.Values{"username": {"admin"}, "password": {"nope"}, "back": {"/f/_/infra"}})
 	assert.Equal(t, http.StatusUnauthorized, wrong.StatusCode)

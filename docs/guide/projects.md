@@ -268,6 +268,9 @@ directory: another there waits for it, and prompts in two directories
 run at once. A workspace's prompt route works the same way (see
 [Workspaces](workspaces.md#a-prompt-against-a-workspace)).
 
+Enter at the header's prompt, after the logo, asks at the root, as
+`/f/_` does.
+
 With the Beszel integration set up, a prompt also sees the
 [Inventory](inventory.md#prompts-on-the-hosts): Claude gets the hosts
 with who signs in to each, and inspects them over ssh with the keys of
