@@ -88,3 +88,20 @@ func TestNotes_edit(t *testing.T) {
 	assert.NotContains(t, f.page(t, asViewer, "/notes"), hook)
 	assert.NotContains(t, f.page(t, asAdmin, "/notes"), `data-edit="`+answer.ID+`"`)
 }
+
+// The fields of a note list the users a mention may name: the composer, a
+// reply, and the field the script opens to edit, over the roles the body
+// carries; a mention of a user links their profile.
+func TestNotes_mentions(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	_, err := f.opts.Board.Post(context.Background(), f.users[asAdmin], "", "@ops a plain note")
+	assert.NoError(t, err)
+
+	body := f.page(t, asOps, "/notes")
+	assert.Contains(t, body, `<body data-roles='{`)
+	assert.Contains(t, body, `<textarea name="body" rows="3" required data-mentions placeholder=`)
+	assert.Contains(t, body, `<textarea name="body" rows="2" required data-mentions aria-label="A reply">`)
+	assert.Contains(t, body, `<a class="mention" href="/users/ops">@ops</a> a plain note`)
+	assert.Contains(t, f.get(t, asOps, "/static/task-ui.js").Body, `<textarea name="body" rows="3" required data-mentions aria-label="The note">`)
+}
