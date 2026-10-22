@@ -851,6 +851,25 @@
     select.addEventListener("change", function () { narrow(select); });
   });
 
+  // A switch turns a part of a form on or off: a workflow's prompt, or
+  // one of its steps. Off collapses the part to its switch and heading,
+  // and its fields leave the form, so a prompt that is off saves as none;
+  // the text stays, for the switch to bring back.
+  document.addEventListener("change", function (event) {
+    if (!event.target.matches("[data-switch]")) return;
+    var part = event.target.closest("[data-switchable]");
+    if (!part) return;
+    var on = event.target.checked;
+    part.classList.toggle("off", !on);
+    part.querySelectorAll(".switch-body textarea, .switch-body select, .switch-body input").forEach(function (field) {
+      field.disabled = !on;
+    });
+    if (on) {
+      var first = part.querySelector(".switch-body textarea");
+      if (first) first.focus();
+    }
+  });
+
   // A select with data-submit saves its form on a change: who a
   // schedule runs as.
   document.querySelectorAll("select[data-submit]").forEach(function (select) {
@@ -1132,7 +1151,7 @@
   function workflowSteps(form) {
     return Array.prototype.map.call(form.querySelectorAll("[data-step]"), function (row) {
       var folder = row.querySelector("[data-step-folder]").value;
-      var enabled = row.querySelector("[data-step-enabled]").checked;
+      var enabled = row.querySelector("[data-switch]").checked;
       if (folder.indexOf(WORKFLOW) === 0) return { workflow: folder.slice(WORKFLOW.length), enabled: enabled };
       return { folder: folder, job: row.querySelector("[data-step-job]").value, enabled: enabled };
     });
@@ -1158,6 +1177,17 @@
     if (job.dropdown) job.dropdown();
   }
 
+  // stepHead names a step by what it runs, the heading it keeps when
+  // it is off: folder / job, or the workflow.
+  function stepHead(row) {
+    var folder = row.querySelector("[data-step-folder]");
+    var job = row.querySelector("[data-step-job]");
+    var head = row.querySelector("[data-step-head]");
+    var picked = folder.options[folder.selectedIndex];
+    if (!picked) return;
+    head.textContent = folder.value.indexOf(WORKFLOW) === 0 ? picked.text : folder.value + " / " + job.value;
+  }
+
   // stepTools enables the move buttons that have somewhere to go, and
   // keeps one step at least.
   function stepTools(list) {
@@ -1173,9 +1203,11 @@
     list.querySelectorAll("[data-step]").forEach(narrowStep);
     stepTools(list);
     form.addEventListener("change", function (event) {
-      if (event.target.matches("[data-step-folder]")) narrowStep(event.target.closest("[data-step]"));
-      // A step toggled off stays, dimmed; a run skips it.
-      if (event.target.matches("[data-step-enabled]")) event.target.closest("[data-step]").classList.toggle("disabled", !event.target.checked);
+      if (event.target.matches("[data-step-folder], [data-step-job]")) {
+        var step = event.target.closest("[data-step]");
+        if (event.target.matches("[data-step-folder]")) narrowStep(step);
+        stepHead(step);
+      }
     });
     form.addEventListener("click", function (event) {
       // Summarize fills the prompt with the short summary instruction.
@@ -1199,6 +1231,7 @@
         list.appendChild(fresh);
         fresh.querySelectorAll("select").forEach(enhanceSelect);
         narrowStep(fresh);
+        stepHead(fresh);
         fresh.querySelector("[data-step-job]").focus();
       } else if (btn.hasAttribute("data-step-up") && row.previousElementSibling) {
         list.insertBefore(row, row.previousElementSibling);

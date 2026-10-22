@@ -52,8 +52,10 @@
 
 /* A show/hide switch beside a heading, as oida sets it: a small uppercase
    word and a track whose knob moves; the checkbox stays the state and the
-   focus target. */
-.peek-toggle {
+   focus target. A .switch is the same track alone, leading a part of a
+   form it turns on and off. */
+.peek-toggle,
+.switch {
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
@@ -116,7 +118,7 @@
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .peek-toggle i::after {
+  :is(.peek-toggle, .switch) i::after {
     transition: transform 0.12s ease, background 0.12s ease;
   }
 }

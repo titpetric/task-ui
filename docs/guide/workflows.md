@@ -16,8 +16,10 @@ the rest do not run. While a workflow runs, the play button in the
 sidebar becomes an eye: open it to watch.
 
 A step is a job of a folder, or another workflow, which then runs in its
-place, all its steps. A step toggled off stays in the chain and a run
-skips it: its row reads skipped, and the steps after it run.
+place, all its steps. In the editor, a switch leads each step. Switch
+a step off and it collapses to its name, folder / job, dimmed; it stays
+in the chain and a run skips it: its row reads skipped, and the steps
+after it run. Switch it on and its selects come back.
 
 Running a workflow needs the right to run every step in it. A workflow
 runs once at a time; task-ui turns down a second start while it runs.
@@ -31,7 +33,12 @@ chains and their last runs.
 
 A workflow's **Prompt** is what Claude gets once the steps end, as the
 user who started the run, in the folder **Run in** names, the root by
-default. Three shapes are valid:
+default. In the editor, a switch leads the **Prompt** heading: on, it
+shows the prompt, **Summarize** and **Run in**; off, only the heading
+stays, and the workflow saves with no prompt. The text stays in the
+form until you leave the page, so switching back on before you save
+restores it. A new workflow starts with the prompt off. Three shapes
+are valid:
 
 - **Steps alone**: the chain as above.
 - **Steps and a prompt**: Claude reads the steps' output and answers, a

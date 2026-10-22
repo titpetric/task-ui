@@ -364,20 +364,29 @@
 	<template data-step-template>{{ template "steprow" (list $p "" "" "" false) }}</template>
 	{{- $id := "" }}{{ if $w }}{{ $id = print "-" $w.ID }}{{ end }}
 	{{- if $p.Can "prompt/edit" }}
-	<div class="field">
-		<label for="wf-prompt{{ $id }}">Prompt <span class="faint">Claude gets it once the steps end, with their output; a workflow with no step to run is the prompt alone</span></label>
-		<textarea id="wf-prompt{{ $id }}" name="prompt" rows="4" spellcheck="false" placeholder="summarize the run, change nothing" data-workflow-prompt-text>{{ if $w }}{{ $w.Prompt }}{{ end }}</textarea>
-		<div class="field-tools"><button type="button" class="btn btn-sm" data-workflow-preset="{{ summaryPrompt }}" title="Fill the prompt with the short summary of Run and summarize">Summarize</button></div>
-	</div>
-	<div class="field">
-		<label for="wf-prompt-folder{{ $id }}">Run in <span class="faint">where Claude runs the prompt, as you</span></label>
-		<select id="wf-prompt-folder{{ $id }}" name="prompt_folder">
-			<option value="">the root</option>
-			{{- range $p.Folders }}
-			<option value="{{ .ID }}"{{ if and $w (eq .ID $w.PromptFolder) }} selected{{ end }}>{{ .ID }}</option>
-			{{- end }}
-		</select>
-	</div>
+	{{- $on := and $w $w.Prompted }}
+	<section class="switchable prompt-section{{ if not $on }} off{{ end }}" data-switchable>
+		<div class="switch-head">
+			{{- template "switch" (list $on "Ask Claude once the steps end") }}
+			<label class="label" for="wf-prompt{{ $id }}">Prompt</label>
+			<span class="faint">Claude gets it once the steps end, with their output; a workflow with no step to run is the prompt alone</span>
+		</div>
+		<div class="switch-body">
+			<div class="field">
+				<textarea id="wf-prompt{{ $id }}" name="prompt" rows="4" spellcheck="false" placeholder="summarize the run, change nothing" data-workflow-prompt-text{{ if not $on }} disabled{{ end }}>{{ if $w }}{{ $w.Prompt }}{{ end }}</textarea>
+				<div class="field-tools"><button type="button" class="btn btn-sm" data-workflow-preset="{{ summaryPrompt }}" title="Fill the prompt with the short summary of Run and summarize">Summarize</button></div>
+			</div>
+			<div class="field">
+				<label for="wf-prompt-folder{{ $id }}">Run in <span class="faint">where Claude runs the prompt, as you</span></label>
+				<select id="wf-prompt-folder{{ $id }}" name="prompt_folder"{{ if not $on }} disabled{{ end }}>
+					<option value="">the root</option>
+					{{- range $p.Folders }}
+					<option value="{{ .ID }}"{{ if and $w (eq .ID $w.PromptFolder) }} selected{{ end }}>{{ .ID }}</option>
+					{{- end }}
+				</select>
+			</div>
+		</div>
+	</section>
 	{{- else if and $w $w.Prompted }}
 	<input type="hidden" name="prompt" value="{{ $w.Prompt }}">
 	<input type="hidden" name="prompt_folder" value="{{ $w.PromptFolder }}">
@@ -389,10 +398,19 @@
 </form>
 {{ end }}
 
+{{/* switch takes (list on label): the leading switch of a part of a
+     form that turns it on, with its settings, or off, collapsed to its
+     heading. task-ui.js sets the off class of its [data-switchable] and
+     the disabled state of the fields inside it. */}}
+{{ define "switch" -}}
+<label class="switch" title="{{ index . 1 }}"><input type="checkbox" data-switch aria-label="{{ index . 1 }}"{{ if index . 0 }} checked{{ end }}><i aria-hidden="true"></i></label>
+{{- end }}
+
 {{ define "steprow" }}
 {{- $p := index . 0 }}{{ $folder := index . 1 }}{{ $job := index . 2 }}{{ $ref := index . 3 }}{{ $off := index . 4 -}}
-<li class="step{{ if $off }} disabled{{ end }}" data-step>
-	<label class="toggle" title="Run this step; off, a run skips it"><input type="checkbox" data-step-enabled aria-label="Run this step"{{ if not $off }} checked{{ end }}></label>
+<li class="step switchable{{ if $off }} off{{ end }}" data-step data-switchable>
+	{{- template "switch" (list (not $off) "Run this step") }}
+	<span class="step-head" data-step-head>{{ if $ref }}{{ range $p.StepWorkflows }}{{ if eq .ID $ref }}{{ .Name }}{{ end }}{{ end }}{{ else }}{{ $folder }} / {{ $job }}{{ end }}</span>
 	<select data-step-folder aria-label="Folder or workflow" required>
 		{{- range $p.Folders }}{{ if .Jobs }}
 		<option value="{{ .ID }}"{{ if eq .ID $folder }} selected{{ end }}>{{ .ID }}</option>
