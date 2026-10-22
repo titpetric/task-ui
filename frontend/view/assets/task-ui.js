@@ -851,6 +851,12 @@
     select.addEventListener("change", function () { narrow(select); });
   });
 
+  // A select with data-submit saves its form on a change: who a
+  // schedule runs as.
+  document.querySelectorAll("select[data-submit]").forEach(function (select) {
+    select.addEventListener("change", function () { select.form.requestSubmit(); });
+  });
+
   // ------------------------------------------------------------ cc-menus
 
   // A control centre's Other menu opens over the page, placed against

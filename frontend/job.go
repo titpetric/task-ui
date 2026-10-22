@@ -28,6 +28,7 @@ func (h *Handlers) job(w http.ResponseWriter, r *http.Request, f *folder.Folder,
 	// A schedule names a folder's job: a directory's job has none.
 	if job.Dir == "" {
 		p.Schedules = h.visibleSchedules(r, f.ID, job.ID)
+		h.runAsUsers(r, p)
 	}
 	h.render(w, http.StatusOK, "job", p)
 }

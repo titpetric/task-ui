@@ -12,6 +12,33 @@
 </div></details>
 {{- end }}
 
+{{/* user-options takes (list users selected [short]): an option per
+     user, name and role, or the name alone when short, for a select that
+     picks a user: who a schedule runs as, who a key is for. */}}
+{{ define "user-options" }}{{ $selected := index . 1 }}{{ $short := gt (len .) 2 }}{{ range index . 0 }}
+			<option value="{{ .Name }}"{{ if eq .Name $selected }} selected{{ end }}>{{ .Name }}{{ if not $short }} ({{ .Role }}){{ end }}</option>
+{{- end }}{{ end }}
+
+{{/* runas takes (list $ id): the Run as field of a schedule form, for an
+     admin, on the admin to start. */}}
+{{ define "runas" }}{{ $p := index . 0 }}{{ if $p.Users }}
+	<div class="field">
+		<label for="{{ index . 1 }}">Run as</label>
+		<select id="{{ index . 1 }}" name="user">
+			{{- template "user-options" (list $p.Users $p.User.Name) }}
+		</select>
+	</div>
+{{- end }}{{ end }}
+
+{{/* runas-row takes (list $ schedule): who a schedule runs as, with the
+     user menu; an admin picks another user, and the schedule saves on
+     the change. */}}
+{{ define "runas-row" }}{{ $p := index . 0 }}{{ with index . 1 }}{{ if $p.Users -}}
+<form class="run-as" data-api="/api/schedules/{{ .ID }}" data-method="PUT" data-next="reload">{{ template "avatar" (list $p .UserName) }} <select name="user" data-submit aria-label="Run as">
+			{{- template "user-options" (list $p.Users .UserName true) }}
+		</select>{{ template "user-menu" (list $p .UserName) }}</form>
+{{- else }}{{ template "user" (list $p .UserName) }}{{ end }}{{ end }}{{ end }}
+
 {{/* folder-pick takes (list choices all label): the folders a user
      sees, All projects or the boxes of Custom, in the user forms; label
      heads the field, left out where the block's heading says it. */}}

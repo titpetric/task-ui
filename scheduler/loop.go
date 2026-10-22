@@ -17,8 +17,8 @@ type Catalogue interface {
 	Find(id string) *folder.Folder
 }
 
-// Loop starts the due schedules as detached runs, under the user who
-// made the schedule.
+// Loop starts the due schedules as detached runs, as the user each
+// schedule runs as, when that user may still run the job.
 type Loop struct {
 	Schedules *storage.ScheduleStorage
 	Users     *storage.UserStorage
@@ -104,10 +104,15 @@ func (l *Loop) fire(ctx context.Context, schedule *model.Schedule, now time.Time
 	if err := l.Schedules.Update(ctx, schedule); err != nil {
 		return false, err
 	}
+	user := l.user(ctx, schedule)
+	if !l.mayRun(ctx, user, f, job) {
+		slog.Warn("scheduled run skipped, its user may not run the job", "folder", schedule.Folder, "job", schedule.Job, "user", user.Name)
+		return false, nil
+	}
 	_, err = l.Runner.Start(ctx, runner.Request{
 		Folder:    f,
 		Job:       job,
-		User:      l.user(ctx, schedule),
+		User:      user,
 		Scheduled: true,
 	})
 	if errors.Is(err, runner.ErrBusy) {
@@ -129,6 +134,16 @@ func (l *Loop) target(schedule *model.Schedule) (*folder.Folder, *folder.Job) {
 		return f, nil
 	}
 	return f, job
+}
+
+// mayRun reports whether the schedule's user may run its job, as they
+// would by hand: they see the folder, and the run permission and the
+// allow lists let them. Without the users, the loop runs every job.
+func (l *Loop) mayRun(ctx context.Context, user *model.User, f *folder.Folder, job *folder.Job) bool {
+	if l.Users == nil {
+		return true
+	}
+	return l.Users.Permissions(ctx, user).Run(f.ID, f.Allow, job.Allow)
 }
 
 // user resolves whom to attribute the run to: the schedule's user when

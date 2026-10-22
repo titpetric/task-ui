@@ -24,5 +24,14 @@ func (h *Handlers) schedules(w http.ResponseWriter, r *http.Request) {
 			p.Schedules = append(p.Schedules, schedule)
 		}
 	}
+	h.runAsUsers(r, p)
 	h.render(w, http.StatusOK, "schedules", p)
+}
+
+// runAsUsers fills the users a schedule may run as, for an admin, who
+// picks one: the Run as picker shows only with them.
+func (h *Handlers) runAsUsers(r *http.Request, p *view.Page) {
+	if p.User.CanAdmin() {
+		p.Users, _ = h.opts.Users.List(r.Context())
+	}
 }

@@ -688,9 +688,7 @@
 		<label class="faint" for="key-for">User</label>
 		<select id="key-for" name="users" data-type="list" data-key-for>
 			<option value="">none, a key of the instance</option>
-			{{- range . }}
-			<option value="{{ .Name }}">{{ .Name }} ({{ .Role }})</option>
-			{{- end }}
+			{{- template "user-options" (list . "") }}
 		</select>
 		<input type="hidden" name="name" value="">
 	</div>

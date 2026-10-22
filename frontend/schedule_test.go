@@ -50,3 +50,28 @@ func TestSchedules_Selects(t *testing.T) {
 	admin := f.page(t, asAdmin, "/schedules")
 	assert.Contains(t, admin, `<option value="deploy" data-folder="private">deploy</option>`)
 }
+
+// An admin picks who a schedule runs as, in the form and on each row;
+// everyone else schedules as themselves and sees who a schedule runs as.
+func TestSchedules_RunAs(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	ctx := context.Background()
+	assert.NoError(t, f.opts.Schedules.Create(ctx, &model.Schedule{Folder: "infra", Job: "plan", UserID: f.users[asOps].ID, UserName: asOps, Expression: "@hourly", Enabled: 1}))
+
+	admin := f.page(t, asAdmin, "/schedules")
+	assert.Contains(t, admin, `<label for="sch-user">Run as</label>`)
+	assert.Contains(t, admin, `<option value="admin" selected>admin (admin)</option>`)
+	assert.Contains(t, admin, `<select name="user" data-submit aria-label="Run as">`)
+	assert.Contains(t, admin, `<option value="ops" selected>ops</option>`)
+
+	job := f.page(t, asAdmin, "/f/_/infra/plan")
+	assert.Contains(t, job, `<label for="sch-user">Run as</label>`)
+
+	for _, path := range []string{"/schedules", "/f/_/infra/plan"} {
+		ops := f.page(t, asOps, path)
+		assert.NotContains(t, ops, `Run as</label>`, path)
+		assert.NotContains(t, ops, `data-submit`, path)
+		assert.Contains(t, ops, `<span class="user-name">ops</span>`, path)
+	}
+}

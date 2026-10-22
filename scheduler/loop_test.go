@@ -30,6 +30,8 @@ type fixture struct {
 	runs      *storage.RunStorage
 	users     *storage.UserStorage
 	now       time.Time
+	// ops is the runner every schedule of the fixture runs as.
+	ops *model.User
 }
 
 func newFixture(t *testing.T) *fixture {
@@ -57,7 +59,9 @@ func newFixture(t *testing.T) *fixture {
 	schedules := storage.NewScheduleStorage(db)
 	users := storage.NewUserStorage(db)
 	loop := scheduler.NewLoop(schedules, users, catalogue{"infra": infra}, manager)
-	f := &fixture{loop: loop, schedules: schedules, runs: runs, users: users, now: time.Date(2026, time.October, 17, 10, 0, 0, 0, time.UTC)}
+	ops := &model.User{Name: "ops", Role: model.RoleRunner}
+	assert.NoError(t, users.Create(context.Background(), ops))
+	f := &fixture{loop: loop, schedules: schedules, runs: runs, users: users, ops: ops, now: time.Date(2026, time.October, 17, 10, 0, 0, 0, time.UTC)}
 	loop.Now = func() time.Time { return f.now }
 	return f
 }
@@ -65,7 +69,7 @@ func newFixture(t *testing.T) *fixture {
 func (f *fixture) schedule(t *testing.T, job, expression string) *model.Schedule {
 	t.Helper()
 	due := f.now.Add(-time.Minute)
-	schedule := &model.Schedule{Folder: "infra", Job: job, Expression: expression, Enabled: 1, NextRunAt: &due, UserName: "ops"}
+	schedule := &model.Schedule{Folder: "infra", Job: job, Expression: expression, Enabled: 1, NextRunAt: &due, UserID: f.ops.ID, UserName: "ops"}
 	assert.NoError(t, f.schedules.Create(context.Background(), schedule))
 	return schedule
 }
@@ -83,10 +87,7 @@ func TestLoop_Tick(t *testing.T) {
 	f := newFixture(t)
 	ctx := context.Background()
 	schedule := f.schedule(t, "plan", "0 * * * *")
-	user := &model.User{Name: "ops", Role: model.RoleRunner}
-	assert.NoError(t, f.users.Create(ctx, user))
-	schedule.UserID = user.ID
-	assert.NoError(t, f.schedules.Update(ctx, schedule))
+	user := f.ops
 
 	started, err := f.loop.Tick(ctx)
 	assert.NoError(t, err)
@@ -233,4 +234,24 @@ func TestLoop_Run(t *testing.T) {
 	}, 5*time.Second, 10*time.Millisecond)
 	cancel()
 	<-done
+}
+
+// A schedule runs as its user only while that user may run the job:
+// the loop skips one the allow lists leave out, or one nobody holds.
+func TestLoop_TickMayRun(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	ctx := context.Background()
+	f.loop.Catalogue.Find("infra").Job("slow").Allow = []string{"admin"}
+	f.schedule(t, "slow", "* * * * *")
+	ghost := f.schedule(t, "plan", "* * * * *")
+	ghost.UserID, ghost.UserName = "gone", "gone"
+	assert.NoError(t, f.schedules.Update(ctx, ghost))
+
+	started, err := f.loop.Tick(ctx)
+	assert.NoError(t, err)
+	assert.Equal(t, 0, started)
+	runs, err := f.runs.List(ctx, storage.RunFilter{Folder: "infra"})
+	assert.NoError(t, err)
+	assert.Len(t, runs, 0)
 }
