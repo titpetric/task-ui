@@ -21,6 +21,7 @@ func (h *Handlers) keys(w http.ResponseWriter, r *http.Request) {
 	}
 	p := h.page(r, "Keys")
 	p.Crumbs = view.Crumbs("Settings", "/settings", "Keys")
+	p.Step = view.StepKeys
 	p.Keys, p.KeysDir = h.accessKeys(h.opts.Keys), h.opts.Keys.Dir
 	p.KeyFolders = h.keyFolders()
 	if h.opts.HomeKeys != nil {
@@ -126,6 +127,7 @@ func (h *Handlers) keyGenerate(w http.ResponseWriter, r *http.Request) {
 	}
 	p := h.page(r, "Generate key")
 	p.Crumbs = view.Crumbs("Settings", "/settings", "Keys", "/settings/keys", "Generate")
+	p.Step = view.StepKeys
 	p.KeysDir = h.opts.Keys.Dir
 	p.Users, _ = h.opts.Users.List(r.Context())
 	h.render(w, http.StatusOK, "key_generate", p)
@@ -138,6 +140,7 @@ func (h *Handlers) keyUpload(w http.ResponseWriter, r *http.Request) {
 	}
 	p := h.page(r, "Upload key")
 	p.Crumbs = view.Crumbs("Settings", "/settings", "Keys", "/settings/keys", "Upload")
+	p.Step = view.StepKeys
 	p.KeysDir = h.opts.Keys.Dir
 	p.Users, _ = h.opts.Users.List(r.Context())
 	h.render(w, http.StatusOK, "key_upload", p)
@@ -188,6 +191,7 @@ func (h *Handlers) keyEdit(w http.ResponseWriter, r *http.Request) {
 		}
 		p := h.page(r, key.Name)
 		p.Crumbs = view.Crumbs("Settings", "/settings", "Keys", "/settings/keys", key.Name)
+		p.Step = view.StepKeys
 		p.Key, p.KeyPolicies, p.KeyUsers = &key, h.keyPolicies(r), h.keyUsers(r)
 		p.Users, _ = h.opts.Users.List(r.Context())
 		h.render(w, http.StatusOK, "key_edit", p)

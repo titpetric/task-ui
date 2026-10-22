@@ -21,6 +21,7 @@ func (h *Handlers) secrets(w http.ResponseWriter, r *http.Request) {
 	}
 	p := h.page(r, "Secrets")
 	p.Crumbs = view.Crumbs("Settings", "/settings", "Secrets")
+	p.Step = view.StepSecrets
 	secrets, err := h.opts.Secrets.List(r.Context())
 	p.Secrets = userSecrets(secrets)
 	if err != nil {
@@ -65,6 +66,7 @@ func (h *Handlers) secretNew(w http.ResponseWriter, r *http.Request) {
 	}
 	p := h.page(r, "Add secret")
 	p.Crumbs = view.Crumbs("Settings", "/settings", "Secrets", "/settings/secrets", "Add")
+	p.Step = view.StepSecrets
 	p.SecretGroups = h.secretGroups(r.Context(), nil, p.Folders)
 	p.Secret = &model.Secret{Scope: keyedScope(p.SecretGroups, scope, h.workspaceOf(r.Context(), scope))}
 	h.render(w, http.StatusOK, "secret_form", p)
@@ -106,6 +108,7 @@ func (h *Handlers) secretEdit(w http.ResponseWriter, r *http.Request) {
 	}
 	p := h.page(r, "Replace "+secret.Name)
 	p.Crumbs = view.Crumbs("Settings", "/settings", "Secrets", "/settings/secrets", secret.Name)
+	p.Step = view.StepSecrets
 	p.Secret = &model.Secret{ID: secret.ID, Scope: secret.Scope, Name: secret.Name}
 	p.SecretGroups = h.secretGroups(r.Context(), nil, p.Folders)
 	h.render(w, http.StatusOK, "secret_form", p)

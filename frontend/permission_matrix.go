@@ -18,6 +18,7 @@ func (h *Handlers) permissionMatrix(w http.ResponseWriter, r *http.Request) {
 	}
 	p := h.page(r, "Permissions")
 	p.Crumbs = view.Crumbs("Settings", "/settings", "Permissions")
+	p.Step = view.StepPermissions
 	for _, role := range model.Roles() {
 		fixed := role == model.RoleAdmin
 		policy := permission.Policy{}

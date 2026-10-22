@@ -9,6 +9,7 @@ import (
 	"github.com/titpetric/task-ui/diskusage"
 	"github.com/titpetric/task-ui/envfile"
 	"github.com/titpetric/task-ui/folder"
+	"github.com/titpetric/task-ui/frontend/view"
 	"github.com/titpetric/task-ui/git"
 	"github.com/titpetric/task-ui/integration"
 	"github.com/titpetric/task-ui/note"
@@ -90,4 +91,7 @@ type Options struct {
 	// SSH finds who task-ui signs in to each host as, for the Hosts page;
 	// nil leaves the column out.
 	SSH *sshprobe.Prober
+	// Instance is what the server runs with, for the Instance step of
+	// the settings; nil shows an empty page.
+	Instance *view.Instance
 }

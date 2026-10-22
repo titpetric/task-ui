@@ -24,6 +24,7 @@ import (
 	"github.com/titpetric/task-ui/envfile"
 	"github.com/titpetric/task-ui/event"
 	"github.com/titpetric/task-ui/frontend"
+	"github.com/titpetric/task-ui/frontend/view"
 	"github.com/titpetric/task-ui/git"
 	"github.com/titpetric/task-ui/integration"
 	"github.com/titpetric/task-ui/mcp"
@@ -322,6 +323,10 @@ func (a *App) wire(version string) error {
 		ArtifactStore: store, Disk: &diskusage.Meter{TTL: 10 * time.Minute}, Board: a.Board, ComposeProject: self,
 		Integrations: integrations, Hosts: hosts,
 		SSH: prober, AddUsers: a.UsersFile != nil, BaseURL: cfg.URL,
+		Instance: &view.Instance{
+			URL: cfg.URL, Listen: cfg.Listen, Root: cfg.Root, DataDir: cfg.DataDir, SSHDir: cfg.SSHDir, Htpasswd: cfg.Htpasswd,
+			Discover: cfg.Discover, Admins: cfg.Admins, Viewers: cfg.Viewers, AutoLogin: cfg.AutoLogin, Agent: cfg.Agent, AgentJob: cfg.AgentJob,
+		},
 	})
 	if err != nil {
 		return err

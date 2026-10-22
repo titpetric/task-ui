@@ -47,6 +47,7 @@ func (h *Handlers) workspaceKeys(r *http.Request, p *view.Page) {
 func (h *Handlers) workspaceKeyPage(r *http.Request, workspace *model.Workspace, title, crumb string) *view.Page {
 	p := h.page(r, title)
 	p.Crumbs = view.Crumbs("Settings", "/settings", "Workspaces", "/settings/workspaces", workspace.Folder, "/settings/workspaces/"+workspace.Folder, crumb)
+	p.Step = view.StepWorkspaces
 	p.Workspace = workspace
 	h.workspaceKeys(r, p)
 	return p

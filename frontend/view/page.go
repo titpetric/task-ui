@@ -208,6 +208,14 @@ type Page struct {
 	Notice string
 	Back   string
 	Crumbs []Crumb
+	// Step is the step of the settings the page belongs to, by name,
+	// for the footer that links the steps; empty for a page of none.
+	Step string
+	// StepCounts say how much each step holds, by name, on the
+	// Settings page.
+	StepCounts map[string]string
+	// Instance is what the server runs with, for the Instance step.
+	Instance *Instance
 }
 
 // Groups are the sidebar's projects, and the workspaces with theirs.

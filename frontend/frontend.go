@@ -61,6 +61,7 @@ func (h *Handlers) Routes() http.Handler {
 		r.Get("/notes", h.notes)
 		r.Get("/inventory", h.inventory)
 		r.Get("/settings", h.settings)
+		r.Get("/settings/instance", h.instance)
 		r.Get("/settings/projects", h.projects)
 		r.Get("/settings/projects/new", h.projectNew)
 		r.Get("/settings/projects/*", h.projectEdit)

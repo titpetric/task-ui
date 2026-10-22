@@ -1,0 +1,75 @@
+/* ------------------------------------------------------------------ setup */
+
+/* The footer of a step of the settings: the steps in setup order on a
+   line of their own, then Previous on the left and Next on the right. */
+.setup-trail {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem 1rem;
+  margin-top: 1.6rem;
+  padding-top: 0.8rem;
+  border-top: 1px solid var(--line);
+
+  & [rel="prev"] {
+    & .back {
+      transform: scaleX(-1);
+    }
+  }
+
+  & .steps {
+    order: -1;
+    flex: 1 1 100%;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.2rem 0;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    color: var(--text-faint);
+    font-size: var(--fs-xs);
+
+    & li + li::before {
+      content: "·";
+      padding: 0 0.45em;
+    }
+
+    & a {
+      color: var(--text-dim);
+    }
+
+    & b {
+      color: var(--text);
+      font-weight: 600;
+    }
+  }
+
+  & [rel="next"] {
+    margin-inline-start: auto;
+  }
+}
+
+/* The steps on the Settings page, and the values of the Instance step:
+   the descriptions take the width, a long path breaks. */
+.table.settings {
+  & td.num {
+    width: 1.5rem;
+    text-align: right;
+    font-family: var(--font);
+  }
+
+  & td.desc {
+    width: 55%;
+    min-width: 24ch;
+  }
+
+  & .path,
+  & td.mono {
+    word-break: break-all;
+  }
+
+  &.instance td.desc {
+    width: 40%;
+  }
+}
