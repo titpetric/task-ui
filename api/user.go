@@ -31,7 +31,11 @@ func (h *Handlers) listUsers(w http.ResponseWriter, r *http.Request) {
 		failErr(w, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, map[string]any{"users": users})
+	views := make([]UserView, 0, len(users))
+	for i := range users {
+		views = append(views, h.userView(r.Context(), &users[i]))
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"users": views})
 }
 
 // ErrUserExists is what AddUser reports for a name the password file
@@ -74,7 +78,7 @@ func (h *Handlers) createUser(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	writeJSON(w, http.StatusCreated, user)
+	writeJSON(w, http.StatusCreated, h.userView(r.Context(), user))
 }
 
 // updateUser changes the folders a user sees. Empty shows them all.
@@ -97,7 +101,7 @@ func (h *Handlers) updateUser(w http.ResponseWriter, r *http.Request) {
 		fail(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	writeJSON(w, http.StatusOK, user)
+	writeJSON(w, http.StatusOK, h.userView(r.Context(), user))
 }
 
 // deleteUser says where to remove users.

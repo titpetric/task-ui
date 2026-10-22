@@ -174,8 +174,9 @@ type Page struct {
 	// SSH key, which runs and git leave out.
 	KeyOverlaps []workspace.Overlap
 	Users       []model.User
-	// Account is the user a form edits.
-	Account *model.User
+	// Account is the user a form edits, and AccountMCP their MCP token.
+	Account    *model.User
+	AccountMCP MCPAccess
 	// AllowChoices are the boxes of a project's "who may run", and
 	// JobAllowChoices those of each job, by job ID.
 	AllowChoices    []WhoChoice

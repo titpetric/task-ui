@@ -12,6 +12,7 @@
 	</div>
 </div>
 
+{{- if or (not $u) (.Can "user/view") }}
 <form class="form" data-api="/api/users{{ with $u }}/{{ .ID }}{{ end }}" data-method="{{ if $u }}PUT{{ else }}POST{{ end }}" data-next="/settings/users?notice={{ if $u }}Folders+saved{{ else }}User+created{{ end }}">
 	{{- if not $u }}
 	<div class="field">
@@ -40,4 +41,8 @@
 		<button class="btn btn-primary" type="submit">{{ if $u }}Save{{ else }}Create user{{ end }}</button>
 	</div>
 </form>
+{{- end }}
+{{- with $u }}
+{{ template "mcp-access" (list $ .) }}
+{{- end }}
 {{ end }}

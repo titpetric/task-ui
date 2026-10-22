@@ -46,3 +46,24 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+.mcp-connect,
+.mcp-access {
+  margin-top: 1.6rem;
+}
+
+.mcp-access {
+  & .actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  & form.inline {
+    display: inline;
+  }
+
+  & .mcp-token .alert {
+    margin-bottom: 0.75rem;
+  }
+}

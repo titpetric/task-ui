@@ -4,13 +4,26 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"net/http"
 	"strings"
+	"time"
 )
 
 // TokenPrefix starts every token, so a reader spots one in a
 // configuration file.
 const TokenPrefix = "tui_"
+
+// MCPToken names the token a user's settings enable for MCP, one per
+// user, and MCPTokenTTL is how long it lasts before a rotation.
+const (
+	MCPToken    = "mcp"
+	MCPTokenTTL = 30 * 24 * time.Hour
+)
+
+// ErrTokenExpired reports a token past its expiry: it signs in nobody
+// until its user rotates it.
+var ErrTokenExpired = errors.New("token expired, rotate it on your user settings")
 
 // NewToken returns a new token for a client, 256 random bits, and its
 // hash. The caller shows the token once and keeps only the hash.

@@ -89,14 +89,22 @@ This page sets which folders a user sees: open a user, then pick **All
 projects**, or **Custom** and check the folders. A user's name and role
 show as text: the password file and the role lists set them.
 
+A user's page also holds their **MCP access**: **Enable MCP** makes a
+token for an MCP client that lasts 30 days and shows it once, with the
+`claude mcp add` command filled in. Once on, the section shows its
+dates, the expiry in amber within a week and red once past, with
+**Rotate** and **Disable**. Enabling takes Allow Edits on Users; you
+rotate or disable your own from your own page, which opens for you
+without Allow View on Users. See [MCP](mcp.md).
+
 ![Create user](../assets/user-new-dark.png)
 
 A client that is not a browser, such as an agent over [MCP](mcp.md),
 signs in with a token instead: `task-ui token <user> <name>` on the
-server prints one, once. Under the table, **Connect an MCP client** shows
-the instance's base link and its MCP endpoint, each with a copy button,
-and the commands that connect a client, filled in with both and with your
-user name.
+server prints one, once, without an expiry. Under the table, **Connect an
+MCP client** shows the instance's base link and its MCP endpoint, each
+with a copy button, the link to your own MCP access, and the command
+that connects Claude Code.
 
 ## Secrets
 

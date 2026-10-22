@@ -124,6 +124,8 @@ func (h *Handlers) Routes() http.Handler {
 	r.Post("/users", h.createUser)
 	r.Put("/users/{id}", h.updateUser)
 	r.Delete("/users/{id}", h.deleteUser)
+	r.Post("/users/{id}/mcp", h.enableMCP)
+	r.Delete("/users/{id}/mcp", h.disableMCP)
 
 	r.Get("/permissions", h.getPermissions)
 	r.Get("/permissions/roles/{role}", h.getRolePolicy)
