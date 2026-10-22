@@ -125,6 +125,12 @@ func (h *Handlers) Routes() http.Handler {
 	r.Put("/users/{id}", h.updateUser)
 	r.Delete("/users/{id}", h.deleteUser)
 
+	r.Get("/permissions", h.getPermissions)
+	r.Get("/permissions/roles/{role}", h.getRolePolicy)
+	r.Put("/permissions/roles/{role}", h.putRolePolicy)
+	r.Get("/permissions/users/{name}", h.getUserPolicy)
+	r.Put("/permissions/users/{name}", h.putUserPolicy)
+
 	r.Get("/secrets", h.listSecrets)
 	r.Post("/secrets", h.setSecret)
 	r.Delete("/secrets/{id}", h.deleteSecret)

@@ -125,3 +125,24 @@ func TestPrompts(t *testing.T) {
 	}
 	assert.Equal(t, http.StatusNotFound, f.call(t, asAdmin, http.MethodGet, "/prompts?folder=nowhere", nil).Status)
 }
+
+// A runner with prompt/edit asks too, and reads the run of the prompt
+// in the internal folder; anyone else's internal runs stay the admins'.
+func TestPrompts_ByPermission(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	promptFolder(t, f)
+	ctx := t.Context()
+	assert.NoError(t, f.opts.Users.Policies().Put(ctx, "user", asOps, "prompt/edit", "allow"))
+
+	res := f.call(t, asOps, http.MethodPost, "/prompts", api.PromptRequest{Folder: "infra", Prompt: "what runs here"})
+	assert.Equal(t, http.StatusCreated, res.Status, string(res.Raw))
+	asked := f.answered(t, res.str("id"))
+	assert.Equal(t, model.NoteDone, asked.State)
+	assert.Equal(t, asOps, f.finished(t, asked.RunID).UserName)
+
+	assert.Equal(t, http.StatusOK, f.call(t, asOps, http.MethodGet, "/runs/"+asked.RunID, nil).Status)
+	assert.Equal(t, http.StatusOK, f.call(t, asOps, http.MethodGet, "/runs/"+asked.RunID+"/frame.txt", nil).Status)
+	assert.Equal(t, http.StatusNotFound, f.call(t, asViewer, http.MethodGet, "/runs/"+asked.RunID, nil).Status)
+	assert.Equal(t, http.StatusForbidden, f.call(t, asOps, http.MethodPost, "/runs/"+asked.RunID+"/stop", nil).Status)
+}

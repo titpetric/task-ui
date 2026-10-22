@@ -18,8 +18,7 @@ import (
 // prompt.
 const PromptJob = "claude-prompt"
 
-// ErrForbidden reports a prompt from someone without prompt/edit, or
-// who may not run the prompt job.
+// ErrForbidden reports a prompt from someone without prompt/edit.
 var ErrForbidden = errors.New("only an admin prompts Claude")
 
 // ErrNoPrompt reports a place no prompt runs in: a directory or the
@@ -137,7 +136,9 @@ func (b *Board) hosts(ctx context.Context) []string {
 // promptRequest resolves where a prompt runs, as the user: the internal
 // prompt job of the directory dir names, a folder and a directory in it
 // or a workspace's folder, or _ for the root, with the directory in
-// TASK_UI_PROMPT_DIR for a folder's, and the run's workspace.
+// TASK_UI_PROMPT_DIR for a folder's, and the run's workspace. The user
+// sees the place; the prompt job runs by prompt/edit, which the callers
+// check, whatever the internal folder's visibility and allow lists.
 func (b *Board) promptRequest(ctx context.Context, user *model.User, dir string) (runner.Request, error) {
 	var req runner.Request
 	if b.Catalogue == nil || b.Runner == nil {
@@ -145,6 +146,8 @@ func (b *Board) promptRequest(ctx context.Context, user *model.User, dir string)
 	}
 	at := b.Root
 	switch f, rest := folder.Resolve(b.Catalogue, dir); {
+	case !sees(user, f, dir):
+		return req, fmt.Errorf("%w: no such directory", ErrNoPrompt)
 	case dir == model.Default:
 		req.Workspace = at
 	case f != nil && !model.IsInternal(f.ID):
@@ -177,9 +180,6 @@ func (b *Board) promptRequest(ctx context.Context, user *model.User, dir string)
 	if job == nil {
 		return req, fmt.Errorf("%w: no job %s/%s", ErrNoPrompt, model.Internal, PromptJob)
 	}
-	if !b.permissions(ctx, user).Run(internal.ID, internal.Allow, job.Allow) {
-		return req, ErrForbidden
-	}
 	if job.Dir != "" {
 		if req.Dir, ok = internal.Path(job.Dir); !ok {
 			return req, fmt.Errorf("%w: no such directory", ErrNoPrompt)
@@ -187,6 +187,19 @@ func (b *Board) promptRequest(ctx context.Context, user *model.User, dir string)
 	}
 	req.Folder, req.Job, req.User, req.Cols, req.Rows = internal, job, user, 120, 40
 	return req, nil
+}
+
+// sees reports whether a user sees the place of a prompt: the folder dir
+// resolves to, a workspace's checkout by its name, and the root for a
+// user who sees every folder.
+func sees(user *model.User, f *folder.Folder, dir string) bool {
+	switch {
+	case f != nil:
+		return user.CanSee(f.ID)
+	case dir == model.Default:
+		return len(user.FolderList()) == 0
+	}
+	return user.CanSee(dir)
 }
 
 // underRoot returns where a directory is under the root, a slash path,

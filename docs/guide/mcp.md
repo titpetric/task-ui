@@ -82,6 +82,14 @@ connected.
 | `list_workflow_runs` | `workflow`, `limit`                              | A workflow's latest runs and their steps |
 | `list_notes`         | `mention`, `state`, `limit`                      | The notes with their replies; by default the open ones that name you |
 | `note_comment`       | `id`, `body`, `state`                            | Replies to a note and sets its instruction to working, done or failed |
+| `post_note`          | `body`, `parent`                                 | Leaves a note on the board as you, or a reply to `parent`; takes `note/edit` |
+| `ask_prompt`         | `folder`, `dir`, `prompt`, `wait`                | Asks Claude in a folder, or `dir` inside it, as the folder's **Prompt** box does; with `wait`, up to 900 seconds, returns Claude's answer; takes `prompt/edit` |
+
+Each tool takes the permissions of the token's user, the ones a page
+takes in the browser. A note from `post_note` and a prompt from
+`ask_prompt` carry that user's name. A user with `prompt/edit` asks in
+the folders the user sees, and reads the runs of the prompts the user
+asked with `get_run`, though they run as `internal/claude-prompt`.
 
 A run started over MCP is like any other: it shows in the history, anyone
 allowed can watch it, and it goes on if the agent stops waiting.
@@ -97,9 +105,10 @@ shell of **Enter Shell**, answers `403` to every token but an admin's.
 
 ## A frozen surface
 
-These nine tools, like the JSON API behind them, are the whole surface,
+These eleven tools, like the JSON API behind them, are the whole surface,
 and the surface stays frozen. An agent can see what there is, run it, read
-how it went, and work through the notes that name it; ending runs, schedules, artifacts, secrets, keys, users and
+how it went, work through the notes that name it, leave notes and ask
+Claude in a folder; ending runs, schedules, artifacts, secrets, keys, users and
 changing workflows stay with people, in the browser. A new tool or
 endpoint needs a reason that the current ones cannot serve,
 and the reason goes with the change.
