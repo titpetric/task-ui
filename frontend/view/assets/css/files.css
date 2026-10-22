@@ -30,6 +30,12 @@
     }
   }
 
+  /* Jobs: a folder's control buttons, a file's Run; the row stays as
+     tall as a button. */
+  & td.jobs {
+    padding-block: 0.2rem;
+  }
+
   & .num {
     text-align: end;
     font-variant-numeric: tabular-nums;

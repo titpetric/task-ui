@@ -41,6 +41,15 @@
   gap: 0.3rem;
 }
 
+/* A folder's jobs in one cell, as a Files list's directory row holds
+   them: the buttons in a row, wrapping on a narrow screen. */
+.cc-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem;
+}
+
 /* Other: one button, a menu of the folder's other jobs under it, each a
    row with its action and name; the button shows a run going in it. */
 .cc-more {

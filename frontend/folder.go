@@ -1,9 +1,12 @@
 package frontend
 
 import (
+	"maps"
 	"net/http"
 	"os"
 	"path"
+	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/titpetric/task-ui/access"
@@ -121,6 +124,11 @@ func (h *Handlers) defaultWorkspace(w http.ResponseWriter, r *http.Request) {
 			p.Tree = append(p.Tree, item)
 		}
 	}
+	root, err := filepath.Abs(h.opts.Root)
+	if err != nil {
+		root = h.opts.Root
+	}
+	p.Last = h.latestRuns(r, withTreeFolders(p, root, p.SubFolders))
 	if workspace != nil && p.Can("workspace/view") {
 		p.Actions = &view.Actions{WorkspaceSettings: "/settings/workspaces/" + model.Default}
 	}
@@ -184,6 +192,12 @@ func (h *Handlers) browse(w http.ResponseWriter, r *http.Request, f *folder.Fold
 		}
 	}
 	p.Tree = h.checkoutTree(p, f, rel, folder.Listing(dir))
+	if subs := withTreeFolders(p, dir, nil); len(subs) > 0 {
+		if p.Last == nil {
+			p.Last = map[string]view.Run{}
+		}
+		maps.Copy(p.Last, h.latestRuns(r, subs))
+	}
 	p.Up = p.Href(f.ID)
 	if parent := path.Dir(rel); parent != "." {
 		p.Up += "/" + escapePath(parent)
@@ -220,17 +234,64 @@ func (h *Handlers) folder(w http.ResponseWriter, r *http.Request, f *folder.Fold
 		p.EnvFiles = h.opts.Env.Files(r.Context(), f)
 	}
 	p.Schedules = h.visibleSchedules(r, f.ID, "")
-	p.Last = h.lastRuns(r, f)
 	for _, sub := range p.Folders {
 		if rest, ok := strings.CutPrefix(sub.ID, f.ID+"/"); ok && !strings.Contains(rest, "/") {
 			p.SubFolders = append(p.SubFolders, sub)
 		}
 	}
+	p.Last = h.latestRuns(r, append([]*folder.Folder{f}, withTreeFolders(p, f.Dir, p.SubFolders)...))
 	// A workspace's page shows its prompt box open.
 	if _, ok := p.Workspaces[f.ID]; ok && p.Prompt != nil {
 		p.Prompt.Open = true
 	}
 	h.render(w, http.StatusOK, "folder", p)
+}
+
+// withTreeFolders links the directories of a page's Files list, the
+// listing of dir, that are folders the user sees to their pages, and puts
+// them in TreeFolders, so the list holds their jobs beside them. A folder
+// of subs the listing lacks, such as one a project row places elsewhere,
+// joins it as a directory row, after the directories it has. It returns
+// the folders the list holds, for their last runs.
+func withTreeFolders(p *view.Page, dir string, subs []*folder.Folder) []*folder.Folder {
+	byDir := map[string]*folder.Folder{}
+	for _, f := range p.Folders {
+		byDir[filepath.Clean(f.Dir)] = f
+	}
+	p.TreeFolders = map[string]*folder.Folder{}
+	held := map[string]bool{}
+	var found []*folder.Folder
+	dirs := 0
+	for i := range p.Tree {
+		item := &p.Tree[i]
+		if !item.Dir {
+			continue
+		}
+		dirs = i + 1
+		f := byDir[filepath.Join(dir, item.Name)]
+		if item.Sealed || f == nil {
+			continue
+		}
+		item.Href = p.Href(f.ID)
+		p.TreeFolders[item.Name], held[f.ID] = f, true
+		found = append(found, f)
+	}
+	var missing []folder.Item
+	for _, f := range subs {
+		if held[f.ID] {
+			continue
+		}
+		name := f.Name()
+		item := folder.Item{Name: name, Dir: true, Href: p.Href(f.ID)}
+		if info, err := os.Stat(f.Dir); err == nil {
+			item.ModTime = info.ModTime()
+		}
+		missing = append(missing, item)
+		p.TreeFolders[name] = f
+		found = append(found, f)
+	}
+	p.Tree = slices.Insert(p.Tree, dirs, missing...)
+	return found
 }
 
 // settingsLinks puts the links to the settings of the workspace or the

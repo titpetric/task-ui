@@ -44,6 +44,10 @@ the job has no runs. A run that ends recolours its button with no reload.
 Under the pointer the whole column lights up, so one job reads down every
 folder at once.
 
+A folder's page is the same for its scope: its **Files** list holds each
+folder inside it with these buttons beside it (see [A folder's
+page](projects.md#a-folders-page)).
+
 ---
 
 Next: [Inventory](inventory.md) · Back to the [contents](../README.md)

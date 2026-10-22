@@ -129,23 +129,29 @@ Open a folder from the sidebar:
   [Runs](runs.md#run-and-summarize)), and **Run force**. **Run all** starts every job of the
   folder in the background. A folder with more than one source has a section
   per source.
-- **Files**: what the folder holds, dot entries too, each with its size
-  and when it changed, and `..` up a level. A directory opens as a page
-  of its own; a file opens in a window, an image shown, markdown
-  rendered, text coloured and cut past 1 MiB, with **Download** beside
-  and in the row.
+- **Files**: what the folder holds, dot entries too, the directories
+  first, each with its size and when it changed, and `..` up a level:
+  the folder's dashboard. A directory opens as a page of its own; a file
+  opens in a window, an image shown, markdown rendered, text coloured and
+  cut past 1 MiB, with **Download** beside and in the row.
+  A directory that is a folder links to the folder's page, and its
+  **Jobs** column holds the folder's jobs as the dashboard's [control
+  centre](dashboard.md#control-centre) shows them: a button per job,
+  `default` first, in the colour of its last run, an eye on a run in
+  progress, and past three the rest under **Other**. They follow the
+  runs as they start and end, with no reload. A folder the listing lacks,
+  such as one a project row places elsewhere, gets a row of its own.
   A directory with targets of its own, a pipeline file, Makefile,
-  package scripts or scripts folder read as a folder's are, lists them
-  as job cards on its page, such as `default`, `build` and `push` of
-  `/f/malta/dockerfiles`, which the checkout of `malta` holds but
-  discovery leaves out. They run in that directory under the folder's
-  allow rules and hours, and pull the folder's checkout; the API names
-  them with `dir` (see [Runs](runs.md#what-a-job-gets)). Each has its
-  page and history under the directory, such as
-  `/f/malta/dockerfiles/build`.
+  package scripts or scripts folder read as a folder's are, that
+  discovery leaves out, such as the Makefile of a directory inside a
+  checkout with an `atkins.yml`, lists them as job cards on its page.
+  They run in that directory under the folder's allow rules and hours,
+  and pull the folder's checkout; the API names them with `dir` (see
+  [Runs](runs.md#what-a-job-gets)). Each has its page and history under
+  the directory, such as `/f/acme/api/tools/build`.
   A file that runs, executable or with a shebang on its first line,
   carries `#!` and **exec**, and **Run** for those the folder lets run,
-  in the row and in the file's window: it starts the file as the job
+  in its Jobs column and in the file's window: it starts the file as the job
   `./<path>`, from the top of the folder, and opens the run's window.
   Its history is at the file's path under the folder.
 - **Sealed entries**: `.git` and every dot file, such as `.env`,
@@ -165,6 +171,10 @@ Open a folder from the sidebar:
   [Settings](settings.md#env-files)).
 
 ![A project's Files: .git and .env sealed, ./serve marked to run](../assets/files-dark.png)
+
+![The root's page: each project in Files with its jobs' control buttons beside it](../assets/folder-dashboard-dark.png)
+
+![The default workspace's Files: each project with its jobs' control buttons, coloured by the last run](../assets/folder-dashboard-dark.png)
 
 ![A file of the checkout in the preview window](../assets/file-dark.png)
 
