@@ -20,6 +20,12 @@
 			{{- range states }}<option value="{{ . }}"{{ if eq (index $.Form "state") . }} selected{{ end }}>{{ . }}</option>{{ end }}
 		</select>
 	</label>
+	<label>By
+		<select name="user">
+			<option value="">anyone</option>
+			{{- range .UserNames }}<option value="{{ . }}"{{ if eq (index $.Form "user") . }} selected{{ end }}>{{ . }}</option>{{ end }}
+		</select>
+	</label>
 	{{- template "pagesize" . }}
 	<button class="btn" type="submit">Filter</button>
 </form>

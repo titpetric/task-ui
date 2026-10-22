@@ -95,6 +95,41 @@
     return '<span class="avatar sm' + (role ? " role-" + escapeHTML(role) : "") + '" title="' + escapeHTML(name) + '">' + escapeHTML(initials(name)) + "</span>";
   }
 
+  // userHTML draws a user's avatar and name with the [...] menu next to
+  // them, as the user template does: the profile, for yourself or with
+  // user/view; the runs by the user; their permissions, with user/edit.
+  // The body says who is signed in and what they may see of users; a
+  // name no user holds, such as the agent a note names, has no profile.
+  function userHTML(name) {
+    var me = document.body.dataset.me || "", may = document.body.dataset.userMenu || "";
+    var q = encodeURIComponent(name), who = escapeHTML(name);
+    var known = Object.prototype.hasOwnProperty.call(roles, name);
+    var item = function (href, icon, text) {
+      return '<a class="more-item" role="menuitem" href="' + href + '"><svg class="ic"><use href="#i-' + icon + '"/></svg>' + text + "</a>";
+    };
+    return '<span class="user-ref">' + avatarHTML(name) + ' <span class="user-name">' + who + "</span>" +
+      '<details class="more-menu user-more"><summary class="btn-icon" title="More on ' + who + '" aria-label="More on ' + who + '"><svg class="ic"><use href="#i-more"/></svg></summary>' +
+      '<div class="more-list" role="menu">' +
+      (known && (name === me || may) ? item("/users/" + q, "users", "Profile") : "") +
+      item("/runs?user=" + q, "list", "Runs by this user") +
+      (known && may === "edit" ? item("/users/" + q + "#permissions", "key", "Permissions") : "") +
+      "</div></details></span>";
+  }
+
+  // A user's menu sits in rows that scroll sideways, which would clip
+  // it: it opens fixed under its button, kept on the screen, and closes
+  // when the page scrolls.
+  document.addEventListener("toggle", function (event) {
+    var menu = event.target;
+    if (!menu.classList || !menu.classList.contains("user-more") || !menu.open) return;
+    var list = menu.querySelector(".more-list"), at = menu.querySelector("summary").getBoundingClientRect();
+    list.style.top = at.bottom + 4 + "px";
+    list.style.left = Math.max(8, Math.min(at.left, window.innerWidth - list.offsetWidth - 8)) + "px";
+  }, true);
+  window.addEventListener("scroll", function () {
+    document.querySelectorAll("details.user-more[open]").forEach(function (menu) { menu.removeAttribute("open"); });
+  }, true);
+
   // ------------------------------------------------------------- terminal
 
   function css(name) {
@@ -849,6 +884,26 @@
     });
   });
 
+  // A permission matrix: a cell cycles inherit, allow (✓) and deny (✕) on
+  // a click. Its hidden field turns on while it differs from what the
+  // page loaded with, so Save puts only the cells that changed.
+  document.addEventListener("click", function (event) {
+    var cell = event.target.closest("form[data-matrix] button[data-tri]");
+    if (!cell) return;
+    var next = { "": "allow", allow: "deny", deny: "" }[cell.dataset.tri || ""];
+    var field = cell.parentNode.querySelector("input[type=hidden]");
+    var label = cell.dataset.title + ": " + (next || "inherit");
+    cell.dataset.tri = next;
+    cell.textContent = next === "allow" ? "\u2713" : next === "deny" ? "\u2715" : "";
+    cell.title = label;
+    cell.setAttribute("aria-label", label);
+    field.value = next;
+    field.disabled = next === field.dataset.was;
+    var form = cell.closest("form"), changed = form.querySelectorAll("input[type=hidden]:not([disabled])").length;
+    var note = form.querySelector("[data-matrix-changed]");
+    if (note) note.textContent = changed ? changed + (changed === 1 ? " change" : " changes") + " to save." : "No changes.";
+  });
+
   // ------------------------------------------------------------- dropdowns
 
   // Every select gets a dropdown drawn in the page's own style: a button
@@ -1253,7 +1308,8 @@
         row.dataset.runId = data.run_id;
         var started = el("td", "nowrap", "just now");
         started.dataset.label = "Started";
-        var by = el("td", "", data.user_name || "");
+        var by = el("td");
+        if (data.user_name) by.innerHTML = userHTML(data.user_name);
         by.dataset.label = "By";
         var result = el("td");
         result.dataset.label = "Result";
@@ -2199,7 +2255,8 @@
     var matches = function (run) {
       return (!params.get("folder") || params.get("folder") === run.folder) &&
         (!params.get("job") || run.job.indexOf(params.get("job")) >= 0) &&
-        (!params.get("state") || params.get("state") === run.state);
+        (!params.get("state") || params.get("state") === run.state) &&
+        (!params.get("user") || params.get("user") === run.user_name);
     };
     var took = function (run) {
       if (!run.started_at) return "";
@@ -2225,8 +2282,7 @@
       return html;
     };
     var whoHTML = function (run) {
-      return '<span class="who-ran">' + avatarHTML(run.user_name) + " " +
-        escapeHTML(run.user_name) + (run.scheduled ? ' <span class="badge">scheduled</span>' : "") +
+      return '<span class="who-ran">' + userHTML(run.user_name) + (run.scheduled ? ' <span class="badge">scheduled</span>' : "") +
         (run.reason ? ' <span class="badge bad" title="' + escapeHTML(run.reason) + '">out of hours</span>' : run.forced ? ' <span class="badge signal">forced</span>' : "") + "</span>";
     };
     onRuns(function (run) {

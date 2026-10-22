@@ -56,16 +56,16 @@ func paged[T any](rows []T, n int, before, after string, id func(T) string) ([]T
 }
 
 // runs lists every run the user may see, filtered by the query, a page
-// at a time.
+// at a time: ?user= keeps the runs a user started.
 func (h *Handlers) runs(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
 	user := access.UserFrom(r.Context())
 	p := h.page(r, "Runs")
 	p.Crumbs = view.Crumbs("Runs")
 	n := pageSize(q)
-	p.Form = map[string]string{"folder": q.Get("folder"), "job": q.Get("job"), "state": q.Get("state"), "n": q.Get("n")}
+	p.Form = map[string]string{"folder": q.Get("folder"), "job": q.Get("job"), "state": q.Get("state"), "user": q.Get("user"), "n": q.Get("n")}
 	filter := storage.RunFilter{
-		Folder: q.Get("folder"), Folders: user.FolderList(), Job: q.Get("job"), Dir: q.Get("dir"), State: q.Get("state"),
+		Folder: q.Get("folder"), Folders: user.FolderList(), Job: q.Get("job"), Dir: q.Get("dir"), State: q.Get("state"), UserName: q.Get("user"),
 		Before: q.Get("before"), After: q.Get("after"), Limit: n + 1,
 	}
 	runs := h.visibleRuns(r.Context(), user, filter)

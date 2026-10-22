@@ -2,6 +2,7 @@ package frontend
 
 import (
 	"net/http"
+	"net/url"
 
 	"github.com/titpetric/task-ui/access"
 	"github.com/titpetric/task-ui/frontend/view"
@@ -35,8 +36,9 @@ func (h *Handlers) userNew(w http.ResponseWriter, r *http.Request) {
 	h.render(w, http.StatusOK, "user_form", p)
 }
 
-// userEdit shows the folders of a user, to change, and their MCP
-// access. Your own page opens without user/view, for your MCP access.
+// userEdit sends the settings link of a user to their profile, which
+// holds their folders, permissions and MCP access. Your own opens
+// without user/view.
 func (h *Handlers) userEdit(w http.ResponseWriter, r *http.Request) {
 	me := access.UserFrom(r.Context())
 	own := me != nil && me.ID == param(r, "id")
@@ -48,13 +50,12 @@ func (h *Handlers) userEdit(w http.ResponseWriter, r *http.Request) {
 		h.missing(w, r, "No user with that ID.")
 		return
 	}
-	p := h.page(r, "Folders of "+user.Name)
-	p.Crumbs = view.Crumbs("Settings", "/settings", "Users", "/settings/users", user.Name)
-	p.Account = user
-	p.FolderChoices = view.FolderChoices(h.opts.Catalogue.List(), user.FolderList())
-	p.AccountMCP = h.mcpAccess(r, user, own)
-	p.CanAddUsers = h.opts.AddUsers
-	h.render(w, http.StatusOK, "user_form", p)
+	http.Redirect(w, r, profileHref(user.Name), http.StatusFound)
+}
+
+// profileHref returns the path of a user's profile.
+func profileHref(name string) string {
+	return "/users/" + url.PathEscape(name)
 }
 
 // mcpAccess returns a user's MCP token as their page shows it.

@@ -51,7 +51,7 @@ func TestRunStorage_List(t *testing.T) {
 		started := base.Add(time.Duration(i) * time.Minute)
 		assert.NoError(t, runs.Create(ctx, &model.Run{Folder: "infra", Job: job, UserID: "u1", StartedAt: &started}))
 	}
-	assert.NoError(t, runs.Create(ctx, &model.Run{Folder: "web", Job: "build", UserID: "u2"}))
+	assert.NoError(t, runs.Create(ctx, &model.Run{Folder: "web", Job: "build", UserID: "u2", UserName: "ops"}))
 
 	all, err := runs.List(ctx, storage.RunFilter{})
 	assert.NoError(t, err)
@@ -66,6 +66,11 @@ func TestRunStorage_List(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Len(t, limited, 1)
 	assert.Equal(t, "u1", limited[0].UserID)
+
+	byName, err := runs.List(ctx, storage.RunFilter{UserName: "ops"})
+	assert.NoError(t, err)
+	assert.Len(t, byName, 1)
+	assert.Equal(t, "web", byName[0].Folder)
 
 	none, err := runs.List(ctx, storage.RunFilter{State: model.StateOK})
 	assert.NoError(t, err)

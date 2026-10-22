@@ -8,7 +8,7 @@
 {{- define "thread" }}{{ $p := index . 0 }}{{ with index . 1 }}{{ $t := . }}
 	<article class="note{{ if .State }} instruction {{ .State }}{{ end }}" id="note-{{ .ID }}">
 		<header>
-			<span class="author">{{ template "avatar" (list $p .UserName) }} <b>{{ .UserName }}</b></span>
+			<span class="author">{{ template "user" (list $p .UserName) }}</span>
 			<span class="faint" title="{{ stamp .CreatedAt }}">{{ ago .CreatedAt }}</span>
 			{{- if .EditedAt }} <span class="faint edited" title="Edited {{ stamp .EditedAt }}">edited</span>{{ end }}
 			{{- if .State }} <span class="badge note-state {{ .State }}">{{ .State }}</span>{{ end }}
@@ -21,7 +21,7 @@
 		<ol class="replies">
 			{{- range .Replies }}
 			<li{{ if eq .State "working" }} class="rerun"{{ end }}>
-				<header><span class="author">{{ template "avatar" (list $p .UserName) }} <b>{{ .UserName }}</b></span> <span class="faint" title="{{ stamp .CreatedAt }}">{{ ago .CreatedAt }}</span>{{ if .EditedAt }} <span class="faint edited" title="Edited {{ stamp .EditedAt }}">edited</span>{{ end }}{{ if eq .State "working" }} <span class="badge note-state working">working</span>{{ end }}{{ if .RunID }} <a class="faint mono" href="/runs/{{ .RunID }}" title="The run this reply comes from">run {{ slice .RunID 0 8 }}</a>{{ end }}<span class="spacer"></span>{{ if $p.Deletes . }}<button type="button" class="btn-icon danger" data-delete="/api/notes/{{ .ID }}" data-confirm="Delete this reply of {{ .UserName }}?" data-next="reload" title="Delete the reply" aria-label="Delete the reply"><svg class="ic"><use href="#i-trash"/></svg></button>{{ end }}</header>
+				<header><span class="author">{{ template "user" (list $p .UserName) }}</span> <span class="faint" title="{{ stamp .CreatedAt }}">{{ ago .CreatedAt }}</span>{{ if .EditedAt }} <span class="faint edited" title="Edited {{ stamp .EditedAt }}">edited</span>{{ end }}{{ if eq .State "working" }} <span class="badge note-state working">working</span>{{ end }}{{ if .RunID }} <a class="faint mono" href="/runs/{{ .RunID }}" title="The run this reply comes from">run {{ slice .RunID 0 8 }}</a>{{ end }}<span class="spacer"></span>{{ if $p.Deletes . }}<button type="button" class="btn-icon danger" data-delete="/api/notes/{{ .ID }}" data-confirm="Delete this reply of {{ .UserName }}?" data-next="reload" title="Delete the reply" aria-label="Delete the reply"><svg class="ic"><use href="#i-trash"/></svg></button>{{ end }}</header>
 				<div class="note-body"{{ if $p.Edits . $t }} data-edit="{{ .ID }}" data-body="{{ .Body }}" title="Click to edit"{{ end }}>{{ message .Body }}</div>
 			</li>
 			{{- end }}
