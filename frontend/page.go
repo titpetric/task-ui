@@ -38,6 +38,7 @@ func (h *Handlers) page(r *http.Request, title string) *view.Page {
 		Notice:        q.Get("notice"),
 		Error:         q.Get("error"),
 		Now:           time.Now(),
+		BaseURL:       h.baseURL(r),
 	}
 	if p.Notice == "" {
 		p.Notice = rekeyedNotice(q.Get("rekeyed"), q.Get("what"))
@@ -63,6 +64,24 @@ func (h *Handlers) page(r *http.Request, title string) *view.Page {
 	p.Recents = view.GroupRecents(time.Now(), view.Recents(runs, h.visibleFlowRuns(r.Context(), user, recentCount), recentCount))
 	p.SideWorkflows = h.visibleWorkflows(r.Context(), p)
 	return p
+}
+
+// baseURL returns the public base link of the instance: TASK_UI_URL, or
+// the scheme and host the request came to, as the proxy in front
+// forwards them.
+func (h *Handlers) baseURL(r *http.Request) string {
+	if h.opts.BaseURL != "" {
+		return h.opts.BaseURL
+	}
+	scheme := "http"
+	if access.IsHTTPS(r) {
+		scheme = "https"
+	}
+	host := r.Host
+	if forwarded, _, _ := strings.Cut(r.Header.Get("X-Forwarded-Host"), ","); strings.TrimSpace(forwarded) != "" {
+		host = strings.TrimSpace(forwarded)
+	}
+	return scheme + "://" + host
 }
 
 // roles returns the role of each user by name, for a signed in user

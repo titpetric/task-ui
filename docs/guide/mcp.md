@@ -42,7 +42,10 @@ in Docker (`docker exec task task-ui ...`).
    ```
 
    Any other MCP client takes the same two things: the URL of `/api/mcp`
-   over HTTP, and the header `Authorization: Bearer <token>`.
+   over HTTP, and the header `Authorization: Bearer <token>`. Settings,
+   Users shows the instance's base link and the endpoint to copy, and this
+   command with both filled in; `TASK_UI_URL` sets the base link (see
+   [Running the server](../running.md)).
 
 4. Check it: `claude mcp list` shows `task` as connected, and a new
    session lists the tools below. Without a token, or with a wrong one,

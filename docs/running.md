@@ -57,6 +57,7 @@ The environment sets the whole configuration:
 | `TASK_UI_AGENT`       |                      | The user a note names to send it an instruction, such as `claude` |
 | `TASK_UI_AGENT_JOB`   | `internal/claude-note` | The job an instruction runs, as `folder/job`; set empty, it waits for MCP |
 | `TASK_UI_COMPOSE_PROJECT` |                  | The compose project task-ui runs in, whose `compose: up` and `down` ask first; empty reads its container's compose label |
+| `TASK_UI_URL`         |                      | The public base link, such as `https://task.example.com`, that the links to copy start with; empty reads it from each request and the proxy's `X-Forwarded-*` headers |
 | `TASK_UI_AUTOLOGIN`   |                      | Sign every request in as this user, for development only          |
 | `TASK_UI_NOW`         |                      | Pin the clock the hours read (RFC 3339), for the screenshots only |
 
