@@ -10,6 +10,7 @@ import (
 	"github.com/titpetric/task-ui/frontend/view"
 	"github.com/titpetric/task-ui/internal/assert"
 	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/permission"
 )
 
 // admin is a page as an admin sees it, with one folder and one run.
@@ -21,10 +22,12 @@ func admin(t *testing.T) *view.Page {
 	job.Name = "plan"
 	f.Jobs = []*folder.Job{job}
 	run := view.Run{Run: model.Run{ID: model.NewID(), Folder: "infra", Job: "plan", UserName: "ops", State: model.StateRunning, StartedAt: &now}, Live: true}
+	user := &model.User{Name: "admin", Role: model.RoleAdmin}
 	return &view.Page{
 		Title:         "Test",
 		Path:          "/",
-		User:          &model.User{Name: "admin", Role: model.RoleAdmin},
+		User:          user,
+		Permissions:   permission.Set{User: user},
 		LoginRequired: true,
 		Folders:       []*folder.Folder{f},
 		Recents:       []view.RecentGroup{{Label: "In the last hour", Entries: []view.Recent{{Run: &run}}}},

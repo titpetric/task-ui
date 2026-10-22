@@ -6,6 +6,7 @@ import (
 	"github.com/titpetric/task-ui/access"
 	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/permission"
 )
 
 // visibleFolder returns a folder the user may see, or nil.
@@ -17,13 +18,39 @@ func (h *Handlers) visibleFolder(user *model.User, id string) *folder.Folder {
 	return f
 }
 
-// canRun reports whether the user may run a job of a folder. A shell
-// job is an admin's alone, whatever the folder allows.
-func canRun(user *model.User, f *folder.Folder, job *folder.Job) bool {
-	if job.IsShell() && !user.CanAdmin() {
+// permissions returns what the user of a request may do.
+func (h *Handlers) permissions(r *http.Request) permission.Set {
+	user := access.UserFrom(r.Context())
+	if h.opts.Users == nil {
+		return permission.Set{User: user}
+	}
+	return h.opts.Users.Permissions(r.Context(), user)
+}
+
+// can reports whether the user of a request may do what a path of
+// `config/permissions.yml` names.
+func (h *Handlers) can(r *http.Request, path string) bool {
+	return h.permissions(r).Allowed(path)
+}
+
+// require answers a request whose user may not do what a path names
+// with 403, and reports whether the user may.
+func (h *Handlers) require(w http.ResponseWriter, r *http.Request, path string) bool {
+	if h.can(r, path) {
+		return true
+	}
+	fail(w, http.StatusForbidden, "admin role required")
+	return false
+}
+
+// canRun reports whether the user of a request may run a job of a
+// folder: a shell job takes the shell permission besides.
+func (h *Handlers) canRun(r *http.Request, f *folder.Folder, job *folder.Job) bool {
+	set := h.permissions(r)
+	if job.IsShell() && !set.Allowed("shell") {
 		return false
 	}
-	return f != nil && job != nil && user.CanRun(f.ID, f.Allow, job.Allow)
+	return f != nil && job != nil && set.Run(f.ID, f.Allow, job.Allow)
 }
 
 // target resolves the folder and job a request names, as the user may
@@ -63,13 +90,4 @@ func (h *Handlers) targetIn(r *http.Request, folderID, dir, jobID string) (*fold
 		return f, nil, "", "no such directory"
 	}
 	return f, job, at, ""
-}
-
-// requireAdmin answers anyone but an admin with 403 and reports it.
-func requireAdmin(w http.ResponseWriter, r *http.Request) bool {
-	if !access.UserFrom(r.Context()).CanAdmin() {
-		fail(w, http.StatusForbidden, "admin role required")
-		return false
-	}
-	return true
 }

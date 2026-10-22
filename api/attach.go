@@ -68,7 +68,7 @@ func (h *Handlers) serveAttach(ws *websocket.Conn) {
 		return
 	}
 	f, job, _, _ := h.targetIn(r, run.Folder, run.Dir, run.Job)
-	h.window(ws, session, !canRun(access.UserFrom(r.Context()), f, job))
+	h.window(ws, session, !h.canRun(r, f, job))
 }
 
 // window pumps a session to the socket and the socket's control messages

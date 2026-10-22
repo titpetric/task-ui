@@ -21,6 +21,9 @@ func (h *Handlers) board(w http.ResponseWriter) bool {
 // replies: ?mention= a user name, ?state= open, working, done or failed,
 // ?limit=.
 func (h *Handlers) listNotes(w http.ResponseWriter, r *http.Request) {
+	if !h.require(w, r, "note/view") {
+		return
+	}
 	if !h.board(w) {
 		return
 	}
@@ -55,6 +58,9 @@ func (h *Handlers) writeThreads(w http.ResponseWriter, r *http.Request, filter s
 
 // postNote leaves a note or a reply as the user.
 func (h *Handlers) postNote(w http.ResponseWriter, r *http.Request) {
+	if !h.require(w, r, "note/edit") {
+		return
+	}
 	if !h.board(w) {
 		return
 	}
@@ -75,6 +81,9 @@ func (h *Handlers) postNote(w http.ResponseWriter, r *http.Request) {
 // an instruction or a prompt runs again, and the agent's reply to it
 // changes in place. The body is a NoteRequest's, whose parent it ignores.
 func (h *Handlers) editNote(w http.ResponseWriter, r *http.Request) {
+	if !h.require(w, r, "note/edit") {
+		return
+	}
 	if !h.board(w) {
 		return
 	}
@@ -93,6 +102,9 @@ func (h *Handlers) editNote(w http.ResponseWriter, r *http.Request) {
 
 // commentNote replies to a note and, with a state, moves its instruction.
 func (h *Handlers) commentNote(w http.ResponseWriter, r *http.Request) {
+	if !h.require(w, r, "note/edit") {
+		return
+	}
 	if !h.board(w) {
 		return
 	}
@@ -121,7 +133,13 @@ func (h *Handlers) deleteNote(w http.ResponseWriter, r *http.Request) {
 		failErr(w, err)
 		return
 	}
-	if note.UserName != user.Name && !user.CanAdmin() {
+	// A prompt takes prompt/delete, any other note note/delete; either
+	// way someone else's note is an admin's.
+	allowed := h.can(r, "note/delete")
+	if note.IsPrompt() && note.ParentID == "" {
+		allowed = h.can(r, "prompt/delete")
+	}
+	if !allowed || (note.UserName != user.Name && !user.CanAdmin()) {
 		fail(w, http.StatusForbidden, "only its author or an admin deletes a note")
 		return
 	}

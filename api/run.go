@@ -50,7 +50,7 @@ func (h *Handlers) view(r *http.Request, run model.Run) RunView {
 		v.Run = session.Snapshot()
 	}
 	f, job, _, _ := h.targetIn(r, run.Folder, run.Dir, run.Job)
-	v.CanRun = canRun(access.UserFrom(r.Context()), f, job)
+	v.CanRun = h.canRun(r, f, job)
 	return v
 }
 
@@ -87,11 +87,11 @@ func (h *Handlers) startRun(w http.ResponseWriter, r *http.Request) {
 		fail(w, http.StatusNotFound, problem)
 		return
 	}
-	if job.IsShell() && !user.CanAdmin() {
+	if job.IsShell() && !h.can(r, "shell") {
 		fail(w, http.StatusForbidden, "an interactive shell is for admins")
 		return
 	}
-	if !canRun(user, f, job) {
+	if !h.canRun(r, f, job) {
 		fail(w, http.StatusForbidden, "your role may view this job, but not run it")
 		return
 	}
@@ -147,7 +147,7 @@ func (h *Handlers) endRun(w http.ResponseWriter, r *http.Request, kill bool) {
 		return
 	}
 	f, job, _, problem := h.targetIn(r, run.Folder, run.Dir, run.Job)
-	if problem != "" || !canRun(access.UserFrom(r.Context()), f, job) {
+	if problem != "" || !h.canRun(r, f, job) {
 		fail(w, http.StatusForbidden, "your role may view this run, but not end it")
 		return
 	}

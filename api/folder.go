@@ -28,7 +28,7 @@ func (h *Handlers) listFolders(w http.ResponseWriter, r *http.Request) {
 				failErr(w, err)
 				return
 			}
-			view.Jobs = append(view.Jobs, JobView{Job: job, CanRun: canRun(user, f, job), LastRun: last})
+			view.Jobs = append(view.Jobs, JobView{Job: job, CanRun: h.canRun(r, f, job), LastRun: last})
 		}
 		views = append(views, view)
 	}
@@ -65,7 +65,7 @@ func (h *Handlers) folderActions(w http.ResponseWriter, r *http.Request) {
 		if err != nil && !errors.Is(err, storage.ErrNotFound) {
 			return JobView{}, err
 		}
-		return JobView{Job: job, CanRun: canRun(user, f, job), LastRun: last}, nil
+		return JobView{Job: job, CanRun: h.canRun(r, f, job), LastRun: last}, nil
 	}
 	for _, skill := range place.Skills() {
 		sv := SkillView{Skill: skill, Jobs: []JobView{}}

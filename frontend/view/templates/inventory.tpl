@@ -7,9 +7,9 @@
 </div>
 
 {{- if .HostsOff }}
-<p class="empty-state">The Beszel integration is not set up.{{ if .User.CanAdmin }} Add its URL and token under <a href="/settings/integrations#beszel">Settings, Integrations</a>.{{ end }}</p>
+<p class="empty-state">The Beszel integration is not set up.{{ if .Can "integration/view" }} Add its URL and token under <a href="/settings/integrations#beszel">Settings, Integrations</a>.{{ end }}</p>
 {{- else }}
-{{- if and .User.CanAdmin .Logins }}
+{{- if and (.Can "hosts") .Logins }}
 <section class="block inventory-run">
 	<h3>Run on the hosts</h3>
 	<form data-inventory-run>

@@ -27,7 +27,7 @@
 			<div class="user-menu">
 				<div class="who"><b>{{ .User.Name }}</b><span>{{ .User.Role }}</span></div>
 				<a href="/keys"><svg class="ic"><use href="#i-key"/></svg>SSH keys</a>
-				{{- if .User.CanAdmin }}
+				{{- if .CanSettings }}
 				<a href="/settings"><svg class="ic"><use href="#i-settings"/></svg>Settings</a>
 				{{- end }}
 				{{- if .LoginRequired }}

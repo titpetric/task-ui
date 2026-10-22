@@ -21,9 +21,9 @@ type UserRequest struct {
 // managedElsewhere is the reply to making or removing users here.
 const managedElsewhere = "users are managed in the password file: task-ui passwd <user> adds or resets one, removing the line removes the user; TASK_UI_ADMINS and TASK_UI_VIEWERS set the roles"
 
-// listUsers returns every user. Admins only.
+// listUsers returns every user. Takes user/view.
 func (h *Handlers) listUsers(w http.ResponseWriter, r *http.Request) {
-	if !requireAdmin(w, r) {
+	if !h.require(w, r, "user/view") {
 		return
 	}
 	users, err := h.opts.Users.List(r.Context())
@@ -39,9 +39,9 @@ func (h *Handlers) listUsers(w http.ResponseWriter, r *http.Request) {
 var ErrUserExists = errors.New("the password file already has that user")
 
 // createUser adds a user to the password file, with their folders, when
-// the server has one to write. Admins only.
+// the server has one to write. Takes user/edit.
 func (h *Handlers) createUser(w http.ResponseWriter, r *http.Request) {
-	if !requireAdmin(w, r) {
+	if !h.require(w, r, "user/edit") {
 		return
 	}
 	if h.opts.AddUser == nil {
@@ -79,7 +79,7 @@ func (h *Handlers) createUser(w http.ResponseWriter, r *http.Request) {
 
 // updateUser changes the folders a user sees. Empty shows them all.
 func (h *Handlers) updateUser(w http.ResponseWriter, r *http.Request) {
-	if !requireAdmin(w, r) {
+	if !h.require(w, r, "user/edit") {
 		return
 	}
 	user, err := h.opts.Users.Get(r.Context(), param(r, "id"))
@@ -102,7 +102,7 @@ func (h *Handlers) updateUser(w http.ResponseWriter, r *http.Request) {
 
 // deleteUser says where to remove users.
 func (h *Handlers) deleteUser(w http.ResponseWriter, r *http.Request) {
-	if !requireAdmin(w, r) {
+	if !h.require(w, r, "user/delete") {
 		return
 	}
 	fail(w, http.StatusMethodNotAllowed, managedElsewhere)

@@ -12,9 +12,9 @@ import (
 )
 
 // listWorkspaces returns every workspace, the default first, then in
-// their order. Admins only.
+// their order. Takes workspace/view.
 func (h *Handlers) listWorkspaces(w http.ResponseWriter, r *http.Request) {
-	if !requireAdmin(w, r) {
+	if !h.require(w, r, "workspace/view") {
 		return
 	}
 	workspaces, err := h.opts.Workspaces.List(r.Context())
@@ -34,7 +34,7 @@ func (h *Handlers) listWorkspaces(w http.ResponseWriter, r *http.Request) {
 // clone is the test: a failure reports git's output and keeps nothing.
 // A workspace made gets its encryption key.
 func (h *Handlers) createWorkspace(w http.ResponseWriter, r *http.Request) {
-	if !requireAdmin(w, r) {
+	if !h.require(w, r, "workspace/edit") {
 		return
 	}
 	var req WorkspaceRequest
@@ -100,7 +100,7 @@ func (h *Handlers) freeWorkspace(ctx context.Context, name string) (int, string)
 
 // getWorkspace returns the workspace of a folder.
 func (h *Handlers) getWorkspace(w http.ResponseWriter, r *http.Request) {
-	if !requireAdmin(w, r) {
+	if !h.require(w, r, "workspace/view") {
 		return
 	}
 	workspace, err := h.opts.Workspaces.GetByFolder(r.Context(), param(r, "folder"))
@@ -115,7 +115,7 @@ func (h *Handlers) getWorkspace(w http.ResponseWriter, r *http.Request) {
 // folder, repository and branch stay: another checkout is another
 // workspace. The default workspace keeps its place, first.
 func (h *Handlers) updateWorkspace(w http.ResponseWriter, r *http.Request) {
-	if !requireAdmin(w, r) {
+	if !h.require(w, r, "workspace/edit") {
 		return
 	}
 	var req WorkspaceRequest
@@ -145,7 +145,7 @@ func (h *Handlers) updateWorkspace(w http.ResponseWriter, r *http.Request) {
 // A workspace whose folder is not a checkout keeps its files; only the
 // rows and the keys go. The default workspace, the root, stays.
 func (h *Handlers) deleteWorkspace(w http.ResponseWriter, r *http.Request) {
-	if !requireAdmin(w, r) {
+	if !h.require(w, r, "workspace/delete") {
 		return
 	}
 	ctx := r.Context()
@@ -213,7 +213,7 @@ func (h *Handlers) deleteWorkspace(w http.ResponseWriter, r *http.Request) {
 // which the board answers by running internal/claude-prompt as the user,
 // with the checkout in TASK_UI_WORKSPACE_DIR, which Claude Code works in.
 func (h *Handlers) promptWorkspace(w http.ResponseWriter, r *http.Request) {
-	if !requireAdmin(w, r) || !h.board(w) {
+	if !h.require(w, r, "prompt/edit") || !h.board(w) {
 		return
 	}
 	var req PromptRequest

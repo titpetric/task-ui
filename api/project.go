@@ -88,9 +88,9 @@ func (req ProjectRequest) apply(project *model.Project) {
 }
 
 // listProjects returns the directories under the root with their
-// sources, checkouts and project rows. Admins only.
+// sources, checkouts and project rows. Takes project/view.
 func (h *Handlers) listProjects(w http.ResponseWriter, r *http.Request) {
-	if !requireAdmin(w, r) {
+	if !h.require(w, r, "project/view") {
 		return
 	}
 	entries := folder.Entries(h.opts.Root, h.opts.Git, h.workspaceFolders(r.Context()))
@@ -118,7 +118,7 @@ func folderIDFromURL(repo string) string {
 // checkout, and records it. The clone is the test: a failure reports
 // git's output and keeps nothing.
 func (h *Handlers) cloneProject(w http.ResponseWriter, r *http.Request) {
-	if !requireAdmin(w, r) {
+	if !h.require(w, r, "project/edit") {
 		return
 	}
 	var req ProjectCloneRequest
@@ -191,7 +191,7 @@ func (h *Handlers) rootTaken(r *http.Request, id string) string {
 
 // getProject returns the project row of a folder.
 func (h *Handlers) getProject(w http.ResponseWriter, r *http.Request) {
-	if !requireAdmin(w, r) {
+	if !h.require(w, r, "project/view") {
 		return
 	}
 	project, err := h.opts.Projects.GetByFolder(r.Context(), folderParam(r))
@@ -205,7 +205,7 @@ func (h *Handlers) getProject(w http.ResponseWriter, r *http.Request) {
 // updateProject writes the configuration of a folder, creating the row
 // when the folder has none.
 func (h *Handlers) updateProject(w http.ResponseWriter, r *http.Request) {
-	if !requireAdmin(w, r) {
+	if !h.require(w, r, "project/edit") {
 		return
 	}
 	id := folderParam(r)
@@ -257,7 +257,7 @@ func (h *Handlers) updateProject(w http.ResponseWriter, r *http.Request) {
 // deleteProject removes a cloned folder and its row. A folder that is
 // not a checkout keeps its files; only the row goes.
 func (h *Handlers) deleteProject(w http.ResponseWriter, r *http.Request) {
-	if !requireAdmin(w, r) {
+	if !h.require(w, r, "project/delete") {
 		return
 	}
 	id := folderParam(r)

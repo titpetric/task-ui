@@ -25,6 +25,9 @@ var imageTypes = map[string]bool{".png": true, ".jpg": true, ".jpeg": true, ".gi
 // window: the version ?version= names, the latest without, and the
 // versions the user may see.
 func (h *Handlers) viewArtifactFile(w http.ResponseWriter, r *http.Request) {
+	if !h.require(w, r, "artifact/view") {
+		return
+	}
 	store := h.opts.ArtifactStore
 	rel := folderParam(r)
 	if store == nil || rel == "" {
@@ -95,9 +98,9 @@ func (h *Handlers) viewArtifactFile(w http.ResponseWriter, r *http.Request) {
 }
 
 // deleteArtifactFile takes a file or a directory out of the artifact
-// tree; the history keeps its versions. Admins only.
+// tree; the history keeps its versions. Takes artifact/edit.
 func (h *Handlers) deleteArtifactFile(w http.ResponseWriter, r *http.Request) {
-	if !requireAdmin(w, r) {
+	if !h.require(w, r, "artifact/edit") {
 		return
 	}
 	if h.opts.ArtifactStore == nil {

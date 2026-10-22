@@ -14,7 +14,7 @@ import (
 
 // projects lists the directories under the root.
 func (h *Handlers) projects(w http.ResponseWriter, r *http.Request) {
-	if !h.requireAdmin(w, r) {
+	if !h.require(w, r, "project/view") {
 		return
 	}
 	p := h.page(r, "Projects")
@@ -32,7 +32,7 @@ func (h *Handlers) projects(w http.ResponseWriter, r *http.Request) {
 
 // projectNew shows the clone form.
 func (h *Handlers) projectNew(w http.ResponseWriter, r *http.Request) {
-	if !h.requireAdmin(w, r) {
+	if !h.require(w, r, "project/edit") {
 		return
 	}
 	p := h.page(r, "Add project")
@@ -43,7 +43,7 @@ func (h *Handlers) projectNew(w http.ResponseWriter, r *http.Request) {
 
 // projectEdit shows the configuration of a folder.
 func (h *Handlers) projectEdit(w http.ResponseWriter, r *http.Request) {
-	if !h.requireAdmin(w, r) {
+	if !h.require(w, r, "project/view") {
 		return
 	}
 	id := strings.Trim(param(r, "*"), "/")

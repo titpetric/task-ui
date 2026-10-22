@@ -10,12 +10,10 @@ import (
 	"github.com/titpetric/task-ui/storage"
 )
 
-// keysWorkspace returns the workspace a key route names, for an admin,
-// answering the request when there is none or the keyring is off.
+// keysWorkspace returns the workspace a key route names, answering the
+// request when there is none or the keyring is off. The route checks
+// the permission first.
 func (h *Handlers) keysWorkspace(w http.ResponseWriter, r *http.Request) *model.Workspace {
-	if !requireAdmin(w, r) {
-		return nil
-	}
 	if h.opts.WorkspaceKeys == nil {
 		fail(w, http.StatusNotFound, "workspace keys are off")
 		return nil
@@ -31,8 +29,11 @@ func (h *Handlers) keysWorkspace(w http.ResponseWriter, r *http.Request) *model.
 // listWorkspaceKeys returns a workspace's keys, public halves and
 // fingerprints only: the encryption key, and the SSH keys with their
 // backups and the roles and the users each goes to; a key with neither
-// goes to every run in the workspace. Admins only.
+// goes to every run in the workspace. Takes workspace/view.
 func (h *Handlers) listWorkspaceKeys(w http.ResponseWriter, r *http.Request) {
+	if !h.require(w, r, "workspace/view") {
+		return
+	}
 	workspace := h.keysWorkspace(w, r)
 	if workspace == nil {
 		return
@@ -86,6 +87,9 @@ func (h *Handlers) uploadWorkspaceKey(w http.ResponseWriter, r *http.Request) {
 // of an SSH key the request names, and answers with the key's public
 // half.
 func (h *Handlers) addWorkspaceKey(w http.ResponseWriter, r *http.Request, add func(*model.Workspace, WorkspaceKeyRequest) (sshkey.Key, error)) {
+	if !h.require(w, r, "workspace/edit") {
+		return
+	}
 	workspace := h.keysWorkspace(w, r)
 	if workspace == nil {
 		return
@@ -155,8 +159,11 @@ func (h *Handlers) workspaceSSHKey(workspace *model.Workspace, name string, back
 
 // updateWorkspaceKey sets the roles and the users whose runs get one of
 // a workspace's SSH keys; with none of either, every run in the
-// workspace gets it. Admins only.
+// workspace gets it. Takes workspace/edit.
 func (h *Handlers) updateWorkspaceKey(w http.ResponseWriter, r *http.Request) {
+	if !h.require(w, r, "workspace/edit") {
+		return
+	}
 	workspace := h.keysWorkspace(w, r)
 	if workspace == nil {
 		return
@@ -186,8 +193,11 @@ func (h *Handlers) updateWorkspaceKey(w http.ResponseWriter, r *http.Request) {
 
 // deleteWorkspaceKey removes one of a workspace's SSH keys, or a backup
 // of one, and its grants. The encryption key is not an SSH key: an
-// admin rotates or replaces it, and no route deletes it. Admins only.
+// admin rotates or replaces it, and no route deletes it. Takes workspace/edit.
 func (h *Handlers) deleteWorkspaceKey(w http.ResponseWriter, r *http.Request) {
+	if !h.require(w, r, "workspace/edit") {
+		return
+	}
 	workspace := h.keysWorkspace(w, r)
 	if workspace == nil {
 		return

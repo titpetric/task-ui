@@ -38,9 +38,9 @@ var errImport = errors.New("the bundle")
 // the workspace's repository or makes its directory, writes its keys,
 // adds its rows under the folder and clones its projects. Up to the
 // projects' clones a failure keeps nothing; a project that does not
-// clone keeps its row and reports git's output. Admins only.
+// clone keeps its row and reports git's output. Takes workspace/edit.
 func (h *Handlers) importWorkspace(w http.ResponseWriter, r *http.Request) {
-	if !requireAdmin(w, r) {
+	if !h.require(w, r, "workspace/edit") {
 		return
 	}
 	if h.opts.WorkspaceKeys == nil {

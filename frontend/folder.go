@@ -78,8 +78,8 @@ func (h *Handlers) folderAt(w http.ResponseWriter, r *http.Request, path string)
 }
 
 // defaultWorkspace shows the default workspace, the root: the projects
-// in it the user may see, and for an admin its prompt and what the root
-// holds, each project and workspace linked.
+// in it the user may see, with prompt/edit its prompt, and with
+// project/view what the root holds, each project and workspace linked.
 func (h *Handlers) defaultWorkspace(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	f := &folder.Folder{ID: model.Default, Title: "Default", Dir: h.opts.Root}
@@ -106,7 +106,9 @@ func (h *Handlers) defaultWorkspace(w http.ResponseWriter, r *http.Request) {
 			projects[sub.ID] = true
 		}
 	}
-	if p.User.CanAdmin() {
+	// The root's directories, projects or not, are what project/view
+	// lists in the settings.
+	if p.Can("project/view") {
 		for _, item := range folder.Listing(h.opts.Root) {
 			id := folder.SafeID(item.Name)
 			if _, named := p.Workspaces[id]; item.Dir && (projects[id] || named) {
@@ -114,12 +116,12 @@ func (h *Handlers) defaultWorkspace(w http.ResponseWriter, r *http.Request) {
 			}
 			p.Tree = append(p.Tree, item)
 		}
-		if workspace != nil {
-			p.Actions = &view.Actions{WorkspaceSettings: "/settings/workspaces/" + model.Default}
-		}
-		if workspace != nil && h.claudeFor(r, p.User) {
-			p.Prompt = h.withThreads(r, &view.Prompt{API: "/api/workspaces/" + model.Default + "/prompt", Where: "the root", Open: true, Place: model.Default})
-		}
+	}
+	if workspace != nil && p.Can("workspace/view") {
+		p.Actions = &view.Actions{WorkspaceSettings: "/settings/workspaces/" + model.Default}
+	}
+	if workspace != nil && p.Can("prompt/edit") && h.claudeFor(r, p.User) {
+		p.Prompt = h.withThreads(r, &view.Prompt{API: "/api/workspaces/" + model.Default + "/prompt", Where: "the root", Open: true, Place: model.Default})
 	}
 	h.render(w, http.StatusOK, "folder", p)
 }
@@ -226,15 +228,13 @@ func (h *Handlers) folder(w http.ResponseWriter, r *http.Request, f *folder.Fold
 }
 
 // settingsLinks puts the links to the settings of the workspace or the
-// project a folder is in the actions bar of its own page, for an admin.
+// project a folder is in the actions bar of its own page, for a user who
+// may see them.
 func (h *Handlers) settingsLinks(r *http.Request, p *view.Page, f *folder.Folder) {
-	if !p.User.CanAdmin() {
-		return
-	}
-	if _, ok := p.Workspaces[f.ID]; ok {
+	if _, ok := p.Workspaces[f.ID]; ok && p.Can("workspace/view") {
 		p.Actions.WorkspaceSettings = "/settings/workspaces/" + escapePath(f.ID)
 	}
-	if h.opts.Projects != nil {
+	if h.opts.Projects != nil && p.Can("project/view") {
 		if _, err := h.opts.Projects.GetByFolder(r.Context(), f.ID); err == nil {
 			p.Actions.ProjectSettings = "/settings/projects/" + escapePath(f.ID)
 		}

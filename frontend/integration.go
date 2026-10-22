@@ -12,9 +12,9 @@ import (
 )
 
 // integrations shows Settings, Integrations: a form for each integration.
-// Admins only.
+// Takes integration/view.
 func (h *Handlers) integrations(w http.ResponseWriter, r *http.Request) {
-	if !h.requireAdmin(w, r) {
+	if !h.require(w, r, "integration/view") {
 		return
 	}
 	p := h.page(r, "Integrations")
@@ -32,8 +32,12 @@ func (h *Handlers) integrations(w http.ResponseWriter, r *http.Request) {
 }
 
 // inventory shows the hosts of the Beszel integration, who task-ui signs
-// in to each as, and for an admin the form that runs a command on them.
+// in to each as, and with the hosts permission the form that runs a
+// command on them.
 func (h *Handlers) inventory(w http.ResponseWriter, r *http.Request) {
+	if !h.require(w, r, "inventory/view") {
+		return
+	}
 	p := h.page(r, "Inventory")
 	p.Crumbs = view.Crumbs("Inventory")
 	if h.opts.Hosts == nil {
@@ -56,7 +60,7 @@ func (h *Handlers) inventory(w http.ResponseWriter, r *http.Request) {
 		}
 		p.Logins = h.opts.SSH.Logins(r.Context(), hosts, 4*time.Second)
 	}
-	p.Summarize = p.User.CanAdmin() && h.claudeFor(r, p.User)
+	p.Summarize = p.Can("hosts") && h.claudeFor(r, p.User)
 	h.render(w, http.StatusOK, "inventory", p)
 }
 

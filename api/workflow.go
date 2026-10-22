@@ -56,10 +56,9 @@ func (h *Handlers) expand(r *http.Request, steps []model.WorkflowStep) []model.W
 // mayRun returns the first job the user may not run, or "" when the
 // user may run them all, the jobs of the workflows the steps run too.
 func (h *Handlers) mayRun(r *http.Request, steps []model.WorkflowStep) string {
-	user := access.UserFrom(r.Context())
 	for _, step := range h.expand(r, steps) {
 		f, job, _ := h.target(r, step.Folder, step.Job)
-		if !canRun(user, f, job) {
+		if !h.canRun(r, f, job) {
 			return step.Folder + " / " + step.Job
 		}
 	}
@@ -78,10 +77,16 @@ func (h *Handlers) visibleSteps(r *http.Request, steps []model.WorkflowStep) boo
 	return true
 }
 
-// mayChangeWorkflow reports whether the user may change a workflow: its
-// owner or an admin.
-func mayChangeWorkflow(user *model.User, wf *model.Workflow) bool {
-	return user.CanAdmin() || (wf.UserID != "" && user.ID == wf.UserID)
+// mayChangeWorkflow reports whether the user of a request may change a
+// workflow, with workflow/edit, or delete it, with workflow/delete: its
+// owner, or an admin.
+func (h *Handlers) mayChangeWorkflow(r *http.Request, wf *model.Workflow, del bool) bool {
+	allowed := h.can(r, "workflow/edit")
+	if del {
+		allowed = h.can(r, "workflow/delete")
+	}
+	user := access.UserFrom(r.Context())
+	return allowed && (user.CanAdmin() || (wf.UserID != "" && user.ID == wf.UserID))
 }
 
 // workflowView decorates a workflow for the user asking.
@@ -92,7 +97,7 @@ func (h *Handlers) workflowView(r *http.Request, wf model.Workflow, steps []mode
 		v.LastRun = &runs[0]
 	}
 	v.CanRun = h.mayRun(r, steps) == ""
-	v.CanChange = mayChangeWorkflow(access.UserFrom(r.Context()), &wf)
+	v.CanChange = h.mayChangeWorkflow(r, &wf, false)
 	return v
 }
 
@@ -147,6 +152,9 @@ func (h *Handlers) workflowOf(r *http.Request) (*model.Workflow, []model.Workflo
 
 // listWorkflows returns the workflows whose steps the user may see.
 func (h *Handlers) listWorkflows(w http.ResponseWriter, r *http.Request) {
+	if !h.require(w, r, "workflow/view") {
+		return
+	}
 	workflows, err := h.opts.Workflows.List(r.Context())
 	if err != nil {
 		failErr(w, err)
@@ -168,6 +176,9 @@ func (h *Handlers) listWorkflows(w http.ResponseWriter, r *http.Request) {
 
 // createWorkflow adds a workflow. Any user may, from the jobs they see.
 func (h *Handlers) createWorkflow(w http.ResponseWriter, r *http.Request) {
+	if !h.require(w, r, "workflow/edit") {
+		return
+	}
 	var req WorkflowRequest
 	if err := readJSON(r, &req); err != nil {
 		fail(w, http.StatusBadRequest, err.Error())
@@ -190,6 +201,9 @@ func (h *Handlers) createWorkflow(w http.ResponseWriter, r *http.Request) {
 
 // getWorkflow returns one workflow.
 func (h *Handlers) getWorkflow(w http.ResponseWriter, r *http.Request) {
+	if !h.require(w, r, "workflow/view") {
+		return
+	}
 	wf, steps, err := h.workflowOf(r)
 	if err != nil {
 		failErr(w, err)
@@ -205,7 +219,7 @@ func (h *Handlers) updateWorkflow(w http.ResponseWriter, r *http.Request) {
 		failErr(w, err)
 		return
 	}
-	if !mayChangeWorkflow(access.UserFrom(r.Context()), wf) {
+	if !h.mayChangeWorkflow(r, wf, false) {
 		fail(w, http.StatusForbidden, "not your workflow")
 		return
 	}
@@ -239,7 +253,7 @@ func (h *Handlers) deleteWorkflow(w http.ResponseWriter, r *http.Request) {
 		failErr(w, err)
 		return
 	}
-	if !mayChangeWorkflow(access.UserFrom(r.Context()), wf) {
+	if !h.mayChangeWorkflow(r, wf, true) {
 		fail(w, http.StatusForbidden, "not your workflow")
 		return
 	}
@@ -283,6 +297,9 @@ func (h *Handlers) startWorkflow(w http.ResponseWriter, r *http.Request) {
 // listWorkflowRuns returns a workflow's runs, newest first, with their
 // steps.
 func (h *Handlers) listWorkflowRuns(w http.ResponseWriter, r *http.Request) {
+	if !h.require(w, r, "workflow/view") {
+		return
+	}
 	wf, _, err := h.workflowOf(r)
 	if err != nil {
 		failErr(w, err)
@@ -308,6 +325,9 @@ func (h *Handlers) listWorkflowRuns(w http.ResponseWriter, r *http.Request) {
 // listRecentWorkflowRuns returns the runs of every workflow, newest
 // first, those of the workflows the user sees every folder of.
 func (h *Handlers) listRecentWorkflowRuns(w http.ResponseWriter, r *http.Request) {
+	if !h.require(w, r, "workflow/view") {
+		return
+	}
 	runs, err := h.opts.WorkflowRuns.List(r.Context(), queryInt(r, "limit", 10))
 	if err != nil {
 		failErr(w, err)

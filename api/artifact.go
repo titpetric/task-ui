@@ -14,6 +14,9 @@ import (
 
 // listArtifacts returns the artifacts the user may see, newest first.
 func (h *Handlers) listArtifacts(w http.ResponseWriter, r *http.Request) {
+	if !h.require(w, r, "artifact/view") {
+		return
+	}
 	user := access.UserFrom(r.Context())
 	q := r.URL.Query()
 	filter := storage.ArtifactFilter{RunID: q.Get("run"), Folder: q.Get("folder"), Job: q.Get("job"), Limit: queryInt(r, "limit", 100)}
@@ -45,6 +48,9 @@ func (h *Handlers) artifactOf(r *http.Request) (*model.Artifact, error) {
 
 // downloadArtifact serves an artifact's file.
 func (h *Handlers) downloadArtifact(w http.ResponseWriter, r *http.Request) {
+	if !h.require(w, r, "artifact/view") {
+		return
+	}
 	artifact, err := h.artifactOf(r)
 	if err != nil {
 		failErr(w, err)
@@ -64,10 +70,9 @@ func (h *Handlers) downloadArtifact(w http.ResponseWriter, r *http.Request) {
 
 // deleteArtifact removes an artifact, and its file when the run's
 // directory holds it; a version in the artifact store stays in its history.
-// Admins only.
+// Takes artifact/delete.
 func (h *Handlers) deleteArtifact(w http.ResponseWriter, r *http.Request) {
-	if !access.UserFrom(r.Context()).CanAdmin() {
-		fail(w, http.StatusForbidden, "admin role required")
+	if !h.require(w, r, "artifact/delete") {
 		return
 	}
 	artifact, err := h.artifactOf(r)
@@ -86,9 +91,9 @@ func (h *Handlers) deleteArtifact(w http.ResponseWriter, r *http.Request) {
 }
 
 // emptyArtifacts deletes every artifact, the files and their history with
-// them. Admins only.
+// them. Takes artifact/delete.
 func (h *Handlers) emptyArtifacts(w http.ResponseWriter, r *http.Request) {
-	if !requireAdmin(w, r) {
+	if !h.require(w, r, "artifact/delete") {
 		return
 	}
 	if err := h.opts.Runner.EmptyArtifacts(r.Context()); err != nil {

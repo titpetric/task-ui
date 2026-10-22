@@ -10,6 +10,7 @@ import (
 	"github.com/titpetric/task-ui/frontend/view"
 	"github.com/titpetric/task-ui/internal/assert"
 	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/permission"
 )
 
 func TestPage_CanRun(t *testing.T) {
@@ -21,13 +22,18 @@ func TestPage_CanRun(t *testing.T) {
 	assert.False(t, p.CanRun(nil, job))
 	assert.False(t, p.CanRun(f, nil))
 
-	p.User = &model.User{Name: "guest", Role: model.RoleViewer}
+	signIn(p, &model.User{Name: "guest", Role: model.RoleViewer}, nil)
 	assert.False(t, p.CanRun(f, job))
 
-	p.User = &model.User{Name: "ops", Role: model.RoleRunner}
+	signIn(p, &model.User{Name: "ops", Role: model.RoleRunner}, permission.Policy{"run": permission.Allow})
 	assert.True(t, p.CanRun(f, job))
 	job.Allow = []string{"admin"}
 	assert.False(t, p.CanRun(f, job))
+}
+
+// signIn puts a user on a page, with what the user's role allows.
+func signIn(p *view.Page, user *model.User, role permission.Policy) {
+	p.User, p.Permissions = user, permission.Set{User: user, Role: role}
 }
 
 func TestPage_Runs(t *testing.T) {
@@ -148,4 +154,62 @@ func TestPage_Links(t *testing.T) {
 	links := p.Links([]view.Step{{Folder: "acme/api", Job: "build"}, {Folder: "infra", Job: "plan"}})
 	assert.Equal(t, "/f/acme/api/build", links[0].Href)
 	assert.Equal(t, "/f/_/infra/plan", links[1].Href)
+}
+
+func TestPage_Can(t *testing.T) {
+	t.Parallel()
+	p := admin(t)
+	assert.True(t, p.Can("secret/delete"))
+
+	signIn(p, &model.User{Name: "ops", Role: model.RoleRunner}, permission.Policy{"note/all": permission.Allow})
+	assert.True(t, p.Can("note/edit"))
+	assert.False(t, p.Can("secret/view"))
+
+	// Permissions of someone else are none of the user's.
+	p.User = &model.User{Name: "dev", Role: model.RoleRunner}
+	assert.False(t, p.Can("note/edit"))
+}
+
+func TestPage_CanSettings(t *testing.T) {
+	t.Parallel()
+	p := admin(t)
+	assert.True(t, p.CanSettings())
+
+	signIn(p, &model.User{Name: "ops", Role: model.RoleRunner}, permission.Policy{"run": permission.Allow})
+	assert.False(t, p.CanSettings())
+	signIn(p, p.User, permission.Policy{"key/view": permission.Allow})
+	assert.True(t, p.CanSettings())
+}
+
+func TestPage_Deletes(t *testing.T) {
+	t.Parallel()
+	p := admin(t)
+	mine := model.Note{UserName: "ops"}
+	prompt := model.Note{UserName: "ops", WorkspaceID: "w1"}
+	assert.True(t, p.Deletes(mine), "an admin deletes anyone's")
+
+	signIn(p, &model.User{Name: "ops", Role: model.RoleRunner}, permission.Policy{"note/delete": permission.Allow})
+	assert.True(t, p.Deletes(mine))
+	assert.False(t, p.Deletes(model.Note{UserName: "dev"}))
+	assert.False(t, p.Deletes(prompt), "a prompt takes prompt/delete")
+	reply := prompt
+	reply.ParentID = "n1"
+	assert.True(t, p.Deletes(reply), "a reply to a prompt is a note")
+
+	signIn(p, p.User, permission.Policy{"prompt/delete": permission.Allow})
+	assert.True(t, p.Deletes(prompt))
+	assert.False(t, p.Deletes(mine))
+}
+
+func TestPage_Edits(t *testing.T) {
+	t.Parallel()
+	p := admin(t)
+	thread := view.Thread{Note: model.Note{ID: "n1", UserName: "ops"}}
+	assert.True(t, p.Edits(thread.Note, thread))
+
+	signIn(p, &model.User{Name: "ops", Role: model.RoleRunner}, nil)
+	assert.False(t, p.Edits(thread.Note, thread), "without note/edit")
+	signIn(p, p.User, permission.Policy{"note/edit": permission.Allow})
+	assert.True(t, p.Edits(thread.Note, thread))
+	assert.False(t, p.Edits(model.Note{ID: "n2", UserName: "dev"}, thread))
 }

@@ -16,7 +16,7 @@ import (
 // encryption key, which stores secrets, and their SSH keys, which
 // connect to hosts; then the instance's SSH keys with their policies.
 func (h *Handlers) keys(w http.ResponseWriter, r *http.Request) {
-	if !h.requireAdmin(w, r) {
+	if !h.require(w, r, "key/view") {
 		return
 	}
 	p := h.page(r, "Keys")
@@ -121,7 +121,7 @@ func (h *Handlers) accessKeys(store *sshkey.Store) []sshkey.Key {
 
 // keyGenerate shows the generate form.
 func (h *Handlers) keyGenerate(w http.ResponseWriter, r *http.Request) {
-	if !h.requireAdmin(w, r) {
+	if !h.require(w, r, "key/edit") {
 		return
 	}
 	p := h.page(r, "Generate key")
@@ -133,7 +133,7 @@ func (h *Handlers) keyGenerate(w http.ResponseWriter, r *http.Request) {
 
 // keyUpload shows the upload form.
 func (h *Handlers) keyUpload(w http.ResponseWriter, r *http.Request) {
-	if !h.requireAdmin(w, r) {
+	if !h.require(w, r, "key/edit") {
 		return
 	}
 	p := h.page(r, "Upload key")
@@ -178,7 +178,7 @@ func (h *Handlers) keyPolicies(r *http.Request) map[string][]string {
 
 // keyEdit shows the form that sets the roles whose runs get a key.
 func (h *Handlers) keyEdit(w http.ResponseWriter, r *http.Request) {
-	if !h.requireAdmin(w, r) {
+	if !h.require(w, r, "key/view") {
 		return
 	}
 	name := param(r, "name")

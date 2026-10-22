@@ -10,6 +10,7 @@ import (
 	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/git"
 	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/permission"
 	"github.com/titpetric/task-ui/sshkey"
 	"github.com/titpetric/task-ui/workspace"
 )
@@ -20,8 +21,10 @@ import (
 type Page struct {
 	Title string
 	// Path is the request path, for the active entry of the sidebar.
-	Path          string
-	User          *model.User
+	Path string
+	User *model.User
+	// Permissions are what User may do, for Can.
+	Permissions   permission.Set
 	LoginRequired bool
 	Version       string
 	// Now is the moment the page is for: the hours read against it.
@@ -60,7 +63,7 @@ type Page struct {
 	// Actions are the actions bar of the folder or the directory browsed.
 	Actions *Actions
 	// Prompt is the prompt box of the folder or the directory browsed,
-	// for an admin with a Claude token.
+	// for a user with prompt/edit and a Claude token.
 	Prompt   *Prompt
 	Checkout *git.Info
 	// Tree is what the folder, or the directory browsed in it, holds.
@@ -208,9 +211,51 @@ func (p *Page) Links(steps []Step) []Link {
 	return Chain(steps, p.Workspaces)
 }
 
-// CanRun reports whether the signed in user may run a job.
+// Can reports whether the signed in user may do what a path of
+// `config/permissions.yml` names: {{ if $.Can "secret/edit" }}.
+func (p *Page) Can(path string) bool {
+	return p.permissions().Allowed(path)
+}
+
+// permissions returns Permissions when they are the user's, and nothing
+// more than the user's role grants without a policy otherwise.
+func (p *Page) permissions() permission.Set {
+	if p.Permissions.User != p.User {
+		return permission.Set{User: p.User}
+	}
+	return p.Permissions
+}
+
+// CanSettings reports whether the signed in user may see a page of the
+// settings: any of the sections they list.
+func (p *Page) CanSettings() bool {
+	return p.Can("workspace/view") || p.Can("project/view") || p.Can("key/view") || p.Can("secret/view") || p.Can("integration/view") || p.Can("user/view")
+}
+
+// CanRun reports whether the signed in user may run a job: a shell job
+// takes the shell permission besides.
 func (p *Page) CanRun(f *folder.Folder, job *folder.Job) bool {
-	return f != nil && job != nil && p.User.CanRun(f.ID, f.Allow, job.Allow)
+	if f == nil || job == nil || (job.IsShell() && !p.Can("shell")) {
+		return false
+	}
+	return p.permissions().Run(f.ID, f.Allow, job.Allow)
+}
+
+// Deletes reports whether the signed in user may delete a note: their
+// own, or anyone's for an admin, with note/delete, or prompt/delete for
+// a prompt.
+func (p *Page) Deletes(note model.Note) bool {
+	allowed := p.Can("note/delete")
+	if note.IsPrompt() && note.ParentID == "" {
+		allowed = p.Can("prompt/delete")
+	}
+	return allowed && p.User != nil && (note.UserName == p.User.Name || p.User.CanAdmin())
+}
+
+// Edits reports whether the signed in user may edit a note of a thread,
+// with note/edit, as Thread.Edits says.
+func (p *Page) Edits(note model.Note, t Thread) bool {
+	return p.Can("note/edit") && t.Edits(p.User, note)
 }
 
 // CanRunAny reports whether the signed in user may run a job of a folder.

@@ -20,11 +20,12 @@ type Actions struct {
 	// down there ask first.
 	Self string
 	// Shell is the place's shell job, Enter Shell at the right of the
-	// bar: set for an admin alone.
+	// bar: set with the shell permission.
 	Shell *folder.Job
 	// WorkspaceSettings and ProjectSettings link the settings page of
 	// the workspace or the project a folder page is of, beside Enter
-	// Shell: set for an admin alone, on the folder's own page.
+	// Shell: set with workspace/view and project/view, on the folder's
+	// own page.
 	WorkspaceSettings string
 	ProjectSettings   string
 }

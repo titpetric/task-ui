@@ -8,7 +8,7 @@ import (
 
 // users lists who may sign in.
 func (h *Handlers) users(w http.ResponseWriter, r *http.Request) {
-	if !h.requireAdmin(w, r) {
+	if !h.require(w, r, "user/view") {
 		return
 	}
 	p := h.page(r, "Users")
@@ -20,7 +20,7 @@ func (h *Handlers) users(w http.ResponseWriter, r *http.Request) {
 
 // userNew shows the form that makes a user in the password file.
 func (h *Handlers) userNew(w http.ResponseWriter, r *http.Request) {
-	if !h.requireAdmin(w, r) {
+	if !h.require(w, r, "user/edit") {
 		return
 	}
 	if !h.opts.AddUsers {
@@ -35,7 +35,7 @@ func (h *Handlers) userNew(w http.ResponseWriter, r *http.Request) {
 
 // userEdit shows the folders of a user, to change.
 func (h *Handlers) userEdit(w http.ResponseWriter, r *http.Request) {
-	if !h.requireAdmin(w, r) {
+	if !h.require(w, r, "user/view") {
 		return
 	}
 	user, err := h.opts.Users.Get(r.Context(), param(r, "id"))
