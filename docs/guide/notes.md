@@ -26,7 +26,7 @@ agent, `TASK_UI_AGENT`.
 A note naming the agent, `@claude` on most instances, starts the agent on
 it.
 
-- With an agent job, `_/@claude-note` unless configured otherwise,
+- With an agent job, `@claude-note` unless configured otherwise,
   task-ui starts that job as the agent's user the moment the note or the
   reply appears, with the whole thread in
   its environment: `TASK_UI_NOTE`, every message of the thread under its
@@ -88,7 +88,7 @@ host commands that run `task-ui agent`:
 
 | Job              | Runs                         | What it does                                                                                     |
 |------------------|------------------------------|--------------------------------------------------------------------------------------------------|
-| `@claude-note`   | `task-ui agent note`         | The Notes agent: Claude Code on the thread in `TASK_UI_NOTE`, in the root, as `_/@claude-note`; its answer goes to `TASK_UI_NOTE_REPLY` |
+| `@claude-note`   | `task-ui agent note`         | The Notes agent: Claude Code on the thread in `TASK_UI_NOTE`, in the root; its answer goes to `TASK_UI_NOTE_REPLY` |
 | `@claude-prompt` | `task-ui agent prompt`       | Claude Code on the thread in `TASK_UI_PROMPT`, in `TASK_UI_PROMPT_DIR`, or else the workspace checkout `TASK_UI_WORKSPACE_DIR`; its answer goes to `TASK_UI_PROMPT_REPLY` |
 | `@claude`        | `task-ui agent shell [args]` | Claude Code in a terminal in the folder, or a directory inside it, for an admin at the keyboard: **Enter Claude** |
 
@@ -98,10 +98,14 @@ integration and stops without it. They run `claude` from the `PATH` with
 permission prompts. Each run gets the secrets of its folder, as any job
 there does; the Notes agent's, of the root's, `_`.
 
-The board starts `_/@claude-note` as the agent's user, whose role does
+The board starts `@claude-note` in the root as the agent's user, whose role does
 not need to see a folder; no `POST /api/runs` starts it. Who sees the
 root sees its runs with the `note/view` permission, and the agent's user
 always sees its own, which it, or an admin, may stop with `note/edit`.
+A run of the root names its job alone, as `@claude-note` or `@shell`, in
+the recents, the runs list, a run's page and the MCP tools' text, and a
+directory of the root by its path, as `deploy / up`; the run's row keeps
+the folder `_`.
 A prompt on a folder page runs `@claude-prompt` of that folder as the
 user who asks (see [Prompt](projects.md#prompt)); that prompt and its
 answer are a thread of the folder's page, never of the board.

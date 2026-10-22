@@ -26,12 +26,12 @@
 		<a class="tile" href="/runs/{{ .ID }}" data-attach="{{ .ID }}" data-tile="{{ .ID }}">
 			<div class="tile-head">
 				<i class="dot {{ .State }}"></i>
-				<b>{{ .Where }} / {{ .Job }}</b>
+				<b>{{ .Name }}</b>
 				<span class="spacer"></span>
 				<span class="faint">{{ if .Attached }}{{ .Attached }} watching{{ end }}</span>
 				{{ template "avatar" (list $ .UserName) }}
 			</div>
-			<div class="frame"{{ if eq .State "running" }} data-frame="{{ .ID }}"{{ end }} role="img" aria-label="Terminal of {{ .Where }} / {{ .Job }}">{{ .FrameSVG }}</div>
+			<div class="frame"{{ if eq .State "running" }} data-frame="{{ .ID }}"{{ end }} role="img" aria-label="Terminal of {{ .Name }}">{{ .FrameSVG }}</div>
 		</a>
 	{{- end }}
 	</div>

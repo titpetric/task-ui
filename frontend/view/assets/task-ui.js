@@ -345,9 +345,18 @@
   }
 
   // runTitle names a run as its window does: folder, the directory
-  // inside it when the job is one of that directory's, and the job.
+  // inside it when the job is one of that directory's, and the job; a
+  // job of the root, _, by its name alone, as Run.Name does.
   function runTitle(run) {
-    return run.folder + (run.dir ? "/" + run.dir : "") + " / " + run.job;
+    if (run.folder === "_" && !run.dir) return run.job;
+    return runPlace(run) + " / " + run.job;
+  }
+
+  // runPlace is the folder a run names: folder/dir, a directory of the
+  // root without the _/, as Run.Place does.
+  function runPlace(run) {
+    if (run.folder === "_" && run.dir) return run.dir;
+    return run.folder + (run.dir ? "/" + run.dir : "");
   }
 
   // runArgs reads the arguments a run row keeps, a JSON list.
@@ -2404,7 +2413,7 @@
       var place = folderHref(folder) + (dir ? "/" + dir : "");
       row.innerHTML =
         '<td class="nowrap" data-label="Started">just now</td>' +
-        '<td data-label="Folder"><a href="' + place + '">' + folder + (dir ? "/" + dir : "") + "</a></td>" +
+        '<td data-label="Folder"><a href="' + place + '">' + escapeHTML(runPlace(run)) + "</a></td>" +
         '<td class="key"><a href="' + place + "/" + job + '">' + job + "</a></td>" +
         '<td data-label="By">' + whoHTML(run) + "</td>" +
         '<td class="nowrap" data-label="Took" data-took>' + took(run) + "</td>" +
@@ -2962,7 +2971,7 @@
     return '<a href="/runs/' + encodeURIComponent(r.id) + '" class="recent" title="' +
       escapeHTML("Open " + runTitle(r) + ", " + r.user_name + ", " + r.state) + '">' +
       '<i class="dot ' + escapeHTML(r.state) + '"></i>' +
-      '<span class="what"><b>' + escapeHTML(r.job) + '</b><small>' + escapeHTML(r.folder + (r.dir ? "/" + r.dir : "")) + '</small></span>' +
+      '<span class="what"><b>' + escapeHTML(r.job) + '</b><small>' + escapeHTML(runPlace(r)) + '</small></span>' +
       (running ? '<svg class="ic act"><use href="#i-' + (r.can_run ? "play" : "eye") + '"/></svg>' : "") +
       avatarHTML(r.user_name) + "</a>";
   }

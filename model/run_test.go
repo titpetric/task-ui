@@ -81,3 +81,18 @@ func TestRun_IsClaude(t *testing.T) {
 	assert.False(t, (&model.Run{Folder: "malta", Job: "@shell"}).IsClaude())
 	assert.False(t, (*model.Run)(nil).IsClaude())
 }
+
+// A run of the root names its job alone, and a directory of the root
+// by its path, without the _/ the stored row keeps.
+func TestRun_Name(t *testing.T) {
+	t.Parallel()
+	assert.Equal(t, "@claude-note", model.Run{Folder: model.Default, Job: model.NoteJob}.Name())
+	assert.Equal(t, "_", model.Run{Folder: model.Default, Job: "@shell"}.Place())
+	assert.Equal(t, "deploy / @claude-prompt", model.Run{Folder: model.Default, Dir: "deploy", Job: model.PromptJob}.Name())
+	assert.Equal(t, "deploy", model.Run{Folder: model.Default, Dir: "deploy", Job: "up"}.Place())
+	assert.Equal(t, "malta/dockerfiles / build", model.Run{Folder: "malta", Dir: "dockerfiles", Job: "build"}.Name())
+	assert.Equal(t, "malta / build", model.Run{Folder: "malta", Job: "build"}.Name())
+	assert.Equal(t, "@claude-note", (&model.Run{Folder: model.Default, Job: model.NoteJob}).Path())
+	assert.Equal(t, "deploy/up", (&model.Run{Folder: model.Default, Dir: "deploy", Job: "up"}).Path())
+	assert.Equal(t, "malta/dockerfiles/build", (&model.Run{Folder: "malta", Dir: "dockerfiles", Job: "build"}).Path())
+}

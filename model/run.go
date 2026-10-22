@@ -1,6 +1,7 @@
 package model
 
 import (
+	"strings"
 	"time"
 )
 
@@ -67,6 +68,31 @@ func (r Run) Where() string {
 		return r.Folder + "/" + r.Dir
 	}
 	return r.Folder
+}
+
+// Place is the folder a page names the run by: Where, with the root's
+// _/ dropped from a directory of it; _ alone for a job of the root.
+func (r Run) Place() string {
+	if r.Folder == Default && r.Dir != "" {
+		return r.Dir
+	}
+	return r.Where()
+}
+
+// Name returns the title of the run on a page: Place / job, or the job
+// alone for a job of the root, such as @claude-note. The stored row
+// keeps the folder _.
+func (r Run) Name() string {
+	if r.Folder == Default && r.Dir == "" {
+		return r.Job
+	}
+	return r.Place() + " / " + r.Job
+}
+
+// Path is the run as text names it in one word, folder/job, with the
+// root's _/ dropped like Name does: @claude-note, deploy/up.
+func (r Run) Path() string {
+	return strings.TrimPrefix(r.Key(), Default+"/")
 }
 
 // ArgList returns the arguments the run passed the job, after --.

@@ -31,7 +31,7 @@
 		{{- range . }}{{ $r := . }}
 			<tr>
 				<td class="nowrap" data-label="Started" title="{{ stamp .StartedAt }}">{{ ago .StartedAt }}</td>
-				<td class="key"><a href="{{ with $.RunJobHref .Folder .Dir .Job }}{{ . }}{{ else }}/runs/{{ $r.ID }}{{ end }}">{{ .Where }} / {{ .Job }}</a></td>
+				<td class="key"><a href="{{ with $.RunJobHref .Folder .Dir .Job }}{{ . }}{{ else }}/runs/{{ $r.ID }}{{ end }}">{{ .Name }}</a></td>
 				<td class="nowrap" data-label="Took">{{ duration .Elapsed }}</td>
 				<td data-label="Result">{{ template "state" . }}</td>
 				<td class="actions"><a class="btn btn-sm" href="/runs/{{ .ID }}" data-attach="{{ .ID }}">{{ if eq .State "running" }}Attach{{ else }}View{{ end }}</a></td>

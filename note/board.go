@@ -65,8 +65,9 @@ type Board struct {
 	// Agent is the user name a note names to have the board run the
 	// agent job on it; empty leaves every instruction to MCP.
 	Agent string
-	// AgentJob is the job the board starts for an instruction, as
-	// folder/job; empty leaves instructions open for an agent over MCP.
+	// AgentJob is the job the board starts for an instruction:
+	// @claude-note, the Notes agent in the root, or folder/job; empty
+	// leaves instructions open for an agent over MCP.
 	AgentJob string
 	// AgentCommand is the command the Claude jobs of the board run, a
 	// prompt's and the Notes agent's, their subcommand after it; nil runs
@@ -391,10 +392,10 @@ func (b *Board) Answerer() string {
 	return answerer
 }
 
-// agentJob resolves AgentJob, folder/job: the root's Notes agent,
-// _/@claude-note, or a job of the catalogue.
+// agentJob resolves AgentJob: @claude-note, the Notes agent in the
+// root, or folder/job, a job of the catalogue.
 func (b *Board) agentJob() (*folder.Folder, *folder.Job) {
-	if b.AgentJob == model.Default+"/"+folder.NoteID && b.Root != "" {
+	if b.AgentJob == folder.NoteID && b.Root != "" {
 		root := &folder.Folder{ID: model.Default, Title: model.Default, Dir: b.Root}
 		return root, b.agentCommand(root.NoteJob(), "note")
 	}

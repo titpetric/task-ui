@@ -307,7 +307,8 @@ The reply is the note, with `dir` `malta/dockerfiles/blog`; `GET
 its `@shell` is: `malta/dockerfiles/blog/@claude-prompt`, folder `malta`,
 `dir` `dockerfiles/blog` and job `@claude-prompt`, with the absolute
 directory in `TASK_UI_PROMPT_DIR`; the recents and the runs list show it
-under the folder. A prompt at the root runs as `_/@claude-prompt`. The
+under the folder. A prompt at the root runs as `@claude-prompt` of the folder `_`, and its
+run shows as `@claude-prompt`. The
 run gets the secrets of the folder, as its other jobs do, and runs out of
 its hours too, as it runs none of the folder's jobs; no `POST /api/runs`
 starts it, as a prompt needs its thread. Who sees the folder sees its
