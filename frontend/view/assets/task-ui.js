@@ -1906,83 +1906,170 @@
     });
   }
 
-  // The header's prompt: Enter asks Claude at the root, as the prompt of
-  // /f/_ does, and a panel under the header follows the thread over the
-  // notes topic: the question, working, then the answer as /f/_ renders
-  // it. Esc clears the field and leaves it, or closes the panel; so does
-  // a click outside them.
+  // The header's prompt asks Claude where the page is, as the header's
+  // data-prompt-* name it: a folder or a directory in it, a run, or the
+  // root, _. A panel under the header follows the thread over the notes
+  // topic: the place, the question, working, then the answer, rendered as
+  // the thread's page renders it. The logo opens and closes the panel;
+  // Esc or a click outside closes it. The tab keeps the panel's thread
+  // and whether it is open, so another page brings the same thread back.
   var headerPrompt = document.getElementById("header-prompt");
   var headerAnswer = document.getElementById("header-answer");
-  if (headerPrompt && headerAnswer) {
-    var asked = "";
+  var headerToggle = document.getElementById("header-toggle");
+  var headerTop = document.querySelector("header.top[data-prompt-folder]");
+  var headerOpen = function () { return !!headerAnswer && !headerAnswer.hidden; };
+  if (headerPrompt && headerAnswer && headerTop) {
+    var here = {
+      folder: headerTop.dataset.promptFolder, dir: headerTop.dataset.promptDir || "", run: headerTop.dataset.promptRun || "",
+      label: headerTop.dataset.promptLabel, href: headerTop.dataset.promptHref
+    };
+    var me = document.body.dataset.me || "";
+    var stateKey = "task-ui.header-prompt";
     var follow = null;
+    var shown = "";
+    var saved = function () {
+      try { return JSON.parse(sessionStorage.getItem(stateKey)) || {}; } catch (e) { return {}; }
+    };
+    var save = function (state) {
+      try { sessionStorage.setItem(stateKey, JSON.stringify(state)); } catch (e) { /* the tab forgets */ }
+    };
     var typed = function () { headerPrompt.classList.toggle("typed", headerPrompt.value !== ""); };
-    var closeAnswer = function () {
-      headerAnswer.hidden = true;
-      headerAnswer.innerHTML = "";
-      asked = "";
+    var unfollow = function () {
       if (follow) follow.close();
       follow = null;
     };
-    var answerState = function (state, text) {
+    var threadsURL = function (place) {
+      if (place.run) return "/api/prompts?limit=20&run=" + encodeURIComponent(place.run);
+      return "/api/prompts?limit=20&folder=" + encodeURIComponent(place.folder) + (place.dir ? "&dir=" + encodeURIComponent(place.dir) : "");
+    };
+    var setOpen = function (open) {
+      headerAnswer.hidden = !open;
+      if (headerToggle) headerToggle.setAttribute("aria-expanded", open ? "true" : "false");
+      var state = saved();
+      state.open = open;
+      save(state);
+      if (!open) unfollow();
+    };
+    // frame draws the panel for a thread in a place: the place, linked to
+    // the thread, the question, its state, and room for the answer.
+    var frame = function (place, question, id) {
+      shown = id || "";
+      headerAnswer.innerHTML = '<p class="place">@claude-prompt · <a></a></p><p class="question"></p><p class="working" data-state>open</p><div class="answer note-body"></div>';
+      var link = headerAnswer.querySelector(".place a");
+      link.textContent = place.label;
+      link.href = place.href + (id ? "#note-" + encodeURIComponent(id) : "");
+      headerAnswer.querySelector(".question").textContent = question;
+    };
+    var setState = function (state, text) {
       var line = headerAnswer.querySelector("[data-state]");
       if (!line) return;
+      if (state === "done") {
+        line.remove();
+        return;
+      }
       line.className = state === "failed" ? "failed" : "working";
       line.textContent = text || state;
     };
-    var showAnswer = function (id) {
-      fetch("/f/_", { credentials: "same-origin" })
-        .then(function (res) { return res.text(); })
+    // answer puts the last reply of the thread in the panel: as the
+    // thread's page renders it, or as the summaries render markdown.
+    var answer = function (place, id, reply) {
+      var put = function (html) {
+        var box = headerAnswer.querySelector(".answer");
+        if (shown === id && box && html) box.innerHTML = html;
+      };
+      put(markdownHTML(reply.body));
+      fetch(place.href, { credentials: "same-origin" })
+        .then(function (res) { return res.ok ? res.text() : ""; })
         .then(function (text) {
-          if (asked !== id) return;
           var doc = new DOMParser().parseFromString(text, "text/html");
-          var bodies = doc.querySelectorAll("#note-" + id + " .replies > li .note-body");
-          var body = bodies[bodies.length - 1];
-          if (!body) return api("GET", "/api/prompts?folder=_&limit=20").then(function (res) {
-            var thread = ((res.data && res.data.notes) || []).filter(function (n) { return n.id === id; })[0];
-            var replies = (thread && thread.replies) || [];
-            return replies.length ? "<pre>" + escapeHTML(replies[replies.length - 1].body) + "</pre>" : "";
-          });
-          return body.innerHTML;
+          var bodies = doc.querySelectorAll("#note-" + CSS.escape(id) + " .replies > li .note-body");
+          if (bodies.length) put(bodies[bodies.length - 1].innerHTML);
         })
-        .then(function (html) {
-          if (asked !== id || !html) return;
-          var answer = headerAnswer.querySelector(".answer");
-          if (answer) answer.innerHTML = html;
-        });
+        .catch(function () {});
     };
-    var askRoot = function (text) {
-      if (follow) follow.close();
-      follow = null;
-      asked = "";
-      headerAnswer.innerHTML = '<p class="question"></p><p class="working" data-state>working</p><div class="answer note-body"></div><a class="thread" href="/f/_">the thread on /f/_</a>';
-      headerAnswer.querySelector(".question").textContent = text;
-      headerAnswer.hidden = false;
-      api("POST", "/api/prompts", { folder: "_", prompt: text }).then(function (res) {
-        if (res.status >= 300) {
-          answerState("failed", res.data.error || ("HTTP " + res.status));
-          return;
-        }
-        var id = asked = res.data.id;
-        headerAnswer.querySelector("a.thread").href = "/f/_#note-" + encodeURIComponent(id);
-        if (!window.EventSource) return;
-        follow = new EventSource("/api/sse/notes");
-        follow.addEventListener("note", function (event) {
-          var changed = {};
-          try { changed = JSON.parse(event.data); } catch (e) { return; }
-          if (asked !== id || changed.id !== id) return;
-          if (changed.state === "done" || changed.state === "failed") {
-            answerState(changed.state, changed.state === "failed" ? "failed" : "");
-            if (changed.state === "done") headerAnswer.querySelector("[data-state]").remove();
-            showAnswer(id);
-            follow.close();
-            follow = null;
-          } else if (changed.state) {
-            answerState(changed.state);
-          }
-        });
+    // load draws a thread from its place's list, and follows it while it
+    // runs; false when the place no longer lists it.
+    var load = function (place, id) {
+      return api("GET", threadsURL(place)).then(function (res) {
+        var thread = ((res.data && res.data.notes) || []).filter(function (n) { return n.id === id; })[0];
+        if (!thread) return false;
+        frame(place, thread.body, thread.id);
+        setState(thread.state || "done", thread.state === "failed" ? "failed" : "");
+        var replies = thread.replies || [];
+        if (replies.length && thread.state !== "open" && thread.state !== "working") answer(place, id, replies[replies.length - 1]);
+        else watch(place, id);
+        return true;
       });
     };
+    // watch follows a thread over the notes topic until it ends.
+    var watch = function (place, id) {
+      unfollow();
+      if (!window.EventSource) return;
+      follow = new EventSource("/api/sse/notes");
+      follow.addEventListener("note", function (event) {
+        var changed = {};
+        try { changed = JSON.parse(event.data); } catch (e) { return; }
+        if (shown !== id || changed.id !== id) return;
+        if (changed.state === "done" || changed.state === "failed") {
+          unfollow();
+          load(place, id);
+        } else if (changed.state) {
+          setState(changed.state);
+        }
+      });
+    };
+    // reopen shows the tab's thread, or else the user's latest here, or
+    // an empty panel with the field focused.
+    var reopen = function () {
+      var state = saved();
+      var empty = function () {
+        frame(here, "", "");
+        headerAnswer.querySelector(".question").remove();
+        headerAnswer.querySelector("[data-state]").remove();
+        headerPrompt.focus();
+      };
+      if (state.thread && state.place) {
+        return load(state.place, state.thread).then(function (found) {
+          if (found) return;
+          save({ open: true });
+          return reopen();
+        });
+      }
+      return api("GET", threadsURL(here)).then(function (res) {
+        var mine = ((res.data && res.data.notes) || []).filter(function (n) { return n.user_name === me; })[0];
+        if (!mine) return empty();
+        save({ open: true, thread: mine.id, place: here });
+        return load(here, mine.id);
+      });
+    };
+    var ask = function (text) {
+      unfollow();
+      frame(here, text, "");
+      setOpen(true);
+      var body = here.run ? { run: here.run, prompt: text } : { folder: here.folder, dir: here.dir, prompt: text };
+      api("POST", "/api/prompts", body).then(function (res) {
+        if (res.status >= 300) {
+          setState("failed", res.data.error || ("HTTP " + res.status));
+          return;
+        }
+        var id = res.data.id;
+        save({ open: true, thread: id, place: here });
+        frame(here, text, id);
+        setState(res.data.state || "open");
+        watch(here, id);
+      });
+    };
+    if (headerToggle) {
+      headerToggle.addEventListener("click", function (event) {
+        event.stopPropagation();
+        if (headerOpen()) {
+          setOpen(false);
+          return;
+        }
+        setOpen(true);
+        reopen();
+      });
+    }
     headerPrompt.addEventListener("input", typed);
     headerPrompt.addEventListener("keydown", function (event) {
       if (event.key === "Escape") {
@@ -1998,15 +2085,19 @@
       if (!text) return;
       headerPrompt.value = "";
       typed();
-      askRoot(text);
+      ask(text);
     });
     document.addEventListener("keydown", function (event) {
-      if (event.key === "Escape" && !headerAnswer.hidden && event.target !== headerPrompt) closeAnswer();
+      if (event.key === "Escape" && headerOpen() && event.target !== headerPrompt) setOpen(false);
     });
     document.addEventListener("click", function (event) {
-      if (headerAnswer.hidden || event.target === headerPrompt || headerAnswer.contains(event.target)) return;
-      closeAnswer();
+      if (!headerOpen() || event.target === headerPrompt || headerAnswer.contains(event.target)) return;
+      setOpen(false);
     });
+    if (saved().open && saved().thread) {
+      setOpen(true);
+      reopen();
+    }
   }
 
   // The inventory runs a command on the hosts checked, all at once, and
@@ -2860,6 +2951,12 @@
       avatarHTML(r.user_name) + "</a>";
   }
 
+  // isPromptRun reports whether a run is a prompt's: @claude-prompt, or
+  // internal/claude-prompt of an older thread.
+  function isPromptRun(r) {
+    return r.job === "@claude-prompt" || (r.folder === "internal" && r.job === "claude-prompt");
+  }
+
   function poll() {
     if (document.hidden) return;
     Promise.all([api("GET", "/api/runs?limit=50"), api("GET", "/api/workflow-runs?limit=50")]).then(function (both) {
@@ -2881,10 +2978,13 @@
       });
       var any = document.querySelector("[data-any-running]");
       if (any) any.classList.toggle("running", Object.keys(running).length > 0);
-      var signature = runs.map(function (r) { return r.id + ":" + r.state + ":" + r.attached; }).join(",");
+      // A prompt's run changes no page: its thread follows it, in the
+      // header's panel or under a prompt box.
+      var signature = runs.filter(function (r) { return !isPromptRun(r); }).map(function (r) { return r.id + ":" + r.state + ":" + r.attached; }).join(",");
       // Pages that list runs refresh when the set changes, unless a window
-      // is open: that window refreshes the page when it closes.
-      if (known !== null && signature !== known && !session && !document.querySelector("dialog[open]") && document.querySelector("[data-live]")) {
+      // or the header's panel is open: a window refreshes the page when it
+      // closes.
+      if (known !== null && signature !== known && !session && !headerOpen() && !document.querySelector("dialog[open]") && document.querySelector("[data-live]")) {
         window.location.reload();
       }
       known = signature;

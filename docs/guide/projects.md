@@ -281,8 +281,13 @@ theirs, and may stop it. One prompt runs per directory: another there
 waits for it, and prompts in two directories run at once. A workspace's prompt route works the same way (see
 [Workspaces](workspaces.md#a-prompt-against-a-workspace)).
 
-Enter at the header's prompt, after the logo, asks at the root, as
-`/f/_` does.
+Enter at the header's prompt, after the logo, asks where the page is:
+in the folder or the directory of its page, a project's or workspace's
+settings included, about the run on a run's page, and at the root
+anywhere else. Claude's answer lands in a panel under the header, in
+markdown, with no reload; the panel names the place and links the
+thread. A click on the logo opens and closes the panel, which keeps its
+thread in the tab from page to page.
 
 With the Beszel integration set up, a prompt also sees the
 [Inventory](inventory.md#prompts-on-the-hosts): Claude gets the hosts

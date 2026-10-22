@@ -43,17 +43,45 @@ func TestPage_Chrome(t *testing.T) {
 	// that names it.
 	const prompt = `<input type="text" class="header-prompt" id="header-prompt" tabindex="-1" autocomplete="off" spellcheck="false">`
 	assert.Contains(t, body, prompt)
-	head := body[strings.Index(body, `<header class="top">`):strings.Index(body, `</header>`)]
+	head := body[strings.Index(body, `<header class="top"`):strings.Index(body, `</header>`)]
 	assert.NotContains(t, head, "placeholder")
 	assert.NotContains(t, head[strings.Index(head, "header-prompt"):strings.Index(head, `<details class="user"`)], "aria-label")
+	// Off a folder or a run it asks at the root, and the logo is a button
+	// of its own that opens the panel, the name a link home.
+	assert.Contains(t, head, `<header class="top" data-prompt-folder="_" data-prompt-dir="" data-prompt-run="" data-prompt-label="_" data-prompt-href="/f/_">`)
+	assert.Contains(t, head, `<h1><a href="/"><span>TaskUI</span></a><button type="button" class="logo-toggle" id="header-toggle"`)
 
 	limited := f.page(t, asLimited, "/")
 	assert.NotContains(t, limited, "header-prompt")
 	assert.NotContains(t, f.page(t, asViewer, "/"), "header-prompt")
+	for _, page := range []string{limited, f.page(t, asViewer, "/")} {
+		assert.Contains(t, page, `<header class="top">`)
+		assert.Contains(t, page, `<h1><a href="/"><span>TaskUI</span><svg class="logo"`, "a plain link, as without prompts")
+		assert.NotContains(t, page, "header-toggle")
+	}
 	assert.NotContains(t, limited, "Settings</a>")
 	assert.NotContains(t, limited, `data-folder="private"`)
 	assert.NotContains(t, limited, `title="admin">AD<`)
 	assert.Contains(t, limited, `title="ops">OP<`)
+}
+
+// The header's prompt asks where the page is: a folder, a directory in
+// it, a job's directory, a run in its folder, or the root elsewhere.
+func TestPage_HeaderPrompt(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	header := func(path string) string {
+		body := f.page(t, asAdmin, path)
+		return body[strings.Index(body, `<header class="top"`):strings.Index(body, `<button type="button" class="btn-icon menu-toggle"`)]
+	}
+	assert.Contains(t, header("/f/_/infra"), `data-prompt-folder="infra" data-prompt-dir="" data-prompt-run="" data-prompt-label="infra" data-prompt-href="/f/_/infra"`)
+	run := f.run(t, "infra", "plan", "ops", model.StateOK)
+	assert.Contains(t, header("/runs/"+run.ID), `data-prompt-folder="infra" data-prompt-dir="" data-prompt-run="`+run.ID+`" data-prompt-label="run `+run.ID[:4]+`…" data-prompt-href="/runs/`+run.ID+`"`)
+	prompt := f.run(t, "infra", model.PromptJob, "admin", model.StateOK)
+	assert.Contains(t, header("/runs/"+prompt.ID), `data-prompt-folder="infra" data-prompt-dir="" data-prompt-run=""`, "a prompt's run asks in its place")
+	for _, path := range []string{"/", "/runs", "/notes", "/settings"} {
+		assert.Contains(t, header(path), `data-prompt-folder="_" data-prompt-dir="" data-prompt-run="" data-prompt-label="_"`, path)
+	}
 }
 
 func mustProject(t *testing.T, f *fixture, folder string) *model.Project {
