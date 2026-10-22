@@ -35,4 +35,6 @@
 	</tbody>
 </table>
 </div>
+
+{{ template "mcp-connect" . }}
 {{ end }}

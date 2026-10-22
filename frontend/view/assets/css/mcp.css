@@ -1,0 +1,48 @@
+/* The MCP block of the users page and a user's MCP access: values to
+   copy, each a code field with its copy button. */
+.copy-line {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  max-width: 100%;
+  margin: 0.3rem 0;
+
+  & code {
+    padding: 0.2rem 0.45rem;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+}
+
+.copy-list {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 0.15rem 1rem;
+  align-items: center;
+  margin: 0.75rem 0;
+
+  & dt {
+    color: var(--text-dim);
+    font-size: var(--fs-sm);
+  }
+
+  & dd {
+    margin: 0;
+    min-width: 0;
+  }
+}
+
+.mcp-steps {
+  margin: 0.75rem 0;
+  padding-left: 1.25rem;
+
+  & li {
+    margin-bottom: 0.6rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .copy-list {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

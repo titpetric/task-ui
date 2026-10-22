@@ -75,6 +75,9 @@ type Options struct {
 	// ComposeProject is the docker compose project task-ui runs in: up
 	// and down of it on the actions bar ask first.
 	ComposeProject string
+	// BaseURL is the public base link, TASK_UI_URL; empty derives it
+	// from each request.
+	BaseURL string
 	// AddUsers lets an admin make users: the server writes a password
 	// file.
 	AddUsers bool

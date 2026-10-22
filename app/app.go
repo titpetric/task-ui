@@ -315,7 +315,7 @@ func (a *App) wire(version string) error {
 		Runner: a.Runner, Catalogue: a.Catalogue, Git: g, Keys: keys, HomeKeys: homeKeys, KeyPolicies: keyPolicies, Env: env, Recordings: recordings, Root: cfg.Root, Version: version, Now: cfg.Clock(),
 		ArtifactStore: store, Disk: &diskusage.Meter{TTL: 10 * time.Minute}, Board: a.Board, ComposeProject: self,
 		Integrations: integrations, Hosts: hosts,
-		SSH: prober, AddUsers: a.UsersFile != nil,
+		SSH: prober, AddUsers: a.UsersFile != nil, BaseURL: cfg.URL,
 	})
 	if err != nil {
 		return err

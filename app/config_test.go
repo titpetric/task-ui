@@ -76,6 +76,21 @@ func TestNewConfig_AgentJob(t *testing.T) {
 	assert.Equal(t, "deploy/agent", cfg.AgentJob)
 }
 
+// The base link drops a trailing slash; unset, the pages derive it per
+// request.
+func TestNewConfig_URL(t *testing.T) {
+	t.Setenv("TASK_UI_ROOT", t.TempDir())
+	t.Setenv("TASK_UI_URL", "")
+	cfg, err := app.NewConfig(nil)
+	assert.NoError(t, err)
+	assert.Equal(t, "", cfg.URL)
+
+	t.Setenv("TASK_UI_URL", "https://task.example.com/")
+	cfg, err = app.NewConfig(nil)
+	assert.NoError(t, err)
+	assert.Equal(t, "https://task.example.com", cfg.URL)
+}
+
 func TestNewConfig_Errors(t *testing.T) {
 	t.Setenv("TASK_UI_ROOT", filepath.Join(t.TempDir(), "missing"))
 	_, err := app.NewConfig(nil)

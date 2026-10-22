@@ -1,9 +1,12 @@
 package frontend_test
 
 import (
+	"context"
+	"io"
 	"net/http"
 	"testing"
 
+	"github.com/titpetric/task-ui/access"
 	"github.com/titpetric/task-ui/frontend"
 	"github.com/titpetric/task-ui/internal/assert"
 	"github.com/titpetric/task-ui/model"
@@ -25,6 +28,44 @@ func TestUsers(t *testing.T) {
 	assert.NotContains(t, body, "data-delete")
 	assert.NotContains(t, body, "/settings/users/new")
 	assert.Contains(t, body, "infra</td>")
+}
+
+// The users page tells how to connect an MCP client, with the base link
+// configured or derived from the proxy's forwarded headers, and never a
+// token.
+func TestUsers_MCP(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+
+	req, err := http.NewRequest(http.MethodGet, f.server.URL+"/settings/users", nil)
+	assert.NoError(t, err)
+	session, err := f.opts.Guard.Sessions.Issue(context.Background(), f.users[asAdmin])
+	assert.NoError(t, err)
+	req.AddCookie(&http.Cookie{Name: access.Cookie, Value: session})
+	req.Header.Set("X-Forwarded-Proto", "https")
+	req.Header.Set("X-Forwarded-Host", "task.example.com")
+	res, err := client().Do(req)
+	assert.NoError(t, err)
+	raw, err := io.ReadAll(res.Body)
+	assert.NoError(t, res.Body.Close())
+	assert.NoError(t, err)
+	derived := string(raw)
+	assert.Contains(t, derived, "Connect an MCP client")
+	assert.Contains(t, derived, `data-copy="https://task.example.com"`)
+	assert.Contains(t, derived, `data-copy="https://task.example.com/api/mcp"`)
+	assert.Contains(t, derived, "task-ui token admin mcp")
+	assert.NotContains(t, derived, access.TokenPrefix)
+
+	f.opts.BaseURL = "https://task.cdn.si"
+	h, err := frontend.New(f.opts)
+	assert.NoError(t, err)
+	f.server.Config.Handler = h.Routes()
+	configured := f.page(t, asAdmin, "/settings/users")
+	assert.Contains(t, configured, `data-copy="https://task.cdn.si"`)
+	assert.Contains(t, configured, `data-copy="https://task.cdn.si/api/mcp"`)
+	assert.Contains(t, configured, "claude mcp add --transport http --scope user task https://task.cdn.si/api/mcp")
+	assert.NotContains(t, configured, "task.example.com")
+	assert.NotContains(t, configured, access.TokenPrefix)
 }
 
 func TestUserForm(t *testing.T) {

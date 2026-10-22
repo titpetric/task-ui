@@ -185,6 +185,9 @@ type Page struct {
 	// CanAddUsers shows Create user: the server writes a password file.
 	CanAddUsers bool
 	Root        string
+	// BaseURL is the public base link of the instance, without a
+	// trailing slash, that the links to copy start with.
+	BaseURL string
 
 	// Form holds the values of a form the page shows again.
 	Form   map[string]string

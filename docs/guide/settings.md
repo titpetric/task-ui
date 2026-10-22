@@ -93,7 +93,10 @@ show as text: the password file and the role lists set them.
 
 A client that is not a browser, such as an agent over [MCP](mcp.md),
 signs in with a token instead: `task-ui token <user> <name>` on the
-server prints one, once.
+server prints one, once. Under the table, **Connect an MCP client** shows
+the instance's base link and its MCP endpoint, each with a copy button,
+and the commands that connect a client, filled in with both and with your
+user name.
 
 ## Secrets
 

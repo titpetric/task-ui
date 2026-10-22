@@ -65,6 +65,11 @@ type Config struct {
 	// TASK_UI_COMPOSE_PROJECT; empty reads the compose label of the
 	// container task-ui runs in, if it runs in one.
 	ComposeProject string
+	// URL is the public base link of the instance, such as
+	// https://task.example.com, without a trailing slash: the links to
+	// copy on a page start with it. TASK_UI_URL; empty derives it
+	// from each request, through the proxy's forwarded headers.
+	URL string
 	// AgentJob is the job an instruction runs, as folder/job, as the
 	// agent's user. TASK_UI_AGENT_JOB, default internal/claude-note; set
 	// empty, it leaves instructions open for an agent that reads the
@@ -154,6 +159,7 @@ func NewConfig(args []string) (*Config, error) {
 		AgentJob:  envSet("TASK_UI_AGENT_JOB", "internal/claude-note"),
 
 		ComposeProject: env("TASK_UI_COMPOSE_PROJECT", ""),
+		URL:            strings.TrimRight(strings.TrimSpace(env("TASK_UI_URL", "")), "/"),
 	}
 	var err error
 	if cfg.SessionTTL, err = envDuration("TASK_UI_SESSION_TTL", 12*time.Hour); err != nil {
