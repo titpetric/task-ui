@@ -25,10 +25,17 @@ var skipped = map[string]bool{"node_modules": true, "vendor": true, "testdata": 
 // a pipeline file of their own: a Go tree's Makefiles are the pipeline's
 // business. Configured folders override the discovered ones by ID, and
 // Discovery adds a configured folder whose path the walk did not find.
+//
+// The root, the workspaces and the configured folders are roots: a
+// directory right below one that its checkout ignores, such as another
+// checkout, lists when it holds a job source of its own.
 type Discovery struct {
 	Root     string
 	Discover bool
 	Config   []Config
+	// Workspaces are the workspaces' directories, by Path or ID under the
+	// root, and their Shallow; the root is one whether they name it or not.
+	Workspaces []Config
 	// Probe is every folder's Probe, for the skills atkins applies in it.
 	Probe *skills.Prober
 }
@@ -123,24 +130,31 @@ func isFile(path string) bool {
 }
 
 // discover adds the root when it has something to run, and walks the
-// tree below it, one level into a shallow project. A directory of the root
-// named internal or _ lists nothing: the names are task-ui's own. The walk
-// goes into every configured folder, even one a checkout ignores, such
-// as a project cloned inside a workspace.
+// tree below it, one level into a shallow project or workspace. A
+// directory of the root named internal or _ lists nothing: the names are
+// task-ui's own. The walk goes into every configured folder, even one a
+// checkout ignores, such as a project cloned inside a workspace, and into
+// an ignored directory right below a root that holds a job source.
 func (d *Discovery) discover(root string, c *catalogue) {
 	if !c.seen(root) && detector.Any(root) {
 		if f := Load(SafeID(filepath.Base(root)), root); runnable(f) {
 			c.add(f)
 		}
 	}
-	shallow, keep := map[string]bool{}, map[string]bool{}
-	for _, cfg := range d.Config {
-		keep[cfg.dir(root)] = true
+	shallow, keep, roots := map[string]bool{}, map[string]bool{}, map[string]bool{root: true}
+	for _, cfg := range d.Workspaces {
+		roots[cfg.dir(root)] = true
 		if cfg.Shallow {
 			shallow[cfg.dir(root)] = true
 		}
 	}
-	w := walker{shallow: shallow, keep: keep, found: func(id, dir string) {
+	for _, cfg := range d.Config {
+		keep[cfg.dir(root)], roots[cfg.dir(root)] = true, true
+		if cfg.Shallow {
+			shallow[cfg.dir(root)] = true
+		}
+	}
+	w := walker{shallow: shallow, keep: keep, roots: roots, found: func(id, dir string) {
 		if c.seen(dir) || model.IsReserved(id) {
 			return
 		}
@@ -148,7 +162,7 @@ func (d *Discovery) discover(root string, c *catalogue) {
 			c.add(f)
 		}
 	}}
-	w.walk(root, "", 1, detector.HasPipeline(root), gitIgnored(root, nil), false)
+	w.walk(root, "", 1, detector.HasPipeline(root), gitIgnored(root, nil), shallow[root])
 }
 
 // sections adds the top level folder of every listed folder below one
@@ -206,17 +220,19 @@ func gitIgnored(dir string, ignored map[string]bool) map[string]bool {
 
 // walker visits the directories below the root and reports the ones
 // with something to run to found. Directories a git checkout ignores are
-// not visited unless keep holds them, and the walk goes one level into
-// a directory in shallow, a shallow project, and no deeper.
+// not visited unless keep holds them or they sit right below a directory
+// of roots with a job source of their own, and the walk goes one level
+// into a directory in shallow, a shallow project or workspace, and no
+// deeper, but for the roots below it.
 type walker struct {
-	shallow, keep map[string]bool
-	found         func(id, dir string)
+	shallow, keep, roots map[string]bool
+	found                func(id, dir string)
 }
 
 // walk visits the directories below dir, in name order. Below a pipeline
 // folder walk reports only a folder with a pipeline file, but goes on
-// through the rest. last stops it under the directories of dir: dir is a
-// shallow project.
+// through the rest. last stops it under the directories of dir that are
+// not roots: dir is a shallow project or workspace.
 func (w walker) walk(dir, id string, depth int, underPipeline bool, ignored map[string]bool, last bool) {
 	if depth > maxDepth {
 		return
@@ -228,7 +244,7 @@ func (w walker) walk(dir, id string, depth int, underPipeline bool, ignored map[
 			continue
 		}
 		sub := filepath.Join(dir, name)
-		if ignored[sub] && !w.keep[sub] {
+		if ignored[sub] && !w.keep[sub] && !(w.roots[dir] && detector.Any(sub)) {
 			continue
 		}
 		ignored := gitIgnored(sub, ignored)
@@ -240,7 +256,7 @@ func (w walker) walk(dir, id string, depth int, underPipeline bool, ignored map[
 		if pipeline || (!underPipeline && detector.Any(sub)) {
 			w.found(subID, sub)
 		}
-		if last {
+		if last && !w.roots[sub] {
 			continue
 		}
 		w.walk(sub, subID, depth+1, underPipeline || pipeline, ignored, w.shallow[sub])

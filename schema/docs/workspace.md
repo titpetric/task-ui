@@ -12,4 +12,5 @@ Workspace.
 | branch      | varchar  |     | Branch      |
 | created_at  | datetime |     | Created At  |
 | updated_at  | datetime |     | Updated At  |
+| shallow     | boolean  |     | Shallow     |
 | sort        | bigint   |     | Sort        |

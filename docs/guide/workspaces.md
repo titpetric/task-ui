@@ -143,7 +143,16 @@ directory that's there already: that answers `409` before git runs.
 
 The project lists with the folders inside it whatever the workspace's
 `.gitignore` says, so a workspace that ignores its projects' folders, as
-one that clones them itself should, still shows them.
+one that clones them itself should, still shows them. A checkout the
+workspace ignores without a project row lists too, when it holds a job
+source at its top, such as `malta/deploy` with its `atkins.yml`: it
+opens at `/f/malta/deploy` with its jobs and the folders inside it, as a
+project does (see [Where the jobs come from](projects.md#where-the-jobs-come-from)).
+
+**Recursive**, on the workspace's add and configure forms as on a
+project's, is on by default: discovery lists the folders inside the
+workspace as deep as they go. Off, it lists the workspace's top-level
+folders alone, and the projects inside it by their own Recursive.
 
 The API does the same, with a token from `task-ui token`:
 
@@ -157,8 +166,8 @@ curl -s -X POST https://task.example.com/api/projects \
 ```
 
 A taken folder answers `409`. `PUT /api/workspaces/malta` with
-`{title, description}` changes its text, and `DELETE /api/workspaces/malta`
-removes it. A `sort` in the `PUT` places the workspace: the lowest comes
+`{title, description}` changes its text, `recursive` its Recursive, and
+`DELETE /api/workspaces/malta` removes it. A `sort` in the `PUT` places the workspace: the lowest comes
 first, and workspaces of one sort go by folder. Left out, the sort
 stays.
 

@@ -16,6 +16,9 @@ type Catalogue struct {
 	Root     string
 	Discover bool
 	Projects *storage.ProjectStorage
+	// Workspaces are the workspace rows, whose directories discovery
+	// treats as roots.
+	Workspaces *storage.WorkspaceStorage
 	// Skills asks atkins for the skills of a folder's directory, for
 	// every folder the catalogue lists.
 	Skills *skills.Prober
@@ -35,6 +38,13 @@ func (c *Catalogue) discovery() *folder.Discovery {
 			slog.Error("listing projects", "err", err)
 		}
 		d.Config = folder.ConfigsOf(projects)
+	}
+	if c.Workspaces != nil {
+		workspaces, err := c.Workspaces.List(context.Background())
+		if err != nil {
+			slog.Error("listing workspaces", "err", err)
+		}
+		d.Workspaces = folder.WorkspaceConfigsOf(workspaces)
 	}
 	return d
 }

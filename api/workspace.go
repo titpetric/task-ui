@@ -61,6 +61,7 @@ func (h *Handlers) createWorkspace(w http.ResponseWriter, r *http.Request) {
 	workspace := &model.Workspace{
 		Folder: req.Folder, Title: req.Title, Description: req.Description,
 		SourceURL: req.URL, Branch: req.Branch,
+		Shallow: req.Recursive != nil && !*req.Recursive,
 	}
 	if err := h.opts.Workspaces.Create(ctx, workspace); err != nil {
 		failErr(w, err)
@@ -111,9 +112,9 @@ func (h *Handlers) getWorkspace(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, workspace)
 }
 
-// updateWorkspace writes a workspace's title and description. Its
-// folder, repository and branch stay: another checkout is another
-// workspace. The default workspace keeps its place, first.
+// updateWorkspace writes a workspace's title, description and
+// Recursive. Its folder, repository and branch stay: another checkout is
+// another workspace. The default workspace keeps its place, first.
 func (h *Handlers) updateWorkspace(w http.ResponseWriter, r *http.Request) {
 	if !h.require(w, r, "workspace/edit") {
 		return
@@ -131,6 +132,9 @@ func (h *Handlers) updateWorkspace(w http.ResponseWriter, r *http.Request) {
 	workspace.Title, workspace.Description = req.Title, req.Description
 	if req.Sort != nil && workspace.Folder != model.Default {
 		workspace.Sort = *req.Sort
+	}
+	if req.Recursive != nil {
+		workspace.Shallow = !*req.Recursive
 	}
 	if err := h.opts.Workspaces.Update(r.Context(), workspace); err != nil {
 		failErr(w, err)

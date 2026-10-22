@@ -45,6 +45,7 @@ func TestWorkspace_CRUD(t *testing.T) {
 	assert.Equal(t, http.StatusCreated, created.Status, string(created.Raw))
 	assert.Equal(t, "malta", created.str("workspace", "folder"))
 	assert.Equal(t, repo, created.str("workspace", "source_url"))
+	assert.Equal(t, false, created.get("workspace", "shallow"), "Recursive is the default")
 	assert.FileExists(t, filepath.Join(f.root, "malta", "Makefile"))
 
 	// A second workspace from the same repository, under its own name.
@@ -76,6 +77,14 @@ func TestWorkspace_CRUD(t *testing.T) {
 	assert.Equal(t, "gozo", list.list("workspaces")[0].(map[string]any)["folder"])
 	kept := f.call(t, asAdmin, http.MethodPut, "/workspaces/malta", api.WorkspaceRequest{Title: "The island"})
 	assert.Equal(t, float64(5), kept.get("sort"))
+
+	// Recursive off makes the workspace shallow; left out, it stays.
+	flat := f.call(t, asAdmin, http.MethodPut, "/workspaces/malta", api.WorkspaceRequest{Title: "The island", Recursive: new(false)})
+	assert.Equal(t, true, flat.get("shallow"))
+	kept = f.call(t, asAdmin, http.MethodPut, "/workspaces/malta", api.WorkspaceRequest{Title: "The island"})
+	assert.Equal(t, true, kept.get("shallow"))
+	deep := f.call(t, asAdmin, http.MethodPut, "/workspaces/malta", api.WorkspaceRequest{Title: "The island", Recursive: new(true)})
+	assert.Equal(t, false, deep.get("shallow"))
 
 	deleted := f.call(t, asAdmin, http.MethodDelete, "/workspaces/malta", nil)
 	assert.Equal(t, http.StatusNoContent, deleted.Status)

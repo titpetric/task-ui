@@ -97,9 +97,18 @@ pipeline of their own, so the Makefiles of a Go tree do not
 become folders; under a plain folder they do. Hidden directories, `node_modules`, `vendor` and
 `testdata` are never looked into.
 
-A project with **Recursive** off in its settings lists itself and its
-top-level folders alone, `web` and `web/api` but not `web/api/v1`,
-counted from the project's own folder, in a workspace as at the root.
+Discovery skips what a checkout's `.gitignore` ignores: build copies,
+caches, dependencies. One kind of ignored directory lists all the same:
+a directory right below a workspace or a project that holds a job
+source of its own, an `atkins.yml`, a Taskfile, a Makefile, `package.json`
+scripts, such as a checkout the workspace keeps beside its files. The
+folders inside it follow the Recursive of the workspace or project above
+it. An ignored directory with nothing to run, or one deeper down, stays
+out; a project row on the directory configures it, as on any folder.
+
+A project or a workspace with **Recursive** off in its settings lists
+itself and its top-level folders alone, `web` and `web/api` but not `web/api/v1`,
+counted from its own folder, in a workspace as at the root.
 The deeper folders leave the sidebar, the folder pages, the dashboard
 and `list_jobs`; their `/f/` path opens as a directory of the folder
 above, to browse, and **Files** still holds the whole checkout.
