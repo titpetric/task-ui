@@ -72,8 +72,11 @@ workspace.
 Who may sign in comes from the password file on the server. **Create
 user** adds one to it, with a name and a password of at least 8
 characters, and they can sign in at once; `task-ui passwd <user>` on the
-server adds or resets one too. Removing the line removes them, and
-task-ui reads the file again whenever it changes. The roles
+server adds or resets one too. **Delete** on a user's row or page
+removes one who is no admin and not you: their line leaves the file, and
+their sessions, tokens and policy end at once, while runs, notes and
+history keep their name. Removing the line on the server does the same,
+and task-ui reads the file again whenever it changes. The roles
 come from the server's `TASK_UI_ADMINS` and `TASK_UI_VIEWERS`; everyone
 else is a runner.
 

@@ -53,6 +53,7 @@ func (h *Handlers) userEdit(w http.ResponseWriter, r *http.Request) {
 	p.Account = user
 	p.FolderChoices = view.FolderChoices(h.opts.Catalogue.List(), user.FolderList())
 	p.AccountMCP = h.mcpAccess(r, user, own)
+	p.CanAddUsers = h.opts.AddUsers
 	h.render(w, http.StatusOK, "user_form", p)
 }
 

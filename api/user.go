@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/titpetric/task-ui/access"
 	"github.com/titpetric/task-ui/model"
 )
 
@@ -18,7 +19,8 @@ type UserRequest struct {
 	Folders  []string `json:"folders"`
 }
 
-// managedElsewhere is the reply to making or removing users here.
+// managedElsewhere is the reply to making or removing users without a
+// password file to write.
 const managedElsewhere = "users are managed in the password file: task-ui passwd <user> adds or resets one, removing the line removes the user; TASK_UI_ADMINS and TASK_UI_VIEWERS set the roles"
 
 // listUsers returns every user. Takes user/view.
@@ -104,10 +106,33 @@ func (h *Handlers) updateUser(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, h.userView(r.Context(), user))
 }
 
-// deleteUser says where to remove users.
+// deleteUser removes a user from the password file and storage, with
+// their sessions, tokens and policy, when the server has a file to
+// write. Takes user/delete; an admin and yourself stay.
 func (h *Handlers) deleteUser(w http.ResponseWriter, r *http.Request) {
 	if !h.require(w, r, "user/delete") {
 		return
 	}
-	fail(w, http.StatusMethodNotAllowed, managedElsewhere)
+	if h.opts.RemoveUser == nil {
+		fail(w, http.StatusMethodNotAllowed, managedElsewhere)
+		return
+	}
+	user, err := h.opts.Users.Get(r.Context(), param(r, "id"))
+	if err != nil {
+		failErr(w, err)
+		return
+	}
+	switch {
+	case user.ID == access.UserFrom(r.Context()).ID:
+		fail(w, http.StatusForbidden, "you can't delete yourself")
+		return
+	case user.CanAdmin():
+		fail(w, http.StatusForbidden, "an admin can't be deleted here")
+		return
+	}
+	if err := h.opts.RemoveUser(r.Context(), user.Name); err != nil {
+		failErr(w, err)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
 }

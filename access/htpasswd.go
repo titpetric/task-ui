@@ -91,3 +91,38 @@ func SetHtpasswd(path, name, hash string) error {
 	}
 	return os.WriteFile(path, []byte(strings.Join(lines, "\n")+"\n"), 0o600)
 }
+
+// RemoveHtpasswd removes a user's line from a password file, and
+// reports whether the file held one. Other lines stay as they are; a
+// missing file holds nobody.
+func RemoveHtpasswd(path, name string) (bool, error) {
+	name = strings.TrimSpace(name)
+	if name == "" {
+		return false, errors.New("a user name may not be empty")
+	}
+	data, err := os.ReadFile(path)
+	if errors.Is(err, os.ErrNotExist) {
+		return false, nil
+	}
+	if err != nil {
+		return false, err
+	}
+	var lines []string
+	removed := false
+	for _, line := range strings.Split(strings.TrimRight(string(data), "\n"), "\n") {
+		trimmed := strings.TrimSpace(line)
+		if existing, _, _ := strings.Cut(trimmed, ":"); strings.TrimSpace(existing) == name && !strings.HasPrefix(trimmed, "#") {
+			removed = true
+			continue
+		}
+		lines = append(lines, line)
+	}
+	if !removed {
+		return false, nil
+	}
+	text := strings.Join(lines, "\n")
+	if text != "" {
+		text += "\n"
+	}
+	return true, os.WriteFile(path, []byte(text), 0o600)
+}

@@ -182,6 +182,14 @@ func newFixture(t *testing.T) *fixture {
 		}
 		return users.Create(ctx, &model.User{Name: name, Role: model.RoleRunner})
 	}
+	// RemoveUser stands in for the password file too.
+	f.opts.RemoveUser = func(ctx context.Context, name string) error {
+		user, err := users.GetByName(ctx, name)
+		if err != nil {
+			return err
+		}
+		return users.Delete(ctx, user.ID)
+	}
 	routes := api.New(f.opts).Routes()
 	f.server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		user := f.users[r.Header.Get("X-User")]
