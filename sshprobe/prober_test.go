@@ -2,8 +2,11 @@ package sshprobe_test
 
 import (
 	"context"
+	"errors"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"syscall"
 	"testing"
 	"time"
 
@@ -19,8 +22,23 @@ func fakeSSH(t *testing.T) (string, string) {
 	log := filepath.Join(dir, "args")
 	script := filepath.Join(dir, "ssh")
 	body := "#!/bin/sh\necho \"$@\" >> " + log + "\nfor last; do :; done\ntarget=$(eval echo \\${$(($# - 1))})\ncase \"$target\" in debian@a|root@b) exit 0;; *@c) sleep 2; exit 0;; esac\nexit 255\n"
-	assert.NoError(t, os.WriteFile(script, []byte(body), 0o755))
+	writeScript(t, script, body)
 	return script, log
+}
+
+// writeScript writes an executable script and waits until it runs. A
+// child that a parallel test forks while the file is open for writing
+// holds the open file until it execs, and running the script then fails
+// with "text file busy". Once one run starts, no child holds it.
+func writeScript(t *testing.T, path, body string) {
+	t.Helper()
+	assert.NoError(t, os.WriteFile(path, []byte(body), 0o755))
+	for i := 0; i < 100; i++ {
+		if err := exec.Command(path).Run(); !errors.Is(err, syscall.ETXTBSY) {
+			break
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
 }
 
 func TestProber_Logins(t *testing.T) {
