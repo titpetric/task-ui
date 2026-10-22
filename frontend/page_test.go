@@ -16,10 +16,16 @@ import (
 func TestPage_Chrome(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
-	f.run(t, "infra", "plan", "ops", model.StateOK)
+	plan := f.run(t, "infra", "plan", "ops", model.StateOK)
 	f.run(t, "private", "deploy", "admin", model.StateFailed)
 
 	body := f.page(t, asAdmin, "/")
+	// A recent is a link to its run's page; the run window opens from
+	// View and Attach, and links there in its header.
+	recents := body[strings.Index(body, `id="recents"`):]
+	assert.Contains(t, recents, `<a href="/runs/`+plan.ID+`" class="recent" title="Open infra / plan, ops, ok">`)
+	assert.NotContains(t, recents, "data-attach")
+	assert.Contains(t, body, `<a class="btn btn-sm" id="run-page" href="/runs" hidden>Open run page</a>`)
 	assert.Contains(t, body, `class="avatar role-admin">AD<`)
 	assert.Contains(t, body, "Settings")
 	assert.Contains(t, body, "Logout")

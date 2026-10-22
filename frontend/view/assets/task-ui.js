@@ -23,6 +23,7 @@
     stop: document.getElementById("run-stop"),
     kill: document.getElementById("run-kill"),
     close: document.getElementById("run-close"),
+    page: document.getElementById("run-page"),
     reason: document.getElementById("run-reason"),
     reasonText: document.getElementById("run-reason-text"),
   };
@@ -213,10 +214,19 @@
     buttons({});
     els.reason.hidden = true;
     els.reasonText.value = "";
+    pageLink("");
     if (!dialog.open) dialog.showModal();
     session = newTerminal();
     session.term.focus();
     return session;
+  }
+
+  // pageLink points Open run page at the run of the window, and hides it
+  // while the window has no run yet.
+  function pageLink(id) {
+    if (!els.page) return;
+    els.page.hidden = !id;
+    els.page.href = "/runs/" + encodeURIComponent(id || "");
   }
 
   // ------------------------------------------------------------------ runs
@@ -272,6 +282,7 @@
   function attach(id) {
     var s = open("Run", "", "");
     s.id = id;
+    pageLink(id);
     history.replaceState(null, "", location.pathname + location.search + "#run=" + id);
     setState("running", "loading");
     api("GET", "/api/runs/" + encodeURIComponent(id)).then(function (res) {
@@ -309,6 +320,7 @@
   // connect attaches the terminal to a live run over the socket.
   function connect(s, run) {
     s.run = run;
+    pageLink(run.id);
     els.title.textContent = runTitle(run);
     els.who.textContent = run.user_name || "";
     var term = s.term;
@@ -382,6 +394,7 @@
   // playback writes the recording of a finished run into the terminal.
   function playback(s, run) {
     s.run = run;
+    pageLink(run.id);
     els.kind.textContent = "History";
     els.hint.textContent = "Recorded " + (run.started_at ? new Date(run.started_at).toLocaleString() : "") + ".";
     buttons({ again: run.can_run });
@@ -2654,9 +2667,8 @@
     }
     var r = e.run;
     var running = r.state === "running";
-    var verb = !running ? "View" : r.can_run ? "Attach to" : "Watch";
-    return '<a href="/runs/' + encodeURIComponent(r.id) + '" data-attach="' + escapeHTML(r.id) + '" class="recent" title="' +
-      escapeHTML(verb + " " + runTitle(r) + ", " + r.user_name + ", " + r.state) + '">' +
+    return '<a href="/runs/' + encodeURIComponent(r.id) + '" class="recent" title="' +
+      escapeHTML("Open " + runTitle(r) + ", " + r.user_name + ", " + r.state) + '">' +
       '<i class="dot ' + escapeHTML(r.state) + '"></i>' +
       '<span class="what"><b>' + escapeHTML(r.job) + '</b><small>' + escapeHTML(r.folder + (r.dir ? "/" + r.dir : "")) + '</small></span>' +
       (running ? '<svg class="ic act"><use href="#i-' + (r.can_run ? "play" : "eye") + '"/></svg>' : "") +

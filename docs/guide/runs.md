@@ -56,14 +56,15 @@ Starting a job, or attaching to a run, opens the run window over the
 page: the run's terminal, live.
 
 - **The run goes on without the window.** Closing it detaches; the run
-  keeps running, and the sidebar, the dashboard or this list open a window
-  on it again. A window that comes back gets the tail of what it missed.
+  keeps running, and the dashboard, this list or the run's page open a
+  window on it again. A window that comes back gets the tail of what it missed.
 - **Runners type into it.** Input goes to the job, and the terminal takes
   the window's size. A viewer can only watch in the window.
 - **Stop** signals the job to end (SIGHUP and SIGTERM, then SIGKILL after
   `TASK_UI_GRACE`, ten seconds) and records it as `stopped`. **Kill** ends it now, as
   `killed`.
 - **Run again** starts the job once more when it has ended.
+- **Open run page** in the window's header goes to the run's page.
 
 A finished run stays attachable, its last frame in memory, for
 `TASK_UI_KEEP`, fifteen minutes; after that it opens as history: its
