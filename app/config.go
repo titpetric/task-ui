@@ -57,8 +57,9 @@ type Config struct {
 	// Grace is how long a stopped process gets before the kill.
 	// TASK_UI_GRACE, default 10s.
 	Grace time.Duration
-	// Agent is the user a note on the board names with @ to make it an
-	// instruction to run. TASK_UI_AGENT; empty turns instructions off.
+	// Agent is the user a note on the board names with @ to have task-ui
+	// run the agent job on it; a note naming any other user waits for that
+	// user over MCP. TASK_UI_AGENT; empty leaves every instruction to MCP.
 	Agent string
 	// ComposeProject is the docker compose project task-ui runs in, whose
 	// compose up and down ask first on the actions bar.
@@ -72,8 +73,8 @@ type Config struct {
 	URL string
 	// AgentJob is the job an instruction runs, as folder/job, as the
 	// agent's user. TASK_UI_AGENT_JOB, default internal/claude-note; set
-	// empty, it leaves instructions open for an agent that reads the
-	// board over MCP.
+	// empty, it leaves the agent's instructions open too, for an agent that
+	// reads the board over MCP.
 	AgentJob string
 	// ArtifactHistory is how many versions the artifact history keeps
 	// before it squashes to one. TASK_UI_ARTIFACT_HISTORY, default 50; 0

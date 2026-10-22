@@ -40,7 +40,7 @@ func newFixture(t *testing.T) *fixture {
 	hash, err := access.HashPassword("demo")
 	assert.NoError(t, err)
 	htpasswd := filepath.Join(t.TempDir(), ".htpasswd")
-	assert.NoError(t, os.WriteFile(htpasswd, []byte("admin:"+hash+"\nguest:"+hash+"\nops:"+hash+"\n"), 0o600))
+	assert.NoError(t, os.WriteFile(htpasswd, []byte("admin:"+hash+"\nguest:"+hash+"\nops:"+hash+"\nconsuela:"+hash+"\n"), 0o600))
 
 	cfg := &app.Config{
 		Listen: "127.0.0.1:0", Root: root, Discover: true, Htpasswd: htpasswd,
@@ -56,7 +56,7 @@ func newFixture(t *testing.T) *fixture {
 	f := &fixture{server: httptest.NewServer(a.Handler()), tokens: map[string]string{}, root: root, notes: a.Board.Notes}
 	t.Cleanup(f.server.Close)
 	tokens := storage.NewUserAuthTokenStorage(a.DB)
-	for _, name := range []string{"admin", "guest", "ops"} {
+	for _, name := range []string{"admin", "guest", "ops", "consuela"} {
 		user, err := a.Users.GetByName(ctx, name)
 		assert.NoError(t, err)
 		token, hash, err := access.NewToken()

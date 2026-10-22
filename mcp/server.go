@@ -122,7 +122,8 @@ type empty struct{}
 const instructions = "task-ui runs the jobs of folders (atkins, Taskfile, make, npm, scripts) and workflows, a chain of jobs, " +
 	"as the user of the token. list_jobs and list_workflows show what there is, run_job and run_workflow start one " +
 	"and can wait for the outcome, list_runs and get_run show how runs went and their output. " +
-	"list_notes and note_comment read and answer the notes that name you, post_note leaves one, " +
+	"list_notes and note_comment read and answer the notes that name you, each an instruction to you to report on, " +
+	"post_note leaves one for whoever it names, " +
 	"and ask_prompt asks Claude in a folder and can wait for the answer."
 
 // ServeHTTP answers one JSON-RPC message per POST, in JSON. There is no

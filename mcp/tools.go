@@ -84,7 +84,7 @@ func tools() []Tool {
 		{
 			Name: "list_notes",
 			Description: "List the notes on the board with their replies, newest first. By default the open notes that name you with @: " +
-				"each is an instruction to do, then report on with note_comment. Notes to other users are not yours.",
+				"each is an instruction to you, from whoever may run jobs, to do and report on with note_comment. Notes to other users are not yours.",
 			InputSchema: object(map[string]Property{
 				"mention": str("Only notes that name this user; empty is you, * is anyone."),
 				"state":   {Type: "string", Description: "Only notes in this state; open unless given, * for any.", Enum: []string{"open", "working", "done", "failed", "*"}},
@@ -95,7 +95,8 @@ func tools() []Tool {
 		{
 			Name: "note_comment",
 			Description: "Reply to a note, and set the state of its instruction: working when you start, done or failed when you end, " +
-				"with what you did or why it failed. A change the author wants is a new note.",
+				"with what you did or why it failed. The state is for a user the note names, its author or an admin; anyone may reply. " +
+				"A change the author wants is a new note.",
 			InputSchema: object(map[string]Property{
 				"id":    str("The note's ID, from list_notes."),
 				"body":  str("The reply: what you did, what changed, where to look."),
