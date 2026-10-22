@@ -30,9 +30,9 @@ type KeyRequest struct {
 
 // listKeys returns the SSH key pairs of the instance SSH folder, the
 // encryption keys left out, beside the instance's encryption key and
-// the keys held for both uses. Admins only.
+// the keys held for both uses. Takes key/view.
 func (h *Handlers) listKeys(w http.ResponseWriter, r *http.Request) {
-	if !requireAdmin(w, r) {
+	if !h.require(w, r, "key/view") {
 		return
 	}
 	policies, err := h.opts.KeyPolicies.All(r.Context())
@@ -95,9 +95,9 @@ func (h *Handlers) setPolicies(r *http.Request, name string, req KeyRequest) err
 	return nil
 }
 
-// updateKey changes the roles whose runs get a key. Admins only.
+// updateKey changes the roles whose runs get a key. Takes key/edit.
 func (h *Handlers) updateKey(w http.ResponseWriter, r *http.Request) {
-	if !requireAdmin(w, r) {
+	if !h.require(w, r, "key/edit") {
 		return
 	}
 	name := param(r, "name")
@@ -130,7 +130,7 @@ func (h *Handlers) updateKey(w http.ResponseWriter, r *http.Request) {
 // generateKey makes a new pair. It keeps the existing pair of the same
 // type as a backup. An SSH key encrypts nothing, so no secret changes.
 func (h *Handlers) generateKey(w http.ResponseWriter, r *http.Request) {
-	if !requireAdmin(w, r) {
+	if !h.require(w, r, "key/edit") {
 		return
 	}
 	var req KeyRequest
@@ -153,7 +153,7 @@ func (h *Handlers) generateKey(w http.ResponseWriter, r *http.Request) {
 // uploadKey stores a private key as the pair of its type. A key the
 // instance or a workspace encrypts with answers 409.
 func (h *Handlers) uploadKey(w http.ResponseWriter, r *http.Request) {
-	if !requireAdmin(w, r) {
+	if !h.require(w, r, "key/edit") {
 		return
 	}
 	var req KeyRequest
@@ -179,7 +179,7 @@ func (h *Handlers) uploadKey(w http.ResponseWriter, r *http.Request) {
 
 // deleteKey removes a pair, or a backup, and its policies.
 func (h *Handlers) deleteKey(w http.ResponseWriter, r *http.Request) {
-	if !requireAdmin(w, r) {
+	if !h.require(w, r, "key/delete") {
 		return
 	}
 	name := param(r, "name")
@@ -197,9 +197,9 @@ func (h *Handlers) deleteKey(w http.ResponseWriter, r *http.Request) {
 // rotateEncryptKey generates a new encryption key for the instance and
 // writes the services' secrets, the integrations' settings, again for
 // it. The previous key stays as a backup and still opens them, so a
-// rekey that fails sets rekey_error. Admins only.
+// rekey that fails sets rekey_error. Takes key/edit.
 func (h *Handlers) rotateEncryptKey(w http.ResponseWriter, r *http.Request) {
-	if !requireAdmin(w, r) {
+	if !h.require(w, r, "key/edit") {
 		return
 	}
 	if h.opts.WorkspaceKeys == nil {

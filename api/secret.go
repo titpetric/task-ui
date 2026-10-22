@@ -24,9 +24,9 @@ type SecretView struct {
 	Name  string `json:"name"`
 }
 
-// listSecrets returns every secret, content withheld. Admins only.
+// listSecrets returns every secret, content withheld. Takes secret/view.
 func (h *Handlers) listSecrets(w http.ResponseWriter, r *http.Request) {
-	if !requireAdmin(w, r) {
+	if !h.require(w, r, "secret/view") {
 		return
 	}
 	secrets, err := h.opts.Secrets.List(r.Context())
@@ -46,7 +46,7 @@ func (h *Handlers) listSecrets(w http.ResponseWriter, r *http.Request) {
 
 // setSecret creates a secret or replaces its content.
 func (h *Handlers) setSecret(w http.ResponseWriter, r *http.Request) {
-	if !requireAdmin(w, r) {
+	if !h.require(w, r, "secret/edit") {
 		return
 	}
 	var req SecretRequest
@@ -112,7 +112,7 @@ func (h *Handlers) secretKey(r *http.Request, scope string) string {
 // rekeySecrets writes every secret again for the current key of its
 // scope: a workspace's, or the instance key for the services'.
 func (h *Handlers) rekeySecrets(w http.ResponseWriter, r *http.Request) {
-	if !requireAdmin(w, r) {
+	if !h.require(w, r, "secret/edit") {
 		return
 	}
 	n, err := h.opts.Secrets.Rekey(r.Context())
@@ -125,7 +125,7 @@ func (h *Handlers) rekeySecrets(w http.ResponseWriter, r *http.Request) {
 
 // deleteSecret removes a secret.
 func (h *Handlers) deleteSecret(w http.ResponseWriter, r *http.Request) {
-	if !requireAdmin(w, r) {
+	if !h.require(w, r, "secret/delete") {
 		return
 	}
 	if err := h.opts.Secrets.Delete(r.Context(), param(r, "id")); err != nil {

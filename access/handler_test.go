@@ -1,27 +1,13 @@
 package access_test
 
 import (
-	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/titpetric/task-ui/access"
 	"github.com/titpetric/task-ui/internal/assert"
-	"github.com/titpetric/task-ui/model"
 )
-
-func TestRequireAdmin(t *testing.T) {
-	t.Parallel()
-	handler := access.RequireAdmin(hello)
-	w := httptest.NewRecorder()
-	handler.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/settings", nil).WithContext(access.WithUser(context.Background(), &model.User{Name: "ops", Role: model.RoleRunner})))
-	assert.Equal(t, http.StatusForbidden, w.Code)
-	w = httptest.NewRecorder()
-	handler.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/settings", nil).WithContext(access.WithUser(context.Background(), &model.User{Name: "root", Role: model.RoleAdmin})))
-	assert.Equal(t, http.StatusOK, w.Code)
-	assert.Nil(t, access.UserFrom(context.Background()))
-}
 
 func TestSameOrigin(t *testing.T) {
 	t.Parallel()

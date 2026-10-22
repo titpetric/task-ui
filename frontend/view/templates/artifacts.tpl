@@ -4,7 +4,7 @@
 		<h2>Artifacts</h2>
 		<p>The files the runs leave in <code>$TASK_UI_ARTIFACTS</code>, gathered into one tree: a run that writes a file again replaces it, and the history keeps the version before.</p>
 	</div>
-	{{- if .User.CanAdmin }}
+	{{- if .Can "artifact/delete" }}
 	<div class="actions">
 		<button type="button" class="btn btn-danger" data-delete="/api/artifacts" data-confirm="Delete all the artifacts? Every file, its history and the record of every version go." data-confirm-ok="Delete all" data-next="reload"><svg class="ic"><use href="#i-trash"/></svg>Delete all</button>
 	</div>
@@ -46,7 +46,7 @@
 					<a class="btn-icon" href="{{ .Href }}?download" title="Download {{ .Name }}" aria-label="Download {{ .Name }}"><svg class="ic"><use href="#i-download"/></svg></a>
 					<button type="button" class="btn-icon" data-copy="{{ .Href }}" title="Copy the link to {{ .Name }}" aria-label="Copy the link to {{ .Name }}"><svg class="ic"><use href="#i-copy"/></svg></button>
 					{{- end }}
-					{{- if $.User.CanAdmin }}
+					{{- if $.Can "artifact/edit" }}
 					<button type="button" class="btn-icon danger" data-delete="/api{{ if .Dir }}/artifacts/files/{{ .Path }}{{ else }}{{ .Href }}{{ end }}" data-confirm="Delete {{ .Path }}{{ if .Dir }}/ and everything in it{{ end }} from the tree? The history keeps its versions." data-confirm-ok="Delete" data-next="reload" title="Delete from the tree" aria-label="Delete {{ .Name }}"><svg class="ic"><use href="#i-trash"/></svg></button>
 					{{- end }}
 				</td>
@@ -87,7 +87,7 @@
 				<td class="nowrap">{{ size .ByteSize }}</td>
 				<td class="actions">
 					<a class="btn-icon" href="/api/artifacts/{{ .ID }}" title="Download this version" aria-label="Download {{ .Name }}"><svg class="ic"><use href="#i-download"/></svg></a>
-					{{- if $.User.CanAdmin }}<button type="button" class="btn-icon danger" data-delete="/api/artifacts/{{ .ID }}" data-confirm="Delete the record of {{ .Name }} from {{ .Folder }} / {{ .Job }}?" data-next="reload" title="Delete" aria-label="Delete {{ .Name }}"><svg class="ic"><use href="#i-trash"/></svg></button>{{ end }}
+					{{- if $.Can "artifact/delete" }}<button type="button" class="btn-icon danger" data-delete="/api/artifacts/{{ .ID }}" data-confirm="Delete the record of {{ .Name }} from {{ .Folder }} / {{ .Job }}?" data-next="reload" title="Delete" aria-label="Delete {{ .Name }}"><svg class="ic"><use href="#i-trash"/></svg></button>{{ end }}
 				</td>
 			</tr>
 		{{- else }}

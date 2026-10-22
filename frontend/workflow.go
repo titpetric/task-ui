@@ -67,7 +67,7 @@ func (h *Handlers) workflowView(ctx context.Context, p *view.Page, wf model.Work
 	if runs, err := h.opts.WorkflowRuns.ListByWorkflow(ctx, wf.ID, storage.WorkflowRunFilter{Limit: 1}); err == nil && len(runs) > 0 {
 		v.LastRun = &runs[0]
 	}
-	v.CanChange = user.CanAdmin() || (wf.UserID != "" && wf.UserID == user.ID)
+	v.CanChange = p.Can("workflow/edit") && (user.CanAdmin() || (wf.UserID != "" && wf.UserID == user.ID))
 	return v
 }
 
@@ -106,6 +106,9 @@ func (h *Handlers) stepWorkflows(ctx context.Context, p *view.Page, self string)
 // workflows lists the workflows and takes a new one. Any user may make
 // one, from the jobs they can see.
 func (h *Handlers) workflows(w http.ResponseWriter, r *http.Request) {
+	if !h.require(w, r, "workflow/view") {
+		return
+	}
 	p := h.page(r, "Workflows")
 	p.Crumbs = view.Crumbs("Workflows")
 	p.Workflows = p.SideWorkflows
@@ -116,6 +119,9 @@ func (h *Handlers) workflows(w http.ResponseWriter, r *http.Request) {
 // workflowNew shows the form for a new workflow. Any user may make one,
 // from the jobs and workflows they see.
 func (h *Handlers) workflowNew(w http.ResponseWriter, r *http.Request) {
+	if !h.require(w, r, "workflow/edit") {
+		return
+	}
 	p := h.page(r, "New workflow")
 	p.Crumbs = view.Crumbs("Workflows", "/workflows", "New")
 	p.StepWorkflows = p.SideWorkflows
@@ -125,6 +131,9 @@ func (h *Handlers) workflowNew(w http.ResponseWriter, r *http.Request) {
 // loadWorkflow fills the page with the workflow a route names, or
 // renders the not found page and returns nil.
 func (h *Handlers) loadWorkflow(w http.ResponseWriter, r *http.Request) (*view.Page, map[string]string) {
+	if !h.require(w, r, "workflow/view") {
+		return nil, nil
+	}
 	wf, err := h.opts.Workflows.Get(r.Context(), param(r, "id"))
 	if err != nil {
 		h.missing(w, r, "No workflow with that ID.")

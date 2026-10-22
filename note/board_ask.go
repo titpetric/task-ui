@@ -18,7 +18,8 @@ import (
 // prompt.
 const PromptJob = "claude-prompt"
 
-// ErrForbidden reports a prompt from someone who is not an admin.
+// ErrForbidden reports a prompt from someone without prompt/edit, or
+// who may not run the prompt job.
 var ErrForbidden = errors.New("only an admin prompts Claude")
 
 // ErrNoPrompt reports a place no prompt runs in: a directory or the
@@ -30,13 +31,13 @@ var ErrNoPrompt = errors.New("no prompt runs here")
 // open, of the folder's workspace. With parentID it replies in a
 // prompt's thread instead, in the thread's place, and opens it again.
 // Either way the board starts the prompt job on the thread as the user
-// and replies with Claude's answer when the run ends. Only an admin
-// asks.
+// and replies with Claude's answer when the run ends. Asking takes
+// prompt/edit.
 func (b *Board) Ask(ctx context.Context, user *model.User, parentID, dir, body string) (*model.Note, error) {
 	if user == nil || strings.TrimSpace(body) == "" {
 		return nil, fmt.Errorf("%w: a prompt needs an author and some text", ErrInvalid)
 	}
-	if !user.CanAdmin() {
+	if !b.permissions(ctx, user).Allowed("prompt/edit") {
 		return nil, ErrForbidden
 	}
 	var parent *model.Note
@@ -176,7 +177,7 @@ func (b *Board) promptRequest(ctx context.Context, user *model.User, dir string)
 	if job == nil {
 		return req, fmt.Errorf("%w: no job %s/%s", ErrNoPrompt, model.Internal, PromptJob)
 	}
-	if !user.CanRun(internal.ID, internal.Allow, job.Allow) {
+	if !b.permissions(ctx, user).Run(internal.ID, internal.Allow, job.Allow) {
 		return req, ErrForbidden
 	}
 	if job.Dir != "" {

@@ -33,9 +33,9 @@ func (h *Handlers) integrationView(r *http.Request, kind integration.Kind) (Inte
 }
 
 // listIntegrations returns every integration with its settings, secrets
-// withheld. Admins only.
+// withheld. Takes integration/view.
 func (h *Handlers) listIntegrations(w http.ResponseWriter, r *http.Request) {
-	if !requireAdmin(w, r) {
+	if !h.require(w, r, "integration/view") {
 		return
 	}
 	views := []IntegrationView{}
@@ -50,9 +50,14 @@ func (h *Handlers) listIntegrations(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"integrations": views})
 }
 
-// saveIntegration writes an integration's settings. Admins only.
+// saveIntegration writes an integration's settings, with
+// integration/edit. Beszel's are the inventory's source, so they take
+// inventory/edit too.
 func (h *Handlers) saveIntegration(w http.ResponseWriter, r *http.Request) {
-	if !requireAdmin(w, r) {
+	if !h.require(w, r, "integration/edit") {
+		return
+	}
+	if param(r, "id") == integration.Beszel && !h.require(w, r, "inventory/edit") {
 		return
 	}
 	var req IntegrationRequest
@@ -73,9 +78,14 @@ func (h *Handlers) saveIntegration(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, view)
 }
 
-// deleteIntegration removes an integration's settings. Admins only.
+// deleteIntegration removes an integration's settings, with
+// integration/delete; Beszel's, the inventory's source, with
+// inventory/delete too.
 func (h *Handlers) deleteIntegration(w http.ResponseWriter, r *http.Request) {
-	if !requireAdmin(w, r) {
+	if !h.require(w, r, "integration/delete") {
+		return
+	}
+	if param(r, "id") == integration.Beszel && !h.require(w, r, "inventory/delete") {
 		return
 	}
 	if err := h.opts.Integrations.Delete(r.Context(), param(r, "id")); err != nil {
@@ -88,6 +98,9 @@ func (h *Handlers) deleteIntegration(w http.ResponseWriter, r *http.Request) {
 // listHosts returns the inventory: the hosts of the Beszel integration,
 // largest first.
 func (h *Handlers) listHosts(w http.ResponseWriter, r *http.Request) {
+	if !h.require(w, r, "inventory/view") {
+		return
+	}
 	if h.opts.Hosts == nil {
 		fail(w, http.StatusNotFound, beszel.ErrOff.Error())
 		return
@@ -109,9 +122,9 @@ const runTimeout = 2 * time.Minute
 
 // runOnHosts runs a command on hosts of the inventory, all at once, over
 // the ssh login task-ui has to each, and returns each host's output and
-// exit code. Admins only: the logins reach the hosts as debian or root.
+// exit code. Takes hosts: the logins reach the hosts as debian or root.
 func (h *Handlers) runOnHosts(w http.ResponseWriter, r *http.Request) {
-	if !requireAdmin(w, r) {
+	if !h.require(w, r, "hosts") {
 		return
 	}
 	if h.opts.Hosts == nil || h.opts.SSH == nil {

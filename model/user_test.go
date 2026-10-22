@@ -48,26 +48,18 @@ func TestUser_CanSee(t *testing.T) {
 	assert.False(t, (&model.User{Role: model.RoleRunner, Folders: `["internal"]`}).CanSee(model.Internal))
 }
 
-func TestUser_CanRun(t *testing.T) {
+func TestUser_Listed(t *testing.T) {
 	t.Parallel()
-	admin := &model.User{Name: "root", Role: model.RoleAdmin}
 	ops := &model.User{Name: "ops", Role: model.RoleRunner}
-	dev := &model.User{Name: "dev", Role: model.RoleRunner}
-	scoped := &model.User{Name: "web", Role: model.RoleRunner, Folders: `["web"]`}
-	guest := &model.User{Name: "guest", Role: model.RoleViewer}
 	locked := []string{"ops"}
 	admins := []string{"admin"}
 
-	assert.True(t, admin.CanRun("infra", locked, admins))
-	assert.True(t, ops.CanRun("infra", locked, nil))
-	assert.False(t, ops.CanRun("infra", locked, admins))
-	assert.True(t, dev.CanRun("web", nil, nil))
-	assert.False(t, dev.CanRun("infra", locked, nil))
-	assert.True(t, scoped.CanRun("web", nil, nil))
-	assert.False(t, scoped.CanRun("infra", nil, nil))
-	assert.False(t, guest.CanRun("web", nil, nil))
-	assert.False(t, (*model.User)(nil).CanRun("web", nil, nil))
-	assert.True(t, ops.CanRun("infra", []string{"runner"}, nil), "a role in the allow list")
+	assert.True(t, ops.Listed(nil, nil))
+	assert.True(t, ops.Listed(locked, nil))
+	assert.False(t, ops.Listed(locked, admins))
+	assert.False(t, (&model.User{Name: "dev", Role: model.RoleRunner}).Listed(locked, nil))
+	assert.True(t, ops.Listed([]string{"runner"}, nil), "a role in the allow list")
+	assert.False(t, (*model.User)(nil).Listed(nil, nil))
 }
 
 func TestUser_CanAdmin(t *testing.T) {

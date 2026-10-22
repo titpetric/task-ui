@@ -5,16 +5,29 @@ import (
 	"errors"
 
 	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/permission"
 )
 
-// UserStorage keeps the users.
+// UserStorage keeps the users, and the permission policies of the users
+// and their roles.
 type UserStorage struct {
-	db DB
+	db       DB
+	policies *PermissionPolicyStorage
 }
 
 // NewUserStorage returns the storage over a pool.
 func NewUserStorage(db DB) *UserStorage {
-	return &UserStorage{db: db}
+	return &UserStorage{db: db, policies: NewPermissionPolicyStorage(db)}
+}
+
+// Policies returns the permission policies, the one cache of them.
+func (s *UserStorage) Policies() *PermissionPolicyStorage {
+	return s.policies
+}
+
+// Permissions returns what a user may do.
+func (s *UserStorage) Permissions(ctx context.Context, user *model.User) permission.Set {
+	return s.policies.For(ctx, user)
 }
 
 // Create inserts a user. It fills in an empty ID and sets the timestamps.

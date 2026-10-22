@@ -12,6 +12,9 @@ import (
 // notes shows the notes board: the notes newest first, each with its
 // replies, and the agent a note names to start work.
 func (h *Handlers) notes(w http.ResponseWriter, r *http.Request) {
+	if !h.require(w, r, "note/view") {
+		return
+	}
 	if h.opts.Board == nil {
 		h.missing(w, r, "Notes are off.")
 		return

@@ -7,10 +7,10 @@ import (
 	"github.com/titpetric/task-ui/folder"
 )
 
-// envFile shows an env file of a folder, to edit. Admins only: the
+// envFile shows an env file of a folder, to edit. Takes env/view: the
 // content may hold what the folder's own file keeps.
 func (h *Handlers) envFile(w http.ResponseWriter, r *http.Request, f *folder.Folder, path string) {
-	if !h.requireAdmin(w, r) {
+	if !h.require(w, r, "env/view") {
 		return
 	}
 	file, err := h.opts.Env.File(r.Context(), f, path)

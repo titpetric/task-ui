@@ -13,6 +13,7 @@ import (
 	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/frontend/view"
 	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/permission"
 	"github.com/titpetric/task-ui/runner"
 	"github.com/titpetric/task-ui/storage"
 )
@@ -30,6 +31,7 @@ func (h *Handlers) page(r *http.Request, title string) *view.Page {
 		Title:         title,
 		Path:          r.URL.Path,
 		User:          user,
+		Permissions:   h.permissions(r),
 		LoginRequired: h.opts.Guard.LoginRequired(),
 		Version:       h.opts.Version,
 		Form:          map[string]string{},
@@ -282,15 +284,36 @@ func (h *Handlers) missing(w http.ResponseWriter, r *http.Request, reason string
 	h.render(w, http.StatusNotFound, "notfound", p)
 }
 
-// requireAdmin renders a refusal for anyone but an admin and reports it.
-func (h *Handlers) requireAdmin(w http.ResponseWriter, r *http.Request) bool {
-	if access.UserFrom(r.Context()).CanAdmin() {
+// permissions returns what the user of a request may do.
+func (h *Handlers) permissions(r *http.Request) permission.Set {
+	user := access.UserFrom(r.Context())
+	if h.opts.Users == nil {
+		return permission.Set{User: user}
+	}
+	return h.opts.Users.Permissions(r.Context(), user)
+}
+
+// can reports whether the user of a request may do what a path of
+// `config/permissions.yml` names.
+func (h *Handlers) can(r *http.Request, path string) bool {
+	return h.permissions(r).Allowed(path)
+}
+
+// require renders a refusal for a user who may not do what a path
+// names, and reports whether the user may.
+func (h *Handlers) require(w http.ResponseWriter, r *http.Request, path string) bool {
+	if h.can(r, path) {
 		return true
 	}
+	h.refuse(w, r)
+	return false
+}
+
+// refuse renders the refusal of a page the user may not see.
+func (h *Handlers) refuse(w http.ResponseWriter, r *http.Request) {
 	p := h.page(r, "Admins only")
 	p.Error = "Settings are for admins."
 	h.render(w, http.StatusForbidden, "notfound", p)
-	return false
 }
 
 // crumbsOf walks a nested folder ID into a breadcrumb, one step per

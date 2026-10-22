@@ -26,6 +26,9 @@ import (
 // runs left, a directory at a time (?path=), the space the files and their
 // history take, and the record of every version, newest first.
 func (h *Handlers) artifacts(w http.ResponseWriter, r *http.Request) {
+	if !h.require(w, r, "artifact/view") {
+		return
+	}
 	user := access.UserFrom(r.Context())
 	q := r.URL.Query()
 	p := h.page(r, "Artifacts")
@@ -76,6 +79,9 @@ func (h *Handlers) artifacts(w http.ResponseWriter, r *http.Request) {
 // or the one ?version= names, inline: an image or a page opens in the
 // browser, ?download saves it. A directory goes to its listing.
 func (h *Handlers) artifactFile(w http.ResponseWriter, r *http.Request) {
+	if !h.require(w, r, "artifact/view") {
+		return
+	}
 	store := h.opts.ArtifactStore
 	rel := strings.Trim(param(r, "*"), "/")
 	if store == nil || rel == "" {
@@ -221,6 +227,9 @@ func escapePath(p string) string {
 // tar of the latest files the user may see: /artifacts/<dir>.tgz, or
 // /artifacts.tgz for the whole tree.
 func (h *Handlers) artifactArchive(w http.ResponseWriter, r *http.Request) {
+	if !h.require(w, r, "artifact/view") {
+		return
+	}
 	store := h.opts.ArtifactStore
 	wanted := param(r, "*")
 	if r.URL.Path != "/artifacts.tgz" && !strings.HasSuffix(wanted, ".tgz") {

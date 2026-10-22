@@ -21,6 +21,9 @@ type ScheduleRequest struct {
 
 // listSchedules returns the schedules of the folders the user may see.
 func (h *Handlers) listSchedules(w http.ResponseWriter, r *http.Request) {
+	if !h.require(w, r, "schedule/view") {
+		return
+	}
 	user := access.UserFrom(r.Context())
 	schedules, err := h.opts.Schedules.List(r.Context())
 	if err != nil {
@@ -38,6 +41,9 @@ func (h *Handlers) listSchedules(w http.ResponseWriter, r *http.Request) {
 
 // createSchedule adds a schedule for a job the user may run.
 func (h *Handlers) createSchedule(w http.ResponseWriter, r *http.Request) {
+	if !h.require(w, r, "schedule/edit") {
+		return
+	}
 	var req ScheduleRequest
 	if err := readJSON(r, &req); err != nil {
 		fail(w, http.StatusBadRequest, err.Error())
@@ -53,7 +59,7 @@ func (h *Handlers) createSchedule(w http.ResponseWriter, r *http.Request) {
 		fail(w, http.StatusBadRequest, folder.ErrShellUnattended.Error())
 		return
 	}
-	if !canRun(user, f, job) {
+	if !h.canRun(r, f, job) {
 		fail(w, http.StatusForbidden, "your role may view this job, but not schedule it")
 		return
 	}
@@ -87,6 +93,9 @@ func (h *Handlers) scheduleOf(r *http.Request) (*model.Schedule, error) {
 
 // getSchedule returns one schedule.
 func (h *Handlers) getSchedule(w http.ResponseWriter, r *http.Request) {
+	if !h.require(w, r, "schedule/view") {
+		return
+	}
 	schedule, err := h.scheduleOf(r)
 	if err != nil {
 		failErr(w, err)
@@ -103,11 +112,14 @@ func (h *Handlers) mayChange(r *http.Request, schedule *model.Schedule) bool {
 		return true
 	}
 	f, job, _ := h.target(r, schedule.Folder, schedule.Job)
-	return canRun(user, f, job)
+	return h.canRun(r, f, job)
 }
 
 // updateSchedule changes the expression or switches a schedule.
 func (h *Handlers) updateSchedule(w http.ResponseWriter, r *http.Request) {
+	if !h.require(w, r, "schedule/edit") {
+		return
+	}
 	schedule, err := h.scheduleOf(r)
 	if err != nil {
 		failErr(w, err)
@@ -145,6 +157,9 @@ func (h *Handlers) updateSchedule(w http.ResponseWriter, r *http.Request) {
 
 // deleteSchedule removes a schedule.
 func (h *Handlers) deleteSchedule(w http.ResponseWriter, r *http.Request) {
+	if !h.require(w, r, "schedule/delete") {
+		return
+	}
 	schedule, err := h.scheduleOf(r)
 	if err != nil {
 		failErr(w, err)

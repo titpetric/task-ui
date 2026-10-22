@@ -26,6 +26,7 @@ import (
 	"github.com/titpetric/task-ui/event"
 	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/permission"
 	"github.com/titpetric/task-ui/recording"
 	"github.com/titpetric/task-ui/runner"
 	"github.com/titpetric/task-ui/storage"
@@ -98,7 +99,7 @@ func (b *Board) Post(ctx context.Context, user *model.User, parentID, body strin
 		b.publish(note)
 		return note, nil
 	}
-	instruction := b.instructs(user, body)
+	instruction := b.instructs(ctx, user, body)
 	if instruction && parent == nil {
 		note.State = model.NoteOpen
 	}
@@ -127,9 +128,19 @@ func (b *Board) Post(ctx context.Context, user *model.User, parentID, body strin
 
 // instructs reports whether a note of the user's with the body is an
 // instruction: it names the agent, and the user is someone else who may
-// run jobs, as a viewer's note to the agent is a message.
-func (b *Board) instructs(user *model.User, body string) bool {
-	return b.Agent != "" && user.Name != b.Agent && user.Role != model.RoleViewer && contains(model.Mentions(body), b.Agent)
+// run jobs, as a note to the agent from someone who may not is a
+// message.
+func (b *Board) instructs(ctx context.Context, user *model.User, body string) bool {
+	return b.Agent != "" && user.Name != b.Agent && contains(model.Mentions(body), b.Agent) && b.permissions(ctx, user).Allowed("run")
+}
+
+// permissions returns what a user may do; without the users, an admin
+// may do everything and anyone else nothing.
+func (b *Board) permissions(ctx context.Context, user *model.User) permission.Set {
+	if b.Users == nil {
+		return permission.Set{User: user}
+	}
+	return b.Users.Permissions(ctx, user)
 }
 
 // Comment replies to a note, and moves its instruction to the state the

@@ -16,7 +16,7 @@ import (
 // TASK_UI_PROMPT and the directory in TASK_UI_PROMPT_DIR. It answers with
 // the note; Claude's answer is a reply to it once the run ends.
 func (h *Handlers) startPrompt(w http.ResponseWriter, r *http.Request) {
-	if !requireAdmin(w, r) || !h.board(w) {
+	if !h.require(w, r, "prompt/edit") || !h.board(w) {
 		return
 	}
 	var req PromptRequest
@@ -73,9 +73,9 @@ func (h *Handlers) ask(w http.ResponseWriter, r *http.Request, req PromptRequest
 
 // listPrompts returns the prompt threads of a folder, or of ?dir= inside
 // it, ?folder=_ for the root, newest first, each with its replies:
-// ?limit=. Admins only.
+// ?limit=. Takes prompt/view.
 func (h *Handlers) listPrompts(w http.ResponseWriter, r *http.Request) {
-	if !requireAdmin(w, r) || !h.board(w) {
+	if !h.require(w, r, "prompt/view") || !h.board(w) {
 		return
 	}
 	q := r.URL.Query()

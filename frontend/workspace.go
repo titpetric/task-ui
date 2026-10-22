@@ -12,7 +12,7 @@ import (
 
 // workspaces lists the workspaces and the projects cloned inside each.
 func (h *Handlers) workspaces(w http.ResponseWriter, r *http.Request) {
-	if !h.requireAdmin(w, r) {
+	if !h.require(w, r, "workspace/view") {
 		return
 	}
 	p := h.page(r, "Workspaces")
@@ -25,7 +25,7 @@ func (h *Handlers) workspaces(w http.ResponseWriter, r *http.Request) {
 
 // workspaceNew shows the form that clones a workspace.
 func (h *Handlers) workspaceNew(w http.ResponseWriter, r *http.Request) {
-	if !h.requireAdmin(w, r) {
+	if !h.require(w, r, "workspace/edit") {
 		return
 	}
 	p := h.page(r, "Add workspace")
@@ -36,7 +36,7 @@ func (h *Handlers) workspaceNew(w http.ResponseWriter, r *http.Request) {
 // workspaceEdit shows a workspace's title and description, its keys,
 // and its delete, which names the projects that go with it.
 func (h *Handlers) workspaceEdit(w http.ResponseWriter, r *http.Request) {
-	if !h.requireAdmin(w, r) {
+	if !h.require(w, r, "workspace/view") {
 		return
 	}
 	name := param(r, "folder")

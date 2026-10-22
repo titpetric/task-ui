@@ -48,24 +48,16 @@ func (u *User) CanSee(folder string) bool {
 	return len(list) == 0 || slices.Contains(list, folder)
 }
 
-// CanRun reports whether the user may run a job, given the allow list of
-// its folder and the allow list of the job. Admins may run everything
-// they see; runners may run what the allow lists permit; viewers run
-// nothing.
-func (u *User) CanRun(folder string, folderAllow, jobAllow []string) bool {
-	if u == nil || !u.CanSee(folder) {
-		return false
-	}
-	switch u.Role {
-	case RoleAdmin:
-		return true
-	case RoleRunner:
-		return u.allowed(folderAllow) && u.allowed(jobAllow)
-	}
-	return false
+// Listed reports whether allow lists let the user run a job: the list
+// of its folder and the list of the job, each empty or naming the user
+// or the user's role. What the user may do besides is the permission
+// package's to say.
+func (u *User) Listed(folderAllow, jobAllow []string) bool {
+	return u != nil && u.allowed(folderAllow) && u.allowed(jobAllow)
 }
 
-// CanAdmin reports whether the user may manage the instance.
+// CanAdmin reports whether the user holds the admin role, which may do
+// everything, whatever the permission policies say.
 func (u *User) CanAdmin() bool {
 	return u != nil && u.Role == RoleAdmin
 }

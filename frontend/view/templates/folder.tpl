@@ -74,14 +74,14 @@
 	<h3>Environment <small>dotenv files the sources read</small></h3>
 	<div class="table-wrap">
 	<table class="table">
-		<thead><tr><th>File</th><th>Variables</th><th>State</th>{{ if $.User.CanAdmin }}<th></th>{{ end }}</tr></thead>
+		<thead><tr><th>File</th><th>Variables</th><th>State</th>{{ if $.Can "env/view" }}<th></th>{{ end }}</tr></thead>
 		<tbody>
 		{{- range .EnvFiles }}
 			<tr>
 				<td class="key"><svg class="ic"><use href="#i-file"/></svg> {{ .Path }}</td>
 				<td class="desc">{{ if .Keys }}{{ join .Keys ", " }}{{ else }}<span class="faint">none</span>{{ end }}</td>
 				<td>{{ if .Managed }}<span class="badge ok">managed</span>{{ else if .Exists }}<span class="badge">in folder</span>{{ else }}<span class="badge bad">missing</span>{{ end }}</td>
-				{{- if $.User.CanAdmin }}
+				{{- if $.Can "env/view" }}
 				<td class="actions"><a class="btn-icon" href="{{ $.Href $p.ID }}/env/{{ .Path }}" title="Edit {{ .Path }}" aria-label="Edit {{ .Path }}"><svg class="ic"><use href="#i-edit"/></svg></a></td>
 				{{- end }}
 			</tr>

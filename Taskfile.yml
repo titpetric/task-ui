@@ -40,9 +40,10 @@ tasks:
       - scripts/smoke.sh
 
   lint:
-    desc: "Lint with splint, zero findings is the bar"
+    desc: "Lint with splint and rulelint, zero findings is the bar"
     cmds:
       - splint ./...
+      - go run ./internal/cmd/rulelint
 
   install:
     desc: "Install task-ui"

@@ -10,6 +10,9 @@ import (
 
 // schedules lists what runs on a schedule, and takes a new one.
 func (h *Handlers) schedules(w http.ResponseWriter, r *http.Request) {
+	if !h.require(w, r, "schedule/view") {
+		return
+	}
 	user := access.UserFrom(r.Context())
 	p := h.page(r, "Scheduled")
 	p.Crumbs = view.Crumbs("Scheduled")

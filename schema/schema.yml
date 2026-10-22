@@ -230,6 +230,55 @@
       columns:
         - workspace_id
         - dir
+- name: permission_policy
+  comment: Permission Policy
+  columns:
+    - name: id
+      type: text
+      key: PRI
+      comment: ID
+      datatype: char(26)
+    - name: subject_kind
+      type: TEXT
+      key: MUL
+      comment: Subject Kind
+      datatype: varchar
+      values:
+        - role
+        - user
+    - name: subject
+      type: text
+      key: MUL
+      comment: Subject
+      datatype: varchar
+    - name: path
+      type: text
+      key: MUL
+      comment: Path
+      datatype: varchar
+    - name: effect
+      type: TEXT
+      comment: Effect
+      datatype: varchar
+      values:
+        - allow
+        - deny
+    - name: created_at
+      type: timestamp
+      comment: Created At
+      datatype: datetime
+  indexes:
+    - name: sqlite_autoindex_permission_policy_1
+      columns:
+        - id
+      primary: true
+      unique: true
+    - name: idx_permission_policy_subject_path
+      columns:
+        - subject_kind
+        - subject
+        - path
+      unique: true
 - name: project
   comment: Project
   columns:

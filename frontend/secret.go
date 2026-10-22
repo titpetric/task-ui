@@ -16,7 +16,7 @@ import (
 // secrets lists the secrets by workspace, values withheld; ?workspace=
 // shows one workspace alone.
 func (h *Handlers) secrets(w http.ResponseWriter, r *http.Request) {
-	if !h.requireAdmin(w, r) {
+	if !h.require(w, r, "secret/view") {
 		return
 	}
 	p := h.page(r, "Secrets")
@@ -56,7 +56,7 @@ func rekeyedNotice(n, what string) string {
 
 // secretNew shows the form for a new secret, scoped by the query.
 func (h *Handlers) secretNew(w http.ResponseWriter, r *http.Request) {
-	if !h.requireAdmin(w, r) {
+	if !h.require(w, r, "secret/edit") {
 		return
 	}
 	scope := r.URL.Query().Get("scope")
@@ -95,7 +95,7 @@ func keyedScope(groups []view.SecretGroup, scope, workspace string) string {
 
 // secretEdit shows the form to replace a secret's value.
 func (h *Handlers) secretEdit(w http.ResponseWriter, r *http.Request) {
-	if !h.requireAdmin(w, r) {
+	if !h.require(w, r, "secret/view") {
 		return
 	}
 	q := r.URL.Query()

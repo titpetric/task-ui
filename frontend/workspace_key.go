@@ -7,12 +7,10 @@ import (
 	"github.com/titpetric/task-ui/model"
 )
 
-// keyWorkspace returns the workspace a key page names, for an admin,
-// answering the request when there is none or the keyring is off.
+// keyWorkspace returns the workspace a key page names, answering the
+// request when there is none or the keyring is off. The page checks the
+// permission first.
 func (h *Handlers) keyWorkspace(w http.ResponseWriter, r *http.Request) *model.Workspace {
-	if !h.requireAdmin(w, r) {
-		return nil
-	}
 	name := param(r, "folder")
 	if h.opts.Workspaces == nil || h.opts.WorkspaceKeys == nil {
 		h.missing(w, r, "No workspace named "+name+".")
@@ -57,6 +55,9 @@ func (h *Handlers) workspaceKeyPage(r *http.Request, workspace *model.Workspace,
 // workspaceKeyGenerate shows the form that generates an SSH key for a
 // workspace.
 func (h *Handlers) workspaceKeyGenerate(w http.ResponseWriter, r *http.Request) {
+	if !h.require(w, r, "workspace/edit") {
+		return
+	}
 	workspace := h.keyWorkspace(w, r)
 	if workspace == nil {
 		return
@@ -67,6 +68,9 @@ func (h *Handlers) workspaceKeyGenerate(w http.ResponseWriter, r *http.Request) 
 // workspaceKeyUpload shows the form that uploads an SSH key for a
 // workspace, or with ?encrypt=1 its encryption key.
 func (h *Handlers) workspaceKeyUpload(w http.ResponseWriter, r *http.Request) {
+	if !h.require(w, r, "workspace/edit") {
+		return
+	}
 	workspace := h.keyWorkspace(w, r)
 	if workspace == nil {
 		return
@@ -87,6 +91,9 @@ func (h *Handlers) workspaceKeyUpload(w http.ResponseWriter, r *http.Request) {
 // workspaceKeyEdit shows the form that sets whose runs get one of a
 // workspace's SSH keys.
 func (h *Handlers) workspaceKeyEdit(w http.ResponseWriter, r *http.Request) {
+	if !h.require(w, r, "workspace/view") {
+		return
+	}
 	workspace := h.keyWorkspace(w, r)
 	if workspace == nil {
 		return

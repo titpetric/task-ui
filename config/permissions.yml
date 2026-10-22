@@ -1,0 +1,28 @@
+# Each section gets these rules. Creating, rotating, exporting and
+# managing keys count as edit; replies and states edit a note or prompt.
+rules:
+  all: "Allow All"
+  view: "Allow View"
+  edit: "Allow Edits"
+  delete: "Allow Deletes"
+
+sections:
+  workspace: "Workspaces"
+  project: "Projects"
+  note: "Notes"
+  prompt: "Prompts"
+  workflow: "Workflows"
+  schedule: "Schedules"
+  artifact: "Artifacts"
+  env: "Env Files"
+  secret: "Secrets"
+  key: "Instance Keys"
+  integration: "Integrations"
+  inventory: "Inventory"
+  user: "Users"
+
+# What a user may do in the application, beyond the sections.
+permissions:
+  run: "Run Jobs"
+  shell: "Enter Shell"
+  hosts: "Run on Hosts"

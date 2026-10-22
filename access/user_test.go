@@ -13,4 +13,5 @@ func TestWithUser(t *testing.T) {
 	t.Parallel()
 	ctx := access.WithUser(context.Background(), &model.User{Name: "x"})
 	assert.Equal(t, "x", access.UserFrom(ctx).Name)
+	assert.Nil(t, access.UserFrom(context.Background()))
 }

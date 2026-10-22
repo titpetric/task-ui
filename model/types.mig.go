@@ -480,6 +480,74 @@ var NoteFields = []string{"id", "channel", "parent_id", "user_id", "user_name", 
 // NotePrimaryFields are the primary key fields in the DB table.
 var NotePrimaryFields = []string{"id"}
 
+// PermissionPolicy generated for db table `permission_policy`.
+//
+// Permission Policy.
+type PermissionPolicy struct {
+	// ID
+	ID string `db:"id" json:"id"`
+
+	// Subject Kind
+	SubjectKind string `db:"subject_kind" json:"subject_kind"`
+
+	// Subject
+	Subject string `db:"subject" json:"subject"`
+
+	// Path
+	Path string `db:"path" json:"path"`
+
+	// Effect
+	Effect string `db:"effect" json:"effect"`
+
+	// Created At
+	CreatedAt *time.Time `db:"created_at" json:"created_at"`
+}
+
+// GetID will return the value of ID.
+func (p *PermissionPolicy) GetID() string { return p.ID }
+
+// SetID sets ID to the provided value.
+func (p *PermissionPolicy) SetID(val string) { p.ID = val }
+
+// GetSubjectKind will return the value of SubjectKind.
+func (p *PermissionPolicy) GetSubjectKind() string { return p.SubjectKind }
+
+// SetSubjectKind sets SubjectKind to the provided value.
+func (p *PermissionPolicy) SetSubjectKind(val string) { p.SubjectKind = val }
+
+// GetSubject will return the value of Subject.
+func (p *PermissionPolicy) GetSubject() string { return p.Subject }
+
+// SetSubject sets Subject to the provided value.
+func (p *PermissionPolicy) SetSubject(val string) { p.Subject = val }
+
+// GetPath will return the value of Path.
+func (p *PermissionPolicy) GetPath() string { return p.Path }
+
+// SetPath sets Path to the provided value.
+func (p *PermissionPolicy) SetPath(val string) { p.Path = val }
+
+// GetEffect will return the value of Effect.
+func (p *PermissionPolicy) GetEffect() string { return p.Effect }
+
+// SetEffect sets Effect to the provided value.
+func (p *PermissionPolicy) SetEffect(val string) { p.Effect = val }
+
+// GetCreatedAt will return the value of CreatedAt.
+func (p *PermissionPolicy) GetCreatedAt() *time.Time { return p.CreatedAt }
+
+// SetCreatedAt sets CreatedAt to the provided value.
+func (p *PermissionPolicy) SetCreatedAt(stamp time.Time) { p.CreatedAt = &stamp }
+
+// PermissionPolicyTable is the name of the table in the DB.
+const PermissionPolicyTable = "`permission_policy`"
+
+// PermissionPolicyFields is a list of all columns in the DB table.
+var PermissionPolicyFields = []string{"id", "subject_kind", "subject", "path", "effect", "created_at"}
+
+// PermissionPolicyPrimaryFields are the primary key fields in the DB table.
+var PermissionPolicyPrimaryFields = []string{"id"}
+
 // Project generated for db table `project`.
 type Project struct {
 	// ID
@@ -2269,6 +2337,67 @@ func (n *Note) Update(opts ...QueryOption) string {
 // Delete starts building a DELETE query.
 func (n *Note) Delete(opts ...QueryOption) string {
 	cfg := (&QueryConfig{Table: NoteTable}).Apply(opts...)
+	query := fmt.Sprintf("DELETE FROM %s", cfg.Table)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	return query
+}
+
+// Insert starts building an INSERT INTO query.
+func (p *PermissionPolicy) Insert(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: PermissionPolicyTable, Statement: "INSERT INTO"}).Apply(opts...)
+	cols := PermissionPolicyFields
+	if len(cfg.Columns) > 0 {
+		cols = cfg.Columns
+	}
+	return fmt.Sprintf("%s %s (%s) VALUES (:%s)", cfg.Statement, cfg.Table, strings.Join(cols, ", "), strings.Join(cols, ", :"))
+}
+
+// Select starts building a SELECT query.
+func (p *PermissionPolicy) Select(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: PermissionPolicyTable}).Apply(opts...)
+	cols := "*"
+	if len(cfg.Columns) > 0 {
+		cols = strings.Join(cfg.Columns, ", ")
+	}
+	query := fmt.Sprintf("SELECT %s FROM %s", cols, cfg.Table)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	if cfg.OrderBy != "" {
+		query += " ORDER BY " + cfg.OrderBy
+	}
+	if cfg.LimitOffset > 0 {
+		query += fmt.Sprintf(" LIMIT %d, %d", cfg.LimitStart, cfg.LimitOffset)
+	}
+	return query
+}
+
+// Update starts building a UPDATE query.
+func (p *PermissionPolicy) Update(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: PermissionPolicyTable}).Apply(opts...)
+	cols := PermissionPolicyFields
+	if len(cfg.Columns) > 0 {
+		cols = cfg.Columns
+	}
+	setClause := ""
+	for i, col := range cols {
+		if i > 0 {
+			setClause += ", "
+		}
+		setClause += col + "=:" + col
+	}
+	query := fmt.Sprintf("UPDATE %s SET %s", cfg.Table, setClause)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	return query
+}
+
+// Delete starts building a DELETE query.
+func (p *PermissionPolicy) Delete(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: PermissionPolicyTable}).Apply(opts...)
 	query := fmt.Sprintf("DELETE FROM %s", cfg.Table)
 	if cfg.Where != "" {
 		query += " WHERE " + cfg.Where

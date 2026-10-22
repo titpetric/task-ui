@@ -14,9 +14,9 @@ import (
 // imports: its row, its projects, the grants of its SSH keys, its env
 // files, its secrets as ciphertext and its key files, encrypted to the
 // passphrase. Schedules, workflows, runs and artifacts stay. A POST
-// keeps the passphrase out of the URL. Admins only.
+// keeps the passphrase out of the URL. Takes workspace/edit.
 func (h *Handlers) exportWorkspace(w http.ResponseWriter, r *http.Request) {
-	if !requireAdmin(w, r) {
+	if !h.require(w, r, "workspace/edit") {
 		return
 	}
 	var req WorkspaceExportRequest

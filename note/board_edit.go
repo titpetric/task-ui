@@ -44,7 +44,7 @@ func (b *Board) Edit(ctx context.Context, user *model.User, id, body string) (*m
 	}
 	var req runner.Request
 	if thread.IsPrompt() {
-		if !user.CanAdmin() {
+		if !b.permissions(ctx, user).Allowed("prompt/edit") {
 			return nil, ErrForbidden
 		}
 		if req, err = b.promptRequest(ctx, user, thread.Dir); err != nil {
@@ -61,7 +61,7 @@ func (b *Board) Edit(ctx context.Context, user *model.User, id, body string) (*m
 		thread = note
 	}
 	b.publish(note)
-	instruction := b.instructs(user, note.Body)
+	instruction := b.instructs(ctx, user, note.Body)
 	if !thread.IsPrompt() && !instruction {
 		return note, nil
 	}

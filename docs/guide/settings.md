@@ -73,6 +73,12 @@ task-ui reads the file again whenever it changes. The roles
 come from the server's `TASK_UI_ADMINS` and `TASK_UI_VIEWERS`; everyone
 else is a runner.
 
+What a role may do comes from permission policies over the rules of
+`config/permissions.yml`. An admin may do everything. A runner runs
+jobs, and reads and writes notes, workflows and schedules; a viewer does
+the same without running; both read artifacts and the inventory. A
+policy of a user's own adds to the role's, and a deny in either wins.
+
 ![Users](../assets/users-dark.png)
 
 This page sets which folders a user sees: open a user, then pick **All

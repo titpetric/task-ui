@@ -2,6 +2,7 @@ package api
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/titpetric/task-ui/access"
 	"github.com/titpetric/task-ui/envfile"
@@ -54,7 +55,7 @@ func (h *Handlers) envView(r *http.Request, fold *folder.Folder, path string) (*
 }
 
 // getEnv lists a folder's env files, or returns one with its content.
-// The content is for admins only: it may hold what the folder's own
+// The content takes env/view: it may hold what the folder's own
 // file keeps.
 func (h *Handlers) getEnv(w http.ResponseWriter, r *http.Request) {
 	f, path := h.envTarget(r)
@@ -66,7 +67,7 @@ func (h *Handlers) getEnv(w http.ResponseWriter, r *http.Request) {
 		h.listEnv(w, r, f)
 		return
 	}
-	if !requireAdmin(w, r) {
+	if !h.require(w, r, "env/view") {
 		return
 	}
 	view, err := h.envView(r, f, path)
@@ -78,14 +79,23 @@ func (h *Handlers) getEnv(w http.ResponseWriter, r *http.Request) {
 }
 
 // putEnv saves the managed content of an env file and generates it in
-// the folder, with the secrets appended.
+// the folder, with the secrets appended. Content takes env/edit, and
+// no content, which clears it, env/delete.
 func (h *Handlers) putEnv(w http.ResponseWriter, r *http.Request) {
-	if !requireAdmin(w, r) {
+	if !h.can(r, "env/edit") && !h.require(w, r, "env/delete") {
 		return
 	}
 	var req EnvRequest
 	if err := readJSON(r, &req); err != nil {
 		fail(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	// Saving no content clears the file: a delete.
+	if strings.TrimSpace(req.Content) == "" {
+		if !h.require(w, r, "env/delete") {
+			return
+		}
+	} else if !h.require(w, r, "env/edit") {
 		return
 	}
 	fold, path := h.envTarget(r)
