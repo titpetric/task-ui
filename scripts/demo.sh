@@ -286,7 +286,7 @@ shot workspace-edit-dark /settings/workspaces/acme dark 1440x1300
 shot sidebar-workspace-dark /f/acme/api dark 1440x1900
 shot workspace-prompt-dark /f/acme dark
 # The default workspace's page as a dashboard of the root: each project
-# in its Files list with its jobs' control buttons beside it.
+# in its Files list with Run and |>summarize beside it.
 shot folder-dashboard-dark /f/_ dark 1440x800
 # The api project's Files: .git and .env sealed, ./serve marked to run,
 # and its README in the preview window.

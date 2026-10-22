@@ -20,6 +20,8 @@ import (
 type Handlers struct {
 	opts Options
 	view *view.View
+	// subs holds the directories of Files lists, as detected.
+	subs *subCache
 }
 
 // New returns the handlers over the options, with the templates parsed.
@@ -28,7 +30,7 @@ func New(opts Options) (*Handlers, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Handlers{opts: opts, view: v}, nil
+	return &Handlers{opts: opts, view: v, subs: &subCache{}}, nil
 }
 
 // Routes returns the router of the pages, to mount at the root.

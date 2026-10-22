@@ -53,6 +53,48 @@ func TestPage_Summarizes(t *testing.T) {
 	assert.False(t, p.Summarizes(interactive))
 }
 
+// |>summarize's menu leaves the interactive jobs out and runs the one
+// left directly; none left is no menu.
+func TestPage_SummaryMenu(t *testing.T) {
+	t.Parallel()
+	f := &folder.Folder{ID: "infra"}
+	build, shell := &folder.Job{ID: "build"}, &folder.Job{ID: "shell"}
+	shell.Interactive = true
+	m := view.NewRunMenu(f, []*folder.Job{shell, build}, nil)
+	assert.True(t, m.Main == nil)
+
+	p := &view.Page{}
+	assert.True(t, p.SummaryMenu(m) == nil, "no Summaries")
+	p.Summaries = true
+	sum := p.SummaryMenu(m)
+	assert.Equal(t, []*folder.Job{build}, sum.Jobs)
+	assert.Equal(t, build, sum.Main)
+	assert.False(t, sum.Menu())
+	assert.True(t, p.SummaryMenu(view.NewRunMenu(f, []*folder.Job{shell}, nil)) == nil)
+	assert.True(t, p.SummaryMenu(nil) == nil)
+}
+
+// A menu shows for a user who may run any of its jobs.
+func TestPage_CanRunMenu(t *testing.T) {
+	t.Parallel()
+	p := admin(t)
+	m := view.NewRunMenu(p.Folder, p.Folder.Jobs, nil)
+	assert.True(t, p.CanRunMenu(m))
+	assert.False(t, p.CanRunMenu(nil))
+	signIn(p, &model.User{Name: "guest", Role: model.RoleViewer}, nil)
+	assert.False(t, p.CanRunMenu(m))
+}
+
+// A job's dot is how its last run ended, pending for none.
+func TestPage_LastState(t *testing.T) {
+	t.Parallel()
+	job := &folder.Job{Folder: "infra", ID: "plan"}
+	p := &view.Page{Last: map[string]view.Run{job.Key(): {Run: model.Run{State: model.StateFailed}}}}
+	assert.Equal(t, model.StateFailed, p.LastState(job))
+	assert.Equal(t, "pending", p.LastState(&folder.Job{Folder: "infra", ID: "apply"}))
+	assert.Equal(t, "pending", p.LastState(nil))
+}
+
 func TestPage_Runs(t *testing.T) {
 	t.Parallel()
 	p := admin(t)

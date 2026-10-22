@@ -8,7 +8,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/integration"
 	"github.com/titpetric/task-ui/internal/assert"
 	"github.com/titpetric/task-ui/model"
@@ -435,43 +434,4 @@ func TestFolder_PromptThreads(t *testing.T) {
 	assert.NotContains(t, admin, "and in private", "a prompt of another place")
 	assert.NotContains(t, f.page(t, asOps, "/f/_/infra"), "what runs here")
 	assert.NotContains(t, f.page(t, asAdmin, "/notes"), "what runs here")
-}
-
-// A folder page's Files list is a dashboard of what the folder holds:
-// no Folders table, a directory that is a folder links to its page and
-// holds its jobs' control buttons in Jobs, coloured by the last run,
-// default first and the rest under Other past three; a file that runs
-// has its Run in Jobs. The buttons follow the runs as the dashboard's do.
-func TestFolder_FilesDashboard(t *testing.T) {
-	t.Parallel()
-	f := newFixture(t)
-	web := shellFolder(t, f.root, "infra/web", map[string]string{"build": "true", "default": "true", "lint": "true", "test": "true", "zap": "true"})
-	folder.DefaultFirst(web.Jobs)
-	f.opts.Catalogue.(catalogue)["infra/web"] = web
-	assert.NoError(t, os.WriteFile(filepath.Join(f.infra.Dir, "tool.py"), []byte("#!/usr/bin/env python3\n"), 0o755))
-	f.run(t, "infra/edge", "deploy", asOps, model.StateOK)
-	f.run(t, "infra/web", "build", asOps, model.StateFailed)
-
-	body := f.page(t, asOps, "/f/_/infra")
-	assert.NotContains(t, body, "<h3>Folders</h3>")
-	assert.Contains(t, body, `<table class="table file-table col-hover">`)
-	assert.Contains(t, body, `<th>Name</th><th>Jobs</th>`)
-	assert.Contains(t, body, `<a href="/f/_/infra/edge">edge</a>`)
-	assert.Contains(t, body, `data-cc="infra/edge/deploy" data-folder="infra/edge" data-job="deploy" data-name="deploy" data-label="deploy" data-last="ok"`)
-	assert.Contains(t, body, `class="cc named ok" data-run data-folder="infra/edge" data-job="deploy"`)
-	assert.Contains(t, body, `class="cc named bad" data-run data-folder="infra/web" data-job="build"`)
-	assert.Contains(t, body, `class="cc named never" data-run data-folder="infra/web" data-job="default"`)
-	def := strings.Index(body, `data-cc="infra/web/default"`)
-	assert.True(t, def > 0 && def < strings.Index(body, `data-cc="infra/web/build"`), "default first")
-	more := strings.Index(body, `<details class="cc-more">`)
-	assert.True(t, more > 0 && more < strings.Index(body, `data-cc="infra/web/test"`), "past three under Other")
-	assert.True(t, more > strings.Index(body, `data-cc="infra/web/lint"`))
-	assert.Contains(t, body, `<td class="jobs"><div class="actions"><button type="button" class="btn btn-primary btn-sm" data-run data-folder="infra" data-job="./tool.py"`)
-
-	viewer := f.page(t, asViewer, "/f/_/infra")
-	assert.Contains(t, viewer, `<a class="cc named idle ok" href="/f/_/infra/edge/deploy"`)
-
-	js := f.get(t, asOps, "/static/task-ui.js").Body
-	assert.Contains(t, js, `if (document.querySelector(".cc-slot") && window.EventSource) {`)
-	assert.Equal(t, 1, strings.Count(js, "function slotHTML("))
 }

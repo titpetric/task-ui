@@ -19,11 +19,11 @@ it with headless chromium; `task docs:shots` regenerates them into
 | ![Workspaces: checkouts that hold projects, and Import](assets/workspaces-dark.png) | ![The sidebar with a workspace open, its projects under it](assets/sidebar-workspace-dark.png) |
 | ![A workspace's page, with the Prompt box open](assets/workspace-prompt-dark.png) | ![Configure a workspace: its keys, and Export](assets/workspace-edit-dark.png) |
 | ![A project's Files: .git and .env sealed, a file that runs marked exec](assets/files-dark.png) | ![A file of the checkout in the preview window](assets/file-dark.png) |
-| ![The default workspace's page: each project in Files with its jobs' control buttons](assets/folder-dashboard-dark.png) | ![Instance: what the server runs with, read only](assets/instance-dark.png) |
+| ![The default workspace's page: each project in Files with Run and |>summarize](assets/folder-dashboard-dark.png) | ![Instance: what the server runs with, read only](assets/instance-dark.png) |
 | ![A directory's actions bar: the git line, Enter Shell, and the git, compose and dockerfile skills](assets/actions-dark.png) | ![The arguments field of compose: custom..., and the argv it runs](assets/args-dark.png) |
 | ![Users, from the password file](assets/users-dark.png) | ![Secrets, grouped by workspace, each on its own key](assets/secrets-dark.png) |
 | ![Permissions: a matrix per role](assets/permissions-dark.png) | ![A profile: a user's activity](assets/profile-dark.png) |
-| ![A profile's permissions over the role's](assets/profile-permissions-dark.png) | ![The default workspace's Files: each project with its jobs' control buttons](assets/folder-dashboard-dark.png) |
+| ![A profile's permissions over the role's](assets/profile-permissions-dark.png) | ![The default workspace's Files: each project with Run and |>summarize](assets/folder-dashboard-dark.png) |
 | ![Add a secret](assets/secret-new-dark.png) | ![An env file](assets/envfile-dark.png) |
 | ![SSH keys](assets/keys-dark.png) | ![Generate a key](assets/keys-generate-dark.png) |
 | ![Upload a key](assets/keys-upload-dark.png) | ![Sign in](assets/login-dark.png) |
