@@ -196,6 +196,11 @@
       type: timestamp
       comment: Updated At
       datatype: datetime
+    - name: about_run_id
+      type: text
+      key: MUL
+      comment: About Run ID
+      datatype: char(26)
     - name: edited_at
       type: timestamp
       comment: Edited At
@@ -216,6 +221,9 @@
         - id
       primary: true
       unique: true
+    - name: idx_note_about_run
+      columns:
+        - about_run_id
     - name: idx_note_channel
       columns:
         - channel

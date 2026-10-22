@@ -14,3 +14,9 @@ func TestPromptIn(t *testing.T) {
 	assert.Equal(t, &view.Prompt{API: "/api/prompts", Folder: "malta", Where: "malta/", Place: "malta"}, view.PromptIn("malta", ""))
 	assert.Equal(t, &view.Prompt{API: "/api/prompts", Folder: "malta", Dir: "dockerfiles/task", Where: "malta/dockerfiles/task/", Place: "malta/dockerfiles/task"}, view.PromptIn("malta", "dockerfiles/task"))
 }
+
+// The prompt box of a run's page posts the run, and stands open.
+func TestPromptAbout(t *testing.T) {
+	t.Parallel()
+	assert.Equal(t, &view.Prompt{API: "/api/prompts", Run: "01RUN", Where: "malta/dockerfiles/", Place: "malta/dockerfiles", Open: true}, view.PromptAbout("01RUN", "malta/dockerfiles"))
+}

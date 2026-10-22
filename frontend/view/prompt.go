@@ -1,7 +1,7 @@
 package view
 
-// Prompt is the prompt box of a folder page or of a directory browsed
-// inside a folder: Claude Code on a prompt, run as internal/claude-prompt
+// Prompt is the prompt box of a folder page, of a directory browsed
+// inside a folder, or of a run's page: Claude Code on a prompt, run as internal/claude-prompt
 // in that directory, and the threads of the prompts asked there, each
 // question with Claude's answer.
 type Prompt struct {
@@ -11,6 +11,12 @@ type Prompt struct {
 	// Folder and Dir name the directory for /api/prompts.
 	Folder string
 	Dir    string
+	// Run is the run a run page's box asks about, with its output, in
+	// the run's directory; its threads are those about the run.
+	Run string
+	// Watch lists the threads without the box to ask, for a user who
+	// reads them only.
+	Watch bool
 	// Where is the directory as the box names it, ending in /.
 	Where string
 	// Open shows the box open, as on a workspace's page.
@@ -30,4 +36,10 @@ func PromptIn(folderID, dir string) *Prompt {
 		place += "/" + dir
 	}
 	return &Prompt{API: "/api/prompts", Folder: folderID, Dir: dir, Where: place + "/", Place: place}
+}
+
+// PromptAbout returns the prompt box of a run's page, about the run in
+// where, its folder and directory.
+func PromptAbout(runID, where string) *Prompt {
+	return &Prompt{API: "/api/prompts", Run: runID, Where: where + "/", Place: where, Open: true}
 }

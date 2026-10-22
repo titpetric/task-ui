@@ -109,6 +109,42 @@ attaches to it.
 While the run is in progress the page shows its terminal as it looks now,
 and **Attach**, **Stop** and **Kill** instead.
 
+### A prompt about a run
+
+With the `prompt/edit` permission and a token in the [Claude Code
+integration](settings.md#integrations), a finished run's page has a
+**Prompt** box under its output: ask why the run ended the way it did,
+or for a fix to its job or pipeline. The prompt runs
+`internal/claude-prompt` as you in the run's folder, or the directory
+inside it the job ran in, as a folder's prompt does (see [Projects and
+jobs](projects.md#prompt)). Claude gets the run with the question: its
+ID, folder, directory and job, who started it, how it ended and its exit
+code, when it started and how long it took, the job's command, and the
+end of its output as text, marked as cut when longer than either limit:
+
+| Output | Limit |
+|--------|-------|
+| Lines | the last 2000 |
+| Size | 256 KiB |
+
+For a question that names a fix, Claude makes it in the checkout,
+commits it to main, pushes, and names the change in its reply.
+
+The run's page lists its threads, newest first, as they get answered:
+the run's history of questions and fixes. They stay off the folder's
+prompt box. **Reply** asks again about the same run, and a click on a
+question edits it and runs it again, as on a folder page. With
+`prompt/view` alone you read the threads, without the box. A prompt's
+own run, in the internal folder, has no prompt.
+
+```sh
+curl -s -X POST https://task.example.com/api/prompts \
+  -H "Authorization: Bearer $TOKEN" \
+  -d '{"run": "<run id>", "prompt": "why did this run fail"}'
+curl -s "https://task.example.com/api/prompts?run=<run id>" \
+  -H "Authorization: Bearer $TOKEN"
+```
+
 ## What a job gets
 
 A run starts in its folder, or in the directory inside it whose job it

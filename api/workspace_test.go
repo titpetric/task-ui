@@ -237,14 +237,15 @@ func (f *fixture) answered(t *testing.T, id string) *model.Note {
 
 // promptFolder puts an internal folder in the fixture's catalogue whose
 // claude-prompt stands in for task-ui agent prompt: it writes the
-// prompt's environment and where it runs to internal/env.out, waits for
+// prompt's environment and where it runs to internal/env.out, the run a
+// prompt about a run gets to internal/run.out, waits for
 // a file named release in the directory it runs in, when that directory
 // holds a file named hold, then answers with the prompt in the reply
 // file.
 func promptFolder(t *testing.T, f *fixture) *folder.Folder {
 	t.Helper()
 	internal := shellFolder(t, f.root, model.Internal, map[string]string{
-		"claude-prompt": `{ env | grep '^TASK_UI_\(PROMPT\|WORKSPACE\|WORKSPACE_DIR\|PROMPT_DIR\)=' | sort; echo "pwd=$(pwd -P)"; } > "` + filepath.Join(f.root, model.Internal, "env.out") + `"; while [ -e hold ] && [ ! -e release ]; do sleep 0.05; done; printf 'Answer to: %s' "$TASK_UI_PROMPT" > "$TASK_UI_PROMPT_REPLY"`,
+		"claude-prompt": `{ env | grep '^TASK_UI_\(PROMPT\|WORKSPACE\|WORKSPACE_DIR\|PROMPT_DIR\)=' | sort; echo "pwd=$(pwd -P)"; } > "` + filepath.Join(f.root, model.Internal, "env.out") + `"; if [ -n "$TASK_UI_PROMPT_RUN" ]; then cp "$TASK_UI_PROMPT_RUN" "` + filepath.Join(f.root, model.Internal, "run.out") + `"; fi; while [ -e hold ] && [ ! -e release ]; do sleep 0.05; done; printf 'Answer to: %s' "$TASK_UI_PROMPT" > "$TASK_UI_PROMPT_REPLY"`,
 	})
 	// The internal folder's directory is the root, as agent.Folder's.
 	internal.Dir, internal.HostJobs = f.root, true

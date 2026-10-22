@@ -58,7 +58,8 @@ func TestNoteStorage(t *testing.T) {
 }
 
 // A prompt is a note with a workspace: the board's listing leaves it out,
-// and the prompts' listing narrows by workspace and place.
+// and the prompts' listing narrows by workspace and place, or by the
+// run a prompt asks about.
 func TestNoteStorage_Prompts(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
@@ -77,6 +78,18 @@ func TestNoteStorage_Prompts(t *testing.T) {
 	assert.Equal(t, here.ID, mine[0].ID)
 	none, _ := notes.List(ctx, storage.NoteFilter{Prompts: true, WorkspaceID: "ws2"})
 	assert.Len(t, none, 0)
+
+	// A prompt about a run lists by the run, not with its place's.
+	about := &model.Note{UserName: "admin", Body: "why did it fail", State: model.NoteOpen, WorkspaceID: "ws1", Dir: "malta", AboutRunID: "run1"}
+	assert.NoError(t, notes.Create(ctx, about))
+	mine, _ = notes.List(ctx, storage.NoteFilter{Prompts: true, Dir: "malta"})
+	assert.Len(t, mine, 1)
+	assert.Equal(t, here.ID, mine[0].ID)
+	run, _ := notes.List(ctx, storage.NoteFilter{Prompts: true, AboutRunID: "run1"})
+	assert.Len(t, run, 1)
+	assert.Equal(t, about.ID, run[0].ID)
+	all, _ = notes.List(ctx, storage.NoteFilter{Prompts: true})
+	assert.Len(t, all, 3)
 }
 
 // Edit changes a note's body and mentions and marks it edited; Answer
