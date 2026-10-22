@@ -76,12 +76,27 @@ func TestUser_SeesRun(t *testing.T) {
 	build := &model.Run{Folder: "malta", Job: "build", UserID: "u2"}
 	prompt := &model.Run{Folder: "malta", Job: model.PromptJob, UserID: "u2"}
 	mine := &model.Run{Folder: "infra", Job: model.PromptJob, UserID: "u1"}
-	assert.True(t, limited.SeesRun(build, false))
-	assert.False(t, limited.SeesRun(prompt, false), "a prompt's run takes prompt/view")
-	assert.True(t, limited.SeesRun(prompt, true))
-	assert.True(t, limited.SeesRun(mine, false), "the asker sees their own")
-	assert.False(t, other.SeesRun(mine, false))
-	assert.True(t, other.SeesRun(mine, true))
-	assert.False(t, limited.SeesRun(&model.Run{Folder: "infra", Job: "build"}, true))
-	assert.False(t, (*model.User)(nil).SeesRun(build, true))
+	assert.True(t, limited.SeesRun(build, false, false))
+	assert.False(t, limited.SeesRun(prompt, false, false), "a prompt's run takes prompt/view")
+	assert.True(t, limited.SeesRun(prompt, true, false))
+	assert.True(t, limited.SeesRun(mine, false, false), "the asker sees their own")
+	assert.False(t, other.SeesRun(mine, false, false))
+	assert.True(t, other.SeesRun(mine, true, false))
+	assert.False(t, limited.SeesRun(&model.Run{Folder: "infra", Job: "build"}, true, false))
+	assert.False(t, (*model.User)(nil).SeesRun(build, true, false))
+
+	// The Notes agent's run takes note/view, and its starter sees it.
+	agent := &model.User{ID: "u3", Name: "claude"}
+	noted := &model.Run{Folder: model.Default, Job: model.NoteJob, UserID: "u3"}
+	assert.False(t, other.SeesRun(noted, true, false), "a note's run takes note/view")
+	assert.True(t, other.SeesRun(noted, false, true))
+	assert.True(t, agent.SeesRun(noted, false, false), "the agent sees its own")
+
+	// The older runs of the internal folder are the admins' and their
+	// starter's.
+	admin := &model.User{ID: "u4", Role: model.RoleAdmin}
+	older := &model.Run{Folder: model.Internal, Job: "claude-note", UserID: "u3"}
+	assert.True(t, admin.SeesRun(older, true, true))
+	assert.True(t, agent.SeesRun(older, false, false))
+	assert.False(t, other.SeesRun(older, true, true))
 }

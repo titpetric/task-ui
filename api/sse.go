@@ -42,10 +42,10 @@ func (h *Handlers) sse(w http.ResponseWriter, r *http.Request) {
 			failErr(w, storage.ErrNotFound)
 			return
 		}
-		prompts := h.can(r, "prompt/view")
+		prompts, notes := h.can(r, "prompt/view"), h.can(r, "note/view")
 		visible = func(e event.Event) bool {
 			run, ok := e.Data.(model.Run)
-			return ok && user.SeesRun(&run, prompts)
+			return ok && user.SeesRun(&run, prompts, notes)
 		}
 	case note.Topic:
 		if id != "" || h.opts.Board == nil {

@@ -314,11 +314,11 @@ func (h *Handlers) permissions(r *http.Request) permission.Set {
 }
 
 // runSeer returns whether the user of a request sees a run: one of a
-// folder the user sees, a prompt's with prompt/view, and the user's own
-// prompts' runs.
+// folder the user sees, a prompt's with prompt/view, the Notes agent's
+// with note/view, and such runs the user started.
 func (h *Handlers) runSeer(r *http.Request) func(*model.Run) bool {
-	user, prompts := access.UserFrom(r.Context()), h.can(r, "prompt/view")
-	return func(run *model.Run) bool { return user.SeesRun(run, prompts) }
+	user, prompts, notes := access.UserFrom(r.Context()), h.can(r, "prompt/view"), h.can(r, "note/view")
+	return func(run *model.Run) bool { return user.SeesRun(run, prompts, notes) }
 }
 
 // can reports whether the user of a request may do what a path of

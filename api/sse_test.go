@@ -124,7 +124,7 @@ func TestSSE_Hidden(t *testing.T) {
 func TestSSE_NotesPrompts(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
-	promptFolder(t, f)
+	promptCommand(t, f)
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 	ops := f.sse(t, ctx, asOps, "notes")
@@ -166,7 +166,7 @@ func TestSSE_NotesPrompts(t *testing.T) {
 func TestSSE_RunsPrompts(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
-	promptFolder(t, f)
+	promptCommand(t, f)
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 	res := f.sse(t, ctx, asLimited, "runs")

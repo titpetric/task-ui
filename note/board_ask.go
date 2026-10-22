@@ -14,15 +14,11 @@ import (
 	"github.com/titpetric/task-ui/runner"
 )
 
-// PromptJob is the internal job whose command a prompt runs, as the job
-// @claude-prompt of the place it asks in.
-const PromptJob = "claude-prompt"
-
 // ErrForbidden reports a prompt from someone without prompt/edit.
 var ErrForbidden = errors.New("only an admin prompts Claude")
 
-// ErrNoPrompt reports a place no prompt runs in: a directory or the
-// internal prompt job that is not there.
+// ErrNoPrompt reports a place no prompt runs in: a directory that is
+// not there.
 var ErrNoPrompt = errors.New("no prompt runs here")
 
 // Ask puts a prompt to Claude in dir, a folder and a directory inside it
@@ -159,10 +155,9 @@ func (b *Board) hosts(ctx context.Context) []string {
 // job, @claude-prompt, of the place dir names, a folder and a directory
 // in it, a workspace's checkout, or _ for the root, with the directory
 // in TASK_UI_PROMPT_DIR for a folder's, and the run's workspace. The run
-// is the place's, as its @shell run is, and runs the command of the
-// internal job claude-prompt. The user sees the place; the
-// prompt job runs by prompt/edit, which the callers check, whatever the
-// folder's allow lists.
+// is the place's, as its @shell run is, with the place's secrets. The
+// user sees the place; the prompt job runs by prompt/edit, which the
+// callers check, whatever the folder's allow lists.
 func (b *Board) promptRequest(ctx context.Context, user *model.User, dir string) (runner.Request, error) {
 	var req runner.Request
 	if b.Catalogue == nil || b.Runner == nil {
@@ -176,7 +171,7 @@ func (b *Board) promptRequest(ctx context.Context, user *model.User, dir string)
 	case dir == model.Default:
 		place = &folder.Folder{ID: model.Default, Title: model.Default, Dir: at}
 		req.Workspace = at
-	case f != nil && !model.IsInternal(f.ID):
+	case f != nil:
 		path, ok := f.Path(rest)
 		if !ok {
 			return req, fmt.Errorf("%w: no such directory", ErrNoPrompt)
@@ -197,12 +192,8 @@ func (b *Board) promptRequest(ctx context.Context, user *model.User, dir string)
 	if _, ok := b.underRoot(at); !ok {
 		return req, fmt.Errorf("%w: no such directory", ErrNoPrompt)
 	}
-	command := b.Catalogue.Find(model.Internal).Job(PromptJob)
-	if command == nil {
-		return req, fmt.Errorf("%w: no job %s/%s", ErrNoPrompt, model.Internal, PromptJob)
-	}
-	job := place.PromptJob()
-	job.Dir, job.Command = inside, command.Command
+	job := b.agentCommand(place.PromptJob(), "prompt")
+	job.Dir = inside
 	req.Folder, req.Job, req.Dir, req.User, req.Cols, req.Rows = place, job, at, user, 120, 40
 	return req, nil
 }

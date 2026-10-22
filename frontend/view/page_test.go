@@ -148,6 +148,23 @@ func TestPage_Href(t *testing.T) {
 	assert.Equal(t, "/f/_/infra", (&view.Page{}).Href("infra"))
 }
 
+// A run links its place and its job's page; a prompt's, the Notes
+// agent's and an older run of the internal folder have no job page, and
+// internal no folder page.
+func TestPage_RunJobHref(t *testing.T) {
+	t.Parallel()
+	p := &view.Page{Workspaces: map[string]int{"acme": 0}}
+	assert.Equal(t, "/f/acme/dockerfiles/build", p.RunJobHref("acme", "dockerfiles", "build"))
+	assert.Equal(t, "/f/_/infra/@claude", p.RunJobHref("infra", "", "@claude"))
+	assert.Equal(t, "", p.RunJobHref("acme", "dockerfiles", "@claude-prompt"))
+	assert.Equal(t, "", p.RunJobHref("_", "", "@claude-note"))
+	assert.Equal(t, "", p.RunJobHref("internal", "", "claude"))
+
+	assert.Equal(t, "/f/acme/dockerfiles", p.RunFolderHref("acme", "dockerfiles"))
+	assert.Equal(t, "/f/_", p.RunFolderHref("_", ""))
+	assert.Equal(t, "", p.RunFolderHref("internal", ""))
+}
+
 func TestPage_Links(t *testing.T) {
 	t.Parallel()
 	p := &view.Page{Workspaces: map[string]int{"acme": 0}}

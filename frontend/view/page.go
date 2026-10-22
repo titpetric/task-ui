@@ -215,6 +215,29 @@ func (p *Page) Href(id string) string {
 	return FolderHref(id, p.Workspaces)
 }
 
+// RunFolderHref returns the page of the place a run ran in, its folder
+// or the directory inside it, or "" for the internal folder of older
+// runs, which has none.
+func (p *Page) RunFolderHref(folderID, dir string) string {
+	if model.IsInternal(folderID) {
+		return ""
+	}
+	if dir != "" {
+		return p.Href(folderID) + "/" + dir
+	}
+	return p.Href(folderID)
+}
+
+// RunJobHref returns the page of a run's job, or "" for a job with none:
+// a prompt's, the Notes agent's, or one of the internal folder.
+func (p *Page) RunJobHref(folderID, dir, job string) string {
+	run := model.Run{Folder: folderID, Job: job}
+	if run.IsPrompt() || run.IsNote() || model.IsInternal(folderID) {
+		return ""
+	}
+	return p.RunFolderHref(folderID, dir) + "/" + job
+}
+
 // PlaceHref returns the page of the place a prompt ran in, as a note's
 // Dir holds it: under the folder that holds it among the page's
 // folders, or the root's for _. Empty for a place in no such folder.

@@ -49,8 +49,12 @@ func (h *Handlers) view(r *http.Request, run model.Run) RunView {
 		v.Live, v.Attached, v.Status = true, session.Attached(), &status
 		v.Run = session.Snapshot()
 	}
-	if run.IsPrompt() {
+	switch {
+	case run.IsPrompt():
 		v.CanRun = h.endsPrompt(r, &run)
+		return v
+	case run.IsNote():
+		v.CanRun = h.endsNote(r, &run)
 		return v
 	}
 	f, job, _, _ := h.targetIn(r, run.Folder, run.Dir, run.Job)
@@ -65,6 +69,14 @@ func (h *Handlers) endsPrompt(r *http.Request, run *model.Run) bool {
 	return user != nil && (run.UserID == user.ID || user.CanAdmin()) && h.can(r, "prompt/edit")
 }
 
+// endsNote reports whether the user of a request may end the Notes
+// agent's run: its starter, the agent's user, or an admin, with
+// note/edit.
+func (h *Handlers) endsNote(r *http.Request, run *model.Run) bool {
+	user := access.UserFrom(r.Context())
+	return user != nil && (run.UserID == user.ID || user.CanAdmin()) && h.can(r, "note/edit")
+}
+
 // listRuns returns the runs the user may see, newest first.
 func (h *Handlers) listRuns(w http.ResponseWriter, r *http.Request) {
 	user := access.UserFrom(r.Context())
@@ -76,9 +88,9 @@ func (h *Handlers) listRuns(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	views := []RunView{}
-	prompts := h.can(r, "prompt/view")
+	prompts, notes := h.can(r, "prompt/view"), h.can(r, "note/view")
 	for _, run := range runs {
-		if user.SeesRun(&run, prompts) {
+		if user.SeesRun(&run, prompts, notes) {
 			views = append(views, h.view(r, run))
 		}
 	}
@@ -94,8 +106,12 @@ func (h *Handlers) startRun(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	user := access.UserFrom(r.Context())
-	if req.Job == model.PromptJob {
+	switch req.Job {
+	case model.PromptJob:
 		fail(w, http.StatusBadRequest, "a prompt starts from /api/prompts, with its text")
+		return
+	case model.NoteJob:
+		fail(w, http.StatusBadRequest, "the Notes agent starts from the Notes board, on a note that names it")
 		return
 	}
 	f, job, dir, problem := h.targetIn(r, req.Folder, req.Dir, req.Job)
@@ -104,7 +120,7 @@ func (h *Handlers) startRun(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if job.IsShell() && !h.can(r, "shell") {
-		fail(w, http.StatusForbidden, "an interactive shell is for admins")
+		fail(w, http.StatusForbidden, "an interactive shell, or Claude in one, is for admins")
 		return
 	}
 	if !h.canRun(r, f, job) {
@@ -134,14 +150,14 @@ func (h *Handlers) startRun(w http.ResponseWriter, r *http.Request) {
 }
 
 // runOf returns the run a route names, when the user may see it: a run
-// of a folder the user sees, a prompt's run there with prompt/view, or
-// the run of a prompt the user asked.
+// of a folder the user sees, a prompt's run there with prompt/view, the
+// Notes agent's with note/view, or such a run the user started.
 func (h *Handlers) runOf(r *http.Request) (*model.Run, error) {
 	run, err := h.opts.Runs.Get(r.Context(), param(r, "id"))
 	if err != nil {
 		return nil, err
 	}
-	if !access.UserFrom(r.Context()).SeesRun(run, h.can(r, "prompt/view")) {
+	if !access.UserFrom(r.Context()).SeesRun(run, h.can(r, "prompt/view"), h.can(r, "note/view")) {
 		return nil, storage.ErrNotFound
 	}
 	return run, nil

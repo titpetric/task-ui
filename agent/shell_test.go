@@ -10,16 +10,17 @@ import (
 
 func TestAgent_Shell(t *testing.T) {
 	t.Parallel()
-	root := realDir(t)
+	dir, root := realDir(t), realDir(t)
 	shell := func(env ...string) (string, error) {
 		cmd := exec.Command(os.Args[0], "-test.run=^$")
+		cmd.Dir = dir
 		cmd.Env = append(os.Environ(), env...)
 		out, err := cmd.CombinedOutput()
 		return string(out), err
 	}
 	out, err := shell("AGENT_TEST_SHELL=--resume x", "PATH="+fakeClaude(t), "CLAUDE_CODE_OAUTH_TOKEN=sk-1", "TASK_UI_ROOT="+root)
 	assert.NoError(t, err, out)
-	assert.Contains(t, out, "cwd="+root+"\n")
+	assert.Contains(t, out, "cwd="+dir+"\n", "Claude starts where the run does, not in the root")
 	assert.Contains(t, out, "sandbox=1\n")
 	assert.Contains(t, out, "arg=--dangerously-skip-permissions\narg=--resume\narg=x\n")
 

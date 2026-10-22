@@ -43,18 +43,16 @@ func TestManager_Workspace(t *testing.T) {
 	root := run(f.shellJob("plain", script, false))
 	assert.Contains(t, root, "home=["+home+"] ws=[_] dir=["+f.root+"] set=[y]")
 	assert.Contains(t, run(f.shellJob("ws/project", script, false)), "ws=[ws] dir=["+filepath.Join(f.root, "ws")+"]")
-	internal := run(f.shellJob("internal/tools", script, false))
-	assert.Contains(t, internal, "ws=[] dir=[] set=[]")
 
 	other := filepath.Join(f.root, "gozo")
 	req := f.shellJob("ws/other", script, false)
 	req.Workspace = other
 	assert.Contains(t, run(req), "ws=[gozo] dir=["+other+"]")
-	req = f.shellJob("internal/prompt", script, false)
+	req = f.shellJob("tools/prompt", script, false)
 	req.Workspace = f.root
 	assert.Contains(t, run(req), "ws=[_] dir=["+f.root+"]")
-	// An internal job run for a folder takes that folder's workspace.
-	req = f.shellJob("internal/prompt", script, false)
+	// A job run for another folder takes that folder's workspace.
+	req = f.shellJob("tools/prompt", script, false)
 	req.WorkspaceOf = "ws/project"
 	assert.Contains(t, run(req), "ws=[ws] dir=["+filepath.Join(f.root, "ws")+"]")
 
@@ -66,7 +64,6 @@ func TestManager_Workspace(t *testing.T) {
 	assert.NoError(t, err)
 	req.WorkspaceOf, req.Workspace = "", f.root
 	assert.Equal(t, def.ID, f.manager.WorkspaceID(ctx, req))
-	assert.Equal(t, "", f.manager.WorkspaceID(ctx, f.shellJob("internal/tools", script, false)))
 }
 
 // A request's Dir is where the process starts, and its job's Dir what

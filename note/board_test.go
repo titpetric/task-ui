@@ -260,17 +260,16 @@ func TestBoard_InstructionAnswer(t *testing.T) {
 	assert.Equal(t, "Done: @claude answer, fail\n\nThe run ended failed (exit 1).", replies(t, f, failed.ID)[0].Body)
 }
 
-// The agent job may live in the internal folder, which the agent's user,
-// a runner, does not see: the board starts it all the same.
-func TestBoard_InternalJob(t *testing.T) {
+// The agent job by default is the root's Notes agent, _/@claude-note,
+// which runs in the root as the agent's user, who sees no folder of it:
+// the board starts it all the same.
+func TestBoard_NoteJob(t *testing.T) {
 	t.Parallel()
-	f := newFixture(t, "internal/run")
-	agentFolder := *f.board.Catalogue.Find("agent")
-	agentFolder.ID = model.Internal
-	job := *agentFolder.Jobs[0]
-	job.Folder = model.Internal
-	agentFolder.Jobs = []*folder.Job{&job}
-	f.board.Catalogue = catalogue{model.Internal: &agentFolder}
+	f := newFixture(t, "_/"+model.NoteJob)
+	root, err := filepath.EvalSymlinks(t.TempDir())
+	assert.NoError(t, err)
+	f.board.Root = root
+	f.board.AgentCommand = []string{"sh", "-c", `echo "Done in $(pwd -P): $TASK_UI_NOTE ($TASK_UI_FOLDER/$TASK_UI_JOB $0)" > "$TASK_UI_NOTE_REPLY"`}
 
 	posted, err := f.board.Post(context.Background(), f.ops, "", "@claude answer this")
 	assert.NoError(t, err)
@@ -278,10 +277,13 @@ func TestBoard_InternalJob(t *testing.T) {
 	assert.Equal(t, model.NoteDone, done.State)
 	reply := replies(t, f, posted.ID)
 	assert.Len(t, reply, 1)
-	assert.Equal(t, "Done: @claude answer this", reply[0].Body)
+	assert.Equal(t, "Done in "+root+": @claude answer this (_/@claude-note note)", reply[0].Body)
 	run, ok := f.board.Runner.Get(done.RunID)
 	assert.True(t, ok)
-	assert.Equal(t, model.Internal, run.Snapshot().Folder)
+	assert.Equal(t, model.Default+"/"+model.NoteJob, snapshotKey(run))
+	assert.Equal(t, "claude", run.Snapshot().UserName)
+	snapshot := run.Snapshot()
+	assert.True(t, snapshot.IsNote())
 }
 
 // snapshotKey is the run key of a session's run.
@@ -290,8 +292,8 @@ func snapshotKey(session *runner.Session) string {
 	return run.Key()
 }
 
-// withPrompts sets up the fixture's board with a root with the folder proj, and
-// an internal folder whose claude-prompt answers in the reply file with
+// withPrompts sets up the fixture's board with a root with the folder
+// proj, and an agent command whose prompt answers in the reply file with
 // the thread, and fails a thread that ends in fail. It returns an admin.
 func (f *fixture) withPrompts(t *testing.T) *model.User {
 	t.Helper()
@@ -300,11 +302,8 @@ func (f *fixture) withPrompts(t *testing.T) *model.User {
 	assert.NoError(t, err)
 	proj := &folder.Folder{ID: "proj", Title: "proj", Dir: filepath.Join(root, "proj")}
 	assert.NoError(t, os.MkdirAll(filepath.Join(proj.Dir, "images"), 0o755))
-	internal := &folder.Folder{ID: model.Internal, Title: model.Internal, Dir: root, HostJobs: true}
-	job := &folder.Job{Folder: model.Internal, ID: note.PromptJob, Kind: "script", Command: []string{"sh", "-c", `printf 'In %s: %s' "$(pwd -P)" "$TASK_UI_PROMPT" > "$TASK_UI_PROMPT_REPLY"; case "$TASK_UI_PROMPT" in *fail) exit 3;; esac`}}
-	job.Name = note.PromptJob
-	internal.Jobs = []*folder.Job{job}
-	f.board.Catalogue = catalogue{"proj": proj, model.Internal: internal}
+	f.board.AgentCommand = []string{"sh", "-c", `printf 'In %s: %s' "$(pwd -P)" "$TASK_UI_PROMPT" > "$TASK_UI_PROMPT_REPLY"; case "$TASK_UI_PROMPT" in *fail) exit 3;; esac`}
+	f.board.Catalogue = catalogue{"proj": proj}
 	f.board.Root = root
 	admin := &model.User{Name: "admin", Role: model.RoleAdmin}
 	assert.NoError(t, f.board.Users.Create(ctx, admin))
@@ -416,7 +415,7 @@ func TestBoard_AskHosts(t *testing.T) {
 	f := newFixture(t, "agent/run")
 	admin := f.withPrompts(t)
 	ctx := context.Background()
-	f.board.Catalogue.Find(model.Internal).Jobs[0].Command = []string{"sh", "-c", `printf 'hosts: %s' "${TASK_UI_HOSTS-unset}" > "$TASK_UI_PROMPT_REPLY"`}
+	f.board.AgentCommand = []string{"sh", "-c", `printf 'hosts: %s' "${TASK_UI_HOSTS-unset}" > "$TASK_UI_PROMPT_REPLY"`}
 	agentFolder := &folder.Folder{ID: "agent", Title: "agent", Dir: t.TempDir()}
 	job := &folder.Job{Folder: "agent", ID: "run", Name: "run", Kind: "script", Command: []string{"sh", "-c", `printf 'hosts: %s' "${TASK_UI_HOSTS-unset}" > "$TASK_UI_NOTE_REPLY"`}}
 	agentFolder.Jobs = []*folder.Job{job}
@@ -458,13 +457,13 @@ func TestBoard_AskHosts(t *testing.T) {
 }
 
 // A user with prompt/edit asks in a folder the user sees, whatever the
-// internal folder's visibility and its prompt job's allow list say.
+// folder's allow list says.
 func TestBoard_AskByPermission(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t, "")
 	f.withPrompts(t)
 	ctx := context.Background()
-	f.board.Catalogue.Find(model.Internal).Jobs[0].Allow = []string{"admin"}
+	f.board.Catalogue.Find("proj").Allow = []string{"admin"}
 	claude, err := f.board.Users.GetByName(ctx, "claude")
 	assert.NoError(t, err)
 

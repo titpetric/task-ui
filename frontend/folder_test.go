@@ -270,14 +270,14 @@ func TestFolder_Nested(t *testing.T) {
 
 // A folder's path starts with its workspace: a named one by its folder,
 // _ for a project at the root. A path that starts with neither moves to
-// /f/_/ for good, its query kept; internal stays put, and a named
+// /f/_/ for good, its query kept; internal is no folder, and a named
 // workspace is not reached through _.
 func TestFolder_Namespace(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
 	ctx := context.Background()
 	cat := f.opts.Catalogue.(catalogue)
-	for _, id := range []string{"acme", "acme/api", model.Internal} {
+	for _, id := range []string{"acme", "acme/api"} {
 		cat[id] = shellFolder(t, f.root, id, map[string]string{"build": "echo " + id})
 	}
 	assert.NoError(t, f.opts.Workspaces.EnsureDefault(ctx))
@@ -303,7 +303,7 @@ func TestFolder_Namespace(t *testing.T) {
 	for _, path := range []string{"/f/_/acme", "/f/_/acme/api", "/f/_/internal", "/f/_/_", "/f/_/nothing"} {
 		assert.Equal(t, http.StatusNotFound, f.get(t, asAdmin, path).Status, path)
 	}
-	assert.Equal(t, http.StatusOK, f.get(t, asAdmin, "/f/internal").Status)
+	assert.Equal(t, http.StatusNotFound, f.get(t, asAdmin, "/f/internal").Status)
 
 	// /f/_ is the default workspace: the projects at the root a user sees.
 	def := f.page(t, asLimited, "/f/_")

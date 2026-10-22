@@ -6,7 +6,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/titpetric/task-ui/agent"
 	"github.com/titpetric/task-ui/internal/assert"
 	"github.com/titpetric/task-ui/model"
 )
@@ -150,27 +149,25 @@ func TestPage_AdminOnly(t *testing.T) {
 	}
 }
 
-// The internal folder is the admins': in the sidebar, on the dashboard
-// and at /f/internal, with its three jobs. Nobody else finds it.
+// No folder is internal: not in the sidebar, not on the dashboard, not
+// at /f/internal, for anyone; its older runs still open for an admin.
 func TestPage_internal(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
-	f.opts.Catalogue.(catalogue)[model.Internal] = agent.Folder(f.root, "claude")
+	older := f.run(t, model.Internal, "claude-note", "claude", model.StateOK)
 
-	home := f.page(t, asAdmin, "/")
-	assert.Contains(t, home, `href="/f/internal"`)
-	assert.Contains(t, home, "claude-note")
-	page := f.page(t, asAdmin, "/f/internal")
-	for _, job := range []string{"claude-note", "claude-prompt", "claude"} {
-		assert.Contains(t, page, `href="/f/internal/`+job+`"`)
-		assert.Contains(t, f.page(t, asAdmin, "/f/internal/"+job), "Claude Code")
-	}
-
-	for _, user := range []string{asOps, asViewer, asLimited} {
+	for _, user := range []string{asAdmin, asOps, asViewer, asLimited} {
 		assert.NotContains(t, f.page(t, user, "/"), `/f/internal`, user)
+		assert.NotContains(t, sidebar(f.page(t, user, "/runs")), `internal`, user)
 		assert.Equal(t, http.StatusNotFound, f.get(t, user, "/f/internal").Status, user)
 		assert.Equal(t, http.StatusNotFound, f.get(t, user, "/f/internal/claude-note").Status, user)
 	}
+	runs := f.page(t, asAdmin, "/runs")
+	assert.Contains(t, runs, "/runs/"+older.ID)
+	page := f.page(t, asAdmin, "/runs/"+older.ID)
+	assert.Contains(t, page, "<title>internal / claude-note")
+	assert.NotContains(t, page, "promptbox")
+	assert.NotContains(t, f.page(t, asOps, "/runs"), "/runs/"+older.ID)
 }
 
 // A workspace in the sidebar folds its projects under it, each a project

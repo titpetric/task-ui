@@ -18,8 +18,9 @@ import (
 // nothing to run, which opens as a page to browse. Folders nest, so the
 // longest folder that starts the path is the one meant. A path starts
 // with its workspace: a named one, or _ for the projects at the root;
-// internal is task-ui's own. /f/_ is the default workspace itself, and a
-// path that starts with none moves, for good, under /f/_/.
+// internal names none, the folder of older runs only. /f/_ is the
+// default workspace itself, and a path that starts with none moves, for
+// good, under /f/_/.
 func (h *Handlers) folderPath(w http.ResponseWriter, r *http.Request) {
 	path := strings.Trim(param(r, "*"), "/")
 	named := map[string]bool{}
@@ -38,7 +39,10 @@ func (h *Handlers) folderPath(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		path = rest
-	case !named[top] && top != model.Internal:
+	case top == model.Internal:
+		h.missing(w, r, "No folder named "+path+".")
+		return
+	case !named[top]:
 		target := "/f/" + model.Default + "/" + escapePath(path)
 		if r.URL.RawQuery != "" {
 			target += "?" + r.URL.RawQuery
@@ -171,7 +175,7 @@ func (h *Handlers) browse(w http.ResponseWriter, r *http.Request, f *folder.Fold
 	p.Browse = rel + "/"
 	dir, _ := f.Path(rel)
 	if sub := f.Sub(rel); sub != nil {
-		p.Actions = h.actions(p, sub)
+		p.Actions = h.actions(r, p, sub)
 		p.Prompt = h.prompt(r, p, f, rel)
 		if len(sub.Sources) > 0 {
 			p.Place = sub
@@ -198,7 +202,7 @@ func (h *Handlers) folder(w http.ResponseWriter, r *http.Request, f *folder.Fold
 		p.Up = p.Href(parent)
 	}
 	p.Crumbs = crumbsOf(f.ID, "", p.Workspaces)
-	p.Actions = h.actions(p, f)
+	p.Actions = h.actions(r, p, f)
 	h.settingsLinks(r, p, f)
 	p.Prompt = h.prompt(r, p, f, "")
 	if h.opts.Git != nil && h.opts.Git.IsRepo(f.Dir) {

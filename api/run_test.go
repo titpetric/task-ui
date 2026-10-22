@@ -347,3 +347,76 @@ func TestRun_Shell(t *testing.T) {
 	assert.Contains(t, out, "at="+want)
 	assert.Equal(t, 7, status.ExitCode)
 }
+
+// @claude is Claude Code in a terminal, a shell as @shell is: 403
+// without the shell permission, an admin's to run and end. The Notes
+// agent's @claude-note and a prompt's @claude-prompt start from the
+// board and the prompt routes, never from POST /api/runs.
+func TestRun_ClaudeBuiltins(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	ctx := t.Context()
+
+	for _, user := range []string{asOps, asViewer, asLimited} {
+		res := f.call(t, user, http.MethodPost, "/runs", api.RunRequest{Folder: "infra", Job: folder.ClaudeID})
+		assert.Equal(t, http.StatusForbidden, res.Status, user)
+	}
+	terminal := &model.Run{Folder: "infra", Job: folder.ClaudeID, UserName: asAdmin, State: model.StateOK}
+	assert.NoError(t, f.opts.Runs.Create(ctx, terminal))
+	assert.Equal(t, true, f.call(t, asAdmin, http.MethodGet, "/runs/"+terminal.ID, nil).get("can_run"))
+	assert.Equal(t, false, f.call(t, asOps, http.MethodGet, "/runs/"+terminal.ID, nil).get("can_run"))
+
+	for _, req := range []api.RunRequest{
+		{Folder: model.Default, Job: model.NoteJob},
+		{Folder: "infra", Job: model.NoteJob},
+		{Folder: "infra", Job: model.PromptJob},
+	} {
+		res := f.call(t, asAdmin, http.MethodPost, "/runs", req)
+		assert.Equal(t, http.StatusBadRequest, res.Status, req.Folder+"/"+req.Job)
+	}
+}
+
+// The Notes agent's run, _/@claude-note, shows with note/view, and to
+// the agent's user who starts it, who ends it with note/edit, as an
+// admin does.
+func TestRun_NoteVisibility(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	ctx := t.Context()
+	agent, err := f.opts.Users.GetByName(ctx, asOps)
+	assert.NoError(t, err)
+	run := &model.Run{Folder: model.Default, Job: model.NoteJob, UserID: agent.ID, UserName: agent.Name, State: model.StateOK}
+	assert.NoError(t, f.opts.Runs.Create(ctx, run))
+	listed := func(user string) bool {
+		for _, row := range f.call(t, user, http.MethodGet, "/runs", nil).list("runs") {
+			if row.(map[string]any)["id"] == run.ID {
+				return true
+			}
+		}
+		return false
+	}
+
+	assert.True(t, listed(asAdmin))
+	assert.True(t, listed(asViewer), "a viewer's role has note/view")
+	for _, user := range []string{asOps, asViewer} {
+		assert.NoError(t, f.opts.Users.Policies().Put(ctx, "user", user, "note/view", "deny"))
+	}
+	assert.True(t, listed(asOps), "the starter's own")
+	assert.False(t, listed(asViewer), "without note/view")
+	assert.Equal(t, http.StatusNotFound, f.call(t, asViewer, http.MethodGet, "/runs/"+run.ID, nil).Status)
+	assert.NoError(t, f.opts.Users.Policies().Put(ctx, "user", asViewer, "note/view", "allow"))
+	assert.True(t, listed(asViewer), "with note/view")
+	assert.Equal(t, false, f.call(t, asViewer, http.MethodGet, "/runs/"+run.ID, nil).get("can_run"))
+
+	assert.Equal(t, true, f.call(t, asOps, http.MethodGet, "/runs/"+run.ID, nil).get("can_run"), "the starter ends it")
+	assert.NoError(t, f.opts.Users.Policies().Put(ctx, "user", asOps, "note/edit", "deny"))
+	assert.Equal(t, false, f.call(t, asOps, http.MethodGet, "/runs/"+run.ID, nil).get("can_run"), "with note/edit")
+	assert.Equal(t, true, f.call(t, asAdmin, http.MethodGet, "/runs/"+run.ID, nil).get("can_run"))
+
+	// An older run of the internal folder lists for admins and its starter.
+	older := &model.Run{Folder: model.Internal, Job: "claude-note", UserID: agent.ID, UserName: agent.Name, State: model.StateOK}
+	assert.NoError(t, f.opts.Runs.Create(ctx, older))
+	assert.Equal(t, http.StatusOK, f.call(t, asAdmin, http.MethodGet, "/runs/"+older.ID, nil).Status)
+	assert.Equal(t, http.StatusOK, f.call(t, asOps, http.MethodGet, "/runs/"+older.ID, nil).Status)
+	assert.Equal(t, http.StatusNotFound, f.call(t, asViewer, http.MethodGet, "/runs/"+older.ID, nil).Status)
+}

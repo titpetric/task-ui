@@ -22,6 +22,9 @@ type Actions struct {
 	// Shell is the place's shell job, Enter Shell at the right of the
 	// bar: set with the shell permission.
 	Shell *folder.Job
+	// Claude is the place's Claude job, Enter Claude beside Enter Shell:
+	// set with the shell permission and a Claude token.
+	Claude *folder.Job
 	// WorkspaceSettings and ProjectSettings link the settings page of
 	// the workspace or the project a folder page is of, beside Enter
 	// Shell: set with workspace/view and project/view, on the folder's
@@ -48,5 +51,5 @@ func (a *Actions) Confirm(skill *folder.Skill, job *folder.Job) string {
 
 // Empty reports whether the bar has nothing to show.
 func (a *Actions) Empty() bool {
-	return a == nil || (a.Git == nil && len(a.Skills) == 0 && len(a.Pipeline) == 0 && a.Shell == nil && a.WorkspaceSettings == "" && a.ProjectSettings == "")
+	return a == nil || (a.Git == nil && len(a.Skills) == 0 && len(a.Pipeline) == 0 && a.Shell == nil && a.Claude == nil && a.WorkspaceSettings == "" && a.ProjectSettings == "")
 }

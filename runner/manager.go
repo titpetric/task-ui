@@ -365,14 +365,9 @@ func (m *Manager) command(ctx context.Context, session *Session) (*exec.Cmd, err
 		cmd.Dir = session.dir
 	}
 	cmd.Env = os.Environ()
-	// A prompt's run gets the internal folder's secrets, not those of
-	// the folder it asks in.
+	// Every run gets its folder's secrets, Claude's built-ins too.
 	if m.opts.Secrets != nil {
-		scope := f.ID
-		if job.IsPrompt() {
-			scope = model.Internal
-		}
-		secrets, err := m.opts.Secrets.For(ctx, scope)
+		secrets, err := m.opts.Secrets.For(ctx, f.ID)
 		if err != nil {
 			return nil, err
 		}
@@ -419,8 +414,8 @@ func (m *Manager) command(ctx context.Context, session *Session) (*exec.Cmd, err
 // workspace returns the folder and the directory of the request's
 // workspace: the one it names, or the workspace of the first segment
 // of WorkspaceOf, else of the folder, under the root, or the default
-// workspace, _ at the root, for a folder in no named one. Empty for an
-// internal folder, or with no workspace known.
+// workspace, _ at the root, for a folder in no named one. Empty with no
+// workspace known.
 func (m *Manager) workspace(ctx context.Context, req Request) (string, string) {
 	if req.Workspace != "" {
 		if m.opts.Root != "" && filepath.Clean(req.Workspace) == filepath.Clean(m.opts.Root) {
@@ -432,7 +427,7 @@ func (m *Manager) workspace(ctx context.Context, req Request) (string, string) {
 	if req.WorkspaceOf != "" {
 		of = req.WorkspaceOf
 	}
-	if m.opts.Workspaces == nil || model.IsInternal(of) {
+	if m.opts.Workspaces == nil {
 		return "", ""
 	}
 	top, _, _ := strings.Cut(of, "/")

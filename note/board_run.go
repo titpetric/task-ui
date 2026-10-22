@@ -21,9 +21,8 @@ const (
 // AskRun puts a prompt to Claude about a run, from the run's page: a
 // thread in the run's directory that holds the run, which Claude gets
 // with the run's details and the end of its output. Asking takes
-// prompt/edit and a run the user sees, outside the internal folder and
-// no prompt's own; Ask
-// with the thread as parent replies in it.
+// prompt/edit and a run the user sees, none of Claude's own; Ask with
+// the thread as parent replies in it.
 func (b *Board) AskRun(ctx context.Context, user *model.User, runID, body string) (*model.Note, error) {
 	if b.Runs == nil {
 		return nil, fmt.Errorf("%w: prompts about runs are off", ErrNoPrompt)
@@ -35,7 +34,7 @@ func (b *Board) AskRun(ctx context.Context, user *model.User, runID, body string
 	if err != nil {
 		return nil, err
 	}
-	if !user.CanSee(run.Folder) || model.IsInternal(run.Folder) || run.IsPrompt() {
+	if !user.CanSee(run.Folder) || run.IsClaude() {
 		return nil, fmt.Errorf("%w: no such run", ErrNoPrompt)
 	}
 	return b.ask(ctx, user, "", run.Where(), run.ID, body)

@@ -1,7 +1,7 @@
-// Package agent holds task-ui's host commands, the jobs of the internal
-// folder: Claude Code on a note from the Notes board, on a prompt against
-// a workspace, and in a terminal. The server runs them as
-// `task-ui agent note|prompt|shell`.
+// Package agent holds task-ui's host commands, the commands of the Claude
+// built-ins every folder has: Claude Code on a note from the Notes board,
+// @claude-note, on a prompt, @claude-prompt, and in a terminal, @claude.
+// The server runs them as `task-ui agent note|prompt|shell`.
 package agent
 
 import (

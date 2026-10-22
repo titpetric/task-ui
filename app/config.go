@@ -6,6 +6,7 @@ package app
 import (
 	"errors"
 	"fmt"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"slices"
@@ -15,6 +16,7 @@ import (
 
 	"github.com/spf13/pflag"
 
+	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/sshkey"
 	"github.com/titpetric/task-ui/workspace"
 )
@@ -72,7 +74,8 @@ type Config struct {
 	// from each request, through the proxy's forwarded headers.
 	URL string
 	// AgentJob is the job an instruction runs, as folder/job, as the
-	// agent's user. TASK_UI_AGENT_JOB, default internal/claude-note; set
+	// agent's user. TASK_UI_AGENT_JOB, default _/@claude-note, the Notes
+	// agent in the root; internal/claude-note names the same job. Set
 	// empty, it leaves the agent's instructions open too, for an agent that
 	// reads the board over MCP.
 	AgentJob string
@@ -142,6 +145,14 @@ func envDuration(name string, fallback time.Duration) (time.Duration, error) {
 	return d, nil
 }
 
+// NoteAgentJob is the agent job by default: the Notes agent, a job of
+// the root.
+const NoteAgentJob = model.Default + "/" + model.NoteJob
+
+// legacyAgentJob is the agent job's other name, which older
+// configurations set.
+const legacyAgentJob = model.Internal + "/claude-note"
+
 // NewConfig reads the environment and the command line flags.
 func NewConfig(args []string) (*Config, error) {
 	home, _ := os.UserHomeDir()
@@ -157,7 +168,7 @@ func NewConfig(args []string) (*Config, error) {
 		SSHDir:    env("TASK_UI_SSH_DIR", filepath.Join(home, ".ssh")),
 		AutoLogin: env("TASK_UI_AUTOLOGIN", ""),
 		Agent:     env("TASK_UI_AGENT", ""),
-		AgentJob:  envSet("TASK_UI_AGENT_JOB", "internal/claude-note"),
+		AgentJob:  envSet("TASK_UI_AGENT_JOB", NoteAgentJob),
 
 		ComposeProject: env("TASK_UI_COMPOSE_PROJECT", ""),
 		URL:            strings.TrimRight(strings.TrimSpace(env("TASK_UI_URL", "")), "/"),
@@ -211,6 +222,10 @@ func (c *Config) Validate() error {
 	}
 	if c.SessionTTL <= 0 {
 		return errors.New("TASK_UI_SESSION_TTL: must be positive")
+	}
+	if c.AgentJob == legacyAgentJob {
+		slog.Info("TASK_UI_AGENT_JOB names the Notes agent by its other name", "set", c.AgentJob, "runs", NoteAgentJob)
+		c.AgentJob = NoteAgentJob
 	}
 	return nil
 }

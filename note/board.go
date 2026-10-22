@@ -68,8 +68,12 @@ type Board struct {
 	// AgentJob is the job the board starts for an instruction, as
 	// folder/job; empty leaves instructions open for an agent over MCP.
 	AgentJob string
+	// AgentCommand is the command the Claude jobs of the board run, a
+	// prompt's and the Notes agent's, their subcommand after it; nil runs
+	// the jobs' own, task-ui agent.
+	AgentCommand []string
 	// Root is the directory of the projects, the default workspace, where
-	// a prompt at the root runs.
+	// a prompt at the root and the Notes agent run.
 	Root string
 	// Hosts lists the inventory for a prompt's run, as beszel.Hosts does,
 	// in TASK_UI_HOSTS; nil, or an error of beszel.ErrOff, leaves it out.
@@ -387,8 +391,13 @@ func (b *Board) Answerer() string {
 	return answerer
 }
 
-// agentJob resolves AgentJob, folder/job, in the catalogue.
+// agentJob resolves AgentJob, folder/job: the root's Notes agent,
+// _/@claude-note, or a job of the catalogue.
 func (b *Board) agentJob() (*folder.Folder, *folder.Job) {
+	if b.AgentJob == model.Default+"/"+folder.NoteID && b.Root != "" {
+		root := &folder.Folder{ID: model.Default, Title: model.Default, Dir: b.Root}
+		return root, b.agentCommand(root.NoteJob(), "note")
+	}
 	cut := strings.LastIndex(b.AgentJob, "/")
 	if cut <= 0 || b.Catalogue == nil {
 		return nil, nil
@@ -398,6 +407,15 @@ func (b *Board) agentJob() (*folder.Folder, *folder.Job) {
 		return nil, nil
 	}
 	return f, f.Job(b.AgentJob[cut+1:])
+}
+
+// agentCommand returns a Claude job with AgentCommand and the subcommand
+// for its command, when the board has one.
+func (b *Board) agentCommand(job *folder.Job, subcommand string) *folder.Job {
+	if b.AgentCommand != nil {
+		job.Command = append(append([]string{}, b.AgentCommand...), subcommand)
+	}
+	return job
 }
 
 // output returns the last lines of a run's output, from its recording.

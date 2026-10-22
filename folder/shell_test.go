@@ -37,20 +37,3 @@ func TestFolder_ShellJob(t *testing.T) {
 	assert.True(t, (*folder.Folder)(nil).ShellJob() == nil)
 	assert.Contains(t, folder.ErrShellUnattended.Error(), "no schedule or workflow step")
 }
-
-// A folder of host commands keeps its jobs in a directory Sub returns,
-// each run there.
-func TestFolder_HostJobs(t *testing.T) {
-	t.Parallel()
-	f := checkout(t)
-	job := &folder.Job{Folder: f.ID, ID: "prompt", Command: []string{"true"}}
-	f.Jobs, f.HostJobs = []*folder.Job{job}, true
-
-	sub := f.Sub("bin")
-	assert.NotNil(t, sub)
-	assert.Equal(t, "bin", sub.Rel)
-	assert.Len(t, sub.Jobs, 1)
-	assert.Equal(t, "bin", sub.Job("prompt").Dir)
-	assert.Equal(t, "", job.Dir, "the folder's own job stays")
-	assert.True(t, f.Sub("nothing") == nil)
-}

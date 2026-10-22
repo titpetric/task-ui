@@ -44,11 +44,11 @@
 	<table class="table cards">
 		<thead><tr><th>Started</th><th>Folder</th><th>Job</th><th>By</th><th>Duration</th><th>Result</th><th></th></tr></thead>
 		<tbody data-runs-table{{ if .Summarize }} data-summarize{{ end }}>
-		{{- range .Runs }}
+		{{- range .Runs }}{{ $r := . }}
 			<tr data-run-id="{{ .ID }}">
 				<td class="nowrap" data-label="Started" title="{{ stamp .StartedAt }}">{{ ago .StartedAt }}</td>
-				<td data-label="Folder"><a href="{{ $.Href .Folder }}{{ with .Dir }}/{{ . }}{{ end }}">{{ .Where }}</a></td>
-				<td class="key"><a href="{{ $.Href .Folder }}/{{ with .Dir }}{{ . }}/{{ end }}{{ .Job }}">{{ .Job }}</a></td>
+				<td data-label="Folder">{{ with $.RunFolderHref .Folder .Dir }}<a href="{{ . }}">{{ $r.Where }}</a>{{ else }}{{ .Where }}{{ end }}</td>
+				<td class="key">{{ with $.RunJobHref .Folder .Dir .Job }}<a href="{{ . }}">{{ $r.Job }}</a>{{ else }}{{ .Job }}{{ end }}</td>
 				<td data-label="By">{{ template "who" (list $ .) }}</td>
 				<td class="nowrap" data-label="Took" data-took>{{ duration .Elapsed }}</td>
 				<td data-label="Result" data-result>{{ template "state" . }}{{ if .Attached }} <span class="faint">{{ .Attached }} watching</span>{{ end }}</td>

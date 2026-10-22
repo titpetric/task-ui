@@ -4,9 +4,10 @@ import (
 	"strings"
 )
 
-// Internal is the namespace of the folder task-ui builds for its own host
-// commands, the notes agent among them. No checkout or project takes the
-// name, and only admins see the folder.
+// Internal is the folder older runs of the Claude jobs carry,
+// internal/claude-note, claude-prompt and claude: they list and open by
+// it, for admins and their starter. No checkout, project or workspace
+// takes the name, so no folder shares those runs.
 const Internal = "internal"
 
 // Default is the folder of the default workspace: the root itself, which

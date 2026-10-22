@@ -35,8 +35,8 @@ func (u *User) FolderList() []string {
 	return DecodeList(u.Folders)
 }
 
-// CanSee reports whether the user may see a folder. The internal folder,
-// and its runs, are the admins'.
+// CanSee reports whether the user may see a folder. The internal folder
+// of older runs, and those runs, are the admins'.
 func (u *User) CanSee(folder string) bool {
 	if u == nil {
 		return false
@@ -49,16 +49,17 @@ func (u *User) CanSee(folder string) bool {
 }
 
 // SeesRun reports whether the user may see a run: one of a folder the
-// user sees, a prompt's run with prompts, prompt/view, and the user's
-// own prompt runs whatever the folder.
-func (u *User) SeesRun(run *Run, prompts bool) bool {
+// user sees, a prompt's run with prompts, prompt/view, the Notes
+// agent's with notes, note/view, and the user's own runs of either
+// whatever the folder.
+func (u *User) SeesRun(run *Run, prompts, notes bool) bool {
 	if u == nil || run == nil {
 		return false
 	}
-	if run.IsPrompt() && run.UserID == u.ID {
+	if (run.IsPrompt() || run.IsNote()) && run.UserID == u.ID {
 		return true
 	}
-	return u.CanSee(run.Folder) && (prompts || !run.IsPrompt())
+	return u.CanSee(run.Folder) && (prompts || !run.IsPrompt()) && (notes || !run.IsNote())
 }
 
 // Listed reports whether allow lists let the user run a job: the list

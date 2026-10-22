@@ -61,9 +61,12 @@ func (d *Discovery) List() []*Folder {
 		root = d.Root
 	}
 	c := &catalogue{byID: map[string]*Folder{}, byDir: map[string]*Folder{}}
-	// Configured folders first, so their paths win over discovery.
+	// Configured folders first, so their paths win over discovery; one
+	// under internal lists nothing, as the folder of older runs.
 	for _, cfg := range d.Config {
-		c.add(configured(root, cfg))
+		if f := configured(root, cfg); !model.IsInternal(f.ID) {
+			c.add(f)
+		}
 	}
 	if d.Discover {
 		d.discover(root, c)

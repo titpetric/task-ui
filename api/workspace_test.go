@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/titpetric/task-ui/api"
-	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/internal/assert"
 	"github.com/titpetric/task-ui/model"
 )
@@ -192,8 +191,8 @@ func TestWorkspace_Prompt(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
 	repo := "file://" + localRepo(t)
-	promptFolder(t, f)
-	out := filepath.Join(f.root, model.Internal, "env.out")
+	promptCommand(t, f)
+	out := promptOut(f, "env.out")
 
 	assert.Equal(t, http.StatusCreated, f.call(t, asAdmin, http.MethodPost, "/workspaces", api.WorkspaceRequest{URL: repo, Folder: "malta"}).Status)
 
@@ -235,24 +234,22 @@ func (f *fixture) answered(t *testing.T, id string) *model.Note {
 	return note
 }
 
-// promptFolder puts an internal folder in the fixture's catalogue whose
-// claude-prompt stands in for task-ui agent prompt, the command a
-// prompt's @claude-prompt runs: it writes the
-// prompt's environment and where it runs to internal/env.out, the run a
-// prompt about a run gets to internal/run.out, waits for
-// a file named release in the directory it runs in, when that directory
-// holds a file named hold, then answers with the prompt in the reply
-// file.
-func promptFolder(t *testing.T, f *fixture) *folder.Folder {
+// promptCommand stands a script in for task-ui agent, the command a
+// prompt's @claude-prompt runs: it writes the prompt's environment and
+// where it runs to promptOut env.out, the run a prompt about a run gets
+// to run.out, waits for a file named release in the directory it runs
+// in, when that directory holds a file named hold, then answers with the
+// prompt in the reply file.
+func promptCommand(t *testing.T, f *fixture) {
 	t.Helper()
-	internal := shellFolder(t, f.root, model.Internal, map[string]string{
-		"claude-prompt": `{ env | grep '^TASK_UI_\(PROMPT\|WORKSPACE\|WORKSPACE_DIR\|PROMPT_DIR\)=' | sort; echo "pwd=$(pwd -P)"; } > "` + filepath.Join(f.root, model.Internal, "env.out") + `"; if [ -n "$TASK_UI_PROMPT_RUN" ]; then cp "$TASK_UI_PROMPT_RUN" "` + filepath.Join(f.root, model.Internal, "run.out") + `"; fi; while [ -e hold ] && [ ! -e release ]; do sleep 0.05; done; printf 'Answer to: %s' "$TASK_UI_PROMPT" > "$TASK_UI_PROMPT_REPLY"`,
-	})
-	// The internal folder's directory is the root, as agent.Folder's.
-	internal.Dir, internal.HostJobs = f.root, true
-	internal.Job("claude-prompt").Allow = []string{model.RoleAdmin}
-	f.opts.Catalogue.(catalogue)[model.Internal] = internal
-	return internal
+	assert.NoError(t, os.MkdirAll(promptOut(f, ""), 0o755))
+	f.opts.Board.AgentCommand = []string{"sh", "-c", `{ env | grep '^TASK_UI_\(PROMPT\|WORKSPACE\|WORKSPACE_DIR\|PROMPT_DIR\)=' | sort; echo "pwd=$(pwd -P)"; } > "` + promptOut(f, "env.out") + `"; if [ -n "$TASK_UI_PROMPT_RUN" ]; then cp "$TASK_UI_PROMPT_RUN" "` + promptOut(f, "run.out") + `"; fi; while [ -e hold ] && [ ! -e release ]; do sleep 0.05; done; printf 'Answer to: %s' "$TASK_UI_PROMPT" > "$TASK_UI_PROMPT_REPLY"`}
+}
+
+// promptOut is where promptCommand's script writes a file, in a
+// directory of the root with nothing to run.
+func promptOut(f *fixture, name string) string {
+	return filepath.Join(f.root, ".prompt", name)
 }
 
 // The default workspace, _, is the root: it lists first, takes a title,
