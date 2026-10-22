@@ -62,6 +62,10 @@ type Board struct {
 	// Root is the directory of the projects, the default workspace, where
 	// a prompt at the root runs.
 	Root string
+	// Hosts lists the inventory for a prompt's run, as beszel.Hosts does,
+	// in TASK_UI_HOSTS; nil, or an error of beszel.ErrOff, leaves it out.
+	// The notes agent's runs never get it.
+	Hosts func(ctx context.Context) (string, error)
 }
 
 // Post leaves a note on the board, or a reply to one. A note naming the
