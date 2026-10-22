@@ -171,63 +171,15 @@ func (b *Board) Comment(ctx context.Context, user *model.User, id, body, state s
 		}
 	}
 	if state != "" {
-		if err := b.Notes.SetState(ctx, note.ID, state, ""); err != nil {
+		if err := b.setState(ctx, note, state); err != nil {
 			return nil, err
 		}
-		note.State = state
 		b.publish(note)
 	}
 	if reply == nil {
 		return note, nil
 	}
 	return reply, nil
-}
-
-// Recover fails the instructions a restart cut short: a note still
-// working on a run of the board's has no run to wait on any more. A note
-// working with no run is an external agent's, which goes on. An open
-// instruction to the agent with no run yet, one that never started or one
-// set open by hand, starts the agent, and an open prompt with no run
-// starts its prompt.
-func (b *Board) Recover(ctx context.Context) error {
-	open, err := b.Notes.List(ctx, storage.NoteFilter{State: model.NoteOpen})
-	if err != nil {
-		return err
-	}
-	prompts, err := b.Notes.List(ctx, storage.NoteFilter{State: model.NoteOpen, Prompts: true})
-	if err != nil {
-		return err
-	}
-	for i := range open {
-		if open[i].RunID == "" && b.threadForAgent(ctx, &open[i]) {
-			b.dispatch(&open[i], nil)
-		}
-	}
-	for i := range prompts {
-		if prompts[i].RunID == "" {
-			b.reask(ctx, &prompts[i])
-		}
-	}
-	working, err := b.Notes.List(ctx, storage.NoteFilter{State: model.NoteWorking})
-	if err != nil {
-		return err
-	}
-	workingPrompts, err := b.Notes.List(ctx, storage.NoteFilter{State: model.NoteWorking, Prompts: true})
-	if err != nil {
-		return err
-	}
-	for _, note := range append(working, workingPrompts...) {
-		if note.RunID == "" && !note.IsPrompt() {
-			continue
-		}
-		if note.RunID != "" && b.Runner != nil {
-			if _, live := b.Runner.Get(note.RunID); live {
-				continue
-			}
-		}
-		b.finish(ctx, &note, model.NoteFailed, "task-ui restarted while the run was going.", b.working(ctx, &note))
-	}
-	return nil
 }
 
 // working returns the reply of a thread a rerun rewrites, the one in

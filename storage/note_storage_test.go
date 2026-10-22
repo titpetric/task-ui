@@ -55,6 +55,10 @@ func TestNoteStorage(t *testing.T) {
 	assert.Equal(t, model.NoteDone, got.State)
 	assert.Equal(t, "run1", got.RunID, "kept")
 	assert.ErrorIs(t, notes.SetState(ctx, "missing", model.NoteDone, ""), storage.ErrNotFound)
+	assert.NoError(t, notes.Release(ctx, task.ID, model.NoteWorking))
+	got, _ = notes.Get(ctx, task.ID)
+	assert.Equal(t, model.NoteWorking, got.State)
+	assert.Equal(t, "", got.RunID, "let go")
 
 	assert.NoError(t, notes.Delete(ctx, task.ID))
 	_, err = notes.Get(ctx, reply.ID)

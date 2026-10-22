@@ -137,6 +137,12 @@ func (s *NoteStorage) SetState(ctx context.Context, id, state, runID string) err
 	return s.change(ctx, "UPDATE note SET state = ?, run_id = CASE WHEN ? = '' THEN run_id ELSE ? END, updated_at = ? WHERE id = ?", state, runID, runID, stamp(), id)
 }
 
+// Release sets a note's state and lets go of the run it names, for
+// someone who works on it over MCP.
+func (s *NoteStorage) Release(ctx context.Context, id, state string) error {
+	return s.change(ctx, "UPDATE note SET state = ?, run_id = '', updated_at = ? WHERE id = ?", state, stamp(), id)
+}
+
 // Edit puts a new body in a note, with its mentions, and marks it
 // edited now.
 func (s *NoteStorage) Edit(ctx context.Context, id, body string) error {
