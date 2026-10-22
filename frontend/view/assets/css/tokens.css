@@ -83,6 +83,11 @@
 
   --term-bg: #090c10;
   --term-fg: #d5dee7;
+  /* The logo's tile and the header's prompt stay a dark terminal in
+     either theme. */
+  --logo-bg: #0b0f14;
+  --logo-fg: #d5dee7;
+  --logo-signal: #e0a44f;
 
   /* The type sizes in use, smallest first. The labels are uppercase and
      tracked, the fields and the body are text. */

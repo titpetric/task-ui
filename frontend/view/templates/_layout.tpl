@@ -21,7 +21,12 @@
 	<header class="top">
 		<button type="button" class="btn-icon menu-toggle" id="menu-toggle" aria-label="Menu" aria-controls="side" aria-expanded="false"><svg class="ic"><use href="#i-menu"/></svg></button>
 		<h1><a href="/"><span>TaskUI</span>{{ template "logo" }}</a></h1>
+		{{- if .Can "prompt/edit" }}
+		<input type="text" class="header-prompt" id="header-prompt" tabindex="-1" autocomplete="off" spellcheck="false">
+		<div class="header-answer" id="header-answer" hidden></div>
+		{{- else }}
 		<span class="spacer"></span>
+		{{- end }}
 		<details class="user" id="user-menu">
 			<summary aria-label="{{ .User.Name }}, {{ .User.Role }}" title="{{ .User.Name }}"><span class="avatar role-{{ .User.Role }}">{{ .User.Initials }}</span></summary>
 			<div class="user-menu">

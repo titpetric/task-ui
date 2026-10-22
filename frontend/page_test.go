@@ -38,7 +38,17 @@ func TestPage_Chrome(t *testing.T) {
 	// the avatars the script draws.
 	assert.Contains(t, body, `<body data-roles='{&#34;admin&#34;:&#34;admin&#34;,&#34;limited&#34;:&#34;runner&#34;,&#34;ops&#34;:&#34;runner&#34;,&#34;viewer&#34;:&#34;viewer&#34;}' data-workspaces='{}'>`)
 
+	// The header's prompt, for prompt/edit: a bare field with nothing
+	// that names it.
+	const prompt = `<input type="text" class="header-prompt" id="header-prompt" tabindex="-1" autocomplete="off" spellcheck="false">`
+	assert.Contains(t, body, prompt)
+	head := body[strings.Index(body, `<header class="top">`):strings.Index(body, `</header>`)]
+	assert.NotContains(t, head, "placeholder")
+	assert.NotContains(t, head[strings.Index(head, "header-prompt"):strings.Index(head, `<details class="user"`)], "aria-label")
+
 	limited := f.page(t, asLimited, "/")
+	assert.NotContains(t, limited, "header-prompt")
+	assert.NotContains(t, f.page(t, asViewer, "/"), "header-prompt")
 	assert.NotContains(t, limited, "Settings</a>")
 	assert.NotContains(t, limited, `data-folder="private"`)
 	assert.NotContains(t, limited, `title="admin">AD<`)

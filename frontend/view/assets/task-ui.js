@@ -1824,6 +1824,109 @@
     });
   }
 
+  // The header's prompt: Enter asks Claude at the root, as the prompt of
+  // /f/_ does, and a panel under the header follows the thread over the
+  // notes topic: the question, working, then the answer as /f/_ renders
+  // it. Esc clears the field and leaves it, or closes the panel; so does
+  // a click outside them.
+  var headerPrompt = document.getElementById("header-prompt");
+  var headerAnswer = document.getElementById("header-answer");
+  if (headerPrompt && headerAnswer) {
+    var asked = "";
+    var follow = null;
+    var typed = function () { headerPrompt.classList.toggle("typed", headerPrompt.value !== ""); };
+    var closeAnswer = function () {
+      headerAnswer.hidden = true;
+      headerAnswer.innerHTML = "";
+      asked = "";
+      if (follow) follow.close();
+      follow = null;
+    };
+    var answerState = function (state, text) {
+      var line = headerAnswer.querySelector("[data-state]");
+      if (!line) return;
+      line.className = state === "failed" ? "failed" : "working";
+      line.textContent = text || state;
+    };
+    var showAnswer = function (id) {
+      fetch("/f/_", { credentials: "same-origin" })
+        .then(function (res) { return res.text(); })
+        .then(function (text) {
+          if (asked !== id) return;
+          var doc = new DOMParser().parseFromString(text, "text/html");
+          var bodies = doc.querySelectorAll("#note-" + id + " .replies > li .note-body");
+          var body = bodies[bodies.length - 1];
+          if (!body) return api("GET", "/api/prompts?folder=_&limit=20").then(function (res) {
+            var thread = ((res.data && res.data.notes) || []).filter(function (n) { return n.id === id; })[0];
+            var replies = (thread && thread.replies) || [];
+            return replies.length ? "<pre>" + escapeHTML(replies[replies.length - 1].body) + "</pre>" : "";
+          });
+          return body.innerHTML;
+        })
+        .then(function (html) {
+          if (asked !== id || !html) return;
+          var answer = headerAnswer.querySelector(".answer");
+          if (answer) answer.innerHTML = html;
+        });
+    };
+    var askRoot = function (text) {
+      if (follow) follow.close();
+      follow = null;
+      asked = "";
+      headerAnswer.innerHTML = '<p class="question"></p><p class="working" data-state>working</p><div class="answer note-body"></div><a class="thread" href="/f/_">the thread on /f/_</a>';
+      headerAnswer.querySelector(".question").textContent = text;
+      headerAnswer.hidden = false;
+      api("POST", "/api/prompts", { folder: "_", prompt: text }).then(function (res) {
+        if (res.status >= 300) {
+          answerState("failed", res.data.error || ("HTTP " + res.status));
+          return;
+        }
+        var id = asked = res.data.id;
+        headerAnswer.querySelector("a.thread").href = "/f/_#note-" + encodeURIComponent(id);
+        if (!window.EventSource) return;
+        follow = new EventSource("/api/sse/notes");
+        follow.addEventListener("note", function (event) {
+          var changed = {};
+          try { changed = JSON.parse(event.data); } catch (e) { return; }
+          if (asked !== id || changed.id !== id) return;
+          if (changed.state === "done" || changed.state === "failed") {
+            answerState(changed.state, changed.state === "failed" ? "failed" : "");
+            if (changed.state === "done") headerAnswer.querySelector("[data-state]").remove();
+            showAnswer(id);
+            follow.close();
+            follow = null;
+          } else if (changed.state) {
+            answerState(changed.state);
+          }
+        });
+      });
+    };
+    headerPrompt.addEventListener("input", typed);
+    headerPrompt.addEventListener("keydown", function (event) {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        headerPrompt.value = "";
+        typed();
+        headerPrompt.blur();
+        return;
+      }
+      if (event.key !== "Enter" || event.isComposing) return;
+      event.preventDefault();
+      var text = headerPrompt.value.trim();
+      if (!text) return;
+      headerPrompt.value = "";
+      typed();
+      askRoot(text);
+    });
+    document.addEventListener("keydown", function (event) {
+      if (event.key === "Escape" && !headerAnswer.hidden && event.target !== headerPrompt) closeAnswer();
+    });
+    document.addEventListener("click", function (event) {
+      if (headerAnswer.hidden || event.target === headerPrompt || headerAnswer.contains(event.target)) return;
+      closeAnswer();
+    });
+  }
+
   // The inventory runs a command on the hosts checked, all at once, and
   // shows each host's output and exit code. A quick button fills in a
   // command.

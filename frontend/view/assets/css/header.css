@@ -48,7 +48,7 @@ header.top h1 .logo {
 }
 
 header.top h1 .logo rect {
-  fill: #0b0f14;
+  fill: var(--logo-bg);
   stroke: var(--line-2);
   stroke-width: 1;
 }
@@ -61,7 +61,7 @@ header.top h1 .logo .prompt {
 }
 
 header.top h1 .logo .cursor {
-  stroke: #d5dee7;
+  stroke: var(--logo-fg);
   stroke-width: 3;
   animation: cursor-blink 1.06s steps(1, end) infinite;
 }
@@ -74,6 +74,94 @@ header.top h1 .logo .cursor {
 
 header.top .spacer {
   flex: 1;
+}
+
+/* The header's prompt: a field in the header's empty space after the
+   logo, the header's own colour until it has focus or text, then typed
+   at the logo's prompt, amber and monospace, while the logo's cursor
+   holds still. Enter asks Claude at the root; the answer drops under
+   the header in a terminal panel. */
+header.top .header-prompt {
+  flex: 1;
+  min-width: 0;
+  align-self: stretch;
+  margin: 0;
+  padding: 0 0.25rem;
+  border: 0;
+  outline: 0;
+  background: var(--ink-0);
+  color: var(--ink-0);
+  caret-color: var(--ink-0);
+  font-family: var(--font);
+  font-size: var(--fs-md);
+  cursor: default;
+
+  &::selection {
+    background: transparent;
+  }
+
+  &:focus,
+  &.typed {
+    color: var(--signal);
+    caret-color: var(--signal);
+
+    &::selection {
+      background: var(--signal-wash);
+    }
+  }
+}
+
+header.top:has(.header-prompt:focus) h1 .logo .cursor {
+  animation: none;
+}
+
+header.top .header-answer {
+  position: absolute;
+  top: 100%;
+  inset-inline-start: 1.25rem;
+  width: min(48rem, calc(100% - 2.5rem));
+  max-height: 70vh;
+  overflow: auto;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--line-2);
+  border-top: 0;
+  border-radius: 0 0 var(--radius) var(--radius);
+  background: var(--logo-bg);
+  color: var(--logo-fg);
+  font-family: var(--font);
+  font-size: var(--fs-sm);
+  box-shadow: var(--shadow-menu);
+
+  & .question {
+    margin: 0 0 0.5rem;
+    white-space: pre-wrap;
+
+    &::before {
+      content: "> ";
+      color: var(--logo-signal);
+    }
+  }
+
+  & .working {
+    color: var(--logo-signal);
+  }
+
+  & .failed {
+    color: var(--bad);
+  }
+
+  & .answer {
+    margin: 0 0 0.5rem;
+  }
+
+  & .answer pre {
+    white-space: pre-wrap;
+  }
+
+  & a.thread {
+    color: var(--logo-signal);
+    font-size: var(--fs-xs);
+  }
 }
 
 header.login-top {
