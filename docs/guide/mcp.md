@@ -20,8 +20,8 @@ and hours.
    `TASK_UI_ADMINS` and `TASK_UI_VIEWERS` set the role; every other user
    is a runner (see [Running the server](../running.md)).
 
-2. Open the user on Settings, Users, and press **Enable MCP** under **MCP
-   access**. task-ui makes a token that lasts 30 days and shows it once,
+2. Open the user's profile, from Settings, Users or the **⋯** menu next to
+   their name, and press **Enable MCP** under **MCP access**. task-ui makes a token that lasts 30 days and shows it once,
    beside the ready `claude mcp add` command; copy both before you leave
    the page, which keeps only the token's hash. The section shows the
    token's creation, its expiry, in amber within a week and red once
@@ -29,7 +29,7 @@ and hours.
    the old one stops working at once; **Disable** removes it.
 
    Enabling takes Allow Edits on Users, which admins hold; a user rotates
-   or disables their own token once on, from their own page. A
+   or disables their own token once on, from their own profile. A
    token past its expiry gets `401` "token expired, rotate it on your user
    settings".
 
@@ -101,7 +101,11 @@ connected.
 | `ask_prompt`         | `folder`, `dir`, `prompt`, `wait`                | Asks Claude in a folder, or `dir` inside it, as the folder's **Prompt** box does; with `wait`, up to 900 seconds, returns Claude's answer; takes `prompt/edit` |
 
 Each tool takes the permissions of the token's user, the ones a page
-takes in the browser. A note from `post_note` and a prompt from
+takes in the browser: the role's policy and the user's own, which
+Settings, Permissions and the user's profile set (see
+[Settings](settings.md#permissions)). An agent that should post notes or
+ask prompts without being an admin gets Allow Edits on Notes or on
+Prompts in its own policy. A note from `post_note` and a prompt from
 `ask_prompt` carry that user's name. A user with `prompt/edit` asks in
 the folders the user sees, and reads the runs of the prompts the user
 asked with `get_run`, though they run as `internal/claude-prompt`.

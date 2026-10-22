@@ -12,6 +12,7 @@ The page has three parts.
 
 - **The header.** The name and its prompt logo go home to the dashboard.
   Your initials, on the right, open the user menu: who you are, your role,
+  **Profile**, your activity, folders, permissions and MCP access,
   **Settings** for admins, and **Sign out**. On a phone a menu button on
   the left opens the sidebar as a drawer.
 - **The sidebar.** Everything you can open, in a fixed order:

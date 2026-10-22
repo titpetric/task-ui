@@ -81,24 +81,39 @@ come from the server's `TASK_UI_ADMINS` and `TASK_UI_VIEWERS`; everyone
 else is a runner.
 
 What a role may do comes from permission policies over the rules of
-`config/permissions.yml`. An admin may do everything. A runner runs
-jobs, and reads and writes notes, workflows and schedules; a viewer does
-the same without running; both read artifacts and the inventory. A
-policy of a user's own adds to the role's, and a deny in either wins.
+`config/permissions.yml`, which [Permissions](#permissions) sets. An
+admin may do everything. A runner runs jobs, and reads and writes notes,
+workflows and schedules; a viewer does the same without running; both
+read artifacts and the inventory. A policy of a user's own adds to the
+role's, and a deny in either wins.
 
 ![Users](../assets/users-dark.png)
 
-This page sets which folders a user sees: open a user, then pick **All
-projects**, or **Custom** and check the folders. A user's name and role
-show as text: the password file and the role lists set them.
+A user's name opens their **profile**, at `/users/<name>`: the name and
+the role, which the password file and the role lists set, and what the
+user ran and wrote lately, as far as you see it: runs and workflow runs
+in folders you see, notes with Allow View on Notes, and prompts with
+Allow View on Prompts in places you see. With Allow Edits on Users the
+profile sets which folders the user sees: **All projects**, or
+**Custom** and the folders checked. The profile also holds the user's
+own permissions and their MCP access, and **Delete user**. Anyone with
+Allow View on Users opens any profile; everyone opens their own, from
+**Profile** in the user menu.
 
-A user's page also holds their **MCP access**: **Enable MCP** makes a
-token for an MCP client that lasts 30 days and shows it once, with the
-`claude mcp add` command filled in. Once on, the section shows its
-dates, the expiry in amber within a week and red once past, with
-**Rotate** and **Disable**. Enabling takes Allow Edits on Users; you
-rotate or disable your own from your own page, which opens for you
-without Allow View on Users. See [MCP](mcp.md).
+![A profile: the activity of a user](../assets/profile-dark.png)
+
+Next to a user's name, on every page that shows one, a **⋯** button
+opens a menu: **Profile**, **Runs by this user**, which opens Runs
+filtered to them, and **Permissions** with Allow Edits on Users. A name
+that no user holds, such as the agent a note names, has no profile.
+
+A profile's **MCP access**: **Enable MCP** makes a token for an MCP
+client that lasts 30 days and shows it once, with the `claude mcp add`
+command filled in. Once on, the section shows its dates, the expiry in
+amber within a week and red once past, with **Rotate** and **Disable**.
+Enabling takes Allow Edits on Users; you rotate or disable your own from
+your own profile. `/settings/users/<id>` opens the profile too. See
+[MCP](mcp.md).
 
 ![Create user](../assets/user-new-dark.png)
 
@@ -108,6 +123,39 @@ server prints one, once, without an expiry. Under the table, **Connect an
 MCP client** shows the instance's base link and its MCP endpoint, each
 with a copy button, the link to your own MCP access, and the command
 that connects Claude Code.
+
+## Permissions
+
+What each role may do, rule by rule, over `config/permissions.yml`: each
+section, such as Notes, Secrets or Users, has the rules **Allow All**,
+**Allow View**, **Allow Edits** and **Allow Deletes**, and the
+application has **Run Jobs**, **Enter Shell** and **Run on Hosts**. A
+matrix per role holds a row per section, a column per rule, and the
+application's permissions under them.
+
+![Permissions: a matrix per role](../assets/permissions-dark.png)
+
+A cell inherits, empty, allows, a green ✓, or denies, a red ✕; a click
+moves it to the next, and **Save** keeps the cells that changed. **Allow
+All** sets every rule of its section, and a rule set on its own
+overrides it. The admin role shows every cell allowed and none changes:
+an admin may do everything. The page opens with Allow View on Users and
+changes with Allow Edits on Users; your own role's matrix changes only
+when your role grants Allow Edits on Users.
+
+A user's profile has the same matrix under **Permissions**, for their own
+policy over their role's, with the result after each cell: a muted ✓
+where the user may do it, ✕ where not. A deny in the role's policy or the
+user's wins; what neither allows, the user may not do. An admin's matrix shows
+everything allowed and does not change, and your own changes only with
+Allow Edits on Users through your role, so no one grants themselves
+more.
+
+![A profile's permissions: shell denied, the secrets readable](../assets/profile-permissions-dark.png)
+
+Folder visibility and the allow lists of jobs still apply over the
+permissions: a user runs a job with Run Jobs, in a folder they see, when
+its allow lists name them or their role.
 
 ## Secrets
 

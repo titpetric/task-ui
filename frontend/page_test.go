@@ -29,6 +29,7 @@ func TestPage_Chrome(t *testing.T) {
 	assert.Contains(t, body, `class="avatar role-admin">AD<`)
 	assert.Contains(t, body, "Settings")
 	assert.Contains(t, body, "Logout")
+	assert.Contains(t, body, `<a href="/users/admin"><svg class="ic"><use href="#i-users"/></svg>Profile</a>`)
 	assert.Contains(t, body, `data-folder="infra"`)
 	assert.Contains(t, body, `data-folder="private"`)
 	assert.Contains(t, body, "Recents")
