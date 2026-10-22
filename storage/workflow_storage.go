@@ -146,9 +146,14 @@ func (s *WorkflowStorage) Get(ctx context.Context, id string) (*model.Workflow, 
 	return workflow, notFound(err)
 }
 
-// Steps returns a workflow's steps in order.
+// Steps returns a workflow's steps in order, an empty list for a
+// workflow of a prompt alone.
 func (s *WorkflowStorage) Steps(ctx context.Context, id string) ([]model.WorkflowStep, error) {
-	return client(s.db).Select[model.WorkflowStep](ctx, "SELECT * FROM workflow_step WHERE workflow_id = ? ORDER BY position", id)
+	steps, err := client(s.db).Select[model.WorkflowStep](ctx, "SELECT * FROM workflow_step WHERE workflow_id = ? ORDER BY position", id)
+	if steps == nil && err == nil {
+		steps = []model.WorkflowStep{}
+	}
+	return steps, err
 }
 
 // List returns every workflow, by name.
@@ -285,9 +290,14 @@ func (s *WorkflowRunStorage) Get(ctx context.Context, id string) (*model.Workflo
 	return run, notFound(err)
 }
 
-// Steps returns a workflow run's steps in order.
+// Steps returns a workflow run's steps in order, an empty list for a
+// run of a prompt alone.
 func (s *WorkflowRunStorage) Steps(ctx context.Context, id string) ([]model.WorkflowRunStep, error) {
-	return client(s.db).Select[model.WorkflowRunStep](ctx, "SELECT * FROM workflow_run_step WHERE workflow_run_id = ? ORDER BY position", id)
+	steps, err := client(s.db).Select[model.WorkflowRunStep](ctx, "SELECT * FROM workflow_run_step WHERE workflow_run_id = ? ORDER BY position", id)
+	if steps == nil && err == nil {
+		steps = []model.WorkflowRunStep{}
+	}
+	return steps, err
 }
 
 // WorkflowRunFilter pages a workflow's runs: Limit of them, 20 when
