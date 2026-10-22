@@ -110,6 +110,7 @@ func (h *Handlers) Routes() http.Handler {
 	r.Put("/workspaces/{folder}", h.updateWorkspace)
 	r.Delete("/workspaces/{folder}", h.deleteWorkspace)
 	r.Post("/workspaces/{folder}/prompt", h.promptWorkspace)
+	r.Get("/prompts", h.listPrompts)
 	r.Post("/prompts", h.startPrompt)
 	r.Post("/workspaces/{folder}/export", h.exportWorkspace)
 	r.Get("/workspaces/{folder}/keys", h.listWorkspaceKeys)
@@ -190,11 +191,11 @@ func failErr(w http.ResponseWriter, err error) {
 // statusOf maps the errors the packages return to HTTP statuses.
 func statusOf(err error) int {
 	switch {
-	case errors.Is(err, storage.ErrNotFound), errors.Is(err, runner.ErrNotFound), errors.Is(err, fs.ErrNotExist):
+	case errors.Is(err, storage.ErrNotFound), errors.Is(err, runner.ErrNotFound), errors.Is(err, fs.ErrNotExist), errors.Is(err, note.ErrNoPrompt):
 		return http.StatusNotFound
 	case errors.Is(err, runner.ErrBusy), errors.Is(err, runner.ErrMoving):
 		return http.StatusConflict
-	case errors.Is(err, runner.ErrOutOfHours):
+	case errors.Is(err, runner.ErrOutOfHours), errors.Is(err, note.ErrForbidden):
 		return http.StatusForbidden
 	case errors.Is(err, secret.ErrNoKey), errors.Is(err, workspace.ErrRole):
 		return http.StatusConflict

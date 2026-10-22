@@ -26,6 +26,12 @@ func (h *Handlers) listNotes(w http.ResponseWriter, r *http.Request) {
 	}
 	q := r.URL.Query()
 	filter := storage.NoteFilter{Channel: model.ChannelNotes, Mention: q.Get("mention"), State: q.Get("state"), Limit: queryInt(r, "limit", 50)}
+	h.writeThreads(w, r, filter)
+}
+
+// writeThreads answers with the threads a filter lists, each with its
+// replies.
+func (h *Handlers) writeThreads(w http.ResponseWriter, r *http.Request, filter storage.NoteFilter) {
 	notes, err := h.opts.Board.Notes.List(r.Context(), filter)
 	if err != nil {
 		failErr(w, err)

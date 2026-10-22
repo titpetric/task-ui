@@ -464,6 +464,14 @@ func (m *Manager) workspace(ctx context.Context, req Request) (string, string) {
 	return model.Default, m.opts.Root
 }
 
+// WorkspaceID returns the ID of the workspace row a run of the request
+// takes, as Start finds it: "" for an internal folder's own run, or
+// with no workspace known.
+func (m *Manager) WorkspaceID(ctx context.Context, req Request) string {
+	name, _ := m.workspace(ctx, req)
+	return m.workspaceID(ctx, name)
+}
+
 // workspaceID returns the ID of the workspace row of a folder, "" for
 // none or with no workspaces known.
 func (m *Manager) workspaceID(ctx context.Context, name string) string {

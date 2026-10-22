@@ -26,7 +26,8 @@ const heartbeat = 15 * time.Second
 //	               sees every step of it
 //	runs           every run as it starts and ends: run, with the run row,
 //	               of the folders the user sees
-//	notes          every note and reply as someone leaves or changes it: note
+//	notes          every note and reply as someone leaves or changes it:
+//	               note; a prompt's notes for an admin alone
 //
 // The stream ends when the client goes.
 func (h *Handlers) sse(w http.ResponseWriter, r *http.Request) {
@@ -49,6 +50,10 @@ func (h *Handlers) sse(w http.ResponseWriter, r *http.Request) {
 		if id != "" || h.opts.Board == nil {
 			failErr(w, storage.ErrNotFound)
 			return
+		}
+		visible = func(e event.Event) bool {
+			n, ok := e.Data.(model.Note)
+			return ok && (!n.IsPrompt() || user.CanAdmin())
 		}
 	case "workflow":
 		wf, err := h.opts.Workflows.Get(r.Context(), id)

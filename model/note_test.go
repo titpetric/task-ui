@@ -32,3 +32,9 @@ func TestNote_Finished(t *testing.T) {
 	assert.True(t, (&model.Note{State: model.NoteDone}).Finished())
 	assert.True(t, (&model.Note{State: model.NoteFailed}).Finished())
 }
+
+func TestNote_IsPrompt(t *testing.T) {
+	t.Parallel()
+	assert.False(t, (&model.Note{}).IsPrompt())
+	assert.True(t, (&model.Note{WorkspaceID: "01J", Dir: "malta"}).IsPrompt())
+}

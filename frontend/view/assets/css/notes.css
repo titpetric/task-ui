@@ -85,6 +85,19 @@
     color: var(--signal);
   }
 
+  /* A note the agent works on pulses, as a running run's dot does. */
+  &.working::before {
+    content: "";
+    display: inline-block;
+    width: 0.45rem;
+    height: 0.45rem;
+    margin-inline-end: 0.35rem;
+    border-radius: var(--radius-round);
+    background: var(--signal);
+    vertical-align: middle;
+    animation: pulse 1.6s ease-out infinite;
+  }
+
   &.done {
     color: var(--ok);
   }

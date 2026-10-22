@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/titpetric/task-ui/integration"
 	"github.com/titpetric/task-ui/internal/assert"
 	"github.com/titpetric/task-ui/model"
 )
@@ -404,4 +405,32 @@ func TestFolder_BrowseJobs(t *testing.T) {
 	assert.Contains(t, plan, `data-attach="`+own.ID+`"`)
 	assert.NotContains(t, plan, `data-attach="`+inDir.ID+`"`)
 	assert.Equal(t, http.StatusNotFound, f.get(t, asOps, "/f/_/infra/images/nothing").Status)
+}
+
+// An admin's folder page shows the prompts asked there under the box,
+// each question with Claude's answer in markdown; the notes board and a
+// non-admin see none.
+func TestFolder_PromptThreads(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	ctx := context.Background()
+	f.withKey(t)
+	assert.NoError(t, f.opts.Integrations.Save(ctx, integration.Claude, map[string]string{"token": "sk-1"}))
+	notes := f.opts.Board.Notes
+	asked := &model.Note{UserName: asAdmin, Body: "what runs here", State: model.NoteDone, WorkspaceID: model.Default, Dir: "infra"}
+	assert.NoError(t, notes.Create(ctx, asked))
+	assert.NoError(t, notes.Create(ctx, &model.Note{ParentID: asked.ID, UserName: "claude", Body: "The **plan** job.", WorkspaceID: model.Default, Dir: "infra"}))
+	elsewhere := &model.Note{UserName: asAdmin, Body: "and in private", State: model.NoteOpen, WorkspaceID: model.Default, Dir: "private"}
+	assert.NoError(t, notes.Create(ctx, elsewhere))
+
+	admin := f.page(t, asAdmin, "/f/_/infra")
+	assert.Contains(t, admin, `data-notes data-dir="infra"`)
+	assert.Contains(t, admin, `id="note-`+asked.ID+`"`)
+	assert.Contains(t, admin, "what runs here")
+	assert.Contains(t, admin, "The <strong>plan</strong> job.")
+	assert.Contains(t, admin, `<span class="badge note-state done">done</span>`)
+	assert.Contains(t, admin, `data-parent="`+asked.ID+`"`)
+	assert.NotContains(t, admin, "and in private", "a prompt of another place")
+	assert.NotContains(t, f.page(t, asOps, "/f/_/infra"), "what runs here")
+	assert.NotContains(t, f.page(t, asAdmin, "/notes"), "what runs here")
 }

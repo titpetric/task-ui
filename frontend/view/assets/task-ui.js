@@ -639,13 +639,12 @@
         formError(form, (res.data.error || ("HTTP " + res.status)) + (res.data.output ? "\n\n" + res.data.output : ""));
         return;
       }
-      // A form that starts a run opens its window, the one submit that
-      // does: a prompt against a workspace.
-      if (form.hasAttribute("data-attach-result") && res.data.id) {
+      // A prompt is a note: the form empties and its thread shows at the
+      // top of the list under it, where the answer lands.
+      if (form.hasAttribute("data-refresh-notes")) {
         if (button) button.disabled = false;
         form.reset();
-        if (dialog && window.Terminal) attach(res.data.id);
-        else window.location.href = "/runs/" + encodeURIComponent(res.data.id);
+        refreshNotes();
         return;
       }
       next(filled(form.dataset.next, res.data));
@@ -1729,9 +1728,15 @@
       area.form.requestSubmit();
     }
   });
+  // The board follows its own notes, a prompt box the notes of its
+  // place, data-dir, as the note's dir names it.
   if (notesList && window.EventSource) {
     var pending;
-    new EventSource("/api/sse/notes").addEventListener("note", function () {
+    var place = notesList.dataset.dir || "";
+    new EventSource("/api/sse/notes").addEventListener("note", function (event) {
+      var changed = {};
+      try { changed = JSON.parse(event.data); } catch (e) { /* refresh anyway */ }
+      if (changed.id && (changed.dir || "") !== place) return;
       clearTimeout(pending);
       pending = setTimeout(refreshNotes, 150);
     });

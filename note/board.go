@@ -7,6 +7,11 @@
 // how the run ended. Without one, the note stays open for an agent that
 // reads the board over MCP. A note to anyone else is a message and nothing
 // more.
+//
+// A prompt from a folder page is a note too, with the workspace of the
+// folder and the place it runs: Claude Code on the thread in that
+// directory, as the user who asks, its answer the reply. The board does
+// not list prompts; their folder's page does.
 package note
 
 import (
@@ -34,6 +39,9 @@ const Topic = "notes"
 // unknown state, or a reply to a reply.
 var ErrInvalid = errors.New("invalid note")
 
+// answerer names Claude's replies to prompts without an agent.
+const answerer = "claude"
+
 // tail is how many lines of a run's output the agent's reply quotes.
 const tail = 30
 
@@ -51,6 +59,9 @@ type Board struct {
 	// AgentJob is the job the board starts for an instruction, as
 	// folder/job; empty leaves instructions open for an agent over MCP.
 	AgentJob string
+	// Root is the directory of the projects, the default workspace, where
+	// a prompt at the root runs.
+	Root string
 }
 
 // Post leaves a note on the board, or a reply to one. A note naming the
@@ -69,8 +80,20 @@ func (b *Board) Post(ctx context.Context, user *model.User, parentID, body strin
 		if parent.ParentID != "" {
 			return nil, fmt.Errorf("%w: a reply goes to a note, not to a reply", ErrInvalid)
 		}
+		// A reply in a prompt's thread asks again, Claude's own excepted.
+		if parent.IsPrompt() && user.Name != b.answerer() {
+			return b.Ask(ctx, user, parent.ID, "", body)
+		}
 	}
 	note := &model.Note{Channel: model.ChannelNotes, ParentID: parentID, UserID: user.ID, UserName: user.Name, Body: body}
+	if parent != nil && parent.IsPrompt() {
+		note.WorkspaceID, note.Dir = parent.WorkspaceID, parent.Dir
+		if err := b.Notes.Create(ctx, note); err != nil {
+			return nil, err
+		}
+		b.publish(note)
+		return note, nil
+	}
 	// Only someone who may run jobs sends the agent an instruction: a
 	// viewer's note to the agent is a message.
 	instruction := b.Agent != "" && user.Name != b.Agent && user.Role != model.RoleViewer && contains(model.Mentions(body), b.Agent)
@@ -136,24 +159,36 @@ func (b *Board) Comment(ctx context.Context, user *model.User, id, body, state s
 
 // Recover fails the instructions a restart cut short: a note still
 // working has no run to wait on any more. An open instruction with no run
-// yet, one that never started or one set open by hand, starts the agent.
+// yet, one that never started or one set open by hand, starts the agent,
+// and an open prompt with no run starts its prompt.
 func (b *Board) Recover(ctx context.Context) error {
-	if b.AgentJob != "" {
-		open, err := b.Notes.List(ctx, storage.NoteFilter{State: model.NoteOpen})
-		if err != nil {
-			return err
+	open, err := b.Notes.List(ctx, storage.NoteFilter{State: model.NoteOpen})
+	if err != nil {
+		return err
+	}
+	prompts, err := b.Notes.List(ctx, storage.NoteFilter{State: model.NoteOpen, Prompts: true})
+	if err != nil {
+		return err
+	}
+	for i := range open {
+		if open[i].RunID == "" && b.AgentJob != "" {
+			b.dispatch(&open[i])
 		}
-		for i := range open {
-			if open[i].RunID == "" {
-				b.dispatch(&open[i])
-			}
+	}
+	for i := range prompts {
+		if prompts[i].RunID == "" {
+			b.reask(ctx, &prompts[i])
 		}
 	}
 	working, err := b.Notes.List(ctx, storage.NoteFilter{State: model.NoteWorking})
 	if err != nil {
 		return err
 	}
-	for _, note := range working {
+	workingPrompts, err := b.Notes.List(ctx, storage.NoteFilter{State: model.NoteWorking, Prompts: true})
+	if err != nil {
+		return err
+	}
+	for _, note := range append(working, workingPrompts...) {
 		if note.RunID != "" && b.Runner != nil {
 			if _, live := b.Runner.Get(note.RunID); live {
 				continue
@@ -180,55 +215,68 @@ func (b *Board) dispatch(note *model.Note) {
 		fail("There is no user " + b.Agent + " to run the agent job as.")
 		return
 	}
-	// The job writes its answer to the reply file; the reply on the note
-	// is that answer, and the run's output stays in the run.
-	answer, err := os.CreateTemp("", "note-reply-*.md")
+	answer, err := replyFile()
 	if err != nil {
 		fail("The reply file was not made: " + err.Error())
 		return
 	}
-	_ = answer.Close()
 	req := runner.Request{
 		Folder: f, Job: job, User: agent, Cols: 120, Rows: 40,
 		Env: []string{
 			"TASK_UI_NOTE_ID=" + note.ID, "TASK_UI_NOTE_AUTHOR=" + note.UserName, "TASK_UI_NOTE=" + b.thread(ctx, note),
-			"TASK_UI_NOTE_REPLY=" + answer.Name(),
+			"TASK_UI_NOTE_REPLY=" + answer,
 		},
 	}
-	go func() {
-		defer os.Remove(answer.Name())
-		// One run of the job at a time: an instruction waits for the
-		// run in the way, then starts its own.
-		session, err := b.Runner.Start(ctx, req)
-		for errors.Is(err, runner.ErrBusy) && session != nil {
-			<-session.Done()
-			session, err = b.Runner.Start(ctx, req)
-		}
-		if err != nil {
-			fail("The agent job did not start: " + err.Error())
-			return
-		}
-		if err := b.Notes.SetState(ctx, note.ID, model.NoteWorking, session.ID()); err != nil {
-			slog.Warn("note state not saved", "note", note.ID, "err", err)
-		}
-		note.State, note.RunID = model.NoteWorking, session.ID()
-		b.publish(note)
+	go b.run(note, req, answer, "The agent job")
+}
+
+// run starts a request for a note and replies when the run ends: with
+// what the job wrote to the reply file, or else with how the run ended
+// and the end of its output, which stays in the run. One run of a job
+// in a directory at a time: the note waits for the run in the way, then
+// starts its own.
+func (b *Board) run(note *model.Note, req runner.Request, answer, what string) {
+	ctx := context.Background()
+	defer os.Remove(answer)
+	session, err := b.Runner.Start(ctx, req)
+	for errors.Is(err, runner.ErrBusy) && session != nil {
 		<-session.Done()
-		status := session.Status()
-		state := model.NoteDone
-		if status.State != model.StateOK {
-			state = model.NoteFailed
+		session, err = b.Runner.Start(ctx, req)
+	}
+	if err != nil {
+		b.finish(ctx, note, model.NoteFailed, what+" did not start: "+err.Error())
+		return
+	}
+	if err := b.Notes.SetState(ctx, note.ID, model.NoteWorking, session.ID()); err != nil {
+		slog.Warn("note state not saved", "note", note.ID, "err", err)
+	}
+	note.State, note.RunID = model.NoteWorking, session.ID()
+	b.publish(note)
+	<-session.Done()
+	status := session.Status()
+	state := model.NoteDone
+	if status.State != model.StateOK {
+		state = model.NoteFailed
+	}
+	run := session.Snapshot()
+	if reply := readReply(answer); reply != "" {
+		if state == model.NoteFailed {
+			reply += fmt.Sprintf("\n\nThe run ended %s (exit %d).", status.State, status.ExitCode)
 		}
-		run := session.Snapshot()
-		if reply := readReply(answer.Name()); reply != "" {
-			if state == model.NoteFailed {
-				reply += fmt.Sprintf("\n\nThe run ended %s (exit %d).", status.State, status.ExitCode)
-			}
-			b.finish(ctx, note, state, reply)
-			return
-		}
-		b.finish(ctx, note, state, report(&run, status, b.output(&run)))
-	}()
+		b.finish(ctx, note, state, reply)
+		return
+	}
+	b.finish(ctx, note, state, report(&run, status, b.output(&run)))
+}
+
+// replyFile makes the file a job writes its answer to; the reply on the
+// note is that answer, and the run's output stays in the run.
+func replyFile() (string, error) {
+	answer, err := os.CreateTemp("", "note-reply-*.md")
+	if err != nil {
+		return "", err
+	}
+	return answer.Name(), answer.Close()
 }
 
 // thread is the text of a note and its replies, oldest first, each under
@@ -248,8 +296,8 @@ func (b *Board) thread(ctx context.Context, note *model.Note) string {
 
 // finish replies to an instruction as the agent and records its state.
 func (b *Board) finish(ctx context.Context, note *model.Note, state, body string) {
-	reply := &model.Note{Channel: note.Channel, ParentID: note.ID, UserName: b.Agent, Body: body, RunID: note.RunID}
-	if agent, err := b.Users.GetByName(ctx, b.Agent); err == nil {
+	reply := &model.Note{Channel: note.Channel, ParentID: note.ID, UserName: b.answerer(), Body: body, RunID: note.RunID, WorkspaceID: note.WorkspaceID, Dir: note.Dir}
+	if agent, err := b.Users.GetByName(ctx, reply.UserName); err == nil {
 		reply.UserID = agent.ID
 	}
 	if err := b.Notes.Create(ctx, reply); err != nil {
@@ -262,6 +310,15 @@ func (b *Board) finish(ctx context.Context, note *model.Note, state, body string
 	}
 	note.State = state
 	b.publish(note)
+}
+
+// answerer is the user name the agent's replies carry: Agent, or claude
+// for a prompt's answer with no agent set.
+func (b *Board) answerer() string {
+	if b.Agent != "" {
+		return b.Agent
+	}
+	return answerer
 }
 
 // agentJob resolves AgentJob, folder/job, in the catalogue.

@@ -133,11 +133,15 @@ a.chip-act:not(.running) {
 }
 
 /* Enter Shell: the top right of the bar, the chips on the line below. */
-.shell-enter {
+/* The settings links and Enter Shell, at the right of the bar. */
+.bar-end {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
   margin-left: auto;
 }
 
-.actionsbar:has(.shell-enter) .chips {
+.actionsbar:has(.bar-end) .chips {
   flex-basis: 100%;
 }
 

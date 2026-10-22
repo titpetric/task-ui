@@ -19,14 +19,14 @@ func (h *Handlers) notes(w http.ResponseWriter, r *http.Request) {
 	p := h.page(r, "Notes")
 	p.Crumbs = view.Crumbs("Notes")
 	p.Agent = h.opts.Board.Agent
-	p.Threads = h.threads(r, model.ChannelNotes, 100)
+	p.Threads = h.threads(r, storage.NoteFilter{Channel: model.ChannelNotes, Limit: 100})
 	h.render(w, http.StatusOK, "notes", p)
 }
 
-// threads lists a channel's notes, newest first, with their replies. A
-// note links its agent's run only for a user who sees the run.
-func (h *Handlers) threads(r *http.Request, channel string, limit int) []view.Thread {
-	notes, _ := h.opts.Board.Notes.List(r.Context(), storage.NoteFilter{Channel: channel, Limit: limit})
+// threads lists the notes a filter names, newest first, with their
+// replies. A note links its agent's run only for a user who sees the run.
+func (h *Handlers) threads(r *http.Request, filter storage.NoteFilter) []view.Thread {
+	notes, _ := h.opts.Board.Notes.List(r.Context(), filter)
 	ids := make([]string, len(notes))
 	for i, note := range notes {
 		ids[i] = note.ID

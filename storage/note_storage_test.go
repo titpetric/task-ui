@@ -56,3 +56,25 @@ func TestNoteStorage(t *testing.T) {
 	_, err = notes.Get(ctx, reply.ID)
 	assert.ErrorIs(t, err, storage.ErrNotFound, "the replies go too")
 }
+
+// A prompt is a note with a workspace: the board's listing leaves it out,
+// and the prompts' listing narrows by workspace and place.
+func TestNoteStorage_Prompts(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	notes := storage.NewNoteStorage(newDB(t))
+	assert.NoError(t, notes.Create(ctx, &model.Note{UserName: "ops", Body: "a note"}))
+	here := &model.Note{UserName: "admin", Body: "what builds here", State: model.NoteOpen, WorkspaceID: "ws1", Dir: "malta"}
+	assert.NoError(t, notes.Create(ctx, here))
+	assert.NoError(t, notes.Create(ctx, &model.Note{UserName: "admin", Body: "and here", State: model.NoteOpen, WorkspaceID: "ws1", Dir: "malta/dockerfiles"}))
+
+	board, _ := notes.List(ctx, storage.NoteFilter{State: model.NoteOpen})
+	assert.Len(t, board, 0)
+	all, _ := notes.List(ctx, storage.NoteFilter{Prompts: true})
+	assert.Len(t, all, 2)
+	mine, _ := notes.List(ctx, storage.NoteFilter{Prompts: true, WorkspaceID: "ws1", Dir: "malta"})
+	assert.Len(t, mine, 1)
+	assert.Equal(t, here.ID, mine[0].ID)
+	none, _ := notes.List(ctx, storage.NoteFilter{Prompts: true, WorkspaceID: "ws2"})
+	assert.Len(t, none, 0)
+}

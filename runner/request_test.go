@@ -57,6 +57,16 @@ func TestManager_Workspace(t *testing.T) {
 	req = f.shellJob("internal/prompt", script, false)
 	req.WorkspaceOf = "ws/project"
 	assert.Contains(t, run(req), "ws=[ws] dir=["+filepath.Join(f.root, "ws")+"]")
+
+	// WorkspaceID names the row such a run takes.
+	ws, err := f.workspaces.GetByFolder(ctx, "ws")
+	assert.NoError(t, err)
+	assert.Equal(t, ws.ID, f.manager.WorkspaceID(ctx, req))
+	def, err := f.workspaces.GetByFolder(ctx, model.Default)
+	assert.NoError(t, err)
+	req.WorkspaceOf, req.Workspace = "", f.root
+	assert.Equal(t, def.ID, f.manager.WorkspaceID(ctx, req))
+	assert.Equal(t, "", f.manager.WorkspaceID(ctx, f.shellJob("internal/tools", script, false)))
 }
 
 // A request's Dir is where the process starts, and its job's Dir what

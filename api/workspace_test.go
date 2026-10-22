@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/titpetric/task-ui/api"
 	"github.com/titpetric/task-ui/folder"
@@ -198,10 +199,13 @@ func TestWorkspace_Prompt(t *testing.T) {
 
 	res := f.call(t, asAdmin, http.MethodPost, "/workspaces/malta/prompt", api.PromptRequest{Prompt: " list the skills ", Cols: 80, Rows: 24})
 	assert.Equal(t, http.StatusCreated, res.Status, string(res.Raw))
-	assert.Equal(t, model.Internal, res.str("folder"))
-	assert.Equal(t, "claude-prompt", res.str("job"))
-	run := f.finished(t, res.str("id"))
+	assert.Equal(t, "malta", res.str("dir"))
+	assert.Equal(t, "list the skills", res.str("body"))
+	asked := f.answered(t, res.str("id"))
+	run := f.finished(t, asked.RunID)
 	assert.Equal(t, model.StateOK, run.State)
+	assert.Equal(t, model.Internal, run.Folder)
+	assert.Equal(t, "claude-prompt", run.Job)
 	assert.Equal(t, asAdmin, run.UserName)
 
 	env, err := os.ReadFile(out)
@@ -219,15 +223,28 @@ func TestWorkspace_Prompt(t *testing.T) {
 	}
 }
 
+// answered waits for a prompt's note to end, and returns it.
+func (f *fixture) answered(t *testing.T, id string) *model.Note {
+	t.Helper()
+	var note *model.Note
+	assert.Eventually(t, func() bool {
+		var err error
+		note, err = f.opts.Board.Notes.Get(context.Background(), id)
+		return err == nil && note.Finished()
+	}, 10*time.Second, 20*time.Millisecond)
+	return note
+}
+
 // promptFolder puts an internal folder in the fixture's catalogue whose
 // claude-prompt stands in for task-ui agent prompt: it writes the
-// prompt's environment and where it runs to internal/env.out,
-// then waits for a file named release in the directory it runs in, when
-// that directory holds a file named hold.
+// prompt's environment and where it runs to internal/env.out, waits for
+// a file named release in the directory it runs in, when that directory
+// holds a file named hold, then answers with the prompt in the reply
+// file.
 func promptFolder(t *testing.T, f *fixture) *folder.Folder {
 	t.Helper()
 	internal := shellFolder(t, f.root, model.Internal, map[string]string{
-		"claude-prompt": `{ env | grep '^TASK_UI_\(PROMPT\|WORKSPACE\|WORKSPACE_DIR\|PROMPT_DIR\)=' | sort; echo "pwd=$(pwd -P)"; } > "` + filepath.Join(f.root, model.Internal, "env.out") + `"; while [ -e hold ] && [ ! -e release ]; do sleep 0.05; done`,
+		"claude-prompt": `{ env | grep '^TASK_UI_\(PROMPT\|WORKSPACE\|WORKSPACE_DIR\|PROMPT_DIR\)=' | sort; echo "pwd=$(pwd -P)"; } > "` + filepath.Join(f.root, model.Internal, "env.out") + `"; while [ -e hold ] && [ ! -e release ]; do sleep 0.05; done; printf 'Answer to: %s' "$TASK_UI_PROMPT" > "$TASK_UI_PROMPT_REPLY"`,
 	})
 	// The internal folder's directory is the root, as agent.Folder's.
 	internal.Dir, internal.HostJobs = f.root, true

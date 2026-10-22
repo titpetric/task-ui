@@ -38,4 +38,6 @@ func TestActions_Empty(t *testing.T) {
 	assert.False(t, (&view.Actions{Git: &git.Status{Branch: "main"}}).Empty())
 	assert.False(t, (&view.Actions{Skills: []*folder.Skill{{ID: "git"}}}).Empty())
 	assert.False(t, (&view.Actions{Shell: (&folder.Folder{ID: "site"}).ShellJob()}).Empty())
+	assert.False(t, (&view.Actions{WorkspaceSettings: "/settings/workspaces/_"}).Empty())
+	assert.False(t, (&view.Actions{ProjectSettings: "/settings/projects/site"}).Empty())
 }
