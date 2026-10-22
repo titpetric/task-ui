@@ -286,6 +286,7 @@ func (a *App) wire(version string) error {
 	a.Board = &note.Board{
 		Notes: storage.NewNoteStorage(a.DB), Users: a.Users, Catalogue: a.Catalogue, Runner: a.Runner,
 		Recordings: recordings, Events: events, Agent: cfg.Agent, AgentJob: cfg.AgentJob, Root: cfg.Root,
+		Hosts: promptHosts(hosts, prober),
 	}
 	if err := a.Board.Recover(context.Background()); err != nil {
 		return err
@@ -402,4 +403,22 @@ func home() string {
 		return "/"
 	}
 	return dir
+}
+
+// promptHosts lists the inventory for a prompt's run: the hosts, largest
+// first, with who task-ui signs in to each as, waiting at most 10s for
+// the hosts not yet probed.
+func promptHosts(hosts *beszel.Inventory, prober *sshprobe.Prober) func(ctx context.Context) (string, error) {
+	return func(ctx context.Context) (string, error) {
+		systems, err := hosts.Systems(ctx)
+		if err != nil {
+			return "", err
+		}
+		systems = beszel.ByCapacity(systems)
+		names := make([]string, len(systems))
+		for i, system := range systems {
+			names[i] = system.Host
+		}
+		return beszel.Hosts(systems, prober.Logins(ctx, names, 10*time.Second)), nil
+	}
 }

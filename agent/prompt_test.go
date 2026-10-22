@@ -57,3 +57,29 @@ func TestAgent_Prompt_reply(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, out.String(), string(written))
 }
+
+// With TASK_UI_HOSTS, Claude's system prompt gets the hosts and how to
+// reach them over ssh; without it, there is no system prompt.
+func TestAgent_Prompt_hosts(t *testing.T) {
+	t.Parallel()
+	here := realDir(t)
+	var out bytes.Buffer
+	env := []string{"PATH=" + fakeClaude(t), "CLAUDE_CODE_OAUTH_TOKEN=sk-1", "TASK_UI_PROMPT_DIR=" + here, "TASK_UI_PROMPT=list the containers"}
+	a := &agent.Agent{Stdout: &out, Stderr: io.Discard, Env: append(env, "TASK_UI_HOSTS=web\tweb.example\troot\tup\ndb\tdb\t\tdown")}
+	assert.NoError(t, a.Run(context.Background(), []string{"prompt"}))
+	text := out.String()
+	assert.Contains(t, text, "arg=--append-system-prompt\narg=task-ui's inventory lists these hosts")
+	assert.Contains(t, text, "\n\nweb\tweb.example\troot\tup\ndb\tdb\t\tdown\n\n")
+	assert.Contains(t, text, "ssh -o BatchMode=yes -o ConnectTimeout=10 -o StrictHostKeyChecking=accept-new <user>@<host> '<command>'")
+	assert.Contains(t, text, "run them in parallel")
+
+	out.Reset()
+	a.Env = append(env, "TASK_UI_HOSTS=The inventory could not be read: hub down")
+	assert.NoError(t, a.Run(context.Background(), []string{"prompt"}))
+	assert.Contains(t, out.String(), "arg=--append-system-prompt\narg=task-ui's inventory of hosts: The inventory could not be read: hub down\n")
+
+	out.Reset()
+	a.Env = env
+	assert.NoError(t, a.Run(context.Background(), []string{"prompt"}))
+	assert.NotContains(t, out.String(), "--append-system-prompt")
+}

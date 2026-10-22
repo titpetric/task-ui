@@ -38,5 +38,5 @@ func (a *Agent) Note(ctx context.Context) error {
 		defer reply.Close()
 		out = io.MultiWriter(a.Stdout, reply)
 	}
-	return a.ask(ctx, a.getenv("TASK_UI_ROOT"), prompt, out)
+	return a.ask(ctx, a.getenv("TASK_UI_ROOT"), prompt, "", out)
 }

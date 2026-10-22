@@ -45,8 +45,9 @@ func (a *Agent) claudePath() (string, error) {
 	return "", errors.New("claude: not found in PATH")
 }
 
-// ask runs claude -p on the prompt in dir and writes its reply to out.
-func (a *Agent) ask(ctx context.Context, dir, prompt string, out io.Writer) error {
+// ask runs claude -p on the prompt in dir and writes its reply to out,
+// with system, when not empty, after Claude's own system prompt.
+func (a *Agent) ask(ctx context.Context, dir, prompt, system string, out io.Writer) error {
 	if a.getenv("CLAUDE_CODE_OAUTH_TOKEN") == "" {
 		return errNoToken
 	}
@@ -54,7 +55,11 @@ func (a *Agent) ask(ctx context.Context, dir, prompt string, out io.Writer) erro
 	if err != nil {
 		return err
 	}
-	cmd := exec.CommandContext(ctx, path, "-p", "--dangerously-skip-permissions", "--output-format", "text", prompt)
+	args := []string{"-p", "--dangerously-skip-permissions", "--output-format", "text"}
+	if system != "" {
+		args = append(args, "--append-system-prompt", system)
+	}
+	cmd := exec.CommandContext(ctx, path, append(args, prompt)...)
 	cmd.Dir = dir
 	cmd.Env = a.environ()
 	cmd.Stdin, cmd.Stdout, cmd.Stderr = a.Stdin, out, a.Stderr

@@ -260,6 +260,13 @@ directory: another there waits for it, and prompts in two directories
 run at once. A workspace's prompt route works the same way (see
 [Workspaces](workspaces.md#a-prompt-against-a-workspace)).
 
+With the Beszel integration set up, a prompt also sees the
+[Inventory](inventory.md#prompts-on-the-hosts): Claude gets the hosts
+with who signs in to each, and inspects them over ssh with the keys of
+the run, so a question such as "list running containers on all hosts,
+check for any usage of php or frankenphp images" gets an answer per
+host.
+
 ## A job's page
 
 ![A job: what it runs, its history and schedules](../assets/job-dark.png)

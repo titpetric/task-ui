@@ -35,6 +35,31 @@ runs no tools, for at most three minutes.
 
 The logins sign in as `debian` or `root`, so the panel is for admins alone.
 
+## Prompts on the hosts
+
+A [prompt](projects.md#prompt) on a folder page sees the inventory. Its
+run gets the hosts in `TASK_UI_HOSTS`, a line a host in the order of the
+table: the name, the host, the user of its SSH column (empty for a host
+task-ui does not reach) and `up` or `down`, separated by tabs. Claude
+reads them with how to sign in,
+`ssh -o BatchMode=yes -o ConnectTimeout=10 -o StrictHostKeyChecking=accept-new user@host 'command'`,
+and the commands above as examples. It runs a question about every host
+on each in parallel, prefers read-only commands, changes nothing on a
+host unless the question calls for a change, and names the hosts it
+could not reach. A question for instance:
+
+> list running containers on all hosts, check for any usage of php or
+> frankenphp images
+
+The ssh agent of the run holds the keys that sign in: the instance keys
+[Settings, Keys](settings.md#keys) grants your role or your name, and the
+SSH keys of the workspace its grants let through. The SSH column comes
+from every instance key, so a host there may still refuse a prompt whose
+run lacks the key that reaches it; grant that key to the admin role, or
+to you, in Settings, Keys. When Beszel does not answer, the prompt runs
+all the same, and Claude reads that task-ui got no inventory. The
+notes agent, `@claude` on the Notes board, gets no inventory.
+
 task-ui reads the hub at most once a minute, and the page fetches the
 hosts again each minute on its own, the time it drew them under the
 table as **Live updated**. The page needs the Beszel

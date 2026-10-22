@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/titpetric/task-ui/beszel"
 	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/runner"
@@ -105,7 +106,29 @@ func (b *Board) dispatchPrompt(note *model.Note, req runner.Request) {
 		return
 	}
 	req.Env = append(append([]string{}, req.Env...), "TASK_UI_PROMPT="+b.thread(ctx, note), "TASK_UI_PROMPT_REPLY="+answer)
-	go b.run(note, req, answer, "The prompt")
+	go func() {
+		req.Env = append(req.Env, b.hosts(ctx)...)
+		b.run(note, req, answer, "The prompt")
+	}()
+}
+
+// hosts is the inventory a prompt's run gets, TASK_UI_HOSTS: the hosts,
+// or a line saying why task-ui got none, so the prompt runs
+// either way; nothing when there is no inventory.
+func (b *Board) hosts(ctx context.Context) []string {
+	if b.Hosts == nil {
+		return nil
+	}
+	hosts, err := b.Hosts(ctx)
+	switch {
+	case errors.Is(err, beszel.ErrOff):
+		return nil
+	case err != nil:
+		return []string{"TASK_UI_HOSTS=The inventory could not be read: " + err.Error()}
+	case hosts == "":
+		return nil
+	}
+	return []string{"TASK_UI_HOSTS=" + hosts}
 }
 
 // promptRequest resolves where a prompt runs, as the user: the internal

@@ -2,14 +2,17 @@ package note_test
 
 import (
 	"context"
+	"errors"
 	"os"
 	"path/filepath"
 	"sort"
+	"sync"
 	"testing"
 	"time"
 
 	_ "modernc.org/sqlite" // the driver storage opens
 
+	"github.com/titpetric/task-ui/beszel"
 	"github.com/titpetric/task-ui/event"
 	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/internal/assert"
@@ -392,4 +395,52 @@ func TestBoard_RecoverPrompt(t *testing.T) {
 	assert.NoError(t, f.board.Recover(ctx))
 	assert.Equal(t, model.NoteDone, f.settled(t, open.ID).State)
 	assert.Equal(t, model.NoteFailed, f.settled(t, working.ID).State)
+}
+
+// A prompt's run gets the inventory in TASK_UI_HOSTS, or why task-ui got
+// none, and runs either way; the notes agent's run never gets it.
+func TestBoard_AskHosts(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t, "agent/run")
+	admin := f.withPrompts(t)
+	ctx := context.Background()
+	f.board.Catalogue.Find(model.Internal).Jobs[0].Command = []string{"sh", "-c", `printf 'hosts: %s' "${TASK_UI_HOSTS-unset}" > "$TASK_UI_PROMPT_REPLY"`}
+	agentFolder := &folder.Folder{ID: "agent", Title: "agent", Dir: t.TempDir()}
+	job := &folder.Job{Folder: "agent", ID: "run", Name: "run", Kind: "script", Command: []string{"sh", "-c", `printf 'hosts: %s' "${TASK_UI_HOSTS-unset}" > "$TASK_UI_NOTE_REPLY"`}}
+	agentFolder.Jobs = []*folder.Job{job}
+	f.board.Catalogue.(catalogue)["agent"] = agentFolder
+
+	var mu sync.Mutex
+	hosts, fail := "web\tweb.example\troot\tup", error(nil)
+	f.board.Hosts = func(context.Context) (string, error) {
+		mu.Lock()
+		defer mu.Unlock()
+		return hosts, fail
+	}
+	failWith := func(err error) {
+		mu.Lock()
+		defer mu.Unlock()
+		fail = err
+	}
+	asked, askErr := f.board.Ask(ctx, admin, "", "proj", "list the containers")
+	assert.NoError(t, askErr)
+	assert.Equal(t, model.NoteDone, f.settled(t, asked.ID).State)
+	assert.Equal(t, "hosts: web\tweb.example\troot\tup", replies(t, f, asked.ID)[0].Body)
+
+	posted, postErr := f.board.Post(ctx, f.ops, "", "@claude list the containers")
+	assert.NoError(t, postErr)
+	assert.Equal(t, model.NoteDone, f.settled(t, posted.ID).State)
+	assert.Equal(t, "hosts: unset", replies(t, f, posted.ID)[0].Body, "the notes agent sees no inventory")
+
+	failWith(errors.New("hub down"))
+	failing, askErr := f.board.Ask(ctx, admin, "", "proj", "again")
+	assert.NoError(t, askErr)
+	assert.Equal(t, model.NoteDone, f.settled(t, failing.ID).State)
+	assert.Equal(t, "hosts: The inventory could not be read: hub down", replies(t, f, failing.ID)[0].Body)
+
+	failWith(beszel.ErrOff)
+	off, askErr := f.board.Ask(ctx, admin, "", "proj", "once more")
+	assert.NoError(t, askErr)
+	assert.Equal(t, model.NoteDone, f.settled(t, off.ID).State)
+	assert.Equal(t, "hosts: unset", replies(t, f, off.ID)[0].Body)
 }

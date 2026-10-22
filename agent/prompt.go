@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io"
 	"os"
+	"strings"
 )
 
 // Prompt runs Claude Code on a prompt, TASK_UI_PROMPT, in the directory
@@ -42,5 +43,24 @@ func (a *Agent) Prompt(ctx context.Context) error {
 		defer reply.Close()
 		out = io.MultiWriter(a.Stdout, reply)
 	}
-	return a.ask(ctx, dir, prompt, out)
+	return a.ask(ctx, dir, prompt, inventory(a.getenv("TASK_UI_HOSTS")), out)
+}
+
+// inventory tells Claude about the hosts of TASK_UI_HOSTS and how to
+// inspect them over ssh, or passes on why there are none, a line without
+// tabs; nothing without hosts.
+func inventory(hosts string) string {
+	switch {
+	case hosts == "":
+		return ""
+	case !strings.Contains(hosts, "\t"):
+		return "task-ui's inventory of hosts: " + hosts
+	}
+	return "task-ui's inventory lists these hosts, one a line, with tabs between the name, the host, the user that signs in and up or down (an empty user is a host task-ui does not reach):\n\n" +
+		hosts + "\n\n" +
+		"The run's ssh agent holds the keys that sign in, so you may inspect the hosts with\n\n" +
+		"    ssh -o BatchMode=yes -o ConnectTimeout=10 -o StrictHostKeyChecking=accept-new <user>@<host> '<command>'\n\n" +
+		"such as `uptime`, `df -h /`, `free -h`, `docker ps --format '{{.Names}}\\t{{.Image}}\\t{{.Status}}'`, `uname -r` or `cat /etc/os-release`. " +
+		"For a question about all the hosts, run them in parallel. Prefer read-only commands, and change nothing on a host unless the question asks for that change. " +
+		"Say which hosts you could not reach."
 }
