@@ -95,6 +95,7 @@
 			{{- if .Notice }}<div class="alert ok" role="status">{{ .Notice }}</div>{{ end }}
 			{{- if .Error }}<div class="alert bad" role="alert">{{ .Error }}</div>{{ end }}
 			{{ template "content" . }}
+			{{- template "setup-trail" .SetupTrail }}
 		</main>
 		{{- /* The right rail, on wide screens: the latest runs and workflow
 		     runs by anyone. Narrower, Runs in the sidebar lists them. */}}
@@ -308,6 +309,20 @@
 <nav class="pager" aria-label="Pages">
 	{{- if .Prev }}<a class="btn btn-sm" href="{{ .Prev }}" rel="prev">Previous</a>{{ end }}
 	{{- if .Next }}<a class="btn btn-sm" href="{{ .Next }}" rel="next">Next</a>{{ end }}
+</nav>
+{{- end }}{{ end }}
+
+{{- /* The footer of a step of the settings, from a view.SetupTrail: the
+     step before, the steps in order with this one in bold, the step after. */}}
+{{ define "setup-trail" }}{{ with . }}
+<nav class="setup-trail" aria-label="Setup steps">
+	{{- with .Previous }}<a class="btn btn-sm" href="{{ .Href }}" rel="prev"><svg class="ic back"><use href="#i-chev"/></svg>Previous: {{ .Name }}</a>{{ end }}
+	<ol class="steps">
+		{{- range .Steps }}
+		<li>{{ if .Current }}<b aria-current="step">{{ .Name }}</b>{{ else }}<a href="{{ .Href }}">{{ .Name }}</a>{{ end }}</li>
+		{{- end }}
+	</ol>
+	{{- with .Next }}<a class="btn btn-sm" href="{{ .Href }}" rel="next">Next: {{ .Name }}<svg class="ic"><use href="#i-chev"/></svg></a>{{ end }}
 </nav>
 {{- end }}{{ end }}
 

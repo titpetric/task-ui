@@ -146,6 +146,7 @@ func newFixture(t *testing.T) *fixture {
 		Integrations:  &integration.Store{Secrets: secrets},
 		SSH:           &sshprobe.Prober{Users: []string{"debian", "root"}, Timeout: 2 * time.Second, TTL: time.Hour, Command: fakeSSH(t)},
 		Disk:          &diskusage.Meter{TTL: time.Minute},
+		Instance:      &view.Instance{Listen: ":3000", Root: root, DataDir: "/srv/task-ui/data", Admins: []string{asAdmin}, Viewers: []string{asViewer}, Agent: "claude", AgentJob: "@claude-note"},
 	}
 	f.opts.Hosts = &beszel.Inventory{TTL: time.Minute, Settings: func(ctx context.Context) (string, string, error) {
 		values, err := f.opts.Integrations.Values(ctx, integration.Beszel)

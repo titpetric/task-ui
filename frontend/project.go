@@ -19,6 +19,7 @@ func (h *Handlers) projects(w http.ResponseWriter, r *http.Request) {
 	}
 	p := h.page(r, "Projects")
 	p.Crumbs = view.Crumbs("Settings", "/settings", "Projects")
+	p.Step = view.StepProjects
 	p.Root = h.opts.Root
 	p.Entries = folder.Entries(h.opts.Root, h.opts.Git, h.workspaceFolders(r.Context()))
 	if h.opts.Disk != nil {
@@ -37,6 +38,7 @@ func (h *Handlers) projectNew(w http.ResponseWriter, r *http.Request) {
 	}
 	p := h.page(r, "Add project")
 	p.Crumbs = view.Crumbs("Settings", "/settings", "Projects", "/settings/projects", "Add")
+	p.Step = view.StepProjects
 	p.WorkspaceList = h.workspaceList(r.Context())
 	h.render(w, http.StatusOK, "project_new", p)
 }
@@ -58,6 +60,7 @@ func (h *Handlers) projectEdit(w http.ResponseWriter, r *http.Request) {
 	p := h.page(r, "Configure "+id)
 	p.Folder = f
 	p.Crumbs = view.Crumbs("Settings", "/settings", "Projects", "/settings/projects", id)
+	p.Step = view.StepProjects
 	if project, err := h.opts.Projects.GetByFolder(r.Context(), id); err == nil {
 		p.Project = project
 		p.Form = map[string]string{

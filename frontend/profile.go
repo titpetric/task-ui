@@ -34,6 +34,7 @@ func (h *Handlers) profile(w http.ResponseWriter, r *http.Request) {
 	p.Crumbs = view.Crumbs(user.Name)
 	if p.Can("user/view") {
 		p.Crumbs = view.Crumbs("Settings", "/settings", "Users", "/settings/users", user.Name)
+		p.Step = view.StepUsers
 	}
 	p.Account = user
 	p.FolderChoices = view.FolderChoices(h.opts.Catalogue.List(), user.FolderList())

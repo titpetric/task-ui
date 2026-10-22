@@ -17,6 +17,7 @@ func (h *Handlers) workspaces(w http.ResponseWriter, r *http.Request) {
 	}
 	p := h.page(r, "Workspaces")
 	p.Crumbs = view.Crumbs("Settings", "/settings", "Workspaces")
+	p.Step = view.StepWorkspaces
 	p.Root = h.opts.Root
 	p.WorkspaceList = h.workspaceList(r.Context())
 	p.Nested = h.nestedProjects(r.Context())
@@ -30,6 +31,7 @@ func (h *Handlers) workspaceNew(w http.ResponseWriter, r *http.Request) {
 	}
 	p := h.page(r, "Add workspace")
 	p.Crumbs = view.Crumbs("Settings", "/settings", "Workspaces", "/settings/workspaces", "Add")
+	p.Step = view.StepWorkspaces
 	h.render(w, http.StatusOK, "workspace_new", p)
 }
 
@@ -51,6 +53,7 @@ func (h *Handlers) workspaceEdit(w http.ResponseWriter, r *http.Request) {
 	}
 	p := h.page(r, "Configure "+workspace.Folder)
 	p.Crumbs = view.Crumbs("Settings", "/settings", "Workspaces", "/settings/workspaces", workspace.Folder)
+	p.Step = view.StepWorkspaces
 	p.Workspace = workspace
 	p.Root = h.opts.Root
 	p.Nested = h.nestedProjects(r.Context())

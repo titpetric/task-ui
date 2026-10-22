@@ -16,6 +16,7 @@ func (h *Handlers) users(w http.ResponseWriter, r *http.Request) {
 	}
 	p := h.page(r, "Users")
 	p.Crumbs = view.Crumbs("Settings", "/settings", "Users")
+	p.Step = view.StepUsers
 	p.Users, _ = h.opts.Users.List(r.Context())
 	p.CanAddUsers = h.opts.AddUsers
 	h.render(w, http.StatusOK, "users", p)
@@ -32,6 +33,7 @@ func (h *Handlers) userNew(w http.ResponseWriter, r *http.Request) {
 	}
 	p := h.page(r, "Create user")
 	p.Crumbs = view.Crumbs("Settings", "/settings", "Users", "/settings/users", "Create")
+	p.Step = view.StepUsers
 	p.FolderChoices = view.FolderChoices(h.opts.Catalogue.List(), nil)
 	h.render(w, http.StatusOK, "user_form", p)
 }
