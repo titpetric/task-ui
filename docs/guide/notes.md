@@ -97,9 +97,12 @@ Each signs in with `CLAUDE_CODE_OAUTH_TOKEN` from the Claude Code
 integration and stops without it. They run `claude` from the `PATH` with
 `IS_SANDBOX=1` and `--dangerously-skip-permissions`, so Claude skips the
 permission prompts. The board starts `claude-note` as the agent's user,
-whose role does not need to see the folder, and `claude-prompt` as the
-admin who asks on a folder page; that prompt and its answer are a thread
-of the folder's page, never of the board.
+whose role does not need to see the folder. A prompt on a folder page
+runs the command of `claude-prompt` as the user who asks, as the job
+`@claude-prompt` of that folder (see [Prompt](projects.md#prompt)); that
+prompt and its answer are a thread of the folder's page, never of the
+board. Runs of `internal/claude-prompt` itself are the prompts of older
+threads.
 
 ---
 

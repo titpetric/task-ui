@@ -48,6 +48,19 @@ func (u *User) CanSee(folder string) bool {
 	return len(list) == 0 || slices.Contains(list, folder)
 }
 
+// SeesRun reports whether the user may see a run: one of a folder the
+// user sees, a prompt's run with prompts, prompt/view, and the user's
+// own prompt runs whatever the folder.
+func (u *User) SeesRun(run *Run, prompts bool) bool {
+	if u == nil || run == nil {
+		return false
+	}
+	if run.IsPrompt() && run.UserID == u.ID {
+		return true
+	}
+	return u.CanSee(run.Folder) && (prompts || !run.IsPrompt())
+}
+
 // Listed reports whether allow lists let the user run a job: the list
 // of its folder and the list of the job, each empty or naming the user
 // or the user's role. What the user may do besides is the permission

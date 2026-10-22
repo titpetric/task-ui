@@ -14,7 +14,7 @@ import (
 func (h *Handlers) home(w http.ResponseWriter, r *http.Request) {
 	user := access.UserFrom(r.Context())
 	p := h.page(r, "Dashboard")
-	p.Runs = h.live(user)
+	p.Runs = h.live(h.runSeer(r))
 	p.Control = view.NewControl(p.Folders, view.ControlRepeats)
 	p.Last = h.latestRuns(r, p.Folders)
 	schedules, _ := h.opts.Schedules.List(r.Context())

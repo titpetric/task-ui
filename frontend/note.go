@@ -3,7 +3,6 @@ package frontend
 import (
 	"net/http"
 
-	"github.com/titpetric/task-ui/access"
 	"github.com/titpetric/task-ui/frontend/view"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/storage"
@@ -52,10 +51,11 @@ func (h *Handlers) threads(r *http.Request, filter storage.NoteFilter) []view.Th
 	return threads
 }
 
-// seesRun returns a check of whether the user sees a run, by its folder,
-// that looks each run up once. A run that is not there links nowhere.
+// seesRun returns a check of whether the user sees a run, as runSeer
+// says, that looks each run up once. A run that is not there links
+// nowhere.
 func (h *Handlers) seesRun(r *http.Request) func(id string) bool {
-	user := access.UserFrom(r.Context())
+	sees := h.runSeer(r)
 	seen := map[string]bool{}
 	return func(id string) bool {
 		if id == "" {
@@ -65,7 +65,7 @@ func (h *Handlers) seesRun(r *http.Request) func(id string) bool {
 			return sees
 		}
 		run, err := h.opts.Runs.Get(r.Context(), id)
-		seen[id] = err == nil && user.CanSee(run.Folder)
+		seen[id] = err == nil && sees(run)
 		return seen[id]
 	}
 }

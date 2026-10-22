@@ -159,3 +159,34 @@ func TestSSE_NotesPrompts(t *testing.T) {
 	first := next(opsLines)
 	assert.Contains(t, first, `"body":"a note"`, "ops never sees the prompt")
 }
+
+// The runs topic streams a prompt's run with prompt/view alone: the
+// first event a user who sees its folder without it gets is the next
+// run there.
+func TestSSE_RunsPrompts(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	promptFolder(t, f)
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+	res := f.sse(t, ctx, asLimited, "runs")
+	defer res.Body.Close()
+	lines := bufio.NewScanner(res.Body)
+	for lines.Scan() {
+		if strings.HasPrefix(lines.Text(), ": connected") {
+			break
+		}
+	}
+
+	asked := f.call(t, asAdmin, http.MethodPost, "/prompts", map[string]string{"folder": "infra", "prompt": "what runs here"})
+	assert.Equal(t, http.StatusCreated, asked.Status, string(asked.Raw))
+	f.answered(t, asked.str("id"))
+	id := f.start(t, asOps, "infra", "plan")
+
+	for lines.Scan() {
+		if data, ok := strings.CutPrefix(lines.Text(), "data: "); ok {
+			assert.Contains(t, data, `"id":"`+id+`"`, "no prompt's run first")
+			break
+		}
+	}
+}

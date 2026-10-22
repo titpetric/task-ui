@@ -68,3 +68,20 @@ func TestUser_CanAdmin(t *testing.T) {
 	assert.False(t, (&model.User{Role: model.RoleRunner}).CanAdmin())
 	assert.False(t, (*model.User)(nil).CanAdmin())
 }
+
+func TestUser_SeesRun(t *testing.T) {
+	t.Parallel()
+	limited := &model.User{ID: "u1", Name: "rob", Folders: `["malta"]`}
+	other := &model.User{ID: "u2", Name: "consuela"}
+	build := &model.Run{Folder: "malta", Job: "build", UserID: "u2"}
+	prompt := &model.Run{Folder: "malta", Job: model.PromptJob, UserID: "u2"}
+	mine := &model.Run{Folder: "infra", Job: model.PromptJob, UserID: "u1"}
+	assert.True(t, limited.SeesRun(build, false))
+	assert.False(t, limited.SeesRun(prompt, false), "a prompt's run takes prompt/view")
+	assert.True(t, limited.SeesRun(prompt, true))
+	assert.True(t, limited.SeesRun(mine, false), "the asker sees their own")
+	assert.False(t, other.SeesRun(mine, false))
+	assert.True(t, other.SeesRun(mine, true))
+	assert.False(t, limited.SeesRun(&model.Run{Folder: "infra", Job: "build"}, true))
+	assert.False(t, (*model.User)(nil).SeesRun(build, true))
+}

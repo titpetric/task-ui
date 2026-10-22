@@ -14,9 +14,9 @@ import (
 )
 
 // POST /api/prompts puts a prompt to Claude in a folder, or in a
-// directory inside one: a note, which internal/claude-prompt answers in
-// that directory, with TASK_UI_PROMPT_DIR naming it, as a reply. Admins
-// only.
+// directory inside one: a note, which a run of @claude-prompt in that
+// folder and directory answers, with TASK_UI_PROMPT_DIR naming it, as a
+// reply. Admins only.
 func TestPrompts(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
@@ -41,9 +41,9 @@ func TestPrompts(t *testing.T) {
 	asked := f.answered(t, res.str("id"))
 	assert.Equal(t, model.NoteDone, asked.State)
 	run := f.finished(t, asked.RunID)
-	assert.Equal(t, model.Internal, run.Folder)
-	assert.Equal(t, "claude-prompt", run.Job)
-	assert.Equal(t, "infra", run.Dir)
+	assert.Equal(t, "infra", run.Folder)
+	assert.Equal(t, model.PromptJob, run.Job)
+	assert.Equal(t, "", run.Dir)
 	assert.Equal(t, asAdmin, run.UserName)
 	env, err := os.ReadFile(out)
 	assert.NoError(t, err)
@@ -103,6 +103,8 @@ func TestPrompts(t *testing.T) {
 	for _, id := range []string{first.str("id"), queued.str("id"), second.str("id")} {
 		assert.Equal(t, model.NoteDone, f.answered(t, id).State)
 	}
+	imagesRun := f.finished(t, f.answered(t, first.str("id")).RunID)
+	assert.Equal(t, "infra/images/"+model.PromptJob, imagesRun.Key(), "the queue keys on folder/dir/@claude-prompt")
 	listed := f.call(t, asAdmin, http.MethodGet, "/prompts?folder=infra&dir=images", nil)
 	assert.Len(t, listed.list("notes"), 2)
 	assert.Equal(t, "again", listed.list("notes")[0].(map[string]any)["body"], "newest first")
@@ -126,8 +128,10 @@ func TestPrompts(t *testing.T) {
 	assert.Equal(t, http.StatusNotFound, f.call(t, asAdmin, http.MethodGet, "/prompts?folder=nowhere", nil).Status)
 }
 
-// A runner with prompt/edit asks too, and reads the run of the prompt
-// in the internal folder; anyone else's internal runs stay the admins'.
+// A runner with prompt/edit asks too, reads the run of the prompt and
+// ends it. Others who see the folder see a prompt's run with
+// prompt/view only: in /api/runs, its page and the runs topic. No
+// prompt starts from POST /api/runs.
 func TestPrompts_ByPermission(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
@@ -144,7 +148,26 @@ func TestPrompts_ByPermission(t *testing.T) {
 	assert.Equal(t, http.StatusOK, f.call(t, asOps, http.MethodGet, "/runs/"+asked.RunID, nil).Status)
 	assert.Equal(t, http.StatusOK, f.call(t, asOps, http.MethodGet, "/runs/"+asked.RunID+"/frame.txt", nil).Status)
 	assert.Equal(t, http.StatusNotFound, f.call(t, asViewer, http.MethodGet, "/runs/"+asked.RunID, nil).Status)
-	assert.Equal(t, http.StatusForbidden, f.call(t, asOps, http.MethodPost, "/runs/"+asked.RunID+"/stop", nil).Status)
+	assert.Equal(t, http.StatusNotFound, f.call(t, asLimited, http.MethodGet, "/runs/"+asked.RunID, nil).Status)
+	assert.Equal(t, http.StatusNotFound, f.call(t, asLimited, http.MethodPost, "/runs/"+asked.RunID+"/stop", nil).Status)
+	assert.Equal(t, http.StatusNoContent, f.call(t, asOps, http.MethodPost, "/runs/"+asked.RunID+"/stop", nil).Status)
+	listed := func(user string) bool {
+		for _, run := range f.call(t, user, http.MethodGet, "/runs?folder=infra", nil).list("runs") {
+			if run.(map[string]any)["id"] == asked.RunID {
+				return true
+			}
+		}
+		return false
+	}
+	assert.True(t, listed(asOps), "the asker's own")
+	assert.False(t, listed(asLimited), "without prompt/view")
+	assert.True(t, listed(asAdmin))
+	assert.NoError(t, f.opts.Users.Policies().Put(ctx, "user", asLimited, "prompt/view", "allow"))
+	assert.True(t, listed(asLimited), "with prompt/view")
+	assert.Equal(t, http.StatusOK, f.call(t, asLimited, http.MethodGet, "/runs/"+asked.RunID, nil).Status)
+
+	refused := f.call(t, asAdmin, http.MethodPost, "/runs", api.RunRequest{Folder: "infra", Job: model.PromptJob})
+	assert.Equal(t, http.StatusBadRequest, refused.Status, string(refused.Raw))
 }
 
 // POST /api/prompts with run asks about a run, in its folder and
@@ -172,8 +195,9 @@ func TestPrompts_AboutRun(t *testing.T) {
 	asked := f.answered(t, res.str("id"))
 	assert.Equal(t, model.NoteDone, asked.State)
 	prompt := f.finished(t, asked.RunID)
-	assert.Equal(t, "claude-prompt", prompt.Job)
-	assert.Equal(t, "logs", prompt.Dir)
+	assert.Equal(t, "logs/"+model.PromptJob, prompt.Key())
+	refused := f.call(t, asAdmin, http.MethodPost, "/prompts", api.PromptRequest{Run: prompt.ID, Prompt: "why"})
+	assert.Equal(t, http.StatusNotFound, refused.Status, "no prompt about a prompt's run")
 
 	text, err := os.ReadFile(filepath.Join(f.root, model.Internal, "run.out"))
 	assert.NoError(t, err)

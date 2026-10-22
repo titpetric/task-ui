@@ -17,7 +17,7 @@ const activityLimit = 5000
 
 // activity charts the runs a filter lists that the user may see. The
 // duration line is a job's alone: on the runs page it would mix jobs.
-func (h *Handlers) activity(ctx context.Context, user *model.User, filter storage.RunFilter, now time.Time, durations bool) *view.Activity {
+func (h *Handlers) activity(ctx context.Context, sees func(*model.Run) bool, filter storage.RunFilter, now time.Time, durations bool) *view.Activity {
 	rows, err := h.opts.Runs.List(ctx, filter)
 	if err != nil {
 		slog.Error("listing runs for the charts", "err", err)
@@ -25,7 +25,7 @@ func (h *Handlers) activity(ctx context.Context, user *model.User, filter storag
 	}
 	runs := make([]view.ActivityRun, 0, len(rows))
 	for _, row := range rows {
-		if row.StartedAt == nil || !user.CanSee(row.Folder) {
+		if row.StartedAt == nil || !sees(&row) {
 			continue
 		}
 		runs = append(runs, view.ActivityRun{StartedAt: *row.StartedAt, Elapsed: row.Elapsed(), State: row.State})

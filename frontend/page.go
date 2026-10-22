@@ -57,8 +57,9 @@ func (h *Handlers) page(r *http.Request, title string) *view.Page {
 		p.Workspaces[ws] = i
 	}
 	p.Roles = h.roles(r.Context(), user)
-	p.Running = h.running(user)
-	runs := h.visibleRuns(r.Context(), user, storage.RunFilter{Limit: 2 * recentCount})
+	sees := h.runSeer(r)
+	p.Running = h.running(sees)
+	runs := h.visibleRuns(r.Context(), sees, storage.RunFilter{Limit: 2 * recentCount})
 	// The headings read against the wall clock, as "ago" does; the page's
 	// clock stays fixed for a demo or a test.
 	p.Recents = view.GroupRecents(time.Now(), view.Recents(runs, h.visibleFlowRuns(r.Context(), user, recentCount), recentCount))
@@ -177,12 +178,12 @@ func hiddenUnder(hidden map[string]bool, id string) bool {
 	}
 }
 
-// running returns the live runs the user may see, by job key.
-func (h *Handlers) running(user *model.User) map[string]view.Run {
+// running returns the live runs the user sees, by job key.
+func (h *Handlers) running(sees func(*model.Run) bool) map[string]view.Run {
 	result := map[string]view.Run{}
 	for _, session := range h.opts.Runner.List() {
 		run := session.Snapshot()
-		if !user.CanSee(run.Folder) || run.Finished() {
+		if !sees(&run) || run.Finished() {
 			continue
 		}
 		result[run.Key()] = h.runView(run)
@@ -190,14 +191,14 @@ func (h *Handlers) running(user *model.User) map[string]view.Run {
 	return result
 }
 
-// live returns the runs with a session in memory the user may see,
-// newest first, each with its frame: running ones, and the ones that
-// just finished.
-func (h *Handlers) live(user *model.User) []view.Run {
+// live returns the runs with a session in memory the user sees, newest
+// first, each with its frame: running ones, and the ones that just
+// finished.
+func (h *Handlers) live(sees func(*model.Run) bool) []view.Run {
 	var result []view.Run
 	for _, session := range h.opts.Runner.List() {
 		run := session.Snapshot()
-		if user.CanSee(run.Folder) {
+		if sees(&run) {
 			result = append(result, h.framed(h.runView(run)))
 		}
 	}
@@ -265,8 +266,8 @@ func (h *Handlers) frameOf(ctx context.Context, runID string) (template.HTML, in
 	return template.HTML(replay.Screen.Trim(frameRows).SVG(runner.DarkPalette)), replay.Lines(), replay.Complete()
 }
 
-// visibleRuns lists runs the user may see.
-func (h *Handlers) visibleRuns(ctx context.Context, user *model.User, filter storage.RunFilter) []view.Run {
+// visibleRuns lists the runs of a filter the user sees.
+func (h *Handlers) visibleRuns(ctx context.Context, sees func(*model.Run) bool, filter storage.RunFilter) []view.Run {
 	runs, err := h.opts.Runs.List(ctx, filter)
 	if err != nil {
 		slog.Error("listing runs", "err", err)
@@ -274,7 +275,7 @@ func (h *Handlers) visibleRuns(ctx context.Context, user *model.User, filter sto
 	}
 	result := []view.Run{}
 	for _, run := range runs {
-		if user.CanSee(run.Folder) {
+		if sees(&run) {
 			result = append(result, h.runView(run))
 		}
 	}
@@ -310,6 +311,14 @@ func (h *Handlers) permissions(r *http.Request) permission.Set {
 		return permission.Set{User: user}
 	}
 	return h.opts.Users.Permissions(r.Context(), user)
+}
+
+// runSeer returns whether the user of a request sees a run: one of a
+// folder the user sees, a prompt's with prompt/view, and the user's own
+// prompts' runs.
+func (h *Handlers) runSeer(r *http.Request) func(*model.Run) bool {
+	user, prompts := access.UserFrom(r.Context()), h.can(r, "prompt/view")
+	return func(run *model.Run) bool { return user.SeesRun(run, prompts) }
 }
 
 // can reports whether the user of a request may do what a path of

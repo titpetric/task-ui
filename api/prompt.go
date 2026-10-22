@@ -12,7 +12,7 @@ import (
 
 // startPrompt puts a prompt to Claude in a folder, or in a directory
 // inside one: a note of the folder's workspace, which the board answers
-// by running internal/claude-prompt there as the user, with the thread in
+// by running @claude-prompt there as the user, with the thread in
 // TASK_UI_PROMPT and the directory in TASK_UI_PROMPT_DIR. It answers with
 // the note; Claude's answer is a reply to it once the run ends. With
 // run, the prompt asks about that run, in its folder and directory, and

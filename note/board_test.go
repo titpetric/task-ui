@@ -284,6 +284,12 @@ func TestBoard_InternalJob(t *testing.T) {
 	assert.Equal(t, model.Internal, run.Snapshot().Folder)
 }
 
+// snapshotKey is the run key of a session's run.
+func snapshotKey(session *runner.Session) string {
+	run := session.Snapshot()
+	return run.Key()
+}
+
 // withPrompts sets up the fixture's board with a root with the folder proj, and
 // an internal folder whose claude-prompt answers in the reply file with
 // the thread, and fails a thread that ends in fail. It returns an admin.
@@ -330,6 +336,9 @@ func TestBoard_Ask(t *testing.T) {
 	run, ok := f.board.Runner.Get(done.RunID)
 	assert.True(t, ok)
 	assert.Equal(t, admin.Name, run.Snapshot().UserName, "a prompt runs as who asks")
+	assert.Equal(t, "proj", run.Snapshot().Folder, "the run is its place's")
+	assert.Equal(t, "images", run.Snapshot().Dir)
+	assert.Equal(t, model.PromptJob, run.Snapshot().Job)
 
 	board, err := f.board.Notes.List(ctx, storage.NoteFilter{})
 	assert.NoError(t, err)
@@ -352,6 +361,9 @@ func TestBoard_Ask(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, model.NoteDone, f.settled(t, root.ID).State)
 	assert.Equal(t, "In "+f.board.Root+": what is here", replies(t, f, root.ID)[0].Body)
+	rootRun, ok := f.board.Runner.Get(f.settled(t, root.ID).RunID)
+	assert.True(t, ok)
+	assert.Equal(t, model.Default+"/"+model.PromptJob, snapshotKey(rootRun))
 }
 
 // A failed run fails the prompt, and Claude's reply says how it ended;

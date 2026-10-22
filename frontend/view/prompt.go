@@ -1,8 +1,8 @@
 package view
 
 // Prompt is the prompt box of a folder page, of a directory browsed
-// inside a folder, or of a run's page: Claude Code on a prompt, run as internal/claude-prompt
-// in that directory, and the threads of the prompts asked there, each
+// inside a folder, or of a run's page: Claude Code on a prompt, a run
+// of @claude-prompt in that directory, and the threads of the prompts asked there, each
 // question with Claude's answer.
 type Prompt struct {
 	// API is the route the box posts to: /api/prompts, or the workspace

@@ -125,7 +125,8 @@ ask prompts without being an admin gets Allow Edits on Notes or on
 Prompts in its own policy. A note from `post_note` and a prompt from
 `ask_prompt` carry that user's name. A user with `prompt/edit` asks in
 the folders the user sees, and reads the runs of the prompts the user
-asked with `get_run`, though they run as `internal/claude-prompt`.
+asked with `get_run`: `@claude-prompt` of the folder asked in. Other
+users' prompt runs list in `list_runs` and `get_run` with `prompt/view`.
 
 A run started over MCP is like any other: it shows in the history, anyone
 allowed can watch it, and it goes on if the agent stops waiting.

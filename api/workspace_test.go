@@ -204,8 +204,8 @@ func TestWorkspace_Prompt(t *testing.T) {
 	asked := f.answered(t, res.str("id"))
 	run := f.finished(t, asked.RunID)
 	assert.Equal(t, model.StateOK, run.State)
-	assert.Equal(t, model.Internal, run.Folder)
-	assert.Equal(t, "claude-prompt", run.Job)
+	assert.Equal(t, "malta", run.Folder, "the run is the workspace's")
+	assert.Equal(t, model.PromptJob, run.Job)
 	assert.Equal(t, asAdmin, run.UserName)
 
 	env, err := os.ReadFile(out)
@@ -236,7 +236,8 @@ func (f *fixture) answered(t *testing.T, id string) *model.Note {
 }
 
 // promptFolder puts an internal folder in the fixture's catalogue whose
-// claude-prompt stands in for task-ui agent prompt: it writes the
+// claude-prompt stands in for task-ui agent prompt, the command a
+// prompt's @claude-prompt runs: it writes the
 // prompt's environment and where it runs to internal/env.out, the run a
 // prompt about a run gets to internal/run.out, waits for
 // a file named release in the directory it runs in, when that directory

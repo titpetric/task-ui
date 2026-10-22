@@ -25,7 +25,7 @@ const heartbeat = 15 * time.Second
 //	workflow:{id}  a workflow's runs: run, step and done, for a user who
 //	               sees every step of it
 //	runs           every run as it starts and ends: run, with the run row,
-//	               of the folders the user sees
+//	               of the folders the user sees; a prompt's with prompt/view
 //	notes          every note and reply as someone leaves or changes it:
 //	               note, with note/view; a prompt's notes with prompt/view
 //
@@ -42,9 +42,10 @@ func (h *Handlers) sse(w http.ResponseWriter, r *http.Request) {
 			failErr(w, storage.ErrNotFound)
 			return
 		}
+		prompts := h.can(r, "prompt/view")
 		visible = func(e event.Event) bool {
 			run, ok := e.Data.(model.Run)
-			return ok && user.CanSee(run.Folder)
+			return ok && user.SeesRun(&run, prompts)
 		}
 	case note.Topic:
 		if id != "" || h.opts.Board == nil {

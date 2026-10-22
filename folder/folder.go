@@ -67,14 +67,17 @@ type Folder struct {
 // Job returns the job by ID, name or alias, or nil. The ID is what URLs
 // and history use; the name is the target as its file spells it. An ID
 // that starts with ./ is the job of a file that runs: see FileJob; @shell
-// is the shell job, see ShellJob; any other that starts with @ the job of
-// an atkins skill: see SkillJob.
+// is the shell job, see ShellJob; @claude-prompt is none, see PromptJob;
+// any other that starts with @ the job of an atkins skill: see SkillJob.
 func (f *Folder) Job(id string) *Job {
 	if f == nil {
 		return nil
 	}
-	if id == ShellID {
+	switch id {
+	case ShellID:
 		return f.ShellJob()
+	case PromptID:
+		return nil
 	}
 	if rel, ok := strings.CutPrefix(id, FilePrefix); ok {
 		return f.FileJob(rel)

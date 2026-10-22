@@ -255,5 +255,15 @@ func TestRun_Prompt(t *testing.T) {
 	assert.NotContains(t, viewer, box)
 
 	prompt := f.run(t, model.Internal, "claude-prompt", "admin", model.StateOK)
-	assert.NotContains(t, f.page(t, asAdmin, "/runs/"+prompt.ID), "promptbox")
+	assert.NotContains(t, f.page(t, asAdmin, "/runs/"+prompt.ID), "promptbox", "an older prompt's run renders, with no box")
+
+	// A prompt's run is its place's, @claude-prompt, with no box; the
+	// runs list shows it to those with prompt/view.
+	asked := f.run(t, "infra", model.PromptJob, "admin", model.StateOK)
+	page := f.page(t, asAdmin, "/runs/"+asked.ID)
+	assert.Contains(t, page, "<title>infra / @claude-prompt")
+	assert.NotContains(t, page, "promptbox")
+	assert.Contains(t, f.page(t, asViewer, "/runs"), "/runs/"+asked.ID)
+	assert.NotContains(t, f.page(t, asOps, "/runs"), "/runs/"+asked.ID, "no prompt/view")
+	assert.Equal(t, http.StatusNotFound, f.get(t, asOps, "/runs/"+asked.ID).Status)
 }

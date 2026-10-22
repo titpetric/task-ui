@@ -359,8 +359,9 @@ A workspace's folder page, `/f/malta`, carries the **Prompt** box open
 for an admin once the [Claude Code integration](settings.md#integrations)
 has a token for them; every other folder page, and every directory inside
 a folder, carries it folded until its directory holds a prompt (see
-[Prompt](projects.md#prompt)). The prompt runs `internal/claude-prompt`
-as you, and Claude's answer shows under the question when the run ends.
+[Prompt](projects.md#prompt)). The prompt runs `@claude-prompt` of the
+workspace as you, and Claude's answer shows under the question when the
+run ends.
 
 ![The Prompt box on a workspace's page](../assets/workspace-prompt-dark.png)
 
