@@ -1,5 +1,5 @@
 {{- /* The control buttons of a folder's jobs, the dashboard's control
-     centre's and a folder page's Files list's. */}}
+     centre's. */}}
 
 {{/* controljob is a job's button in the control centre: Run, an eye on
      the run in progress, or a #! to its page for a user who may not run
@@ -34,22 +34,5 @@
 	<summary class="cc" title="{{ len . }} more job{{ if ne (len .) 1 }}s{{ end }} of {{ $f.ID }}" aria-label="{{ len . }} more jobs of {{ $f.ID }}"><svg class="ic"><use href="#i-more"/></svg></summary>
 	<div class="cc-menu" role="menu">{{ range . }}{{ template "controljob" (list $ $f . true) }}{{ end }}</div>
 </details>
-{{- end }}
-{{- end }}
-
-{{/* controljobs are a folder's jobs in one cell, as a Files list's
-     directory row holds them: the first three by name, default first,
-     the rest under Other. (list $ folder) */}}
-{{- define "controljobs" }}
-{{- $ := index . 0 }}{{ $f := index . 1 }}{{ $jobs := $f.Jobs }}
-{{- if $jobs }}
-<div class="cc-row">
-	{{- if gt (len $jobs) 3 }}
-	{{- range slice $jobs 0 3 }}{{ template "controljob" (list $ $f . true) }}{{ end }}
-	{{- template "controlmore" (list $ $f (slice $jobs 3)) }}
-	{{- else }}
-	{{- range $jobs }}{{ template "controljob" (list $ $f . true) }}{{ end }}
-	{{- end }}
-</div>
 {{- end }}
 {{- end }}

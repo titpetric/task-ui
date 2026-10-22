@@ -168,6 +168,10 @@ type Page struct {
 	// TreeFolders are the folders of the directories Tree lists, by the
 	// directory's name, whose jobs the list holds beside them.
 	TreeFolders map[string]*folder.Folder
+	// TreeMenus are the Run menus of the rows Tree lists, by the entry's
+	// name: a directory that is a folder or holds a job source, and a
+	// file that is a job source.
+	TreeMenus map[string]*RunMenu
 	// KeyHolders are the roles and the users, and the keys each gets.
 	KeyHolders []KeyHolder
 	Key        *sshkey.Key
@@ -435,4 +439,58 @@ func (p *Page) WhoCanRun(f *folder.Folder, job *folder.Job) string {
 		return "admin, runner"
 	}
 	return "admin, " + strings.Join(allow, ", ")
+}
+
+// SummaryMenu returns the menu of |>summarize: the jobs of m that Claude
+// summarizes, without the interactive ones; Main the same when Claude
+// summarizes it, else the only job remaining. Nil for none.
+func (p *Page) SummaryMenu(m *RunMenu) *RunMenu {
+	if m == nil {
+		return nil
+	}
+	var jobs []*folder.Job
+	for _, job := range m.Jobs {
+		if p.Summarizes(job) {
+			jobs = append(jobs, job)
+		}
+	}
+	main := m.Main
+	if !p.Summarizes(main) {
+		main = nil
+	}
+	if main == nil && len(jobs) == 1 {
+		main = jobs[0]
+	}
+	if main == nil && len(jobs) == 0 {
+		return nil
+	}
+	return &RunMenu{Folder: m.Folder, Main: main, Jobs: jobs}
+}
+
+// CanRunMenu reports whether the user may run any job of a menu.
+func (p *Page) CanRunMenu(m *RunMenu) bool {
+	if m == nil {
+		return false
+	}
+	if p.CanRun(m.Folder, m.Main) {
+		return true
+	}
+	for _, job := range m.Jobs {
+		if p.CanRun(m.Folder, job) {
+			return true
+		}
+	}
+	return false
+}
+
+// LastState is the class of a job's dot: how its last run ended, pending
+// for none.
+func (p *Page) LastState(job *folder.Job) string {
+	if job == nil {
+		return "pending"
+	}
+	if run := p.LastRun(job.Key()); run != nil {
+		return run.State
+	}
+	return "pending"
 }

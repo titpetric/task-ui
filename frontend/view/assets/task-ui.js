@@ -897,8 +897,16 @@
   }, true);
   document.addEventListener("click", function (event) {
     document.querySelectorAll("details.cc-more[open]").forEach(function (menu) {
-      if (!menu.contains(event.target) || event.target.closest(".cc-menu .cc")) menu.removeAttribute("open");
+      if (!menu.contains(event.target) || event.target.closest(".cc-menu .cc, .cc-menu [data-run], .cc-menu [data-attach]")) menu.removeAttribute("open");
     });
+  });
+  // A row of a Run menu's table runs on Enter or Space, as a button does.
+  document.addEventListener("keydown", function (event) {
+    if (event.key !== "Enter" && event.key !== " ") return;
+    var row = event.target.closest && event.target.closest('.cc-menu tr[role="menuitem"]');
+    if (!row) return;
+    event.preventDefault();
+    row.click();
   });
   document.addEventListener("keydown", function (event) {
     if (event.key !== "Escape") return;
@@ -1735,7 +1743,9 @@
     // row of the Files panel into the window's foot; the window closes for
     // the run window to open.
     var previewActions = document.getElementById("preview-actions");
-    previewActions.addEventListener("click", function () { previewDialog.close(); });
+    previewActions.addEventListener("click", function (event) {
+      if (event.target.closest("[data-run], [data-attach]")) previewDialog.close();
+    });
     var showActions = function (href) {
       previewActions.innerHTML = "";
       var link = Array.prototype.find.call(document.querySelectorAll("a[data-file]"), function (a) {
@@ -1743,9 +1753,10 @@
       });
       var row = link && link.closest("tr");
       if (!row) return;
-      row.querySelectorAll(".actions [data-run], .actions [data-attach]").forEach(function (btn) {
+      row.querySelectorAll(".actions > [data-run], .actions > [data-attach], .actions > .runsplit").forEach(function (btn) {
         var copy = btn.cloneNode(true);
         copy.classList.remove("btn-sm");
+        copy.querySelectorAll(".btn-sm").forEach(function (part) { part.classList.remove("btn-sm"); });
         previewActions.appendChild(copy);
       });
     };
@@ -2527,8 +2538,8 @@
     }, 1000);
   }
 
-  // A job's control button, in the dashboard's control centre or a
-  // folder page's Files list, follows the runs topic: an eye on the job
+  // A job's control button in the dashboard's control centre follows
+  // the runs topic: an eye on the job
   // running, Run again when it ended, in the colour of how it ended. Its
   // slot keeps that colour in data-last.
   function slotHTML(slot, run) {
@@ -2552,6 +2563,18 @@
     onRuns(function (run) {
       document.querySelectorAll('.cc-slot[data-cc="' + run.folder + "/" + run.job + '"]').forEach(function (slot) {
         slot.innerHTML = slotHTML(slot, run);
+      });
+    });
+  }
+  // The dot on a Files list row's Run follows the runs topic too: it
+  // pulses while the job runs and takes how it ended.
+  if (document.querySelector(".runsplit[data-key]") && window.EventSource) {
+    onRuns(function (run) {
+      var key = run.folder + (run.dir ? "/" + run.dir : "") + "/" + run.job;
+      document.querySelectorAll(".runsplit[data-key]").forEach(function (split) {
+        if (split.dataset.key !== key) return;
+        var dot = split.querySelector(":scope > .btn .dot");
+        if (dot) dot.className = "dot " + (run.state || "pending");
       });
     });
   }
@@ -2753,7 +2776,7 @@
   // its card's head or the page's head: what the job runs, the words
   // typed after it as they reach it, and Run.
   function argsLine(btn, spec) {
-    var anchor = btn.closest(".chips, .jobcard > header, .page-head") || btn.parentNode;
+    var anchor = btn.closest(".chips, .jobcard > header, .page-head, .runsplit") || btn.parentNode;
     var open = document.querySelector("form.argsline");
     if (open) {
       var same = open.dataset.job === spec.job && open.dataset.dir === spec.dir && open.dataset.folder === spec.folder;

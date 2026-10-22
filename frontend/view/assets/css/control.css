@@ -173,3 +173,101 @@
     }
   }
 }
+
+/* A split Run of a Files list row: the button and the chevron of its
+   menu joined into one; the dot on Run is how its job last ended. */
+.runsplit {
+  display: inline-flex;
+  align-items: stretch;
+
+  & > .btn:has(+ .run-menu) {
+    border-start-end-radius: 0;
+    border-end-end-radius: 0;
+  }
+
+  & > .btn + .run-menu > summary {
+    margin-inline-start: -1px;
+    padding-inline: 0.45rem;
+    border-start-start-radius: 0;
+    border-end-start-radius: 0;
+  }
+
+  & .chev {
+    width: 0.7rem;
+    height: 0.7rem;
+    transform: rotate(90deg);
+  }
+
+  & .run-menu[open] .chev {
+    transform: rotate(-90deg);
+  }
+
+  & .dot {
+    width: 0.4rem;
+    height: 0.4rem;
+  }
+}
+
+/* The menu of a split Run: a table, a row a target, the play glyph in
+   the colour of its last run, its name and what it does; a row runs its
+   target on a click. A row the user may not run is listed faint. */
+.cc-menu .menu-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-button);
+
+  & td {
+    padding: 0.35rem 0.5rem;
+    white-space: nowrap;
+    text-align: start;
+  }
+
+  & td.glyph {
+    width: 1%;
+
+    & .ic {
+      width: 0.75rem;
+      height: 0.75rem;
+      color: var(--text-dim);
+    }
+
+    &.ok .ic {
+      color: var(--ok);
+    }
+
+    &:is(.failed, .killed) .ic {
+      color: var(--bad);
+    }
+  }
+
+  & td.name {
+    font-weight: 600;
+  }
+
+  & td.desc {
+    max-width: 24rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--text-dim);
+  }
+
+  & tr[role="menuitem"] {
+    cursor: pointer;
+
+    &:is(:hover, :focus-visible) {
+      outline: none;
+      background: var(--signal);
+      color: var(--signal-ink);
+
+      & td,
+      & td.glyph .ic {
+        color: inherit;
+      }
+    }
+  }
+
+  & tr.idle {
+    color: var(--text-faint);
+    cursor: default;
+  }
+}

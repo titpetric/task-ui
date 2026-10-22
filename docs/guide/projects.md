@@ -135,17 +135,28 @@ Open a folder from the sidebar:
   the folder's dashboard. A directory opens as a page of its own; a file
   opens in a window, an image shown, markdown rendered, text coloured and
   cut past 1 MiB, with **Download** beside and in the row.
-  A directory that is a folder links to the folder's page, and its
-  **Jobs** column holds the folder's jobs as the dashboard's [control
-  centre](dashboard.md#control-centre) shows them: a button per job,
-  `default` first, in the colour of its last run, an eye on a run in
-  progress, and past three the rest under **Other**. They follow the
-  runs as they start and end, with no reload. A folder the listing lacks,
-  such as one a project row places elsewhere, gets a row of its own.
+  A directory that is a folder links to the folder's page. A folder the
+  listing lacks, such as one a project row places elsewhere, gets a row
+  of its own.
   A directory with targets of its own, a pipeline file, Makefile,
   package scripts or scripts folder read as a folder's are, that
   discovery leaves out, such as the Makefile of a directory inside a
   checkout with an `atkins.yml`, lists them as job cards on its page.
+  The **Jobs** column of a directory with jobs, a folder or one with a
+  job source at its top, holds **Run** and **|>summarize**; so does the
+  row of a file that is a job source, such as `atkins.yml`, and the
+  file's window. **Run** runs `default`, or the only job, and its dot
+  shows how that job last went, live as runs start and end, or an eye
+  on a run in progress. With more jobs, the chevron beside it opens a
+  table of them, `default` first and the rest by name: the play glyph
+  in the colour of the job's last run, the name and what it does, or `Run the <name> target` when its file
+  says nothing. A row runs its job, or attaches to it while it runs; a
+  job your role may not run lists faint. A directory without `default`
+  opens the table from **Run** itself. **|>summarize** does the same
+  with Claude's summary, the interactive jobs left out, and runs the
+  one job left directly. The sidebar and the folder list stay as
+  discovery reads them: the jobs of a directory found here run as the
+  folder's in that directory.
   They run in that directory under the folder's allow rules and hours,
   and pull the folder's checkout; the API names them with `dir` (see
   [Runs](runs.md#what-a-job-gets)). Each has its page and history under
@@ -173,9 +184,9 @@ Open a folder from the sidebar:
 
 ![A project's Files: .git and .env sealed, ./serve marked to run](../assets/files-dark.png)
 
-![The root's page: each project in Files with its jobs' control buttons beside it](../assets/folder-dashboard-dark.png)
+![The root's page: each project in Files with Run and |>summarize beside it](../assets/folder-dashboard-dark.png)
 
-![The default workspace's Files: each project with its jobs' control buttons, coloured by the last run](../assets/folder-dashboard-dark.png)
+![The default workspace's Files: each project with Run and |>summarize, a dot of how the default last ran](../assets/folder-dashboard-dark.png)
 
 ![A file of the checkout in the preview window](../assets/file-dark.png)
 

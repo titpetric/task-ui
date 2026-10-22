@@ -129,6 +129,7 @@ func (h *Handlers) defaultWorkspace(w http.ResponseWriter, r *http.Request) {
 		root = h.opts.Root
 	}
 	p.Last = h.latestRuns(r, withTreeFolders(p, root, p.SubFolders))
+	h.treeMenus(p, f, nil, false)
 	if workspace != nil && p.Can("workspace/view") {
 		p.Actions = &view.Actions{WorkspaceSettings: "/settings/workspaces/" + model.Default}
 	}
@@ -198,6 +199,12 @@ func (h *Handlers) browse(w http.ResponseWriter, r *http.Request, f *folder.Fold
 		}
 		maps.Copy(p.Last, h.latestRuns(r, subs))
 	}
+	if h.treeMenus(p, f, p.Place, true) {
+		if p.Last == nil {
+			p.Last = map[string]view.Run{}
+		}
+		maps.Copy(p.Last, h.latestRuns(r, []*folder.Folder{f}))
+	}
 	p.Up = p.Href(f.ID)
 	if parent := path.Dir(rel); parent != "." {
 		p.Up += "/" + escapePath(parent)
@@ -240,6 +247,7 @@ func (h *Handlers) folder(w http.ResponseWriter, r *http.Request, f *folder.Fold
 		}
 	}
 	p.Last = h.latestRuns(r, append([]*folder.Folder{f}, withTreeFolders(p, f.Dir, p.SubFolders)...))
+	h.treeMenus(p, f, f, true)
 	// A workspace's page shows its prompt box open.
 	if _, ok := p.Workspaces[f.ID]; ok && p.Prompt != nil {
 		p.Prompt.Open = true
