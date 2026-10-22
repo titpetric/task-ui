@@ -6,7 +6,6 @@ package app
 import (
 	"errors"
 	"fmt"
-	"log/slog"
 	"os"
 	"path/filepath"
 	"slices"
@@ -73,11 +72,11 @@ type Config struct {
 	// copy on a page start with it. TASK_UI_URL; empty derives it
 	// from each request, through the proxy's forwarded headers.
 	URL string
-	// AgentJob is the job an instruction runs, as folder/job, as the
-	// agent's user. TASK_UI_AGENT_JOB, default _/@claude-note, the Notes
-	// agent in the root; internal/claude-note names the same job. Set
-	// empty, it leaves the agent's instructions open too, for an agent that
-	// reads the board over MCP.
+	// AgentJob is the job an instruction runs, as the agent's user.
+	// TASK_UI_AGENT_JOB, default @claude-note, the Notes agent in the
+	// root, or a job of a folder as folder/job. Set empty, it leaves the
+	// agent's instructions open too, for an agent that reads the board
+	// over MCP.
 	AgentJob string
 	// ArtifactHistory is how many versions the artifact history keeps
 	// before it squashes to one. TASK_UI_ARTIFACT_HISTORY, default 50; 0
@@ -145,13 +144,9 @@ func envDuration(name string, fallback time.Duration) (time.Duration, error) {
 	return d, nil
 }
 
-// NoteAgentJob is the agent job by default: the Notes agent, a job of
-// the root.
-const NoteAgentJob = model.Default + "/" + model.NoteJob
-
-// legacyAgentJob is the agent job's other name, which older
-// configurations set.
-const legacyAgentJob = model.Internal + "/claude-note"
+// NoteAgentJob is the agent job by default: the Notes agent, a
+// built-in that runs in the root.
+const NoteAgentJob = model.NoteJob
 
 // NewConfig reads the environment and the command line flags.
 func NewConfig(args []string) (*Config, error) {
@@ -223,9 +218,21 @@ func (c *Config) Validate() error {
 	if c.SessionTTL <= 0 {
 		return errors.New("TASK_UI_SESSION_TTL: must be positive")
 	}
-	if c.AgentJob == legacyAgentJob {
-		slog.Info("TASK_UI_AGENT_JOB names the Notes agent by its other name", "set", c.AgentJob, "runs", NoteAgentJob)
-		c.AgentJob = NoteAgentJob
+	if err := checkAgentJob(c.AgentJob); err != nil {
+		return err
+	}
+	return nil
+}
+
+// checkAgentJob refuses an agent job that names a built-in other than
+// @claude-note, or one in a folder: a built-in has no folder to name.
+func checkAgentJob(job string) error {
+	if job == "" || job == NoteAgentJob {
+		return nil
+	}
+	cut := strings.LastIndex(job, "/")
+	if cut <= 0 || strings.HasPrefix(job[cut+1:], "@") || model.IsInternal(job[:cut]) {
+		return fmt.Errorf("TASK_UI_AGENT_JOB: %q is no agent job: set %s, the Notes agent, a job of a folder as folder/job, or empty", job, NoteAgentJob)
 	}
 	return nil
 }

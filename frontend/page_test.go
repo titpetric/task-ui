@@ -242,3 +242,21 @@ func sidebar(body string) string {
 	end := strings.Index(body[start:], "</nav>")
 	return body[start : start+end]
 }
+
+// A run of the root names its job alone, on the run page, in the runs
+// table and in the recents, without the _/ its row keeps; its links go
+// to the root's pages.
+func TestPage_rootRunName(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	shell := f.run(t, model.Default, "@shell", asAdmin, model.StateOK)
+
+	page := f.page(t, asAdmin, "/runs/"+shell.ID)
+	assert.Contains(t, page, "<title>@shell | TaskUI")
+	assert.Contains(t, page, "<h2>@shell <span")
+	runs := f.page(t, asAdmin, "/runs")
+	assert.NotContains(t, runs, ">_/@shell")
+	assert.NotContains(t, runs, "_ / @shell")
+	assert.Contains(t, runs, `href="/f/_/@shell">@shell</a>`)
+	assert.Contains(t, runs, `title="Open @shell, admin, ok"`)
+}

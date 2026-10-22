@@ -87,13 +87,9 @@ func (h *Handlers) run(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	run := h.framed(h.runView(*row))
-	where := run.Folder
-	if run.Dir != "" {
-		where += "/" + run.Dir
-	}
-	p := h.page(r, where+" / "+run.Job)
+	p := h.page(r, run.Name())
 	p.Run = &run
-	p.Crumbs = view.Crumbs("Runs", "/runs", where+" / "+run.Job)
+	p.Crumbs = view.Crumbs("Runs", "/runs", run.Name())
 	// A run of a directory's job finds the job there; the folder's rules
 	// stand for it.
 	if f := h.opts.Catalogue.Find(run.Folder); f != nil {

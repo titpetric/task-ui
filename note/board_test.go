@@ -260,12 +260,12 @@ func TestBoard_InstructionAnswer(t *testing.T) {
 	assert.Equal(t, "Done: @claude answer, fail\n\nThe run ended failed (exit 1).", replies(t, f, failed.ID)[0].Body)
 }
 
-// The agent job by default is the root's Notes agent, _/@claude-note,
+// The agent job by default is the root's Notes agent, @claude-note,
 // which runs in the root as the agent's user, who sees no folder of it:
 // the board starts it all the same.
 func TestBoard_NoteJob(t *testing.T) {
 	t.Parallel()
-	f := newFixture(t, "_/"+model.NoteJob)
+	f := newFixture(t, model.NoteJob)
 	root, err := filepath.EvalSymlinks(t.TempDir())
 	assert.NoError(t, err)
 	f.board.Root = root

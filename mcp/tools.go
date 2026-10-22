@@ -283,7 +283,7 @@ func showRun(ctx context.Context, c *client, id string, wait int, lines *int) (s
 		}
 	}
 	var b strings.Builder
-	fmt.Fprintf(&b, "run %s: %s/%s by %s, %s\n", view.ID, view.Where(), view.Job, view.UserName, outcome(&view.Run))
+	fmt.Fprintf(&b, "run %s: %s by %s, %s\n", view.ID, view.Path(), view.UserName, outcome(&view.Run))
 	if view.Reason != "" {
 		fmt.Fprintf(&b, "forced: %s\n", view.Reason)
 	}
@@ -462,7 +462,7 @@ func listRuns(ctx context.Context, c *client, args json.RawMessage) (string, err
 	}
 	var b strings.Builder
 	for _, view := range out.Runs {
-		fmt.Fprintf(&b, "%s %s/%s by %s: %s\n", view.ID, view.Where(), view.Job, view.UserName, outcome(&view.Run))
+		fmt.Fprintf(&b, "%s %s by %s: %s\n", view.ID, view.Path(), view.UserName, outcome(&view.Run))
 	}
 	return b.String(), nil
 }

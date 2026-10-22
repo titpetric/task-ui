@@ -107,7 +107,7 @@ func (h *Handlers) runOutput(run *model.Run) (string, error) {
 // output in a fence.
 func runReport(run *model.Run, output string) string {
 	var b strings.Builder
-	fmt.Fprintf(&b, "# %s / %s, run %s\n\n", run.Folder, run.Job, run.ID)
+	fmt.Fprintf(&b, "# %s, run %s\n\n", run.Name(), run.ID)
 	fmt.Fprintf(&b, "Ended %s, exit %d, after %s; started by %s.\n", run.State, run.ExitCode, run.Elapsed().Round(time.Millisecond), run.UserName)
 	fmt.Fprintf(&b, "\n```\n%s\n```\n", strings.ReplaceAll(output, "```", "'''"))
 	return b.String()

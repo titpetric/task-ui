@@ -378,7 +378,7 @@ func TestRun_ClaudeBuiltins(t *testing.T) {
 	}
 }
 
-// The Notes agent's run, _/@claude-note, shows with note/view, and to
+// The Notes agent's run, @claude-note of the root, shows with note/view, and to
 // the agent's user who starts it, who ends it with note/edit, as an
 // admin does.
 func TestRun_NoteVisibility(t *testing.T) {

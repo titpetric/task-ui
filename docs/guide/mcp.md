@@ -141,7 +141,7 @@ start from the browser or `POST /api/runs`, and `list_runs` and
 shell of **Enter Shell**, and `@claude`, Claude Code in one, answer `403`
 to every token but an admin's; `@claude-note` and `@claude-prompt` start
 from the Notes board and the prompt routes alone. The Notes agent's runs,
-`_/@claude-note`, list with `note/view`, and to the agent's user always.
+`@claude-note`, list with `note/view`, and to the agent's user always.
 
 ## A frozen surface
 

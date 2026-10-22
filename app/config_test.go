@@ -55,22 +55,29 @@ func TestNewConfig(t *testing.T) {
 	assert.True(t, flagged.PrintBuildInfo)
 }
 
-// The agent job is the root's Notes agent unless set, and
-// internal/claude-note names it too; set empty, instructions wait for an
-// agent over MCP.
+// The agent job is the Notes agent, @claude-note, unless set; set
+// empty, instructions wait for an agent over MCP. A built-in named in a
+// folder, as _/@claude-note, or internal/claude-note fails at start.
 func TestNewConfig_AgentJob(t *testing.T) {
 	t.Setenv("TASK_UI_ROOT", t.TempDir())
 	t.Setenv("TASK_UI_AGENT_JOB", "")
 	assert.NoError(t, os.Unsetenv("TASK_UI_AGENT_JOB"))
 	cfg, err := app.NewConfig(nil)
 	assert.NoError(t, err)
-	assert.Equal(t, "_/@claude-note", cfg.AgentJob)
+	assert.Equal(t, "@claude-note", cfg.AgentJob)
 	assert.Equal(t, app.NoteAgentJob, cfg.AgentJob)
 
-	t.Setenv("TASK_UI_AGENT_JOB", "internal/claude-note")
+	t.Setenv("TASK_UI_AGENT_JOB", "@claude-note")
 	cfg, err = app.NewConfig(nil)
 	assert.NoError(t, err)
-	assert.Equal(t, "_/@claude-note", cfg.AgentJob)
+	assert.Equal(t, "@claude-note", cfg.AgentJob)
+
+	for _, old := range []string{"internal/claude-note", "_/@claude-note", "@claude-prompt", "claude-note"} {
+		t.Setenv("TASK_UI_AGENT_JOB", old)
+		_, err = app.NewConfig(nil)
+		assert.Error(t, err, old)
+		assert.Contains(t, err.Error(), "TASK_UI_AGENT_JOB", old)
+	}
 
 	t.Setenv("TASK_UI_AGENT_JOB", "")
 	cfg, err = app.NewConfig(nil)

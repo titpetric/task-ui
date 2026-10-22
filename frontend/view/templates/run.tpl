@@ -2,7 +2,7 @@
 {{- $run := .Run }}{{ $can := .CanRun .Folder .Job }}
 <div class="page-head">
 	<div>
-		<h2>{{ $run.Where }} / {{ $run.Job }} <span class="badge {{ tone $run.State }}">{{ $run.State }}{{ if and (ne $run.State "ok") (ne $run.State "running") }} {{ $run.ExitCode }}{{ end }}</span></h2>
+		<h2>{{ $run.Name }} <span class="badge {{ tone $run.State }}">{{ $run.State }}{{ if and (ne $run.State "ok") (ne $run.State "running") }} {{ $run.ExitCode }}{{ end }}</span></h2>
 		<p>Started by {{ $run.UserName }} {{ ago $run.StartedAt }}{{ if $run.IsScheduled }} by the scheduler{{ end }}{{ if $run.IsForced }}, with Run force{{ end }}.{{ if eq $run.State "running" }} The session is live: attach to follow it{{ if $can }}, or end it{{ end }}.{{ else }} The run is over; everything it printed is below.{{ end }}</p>
 	</div>
 	<div class="actions">
@@ -18,7 +18,7 @@
 {{- if and $run.Live (eq $run.State "running") }}
 <section class="block" data-live>
 	<h3>Terminal <small>as it looks now, {{ if $run.Attached }}{{ $run.Attached }} watching{{ else }}nobody attached{{ end }}</small></h3>
-	<a class="tile wide" href="#" data-attach="{{ $run.ID }}"><div class="frame" data-frame="{{ $run.ID }}" role="img" aria-label="Terminal of {{ $run.Where }} / {{ $run.Job }}">{{ $run.FrameSVG }}</div></a>
+	<a class="tile wide" href="#" data-attach="{{ $run.ID }}"><div class="frame" data-frame="{{ $run.ID }}" role="img" aria-label="Terminal of {{ $run.Name }}">{{ $run.FrameSVG }}</div></a>
 </section>
 {{- end }}
 

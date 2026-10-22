@@ -115,9 +115,9 @@
 					{{- end }}
 					{{- with $e.Run }}
 					{{- $can := $.CanRunJob .Folder .Dir .Job }}
-					<a href="/runs/{{ .ID }}" class="recent" title="Open {{ .Where }} / {{ .Job }}, {{ .UserName }}, {{ .State }}">
+					<a href="/runs/{{ .ID }}" class="recent" title="Open {{ .Name }}, {{ .UserName }}, {{ .State }}">
 						<i class="dot {{ .State }}"></i>
-						<span class="what"><b>{{ .Job }}</b><small>{{ .Where }}</small></span>
+						<span class="what"><b>{{ .Job }}</b><small>{{ .Place }}</small></span>
 						{{- if eq .State "running" }}<svg class="ic act"><use href="#i-{{ if $can }}play{{ else }}eye{{ end }}"/></svg>{{ end }}
 						{{ template "avatar" (list $ .UserName) }}
 					</a>
