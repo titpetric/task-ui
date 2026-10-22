@@ -358,15 +358,16 @@ per trust boundary.
 A workspace's folder page, `/f/malta`, carries the **Prompt** box open
 for an admin once the [Claude Code integration](settings.md#integrations)
 has a token for them; every other folder page, and every directory inside
-a folder, carries it folded (see [Prompt](projects.md#prompt)). The
-prompt runs `internal/claude-prompt` as you, and its window opens on the
-run.
+a folder, carries it folded until its directory holds a prompt (see
+[Prompt](projects.md#prompt)). The prompt runs `internal/claude-prompt`
+as you, and Claude's answer shows under the question when the run ends.
 
 ![The Prompt box on a workspace's page](../assets/workspace-prompt-dark.png)
 
 Claude Code works in the workspace's checkout, so it reads the
 workspace's `CLAUDE.md` and `.claude/`. The run's environment holds the
-prompt in `TASK_UI_PROMPT` and the checkout in `TASK_UI_WORKSPACE_DIR`.
+thread in `TASK_UI_PROMPT`, the checkout in `TASK_UI_WORKSPACE_DIR`, and
+the file Claude writes its answer to in `TASK_UI_PROMPT_REPLY`.
 `task-ui agent prompt` works in `TASK_UI_PROMPT_DIR`, which a prompt of a
 folder or a directory sets, or else in `TASK_UI_WORKSPACE_DIR`, and exits
 with an error when the prompt or both directories are empty. The run
@@ -378,10 +379,11 @@ curl -s -X POST https://task.example.com/api/workspaces/malta/prompt \
   -d '{"prompt": "list the skills this workspace carries"}'
 ```
 
-The reply is the run, with its `id`; `GET /api/runs/{id}` and the
-recording follow it. The run starts in the workspace's checkout and
-holds that directory as `POST /api/prompts` holds one: a second prompt
-there while one runs answers `409`, and a prompt in a project of the
+The reply is the note, with its `id`, and its `run_id` once the run
+starts; Claude's answer is a reply to it, which `GET
+/api/prompts?folder=malta` lists. The run starts in the workspace's
+checkout and holds that directory as `POST /api/prompts` holds one: a
+second prompt there waits for it, and a prompt in a project of the
 workspace runs beside it.
 
 ---

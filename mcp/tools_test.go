@@ -1,6 +1,7 @@
 package mcp_test
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"os"
@@ -10,6 +11,7 @@ import (
 
 	"github.com/titpetric/task-ui/api"
 	"github.com/titpetric/task-ui/internal/assert"
+	"github.com/titpetric/task-ui/model"
 )
 
 // The tools list a job, run it, wait for it and show it; a viewer may not run it.
@@ -108,12 +110,15 @@ func TestTools_Notes(t *testing.T) {
 	status, raw := f.post(t, f.tokens["ops"], "/api/notes", api.NoteRequest{Body: "@admin tidy the README"})
 	assert.Equal(t, http.StatusCreated, status, string(raw))
 	f.post(t, f.tokens["ops"], "/api/notes", api.NoteRequest{Body: "@guest have a look"})
+	// A prompt from a folder page is a note too, which the board leaves out.
+	assert.NoError(t, f.notes.Create(context.Background(), &model.Note{UserName: "admin", Body: "@admin a prompt", State: model.NoteOpen, WorkspaceID: model.Default, Dir: "site"}))
 
 	text, failed := f.tool(t, "admin", "list_notes", nil)
 	assert.False(t, failed, text)
 	assert.Contains(t, text, "by ops, open,")
 	assert.Contains(t, text, "@admin tidy the README")
 	assert.NotContains(t, text, "@guest")
+	assert.NotContains(t, text, "a prompt")
 	id := strings.Fields(strings.TrimPrefix(text, "note "))[0]
 
 	text, failed = f.tool(t, "admin", "note_comment", map[string]any{"id": id, "body": "Tidied in abc123.", "state": "done"})
@@ -125,6 +130,7 @@ func TestTools_Notes(t *testing.T) {
 	text, _ = f.tool(t, "admin", "list_notes", map[string]any{"state": "*", "mention": "*"})
 	assert.Contains(t, text, "reply by admin")
 	assert.Contains(t, text, "@guest have a look")
+	assert.NotContains(t, text, "a prompt")
 
 	_, failed = f.tool(t, "admin", "note_comment", map[string]any{"id": id})
 	assert.True(t, failed)

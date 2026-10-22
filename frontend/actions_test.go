@@ -104,7 +104,7 @@ func TestFolder_Prompt(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
 	ctx := context.Background()
-	const block = `data-api="/api/prompts" data-attach-result`
+	const block = `data-api="/api/prompts" data-refresh-notes`
 	assert.NoError(t, os.MkdirAll(filepath.Join(f.infra.Dir, "images"), 0o755))
 
 	// infra is a workspace; without a Claude token there is no prompt.
@@ -150,5 +150,40 @@ func TestFolder_Shell(t *testing.T) {
 	for _, user := range []string{asOps, asViewer, asLimited} {
 		assert.NotContains(t, f.page(t, user, "/f/_/infra"), button, user)
 		assert.NotContains(t, f.page(t, user, "/f/_/infra/images"), button, user)
+	}
+}
+
+// An admin's actions bar links the settings of the workspace or the
+// project a folder page is of, beside Enter Shell; no one else's does,
+// nor a directory's inside them.
+func TestFolder_SettingsLinks(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	ctx := context.Background()
+	assert.NoError(t, os.MkdirAll(filepath.Join(f.infra.Dir, "images"), 0o755))
+	assert.NoError(t, f.opts.Workspaces.EnsureDefault(ctx))
+	assert.NoError(t, f.opts.Workspaces.Create(ctx, &model.Workspace{Folder: "infra", Title: "Infra"}))
+	assert.NoError(t, f.opts.Projects.Create(ctx, &model.Project{Folder: "private", Title: "Private"}))
+	const workspace, project = `>Workspace Settings</a>`, `>Project Settings</a>`
+
+	ws := f.page(t, asAdmin, "/f/infra")
+	assert.Contains(t, ws, `href="/settings/workspaces/infra"`)
+	assert.Contains(t, ws, workspace)
+	assert.NotContains(t, ws, project)
+	root := f.page(t, asAdmin, "/f/_")
+	assert.Contains(t, root, `href="/settings/workspaces/_"`)
+	pr := f.page(t, asAdmin, "/f/_/private")
+	assert.Contains(t, pr, `href="/settings/projects/private"`)
+	assert.Contains(t, pr, project)
+	assert.NotContains(t, pr, workspace)
+	browse := f.page(t, asAdmin, "/f/infra/images")
+	assert.NotContains(t, browse, workspace)
+	assert.NotContains(t, browse, project)
+	for _, user := range []string{asOps, asViewer} {
+		for _, path := range []string{"/f/infra", "/f/_", "/f/_/private"} {
+			page := f.page(t, user, path)
+			assert.NotContains(t, page, workspace, user+" "+path)
+			assert.NotContains(t, page, project, user+" "+path)
+		}
 	}
 }

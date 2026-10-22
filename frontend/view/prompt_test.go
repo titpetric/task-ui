@@ -11,6 +11,6 @@ import (
 // directory too.
 func TestPromptIn(t *testing.T) {
 	t.Parallel()
-	assert.Equal(t, &view.Prompt{API: "/api/prompts", Folder: "malta", Where: "malta/"}, view.PromptIn("malta", ""))
-	assert.Equal(t, &view.Prompt{API: "/api/prompts", Folder: "malta", Dir: "dockerfiles/task", Where: "malta/dockerfiles/task/"}, view.PromptIn("malta", "dockerfiles/task"))
+	assert.Equal(t, &view.Prompt{API: "/api/prompts", Folder: "malta", Where: "malta/", Place: "malta"}, view.PromptIn("malta", ""))
+	assert.Equal(t, &view.Prompt{API: "/api/prompts", Folder: "malta", Dir: "dockerfiles/task", Where: "malta/dockerfiles/task/", Place: "malta/dockerfiles/task"}, view.PromptIn("malta", "dockerfiles/task"))
 }

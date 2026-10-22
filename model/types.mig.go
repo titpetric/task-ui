@@ -376,6 +376,12 @@ type Note struct {
 
 	// Updated At
 	UpdatedAt *time.Time `db:"updated_at" json:"updated_at"`
+
+	// Workspace ID
+	WorkspaceID string `db:"workspace_id" json:"workspace_id"`
+
+	// Dir
+	Dir string `db:"dir" json:"dir"`
 }
 
 // GetID will return the value of ID.
@@ -444,11 +450,23 @@ func (n *Note) GetUpdatedAt() *time.Time { return n.UpdatedAt }
 // SetUpdatedAt sets UpdatedAt to the provided value.
 func (n *Note) SetUpdatedAt(stamp time.Time) { n.UpdatedAt = &stamp }
 
+// GetWorkspaceID will return the value of WorkspaceID.
+func (n *Note) GetWorkspaceID() string { return n.WorkspaceID }
+
+// SetWorkspaceID sets WorkspaceID to the provided value.
+func (n *Note) SetWorkspaceID(val string) { n.WorkspaceID = val }
+
+// GetDir will return the value of Dir.
+func (n *Note) GetDir() string { return n.Dir }
+
+// SetDir sets Dir to the provided value.
+func (n *Note) SetDir(val string) { n.Dir = val }
+
 // NoteTable is the name of the table in the DB.
 const NoteTable = "`note`"
 
 // NoteFields is a list of all columns in the DB table.
-var NoteFields = []string{"id", "channel", "parent_id", "user_id", "user_name", "body", "mentions", "state", "run_id", "created_at", "updated_at"}
+var NoteFields = []string{"id", "channel", "parent_id", "user_id", "user_name", "body", "mentions", "state", "run_id", "created_at", "updated_at", "workspace_id", "dir"}
 
 // NotePrimaryFields are the primary key fields in the DB table.
 var NotePrimaryFields = []string{"id"}

@@ -55,14 +55,16 @@ jobs, the agent's included. No checkout or project takes the name.
 | Job             | Runs                         | What it does                                                                                     |
 |-----------------|------------------------------|--------------------------------------------------------------------------------------------------|
 | `claude-note`   | `task-ui agent note`         | Claude Code on the thread in `TASK_UI_NOTE`, in the root; its answer goes to `TASK_UI_NOTE_REPLY` |
-| `claude-prompt` | `task-ui agent prompt`       | Claude Code on `TASK_UI_PROMPT`, in `TASK_UI_PROMPT_DIR`, or else the workspace checkout `TASK_UI_WORKSPACE_DIR` |
+| `claude-prompt` | `task-ui agent prompt`       | Claude Code on the thread in `TASK_UI_PROMPT`, in `TASK_UI_PROMPT_DIR`, or else the workspace checkout `TASK_UI_WORKSPACE_DIR`; its answer goes to `TASK_UI_PROMPT_REPLY` |
 | `claude`        | `task-ui agent shell [args]` | Claude Code in a terminal, in the root, for an admin at the keyboard                             |
 
 Each signs in with `CLAUDE_CODE_OAUTH_TOKEN` from the Claude Code
 integration and stops without it. They run `claude` from the `PATH` with
 `IS_SANDBOX=1` and `--dangerously-skip-permissions`, so Claude skips the
 permission prompts. The board starts `claude-note` as the agent's user,
-whose role does not need to see the folder.
+whose role does not need to see the folder, and `claude-prompt` as the
+admin who asks on a folder page; that prompt and its answer are a thread
+of the folder's page, never of the board.
 
 ---
 

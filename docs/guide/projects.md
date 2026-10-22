@@ -159,7 +159,10 @@ on load.
 ![The actions bar of a directory: the git line, then git, compose and dockerfile chips](../assets/actions-dark.png)
 
 The bar under a folder's title, and under a directory's inside a folder,
-has two parts, and **Enter Shell** at its top right for an admin:
+has two parts, and at its top right for an admin **Enter Shell**, with
+**Workspace Settings** on a workspace's own page, `/f/_` among them, and
+**Project Settings** on a project's own page, links to their settings
+pages. A directory inside them has neither link.
 
 - **The git line**: `⎇ main ↑1 ↓3 ●2 · malta/dockerfiles`. It reads the
   checkout the page is in, the nearest one up from it and no higher than
@@ -226,22 +229,34 @@ button shows to admins alone. No schedule or workflow step takes
 
 An admin with a token in the [Claude Code integration](settings.md#integrations)
 gets a **Prompt** box under the bar of every folder page and every
-directory inside a folder: open on a workspace's page and on `/f/_`,
-which prompts at the root, and folded elsewhere until clicked. The
-prompt runs `internal/claude-prompt` as you, with Claude Code in that
-directory, so it reads the `CLAUDE.md` and `.claude/` there and above,
-and its window opens on the run.
+directory inside a folder: open on a workspace's page, on `/f/_`,
+which prompts at the root, and wherever its directory holds a prompt, folded
+elsewhere until clicked. The prompt runs `internal/claude-prompt` as
+you, with Claude Code in that directory, so it reads the `CLAUDE.md` and
+`.claude/` there and above.
+
+No window opens. The question shows under the box at once, `open`, then
+`working` while the run goes, and Claude's answer, in markdown, lands
+under it when the run ends, without a reload. Each thread links its
+run, which keeps the output. **Reply** under a thread asks again: Claude
+reads the whole thread, its earlier answers among them. The box lists
+the last 20 threads of its directory, for admins; the Notes board lists
+none of them.
 
 ```sh
 curl -s -X POST https://task.example.com/api/prompts \
   -H "Authorization: Bearer $TOKEN" \
   -d '{"folder": "malta", "dir": "dockerfiles/blog", "prompt": "what does this image build"}'
+curl -s "https://task.example.com/api/prompts?folder=malta&dir=dockerfiles/blog" \
+  -H "Authorization: Bearer $TOKEN"
 ```
 
-The run is `internal/claude-prompt` with the directory under the root as
-its `dir`, such as `malta/dockerfiles/blog`, and the absolute directory
-in `TASK_UI_PROMPT_DIR`. One prompt runs per directory: a second there
-answers `409` with the run in the way, and prompts in two directories
+The reply is the note, with `dir` `malta/dockerfiles/blog`; `GET
+/api/prompts` lists the threads there, each with its `replies`, and
+`parent` on the POST replies in a thread. The run is
+`internal/claude-prompt` with the directory under the root as its `dir`,
+and the absolute directory in `TASK_UI_PROMPT_DIR`. One prompt runs per
+directory: another there waits for it, and prompts in two directories
 run at once. A workspace's prompt route works the same way (see
 [Workspaces](workspaces.md#a-prompt-against-a-workspace)).
 

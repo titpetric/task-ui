@@ -3,7 +3,9 @@
      chip per atkins skill that applies there, and a chip of the place's own
      atkins jobs. Every action is a Run of the place's folder, run where the
      job runs; a running one attaches, one the user may not run links to
-     its page. Enter Shell, an admin's alone, sits at the top right. */}}
+     its page. At the top right, an admin's alone: the links to the
+     settings of the workspace or project the folder page is of, and
+     Enter Shell. */}}
 {{- define "actions" }}
 {{- with .Actions }}{{ if not .Empty }}
 {{- $a := . }}
@@ -18,13 +20,23 @@
 		<span class="where">· {{ if .Checkout }}{{ .Checkout }}{{ else }}the root{{ end }}</span>
 	</div>
 	{{- end }}
-	{{- with .Shell }}
-	{{- $where := print $a.Place.ID (or (and .Dir (print "/" .Dir)) "") }}
-	{{- with $.RunningRun .Key }}
-	<a class="btn btn-sm shell-enter running" href="/runs/{{ .ID }}" data-attach="{{ .ID }}" title="Attach to the shell in {{ $where }}/, running"><i class="dot running"></i>Shell</a>
-	{{- else }}
-	<button type="button" class="btn btn-sm shell-enter" data-run data-folder="{{ $a.Place.ID }}"{{ with .Dir }} data-dir="{{ . }}"{{ end }} data-job="{{ .ID }}" data-title="{{ $where }} / shell" title="bash -l in {{ $where }}/, as task-ui runs its jobs"><svg class="ic"><use href="#i-terminal"/></svg>Enter Shell</button>
-	{{- end }}
+	{{- if or .Shell .WorkspaceSettings .ProjectSettings }}
+	<div class="bar-end">
+		{{- with .WorkspaceSettings }}
+		<a class="btn btn-sm" href="{{ . }}" title="The settings of this workspace"><svg class="ic"><use href="#i-settings"/></svg>Workspace Settings</a>
+		{{- end }}
+		{{- with .ProjectSettings }}
+		<a class="btn btn-sm" href="{{ . }}" title="The settings of this project"><svg class="ic"><use href="#i-settings"/></svg>Project Settings</a>
+		{{- end }}
+		{{- with .Shell }}
+		{{- $where := print $a.Place.ID (or (and .Dir (print "/" .Dir)) "") }}
+		{{- with $.RunningRun .Key }}
+		<a class="btn btn-sm shell-enter running" href="/runs/{{ .ID }}" data-attach="{{ .ID }}" title="Attach to the shell in {{ $where }}/, running"><i class="dot running"></i>Shell</a>
+		{{- else }}
+		<button type="button" class="btn btn-sm shell-enter" data-run data-folder="{{ $a.Place.ID }}"{{ with .Dir }} data-dir="{{ . }}"{{ end }} data-job="{{ .ID }}" data-title="{{ $where }} / shell" title="bash -l in {{ $where }}/, as task-ui runs its jobs"><svg class="ic"><use href="#i-terminal"/></svg>Enter Shell</button>
+		{{- end }}
+		{{- end }}
+	</div>
 	{{- end }}
 	{{- if or .Skills .Pipeline }}
 	<div class="chips">

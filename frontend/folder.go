@@ -114,8 +114,11 @@ func (h *Handlers) defaultWorkspace(w http.ResponseWriter, r *http.Request) {
 			}
 			p.Tree = append(p.Tree, item)
 		}
+		if workspace != nil {
+			p.Actions = &view.Actions{WorkspaceSettings: "/settings/workspaces/" + model.Default}
+		}
 		if workspace != nil && h.claudeFor(r, p.User) {
-			p.Prompt = &view.Prompt{API: "/api/workspaces/" + model.Default + "/prompt", Where: "the root", Open: true}
+			p.Prompt = h.withThreads(r, &view.Prompt{API: "/api/workspaces/" + model.Default + "/prompt", Where: "the root", Open: true, Place: model.Default})
 		}
 	}
 	h.render(w, http.StatusOK, "folder", p)
@@ -194,6 +197,7 @@ func (h *Handlers) folder(w http.ResponseWriter, r *http.Request, f *folder.Fold
 	}
 	p.Crumbs = crumbsOf(f.ID, "", p.Workspaces)
 	p.Actions = h.actions(p, f)
+	h.settingsLinks(r, p, f)
 	p.Prompt = h.prompt(r, p, f, "")
 	if h.opts.Git != nil && h.opts.Git.IsRepo(f.Dir) {
 		p.Checkout = h.opts.Git.Info(f.Dir)
@@ -219,6 +223,22 @@ func (h *Handlers) folder(w http.ResponseWriter, r *http.Request, f *folder.Fold
 		p.Prompt.Open = true
 	}
 	h.render(w, http.StatusOK, "folder", p)
+}
+
+// settingsLinks puts the links to the settings of the workspace or the
+// project a folder is in the actions bar of its own page, for an admin.
+func (h *Handlers) settingsLinks(r *http.Request, p *view.Page, f *folder.Folder) {
+	if !p.User.CanAdmin() {
+		return
+	}
+	if _, ok := p.Workspaces[f.ID]; ok {
+		p.Actions.WorkspaceSettings = "/settings/workspaces/" + escapePath(f.ID)
+	}
+	if h.opts.Projects != nil {
+		if _, err := h.opts.Projects.GetByFolder(r.Context(), f.ID); err == nil {
+			p.Actions.ProjectSettings = "/settings/projects/" + escapePath(f.ID)
+		}
+	}
 }
 
 // lastRuns returns the latest run of each job of a folder.

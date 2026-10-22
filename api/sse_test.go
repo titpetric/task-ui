@@ -118,3 +118,44 @@ func TestSSE_Hidden(t *testing.T) {
 		assert.Equal(t, http.StatusNotFound, res.StatusCode, topic)
 	}
 }
+
+// The notes topic streams a prompt's notes to admins alone; everyone
+// gets the board's.
+func TestSSE_NotesPrompts(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	promptFolder(t, f)
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+	ops := f.sse(t, ctx, asOps, "notes")
+	defer ops.Body.Close()
+	admin := f.sse(t, ctx, asAdmin, "notes")
+	defer admin.Body.Close()
+	opsLines, adminLines := bufio.NewScanner(ops.Body), bufio.NewScanner(admin.Body)
+	// Each stream opens with a connected comment before the first event.
+	for _, s := range []*bufio.Scanner{opsLines, adminLines} {
+		for s.Scan() {
+			if strings.HasPrefix(s.Text(), ": connected") {
+				break
+			}
+		}
+	}
+
+	asked := f.call(t, asAdmin, http.MethodPost, "/prompts", map[string]string{"folder": "infra", "prompt": "secret question"})
+	assert.Equal(t, http.StatusCreated, asked.Status, string(asked.Raw))
+	f.answered(t, asked.str("id"))
+	board := f.call(t, asOps, http.MethodPost, "/notes", map[string]string{"body": "a note"})
+	assert.Equal(t, http.StatusCreated, board.Status, string(board.Raw))
+
+	next := func(s *bufio.Scanner) string {
+		for s.Scan() {
+			if data, ok := strings.CutPrefix(s.Text(), "data: "); ok {
+				return data
+			}
+		}
+		return ""
+	}
+	assert.Contains(t, next(adminLines), "secret question")
+	first := next(opsLines)
+	assert.Contains(t, first, `"body":"a note"`, "ops never sees the prompt")
+}

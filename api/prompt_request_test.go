@@ -11,6 +11,6 @@ import (
 func TestPromptRequest(t *testing.T) {
 	t.Parallel()
 	var req api.PromptRequest
-	assert.NoError(t, json.Unmarshal([]byte(`{"prompt":"list the skills","cols":120,"rows":40}`), &req))
-	assert.Equal(t, api.PromptRequest{Prompt: "list the skills", Cols: 120, Rows: 40}, req)
+	assert.NoError(t, json.Unmarshal([]byte(`{"prompt":"list the skills","parent":"01J","cols":120,"rows":40}`), &req))
+	assert.Equal(t, api.PromptRequest{Prompt: "list the skills", Parent: "01J", Cols: 120, Rows: 40}, req)
 }

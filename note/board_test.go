@@ -280,3 +280,116 @@ func TestBoard_InternalJob(t *testing.T) {
 	assert.True(t, ok)
 	assert.Equal(t, model.Internal, run.Snapshot().Folder)
 }
+
+// withPrompts sets up the fixture's board with a root with the folder proj, and
+// an internal folder whose claude-prompt answers in the reply file with
+// the thread, and fails a thread that ends in fail. It returns an admin.
+func (f *fixture) withPrompts(t *testing.T) *model.User {
+	t.Helper()
+	ctx := context.Background()
+	root, err := filepath.EvalSymlinks(t.TempDir())
+	assert.NoError(t, err)
+	proj := &folder.Folder{ID: "proj", Title: "proj", Dir: filepath.Join(root, "proj")}
+	assert.NoError(t, os.MkdirAll(filepath.Join(proj.Dir, "images"), 0o755))
+	internal := &folder.Folder{ID: model.Internal, Title: model.Internal, Dir: root, HostJobs: true}
+	job := &folder.Job{Folder: model.Internal, ID: note.PromptJob, Kind: "script", Command: []string{"sh", "-c", `printf 'In %s: %s' "$(pwd -P)" "$TASK_UI_PROMPT" > "$TASK_UI_PROMPT_REPLY"; case "$TASK_UI_PROMPT" in *fail) exit 3;; esac`}}
+	job.Name = note.PromptJob
+	internal.Jobs = []*folder.Job{job}
+	f.board.Catalogue = catalogue{"proj": proj, model.Internal: internal}
+	f.board.Root = root
+	admin := &model.User{Name: "admin", Role: model.RoleAdmin}
+	assert.NoError(t, f.board.Users.Create(ctx, admin))
+	return admin
+}
+
+// A prompt is a note of its place, open, which the prompt job answers
+// with a reply from Claude; it stays off the board.
+func TestBoard_Ask(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t, "")
+	admin := f.withPrompts(t)
+	ctx := context.Background()
+
+	asked, err := f.board.Ask(ctx, admin, "", "proj/images", "what builds here")
+	assert.NoError(t, err)
+	assert.Equal(t, model.NoteOpen, asked.State)
+	assert.Equal(t, "proj/images", asked.Dir)
+	assert.True(t, asked.IsPrompt())
+	done := f.settled(t, asked.ID)
+	assert.Equal(t, model.NoteDone, done.State)
+	answer := replies(t, f, asked.ID)
+	assert.Len(t, answer, 1)
+	assert.Equal(t, "claude", answer[0].UserName)
+	assert.Equal(t, "In "+filepath.Join(f.board.Root, "proj", "images")+": what builds here", answer[0].Body)
+	assert.Equal(t, done.RunID, answer[0].RunID)
+	assert.Equal(t, asked.Dir, answer[0].Dir)
+	assert.Equal(t, asked.WorkspaceID, answer[0].WorkspaceID)
+	run, ok := f.board.Runner.Get(done.RunID)
+	assert.True(t, ok)
+	assert.Equal(t, admin.Name, run.Snapshot().UserName, "a prompt runs as who asks")
+
+	board, err := f.board.Notes.List(ctx, storage.NoteFilter{})
+	assert.NoError(t, err)
+	assert.Len(t, board, 0, "the board lists no prompt")
+	listed, err := f.board.Notes.List(ctx, storage.NoteFilter{Prompts: true, Dir: "proj/images"})
+	assert.NoError(t, err)
+	assert.Len(t, listed, 1)
+
+	// A reply asks again with the thread, through Post as on the page.
+	reply, err := f.board.Post(ctx, admin, asked.ID, "and which first")
+	assert.NoError(t, err)
+	assert.Equal(t, "proj/images", reply.Dir)
+	assert.Eventually(t, func() bool { return len(replies(t, f, asked.ID)) == 3 }, 10*time.Second, 20*time.Millisecond)
+	assert.Equal(t, model.NoteDone, f.settled(t, asked.ID).State)
+	assert.Contains(t, replies(t, f, asked.ID)[2].Body, "admin:\nwhat builds here\n\nclaude:\nIn ")
+	assert.Contains(t, replies(t, f, asked.ID)[2].Body, "admin:\nand which first")
+
+	// The root is _.
+	root, err := f.board.Ask(ctx, admin, "", model.Default, "what is here")
+	assert.NoError(t, err)
+	assert.Equal(t, model.NoteDone, f.settled(t, root.ID).State)
+	assert.Equal(t, "In "+f.board.Root+": what is here", replies(t, f, root.ID)[0].Body)
+}
+
+// A failed run fails the prompt, and Claude's reply says how it ended;
+// only an admin asks, in a place there is.
+func TestBoard_AskFailed(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t, "")
+	admin := f.withPrompts(t)
+	ctx := context.Background()
+
+	asked, err := f.board.Ask(ctx, admin, "", "proj", "now fail")
+	assert.NoError(t, err)
+	assert.Equal(t, model.NoteFailed, f.settled(t, asked.ID).State)
+	assert.Contains(t, replies(t, f, asked.ID)[0].Body, "now fail\n\nThe run ended failed (exit 3).")
+
+	_, err = f.board.Ask(ctx, f.ops, "", "proj", "hello")
+	assert.ErrorIs(t, err, note.ErrForbidden)
+	_, err = f.board.Post(ctx, f.ops, asked.ID, "hello")
+	assert.ErrorIs(t, err, note.ErrForbidden, "a reply in a prompt's thread is a prompt")
+	_, err = f.board.Ask(ctx, admin, "", "proj/nothing", "hello")
+	assert.ErrorIs(t, err, note.ErrNoPrompt)
+	_, err = f.board.Ask(ctx, admin, "", "", "hello")
+	assert.ErrorIs(t, err, note.ErrNoPrompt)
+	_, err = f.board.Ask(ctx, admin, "", "proj", " ")
+	assert.ErrorIs(t, err, note.ErrInvalid)
+	plain, _ := f.board.Post(ctx, f.ops, "", "a note")
+	_, err = f.board.Ask(ctx, admin, plain.ID, "", "hello")
+	assert.ErrorIs(t, err, note.ErrInvalid)
+}
+
+// After a restart, an open prompt with no run starts it as its author.
+func TestBoard_RecoverPrompt(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t, "")
+	admin := f.withPrompts(t)
+	ctx := context.Background()
+	open := &model.Note{UserID: admin.ID, UserName: admin.Name, Body: "go", State: model.NoteOpen, WorkspaceID: model.Default, Dir: "proj"}
+	assert.NoError(t, f.board.Notes.Create(ctx, open))
+	working := &model.Note{UserID: admin.ID, UserName: admin.Name, Body: "gone", State: model.NoteWorking, RunID: "gone", WorkspaceID: model.Default, Dir: "proj"}
+	assert.NoError(t, f.board.Notes.Create(ctx, working))
+	assert.NoError(t, f.board.Recover(ctx))
+	assert.Equal(t, model.NoteDone, f.settled(t, open.ID).State)
+	assert.Equal(t, model.NoteFailed, f.settled(t, working.ID).State)
+}

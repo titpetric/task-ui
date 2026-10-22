@@ -90,6 +90,7 @@ serve() {
 admin=3101
 viewer=3102
 login=3103
+prompter=3104
 # The clock is pinned to a Friday evening, out of the website's hours,
 # for the Run force capture: the coming Friday, so the runs the demo
 # makes now fall in the activity charts' thirty days before it.
@@ -97,6 +98,23 @@ friday="$(date -d friday +%F)"
 serve "$admin" TASK_UI_AUTOLOGIN=admin TASK_UI_NOW="${friday}T22:00:00+02:00"
 serve "$viewer" TASK_UI_AUTOLOGIN=guest
 serve "$login"
+# The prompt instance answers the Prompt box with a Claude Code stand-in:
+# its HOME's .profile puts a claude first in the PATH of its runs, which
+# prints the answer in markdown.
+mkdir -p "$work/home/bin"
+printf 'PATH="$HOME/bin:$PATH"\n' >"$work/home/.profile"
+cat >"$work/home/bin/claude" <<'ANSWER'
+#!/bin/sh
+cat <<'MD'
+The tooling every Acme project shares:
+
+- **Skills** in `.atkins/skills/`: `git`, `compose` and `dockerfile`, which apply in each project's checkout.
+- **Jobs** in `atkins.yml`: `bootstrap` clones the projects beside it, `policy` checks them before a release.
+- **Projects**: `api` and `web`, each with a `release` job of its own.
+MD
+ANSWER
+chmod +x "$work/home/bin/claude"
+serve "$prompter" TASK_UI_AUTOLOGIN=admin HOME="$work/home"
 export TASK_UI_BASE="http://127.0.0.1:${admin}"
 
 # api calls the admin instance the way the pages do.
@@ -227,8 +245,8 @@ done
 # The workspace comes last, so the shots above keep a sidebar without
 # one: the acme checkout, its two projects cloned inside it, and a Claude
 # token for the admin, which the Prompt box needs: open on the
-# workspace's page, folded on every other. The demo shows the box and
-# runs no prompt.
+# workspace's page, folded on every other. The prompt instance asks one
+# prompt there, so the box shows a question and its answer.
 api POST /workspaces -d "{\"url\":\"file://$work/repos/acme.git\",\"folder\":\"acme\",\"title\":\"Acme\",\"description\":\"The tooling every Acme project shares\"}"
 api POST /projects -d "{\"url\":\"file://$work/repos/acme-api.git\",\"id\":\"api\",\"workspace\":\"acme\"}"
 api POST /projects -d "{\"url\":\"file://$work/repos/acme-web.git\",\"id\":\"web\",\"workspace\":\"acme\"}"
@@ -243,6 +261,12 @@ api POST /secrets -d '{"scope":"acme/api","name":"DATABASE_URL","content":"postg
 api POST /workspaces/acme/keys/generate -d '{"type":"ed25519","name":"git","comment":"acme git"}'
 api POST /workspaces/acme/keys/generate -d '{"type":"ed25519","name":"deploy","comment":"acme deploy","policies":["admin"]}'
 printf 'DATABASE_URL=postgres://localhost/api\n' >"$work/demo/acme/api/.env"
+
+TASK_UI_BASE="http://127.0.0.1:${prompter}" api POST /workspaces/acme/prompt -d '{"prompt":"what does this workspace hold, in a few lines"}'
+for _ in $(seq 1 100); do
+  curl -fsS "${TASK_UI_BASE}/api/prompts?folder=acme" | grep -q '"state":"done"' && break
+  sleep 0.2
+done
 
 # Every link on every page answers, the workspace's included.
 scripts/crawl.sh

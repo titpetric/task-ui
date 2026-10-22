@@ -285,7 +285,7 @@ func (a *App) wire(version string) error {
 	a.Guard.Tokens = storage.NewUserAuthTokenStorage(a.DB)
 	a.Board = &note.Board{
 		Notes: storage.NewNoteStorage(a.DB), Users: a.Users, Catalogue: a.Catalogue, Runner: a.Runner,
-		Recordings: recordings, Events: events, Agent: cfg.Agent, AgentJob: cfg.AgentJob,
+		Recordings: recordings, Events: events, Agent: cfg.Agent, AgentJob: cfg.AgentJob, Root: cfg.Root,
 	}
 	if err := a.Board.Recover(context.Background()); err != nil {
 		return err

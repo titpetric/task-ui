@@ -1,23 +1,22 @@
 package api
 
 import (
-	"errors"
 	"net/http"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/titpetric/task-ui/access"
 	"github.com/titpetric/task-ui/model"
-	"github.com/titpetric/task-ui/runner"
+	"github.com/titpetric/task-ui/storage"
 )
 
-// startPrompt runs a prompt in a folder, or in a directory inside one:
-// internal/claude-prompt as the user, with TASK_UI_PROMPT, the directory
-// in TASK_UI_PROMPT_DIR, which Claude Code works in, and the folder's
-// workspace. It answers with the run, for the window to attach to.
+// startPrompt puts a prompt to Claude in a folder, or in a directory
+// inside one: a note of the folder's workspace, which the board answers
+// by running internal/claude-prompt there as the user, with the thread in
+// TASK_UI_PROMPT and the directory in TASK_UI_PROMPT_DIR. It answers with
+// the note; Claude's answer is a reply to it once the run ends.
 func (h *Handlers) startPrompt(w http.ResponseWriter, r *http.Request) {
-	if !requireAdmin(w, r) {
+	if !requireAdmin(w, r) || !h.board(w) {
 		return
 	}
 	var req PromptRequest
@@ -25,76 +24,65 @@ func (h *Handlers) startPrompt(w http.ResponseWriter, r *http.Request) {
 		fail(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	f := h.visibleFolder(access.UserFrom(r.Context()), req.Folder)
-	if f == nil || model.IsInternal(f.ID) {
-		fail(w, http.StatusNotFound, "no such folder")
-		return
+	where := ""
+	if req.Parent == "" {
+		var problem string
+		if where, problem = h.promptPlace(r, req.Folder, req.Dir); problem != "" {
+			fail(w, http.StatusNotFound, problem)
+			return
+		}
 	}
-	dir, ok := f.Path(strings.Trim(req.Dir, "/"))
-	if info, err := os.Stat(dir); !ok || err != nil || !info.IsDir() {
-		fail(w, http.StatusNotFound, "no such directory")
-		return
-	}
-	h.prompt(w, r, req, dir, runner.Request{WorkspaceOf: f.ID, Env: []string{"TASK_UI_PROMPT_DIR=" + dir}})
+	h.ask(w, r, req, where)
 }
 
-// prompt starts internal/claude-prompt on the request's prompt in dir, an
-// absolute directory under the root, as the internal job of that
-// directory: one prompt runs per directory at a time, 409 with the run
-// in the way for another. base carries the workspace and the environment
-// of the route; TASK_UI_PROMPT comes after it.
-func (h *Handlers) prompt(w http.ResponseWriter, r *http.Request, req PromptRequest, dir string, base runner.Request) {
+// promptPlace returns where a prompt in a folder, or in dir inside it,
+// runs, as a note's Dir holds it: _ for the default workspace, the root.
+// The second result says what is wrong when the place is none.
+func (h *Handlers) promptPlace(r *http.Request, folderID, dir string) (string, string) {
+	dir = strings.Trim(dir, "/")
+	if folderID == model.Default && dir == "" {
+		return model.Default, ""
+	}
+	f := h.visibleFolder(access.UserFrom(r.Context()), folderID)
+	if f == nil || model.IsInternal(f.ID) {
+		return "", "no such folder"
+	}
+	at, ok := f.Path(dir)
+	if info, err := os.Stat(at); !ok || err != nil || !info.IsDir() {
+		return "", "no such directory"
+	}
+	return model.Run{Folder: f.ID, Dir: dir}.Where(), ""
+}
+
+// ask puts the request's prompt to the board in where, or as a reply in
+// its parent's thread, and answers 201 with the note. One prompt runs in
+// a directory at a time; another there waits for it.
+func (h *Handlers) ask(w http.ResponseWriter, r *http.Request, req PromptRequest, where string) {
 	prompt := strings.TrimSpace(req.Prompt)
 	if prompt == "" {
 		fail(w, http.StatusBadRequest, "write a prompt")
 		return
 	}
-	user := access.UserFrom(r.Context())
-	rel, ok := h.underRoot(dir)
-	if !ok {
-		fail(w, http.StatusNotFound, "no such directory")
-		return
-	}
-	f, job, at, problem := h.targetIn(r, model.Internal, rel, promptJob)
-	if problem != "" {
-		fail(w, http.StatusNotFound, problem)
-		return
-	}
-	if !canRun(user, f, job) {
-		fail(w, http.StatusForbidden, "your role may view this job, but not run it")
-		return
-	}
-	base.Folder, base.Job, base.User, base.Cols, base.Rows, base.Dir = f, job, user, req.Cols, req.Rows, at
-	base.Env = append(base.Env, "TASK_UI_PROMPT="+prompt)
-	session, err := h.opts.Runner.Start(r.Context(), base)
-	if errors.Is(err, runner.ErrBusy) {
-		writeJSON(w, http.StatusConflict, map[string]any{"error": "a prompt is running already", "run": h.view(r, session.Snapshot())})
-		return
-	}
+	note, err := h.opts.Board.Ask(r.Context(), access.UserFrom(r.Context()), req.Parent, where, prompt)
 	if err != nil {
 		failErr(w, err)
 		return
 	}
-	writeJSON(w, http.StatusCreated, h.view(r, session.Snapshot()))
+	writeJSON(w, http.StatusCreated, note)
 }
 
-// underRoot returns where a directory is under the root, a slash path,
-// "" for the root itself; false for one outside it.
-func (h *Handlers) underRoot(dir string) (string, bool) {
-	root, err := filepath.EvalSymlinks(h.opts.Root)
-	if err != nil {
-		return "", false
+// listPrompts returns the prompt threads of a folder, or of ?dir= inside
+// it, ?folder=_ for the root, newest first, each with its replies:
+// ?limit=. Admins only.
+func (h *Handlers) listPrompts(w http.ResponseWriter, r *http.Request) {
+	if !requireAdmin(w, r) || !h.board(w) {
+		return
 	}
-	at, err := filepath.EvalSymlinks(dir)
-	if err != nil {
-		return "", false
+	q := r.URL.Query()
+	where, problem := h.promptPlace(r, q.Get("folder"), q.Get("dir"))
+	if problem != "" {
+		fail(w, http.StatusNotFound, problem)
+		return
 	}
-	rel, err := filepath.Rel(root, at)
-	if err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
-		return "", false
-	}
-	if rel == "." {
-		return "", true
-	}
-	return filepath.ToSlash(rel), true
+	h.writeThreads(w, r, storage.NoteFilter{Prompts: true, Dir: where, Limit: queryInt(r, "limit", 20)})
 }

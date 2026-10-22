@@ -196,6 +196,16 @@
       type: timestamp
       comment: Updated At
       datatype: datetime
+    - name: workspace_id
+      type: text
+      key: MUL
+      comment: Workspace ID
+      datatype: char(26)
+    - name: dir
+      type: text
+      key: MUL
+      comment: Dir
+      datatype: varchar
   indexes:
     - name: sqlite_autoindex_note_1
       columns:
@@ -212,6 +222,10 @@
     - name: idx_note_state
       columns:
         - state
+    - name: idx_note_workspace
+      columns:
+        - workspace_id
+        - dir
 - name: project
   comment: Project
   columns:

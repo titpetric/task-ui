@@ -26,6 +26,13 @@ type NoteFilter struct {
 	Channel string
 	Mention string
 	State   string
+	// Prompts lists the prompt threads, the notes with a workspace;
+	// false lists the board's notes, which have none.
+	Prompts bool
+	// WorkspaceID and Dir narrow the prompts to a workspace and to the
+	// place they ran, as Note.Dir holds it.
+	WorkspaceID string
+	Dir         string
 	// Limit keeps the newest; zero keeps them all.
 	Limit int
 }
@@ -69,6 +76,19 @@ func (s *NoteStorage) List(ctx context.Context, filter NoteFilter) ([]model.Note
 	if filter.State != "" {
 		where = append(where, "state = ?")
 		args = append(args, filter.State)
+	}
+	if !filter.Prompts {
+		where = append(where, "workspace_id = ''")
+	} else {
+		where = append(where, "workspace_id != ''")
+		if filter.WorkspaceID != "" {
+			where = append(where, "workspace_id = ?")
+			args = append(args, filter.WorkspaceID)
+		}
+		if filter.Dir != "" {
+			where = append(where, "dir = ?")
+			args = append(args, filter.Dir)
+		}
 	}
 	query := "SELECT * FROM note WHERE " + strings.Join(where, " AND ") + " ORDER BY rowid DESC"
 	if filter.Limit > 0 {

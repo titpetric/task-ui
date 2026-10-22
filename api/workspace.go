@@ -9,11 +9,7 @@ import (
 
 	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/model"
-	"github.com/titpetric/task-ui/runner"
 )
-
-// promptJob is the internal job a prompt runs.
-const promptJob = "claude-prompt"
 
 // listWorkspaces returns every workspace, the default first, then in
 // their order. Admins only.
@@ -212,13 +208,12 @@ func (h *Handlers) deleteWorkspace(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-// promptWorkspace runs a prompt against a workspace: internal/claude-prompt
-// as the user, with TASK_UI_PROMPT and the workspace's checkout in
-// TASK_UI_WORKSPACE_DIR, which Claude Code works in: a prompt in the
-// workspace's directory, as POST /api/prompts starts one, and answers
-// the same: the run, for the window to attach to.
+// promptWorkspace puts a prompt to Claude in a workspace's checkout, as
+// POST /api/prompts does in a folder, and answers the same: the note,
+// which the board answers by running internal/claude-prompt as the user,
+// with the checkout in TASK_UI_WORKSPACE_DIR, which Claude Code works in.
 func (h *Handlers) promptWorkspace(w http.ResponseWriter, r *http.Request) {
-	if !requireAdmin(w, r) {
+	if !requireAdmin(w, r) || !h.board(w) {
 		return
 	}
 	var req PromptRequest
@@ -231,8 +226,7 @@ func (h *Handlers) promptWorkspace(w http.ResponseWriter, r *http.Request) {
 		failErr(w, err)
 		return
 	}
-	dir := workspace.Dir(h.opts.Root)
-	h.prompt(w, r, req, dir, runner.Request{Workspace: dir})
+	h.ask(w, r, req, workspace.Folder)
 }
 
 // workspaceFolders returns the folder of every named workspace, none

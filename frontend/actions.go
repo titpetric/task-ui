@@ -6,6 +6,7 @@ import (
 	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/frontend/view"
 	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/storage"
 )
 
 // actions builds the actions bar of a place, a folder or the folder of a
@@ -28,10 +29,19 @@ func (h *Handlers) actions(p *view.Page, place *folder.Folder) *view.Actions {
 }
 
 // prompt returns the prompt box of a folder, or of a directory inside
-// it: for an admin with a Claude token, none in the internal folder.
+// it, with the threads asked there: for an admin with a Claude token,
+// none in the internal folder.
 func (h *Handlers) prompt(r *http.Request, p *view.Page, f *folder.Folder, rel string) *view.Prompt {
 	if !p.User.CanAdmin() || model.IsInternal(f.ID) || !h.claudeFor(r, p.User) {
 		return nil
 	}
-	return view.PromptIn(f.ID, rel)
+	return h.withThreads(r, view.PromptIn(f.ID, rel))
+}
+
+// withThreads fills a prompt box with the last threads of its place.
+func (h *Handlers) withThreads(r *http.Request, prompt *view.Prompt) *view.Prompt {
+	if h.opts.Board != nil {
+		prompt.Threads = h.threads(r, storage.NoteFilter{Prompts: true, Dir: prompt.Place, Limit: 20})
+	}
+	return prompt
 }
