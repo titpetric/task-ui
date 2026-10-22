@@ -121,7 +121,7 @@ func TestWorkflow_Page(t *testing.T) {
 	f := newFixture(t)
 	wf := f.workflow(t, asOps, "release", "infra", "plan", "infra/edge", "deploy")
 
-	run, err := f.opts.Flows.Start(context.Background(), wf, f.users[asOps])
+	run, err := f.opts.Flows.Start(context.Background(), wf, f.users[asOps], "")
 	assert.NoError(t, err)
 	select {
 	case <-f.opts.Flows.Done(run.ID):
@@ -175,7 +175,7 @@ func TestWorkflow_Page(t *testing.T) {
 
 	// A run that prints more than a screen gets Expand, with its lines.
 	long := f.workflow(t, asOps, "long", "infra", "many")
-	longRun, err := f.opts.Flows.Start(context.Background(), long, f.users[asOps])
+	longRun, err := f.opts.Flows.Start(context.Background(), long, f.users[asOps], "")
 	assert.NoError(t, err)
 	select {
 	case <-f.opts.Flows.Done(longRun.ID):
@@ -206,7 +206,7 @@ func TestWorkflow_Recents(t *testing.T) {
 	wf := f.workflow(t, asOps, "release", "infra", "plan")
 	private := f.workflow(t, asAdmin, "private", "private", "deploy")
 	for _, w := range []*model.Workflow{wf, private} {
-		run, err := f.opts.Flows.Start(context.Background(), w, f.users[asAdmin])
+		run, err := f.opts.Flows.Start(context.Background(), w, f.users[asAdmin], "")
 		assert.NoError(t, err)
 		select {
 		case <-f.opts.Flows.Done(run.ID):
@@ -282,7 +282,7 @@ func TestWorkflow_NestedPipeline(t *testing.T) {
 	outer := &model.Workflow{Name: "outer", UserID: user.ID, UserName: user.Name}
 	assert.NoError(t, f.opts.Workflows.Create(context.Background(), outer, []model.WorkflowStep{{WorkflowRef: inner.ID}}))
 
-	run, err := f.opts.Flows.Start(context.Background(), outer, user)
+	run, err := f.opts.Flows.Start(context.Background(), outer, user, "")
 	assert.NoError(t, err)
 	select {
 	case <-f.opts.Flows.Done(run.ID):
@@ -333,4 +333,74 @@ func TestWorkflow_Pages(t *testing.T) {
 	back := f.page(t, asOps, path+"?after="+made[15])
 	assert.Equal(t, 15, rows(back))
 	assert.Contains(t, back, `<tr data-run-id="`+made[0]+`">`)
+}
+
+// The editor has a toggle on every step, a disabled one dimmed, and
+// for a user with prompt/edit the Prompt, its Summarize preset and Run
+// in; the workflow page shows the prompt under the steps, and its Run
+// opens the input dialog.
+func TestWorkflow_PromptEditor(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	ctx := context.Background()
+	admin := f.users[asAdmin]
+	wf := &model.Workflow{Name: "summed", UserID: admin.ID, UserName: admin.Name, Prompt: "summarize, change nothing", PromptFolder: "infra"}
+	assert.NoError(t, f.opts.Workflows.Create(ctx, wf, []model.WorkflowStep{{Folder: "infra", Job: "plan"}, {Folder: "infra", Job: "many", Disabled: true}}))
+
+	edit := f.page(t, asAdmin, "/workflows/"+wf.ID+"/edit")
+	assert.Equal(t, 2, strings.Count(edit, `<input type="checkbox" data-step-enabled aria-label="Run this step"`)-1, "two rows and the template")
+	assert.Contains(t, edit, `<li class="step disabled" data-step>`)
+	assert.Contains(t, edit, `data-step-enabled aria-label="Run this step" checked>`)
+	assert.Contains(t, edit, `name="prompt" rows="4"`)
+	assert.Contains(t, edit, `>summarize, change nothing</textarea>`)
+	assert.Contains(t, edit, `data-workflow-preset="Summarise the run in one or two short paragraphs`)
+	assert.Contains(t, edit, `<option value="infra" selected>infra</option>`)
+	assert.Contains(t, edit, `<option value="">the root</option>`)
+
+	// Without prompt/edit the form has no prompt fields.
+	ops := f.page(t, asOps, "/workflows/new")
+	assert.NotContains(t, ops, `name="prompt" rows="4"`)
+	assert.Contains(t, ops, `data-step-enabled`)
+
+	page := f.page(t, asAdmin, "/workflows/"+wf.ID)
+	assert.Contains(t, page, `data-workflow-run="`+wf.ID+`" data-workflow-prompt="summed"`)
+	assert.Contains(t, page, `<p class="workflow-prompt" data-workflow-prompt-shown>summarize, change nothing</p>`)
+	assert.Contains(t, page, "Claude gets it in infra/ once the steps end")
+	assert.Contains(t, page, `<li class="node disabled" data-step="1">`)
+	assert.Contains(t, page, "step 2, disabled: a run skips it")
+	assert.Contains(t, page, `id="workflow-input-dialog"`)
+
+	plain := f.workflow(t, asOps, "plain", "infra", "plan")
+	assert.Contains(t, f.page(t, asOps, "/workflows/"+plain.ID), `data-workflow-run="`+plain.ID+`">`)
+}
+
+// A workflow run's page shows its skipped steps and the thread of its
+// prompt: the prompt with the input, and Claude's answer.
+func TestWorkflow_RunPromptThread(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	ctx := context.Background()
+	admin := f.users[asAdmin]
+	wf := &model.Workflow{Name: "summed", UserID: admin.ID, UserName: admin.Name, Prompt: "summarize, change nothing"}
+	assert.NoError(t, f.opts.Workflows.Create(ctx, wf, []model.WorkflowStep{{Folder: "infra", Job: "plan", Disabled: true}}))
+	run := &model.WorkflowRun{WorkflowID: wf.ID, Name: wf.Name, UserID: admin.ID, UserName: admin.Name}
+	steps, _ := f.opts.Workflows.Steps(ctx, wf.ID)
+	assert.NoError(t, f.opts.WorkflowRuns.Create(ctx, run, steps))
+	rows, _ := f.opts.WorkflowRuns.Steps(ctx, run.ID)
+	rows[0].State = model.StepSkipped
+	assert.NoError(t, f.opts.WorkflowRuns.UpdateStep(ctx, &rows[0]))
+	run.State = model.StateOK
+	assert.NoError(t, f.opts.WorkflowRuns.Update(ctx, run))
+	asked := &model.Note{UserID: admin.ID, UserName: admin.Name, Body: "summarize, change nothing\n\nInput:\nfor 1.2", State: model.NoteDone, WorkspaceID: model.Default, Dir: model.Default, AboutWorkflowRunID: run.ID}
+	assert.NoError(t, f.opts.Board.Notes.Create(ctx, asked))
+	assert.NoError(t, f.opts.Board.Notes.Create(ctx, &model.Note{ParentID: asked.ID, UserName: "claude", Body: "All **quiet**.", WorkspaceID: model.Default, Dir: model.Default, AboutWorkflowRunID: run.ID}))
+
+	page := f.page(t, asAdmin, "/workflows/"+wf.ID+"/runs/"+run.ID)
+	assert.Contains(t, page, "<small>skipped</small>")
+	assert.Contains(t, page, "the workflow's prompt, asked in the root once the steps ended")
+	assert.Contains(t, page, `data-notes data-dir="_"`)
+	assert.Contains(t, page, "for 1.2")
+	assert.Contains(t, page, "<strong>quiet</strong>")
+	// The root's prompts leave it out.
+	assert.NotContains(t, f.page(t, asAdmin, "/f/_"), "for 1.2")
 }

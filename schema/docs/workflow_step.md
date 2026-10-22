@@ -9,4 +9,5 @@ Workflow Step.
 | position     | bigint   | MUL | Position     |
 | folder       | varchar  |     | Folder       |
 | job          | varchar  |     | Job          |
+| disabled     | boolean  |     | Disabled     |
 | workflow_ref | char(26) |     | Workflow Ref |

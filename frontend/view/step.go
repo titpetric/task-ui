@@ -9,6 +9,8 @@ type Step struct {
 	// of a job.
 	WorkflowID   string
 	WorkflowName string
+	// Disabled is a workflow's step its runs skip.
+	Disabled bool
 	// State is how a run's step ended; RunID the run it made of a job,
 	// WorkflowRunID the run it made of a workflow.
 	State         string

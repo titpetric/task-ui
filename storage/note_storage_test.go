@@ -98,6 +98,18 @@ func TestNoteStorage_Prompts(t *testing.T) {
 	assert.Equal(t, about.ID, run[0].ID)
 	all, _ = notes.List(ctx, storage.NoteFilter{Prompts: true})
 	assert.Len(t, all, 3)
+
+	// A workflow run's prompt lists by the workflow run, not with its
+	// place's.
+	flow := &model.Note{UserName: "admin", Body: "summarize", State: model.NoteOpen, WorkspaceID: "ws1", Dir: "malta", AboutWorkflowRunID: "wr1"}
+	assert.NoError(t, notes.Create(ctx, flow))
+	mine, _ = notes.List(ctx, storage.NoteFilter{Prompts: true, Dir: "malta"})
+	assert.Len(t, mine, 1)
+	assert.Equal(t, here.ID, mine[0].ID)
+	wr, _ := notes.List(ctx, storage.NoteFilter{Prompts: true, AboutWorkflowRunID: "wr1"})
+	assert.Len(t, wr, 1)
+	assert.Equal(t, flow.ID, wr[0].ID)
+	assert.Equal(t, "wr1", wr[0].AboutWorkflowRunID)
 }
 
 // Edit changes a note's body and mentions and marks it edited; Answer

@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/titpetric/task-ui/claude"
 	"github.com/titpetric/task-ui/hours"
 	"github.com/titpetric/task-ui/model"
 )
@@ -35,6 +36,9 @@ func Funcs() template.FuncMap {
 		"hasPrefix":    strings.HasPrefix,
 		"message":      Message,
 		"json":         JSON,
+		// summaryPrompt is the short summary instruction, the Summarize
+		// preset of a workflow's prompt.
+		"summaryPrompt": func() string { return claude.RunSummary },
 	}
 }
 

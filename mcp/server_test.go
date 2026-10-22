@@ -18,6 +18,7 @@ import (
 	"github.com/titpetric/task-ui/app"
 	"github.com/titpetric/task-ui/internal/assert"
 	"github.com/titpetric/task-ui/mcp"
+	"github.com/titpetric/task-ui/note"
 	"github.com/titpetric/task-ui/storage"
 )
 
@@ -28,6 +29,7 @@ type fixture struct {
 	tokens map[string]string
 	root   string
 	notes  *storage.NoteStorage
+	board  *note.Board
 }
 
 func newFixture(t *testing.T) *fixture {
@@ -53,7 +55,7 @@ func newFixture(t *testing.T) *fixture {
 	assert.NoError(t, err)
 	t.Cleanup(func() { a.Close() })
 
-	f := &fixture{server: httptest.NewServer(a.Handler()), tokens: map[string]string{}, root: root, notes: a.Board.Notes}
+	f := &fixture{server: httptest.NewServer(a.Handler()), tokens: map[string]string{}, root: root, notes: a.Board.Notes, board: a.Board}
 	t.Cleanup(f.server.Close)
 	tokens := storage.NewUserAuthTokenStorage(a.DB)
 	for _, name := range []string{"admin", "guest", "ops", "consuela"} {

@@ -23,7 +23,7 @@
 				{{- if .CanRun }}{{ if .Running }}
 				<button type="button" class="btn btn-sm" data-workflow-stop="{{ .Running }}"><svg class="ic"><use href="#i-stop"/></svg>Stop</button>
 				{{- else }}
-				<button type="button" class="btn btn-primary btn-sm" data-workflow-run="{{ .ID }}"><svg class="ic"><use href="#i-play"/></svg>Run</button>
+				<button type="button" class="btn btn-primary btn-sm" data-workflow-run="{{ .ID }}"{{ if .Prompted }} data-workflow-prompt="{{ .Name }}"{{ end }}><svg class="ic"><use href="#i-play"/></svg>Run</button>
 				{{- end }}{{ end }}
 				<a class="btn btn-sm" href="/workflows/{{ .ID }}">Open</a>
 			</td>

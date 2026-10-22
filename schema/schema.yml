@@ -201,6 +201,11 @@
       key: MUL
       comment: About Run ID
       datatype: char(26)
+    - name: about_workflow_run_id
+      type: text
+      key: MUL
+      comment: About Workflow Run ID
+      datatype: char(26)
     - name: edited_at
       type: timestamp
       comment: Edited At
@@ -224,6 +229,9 @@
     - name: idx_note_about_run
       columns:
         - about_run_id
+    - name: idx_note_about_workflow_run
+      columns:
+        - about_workflow_run_id
     - name: idx_note_channel
       columns:
         - channel
@@ -949,6 +957,14 @@
       type: timestamp
       comment: Updated At
       datatype: datetime
+    - name: prompt
+      type: text
+      comment: Prompt
+      datatype: varchar
+    - name: prompt_folder
+      type: text
+      comment: Prompt Folder
+      datatype: varchar
     - name: sidebar_hidden
       type: boolean
       comment: Sidebar Hidden
@@ -1129,6 +1145,10 @@
       type: text
       comment: Job
       datatype: varchar
+    - name: disabled
+      type: boolean
+      comment: Disabled
+      datatype: boolean
     - name: workflow_ref
       type: text
       comment: Workflow Ref

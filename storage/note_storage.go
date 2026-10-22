@@ -37,6 +37,10 @@ type NoteFilter struct {
 	// AboutRunID narrows the prompts to the threads about a run; without
 	// it, a filter by Dir leaves those out, as the run's page lists them.
 	AboutRunID string
+	// AboutWorkflowRunID narrows the prompts to the thread of a workflow
+	// run's prompt; a filter by Dir leaves those out, as the workflow
+	// run's page lists them.
+	AboutWorkflowRunID string
 	// UserName narrows to the threads a user started.
 	UserName string
 	// Limit keeps the newest; zero keeps them all.
@@ -102,6 +106,10 @@ func (s *NoteStorage) List(ctx context.Context, filter NoteFilter) ([]model.Note
 		if filter.AboutRunID != "" || filter.Dir != "" {
 			where = append(where, "about_run_id = ?")
 			args = append(args, filter.AboutRunID)
+		}
+		if filter.AboutWorkflowRunID != "" || filter.Dir != "" {
+			where = append(where, "about_workflow_run_id = ?")
+			args = append(args, filter.AboutWorkflowRunID)
 		}
 	}
 	query := "SELECT * FROM note WHERE " + strings.Join(where, " AND ") + " ORDER BY rowid DESC"

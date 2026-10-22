@@ -8,16 +8,13 @@ import (
 	"strings"
 )
 
-// Prompt runs Claude Code on a prompt, TASK_UI_PROMPT, in the directory
-// TASK_UI_PROMPT_DIR names, a folder or a directory inside one, or else
-// in the workspace's checkout, TASK_UI_WORKSPACE_DIR: Claude reads the
-// CLAUDE.md and .claude/ there and above. The prompt is a thread, oldest
-// first, each message under its author in a thread of more than one; the
-// last is the question. Claude's answer goes to the terminal and to the file
-// TASK_UI_PROMPT_REPLY names, which the board replies with. A thread
-// from a run's page has the run in the file TASK_UI_PROMPT_RUN names.
-// TASK_UI_PROMPT_INSTRUCTIONS, such as the shape of a run's summary, goes
-// to Claude's system prompt, ahead of the inventory of TASK_UI_HOSTS.
+// Prompt runs Claude Code on a prompt, TASK_UI_PROMPT, a thread whose
+// last message is the question, in TASK_UI_PROMPT_DIR, or else the
+// workspace's checkout, TASK_UI_WORKSPACE_DIR. Claude's reply goes to the
+// terminal and to TASK_UI_PROMPT_REPLY. TASK_UI_PROMPT_RUN names a file
+// with the run a thread is about, TASK_UI_PROMPT_WORKFLOW one with a
+// workflow run's steps; TASK_UI_PROMPT_INSTRUCTIONS goes to the system
+// prompt, ahead of the hosts of TASK_UI_HOSTS.
 func (a *Agent) Prompt(ctx context.Context) error {
 	thread := a.getenv("TASK_UI_PROMPT")
 	if thread == "" {
@@ -42,6 +39,13 @@ func (a *Agent) Prompt(ctx context.Context) error {
 			return err
 		}
 		prompt = aboutRun(string(run), thread)
+	}
+	if path := a.getenv("TASK_UI_PROMPT_WORKFLOW"); path != "" {
+		run, err := os.ReadFile(path)
+		if err != nil {
+			return err
+		}
+		prompt = aboutWorkflow(string(run), thread)
 	}
 
 	out := a.Stdout
@@ -78,6 +82,19 @@ func aboutRun(run, thread string) string {
 		"Otherwise change nothing. The thread, oldest first; with several messages each is under its author, your earlier answers among them, and the last message is the question:\n\n" +
 		thread + "\n\n" +
 		"Your final message is the answer, in markdown, shown under the question on the run's page."
+}
+
+// aboutWorkflow is the prompt a workflow asks once a run's steps
+// ended: the run, as TASK_UI_PROMPT_WORKFLOW's file describes it with
+// the end of each step's output, then the thread, the workflow's prompt
+// first. Claude changes nothing the prompt does not name.
+func aboutWorkflow(run, thread string) string {
+	return "A prompt of a task-ui workflow, asked once a run of the workflow ended its steps, about that run. The run:\n\n" +
+		strings.TrimSpace(run) + "\n\n" +
+		"Change nothing unless the prompt asks for a change; if it asks for a fix, make it in the checkout you are in, commit it to main and push it, and say what changed and where. " +
+		"The thread, oldest first; with several messages each is under its author, your earlier answers among them, and the first message is the workflow's prompt:\n\n" +
+		thread + "\n\n" +
+		"Your final message is the answer, in markdown, shown under the prompt on the workflow run's page."
 }
 
 // inventory tells Claude about the hosts of TASK_UI_HOSTS and how to

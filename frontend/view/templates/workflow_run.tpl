@@ -12,6 +12,7 @@
 	<ol class="pipeline">
 		{{- range $i, $l := $.Pipeline }}{{ template "pipenode" (list $l $i) }}{{ end }}
 	</ol>
+	{{- template "promptbox" $ }}
 </section>
 {{- end }}
 {{ end }}

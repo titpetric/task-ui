@@ -8,7 +8,7 @@ func Chain(steps []Step, workspaces map[string]int) []Link {
 	links := make([]Link, 0, len(steps))
 	last := ""
 	for _, s := range steps {
-		l := Link{State: s.State, RunID: s.RunID}
+		l := Link{State: s.State, RunID: s.RunID, Disabled: s.Disabled}
 		switch {
 		case s.WorkflowID != "":
 			l.Workflow, l.Text, l.Href = true, s.WorkflowName, "/workflows/"+s.WorkflowID

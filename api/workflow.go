@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/titpetric/task-ui/access"
 	"github.com/titpetric/task-ui/folder"
@@ -13,10 +14,17 @@ import (
 )
 
 // WorkflowRequest creates or changes a workflow: a name and its jobs, in
-// the order they run.
+// the order they run, and a prompt to ask Claude once they end. It needs
+// an enabled step or a prompt.
 type WorkflowRequest struct {
 	Name  string        `json:"name"`
 	Steps []StepRequest `json:"steps"`
+	// Prompt is what Claude gets once the workflow's steps end, with
+	// their output, as the user who runs it; it takes prompt/edit.
+	Prompt string `json:"prompt,omitempty"`
+	// PromptFolder is where the prompt runs: a folder, or folder/dir,
+	// the user sees; empty runs it in the root, _.
+	PromptFolder string `json:"prompt_folder,omitempty"`
 	// Sidebar lists the workflow in the sidebar, the default; false
 	// keeps it out, for one that is a step of others. Left out on a
 	// change, it stays unchanged.
@@ -104,11 +112,9 @@ func (h *Handlers) workflowView(r *http.Request, wf model.Workflow, steps []mode
 // checkSteps turns the requested steps into rows, each a job the user
 // may see, or a workflow whose jobs they all see.
 func (h *Handlers) checkSteps(r *http.Request, req WorkflowRequest) ([]model.WorkflowStep, error) {
-	if len(req.Steps) == 0 {
-		return nil, errors.New("a workflow needs at least one step")
-	}
 	steps := make([]model.WorkflowStep, 0, len(req.Steps))
 	for i, step := range req.Steps {
+		disabled := step.Enabled != nil && !*step.Enabled
 		if step.Workflow != "" {
 			wf, err := h.opts.Workflows.Get(r.Context(), step.Workflow)
 			var inner []model.WorkflowStep
@@ -118,7 +124,7 @@ func (h *Handlers) checkSteps(r *http.Request, req WorkflowRequest) ([]model.Wor
 			if err != nil || !h.visibleSteps(r, inner) {
 				return nil, fmt.Errorf("step %d: no workflow %s", i+1, step.Workflow)
 			}
-			steps = append(steps, model.WorkflowStep{WorkflowRef: wf.ID})
+			steps = append(steps, model.WorkflowStep{WorkflowRef: wf.ID, Disabled: disabled})
 			continue
 		}
 		f, job, problem := h.target(r, step.Folder, step.Job)
@@ -128,9 +134,47 @@ func (h *Handlers) checkSteps(r *http.Request, req WorkflowRequest) ([]model.Wor
 		if job.IsShell() {
 			return nil, fmt.Errorf("step %d, %s / %s: %w", i+1, step.Folder, step.Job, folder.ErrShellUnattended)
 		}
-		steps = append(steps, model.WorkflowStep{Folder: f.ID, Job: job.ID})
+		steps = append(steps, model.WorkflowStep{Folder: f.ID, Job: job.ID, Disabled: disabled})
 	}
 	return steps, nil
+}
+
+// checkWorkflow reads a request into the workflow and its steps: the
+// steps checkSteps takes, and the prompt, which takes prompt/edit and a
+// place the user sees. It answers the error and returns false for a
+// request it refuses, and for one with no enabled step and no prompt.
+func (h *Handlers) checkWorkflow(w http.ResponseWriter, r *http.Request, req WorkflowRequest, wf *model.Workflow) ([]model.WorkflowStep, bool) {
+	steps, err := h.checkSteps(r, req)
+	if err != nil {
+		fail(w, http.StatusBadRequest, err.Error())
+		return nil, false
+	}
+	wf.Name = req.Name
+	wf.Prompt, wf.PromptFolder = strings.TrimSpace(req.Prompt), strings.Trim(req.PromptFolder, "/")
+	if wf.PromptFolder == model.Default {
+		wf.PromptFolder = ""
+	}
+	if !wf.Runs(steps) {
+		fail(w, http.StatusBadRequest, "a workflow needs an enabled step or a prompt")
+		return nil, false
+	}
+	if !wf.HasPrompt() {
+		wf.PromptFolder = ""
+		return steps, true
+	}
+	if !h.can(r, "prompt/edit") {
+		fail(w, http.StatusForbidden, "your role may not prompt Claude")
+		return nil, false
+	}
+	if h.opts.Board == nil {
+		fail(w, http.StatusBadRequest, "prompts are off")
+		return nil, false
+	}
+	if err := h.opts.Board.PromptPlace(r.Context(), access.UserFrom(r.Context()), wf.PromptPlace()); err != nil {
+		fail(w, http.StatusBadRequest, "run the prompt in: "+err.Error())
+		return nil, false
+	}
+	return steps, true
 }
 
 // workflowOf returns the workflow a route names and its steps, when the
@@ -184,13 +228,12 @@ func (h *Handlers) createWorkflow(w http.ResponseWriter, r *http.Request) {
 		fail(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	steps, err := h.checkSteps(r, req)
-	if err != nil {
-		fail(w, http.StatusBadRequest, err.Error())
+	user := access.UserFrom(r.Context())
+	wf := &model.Workflow{UserID: user.ID, UserName: user.Name, SidebarHidden: req.Sidebar != nil && !*req.Sidebar}
+	steps, ok := h.checkWorkflow(w, r, req, wf)
+	if !ok {
 		return
 	}
-	user := access.UserFrom(r.Context())
-	wf := &model.Workflow{Name: req.Name, UserID: user.ID, UserName: user.Name, SidebarHidden: req.Sidebar != nil && !*req.Sidebar}
 	if err := h.opts.Workflows.Create(r.Context(), wf, steps); err != nil {
 		fail(w, http.StatusBadRequest, err.Error())
 		return
@@ -228,12 +271,10 @@ func (h *Handlers) updateWorkflow(w http.ResponseWriter, r *http.Request) {
 		fail(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	steps, err := h.checkSteps(r, req)
-	if err != nil {
-		fail(w, http.StatusBadRequest, err.Error())
+	steps, ok := h.checkWorkflow(w, r, req, wf)
+	if !ok {
 		return
 	}
-	wf.Name = req.Name
 	if req.Sidebar != nil {
 		wf.SidebarHidden = !*req.Sidebar
 	}
@@ -269,19 +310,29 @@ func (h *Handlers) deleteWorkflow(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-// startWorkflow runs a workflow, when the user may run every step. A
-// workflow already running answers 409 with its run.
+// startWorkflow runs a workflow, when the user may run every step, and
+// ask its prompt, with prompt/edit; an optional body's input goes to the
+// prompt. A workflow already running answers 409 with its run.
 func (h *Handlers) startWorkflow(w http.ResponseWriter, r *http.Request) {
 	wf, steps, err := h.workflowOf(r)
 	if err != nil {
 		failErr(w, err)
 		return
 	}
+	var req WorkflowRunRequest
+	if err := readJSON(r, &req); err != nil && r.ContentLength > 0 {
+		fail(w, http.StatusBadRequest, err.Error())
+		return
+	}
 	if step := h.mayRun(r, steps); step != "" {
 		fail(w, http.StatusForbidden, "your role may not run "+step)
 		return
 	}
-	run, err := h.opts.Flows.Start(r.Context(), wf, access.UserFrom(r.Context()))
+	if wf.HasPrompt() && !h.can(r, "prompt/edit") {
+		fail(w, http.StatusForbidden, "your role may not prompt Claude, which the workflow asks")
+		return
+	}
+	run, err := h.opts.Flows.Start(r.Context(), wf, access.UserFrom(r.Context()), req.Input)
 	if errors.Is(err, workflow.ErrBusy) {
 		running, _ := h.opts.Flows.Active(wf.ID)
 		writeJSON(w, http.StatusConflict, map[string]any{"error": err.Error(), "run_id": running})

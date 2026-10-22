@@ -7,7 +7,8 @@ A prompt runs as `@claude-prompt` of the folder and directory it asks
 in, such as `malta/dockerfiles/@claude-prompt`, and lists under that
 folder here and in the recents. Another user's prompt runs list with
 the `prompt/view` permission; your own always do (see
-[Prompt](projects.md#prompt)).
+[Prompt](projects.md#prompt)). A run of the root names its job alone, as
+`@claude-note` or `@shell`, and a directory of the root by its path.
 
 ![The runs](../assets/runs-dark.png)
 
@@ -178,6 +179,19 @@ curl -s -X POST https://task.example.com/api/runs \
   -H "Authorization: Bearer $TOKEN" \
   -d '{"folder": "malta", "dir": "dockerfiles", "job": "@git:status", "summarize": true}'
 curl -s "https://task.example.com/api/prompts?run=<run id>" \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+A workflow summarises itself the same way when its prompt is a
+summary: **Summarize** in its editor fills the prompt with this shape
+(see [A workflow with a prompt](workflows.md#a-workflow-with-a-prompt)).
+Its thread lists by the workflow run:
+
+```sh
+curl -s -X POST https://task.example.com/api/workflows/<id>/runs \
+  -H "Authorization: Bearer $TOKEN" \
+  -d '{"input": "for the 1.2 tag"}'
+curl -s "https://task.example.com/api/prompts?workflow_run=<workflow run id>" \
   -H "Authorization: Bearer $TOKEN"
 ```
 

@@ -380,6 +380,9 @@ type Note struct {
 	// About Run ID
 	AboutRunID string `db:"about_run_id" json:"about_run_id"`
 
+	// About Workflow Run ID
+	AboutWorkflowRunID string `db:"about_workflow_run_id" json:"about_workflow_run_id"`
+
 	// Edited At
 	EditedAt *time.Time `db:"edited_at" json:"edited_at"`
 
@@ -462,6 +465,12 @@ func (n *Note) GetAboutRunID() string { return n.AboutRunID }
 // SetAboutRunID sets AboutRunID to the provided value.
 func (n *Note) SetAboutRunID(val string) { n.AboutRunID = val }
 
+// GetAboutWorkflowRunID will return the value of AboutWorkflowRunID.
+func (n *Note) GetAboutWorkflowRunID() string { return n.AboutWorkflowRunID }
+
+// SetAboutWorkflowRunID sets AboutWorkflowRunID to the provided value.
+func (n *Note) SetAboutWorkflowRunID(val string) { n.AboutWorkflowRunID = val }
+
 // GetEditedAt will return the value of EditedAt.
 func (n *Note) GetEditedAt() *time.Time { return n.EditedAt }
 
@@ -484,7 +493,7 @@ func (n *Note) SetDir(val string) { n.Dir = val }
 const NoteTable = "`note`"
 
 // NoteFields is a list of all columns in the DB table.
-var NoteFields = []string{"id", "channel", "parent_id", "user_id", "user_name", "body", "mentions", "state", "run_id", "created_at", "updated_at", "about_run_id", "edited_at", "workspace_id", "dir"}
+var NoteFields = []string{"id", "channel", "parent_id", "user_id", "user_name", "body", "mentions", "state", "run_id", "created_at", "updated_at", "about_run_id", "about_workflow_run_id", "edited_at", "workspace_id", "dir"}
 
 // NotePrimaryFields are the primary key fields in the DB table.
 var NotePrimaryFields = []string{"id"}
@@ -1608,6 +1617,12 @@ type Workflow struct {
 	// Updated At
 	UpdatedAt *time.Time `db:"updated_at" json:"updated_at"`
 
+	// Prompt
+	Prompt string `db:"prompt" json:"prompt"`
+
+	// Prompt Folder
+	PromptFolder string `db:"prompt_folder" json:"prompt_folder"`
+
 	// Sidebar Hidden
 	SidebarHidden bool `db:"sidebar_hidden" json:"sidebar_hidden"`
 }
@@ -1648,6 +1663,18 @@ func (w *Workflow) GetUpdatedAt() *time.Time { return w.UpdatedAt }
 // SetUpdatedAt sets UpdatedAt to the provided value.
 func (w *Workflow) SetUpdatedAt(stamp time.Time) { w.UpdatedAt = &stamp }
 
+// GetPrompt will return the value of Prompt.
+func (w *Workflow) GetPrompt() string { return w.Prompt }
+
+// SetPrompt sets Prompt to the provided value.
+func (w *Workflow) SetPrompt(val string) { w.Prompt = val }
+
+// GetPromptFolder will return the value of PromptFolder.
+func (w *Workflow) GetPromptFolder() string { return w.PromptFolder }
+
+// SetPromptFolder sets PromptFolder to the provided value.
+func (w *Workflow) SetPromptFolder(val string) { w.PromptFolder = val }
+
 // GetSidebarHidden will return the value of SidebarHidden.
 func (w *Workflow) GetSidebarHidden() bool { return w.SidebarHidden }
 
@@ -1658,7 +1685,7 @@ func (w *Workflow) SetSidebarHidden(val bool) { w.SidebarHidden = val }
 const WorkflowTable = "`workflow`"
 
 // WorkflowFields is a list of all columns in the DB table.
-var WorkflowFields = []string{"id", "name", "user_id", "user_name", "created_at", "updated_at", "sidebar_hidden"}
+var WorkflowFields = []string{"id", "name", "user_id", "user_name", "created_at", "updated_at", "prompt", "prompt_folder", "sidebar_hidden"}
 
 // WorkflowPrimaryFields are the primary key fields in the DB table.
 var WorkflowPrimaryFields = []string{"id"}
@@ -1908,6 +1935,9 @@ type WorkflowStep struct {
 	// Job
 	Job string `db:"job" json:"job"`
 
+	// Disabled
+	Disabled bool `db:"disabled" json:"disabled"`
+
 	// Workflow Ref
 	WorkflowRef string `db:"workflow_ref" json:"workflow_ref"`
 }
@@ -1942,6 +1972,12 @@ func (w *WorkflowStep) GetJob() string { return w.Job }
 // SetJob sets Job to the provided value.
 func (w *WorkflowStep) SetJob(val string) { w.Job = val }
 
+// GetDisabled will return the value of Disabled.
+func (w *WorkflowStep) GetDisabled() bool { return w.Disabled }
+
+// SetDisabled sets Disabled to the provided value.
+func (w *WorkflowStep) SetDisabled(val bool) { w.Disabled = val }
+
 // GetWorkflowRef will return the value of WorkflowRef.
 func (w *WorkflowStep) GetWorkflowRef() string { return w.WorkflowRef }
 
@@ -1952,7 +1988,7 @@ func (w *WorkflowStep) SetWorkflowRef(val string) { w.WorkflowRef = val }
 const WorkflowStepTable = "`workflow_step`"
 
 // WorkflowStepFields is a list of all columns in the DB table.
-var WorkflowStepFields = []string{"id", "workflow_id", "position", "folder", "job", "workflow_ref"}
+var WorkflowStepFields = []string{"id", "workflow_id", "position", "folder", "job", "disabled", "workflow_ref"}
 
 // WorkflowStepPrimaryFields are the primary key fields in the DB table.
 var WorkflowStepPrimaryFields = []string{"id"}

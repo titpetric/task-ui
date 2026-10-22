@@ -1122,12 +1122,13 @@
   var WORKFLOW = "workflow:";
 
   // workflowSteps reads a workflow form's steps, in their order: a job of
-  // a folder, or a workflow.
+  // a folder, or a workflow, each enabled or not.
   function workflowSteps(form) {
     return Array.prototype.map.call(form.querySelectorAll("[data-step]"), function (row) {
       var folder = row.querySelector("[data-step-folder]").value;
-      if (folder.indexOf(WORKFLOW) === 0) return { workflow: folder.slice(WORKFLOW.length) };
-      return { folder: folder, job: row.querySelector("[data-step-job]").value };
+      var enabled = row.querySelector("[data-step-enabled]").checked;
+      if (folder.indexOf(WORKFLOW) === 0) return { workflow: folder.slice(WORKFLOW.length), enabled: enabled };
+      return { folder: folder, job: row.querySelector("[data-step-job]").value, enabled: enabled };
     });
   }
 
@@ -1158,7 +1159,6 @@
     Array.prototype.forEach.call(rows, function (row, i) {
       row.querySelector("[data-step-up]").disabled = i === 0;
       row.querySelector("[data-step-down]").disabled = i === rows.length - 1;
-      row.querySelector("[data-step-remove]").disabled = rows.length === 1;
     });
   }
 
@@ -1168,8 +1168,19 @@
     stepTools(list);
     form.addEventListener("change", function (event) {
       if (event.target.matches("[data-step-folder]")) narrowStep(event.target.closest("[data-step]"));
+      // A step toggled off stays, dimmed; a run skips it.
+      if (event.target.matches("[data-step-enabled]")) event.target.closest("[data-step]").classList.toggle("disabled", !event.target.checked);
     });
     form.addEventListener("click", function (event) {
+      // Summarize fills the prompt with the short summary instruction.
+      var preset = event.target.closest("[data-workflow-preset]");
+      if (preset) {
+        event.preventDefault();
+        var text = form.querySelector("[data-workflow-prompt-text]");
+        text.value = preset.dataset.workflowPreset;
+        text.focus();
+        return;
+      }
       var btn = event.target.closest("[data-step-add], [data-step-up], [data-step-down], [data-step-remove]");
       if (!btn) return;
       event.preventDefault();
@@ -1187,7 +1198,8 @@
         list.insertBefore(row, row.previousElementSibling);
       } else if (btn.hasAttribute("data-step-down") && row.nextElementSibling) {
         list.insertBefore(row.nextElementSibling, row);
-      } else if (btn.hasAttribute("data-step-remove") && list.children.length > 1) {
+      } else if (btn.hasAttribute("data-step-remove")) {
+        // The last step goes too: a workflow of a prompt alone has none.
         row.remove();
       }
       stepTools(list);
@@ -1232,16 +1244,56 @@
   var live = document.querySelector('[data-sse^="workflow:"]');
   var follows = document.querySelector("[data-sse]");
 
+  // workflowInput asks for the input of a workflow with a prompt, in a
+  // dialog: resolves to the text, empty for none, or null on Cancel.
+  var inputDialog = document.getElementById("workflow-input-dialog");
+  var inputResolve = null;
+  function workflowInput(name) {
+    if (!inputDialog || typeof inputDialog.showModal !== "function") return Promise.resolve("");
+    var form = inputDialog.querySelector("form");
+    form.reset();
+    document.getElementById("workflow-input-title").textContent = "Run " + name;
+    inputDialog.showModal();
+    form.elements.input.focus();
+    return new Promise(function (resolve) { inputResolve = resolve; });
+  }
+  if (inputDialog) {
+    var inputForm = inputDialog.querySelector("form");
+    var settle = function (value) {
+      var resolve = inputResolve;
+      inputResolve = null;
+      if (resolve) resolve(value);
+    };
+    inputForm.addEventListener("submit", function () { settle(inputForm.elements.input.value.trim()); });
+    inputForm.querySelector("[data-workflow-input-cancel]").addEventListener("click", function () { inputDialog.close(); });
+    inputForm.elements.input.addEventListener("keydown", function (event) {
+      if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
+        event.preventDefault();
+        inputForm.requestSubmit();
+      }
+    });
+    inputDialog.addEventListener("close", function () { settle(null); });
+  }
+
   document.addEventListener("click", function (event) {
     var btn = event.target.closest("[data-workflow-run], [data-workflow-stop]");
     if (!btn) return;
     event.preventDefault();
-    btn.disabled = true;
     var run = btn.hasAttribute("data-workflow-run");
+    // A workflow with a prompt asks for its input first.
+    var asked = run && btn.hasAttribute("data-workflow-prompt") ? workflowInput(btn.dataset.workflowPrompt) : Promise.resolve("");
+    asked.then(function (input) {
+      if (input === null) return;
+      startOrStop(btn, run, input);
+    });
+  });
+
+  function startOrStop(btn, run, input) {
+    btn.disabled = true;
     var path = run
       ? "/api/workflows/" + encodeURIComponent(btn.dataset.workflowRun) + "/runs"
       : "/api/workflow-runs/" + encodeURIComponent(btn.dataset.workflowStop) + "/stop";
-    api("POST", path).then(function (res) {
+    api("POST", path, input ? { input: input } : undefined).then(function (res) {
       // A workflow already running answers 409; its page shows that run.
       if (res.status >= 300 && res.status !== 409) {
         btn.disabled = false;
@@ -1254,7 +1306,7 @@
       if (run) window.location.href = "/workflows/" + encodeURIComponent(btn.dataset.workflowRun);
       else window.location.reload();
     });
-  });
+  }
 
   // The workflow page is drawn on from the events of its topic, no
   // fetch and no reload: `run` resets the pipeline to pending, swaps Run

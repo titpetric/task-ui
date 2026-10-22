@@ -35,6 +35,26 @@ func TestWorkflowStorage_Create(t *testing.T) {
 	assert.Equal(t, int64(2), got[2].Position)
 
 	assert.Error(t, workflows.Create(ctx, &model.Workflow{Name: "empty"}, nil), "no steps")
+	off := []model.WorkflowStep{{Folder: "a", Job: "b", Disabled: true}}
+	assert.Error(t, workflows.Create(ctx, &model.Workflow{Name: "off"}, off), "every step disabled, no prompt")
+
+	// A prompt runs a workflow with every step disabled, or with none,
+	// and the prompt, its place and the step toggles round trip.
+	asks := &model.Workflow{Name: "asks", Prompt: "summarize, change nothing", PromptFolder: "malta/dockerfiles"}
+	assert.NoError(t, workflows.Create(ctx, asks, append(off, model.WorkflowStep{Folder: "a", Job: "c"})))
+	read, err := workflows.Get(ctx, asks.ID)
+	assert.NoError(t, err)
+	assert.Equal(t, "summarize, change nothing", read.Prompt)
+	assert.Equal(t, "malta/dockerfiles", read.PromptFolder)
+	toggled, err := workflows.Steps(ctx, asks.ID)
+	assert.NoError(t, err)
+	assert.True(t, toggled[0].Disabled)
+	assert.False(t, toggled[1].Disabled)
+	alone := &model.Workflow{Name: "alone", Prompt: "say ok"}
+	assert.NoError(t, workflows.Create(ctx, alone, nil))
+	none, err := workflows.Steps(ctx, alone.ID)
+	assert.NoError(t, err)
+	assert.Len(t, none, 0)
 	assert.Error(t, workflows.Create(ctx, &model.Workflow{}, steps("a", "b")), "no name")
 	assert.Error(t, workflows.Create(ctx, &model.Workflow{Name: "half"}, steps("a", "")), "a step without a job")
 }

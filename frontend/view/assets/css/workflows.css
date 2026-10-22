@@ -133,6 +133,22 @@
   & .node.running .what a {
     color: var(--signal);
   }
+
+  /* A disabled step of the workflow, which its runs skip. */
+  & .node.disabled .what {
+    opacity: 0.55;
+  }
+}
+
+/* The workflow's prompt under its pipeline, as written. */
+.workflow-prompt-head {
+  margin-top: 1.4rem;
+}
+
+.workflow-prompt {
+  max-width: 60rem;
+  white-space: pre-wrap;
+  color: var(--text);
 }
 
 .workflow-form .steps {
@@ -146,10 +162,33 @@
 
 .workflow-form .step {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) minmax(0, 1fr) auto;
+  grid-template-columns: auto auto minmax(0, 1fr) minmax(0, 1fr) auto;
   align-items: center;
   gap: 0.5rem;
   counter-increment: step;
+
+  /* A step toggled off stays in the chain, dimmed: a run skips it. */
+  &.disabled > :not(.toggle) {
+    opacity: 0.5;
+  }
+
+  & .toggle {
+    display: flex;
+    align-items: center;
+
+    & input {
+      width: 1rem;
+      height: 1rem;
+      accent-color: var(--signal);
+    }
+  }
+}
+
+/* Summarize, under the prompt, fills it with the short summary. */
+.workflow-form .field-tools {
+  display: flex;
+  gap: 0.4rem;
+  margin-top: 0.3rem;
 }
 
 .workflow-form .step::before {
@@ -167,11 +206,16 @@
 
 @media (max-width: 640px) {
   .workflow-form .step {
-    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-columns: auto auto minmax(0, 1fr);
   }
 
   .workflow-form .step [data-step-job],
   .workflow-form .step-tools {
-    grid-column: 2;
+    grid-column: 3;
   }
+}
+
+/* The thread of the prompt on a workflow run's page, under its steps. */
+[data-pipeline-view] .promptbox {
+  margin-top: 1.4rem;
 }

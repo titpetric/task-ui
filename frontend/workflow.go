@@ -24,7 +24,7 @@ func (h *Handlers) workflowNames(ctx context.Context) map[string]string {
 func viewSteps(steps []model.WorkflowStep, names map[string]string) []view.Step {
 	out := make([]view.Step, 0, len(steps))
 	for _, s := range steps {
-		out = append(out, view.Step{Folder: s.Folder, Job: s.Job, WorkflowID: s.WorkflowRef, WorkflowName: names[s.WorkflowRef]})
+		out = append(out, view.Step{Folder: s.Folder, Job: s.Job, WorkflowID: s.WorkflowRef, WorkflowName: names[s.WorkflowRef], Disabled: s.Disabled})
 	}
 	return out
 }
@@ -205,8 +205,34 @@ func (h *Handlers) workflowRun(w http.ResponseWriter, r *http.Request) {
 	p.WorkflowRuns = []view.WorkflowRun{{WorkflowRun: *run, Steps: viewRunSteps(rows, names)}}
 	p.Pipeline = view.Chain(p.WorkflowRuns[0].Steps, p.Workspaces)
 	h.frames(r.Context(), p.Pipeline, names, p.Workspaces, true)
+	p.Prompt = h.workflowRunPrompt(r, p, run)
 	p.Crumbs = view.Crumbs("Workflows", "/workflows", p.Workflow.Name, "/workflows/"+p.Workflow.ID, "Run")
 	h.render(w, http.StatusOK, "workflow_run", p)
+}
+
+// workflowRunPrompt is the box of a workflow run's page: the thread of
+// the workflow's prompt, live while it runs, for a user with
+// prompt/view. None for a run whose workflow asks nothing and that has
+// no thread.
+func (h *Handlers) workflowRunPrompt(r *http.Request, p *view.Page, run *model.WorkflowRun) *view.Prompt {
+	if h.opts.Board == nil || !p.Can("prompt/view") {
+		return nil
+	}
+	threads := h.threads(r, storage.NoteFilter{Prompts: true, AboutWorkflowRunID: run.ID, Limit: 5})
+	place := p.Workflow.PromptPlace()
+	if len(threads) > 0 {
+		place = threads[0].Dir
+	}
+	if len(threads) == 0 && !(p.Workflow.Prompted() && run.State == model.StateRunning) {
+		return nil
+	}
+	where := "the root"
+	if place != model.Default {
+		where = place + "/"
+	}
+	prompt := view.PromptOfWorkflowRun(run.ID, place, where)
+	prompt.Threads = threads
+	return prompt
 }
 
 // frames puts on each step of a run's chain the screen its run ended

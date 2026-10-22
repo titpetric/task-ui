@@ -14,6 +14,9 @@ type Prompt struct {
 	// Run is the run a run page's box asks about, with its output, in
 	// the run's directory; its threads are those about the run.
 	Run string
+	// WorkflowRun is the workflow run whose prompt's thread the box of a
+	// workflow run's page lists, without a box to ask.
+	WorkflowRun string
 	// Watch lists the threads without the box to ask, for a user who
 	// reads them only.
 	Watch bool
@@ -36,6 +39,13 @@ func PromptIn(folderID, dir string) *Prompt {
 		place += "/" + dir
 	}
 	return &Prompt{API: "/api/prompts", Folder: folderID, Dir: dir, Where: place + "/", Place: place}
+}
+
+// PromptOfWorkflowRun returns the box of a workflow run's page: the
+// thread of the workflow's prompt, asked in place once the steps
+// ended, where names place.
+func PromptOfWorkflowRun(runID, place, where string) *Prompt {
+	return &Prompt{WorkflowRun: runID, Watch: true, Open: true, Where: where, Place: place}
 }
 
 // PromptAbout returns the prompt box of a run's page, about the run in

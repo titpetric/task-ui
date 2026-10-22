@@ -3,13 +3,13 @@
 <div class="page-head">
 	<div>
 		<h2>{{ $w.Name }}</h2>
-		<p class="faint">{{ len $w.Steps }} step{{ if ne (len $w.Steps) 1 }}s{{ end }}, by {{ $w.UserName }}</p>
+		<p class="faint">{{ len $w.Steps }} step{{ if ne (len $w.Steps) 1 }}s{{ end }}{{ if $w.Prompted }} and a prompt{{ end }}, by {{ $w.UserName }}</p>
 	</div>
 	<div class="actions" data-actions>
 		{{- if $w.CanRun }}{{ if $w.Running }}
 		<button type="button" class="btn" data-workflow-stop="{{ $w.Running }}"><svg class="ic"><use href="#i-stop"/></svg>Stop</button>
 		{{- else }}
-		<button type="button" class="btn btn-primary" data-workflow-run="{{ $w.ID }}"><svg class="ic"><use href="#i-play"/></svg>Run</button>
+		<button type="button" class="btn btn-primary" data-workflow-run="{{ $w.ID }}"{{ if $w.Prompted }} data-workflow-prompt="{{ $w.Name }}"{{ end }}><svg class="ic"><use href="#i-play"/></svg>Run</button>
 		{{- end }}{{ end }}
 		{{- if $w.CanChange }}
 		<a class="btn" href="/workflows/{{ $w.ID }}/edit"><svg class="ic"><use href="#i-edit"/></svg>Edit</a>
@@ -31,6 +31,10 @@
 	<ol class="pipeline" data-pipeline>
 		{{- range $i, $l := $.Pipeline }}{{ template "pipenode" (list $l $i) }}{{ end }}
 	</ol>
+	{{- if $w.Prompted }}
+	<h3 class="workflow-prompt-head">Prompt <small>Claude gets it in {{ $w.PromptWhere }} once the steps end, with their output{{ if $w.CanRun }}; Run asks for input to add{{ end }}</small></h3>
+	<p class="workflow-prompt" data-workflow-prompt-shown>{{ $w.Prompt }}</p>
+	{{- end }}
 </section>
 
 <section class="block">

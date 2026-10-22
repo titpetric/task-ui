@@ -68,7 +68,7 @@
 						{{- if .Running }}
 						<a class="play" href="/workflows/{{ .ID }}" title="{{ .Name }}, running" aria-label="Watch {{ .Name }}"><svg class="ic"><use href="#i-eye"/></svg></a>
 						{{- else if .CanRun }}
-						<button type="button" class="play" data-workflow-run="{{ .ID }}" title="Run {{ .Name }}" aria-label="Run {{ .Name }}"><svg class="ic"><use href="#i-play"/></svg></button>
+						<button type="button" class="play" data-workflow-run="{{ .ID }}"{{ if .Prompted }} data-workflow-prompt="{{ .Name }}"{{ end }} title="Run {{ .Name }}" aria-label="Run {{ .Name }}"><svg class="ic"><use href="#i-play"/></svg></button>
 						{{- end }}
 					</div>
 					{{- end }}{{ end }}
@@ -274,6 +274,17 @@
 {{ end }}
 
 {{ define "confirm" }}
+<dialog class="confirm" id="workflow-input-dialog" aria-labelledby="workflow-input-title">
+	<form method="dialog" data-workflow-input>
+		<h3 id="workflow-input-title">Run</h3>
+		<p>Input for the workflow's prompt, optional: Claude reads it after the prompt, under the line <code>Input:</code>.</p>
+		<textarea name="input" rows="3" spellcheck="false" aria-label="Input for the prompt"></textarea>
+		<div class="confirm-foot">
+			<button type="button" class="btn" data-workflow-input-cancel>Cancel</button>
+			<button type="submit" class="btn btn-primary">Run</button>
+		</div>
+	</form>
+</dialog>
 <dialog class="confirm" id="confirm-dialog" aria-labelledby="confirm-title">
 	<h3 id="confirm-title">Are you sure?</h3>
 	<p id="confirm-text"></p>
@@ -317,9 +328,11 @@
 
 {{ define "hours" }}{{ $text := index . 0 }}{{ $page := index . 1 }}{{ if $text }}{{ hoursLine $text }} {{ if $page.InHours $text }}<span class="badge ok">open now</span>{{ else }}<span class="badge bad">out of hours now</span>{{ end }}{{ else }}<span class="faint">always</span>{{ end }}{{ end }}
 
-{{/* stepeditor is the workflow form: a name and the steps in order.
-     list: page, workflow (nil for a new one), API path, method, where to
-     go after, the submit label. A step offers every job the user sees. */}}
+{{/* stepeditor is the workflow form: a name, the steps in order, each
+     with its toggle, and for a user with prompt/edit the prompt Claude
+     gets once they end and where it runs. list: page, workflow (nil for
+     a new one), API path, method, where to go after, the submit label. A
+     step offers every job the user sees. */}}
 {{ define "stepeditor" }}
 {{- $p := index . 0 }}{{ $w := index . 1 }}{{ $api := index . 2 }}{{ $method := index . 3 }}{{ $next := index . 4 }}{{ $label := index . 5 -}}
 <form class="form workflow-form" data-workflow data-api="{{ $api }}{{ if $w }}{{ $w.ID }}{{ end }}" data-method="{{ $method }}" data-next="{{ $next }}">
@@ -331,9 +344,29 @@
 		<label class="check"><input type="checkbox" id="wf-sidebar{{ if $w }}-{{ $w.ID }}{{ end }}" name="sidebar"{{ if or (not $w) (not $w.SidebarHidden) }} checked{{ end }}> Show in sidebar <span class="faint">off for a workflow that is a step of others</span></label>
 	</div>
 	<ol class="steps" data-steps>
-		{{- if $w }}{{ range $w.Steps }}{{ template "steprow" (list $p .Folder .Job .WorkflowID) }}{{ end }}{{ else }}{{ template "steprow" (list $p "" "" "") }}{{ end }}
+		{{- if $w }}{{ range $w.Steps }}{{ template "steprow" (list $p .Folder .Job .WorkflowID .Disabled) }}{{ end }}{{ else }}{{ template "steprow" (list $p "" "" "" false) }}{{ end }}
 	</ol>
-	<template data-step-template>{{ template "steprow" (list $p "" "" "") }}</template>
+	<template data-step-template>{{ template "steprow" (list $p "" "" "" false) }}</template>
+	{{- $id := "" }}{{ if $w }}{{ $id = print "-" $w.ID }}{{ end }}
+	{{- if $p.Can "prompt/edit" }}
+	<div class="field">
+		<label for="wf-prompt{{ $id }}">Prompt <span class="faint">Claude gets it once the steps end, with their output; a workflow with no step to run is the prompt alone</span></label>
+		<textarea id="wf-prompt{{ $id }}" name="prompt" rows="4" spellcheck="false" placeholder="summarize the run, change nothing" data-workflow-prompt-text>{{ if $w }}{{ $w.Prompt }}{{ end }}</textarea>
+		<div class="field-tools"><button type="button" class="btn btn-sm" data-workflow-preset="{{ summaryPrompt }}" title="Fill the prompt with the short summary of Run and summarize">Summarize</button></div>
+	</div>
+	<div class="field">
+		<label for="wf-prompt-folder{{ $id }}">Run in <span class="faint">where Claude runs the prompt, as you</span></label>
+		<select id="wf-prompt-folder{{ $id }}" name="prompt_folder">
+			<option value="">the root</option>
+			{{- range $p.Folders }}
+			<option value="{{ .ID }}"{{ if and $w (eq .ID $w.PromptFolder) }} selected{{ end }}>{{ .ID }}</option>
+			{{- end }}
+		</select>
+	</div>
+	{{- else if and $w $w.Prompted }}
+	<input type="hidden" name="prompt" value="{{ $w.Prompt }}">
+	<input type="hidden" name="prompt_folder" value="{{ $w.PromptFolder }}">
+	{{- end }}
 	<div class="form-foot">
 		<button type="button" class="btn" data-step-add>Add step</button>
 		<button class="btn btn-primary" type="submit">{{ $label }}</button>
@@ -342,8 +375,9 @@
 {{ end }}
 
 {{ define "steprow" }}
-{{- $p := index . 0 }}{{ $folder := index . 1 }}{{ $job := index . 2 }}{{ $ref := index . 3 -}}
-<li class="step" data-step>
+{{- $p := index . 0 }}{{ $folder := index . 1 }}{{ $job := index . 2 }}{{ $ref := index . 3 }}{{ $off := index . 4 -}}
+<li class="step{{ if $off }} disabled{{ end }}" data-step>
+	<label class="toggle" title="Run this step; off, a run skips it"><input type="checkbox" data-step-enabled aria-label="Run this step"{{ if not $off }} checked{{ end }}></label>
 	<select data-step-folder aria-label="Folder or workflow" required>
 		{{- range $p.Folders }}{{ if .Jobs }}
 		<option value="{{ .ID }}"{{ if eq .ID $folder }} selected{{ end }}>{{ .ID }}</option>
@@ -772,14 +806,14 @@
      A step that ran a workflow holds that run's chain. */}}
 {{- define "pipenode" }}
 {{- $l := index . 0 }}{{ $i := index . 1 }}
-<li class="node{{ with $l.State }} {{ . }}{{ end }}" data-step="{{ $i }}">
+<li class="node{{ with $l.State }} {{ . }}{{ end }}{{ if $l.Disabled }} disabled{{ end }}" data-step="{{ $i }}">
 	<span class="rail"><i class="dot{{ with $l.State }} {{ . }}{{ end }}"></i></span>
 	<div class="what">
 		<div class="step-head">
 			<a href="{{ $l.Href }}"{{ if $l.RunID }} data-run-link="{{ $l.RunID }}"{{ end }}>{{ if $l.Workflow }}<svg class="ic"><use href="#i-flow"/></svg>{{ end }}{{ $l.Text }}</a>
 			{{- if and $l.RunID (not $l.Complete) }}<button type="button" class="btn btn-sm" data-expand="{{ $l.RunID }}" aria-expanded="false"><svg class="ic"><use href="#i-expand"/></svg><span>Expand{{ with $l.Lines }} {{ . }} lines{{ end }}</span></button>{{ end }}
 		</div>
-		<small>{{ if $l.State }}{{ $l.State }}{{ else }}step {{ add $i 1 }}{{ end }}</small>
+		<small>{{ if $l.State }}{{ $l.State }}{{ else if $l.Disabled }}step {{ add $i 1 }}, disabled: a run skips it{{ else }}step {{ add $i 1 }}{{ end }}</small>
 		{{- if $l.RunID }}<a class="frame" href="/runs/{{ $l.RunID }}" data-attach="{{ $l.RunID }}"{{ if eq $l.State "running" }} data-frame="{{ $l.RunID }}"{{ end }} role="img" aria-label="Terminal of {{ $l.Text }}">{{ $l.FrameSVG }}</a>{{ end }}
 		{{- if $l.WorkflowRunID }}
 		<ol class="pipeline sub" data-sub="{{ $l.WorkflowRunID }}" data-workflow="{{ $l.WorkflowID }}">
