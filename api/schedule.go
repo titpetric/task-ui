@@ -17,6 +17,10 @@ type ScheduleRequest struct {
 	Job        string `json:"job"`
 	Expression string `json:"expression"`
 	Enabled    *bool  `json:"enabled"`
+	// User is who the schedule runs as, by name or ID: an admin picks
+	// anyone, everyone else only themselves. Empty is the caller on
+	// create, and no change on update.
+	User string `json:"user"`
 }
 
 // listSchedules returns the schedules of the folders the user may see.
@@ -63,12 +67,20 @@ func (h *Handlers) createSchedule(w http.ResponseWriter, r *http.Request) {
 		fail(w, http.StatusForbidden, "your role may view this job, but not schedule it")
 		return
 	}
+	runAs, status, problem := h.runAs(r, req.User, f.ID, job.ID)
+	if problem != "" {
+		fail(w, status, problem)
+		return
+	}
+	if runAs == nil {
+		runAs = user
+	}
 	next, err := scheduler.NextRun(req.Expression, time.Now())
 	if err != nil {
 		fail(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	schedule := &model.Schedule{Folder: f.ID, Job: job.ID, UserID: user.ID, UserName: user.Name, Expression: req.Expression, Enabled: 1, NextRunAt: &next}
+	schedule := &model.Schedule{Folder: f.ID, Job: job.ID, UserID: runAs.ID, UserName: runAs.Name, Expression: req.Expression, Enabled: 1, NextRunAt: &next}
 	if req.Enabled != nil && !*req.Enabled {
 		schedule.Enabled = 0
 	}
@@ -77,6 +89,36 @@ func (h *Handlers) createSchedule(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusCreated, schedule)
+}
+
+// runAs resolves the user a schedule request names to run as, by name
+// or ID, and checks that they may run the job: they see its folder and
+// the run permission and the allow lists let them. It returns nil for
+// no name. Only an admin names someone other than themselves (403); a
+// user nobody holds, or one who may not run the job, is a 400.
+func (h *Handlers) runAs(r *http.Request, name, folderID, jobID string) (*model.User, int, string) {
+	if name == "" {
+		return nil, 0, ""
+	}
+	caller := access.UserFrom(r.Context())
+	if name == caller.Name || name == caller.ID {
+		return caller, 0, ""
+	}
+	if !caller.CanAdmin() {
+		return nil, http.StatusForbidden, "only an admin picks who a schedule runs as"
+	}
+	user, err := h.opts.Users.GetByName(r.Context(), name)
+	if err != nil {
+		if user, err = h.opts.Users.Get(r.Context(), name); err != nil {
+			return nil, http.StatusBadRequest, "no user " + name
+		}
+	}
+	as := r.WithContext(access.WithUser(r.Context(), user))
+	f, job, problem := h.target(as, folderID, jobID)
+	if problem != "" || job.IsShell() || !h.canRun(as, f, job) {
+		return nil, http.StatusBadRequest, user.Name + " may not run " + folderID + "/" + jobID
+	}
+	return user, 0, ""
 }
 
 // scheduleOf returns the schedule a route names, when the user may see it.
@@ -133,6 +175,14 @@ func (h *Handlers) updateSchedule(w http.ResponseWriter, r *http.Request) {
 	if err := readJSON(r, &req); err != nil {
 		fail(w, http.StatusBadRequest, err.Error())
 		return
+	}
+	runAs, status, problem := h.runAs(r, req.User, schedule.Folder, schedule.Job)
+	if problem != "" {
+		fail(w, status, problem)
+		return
+	}
+	if runAs != nil {
+		schedule.UserID, schedule.UserName = runAs.ID, runAs.Name
 	}
 	if req.Expression != "" {
 		next, err := scheduler.NextRun(req.Expression, time.Now())

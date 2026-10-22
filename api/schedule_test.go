@@ -1,12 +1,16 @@
 package api_test
 
 import (
+	"context"
 	"net/http"
 	"testing"
+	"time"
 
 	"github.com/titpetric/task-ui/api"
 	"github.com/titpetric/task-ui/internal/assert"
 	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/scheduler"
+	"github.com/titpetric/task-ui/storage"
 )
 
 func ptr[T any](v T) *T { return &v }
@@ -115,4 +119,65 @@ func TestSchedule_Delete(t *testing.T) {
 
 	again := f.call(t, asAdmin, http.MethodDelete, path, nil)
 	assert.Equal(t, http.StatusNotFound, again.Status)
+}
+
+// An admin picks who a schedule runs as; the scheduler starts its runs
+// as that user.
+func TestSchedule_RunAs(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	ctx := context.Background()
+
+	res := f.call(t, asAdmin, http.MethodPost, "/schedules", api.ScheduleRequest{Folder: "infra", Job: "plan", Expression: "* * * * *", User: asOps})
+	assert.Equal(t, http.StatusCreated, res.Status, string(res.Raw))
+	assert.Equal(t, asOps, res.str("user_name"))
+	assert.Equal(t, f.users[asOps].ID, res.str("user_id"))
+
+	// By ID, and back to the admin on an update.
+	byID := f.call(t, asAdmin, http.MethodPost, "/schedules", api.ScheduleRequest{Folder: "infra", Job: "plan", Expression: "@daily", User: f.users[asLimited].ID})
+	assert.Equal(t, asLimited, byID.str("user_name"))
+	back := f.call(t, asAdmin, http.MethodPut, "/schedules/"+byID.str("id"), api.ScheduleRequest{User: asAdmin})
+	assert.Equal(t, http.StatusOK, back.Status)
+	assert.Equal(t, asAdmin, back.str("user_name"))
+
+	// The scheduler fires it as ops.
+	loop := scheduler.NewLoop(f.opts.Schedules, f.opts.Users, f.opts.Catalogue, f.opts.Runner)
+	loop.Now = func() time.Time { return time.Now().Add(2 * time.Minute) }
+	started, err := loop.Tick(ctx)
+	assert.NoError(t, err)
+	assert.Equal(t, 1, started)
+	runs, err := f.opts.Runs.List(ctx, storage.RunFilter{Folder: "infra", Job: "plan"})
+	assert.NoError(t, err)
+	assert.Len(t, runs, 1)
+	assert.Equal(t, asOps, runs[0].UserName)
+	assert.Equal(t, int64(1), runs[0].Scheduled)
+}
+
+// Only an admin names another user, who must exist and may run the job.
+func TestSchedule_RunAsRefused(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+
+	cases := []struct {
+		name   string
+		user   string
+		req    api.ScheduleRequest
+		status int
+	}{
+		{"not an admin", asOps, api.ScheduleRequest{Folder: "infra", Job: "plan", Expression: "@daily", User: asLimited}, http.StatusForbidden},
+		{"unknown user", asAdmin, api.ScheduleRequest{Folder: "infra", Job: "plan", Expression: "@daily", User: "nobody"}, http.StatusBadRequest},
+		{"may not run", asAdmin, api.ScheduleRequest{Folder: "private", Job: "deploy", Expression: "@daily", User: asOps}, http.StatusBadRequest},
+		{"sees no folder", asAdmin, api.ScheduleRequest{Folder: "private", Job: "deploy", Expression: "@daily", User: asLimited}, http.StatusBadRequest},
+		{"a viewer", asAdmin, api.ScheduleRequest{Folder: "infra", Job: "plan", Expression: "@daily", User: asViewer}, http.StatusBadRequest},
+	}
+	for _, c := range cases {
+		res := f.call(t, c.user, http.MethodPost, "/schedules", c.req)
+		assert.Equal(t, c.status, res.Status, c.name)
+	}
+
+	// Naming yourself is no pick.
+	own := f.call(t, asOps, http.MethodPost, "/schedules", api.ScheduleRequest{Folder: "infra", Job: "plan", Expression: "@daily", User: asOps})
+	assert.Equal(t, http.StatusCreated, own.Status)
+	refused := f.call(t, asOps, http.MethodPut, "/schedules/"+own.str("id"), api.ScheduleRequest{User: asLimited})
+	assert.Equal(t, http.StatusForbidden, refused.Status)
 }

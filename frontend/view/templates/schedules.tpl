@@ -2,7 +2,7 @@
 <div class="page-head">
 	<div>
 		<h2>Scheduled</h2>
-		<p>Jobs that run on a cron expression, in the background, under the name of whoever scheduled them. A job that is still running when its time comes is skipped.</p>
+		<p>Jobs that run on a cron expression, in the background, as the user each schedule names: whoever made it, or the user an admin picks under Run as. The scheduler skips a job that is still running when its time comes, and a job its user may not run at that time.</p>
 	</div>
 </div>
 
@@ -29,6 +29,7 @@
 		<label for="sch-expr">Expression</label>
 		<input type="text" id="sch-expr" name="expression" placeholder="0 3 * * *  or  @daily" spellcheck="false" autocomplete="off" required>
 	</div>
+	{{- template "runas" (list $ "sch-user") }}
 	<div class="form-foot">
 		<button class="btn btn-primary" type="submit">Schedule</button>
 	</div>
@@ -37,7 +38,7 @@
 
 <div class="table-wrap">
 <table class="table">
-	<thead><tr><th>Folder</th><th>Job</th><th>Expression</th><th>Next run</th><th>Last run</th><th>By</th><th>State</th><th></th></tr></thead>
+	<thead><tr><th>Folder</th><th>Job</th><th>Expression</th><th>Next run</th><th>Last run</th><th>Runs as</th><th>State</th><th></th></tr></thead>
 	<tbody>
 	{{- range .Schedules }}
 		<tr>
@@ -46,7 +47,7 @@
 			<td><code>{{ .Expression }}</code></td>
 			<td class="nowrap">{{ if .IsEnabled }}{{ stamp .NextRunAt }}{{ else }}<span class="faint">-</span>{{ end }}</td>
 			<td class="nowrap">{{ if .LastRunAt }}{{ ago .LastRunAt }}{{ else }}<span class="faint">never</span>{{ end }}</td>
-			<td>{{ template "user" (list $ .UserName) }}</td>
+			<td>{{ template "runas-row" (list $ .) }}</td>
 			<td>{{ if .IsEnabled }}<span class="badge ok">enabled</span>{{ else }}<span class="badge">disabled</span>{{ end }}</td>
 			<td class="actions">
 				<form data-api="/api/schedules/{{ .ID }}" data-method="PUT" data-next="reload"><input type="hidden" name="enabled" data-type="bool" value="{{ if .IsEnabled }}false{{ else }}true{{ end }}"><button class="btn btn-sm" type="submit">{{ if .IsEnabled }}Disable{{ else }}Enable{{ end }}</button></form>

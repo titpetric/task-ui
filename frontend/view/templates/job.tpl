@@ -54,7 +54,7 @@
 	{{- with .Activity }}{{ template "activity" . }}{{ end }}
 	<div class="table-wrap">
 	<table class="table cards">
-		<thead><tr><th>Started</th><th>By</th><th>Duration</th><th>Result</th><th></th></tr></thead>
+		<thead><tr><th>Started</th><th>Runs as</th><th>Duration</th><th>Result</th><th></th></tr></thead>
 		<tbody>
 		{{- range .Runs }}
 			<tr>
@@ -80,14 +80,14 @@
 	<h3>Scheduled <small>cron expressions, in the server's time zone</small></h3>
 	<div class="table-wrap">
 	<table class="table">
-		<thead><tr><th>Expression</th><th>Next run</th><th>Last run</th><th>By</th><th>State</th><th></th></tr></thead>
+		<thead><tr><th>Expression</th><th>Next run</th><th>Last run</th><th>Runs as</th><th>State</th><th></th></tr></thead>
 		<tbody>
 		{{- range .Schedules }}
 			<tr>
 				<td class="key"><code>{{ .Expression }}</code></td>
 				<td class="nowrap">{{ if .IsEnabled }}{{ stamp .NextRunAt }}{{ else }}<span class="faint">-</span>{{ end }}</td>
 				<td class="nowrap">{{ if .LastRunAt }}{{ ago .LastRunAt }}{{ else }}<span class="faint">never</span>{{ end }}</td>
-				<td>{{ template "user" (list $ .UserName) }}</td>
+				<td>{{ template "runas-row" (list $ .) }}</td>
 				<td>{{ if .IsEnabled }}<span class="badge ok">enabled</span>{{ else }}<span class="badge">disabled</span>{{ end }}</td>
 				<td class="actions">
 					{{- if $can }}
@@ -97,7 +97,7 @@
 				</td>
 			</tr>
 		{{- else }}
-			<tr class="empty"><td colspan="6">Not scheduled.{{ if $can }} Add an expression below to run it on a schedule, under your name.{{ end }}</td></tr>
+			<tr class="empty"><td colspan="6">Not scheduled.{{ if $can }} Add an expression below to run it on a schedule{{ if $.Users }}, as the user you pick{{ else }}, as you{{ end }}.{{ end }}</td></tr>
 		{{- end }}
 		</tbody>
 	</table>
@@ -110,6 +110,7 @@
 			<label for="sch-expr">Expression</label>
 			<input type="text" id="sch-expr" name="expression" placeholder="0 3 * * *  or  @daily" spellcheck="false" autocomplete="off" required>
 		</div>
+		{{- template "runas" (list $ "sch-user") }}
 		<div class="form-foot">
 			<button class="btn btn-primary" type="submit">Schedule</button>
 		</div>
