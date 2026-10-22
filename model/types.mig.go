@@ -601,8 +601,8 @@ type Project struct {
 	// Updated At
 	UpdatedAt *time.Time `db:"updated_at" json:"updated_at"`
 
-	// Root Only
-	RootOnly bool `db:"root_only" json:"root_only"`
+	// Shallow
+	Shallow bool `db:"shallow" json:"shallow"`
 
 	// Sidebar Hidden
 	SidebarHidden bool `db:"sidebar_hidden" json:"sidebar_hidden"`
@@ -692,11 +692,11 @@ func (p *Project) GetUpdatedAt() *time.Time { return p.UpdatedAt }
 // SetUpdatedAt sets UpdatedAt to the provided value.
 func (p *Project) SetUpdatedAt(stamp time.Time) { p.UpdatedAt = &stamp }
 
-// GetRootOnly will return the value of RootOnly.
-func (p *Project) GetRootOnly() bool { return p.RootOnly }
+// GetShallow will return the value of Shallow.
+func (p *Project) GetShallow() bool { return p.Shallow }
 
-// SetRootOnly sets RootOnly to the provided value.
-func (p *Project) SetRootOnly(val bool) { p.RootOnly = val }
+// SetShallow sets Shallow to the provided value.
+func (p *Project) SetShallow(val bool) { p.Shallow = val }
 
 // GetSidebarHidden will return the value of SidebarHidden.
 func (p *Project) GetSidebarHidden() bool { return p.SidebarHidden }
@@ -708,7 +708,7 @@ func (p *Project) SetSidebarHidden(val bool) { p.SidebarHidden = val }
 const ProjectTable = "`project`"
 
 // ProjectFields is a list of all columns in the DB table.
-var ProjectFields = []string{"id", "folder", "title", "description", "source_url", "branch", "allow", "commands", "sources", "job_allow", "hours", "job_hours", "created_at", "updated_at", "root_only", "sidebar_hidden"}
+var ProjectFields = []string{"id", "folder", "title", "description", "source_url", "branch", "allow", "commands", "sources", "job_allow", "hours", "job_hours", "created_at", "updated_at", "shallow", "sidebar_hidden"}
 
 // ProjectPrimaryFields are the primary key fields in the DB table.
 var ProjectPrimaryFields = []string{"id"}

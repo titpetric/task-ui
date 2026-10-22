@@ -120,7 +120,7 @@ func isFile(path string) bool {
 }
 
 // discover adds the root when it has something to run, and walks the
-// tree below it, not into a root-only project. A directory of the root
+// tree below it, one level into a shallow project. A directory of the root
 // named internal or _ lists nothing: the names are task-ui's own. The walk
 // goes into every configured folder, even one a checkout ignores, such
 // as a project cloned inside a workspace.
@@ -130,21 +130,22 @@ func (d *Discovery) discover(root string, c *catalogue) {
 			c.add(f)
 		}
 	}
-	stop, keep := map[string]bool{}, map[string]bool{}
+	shallow, keep := map[string]bool{}, map[string]bool{}
 	for _, cfg := range d.Config {
 		keep[cfg.dir(root)] = true
-		if cfg.RootOnly {
-			stop[cfg.dir(root)] = true
+		if cfg.Shallow {
+			shallow[cfg.dir(root)] = true
 		}
 	}
-	walk(root, "", 1, detector.HasPipeline(root), gitIgnored(root, nil), stop, keep, func(id, dir string) {
+	w := walker{shallow: shallow, keep: keep, found: func(id, dir string) {
 		if c.seen(dir) || model.IsReserved(id) {
 			return
 		}
 		if f := Load(id, dir); runnable(f) {
 			c.add(f)
 		}
-	})
+	}}
+	w.walk(root, "", 1, detector.HasPipeline(root), gitIgnored(root, nil), false)
 }
 
 // sections adds the top level folder of every listed folder below one
@@ -200,13 +201,20 @@ func gitIgnored(dir string, ignored map[string]bool) map[string]bool {
 	return merged
 }
 
-// walk visits the directories below dir, in name order, and reports the
-// ones with something to run. Below a pipeline folder walk reports only a
-// folder with a pipeline file, but goes on through the rest.
-// Directories a git checkout ignores are not visited unless keep holds
-// them, and the walk does not go into a directory in stop: a root-only
-// project.
-func walk(dir, id string, depth int, underPipeline bool, ignored, stop, keep map[string]bool, found func(id, dir string)) {
+// walker visits the directories below the root and reports the ones
+// with something to run to found. Directories a git checkout ignores are
+// not visited unless keep holds them, and the walk goes one level into
+// a directory in shallow, a shallow project, and no deeper.
+type walker struct {
+	shallow, keep map[string]bool
+	found         func(id, dir string)
+}
+
+// walk visits the directories below dir, in name order. Below a pipeline
+// folder walk reports only a folder with a pipeline file, but goes on
+// through the rest. last stops it under the directories of dir: dir is a
+// shallow project.
+func (w walker) walk(dir, id string, depth int, underPipeline bool, ignored map[string]bool, last bool) {
 	if depth > maxDepth {
 		return
 	}
@@ -217,7 +225,7 @@ func walk(dir, id string, depth int, underPipeline bool, ignored, stop, keep map
 			continue
 		}
 		sub := filepath.Join(dir, name)
-		if ignored[sub] && !keep[sub] {
+		if ignored[sub] && !w.keep[sub] {
 			continue
 		}
 		ignored := gitIgnored(sub, ignored)
@@ -227,12 +235,12 @@ func walk(dir, id string, depth int, underPipeline bool, ignored, stop, keep map
 		}
 		pipeline := detector.HasPipeline(sub)
 		if pipeline || (!underPipeline && detector.Any(sub)) {
-			found(subID, sub)
+			w.found(subID, sub)
 		}
-		if stop[sub] {
+		if last {
 			continue
 		}
-		walk(sub, subID, depth+1, underPipeline || pipeline, ignored, stop, keep, found)
+		w.walk(sub, subID, depth+1, underPipeline || pipeline, ignored, w.shallow[sub])
 	}
 }
 

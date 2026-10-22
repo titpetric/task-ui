@@ -71,10 +71,13 @@ func TestProject_Clone(t *testing.T) {
 	got := f.call(t, asAdmin, http.MethodGet, "/projects/website", nil)
 	assert.Equal(t, http.StatusOK, got.Status)
 	assert.Equal(t, "file://"+repo, got.str("source_url"))
+	assert.Equal(t, false, got.get("shallow"), "recursive unless asked otherwise")
 
-	named := f.call(t, asAdmin, http.MethodPost, "/projects", api.ProjectCloneRequest{URL: "file://" + repo, ID: "site", Branch: "main"})
+	no := false
+	named := f.call(t, asAdmin, http.MethodPost, "/projects", api.ProjectCloneRequest{URL: "file://" + repo, ID: "site", Branch: "main", Recursive: &no})
 	assert.Equal(t, http.StatusCreated, named.Status, string(named.Raw))
 	assert.Equal(t, "main", named.str("project", "branch"))
+	assert.Equal(t, true, f.call(t, asAdmin, http.MethodGet, "/projects/site", nil).get("shallow"))
 	assert.DirExists(t, filepath.Join(f.root, "site"))
 }
 
@@ -170,27 +173,27 @@ func TestProject_UpdateHours(t *testing.T) {
 	assert.Contains(t, job.str("error"), "plan:")
 }
 
-// A project is recursive unless made or set root-only: then the listing
-// shows its own jobs alone.
-func TestProject_RootOnly(t *testing.T) {
+// A project is recursive unless made or set shallow: then the listing
+// shows the project and its top-level folders alone.
+func TestProject_Shallow(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
 
 	res := f.call(t, asAdmin, http.MethodPut, "/projects/infra", api.ProjectRequest{Title: "Infra"})
 	assert.Equal(t, http.StatusOK, res.Status, string(res.Raw))
-	assert.Equal(t, false, res.get("root_only"))
+	assert.Equal(t, false, res.get("shallow"))
 
 	no := false
 	res = f.call(t, asAdmin, http.MethodPut, "/projects/infra", api.ProjectRequest{Title: "Infra", Recursive: &no})
 	assert.Equal(t, http.StatusOK, res.Status, string(res.Raw))
-	assert.Equal(t, true, res.get("root_only"))
+	assert.Equal(t, true, res.get("shallow"))
 
 	// A request without the field leaves it unchanged.
 	res = f.call(t, asAdmin, http.MethodPut, "/projects/infra", api.ProjectRequest{Title: "Infra"})
-	assert.Equal(t, true, res.get("root_only"))
+	assert.Equal(t, true, res.get("shallow"))
 	yes := true
 	res = f.call(t, asAdmin, http.MethodPut, "/projects/infra", api.ProjectRequest{Title: "Infra", Recursive: &yes})
-	assert.Equal(t, false, res.get("root_only"))
+	assert.Equal(t, false, res.get("shallow"))
 }
 
 // A project shows in the sidebar unless set not to.

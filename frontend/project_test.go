@@ -82,7 +82,7 @@ func TestProjectEdit_PerJob(t *testing.T) {
 }
 
 // The clone and configure forms have the recursive toggle, on unless
-// the project is root-only.
+// the project is shallow.
 func TestProject_RecursiveToggle(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
@@ -93,11 +93,11 @@ func TestProject_RecursiveToggle(t *testing.T) {
 	fresh := f.page(t, asAdmin, "/settings/projects/infra")
 	assert.Contains(t, fresh, `type="checkbox" id="pe-recursive" name="recursive" checked`)
 
-	project := &model.Project{Folder: "infra", RootOnly: true}
+	project := &model.Project{Folder: "infra", Shallow: true}
 	assert.NoError(t, f.opts.Projects.Create(context.Background(), project))
-	rootOnly := f.page(t, asAdmin, "/settings/projects/infra")
-	assert.Contains(t, rootOnly, `type="checkbox" id="pe-recursive" name="recursive">`)
-	assert.NotContains(t, rootOnly, `name="recursive" checked`)
+	shallow := f.page(t, asAdmin, "/settings/projects/infra")
+	assert.Contains(t, shallow, `type="checkbox" id="pe-recursive" name="recursive">`)
+	assert.NotContains(t, shallow, `name="recursive" checked`)
 }
 
 // The clone form always has a Workspace select, the default one, _,
