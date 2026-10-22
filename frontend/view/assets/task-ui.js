@@ -1692,12 +1692,20 @@
           var value = form.elements.body.value;
           if (value) drafts[form.dataset.parent] = value;
         });
+        var edits = {};
+        notesList.querySelectorAll("form[data-note-edit]").forEach(function (form) {
+          edits[form.dataset.noteEdit] = form.elements.body.value;
+        });
         notesList.innerHTML = fresh.innerHTML;
         Object.keys(drafts).forEach(function (parent) {
           var form = notesList.querySelector('form[data-parent="' + parent + '"]');
           if (!form) return;
           form.elements.body.value = drafts[parent];
           form.closest("details").open = true;
+        });
+        Object.keys(edits).forEach(function (id) {
+          var body = notesList.querySelector('[data-edit="' + id + '"]');
+          if (body) editNote(body, edits[id]);
         });
       });
   }
@@ -1720,7 +1728,68 @@
         refreshNotes();
       });
   });
+  // Its author, or an admin, clicks a note's text to edit it in place:
+  // Ctrl+Enter or Save puts it, Esc or Cancel leaves it as it was. A note
+  // to the agent runs again, and its answer follows over the notes topic.
+  function editNote(body, value) {
+    var form = document.createElement("form");
+    form.className = "note-form note-edit";
+    form.dataset.noteEdit = body.dataset.edit;
+    form.innerHTML = '<textarea name="body" rows="3" required aria-label="The note"></textarea>' +
+      '<div class="note-form-foot"><span class="faint">Ctrl+Enter saves, Esc cancels.</span>' +
+      '<span><button class="btn" type="button" data-edit-cancel>Cancel</button> <button class="btn btn-primary" type="submit">Save</button></span></div>';
+    form.elements.body.value = value === undefined ? body.dataset.body : value;
+    body.hidden = true;
+    body.after(form);
+    form.elements.body.focus();
+  }
+  function closeEdit(form) {
+    var body = form.previousElementSibling;
+    if (body && body.hasAttribute("data-edit")) body.hidden = false;
+    form.remove();
+  }
+  document.addEventListener("click", function (event) {
+    var cancel = event.target.closest("[data-edit-cancel]");
+    if (cancel) {
+      closeEdit(cancel.closest("form[data-note-edit]"));
+      return;
+    }
+    var body = event.target.closest(".note-body[data-edit]");
+    if (!body || event.target.closest("a, button, summary")) return;
+    if (String(window.getSelection && window.getSelection()) !== "") return;
+    editNote(body);
+  });
+  document.addEventListener("submit", function (event) {
+    var form = event.target.closest("form[data-note-edit]");
+    if (!form) return;
+    event.preventDefault();
+    var value = form.elements.body.value.trim();
+    if (!value) return;
+    var button = form.querySelector("button[type=submit]");
+    button.disabled = true;
+    api("PUT", "/api/notes/" + encodeURIComponent(form.dataset.noteEdit), { body: value })
+      .then(function (res) {
+        button.disabled = false;
+        if (res.status >= 300) {
+          window.alert(res.data.error || ("HTTP " + res.status));
+          return;
+        }
+        closeEdit(form);
+        refreshNotes();
+      });
+  });
   document.addEventListener("keydown", function (event) {
+    var editing = event.target.closest && event.target.closest("form[data-note-edit] textarea");
+    if (editing && event.key === "Escape") {
+      event.preventDefault();
+      closeEdit(editing.form);
+      return;
+    }
+    if (editing && event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
+      event.preventDefault();
+      editing.form.requestSubmit();
+      return;
+    }
     var area = event.target.closest && event.target.closest("form[data-note-form] textarea");
     if (!area || event.key !== "Enter") return;
     if (event.ctrlKey || event.metaKey) {

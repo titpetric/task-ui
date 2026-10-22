@@ -45,6 +45,9 @@ type fixture struct {
 	grants     *storage.WorkspaceKeyGrantStorage
 	// keyDir is the instance's SSH folder, the policies' keys.
 	keyDir string
+	// summaries are Claude's summaries of the runs, recordings their casts.
+	summaries  *storage.RunSummaryStorage
+	recordings *recording.Store
 }
 
 func newFixture(t *testing.T) *fixture {
@@ -65,6 +68,7 @@ func newFixture(t *testing.T) *fixture {
 		runs: runs, files: artifacts, secrets: secrets, root: t.TempDir(),
 		policies: storage.NewSSHKeyPolicyStorage(db), workspaces: storage.NewWorkspaceStorage(db),
 		keys: keyring, grants: storage.NewWorkspaceKeyGrantStorage(db), keyDir: keys.Dir,
+		summaries: storage.NewRunSummaryStorage(db), recordings: &recording.Store{Root: t.TempDir()},
 	}
 	manager := runner.New(runner.Options{
 		Now: func() time.Time {
@@ -75,10 +79,11 @@ func newFixture(t *testing.T) *fixture {
 		},
 		Runs:          runs,
 		Artifacts:     artifacts,
+		Summaries:     f.summaries,
 		Secrets:       secrets,
 		Env:           envfile.New(storage.NewEnvFileStorage(db), secrets),
 		Git:           &git.Git{},
-		Recordings:    &recording.Store{Root: t.TempDir()},
+		Recordings:    f.recordings,
 		ArtifactRoot:  t.TempDir(),
 		Grace:         time.Second,
 		KillTimeout:   5 * time.Second,

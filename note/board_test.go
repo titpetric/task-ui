@@ -43,7 +43,7 @@ func (c catalogue) List() []*folder.Folder {
 
 // fixture is a board over a private database, with the users ops and
 // claude and an agent job that echoes its note, and writes the reply file
-// for a note with the word answer.
+// for a note with the word answer, a second late for one with slow.
 type fixture struct {
 	board *note.Board
 	ops   *model.User
@@ -63,7 +63,7 @@ func newFixture(t *testing.T, agentJob string) *fixture {
 	dir := filepath.Join(t.TempDir(), "agent")
 	assert.NoError(t, os.MkdirAll(dir, 0o755))
 	f := &folder.Folder{ID: "agent", Title: "agent", Dir: dir}
-	job := &folder.Job{Folder: "agent", ID: "run", Kind: "script", Command: []string{"sh", "-c", `echo "note $TASK_UI_NOTE_ID from $TASK_UI_NOTE_AUTHOR: $TASK_UI_NOTE"; case "$TASK_UI_NOTE" in *answer*) echo "Done: $TASK_UI_NOTE" > "$TASK_UI_NOTE_REPLY";; esac; test "$TASK_UI_NOTE" != "@claude fail" && test "$TASK_UI_NOTE" != "@claude answer, fail"`}}
+	job := &folder.Job{Folder: "agent", ID: "run", Kind: "script", Command: []string{"sh", "-c", `echo "note $TASK_UI_NOTE_ID from $TASK_UI_NOTE_AUTHOR: $TASK_UI_NOTE"; case "$TASK_UI_NOTE" in *slow*) sleep 1;; esac; case "$TASK_UI_NOTE" in *answer*) echo "Done: $TASK_UI_NOTE" > "$TASK_UI_NOTE_REPLY";; esac; test "$TASK_UI_NOTE" != "@claude fail" && test "$TASK_UI_NOTE" != "@claude answer, fail"`}}
 	job.Name = "run"
 	f.Jobs = []*folder.Job{job}
 

@@ -71,6 +71,26 @@ func (h *Handlers) postNote(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusCreated, note)
 }
 
+// editNote puts a new body in a note, its author's or any for an admin;
+// an instruction or a prompt runs again, and the agent's reply to it
+// changes in place. The body is a NoteRequest's, whose parent it ignores.
+func (h *Handlers) editNote(w http.ResponseWriter, r *http.Request) {
+	if !h.board(w) {
+		return
+	}
+	var req NoteRequest
+	if err := readJSON(r, &req); err != nil {
+		fail(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	note, err := h.opts.Board.Edit(r.Context(), access.UserFrom(r.Context()), param(r, "id"), req.Body)
+	if err != nil {
+		failErr(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, note)
+}
+
 // commentNote replies to a note and, with a state, moves its instruction.
 func (h *Handlers) commentNote(w http.ResponseWriter, r *http.Request) {
 	if !h.board(w) {

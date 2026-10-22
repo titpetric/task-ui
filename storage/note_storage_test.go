@@ -78,3 +78,37 @@ func TestNoteStorage_Prompts(t *testing.T) {
 	none, _ := notes.List(ctx, storage.NoteFilter{Prompts: true, WorkspaceID: "ws2"})
 	assert.Len(t, none, 0)
 }
+
+// Edit changes a note's body and mentions and marks it edited; Answer
+// rewrites a reply in place, with its state and run, unmarked.
+func TestNoteStorage_Edit(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	notes := storage.NewNoteStorage(newDB(t))
+	posted := &model.Note{UserName: "ops", Body: "have a look"}
+	assert.NoError(t, notes.Create(ctx, posted))
+	assert.Nil(t, posted.EditedAt)
+
+	assert.NoError(t, notes.Edit(ctx, posted.ID, "  @alice have a look  "))
+	got, err := notes.Get(ctx, posted.ID)
+	assert.NoError(t, err)
+	assert.Equal(t, "@alice have a look", got.Body)
+	assert.True(t, got.Mentioned("alice"))
+	assert.NotNil(t, got.EditedAt)
+	assert.Error(t, notes.Edit(ctx, posted.ID, " "))
+	assert.ErrorIs(t, notes.Edit(ctx, "missing", "x"), storage.ErrNotFound)
+
+	reply := &model.Note{UserName: "claude", Body: "first", ParentID: posted.ID, RunID: "r1"}
+	assert.NoError(t, notes.Create(ctx, reply))
+	assert.NoError(t, notes.Answer(ctx, reply.ID, "first", model.NoteWorking, ""))
+	got, _ = notes.Get(ctx, reply.ID)
+	assert.Equal(t, model.NoteWorking, got.State)
+	assert.Equal(t, "r1", got.RunID)
+	assert.NoError(t, notes.Answer(ctx, reply.ID, "second", "", "r2"))
+	got, _ = notes.Get(ctx, reply.ID)
+	assert.Equal(t, "second", got.Body)
+	assert.Equal(t, "", got.State)
+	assert.Equal(t, "r2", got.RunID)
+	assert.Nil(t, got.EditedAt, "an answer run again is no edit")
+	assert.ErrorIs(t, notes.Answer(ctx, "missing", "x", "", ""), storage.ErrNotFound)
+}

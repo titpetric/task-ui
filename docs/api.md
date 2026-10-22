@@ -32,6 +32,7 @@ route or a tool only for a need these cannot serve, and states the reason.
 | `@shell` as `job` on `POST /api/runs` | **Enter Shell** in the actions bar: an admin's interactive `bash -l` in a folder's directory, or a directory inside it, which no job of a folder runs. `403` for anyone but an admin, whatever the folder allows; no schedule or workflow step takes it |
 | `POST /api/prompts` | The **Prompt** box of every folder page and every directory inside a folder: Claude Code on a prompt in that directory. `/api/workspaces/{folder}/prompt` names a workspace and no directory inside it; a prompt holds its directory alone, on either route |
 | `GET /api/prompts`, `parent` on `POST /api/prompts` and `/api/workspaces/{folder}/prompt`, the note as their answer, `workspace_id` and `dir` on notes | The prompt threads under the **Prompt** box: a prompt is a question and Claude's answer, which a run cannot carry, so a prompt is a note of the folder's workspace and place, and Claude replies to it once the run ends. A reply asks again with the thread. `/api/notes` and `list_notes` list the board's notes alone, none with a workspace. Schema `note_workspace` adds the two columns |
+| `PUT /api/notes/{id}`, `edited_at` on notes | Click to edit a note, a reply or a prompt: editing a note and running its answer again, which `POST` and comments cannot express. The note keeps its ID, and the agent's answer to it takes the new answer in place, from a run under the same run ID. Schema `note_edited` adds the column |
 | `summarize` on `POST /api/inventory/run` | **Run and summarize** on the Inventory page: Claude reads every host's output as one report, after the run, in the same request |
 
 | Method | Path | Does |
@@ -54,6 +55,7 @@ route or a tool only for a need these cannot serve, and states the reason.
 | `POST` | `/api/workflow-runs/{id}/stop` | stops the step running, skips the rest |
 | `GET` `POST` | `/api/notes?mention=&state=&limit=` | the threads, newest first, with their replies; `POST {parent_id, body}` leaves a note or a reply, and one naming the agent starts it |
 | `POST` | `/api/notes/{id}/comments` | `{body, state}`: a reply, and the instruction's state: working, done or failed |
+| `PUT` | `/api/notes/{id}` | `{body}`: a new body for a note or a reply, its author's or any for an admin, marked `edited_at`; a note to the agent, or a prompt, runs again and its answer changes in place under the same run |
 | `DELETE` | `/api/notes/{id}` | a note and its replies; its author or an admin |
 | `GET` `PUT` `DELETE` | `/api/integrations`, `/api/integrations/{id}` | the integrations, `claude` and `beszel`: `{values}` by setting name; secrets come back only as `set`, and an empty one keeps its value (admins) |
 | `GET` | `/api/inventory` | the hosts of the Beszel integration, largest first; 404 without it |

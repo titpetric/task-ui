@@ -56,3 +56,21 @@ func TestNote_Delete(t *testing.T) {
 	assert.Equal(t, http.StatusNoContent, f.call(t, asOps, http.MethodDelete, "/notes/"+id, nil).Status)
 	assert.Equal(t, http.StatusNotFound, f.call(t, asAdmin, http.MethodDelete, "/notes/"+id, nil).Status)
 }
+
+// Its author or an admin edits a note, which keeps its ID and shows
+// edited.
+func TestNote_Edit(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	id := f.call(t, asOps, http.MethodPost, "/notes", api.NoteRequest{Body: "a note"}).str("id")
+
+	edited := f.call(t, asOps, http.MethodPut, "/notes/"+id, api.NoteRequest{Body: "a note, edited"})
+	assert.Equal(t, http.StatusOK, edited.Status, string(edited.Raw))
+	assert.Equal(t, id, edited.str("id"))
+	assert.Equal(t, "a note, edited", edited.str("body"))
+	assert.NotEqual(t, "", edited.str("edited_at"))
+	assert.Equal(t, http.StatusForbidden, f.call(t, asViewer, http.MethodPut, "/notes/"+id, api.NoteRequest{Body: "mine"}).Status)
+	assert.Equal(t, http.StatusOK, f.call(t, asAdmin, http.MethodPut, "/notes/"+id, api.NoteRequest{Body: "tidied"}).Status)
+	assert.Equal(t, http.StatusBadRequest, f.call(t, asOps, http.MethodPut, "/notes/"+id, api.NoteRequest{Body: " "}).Status)
+	assert.Equal(t, http.StatusNotFound, f.call(t, asOps, http.MethodPut, "/notes/nothing", api.NoteRequest{Body: "x"}).Status)
+}

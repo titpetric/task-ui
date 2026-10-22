@@ -113,11 +113,15 @@ func (m *Manager) Start(ctx context.Context, req Request) (*Session, error) {
 	if err != nil {
 		return nil, err
 	}
-	run := m.newRun(req)
+	run := req.newRun()
 	if outOfHours {
 		run.Reason = strings.TrimSpace(req.Reason)
 	}
 	if current, err := m.acquire(run.Key(), run.Folder, req.Force); err != nil {
+		return current, err
+	}
+	if current, err := m.replace(ctx, run); err != nil {
+		m.release(run.Key(), nil)
 		return current, err
 	}
 	if err := m.opts.Runs.Create(ctx, run); err != nil {
@@ -149,33 +153,6 @@ func (m *Manager) publish(run model.Run) {
 	if m.Events != nil {
 		m.Events.Publish(RunsTopic, "run", run)
 	}
-}
-
-func (m *Manager) newRun(req Request) *model.Run {
-	run := &model.Run{
-		Folder:   req.Folder.ID,
-		Job:      req.Job.ID,
-		Dir:      req.Job.Dir,
-		Args:     model.EncodeList(req.Args),
-		TermCols: int64(req.Cols),
-		TermRows: int64(req.Rows),
-	}
-	if req.User != nil {
-		run.UserID, run.UserName = req.User.ID, req.User.Name
-	}
-	if req.Force {
-		run.Forced = 1
-	}
-	if req.Scheduled {
-		run.Scheduled = 1
-	}
-	if run.TermCols < 20 || run.TermCols > 500 {
-		run.TermCols = 120
-	}
-	if run.TermRows < 5 || run.TermRows > 200 {
-		run.TermRows = 30
-	}
-	return run
 }
 
 // acquire takes the lock of a key, killing the holder when forced. A

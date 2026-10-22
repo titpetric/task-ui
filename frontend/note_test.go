@@ -66,3 +66,24 @@ func TestNotes_runLink(t *testing.T) {
 	assert.Contains(t, ops, "Tidied.")
 	assert.Contains(t, ops, link(web.ID))
 }
+
+// A note's text carries the edit hook for its author and the admins, and
+// an edited note says so; the agent's answer has none.
+func TestNotes_edit(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	ctx := context.Background()
+	note, err := f.opts.Board.Post(ctx, f.users[asOps], "", "@claude tidy up")
+	assert.NoError(t, err)
+	assert.NoError(t, f.opts.Board.Notes.Edit(ctx, note.ID, "@claude tidy up, twice"))
+	answer := &model.Note{Channel: model.ChannelNotes, ParentID: note.ID, UserName: f.opts.Board.Answerer(), Body: "Tidied."}
+	assert.NoError(t, f.opts.Board.Notes.Create(ctx, answer))
+
+	hook := `data-edit="` + note.ID + `" data-body="@claude tidy up, twice"`
+	ops := f.page(t, asOps, "/notes")
+	assert.Contains(t, ops, hook)
+	assert.Contains(t, ops, `class="faint edited"`)
+	assert.Contains(t, f.page(t, asAdmin, "/notes"), hook)
+	assert.NotContains(t, f.page(t, asViewer, "/notes"), hook)
+	assert.NotContains(t, f.page(t, asAdmin, "/notes"), `data-edit="`+answer.ID+`"`)
+}
