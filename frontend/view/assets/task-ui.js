@@ -79,12 +79,12 @@
   })();
 
   // folderHref returns the path of a folder's page, as Page.Href does: a
-  // folder of a named workspace, or of internal, by its ID, a project at
-  // the root under /f/_/.
+  // folder of a named workspace by its ID, a project at the root under
+  // /f/_/.
   function folderHref(id) {
     var top = String(id).split("/")[0];
     if (id === "_") return "/f/_";
-    if (top === "internal" || Object.prototype.hasOwnProperty.call(workspaces, top)) return "/f/" + id;
+    if (Object.prototype.hasOwnProperty.call(workspaces, top)) return "/f/" + id;
     return "/f/_/" + id;
   }
 

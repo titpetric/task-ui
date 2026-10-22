@@ -33,7 +33,7 @@ func (p *Page) HeaderPrompt() HeaderPrompt {
 		if model.IsInternal(run.Folder) {
 			return root
 		}
-		if run.IsPrompt() {
+		if run.IsClaude() {
 			return p.headerPlace(run.Folder, run.Dir, root)
 		}
 		place := p.headerPlace(run.Folder, run.Dir, root)
@@ -56,7 +56,7 @@ func (p *Page) HeaderPrompt() HeaderPrompt {
 }
 
 // headerPlace is the header's prompt in a folder and a directory inside
-// it; the root for _ or the internal folder.
+// it; the root for _ or the internal folder of older runs.
 func (p *Page) headerPlace(folderID, dir string, root HeaderPrompt) HeaderPrompt {
 	if folderID == model.Default && dir == "" || model.IsInternal(folderID) || folderID == "" {
 		return root

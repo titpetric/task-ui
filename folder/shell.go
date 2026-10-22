@@ -17,10 +17,6 @@ func (f *Folder) ShellJob() *Job {
 	if f == nil {
 		return nil
 	}
-	where := f.ID
-	if f.Rel != "" {
-		where += "/" + f.Rel
-	}
 	job := &Job{
 		Folder:  f.ID,
 		Dir:     f.Rel,
@@ -30,16 +26,17 @@ func (f *Folder) ShellJob() *Job {
 		Allow:   []string{model.RoleAdmin},
 	}
 	job.Name = "shell"
-	job.Description = "An interactive login shell in " + where + "/"
+	job.Description = "An interactive login shell in " + f.where() + "/"
 	job.Interactive = true
 	return job
 }
 
-// ErrShellUnattended refuses the shell job where no one is at the
+// ErrShellUnattended refuses a shell job where no one is at the
 // keyboard: a schedule or a workflow step.
 var ErrShellUnattended = errors.New("an interactive shell runs with an admin at the keyboard: no schedule or workflow step takes it")
 
-// IsShell reports whether the job is a folder's shell job.
+// IsShell reports whether the job is one of a folder's shells, @shell or
+// @claude: a terminal for an admin, which the shell permission gates.
 func (j *Job) IsShell() bool {
-	return j != nil && j.ID == ShellID && j.Kind == "shell"
+	return j != nil && (j.ID == ShellID || j.ID == ClaudeID) && j.Kind == "shell"
 }

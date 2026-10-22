@@ -15,7 +15,5 @@ func TestFolderHref(t *testing.T) {
 	assert.Equal(t, "/f/acme", view.FolderHref("acme", workspaces))
 	assert.Equal(t, "/f/acme/api", view.FolderHref("acme/api", workspaces))
 	assert.Equal(t, "/f/_/acmes", view.FolderHref("acmes", workspaces))
-	assert.Equal(t, "/f/internal", view.FolderHref("internal", workspaces))
-	assert.Equal(t, "/f/internal/tools", view.FolderHref("internal/tools", nil))
 	assert.Equal(t, "/f/_", view.FolderHref("_", workspaces))
 }

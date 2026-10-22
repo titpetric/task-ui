@@ -50,7 +50,7 @@ func (h *Handlers) promptPlace(r *http.Request, folderID, dir string) (string, s
 		return model.Default, ""
 	}
 	f := h.visibleFolder(access.UserFrom(r.Context()), folderID)
-	if f == nil || model.IsInternal(f.ID) {
+	if f == nil {
 		return "", "no such folder"
 	}
 	at, ok := f.Path(dir)

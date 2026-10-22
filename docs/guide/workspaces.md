@@ -372,7 +372,7 @@ the file Claude writes its answer to in `TASK_UI_PROMPT_REPLY`.
 `task-ui agent prompt` works in `TASK_UI_PROMPT_DIR`, which a prompt of a
 folder or a directory sets, or else in `TASK_UI_WORKSPACE_DIR`, and exits
 with an error when the prompt or both directories are empty. The run
-lists under Runs like any other, in the internal folder only admins see.
+lists under Runs as the workspace's, `malta/@claude-prompt`.
 
 ```sh
 curl -s -X POST https://task.example.com/api/workspaces/malta/prompt \

@@ -35,9 +35,9 @@ func TestCatalogue(t *testing.T) {
 	projects := storage.NewProjectStorage(db)
 	var c folder.Catalogue = app.NewCatalogue(root, true, projects)
 	list := c.List()
-	assert.Len(t, list, 3)
-	assert.Equal(t, model.Internal, list[0].ID, "the internal folder comes first")
-	assert.Equal(t, "infra", list[1].ID)
+	assert.Len(t, list, 2)
+	assert.Equal(t, "infra", list[0].ID)
+	assert.Nil(t, c.Find(model.Internal), "no internal folder")
 	assert.Equal(t, "site", c.Find("site").ID)
 	assert.Nil(t, c.Find("nowhere"))
 
@@ -49,11 +49,11 @@ func TestCatalogue(t *testing.T) {
 
 	// Without discovery the catalogue lists only configured folders.
 	narrow := app.NewCatalogue(root, false, projects)
-	assert.Len(t, narrow.List(), 2)
-	assert.Equal(t, "infra", narrow.List()[1].ID)
+	assert.Len(t, narrow.List(), 1)
+	assert.Equal(t, "infra", narrow.List()[0].ID)
 
 	bare := app.NewCatalogue(root, true, nil)
-	assert.Len(t, bare.List(), 3)
+	assert.Len(t, bare.List(), 2)
 }
 
 // A shallow project row cuts the catalogue at the project's top-level
@@ -82,8 +82,8 @@ func TestCatalogue_Shallow(t *testing.T) {
 	assert.Equal(t, "admin", rest)
 }
 
-// The internal folder holds the host commands, with the agent's user on
-// the notes job; no directory or project row takes its place.
+// No folder is internal: a directory or a project row of the name
+// lists nothing, as the folder of older runs.
 func TestCatalogue_internal(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
@@ -96,17 +96,8 @@ func TestCatalogue_internal(t *testing.T) {
 	projects := storage.NewProjectStorage(db)
 	assert.NoError(t, projects.Create(ctx, &model.Project{Folder: "internal/tools", Title: "Tools"}))
 
-	c := &app.Catalogue{Root: root, Discover: true, Projects: projects, Agent: "claude"}
-	internal := c.Find(model.Internal)
-	assert.NotNil(t, internal)
-	assert.Equal(t, root, internal.Dir)
-	assert.Len(t, internal.Jobs, 3)
-	assert.Equal(t, []string{"claude"}, internal.Job("claude-note").Allow)
-	assert.Equal(t, []string{"admin"}, internal.Job("claude-prompt").Allow)
-	assert.True(t, internal.Job("claude").Interactive)
+	c := app.NewCatalogue(root, true, projects)
+	assert.Nil(t, c.Find(model.Internal))
 	assert.Nil(t, c.Find("internal/tools"))
-
-	list := c.List()
-	assert.Len(t, list, 1)
-	assert.Equal(t, model.Internal, list[0].ID)
+	assert.Len(t, c.List(), 0)
 }

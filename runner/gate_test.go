@@ -77,8 +77,8 @@ func TestManager_GateJobAndSchedule(t *testing.T) {
 }
 
 // A prompt's run, @claude-prompt in the folder it asks in, takes no
-// hours of the folder and gets the internal folder's secrets, not the
-// folder's own; its row names the folder, the directory and the job.
+// hours of the folder and gets the folder's secrets, as any job there
+// does; its row names the folder, the directory and the job.
 func TestManager_PromptJob(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
@@ -98,7 +98,7 @@ func TestManager_PromptJob(t *testing.T) {
 	assert.NoError(t, err, "out of the folder's hours")
 	out, status := collect(t, session.Attach(true))
 	assert.Equal(t, model.StateOK, status.State)
-	assert.Contains(t, out, "[shared][] @claude-prompt")
+	assert.Contains(t, out, "[shared][own] @claude-prompt")
 	run := session.Snapshot()
 	assert.Equal(t, "asked", run.Folder)
 	assert.Equal(t, folder.PromptID, run.Job)

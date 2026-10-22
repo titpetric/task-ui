@@ -4,9 +4,18 @@ import (
 	"time"
 )
 
-// PromptJob is the job ID of a prompt's run, in the folder and the
-// directory the prompt asks in, as @shell is a folder's shell.
-const PromptJob = "@claude-prompt"
+// The job IDs of the Claude built-ins, which every folder has beside
+// @shell.
+const (
+	// PromptJob is the job of a prompt's run, in the folder and the
+	// directory the prompt asks in.
+	PromptJob = "@claude-prompt"
+	// NoteJob is the job of the Notes agent's run, in the root, _.
+	NoteJob = "@claude-note"
+	// ClaudeJob is Claude Code in a terminal, in the folder or a
+	// directory inside it.
+	ClaudeJob = "@claude"
+)
 
 // IsPrompt reports whether the run is a prompt's: @claude-prompt, or
 // internal/claude-prompt, which ran the prompts of older threads.
@@ -15,6 +24,25 @@ func (r *Run) IsPrompt() bool {
 		return false
 	}
 	return r.Job == PromptJob || (IsInternal(r.Folder) && r.Job == "claude-prompt")
+}
+
+// IsNote reports whether the run is the Notes agent's: @claude-note, or
+// internal/claude-note, which ran the instructions of older notes.
+func (r *Run) IsNote() bool {
+	if r == nil {
+		return false
+	}
+	return r.Job == NoteJob || (IsInternal(r.Folder) && r.Job == "claude-note")
+}
+
+// IsClaude reports whether the run is one of Claude's own: a prompt's,
+// the Notes agent's, Claude Code in a terminal, or any run of the
+// internal folder the older ones carry. No prompt asks about one.
+func (r *Run) IsClaude() bool {
+	if r == nil {
+		return false
+	}
+	return r.IsPrompt() || r.IsNote() || r.Job == ClaudeJob || IsInternal(r.Folder)
 }
 
 // Key is the identity the run lock uses: one run per job per folder

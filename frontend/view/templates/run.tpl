@@ -37,9 +37,9 @@
 	<div class="table-wrap">
 	<table class="table table-kv">
 		<tbody>
-			<tr><th>Folder</th><td><a href="{{ $.Href $run.Folder }}"><svg class="ic"><use href="#i-folder"/></svg> {{ $run.Folder }}</a></td></tr>
-			{{- with $run.Dir }}<tr><th>Directory</th><td><a href="{{ $.Href $run.Folder }}/{{ . }}"><svg class="ic"><use href="#i-folder-open"/></svg> {{ . }}/</a> <span class="dim">the job ran here</span></td></tr>{{ end }}
-			<tr><th>Job</th><td><a href="{{ $.Href $run.Folder }}/{{ with $run.Dir }}{{ . }}/{{ end }}{{ $run.Job }}">{{ $run.Job }}</a></td></tr>
+			<tr><th>Folder</th><td>{{ with $.RunFolderHref $run.Folder "" }}<a href="{{ . }}"><svg class="ic"><use href="#i-folder"/></svg> {{ $run.Folder }}</a>{{ else }}{{ $run.Folder }}{{ end }}</td></tr>
+			{{- with $run.Dir }}<tr><th>Directory</th><td><a href="{{ $.RunFolderHref $run.Folder . }}"><svg class="ic"><use href="#i-folder-open"/></svg> {{ . }}/</a> <span class="dim">the job ran here</span></td></tr>{{ end }}
+			<tr><th>Job</th><td>{{ with $.RunJobHref $run.Folder $run.Dir $run.Job }}<a href="{{ . }}">{{ $run.Job }}</a>{{ else }}{{ $run.Job }}{{ end }}</td></tr>
 			{{- with $run.ArgList }}<tr><th>Arguments</th><td>{{ range . }}<code>{{ . }}</code> {{ end }}<span class="dim">after --, one argument each</span></td></tr>{{ end }}
 			<tr><th>By</th><td>{{ template "who" (list $ $run) }}</td></tr>
 			<tr><th>Started</th><td>{{ stamp $run.StartedAt }}</td></tr>

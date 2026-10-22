@@ -166,7 +166,8 @@ on load.
 ![The actions bar of a directory: the git line, then git, compose and dockerfile chips](../assets/actions-dark.png)
 
 The bar under a folder's title, and under a directory's inside a folder,
-has two parts, and at its top right for an admin **Enter Shell**, with
+has two parts, and at its top right for an admin **Enter Shell** and,
+with a Claude token, **Enter Claude**, with
 **Workspace Settings** on a workspace's own page, `/f/_` among them, and
 **Project Settings** on a project's own page, links to their settings
 pages. A directory inside them has neither link.
@@ -232,6 +233,18 @@ Only an admin starts a shell: `POST /api/runs` with `@shell` answers
 button shows to admins alone. No schedule or workflow step takes
 `@shell`: there is no one at its keyboard.
 
+### Enter Claude
+
+Beside it, an admin with a token in the
+[Claude Code integration](settings.md#integrations) gets **Enter
+Claude**: Claude Code in a terminal in the folder's directory, or in the
+directory the page browses, the job `@claude` of the folder, which runs
+`task-ui agent shell`, a shell as `@shell` is: the **Enter Shell**
+permission gates it, `POST /api/runs` with `@claude` answers `403` to
+anyone without it, no schedule or workflow step takes it, and it pulls
+nothing. Claude reads the `CLAUDE.md` and `.claude/` of that directory
+and above, and the run's history keeps under the directory.
+
 ### Prompt
 
 An admin with a token in the [Claude Code integration](settings.md#integrations)
@@ -273,8 +286,8 @@ its `@shell` is: `malta/dockerfiles/blog/@claude-prompt`, folder `malta`,
 `dir` `dockerfiles/blog` and job `@claude-prompt`, with the absolute
 directory in `TASK_UI_PROMPT_DIR`; the recents and the runs list show it
 under the folder. A prompt at the root runs as `_/@claude-prompt`. The
-run takes no hours or secrets of the folder: it gets the environment of
-`internal/claude-prompt`, whose command it runs, and no `POST /api/runs`
+run gets the secrets of the folder, as its other jobs do, and runs out of
+its hours too, as it runs none of the folder's jobs; no `POST /api/runs`
 starts it, as a prompt needs its thread. Who sees the folder sees its
 prompt runs with the `prompt/view` permission; who asks always sees
 theirs, and may stop it. One prompt runs per directory: another there

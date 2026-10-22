@@ -20,8 +20,8 @@ import (
 func TestPrompts(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
-	promptFolder(t, f)
-	out := filepath.Join(f.root, model.Internal, "env.out")
+	promptCommand(t, f)
+	out := promptOut(f, "env.out")
 	infra := filepath.Join(f.root, "infra")
 
 	for _, user := range []string{asOps, asViewer, asLimited} {
@@ -135,7 +135,7 @@ func TestPrompts(t *testing.T) {
 func TestPrompts_ByPermission(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
-	promptFolder(t, f)
+	promptCommand(t, f)
 	ctx := t.Context()
 	assert.NoError(t, f.opts.Users.Policies().Put(ctx, "user", asOps, "prompt/edit", "allow"))
 
@@ -177,7 +177,7 @@ func TestPrompts_ByPermission(t *testing.T) {
 func TestPrompts_AboutRun(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
-	promptFolder(t, f)
+	promptCommand(t, f)
 	f.opts.Catalogue.(catalogue)["logs"] = shellFolder(t, f.root, "logs", map[string]string{"long": "seq 1 2600; exit 4"})
 	about := f.finished(t, f.start(t, asAdmin, "logs", "long"))
 	assert.Equal(t, model.StateFailed, about.State)
@@ -199,7 +199,7 @@ func TestPrompts_AboutRun(t *testing.T) {
 	refused := f.call(t, asAdmin, http.MethodPost, "/prompts", api.PromptRequest{Run: prompt.ID, Prompt: "why"})
 	assert.Equal(t, http.StatusNotFound, refused.Status, "no prompt about a prompt's run")
 
-	text, err := os.ReadFile(filepath.Join(f.root, model.Internal, "run.out"))
+	text, err := os.ReadFile(promptOut(f, "run.out"))
 	assert.NoError(t, err)
 	got := string(text)
 	assert.Contains(t, got, "Run "+about.ID+" of the job long in logs, by admin.\nState: failed, exit code 4.\n")
@@ -214,7 +214,7 @@ func TestPrompts_AboutRun(t *testing.T) {
 	assert.Len(t, f.call(t, asAdmin, http.MethodGet, "/prompts?folder=logs", nil).list("notes"), 0, "the directory lists its own prompts")
 
 	// A reply asks again about the same run.
-	assert.NoError(t, os.Remove(filepath.Join(f.root, model.Internal, "run.out")))
+	assert.NoError(t, os.Remove(promptOut(f, "run.out")))
 	again := f.call(t, asAdmin, http.MethodPost, "/prompts", api.PromptRequest{Parent: asked.ID, Prompt: "and then"})
 	assert.Equal(t, http.StatusCreated, again.Status, string(again.Raw))
 	assert.Equal(t, about.ID, again.str("about_run_id"))
@@ -222,7 +222,7 @@ func TestPrompts_AboutRun(t *testing.T) {
 		replies := f.call(t, asAdmin, http.MethodGet, "/prompts?run="+about.ID, nil).list("notes")[0].(map[string]any)["replies"].([]any)
 		return len(replies) == 3
 	}, 10*time.Second, 20*time.Millisecond)
-	assert.FileExists(t, filepath.Join(f.root, model.Internal, "run.out"))
+	assert.FileExists(t, promptOut(f, "run.out"))
 
 	// A run the user does not see, or one of the internal folder, has no
 	// prompt.

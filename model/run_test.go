@@ -58,3 +58,26 @@ func TestRun_IsPrompt(t *testing.T) {
 	assert.False(t, (&model.Run{Folder: "malta", Job: "@shell"}).IsPrompt())
 	assert.False(t, (*model.Run)(nil).IsPrompt())
 }
+
+func TestRun_IsNote(t *testing.T) {
+	t.Parallel()
+	assert.True(t, (&model.Run{Folder: model.Default, Job: model.NoteJob}).IsNote())
+	assert.True(t, (&model.Run{Folder: model.Internal, Job: "claude-note"}).IsNote(), "an older note's run")
+	assert.False(t, (&model.Run{Folder: "malta", Job: "claude-note"}).IsNote())
+	assert.False(t, (&model.Run{Folder: "malta", Job: model.PromptJob}).IsNote())
+	assert.False(t, (*model.Run)(nil).IsNote())
+}
+
+func TestRun_IsClaude(t *testing.T) {
+	t.Parallel()
+	for _, run := range []*model.Run{
+		{Folder: "malta", Job: model.PromptJob},
+		{Folder: model.Default, Job: model.NoteJob},
+		{Folder: "malta", Dir: "dockerfiles", Job: model.ClaudeJob},
+		{Folder: model.Internal, Job: "claude"},
+	} {
+		assert.True(t, run.IsClaude(), run.Key())
+	}
+	assert.False(t, (&model.Run{Folder: "malta", Job: "@shell"}).IsClaude())
+	assert.False(t, (*model.Run)(nil).IsClaude())
+}

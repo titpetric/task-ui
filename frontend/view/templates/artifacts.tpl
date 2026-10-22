@@ -76,11 +76,11 @@
 	<table class="table">
 		<thead><tr><th>Created</th><th>Folder</th><th>Job</th><th>Run</th><th>Name</th><th class="hide-sm">Version</th><th>Size</th><th></th></tr></thead>
 		<tbody>
-		{{- range .Artifacts }}
+		{{- range .Artifacts }}{{ $a := . }}
 			<tr>
 				<td class="nowrap" title="{{ stamp .CreatedAt }}">{{ ago .CreatedAt }}</td>
-				<td><a href="{{ $.Href .Folder }}">{{ .Folder }}</a></td>
-				<td><a href="{{ $.Href .Folder }}/{{ .Job }}">{{ .Job }}</a></td>
+				<td>{{ with $.RunFolderHref .Folder "" }}<a href="{{ . }}">{{ $a.Folder }}</a>{{ else }}{{ .Folder }}{{ end }}</td>
+				<td>{{ with $.RunJobHref .Folder "" .Job }}<a href="{{ . }}">{{ $a.Job }}</a>{{ else }}{{ .Job }}{{ end }}</td>
 				<td><a class="faint mono" href="/runs/{{ .RunID }}" title="{{ .RunID }}">{{ slice .RunID 0 8 }}</a></td>
 				<td class="key">{{ if .CommitID }}<a href="/artifacts/files/{{ .Path }}?version={{ .CommitID }}" data-artifact="{{ .Path }}" data-version="{{ .CommitID }}" title="View this version">{{ .Name }}</a>{{ else }}<a href="/api/artifacts/{{ .ID }}">{{ .Name }}</a>{{ end }}</td>
 				<td class="hide-sm">{{ if .CommitID }}<span class="faint mono" title="{{ .CommitID }}">{{ slice .CommitID 0 7 }}</span>{{ else }}<span class="faint">kept apart</span>{{ end }}</td>

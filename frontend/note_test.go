@@ -41,8 +41,9 @@ func TestNotes(t *testing.T) {
 	assert.NotContains(t, viewer, `data-delete="/api/notes/`+first.ID+`"`)
 }
 
-// A note links the agent's run for the users who see it: the runs of the
-// internal folder are the admins'.
+// A note links the agent's run for the users who see it: the older runs
+// of the internal folder are the admins', the Notes agent's take
+// note/view.
 func TestNotes_runLink(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)

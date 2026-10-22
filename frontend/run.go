@@ -110,10 +110,10 @@ func (h *Handlers) run(w http.ResponseWriter, r *http.Request) {
 
 // runPrompt returns the prompt box of a run's page with the threads
 // about the run: to ask, for a user with prompt/edit and a Claude token
-// once the run ended; to read them only, with prompt/view. None for a
-// run of the internal folder, nor for a prompt's own run.
+// once the run ended; to read them only, with prompt/view. None for one
+// of Claude's own runs.
 func (h *Handlers) runPrompt(r *http.Request, p *view.Page, run *view.Run) *view.Prompt {
-	if h.opts.Board == nil || model.IsInternal(run.Folder) || run.IsPrompt() || !p.Can("prompt/view") {
+	if h.opts.Board == nil || run.IsClaude() || !p.Can("prompt/view") {
 		return nil
 	}
 	prompt := view.PromptAbout(run.ID, run.Where())

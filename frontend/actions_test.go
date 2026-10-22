@@ -2,6 +2,7 @@ package frontend_test
 
 import (
 	"context"
+	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -151,6 +152,30 @@ func TestFolder_Shell(t *testing.T) {
 		assert.NotContains(t, f.page(t, user, "/f/_/infra"), button, user)
 		assert.NotContains(t, f.page(t, user, "/f/_/infra/images"), button, user)
 	}
+}
+
+// Enter Claude sits beside Enter Shell, for an admin with a Claude
+// token: @claude of the folder or of the directory inside it.
+func TestFolder_Claude(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	ctx := context.Background()
+	assert.NoError(t, os.MkdirAll(filepath.Join(f.infra.Dir, "images"), 0o755))
+	const button = `data-job="@claude"`
+
+	assert.NotContains(t, f.page(t, asAdmin, "/f/_/infra"), button, "no Claude token")
+	f.withKey(t)
+	assert.NoError(t, f.opts.Integrations.Save(ctx, integration.Claude, map[string]string{"token": "sk-1"}))
+	admin := f.page(t, asAdmin, "/f/_/infra")
+	assert.Contains(t, admin, `data-folder="infra" data-job="@claude" data-title="infra / claude"`)
+	assert.Contains(t, admin, ">Enter Claude</button>")
+	assert.Contains(t, admin, ">Enter Shell</button>")
+	browse := f.page(t, asAdmin, "/f/_/infra/images")
+	assert.Contains(t, browse, `data-dir="images" data-job="@claude" data-title="infra/images / claude"`)
+	for _, user := range []string{asOps, asViewer, asLimited} {
+		assert.NotContains(t, f.page(t, user, "/f/_/infra"), button, user)
+	}
+	assert.Equal(t, http.StatusOK, f.get(t, asAdmin, "/f/_/infra/@claude").Status, "its job page")
 }
 
 // An admin's actions bar links the settings of the workspace or the

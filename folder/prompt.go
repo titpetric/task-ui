@@ -1,8 +1,6 @@
 package folder
 
 import (
-	"os"
-
 	"github.com/titpetric/task-ui/model"
 )
 
@@ -19,23 +17,15 @@ func (f *Folder) PromptJob() *Job {
 	if f == nil {
 		return nil
 	}
-	exe, err := os.Executable()
-	if err != nil {
-		exe = "task-ui"
-	}
-	where := f.ID
-	if f.Rel != "" {
-		where += "/" + f.Rel
-	}
 	job := &Job{
 		Folder:  f.ID,
 		Dir:     f.Rel,
 		ID:      PromptID,
 		Kind:    "prompt",
-		Command: []string{exe, "agent", "prompt"},
+		Command: []string{executable(), "agent", "prompt"},
 	}
 	job.Name = "claude-prompt"
-	job.Description = "Claude Code on a prompt in " + where + "/"
+	job.Description = "Claude Code on a prompt in " + f.where() + "/"
 	return job
 }
 

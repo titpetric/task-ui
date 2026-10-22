@@ -5,17 +5,20 @@ import (
 
 	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/frontend/view"
-	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/storage"
 )
 
 // actions builds the actions bar of a place, a folder or the folder of a
 // directory inside one: the git line of its checkout, its skills and its
-// own atkins jobs, and with the shell permission Enter Shell.
-func (h *Handlers) actions(p *view.Page, place *folder.Folder) *view.Actions {
+// own atkins jobs, and with the shell permission Enter Shell, and Enter
+// Claude with a Claude token besides.
+func (h *Handlers) actions(r *http.Request, p *view.Page, place *folder.Folder) *view.Actions {
 	a := &view.Actions{Place: place, Self: h.opts.ComposeProject, Skills: place.Skills()}
 	if p.Can("shell") {
 		a.Shell = place.ShellJob()
+		if h.claudeFor(r, p.User) {
+			a.Claude = place.ClaudeJob()
+		}
 	}
 	if h.opts.Git != nil && h.opts.Root != "" {
 		a.Git = h.opts.Git.Status(place.Dir, h.opts.Root)
@@ -30,9 +33,9 @@ func (h *Handlers) actions(p *view.Page, place *folder.Folder) *view.Actions {
 
 // prompt returns the prompt box of a folder, or of a directory inside
 // it, with the threads asked there: for a user with prompt/edit and a
-// Claude token, none in the internal folder.
+// Claude token.
 func (h *Handlers) prompt(r *http.Request, p *view.Page, f *folder.Folder, rel string) *view.Prompt {
-	if !p.Can("prompt/edit") || model.IsInternal(f.ID) || !h.claudeFor(r, p.User) {
+	if !p.Can("prompt/edit") || !h.claudeFor(r, p.User) {
 		return nil
 	}
 	return h.withThreads(r, view.PromptIn(f.ID, rel))
