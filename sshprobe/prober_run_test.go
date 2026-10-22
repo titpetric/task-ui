@@ -2,7 +2,6 @@ package sshprobe_test
 
 import (
 	"context"
-	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -18,7 +17,7 @@ func runSSH(t *testing.T) string {
 	t.Helper()
 	script := filepath.Join(t.TempDir(), "ssh")
 	body := "#!/bin/sh\nlogin=$(eval echo \\${$(($# - 1))})\nremote=$(eval echo \\${$#})\ncase \"$login\" in debian@a|debian@slow) exec sh -c \"$remote\";; esac\necho 'ssh: connect refused' >&2\nexit 255\n"
-	assert.NoError(t, os.WriteFile(script, []byte(body), 0o755))
+	writeScript(t, script, body)
 	return script
 }
 
