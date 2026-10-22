@@ -22,6 +22,18 @@ func TestWorkflow(t *testing.T) {
 	assert.Equal(t, "push", view.Chain(w.Steps, nil)[1].Text)
 	assert.True(t, w.CanRun)
 	assert.False(t, w.CanChange)
+	assert.False(t, w.Prompted())
+	assert.Equal(t, "the root", w.PromptWhere())
+
+	w.Prompt, w.PromptFolder = "summarize", "infra/app"
+	w.Steps[1].Disabled = true
+	assert.True(t, w.Prompted())
+	assert.Equal(t, "infra/app/", w.PromptWhere())
+	assert.True(t, view.Chain(w.Steps, nil)[1].Disabled)
+	box := view.PromptOfWorkflowRun("wr1", "infra/app", w.PromptWhere())
+	assert.True(t, box.Watch)
+	assert.Equal(t, "infra/app", box.Place)
+	assert.Equal(t, "wr1", box.WorkflowRun)
 }
 
 // A run of a workflow carries the states of its steps.

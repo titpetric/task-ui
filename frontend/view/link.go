@@ -16,6 +16,8 @@ type Link struct {
 	Workflow      bool
 	WorkflowID    string
 	WorkflowRunID string
+	// Disabled is a step the workflow's runs skip.
+	Disabled bool
 	// Sub is the chain of the run the step made of a workflow, when the
 	// page shows it.
 	Sub []Link

@@ -57,11 +57,14 @@ type Board struct {
 	Notes *storage.NoteStorage
 	Users *storage.UserStorage
 	// Runs reads the run a prompt asks about; nil turns those off.
-	Runs       *storage.RunStorage
-	Catalogue  folder.Catalogue
-	Runner     *runner.Manager
-	Recordings *recording.Store
-	Events     *event.Bus
+	Runs *storage.RunStorage
+	// WorkflowRuns reads the workflow run whose prompt a thread asks;
+	// nil turns workflow prompts off.
+	WorkflowRuns *storage.WorkflowRunStorage
+	Catalogue    folder.Catalogue
+	Runner       *runner.Manager
+	Recordings   *recording.Store
+	Events       *event.Bus
 	// Agent is the user name a note names to have the board run the
 	// agent job on it; empty leaves every instruction to MCP.
 	Agent string
@@ -106,7 +109,7 @@ func (b *Board) Post(ctx context.Context, user *model.User, parentID, body strin
 	}
 	note := &model.Note{Channel: model.ChannelNotes, ParentID: parentID, UserID: user.ID, UserName: user.Name, Body: body}
 	if parent != nil && parent.IsPrompt() {
-		note.WorkspaceID, note.Dir, note.AboutRunID = parent.WorkspaceID, parent.Dir, parent.AboutRunID
+		note.WorkspaceID, note.Dir, note.AboutRunID, note.AboutWorkflowRunID = parent.WorkspaceID, parent.Dir, parent.AboutRunID, parent.AboutWorkflowRunID
 		if err := b.Notes.Create(ctx, note); err != nil {
 			return nil, err
 		}
@@ -228,7 +231,7 @@ func (b *Board) dispatch(note, again *model.Note) {
 			"TASK_UI_NOTE_REPLY=" + answer,
 		},
 	}
-	go b.run(note, req, answer, "The agent job", again)
+	go b.run(context.Background(), note, req, answer, "The agent job", again)
 }
 
 // run starts a request for a note and replies when the run ends: with
@@ -237,14 +240,15 @@ func (b *Board) dispatch(note, again *model.Note) {
 // in a directory at a time: the note waits for the run in the way, then
 // starts its own. An answer run again, again, takes the ID of its run
 // when that run is of the same job and place, else a new one, and shows
-// working until the new answer takes its place.
-func (b *Board) run(note *model.Note, req runner.Request, answer, what string, again *model.Note) {
+// working until the new answer takes its place. A stop ends the run,
+// and the note fails with how it ended.
+func (b *Board) run(stop context.Context, note *model.Note, req runner.Request, answer, what string, again *model.Note) {
 	ctx := context.Background()
 	defer os.Remove(answer)
 	if again != nil {
 		req.ID = again.RunID
 	}
-	session, err := b.start(ctx, req)
+	session, err := b.start(stop, req)
 	if again != nil {
 		// The reply as it stands once the run in the way ends, or a new
 		// reply when someone deleted it.
@@ -270,7 +274,12 @@ func (b *Board) run(note *model.Note, req runner.Request, answer, what string, a
 		again.State, again.RunID = model.NoteWorking, session.ID()
 		b.publish(again)
 	}
-	<-session.Done()
+	select {
+	case <-session.Done():
+	case <-stop.Done():
+		_ = b.Runner.Stop(session.ID())
+		<-session.Done()
+	}
 	status := session.Status()
 	state := model.NoteDone
 	if status.State != model.StateOK {
@@ -289,13 +298,18 @@ func (b *Board) run(note *model.Note, req runner.Request, answer, what string, a
 
 // start starts a request, after the run in the way of its job ends, or
 // a moment later while that run is still starting and has no session;
-// a run ID the request may not take turns into a new one.
-func (b *Board) start(ctx context.Context, req runner.Request) (*runner.Session, error) {
+// a run ID the request may not take turns into a new one. A stop while
+// it waits starts nothing.
+func (b *Board) start(stop context.Context, req runner.Request) (*runner.Session, error) {
+	ctx := context.Background()
 	session, err := b.Runner.Start(ctx, req)
 	for {
 		switch {
 		case errors.Is(err, runner.ErrBusy) && session != nil:
-			<-session.Done()
+			select {
+			case <-session.Done():
+			case <-stop.Done():
+			}
 		case errors.Is(err, runner.ErrBusy):
 			time.Sleep(50 * time.Millisecond)
 		case errors.Is(err, runner.ErrReuse) && req.ID != "":
@@ -303,6 +317,9 @@ func (b *Board) start(ctx context.Context, req runner.Request) (*runner.Session,
 			req.ID = ""
 		default:
 			return session, err
+		}
+		if stop.Err() != nil {
+			return nil, stop.Err()
 		}
 		session, err = b.Runner.Start(ctx, req)
 	}
@@ -372,7 +389,10 @@ func (b *Board) answer(ctx context.Context, note, again *model.Note, body string
 
 // reply replies to a note as the agent, with the note's run.
 func (b *Board) reply(ctx context.Context, note *model.Note, body string) {
-	reply := &model.Note{Channel: note.Channel, ParentID: note.ID, UserName: b.Answerer(), Body: body, RunID: note.RunID, WorkspaceID: note.WorkspaceID, Dir: note.Dir, AboutRunID: note.AboutRunID}
+	reply := &model.Note{
+		Channel: note.Channel, ParentID: note.ID, UserName: b.Answerer(), Body: body, RunID: note.RunID,
+		WorkspaceID: note.WorkspaceID, Dir: note.Dir, AboutRunID: note.AboutRunID, AboutWorkflowRunID: note.AboutWorkflowRunID,
+	}
 	if agent, err := b.Users.GetByName(ctx, reply.UserName); err == nil {
 		reply.UserID = agent.ID
 	}

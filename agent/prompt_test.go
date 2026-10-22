@@ -106,6 +106,26 @@ func TestAgent_Prompt_run(t *testing.T) {
 	assert.Error(t, a.Run(context.Background(), []string{"prompt"}))
 }
 
+// A workflow run's prompt reaches Claude after the run's steps, from
+// the file TASK_UI_PROMPT_WORKFLOW names, told to change nothing the
+// prompt does not name; a file that is not there fails the prompt.
+func TestAgent_Prompt_workflow(t *testing.T) {
+	t.Parallel()
+	here := realDir(t)
+	run := filepath.Join(t.TempDir(), "workflow.md")
+	assert.NoError(t, os.WriteFile(run, []byte("Workflow run 01 of the workflow ship, by ops, with 1 step.\n"), 0o644))
+	var out bytes.Buffer
+	env := []string{"PATH=" + fakeClaude(t), "CLAUDE_CODE_OAUTH_TOKEN=sk-1", "TASK_UI_PROMPT_DIR=" + here, "TASK_UI_PROMPT=summarize, change nothing"}
+	a := &agent.Agent{Stdout: &out, Stderr: io.Discard, Env: append(env, "TASK_UI_PROMPT_WORKFLOW="+run)}
+	assert.NoError(t, a.Run(context.Background(), []string{"prompt"}))
+	text := out.String()
+	assert.Contains(t, text, "arg=A prompt of a task-ui workflow, asked once a run of the workflow ended its steps, about that run. The run:\n\nWorkflow run 01 of the workflow ship, by ops, with 1 step.\n\nChange nothing unless the prompt asks for a change")
+	assert.Contains(t, text, "the first message is the workflow's prompt:\n\nsummarize, change nothing\n\nYour final message is the answer")
+
+	a.Env = append(env, "TASK_UI_PROMPT_WORKFLOW="+filepath.Join(here, "gone.md"))
+	assert.Error(t, a.Run(context.Background(), []string{"prompt"}))
+}
+
 // TASK_UI_PROMPT_INSTRUCTIONS goes to the system prompt, ahead of the
 // hosts, and the question stays the thread's.
 func TestAgent_Prompt_instructions(t *testing.T) {

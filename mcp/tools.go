@@ -60,6 +60,7 @@ func tools() []Tool {
 			Description: "Start a workflow by ID or name, and wait for it to end if asked. Returns the run and its steps.",
 			InputSchema: object(map[string]Property{
 				"workflow": str("The workflow's ID or name."),
+				"input":    str("Text for the workflow's prompt, which Claude reads after it under Input:, for a workflow with a prompt."),
 				"wait":     wait,
 			}, "workflow"),
 			call: runWorkflow,
@@ -303,6 +304,7 @@ func showRun(ctx context.Context, c *client, id string, wait int, lines *int) (s
 
 type workflowArgs struct {
 	Workflow string `json:"workflow"`
+	Input    string `json:"input"`
 	Wait     int    `json:"wait"`
 	Limit    int    `json:"limit"`
 }
@@ -325,7 +327,11 @@ func runWorkflow(ctx context.Context, c *client, args json.RawMessage) (string, 
 	if err != nil {
 		return "", err
 	}
-	data, err := c.call(ctx, http.MethodPost, "/workflows/"+url.PathEscape(wf.ID)+"/runs", nil)
+	var body any
+	if in.Input != "" {
+		body = map[string]string{"input": in.Input}
+	}
+	data, err := c.call(ctx, http.MethodPost, "/workflows/"+url.PathEscape(wf.ID)+"/runs", body)
 	var e *apiError
 	if errors.As(err, &e) && e.Status == http.StatusConflict {
 		var busy busyFlow

@@ -95,12 +95,21 @@ func (h *Handlers) askRun(w http.ResponseWriter, r *http.Request, req PromptRequ
 
 // listPrompts returns the prompt threads of a folder, or of ?dir= inside
 // it, ?folder=_ for the root, or those about a run the user sees, ?run=,
+// or the prompt's of a workflow run the user sees, ?workflow_run=,
 // newest first, each with its replies: ?limit=. Takes prompt/view.
 func (h *Handlers) listPrompts(w http.ResponseWriter, r *http.Request) {
 	if !h.require(w, r, "prompt/view") || !h.board(w) {
 		return
 	}
 	q := r.URL.Query()
+	if id := q.Get("workflow_run"); id != "" {
+		if _, err := h.opts.WorkflowRuns.Get(r.Context(), id); err != nil || !h.visibleRun(r, id) {
+			fail(w, http.StatusNotFound, "no such workflow run")
+			return
+		}
+		h.writeThreads(w, r, storage.NoteFilter{Prompts: true, AboutWorkflowRunID: id, Limit: queryInt(r, "limit", 20)})
+		return
+	}
 	if id := q.Get("run"); id != "" {
 		run, err := h.opts.Runs.Get(r.Context(), id)
 		if err != nil || !access.UserFrom(r.Context()).CanSee(run.Folder) {

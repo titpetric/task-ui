@@ -71,7 +71,7 @@ func newFixture(t *testing.T, agentJob string) *fixture {
 	manager := runner.New(runner.Options{Runs: storage.NewRunStorage(db), Recordings: recordings, Grace: time.Second, KillTimeout: 5 * time.Second, Keep: time.Minute})
 	t.Cleanup(func() { manager.Shutdown(context.Background()) })
 	board := &note.Board{
-		Notes: storage.NewNoteStorage(db), Users: users, Runs: storage.NewRunStorage(db), Catalogue: catalogue{"agent": f},
+		Notes: storage.NewNoteStorage(db), Users: users, Runs: storage.NewRunStorage(db), WorkflowRuns: storage.NewWorkflowRunStorage(db), Catalogue: catalogue{"agent": f},
 		Runner: manager, Recordings: recordings, Events: event.NewBus(), Agent: "claude", AgentJob: agentJob,
 	}
 	return &fixture{board: board, ops: ops}

@@ -143,24 +143,30 @@ func (b *Board) command(run *model.Run) string {
 // recording: the last aboutLines lines, fewer when those pass
 // aboutBytes, and whether it left any out.
 func (b *Board) outputTail(run *model.Run) (string, bool) {
+	return cutTail(b.outputText(run), aboutBytes)
+}
+
+// outputText returns a run's output as text, its colours and cursor
+// moves played out, from its recording; empty when there is none.
+func (b *Board) outputText(run *model.Run) string {
 	if b.Recordings == nil {
-		return "", false
+		return ""
 	}
 	cast, err := b.Recordings.Read(run)
 	if err != nil {
-		return "", false
+		return ""
 	}
 	defer cast.Close()
 	replay, err := runner.ReplayCast(cast)
 	if err != nil {
-		return "", false
+		return ""
 	}
-	return cutTail(strings.TrimRight(replay.Output.Text(), " \n"))
+	return strings.TrimRight(replay.Output.Text(), " \n")
 }
 
 // cutTail keeps the last lines of an output, as many as fit aboutLines
-// and aboutBytes, and reports whether it cut any.
-func cutTail(output string) (string, bool) {
+// and limit bytes, and reports whether it cut any.
+func cutTail(output string, limit int) (string, bool) {
 	if output == "" {
 		return "", false
 	}
@@ -172,7 +178,7 @@ func cutTail(output string) (string, bool) {
 	size := 0
 	for i := len(lines) - 1; i >= 0; i-- {
 		size += len(lines[i]) + 1
-		if size > aboutBytes {
+		if size > limit {
 			lines, cut = lines[i+1:], true
 			break
 		}

@@ -5,13 +5,16 @@
      question with Claude's answer once its run ends. A run's box asks
      about the run, with its output, and lists the threads about it; one
      who only reads prompts sees those threads without the box, a running
-     run's box hidden until a thread about it comes. Open on a
+     run's box hidden until a thread about it comes. A workflow run's box
+     lists the thread of the workflow's prompt alone. Open on a
      workspace's page, a run's page and once a prompt was asked, folded
      elsewhere. */}}
 {{- define "promptbox" }}
 {{- with .Prompt }}
 <details class="promptbox"{{ if or .Open .Threads }} open{{ end }}{{ if and .Watch (not .Threads) }} hidden{{ end }}>
-	{{- if .Run }}
+	{{- if .WorkflowRun }}
+	<summary><h3 class="section-title"><svg class="ic chev"><use href="#i-chev"/></svg>Prompt <small>the workflow's prompt, asked in {{ .Where }} once the steps ended, with their output</small></h3></summary>
+	{{- else if .Run }}
 	<summary><h3 class="section-title"><svg class="ic chev"><use href="#i-chev"/></svg>Prompt <small>Claude Code on this run and its output, in {{ .Where }}</small></h3></summary>
 	{{- else }}
 	<summary><h3 class="section-title"><svg class="ic chev"><use href="#i-chev"/></svg>Prompt <small>Claude Code in {{ .Where }}, with the CLAUDE.md and .claude/ there and above</small></h3></summary>

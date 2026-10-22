@@ -8,4 +8,7 @@ type StepRequest struct {
 	// Workflow is the ID of a workflow the step runs; a step runs a job or
 	// a workflow.
 	Workflow string `json:"workflow,omitempty"`
+	// Enabled runs the step, the default; false keeps it in the workflow
+	// and a run skips it.
+	Enabled *bool `json:"enabled,omitempty"`
 }

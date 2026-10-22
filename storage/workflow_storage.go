@@ -29,8 +29,8 @@ func checkChain(workflow *model.Workflow, steps []model.WorkflowStep) error {
 	if strings.TrimSpace(workflow.Name) == "" {
 		return errors.New("a workflow needs a name")
 	}
-	if len(steps) == 0 {
-		return errors.New("a workflow needs at least one step")
+	if !workflow.Runs(steps) {
+		return errors.New("a workflow needs a step to run or a prompt")
 	}
 	for _, step := range steps {
 		job := step.Folder != "" || step.Job != ""
@@ -111,7 +111,7 @@ func inTx(ctx context.Context, db DB, fn func(c conn) error) error {
 // insertSteps writes a workflow's steps in order, positions from zero.
 func insertSteps(ctx context.Context, c conn, workflowID string, steps []model.WorkflowStep) error {
 	for i, step := range steps {
-		row := model.WorkflowStep{ID: model.NewID(), WorkflowID: workflowID, Position: int64(i), Folder: step.Folder, Job: step.Job, WorkflowRef: step.WorkflowRef}
+		row := model.WorkflowStep{ID: model.NewID(), WorkflowID: workflowID, Position: int64(i), Folder: step.Folder, Job: step.Job, WorkflowRef: step.WorkflowRef, Disabled: step.Disabled}
 		if err := c.Insert(ctx, model.WorkflowStepTable, &row); err != nil {
 			return err
 		}

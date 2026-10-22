@@ -25,6 +25,12 @@ dialog.confirm {
     color: var(--text);
     margin-bottom: 1rem;
   }
+
+  /* The input of a workflow's prompt, above the dialog's buttons. */
+  & textarea {
+    width: 100%;
+    margin-bottom: 1rem;
+  }
 }
 
 .confirm-foot {

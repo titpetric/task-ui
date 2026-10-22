@@ -59,7 +59,7 @@ func (b *Board) ask(ctx context.Context, user *model.User, parentID, dir, aboutR
 	note := &model.Note{Channel: model.ChannelNotes, ParentID: parentID, UserID: user.ID, UserName: user.Name, Body: body, Dir: dir, AboutRunID: aboutRun}
 	thread := note
 	if parent != nil {
-		note.WorkspaceID = parent.WorkspaceID
+		note.WorkspaceID, note.AboutWorkflowRunID = parent.WorkspaceID, parent.AboutWorkflowRunID
 		thread = parent
 	} else {
 		note.State = model.NoteOpen
@@ -104,35 +104,65 @@ func (b *Board) reask(ctx context.Context, note *model.Note) {
 // dispatchPrompt starts the prompt job on a prompt's thread, in the
 // background, and replies with Claude's answer when the run ends: in a
 // new reply, or in again, the reply to rewrite, from the thread before
-// it. A thread about a run gets the run in a file, TASK_UI_PROMPT_RUN,
-// as its output may pass what an environment variable holds, and the
-// summary of Run and summarize its shape in TASK_UI_PROMPT_INSTRUCTIONS.
+// it.
 func (b *Board) dispatchPrompt(note *model.Note, req runner.Request, again *model.Note) {
+	req, answer, cleanup, ok := b.promptEnv(note, req, again)
+	if !ok {
+		return
+	}
+	go func() {
+		defer cleanup()
+		req.Env = append(req.Env, b.hosts(context.Background())...)
+		b.run(context.Background(), note, req, answer, "The prompt", again)
+	}()
+}
+
+// promptEnv puts a prompt's thread and the file its answer goes to in
+// the request's environment, and returns the request, that file, and a
+// cleanup for the files it made. A thread about a run gets the run in a
+// file, TASK_UI_PROMPT_RUN, as its output may pass what an environment
+// variable holds, a workflow run's prompt the run's steps in
+// TASK_UI_PROMPT_WORKFLOW, and the summary of Run and summarize its
+// shape in TASK_UI_PROMPT_INSTRUCTIONS. When one is not there to read,
+// the note fails and promptEnv returns false.
+func (b *Board) promptEnv(note *model.Note, req runner.Request, again *model.Note) (runner.Request, string, func(), bool) {
 	ctx := context.Background()
 	answer, err := replyFile()
 	if err != nil {
 		b.finish(ctx, note, model.NoteFailed, "The reply file was not made: "+err.Error(), again)
-		return
+		return req, "", nil, false
 	}
 	thread := b.thread(ctx, note, again)
 	req.Env = append(append([]string{}, req.Env...), "TASK_UI_PROMPT="+thread, "TASK_UI_PROMPT_REPLY="+answer)
 	req.Env = append(req.Env, instructions(note, thread)...)
-	about := ""
-	if note.AboutRunID != "" {
-		if about, err = b.aboutRun(ctx, note.AboutRunID); err != nil {
-			os.Remove(answer)
-			b.finish(ctx, note, model.NoteFailed, "The run "+note.AboutRunID+" is not there to ask about: "+err.Error(), again)
-			return
+	var files []string
+	cleanup := func() {
+		for _, file := range files {
+			os.Remove(file)
 		}
-		req.Env = append(req.Env, "TASK_UI_PROMPT_RUN="+about)
 	}
-	go func() {
-		if about != "" {
-			defer os.Remove(about)
+	about := []struct {
+		id, env, what string
+		write         func(context.Context, string) (string, error)
+	}{
+		{note.AboutRunID, "TASK_UI_PROMPT_RUN", "The run ", b.aboutRun},
+		{note.AboutWorkflowRunID, "TASK_UI_PROMPT_WORKFLOW", "The workflow run ", b.aboutWorkflowRun},
+	}
+	for _, a := range about {
+		if a.id == "" {
+			continue
 		}
-		req.Env = append(req.Env, b.hosts(ctx)...)
-		b.run(note, req, answer, "The prompt", again)
-	}()
+		file, err := a.write(ctx, a.id)
+		if err != nil {
+			cleanup()
+			os.Remove(answer)
+			b.finish(ctx, note, model.NoteFailed, a.what+a.id+" is not there to ask about: "+err.Error(), again)
+			return req, "", nil, false
+		}
+		files = append(files, file)
+		req.Env = append(req.Env, a.env+"="+file)
+	}
+	return req, answer, cleanup, true
 }
 
 // hosts is the inventory a prompt's run gets, TASK_UI_HOSTS: the hosts,
