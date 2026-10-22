@@ -452,22 +452,26 @@
 </details>
 {{- end }}
 
-{{/* tree is the Files panel of a folder page: .. up a level, the
-     directories first, linked into, then the files, each opening in the
-     preview window. A file that runs carries #! and exec, and Run for
-     those who may run it. A sealed entry is listed, plain and locked. */}}
+{{/* tree is the Files panel of a folder page, a dashboard of what it
+     holds: .. up a level, the directories first, linked into, then the
+     files, each opening in the preview window. A directory that is a
+     folder links to its page and holds its jobs' control buttons in Jobs,
+     as the dashboard's control centre does. A file that runs carries #!
+     and exec, and Run in Jobs for those who may run it. A sealed entry is
+     listed, plain and locked. */}}
 {{- define "tree" }}
 <div class="table-wrap">
-<table class="table file-table">
-	<thead><tr><th>Name</th><th class="num">Size</th><th class="hide-sm">Changed</th><th></th></tr></thead>
+<table class="table file-table col-hover">
+	<thead><tr><th>Name</th><th>Jobs</th><th class="num">Size</th><th class="hide-sm">Changed</th><th></th></tr></thead>
 	<tbody>
 	{{- with $.Up }}
-		<tr class="up"><td class="key"><svg class="ic dir"><use href="#i-folder"/></svg> <a href="{{ . }}" title="Up a level">..</a></td><td></td><td class="hide-sm"></td><td></td></tr>
+		<tr class="up"><td class="key"><svg class="ic dir"><use href="#i-folder"/></svg> <a href="{{ . }}" title="Up a level">..</a></td><td></td><td></td><td class="hide-sm"></td><td></td></tr>
 	{{- end }}
 	{{- range .Tree }}
 		{{- if .Sealed }}
 		<tr class="sealed" aria-disabled="true" title="{{ .Name }} is listed, but task-ui does not open it">
 			<td class="key"><svg class="ic"><use href="#i-secret"/></svg> <span>{{ .Name }}</span></td>
+			<td></td>
 			<td class="num nowrap">{{ if not .Dir }}{{ size .Size }}{{ end }}</td>
 			<td class="hide-sm nowrap" title="{{ stamp .ModTime }}">{{ ago .ModTime }}</td>
 			<td></td>
@@ -480,14 +484,17 @@
 				{{- else if .Href }} <a href="{{ .Href }}" data-file="{{ .Path }}">{{ .Name }}</a>
 				{{- else }} <span>{{ .Name }}</span>{{ end }}
 				{{- if .Exec }} <span class="badge exec" title="Runs: executable, or a shebang on its first line">exec</span>{{ end }}</td>
+			<td class="jobs">
+				{{- if .Dir }}{{ with index $.TreeFolders .Name }}{{ template "controljobs" (list $ .) }}{{ end }}
+				{{- else if and .Exec .Path }}{{ with $.Folder.Job (print "./" .Path) }}
+				{{- $run := $.RunningRun .Key }}
+				{{- if $run }}<a class="btn btn-sm" href="/runs/{{ $run.ID }}" data-attach="{{ $run.ID }}"><svg class="ic"><use href="#i-eye"/></svg>Attach</a>
+				{{- else if $.CanRun $.Folder . }}<div class="actions">{{ template "runButtons" (list $ $.Folder .) }}</div>{{ end }}
+				{{- end }}{{ end }}
+			</td>
 			<td class="num nowrap">{{ if not .Dir }}{{ size .Size }}{{ end }}</td>
 			<td class="hide-sm nowrap" title="{{ stamp .ModTime }}">{{ ago .ModTime }}</td>
 			<td class="actions">
-				{{- if and .Exec .Path }}{{ with $.Folder.Job (print "./" .Path) }}
-				{{- $run := $.RunningRun .Key }}
-				{{- if $run }}<a class="btn btn-sm" href="/runs/{{ $run.ID }}" data-attach="{{ $run.ID }}"><svg class="ic"><use href="#i-eye"/></svg>Attach</a>
-				{{- else if $.CanRun $.Folder . }}{{ template "runButtons" (list $ $.Folder .) }}{{ end }}
-				{{- end }}{{ end }}
 				{{- if and (not .Dir) .Href }}
 				<a class="btn-icon" href="{{ .Href }}?download" title="Download {{ .Name }}" aria-label="Download {{ .Name }}"><svg class="ic"><use href="#i-download"/></svg></a>
 				{{- end }}
@@ -495,7 +502,7 @@
 		</tr>
 		{{- end }}
 	{{- else }}
-		<tr class="empty"><td colspan="4">Empty.</td></tr>
+		<tr class="empty"><td colspan="5">Empty.</td></tr>
 	{{- end }}
 	</tbody>
 </table>

@@ -165,6 +165,9 @@ type Page struct {
 	KeyUsers map[string][]string
 	// SubFolders are the folders right under the folder a page shows.
 	SubFolders []*folder.Folder
+	// TreeFolders are the folders of the directories Tree lists, by the
+	// directory's name, whose jobs the list holds beside them.
+	TreeFolders map[string]*folder.Folder
 	// KeyHolders are the roles and the users, and the keys each gets.
 	KeyHolders []KeyHolder
 	Key        *sshkey.Key

@@ -2427,11 +2427,38 @@
     }, 1000);
   }
 
+  // A job's control button, in the dashboard's control centre or a
+  // folder page's Files list, follows the runs topic: an eye on the job
+  // running, Run again when it ended, in the colour of how it ended. Its
+  // slot keeps that colour in data-last.
+  function slotHTML(slot, run) {
+    var label = slot.dataset.label ? "<span>" + escapeHTML(slot.dataset.label) + "</span>" : "";
+    var named = slot.dataset.label ? " named" : "";
+    if (run && run.state && run.state !== "running") slot.dataset.last = run.state === "ok" ? "ok" : "bad";
+    var last = " " + escapeHTML(slot.dataset.last || "never");
+    var what = escapeHTML(slot.dataset.folder + " / " + slot.dataset.name);
+    if (run && run.state === "running") {
+      return '<a class="cc' + named + ' running" href="/runs/' + escapeHTML(run.id) + '" data-attach="' + escapeHTML(run.id) +
+        '" title="Attach to ' + what + ', running"><svg class="ic"><use href="#i-eye"/></svg>' + label + "</a>";
+    }
+    if (slot.hasAttribute("data-can")) {
+      return '<button type="button" class="cc' + named + last + '" data-run data-folder="' + escapeHTML(slot.dataset.folder) + '" data-job="' +
+        escapeHTML(slot.dataset.job) + '" data-title="' + what + '" title="Run ' + what + '"><svg class="ic"><use href="#i-play"/></svg>' + label + "</button>";
+    }
+    return '<a class="cc' + named + " idle" + last + '" href="' + escapeHTML(folderHref(slot.dataset.folder)) + "/" + escapeHTML(slot.dataset.job) + '" title="' + what +
+      ': your role may not run it"><i class="shebang" aria-hidden="true">#!</i>' + label + "</a>";
+  }
+  if (document.querySelector(".cc-slot") && window.EventSource) {
+    onRuns(function (run) {
+      document.querySelectorAll('.cc-slot[data-cc="' + run.folder + "/" + run.job + '"]').forEach(function (slot) {
+        slot.innerHTML = slotHTML(slot, run);
+      });
+    });
+  }
+
   // The dashboard follows the runs topic too: a run that starts adds its
   // tile, polled for its frame; one that ends marks its tile and the last
-  // frame is fetched. The running count and the control centre's buttons
-  // follow: an eye on the job running, Run again when it ended, in the
-  // colour of how it ended. A slot keeps that colour in data-last.
+  // frame is fetched. The running count follows.
   var dashboard = document.querySelector('[data-sse="runs"][data-dashboard]');
   if (dashboard && window.EventSource) {
     var tiles = dashboard.querySelector("[data-tiles]");
@@ -2441,23 +2468,6 @@
       var n = tiles.querySelectorAll(".tile-head .dot.running").length;
       if (runningCount) runningCount.textContent = n;
       if (tilesEmpty) tilesEmpty.hidden = tiles.children.length > 0;
-    };
-    var slotHTML = function (slot, run) {
-      var label = slot.dataset.label ? "<span>" + escapeHTML(slot.dataset.label) + "</span>" : "";
-      var named = slot.dataset.label ? " named" : "";
-      if (run && run.state && run.state !== "running") slot.dataset.last = run.state === "ok" ? "ok" : "bad";
-      var last = " " + escapeHTML(slot.dataset.last || "never");
-      var what = escapeHTML(slot.dataset.folder + " / " + slot.dataset.name);
-      if (run && run.state === "running") {
-        return '<a class="cc' + named + ' running" href="/runs/' + escapeHTML(run.id) + '" data-attach="' + escapeHTML(run.id) +
-          '" title="Attach to ' + what + ', running"><svg class="ic"><use href="#i-eye"/></svg>' + label + "</a>";
-      }
-      if (slot.hasAttribute("data-can")) {
-        return '<button type="button" class="cc' + named + last + '" data-run data-folder="' + escapeHTML(slot.dataset.folder) + '" data-job="' +
-          escapeHTML(slot.dataset.job) + '" data-title="' + what + '" title="Run ' + what + '"><svg class="ic"><use href="#i-play"/></svg>' + label + "</button>";
-      }
-      return '<a class="cc' + named + " idle" + last + '" href="' + escapeHTML(folderHref(slot.dataset.folder)) + "/" + escapeHTML(slot.dataset.job) + '" title="' + what +
-        ': your role may not run it"><i class="shebang" aria-hidden="true">#!</i>' + label + "</a>";
     };
     onRuns(function (run) {
       var tile = tiles.querySelector('[data-tile="' + run.id + '"]');
@@ -2484,9 +2494,6 @@
             .catch(function () {});
         }
       }
-      dashboard.querySelectorAll('.cc-slot[data-cc="' + run.folder + "/" + run.job + '"]').forEach(function (slot) {
-        slot.innerHTML = slotHTML(slot, run);
-      });
       countRunning();
     });
   }
