@@ -84,6 +84,23 @@ The configuration sits in `CLAUDE_CONFIG_DIR`; keep that on a volume so
 it outlives the container. `claude mcp list` shows the server as
 connected.
 
+## An agent elsewhere
+
+An MCP client on another machine, with a token of its own user, such as
+`consuela`, takes the notes that name it, as the agent job does for
+`@claude`:
+
+1. `list_notes` with no arguments lists the open notes that name the
+   token's user, in the note or in a reply, with their threads. Poll it.
+2. `note_comment` with `state` `working` claims a note, so the board shows
+   someone is on it.
+3. `note_comment` with a `body`, what changed and where to look, and
+   `state` `done`, or `failed` with the reason, ends it.
+
+A reply that names the user again opens the note again, and it shows in
+the next `list_notes`. The state is for the users the note names, its
+author and an admin; anyone who may post replies.
+
 ## Tools
 
 | Tool                 | Arguments                                        | What it does |
@@ -96,7 +113,7 @@ connected.
 | `get_run`            | `id`, `lines`                                    | A run and the end of its output, as the terminal showed it |
 | `list_workflow_runs` | `workflow`, `limit`                              | A workflow's latest runs and their steps |
 | `list_notes`         | `mention`, `state`, `limit`                      | The notes with their replies; by default the open ones that name you |
-| `note_comment`       | `id`, `body`, `state`                            | Replies to a note and sets its instruction to working, done or failed |
+| `note_comment`       | `id`, `body`, `state`                            | Replies to a note and sets its instruction to working, done or failed; the state is for a user the note names, its author or an admin |
 | `post_note`          | `body`, `parent`                                 | Leaves a note on the board as you, or a reply to `parent`; takes `note/edit` |
 | `ask_prompt`         | `folder`, `dir`, `prompt`, `wait`                | Asks Claude in a folder, or `dir` inside it, as the folder's **Prompt** box does; with `wait`, up to 900 seconds, returns Claude's answer; takes `prompt/edit` |
 

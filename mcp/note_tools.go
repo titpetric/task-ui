@@ -22,8 +22,9 @@ func noteTools() []Tool {
 	str := func(text string) Property { return Property{Type: "string", Description: text} }
 	return []Tool{
 		{
-			Name:        "post_note",
-			Description: "Leave a note on the board as you, or a reply to one. A note that names a user with @ is an instruction to that user.",
+			Name: "post_note",
+			Description: "Leave a note on the board as you, or a reply to one. A note that names a user with @ is an instruction to that user, " +
+				"who picks it up with list_notes and reports with note_comment.",
 			InputSchema: object(map[string]Property{
 				"body":   str("The note, in markdown."),
 				"parent": str("The ID of the note to reply to, from list_notes; none leaves a note of its own."),

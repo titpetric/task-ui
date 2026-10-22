@@ -6,11 +6,25 @@ agent. Name someone with `@name`: the note shows the name marked, and
 
 ![Notes](../assets/notes-dark.png)
 
+## Instructions
+
+A note naming another user of the instance, from someone who may run
+jobs, is an instruction to whoever it names, and so is a reply that names
+one: the reply opens its note again. A name of no user stays a plain
+mention, and a note from a viewer stays a message. The note carries the
+state on its left edge: **open**, **working**, then **done** or
+**failed**.
+
+The user a note names sets that state, and so do the note's author and an
+admin; anyone who may post replies. A user other than the agent, such as
+`@consuela`, an agent on another machine, picks the note up over
+[MCP](mcp.md#an-agent-elsewhere). task-ui runs the agent job only for the
+agent, `TASK_UI_AGENT`.
+
 ## Instructions to the agent
 
-A note naming the agent, `@claude` on most instances, is an instruction,
-and so is a reply that names it. The note carries the state on its left
-edge: **open**, **working**, then **done** or **failed**.
+A note naming the agent, `@claude` on most instances, starts the agent on
+it.
 
 - With an agent job, `internal/claude-note` unless configured otherwise,
   task-ui starts that job as the agent's user the moment the note or the
@@ -25,11 +39,15 @@ edge: **open**, **working**, then **done** or **failed**.
 - The agent may decline an instruction: its reply says why, and the note
   ends there.
 - With `TASK_UI_AGENT_JOB` set empty, the note stays open until an agent
-  reads the board over MCP, replies and closes it with `note_comment`.
+  reads the board over MCP, replies and closes it with `note_comment`, as
+  any other user does.
 
 To follow up, reply on the note and name the agent again: it works from
-the thread, its own replies included. A viewer's note to the agent stays a
-message.
+the thread, its own replies included.
+
+A restart of task-ui fails a note working on a run of its own, as that run
+ends with it. A note an agent elsewhere set working has no such run and
+stays working.
 
 To change what you asked, click the text of the note, or of your reply,
 and edit it in place: **Save** or Ctrl+Enter puts it, Esc cancels. An

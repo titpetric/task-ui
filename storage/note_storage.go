@@ -20,8 +20,9 @@ func NewNoteStorage(db DB) *NoteStorage {
 	return &NoteStorage{db: db}
 }
 
-// NoteFilter narrows a listing. Zero values match everything; Mention and
-// State match notes that name the user and are in the state.
+// NoteFilter narrows a listing. Zero values match everything; Mention
+// matches the threads whose note or a reply names the user, and State
+// the notes in the state.
 type NoteFilter struct {
 	Channel string
 	Mention string
@@ -75,8 +76,8 @@ func (s *NoteStorage) List(ctx context.Context, filter NoteFilter) ([]model.Note
 		args = append(args, filter.Channel)
 	}
 	if filter.Mention != "" {
-		where = append(where, "mentions LIKE ?")
-		args = append(args, "% "+filter.Mention+" %")
+		where = append(where, "(mentions LIKE ? OR id IN (SELECT parent_id FROM note WHERE parent_id != '' AND mentions LIKE ?))")
+		args = append(args, "% "+filter.Mention+" %", "% "+filter.Mention+" %")
 	}
 	if filter.State != "" {
 		where = append(where, "state = ?")

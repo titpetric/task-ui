@@ -137,3 +137,29 @@ func TestTools_Notes(t *testing.T) {
 	_, failed = f.tool(t, "admin", "note_comment", map[string]any{"id": "nothing", "body": "x"})
 	assert.True(t, failed)
 }
+
+// A note naming a user other than the agent is that user's to list by
+// default and to report on; someone else may not set its state.
+func TestTools_NotesToUser(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	status, raw := f.post(t, f.tokens["ops"], "/api/notes", api.NoteRequest{Body: "@consuela tidy the README"})
+	assert.Equal(t, http.StatusCreated, status, string(raw))
+
+	text, failed := f.tool(t, "consuela", "list_notes", nil)
+	assert.False(t, failed, text)
+	assert.Contains(t, text, "by ops, open,")
+	assert.Contains(t, text, "@consuela tidy the README")
+	id := strings.Fields(strings.TrimPrefix(text, "note "))[0]
+
+	text, failed = f.tool(t, "guest", "note_comment", map[string]any{"id": id, "state": "done"})
+	assert.True(t, failed, text)
+	text, failed = f.tool(t, "consuela", "note_comment", map[string]any{"id": id, "state": "working"})
+	assert.False(t, failed, text)
+	status, raw = f.post(t, f.tokens["ops"], "/api/notes/"+id+"/comments", map[string]string{"state": "done"})
+	assert.Equal(t, http.StatusCreated, status, string(raw))
+	text, failed = f.tool(t, "consuela", "note_comment", map[string]any{"id": id, "body": "Tidied in abc123.", "state": "done"})
+	assert.False(t, failed, text)
+	text, _ = f.tool(t, "consuela", "list_notes", nil)
+	assert.Equal(t, "No notes.", text)
+}

@@ -204,7 +204,7 @@ func statusOf(err error) int {
 		return http.StatusNotFound
 	case errors.Is(err, runner.ErrBusy), errors.Is(err, runner.ErrMoving):
 		return http.StatusConflict
-	case errors.Is(err, runner.ErrOutOfHours), errors.Is(err, note.ErrForbidden), errors.Is(err, note.ErrNotAuthor):
+	case errors.Is(err, runner.ErrOutOfHours), errors.Is(err, note.ErrForbidden), errors.Is(err, note.ErrNotAuthor), errors.Is(err, note.ErrNotAssigned):
 		return http.StatusForbidden
 	case errors.Is(err, secret.ErrNoKey), errors.Is(err, workspace.ErrRole):
 		return http.StatusConflict

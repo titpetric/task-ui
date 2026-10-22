@@ -1,12 +1,14 @@
 // Package note is the notes board: messages users leave for each other,
-// the replies to them, and the notes that send the agent an instruction.
+// the replies to them, and the notes that hand someone an instruction.
 //
-// A note on the board, or a reply, that names the agent with @, such as
-// @claude, is an instruction. With an agent job configured, the board starts that job as
-// the agent's user, the note's text in its environment, and replies with
-// how the run ended. Without one, the note stays open for an agent that
-// reads the board over MCP. A note to anyone else is a message and nothing
-// more.
+// A note on the board, or a reply, that names another user with @, such
+// as @claude or @consuela, from someone who may run jobs, is an
+// instruction to the users it names. For the agent, the board starts the
+// agent job as the agent's user, the note's text in its environment, and
+// replies with how the run ended. Any other user, or the agent without an
+// agent job, picks the note up over MCP: list_notes lists it open, and
+// note_comment reports working, done or failed. A note naming no user, or
+// from someone who may not run jobs, is a message and nothing more.
 //
 // A prompt from a folder page is a note too, with the workspace of the
 // folder and the place it runs: Claude Code on the thread in that
@@ -40,6 +42,10 @@ const Topic = "notes"
 // unknown state, or a reply to a reply.
 var ErrInvalid = errors.New("invalid note")
 
+// ErrNotAssigned reports a state set by someone the instruction does not
+// name, who is neither its author nor an admin.
+var ErrNotAssigned = errors.New("only a user the note names, its author or an admin sets its state")
+
 // answerer names Claude's replies to prompts without an agent.
 const answerer = "claude"
 
@@ -56,8 +62,8 @@ type Board struct {
 	Runner     *runner.Manager
 	Recordings *recording.Store
 	Events     *event.Bus
-	// Agent is the user name a note names to send it an instruction;
-	// empty turns instructions off.
+	// Agent is the user name a note names to have the board run the
+	// agent job on it; empty leaves every instruction to MCP.
 	Agent string
 	// AgentJob is the job the board starts for an instruction, as
 	// folder/job; empty leaves instructions open for an agent over MCP.
@@ -71,9 +77,10 @@ type Board struct {
 	Hosts func(ctx context.Context) (string, error)
 }
 
-// Post leaves a note on the board, or a reply to one. A note naming the
-// agent opens an instruction, and so does a reply naming it: the board
-// starts the agent's job on the whole thread.
+// Post leaves a note on the board, or a reply to one. A note naming
+// another user opens an instruction, and so does a reply naming one; when
+// it names the agent, the board starts the agent's job on the whole
+// thread.
 func (b *Board) Post(ctx context.Context, user *model.User, parentID, body string) (*model.Note, error) {
 	if user == nil || strings.TrimSpace(body) == "" {
 		return nil, fmt.Errorf("%w: a note needs an author and some text", ErrInvalid)
@@ -114,7 +121,7 @@ func (b *Board) Post(ctx context.Context, user *model.User, parentID, body strin
 	}
 	thread := note
 	if parent != nil {
-		// A reply naming the agent opens the note it answers again.
+		// A reply naming someone opens the note it answers again.
 		if err := b.Notes.SetState(ctx, parent.ID, model.NoteOpen, ""); err != nil {
 			return nil, err
 		}
@@ -122,18 +129,10 @@ func (b *Board) Post(ctx context.Context, user *model.User, parentID, body strin
 		thread = parent
 		b.publish(parent)
 	}
-	if b.AgentJob != "" {
+	if b.forAgent(user, body) {
 		b.dispatch(thread, nil)
 	}
 	return note, nil
-}
-
-// instructs reports whether a note of the user's with the body is an
-// instruction: it names the agent, and the user is someone else who may
-// run jobs, as a note to the agent from someone who may not is a
-// message.
-func (b *Board) instructs(ctx context.Context, user *model.User, body string) bool {
-	return b.Agent != "" && user.Name != b.Agent && contains(model.Mentions(body), b.Agent) && b.permissions(ctx, user).Allowed("run")
 }
 
 // permissions returns what a user may do; without the users, an admin
@@ -146,7 +145,9 @@ func (b *Board) permissions(ctx context.Context, user *model.User) permission.Se
 }
 
 // Comment replies to a note, and moves its instruction to the state the
-// caller names: working, done or failed. An agent reports with it.
+// caller names: working, done or failed. A user the instruction names
+// reports with it; its author and an admin may set the state too, and
+// anyone who may post may reply.
 func (b *Board) Comment(ctx context.Context, user *model.User, id, body, state string) (*model.Note, error) {
 	note, err := b.Notes.Get(ctx, id)
 	if err != nil {
@@ -159,6 +160,9 @@ func (b *Board) Comment(ctx context.Context, user *model.User, id, body, state s
 	}
 	if state != "" && note.State == "" {
 		return nil, fmt.Errorf("%w: the note is not an instruction", ErrInvalid)
+	}
+	if state != "" && !b.assigned(ctx, user, note) {
+		return nil, ErrNotAssigned
 	}
 	var reply *model.Note
 	if strings.TrimSpace(body) != "" {
@@ -180,9 +184,11 @@ func (b *Board) Comment(ctx context.Context, user *model.User, id, body, state s
 }
 
 // Recover fails the instructions a restart cut short: a note still
-// working has no run to wait on any more. An open instruction with no run
-// yet, one that never started or one set open by hand, starts the agent,
-// and an open prompt with no run starts its prompt.
+// working on a run of the board's has no run to wait on any more. A note
+// working with no run is an external agent's, which goes on. An open
+// instruction to the agent with no run yet, one that never started or one
+// set open by hand, starts the agent, and an open prompt with no run
+// starts its prompt.
 func (b *Board) Recover(ctx context.Context) error {
 	open, err := b.Notes.List(ctx, storage.NoteFilter{State: model.NoteOpen})
 	if err != nil {
@@ -193,7 +199,7 @@ func (b *Board) Recover(ctx context.Context) error {
 		return err
 	}
 	for i := range open {
-		if open[i].RunID == "" && b.AgentJob != "" {
+		if open[i].RunID == "" && b.threadForAgent(ctx, &open[i]) {
 			b.dispatch(&open[i], nil)
 		}
 	}
@@ -211,6 +217,9 @@ func (b *Board) Recover(ctx context.Context) error {
 		return err
 	}
 	for _, note := range append(working, workingPrompts...) {
+		if note.RunID == "" && !note.IsPrompt() {
+			continue
+		}
 		if note.RunID != "" && b.Runner != nil {
 			if _, live := b.Runner.Get(note.RunID); live {
 				continue
@@ -492,14 +501,4 @@ func report(run *model.Run, status runner.Status, output string) string {
 		text += "\n\n```\n" + output + "\n```"
 	}
 	return text
-}
-
-// contains reports whether names holds name.
-func contains(names []string, name string) bool {
-	for _, n := range names {
-		if n == name {
-			return true
-		}
-	}
-	return false
 }

@@ -17,7 +17,8 @@ var ErrNotAuthor = errors.New("only its author or an admin edits a note")
 // Edit puts a new body in a note or a reply, its author's or any for an
 // admin, and marks it edited. An instruction runs again on the edited
 // text: a prompt, a reply in a prompt's thread, or a note or a reply on
-// the board that names the agent. The agent's answer to it, the
+// the board that names a user, which opens again, and the agent's job
+// runs on it when it names the agent. The agent's answer to it, the
 // first answer after it in the thread, shows working and then takes the
 // new answer in place, from a run under the same run ID; with no answer
 // yet, the agent replies as it does to a new note. The agent's own
@@ -74,7 +75,7 @@ func (b *Board) Edit(ctx context.Context, user *model.User, id, body string) (*m
 	switch {
 	case thread.IsPrompt():
 		b.dispatchPrompt(thread, req, again)
-	case b.AgentJob != "":
+	case b.forAgent(user, note.Body):
 		b.dispatch(thread, again)
 	}
 	return note, nil
