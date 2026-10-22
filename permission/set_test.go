@@ -46,3 +46,15 @@ func TestSet_Run(t *testing.T) {
 	assert.True(t, admin.Run(model.Internal, []string{"ops"}, []string{"dev"}))
 	assert.False(t, permission.Set{}.Run("infra", nil, nil))
 }
+
+func TestSet_Effective(t *testing.T) {
+	t.Parallel()
+	set := permission.Set{User: &model.User{Name: "ops", Role: model.RoleRunner}, Role: permission.Policy{"note/all": permission.Allow}, Own: permission.Policy{"note/delete": permission.Deny}}
+	effective := set.Effective()
+	assert.True(t, effective["note/view"])
+	assert.False(t, effective["note/delete"])
+	assert.False(t, effective["run"])
+	_, ok := effective["note/all"]
+	assert.False(t, ok, "no check names all")
+	assert.True(t, permission.Set{User: &model.User{Role: model.RoleAdmin}}.Effective()["shell"])
+}

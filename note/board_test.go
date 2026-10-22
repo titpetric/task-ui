@@ -444,3 +444,30 @@ func TestBoard_AskHosts(t *testing.T) {
 	assert.Equal(t, model.NoteDone, f.settled(t, off.ID).State)
 	assert.Equal(t, "hosts: unset", replies(t, f, off.ID)[0].Body)
 }
+
+// A user with prompt/edit asks in a folder the user sees, whatever the
+// internal folder's visibility and its prompt job's allow list say.
+func TestBoard_AskByPermission(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t, "")
+	f.withPrompts(t)
+	ctx := context.Background()
+	f.board.Catalogue.Find(model.Internal).Jobs[0].Allow = []string{"admin"}
+	claude, err := f.board.Users.GetByName(ctx, "claude")
+	assert.NoError(t, err)
+
+	asked, err := f.board.Ask(ctx, claude, "", "proj", "what is here")
+	assert.NoError(t, err)
+	done := f.settled(t, asked.ID)
+	assert.Equal(t, model.NoteDone, done.State)
+	assert.Equal(t, "claude", asked.UserName)
+	assert.Contains(t, replies(t, f, asked.ID)[0].Body, ": what is here")
+
+	scoped := &model.User{Name: "web", Role: model.RoleRunner, Folders: model.EncodeList([]string{"web"})}
+	assert.NoError(t, f.board.Users.Create(ctx, scoped))
+	assert.NoError(t, f.board.Users.Policies().Put(ctx, "user", "web", "prompt/edit", "allow"))
+	_, err = f.board.Ask(ctx, scoped, "", "proj", "what is here")
+	assert.ErrorIs(t, err, note.ErrNoPrompt, "a folder the user does not see")
+	_, err = f.board.Ask(ctx, scoped, "", model.Default, "what is here")
+	assert.ErrorIs(t, err, note.ErrNoPrompt, "the root is for a user who sees every folder")
+}

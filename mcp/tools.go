@@ -29,7 +29,7 @@ func tools() []Tool {
 	num := func(text string) Property { return Property{Type: "integer", Description: text} }
 	wait := num("Seconds to wait for the run to end, up to 900; 0 returns once it started.")
 	lines := num("Lines of output to return from the end, 100 unless given; 0 for none.")
-	return []Tool{
+	return append([]Tool{
 		{
 			Name:        "list_jobs",
 			Description: "List the folders you can see and their jobs: whether you may run each, and how it last went.",
@@ -112,7 +112,7 @@ func tools() []Tool {
 			}, "workflow"),
 			call: listWorkflowRuns,
 		},
-	}
+	}, noteTools()...)
 }
 
 // decode reads a tool's arguments into v; none is an empty object.

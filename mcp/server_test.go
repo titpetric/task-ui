@@ -70,9 +70,21 @@ func newFixture(t *testing.T) *fixture {
 // post sends a body to a path with a token and returns the status and body.
 func (f *fixture) post(t *testing.T, token, path string, body any) (int, []byte) {
 	t.Helper()
+	return f.send(t, http.MethodPost, token, path, body)
+}
+
+// put sends a body to a path with PUT, as post does with POST.
+func (f *fixture) put(t *testing.T, token, path string, body any) (int, []byte) {
+	t.Helper()
+	return f.send(t, http.MethodPut, token, path, body)
+}
+
+// send sends a body to a path with a token and returns the status and body.
+func (f *fixture) send(t *testing.T, method, token, path string, body any) (int, []byte) {
+	t.Helper()
 	data, err := json.Marshal(body)
 	assert.NoError(t, err)
-	req, err := http.NewRequest(http.MethodPost, f.server.URL+path, bytes.NewReader(data))
+	req, err := http.NewRequest(method, f.server.URL+path, bytes.NewReader(data))
 	assert.NoError(t, err)
 	req.Header.Set("Content-Type", "application/json")
 	if token != "" {
@@ -131,7 +143,7 @@ func TestNew(t *testing.T) {
 		names = append(names, tool.Name)
 		assert.Equal(t, "object", tool.InputSchema.Type)
 	}
-	assert.Equal(t, []string{"list_jobs", "list_workflows", "run_job", "run_workflow", "list_runs", "get_run", "list_notes", "note_comment", "list_workflow_runs"}, names)
+	assert.Equal(t, []string{"list_jobs", "list_workflows", "run_job", "run_workflow", "list_runs", "get_run", "list_notes", "note_comment", "list_workflow_runs", "post_note", "ask_prompt"}, names)
 }
 
 // Only a token of a user gets in.
@@ -170,7 +182,7 @@ func TestServer_ServeHTTP(t *testing.T) {
 	assert.Equal(t, http.StatusAccepted, status)
 	assert.Len(t, raw, 0)
 
-	assert.Len(t, f.rpc(t, "admin", "tools/list", nil).Result.Tools, 9)
+	assert.Len(t, f.rpc(t, "admin", "tools/list", nil).Result.Tools, 11)
 	assert.Equal(t, -32601, f.rpc(t, "admin", "resources/list", nil).Error.Code)
 	assert.Equal(t, -32602, f.rpc(t, "admin", "tools/call", map[string]any{"name": "nothing"}).Error.Code)
 

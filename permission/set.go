@@ -1,6 +1,7 @@
 package permission
 
 import (
+	"github.com/titpetric/task-ui/config"
 	"github.com/titpetric/task-ui/model"
 )
 
@@ -14,8 +15,27 @@ type Set struct {
 
 // Allowed reports whether the user may do what a path names. An admin
 // may do everything; anyone else what the role or the user allows,
-// unless either denies it. Nobody may do anything.
+// unless either denies it. Nobody may do anything. A check names its
+// path as a string literal, which rulelint reads.
 func (s Set) Allowed(path string) bool {
+	return s.decide(path)
+}
+
+// Effective is what the set allows by every path a check may name, for
+// the permission matrix.
+func (s Set) Effective() map[string]bool {
+	out := map[string]bool{}
+	p := config.Default()
+	for _, path := range p.Paths() {
+		if p.Checkable(path) {
+			out[path] = s.decide(path)
+		}
+	}
+	return out
+}
+
+// decide answers as Allowed does, for any path.
+func (s Set) decide(path string) bool {
 	if s.User == nil {
 		return false
 	}

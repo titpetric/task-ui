@@ -117,13 +117,17 @@ func (h *Handlers) startRun(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusCreated, h.view(r, session.Snapshot()))
 }
 
-// runOf returns the run a route names, when the user may see it.
+// runOf returns the run a route names, when the user may see it: a run
+// of a folder the user sees, or one the user started in the internal
+// folder, such as the run of a prompt the user asked.
 func (h *Handlers) runOf(r *http.Request) (*model.Run, error) {
 	run, err := h.opts.Runs.Get(r.Context(), param(r, "id"))
 	if err != nil {
 		return nil, err
 	}
-	if !access.UserFrom(r.Context()).CanSee(run.Folder) {
+	user := access.UserFrom(r.Context())
+	own := user != nil && model.IsInternal(run.Folder) && run.UserID == user.ID
+	if !user.CanSee(run.Folder) && !own {
 		return nil, storage.ErrNotFound
 	}
 	return run, nil
