@@ -54,8 +54,12 @@
 				<td data-label="By">{{ template "user" (list $ .UserName) }}</td>
 				<td data-label="Result" data-result><span class="state"><i class="dot {{ .State }}"></i>{{ .State }}</span>{{ if .Message }} <span class="faint">{{ .Message }}</span>{{ end }}</td>
 				<td data-label="Steps"><span class="chain">{{ range $i, $l := $.Links .Steps }}{{ if $i }}<span class="faint then" aria-hidden="true"></span>{{ end }}<a class="nowrap" href="{{ $l.Href }}" data-pos="{{ $i }}"><i class="dot {{ $l.State }}"></i>{{ if $l.Workflow }}<svg class="ic"><use href="#i-flow"/></svg>{{ else if $l.Prompt }}<svg class="ic"><use href="#i-prompt"/></svg>{{ end }}{{ $l.Text }}</a>{{ end }}</span></td>
-				<td class="actions"><a class="btn btn-sm" href="/workflows/{{ $w.ID }}/runs/{{ .ID }}" data-workflow-view>View</a>
-					{{- if and $.Summarize (ne .State "running") }}<button type="button" class="btn btn-sm" data-summary="/api/workflow-runs/{{ .ID }}/summary" data-summary-page="/workflows/{{ $w.ID }}/runs/{{ .ID }}" data-summary-title="{{ $w.Name }}" title="Claude's summary of every step's output">Summary</button>{{ end }}</td>
+				<td class="actions"><a class="btn btn-sm" href="/workflows/{{ $w.ID }}/runs/{{ .ID }}" data-workflow-view>View</a>{{ template "menu" (menu (print "Actions on the run of " $w.Name)
+					(detail "Run" .ID "mono" "")
+					(detail "Started" (stamp .StartedAt))
+					(item "file" "Open the run's page" "href" (print "/workflows/" $w.ID "/runs/" .ID))
+					(and $.Summarize (ne .State "running") (item "note" "Summary" "data-summary" (print "/api/workflow-runs/" .ID "/summary") "data-summary-page" (print "/workflows/" $w.ID "/runs/" .ID) "data-summary-title" $w.Name "title" "Claude's summary of every step's output"))
+				) }}</td>
 			</tr>
 		{{- else }}
 			<tr class="empty"><td colspan="5">Not run yet.</td></tr>

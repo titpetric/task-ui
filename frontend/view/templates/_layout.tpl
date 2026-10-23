@@ -186,6 +186,8 @@
 	<symbol id="i-collapse" viewBox="0 0 16 16"><path d="M13 7H9V3M9 7l4.5-4.5M3 9h4v4M7 9l-4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
 	<symbol id="i-more" viewBox="0 0 16 16"><circle cx="3.5" cy="8" r="1.3" fill="currentColor"/><circle cx="8" cy="8" r="1.3" fill="currentColor"/><circle cx="12.5" cy="8" r="1.3" fill="currentColor"/></symbol>
 	<symbol id="i-chev" viewBox="0 0 16 16"><path d="M6 3.5 10.5 8 6 12.5" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+	<symbol id="i-up" viewBox="0 0 16 16"><path d="M8 13.5v-11M3.5 7 8 2.5 12.5 7" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+	<symbol id="i-down" viewBox="0 0 16 16"><path d="M8 2.5v11M3.5 9 8 13.5 12.5 9" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
 	<symbol id="i-download" viewBox="0 0 16 16"><path d="M8 2.5v8M4.5 7 8 10.5 11.5 7M2.5 13.5h11" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
 	<symbol id="i-upload" viewBox="0 0 16 16"><path d="M8 10.5v-8M4.5 6 8 2.5 11.5 6M2.5 13.5h11" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
 </svg>
@@ -194,7 +196,6 @@
 {{- /* The replay button of a finished run with a recording: it plays
      the recording in the run window at its recorded pace, and reads
      nothing from the server but the recording. */}}
-{{ define "replay" }}{{ if and .CastPath (ended .State) }}<button type="button" class="btn btn-sm replay" data-replay="{{ .ID }}" data-replay-title="{{ .Name }}" data-replay-who="{{ .UserName }}" title="Replay the recording" aria-label="Replay the recording">|&gt;</button>{{ end }}{{ end }}
 
 {{ define "dialog" }}
 <dialog class="run" id="run-dialog" aria-labelledby="run-title">
@@ -639,11 +640,10 @@
 			</div></td>
 			<td class="num nowrap">{{ if not .Dir }}{{ size .Size }}{{ end }}</td>
 			<td class="hide-sm nowrap" title="{{ stamp .ModTime }}">{{ ago .ModTime }}</td>
-			<td class="actions">
-				{{- if and (not .Dir) .Href }}
-				<a class="btn-icon" href="{{ .Href }}?download" title="Download {{ .Name }}" aria-label="Download {{ .Name }}"><svg class="ic"><use href="#i-download"/></svg></a>
-				{{- end }}
-			</td>
+			<td class="actions">{{ if and (not .Dir) .Href }}{{ template "menu" (menu (print "Actions on " .Name)
+				(detail "Changed" (stamp .ModTime))
+				(item "eye" "Preview" "href" .Href "data-file" .Path)
+				(item "download" "Download" "href" (print .Href "?download"))) }}{{ end }}</td>
 		</tr>
 		{{- end }}
 	{{- else }}

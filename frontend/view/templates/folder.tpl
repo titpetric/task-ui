@@ -62,7 +62,8 @@
 				<td class="desc">{{ if .Keys }}{{ join .Keys ", " }}{{ else }}<span class="faint">none</span>{{ end }}</td>
 				<td>{{ if .Managed }}<span class="badge ok">managed</span>{{ else if .Exists }}<span class="badge">in folder</span>{{ else }}<span class="badge bad">missing</span>{{ end }}</td>
 				{{- if $.Can "env/view" }}
-				<td class="actions"><a class="btn-icon" href="{{ $.Href $p.ID }}/env/{{ .Path }}" title="Edit {{ .Path }}" aria-label="Edit {{ .Path }}"><svg class="ic"><use href="#i-edit"/></svg></a></td>
+				<td class="actions">{{ template "menu" (menu (print "Actions on " .Path)
+					(item "edit" "Edit" "href" (print ($.Href $p.ID) "/env/" .Path))) }}</td>
 				{{- end }}
 			</tr>
 		{{- else }}

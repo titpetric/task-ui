@@ -5,11 +5,10 @@
 {{ define "user" }}{{ $p := index . 0 }}{{ $name := index . 1 }}<span class="user-ref">{{ template "avatar" (list $p $name) }} <span class="user-name">{{ $name }}</span>{{ template "user-menu" (list $p $name) }}</span>{{ end }}
 
 {{ define "user-menu" }}{{ $p := index . 0 }}{{ $name := index . 1 -}}
-<details class="more-menu user-more"><summary class="btn-icon" title="More on {{ $name }}" aria-label="More on {{ $name }}"><svg class="ic"><use href="#i-more"/></svg></summary><div class="more-list" role="menu">
-{{- if $p.CanProfile $name }}<a class="more-item" role="menuitem" href="/users/{{ $name }}"><svg class="ic"><use href="#i-users"/></svg>Profile</a>{{ end -}}
-<a class="more-item" role="menuitem" href="/runs?user={{ $name }}"><svg class="ic"><use href="#i-list"/></svg>Runs by this user</a>
-{{- if $p.CanPermissions $name }}<a class="more-item" role="menuitem" href="/users/{{ $name }}#permissions"><svg class="ic"><use href="#i-key"/></svg>Permissions</a>{{ end -}}
-</div></details>
+{{ template "menu" (menu (print "More on " $name)
+	(and ($p.CanProfile $name) (item "users" "Profile" "href" (print "/users/" $name)))
+	(item "list" "Runs by this user" "href" (print "/runs?user=" (urlquery $name)))
+	(and ($p.CanPermissions $name) (item "key" "Permissions" "href" (print "/users/" $name "#permissions")))) }}
 {{- end }}
 
 {{/* user-options takes (list users selected [short]): an option per

@@ -76,8 +76,8 @@ changed, the scheduler skips the run and logs why. When its time comes while the
 the schedule skips that time. Office hours do not gate a schedule: the schedule
 is the decision.
 
-**Disable** stops a schedule without losing it, **Enable** starts it
-again. The schedule's user changes or deletes it, as does anyone else
+**Disable**, in a schedule's **⋯** menu, stops it without losing it,
+**Enable** starts it again. The schedule's user changes or deletes it, as does anyone else
 who may run its job: changing takes Allow Edits on Schedules,
 `schedule/edit`, deleting Allow Deletes, `schedule/delete`. When its job leaves the folder, task-ui disables the schedule.
 

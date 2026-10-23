@@ -29,7 +29,11 @@
 					{{- else }}
 					<button type="button" class="btn btn-primary btn-sm" data-workflow-run="{{ .ID }}"{{ if .Prompted }} data-workflow-prompt="{{ .Name }}"{{ end }}><svg class="ic"><use href="#i-play"/></svg>Run</button>
 					{{- end }}{{ end }}
-					<a class="btn btn-sm" href="/workflows/{{ .ID }}">Open</a>
+					{{- template "menu" (menu (print "Actions on " .Name)
+						(item "flow" "Open" "href" (print "/workflows/" .ID))
+						(and .CanChange (item "edit" "Edit" "href" (print "/workflows/" .ID "/edit")))
+						(and .Running (item "eye" "The run going" "href" (print "/workflows/" .ID "/runs/" .Running)))
+					) }}
 				</td>
 			</tr>
 		{{- else }}

@@ -132,7 +132,7 @@ table.table-kv th {
 @container (max-width: 56rem) {
   .table.fit-cards {
     & .hide-narrow,
-    & .run-as :is(.avatar, .user-more) {
+    & .run-as :is(.avatar, .more-menu) {
       display: none;
     }
   }

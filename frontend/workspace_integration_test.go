@@ -32,8 +32,7 @@ func TestWorkspaces(t *testing.T) {
 	assert.Contains(t, body, `href="/settings/workspaces/malta"`)
 	assert.Contains(t, body, `data-delete="/api/workspaces/malta"`)
 	// One workspace has nowhere to move.
-	assert.Contains(t, body, `data-workspace-move="up" data-folder="malta" title="Move up" aria-label="Move malta up" disabled>`)
-	assert.Contains(t, body, `data-workspace-move="down" data-folder="malta" title="Move down" aria-label="Move malta down" disabled>`)
+	assert.NotContains(t, body, `data-workspace-move`)
 
 	settings := f.page(t, asAdmin, "/settings")
 	assert.Contains(t, settings, `href="/settings/workspaces"`)
@@ -43,10 +42,10 @@ func TestWorkspaces(t *testing.T) {
 	assert.NoError(t, f.opts.Workspaces.Create(ctx, &model.Workspace{Folder: "gozo", Title: "Gozo"}))
 	body = f.page(t, asAdmin, "/settings/workspaces")
 	assert.True(t, strings.Index(body, `href="/f/malta"`) < strings.Index(body, `href="/f/gozo"`), "malta, added first, lists first")
-	assert.Contains(t, body, `data-workspace-move="up" data-folder="malta" title="Move up" aria-label="Move malta up" disabled>`)
-	assert.Contains(t, body, `data-workspace-move="down" data-folder="malta" title="Move down" aria-label="Move malta down">`)
-	assert.Contains(t, body, `data-workspace-move="up" data-folder="gozo" title="Move up" aria-label="Move gozo up">`)
-	assert.Contains(t, body, `data-workspace-move="down" data-folder="gozo" title="Move down" aria-label="Move gozo down" disabled>`)
+	assert.NotContains(t, body, `data-workspace-move="up" data-folder="malta"`)
+	assert.Contains(t, body, `data-workspace-move="down" data-folder="malta"><svg class="ic"><use href="#i-down"/></svg><span>Move down</span>`)
+	assert.Contains(t, body, `data-workspace-move="up" data-folder="gozo"><svg class="ic"><use href="#i-up"/></svg><span>Move up</span>`)
+	assert.NotContains(t, body, `data-workspace-move="down" data-folder="gozo"`)
 
 	form := f.page(t, asAdmin, "/settings/workspaces/new")
 	assert.Contains(t, form, `data-api="/api/workspaces"`)
@@ -126,8 +125,8 @@ func TestWorkspaces_Default(t *testing.T) {
 	assert.True(t, strings.Index(body, `href="/f/_"`) < strings.Index(body, `href="/f/malta"`), "_ lists first")
 	assert.Contains(t, body, `<a href="/f/_/site">site</a>`)
 	assert.NotContains(t, body, `data-delete="/api/workspaces/_"`)
-	assert.NotContains(t, body, `data-folder="_" title="Move`)
-	assert.Contains(t, body, `data-workspace-move="up" data-folder="malta" title="Move up" aria-label="Move malta up" disabled>`)
+	assert.NotContains(t, body, `data-folder="_"`)
+	assert.NotContains(t, body, `data-workspace-move="up" data-folder="malta"`)
 	assert.Contains(t, body, `data-delete="/api/workspaces/malta"`)
 
 	edit := f.page(t, asAdmin, "/settings/workspaces/_")

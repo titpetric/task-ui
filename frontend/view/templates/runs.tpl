@@ -62,14 +62,15 @@
 				<td data-label="Result" data-result>{{ template "state" . }}{{ if and (eq .State "queued") .Message }} <span class="faint">{{ .Message }}</span>{{ end }}{{ with .Title }} <span class="term-title" title="{{ . }}">{{ . }}</span>{{ end }}{{ if .Attached }} <span class="faint">{{ .Attached }} watching</span>{{ end }}</td>
 				<td class="actions" data-actions>
 					<a class="btn btn-sm" href="/runs/{{ .ID }}" data-attach="{{ .ID }}">{{ if not (ended .State) }}Attach{{ else }}View{{ end }}</a>
-					{{- template "replay" . }}
-					{{- if and $.Summarize (ended .State) }}
-					<button type="button" class="btn btn-sm" data-summary="/api/runs/{{ .ID }}/summary" data-summary-page="/runs/{{ .ID }}" data-summary-title="{{ .Name }}" title="Claude's summary of the output">Summary</button>
-					{{- end }}
-					{{- if and .Live (not (ended .State)) }}
-					<button type="button" class="btn-icon" data-stop="{{ .ID }}" title="Stop the run" aria-label="Stop the run"><svg class="ic"><use href="#i-stop"/></svg></button>
-					<button type="button" class="btn-icon danger" data-kill="{{ .ID }}" title="Kill the run" aria-label="Kill the run"><svg class="ic"><use href="#i-trash"/></svg></button>
-					{{- end }}
+					{{- template "menu" (menu (print "Actions on the run of " .Job)
+					(detail "Run" .ID "mono" "")
+					(detail "Started" (stamp .StartedAt))
+					(item "file" "Open the run's page" "href" (print "/runs/" .ID))
+					(and .CastPath (ended .State) (item "play" "Replay the recording" "data-replay" .ID "data-replay-title" .Name "data-replay-who" .UserName))
+					(and $.Summarize (ended .State) (item "note" "Summary" "data-summary" (print "/api/runs/" .ID "/summary") "data-summary-page" (print "/runs/" .ID) "data-summary-title" .Name "title" "Claude's summary of the output"))
+					(and .Live (not (ended .State)) (item "stop" "Stop" "data-stop" .ID))
+					(and .Live (not (ended .State)) (danger "trash" "Kill" "data-kill" .ID))
+					) }}
 				</td>
 			</tr>
 		{{- else }}

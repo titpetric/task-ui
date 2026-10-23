@@ -42,6 +42,13 @@ func Funcs() template.FuncMap {
 		"json":         JSON,
 		"ended":        model.Finished,
 		"argLine":      ArgLine,
+		// menu, item, danger, detail and sep build a [...] menu for the
+		// menu template.
+		"menu":   NewMenu,
+		"item":   NewMenuItem,
+		"danger": NewDangerItem,
+		"detail": NewMenuDetail,
+		"sep":    func() MenuItem { return MenuItem{Sep: true} },
 		// bytes and megabytes word a size in bytes, or in MB as Beszel
 		// counts memory, as size does.
 		"bytes":     func(n uint64) string { return Size(int64(n)) },

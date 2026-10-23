@@ -37,19 +37,14 @@
 					{{- else }} <a href="{{ .Href }}" data-artifact="{{ .Path }}">{{ .Name }}</a>{{ end }}</td>
 				<td class="num nowrap">{{ size .Size }}</td>
 				<td class="hide-sm nowrap" title="{{ stamp .ModTime }}">{{ ago .ModTime }}</td>
-				<td class="actions">
-					{{- if .Dir }}
-					<a class="btn-icon" href="{{ .Archive }}" download title="Download {{ .Name }} as .tgz" aria-label="Download {{ .Name }} as .tgz"><svg class="ic"><use href="#i-download"/></svg></a>
-					<button type="button" class="btn-icon" data-copy="{{ .Archive }}" title="Copy the link to the .tgz" aria-label="Copy the link to {{ .Name }} as .tgz"><svg class="ic"><use href="#i-copy"/></svg></button>
-					{{- else }}
-					<a class="btn-icon" href="{{ .Href }}" data-artifact="{{ .Path }}" title="View {{ .Name }} and its versions" aria-label="View {{ .Name }}"><svg class="ic"><use href="#i-eye"/></svg></a>
-					<a class="btn-icon" href="{{ .Href }}?download" title="Download {{ .Name }}" aria-label="Download {{ .Name }}"><svg class="ic"><use href="#i-download"/></svg></a>
-					<button type="button" class="btn-icon" data-copy="{{ .Href }}" title="Copy the link to {{ .Name }}" aria-label="Copy the link to {{ .Name }}"><svg class="ic"><use href="#i-copy"/></svg></button>
-					{{- end }}
-					{{- if $.Can "artifact/edit" }}
-					<button type="button" class="btn-icon danger" data-delete="/api{{ if .Dir }}/artifacts/files/{{ .Path }}{{ else }}{{ .Href }}{{ end }}" data-confirm="Delete {{ .Path }}{{ if .Dir }}/ and everything in it{{ end }} from the tree? The history keeps its versions." data-confirm-ok="Delete" data-next="reload" title="Delete from the tree" aria-label="Delete {{ .Name }}"><svg class="ic"><use href="#i-trash"/></svg></button>
-					{{- end }}
-				</td>
+				<td class="actions">{{ template "menu" (menu (print "Actions on " .Name)
+					(and (not .Dir) (item "eye" "View and versions" "href" .Href "data-artifact" .Path))
+					(and (not .Dir) (item "download" "Download" "href" (print .Href "?download")))
+					(and (not .Dir) (item "copy" "Copy the link" "data-copy" .Href))
+					(and .Dir (item "download" "Download as .tgz" "href" .Archive "download" ""))
+					(and .Dir (item "copy" "Copy the link to the .tgz" "data-copy" .Archive))
+					(and ($.Can "artifact/edit") (danger "trash" "Delete from the tree" "data-delete" (print "/api" (or (and .Dir (print "/artifacts/files/" .Path)) .Href)) "data-confirm" (print "Delete " .Path (or (and .Dir "/ and everything in it") "") " from the tree? The history keeps its versions.") "data-confirm-ok" "Delete" "data-next" "reload"))
+				) }}</td>
 			</tr>
 		{{- else }}
 			<tr class="empty"><td colspan="4">This folder is empty.</td></tr>
@@ -89,10 +84,14 @@
 				<td class="key">{{ if .CommitID }}<a href="/artifacts/files/{{ .Path }}?version={{ .CommitID }}" data-artifact="{{ .Path }}" data-version="{{ .CommitID }}" title="View this version">{{ .Name }}</a>{{ else }}<a href="/api/artifacts/{{ .ID }}">{{ .Name }}</a>{{ end }}</td>
 				<td class="hide-sm">{{ if .CommitID }}<span class="faint mono" title="{{ .CommitID }}">{{ slice .CommitID 0 7 }}</span>{{ else }}<span class="faint">kept apart</span>{{ end }}</td>
 				<td class="nowrap">{{ size .ByteSize }}</td>
-				<td class="actions">
-					<a class="btn-icon" href="/api/artifacts/{{ .ID }}" title="Download this version" aria-label="Download {{ .Name }}"><svg class="ic"><use href="#i-download"/></svg></a>
-					{{- if $.Can "artifact/delete" }}<button type="button" class="btn-icon danger" data-delete="/api/artifacts/{{ .ID }}" data-confirm="Delete the record of {{ .Name }}{{ if .RunID }} from {{ .Folder }} / {{ .Job }}{{ end }}?" data-next="reload" title="Delete" aria-label="Delete {{ .Name }}"><svg class="ic"><use href="#i-trash"/></svg></button>{{ end }}
-				</td>
+				<td class="actions">{{ template "menu" (menu (print "Actions on " .Name)
+					(and .CommitID (detail "Version" .CommitID "mono" ""))
+					(and .RunID (detail "Run" .RunID "mono" ""))
+					(detail "Created" (stamp .CreatedAt))
+					(and .CommitID (item "eye" "View this version" "href" (print "/artifacts/files/" .Path "?version=" .CommitID) "data-artifact" .Path "data-version" .CommitID))
+					(item "download" "Download this version" "href" (print "/api/artifacts/" .ID))
+					(and ($.Can "artifact/delete") (danger "trash" "Delete the record" "data-delete" (print "/api/artifacts/" .ID) "data-confirm" (print "Delete the record of " .Name (or (and .RunID (print " from " .Folder " / " .Job)) "") "?") "data-confirm-ok" "Delete" "data-next" "reload"))
+				) }}</td>
 			</tr>
 		{{- else }}
 			<tr class="empty"><td colspan="8">No artifacts yet. Files a job writes to <code>$TASK_UI_ARTIFACTS</code> appear here.</td></tr>

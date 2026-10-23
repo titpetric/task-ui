@@ -65,10 +65,15 @@
 				<td data-label="Result">{{ template "state" . }}</td>
 				<td class="actions">
 					<a class="btn btn-sm" href="/runs/{{ .ID }}" data-attach="{{ .ID }}">{{ if not (ended .State) }}Attach{{ else }}View{{ end }}</a>
-					{{- template "replay" . }}
-					{{- if $.SummarizesRun $r . }}<button type="button" class="btn btn-sm" data-summarize-run="{{ .ID }}" data-question="{{ summaryQuestion }}" title="Claude summarizes the run's output, in this window">Summarize</button>
-					{{- else }}{{ with $.RunReport .ID }}{{ if .Pending }}<span class="faint">summarizing</span>{{ end }}{{ end }}{{ end }}
-					{{- if and (not (ended .State)) $can }}<button type="button" class="btn-icon danger" data-kill="{{ .ID }}" title="Kill the run" aria-label="Kill the run"><svg class="ic"><use href="#i-stop"/></svg></button>{{ end }}
+					{{- with $.RunReport .ID }}{{ if .Pending }} <span class="faint">summarizing</span>{{ end }}{{ end }}
+					{{- template "menu" (menu (print "Actions on the run of " .Job)
+					(detail "Run" .ID "mono" "")
+					(detail "Started" (stamp .StartedAt))
+					(item "file" "Open the run's page" "href" (print "/runs/" .ID))
+					(and .CastPath (ended .State) (item "play" "Replay the recording" "data-replay" .ID "data-replay-title" .Name "data-replay-who" .UserName))
+					(and ($.SummarizesRun $r .) (item "note" "Summarize" "data-summarize-run" .ID "data-question" summaryQuestion "title" "Claude summarizes the run's output, in this window"))
+					(and (not (ended .State)) $can (danger "stop" "Kill" "data-kill" .ID))
+					) }}
 				</td>
 			</tr>
 			{{- with $.RunReport .ID }}{{ if .Body }}
@@ -102,12 +107,10 @@
 				<td class="nowrap hide-narrow" data-label="Last run">{{ if .LastRunAt }}{{ ago .LastRunAt }}{{ else }}<span class="faint">never</span>{{ end }}</td>
 				<td data-label="Runs as">{{ template "runas-row" (list $ .) }}</td>
 				<td data-label="State">{{ if .IsEnabled }}<span class="badge ok">enabled</span>{{ else }}<span class="badge">disabled</span>{{ end }}</td>
-				<td class="actions">
-					{{- if $can }}
-					<form data-api="/api/schedules/{{ .ID }}" data-method="PUT" data-next="reload"><input type="hidden" name="enabled" data-type="bool" value="{{ if .IsEnabled }}false{{ else }}true{{ end }}"><button class="btn btn-sm" type="submit">{{ if .IsEnabled }}Disable{{ else }}Enable{{ end }}</button></form>
-					<button type="button" class="btn-icon danger" data-delete="/api/schedules/{{ .ID }}" data-confirm="Delete the schedule {{ .Expression }} for {{ $r.Name }}?" data-next="reload" title="Delete" aria-label="Delete schedule"><svg class="ic"><use href="#i-trash"/></svg></button>
-					{{- end }}
-				</td>
+				<td class="actions">{{ if $can }}{{ template "menu" (menu (print "Actions on the schedule " .Expression)
+					(item (or (and .IsEnabled "stop") "play") (or (and .IsEnabled "Disable") "Enable") "data-api" (print "/api/schedules/" .ID) "data-method" "PUT" "data-body" (or (and .IsEnabled `{"enabled":false}`) `{"enabled":true}`) "data-next" "reload")
+					(danger "trash" "Delete" "data-delete" (print "/api/schedules/" .ID) "data-confirm" (print "Delete the schedule " .Expression " for " $r.Name "?") "data-confirm-ok" "Delete" "data-next" "reload")
+				) }}{{ end }}</td>
 			</tr>
 		{{- else }}
 			<tr class="empty"><td colspan="6">Not scheduled.{{ if $can }} Add a cron expression below to run it on a schedule{{ if $.Users }}, as the user you pick{{ else }}, as you{{ end }}.{{ end }}</td></tr>

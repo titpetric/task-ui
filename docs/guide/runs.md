@@ -236,8 +236,8 @@ attaches to it.
   idle gaps and all, under a blinking `( * recording )` beside the
   title, with **Pause** and **Restart**. It reads the recording and
   nothing more: no run starts, the recents stay as they are, and typing
-  goes nowhere. A finished run's row in a list and its window's header
-  have the same **|>**.
+  goes nowhere. A finished run's window header has the same **|>**,
+  and its row in a list has **Replay the recording** in its **⋯** menu.
 
 Once its recording expires under the
 [Data retention](settings.md#data-retention) settings, a run keeps its
@@ -301,7 +301,7 @@ Claude Code token, on jobs that end on their own: not `@shell`,
 `@claude` or an interactive job. **Run again** in the window brings
 another summary.
 
-**Summarize** on a row of a job page's runs starts the same thread for
+**Summarize**, in the **⋯** menu of a row of a job page's runs, starts the same thread for
 a run that ended without a summary, with the same question; the window
 opens on the run and moves on to Claude's run, `Run 2/2`. It shows with
 the same rights as **|>summarize**; while Claude writes, the row reads
