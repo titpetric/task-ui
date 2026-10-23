@@ -42,7 +42,7 @@ func (b *Board) AskRun(ctx context.Context, user *model.User, runID, body string
 	if !user.CanSee(run.Folder) || run.IsClaude() {
 		return nil, fmt.Errorf("%w: no such run", ErrNoPrompt)
 	}
-	return b.ask(ctx, user, "", run.Where(), run.ID, body)
+	return b.ask(ctx, user, "", run.Where(), run.ID, "", body)
 }
 
 // SummaryQuestion is the question of the thread Run and summarize
@@ -72,9 +72,13 @@ func (b *Board) SummarizeBatch(ctx context.Context, user *model.User, runID stri
 
 // instructions are what a prompt's run tells Claude besides the
 // thread, TASK_UI_PROMPT_INSTRUCTIONS: the summary's shape for the
-// question of SummarizeRun or SummarizeBatch alone in its thread;
-// nothing otherwise.
+// question of SummarizeRun or SummarizeBatch alone in its thread, the
+// builder's of claude.WorkflowBuilder for every run of a thread of the
+// Workflows page; nothing otherwise.
 func instructions(note *model.Note, thread string) []string {
+	if note.Area == model.AreaWorkflows {
+		return []string{"TASK_UI_PROMPT_INSTRUCTIONS=" + claude.WorkflowBuilder}
+	}
 	if note.AboutRunID == "" || thread != note.Body {
 		return nil
 	}

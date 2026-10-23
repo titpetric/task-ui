@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/titpetric/task-ui/access"
+	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/frontend/view"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/storage"
@@ -108,7 +109,8 @@ func (h *Handlers) stepWorkflows(ctx context.Context, p *view.Page, self string)
 }
 
 // workflows lists the workflows and takes a new one. Any user may make
-// one, from the jobs they can see.
+// one, from the jobs they can see. With prompt/edit and a Claude token,
+// its Prompt box has Claude build or change one.
 func (h *Handlers) workflows(w http.ResponseWriter, r *http.Request) {
 	if !h.require(w, r, "workflow/view") {
 		return
@@ -118,6 +120,15 @@ func (h *Handlers) workflows(w http.ResponseWriter, r *http.Request) {
 	p.Step = view.StepWorkflows
 	p.Workflows = p.SideWorkflows
 	p.StepWorkflows = p.SideWorkflows
+	if h.opts.Board != nil && p.Can("prompt/edit") && h.claudeFor(r, p.User) {
+		p.Prompt = view.PromptOfArea(model.AreaWorkflows)
+		user := access.UserFrom(r.Context())
+		for _, thread := range h.threads(r, storage.NoteFilter{Prompts: true, Area: model.AreaWorkflows, Limit: 20}) {
+			if seesPlace(h.opts.Catalogue, user, thread.Dir) {
+				p.Prompt.Threads = append(p.Prompt.Threads, thread)
+			}
+		}
+	}
 	h.render(w, http.StatusOK, "workflows", p)
 }
 
@@ -280,4 +291,14 @@ func (h *Handlers) workflowEdit(w http.ResponseWriter, r *http.Request) {
 	p.StepWorkflows = h.stepWorkflows(r.Context(), p, p.Workflow.ID)
 	h.hostJobs(r, p)
 	h.render(w, http.StatusOK, "workflow_edit", p)
+}
+
+// seesPlace reports whether the user sees the place a prompt ran in:
+// the folder it lies in, or the root for one who sees every folder.
+func seesPlace(c folder.Catalogue, user *model.User, place string) bool {
+	if place == model.Default {
+		return user != nil && len(user.FolderList()) == 0
+	}
+	f, _ := folder.Resolve(c, place)
+	return f != nil && user.CanSee(f.ID)
 }

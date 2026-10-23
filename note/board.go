@@ -111,7 +111,7 @@ func (b *Board) Post(ctx context.Context, user *model.User, parentID, body strin
 	}
 	note := &model.Note{Channel: model.ChannelNotes, ParentID: parentID, UserID: user.ID, UserName: user.Name, Body: body}
 	if parent != nil && parent.IsPrompt() {
-		note.WorkspaceID, note.Dir, note.AboutRunID, note.AboutWorkflowRunID = parent.WorkspaceID, parent.Dir, parent.AboutRunID, parent.AboutWorkflowRunID
+		note.WorkspaceID, note.Dir, note.AboutRunID, note.AboutWorkflowRunID, note.Area = parent.WorkspaceID, parent.Dir, parent.AboutRunID, parent.AboutWorkflowRunID, parent.Area
 		if err := b.Notes.Create(ctx, note); err != nil {
 			return nil, err
 		}
@@ -397,7 +397,7 @@ func (b *Board) reply(ctx context.Context, note *model.Note, body string) {
 	}
 	reply := &model.Note{
 		Channel: note.Channel, ParentID: note.ID, UserName: name, Body: body, RunID: note.RunID,
-		WorkspaceID: note.WorkspaceID, Dir: note.Dir, AboutRunID: note.AboutRunID, AboutWorkflowRunID: note.AboutWorkflowRunID,
+		WorkspaceID: note.WorkspaceID, Dir: note.Dir, AboutRunID: note.AboutRunID, AboutWorkflowRunID: note.AboutWorkflowRunID, Area: note.Area,
 	}
 	if agent, err := b.Users.GetByName(ctx, reply.UserName); err == nil {
 		reply.UserID = agent.ID

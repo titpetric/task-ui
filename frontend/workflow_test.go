@@ -448,3 +448,28 @@ func TestWorkflow_PromptStepEditor(t *testing.T) {
 	assert.Contains(t, page, `<use href="#i-prompt"/></svg>prompt in infra/docs</a>`)
 	assert.Contains(t, page, `<p class="step-prompt">fetch the weather</p>`)
 }
+
+// The Workflows page has the Prompt box for a user with prompt/edit and
+// a Claude token: it asks in the area workflows, in the root or a
+// folder it picks, and lists the area's threads alone.
+func TestWorkflows_Prompt(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	ctx := context.Background()
+	const box = `<input type="hidden" name="area" value="workflows">`
+	assert.NotContains(t, f.page(t, asAdmin, "/workflows"), box)
+
+	f.withKey(t)
+	assert.NoError(t, f.opts.Integrations.Save(ctx, integration.Claude, map[string]string{"token": "sk-1"}))
+	assert.NoError(t, f.opts.Board.Notes.Create(ctx, &model.Note{UserName: asAdmin, Body: "build the watering workflow", State: model.NoteDone, WorkspaceID: model.Default, Dir: "_", Area: model.AreaWorkflows}))
+	assert.NoError(t, f.opts.Board.Notes.Create(ctx, &model.Note{UserName: asAdmin, Body: "a root prompt", State: model.NoteDone, WorkspaceID: model.Default, Dir: "_"}))
+	admin := f.page(t, asAdmin, "/workflows")
+	assert.Contains(t, admin, box)
+	assert.Contains(t, admin, `placeholder="Describe a workflow to build or change"`)
+	assert.Contains(t, admin, `<select name="folder" aria-label="Run in"><option value="_">the root</option>`)
+	assert.Contains(t, admin, `data-area="workflows"`)
+	assert.Contains(t, admin, "build the watering workflow")
+	assert.NotContains(t, admin, "a root prompt")
+	assert.NotContains(t, f.page(t, asOps, "/workflows"), box)
+	assert.NotContains(t, f.page(t, asAdmin, "/f/_"), "build the watering workflow")
+}

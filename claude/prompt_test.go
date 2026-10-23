@@ -23,3 +23,10 @@ func TestHostsSummary(t *testing.T) {
 	assert.Contains(t, claude.HostsSummary, "a markdown table with a row a host")
 	assert.Contains(t, claude.HostsSummary, "Change nothing.")
 }
+
+func TestWorkflowBuilder(t *testing.T) {
+	t.Parallel()
+	assert.Contains(t, claude.WorkflowBuilder, "create_workflow or update_workflow")
+	assert.Contains(t, claude.WorkflowBuilder, "at most 3 runs")
+	assert.Contains(t, claude.WorkflowBuilder, "verbatim")
+}

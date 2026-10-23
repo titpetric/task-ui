@@ -235,3 +235,34 @@ func TestPrompts_AboutRun(t *testing.T) {
 	assert.Equal(t, http.StatusNotFound, f.call(t, asAdmin, http.MethodPost, "/prompts", api.PromptRequest{Run: "nothing", Prompt: "x"}).Status)
 	assert.Equal(t, http.StatusBadRequest, f.call(t, asAdmin, http.MethodPost, "/prompts", api.PromptRequest{Run: about.ID, Prompt: " "}).Status)
 }
+
+// A prompt of the area workflows runs in the root, or the folder it
+// names, with the builder's instruction, and lists by the area, apart
+// from the root's prompts; an area there is none of answers 400.
+func TestPrompts_Area(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	assert.NoError(t, os.MkdirAll(promptOut(f, ""), 0o755))
+	f.opts.Board.AgentCommand = []string{"sh", "-c", `printf '%s' "$TASK_UI_PROMPT_INSTRUCTIONS" > "$TASK_UI_PROMPT_REPLY"`}
+
+	res := f.call(t, asAdmin, http.MethodPost, "/prompts", api.PromptRequest{Area: "workflows", Prompt: "build a weather workflow"})
+	assert.Equal(t, http.StatusCreated, res.Status, string(res.Raw))
+	assert.Equal(t, model.Default, res.str("dir"))
+	assert.Equal(t, model.AreaWorkflows, res.str("area"))
+	asked := f.answered(t, res.str("id"))
+	assert.Equal(t, model.NoteDone, asked.State)
+
+	threads := f.call(t, asAdmin, http.MethodGet, "/prompts?area=workflows", nil).list("notes")
+	assert.Len(t, threads, 1)
+	answer := threads[0].(map[string]any)["replies"].([]any)[0].(map[string]any)["body"].(string)
+	assert.Contains(t, answer, "create_workflow or update_workflow")
+	assert.Len(t, f.call(t, asAdmin, http.MethodGet, "/prompts?folder=_", nil).list("notes"), 0)
+
+	inFolder := f.call(t, asAdmin, http.MethodPost, "/prompts", api.PromptRequest{Area: "workflows", Folder: "infra", Prompt: "build one here"})
+	assert.Equal(t, http.StatusCreated, inFolder.Status, string(inFolder.Raw))
+	assert.Equal(t, "infra", inFolder.str("dir"))
+	f.answered(t, inFolder.str("id"))
+
+	assert.Equal(t, http.StatusBadRequest, f.call(t, asAdmin, http.MethodPost, "/prompts", api.PromptRequest{Area: "elsewhere", Prompt: "x"}).Status)
+	assert.Equal(t, http.StatusForbidden, f.call(t, asOps, http.MethodPost, "/prompts", api.PromptRequest{Area: "workflows", Prompt: "x"}).Status)
+}

@@ -9,6 +9,10 @@ import (
 // instruction to the agent.
 const ChannelNotes = "notes"
 
+// AreaWorkflows marks a prompt from the Workflows page, which builds
+// and changes workflows.
+const AreaWorkflows = "workflows"
+
 // The states of a note to the agent.
 const (
 	NoteOpen    = "open"

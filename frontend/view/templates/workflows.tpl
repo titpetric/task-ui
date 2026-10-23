@@ -9,6 +9,8 @@
 	</div>
 </div>
 
+{{- template "promptbox" . }}
+
 <div class="table-wrap">
 <table class="table cards">
 	<thead><tr><th>Workflow</th><th>Steps</th><th>Last run</th><th>By</th><th></th></tr></thead>

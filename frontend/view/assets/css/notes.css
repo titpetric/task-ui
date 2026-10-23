@@ -31,6 +31,19 @@
   justify-content: space-between;
   gap: 1rem;
   font-size: var(--fs-xs);
+
+  /* The folder an area's prompt runs in, picked inside the line. */
+  & .run-in {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem;
+
+    & select {
+      width: auto;
+      max-width: 16rem;
+    }
+  }
 }
 
 /* One column as wide as the page: a long line in a code block scrolls in
