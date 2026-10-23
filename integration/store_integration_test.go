@@ -6,12 +6,13 @@ import (
 	"context"
 	"testing"
 
+	_ "modernc.org/sqlite"
+
 	"github.com/titpetric/task-ui/integration"
 	"github.com/titpetric/task-ui/internal/assert"
 	"github.com/titpetric/task-ui/secret"
 	"github.com/titpetric/task-ui/sshkey"
 	"github.com/titpetric/task-ui/storage"
-	_ "modernc.org/sqlite"
 )
 
 func newStore(t *testing.T) *integration.Store {

@@ -17,6 +17,8 @@ import (
 	"testing"
 	"time"
 
+	_ "modernc.org/sqlite"
+
 	"github.com/titpetric/task-ui/access"
 	"github.com/titpetric/task-ui/api"
 	"github.com/titpetric/task-ui/artifactstore"
@@ -39,7 +41,6 @@ import (
 	"github.com/titpetric/task-ui/sshprobe"
 	"github.com/titpetric/task-ui/storage"
 	"github.com/titpetric/task-ui/workflow"
-	_ "modernc.org/sqlite"
 )
 
 // fixture is the API over a private database, with a server in front

@@ -6,11 +6,12 @@ import (
 	"context"
 	"testing"
 
+	_ "modernc.org/sqlite"
+
 	"github.com/titpetric/task-ui/internal/assert"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/secret"
 	"github.com/titpetric/task-ui/storage"
-	_ "modernc.org/sqlite"
 )
 
 // newStore returns a store over a private database and a folder with
