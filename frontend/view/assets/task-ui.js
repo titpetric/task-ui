@@ -128,19 +128,33 @@
       "</div></details></span>";
   }
 
-  // A user's menu sits in rows that scroll sideways, which would clip
-  // it: it opens fixed under its button, kept on the screen, and closes
-  // when the page scrolls.
+  // A user's menu, and a row's, sits in rows that scroll sideways, which
+  // would clip it: it opens fixed under its button, kept on the screen,
+  // and closes when the page scrolls.
   document.addEventListener("toggle", function (event) {
     var menu = event.target;
-    if (!menu.classList || !menu.classList.contains("user-more") || !menu.open) return;
+    if (!menu.classList || !(menu.classList.contains("user-more") || menu.classList.contains("row-more")) || !menu.open) return;
     var list = menu.querySelector(".more-list"), at = menu.querySelector("summary").getBoundingClientRect();
     list.style.top = at.bottom + 4 + "px";
     list.style.left = Math.max(8, Math.min(at.left, window.innerWidth - list.offsetWidth - 8)) + "px";
   }, true);
   window.addEventListener("scroll", function () {
-    document.querySelectorAll("details.user-more[open]").forEach(function (menu) { menu.removeAttribute("open"); });
+    document.querySelectorAll("details.user-more[open], details.row-more[open]").forEach(function (menu) { menu.removeAttribute("open"); });
   }, true);
+
+  // A button with data-download saves its text as a file named by
+  // data-filename, such as a key's public half.
+  document.addEventListener("click", function (event) {
+    var btn = event.target.closest("[data-download]");
+    if (!btn) return;
+    var link = document.createElement("a");
+    link.href = URL.createObjectURL(new Blob([btn.dataset.download + "\n"], { type: "text/plain" }));
+    link.download = btn.dataset.filename || "download.txt";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(function () { URL.revokeObjectURL(link.href); }, 1000);
+  });
 
   // A row with data-href opens that page on a click anywhere in it, but
   // not on a link, a button or a menu of its own, nor when text is
