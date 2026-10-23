@@ -11,13 +11,14 @@ import (
 type Policy map[string]string
 
 // Effect returns the subject's entry for a path: its own, or for a rule
-// of a section the section's all; "" when it sets neither.
+// of a section the section's all, a deny in either winning; "" when it
+// sets neither.
 func (p Policy) Effect(path string) string {
-	if effect, ok := p[path]; ok {
-		return effect
-	}
+	effect := p[path]
 	if section, _, ok := strings.Cut(path, "/"); ok {
-		return p[section+"/"+config.All]
+		if all := p[section+"/"+config.All]; all == Deny || effect == "" {
+			effect = all
+		}
 	}
-	return ""
+	return effect
 }

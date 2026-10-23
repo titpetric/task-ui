@@ -157,8 +157,9 @@ the folders the user sees, the user's permissions and MCP access. Page:
 
 A policy allows or denies a rule, for a role or for a user. Every
 section has the rules view, edit and delete, and the application has
-`run`, `shell` and `hosts`. A deny in the role's or the user's policy
-wins, and task-ui refuses what neither allows. An admin may do everything and
+`run`, `shell` and `hosts`. A user's own allow or deny decides first;
+without one the role's decides, where a deny wins over an allow, and
+task-ui refuses what neither allows. An admin may do everything and
 holds no policy. Page: `/settings/permissions`; API: `/api/permissions`;
 MCP and API: `whoami`, `GET /api/me`, what the token's user may do.
 

@@ -3,11 +3,12 @@
 // role.
 //
 // A policy entry allows or denies a path, <section>/<rule> or an
-// application permission; no entry inherits. A user may do what the
-// user's entry or the role's entry allows, unless either denies it, and
-// nothing that neither sets. A <section>/all entry stands for every
-// rule of the section, and a subject's own entry for a rule overrides
-// its all. The admin role allows everything, whatever the policies say.
+// application permission; no entry inherits. A user's own entry decides
+// first; a user without one inherits the role's, and task-ui refuses
+// what neither sets. A <section>/all entry stands for every rule
+// of the section, and where a subject's all and its entry for a rule
+// disagree, the deny wins. The admin role allows everything, whatever
+// the policies say.
 //
 // Checks name their path as a string literal, so internal/cmd/rulelint
 // finds every one and matches it against the configuration.

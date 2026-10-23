@@ -85,8 +85,11 @@
 
 {{- with $pr.Matrix }}
 <section class="block" id="permissions">
-	<h3>Permissions <small>{{ $u.Name }}'s own settings, on top of the {{ $u.Role }} role</small></h3>
-	<p>The role comes from <code>TASK_UI_ADMINS</code> and <code>TASK_UI_VIEWERS</code>; everyone else is a runner. {{ if $.Can "user/view" }}<a href="/settings/permissions#role-{{ $u.Role }}">The {{ $u.Role }} role's settings</a>{{ else }}The {{ $u.Role }} role's settings{{ end }} apply first. A box here adds an allow or a deny for {{ $u.Name }} alone, and a deny in either place wins. The mark after each box shows the result.{{ if .Fixed }} Admins can do everything; you can't change that.{{ end }}</p>
+	<h3>Permissions <small>{{ $u.Name }}'s own rules, before the role's</small></h3>
+	<p>Role: {{ if $.Can "user/view" }}<a href="/settings/permissions#role-{{ $u.Role }}">{{ $u.Role }}</a>{{ else }}{{ $u.Role }}{{ end }}.{{ if .Fixed }} Admins can do everything; this can't change.{{ end }}</p>
+	{{- if not .Fixed }}
+	<p>An allow or a deny here is {{ $u.Name }}'s own and decides first, whatever the role says. Inherit, the empty box, leaves it to the role's rules, where a deny wins over an allow. The mark after each box shows the result.</p>
+	{{- end }}
 	{{- template "matrix" (list $ .) }}
 </section>
 {{- end }}

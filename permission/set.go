@@ -16,8 +16,8 @@ type Set struct {
 }
 
 // Allowed reports whether the user may do what a path names. An admin
-// may do everything; anyone else what the role or the user allows,
-// unless either denies it. Nobody may do anything. A check names its
+// may do everything; anyone else what the user's own entry says, or
+// without one what the role's says. Nobody may do anything. A check names its
 // path as a string literal, which rulelint reads.
 func (s Set) Allowed(path string) bool {
 	return s.decide(path)
@@ -70,11 +70,10 @@ func (s Set) decide(path string) bool {
 	if s.User.CanAdmin() {
 		return true
 	}
-	role, own := s.Role.Effect(path), s.Own.Effect(path)
-	if role == Deny || own == Deny {
-		return false
+	if own := s.Own.Effect(path); own != "" {
+		return own == Allow
 	}
-	return role == Allow || own == Allow
+	return s.Role.Effect(path) == Allow
 }
 
 // Run reports whether the user may run a job, given the allow lists of

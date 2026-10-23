@@ -64,8 +64,9 @@ func TestPermissionPolicyStorage_Put(t *testing.T) {
 	assert.Error(t, policies.Put(ctx, permission.KindUser, "ops", "run", "maybe"))
 }
 
-// A user's deny beats the role's allow, a user's allow adds to the role,
-// and nobody may do what neither sets; an admin may do everything.
+// A user's own entry decides first, either way; a user without one
+// inherits the role's, nobody may do what neither sets, and an admin may
+// do everything.
 func TestPermissionPolicyStorage_For(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
@@ -84,7 +85,8 @@ func TestPermissionPolicyStorage_For(t *testing.T) {
 	assert.True(t, users.Permissions(ctx, ops).Allowed("secret/view"))
 
 	assert.NoError(t, policies.Put(ctx, permission.KindRole, model.RoleRunner, "secret/view", permission.Deny))
-	assert.False(t, users.Permissions(ctx, ops).Allowed("secret/view"), "the role's deny beats the user's allow")
+	assert.True(t, users.Permissions(ctx, ops).Allowed("secret/view"), "the user's allow overrides the role's deny")
+	assert.False(t, users.Permissions(ctx, &model.User{Name: "dev", Role: model.RoleRunner}).Allowed("secret/view"), "a user without an entry inherits the role's deny")
 
 	root := &model.User{Name: "root", Role: model.RoleAdmin}
 	assert.NoError(t, policies.Put(ctx, permission.KindUser, "root", "run", permission.Deny))
