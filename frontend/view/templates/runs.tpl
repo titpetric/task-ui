@@ -37,6 +37,13 @@
 </section>
 {{- end }}
 
+{{- with .Tooling }}
+<section class="block">
+	<h3>Tooling <small>what the commands inside the runs spent their time on</small></h3>
+	{{- template "tooling" . }}
+</section>
+{{- end }}
+
 {{- /* The table follows the runs topic: a run that starts goes on top,
      one that ends changes in place, no reload. */}}
 <section class="block" data-sse="runs">
