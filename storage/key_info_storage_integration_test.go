@@ -50,3 +50,34 @@ func TestKeyInfoStorage(t *testing.T) {
 	roles, _, _ = keys.Links(ctx)
 	assert.Len(t, roles, 0)
 }
+
+// A rotation records the new fingerprint and the backup of the old
+// material; clearing the backup keeps the fingerprint.
+func TestKeyInfoStorage_SetBackup(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	keys := storage.NewKeyInfoStorage(newDB(t))
+	assert.NoError(t, keys.Create(ctx, &model.KeyInfo{Name: "task_ssh_ed25519", Purpose: storage.KeySSH, Algo: "ed25519", Fingerprint: "SHA256:old"}))
+	assert.NoError(t, keys.SetBackup(ctx, "task_ssh_ed25519", "SHA256:new", "task_ssh_ed25519.bak", "SHA256:old"))
+	got, err := keys.Get(ctx, "task_ssh_ed25519")
+	assert.NoError(t, err)
+	assert.Equal(t, "SHA256:new", got.Fingerprint)
+	assert.Equal(t, "task_ssh_ed25519.bak", got.Backup)
+	assert.Equal(t, "SHA256:old", got.BackupFingerprint)
+	assert.NotNil(t, got.RotatedAt)
+}
+
+// ClearBackup forgets the backup and keeps the key's own fingerprint.
+func TestKeyInfoStorage_ClearBackup(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	keys := storage.NewKeyInfoStorage(newDB(t))
+	assert.NoError(t, keys.Create(ctx, &model.KeyInfo{Name: "task_ssh_ed25519", Purpose: storage.KeySSH, Algo: "ed25519", Fingerprint: "SHA256:old"}))
+	assert.NoError(t, keys.SetBackup(ctx, "task_ssh_ed25519", "SHA256:new", "task_ssh_ed25519.bak", "SHA256:old"))
+	assert.NoError(t, keys.ClearBackup(ctx, "task_ssh_ed25519"))
+	got, err := keys.Get(ctx, "task_ssh_ed25519")
+	assert.NoError(t, err)
+	assert.Equal(t, "", got.Backup)
+	assert.Equal(t, "", got.BackupFingerprint)
+	assert.Equal(t, "SHA256:new", got.Fingerprint)
+}

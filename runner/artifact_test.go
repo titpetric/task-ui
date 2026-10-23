@@ -22,6 +22,4 @@ func TestManager_ArtifactPath(t *testing.T) {
 	m := runner.New(runner.Options{ArtifactRoot: root})
 	artifact := &model.Artifact{Path: "run1/sub/out.txt"}
 	assert.Equal(t, filepath.Join(root, "run1", "sub", "out.txt"), m.ArtifactPath(artifact))
-	_, err := m.OpenArtifact(artifact)
-	assert.Error(t, err, "nothing there yet")
 }

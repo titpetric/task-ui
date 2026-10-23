@@ -102,3 +102,13 @@ func TestLoadKeys(t *testing.T) {
 	assert.Equal(t, 1, sshagent.Clean(tmp), "the agent's directory, as one left behind")
 	assert.NoError(t, a.Close())
 }
+
+func TestLoad_NoKeys(t *testing.T) {
+	t.Parallel()
+	a, err := sshagent.Load(t.TempDir(), t.TempDir())
+	assert.NoError(t, err)
+	assert.Nil(t, a)
+
+	_, err = sshagent.Load(filepath.Join(t.TempDir(), "missing"), t.TempDir())
+	assert.Error(t, err)
+}

@@ -117,3 +117,22 @@ func TestProber_Fails(t *testing.T) {
 	assert.Nil(t, (*skills.Prober)(nil).Probe(dir))
 	assert.Nil(t, (&skills.Prober{}).Probe(""))
 }
+
+// ProbeFile names the pipeline file to atkins with -f and keeps its
+// answer apart from the directory's; no file answers nothing.
+func TestProber_ProbeFile(t *testing.T) {
+	t.Parallel()
+	command, calls := fakeAtkins(t, listing)
+	dir, err := filepath.EvalSymlinks(t.TempDir())
+	assert.NoError(t, err)
+	p := &skills.Prober{Command: command, TTL: time.Hour}
+
+	assert.Nil(t, p.ProbeFile(dir, ""))
+	assert.Len(t, lines(t, calls), 0, "no file, no probe")
+
+	assert.Len(t, p.ProbeFile(dir, "ci.yml"), 3)
+	assert.Equal(t, []string{dir + " -f ci.yml -l --json --all"}, lines(t, calls))
+	p.ProbeFile(dir, "ci.yml")
+	p.Probe(dir)
+	assert.Len(t, lines(t, calls), 2, "the file's answer is cached apart from the directory's")
+}
