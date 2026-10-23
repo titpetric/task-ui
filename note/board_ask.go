@@ -136,7 +136,10 @@ func (b *Board) promptEnv(note *model.Note, req runner.Request, again *model.Not
 	req.Env = append(append([]string{}, req.Env...), "TASK_UI_PROMPT="+thread, "TASK_UI_PROMPT_REPLY="+answer)
 	req.Env = append(req.Env, instructions(note, thread)...)
 	var files []string
+	mcp, closeMCP := b.mcpEnv(req.User)
+	req.Env = append(req.Env, mcp...)
 	cleanup := func() {
+		closeMCP()
 		for _, file := range files {
 			os.Remove(file)
 		}

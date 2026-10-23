@@ -93,8 +93,10 @@ A workflow is a named chain of steps, each a job of a folder or another
 workflow, run one after another until one fails. A switch on each step
 skips it. A workflow can end with a prompt to Claude, which reads the
 steps' output and the run's input, or be a prompt alone. Running one
-takes the right to run every step. Page: `/workflows`; API:
-`/api/workflows`; MCP: `list_workflows`, `run_workflow`,
+takes the right to run every step. A step may also be a prompt to
+Claude, whose answer the prompts after it read. Page: `/workflows`; API:
+`/api/workflows`; MCP: `list_workflows`, `get_workflow`,
+`create_workflow`, `update_workflow`, `run_workflow`,
 `list_workflow_runs`.
 
 ## Schedules (`schedule`)
@@ -185,8 +187,11 @@ MCP and API: `whoami`, `GET /api/me`, what the token's user may do.
 The MCP server at `/api/mcp` calls the API as the token's user, with
 the same permissions. Its tools: `whoami`, `list_jobs`, `run_job`,
 `list_runs`, `get_run`, `list_workflows`, `run_workflow`,
-`list_workflow_runs`, `list_notes`, `note_comment`, `post_note`,
+`list_workflow_runs`, `get_workflow`, `create_workflow`,
+`update_workflow`, `list_notes`, `note_comment`, `post_note`,
 `ask_prompt`, `list_artifacts`, `read_artifact` and `write_artifact`.
+A prompt's run and the Notes agent's reach these tools as their user
+for as long as they run, with no token of the user's.
 `task-ui channel`, a Claude Code channel, pushes the open notes naming
 the token's user into an open session as they come.
 A user with `user/edit` enables a token on a user's profile; it lasts

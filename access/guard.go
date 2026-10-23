@@ -23,7 +23,10 @@ type Guard struct {
 	Users    *storage.UserStorage
 	// Tokens sign clients in without a session, through an
 	// Authorization: Bearer header. Nil turns them off.
-	Tokens    *storage.UserAuthTokenStorage
+	Tokens *storage.UserAuthTokenStorage
+	// RunTokens sign in the Claude runs task-ui starts, for as long as
+	// each runs. Nil turns them off.
+	RunTokens *RunTokens
 	AutoLogin string
 	// LoginPath is where the guard sends a browser without a session.
 	LoginPath string
@@ -74,6 +77,13 @@ func (g *Guard) resolve(r *http.Request) (*model.User, string, error) {
 // with an expiry signs in until then; one without signs in until a
 // delete.
 func (g *Guard) bearer(ctx context.Context, token string) (*model.User, string, error) {
+	if id, ok := g.RunTokens.User(token); ok {
+		user, err := g.Users.Get(ctx, id)
+		if err != nil {
+			return nil, "", nil
+		}
+		return user, "", nil
+	}
 	if g.Tokens == nil {
 		return nil, "", nil
 	}
@@ -127,6 +137,9 @@ func (g *Guard) Require(next http.Handler) http.Handler {
 		ctx := WithUser(r.Context(), user)
 		if token != "" {
 			ctx = WithToken(ctx, token)
+		}
+		if _, ok := g.RunTokens.User(BearerToken(r)); ok {
+			ctx = withRun(ctx)
 		}
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})

@@ -13,6 +13,8 @@ type Property struct {
 	Type        string   `json:"type"`
 	Description string   `json:"description"`
 	Enum        []string `json:"enum,omitempty"`
+	// Items is the shape of each element of an array.
+	Items *Schema `json:"items,omitempty"`
 }
 
 // object returns the schema of an object with the properties, the named
