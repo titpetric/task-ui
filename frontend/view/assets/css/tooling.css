@@ -202,7 +202,17 @@
     grid-template-columns: minmax(0, 1fr);
   }
 
+  /* On a phone the file goes under the line, on its own. */
+  .tooling-sum {
+    display: flex;
+    flex-direction: column-reverse;
+    gap: 0.15rem;
+  }
+
   .tooling-db {
+    float: none;
     max-width: 100%;
+    margin: 0;
+    text-align: start;
   }
 }
