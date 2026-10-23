@@ -24,12 +24,18 @@ func (h *Handlers) getMe(w http.ResponseWriter, r *http.Request) {
 				area.Rules = append(area.Rules, rule.Key)
 			}
 		}
+		for _, extra := range p.Extra {
+			if extra.Section == section.Key && effective[extra.Path()] {
+				area.Rules = append(area.Rules, extra.Key)
+			}
+		}
 		area.Allowed = len(area.Rules) > 0
 		view.Sections = append(view.Sections, area)
 	}
 	for _, permission := range p.Permissions {
 		view.Permissions = append(view.Permissions, AreaView{Key: permission.Key, Title: permission.Title, About: config.About(permission.Key), Allowed: effective[permission.Key]})
 	}
+	view.Keys = h.readableKeys(r)
 	for _, f := range h.opts.Catalogue.List() {
 		if !user.CanSee(f.ID) {
 			continue

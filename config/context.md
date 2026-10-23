@@ -137,7 +137,12 @@ Every key of the instance and its workspaces, in one folder, named with
 its algorithm, as `deploy_rsa4096`: encryption keys for the secrets,
 and SSH keys that runs get through their ssh agent by the roles and
 users they link, one of which git pulls with. A key encrypts or
-connects, never both. Private keys are never shown. Page:
+connects, never both. Private keys are never shown. An MCP agent user
+with Allow Read Private, `key/read`, which admins hold and no other role
+by default, gets an SSH key linked to them with `get_ssh_key`: make an
+age identity with `age-keygen` for the request, pass its recipient,
+decrypt it with `age -d -i <identity>` into `/tmp`, use it for
+the task and delete it. `whoami` names the keys you may read. Page:
 `/settings/keys`; API: `/api/keys`.
 
 ## Integrations (`integration`)

@@ -48,6 +48,10 @@ func (h *Handlers) fillKeys(ctx context.Context, p *view.Page) {
 		}
 	}
 	p.InstanceKey = h.opts.Keys.EncryptKey(ctx, storage.ScopeInstance)
+	if h.opts.KeyReads != nil {
+		p.KeyReads, _ = h.opts.KeyReads.Counts(ctx)
+		p.KeyLastRead, _ = h.opts.KeyReads.Last(ctx)
+	}
 }
 
 // keyWorkspaces returns a row per workspace, the default one first: its

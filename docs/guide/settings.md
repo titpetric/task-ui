@@ -49,6 +49,7 @@ and how much of it, one block per kind of data:
 | **Run recordings** | the `.cast` file of a finished run | the run, its details and its artifacts; its page says the recording expired | 31 days |
 | **Artifact history** | earlier versions of the artifact tree's files, with their records | the latest version of every file in the tree | Never |
 | **Secret read log** | which run got which secret | the last 1000 reads of each secret, which the log keeps whatever the rule | Never |
+| **Key read log** | who read which private key, over MCP or the API | the last 1000 reads of each key, which the log keeps whatever the rule | Never |
 
 Each block shows what it holds, the count, the size and the oldest,
 and two rules:
@@ -413,9 +414,13 @@ that connects Claude Code.
 What each role may do, rule by rule, over `config/permissions.yml`: each
 section, such as Notes, Secrets or Users, has the rules **Allow All**,
 **Allow View**, **Allow Edits** and **Allow Deletes**, and the
-application has **Run Jobs**, **Enter Shell** and **Run on Hosts**. A
-matrix per role holds a row per section, a column per rule, and the
-application's permissions under them.
+application has **Run Jobs**, **Enter Shell** and **Run on Hosts**.
+Instance Keys adds **Allow Read Private**, `key/read`, an agent's read
+of an SSH key's private half (see [MCP](mcp.md#an-ssh-key-for-a-task)):
+Allow All leaves it out, so it takes an allow of its own, and only
+admins hold it at the start. A matrix per role holds a row per section,
+a column per rule, and under them Allow Read Private and the
+application's permissions.
 
 ![Permissions: a matrix per role](../assets/permissions-dark.png)
 

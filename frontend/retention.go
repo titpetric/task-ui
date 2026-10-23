@@ -16,6 +16,8 @@ var retentionKinds = map[string]view.RetentionBlock{
 		Desc: "The earlier versions of the artifact tree's files, which the history keeps when a run or a user writes a file again. The latest version of every file in the tree stays."},
 	retention.SecretReads: {Title: "Secret read log", One: "read", Many: "reads",
 		Desc: "Which run got which secret in its environment. The log keeps the last 1000 reads of each secret whatever the rule says."},
+	retention.KeyReads: {Title: "Key read log", One: "read", Many: "reads",
+		Desc: "Who read which private key over MCP or the API, encrypted to their recipient, by token. The log keeps the last 1000 reads of each key whatever the rule says."},
 }
 
 // dataRetention shows what each kind of data holds and the rule that

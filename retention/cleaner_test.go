@@ -37,7 +37,7 @@ func newCleaner(t *testing.T) *fixture {
 		cleaner: &retention.Cleaner{
 			DB: db, DBPath: path, Values: storage.NewSettingStorage(db), Runs: storage.NewRunStorage(db),
 			Artifacts: storage.NewArtifactStorage(db), Store: &artifactstore.Store{Dir: filepath.Join(dir, "tree")},
-			SecretReads: storage.NewSecretReadStorage(db), RecordingsDir: filepath.Join(dir, "recordings"),
+			SecretReads: storage.NewSecretReadStorage(db), KeyReads: storage.NewKeyReadStorage(db), RecordingsDir: filepath.Join(dir, "recordings"),
 			Now: func() time.Time { return now },
 		},
 		now: now,
@@ -185,5 +185,26 @@ func TestCleaner_SecretReads(t *testing.T) {
 	assert.Contains(t, out.String(), "removed 3 items")
 	left, _ := f.cleaner.SecretReads.All(f.ctx)
 	assert.Len(t, left, 2)
+	assert.Equal(t, reads[3].ID, left[0].ID)
+}
+
+// The key read log keeps to its rule as the secret read log does.
+func TestCleaner_KeyReads(t *testing.T) {
+	t.Parallel()
+	f := newCleaner(t)
+	var reads []*model.KeyRead
+	for i := 0; i < 4; i++ {
+		read := &model.KeyRead{KeyName: "deploy_rsa4096", UserName: "claude", TokenID: "t1", Via: "mcp"}
+		assert.NoError(t, f.cleaner.KeyReads.Record(f.ctx, read))
+		reads = append(reads, read)
+	}
+	usage, _ := f.cleaner.Usage(f.ctx)
+	each := usage[retention.KeyReads].Bytes / 4
+	assert.NoError(t, f.cleaner.Save(f.ctx, retention.Settings{Recordings: retention.Rule{Age: retention.Month}, Artifacts: retention.Rule{Age: retention.Never}, SecretReads: retention.Rule{Age: retention.Never}, KeyReads: retention.Rule{Age: retention.Never, Limit: each}}))
+	var out bytes.Buffer
+	assert.NoError(t, f.cleaner.Clean(f.ctx, false, &out))
+	assert.Contains(t, out.String(), "Key read log (keep for ever, at most ")
+	left, _ := f.cleaner.KeyReads.All(f.ctx)
+	assert.Len(t, left, 1)
 	assert.Equal(t, reads[3].ID, left[0].ID)
 }

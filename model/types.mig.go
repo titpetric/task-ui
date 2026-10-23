@@ -398,6 +398,74 @@ var KeyInfoFields = []string{"name", "purpose", "algo", "bits", "fingerprint", "
 // KeyInfoPrimaryFields are the primary key fields in the DB table.
 var KeyInfoPrimaryFields = []string{"name"}
 
+// KeyRead generated for db table `key_read`.
+//
+// Key Read.
+type KeyRead struct {
+	// ID
+	ID string `db:"id" json:"id"`
+
+	// Key Name
+	KeyName string `db:"key_name" json:"key_name"`
+
+	// User Name
+	UserName string `db:"user_name" json:"user_name"`
+
+	// Token ID
+	TokenID string `db:"token_id" json:"token_id"`
+
+	// Via
+	Via string `db:"via" json:"via"`
+
+	// Created At
+	CreatedAt *time.Time `db:"created_at" json:"created_at"`
+}
+
+// GetID will return the value of ID.
+func (k *KeyRead) GetID() string { return k.ID }
+
+// SetID sets ID to the provided value.
+func (k *KeyRead) SetID(val string) { k.ID = val }
+
+// GetKeyName will return the value of KeyName.
+func (k *KeyRead) GetKeyName() string { return k.KeyName }
+
+// SetKeyName sets KeyName to the provided value.
+func (k *KeyRead) SetKeyName(val string) { k.KeyName = val }
+
+// GetUserName will return the value of UserName.
+func (k *KeyRead) GetUserName() string { return k.UserName }
+
+// SetUserName sets UserName to the provided value.
+func (k *KeyRead) SetUserName(val string) { k.UserName = val }
+
+// GetTokenID will return the value of TokenID.
+func (k *KeyRead) GetTokenID() string { return k.TokenID }
+
+// SetTokenID sets TokenID to the provided value.
+func (k *KeyRead) SetTokenID(val string) { k.TokenID = val }
+
+// GetVia will return the value of Via.
+func (k *KeyRead) GetVia() string { return k.Via }
+
+// SetVia sets Via to the provided value.
+func (k *KeyRead) SetVia(val string) { k.Via = val }
+
+// GetCreatedAt will return the value of CreatedAt.
+func (k *KeyRead) GetCreatedAt() *time.Time { return k.CreatedAt }
+
+// SetCreatedAt sets CreatedAt to the provided value.
+func (k *KeyRead) SetCreatedAt(stamp time.Time) { k.CreatedAt = &stamp }
+
+// KeyReadTable is the name of the table in the DB.
+const KeyReadTable = "`key_read`"
+
+// KeyReadFields is a list of all columns in the DB table.
+var KeyReadFields = []string{"id", "key_name", "user_name", "token_id", "via", "created_at"}
+
+// KeyReadPrimaryFields are the primary key fields in the DB table.
+var KeyReadPrimaryFields = []string{"id"}
+
 // KeyRole generated for db table `key_role`.
 //
 // Key Role.
@@ -2767,6 +2835,67 @@ func (k *KeyInfo) Update(opts ...QueryOption) string {
 // Delete starts building a DELETE query.
 func (k *KeyInfo) Delete(opts ...QueryOption) string {
 	cfg := (&QueryConfig{Table: KeyInfoTable}).Apply(opts...)
+	query := fmt.Sprintf("DELETE FROM %s", cfg.Table)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	return query
+}
+
+// Insert starts building an INSERT INTO query.
+func (k *KeyRead) Insert(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: KeyReadTable, Statement: "INSERT INTO"}).Apply(opts...)
+	cols := KeyReadFields
+	if len(cfg.Columns) > 0 {
+		cols = cfg.Columns
+	}
+	return fmt.Sprintf("%s %s (%s) VALUES (:%s)", cfg.Statement, cfg.Table, strings.Join(cols, ", "), strings.Join(cols, ", :"))
+}
+
+// Select starts building a SELECT query.
+func (k *KeyRead) Select(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: KeyReadTable}).Apply(opts...)
+	cols := "*"
+	if len(cfg.Columns) > 0 {
+		cols = strings.Join(cfg.Columns, ", ")
+	}
+	query := fmt.Sprintf("SELECT %s FROM %s", cols, cfg.Table)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	if cfg.OrderBy != "" {
+		query += " ORDER BY " + cfg.OrderBy
+	}
+	if cfg.LimitOffset > 0 {
+		query += fmt.Sprintf(" LIMIT %d, %d", cfg.LimitStart, cfg.LimitOffset)
+	}
+	return query
+}
+
+// Update starts building a UPDATE query.
+func (k *KeyRead) Update(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: KeyReadTable}).Apply(opts...)
+	cols := KeyReadFields
+	if len(cfg.Columns) > 0 {
+		cols = cfg.Columns
+	}
+	setClause := ""
+	for i, col := range cols {
+		if i > 0 {
+			setClause += ", "
+		}
+		setClause += col + "=:" + col
+	}
+	query := fmt.Sprintf("UPDATE %s SET %s", cfg.Table, setClause)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	return query
+}
+
+// Delete starts building a DELETE query.
+func (k *KeyRead) Delete(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: KeyReadTable}).Apply(opts...)
 	query := fmt.Sprintf("DELETE FROM %s", cfg.Table)
 	if cfg.Where != "" {
 		query += " WHERE " + cfg.Where

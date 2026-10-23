@@ -18,4 +18,9 @@ func TestPolicy_Effect(t *testing.T) {
 	assert.Equal(t, "", p.Effect("secret/view"))
 	assert.Equal(t, "", p.Effect("shell"))
 	assert.Equal(t, "", permission.Policy(nil).Effect("run"))
+
+	keys := permission.Policy{"key/all": permission.Allow}
+	assert.Equal(t, "", keys.Effect("key/read"), "a rule a section adds takes no all")
+	keys["key/read"] = permission.Allow
+	assert.Equal(t, permission.Allow, keys.Effect("key/read"))
 }
