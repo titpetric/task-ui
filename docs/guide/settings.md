@@ -39,11 +39,12 @@ does:
   artifact history and a link to Data retention.
 - **Paths**: the workspace folder, discovery, the data folder and how
   the host sees it, the key folder and the compose project.
-- **Keys**: the instance's encryption key and the git key, each with
-  its algorithm, size, fingerprint and purpose, `encryption` or
-  `git + ssh`. The **⋯** menu of a key copies its public key, downloads
-  it as `<name>.pub` and rotates the key (see [Keys](#keys)); it never
-  shows the private key.
+- **Keys**: the instance's encryption key and the git key, in the
+  columns of the Keys page: name, algorithm, size, public key with its
+  copy button, purpose, `encryption` or `git + ssh`. The **⋯** menu of
+  a key shows its fingerprint and dates, copies its public key,
+  downloads it as `<name>.pub` and rotates the key (see [Keys](#keys));
+  nothing shows the private key.
 - **Integrations**: whether the Beszel integration lists the
   Inventory's hosts.
 
@@ -145,8 +146,15 @@ instance or of a workspace, and whose runs get an SSH key. Nothing but the key
 folder reads a key file: git, the inventory's logins, the secrets and
 the runs all go through it, and none reads `~/.ssh`.
 
-Under the table, **Every key** lists them all: name, purpose, algorithm
-and fingerprint, scope, the roles and users it links, and its date.
+Under the table, **Every key** lists them all in the columns every keys
+table has, the Instance page's too: **Name**, **Algorithm** (ed25519,
+ecdsa, rsa), **Size** (256 bits, 4096 bits), **Public key**, shortened
+to its type and the end of its material with the whole line in its
+tooltip and a copy button that copies the whole line, **Purpose**,
+`encryption` or `git + ssh`, and the row's **⋯** menu. The menu opens
+on the key's details, its fingerprint, its creation and rotation dates,
+its backup, scope, links and reads, then Copy public key, Download
+public key, Edit links, Rotate Key or Delete backup, and Remove last.
 
 - **Generate key** makes a key: a name, the algorithm and the size,
   ed25519 by default, ECDSA P-256, P-384 or P-521, RSA 2048, 3072 or
@@ -155,7 +163,7 @@ and fingerprint, scope, the roles and users it links, and its date.
   size from it. A key the folder holds already, under any name or
   purpose, answers `409`: a key has one purpose.
 - The copy button copies a public key, to add on the hosts that
-  accept it. **Remove** retires an SSH key: its files stay in the folder
+  accept it. **Remove**, in the **⋯** menu, retires an SSH key: its files stay in the folder
   as `<name>.key.bak-<time>`, nothing lists or loads them.
 - **Who gets it** picks whose runs get an SSH key, in a **Roles** row and
   a **Users** row of boxes. A run started by someone with one of the

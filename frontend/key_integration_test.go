@@ -41,7 +41,7 @@ func TestKeys(t *testing.T) {
 
 	body := f.page(t, asAdmin, "/settings/keys")
 	assert.Contains(t, body, `<tr id="key-deploy_ed25519">`)
-	assert.Contains(t, body, `<span class="badge ok" title="git pulls and clones with it">git</span>`)
+	assert.Contains(t, body, `title="git pulls and clones with it">git + ssh</span>`)
 	assert.Contains(t, body, strings.ReplaceAll(key.Fingerprint, "+", "&#43;"))
 	assert.Contains(t, body, `data-copy="ssh-ed25519`)
 	assert.Contains(t, body, `data-delete="/api/keys/deploy_ed25519"`)
@@ -89,7 +89,7 @@ func TestKeys_Encryption(t *testing.T) {
 
 	assert.NoError(t, f.opts.Keys.SetGit(context.Background(), "task_ssh_ed25519"))
 	page := f.page(t, asAdmin, "/settings/instance")
-	assert.Contains(t, page, `<a class="mono" href="/settings/keys/task_encryption_ed25519">task_encryption_ed25519</a>`)
+	assert.Contains(t, page, `<span class="mono">task_encryption_ed25519</span>`)
 	assert.Contains(t, page, `<a class="mono" href="/settings/keys/task_ssh_ed25519">task_ssh_ed25519</a>`)
 	assert.Contains(t, page, "Rotate Key</button>")
 }

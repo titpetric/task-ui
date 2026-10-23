@@ -9,6 +9,7 @@
 package keystore
 
 import (
+	"strings"
 	"time"
 )
 
@@ -59,4 +60,28 @@ func (k Key) Encrypts() bool {
 // ed25519, ecdsa256, rsa4096.
 func (k Key) Kind() string {
 	return tag(k.Algo, k.Bits)
+}
+
+// Size is the key's size in bits: Bits, 256 for ed25519.
+func (k Key) Size() int {
+	if k.Bits == 0 && k.Algo == "ed25519" {
+		return 256
+	}
+	return k.Bits
+}
+
+// ShortPublic is the public key as a table shows it: its type and the
+// end of its material, where keys of a type differ, the comment left
+// out. PublicKey is
+// the whole line, to copy.
+func (k Key) ShortPublic() string {
+	fields := strings.Fields(k.PublicKey)
+	if len(fields) < 2 {
+		return k.PublicKey
+	}
+	material := fields[1]
+	if len(material) > 10 {
+		material = "…" + material[len(material)-10:]
+	}
+	return fields[0] + " " + material
 }

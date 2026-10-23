@@ -78,29 +78,12 @@
 	</div>
 	<p class="dim">Every key lives in the key folder as <code>&lt;name&gt;.key</code> and <code>&lt;name&gt;.pub</code>, the name ending in its algorithm and size. An instance SSH key goes to the runs of the roles and users it links, through their ssh agent, and the inventory signs in to hosts with it; a workspace's SSH key goes to the runs of that workspace. The git key, which a key's page sets, pulls and clones the checkouts. An encryption key never leaves task-ui.</p>
 	<div class="table-wrap">
-	<table class="table keys">
-		<thead><tr><th>Name</th><th>Purpose</th><th>Fingerprint</th><th>Scope</th><th>Linked</th><th>Reads</th><th>Last read</th><th>Date</th><th>Actions</th></tr></thead>
+	<table class="table keys key-table cards">
+		{{ template "keyhead" }}
 		<tbody>
-		{{- range .Keys }}
-			<tr id="key-{{ .Name }}">
-				<td class="key"><span class="mono">{{ .Name }}</span>{{ with .Backup }}{{ template "backup-active" . }}{{ end }}{{ with .Comment }}<div class="faint">{{ . }}</div>{{ end }}</td>
-				<td data-label="Purpose"><span class="badge{{ if .Encrypts }} signal{{ end }}"{{ if .Git }} title="git pulls and clones with it"{{ end }}>{{ if .Encrypts }}encryption{{ else }}git + ssh{{ end }}</span></td>
-				<td class="fingerprint" data-label="Fingerprint"><span class="kind dim">{{ .Kind }}</span>{{ .Fingerprint }}</td>
-				<td class="nowrap" data-label="Scope">{{ with .Workspace }}workspace{{ else }}instance{{ end }}</td>
-				<td class="nowrap" data-label="Linked">{{ if .Encrypts }}<span class="faint">never handed out</span>{{ else }}{{ range .Roles }}<span class="badge">{{ . }}</span> {{ end }}{{ range .Users }}{{ template "avatar" (list $ .) }} {{ end }}{{ if not (or .Roles .Users) }}<span class="faint">{{ if .Workspace }}every run of the workspace{{ else }}none{{ end }}</span>{{ end }}{{ end }}</td>
-				<td class="nowrap" data-label="Reads">{{ with index $.KeyReads .Name }}{{ . }}{{ else }}<span class="faint">0</span>{{ end }}</td>
-				<td class="nowrap" data-label="Last read">{{ with index $.KeyLastRead .Name }}<span title="{{ stamp .CreatedAt }}">{{ ago .CreatedAt }}</span> {{ template "user" (list $ .UserName) }} <span class="faint">{{ .Via }}</span>{{ else }}<span class="faint">never</span>{{ end }}</td>
-				<td class="nowrap" data-label="Date" title="{{ stamp .CreatedAt }}">{{ ago .CreatedAt }}</td>
-				<td class="actions">
-					<button type="button" class="btn-icon" data-copy="{{ .PublicKey }}" title="Copy public key" aria-label="Copy public key"><svg class="ic"><use href="#i-copy"/></svg></button>
-					{{- if not .Encrypts }}
-					<a class="btn-icon" href="/settings/keys/{{ .Name }}" title="Who gets it, and git" aria-label="Edit links"><svg class="ic"><use href="#i-edit"/></svg></a>
-					<button type="button" class="btn-icon danger" data-delete="/api/keys/{{ .Name }}" data-confirm="Remove {{ .Name }}? Runs and hosts that use it lose access. Its files stay in the key folder as a backup." data-next="reload" title="Remove key" aria-label="Remove key"><svg class="ic"><use href="#i-trash"/></svg></button>
-					{{- end }}
-				</td>
-			</tr>
+		{{- range .Keys }}{{ template "keyrow" (list $ . "/settings/keys") }}
 		{{- else }}
-			<tr class="empty"><td colspan="9">No key yet. Generate one, or upload the private key you already use.</td></tr>
+			<tr class="empty"><td colspan="6">No key yet. Generate one, or upload the private key you already use.</td></tr>
 		{{- end }}
 		</tbody>
 	</table>
