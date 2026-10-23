@@ -38,13 +38,20 @@ func stubAtkins(t *testing.T, f *fixture, body string) {
 }
 
 const toolingListing = `cat <<'JSON'
-{"database":"/w/.atkins/atkins.db","days":31,"from":"2026-09-22","to":"2026-10-23",
- "runs":44,"total_ms":184900,
- "commands":[{"command":"go test -cover","tool":"go","runs":42,"total_ms":184000,"average_ms":4380,"max_ms":9100,"failures":3}],
- "tools":[{"tool":"go","commands":1,"runs":42,"total_ms":184000,"failures":3}],
- "usage":[{"date":"2026-10-21","tool":"go","runs":20,"total_ms":90000},
-          {"date":"2026-10-23","tool":"go","runs":22,"total_ms":94000},
-          {"date":"2026-10-23","tool":"npm","runs":2,"total_ms":900}]}
+{"project":{"name":"project","repository":"titpetric/task-ui",
+  "database":"/w/task-ui/.atkins/atkins.db","days":31,"from":"2026-09-22","to":"2026-10-23",
+  "runs":44,"total_ms":184900,
+  "commands":[{"command":"go test -cover","tool":"go","runs":42,"total_ms":184000,"average_ms":4380,"max_ms":9100,"failures":3}],
+  "tools":[{"tool":"go","commands":1,"runs":42,"total_ms":184000,"failures":3}],
+  "usage":[{"date":"2026-10-21","tool":"go","runs":20,"total_ms":90000},
+           {"date":"2026-10-23","tool":"go","runs":22,"total_ms":94000},
+           {"date":"2026-10-23","tool":"npm","runs":2,"total_ms":900}]},
+ "workspace":{"name":"workspace",
+  "database":"/home/you/.atkins/atkins.db","days":31,"from":"2026-09-22","to":"2026-10-23",
+  "runs":310,"total_ms":900000,
+  "commands":[{"command":"docker compose up","tool":"docker","runs":12,"total_ms":400000}],
+  "tools":[{"tool":"docker","commands":1,"runs":12,"total_ms":400000}],
+  "usage":[{"date":"2026-10-23","tool":"docker","runs":12,"total_ms":400000}]}}
 JSON`
 
 // The panel is on the runs page, drawn from what atkins recorded for
@@ -61,7 +68,13 @@ func TestToolingOnTheRunsPage(t *testing.T) {
 	assert.Contains(t, res.Body, "Last 30 days")
 	assert.Contains(t, res.Body, "Last 7 days")
 	assert.Contains(t, res.Body, "2026-10-23: 24 commands in ")
-	assert.Contains(t, res.Body, "/w/.atkins/atkins.db")
+
+	// A section per database atkins records to, the project named by
+	// its repository and the workspace by nothing.
+	assert.Contains(t, res.Body, "titpetric/task-ui")
+	assert.Contains(t, res.Body, "/w/task-ui/.atkins/atkins.db")
+	assert.Contains(t, res.Body, "/home/you/.atkins/atkins.db")
+	assert.Contains(t, res.Body, "docker compose up")
 
 	// The tools of a window, and the table behind the toggle.
 	assert.Contains(t, res.Body, "tooling-tools")
@@ -85,7 +98,7 @@ func TestToolingWithoutAnAnswer(t *testing.T) {
 	assert.Equal(t, http.StatusOK, res.Status)
 	assert.NotContains(t, res.Body, "tooling-charts")
 
-	stubAtkins(t, f, `echo '{"database":"/w/x.db","days":31,"to":"2026-10-23"}'`)
+	stubAtkins(t, f, `echo '{"workspace":{"name":"workspace","database":"/w/x.db","days":31,"to":"2026-10-23"}}'`)
 	res = f.get(t, asAdmin, "/runs")
 	assert.Equal(t, http.StatusOK, res.Status)
 	assert.NotContains(t, res.Body, "tooling-charts")
