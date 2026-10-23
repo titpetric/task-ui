@@ -105,3 +105,24 @@ func TestHead_WorkspacePage(t *testing.T) {
 	assert.Contains(t, body, `<p class="empty-line">No projects in acme yet.</p>`)
 	assert.NotContains(t, body, `<table class="table projects">`)
 }
+
+// Every list page holds its create action top right, in the page head,
+// worded Add <thing> with the plus icon.
+func TestHead_CreateActions(t *testing.T) {
+	t.Parallel()
+
+	p := admin(t)
+	p.CanAddUsers = true
+	for page, add := range map[string]string{
+		"projects":   `href="/settings/projects/new"><svg class="ic"><use href="#i-plus"/></svg>Add project</a>`,
+		"workspaces": `href="/settings/workspaces/new"><svg class="ic"><use href="#i-plus"/></svg>Add workspace</a>`,
+		"users":      `href="/settings/users/new"><svg class="ic"><use href="#i-plus"/></svg>Add user</a>`,
+		"workflows":  `href="/workflows/new"><svg class="ic"><use href="#i-plus"/></svg>Add workflow</a>`,
+		"keys":       `href="/settings/keys/generate"><svg class="ic"><use href="#i-key"/></svg>Generate key</a>`,
+	} {
+		body := render(t, page, p)
+		head := body[strings.Index(body, `<div class="page-head">`):]
+		head = head[:strings.Index(head, "\n</div>")]
+		assert.Contains(t, head, add, page)
+	}
+}

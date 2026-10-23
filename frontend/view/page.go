@@ -234,7 +234,7 @@ type Page struct {
 	JobAllowChoices map[string][]WhoChoice
 	// FolderChoices are the boxes of the user form's folders.
 	FolderChoices []FolderChoice
-	// CanAddUsers shows Create user: the server writes a password file.
+	// CanAddUsers shows Add user: the server writes a password file.
 	CanAddUsers bool
 	Root        string
 	// BaseURL is the public base link of the instance, without a

@@ -7,9 +7,9 @@ Jobs that run on their own, on a cron expression.
 ## Scheduling a job
 
 A job's page (open it from the sidebar) has a **Schedules** section:
-enter an expression and **Schedule**. The Scheduled page lists every
-schedule with its next and last run, and the form there takes a folder
-and job too.
+enter an expression and **Add schedule**. The Scheduled page lists every
+schedule with its next and last run, and its **Add schedule** form takes
+a folder and job too.
 
 An admin picks who a schedule runs as: **Run as** on both forms lists
 the users, with the admin first selected. task-ui checks that the picked

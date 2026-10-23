@@ -95,12 +95,14 @@
 
 {{- if not $r.Dir }}
 <section class="block">
-	<h3>Schedules <small>cron expressions, in the server's time zone</small></h3>
+	{{- $none := "Not scheduled." }}{{ if $can }}{{ $none = "Not scheduled. Add a cron expression below to run it on a schedule." }}{{ end }}
+	{{- template "blockhead" (head "Schedules" "cron expressions, in the server's time zone" (and (not .Schedules) $none)) }}
+	{{- with .Schedules }}
 	<div class="table-wrap fit">
 	<table class="table fit-cards">
 		<thead><tr><th>Expression</th><th>Next run</th><th class="hide-narrow">Last run</th><th>Runs as</th><th>State</th><th></th></tr></thead>
 		<tbody>
-		{{- range .Schedules }}
+		{{- range . }}
 			<tr>
 				<td class="key" data-label="Expression"><code>{{ .Expression }}</code></td>
 				<td data-label="Next run">{{ template "nextrun" . }}</td>
@@ -112,12 +114,11 @@
 					(danger "trash" "Delete" "data-delete" (print "/api/schedules/" .ID) "data-confirm" (print "Delete the schedule " .Expression " for " $r.Name "?") "data-confirm-ok" "Delete" "data-next" "reload")
 				) }}{{ end }}</td>
 			</tr>
-		{{- else }}
-			<tr class="empty"><td colspan="6">Not scheduled.{{ if $can }} Add a cron expression below to run it on a schedule{{ if $.Users }}, as the user you pick{{ else }}, as you{{ end }}.{{ end }}</td></tr>
 		{{- end }}
 		</tbody>
 	</table>
 	</div>
+	{{- end }}
 	{{- if $can }}
 	<form class="form inline" data-api="/api/schedules" data-method="POST" data-next="reload">
 		<input type="hidden" name="folder" value="{{ $p.ID }}">
@@ -128,7 +129,7 @@
 		</div>
 		{{- template "runas" (list $ "sch-user") }}
 		<div class="form-foot">
-			<button class="btn btn-primary" type="submit">Schedule</button>
+			<button class="btn btn-primary" type="submit"><svg class="ic"><use href="#i-plus"/></svg>Add schedule</button>
 		</div>
 	</form>
 	{{- end }}

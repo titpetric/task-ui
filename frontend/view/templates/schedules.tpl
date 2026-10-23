@@ -8,6 +8,8 @@
 
 {{- $any := false }}{{ range $p := .Folders }}{{ range $p.Jobs }}{{ if $.CanRun $p . }}{{ $any = true }}{{ end }}{{ end }}{{ end }}{{ if .HostJobs }}{{ $any = true }}{{ end }}
 {{- if $any }}
+<section class="block" id="add-schedule">
+<h3>Add schedule</h3>
 <form class="form inline" data-api="/api/schedules" data-method="POST" data-next="reload">
 	<div class="field">
 		<label for="sch-folder">Folder</label>
@@ -39,18 +41,20 @@
 	</div>
 	{{- template "runas" (list $ "sch-user") }}
 	<div class="form-foot">
-		<button class="btn btn-primary" type="submit">Schedule</button>
+		<button class="btn btn-primary" type="submit"><svg class="ic"><use href="#i-plus"/></svg>Add schedule</button>
 	</div>
 </form>
+</section>
 {{- end }}
 
 <section class="block">
-	<h3>Schedules</h3>
+	{{- template "blockhead" (head "Schedules" "" (and (not .Schedules) (print "No schedules yet." (or (and $any " Pick a job and a cron expression above.") "")))) }}
+	{{- with .Schedules }}
 	<div class="table-wrap fit">
 	<table class="table fit-cards">
 		<thead><tr><th>Folder</th><th>Job</th><th>Expression</th><th>Next run</th><th class="hide-narrow">Last run</th><th>Runs as</th><th>State</th><th></th></tr></thead>
 		<tbody>
-		{{- range .Schedules }}
+		{{- range . }}
 			<tr>
 				<td data-label="Folder"><a href="{{ $.Href .Folder }}">{{ .Folder }}</a></td>
 				<td class="key" data-label="Job">{{ if and (eq .Folder "_") (hasPrefix .Job "@") }}{{ .Job }}{{ else }}<a href="{{ $.Href .Folder }}/{{ .Job }}">{{ .Job }}</a>{{ end }}{{ with argLine .Job .Args }} <code>{{ . }}</code>{{ end }}</td>
@@ -64,11 +68,10 @@
 					(danger "trash" "Delete" "data-delete" (print "/api/schedules/" .ID) "data-confirm" (print "Delete the schedule " .Expression " for " .Folder " / " .Job "?") "data-confirm-ok" "Delete" "data-next" "reload")
 				) }}</td>
 			</tr>
-		{{- else }}
-			<tr class="empty"><td colspan="8">No schedules yet.{{ if $any }} Pick a job and a cron expression above.{{ end }}</td></tr>
 		{{- end }}
 		</tbody>
 	</table>
 	</div>
+	{{- end }}
 </section>
 {{ end }}

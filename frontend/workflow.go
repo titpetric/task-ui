@@ -138,7 +138,7 @@ func (h *Handlers) workflowNew(w http.ResponseWriter, r *http.Request) {
 	if !h.require(w, r, "workflow/edit") {
 		return
 	}
-	p := h.page(r, "New workflow")
+	p := h.page(r, "Add workflow")
 	p.Crumbs = view.Crumbs("Workflows", "/workflows", "New")
 	p.Step = view.StepWorkflows
 	p.StepWorkflows = p.SideWorkflows

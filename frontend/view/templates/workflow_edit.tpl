@@ -6,7 +6,10 @@
 		<p>Change the name and the steps: fold a step open to edit it, drag it by its grip to move it. Earlier runs keep the steps they ran with.</p>
 	</div>
 	<div class="actions">
-		<button type="button" class="btn-icon danger" data-delete="/api/workflows/{{ $w.ID }}" data-confirm="Delete the workflow {{ $w.Name }}? Its runs stay in the history." data-next="/workflows" title="Delete" aria-label="Delete workflow"><svg class="ic"><use href="#i-trash"/></svg></button>
+		{{ template "menu" (menu (print "Actions on " $w.Name)
+			(item "flow" "Open" "href" (print "/workflows/" $w.ID))
+			(danger "trash" "Delete" "data-delete" (print "/api/workflows/" $w.ID) "data-confirm" (print "Delete the workflow " $w.Name "? Its runs stay in the history.") "data-confirm-ok" "Delete" "data-next" "/workflows")
+		) }}
 	</div>
 </div>
 

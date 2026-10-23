@@ -6,7 +6,9 @@
 	</div>
 	{{- if .Can "artifact/delete" }}
 	<div class="actions">
-		<button type="button" class="btn btn-danger" data-delete="/api/artifacts" data-confirm="Delete all artifacts? This removes every file, its history and the record of every version." data-confirm-ok="Delete all" data-next="reload"><svg class="ic"><use href="#i-trash"/></svg>Delete all</button>
+		{{ template "menu" (menu "Actions on every artifact"
+			(danger "trash" "Delete all" "data-delete" "/api/artifacts" "data-confirm" "Delete all artifacts? This removes every file, its history and the record of every version." "data-confirm-ok" "Delete all" "data-next" "reload")
+		) }}
 	</div>
 	{{- end }}
 </div>

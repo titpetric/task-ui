@@ -25,7 +25,7 @@ it with headless chromium; `task docs:shots` regenerates them into
 | ![Users, from the password file](assets/users-dark.png) | ![Secrets, grouped by workspace, each on its own key](assets/secrets-dark.png) |
 | ![Permissions: a matrix per role](assets/permissions-dark.png) | ![A profile: a user's activity](assets/profile-dark.png) |
 | ![A profile's permissions over the role's](assets/profile-permissions-dark.png) | ![Integrations: Claude Code and Beszel](assets/integrations-dark.png) |
-| ![Notes: messages, replies and instructions](assets/notes-dark.png) | ![Create user](assets/user-new-dark.png) |
+| ![Notes: messages, replies and instructions](assets/notes-dark.png) | ![Add user](assets/user-new-dark.png) |
 | ![Add a secret](assets/secret-new-dark.png) | ![An env file](assets/envfile-dark.png) |
 | ![SSH keys](assets/keys-dark.png) | ![Generate a key](assets/keys-generate-dark.png) |
 | ![Upload a key](assets/keys-upload-dark.png) | ![Sign in](assets/login-dark.png) |
