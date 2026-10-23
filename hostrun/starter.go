@@ -1,7 +1,8 @@
-// Package hostrun starts the runs of @host: a command on hosts of the
-// inventory, over the ssh login task-ui has to each, as ordinary runs of
-// the root's host job, one per host, so each has a row, a recording, a
-// place in the recents and the run history, and can run again.
+// Package hostrun starts the runs of @host:<host>: a command on hosts of
+// the inventory, over the ssh login task-ui has to each, as ordinary
+// runs of the root's host jobs, one per host, so each has a row, a
+// recording, a place in the recents and the run history, and can run
+// again.
 package hostrun
 
 import (
@@ -35,7 +36,7 @@ var (
 
 // Starter starts host runs through the runner.
 type Starter struct {
-	// Catalogue finds the root, _, whose host job the runs are.
+	// Catalogue finds the root, _, whose host jobs the runs are.
 	Catalogue interface {
 		Find(id string) *folder.Folder
 	}
@@ -104,9 +105,9 @@ func (s *Starter) Resolve(ctx context.Context, targets []string) ([]string, map[
 
 // Start starts the command on each host the request names as the user,
 // one run each, at once, and returns the batch's ID, "" without one,
-// and the sessions. It skips a host already running a host job; a
-// host without a login gets a run that fails saying so. The caller
-// checks the user may run on hosts.
+// and the sessions, a run of @host:<host> a host. It skips a host
+// already running a command; a host without a login gets a run that
+// fails saying so. The caller checks the user may run on hosts.
 func (s *Starter) Start(ctx context.Context, user *model.User, req Request) (string, []*runner.Session, error) {
 	command := strings.TrimSpace(req.Command)
 	if command == "" {
@@ -116,8 +117,8 @@ func (s *Starter) Start(ctx context.Context, user *model.User, req Request) (str
 	if s.Catalogue != nil {
 		root = s.Catalogue.Find(model.Default)
 	}
-	if root.HostJob() == nil {
-		return "", nil, errors.New("the root folder has no host job")
+	if root.HostJob("*") == nil {
+		return "", nil, errors.New("the root folder has no host jobs")
 	}
 	hosts, logins, err := s.Resolve(ctx, req.Targets)
 	if err != nil {
@@ -134,7 +135,7 @@ func (s *Starter) Start(ctx context.Context, user *model.User, req Request) (str
 	var sessions []*runner.Session
 	var errs []error
 	for _, host := range hosts {
-		job := root.HostJob()
+		job := root.HostJob(host)
 		job.Command = s.command(host, logins[host], command)
 		session, err := s.Runner.Start(ctx, runner.Request{
 			Folder: root, Job: job, User: user, Target: host, BatchID: batch, Args: []string{command}, Timeout: timeout,

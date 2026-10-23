@@ -1,35 +1,58 @@
 package folder
 
 import (
+	"errors"
+	"strings"
+
 	"github.com/titpetric/task-ui/model"
 )
 
-// HostID is the ID of the root's host job: a command on a host of the
-// inventory, over the ssh login task-ui has to it.
-const HostID = model.HostJob
+// HostPrefix starts the ID of a job of the root that runs a command on
+// a host of the inventory: @host:dev1, or @host:* for every host with
+// an ssh login.
+const HostPrefix = model.HostPrefix
 
-// HostJob returns the host job of the root, _, nil for any other folder
-// or a directory inside the root. Its run names the host as its target
-// and the command as its args; the hosts permission says who runs it.
-// Its command is the ssh client's, which the run's starter fills in for
-// the host, so the job alone has none. Unlike @shell it needs no one at
-// the keyboard: a schedule or a workflow step takes it.
-func (f *Folder) HostJob() *Job {
-	if f == nil || f.ID != model.Default || f.Rel != "" {
+// ErrHostBare refuses the job @host, which names no host.
+var ErrHostBare = errors.New("a command on a host is the job @host:<name>, a host of the inventory, or @host:* for every host with an ssh login")
+
+// HostJob returns the job of the root, _, that runs a command on the
+// host, or on every host with an ssh login for *; nil for any other
+// folder, a directory inside the root, or no host. The job doesn't
+// check the inventory lists the host: its run's starter does. Its run
+// names the host as its target and the command as its args; the hosts
+// permission says who runs it. Its command is the ssh client's, which
+// the run's starter fills in for the host, so the job alone has none.
+// Unlike @shell it needs no one at the keyboard: a schedule or a
+// workflow step takes it.
+func (f *Folder) HostJob(host string) *Job {
+	if f == nil || f.ID != model.Default || f.Rel != "" || host == "" || strings.ContainsAny(host, " \t\r\n/") {
 		return nil
 	}
 	job := &Job{
 		Folder: f.ID,
-		ID:     HostID,
+		ID:     model.HostJob(host),
 		Kind:   "host",
 	}
-	job.Name = "host"
-	job.Description = "A command on a host of the inventory, over ssh"
+	job.Name = job.ID
+	job.Description = "A command on " + host + " over ssh"
+	if host == "*" {
+		job.Description = "A command on every host with an ssh login, a run a host"
+	}
 	job.TakesArgs = true
 	return job
 }
 
-// IsHost reports whether the job is the root's host job, @host.
+// IsHost reports whether the job is a host job of the root,
+// @host:<host>.
 func (j *Job) IsHost() bool {
-	return j != nil && j.ID == HostID && j.Kind == "host"
+	return j != nil && j.Kind == "host" && strings.HasPrefix(j.ID, HostPrefix)
+}
+
+// HostTarget returns the host a host job runs on, * for every host, ""
+// for any other job.
+func (j *Job) HostTarget() string {
+	if !j.IsHost() {
+		return ""
+	}
+	return strings.TrimPrefix(j.ID, HostPrefix)
 }

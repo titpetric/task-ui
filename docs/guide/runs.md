@@ -10,10 +10,11 @@ the `prompt/view` permission; your own always do (see
 [Prompt](projects.md#prompt)). A run of the root names its job alone, as
 `@claude-note` or `@shell`, and a directory of the root by its path.
 
-A command on a host of the [inventory](inventory.md) runs as `@host`,
-the root's built-in job: one run a host, named `@host · <host>`, its
-command the run's args. `/runs?job=@host` lists them, and
-`/runs?batch=<id>` the runs started together on more than one host.
+A command on a host of the [inventory](inventory.md) runs as
+`@host:<host>`, a built-in job of the root, one run a host, its command
+the run's args. `/runs?job=@host:dev1` lists the runs on `dev1`,
+`/runs?job=@host:*` those on every host, and `/runs?batch=<id>` the runs
+started together on more than one host.
 
 ![The runs](../assets/runs-dark.png)
 

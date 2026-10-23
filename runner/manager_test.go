@@ -383,7 +383,7 @@ func TestManager_Integrations(t *testing.T) {
 	}
 }
 
-// Runs of a host job lock per target, so one runs on every host at
+// Runs of a host job lock per host, its job, so one runs on every host at
 // once; the args are the row's and not the command's, and a timeout
 // kills a run that goes past it.
 func TestManager_HostTargets(t *testing.T) {
@@ -392,7 +392,7 @@ func TestManager_HostTargets(t *testing.T) {
 	ctx := context.Background()
 	root := &folder.Folder{ID: model.Default, Dir: f.root}
 	start := func(target, script string, timeout time.Duration) *runner.Session {
-		job := root.HostJob()
+		job := root.HostJob(target)
 		job.Command = []string{"sh", "-c", script, "sh"}
 		session, err := f.manager.Start(ctx, runner.Request{Folder: root, Job: job, User: &model.User{ID: "u1", Name: "ops"}, Target: target, BatchID: "b1", Args: []string{"uptime"}, Timeout: timeout})
 		assert.NoError(t, err)

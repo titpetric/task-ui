@@ -8,7 +8,7 @@ const RunSummary = "Summarise the run in one or two short paragraphs: what it di
 	"No preamble, no headings, no advice unless it failed, don't explain the obvious. Change nothing."
 
 // HostsSummary is how Claude summarises the runs of one command on
-// hosts, a batch of @host runs: the short summary of RunSummary,
+// hosts, a batch of @host:<host> runs: the short summary of RunSummary,
 // with a table a row a host.
 const HostsSummary = "The runs are one shell command on several hosts over ssh, a run a host. " +
 	"Summarise them in one or two short paragraphs: lead with what needs attention (failures, hosts that differ, warnings, anything near a limit), then a line on what is fine. " +

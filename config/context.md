@@ -34,7 +34,10 @@ terminal, `@claude-prompt`, Claude Code on a prompt, and `@claude-note`,
 Claude Code on a note to the agent. `run` lets a user run jobs, in a
 folder the user sees, when the allow lists of the folder and the job
 name the user or the role, or are empty, and inside the folder's hours
-unless forced with a reason. `@shell` and `@claude` take `shell`.
+unless forced with a reason. `@shell` and `@claude` take `shell`. The
+root, `_`, has `@host:<name>`, a shell command, its args, on a host of
+the inventory over ssh, and `@host:*`, the command on every host with an
+ssh login, a run a host; they take `hosts`.
 
 ## Runs
 
@@ -144,7 +147,9 @@ Page: `/settings/integrations`; API: `/api/integrations`.
 The hosts Beszel watches, with their load and the ssh login task-ui
 reaches each with. `hosts` runs a shell command on the picked hosts at
 once, and can have Claude summarise the outputs. Prompts get the hosts
-in `TASK_UI_HOSTS`. Page: `/inventory`; API: `/api/inventory`.
+in `TASK_UI_HOSTS`. Page: `/inventory`; API: `/api/inventory`. An
+agent on a prompt reaches the hosts through the inventory in its
+context; the `@host:` jobs are for commands to record and schedule.
 
 ## Users (`user`)
 

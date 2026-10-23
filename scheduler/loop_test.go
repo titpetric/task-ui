@@ -47,7 +47,9 @@ func newFixture(t *testing.T) *fixture {
 	plan.Name = "plan"
 	slow := &folder.Job{Folder: "infra", ID: "slow", Command: []string{"sh", "-c", "sleep 30"}}
 	slow.Name = "slow"
-	infra.Jobs = []*folder.Job{plan, slow}
+	greet := &folder.Job{Folder: "infra", ID: "greet", Command: []string{"sh", "-c", `echo "hi $*"`, "sh"}}
+	greet.Name, greet.TakesArgs = "greet", true
+	infra.Jobs = []*folder.Job{plan, slow, greet}
 
 	runs := storage.NewRunStorage(db)
 	manager := runner.New(runner.Options{
@@ -256,7 +258,7 @@ func TestLoop_TickMayRun(t *testing.T) {
 	assert.Len(t, runs, 0)
 }
 
-// A schedule of @host stays: the hosts permission decides whether it
+// A schedule of @host:* stays: the hosts permission decides whether it
 // runs, and without the hosts to run on it starts nothing.
 func TestLoop_HostSchedule(t *testing.T) {
 	t.Parallel()
@@ -266,7 +268,7 @@ func TestLoop_HostSchedule(t *testing.T) {
 	assert.NoError(t, f.users.Create(ctx, admin))
 	due := f.now.Add(-time.Minute)
 	for _, user := range []*model.User{f.ops, admin} {
-		schedule := &model.Schedule{Folder: model.Default, Job: model.HostJob, Target: "*", Args: `["uptime"]`, Expression: "@hourly", Enabled: 1, NextRunAt: &due, UserID: user.ID, UserName: user.Name}
+		schedule := &model.Schedule{Folder: model.Default, Job: model.HostAll, Args: `["uptime"]`, Expression: "@hourly", Enabled: 1, NextRunAt: &due, UserID: user.ID, UserName: user.Name}
 		assert.NoError(t, f.schedules.Create(ctx, schedule))
 	}
 	started, err := f.loop.Tick(ctx)
@@ -277,4 +279,21 @@ func TestLoop_HostSchedule(t *testing.T) {
 	for _, schedule := range schedules {
 		assert.Equal(t, int64(1), schedule.Enabled)
 	}
+}
+
+// A schedule of a job that takes args starts its run with them.
+func TestLoop_ScheduleArgs(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	ctx := context.Background()
+	schedule := f.schedule(t, "greet", "@hourly")
+	schedule.Args = `["there","now"]`
+	assert.NoError(t, f.schedules.Update(ctx, schedule))
+	started, err := f.loop.Tick(ctx)
+	assert.NoError(t, err)
+	assert.Equal(t, 1, started)
+	runs, err := f.runs.List(ctx, storage.RunFilter{Folder: "infra", Job: "greet"})
+	assert.NoError(t, err)
+	assert.Len(t, runs, 1)
+	assert.Equal(t, []string{"there", "now"}, runs[0].ArgList())
 }

@@ -13,6 +13,11 @@ func TestMentions(t *testing.T) {
 	assert.Equal(t, []string{"a.b"}, model.Mentions("(@a.b)"))
 	assert.Len(t, model.Mentions("mail me at me@example.com"), 0)
 	assert.Len(t, model.Mentions("nothing here"), 0)
+	// A job ID with a colon names no user: @host:dev1 is no mention of
+	// a user host, while "@ops: look" is one of ops.
+	assert.Len(t, model.Mentions("ran @host:dev1 and @host:* and @git:status"), 0)
+	assert.Equal(t, []string{"ops"}, model.Mentions("@ops: look at @host:dev1"))
+	assert.Equal(t, []string{"ops"}, model.Mentions("ask @ops:"))
 }
 
 func TestNote_Mentioned(t *testing.T) {

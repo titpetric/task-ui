@@ -6,7 +6,7 @@
 	</div>
 </div>
 
-{{- $any := false }}{{ range $p := .Folders }}{{ range $p.Jobs }}{{ if $.CanRun $p . }}{{ $any = true }}{{ end }}{{ end }}{{ end }}
+{{- $any := false }}{{ range $p := .Folders }}{{ range $p.Jobs }}{{ if $.CanRun $p . }}{{ $any = true }}{{ end }}{{ end }}{{ end }}{{ if .HostJobs }}{{ $any = true }}{{ end }}
 {{- if $any }}
 <form class="form inline" data-api="/api/schedules" data-method="POST" data-next="reload">
 	<div class="field">
@@ -15,6 +15,9 @@
 			{{- range $p := .Folders }}{{ if $.CanRunAny $p }}
 			<option value="{{ $p.ID }}"{{ if eq (index $.Form "folder") $p.ID }} selected{{ end }}>{{ $p.ID }}</option>
 			{{- end }}{{ end }}
+			{{- if .HostJobs }}
+			<option value="_"{{ if eq (index $.Form "folder") "_" }} selected{{ end }}>_</option>
+			{{- end }}
 		</select>
 	</div>
 	<div class="field">
@@ -23,7 +26,12 @@
 			{{- range $p := .Folders }}{{ range $p.Jobs }}{{ if $.CanRun $p . }}
 			<option value="{{ .ID }}" data-folder="{{ $p.ID }}">{{ .Name }}</option>
 			{{- end }}{{ end }}{{ end }}
+			{{- template "hostjobs" (list $ "") }}
 		</select>
+	</div>
+	<div class="field">
+		<label for="sch-args">Args <span class="faint">for a job that takes them; the command of a host</span></label>
+		<input type="text" id="sch-args" name="args" data-type="args" placeholder="df -h /" spellcheck="false" autocomplete="off">
 	</div>
 	<div class="field">
 		<label for="sch-expr">Expression</label>
@@ -43,7 +51,7 @@
 	{{- range .Schedules }}
 		<tr>
 			<td data-label="Folder"><a href="{{ $.Href .Folder }}">{{ .Folder }}</a></td>
-			<td class="key" data-label="Job"><a href="{{ $.Href .Folder }}/{{ .Job }}">{{ .Job }}</a></td>
+			<td class="key" data-label="Job">{{ if and (eq .Folder "_") (hasPrefix .Job "@") }}{{ .Job }}{{ else }}<a href="{{ $.Href .Folder }}/{{ .Job }}">{{ .Job }}</a>{{ end }}{{ with argLine .Job .Args }} <code>{{ . }}</code>{{ end }}</td>
 			<td data-label="Expression"><code class="nowrap">{{ .Expression }}</code></td>
 			<td data-label="Next run">{{ template "nextrun" . }}</td>
 			<td class="nowrap hide-narrow" data-label="Last run">{{ if .LastRunAt }}{{ ago .LastRunAt }}{{ else }}<span class="faint">never</span>{{ end }}</td>

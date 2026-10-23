@@ -32,16 +32,22 @@ day of week, in the server's time zone:
 
 Month and day names work too (`mon-fri`, `jan`).
 
+**Args** on the Scheduled form go to a job that takes arguments, after
+`--`, on every run of the schedule; a job that takes none refuses them.
+
 A schedule runs a command on hosts of the [inventory](inventory.md)
-too: `@host` of the root, `_`, with a `target`, a host or `*` for every
-host with an ssh login, and the command as its `args`, through
-`POST /api/schedules`:
+too: `@host:<name>` of the root, `_`, on the host, or `@host:*` on every
+host with an ssh login, with the command as its args. With the `hosts`
+permission, the job picker of the Scheduled form lists them under
+**Hosts**, beside the root `_` in the folder picker, and **Args** takes
+the command whole. Through `POST /api/schedules`:
 
 ```json
-{"folder": "_", "job": "@host", "target": "*", "args": ["df -h /"], "expression": "0 6 * * *"}
+{"folder": "_", "job": "@host:*", "args": ["df -h /"], "expression": "0 6 * * *"}
 ```
 
-Its user needs the `hosts` permission; `*` starts a batch, a run a host.
+Its user needs the `hosts` permission; `@host:*` starts a batch, a run
+a host. The bare `@host` names no host, and the API refuses it.
 
 ## Cleanup
 

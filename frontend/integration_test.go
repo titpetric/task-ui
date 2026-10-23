@@ -101,7 +101,7 @@ func TestInventory_LastBatch(t *testing.T) {
 	var runs []*model.Run
 	for _, host := range []string{"dev1", "dev2"} {
 		now := time.Now()
-		run := &model.Run{Folder: model.Default, Job: model.HostJob, Target: host, BatchID: batch, Args: `["uptime"]`, UserID: f.users[asAdmin].ID, UserName: asAdmin, State: model.StateOK, StartedAt: &now, FinishedAt: &now, CastPath: "x.cast"}
+		run := &model.Run{Folder: model.Default, Job: model.HostJob(host), Target: host, BatchID: batch, Args: `["uptime"]`, UserID: f.users[asAdmin].ID, UserName: asAdmin, State: model.StateOK, StartedAt: &now, FinishedAt: &now, CastPath: "x.cast"}
 		assert.NoError(t, f.opts.Runs.Create(ctx, run))
 		runs = append(runs, run)
 	}
@@ -118,9 +118,36 @@ func TestInventory_LastBatch(t *testing.T) {
 	assert.NotContains(t, f.page(t, asViewer, "/inventory"), "Your last run")
 
 	page := f.page(t, asAdmin, "/runs/"+runs[1].ID)
-	assert.Contains(t, page, "<h2>@host · dev2")
+	assert.Contains(t, page, "<h2>@host:dev2")
 	assert.Contains(t, page, "Summarize the runs on these hosts.")
 	listed := f.page(t, asAdmin, "/runs?batch="+batch)
 	assert.Contains(t, listed, runs[0].ID)
 	assert.Contains(t, listed, runs[1].ID)
+}
+
+// The job pickers of Scheduled and of a workflow's steps list the host
+// jobs under Hosts, @host:* and one a host with an ssh login, for a
+// user with the hosts permission alone; every job has the args field.
+func TestHostJobs(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	f.withKey(t)
+	hub := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte(`{"items":[{"id":"a","name":"dev1","host":"10.10.10.11","status":"up","info":{"t":4}}]}`))
+	}))
+	t.Cleanup(hub.Close)
+	assert.NoError(t, f.opts.Integrations.Save(context.Background(), integration.Beszel, map[string]string{"url": hub.URL, "token": "t1"}))
+
+	for _, path := range []string{"/schedules", "/workflows/new"} {
+		admin := f.page(t, asAdmin, path)
+		assert.Contains(t, admin, `<optgroup label="Hosts">`, path)
+		assert.Contains(t, admin, `<option value="@host:*" data-folder="_"`, path)
+		assert.Contains(t, admin, `<option value="@host:10.10.10.11" data-folder="_"`, path)
+		assert.Contains(t, admin, `<option value="_"`, path)
+		ops := f.page(t, asOps, path)
+		assert.NotContains(t, ops, `label="Hosts"`, path)
+		assert.NotContains(t, ops, `@host:`, path)
+	}
+	assert.Contains(t, f.page(t, asAdmin, "/schedules"), `name="args" data-type="args"`)
+	assert.Contains(t, f.page(t, asOps, "/workflows/new"), `data-step-args`)
 }

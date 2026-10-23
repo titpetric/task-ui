@@ -27,3 +27,9 @@ func TestSchedule_IsEnabled(t *testing.T) {
 	assert.False(t, (&model.Schedule{}).IsEnabled())
 	assert.True(t, (&model.Schedule{Enabled: 1}).IsEnabled())
 }
+
+func TestSchedule_ArgList(t *testing.T) {
+	t.Parallel()
+	assert.Equal(t, []string{"df -h /"}, (&model.Schedule{Args: `["df -h /"]`}).ArgList())
+	assert.Empty(t, (&model.Schedule{}).ArgList())
+}

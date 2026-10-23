@@ -298,8 +298,6 @@
     // the list a run row keeps, or the line typed.
     if (spec.dir) body.dir = spec.dir;
     if (spec.args && spec.args.length) body.args = spec.args;
-    // A command on a host runs again on its host.
-    if (spec.target) body.target = spec.target;
     // Run and summarize: Claude summarises the run on its page when it
     // ends.
     if (spec.summarize) body.summarize = true;
@@ -356,7 +354,7 @@
       var run = res.data;
       els.title.textContent = runTitle(run);
       els.who.textContent = run.user_name || "";
-      s.spec = { folder: run.folder, dir: run.dir || "", job: run.job, args: runArgs(run), target: run.target || "", title: runTitle(run) };
+      s.spec = { folder: run.folder, dir: run.dir || "", job: run.job, args: runArgs(run), title: runTitle(run) };
       // A finished run stays live in memory for a while, for the windows
       // on it; opened afterwards it is history, not something to attach to.
       if (run.live && run.state === "running") {
@@ -371,8 +369,7 @@
   // inside it when the job is one of that directory's, and the job; a
   // job of the root, _, by its name alone, as Run.Name does.
   function runTitle(run) {
-    var title = run.folder === "_" && !run.dir ? run.job : runPlace(run) + " / " + run.job;
-    return run.target ? title + " · " + run.target : title;
+    return run.folder === "_" && !run.dir ? run.job : runPlace(run) + " / " + run.job;
   }
 
   // runPlace is the folder a run names: folder/dir, a directory of the
@@ -722,8 +719,18 @@
 
   // ----------------------------------------------------------------- forms
 
+  // argsOf is the args a job's field sends: the line as typed, which
+  // the API splits as a shell splits words, or for a job of a host,
+  // @host:<host>, the line whole, the command ssh runs; null for none.
+  function argsOf(line, job) {
+    line = line.trim();
+    if (!line) return null;
+    return job.indexOf("@host:") === 0 ? [line] : line;
+  }
+
   // serialize reads a form into the JSON the API takes. data-type says
-  // what a field is: a list splits on commas, a bool parses, an int too.
+  // what a field is: a list splits on commas, a bool parses, an int too,
+  // and args go as argsOf has them for the form's job.
   function serialize(form) {
     var body = {}, joined = {};
     Array.prototype.forEach.call(form.elements, function (el) {
@@ -764,6 +771,10 @@
           break;
         case "int":
           value = parseInt(value, 10) || 0;
+          break;
+        case "args":
+          value = argsOf(value, form.elements.job ? form.elements.job.value : "");
+          if (value === null) return;
           break;
       }
       // "map.key" fields build an object; empty entries are left out, so
@@ -1038,16 +1049,38 @@
     });
   });
 
+  // keepFolder keeps the options of a folder in a job select, each in
+  // the group it came in, such as Hosts, and drops the rest.
+  function keepFolder(select, folder) {
+    if (!select.allOptions) {
+      select.allOptions = Array.prototype.map.call(select.options, function (option) {
+        return { option: option, group: option.parentNode.tagName === "OPTGROUP" ? option.parentNode.label : "" };
+      });
+    }
+    select.innerHTML = "";
+    var groups = {};
+    select.allOptions.forEach(function (item) {
+      if (item.option.dataset.folder !== folder) return;
+      if (!item.group) {
+        select.appendChild(item.option);
+        return;
+      }
+      if (!groups[item.group]) {
+        groups[item.group] = document.createElement("optgroup");
+        groups[item.group].label = item.group;
+        select.appendChild(groups[item.group]);
+      }
+      groups[item.group].appendChild(item.option);
+    });
+  }
+
   // A select that narrows another keeps only the options of its folder:
   // the job list follows the folder picked for a schedule.
   function narrow(select) {
     var target = document.getElementById(select.dataset.narrows);
     if (!target) return;
-    if (!target.allOptions) target.allOptions = Array.prototype.slice.call(target.options);
-    target.innerHTML = "";
-    target.allOptions.forEach(function (option) {
-      if (option.dataset.folder === select.value) target.appendChild(option);
-    });
+    keepFolder(target, select.value);
+    if (target.dropdown) target.dropdown();
   }
   document.querySelectorAll("select[data-narrows]").forEach(function (select) {
     narrow(select);
@@ -1364,7 +1397,10 @@
       var folder = row.querySelector("[data-step-folder]").value;
       var enabled = row.querySelector("[data-switch]").checked;
       if (folder.indexOf(WORKFLOW) === 0) return { workflow: folder.slice(WORKFLOW.length), enabled: enabled };
-      return { folder: folder, job: row.querySelector("[data-step-job]").value, enabled: enabled };
+      var step = { folder: folder, job: row.querySelector("[data-step-job]").value, enabled: enabled };
+      var args = argsOf(row.querySelector("[data-step-args]").value, step.job);
+      if (args !== null) step.args = args;
+      return step;
     });
   }
 
@@ -1377,13 +1413,10 @@
     var flow = folder.value.indexOf(WORKFLOW) === 0;
     job.hidden = flow;
     job.required = !flow;
+    row.querySelector("[data-step-args]").hidden = flow;
     if (flow) return;
-    if (!job.allOptions) job.allOptions = Array.prototype.slice.call(job.options);
     var picked = job.value;
-    job.innerHTML = "";
-    job.allOptions.forEach(function (option) {
-      if (option.dataset.folder === folder.value) job.appendChild(option);
-    });
+    keepFolder(job, folder.value);
     if (picked && Array.prototype.some.call(job.options, function (o) { return o.value === picked; })) job.value = picked;
     if (job.dropdown) job.dropdown();
   }
@@ -2223,7 +2256,9 @@
   // under the caret: up and down move, Enter or Tab takes a name, Esc
   // closes it.
   var mentionAt = /(?:^|[\s(\[{,;])@([A-Za-z0-9._-]*)$/;
-  var mentionAll = /(^|[\s(\[{,;])@([A-Za-z0-9][A-Za-z0-9._-]*)/g;
+  // A colon and a character other than a space after the name make a
+  // job ID, @host:dev1, no mention, as model.Mentions reads it.
+  var mentionAll = /(^|[\s(\[{,;])@([A-Za-z0-9][A-Za-z0-9._-]*)(?![A-Za-z0-9._-]|:\S)/g;
   var mentionCopy = ["boxSizing", "width", "fontFamily", "fontSize", "fontWeight", "fontStyle", "lineHeight", "letterSpacing", "wordSpacing", "tabSize", "textIndent", "textTransform",
     "paddingTop", "paddingRight", "paddingBottom", "paddingLeft", "borderTopWidth", "borderRightWidth", "borderBottomWidth", "borderLeftWidth", "borderStyle", "borderRadius"];
   var mention = { list: null, area: null, start: 0, names: [], at: 0 };
@@ -2642,7 +2677,7 @@
       if (!hosts.length) return;
       var buttons = inventoryRun.querySelectorAll("button[type=submit]");
       buttons.forEach(function (button) { button.disabled = true; });
-      // Each host's run is a run of @host, under one batch: the page
+      // Each host's run is a run of @host:<host>, under one batch: the page
       // shows the batch, the user's last, as it loads.
       api("POST", "/api/inventory/run", { command: inventoryRun.elements.command.value, hosts: hosts, summarize: summarize }).then(function (res) {
         buttons.forEach(function (button) { button.disabled = false; });

@@ -26,7 +26,7 @@ type Loop struct {
 	Users     *storage.UserStorage
 	Catalogue Catalogue
 	Runner    *runner.Manager
-	// Hosts start a schedule of @host on its target. Nil skips such a
+	// Hosts start a schedule of @host:<host> on its host. Nil skips such a
 	// schedule.
 	Hosts *hostrun.Starter
 	// Interval is how often the loop looks. Zero is a minute.
@@ -115,12 +115,13 @@ func (l *Loop) fire(ctx context.Context, schedule *model.Schedule, now time.Time
 		return false, nil
 	}
 	if job.IsHost() {
-		return l.fireHosts(ctx, schedule, user)
+		return l.fireHosts(ctx, schedule, job, user)
 	}
 	_, err = l.Runner.Start(ctx, runner.Request{
 		Folder:    f,
 		Job:       job,
 		User:      user,
+		Args:      model.DecodeList(schedule.Args),
 		Scheduled: true,
 	})
 	if errors.Is(err, runner.ErrBusy) {
@@ -130,14 +131,15 @@ func (l *Loop) fire(ctx context.Context, schedule *model.Schedule, now time.Time
 	return err == nil, err
 }
 
-// fireHosts starts a schedule of @host: its command, the args, on its
-// target, a host or * for every host with an ssh login, a batch.
-func (l *Loop) fireHosts(ctx context.Context, schedule *model.Schedule, user *model.User) (bool, error) {
+// fireHosts starts a schedule of @host:<host>: its command, the args,
+// on the host, or on every host with an ssh login for *, a batch.
+func (l *Loop) fireHosts(ctx context.Context, schedule *model.Schedule, job *folder.Job, user *model.User) (bool, error) {
 	if l.Hosts == nil {
-		slog.Warn("scheduled run skipped, no hosts on this instance", "job", schedule.Job, "target", schedule.Target)
+		slog.Warn("scheduled run skipped, no hosts on this instance", "job", schedule.Job)
 		return false, nil
 	}
-	req := hostrun.Request{Targets: []string{schedule.Target}, Command: strings.Join(model.DecodeList(schedule.Args), " "), Batch: schedule.Target == "*", Scheduled: true}
+	target := job.HostTarget()
+	req := hostrun.Request{Targets: []string{target}, Command: strings.Join(model.DecodeList(schedule.Args), " "), Batch: target == "*", Scheduled: true}
 	_, _, err := l.Hosts.Start(ctx, user, req)
 	return err == nil, err
 }

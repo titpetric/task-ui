@@ -26,7 +26,9 @@ func NewRunStorage(db DB) *RunStorage {
 type RunFilter struct {
 	Folder  string
 	Folders []string
-	Job     string
+	// Job keeps the runs of a job; @host:* keeps those of every host
+	// job, @host:<host>.
+	Job string
 	// Dir is the directory inside the folder of the job, with Job: ""
 	// keeps the runs of the folder's own job, not those of the job of a
 	// directory inside it with the same name.
@@ -106,7 +108,12 @@ func runQuery(filter RunFilter) (string, []any) {
 		}
 	}
 	add("folder", filter.Folder)
-	add("job", filter.Job)
+	if filter.Job == model.HostAll {
+		where = append(where, "job LIKE ?")
+		args = append(args, model.HostPrefix+"%")
+	} else {
+		add("job", filter.Job)
+	}
 	if filter.Job != "" {
 		where = append(where, "dir = ?")
 		args = append(args, filter.Dir)

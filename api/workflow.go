@@ -127,6 +127,9 @@ func (h *Handlers) checkSteps(r *http.Request, req WorkflowRequest) ([]model.Wor
 			steps = append(steps, model.WorkflowStep{WorkflowRef: wf.ID, Disabled: disabled})
 			continue
 		}
+		if step.Job == model.HostBare {
+			return nil, fmt.Errorf("step %d, %s / %s: %w", i+1, step.Folder, step.Job, folder.ErrHostBare)
+		}
 		f, job, problem := h.target(r, step.Folder, step.Job)
 		if problem != "" {
 			return nil, fmt.Errorf("step %d, %s / %s: %s", i+1, step.Folder, step.Job, problem)
@@ -134,10 +137,10 @@ func (h *Handlers) checkSteps(r *http.Request, req WorkflowRequest) ([]model.Wor
 		if job.IsShell() {
 			return nil, fmt.Errorf("step %d, %s / %s: %w", i+1, step.Folder, step.Job, folder.ErrShellUnattended)
 		}
-		if problem := hostTarget(job, step.Target, step.Args); problem != "" {
+		if problem := jobArgs(job, step.Args); problem != "" {
 			return nil, fmt.Errorf("step %d, %s / %s: %s", i+1, step.Folder, step.Job, problem)
 		}
-		steps = append(steps, model.WorkflowStep{Folder: f.ID, Job: job.ID, Disabled: disabled, Target: strings.TrimSpace(step.Target), Args: model.EncodeList(step.Args)})
+		steps = append(steps, model.WorkflowStep{Folder: f.ID, Job: job.ID, Disabled: disabled, Args: model.EncodeList(step.Args)})
 	}
 	return steps, nil
 }

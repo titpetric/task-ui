@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/titpetric/task-ui/argv"
 	"github.com/titpetric/task-ui/frontend/view"
 	"github.com/titpetric/task-ui/internal/assert"
 )
@@ -110,4 +111,17 @@ func TestFolderDir(t *testing.T) {
 	assert.Equal(t, "", view.FolderDir("malta/deploy/blog", "malta/deploy"))
 	assert.Equal(t, "web", view.FolderDir("malta/deploy/web/blog", "malta/deploy"))
 	assert.Equal(t, "", view.FolderDir("malta/deploy", "malta/deploy"))
+}
+
+// ArgLine returns a line that splits into the same args, and the
+// command of a host job unchanged.
+func TestArgLine(t *testing.T) {
+	t.Parallel()
+	line := view.ArgLine("greet", `["a","two words","it's",""]`)
+	assert.Equal(t, `a 'two words' 'it'\''s' ''`, line)
+	words, err := argv.Split(line)
+	assert.NoError(t, err)
+	assert.Equal(t, []string{"a", "two words", "it's", ""}, words)
+	assert.Equal(t, `echo "a b" | wc -c`, view.ArgLine("@host:dev1", `["echo \"a b\" | wc -c"]`))
+	assert.Equal(t, "", view.ArgLine("plan", "[]"))
 }

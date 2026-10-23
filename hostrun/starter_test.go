@@ -94,7 +94,7 @@ func TestStarter_Start(t *testing.T) {
 	assert.Len(t, rows, 2)
 	for _, row := range rows {
 		assert.Equal(t, model.StateOK, row.State)
-		assert.Equal(t, model.HostJob, row.Job)
+		assert.Equal(t, model.HostJob(row.Target), row.Job)
 		assert.Equal(t, model.Default, row.Folder)
 		assert.Equal(t, []string{"echo hi from $(echo here)"}, row.ArgList())
 		assert.NotEqual(t, "", row.CastPath)

@@ -36,10 +36,29 @@ func Funcs() template.FuncMap {
 		"hasPrefix":    strings.HasPrefix,
 		"message":      Message,
 		"json":         JSON,
+		"argLine":      ArgLine,
 		// summaryPrompt is the short summary instruction, the Summarize
 		// preset of a workflow's prompt.
 		"summaryPrompt": func() string { return claude.RunSummary },
 	}
+}
+
+// ArgLine returns the args a schedule or a workflow step keeps, a JSON
+// list, as the line its form takes back: the words, quoted where a
+// word needs it, or for a job of @host:<host> the command unchanged.
+func ArgLine(job, args string) string {
+	list := model.DecodeList(args)
+	if strings.HasPrefix(job, model.HostPrefix) {
+		return strings.Join(list, " ")
+	}
+	words := make([]string, len(list))
+	for i, word := range list {
+		words[i] = word
+		if word == "" || strings.ContainsAny(word, " \t'\"\\") {
+			words[i] = "'" + strings.ReplaceAll(word, "'", `'\''`) + "'"
+		}
+	}
+	return strings.Join(words, " ")
 }
 
 // JSON encodes a value for an attribute a script reads; a value that

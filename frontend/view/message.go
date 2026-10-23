@@ -9,8 +9,9 @@ import (
 )
 
 // mentionText matches @name where a note names a user, the way
-// model.Mentions reads it.
-var mentionText = regexp.MustCompile(`(^|[\s(\[{,;])@([A-Za-z0-9][A-Za-z0-9._-]*[A-Za-z0-9_]|[A-Za-z0-9])`)
+// model.Mentions reads it; the third group, a colon and a character
+// other than a space, makes it a job ID such as @host:dev1, no mention.
+var mentionText = regexp.MustCompile(`(^|[\s(\[{,;])@([A-Za-z0-9][A-Za-z0-9._-]*[A-Za-z0-9_]|[A-Za-z0-9])((?::\S)?)`)
 
 // Message renders the text of a note as markdown: lists, **bold**,
 // headings, `code` and ``` fences, with a line break kept a line break
@@ -33,7 +34,10 @@ func message(text string, link func(name string) bool) template.HTML {
 		Text: func(escaped string) string {
 			return mentionText.ReplaceAllStringFunc(escaped, func(m string) string {
 				sub := mentionText.FindStringSubmatch(m)
-				lead, name := sub[1], sub[2]
+				lead, name, job := sub[1], sub[2], sub[3]
+				if job != "" {
+					return m
+				}
 				if link(name) {
 					return lead + `<a class="mention" href="/users/` + url.PathEscape(name) + `">@` + name + `</a>`
 				}

@@ -12,9 +12,10 @@ func TestRun_Key(t *testing.T) {
 	t.Parallel()
 	assert.Equal(t, "infra/make:build", (&model.Run{Folder: "infra", Job: "make:build"}).Key())
 	assert.Equal(t, "malta/dockerfiles/build", (&model.Run{Folder: "malta", Dir: "dockerfiles", Job: "build"}).Key())
-	// A host run locks per host.
-	assert.Equal(t, "_/@host web1", (&model.Run{Folder: model.Default, Job: model.HostJob, Target: "web1"}).Key())
-	assert.True(t, (&model.Run{Job: model.HostJob}).IsHost())
+	// A host run locks per host: its job names the host.
+	assert.Equal(t, "_/@host:web1", (&model.Run{Folder: model.Default, Job: model.HostJob("web1"), Target: "web1"}).Key())
+	assert.True(t, (&model.Run{Job: model.HostJob("web1")}).IsHost())
+	assert.False(t, (&model.Run{Job: model.HostBare}).IsHost())
 	assert.False(t, (&model.Run{Job: "@shell"}).IsHost())
 }
 
@@ -99,7 +100,8 @@ func TestRun_Name(t *testing.T) {
 	assert.Equal(t, "@claude-note", (&model.Run{Folder: model.Default, Job: model.NoteJob}).Path())
 	assert.Equal(t, "deploy/up", (&model.Run{Folder: model.Default, Dir: "deploy", Job: "up"}).Path())
 	assert.Equal(t, "malta/dockerfiles/build", (&model.Run{Folder: "malta", Dir: "dockerfiles", Job: "build"}).Path())
-	host := model.Run{Folder: model.Default, Job: model.HostJob, Target: "web1"}
-	assert.Equal(t, "@host · web1", host.Name())
-	assert.Equal(t, "@host", host.Path())
+	host := model.Run{Folder: model.Default, Job: model.HostJob("web1"), Target: "web1"}
+	assert.Equal(t, "@host:web1", host.Name())
+	assert.Equal(t, "@host:web1", host.Path())
+	assert.Equal(t, "@host:*", model.HostAll)
 }

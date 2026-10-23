@@ -19,6 +19,8 @@ func TestMessage(t *testing.T) {
 	assert.Equal(t, "<p>mail me@example.com</p>\n", string(view.Message("mail me@example.com")))
 	assert.Equal(t, "<p>run <code>@claude</code> here</p>\n", string(view.Message("run `@claude` here")))
 	assert.Equal(t, ``, string(view.Message("")))
+	// A job ID with a colon is no mention; an address with a colon is.
+	assert.Equal(t, "<p>ran @host:dev1 for <span class=\"mention\">@ops</span>:</p>\n", string(view.Message("ran @host:dev1 for @ops:")))
 }
 
 // A page links a mention of a user to their profile, for a signed in

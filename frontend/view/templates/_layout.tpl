@@ -118,7 +118,7 @@
 					{{- $can := $.CanRunJob .Folder .Dir .Job }}
 					<a href="/runs/{{ .ID }}" class="recent" title="Open {{ .Name }}, {{ .UserName }}, {{ .State }}">
 						<i class="dot {{ .State }}"></i>
-						<span class="what"><b>{{ .Job }}{{ with .Target }} · {{ . }}{{ end }}</b><small>{{ .Place }}</small></span>
+						<span class="what"><b>{{ .Job }}</b><small>{{ .Place }}</small></span>
 						{{- if eq .State "running" }}<svg class="ic act"><use href="#i-{{ if $can }}play{{ else }}eye{{ end }}"/></svg>{{ end }}
 						{{ template "avatar" (list $ .UserName) }}
 					</a>
@@ -371,9 +371,9 @@
 		<label class="check"><input type="checkbox" id="wf-sidebar{{ if $w }}-{{ $w.ID }}{{ end }}" name="sidebar"{{ if or (not $w) (not $w.SidebarHidden) }} checked{{ end }}> Show in sidebar <span class="faint">turn off for a workflow you only use as a step of others</span></label>
 	</div>
 	<ol class="steps" data-steps>
-		{{- if $w }}{{ range $w.Steps }}{{ template "steprow" (list $p .Folder .Job .WorkflowID .Disabled) }}{{ end }}{{ else }}{{ template "steprow" (list $p "" "" "" false) }}{{ end }}
+		{{- if $w }}{{ range $w.Steps }}{{ template "steprow" (list $p .Folder .Job .WorkflowID .Disabled .Args) }}{{ end }}{{ else }}{{ template "steprow" (list $p "" "" "" false "") }}{{ end }}
 	</ol>
-	<template data-step-template>{{ template "steprow" (list $p "" "" "" false) }}</template>
+	<template data-step-template>{{ template "steprow" (list $p "" "" "" false "") }}</template>
 	{{- $id := "" }}{{ if $w }}{{ $id = print "-" $w.ID }}{{ end }}
 	{{- if $p.Can "prompt/edit" }}
 	{{- $on := and $w $w.Prompted }}
@@ -418,8 +418,18 @@
 <label class="switch" title="{{ index . 1 }}"><input type="checkbox" data-switch aria-label="{{ index . 1 }}"{{ if index . 0 }} checked{{ end }}><i aria-hidden="true"></i></label>
 {{- end }}
 
+{{/* hostjobs lists the jobs that run a command on hosts in a job
+     picker, under Hosts, for a user with the hosts permission. */}}
+{{- define "hostjobs" }}{{ $job := "" }}{{ if gt (len .) 1 }}{{ $job = index . 1 }}{{ end }}{{ with index . 0 }}{{ if .HostJobs }}
+			<optgroup label="Hosts">
+				{{- range .HostJobs }}
+				<option value="{{ .ID }}" data-folder="_" title="{{ .Description }}"{{ if eq .ID $job }} selected{{ end }}>{{ .Name }}</option>
+				{{- end }}
+			</optgroup>
+{{- end }}{{ end }}{{ end }}
+
 {{ define "steprow" }}
-{{- $p := index . 0 }}{{ $folder := index . 1 }}{{ $job := index . 2 }}{{ $ref := index . 3 }}{{ $off := index . 4 -}}
+{{- $p := index . 0 }}{{ $folder := index . 1 }}{{ $job := index . 2 }}{{ $ref := index . 3 }}{{ $off := index . 4 }}{{ $args := index . 5 -}}
 <li class="step switchable{{ if $off }} off{{ end }}" data-step data-switchable>
 	{{- template "switch" (list (not $off) "Run this step") }}
 	<span class="step-head" data-step-head>{{ if $ref }}{{ range $p.StepWorkflows }}{{ if eq .ID $ref }}{{ .Name }}{{ end }}{{ end }}{{ else }}{{ $folder }} / {{ $job }}{{ end }}</span>
@@ -427,6 +437,9 @@
 		{{- range $p.Folders }}{{ if .Jobs }}
 		<option value="{{ .ID }}"{{ if eq .ID $folder }} selected{{ end }}>{{ .ID }}</option>
 		{{- end }}{{ end }}
+		{{- if $p.HostJobs }}
+		<option value="_"{{ if eq "_" $folder }} selected{{ end }}>_</option>
+		{{- end }}
 		{{- if $p.StepWorkflows }}
 		<optgroup label="Workflows">
 			{{- range $p.StepWorkflows }}
@@ -439,7 +452,9 @@
 		{{- range $f := $p.Folders }}{{ range $f.Jobs }}
 		<option value="{{ .ID }}" data-folder="{{ $f.ID }}"{{ if and (eq $f.ID $folder) (eq .ID $job) }} selected{{ end }}>{{ .Name }}</option>
 		{{- end }}{{ end }}
+		{{- template "hostjobs" (list $p $job) }}
 	</select>
+	<input type="text" data-step-args aria-label="Args, for a job that takes them" placeholder="args" value="{{ argLine $job $args }}" spellcheck="false" autocomplete="off">
 	<span class="step-tools">
 		<button type="button" class="btn-icon" data-step-up title="Move up" aria-label="Move step up">↑</button>
 		<button type="button" class="btn-icon" data-step-down title="Move down" aria-label="Move step down">↓</button>

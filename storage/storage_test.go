@@ -49,7 +49,7 @@ func TestMigrate(t *testing.T) {
 
 	var count int
 	assert.NoError(t, db.GetContext(ctx, &count, "SELECT COUNT(*) FROM migrations WHERE project = ?", storage.Project))
-	assert.Equal(t, 46, count)
+	assert.Equal(t, 49, count)
 }
 
 func TestOpenAndMigrate(t *testing.T) {
@@ -105,4 +105,41 @@ func TestMigrate_scheduleUTC(t *testing.T) {
 	assert.Equal(t, "2026-01-10 04:00:00 +0000 UTC", got[1].Next)
 	assert.Nil(t, got[1].Last)
 	assert.Equal(t, "2026-10-23 05:00:00.5 +0000 UTC", got[2].Next, "a time in UTC stays")
+}
+
+// TestMigrate_hostJobs moves the runs, schedules and steps of the bare
+// @host to the job of their target, @host:<host> or @host:*; the runs
+// keep the target, the schedules and steps drop it.
+func TestMigrate_hostJobs(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	db := newDB(t)
+	for _, insert := range []string{
+		`INSERT INTO run (id, folder, job, target, state) VALUES ('r1', '_', '@host', 'dev1', 'ok'), ('r2', '_', 'plan', '', 'ok')`,
+		`INSERT INTO schedule (id, folder, job, expression, target, args) VALUES ('s1', '_', '@host', '@daily', '*', '["uptime"]')`,
+		`INSERT INTO workflow_step (id, workflow_id, position, folder, job, target, args) VALUES ('w1', 'wf', 0, '_', '@host', 'dev2', '["uptime"]')`,
+	} {
+		_, err := db.ExecContext(ctx, insert)
+		assert.NoError(t, err)
+	}
+	for _, file := range []string{"run_target_host_job.up.sql", "schedule_target_host_job.up.sql", "workflow_step_target_host_job.up.sql"} {
+		statements, err := migrate.Statements(schema.Migrations(), file)
+		assert.NoError(t, err)
+		for _, statement := range statements {
+			_, err := db.ExecContext(ctx, statement)
+			assert.NoError(t, err)
+		}
+	}
+	type row struct {
+		Job    string `db:"job"`
+		Target string `db:"target"`
+	}
+	var runs []row
+	assert.NoError(t, db.SelectContext(ctx, &runs, "SELECT job, target FROM run ORDER BY id"))
+	assert.Equal(t, []row{{"@host:dev1", "dev1"}, {"plan", ""}}, runs)
+	var schedule, step row
+	assert.NoError(t, db.GetContext(ctx, &schedule, "SELECT job, target FROM schedule"))
+	assert.Equal(t, row{"@host:*", ""}, schedule)
+	assert.NoError(t, db.GetContext(ctx, &step, "SELECT job, target FROM workflow_step"))
+	assert.Equal(t, row{"@host:dev2", ""}, step)
 }

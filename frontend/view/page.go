@@ -98,6 +98,10 @@ type Page struct {
 	// Logins are who task-ui signs in to each host as over ssh, user@host
 	// by the host's address; nil leaves the SSH column out.
 	Logins map[string]string
+	// HostJobs are the jobs of the root that run a command on hosts, for
+	// the job pickers of schedules and workflow steps: @host:* and
+	// @host:<host> a host with an ssh login, for a user with hosts.
+	HostJobs []*folder.Job
 	// Summarize shows what Claude summarizes, Run and summarize on the
 	// Inventory and Summary on runs and workflow runs: the Claude
 	// integration has a token for the user.
