@@ -38,6 +38,9 @@ type Discovery struct {
 	Workspaces []Config
 	// Probe is every folder's Probe, for the skills atkins applies in it.
 	Probe *skills.Prober
+	// Ignored lists the paths, relative to dir, that a git checkout at dir
+	// ignores, nil for none; git ls-files unless set.
+	Ignored func(dir string) []string
 }
 
 // catalogue collects folders by ID and by directory, the first of each
@@ -155,7 +158,11 @@ func (d *Discovery) discover(root string, c *catalogue) {
 			shallow[cfg.dir(root)] = true
 		}
 	}
-	w := walker{shallow: shallow, keep: keep, roots: roots, found: func(id, dir string) {
+	ls := d.Ignored
+	if ls == nil {
+		ls = gitIgnored
+	}
+	w := walker{shallow: shallow, keep: keep, roots: roots, ls: ls, found: func(id, dir string) {
 		if c.seen(dir) || model.IsReserved(id) {
 			return
 		}
@@ -163,7 +170,7 @@ func (d *Discovery) discover(root string, c *catalogue) {
 			c.add(f)
 		}
 	}}
-	w.walk(root, "", 1, detector.HasPipeline(root), gitIgnored(root, nil), shallow[root])
+	w.walk(root, "", 1, detector.HasPipeline(root), w.ignore(root, nil), shallow[root])
 }
 
 // sections adds the top level folder of every listed folder below one
@@ -196,25 +203,38 @@ func runnable(f *Folder) bool {
 	return false
 }
 
-// gitIgnored adds the directories a git checkout at dir ignores to
-// ignored: build copies, caches, dependencies. dir that is not a checkout
-// adds nothing, and nor does a failing git.
-func gitIgnored(dir string, ignored map[string]bool) map[string]bool {
+// gitIgnored lists the directories git ignores in the checkout at dir:
+// build copies, caches, dependencies. A failing git lists nothing.
+func gitIgnored(dir string) []string {
+	out, err := exec.Command("git", "-C", dir, "ls-files", "-z", "--others", "--ignored", "--exclude-standard", "--directory").Output()
+	if err != nil {
+		return nil
+	}
+	var paths []string
+	for _, path := range bytes.Split(out, []byte{0}) {
+		if p := strings.TrimSuffix(string(path), "/"); p != "" {
+			paths = append(paths, p)
+		}
+	}
+	return paths
+}
+
+// ignore adds the directories the git checkout at dir ignores to
+// ignored; dir that is not a checkout adds nothing.
+func (w walker) ignore(dir string, ignored map[string]bool) map[string]bool {
 	if _, err := os.Stat(filepath.Join(dir, ".git")); err != nil {
 		return ignored
 	}
-	out, err := exec.Command("git", "-C", dir, "ls-files", "-z", "--others", "--ignored", "--exclude-standard", "--directory").Output()
-	if err != nil {
+	paths := w.ls(dir)
+	if len(paths) == 0 {
 		return ignored
 	}
 	merged := map[string]bool{}
 	for path := range ignored {
 		merged[path] = true
 	}
-	for _, path := range bytes.Split(out, []byte{0}) {
-		if p := strings.TrimSuffix(string(path), "/"); p != "" {
-			merged[filepath.Join(dir, p)] = true
-		}
+	for _, path := range paths {
+		merged[filepath.Join(dir, path)] = true
 	}
 	return merged
 }
@@ -228,6 +248,8 @@ func gitIgnored(dir string, ignored map[string]bool) map[string]bool {
 type walker struct {
 	shallow, keep, roots map[string]bool
 	found                func(id, dir string)
+	// ls lists what the checkout at a directory ignores.
+	ls func(dir string) []string
 }
 
 // walk visits the directories below dir, in name order. Below a pipeline
@@ -248,7 +270,7 @@ func (w walker) walk(dir, id string, depth int, underPipeline bool, ignored map[
 		if ignored[sub] && !w.keep[sub] && !(w.roots[dir] && holdsJobs(sub, depth)) {
 			continue
 		}
-		ignored := gitIgnored(sub, ignored)
+		ignored := w.ignore(sub, ignored)
 		subID := SafeID(name)
 		if id != "" {
 			subID = id + "/" + subID

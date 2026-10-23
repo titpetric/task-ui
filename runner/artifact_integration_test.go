@@ -147,3 +147,14 @@ func TestManager_WriteArtifact(t *testing.T) {
 	_, err = runner.New(runner.Options{}).WriteArtifact(ctx, "x", nil, "ops")
 	assert.ErrorIs(t, err, runner.ErrNotFound)
 }
+
+// OpenArtifact opens nothing for a file not written yet, nor for a
+// commit without a store to show it from.
+func TestManager_OpenArtifact(t *testing.T) {
+	t.Parallel()
+	m := runner.New(runner.Options{ArtifactRoot: t.TempDir()})
+	_, err := m.OpenArtifact(&model.Artifact{Path: "run1/sub/out.txt"})
+	assert.ErrorIs(t, err, os.ErrNotExist, "nothing there yet")
+	_, err = m.OpenArtifact(&model.Artifact{Path: "out.txt", CommitID: "abc"})
+	assert.ErrorIs(t, err, runner.ErrNotFound)
+}

@@ -58,3 +58,10 @@ func TestMain(m *testing.M) {
 	}
 	os.Exit(m.Run())
 }
+
+func TestAgent_Run(t *testing.T) {
+	t.Parallel()
+	a := &agent.Agent{}
+	assert.ErrorContains(t, a.Run(context.Background(), nil), "usage: task-ui agent")
+	assert.ErrorContains(t, a.Run(context.Background(), []string{"nope"}), "usage: task-ui agent")
+}

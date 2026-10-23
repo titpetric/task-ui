@@ -138,3 +138,30 @@ func TestDiscovery_SkipsInternal(t *testing.T) {
 		t.Fatalf("folders: got %v, want %v", ids, want)
 	}
 }
+
+// Ignored names what a checkout ignores, asked of a directory with a
+// .git alone: an ignored build copy below a checkout stays out.
+func TestDiscovery_Ignored(t *testing.T) {
+	root := t.TempDir()
+	write(t, filepath.Join(root, "app", ".git", "HEAD"), "ref: refs/heads/main\n")
+	write(t, filepath.Join(root, "app", "Taskfile.yml"), "tasks:\n  build:\n    desc: Build\n")
+	write(t, filepath.Join(root, "app", "dist", "Taskfile.yml"), "tasks:\n  copy:\n    desc: Copy\n")
+	write(t, filepath.Join(root, "app", "tools", "Taskfile.yml"), "tasks:\n  lint:\n    desc: Lint\n")
+
+	var asked []string
+	d := &Discovery{Root: root, Discover: true, Ignored: func(dir string) []string {
+		asked = append(asked, dir)
+		return []string{"dist"}
+	}}
+	ids := []string{}
+	for _, f := range d.List() {
+		ids = append(ids, f.ID)
+	}
+	slices.Sort(ids)
+	if want := []string{"app", "app/tools"}; !slices.Equal(ids, want) {
+		t.Fatalf("folders: got %v, want %v", ids, want)
+	}
+	if want := []string{filepath.Join(root, "app")}; !slices.Equal(asked, want) {
+		t.Fatalf("asked: got %v, want %v", asked, want)
+	}
+}

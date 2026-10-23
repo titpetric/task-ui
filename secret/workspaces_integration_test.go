@@ -199,6 +199,50 @@ func TestStore_RekeyInstance(t *testing.T) {
 	assert.Equal(t, "acme", name)
 }
 
+// Plain returns a workspace's rows decrypted, for an export, none of
+// another workspace's or a service's.
+func TestStore_Plain(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	s := newSpaces(t)
+	for _, row := range []model.Secret{
+		{Scope: "workspace:acme", Name: "SHARED", Content: "s"},
+		{Scope: "acme/api", Name: "OWN", Content: "o"},
+		{Scope: "web", Name: "ROOT", Content: "r"},
+		{Scope: "integration:beszel", Name: "TOKEN", Content: "t"},
+	} {
+		assert.NoError(t, s.store.Set(ctx, &row))
+	}
+	rows, err := s.store.Plain(ctx, "acme")
+	assert.NoError(t, err)
+	plain := map[string]string{}
+	for _, row := range rows {
+		plain[row.Name] = row.Content
+	}
+	assert.Equal(t, map[string]string{"SHARED": "s", "OWN": "o"}, plain)
+}
+
+// Unopened counts a workspace's rows the instance key does not open:
+// plain text, or encrypted to another key.
+func TestStore_Unopened(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	s := newSpaces(t)
+	assert.NoError(t, s.store.Set(ctx, &model.Secret{Scope: "acme/api", Name: "OWN", Content: "o"}))
+	n, err := s.store.Unopened(ctx, "acme")
+	assert.NoError(t, err)
+	assert.Equal(t, 0, n)
+
+	legacy, err := s.store.Legacy.Encrypt("old")
+	assert.NoError(t, err)
+	assert.NoError(t, s.rows.Set(ctx, &model.Secret{Scope: "workspace:acme", Name: "OLD", Content: legacy}))
+	assert.NoError(t, s.rows.Set(ctx, &model.Secret{Scope: "acme/api", Name: "RAW", Content: "plain"}))
+	assert.NoError(t, s.rows.Set(ctx, &model.Secret{Scope: "web", Name: "ELSEWHERE", Content: "plain"}))
+	n, err = s.store.Unopened(ctx, "acme")
+	assert.NoError(t, err)
+	assert.Equal(t, 2, n)
+}
+
 // Encrypted returns a workspace's rows as stored, its shared ones and
 // its folders', none of another workspace's or a service's.
 func TestStore_Encrypted(t *testing.T) {
