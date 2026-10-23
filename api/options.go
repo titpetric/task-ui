@@ -15,6 +15,7 @@ import (
 	"github.com/titpetric/task-ui/integration"
 	"github.com/titpetric/task-ui/note"
 	"github.com/titpetric/task-ui/recording"
+	"github.com/titpetric/task-ui/retention"
 	"github.com/titpetric/task-ui/runner"
 	"github.com/titpetric/task-ui/secret"
 	"github.com/titpetric/task-ui/sshkey"
@@ -59,6 +60,8 @@ type Options struct {
 	KeyPolicies *storage.SSHKeyPolicyStorage
 	Env         *envfile.Store
 	Recordings  *recording.Store
+	// Cleaner holds the Data retention rules; nil turns their route off.
+	Cleaner *retention.Cleaner
 	// Root is the folder that holds cloned projects.
 	Root string
 	// Board is the notes board and the chat; nil turns them off.

@@ -4,6 +4,7 @@ import (
 	"html/template"
 
 	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/recording"
 )
 
 // Run is a run as the pages show it: the row, and what the runner knows
@@ -19,6 +20,15 @@ type Run struct {
 	// FrameSVG is the last frame of the terminal, rendered, when the
 	// page shows it.
 	FrameSVG template.HTML
+	// Expired says the Data retention settings removed the run's
+	// recording; the run's page says so in place of its output.
+	Expired bool
+}
+
+// ExpiredText is what a page says in place of the output of a run
+// whose recording expired.
+func (r Run) ExpiredText() string {
+	return recording.Expired
 }
 
 // Initials returns the initials of the user who started the run.

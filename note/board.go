@@ -445,6 +445,9 @@ func (b *Board) output(run *model.Run) string {
 		return ""
 	}
 	cast, err := b.Recordings.Read(run)
+	if errors.Is(err, recording.ErrExpired) {
+		return recording.Expired
+	}
 	if err != nil {
 		return ""
 	}

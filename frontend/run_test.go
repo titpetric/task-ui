@@ -3,6 +3,8 @@ package frontend_test
 import (
 	"context"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -60,6 +62,9 @@ func TestRun(t *testing.T) {
 	run := f.run(t, "infra", "plan", "ops", model.StateFailed)
 	run.ExitCode, run.CastPath = 2, "infra/plan/x.cast"
 	assert.NoError(t, f.opts.Runs.Update(context.Background(), run))
+	cast := filepath.Join(f.opts.Recordings.Root, "infra", "plan", "x.cast")
+	assert.NoError(t, os.MkdirAll(filepath.Dir(cast), 0o755))
+	assert.NoError(t, os.WriteFile(cast, []byte("{\"version\":2}\n"), 0o644))
 	assert.NoError(t, f.opts.Artifacts.Create(context.Background(), &model.Artifact{RunID: run.ID, Folder: "infra", Job: "plan", Name: "report.txt", Path: "x/report.txt", ByteSize: 2048, ContentType: "text/plain"}))
 
 	body := f.page(t, asViewer, "/runs/"+run.ID)

@@ -150,3 +150,15 @@ func (s *SecretReadStorage) Usage(ctx context.Context) (int, int64, error) {
 func (s *SecretReadStorage) Prune(ctx context.Context, before time.Time) error {
 	return client(s.db).Exec(ctx, "DELETE FROM secret_read WHERE id < ?", model.NewIDAt(before)[:10])
 }
+
+// All returns every read of the log, oldest first, for the data
+// retention rules.
+func (s *SecretReadStorage) All(ctx context.Context) ([]model.SecretRead, error) {
+	return client(s.db).Select[model.SecretRead](ctx, "SELECT * FROM secret_read ORDER BY rowid ASC")
+}
+
+// DeleteThrough removes the reads up to and including the one named,
+// in the order All returns them.
+func (s *SecretReadStorage) DeleteThrough(ctx context.Context, id string) error {
+	return client(s.db).Exec(ctx, "DELETE FROM secret_read WHERE rowid <= (SELECT rowid FROM secret_read WHERE id = ?)", id)
+}

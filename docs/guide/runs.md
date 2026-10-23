@@ -132,6 +132,12 @@ attaches to it.
   goes nowhere. A finished run's row in a list and its window's header
   have the same **|>**.
 
+Once its recording expires under the
+[Data retention](settings.md#data-retention) settings, a run keeps its
+page, its details and its artifacts: **Output** says the recording
+expired, **Recording** and **|>** go, its frame says so, and a prompt
+about the run reads that the run has no output any more.
+
 While the run is in progress the page shows its terminal as it looks now,
 and **Attach**, **Stop** and **Kill** instead.
 

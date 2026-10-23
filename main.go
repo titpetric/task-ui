@@ -236,14 +236,53 @@ func channelBridge(ctx context.Context, args []string, stdin io.Reader, stdout i
 	return b.Run(ctx)
 }
 
-// run is main without the exit: the hash, agent, channel, passwd,
-// email, backup and token commands, the version, or the server until a signal.
+// cleanup runs task-ui cleanup, the root's @cleanup: the Data retention
+// rules applied to the data of the configuration, the server's own when
+// a run of @cleanup inherits its environment. --dry-run prints what
+// would go and changes nothing.
+func cleanup(ctx context.Context, args []string, stdout io.Writer) error {
+	dry := false
+	for _, arg := range args {
+		switch arg {
+		case "--":
+		case "--dry-run", "-n":
+			dry = true
+		default:
+			return errors.New("usage: task-ui cleanup [--dry-run]")
+		}
+	}
+	cfg, err := app.NewConfig(nil)
+	if err != nil {
+		return err
+	}
+	if err := os.MkdirAll(filepath.Dir(cfg.DB), 0o755); err != nil {
+		return err
+	}
+	db, err := storage.OpenAndMigrate(ctx, cfg.DB)
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+	cleaner := app.NewCleaner(db, cfg)
+	when := "now"
+	if dry {
+		when = "a dry run: nothing changes"
+	}
+	fmt.Fprintf(stdout, "task-ui cleanup of %s, %s\n", cfg.DataDir, when)
+	return cleaner.Clean(ctx, dry, stdout)
+}
+
+// run is main without the exit: the hash, agent, channel, cleanup,
+// passwd, email, backup and token commands, the version, or the server until a signal.
 func run(ctx context.Context, args []string, stdin io.Reader, stdout io.Writer) error {
 	if len(args) > 0 && args[0] == "hash" {
 		return hash(args[1:], stdin, stdout)
 	}
 	if len(args) > 0 && args[0] == "channel" {
 		return channelBridge(ctx, args[1:], stdin, stdout)
+	}
+	if len(args) > 0 && args[0] == "cleanup" {
+		return cleanup(ctx, args[1:], stdout)
 	}
 	if len(args) > 0 && args[0] == "agent" {
 		a := &agent.Agent{Env: os.Environ(), Stdin: stdin, Stdout: stdout, Stderr: os.Stderr}

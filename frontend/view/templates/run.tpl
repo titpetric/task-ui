@@ -3,7 +3,7 @@
 <div class="page-head">
 	<div>
 		<h2>{{ $run.Name }} <span class="badge {{ tone $run.State }}">{{ $run.State }}{{ if and (ne $run.State "ok") (ne $run.State "running") }} {{ $run.ExitCode }}{{ end }}</span></h2>
-		<p>Started by {{ $run.UserName }} {{ ago $run.StartedAt }}{{ if $run.IsScheduled }} by the scheduler{{ end }}{{ if $run.IsForced }}, with Run force{{ end }}.{{ if eq $run.State "running" }} It's still running: attach to follow it{{ if $can }}, or stop it{{ end }}.{{ else }} The run has finished; its full output is below.{{ end }}</p>
+		<p>Started by {{ $run.UserName }} {{ ago $run.StartedAt }}{{ if $run.IsScheduled }} by the scheduler{{ end }}{{ if $run.IsForced }}, with Run force{{ end }}.{{ if eq $run.State "running" }} It's still running: attach to follow it{{ if $can }}, or stop it{{ end }}.{{ else if $run.Expired }} The run has finished; its recording expired.{{ else }} The run has finished; its full output is below.{{ end }}</p>
 	</div>
 	<div class="actions">
 		<button type="button" class="btn btn-primary" data-attach="{{ $run.ID }}">{{ if eq $run.State "running" }}Attach{{ else }}View{{ end }}</button>
@@ -11,8 +11,8 @@
 		<button type="button" class="btn" data-stop="{{ $run.ID }}">Stop</button>
 		<button type="button" class="btn btn-danger" data-kill="{{ $run.ID }}">Kill</button>
 		{{- end }}
-		{{- if $run.CastPath }}<a class="btn" href="/api/runs/{{ $run.ID }}/cast" download="{{ $run.ID }}.cast">Recording</a>{{ end }}
-		{{- if and $run.CastPath (ne $run.State "running") }}<button type="button" class="btn" data-replay="{{ $run.ID }}" data-replay-title="{{ $run.Name }}" data-replay-who="{{ $run.UserName }}" title="Replay the recording" aria-label="Replay the recording">|&gt;</button>{{ end }}
+		{{- if and $run.CastPath (not $run.Expired) }}<a class="btn" href="/api/runs/{{ $run.ID }}/cast" download="{{ $run.ID }}.cast">Recording</a>{{ end }}
+		{{- if and $run.CastPath (ne $run.State "running") (not $run.Expired) }}<button type="button" class="btn" data-replay="{{ $run.ID }}" data-replay-title="{{ $run.Name }}" data-replay-who="{{ $run.UserName }}" title="Replay the recording" aria-label="Replay the recording">|&gt;</button>{{ end }}
 	</div>
 </div>
 
@@ -23,7 +23,12 @@
 </section>
 {{- end }}
 
-{{- if and $run.CastPath (ne $run.State "running") }}
+{{- if $run.Expired }}
+<section class="block">
+	<h3>Output <small>the recording expired</small></h3>
+	<p class="dim">{{ $run.ExpiredText }} <a href="/settings/retention">Data retention</a></p>
+</section>
+{{- else if and $run.CastPath (ne $run.State "running") }}
 <section class="block">
 	<h3>Output <small>every line the run printed</small></h3>
 	<pre class="output" data-output="{{ $run.ID }}" data-cols="{{ $run.TermCols }}" data-rows="{{ $run.TermRows }}"><span class="faint">Reading the recording…</span></pre>

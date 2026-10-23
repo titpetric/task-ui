@@ -136,3 +136,34 @@ func runText(cells []Cell) string {
 	}
 	return b.String()
 }
+
+// TextFrame is a frame of a terminal of a size that shows a text, its
+// lines wrapped to the width, and no cursor: what a page shows in place
+// of a run's screen it has no recording of.
+func TextFrame(cols, rows int, text string) Frame {
+	if cols <= 0 {
+		cols = 80
+	}
+	f := Frame{Cols: cols, Rows: rows, CursorX: cols, CursorY: rows}
+	for _, paragraph := range strings.Split(text, "\n") {
+		line := []Cell{}
+		for _, word := range strings.Fields(paragraph) {
+			if len(line) > 0 && len(line)+1+len([]rune(word)) > cols {
+				f.Lines = append(f.Lines, line)
+				line = []Cell{}
+			}
+			if len(line) > 0 {
+				line = append(line, Cell{Char: ' ', FG: DefaultFG, BG: DefaultBG})
+			}
+			for _, r := range word {
+				line = append(line, Cell{Char: r, FG: DefaultFG, BG: DefaultBG})
+			}
+		}
+		f.Lines = append(f.Lines, line)
+	}
+	if f.Rows < len(f.Lines) {
+		f.Rows = len(f.Lines)
+		f.CursorY = f.Rows
+	}
+	return f
+}

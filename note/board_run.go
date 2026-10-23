@@ -2,6 +2,7 @@ package note
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"slices"
@@ -10,6 +11,7 @@ import (
 
 	"github.com/titpetric/task-ui/claude"
 	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/recording"
 	"github.com/titpetric/task-ui/runner"
 	"github.com/titpetric/task-ui/storage"
 )
@@ -199,6 +201,10 @@ func (b *Board) outputText(run *model.Run) string {
 		return ""
 	}
 	cast, err := b.Recordings.Read(run)
+	if errors.Is(err, recording.ErrExpired) {
+		// The prompt reads that the run has no output any more.
+		return recording.Expired
+	}
 	if err != nil {
 		return ""
 	}

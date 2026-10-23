@@ -42,7 +42,9 @@ A run is one start of a job: who started it, how it ended, its output
 and its recording. One run per job goes at a time; **Run force**
 replaces it. **Run again** starts the same job, directory and arguments.
 **|>summarize** runs a job and has Claude summarise the run on its page
-when it ends. A run's page takes prompts about the run. Pages: `/runs`,
+when it ends. A run's page takes prompts about the run. The Data retention settings
+keep a run's recording for an age and within a size; once it expires
+the run and its details stay, without the output. Pages: `/runs`,
 `/runs/<id>`; API: `/api/runs`; MCP: `run_job`, `list_runs`, `get_run`.
 You see the runs of folders you see; ending one takes the right to run
 its job.
@@ -93,7 +95,9 @@ takes the right to run every step. Page: `/workflows`; API:
 
 A schedule runs a job on a cron expression, in the server's time zone,
 as its user. An admin picks who it runs as; anyone else schedules as
-themselves. Page: `/schedules`; API: `/api/schedules`.
+themselves. `@cleanup` of the root, `_`, applies the Data retention
+settings, `/settings/retention`, on a daily schedule task-ui adds once;
+admins alone run it. Page: `/schedules`; API: `/api/schedules`.
 
 ## Artifacts (`artifact`)
 

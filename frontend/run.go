@@ -88,6 +88,7 @@ func (h *Handlers) run(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	run := h.framed(h.runView(*row))
+	run.Expired = h.opts.Recordings.IsExpired(row)
 	p := h.page(r, run.Name())
 	p.Run = &run
 	p.Crumbs = view.Crumbs("Runs", "/runs", run.Name())

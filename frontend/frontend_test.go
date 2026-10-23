@@ -29,6 +29,7 @@ import (
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/note"
 	"github.com/titpetric/task-ui/recording"
+	"github.com/titpetric/task-ui/retention"
 	"github.com/titpetric/task-ui/runner"
 	"github.com/titpetric/task-ui/secret"
 	"github.com/titpetric/task-ui/sshkey"
@@ -154,6 +155,10 @@ func newFixture(t *testing.T) *fixture {
 		return values["url"], values["token"], err
 	}}
 	f.opts.Guard.Tokens = storage.NewUserAuthTokenStorage(db)
+	f.opts.Cleaner = &retention.Cleaner{
+		Values: storage.NewSettingStorage(db), Runs: runs, Artifacts: f.opts.Artifacts, Store: f.opts.ArtifactStore,
+		SecretReads: f.opts.SecretReads, RecordingsDir: recordings.Root,
+	}
 	h, err := frontend.New(f.opts)
 	assert.NoError(t, err)
 	f.server = httptest.NewServer(h.Routes())

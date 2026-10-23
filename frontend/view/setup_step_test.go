@@ -26,14 +26,14 @@ func TestSetupStep(t *testing.T) {
 	p := &view.Page{Step: view.StepUsers}
 	signIn(p, &model.User{Name: "root", Role: model.RoleAdmin}, nil)
 	steps := p.SetupSteps()
-	assert.Equal(t, []string{"Instance", "Keys", "Secrets", "Integrations", "Users", "Permissions", "Workflows", "Workspaces", "Projects"}, stepNames(steps))
-	assert.Equal(t, view.SetupStep{Name: "Users", Href: "/settings/users", Icon: "users", Desc: steps[4].Desc, Number: 5, Current: true}, steps[4])
+	assert.Equal(t, []string{"Instance", "Data retention", "Keys", "Secrets", "Integrations", "Users", "Permissions", "Workflows", "Workspaces", "Projects"}, stepNames(steps))
+	assert.Equal(t, view.SetupStep{Name: "Users", Href: "/settings/users", Icon: "users", Desc: steps[5].Desc, Number: 6, Current: true}, steps[5])
 	assert.False(t, steps[0].Current)
 
 	signIn(p, &model.User{Name: "ops", Role: model.RoleRunner}, permission.Policy{"secret/view": permission.Allow, "workflow/view": permission.Allow})
 	steps = p.SetupSteps()
-	assert.Equal(t, []string{"Instance", "Secrets", "Workflows"}, stepNames(steps))
-	assert.Equal(t, 3, steps[2].Number)
+	assert.Equal(t, []string{"Instance", "Data retention", "Secrets", "Workflows"}, stepNames(steps))
+	assert.Equal(t, 4, steps[3].Number)
 
 	signIn(p, &model.User{Name: "guest", Role: model.RoleViewer}, permission.Policy{"workflow/view": permission.Allow})
 	assert.Equal(t, []string{"Workflows"}, stepNames(p.SetupSteps()))

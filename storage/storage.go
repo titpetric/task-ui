@@ -98,3 +98,13 @@ func stamp() *time.Time {
 	now := time.Now().UTC().Truncate(time.Millisecond)
 	return &now
 }
+
+// Vacuum rebuilds the database to free the space of deleted rows,
+// while the server runs, and folds the write-ahead log into the file.
+func Vacuum(ctx context.Context, db DB) error {
+	if _, err := db.ExecContext(ctx, "VACUUM"); err != nil {
+		return err
+	}
+	_, err := db.ExecContext(ctx, "PRAGMA wal_checkpoint(TRUNCATE)")
+	return err
+}

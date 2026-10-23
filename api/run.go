@@ -13,6 +13,7 @@ import (
 	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/hostrun"
 	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/recording"
 	"github.com/titpetric/task-ui/runner"
 	"github.com/titpetric/task-ui/storage"
 )
@@ -299,6 +300,10 @@ func (h *Handlers) replayOf(r *http.Request, run *model.Run) (runner.Frame, int,
 		if session, ok := h.opts.Runner.Get(run.ID); ok && !all {
 			return session.Frame(), 0, false, nil
 		}
+		if errors.Is(err, recording.ErrExpired) {
+			// The retention rules let the recording go: the frame says so.
+			return runner.TextFrame(int(run.TermCols), int(run.TermRows), recording.Expired), 0, true, nil
+		}
 		return runner.Frame{}, 0, false, runner.ErrNotFound
 	}
 	defer cast.Close()
@@ -363,6 +368,10 @@ func (h *Handlers) cast(w http.ResponseWriter, r *http.Request) {
 	}
 	if run.CastPath == "" || h.opts.Recordings == nil {
 		fail(w, http.StatusNotFound, "no recording")
+		return
+	}
+	if h.opts.Recordings.IsExpired(run) {
+		fail(w, http.StatusGone, recording.Expired)
 		return
 	}
 	w.Header().Set("Content-Type", "application/x-asciicast")

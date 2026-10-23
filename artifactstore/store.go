@@ -23,6 +23,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"syscall"
 
 	"github.com/titpetric/task-ui/folder"
 )
@@ -59,8 +60,18 @@ type Store struct {
 // nothing changed. Ingest skips a path element named .git, so a run cannot
 // write into the repository.
 func (s *Store) Ingest(ctx context.Context, src, message, author string) (string, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	return s.IngestThen(ctx, src, message, author, nil)
+}
+
+// IngestThen is Ingest, and calls then with the commit while it still
+// holds the tree, so the records of the commit are in place before
+// Expire, in this process or another, renames it.
+func (s *Store) IngestThen(ctx context.Context, src, message, author string, then func(commit string) error) (string, error) {
+	unlock, err := s.lock()
+	if err != nil {
+		return "", err
+	}
+	defer unlock()
 	if err := s.init(ctx); err != nil {
 		return "", err
 	}
@@ -71,7 +82,7 @@ func (s *Store) Ingest(ctx context.Context, src, message, author string) (string
 		return "", err
 	}
 	if _, err := s.git(ctx, "diff", "--cached", "--quiet"); err == nil {
-		return s.head(ctx), nil
+		return s.then(ctx, then)
 	}
 	if author == "" {
 		author = "task-ui"
@@ -79,51 +90,18 @@ func (s *Store) Ingest(ctx context.Context, src, message, author string) (string
 	if _, err := s.git(ctx, "commit", "-q", "--author", author+" <"+author+"@task-ui>", "-m", message); err != nil {
 		return "", err
 	}
-	return s.head(ctx), nil
+	return s.then(ctx, then)
 }
 
-// Write puts one file into the tree at a path, over the version it
-// holds, and commits the change under the author's name, as Ingest does
-// for a run's files. It returns the commit that holds the file.
-func (s *Store) Write(ctx context.Context, rel string, data []byte, author string) (string, error) {
-	clean, err := writePath(rel)
-	if err != nil {
-		return "", err
-	}
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	if err := s.init(ctx); err != nil {
-		return "", err
-	}
-	target := filepath.Join(s.Dir, filepath.FromSlash(clean))
-	parts := strings.Split(clean, "/")
-	for i := 1; i < len(parts); i++ {
-		if info, err := os.Lstat(filepath.Join(s.Dir, filepath.FromSlash(strings.Join(parts[:i], "/")))); err == nil && !info.IsDir() {
-			return "", ErrInTheWay
+// then calls then, when given, with the current commit, and returns it.
+func (s *Store) then(ctx context.Context, then func(commit string) error) (string, error) {
+	head := s.head(ctx)
+	if then != nil {
+		if err := then(head); err != nil {
+			return "", err
 		}
 	}
-	if info, err := os.Lstat(target); err == nil && !info.Mode().IsRegular() {
-		return "", ErrInTheWay
-	}
-	if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil {
-		return "", err
-	}
-	if err := writeFile(target, data); err != nil {
-		return "", err
-	}
-	if _, err := s.git(ctx, "add", "--", clean); err != nil {
-		return "", err
-	}
-	if _, err := s.git(ctx, "diff", "--cached", "--quiet"); err == nil {
-		return s.head(ctx), nil
-	}
-	if author == "" {
-		author = "task-ui"
-	}
-	if _, err := s.git(ctx, "commit", "-q", "--author", author+" <"+author+"@task-ui>", "-m", "Write "+clean); err != nil {
-		return "", err
-	}
-	return s.head(ctx), nil
+	return head, nil
 }
 
 // Remove takes a file or a directory out of the tree and commits that
@@ -134,8 +112,11 @@ func (s *Store) Remove(ctx context.Context, rel, author string) (string, error) 
 	if err != nil || clean == "" {
 		return "", ErrNotFound
 	}
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	unlock, err := s.lock()
+	if err != nil {
+		return "", err
+	}
+	defer unlock()
 	if !s.exists() {
 		return "", ErrNotFound
 	}
@@ -164,8 +145,17 @@ func (s *Store) Remove(ctx context.Context, rel, author string) (string, error) 
 // holds more than Keep commits, and drops the versions only the history
 // held. It returns the new commit, or "" when the history is within Keep.
 func (s *Store) Squash(ctx context.Context) (string, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	return s.SquashThen(ctx, nil)
+}
+
+// SquashThen is Squash, and calls then with the new commit while it
+// still holds the tree, when it squashed.
+func (s *Store) SquashThen(ctx context.Context, then func(head string) error) (string, error) {
+	unlock, err := s.lock()
+	if err != nil {
+		return "", err
+	}
+	defer unlock()
 	if s.Keep <= 0 || !s.exists() {
 		return "", nil
 	}
@@ -185,16 +175,48 @@ func (s *Store) Squash(ctx context.Context) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	for _, args := range [][]string{
-		{"update-ref", "refs/heads/main", head},
-		{"reflog", "expire", "--expire=now", "--all"},
-		{"gc", "--prune=now", "--quiet"},
-	} {
-		if _, err := s.git(ctx, args...); err != nil {
+	if err := s.replace(ctx, head, ""); err != nil {
+		return "", err
+	}
+	if then != nil {
+		if err := then(head); err != nil {
 			return "", err
 		}
 	}
 	return head, nil
+}
+
+// replace points main at a new head, when it still names old, if the
+// caller names one, and drops what only the history before held.
+func (s *Store) replace(ctx context.Context, head, old string) error {
+	if err := s.point(ctx, head, old); err != nil {
+		return err
+	}
+	return s.prune(ctx)
+}
+
+// point points main at a new head, when it still names old, if the
+// caller names one.
+func (s *Store) point(ctx context.Context, head, old string) error {
+	ref := []string{"update-ref", "refs/heads/main", head}
+	if old != "" {
+		ref = append(ref, old)
+	}
+	_, err := s.git(ctx, ref...)
+	return err
+}
+
+// prune drops what no commit of main holds.
+func (s *Store) prune(ctx context.Context) error {
+	for _, args := range [][]string{
+		{"reflog", "expire", "--expire=now", "--all"},
+		{"gc", "--prune=now", "--quiet"},
+	} {
+		if _, err := s.git(ctx, args...); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // Show returns a path's file as a commit holds it.
@@ -206,8 +228,11 @@ func (s *Store) Show(ctx context.Context, commit, rel string) ([]byte, error) {
 	if err != nil || clean == "" {
 		return nil, ErrNotFound
 	}
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	unlock, err := s.lock()
+	if err != nil {
+		return nil, err
+	}
+	defer unlock()
 	if !s.exists() {
 		return nil, ErrNotFound
 	}
@@ -249,9 +274,39 @@ func (s *Store) List(rel string) []folder.Item {
 
 // Empty deletes the tree and its history; the next Ingest starts over.
 func (s *Store) Empty() error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	unlock, err := s.lock()
+	if err != nil {
+		return err
+	}
+	defer unlock()
 	return os.RemoveAll(s.Dir)
+}
+
+// lock holds the tree for one change: against the other goroutines of
+// this process, and with a lock on the file beside the tree against
+// another process, such as task-ui cleanup rewriting the history while
+// the server takes a run's files.
+func (s *Store) lock() (func(), error) {
+	s.mu.Lock()
+	if err := os.MkdirAll(filepath.Dir(s.Dir), 0o755); err != nil {
+		s.mu.Unlock()
+		return nil, err
+	}
+	file, err := os.OpenFile(s.Dir+".lock", os.O_CREATE|os.O_RDWR, 0o644)
+	if err != nil {
+		s.mu.Unlock()
+		return nil, err
+	}
+	if err := syscall.Flock(int(file.Fd()), syscall.LOCK_EX); err != nil {
+		file.Close()
+		s.mu.Unlock()
+		return nil, err
+	}
+	return func() {
+		_ = syscall.Flock(int(file.Fd()), syscall.LOCK_UN)
+		file.Close()
+		s.mu.Unlock()
+	}, nil
 }
 
 // init makes the repository, once.
@@ -310,21 +365,6 @@ func cleanPath(rel string) (string, error) {
 	return strings.TrimPrefix(path.Clean("/"+slashed), "/"), nil
 }
 
-// writePath returns the slash path Write writes, or ErrPath: a
-// relative path of names, none of them . or .., and no dot file or
-// directory, which the tree lists as sealed.
-func writePath(rel string) (string, error) {
-	if rel == "" || strings.HasPrefix(rel, "/") || strings.Contains(rel, "\\") {
-		return "", ErrPath
-	}
-	for _, part := range strings.Split(rel, "/") {
-		if part == "" || strings.HasPrefix(part, ".") {
-			return "", ErrPath
-		}
-	}
-	return rel, nil
-}
-
 // copyTree copies the files under src over dst, making the directories,
 // replacing a file where a directory goes and the other way round.
 func copyTree(src, dst string) error {
@@ -359,24 +399,6 @@ func copyTree(src, dst string) error {
 		}
 		return copyFile(p, target)
 	})
-}
-
-// writeFile writes data to dst, through a temporary file beside it.
-func writeFile(dst string, data []byte) error {
-	tmp, err := os.CreateTemp(filepath.Dir(dst), ".ingest-*")
-	if err != nil {
-		return err
-	}
-	if _, err := tmp.Write(data); err != nil {
-		tmp.Close()
-		os.Remove(tmp.Name())
-		return err
-	}
-	if err := tmp.Close(); err != nil {
-		os.Remove(tmp.Name())
-		return err
-	}
-	return os.Rename(tmp.Name(), dst)
 }
 
 // copyFile writes src to dst, through a temporary file beside it.

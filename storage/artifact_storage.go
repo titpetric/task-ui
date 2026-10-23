@@ -116,3 +116,49 @@ func (s *ArtifactStorage) Squash(ctx context.Context, head string) error {
 func (s *ArtifactStorage) DeleteAll(ctx context.Context) error {
 	return client(s.db).Exec(ctx, "DELETE FROM artifact")
 }
+
+// History returns the earlier versions of the files of the artifact
+// tree, oldest first: every artifact with a commit but the newest of its
+// path, which Latest returns.
+func (s *ArtifactStorage) History(ctx context.Context) ([]model.Artifact, error) {
+	return client(s.db).Select[model.Artifact](ctx, `SELECT * FROM artifact WHERE commit_id != '' AND id NOT IN (
+		SELECT id FROM (
+			SELECT id, ROW_NUMBER() OVER (PARTITION BY path ORDER BY rowid DESC) AS version
+			FROM artifact WHERE commit_id != ''
+		) WHERE version = 1
+	) ORDER BY rowid ASC`)
+}
+
+// Rewrite follows the artifact tree dropping the commits of its history
+// before a new root: the artifacts of a dropped commit go, but the ones
+// keep names, which move to root; the commits after it take their new
+// names, from renamed. It returns how many artifacts went.
+func (s *ArtifactStorage) Rewrite(ctx context.Context, root string, renamed map[string]string, dropped []string, keep func(model.Artifact) bool) (int, error) {
+	removed := 0
+	err := inTx(ctx, s.db, func(c conn) error {
+		for _, commit := range dropped {
+			rows, err := c.Select[model.Artifact](ctx, "SELECT * FROM artifact WHERE commit_id = ?", commit)
+			if err != nil {
+				return err
+			}
+			for _, row := range rows {
+				if keep != nil && keep(row) {
+					err = c.Exec(ctx, "UPDATE artifact SET commit_id = ? WHERE id = ?", root, row.ID)
+				} else {
+					removed++
+					err = c.Exec(ctx, "DELETE FROM artifact WHERE id = ?", row.ID)
+				}
+				if err != nil {
+					return err
+				}
+			}
+		}
+		for _, old := range model.SortedKeys(renamed) {
+			if err := c.Exec(ctx, "UPDATE artifact SET commit_id = ? WHERE commit_id = ?", renamed[old], old); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+	return removed, err
+}

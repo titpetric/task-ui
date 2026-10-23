@@ -10,6 +10,7 @@ import (
 	"github.com/titpetric/task-ui/internal/assert"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/note"
+	"github.com/titpetric/task-ui/recording"
 	"github.com/titpetric/task-ui/storage"
 )
 
@@ -44,6 +45,23 @@ func TestBoard_AskRun(t *testing.T) {
 	assert.ErrorIs(t, err, note.ErrNoPrompt)
 	_, err = (&note.Board{}).AskRun(ctx, f.ops, run.ID, "why")
 	assert.ErrorIs(t, err, note.ErrNoPrompt)
+}
+
+// A prompt about a run whose recording expired reads that the run has
+// no output any more.
+func TestBoard_AskRunExpired(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t, "")
+	admin := f.withPrompts(t)
+	ctx := context.Background()
+	f.board.AgentCommand = []string{"sh", "-c", `cat "$TASK_UI_PROMPT_RUN" > "$TASK_UI_PROMPT_REPLY"`}
+	run := &model.Run{Folder: "proj", Job: "build", UserName: "admin", State: string(model.StateOK), CastPath: "proj/build/gone.cast"}
+	assert.NoError(t, f.board.Runs.Create(ctx, run))
+
+	asked, err := f.board.AskRun(ctx, admin, run.ID, "what did it print")
+	assert.NoError(t, err)
+	assert.Equal(t, model.NoteDone, f.settled(t, asked.ID).State)
+	assert.Contains(t, replies(t, f, asked.ID)[0].Body, recording.Expired)
 }
 
 // SummarizeBatch asks about a batch's first run with the hosts'

@@ -120,3 +120,28 @@ func TestArtifactStorage_LatestAndSquash(t *testing.T) {
 	all, _ = artifacts.List(ctx, storage.ArtifactFilter{})
 	assert.Len(t, all, 0)
 }
+
+// Rewrite drops the artifacts of dropped commits but the ones it keeps,
+// which move to the root, and renames the commits after.
+func TestArtifactStorage_Rewrite(t *testing.T) {
+	t.Parallel()
+	artifacts := storage.NewArtifactStorage(newDB(t))
+	ctx := context.Background()
+	gone := &model.Artifact{RunID: "r1", Folder: "infra", Job: "build", Name: "a", Path: "a", CommitID: "c1"}
+	kept := &model.Artifact{RunID: "r1", Folder: "infra", Job: "build", Name: "b", Path: "b", CommitID: "c1"}
+	later := &model.Artifact{RunID: "r2", Folder: "infra", Job: "build", Name: "a", Path: "a", CommitID: "c2"}
+	for _, a := range []*model.Artifact{gone, kept, later} {
+		assert.NoError(t, artifacts.Create(ctx, a))
+	}
+	removed, err := artifacts.Rewrite(ctx, "n2", map[string]string{"c2": "n2"}, []string{"c1"}, func(a model.Artifact) bool { return a.ID == kept.ID })
+	assert.NoError(t, err)
+	assert.Equal(t, 1, removed)
+	all, _ := artifacts.List(ctx, storage.ArtifactFilter{})
+	assert.Len(t, all, 2)
+	for _, a := range all {
+		assert.Equal(t, "n2", a.CommitID)
+	}
+	history, err := artifacts.History(ctx)
+	assert.NoError(t, err)
+	assert.Len(t, history, 0)
+}

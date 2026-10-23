@@ -230,6 +230,9 @@ type Page struct {
 	StepCounts map[string]string
 	// Instance is what the server runs with, for the Instance step.
 	Instance *Instance
+	// Retention are the kinds of data the Data retention step keeps,
+	// with what each holds and its rule.
+	Retention []RetentionBlock
 }
 
 // Groups are the sidebar's projects, and the workspaces with theirs.

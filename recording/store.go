@@ -6,6 +6,7 @@ package recording
 import (
 	"bufio"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -14,6 +15,14 @@ import (
 
 	"github.com/titpetric/task-ui/model"
 )
+
+// ErrExpired reports a run whose recording the Data retention settings
+// removed; the run's row stays. errors.Is matches os.ErrNotExist too.
+var ErrExpired = fmt.Errorf("the recording expired: %w", os.ErrNotExist)
+
+// Expired is what a page, a frame or a prompt says in place of the
+// output of a run whose recording expired.
+const Expired = "The recording of this run expired under the Data retention settings: its output is gone. The run's details stay."
 
 // Store keeps the recordings under <root>/<folder>/<job>/<id>.cast.
 type Store struct {
@@ -38,12 +47,27 @@ func (s *Store) Relative(path string) string {
 	return rel
 }
 
-// Read opens the recording a run row names, for playback.
+// Read opens the recording a run row names, for playback: ErrExpired
+// for one the row names that is not on disk.
 func (s *Store) Read(run *model.Run) (*os.File, error) {
 	if run.CastPath == "" {
 		return nil, os.ErrNotExist
 	}
-	return os.Open(filepath.Join(s.Root, filepath.FromSlash(run.CastPath)))
+	file, err := os.Open(filepath.Join(s.Root, filepath.FromSlash(run.CastPath)))
+	if errors.Is(err, os.ErrNotExist) {
+		return nil, ErrExpired
+	}
+	return file, err
+}
+
+// IsExpired reports whether a finished run names a recording that is
+// not on disk.
+func (s *Store) IsExpired(run *model.Run) bool {
+	if s == nil || run.CastPath == "" || run.State == model.StateRunning {
+		return false
+	}
+	_, err := os.Stat(filepath.Join(s.Root, filepath.FromSlash(run.CastPath)))
+	return errors.Is(err, os.ErrNotExist)
 }
 
 // Open starts a recording for a run.

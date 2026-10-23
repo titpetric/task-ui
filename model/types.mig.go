@@ -1272,6 +1272,45 @@ var SecretReadFields = []string{"id", "secret_id", "name", "run_id", "folder", "
 // SecretReadPrimaryFields are the primary key fields in the DB table.
 var SecretReadPrimaryFields = []string{"id"}
 
+// Setting generated for db table `setting`.
+type Setting struct {
+	// Name
+	Name string `db:"name" json:"name"`
+
+	// Value
+	Value string `db:"value" json:"value"`
+
+	// Updated At
+	UpdatedAt *time.Time `db:"updated_at" json:"updated_at"`
+}
+
+// GetName will return the value of Name.
+func (s *Setting) GetName() string { return s.Name }
+
+// SetName sets Name to the provided value.
+func (s *Setting) SetName(val string) { s.Name = val }
+
+// GetValue will return the value of Value.
+func (s *Setting) GetValue() string { return s.Value }
+
+// SetValue sets Value to the provided value.
+func (s *Setting) SetValue(val string) { s.Value = val }
+
+// GetUpdatedAt will return the value of UpdatedAt.
+func (s *Setting) GetUpdatedAt() *time.Time { return s.UpdatedAt }
+
+// SetUpdatedAt sets UpdatedAt to the provided value.
+func (s *Setting) SetUpdatedAt(stamp time.Time) { s.UpdatedAt = &stamp }
+
+// SettingTable is the name of the table in the DB.
+const SettingTable = "`setting`"
+
+// SettingFields is a list of all columns in the DB table.
+var SettingFields = []string{"name", "value", "updated_at"}
+
+// SettingPrimaryFields are the primary key fields in the DB table.
+var SettingPrimaryFields = []string{"name"}
+
 // SSHKeyPolicy generated for db table `ssh_key_policy`.
 //
 // SSH Key Policy.
@@ -2985,6 +3024,67 @@ func (s *SecretRead) Update(opts ...QueryOption) string {
 // Delete starts building a DELETE query.
 func (s *SecretRead) Delete(opts ...QueryOption) string {
 	cfg := (&QueryConfig{Table: SecretReadTable}).Apply(opts...)
+	query := fmt.Sprintf("DELETE FROM %s", cfg.Table)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	return query
+}
+
+// Insert starts building an INSERT INTO query.
+func (s *Setting) Insert(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: SettingTable, Statement: "INSERT INTO"}).Apply(opts...)
+	cols := SettingFields
+	if len(cfg.Columns) > 0 {
+		cols = cfg.Columns
+	}
+	return fmt.Sprintf("%s %s (%s) VALUES (:%s)", cfg.Statement, cfg.Table, strings.Join(cols, ", "), strings.Join(cols, ", :"))
+}
+
+// Select starts building a SELECT query.
+func (s *Setting) Select(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: SettingTable}).Apply(opts...)
+	cols := "*"
+	if len(cfg.Columns) > 0 {
+		cols = strings.Join(cfg.Columns, ", ")
+	}
+	query := fmt.Sprintf("SELECT %s FROM %s", cols, cfg.Table)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	if cfg.OrderBy != "" {
+		query += " ORDER BY " + cfg.OrderBy
+	}
+	if cfg.LimitOffset > 0 {
+		query += fmt.Sprintf(" LIMIT %d, %d", cfg.LimitStart, cfg.LimitOffset)
+	}
+	return query
+}
+
+// Update starts building a UPDATE query.
+func (s *Setting) Update(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: SettingTable}).Apply(opts...)
+	cols := SettingFields
+	if len(cfg.Columns) > 0 {
+		cols = cfg.Columns
+	}
+	setClause := ""
+	for i, col := range cols {
+		if i > 0 {
+			setClause += ", "
+		}
+		setClause += col + "=:" + col
+	}
+	query := fmt.Sprintf("UPDATE %s SET %s", cfg.Table, setClause)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	return query
+}
+
+// Delete starts building a DELETE query.
+func (s *Setting) Delete(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: SettingTable}).Apply(opts...)
 	query := fmt.Sprintf("DELETE FROM %s", cfg.Table)
 	if cfg.Where != "" {
 		query += " WHERE " + cfg.Where

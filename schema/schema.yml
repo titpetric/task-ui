@@ -701,6 +701,28 @@
       columns:
         - secret_id
         - created_at
+- name: setting
+  comment: Setting
+  columns:
+    - name: name
+      type: text
+      key: PRI
+      comment: Name
+      datatype: varchar
+    - name: value
+      type: text
+      comment: Value
+      datatype: varchar
+    - name: updated_at
+      type: timestamp
+      comment: Updated At
+      datatype: datetime
+  indexes:
+    - name: sqlite_autoindex_setting_1
+      columns:
+        - name
+      primary: true
+      unique: true
 - name: ssh_key_policy
   comment: SSH Key Policy
   columns:

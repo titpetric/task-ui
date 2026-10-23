@@ -1,6 +1,7 @@
 package api
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -9,6 +10,7 @@ import (
 	"github.com/titpetric/task-ui/access"
 	"github.com/titpetric/task-ui/claude"
 	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/recording"
 	"github.com/titpetric/task-ui/storage"
 )
 
@@ -110,6 +112,9 @@ func (h *Handlers) workflowReport(r *http.Request, run *model.WorkflowRun, steps
 		}
 		fmt.Fprintf(&b, "\nExit %d, after %s.\n", stepRun.ExitCode, stepRun.Elapsed().Round(time.Millisecond))
 		output, err := h.runOutput(stepRun)
+		if errors.Is(err, recording.ErrExpired) {
+			output, err = recording.Expired, nil
+		}
 		if err != nil {
 			continue
 		}

@@ -2,6 +2,7 @@ package frontend
 
 import (
 	"context"
+	"errors"
 	"html/template"
 	"log/slog"
 	"net/http"
@@ -14,6 +15,7 @@ import (
 	"github.com/titpetric/task-ui/frontend/view"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/permission"
+	"github.com/titpetric/task-ui/recording"
 	"github.com/titpetric/task-ui/runner"
 	"github.com/titpetric/task-ui/storage"
 )
@@ -255,6 +257,9 @@ func (h *Handlers) frameOf(ctx context.Context, runID string) (template.HTML, in
 		return fromSession()
 	}
 	cast, err := h.opts.Recordings.Read(run)
+	if errors.Is(err, recording.ErrExpired) {
+		return template.HTML(runner.TextFrame(int(run.TermCols), frameRows, recording.Expired).SVG(runner.DarkPalette)), 0, true
+	}
 	if err != nil {
 		return fromSession()
 	}

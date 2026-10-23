@@ -43,6 +43,13 @@ func TestRun(t *testing.T) {
 
 	assert.Error(t, run(context.Background(), []string{"--nope"}, strings.NewReader(""), &out))
 
+	// cleanup applies the rules to the data of the configuration.
+	out.Reset()
+	assert.NoError(t, run(context.Background(), []string{"cleanup", "--", "--dry-run"}, strings.NewReader(""), &out))
+	assert.Contains(t, out.String(), "a dry run: nothing changes")
+	assert.Contains(t, out.String(), "Run recordings (keep for 31 days, no size limit): would remove 0 items")
+	assert.Error(t, run(context.Background(), []string{"cleanup", "--all"}, strings.NewReader(""), &out))
+
 	// The channel needs a token file and an instance; it ends with stdin.
 	assert.Error(t, run(context.Background(), []string{"channel"}, strings.NewReader(""), &out))
 	tokenFile := filepath.Join(root, "token")
