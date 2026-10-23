@@ -44,7 +44,8 @@ Three ideas carry the rest of the guide.
   belongs to no window: anyone allowed attaches to it, and it goes on when
   you close every window. One job runs once at a time across the
   instance; different jobs run side by side, and so do the prompts to
-  Claude.
+  Claude, as many at once as the machine has CPUs, the rest waiting
+  queued in order. A terminal takes no turn.
 - **A role** decides what you can do, with each user's own policy on
   top. Viewers watch and read history, runners start the jobs the allow
   lists let them, and admins may do everything; what each role may do is

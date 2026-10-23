@@ -51,8 +51,10 @@ who may change them. A run in progress has **Attach**, a finished one **View**.
 
 A run waits, **queued**, its dot a ring, behind the run of its
 job before it: a command on a host that still runs one (see
-[Inventory](inventory.md#queued-commands)). It starts once that run
-ended, and its page says so; **Stop** takes it out of the queue,
+[Inventory](inventory.md#queued-commands)); or for a free slot, while
+as many runs go as the machine has CPUs (see
+[Runs at once](#runs-at-once)). It starts once that run
+ended or a slot frees, and its page says so; **Stop** takes it out of the queue,
 stopped. A queued run the instance restarted before it ran ends failed,
 its page saying "the instance restarted before it ran".
 
@@ -122,6 +124,17 @@ their own and go side by side: no prompt waits for another. Starting any
 other job that runs already attaches to the run in the way. **Run force** kills that run and
 starts again; out of a folder's hours it also asks why, and keeps the
 reason with the run (see [Projects and jobs](projects.md#hours)).
+
+### Runs at once
+
+Different jobs run side by side, as many at once as the machine that
+runs task-ui has CPUs. A run that comes while the runs fill every slot
+waits, **queued**, and starts when a run ends, in the order the runs
+came; the runs list, the dashboard and the run's page say where it
+stands in line, and **Stop** takes it out. A terminal takes no slot:
+`@shell`, `@claude` and a job marked `interactive: true` idle on their
+input, so an open shell never holds up a run. A prompt's run and the
+Notes agent's do work and take one.
 
 ### From an agent
 

@@ -44,7 +44,9 @@ ssh login, a run a host; they take `hosts`.
 A run is one start of a job: who started it, how it ended, its output
 and its recording. One run per job goes at a time, except the Claude
 runs of prompts and notes, which go side by side; **Run force**
-replaces it. **Run again** starts the same job, directory and arguments.
+replaces it. As many runs go at once as the machine has CPUs, and a run
+over that waits, queued, for a free slot, in order; terminals, `@shell`,
+`@claude` and interactive jobs, take none. **Run again** starts the same job, directory and arguments.
 **|>summarize** runs a job and has Claude summarise the run on its page
 when it ends. A job names its current step with its terminal title,
 `printf '\033]0;building images\007'`, which shows beside the run on

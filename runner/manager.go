@@ -2,8 +2,9 @@
 // detached from any window, with a terminal emulator behind it that
 // holds the screen at every moment, windows that attach and detach, a
 // lock that allows one run per job across the instance, and the
-// artifacts a run leaves behind. A prompt's runs and the Notes agent's
-// are each a Claude session of their own and go side by side.
+// artifacts a run leaves behind. As many runs do work at once as the
+// machine has CPUs, the rest wait in line. A prompt's runs and the Notes
+// agent's are each a Claude session of their own and go side by side.
 package runner
 
 import (
@@ -14,6 +15,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"sort"
 	"strconv"
 	"strings"
@@ -66,6 +68,9 @@ type Manager struct {
 	// frozen are the folders that are moving: no run of them or of a
 	// folder inside them starts.
 	frozen map[string]bool
+	// slots hold the runs that do work, as many at once as the machine
+	// has CPUs; a run over that waits, queued, holding its job's lock.
+	slots *Slots
 }
 
 // New returns a manager. Zero durations get defaults.
@@ -79,7 +84,7 @@ func New(opts Options) *Manager {
 	if opts.Keep <= 0 {
 		opts.Keep = time.Hour
 	}
-	return &Manager{opts: opts, sessions: map[string]*Session{}, byKey: map[string]*Session{}, queued: map[string][]*Session{}}
+	return &Manager{opts: opts, sessions: map[string]*Session{}, byKey: map[string]*Session{}, queued: map[string][]*Session{}, slots: NewSlots(runtime.NumCPU())}
 }
 
 // Get returns a session by run id.
@@ -88,6 +93,11 @@ func (m *Manager) Get(id string) (*Session, bool) {
 	defer m.mu.Unlock()
 	session, ok := m.sessions[id]
 	return session, ok
+}
+
+// Position is where a run stands in the line for a slot, 0 off it.
+func (m *Manager) Position(id string) int {
+	return m.slots.Position(id)
 }
 
 // Active returns the session running a job, by key.
@@ -114,7 +124,8 @@ func (m *Manager) List() []*Session {
 // session in the way and ErrBusy, unless the request forces: then Start
 // kills the run in the way, waits for it, and the new run takes its
 // place; or unless the request queues: then the new run waits, queued,
-// and starts once the runs before it ended.
+// and starts once the runs before it ended. A run that does work while
+// runs fill every slot waits, queued, for one.
 func (m *Manager) Start(ctx context.Context, req Request) (*Session, error) {
 	if req.Folder == nil || req.Job == nil {
 		return nil, errors.New("a run needs a folder and a job")
@@ -144,17 +155,24 @@ func (m *Manager) Start(ctx context.Context, req Request) (*Session, error) {
 		m.release(run.LockKey(), nil)
 		return current, err
 	}
+	slot := TakesSlot(req.Job)
+	if slot && m.slots.Full() {
+		run.State = model.StateQueued
+	}
 	if err := m.opts.Runs.Create(ctx, run); err != nil {
 		m.release(run.LockKey(), nil)
 		return nil, err
 	}
 	session := m.newSession(ctx, req, run)
+	session.slot = slot
+	if run.State == model.StateQueued {
+		session.status = Status{State: model.StateQueued}
+	}
 	m.mu.Lock()
 	m.sessions[run.ID] = session
 	m.byKey[run.LockKey()] = session
 	m.mu.Unlock()
-	m.publish(*run)
-	go m.serve(session)
+	m.admit(session)
 	return session, nil
 }
 
@@ -221,9 +239,20 @@ func (m *Manager) Shutdown(ctx context.Context) {
 	for _, queue := range m.queued {
 		waiting = append(waiting, queue...)
 	}
+	var slotless []*Session
+	for _, id := range m.slots.Clear() {
+		if session, ok := m.sessions[id]; ok {
+			slotless = append(slotless, session)
+		}
+	}
 	m.mu.Unlock()
+	lost := Status{State: model.StateFailed, ExitCode: 1, Message: model.QueuedLost}
 	for _, session := range waiting {
-		m.dequeue(session, Status{State: model.StateFailed, ExitCode: 1, Message: model.QueuedLost})
+		m.dequeue(session, lost)
+	}
+	for _, session := range slotless {
+		m.handOff(session.Key(), session)
+		m.end(session, lost)
 	}
 	for _, session := range m.List() {
 		session.Kill(m.opts.Grace)
@@ -263,6 +292,7 @@ func (m *Manager) serve(session *Session) {
 	// that runs again on the status finds the job free, or to the run
 	// that waits next.
 	m.handOff(run.LockKey(), session)
+	m.freeSlot(session)
 	m.settle(ctx, session, status)
 	go m.forget(session)
 }
@@ -333,27 +363,6 @@ func (m *Manager) execute(ctx context.Context, session *Session) Status {
 	}
 	pump(proc, session)
 	return session.outcome(proc.Wait())
-}
-
-// failed writes why in red and returns the failed status.
-func failed(session *Session, message string) Status {
-	fmt.Fprintf(session, "\x1b[31m%s\x1b[0m\r\n", message)
-	return Status{State: model.StateFailed, ExitCode: 1, Message: message}
-}
-
-// pump copies the process output into the session until it ends.
-func pump(proc *Process, session *Session) {
-	buf := make([]byte, 32*1024)
-	for {
-		n, err := proc.Read(buf)
-		if n > 0 {
-			session.write(buf[:n])
-		}
-		if err != nil {
-			_ = proc.Close()
-			return
-		}
-	}
 }
 
 // command builds the process: bash -l for the login environment, the

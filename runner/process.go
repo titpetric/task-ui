@@ -2,6 +2,7 @@ package runner
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"os/exec"
 	"sync"
@@ -9,6 +10,8 @@ import (
 	"time"
 
 	"github.com/creack/pty"
+
+	"github.com/titpetric/task-ui/model"
 )
 
 // Process is a command running on a pseudo terminal, in its own session,
@@ -98,4 +101,25 @@ func (p *Process) Wait() int {
 		return exit.ExitCode()
 	}
 	return -1
+}
+
+// failed writes why in red and returns the failed status.
+func failed(session *Session, message string) Status {
+	fmt.Fprintf(session, "\x1b[31m%s\x1b[0m\r\n", message)
+	return Status{State: model.StateFailed, ExitCode: 1, Message: message}
+}
+
+// pump copies the process output into the session until it ends.
+func pump(proc *Process, session *Session) {
+	buf := make([]byte, 32*1024)
+	for {
+		n, err := proc.Read(buf)
+		if n > 0 {
+			session.write(buf[:n])
+		}
+		if err != nil {
+			_ = proc.Close()
+			return
+		}
+	}
 }

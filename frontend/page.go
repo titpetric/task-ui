@@ -3,6 +3,7 @@ package frontend
 import (
 	"context"
 	"errors"
+	"fmt"
 	"html/template"
 	"log/slog"
 	"net/http"
@@ -216,6 +217,9 @@ func (h *Handlers) runView(run model.Run) view.Run {
 		v.Run, v.Live, v.Attached = session.Snapshot(), true, session.Attached()
 		if status.Message != "" {
 			v.Message = status.Message
+		}
+		if at := h.opts.Runner.Position(run.ID); at > 0 {
+			v.Message = fmt.Sprintf("waits for a free slot, number %d in line", at)
 		}
 	}
 	return v

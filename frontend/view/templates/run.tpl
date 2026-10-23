@@ -3,7 +3,7 @@
 <div class="page-head">
 	<div>
 		<h2>{{ $run.Name }} <span class="badge {{ tone $run.State }}">{{ $run.State }}{{ if and (ne $run.State "ok") (ended $run.State) }} {{ $run.ExitCode }}{{ end }}</span>{{ with $run.Title }} <span class="term-title" title="{{ . }}">{{ . }}</span>{{ end }}</h2>
-		<p>Started by {{ $run.UserName }} {{ ago $run.StartedAt }}{{ if $run.IsScheduled }} by the scheduler{{ end }}{{ if $run.IsForced }}, with Run force{{ end }}.{{ if eq $run.State "queued" }} It waits, queued, for the run of its job before it to end: attach to follow it once it starts{{ if $can }}, or stop it to take it out of the queue{{ end }}.{{ else if not (ended $run.State) }} It's still running: attach to follow it{{ if $can }}, or stop it{{ end }}.{{ else if $run.Expired }} The run has finished; its recording expired.{{ else }} The run has finished; its full output is below.{{ end }}</p>
+		<p>Started by {{ $run.UserName }} {{ ago $run.StartedAt }}{{ if $run.IsScheduled }} by the scheduler{{ end }}{{ if $run.IsForced }}, with Run force{{ end }}.{{ if eq $run.State "queued" }} It waits, queued, for the run of its job before it to end or for a free slot: attach to follow it once it starts{{ if $can }}, or stop it to take it out of the queue{{ end }}.{{ else if not (ended $run.State) }} It's still running: attach to follow it{{ if $can }}, or stop it{{ end }}.{{ else if $run.Expired }} The run has finished; its recording expired.{{ else }} The run has finished; its full output is below.{{ end }}</p>
 	</div>
 	<div class="actions">
 		<button type="button" class="btn btn-primary" data-attach="{{ $run.ID }}">{{ if not (ended $run.State) }}Attach{{ else }}View{{ end }}</button>
