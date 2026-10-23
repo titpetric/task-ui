@@ -12,7 +12,7 @@ row's **⋯** menu; "Delete" and "Remove" are in red, last.
 |------|------|-------|-----------------|-------------|-------|-------|
 | Dashboard | `/` | running terminals as tiles, the control centre of jobs by folder | none | Run, Attach on a tile | none | "No jobs yet." in the control centre |
 | Runs | `/runs` | every run, newest first, with filters; Activity and Tooling folds | none | **View** or **Attach**, `[...]`: open, replay, Summary, Stop, Kill | the filter bar | "No runs match." |
-| Run | `/runs/<id>` | the terminal, its output, the run's details, its artifacts | **View** or **Attach**, Stop, Kill, Report, Recording, Replay | artifacts: `[...]` | the prompt about the run | "No artifacts." |
+| Run | `/runs/<id>` | the terminal, its output, the run's details, its artifacts | **View** or **Attach**, Stop, Kill, Report, Recording, Replay | artifacts: `[...]` | the prompt about the run | "None: a job keeps files by writing them to $TASK_UI_ARTIFACTS." |
 | Report | `/runs/<id>/report` | the question and Claude's answer | Run, Claude's run, Job | none | none | none |
 | Workflows | `/workflows` | the workflows, their steps and last run | **Add workflow** | **Run** or **Stop**, `[...]`: Open, Edit, the run going | the Prompt box | "No workflows yet." |
 | Add workflow | `/workflows/new` | none | none | none | name and steps, Cancel and Save | none |

@@ -1,6 +1,7 @@
-/* A toggle in a form: the box before its label, on one line, the label
-   set as text, not as a field's heading. */
-.field label.check {
+/* A toggle in a form, in a field or straight in the form: the box
+   before its label, on one line, the label set as text, not as a
+   field's heading. */
+:is(.field, .form) label.check {
   display: flex;
   align-items: center;
   gap: 0.5rem;
