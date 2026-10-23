@@ -86,3 +86,48 @@ func TestUseProber(t *testing.T) {
 	assert.Equal(t, "first", prober.Bin())
 	restore()
 }
+
+// A listing atkins' linter refuses becomes a source with the error and
+// the findings, each file relative to the folder, and no targets.
+func TestFromListing_Lint(t *testing.T) {
+	dir := t.TempDir()
+	listing := skills.Listing{
+		Error: "pipeline 'Broken' has errors",
+		Lint: []skills.Finding{
+			{Pipeline: "Broken", Path: filepath.Join(dir, "atkins.yml"), Job: "build", Detail: "step references task 'go:fmt'"},
+			{Pipeline: "Broken", Detail: "no file"},
+			{Pipeline: "go", Path: filepath.Join(filepath.Dir(dir), ".atkins", "skills", "go.yml"), Job: "fmt", Detail: "skill"},
+		},
+	}
+
+	source := fromListing(dir, "atkins.yml", listing)
+	assert.Equal(t, "atkins.yml: pipeline 'Broken' has errors", source.Error)
+	assert.Len(t, source.Targets, 0)
+	assert.Len(t, source.Errors, 3)
+	assert.Equal(t, "atkins.yml", source.Errors[0].Path)
+	assert.Equal(t, "build", source.Errors[0].Job)
+	assert.Equal(t, "atkins.yml", source.Errors[1].Path)
+	assert.Equal(t, "../.atkins/skills/go.yml", source.Errors[2].Path)
+}
+
+// An error without findings is one finding; a broken listing that lists
+// its sections too lists their jobs beside the findings.
+func TestFromListing_ErrorAndJobs(t *testing.T) {
+	listing := skills.Listing{
+		Error:    "pipeline 'Half' has errors",
+		Sections: []skills.Section{{Kind: skills.KindPipeline, Desc: "Half", Cmds: []skills.Command{{Name: "test", Desc: "Test"}}}},
+	}
+	source := fromListing(t.TempDir(), "atkins.yml", listing)
+	assert.Len(t, source.Errors, 1)
+	assert.Equal(t, "pipeline 'Half' has errors", source.Errors[0].Detail)
+	assert.Equal(t, "atkins.yml", source.Errors[0].Path)
+	assert.Len(t, source.Targets, 1)
+	assert.Equal(t, "Half", source.Name)
+
+	// An empty listing reads as unreadable; a clean one has
+	// no errors.
+	assert.Contains(t, fromListing(t.TempDir(), "atkins.yml", skills.Listing{}).Error, "could not read this pipeline")
+	clean := fromListing(t.TempDir(), "atkins.yml", skills.Listing{Sections: listing.Sections})
+	assert.Equal(t, "", clean.Error)
+	assert.Nil(t, clean.Errors)
+}

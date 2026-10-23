@@ -119,6 +119,31 @@ An agent sees the same list over [MCP](mcp.md): `list_jobs` returns the
 folders, their jobs, whether its user may run each, and how each last
 went.
 
+### A pipeline with errors
+
+atkins lints a pipeline before it lists its jobs, and lists none of a
+pipeline that fails: a step that calls a job the file lacks, such as
+`task: go:fmt` with no `go:fmt` job. task-ui shows what atkins found
+in place of an empty folder:
+
+- The folder's page, and the page of every workspace or project above
+  it, opens with an alert, "1 pipeline has errors", and a line for each
+  finding: the folder, linked, the pipeline file, the job and atkins'
+  words for what is wrong; hover them for the kind of issue. Past five
+  lines the rest fold under **Show more**.
+- The folder's row in the sidebar carries a red `!` with the count of
+  findings in place of its count of jobs; hover it for the first.
+- The dashboard has a line that names the workspaces with a broken
+  pipeline, each linked to its page.
+- `GET /api/folders` and `list_jobs` carry the findings as `errors`,
+  each with its `path`, `job`, `issue` and `detail`.
+
+A finding reads as atkins prints it: `job build: step references task
+'go:fmt', but job "go:fmt" not found` names the job that holds the
+step and the reference that does not resolve. Fix the file, by adding
+the job or correcting the reference, and the next look at the folder
+lists its jobs again: task-ui asks atkins afresh once the file changes.
+
 ## A folder's page
 
 Open a folder from the sidebar:

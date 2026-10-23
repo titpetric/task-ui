@@ -15,3 +15,36 @@
 
   & b { color: var(--text); }
 }
+
+/* The broken pipelines of a place: a finding a line, its folder linked,
+   the rows past the first few folded under Show all. */
+.pipeline-alert {
+  & .pipeline-errors {
+    margin: 0.4rem 0 0;
+    padding: 0;
+    list-style: none;
+
+    & li {
+      padding: 0.15rem 0;
+      overflow-wrap: anywhere;
+    }
+
+    & code {
+      font-size: var(--fs-sm);
+    }
+  }
+
+  & .pipeline-more > summary {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    margin-top: 0.3rem;
+    color: var(--text-dim);
+    cursor: pointer;
+    list-style: none;
+
+    &::-webkit-details-marker {
+      display: none;
+    }
+  }
+}

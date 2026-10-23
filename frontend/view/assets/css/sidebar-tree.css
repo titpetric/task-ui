@@ -169,6 +169,11 @@
   & small {
     color: var(--text-faint);
     font-weight: 400;
+
+    &.bad {
+      color: var(--bad);
+      font-weight: 700;
+    }
   }
 
   &.active .ic {

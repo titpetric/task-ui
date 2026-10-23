@@ -1,6 +1,7 @@
 package detector
 
 import (
+	"path/filepath"
 	"strings"
 	"sync"
 
@@ -72,18 +73,30 @@ func (d atkinsDetector) detectFile(dir, file string) *Source {
 		name = pipelineFile(dir)
 	}
 
-	source := &Source{Kind: AtkinsKind, File: name, Command: defaultCommand(AtkinsKind, name)}
-
 	probing.Lock()
-	sections := prober.ProbeFile(dir, file)
-	if file == "" {
-		sections = prober.Probe(dir)
-	}
+	listing := prober.List(dir, file)
 	probing.Unlock()
 
-	section := pipelineSection(sections)
+	return fromListing(dir, name, listing)
+}
+
+// fromListing reads atkins' answer for the pipeline name in dir into a
+// source. A pipeline atkins' linter refuses carries the findings in
+// Errors and lists the jobs atkins still gave, if any.
+func fromListing(dir, name string, listing skills.Listing) *Source {
+	source := &Source{Kind: AtkinsKind, File: name, Command: defaultCommand(AtkinsKind, name)}
+	if listing.Broken() {
+		source.Error = name + ": " + listing.Error
+		if listing.Error == "" {
+			source.Error = name + ": atkins found errors in this pipeline"
+		}
+		source.Errors = findings(dir, name, listing)
+	}
+	section := pipelineSection(listing.Sections)
 	if section == nil {
-		source.Error = name + ": atkins could not read this pipeline"
+		if source.Error == "" {
+			source.Error = name + ": atkins could not read this pipeline"
+		}
 		return source
 	}
 
@@ -100,6 +113,31 @@ func (d atkinsDetector) detectFile(dir, file string) *Source {
 	}
 
 	return source
+}
+
+// findings takes atkins' lint findings into the source, each file named
+// relative to the folder: atkins names it absolute, a path of the host
+// the page has no use for. A finding without a file is the pipeline's,
+// and an error without findings is one.
+func findings(dir, name string, listing skills.Listing) []skills.Finding {
+	lint := listing.Lint
+	if len(lint) == 0 {
+		lint = []skills.Finding{{Detail: listing.Error}}
+	}
+	if abs, err := filepath.Abs(dir); err == nil {
+		dir = abs
+	}
+	result := make([]skills.Finding, 0, len(lint))
+	for _, finding := range lint {
+		switch rel, err := filepath.Rel(dir, finding.Path); {
+		case finding.Path == "":
+			finding.Path = name
+		case filepath.IsAbs(finding.Path) && err == nil:
+			finding.Path = filepath.ToSlash(rel)
+		}
+		result = append(result, finding)
+	}
+	return result
 }
 
 // pipelineFile returns the pipeline file name a folder holds, empty

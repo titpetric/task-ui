@@ -118,6 +118,25 @@ func TestProber_Fails(t *testing.T) {
 	assert.Nil(t, (&skills.Prober{}).Probe(""))
 }
 
+// List answers the findings of a pipeline atkins' linter refuses, which
+// atkins prints with exit 1, and keeps them as it keeps sections; Probe
+// lists no sections for it.
+func TestProber_List(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	command, calls := fakeAtkins(t, `echo '{"error":"pipeline has errors","lint":[{"job":"build","detail":"no go:fmt"}]}'; echo 'Error: EOF' >&2; exit 1`)
+	p := &skills.Prober{Command: command, TTL: time.Hour}
+	listing := p.List(dir, "")
+	assert.True(t, listing.Broken())
+	assert.Equal(t, "pipeline has errors", listing.Error)
+	assert.Equal(t, []skills.Finding{{Job: "build", Detail: "no go:fmt"}}, listing.Lint)
+	assert.Nil(t, p.Probe(dir))
+	assert.Len(t, lines(t, calls), 1, "cached")
+
+	assert.Equal(t, skills.Listing{}, (*skills.Prober)(nil).List(dir, ""))
+	assert.Equal(t, skills.Listing{}, (&skills.Prober{}).List("", "atkins.yml"))
+}
+
 // ProbeFile names the pipeline file to atkins with -f and keeps its
 // answer apart from the directory's; no file answers nothing.
 func TestProber_ProbeFile(t *testing.T) {

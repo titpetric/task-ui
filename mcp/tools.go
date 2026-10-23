@@ -144,6 +144,13 @@ func listJobs(ctx context.Context, c *client, args json.RawMessage) (string, err
 		if f.Error != "" {
 			fmt.Fprintf(&b, "  (cannot read: %s)\n", f.Error)
 		}
+		for _, finding := range f.Errors {
+			fmt.Fprintf(&b, "  ! %s", finding.Path)
+			if finding.Job != "" {
+				fmt.Fprintf(&b, " job %s", finding.Job)
+			}
+			fmt.Fprintf(&b, ": %s\n", finding.Detail)
+		}
 		for _, job := range f.Jobs {
 			fmt.Fprintf(&b, "  %s", job.ID)
 			if job.Description != "" {
