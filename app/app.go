@@ -252,10 +252,12 @@ func (a *App) wire(version string) error {
 	a.Guard.AutoLogin = cfg.AutoLogin
 	a.Guard.Tokens = storage.NewUserAuthTokenStorage(a.DB)
 	a.Guard.Now = cfg.Clock()
+	a.Guard.RunTokens = access.NewRunTokens()
 	a.Board = &note.Board{
 		Notes: storage.NewNoteStorage(a.DB), Users: a.Users, Runs: runs, WorkflowRuns: workflowRuns, Catalogue: a.Catalogue, Runner: a.Runner,
 		Recordings: recordings, Events: events, Root: cfg.Root,
 		Hosts: promptHosts(hosts, prober), BaseURL: cfg.URL,
+		RunTokens: a.Guard.RunTokens, MCPURL: func() string { return MCPURL(a.Addr()) },
 	}
 	a.Workflows.Prompter = a.Board
 	if err := a.Board.Recover(context.Background()); err != nil {

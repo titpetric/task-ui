@@ -34,7 +34,8 @@ func (a *Agent) environ() []string {
 }
 
 // context is what every Claude run here reads after the instructions
-// of its own: where the run's artifacts go, then claude.Context, the
+// of its own: where the run's artifacts go, task-ui's MCP tools for a
+// run that has them, then claude.Context, the
 // user of the run with the role and what the user may do, from
 // TASK_UI_USER, TASK_UI_ROLE and TASK_UI_PERMISSIONS, and what task-ui is.
 func (a *Agent) context() string {
@@ -43,7 +44,13 @@ func (a *Agent) context() string {
 		artifacts = "This run's artifact directory is $TASK_UI_ARTIFACTS, " + dir + ": a file you write there, such as a report or an image, " +
 			"moves into task-ui's artifact tree at the same path when the run ends, for the Artifacts page."
 	}
-	return system(artifacts, claude.Context(a.getenv("TASK_UI_USER"), a.getenv("TASK_UI_ROLE"), a.getenv("TASK_UI_PERMISSIONS")))
+	tools := ""
+	if a.getenv("TASK_UI_MCP_CONFIG") != "" {
+		tools = "task-ui's MCP server, task, is connected for this run as " + a.getenv("TASK_UI_USER") + ", with that user's permissions and no more: " +
+			"its tools list and run jobs and workflows, read runs, make and change workflows with get_workflow, create_workflow and update_workflow, " +
+			"and read and leave notes. Use them for what the question asks of task-ui; the access ends with the run."
+	}
+	return system(artifacts, tools, claude.Context(a.getenv("TASK_UI_USER"), a.getenv("TASK_UI_ROLE"), a.getenv("TASK_UI_PERMISSIONS")))
 }
 
 // claudePath finds claude in the PATH of the environment.
@@ -61,7 +68,9 @@ func (a *Agent) claudePath() (string, error) {
 }
 
 // ask runs claude -p on the prompt in dir and writes its reply to out,
-// with system, when not empty, after Claude's own system prompt.
+// with system, when not empty, after Claude's own system prompt, and
+// the MCP configuration of TASK_UI_MCP_CONFIG, task-ui's tools as the
+// run's user, when the run has one.
 func (a *Agent) ask(ctx context.Context, dir, prompt, system string, out io.Writer) error {
 	if a.getenv("CLAUDE_CODE_OAUTH_TOKEN") == "" {
 		return errNoToken
@@ -71,6 +80,9 @@ func (a *Agent) ask(ctx context.Context, dir, prompt, system string, out io.Writ
 		return err
 	}
 	args := []string{"-p", "--dangerously-skip-permissions", "--output-format", "text"}
+	if config := a.getenv("TASK_UI_MCP_CONFIG"); config != "" {
+		args = append(args, "--mcp-config", config)
+	}
 	if system != "" {
 		args = append(args, "--append-system-prompt", system)
 	}

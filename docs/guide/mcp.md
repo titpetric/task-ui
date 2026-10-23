@@ -79,8 +79,18 @@ header in place of the session cookie.
 
 ## Claude Code inside task-ui
 
-The Claude Code that task-ui runs, the agent job of the [Notes](notes.md)
-board and a Claude terminal, reaches the same tools when its own
+Every prompt task-ui runs, `@claude-prompt`, and the Notes agent,
+`@claude-note`, get the tools as the user they run for, with no setup:
+task-ui mints a token for the run when it starts and revokes it when the
+run ends, writes an MCP configuration with it to a directory of the run's
+own, mode 0700, that `TASK_UI_MCP_CONFIG` names, and Claude starts with
+`--mcp-config` on it. The token has that user's permissions and no more,
+shows nowhere, and is none of the user's tokens: it needs no MCP agent user
+on the user's profile. The configuration goes with the run. So a
+prompt can build a workflow with `create_workflow`, run it with
+`run_workflow` and read how it went.
+
+A Claude terminal, **Enter Claude**, reaches the same tools when its own
 configuration has the server. Add it with a token of the agent's user and
 the loopback address, from inside the server:
 
@@ -208,7 +218,10 @@ with `-p`, `/loop` with `list_notes` polls in its place:
 | `list_jobs`          | `folder`                                         | The folders and their jobs, `default` first, whether you may run each, how it last went |
 | `list_workflows`     |                                                  | The workflows, their steps and their last run |
 | `run_job`            | `folder`, `job`, `force`, `reason`, `wait`, `lines` | Starts a job; with `wait`, up to 900 seconds, returns how it ended and the end of its output |
-| `run_workflow`       | `workflow`, `input`, `wait`                      | Starts a workflow by ID or name, `input` going to its prompt; with `wait`, returns how each step went |
+| `run_workflow`       | `workflow`, `input`, `wait`                      | Starts a workflow by ID or name, `input` going to its prompt; with `wait`, returns how each step went and the run's answer, Claude's reply to its last prompt |
+| `get_workflow`       | `workflow`                                       | A workflow by ID or name: its steps, each a job, a workflow or a prompt, its final prompt and where it runs, and its last run |
+| `create_workflow`    | `name`, `steps`, `prompt`, `prompt_folder`, `sidebar` | Makes a workflow as you: `steps` in order, each `{folder, job, args}`, `{workflow}` or `{prompt, folder, dir}`, and `enabled`; takes `workflow/edit`, and `prompt/edit` for a prompt |
+| `update_workflow`    | `workflow`, and the fields of `create_workflow`  | Changes a workflow you own, or any as an admin: a field left out stays, `steps` given replace them all; there is no delete |
 | `list_runs`          | `folder`, `job`, `state`, `limit`                | The latest runs, newest first, a directory's run as `folder/dir/job` |
 | `get_run`            | `id`, `lines`                                    | A run and the end of its output, as the terminal showed it |
 | `list_workflow_runs` | `workflow`, `limit`                              | A workflow's latest runs and their steps |
@@ -265,12 +278,12 @@ it per area beside what you may do there. `GET /api/me` answers the same as JSON
 
 ## A frozen surface
 
-These fifteen tools, like the JSON API behind them, are the whole surface,
+These nineteen tools, like the JSON API behind them, are the whole surface,
 and the surface stays frozen. An agent can see what it may do and what there is, run it, read
 how it went, work through the notes that name it, leave notes, ask
-Claude in a folder, and read and write the artifact tree; ending runs,
-schedules, deleting artifacts, secrets, keys, users and changing
-workflows stay with people, in the browser. A new tool or
+Claude in a folder, read and write the artifact tree, and make and change
+workflows; ending runs, schedules, deleting workflows, artifacts,
+secrets, keys and users stay with people, in the browser. A new tool or
 endpoint needs a reason that the current ones cannot serve,
 and the reason goes with the change.
 

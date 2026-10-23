@@ -114,7 +114,7 @@ func tools() []Tool {
 			}, "workflow"),
 			call: listWorkflowRuns,
 		},
-	}, append(append(noteTools(), artifactTools()...), whoamiTool(), keyTool())...)
+	}, append(append(append(noteTools(), artifactTools()...), workflowTools()...), whoamiTool(), keyTool())...)
 }
 
 // decode reads a tool's arguments into v; none is an empty object.
@@ -419,7 +419,10 @@ func showFlowRun(view api.WorkflowRunView, names map[string]string) string {
 	fmt.Fprintf(&b, "workflow run %s: %s by %s, %s\n", view.ID, view.Name, view.UserName, flowOutcome(&view.WorkflowRun))
 	for i, step := range view.Steps {
 		name := step.Folder + "/" + step.Job
-		if step.WorkflowRef != "" {
+		switch {
+		case step.IsPrompt():
+			name = "prompt in " + step.Folder
+		case step.WorkflowRef != "":
 			name = "workflow " + names[step.WorkflowRef]
 		}
 		state := step.State
@@ -434,6 +437,9 @@ func showFlowRun(view api.WorkflowRunView, names map[string]string) string {
 			fmt.Fprintf(&b, " (workflow run %s)", step.WorkflowRunRef)
 		}
 		b.WriteString("\n")
+	}
+	if view.Answer != "" {
+		b.WriteString("answer:\n" + view.Answer + "\n")
 	}
 	return b.String()
 }

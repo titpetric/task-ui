@@ -160,3 +160,23 @@ func TestAgent_Prompt_instructions(t *testing.T) {
 	assert.Contains(t, text, "arg=--append-system-prompt\narg="+claude.RunSummary+"\n\ntask-ui's inventory of hosts: web\n")
 	assert.Contains(t, text, "the last message is the question:\n\nSummarize this run.\n\n")
 }
+
+// A run with an MCP configuration passes its file to Claude
+// and tells it task-ui's tools are there as the run's user; a run
+// without has neither.
+func TestAgent_Prompt_mcp(t *testing.T) {
+	t.Parallel()
+	here := realDir(t)
+	var out bytes.Buffer
+	env := []string{"PATH=" + fakeClaude(t), "CLAUDE_CODE_OAUTH_TOKEN=sk-1", "TASK_UI_PROMPT_DIR=" + here, "TASK_UI_PROMPT=build a workflow", "TASK_UI_USER=claude"}
+	a := &agent.Agent{Stdout: &out, Stderr: io.Discard, Env: append(env, "TASK_UI_MCP_CONFIG=/run/mcp/mcp.json")}
+	assert.NoError(t, a.Run(context.Background(), []string{"prompt"}))
+	assert.Contains(t, out.String(), "arg=--mcp-config\narg=/run/mcp/mcp.json\n")
+	assert.Contains(t, out.String(), "task-ui's MCP server, task, is connected for this run as claude, with that user's permissions and no more")
+
+	out.Reset()
+	a.Env = env
+	assert.NoError(t, a.Run(context.Background(), []string{"prompt"}))
+	assert.NotContains(t, out.String(), "--mcp-config")
+	assert.NotContains(t, out.String(), "is connected for this run")
+}

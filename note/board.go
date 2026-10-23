@@ -25,6 +25,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/titpetric/task-ui/access"
 	"github.com/titpetric/task-ui/event"
 	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/model"
@@ -79,6 +80,11 @@ type Board struct {
 	// BaseURL is the public link of the instance, which the links a
 	// prompt reads start with; empty leaves them paths.
 	BaseURL string
+	// RunTokens mints the token of each Claude run the board starts, for
+	// the MCP server MCPURL returns; either nil, or an empty URL, leaves
+	// the runs without task-ui's tools.
+	RunTokens *access.RunTokens
+	MCPURL    func() string
 }
 
 // Post leaves a note on the board, or a reply to one. A note naming
@@ -222,7 +228,12 @@ func (b *Board) dispatch(note, again *model.Note, agent *model.User) {
 			"TASK_UI_NOTE_REPLY=" + answer,
 		},
 	}
-	go b.run(context.Background(), note, req, answer, "The agent job", again)
+	mcp, closeMCP := b.mcpEnv(agent)
+	req.Env = append(req.Env, mcp...)
+	go func() {
+		defer closeMCP()
+		b.run(context.Background(), note, req, answer, "The agent job", again)
+	}()
 }
 
 // run starts a request for a note and replies when the run ends: with
