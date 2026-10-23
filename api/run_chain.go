@@ -40,6 +40,9 @@ type RunChain struct {
 	// empty until the next run starts.
 	Prev string `json:"prev,omitempty"`
 	Next string `json:"next,omitempty"`
+	// Last is the newest run of the chain that started, unless that run
+	// is this one: where a window opened on the chain goes.
+	Last string `json:"last,omitempty"`
 	// Complete says no more runs join the chain.
 	Complete bool `json:"complete"`
 }
@@ -61,6 +64,7 @@ func NewRunChain(kind, id string, runs []string, total int, complete bool, curre
 	}
 	if at+1 < len(runs) {
 		c.Next = runs[at+1]
+		c.Last = runs[len(runs)-1]
 	}
 	return c
 }
