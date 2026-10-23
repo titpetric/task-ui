@@ -135,6 +135,23 @@ the chain is complete. A window on a run of no chain has no paginator.
 `GET /api/runs/<id>` carries the chain as `chain`, and the attach socket
 sends it as a `chain` message (see the [API](../api.md)).
 
+**Report**, beside the paginator, shows on a run that has a report:
+Claude's run on a prompt once it answered, such as the summary's
+`Run 2/2`, and a run Claude summarized. It opens the run's report page.
+
+### A run's report
+
+`/runs/<id>/report` shows Claude's markdown of a run as a document:
+the summary of a run, or what Claude's run on a prompt replied, with
+the question above the reply when the question is no summary's. Its head names the job,
+when the run started, who started it and who asked, with links to the
+run, Claude's run and the job. The page reads the reply Claude saved,
+not the terminal, so no output, spinner or tool call shows in it.
+**Report** on a run's page, in the run window, under a summary on a
+job page and in the Summary column of the Files list all open it. The
+page takes `prompt/view` and a run you see; `GET /api/runs/<id>` names
+it as `report` when the run has one.
+
 A finished run stays attachable, its last frame in memory, for
 `TASK_UI_KEEP`, fifteen minutes; after that it opens as history: its
 whole recording played into the window, with how it ended, and **Run

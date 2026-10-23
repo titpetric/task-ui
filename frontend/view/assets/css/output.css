@@ -17,3 +17,9 @@ pre.output {
   white-space: pre;
   tab-size: 8;
 }
+
+/* A report reads as a document: Claude's markdown at a line length for
+   reading, on the page's surface. */
+.markdown-doc:is(.report-doc, .report-question) {
+  max-width: 80ch;
+}

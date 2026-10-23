@@ -127,7 +127,7 @@ func (h *Handlers) treeSummaries(r *http.Request, p *view.Page) {
 		if answers := replies[thread]; len(answers) > 0 {
 			text = answers[0].Body
 		}
-		p.TreeSummaries[name] = view.NewSummaryLink(newest.ID, thread, text)
+		p.TreeSummaries[name] = view.NewSummaryLink(newest.ID, text)
 	}
 }
 

@@ -51,3 +51,9 @@ func SummaryOf(thread *model.Note, replies []model.Note) *Report {
 	report.Pending = true
 	return report
 }
+
+// IsSummary reports whether the report is a run's summary.
+func (r *Report) IsSummary() bool {
+	asked := r.Question == SummaryQuestion || r.Question == BatchSummaryQuestion
+	return r.ThreadID == "" || asked
+}
