@@ -25,6 +25,16 @@ type Inventory struct {
 
 // Systems returns the hub's systems, or ErrOff without a hub.
 func (i *Inventory) Systems(ctx context.Context) ([]System, error) {
+	client, err := i.Hub(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return client.Systems(ctx)
+}
+
+// Hub returns the client of the hub the settings name, the same one for
+// as long as they stay the same, or ErrOff without a hub.
+func (i *Inventory) Hub(ctx context.Context) (*Client, error) {
 	url, token, err := i.Settings(ctx)
 	if err != nil {
 		return nil, err
@@ -33,10 +43,9 @@ func (i *Inventory) Systems(ctx context.Context) ([]System, error) {
 		return nil, ErrOff
 	}
 	i.mu.Lock()
+	defer i.mu.Unlock()
 	if i.client == nil || i.client.URL != url || i.client.Token != token {
 		i.client = &Client{URL: url, Token: token, TTL: i.TTL}
 	}
-	client := i.client
-	i.mu.Unlock()
-	return client.Systems(ctx)
+	return i.client, nil
 }

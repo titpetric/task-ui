@@ -65,6 +65,33 @@
 {{- /* The hosts follow Beszel: the page fetches itself once a minute and
      puts this section back, with the time of the fetch under the table. */}}
 <section class="block" data-hosts-live>
+{{- with .Cluster }}
+<div class="cluster">
+	<h3 class="section-title">Cluster <small>{{ len .Hosts }} host{{ if ne (len .Hosts) 1 }}s{{ end }}, {{ .Up }} up{{ with .Down }}, <span class="bad">{{ . }} down</span>{{ end }}</small></h3>
+	<div class="pools">
+		{{- range .Pools }}
+		<div class="pool">
+			<div class="pool-head">
+				<span class="pool-name">{{ .Name }}</span>
+				<span class="pool-figure">{{ .Figure }}</span>
+				{{- if ne .Name "Containers" }}<span class="pool-pct">{{ printf "%.0f" .Percent }}%</span>{{ end }}
+			</div>
+			<div class="pool-bar" role="img" aria-label="{{ .Name }}: {{ .Figure }}">
+				{{- range .Segments }}{{ if gt .Width 0.0 }}<span class="seg c{{ .Color }}" style="flex-grow: {{ printf "%.3f" .Width }}" title="{{ .Title }}"><i style="width: {{ printf "%.1f" .Fill }}%"></i></span>{{ end }}{{ end }}
+			</div>
+		</div>
+		{{- end }}
+	</div>
+	<ul class="pool-legend">
+		{{- range .Hosts }}
+		<li{{ if .Left }} class="left"{{ end }}><i class="swatch{{ if not .Left }} c{{ .Color }}{{ end }}"></i>{{ .Name }}</li>
+		{{- end }}
+	</ul>
+	{{- with .Left }}
+	<p class="faint pool-note">{{ . }} host{{ if ne . 1 }}s are down or send{{ else }} is down or sends{{ end }} no measures, greyed in the legend and left out of the pools.</p>
+	{{- end }}
+</div>
+{{- end }}
 <h3>Hosts</h3>
 <div class="table-wrap">
 <table class="table hosts">

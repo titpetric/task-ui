@@ -8,6 +8,7 @@ import (
 	"github.com/titpetric/task-ui/beszel"
 	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/frontend/view"
+	"github.com/titpetric/task-ui/hostinfo"
 	"github.com/titpetric/task-ui/integration"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/storage"
@@ -63,11 +64,46 @@ func (h *Handlers) inventory(w http.ResponseWriter, r *http.Request) {
 		}
 		p.Logins = h.opts.SSH.Logins(r.Context(), hosts, 4*time.Second)
 	}
+	if len(systems) > 0 {
+		h.cluster(r, p)
+	}
 	p.Summarize = p.Can("hosts") && h.claudeFor(r, p.User)
 	if p.Can("hosts") {
 		h.lastBatch(r, p)
 	}
 	h.render(w, http.StatusOK, "inventory", p)
+}
+
+// cluster sums the page's hosts into pools: their running containers
+// from the hub, and their durable filesystems from what each host last
+// told over ssh. With the hosts permission, the reader reads a host
+// whose answer is stale again in the background, for the next view.
+func (h *Handlers) cluster(r *http.Request, p *view.Page) {
+	var containers map[string][]beszel.Container
+	if hub, err := h.opts.Hosts.Hub(r.Context()); err == nil {
+		containers, _ = hub.Containers(r.Context())
+	}
+	disks := map[string][]hostinfo.Filesystem{}
+	for _, system := range p.Hosts {
+		if facts := h.facts(r, p, p.Logins[system.Host], 0); facts != nil {
+			disks[system.ID] = facts.Filesystems
+		}
+	}
+	cluster := hostinfo.NewCluster(p.Hosts, containers, disks)
+	p.Cluster = &cluster
+}
+
+// facts returns what a login's host last told over ssh, waiting at most
+// wait for a fresh answer; only a user with the hosts permission makes
+// task-ui read a host. nil without a login or an answer.
+func (h *Handlers) facts(r *http.Request, p *view.Page, login string, wait time.Duration) *hostinfo.Facts {
+	if h.opts.Facts == nil || login == "" {
+		return nil
+	}
+	if p.Can("hosts") {
+		return h.opts.Facts.Facts(r.Context(), login, wait)
+	}
+	return h.opts.Facts.Cached(login)
 }
 
 // lastBatch puts the user's last Run on the inventory on the page: its

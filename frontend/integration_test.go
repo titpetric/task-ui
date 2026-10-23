@@ -44,11 +44,14 @@ func TestInventory(t *testing.T) {
 	assert.Contains(t, f.page(t, asAdmin, "/inventory"), "The Beszel integration isn't set up yet")
 
 	hub := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path == "/api/collections/system_stats/records" {
+		switch r.URL.Path {
+		case "/api/collections/system_stats/records":
 			_, _ = w.Write([]byte(`{"items":[{"system":"a","stats":{"m":15.6,"mu":12.4,"d":200,"du":60}}]}`))
-			return
+		case "/api/collections/containers/records":
+			_, _ = w.Write([]byte(`{"items":[{"system":"a","name":"db","cpu":2,"memory":100}]}`))
+		default:
+			_, _ = w.Write([]byte(`{"items":[{"id":"a","name":"dev1","host":"10.10.10.11","status":"up","info":{"cpu":95,"mp":80,"dp":30,"u":7200,"t":4,"m":"EPYC","k":"6.12","v":"0.12"}},{"id":"b","name":"old","host":"10.10.10.12","status":"down","info":{"t":2}}]}`))
 		}
-		_, _ = w.Write([]byte(`{"items":[{"id":"a","name":"dev1","host":"10.10.10.11","status":"up","info":{"cpu":95,"mp":80,"dp":30,"u":7200,"t":4,"m":"EPYC","k":"6.12","v":"0.12"}}]}`))
 	}))
 	t.Cleanup(hub.Close)
 	assert.NoError(t, f.opts.Integrations.Save(context.Background(), integration.Beszel, map[string]string{"url": hub.URL, "token": "t1"}))
@@ -80,6 +83,15 @@ func TestInventory(t *testing.T) {
 	assert.NotContains(t, body, "EPYC")
 	assert.Contains(t, body, `href="/inventory" class="active"`)
 	assert.Equal(t, http.StatusNotFound, f.get(t, asViewer, "/hosts").Status)
+
+	// The cluster over the table: a pool a resource of the hosts that
+	// report, the host down greyed in the legend.
+	assert.Contains(t, body, `Cluster <small>2 hosts, 1 up, <span class="bad">1 down</span></small>`)
+	assert.Contains(t, body, `<span class="pool-figure">3.8 / 4 cores</span><span class="pool-pct">95%</span>`)
+	assert.Contains(t, body, `<span class="seg c0" style="flex-grow: 100.000" title="dev1: 12.4 GiB of 15.6 GiB"><i style="width: 79.5%"></i></span>`)
+	assert.Contains(t, body, `<span class="pool-figure">1 running</span>`)
+	assert.Contains(t, body, `<li class="left"><i class="swatch"></i>old</li>`)
+	assert.Contains(t, body, "1 host is down or sends no measures")
 }
 
 // The run panel shows the user's last Run, a row a host, linked to its

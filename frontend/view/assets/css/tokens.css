@@ -81,6 +81,15 @@
   --role-runner: var(--ok);
   --role-viewer: var(--text-faint);
 
+  /* The series of a chart and the hosts of the inventory's pools, in a
+     fixed order, apart from the status colours. */
+  --series-0: #3987e5;
+  --series-1: #d95926;
+  --series-2: #199e70;
+  --series-3: #d55181;
+  --series-4: #9085e9;
+  --series-5: #c98500;
+
   --term-bg: #090c10;
   --term-fg: #d5dee7;
   /* The logo's tile and the header's prompt stay a dark terminal in
@@ -157,6 +166,13 @@
     --signal-wash: color-mix(in srgb, var(--signal) 10%, transparent);
     --ok-wash: color-mix(in srgb, var(--ok) 8%, transparent);
     --bad-wash: color-mix(in srgb, var(--bad) 8%, transparent);
+
+    --series-0: #2a78d6;
+    --series-1: #eb6834;
+    --series-2: #1baf7a;
+    --series-3: #e87ba4;
+    --series-4: #6250d6;
+    --series-5: #eda100;
 
     --term-bg: #fffdf9;
     --term-fg: #23201a;

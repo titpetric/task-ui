@@ -1,0 +1,127 @@
+/* The cluster over the hosts table: a pool a resource, each a bar of a
+   segment a host, as wide as its share of the whole, the used part in
+   the host's colour and the free part a wash of it. A host keeps its
+   colour in every pool and in the legend under them. */
+.cluster {
+  margin: 0 0 1.2rem;
+
+  & h3 small {
+    font-weight: 400;
+    letter-spacing: var(--ls-xs);
+    text-transform: none;
+
+    & .bad {
+      color: var(--bad);
+    }
+  }
+}
+
+.pools {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.6rem;
+}
+
+.pool {
+  padding: 0.6rem 0.8rem 0.7rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--ink-1);
+}
+
+.pool-head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  margin-bottom: 0.45rem;
+
+  & .pool-name {
+    color: var(--text-faint);
+    font-size: var(--fs-label);
+    font-weight: 600;
+    letter-spacing: var(--ls-label);
+    text-transform: uppercase;
+  }
+
+  & .pool-figure {
+    margin-inline-start: auto;
+    font: 500 1.05rem/1.2 var(--font);
+    font-variant-numeric: tabular-nums;
+  }
+
+  & .pool-pct {
+    min-width: 2.6rem;
+    color: var(--text-dim);
+    font: 600 1.05rem/1.2 var(--font);
+    font-variant-numeric: tabular-nums;
+    text-align: end;
+  }
+}
+
+.pool-bar {
+  display: flex;
+  gap: 2px;
+  height: 0.9rem;
+
+  & .seg {
+    position: relative;
+    flex: 1 1 0;
+    min-width: 3px;
+    overflow: hidden;
+    border-radius: var(--radius);
+    background: color-mix(in srgb, var(--seg) 22%, transparent);
+
+    & i {
+      position: absolute;
+      inset: 0 auto 0 0;
+      background: var(--seg);
+    }
+  }
+}
+
+.c0 { --seg: var(--series-0); }
+.c1 { --seg: var(--series-1); }
+.c2 { --seg: var(--series-2); }
+.c3 { --seg: var(--series-3); }
+.c4 { --seg: var(--series-4); }
+.c5 { --seg: var(--series-5); }
+
+.pool-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem 1rem;
+  margin: 0.6rem 0 0;
+  padding: 0;
+  list-style: none;
+  color: var(--text-dim);
+  font: 400 var(--fs-data) var(--font);
+
+  & li {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  & li.left {
+    color: var(--text-faint);
+    text-decoration: line-through;
+  }
+
+  & .swatch {
+    width: 0.7rem;
+    height: 0.7rem;
+    border-radius: var(--radius);
+    background: var(--seg, var(--line-2));
+  }
+}
+
+.pool-note {
+  margin: 0.4rem 0 0;
+  font-size: var(--fs-xs);
+}
+
+@media (max-width: 720px) {
+  .pools {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

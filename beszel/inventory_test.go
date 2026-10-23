@@ -30,3 +30,13 @@ func TestInventory(t *testing.T) {
 	_, err = inv.Systems(context.Background())
 	assert.ErrorIs(t, err, beszel.ErrToken, "a new token is a new client")
 }
+
+// Hub is the client of the settings, or ErrOff without them.
+func TestInventory_Hub(t *testing.T) {
+	t.Parallel()
+	inv := &beszel.Inventory{Settings: func(context.Context) (string, string, error) { return "http://hub", "t", nil }}
+	a, err := inv.Hub(context.Background())
+	assert.NoError(t, err)
+	b, _ := inv.Hub(context.Background())
+	assert.True(t, a == b)
+}
