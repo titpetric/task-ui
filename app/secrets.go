@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"os"
 	"strings"
@@ -13,15 +14,13 @@ import (
 	"github.com/titpetric/task-ui/storage"
 )
 
-// secrets returns the secret store: the services' secrets on the
-// instance's encryption key, the workspaces' on each workspace's key.
-// No SSH key encrypts or decrypts with it.
+// secrets returns the secret store: every secret on the instance's
+// encryption key, the workspaces' and the services'. No SSH key
+// encrypts or decrypts with it.
 func (a *App) secrets() *secret.Store {
 	keys := a.keys()
 	store := secret.New(storage.NewSecretStorage(a.DB), secret.NewVault(keys.Vault(storage.ScopeInstance)))
-	store.Workspaces = &secret.Workspaces{Rows: storage.NewWorkspaceStorage(a.DB), Keys: func(id string) secret.Keys {
-		return keys.Vault(keystore.ScopeWorkspace(id))
-	}}
+	store.Workspaces = &secret.Workspaces{Rows: storage.NewWorkspaceStorage(a.DB)}
 	return store
 }
 
@@ -47,25 +46,67 @@ func (a *App) copyDB(suffix string) func(context.Context) error {
 	}
 }
 
-// migrateSecrets puts every workspace secret on its workspace's key,
-// after copying the database to <db>.pre-workspace-keys, then every
-// integration on the instance's encryption key, after copying it to
-// <db>.pre-keysplit. Only these two read with the legacy SSH keys, the
-// ones in TASK_UI_SSH_DIR that encrypted the secrets before. With
+// migrateSecrets puts every secret on the instance's encryption key:
+// the workspaces' secrets, after copying the database to
+// <db>.pre-instance-key, then the integrations, after copying it to
+// <db>.pre-keysplit. They read with the legacy keys, the SSH keys in
+// TASK_UI_SSH_DIR that encrypted the secrets before and the
+// workspaces' encryption keys. A workspace's encryption key whose
+// secrets the instance's key opens then goes, its row and its files;
+// one with a secret it does not open stays, with a warning. With
 // nothing to migrate they copy nothing.
 func (a *App) migrateSecrets(ctx context.Context) error {
-	store := a.secrets()
-	store.Legacy = secret.NewVault(secret.DirKeys{Store: &sshkey.Store{Dir: a.Config.SSHDir}})
-	result, err := store.Migrate(ctx, a.copyDB("pre-workspace-keys"))
+	keys := a.keys()
+	old, err := keys.WorkspaceEncryptKeys(ctx)
 	if err != nil {
 		return err
 	}
-	logMigration("secrets on their workspace's key", result)
+	legacy := secret.Chain{secret.DirKeys{Store: &sshkey.Store{Dir: a.Config.SSHDir}}}
+	for _, key := range old {
+		legacy = append(legacy, keys.Vault(key.Scope))
+	}
+	store := a.secrets()
+	store.Legacy = secret.NewVault(legacy)
+	result, err := store.Migrate(ctx, a.copyDB("pre-instance-key"))
+	if err != nil {
+		return err
+	}
+	logMigration("secrets on the instance's encryption key", result)
 	result, err = store.MigrateInstance(ctx, a.copyDB("pre-keysplit"))
 	if err != nil {
 		return err
 	}
 	logMigration("integrations on the instance's encryption key", result)
+	return a.dropWorkspaceKeys(ctx, keys, store, old)
+}
+
+// dropWorkspaceKeys removes the workspaces' encryption keys whose
+// secrets the instance's key opens: one encryption key per instance.
+func (a *App) dropWorkspaceKeys(ctx context.Context, keys *keystore.Local, store *secret.Store, old []keystore.Key) error {
+	workspaces := storage.NewWorkspaceStorage(a.DB)
+	for _, key := range old {
+		row, err := workspaces.Get(ctx, key.Workspace())
+		if err != nil {
+			slog.Warn("workspace encryption key kept: its workspace is gone", "name", key.Name, "error", err)
+			continue
+		}
+		held, err := store.Encrypted(ctx, row.Folder)
+		if err != nil {
+			return err
+		}
+		unopened, err := store.Unopened(ctx, row.Folder)
+		if err != nil {
+			return err
+		}
+		if unopened > 0 {
+			slog.Warn("workspace encryption key kept: the instance's key does not open some of its secrets", "name", key.Name, "workspace", row.Folder, "secrets", len(held), "unopened", unopened)
+			continue
+		}
+		if err := keys.Purge(ctx, key.Name); err != nil {
+			return fmt.Errorf("removing the workspace encryption key %s: %w", key.Name, err)
+		}
+		slog.Info("workspace encryption key removed: the instance's key encrypts its secrets", "name", key.Name, "workspace", row.Folder, "secrets", len(held))
+	}
 	return nil
 }
 

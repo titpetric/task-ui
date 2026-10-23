@@ -1,11 +1,18 @@
 package api
 
+import (
+	"errors"
+)
+
+// ErrWorkspaceEncrypt refuses an encryption key for a workspace: the
+// instance's one encryption key encrypts every secret.
+var ErrWorkspaceEncrypt = errors.New("a workspace has no encryption key: the instance's encryption key encrypts every secret, one per instance")
+
 // WorkspaceKeyRequest generates a workspace key, or uploads a private
 // key, or sets whose runs get one of the workspace's SSH keys.
 type WorkspaceKeyRequest struct {
-	// Encrypt points the request at the workspace's encryption key:
-	// generate makes it, or rotates it to new material; upload takes one when
-	// there is none. The previous material stays as a backup.
+	// Encrypt names a workspace's encryption key, which no workspace
+	// has any more: true answers 400, ErrWorkspaceEncrypt.
 	Encrypt bool `json:"encrypt"`
 	// Algo, or Type, and Bits are the SSH key to generate: ed25519, the
 	// default, ecdsa or rsa.

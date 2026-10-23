@@ -178,7 +178,7 @@ func (h *Handlers) restore(ctx context.Context, bundle *workspace.Bundle, target
 	if err := h.restoreEnvFiles(ctx, target, manifest.EnvFiles, undo); err != nil {
 		return nil, nil, "", err
 	}
-	if err := h.restoreSecrets(ctx, row, manifest.Secrets, undo); err != nil {
+	if err := h.restoreSecrets(ctx, row, manifest.Secrets, keystore.BundledEncryptKeys(bundle.Keys), undo); err != nil {
 		return nil, nil, "", err
 	}
 	projects, err := h.restoreProjects(ctx, target, manifest.Projects, undo)
@@ -247,18 +247,20 @@ func (h *Handlers) restoreEnvFiles(ctx context.Context, target string, files []m
 	return nil
 }
 
-// restoreSecrets adds the bundle's secrets under the target, their
-// ciphertext as it came: each must open with the bundled key. A row
-// left at the same scope and name takes the bundle's, as an env file's
-// does.
-func (h *Handlers) restoreSecrets(ctx context.Context, row *model.Workspace, secrets []model.Secret, undo *rollback) error {
+// restoreSecrets adds the bundle's secrets under the target, encrypted
+// for this instance's encryption key. A bundle carries them plain
+// inside its passphrase; an older one carries them encrypted, with the
+// workspace's encryption key that opens them, which stays out of the
+// key folder. A row left at the same scope and name takes the
+// bundle's, as an env file's does.
+func (h *Handlers) restoreSecrets(ctx context.Context, row *model.Workspace, secrets []model.Secret, bundled [][]byte, undo *rollback) error {
 	if len(secrets) == 0 {
 		return nil
 	}
 	if h.opts.Secrets == nil || h.opts.Secrets.Workspaces == nil {
 		return fmt.Errorf("%w holds secrets, and this instance keeps none per workspace", errImport)
 	}
-	vault := secret.NewVault(h.opts.Keys.Vault(keystore.ScopeWorkspace(row.ID)))
+	old := secret.NewVault(secret.PEMKeys(bundled))
 	for _, s := range secrets {
 		scope := workspace.AbsoluteScope(row.Folder, s.Scope)
 		if s.Scope != storage.ScopeWorkspace {
@@ -271,10 +273,18 @@ func (h *Handlers) restoreSecrets(ctx context.Context, row *model.Workspace, sec
 		if !storage.ValidName(s.Name) {
 			return fmt.Errorf("%w: %q is not a variable name", errImport, s.Name)
 		}
-		if _, err := vault.Decrypt(s.Content); err != nil || !secret.Encrypted(s.Content) {
-			return fmt.Errorf("%w: the secret %s does not open with the bundled encryption key", errImport, s.Name)
+		plain := s.Content
+		if secret.Encrypted(s.Content) {
+			var err error
+			if plain, err = old.Decrypt(s.Content); err != nil {
+				return fmt.Errorf("%w: the secret %s does not open with the bundled encryption key", errImport, s.Name)
+			}
 		}
-		added := &model.Secret{Scope: scope, Name: s.Name, Content: s.Content}
+		content, err := h.opts.Secrets.Vault.Encrypt(plain)
+		if err != nil {
+			return err
+		}
+		added := &model.Secret{Scope: scope, Name: s.Name, Content: content}
 		previous, err := h.opts.Secrets.Secrets.Get(ctx, *added)
 		if err != nil && !errors.Is(err, storage.ErrNotFound) {
 			return err

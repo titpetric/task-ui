@@ -311,8 +311,7 @@ func fakeSSH(t *testing.T) string {
 	return script
 }
 
-// workspaceVaults keeps the secrets of each workspace on its key of the
-// key folder.
+// workspaceVaults finds the workspace of each secret's scope.
 func (f *fixture) workspaceVaults() *secret.Workspaces {
-	return &secret.Workspaces{Rows: f.opts.Workspaces, Keys: func(id string) secret.Keys { return f.opts.Keys.Vault(keystore.ScopeWorkspace(id)) }}
+	return &secret.Workspaces{Rows: f.opts.Workspaces}
 }

@@ -9,7 +9,7 @@
 		{{- if $keyed }}
 		<a class="btn btn-primary" href="/settings/secrets/new{{ with .SecretWorkspace }}?scope=workspace:{{ . }}{{ end }}">Add secret</a>
 		{{- else }}
-		<button class="btn btn-primary" type="button" disabled title="No workspace has an encryption key yet">Add secret</button>
+		<button class="btn btn-primary" type="button" disabled title="The instance has no encryption key yet">Add secret</button>
 		{{- end }}
 	</div>
 </div>
@@ -26,23 +26,13 @@
 		<div class="actions">
 			{{- if .Key }}
 			<a class="btn btn-sm" href="/settings/secrets/new?scope={{ .Shared }}">Add secret</a>
-			<details class="more-menu">
-				<summary class="btn-icon" title="More for {{ .Workspace }}" aria-label="More for {{ .Workspace }}"><svg class="ic"><use href="#i-more"/></svg></summary>
-				<div class="more-list" role="menu">
-					<form data-api="/api/workspaces/{{ .Workspace }}/keys/generate" data-method="POST" data-next="/settings/secrets?rekeyed={rekeyed}{{ if $.SecretWorkspace }}&workspace={{ .Workspace }}{{ end }}#ws-{{ .Workspace }}" data-confirm="Rotate the encryption key of {{ .Workspace }}? task-ui generates a new key, keeps the current one as a backup, and re-encrypts the workspace's {{ len .Secrets }} secret{{ if ne (len .Secrets) 1 }}s{{ end }}. Runs see no change." data-confirm-ok="Rotate">
-						<input type="hidden" name="encrypt" value="true" data-type="bool">
-						<input type="hidden" name="comment" value="{{ .Key.Comment }}">
-						<button class="more-item" type="submit" role="menuitem"><svg class="ic"><use href="#i-rotate"/></svg> Rotate encryption key</button>
-					</form>
-				</div>
-			</details>
 			{{- else }}
-			<button class="btn btn-sm" type="button" disabled title="Add an encryption key to {{ .Workspace }} first">Add secret</button>
+			<button class="btn btn-sm" type="button" disabled title="The instance has no encryption key yet">Add secret</button>
 			{{- end }}
 		</div>
 	</div>
 	{{- if not .Key }}
-	<div class="alert signal secret-nokey"><svg class="ic"><use href="#i-secret"/></svg> Add an encryption key to store secrets in {{ .Workspace }}. <a href="/settings/keys#ws-{{ .Workspace }}">Keys</a></div>
+	<div class="alert signal secret-nokey"><svg class="ic"><use href="#i-secret"/></svg> The instance has no encryption key, so it stores no secret. <a href="/settings/instance#keys">Instance</a></div>
 	{{- end }}
 	{{- if or .Key .Secrets }}
 	<div class="table-wrap">

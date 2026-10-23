@@ -70,7 +70,7 @@ func (h *Handlers) keyWorkspaces(ctx context.Context, folders []*folder.Folder) 
 	for _, ws := range workspaces {
 		index[ws.Folder] = len(rows)
 		scope := keystore.ScopeWorkspace(ws.ID)
-		row := view.KeyWorkspace{Workspace: ws, Encrypt: h.opts.Keys.EncryptKey(ctx, scope)}
+		row := view.KeyWorkspace{Workspace: ws}
 		row.SSH, _ = h.opts.Keys.Of(ctx, scope, keystore.PurposeSSH)
 		rows = append(rows, row)
 	}

@@ -63,9 +63,9 @@
 </section>
 {{- end }}
 
-{{- /* workspacekeys are a workspace's keys: the encryption key its
-     secrets use, which no run gets, and the SSH keys its runs get, each
-     to every run in the workspace or to the roles and users linked. */}}
+{{- /* workspacekeys are a workspace's SSH keys, which its runs get,
+     each to every run in the workspace or to the roles and users
+     linked. */}}
 {{- define "workspacekeys" }}
 {{- $ws := .Workspace }}{{ $base := printf "/settings/workspaces/%s/keys" $ws.Folder }}{{ $api := printf "/api/workspaces/%s/keys" $ws.Folder }}
 <section class="block workspace-keys" id="keys">
@@ -76,40 +76,11 @@
 			<a class="btn btn-sm btn-primary" href="{{ $base }}/generate">Generate key</a>
 		</div>
 	</div>
-	<p class="dim">The workspace's own keys, named <span class="mono">workspace_{{ $ws.Folder }}_&lt;name&gt;_&lt;algorithm&gt;</span> in the key folder, <span class="mono-break">{{ .KeysDir }}</span>, out of the checkout. Its runs get its SSH keys in their ssh agent, next to the instance keys linked to them. A key with no link goes to every run in the workspace; links limit it to the checked roles and users. The encryption key protects the workspace's secrets, and no run gets it.</p>
+	<p class="dim">The workspace's own keys, named <span class="mono">workspace_{{ $ws.Folder }}_&lt;name&gt;_&lt;algorithm&gt;</span> in the key folder, <span class="mono-break">{{ .KeysDir }}</span>, out of the checkout. Its runs get its SSH keys in their ssh agent, next to the instance keys linked to them. A key with no link goes to every run in the workspace; links limit it to the checked roles and users. The instance's encryption key protects the workspace's secrets.</p>
 	<div class="table-wrap">
 	<table class="table keys">
 		<thead><tr><th>Name</th><th>Fingerprint</th><th>Who gets it</th><th>Date</th><th>Actions</th></tr></thead>
 		<tbody>
-		{{- with .EncryptKey }}
-			<tr class="encrypt-key">
-				<td class="key"><span class="mono">{{ .Name }}</span> <span class="badge signal" title="This key encrypts the workspace's secrets"><svg class="ic"><use href="#i-secret"/></svg> encryption</span></td>
-				<td class="fingerprint"><span class="kind dim">{{ .Kind }}</span>{{ .Fingerprint }}</td>
-				<td class="nowrap"><span class="faint">no run</span></td>
-				<td class="nowrap" title="{{ stamp .CreatedAt }}">{{ ago .CreatedAt }}</td>
-				<td class="actions">
-					<button type="button" class="btn-icon" data-copy="{{ .PublicKey }}" title="Copy public key" aria-label="Copy public key"><svg class="ic"><use href="#i-copy"/></svg></button>
-					<form data-api="{{ $api }}/generate" data-method="POST" data-next="/settings/workspaces/{{ $ws.Folder }}?rekeyed={rekeyed}#keys" data-confirm="Rotate the encryption key of {{ $ws.Folder }}? task-ui keeps the current material as a backup and re-encrypts the workspace's secrets with the new one." data-confirm-ok="Rotate">
-						<input type="hidden" name="encrypt" value="true" data-type="bool">
-						<input type="hidden" name="comment" value="{{ .Comment }}">
-						<button class="btn-icon" type="submit" title="Rotate: generate a new encryption key" aria-label="Rotate the encryption key"><svg class="ic"><use href="#i-rotate"/></svg></button>
-					</form>
-				</td>
-			</tr>
-		{{- else }}
-			<tr class="encrypt-key">
-				<td class="key"><span class="badge bad">missing</span> <span class="badge signal"><svg class="ic"><use href="#i-secret"/></svg> encryption</span></td>
-				<td colspan="3" class="dim">No encryption key. The workspace can't store secrets until it has one.</td>
-				<td class="actions">
-					<a class="btn-icon" href="{{ $base }}/upload?encrypt=1" title="Upload an encryption key you have" aria-label="Upload an encryption key"><svg class="ic"><use href="#i-download"/></svg></a>
-					<form data-api="{{ $api }}/generate" data-method="POST" data-next="/settings/workspaces/{{ $ws.Folder }}?notice=Encryption+key+added#keys">
-						<input type="hidden" name="encrypt" value="true" data-type="bool">
-						<input type="hidden" name="comment" value="task-ui {{ $ws.Folder }}">
-						<button class="btn-icon" type="submit" title="Generate an encryption key" aria-label="Generate an encryption key"><svg class="ic"><use href="#i-key"/></svg></button>
-					</form>
-				</td>
-			</tr>
-		{{- end }}
 		{{- range .Keys }}
 			<tr>
 				<td class="key"><span class="mono">{{ .Name }}</span>{{ with .Comment }}<div class="faint">{{ . }}</div>{{ end }}</td>

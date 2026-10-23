@@ -6,13 +6,12 @@ import (
 )
 
 // KeyWorkspace is a workspace on the keys page: its projects, how many
-// secrets it stores, its one encryption key, nil while it has none, and
-// its SSH keys, backups left out.
+// secrets it stores, and its SSH keys, backups left out. The instance's
+// encryption key encrypts its secrets.
 type KeyWorkspace struct {
 	Workspace model.Workspace
 	Projects  []string
 	Secrets   int
-	Encrypt   *keystore.Key
 	SSH       []keystore.Key
 }
 

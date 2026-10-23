@@ -9,21 +9,20 @@ import (
 )
 
 // Store is the secrets as the rest of task-ui reads them: plain on the
-// way in and out, encrypted in storage. The workspace's key encrypts a
-// workspace's secrets, those it shares with its folders and each
-// folder's own; the instance key encrypts a service's, such as an
+// way in and out, encrypted in storage with the instance's one
+// encryption key: a workspace's secrets, those it shares with its
+// folders and each folder's own, and a service's, such as an
 // integration's.
 type Store struct {
 	Secrets *storage.SecretStorage
-	// Vault is the instance vault: it encrypts the services' secrets,
-	// and every secret when Workspaces is nil.
+	// Vault is the instance vault: it encrypts every secret.
 	Vault *Vault
-	// Workspaces finds the workspace of every other scope and the
-	// vault of its key. Nil keeps every secret on Vault and every
-	// folder in the default workspace.
+	// Workspaces finds the workspace of a scope. Nil keeps every folder
+	// in the default workspace.
 	Workspaces *Workspaces
-	// Legacy is the vault over the SSH keys that encrypted the secrets
-	// before encryption had keys of its own. Only the migrations read
+	// Legacy is the vault over the keys that encrypted the secrets
+	// before the instance's key encrypted them all: the SSH keys of old
+	// and the workspaces' encryption keys. Only the migrations read
 	// with it, and nothing writes for it; the store that serves
 	// requests has none.
 	Legacy *Vault
@@ -34,16 +33,10 @@ func New(secrets *storage.SecretStorage, vault *Vault) *Store {
 	return &Store{Secrets: secrets, Vault: vault}
 }
 
-// vault returns the vault of a scope's secrets.
-func (s *Store) vault(ctx context.Context, scope string) (*Vault, error) {
-	if s.Workspaces == nil || Service(scope) {
-		return s.Vault, nil
-	}
-	row, err := s.Workspaces.Of(ctx, scope)
-	if err != nil {
-		return nil, err
-	}
-	return s.Workspaces.Vault(row), nil
+// vault returns the vault of a scope's secrets: the instance's, one
+// encryption key for every secret.
+func (s *Store) vault(context.Context, string) (*Vault, error) {
+	return s.Vault, nil
 }
 
 // Workspace returns the folder of the workspace a scope belongs to.
@@ -180,7 +173,8 @@ func (s *Store) OnInstance(ctx context.Context) (int, error) {
 	return len(secrets), err
 }
 
-// instance returns the rows the instance key encrypts.
+// instance returns the rows of the services' secrets, and every row
+// without Workspaces.
 func (s *Store) instance(ctx context.Context) ([]model.Secret, error) {
 	return s.rows(ctx, func(scope string) (bool, error) {
 		return s.Workspaces == nil || Service(scope), nil
@@ -219,8 +213,7 @@ func (s *Store) inWorkspace(ctx context.Context, workspace string) ([]model.Secr
 }
 
 // Encrypted returns the rows of a workspace's secrets as storage keeps
-// them, encrypted to its key: its shared ones and its folders'. An
-// export carries them unchanged.
+// them, encrypted: its shared ones and its folders'.
 func (s *Store) Encrypted(ctx context.Context, workspace string) ([]model.Secret, error) {
 	return s.inWorkspace(ctx, workspace)
 }
@@ -246,14 +239,30 @@ func (s *Store) RekeyInstance(ctx context.Context, exclude ...string) (int, erro
 	return s.rekey(ctx, secrets, exclude)
 }
 
-// RekeyWorkspace writes a workspace's secrets again for its current
-// key, after a rotation; the backup of the previous key opens them.
-func (s *Store) RekeyWorkspace(ctx context.Context, workspace string) (int, error) {
+// Plain returns a workspace's secrets decrypted, its shared ones and
+// its folders': an export carries them inside its passphrase.
+func (s *Store) Plain(ctx context.Context, workspace string) ([]model.Secret, error) {
+	secrets, err := s.inWorkspace(ctx, workspace)
+	if err != nil {
+		return nil, err
+	}
+	return secrets, s.openAll(ctx, secrets)
+}
+
+// Unopened counts a workspace's secrets the instance's encryption key
+// does not open: a workspace key that encrypted them goes only at 0.
+func (s *Store) Unopened(ctx context.Context, workspace string) (int, error) {
 	secrets, err := s.inWorkspace(ctx, workspace)
 	if err != nil {
 		return 0, err
 	}
-	return s.rekey(ctx, secrets, nil)
+	n := 0
+	for _, secret := range secrets {
+		if !Encrypted(secret.Content) || !opens(s.Vault, secret.Content) {
+			n++
+		}
+	}
+	return n, nil
 }
 
 // rekey writes rows again, each with its scope's vault; the excluded

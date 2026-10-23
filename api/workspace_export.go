@@ -104,7 +104,7 @@ func (h *Handlers) bundle(ctx context.Context, row *model.Workspace) (*workspace
 		}
 	}
 	if h.opts.Secrets != nil && h.opts.Secrets.Workspaces != nil {
-		secrets, err := h.opts.Secrets.Encrypted(ctx, name)
+		secrets, err := h.opts.Secrets.Plain(ctx, name)
 		if err != nil {
 			return nil, err
 		}

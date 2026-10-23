@@ -25,8 +25,8 @@ func (h *Handlers) keyWorkspace(w http.ResponseWriter, r *http.Request) *model.W
 	return workspace
 }
 
-// workspaceKeys puts a workspace's keys on its page: the encryption
-// key, the SSH keys, and whom each goes to. Without the key folder the
+// workspaceKeys puts a workspace's SSH keys on its page, and whom each
+// goes to. Without the key folder the
 // page has none.
 func (h *Handlers) workspaceKeys(r *http.Request, p *view.Page) {
 	p.KeyPolicies, p.KeyUsers = map[string][]string{}, map[string][]string{}
@@ -34,7 +34,6 @@ func (h *Handlers) workspaceKeys(r *http.Request, p *view.Page) {
 		return
 	}
 	scope := keystore.ScopeWorkspace(p.Workspace.ID)
-	p.EncryptKey = h.opts.Keys.EncryptKey(r.Context(), scope)
 	p.Keys, _ = h.opts.Keys.Of(r.Context(), scope, keystore.PurposeSSH)
 	p.KeysDir = h.opts.Keys.Dir
 	for _, key := range p.Keys {
@@ -67,7 +66,7 @@ func (h *Handlers) workspaceKeyGenerate(w http.ResponseWriter, r *http.Request) 
 }
 
 // workspaceKeyUpload shows the form that uploads an SSH key for a
-// workspace, or with ?encrypt=1 its encryption key.
+// workspace.
 func (h *Handlers) workspaceKeyUpload(w http.ResponseWriter, r *http.Request) {
 	if !h.require(w, r, "workspace/edit") {
 		return
@@ -76,16 +75,8 @@ func (h *Handlers) workspaceKeyUpload(w http.ResponseWriter, r *http.Request) {
 	if workspace == nil {
 		return
 	}
-	title := "Upload key"
-	encrypt := r.URL.Query().Get("encrypt") == "1"
-	if encrypt {
-		title = "Upload encryption key"
-	}
-	p := h.workspaceKeyPage(r, workspace, title, title)
+	p := h.workspaceKeyPage(r, workspace, "Upload key", "Upload key")
 	p.Form = map[string]string{}
-	if encrypt {
-		p.Form["encrypt"] = "true"
-	}
 	h.render(w, http.StatusOK, "workspace_key_upload", p)
 }
 

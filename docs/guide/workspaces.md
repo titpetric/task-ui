@@ -205,24 +205,16 @@ isn't pulled.
 
 ## Keys
 
-Every workspace has keys of its own, in the key folder,
+Every workspace has SSH keys of its own, in the key folder,
 `TASK_UI_SSH_DIR`, out of its checkout, where a `git add -A` would
 publish them: `workspace_<folder>_<name>_<algorithm>.key` and `.pub`,
 the files `0600`. The **Keys** section of a workspace's configure page,
 `/settings/workspaces/malta`, lists them with their fingerprints, never
 a private key.
 
-- The **encryption key**, ed25519 or RSA, exactly one,
-  `workspace_malta_encryption_ed25519`, encrypts the workspace's
-  [secrets](settings.md#secrets): its shared ones and its projects'. A
-  workspace starts without one and stores no secrets until a user with
-  `workspace/edit` adds it: **Generate** makes one, **Upload** takes one
-  you have, on this page or on the [Keys](settings.md#keys) page.
-  Rotate writes new material for it, here, on the Keys page or from the ⋯
-  menu of the workspace on the Secrets page; the previous material stays
-  as a backup, and task-ui re-encrypts the workspace's secrets for the
-  new one. No run gets it.
-- The **SSH keys**, zero or more, are for the workspace's runs.
+- The **SSH keys**, zero or more, are for the workspace's runs. A
+  workspace has no encryption key: the instance's encrypts its
+  [secrets](settings.md#secrets), as every secret.
   Generate or upload any number, each under a name of its own,
   `workspace_malta_deploy_ed25519`. A key without a link goes to every
   run in the workspace; checking roles or users narrows it to their
@@ -253,10 +245,9 @@ curl -s https://task.example.com/api/workspaces/malta/keys \
 
 `PUT /api/workspaces/malta/keys/workspace_malta_deploy_ed25519` with
 `{policies, users}` sets the links, empty for every run, and `DELETE`
-retires the key. `"encrypt": true` on `generate` makes the encryption
-key, or rotates the one there to new material, and on `upload` takes one;
-`rekeyed` counts the secrets task-ui wrote again for it. Listing the keys takes `workspace/view`; the other key routes take
-`workspace/edit`.
+retires the key. `"encrypt": true` on `generate` or `upload` answers
+`400`: one encryption key per instance. Listing the keys takes
+`workspace/view`; the other key routes take `workspace/edit`.
 
 ## Secrets
 
@@ -266,9 +257,8 @@ A workspace's secrets reach its runs as variables (see
 `malta/deploy`, reach that project and win over a shared one of the same
 name. The shared secrets of `_` reach the projects at the root and no
 named workspace: a project in `malta` gets `malta`'s shared secrets and
-its own, never `_`'s. The workspace's encryption key encrypts them all,
-and a workspace without one stores none: the Secrets page turns its
-**Add secret** off and the API answers `409`. The Secrets page groups
+its own, never `_`'s. The instance's encryption key encrypts them all.
+The Secrets page groups
 them by workspace, each project's under its name.
 
 ## Move to another instance
@@ -286,10 +276,12 @@ The bundle carries:
 - its projects, by folder relative to the workspace, with their
   repository, branch and settings;
 - its env files, by folder and path;
-- its secrets as ciphertext: the bundled encryption key opens them, so
-  their values never leave it;
-- its private keys, by name, and the links of its SSH keys; an import
-  names them after its folder, `workspace_<folder>_...`.
+- its secrets, inside the passphrase, which the importing instance
+  encrypts with its own encryption key; an older bundle's secrets come
+  encrypted with the workspace's encryption key, which opens them on
+  import and stays out of the key folder;
+- its private SSH keys, by name, and their links; an import names them
+  after its folder, `workspace_<folder>_...`.
 
 Schedules, workflows, runs and artifacts stay on the instance, as do the
 integrations, which the instance's encryption key encrypts. The bundle of `_` leaves
@@ -308,13 +300,10 @@ projects keeps nothing: no checkout, no keys, no rows. Env files and
 secrets that a removed workspace of the same folder left behind take
 the bundle's content.
 
-The import keeps a key to one use too. A bundle whose encryption key a
-workspace on this instance holds answers `409` before it clones anything,
-so a workspace exported and imported again on the same instance needs
-the original removed first, or another instance. Two workspaces never
-share an encryption key, and rotating one never leaves the other on the
-old key. The same goes for a bundled key that this instance holds for
-the other use. The bundle's SSH keys may also be SSH keys here.
+The import keeps a key to one use too. A bundle whose SSH key this
+instance holds answers `409` before it clones anything, so a workspace
+exported and imported again on the same instance needs the original
+removed first, or another instance.
 
 The bundle of the default workspace, `_`, imports as a named workspace,
 so it needs a folder, such as `legacy`. Its projects move under that

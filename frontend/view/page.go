@@ -213,11 +213,9 @@ type Page struct {
 	// KeyHolders are the roles and the users, and the keys each gets.
 	KeyHolders []KeyHolder
 	Key        *keystore.Key
-	// InstanceKey is the instance's encryption key, the services'
-	// secrets', such as the integrations' settings; EncryptKey is a
-	// workspace's encryption key, on its pages.
+	// InstanceKey is the instance's encryption key, which encrypts
+	// every secret.
 	InstanceKey *keystore.Key
-	EncryptKey  *keystore.Key
 	Users       []model.User
 	// Account is the user a form or a profile shows, and AccountMCP
 	// their MCP token.

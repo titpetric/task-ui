@@ -8,11 +8,12 @@ import (
 	"github.com/titpetric/task-ui/sshkey"
 )
 
-// Bundle returns the private keys of a scope as a workspace export
-// bundles them, by path: encrypt/<name>.key and ssh/<name>.key, and
-// the roles and users of each SSH key by name.
+// Bundle returns the SSH keys of a scope as a workspace export bundles
+// them, by path, ssh/<name>.key, and the roles and users of each by
+// name. No encryption key leaves: the instance's encrypts every secret,
+// and an export carries the secrets inside its passphrase.
 func (l *Local) Bundle(ctx context.Context, scope string) (map[string][]byte, map[string][]string, map[string][]string, error) {
-	keys, err := l.Of(ctx, scope, "")
+	keys, err := l.Of(ctx, scope, PurposeSSH)
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -78,6 +79,9 @@ func (l *Local) CheckBundle(ctx context.Context, files map[string][]byte) error 
 		return err
 	}
 	for _, key := range keys {
+		if key.purpose == PurposeEncrypt {
+			continue
+		}
 		fp, err := sshkey.Fingerprint(key.data)
 		if err != nil {
 			return fmt.Errorf("the bundle's key %s: %w", key.name, err)
@@ -87,4 +91,21 @@ func (l *Local) CheckBundle(ctx context.Context, files map[string][]byte) error 
 		}
 	}
 	return nil
+}
+
+// BundledEncryptKeys returns the private encryption keys an older
+// bundle carries, encrypt/<name>.key, which open the secrets it
+// carries encrypted.
+func BundledEncryptKeys(files map[string][]byte) [][]byte {
+	var result [][]byte
+	keys, err := unbundle(files, "", "x")
+	if err != nil {
+		return nil
+	}
+	for _, key := range keys {
+		if key.purpose == PurposeEncrypt {
+			result = append(result, key.data)
+		}
+	}
+	return result
 }

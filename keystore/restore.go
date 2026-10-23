@@ -4,9 +4,11 @@ import (
 	"context"
 )
 
-// Restore takes the keys of a bundle of the workspace source into a
-// workspace's scope under folder, with the links the bundle names for its
-// SSH keys by their names, and returns the names it took.
+// Restore takes the SSH keys of a bundle of the workspace source into a
+// workspace's scope under folder, with the links the bundle names for
+// them by their names, and returns the names it took. An encryption
+// key of an older bundle stays out: the instance's encrypts every
+// secret.
 func (l *Local) Restore(ctx context.Context, scope, source, folder string, files map[string][]byte, roles, users map[string][]string) ([]string, error) {
 	keys, err := unbundle(files, source, folder)
 	if err != nil {
@@ -14,6 +16,9 @@ func (l *Local) Restore(ctx context.Context, scope, source, folder string, files
 	}
 	var taken []string
 	for _, b := range keys {
+		if b.purpose == PurposeEncrypt {
+			continue
+		}
 		key, err := l.Import(ctx, Spec{Name: b.name, Purpose: b.purpose, Scope: scope}, b.data)
 		if err != nil {
 			return taken, err

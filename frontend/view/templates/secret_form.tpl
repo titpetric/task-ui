@@ -3,7 +3,7 @@
 <div class="page-head">
 	<div>
 		<h2>{{ .Title }}</h2>
-		<p>task-ui encrypts the value with its workspace's key and never shows it again. A workspace secret goes to every project in that workspace and no other. Saving an existing name replaces its value. A workspace needs an encryption key before it can store secrets: add one under <a href="/settings/keys">Keys</a>.</p>
+		<p>task-ui encrypts the value with the instance's encryption key and never shows it again. A workspace secret goes to every project in that workspace and no other. Saving an existing name replaces its value.</p>
 	</div>
 </div>
 

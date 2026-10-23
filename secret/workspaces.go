@@ -9,14 +9,11 @@ import (
 	"github.com/titpetric/task-ui/storage"
 )
 
-// Workspaces finds the workspace a secret's scope belongs to and the
-// vault of that workspace's encryption key. workspace:<folder> names
-// its workspace; a folder's is its first segment when that is a named
-// workspace, else the default one, _.
+// Workspaces finds the workspace a secret's scope belongs to.
+// workspace:<folder> names its workspace; a folder's is its first
+// segment when that is a named workspace, else the default one, _.
 type Workspaces struct {
 	Rows *storage.WorkspaceStorage
-	// Keys returns the encryption key of a workspace, by ID.
-	Keys func(id string) Keys
 }
 
 // Service reports whether a scope is a service's, such as
@@ -57,9 +54,4 @@ func (w *Workspaces) Of(ctx context.Context, scope string) (*model.Workspace, er
 		return nil, fmt.Errorf("the workspace %s of %s: %w", name, scope, err)
 	}
 	return row, nil
-}
-
-// Vault returns the vault over a workspace's encryption key.
-func (w *Workspaces) Vault(row *model.Workspace) *Vault {
-	return NewVault(w.Keys(row.ID))
 }

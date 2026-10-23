@@ -162,9 +162,14 @@ func (h *Handlers) secretEdit(w http.ResponseWriter, r *http.Request) {
 }
 
 // secretGroups sorts the secrets and the folders by workspace, in the
-// order of the workspaces, the default one first.
+// order of the workspaces, the default one first; each takes the
+// instance's encryption key, which encrypts every secret.
 func (h *Handlers) secretGroups(ctx context.Context, secrets []model.Secret, folders []*folder.Folder) []view.SecretGroup {
 	var groups []view.SecretGroup
+	var key *keystore.Key
+	if h.opts.Keys != nil {
+		key = h.opts.Keys.EncryptKey(ctx, storage.ScopeInstance)
+	}
 	index := map[string]int{}
 	add := func(name, title string, key *keystore.Key) int {
 		if i, ok := index[name]; ok {
@@ -177,26 +182,21 @@ func (h *Handlers) secretGroups(ctx context.Context, secrets []model.Secret, fol
 		groups = append(groups, view.SecretGroup{Workspace: name, Title: title, Key: key})
 		return index[name]
 	}
-	add(model.Default, "Default", nil)
+	add(model.Default, "Default", key)
 	if h.opts.Workspaces != nil {
 		workspaces, _ := h.opts.Workspaces.List(ctx)
 		for _, ws := range workspaces {
-			var key *keystore.Key
-			if h.opts.Keys != nil {
-				key = h.opts.Keys.EncryptKey(ctx, keystore.ScopeWorkspace(ws.ID))
-			}
-			i := add(ws.Folder, ws.Title, key)
-			groups[i].Key = key
+			add(ws.Folder, ws.Title, key)
 		}
 	}
 	for _, secret := range secrets {
 		name, _ := h.opts.Secrets.Workspace(ctx, secret.Scope)
-		i := add(name, "", nil)
+		i := add(name, "", key)
 		groups[i].Secrets = append(groups[i].Secrets, secret)
 	}
 	for _, f := range folders {
 		name, _ := h.opts.Secrets.Workspace(ctx, f.ID)
-		i := add(name, "", nil)
+		i := add(name, "", key)
 		groups[i].Folders = append(groups[i].Folders, f.ID)
 	}
 	return groups

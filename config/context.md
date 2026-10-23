@@ -73,7 +73,7 @@ no permission of its own.
 ## Workspaces (`workspace`)
 
 A workspace is a checkout under the root that holds projects, with its
-own encryption key, SSH keys and secrets, kept from other workspaces.
+own SSH keys and secrets, kept from other workspaces.
 The default workspace, `_`, is the root itself. A workspace exports and
 imports between instances. Page: `/settings/workspaces`; API:
 `/api/workspaces`.
@@ -149,15 +149,15 @@ the secrets appended on save and before every run. API: `/api/env`.
 ## Secrets (`secret`)
 
 Variables added to the environment of runs, encrypted with the
-workspace's key. A secret's scope is a workspace, `workspace:<name>`,
+instance's one encryption key. A secret's scope is a workspace, `workspace:<name>`,
 or a folder. A value is never shown again once saved. Page:
 `/settings/secrets`; API: `/api/secrets`.
 
 ## Keys (`key`)
 
 Every key of the instance and its workspaces, in one folder, named with
-its algorithm, as `deploy_rsa4096`: encryption keys for the secrets,
-and SSH keys that runs get through their ssh agent by the roles and
+its algorithm, as `deploy_rsa4096`: the instance's encryption key for
+the secrets, and SSH keys that runs get through their ssh agent by the roles and
 users they link, one of which git pulls with. A key encrypts or
 connects, never both. Private keys are never shown. An MCP agent user
 with Allow Read Private, `key/read`, which admins hold and no other role
