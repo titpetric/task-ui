@@ -30,8 +30,8 @@ func stubAtkins(t *testing.T, listing string) {
 	assert.NoError(t, os.WriteFile(command, []byte(script), 0o755))
 
 	// A parallel test that forks while the file is open for writing
-	// hands the child the open file until it execs: wait for one clean
-	// run.
+	// leaves the child holding the open file until it execs: wait for
+	// one clean run.
 	for range 100 {
 		if err := exec.Command(command, "warm").Run(); !errors.Is(err, syscall.ETXTBSY) {
 			break
@@ -127,7 +127,7 @@ func TestAtkinsDetectorWithoutAPipeline(t *testing.T) {
 }
 
 // A pipeline atkins cannot read still answers, so the folder lists what
-// is wrong rather than nothing.
+// is wrong.
 func TestAtkinsDetectorOnABrokenPipeline(t *testing.T) {
 	stubAtkins(t, "not json")
 	dir := withPipeline(t, ".atkins.yml")
@@ -150,7 +150,7 @@ func TestAtkinsDetectorFileNames(t *testing.T) {
 	}
 }
 
-// FromFile reads the file a configuration names, whatever it is called,
+// FromFile reads the file a configuration names, whatever its name,
 // through the same listing.
 func TestFromFileReadsAnAtkinsPipeline(t *testing.T) {
 	stubAtkins(t, infra)

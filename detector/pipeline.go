@@ -26,8 +26,8 @@ var taskfileNames = []string{"Taskfile.yml", "taskfile.yml", "Taskfile.yaml", "t
 // pipelineDetector reads a Taskfile: the first of its file names
 // present in the folder.
 //
-// An atkins pipeline is read by asking atkins, in atkins.go. go-task has
-// no equivalent listing this reads, so its file is parsed here.
+// atkins.go reads an atkins pipeline by asking atkins. go-task has no
+// such listing, so this type parses its file.
 type pipelineDetector struct {
 	kind  string
 	names []string

@@ -9,8 +9,8 @@ import (
 )
 
 func TestFromFile(t *testing.T) {
-	// A yaml file no convention claims is read as an atkins pipeline,
-	// which means asking atkins to list it.
+	// FromFile treats a yaml file no convention claims as an atkins
+	// pipeline, and asks atkins to list it.
 	stubAtkins(t, `[{"kind":"pipeline","active":true,"desc":"Jobs","cmds":[
 	  {"id":"sync","name":"sync","desc":"Sync","cmd":"atkins sync","active":true}]}]`)
 

@@ -25,8 +25,8 @@ type Command struct {
 	// Env are the dotenv files the job reads on top of its section's.
 	Env []string `json:"env,omitempty"`
 
-	// Hidden reports a job the file asks not to be offered, with
-	// show: false. It is listed so a reader knows it exists.
+	// Hidden reports a job the file hides from the job list with
+	// show: false. The listing keeps it so a reader knows it exists.
 	Hidden bool `json:"hidden,omitempty"`
 
 	Active bool  `json:"active"`
