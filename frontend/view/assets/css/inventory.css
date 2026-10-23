@@ -3,6 +3,20 @@
    cell is the mono face at one size, aligned to the top, and what sits in
    a cell (badge, copy button, meter) is one line tall. */
 .table.hosts {
+  & :is(th, td) {
+    padding-inline: 0.45rem;
+  }
+
+  & th small {
+    font-weight: 400;
+    letter-spacing: 0;
+    text-transform: none;
+  }
+
+  & .meter .spacebar-track {
+    width: 2.2rem;
+  }
+
   & td {
     font: 400 var(--fs-data)/var(--control-xs) var(--font);
     vertical-align: top;

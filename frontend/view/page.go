@@ -101,6 +101,9 @@ type Page struct {
 	Logins map[string]string
 	// Cluster sums the hosts into pools, over the hosts table.
 	Cluster *hostinfo.Cluster
+	// HostDetail is a host of the inventory in full, the expanded row of
+	// its line.
+	HostDetail *HostDetail
 	// HostJobs are the jobs of the root that run a command on hosts, for
 	// the job pickers of schedules and workflow steps: @host:* and
 	// @host:<host> a host with an ssh login, for a user with hosts.

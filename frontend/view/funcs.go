@@ -38,6 +38,11 @@ func Funcs() template.FuncMap {
 		"json":         JSON,
 		"ended":        model.Finished,
 		"argLine":      ArgLine,
+		// bytes and megabytes word a size in bytes, or in MB as Beszel
+		// counts memory, as size does.
+		"bytes":     func(n uint64) string { return Size(int64(n)) },
+		"megabytes": func(v float64) string { return Size(int64(v * (1 << 20))) },
+		"rate":      func(v float64) string { return Size(int64(v)) + "/s" },
 		// summaryPrompt is the short summary instruction, the Summarize
 		// preset of a workflow's prompt.
 		"summaryPrompt": func() string { return claude.RunSummary },
@@ -175,6 +180,9 @@ func Size(n int64) string {
 	}
 	if value >= unit {
 		value, suffix = value/unit, "GB"
+	}
+	if value >= unit {
+		value, suffix = value/unit, "TB"
 	}
 	return fmt.Sprintf("%.1f %s", value, suffix)
 }

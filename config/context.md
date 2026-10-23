@@ -145,7 +145,9 @@ Page: `/settings/integrations`; API: `/api/integrations`.
 ## Inventory (`inventory`, `hosts`)
 
 The hosts Beszel watches, with their load and the ssh login task-ui
-reaches each with. `hosts` runs a shell command on the picked hosts at
+reaches each with, summed into pools of CPU, memory, disk and
+containers. With `hosts`, a host's line opens its containers, durable
+filesystems and month of charts, `/inventory/hosts/<name>`. `hosts` runs a shell command on the picked hosts at
 once, and can have Claude summarise the outputs. Prompts get the hosts
 in `TASK_UI_HOSTS`. Page: `/inventory`; API: `/api/inventory`. An
 agent on a prompt reaches the hosts through the inventory in its

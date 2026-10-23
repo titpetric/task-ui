@@ -65,6 +65,7 @@ func TestSize(t *testing.T) {
 	assert.Equal(t, "1.5 KB", view.Size(1536))
 	assert.Equal(t, "2.0 MB", view.Size(2<<20))
 	assert.Equal(t, "3.0 GB", view.Size(3<<30))
+	assert.Equal(t, "1.5 TB", view.Size(3<<39))
 }
 
 func TestTone(t *testing.T) {

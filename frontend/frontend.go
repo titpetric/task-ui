@@ -62,6 +62,7 @@ func (h *Handlers) Routes() http.Handler {
 		r.Get("/schedules", h.schedules)
 		r.Get("/notes", h.notes)
 		r.Get("/inventory", h.inventory)
+		r.Get("/inventory/hosts/{name}", h.inventoryHost)
 		r.Get("/settings", h.settings)
 		r.Get("/settings/instance", h.instance)
 		r.Get("/settings/retention", h.dataRetention)
