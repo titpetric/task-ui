@@ -15,6 +15,7 @@ import (
 
 	"github.com/titpetric/task-ui/envfile"
 	"github.com/titpetric/task-ui/folder"
+	"github.com/titpetric/task-ui/keystore"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/secret"
 	"github.com/titpetric/task-ui/storage"
@@ -43,8 +44,7 @@ func (h *Handlers) importWorkspace(w http.ResponseWriter, r *http.Request) {
 	if !h.require(w, r, "workspace/edit") {
 		return
 	}
-	if h.opts.WorkspaceKeys == nil {
-		fail(w, http.StatusNotFound, "workspace keys aren't available on this instance")
+	if h.keysOff(w) {
 		return
 	}
 	bundle, target, status, problem := h.readImport(w, r)
@@ -142,7 +142,7 @@ func (h *Handlers) restore(ctx context.Context, bundle *workspace.Bundle, target
 	manifest := bundle.Manifest
 	source := manifest.Workspace
 	dir := filepath.Join(h.opts.Root, target)
-	if err := h.opts.WorkspaceKeys.CheckBundle(bundle.Keys); err != nil {
+	if err := h.opts.Keys.CheckBundle(ctx, bundle.Keys); err != nil {
 		return nil, nil, "", err
 	}
 	if source.SourceURL != "" {
@@ -166,18 +166,14 @@ func (h *Handlers) restore(ctx context.Context, bundle *workspace.Bundle, target
 		return nil, nil, "", err
 	}
 	undo.add(func() { _ = h.opts.Workspaces.Delete(context.WithoutCancel(ctx), row.ID) })
-	undo.add(func() { _ = h.opts.WorkspaceKeys.Remove(row.ID) })
-	if err := h.opts.WorkspaceKeys.Restore(row.ID, bundle.Keys); err != nil {
-		if errors.Is(err, workspace.ErrRole) {
+	scope := keystore.ScopeWorkspace(row.ID)
+	undo.add(func() { _ = h.opts.Keys.RemoveScope(context.WithoutCancel(ctx), scope) })
+	roles, users := grants(manifest.Grants)
+	if _, err := h.opts.Keys.Restore(ctx, scope, source.Folder, target, bundle.Keys, roles, users); err != nil {
+		if errors.Is(err, keystore.ErrExists) {
 			return nil, nil, "", err
 		}
 		return nil, nil, "", fmt.Errorf("%w: %v", errImport, err)
-	}
-	if err := h.opts.WorkspaceKeys.Prepare(row.ID); err != nil {
-		return nil, nil, "", err
-	}
-	if err := h.restoreGrants(ctx, row, manifest.Grants, undo); err != nil {
-		return nil, nil, "", err
 	}
 	if err := h.restoreEnvFiles(ctx, target, manifest.EnvFiles, undo); err != nil {
 		return nil, nil, "", err
@@ -202,18 +198,11 @@ func importedFolder(target, relative string) (string, error) {
 	return id, nil
 }
 
-// restoreGrants sets the grants of the bundle's SSH keys.
-func (h *Handlers) restoreGrants(ctx context.Context, row *model.Workspace, grants []model.WorkspaceKeyGrant, undo *rollback) error {
-	if h.opts.KeyGrants == nil || len(grants) == 0 {
-		return nil
-	}
-	undo.add(func() { _ = h.opts.KeyGrants.DeleteWorkspace(context.WithoutCancel(ctx), row.ID) })
+// grants returns a bundle's grants as the roles and the users of each
+// SSH key, by name.
+func grants(list []model.WorkspaceKeyGrant) (map[string][]string, map[string][]string) {
 	roles, users := map[string][]string{}, map[string][]string{}
-	var keys []string
-	for _, grant := range grants {
-		if !slices.Contains(keys, grant.KeyName) {
-			keys = append(keys, grant.KeyName)
-		}
+	for _, grant := range list {
 		if grant.Role != "" {
 			roles[grant.KeyName] = append(roles[grant.KeyName], grant.Role)
 		}
@@ -221,12 +210,7 @@ func (h *Handlers) restoreGrants(ctx context.Context, row *model.Workspace, gran
 			users[grant.KeyName] = append(users[grant.KeyName], grant.UserName)
 		}
 	}
-	for _, key := range keys {
-		if err := h.opts.KeyGrants.Set(ctx, row.ID, key, roles[key], users[key]); err != nil {
-			return fmt.Errorf("%w: the grants of %s: %v", errImport, key, err)
-		}
-	}
-	return nil
+	return roles, users
 }
 
 // restoreEnvFiles adds the bundle's env files under the target. A row
@@ -274,7 +258,7 @@ func (h *Handlers) restoreSecrets(ctx context.Context, row *model.Workspace, sec
 	if h.opts.Secrets == nil || h.opts.Secrets.Workspaces == nil {
 		return fmt.Errorf("%w holds secrets, and this instance keeps none per workspace", errImport)
 	}
-	vault := secret.NewVault(h.opts.WorkspaceKeys.Encrypt(row.ID))
+	vault := secret.NewVault(h.opts.Keys.Vault(keystore.ScopeWorkspace(row.ID)))
 	for _, s := range secrets {
 		scope := workspace.AbsoluteScope(row.Folder, s.Scope)
 		if s.Scope != storage.ScopeWorkspace {

@@ -11,7 +11,6 @@ import (
 	"github.com/titpetric/task-ui/secret"
 	"github.com/titpetric/task-ui/sshkey"
 	"github.com/titpetric/task-ui/storage"
-	"github.com/titpetric/task-ui/workspace"
 )
 
 // spaces is a store over a private database that keeps the secrets per
@@ -23,7 +22,7 @@ type spaces struct {
 	rows     *storage.SecretStorage
 	instance *sshkey.Store
 	legacy   *sshkey.Store
-	keyring  *workspace.Keyring
+	encrypt  map[string]*sshkey.Store
 	ids      map[string]string
 }
 
@@ -40,24 +39,24 @@ func newSpaces(t *testing.T) *spaces {
 	workspaces := storage.NewWorkspaceStorage(db)
 	assert.NoError(t, workspaces.EnsureDefault(ctx))
 	assert.NoError(t, workspaces.Create(ctx, &model.Workspace{Folder: "acme"}))
-	keyring := &workspace.Keyring{Data: t.TempDir(), Access: []*sshkey.Store{legacy}}
-	_, err = keyring.EnsureInstance("instance")
+	instance := newKeys(t)
+	_, err = instance.Generate("ed25519", "instance")
 	assert.NoError(t, err)
-	instance := keyring.Instance()
-	ids := map[string]string{}
+	ids, encrypt := map[string]string{}, map[string]*sshkey.Store{}
 	list, err := workspaces.List(ctx)
 	assert.NoError(t, err)
 	for _, ws := range list {
-		_, err := keyring.Ensure(ws.ID, "task-ui "+ws.Folder)
+		encrypt[ws.ID] = newKeys(t)
+		_, err := encrypt[ws.ID].Generate("ed25519", "task-ui "+ws.Folder)
 		assert.NoError(t, err)
 		ids[ws.Folder] = ws.ID
 	}
 
 	rows := storage.NewSecretStorage(db)
-	store := secret.New(rows, secret.NewVault(instance))
-	store.Workspaces = &secret.Workspaces{Rows: workspaces, Keys: keyring}
-	store.Legacy = secret.NewVault(legacy)
-	return &spaces{store: store, rows: rows, instance: instance, legacy: legacy, keyring: keyring, ids: ids}
+	store := secret.New(rows, secret.NewVault(secret.DirKeys{Store: instance}))
+	store.Workspaces = &secret.Workspaces{Rows: workspaces, Keys: func(id string) secret.Keys { return secret.DirKeys{Store: encrypt[id]} }}
+	store.Legacy = secret.NewVault(secret.DirKeys{Store: legacy})
+	return &spaces{store: store, rows: rows, instance: instance, legacy: legacy, encrypt: encrypt, ids: ids}
 }
 
 // hide moves a store's ed25519 pair away until the test ends.
@@ -120,9 +119,9 @@ func TestStore_Workspaces(t *testing.T) {
 
 	shared, err := s.rows.Get(ctx, model.Secret{Scope: "workspace:_", Name: "SHARED"})
 	assert.NoError(t, err, "all is the default workspace's shared scope")
-	_, err = secret.NewVault(s.instance).Decrypt(shared.Content)
+	_, err = secret.NewVault(secret.DirKeys{Store: s.instance}).Decrypt(shared.Content)
 	assert.Error(t, err, "the instance key does not open a workspace's secret")
-	_, err = secret.NewVault(s.keyring.Encrypt(s.ids["_"])).Decrypt(shared.Content)
+	_, err = secret.NewVault(secret.DirKeys{Store: s.encrypt[s.ids["_"]]}).Decrypt(shared.Content)
 	assert.NoError(t, err)
 
 	web, err := s.store.For(ctx, "web")
@@ -160,7 +159,7 @@ func TestStore_RekeyWorkspace(t *testing.T) {
 	assert.NoError(t, s.store.Set(ctx, &model.Secret{Scope: "web", Name: "C", Content: "three"}))
 	web, _ := s.rows.Get(ctx, model.Secret{Scope: "web", Name: "C"})
 
-	_, err := s.keyring.RotateEncrypt(s.ids["acme"], "rotated")
+	_, err := s.encrypt[s.ids["acme"]].Generate("ed25519", "rotated")
 	assert.NoError(t, err)
 	n, err := s.store.RekeyWorkspace(ctx, "acme")
 	assert.NoError(t, err)
@@ -168,7 +167,7 @@ func TestStore_RekeyWorkspace(t *testing.T) {
 	after, _ := s.rows.Get(ctx, model.Secret{Scope: "web", Name: "C"})
 	assert.Equal(t, web.Content, after.Content, "another workspace's secret is not written")
 
-	keys := s.keyring.Encrypt(s.ids["acme"])
+	keys := s.encrypt[s.ids["acme"]]
 	for _, key := range keys.List() {
 		if key.Backup {
 			assert.NoError(t, keys.Delete(key.Name))

@@ -9,19 +9,16 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"sort"
 	"strings"
 	"time"
 )
 
 // Git runs git for the folders: the clone that adds a project, the pull
-// before every run, and the facts the pages show. It authenticates with
-// the keys in SSHDir, the ones the settings manage.
+// before every run, and the facts the pages show. A clone and a pull
+// authenticate with the key Keys hands out, in an ssh agent for the
+// length of the command; nil Keys leaves ssh to itself.
 type Git struct {
-	SSHDir string
-	// Withhold reports a key file of SSHDir that git leaves out: a copy
-	// of an encryption key, which never authenticates.
-	Withhold func(path string) bool
+	Keys Keys
 }
 
 // ErrNotRepo reports a folder without a .git directory.
@@ -51,49 +48,26 @@ func (g *Git) Checkout(dir string, levels int) string {
 	return ""
 }
 
-// env returns the environment git runs with: no prompts, and ssh using
-// the instance keys when there are any.
-func (g *Git) env() []string {
+// env returns the environment git runs with: no prompts, and for a
+// command that reaches a remote, ssh with the key Keys hands out. The
+// cleanup ends its agent.
+func (g *Git) env(ctx context.Context, remote bool) ([]string, func(), error) {
 	env := append(os.Environ(), "GIT_TERMINAL_PROMPT=0")
-	if cmd := g.sshCommand(); cmd != "" {
-		env = append(env, "GIT_SSH_COMMAND="+cmd)
+	if !remote || g.Keys == nil {
+		return env, func() {}, nil
 	}
-	return env
-}
-
-// sshCommand builds the ssh command for git: every private key in SSHDir
-// that Withhold lets through, and a known_hosts file next to them that
-// accepts a host on first contact.
-func (g *Git) sshCommand() string {
-	if g.SSHDir == "" {
-		return ""
-	}
-	entries, err := os.ReadDir(g.SSHDir)
+	agent, public, err := g.Keys.GitAgent(ctx)
 	if err != nil {
-		return ""
+		return nil, nil, fmt.Errorf("the git key: %w", err)
 	}
-	var keys []string
-	for _, entry := range entries {
-		name := entry.Name()
-		if entry.IsDir() || !strings.HasPrefix(name, "id_") || strings.HasSuffix(name, ".pub") || strings.Contains(name, ".bak-") {
-			continue
-		}
-		path := filepath.Join(g.SSHDir, name)
-		if g.Withhold != nil && g.Withhold(path) {
-			continue
-		}
-		keys = append(keys, path)
+	parts := []string{"ssh", "-o", "StrictHostKeyChecking=accept-new", "-o", "UserKnownHostsFile=" + shellQuote(g.Keys.KnownHosts())}
+	if agent != nil {
+		// The public half names the key; the agent signs with it, and no
+		// private key touches the disk.
+		parts = append(parts, "-o", "IdentitiesOnly=yes", "-o", "IdentityAgent="+shellQuote(agent.Socket), "-i", shellQuote(public))
 	}
-	if len(keys) == 0 {
-		return ""
-	}
-	sort.Strings(keys)
-	parts := []string{"ssh", "-o", "IdentitiesOnly=yes", "-o", "StrictHostKeyChecking=accept-new",
-		"-o", "UserKnownHostsFile=" + shellQuote(filepath.Join(g.SSHDir, "known_hosts"))}
-	for _, key := range keys {
-		parts = append(parts, "-i", shellQuote(key))
-	}
-	return strings.Join(parts, " ")
+	env = append(env, "GIT_SSH_COMMAND="+strings.Join(parts, " "))
+	return env, func() { _ = agent.Close() }, nil
 }
 
 func shellQuote(s string) string {
@@ -101,9 +75,14 @@ func shellQuote(s string) string {
 }
 
 func (g *Git) run(ctx context.Context, dir string, w io.Writer, args ...string) error {
+	env, cleanup, err := g.env(ctx, len(args) > 0 && (args[0] == "clone" || args[0] == "pull"))
+	if err != nil {
+		return err
+	}
+	defer cleanup()
 	cmd := exec.CommandContext(ctx, "git", args...)
 	cmd.Dir = dir
-	cmd.Env = g.env()
+	cmd.Env = env
 	cmd.Stdout = w
 	cmd.Stderr = w
 	return cmd.Run()

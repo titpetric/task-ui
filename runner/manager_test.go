@@ -16,13 +16,12 @@ import (
 	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/git"
 	"github.com/titpetric/task-ui/internal/assert"
+	"github.com/titpetric/task-ui/keystore"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/recording"
 	"github.com/titpetric/task-ui/runner"
 	"github.com/titpetric/task-ui/secret"
-	"github.com/titpetric/task-ui/sshkey"
 	"github.com/titpetric/task-ui/storage"
-	"github.com/titpetric/task-ui/workspace"
 )
 
 // fixture is a manager over a private database and temporary folders.
@@ -34,17 +33,12 @@ type fixture struct {
 	// reads log which run got which secret.
 	reads *storage.SecretReadStorage
 	root  string
-	// policies grant the instance key, id_ed25519, to roles' runs.
-	policies *storage.SSHKeyPolicyStorage
 	// now is what the manager's clock reads; zero is the real time.
 	now time.Time
-	// workspaces are the workspaces under root the manager knows, keys
-	// their keys and grants whose runs get each SSH key.
+	// workspaces are the workspaces under root the manager knows, and
+	// keys the key folder, with an instance SSH key, task_ssh_ed25519.
 	workspaces *storage.WorkspaceStorage
-	keys       *workspace.Keyring
-	grants     *storage.WorkspaceKeyGrantStorage
-	// keyDir is the instance's SSH folder, the policies' keys.
-	keyDir string
+	keys       *keystore.Local
 	// summaries are Claude's summaries of the runs, recordings their casts.
 	summaries  *storage.RunSummaryStorage
 	recordings *recording.Store
@@ -57,17 +51,15 @@ func newFixture(t *testing.T) *fixture {
 	t.Cleanup(func() { db.Close() })
 	runs := storage.NewRunStorage(db)
 	artifacts := storage.NewArtifactStorage(db)
-	keys := &sshkey.Store{Dir: t.TempDir()}
-	_, err = keys.Generate("ed25519", "test")
+	keys := &keystore.Local{Dir: t.TempDir(), Rows: storage.NewKeyInfoStorage(db), Settings: storage.NewSettingStorage(db), Tmp: t.TempDir()}
+	_, err = keys.Generate(context.Background(), keystore.Spec{Name: "task_ssh", Comment: "test"})
 	assert.NoError(t, err)
-	keyring := &workspace.Keyring{Data: t.TempDir(), Access: []*sshkey.Store{keys}}
-	_, err = keyring.EnsureInstance("instance")
+	_, err = keys.Generate(context.Background(), keystore.Spec{Name: "task_encryption", Purpose: keystore.PurposeEncrypt})
 	assert.NoError(t, err)
-	secrets := secret.New(storage.NewSecretStorage(db), secret.NewVault(keyring.Instance()))
+	secrets := secret.New(storage.NewSecretStorage(db), secret.NewVault(keys.Vault(storage.ScopeInstance)))
 	f := &fixture{
 		runs: runs, files: artifacts, secrets: secrets, reads: storage.NewSecretReadStorage(db), root: t.TempDir(),
-		policies: storage.NewSSHKeyPolicyStorage(db), workspaces: storage.NewWorkspaceStorage(db),
-		keys: keyring, grants: storage.NewWorkspaceKeyGrantStorage(db), keyDir: keys.Dir,
+		workspaces: storage.NewWorkspaceStorage(db), keys: keys,
 		summaries: storage.NewRunSummaryStorage(db), recordings: &recording.Store{Root: t.TempDir()},
 	}
 	manager := runner.New(runner.Options{
@@ -77,25 +69,22 @@ func newFixture(t *testing.T) *fixture {
 			}
 			return f.now
 		},
-		Runs:          runs,
-		Artifacts:     artifacts,
-		Summaries:     f.summaries,
-		Secrets:       secrets,
-		SecretReads:   f.reads,
-		Env:           envfile.New(storage.NewEnvFileStorage(db), secrets),
-		Git:           &git.Git{},
-		Recordings:    f.recordings,
-		ArtifactRoot:  t.TempDir(),
-		Grace:         time.Second,
-		KillTimeout:   5 * time.Second,
-		Keep:          time.Minute,
-		KeyDir:        keys.Dir,
-		KeyPolicies:   f.policies,
-		Root:          f.root,
-		Workspaces:    f.workspaces,
-		WorkspaceKeys: f.keys,
-		KeyGrants:     f.grants,
-		Users:         storage.NewUserStorage(db),
+		Runs:         runs,
+		Artifacts:    artifacts,
+		Summaries:    f.summaries,
+		Secrets:      secrets,
+		SecretReads:  f.reads,
+		Env:          envfile.New(storage.NewEnvFileStorage(db), secrets),
+		Git:          &git.Git{},
+		Recordings:   f.recordings,
+		ArtifactRoot: t.TempDir(),
+		Grace:        time.Second,
+		KillTimeout:  5 * time.Second,
+		Keep:         time.Minute,
+		Keys:         keys,
+		Root:         f.root,
+		Workspaces:   f.workspaces,
+		Users:        storage.NewUserStorage(db),
 	})
 	f.manager = manager
 	return f

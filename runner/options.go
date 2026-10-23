@@ -7,10 +7,10 @@ import (
 	"github.com/titpetric/task-ui/envfile"
 	"github.com/titpetric/task-ui/git"
 	"github.com/titpetric/task-ui/hostpath"
+	"github.com/titpetric/task-ui/keystore"
 	"github.com/titpetric/task-ui/recording"
 	"github.com/titpetric/task-ui/secret"
 	"github.com/titpetric/task-ui/storage"
-	"github.com/titpetric/task-ui/workspace"
 )
 
 // Options configure the manager.
@@ -28,12 +28,11 @@ type Options struct {
 	// such as the Claude Code token. Nil adds nothing.
 	Integrations Integrations
 	Git          *git.Git
-	// KeyDir is the instance SSH folder, and KeyPolicies which of its
-	// keys each role's runs get through the run's ssh agent. With either
-	// nil or empty, a run gets no instance key.
-	KeyDir      string
-	KeyPolicies *storage.SSHKeyPolicyStorage
-	Recordings  *recording.Store
+	// Keys are the key folder: a run gets the SSH keys linked to the
+	// role or the name of whoever started it, and its workspace's,
+	// through an ssh agent of its own. Nil serves no key.
+	Keys       *keystore.Local
+	Recordings *recording.Store
 	// ArtifactRoot is where a run writes its artifacts, one directory per
 	// run, while it runs.
 	ArtifactRoot string
@@ -59,12 +58,6 @@ type Options struct {
 	// workspace in its environment. Nil Workspaces knows none.
 	Root       string
 	Workspaces *storage.WorkspaceStorage
-	// WorkspaceKeys are the keys of the workspaces, and KeyGrants whose
-	// runs get each of a workspace's SSH keys: a run gets its
-	// workspace's keys beside the instance ones. Nil WorkspaceKeys adds
-	// none; with nil KeyGrants every run gets every key.
-	WorkspaceKeys *workspace.Keyring
-	KeyGrants     *storage.WorkspaceKeyGrantStorage
 	// Users say what the user of a run may do, which the run reads in
 	// TASK_UI_PERMISSIONS, so Claude in it knows. Nil leaves it out.
 	Users *storage.UserStorage

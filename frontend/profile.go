@@ -39,6 +39,9 @@ func (h *Handlers) profile(w http.ResponseWriter, r *http.Request) {
 	p.Account = user
 	p.FolderChoices = view.FolderChoices(h.opts.Catalogue.List(), user.FolderList())
 	p.AccountMCP = h.mcpAccess(r, user, own)
+	if own || p.Can("key/view") {
+		p.Keys = h.userKeys(r.Context(), user)
+	}
 	p.CanAddUsers = h.opts.AddUsers
 	p.Profile = &view.Profile{Own: own}
 	h.activityOf(r, p, user)

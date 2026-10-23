@@ -18,7 +18,7 @@ func TestStore_Migrate(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
 	s := newSpaces(t)
-	legacy := secret.NewVault(s.legacy)
+	legacy := secret.NewVault(secret.DirKeys{Store: s.legacy})
 	put := func(scope, name, content string) {
 		t.Helper()
 		encrypted, err := legacy.Encrypt(content)
@@ -34,7 +34,7 @@ func TestStore_Migrate(t *testing.T) {
 	stranger := newKeys(t)
 	_, err := stranger.Generate("ed25519", "stranger")
 	assert.NoError(t, err)
-	lost, err := secret.NewVault(stranger).Encrypt("lost")
+	lost, err := secret.NewVault(secret.DirKeys{Store: stranger}).Encrypt("lost")
 	assert.NoError(t, err)
 	assert.NoError(t, s.rows.Create(ctx, &model.Secret{Scope: "web", Name: "LOST", Content: lost}))
 	integration, _ := s.rows.Get(ctx, model.Secret{Scope: "integration:claude", Name: "token"})
@@ -73,7 +73,7 @@ func TestStore_MigrateConflict(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
 	s := newSpaces(t)
-	encrypted, err := secret.NewVault(s.legacy).Encrypt("old")
+	encrypted, err := secret.NewVault(secret.DirKeys{Store: s.legacy}).Encrypt("old")
 	assert.NoError(t, err)
 	assert.NoError(t, s.rows.Create(ctx, &model.Secret{Scope: storage.ScopeAll, Name: "TOKEN", Content: encrypted}))
 	assert.NoError(t, s.store.Set(ctx, &model.Secret{Scope: "workspace:_", Name: "TOKEN", Content: "new"}))
@@ -97,7 +97,7 @@ func TestStore_MigrateInstance(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
 	s := newSpaces(t)
-	legacy := secret.NewVault(s.legacy)
+	legacy := secret.NewVault(secret.DirKeys{Store: s.legacy})
 	for name, content := range map[string]string{"url": "https://beszel", "token": "t"} {
 		encrypted, err := legacy.Encrypt(content)
 		assert.NoError(t, err)
@@ -110,7 +110,7 @@ func TestStore_MigrateInstance(t *testing.T) {
 	stranger := newKeys(t)
 	_, err := stranger.Generate("ed25519", "stranger")
 	assert.NoError(t, err)
-	lost, err := secret.NewVault(stranger).Encrypt("lost")
+	lost, err := secret.NewVault(secret.DirKeys{Store: stranger}).Encrypt("lost")
 	assert.NoError(t, err)
 	assert.NoError(t, s.rows.Create(ctx, &model.Secret{Scope: "integration:lost", Name: "token", Content: lost}))
 
@@ -151,7 +151,7 @@ func TestStore_MigrateInstanceNoLegacy(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
 	s := newSpaces(t)
-	encrypted, err := secret.NewVault(s.legacy).Encrypt("t")
+	encrypted, err := secret.NewVault(secret.DirKeys{Store: s.legacy}).Encrypt("t")
 	assert.NoError(t, err)
 	assert.NoError(t, s.rows.Create(ctx, &model.Secret{Scope: "integration:claude", Name: "token", Content: encrypted}))
 	s.store.Legacy = nil

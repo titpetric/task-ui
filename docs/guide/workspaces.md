@@ -205,60 +205,57 @@ isn't pulled.
 
 ## Keys
 
-Every workspace has keys of its own, under the data directory and out
-of its checkout, where a `git add -A` would publish them:
-`TASK_UI_DATA/workspaces/<workspace id>/encrypt` and `/ssh`. The
-directories are `0700` and the key files `0600`. The **Keys** section of
-a workspace's configure page, `/settings/workspaces/malta`, lists them
-with their fingerprints, never a private key.
+Every workspace has keys of its own, in the key folder,
+`TASK_UI_SSH_DIR`, out of its checkout, where a `git add -A` would
+publish them: `workspace_<folder>_<name>_<algorithm>.key` and `.pub`,
+the files `0600`. The **Keys** section of a workspace's configure page,
+`/settings/workspaces/malta`, lists them with their fingerprints, never
+a private key.
 
-- The **encryption key**, an ed25519 key, exactly one, encrypts the
-  workspace's [secrets](settings.md#secrets): its shared ones and its
-  projects'. A workspace starts without one and stores no secrets until
-  a user with `workspace/edit` adds it: **Generate** makes one, **Upload** takes one you
-  have, on this page or on the [Keys](settings.md#keys) page. Rotate
-  makes a new one, here, on the Keys page or from the ⋯ menu of the
-  workspace on the Secrets page; the previous key stays as a backup, and
-  task-ui re-encrypts the workspace's secrets for the new key. No run
-  gets it.
+- The **encryption key**, ed25519 or RSA, exactly one,
+  `workspace_malta_encryption_ed25519`, encrypts the workspace's
+  [secrets](settings.md#secrets): its shared ones and its projects'. A
+  workspace starts without one and stores no secrets until a user with
+  `workspace/edit` adds it: **Generate** makes one, **Upload** takes one
+  you have, on this page or on the [Keys](settings.md#keys) page.
+  Rotate writes new material for it, here, on the Keys page or from the ⋯
+  menu of the workspace on the Secrets page; the previous material stays
+  as a backup, and task-ui re-encrypts the workspace's secrets for the
+  new one. No run gets it.
 - The **SSH keys**, zero or more, are for the workspace's runs.
-  Generate or upload any number, each named `id_<type>_<name>`. A key
-  without a grant goes to every run in the workspace; checking roles or
-  users narrows it to their runs. A rotation keeps a key's grants, and
-  delete takes the key and its grants. With none, task-ui can't SSH to
-  the workspace's hosts with a key of its own: its runs get only the
-  instance SSH keys their policies grant.
+  Generate or upload any number, each under a name of its own,
+  `workspace_malta_deploy_ed25519`. A key without a link goes to every
+  run in the workspace; checking roles or users narrows it to their
+  runs. Remove retires the key and its links. With none, task-ui can't
+  SSH to the workspace's hosts with a key of its own: its runs get only
+  the instance SSH keys linked to them.
 
-A key has one use (see [One key, one use](settings.md#one-key-one-use)).
-An upload refuses key material that another store holds for the other
-use, in this workspace, another one or the instance, with `409`: an SSH
-key that is an encryption key anywhere, an encryption key that is an SSH
-key anywhere. An encryption key has one holder, so an upload of an
-encryption key another workspace or the instance holds answers `409`
-too; a backup of the workspace's own may come back.
+A key has one use (see [One key, one use](settings.md#one-key-one-use)):
+an upload of key material the key folder holds already, under any name,
+answers `409`.
 
 ![A workspace's configure page: its keys, and Export](../assets/workspace-edit-dark.png)
 
-A run gets the instance keys its policies name it for (see
-[Settings](settings.md#keys)), then its workspace's SSH keys, and the first
-line of its terminal names each: `$ ssh-agent: id_ed25519,
-ws:id_ed25519_deploy`. A project at the root gets the keys of `_`. The grants
-decide what reaches a run's agent, not what a job can open on disk (see
-[What a workspace keeps apart](#what-a-workspace-keeps-apart)).
+A run gets the instance keys linked to it (see
+[Settings](settings.md#keys)), then its workspace's SSH keys, and the
+first line of its terminal names each: `$ ssh-agent: deploy_rsa4096,
+workspace_malta_deploy_ed25519`. A project at the root gets the keys of
+`_`. The links decide what reaches a run's agent, not what a job can
+open on disk (see [What a workspace keeps apart](#what-a-workspace-keeps-apart)).
 
 ```sh
 curl -s -X POST https://task.example.com/api/workspaces/malta/keys/generate \
   -H "Authorization: Bearer $TOKEN" \
-  -d '{"type": "ed25519", "name": "deploy", "policies": ["admin"]}'
+  -d '{"algo": "ed25519", "name": "deploy", "policies": ["admin"]}'
 curl -s https://task.example.com/api/workspaces/malta/keys \
   -H "Authorization: Bearer $TOKEN"
 ```
 
-`PUT /api/workspaces/malta/keys/id_ed25519_deploy` with `{policies,
-users}` sets the grants, empty for every run, and `DELETE` removes the
-key. `"encrypt": true` on `generate` or `upload` rotates or replaces the
-encryption key; `rekeyed` counts the secrets task-ui wrote again for
-it. Listing the keys takes `workspace/view`; the other key routes take
+`PUT /api/workspaces/malta/keys/workspace_malta_deploy_ed25519` with
+`{policies, users}` sets the links, empty for every run, and `DELETE`
+retires the key. `"encrypt": true` on `generate` makes the encryption
+key, or rotates the one there to new material, and on `upload` takes one;
+`rekeyed` counts the secrets task-ui wrote again for it. Listing the keys takes `workspace/view`; the other key routes take
 `workspace/edit`.
 
 ## Secrets
@@ -291,7 +288,8 @@ The bundle carries:
 - its env files, by folder and path;
 - its secrets as ciphertext: the bundled encryption key opens them, so
   their values never leave it;
-- its key files, backups among them, and the grants of its SSH keys.
+- its private keys, by name, and the links of its SSH keys; an import
+  names them after its folder, `workspace_<folder>_...`.
 
 Schedules, workflows, runs and artifacts stay on the instance, as do the
 integrations, which the instance's encryption key encrypts. The bundle of `_` leaves
@@ -355,9 +353,8 @@ its environment and which SSH keys go into its agent. That is no
 sandbox. Every run runs as the server's OS user, in every workspace, so
 a job can read what that user can:
 
-- every workspace's key files under `TASK_UI_DATA/workspaces/`, the
-  encryption keys among them, the instance's encryption key under
-  `TASK_UI_DATA/instance/encrypt`, and the instance's SSH keys;
+- every key file of the key folder, `TASK_UI_SSH_DIR`, the encryption
+  keys among them; in the image, mount `/keys` and nothing else there;
 - the database, with every workspace's secrets as ciphertext, which the
   keys beside it open;
 - every checkout under the root, sealed entries such as `.git` and

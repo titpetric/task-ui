@@ -780,25 +780,22 @@
 
 {{- define "logo" }}<svg class="logo" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="3"/><path class="prompt" d="M8 10l6 6-6 6"/><path class="cursor" d="M16 23h8"/></svg>{{ end }}
 
-{{- /* keyfor is the start of a new key's policies: who it belongs to,
-     one user or the instance, and the roles whose runs get it. A user's
-     key takes their name, id_<type>_<user>, and goes to them. */}}
-{{- define "keyfor" }}
+{{- /* keyname is the name field of a key form: the name before the
+     algorithm, which task-ui adds. */}}
+{{- define "keyname" }}
 <div class="field">
-	<span class="label">Who gets it <span class="faint">a user's key carries their name; runs of the checked roles get it through their ssh agent</span></span>
-	<div class="checks who">
-		<label class="faint" for="key-for">User</label>
-		<select id="key-for" name="users" data-type="list" data-key-for>
-			<option value="">none: an instance key</option>
-			{{- template "user-options" (list . "") }}
-		</select>
-		<input type="hidden" name="name" value="">
-	</div>
-	<div class="checks who">
-		<span class="faint">Roles</span>
-		{{- range roles }}
-		<label class="check"><input type="checkbox" name="policies" value="{{ . }}" data-type="set"> {{ . }}</label>
-		{{- end }}
+	<label for="key-name">Name <span class="faint">lower case letters, digits, dashes and underscores; the algorithm follows, as deploy_ed25519</span></label>
+	<input type="text" id="key-name" name="name" value="{{ . }}" required pattern="[a-z0-9][a-z0-9_\-]{0,63}" spellcheck="false" autocomplete="off">
+</div>
+{{- end }}
+
+{{- /* keypurpose is the purpose field of a key form. */}}
+{{- define "keypurpose" }}
+<div class="field">
+	<span class="label">Purpose</span>
+	<div class="checks">
+		<label class="check"><input type="radio" name="purpose" value="ssh" checked> SSH key <span class="faint">runs, git and logins authenticate with it</span></label>
+		<label class="check"><input type="radio" name="purpose" value="encrypt"> Encryption key <span class="faint">ed25519 or RSA; encrypts the secrets, never handed out</span></label>
 	</div>
 </div>
 {{- end }}

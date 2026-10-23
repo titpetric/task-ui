@@ -8,12 +8,14 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"filippo.io/age"
 
 	"github.com/titpetric/task-ui/api"
 	"github.com/titpetric/task-ui/internal/assert"
+	"github.com/titpetric/task-ui/keystore"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/storage"
 	"github.com/titpetric/task-ui/workspace"
@@ -71,14 +73,16 @@ func TestWorkspaceImport(t *testing.T) {
 	assert.FileExists(t, filepath.Join(to.root, "acme2", "Makefile"))
 	assert.FileExists(t, filepath.Join(to.root, "acme2", "api", "Makefile"))
 
-	want, err := from.opts.WorkspaceKeys.Files(fromID)
+	want, _, _, err := from.opts.Keys.Bundle(ctx, keystore.ScopeWorkspace(fromID))
 	assert.NoError(t, err)
-	got, err := to.opts.WorkspaceKeys.Files(toID)
+	got, _, users, err := to.opts.Keys.Bundle(ctx, keystore.ScopeWorkspace(toID))
 	assert.NoError(t, err)
 	assert.Len(t, got, len(want))
 	for name, data := range want {
+		name = strings.Replace(name, "workspace_acme_", "workspace_acme2_", 1)
 		assert.True(t, bytes.Equal(data, got[name]), name)
-		info, err := os.Stat(filepath.Join(to.opts.WorkspaceKeys.Dir(toID), filepath.FromSlash(name)))
+		_, file := filepath.Split(name)
+		info, err := os.Stat(filepath.Join(to.opts.Keys.Dir, file))
 		assert.NoError(t, err)
 		assert.Equal(t, os.FileMode(0o600), info.Mode().Perm(), name)
 	}
@@ -93,21 +97,19 @@ func TestWorkspaceImport(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Contains(t, string(written), "MODE=prod")
 	assert.Contains(t, string(written), `TOKEN=`)
-	_, users, err := to.opts.KeyGrants.All(ctx, toID)
-	assert.NoError(t, err)
-	assert.Equal(t, []string{"ghost", asOps}, users["id_ed25519_deploy"])
+	assert.Equal(t, []string{"ghost", asOps}, users["workspace_acme2_deploy_ed25519"])
 	row, err := to.opts.Projects.GetByFolder(ctx, "acme2/api")
 	assert.NoError(t, err)
 	assert.Contains(t, row.SourceURL, "file://")
 
 	// Over a folder held, the import answers 409. The bundle's own name
-	// is free on this instance, but its encryption key is acme2's, and an
-	// encryption key has one holder: 409, before the import clones anything.
+	// is free on this instance, but its keys are acme2's, and a key has
+	// one holder: 409, before the import clones anything.
 	held := to.importBundle(t, asAdmin, bundle, passphrase, "acme2")
 	assert.Equal(t, http.StatusConflict, held.Status, string(held.Raw))
 	same := to.importBundle(t, asAdmin, bundle, passphrase, "")
 	assert.Equal(t, http.StatusConflict, same.Status, string(same.Raw))
-	assert.Contains(t, same.str("error"), "encrypts with this key already")
+	assert.Contains(t, same.str("error"), "is there already")
 	assert.NoDirExists(t, filepath.Join(to.root, "acme"))
 
 	// A removed workspace takes its env files and its keys with it;
@@ -143,9 +145,9 @@ func nothing(t *testing.T, f *fixture, name string) {
 	for _, s := range secrets {
 		assert.NotEqual(t, name, s.Scope)
 	}
-	entries, err := os.ReadDir(filepath.Join(f.opts.WorkspaceKeys.Data, "workspaces"))
+	keys, err := f.opts.Keys.List(ctx)
 	assert.NoError(t, err)
-	assert.Len(t, entries, 2, "the keys of _ and acme alone")
+	assert.Len(t, keys, 4, "the instance's, _'s and acme's two alone")
 }
 
 // A wrong passphrase, a hand made tar that leaves keys/, and a bundle

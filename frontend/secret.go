@@ -8,8 +8,8 @@ import (
 	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/frontend/view"
 	"github.com/titpetric/task-ui/integration"
+	"github.com/titpetric/task-ui/keystore"
 	"github.com/titpetric/task-ui/model"
-	"github.com/titpetric/task-ui/sshkey"
 	"github.com/titpetric/task-ui/storage"
 )
 
@@ -166,7 +166,7 @@ func (h *Handlers) secretEdit(w http.ResponseWriter, r *http.Request) {
 func (h *Handlers) secretGroups(ctx context.Context, secrets []model.Secret, folders []*folder.Folder) []view.SecretGroup {
 	var groups []view.SecretGroup
 	index := map[string]int{}
-	add := func(name, title string, key *sshkey.Key) int {
+	add := func(name, title string, key *keystore.Key) int {
 		if i, ok := index[name]; ok {
 			return i
 		}
@@ -181,9 +181,9 @@ func (h *Handlers) secretGroups(ctx context.Context, secrets []model.Secret, fol
 	if h.opts.Workspaces != nil {
 		workspaces, _ := h.opts.Workspaces.List(ctx)
 		for _, ws := range workspaces {
-			var key *sshkey.Key
-			if h.opts.WorkspaceKeys != nil {
-				key = h.opts.WorkspaceKeys.EncryptKey(ws.ID)
+			var key *keystore.Key
+			if h.opts.Keys != nil {
+				key = h.opts.Keys.EncryptKey(ctx, keystore.ScopeWorkspace(ws.ID))
 			}
 			i := add(ws.Folder, ws.Title, key)
 			groups[i].Key = key

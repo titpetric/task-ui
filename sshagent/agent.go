@@ -6,9 +6,11 @@ package sshagent
 
 import (
 	"errors"
+	"fmt"
 	"net"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"sync"
 
@@ -44,6 +46,31 @@ func Load(keys, tmp string) (*Agent, error) {
 	return LoadFiles(tmp, paths...)
 }
 
+// LoadKeys serves the private keys given, from memory, on a socket in a
+// new private directory under tmp ("" is the system's), as LoadFiles
+// does; Keys holds their names. It writes no key file.
+func LoadKeys(tmp string, keys ...Named) (*Agent, error) {
+	ring := agent.NewKeyring()
+	var loaded []string
+	for _, key := range keys {
+		if slices.Contains(loaded, key.Name) {
+			continue
+		}
+		private, err := ssh.ParseRawPrivateKey(key.PEM)
+		if err != nil {
+			return nil, fmt.Errorf("the key %s: %w", key.Name, err)
+		}
+		if err := ring.Add(agent.AddedKey{PrivateKey: private, Comment: key.Name}); err != nil {
+			return nil, err
+		}
+		loaded = append(loaded, key.Name)
+	}
+	if len(loaded) == 0 {
+		return nil, nil
+	}
+	return serveRing(tmp, ring, loaded)
+}
+
 // LoadFiles reads the private keys in the files given and serves them on
 // a socket in a new private directory under tmp ("" is the system's).
 // It skips files that are not an unencrypted private key, public halves,
@@ -74,8 +101,16 @@ func LoadFiles(tmp string, paths ...string) (*Agent, error) {
 	if len(loaded) == 0 {
 		return nil, nil
 	}
+	return serveRing(tmp, ring, loaded)
+}
 
-	dir, err := os.MkdirTemp(tmp, "task-ui-agent-")
+// Prefix starts the name of every agent's directory, so a start of
+// task-ui removes the ones a process before it left.
+const Prefix = "task-ui-agent-"
+
+// serveRing serves a keyring on a socket in a new private directory.
+func serveRing(tmp string, ring agent.Agent, loaded []string) (*Agent, error) {
+	dir, err := os.MkdirTemp(tmp, Prefix)
 	if err != nil {
 		return nil, err
 	}
@@ -117,4 +152,20 @@ func (a *Agent) Close() error {
 		err = errors.Join(err, rmErr)
 	}
 	return err
+}
+
+// Clean removes the agent directories under tmp ("" is the system's)
+// that a process before this one left. It returns how many.
+func Clean(tmp string) int {
+	if tmp == "" {
+		tmp = os.TempDir()
+	}
+	dirs, _ := filepath.Glob(filepath.Join(tmp, Prefix+"*"))
+	removed := 0
+	for _, dir := range dirs {
+		if os.RemoveAll(dir) == nil {
+			removed++
+		}
+	}
+	return removed
 }

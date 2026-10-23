@@ -83,7 +83,8 @@ Keys have two purposes, and no key serves both:
   for its secrets; the instance has one, for the integrations' settings.
   A workspace without one stores no secrets.
 - **SSH keys** connect runs and git to hosts and remotes. A workspace has
-  any number, for its own runs; the instance's go to runs by policy.
+  any number, for its own runs; the instance's go to the runs of the
+  roles and users they link.
 
 ![Keys](../assets/keys-dark.png)
 
@@ -101,10 +102,9 @@ workspace:
   the old key as a backup and re-encrypts what it encrypted: the
   workspace's secrets, or the integrations' settings for the instance's
   key, and the page says how many.
-- **SSH keys**: how many, and their names, each linked to its grants or
-  policies. A workspace with none reads "task-ui can't SSH to this
-  workspace's hosts with a key of its own: its runs get only the instance
-  SSH keys their policies grant", with **Generate** and **Upload**.
+- **SSH keys**: how many, and their names, each linked to its edit
+  form. A workspace with none says its runs get only the instance SSH
+  keys linked to them, with **Generate** and **Upload**.
 
 A workspace starts without an encryption key: a user with Allow Edits
 on Workspaces, `workspace/edit`, adds one on this page, generated or uploaded, before it stores a secret. The only key
@@ -113,77 +113,104 @@ and a workspace's when it holds secrets and has no key, so they open.
 The workspace's configure page has the same keys in its
 [Keys](workspaces.md#keys) section.
 
-Under the table, **Instance SSH keys** are the key pairs of
-`TASK_UI_SSH_DIR`:
+Every key lives in one folder, the key folder, `TASK_UI_SSH_DIR`,
+`/keys` in the image: flat, `<name>.key` and `<name>.pub`, the
+folder `0700` and each file `0600`, beside `known_hosts`. The name ends
+with the algorithm and the size, `deploy_rsa4096`,
+`task_encryption_ed25519`, `workspace_malta_build_ed25519`,
+`user_alice_ed25519`, and is unique across the folder. The database
+says what each key is: an encryption key or an SSH key, of the instance
+or of a workspace, and whose runs get an SSH key. Nothing but the key
+folder reads a key file: git, the inventory's logins, the secrets and
+the runs all go through it, and none reads `~/.ssh`.
 
-- **Generate key** makes a new pair (ed25519, ECDSA or RSA), **Upload key**
-  takes a private key you already use, unencrypted.
+Under the table, **Every key** lists them all: name, purpose, algorithm
+and fingerprint, scope, the roles and users it links, and its date.
+
+- **Generate key** makes a key: a name, the algorithm and the size,
+  ed25519 by default, ECDSA P-256, P-384 or P-521, RSA 2048, 3072 or
+  4096, and the purpose. **Upload key** takes a private key you already
+  use, unencrypted, under a name; task-ui reads the algorithm and the
+  size from it. A key the folder holds already, under any name or
+  purpose, answers `409`: a key has one purpose.
 - The copy button copies a public key, to add on the hosts that
-  accept it.
-- **Rotate** makes a new pair of the same type and keeps the old one as
-  a backup. An SSH key encrypts nothing, so no secret changes.
-- **Who gets it** picks whose runs get a key, in a **Roles** row and a **Users** row of boxes. A run
-  started by someone with one of the key's roles, or by one of its users,
-  has it in the run's ssh agent, and nothing else does: that agent is the
-  only way a key reaches a run. Pick them when you generate or upload a key, or later with the
-  edit button on its row. A key can have more than one, and a key with none
-  stays the instance's: git and the inventory's logins use it, runs do not get it.
-- **A key for someone**: pick the user under **For** when you generate or
-  upload it, `alice`, and task-ui stores it as `id_ed25519_alice` beside
-  the type's own key and grants it to alice. She finds it under **SSH keys** in her user
-  menu, the keys her runs get, and copies the public half to her git host
-  or servers. A rotation keeps a key's policies. The key files are still
-  readable by any job, as jobs run as the server's user; policies decide
-  what a run gets, they do not hide a file. Keep `TASK_UI_SSH_DIR`
-  out of `~/.ssh`, so `ssh` in a job does not find them by default.
-- **Who gets which key** lists each role and each user, and the keys
-  their runs get, by comment: a user's own keys, then, dashed, those of
-  their role. A key links to its policies.
+  accept it. **Remove** retires an SSH key: its files stay in the folder
+  as `<name>.key.bak-<time>`, nothing lists or loads them.
+- **Who gets it** picks whose runs get an SSH key, in a **Roles** row and
+  a **Users** row of boxes. A run started by someone with one of the
+  key's roles, or by one of its users, has it in the run's ssh agent, and
+  nothing else does: that agent is the only way a key reaches a run,
+  from memory, with no key file on disk. A workspace's SSH key with no
+  link goes to every run of the workspace. An instance SSH key with no
+  link stays the instance's: the inventory's logins use it, runs don't.
+- **git pulls and clones with this key**, on a key's edit form, makes it
+  the one key git uses for every checkout; the Instance page shows it.
+- **A key for someone**: **Generate a key for alice** on her profile
+  starts `user_alice_ed25519`, linked to her. She finds it under **SSH
+  keys** in her user menu, and copies the public half to her git host or
+  servers. The key files are still readable by any job, as jobs run as
+  the server's user; links decide what a run gets, they do not hide a
+  file. Keep the key folder out of `~/.ssh`, so `ssh` in a job does not
+  find the keys by default.
+- **Who gets which key** lists each role and each user, and the instance
+  SSH keys their runs get: a user's own keys, then, dashed, those of
+  their role.
 - A project with private keys in its `.ssh/` folder gets a warning: runs
-  do not load them. Keys belong here: upload a key it needs and grant it
-  by policy, then delete the folder.
-- **Server user's keys** lists the pairs in `~/.ssh` of the user task-ui
-  runs as, when that is not `TASK_UI_SSH_DIR`. `ssh` and git take them by
-  default, in every run, for git remotes and for the inventory's logins.
-  The page shows them read-only, with the copy button: they come with the
-  server or its image, and change there.
+  do not load them. Keys belong in the key folder: upload a key it needs
+  and link it, then delete the folder.
 
-The instance's encryption key is `TASK_UI_DATA/instance/encrypt/id_ed25519`.
-No run, git remote or SSH connection gets it, and with it gone the
-workspaces' secrets still open. `POST /api/keys/encrypt/rotate` rotates
-it.
+The instance's encryption key, `task_encryption_ed25519`, encrypts the
+integrations' settings. No run, git remote or SSH connection gets it,
+and with it gone the workspaces' secrets still open. **Rotate**, or
+**Regenerate** on the Instance page, rotates it to new material, keeps the
+old as a backup that still decrypts, and writes the integrations again:
+`POST /api/keys/encrypt/rotate`.
 
 ### One key, one use
 
 A key either encrypts secrets or authenticates SSH connections, never
-both. The encryption keys are the instance's and each workspace's
-`encrypt/` key; the SSH keys are those of `TASK_UI_SSH_DIR`, the server
-user's `~/.ssh` and each workspace's `ssh/`.
+both, and the folder holds a key once, by its fingerprint.
 
 - No encryption key goes into a run's ssh agent, into git's ssh command,
-  into a policy or a grant, or onto the SSH key lists, wherever a copy of
-  it lies.
+  into a link, or to the inventory's logins; no route hands one out.
 - No SSH key is an age recipient or opens a secret.
-- An upload of key material, its private or its public half, that
-  another store holds for the other use, in the instance or in any
-  workspace, answers `409` and writes nothing. So does an encryption
-  key another workspace or the instance holds already. A generated key
-  is new, so it never collides.
-- At start, task-ui looks for a key both an encryption store and an SSH
-  store hold, by fingerprint, and logs a warning naming both paths; the
-  keys page shows it in red. task-ui deletes no key: remove the SSH
-  copy, or generate a new SSH key in its place.
+- An upload of key material the folder holds already, under any name or
+  purpose, answers `409` and writes nothing. A scope holds one
+  encryption key.
 
 ```sh
 curl -s https://task.example.com/api/keys -H "Authorization: Bearer $TOKEN"
-curl -s -X POST https://task.example.com/api/keys/encrypt/rotate \
-  -H "Authorization: Bearer $TOKEN"
+curl -s -X POST https://task.example.com/api/keys/generate -H "Authorization: Bearer $TOKEN" \
+  -d '{"name": "deploy", "algo": "rsa", "bits": 4096, "policies": ["admin"], "users": ["claude"]}'
+curl -s -X PUT https://task.example.com/api/keys/task_ssh_ed25519 -H "Authorization: Bearer $TOKEN" \
+  -d '{"git": true}'
 ```
 
-`GET /api/keys` lists the SSH keys, the instance's encryption key as
-`encrypt`, public half and fingerprint, and the keys held for both uses
-as `overlaps`. The rotation answers the new key and `rekeyed`, the
+`GET /api/keys` lists every key, the instance's encryption key again as
+`encrypt` and the git key's name as `git`, public halves and
+fingerprints only. The rotation answers the key and `rekeyed`, the
 count of integration settings task-ui wrote again.
+
+### Moving the keys into the key folder
+
+An instance from before the key folder kept its keys apart:
+`TASK_UI_DATA/instance/encrypt`, `TASK_UI_DATA/workspaces/<id>/encrypt`
+and `ssh`, and `id_*` files in `TASK_UI_SSH_DIR`. The first start takes
+them in once and logs each by its old file, its name and its
+fingerprint:
+
+- the instance's encryption key becomes `task_encryption_<algo>`;
+- a workspace's becomes `workspace_<folder>_encryption_<algo>`, the
+  default workspace's folder as `default`, and its SSH keys
+  `workspace_<folder>_<name>_<algo>`, with their grants;
+- `id_ed25519` of the key folder becomes `task_ssh_ed25519`, which git
+  pulls with, and `id_<type>_<name>`, as `id_rsa_deploy`, becomes
+  `<name>_<algo>`, `deploy_rsa4096`, with the roles and users its
+  policy named.
+
+Backups come along, to decrypt what they encrypted, and the secrets and
+the integrations open as before. The old files stay in place;
+nothing reads them, and the log says so: remove them once the keys work.
 
 ## Secrets
 
@@ -233,8 +260,8 @@ off, the form leaves its scopes out, and `POST /api/secrets` answers
 ```
 
 The ⋯ menu of a workspace with a key holds **Rotate encryption key**.
-After a confirmation, task-ui generates a new key, keeps the current one
-beside it as a backup, `id_ed25519.bak-<time>`, re-encrypts the
+After a confirmation, task-ui rotates the key to new material, keeps the
+current one beside it as a backup, `<name>.key.bak-<time>`, re-encrypts the
 workspace's secrets, and the page says how many: **Re-encrypted 3
 secrets.** Runs see no change.
 
@@ -248,7 +275,7 @@ keys. The integrations' settings aren't on this page: the
 encryption key.
 
 At start, task-ui moves the secrets of an instance that kept them all on
-its SSH key, the `id_ed25519` or `id_rsa` of `TASK_UI_SSH_DIR`: a secret
+its SSH key, the `id_ed25519` or `id_rsa` of the key folder: a secret
 for all folders, scope `all`, becomes `_`'s shared secret,
 `workspace:_`, and task-ui writes every other secret again for its
 workspace's key. A workspace that holds secrets and has no encryption

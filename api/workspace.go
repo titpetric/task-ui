@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/titpetric/task-ui/folder"
+	"github.com/titpetric/task-ui/keystore"
 	"github.com/titpetric/task-ui/model"
 )
 
@@ -66,12 +67,6 @@ func (h *Handlers) createWorkspace(w http.ResponseWriter, r *http.Request) {
 	if err := h.opts.Workspaces.Create(ctx, workspace); err != nil {
 		failErr(w, err)
 		return
-	}
-	if h.opts.WorkspaceKeys != nil {
-		if err := h.opts.WorkspaceKeys.Prepare(workspace.ID); err != nil {
-			failErr(w, err)
-			return
-		}
 	}
 	writeJSON(w, http.StatusCreated, map[string]any{"workspace": workspace, "output": output})
 }
@@ -197,14 +192,8 @@ func (h *Handlers) deleteWorkspace(w http.ResponseWriter, r *http.Request) {
 		failErr(w, err)
 		return
 	}
-	if h.opts.KeyGrants != nil {
-		if err := h.opts.KeyGrants.DeleteWorkspace(ctx, workspace.ID); err != nil {
-			failErr(w, err)
-			return
-		}
-	}
-	if h.opts.WorkspaceKeys != nil {
-		if err := h.opts.WorkspaceKeys.Remove(workspace.ID); err != nil {
+	if h.opts.Keys != nil {
+		if err := h.opts.Keys.RemoveScope(ctx, keystore.ScopeWorkspace(workspace.ID)); err != nil {
 			failErr(w, err)
 			return
 		}

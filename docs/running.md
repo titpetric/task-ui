@@ -39,12 +39,12 @@ nothing a run writes; mount nothing there. The image bundles `task`,
   -v "${TASK_UI_HOST_PWD:-$PWD}:/src"`. task-ui reads the host paths
   from the mounts of its container; `TASK_UI_HOST_DATA` set in its
   environment overrides the data directory's.
-- The keys that encrypt live under `/data`, apart from the SSH keys:
-  `TASK_UI_DATA/instance/encrypt/id_ed25519` encrypts the integrations'
-  settings, and `TASK_UI_DATA/workspaces/<id>/encrypt` each workspace's
-  secrets. task-ui makes them at start, directories `0700` and files
-  `0600`. Back up `/data` with the database: without these keys the
-  secrets don't open.
+- The key folder holds every key, `<name>.key` and `<name>.pub`, the
+  encryption keys among them: `task_encryption_ed25519` encrypts the
+  integrations' settings, and `workspace_<folder>_encryption_<algo>`
+  each workspace's secrets. task-ui makes the folder `0700` and each
+  file `0600`. Back up `/keys` with `/data`: without the encryption keys
+  the secrets don't open. A copy of `/data` alone holds no key.
 
 ## Configuration
 

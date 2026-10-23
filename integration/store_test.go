@@ -21,7 +21,7 @@ func newStore(t *testing.T) *integration.Store {
 	keys := &sshkey.Store{Dir: t.TempDir()}
 	_, err = keys.Generate("ed25519", "test")
 	assert.NoError(t, err)
-	return &integration.Store{Secrets: secret.New(storage.NewSecretStorage(db), secret.NewVault(keys))}
+	return &integration.Store{Secrets: secret.New(storage.NewSecretStorage(db), secret.NewVault(secret.DirKeys{Store: keys}))}
 }
 
 // Settings save encrypted, an empty secret keeps its value, an empty plain

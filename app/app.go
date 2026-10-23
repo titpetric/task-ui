@@ -8,8 +8,6 @@ import (
 	"net"
 	"net/http"
 	"os"
-	"path/filepath"
-	"strings"
 	"sync/atomic"
 	"time"
 
@@ -36,7 +34,6 @@ import (
 	"github.com/titpetric/task-ui/runner"
 	"github.com/titpetric/task-ui/scheduler"
 	"github.com/titpetric/task-ui/skills"
-	"github.com/titpetric/task-ui/sshkey"
 	"github.com/titpetric/task-ui/sshprobe"
 	"github.com/titpetric/task-ui/storage"
 	"github.com/titpetric/task-ui/workflow"
@@ -144,55 +141,6 @@ func (a *App) prepare(ctx context.Context) error {
 	return storage.NewWorkflowRunStorage(a.DB).Interrupt(ctx, "task-ui restarted while it ran")
 }
 
-// ensureKeys makes the instance's encryption key and the key
-// directories of every workspace, the default one among them. A
-// workspace gets an encryption key from an admin, generated or
-// uploaded; only one that holds secrets and has no key, such as the
-// default workspace of an instance that kept its secrets on an SSH key,
-// gets one here, so its secrets open. It warns of a key held for
-// both uses, encryption and SSH, and removes nothing.
-func (a *App) ensureKeys(ctx context.Context) error {
-	workspaces, err := storage.NewWorkspaceStorage(a.DB).List(ctx)
-	if err != nil {
-		return err
-	}
-	keyring := a.Config.Keyring()
-	made, err := keyring.EnsureInstance("task-ui instance")
-	if err != nil {
-		return fmt.Errorf("the instance's encryption key: %w", err)
-	}
-	if made {
-		slog.Info("instance encryption key generated", "dir", keyring.Instance().Dir)
-	}
-	defer func() {
-		for _, overlap := range keyring.Overlaps() {
-			slog.Warn("a key is both an encryption key and an SSH key: runs and git leave it out; remove one of the copies",
-				"fingerprint", overlap.Fingerprint, "encrypt", strings.Join(overlap.Encrypt, ","), "ssh", strings.Join(overlap.Access, ","))
-		}
-	}()
-	store := a.secrets()
-	for _, ws := range workspaces {
-		if err := keyring.Prepare(ws.ID); err != nil {
-			return fmt.Errorf("the keys of workspace %s: %w", ws.Folder, err)
-		}
-		held, err := store.Encrypted(ctx, ws.Folder)
-		if err != nil {
-			return err
-		}
-		if len(held) == 0 {
-			continue
-		}
-		made, err := keyring.Ensure(ws.ID, "task-ui "+ws.Folder)
-		if err != nil {
-			return fmt.Errorf("the keys of workspace %s: %w", ws.Folder, err)
-		}
-		if made {
-			slog.Info("workspace encryption key generated for the secrets it holds", "workspace", ws.Folder, "dir", keyring.Dir(ws.ID))
-		}
-	}
-	return nil
-}
-
 // seed writes the password file to storage, when there is one. Without
 // one the users in storage stay as they are.
 func (a *App) seed(ctx context.Context) error {
@@ -241,20 +189,14 @@ func (a *App) wire(version string) error {
 	workflows := storage.NewWorkflowStorage(db)
 	workflowRuns := storage.NewWorkflowRunStorage(db)
 	refs := storage.NewFolderRefStorage(db)
-	keyring, grants := cfg.Keyring(), storage.NewWorkspaceKeyGrantStorage(db)
-	g := &git.Git{SSHDir: cfg.SSHDir, Withhold: keyring.Encrypts}
-	keys := &sshkey.Store{Dir: cfg.SSHDir}
-	var homeKeys *sshkey.Store
-	if dir := filepath.Join(home(), ".ssh"); filepath.Clean(dir) != filepath.Clean(cfg.SSHDir) {
-		homeKeys = &sshkey.Store{Dir: dir}
-	}
-	keyPolicies := storage.NewSSHKeyPolicyStorage(db)
+	keys := a.keys()
+	g := &git.Git{Keys: keys}
 	secrets := a.secrets()
 	env := envfile.New(storage.NewEnvFileStorage(db), secrets)
 	integrations := &integration.Store{Secrets: secrets}
 	prober := &sshprobe.Prober{
-		Users: []string{"debian", "root"}, KeyDirs: []string{cfg.SSHDir, filepath.Join(home(), ".ssh")},
-		KnownHosts: filepath.Join(cfg.SSHDir, "known_hosts"), Timeout: 4 * time.Second, TTL: 10 * time.Minute,
+		Users: []string{"debian", "root"}, Keys: keys,
+		KnownHosts: keys.KnownHosts(), Timeout: 4 * time.Second, TTL: 10 * time.Minute,
 		Terminal: true,
 	}
 	hosts := &beszel.Inventory{TTL: time.Minute, Settings: func(ctx context.Context) (string, string, error) {
@@ -278,7 +220,7 @@ func (a *App) wire(version string) error {
 	mounts, hostData := hostPaths(cfg)
 	a.Runner = runner.New(runner.Options{
 		HostPaths: mounts, HostData: hostData,
-		KeyDir: keys.Dir, KeyPolicies: keyPolicies,
+		Keys:          keys,
 		Runs:          runs,
 		Artifacts:     artifacts,
 		Summaries:     summaries,
@@ -296,8 +238,6 @@ func (a *App) wire(version string) error {
 		Now:           cfg.Clock(),
 		Root:          cfg.Root,
 		Workspaces:    workspaces,
-		WorkspaceKeys: keyring,
-		KeyGrants:     grants,
 		Users:         a.Users,
 	})
 	hostRuns := &hostrun.Starter{Catalogue: a.Catalogue, Hosts: hosts, SSH: prober, Runner: a.Runner}
@@ -334,18 +274,18 @@ func (a *App) wire(version string) error {
 	}
 	apiHandlers := api.New(api.Options{
 		Users: a.Users, Projects: projects, Workspaces: workspaces, Runs: runs, Artifacts: artifacts, ArtifactStore: store, Schedules: schedules, Secrets: secrets, SecretReads: secretReads,
-		FolderRefs: refs, WorkspaceKeys: keyring, KeyGrants: grants,
-		Workflows: workflows, WorkflowRuns: workflowRuns, Flows: a.Workflows, Events: events,
-		Runner: a.Runner, Catalogue: a.Catalogue, Git: g, Keys: keys, KeyPolicies: keyPolicies, Env: env, Recordings: recordings, Root: cfg.Root, Board: a.Board,
+		FolderRefs: refs,
+		Workflows:  workflows, WorkflowRuns: workflowRuns, Flows: a.Workflows, Events: events,
+		Runner: a.Runner, Catalogue: a.Catalogue, Git: g, Keys: keys, Env: env, Recordings: recordings, Root: cfg.Root, Board: a.Board,
 		Integrations: integrations, Hosts: hosts, HostRuns: hostRuns, Summarizer: &claude.Summarizer{Timeout: 3 * time.Minute},
 		AddUser: addUser, RemoveUser: removeUser, Tokens: a.Guard.Tokens, Now: cfg.Clock(), Summaries: summaries, Version: version,
 		Cleaner: cleaner,
 	})
 	pages, err := frontend.New(frontend.Options{
 		Guard: a.Guard, Auth: access.NewAuthenticator(a.Users, a.Emails, a.Passwords), Users: a.Users, Projects: projects, Workspaces: workspaces, Runs: runs, Artifacts: artifacts, Schedules: schedules, Secrets: secrets, SecretReads: secretReads,
-		FolderRefs: refs, WorkspaceKeys: keyring, KeyGrants: grants,
-		Workflows: workflows, WorkflowRuns: workflowRuns, Flows: a.Workflows,
-		Runner: a.Runner, Catalogue: a.Catalogue, Git: g, Keys: keys, HomeKeys: homeKeys, KeyPolicies: keyPolicies, Env: env, Recordings: recordings, Root: cfg.Root, Version: version, Now: cfg.Clock(),
+		FolderRefs: refs,
+		Workflows:  workflows, WorkflowRuns: workflowRuns, Flows: a.Workflows,
+		Runner: a.Runner, Catalogue: a.Catalogue, Git: g, Keys: keys, Env: env, Recordings: recordings, Root: cfg.Root, Version: version, Now: cfg.Clock(),
 		ArtifactStore: store, Disk: &diskusage.Meter{TTL: 10 * time.Minute}, Board: a.Board, ComposeProject: self, Cleaner: cleaner,
 		Integrations: integrations, Hosts: hosts,
 		SSH: prober, AddUsers: a.UsersFile != nil, BaseURL: cfg.URL,
@@ -436,15 +376,6 @@ func (a *App) shutdown(server *http.Server) error {
 // Close releases the database.
 func (a *App) Close() error {
 	return a.DB.Close()
-}
-
-// home is the user's home directory, or / when there is none.
-func home() string {
-	dir, err := os.UserHomeDir()
-	if err != nil {
-		return "/"
-	}
-	return dir
 }
 
 // promptHosts lists the inventory for a prompt's run: the hosts, largest

@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/titpetric/task-ui/frontend/view"
+	"github.com/titpetric/task-ui/keystore"
 	"github.com/titpetric/task-ui/model"
 )
 
@@ -12,7 +13,7 @@ import (
 // permission first.
 func (h *Handlers) keyWorkspace(w http.ResponseWriter, r *http.Request) *model.Workspace {
 	name := param(r, "folder")
-	if h.opts.Workspaces == nil || h.opts.WorkspaceKeys == nil {
+	if h.opts.Workspaces == nil || h.opts.Keys == nil {
 		h.missing(w, r, "No workspace named "+name+".")
 		return nil
 	}
@@ -25,20 +26,19 @@ func (h *Handlers) keyWorkspace(w http.ResponseWriter, r *http.Request) *model.W
 }
 
 // workspaceKeys puts a workspace's keys on its page: the encryption
-// key, the SSH keys with their backups, and whom each goes to.
-// Without the keyring the page has none.
+// key, the SSH keys, and whom each goes to. Without the key folder the
+// page has none.
 func (h *Handlers) workspaceKeys(r *http.Request, p *view.Page) {
 	p.KeyPolicies, p.KeyUsers = map[string][]string{}, map[string][]string{}
-	if h.opts.WorkspaceKeys == nil || p.Workspace == nil {
+	if h.opts.Keys == nil || p.Workspace == nil {
 		return
 	}
-	id := p.Workspace.ID
-	p.EncryptKey = h.opts.WorkspaceKeys.EncryptKey(id)
-	p.Keys, p.KeysDir = h.opts.WorkspaceKeys.SSH(id).List(), h.opts.WorkspaceKeys.Dir(id)
-	if h.opts.KeyGrants != nil {
-		if roles, users, err := h.opts.KeyGrants.All(r.Context(), id); err == nil {
-			p.KeyPolicies, p.KeyUsers = roles, users
-		}
+	scope := keystore.ScopeWorkspace(p.Workspace.ID)
+	p.EncryptKey = h.opts.Keys.EncryptKey(r.Context(), scope)
+	p.Keys, _ = h.opts.Keys.Of(r.Context(), scope, keystore.PurposeSSH)
+	p.KeysDir = h.opts.Keys.Dir
+	for _, key := range p.Keys {
+		p.KeyPolicies[key.Name], p.KeyUsers[key.Name] = key.Roles, key.Users
 	}
 	p.Users, _ = h.opts.Users.List(r.Context())
 }
@@ -99,15 +99,12 @@ func (h *Handlers) workspaceKeyEdit(w http.ResponseWriter, r *http.Request) {
 	if workspace == nil {
 		return
 	}
-	name := param(r, "name")
-	for _, key := range h.opts.WorkspaceKeys.SSH(workspace.ID).List() {
-		if key.Name != name || key.Backup {
-			continue
-		}
-		p := h.workspaceKeyPage(r, workspace, key.Name, key.Name)
-		p.Key = &key
-		h.render(w, http.StatusOK, "workspace_key_edit", p)
+	key, err := h.opts.Keys.Get(r.Context(), param(r, "name"))
+	if err != nil || key.Scope != keystore.ScopeWorkspace(workspace.ID) || key.Encrypts() {
+		h.notFound(w, r)
 		return
 	}
-	h.notFound(w, r)
+	p := h.workspaceKeyPage(r, workspace, key.Name, key.Name)
+	p.Key = key
+	h.render(w, http.StatusOK, "workspace_key_edit", p)
 }

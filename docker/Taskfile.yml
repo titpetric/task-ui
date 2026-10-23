@@ -16,11 +16,12 @@ tasks:
       - docker images | grep {{ .image }}
 
   gen:
-    desc: "Generate ssh key for docker image"
+    desc: "Generate an ssh key for the key folder, ./keys"
     dir: '{{ .root }}/docker'
     cmds:
-      - ssh-keygen -t ecdsa -f ./root/.ssh/id_ecdsa -C task-ui
-      - cat ./root/.ssh/id_ecdsa.pub
+      - mkdir -p -m 700 ./keys
+      - ssh-keygen -t ed25519 -N '' -f ./keys/id_ed25519 -C task-ui
+      - cat ./keys/id_ed25519.pub
 
   run:
     desc: "Run task-ui in docker env"

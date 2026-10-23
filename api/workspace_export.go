@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/titpetric/task-ui/keystore"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/workspace"
 )
@@ -70,8 +71,10 @@ func (h *Handlers) bundle(ctx context.Context, row *model.Workspace) (*workspace
 		project.Folder = workspace.Relative(name, project.Folder)
 		manifest.Projects = append(manifest.Projects, project)
 	}
-	if h.opts.KeyGrants != nil {
-		roles, users, err := h.opts.KeyGrants.All(ctx, row.ID)
+	var keyFiles map[string][]byte
+	if h.opts.Keys != nil {
+		var roles, users map[string][]string
+		keyFiles, roles, users, err = h.opts.Keys.Bundle(ctx, keystore.ScopeWorkspace(row.ID))
 		if err != nil {
 			return nil, err
 		}
@@ -114,11 +117,5 @@ func (h *Handlers) bundle(ctx context.Context, row *model.Workspace) (*workspace
 			manifest.Secrets = append(manifest.Secrets, secret)
 		}
 	}
-	bundle := &workspace.Bundle{Manifest: manifest, WorkFactor: h.opts.ExportWorkFactor}
-	if h.opts.WorkspaceKeys != nil {
-		if bundle.Keys, err = h.opts.WorkspaceKeys.Files(row.ID); err != nil {
-			return nil, err
-		}
-	}
-	return bundle, nil
+	return &workspace.Bundle{Manifest: manifest, WorkFactor: h.opts.ExportWorkFactor, Keys: keyFiles}, nil
 }

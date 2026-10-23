@@ -3,12 +3,41 @@ package git
 import (
 	"bytes"
 	"context"
+	"crypto/ed25519"
+	"crypto/rand"
+	"encoding/pem"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"golang.org/x/crypto/ssh"
+
+	"github.com/titpetric/task-ui/sshagent"
 )
+
+// fakeKeys hand git a key in an agent, with key, or none.
+type fakeKeys struct {
+	t     *testing.T
+	key   bool
+	agent *sshagent.Agent
+}
+
+func (f *fakeKeys) GitAgent(context.Context) (*sshagent.Agent, string, error) {
+	if !f.key {
+		return nil, "", nil
+	}
+	_, private, _ := ed25519.GenerateKey(rand.Reader)
+	block, err := ssh.MarshalPrivateKey(private, "")
+	if err != nil {
+		f.t.Fatal(err)
+	}
+	f.agent, err = sshagent.LoadKeys(f.t.TempDir(), sshagent.Named{Name: "task_ssh_ed25519", PEM: pem.EncodeToMemory(block)})
+	return f.agent, "/keys/task_ssh_ed25519.pub", err
+}
+
+func (f *fakeKeys) KnownHosts() string { return "/keys/known_hosts" }
 
 func gitCmd(t *testing.T, dir string, args ...string) {
 	t.Helper()
@@ -54,7 +83,7 @@ func TestGit_ValidURL(t *testing.T) {
 }
 
 func TestGit_Clone(t *testing.T) {
-	g := &Git{SSHDir: t.TempDir()}
+	g := &Git{Keys: &fakeKeys{t: t}}
 	url, _ := repo(t)
 	dir := filepath.Join(t.TempDir(), "notes")
 
@@ -146,26 +175,9 @@ func TestGit_Remove(t *testing.T) {
 }
 
 func TestGit_IsRepo(t *testing.T) {
-	g := &Git{SSHDir: t.TempDir()}
+	g := &Git{}
 	if g.IsRepo(t.TempDir()) {
 		t.Fatal("empty folder is a repo")
-	}
-	// The ssh command names every key in the folder and nothing else.
-	if g.sshCommand() != "" {
-		t.Fatal("ssh command without keys")
-	}
-	if err := os.WriteFile(filepath.Join(g.SSHDir, "id_ed25519"), nil, 0o600); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(filepath.Join(g.SSHDir, "id_ed25519.pub"), nil, 0o644); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(filepath.Join(g.SSHDir, "id_rsa.bak-20260101T000000"), nil, 0o600); err != nil {
-		t.Fatal(err)
-	}
-	command := g.sshCommand()
-	if !strings.Contains(command, "id_ed25519'") || strings.Contains(command, ".pub") || strings.Contains(command, ".bak") || !strings.Contains(command, "known_hosts") {
-		t.Fatalf("ssh command: %q", command)
 	}
 }
 
@@ -199,37 +211,44 @@ func TestGit_Checkout(t *testing.T) {
 	}
 }
 
-// git's ssh takes every key of SSHDir but the backups, the public
-// halves and the ones Withhold names, such as a copy of an encryption
-// key; a pull or a clone over ssh authenticates with no other.
-func TestGit_SSHCommand(t *testing.T) {
+// A clone or a pull runs ssh with the git key in an agent, named by its
+// public half, and the key folder's known_hosts; nothing else does, and
+// with no git key ssh is its own.
+func TestGit_env(t *testing.T) {
 	t.Parallel()
-	dir := t.TempDir()
-	for _, name := range []string{"id_ed25519", "id_ed25519.pub", "id_rsa_deploy", "id_ed25519_secrets", "id_rsa.bak-20260101T000000", "known_hosts"} {
-		if err := os.WriteFile(filepath.Join(dir, name), nil, 0o600); err != nil {
-			t.Fatal(err)
+	keys := &fakeKeys{t: t, key: true}
+	g := &Git{Keys: keys}
+	env, cleanup, err := g.env(context.Background(), true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	command := ""
+	for _, kv := range env {
+		if v, ok := strings.CutPrefix(kv, "GIT_SSH_COMMAND="); ok {
+			command = v
 		}
 	}
-	g := &Git{SSHDir: dir, Withhold: func(path string) bool { return filepath.Base(path) == "id_ed25519_secrets" }}
-	cmd := g.sshCommand()
-	for _, want := range []string{"-i '" + filepath.Join(dir, "id_ed25519") + "'", "-i '" + filepath.Join(dir, "id_rsa_deploy") + "'", "IdentitiesOnly=yes"} {
-		if !strings.Contains(cmd, want) {
-			t.Fatalf("%q lacks %q", cmd, want)
+	for _, want := range []string{"IdentitiesOnly=yes", "IdentityAgent='" + keys.agent.Socket + "'", "-i '/keys/task_ssh_ed25519.pub'", "UserKnownHostsFile='/keys/known_hosts'"} {
+		if !strings.Contains(command, want) {
+			t.Fatalf("%q lacks %q", command, want)
 		}
 	}
-	for _, not := range []string{"id_ed25519_secrets", ".pub", ".bak-"} {
-		if strings.Contains(cmd, not) {
-			t.Fatalf("%q offers %q", cmd, not)
+	cleanup()
+	if _, err := os.Stat(keys.agent.Socket); !os.IsNotExist(err) {
+		t.Fatal("the agent outlives the command")
+	}
+	local, cleanup, _ := g.env(context.Background(), false)
+	cleanup()
+	for _, kv := range local {
+		if strings.HasPrefix(kv, "GIT_SSH_COMMAND=") {
+			t.Fatal("a local command gets ssh")
 		}
 	}
-	found := false
-	for _, env := range g.env() {
-		found = found || env == "GIT_SSH_COMMAND="+cmd
-	}
-	if !found {
-		t.Fatal("git runs without the ssh command")
-	}
-	if (&Git{SSHDir: t.TempDir()}).sshCommand() != "" {
-		t.Fatal("an ssh command without keys")
+	none, cleanup, _ := (&Git{Keys: &fakeKeys{t: t}}).env(context.Background(), true)
+	cleanup()
+	for _, kv := range none {
+		if strings.Contains(kv, "IdentityAgent") {
+			t.Fatal("an agent without a git key")
+		}
 	}
 }

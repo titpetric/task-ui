@@ -1,159 +1,179 @@
 package api
 
 import (
+	"errors"
 	"net/http"
-	"path/filepath"
 	"strings"
 
-	"github.com/titpetric/task-ui/sshkey"
+	"github.com/titpetric/task-ui/keystore"
 	"github.com/titpetric/task-ui/storage"
 )
 
-// KeyRequest generates a key pair, or uploads a private key.
+// KeyRequest generates a key, uploads a private key, or sets whose runs
+// get an SSH key and whether git pulls with it.
 type KeyRequest struct {
-	// Type is the pair to generate: ed25519, ecdsa or rsa.
+	// Name is the key's name before its algorithm: deploy names
+	// deploy_rsa4096. Unique across the key folder.
+	Name string `json:"name"`
+	// Algo and Bits are what to generate: ed25519, the default, ecdsa of
+	// 256, 384 or 521 bits, rsa of 2048, 3072 or 4096. Type is Algo too.
+	Algo string `json:"algo"`
 	Type string `json:"type"`
-	// Name labels a key made for someone: id_<type>_<name>, beside the
-	// type's own key. Empty is the type's own key.
-	Name    string `json:"name"`
+	Bits int    `json:"bits"`
+	// Purpose is ssh, the default, or encrypt.
+	Purpose string `json:"purpose"`
 	Comment string `json:"comment"`
-	// Content is the private key to upload, PEM encoded.
+	// Content is the private key to upload, PEM or OpenSSH.
 	Content string `json:"content"`
-	// Policies are the roles whose runs get the key through the run's
-	// ssh agent. Left out, a key keeps the roles it had, so a rotation
-	// keeps them; an empty list withholds the key from all.
+	// Policies are the roles, and Users the users by name, whose runs
+	// get an SSH key through the run's ssh agent. Left out on a PUT, a
+	// key keeps them.
 	Policies []string `json:"policies"`
-	// Users are the users, by name, whose runs get the key, beside the
-	// roles. Left out, a key keeps the users it had.
-	Users []string `json:"users"`
+	Users    []string `json:"users"`
+	// Git makes an SSH key the one git pulls and clones with.
+	Git *bool `json:"git,omitempty"`
 }
 
-// listKeys returns the SSH key pairs of the instance SSH folder, the
-// encryption keys left out, beside the instance's encryption key and
-// the keys held for both uses. Takes key/view.
+// spec returns what the request makes, in a scope.
+func (req *KeyRequest) spec(scope string) keystore.Spec {
+	algo := req.Algo
+	if algo == "" {
+		algo = req.Type
+	}
+	return keystore.Spec{Name: strings.TrimSpace(req.Name), Algo: algo, Bits: req.Bits, Purpose: req.Purpose, Scope: scope, Comment: strings.TrimSpace(req.Comment)}
+}
+
+// keyStatus maps an error of the key folder to its status.
+func keyStatus(err error) int {
+	switch {
+	case errors.Is(err, keystore.ErrExists):
+		return http.StatusConflict
+	case errors.Is(err, storage.ErrNotFound):
+		return http.StatusNotFound
+	}
+	return http.StatusBadRequest
+}
+
+// failKey answers an error of the key folder.
+func failKey(w http.ResponseWriter, err error) {
+	fail(w, keyStatus(err), err.Error())
+}
+
+// keysOff answers a request on an instance without the key folder.
+func (h *Handlers) keysOff(w http.ResponseWriter) bool {
+	if h.opts.Keys == nil {
+		fail(w, http.StatusNotFound, "the key folder isn't available on this instance")
+		return true
+	}
+	return false
+}
+
+// listKeys returns every key of the key folder, public halves and
+// fingerprints only: purpose, algorithm and size, scope, the roles and
+// users an SSH key goes to, and the one git pulls with. Takes key/view.
 func (h *Handlers) listKeys(w http.ResponseWriter, r *http.Request) {
-	if !h.require(w, r, "key/view") {
+	if !h.require(w, r, "key/view") || h.keysOff(w) {
 		return
 	}
-	policies, err := h.opts.KeyPolicies.All(r.Context())
+	keys, err := h.opts.Keys.List(r.Context())
 	if err != nil {
 		failErr(w, err)
 		return
 	}
-	users, err := h.opts.KeyPolicies.AllUsers(r.Context())
-	if err != nil {
-		failErr(w, err)
-		return
+	body := map[string]any{"keys": keys, "dir": h.opts.Keys.Dir}
+	if git := h.opts.Keys.Git(r.Context()); git != nil {
+		body["git"] = git.Name
 	}
-	body := map[string]any{"keys": h.accessKeys(), "dir": h.opts.Keys.Dir, "policies": policies, "users": users}
-	if keyring := h.opts.WorkspaceKeys; keyring != nil {
-		body["encrypt"], body["overlaps"] = keyring.InstanceKey(), keyring.Overlaps()
+	if key := h.opts.Keys.EncryptKey(r.Context(), storage.ScopeInstance); key != nil {
+		body["encrypt"] = key
 	}
 	writeJSON(w, http.StatusOK, body)
 }
 
-// accessKeys returns the key pairs of the instance SSH folder, backups
-// among them, without a key that encrypts: a copy of an encryption key
-// is no SSH key, whatever folder holds it.
-func (h *Handlers) accessKeys() []sshkey.Key {
-	keys := h.opts.Keys.List()
-	if h.opts.WorkspaceKeys == nil {
-		return keys
-	}
-	result := []sshkey.Key{}
-	for _, key := range keys {
-		if !h.opts.WorkspaceKeys.Encrypts(filepath.Join(h.opts.Keys.Dir, key.Name)) {
-			result = append(result, key)
+// link sets the roles and the users of a key and the git key, each
+// when the request names it.
+func (h *Handlers) link(r *http.Request, name string, req KeyRequest) error {
+	if req.Policies != nil || req.Users != nil {
+		key, err := h.opts.Keys.Get(r.Context(), name)
+		if err != nil {
+			return err
 		}
-	}
-	return result
-}
-
-// checkAccess refuses an upload that is an encryption key, ErrRole.
-func (h *Handlers) checkAccess(content string) error {
-	if h.opts.WorkspaceKeys == nil {
-		return nil
-	}
-	return h.opts.WorkspaceKeys.CheckAccess([]byte(content))
-}
-
-// setPolicies sets the roles and the users whose runs get a key, each
-// when the request names them.
-func (h *Handlers) setPolicies(r *http.Request, name string, req KeyRequest) error {
-	if req.Policies != nil {
-		if err := h.opts.KeyPolicies.Set(r.Context(), name, req.Policies); err != nil {
+		roles, users := key.Roles, key.Users
+		if req.Policies != nil {
+			roles = req.Policies
+		}
+		if req.Users != nil {
+			users = trimmed(req.Users)
+		}
+		if err := h.opts.Keys.Link(r.Context(), name, roles, users); err != nil {
 			return err
 		}
 	}
-	if req.Users != nil {
-		users := make([]string, 0, len(req.Users))
-		for _, user := range req.Users {
-			users = append(users, strings.TrimSpace(user))
+	if req.Git != nil {
+		git := ""
+		if *req.Git {
+			git = name
+		} else if current := h.opts.Keys.Git(r.Context()); current != nil && current.Name != name {
+			git = current.Name
 		}
-		return h.opts.KeyPolicies.SetUsers(r.Context(), name, users)
+		return h.opts.Keys.SetGit(r.Context(), git)
 	}
 	return nil
 }
 
-// updateKey changes the roles whose runs get a key. Takes key/edit.
+// trimmed returns the items trimmed.
+func trimmed(items []string) []string {
+	result := make([]string, 0, len(items))
+	for _, item := range items {
+		result = append(result, strings.TrimSpace(item))
+	}
+	return result
+}
+
+// updateKey sets the roles and users whose runs get an SSH key, and
+// whether git pulls with it. Takes key/edit.
 func (h *Handlers) updateKey(w http.ResponseWriter, r *http.Request) {
-	if !h.require(w, r, "key/edit") {
+	if !h.require(w, r, "key/edit") || h.keysOff(w) {
 		return
 	}
 	name := param(r, "name")
-	found := false
-	for _, key := range h.accessKeys() {
-		found = found || (key.Name == name && !key.Backup)
-	}
-	if !found {
-		failErr(w, storage.ErrNotFound)
-		return
-	}
 	var req KeyRequest
 	if err := readJSON(r, &req); err != nil {
 		fail(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	if req.Policies == nil {
-		req.Policies = []string{}
-	}
-	if req.Users == nil {
-		req.Users = []string{}
-	}
-	if err := h.setPolicies(r, name, req); err != nil {
-		fail(w, http.StatusBadRequest, err.Error())
+	if err := h.link(r, name, req); err != nil {
+		failKey(w, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, map[string]any{"name": name, "policies": req.Policies, "users": req.Users})
+	key, err := h.opts.Keys.Get(r.Context(), name)
+	if err != nil {
+		failErr(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"key": key, "name": name, "policies": key.Roles, "users": key.Users})
 }
 
-// generateKey makes a new pair. It keeps the existing pair of the same
-// type as a backup. An SSH key encrypts nothing, so no secret changes.
+// generateKey makes an instance key under a name of its own. Takes
+// key/edit.
 func (h *Handlers) generateKey(w http.ResponseWriter, r *http.Request) {
-	if !h.require(w, r, "key/edit") {
-		return
-	}
-	var req KeyRequest
-	if err := readJSON(r, &req); err != nil {
-		fail(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	key, err := h.opts.Keys.GenerateAs(req.Type, strings.TrimSpace(req.Name), strings.TrimSpace(req.Comment))
-	if err != nil {
-		fail(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	if err := h.setPolicies(r, key.Name, req); err != nil {
-		fail(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	writeJSON(w, http.StatusCreated, map[string]any{"key": key})
+	h.addKey(w, r, func(req KeyRequest) (*keystore.Key, error) {
+		return h.opts.Keys.Generate(r.Context(), req.spec(storage.ScopeInstance))
+	})
 }
 
-// uploadKey stores a private key as the pair of its type. A key the
-// instance or a workspace encrypts with answers 409.
+// uploadKey stores a private key as an instance key; its algorithm and
+// size come from the key. A key the folder holds, under any name or
+// purpose, answers 409. Takes key/edit.
 func (h *Handlers) uploadKey(w http.ResponseWriter, r *http.Request) {
-	if !h.require(w, r, "key/edit") {
+	h.addKey(w, r, func(req KeyRequest) (*keystore.Key, error) {
+		return h.opts.Keys.Import(r.Context(), req.spec(storage.ScopeInstance), []byte(req.Content))
+	})
+}
+
+// addKey reads a key request, adds the key and links it.
+func (h *Handlers) addKey(w http.ResponseWriter, r *http.Request, add func(KeyRequest) (*keystore.Key, error)) {
+	if !h.require(w, r, "key/edit") || h.keysOff(w) {
 		return
 	}
 	var req KeyRequest
@@ -161,58 +181,63 @@ func (h *Handlers) uploadKey(w http.ResponseWriter, r *http.Request) {
 		fail(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	if err := h.checkAccess(req.Content); err != nil {
+	key, err := add(req)
+	if err != nil {
+		failKey(w, err)
+		return
+	}
+	if err := h.link(r, key.Name, req); err != nil {
+		failKey(w, err)
+		return
+	}
+	if key, err = h.opts.Keys.Get(r.Context(), key.Name); err != nil {
 		failErr(w, err)
 		return
 	}
-	key, err := h.opts.Keys.UploadAs([]byte(req.Content), strings.TrimSpace(req.Name), strings.TrimSpace(req.Comment))
-	if err != nil {
-		fail(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	if err := h.setPolicies(r, key.Name, req); err != nil {
-		fail(w, http.StatusBadRequest, err.Error())
-		return
-	}
 	writeJSON(w, http.StatusCreated, map[string]any{"key": key})
 }
 
-// deleteKey removes a pair, or a backup, and its policies.
+// deleteKey retires a key and drops its links. The encryption key of a
+// scope that holds secrets stays: it opens them. Takes key/delete.
 func (h *Handlers) deleteKey(w http.ResponseWriter, r *http.Request) {
-	if !h.require(w, r, "key/delete") {
+	if !h.require(w, r, "key/delete") || h.keysOff(w) {
 		return
 	}
 	name := param(r, "name")
-	if err := h.opts.Keys.Delete(name); err != nil {
+	key, err := h.opts.Keys.Get(r.Context(), name)
+	if err != nil {
 		failErr(w, err)
 		return
 	}
-	if err := h.opts.KeyPolicies.Delete(r.Context(), name); err != nil {
+	if key.Encrypts() {
+		fail(w, http.StatusConflict, "an encryption key opens its secrets: rotate it or upload another in its place")
+		return
+	}
+	if err := h.opts.Keys.Remove(r.Context(), name); err != nil {
 		failErr(w, err)
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
 }
 
-// rotateEncryptKey generates a new encryption key for the instance and
+// rotateEncryptKey rotates the instance's encryption key to new material and
 // writes the services' secrets, the integrations' settings, again for
-// it. The previous key stays as a backup and still opens them, so a
-// rekey that fails sets rekey_error. Takes key/edit.
+// it. The previous material stays as a backup and still opens them, so
+// a rekey that fails sets rekey_error. Takes key/edit.
 func (h *Handlers) rotateEncryptKey(w http.ResponseWriter, r *http.Request) {
-	if !h.require(w, r, "key/edit") {
+	if !h.require(w, r, "key/edit") || h.keysOff(w) {
 		return
 	}
-	if h.opts.WorkspaceKeys == nil {
-		fail(w, http.StatusNotFound, "the keyring isn't available on this instance")
-		return
+	current := h.opts.Keys.EncryptKey(r.Context(), storage.ScopeInstance)
+	var key *keystore.Key
+	var err error
+	if current == nil {
+		key, err = h.opts.Keys.Generate(r.Context(), keystore.Spec{Name: "task_encryption", Purpose: keystore.PurposeEncrypt, Comment: "task-ui instance"})
+	} else {
+		key, err = h.opts.Keys.Rotate(r.Context(), current.Name)
 	}
-	comment := "task-ui instance"
-	if key := h.opts.WorkspaceKeys.InstanceKey(); key != nil && key.Comment != "" {
-		comment = key.Comment
-	}
-	key, err := h.opts.WorkspaceKeys.RotateInstance(comment)
 	if err != nil {
-		failErr(w, err)
+		failKey(w, err)
 		return
 	}
 	n, err := h.opts.Secrets.RekeyInstance(r.Context())

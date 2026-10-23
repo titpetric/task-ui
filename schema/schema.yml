@@ -109,6 +109,137 @@
         - folder
         - path
       unique: true
+- name: key_info
+  comment: Key Info
+  columns:
+    - name: name
+      type: text
+      key: PRI
+      comment: Name
+      datatype: varchar
+    - name: purpose
+      type: TEXT
+      key: MUL
+      comment: Purpose
+      datatype: varchar
+      values:
+        - encrypt
+        - ssh
+    - name: algo
+      type: text
+      comment: Algo
+      datatype: varchar
+    - name: bits
+      type: integer
+      comment: Bits
+      datatype: bigint
+      size: 8
+    - name: fingerprint
+      type: text
+      key: MUL
+      comment: Fingerprint
+      datatype: varchar
+    - name: scope
+      type: text
+      key: MUL
+      comment: Scope
+      datatype: varchar
+    - name: comment
+      type: text
+      comment: Comment
+      datatype: varchar
+    - name: created_at
+      type: timestamp
+      comment: Created At
+      datatype: datetime
+    - name: updated_at
+      type: timestamp
+      comment: Updated At
+      datatype: datetime
+  indexes:
+    - name: sqlite_autoindex_key_info_1
+      columns:
+        - name
+      primary: true
+      unique: true
+    - name: idx_key_info_fingerprint
+      columns:
+        - fingerprint
+      unique: true
+    - name: idx_key_info_scope
+      columns:
+        - scope
+        - purpose
+- name: key_role
+  comment: Key Role
+  columns:
+    - name: id
+      type: text
+      key: PRI
+      comment: ID
+      datatype: char(26)
+    - name: key_name
+      type: text
+      key: MUL
+      comment: Key Name
+      datatype: varchar
+    - name: role
+      type: TEXT
+      key: MUL
+      comment: Role
+      datatype: varchar
+      values:
+        - admin
+        - runner
+        - viewer
+    - name: created_at
+      type: timestamp
+      comment: Created At
+      datatype: datetime
+  indexes:
+    - name: sqlite_autoindex_key_role_1
+      columns:
+        - id
+      primary: true
+      unique: true
+    - name: idx_key_role_key_role
+      columns:
+        - key_name
+        - role
+      unique: true
+- name: key_user
+  comment: Key User
+  columns:
+    - name: id
+      type: text
+      key: PRI
+      comment: ID
+      datatype: char(26)
+    - name: key_name
+      type: text
+      key: MUL
+      comment: Key Name
+      datatype: varchar
+    - name: user_name
+      type: text
+      key: MUL
+      comment: User Name
+      datatype: varchar
+    - name: created_at
+      type: timestamp
+      comment: Created At
+      datatype: datetime
+  indexes:
+    - name: sqlite_autoindex_key_user_1
+      columns:
+        - id
+      primary: true
+      unique: true
+    - name: idx_key_user_key_user
+      columns:
+        - key_name
+        - user_name
+      unique: true
 - name: migrations
   comment: Migrations
   columns:

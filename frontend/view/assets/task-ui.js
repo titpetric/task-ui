@@ -837,10 +837,11 @@
     form.dataset.next = "/settings/projects?notice=" + encodeURIComponent("Moved to " + to);
   });
 
-  // A new key made for a user takes their name: id_<type>_<user>.
+  // The algorithm of a new key carries its size: the bits field takes
+  // the chosen option's, 0 for ed25519.
   document.addEventListener("change", function (event) {
-    var pick = event.target.closest("select[data-key-for]");
-    if (pick) pick.form.elements.name.value = pick.value;
+    var pick = event.target.closest("select[data-key-algo]");
+    if (pick) pick.form.elements.bits.value = pick.selectedOptions[0].dataset.bits || "0";
   });
 
   // A show/hide switch remembers its choice, in this browser.

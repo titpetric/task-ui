@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/titpetric/task-ui/internal/assert"
+	"github.com/titpetric/task-ui/keystore"
 	"github.com/titpetric/task-ui/model"
 )
 
@@ -24,14 +25,11 @@ func TestWorkspaceKeys(t *testing.T) {
 	missing := f.page(t, asAdmin, "/settings/workspaces/malta")
 	assert.Contains(t, missing, `<span class="badge bad">missing</span>`)
 	assert.Contains(t, missing, `data-next="/settings/workspaces/malta?notice=Encryption+key+added#keys"`)
-	_, err = f.opts.WorkspaceKeys.Ensure(ws.ID, "task-ui malta")
-	assert.NoError(t, err)
-	encrypt := f.opts.WorkspaceKeys.EncryptKey(ws.ID)
-	deploy, err := f.opts.WorkspaceKeys.SSH(ws.ID).GenerateAs("ed25519", "deploy", "deploy")
-	assert.NoError(t, err)
-	admin, err := f.opts.WorkspaceKeys.SSH(ws.ID).GenerateAs("ed25519", "admin", "admin")
-	assert.NoError(t, err)
-	assert.NoError(t, f.opts.KeyGrants.Set(ctx, ws.ID, admin.Name, []string{model.RoleAdmin}, nil))
+	scope := keystore.ScopeWorkspace(ws.ID)
+	encrypt := f.gen(t, keystore.Spec{Name: "workspace_malta_encryption", Purpose: keystore.PurposeEncrypt, Scope: scope})
+	deploy := f.gen(t, keystore.Spec{Name: "workspace_malta_deploy", Scope: scope})
+	admin := f.gen(t, keystore.Spec{Name: "workspace_malta_admin", Scope: scope})
+	assert.NoError(t, f.opts.Keys.Link(ctx, admin.Name, []string{model.RoleAdmin}, nil))
 
 	body := f.page(t, asAdmin, "/settings/workspaces/malta")
 	assert.Contains(t, body, `<section class="block workspace-keys" id="keys">`)
@@ -39,13 +37,12 @@ func TestWorkspaceKeys(t *testing.T) {
 	assert.Contains(t, body, `name="passphrase" autocomplete="new-password" required`)
 	assert.Contains(t, body, html(encrypt.Fingerprint))
 	assert.NotContains(t, body, `<span class="badge bad">missing</span>`)
-	assert.Contains(t, body, `href="/settings/workspaces/malta/keys/upload?encrypt=1"`)
 	assert.Contains(t, body, `<input type="hidden" name="encrypt" value="true" data-type="bool">`)
 	assert.Contains(t, body, html(deploy.Fingerprint))
 	assert.Contains(t, body, `<span class="dim">every run</span>`)
 	assert.Contains(t, body, `<span class="badge">admin</span>`)
-	assert.Contains(t, body, `href="/settings/workspaces/malta/keys/id_ed25519_deploy"`)
-	assert.Contains(t, body, `data-delete="/api/workspaces/malta/keys/id_ed25519_deploy"`)
+	assert.Contains(t, body, `href="/settings/workspaces/malta/keys/workspace_malta_deploy_ed25519"`)
+	assert.Contains(t, body, `data-delete="/api/workspaces/malta/keys/workspace_malta_deploy_ed25519"`)
 	assert.NotContains(t, body, "PRIVATE KEY")
 
 	generate := f.page(t, asAdmin, "/settings/workspaces/malta/keys/generate")
@@ -63,11 +60,11 @@ func TestWorkspaceKeys(t *testing.T) {
 	assert.NotContains(t, encryptUpload, `name="policies"`)
 
 	edit := f.page(t, asAdmin, "/settings/workspaces/malta/keys/"+admin.Name)
-	assert.Contains(t, edit, `data-api="/api/workspaces/malta/keys/id_ed25519_admin" data-method="PUT"`)
+	assert.Contains(t, edit, `data-api="/api/workspaces/malta/keys/workspace_malta_admin_ed25519" data-method="PUT"`)
 	assert.Contains(t, edit, `name="policies" value="admin" data-type="set" checked>`)
 	assert.Contains(t, edit, html(admin.Fingerprint))
 
-	assert.Equal(t, http.StatusNotFound, f.get(t, asAdmin, "/settings/workspaces/malta/keys/id_ed25519_nope").Status)
+	assert.Equal(t, http.StatusNotFound, f.get(t, asAdmin, "/settings/workspaces/malta/keys/workspace_malta_nope_ed25519").Status)
 	assert.Equal(t, http.StatusNotFound, f.get(t, asAdmin, "/settings/workspaces/nope/keys/generate").Status)
 	assert.Equal(t, http.StatusForbidden, f.get(t, asOps, "/settings/workspaces/malta/keys/generate").Status)
 }

@@ -5,10 +5,12 @@ import (
 	"encoding/json"
 	"net/http"
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/titpetric/task-ui/api"
 	"github.com/titpetric/task-ui/internal/assert"
+	"github.com/titpetric/task-ui/keystore"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/secret"
 )
@@ -101,7 +103,8 @@ func TestSecret_ListAndDelete(t *testing.T) {
 func TestSecret_Encryption(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
-	assert.NoError(t, os.RemoveAll(f.opts.WorkspaceKeys.Instance().Dir))
+	ctx := context.Background()
+	assert.NoError(t, f.opts.Keys.Rows.Delete(ctx, "task_encryption_ed25519"))
 
 	none := f.call(t, asAdmin, http.MethodPost, "/secrets", api.SecretRequest{Name: "TOKEN", Content: "x"})
 	assert.Equal(t, http.StatusConflict, none.Status)
@@ -109,7 +112,7 @@ func TestSecret_Encryption(t *testing.T) {
 
 	f.withKey(t)
 	assert.Equal(t, http.StatusConflict, f.call(t, asAdmin, http.MethodPost, "/secrets", api.SecretRequest{Name: "TOKEN", Content: "x"}).Status, "an SSH key does not encrypt")
-	_, err := f.opts.WorkspaceKeys.EnsureInstance("task-ui instance")
+	_, err := f.opts.Keys.Generate(ctx, keystore.Spec{Name: "task_instance", Purpose: keystore.PurposeEncrypt})
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusOK, f.call(t, asAdmin, http.MethodPost, "/secrets", api.SecretRequest{Name: "TOKEN", Content: "x"}).Status)
 	raw, err := f.opts.Secrets.Secrets.List(context.Background())
@@ -124,6 +127,12 @@ func TestSecret_Encryption(t *testing.T) {
 	assert.Len(t, rekeyed.list("keys"), 1)
 }
 
+// workspaceVaults keeps the secrets of each workspace on its key of the
+// key folder.
+func (f *fixture) workspaceVaults() *secret.Workspaces {
+	return &secret.Workspaces{Rows: f.opts.Workspaces, Keys: func(id string) secret.Keys { return f.opts.Keys.Vault(keystore.ScopeWorkspace(id)) }}
+}
+
 // withWorkspaces keeps the fixture's secrets per workspace: the default
 // one and acme, each with its encryption key.
 func (f *fixture) withWorkspaces(t *testing.T) {
@@ -134,10 +143,10 @@ func (f *fixture) withWorkspaces(t *testing.T) {
 	list, err := f.opts.Workspaces.List(ctx)
 	assert.NoError(t, err)
 	for _, ws := range list {
-		_, err := f.opts.WorkspaceKeys.Ensure(ws.ID, "task-ui "+ws.Folder)
+		_, err := f.opts.Keys.Generate(ctx, keystore.Spec{Name: keystore.WorkspaceKeyName(ws.Folder, "encryption"), Purpose: keystore.PurposeEncrypt, Scope: keystore.ScopeWorkspace(ws.ID)})
 		assert.NoError(t, err)
 	}
-	f.opts.Secrets.Workspaces = &secret.Workspaces{Rows: f.opts.Workspaces, Keys: f.opts.WorkspaceKeys}
+	f.opts.Secrets.Workspaces = f.workspaceVaults()
 }
 
 // A secret scoped to a workspace reaches its folders; all is the
@@ -173,11 +182,11 @@ func TestSecret_WorkspaceScope(t *testing.T) {
 	assert.Equal(t, float64(1), rotated.get("rekeyed"))
 	ws, err := f.opts.Workspaces.GetByFolder(context.Background(), "acme")
 	assert.NoError(t, err)
-	keys := f.opts.WorkspaceKeys.Encrypt(ws.ID)
-	for _, key := range keys.List() {
-		if key.Backup {
-			assert.NoError(t, keys.Delete(key.Name))
-		}
+	key := f.opts.Keys.EncryptKey(context.Background(), keystore.ScopeWorkspace(ws.ID))
+	backups, _ := filepath.Glob(filepath.Join(f.opts.Keys.Dir, key.Name+".key.bak-*"))
+	assert.Len(t, backups, 1)
+	for _, backup := range backups {
+		assert.NoError(t, os.Remove(backup))
 	}
 	inAcme, err = f.opts.Secrets.For(context.Background(), "acme/api")
 	assert.NoError(t, err)
@@ -204,7 +213,7 @@ func TestSecret_NoKey(t *testing.T) {
 	ctx := context.Background()
 	assert.NoError(t, f.opts.Workspaces.EnsureDefault(ctx))
 	assert.NoError(t, f.opts.Workspaces.Create(ctx, &model.Workspace{Folder: "acme"}))
-	f.opts.Secrets.Workspaces = &secret.Workspaces{Rows: f.opts.Workspaces, Keys: f.opts.WorkspaceKeys}
+	f.opts.Secrets.Workspaces = f.workspaceVaults()
 
 	refused := f.call(t, asAdmin, http.MethodPost, "/secrets", api.SecretRequest{Scope: "workspace:acme", Name: "TOKEN", Content: "x"})
 	assert.Equal(t, http.StatusConflict, refused.Status, string(refused.Raw))

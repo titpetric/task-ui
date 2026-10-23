@@ -3,29 +3,29 @@ package view
 import (
 	"slices"
 
+	"github.com/titpetric/task-ui/keystore"
 	"github.com/titpetric/task-ui/model"
-	"github.com/titpetric/task-ui/sshkey"
 )
 
 // KeyHolder is a row of the keys page's policy table: a role, or a user,
-// and the instance keys its runs get. A user's runs get the keys given to
+// and the instance SSH keys its runs get. A user's runs get the keys given to
 // them by name, Direct, and those of their role, ViaRole.
 type KeyHolder struct {
 	Role    string
 	User    *model.User
-	Direct  []sshkey.Key
-	ViaRole []sshkey.Key
+	Direct  []keystore.Key
+	ViaRole []keystore.Key
 }
 
-// KeyHolders lays out who gets which key: a row for each role, then one
-// for each user. byRole and byUser name, for each key, the roles and the
-// users that get it; backups go to no one.
-func KeyHolders(keys []sshkey.Key, byRole, byUser map[string][]string, users []model.User) []KeyHolder {
+// KeyHolders lays out who gets which instance SSH key: a row for each
+// role, then one for each user, from the roles and the users each key
+// links.
+func KeyHolders(keys []keystore.Key, users []model.User) []KeyHolder {
 	var rows []KeyHolder
-	forRole := func(role string) []sshkey.Key {
-		var list []sshkey.Key
+	forRole := func(role string) []keystore.Key {
+		var list []keystore.Key
 		for _, key := range keys {
-			if !key.Backup && slices.Contains(byRole[key.Name], role) {
+			if key.Purpose == keystore.PurposeSSH && key.Workspace() == "" && slices.Contains(key.Roles, role) {
 				list = append(list, key)
 			}
 		}
@@ -38,7 +38,7 @@ func KeyHolders(keys []sshkey.Key, byRole, byUser map[string][]string, users []m
 		user := &users[i]
 		row := KeyHolder{Role: user.EffectiveRole(), User: user, ViaRole: forRole(user.EffectiveRole())}
 		for _, key := range keys {
-			if !key.Backup && slices.Contains(byUser[key.Name], user.Name) {
+			if key.Purpose == keystore.PurposeSSH && key.Workspace() == "" && slices.Contains(key.Users, user.Name) {
 				row.Direct = append(row.Direct, key)
 			}
 		}

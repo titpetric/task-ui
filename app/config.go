@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -16,8 +15,6 @@ import (
 	"github.com/spf13/pflag"
 
 	"github.com/titpetric/task-ui/model"
-	"github.com/titpetric/task-ui/sshkey"
-	"github.com/titpetric/task-ui/workspace"
 )
 
 // Config is the instance configuration. Every field comes from a TASK_UI_*
@@ -250,21 +247,6 @@ func (c *Config) ArtifactTree() string {
 // ArtifactsDir is where the runs write their artifacts while they run.
 func (c *Config) ArtifactsDir() string {
 	return filepath.Join(c.DataDir, "artifacts")
-}
-
-// Keyring keeps the workspaces' keys and the instance's encryption
-// key, under the data directory; it knows the instance's SSH folders,
-// TASK_UI_SSH_DIR and the server user's ~/.ssh, to keep a key to one
-// use.
-func (c *Config) Keyring() *workspace.Keyring {
-	k := &workspace.Keyring{Data: c.DataDir}
-	for _, dir := range []string{c.SSHDir, filepath.Join(home(), ".ssh")} {
-		if dir == "" || slices.ContainsFunc(k.Access, func(s *sshkey.Store) bool { return filepath.Clean(s.Dir) == filepath.Clean(dir) }) {
-			continue
-		}
-		k.Access = append(k.Access, &sshkey.Store{Dir: dir})
-	}
-	return k
 }
 
 // envInt reads a whole number from the environment, or the fallback.
