@@ -1,107 +1,11 @@
 package detector
 
 import (
+	"os"
 	"path/filepath"
 	"slices"
-	"strings"
 	"testing"
 )
-
-func TestPipelineDetectorAtkins(t *testing.T) {
-	dir := t.TempDir()
-	write(t, filepath.Join(dir, "atkins.yml"), `
-name: Infra
-help: Deploys things.
-include: vars.yml
-env:
-  include: [.env, secrets.env]
-jobs:
-  deploy:
-    desc: "Deploy"
-    summary: |
-      Long text.
-    depends_on: build
-    env:
-      include: deploy.env
-    steps:
-      - run: echo deploy
-      - name: Verify
-        run: ./verify.sh
-      - task: notify
-      - defer: rm -f lock
-  build:
-    desc: "Build"
-    run: go build ./...
-  up: docker compose up
-  list:
-    - echo one
-    - echo two
-  hidden:
-    desc: "Hidden"
-    show: false
-  nodesc:
-    steps:
-      - run: echo
-  default:
-    passthru: true
-    steps:
-      - task: go:fmt
-      - task: go:test
-  helper:
-    internal: true
-    steps:
-      - run: echo
-`)
-	source := (pipelineDetector{kind: "atkins", names: atkinsNames}).Detect(dir)
-	if source == nil || source.Error != "" {
-		t.Fatalf("source: %+v", source)
-	}
-	if source.Name != "Infra" || source.Description != "Deploys things." {
-		t.Fatalf("name/description: %q %q", source.Name, source.Description)
-	}
-	if source.Kind != "atkins" || !slices.Equal(source.Command, []string{"atkins", "-f", "atkins.yml"}) {
-		t.Fatalf("kind/command: %s %v", source.Kind, source.Command)
-	}
-	if !slices.Equal(source.Includes, []string{"vars.yml"}) {
-		t.Fatalf("includes: %v", source.Includes)
-	}
-	if !slices.Equal(source.EnvFiles, []string{".env", "secrets.env", "deploy.env"}) {
-		t.Fatalf("env files: %v", source.EnvFiles)
-	}
-
-	got := []string{}
-	for _, target := range source.Targets {
-		got = append(got, target.Name)
-	}
-	// atkins lists every job, as `atkins -l` does: one without a desc takes
-	// its first step as its description. Internal and show: false jobs stay out.
-	if want := []string{"build", "default", "deploy", "list", "nodesc", "up"}; !slices.Equal(got, want) {
-		t.Fatalf("targets: got %v, want %v", got, want)
-	}
-	if nodesc := source.Target("nodesc"); nodesc.Description != "run: echo" {
-		t.Fatalf("nodesc description: %q", nodesc.Description)
-	}
-	if def := source.Target("default"); def.Description != "task: go:fmt" || !slices.Equal(def.Steps, []string{"task: go:fmt", "task: go:test"}) {
-		t.Fatalf("default: %+v", def)
-	}
-
-	deploy := source.Target("deploy")
-	if deploy.Summary != "Long text." || !slices.Equal(deploy.DependsOn, []string{"build"}) || !slices.Equal(deploy.EnvFiles, []string{"deploy.env"}) {
-		t.Fatalf("deploy: %+v", deploy)
-	}
-	if want := []string{"run: echo deploy", "Verify", "task: notify", "defer: rm -f lock"}; !slices.Equal(deploy.Steps, want) {
-		t.Fatalf("deploy steps: got %v, want %v", deploy.Steps, want)
-	}
-	if build := source.Target("build"); !slices.Equal(build.Steps, []string{"go build ./..."}) {
-		t.Fatalf("build steps: %v", build.Steps)
-	}
-	if up := source.Target("up"); up.Description != "docker compose up" || !slices.Equal(up.Steps, []string{"docker compose up"}) {
-		t.Fatalf("scalar job: %+v", up)
-	}
-	if list := source.Target("list"); list.Description != "echo one" {
-		t.Fatalf("list job description: %q", list.Description)
-	}
-}
 
 func TestPipelineDetectorTaskfile(t *testing.T) {
 	dir := t.TempDir()
@@ -157,36 +61,45 @@ tasks:
 
 func TestPipelineDetectorInvalid(t *testing.T) {
 	dir := t.TempDir()
-	write(t, filepath.Join(dir, "atkins.yml"), "jobs: [unclosed")
-	source := (pipelineDetector{kind: "atkins", names: atkinsNames}).Detect(dir)
+	write(t, filepath.Join(dir, "Taskfile.yml"), "tasks: [unclosed")
+	source := (pipelineDetector{kind: "task", names: taskfileNames}).Detect(dir)
 	if source == nil || source.Error == "" {
 		t.Fatalf("expected a parse error: %+v", source)
 	}
-	if (pipelineDetector{kind: "task", names: taskfileNames}).Detect(dir) != nil {
+	if (pipelineDetector{kind: "task", names: []string{"Nothing.yml"}}).Detect(dir) != nil {
 		t.Fatal("Taskfile detected without one")
 	}
 }
 
-// An atkins job with `args: true` takes arguments; a Taskfile task
-// with the same key does not, and neither does a job without it.
+// A Taskfile task takes no arguments, whatever key it carries: the
+// command line passing them after -- is an atkins feature.
 func TestPipelineDetectorTakesArgs(t *testing.T) {
 	dir := t.TempDir()
-	body := "jobs:\n  custom:\n    desc: Compose\n    args: true\n    steps:\n      - run: echo first\n      - exec: [docker, compose]\n  up:\n    desc: Up\n    steps:\n      - run: docker compose up\n"
-	write(t, filepath.Join(dir, "atkins.yml"), body)
-	write(t, filepath.Join(dir, "Taskfile.yml"), strings.ReplaceAll(body, "jobs:", "tasks:"))
-	atkins := (pipelineDetector{kind: "atkins", names: atkinsNames}).Detect(dir)
-	if !atkins.Target("custom").TakesArgs || atkins.Target("up").TakesArgs {
-		t.Fatalf("atkins args: %+v", atkins.Targets)
-	}
-	// The command the arguments follow is the first exec: step's argv.
-	if got := strings.Join(atkins.Target("custom").Exec, " "); got != "docker compose" {
-		t.Fatalf("atkins exec: %q", got)
-	}
-	if steps := atkins.Target("custom").Steps; len(steps) != 2 || steps[1] != "exec: docker compose" {
-		t.Fatalf("atkins steps: %q", steps)
-	}
+	write(t, filepath.Join(dir, "Taskfile.yml"), "tasks:\n  custom:\n    desc: Compose\n    args: true\n    cmds:\n      - docker compose\n")
 	task := (pipelineDetector{kind: "task", names: taskfileNames}).Detect(dir)
 	if task.Target("custom").TakesArgs {
 		t.Fatal("a Taskfile task takes no args")
+	}
+	if steps := task.Target("custom").Steps; !slices.Equal(steps, []string{"docker compose"}) {
+		t.Fatalf("taskfile steps: %q", steps)
+	}
+}
+
+// isFile tells a regular file from a directory and from nothing.
+func TestIsFile(t *testing.T) {
+	dir := t.TempDir()
+	write(t, filepath.Join(dir, "Taskfile.yml"), "tasks:\n")
+	if err := os.Mkdir(filepath.Join(dir, "folder"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+
+	if !isFile(dir, "Taskfile.yml") {
+		t.Fatal("a file is a file")
+	}
+	if isFile(dir, "folder") {
+		t.Fatal("a directory is not a file")
+	}
+	if isFile(dir, "missing.yml") {
+		t.Fatal("nothing is not a file")
 	}
 }
