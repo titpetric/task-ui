@@ -368,14 +368,22 @@ func (m *Manager) command(ctx context.Context, session *Session) (*exec.Cmd, err
 		cmd.Dir = session.dir
 	}
 	cmd.Env = os.Environ()
-	// Every run gets its folder's secrets, Claude's built-ins too.
+	// Every run gets its folder's secrets, Claude's built-ins too, and
+	// the log of each secret records the run.
 	if m.opts.Secrets != nil {
-		secrets, err := m.opts.Secrets.For(ctx, f.ID)
+		secrets, err := m.opts.Secrets.Reaching(ctx, f.ID)
 		if err != nil {
 			return nil, err
 		}
-		for _, key := range model.SortedKeys(secrets) {
-			cmd.Env = append(cmd.Env, key+"="+secrets[key])
+		reads := make([]model.SecretRead, 0, len(secrets))
+		for _, secret := range secrets {
+			cmd.Env = append(cmd.Env, secret.Name+"="+secret.Content)
+			reads = append(reads, model.SecretRead{SecretID: secret.ID, Name: secret.Name, RunID: run.ID, Folder: run.Folder, Dir: run.Dir, Job: run.Job, UserName: run.UserName})
+		}
+		if m.opts.SecretReads != nil {
+			if err := m.opts.SecretReads.Record(ctx, reads); err != nil {
+				return nil, err
+			}
 		}
 	}
 	if m.opts.Integrations != nil {

@@ -82,6 +82,7 @@ func (h *Handlers) Routes() http.Handler {
 		r.Get("/settings/integrations", h.integrations)
 		r.Get("/settings/secrets/new", h.secretNew)
 		r.Get("/settings/secrets/edit", h.secretEdit)
+		r.Get("/settings/secrets/{id}/reads", h.secretReads)
 		r.Get("/settings/users", h.users)
 		r.Get("/settings/users/new", h.userNew)
 		r.Get("/settings/users/{id}", h.userEdit)

@@ -130,6 +130,7 @@ func newFixture(t *testing.T) *fixture {
 		Artifacts:     storage.NewArtifactStorage(db),
 		Schedules:     storage.NewScheduleStorage(db),
 		Secrets:       secrets,
+		SecretReads:   storage.NewSecretReadStorage(db),
 		FolderRefs:    storage.NewFolderRefStorage(db),
 		Runner:        manager,
 		Catalogue:     cat,

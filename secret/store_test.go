@@ -68,6 +68,12 @@ func TestStore_SetAndRead(t *testing.T) {
 	website, err := s.For(ctx, "website")
 	assert.NoError(t, err)
 	assert.Equal(t, map[string]string{"TOKEN": "hunter2"}, website)
+	// The rows that reach infra, by name: REGION and its own TOKEN.
+	reaching, err := s.Reaching(ctx, "infra")
+	assert.NoError(t, err)
+	assert.Len(t, reaching, 2)
+	assert.Equal(t, "REGION", reaching[0].Name)
+	assert.Equal(t, "infra", reaching[1].Scope)
 
 	count, err := s.Count(ctx)
 	assert.NoError(t, err)

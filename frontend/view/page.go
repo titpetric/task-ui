@@ -133,6 +133,13 @@ type Page struct {
 	// SecretWorkspace is the workspace the secrets page shows alone,
 	// empty for every one.
 	SecretWorkspace string
+	// SecretReadCounts and SecretLastReads are how many runs read each
+	// secret and the last of them, by secret ID, on the secrets page.
+	SecretReadCounts map[string]int
+	SecretLastReads  map[string]model.SecretRead
+	// SecretReads are a secret's read log on its page, and on a run's
+	// page the secrets the run got, by name.
+	SecretReads []model.SecretRead
 	// KeyWorkspaces are the rows of the keys page, one per workspace.
 	KeyWorkspaces []KeyWorkspace
 	Entries       []folder.Entry

@@ -113,7 +113,9 @@ attaches to it.
 - **Run**: folder, job, who and when, how long, how it ended, and the
   reason for a run forced out of hours. A run of a directory's job names
   the directory, linked to its page, and a run given arguments lists
-  them, one each.
+  them, one each. With `secret/view`, **Secrets** names the secrets the
+  run got in its environment, never a value (see
+  [Settings](settings.md#secrets)).
 - **Artifacts**: the files the run left (see [Artifacts](artifacts.md)).
 - **Recording** downloads the run as an asciicast file, for `asciinema
   play`.

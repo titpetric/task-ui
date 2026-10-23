@@ -154,8 +154,19 @@ Variables added to the environment of the runs in a
 [workspace](workspaces.md). The page manages them and groups them by
 workspace: first the secrets for every project in it,
 then each project's own under the project's name. A row shows the
-secret's name, its scope, when it changed, and two buttons, replace the
-value and delete. A value is never shown again once saved.
+secret's name, its scope, when it changed, its **Reads** and **Last
+read**, and two buttons, replace the value and delete. A value is never
+shown again once saved.
+
+Every run records the secrets it gets in its environment, one read per
+secret per run. **Reads** counts them, and **Last read** says when the
+last run got the secret and names its job as `folder/dir/job`, a link to
+that run. The count links to the secret's read log,
+`/settings/secrets/<id>/reads`: the runs that got it, newest first, 50 a
+page, each with when, the run, the job and who started it. task-ui keeps
+the last 1000 reads of each secret and drops older ones. A run's page
+lists the names of the secrets the run got, never a value, for users
+with `secret/view`.
 
 A secret has a scope:
 

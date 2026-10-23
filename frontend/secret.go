@@ -28,6 +28,10 @@ func (h *Handlers) secrets(w http.ResponseWriter, r *http.Request) {
 		p.Error = err.Error()
 	}
 	p.SecretGroups = h.secretGroups(r.Context(), p.Secrets, p.Folders)
+	if h.opts.SecretReads != nil {
+		p.SecretReadCounts, _ = h.opts.SecretReads.Counts(r.Context())
+		p.SecretLastReads, _ = h.opts.SecretReads.Last(r.Context())
+	}
 	if only := r.URL.Query().Get("workspace"); only != "" {
 		for _, group := range p.SecretGroups {
 			if group.Workspace == only {
@@ -38,6 +42,49 @@ func (h *Handlers) secrets(w http.ResponseWriter, r *http.Request) {
 	}
 	h.render(w, http.StatusOK, "secrets", p)
 }
+
+// secretReads lists the runs that got a secret, newest first, a page
+// at a time; the value never shows.
+func (h *Handlers) secretReads(w http.ResponseWriter, r *http.Request) {
+	if !h.require(w, r, "secret/view") {
+		return
+	}
+	secrets, err := h.opts.Secrets.Secrets.List(r.Context())
+	if err != nil {
+		h.missing(w, r, "No secret with that ID.")
+		return
+	}
+	id := param(r, "id")
+	var found *model.Secret
+	for _, secret := range userSecrets(secrets) {
+		if secret.ID == id {
+			found = &model.Secret{ID: secret.ID, Scope: secret.Scope, Name: secret.Name}
+		}
+	}
+	if found == nil {
+		h.missing(w, r, "No secret with that ID.")
+		return
+	}
+	p := h.page(r, "Reads of "+found.Name)
+	p.Crumbs = view.Crumbs("Settings", "/settings", "Secrets", "/settings/secrets", found.Name)
+	p.Step = view.StepSecrets
+	p.Secret = found
+	if h.opts.SecretReads != nil {
+		q := r.URL.Query()
+		before, after := q.Get("before"), q.Get("after")
+		reads, err := h.opts.SecretReads.List(r.Context(), id, before, after, secretReadPage+1)
+		if err != nil {
+			p.Error = err.Error()
+		}
+		var prev, next string
+		p.SecretReads, prev, next = paged(reads, secretReadPage, before, after, func(read model.SecretRead) string { return read.ID })
+		p.Pager = view.NewPager("/settings/secrets/"+id+"/reads", q, prev, next)
+	}
+	h.render(w, http.StatusOK, "secret_reads", p)
+}
+
+// secretReadPage is how many reads a page of a secret's log shows.
+const secretReadPage = 50
 
 // rekeyedNotice is the notice after a rotation wrote n secrets again,
 // or n of what, such as integration settings; "" without a count.

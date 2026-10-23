@@ -126,6 +126,21 @@ func (s *Store) openAll(ctx context.Context, secrets []model.Secret) error {
 // its workspace shares, with the folder's own winning. A folder in a
 // named workspace does not get the default workspace's.
 func (s *Store) For(ctx context.Context, folder string) (map[string]string, error) {
+	secrets, err := s.Reaching(ctx, folder)
+	if err != nil {
+		return nil, err
+	}
+	result := map[string]string{}
+	for _, secret := range secrets {
+		result[secret.Name] = secret.Content
+	}
+	return result, nil
+}
+
+// Reaching returns the rows of the secrets that reach a folder,
+// decrypted, one per name by name: the folder's own in place of a
+// shared one of the same name. A run gets these, and records them read.
+func (s *Store) Reaching(ctx context.Context, folder string) ([]model.Secret, error) {
 	workspace, err := s.Workspace(ctx, folder)
 	if err != nil {
 		return nil, err
@@ -137,9 +152,13 @@ func (s *Store) For(ctx context.Context, folder string) (map[string]string, erro
 	if err := s.openAll(ctx, secrets); err != nil {
 		return nil, err
 	}
-	result := map[string]string{}
+	byName := map[string]model.Secret{}
 	for _, secret := range secrets {
-		result[secret.Name] = secret.Content
+		byName[secret.Name] = secret
+	}
+	result := make([]model.Secret, 0, len(byName))
+	for _, name := range model.SortedKeys(byName) {
+		result = append(result, byName[name])
 	}
 	return result, nil
 }

@@ -20,7 +20,9 @@ type Options struct {
 	// under its ID drops its own. Nil keeps none.
 	Summaries *storage.RunSummaryStorage
 	Secrets   *secret.Store
-	Env       *envfile.Store
+	// SecretReads log which run got which secret. Nil logs none.
+	SecretReads *storage.SecretReadStorage
+	Env         *envfile.Store
 	// Integrations add to a run what an integration has for its folder,
 	// such as the Claude Code token. Nil adds nothing.
 	Integrations Integrations

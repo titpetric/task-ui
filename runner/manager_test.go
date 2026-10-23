@@ -33,7 +33,9 @@ type fixture struct {
 	runs    *storage.RunStorage
 	files   *storage.ArtifactStorage
 	secrets *secret.Store
-	root    string
+	// reads log which run got which secret.
+	reads *storage.SecretReadStorage
+	root  string
 	// policies grant the instance key, id_ed25519, to roles' runs.
 	policies *storage.SSHKeyPolicyStorage
 	// now is what the manager's clock reads; zero is the real time.
@@ -65,7 +67,7 @@ func newFixture(t *testing.T) *fixture {
 	assert.NoError(t, err)
 	secrets := secret.New(storage.NewSecretStorage(db), secret.NewVault(keyring.Instance()))
 	f := &fixture{
-		runs: runs, files: artifacts, secrets: secrets, root: t.TempDir(),
+		runs: runs, files: artifacts, secrets: secrets, reads: storage.NewSecretReadStorage(db), root: t.TempDir(),
 		policies: storage.NewSSHKeyPolicyStorage(db), workspaces: storage.NewWorkspaceStorage(db),
 		keys: keyring, grants: storage.NewWorkspaceKeyGrantStorage(db), keyDir: keys.Dir,
 		summaries: storage.NewRunSummaryStorage(db), recordings: &recording.Store{Root: t.TempDir()},
@@ -81,6 +83,7 @@ func newFixture(t *testing.T) *fixture {
 		Artifacts:     artifacts,
 		Summaries:     f.summaries,
 		Secrets:       secrets,
+		SecretReads:   f.reads,
 		Env:           envfile.New(storage.NewEnvFileStorage(db), secrets),
 		Git:           &git.Git{},
 		Recordings:    f.recordings,
@@ -267,6 +270,7 @@ func TestManager_Secrets(t *testing.T) {
 	ctx := context.Background()
 	assert.NoError(t, f.secrets.Set(ctx, &model.Secret{Scope: storage.ScopeAll, Name: "GREETING", Content: "hello from all"}))
 	assert.NoError(t, f.secrets.Set(ctx, &model.Secret{Scope: "env", Name: "GREETING", Content: "hello from the folder"}))
+	assert.NoError(t, f.secrets.Set(ctx, &model.Secret{Scope: storage.ScopeAll, Name: "REGION", Content: "eu"}))
 
 	req := f.shellJob("env", `echo "$GREETING" "$TASK_UI_FOLDER" "$TASK_UI_JOB" "$TASK_UI_USER"; test -d "$TASK_UI_ARTIFACTS"`, false)
 	req.Folder.EnvFiles = []string{".env"}
@@ -275,6 +279,20 @@ func TestManager_Secrets(t *testing.T) {
 	out, status := collect(t, session.Attach(true))
 	assert.Equal(t, model.StateOK, status.State)
 	assert.Contains(t, out, "hello from the folder env run ops")
+
+	// Each secret the run got logs a read: the folder's own GREETING and
+	// REGION. Names, never values.
+	reads, err := f.reads.ForRun(ctx, session.ID())
+	assert.NoError(t, err)
+	assert.Len(t, reads, 2)
+	assert.Equal(t, "GREETING", reads[0].Name)
+	assert.Equal(t, "env", reads[0].Folder)
+	assert.Equal(t, "run", reads[0].Job)
+	assert.Equal(t, "ops", reads[0].UserName)
+	assert.Equal(t, "REGION", reads[1].Name)
+	own, err := f.secrets.Get(ctx, model.Secret{Scope: "env", Name: "GREETING"})
+	assert.NoError(t, err)
+	assert.Equal(t, own.ID, reads[0].SecretID)
 
 	data, err := os.ReadFile(filepath.Join(req.Folder.Dir, ".env"))
 	assert.NoError(t, err)
