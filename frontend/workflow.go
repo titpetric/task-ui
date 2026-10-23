@@ -24,7 +24,7 @@ func (h *Handlers) workflowNames(ctx context.Context) map[string]string {
 func viewSteps(steps []model.WorkflowStep, names map[string]string) []view.Step {
 	out := make([]view.Step, 0, len(steps))
 	for _, s := range steps {
-		out = append(out, view.Step{Folder: s.Folder, Job: s.Job, WorkflowID: s.WorkflowRef, WorkflowName: names[s.WorkflowRef], Disabled: s.Disabled})
+		out = append(out, view.Step{Folder: s.Folder, Job: s.Job, WorkflowID: s.WorkflowRef, WorkflowName: names[s.WorkflowRef], Disabled: s.Disabled, Args: s.Args})
 	}
 	return out
 }
@@ -127,6 +127,7 @@ func (h *Handlers) workflowNew(w http.ResponseWriter, r *http.Request) {
 	p.Crumbs = view.Crumbs("Workflows", "/workflows", "New")
 	p.Step = view.StepWorkflows
 	p.StepWorkflows = p.SideWorkflows
+	h.hostJobs(r, p)
 	h.render(w, http.StatusOK, "workflow_new", p)
 }
 
@@ -273,5 +274,6 @@ func (h *Handlers) workflowEdit(w http.ResponseWriter, r *http.Request) {
 	p.Crumbs = view.Crumbs("Workflows", "/workflows", p.Workflow.Name, "/workflows/"+p.Workflow.ID, "Edit")
 	p.Step = view.StepWorkflows
 	p.StepWorkflows = h.stepWorkflows(r.Context(), p, p.Workflow.ID)
+	h.hostJobs(r, p)
 	h.render(w, http.StatusOK, "workflow_edit", p)
 }

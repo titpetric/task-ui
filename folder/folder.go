@@ -64,8 +64,8 @@ type Folder struct {
 // that starts with ./ is the job of a file that runs: see FileJob; @shell
 // is the shell job, see ShellJob, and @claude Claude's, see ClaudeJob;
 // @claude-prompt and @claude-note are none, see PromptJob and NoteJob;
-// @host is the root's host job, see HostJob, and @cleanup its cleanup
-// job, see CleanupJob;
+// @host:<host> is a host job of the root, see HostJob, and @cleanup its
+// cleanup job, see CleanupJob;
 // any other that starts with @ the job of an atkins skill: see SkillJob.
 func (f *Folder) Job(id string) *Job {
 	if f == nil {
@@ -76,8 +76,6 @@ func (f *Folder) Job(id string) *Job {
 		return f.ShellJob()
 	case ClaudeID:
 		return f.ClaudeJob()
-	case HostID:
-		return f.HostJob()
 	case CleanupID:
 		return f.CleanupJob()
 	case PromptID, NoteID:
@@ -85,6 +83,9 @@ func (f *Folder) Job(id string) *Job {
 	}
 	if rel, ok := strings.CutPrefix(id, FilePrefix); ok {
 		return f.FileJob(rel)
+	}
+	if host, ok := strings.CutPrefix(id, HostPrefix); ok {
+		return f.HostJob(host)
 	}
 	if name, ok := strings.CutPrefix(id, SkillPrefix); ok {
 		return f.SkillJob(name)

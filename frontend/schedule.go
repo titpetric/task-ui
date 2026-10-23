@@ -25,6 +25,7 @@ func (h *Handlers) schedules(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	h.runAsUsers(r, p)
+	h.hostJobs(r, p)
 	h.render(w, http.StatusOK, "schedules", p)
 }
 

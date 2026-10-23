@@ -8,6 +8,7 @@ import (
 	"github.com/titpetric/task-ui/access"
 	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/runner"
 	"github.com/titpetric/task-ui/scheduler"
 	"github.com/titpetric/task-ui/storage"
 )
@@ -22,25 +23,21 @@ type ScheduleRequest struct {
 	// anyone, everyone else only themselves. Empty is the caller on
 	// create, and no change on update.
 	User string `json:"user"`
-	// Target and Args are what a schedule of @host runs: a host of the
-	// inventory, or * for every host with an ssh login, and the command.
-	// Only @host takes them; on update, empty keeps them.
-	Target string  `json:"target,omitempty"`
-	Args   RunArgs `json:"args,omitempty"`
+	// Args follow the job's argv after --, for a job that takes args:
+	// the command of @host:<host>, which needs one. On update, empty
+	// keeps them.
+	Args RunArgs `json:"args,omitempty"`
 }
 
-// hostTarget checks the target and the command of a schedule or a
-// workflow step: both for @host, neither for any other job. It returns
-// what is wrong, "" for nothing.
-func hostTarget(job *folder.Job, target string, args []string) string {
-	if !job.IsHost() {
-		if target != "" || len(args) > 0 {
-			return "only @host takes a target and args here"
-		}
-		return ""
-	}
-	if strings.TrimSpace(target) == "" || strings.TrimSpace(strings.Join(args, " ")) == "" {
-		return "@host needs a target, a host or * for every host, and a command as its args"
+// jobArgs checks the args of a schedule or a workflow step: a command
+// for @host:<host>, which needs one, and for any other job only when it
+// takes args. It returns what is wrong, "" for nothing.
+func jobArgs(job *folder.Job, args []string) string {
+	switch {
+	case job.IsHost() && strings.TrimSpace(strings.Join(args, " ")) == "":
+		return job.ID + " needs a command as its args"
+	case len(args) > 0 && !job.TakesArgs:
+		return runner.ErrNoArgs.Error()
 	}
 	return ""
 }
@@ -76,6 +73,10 @@ func (h *Handlers) createSchedule(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	user := access.UserFrom(r.Context())
+	if req.Job == model.HostBare {
+		fail(w, http.StatusBadRequest, folder.ErrHostBare.Error())
+		return
+	}
 	f, job, problem := h.target(r, req.Folder, req.Job)
 	if problem != "" {
 		fail(w, http.StatusNotFound, problem)
@@ -85,7 +86,7 @@ func (h *Handlers) createSchedule(w http.ResponseWriter, r *http.Request) {
 		fail(w, http.StatusBadRequest, folder.ErrShellUnattended.Error())
 		return
 	}
-	if problem := hostTarget(job, req.Target, req.Args); problem != "" {
+	if problem := jobArgs(job, req.Args); problem != "" {
 		fail(w, http.StatusBadRequest, problem)
 		return
 	}
@@ -106,7 +107,7 @@ func (h *Handlers) createSchedule(w http.ResponseWriter, r *http.Request) {
 		fail(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	schedule := &model.Schedule{Folder: f.ID, Job: job.ID, UserID: runAs.ID, UserName: runAs.Name, Expression: req.Expression, Enabled: 1, NextRunAt: &next, Target: strings.TrimSpace(req.Target), Args: model.EncodeList(req.Args)}
+	schedule := &model.Schedule{Folder: f.ID, Job: job.ID, UserID: runAs.ID, UserName: runAs.Name, Expression: req.Expression, Enabled: 1, NextRunAt: &next, Args: model.EncodeList(req.Args)}
 	if req.Enabled != nil && !*req.Enabled {
 		schedule.Enabled = 0
 	}
@@ -210,20 +211,17 @@ func (h *Handlers) updateSchedule(w http.ResponseWriter, r *http.Request) {
 	if runAs != nil {
 		schedule.UserID, schedule.UserName = runAs.ID, runAs.Name
 	}
-	if req.Target != "" || len(req.Args) > 0 {
-		target, args := strings.TrimSpace(req.Target), []string(req.Args)
-		if target == "" {
-			target = schedule.Target
-		}
-		if len(args) == 0 {
-			args = model.DecodeList(schedule.Args)
-		}
+	if len(req.Args) > 0 {
 		_, job, _ := h.target(r, schedule.Folder, schedule.Job)
-		if problem := hostTarget(job, target, args); problem != "" {
+		if job == nil {
+			fail(w, http.StatusNotFound, "no such job")
+			return
+		}
+		if problem := jobArgs(job, req.Args); problem != "" {
 			fail(w, http.StatusBadRequest, problem)
 			return
 		}
-		schedule.Target, schedule.Args = target, model.EncodeList(args)
+		schedule.Args = model.EncodeList(req.Args)
 	}
 	if req.Expression != "" {
 		next, err := scheduler.NextRun(req.Expression, time.Now())

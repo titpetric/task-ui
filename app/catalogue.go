@@ -57,7 +57,7 @@ func (c *Catalogue) List() []*folder.Folder {
 
 // Find returns a folder by ID, or nil. _ is the root itself when no
 // folder takes the ID: the folder of the root's built-in jobs, @shell,
-// @claude and @host, which discovery lists under no ID.
+// @claude and @host:<host>, which discovery lists under no ID.
 func (c *Catalogue) Find(id string) *folder.Folder {
 	if f := c.discovery().Find(id); f != nil || id != model.Default {
 		return f

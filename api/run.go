@@ -35,9 +35,6 @@ type RunRequest struct {
 	// Summarize asks Claude, when the run ends, for its summary in a
 	// prompt about the run, as the user who starts it: prompt/edit.
 	Summarize bool `json:"summarize"`
-	// Target is the host a run of @host runs its command on, the args,
-	// or * for every host with an ssh login, a batch.
-	Target string `json:"target,omitempty"`
 }
 
 // RunView is a run as the API shows it: the row, and the live status
@@ -125,6 +122,9 @@ func (h *Handlers) startRun(w http.ResponseWriter, r *http.Request) {
 	case model.NoteJob:
 		fail(w, http.StatusBadRequest, "start the Notes agent from the Notes board, with a note that names it")
 		return
+	case model.HostBare:
+		fail(w, http.StatusBadRequest, folder.ErrHostBare.Error())
+		return
 	}
 	f, job, dir, problem := h.targetIn(r, req.Folder, req.Dir, req.Job)
 	if problem != "" {
@@ -147,7 +147,7 @@ func (h *Handlers) startRun(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if job.IsHost() {
-		h.startHostRun(w, r, req)
+		h.startHostRun(w, r, req, job.HostTarget())
 		return
 	}
 	session, err := h.opts.Runner.Start(r.Context(), runner.Request{Folder: f, Job: job, User: user, Force: req.Force, Reason: req.Reason, Cols: req.Cols, Rows: req.Rows, Dir: dir, Args: req.Args})
@@ -171,15 +171,10 @@ func (h *Handlers) startRun(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusCreated, h.view(r, session.Snapshot()))
 }
 
-// startHostRun starts a run of @host on the request's target, the
-// command its args, and answers the run; a target of * starts a batch,
-// one run a host, and answers the first.
-func (h *Handlers) startHostRun(w http.ResponseWriter, r *http.Request, req RunRequest) {
-	target := strings.TrimSpace(req.Target)
-	if target == "" {
-		fail(w, http.StatusBadRequest, "a run of @host needs a target: a host of the inventory, or *")
-		return
-	}
+// startHostRun starts a run of @host:<target>, the command its args,
+// and answers the run; @host:* starts a batch, one run a host, and
+// answers the first.
+func (h *Handlers) startHostRun(w http.ResponseWriter, r *http.Request, req RunRequest, target string) {
 	host := hostrun.Request{Targets: []string{target}, Command: strings.Join(req.Args, " "), Batch: target == "*", Force: req.Force, Reason: req.Reason, Cols: req.Cols, Rows: req.Rows}
 	_, sessions, ok := h.startHosts(w, r, host, req.Summarize)
 	if !ok {

@@ -20,17 +20,25 @@ hosts, by default every one with an ssh login (**All**, **None** and
 quick one (`uptime`, `df -h /`, `free -h`, the containers, the kernel, the
 OS), and **Run**, or Ctrl+Enter.
 
-Each host gets a run of its own, a run of `@host`, the root's built-in
-job beside `@shell`: it runs the command over the host's login, on a
-terminal, for at most two minutes; task-ui kills it past that. Pagers are
-off (`PAGER=cat`), so `systemctl status` and the like end on their own.
-A run of `@host` is a run like any other: it has a row, a recording, live
+Each host gets a run of its own, a run of `@host:<host>`, a built-in job
+of the root beside `@shell`, `@host:dev1` for the host `dev1`: it runs
+the command over the host's login, on a terminal, for at most two
+minutes; task-ui kills it past that. Pagers are off (`PAGER=cat`), so
+`systemctl status` and the like end on their own. A run of
+`@host:<host>` is a run like any other: it has a row, a recording, live
 output, a place in the recents and on [Runs](runs.md), where
-`job=@host` keeps them, and its page, which names it `@host · <host>`.
-Its target is the host, its args the command, so **Run again** runs the
-same command on the same host. A host without an ssh login gets a run
-that fails saying so; task-ui skips a host still running a command of
-`@host`. Who ran what on which host is the run history.
+`job=@host:dev1` keeps the runs on `dev1` and `job=@host:*` those on
+every host, and its page, which names it by its job. Its target is the
+host, its args the command, so **Run again** runs the same command on
+the same host. A host without an ssh login gets a run that fails saying
+so; task-ui skips a host still running a command. Who ran what on which
+host is the run history.
+
+The colon keeps a job apart from a mention: `@host:dev1` in a
+[note](notes.md) names no user `host`. `POST /api/runs` starts
+`@host:<name>` with the command as its args, and `@host:*` on every host
+with an ssh login, a batch; the bare `@host` names no host, and the API
+refuses it.
 
 The runs started together are a batch. The panel shows your last batch
 under the form, a row a host: the host, linked to its run's page, how
@@ -51,10 +59,14 @@ when the Claude Code integration has a token for you (see
 [Settings](settings.md#integrations)).
 
 A [schedule](scheduled.md) or a [workflow](workflows.md) step runs
-`@host` too, with a target, a host or `*` for every host with an ssh
-login, and the command as its args; `*` starts a batch. A workflow step
-on `*` ends ok when every host's run did. Both take the `hosts`
-permission of the user they run as.
+`@host:<name>` or `@host:*` too, with the command as its args;
+`@host:*` starts a batch. Their job pickers list the host jobs under
+**Hosts** for a user with `hosts`, and nothing new for anyone else. A
+workflow step of `@host:*` ends ok when every host's run did. Both take
+the `hosts` permission of the user they run as. An agent on a
+[prompt](#prompts-on-the-hosts) reaches the hosts through the inventory
+in its context; the `@host:` jobs are for the commands to record and to
+schedule.
 
 The logins sign in as `debian` or `root`, so the panel shows only with
 `hosts`, which no role but admin holds until

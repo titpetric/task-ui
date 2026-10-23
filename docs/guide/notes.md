@@ -10,6 +10,10 @@ Enter or Tab puts the name in, Esc closes the list. In the field and in
 the posted note, the name of a user wears the colour of a link, and the
 posted note links to their profile for whoever may open it.
 
+A colon right after the name, with no space after it, makes a job ID
+and no mention: `@host:dev1` and `@git:status` name no user `host` or
+`git`, while `@ops: look at this` names `ops`.
+
 ![Notes](../assets/notes-dark.png)
 
 ## Instructions

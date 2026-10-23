@@ -70,7 +70,7 @@ type Options struct {
 	// host inventory through the Beszel one.
 	Integrations *integration.Store
 	Hosts        *beszel.Inventory
-	// HostRuns start the runs of @host, a command on hosts of the
+	// HostRuns start the runs of @host:<host>, a command on hosts of the
 	// inventory. Nil runs on no host.
 	HostRuns *hostrun.Starter
 	// AddUser puts a new user in the password file; nil leaves users to

@@ -120,7 +120,7 @@ func (h *Handlers) listHosts(w http.ResponseWriter, r *http.Request) {
 }
 
 // runOnHosts runs a command on hosts of the inventory, all at once, a
-// run of @host each over the ssh login task-ui has to the host, under
+// run of @host:<host> each over the ssh login task-ui has to the host, under
 // one batch, and answers the batch's ID and its runs. With summarize,
 // Claude summarizes the batch once every run ended, in a thread about
 // its first run. Takes hosts: the logins reach the hosts as debian or
@@ -148,7 +148,7 @@ func (h *Handlers) runOnHosts(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusCreated, map[string]any{"batch": batch, "runs": views})
 }
 
-// startHosts starts the runs of @host a request names, as the user,
+// startHosts starts the runs of @host:<host> a request names, as the user,
 // and with summarize asks Claude about them once they ended: about the
 // batch when there are more than one, about the run when one. It answers the
 // request and returns false when nothing started.

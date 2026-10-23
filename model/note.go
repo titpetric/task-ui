@@ -19,14 +19,22 @@ const (
 
 // mention matches @name at the start of the text or after a space or an
 // opening mark: a user name of letters, digits, dot, dash or underscore.
-var mention = regexp.MustCompile(`(?:^|[\s(\[{,;])@([A-Za-z0-9][A-Za-z0-9._-]*)`)
+// The second group is a colon right after the name with no space after
+// it, which makes it a job ID such as @host:dev1 or @git:status, no
+// mention; "@claude: check" stays one.
+var mention = regexp.MustCompile(`(?:^|[\s(\[{,;])@([A-Za-z0-9][A-Za-z0-9._-]*)((?::\S)?)`)
 
 // Mentions returns the user names a text names with @, once each, in the
-// order they appear. Mentions drops a trailing dot or dash, the punctuation.
+// order they appear. Mentions drops a trailing dot or dash, the
+// punctuation, and skips a name a colon and a character other than a
+// space follow: @host:dev1 is a job.
 func Mentions(text string) []string {
 	var names []string
 	seen := map[string]bool{}
 	for _, m := range mention.FindAllStringSubmatch(text, -1) {
+		if m[2] != "" {
+			continue
+		}
 		name := strings.TrimRight(m[1], ".-")
 		if name != "" && !seen[name] {
 			seen[name] = true

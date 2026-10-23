@@ -36,8 +36,8 @@ type Request struct {
 	// Args follow the job's argv after --, as argv and never through a
 	// shell: only for a job that takes args.
 	Args []string
-	// Target is the host a run of @host runs on, which the row keeps;
-	// two runs of a job with different targets run at once.
+	// Target is the host a run of @host:<host> runs on, which the row
+	// keeps for the filters and the pages.
 	Target string
 	// BatchID groups the run with others started together, the ID of
 	// the batch's first run; the row keeps it.

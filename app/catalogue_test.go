@@ -43,7 +43,7 @@ func TestCatalogue(t *testing.T) {
 	// _ is the root, for its built-in jobs, and lists as no folder.
 	rootFolder := c.Find(model.Default)
 	assert.Equal(t, root, rootFolder.Dir)
-	assert.NotNil(t, rootFolder.Job("@host"))
+	assert.NotNil(t, rootFolder.Job("@host:dev1"))
 
 	// A project row changes what the folder says, on the next call.
 	assert.NoError(t, projects.Create(ctx, &model.Project{Folder: "infra", Title: "The servers", Allow: model.EncodeList([]string{"ops"})}))

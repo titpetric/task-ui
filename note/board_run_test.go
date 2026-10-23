@@ -71,7 +71,7 @@ func TestBoard_SummarizeBatch(t *testing.T) {
 	f := newFixture(t, "")
 	admin := f.withPrompts(t)
 	ctx := context.Background()
-	run := &model.Run{Folder: model.Default, Job: model.HostJob, UserName: "admin", State: string(model.StateOK)}
+	run := &model.Run{Folder: model.Default, Job: model.HostJob("dev1"), Target: "dev1", UserName: "admin", State: string(model.StateOK)}
 	assert.NoError(t, f.board.Runs.Create(ctx, run))
 
 	asked, err := f.board.SummarizeBatch(ctx, admin, run.ID)

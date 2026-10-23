@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/titpetric/task-ui/beszel"
+	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/frontend/view"
 	"github.com/titpetric/task-ui/integration"
 	"github.com/titpetric/task-ui/model"
@@ -73,7 +74,7 @@ func (h *Handlers) inventory(w http.ResponseWriter, r *http.Request) {
 // runs, one a host, and the prompt box about them, where Run and
 // summarize's thread shows.
 func (h *Handlers) lastBatch(r *http.Request, p *view.Page) {
-	last, err := h.opts.Runs.List(r.Context(), storage.RunFilter{Folder: model.Default, Job: model.HostJob, UserName: p.User.Name, Limit: 1})
+	last, err := h.opts.Runs.List(r.Context(), storage.RunFilter{Folder: model.Default, Job: model.HostAll, UserName: p.User.Name, Limit: 1})
 	if err != nil || len(last) == 0 {
 		return
 	}
@@ -95,4 +96,32 @@ func (h *Handlers) claudeFor(r *http.Request, user *model.User) bool {
 	}
 	env, _ := h.opts.Integrations.Env(r.Context(), user.Name, user.Role)
 	return env["CLAUDE_CODE_OAUTH_TOKEN"] != ""
+}
+
+// hostJobs puts the jobs that run a command on hosts on a page with a
+// job picker, for a user with the hosts permission: @host:* and
+// @host:<host> for each host task-ui has an ssh login to.
+func (h *Handlers) hostJobs(r *http.Request, p *view.Page) {
+	if !p.Can("hosts") || h.opts.Hosts == nil || h.opts.SSH == nil {
+		return
+	}
+	systems, err := h.opts.Hosts.Systems(r.Context())
+	if err != nil || len(systems) == 0 {
+		return
+	}
+	systems = beszel.ByCapacity(systems)
+	hosts := make([]string, len(systems))
+	for i, system := range systems {
+		hosts[i] = system.Host
+	}
+	logins := h.opts.SSH.Logins(r.Context(), hosts, 4*time.Second)
+	root := &folder.Folder{ID: model.Default}
+	for _, host := range hosts {
+		if job := root.HostJob(host); job != nil && logins[host] != "" {
+			p.HostJobs = append(p.HostJobs, job)
+		}
+	}
+	if len(p.HostJobs) > 0 {
+		p.HostJobs = append([]*folder.Job{root.HostJob("*")}, p.HostJobs...)
+	}
 }

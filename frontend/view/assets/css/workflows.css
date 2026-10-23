@@ -167,7 +167,7 @@
 
 .workflow-form .step {
   display: grid;
-  grid-template-columns: auto auto minmax(0, 1fr) minmax(0, 1fr) auto;
+  grid-template-columns: auto auto minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) auto;
   align-items: center;
   gap: 0.5rem;
   counter-increment: step;
@@ -180,7 +180,7 @@
 
   & .step-head {
     display: none;
-    grid-column: span 2;
+    grid-column: span 3;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -190,7 +190,7 @@
 
   /* A step switched off stays in the chain, dimmed: a run skips it. */
   &.off {
-    & > :is(.dd, select) {
+    & > :is(.dd, select, [data-step-args]) {
       display: none;
     }
 
@@ -267,6 +267,8 @@
   }
 
   .workflow-form .step [data-step-job],
+  .workflow-form .step .dd:has([data-step-job]),
+  .workflow-form .step [data-step-args],
   .workflow-form .step-tools {
     grid-column: 3;
   }

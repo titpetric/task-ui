@@ -8,22 +8,30 @@ import (
 	"github.com/titpetric/task-ui/model"
 )
 
-// @host is the root's alone: a job that takes the command as its args,
-// with no command of its own and no allow list.
+// @host:<host> is the root's alone: a job a host, or * for every host,
+// that takes the command as its args, with no command of its own and
+// no allow list. The bare @host is no job.
 func TestFolder_HostJob(t *testing.T) {
 	t.Parallel()
 	root := &folder.Folder{ID: model.Default, Dir: t.TempDir()}
-	job := root.Job(folder.HostID)
+	job := root.Job("@host:dev1")
 	assert.NotNil(t, job)
 	assert.True(t, job.IsHost())
+	assert.Equal(t, "dev1", job.HostTarget())
 	assert.False(t, job.IsShell())
 	assert.True(t, job.TakesArgs)
 	assert.False(t, job.Interactive)
 	assert.Len(t, job.Command, 0)
 	assert.Len(t, job.Allow, 0)
-	assert.Equal(t, "_/@host", job.Key())
+	assert.Equal(t, "_/@host:dev1", job.Key())
+	assert.Equal(t, "*", root.Job(model.HostAll).HostTarget())
 
-	assert.Nil(t, checkout(t).Job(folder.HostID))
-	assert.Nil(t, (*folder.Folder)(nil).HostJob())
+	assert.Nil(t, root.Job(model.HostBare))
+	assert.Nil(t, root.Job(model.HostPrefix))
+	assert.Nil(t, root.Job("@host:a b"))
+	assert.Nil(t, checkout(t).Job("@host:dev1"))
+	assert.Nil(t, (*folder.Folder)(nil).HostJob("dev1"))
 	assert.False(t, (*folder.Job)(nil).IsHost())
+	assert.Equal(t, "", root.Job("@shell").HostTarget())
+	assert.NotNil(t, folder.ErrHostBare)
 }

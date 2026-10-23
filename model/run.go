@@ -16,14 +16,26 @@ const (
 	// ClaudeJob is Claude Code in a terminal, in the folder or a
 	// directory inside it.
 	ClaudeJob = "@claude"
-	// HostJob is a command on a host of the inventory over ssh, a job
-	// of the root, _, whose run names the host as its target.
-	HostJob = "@host"
+	// HostPrefix starts the ID of a command on a host of the inventory
+	// over ssh, a job of the root, _: @host:dev1 runs on dev1, its run's
+	// target, and @host:* on every host with an ssh login, a batch of
+	// runs of @host:<host>. The colon keeps it apart from a mention.
+	HostPrefix = "@host:"
+	// HostAll is the job of a command on every host with an ssh login.
+	HostAll = HostPrefix + "*"
+	// HostBare is no job: a command on a host names its host.
+	HostBare = "@host"
 )
 
-// IsHost reports whether the run is a command on a host, @host.
+// HostJob returns the ID of the job of a command on a host, or on
+// every host for *.
+func HostJob(host string) string {
+	return HostPrefix + host
+}
+
+// IsHost reports whether the run is a command on a host, @host:<host>.
 func (r *Run) IsHost() bool {
-	return r != nil && r.Job == HostJob
+	return r != nil && strings.HasPrefix(r.Job, HostPrefix)
 }
 
 // IsPrompt reports whether the run is a prompt's: @claude-prompt, or
@@ -55,12 +67,9 @@ func (r *Run) IsClaude() bool {
 }
 
 // Key is the identity the run lock uses: one run per job per folder
-// and directory inside it, and per target: @host runs on many hosts at
-// once, one at a time on each.
+// and directory inside it. A command on a host has a job a host, so
+// the hosts run at once, one at a time on each.
 func (r *Run) Key() string {
-	if r.Target != "" {
-		return RunKey(r.Folder, r.Dir, r.Job) + " " + r.Target
-	}
 	return RunKey(r.Folder, r.Dir, r.Job)
 }
 
@@ -92,17 +101,13 @@ func (r Run) Place() string {
 }
 
 // Name returns the title of the run on a page: Place / job, or the job
-// alone for a job of the root, such as @claude-note, and the target
-// after a dot: @host · web1. The stored row keeps the folder _.
+// alone for a job of the root, such as @claude-note or @host:web1. The
+// stored row keeps the folder _.
 func (r Run) Name() string {
-	name := r.Place() + " / " + r.Job
 	if r.Folder == Default && r.Dir == "" {
-		name = r.Job
+		return r.Job
 	}
-	if r.Target != "" {
-		name += " · " + r.Target
-	}
-	return name
+	return r.Place() + " / " + r.Job
 }
 
 // Path is the run as text names it in one word, folder/job, with the

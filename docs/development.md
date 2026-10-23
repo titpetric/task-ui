@@ -54,7 +54,7 @@ domains, the domains to `model` and `storage`, `model` to nothing of ours.
 | `event`     | the in-memory bus the pages follow, by topic                                 |
 | `sshagent`  | an ssh agent on a socket of its own, serving keys from memory to a run       |
 | `sshprobe`  | who task-ui signs in to a host as over ssh                                   |
-| `hostrun`   | the runs of `@host`: a command on hosts of the inventory, a run a host     |
+| `hostrun`   | the runs of `@host:<host>`, a command on a host of the inventory             |
 | `skills`    | asks atkins what runs in a directory: its pipeline and the skills that apply |
 | `markdown`  | markdown rendered as HTML                                                    |
 | `highlight` | the coloured HTML of the files a pipeline reads                              |
