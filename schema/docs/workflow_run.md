@@ -15,3 +15,5 @@ Workflow Run.
 | finished_at | datetime |     | Finished At |
 | created_at  | datetime |     | Created At  |
 | updated_at  | datetime |     | Updated At  |
+| input       | varchar  |     | Input       |
+| answer      | varchar  |     | Answer      |

@@ -1329,6 +1329,14 @@
       type: timestamp
       comment: Updated At
       datatype: datetime
+    - name: input
+      type: text
+      comment: Input
+      datatype: varchar
+    - name: answer
+      type: text
+      comment: Answer
+      datatype: varchar
   indexes:
     - name: sqlite_autoindex_workflow_run_1
       columns:

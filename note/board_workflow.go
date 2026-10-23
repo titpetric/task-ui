@@ -144,7 +144,8 @@ func (b *Board) aboutWorkflowRun(ctx context.Context, id string) (string, error)
 	if err != nil {
 		return "", err
 	}
-	_, err = file.WriteString(b.workflowText(ctx, run, steps))
+	about := b.workflowContext(ctx, run)
+	_, err = file.WriteString(about + b.workflowText(ctx, run, steps, workflowBytes-len(about)))
 	if closeErr := file.Close(); err == nil {
 		err = closeErr
 	}
@@ -168,10 +169,10 @@ type stepText struct {
 // then each step that ended, in order, how it ended, its exit code and
 // time, and the end of its output, ANSI played out, or a prompt step's
 // answer. A step still to come, or the prompt step that asks, is not
-// there yet. The steps share workflowBytes of output, the newest first:
+// there yet. The steps share budget bytes of output, the newest first:
 // each takes at most an even share of the rest, and a step that needs
 // less hands what it does not use to the steps before it.
-func (b *Board) workflowText(ctx context.Context, run *model.WorkflowRun, all []model.WorkflowRunStep) string {
+func (b *Board) workflowText(ctx context.Context, run *model.WorkflowRun, all []model.WorkflowRunStep, budget int) string {
 	steps := make([]model.WorkflowRunStep, 0, len(all))
 	for _, step := range all {
 		if step.State != model.StepPending && step.State != model.StateRunning {
@@ -186,7 +187,7 @@ func (b *Board) workflowText(ctx context.Context, run *model.WorkflowRun, all []
 			ran = append(ran, i)
 		}
 	}
-	left := workflowBytes
+	left := budget
 	for n := len(ran) - 1; n >= 0; n-- {
 		i := ran[n]
 		output := steps[i].Answer

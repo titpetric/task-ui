@@ -372,3 +372,22 @@ func (s *WorkflowRunStorage) Interrupt(ctx context.Context, message string) erro
 		return c.Exec(ctx, "UPDATE workflow_run SET state = ?, message = ?, finished_at = ?, updated_at = ? WHERE state = ?", model.StateFailed, message, now, now, model.StateRunning)
 	})
 }
+
+// Answered returns the newest finished runs of a workflow with an
+// answer, at most limit of them, newest first, without the run except
+// names.
+func (s *WorkflowRunStorage) Answered(ctx context.Context, workflowID, except string, limit int) ([]model.WorkflowRun, error) {
+	return client(s.db).Select[model.WorkflowRun](ctx,
+		"SELECT * FROM workflow_run WHERE workflow_id = ? AND id != ? AND answer != '' AND state != ? ORDER BY started_at DESC, rowid DESC LIMIT ?",
+		workflowID, except, model.StateRunning, limit)
+}
+
+// Number returns the place of a run among its workflow's runs, the
+// first 1, in the order they started.
+func (s *WorkflowRunStorage) Number(ctx context.Context, run *model.WorkflowRun) (int, error) {
+	n, err := client(s.db).Get[int64](ctx, "SELECT COUNT(*) FROM workflow_run WHERE workflow_id = ? AND rowid <= (SELECT rowid FROM workflow_run WHERE id = ?)", run.WorkflowID, run.ID)
+	if err != nil {
+		return 0, err
+	}
+	return int(*n), nil
+}

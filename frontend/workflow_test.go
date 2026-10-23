@@ -357,6 +357,7 @@ func TestWorkflow_PromptEditor(t *testing.T) {
 	assert.Contains(t, edit, `data-switch aria-label="Ask Claude once the steps end" checked>`)
 	assert.Contains(t, edit, `name="prompt" rows="4" spellcheck="false" placeholder="summarize the run, change nothing" data-workflow-prompt-text>`)
 	assert.Contains(t, edit, `>summarize, change nothing</textarea>`)
+	assert.Contains(t, edit, `Claude also gets the last 3 answers of this workflow.`)
 	assert.Contains(t, edit, `data-workflow-preset="Summarise the run in one or two short paragraphs`)
 	assert.Contains(t, edit, `<option value="infra" selected>infra</option>`)
 	assert.Contains(t, edit, `<option value="">the root</option>`)

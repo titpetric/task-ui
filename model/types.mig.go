@@ -2204,6 +2204,12 @@ type WorkflowRun struct {
 
 	// Updated At
 	UpdatedAt *time.Time `db:"updated_at" json:"updated_at"`
+
+	// Input
+	Input string `db:"input" json:"input"`
+
+	// Answer
+	Answer string `db:"answer" json:"answer"`
 }
 
 // GetID will return the value of ID.
@@ -2272,11 +2278,23 @@ func (w *WorkflowRun) GetUpdatedAt() *time.Time { return w.UpdatedAt }
 // SetUpdatedAt sets UpdatedAt to the provided value.
 func (w *WorkflowRun) SetUpdatedAt(stamp time.Time) { w.UpdatedAt = &stamp }
 
+// GetInput will return the value of Input.
+func (w *WorkflowRun) GetInput() string { return w.Input }
+
+// SetInput sets Input to the provided value.
+func (w *WorkflowRun) SetInput(val string) { w.Input = val }
+
+// GetAnswer will return the value of Answer.
+func (w *WorkflowRun) GetAnswer() string { return w.Answer }
+
+// SetAnswer sets Answer to the provided value.
+func (w *WorkflowRun) SetAnswer(val string) { w.Answer = val }
+
 // WorkflowRunTable is the name of the table in the DB.
 const WorkflowRunTable = "`workflow_run`"
 
 // WorkflowRunFields is a list of all columns in the DB table.
-var WorkflowRunFields = []string{"id", "workflow_id", "name", "user_id", "user_name", "state", "message", "started_at", "finished_at", "created_at", "updated_at"}
+var WorkflowRunFields = []string{"id", "workflow_id", "name", "user_id", "user_name", "state", "message", "started_at", "finished_at", "created_at", "updated_at", "input", "answer"}
 
 // WorkflowRunPrimaryFields are the primary key fields in the DB table.
 var WorkflowRunPrimaryFields = []string{"id"}

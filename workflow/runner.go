@@ -179,7 +179,7 @@ func (r *Runner) Start(ctx context.Context, workflow *model.Workflow, user *mode
 	if _, busy := r.byFlow[workflow.ID]; busy {
 		return nil, ErrBusy
 	}
-	run := &model.WorkflowRun{WorkflowID: workflow.ID, Name: workflow.Name, UserID: user.ID, UserName: user.Name}
+	run := &model.WorkflowRun{WorkflowID: workflow.ID, Name: workflow.Name, UserID: user.ID, UserName: user.Name, Input: input}
 	if err := r.runs.Create(ctx, run, steps); err != nil {
 		return nil, err
 	}
@@ -294,6 +294,11 @@ func (r *Runner) walk(ctx context.Context, a *active, steps []Step, rows []model
 		switch {
 		case step.Prompt != "":
 			state, row.RunID, row.Answer, message = r.promptStep(ctx, a, row, step, user)
+			// The last prompt step's answer is the run's, without a
+			// final prompt.
+			if row.Answer != "" {
+				run.Answer = row.Answer
+			}
 		case step.Workflow != nil:
 			state, row.WorkflowRunRef, message = r.nested(ctx, step.Workflow, user)
 		default:

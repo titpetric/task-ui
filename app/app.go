@@ -255,7 +255,7 @@ func (a *App) wire(version string) error {
 	a.Board = &note.Board{
 		Notes: storage.NewNoteStorage(a.DB), Users: a.Users, Runs: runs, WorkflowRuns: workflowRuns, Catalogue: a.Catalogue, Runner: a.Runner,
 		Recordings: recordings, Events: events, Root: cfg.Root,
-		Hosts: promptHosts(hosts, prober),
+		Hosts: promptHosts(hosts, prober), BaseURL: cfg.URL,
 	}
 	a.Workflows.Prompter = a.Board
 	if err := a.Board.Recover(context.Background()); err != nil {
