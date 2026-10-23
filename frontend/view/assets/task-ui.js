@@ -297,7 +297,7 @@
     termTitle("");
     els.who.textContent = who || "";
     els.elapsed.textContent = "";
-    els.hint.textContent = "Closing this window doesn't stop the run.";
+    els.hint.textContent = "";
     setState(null);
     notice("");
     buttons({});
@@ -445,10 +445,7 @@
     setState("running", "attaching");
     buttons({ stop: run.can_run, kill: run.can_run, take: run.can_input });
     taking(s, false, run.input_by || "");
-    els.hint.textContent = run.can_run
-      ? "Closing this window doesn't stop the run. Stop ends it; Kill ends it right away."
-      : "You're watching. You don't have permission to type into this run or end it. Closing this window doesn't stop it.";
-    if (run.can_input) els.hint.textContent += " Take input sends your keystrokes to it, to answer a prompt it waits on.";
+    els.hint.textContent = run.can_run ? "" : "You're watching. You don't have permission to type into this run or end it.";
 
     term.onData(function (data) {
       if (ws.readyState === 1) ws.send(JSON.stringify({ type: "input", message: data }));
