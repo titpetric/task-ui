@@ -173,11 +173,11 @@ func (s *Store) OnInstance(ctx context.Context) (int, error) {
 	return len(secrets), err
 }
 
-// instance returns the rows of the services' secrets, and every row
-// without Workspaces.
+// instance returns every row: the instance key encrypts them all, the
+// workspaces' secrets and the services'.
 func (s *Store) instance(ctx context.Context) ([]model.Secret, error) {
-	return s.rows(ctx, func(scope string) (bool, error) {
-		return s.Workspaces == nil || Service(scope), nil
+	return s.rows(ctx, func(string) (bool, error) {
+		return true, nil
 	})
 }
 
@@ -229,8 +229,8 @@ func (s *Store) Rekey(ctx context.Context, exclude ...string) (int, error) {
 	return s.rekey(ctx, secrets, exclude)
 }
 
-// RekeyInstance writes the secrets the instance key encrypts again for
-// its current key, the excluded names left out.
+// RekeyInstance writes every secret again for the instance key's
+// current material, the excluded names left out: after a rotation.
 func (s *Store) RekeyInstance(ctx context.Context, exclude ...string) (int, error) {
 	secrets, err := s.instance(ctx)
 	if err != nil {
