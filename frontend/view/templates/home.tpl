@@ -27,6 +27,7 @@
 			<div class="tile-head">
 				<i class="dot {{ .State }}"></i>
 				<b>{{ .Name }}</b>
+				<span class="term-title" data-term-title{{ with .Title }} title="{{ . }}"{{ end }}>{{ .Title }}</span>
 				<span class="spacer"></span>
 				<span class="faint">{{ if .Attached }}{{ .Attached }} watching{{ end }}</span>
 				{{ template "avatar" (list $ .UserName) }}

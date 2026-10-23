@@ -46,7 +46,10 @@ and its recording. One run per job goes at a time, except the Claude
 runs of prompts and notes, which go side by side; **Run force**
 replaces it. **Run again** starts the same job, directory and arguments.
 **|>summarize** runs a job and has Claude summarise the run on its page
-when it ends. A run's page takes prompts about the run. The Data retention settings
+when it ends. A job names its current step with its terminal title,
+`printf '\033]0;building images\007'`, which shows beside the run on
+its window, the dashboard and the runs list, and the run keeps the last.
+A run's page takes prompts about the run. The Data retention settings
 keep a run's recording for an age and within a size; once it expires
 the run and its details stay, without the output. Pages: `/runs`,
 `/runs/<id>`; API: `/api/runs`; MCP: `run_job`, `list_runs`, `get_run`.

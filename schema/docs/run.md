@@ -26,3 +26,4 @@ Run.
 | target      | varchar  |     | Target      |
 | batch_id    | char(26) | MUL | Batch ID    |
 | message     | varchar  |     | Message     |
+| title       | varchar  |     | Title       |

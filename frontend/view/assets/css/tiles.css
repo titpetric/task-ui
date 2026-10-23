@@ -61,3 +61,22 @@
 .tile.wide {
   max-width: 78rem;
 }
+
+/* The title a run's terminal set, beside its name or its state on the
+   tiles, the runs list and the run's page: one line, cut short, the
+   whole of it in the tooltip. */
+.term-title {
+  display: inline-block;
+  max-width: 24ch;
+  overflow: hidden;
+  color: var(--text-dim);
+  font-size: var(--fs-sm);
+  font-weight: 400;
+  text-overflow: ellipsis;
+  vertical-align: bottom;
+  white-space: nowrap;
+
+  &:empty {
+    display: none;
+  }
+}

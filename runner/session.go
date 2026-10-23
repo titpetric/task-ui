@@ -14,6 +14,10 @@ import (
 // replaySize is how much of the output a late window gets.
 const replaySize = 256 << 10
 
+// TitleEvery is how often at most a session tells Titled of a title
+// that keeps changing: the last title always arrives.
+const TitleEvery = 250 * time.Millisecond
+
 // pendingSize bounds the input kept for a process that has not started.
 const pendingSize = 64 << 10
 
@@ -45,6 +49,10 @@ type Session struct {
 	workspace     string
 	workspaceName string
 	workspaceID   string
+	// Titled hears the run row when the terminal's title changes, at
+	// most every TitleEvery with the title of the moment; nil tells
+	// nobody. The manager publishes it on the runs topic.
+	Titled func(run model.Run)
 
 	mu   sync.Mutex
 	term vt10x.Terminal
@@ -57,12 +65,18 @@ type Session struct {
 	// inputBy names who took input on a job that takes none; "" until
 	// someone does.
 	inputBy string
-	subs    map[*Subscriber]struct{}
-	sinks   []io.Writer
-	status  Status
-	stopped bool
-	killed  bool
-	done    chan struct{}
+	// titles follows the output for the title the terminal sets, which
+	// Run.Title keeps; titleAt is when Titled last heard of it, and
+	// titleDue says a later call carries the changes since.
+	titles   titleScanner
+	titleAt  time.Time
+	titleDue bool
+	subs     map[*Subscriber]struct{}
+	sinks    []io.Writer
+	status   Status
+	stopped  bool
+	killed   bool
+	done     chan struct{}
 }
 
 // NewSession returns the session of a run whose process has not
@@ -119,6 +133,9 @@ func (s *Session) Attach(readOnly bool) *Subscriber {
 	defer s.mu.Unlock()
 	if replay := s.tail.Bytes(); len(replay) > 0 {
 		sub.send(Event{Output: replay})
+	}
+	if title := s.Run.Title; title != "" {
+		sub.send(Event{Title: &title})
 	}
 	if s.status.Finished() {
 		status := s.status
@@ -221,6 +238,13 @@ func (s *Session) addSink(w io.Writer) {
 	s.sinks = append(s.sinks, w)
 }
 
+// Title returns the title the run's terminal set, "" for none.
+func (s *Session) Title() string {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.Run.Title
+}
+
 // Snapshot returns a copy of the run row as the session knows it.
 func (s *Session) Snapshot() model.Run {
 	s.mu.Lock()
@@ -232,7 +256,6 @@ func (s *Session) Snapshot() model.Run {
 // (the recording), and every attached window.
 func (s *Session) write(p []byte) {
 	s.mu.Lock()
-	defer s.mu.Unlock()
 	_, _ = s.term.Write(p)
 	_, _ = s.tail.Write(p)
 	for _, sink := range s.sinks {
@@ -242,6 +265,43 @@ func (s *Session) write(p []byte) {
 	for sub := range s.subs {
 		sub.send(event)
 	}
+	var titled *model.Run
+	if title, changed := s.titles.scan(p); changed {
+		s.Run.Title = title
+		for sub := range s.subs {
+			sub.send(Event{Title: &title})
+		}
+		titled = s.retitled()
+	}
+	s.mu.Unlock()
+	if titled != nil {
+		s.Titled(*titled)
+	}
+}
+
+// retitled decides when Titled hears of the title: it returns the run
+// to tell it of now, when it heard nothing for TitleEvery, else nil and
+// tells it once that passed, with the title of then. The caller holds
+// the lock.
+func (s *Session) retitled() *model.Run {
+	if s.Titled == nil || s.titleDue {
+		return nil
+	}
+	wait := TitleEvery - time.Since(s.titleAt)
+	if wait <= 0 {
+		s.titleAt = time.Now()
+		run := *s.Run
+		return &run
+	}
+	s.titleDue = true
+	time.AfterFunc(wait, func() {
+		s.mu.Lock()
+		s.titleDue, s.titleAt = false, time.Now()
+		run := *s.Run
+		s.mu.Unlock()
+		s.Titled(run)
+	})
+	return nil
 }
 
 // Write implements io.Writer: the session is the run's terminal.

@@ -164,6 +164,7 @@ func (m *Manager) newSession(ctx context.Context, req Request, run *model.Run) *
 	session := NewSession(run, req.Folder, req.Job)
 	session.env = req.Env
 	session.dir, session.args, session.timeout = req.Dir, req.Args, req.Timeout
+	session.Titled = m.publish
 	session.workspaceName, session.workspace = m.workspace(ctx, req)
 	session.workspaceID = m.workspaceID(ctx, session.workspaceName)
 	if req.User != nil {

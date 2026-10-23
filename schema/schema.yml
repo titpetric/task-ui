@@ -667,6 +667,10 @@
       type: text
       comment: Message
       datatype: varchar
+    - name: title
+      type: text
+      comment: Title
+      datatype: varchar
   indexes:
     - name: sqlite_autoindex_run_1
       columns:

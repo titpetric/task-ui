@@ -3,6 +3,8 @@ package api
 import (
 	"encoding/json"
 	"time"
+
+	"github.com/titpetric/task-ui/runner"
 )
 
 // Window is what a window on a run may do to it, and what it did: the
@@ -57,6 +59,19 @@ func (w *Window) Apply(frame []byte) []byte {
 		}
 	}
 	return nil
+}
+
+// Frame returns the frame a run's event goes to the window in: the
+// output as a binary frame, a title or the status as a text frame,
+// which text says.
+func (w *Window) Frame(event runner.Event) (frame []byte, text bool) {
+	switch {
+	case event.Status != nil:
+		return controlFrame(control{Type: "status", State: event.Status.State, ExitCode: event.Status.ExitCode, Message: event.Status.Message}), true
+	case event.Title != nil:
+		return controlFrame(control{Type: "title", Title: *event.Title}), true
+	}
+	return event.Output, false
 }
 
 // controlFrame encodes a control message as a text frame.

@@ -107,6 +107,20 @@ dialog.run {
   }
 }
 
+/* The title the run's terminal set follows the job's name, dim. */
+.run-head .run-subtitle {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text-dim);
+  font-size: var(--fs-sm);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  &[hidden] {
+    display: none;
+  }
+}
+
 /* A window that took input on a run of a job that takes none says so
    after the title, and its terminal takes the signal colour. */
 .run-head .input-on {
