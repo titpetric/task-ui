@@ -7,6 +7,7 @@
 </div>
 
 <section class="block key-overview">
+	<h3>Scopes <small>the keys of the instance and each workspace</small></h3>
 	<div class="table-wrap">
 	<table class="table key-purposes">
 		<thead><tr><th>Scope</th><th>Secrets</th><th>Encryption key</th><th>SSH keys</th></tr></thead>

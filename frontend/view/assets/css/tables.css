@@ -211,6 +211,12 @@ table.table-kv th {
     font-weight: 600;
     letter-spacing: var(--ls-label);
     text-transform: uppercase;
+
+    & .faint {
+      font-weight: 400;
+      letter-spacing: var(--ls-xs);
+      text-transform: none;
+    }
   }
 
   & > .markdown-doc {

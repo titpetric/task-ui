@@ -40,6 +40,7 @@
 {{- /* The table follows the runs topic: a run that starts goes on top,
      one that ends changes in place, no reload. */}}
 <section class="block" data-sse="runs">
+	<h3>Runs <small>newest first</small></h3>
 	<div class="table-wrap">
 	<table class="table cards">
 		<thead><tr><th>Started</th><th>Folder</th><th>Job</th><th>By</th><th>Duration</th><th>Result</th><th></th></tr></thead>

@@ -52,6 +52,7 @@
 <section class="block" data-live>
 	<h3>History{{ if .Runs }} <small>{{ len .Runs }} runs</small>{{ end }}</h3>
 	{{- with .Activity }}{{ template "activity" . }}{{ end }}
+	<h4>Runs <small>newest first</small></h4>
 	<div class="table-wrap">
 	<table class="table cards">
 		<thead><tr><th>Started</th><th>Runs as</th><th>Duration</th><th>Result</th><th></th></tr></thead>
@@ -89,7 +90,7 @@
 
 {{- if not $r.Dir }}
 <section class="block">
-	<h3>Scheduled <small>cron expressions, in the server's time zone</small></h3>
+	<h3>Schedules <small>cron expressions, in the server's time zone</small></h3>
 	<div class="table-wrap fit">
 	<table class="table fit-cards">
 		<thead><tr><th>Expression</th><th>Next run</th><th class="hide-narrow">Last run</th><th>Runs as</th><th>State</th><th></th></tr></thead>

@@ -5,7 +5,7 @@
   flex-wrap: wrap;
   align-items: flex-end;
   gap: 0.6rem 0.8rem;
-  margin-bottom: 1rem;
+  margin-bottom: var(--block-gap);
 }
 
 .filters label {
@@ -42,7 +42,7 @@
   align-items: flex-end;
   gap: 0.6rem 0.8rem;
   max-width: none;
-  margin: 0.8rem 0 1.4rem;
+  margin: var(--stack-gap) 0 var(--block-gap);
 
   & .field {
     flex: 1 1 14rem;
