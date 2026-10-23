@@ -1,11 +1,9 @@
 package api
 
 import (
-	"encoding/json"
 	"errors"
 	"net/http"
 	"net/url"
-	"time"
 
 	"golang.org/x/net/websocket"
 
@@ -17,7 +15,14 @@ import (
 // terminal output. Text frames carry JSON control messages:
 //
 //	server: {"type":"status","state":"running|ok|failed|stopped|killed","exit_code":0,"message":""}
+//	server: {"type":"input","state":"on|off","message":""}
 //	client: {"type":"input","message":"..."} | {"type":"resize","cols":120,"rows":30} | {"type":"stop"} | {"type":"kill"}
+//	client: {"type":"take"} | {"type":"release"}
+//
+// Take turns a window on a running run of a job that takes no input
+// into one that types into it, for a user with the input permission;
+// release turns it back. The server answers either with an input
+// message, its state on or off and why when refused.
 //
 // Closing the socket detaches the window; the run goes on.
 type control struct {
@@ -68,13 +73,23 @@ func (h *Handlers) serveAttach(ws *websocket.Conn) {
 		return
 	}
 	f, job, _, _ := h.targetIn(r, run.Folder, run.Dir, run.Job)
-	h.window(ws, session, !h.canRun(r, f, job))
+	w := &Window{Terminal: session, Interactive: session.Job != nil && session.Job.Interactive, ReadOnly: !h.canRun(r, f, job)}
+	if user := access.UserFrom(r.Context()); user != nil && h.takesInput(r, session) {
+		w.Taker = user.Name
+	}
+	h.window(ws, session, w)
+}
+
+// takesInput reports whether the user of a request may take input on
+// a session: a job that takes none, and the input permission.
+func (h *Handlers) takesInput(r *http.Request, session *runner.Session) bool {
+	return session.Job != nil && !session.Job.Interactive && h.can(r, "input")
 }
 
 // window pumps a session to the socket and the socket's control messages
 // to the session, until the run ends or the window closes.
-func (h *Handlers) window(ws *websocket.Conn, session *runner.Session, readOnly bool) {
-	sub := session.Attach(readOnly)
+func (h *Handlers) window(ws *websocket.Conn, session *runner.Session, w *Window) {
+	sub := session.Attach(w.ReadOnly)
 	defer session.Detach(sub)
 
 	// The reads end when the window leaves; a quiet run would not
@@ -82,7 +97,7 @@ func (h *Handlers) window(ws *websocket.Conn, session *runner.Session, readOnly 
 	gone := make(chan struct{})
 	go func() {
 		defer close(gone)
-		h.readControls(ws, session, readOnly)
+		readControls(ws, w)
 	}()
 
 	for {
@@ -104,38 +119,20 @@ func (h *Handlers) window(ws *websocket.Conn, session *runner.Session, readOnly 
 	}
 }
 
-// readControls applies what the window sends: input, resizes, stop and
-// kill. It ignores a read-only window's input and ends.
-func (h *Handlers) readControls(ws *websocket.Conn, session *runner.Session, readOnly bool) {
+// readControls applies what the window sends, and answers what it
+// answers, until the window goes.
+func readControls(ws *websocket.Conn, w *Window) {
 	for {
 		var frame []byte
 		if err := websocket.Message.Receive(ws, &frame); err != nil {
 			return
 		}
-		var msg control
-		if json.Unmarshal(frame, &msg) != nil {
-			continue
-		}
-		switch msg.Type {
-		case "resize":
-			session.Resize(msg.Cols, msg.Rows)
-		case "input":
-			if !readOnly {
-				_ = session.Input([]byte(msg.Message))
-			}
-		case "stop":
-			if !readOnly {
-				session.Stop(5 * time.Second)
-			}
-		case "kill":
-			if !readOnly {
-				session.Kill(5 * time.Second)
-			}
+		if reply := w.Apply(frame); reply != nil {
+			_ = websocket.Message.Send(ws, string(reply))
 		}
 	}
 }
 
 func sendControl(ws *websocket.Conn, msg control) {
-	data, _ := json.Marshal(msg)
-	_ = websocket.Message.Send(ws, string(data))
+	_ = websocket.Message.Send(ws, string(controlFrame(msg)))
 }

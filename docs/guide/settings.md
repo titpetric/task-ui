@@ -414,7 +414,8 @@ that connects Claude Code.
 What each role may do, rule by rule, over `config/permissions.yml`: each
 section, such as Notes, Secrets or Users, has the rules **Allow All**,
 **Allow View**, **Allow Edits** and **Allow Deletes**, and the
-application has **Run Jobs**, **Enter Shell** and **Run on Hosts**.
+application has **Run Jobs**, **Enter Shell**, **Run on Hosts** and
+**Allow interactive mode**.
 Instance Keys adds **Allow Read Private**, `key/read`, an agent's read
 of an SSH key's private half (see [MCP](mcp.md#an-ssh-key-for-a-task)):
 Allow All leaves it out, so it takes an allow of its own, and only
@@ -451,6 +452,7 @@ The application's permissions gate what the sections do not:
 | Run Jobs     | `run`   | starting a folder's jobs and ending their runs, from the pages, the API and `run_job`; a workflow takes it for every step, and a schedule for its job |
 | Enter Shell  | `shell` | **Enter Shell**, the job `@shell`, an interactive `bash -l`, and **Enter Claude**, the job `@claude`, which also takes a Claude token |
 | Run on Hosts | `hosts` | the command form of [Inventory](inventory.md), which runs a command on its hosts over ssh, and its **Run and summarize** |
+| Allow interactive mode | `input` | **Take input** in the run window: typing into a running run of a job that takes no input, to answer a prompt it waits on (see [Runs](runs.md#the-run-window)) |
 
 The admin role may do everything and holds no policy. The other roles,
 and the `claude` user, start with these policies; everything else they
@@ -462,8 +464,8 @@ lack until a policy allows it:
 | viewer role   | the runner's, without Run Jobs and Allow Edits on Artifacts |
 | `claude` user | Run Jobs; Allow View and Allow Edits on Notes and on Prompts |
 
-So no role but admin starts with Enter Shell, Run on Hosts, the
-prompts or any section of the settings.
+So no role but admin starts with Enter Shell, Run on Hosts, Allow
+interactive mode, the prompts or any section of the settings.
 
 Folder visibility and the allow lists of jobs still apply over the
 permissions: a user runs a job with Run Jobs, in a folder they see, when

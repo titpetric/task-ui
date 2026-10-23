@@ -84,8 +84,17 @@ page: the run's terminal, live.
 - **The run goes on without the window.** Closing it detaches; the run
   keeps running, and the dashboard, this list or the run's page open a
   window on it again. A window that comes back gets the tail of what it missed.
-- **Runners type into it.** Input goes to the job, and the terminal takes
-  the window's size. A viewer can only watch in the window.
+- **Runners type into an interactive job.** Input goes to the job, and
+  the terminal takes the window's size. A viewer can only watch in the
+  window.
+- **Take input** answers a job that takes no input but waits on a
+  prompt, such as the ssh prompt to trust a host. Every run has a
+  terminal on its input, so it reaches the process. With **Allow
+  interactive mode**, which admins hold, the button sits in the foot of
+  a running run's window: your keystrokes go to the process and the
+  header says `( > input on )` until **Release input**. The run's
+  recording names who took input first, and a window opened later shows
+  it in the header.
 - **Stop** signals the job to end (SIGHUP and SIGTERM, then SIGKILL after
   `TASK_UI_GRACE`, ten seconds) and records it as `stopped`. **Kill** ends it now, as
   `killed`.

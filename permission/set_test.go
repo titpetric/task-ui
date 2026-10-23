@@ -34,6 +34,20 @@ func TestSet_Allowed(t *testing.T) {
 	assert.False(t, permission.Set{}.Allowed("note/view"), "nobody may do nothing")
 }
 
+func TestSet_Allowed_input(t *testing.T) {
+	t.Parallel()
+	runner := permission.Policy{"run": permission.Allow}
+	ops := permission.Set{User: &model.User{Name: "ops", Role: model.RoleRunner}, Role: runner}
+	assert.False(t, ops.Allowed("input"), "a runner takes no input on a job that takes none")
+	viewer := permission.Set{User: &model.User{Name: "guest", Role: model.RoleViewer}}
+	assert.False(t, viewer.Allowed("input"))
+	ops.Own = permission.Policy{"input": permission.Allow}
+	assert.True(t, ops.Allowed("input"), "a user granted the rule takes input")
+	admin := permission.Set{User: &model.User{Name: "root", Role: model.RoleAdmin}}
+	assert.True(t, admin.Allowed("input"))
+	assert.True(t, admin.Effective()["input"], "the permission matrix lists the rule")
+}
+
 func TestSet_Run(t *testing.T) {
 	t.Parallel()
 	runner := permission.Policy{"run": permission.Allow}

@@ -54,15 +54,21 @@ type Session struct {
 	// size the window requested; both reach the process when it starts.
 	pending    []byte
 	cols, rows int
-	subs       map[*Subscriber]struct{}
-	sinks      []io.Writer
-	status     Status
-	stopped    bool
-	killed     bool
-	done       chan struct{}
+	// inputBy names who took input on a job that takes none; "" until
+	// someone does.
+	inputBy string
+	subs    map[*Subscriber]struct{}
+	sinks   []io.Writer
+	status  Status
+	stopped bool
+	killed  bool
+	done    chan struct{}
 }
 
-func newSession(run *model.Run, f *folder.Folder, job *folder.Job) *Session {
+// NewSession returns the session of a run whose process has not
+// started: windows attach to it, and input waits for the process. The
+// manager starts the process; a session it never starts stays running.
+func NewSession(run *model.Run, f *folder.Folder, job *folder.Job) *Session {
 	return &Session{
 		Run:    run,
 		Folder: f,
@@ -141,12 +147,14 @@ func (s *Session) Attached() int {
 	return len(s.subs)
 }
 
-// Input sends keystrokes to the process, for an interactive job.
+// Input sends keystrokes to the process, for an interactive job or one
+// whose input someone took.
 func (s *Session) Input(p []byte) error {
-	if !s.Job.Interactive {
+	s.mu.Lock()
+	if !s.Job.Interactive && s.inputBy == "" {
+		s.mu.Unlock()
 		return ErrNotInteractive
 	}
-	s.mu.Lock()
 	proc := s.proc
 	if proc == nil {
 		if s.status.Finished() {

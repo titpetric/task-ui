@@ -68,7 +68,7 @@ func TestFolders_Actions(t *testing.T) {
 	assert.Equal(t, http.StatusOK, top.Status)
 	assert.Equal(t, "", top.str("dir"))
 	assert.Len(t, top.list("skills"), 1)
-	assert.Len(t, top.list("jobs"), 5)
+	assert.Len(t, top.list("jobs"), 6)
 
 	assert.Equal(t, http.StatusNotFound, f.call(t, asLimited, http.MethodGet, "/folders/private/actions", nil).Status)
 	assert.Equal(t, http.StatusNotFound, f.call(t, asOps, http.MethodGet, "/folders/infra/actions?dir=..", nil).Status)

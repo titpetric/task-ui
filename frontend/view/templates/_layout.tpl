@@ -201,6 +201,7 @@
 		<span class="label" id="run-kind">Run</span>
 		<h3 id="run-title"></h3>
 		<span class="rec" id="run-rec" hidden>( * recording )</span>
+		<span class="input-on" id="run-input" hidden>( &gt; input on )</span>
 		<span class="spacer"></span>
 		<span class="dim" id="run-who"></span>
 		<span class="elapsed" id="run-elapsed"></span>
@@ -221,6 +222,7 @@
 		<button type="button" class="btn" id="run-attach" hidden>Attach</button>
 		<button type="button" class="btn btn-primary" id="run-force" hidden>Run force</button>
 		<button type="button" class="btn" id="run-again" hidden>Run again</button>
+		<button type="button" class="btn" id="run-take" aria-pressed="false" title="Send your keystrokes to the run, to answer a prompt it waits on" hidden>Take input</button>
 		<button type="button" class="btn" id="run-stop" hidden>Stop</button>
 		<button type="button" class="btn btn-danger" id="run-kill" hidden>Kill</button>
 		<button type="button" class="btn" id="run-pause" hidden>Pause</button>

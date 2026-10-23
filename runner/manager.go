@@ -161,7 +161,7 @@ func (m *Manager) Start(ctx context.Context, req Request) (*Session, error) {
 // newSession is the session of a run a request starts, with what the
 // run needs of the request.
 func (m *Manager) newSession(ctx context.Context, req Request, run *model.Run) *Session {
-	session := newSession(run, req.Folder, req.Job)
+	session := NewSession(run, req.Folder, req.Job)
 	session.env = req.Env
 	session.dir, session.args, session.timeout = req.Dir, req.Args, req.Timeout
 	session.workspaceName, session.workspace = m.workspace(ctx, req)
