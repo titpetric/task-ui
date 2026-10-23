@@ -158,7 +158,9 @@ func TestPage_CanRunJob(t *testing.T) {
 	p.Folder.Dir = t.TempDir()
 	images := filepath.Join(p.Folder.Dir, "images")
 	assert.NoError(t, os.MkdirAll(images, 0o755))
-	assert.NoError(t, os.WriteFile(filepath.Join(images, "atkins.yml"), []byte("jobs:\n  build:\n    steps:\n      - run: echo\n"), 0o644))
+	// A Taskfile, which task-ui parses itself: the atkins binary lists an
+	// atkins pipeline, a process this unit test does not start.
+	assert.NoError(t, os.WriteFile(filepath.Join(images, "Taskfile.yml"), []byte("tasks:\n  build:\n    desc: Build the images\n"), 0o644))
 	assert.True(t, p.CanRunJob("infra", "images", "build"))
 	assert.False(t, p.CanRunJob("infra", "", "build"))
 	assert.False(t, p.CanRunJob("infra", "images", "plan"))
