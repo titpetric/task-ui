@@ -258,6 +258,19 @@ Claude Code token, on jobs that end on their own: not `@shell`,
 `@claude` or an interactive job. **Run again** in the window brings
 another summary.
 
+**Summarize** on a row of a job page's runs starts the same thread for
+a run that ended without a summary, with the same question; the window
+opens on the run and moves on to Claude's run, `Run 2/2`. It shows with
+the same rights as **|>summarize**; while Claude writes, the row reads
+"summarizing". The API takes it as a prompt about the run that reads
+the question:
+
+```sh
+curl -s -X POST https://task.example.com/api/prompts \
+  -H "Authorization: Bearer $TOKEN" \
+  -d '{"run": "<run id>", "prompt": "Summarize this run."}'
+```
+
 task-ui waits for the run in memory: when the server restarts before
 the run ends, no summary comes. The API takes `summarize` on a run:
 

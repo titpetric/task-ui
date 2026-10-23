@@ -63,6 +63,9 @@ type Board struct {
 	// WorkflowRuns reads the workflow run whose prompt a thread asks;
 	// nil turns workflow prompts off.
 	WorkflowRuns *storage.WorkflowRunStorage
+	// RunSummaries keep the summaries the Runs page's Summary wrote, a
+	// report of a run without a summary thread; nil leaves them out.
+	RunSummaries *storage.RunSummaryStorage
 	Catalogue    folder.Catalogue
 	Runner       *runner.Manager
 	Recordings   *recording.Store

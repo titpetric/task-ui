@@ -10,6 +10,7 @@ import (
 	"github.com/titpetric/task-ui/claude"
 	"github.com/titpetric/task-ui/hours"
 	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/note"
 )
 
 // Funcs returns the functions the templates use.
@@ -46,6 +47,9 @@ func Funcs() template.FuncMap {
 		// summaryPrompt is the short summary instruction, the Summarize
 		// preset of a workflow's prompt.
 		"summaryPrompt": func() string { return claude.RunSummary },
+		// summaryQuestion is the question of Run and summarize, which
+		// Summarize on a run that ended asks as well.
+		"summaryQuestion": func() string { return note.SummaryQuestion },
 	}
 }
 

@@ -10,6 +10,7 @@ import (
 	"github.com/titpetric/task-ui/frontend/view"
 	"github.com/titpetric/task-ui/internal/assert"
 	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/note"
 	"github.com/titpetric/task-ui/permission"
 )
 
@@ -331,4 +332,26 @@ func TestPage_CanPermissions(t *testing.T) {
 	assert.False(t, p.CanPermissions("claude"))
 	signIn(p, &model.User{Name: "ops", Role: model.RoleRunner}, permission.Policy{"user/view": permission.Allow})
 	assert.False(t, p.CanPermissions("ops"))
+}
+
+// Summarize stands on a run that ended, of a job that Summarizes, with
+// no summary yet nor one under way, and on none of Claude's runs.
+func TestPage_SummarizesRun(t *testing.T) {
+	t.Parallel()
+	job := &folder.Job{ID: "plan"}
+	run := view.Run{Run: model.Run{ID: "r1", Folder: "infra", Job: "plan", State: model.StateOK}}
+	p := &view.Page{}
+	assert.False(t, p.SummarizesRun(job, run), "no Summaries")
+	p.Summaries = true
+	assert.True(t, p.SummarizesRun(job, run))
+	running := run
+	running.State = model.StateRunning
+	assert.False(t, p.SummarizesRun(job, running))
+	prompt := run
+	prompt.Job = folder.PromptID
+	assert.False(t, p.SummarizesRun(job, prompt))
+	p.RunReports = map[string]*note.Report{"r1": {RunID: "r1", Pending: true}}
+	assert.False(t, p.SummarizesRun(job, run))
+	assert.True(t, p.RunReport("r1").Pending)
+	assert.Nil(t, p.RunReport("r2"))
 }
