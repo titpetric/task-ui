@@ -1,6 +1,3 @@
-// Package folder is the catalogue: a folder is a working directory and the
-// targets found in it, and a job is one of those targets with an identity
-// inside the folder.
 package folder
 
 import (

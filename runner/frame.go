@@ -36,9 +36,8 @@ func (f Frame) Text() string {
 	return b.String()
 }
 
-// Trim returns the frame without its trailing empty rows, keeping at
-// least min rows and the row the cursor is on: what a tile shows of a
-// terminal that has only begun.
+// Trim returns the frame without its trailing empty rows, keeping at least min rows and the cursor's row.
+// A tile shows this much of a terminal that has only begun.
 func (f Frame) Trim(min int) Frame {
 	rows := f.CursorY + 1
 	for y := len(f.Lines) - 1; y >= rows; y-- {
@@ -72,9 +71,7 @@ func blank(line []Cell) bool {
 	return true
 }
 
-// SVG renders the frame as an image: one text row per line, a tspan per
-// run of the same colours, a rect behind every run with a background of
-// its own. The cell size is in user units, so the image scales.
+// SVG renders the frame as an image that scales: a text row per line, a tspan and a background rect per colour run.
 func (f Frame) SVG(p Palette) string {
 	const cw, ch = 8.4, 17.0
 	var b strings.Builder
@@ -137,9 +134,7 @@ func runText(cells []Cell) string {
 	return b.String()
 }
 
-// TextFrame is a frame of a terminal of a size that shows a text, its
-// lines wrapped to the width, and no cursor: what a page shows in place
-// of a run's screen it has no recording of.
+// TextFrame shows a text in a frame of a size, wrapped to the width, no cursor, for a run with no recording.
 func TextFrame(cols, rows int, text string) Frame {
 	if cols <= 0 {
 		cols = 80

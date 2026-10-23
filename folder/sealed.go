@@ -14,10 +14,8 @@ func Sealed(name string, dir bool) bool {
 	return name == repository || (!dir && strings.HasPrefix(name, ".") && name != "." && name != "..")
 }
 
-// SealedPath reports whether a slash path names a sealed entry or goes
-// through .git: it takes .git/config, sub/.env and .claude/.secret, and
-// leaves .claude/CLAUDE.md. dir says the last entry is a directory; the
-// ones before it are.
+// SealedPath reports whether a slash path names a sealed entry or has .git among its segments.
+// It takes .git/config, sub/.env and .claude/.secret, not .claude/CLAUDE.md; dir marks the last entry a directory.
 func SealedPath(rel string, dir bool) bool {
 	segments := strings.Split(strings.TrimPrefix(path.Clean("/"+rel), "/"), "/")
 	for i, segment := range segments {

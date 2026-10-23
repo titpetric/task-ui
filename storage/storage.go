@@ -32,10 +32,8 @@ const Project = "task-ui"
 // ErrNotFound reports a row that is not there.
 var ErrNotFound = errors.New("not found")
 
-// Open opens a sqlite database. The driver is the program's to link:
-// main imports modernc.org/sqlite for its side effect, as do the tests. An empty DSN or ":memory:" is a private
-// in-memory database held on one connection, for tests;
-// anything else is a file.
+// Open opens a sqlite database: a file, or for an empty DSN or ":memory:" a private one in memory on one connection.
+// The program links the driver: main and the tests import modernc.org/sqlite for its side effect.
 func Open(dsn string) (DB, error) {
 	memory := dsn == "" || dsn == ":memory:"
 	if memory {
@@ -103,9 +101,9 @@ func stamp() *time.Time {
 // compared as text against another time holds one zone, whatever the
 // zone of the clock that made it. Nil stays nil.
 //
-// The precision it came with is kept. stamp() rounds the clock it reads
+// It keeps the precision the time came with. stamp() rounds the clock it reads
 // to the millisecond, which is resolution enough for a row nobody else
-// is racing; a time a caller hands over is a moment it measured, and two
+// is racing; a time from a caller is a moment it measured, and two
 // of them in one millisecond are two moments. Rounding them together
 // makes a tie, and a list ordered by started_at then falls back to the
 // id for an order the caller did not mean.

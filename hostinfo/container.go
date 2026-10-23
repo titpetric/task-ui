@@ -26,9 +26,7 @@ type Container struct {
 	Sized       bool
 }
 
-// Merge puts Beszel's containers of a host and docker's together by
-// name, the busiest first: by CPU, then memory, then name. hostMemory is
-// the host's RAM in GB, for each container's share of it.
+// Merge joins Beszel's and docker's containers of a host by name, busiest first, hostMemory the host's RAM in GB.
 func Merge(measured []beszel.Container, sized []DockerContainer, hostMemory float64) []Container {
 	byName := map[string]*Container{}
 	var rows []*Container

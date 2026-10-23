@@ -23,7 +23,9 @@ import (
 // Reading a generated file back drops everything after it.
 const Marker = "# --- task-ui secrets, generated before each run ---"
 
-// Store reads and writes the env files of folders.
+// Store reads and writes the env files of folders. When it generates them
+// for a run, a file storage never managed and the folder lacks holds the
+// secrets alone.
 type Store struct {
 	// Managed holds the content saved from the UI.
 	Managed *storage.EnvFileStorage
@@ -114,9 +116,7 @@ func StripGenerated(content string) string {
 	return content
 }
 
-// Generate writes every env file a folder reads into the folder, with the
-// secrets appended, ready for a run. For a file never managed and not in the
-// folder, Generate writes the secrets alone.
+// Generate writes each env file a folder reads into the folder, with the secrets appended, ready for a run.
 func (s *Store) Generate(ctx context.Context, f *folder.Folder) error {
 	var failures []error
 	for _, path := range f.EnvFiles {

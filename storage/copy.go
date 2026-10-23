@@ -6,10 +6,8 @@ import (
 	"os"
 )
 
-// Copy writes a consistent copy of the database to a new file, the
-// write-ahead log folded in. A file already at the path stays: Copy
-// reports os.ErrExist and writes nothing, so a first copy is never
-// overwritten by a later one.
+// Copy writes a consistent copy of the database to a new file, the write-ahead log folded in.
+// A file already at the path stays: Copy reports os.ErrExist and writes nothing.
 func Copy(ctx context.Context, db DB, path string) error {
 	if _, err := os.Stat(path); err == nil {
 		return os.ErrExist

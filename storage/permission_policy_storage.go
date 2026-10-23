@@ -86,8 +86,7 @@ func (s *PermissionPolicyStorage) Put(ctx context.Context, kind, subject, path, 
 	return db.Insert(ctx, model.PermissionPolicyTable, row)
 }
 
-// DeleteSubject removes every entry of a subject, as when its user
-// goes.
+// DeleteSubject removes every entry of a subject, as when its user goes.
 func (s *PermissionPolicyStorage) DeleteSubject(ctx context.Context, kind, subject string) error {
 	defer s.forget(kind, subject)
 	return client(s.db).Exec(ctx, "DELETE FROM permission_policy WHERE subject_kind = ? AND subject = ?", kind, subject)
@@ -101,8 +100,7 @@ func (s *PermissionPolicyStorage) forget(kind, subject string) {
 }
 
 // For returns what a user may do, from the user's policy and the role's.
-// A policy that does not read leaves the user with what the other
-// allows, and an admin with everything.
+// A policy that does not read leaves the user with what the other allows, and an admin with everything.
 func (s *PermissionPolicyStorage) For(ctx context.Context, user *model.User) permission.Set {
 	set := permission.Set{User: user}
 	if user == nil || user.CanAdmin() {

@@ -1,11 +1,3 @@
-// Package keystore keeps every key of the instance in one folder, flat:
-// <name>.key, the private key, and <name>.pub, beside known_hosts. The
-// name says the algorithm and the size, as deploy_rsa4096 or
-// task_encryption_ed25519, and the database says what a key is: an
-// encryption key or an SSH key, of the instance or a workspace, and
-// whose runs get an SSH key. Nothing else reads a key file: git, the
-// inventory's logins, the secrets and the runs go through the store,
-// and a run gets its SSH keys in an ssh agent of its own, in memory.
 package keystore
 
 import (
@@ -69,10 +61,8 @@ func (k Key) Size() int {
 	return k.Bits
 }
 
-// ShortPublic is the public key as a table shows it: its type and the
-// end of its material, where keys of a type differ, the comment left
-// out. PublicKey is
-// the whole line, to copy.
+// ShortPublic is the public key as a table shows it: its type and the end of its material, where keys differ.
+// PublicKey holds the whole line, with the comment, to copy.
 func (k Key) ShortPublic() string {
 	fields := strings.Fields(k.PublicKey)
 	if len(fields) < 2 {

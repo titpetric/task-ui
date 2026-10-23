@@ -61,10 +61,8 @@ func (u *User) SeesArtifact(artifact *Artifact) bool {
 	return u.CanSee(artifact.Folder)
 }
 
-// SeesRun reports whether the user may see a run: one of a folder the
-// user sees, a prompt's run with prompts, prompt/view, the Notes
-// agent's with notes, note/view, and the user's own runs of either
-// whatever the folder.
+// SeesRun reports whether the user may see a run: one of a folder the user sees, or the user's own prompt or note run.
+// Another user's prompt run also takes prompts (prompt/view), and a Notes agent's run takes notes (note/view).
 func (u *User) SeesRun(run *Run, prompts, notes bool) bool {
 	if u == nil || run == nil {
 		return false

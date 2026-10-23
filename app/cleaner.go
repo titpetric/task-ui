@@ -12,9 +12,7 @@ import (
 	"github.com/titpetric/task-ui/storage"
 )
 
-// NewCleaner returns the cleaner of the data the configuration names,
-// over an open database: what task-ui cleanup runs, and the Data
-// retention page measures.
+// NewCleaner returns the cleaner `task-ui cleanup` runs and the Data retention page measures, over db.
 func NewCleaner(db storage.DB, cfg *Config) *retention.Cleaner {
 	return &retention.Cleaner{
 		DB: db, DBPath: cfg.DB,

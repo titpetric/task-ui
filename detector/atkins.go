@@ -15,22 +15,18 @@ const AtkinsKind = "atkins"
 // is atkins' own answer, and the listing reports it.
 var atkinsNames = []string{".atkins.yml", ".atkins.yaml", "atkins.yml", "atkins.yaml"}
 
-// prober is the one atkins the detector asks. It is a package value
-// rather than a field because Detectors is a list of values with no
-// wiring, and a probe caches on the files it read, so two detectors
-// sharing one cache is the point.
+// prober is the one atkins the detector asks, a package value and no
+// field: Detectors is a list of values with no wiring, and a probe caches
+// on the files it read, so two detectors share one cache. UseProber sets
+// it to the prober the skill chips use, so one atkins answers both; a test
+// points it at an atkins of its own.
 var prober = &skills.Prober{}
 
 // probing guards the swap a test makes when it points the detector at a
 // different atkins.
 var probing sync.Mutex
 
-// UseProber points the atkins detector at a prober, and returns a
-// function that puts the previous one back.
-//
-// It is how the application hands the detector the prober the skill
-// chips already use, so one atkins answers both and the cache is
-// shared; a test uses it to point at an atkins of its own.
+// UseProber points the atkins detector at a prober and returns a function that puts the previous one back.
 func UseProber(p *skills.Prober) func() {
 	probing.Lock()
 	defer probing.Unlock()
@@ -49,7 +45,7 @@ func UseProber(p *skills.Prober) func() {
 //
 // atkins publishes the whole job in `atkins -l --json`: its description,
 // its aliases, what it depends on, its steps, the files it reads and
-// whether it asks not to be offered. Reading the YAML here instead would
+// whether it hides itself. Reading the YAML here instead would
 // be a second reader of a schema atkins owns, and a field added there
 // would go missing here with nothing to report it.
 type atkinsDetector struct{}
@@ -59,7 +55,7 @@ func (atkinsDetector) Kind() string { return AtkinsKind }
 // Detect returns the folder's pipeline, or nil when it has none.
 //
 // A folder with a pipeline file atkins cannot read still answers, with
-// Error set, so the folder lists what is wrong rather than nothing.
+// Error set, so the folder lists what is wrong.
 func (d atkinsDetector) Detect(dir string) *Source {
 	name := pipelineFile(dir)
 	if name == "" {
@@ -68,9 +64,8 @@ func (d atkinsDetector) Detect(dir string) *Source {
 	return d.detectFile(dir, "")
 }
 
-// detectFile reads the folder's own pipeline, or the one file named,
-// which is what a configuration pointing at a file no convention claims
-// asks for.
+// detectFile reads the folder's own pipeline, or the one file named, for
+// a configuration that points at a file no convention claims.
 func (d atkinsDetector) detectFile(dir, file string) *Source {
 	name := file
 	if name == "" {
@@ -131,7 +126,7 @@ func pipelineSection(sections []skills.Section) *skills.Section {
 }
 
 // atkinsTarget turns one listed job into a target, and returns nil for a
-// job a folder does not offer: one the file hides with show: false, and
+// job a folder does not list: one the file hides with show: false, and
 // one with nothing to say about itself, which is a job written for
 // another job to call.
 //

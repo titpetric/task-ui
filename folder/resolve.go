@@ -4,11 +4,8 @@ import (
 	"strings"
 )
 
-// Resolve finds the folder a path under /f names, and what follows it:
-// nothing for the folder itself, a job ID, or env/<file>. Folder IDs nest,
-// so the longest folder that starts the path wins:
-// "services/api/deploy" is the job deploy of services/api when that is
-// a folder, and the folder services/api/deploy when that is one.
+// Resolve finds the folder a path under /f names, and the rest: "", a job ID, or env/<file>.
+// The longest folder ID that starts the path wins, as folder IDs nest.
 func Resolve(c Catalogue, path string) (*Folder, string) {
 	path = strings.Trim(path, "/")
 	var best *Folder

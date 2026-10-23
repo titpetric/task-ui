@@ -18,7 +18,8 @@ import (
 	"golang.org/x/crypto/ssh/agent"
 )
 
-// Agent is an ssh agent holding the keys of one directory.
+// Agent is an ssh agent holding the keys of one directory. A tmp
+// directory of "" stands for the system's temporary directory.
 type Agent struct {
 	// Socket is the path ssh connects to, for SSH_AUTH_SOCK.
 	Socket string
@@ -71,11 +72,9 @@ func LoadKeys(tmp string, keys ...Named) (*Agent, error) {
 	return serveRing(tmp, ring, loaded)
 }
 
-// LoadFiles reads the private keys in the files given and serves them on
-// a socket in a new private directory under tmp ("" is the system's).
-// It skips files that are not an unencrypted private key, public halves,
-// known_hosts and the ssh configuration file among them, and a file given
-// twice. No key returns nil and no error.
+// LoadFiles serves the private keys of the files given on a socket in a new private directory under tmp.
+// It skips a file given twice and each file of no unencrypted private key, such as public halves and known_hosts.
+// No key returns nil and no error.
 func LoadFiles(tmp string, paths ...string) (*Agent, error) {
 	ring := agent.NewKeyring()
 	var loaded []string
@@ -154,8 +153,7 @@ func (a *Agent) Close() error {
 	return err
 }
 
-// Clean removes the agent directories under tmp ("" is the system's)
-// that a process before this one left. It returns how many.
+// Clean removes the agent directories that earlier processes left under tmp, and returns how many.
 func Clean(tmp string) int {
 	if tmp == "" {
 		tmp = os.TempDir()

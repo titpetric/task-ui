@@ -217,9 +217,8 @@ func drop(ctx context.Context, users *storage.UserStorage, creds []access.Creden
 	return removed, nil
 }
 
-// Watch syncs the file whenever it changes, until the context ends. A
-// file that stops parsing keeps the users as they are: a typo must not
-// lock everyone out.
+// Watch syncs the file whenever it changes, until the context ends.
+// A file that stops parsing keeps the users as they are, so a typo locks nobody out.
 func (f *UsersFile) Watch(ctx context.Context, users *storage.UserStorage, passwords *storage.UserAuthPasswordStorage, report func(error)) {
 	interval := f.Interval
 	if interval <= 0 {

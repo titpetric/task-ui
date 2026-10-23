@@ -35,8 +35,7 @@ type Prompt struct {
 	Threads []Thread
 }
 
-// PromptIn returns the prompt box of a directory inside a folder, the
-// folder itself for an empty dir.
+// PromptIn returns the prompt box of a directory inside a folder, of the folder itself for an empty dir.
 func PromptIn(folderID, dir string) *Prompt {
 	place := folderID
 	if dir != "" {

@@ -22,9 +22,7 @@ type Cluster struct {
 	Left int
 }
 
-// NewCluster sums the systems into pools. containers are each host's
-// running containers and disks its durable filesystems, by the host's
-// ID; a host without filesystems there counts the ones Beszel watches.
+// NewCluster sums the systems into pools, with each host's running containers and durable disks by host ID.
 func NewCluster(systems []beszel.System, containers map[string][]beszel.Container, disks map[string][]Filesystem) Cluster {
 	var c Cluster
 	cpu := Pool{Name: "CPU", Unit: "cores"}

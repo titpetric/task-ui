@@ -9,7 +9,10 @@ import (
 	"github.com/titpetric/task-ui/model"
 )
 
-// ArtifactStorage keeps the files runs left behind.
+// ArtifactStorage keeps the files runs left behind. The artifacts with a commit form the artifact tree,
+// one version of a path per commit. Rewrite drops the commits before a new root: a dropped commit's
+// artifacts go, except the ones keep names, which move to the root, and the later commits take their
+// new names from renamed.
 type ArtifactStorage struct {
 	db DB
 }
@@ -85,8 +88,7 @@ func (s *ArtifactStorage) DeleteByRun(ctx context.Context, runID string) error {
 	return client(s.db).Exec(ctx, "DELETE FROM artifact WHERE run_id = ?", runID)
 }
 
-// Latest returns the newest version of every path in the artifact tree,
-// the artifacts with a commit, by path.
+// Latest returns the newest version of every path in the artifact tree, the artifacts with a commit, by path.
 func (s *ArtifactStorage) Latest(ctx context.Context) ([]model.Artifact, error) {
 	return client(s.db).Select[model.Artifact](ctx, `SELECT * FROM artifact WHERE id IN (
 		SELECT id FROM (
@@ -96,9 +98,8 @@ func (s *ArtifactStorage) Latest(ctx context.Context) ([]model.Artifact, error) 
 	) ORDER BY path`)
 }
 
-// Squash follows the artifact tree flattening its history to one commit:
-// the newest version of each path now lives in head, and the artifacts of
-// the older versions go, as their files did.
+// Squash flattens the artifact tree's history to one commit, head, holding the newest version of each path.
+// The artifacts of older versions go, as their files did.
 func (s *ArtifactStorage) Squash(ctx context.Context, head string) error {
 	db := client(s.db)
 	if err := db.Exec(ctx, `DELETE FROM artifact WHERE commit_id != '' AND id NOT IN (
@@ -117,9 +118,7 @@ func (s *ArtifactStorage) DeleteAll(ctx context.Context) error {
 	return client(s.db).Exec(ctx, "DELETE FROM artifact")
 }
 
-// History returns the earlier versions of the files of the artifact
-// tree, oldest first: every artifact with a commit but the newest of its
-// path, which Latest returns.
+// History returns every artifact with a commit but the newest of its path, oldest first.
 func (s *ArtifactStorage) History(ctx context.Context) ([]model.Artifact, error) {
 	return client(s.db).Select[model.Artifact](ctx, `SELECT * FROM artifact WHERE commit_id != '' AND id NOT IN (
 		SELECT id FROM (
@@ -129,10 +128,7 @@ func (s *ArtifactStorage) History(ctx context.Context) ([]model.Artifact, error)
 	) ORDER BY rowid ASC`)
 }
 
-// Rewrite follows the artifact tree dropping the commits of its history
-// before a new root: the artifacts of a dropped commit go, but the ones
-// keep names, which move to root; the commits after it take their new
-// names, from renamed. It returns how many artifacts went.
+// Rewrite drops the commits of the artifact tree before a new root and returns how many artifacts went.
 func (s *ArtifactStorage) Rewrite(ctx context.Context, root string, renamed map[string]string, dropped []string, keep func(model.Artifact) bool) (int, error) {
 	removed := 0
 	err := inTx(ctx, s.db, func(c conn) error {

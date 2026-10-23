@@ -11,9 +11,8 @@ type Pager struct {
 	Next string
 }
 
-// NewPager builds the links of a page at path with the query, less its
-// cursors: Prev reads after the run prev names, Next before the run next
-// names. It returns nil without either.
+// NewPager links the pages either side of path with the query, less its cursors; nil without prev or next.
+// Prev reads after the run prev names, Next before the run next names.
 func NewPager(path string, query url.Values, prev, next string) *Pager {
 	if prev == "" && next == "" {
 		return nil

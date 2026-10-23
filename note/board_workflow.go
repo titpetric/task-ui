@@ -30,8 +30,7 @@ func WorkflowQuestion(prompt, input string) string {
 	return prompt + "\n\nInput:\n" + input
 }
 
-// PromptPlace checks a place a workflow's prompt runs in, as the user:
-// a folder or a directory in it the user sees, or _ for the root.
+// PromptPlace checks a place a workflow's prompt runs in as the user: a folder or directory the user sees, or _.
 func (b *Board) PromptPlace(ctx context.Context, user *model.User, place string) error {
 	_, err := b.promptRequest(ctx, user, place)
 	return err
@@ -47,10 +46,9 @@ func (b *Board) AskWorkflow(stop context.Context, user *model.User, run *model.W
 	return b.lastReply(context.Background(), note), nil
 }
 
-// AskStep puts a prompt step of a workflow run to Claude, as AskWorkflow
-// does the workflow's prompt, in the step's place: a thread about the
-// workflow run, which Claude gets with the steps before it. It returns
-// the prompt's run and Claude's answer, the step's output.
+// AskStep puts a workflow run's prompt step to Claude in the step's place, as AskWorkflow does the workflow's prompt.
+// The thread is about the workflow run, and Claude gets the steps before it.
+// It returns the prompt's run and Claude's answer, the step's output.
 func (b *Board) AskStep(stop context.Context, user *model.User, run *model.WorkflowRun, step *model.WorkflowRunStep, place, input string) (string, string, error) {
 	note, err := b.askWorkflowRun(stop, user, run, place, WorkflowQuestion(step.Prompt, input))
 	if note == nil {

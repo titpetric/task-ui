@@ -63,9 +63,8 @@ func Funcs() template.FuncMap {
 	}
 }
 
-// ArgLine returns the args a schedule or a workflow step keeps, a JSON
-// list, as the line its form takes back: the words, quoted where a
-// word needs it, or for a job of @host:<host> the command unchanged.
+// ArgLine returns the args a schedule or a workflow step keeps, a JSON list, as the line its form takes back:
+// the words, quoted where a word needs it, or the command unchanged for a job of @host:<host>.
 func ArgLine(job, args string) string {
 	list := model.DecodeList(args)
 	if strings.HasPrefix(job, model.HostPrefix) {
@@ -201,11 +200,9 @@ func Size(n int64) string {
 	return fmt.Sprintf("%.1f %s", value, suffix)
 }
 
-// FolderDir is where a folder sits under the project top, which the
-// sidebar shows as a heading: "dockerfiles" for deploy/dockerfiles/blog
-// under deploy, "" for deploy/dockerfiles and for deploy itself. In a
-// workspace the project is two segments deep: malta/deploy/web/blog
-// under malta/deploy sits in "web".
+// FolderDir is the sidebar heading of a folder under top: "dockerfiles" for deploy/dockerfiles/blog in deploy.
+// FolderDir returns "" for deploy/dockerfiles and for deploy itself.
+// In a workspace the project is two segments deep: malta/deploy/web/blog under malta/deploy sits in "web".
 func FolderDir(id, top string) string {
 	rest, ok := strings.CutPrefix(id, top+"/")
 	if !ok {

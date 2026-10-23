@@ -10,9 +10,8 @@ import (
 // in the folder's directory, or in the directory of a folder Sub returns.
 const ShellID = "@shell"
 
-// ShellJob returns the folder's shell job, `bash -l` with a terminal in
-// the folder's directory, for admins only: no allow rule of a folder or a
-// job opens it to anyone else. No schedule or workflow step takes it.
+// ShellJob returns the folder's shell job, `bash -l` with a terminal in the folder's directory, for admins only.
+// No allow rule of a folder or a job opens it to anyone else, and no schedule or workflow step takes it.
 func (f *Folder) ShellJob() *Job {
 	if f == nil {
 		return nil

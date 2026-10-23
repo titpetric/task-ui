@@ -18,7 +18,9 @@ import (
 
 // Prober runs `atkins -l --json --all` in a directory and keeps the
 // sections for TTL, or until the pipeline file or a skills folder it read changes.
-// A probe that fails or takes longer than Timeout answers nothing.
+// A probe that fails or takes longer than Timeout answers nothing. Stamp
+// tells a change apart: it reads the nearest pipeline file and the files of
+// every .atkins/skills folder from the directory up.
 type Prober struct {
 	// Command is the atkins binary, atkins unless set.
 	Command string
@@ -127,9 +129,7 @@ func (p *Prober) ttl() time.Duration {
 // pipelineNames are the files atkins reads as a directory's pipeline.
 var pipelineNames = []string{".atkins.yml", ".atkins.yaml", "atkins.yml", "atkins.yaml"}
 
-// Stamp sums up the files a probe of dir reads: the modification times
-// of the nearest pipeline file and of the files of every .atkins/skills
-// folder from dir up, so a change to any answers afresh.
+// Stamp sums up the modification times of the files a probe of dir reads, so a change to any answers afresh.
 func Stamp(dir string) string {
 	var parts []string
 	pipeline := false

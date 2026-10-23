@@ -24,7 +24,11 @@ const pendingSize = 64 << 10
 // Session is one run in progress, and what remains of it after: the
 // process on its pty, the terminal emulator that follows the output, the
 // windows attached, and how it ended. A session outlives the window that
-// started it: windows attach and detach, the run goes on.
+// started it: windows attach and detach, the run goes on. Windows attach
+// before the process starts and input waits for it; the manager starts the
+// process, and a session it never starts stays running. Every run has its
+// pty on stdin, so a job that takes no input still answers a prompt once a
+// user takes its input.
 type Session struct {
 	Run    *model.Run
 	Folder *folder.Folder
@@ -81,9 +85,7 @@ type Session struct {
 	done    chan struct{}
 }
 
-// NewSession returns the session of a run whose process has not
-// started: windows attach to it, and input waits for the process. The
-// manager starts the process; a session it never starts stays running.
+// NewSession returns the session of a run whose process has not started, for windows to attach to.
 func NewSession(run *model.Run, f *folder.Folder, job *folder.Job) *Session {
 	return &Session{
 		Run:    run,
@@ -124,9 +126,8 @@ func (s *Session) Frame() Frame {
 	return snapshot(s.term)
 }
 
-// Attach adds a window. It receives what the run showed so far, then
-// the output as it happens, then the status the run ended with. A window
-// on a finished run gets the replay and the status at once.
+// Attach adds a window that gets what the run showed so far, then the output as it happens, then the final status.
+// A window on a finished run gets the replay and the status at once.
 func (s *Session) Attach(readOnly bool) *Subscriber {
 	sub := newSubscriber(64, readOnly)
 	s.mu.Lock()

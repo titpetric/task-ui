@@ -8,10 +8,8 @@ import (
 // instruction from the Notes board, a job of the root, _.
 const NoteID = model.NoteJob
 
-// NoteJob returns the folder's Notes agent job, task-ui agent note in
-// the folder's directory; the board runs it as the root's, _/@claude-note.
-// Job does not resolve it: the board starts it on a note, as the agent's
-// user, and no run, schedule or workflow step takes it by ID.
+// NoteJob returns the folder's Notes agent job, task-ui agent note in the folder's directory.
+// The board starts it on a note as the agent's user, as _/@claude-note; Job does not resolve it.
 func (f *Folder) NoteJob() *Job {
 	if f == nil {
 		return nil

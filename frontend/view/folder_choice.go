@@ -7,15 +7,14 @@ import (
 )
 
 // FolderChoice is a box of the user form's folder list: a folder, and
-// whether the user sees it.
+// whether the user sees it. A folder the user sees that the catalogue lacks keeps a box, checked,
+// so saving keeps it.
 type FolderChoice struct {
 	ID      string
 	Checked bool
 }
 
-// FolderChoices lists a box for every folder, checked for those in seen,
-// then one for each folder seen names that the catalogue lacks,
-// so saving keeps it.
+// FolderChoices lists a box for every folder, checked for those in seen, then the rest of seen.
 func FolderChoices(folders []*folder.Folder, seen []string) []FolderChoice {
 	choices := make([]FolderChoice, 0, len(folders))
 	known := map[string]bool{}

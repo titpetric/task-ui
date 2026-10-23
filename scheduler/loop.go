@@ -67,10 +67,8 @@ func (l *Loop) Run(ctx context.Context) {
 	}
 }
 
-// Tick starts every schedule that is due and moves it to its next run.
-// It returns how many runs it started. It skips a schedule whose job is
-// busy until its next time, and disables one whose folder or job is
-// missing, so it stops asking.
+// Tick starts every due schedule, moves it to its next time and returns how many runs it started.
+// It skips a schedule whose job is busy and disables one whose folder or job is missing.
 func (l *Loop) Tick(ctx context.Context) (int, error) {
 	now := l.Now()
 	due, err := l.Schedules.Due(ctx, now)

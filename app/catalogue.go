@@ -12,7 +12,8 @@ import (
 
 // Catalogue discovers the folders under the root on every call, with the
 // project rows applied, so a clone or a configuration change shows at
-// once.
+// once. Discovery lists the root under no ID, so Find answers _ with the root itself: the folder of
+// the root's built-in jobs, @shell, @claude and @host:<host>.
 type Catalogue struct {
 	Root     string
 	Discover bool
@@ -55,9 +56,8 @@ func (c *Catalogue) List() []*folder.Folder {
 	return c.discovery().List()
 }
 
-// Find returns a folder by ID, or nil. _ is the root itself when no
-// folder takes the ID: the folder of the root's built-in jobs, @shell,
-// @claude and @host:<host>, which discovery lists under no ID.
+// Find returns a folder by ID, or nil.
+// An ID of _ that no folder takes is the root itself.
 func (c *Catalogue) Find(id string) *folder.Folder {
 	if f := c.discovery().Find(id); f != nil || id != model.Default {
 		return f

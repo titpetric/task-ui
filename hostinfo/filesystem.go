@@ -1,8 +1,3 @@
-// Package hostinfo reads what a host of the inventory holds beyond what
-// Beszel reports: its filesystems and its containers' sizes, over the
-// ssh login task-ui has to it, and puts the two sources together for the
-// Inventory page: the containers of a host, its durable filesystems and
-// the pools of the cluster.
 package hostinfo
 
 import (
@@ -34,9 +29,7 @@ func (f Filesystem) Percent() float64 {
 	return float64(f.Used) * 100 / float64(f.Size)
 }
 
-// ParseDF reads the output of df -PT -B1: a header, then a line a
-// filesystem of device, type, size, used, available, capacity and the
-// mount point, which may hold spaces.
+// ParseDF reads the output of df -PT -B1 into filesystems, mount points with spaces included.
 func ParseDF(out string) []Filesystem {
 	var filesystems []Filesystem
 	for _, line := range strings.Split(out, "\n") {
@@ -69,11 +62,7 @@ var volatile = map[string]bool{
 	"rpc_pipefs": true, "shm": true, "none": true,
 }
 
-// Durable keeps the filesystems that hold data past a reboot, one a
-// device: no tmpfs, overlay or other in-memory and kernel filesystems,
-// none of docker's own mounts, and of the mounts of one device, a bind
-// mount among them, the one of the shortest mount point. They come back
-// by mount point.
+// Durable keeps the filesystems that hold data past a reboot, one per device, sorted by mount point.
 func Durable(filesystems []Filesystem) []Filesystem {
 	byDevice := map[string]Filesystem{}
 	for _, fs := range filesystems {
@@ -106,9 +95,8 @@ func dockers(mount string) bool {
 // gib is a GB as Beszel counts one, in bytes.
 const gib = 1 << 30
 
-// BeszelFilesystems are the filesystems a host's agent watches: the
-// root, /, and each extra one under the name the agent sets for it, sizes
-// from GB. Without stats there are none.
+// BeszelFilesystems returns the root and each extra filesystem a host's agent watches, sizes from GB.
+// Without stats it returns none.
 func BeszelFilesystems(stats *beszel.Stats) []Filesystem {
 	if stats == nil || stats.Disk == 0 {
 		return nil

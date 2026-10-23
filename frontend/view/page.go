@@ -333,9 +333,8 @@ func (p *Page) CanSettings() bool {
 	return p.Can("workspace/view") || p.Can("project/view") || p.Can("key/view") || p.Can("secret/view") || p.Can("integration/view") || p.Can("user/view")
 }
 
-// CanProfile reports whether the signed in user may open the profile
-// of a user, by name: their own, or anyone's with user/view. A name no
-// user holds, such as the agent a note names, has none.
+// CanProfile reports whether the signed in user may open a profile by name: their own, or any with user/view.
+// A name no user holds, such as the agent a note names, has no profile.
 func (p *Page) CanProfile(name string) bool {
 	if _, ok := p.Roles[name]; !ok || p.User == nil {
 		return false
@@ -343,8 +342,7 @@ func (p *Page) CanProfile(name string) bool {
 	return p.User.Name == name || p.Can("user/view")
 }
 
-// CanPermissions reports whether the menu of a user, by name, links
-// their permissions: a user, for a signed in user with user/edit.
+// CanPermissions reports whether the menu of a user, by name, links their permissions, for user/edit.
 func (p *Page) CanPermissions(name string) bool {
 	_, ok := p.Roles[name]
 	return ok && p.Can("user/edit")
@@ -391,9 +389,7 @@ func (p *Page) SummarizesRun(job *folder.Job, run Run) bool {
 	return ended && p.Summarizes(job) && p.RunReports[run.ID] == nil
 }
 
-// Deletes reports whether the signed in user may delete a note: their
-// own, or anyone's for an admin, with note/delete, or prompt/delete for
-// a prompt.
+// Deletes reports whether the signed in user may delete a note: their own, or any note for an admin.
 func (p *Page) Deletes(note model.Note) bool {
 	allowed := p.Can("note/delete")
 	if note.IsPrompt() && note.ParentID == "" {
@@ -417,9 +413,8 @@ func (p *Page) CanRunAny(f *folder.Folder) bool {
 	return false
 }
 
-// CanRunJob reports whether the signed in user may run a job named by
-// the IDs of its folder and itself and the directory inside the folder
-// it runs in, as a run names them.
+// CanRunJob reports whether the signed in user may run a job as a run names it:
+// by the IDs of its folder and itself, and the directory inside the folder it runs in.
 func (p *Page) CanRunJob(folderID, dir, jobID string) bool {
 	for _, f := range p.Folders {
 		if f.ID == folderID {

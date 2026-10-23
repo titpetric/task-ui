@@ -13,13 +13,19 @@ import (
 // The kinds of chain a run is part of.
 const (
 	// ChainSummary is a Run and summarize: the job's run, then Claude's
-	// summary of it.
+	// summary of it once it starts. A job's run with no summary to come is
+	// no chain.
 	ChainSummary = "summary"
 	// ChainWorkflow is a workflow run: the runs of its steps in order,
-	// then the run of its prompt.
+	// then the run of its prompt. A step that runs another workflow, or a
+	// skipped one, has no run in it. Claude's runs are those of the
+	// workflow run's prompt threads that no step names yet, oldest first: a
+	// prompt step names its run once it ends, so a prompt step in progress
+	// takes the first, and the workflow's prompt the last.
 	ChainWorkflow = "workflow"
-	// ChainBatch is a command on hosts: a run a host, then Claude's
-	// summary of them with Run and summarize.
+	// ChainBatch is a command on hosts: a run a host, oldest first, then
+	// Claude's summary of them with Run and summarize. A batch of one run
+	// without a summary is no chain.
 	ChainBatch = "batch"
 )
 
@@ -47,9 +53,8 @@ type RunChain struct {
 	Complete bool `json:"complete"`
 }
 
-// NewRunChain places the current run in the runs of a chain that have
-// started, in order: nil when the chain does not hold it. Total counts
-// the runs to come as well; a complete chain holds the runs it has.
+// NewRunChain places current among the started runs of a chain, in order, or returns nil when they lack it.
+// Total counts the runs to come as well; a complete chain's total is the runs it has.
 func NewRunChain(kind, id string, runs []string, total int, complete bool, current string) *RunChain {
 	at := slices.Index(runs, current)
 	if at < 0 {
@@ -69,10 +74,8 @@ func NewRunChain(kind, id string, runs []string, total int, complete bool, curre
 	return c
 }
 
-// SummaryChain is the chain of a Run and summarize: the job's run, and
-// the summary's run once Claude starts it. Asked says a summary comes
-// once the job ends; without it and a summary the job's run is no
-// chain.
+// SummaryChain is the chain of a Run and summarize, as ChainSummary describes it.
+// Asked says a summary comes once the job ends.
 func SummaryChain(current string, job model.Run, summary *model.Run, asked bool) *RunChain {
 	runs := []string{job.ID}
 	if summary != nil {
@@ -83,9 +86,8 @@ func SummaryChain(current string, job model.Run, summary *model.Run, asked bool)
 	return NewRunChain(ChainSummary, job.ID, runs, 2, summary != nil && model.Finished(summary.State), current)
 }
 
-// BatchChain is the chain of a batch of host runs, oldest first, and
-// their summary's run with Run and summarize; asked says a summary
-// comes once the batch ends. A batch of one run without a summary is no chain.
+// BatchChain is the chain of a batch of host runs, as ChainBatch describes it.
+// Asked says a summary comes once the batch ends.
 func BatchChain(current, batchID string, batch []model.Run, summary *model.Run, asked bool) *RunChain {
 	runs := make([]string, 0, len(batch)+1)
 	complete := true
@@ -109,13 +111,7 @@ func BatchChain(current, batchID string, batch []model.Run, summary *model.Run, 
 	return NewRunChain(ChainBatch, batchID, runs, total, complete, current)
 }
 
-// WorkflowChain is the chain of a workflow run: the runs of its steps,
-// in order, then the run of its prompt, which prompt says it has. A
-// step that runs another workflow, or one skipped, has no run of the
-// chain. Claude's runs are those of the workflow run's prompt threads
-// that no step names yet, oldest first: a prompt step's names its run
-// once it ends, so a prompt step in progress takes the first, and the
-// workflow's prompt the last.
+// WorkflowChain is the ChainWorkflow chain of a workflow run; prompt says the workflow has a prompt.
 func WorkflowChain(current string, run model.WorkflowRun, steps []model.WorkflowRunStep, prompt bool, claude []string) *RunChain {
 	var runs []string
 	total := 0

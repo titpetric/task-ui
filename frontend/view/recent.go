@@ -44,8 +44,7 @@ func (r Recent) Initials() string {
 	return (&model.User{Name: r.Flow.UserName}).Initials()
 }
 
-// Recents merges the runs of jobs and of workflows, newest first, and
-// keeps the first n.
+// Recents merges the runs of jobs and of workflows, newest first, and keeps the first n.
 func Recents(runs []Run, flows []model.WorkflowRun, n int) []Recent {
 	result := make([]Recent, 0, len(runs)+len(flows))
 	for i := range runs {

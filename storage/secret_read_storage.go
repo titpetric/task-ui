@@ -62,9 +62,7 @@ func (s *SecretReadStorage) keep() int {
 	return SecretReadKeep
 }
 
-// List returns a secret's reads, newest first, limit at most: before
-// and after name the read the page starts past, older or newer, as the
-// runs' pager does.
+// List returns a secret's reads newest first, at most limit, past the read before (older) or after (newer) names.
 func (s *SecretReadStorage) List(ctx context.Context, secretID, before, after string, limit int) ([]model.SecretRead, error) {
 	query := "SELECT * FROM secret_read WHERE secret_id = ?"
 	args := []any{secretID}

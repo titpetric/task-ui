@@ -76,8 +76,7 @@ func (s *KeyInfoStorage) SetFingerprint(ctx context.Context, name, fingerprint s
 	return client(s.db).Exec(ctx, "UPDATE key_info SET fingerprint = ?, updated_at = ? WHERE name = ?", fingerprint, stamp(), name)
 }
 
-// SetBackup records a rotation: the key's new fingerprint, and the
-// backup of its previous material by name and fingerprint.
+// SetBackup records a rotation: a key's new fingerprint, and its previous material's backup name and fingerprint.
 func (s *KeyInfoStorage) SetBackup(ctx context.Context, name, fingerprint, backup, backupFingerprint string) error {
 	now := stamp()
 	return client(s.db).Exec(ctx, "UPDATE key_info SET fingerprint = ?, backup = ?, backup_fingerprint = ?, rotated_at = ?, updated_at = ? WHERE name = ?", fingerprint, backup, backupFingerprint, now, now, name)

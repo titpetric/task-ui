@@ -31,10 +31,8 @@ func HTML(src []byte, prefix, dir string) string {
 	return Render(Options{Prefix: prefix, Dir: dir}, src)
 }
 
-// Render renders markdown as HTML, shaped by the options. Raw HTML in the
-// source shows as text, links keep to safe schemes and open in a new view,
-// and a relative link or image resolves against Dir, the directory of the
-// file, and links under Prefix, the URL the files of the tree are at.
+// Render renders markdown as HTML, shaped by the options.
+// Raw HTML in the source shows as text, and links keep to safe schemes and open in a new view.
 func Render(opts Options, src []byte) string {
 	src = fenceBreaks(bytes.ReplaceAll(src, []byte("\r\n"), []byte("\n")))
 	renderer := blackfriday.NewHTMLRenderer(blackfriday.HTMLRendererParameters{

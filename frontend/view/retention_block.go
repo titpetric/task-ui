@@ -43,8 +43,7 @@ func (b RetentionBlock) LimitText() string {
 	return retention.FormatSize(b.Rule.Limit)
 }
 
-// Ages are the ages the page lists, each with its label, the rule's
-// checked.
+// Ages are the ages the page lists, each with its label, the rule's checked.
 func (b RetentionBlock) Ages() []struct {
 	Value, Label string
 	Checked      bool

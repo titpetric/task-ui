@@ -19,8 +19,7 @@ func DecodeList(text string) []string {
 	return list
 }
 
-// EncodeList writes a list of strings as JSON text. EncodeList writes nil as
-// an empty list, so the column never holds null.
+// EncodeList writes a list of strings as JSON text, nil as an empty list so the column never holds null.
 func EncodeList(list []string) string {
 	if list == nil {
 		list = []string{}
@@ -40,8 +39,7 @@ func DecodeMap(text string) map[string][]string {
 	return result
 }
 
-// EncodeMap writes a map of string lists as JSON text, keys sorted so
-// the text is stable.
+// EncodeMap writes a map of string lists as JSON text, keys sorted so the text is stable.
 func EncodeMap(m map[string][]string) string {
 	if m == nil {
 		m = map[string][]string{}

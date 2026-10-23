@@ -34,8 +34,7 @@ func (r *Recorder) Write(p []byte) (int, error) {
 	return len(p), r.buf.Flush()
 }
 
-// Mark records a marker event, what happened to the run besides its
-// output, such as who took input on it. Replays skip it.
+// Mark records a marker event, such as who took input on the run, which replays skip.
 func (r *Recorder) Mark(label string) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()

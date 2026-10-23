@@ -8,12 +8,8 @@ import (
 // applies the Data retention settings.
 const CleanupID = "@cleanup"
 
-// CleanupJob returns the cleanup job of the root, _, nil for any other
-// folder or a directory inside the root: task-ui cleanup, which removes
-// the recordings, the artifact versions and the secret reads the Data
-// retention settings let go. Admins alone run it, by hand, on the daily
-// schedule task-ui seeds, or in a workflow step; --dry-run as its args
-// prints what would go.
+// CleanupJob returns the root's cleanup job, task-ui cleanup, or nil for any other folder or a directory in it.
+// Admins run it by hand, on the daily schedule task-ui seeds, or in a workflow step; --dry-run prints what would go.
 func (f *Folder) CleanupJob() *Job {
 	if f == nil || f.ID != model.Default || f.Rel != "" {
 		return nil

@@ -255,9 +255,8 @@ func (s *Store) Path(rel string) (string, error) {
 	return filepath.Join(s.Dir, filepath.FromSlash(clean)), nil
 }
 
-// List returns what a directory of the tree holds, the latest versions,
-// directories first. The repository itself and the other dot entries are
-// not listed.
+// List returns the latest versions a directory of the tree holds, directories first.
+// It leaves out the repository itself and the other dot entries.
 func (s *Store) List(rel string) []folder.Item {
 	dir, err := s.Path(rel)
 	if err != nil {

@@ -19,15 +19,13 @@ func NewUserAuthTokenStorage(db DB) *UserAuthTokenStorage {
 	return &UserAuthTokenStorage{db: db}
 }
 
-// Set stores a token for a user under a name, in place of the one it had.
-// It never expires.
+// Set stores a token that never expires for a user under a name, in place of the one it had.
 func (s *UserAuthTokenStorage) Set(ctx context.Context, userID, name, hash string) error {
 	_, err := s.set(ctx, userID, name, hash, nil)
 	return err
 }
 
-// SetUntil stores a token like Set, one that stops signing in at
-// expires, and returns its row.
+// SetUntil stores a token like Set, one that stops signing in at expires, and returns its row.
 func (s *UserAuthTokenStorage) SetUntil(ctx context.Context, userID, name, hash string, expires time.Time) (*model.UserAuthToken, error) {
 	expires = expires.UTC().Truncate(time.Millisecond)
 	return s.set(ctx, userID, name, hash, &expires)

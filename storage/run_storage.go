@@ -166,8 +166,7 @@ func (s *RunStorage) Last(ctx context.Context, filter RunFilter) (*model.Run, er
 	return &runs[0], nil
 }
 
-// Latest returns the latest finished run of every job of the folders,
-// every folder for none, a run per folder, directory and job.
+// Latest returns the latest finished run per folder, directory and job of the folders, or of every folder for none.
 func (s *RunStorage) Latest(ctx context.Context, folders []string) ([]model.Run, error) {
 	where := "state != ?"
 	args := []any{model.StateRunning}
@@ -216,9 +215,8 @@ func (s *RunStorage) KillActive(ctx context.Context) (int64, error) {
 	return db.RowsAffected(), nil
 }
 
-// FailQueued marks every queued run failed with the message: what the
-// instance does when it starts, for the runs that waited in the queue of
-// the previous process and never started.
+// FailQueued marks every queued run failed with the message, as the instance starts.
+// Those runs waited in the previous process's queue and never started.
 func (s *RunStorage) FailQueued(ctx context.Context, message string) (int64, error) {
 	db := client(s.db)
 	now := stamp()
@@ -234,9 +232,8 @@ func (s *RunStorage) Recorded(ctx context.Context) ([]model.Run, error) {
 	return client(s.db).Select[model.Run](ctx, "SELECT * FROM run WHERE cast_path != '' ORDER BY started_at ASC, id ASC")
 }
 
-// Busy returns the IDs of the runs whose recordings stay whatever the
-// retention rules say: the runs in progress, and every step run of a
-// workflow run in progress, whose prompt reads their output.
+// Busy returns the IDs of the runs whose recordings stay whatever the retention rules say.
+// Those are the runs in progress and the step runs of a workflow run in progress, whose prompt reads their output.
 func (s *RunStorage) Busy(ctx context.Context) (map[string]bool, error) {
 	ids, err := client(s.db).Select[runID](ctx, `SELECT id FROM run WHERE state = ?
 		UNION SELECT run_id AS id FROM workflow_run_step WHERE run_id != '' AND workflow_run_id IN (SELECT id FROM workflow_run WHERE state = ?)`, model.StateRunning, model.StateRunning)

@@ -132,10 +132,7 @@ type ToolingCommand struct {
 	LastRun  *time.Time
 }
 
-// NewTooling turns a report into the panel. Nil for a report with
-// nothing in it, which is a tree that has never run a job through
-// atkins: the page then shows no panel at all.
-//
+// NewTooling turns a report into the panel, nil for a report of a tree that never ran a job through atkins.
 // The samples' charts count their slots in now's time zone.
 func NewTooling(report *tooling.Report, now time.Time) *Tooling {
 	scopes := report.Scopes()

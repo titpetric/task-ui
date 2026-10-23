@@ -27,8 +27,7 @@ type psLine struct {
 	Size   string `json:"Size"`
 }
 
-// ParseDockerPS reads the output of docker ps --size --format
-// '{{json .}}', a container a line; it skips a line that is no JSON.
+// ParseDockerPS reads docker ps --size --format '{{json .}}' output, a container a line, skipping lines of no JSON.
 func ParseDockerPS(out string) []DockerContainer {
 	var containers []DockerContainer
 	for _, line := range strings.Split(out, "\n") {

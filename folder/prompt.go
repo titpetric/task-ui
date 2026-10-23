@@ -9,10 +9,8 @@ import (
 // returns, as the user who asks.
 const PromptID = model.PromptJob
 
-// PromptJob returns the folder's prompt job, task-ui agent prompt in
-// the folder's directory. Job does not resolve it: a prompt starts with
-// its thread, from the prompt routes, which hold it to prompt/edit, and
-// no run, schedule or workflow step takes it by ID.
+// PromptJob returns the folder's prompt job, task-ui agent prompt in the folder's directory.
+// A prompt starts it with its thread from the prompt routes, which hold it to prompt/edit; Job does not resolve it.
 func (f *Folder) PromptJob() *Job {
 	if f == nil {
 		return nil

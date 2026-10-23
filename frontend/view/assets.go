@@ -15,9 +15,8 @@ var assets embed.FS
 // AssetPrefix is the path the server serves the assets under.
 const AssetPrefix = "/static/"
 
-// AssetsFS returns the embedded assets: the stylesheet, the script, the
-// icon and the vendored terminal. Dropping a file in the folder is all it
-// takes to serve it.
+// AssetsFS returns the embedded assets: the stylesheet, the script, the icon and the vendored terminal.
+// The server serves any file dropped in the assets folder.
 func AssetsFS() fs.FS {
 	sub, err := fs.Sub(assets, "assets")
 	if err != nil {

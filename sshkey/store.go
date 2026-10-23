@@ -327,8 +327,7 @@ func Fingerprint(data []byte) (string, error) {
 	return ssh.FingerprintSHA256(signer.PublicKey()), nil
 }
 
-// FileFingerprint returns the fingerprint of the key in a file, from
-// its .pub sibling or the private key itself.
+// FileFingerprint returns the fingerprint of the key in a file, from its .pub sibling or the private key.
 func FileFingerprint(path string) (string, error) {
 	key, err := (&Store{Dir: filepath.Dir(path)}).describe(filepath.Base(path))
 	return key.Fingerprint, err

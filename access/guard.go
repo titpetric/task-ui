@@ -17,7 +17,9 @@ const Cookie = "task_ui_session"
 
 // Guard resolves the user of a request and keeps the ones without one
 // out. Login is the only way in, unless the development auto login names
-// a user: then every request is that user.
+// a user: then every request is that user. A bearer token decides alone:
+// one that signs in nobody leaves the request without a user, whatever
+// cookie it carries.
 type Guard struct {
 	Sessions *Sessions
 	Users    *storage.UserStorage
@@ -44,8 +46,7 @@ func (g *Guard) LoginRequired() bool {
 	return g.AutoLogin == ""
 }
 
-// User resolves the user of a request from a bearer token, the auto login or the session cookie.
-// It returns nil for nobody, and for a token that signs in nobody, whatever else the request carries.
+// User resolves the user of a request from a bearer token, the auto login or the session cookie, nil for nobody.
 func (g *Guard) User(r *http.Request) *model.User {
 	user, _, _ := g.resolve(r)
 	return user
@@ -116,8 +117,7 @@ func (g *Guard) lookup(ctx context.Context, name string) *model.User {
 	return user
 }
 
-// Require sends visitors without a session to the login screen, and
-// answers API and websocket requests with 401.
+// Require sends visitors without a session to the login screen and answers API and websocket requests with 401.
 func (g *Guard) Require(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		user, token, err := g.resolve(r)
@@ -169,8 +169,7 @@ func (g *Guard) SetCookie(w http.ResponseWriter, r *http.Request, user *model.Us
 	return nil
 }
 
-// ClearCookie ends the session of a request: it deletes the session, so
-// the old cookie signs in nobody, and clears the cookie.
+// ClearCookie deletes the session of a request, so its old cookie signs in nobody, and clears the cookie.
 func (g *Guard) ClearCookie(w http.ResponseWriter, r *http.Request) error {
 	var err error
 	if cookie, cerr := r.Cookie(Cookie); cerr == nil {

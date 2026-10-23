@@ -13,6 +13,8 @@ import (
 )
 
 // Prober tries the users on a host and keeps what it found for TTL.
+// A host whose probe still runs when Logins stops waiting comes back
+// empty, and the probe's answer fills in for the next call.
 type Prober struct {
 	// Users are the logins Logins tries, in order; the first that signs in
 	// wins.
@@ -43,10 +45,7 @@ type probe struct {
 	at   time.Time
 }
 
-// Logins returns who signs in to each host: user@host, or "" for a host
-// none of the users reach. It waits at most wait for the hosts it has no
-// fresh answer for; a host whose probe still runs comes back empty this time and
-// fill in for the next call.
+// Logins returns user@host for each host, "" for one no user reaches, waiting at most wait for fresh answers.
 func (p *Prober) Logins(ctx context.Context, hosts []string, wait time.Duration) map[string]string {
 	var wg sync.WaitGroup
 	for _, host := range hosts {

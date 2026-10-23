@@ -8,7 +8,7 @@ import (
 // Matrix is a policy as the permissions pages draw it: a row for each
 // section with a cell for each rule, then a row for each rule a section
 // adds and each application permission. A cell cycles inherit, allow and deny; Save puts the
-// cells that changed to API.
+// cells that changed to API. A fixed matrix shows every cell as allowed.
 type Matrix struct {
 	// ID anchors the matrix on its page.
 	ID string
@@ -29,9 +29,7 @@ type Matrix struct {
 	Effective bool
 }
 
-// NewMatrix lays a policy out on the rules of p, with what the subject
-// may do by the policy and the role's together. A fixed matrix shows
-// every cell as allowed.
+// NewMatrix lays a policy out on the rules of p, effective what the policy and the role allow together.
 func NewMatrix(p *config.Permissions, policy permission.Policy, effective map[string]bool, fixed bool) Matrix {
 	m := Matrix{Rules: p.Rules, Fixed: fixed}
 	cell := func(path, title string) MatrixCell {

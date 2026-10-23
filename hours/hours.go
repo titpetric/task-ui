@@ -46,8 +46,7 @@ func (r Rule) Allows(t time.Time) bool {
 	return r.Matches(t) && minute >= r.From && minute < r.To
 }
 
-// String writes the rule back the way Parse reads it: whole hours as
-// hours, anything finer as hh:mm on both ends.
+// String writes the rule back the way Parse reads it, whole hours as hours and finer spans as hh:mm.
 func (r Rule) String() string {
 	padded := r.From%60 != 0 || r.To%60 != 0
 	return days(r.Days) + " " + clock(r.From, padded) + "-" + clock(r.To, padded)
@@ -83,9 +82,13 @@ func (rules Rules) String() string {
 	return strings.Join(parts, "\n")
 }
 
-// Parse reads rules, one per line or comma separated: days, then a span.
-// Days are names or ranges, "mon-fri", "sat,sun", "daily"; the span is
-// "9-17" or "09:30-17:00". Empty text is no rules.
+// Parse reads rules, one per line or comma separated: days as names or ranges, then a span, such as:
+//
+//	mon-fri 9-17
+//	sat,sun 09:30-17:00
+//	daily 0-24
+//
+// Empty text is no rules.
 func Parse(text string) (Rules, error) {
 	var rules Rules
 	for _, line := range strings.FieldsFunc(text, func(r rune) bool { return r == '\n' || r == ';' }) {

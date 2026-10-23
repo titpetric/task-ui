@@ -10,11 +10,8 @@ import (
 	"github.com/titpetric/task-ui/detector"
 )
 
-// Listing returns what a directory holds: the directories first, then the
-// files, each by name regardless of case, with sizes and times. Listing
-// keeps dot entries; the sealed ones say so. A symlink lists as what it
-// points to, and Listing seals it when it seals that. A directory
-// Listing cannot read lists nothing.
+// Listing returns a directory's entries, directories first, then files, by name regardless of case; nil if unreadable.
+// A symlink lists as what it points to, sealed when its target is; dot entries stay, the sealed ones marked.
 func Listing(dir string) []Item {
 	entries, err := os.ReadDir(dir)
 	if err != nil {

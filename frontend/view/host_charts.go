@@ -13,9 +13,7 @@ import (
 // of the month.
 const ChartTop = 5
 
-// HostCharts draws a host's month: CPU, memory used against its RAM,
-// how full each disk is, the root and the extra ones, and the traffic
-// sent and received, to now.
+// HostCharts draws a host's month to now: CPU, memory against its RAM, each disk's fill and the traffic.
 func HostCharts(system beszel.System, samples []beszel.Sample, now time.Time) []Chart {
 	from := now.Add(-beszel.Month)
 	cpu := ChartSeries{Name: "CPU"}
@@ -57,8 +55,7 @@ func HostCharts(system beszel.System, samples []beszel.Sample, now time.Time) []
 	}
 }
 
-// ContainerCharts draws a month of a host's busiest containers: the
-// ChartTop of most memory on average, and of most CPU.
+// ContainerCharts draws a month of the ChartTop containers of most mean memory, and of most CPU.
 func ContainerCharts(now time.Time, samples []beszel.ContainerSample) []Chart {
 	from := now.Add(-beszel.Month)
 	memory := map[string][]ChartPoint{}
@@ -75,9 +72,7 @@ func ContainerCharts(now time.Time, samples []beszel.ContainerSample) []Chart {
 	}
 }
 
-// ClusterCharts draws the cluster's month, a host on another, in the
-// hosts' colours of the pools: the busy cores and the memory used. It
-// leaves out the hosts the pools leave out.
+// ClusterCharts draws the month's busy cores and memory of the pools' hosts, stacked, in their pools' colours.
 func ClusterCharts(cluster *hostinfo.Cluster, systems []beszel.System, history map[string][]beszel.Sample, now time.Time) []Chart {
 	from := now.Add(-beszel.Month)
 	step := beszelStep(history)

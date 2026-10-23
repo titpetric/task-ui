@@ -194,9 +194,8 @@ func (s *NoteStorage) Edit(ctx context.Context, id, body string) error {
 		body, model.EncodeMentions(model.Mentions(body)), now, now, id)
 }
 
-// Answer puts the agent's answer in its reply, in place of the one it
-// had, with the run it comes from and a state: working while a run
-// answers it again, empty once it has.
+// Answer puts the agent's answer in its reply in place of the old one, with the run it comes from.
+// The state is working while a run answers it again, empty once it has.
 func (s *NoteStorage) Answer(ctx context.Context, id, body, state, runID string) error {
 	body = strings.TrimSpace(body)
 	if body == "" {

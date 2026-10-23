@@ -1,8 +1,3 @@
-// Package detector reads the conventions a folder follows: a pipeline file,
-// a Makefile, package scripts, a scripts directory. Each convention is a
-// Detector that returns a Source, the targets it declares and the command
-// that runs them. Adding a convention is adding a Detector to Detectors;
-// nothing else in task-ui asks which kind a target is.
 package detector
 
 import (
@@ -44,11 +39,7 @@ func Pipeline(kind string) bool {
 	return contains(PipelineKinds, kind)
 }
 
-// HasPipeline reports whether a folder has a pipeline file.
-//
-// It asks the file names and not the detectors: discovery walks a tree
-// of folders with this, and reading each pipeline to answer a question
-// about its file name would run atkins once a folder.
+// HasPipeline reports whether a folder has a pipeline file, an atkins pipeline or a Taskfile, by its name alone.
 func HasPipeline(dir string) bool {
 	if pipelineFile(dir) != "" {
 		return true
@@ -71,11 +62,7 @@ func ByKind(kind string) (Detector, bool) {
 	return nil, false
 }
 
-// Any reports whether a folder follows at least one convention.
-//
-// The atkins pipeline is answered by its file name rather than by
-// reading it, because discovery asks this of every folder under the
-// root and reading one runs atkins.
+// Any reports whether a folder follows at least one convention, the atkins pipeline by its file name alone.
 func Any(dir string) bool {
 	if pipelineFile(dir) != "" {
 		return true
@@ -91,8 +78,7 @@ func Any(dir string) bool {
 	return false
 }
 
-// All reads every convention out of a folder. With kinds given, only those
-// detectors run: a configuration narrows a folder this way.
+// All reads every convention out of a folder, or only the detectors of the kinds given.
 func All(dir string, kinds ...string) []*Source {
 	var sources []*Source
 	for _, detector := range Detectors {

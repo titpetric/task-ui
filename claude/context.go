@@ -4,10 +4,8 @@ import (
 	"github.com/titpetric/task-ui/config"
 )
 
-// Context is what Claude reads after its own system prompt in every run
-// task-ui starts: who it works for, with the role and a line of what the
-// user may do, then `config/context.md`, what task-ui is. No user leaves
-// out the first line.
+// Context is what Claude reads after its system prompt in every run: who it works for, then context.md.
+// Without a user, Claude reads context.md alone.
 func Context(user, role, permissions string) string {
 	if user == "" {
 		return config.Context()

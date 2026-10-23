@@ -71,9 +71,8 @@ type rpcError struct {
 	Message string `json:"message"`
 }
 
-// Run answers the session on In until it closes, and once the session
-// sends notifications/initialized pushes the user's open notes, then each one as it comes,
-// until the context ends.
+// Run answers the session on In until it closes or the context ends.
+// After notifications/initialized it pushes the user's open notes, then each one as it comes.
 func (b *Bridge) Run(ctx context.Context) error {
 	if b.URL == "" || b.Token == "" {
 		return errors.New("usage: task-ui channel --url <instance> --token-file <file>")

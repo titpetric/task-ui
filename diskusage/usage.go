@@ -42,9 +42,7 @@ func (u Usage) HistoryPercent() float64 {
 	return 100 - u.FilesPercent()
 }
 
-// Measure walks a directory and adds up the sizes of its files. In a git
-// checkout, the files git ignores count apart, as Ignored. Entries it
-// cannot read count as nothing.
+// Measure walks a directory and adds up the sizes of its files, counting entries it cannot read as nothing.
 func Measure(dir string) Usage {
 	var u Usage
 	git := filepath.Join(dir, ".git")

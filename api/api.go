@@ -33,7 +33,8 @@ import (
 	"github.com/titpetric/task-ui/storage"
 )
 
-// Handlers serves the API.
+// Handlers serves the API. The route set does not grow: a change adds a route only for a need
+// the others cannot serve, and states the reason.
 type Handlers struct {
 	opts Options
 	// summarizing holds the runs Run and summarize waits on, by ID, the
@@ -46,9 +47,7 @@ func New(opts Options) *Handlers {
 	return &Handlers{opts: opts}
 }
 
-// Routes returns the router, to mount under /api. Every route expects
-// the user on the context. The route set does not grow: a change adds a
-// route only for a need these cannot serve, and states the reason.
+// Routes returns the router to mount under /api; every route expects the user on the context.
 func (h *Handlers) Routes() http.Handler {
 	r := chi.NewRouter()
 

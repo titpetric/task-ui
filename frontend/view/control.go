@@ -12,10 +12,12 @@ import (
 const ControlRepeats = 2
 
 // Control is the dashboard's control centre: a row per folder with
-// jobs, a column per job name that repeats enough.
+// jobs, a column per job name that repeats enough. A name counts across folders and within one, and
+// the column of a job follows its name, so a Makefile's build and a pipeline's build share the
+// column, and a folder's two builds share its cell.
 type Control struct {
 	// Columns are the job names with a column, default first, then the
-	// most common.
+	// most common, then by name.
 	Columns []string
 	Rows    []ControlRow
 }
@@ -31,11 +33,7 @@ type ControlRow struct {
 	Extra []*folder.Job
 }
 
-// NewControl lays the folders out: every job name that occurs min times
-// or more, across folders or within one, gets a column, default first,
-// then the most common and then by name. The column of a job follows its name, so a Makefile's
-// build and a pipeline's build share the column, and a folder's two
-// builds share its cell.
+// NewControl lays the folders out, a column for each job name that occurs min times or more.
 func NewControl(folders []*folder.Folder, min int) Control {
 	counts := map[string]int{}
 	for _, f := range folders {
