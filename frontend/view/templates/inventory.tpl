@@ -90,6 +90,11 @@
 	{{- with .Left }}
 	<p class="faint pool-note">{{ . }} host{{ if ne . 1 }}s are down or send{{ else }} is down or sends{{ end }} no measures, greyed in the legend and left out of the pools.</p>
 	{{- end }}
+	{{- with $.ClusterCharts }}
+	<div class="charts">
+		{{- range . }}{{ template "chart" . }}{{ end }}
+	</div>
+	{{- end }}
 </div>
 {{- end }}
 <h3>Hosts</h3>

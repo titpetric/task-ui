@@ -30,6 +30,10 @@ type HostDetail struct {
 	// the last try, or no docker for the login.
 	Read    time.Time
 	Unsized string
+	// Charts are the host's month, Beszel's records; ContainerCharts its
+	// busiest containers' month.
+	Charts          []Chart
+	ContainerCharts []Chart
 }
 
 // Uptime says how long the host has run: in days past two, else in

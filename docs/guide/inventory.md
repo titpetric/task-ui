@@ -68,6 +68,23 @@ among them, all but the shortest mount point. A host without an ssh
 login shows what Beszel watches: the root, `/`, and the extra
 filesystems of its agent, by the name the agent sets.
 
+**The last 30 days** closes the row with charts of the host's month:
+CPU, memory used against its RAM, how full each disk Beszel watches is,
+the root and the extra ones, the traffic sent and received, and the
+five containers of the most memory on average and the five of the most
+CPU. Under the pools, the cluster's month: the busy cores and the
+memory used, a host on another in its colour of the pools, the top the
+sum.
+
+The charts draw the way rrdtool draws: a line a series over a day axis
+with a dashed gridline each Monday, three or four gridlines in the
+chart's unit, an area under a lone line, and a gap where the records
+stop, such as the days a host is down, the line not drawn across it.
+Under each chart, a row a series of its least, mean and most, and the
+total of a stack. They read Beszel's records of eight hours, which the
+hub keeps 30 days, or of two hours on a hub younger than a record of
+eight; task-ui reads them at most every ten minutes.
+
 task-ui reads a host over ssh at most every five minutes, in the
 background, and when a row opens waits for the host a short while;
 `docker ps --size` is slow on a host of many containers. A host with

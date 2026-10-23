@@ -101,6 +101,8 @@ type Page struct {
 	Logins map[string]string
 	// Cluster sums the hosts into pools, over the hosts table.
 	Cluster *hostinfo.Cluster
+	// ClusterCharts are the cluster's month under the pools.
+	ClusterCharts []Chart
 	// HostDetail is a host of the inventory in full, the expanded row of
 	// its line.
 	HostDetail *HostDetail

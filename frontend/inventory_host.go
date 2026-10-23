@@ -51,6 +51,12 @@ func (h *Handlers) inventoryHost(w http.ResponseWriter, r *http.Request) {
 	if hub, err := h.opts.Hosts.Hub(r.Context()); err == nil {
 		containers, _ := hub.Containers(r.Context())
 		measured, detail.Measured = containers[system.ID], len(containers[system.ID]) > 0
+		if history, _ := hub.History(r.Context()); len(history[system.ID]) > 0 {
+			detail.Charts = view.HostCharts(*system, history[system.ID], p.Now)
+		}
+		if samples, _ := hub.ContainerHistory(r.Context(), system.ID); len(samples) > 0 {
+			detail.ContainerCharts = view.ContainerCharts(p.Now, samples)
+		}
 	}
 	var sized []hostinfo.DockerContainer
 	facts := h.facts(r, p, detail.Login, 15*time.Second)

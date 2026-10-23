@@ -116,3 +116,10 @@
     color: var(--bad);
   }
 }
+
+/* A chart's legend in an open row keeps its own line height over the
+   one of the hosts table's cells. */
+.table.hosts .chart-legend :is(th, td) {
+  font: 400 var(--fs-xs)/1.5 var(--font);
+  vertical-align: middle;
+}
