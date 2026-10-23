@@ -2,9 +2,11 @@ package api
 
 import (
 	"errors"
+	"io"
 	"net/http"
 	"os"
 	"path"
+	"strconv"
 	"strings"
 	"unicode/utf8"
 
@@ -45,9 +47,9 @@ func (h *Handlers) viewArtifactFile(w http.ResponseWriter, r *http.Request) {
 	// commit before; the newest record of a commit stands for it.
 	seen := map[string]bool{}
 	for _, record := range records {
-		if record.CommitID != "" && !seen[record.CommitID] && user.CanSee(record.Folder) {
+		if record.CommitID != "" && !seen[record.CommitID] && user.SeesArtifact(&record) {
 			seen[record.CommitID] = true
-			view.Versions = append(view.Versions, ArtifactVersion{Commit: record.CommitID, CreatedAt: record.CreatedAt, Folder: record.Folder, Job: record.Job, RunID: record.RunID, ByteSize: record.ByteSize})
+			view.Versions = append(view.Versions, ArtifactVersion{Commit: record.CommitID, CreatedAt: record.CreatedAt, Folder: record.Folder, Job: record.Job, RunID: record.RunID, UserName: record.UserName, ByteSize: record.ByteSize})
 		}
 	}
 	if !user.CanAdmin() && len(view.Versions) == 0 {
@@ -81,6 +83,15 @@ func (h *Handlers) viewArtifactFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	view.ByteSize = int64(len(data))
+	if _, raw := r.URL.Query()["raw"]; raw {
+		// The file itself, for a client that reads it, as MCP's
+		// read_artifact does.
+		w.Header().Set("Content-Type", view.ContentType)
+		w.Header().Set("X-Artifact-Version", view.Version)
+		w.Header().Set("Content-Length", strconv.Itoa(len(data)))
+		_, _ = w.Write(data)
+		return
+	}
 	ext := strings.ToLower(path.Ext(rel))
 	switch {
 	case imageTypes[ext]:
@@ -95,6 +106,43 @@ func (h *Handlers) viewArtifactFile(w http.ResponseWriter, r *http.Request) {
 		view.Text = string(data)
 	}
 	writeJSON(w, http.StatusOK, view)
+}
+
+// maxArtifactWrite bounds a file written into the artifact tree.
+const maxArtifactWrite = 16 << 20
+
+// writeArtifactFile puts the request's body into the artifact tree at
+// the path, as the user with no run, over the version there; the history
+// keeps that one. Takes artifact/edit.
+func (h *Handlers) writeArtifactFile(w http.ResponseWriter, r *http.Request) {
+	if !h.require(w, r, "artifact/edit") {
+		return
+	}
+	if h.opts.ArtifactStore == nil {
+		fail(w, http.StatusNotFound, artifactstore.ErrNotFound.Error())
+		return
+	}
+	defer r.Body.Close()
+	data, err := io.ReadAll(io.LimitReader(r.Body, maxArtifactWrite+1))
+	if err != nil {
+		fail(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	if len(data) > maxArtifactWrite {
+		fail(w, http.StatusRequestEntityTooLarge, "a file written into the artifacts is at most 16 MiB")
+		return
+	}
+	artifact, err := h.opts.Runner.WriteArtifact(r.Context(), param(r, "*"), data, access.UserFrom(r.Context()).Name)
+	switch {
+	case errors.Is(err, artifactstore.ErrPath):
+		fail(w, http.StatusBadRequest, err.Error())
+	case errors.Is(err, artifactstore.ErrInTheWay):
+		fail(w, http.StatusConflict, err.Error())
+	case err != nil:
+		failErr(w, err)
+	default:
+		writeJSON(w, http.StatusCreated, artifact)
+	}
 }
 
 // deleteArtifactFile takes a file or a directory out of the artifact
@@ -119,10 +167,11 @@ func (h *Handlers) deleteArtifactFile(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-// hasVersion reports whether the versions hold the commit.
+// hasVersion reports whether the versions hold the commit, named in
+// full or by its first seven characters or more.
 func hasVersion(versions []ArtifactVersion, commit string) bool {
 	for _, version := range versions {
-		if version.Commit == commit {
+		if version.Commit == commit || len(commit) >= 7 && strings.HasPrefix(version.Commit, commit) {
 			return true
 		}
 	}

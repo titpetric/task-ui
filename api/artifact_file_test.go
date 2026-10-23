@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/titpetric/task-ui/internal/assert"
@@ -51,12 +52,13 @@ func TestArtifactFile_View(t *testing.T) {
 	assert.Equal(t, http.StatusNotFound, f.call(t, asAdmin, http.MethodGet, "/artifacts/files/nothing.txt", nil).Status)
 }
 
-// An admin deletes a file from the tree; its versions stay viewable.
+// An admin deletes a file from the tree, as a runner may with
+// artifact/edit; its versions stay viewable.
 func TestArtifactFile_Delete(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
 	f.version(t, "infra", "out.txt", "kept in history")
-	assert.Equal(t, http.StatusForbidden, f.call(t, asOps, http.MethodDelete, "/artifacts/files/out.txt", nil).Status)
+	assert.Equal(t, http.StatusForbidden, f.call(t, asViewer, http.MethodDelete, "/artifacts/files/out.txt", nil).Status)
 	assert.Equal(t, http.StatusNoContent, f.call(t, asAdmin, http.MethodDelete, "/artifacts/files/out.txt", nil).Status)
 	assert.Equal(t, http.StatusNotFound, f.call(t, asAdmin, http.MethodDelete, "/artifacts/files/out.txt", nil).Status)
 	path, _ := f.opts.ArtifactStore.Path("out.txt")
@@ -65,4 +67,49 @@ func TestArtifactFile_Delete(t *testing.T) {
 	gone := f.call(t, asAdmin, http.MethodGet, "/artifacts/files/out.txt", nil)
 	assert.Equal(t, http.StatusOK, gone.Status)
 	assert.Equal(t, "kept in history", gone.Body["text"])
+}
+
+// put writes a body into the artifact tree at a path as a user.
+func (f *fixture) put(t *testing.T, user, rel, body string) response {
+	t.Helper()
+	req, err := http.NewRequest(http.MethodPut, f.server.URL+"/artifacts/files/"+rel, strings.NewReader(body))
+	assert.NoError(t, err)
+	req.Header.Set("X-User", user)
+	return f.do(t, req)
+}
+
+// A runner writes a file into the tree with artifact/edit, the history
+// keeps the version it replaces, and the version names the user; a viewer
+// may not, and the API refuses a path with .. or a dot file.
+func TestArtifactFile_Write(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	f.version(t, "infra", "notes/plan.md", "# Plan\n")
+
+	written := f.put(t, asOps, "notes/plan.md", "# Plan, revised\n")
+	assert.Equal(t, http.StatusCreated, written.Status, string(written.Raw))
+	assert.Equal(t, "ops", written.Body["user_name"])
+	assert.Equal(t, "", written.Body["run_id"])
+
+	view := f.call(t, asLimited, http.MethodGet, "/artifacts/files/notes/plan.md", nil)
+	assert.Contains(t, view.Body["html"].(string), "Plan, revised")
+	versions := view.list("versions")
+	assert.Len(t, versions, 2)
+	assert.Equal(t, "ops", versions[0].(map[string]any)["user_name"])
+	older := versions[1].(map[string]any)["commit"].(string)
+	raw := f.call(t, asLimited, http.MethodGet, "/artifacts/files/notes/plan.md?raw&version="+older, nil)
+	assert.Equal(t, "# Plan\n", string(raw.Raw))
+	assert.Equal(t, older, raw.Headers.Get("X-Artifact-Version"))
+
+	// A file a user wrote belongs to no folder: a runner limited to
+	// infra sees it.
+	assert.Equal(t, http.StatusCreated, f.put(t, asOps, "shared/todo.txt", "one").Status)
+	assert.Equal(t, "one", f.call(t, asLimited, http.MethodGet, "/artifacts/files/shared/todo.txt", nil).Body["text"])
+
+	assert.Equal(t, http.StatusForbidden, f.put(t, asViewer, "x.txt", "no").Status)
+	for _, rel := range []string{"a/../b.txt", ".env", "dir/.secret", ".git/config", "dir/", "/abs.txt"} {
+		assert.Equal(t, http.StatusBadRequest, f.put(t, asOps, rel, "no").Status, rel)
+	}
+	assert.Equal(t, http.StatusConflict, f.put(t, asOps, "notes", "a directory is there").Status)
+	assert.Equal(t, http.StatusConflict, f.put(t, asOps, "shared/todo.txt/inner", "a file is there").Status)
 }

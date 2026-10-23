@@ -29,10 +29,11 @@ type ArtifactFilter struct {
 	Limit int
 }
 
-// Create inserts an artifact.
+// Create inserts an artifact: a file a run left, or one a user wrote
+// into the artifact tree with no run.
 func (s *ArtifactStorage) Create(ctx context.Context, artifact *model.Artifact) error {
-	if artifact.RunID == "" || artifact.Name == "" {
-		return errors.New("an artifact needs a run and a name")
+	if (artifact.RunID == "" && (artifact.UserName == "" || artifact.CommitID == "")) || artifact.Name == "" {
+		return errors.New("an artifact needs a name, and a run or a user who wrote it into the tree")
 	}
 	if artifact.ID == "" {
 		artifact.ID = model.NewID()

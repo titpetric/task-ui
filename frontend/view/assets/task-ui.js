@@ -1959,7 +1959,7 @@
         previewVersion.innerHTML = view.versions.map(function (v, i) {
           var when = v.created_at ? new Date(v.created_at).toLocaleString() : v.commit.slice(0, 7);
           return '<option value="' + escapeHTML(v.commit) + '"' + (v.commit === view.version ? " selected" : "") + ">" +
-            escapeHTML((i === 0 ? "latest · " : "") + when + " · " + v.folder + "/" + v.job) + "</option>";
+            escapeHTML((i === 0 ? "latest · " : "") + when + " · " + (v.run_id ? v.folder + "/" + v.job : "by " + v.user_name)) + "</option>";
         }).join("");
         previewVersion.hidden = view.versions.length < 2;
         showView(view, fileURL(rel, view.version));

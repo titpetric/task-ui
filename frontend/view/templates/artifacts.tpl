@@ -79,15 +79,19 @@
 		{{- range .Artifacts }}{{ $a := . }}
 			<tr>
 				<td class="nowrap" title="{{ stamp .CreatedAt }}">{{ ago .CreatedAt }}</td>
+				{{- if .RunID }}
 				<td>{{ with $.RunFolderHref .Folder "" }}<a href="{{ . }}">{{ $a.Folder }}</a>{{ else }}{{ .Folder }}{{ end }}</td>
 				<td>{{ with $.RunJobHref .Folder "" .Job }}<a href="{{ . }}">{{ $a.Job }}</a>{{ else }}{{ .Job }}{{ end }}</td>
 				<td><a class="faint mono" href="/runs/{{ .RunID }}" title="{{ .RunID }}">{{ slice .RunID 0 8 }}</a></td>
+				{{- else }}
+				<td colspan="3" class="dim">written over MCP or the API by {{ template "user" (list $ .UserName) }}</td>
+				{{- end }}
 				<td class="key">{{ if .CommitID }}<a href="/artifacts/files/{{ .Path }}?version={{ .CommitID }}" data-artifact="{{ .Path }}" data-version="{{ .CommitID }}" title="View this version">{{ .Name }}</a>{{ else }}<a href="/api/artifacts/{{ .ID }}">{{ .Name }}</a>{{ end }}</td>
 				<td class="hide-sm">{{ if .CommitID }}<span class="faint mono" title="{{ .CommitID }}">{{ slice .CommitID 0 7 }}</span>{{ else }}<span class="faint">kept apart</span>{{ end }}</td>
 				<td class="nowrap">{{ size .ByteSize }}</td>
 				<td class="actions">
 					<a class="btn-icon" href="/api/artifacts/{{ .ID }}" title="Download this version" aria-label="Download {{ .Name }}"><svg class="ic"><use href="#i-download"/></svg></a>
-					{{- if $.Can "artifact/delete" }}<button type="button" class="btn-icon danger" data-delete="/api/artifacts/{{ .ID }}" data-confirm="Delete the record of {{ .Name }} from {{ .Folder }} / {{ .Job }}?" data-next="reload" title="Delete" aria-label="Delete {{ .Name }}"><svg class="ic"><use href="#i-trash"/></svg></button>{{ end }}
+					{{- if $.Can "artifact/delete" }}<button type="button" class="btn-icon danger" data-delete="/api/artifacts/{{ .ID }}" data-confirm="Delete the record of {{ .Name }}{{ if .RunID }} from {{ .Folder }} / {{ .Job }}{{ end }}?" data-next="reload" title="Delete" aria-label="Delete {{ .Name }}"><svg class="ic"><use href="#i-trash"/></svg></button>{{ end }}
 				</td>
 			</tr>
 		{{- else }}

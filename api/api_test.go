@@ -107,14 +107,16 @@ func newFixture(t *testing.T) *fixture {
 	runs := storage.NewRunStorage(db)
 	artifacts := storage.NewArtifactStorage(db)
 	recordings := &recording.Store{Root: t.TempDir()}
+	tree := &artifactstore.Store{Dir: filepath.Join(t.TempDir(), "tree")}
 	manager := runner.New(runner.Options{
-		Runs:         runs,
-		Artifacts:    artifacts,
-		Recordings:   recordings,
-		ArtifactRoot: t.TempDir(),
-		Grace:        time.Second,
-		KillTimeout:  5 * time.Second,
-		Keep:         time.Minute,
+		Runs:          runs,
+		Artifacts:     artifacts,
+		ArtifactStore: tree,
+		Recordings:    recordings,
+		ArtifactRoot:  t.TempDir(),
+		Grace:         time.Second,
+		KillTimeout:   5 * time.Second,
+		Keep:          time.Minute,
 	})
 	t.Cleanup(func() { manager.Shutdown(context.Background()) })
 
@@ -151,7 +153,7 @@ func newFixture(t *testing.T) *fixture {
 		KeyGrants:     storage.NewWorkspaceKeyGrantStorage(db),
 		Runs:          runs,
 		Artifacts:     artifacts,
-		ArtifactStore: &artifactstore.Store{Dir: filepath.Join(t.TempDir(), "tree")},
+		ArtifactStore: tree,
 		Schedules:     storage.NewScheduleStorage(db),
 		Secrets:       secrets,
 		FolderRefs:    storage.NewFolderRefStorage(db),

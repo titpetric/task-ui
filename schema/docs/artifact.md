@@ -14,3 +14,4 @@ Artifact.
 | content_type | varchar  |     | Content Type |
 | created_at   | datetime |     | Created At   |
 | commit_id    | varchar  | MUL | Commit ID    |
+| user_name    | varchar  |     | User Name    |

@@ -30,6 +30,14 @@ import (
 // ErrNotFound reports a path or a version the store does not hold.
 var ErrNotFound = errors.New("not in the artifacts")
 
+// ErrPath refuses a path Write would write: an absolute one, one that
+// climbs out of the tree, or one that names a dot file or the repository.
+var ErrPath = errors.New("not a path to write in the artifacts: a relative path, no .. and no dot file")
+
+// ErrInTheWay refuses a write where the tree holds a directory at the
+// path, or a file where the path needs a directory.
+var ErrInTheWay = errors.New("the artifact tree holds a file or a directory in the way")
+
 // commitID matches a full or abbreviated commit name.
 var commitID = regexp.MustCompile(`^[0-9a-f]{7,64}$`)
 
@@ -69,6 +77,50 @@ func (s *Store) Ingest(ctx context.Context, src, message, author string) (string
 		author = "task-ui"
 	}
 	if _, err := s.git(ctx, "commit", "-q", "--author", author+" <"+author+"@task-ui>", "-m", message); err != nil {
+		return "", err
+	}
+	return s.head(ctx), nil
+}
+
+// Write puts one file into the tree at a path, over the version it
+// holds, and commits the change under the author's name, as Ingest does
+// for a run's files. It returns the commit that holds the file.
+func (s *Store) Write(ctx context.Context, rel string, data []byte, author string) (string, error) {
+	clean, err := writePath(rel)
+	if err != nil {
+		return "", err
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if err := s.init(ctx); err != nil {
+		return "", err
+	}
+	target := filepath.Join(s.Dir, filepath.FromSlash(clean))
+	parts := strings.Split(clean, "/")
+	for i := 1; i < len(parts); i++ {
+		if info, err := os.Lstat(filepath.Join(s.Dir, filepath.FromSlash(strings.Join(parts[:i], "/")))); err == nil && !info.IsDir() {
+			return "", ErrInTheWay
+		}
+	}
+	if info, err := os.Lstat(target); err == nil && !info.Mode().IsRegular() {
+		return "", ErrInTheWay
+	}
+	if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil {
+		return "", err
+	}
+	if err := writeFile(target, data); err != nil {
+		return "", err
+	}
+	if _, err := s.git(ctx, "add", "--", clean); err != nil {
+		return "", err
+	}
+	if _, err := s.git(ctx, "diff", "--cached", "--quiet"); err == nil {
+		return s.head(ctx), nil
+	}
+	if author == "" {
+		author = "task-ui"
+	}
+	if _, err := s.git(ctx, "commit", "-q", "--author", author+" <"+author+"@task-ui>", "-m", "Write "+clean); err != nil {
 		return "", err
 	}
 	return s.head(ctx), nil
@@ -258,6 +310,21 @@ func cleanPath(rel string) (string, error) {
 	return strings.TrimPrefix(path.Clean("/"+slashed), "/"), nil
 }
 
+// writePath returns the slash path Write writes, or ErrPath: a
+// relative path of names, none of them . or .., and no dot file or
+// directory, which the tree lists as sealed.
+func writePath(rel string) (string, error) {
+	if rel == "" || strings.HasPrefix(rel, "/") || strings.Contains(rel, "\\") {
+		return "", ErrPath
+	}
+	for _, part := range strings.Split(rel, "/") {
+		if part == "" || strings.HasPrefix(part, ".") {
+			return "", ErrPath
+		}
+	}
+	return rel, nil
+}
+
 // copyTree copies the files under src over dst, making the directories,
 // replacing a file where a directory goes and the other way round.
 func copyTree(src, dst string) error {
@@ -292,6 +359,24 @@ func copyTree(src, dst string) error {
 		}
 		return copyFile(p, target)
 	})
+}
+
+// writeFile writes data to dst, through a temporary file beside it.
+func writeFile(dst string, data []byte) error {
+	tmp, err := os.CreateTemp(filepath.Dir(dst), ".ingest-*")
+	if err != nil {
+		return err
+	}
+	if _, err := tmp.Write(data); err != nil {
+		tmp.Close()
+		os.Remove(tmp.Name())
+		return err
+	}
+	if err := tmp.Close(); err != nil {
+		os.Remove(tmp.Name())
+		return err
+	}
+	return os.Rename(tmp.Name(), dst)
 }
 
 // copyFile writes src to dst, through a temporary file beside it.

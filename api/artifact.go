@@ -27,7 +27,7 @@ func (h *Handlers) listArtifacts(w http.ResponseWriter, r *http.Request) {
 	}
 	visible := []model.Artifact{}
 	for _, artifact := range artifacts {
-		if user.CanSee(artifact.Folder) {
+		if user.SeesArtifact(&artifact) {
 			visible = append(visible, artifact)
 		}
 	}
@@ -40,7 +40,7 @@ func (h *Handlers) artifactOf(r *http.Request) (*model.Artifact, error) {
 	if err != nil {
 		return nil, err
 	}
-	if !access.UserFrom(r.Context()).CanSee(artifact.Folder) {
+	if !access.UserFrom(r.Context()).SeesArtifact(artifact) {
 		return nil, storage.ErrNotFound
 	}
 	return artifact, nil

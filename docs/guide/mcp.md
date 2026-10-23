@@ -126,6 +126,9 @@ author and an admin; anyone who may post replies.
 | `note_comment`       | `id`, `body`, `state`                            | Replies to a note and sets its instruction to working, done or failed; the state is for a user the note names, its author or an admin |
 | `post_note`          | `body`, `parent`                                 | Leaves a note on the board as you, or a reply to `parent`; takes `note/edit` |
 | `ask_prompt`         | `folder`, `dir`, `prompt`, `wait`                | Asks Claude in a folder, or `dir` inside it, as the folder's **Prompt** box does; with `wait`, up to 900 seconds, returns Claude's answer; takes `prompt/edit` |
+| `list_artifacts`     | `path`                                           | A directory of the artifact tree, the top unless given: each file's size, time, and the run or the user that wrote it; takes `artifact/view` |
+| `read_artifact`      | `path`, `version`                                | A file of the tree, the latest or `version`: text up to 256 KiB, saying where it cut, and for anything else its type, size and download link; takes `artifact/view` |
+| `write_artifact`     | `path`, `content`, `encoding`                    | Writes a file into the tree as you, at most 16 MiB, `encoding` `base64` for a binary one, over the version there, which the history keeps; a relative path with no `..` and no dot file; takes `artifact/edit` |
 
 Each tool takes the permissions of the token's user, the ones a page
 takes in the browser: the role's policy and the user's own, which
@@ -171,11 +174,12 @@ it per area beside what you may do there. `GET /api/me` answers the same as JSON
 
 ## A frozen surface
 
-These twelve tools, like the JSON API behind them, are the whole surface,
+These fifteen tools, like the JSON API behind them, are the whole surface,
 and the surface stays frozen. An agent can see what it may do and what there is, run it, read
-how it went, work through the notes that name it, leave notes and ask
-Claude in a folder; ending runs, schedules, artifacts, secrets, keys, users and
-changing workflows stay with people, in the browser. A new tool or
+how it went, work through the notes that name it, leave notes, ask
+Claude in a folder, and read and write the artifact tree; ending runs,
+schedules, deleting artifacts, secrets, keys, users and changing
+workflows stay with people, in the browser. A new tool or
 endpoint needs a reason that the current ones cannot serve,
 and the reason goes with the change.
 

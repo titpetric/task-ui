@@ -38,7 +38,8 @@ own directory goes, and nothing carries over into the next run's.
   directory, or everything, as a `.tgz`, and its link copies the same way:
   `/artifacts/<directory>.tgz`, and `/artifacts.tgz` for the whole tree.
 - **History**: every version a run left, newest first, with the folder,
-  job and run it came from, filtered by folder and job. A name opens
+  job and run it came from, or the user who wrote it over MCP or the
+  API, filtered by folder and job. A name opens
   that version in the preview window. A run's page lists its own.
 
 You see the files of the folders you may see, in the table and in a
@@ -48,6 +49,19 @@ history keeps its versions, and the preview window still shows them.
 With Allow Deletes on Artifacts, `artifact/delete`, you delete a record,
 and **Delete all**, at the top right, deletes every file, its history
 and every record.
+
+## Writing one
+
+An agent outside task-ui writes into the tree too, over MCP with
+`write_artifact`, or with `PUT /api/artifacts/files/<path>` and the file
+as the body: a relative path, with no `..` and no dot file, within the
+size limit the [API](../api.md) names. The file replaces the version at that path, which the history
+keeps, as a run's file would. Its record has no run, folder or job: the
+History names the user who wrote it, and whoever sees artifacts sees
+it. `list_artifacts` lists a directory and `read_artifact` reads a file,
+the latest version or an older one. Writing takes Allow Edits on
+Artifacts, `artifact/edit`, which the runner role holds; with it a
+runner also deletes a file from the tree (see [MCP](mcp.md#tools)).
 
 ## History
 

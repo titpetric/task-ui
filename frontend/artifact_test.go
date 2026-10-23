@@ -41,6 +41,13 @@ func TestArtifacts(t *testing.T) {
 
 	empty := f.page(t, asAdmin, "/artifacts?folder=nowhere")
 	assert.Contains(t, empty, "No artifacts yet")
+
+	// A file a user wrote over MCP has no run, and anyone who sees
+	// artifacts sees it.
+	assert.NoError(t, f.opts.Artifacts.Create(ctx, &model.Artifact{UserName: "ops", Name: "todo.txt", Path: "todo.txt", CommitID: "abc1234", ByteSize: 4}))
+	limited = f.page(t, asLimited, "/artifacts")
+	assert.Contains(t, limited, "todo.txt")
+	assert.Contains(t, limited, "written over MCP or the API by")
 }
 
 // store puts files into the fixture's artifact tree as a run of a folder
@@ -80,10 +87,13 @@ func TestArtifacts_Tree(t *testing.T) {
 	assert.Contains(t, body, `data-delete="/api/artifacts/files/job1.txt"`)
 	assert.Contains(t, body, `data-delete="/api/artifacts/files/reports"`)
 
+	// A runner takes a file out of the tree with artifact/edit, and
+	// deletes no record.
 	limited := f.page(t, asLimited, "/artifacts")
 	assert.Contains(t, limited, "job1.txt")
 	assert.NotContains(t, limited, `/artifacts/files/job2.txt`)
-	assert.NotContains(t, limited, `data-delete="/api/artifacts`)
+	assert.Contains(t, limited, `data-delete="/api/artifacts/files/job1.txt"`)
+	assert.NotContains(t, limited, `data-delete="/api/artifacts"`)
 
 	reports := f.page(t, asLimited, "/artifacts?path=reports")
 	assert.Contains(t, reports, `data-artifact="reports/chart.svg"`)

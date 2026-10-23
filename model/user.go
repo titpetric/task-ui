@@ -48,6 +48,19 @@ func (u *User) CanSee(folder string) bool {
 	return len(list) == 0 || slices.Contains(list, folder)
 }
 
+// SeesArtifact reports whether the user may see an artifact: one a run
+// of a folder the user sees left, or one a user wrote into the tree with
+// no run, which belongs to no folder.
+func (u *User) SeesArtifact(artifact *Artifact) bool {
+	if u == nil || artifact == nil {
+		return false
+	}
+	if artifact.RunID == "" && artifact.Folder == "" {
+		return true
+	}
+	return u.CanSee(artifact.Folder)
+}
+
 // SeesRun reports whether the user may see a run: one of a folder the
 // user sees, a prompt's run with prompts, prompt/view, the Notes
 // agent's with notes, note/view, and the user's own runs of either
