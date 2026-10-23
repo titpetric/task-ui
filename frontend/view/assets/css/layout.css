@@ -274,7 +274,8 @@ section.block > .block-head > h3 {
   }
 }
 
-.summary {
+/* A job's description from its pipeline, above the job page. */
+pre.summary {
   margin: 0 0 1rem;
   padding: 0.6rem 0.8rem;
   border-inline-start: 2px solid var(--line-2);
