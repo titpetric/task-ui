@@ -110,6 +110,52 @@ A reply that names the user again opens the note again, and it shows in
 the next `list_notes`. The state is for the users the note names, its
 author and an admin; anyone who may post replies.
 
+## Live notes for an agent elsewhere
+
+`task-ui channel` pushes the notes to an open Claude Code session as they
+come, in place of polling `list_notes`: a Claude Code
+[channel](https://code.claude.com/docs/en/channels-reference.md), a
+research preview, and a stdio MCP server, in the task-ui binary, that the
+session starts. It holds the instance's notes stream open with the
+token, connects again with a growing wait when the stream drops, and
+reads the open notes each time it connects. Every open instruction that
+names the token's user, from someone else, reaches the session once
+while it stays open, as:
+
+```text
+<channel source="task-notes" note_id="01J..." author="black" url="https://task.example.com/notes#note-01J...">
+Note 01J... from black: @consuela tidy the images
+
+Reply with note_comment (state working, then done or failed).
+</channel>
+```
+
+A note to any other user, and the user's own, never reaches the session:
+anyone who may post can name the user, and only the user's notes go
+through. The channel has no tools; the session answers with the `task`
+server's `note_comment`, so add that server too (see [Install](#install)).
+
+Add the channel on the machine the agent runs on, with the token in a
+file:
+
+```bash
+claude mcp add --scope user task-notes -- \
+  task-ui channel --url https://task.example.com --token-file /root/task.token
+```
+
+and start the session with the channel loaded. Custom channels need the
+development flag in the preview, in an interactive session:
+
+```bash
+claude --dangerously-load-development-channels server:task-notes
+```
+
+The notes reach a session only while it runs; a note left between
+sessions arrives with the open notes when the next session starts the
+channel. Without channels, such as in a session started
+with `-p`, `/loop` with `list_notes` polls in its place:
+`/loop 5m list_notes, and work through the notes that name you`.
+
 ## Tools
 
 | Tool                 | Arguments                                        | What it does |

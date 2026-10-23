@@ -43,6 +43,13 @@ func TestRun(t *testing.T) {
 
 	assert.Error(t, run(context.Background(), []string{"--nope"}, strings.NewReader(""), &out))
 
+	// The channel needs a token file and an instance; it ends with stdin.
+	assert.Error(t, run(context.Background(), []string{"channel"}, strings.NewReader(""), &out))
+	tokenFile := filepath.Join(root, "token")
+	assert.NoError(t, os.WriteFile(tokenFile, []byte("tui_x\n"), 0o600))
+	assert.Error(t, run(context.Background(), []string{"channel", "--token-file", tokenFile, "--url", ""}, strings.NewReader(""), &out))
+	assert.NoError(t, run(context.Background(), []string{"channel", "--token-file", tokenFile, "--url", "http://127.0.0.1:1"}, strings.NewReader(""), &out))
+
 	// agent reaches the host commands, before the configuration.
 	assert.ErrorContains(t, run(context.Background(), []string{"agent"}, strings.NewReader(""), &out), "usage: task-ui agent")
 	t.Setenv("CLAUDE_CODE_OAUTH_TOKEN", "")

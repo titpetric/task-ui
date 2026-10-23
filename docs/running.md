@@ -92,6 +92,7 @@ task-ui backup alice                         # ten backup passwords, each signs 
 task-ui token alice cli                      # a token for a client such as an MCP agent
 task-ui token alice                          # the names of alice's tokens, and when each was last used
 task-ui token alice rm cli                   # removes a token
+task-ui channel --url https://task.example.com --token-file task.token  # pushes alice's notes into a Claude Code session
 task-ui -v                                   # the version and the commit
 ```
 

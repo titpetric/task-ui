@@ -165,6 +165,8 @@ the same permissions. Its tools: `whoami`, `list_jobs`, `run_job`,
 `list_runs`, `get_run`, `list_workflows`, `run_workflow`,
 `list_workflow_runs`, `list_notes`, `note_comment`, `post_note`,
 `ask_prompt`, `list_artifacts`, `read_artifact` and `write_artifact`.
+`task-ui channel`, a Claude Code channel, pushes the open notes naming
+the token's user into an open session as they come.
 A user with `user/edit` enables a token on a user's profile; it lasts
 30 days, and its user rotates or disables it. A refused call names the
 permission it needs.

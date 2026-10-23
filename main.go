@@ -8,8 +8,10 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"flag"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -23,6 +25,7 @@ import (
 	"github.com/titpetric/task-ui/access"
 	"github.com/titpetric/task-ui/agent"
 	"github.com/titpetric/task-ui/app"
+	"github.com/titpetric/task-ui/channel"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/storage"
 )
@@ -211,11 +214,36 @@ func token(ctx context.Context, dsn string, args []string, stdout io.Writer) err
 	return nil
 }
 
-// run is main without the exit: the hash, agent, passwd, email, backup
-// and token commands, the version, or the server until a signal.
+// channelBridge runs task-ui channel: a stdio MCP server that pushes the
+// notes naming the token's user into the Claude Code session that
+// started it. Stdout is the session's; what the bridge says goes to
+// stderr.
+func channelBridge(ctx context.Context, args []string, stdin io.Reader, stdout io.Writer) error {
+	flags := flag.NewFlagSet("channel", flag.ContinueOnError)
+	base := flags.String("url", os.Getenv("TASK_UI_URL"), "the instance's base link, such as https://task.example.com")
+	tokenFile := flags.String("token-file", "", "a file that holds the token of the user whose notes to push")
+	if err := flags.Parse(args); err != nil {
+		return err
+	}
+	if *tokenFile == "" {
+		return errors.New("usage: task-ui channel --url <instance> --token-file <file>")
+	}
+	token, err := os.ReadFile(*tokenFile)
+	if err != nil {
+		return err
+	}
+	b := &channel.Bridge{URL: *base, Token: strings.TrimSpace(string(token)), In: stdin, Out: stdout, Log: log.New(os.Stderr, "task-ui channel: ", log.LstdFlags)}
+	return b.Run(ctx)
+}
+
+// run is main without the exit: the hash, agent, channel, passwd,
+// email, backup and token commands, the version, or the server until a signal.
 func run(ctx context.Context, args []string, stdin io.Reader, stdout io.Writer) error {
 	if len(args) > 0 && args[0] == "hash" {
 		return hash(args[1:], stdin, stdout)
+	}
+	if len(args) > 0 && args[0] == "channel" {
+		return channelBridge(ctx, args[1:], stdin, stdout)
 	}
 	if len(args) > 0 && args[0] == "agent" {
 		a := &agent.Agent{Env: os.Environ(), Stdin: stdin, Stdout: stdout, Stderr: os.Stderr}
