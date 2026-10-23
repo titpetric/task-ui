@@ -146,6 +146,9 @@ func TestPage_AdminOnly(t *testing.T) {
 		res := f.get(t, asOps, path)
 		assert.Equal(t, http.StatusForbidden, res.Status, path)
 		assert.Contains(t, res.Body, "You need permission to open this page.")
+		assert.Contains(t, res.Body, "<h2>Not allowed</h2>")
+		assert.Contains(t, res.Body, "An admin grants permissions under Settings.")
+		assert.NotContains(t, res.Body, "renamed it")
 	}
 }
 
