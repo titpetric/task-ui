@@ -17,8 +17,51 @@ import (
 	"time"
 )
 
-// Report is what atkins says about a directory.
+// Report is what atkins says about a directory: what this checkout has
+// been running, and what every checkout on the machine has been running
+// between them.
+//
+// A run records to both databases, so the two answer different
+// questions of the same rows. The project's says what this checkout
+// costs; the workspace's says where a week went across every project
+// atkins ran in.
 type Report struct {
+	// Project is the checkout's own history, absent for a directory
+	// that belongs to no project.
+	Project *Scope `json:"project,omitempty"`
+
+	// Workspace is every project's history together.
+	Workspace *Scope `json:"workspace,omitempty"`
+}
+
+// Scopes returns the scopes the report holds, the project first.
+func (r *Report) Scopes() []*Scope {
+	if r == nil {
+		return nil
+	}
+	var scopes []*Scope
+	for _, scope := range []*Scope{r.Project, r.Workspace} {
+		if !scope.Empty() {
+			scopes = append(scopes, scope)
+		}
+	}
+	return scopes
+}
+
+// Empty reports a report with nothing recorded in either database.
+func (r *Report) Empty() bool {
+	return len(r.Scopes()) == 0
+}
+
+// Scope is one database's history.
+type Scope struct {
+	// Name is what the scope is called, project or workspace.
+	Name string `json:"name"`
+
+	// Repository is the checkout the rows came from, empty for the
+	// workspace, which holds many.
+	Repository string `json:"repository,omitempty"`
+
 	// Database is the file the rows came from, and Days the window they
 	// cover.
 	Database string `json:"database"`
@@ -71,8 +114,8 @@ type Usage struct {
 	TotalMs int64  `json:"total_ms"`
 }
 
-// Empty reports a report with nothing recorded in it.
-func (r *Report) Empty() bool {
+// Empty reports a scope with nothing recorded in it.
+func (r *Scope) Empty() bool {
 	return r == nil || len(r.Usage) == 0
 }
 
@@ -82,7 +125,7 @@ func (r *Report) Empty() bool {
 // The window is a count of days and not a cutoff time, because the rows
 // are dates and the question is "the last seven days", which a reader
 // asks of a calendar and not of a clock.
-func (r *Report) Since(days int) []Usage {
+func (r *Scope) Since(days int) []Usage {
 	if r == nil || days <= 0 {
 		return nil
 	}
@@ -107,7 +150,7 @@ func (r *Report) Since(days int) []Usage {
 //
 // The report's own Tools cover its whole window, so a shorter one is
 // rolled up from the usage rows rather than taken from them.
-func (r *Report) ToolsSince(days int) []Tool {
+func (r *Scope) ToolsSince(days int) []Tool {
 	totals := map[string]*Tool{}
 	for _, row := range r.Since(days) {
 		tool, ok := totals[row.Tool]
@@ -139,7 +182,7 @@ func (r *Report) ToolsSince(days int) []Tool {
 // The empty days are filled because a run of days reads as time: a chart
 // that leaves them out draws a busy fortnight and a quiet one the same
 // width.
-func (r *Report) Daily(days int) []Day {
+func (r *Scope) Daily(days int) []Day {
 	if r == nil || days <= 0 {
 		return nil
 	}
@@ -181,7 +224,7 @@ type Day struct {
 }
 
 // lastDate is the day the report ends on, which is the day it was made.
-func (r *Report) lastDate() time.Time {
+func (r *Scope) lastDate() time.Time {
 	at, err := time.Parse(time.DateOnly, strings.TrimSpace(r.To))
 	if err != nil {
 		return time.Time{}
