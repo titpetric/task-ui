@@ -21,6 +21,25 @@ func (s WorkflowStep) IsWorkflow() bool { return s.WorkflowRef != "" }
 // IsWorkflow says the step ran a workflow in place of a job.
 func (s WorkflowRunStep) IsWorkflow() bool { return s.WorkflowRef != "" }
 
+// IsPrompt says the step asks Claude in place of running a job.
+func (s WorkflowStep) IsPrompt() bool { return s.Prompt != "" }
+
+// IsPrompt says the step asked Claude in place of running a job.
+func (s WorkflowRunStep) IsPrompt() bool { return s.Prompt != "" }
+
+// Place is where a prompt step asks Claude: its folder and the
+// directory inside it, or _ for the root.
+func (s WorkflowStep) Place() string {
+	folder := s.Folder
+	if folder == "" {
+		folder = Default
+	}
+	if s.Dir == "" {
+		return folder
+	}
+	return folder + "/" + s.Dir
+}
+
 // Runs reports whether the workflow has something to run with these
 // steps: an enabled step, or a prompt.
 func (w *Workflow) Runs(steps []WorkflowStep) bool {

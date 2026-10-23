@@ -16,6 +16,9 @@ type Link struct {
 	Workflow      bool
 	WorkflowID    string
 	WorkflowRunID string
+	// Prompt says the step asks Claude: the prompt, which the page shows
+	// on hover.
+	Prompt string
 	// Disabled is a step the workflow's runs skip.
 	Disabled bool
 	// Sub is the chain of the run the step made of a workflow, when the

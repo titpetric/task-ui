@@ -1,8 +1,9 @@
 package view
 
 // Chain turns steps into links. It names a folder once, for the steps
-// that follow in it, and a workflow step by its name; a job links to its
-// page, as FolderHref places its folder among the workspaces. A run's
+// that follow in it, a workflow step by its name, and a prompt step as
+// a prompt in its place; a job links to its page, as FolderHref places
+// its folder among the workspaces, a prompt to its folder's. A run's
 // step links to the run it made.
 func Chain(steps []Step, workspaces map[string]int) []Link {
 	links := make([]Link, 0, len(steps))
@@ -10,6 +11,13 @@ func Chain(steps []Step, workspaces map[string]int) []Link {
 	for _, s := range steps {
 		l := Link{State: s.State, RunID: s.RunID, Disabled: s.Disabled}
 		switch {
+		case s.Prompt != "":
+			place := s.Folder
+			if s.Dir != "" {
+				place += "/" + s.Dir
+			}
+			l.Prompt, l.Text, l.Href = s.Prompt, "prompt in "+place, FolderHref(s.Folder, workspaces)
+			last = ""
 		case s.WorkflowID != "":
 			l.Workflow, l.Text, l.Href = true, s.WorkflowName, "/workflows/"+s.WorkflowID
 			l.WorkflowID, l.WorkflowRunID = s.WorkflowID, s.WorkflowRunID

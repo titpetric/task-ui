@@ -138,7 +138,7 @@ func TestAgent_Prompt_workflow(t *testing.T) {
 	a := &agent.Agent{Stdout: &out, Stderr: io.Discard, Env: append(env, "TASK_UI_PROMPT_WORKFLOW="+run)}
 	assert.NoError(t, a.Run(context.Background(), []string{"prompt"}))
 	text := out.String()
-	assert.Contains(t, text, "arg=A prompt of a task-ui workflow, asked once a run of the workflow ended its steps, about that run. The run:\n\nWorkflow run 01 of the workflow ship, by ops, with 1 step.\n\nChange nothing unless the prompt asks for a change")
+	assert.Contains(t, text, "arg=A prompt of a task-ui workflow, asked in a run of the workflow once the steps before it ended, about that run. The run:\n\nWorkflow run 01 of the workflow ship, by ops, with 1 step.\n\nChange nothing unless the prompt asks for a change")
 	assert.Contains(t, text, "the first message is the workflow's prompt:\n\nsummarize, change nothing\n\nYour final message is the answer")
 
 	a.Env = append(env, "TASK_UI_PROMPT_WORKFLOW="+filepath.Join(here, "gone.md"))

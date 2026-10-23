@@ -14,6 +14,11 @@ func Pipeline(steps, last []Step, workspaces map[string]int) []Link {
 			}
 		}
 		if same {
+			// A run's step keeps no directory of its prompt; the
+			// workflow's step has it.
+			for i := range last {
+				last[i].Dir = steps[i].Dir
+			}
 			return Chain(last, workspaces)
 		}
 	}

@@ -85,11 +85,12 @@ func aboutRun(run, thread string) string {
 }
 
 // aboutWorkflow is the prompt a workflow asks once a run's steps
-// ended: the run, as TASK_UI_PROMPT_WORKFLOW's file describes it with
-// the end of each step's output, then the thread, the workflow's prompt
-// first. Claude changes nothing the prompt does not name.
+// ended, or a prompt step asks after the steps before it: the run, as
+// TASK_UI_PROMPT_WORKFLOW's file describes it with the end of each
+// step's output, then the thread, the prompt first. Claude changes
+// nothing the prompt does not name.
 func aboutWorkflow(run, thread string) string {
-	return "A prompt of a task-ui workflow, asked once a run of the workflow ended its steps, about that run. The run:\n\n" +
+	return "A prompt of a task-ui workflow, asked in a run of the workflow once the steps before it ended, about that run. The run:\n\n" +
 		strings.TrimSpace(run) + "\n\n" +
 		"Change nothing unless the prompt asks for a change; if it asks for a fix, make it in the checkout you are in, commit it to main and push it, and say what changed and where. " +
 		"The thread, oldest first; with several messages each is under its author, your earlier answers among them, and the first message is the workflow's prompt:\n\n" +

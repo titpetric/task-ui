@@ -20,6 +20,18 @@ func TestWorkflowRunStep_IsWorkflow(t *testing.T) {
 	assert.False(t, model.WorkflowRunStep{Folder: "infra", Job: "plan"}.IsWorkflow())
 }
 
+// A step asks Claude when it has a prompt, in its folder and directory,
+// the root without a folder.
+func TestWorkflowStep_IsPrompt(t *testing.T) {
+	t.Parallel()
+	assert.True(t, model.WorkflowStep{Folder: "_", Job: model.PromptJob, Prompt: "say ok"}.IsPrompt())
+	assert.False(t, model.WorkflowStep{Folder: "infra", Job: "plan"}.IsPrompt())
+	assert.True(t, model.WorkflowRunStep{Prompt: "say ok"}.IsPrompt())
+	assert.False(t, model.WorkflowRunStep{Folder: "infra", Job: "plan"}.IsPrompt())
+	assert.Equal(t, "_", model.WorkflowStep{Prompt: "say ok"}.Place())
+	assert.Equal(t, "malta/dockerfiles", model.WorkflowStep{Folder: "malta", Dir: "dockerfiles", Prompt: "say ok"}.Place())
+}
+
 // A workflow runs with an enabled step or a prompt; its prompt runs in
 // the root without a folder.
 func TestWorkflow_Runs(t *testing.T) {
