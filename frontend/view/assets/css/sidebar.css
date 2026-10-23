@@ -152,6 +152,23 @@
   }
 }
 
+/* The last slot when some recents don't fit: a link to Runs, and how
+   many it leaves out, muted. */
+.recents a.recent.more {
+  color: var(--text-faint);
+
+  & b {
+    color: var(--text-dim);
+  }
+
+  /* The list icon stands where an entry's dot does. */
+  & > .ic {
+    width: 0.8rem;
+    height: 0.8rem;
+    margin-inline: -0.15rem;
+  }
+}
+
 .recents .what {
   flex: 1;
   min-width: 0;

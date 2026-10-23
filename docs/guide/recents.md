@@ -7,8 +7,10 @@ sidebar lists the same runs, and the rail's heading links there.
 
 The rail lists the latest 50, under headings of when they started: **In
 the last hour**, **1 hour ago**, **2 hours ago**, and past a day, **1 day
-ago** and on. It stays in place, as tall as the screen, while the page
-scrolls, and scrolls on its own past what the screen holds.
+ago** and on. It ends where the page or the screen ends, whichever
+comes first. When some entries don't fit, its last slot is **All runs**
+with how many more there are, a link to **Runs**; when every entry fits,
+the list ends with the last one.
 
 Each entry shows how the run went (its dot), the job and folder, and who
 started it, as their initials. A workflow run shows the workflow's name
