@@ -26,7 +26,7 @@ type Detector interface {
 // folder: the first that reads the folder names its source. Pipelines first,
 // then build files, then the scripts folder.
 var Detectors = []Detector{
-	pipelineDetector{kind: "atkins", names: atkinsNames},
+	atkinsDetector{},
 	pipelineDetector{kind: "task", names: taskfileNames},
 	makeDetector{},
 	npmDetector{},
@@ -45,9 +45,16 @@ func Pipeline(kind string) bool {
 }
 
 // HasPipeline reports whether a folder has a pipeline file.
+//
+// It asks the file names and not the detectors: discovery walks a tree
+// of folders with this, and reading each pipeline to answer a question
+// about its file name would run atkins once a folder.
 func HasPipeline(dir string) bool {
-	for _, detector := range Detectors {
-		if Pipeline(detector.Kind()) && detector.Detect(dir) != nil {
+	if pipelineFile(dir) != "" {
+		return true
+	}
+	for _, name := range taskfileNames {
+		if isFile(dir, name) {
 			return true
 		}
 	}
@@ -65,8 +72,18 @@ func ByKind(kind string) (Detector, bool) {
 }
 
 // Any reports whether a folder follows at least one convention.
+//
+// The atkins pipeline is answered by its file name rather than by
+// reading it, because discovery asks this of every folder under the
+// root and reading one runs atkins.
 func Any(dir string) bool {
+	if pipelineFile(dir) != "" {
+		return true
+	}
 	for _, detector := range Detectors {
+		if detector.Kind() == AtkinsKind {
+			continue
+		}
 		if detector.Detect(dir) != nil {
 			return true
 		}
@@ -99,13 +116,16 @@ func FromFile(path string) *Source {
 	if info, err := os.Stat(path); err != nil || info.IsDir() {
 		return nil
 	}
+	if contains(atkinsNames, name) {
+		return atkinsDetector{}.detectFile(dir, name)
+	}
 	for _, detector := range Detectors {
 		if p, ok := detector.(pipelineDetector); ok && contains(p.names, name) {
 			return p.detectFile(dir, name)
 		}
 	}
 	if ext := strings.ToLower(filepath.Ext(name)); ext == ".yml" || ext == ".yaml" {
-		return pipelineDetector{kind: "atkins", names: []string{name}}.detectFile(dir, name)
+		return atkinsDetector{}.detectFile(dir, name)
 	}
 	return nil
 }

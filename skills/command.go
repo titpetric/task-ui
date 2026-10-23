@@ -12,7 +12,23 @@ type Command struct {
 	Args bool `json:"args"`
 	// Exec is the argv of the first exec: step of a job that takes
 	// args: the command the arguments follow.
-	Exec   []string `json:"exec,omitempty"`
-	Active bool     `json:"active"`
-	When   *When    `json:"when,omitempty"`
+	Exec []string `json:"exec,omitempty"`
+
+	// Aliases are the other names the job answers to, and DependsOn the
+	// jobs that run before it.
+	Aliases   []string `json:"aliases,omitempty"`
+	DependsOn []string `json:"depends_on,omitempty"`
+
+	// Steps are the step labels, the lines a run prints under the job.
+	Steps []string `json:"steps,omitempty"`
+
+	// Env are the dotenv files the job reads on top of its section's.
+	Env []string `json:"env,omitempty"`
+
+	// Hidden reports a job the file asks not to be offered, with
+	// show: false. It is listed so a reader knows it exists.
+	Hidden bool `json:"hidden,omitempty"`
+
+	Active bool  `json:"active"`
+	When   *When `json:"when,omitempty"`
 }
