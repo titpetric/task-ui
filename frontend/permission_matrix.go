@@ -28,7 +28,7 @@ func (h *Handlers) permissionMatrix(w http.ResponseWriter, r *http.Request) {
 		effective := permission.Set{User: &model.User{Role: role}, Role: policy}.Effective()
 		m := view.NewMatrix(config.Default(), policy, effective, fixed)
 		m.ID, m.Title, m.API = "role-"+role, role, "/api/permissions/roles/"+role
-		m.Editable = !fixed && p.Can("user/edit") && (role != p.User.Role || editsByRole(p))
+		m.Editable = !fixed && p.Can("user/edit") && (role != p.User.EffectiveRole() || editsByRole(p))
 		p.Matrices = append(p.Matrices, m)
 	}
 	h.render(w, http.StatusOK, "permissions", p)

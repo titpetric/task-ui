@@ -837,6 +837,18 @@
       type: timestamp
       comment: Updated At
       datatype: datetime
+    - name: admin
+      type: boolean
+      comment: Admin
+      datatype: boolean
+    - name: mcp
+      type: boolean
+      comment: Mcp
+      datatype: boolean
+    - name: agent_reply
+      type: boolean
+      comment: Agent Reply
+      datatype: boolean
   indexes:
     - name: sqlite_autoindex_user_1
       columns:

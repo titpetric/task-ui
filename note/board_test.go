@@ -58,21 +58,25 @@ func newFixture(t *testing.T, agentJob string) *fixture {
 	users := storage.NewUserStorage(db)
 	ops := &model.User{Name: "ops", Role: model.RoleRunner}
 	assert.NoError(t, users.Create(ctx, ops))
-	assert.NoError(t, users.Create(ctx, &model.User{Name: "claude", Role: model.RoleRunner}))
+	// claude runs instance Claude when mentioned unless the fixture has
+	// no agent, "", and then waits for its agent over MCP.
+	assert.NoError(t, users.Create(ctx, &model.User{Name: "claude", Role: model.RoleRunner, Mcp: true, AgentReply: agentJob != ""}))
 
 	dir := filepath.Join(t.TempDir(), "agent")
 	assert.NoError(t, os.MkdirAll(dir, 0o755))
-	f := &folder.Folder{ID: "agent", Title: "agent", Dir: dir}
-	job := &folder.Job{Folder: "agent", ID: "run", Kind: "script", Command: []string{"sh", "-c", `echo "note $TASK_UI_NOTE_ID from $TASK_UI_NOTE_AUTHOR: $TASK_UI_NOTE"; case "$TASK_UI_NOTE" in *slow*) sleep 1;; esac; case "$TASK_UI_NOTE" in *answer*) echo "Done: $TASK_UI_NOTE" > "$TASK_UI_NOTE_REPLY";; esac; test "$TASK_UI_NOTE" != "@claude fail" && test "$TASK_UI_NOTE" != "@claude answer, fail"`}}
-	job.Name = "run"
-	f.Jobs = []*folder.Job{job}
+	script := []string{"sh", "-c", `echo "note $TASK_UI_NOTE_ID from $TASK_UI_NOTE_AUTHOR: $TASK_UI_NOTE"; case "$TASK_UI_NOTE" in *slow*) sleep 1;; esac; case "$TASK_UI_NOTE" in *answer*) echo "Done: $TASK_UI_NOTE" > "$TASK_UI_NOTE_REPLY";; esac; test "$TASK_UI_NOTE" != "@claude fail" && test "$TASK_UI_NOTE" != "@claude answer, fail"`}
 
 	recordings := &recording.Store{Root: t.TempDir()}
 	manager := runner.New(runner.Options{Runs: storage.NewRunStorage(db), Recordings: recordings, Grace: time.Second, KillTimeout: 5 * time.Second, Keep: time.Minute})
 	t.Cleanup(func() { manager.Shutdown(context.Background()) })
 	board := &note.Board{
-		Notes: storage.NewNoteStorage(db), Users: users, Runs: storage.NewRunStorage(db), WorkflowRuns: storage.NewWorkflowRunStorage(db), Catalogue: catalogue{"agent": f},
-		Runner: manager, Recordings: recordings, Events: event.NewBus(), Agent: "claude", AgentJob: agentJob,
+		Notes: storage.NewNoteStorage(db), Users: users, Runs: storage.NewRunStorage(db), WorkflowRuns: storage.NewWorkflowRunStorage(db), Catalogue: catalogue{},
+		Runner: manager, Recordings: recordings, Events: event.NewBus(),
+	}
+	// "agent/run" runs the script as the Notes agent in a root of its own;
+	// "agent/nothing" leaves the board no root to run it in.
+	if agentJob == "agent/run" {
+		board.Root, board.AgentCommand = dir, script
 	}
 	return &fixture{board: board, ops: ops}
 }
@@ -213,7 +217,7 @@ func TestBoard_Comment(t *testing.T) {
 	assert.NoError(t, err)
 	failed := missing.settled(t, lost.ID)
 	assert.Equal(t, model.NoteFailed, failed.State)
-	assert.Contains(t, replies(t, missing, lost.ID)[0].Body, "is not there")
+	assert.Contains(t, replies(t, missing, lost.ID)[0].Body, "has no root")
 }
 
 // After a restart, an instruction left working with no run fails.
@@ -415,11 +419,7 @@ func TestBoard_AskHosts(t *testing.T) {
 	f := newFixture(t, "agent/run")
 	admin := f.withPrompts(t)
 	ctx := context.Background()
-	f.board.AgentCommand = []string{"sh", "-c", `printf 'hosts: %s' "${TASK_UI_HOSTS-unset}" > "$TASK_UI_PROMPT_REPLY"`}
-	agentFolder := &folder.Folder{ID: "agent", Title: "agent", Dir: t.TempDir()}
-	job := &folder.Job{Folder: "agent", ID: "run", Name: "run", Kind: "script", Command: []string{"sh", "-c", `printf 'hosts: %s' "${TASK_UI_HOSTS-unset}" > "$TASK_UI_NOTE_REPLY"`}}
-	agentFolder.Jobs = []*folder.Job{job}
-	f.board.Catalogue.(catalogue)["agent"] = agentFolder
+	f.board.AgentCommand = []string{"sh", "-c", `printf 'hosts: %s' "${TASK_UI_HOSTS-unset}" > "${TASK_UI_PROMPT_REPLY:-$TASK_UI_NOTE_REPLY}"`}
 
 	var mu sync.Mutex
 	hosts, fail := "web\tweb.example\troot\tup", error(nil)

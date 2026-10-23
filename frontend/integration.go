@@ -135,7 +135,7 @@ func (h *Handlers) claudeFor(r *http.Request, user *model.User) bool {
 	if h.opts.Integrations == nil || user == nil {
 		return false
 	}
-	env, _ := h.opts.Integrations.Env(r.Context(), user.Name, user.Role)
+	env, _ := h.opts.Integrations.Env(r.Context(), user.Name, user.EffectiveRole())
 	return env["CLAUDE_CODE_OAUTH_TOKEN"] != ""
 }
 

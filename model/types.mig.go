@@ -1439,6 +1439,15 @@ type User struct {
 
 	// Updated At
 	UpdatedAt *time.Time `db:"updated_at" json:"updated_at"`
+
+	// Admin
+	Admin bool `db:"admin" json:"admin"`
+
+	// Mcp
+	Mcp bool `db:"mcp" json:"mcp"`
+
+	// Agent Reply
+	AgentReply bool `db:"agent_reply" json:"agent_reply"`
 }
 
 // GetID will return the value of ID.
@@ -1477,11 +1486,29 @@ func (u *User) GetUpdatedAt() *time.Time { return u.UpdatedAt }
 // SetUpdatedAt sets UpdatedAt to the provided value.
 func (u *User) SetUpdatedAt(stamp time.Time) { u.UpdatedAt = &stamp }
 
+// GetAdmin will return the value of Admin.
+func (u *User) GetAdmin() bool { return u.Admin }
+
+// SetAdmin sets Admin to the provided value.
+func (u *User) SetAdmin(val bool) { u.Admin = val }
+
+// GetMcp will return the value of Mcp.
+func (u *User) GetMcp() bool { return u.Mcp }
+
+// SetMcp sets Mcp to the provided value.
+func (u *User) SetMcp(val bool) { u.Mcp = val }
+
+// GetAgentReply will return the value of AgentReply.
+func (u *User) GetAgentReply() bool { return u.AgentReply }
+
+// SetAgentReply sets AgentReply to the provided value.
+func (u *User) SetAgentReply(val bool) { u.AgentReply = val }
+
 // UserTable is the name of the table in the DB.
 const UserTable = "`user`"
 
 // UserFields is a list of all columns in the DB table.
-var UserFields = []string{"id", "name", "role", "folders", "created_at", "updated_at"}
+var UserFields = []string{"id", "name", "role", "folders", "created_at", "updated_at", "admin", "mcp", "agent_reply"}
 
 // UserPrimaryFields are the primary key fields in the DB table.
 var UserPrimaryFields = []string{"id"}

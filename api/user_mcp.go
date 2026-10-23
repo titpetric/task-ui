@@ -54,6 +54,10 @@ func (h *Handlers) enableMCP(w http.ResponseWriter, r *http.Request) {
 	if user == nil {
 		return
 	}
+	if !user.Mcp {
+		fail(w, http.StatusConflict, user.Name+" is no MCP agent user: an admin turns it on first")
+		return
+	}
 	token, hash, err := access.NewToken()
 	if err != nil {
 		failErr(w, err)

@@ -21,6 +21,8 @@ type MCPAccess struct {
 	// disables it, with user/edit or as its own user once on.
 	CanEnable bool
 	CanManage bool
+	// Agent says the user is an MCP agent user, the flag a token needs.
+	Agent bool
 }
 
 // NewMCPAccess returns the access of a token row; nil is off.

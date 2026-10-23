@@ -12,17 +12,18 @@
 </div>
 
 <div class="alert">
-	Users come from the password file; <b>Create user</b> or <code>task-ui passwd &lt;user&gt;</code> adds one or resets a password. Roles come from <code>TASK_UI_ADMINS</code> and <code>TASK_UI_VIEWERS</code>; everyone else is a runner.
+	Users come from the password file; <b>Create user</b> or <code>task-ui passwd &lt;user&gt;</code> adds one or resets a password. A new user starts as a viewer. An admin sets the admin flag, the role and MCP on the user's profile, or with <code>task-ui user</code>.
 </div>
 
 <div class="table-wrap">
 <table class="table cards">
-	<thead><tr><th>User</th><th>Role</th><th>Folders</th><th>Since</th><th></th></tr></thead>
+	<thead><tr><th>User</th><th>Role</th><th>Flags</th><th>Folders</th><th>Since</th><th></th></tr></thead>
 	<tbody>
 	{{- range .Users }}
 		<tr class="row-link" data-href="/users/{{ .Name }}">
 			<td class="key nowrap"><span class="user-ref">{{ template "avatar" (list $ .Name) }} <a class="user-name" href="/users/{{ .Name }}">{{ .Name }}</a>{{ template "user-menu" (list $ .Name) }}</span></td>
-			<td data-label="Role"><span class="badge{{ if .CanAdmin }} signal{{ end }}">{{ .Role }}</span></td>
+			<td data-label="Role"><span class="badge{{ if .CanAdmin }} signal{{ end }}">{{ .EffectiveRole }}</span></td>
+			<td class="nowrap" data-label="Flags">{{ if .Mcp }}<span class="badge" title="MCP agent user">mcp</span>{{ end }}{{ if .AgentReply }} <span class="badge" title="Runs instance Claude when mentioned">agent</span>{{ end }}{{ if not .Mcp }}<span class="faint">none</span>{{ end }}</td>
 			<td class="desc" data-label="Folders">{{ with .FolderList }}{{ join . ", " }}{{ else }}<span class="faint">all</span>{{ end }}</td>
 			<td class="nowrap" data-label="Since" title="{{ stamp .CreatedAt }}">{{ ago .CreatedAt }}</td>
 			<td class="actions">
@@ -33,7 +34,7 @@
 			</td>
 		</tr>
 	{{- else }}
-		<tr class="empty"><td colspan="5">No users yet. Add one with <code>task-ui passwd &lt;user&gt;</code> and it appears here.</td></tr>
+		<tr class="empty"><td colspan="6">No users yet. Add one with <code>task-ui passwd &lt;user&gt;</code> and it appears here.</td></tr>
 	{{- end }}
 	</tbody>
 </table>

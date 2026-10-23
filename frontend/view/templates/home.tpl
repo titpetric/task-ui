@@ -16,7 +16,7 @@
 	<div><b>Jobs</b><span>{{ $jobs }}</span></div>
 	<div><b>Running</b><span data-running-count>{{ len .Running }}</span></div>
 	<div><b>Scheduled</b><span>{{ len .Schedules }}</span></div>
-	<div><b>Your role</b><span>{{ .User.Role }}</span></div>
+	<div><b>Your role</b><span>{{ .User.EffectiveRole }}</span></div>
 </div>
 
 <section class="block">

@@ -70,7 +70,8 @@ func (h *Handlers) mcpAccess(r *http.Request, user *model.User, own bool) view.M
 		token = nil
 	}
 	a := view.NewMCPAccess(token)
-	a.CanEnable = h.can(r, "user/edit")
+	a.Agent = user.Mcp
+	a.CanEnable = h.can(r, "user/edit") && user.Mcp
 	a.CanManage = a.CanEnable || own && a.Enabled
 	return a
 }

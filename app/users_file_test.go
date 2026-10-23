@@ -48,12 +48,9 @@ func signsIn(t *testing.T, passwords *storage.UserAuthPasswordStorage, user *mod
 func TestNewUsersFile(t *testing.T) {
 	t.Parallel()
 
-	f := app.NewUsersFile("/etc/task-ui/.htpasswd", []string{"admin"}, []string{"guest", "admin"})
+	f := app.NewUsersFile("/etc/task-ui/.htpasswd")
 	assert.Equal(t, "/etc/task-ui/.htpasswd", f.Path)
 	assert.Equal(t, 5*time.Second, f.Interval)
-	assert.Equal(t, model.RoleAdmin, f.Role("admin"))
-	assert.Equal(t, model.RoleViewer, f.Role("guest"))
-	assert.Equal(t, model.RoleRunner, f.Role("ops"))
 	assert.False(t, f.Changed())
 }
 
@@ -66,7 +63,7 @@ func TestUsersFile_Sync(t *testing.T) {
 	users, passwords := storage.NewUserStorage(db), storage.NewUserAuthPasswordStorage(db)
 	sessions := access.NewSessions(storage.NewUserSessionStorage(db), users, time.Hour)
 	path := htpasswdFile(t, "admin", "ops", "guest")
-	f := app.NewUsersFile(path, []string{"admin"}, []string{"guest"})
+	f := app.NewUsersFile(path)
 
 	assert.True(t, f.Changed())
 	created, removed, err := f.Sync(ctx, users, passwords)
@@ -75,11 +72,16 @@ func TestUsersFile_Sync(t *testing.T) {
 	assert.Equal(t, 0, removed)
 	assert.False(t, f.Changed())
 
+	// The first read into empty storage makes every user an admin.
 	admin := mustUser(t, users, "admin")
-	assert.Equal(t, model.RoleAdmin, admin.Role)
+	assert.True(t, admin.Admin)
 	assert.True(t, signsIn(t, passwords, admin, "demo"))
-	assert.Equal(t, model.RoleRunner, mustUser(t, users, "ops").Role)
-	assert.Equal(t, model.RoleViewer, mustUser(t, users, "guest").Role)
+	assert.True(t, mustUser(t, users, "ops").Admin)
+	assert.True(t, mustUser(t, users, "guest").Admin)
+	for _, name := range []string{"ops", "guest"} {
+		u := mustUser(t, users, name)
+		assert.NoError(t, users.SetFlags(ctx, u, false, model.RoleRunner, false, false, false))
+	}
 
 	// Everyone signs in once.
 	tokens := map[string]string{}
@@ -88,8 +90,8 @@ func TestUsersFile_Sync(t *testing.T) {
 		assert.NoError(t, err)
 	}
 
-	// A changed file: ops gets a new password and leaves the viewers,
-	// guest leaves, a newcomer arrives; folders set in the UI stay.
+	// A changed file: ops gets a new password, guest leaves, a newcomer
+	// arrives as a viewer; folders and roles set in the UI stay.
 	ops := mustUser(t, users, "ops")
 	ops.Folders = model.EncodeList([]string{"infra"})
 	assert.NoError(t, users.Update(ctx, ops))
@@ -98,7 +100,6 @@ func TestUsersFile_Sync(t *testing.T) {
 	assert.NoError(t, access.SetHtpasswd(path, "dev", reset))
 	data, _ := os.ReadFile(path)
 	assert.NoError(t, os.WriteFile(path, []byte(replaceLine(string(data), "guest")), 0o600))
-	f.Viewers = []string{"ops"}
 
 	created, removed, err = f.Sync(ctx, users, passwords)
 	assert.NoError(t, err)
@@ -106,7 +107,10 @@ func TestUsersFile_Sync(t *testing.T) {
 	assert.Equal(t, 1, removed)
 	ops = mustUser(t, users, "ops")
 	assert.True(t, signsIn(t, passwords, ops, "changed"))
-	assert.Equal(t, model.RoleViewer, ops.Role)
+	assert.Equal(t, model.RoleRunner, ops.Role)
+	dev := mustUser(t, users, "dev")
+	assert.Equal(t, model.RoleViewer, dev.Role, "the lowest role")
+	assert.False(t, dev.Admin || dev.Mcp || dev.AgentReply)
 	assert.Equal(t, []string{"infra"}, ops.FolderList())
 	assert.Equal(t, admin.ID, mustUser(t, users, "admin").ID)
 	_, err = users.GetByName(ctx, "guest")
@@ -137,7 +141,7 @@ func TestUsersFile_Watch(t *testing.T) {
 	defer cancel()
 	users, passwords := newUsers(t)
 	path := htpasswdFile(t, "admin")
-	f := app.NewUsersFile(path, []string{"admin"}, nil)
+	f := app.NewUsersFile(path)
 	f.Interval = 20 * time.Millisecond
 	_, _, err := f.Sync(ctx, users, passwords)
 	assert.NoError(t, err)
@@ -221,13 +225,14 @@ func TestUsersFile_Add(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
 	users, passwords := newUsers(t)
-	f := app.NewUsersFile(htpasswdFile(t, "admin"), []string{"admin"}, nil)
+	f := app.NewUsersFile(htpasswdFile(t, "admin"))
 	_, _, err := f.Sync(ctx, users, passwords)
 	assert.NoError(t, err)
 
 	assert.NoError(t, f.Add(ctx, users, passwords, "alice", "correct horse"))
 	alice := mustUser(t, users, "alice")
-	assert.Equal(t, model.RoleRunner, alice.Role)
+	assert.Equal(t, model.RoleViewer, alice.Role, "a new user of a storage with users")
+	assert.False(t, alice.Admin)
 	assert.True(t, signsIn(t, passwords, alice, "correct horse"))
 	assert.False(t, f.Changed())
 	creds, err := access.LoadHtpasswd(f.Path)
@@ -238,7 +243,7 @@ func TestUsersFile_Add(t *testing.T) {
 	assert.Error(t, f.Add(ctx, users, passwords, "Bad:Name", "correct horse"))
 	assert.Error(t, f.Add(ctx, users, passwords, "bob", "short"))
 
-	fresh := app.NewUsersFile(filepath.Join(t.TempDir(), ".htpasswd"), nil, nil)
+	fresh := app.NewUsersFile(filepath.Join(t.TempDir(), ".htpasswd"))
 	assert.NoError(t, fresh.Add(ctx, users, passwords, "carol", "correct horse"))
 }
 
@@ -248,7 +253,7 @@ func TestUsersFile_Remove(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
 	users, passwords := newUsers(t)
-	f := app.NewUsersFile(htpasswdFile(t, "admin", "ops"), []string{"admin"}, nil)
+	f := app.NewUsersFile(htpasswdFile(t, "admin", "ops"))
 	_, _, err := f.Sync(ctx, users, passwords)
 	assert.NoError(t, err)
 
@@ -262,4 +267,24 @@ func TestUsersFile_Remove(t *testing.T) {
 
 	assert.ErrorIs(t, f.Remove(ctx, users, passwords, "ops"), storage.ErrNotFound)
 	assert.Error(t, f.Remove(ctx, users, passwords, ""))
+}
+
+// A file of one user makes that user an admin while storage holds none,
+// as a storage whose admins all left would; with an admin in storage, a
+// one-line file changes nobody.
+func TestUsersFile_OneUserAdmin(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	users, passwords := newUsers(t)
+	assert.NoError(t, users.Create(ctx, &model.User{Name: "ops", Role: model.RoleRunner}))
+	f := app.NewUsersFile(htpasswdFile(t, "ops"))
+	_, _, err := f.Sync(ctx, users, passwords)
+	assert.NoError(t, err)
+	assert.True(t, mustUser(t, users, "ops").Admin, "the one user, no admin")
+
+	g := app.NewUsersFile(htpasswdFile(t, "ops", "dev"))
+	_, _, err = g.Sync(ctx, users, passwords)
+	assert.NoError(t, err)
+	assert.False(t, mustUser(t, users, "dev").Admin)
+	assert.Equal(t, model.RoleViewer, mustUser(t, users, "dev").Role)
 }

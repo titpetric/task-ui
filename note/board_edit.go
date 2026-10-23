@@ -39,7 +39,7 @@ func (b *Board) Edit(ctx context.Context, user *model.User, id, body string) (*m
 		if thread, err = b.Notes.Get(ctx, note.ParentID); err != nil {
 			return nil, err
 		}
-		if thread.State != "" && note.UserName == b.Answerer() {
+		if thread.State != "" && note.UserName == b.AnswererOf(ctx, thread) {
 			return nil, fmt.Errorf("%w: you can't edit the agent's answer; it changes when its question runs again", ErrInvalid)
 		}
 	}
@@ -72,11 +72,12 @@ func (b *Board) Edit(ctx context.Context, user *model.User, id, body string) (*m
 	thread.State = model.NoteOpen
 	b.publish(thread)
 	again := b.answerTo(ctx, thread, note)
+	agent := b.forAgent(ctx, user, note.Body)
 	switch {
 	case thread.IsPrompt():
 		b.dispatchPrompt(thread, req, again)
-	case b.forAgent(user, note.Body):
-		b.dispatch(thread, again)
+	case agent != nil:
+		b.dispatch(thread, again, agent)
 	}
 	return note, nil
 }
@@ -85,9 +86,10 @@ func (b *Board) Edit(ctx context.Context, user *model.User, id, body string) (*m
 // reply of the agent after it, or nil for none yet.
 func (b *Board) answerTo(ctx context.Context, thread, note *model.Note) *model.Note {
 	replies, _ := b.Notes.Replies(ctx, []string{thread.ID})
+	name := b.AnswererOf(ctx, thread)
 	after := note.ID == thread.ID
 	for _, reply := range replies[thread.ID] {
-		if after && reply.UserName == b.Answerer() {
+		if after && name != "" && reply.UserName == name {
 			return &reply
 		}
 		if reply.ID == note.ID {

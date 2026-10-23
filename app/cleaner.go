@@ -32,8 +32,8 @@ func NewCleaner(db storage.DB, cfg *Config) *retention.Cleaner {
 const seededCleanup = "cleanup.seeded"
 
 // seedCleanup adds the daily schedule of the root's @cleanup once, run
-// as the first admin of TASK_UI_ADMINS the users hold, or the auto login
-// user; until there is one it waits for the next start. An admin edits or deletes it on the
+// as the auto login user when an admin, else the first admin by name;
+// until there is one it waits for the next start. An admin edits or deletes it on the
 // Schedules page, and it stays as they leave it.
 func (a *App) seedCleanup(ctx context.Context) error {
 	settings := storage.NewSettingStorage(a.DB)
@@ -42,10 +42,15 @@ func (a *App) seedCleanup(ctx context.Context) error {
 		return err
 	}
 	var admin *model.User
-	for _, name := range append(append([]string{}, a.Config.Admins...), a.Config.AutoLogin) {
-		if user, err := a.Users.GetByName(ctx, name); err == nil && user.CanAdmin() {
-			admin = user
-			break
+	if user, err := a.Users.GetByName(ctx, a.Config.AutoLogin); err == nil && user.CanAdmin() {
+		admin = user
+	}
+	if users, err := a.Users.List(ctx); err == nil && admin == nil {
+		for i := range users {
+			if users[i].CanAdmin() {
+				admin = &users[i]
+				break
+			}
 		}
 	}
 	if admin == nil {

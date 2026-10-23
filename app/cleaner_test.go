@@ -22,7 +22,7 @@ func TestNew_SeedsCleanup(t *testing.T) {
 	makeFolder(t, root, "site")
 	data := filepath.Join(t.TempDir(), "data")
 	cfg := &app.Config{
-		Listen: "127.0.0.1:0", Root: root, Htpasswd: htpasswdFile(t, "admin", "guest"), Admins: []string{"nobody", "admin"},
+		Listen: "127.0.0.1:0", Root: root, Htpasswd: htpasswdFile(t, "admin", "guest"), Import: &app.RoleImport{Admins: []string{"nobody", "admin"}},
 		DataDir: data, SSHDir: t.TempDir(), SessionTTL: time.Hour, Keep: time.Minute, Grace: time.Second,
 	}
 	assert.NoError(t, cfg.Validate())

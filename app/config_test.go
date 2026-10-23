@@ -30,8 +30,7 @@ func TestNewConfig(t *testing.T) {
 	assert.Equal(t, root, cfg.Root)
 	assert.Equal(t, "127.0.0.1:1234", cfg.Listen)
 	assert.Equal(t, filepath.Join(root, ".htpasswd"), cfg.Htpasswd)
-	assert.Equal(t, []string{"admin", "root"}, cfg.Admins)
-	assert.Equal(t, []string{"guest"}, cfg.Viewers)
+	assert.Equal(t, &app.RoleImport{Admins: []string{"admin", "root"}, Viewers: []string{"guest"}}, cfg.Import)
 	assert.Equal(t, filepath.Join(root, "data", "task-ui.db"), cfg.DB)
 	assert.Equal(t, filepath.Join(root, "data", "recordings"), cfg.RecordingsDir())
 	assert.Equal(t, filepath.Join(root, "data", "artifacts"), cfg.ArtifactsDir())
@@ -55,39 +54,21 @@ func TestNewConfig(t *testing.T) {
 	assert.True(t, flagged.PrintBuildInfo)
 }
 
-// The agent job is the Notes agent, @claude-note, unless set; set
-// empty, instructions wait for an agent over MCP. A built-in named in a
-// folder, as _/@claude-note, or internal/claude-note fails at start.
-func TestNewConfig_AgentJob(t *testing.T) {
+// The role lists of an older configuration are an import, nil when
+// none of them is in the environment.
+func TestNewConfig_Import(t *testing.T) {
 	t.Setenv("TASK_UI_ROOT", t.TempDir())
-	t.Setenv("TASK_UI_AGENT_JOB", "")
-	assert.NoError(t, os.Unsetenv("TASK_UI_AGENT_JOB"))
+	t.Setenv("TASK_UI_ADMINS", "")
+	t.Setenv("TASK_UI_VIEWERS", "")
+	t.Setenv("TASK_UI_AGENT", "")
 	cfg, err := app.NewConfig(nil)
 	assert.NoError(t, err)
-	assert.Equal(t, "@claude-note", cfg.AgentJob)
-	assert.Equal(t, app.NoteAgentJob, cfg.AgentJob)
+	assert.Nil(t, cfg.Import)
 
-	t.Setenv("TASK_UI_AGENT_JOB", "@claude-note")
+	t.Setenv("TASK_UI_AGENT", "claude")
 	cfg, err = app.NewConfig(nil)
 	assert.NoError(t, err)
-	assert.Equal(t, "@claude-note", cfg.AgentJob)
-
-	for _, old := range []string{"internal/claude-note", "_/@claude-note", "@claude-prompt", "claude-note"} {
-		t.Setenv("TASK_UI_AGENT_JOB", old)
-		_, err = app.NewConfig(nil)
-		assert.Error(t, err, old)
-		assert.Contains(t, err.Error(), "TASK_UI_AGENT_JOB", old)
-	}
-
-	t.Setenv("TASK_UI_AGENT_JOB", "")
-	cfg, err = app.NewConfig(nil)
-	assert.NoError(t, err)
-	assert.Equal(t, "", cfg.AgentJob)
-
-	t.Setenv("TASK_UI_AGENT_JOB", "deploy/agent")
-	cfg, err = app.NewConfig(nil)
-	assert.NoError(t, err)
-	assert.Equal(t, "deploy/agent", cfg.AgentJob)
+	assert.Equal(t, &app.RoleImport{Agent: "claude"}, cfg.Import)
 }
 
 // The base link drops a trailing slash; unset, the pages derive it per
@@ -137,7 +118,7 @@ func TestConfig_Validate(t *testing.T) {
 	assert.NoError(t, cfg.Validate())
 	assert.Equal(t, filepath.Join("d", "task-ui.db"), cfg.DB)
 	assert.Equal(t, "", cfg.Htpasswd)
-	assert.Nil(t, cfg.Admins)
+	assert.Nil(t, cfg.Import)
 	assert.True(t, time.Since(cfg.Clock()()) < time.Minute)
 
 	assert.ErrorContains(t, (&app.Config{}).Validate(), "root directory")

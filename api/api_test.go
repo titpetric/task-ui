@@ -124,7 +124,7 @@ func newFixture(t *testing.T) *fixture {
 	users := storage.NewUserStorage(db)
 	f := &fixture{root: root, users: map[string]*model.User{}, db: db}
 	for name, role := range map[string]string{asAdmin: model.RoleAdmin, asOps: model.RoleRunner, asViewer: model.RoleViewer, asLimited: model.RoleRunner} {
-		user := &model.User{Name: name, Role: role}
+		user := &model.User{Name: name, Role: role, Mcp: true}
 		if name == asLimited {
 			user.Folders = model.EncodeList([]string{"infra"})
 		}
@@ -169,7 +169,7 @@ func newFixture(t *testing.T) *fixture {
 		Integrations:  &integration.Store{Secrets: secrets},
 		// A cheap scrypt keeps the exports quick under -race.
 		ExportWorkFactor: 10,
-		Board:            &note.Board{Notes: storage.NewNoteStorage(db), Users: users, Runs: runs, WorkflowRuns: workflowRuns, Catalogue: cat, Runner: manager, Recordings: recordings, Events: flows.Events, Agent: "claude", Root: root},
+		Board:            &note.Board{Notes: storage.NewNoteStorage(db), Users: users, Runs: runs, WorkflowRuns: workflowRuns, Catalogue: cat, Runner: manager, Recordings: recordings, Events: flows.Events, Root: root},
 	}
 	flows.Prompter = f.opts.Board
 	f.opts.Hosts = &beszel.Inventory{TTL: time.Minute, Settings: func(ctx context.Context) (string, string, error) {

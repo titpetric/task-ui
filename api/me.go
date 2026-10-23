@@ -13,7 +13,7 @@ func (h *Handlers) getMe(w http.ResponseWriter, r *http.Request) {
 	user := access.UserFrom(r.Context())
 	set := h.permissions(r)
 	p, effective := config.Default(), set.Effective()
-	view := MeView{Name: user.Name, Role: user.Role, Admin: user.CanAdmin(), Allowed: set.Allows(), Summary: set.Summary(), Folders: []string{}}
+	view := MeView{Name: user.Name, Role: user.EffectiveRole(), Admin: user.CanAdmin(), Allowed: set.Allows(), Summary: set.Summary(), Folders: []string{}}
 	if view.Allowed == nil {
 		view.Allowed = []string{}
 	}

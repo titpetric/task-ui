@@ -12,13 +12,8 @@ type Instance struct {
 	SSHDir   string
 	Htpasswd string
 	Discover bool
-	Admins   []string
-	Viewers  []string
 	// AutoLogin is the user every request signs in as, if any.
 	AutoLogin string
-	// Agent is the user a note names to run AgentJob on it.
-	Agent    string
-	AgentJob string
 	// Beszel says the Beszel integration has a hub and a token, which
 	// the Inventory reads.
 	Beszel bool

@@ -214,6 +214,98 @@ func token(ctx context.Context, dsn string, args []string, stdout io.Writer) err
 	return nil
 }
 
+// userCommand runs task-ui user, over the database without the server:
+// list prints every user with the admin flag, role and MCP flags; admin,
+// role and mcp set one of them. Taking the admin flag from the last
+// admin needs --force.
+func userCommand(ctx context.Context, dsn string, args []string, stdout io.Writer) error {
+	const usage = "usage: task-ui user list | admin <user> on|off [--force] | role <user> runner|viewer | mcp <user> on|off | agent <user> on|off"
+	force := false
+	var rest []string
+	for _, arg := range args {
+		if arg == "--force" {
+			force = true
+			continue
+		}
+		rest = append(rest, arg)
+	}
+	if len(rest) == 1 && rest[0] == "list" {
+		return listUsers(ctx, dsn, stdout)
+	}
+	if len(rest) != 3 {
+		return errors.New(usage)
+	}
+	db, user, err := openUser(ctx, dsn, rest[1])
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+	admin, role, mcp, reply := user.Admin, user.Role, user.Mcp, user.AgentReply
+	on, value := rest[2] == "on", rest[2]
+	if rest[0] != "role" && value != "on" && value != "off" {
+		return errors.New(usage)
+	}
+	switch rest[0] {
+	case "admin":
+		admin = on
+	case "role":
+		role = value
+	case "mcp":
+		mcp = on
+		reply = reply && on
+	case "agent":
+		reply = on
+		mcp = mcp || on
+	default:
+		return errors.New(usage)
+	}
+	if err := storage.NewUserStorage(db).SetFlags(ctx, user, admin, role, mcp, reply, force); err != nil {
+		if errors.Is(err, storage.ErrLastAdmin) {
+			return errors.New("the last admin keeps the admin flag: make another user an admin first, or add --force")
+		}
+		return err
+	}
+	return printUser(stdout, user)
+}
+
+// listUsers prints every user, a line each.
+func listUsers(ctx context.Context, dsn string, stdout io.Writer) error {
+	if err := os.MkdirAll(filepath.Dir(dsn), 0o755); err != nil {
+		return err
+	}
+	db, err := storage.OpenAndMigrate(ctx, dsn)
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+	users, err := storage.NewUserStorage(db).List(ctx)
+	if err != nil {
+		return err
+	}
+	for i := range users {
+		if err := printUser(stdout, &users[i]); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// printUser prints a user's name, role and flags on a line.
+func printUser(stdout io.Writer, user *model.User) error {
+	flags := []string{}
+	if user.Admin {
+		flags = append(flags, "admin")
+	}
+	if user.Mcp {
+		flags = append(flags, "mcp")
+	}
+	if user.AgentReply {
+		flags = append(flags, "agent")
+	}
+	_, err := fmt.Fprintf(stdout, "%s\t%s\t%s\n", user.Name, user.Role, strings.Join(flags, ","))
+	return err
+}
+
 // channelBridge runs task-ui channel: a stdio MCP server that pushes the
 // notes naming the token's user into the Claude Code session that
 // started it. Stdout is the session's; what the bridge says goes to
@@ -273,7 +365,7 @@ func cleanup(ctx context.Context, args []string, stdout io.Writer) error {
 }
 
 // run is main without the exit: the hash, agent, channel, cleanup,
-// passwd, email, backup and token commands, the version, or the server until a signal.
+// passwd, email, backup, token and user commands, the version, or the server until a signal.
 func run(ctx context.Context, args []string, stdin io.Reader, stdout io.Writer) error {
 	if len(args) > 0 && args[0] == "hash" {
 		return hash(args[1:], stdin, stdout)
@@ -287,6 +379,14 @@ func run(ctx context.Context, args []string, stdin io.Reader, stdout io.Writer) 
 	if len(args) > 0 && args[0] == "agent" {
 		a := &agent.Agent{Env: os.Environ(), Stdin: stdin, Stdout: stdout, Stderr: os.Stderr}
 		return a.Run(ctx, args[1:])
+	}
+	if len(args) > 0 && args[0] == "user" {
+		// Its --force is no server flag: the configuration reads none.
+		cfg, err := app.NewConfig(nil)
+		if err != nil {
+			return err
+		}
+		return userCommand(ctx, cfg.DB, args[1:], stdout)
 	}
 	cfg, err := app.NewConfig(args)
 	if err != nil {
@@ -304,6 +404,7 @@ func run(ctx context.Context, args []string, stdin io.Reader, stdout io.Writer) 
 	if len(args) > 0 && args[0] == "token" {
 		return token(ctx, cfg.DB, args[1:], stdout)
 	}
+
 	if cfg.PrintBuildInfo {
 		_, err := fmt.Fprintf(stdout, "task-ui %s %s\n", version, commit)
 		return err

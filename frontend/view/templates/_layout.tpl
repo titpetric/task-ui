@@ -36,9 +36,9 @@
 		<span class="spacer"></span>
 		{{- end }}
 		<details class="user" id="user-menu">
-			<summary aria-label="{{ .User.Name }}, {{ .User.Role }}" title="{{ .User.Name }}"><span class="avatar role-{{ .User.Role }}">{{ .User.Initials }}</span></summary>
+			<summary aria-label="{{ .User.Name }}, {{ .User.EffectiveRole }}" title="{{ .User.Name }}"><span class="avatar role-{{ .User.EffectiveRole }}">{{ .User.Initials }}</span></summary>
 			<div class="user-menu">
-				<div class="who"><b>{{ .User.Name }}</b><span>{{ .User.Role }}</span></div>
+				<div class="who"><b>{{ .User.Name }}</b><span>{{ .User.EffectiveRole }}</span></div>
 				<a href="/users/{{ .User.Name }}"><svg class="ic"><use href="#i-users"/></svg>Profile</a>
 				<a href="/keys"><svg class="ic"><use href="#i-key"/></svg>SSH keys</a>
 				{{- if .CanSettings }}

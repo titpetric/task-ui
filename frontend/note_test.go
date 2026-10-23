@@ -74,16 +74,20 @@ func TestNotes_edit(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
 	ctx := context.Background()
-	note, err := f.opts.Board.Post(ctx, f.users[asOps], "", "@claude tidy up")
-	assert.NoError(t, err)
+	// claude runs instance Claude when mentioned; the note goes in as
+	// one it answered, with no run to start here.
+	assert.NoError(t, f.opts.Users.Create(ctx, &model.User{Name: "claude", Role: model.RoleRunner, Mcp: true, AgentReply: true}))
+	ops := f.users[asOps]
+	note := &model.Note{Channel: model.ChannelNotes, UserID: ops.ID, UserName: ops.Name, Body: "@claude tidy up", State: model.NoteDone}
+	assert.NoError(t, f.opts.Board.Notes.Create(ctx, note))
 	assert.NoError(t, f.opts.Board.Notes.Edit(ctx, note.ID, "@claude tidy up, twice"))
-	answer := &model.Note{Channel: model.ChannelNotes, ParentID: note.ID, UserName: f.opts.Board.Answerer(), Body: "Tidied."}
+	answer := &model.Note{Channel: model.ChannelNotes, ParentID: note.ID, UserName: "claude", Body: "Tidied."}
 	assert.NoError(t, f.opts.Board.Notes.Create(ctx, answer))
 
 	hook := `data-edit="` + note.ID + `" data-body="@claude tidy up, twice"`
-	ops := f.page(t, asOps, "/notes")
-	assert.Contains(t, ops, hook)
-	assert.Contains(t, ops, `class="faint edited"`)
+	page := f.page(t, asOps, "/notes")
+	assert.Contains(t, page, hook)
+	assert.Contains(t, page, `class="faint edited"`)
 	assert.Contains(t, f.page(t, asAdmin, "/notes"), hook)
 	assert.NotContains(t, f.page(t, asViewer, "/notes"), hook)
 	assert.NotContains(t, f.page(t, asAdmin, "/notes"), `data-edit="`+answer.ID+`"`)

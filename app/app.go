@@ -112,6 +112,9 @@ func (a *App) prepare(ctx context.Context) error {
 	if err := a.autoLogin(ctx); err != nil {
 		return err
 	}
+	if err := a.importRoles(ctx); err != nil {
+		return err
+	}
 	if err := a.seedCleanup(ctx); err != nil {
 		return err
 	}
@@ -197,7 +200,7 @@ func (a *App) seed(ctx context.Context) error {
 		slog.Warn("no password file: nobody new can sign in", "hint", "set TASK_UI_HTPASSWD or put .htpasswd in the root")
 		return nil
 	}
-	a.UsersFile = NewUsersFile(a.Config.Htpasswd, a.Config.Admins, a.Config.Viewers)
+	a.UsersFile = NewUsersFile(a.Config.Htpasswd)
 	created, removed, err := a.UsersFile.Sync(ctx, a.Users, a.Passwords)
 	if errors.Is(err, os.ErrNotExist) {
 		// Not made yet: start anyway, the watcher reads it once it exists,
@@ -208,7 +211,7 @@ func (a *App) seed(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("reading users: %w", err)
 	}
-	slog.Info("users read from the password file", "file", a.Config.Htpasswd, "created", created, "removed", removed, "admins", a.Config.Admins)
+	slog.Info("users read from the password file", "file", a.Config.Htpasswd, "created", created, "removed", removed)
 	return nil
 }
 
@@ -224,7 +227,7 @@ func (a *App) autoLogin(ctx context.Context) error {
 		return nil
 	}
 	slog.Warn("auto login names a user that is not there: created as an admin", "user", name)
-	return a.Users.Create(ctx, &model.User{Name: name, Role: model.RoleAdmin})
+	return a.Users.Create(ctx, &model.User{Name: name, Role: model.RoleRunner, Admin: true, Mcp: true})
 }
 
 // wire builds the services and the handler over the open database.
@@ -309,7 +312,7 @@ func (a *App) wire(version string) error {
 	a.Guard.Now = cfg.Clock()
 	a.Board = &note.Board{
 		Notes: storage.NewNoteStorage(a.DB), Users: a.Users, Runs: runs, WorkflowRuns: workflowRuns, Catalogue: a.Catalogue, Runner: a.Runner,
-		Recordings: recordings, Events: events, Agent: cfg.Agent, AgentJob: cfg.AgentJob, Root: cfg.Root,
+		Recordings: recordings, Events: events, Root: cfg.Root,
 		Hosts: promptHosts(hosts, prober),
 	}
 	a.Workflows.Prompter = a.Board
@@ -347,7 +350,7 @@ func (a *App) wire(version string) error {
 		Facts: &hostinfo.Reader{Run: prober.Output, Timeout: 20 * time.Second, TTL: 5 * time.Minute},
 		Instance: &view.Instance{
 			URL: cfg.URL, Listen: cfg.Listen, Root: cfg.Root, DataDir: cfg.DataDir, SSHDir: cfg.SSHDir, Htpasswd: cfg.Htpasswd,
-			Discover: cfg.Discover, Admins: cfg.Admins, Viewers: cfg.Viewers, AutoLogin: cfg.AutoLogin, Agent: cfg.Agent, AgentJob: cfg.AgentJob,
+			Discover: cfg.Discover, AutoLogin: cfg.AutoLogin,
 		},
 	})
 	if err != nil {
@@ -360,7 +363,7 @@ func (a *App) wire(version string) error {
 	// the token's user.
 	server := mcp.New(routes, version)
 	server.BaseURL = cfg.URL
-	r.Mount("/api/mcp", a.Guard.Require(access.SameOrigin(server)))
+	r.Mount("/api/mcp", a.Guard.Require(access.RequireMCP(access.SameOrigin(server))))
 	r.Mount("/api", a.Guard.Require(access.SameOrigin(routes)))
 	r.Mount("/", pages.Routes())
 	a.handler = r

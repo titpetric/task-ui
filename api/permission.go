@@ -50,7 +50,7 @@ func (h *Handlers) putRolePolicy(w http.ResponseWriter, r *http.Request) {
 		fail(w, http.StatusConflict, "the admin role can do everything and has no policy to change")
 		return
 	}
-	if role == access.UserFrom(r.Context()).Role && !h.editsUsersByRole(r) {
+	if role == access.UserFrom(r.Context()).EffectiveRole() && !h.editsUsersByRole(r) {
 		fail(w, http.StatusForbidden, "to change your own role's policy, your role needs user/edit")
 		return
 	}
@@ -161,7 +161,7 @@ func (h *Handlers) writeRolePolicy(w http.ResponseWriter, r *http.Request, role 
 // writeUserPolicy answers a user's policy, the role's, and what the user
 // may do by both.
 func (h *Handlers) writeUserPolicy(w http.ResponseWriter, r *http.Request, user *model.User) {
-	view := PolicyView{Kind: permission.KindUser, Subject: user.Name, Role: user.Role, Fixed: user.CanAdmin(), Policy: permission.Policy{}}
+	view := PolicyView{Kind: permission.KindUser, Subject: user.Name, Role: user.EffectiveRole(), Fixed: user.CanAdmin(), Policy: permission.Policy{}}
 	set := h.opts.Users.Permissions(r.Context(), user)
 	if !view.Fixed && set.Own != nil {
 		view.Policy, view.RolePolicy = set.Own, set.Role

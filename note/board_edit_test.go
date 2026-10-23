@@ -127,9 +127,11 @@ func TestBoard_EditWhileRunning(t *testing.T) {
 func TestBoard_EditPrompt(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t, "agent/run")
-	agent := f.board.Catalogue.Find("agent")
+	notes := f.board.AgentCommand[2]
 	admin := f.withPrompts(t)
-	f.board.Catalogue.(catalogue)["agent"] = agent
+	// One command answers both: the Notes agent's as the fixture's, a
+	// prompt's as withPrompts has it.
+	f.board.AgentCommand[2] = `if [ "$0" = note ]; then ` + notes + `; else ` + f.board.AgentCommand[2] + `; fi`
 	ctx := context.Background()
 	asked, err := f.board.Ask(ctx, admin, "", "proj", "what builds here")
 	assert.NoError(t, err)
@@ -176,9 +178,14 @@ func TestBoard_EditPrompt(t *testing.T) {
 	assert.Equal(t, "proj/"+model.PromptJob, snapshotKey(kept), "the prompt's run stays")
 }
 
-// The agent's replies carry its user name, or claude with no agent.
+// Claude's answers to prompts carry claude; an instruction's carry the
+// agent its thread names, and a thread naming none has no answerer.
 func TestBoard_Answerer(t *testing.T) {
 	t.Parallel()
-	assert.Equal(t, "ops", (&note.Board{Agent: "ops"}).Answerer())
 	assert.Equal(t, "claude", (&note.Board{}).Answerer())
+	f := newFixture(t, "agent/nothing")
+	ctx := context.Background()
+	assert.Equal(t, "claude", f.board.AnswererOf(ctx, &model.Note{Body: "@claude go", UserName: "ops"}))
+	assert.Equal(t, "", f.board.AnswererOf(ctx, &model.Note{Body: "@ops go", UserName: "claude"}), "ops runs no agent")
+	assert.Equal(t, "", f.board.AnswererOf(ctx, &model.Note{Body: "@claude go", UserName: "claude"}), "its own note")
 }

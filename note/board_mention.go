@@ -21,11 +21,8 @@ func (b *Board) instructs(ctx context.Context, user *model.User, body string) bo
 	return named && b.permissions(ctx, user).Allowed("run")
 }
 
-// known reports whether a name is the agent's or a user's.
+// known reports whether a name is a user's.
 func (b *Board) known(ctx context.Context, name string) bool {
-	if b.Agent != "" && name == b.Agent {
-		return true
-	}
 	if b.Users == nil {
 		return false
 	}
@@ -33,29 +30,59 @@ func (b *Board) known(ctx context.Context, name string) bool {
 	return err == nil
 }
 
-// forAgent reports whether an instruction of the user's with the body is
-// the board's to run: it names the agent, someone else wrote it, and
-// there is an agent job.
-func (b *Board) forAgent(user *model.User, body string) bool {
-	return b.AgentJob != "" && b.Agent != "" && user.Name != b.Agent && contains(model.Mentions(body), b.Agent)
+// agentIn returns the first user a text by the author names, other
+// than the author, whose mentions run the Notes agent, Run instance
+// Claude when mentioned on, or nil.
+func (b *Board) agentIn(ctx context.Context, author, body string) *model.User {
+	if b.Users == nil {
+		return nil
+	}
+	for _, name := range model.Mentions(body) {
+		if name == author {
+			continue
+		}
+		if user, err := b.Users.GetByName(ctx, name); err == nil && user.AgentReply && user.Mcp {
+			return user
+		}
+	}
+	return nil
 }
 
-// threadForAgent reports whether an open thread is the agent's to run:
-// its note or a reply by someone else names the agent.
-func (b *Board) threadForAgent(ctx context.Context, note *model.Note) bool {
-	if b.AgentJob == "" || b.Agent == "" {
-		return false
-	}
-	if note.UserName != b.Agent && note.Mentioned(b.Agent) {
-		return true
+// forAgent returns the agent an instruction of the user's with the body
+// is the board's to run as, or nil: it names a user with Run instance
+// Claude when mentioned, someone else wrote it. A note naming any other
+// user waits for that user, their agent over MCP or themselves.
+func (b *Board) forAgent(ctx context.Context, user *model.User, body string) *model.User {
+	return b.agentIn(ctx, user.Name, body)
+}
+
+// threadForAgent returns the agent an open thread is for, or nil: its
+// note or a reply by someone else names a user with Run instance Claude
+// when mentioned.
+func (b *Board) threadForAgent(ctx context.Context, note *model.Note) *model.User {
+	if agent := b.agentIn(ctx, note.UserName, note.Body); agent != nil {
+		return agent
 	}
 	replies, _ := b.Notes.Replies(ctx, []string{note.ID})
 	for _, reply := range replies[note.ID] {
-		if reply.UserName != b.Agent && reply.Mentioned(b.Agent) {
-			return true
+		if agent := b.agentIn(ctx, reply.UserName, reply.Body); agent != nil {
+			return agent
 		}
 	}
-	return false
+	return nil
+}
+
+// AnswererOf returns the user name the agent's replies on a thread
+// carry: claude on a prompt, the agent the thread names on an
+// instruction, else empty.
+func (b *Board) AnswererOf(ctx context.Context, thread *model.Note) string {
+	if thread.IsPrompt() {
+		return answerer
+	}
+	if agent := b.threadForAgent(ctx, thread); agent != nil {
+		return agent.Name
+	}
+	return ""
 }
 
 // assigned reports whether the user may set an instruction's state: the

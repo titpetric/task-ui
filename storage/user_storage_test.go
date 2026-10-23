@@ -86,8 +86,13 @@ func TestUserStorage_Update(t *testing.T) {
 	assert.NoError(t, users.Update(ctx, user))
 	got, err := users.Get(ctx, user.ID)
 	assert.NoError(t, err)
-	assert.Equal(t, model.RoleAdmin, got.Role)
+	assert.True(t, got.Admin, "the admin role is the admin flag")
+	assert.Equal(t, model.RoleRunner, got.Role)
+	assert.Equal(t, model.RoleAdmin, got.EffectiveRole())
 	assert.Equal(t, []string{"infra"}, got.FolderList())
+
+	got.AgentReply = true
+	assert.ErrorIs(t, users.Update(ctx, got), storage.ErrAgentReply)
 
 	user.Role = "root"
 	assert.Error(t, users.Update(ctx, user))
@@ -138,4 +143,45 @@ func TestUserStorage_MoveFolder(t *testing.T) {
 	got, err = users.Get(ctx, everyone.ID)
 	assert.NoError(t, err)
 	assert.Len(t, got.FolderList(), 0, "a user who sees every folder keeps seeing them")
+}
+
+// SetFlags changes what a user is; the last admin keeps the flag unless
+// forced, MCP off ends agent reply's use and the user's MCP token.
+func TestUserStorage_SetFlags(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	db := newDB(t)
+	users, tokens := storage.NewUserStorage(db), storage.NewUserAuthTokenStorage(db)
+	root := &model.User{Name: "root", Role: model.RoleAdmin}
+	ops := &model.User{Name: "ops", Role: model.RoleRunner}
+	assert.NoError(t, users.Create(ctx, root))
+	assert.NoError(t, users.Create(ctx, ops))
+	assert.True(t, root.Admin)
+	n, err := users.Admins(ctx)
+	assert.NoError(t, err)
+	assert.Equal(t, int64(1), n)
+
+	assert.ErrorIs(t, users.SetFlags(ctx, root, false, model.RoleRunner, false, false, false), storage.ErrLastAdmin)
+	assert.Error(t, users.SetFlags(ctx, ops, false, model.RoleAdmin, false, false, false), "admin is the flag")
+	assert.ErrorIs(t, users.SetFlags(ctx, ops, false, model.RoleRunner, false, true, false), storage.ErrAgentReply)
+
+	assert.NoError(t, users.SetFlags(ctx, ops, true, model.RoleViewer, true, true, false))
+	assert.True(t, ops.Admin && ops.Mcp && ops.AgentReply)
+	agents, err := users.Agents(ctx)
+	assert.NoError(t, err)
+	assert.Len(t, agents, 1)
+	assert.NoError(t, users.SetFlags(ctx, root, false, model.RoleRunner, false, false, false), "ops is an admin too")
+
+	_, err = tokens.SetUntil(ctx, ops.ID, "mcp", "h1", time.Now().Add(time.Hour))
+	assert.NoError(t, err)
+	assert.NoError(t, tokens.Set(ctx, ops.ID, "cli", "h2"))
+	assert.NoError(t, users.SetFlags(ctx, ops, true, model.RoleViewer, false, false, false))
+	list, err := tokens.List(ctx, ops.ID)
+	assert.NoError(t, err)
+	assert.Len(t, list, 1)
+	assert.Equal(t, "cli", list[0].Name, "the CLI token stays; the endpoint refuses it")
+
+	assert.NoError(t, users.SetFlags(ctx, ops, false, model.RoleViewer, false, false, true), "forced")
+	n, _ = users.Admins(ctx)
+	assert.Equal(t, int64(0), n)
 }

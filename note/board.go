@@ -65,13 +65,6 @@ type Board struct {
 	Runner       *runner.Manager
 	Recordings   *recording.Store
 	Events       *event.Bus
-	// Agent is the user name a note names to have the board run the
-	// agent job on it; empty leaves every instruction to MCP.
-	Agent string
-	// AgentJob is the job the board starts for an instruction:
-	// @claude-note, the Notes agent in the root, or folder/job; empty
-	// leaves instructions open for an agent over MCP.
-	AgentJob string
 	// AgentCommand is the command the Claude jobs of the board run, a
 	// prompt's and the Notes agent's, their subcommand after it; nil runs
 	// the jobs' own, task-ui agent.
@@ -137,8 +130,8 @@ func (b *Board) Post(ctx context.Context, user *model.User, parentID, body strin
 		thread = parent
 		b.publish(parent)
 	}
-	if b.forAgent(user, body) {
-		b.dispatch(thread, nil)
+	if agent := b.forAgent(ctx, user, body); agent != nil {
+		b.dispatch(thread, nil, agent)
 	}
 	return note, nil
 }
@@ -202,21 +195,16 @@ func (b *Board) working(ctx context.Context, note *model.Note) *model.Note {
 	return nil
 }
 
-// dispatch starts the agent's job for an instruction, in the background,
-// and replies when the run ends: with a new reply, or in again, the
-// agent's answer to run again, on the thread before it. A job or an agent
-// user that is missing, or a run that does not start, fails the note.
-func (b *Board) dispatch(note, again *model.Note) {
+// dispatch starts the Notes agent for an instruction as the agent user,
+// in the background, and replies when the run ends: with a new reply,
+// or in again, the agent's answer to run again, on the thread before
+// it. No root, or a run that does not start, fails the note.
+func (b *Board) dispatch(note, again *model.Note, agent *model.User) {
 	ctx := context.Background()
 	fail := func(reason string) { b.finish(ctx, note, model.NoteFailed, reason, again) }
 	f, job := b.agentJob()
 	if f == nil || job == nil {
-		fail("The agent job " + b.AgentJob + " is not there.")
-		return
-	}
-	agent, err := b.Users.GetByName(ctx, b.Agent)
-	if err != nil {
-		fail("There is no user " + b.Agent + " to run the agent job as.")
+		fail("The Notes agent " + folder.NoteID + " has no root to run in.")
 		return
 	}
 	answer, err := replyFile()
@@ -389,8 +377,12 @@ func (b *Board) answer(ctx context.Context, note, again *model.Note, body string
 
 // reply replies to a note as the agent, with the note's run.
 func (b *Board) reply(ctx context.Context, note *model.Note, body string) {
+	name := b.AnswererOf(ctx, note)
+	if name == "" {
+		name = answerer
+	}
 	reply := &model.Note{
-		Channel: note.Channel, ParentID: note.ID, UserName: b.Answerer(), Body: body, RunID: note.RunID,
+		Channel: note.Channel, ParentID: note.ID, UserName: name, Body: body, RunID: note.RunID,
 		WorkspaceID: note.WorkspaceID, Dir: note.Dir, AboutRunID: note.AboutRunID, AboutWorkflowRunID: note.AboutWorkflowRunID,
 	}
 	if agent, err := b.Users.GetByName(ctx, reply.UserName); err == nil {
@@ -403,31 +395,18 @@ func (b *Board) reply(ctx context.Context, note *model.Note, body string) {
 	}
 }
 
-// Answerer is the user name the agent's replies carry: Agent, or claude
-// for a prompt's answer with no agent set.
+// Answerer is the user name Claude's answers to prompts carry.
 func (b *Board) Answerer() string {
-	if b.Agent != "" {
-		return b.Agent
-	}
 	return answerer
 }
 
-// agentJob resolves AgentJob: @claude-note, the Notes agent in the
-// root, or folder/job, a job of the catalogue.
+// agentJob returns the Notes agent, @claude-note, in the root.
 func (b *Board) agentJob() (*folder.Folder, *folder.Job) {
-	if b.AgentJob == folder.NoteID && b.Root != "" {
-		root := &folder.Folder{ID: model.Default, Title: model.Default, Dir: b.Root}
-		return root, b.agentCommand(root.NoteJob(), "note")
-	}
-	cut := strings.LastIndex(b.AgentJob, "/")
-	if cut <= 0 || b.Catalogue == nil {
+	if b.Root == "" {
 		return nil, nil
 	}
-	f := b.Catalogue.Find(b.AgentJob[:cut])
-	if f == nil {
-		return nil, nil
-	}
-	return f, f.Job(b.AgentJob[cut+1:])
+	root := &folder.Folder{ID: model.Default, Title: model.Default, Dir: b.Root}
+	return root, b.agentCommand(root.NoteJob(), "note")
 }
 
 // agentCommand returns a Claude job with AgentCommand and the subcommand

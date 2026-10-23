@@ -20,7 +20,9 @@ func (h *Handlers) notes(w http.ResponseWriter, r *http.Request) {
 	}
 	p := h.page(r, "Notes")
 	p.Crumbs = view.Crumbs("Notes")
-	p.Agent = h.opts.Board.Agent
+	if agents, err := h.opts.Users.Agents(r.Context()); err == nil && len(agents) > 0 {
+		p.Agent = agents[0].Name
+	}
 	p.Threads = h.threads(r, storage.NoteFilter{Channel: model.ChannelNotes, Limit: 100})
 	h.render(w, http.StatusOK, "notes", p)
 }
@@ -37,7 +39,7 @@ func (h *Handlers) threads(r *http.Request, filter storage.NoteFilter) []view.Th
 	sees := h.seesRun(r)
 	threads := make([]view.Thread, 0, len(notes))
 	for _, note := range notes {
-		thread := view.Thread{Note: note, Replies: replies[note.ID], Answerer: h.opts.Board.Answerer()}
+		thread := view.Thread{Note: note, Replies: replies[note.ID], Answerer: h.opts.Board.AnswererOf(r.Context(), &note)}
 		if !sees(thread.RunID) {
 			thread.RunID = ""
 		}
