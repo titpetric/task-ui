@@ -20,9 +20,8 @@ func (a *App) keys() *keystore.Local {
 // ensureKeys makes the key folder, private to the server, removes the
 // agent directories a process before this one left, takes the keys of
 // the older layout into the folder once, and makes the instance's
-// encryption key when there is none. A workspace gets an encryption
-// key from an admin, generated or uploaded; only one that holds secrets
-// and has no key gets one here, so its secrets open.
+// encryption key when there is none: the one key that encrypts every
+// secret.
 func (a *App) ensureKeys(ctx context.Context) error {
 	if a.Config.SSHDir == "" {
 		a.Config.SSHDir = filepath.Join(a.Config.DataDir, "keys")
@@ -53,25 +52,6 @@ func (a *App) ensureKeys(ctx context.Context) error {
 			return fmt.Errorf("the instance's encryption key: %w", err)
 		}
 		slog.Info("instance encryption key generated", "name", key.Name, "fingerprint", key.Fingerprint)
-	}
-	store := a.secrets()
-	for _, ws := range workspaces {
-		scope := keystore.ScopeWorkspace(ws.ID)
-		if keys.EncryptKey(ctx, scope) != nil {
-			continue
-		}
-		held, err := store.Encrypted(ctx, ws.Folder)
-		if err != nil {
-			return err
-		}
-		if len(held) == 0 {
-			continue
-		}
-		key, err := keys.Generate(ctx, keystore.Spec{Name: keystore.WorkspaceKeyName(ws.Folder, "encryption"), Purpose: keystore.PurposeEncrypt, Scope: scope, Comment: "task-ui " + ws.Folder})
-		if err != nil {
-			return fmt.Errorf("the keys of workspace %s: %w", ws.Folder, err)
-		}
-		slog.Info("workspace encryption key generated for the secrets it holds", "workspace", ws.Folder, "name", key.Name)
 	}
 	return nil
 }

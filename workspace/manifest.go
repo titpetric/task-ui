@@ -14,9 +14,11 @@ const Format = 1
 // row, its projects, the grants of its SSH keys, its env files and its
 // secrets. Folders are relative to the workspace, "" its own folder; a
 // secret's scope is a relative folder, or workspace: for the secrets it
-// shares. Secrets keep their ciphertext: the bundled encryption key
-// opens them. IDs and dates stay behind; the importing instance makes
-// its own.
+// shares. Secrets go plain, inside the bundle's passphrase, and the
+// importing instance encrypts them for its own encryption key; an
+// older bundle's carry ciphertext and the workspace's encryption key
+// that opens them. IDs and dates stay behind; the importing instance
+// makes its own.
 type Manifest struct {
 	Format int `json:"format"`
 	// Version is the task-ui that wrote the bundle.

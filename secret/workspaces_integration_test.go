@@ -56,7 +56,7 @@ func newSpaces(t *testing.T) *spaces {
 
 	rows := storage.NewSecretStorage(db)
 	store := secret.New(rows, secret.NewVault(secret.DirKeys{Store: instance}))
-	store.Workspaces = &secret.Workspaces{Rows: workspaces, Keys: func(id string) secret.Keys { return secret.DirKeys{Store: encrypt[id]} }}
+	store.Workspaces = &secret.Workspaces{Rows: workspaces}
 	store.Legacy = secret.NewVault(secret.DirKeys{Store: legacy})
 	return &spaces{store: store, rows: rows, instance: instance, legacy: legacy, encrypt: encrypt, ids: ids}
 }
@@ -87,7 +87,6 @@ func TestWorkspaces(t *testing.T) {
 	row, err := w.Of(ctx, "acme/api")
 	assert.NoError(t, err)
 	assert.Equal(t, s.ids["acme"], row.ID)
-	assert.Equal(t, []string{"id_ed25519"}, w.Vault(row).Recipients())
 	_, err = w.Of(ctx, "workspace:gone")
 	assert.ErrorContains(t, err, "gone")
 
@@ -149,37 +148,20 @@ func TestStore_Workspaces(t *testing.T) {
 	assert.Equal(t, 1, n)
 }
 
-// A rotation of a workspace's key, then RekeyWorkspace, writes its
-// secrets for the new key alone; another workspace's stay as they are.
-// Forget removes a workspace's secrets and no other.
-func TestStore_RekeyWorkspace(t *testing.T) {
+// Rekey writes every secret for the instance's key; Forget removes a
+// workspace's secrets and no other.
+func TestStore_Forget(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
 	s := newSpaces(t)
 	assert.NoError(t, s.store.Set(ctx, &model.Secret{Scope: "workspace:acme", Name: "A", Content: "one"}))
 	assert.NoError(t, s.store.Set(ctx, &model.Secret{Scope: "acme/api", Name: "B", Content: "two"}))
 	assert.NoError(t, s.store.Set(ctx, &model.Secret{Scope: "web", Name: "C", Content: "three"}))
-	web, _ := s.rows.Get(ctx, model.Secret{Scope: "web", Name: "C"})
-
-	_, err := s.encrypt[s.ids["acme"]].Generate("ed25519", "rotated")
-	assert.NoError(t, err)
-	n, err := s.store.RekeyWorkspace(ctx, "acme")
-	assert.NoError(t, err)
-	assert.Equal(t, 2, n)
-	after, _ := s.rows.Get(ctx, model.Secret{Scope: "web", Name: "C"})
-	assert.Equal(t, web.Content, after.Content, "another workspace's secret is not written")
-
-	keys := s.encrypt[s.ids["acme"]]
-	for _, key := range keys.List() {
-		if key.Backup {
-			assert.NoError(t, keys.Delete(key.Name))
-		}
-	}
 	api, err := s.store.For(ctx, "acme/api")
 	assert.NoError(t, err)
 	assert.Equal(t, map[string]string{"A": "one", "B": "two"}, api)
 
-	n, err = s.store.Rekey(ctx)
+	n, err := s.store.Rekey(ctx)
 	assert.NoError(t, err)
 	assert.Equal(t, 3, n, "Rekey writes every scope with its own key")
 

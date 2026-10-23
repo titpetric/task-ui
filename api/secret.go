@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/titpetric/task-ui/integration"
-	"github.com/titpetric/task-ui/keystore"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/storage"
 )
@@ -114,10 +113,6 @@ func (h *Handlers) setSecret(w http.ResponseWriter, r *http.Request) {
 		fail(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	if problem := h.secretKey(r, req.Scope); problem != "" {
-		fail(w, http.StatusConflict, problem)
-		return
-	}
 	secret := &model.Secret{Scope: req.Scope, Name: strings.TrimSpace(req.Name), Content: req.Content}
 	if err := h.opts.Secrets.Set(r.Context(), secret); err != nil {
 		failErr(w, err)
@@ -144,25 +139,8 @@ func (h *Handlers) secretScope(r *http.Request, scope string) error {
 	return nil
 }
 
-// secretKey says why a scope's workspace stores no secret: it has no
-// encryption key yet. "" when it has one, or keeps no keys of its own.
-func (h *Handlers) secretKey(r *http.Request, scope string) string {
-	if h.opts.Keys == nil || h.opts.Workspaces == nil || h.opts.Secrets == nil || h.opts.Secrets.Workspaces == nil {
-		return ""
-	}
-	name, err := h.opts.Secrets.Workspace(r.Context(), scope)
-	if err != nil {
-		return ""
-	}
-	row, err := h.opts.Workspaces.GetByFolder(r.Context(), name)
-	if err != nil || h.opts.Keys.EncryptKey(r.Context(), keystore.ScopeWorkspace(row.ID)) != nil {
-		return ""
-	}
-	return "the workspace " + name + " has no encryption key, so it stores no secrets: generate or upload one in Settings, Keys"
-}
-
-// rekeySecrets writes every secret again for the current key of its
-// scope: a workspace's, or the instance key for the services'.
+// rekeySecrets writes every secret again for the instance's current
+// encryption key.
 func (h *Handlers) rekeySecrets(w http.ResponseWriter, r *http.Request) {
 	if !h.require(w, r, "secret/edit") {
 		return

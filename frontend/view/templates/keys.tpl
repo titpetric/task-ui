@@ -2,7 +2,7 @@
 <div class="page-head">
 	<div>
 		<h2>Keys</h2>
-		<p>There are two kinds of key, and a key can't be both. An <b>encryption key</b> protects secrets. The instance has one for the integrations, and each workspace has one for its secrets; without it, a workspace can't store secrets. <b>SSH keys</b> let runs and git connect to hosts and remotes. Instance SSH keys go to the runs of the roles and users they link; a workspace's SSH keys go to that workspace's runs.</p>
+		<p>There are two kinds of key, and a key can't be both. The <b>encryption key</b> protects secrets: the instance has one, and it encrypts every secret, the workspaces' and the integrations'. <b>SSH keys</b> let runs and git connect to hosts and remotes; git runs over ssh. Instance SSH keys go to the runs of the roles and users they link; a workspace's SSH keys go to that workspace's runs.</p>
 	</div>
 </div>
 
@@ -43,31 +43,14 @@
 			</tr>
 			{{- range .KeyWorkspaces }}
 			{{- $ws := .Workspace }}{{ $api := printf "/api/workspaces/%s/keys" $ws.Folder }}{{ $base := printf "/settings/workspaces/%s" $ws.Folder }}
-			<tr id="ws-{{ $ws.Folder }}"{{ if not .Encrypt }} class="key-missing"{{ end }}>
+			<tr id="ws-{{ $ws.Folder }}">
 				<td>
 					<a href="{{ $base }}"><b>{{ or $ws.Title $ws.Folder }}</b></a>{{ if and $ws.Title (ne $ws.Title $ws.Folder) }} <span class="badge">{{ $ws.Folder }}</span>{{ end }}
 					<div class="faint key-projects">{{ if .Projects }}{{ join .Projects ", " }}{{ else }}no projects{{ end }}</div>
 				</td>
-				<td>{{ if .Secrets }}<a href="/settings/secrets?workspace={{ $ws.Folder }}">{{ .Secrets }} secret{{ if ne .Secrets 1 }}s{{ end }}</a>{{ else if .Encrypt }}<a class="faint" href="/settings/secrets?workspace={{ $ws.Folder }}">none</a>{{ else }}<span class="faint">none</span>{{ end }}</td>
+				<td>{{ if .Secrets }}<a href="/settings/secrets?workspace={{ $ws.Folder }}">{{ .Secrets }} secret{{ if ne .Secrets 1 }}s{{ end }}</a>{{ else }}<a class="faint" href="/settings/secrets?workspace={{ $ws.Folder }}">none</a>{{ end }}</td>
 				<td>
-					{{- with .Encrypt }}
-					<span class="badge ok">set</span>
-					<form class="inline" data-api="{{ $api }}/generate" data-method="POST" data-next="/settings/keys?rekeyed={rekeyed}#ws-{{ $ws.Folder }}" data-confirm="Rotate the encryption key of {{ $ws.Folder }}? task-ui gives it new material, keeps the current one as a backup, and re-encrypts the workspace's secrets." data-confirm-ok="Rotate Key">
-						<input type="hidden" name="encrypt" value="true" data-type="bool">
-						<input type="hidden" name="comment" value="{{ .Comment }}">
-						<button class="btn btn-sm" type="submit" title="Generate a new encryption key"><svg class="ic"><use href="#i-rotate"/></svg> Rotate Key</button>
-					</form>
-					<div class="key-fp faint">{{ .Fingerprint }}</div>
-					{{- else }}
-					<span class="badge bad">missing</span>
-					<form class="inline" data-api="{{ $api }}/generate" data-method="POST" data-next="/settings/keys?notice=Encryption+key+added+to+{{ $ws.Folder }}#ws-{{ $ws.Folder }}">
-						<input type="hidden" name="encrypt" value="true" data-type="bool">
-						<input type="hidden" name="comment" value="task-ui {{ $ws.Folder }}">
-						<button class="btn btn-sm btn-primary" type="submit">Generate</button>
-					</form>
-					<a class="btn btn-sm" href="{{ $base }}/keys/upload?encrypt=1">Upload</a>
-					<div class="warn">You can't add secrets until it has one.</div>
-					{{- end }}
+					<span class="faint">the instance's</span>
 				</td>
 				<td>
 					{{- if .SSH }}
@@ -93,15 +76,15 @@
 			<a class="btn btn-sm btn-primary" href="/settings/keys/generate">Generate key</a>
 		</div>
 	</div>
-	<p class="dim">Every key lives in the key folder as <code>&lt;name&gt;.key</code> and <code>&lt;name&gt;.pub</code>, the name ending in its algorithm and size. An instance SSH key goes to the runs of the roles and users it links, through their ssh agent, and the inventory signs in to hosts with it; a workspace's SSH key goes to the runs of that workspace. The <span class="badge ok">git</span> key pulls and clones the checkouts. An encryption key never leaves task-ui.</p>
+	<p class="dim">Every key lives in the key folder as <code>&lt;name&gt;.key</code> and <code>&lt;name&gt;.pub</code>, the name ending in its algorithm and size. An instance SSH key goes to the runs of the roles and users it links, through their ssh agent, and the inventory signs in to hosts with it; a workspace's SSH key goes to the runs of that workspace. The git key, which a key's page sets, pulls and clones the checkouts. An encryption key never leaves task-ui.</p>
 	<div class="table-wrap">
 	<table class="table keys">
 		<thead><tr><th>Name</th><th>Purpose</th><th>Fingerprint</th><th>Scope</th><th>Linked</th><th>Reads</th><th>Last read</th><th>Date</th><th>Actions</th></tr></thead>
 		<tbody>
 		{{- range .Keys }}
 			<tr id="key-{{ .Name }}">
-				<td class="key"><span class="mono">{{ .Name }}</span>{{ with .Backup }}{{ template "backup-active" . }}{{ end }}{{ if .Git }} <span class="badge ok" title="git pulls and clones with it">git</span>{{ end }}{{ with .Comment }}<div class="faint">{{ . }}</div>{{ end }}</td>
-				<td data-label="Purpose"><span class="badge{{ if .Encrypts }} signal{{ end }}">{{ if .Encrypts }}encryption{{ else }}SSH{{ end }}</span></td>
+				<td class="key"><span class="mono">{{ .Name }}</span>{{ with .Backup }}{{ template "backup-active" . }}{{ end }}{{ with .Comment }}<div class="faint">{{ . }}</div>{{ end }}</td>
+				<td data-label="Purpose"><span class="badge{{ if .Encrypts }} signal{{ end }}"{{ if .Git }} title="git pulls and clones with it"{{ end }}>{{ if .Encrypts }}encryption{{ else }}git + ssh{{ end }}</span></td>
 				<td class="fingerprint" data-label="Fingerprint"><span class="kind dim">{{ .Kind }}</span>{{ .Fingerprint }}</td>
 				<td class="nowrap" data-label="Scope">{{ with .Workspace }}workspace{{ else }}instance{{ end }}</td>
 				<td class="nowrap" data-label="Linked">{{ if .Encrypts }}<span class="faint">never handed out</span>{{ else }}{{ range .Roles }}<span class="badge">{{ . }}</span> {{ end }}{{ range .Users }}{{ template "avatar" (list $ .) }} {{ end }}{{ if not (or .Roles .Users) }}<span class="faint">{{ if .Workspace }}every run of the workspace{{ else }}none{{ end }}</span>{{ end }}{{ end }}</td>

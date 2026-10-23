@@ -1,6 +1,8 @@
 package runner
 
-import "context"
+import (
+	"context"
+)
 
 // BacklogState is how the slots and the line for them stand, as the
 // Instance page and GET /api/instance show it.

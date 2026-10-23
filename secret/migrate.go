@@ -18,10 +18,11 @@ type pending struct {
 	vault  *Vault
 }
 
-// Migrate puts every secret but the services' on its workspace's key:
-// the shared ones, scope all, become the default workspace's,
-// workspace:_, and Migrate decrypts a row its workspace's key does not
-// open with the legacy SSH keys and encrypts it for the workspace's. Before
+// Migrate puts every secret but the services' on the instance's
+// encryption key: the shared ones, scope all, become the default
+// workspace's, workspace:_, and Migrate decrypts a row that key does not
+// open with the legacy keys, the SSH keys of old and the workspaces'
+// encryption keys, and encrypts it for the instance's. Before
 // it writes anything it calls before, to copy the database, say; with
 // nothing to do it does not. Migrate removes a row only after it wrote
 // the replacement and read it back; a row nothing opens stays untouched,
@@ -47,7 +48,7 @@ func (s *Store) Migrate(ctx context.Context, before func(context.Context) error)
 			continue
 		}
 		result.Migrated++
-		slog.Info("secret written for its workspace's key", "scope", item.row.Scope, "to", item.target, "name", item.row.Name)
+		slog.Info("secret written for the instance's encryption key", "scope", item.row.Scope, "to", item.target, "name", item.row.Name)
 	}
 	return result, nil
 }
@@ -94,7 +95,7 @@ func (s *Store) migrate(ctx context.Context, item pending) error {
 	plain, err := item.vault.Decrypt(item.row.Content)
 	if err != nil {
 		if plain, err = s.legacy(item.row.Content); err != nil {
-			return fmt.Errorf("neither the workspace's key nor the legacy SSH keys open it: %w", err)
+			return fmt.Errorf("neither the instance's encryption key nor the legacy keys open it: %w", err)
 		}
 	}
 	encrypted, err := item.vault.Encrypt(plain)
@@ -102,7 +103,7 @@ func (s *Store) migrate(ctx context.Context, item pending) error {
 		return err
 	}
 	if back, err := item.vault.Decrypt(encrypted); err != nil || back != plain {
-		return errors.Join(errors.New("the workspace's key does not read back what it wrote"), err)
+		return errors.Join(errors.New("the instance's encryption key does not read back what it wrote"), err)
 	}
 	if item.target == item.row.Scope {
 		row := item.row
@@ -142,8 +143,9 @@ func (s *Store) check(ctx context.Context, item pending, plain string) error {
 	return nil
 }
 
-// legacy decrypts a value with the SSH keys that encrypted the secrets
-// before encryption had keys of its own.
+// legacy decrypts a value with the keys that encrypted the secrets
+// before the instance's key encrypted them all: the SSH keys of old and
+// the workspaces' encryption keys.
 func (s *Store) legacy(text string) (string, error) {
 	if s.Legacy == nil {
 		return "", errors.New("no legacy SSH keys")

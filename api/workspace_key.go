@@ -23,10 +23,11 @@ func (h *Handlers) keysWorkspace(w http.ResponseWriter, r *http.Request) *model.
 	return workspace
 }
 
-// listWorkspaceKeys returns a workspace's keys, public halves and
-// fingerprints only: the encryption key, and the SSH keys with the
-// roles and the users each goes to; a key with neither goes to every
-// run in the workspace. Takes workspace/view.
+// listWorkspaceKeys returns a workspace's SSH keys, public halves and
+// fingerprints only, with the roles and the users each goes to; a key
+// with neither goes to every run in the workspace. A workspace has no
+// encryption key: the instance's encrypts every secret. Takes
+// workspace/view.
 func (h *Handlers) listWorkspaceKeys(w http.ResponseWriter, r *http.Request) {
 	if !h.require(w, r, "workspace/view") {
 		return
@@ -44,25 +45,18 @@ func (h *Handlers) listWorkspaceKeys(w http.ResponseWriter, r *http.Request) {
 	if keys == nil {
 		keys = []keystore.Key{}
 	}
-	writeJSON(w, http.StatusOK, map[string]any{"encrypt": h.opts.Keys.EncryptKey(r.Context(), scope), "keys": keys, "dir": h.opts.Keys.Dir})
+	writeJSON(w, http.StatusOK, map[string]any{"keys": keys, "dir": h.opts.Keys.Dir})
 }
 
-// generateWorkspaceKey makes an SSH key of a workspace, or its
-// encryption key, new material for the one it has, for which it writes
-// the workspace's secrets again.
+// generateWorkspaceKey makes an SSH key of a workspace.
 func (h *Handlers) generateWorkspaceKey(w http.ResponseWriter, r *http.Request) {
 	h.addWorkspaceKey(w, r, func(workspace *model.Workspace, req WorkspaceKeyRequest) (*keystore.Key, error) {
-		spec := h.workspaceSpec(workspace, req)
-		if current := h.opts.Keys.EncryptKey(r.Context(), spec.Scope); req.Encrypt && current != nil {
-			return h.opts.Keys.Rotate(r.Context(), current.Name)
-		}
-		return h.opts.Keys.Generate(r.Context(), spec)
+		return h.opts.Keys.Generate(r.Context(), h.workspaceSpec(workspace, req))
 	})
 }
 
-// uploadWorkspaceKey stores a private key as an SSH key of a workspace,
-// or as its encryption key. A key the folder holds, under any name or
-// purpose, answers 409.
+// uploadWorkspaceKey stores a private key as an SSH key of a workspace.
+// A key the folder holds, under any name or purpose, answers 409.
 func (h *Handlers) uploadWorkspaceKey(w http.ResponseWriter, r *http.Request) {
 	h.addWorkspaceKey(w, r, func(workspace *model.Workspace, req WorkspaceKeyRequest) (*keystore.Key, error) {
 		return h.opts.Keys.Import(r.Context(), h.workspaceSpec(workspace, req), []byte(req.Content))
@@ -70,14 +64,11 @@ func (h *Handlers) uploadWorkspaceKey(w http.ResponseWriter, r *http.Request) {
 }
 
 // workspaceSpec returns what a request makes for a workspace: its name
-// under workspace_<folder>_, the purpose, the workspace's scope.
+// under workspace_<folder>_, an SSH key of the workspace's scope.
 func (h *Handlers) workspaceSpec(workspace *model.Workspace, req WorkspaceKeyRequest) keystore.Spec {
 	kr := req.keyRequest()
 	spec := kr.spec(keystore.ScopeWorkspace(workspace.ID))
 	what := spec.Name
-	if req.Encrypt {
-		spec.Purpose, what = keystore.PurposeEncrypt, "encryption"
-	}
 	if what == "" {
 		what = "ssh"
 	}
@@ -85,9 +76,10 @@ func (h *Handlers) workspaceSpec(workspace *model.Workspace, req WorkspaceKeyReq
 	return spec
 }
 
-// addWorkspaceKey reads a key request, adds the key, links an SSH key
-// the request names roles or users for, and answers with the key's
-// public half; a new encryption key writes the secrets again.
+// addWorkspaceKey reads a key request, adds the SSH key, links it to
+// the roles or users the request names, and answers with its public
+// half. A request for an encryption key answers 400: one encryption
+// key per instance, the instance's.
 func (h *Handlers) addWorkspaceKey(w http.ResponseWriter, r *http.Request, add func(*model.Workspace, WorkspaceKeyRequest) (*keystore.Key, error)) {
 	if !h.require(w, r, "workspace/edit") {
 		return
@@ -101,34 +93,20 @@ func (h *Handlers) addWorkspaceKey(w http.ResponseWriter, r *http.Request, add f
 		fail(w, http.StatusBadRequest, err.Error())
 		return
 	}
+	if req.Encrypt {
+		fail(w, http.StatusBadRequest, ErrWorkspaceEncrypt.Error())
+		return
+	}
 	key, err := add(workspace, req)
 	if err != nil {
 		failKey(w, err)
 		return
 	}
-	if !req.Encrypt {
-		if err := h.link(r, key.Name, req.keyRequest()); err != nil {
-			failKey(w, err)
-			return
-		}
+	if err := h.link(r, key.Name, req.keyRequest()); err != nil {
+		failKey(w, err)
+		return
 	}
-	body := map[string]any{"key": key}
-	if req.Encrypt && h.opts.Secrets != nil {
-		h.rekeyWorkspace(r, workspace, body)
-	}
-	writeJSON(w, http.StatusCreated, body)
-}
-
-// rekeyWorkspace writes a workspace's secrets again for its encryption
-// key and adds the count to the body. The previous material stays as a
-// backup, so a rekey that fails is a field of the body, not a failure:
-// the backup still opens the secrets.
-func (h *Handlers) rekeyWorkspace(r *http.Request, workspace *model.Workspace, body map[string]any) {
-	n, err := h.opts.Secrets.RekeyWorkspace(r.Context(), workspace.Folder)
-	body["rekeyed"] = n
-	if err != nil {
-		body["rekey_error"] = err.Error()
-	}
+	writeJSON(w, http.StatusCreated, map[string]any{"key": key})
 }
 
 // workspaceSSHKey returns an SSH key of the workspace by name, answering
@@ -176,8 +154,7 @@ func (h *Handlers) updateWorkspaceKey(w http.ResponseWriter, r *http.Request) {
 }
 
 // deleteWorkspaceKey retires one of a workspace's SSH keys and drops
-// its links. The encryption key is no SSH key: an admin rotates it to new
-// material, and no route deletes it. Takes workspace/edit.
+// its links. Takes workspace/edit.
 func (h *Handlers) deleteWorkspaceKey(w http.ResponseWriter, r *http.Request) {
 	if !h.require(w, r, "workspace/edit") {
 		return
