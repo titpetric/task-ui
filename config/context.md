@@ -59,7 +59,13 @@ the run and its details stay, without the output. Pages: `/runs`,
 You see the runs of folders you see; ending one takes the right to run
 its job. Every run has a terminal on its input: you type into a run of
 an interactive job when you may run it, and `input` lets you take input
-on a running run of any job, to answer a prompt it waits on.
+on a running run of any job, to answer a prompt it waits on. The
+**Tooling** panel on `/runs` is what the commands inside the runs spent
+their time on, from `atkins --stats --json`: a section per database
+atkins records to, the project's and the workspace's, each with a chart
+of the last 30 and 7 days, the tools of each by total time, and the
+commands behind a toggle. It reports commands and not runs, so it needs
+no permission of its own.
 
 ## Workspaces (`workspace`)
 

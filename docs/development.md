@@ -56,6 +56,7 @@ domains, the domains to `model` and `storage`, `model` to nothing of ours.
 | `sshprobe`  | who task-ui signs in to a host as over ssh                                   |
 | `hostrun`   | the runs of `@host:<host>`, a command on a host of the inventory             |
 | `skills`    | asks atkins what runs in a directory: its pipeline and the skills that apply |
+| `tooling`   | asks atkins what the tree has been running, the `Report` behind the panel on the runs page |
 | `markdown`  | markdown rendered as HTML                                                    |
 | `highlight` | the coloured HTML of the files a pipeline reads                              |
 | `diskusage` | how much space a directory takes, files and git history apart                |
