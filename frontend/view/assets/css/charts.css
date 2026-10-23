@@ -1,0 +1,150 @@
+/* A month of measures the way rrdtool draws it: thin lines over a day
+   axis with a gridline a week, a faint area under a lone line, a stack
+   of areas for the hosts of the cluster, and the least, mean and most
+   of each series under the drawing. The series take the series colours
+   in order. */
+.charts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.6rem;
+  margin-top: 0.6rem;
+}
+
+.chart {
+  margin: 0;
+  min-width: 0;
+  padding: 0.5rem 0.7rem 0.45rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--ink-1);
+
+  & .chart-title {
+    margin: 0 0 0.3rem;
+    color: var(--text-dim);
+    font-family: var(--font-ui);
+    font-size: var(--fs-xs);
+  }
+
+  & .chart-empty {
+    margin: 1.5rem 0;
+    font-size: var(--fs-sm);
+    text-align: center;
+  }
+}
+
+.chart-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+
+  & .grid {
+    stroke: var(--line);
+    stroke-width: 1;
+  }
+
+  & .grid.week {
+    stroke-dasharray: 2 3;
+  }
+
+  & .axis,
+  & .day {
+    stroke: var(--line-2);
+    stroke-width: 1;
+  }
+
+  & .tick {
+    fill: var(--text-faint);
+    font: 400 10.5px var(--font);
+  }
+
+  & .line {
+    fill: none;
+    stroke: var(--seg);
+    stroke-width: 1.5;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+  }
+
+  & .area {
+    fill: color-mix(in srgb, var(--seg) 16%, transparent);
+    stroke: none;
+  }
+
+  & .dot {
+    fill: var(--seg);
+  }
+}
+
+/* The legend sits in the hosts table when a host's row is open, so it
+   undoes what that table sets on its cells. */
+.chart-legend {
+  width: 100%;
+  margin-top: 0.3rem;
+  border-collapse: collapse;
+  font: 400 var(--fs-xs) var(--font);
+  font-variant-numeric: tabular-nums;
+
+  & th {
+    padding: 0 0 0.1rem 0.6rem;
+    border: 0;
+    background: none;
+    color: var(--text-faint);
+    font-size: var(--fs-xs);
+    font-weight: 400;
+    letter-spacing: 0;
+    text-transform: none;
+    text-align: end;
+  }
+
+  & td {
+    padding: 0.05rem 0 0.05rem 0.6rem;
+    border: 0;
+    background: none;
+    font: inherit;
+    color: var(--text-dim);
+    text-align: end;
+    white-space: nowrap;
+  }
+
+  & td:first-child {
+    padding-inline-start: 0;
+    overflow: hidden;
+    max-width: 9rem;
+    color: var(--text);
+    text-align: start;
+    text-overflow: ellipsis;
+  }
+
+  & tbody tr:hover td {
+    background: none;
+  }
+
+  & tr.total td {
+    border-top: 1px solid var(--line);
+    font-weight: 600;
+  }
+
+  & .swatch {
+    display: inline-block;
+    width: 0.6rem;
+    height: 0.6rem;
+    margin-inline-end: 0.4rem;
+    border-radius: var(--radius);
+    background: var(--seg);
+    vertical-align: -0.05rem;
+  }
+}
+
+.s0 { --seg: var(--series-0); }
+.s1 { --seg: var(--series-1); }
+.s2 { --seg: var(--series-2); }
+.s3 { --seg: var(--series-3); }
+.s4 { --seg: var(--series-4); }
+.s5 { --seg: var(--series-5); }
+
+@media (max-width: 720px) {
+  .charts {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

@@ -80,8 +80,10 @@ func (h *Handlers) inventory(w http.ResponseWriter, r *http.Request) {
 // whose answer is stale again in the background, for the next view.
 func (h *Handlers) cluster(r *http.Request, p *view.Page) {
 	var containers map[string][]beszel.Container
+	var history map[string][]beszel.Sample
 	if hub, err := h.opts.Hosts.Hub(r.Context()); err == nil {
 		containers, _ = hub.Containers(r.Context())
+		history, _ = hub.History(r.Context())
 	}
 	disks := map[string][]hostinfo.Filesystem{}
 	for _, system := range p.Hosts {
@@ -91,6 +93,9 @@ func (h *Handlers) cluster(r *http.Request, p *view.Page) {
 	}
 	cluster := hostinfo.NewCluster(p.Hosts, containers, disks)
 	p.Cluster = &cluster
+	if len(history) > 0 {
+		p.ClusterCharts = view.ClusterCharts(p.Cluster, p.Hosts, history, p.Now)
+	}
 }
 
 // facts returns what a login's host last told over ssh, waiting at most

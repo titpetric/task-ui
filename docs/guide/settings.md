@@ -283,7 +283,12 @@ setting of an integration.
   [Notes](notes.md) board runs as that user. With no box checked, every
   run gets it. The token alone sets the integration up.
 - **Beszel**: the hub's URL, as task-ui reaches it, and a token, for the
-  [Inventory](inventory.md) page.
+  [Inventory](inventory.md) page. task-ui reads the collections
+  `systems`, `system_stats`, the latest minute of each host and its
+  records of eight or two hours for the charts, `containers`, the
+  containers each host runs, and `container_stats`, their records,
+  the newest minute on a hub without `containers`. A read-only user
+  reads them all.
 
 Beszel has no API keys, so task-ui takes a token of a read-only user that
 no one signs in as. Make one in Beszel with a password nobody keeps, then

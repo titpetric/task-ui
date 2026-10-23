@@ -84,6 +84,16 @@
 	{{- else }}
 	<p class="empty-state">Neither df over ssh nor Beszel reports the host's filesystems{{ if not $d.Login }}: task-ui has no ssh login to it, and Beszel no measures{{ end }}.</p>
 	{{- end }}
+
+	{{- if or $d.Charts $d.ContainerCharts }}
+	<h4 class="section-title">The last 30 days <small>Beszel's records</small></h4>
+	<div class="charts">
+		{{- range $d.Charts }}{{ template "chart" . }}{{ end }}
+		{{- range $d.ContainerCharts }}{{ template "chart" . }}{{ end }}
+	</div>
+	{{- else }}
+	<p class="empty-state">Beszel holds no records of the host in the last 30 days.</p>
+	{{- end }}
 </div>
 {{- end }}
 {{ end }}

@@ -18,6 +18,12 @@ func hostHub(t *testing.T) *httptest.Server {
 		switch r.URL.Path {
 		case "/api/collections/system_stats/records":
 			_, _ = w.Write([]byte(`{"items":[{"system":"a","created":"2026-10-16 19:00:00.000Z","stats":{"m":8,"mu":4,"d":200,"du":60,"efs":{"sdb":{"d":100,"du":10}}}}]}`))
+		case "/api/collections/container_stats/records":
+			if !strings.Contains(r.URL.Query().Get("filter"), "system='a'") {
+				_, _ = w.Write([]byte(`{"items":[]}`))
+				return
+			}
+			_, _ = w.Write([]byte(`{"items":[{"system":"a","created":"2026-10-16 19:00:00.000Z","stats":[{"n":"db","c":4,"m":2048}]}]}`))
 		case "/api/collections/containers/records":
 			_, _ = w.Write([]byte(`{"items":[{"system":"a","name":"web","image":"caddy:2","status":"Up 1 hour","cpu":1.5,"memory":64,"net":2048},{"system":"a","name":"db","cpu":4,"memory":2048}]}`))
 		case "/api/collections/systems/records":
@@ -44,6 +50,7 @@ func TestInventoryHost(t *testing.T) {
 	list := f.page(t, asAdmin, "/inventory")
 	assert.Contains(t, list, `<tr class="host-row" data-host-row="dev1" tabindex="0" aria-expanded="false">`)
 	assert.NotContains(t, f.page(t, asViewer, "/inventory"), "data-host-row")
+	assert.Contains(t, list, `<figcaption class="chart-title">Busy cores</figcaption>`)
 
 	body := f.page(t, asAdmin, "/inventory/hosts/dev1")
 	assert.Contains(t, body, `data-host-detail="dev1"`)
@@ -63,9 +70,14 @@ func TestInventoryHost(t *testing.T) {
 	assert.NotContains(t, body, `<code>/run</code>`)
 	assert.Contains(t, body, `class="meter high"`)
 	assert.NotContains(t, body, "hub-token-secret")
+	assert.Contains(t, body, "The last 30 days")
+	assert.Contains(t, body, `<figcaption class="chart-title">Containers by memory</figcaption>`)
+	assert.Contains(t, body, `<svg class="chart-svg" viewBox="0 0 400 140" role="img" aria-label="Disk">`)
+	assert.Contains(t, body, `<i class="swatch s1"></i>sdb</td>`)
 
 	old := f.page(t, asAdmin, "/inventory/hosts/old")
 	assert.Contains(t, old, "no ssh login")
+	assert.Contains(t, old, "Beszel holds no records of the host in the last 30 days.")
 	assert.Contains(t, old, "Neither Beszel nor docker ps lists containers on the host: task-ui has no ssh login to the host, for docker ps.")
 	assert.Contains(t, old, "Neither df over ssh nor Beszel reports the host's filesystems: task-ui has no ssh login to it, and Beszel no measures.")
 
