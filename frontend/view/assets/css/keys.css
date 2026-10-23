@@ -73,10 +73,11 @@
 .table.secrets {
   table-layout: fixed;
 
-  & th:nth-child(1) { width: 38%; }
-  & th:nth-child(2) { width: 30%; }
-  & th:nth-child(3) { width: 18%; }
-  & th:nth-child(4) { width: 14%; }
+  & th:nth-child(1) { width: 26%; }
+  & th:nth-child(2) { width: 20%; }
+  & th:nth-child(3) { width: 13%; }
+  & th:nth-child(4) { width: 8%; }
+  & th:nth-child(6) { width: 3.5rem; }
 
   & td {
     overflow-wrap: anywhere;
@@ -100,76 +101,6 @@
 
 .secret-filter {
   margin-bottom: 0.75rem;
-}
-
-/* A quiet menu behind a ⋯ button, for an action a block seldom needs,
-   such as rotating a workspace's encryption key. */
-.more-menu {
-  position: relative;
-  display: inline-block;
-
-  & > summary {
-    list-style: none;
-    cursor: pointer;
-
-    &::-webkit-details-marker {
-      display: none;
-    }
-  }
-
-  &[open] > summary {
-    border-color: var(--signal);
-  }
-}
-
-.more-list {
-  position: absolute;
-  top: calc(100% + 0.25rem);
-  right: 0;
-  z-index: 40;
-  display: grid;
-  min-width: 14rem;
-  padding: 0.25rem;
-  border: 1px solid var(--line-2);
-  border-radius: var(--radius);
-  background: var(--ink-1);
-  box-shadow: var(--shadow-pop);
-}
-
-.more-item {
-  display: flex;
-  align-items: center;
-  gap: 0.45rem;
-  width: 100%;
-  padding: 0.35rem 0.5rem;
-  border: 0;
-  border-radius: var(--radius);
-  background: transparent;
-  color: var(--text);
-  font: inherit;
-  font-size: var(--fs-sm);
-  text-align: start;
-  cursor: pointer;
-
-  &:hover,
-  &:focus-visible {
-    background: var(--ink-2);
-    color: var(--signal);
-  }
-
-  &.danger {
-    color: var(--bad);
-  }
-
-  &[disabled] {
-    color: var(--text-faint);
-    cursor: not-allowed;
-    background: transparent;
-  }
-
-  & small {
-    margin-inline-start: auto;
-  }
 }
 
 /* A keys table, on the Keys page and the Instance page: Name,
@@ -225,43 +156,4 @@
   & td.actions {
     text-align: right;
   }
-
-  & .row-more .more-list {
-    position: fixed;
-    right: auto;
-    min-width: 18rem;
-  }
-}
-
-/* The details a row's menu holds above its items, such as a key's
-   fingerprint and dates, and the line between its groups. */
-.more-details {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 0.2rem 0.6rem;
-  margin: 0 0 0.25rem;
-  padding: 0.4rem 0.5rem 0.5rem;
-  border-bottom: 1px solid var(--line);
-  font-size: var(--fs-xs);
-  text-align: start;
-
-  & dt {
-    color: var(--text-faint);
-    font-size: var(--fs-label);
-    letter-spacing: var(--ls-label);
-    text-transform: uppercase;
-  }
-
-  & dd {
-    margin: 0;
-    color: var(--text-dim);
-    overflow-wrap: anywhere;
-    max-width: 22rem;
-  }
-}
-
-.more-sep {
-  margin: 0.25rem 0;
-  border: 0;
-  border-top: 1px solid var(--line);
 }

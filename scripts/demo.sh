@@ -305,6 +305,15 @@ repo labs "Experiments"
 api POST /workspaces -d "{\"url\":\"file://$work/repos/labs.git\",\"folder\":\"labs\",\"title\":\"Labs\"}"
 shot keys-dark /settings/keys dark 1440x1100
 shot secrets-dark /settings/secrets dark 1440x1300
+# A row's [...] menu open, #actions=<n> opening row n's: a key's, its
+# details on top and Remove last, in both themes; a run of a job beside
+# View;
+# on a phone, a sheet along the bottom.
+for theme in dark light; do
+  shot "keys-menu-${theme}" "/settings/keys#actions=1" "$theme" 1440x1500
+  shot "job-menu-${theme}" "/f/_/infra/deploy#actions=1" "$theme" 1440x1400
+done
+shot mobile-actions-dark "/settings/users#actions=2" dark 390x844
 
 mkdir -p docs/assets
 rm -f docs/assets/*.png

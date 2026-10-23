@@ -75,10 +75,10 @@
 				<td class="key"><a href="/api/artifacts/{{ .ID }}">{{ .Name }}</a></td>
 				<td class="nowrap">{{ size .ByteSize }}</td>
 				<td class="dim">{{ .ContentType }}</td>
-				<td class="actions">
-					<a class="btn-icon" href="/api/artifacts/{{ .ID }}" title="Download" aria-label="Download {{ .Name }}"><svg class="ic"><use href="#i-download"/></svg></a>
-					{{- if $.Can "artifact/delete" }}<button type="button" class="btn-icon danger" data-delete="/api/artifacts/{{ .ID }}" data-confirm="Delete {{ .Name }}?" data-next="reload" title="Delete" aria-label="Delete {{ .Name }}"><svg class="ic"><use href="#i-trash"/></svg></button>{{ end }}
-				</td>
+				<td class="actions">{{ template "menu" (menu (print "Actions on " .Name)
+					(item "download" "Download" "href" (print "/api/artifacts/" .ID))
+					(and ($.Can "artifact/delete") (danger "trash" "Delete" "data-delete" (print "/api/artifacts/" .ID) "data-confirm" (print "Delete " .Name "?") "data-confirm-ok" "Delete" "data-next" "reload"))
+				) }}</td>
 			</tr>
 		{{- else }}
 			<tr class="empty"><td colspan="4">No artifacts. To keep files from a run, the job writes them to the directory in $TASK_UI_ARTIFACTS.</td></tr>

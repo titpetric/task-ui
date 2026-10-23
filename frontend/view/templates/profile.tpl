@@ -34,7 +34,12 @@
 				<td class="key"><a href="{{ with $.RunJobHref .Folder .Dir .Job }}{{ . }}{{ else }}/runs/{{ $r.ID }}{{ end }}">{{ .Name }}</a></td>
 				<td class="nowrap" data-label="Took">{{ duration .Elapsed }}</td>
 				<td data-label="Result">{{ template "state" . }}</td>
-				<td class="actions"><a class="btn btn-sm" href="/runs/{{ .ID }}" data-attach="{{ .ID }}">{{ if not (ended .State) }}Attach{{ else }}View{{ end }}</a>{{ template "replay" . }}</td>
+				<td class="actions"><a class="btn btn-sm" href="/runs/{{ .ID }}" data-attach="{{ .ID }}">{{ if not (ended .State) }}Attach{{ else }}View{{ end }}</a>{{ template "menu" (menu (print "Actions on the run of " .Job)
+					(detail "Run" .ID "mono" "")
+					(detail "Started" (stamp .StartedAt))
+					(item "file" "Open the run's page" "href" (print "/runs/" .ID))
+					(and .CastPath (ended .State) (item "play" "Replay the recording" "data-replay" .ID "data-replay-title" .Name "data-replay-who" .UserName))
+				) }}</td>
 			</tr>
 		{{- end }}
 		</tbody>

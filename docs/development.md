@@ -12,11 +12,71 @@ sets the instance up through the API with curl, starts real runs with
 and captures each view with headless chromium through
 `scripts/chromium.sh`, the phone views included. A run opens in its
 window from a link: `/runs/<id>#run=<id>`; `#start=<folder>/<job>`
-starts one; `#menu` opens the drawer.
+starts one; `#menu` opens the drawer; `#actions=<n>` opens the **⋯**
+menu of row n.
 
 Under 860px the sidebar is a drawer behind the menu button, with the
 folders opening into their jobs, and the tables of jobs and runs fold
 into cards.
+
+## Row actions
+
+A row of a table shows its main action as a button and the rest
+behind its **⋯** button, the same menu on every page: users, keys,
+secrets, projects, workspaces, schedules, workflows, runs, notes and
+prompts, artifacts, a folder's Files and env files, and the inventory's
+hosts.
+
+- **Visible**: the row's main purpose, at most one or two buttons:
+  **Run** on a job or a workflow, **View** or **Attach** on a run, the
+  Run menus of the Files list, the copy button of a key's public key.
+  Everything else goes in the menu.
+- **Items**: an icon and a text label each, never an icon alone. A link
+  navigates; a button does what its data attributes say, as a loose
+  button does: `data-delete`, `data-api` with `data-method` and
+  `data-body`, `data-copy`, `data-download`, `data-confirm`,
+  `data-confirm-ok` and `data-next`.
+- **Order**: the primary items first (open, edit, view), the secondary
+  ones (copy, download, move) after a line, the danger group last, in
+  the bad colour: Delete, Remove, Kill. The menu puts every danger item
+  in the last group, wherever the template lists it.
+- **Details**: the top of the menu holds what the row's columns leave
+  out, as label and value: a key's fingerprint and dates, a run's ID and
+  start, the version of an artifact.
+- **Accessibility**: the button has `aria-haspopup="menu"`,
+  `aria-expanded` and the label "Actions on <name>"; the items have
+  `role="menuitem"`. A click opens the menu, never a hover; Enter, Space
+  or the down arrow open it on the first item, the arrows, Home and End
+  move, Escape closes it and returns the focus to the button. A click
+  outside, a scroll or a pick close it, and one menu is open at a time.
+  On a phone, under 640px, it opens as a sheet at the bottom.
+
+A template draws one with the `menu` template and the functions of the
+same names:
+
+```
+{{ template "menu" (menu (print "Actions on " .Name)
+	(detail "Fingerprint" .Fingerprint "mono" "")
+	(item "edit" "Edit links" "href" (print "/settings/keys/" .Name))
+	(item "copy" "Copy public key" "data-copy" .PublicKey)
+	sep
+	(and ($.Can "key/delete") (danger "trash" "Remove" "data-delete" (print "/api/keys/" .Name) "data-confirm" "Remove it?" "data-next" "reload"))) }}
+```
+
+`item` and `danger` take an icon of the sprite, a label and pairs of an
+attribute and its value: `href`, `download`, `note`, `disabled` (its value
+the note) and any `data-*`, `aria-*` or `title`, the values escaped; an
+unknown attribute fails the render. `detail` takes a label, a value and
+`title` or `mono`. `sep` ends a group. `(and $cond (item ...))` leaves an
+item out while the condition is empty, and a menu with nothing in it
+draws no button. `menuHTML` in `task-ui.js` draws the same for the rows
+a script adds. The CSS is in `css/menus.css`.
+
+A keys table has the same columns on every page, the Keys page, the
+Instance page, a workspace's page and Your SSH keys: Name, Algorithm,
+Size in bits, Public key shortened with a copy button for the whole
+line, Purpose, and the **⋯** menu with the fingerprint, the dates and
+the links in its details.
 
 ## Layout
 

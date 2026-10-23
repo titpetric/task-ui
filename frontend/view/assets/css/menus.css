@@ -1,0 +1,144 @@
+/* The [...] menu, the one way a row, or a block, shows the actions it
+   seldom needs (the menu template, docs/development.md, Row actions): an
+   icon button that opens a list on a click, its details on top, then its
+   items, an icon and a label each, a line between their groups, the
+   danger group last in the bad colour. The list opens fixed, placed by
+   the script against its button, so a table that scrolls sideways does
+   not clip it; on a phone it is a sheet along the bottom of the screen. */
+.more-menu {
+  position: relative;
+  display: inline-block;
+  vertical-align: middle;
+  text-align: start;
+
+  & > summary {
+    list-style: none;
+    cursor: pointer;
+
+    &::-webkit-details-marker {
+      display: none;
+    }
+  }
+
+  &[open] > summary {
+    border-color: var(--signal);
+    color: var(--signal);
+  }
+}
+
+.more-list {
+  position: fixed;
+  z-index: 40;
+  display: grid;
+  min-width: 14rem;
+  max-width: min(24rem, calc(100vw - 1rem));
+  max-height: calc(100vh - 1rem);
+  overflow-y: auto;
+  padding: 0.25rem;
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius);
+  background: var(--ink-1);
+  box-shadow: var(--shadow-pop);
+  white-space: normal;
+}
+
+.more-items {
+  display: grid;
+}
+
+.more-item {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  width: 100%;
+  padding: 0.35rem 0.5rem;
+  border: 0;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: var(--fs-sm);
+  text-align: start;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+
+  & .ic {
+    flex: none;
+  }
+
+  &:hover,
+  &:focus-visible {
+    background: var(--ink-2);
+    color: var(--signal);
+    text-decoration: none;
+  }
+
+  &.danger {
+    color: var(--bad);
+
+    &:hover,
+    &:focus-visible {
+      color: var(--bad);
+    }
+  }
+
+  &[disabled] {
+    color: var(--text-faint);
+    cursor: not-allowed;
+    background: transparent;
+  }
+
+  & small {
+    margin-inline-start: auto;
+    padding-inline-start: 0.75rem;
+  }
+}
+
+/* The details a menu holds above its items, what the row's columns
+   leave out: a key's fingerprint, a run's ID, when a file changed. */
+.more-details {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.2rem 0.6rem;
+  margin: 0 0 0.25rem;
+  padding: 0.4rem 0.5rem 0.5rem;
+  border-bottom: 1px solid var(--line);
+  font-size: var(--fs-xs);
+  text-align: start;
+
+  & dt {
+    color: var(--text-faint);
+    font-size: var(--fs-label);
+    letter-spacing: var(--ls-label);
+    text-transform: uppercase;
+  }
+
+  & dd {
+    margin: 0;
+    color: var(--text-dim);
+    overflow-wrap: anywhere;
+  }
+}
+
+.more-sep {
+  margin: 0.25rem 0;
+  border: 0;
+  border-top: 1px solid var(--line);
+}
+
+/* On a phone the list is a sheet along the bottom, the width of the
+   screen, its items tall enough to tap. */
+@media (max-width: 640px) {
+  .more-list {
+    inset: auto 0.5rem 0.5rem;
+    max-width: none;
+    max-height: 70vh;
+    padding: 0.4rem;
+  }
+
+  .more-item {
+    padding: 0.6rem 0.6rem;
+    font-size: var(--fs-md);
+  }
+}

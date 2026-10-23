@@ -10,7 +10,7 @@
   gap: 0.3rem;
   white-space: nowrap;
 
-  & .user-more > summary {
+  & .more-menu > summary {
     width: 1.3rem;
     height: 1.3rem;
     opacity: 0.55;
@@ -21,17 +21,10 @@
     }
   }
 
-  &:hover .user-more > summary,
-  & .user-more[open] > summary,
-  & .user-more > summary:focus-visible {
+  &:hover .more-menu > summary,
+  & .more-menu[open] > summary,
+  & .more-menu > summary:focus-visible {
     opacity: 1;
-  }
-
-  & .user-more .more-list {
-    position: fixed;
-    right: auto;
-    min-width: 12rem;
-    white-space: nowrap;
   }
 }
 

@@ -59,10 +59,10 @@
 				<td class="nowrap hide-narrow" data-label="Last run">{{ if .LastRunAt }}{{ ago .LastRunAt }}{{ else }}<span class="faint">never</span>{{ end }}</td>
 				<td data-label="Runs as">{{ template "runas-row" (list $ .) }}</td>
 				<td data-label="State">{{ if .IsEnabled }}<span class="badge ok">enabled</span>{{ else }}<span class="badge">disabled</span>{{ end }}</td>
-				<td class="actions">
-					<form data-api="/api/schedules/{{ .ID }}" data-method="PUT" data-next="reload"><input type="hidden" name="enabled" data-type="bool" value="{{ if .IsEnabled }}false{{ else }}true{{ end }}"><button class="btn btn-sm" type="submit">{{ if .IsEnabled }}Disable{{ else }}Enable{{ end }}</button></form>
-					<button type="button" class="btn-icon danger" data-delete="/api/schedules/{{ .ID }}" data-confirm="Delete the schedule {{ .Expression }} for {{ .Folder }} / {{ .Job }}?" data-next="reload" title="Delete" aria-label="Delete schedule"><svg class="ic"><use href="#i-trash"/></svg></button>
-				</td>
+				<td class="actions">{{ template "menu" (menu (print "Actions on the schedule " .Expression)
+					(item (or (and .IsEnabled "stop") "play") (or (and .IsEnabled "Disable") "Enable") "data-api" (print "/api/schedules/" .ID) "data-method" "PUT" "data-body" (or (and .IsEnabled `{"enabled":false}`) `{"enabled":true}`) "data-next" "reload")
+					(danger "trash" "Delete" "data-delete" (print "/api/schedules/" .ID) "data-confirm" (print "Delete the schedule " .Expression " for " .Folder " / " .Job "?") "data-confirm-ok" "Delete" "data-next" "reload")
+				) }}</td>
 			</tr>
 		{{- else }}
 			<tr class="empty"><td colspan="8">No schedules yet.{{ if $any }} Pick a job and a cron expression above.{{ end }}</td></tr>

@@ -22,12 +22,11 @@
 				<td class="mono-break">{{ with .Checkout }}{{ .Remote }} <span class="badge">{{ .Branch }}</span>{{ else }}<span class="faint">local folder</span>{{ end }}</td>
 				<td class="desc hide-sm">{{ with .Checkout }}<span class="faint">{{ .Commit }}</span> {{ .Subject }}{{ if not .When.IsZero }} <span class="faint">{{ ago .When }}</span>{{ end }}{{ end }}</td>
 				{{- if $.Spaces }}<td class="hide-sm">{{ template "spacemini" index $.Spaces .ID }}</td>{{ end }}
-				<td class="actions">
-					<a class="btn-icon" href="/settings/projects/{{ .ID }}" title="Configure {{ .ID }}" aria-label="Configure {{ .ID }}"><svg class="ic"><use href="#i-edit"/></svg></a>
-					{{- if .Checkout }}
-					<button type="button" class="btn-icon danger" data-delete="/api/projects/{{ .ID }}" data-confirm="Remove the folder {{ .ID }} and its checkout? You can clone it again from {{ .Checkout.Remote }}." data-confirm-ok="Remove" data-next="reload" title="Remove the checkout" aria-label="Remove {{ .ID }}"><svg class="ic"><use href="#i-trash"/></svg></button>
-					{{- end }}
-				</td>
+				<td class="actions">{{ template "menu" (menu (print "Actions on " .ID)
+					(and .Sources (item "folder" "Open" "href" ($.Href .ID)))
+					(item "edit" "Configure" "href" (print "/settings/projects/" .ID))
+					(and .Checkout (danger "trash" "Remove" "data-delete" (print "/api/projects/" .ID) "data-confirm" (print "Remove the folder " .ID " and its checkout? You can clone it again from " .Checkout.Remote ".") "data-confirm-ok" "Remove" "data-next" "reload"))
+				) }}</td>
 			</tr>
 		{{- else }}
 			<tr class="empty"><td colspan="6">The root is empty. Add a project from a git repository, or put a folder with jobs under {{ $.Root }}.</td></tr>

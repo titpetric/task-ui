@@ -23,17 +23,17 @@
 		<tbody>
 		{{- range .Users }}
 			<tr class="row-link" data-href="/users/{{ .Name }}">
-				<td class="key nowrap"><span class="user-ref">{{ template "avatar" (list $ .Name) }} <a class="user-name" href="/users/{{ .Name }}">{{ .Name }}</a>{{ template "user-menu" (list $ .Name) }}</span></td>
+				<td class="key nowrap"><span class="user-ref">{{ template "avatar" (list $ .Name) }} <a class="user-name" href="/users/{{ .Name }}">{{ .Name }}</a></span></td>
 				<td data-label="Role"><span class="badge{{ if .CanAdmin }} signal{{ end }}">{{ .EffectiveRole }}</span></td>
 				<td class="nowrap" data-label="Flags">{{ if .Mcp }}<span class="badge" title="MCP agent user">mcp</span>{{ end }}{{ if .AgentReply }} <span class="badge" title="Runs instance Claude when mentioned">agent</span>{{ end }}{{ if not .Mcp }}<span class="faint">none</span>{{ end }}</td>
 				<td class="desc" data-label="Folders">{{ with .FolderList }}{{ join . ", " }}{{ else }}<span class="faint">all</span>{{ end }}</td>
 				<td class="nowrap" data-label="Since" title="{{ stamp .CreatedAt }}">{{ ago .CreatedAt }}</td>
-				<td class="actions">
-					<a class="btn-icon" href="/users/{{ .Name }}" title="Profile of {{ .Name }}" aria-label="Profile of {{ .Name }}"><svg class="ic"><use href="#i-edit"/></svg></a>
-					{{- if and $.CanAddUsers ($.Can "user/delete") (not .CanAdmin) $.User (ne .ID $.User.ID) }}
-					<button type="button" class="btn-icon danger" data-delete="/api/users/{{ .ID }}" data-confirm="Delete the user {{ .Name }}? This removes them from the password file and ends their sessions and tokens right away. Their runs, notes and history keep the name." data-confirm-ok="Delete" data-next="/settings/users?notice=User+deleted" title="Delete {{ .Name }}" aria-label="Delete {{ .Name }}"><svg class="ic"><use href="#i-trash"/></svg></button>
-					{{- end }}
-				</td>
+				<td class="actions">{{ template "menu" (menu (print "Actions on " .Name)
+					(item "users" "Profile" "href" (print "/users/" .Name))
+					(item "list" "Runs by this user" "href" (print "/runs?user=" (urlquery .Name)))
+					(and ($.CanPermissions .Name) (item "key" "Permissions" "href" (print "/users/" .Name "#permissions")))
+					(and $.CanAddUsers ($.Can "user/delete") (not .CanAdmin) $.User (ne .ID $.User.ID) (danger "trash" "Delete" "data-delete" (print "/api/users/" .ID) "data-confirm" (print "Delete the user " .Name "? This removes them from the password file and ends their sessions and tokens right away. Their runs, notes and history keep the name.") "data-confirm-ok" "Delete" "data-next" "/settings/users?notice=User+deleted"))
+				) }}</td>
 			</tr>
 		{{- else }}
 			<tr class="empty"><td colspan="6">No users yet. Add one with <code>task-ui passwd &lt;user&gt;</code> and it appears here.</td></tr>

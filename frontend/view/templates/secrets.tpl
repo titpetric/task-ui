@@ -37,7 +37,7 @@
 	{{- if or .Key .Secrets }}
 	<div class="table-wrap">
 	<table class="table secrets">
-		<thead><tr><th>Name</th><th>Scope</th><th>Updated</th><th>Reads</th><th>Last read</th><th>Actions</th></tr></thead>
+		<thead><tr><th>Name</th><th>Scope</th><th>Updated</th><th>Reads</th><th>Last read</th><th class="actions" aria-label="Actions"></th></tr></thead>
 		{{- with .SharedSecrets }}
 		<tbody>
 			<tr class="secret-scope"><th colspan="6">Every project in {{ $g.Workspace }}</th></tr>
@@ -73,10 +73,12 @@
 				<td class="nowrap" title="{{ stamp $s.UpdatedAt }}">{{ ago $s.UpdatedAt }}</td>
 				<td class="nowrap">{{ with index $p.SecretReadCounts $s.ID }}<a href="/settings/secrets/{{ $s.ID }}/reads" title="The runs that got {{ $s.Name }}">{{ . }}</a>{{ else }}<span class="faint">0</span>{{ end }}</td>
 				{{- $last := index $p.SecretLastReads $s.ID }}
-				<td class="nowrap">{{ if $last.RunID }}<span title="{{ stamp $last.CreatedAt }}">{{ ago $last.CreatedAt }}</span> <a href="/runs/{{ $last.RunID }}">{{ $last.Folder }}/{{ with $last.Dir }}{{ . }}/{{ end }}{{ $last.Job }}</a>{{ else }}<span class="faint">never</span>{{ end }}</td>
-				<td class="actions">
-					<a class="btn-icon" href="/settings/secrets/edit?scope={{ $s.Scope }}&name={{ $s.Name }}" title="Replace the value" aria-label="Replace {{ $s.Name }}"><svg class="ic"><use href="#i-edit"/></svg></a>
-					<button type="button" class="btn-icon danger" data-delete="/api/secrets/{{ $s.ID }}" data-confirm="Delete {{ $s.Name }} from {{ if eq $s.Scope $g.Shared }}every project in {{ $g.Workspace }}{{ else }}{{ $s.Scope }}{{ end }}? Runs no longer get it." data-next="reload" title="Delete" aria-label="Delete {{ $s.Name }}"><svg class="ic"><use href="#i-trash"/></svg></button>
-				</td>
+				<td>{{ if $last.RunID }}<span title="{{ stamp $last.CreatedAt }}">{{ ago $last.CreatedAt }}</span> <a href="/runs/{{ $last.RunID }}">{{ $last.Folder }}/{{ with $last.Dir }}{{ . }}/{{ end }}{{ $last.Job }}</a>{{ else }}<span class="faint">never</span>{{ end }}</td>
+				<td class="actions">{{ template "menu" (menu (print "Actions on " $s.Name)
+					(detail "Changed" (stamp $s.UpdatedAt))
+					(item "edit" "Replace the value" "href" (print "/settings/secrets/edit?scope=" (urlquery $s.Scope) "&name=" (urlquery $s.Name)))
+					(item "list" "Reads" "href" (print "/settings/secrets/" $s.ID "/reads"))
+					(danger "trash" "Delete" "data-delete" (print "/api/secrets/" $s.ID) "data-confirm" (print "Delete " $s.Name " from " (or (and (eq $s.Scope $g.Shared) (print "every project in " $g.Workspace)) $s.Scope) "? Runs stop getting it.") "data-confirm-ok" "Delete" "data-next" "reload")
+				) }}</td>
 			</tr>
 {{- end }}

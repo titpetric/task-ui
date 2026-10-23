@@ -126,10 +126,10 @@ the sidebar's order.
   **Recursive**, which, as a project's does, lists the folders inside it
   as deep as they go, or, off, the workspace and its top-level folders
   alone; the repository and the folder stay.
-- **Move up** and **Move down** change the order of the workspaces, in
+- **Move up** and **Move down**, in a workspace's **⋯** menu, change the order of the workspaces, in
   the sidebar and on the page. An added workspace goes last. The default
   workspace lists first and keeps its place.
-- The remove button deletes the checkout, every project inside it and
+- **Remove**, last in the menu, deletes the checkout, every project inside it and
   their rows, the env files task-ui keeps for them, the workspace's
   secrets and its keys, and its confirm names those projects first. The
   default workspace has none: `DELETE /api/workspaces/_` answers `409`.
@@ -209,7 +209,9 @@ Every workspace has SSH keys of its own, in the key folder,
 `TASK_UI_SSH_DIR`, out of its checkout, where a `git add -A` would
 publish them: `workspace_<folder>_<name>_<algorithm>.key` and `.pub`,
 the files `0600`. The **Keys** section of a workspace's configure page,
-`/settings/workspaces/malta`, lists them with their fingerprints, never
+`/settings/workspaces/malta`, lists them in the keys table of the Keys
+page, name, algorithm, size, public key with its copy button, purpose
+and the **⋯** menu, never
 a private key.
 
 - The **SSH keys**, zero or more, are for the workspace's runs. A

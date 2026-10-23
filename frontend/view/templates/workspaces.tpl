@@ -25,14 +25,14 @@
 				<td class="desc">{{ .Title }}{{ with .Description }} <span class="faint">{{ . }}</span>{{ end }}</td>
 				<td class="mono-break">{{ if $default }}<span class="faint">the root</span>{{ else }}{{ .SourceURL }}{{ with .Branch }} <span class="badge">{{ . }}</span>{{ end }}{{ end }}</td>
 				<td class="hide-sm">{{ range $i, $id := $nested }}{{ if $i }}, {{ end }}<a href="{{ $.Href $id }}">{{ $id }}</a>{{ else }}<span class="faint">none yet</span>{{ end }}</td>
-				<td class="actions">
-					{{- if not $default }}
-					<button type="button" class="btn-icon" data-workspace-move="up" data-folder="{{ .Folder }}" title="Move up" aria-label="Move {{ .Folder }} up"{{ if eq $i $first }} disabled{{ end }}>↑</button>
-					<button type="button" class="btn-icon" data-workspace-move="down" data-folder="{{ .Folder }}" title="Move down" aria-label="Move {{ .Folder }} down"{{ if eq (add $i 1) $last }} disabled{{ end }}>↓</button>
-					{{- end }}
-					<a class="btn-icon" href="/settings/workspaces/{{ .Folder }}" title="Configure {{ .Folder }}" aria-label="Configure {{ .Folder }}"><svg class="ic"><use href="#i-edit"/></svg></a>
-					{{- if not $default }}{{ template "workspacedelete" (list . $nested "reload") }}{{ end }}
-				</td>
+				<td class="actions">{{ template "menu" (menu (print "Actions on " .Folder)
+					(item "folder-open" "Open" "href" ($.Href .Folder))
+					(item "edit" "Configure" "href" (print "/settings/workspaces/" .Folder))
+					sep
+					(and (not $default) (ne $i $first) (item "up" "Move up" "data-workspace-move" "up" "data-folder" .Folder))
+					(and (not $default) (ne (add $i 1) $last) (item "down" "Move down" "data-workspace-move" "down" "data-folder" .Folder))
+					(and (not $default) (danger "trash" "Remove" "data-delete" (print "/api/workspaces/" .Folder) "data-confirm" (print "Remove the workspace " .Folder " with its checkout, keys and secrets" (or (and $nested (print ", and the projects inside it: " (join $nested ", "))) "") "? You can clone it again from " .SourceURL ".") "data-confirm-ok" "Remove" "data-next" "reload"))
+				) }}</td>
 			</tr>
 		{{- else }}
 			<tr class="empty"><td colspan="5">No workspaces yet. Add one from a git repository, then clone projects into it with Add project.</td></tr>

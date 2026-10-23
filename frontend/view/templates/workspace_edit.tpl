@@ -77,7 +77,7 @@
      each to every run in the workspace or to the roles and users
      linked. */}}
 {{- define "workspacekeys" }}
-{{- $ws := .Workspace }}{{ $base := printf "/settings/workspaces/%s/keys" $ws.Folder }}{{ $api := printf "/api/workspaces/%s/keys" $ws.Folder }}
+{{- $ws := .Workspace }}{{ $base := printf "/settings/workspaces/%s/keys" $ws.Folder }}
 <section class="block workspace-keys" id="keys">
 	<div class="block-head">
 		<h3>Keys</h3>
@@ -88,23 +88,12 @@
 	</div>
 	<p class="dim">The workspace's own keys, named <span class="mono">workspace_{{ $ws.Folder }}_&lt;name&gt;_&lt;algorithm&gt;</span> in the key folder, <span class="mono-break">{{ .KeysDir }}</span>, out of the checkout. Its runs get its SSH keys in their ssh agent, next to the instance keys linked to them. A key with no link goes to every run in the workspace; links limit it to the checked roles and users. The instance's encryption key protects the workspace's secrets.</p>
 	<div class="table-wrap">
-	<table class="table keys">
-		<thead><tr><th>Name</th><th>Fingerprint</th><th>Who gets it</th><th>Date</th><th>Actions</th></tr></thead>
+	<table class="table keys key-table cards">
+		{{ template "keyhead" }}
 		<tbody>
-		{{- range .Keys }}
-			<tr>
-				<td class="key"><span class="mono">{{ .Name }}</span>{{ with .Comment }}<div class="faint">{{ . }}</div>{{ end }}</td>
-				<td class="fingerprint"><span class="kind dim">{{ .Kind }}</span>{{ .Fingerprint }}</td>
-				<td class="nowrap">{{ range .Roles }}<span class="badge">{{ . }}</span> {{ end }}{{ range .Users }}{{ template "avatar" (list $ .) }} {{ end }}{{ if not (or .Roles .Users) }}<span class="dim">every run</span>{{ end }}</td>
-				<td class="nowrap" title="{{ stamp .CreatedAt }}">{{ ago .CreatedAt }}</td>
-				<td class="actions">
-					<button type="button" class="btn-icon" data-copy="{{ .PublicKey }}" title="Copy public key" aria-label="Copy public key"><svg class="ic"><use href="#i-copy"/></svg></button>
-					<a class="btn-icon" href="{{ $base }}/{{ .Name }}" title="Links: whose runs get it" aria-label="Edit links"><svg class="ic"><use href="#i-edit"/></svg></a>
-					<button type="button" class="btn-icon danger" data-delete="{{ $api }}/{{ .Name }}" data-confirm="Remove {{ .Name }}? The workspace's runs no longer get it. Its files stay in the key folder as a backup." data-next="reload" title="Remove key" aria-label="Remove key"><svg class="ic"><use href="#i-trash"/></svg></button>
-				</td>
-			</tr>
+		{{- range .Keys }}{{ template "keyrow" (list $ . (print "/settings/workspaces/" $ws.Folder) $ws.Folder) }}
 		{{- else }}
-			<tr class="empty"><td colspan="5">No SSH key yet. Generate one, or upload the private key the workspace's runs use.</td></tr>
+			<tr class="empty"><td colspan="6">No SSH key yet. Generate one, or upload the private key the workspace's runs use.</td></tr>
 		{{- end }}
 		</tbody>
 	</table>

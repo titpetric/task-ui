@@ -79,7 +79,7 @@ func TestInstance_Keys(t *testing.T) {
 		`<span class="mono" title="ssh-rsa AAAAgit">ssh-rsa AAAAgit</span>`,
 		`<dt>Fingerprint</dt><dd class="mono">SHA256:git</dd>`, `aria-haspopup="menu"`,
 		`data-copy="ssh-rsa AAAAgit"`, `data-download="ssh-ed25519 AAAAenc" data-filename="task_encryption_ed25519.pub"`,
-		`<details class="more-menu row-more">`, "Rotate Key",
+		`<details class="more-menu">`, "Rotate Key",
 	} {
 		assert.Contains(t, body, want)
 	}
@@ -103,7 +103,7 @@ func TestInstance_KeyBackup(t *testing.T) {
 	assert.NoError(t, v.Render(&buf, "instance", p))
 	body := buf.String()
 	assert.Contains(t, body, "BACKUP ACTIVE: backup/deploy_ed25519")
-	assert.Contains(t, body, `disabled title="Delete the backup first"`)
+	assert.Contains(t, body, `role="menuitem" disabled><svg class="ic"><use href="#i-rotate"/></svg><span>Rotate Key</span><small class="faint">Delete the backup first</small>`)
 	assert.Contains(t, body, `data-delete="/api/keys/deploy_ed25519/backup"`)
 	assert.Contains(t, body, "SHA256:old")
 	assert.NotContains(t, body, `data-api="/api/keys/deploy_ed25519/rotate"`)

@@ -28,15 +28,16 @@ a view reads again, over ssh, the filesystems of a host whose filesystems task-u
 minutes ago, in the background, for the next view.
 
 The SSH column is the first of `debian@` and `root@` that signs in to the
-host with the instance keys, without a password; the button beside it
-copies the `ssh` command. task-ui tries every ten minutes, and a host it
+host with the instance keys, without a password; **Copy ssh**, in the
+row's **⋯** menu, copies the `ssh` command, and **Open the host's page**
+opens `/inventory/hosts/<name>`. task-ui tries every ten minutes, and a host it
 reaches slowly fills in on the next view.
 
 ## The expanded row
 
 With `hosts`, a click on a host's line, or Enter or Space on it, opens
-its expanded row under it, and the next click folds it; **Copy** and
-the other controls on the line do what they do and open nothing. The
+its expanded row under it, and the next click folds it; the **⋯** menu
+and the other controls on the line do what they do and open nothing. The
 row is the host's page, `/inventory/hosts/<name>`, fetched when it
 opens and kept half a minute. The hosts you open stay open through the
 page's refresh and a reload, and `/inventory#host=<name>` opens one.

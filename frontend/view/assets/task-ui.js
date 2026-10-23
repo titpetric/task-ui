@@ -107,6 +107,43 @@
     return '<span class="avatar sm' + (role ? " role-" + escapeHTML(role) : "") + '" title="' + escapeHTML(name) + '">' + escapeHTML(initials(name)) + "</span>";
   }
 
+  // menuHTML draws a [...] menu as the menu template does, for the rows
+  // a script adds: label names the button, details are [label, value]
+  // pairs, items are {icon, label, href, attrs, danger}, attrs an object
+  // of data-* attributes, false or null left out. The danger items go
+  // last, after a line; a null item ends a group. No item draws nothing.
+  function menuHTML(label, details, items) {
+    var groups = [[]], danger = [];
+    items.forEach(function (item) {
+      if (item === null) groups.push([]);
+      else if (item && item.danger) danger.push(item);
+      else if (item) groups[groups.length - 1].push(item);
+    });
+    groups.push(danger);
+    groups = groups.filter(function (g) { return g.length; });
+    details = (details || []).filter(Boolean);
+    if (!groups.length && !details.length) return "";
+    var draw = function (item) {
+      var attrs = Object.keys(item.attrs || {}).map(function (name) {
+        return " " + name + '="' + escapeHTML(item.attrs[name]) + '"';
+      }).join("");
+      var body = '<svg class="ic"><use href="#i-' + item.icon + '"/></svg><span>' + escapeHTML(item.label) + "</span>";
+      var cls = "more-item" + (item.danger ? " danger" : "");
+      return item.href ?
+        '<a class="' + cls + '" role="menuitem" href="' + escapeHTML(item.href) + '"' + attrs + ">" + body + "</a>" :
+        '<button type="button" class="' + cls + '" role="menuitem"' + attrs + ">" + body + "</button>";
+    };
+    var who = escapeHTML(label);
+    return '<details class="more-menu"><summary class="btn-icon" aria-haspopup="menu" aria-expanded="false" title="' + who + '" aria-label="' + who + '">' +
+      '<svg class="ic"><use href="#i-more"/></svg></summary><div class="more-list">' +
+      (details.length ? '<dl class="more-details">' + details.map(function (d) {
+        return "<dt>" + escapeHTML(d[0]) + "</dt><dd" + (d[2] ? ' class="mono"' : "") + ">" + escapeHTML(d[1]) + "</dd>";
+      }).join("") + "</dl>" : "") +
+      '<div class="more-items" role="menu" aria-label="' + who + '">' +
+      groups.map(function (g) { return g.map(draw).join(""); }).join('<hr class="more-sep">') +
+      "</div></div></details>";
+  }
+
   // userHTML draws a user's avatar and name with the [...] menu next to
   // them, as the user template does: the profile, for yourself or with
   // user/view; the runs by the user; their permissions, with user/edit.
@@ -116,31 +153,13 @@
     var me = document.body.dataset.me || "", may = document.body.dataset.userMenu || "";
     var q = encodeURIComponent(name), who = escapeHTML(name);
     var known = Object.prototype.hasOwnProperty.call(roles, name);
-    var item = function (href, icon, text) {
-      return '<a class="more-item" role="menuitem" href="' + href + '"><svg class="ic"><use href="#i-' + icon + '"/></svg>' + text + "</a>";
-    };
     return '<span class="user-ref">' + avatarHTML(name) + ' <span class="user-name">' + who + "</span>" +
-      '<details class="more-menu user-more"><summary class="btn-icon" title="More on ' + who + '" aria-label="More on ' + who + '"><svg class="ic"><use href="#i-more"/></svg></summary>' +
-      '<div class="more-list" role="menu">' +
-      (known && (name === me || may) ? item("/users/" + q, "users", "Profile") : "") +
-      item("/runs?user=" + q, "list", "Runs by this user") +
-      (known && may === "edit" ? item("/users/" + q + "#permissions", "key", "Permissions") : "") +
-      "</div></details></span>";
+      menuHTML("More on " + name, [], [
+        known && (name === me || may) && { icon: "users", label: "Profile", href: "/users/" + q },
+        { icon: "list", label: "Runs by this user", href: "/runs?user=" + q },
+        known && may === "edit" && { icon: "key", label: "Permissions", href: "/users/" + q + "#permissions" }
+      ]) + "</span>";
   }
-
-  // A user's menu, and a row's, sits in rows that scroll sideways, which
-  // would clip it: it opens fixed under its button, kept on the screen,
-  // and closes when the page scrolls.
-  document.addEventListener("toggle", function (event) {
-    var menu = event.target;
-    if (!menu.classList || !(menu.classList.contains("user-more") || menu.classList.contains("row-more")) || !menu.open) return;
-    var list = menu.querySelector(".more-list"), at = menu.querySelector("summary").getBoundingClientRect();
-    list.style.top = at.bottom + 4 + "px";
-    list.style.left = Math.max(8, Math.min(at.left, window.innerWidth - list.offsetWidth - 8)) + "px";
-  }, true);
-  window.addEventListener("scroll", function () {
-    document.querySelectorAll("details.user-more[open], details.row-more[open]").forEach(function (menu) { menu.removeAttribute("open"); });
-  }, true);
 
   // A button with data-download saves its text as a file named by
   // data-filename, such as a key's public half.
@@ -1369,28 +1388,107 @@
 
   // ------------------------------------------------------------ cc-menus
 
-  // A control centre's Other menu opens over the page, placed against
-  // its button, so the table's scrolling box cannot clip it; under the
-  // button, or over it when the screen ends first. It closes on a click
-  // outside it, on Escape, on a scroll, and once one of its jobs is
-  // picked.
+  // A menu, a row's [...] or a control centre's Other, is a <details>
+  // that opens on a click, never a hover. Its list opens over the page,
+  // placed against its button so a table's scrolling box cannot clip it:
+  // under the button, or over it when the screen ends first, its right
+  // edge on the button's in the right half of the screen. On a phone,
+  // a [...] list is a sheet at the bottom (menus.css). One menu is open
+  // at a time; a click outside, Escape, a scroll of the page and the
+  // pick of an item close it, Escape giving the focus back to the
+  // button. The arrow keys, Home and End move between the items.
+  var menuSelector = "details.more-menu, details.cc-more";
+  var menuList = function (menu) { return menu.querySelector(":scope > .more-list, :scope > .cc-menu"); };
+  var menuItems = function (menu) {
+    return Array.prototype.filter.call(menu.querySelectorAll('.more-item, .cc-menu [role="menuitem"], .cc-menu .cc'), function (el) {
+      return !el.disabled && el.offsetParent !== null;
+    });
+  };
+  var closeMenu = function (menu, focus) {
+    menu.removeAttribute("open");
+    if (focus) menu.querySelector("summary").focus();
+  };
+  var sheet = window.matchMedia ? window.matchMedia("(max-width: 640px)") : { matches: false };
   document.addEventListener("toggle", function (event) {
     var menu = event.target;
-    if (!menu.matches || !menu.matches("details.cc-more") || !menu.open) return;
-    var list = menu.querySelector(".cc-menu");
-    var at = menu.querySelector("summary").getBoundingClientRect();
-    list.style.left = Math.max(8, at.right - list.offsetWidth) + "px";
-    var below = window.innerHeight - at.bottom;
-    list.style.top = (below < list.offsetHeight + 8 && at.top > below ? at.top - list.offsetHeight - 4 : at.bottom + 4) + "px";
+    if (!menu.matches || !menu.matches(menuSelector)) return;
+    var summary = menu.querySelector("summary");
+    summary.setAttribute("aria-expanded", menu.open ? "true" : "false");
+    if (!menu.open) return;
+    document.querySelectorAll(menuSelector).forEach(function (other) {
+      if (other !== menu && other.open && !other.contains(menu)) other.removeAttribute("open");
+    });
+    var list = menuList(menu);
+    if (!list) return;
+    if (sheet.matches && menu.classList.contains("more-menu")) {
+      list.style.top = list.style.left = "";
+    } else {
+      var at = summary.getBoundingClientRect();
+      var left = at.left + at.width / 2 > window.innerWidth / 2 ? at.right - list.offsetWidth : at.left;
+      list.style.left = Math.max(8, Math.min(left, window.innerWidth - list.offsetWidth - 8)) + "px";
+      var below = window.innerHeight - at.bottom;
+      list.style.top = (below < list.offsetHeight + 8 && at.top > below ? Math.max(8, at.top - list.offsetHeight - 4) : at.bottom + 4) + "px";
+    }
+    if (menu.dataset.keyed) {
+      delete menu.dataset.keyed;
+      var first = menuItems(menu)[0];
+      if (first) first.focus();
+    }
   }, true);
-  window.addEventListener("scroll", function () {
-    document.querySelectorAll("details.cc-more[open]").forEach(function (menu) { menu.removeAttribute("open"); });
+  window.addEventListener("scroll", function (event) {
+    document.querySelectorAll(menuSelector).forEach(function (menu) {
+      if (menu.open && !(event.target.nodeType === 1 && menuList(menu) && menuList(menu).contains(event.target))) closeMenu(menu);
+    });
   }, true);
   document.addEventListener("click", function (event) {
-    document.querySelectorAll("details.cc-more[open]").forEach(function (menu) {
-      if (!menu.contains(event.target) || event.target.closest(".cc-menu .cc, .cc-menu [data-run], .cc-menu [data-attach]")) menu.removeAttribute("open");
+    document.querySelectorAll(menuSelector).forEach(function (menu) {
+      if (!menu.open) return;
+      if (!menu.contains(event.target) || event.target.closest(".more-item, .cc-menu .cc, .cc-menu [data-run], .cc-menu [data-attach]")) closeMenu(menu);
     });
   });
+  document.addEventListener("keydown", function (event) {
+    var summary = event.target.closest && event.target.closest("summary");
+    var menu = event.target.closest && event.target.closest(menuSelector);
+    // Enter and Space open a menu from its button, as a click does, and
+    // put the focus on its first item; so does the down arrow.
+    if (summary && menu && summary.parentNode === menu) {
+      if (event.key === "Enter" || event.key === " ") {
+        if (!menu.open) menu.dataset.keyed = "1";
+        return;
+      }
+      if (event.key === "ArrowDown" && !menu.open) {
+        event.preventDefault();
+        menu.dataset.keyed = "1";
+        menu.open = true;
+        return;
+      }
+    }
+    if (event.key === "Escape") {
+      document.querySelectorAll(menuSelector).forEach(function (open) {
+        if (open.open) closeMenu(open, true);
+      });
+      return;
+    }
+    if (!menu || !menu.open || ["ArrowDown", "ArrowUp", "Home", "End"].indexOf(event.key) < 0) return;
+    // A field inside a menu keeps its own keys.
+    if (event.target.matches("input, select, textarea")) return;
+    var items = menuItems(menu);
+    if (!items.length) return;
+    event.preventDefault();
+    var i = items.indexOf(document.activeElement);
+    if (event.key === "Home") i = 0;
+    else if (event.key === "End") i = items.length - 1;
+    else if (event.key === "ArrowDown") i = i < 0 ? 0 : (i + 1) % items.length;
+    else i = i <= 0 ? items.length - 1 : i - 1;
+    items[i].focus();
+  });
+  // #actions opens the [...] menu of the first row of the page on load,
+  // #actions=<n> the menu of row n, so a shot can show one open.
+  var actionsHash = /^#actions(?:=(\d+))?$/.exec(location.hash);
+  if (actionsHash) {
+    var rowMenu = document.querySelectorAll("td.actions details.more-menu")[(parseInt(actionsHash[1], 10) || 1) - 1];
+    if (rowMenu) rowMenu.open = true;
+  }
   // A row of a Run menu's table runs on Enter or Space, as a button does.
   document.addEventListener("keydown", function (event) {
     if (event.key !== "Enter" && event.key !== " ") return;
@@ -1399,27 +1497,27 @@
     event.preventDefault();
     row.click();
   });
-  document.addEventListener("keydown", function (event) {
-    if (event.key !== "Escape") return;
-    document.querySelectorAll("details.cc-more[open]").forEach(function (menu) {
-      menu.removeAttribute("open");
-      menu.querySelector("summary").focus();
-    });
-  });
 
-  // A ⋯ menu closes on a click outside it, on Escape, and once one of
-  // its items is picked, before the item's confirm opens.
+  // A button with data-api, an item of a [...] menu, puts data-body, its
+  // JSON, with data-method, after its data-confirm, as a form with
+  // data-api does: on success it goes to data-next, the answer's fields
+  // put in.
   document.addEventListener("click", function (event) {
-    document.querySelectorAll("details.more-menu[open]").forEach(function (menu) {
-      if (!menu.contains(event.target) || event.target.closest(".more-item")) menu.removeAttribute("open");
-    });
-  });
-  document.addEventListener("keydown", function (event) {
-    if (event.key !== "Escape") return;
-    document.querySelectorAll("details.more-menu[open]").forEach(function (menu) {
-      menu.removeAttribute("open");
-      menu.querySelector("summary").focus();
-    });
+    var btn = event.target.closest("button[data-api]");
+    if (!btn || btn.form) return;
+    event.preventDefault();
+    var send = function () {
+      var body = {};
+      try { body = btn.dataset.body ? JSON.parse(btn.dataset.body) : {}; } catch (e) { body = {}; }
+      btn.disabled = true;
+      api((btn.dataset.method || "POST").toUpperCase(), btn.dataset.api, body).then(function (res) {
+        btn.disabled = false;
+        if (res.status >= 300) window.alert((res.data.error || ("HTTP " + res.status)) + (res.data.output ? "\n\n" + res.data.output : ""));
+        else next(filled(btn.dataset.next, res.data));
+      });
+    };
+    if (btn.dataset.confirm) confirm(btn.dataset.confirm, btn.dataset.confirmOk).then(function (ok) { if (ok) send(); });
+    else send();
   });
 
   // A permission matrix: a cell cycles inherit, allow (✓) and deny (✕) on
@@ -2029,17 +2127,18 @@
         var result = row.querySelector("[data-result]");
         result.innerHTML = "";
         result.appendChild(stateSpan(data.state, data.message));
-        // A run that ended takes Summary, where the page offers it.
+        // A run that ended takes Summary in its menu, where the page
+        // offers it.
         var cell = row.querySelector("td.actions");
         if (cell && runs.hasAttribute("data-summarize") && !cell.querySelector("[data-summary]")) {
-          var sum = el("button", "btn btn-sm", "Summary");
-          sum.type = "button";
-          sum.dataset.summary = "/api/workflow-runs/" + encodeURIComponent(data.run_id) + "/summary";
-          sum.dataset.summaryPage = location.pathname.replace(/\/$/, "") + "/runs/" + encodeURIComponent(data.run_id);
           var heading = document.querySelector(".page-head h2");
-          sum.dataset.summaryTitle = heading ? heading.textContent : "";
-          cell.appendChild(document.createTextNode(" "));
-          cell.appendChild(sum);
+          var page = location.pathname.replace(/\/$/, "") + "/runs/" + encodeURIComponent(data.run_id);
+          var old = cell.querySelector("details.more-menu");
+          if (old) old.remove();
+          cell.insertAdjacentHTML("beforeend", menuHTML("Actions on the run of " + (heading ? heading.textContent : ""), [["Run", data.run_id, true]], [
+            { icon: "file", label: "Open the run's page", href: page },
+            { icon: "note", label: "Summary", attrs: { "data-summary": "/api/workflow-runs/" + encodeURIComponent(data.run_id) + "/summary", "data-summary-page": page, "data-summary-title": heading ? heading.textContent : "", title: "Claude's summary of every step's output" } }
+          ]));
         }
       }
       if (actions) {
@@ -2499,6 +2598,13 @@
     var cancel = event.target.closest("[data-edit-cancel]");
     if (cancel) {
       closeEdit(cancel.closest("form[data-note-edit]"));
+      return;
+    }
+    // Edit in a note's [...] menu opens the same field.
+    var open = event.target.closest("[data-edit-open]");
+    if (open) {
+      var note = document.querySelector('.note-body[data-edit="' + open.dataset.editOpen + '"]');
+      if (note && !note.hidden) editNote(note);
       return;
     }
     var body = event.target.closest(".note-body[data-edit]");
@@ -3085,7 +3191,7 @@
     };
     hostsLive.addEventListener("click", function (e) {
       var row = e.target.closest("[data-host-row]");
-      if (!row || e.target.closest("button, a, input, label, code")) return;
+      if (!row || e.target.closest("button, a, input, label, code, details")) return;
       toggleHost(row);
     });
     hostsLive.addEventListener("keydown", function (e) {
@@ -3280,22 +3386,18 @@
     var termTitleHTML = function (run) {
       return run.title ? ' <span class="term-title" title="' + escapeHTML(run.title) + '">' + escapeHTML(run.title) + "</span>" : "";
     };
+    // A row's actions, as the runs template draws them: View or Attach,
+    // then the [...] menu.
     var actionsHTML = function (run, canRun) {
-      var id = escapeHTML(run.id);
-      var html = '<a class="btn btn-sm" href="/runs/' + id + '" data-attach="' + id + '">' + (!ended(run.state) ? "Attach" : "View") + "</a>";
-      if (ended(run.state) && run.cast_path) {
-        html += '<button type="button" class="btn btn-sm replay" data-replay="' + id + '" data-replay-title="' + escapeHTML(runTitle(run)) + '" data-replay-who="' + escapeHTML(run.user_name || "") +
-          '" title="Replay the recording" aria-label="Replay the recording">|&gt;</button>';
-      }
-      if (!ended(run.state) && canRun) {
-        html += '<button type="button" class="btn-icon" data-stop="' + id + '" title="Stop the run" aria-label="Stop the run"><svg class="ic"><use href="#i-stop"/></svg></button>' +
-          '<button type="button" class="btn-icon danger" data-kill="' + id + '" title="Kill the run" aria-label="Kill the run"><svg class="ic"><use href="#i-trash"/></svg></button>';
-      }
-      if (ended(run.state) && runsTable.hasAttribute("data-summarize")) {
-        html += '<button type="button" class="btn btn-sm" data-summary="/api/runs/' + id + '/summary" data-summary-page="/runs/' + id + '" data-summary-title="' + escapeHTML(runTitle(run)) +
-          '" title="Claude\'s summary of the output">Summary</button>';
-      }
-      return html;
+      var id = run.id, live = !ended(run.state);
+      return '<a class="btn btn-sm" href="/runs/' + escapeHTML(id) + '" data-attach="' + escapeHTML(id) + '">' + (live ? "Attach" : "View") + "</a>" +
+        menuHTML("Actions on the run of " + run.job, [["Run", id, true], run.started_at && ["Started", new Date(run.started_at).toLocaleString()]], [
+          { icon: "file", label: "Open the run's page", href: "/runs/" + encodeURIComponent(id) },
+          !live && run.cast_path && { icon: "play", label: "Replay the recording", attrs: { "data-replay": id, "data-replay-title": runTitle(run), "data-replay-who": run.user_name || "" } },
+          !live && runsTable.hasAttribute("data-summarize") && { icon: "note", label: "Summary", attrs: { "data-summary": "/api/runs/" + id + "/summary", "data-summary-page": "/runs/" + id, "data-summary-title": runTitle(run), title: "Claude's summary of the output" } },
+          live && canRun && { icon: "stop", label: "Stop", attrs: { "data-stop": id } },
+          live && canRun && { icon: "trash", label: "Kill", danger: true, attrs: { "data-kill": id } }
+        ]);
     };
     var whoHTML = function (run) {
       return '<span class="who-ran">' + userHTML(run.user_name) + (run.scheduled ? ' <span class="badge">scheduled</span>' : "") +

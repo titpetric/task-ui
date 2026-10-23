@@ -30,3 +30,6 @@ it with headless chromium; `task docs:shots` regenerates them into
 | ![Upload a key](assets/keys-upload-dark.png) | ![Sign in](assets/login-dark.png) |
 | ![The phone: the dashboard](assets/mobile-dashboard-dark.png) | ![The phone: a folder, its jobs as cards](assets/mobile-folder-dark.png) |
 | ![The phone: the drawer with the projects, folders and jobs](assets/mobile-menu-dark.png) | ![Sign in, light theme](assets/login-light.png) |
+| ![A key's actions menu: its details, then Copy, Download, Edit links, Rotate Key, and Remove last](assets/keys-menu-dark.png) | ![A key's actions menu, light theme](assets/keys-menu-light.png) |
+| ![A job's run: its actions menu beside View, its ID, Open, Replay](assets/job-menu-dark.png) | ![A run's actions menu, light theme](assets/job-menu-light.png) |
+| ![The phone: a row's actions menu as a sheet along the bottom](assets/mobile-actions-dark.png) | |
