@@ -61,4 +61,7 @@ type Options struct {
 	// Users say what the user of a run may do, which the run reads in
 	// TASK_UI_PERMISSIONS, so Claude in it knows. Nil leaves it out.
 	Users *storage.UserStorage
+	// Backlog caps the runs that wait for a free slot; a start over it
+	// answers ErrBacklogFull. Nil is the automatic length.
+	Backlog *Backlog
 }

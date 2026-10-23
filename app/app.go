@@ -244,6 +244,7 @@ func (a *App) wire(version string) error {
 		Root:          cfg.Root,
 		Workspaces:    workspaces,
 		Users:         a.Users,
+		Backlog:       &runner.Backlog{Settings: storage.NewSettingStorage(a.DB)},
 	})
 	hostRuns := &hostrun.Starter{Catalogue: a.Catalogue, Hosts: hosts, SSH: prober, Runner: a.Runner}
 	a.Scheduler = scheduler.NewLoop(schedules, a.Users, a.Catalogue, a.Runner)

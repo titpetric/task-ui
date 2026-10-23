@@ -61,6 +61,17 @@ func (s *Slots) Full() bool {
 	return len(s.waiting) > 0 || !s.free()
 }
 
+// Room reports whether a run that comes now finds a slot or a place in
+// a line that holds fewer than backlog runs.
+func (s *Slots) Room(backlog int) bool {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if len(s.waiting) == 0 && s.free() {
+		return true
+	}
+	return len(s.waiting) < backlog
+}
+
 // free reports whether a slot is free. The caller holds mu.
 func (s *Slots) free() bool {
 	return len(s.going) < s.limit

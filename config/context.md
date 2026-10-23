@@ -46,7 +46,10 @@ and its recording. One run per job goes at a time, except the Claude
 runs of prompts and notes, which go side by side; **Run force**
 replaces it. As many runs go at once as the machine has CPUs, and a run
 over that waits, queued, for a free slot, in order; terminals, `@shell`,
-`@claude` and interactive jobs, take none. **Run again** starts the same job, directory and arguments.
+`@claude` and interactive jobs, take none. The line holds the backlog,
+20 runs per CPU unless an admin sets another length on the Instance
+page; a start past it answers `429`, and `run_job` the same error: start
+it again later. **Run again** starts the same job, directory and arguments.
 **|>summarize** runs a job and has Claude summarise the run on its page
 when it ends; the run window follows the chain to the summary's run, as
 it does a workflow run's steps, with Previous and Next in its foot. A job names its current step with its terminal title,
