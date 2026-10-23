@@ -30,17 +30,23 @@
 	<button class="btn" type="submit">Filter</button>
 </form>
 
+{{- /* Activity and Tooling fold on their heading's toggle, and the
+     browser remembers a folded block per user. */}}
 {{- with .Activity }}
-<section class="block">
-	<h3>Activity <small>in the server's time zone</small></h3>
+<section class="block" data-fold="runs-activity">
+	<h3>{{ template "fold" (list "runs-activity" "Activity") }} <small>in the server's time zone</small></h3>
+	<div class="fold-body" id="runs-activity">
 	{{- template "activity" . }}
+	</div>
 </section>
 {{- end }}
 
 {{- with .Tooling }}
-<section class="block">
-	<h3>Tooling <small>what the commands inside the runs spent their time on</small></h3>
+<section class="block" data-fold="runs-tooling">
+	<h3>{{ template "fold" (list "runs-tooling" "Tooling") }} <small>what the commands inside the runs spent their time on</small></h3>
+	<div class="fold-body" id="runs-tooling">
 	{{- template "tooling" . }}
+	</div>
 </section>
 {{- end }}
 

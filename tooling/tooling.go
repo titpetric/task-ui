@@ -76,15 +76,20 @@ type Scope struct {
 	Runs    int64 `json:"runs"`
 	TotalMs int64 `json:"total_ms"`
 
-	// Commands are the normalized commands by total time, Tools the
-	// same rolled up per tool, and Usage a row per tool per day.
-	Commands []Command `json:"commands"`
-	Tools    []Tool    `json:"tools"`
-	Usage    []Usage   `json:"usage"`
+	// Commands are the command keys by total time, Tools the same
+	// rolled up per tool, Usage a row per tool per day, and
+	// CommandUsage a row per command key per day. An atkins older than
+	// the key reports no CommandUsage.
+	Commands     []Command      `json:"commands"`
+	Tools        []Tool         `json:"tools"`
+	Usage        []Usage        `json:"usage"`
+	CommandUsage []CommandUsage `json:"command_usage"`
 }
 
-// Command is one normalized command and what it has cost: `go test -v`
-// counts apart from `go test`, and `go test ./pkg` counts with it.
+// Command is one command key and what it has cost. The key is the
+// command's words up to its first flag, at most three and no path or
+// value: `go test -v ./pkg` counts as `go test`, and `docker compose
+// up -d` as `docker compose up`.
 type Command struct {
 	Command   string     `json:"command"`
 	Tool      string     `json:"tool"`

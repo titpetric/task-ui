@@ -1,6 +1,7 @@
 {{- /* The tooling panel: what atkins recorded the tree running, a
-     section per database it records to. Each holds a chart per window
-     with the tools behind it, and the commands behind a toggle. The
+     section per database it records to. Each holds a chart per window,
+     its days stacked by the window's top commands with a legend, and
+     the commands behind a toggle. The
      toggle is a details element, so it needs no script and the browser
      remembers nothing to go wrong. */}}
 {{- define "tooling" }}
@@ -12,15 +13,18 @@
 			{{- range .Windows }}
 			<figure class="tooling-chart">
 				<figcaption class="tooling-title"><span>Last {{ .Days }} days</span><small>{{ .Runs }} command{{ if ne .Runs 1 }}s{{ end }} · {{ duration .Total }}{{ if .Busiest }} · busiest day {{ duration .Busiest }}{{ end }}</small></figcaption>
-				<div class="tooling-bars" style="--n: {{ len .Bars }}" role="img" aria-label="Time spent per day, the last {{ .Days }} days">
-					{{- $last := sub (len .Bars) 4 }}
-					{{- range $i, $b := .Bars }}
-					<span class="tip{{ if lt $i 4 }} tip-start{{ else if ge $i $last }} tip-end{{ end }}" data-tip="{{ .Title }}" aria-label="{{ .Title }}">{{ with .Style }}<i style="{{ . }}"></i>{{ end }}</span>
+				<div class="tooling-bars" style="--n: {{ len .Bars }}" role="img" aria-label="Time spent per day by {{ .By }}, the last {{ .Days }} days">
+					{{- range $bar := .Bars }}
+					{{- if .Segments }}
+					<span aria-label="{{ .Title }}"><i style="{{ .Style }}">{{ range .Segments }}<b class="tip {{ $bar.Edge }} {{ .Color }}" style="{{ .Style }}" data-tip="{{ .Title }}"></b>{{ end }}</i></span>
+					{{- else }}
+					<span class="tip {{ .Edge }}" data-tip="{{ .Title }}" aria-label="{{ .Title }}"></span>
+					{{- end }}
 					{{- end }}
 				</div>
-				<ul class="tooling-tools">
-					{{- range .Tools }}
-					<li><span class="key">{{ .Tool }}</span><span class="tooling-bar"><i style="{{ .Style }}"></i></span><span class="nowrap">{{ duration .Total }}</span><small class="faint nowrap">{{ .Runs }} run{{ if ne .Runs 1 }}s{{ end }}</small></li>
+				<ul class="tooling-legend">
+					{{- range .Legend }}
+					<li><span class="swatch {{ .Color }}"></span><span class="key" title="{{ .Name }}">{{ .Name }}</span><span class="nowrap">{{ duration .Total }}</span><small class="faint nowrap">{{ .Runs }} run{{ if ne .Runs 1 }}s{{ end }}</small></li>
 					{{- else }}
 					<li class="empty">Nothing ran in this window.</li>
 					{{- end }}
