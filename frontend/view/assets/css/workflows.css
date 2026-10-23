@@ -2,6 +2,9 @@
 
 /* A chain of steps, folder / job, wrapping between steps. */
 .chain {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
   line-height: 1.7;
 }
 
@@ -158,7 +161,9 @@
 /* A workflow's description, under its name in the list. */
 .wf-desc {
   display: block;
+  min-width: 12rem;
   margin-top: 0.15rem;
+  white-space: normal;
   font-family: var(--font-ui);
   font-size: var(--fs-xs);
 }

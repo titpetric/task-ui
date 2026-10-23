@@ -16,7 +16,7 @@
 				<td class="num dim">{{ .Number }}</td>
 				<td class="key nowrap"><a href="{{ .Href }}"><svg class="ic"><use href="#i-{{ .Icon }}"/></svg> {{ .Name }}</a></td>
 				<td class="desc">{{ .Desc }}</td>
-				<td class="count dim"><span class="nowrap">{{ index $.StepCounts .Name }}</span>{{ if eq .Name "Keys" }} <span class="faint path">{{ $.KeysDir }}</span>{{ end }}</td>
+				<td class="count dim"><span class="nowrap">{{ index $.StepCounts .Name }}</span></td>
 				<td class="actions"><a class="btn btn-sm" href="{{ .Href }}">Open</a></td>
 			</tr>
 			{{- end }}

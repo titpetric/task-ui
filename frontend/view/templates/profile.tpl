@@ -78,7 +78,9 @@
 	<h3>Roles <small>what {{ $u.Name }} is</small></h3>
 	{{- if .User.CanAdmin }}
 	<form class="form" data-api="/api/users/{{ $u.ID }}" data-method="PUT" data-next="/users/{{ $u.Name }}?notice=Roles+saved#roles">
-		<label class="check"><input type="checkbox" name="admin"{{ if $u.Admin }} checked{{ end }}> Administrative privileges (all) <span class="faint">every permission, whatever the role; the last admin keeps it</span></label>
+		<div class="field">
+			<label class="check"><input type="checkbox" name="admin"{{ if $u.Admin }} checked{{ end }}> Administrative privileges (all) <span class="faint">every permission, whatever the role; the last admin keeps it</span></label>
+		</div>
 		<div class="field">
 			<label for="u-role">Role <span class="faint">without the admin flag</span></label>
 			<select id="u-role" name="role">
@@ -86,8 +88,12 @@
 				<option value="viewer"{{ if eq $u.Role "viewer" }} selected{{ end }}>viewer</option>
 			</select>
 		</div>
-		<label class="check"><input type="checkbox" name="mcp"{{ if $u.Mcp }} checked{{ end }}> MCP agent user <span class="faint">a token reaches the MCP endpoint; an agent learns of work from the notes that name the user</span></label>
-		<label class="check"><input type="checkbox" name="agent_reply"{{ if $u.AgentReply }} checked{{ end }}> Run instance Claude when mentioned <span class="faint">a note naming {{ $u.Name }} starts the Notes agent as them; needs MCP agent user</span></label>
+		<div class="field">
+			<label class="check"><input type="checkbox" name="mcp"{{ if $u.Mcp }} checked{{ end }}> MCP agent user <span class="faint">a token reaches the MCP endpoint; an agent learns of work from the notes that name the user</span></label>
+		</div>
+		<div class="field">
+			<label class="check"><input type="checkbox" name="agent_reply"{{ if $u.AgentReply }} checked{{ end }}> Run instance Claude when mentioned <span class="faint">a note naming {{ $u.Name }} starts the Notes agent as them; needs MCP agent user</span></label>
+		</div>
 		<div class="form-foot">
 			<button class="btn btn-primary" type="submit">Save</button>
 		</div>

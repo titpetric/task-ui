@@ -65,12 +65,13 @@
 </section>
 
 <section class="block">
-	<h3>Artifacts <small>files left under $TASK_UI_ARTIFACTS</small></h3>
+	{{- template "blockhead" (head "Artifacts" "files left under $TASK_UI_ARTIFACTS" (and (not .Artifacts) "None: a job keeps files by writing them to the directory in $TASK_UI_ARTIFACTS.")) }}
+	{{- with .Artifacts }}
 	<div class="table-wrap">
 	<table class="table">
 		<thead><tr><th>Name</th><th>Size</th><th>Type</th><th></th></tr></thead>
 		<tbody>
-		{{- range .Artifacts }}
+		{{- range . }}
 			<tr>
 				<td class="key"><a href="/api/artifacts/{{ .ID }}">{{ .Name }}</a></td>
 				<td class="nowrap">{{ size .ByteSize }}</td>
@@ -80,12 +81,11 @@
 					(and ($.Can "artifact/delete") (danger "trash" "Delete" "data-delete" (print "/api/artifacts/" .ID) "data-confirm" (print "Delete " .Name "?") "data-confirm-ok" "Delete" "data-next" "reload"))
 				) }}</td>
 			</tr>
-		{{- else }}
-			<tr class="empty"><td colspan="4">No artifacts. To keep files from a run, the job writes them to the directory in $TASK_UI_ARTIFACTS.</td></tr>
 		{{- end }}
 		</tbody>
 	</table>
 	</div>
+	{{- end }}
 </section>
 </div>
 {{ end }}

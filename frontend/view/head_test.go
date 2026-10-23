@@ -67,7 +67,7 @@ func TestHead_SharedKeyRows(t *testing.T) {
 // projectTable returns the table of projects of a page.
 func projectTable(t *testing.T, body string) string {
 	t.Helper()
-	at := strings.Index(body, `<table class="table projects">`)
+	at := strings.Index(body, `<table class="table projects cards">`)
 	assert.True(t, at >= 0, "no projects table")
 	return body[at : at+strings.Index(body[at:], "</table>")]
 }
@@ -103,7 +103,7 @@ func TestHead_WorkspacePage(t *testing.T) {
 	p.Entries = nil
 	body = render(t, "workspace_edit", p)
 	assert.Contains(t, body, `<p class="empty-line">No projects in acme yet.</p>`)
-	assert.NotContains(t, body, `<table class="table projects">`)
+	assert.NotContains(t, body, `<table class="table projects cards">`)
 }
 
 // Every list page holds its create action top right, in the page head,

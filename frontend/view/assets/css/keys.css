@@ -111,7 +111,7 @@
   table-layout: fixed;
 
   & col.c-name {
-    width: 40%;
+    width: 32%;
   }
 
   & col.c-algo {
