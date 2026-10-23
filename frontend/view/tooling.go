@@ -21,10 +21,20 @@ const toolingStub = 4.0
 // handful a ranking stops ranking.
 const toolingTools = 6
 
-// Tooling is what atkins has recorded for the tree, as the runs page
-// shows it: a chart per window, the tools behind each, and the
-// commands for whoever opens the details.
+// Tooling is what atkins has recorded, as the runs page shows it: a
+// scope per database, the project first.
 type Tooling struct {
+	Scopes []ToolingScope
+}
+
+// ToolingScope is one database: a chart per window, the tools behind
+// each, and the commands for whoever opens the details.
+type ToolingScope struct {
+	// Name is what the scope is called, project or workspace, and
+	// Repository the checkout a project's rows came from.
+	Name       string
+	Repository string
+
 	// Database is the file the rows came from, and Days the window
 	// atkins keeps, which bounds every chart here.
 	Database string
@@ -91,24 +101,36 @@ type ToolingCommand struct {
 // nothing in it, which is a tree that has never run a job through
 // atkins: the page shows no panel rather than an empty one.
 func NewTooling(report *tooling.Report) *Tooling {
-	if report.Empty() {
+	scopes := report.Scopes()
+	if len(scopes) == 0 {
 		return nil
 	}
 
-	out := &Tooling{
-		Database: report.Database,
-		Days:     report.Days,
-		Runs:     report.Runs,
-		Total:    milliseconds(report.TotalMs),
+	out := &Tooling{}
+	for _, scope := range scopes {
+		out.Scopes = append(out.Scopes, newToolingScope(scope))
+	}
+	return out
+}
+
+// newToolingScope turns one database into its section of the panel.
+func newToolingScope(scope *tooling.Scope) ToolingScope {
+	out := ToolingScope{
+		Name:       scope.Name,
+		Repository: scope.Repository,
+		Database:   scope.Database,
+		Days:       scope.Days,
+		Runs:       scope.Runs,
+		Total:      milliseconds(scope.TotalMs),
 	}
 
 	for _, days := range ToolingWindows {
-		if window := newToolingWindow(report, days); window != nil {
+		if window := newToolingWindow(scope, days); window != nil {
 			out.Windows = append(out.Windows, *window)
 		}
 	}
 
-	for _, command := range report.Commands {
+	for _, command := range scope.Commands {
 		out.Commands = append(out.Commands, ToolingCommand{
 			Command:  command.Command,
 			Tool:     command.Tool,
@@ -127,7 +149,7 @@ func NewTooling(report *tooling.Report) *Tooling {
 // newToolingWindow builds one chart. Nil when the report is shorter
 // than the window: a week of history drawn as a month is a month of
 // empty bars with a week at the end.
-func newToolingWindow(report *tooling.Report, days int) *ToolingWindow {
+func newToolingWindow(report *tooling.Scope, days int) *ToolingWindow {
 	if report.Days < days {
 		return nil
 	}

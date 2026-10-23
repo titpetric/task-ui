@@ -11,6 +11,13 @@
   margin: 0 0 1rem;
 }
 
+/* A section per database the run records to, the project first. */
+.tooling-scope + .tooling-scope {
+  margin-top: 1.2rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--line);
+}
+
 .tooling-sum {
   display: flex;
   flex-wrap: wrap;
