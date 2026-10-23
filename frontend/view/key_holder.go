@@ -17,9 +17,7 @@ type KeyHolder struct {
 	ViaRole []keystore.Key
 }
 
-// KeyHolders lays out who gets which instance SSH key: a row for each
-// role, then one for each user, from the roles and the users each key
-// links.
+// KeyHolders lays out who gets which instance SSH key, a row for each role and then for each user.
 func KeyHolders(keys []keystore.Key, users []model.User) []KeyHolder {
 	var rows []KeyHolder
 	forRole := func(role string) []keystore.Key {

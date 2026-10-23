@@ -1,7 +1,3 @@
-// Package argv reads the arguments a user types for a job into a list,
-// the way a shell splits words and nothing more: quotes and backslashes
-// group, and no variable, glob, pipe or command substitution expands.
-// The list reaches the job as argv, never through a shell.
 package argv
 
 import (
@@ -21,11 +17,8 @@ const (
 // ErrUnterminated reports a quote that does not close.
 var ErrUnterminated = errors.New("a quote does not close")
 
-// Split reads a line into arguments. Outside quotes, blanks separate
-// arguments and a backslash takes the next character literally. Single
-// quotes take everything up to the next one literally; double quotes do
-// too, except that a backslash before " or \ takes that character. The
-// result passes Check.
+// Split reads a line into arguments by the quoting rules of the package doc.
+// The result passes Check.
 func Split(line string) ([]string, error) {
 	var (
 		args    []string

@@ -60,9 +60,8 @@ func (p *Process) Resize(cols, rows int) {
 	}
 }
 
-// Stop sends SIGHUP and SIGTERM to the process group, and SIGKILL when it
-// has not exited after the grace period. Stopping a process that exited
-// does nothing.
+// Stop sends SIGHUP and SIGTERM to the process group, and SIGKILL when it has not exited after grace.
+// Stopping a process that exited does nothing.
 func (p *Process) Stop(grace time.Duration) {
 	select {
 	case <-p.exited:

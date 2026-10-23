@@ -20,8 +20,7 @@ func (s Set) Allowed(path string) bool {
 	return s.decide(path)
 }
 
-// Effective is what the set allows by every path a check may name, for
-// the permission matrix.
+// Effective maps every path a check may name to whether the set allows it, for the permission matrix.
 func (s Set) Effective() map[string]bool {
 	out := map[string]bool{}
 	p := config.Default()
@@ -33,8 +32,7 @@ func (s Set) Effective() map[string]bool {
 	return out
 }
 
-// Allows lists the paths a check may name that the set allows, in the
-// order of permissions.yml.
+// Allows lists the paths a check may name that the set allows, in the order of permissions.yml.
 func (s Set) Allows() []string {
 	var paths []string
 	p := config.Default()
@@ -75,10 +73,9 @@ func (s Set) decide(path string) bool {
 	return s.Role.Effect(path) == Allow
 }
 
-// Run reports whether the user may run a job, given the allow lists of
-// its folder and of the job: an admin runs everything the admin sees;
-// anyone else needs the run permission, a folder they see and allow
-// lists that name them or their role, or are empty.
+// Run reports whether the user may run a job, given the allow lists of its folder and of the job.
+// An admin runs everything the admin sees.
+// Anyone else needs run, a folder they see, and allow lists that name them or their role, or are empty.
 func (s Set) Run(folder string, folderAllow, jobAllow []string) bool {
 	if s.User == nil || !s.User.CanSee(folder) {
 		return false

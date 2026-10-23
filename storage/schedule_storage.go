@@ -18,9 +18,8 @@ func NewScheduleStorage(db DB) *ScheduleStorage {
 	return &ScheduleStorage{db: db}
 }
 
-// Create inserts a schedule. NextRunAt is the caller's to set: the
-// scheduler knows the expression, this package does not. The row keeps
-// NextRunAt and LastRunAt in UTC, which Due compares against.
+// Create inserts a schedule, whose NextRunAt the caller sets: the scheduler knows the expression.
+// The row keeps NextRunAt and LastRunAt in UTC, which Due compares against.
 func (s *ScheduleStorage) Create(ctx context.Context, schedule *model.Schedule) error {
 	if schedule.Folder == "" || schedule.Job == "" || schedule.Expression == "" {
 		return errors.New("a schedule needs a folder, a job and an expression")
@@ -58,8 +57,7 @@ func (s *ScheduleStorage) Due(ctx context.Context, now time.Time) ([]model.Sched
 	return client(s.db).Select[model.Schedule](ctx, "SELECT * FROM schedule WHERE enabled = 1 AND next_run_at IS NOT NULL AND next_run_at <= ? ORDER BY next_run_at", *utc(&now))
 }
 
-// Update writes a schedule back, by ID, its times in UTC as Create
-// keeps them.
+// Update writes a schedule back by ID, its times in UTC as Create keeps them.
 func (s *ScheduleStorage) Update(ctx context.Context, schedule *model.Schedule) error {
 	schedule.NextRunAt, schedule.LastRunAt = utc(schedule.NextRunAt), utc(schedule.LastRunAt)
 	schedule.UpdatedAt = stamp()

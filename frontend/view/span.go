@@ -8,6 +8,9 @@ import (
 // Span is the window a chart covers: how many slots it has and how
 // wide each one is, counted in the server's time zone. Activity and
 // Tooling chart the same spans, so their columns line up.
+//
+// Its ticks mark the month a day a week, and the last day; the day every third clock hour, labelled
+// at 03:00, 09:00, 15:00 and 21:00; and the week each day at its noon.
 type Span struct {
 	// Title heads the chart, and Unit names one slot: "busiest day".
 	Title string
@@ -79,9 +82,7 @@ func (s Span) Label(edges []time.Time, i int) string {
 	return start.Format("Mon ") + twoDigits(start.Hour()) + ":00–" + twoDigits(edges[i+1].Hour()) + ":00"
 }
 
-// Ticks mark the span under its chart: on the month a day a week, the
-// last day the last; on the day every third clock hour, labelled at
-// 03:00, 09:00, 15:00 and 21:00; on the week each day at its noon.
+// Ticks mark the span under its chart, as Span describes.
 func (s Span) Ticks(edges []time.Time) []ActivityTick {
 	n := s.Slots
 	middle := func(i int) string { return svgNumber((float64(i) + 0.5) * 100 / float64(n)) }

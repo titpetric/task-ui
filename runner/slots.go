@@ -16,8 +16,7 @@ type Slots struct {
 	waiting []string
 }
 
-// NewSlots returns slots for at most limit runs at once, one at the
-// least.
+// NewSlots returns slots for at most limit runs at once, one at the least.
 func NewSlots(limit int) *Slots {
 	if limit < 1 {
 		limit = 1
@@ -77,8 +76,7 @@ func (s *Slots) free() bool {
 	return len(s.going) < s.limit
 }
 
-// Free releases the slot of a run that ended, and returns the runs that
-// wait first, which take the slots free now, in order.
+// Free releases a finished run's slot and returns the waiting runs, in order, that take the slots free now.
 func (s *Slots) Free(id string) []string {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -115,8 +113,7 @@ func (s *Slots) Clear() []string {
 	return waiting
 }
 
-// Position is where a waiting run stands in line, 1 for the next one,
-// 0 for a run that does not wait.
+// Position is where a waiting run stands in line, 1 for the next one, 0 for a run that does not wait.
 func (s *Slots) Position(id string) int {
 	s.mu.Lock()
 	defer s.mu.Unlock()

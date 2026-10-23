@@ -116,8 +116,7 @@ func (s *SSHKeyPolicyStorage) AllUsers(ctx context.Context) (map[string][]string
 	return result, nil
 }
 
-// For returns the names of the keys a user's runs get: those given to
-// their role and those given to them, each once, by name.
+// For returns the names of the keys a user's runs get, their role's and their own, each once, by name.
 func (s *SSHKeyPolicyStorage) For(ctx context.Context, role, user string) ([]string, error) {
 	return client(s.db).Select[string](ctx,
 		"SELECT key_name FROM ssh_key_policy WHERE role = ? UNION SELECT key_name FROM ssh_key_user WHERE user_name = ? ORDER BY key_name", role, user)

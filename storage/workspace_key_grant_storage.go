@@ -82,9 +82,8 @@ func (s *WorkspaceKeyGrantStorage) All(ctx context.Context, workspaceID string) 
 	return roles, users, nil
 }
 
-// For returns which of a workspace's keys a run started by a user of a
-// role gets, in the order given: each key without a grant, and each key
-// granted to the role or to the user.
+// For returns which of a workspace's keys, in the order given, a run that a user of a role starts gets.
+// A key without a grant goes to every run, a granted one to runs of its role or user.
 func (s *WorkspaceKeyGrantStorage) For(ctx context.Context, workspaceID string, keyNames []string, role, user string) ([]string, error) {
 	roles, users, err := s.All(ctx, workspaceID)
 	if err != nil {

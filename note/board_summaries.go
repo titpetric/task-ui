@@ -6,10 +6,9 @@ import (
 	"github.com/titpetric/task-ui/storage"
 )
 
-// Summaries returns the reports of the runs that have a summary, or
-// one under way, by run ID: of Run and summarize or Summarize, the
-// oldest summary thread about the run that did not fail, else the
-// summary the Runs page's Summary kept.
+// Summaries returns the reports of the runs that have a summary, or one under way, by run ID.
+// A run's report is the oldest summary thread about it that did not fail, of Run and summarize or Summarize,
+// else the summary the Runs page's Summary kept.
 func (b *Board) Summaries(ctx context.Context, runIDs []string) map[string]*Report {
 	reports := map[string]*Report{}
 	if len(runIDs) == 0 {

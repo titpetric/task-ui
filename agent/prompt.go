@@ -8,15 +8,12 @@ import (
 	"strings"
 )
 
-// Prompt runs Claude Code on a prompt, TASK_UI_PROMPT, a thread whose
-// last message is the question, in TASK_UI_PROMPT_DIR, or else the
-// workspace's checkout, TASK_UI_WORKSPACE_DIR. Claude's reply goes to the
-// terminal and to TASK_UI_PROMPT_REPLY. TASK_UI_PROMPT_RUN names a file
-// with the run a thread is about, TASK_UI_PROMPT_WORKFLOW one with a
-// workflow run's steps; TASK_UI_PROMPT_INSTRUCTIONS goes to the system
-// prompt, ahead of the prompt's source, TASK_UI_PROMPT_SOURCE, the
-// thread to reply in with the task MCP, the hosts of TASK_UI_HOSTS and
-// the context. With a source, the final message is the fallback reply.
+// Prompt runs Claude Code on the thread in TASK_UI_PROMPT, whose last message is the question,
+// in TASK_UI_PROMPT_DIR, or else the workspace's checkout, TASK_UI_WORKSPACE_DIR.
+// Claude's reply goes to the terminal and to the file TASK_UI_PROMPT_REPLY names.
+// TASK_UI_PROMPT_RUN names a file with the run a thread is about, TASK_UI_PROMPT_WORKFLOW one with a workflow run's steps.
+// The system prompt holds TASK_UI_PROMPT_INSTRUCTIONS, the thread TASK_UI_PROMPT_SOURCE to reply in with the task MCP,
+// the hosts of TASK_UI_HOSTS and the context; with a source, the final message is the fallback reply.
 func (a *Agent) Prompt(ctx context.Context) error {
 	thread := a.getenv("TASK_UI_PROMPT")
 	if thread == "" {

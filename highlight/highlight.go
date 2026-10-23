@@ -13,8 +13,7 @@ import (
 	"strings"
 )
 
-// HTML returns the file's text, escaped, with its parts marked by the
-// convention its name says.
+// HTML returns the file's text, escaped, its parts marked by the convention its name says.
 func HTML(name, src string) template.HTML {
 	base := strings.ToLower(filepath.Base(name))
 	var line func(string) string

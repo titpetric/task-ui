@@ -7,10 +7,9 @@ import (
 	"time"
 )
 
-// Containers returns the containers each host runs, by the host's ID, at
-// most TTL old: the hub's containers collection, which holds those its
-// agents reported in the last ten minutes, or on a hub without one the
-// newest record of container_stats of each host.
+// Containers returns the containers each host runs, by the host's ID, at most TTL old.
+// They come from the hub's containers collection, which holds what its agents reported in the last ten minutes.
+// On a hub without that collection, they are the newest container_stats record of each host.
 func (c *Client) Containers(ctx context.Context) (map[string][]Container, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()

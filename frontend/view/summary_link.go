@@ -19,8 +19,7 @@ type SummaryLink struct {
 	Preview string
 }
 
-// NewSummaryLink links the report of a run, its summary's text cut to
-// the preview on one line.
+// NewSummaryLink links the report of a run, its summary's text cut to the preview on one line.
 func NewSummaryLink(runID, text string) *SummaryLink {
 	preview := strings.Join(strings.Fields(text), " ")
 	if utf8.RuneCountInString(preview) > summaryPreview {

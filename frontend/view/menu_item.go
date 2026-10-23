@@ -36,11 +36,9 @@ type MenuItem struct {
 	Sep bool
 }
 
-// NewMenuItem returns an item from its icon, its label and pairs of an
-// attribute and its value: href, download, note and disabled (its
-// value the note) set the fields; data-*, aria-* and title go into
-// Attrs. Any other name, or a name without a value, is an error, so a
-// template that misspells one fails to render.
+// NewMenuItem returns an item from its icon, its label and pairs of an attribute and its value.
+// Href, download, note and disabled (its value the note) set fields; data-*, aria-* and title go into Attrs.
+// Any other name, or a name without a value, is an error, so a template that misspells one fails to render.
 func NewMenuItem(icon, label string, attrs ...string) (MenuItem, error) {
 	item := MenuItem{Icon: icon, Label: label}
 	if len(attrs)%2 != 0 {
@@ -75,8 +73,7 @@ func NewMenuItem(icon, label string, attrs ...string) (MenuItem, error) {
 	return item, nil
 }
 
-// NewDangerItem returns an item as NewMenuItem does, in the danger
-// group: Delete, Kill, Remove.
+// NewDangerItem returns an item as NewMenuItem does, in the danger group: Delete, Kill, Remove.
 func NewDangerItem(icon, label string, attrs ...string) (MenuItem, error) {
 	item, err := NewMenuItem(icon, label, attrs...)
 	item.Danger = true

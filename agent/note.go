@@ -7,14 +7,9 @@ import (
 	"os"
 )
 
-// Note runs Claude Code on an instruction from the Notes board, to the
-// end. The board starts it as the agent's user for a note or a reply
-// naming the agent, the thread in TASK_UI_NOTE, TASK_UI_NOTE_ID and
-// TASK_UI_NOTE_AUTHOR. Claude's answer goes to the terminal and to the
-// file TASK_UI_NOTE_REPLY names, which the board replies with: what
-// changed, or why it declined. It works in TASK_UI_WORKSPACE_DIR, the
-// default workspace with the projects, with the context in its system
-// prompt.
+// Note runs Claude Code to the end on the Notes board thread in TASK_UI_NOTE, in TASK_UI_WORKSPACE_DIR.
+// It fails without the thread or a token, or when it cannot create the file TASK_UI_NOTE_REPLY names.
+// Claude's answer goes to the terminal and to that file, which the board replies with.
 func (a *Agent) Note(ctx context.Context) error {
 	thread := a.getenv("TASK_UI_NOTE")
 	if thread == "" {

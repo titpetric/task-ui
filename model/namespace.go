@@ -20,8 +20,7 @@ func IsInternal(folder string) bool {
 	return folder == Internal || strings.HasPrefix(folder, Internal+"/")
 }
 
-// IsReserved reports whether a folder ID starts with a name task-ui keeps
-// for itself: internal or the default workspace's _.
+// IsReserved reports whether a folder ID starts with a name task-ui keeps: internal or the default workspace's _.
 func IsReserved(folder string) bool {
 	top, _, _ := strings.Cut(folder, "/")
 	return top == Internal || top == Default

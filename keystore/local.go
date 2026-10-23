@@ -94,9 +94,8 @@ func tag(algo string, bits int) string {
 	return algo + strconv.Itoa(bits)
 }
 
-// Stem returns the name of a key with a base, an algorithm and a size:
-// the base, an underscore and the tag; a base that ends with the tag
-// already keeps it once.
+// Stem returns a key name of a base, an underscore and the tag of an algorithm and a size.
+// A base that ends with the tag already keeps it once.
 func Stem(name, algo string, bits int) (string, error) {
 	name = strings.TrimSpace(name)
 	t := tag(algo, bits)

@@ -81,13 +81,10 @@ func (b *Board) threadPath(ctx context.Context, thread *model.Note) string {
 	return "/f/" + model.Default + "/" + thread.Dir + anchor
 }
 
-// RunReply posts what a prompt's run found in its own thread, as the
-// run's token asks with note_comment: a reply as Claude, the author of
-// the thread's answers, with the thread's run, in the reply a rerun
-// rewrites when there is one. The thread's state follows its run, so
-// RunReply sets none, and the run's final message is no reply once one
-// came this way. A thread that is no prompt's takes the reply as Comment
-// does.
+// RunReply posts what a prompt's run found to its own thread, as the run's token asks with note_comment.
+// The reply is Claude's, with the thread's run, in the reply a rerun rewrites when there is one.
+// The thread's state follows its run, so RunReply sets none, and the run's final message is no reply after this one.
+// A thread that is no prompt's takes the reply as Comment does.
 func (b *Board) RunReply(ctx context.Context, user *model.User, id, body, state string) (*model.Note, error) {
 	thread, err := b.Notes.Get(ctx, id)
 	if err != nil {

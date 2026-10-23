@@ -23,9 +23,8 @@ type RunMenu struct {
 	Jobs []*folder.Job
 }
 
-// NewRunMenu returns the menu of a folder's jobs, default first and the
-// rest by ID, case aside. Main is the given job, else the default, else
-// the only job; nil for none of those. Nil for no jobs at all.
+// NewRunMenu returns the menu of a folder's jobs, default first and the rest by ID, case aside.
+// Main is the given job, else the default, else the only job; nil for none of those or no jobs.
 func NewRunMenu(f *folder.Folder, jobs []*folder.Job, main *folder.Job) *RunMenu {
 	if f == nil || (len(jobs) == 0 && main == nil) {
 		return nil
@@ -51,9 +50,8 @@ func (m *RunMenu) Menu() bool {
 	return len(m.Jobs) > 1 || (len(m.Jobs) == 1 && m.Jobs[0] != m.Main)
 }
 
-// Describe is what the menu says of a job: its description, or that it
-// runs the target when it has none or the description repeats its name
-// or first step, as a job card leaves it out.
+// Describe is what the menu says of a job: its description, or that it runs the target when it has none.
+// A description that repeats the job's name or first step counts as none, as a job card leaves it out.
 func (m *RunMenu) Describe(job *folder.Job) string {
 	desc := job.Description
 	if desc != "" && desc != job.Name && (len(job.Steps) == 0 || desc != job.Steps[0]) {

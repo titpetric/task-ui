@@ -8,8 +8,7 @@ type Replay struct {
 	Output Frame
 }
 
-// Lines counts the lines of the whole output, less the empty one the
-// cursor waits on after the last.
+// Lines counts the lines of the whole output, less the empty one the cursor waits on after the last.
 func (r Replay) Lines() int {
 	lines := r.Output.Rows
 	if lines > 0 && blank(r.Output.Lines[lines-1]) {

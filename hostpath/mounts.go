@@ -14,6 +14,10 @@ import (
 
 // Mounts are the bind mounts of a container, the deepest mount point
 // first: each a directory of the host at a path of the container.
+// mountinfo shows a bind mount of a directory by its path within its
+// file system, the host path for a file system the host mounts at /.
+// The root mount and the mounts of a file system's own root, such as
+// /proc, map nothing.
 type Mounts []mount
 
 // mount is a host directory, Source, at Target in the container.
@@ -33,10 +37,7 @@ func Read() Mounts {
 	return mounts
 }
 
-// Parse reads mountinfo lines: a bind mount of a directory shows its
-// path within its file system, the host path for a file system mounted
-// at the host's /, at its mount point. The root mount and the mounts of
-// a file system's own root, such as /proc, map nothing.
+// Parse reads mountinfo lines into the bind mounts that map a container's paths to the host's.
 func Parse(r io.Reader) (Mounts, error) {
 	var mounts Mounts
 	scanner := bufio.NewScanner(r)

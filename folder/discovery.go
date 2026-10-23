@@ -63,8 +63,7 @@ func (c *catalogue) seen(dir string) bool {
 	return ok
 }
 
-// List returns the folders in tree order: a folder, then the folders
-// inside it.
+// List returns the folders in tree order: a folder, then the folders inside it.
 func (d *Discovery) List() []*Folder {
 	root, err := filepath.Abs(d.Root)
 	if err != nil {

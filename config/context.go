@@ -28,9 +28,8 @@ func Context() string {
 // "## Inventory (`inventory`, `hosts`)".
 var headingKeys = regexp.MustCompile("`([a-z][a-z0-9_-]*)`")
 
-// About returns the first sentence of the section of context.md whose
-// heading names a key of permissions.yml, a section or a permission,
-// or "" for a key no heading names.
+// About returns the first sentence of the context.md section whose heading names key,
+// a section or a permission of permissions.yml, or "" when no heading names it.
 func About(key string) string {
 	for _, block := range strings.Split(context, "\n## ")[1:] {
 		heading, body, _ := strings.Cut(block, "\n")

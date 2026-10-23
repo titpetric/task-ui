@@ -4,10 +4,8 @@ import (
 	"log/slog"
 )
 
-// TakeInput opens the process of a job that takes no input to the
-// keystrokes Input sends, to answer a prompt the job waits on: every
-// run has its pty on stdin. The run names the first user to take it,
-// in its recording and the log; it reports whether user came first.
+// TakeInput opens the pty of a job that takes no input to the keystrokes Input sends, to answer a prompt it waits on.
+// It reports whether user came first; the recording and the log name that first user.
 func (s *Session) TakeInput(user string) bool {
 	s.mu.Lock()
 	defer s.mu.Unlock()

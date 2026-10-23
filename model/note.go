@@ -28,10 +28,7 @@ const (
 // mention; "@claude: check" stays one.
 var mention = regexp.MustCompile(`(?:^|[\s(\[{,;])@([A-Za-z0-9][A-Za-z0-9._-]*)((?::\S)?)`)
 
-// Mentions returns the user names a text names with @, once each, in the
-// order they appear. Mentions drops a trailing dot or dash, the
-// punctuation, and skips a name a colon and a character other than a
-// space follow: @host:dev1 is a job.
+// Mentions returns the user names a text names with @, once each in order, a trailing dot or dash dropped.
 func Mentions(text string) []string {
 	var names []string
 	seen := map[string]bool{}

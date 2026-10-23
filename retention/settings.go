@@ -29,8 +29,7 @@ func Defaults() Settings {
 	return Settings{Recordings: Rule{Age: Month}, Artifacts: Rule{Age: Never}, SecretReads: Rule{Age: Never}, KeyReads: Rule{Age: Never}}
 }
 
-// Load reads the settings from stored values, the defaults for what is
-// missing or wrong.
+// Load reads the settings from stored values, with the defaults for what is missing or wrong.
 func Load(values map[string]string) Settings {
 	s := Defaults()
 	for _, kind := range Kinds {

@@ -52,9 +52,8 @@ func (s *WorkspaceStorage) GetByFolder(ctx context.Context, folder string) (*mod
 	return workspace, notFound(err)
 }
 
-// EnsureDefault adds the default workspace, whose directory is the
-// root, when the row is missing. A default workspace already there keeps
-// its row unchanged.
+// EnsureDefault adds the default workspace, whose directory is the root, when the row is missing.
+// A default workspace already there keeps its row unchanged.
 func (s *WorkspaceStorage) EnsureDefault(ctx context.Context) error {
 	if _, err := s.GetByFolder(ctx, model.Default); !errors.Is(err, ErrNotFound) {
 		return err

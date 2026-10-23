@@ -31,10 +31,8 @@ var Checks = map[string]bool{"Allowed": true, "Can": true, "can": true, "require
 // templateCheck finds a check in a template: {{ if .Can "note/edit" }}.
 var templateCheck = regexp.MustCompile(`\b[Cc]an "([^"]*)"`)
 
-// Lint walks the Go files, tests left out, and the templates under root,
-// and returns each mismatch with the configuration, sorted: a check of a rule
-// the configuration does not hold, a check whose rule is no literal, and a rule
-// of the configuration nothing checks.
+// Lint checks the Go files but tests, and the templates under root, against the configuration.
+// It returns the mismatches sorted: unknown rules, rules of no literal, and rules nothing checks.
 func Lint(root string, perms *config.Permissions) ([]string, error) {
 	var findings []string
 	used := map[string]bool{}

@@ -26,9 +26,8 @@ func (b *Board) Ask(ctx context.Context, user *model.User, parentID, dir, body s
 	return b.ask(ctx, user, parentID, dir, "", "", body)
 }
 
-// AskArea puts a prompt of an area's page to Claude in dir, as Ask
-// does: a thread marked with the area, such as model.AreaWorkflows,
-// whose runs get the area's instruction. Asking takes prompt/edit.
+// AskArea puts a prompt of an area's page, such as model.AreaWorkflows, to Claude in dir, as Ask does.
+// The thread carries the area, so its runs get the area's instruction; asking takes prompt/edit.
 func (b *Board) AskArea(ctx context.Context, user *model.User, area, dir, body string) (*model.Note, error) {
 	if area != model.AreaWorkflows {
 		return nil, fmt.Errorf("%w: no area %q", ErrInvalid, area)

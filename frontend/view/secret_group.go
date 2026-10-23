@@ -25,8 +25,7 @@ func (g SecretGroup) Shared() string {
 	return "workspace:" + g.Workspace
 }
 
-// SharedSecrets returns the secrets the workspace shares with every
-// folder in it.
+// SharedSecrets returns the secrets the workspace shares with every folder in it.
 func (g SecretGroup) SharedSecrets() []model.Secret {
 	var result []model.Secret
 	for _, secret := range g.Secrets {
@@ -37,8 +36,7 @@ func (g SecretGroup) SharedSecrets() []model.Secret {
 	return result
 }
 
-// Projects returns the folders that have secrets of their own, by
-// folder, each with its secrets.
+// Projects returns the folders with secrets of their own, by folder, each with its secrets.
 func (g SecretGroup) Projects() []SecretProject {
 	index := map[string]int{}
 	var result []SecretProject

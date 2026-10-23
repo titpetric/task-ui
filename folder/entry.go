@@ -12,7 +12,9 @@ import (
 )
 
 // Entry is one directory under the root, as the settings list it: with or
-// without something to run, with or without a git remote.
+// without something to run, with or without a git remote. A checkout
+// inside a workspace has the ID `<workspace>/<name>`, and Jobs counts the
+// jobs of the directory and of the folders discovered inside it.
 type Entry struct {
 	ID  string `json:"id"`
 	Dir string `json:"dir"`
@@ -26,9 +28,7 @@ type Entry struct {
 	Error string `json:"error,omitempty"`
 }
 
-// Entries lists the directories under root, less internal and _, and the checkouts inside each
-// workspace as `<workspace>/<name>`. Jobs counts the jobs of the directory
-// and of the folders discovered inside it.
+// Entries lists the directories under root, less internal and _, and the checkouts inside each workspace.
 func Entries(root string, g *git.Git, workspaces []string) []Entry {
 	dirs := map[string]string{}
 	ids := []string{}

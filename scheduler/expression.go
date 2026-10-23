@@ -173,8 +173,7 @@ func (e *Expression) Matches(t time.Time) bool {
 }
 
 // Next returns the first minute after t at which the expression fires.
-// A schedule that never fires, such as the 31st of February, returns the
-// zero time after five years of looking.
+// One that never fires, such as on the 31st of February, returns the zero time after five years of looking.
 func (e *Expression) Next(after time.Time) time.Time {
 	t := after.Truncate(time.Minute).Add(time.Minute)
 	limit := t.AddDate(5, 0, 0)

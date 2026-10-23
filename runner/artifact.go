@@ -82,10 +82,9 @@ func (m *Manager) squashArtifacts(ctx context.Context) {
 	}
 }
 
-// WriteArtifact puts a file into the artifact tree at a path, as a user
-// and with no run, over the API or MCP: the store commits it under the
-// user's name and keeps the version it replaces, and the record names the
-// user where a run's names its run, folder and job.
+// WriteArtifact puts a file into the artifact tree at a path as a user, with no run, over the API or MCP.
+// The store commits it under the user's name and keeps the version it replaces.
+// The record names the user where a run's names its run, folder and job.
 func (m *Manager) WriteArtifact(ctx context.Context, rel string, data []byte, user string) (*model.Artifact, error) {
 	if m.opts.ArtifactStore == nil || m.opts.Artifacts == nil {
 		return nil, ErrNotFound

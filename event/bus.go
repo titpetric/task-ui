@@ -32,8 +32,7 @@ func NewBus() *Bus {
 	return &Bus{subscribers: map[string]map[int]chan Event{}}
 }
 
-// Subscribe returns a channel of the topic's events and the function
-// that ends the subscription, which closes the channel.
+// Subscribe returns a channel of the topic's events and a cancel func that closes it.
 func (b *Bus) Subscribe(topic string) (<-chan Event, func()) {
 	ch := make(chan Event, Buffer)
 	b.mu.Lock()
@@ -58,8 +57,7 @@ func (b *Bus) Subscribe(topic string) (<-chan Event, func()) {
 	}
 }
 
-// Publish sends an event to the topic's subscribers. One whose buffer
-// is full loses the event: the publisher never waits.
+// Publish sends an event to the topic's subscribers, skipping any whose buffer is full.
 func (b *Bus) Publish(topic, name string, data any) {
 	b.mu.Lock()
 	defer b.mu.Unlock()

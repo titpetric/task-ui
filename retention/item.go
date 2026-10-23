@@ -15,10 +15,7 @@ type Item struct {
 	Busy bool
 }
 
-// Expire returns the items, of the ones given oldest first, that go
-// under a rule at a moment: the ones older than the rule keeps, and then
-// as many more as it takes for the rest to fit its limit, passing over
-// the busy ones.
+// Expire returns the items, given oldest first, older than the rule keeps or over its limit, skipping busy ones.
 func Expire(items []Item, rule Rule, now time.Time) []Item {
 	var total int64
 	for _, item := range items {

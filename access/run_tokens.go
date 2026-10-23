@@ -68,15 +68,13 @@ func (t *RunTokens) run(token string) (runToken, bool) {
 
 type runKey struct{}
 
-// FromRun reports whether the request's user signed in with a run token, which a Claude run
-// task-ui started holds and which needs no MCP access of the user's.
+// FromRun reports whether the request's user signed in with a run token, which needs no MCP access of the user's.
 func FromRun(ctx context.Context) bool {
 	_, ok := ctx.Value(runKey{}).(runToken)
 	return ok
 }
 
-// RunThread returns the ID of the note the run whose token signed the
-// request in answers, empty for a request of no run.
+// RunThread returns the ID of the note the request's run answers, empty for a request of no run.
 func RunThread(ctx context.Context) string {
 	run, _ := ctx.Value(runKey{}).(runToken)
 	return run.thread

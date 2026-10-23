@@ -8,8 +8,7 @@ type tokenKey struct{}
 
 type viaKey struct{}
 
-// TokenFrom returns the ID of the token a request signed in with, ""
-// for a session.
+// TokenFrom returns the ID of the token a request signed in with, "" for a session.
 func TokenFrom(ctx context.Context) string {
 	id, _ := ctx.Value(tokenKey{}).(string)
 	return id

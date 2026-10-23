@@ -18,15 +18,9 @@ type pending struct {
 	vault  *Vault
 }
 
-// Migrate puts every secret but the services' on the instance's
-// encryption key: the shared ones, scope all, become the default
-// workspace's, workspace:_, and Migrate decrypts a row that key does not
-// open with the legacy keys, the SSH keys of old and the workspaces'
-// encryption keys, and encrypts it for the instance's. Before
-// it writes anything it calls before, to copy the database, say; with
-// nothing to do it does not. Migrate removes a row only after it wrote
-// the replacement and read it back; a row nothing opens stays untouched,
-// logged. Run again, it finds every row current and does nothing.
+// Migrate puts every secret but the services' on the instance's encryption key, the shared ones as workspace:_.
+// It calls before, to copy the database say, ahead of its first write, and never with nothing to do.
+// It returns the counts of what it did, and a row nothing opens stays untouched, logged.
 func (s *Store) Migrate(ctx context.Context, before func(context.Context) error) (Migration, error) {
 	var result Migration
 	if s.Workspaces == nil {

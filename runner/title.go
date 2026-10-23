@@ -90,8 +90,7 @@ func (t *titleScanner) end() {
 	}
 }
 
-// CleanTitle makes a terminal title fit to show: no control characters,
-// no space around it, at most TitleMax runes.
+// CleanTitle makes a terminal title fit to show: no control characters or space around it, at most TitleMax runes.
 func CleanTitle(title string) string {
 	title = strings.Map(func(r rune) rune {
 		if unicode.IsControl(r) || r == unicode.ReplacementChar {

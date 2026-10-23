@@ -69,10 +69,8 @@ func (l *Local) DeleteBackup(ctx context.Context, name string) error {
 	return l.Rows.ClearBackup(ctx, name)
 }
 
-// Purge removes a key for good: its row and links, its files, the
-// backup of its last rotation and the older backups beside it. A
-// workspace's encryption key goes so, once the instance's key encrypts
-// what it did.
+// Purge removes a key for good: its row and links, its files and the backups of its rotations.
+// A workspace's encryption key goes this way once the instance's key encrypts what it encrypted.
 func (l *Local) Purge(ctx context.Context, name string) error {
 	if _, err := l.Rows.Get(ctx, name); err != nil {
 		return err

@@ -9,15 +9,9 @@ import (
 	"github.com/titpetric/task-ui/model"
 )
 
-// MigrateInstance puts the services' secrets, integration:<kind>, on
-// the instance's encryption key: it decrypts a row that key does not
-// open with the legacy SSH keys and encrypts it for that key. Before it
-// writes anything it calls before, to copy the database, say; with
-// nothing to do it does not. Migrate checks the new value decrypts to
-// the old before it writes it, and reads the row back after; a row that
-// reads back wrong gets its old content again. A row nothing opens
-// stays untouched, logged. Run again, it finds every row current and
-// does nothing.
+// MigrateInstance puts the services' secrets, integration:<kind>, on the instance's encryption key.
+// It calls before, to copy the database say, ahead of its first write, and never with nothing to do.
+// A row that reads back wrong gets its old content again, and a row nothing opens stays untouched, logged.
 func (s *Store) MigrateInstance(ctx context.Context, before func(context.Context) error) (Migration, error) {
 	var result Migration
 	rows, err := s.instance(ctx)

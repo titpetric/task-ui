@@ -11,15 +11,13 @@ import (
 // replays into: the most of a run's output it shows.
 const OutputRows = 5000
 
-// FrameFromCast replays an asciicast v2 recording and returns the screen it ended on,
-// the last frame of a run without a session in memory.
+// FrameFromCast replays an asciicast v2 recording and returns the screen it ended on, a finished run's last frame.
 func FrameFromCast(r io.Reader) (Frame, error) {
 	replay, err := ReplayCast(r)
 	return replay.Screen, err
 }
 
-// OutputFromCast replays a recording and returns its whole output: every
-// line, colours and redraws as they ended up.
+// OutputFromCast replays a recording and returns its whole output, every line as colours and redraws left it.
 func OutputFromCast(r io.Reader) (Frame, error) {
 	replay, err := ReplayCast(r)
 	return replay.Output, err

@@ -115,9 +115,8 @@ func (s *Store) openAll(ctx context.Context, secrets []model.Secret) error {
 	return nil
 }
 
-// For returns the secrets that reach a folder by name, decrypted: those
-// its workspace shares, with the folder's own winning. A folder in a
-// named workspace does not get the default workspace's.
+// For returns the secrets that reach a folder by name, decrypted: its workspace's shared ones, the folder's own winning.
+// A folder in a named workspace does not get the default workspace's.
 func (s *Store) For(ctx context.Context, folder string) (map[string]string, error) {
 	secrets, err := s.Reaching(ctx, folder)
 	if err != nil {
@@ -217,9 +216,8 @@ func (s *Store) Encrypted(ctx context.Context, workspace string) ([]model.Secret
 	return s.inWorkspace(ctx, workspace)
 }
 
-// Rekey writes every secret again for its scope's current key, the
-// excluded names of the instance key left out: after a rotation, or
-// before a key goes. It returns the number it wrote.
+// Rekey writes every secret again for its scope's current key, after a rotation or before a key goes.
+// It leaves out the excluded names of the instance key and returns the number it wrote.
 func (s *Store) Rekey(ctx context.Context, exclude ...string) (int, error) {
 	secrets, err := s.Secrets.List(ctx)
 	if err != nil {

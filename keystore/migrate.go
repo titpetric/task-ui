@@ -16,16 +16,9 @@ import (
 // the key folder.
 const migratedSetting = "keys.migrated"
 
-// Migrate takes the keys of the older layout into the folder once, as
-// named keys, and records it: the instance's encryption key as
-// task_encryption_<algo>, a workspace's as
-// workspace_<folder>_encryption_<algo> and its SSH keys as
-// workspace_<folder>_<label>_<algo>, the folder's id_<type> as
-// task_ssh_<algo>, which git pulls with, and id_<type>_<label> as
-// <label>_<algo>, each with the roles and users the policies gave it.
-// Backups come along, to decrypt what they encrypted. The old files
-// stay where they are; the log names them. A file it cannot take stays,
-// with a warning.
+// Migrate takes the keys of the older layout into the folder once, under the names of the package doc.
+// Each key keeps the roles and users the policies gave it, and its backups come along.
+// The old files stay where they are, named in the log; a file it cannot take stays with a warning.
 func (l *Local) Migrate(ctx context.Context, legacy Legacy) ([]Moved, error) {
 	values, err := l.Settings.Values(ctx)
 	if err != nil || values[migratedSetting] != "" {
@@ -172,9 +165,7 @@ func (m *migration) link(ctx context.Context, name string, roles, users []string
 	}
 }
 
-// WorkspaceKeyName returns the name, before the algorithm, of a key of
-// a workspace by its folder: workspace_<folder>_<what>, the default
-// workspace, _, as default.
+// WorkspaceKeyName returns workspace_<folder>_<what>, a workspace key's name before the algorithm, _ as default.
 func WorkspaceKeyName(folder, what string) string {
 	if folder == model.Default {
 		folder = "default"

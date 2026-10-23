@@ -7,11 +7,7 @@ import (
 	"github.com/titpetric/task-ui/detector"
 )
 
-// Load reads a directory. A folder with a pipeline file lists that
-// pipeline's targets only: the Makefile, package scripts and scripts
-// folder beside it are the pipeline's business, not jobs of their own.
-// With kinds given, only those detectors run: the configuration
-// widens or narrows a folder this way.
+// Load reads a directory as a folder, with only the detectors of the kinds given when there are any.
 func Load(id, dir string, kinds ...string) *Folder {
 	f := &Folder{ID: id, Title: id, Dir: dir}
 	f.Sources = detector.All(dir, kinds...)
@@ -39,8 +35,7 @@ func firstSource(sources []*detector.Source) []*detector.Source {
 	return sources
 }
 
-// LoadFile reads one file as the only source of a folder, for the single
-// file mode and for a file the configuration names.
+// LoadFile reads one file as the only source of a folder, for single file mode and a file the configuration names.
 func LoadFile(id, path string) *Folder {
 	f := &Folder{ID: id, Title: id, Dir: filepath.Dir(path)}
 	if source := detector.FromFile(path); source != nil {

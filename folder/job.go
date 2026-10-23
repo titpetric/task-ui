@@ -41,10 +41,9 @@ func (j *Job) Key() string {
 	return model.RunKey(j.Folder, j.Dir, j.ID)
 }
 
-// ArgsCommand is what a run of a job that takes args starts, as a page
-// shows it before the arguments: the argv of its exec: step, which the
-// arguments follow, or the job's own argv and --. Empty for a job that
-// takes none.
+// ArgsCommand is what a run of a job that takes args starts, as a page shows it before the arguments.
+// The command is the argv of the job's exec: step, which the arguments follow, or the job's own argv and --.
+// Empty for a job that takes none.
 func (j *Job) ArgsCommand() string {
 	if j == nil || !j.TakesArgs {
 		return ""
@@ -65,9 +64,7 @@ func (j *Job) IsDefault() bool {
 	return id == "default" || strings.HasSuffix(id, ":default")
 }
 
-// DefaultFirst moves the default jobs to the front of a list, in
-// place, the rest keeping their order. Load and Skills order a folder's
-// jobs with it, so default is the first job everywhere.
+// DefaultFirst moves the default jobs to the front of a list in place, the rest keeping their order.
 func DefaultFirst(jobs []*Job) []*Job {
 	sort.SliceStable(jobs, func(a, b int) bool {
 		return jobs[a].IsDefault() && !jobs[b].IsDefault()

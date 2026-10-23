@@ -11,9 +11,7 @@ type RecentGroup struct {
 	Entries []Recent
 }
 
-// GroupRecents puts recents, newest first, under headings of how long ago
-// they started: in the last hour, 1 hour ago, 2 hours ago, and past a day,
-// 1 day ago and on.
+// GroupRecents puts recents, newest first, under the HoursAgo headings of when they started.
 func GroupRecents(now time.Time, recents []Recent) []RecentGroup {
 	var groups []RecentGroup
 	for _, recent := range recents {

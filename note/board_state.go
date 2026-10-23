@@ -44,12 +44,10 @@ func (b *Board) live(runID string) bool {
 	}
 }
 
-// Recover fails the instructions a restart cut short: a note still
-// working on a run of the board's has no run to wait on any more. A note
-// working with no run is an external agent's, which goes on. An open
-// instruction to the agent with no run yet, one that never started or one
-// set open by hand, starts the agent, and an open prompt with no run
-// starts its prompt.
+// Recover fails the instructions a restart cut short: a note working on a run of the board's has no run to wait on.
+// A note working with no run is an external agent's, which goes on.
+// An open instruction to the agent with no run, never started or set open by hand, starts the agent.
+// An open prompt with no run starts its prompt.
 func (b *Board) Recover(ctx context.Context) error {
 	open, err := b.Notes.List(ctx, storage.NoteFilter{State: model.NoteOpen})
 	if err != nil {

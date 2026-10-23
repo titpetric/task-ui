@@ -11,7 +11,8 @@ import (
 // inside it, in their order. Top is nil for folders whose top is not
 // listed; ID names the top either way. A workspace is a group whose
 // projects stand under it in Projects, each a group of its own, and
-// whose Nested is empty.
+// whose Nested is empty. The projects at the root come first, in the folders' order; the
+// workspaces follow, by their rank in workspaces and then by folder.
 type Group struct {
 	ID        string
 	Top       *folder.Folder
@@ -20,10 +21,7 @@ type Group struct {
 	Projects  []Group
 }
 
-// Groups puts the folders, in their order, under their projects, and
-// the projects of each workspace, by its folder, under the workspace.
-// The projects at the root come first, in the folders' order; the
-// workspaces follow, by their rank in workspaces and then by folder.
+// Groups puts the folders under their projects, and each workspace's projects under the workspace.
 func Groups(folders []*folder.Folder, workspaces map[string]int) []Group {
 	groups := group(folders, 0, workspaces)
 	sort.SliceStable(groups, func(i, j int) bool {

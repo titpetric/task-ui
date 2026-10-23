@@ -7,11 +7,8 @@ import (
 	"github.com/titpetric/task-ui/model"
 )
 
-// Freeze holds a folder still while its project moves: it refuses with
-// ErrBusy while a run of the folder, or of one inside it, is active,
-// and with ErrMoving while another move holds the folder. Until release
-// no run of it starts, and no pull of its checkout. The ID is the
-// folder's under the root.
+// Freeze holds the folder of an ID under the root still while its project moves: no run or pull until release.
+// It refuses with ErrBusy while the folder, or one inside it, has an active run, and ErrMoving during another move.
 func (m *Manager) Freeze(id string) (release func(), err error) {
 	m.mu.Lock()
 	if m.isFrozen(id) {

@@ -36,8 +36,7 @@ func (r Rule) Keep() time.Duration {
 	return ages[r.Age]
 }
 
-// Valid reports whether the rule names an age of Ages and no negative
-// limit.
+// Valid reports whether the rule names an age of Ages and no negative limit.
 func (r Rule) Valid() bool {
 	_, ok := ages[r.Age]
 	return (ok || r.Age == Never) && r.Limit >= 0

@@ -9,7 +9,7 @@ import (
 // Reader reads hosts' facts over ssh and keeps each answer for TTL.
 // docker ps --size is slow on a host of many containers, so the reader
 // runs it once in a while, in the background, and a page shows the last
-// answer.
+// answer. Until a host answers, Facts returns its last answer, or nil.
 type Reader struct {
 	// Run runs a command on a login and returns its output: the ssh
 	// prober's Output.
@@ -23,9 +23,7 @@ type Reader struct {
 	running map[string]chan struct{}
 }
 
-// Facts returns a login's facts, read again from the host when the last
-// answer is older than TTL, and waiting at most wait for it; until the
-// host answers it returns the last answer, or nil.
+// Facts returns a login's facts, waiting at most wait for a fresh read once the last answer is older than TTL.
 func (r *Reader) Facts(ctx context.Context, login string, wait time.Duration) *Facts {
 	done := r.start(login)
 	if done != nil && wait > 0 {

@@ -10,9 +10,8 @@ import (
 	"github.com/titpetric/task-ui/storage"
 )
 
-// ForRun returns the SSH keys a run gets, by name: the instance's
-// linked to the role or the name of whoever started it, and the run's
-// workspace's with no link or linked so.
+// ForRun returns the names of the SSH keys a run gets: the instance's linked to the starter's role or name,
+// and those of the run's workspace linked the same way or to nobody.
 func (l *Local) ForRun(ctx context.Context, role, user, workspaceID string) ([]string, error) {
 	keys, err := l.List(ctx)
 	if err != nil {
@@ -38,9 +37,8 @@ func (l *Local) ForRun(ctx context.Context, role, user, workspaceID string) ([]s
 	return names, nil
 }
 
-// Materialize serves SSH keys in an ssh agent, from memory, on a socket
-// in a 0700 directory under Tmp, each key's backup after it. An
-// encryption key is ErrNotSSH. No key is a nil agent.
+// Materialize serves SSH keys from memory in an ssh agent on a socket under Tmp, each key's backup after it.
+// An encryption key is ErrNotSSH, and no key returns a nil agent.
 func (l *Local) Materialize(ctx context.Context, names []string) (*sshagent.Agent, error) {
 	keys, err := l.AgentKeys(ctx, names)
 	if err != nil {

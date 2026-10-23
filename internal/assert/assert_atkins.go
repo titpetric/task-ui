@@ -66,8 +66,7 @@ func FileExists(t testing.TB, path string, msg ...any) {
 	}
 }
 
-// NoFileExists checks that path is not a regular file. A directory at
-// path passes, matching testify.
+// NoFileExists checks that path is no regular file; a directory passes, as in testify.
 func NoFileExists(t testing.TB, path string, msg ...any) {
 	info, err := os.Lstat(path)
 	if err == nil && !info.IsDir() {
@@ -86,8 +85,7 @@ func DirExists(t testing.TB, path string, msg ...any) {
 	}
 }
 
-// NoDirExists checks that path is not a directory. A regular file at
-// path passes, matching testify.
+// NoDirExists checks that path is no directory; a regular file passes, as in testify.
 func NoDirExists(t testing.TB, path string, msg ...any) {
 	info, err := os.Lstat(path)
 	if err == nil && info.IsDir() {
@@ -112,16 +110,14 @@ func JSONEq(t testing.TB, expected, actual string, msg ...any) {
 	}
 }
 
-// ErrorAs checks that err, or an error it wraps, is assignable to
-// target, which must be a non-nil pointer.
+// ErrorAs checks that err, or an error it wraps, is assignable to target, a non-nil pointer.
 func ErrorAs(t testing.TB, err error, target any, msg ...any) {
 	if !errors.As(err, target) {
 		Errorf(t, "%v does not match %T: %v", err, target, msg)
 	}
 }
 
-// ElementsMatch checks that two arrays or slices hold the same elements
-// with the same multiplicity, in any order.
+// ElementsMatch checks that two lists hold the same elements, as often each, in any order.
 func ElementsMatch(t testing.TB, listA, listB any, msg ...any) {
 	extraA, extraB, ok := diffElements(listA, listB)
 	switch {

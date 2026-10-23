@@ -9,7 +9,7 @@
 // report and not task-ui's to guess.
 //
 // Nothing in this package runs a command of its own. It execs atkins,
-// decodes what it prints, and keeps the answer for a while.
+// decodes what it prints, and keeps the result for a while.
 package tooling
 
 import (
@@ -55,8 +55,16 @@ func (r *Report) Empty() bool {
 }
 
 // Scope is one database's history.
+//
+// Since and the methods built on it count a window in days back from the
+// report's last day, not from a cutoff time: the rows are dates, and a
+// reader asks "the last seven days" of a calendar, not of a clock. The
+// report's own Tools cover its whole window, so ToolsSince rolls a
+// shorter one up from the usage rows. Daily fills the empty days with
+// zeros: a chart that leaves them out draws a busy fortnight and a quiet
+// one the same width.
 type Scope struct {
-	// Name is what the scope is called, project or workspace.
+	// Name is the scope's name, project or workspace.
 	Name string `json:"name"`
 
 	// Repository is the checkout the rows came from, empty for the
@@ -116,8 +124,8 @@ type Tool struct {
 	Failures int64  `json:"failures"`
 }
 
-// Usage is one tool on one day: the series a chart of tool use over
-// time is drawn from. A day a tool did not run has no row.
+// Usage is one tool on one day, the series behind a chart of tool use
+// over time. A day a tool did not run has no row.
 type Usage struct {
 	Date    string `json:"date"`
 	Tool    string `json:"tool"`
@@ -130,12 +138,7 @@ func (r *Scope) Empty() bool {
 	return r == nil || len(r.Usage) == 0
 }
 
-// Since returns the usage rows of the last days, counted back from the
-// report's last day, oldest first.
-//
-// The window is a count of days and not a cutoff time, because the rows
-// are dates and the question is "the last seven days", which a reader
-// asks of a calendar and not of a clock.
+// Since returns the usage rows of the last days, counted back from the report's last day, oldest first.
 func (r *Scope) Since(days int) []Usage {
 	if r == nil || days <= 0 {
 		return nil
@@ -156,11 +159,7 @@ func (r *Scope) Since(days int) []Usage {
 	return rows
 }
 
-// ToolsSince returns the tools of the last days by the time they have
-// taken, the most expensive first.
-//
-// The report's own Tools cover its whole window, so a shorter one is
-// rolled up from the usage rows rather than taken from them.
+// ToolsSince returns the tools of the last days, rolled up from the usage rows, most time taken first.
 func (r *Scope) ToolsSince(days int) []Tool {
 	totals := map[string]*Tool{}
 	for _, row := range r.Since(days) {
@@ -187,12 +186,7 @@ func (r *Scope) ToolsSince(days int) []Tool {
 	return tools
 }
 
-// Daily returns the total time per day of the last days, oldest first,
-// with a zero for a day nothing ran.
-//
-// The empty days are filled because a run of days reads as time: a chart
-// that leaves them out draws a busy fortnight and a quiet one the same
-// width.
+// Daily returns the total time per day of the last days, oldest first, with a zero for a day nothing ran.
 func (r *Scope) Daily(days int) []Day {
 	if r == nil || days <= 0 {
 		return nil
@@ -234,7 +228,7 @@ type Day struct {
 	TotalMs int64
 }
 
-// lastDate is the day the report ends on, which is the day it was made.
+// lastDate is the day the report ends on, the day atkins made it.
 func (r *Scope) lastDate() time.Time {
 	at, err := time.Parse(time.DateOnly, strings.TrimSpace(r.To))
 	if err != nil {

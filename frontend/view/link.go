@@ -4,7 +4,10 @@ import (
 	"html/template"
 )
 
-// Link is one step of a chain as a page draws it.
+// Link is one step of a chain as a page draws it. A job links to its page, placed among the
+// workspaces as FolderHref places its folder; a workflow step links to the workflow by its name, and
+// a prompt step reads as a prompt in its place and links to its folder's page. A step that made a
+// run links to that run.
 type Link struct {
 	Text  string
 	Href  string

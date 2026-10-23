@@ -30,8 +30,7 @@ func (s *UserSessionStorage) Create(ctx context.Context, userID, hash string, ex
 	return row, client(s.db).Insert(ctx, model.UserSessionTable, row)
 }
 
-// Find returns the session with a hash, or ErrNotFound. It does not
-// look at the expiry; the caller holds the clock.
+// Find returns the session with a hash, or ErrNotFound, without looking at the expiry: the caller holds the clock.
 func (s *UserSessionStorage) Find(ctx context.Context, hash string) (*model.UserSession, error) {
 	session, err := client(s.db).Get[model.UserSession](ctx, "SELECT * FROM user_session WHERE hash = ?", hash)
 	return session, notFound(err)

@@ -11,9 +11,8 @@ import (
 // Sub returns.
 const ClaudeID = model.ClaudeJob
 
-// ClaudeJob returns the folder's Claude job, task-ui agent shell with a
-// terminal in the folder's directory: a shell, as @shell is, for admins
-// only, and no schedule or workflow step takes it.
+// ClaudeJob returns the folder's Claude job, task-ui agent shell with a terminal in the folder's directory.
+// A shell, as @shell is, for admins only, and no schedule or workflow step takes it.
 func (f *Folder) ClaudeJob() *Job {
 	if f == nil {
 		return nil

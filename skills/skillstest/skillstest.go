@@ -42,8 +42,7 @@ fi
 printf '%s{"id":"go","kind":"skill","path":"/ws/.atkins/skills/go.yml","active":false,"cmds":[{"id":"go:test","name":"test","cmd":"atkins go:test","active":false}]}]\n' "$sep"
 `
 
-// Prober returns a Prober over the stand-in atkins, and the file it logs
-// the directories it probes to.
+// Prober returns a Prober over the stand-in atkins and the file it logs the directories it probes to.
 func Prober(t testing.TB) (*skills.Prober, string) {
 	t.Helper()
 	command := filepath.Join(t.TempDir(), "atkins")

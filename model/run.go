@@ -55,9 +55,8 @@ func (r *Run) IsNote() bool {
 	return r.Job == NoteJob || (IsInternal(r.Folder) && r.Job == "claude-note")
 }
 
-// IsClaude reports whether the run is one of Claude's own: a prompt's,
-// the Notes agent's, Claude Code in a terminal, or any run of the
-// internal folder the older ones carry. No prompt asks about one.
+// IsClaude reports whether the run is Claude's own: a prompt's, the Notes agent's, Claude Code in a terminal or an internal one.
+// No prompt asks about one.
 func (r *Run) IsClaude() bool {
 	if r == nil {
 		return false
@@ -75,9 +74,8 @@ func (r *Run) Parallel() bool {
 	return r.Job == PromptJob || r.Job == NoteJob
 }
 
-// LockKey is the key a run holds while it runs: Key, one run per job,
-// and for a job whose runs go in parallel Key and the run's ID, so each
-// run holds its own.
+// LockKey is the key a run holds while it runs: Key, so one run per job.
+// A job whose runs go in parallel adds the run's ID, so each run holds its own.
 func (r *Run) LockKey() string {
 	if r.Parallel() {
 		return r.Key() + "#" + r.ID
@@ -112,9 +110,8 @@ func (r Run) Place() string {
 	return r.Where()
 }
 
-// Name returns the title of the run on a page: Place / job, or the job
-// alone for a job of the root, such as @claude-note or @host:web1. The
-// stored row keeps the folder _.
+// Name returns the run's title on a page: Place / job, or the job alone for the root, such as @host:web1.
+// The stored row keeps the folder _.
 func (r Run) Name() string {
 	if r.Folder == Default && r.Dir == "" {
 		return r.Job

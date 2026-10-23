@@ -6,8 +6,7 @@ type Crumb struct {
 	Href string
 }
 
-// Crumbs builds a breadcrumb from text and href pairs; an odd last
-// argument is a text without a link.
+// Crumbs builds a breadcrumb from text and href pairs, an odd last argument a text without a link.
 func Crumbs(pairs ...string) []Crumb {
 	var crumbs []Crumb
 	for i := 0; i < len(pairs); i += 2 {

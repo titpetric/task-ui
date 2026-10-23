@@ -15,15 +15,8 @@ const HostPrefix = model.HostPrefix
 // ErrHostBare refuses the job @host, which names no host.
 var ErrHostBare = errors.New("a command on a host is the job @host:<name>, a host of the inventory, or @host:* for every host with an ssh login")
 
-// HostJob returns the job of the root, _, that runs a command on the
-// host, or on every host with an ssh login for *; nil for any other
-// folder, a directory inside the root, or no host. The job doesn't
-// check the inventory lists the host: its run's starter does. Its run
-// names the host as its target and the command as its args; the hosts
-// permission says who runs it. Its command is the ssh client's, which
-// the run's starter fills in for the host, so the job alone has none.
-// Unlike @shell it needs no one at the keyboard: a schedule or a
-// workflow step takes it.
+// HostJob returns the root's job that runs a command on host over ssh, or on every host with an ssh login for *.
+// Nil for any other folder, a directory inside the root, or no host.
 func (f *Folder) HostJob(host string) *Job {
 	if f == nil || f.ID != model.Default || f.Rel != "" || host == "" || strings.ContainsAny(host, " \t\r\n/") {
 		return nil

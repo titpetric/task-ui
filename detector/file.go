@@ -8,11 +8,9 @@ import (
 	"strings"
 )
 
-// File returns the job of one file of a folder that runs, rel to the
-// folder: an executable runs itself, a file whose first line is a
-// shebang runs with what the shebang names. The job's name is rel; a
-// header comment describes it as it does a script's. Nil for any other
-// file.
+// File returns the job of the file rel of a folder, named rel, or nil for a file that does not run.
+// An executable runs itself, and a file whose first line is a shebang runs with what the shebang names.
+// A header comment describes the job as it does a script's.
 func File(dir, rel string) *Target {
 	full := filepath.Join(dir, filepath.FromSlash(rel))
 	info, err := os.Stat(full)

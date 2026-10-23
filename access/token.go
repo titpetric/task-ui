@@ -36,8 +36,7 @@ func NewToken() (string, string, error) {
 	return token, HashToken(token), nil
 }
 
-// HashToken returns the hash storage keeps a token under. A token is random
-// enough for a plain sha256; a password needs bcrypt.
+// HashToken returns the sha256 hash storage keeps a token under: a token is random enough to need no bcrypt.
 func HashToken(token string) string {
 	sum := sha256.Sum256([]byte(token))
 	return hex.EncodeToString(sum[:])

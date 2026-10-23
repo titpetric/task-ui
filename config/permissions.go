@@ -166,8 +166,7 @@ func Default() *Permissions {
 	return embedded
 }
 
-// Paths returns every path a policy may set, in file order: each
-// section's rules, All included, then the permissions.
+// Paths returns every path a policy may set, in file order, the All rules included.
 func (p *Permissions) Paths() []string {
 	var paths []string
 	for _, section := range p.Sections {

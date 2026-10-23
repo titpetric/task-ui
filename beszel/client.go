@@ -1,6 +1,3 @@
-// Package beszel reads the systems of a Beszel hub, which watches the hosts, for
-// task-ui's host inventory. The hub is PocketBase, and the client lists its
-// systems collection with a token.
 package beszel
 
 import (

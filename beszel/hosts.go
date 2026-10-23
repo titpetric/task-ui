@@ -4,10 +4,7 @@ import (
 	"strings"
 )
 
-// Hosts lists the systems for a run, one a line, in their order: the
-// name, the host, the user that signs in to it and up or down, separated
-// by tabs. logins holds user@host for each host task-ui signs in to, as
-// sshprobe finds them; a host without one has an empty user.
+// Hosts lists the systems a line each, tab separated: name, host, the user of its login, and up or down.
 func Hosts(systems []System, logins map[string]string) string {
 	lines := make([]string, 0, len(systems))
 	for _, system := range systems {

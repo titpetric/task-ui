@@ -19,10 +19,8 @@ type Menu struct {
 	Items []MenuItem
 }
 
-// NewMenu returns a menu from its label and its parts, each a
-// MenuItem, a MenuDetail, or a value a template counts as false, such
-// as false, "", 0, nil or an empty map, for one it leaves out:
-// (and $cond (item ...)) returns such a $cond.
+// NewMenu returns a menu from its label and parts: each a MenuItem, a MenuDetail, or a false value it skips.
+// A false value is one a template counts as false, so (and $cond (item ...)) leaves the item out.
 func NewMenu(label string, parts ...any) (*Menu, error) {
 	m := &Menu{Label: label}
 	for _, part := range parts {
@@ -54,9 +52,7 @@ func (m *Menu) Empty() bool {
 	return true
 }
 
-// Groups returns the items to draw between lines: the groups as the
-// separators split them, empty ones left out, then every danger item
-// as the last group.
+// Groups returns the items between separators, empty groups left out, then the danger items as the last group.
 func (m *Menu) Groups() [][]MenuItem {
 	var groups [][]MenuItem
 	var group, danger []MenuItem

@@ -151,8 +151,7 @@ func (s *WorkflowStorage) Get(ctx context.Context, id string) (*model.Workflow, 
 	return workflow, notFound(err)
 }
 
-// Steps returns a workflow's steps in order, an empty list for a
-// workflow of a prompt alone.
+// Steps returns a workflow's steps in order, an empty list for a workflow of a prompt alone.
 func (s *WorkflowStorage) Steps(ctx context.Context, id string) ([]model.WorkflowStep, error) {
 	steps, err := client(s.db).Select[model.WorkflowStep](ctx, "SELECT * FROM workflow_step WHERE workflow_id = ? ORDER BY position", id)
 	if steps == nil && err == nil {
@@ -225,8 +224,7 @@ func (s *WorkflowStorage) Update(ctx context.Context, workflow *model.Workflow, 
 	})
 }
 
-// Delete removes a workflow and its steps. Its runs stay, as history. A
-// workflow another one runs stays, with ErrInUse.
+// Delete removes a workflow and its steps, keeping its runs, or reports ErrInUse for one another workflow runs.
 func (s *WorkflowStorage) Delete(ctx context.Context, id string) error {
 	return inTx(ctx, s.db, func(c conn) error {
 		users, err := c.Select[model.Workflow](ctx, "SELECT w.* FROM workflow w WHERE w.id IN (SELECT workflow_id FROM workflow_step WHERE workflow_ref = ?) ORDER BY w.name COLLATE NOCASE", id)
@@ -257,9 +255,7 @@ func NewWorkflowRunStorage(db DB) *WorkflowRunStorage {
 	return &WorkflowRunStorage{db: db}
 }
 
-// Create inserts a running workflow run and its steps, all pending. Create
-// copies the steps, so a later change to the workflow leaves the run's
-// history intact.
+// Create inserts a running workflow run with its own copy of the steps, all pending.
 func (s *WorkflowRunStorage) Create(ctx context.Context, run *model.WorkflowRun, steps []model.WorkflowStep) error {
 	if run.ID == "" {
 		run.ID = model.NewID()
@@ -291,8 +287,7 @@ func (s *WorkflowRunStorage) Get(ctx context.Context, id string) (*model.Workflo
 	return run, notFound(err)
 }
 
-// Steps returns a workflow run's steps in order, an empty list for a
-// run of a prompt alone.
+// Steps returns a workflow run's steps in order, an empty list for a run of a prompt alone.
 func (s *WorkflowRunStorage) Steps(ctx context.Context, id string) ([]model.WorkflowRunStep, error) {
 	steps, err := client(s.db).Select[model.WorkflowRunStep](ctx, "SELECT * FROM workflow_run_step WHERE workflow_run_id = ? ORDER BY position", id)
 	if steps == nil && err == nil {
@@ -363,9 +358,7 @@ func (s *WorkflowRunStorage) UpdateStep(ctx context.Context, step *model.Workflo
 	return client(s.db).Update(ctx, model.WorkflowRunStepTable, step, "id")
 }
 
-// Interrupt ends the workflow runs left running, when the instance that
-// ran them has stopped: they fail with the message, their running step
-// fails and Interrupt skips the steps after it.
+// Interrupt fails the runs a stopped instance left running and their running step, skipping the steps after it.
 func (s *WorkflowRunStorage) Interrupt(ctx context.Context, message string) error {
 	now := time.Now().UTC().Truncate(time.Millisecond)
 	return inTx(ctx, s.db, func(c conn) error {
@@ -379,9 +372,7 @@ func (s *WorkflowRunStorage) Interrupt(ctx context.Context, message string) erro
 	})
 }
 
-// Answered returns the newest finished runs of a workflow with an
-// answer, at most limit of them, newest first, without the run except
-// names.
+// Answered returns at most limit finished runs of a workflow with an answer, newest first, except the run it names.
 func (s *WorkflowRunStorage) Answered(ctx context.Context, workflowID, except string, limit int) ([]model.WorkflowRun, error) {
 	return client(s.db).Select[model.WorkflowRun](ctx,
 		"SELECT * FROM workflow_run WHERE workflow_id = ? AND id != ? AND answer != '' AND state != ? ORDER BY started_at DESC, rowid DESC LIMIT ?",

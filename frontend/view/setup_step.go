@@ -50,8 +50,7 @@ var setupOrder = []struct {
 	{SetupStep{Name: StepProjects, Href: "/settings/projects", Icon: "folder", Desc: "Git checkouts under the root, pulled before each run."}, func(p *Page) bool { return p.Can("project/view") }},
 }
 
-// SetupSteps returns the steps of the settings the user may open, in
-// setup order and numbered, with the page's Step current.
+// SetupSteps returns the numbered steps of the settings the user may open, in order, the page's Step current.
 func (p *Page) SetupSteps() []SetupStep {
 	var steps []SetupStep
 	for _, entry := range setupOrder {

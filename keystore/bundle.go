@@ -9,12 +9,9 @@ import (
 	"github.com/titpetric/task-ui/sshkey"
 )
 
-// Bundle returns the SSH keys of a scope as a workspace export bundles
-// them, by file name, <name>.key and <name>.pub, and the roles and
-// users of each by name. These are the keys the workspace's runs get;
-// no instance key and no encryption key leaves: the instance's encrypts
-// every secret, and an export carries the secrets inside its
-// passphrase.
+// Bundle returns the SSH keys a scope's runs get, as a workspace export bundles them: files by name.
+// The files are <name>.key and <name>.pub, beside the roles and the users of each key by name.
+// No instance key and no encryption key leaves, as the package doc explains.
 func (l *Local) Bundle(ctx context.Context, scope string) (map[string][]byte, map[string][]string, map[string][]string, error) {
 	keys, err := l.Of(ctx, scope, PurposeSSH)
 	if err != nil {

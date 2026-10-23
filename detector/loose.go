@@ -6,11 +6,9 @@ import (
 	"strings"
 )
 
-// Loose lists the scripts of a folder that is itself a scripts directory
-// with a pipeline: the executables and shell scripts beside the pipeline
-// file that the pipeline does not run, as a source aside it. A script
-// the pipeline names, as a target or in a step, is the pipeline's. Nil
-// for any other folder, or when there are none.
+// Loose lists the scripts beside the pipeline file of a folder that is a scripts directory, as a source aside.
+// It takes the executables and shell scripts the pipeline does not name as a target or in a step.
+// Nil for any other folder, or when there are none.
 func Loose(dir string, pipeline *Source) *Source {
 	if filepath.Base(dir) != "scripts" || pipeline == nil || pipeline.Kind == "script" {
 		return nil

@@ -18,8 +18,7 @@ func NewUserAuthPasswordStorage(db DB) *UserAuthPasswordStorage {
 	return &UserAuthPasswordStorage{db: db}
 }
 
-// List returns a user's passwords: the password first, then the backup
-// passwords, oldest first.
+// List returns a user's passwords: the password first, then the backup passwords, oldest first.
 func (s *UserAuthPasswordStorage) List(ctx context.Context, userID string) ([]model.UserAuthPassword, error) {
 	return client(s.db).Select[model.UserAuthPassword](ctx,
 		"SELECT * FROM user_auth_password WHERE user_id = ? ORDER BY kind = 'backup', rowid", userID)

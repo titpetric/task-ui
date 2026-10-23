@@ -33,7 +33,8 @@ const (
 // most, in base64.
 const maxBody = 24 << 20
 
-// Server answers MCP requests over the API.
+// Server answers MCP requests over the API, one JSON-RPC message per POST. There is no stream to
+// open with GET and no session to end with DELETE.
 type Server struct {
 	// API is the /api router the tools call.
 	API http.Handler
@@ -143,8 +144,7 @@ const toolGuide = "task-ui runs the jobs of folders (atkins, Taskfile, make, npm
 	"and ask_prompt asks Claude in a folder and can wait for the answer. " +
 	"Call whoami to see what you may do: your role, your permissions and the folders you see."
 
-// ServeHTTP answers one JSON-RPC message per POST, in JSON. There is no
-// stream to open with GET and no session to end with DELETE.
+// ServeHTTP answers one JSON-RPC message per POST, in JSON.
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if err := s.serveHTTP(w, r); err != nil {
 		rerr, ok := err.(*rpcError)

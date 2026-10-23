@@ -105,8 +105,7 @@ func ConfigOf(p *model.Project) Config {
 	}
 }
 
-// WorkspaceConfigsOf reads workspace rows as the configurations of their
-// directories, the default one the root's.
+// WorkspaceConfigsOf reads workspace rows as the configurations of their directories, the default one the root's.
 func WorkspaceConfigsOf(workspaces []model.Workspace) []Config {
 	configs := make([]Config, 0, len(workspaces))
 	for _, w := range workspaces {
