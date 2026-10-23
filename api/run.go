@@ -47,6 +47,11 @@ type RunView struct {
 	// CanRun says whether the user asking may run the job, and so end
 	// the run and type into it.
 	CanRun bool `json:"can_run"`
+	// CanInput says whether the user asking may take input on the run
+	// in progress of a job that takes none: the input permission.
+	CanInput bool `json:"can_input"`
+	// InputBy names who took input on the run in progress, if anyone.
+	InputBy string `json:"input_by,omitempty"`
 }
 
 // view decorates a run row with what the runner knows, for the user
@@ -57,6 +62,8 @@ func (h *Handlers) view(r *http.Request, run model.Run) RunView {
 		status := session.Status()
 		v.Live, v.Attached, v.Status = true, session.Attached(), &status
 		v.Run = session.Snapshot()
+		v.InputBy = session.InputBy()
+		v.CanInput = !status.Finished() && h.takesInput(r, session)
 	}
 	switch {
 	case run.IsPrompt():

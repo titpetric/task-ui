@@ -32,3 +32,4 @@ permissions:
   run: "Run Jobs"
   shell: "Enter Shell"
   hosts: "Run on Hosts"
+  input: "Allow interactive mode"

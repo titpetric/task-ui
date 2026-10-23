@@ -75,6 +75,7 @@ func newFixture(t *testing.T) *fixture {
 		"slow":     "sleep 30",
 		"fail":     "exit 3",
 		"echo":     "read line; echo \"got $line\"",
+		"ask":      "read line; echo \"answered $line\"",
 		"artifact": "echo hello > \"$TASK_UI_ARTIFACTS/out.txt\"",
 	})
 	private := shellFolder(t, root, "private", map[string]string{"deploy": "echo deployed"})

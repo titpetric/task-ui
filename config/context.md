@@ -39,7 +39,7 @@ root, `_`, has `@host:<name>`, a shell command, its args, on a host of
 the inventory over ssh, and `@host:*`, the command on every host with an
 ssh login, a run a host; they take `hosts`.
 
-## Runs
+## Runs (`input`)
 
 A run is one start of a job: who started it, how it ended, its output
 and its recording. One run per job goes at a time, except the Claude
@@ -51,7 +51,9 @@ keep a run's recording for an age and within a size; once it expires
 the run and its details stay, without the output. Pages: `/runs`,
 `/runs/<id>`; API: `/api/runs`; MCP: `run_job`, `list_runs`, `get_run`.
 You see the runs of folders you see; ending one takes the right to run
-its job.
+its job. Every run has a terminal on its input: you type into a run of
+an interactive job when you may run it, and `input` lets you take input
+on a running run of any job, to answer a prompt it waits on.
 
 ## Workspaces (`workspace`)
 

@@ -176,3 +176,34 @@ func TestAttach_CrossOrigin(t *testing.T) {
 	_, err := f.dial(t, asOps, id, "http://elsewhere.example")
 	assert.Error(t, err)
 }
+
+func TestAttach_TakeInput(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+
+	// A job that takes no input waits on a prompt: the runner's
+	// keystrokes go nowhere, and the runner may not take input.
+	id := f.start(t, asOps, "infra", "ask")
+	ops := f.attach(t, asOps, id)
+	assert.False(t, f.call(t, asOps, http.MethodGet, "/runs/"+id, nil).get("can_input").(bool))
+	send(t, ops, map[string]any{"type": "input", "message": "no\n"})
+	send(t, ops, map[string]any{"type": "take"})
+	refused := read(t, ops)
+	for refused.Type != "input" {
+		refused = read(t, ops)
+	}
+	assert.Equal(t, "off", refused.State)
+	time.Sleep(100 * time.Millisecond)
+	assert.Equal(t, model.StateRunning, f.call(t, asOps, http.MethodGet, "/runs/"+id, nil).str("state"))
+
+	// The admin takes input, and the keystrokes reach the process.
+	res := f.call(t, asAdmin, http.MethodGet, "/runs/"+id, nil)
+	assert.True(t, res.get("can_input").(bool))
+	admin := f.attach(t, asAdmin, id)
+	send(t, admin, map[string]any{"type": "take"})
+	send(t, admin, map[string]any{"type": "input", "message": "yes\n"})
+	out, status := untilStatus(t, admin)
+	assert.Contains(t, out, "answered yes")
+	assert.Equal(t, model.StateOK, status.State)
+	assert.Equal(t, asAdmin, f.call(t, asAdmin, http.MethodGet, "/runs/"+id, nil).str("input_by"))
+}

@@ -17,6 +17,7 @@ func TestDefault(t *testing.T) {
 	assert.Contains(t, p.Paths(), "note/all")
 	assert.Contains(t, p.Paths(), "secret/view")
 	assert.Contains(t, p.Paths(), "hosts")
+	assert.Contains(t, p.Paths(), "input")
 	assert.Equal(t, len(p.Sections)*len(p.Rules)+len(p.Extra)+len(p.Permissions), len(p.Paths()))
 	assert.Equal(t, len(p.Paths())-len(p.Sections), len(p.Checks()))
 	for _, path := range p.Checks() {

@@ -34,6 +34,17 @@ func (r *Recorder) Write(p []byte) (int, error) {
 	return len(p), r.buf.Flush()
 }
 
+// Mark records a marker event, what happened to the run besides its
+// output, such as who took input on it. Replays skip it.
+func (r *Recorder) Mark(label string) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	event, _ := json.Marshal([]any{time.Since(r.start).Seconds(), "m", label})
+	r.buf.Write(event)
+	r.buf.WriteByte('\n')
+	return r.buf.Flush()
+}
+
 // Close finishes the recording.
 func (r *Recorder) Close() error {
 	r.mu.Lock()

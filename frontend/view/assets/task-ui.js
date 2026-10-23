@@ -30,6 +30,8 @@
     replay: document.getElementById("run-replay"),
     pause: document.getElementById("run-pause"),
     restart: document.getElementById("run-restart"),
+    take: document.getElementById("run-take"),
+    input: document.getElementById("run-input"),
   };
 
   var session = null; // { run, spec, ws, term, fit, timer, onResize, finished, changed }
@@ -236,6 +238,19 @@
     els.kill.hidden = !opts.kill;
     els.pause.hidden = !opts.pause;
     els.restart.hidden = !opts.restart;
+    els.take.hidden = !opts.take;
+  }
+
+  // taking shows whether the window holds input on a run of a job that
+  // takes none: its keystrokes reach the process while it does.
+  function taking(s, on, who) {
+    s.taking = on;
+    dialog.classList.toggle("taking-input", on);
+    els.take.textContent = on ? "Release input" : "Take input";
+    els.take.setAttribute("aria-pressed", on ? "true" : "false");
+    els.input.hidden = !on && !who;
+    els.input.textContent = on ? "( > input on )" : "( > input on, " + who + " )";
+    if (on) s.term.focus();
   }
 
   // teardown closes the window: the socket and the terminal go, the run
@@ -245,7 +260,8 @@
     stopClock();
     if (session.stop) session.stop();
     els.rec.hidden = true;
-    dialog.classList.remove("replaying");
+    els.input.hidden = true;
+    dialog.classList.remove("replaying", "taking-input");
     if (session.ws && session.ws.readyState <= 1) session.ws.close();
     if (session.term) session.term.dispose();
     if (session.onResize) window.removeEventListener("resize", session.onResize);
@@ -402,10 +418,12 @@
     ws.binaryType = "arraybuffer";
     s.ws = ws;
     setState("running", "attaching");
-    buttons({ stop: run.can_run, kill: run.can_run });
+    buttons({ stop: run.can_run, kill: run.can_run, take: run.can_input });
+    taking(s, false, run.input_by || "");
     els.hint.textContent = run.can_run
       ? "Closing this window doesn't stop the run. Stop ends it; Kill ends it right away."
       : "You're watching. You don't have permission to type into this run or end it. Closing this window doesn't stop it.";
+    if (run.can_input) els.hint.textContent += " Take input sends your keystrokes to it, to answer a prompt it waits on.";
 
     term.onData(function (data) {
       if (ws.readyState === 1) ws.send(JSON.stringify({ type: "input", message: data }));
@@ -429,11 +447,16 @@
       var msg;
       try { msg = JSON.parse(event.data); } catch (e) { return; }
       if (msg.type === "status") finish(s, msg);
+      if (msg.type === "input") {
+        taking(s, msg.state === "on", "");
+        if (msg.message) notice(msg.message, "bad");
+      }
     };
     ws.onclose = function () {
       if (session !== s || s.finished) return;
       s.finished = true;
       stopClock();
+      if (s.taking) taking(s, false, "");
       setState("error", "detached");
       notice("The connection closed, but the run continues. Attach again to follow it.", "bad");
       buttons({ attach: true, again: run.can_run });
@@ -443,6 +466,7 @@
   // finish shows how a run ended.
   function finish(s, msg) {
     s.finished = true;
+    if (s.taking) taking(s, false, "");
     s.changed = true;
     stopClock();
     s.term.write("\x1b[?25l");
@@ -658,6 +682,11 @@
       if (session && session.ws && session.ws.readyState === 1) {
         session.ws.send(JSON.stringify({ type: "kill" }));
         els.kill.hidden = true;
+      }
+    });
+    els.take.addEventListener("click", function () {
+      if (session && session.ws && session.ws.readyState === 1) {
+        session.ws.send(JSON.stringify({ type: session.taking ? "release" : "take" }));
       }
     });
     els.attach.addEventListener("click", function () {

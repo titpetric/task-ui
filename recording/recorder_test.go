@@ -35,3 +35,16 @@ func TestRecorder_Close(t *testing.T) {
 	assert.NoError(t, rec.Close())
 	assert.Error(t, rec.Close(), "closing twice")
 }
+
+func TestRecorder_Mark(t *testing.T) {
+	t.Parallel()
+	s := &recording.Store{Root: t.TempDir()}
+	rec, err := s.Open(&model.Run{ID: model.NewID(), Folder: "f", Job: "j"})
+	assert.NoError(t, err)
+	assert.NoError(t, rec.Mark("input taken by black"))
+	assert.NoError(t, rec.Close())
+
+	data, err := os.ReadFile(rec.Path())
+	assert.NoError(t, err)
+	assert.Contains(t, string(data), `"m","input taken by black"`)
+}
