@@ -44,7 +44,9 @@ run count, how many failed and the median duration.
 
 Under the activity, what the commands inside the runs spent their time on, as atkins recorded it. A run of a job is one row in the list above; the twenty commands inside it are twenty rows here, so this answers a question the run history cannot: how much of a month goes to `go test`, and whether that has been true all month or only since Tuesday.
 
-Two charts, a bar a day, the busiest day full height and a day nothing ran an empty column:
+A section per database atkins records to, the project first. The **project** is the checkout the root belongs to, named by its repository, and says what standing in it costs. The **workspace** is `$HOME/.atkins`, which every run on the machine records to, and says where a week went across every project. A root that belongs to no checkout has the workspace alone.
+
+Each section holds two charts, a bar a day, the busiest day full height and a day nothing ran an empty column:
 
 - **Last 30 days**, the shape of a month;
 - **Last 7 days**, the shape of a week, for reading against it.
@@ -53,7 +55,7 @@ Under each, the tools of that window by the time they have taken, longest first:
 
 The toggle under the charts opens the commands themselves, by total time: the normalised command, its tool, how often it ran, its total, its average, its slowest run, how many failed and when it last ran. A command is normalised by atkins, so `go test ./...` and `go test ./pkg` are one row and `go test -race` is another.
 
-The panel is there when atkins has recorded something for the tree, and absent when it has not. The file it reads sits at the end of the summary line. See [Statistics](https://atkins.incubator.to/usage/stats) for what atkins records and the 31 day window it keeps.
+A section is there when its database has something recorded, and absent when it has not. The file each reads sits at the end of its summary line. See [Statistics](https://atkins.incubator.to/usage/stats) for what atkins records, the two databases it records to and the 31 day window it keeps.
 
 ## The list
 
