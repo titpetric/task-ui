@@ -136,11 +136,10 @@ api PUT /projects/website -d '{"hours":"mon-fri 9-17\nfri 9-13"}'
 # the package scripts and the scripts folder too.
 api PUT /projects/tools -d '{"sources":["make","npm","script"]}'
 
-# An SSH key for the keys page, and the default workspace's encryption
-# key, which its secrets need: a workspace starts without one. Then
-# secrets and a managed env file, so the runs and the pages have them.
-api POST /keys/generate -d '{"type":"ed25519","name":"task-ui","comment":"task-ui"}'
-api POST /workspaces/_/keys/generate -d '{"encrypt":true,"comment":"task-ui _"}'
+# An SSH key for the keys page, which git pulls with; the instance's
+# encryption key encrypts the secrets. Then secrets and a managed env
+# file, so the runs and the pages have them.
+api POST /keys/generate -d '{"name":"deploy","type":"ed25519","comment":"task-ui","git":true}'
 api POST /secrets -d '{"scope":"all","name":"CDN_PURGE_URL","content":"https://cdn.example/purge"}'
 api POST /secrets -d '{"scope":"infra","name":"REGION","content":"eu-central-1"}'
 api POST /secrets -d '{"scope":"infra","name":"DEPLOY_TOKEN","content":"s3cret"}'
@@ -259,11 +258,9 @@ api POST /workspaces -d "{\"url\":\"file://$work/repos/acme.git\",\"folder\":\"a
 api POST /projects -d "{\"url\":\"file://$work/repos/acme-api.git\",\"id\":\"api\",\"workspace\":\"acme\"}"
 api POST /projects -d "{\"url\":\"file://$work/repos/acme-web.git\",\"id\":\"web\",\"workspace\":\"acme\"}"
 api PUT /integrations/claude -d '{"values":{"token":"sk-ant-oat01-demo","who":"admin"}}'
-# The workspace's own: its encryption key, a shared secret and one of a
-# project on it, an SSH key every run in acme gets and one only the
+# The workspace's own: a shared secret and one of a project in it, an SSH key every run in acme gets and one only the
 # admins' runs get, and a local .env in the api checkout, which its
 # Files panel lists sealed.
-api POST /workspaces/acme/keys/generate -d '{"encrypt":true,"comment":"task-ui acme"}'
 api POST /secrets -d '{"scope":"workspace:acme","name":"REGISTRY_URL","content":"registry.acme.example"}'
 api POST /secrets -d '{"scope":"acme/api","name":"DATABASE_URL","content":"postgres://api@db/api"}'
 api POST /workspaces/acme/keys/generate -d '{"type":"ed25519","name":"git","comment":"acme git"}'
@@ -300,9 +297,8 @@ shot file-dark "/f/acme/api#file=README.md" dark
 shot actions-dark /f/acme/api/deploy dark 1440x700
 shot args-dark "/f/acme/api/deploy#args=@compose:custom;ps%20-a%20%27;%20id%27" dark 1440x700
 
-# A second workspace, labs, with no encryption key and no SSH key, so the
-# keys and secrets pages show both states: it stores no secrets until an
-# admin adds its key.
+# A second workspace, labs, with no SSH key, so the keys page shows a
+# workspace without one.
 mkdir -p "$work/repos/labs"
 printf '# Labs\n\nExperiments that share nothing yet.\n' >"$work/repos/labs/README.md"
 repo labs "Experiments"

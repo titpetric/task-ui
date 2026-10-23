@@ -102,6 +102,9 @@ func timeZone(t time.Time) string {
 	if name == "UTC" {
 		return name
 	}
+	if name == "" || strings.HasPrefix(name, "+") || strings.HasPrefix(name, "-") {
+		return "UTC" + t.Format("-07:00")
+	}
 	return name + " (UTC" + t.Format("-07:00") + ")"
 }
 

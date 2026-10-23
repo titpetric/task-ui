@@ -106,9 +106,8 @@ api() {
     || { echo "api ${method} ${path} failed:" >&2; cat "$work/api.out" >&2; cat "$work/task-ui.log" >&2; exit 1; }
 }
 
-# The integrations keep their tokens encrypted: the instance's key
-# first, then the hub.
-api POST /workspaces/_/keys/generate -d '{"encrypt":true,"comment":"task-ui _"}'
+# The integrations keep their tokens encrypted with the instance's key,
+# which the start made: the hub.
 api PUT /integrations/beszel -d "{\"values\":{\"url\":\"http://127.0.0.1:${hub}\",\"token\":\"demo\"}}"
 
 # A first view finds the logins and asks the hosts for their facts; the
