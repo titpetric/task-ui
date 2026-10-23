@@ -59,3 +59,19 @@ func SafeBack(back string) string {
 	}
 	return back
 }
+
+// ErrNoMCP is the reply to an MCP request of a user whose MCP is off.
+const ErrNoMCP = "MCP is off for this user: an admin turns on MCP agent user on the user's profile"
+
+// RequireMCP refuses a request of a user without MCP agent user, the
+// flag the MCP endpoint takes. It goes after Require, which puts the
+// user on the context.
+func RequireMCP(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if user := UserFrom(r.Context()); user == nil || !user.Mcp {
+			http.Error(w, ErrNoMCP, http.StatusForbidden)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
+}

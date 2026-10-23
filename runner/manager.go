@@ -162,7 +162,7 @@ func (m *Manager) newSession(ctx context.Context, req Request, run *model.Run) *
 	session.workspaceName, session.workspace = m.workspace(ctx, req)
 	session.workspaceID = m.workspaceID(ctx, session.workspaceName)
 	if req.User != nil {
-		session.role = req.User.Role
+		session.role = req.User.EffectiveRole()
 		if m.opts.Users != nil {
 			session.permissions = m.opts.Users.Permissions(ctx, req.User).Summary()
 		}

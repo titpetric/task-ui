@@ -26,19 +26,21 @@ state on its left edge: **open**, **working**, then **done** or
 **failed**.
 
 The user a note names sets that state, and so do the note's author and an
-admin; anyone who may post replies. A user other than the agent, such as
-`@consuela`, an agent on another machine, picks the note up over
-[MCP](mcp.md#an-agent-elsewhere). task-ui runs the agent job only for the
-agent, `TASK_UI_AGENT`.
+admin; anyone who may post replies. A note may name any user. One with
+**MCP agent user** on, such as `@consuela`, an agent on another machine,
+picks the note up over [MCP](mcp.md#an-agent-elsewhere): an agent learns
+of work from the notes that name it, and nowhere else. task-ui runs the
+Notes agent itself only for a user with **Run instance Claude when
+mentioned** on; a note naming anyone else waits for them, their agent or
+the person.
 
 ## Instructions to the agent
 
-A note naming the agent, `@claude` on most instances, starts the agent on
-it.
+A note naming a user with **Run instance Claude when mentioned**,
+`@claude` on most instances, starts the Notes agent on it.
 
-- With an agent job, `@claude-note` unless configured otherwise,
-  task-ui starts that job as the agent's user the moment the note or the
-  reply appears, with the whole thread in
+- task-ui starts `@claude-note`, the Notes agent in the root, as that
+  user the moment the note or the reply appears, with the whole thread in
   its environment: `TASK_UI_NOTE`, every message of the thread under its
   author, `TASK_UI_NOTE_ID` and `TASK_UI_NOTE_AUTHOR`. The note links the
   run for the users who see it. The job writes its answer to the file `TASK_UI_NOTE_REPLY` names,
@@ -48,9 +50,9 @@ it.
   a time; another instruction waits for it.
 - The agent may decline an instruction: its reply says why, and the note
   ends there.
-- With `TASK_UI_AGENT_JOB` set empty, the note stays open until an agent
-  reads the board over MCP, replies and closes it with `note_comment`, as
-  any other user does.
+- With the flag off, the note stays open until an agent reads the board
+  over MCP, replies and closes it with `note_comment`, as any other user
+  does.
 
 To follow up, reply on the note and name the agent again: it works from
 the thread, its own replies included.
@@ -85,10 +87,11 @@ arrive the moment someone sends them.
 
 ## The agent
 
-`TASK_UI_AGENT` names the agent's user and `TASK_UI_AGENT_JOB` its job,
-`@claude-note` unless set, or a job of a folder as `folder/job` (see
-[Running the server](../running.md)). The agent's user
-has to exist in the password file, and its role decides what its runs may
+An admin makes a user an agent on the user's profile, under **Roles**:
+**MCP agent user**, then **Run instance Claude when mentioned**, which
+needs the first; `task-ui user agent <name> on` sets both (see [Running
+the server](../running.md#users-and-roles)). The agent's user has to
+exist in the password file, and its role decides what its runs may
 reach. The Claude Code integration under [Settings](settings.md#integrations)
 holds its token.
 

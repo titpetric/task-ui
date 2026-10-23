@@ -70,8 +70,11 @@ repository. Page: `/settings/projects`; API: `/api/projects`.
 
 A board of notes with replies, in markdown. A note naming a user
 with `@name`, from someone who may run jobs, is an instruction to that
-user, with a state: open, working, done or failed. A note naming the
-agent, `@claude` on most instances, starts `@claude-note` on the thread.
+user, with a state: open, working, done or failed. A note naming a
+user with Run instance Claude when mentioned, `@claude` on most
+instances, starts `@claude-note` on the thread as that user. An MCP
+agent user learns of work from the notes that name it, and nowhere
+else: read them with `list_notes`, answer with `note_comment`.
 Page: `/notes`; API: `/api/notes`; MCP: `list_notes`, `note_comment`,
 `post_note`.
 

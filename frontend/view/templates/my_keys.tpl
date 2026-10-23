@@ -2,7 +2,7 @@
 <div class="page-head">
 	<div>
 		<h2>Your SSH keys</h2>
-		<p>The keys your runs get through their ssh agent: keys made for you, and keys granted to your role{{ if .User }}, {{ .User.Role }}{{ end }}. Copy a public key to a git host or a server that needs to trust it. The private key stays on the task-ui server.</p>
+		<p>The keys your runs get through their ssh agent: keys made for you, and keys granted to your role{{ if .User }}, {{ .User.EffectiveRole }}{{ end }}. Copy a public key to a git host or a server that needs to trust it. The private key stays on the task-ui server.</p>
 	</div>
 </div>
 

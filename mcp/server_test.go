@@ -43,13 +43,13 @@ func newFixture(t *testing.T) *fixture {
 	hash, err := access.HashPassword("demo")
 	assert.NoError(t, err)
 	htpasswd := filepath.Join(t.TempDir(), ".htpasswd")
-	assert.NoError(t, os.WriteFile(htpasswd, []byte("admin:"+hash+"\nguest:"+hash+"\nops:"+hash+"\nconsuela:"+hash+"\n"), 0o600))
+	assert.NoError(t, os.WriteFile(htpasswd, []byte("admin:"+hash+"\nguest:"+hash+"\nops:"+hash+"\nconsuela:"+hash+"\nplain:"+hash+"\n"), 0o600))
 
 	cfg := &app.Config{
 		Listen: "127.0.0.1:0", Root: root, Discover: true, Htpasswd: htpasswd,
-		Admins: []string{"admin"}, Viewers: []string{"guest"},
+		Import:  &app.RoleImport{Admins: []string{"admin"}, Viewers: []string{"guest"}},
 		DataDir: filepath.Join(t.TempDir(), "data"), DB: ":memory:", SSHDir: t.TempDir(),
-		SessionTTL: time.Hour, Keep: time.Minute, Grace: time.Second, Agent: "admin",
+		SessionTTL: time.Hour, Keep: time.Minute, Grace: time.Second,
 	}
 	assert.NoError(t, cfg.Validate())
 	a, err := app.New(ctx, cfg, "test")
@@ -59,13 +59,17 @@ func newFixture(t *testing.T) *fixture {
 	f := &fixture{server: httptest.NewServer(a.Handler()), tokens: map[string]string{}, root: root, notes: a.Board.Notes, board: a.Board}
 	t.Cleanup(f.server.Close)
 	tokens := storage.NewUserAuthTokenStorage(a.DB)
-	for _, name := range []string{"admin", "guest", "ops", "consuela"} {
+	for _, name := range []string{"admin", "guest", "ops", "consuela", "plain"} {
 		user, err := a.Users.GetByName(ctx, name)
 		assert.NoError(t, err)
 		token, hash, err := access.NewToken()
 		assert.NoError(t, err)
 		assert.NoError(t, tokens.Set(ctx, user.ID, "test", hash))
 		f.tokens[name] = token
+		if name != "plain" {
+			user.Mcp = true
+			assert.NoError(t, a.Users.Update(ctx, user))
+		}
 	}
 	return f
 }
@@ -169,6 +173,9 @@ func TestServer_Auth(t *testing.T) {
 	assert.Equal(t, http.StatusUnauthorized, status)
 	status, _ = f.post(t, f.tokens["admin"], "/api/mcp", body)
 	assert.Equal(t, http.StatusOK, status)
+	status, raw := f.post(t, f.tokens["plain"], "/api/mcp", body)
+	assert.Equal(t, http.StatusForbidden, status, "no MCP agent user")
+	assert.Contains(t, string(raw), "MCP is off")
 
 	// The rest of the API takes the token too.
 	req, _ := http.NewRequest(http.MethodGet, f.server.URL+"/api/folders", nil)

@@ -36,7 +36,7 @@ func KeyHolders(keys []sshkey.Key, byRole, byUser map[string][]string, users []m
 	}
 	for i := range users {
 		user := &users[i]
-		row := KeyHolder{Role: user.Role, User: user, ViaRole: forRole(user.Role)}
+		row := KeyHolder{Role: user.EffectiveRole(), User: user, ViaRole: forRole(user.EffectiveRole())}
 		for _, key := range keys {
 			if !key.Backup && slices.Contains(byUser[key.Name], user.Name) {
 				row.Direct = append(row.Direct, key)

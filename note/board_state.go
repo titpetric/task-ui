@@ -60,8 +60,8 @@ func (b *Board) Recover(ctx context.Context) error {
 		return err
 	}
 	for i := range open {
-		if open[i].RunID == "" && b.threadForAgent(ctx, &open[i]) {
-			b.dispatch(&open[i], nil)
+		if agent := b.threadForAgent(ctx, &open[i]); open[i].RunID == "" && agent != nil {
+			b.dispatch(&open[i], nil, agent)
 		}
 	}
 	for i := range prompts {

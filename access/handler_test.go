@@ -7,6 +7,7 @@ import (
 
 	"github.com/titpetric/task-ui/access"
 	"github.com/titpetric/task-ui/internal/assert"
+	"github.com/titpetric/task-ui/model"
 )
 
 func TestSameOrigin(t *testing.T) {
@@ -58,4 +59,22 @@ func TestSafeBack(t *testing.T) {
 	} {
 		assert.Equal(t, want, access.SafeBack(in), in)
 	}
+}
+
+func TestRequireMCP(t *testing.T) {
+	t.Parallel()
+	handler := access.RequireMCP(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusNoContent) }))
+	as := func(user *model.User) int {
+		r := httptest.NewRequest(http.MethodPost, "http://app.example/api/mcp", nil)
+		if user != nil {
+			r = r.WithContext(access.WithUser(r.Context(), user))
+		}
+		w := httptest.NewRecorder()
+		handler.ServeHTTP(w, r)
+		return w.Code
+	}
+	assert.Equal(t, http.StatusNoContent, as(&model.User{Name: "claude", Role: model.RoleRunner, Mcp: true}))
+	assert.Equal(t, http.StatusForbidden, as(&model.User{Name: "ops", Role: model.RoleRunner}), "MCP agent user off")
+	assert.Equal(t, http.StatusForbidden, as(&model.User{Name: "root", Admin: true}), "an admin needs the flag too")
+	assert.Equal(t, http.StatusForbidden, as(nil))
 }

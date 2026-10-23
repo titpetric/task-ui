@@ -16,7 +16,7 @@
      user, name and role, or the name alone when short, for a select that
      picks a user: who a schedule runs as, who a key is for. */}}
 {{ define "user-options" }}{{ $selected := index . 1 }}{{ $short := gt (len .) 2 }}{{ range index . 0 }}
-			<option value="{{ .Name }}"{{ if eq .Name $selected }} selected{{ end }}>{{ .Name }}{{ if not $short }} ({{ .Role }}){{ end }}</option>
+			<option value="{{ .Name }}"{{ if eq .Name $selected }} selected{{ end }}>{{ .Name }}{{ if not $short }} ({{ .EffectiveRole }}){{ end }}</option>
 {{- end }}{{ end }}
 
 {{/* runas takes (list $ id): the Run as field of a schedule form, for an

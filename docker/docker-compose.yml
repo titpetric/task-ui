@@ -2,11 +2,9 @@ services:
   runner:
     image: titpetric/task-ui
     restart: always
-    environment:
-      # Users sign in from /app/.htpasswd: `task-ui passwd <user>` adds one.
-      # The roles: these names are admins, these viewers, the rest runners.
-      TASK_UI_ADMINS: ${TASK_UI_ADMINS:-admin}
-      TASK_UI_VIEWERS: ${TASK_UI_VIEWERS:-}
+    # Users sign in from /app/.htpasswd: `task-ui passwd <user>` adds one.
+    # The first users of an empty database are admins; `task-ui user`
+    # sets the roles after.
     ports:
     - 3000:3000
     volumes:

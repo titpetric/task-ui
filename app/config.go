@@ -15,7 +15,6 @@ import (
 
 	"github.com/spf13/pflag"
 
-	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/sshkey"
 	"github.com/titpetric/task-ui/workspace"
 )
@@ -34,11 +33,11 @@ type Config struct {
 	// TASK_UI_HTPASSWD, --htpasswd, default .htpasswd in Root when it
 	// exists.
 	Htpasswd string
-	// Admins and Viewers name the users with those roles, comma
-	// separated. TASK_UI_ADMINS, TASK_UI_VIEWERS. Everyone else in the
-	// file is a runner.
-	Admins  []string
-	Viewers []string
+	// Import holds the role lists of an older configuration,
+	// TASK_UI_ADMINS, TASK_UI_VIEWERS and TASK_UI_AGENT, which the first
+	// start over a database applies to its users once; nil without any of them
+	// set. Storage holds the roles after.
+	Import *RoleImport
 	// DataDir holds the database, the recordings and the artifacts.
 	// TASK_UI_DATA, --data, default ./data.
 	DataDir string
@@ -58,10 +57,6 @@ type Config struct {
 	// Grace is how long a stopped process gets before the kill.
 	// TASK_UI_GRACE, default 10s.
 	Grace time.Duration
-	// Agent is the user a note on the board names with @ to have task-ui
-	// run the agent job on it; a note naming any other user waits for that
-	// user over MCP. TASK_UI_AGENT; empty leaves every instruction to MCP.
-	Agent string
 	// ComposeProject is the docker compose project task-ui runs in, whose
 	// compose up and down ask first on the actions bar.
 	// TASK_UI_COMPOSE_PROJECT; empty reads the compose label of the
@@ -72,12 +67,6 @@ type Config struct {
 	// copy on a page start with it. TASK_UI_URL; empty derives it
 	// from each request, through the proxy's forwarded headers.
 	URL string
-	// AgentJob is the job an instruction runs, as the agent's user.
-	// TASK_UI_AGENT_JOB, default @claude-note, the Notes agent in the
-	// root, or a job of a folder as folder/job. Set empty, it leaves the
-	// agent's instructions open too, for an agent that reads the board
-	// over MCP.
-	AgentJob string
 	// ArtifactHistory is how many versions the artifact history keeps
 	// before it squashes to one. TASK_UI_ARTIFACT_HISTORY, default 50; 0
 	// keeps every version.
@@ -100,15 +89,6 @@ func (c *Config) Clock() func() time.Time {
 
 func env(name, fallback string) string {
 	if value, ok := os.LookupEnv(name); ok && value != "" {
-		return value
-	}
-	return fallback
-}
-
-// envSet reads a variable whose empty value means something of its own:
-// the fallback applies only to a variable not set at all.
-func envSet(name, fallback string) string {
-	if value, ok := os.LookupEnv(name); ok {
 		return value
 	}
 	return fallback
@@ -144,10 +124,6 @@ func envDuration(name string, fallback time.Duration) (time.Duration, error) {
 	return d, nil
 }
 
-// NoteAgentJob is the agent job by default: the Notes agent, a
-// built-in that runs in the root.
-const NoteAgentJob = model.NoteJob
-
 // NewConfig reads the environment and the command line flags.
 func NewConfig(args []string) (*Config, error) {
 	home, _ := os.UserHomeDir()
@@ -156,14 +132,11 @@ func NewConfig(args []string) (*Config, error) {
 		Root:      env("TASK_UI_ROOT", "."),
 		Discover:  envBool("TASK_UI_DISCOVER", true),
 		Htpasswd:  env("TASK_UI_HTPASSWD", ""),
-		Admins:    csv(env("TASK_UI_ADMINS", "")),
-		Viewers:   csv(env("TASK_UI_VIEWERS", "")),
+		Import:    roleImport(),
 		DataDir:   env("TASK_UI_DATA", "data"),
 		DB:        env("TASK_UI_DB", ""),
 		SSHDir:    env("TASK_UI_SSH_DIR", filepath.Join(home, ".ssh")),
 		AutoLogin: env("TASK_UI_AUTOLOGIN", ""),
-		Agent:     env("TASK_UI_AGENT", ""),
-		AgentJob:  envSet("TASK_UI_AGENT_JOB", NoteAgentJob),
 
 		ComposeProject: env("TASK_UI_COMPOSE_PROJECT", ""),
 		URL:            strings.TrimRight(strings.TrimSpace(env("TASK_UI_URL", "")), "/"),
@@ -217,22 +190,6 @@ func (c *Config) Validate() error {
 	}
 	if c.SessionTTL <= 0 {
 		return errors.New("TASK_UI_SESSION_TTL: must be positive")
-	}
-	if err := checkAgentJob(c.AgentJob); err != nil {
-		return err
-	}
-	return nil
-}
-
-// checkAgentJob refuses an agent job that names a built-in other than
-// @claude-note, or one in a folder: a built-in has no folder to name.
-func checkAgentJob(job string) error {
-	if job == "" || job == NoteAgentJob {
-		return nil
-	}
-	cut := strings.LastIndex(job, "/")
-	if cut <= 0 || strings.HasPrefix(job[cut+1:], "@") || model.IsInternal(job[:cut]) {
-		return fmt.Errorf("TASK_UI_AGENT_JOB: %q is no agent job: set %s, the Notes agent, a job of a folder as folder/job, or empty", job, NoteAgentJob)
 	}
 	return nil
 }

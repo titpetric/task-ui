@@ -194,10 +194,10 @@ func (h *Handlers) summarize(r *http.Request, prompt, report string) (string, er
 		return "", claude.ErrNoToken
 	}
 	user := access.UserFrom(r.Context())
-	env, err := h.opts.Integrations.Env(r.Context(), user.Name, user.Role)
+	env, err := h.opts.Integrations.Env(r.Context(), user.Name, user.EffectiveRole())
 	if err != nil {
 		return "", err
 	}
-	system := claude.Context(user.Name, user.Role, h.permissions(r).Summary())
+	system := claude.Context(user.Name, user.EffectiveRole(), h.permissions(r).Summary())
 	return h.opts.Summarizer.Summarize(r.Context(), env["CLAUDE_CODE_OAUTH_TOKEN"], system, prompt, report)
 }

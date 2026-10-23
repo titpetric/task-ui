@@ -98,7 +98,7 @@ func newFixture(t *testing.T) *fixture {
 	users := storage.NewUserStorage(db)
 	f := &fixture{root: root, users: map[string]*model.User{}, infra: infra, passwords: storage.NewUserAuthPasswordStorage(db), emails: storage.NewUserEmailStorage(db)}
 	for name, role := range map[string]string{asAdmin: model.RoleAdmin, asOps: model.RoleRunner, asViewer: model.RoleViewer, asLimited: model.RoleRunner} {
-		user := &model.User{Name: name, Role: role}
+		user := &model.User{Name: name, Role: role, Mcp: true}
 		if name == asLimited {
 			user.Folders = model.EncodeList([]string{"infra"})
 		}
@@ -145,11 +145,11 @@ func newFixture(t *testing.T) *fixture {
 		Version:       "test",
 		Now:           func() time.Time { return time.Date(2026, time.October, 16, 22, 0, 0, 0, time.Local) },
 		ArtifactStore: &artifactstore.Store{Dir: filepath.Join(t.TempDir(), "tree")},
-		Board:         &note.Board{Notes: storage.NewNoteStorage(db), Users: users, Agent: "claude"},
+		Board:         &note.Board{Notes: storage.NewNoteStorage(db), Users: users},
 		Integrations:  &integration.Store{Secrets: secrets},
 		SSH:           &sshprobe.Prober{Users: []string{"debian", "root"}, Timeout: 2 * time.Second, TTL: time.Hour, Command: fakeSSH(t)},
 		Disk:          &diskusage.Meter{TTL: time.Minute},
-		Instance:      &view.Instance{Listen: ":3000", Root: root, DataDir: "/srv/task-ui/data", Admins: []string{asAdmin}, Viewers: []string{asViewer}, Agent: "claude", AgentJob: "@claude-note"},
+		Instance:      &view.Instance{Listen: ":3000", Root: root, DataDir: "/srv/task-ui/data"},
 	}
 	f.opts.Hosts = &beszel.Inventory{TTL: time.Minute, Settings: func(ctx context.Context) (string, string, error) {
 		values, err := f.opts.Integrations.Values(ctx, integration.Beszel)

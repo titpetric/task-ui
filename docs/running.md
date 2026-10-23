@@ -45,8 +45,6 @@ The environment sets the whole configuration:
 | `TASK_UI_ROOT`        | `.`                  | Root folder holding the folders                                   |
 | `TASK_UI_DISCOVER`    | `true`               | List every folder under the root with something to run            |
 | `TASK_UI_HTPASSWD`    | `.htpasswd`          | The password file, looked up in the root                          |
-| `TASK_UI_ADMINS`      |                      | Users with the admin role, comma separated                        |
-| `TASK_UI_VIEWERS`     |                      | Users with the viewer role, comma separated; the rest are runners |
 | `TASK_UI_DATA`        | `data`               | Database, recordings, artifacts, workspace keys and the encryption key |
 | `TASK_UI_DB`          | `<data>/task-ui.db`  | Database file (sqlite)                                            |
 | `TASK_UI_SSH_DIR`     | `$HOME/.ssh`         | Folder the SSH key settings manage; its keys only authenticate    |
@@ -54,8 +52,6 @@ The environment sets the whole configuration:
 | `TASK_UI_KEEP`        | `15m`                | How long a finished run stays attachable with its frame in memory |
 | `TASK_UI_GRACE`       | `10s`                | How long a stopped process gets before task-ui kills it           |
 | `TASK_UI_ARTIFACT_HISTORY` | `50`            | Commits the artifact history keeps before it squashes; 0 keeps all |
-| `TASK_UI_AGENT`       |                      | The user a note names to send it an instruction, such as `claude` |
-| `TASK_UI_AGENT_JOB`   | `@claude-note` | The job an instruction runs: `@claude-note`, the Notes agent in the root, or a job of a folder as `folder/job`; set empty, it waits for MCP. Another built-in, or one under a folder, as `_/@claude-note` or `internal/claude-note`, stops task-ui at start with an error |
 | `TASK_UI_COMPOSE_PROJECT` |                  | The compose project task-ui runs in, whose `compose: up` and `down` ask first; empty reads its container's compose label |
 | `TASK_UI_URL`         |                      | The public base link, such as `https://task.example.com`, that the links to copy start with; empty reads it from each request and the proxy's `X-Forwarded-*` headers |
 | `TASK_UI_AUTOLOGIN`   |                      | Sign every request in as this user, for development only          |
@@ -92,6 +88,11 @@ task-ui backup alice                         # ten backup passwords, each signs 
 task-ui token alice cli                      # a token for a client such as an MCP agent
 task-ui token alice                          # the names of alice's tokens, and when each was last used
 task-ui token alice rm cli                   # removes a token
+task-ui user list                            # every user with the role and the flags
+task-ui user admin alice on                  # the admin flag; off for the last admin needs --force
+task-ui user role alice viewer               # runner or viewer, the role without the flag
+task-ui user mcp alice on                    # MCP agent user; off ends alice's MCP token
+task-ui user agent alice on                  # Run instance Claude when mentioned, with MCP
 task-ui channel --url https://task.example.com --token-file task.token  # pushes alice's notes into a Claude Code session
 task-ui cleanup --dry-run                    # what the Data retention rules would remove; without the flag, removes it
 task-ui -v                                   # the version and the commit
@@ -112,9 +113,33 @@ from the password file. To remove a user, delete the line, or
 /api/users/{id}`; both take Allow Deletes on Users, `user/delete`, and
 remove the line and the user's sessions, tokens and policy at once.
 
-`TASK_UI_ADMINS=alice,bob` makes those two admins, `TASK_UI_VIEWERS=support`
-a viewer, and everyone else in the file is a runner; what each role may
-do is in [Settings, Permissions](guide/settings.md#permissions).
+The database holds what each user is: the admin flag, **Administrative
+privileges (all)**, which allows everything, and the role, runner or
+viewer, whose policy decides the rest; what each role may do is in
+[Settings, Permissions](guide/settings.md#permissions). The password
+file brings users in:
+
+- The first read into an empty database makes every user in the file an
+  admin.
+- A file of one user makes that user an admin while no user is one.
+- A name new to a database with users comes in as a viewer, the lowest
+  role, with no flags.
+
+After that an admin sets the flags on the user's profile, or with
+`task-ui user`, which works on the database without the server and
+keeps the flag on the last admin unless `--force`. Two more
+flags make a user an agent: **MCP agent user** lets the user's token
+reach the MCP endpoint, and **Run instance Claude when mentioned** has a
+note naming the user start the Notes agent as them (see
+[Notes](guide/notes.md)).
+
+An instance set up before the database held the roles had them in
+`TASK_UI_ADMINS`, `TASK_UI_VIEWERS` and `TASK_UI_AGENT`. The first start
+over its database applies them once: the admins get the flag, the
+viewers the role, and the agent user both agent flags. It logs the
+import and records it, and reads the variables no more; remove them from
+the environment after. `TASK_UI_AGENT_JOB` is no setting: a note naming
+an agent user runs the Notes agent, `@claude-note`.
 
 ---
 

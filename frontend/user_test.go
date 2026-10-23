@@ -20,7 +20,9 @@ func TestUsers(t *testing.T) {
 	body := f.page(t, asAdmin, "/settings/users")
 	assert.Contains(t, body, "<h2>Users</h2>")
 	assert.Contains(t, body, "task-ui passwd")
-	assert.Contains(t, body, "TASK_UI_ADMINS")
+	assert.Contains(t, body, "task-ui user")
+	assert.NotContains(t, body, "TASK_UI_ADMINS")
+	assert.Contains(t, body, `<span class="badge" title="MCP agent user">mcp</span>`)
 	for _, name := range []string{asAdmin, asOps, asViewer, asLimited} {
 		assert.Contains(t, body, `href="/users/`+name+`" title="Profile of `+name+`"`)
 		assert.Contains(t, body, `<tr class="row-link" data-href="/users/`+name+`">`, "a click on the row opens the profile")
@@ -142,4 +144,29 @@ func TestUserForm_MCP(t *testing.T) {
 	expired := f.page(t, asOps, own)
 	assert.Contains(t, expired, `<span class="badge bad" title=`)
 	assert.Contains(t, expired, ">expired ")
+}
+
+// A profile shows what the user is: an admin edits the admin flag, the
+// role, MCP agent user and Run instance Claude when mentioned; the user
+// reads them. A token waits for MCP agent user.
+func TestProfile_Roles(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	ops := f.users[asOps]
+	admin := f.page(t, asAdmin, "/users/"+ops.Name)
+	assert.Contains(t, admin, `<section class="block" id="roles">`)
+	assert.Contains(t, admin, `<input type="checkbox" name="admin"> Administrative privileges (all)`)
+	assert.Contains(t, admin, `<option value="runner" selected>runner</option>`)
+	assert.Contains(t, admin, `<input type="checkbox" name="mcp" checked> MCP agent user`)
+	assert.Contains(t, admin, `<input type="checkbox" name="agent_reply"> Run instance Claude when mentioned`)
+
+	own := f.page(t, asOps, "/users/"+ops.Name)
+	assert.NotContains(t, own, `name="admin"`)
+	assert.Contains(t, own, "Role: runner. MCP agent user.")
+
+	ops.Mcp = false
+	assert.NoError(t, f.opts.Users.Update(context.Background(), ops))
+	off := f.page(t, asAdmin, "/users/"+ops.Name)
+	assert.Contains(t, off, "A token needs MCP agent user")
+	assert.NotContains(t, off, "Enable MCP</button>")
 }

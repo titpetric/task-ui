@@ -35,8 +35,8 @@ func (s *UserStorage) Create(ctx context.Context, user *model.User) error {
 	if user.Name == "" {
 		return errors.New("a user needs a name")
 	}
-	if !model.ValidRole(user.Role) {
-		return errors.New("unknown role " + user.Role)
+	if err := normalize(user); err != nil {
+		return err
 	}
 	if user.ID == "" {
 		user.ID = model.NewID()
@@ -77,11 +77,81 @@ func (s *UserStorage) Count(ctx context.Context) (int64, error) {
 
 // Update writes a user back, by ID.
 func (s *UserStorage) Update(ctx context.Context, user *model.User) error {
-	if !model.ValidRole(user.Role) {
-		return errors.New("unknown role " + user.Role)
+	if err := normalize(user); err != nil {
+		return err
 	}
 	user.UpdatedAt = stamp()
 	return client(s.db).Update(ctx, model.UserTable, user, "id")
+}
+
+// normalize turns the admin role into the admin flag over a runner, as
+// storage keeps it: the role column holds runner or viewer, and admin
+// is the flag. Agent reply needs MCP.
+func normalize(user *model.User) error {
+	if !model.ValidRole(user.Role) {
+		return errors.New("unknown role " + user.Role)
+	}
+	if user.Role == model.RoleAdmin {
+		user.Admin, user.Role = true, model.RoleRunner
+	}
+	if user.AgentReply && !user.Mcp {
+		return ErrAgentReply
+	}
+	return nil
+}
+
+// ErrAgentReply reports agent reply on a user without MCP.
+var ErrAgentReply = errors.New("run instance Claude when mentioned needs MCP agent user")
+
+// ErrLastAdmin reports a change that would leave no admin.
+var ErrLastAdmin = errors.New("the last admin keeps the admin flag")
+
+// Admins returns how many users hold the admin flag.
+func (s *UserStorage) Admins(ctx context.Context) (int64, error) {
+	count, err := client(s.db).Get[int64](ctx, "SELECT COUNT(*) FROM user WHERE admin = 1")
+	if err != nil {
+		return 0, err
+	}
+	return *count, nil
+}
+
+// SetFlags changes a user's admin flag, role, MCP and agent reply at
+// once, refusing to take the flag from the last admin unless force.
+// MCP turned off removes the user's MCP token, which stops signing in.
+func (s *UserStorage) SetFlags(ctx context.Context, user *model.User, admin bool, role string, mcp, agentReply, force bool) error {
+	current, err := s.Get(ctx, user.ID)
+	if err != nil {
+		return err
+	}
+	if role != model.RoleRunner && role != model.RoleViewer {
+		return errors.New("a role is runner or viewer; admin is the flag")
+	}
+	if current.Admin && !admin && !force {
+		n, err := s.Admins(ctx)
+		if err != nil {
+			return err
+		}
+		if n <= 1 {
+			return ErrLastAdmin
+		}
+	}
+	current.Admin, current.Role, current.Mcp, current.AgentReply = admin, role, mcp, agentReply
+	if err := s.Update(ctx, current); err != nil {
+		return err
+	}
+	if !mcp {
+		if err := NewUserAuthTokenStorage(s.db).DeleteMCP(ctx, current.ID); err != nil {
+			return err
+		}
+	}
+	*user = *current
+	return nil
+}
+
+// Agents returns the users whose mention in a note starts the Notes
+// agent as them, by name.
+func (s *UserStorage) Agents(ctx context.Context) ([]model.User, error) {
+	return client(s.db).Select[model.User](ctx, "SELECT * FROM user WHERE agent_reply = 1 AND mcp = 1 ORDER BY name")
 }
 
 // Delete removes a user by ID, with the email addresses, passwords and

@@ -31,8 +31,7 @@ func newApp(t *testing.T, autoLogin string) *app.App {
 		Root:       root,
 		Discover:   true,
 		Htpasswd:   htpasswdFile(t, "admin", "guest"),
-		Admins:     []string{"admin"},
-		Viewers:    []string{"guest"},
+		Import:     &app.RoleImport{Admins: []string{"admin"}, Viewers: []string{"guest"}},
 		DataDir:    filepath.Join(t.TempDir(), "data"),
 		DB:         ":memory:",
 		SSHDir:     t.TempDir(),
@@ -71,7 +70,7 @@ func TestNew(t *testing.T) {
 	// The users file seeds storage, and discovery finds the folder.
 	admin, err := a.Users.GetByName(context.Background(), "admin")
 	assert.NoError(t, err)
-	assert.Equal(t, model.RoleAdmin, admin.Role)
+	assert.True(t, admin.CanAdmin())
 	assert.Equal(t, "site", a.Catalogue.Find("site").ID)
 }
 
@@ -106,7 +105,8 @@ func TestNew_Errors(t *testing.T) {
 	assert.Nil(t, a.UsersFile)
 	dev, err := a.Users.GetByName(context.Background(), "dev")
 	assert.NoError(t, err)
-	assert.Equal(t, model.RoleAdmin, dev.Role)
+	assert.True(t, dev.CanAdmin())
+	assert.True(t, dev.Mcp, "the auto login user may use MCP too")
 	status, _, _ := get(t, a.Handler(), "/")
 	assert.Equal(t, http.StatusOK, status)
 	// The default workspace has its key directories from the start and
@@ -254,8 +254,19 @@ func TestApp_MCPToken(t *testing.T) {
 		return answer.Token
 	}
 
+	// A token needs MCP agent user, which an admin turns on; the admin's
+	// own CLI token reaches the endpoint once theirs is on.
+	status, raw := call(cli, http.MethodPost, "/api/users/"+guest.ID+"/mcp", "")
+	assert.Equal(t, http.StatusConflict, status, raw)
+	status, _ = call(cli, http.MethodPost, "/api/mcp", initialize)
+	assert.Equal(t, http.StatusForbidden, status)
+	assert.NoError(t, a.Users.SetFlags(ctx, admin, true, model.RoleRunner, true, false, false))
+	status, raw = call(cli, http.MethodPut, "/api/users/"+guest.ID, `{"mcp":true}`)
+	assert.Equal(t, http.StatusOK, status, raw)
+	assert.Contains(t, raw, `"mcp_agent":true`)
+
 	first := enable()
-	status, _ := call(first, http.MethodPost, "/api/mcp", initialize)
+	status, _ = call(first, http.MethodPost, "/api/mcp", initialize)
 	assert.Equal(t, http.StatusOK, status)
 
 	second := enable()
@@ -267,7 +278,7 @@ func TestApp_MCPToken(t *testing.T) {
 	assert.Equal(t, http.StatusOK, status)
 
 	// The listing tells MCP is on, with no token.
-	status, raw := call(cli, http.MethodGet, "/api/users", "")
+	status, raw = call(cli, http.MethodGet, "/api/users", "")
 	assert.Equal(t, http.StatusOK, status)
 	assert.Contains(t, raw, `"mcp":{"enabled":true`)
 	assert.NotContains(t, raw, second)
@@ -278,6 +289,23 @@ func TestApp_MCPToken(t *testing.T) {
 	assert.Equal(t, http.StatusNoContent, status)
 	status, _ = call(second, http.MethodPost, "/api/mcp", initialize)
 	assert.Equal(t, http.StatusUnauthorized, status)
+
+	// MCP agent user off ends the token too.
+	third := enable()
+	status, _ = call(cli, http.MethodPut, "/api/users/"+guest.ID, `{"mcp":false}`)
+	assert.Equal(t, http.StatusOK, status)
+	status, _ = call(third, http.MethodPost, "/api/mcp", initialize)
+	assert.Equal(t, http.StatusUnauthorized, status)
+
+	// Only an admin changes the flags, and the last admin keeps theirs.
+	status, raw = call(cli, http.MethodPut, "/api/users/"+admin.ID, `{"admin":false}`)
+	assert.Equal(t, http.StatusConflict, status)
+	assert.Contains(t, raw, "the last admin")
+	status, _ = call(cli, http.MethodPut, "/api/users/"+guest.ID, `{"role":"admin"}`)
+	assert.Equal(t, http.StatusBadRequest, status)
+	status, raw = call(cli, http.MethodPut, "/api/users/"+guest.ID, `{"agent_reply":true}`)
+	assert.Equal(t, http.StatusBadRequest, status, "agent reply needs MCP")
+	assert.Contains(t, raw, "needs MCP agent user")
 }
 
 // Deleting a user takes their line out of the password file and ends

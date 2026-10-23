@@ -314,9 +314,12 @@ removes one who is no admin and not you: their line leaves the file, and
 their sessions, tokens and policy end at once, while runs, notes and
 history keep their name. Deleting takes Allow Deletes on Users,
 `user/delete`. Removing the line on the server does the same,
-and task-ui reads the file again whenever it changes. The roles
-come from the server's `TASK_UI_ADMINS` and `TASK_UI_VIEWERS`; everyone
-else is a runner.
+and task-ui reads the file again whenever it changes. A new user
+comes in as a viewer, the lowest role; the first users of an empty
+database come in as admins (see [Running the
+server](../running.md#users-and-roles)). The **Flags** column shows
+`mcp` for an MCP agent user and `agent` for one whose mentions run
+instance Claude.
 
 What a role may do comes from permission policies over the rules of
 `config/permissions.yml`, which [Permissions](#permissions) sets. An
@@ -330,13 +333,27 @@ none, the role's rules decide, and a deny there wins over an allow.
 ![Users](../assets/users-dark.png)
 
 A user's name opens their **profile**, at `/users/<name>`: the name and
-the role, which the password file and the role lists set, and what the
+the role, and what the
 user ran and wrote lately, as far as you see it: runs and workflow runs
 in folders you see, notes with Allow View on Notes, and prompts with
 Allow View on Prompts in places you see. With Allow Edits on Users the
 profile sets which folders the user sees: **All projects**, or
 **Custom** and the folders checked. The profile also holds the user's
-own permissions and their MCP access, and **Delete user**. Anyone with
+own permissions and their MCP access, and **Delete user**. Under
+**Roles** an admin sets what the user is:
+
+- **Administrative privileges (all)**: every permission, whatever the
+  role says. The last admin keeps it: unchecking it answers "the last
+  admin".
+- **Role**: runner or viewer, what the user's permissions start from
+  without the flag.
+- **MCP agent user**: the user's token reaches the MCP endpoint, and an
+  agent learns of work from the notes that name the user. Off, it ends
+  the user's MCP token.
+- **Run instance Claude when mentioned**: a note naming the user starts
+  the Notes agent as them. It needs MCP agent user.
+
+Anyone else reads them there. Anyone with
 Allow View on Users opens any profile; everyone opens their own, from
 **Profile** in the user menu.
 

@@ -77,3 +77,10 @@ func (s *UserAuthTokenStorage) Delete(ctx context.Context, userID, name string) 
 func (s *UserAuthTokenStorage) DeleteByUser(ctx context.Context, userID string) error {
 	return client(s.db).Exec(ctx, "DELETE FROM user_auth_token WHERE user_id = ?", userID)
 }
+
+// DeleteMCP removes the tokens a user's settings made for MCP, the ones
+// that expire; the tokens of `task-ui token` stay, and the MCP endpoint
+// refuses them while the user's MCP is off.
+func (s *UserAuthTokenStorage) DeleteMCP(ctx context.Context, userID string) error {
+	return client(s.db).Exec(ctx, "DELETE FROM user_auth_token WHERE user_id = ? AND expires_at IS NOT NULL", userID)
+}

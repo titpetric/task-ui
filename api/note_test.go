@@ -1,6 +1,7 @@
 package api_test
 
 import (
+	"context"
 	"net/http"
 	"testing"
 
@@ -14,6 +15,9 @@ import (
 func TestNote_PostListComment(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
+	// claude is an MCP agent user that reads the board, with no instance
+	// Claude to run.
+	assert.NoError(t, f.opts.Users.Create(context.Background(), &model.User{Name: "claude", Role: model.RoleRunner, Mcp: true}))
 
 	res := f.call(t, asOps, http.MethodPost, "/notes", api.NoteRequest{Body: "@claude tidy the README"})
 	assert.Equal(t, http.StatusCreated, res.Status, string(res.Raw))

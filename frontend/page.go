@@ -99,7 +99,7 @@ func (h *Handlers) roles(ctx context.Context, user *model.User) map[string]strin
 		return roles
 	}
 	for _, u := range users {
-		roles[u.Name] = u.Role
+		roles[u.Name] = u.EffectiveRole()
 	}
 	return roles
 }

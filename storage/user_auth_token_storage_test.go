@@ -65,3 +65,19 @@ func TestUserAuthTokenStorage(t *testing.T) {
 	_, err = tokens.Find(ctx, "h6")
 	assert.NoError(t, err, "another user's token stays")
 }
+
+// DeleteMCP removes the tokens that expire, the MCP ones, and keeps
+// those of `task-ui token`.
+func TestUserAuthTokenStorage_DeleteMCP(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	tokens := storage.NewUserAuthTokenStorage(newDB(t))
+	_, err := tokens.SetUntil(ctx, "u1", "mcp", "h1", time.Now().Add(time.Hour))
+	assert.NoError(t, err)
+	assert.NoError(t, tokens.Set(ctx, "u1", "cli", "h2"))
+	assert.NoError(t, tokens.DeleteMCP(ctx, "u1"))
+	list, err := tokens.List(ctx, "u1")
+	assert.NoError(t, err)
+	assert.Len(t, list, 1)
+	assert.Equal(t, "cli", list[0].Name)
+}

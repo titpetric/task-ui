@@ -17,10 +17,17 @@ and hours.
    task-ui passwd claude
    ```
 
-   `TASK_UI_ADMINS` and `TASK_UI_VIEWERS` set the role; every other user
-   is a runner (see [Running the server](../running.md)).
+   A new user comes in as a viewer; an admin sets the role on the user's
+   profile, under **Roles**, or with `task-ui user role claude runner`
+   (see [Running the server](../running.md#users-and-roles)).
 
-2. Open the user's profile, from Settings, Users or the **⋯** menu next to
+2. Turn on **MCP agent user** under **Roles** on the user's profile, as
+   an admin, or with `task-ui user mcp claude on`: the endpoint takes the
+   tokens of such a user alone, and answers `403` "MCP is off for this
+   user" to any other, an admin's too. Turning it off ends the user's MCP
+   token.
+
+3. Open the user's profile, from Settings, Users or the **⋯** menu next to
    their name, and press **Enable MCP** under **MCP access**. task-ui makes a token that lasts 30 days and shows it once,
    beside the ready `claude mcp add` command; copy both before you leave
    the page, which keeps only the token's hash. The section shows the
@@ -35,7 +42,7 @@ and hours.
    token past its expiry gets `401` "the token has expired; rotate it on
    your profile".
 
-3. Add the server to the agent, on the machine the agent runs on. For
+4. Add the server to the agent, on the machine the agent runs on. For
    Claude Code:
 
    ```bash
@@ -49,7 +56,7 @@ and hours.
    command with both filled in; `TASK_UI_URL` sets the base link (see
    [Running the server](../running.md)).
 
-4. Check it: `claude mcp list` shows `task` as connected, and a new
+5. Check it: `claude mcp list` shows `task` as connected, and a new
    session lists the tools below. Without a token, or with a wrong one,
    `/api/mcp` answers 401.
 

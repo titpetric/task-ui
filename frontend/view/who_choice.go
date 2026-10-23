@@ -26,7 +26,7 @@ func WhoChoices(selected []string, users []model.User) []WhoChoice {
 		choices = append(choices, WhoChoice{Name: role, Role: true, Checked: slices.Contains(selected, role)})
 	}
 	for _, user := range users {
-		if user.Role == model.RoleViewer || known[user.Name] {
+		if user.EffectiveRole() == model.RoleViewer || known[user.Name] {
 			continue
 		}
 		known[user.Name] = true

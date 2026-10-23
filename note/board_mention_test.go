@@ -142,3 +142,30 @@ func TestBoard_RecoverHandedOver(t *testing.T) {
 	assert.Equal(t, model.NoteWorking, got.State)
 	assert.Len(t, replies(t, f, first.ID), 2, "nothing fails the note")
 }
+
+// Any user with Run instance Claude when mentioned runs the Notes agent
+// when a note names them, as themselves, and answers under their name;
+// the flag off, a note naming them waits.
+func TestBoard_AgentByFlag(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t, "agent/run")
+	ctx := context.Background()
+	bot := &model.User{Name: "bot", Role: model.RoleRunner, Mcp: true, AgentReply: true}
+	assert.NoError(t, f.board.Users.Create(ctx, bot))
+	posted, err := f.board.Post(ctx, f.ops, "", "@bot answer this")
+	assert.NoError(t, err)
+	done := f.settled(t, posted.ID)
+	assert.Equal(t, model.NoteDone, done.State)
+	reply := replies(t, f, posted.ID)[0]
+	assert.Equal(t, "bot", reply.UserName)
+	run, ok := f.board.Runner.Get(done.RunID)
+	assert.True(t, ok)
+	assert.Equal(t, "bot", run.Snapshot().UserName)
+
+	assert.NoError(t, f.board.Users.SetFlags(ctx, bot, false, model.RoleRunner, true, false, false))
+	waiting, err := f.board.Post(ctx, f.ops, "", "@bot answer again")
+	assert.NoError(t, err)
+	time.Sleep(50 * time.Millisecond)
+	got, _ := f.board.Notes.Get(ctx, waiting.ID)
+	assert.Equal(t, model.NoteOpen, got.State, "the flag off, it waits for bot")
+}

@@ -17,7 +17,7 @@
 		<dd>{{ template "copy-line" (list (printf "%s/api/mcp" $base) "the MCP endpoint") }}</dd>
 	</dl>
 	<ol class="mcp-steps">
-		<li>{{ if .User }}Enable MCP on <a href="/users/{{ .User.Name }}#mcp">your profile</a>{{ else }}Enable MCP on your profile{{ end }} and copy the token. It shows once and lasts 30 days, or until you rotate it. Enabling needs Allow Edits on Users; if you don't have it, ask someone who does.</li>
+		<li>{{ if .User }}Enable MCP on <a href="/users/{{ .User.Name }}#mcp">your profile</a>{{ else }}Enable MCP on your profile{{ end }} and copy the token. It shows once and lasts 30 days, or until you rotate it. A token needs MCP agent user on, which an admin sets, and enabling needs Allow Edits on Users; if you don't have them, ask someone who does.</li>
 		<li>Add the server to Claude Code:
 			{{ template "copy-line" (list (printf "claude mcp add --transport http --scope user task %s/api/mcp --header \"Authorization: Bearer <token>\"" $base) "the claude mcp add command") }}</li>
 		<li>Other clients connect to the endpoint over HTTP with the header <code>Authorization: Bearer &lt;token&gt;</code>. Check with <code>claude mcp list</code>: it shows <code>task</code> as connected.</li>
@@ -50,7 +50,9 @@
 	{{- end }}
 	{{- else }}
 	<p data-before-reveal>MCP is off for {{ $u.Name }}. Enable creates a token that lasts 30 days and shows it once.</p>
-	{{- if $m.CanEnable }}
+	{{- if not $m.Agent }}
+	<p class="faint">A token needs MCP agent user, under <a href="#roles">Roles</a>, which an admin turns on.</p>
+	{{- else if $m.CanEnable }}
 	<form class="inline" data-api="{{ $api }}" data-method="POST" data-reveal="#mcp-token" data-before-reveal><button class="btn btn-primary" type="submit">Enable MCP</button></form>
 	{{- else }}
 	<p class="faint">Enabling needs Allow Edits on Users. Ask someone who has it.</p>

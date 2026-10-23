@@ -220,7 +220,7 @@ func (h *Handlers) myKeys(w http.ResponseWriter, r *http.Request) {
 	p.Crumbs = view.Crumbs("Your SSH keys")
 	p.KeyUsers = h.keyUsers(r)
 	if h.opts.KeyPolicies != nil && p.User != nil {
-		names, err := h.opts.KeyPolicies.For(r.Context(), p.User.Role, p.User.Name)
+		names, err := h.opts.KeyPolicies.For(r.Context(), p.User.EffectiveRole(), p.User.Name)
 		if err == nil {
 			for _, key := range h.accessKeys(h.opts.Keys) {
 				if !key.Backup && slices.Contains(names, key.Name) {

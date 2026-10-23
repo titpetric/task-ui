@@ -42,7 +42,7 @@ func (u *User) CanSee(folder string) bool {
 		return false
 	}
 	if IsInternal(folder) {
-		return u.Role == RoleAdmin
+		return u.CanAdmin()
 	}
 	list := u.FolderList()
 	return len(list) == 0 || slices.Contains(list, folder)
@@ -83,15 +83,28 @@ func (u *User) Listed(folderAllow, jobAllow []string) bool {
 	return u != nil && u.allowed(folderAllow) && u.allowed(jobAllow)
 }
 
-// CanAdmin reports whether the user holds the admin role, which may do
-// everything, whatever the permission policies say.
+// CanAdmin reports whether the user is an admin, which may do
+// everything, whatever the permission policies say: the admin flag, or
+// the admin role a user made outside storage holds.
 func (u *User) CanAdmin() bool {
-	return u != nil && u.Role == RoleAdmin
+	return u != nil && (u.Admin || u.Role == RoleAdmin)
+}
+
+// EffectiveRole returns the role the user acts with: admin for an
+// admin, else the role column, runner or viewer.
+func (u *User) EffectiveRole() Role {
+	if u == nil {
+		return ""
+	}
+	if u.CanAdmin() {
+		return RoleAdmin
+	}
+	return u.Role
 }
 
 func (u *User) allowed(list []string) bool {
 	if len(list) == 0 {
 		return true
 	}
-	return slices.Contains(list, u.Name) || slices.Contains(list, u.Role)
+	return slices.Contains(list, u.Name) || slices.Contains(list, u.EffectiveRole())
 }
