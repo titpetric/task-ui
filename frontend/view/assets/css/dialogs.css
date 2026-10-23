@@ -129,6 +129,12 @@ dialog.run {
   }
 }
 
+/* A replay takes the size of its recording, which can be larger than
+   the window: the terminal scrolls inside it, under the foot. */
+dialog.run.replaying .terminal-host {
+  overflow: auto;
+}
+
 /* A file a folder's pipeline reads, coloured, in the source window. The
    classes are the highlight package's: k key, c comment, s string, n
    number, v variable, p dash. */
