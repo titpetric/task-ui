@@ -91,6 +91,20 @@ func (c *Config) Clock() func() time.Time {
 	return func() time.Time { return now }
 }
 
+// timeZone names the zone of a time as the Instance page shows it: the
+// location, or the zone's abbreviation for the local one, with its
+// offset.
+func timeZone(t time.Time) string {
+	name, _ := t.Zone()
+	if loc := t.Location().String(); loc != "Local" && loc != name {
+		name = loc + ", " + name
+	}
+	if name == "UTC" {
+		return name
+	}
+	return name + " (UTC" + t.Format("-07:00") + ")"
+}
+
 func env(name, fallback string) string {
 	if value, ok := os.LookupEnv(name); ok && value != "" {
 		return value

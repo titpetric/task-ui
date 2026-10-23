@@ -65,6 +65,10 @@ func (h *Handlers) instance(w http.ResponseWriter, r *http.Request) {
 		values, _ := h.opts.Integrations.Values(r.Context(), integration.Beszel)
 		instance.Beszel = values["url"] != "" && values["token"] != ""
 	}
+	if h.opts.Runner != nil {
+		backlog := h.opts.Runner.Backlog(r.Context())
+		instance.Backlog = &backlog
+	}
 	p.Instance = &instance
 	if p.Can("key/view") {
 		h.fillKeys(r.Context(), p)
