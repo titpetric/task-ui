@@ -18,7 +18,7 @@ func TestAgent_Shell(t *testing.T) {
 		out, err := cmd.CombinedOutput()
 		return string(out), err
 	}
-	out, err := shell("AGENT_TEST_SHELL=--resume x", "PATH="+fakeClaude(t), "CLAUDE_CODE_OAUTH_TOKEN=sk-1", "TASK_UI_ROOT="+root)
+	out, err := shell("AGENT_TEST_SHELL=--resume x", "PATH="+fakeClaude(t), "CLAUDE_CODE_OAUTH_TOKEN=sk-1", "TASK_UI_WORKSPACE_DIR="+root)
 	assert.NoError(t, err, out)
 	assert.Contains(t, out, "cwd="+dir+"\n", "Claude starts where the run does, not in the root")
 	assert.Contains(t, out, "sandbox=1\n")

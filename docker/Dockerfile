@@ -39,18 +39,18 @@ COPY --from=docker /usr/local/libexec/docker/cli-plugins /usr/local/libexec/dock
 # Configure the final image with whatever.
 ADD /docker /
 
+# /app holds the image's own configuration and nothing a run writes.
+# /data holds the database, .htpasswd and the workspace folder,
+# /data/workspaces; /keys every key of the instance. Mount both.
 WORKDIR /app
-RUN mkdir -p /data
+RUN mkdir -p /data /keys && chmod 700 /keys
 VOLUME /data
+VOLUME /keys
 
 RUN docker --version && docker buildx version && docker compose version
 
 ENV GOPATH=/go \
-	TASK_UI_LISTEN=:3000 \
-	TASK_UI_ROOT=/app \
-	TASK_UI_DATA=/data \
-	TASK_UI_HTPASSWD=/app/.htpasswd \
-	TASK_UI_SSH_DIR=/root/.ssh
+	TASK_UI_LISTEN=:3000
 
 EXPOSE 3000
 

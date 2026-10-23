@@ -33,11 +33,11 @@ go build -o "$work/task-ui" .
 cp -r testdata/demo "$work/demo"
 
 # Login is mandatory: three users in the password file, the roles from
-# the environment. The instances sign in as one of them with
+# the environment, which the first start imports into the database. The instances sign in as one of them with
 # TASK_UI_AUTOLOGIN, since chromium's screenshot flag has no way to log
 # in; the sign in screen comes from an instance without it.
 for user in admin ops guest; do
-  TASK_UI_ROOT="$work/demo" TASK_UI_HTPASSWD="$work/demo/.htpasswd" "$work/task-ui" passwd "$user" demo >/dev/null
+  TASK_UI_WORKSPACE="$work/demo" TASK_UI_DATA="$work/data" "$work/task-ui" passwd "$user" demo >/dev/null
 done
 
 # The infra folder comes from a git repository, so the Projects page has
@@ -70,7 +70,7 @@ repo acme-web "The front end's targets"
 serve() {
   local port="$1"
   shift
-  env TASK_UI_ROOT="$work/demo" \
+  env TASK_UI_WORKSPACE="$work/demo" \
     TASK_UI_LISTEN="127.0.0.1:${port}" \
     TASK_UI_DATA="$work/data" \
     TASK_UI_SSH_DIR="$work/ssh" \

@@ -368,7 +368,7 @@ func (m *Manager) command(ctx context.Context, session *Session) (*exec.Cmd, err
 	if session.dir != "" {
 		cmd.Dir = session.dir
 	}
-	cmd.Env = os.Environ()
+	cmd.Env = inherited(os.Environ())
 	// Every run gets its folder's secrets, Claude's built-ins too, and
 	// the log of each secret records the run.
 	if m.opts.Secrets != nil {
@@ -408,7 +408,11 @@ func (m *Manager) command(ctx context.Context, session *Session) (*exec.Cmd, err
 		"TASK_UI_FOLDER="+f.ID,
 		"TASK_UI_JOB="+job.ID,
 		"TASK_UI_RUN_ID="+run.ID,
+		"TASK_UI_HOST_PWD="+m.hostPath(cmd.Dir),
 	)
+	if m.opts.HostData != "" {
+		cmd.Env = append(cmd.Env, "TASK_UI_HOST_DATA="+m.opts.HostData)
+	}
 	if session.permissions != "" {
 		cmd.Env = append(cmd.Env, "TASK_UI_PERMISSIONS="+session.permissions)
 	}

@@ -66,10 +66,13 @@ func passwd(path string, args []string, stdin io.Reader, stdout io.Writer) error
 		return errors.New("usage: task-ui passwd <user> [password], or the password on stdin")
 	}
 	if path == "" {
-		return errors.New("no password file: set TASK_UI_HTPASSWD, or put .htpasswd in the root")
+		return errors.New("no password file: it is .htpasswd in the data directory, TASK_UI_DATA")
 	}
 	var hashed bytes.Buffer
 	if err := hash(args[1:], stdin, &hashed); err != nil {
+		return err
+	}
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		return err
 	}
 	if err := access.SetHtpasswd(path, args[0], strings.TrimSpace(hashed.String())); err != nil {

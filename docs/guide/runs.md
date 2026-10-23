@@ -234,8 +234,13 @@ runs, as a login shell, with:
   `TASK_UI_PERMISSIONS`, what that user may do in a line, as
   `note/view, note/edit, run; everything else is denied`;
 - `TASK_UI_WORKSPACE`, the name of its [workspace](workspaces.md),
-  `_` at the top of the root, and `TASK_UI_WORKSPACE_DIR`, its checkout,
-  the root for `_`; `HOME` stays the server's;
+  `_` at the top of the workspace folder, and `TASK_UI_WORKSPACE_DIR`,
+  its checkout, the workspace folder for `_`; `HOME` stays the
+  server's;
+- `TASK_UI_HOST_PWD`, its directory as the docker host sees it, and
+  `TASK_UI_HOST_DATA`, the data directory there, for a `docker run -v
+  "${TASK_UI_HOST_PWD:-$PWD}:/src"` that the host's daemon resolves (see
+  [Running the server](../running.md));
 - the secrets of its folder and its workspace's shared secrets, never
   another workspace's (see [Settings](settings.md#secrets));
 - an ssh agent, through `SSH_AUTH_SOCK`, with the instance keys whose

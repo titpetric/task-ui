@@ -29,7 +29,7 @@ func TestHash(t *testing.T) {
 func TestRun(t *testing.T) {
 	var out bytes.Buffer
 	root := t.TempDir()
-	t.Setenv("TASK_UI_ROOT", root)
+	t.Setenv("TASK_UI_WORKSPACE", root)
 	t.Setenv("TASK_UI_DATA", filepath.Join(root, "data"))
 	t.Setenv("TASK_UI_LISTEN", "127.0.0.1:0")
 	t.Setenv("TASK_UI_SSH_DIR", filepath.Join(root, "ssh"))
@@ -62,24 +62,28 @@ func TestRun(t *testing.T) {
 	t.Setenv("CLAUDE_CODE_OAUTH_TOKEN", "")
 	assert.ErrorContains(t, run(context.Background(), []string{"agent", "note", "--root", "/nowhere"}, strings.NewReader(""), &out), "TASK_UI_NOTE: this job runs from a note")
 
-	// passwd adds a user to the password file, and resets one; a bad file
-	// stops the server before it listens.
-	t.Setenv("TASK_UI_HTPASSWD", filepath.Join(root, ".htpasswd"))
+	// passwd adds a user to the password file, <data>/.htpasswd, and
+	// resets one; a bad file stops the server before it listens.
+	htpasswd := filepath.Join(root, "data", ".htpasswd")
 	assert.Error(t, run(context.Background(), []string{"passwd"}, strings.NewReader(""), &out))
 	out.Reset()
 	assert.NoError(t, run(context.Background(), []string{"passwd", "alice", "secret"}, strings.NewReader(""), &out))
 	assert.Contains(t, out.String(), "alice: password set")
 	assert.NoError(t, run(context.Background(), []string{"passwd", "alice"}, strings.NewReader("reset\n"), &out))
-	creds, err := access.LoadHtpasswd(filepath.Join(root, ".htpasswd"))
+	creds, err := access.LoadHtpasswd(htpasswd)
 	assert.NoError(t, err)
 	assert.Len(t, creds, 1)
 	assert.True(t, access.CheckHash(creds[0].Hash, "reset"))
 	assert.Error(t, run(context.Background(), []string{"passwd", "bob"}, strings.NewReader(""), &out))
 
-	assert.NoError(t, os.WriteFile(filepath.Join(root, ".htpasswd"), []byte("broken\n"), 0o600))
+	assert.NoError(t, os.WriteFile(htpasswd, []byte("broken\n"), 0o600))
 	assert.Error(t, run(context.Background(), nil, strings.NewReader(""), &out))
-	assert.NoError(t, os.Remove(filepath.Join(root, ".htpasswd")))
-	t.Setenv("TASK_UI_HTPASSWD", "")
+	assert.NoError(t, os.Remove(htpasswd))
+
+	// The variables of the older layout stop it with what replaced them.
+	t.Setenv("TASK_UI_ROOT", root)
+	assert.ErrorContains(t, run(context.Background(), nil, strings.NewReader(""), &out), "TASK_UI_ROOT is not read")
+	assert.NoError(t, os.Unsetenv("TASK_UI_ROOT"))
 
 	// The server runs until the context ends.
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
@@ -93,9 +97,8 @@ func TestRun(t *testing.T) {
 func TestRun_EmailAndBackup(t *testing.T) {
 	var out bytes.Buffer
 	root := t.TempDir()
-	t.Setenv("TASK_UI_ROOT", root)
+	t.Setenv("TASK_UI_WORKSPACE", root)
 	t.Setenv("TASK_UI_DATA", filepath.Join(root, "data"))
-	t.Setenv("TASK_UI_HTPASSWD", filepath.Join(root, ".htpasswd"))
 	ctx := context.Background()
 
 	// Not a user until the server has read the file.
@@ -151,9 +154,8 @@ func TestRun_EmailAndBackup(t *testing.T) {
 func TestRun_User(t *testing.T) {
 	var out bytes.Buffer
 	root := t.TempDir()
-	t.Setenv("TASK_UI_ROOT", root)
+	t.Setenv("TASK_UI_WORKSPACE", root)
 	t.Setenv("TASK_UI_DATA", filepath.Join(root, "data"))
-	t.Setenv("TASK_UI_HTPASSWD", filepath.Join(root, ".htpasswd"))
 	ctx := context.Background()
 	assert.NoError(t, run(ctx, []string{"passwd", "alice", "secret"}, strings.NewReader(""), &out))
 	assert.NoError(t, run(ctx, []string{"passwd", "bob", "secret"}, strings.NewReader(""), &out))
