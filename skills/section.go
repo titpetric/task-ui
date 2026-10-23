@@ -5,14 +5,23 @@ package skills
 // parent. Dir is where its jobs run, the directory of the file a skill's
 // condition matched; Active says the condition holds.
 type Section struct {
-	ID     string    `json:"id"`
-	Kind   string    `json:"kind"`
-	Path   string    `json:"path"`
-	Dir    string    `json:"dir,omitempty"`
-	Active bool      `json:"active"`
-	When   *When     `json:"when,omitempty"`
-	Desc   string    `json:"desc,omitempty"`
-	Cmds   []Command `json:"cmds"`
+	ID     string `json:"id"`
+	Kind   string `json:"kind"`
+	Path   string `json:"path"`
+	Dir    string `json:"dir,omitempty"`
+	Active bool   `json:"active"`
+	When   *When  `json:"when,omitempty"`
+	Desc   string `json:"desc,omitempty"`
+
+	// Help is what the pipeline says it is for, its help: block.
+	Help string `json:"help,omitempty"`
+
+	// Include are the files the section reads into its variables, and
+	// Env the dotenv files it reads into the environment.
+	Include []string `json:"include,omitempty"`
+	Env     []string `json:"env,omitempty"`
+
+	Cmds []Command `json:"cmds"`
 }
 
 // Kinds of section.

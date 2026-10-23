@@ -18,6 +18,7 @@ import (
 	"github.com/titpetric/task-ui/artifactstore"
 	"github.com/titpetric/task-ui/beszel"
 	"github.com/titpetric/task-ui/claude"
+	"github.com/titpetric/task-ui/detector"
 	"github.com/titpetric/task-ui/diskusage"
 	"github.com/titpetric/task-ui/envfile"
 	"github.com/titpetric/task-ui/event"
@@ -208,6 +209,9 @@ func (a *App) wire(version string) error {
 	a.Catalogue = NewCatalogue(cfg.Root, cfg.Discover, projects)
 	a.Catalogue.Workspaces = workspaces
 	a.Catalogue.Skills = &skills.Prober{Timeout: 3 * time.Second, TTL: 30 * time.Second}
+	// The detector reads a folder's pipeline from the same listing the
+	// skill chips come from, so one atkins answers both.
+	detector.UseProber(a.Catalogue.Skills)
 	self := cfg.ComposeProject
 	if self == "" {
 		self = ComposeProject("docker")
