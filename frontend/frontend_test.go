@@ -24,6 +24,7 @@ import (
 	"github.com/titpetric/task-ui/frontend"
 	"github.com/titpetric/task-ui/frontend/view"
 	"github.com/titpetric/task-ui/git"
+	"github.com/titpetric/task-ui/hostinfo"
 	"github.com/titpetric/task-ui/integration"
 	"github.com/titpetric/task-ui/internal/assert"
 	"github.com/titpetric/task-ui/model"
@@ -154,6 +155,7 @@ func newFixture(t *testing.T) *fixture {
 		values, err := f.opts.Integrations.Values(ctx, integration.Beszel)
 		return values["url"], values["token"], err
 	}}
+	f.opts.Facts = &hostinfo.Reader{Run: f.opts.SSH.Output, Timeout: 5 * time.Second, TTL: time.Hour}
 	f.opts.Guard.Tokens = storage.NewUserAuthTokenStorage(db)
 	f.opts.Cleaner = &retention.Cleaner{
 		Values: storage.NewSettingStorage(db), Runs: runs, Artifacts: f.opts.Artifacts, Store: f.opts.ArtifactStore,
@@ -318,7 +320,10 @@ func TestRoutes_Guard(t *testing.T) {
 func fakeSSH(t *testing.T) string {
 	t.Helper()
 	script := filepath.Join(t.TempDir(), "ssh")
-	body := "#!/bin/sh\ntarget=$(eval echo \\${$(($# - 1))})\n[ \"$target\" = debian@10.10.10.11 ] && exit 0\nexit 255\n"
+	body := "#!/bin/sh\ntarget=$(eval echo \\${$(($# - 1))})\nfor last; do :; done\n[ \"$target\" = debian@10.10.10.11 ] || exit 255\n" +
+		"case \"$last\" in *'df -PT'*) printf '%s\\n' " +
+		"'Filesystem Type 1-blocks Used Available Capacity Mounted on' 'tmpfs tmpfs 100 0 100 0% /run' '/dev/vda1 ext4 1000000000 250000000 750000000 25% /' '/dev/vdb ext4 4000000000 3800000000 200000000 95% /mnt/data' " +
+		"'@@docker' '{\"Names\":\"db\",\"Image\":\"postgres:17\",\"State\":\"running\",\"Status\":\"Up 2 days\",\"Size\":\"1kB (virtual 2MB)\"}' '@@exit 0';; esac\nexit 0\n"
 	assert.NoError(t, os.WriteFile(script, []byte(body), 0o755))
 	return script
 }

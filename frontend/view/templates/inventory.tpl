@@ -95,20 +95,23 @@
 <h3>Hosts</h3>
 <div class="table-wrap">
 <table class="table hosts">
-	<thead><tr><th>Host</th>{{ if .Logins }}<th>SSH</th>{{ end }}<th class="center">Cores</th><th>CPU</th><th colspan="2">Memory</th><th colspan="2">Disk</th></tr></thead>
+	<thead><tr><th>Host</th>{{ if .Logins }}<th>SSH</th>{{ end }}<th class="center">Cores</th><th>CPU</th><th colspan="2">Memory <small>GB</small></th><th colspan="2">Disk <small>GB</small></th></tr></thead>
 	<tbody>
+	{{- $open := .Can "hosts" }}
 	{{- range .Hosts }}
-		<tr>
-			<td class="key nowrap" title="{{ .Host }}, {{ .Status }}"><svg class="ic host-state {{ if .Up }}up{{ else }}down{{ end }}" role="img" aria-label="{{ .Status }}"><use href="#i-server"/></svg> {{ .Name }}</td>
+		{{- /* With hosts, a click on a host's line, or Enter or Space on it,
+		     opens its expanded row: the page of the host, fetched. */}}
+		<tr{{ if $open }} class="host-row" data-host-row="{{ .Name }}" tabindex="0" aria-expanded="false"{{ end }}>
+			<td class="key nowrap" title="{{ .Host }}, {{ .Status }}">{{ if $open }}<svg class="ic chev" aria-hidden="true"><use href="#i-chev"/></svg>{{ end }}<svg class="ic host-state {{ if .Up }}up{{ else }}down{{ end }}" role="img" aria-label="{{ .Status }}"><use href="#i-server"/></svg> {{ .Name }}</td>
 			{{- if $.Logins }}
 			<td class="nowrap">{{ with index $.Logins .Host }}<code>{{ . }}</code> <button type="button" class="btn-icon" data-copy="ssh {{ . }}" title="Copy ssh {{ . }}" aria-label="Copy ssh {{ . }}"><svg class="ic"><use href="#i-copy"/></svg></button>{{ else }}<span class="faint">-</span>{{ end }}</td>
 			{{- end }}
 			<td class="center">{{ with .CPUs }}{{ . }}{{ else }}<span class="faint">-</span>{{ end }}</td>
 			<td>{{ template "meter" .Info.CPU }}</td>
 			<td>{{ template "meter" .Info.Memory }}</td>
-			<td class="size faint nowrap">{{ with .Stats }}{{ printf "%.1f" .MemoryUsed }} / {{ printf "%.1f" .Memory }} GB{{ end }}</td>
+			<td class="size faint nowrap">{{ with .Stats }}{{ printf "%.1f" .MemoryUsed }} / {{ printf "%.1f" .Memory }}{{ end }}</td>
 			<td>{{ template "meter" .Info.Disk }}</td>
-			<td class="size faint nowrap">{{ with .Stats }}{{ printf "%.0f" .DiskUsed }} / {{ printf "%.0f" .Disk }} GB{{ end }}</td>
+			<td class="size faint nowrap">{{ with .Stats }}{{ printf "%.0f" .DiskUsed }} / {{ printf "%.0f" .Disk }}{{ end }}</td>
 		</tr>
 	{{- else }}
 		<tr class="empty"><td colspan="8">Beszel isn't monitoring any hosts.</td></tr>

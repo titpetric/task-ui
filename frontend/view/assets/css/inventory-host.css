@@ -1,0 +1,118 @@
+/* A host's expanded row: its line opens it with a click, the chevron
+   turned down while open. Under the line, the host's facts, its
+   containers and filesystems, and its charts, on the page's ground. */
+.table.hosts {
+  & tr.host-row {
+    cursor: pointer;
+
+    &:focus-visible {
+      outline: 1px solid var(--signal);
+      outline-offset: -1px;
+    }
+
+    & .ic.chev {
+      margin-inline-end: 0.35rem;
+      color: var(--text-faint);
+      transition: transform 0.15s;
+    }
+
+    &[aria-expanded="true"] {
+      & td {
+        background: var(--ink-2);
+      }
+
+      & .ic.chev {
+        transform: rotate(90deg);
+        color: var(--signal);
+      }
+    }
+  }
+
+  & tr.host-detail-row > td {
+    padding: 0.8rem 0.9rem 1rem;
+    font-family: var(--font-ui);
+    line-height: 1.4;
+    background: var(--ink-0);
+    cursor: auto;
+  }
+
+  & tbody tr.host-detail-row:hover > td {
+    background: var(--ink-0);
+  }
+}
+
+/* The table of the hosts may scroll sideways on a narrow screen; the
+   expanded row stays as wide as what shows of it, --detail-w, and its
+   own tables scroll instead. */
+.host-detail {
+  position: sticky;
+  left: 0.9rem;
+  display: grid;
+  gap: 0.5rem;
+  width: var(--detail-w, auto);
+  min-width: 0;
+
+  & h4.section-title {
+    margin: 0.6rem 0 0;
+  }
+
+  & .table-wrap {
+    background: var(--ink-1);
+  }
+
+  & .table td {
+    font: 400 var(--fs-data) var(--font);
+  }
+
+  & .num {
+    text-align: end;
+    font-variant-numeric: tabular-nums;
+  }
+
+  & th small {
+    margin-inline-start: 0.3rem;
+    font-weight: 400;
+    letter-spacing: 0;
+    text-transform: none;
+  }
+
+  & th[data-sort] {
+    cursor: pointer;
+    user-select: none;
+
+    &[aria-sort="descending"]::after {
+      content: " \2193";
+    }
+
+    &[aria-sort="ascending"]::after {
+      content: " \2191";
+    }
+  }
+
+  & .key {
+    font-weight: 600;
+  }
+
+  & .under {
+    display: block;
+    font-size: var(--fs-xs);
+  }
+
+  & .empty-state,
+  & .host-note {
+    margin: 0;
+    font-size: var(--fs-sm);
+  }
+}
+
+.host-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem 1.2rem;
+  margin: 0;
+  font-size: var(--fs-sm);
+
+  & .bad {
+    color: var(--bad);
+  }
+}

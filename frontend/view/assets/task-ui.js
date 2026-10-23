@@ -2729,11 +2729,104 @@
         .then(function (text) {
           if (!text) return;
           var fresh = new DOMParser().parseFromString(text, "text/html").querySelector("[data-hosts-live]");
-          if (fresh) hostsLive.innerHTML = fresh.innerHTML;
+          if (fresh) {
+            hostsLive.innerHTML = fresh.innerHTML;
+            reopenHosts();
+          }
         })
         .catch(function () {});
     }, 60000);
   }
+
+  // A click on a host's line, or Enter or Space on it, opens its
+  // expanded row under it: the host's page, fetched, kept 30 seconds.
+  // The open hosts outlast a refresh, and #host=<name> opens one.
+  var hostDetails = {};
+  var openHosts = function () {
+    try { return JSON.parse(localStorage.getItem("inventory.open") || "[]"); } catch (e) { return []; }
+  };
+  var keepOpen = function (name, open) {
+    var names = openHosts().filter(function (n) { return n !== name; });
+    if (open) names.push(name);
+    try { localStorage.setItem("inventory.open", JSON.stringify(names)); } catch (e) {}
+  };
+  var showHost = function (row, open) {
+    var name = row.getAttribute("data-host-row");
+    var next = row.nextElementSibling;
+    if (next && next.classList.contains("host-detail-row")) next.remove();
+    row.setAttribute("aria-expanded", open ? "true" : "false");
+    if (!open) return;
+    var detail = document.createElement("tr");
+    detail.className = "host-detail-row";
+    detail.innerHTML = '<td colspan="' + row.children.length + '"><p class="faint">Reading ' + escapeHTML(name) + "…</p></td>";
+    row.after(detail);
+    var wrap = row.closest(".table-wrap");
+    if (wrap) wrap.style.setProperty("--detail-w", (wrap.clientWidth - 32) + "px");
+    var fill = function (html) { detail.firstChild.innerHTML = html; };
+    var kept = hostDetails[name];
+    if (kept && Date.now() - kept.at < 30000) return fill(kept.html);
+    fetch("/inventory/hosts/" + encodeURIComponent(name), { credentials: "same-origin" })
+      .then(function (res) { return res.ok ? res.text() : Promise.reject(res.status); })
+      .then(function (text) {
+        var found = new DOMParser().parseFromString(text, "text/html").querySelector("[data-host-detail]");
+        if (!found) return Promise.reject("no detail");
+        hostDetails[name] = { html: found.outerHTML, at: Date.now() };
+        fill(found.outerHTML);
+      })
+      .catch(function (why) {
+        fill('<p class="form-error">Reading ' + escapeHTML(name) + " failed: " + escapeHTML(typeof why === "number" ? "HTTP " + why : String(why)) + "</p>");
+      });
+  };
+  var reopenHosts = function () {
+    if (!hostsLive) return;
+    var wanted = openHosts();
+    var hash = /^#host=(.+)$/.exec(location.hash);
+    if (hash) wanted.push(decodeURIComponent(hash[1]));
+    hostsLive.querySelectorAll("[data-host-row]").forEach(function (row) {
+      if (wanted.indexOf(row.getAttribute("data-host-row")) >= 0) showHost(row, true);
+    });
+  };
+  if (hostsLive) {
+    var toggleHost = function (row) {
+      var open = row.getAttribute("aria-expanded") !== "true";
+      showHost(row, open);
+      keepOpen(row.getAttribute("data-host-row"), open);
+    };
+    hostsLive.addEventListener("click", function (e) {
+      var row = e.target.closest("[data-host-row]");
+      if (!row || e.target.closest("button, a, input, label, code")) return;
+      toggleHost(row);
+    });
+    hostsLive.addEventListener("keydown", function (e) {
+      if ((e.key !== "Enter" && e.key !== " ") || !e.target.matches("[data-host-row]")) return;
+      e.preventDefault();
+      toggleHost(e.target);
+    });
+    reopenHosts();
+  }
+
+  // A table with data-sortable sorts by a header with data-sort on a
+  // click, by each cell's data-v: numbers busiest first, words A to Z,
+  // the next click the other way.
+  document.addEventListener("click", function (e) {
+    var th = e.target.closest && e.target.closest("table[data-sortable] th[data-sort]");
+    if (!th) return;
+    var table = th.closest("table");
+    var index = Array.prototype.indexOf.call(th.parentNode.children, th);
+    var num = th.getAttribute("data-sort") === "num";
+    var was = th.getAttribute("aria-sort");
+    var down = was ? was !== "descending" : num;
+    th.parentNode.querySelectorAll("th").forEach(function (h) { h.removeAttribute("aria-sort"); });
+    th.setAttribute("aria-sort", down ? "descending" : "ascending");
+    var body = table.tBodies[0];
+    var rows = Array.prototype.slice.call(body.rows);
+    rows.sort(function (a, b) {
+      var x = a.cells[index].getAttribute("data-v") || "", y = b.cells[index].getAttribute("data-v") || "";
+      var c = num ? parseFloat(x) - parseFloat(y) : x.localeCompare(y);
+      return down ? -c : c;
+    });
+    rows.forEach(function (row) { body.appendChild(row); });
+  });
 
   // The host picker: All, None and Invert set the boxes, and the count
   // says how many of the hosts a run reaches.

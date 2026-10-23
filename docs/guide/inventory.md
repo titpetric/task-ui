@@ -30,6 +30,49 @@ host with the instance keys, without a password; the button beside it
 copies the `ssh` command. task-ui tries every ten minutes, and a host it
 reaches slowly fills in on the next view.
 
+## The expanded row
+
+With `hosts`, a click on a host's line, or Enter or Space on it, opens
+its expanded row under it, and the next click folds it; **Copy** and
+the other controls on the line do what they do and open nothing. The
+row is the host's page, `/inventory/hosts/<name>`, fetched when it
+opens and kept half a minute. The hosts you open stay open through the
+page's refresh and a reload, and `/inventory#host=<name>` opens one.
+Over the tables, the host's address, its ssh login, cores, uptime,
+Beszel agent and when task-ui last read it over ssh.
+
+**Containers** lists the host's containers, the busiest first, by CPU
+then memory; a click on a header sorts by it, the next the other way.
+A row puts two sources together by the container's name:
+
+- Beszel's measures: CPU in percent of the host, memory, with its
+  share of the host's RAM, and the traffic in and out per second, from
+  the hub's `containers` collection, the newest `container_stats` on a
+  hub without one.
+- docker's sizes: what the container wrote, its writable layer, of the
+  whole with its image, from `docker ps --size` over the host's ssh
+  login, through `sudo -n` when the login may not run docker, with the
+  image and the status.
+
+A cell one source leaves empty shows `-`, its hover saying why: no ssh
+login, docker that did not answer, or a container Beszel has no
+measures of, such as one that exited.
+
+**Filesystems** lists the host's durable storage: mount point, device,
+type, size, used, free and how full. From `df` over the host's ssh
+login, it leaves out what holds nothing past a reboot or shows another
+filesystem again: tmpfs, devtmpfs, overlay, squashfs, efivarfs, proc,
+sysfs, cgroup, nsfs, autofs, fuse.lxcfs and the like, the mounts docker
+makes for containers, and of the mounts of one device, bind mounts
+among them, all but the shortest mount point. A host without an ssh
+login shows what Beszel watches: the root, `/`, and the extra
+filesystems of its agent, by the name the agent sets.
+
+task-ui reads a host over ssh at most every five minutes, in the
+background, and when a row opens waits for the host a short while;
+`docker ps --size` is slow on a host of many containers. A host with
+neither source says so.
+
 ## Running a command on the hosts
 
 A user with the `hosts` permission, Run on Hosts, runs a shell command
