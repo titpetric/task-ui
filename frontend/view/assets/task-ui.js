@@ -254,7 +254,7 @@
     els.take.textContent = on ? "Release input" : "Take input";
     els.take.setAttribute("aria-pressed", on ? "true" : "false");
     els.input.hidden = !on && !who;
-    els.input.textContent = on ? "( > input on )" : "( > input on, " + who + " )";
+    els.input.textContent = on ? "Input on" : "Input: " + who;
     if (on) s.term.focus();
   }
 
