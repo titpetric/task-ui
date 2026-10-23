@@ -19,7 +19,7 @@ func (h *Handlers) board(w http.ResponseWriter) bool {
 
 // listNotes returns the threads of the board, newest first, each with its
 // replies: ?mention= a user name, ?state= open, working, done or failed,
-// ?limit=.
+// ?limit=. Empty or * matches any user, or any state.
 func (h *Handlers) listNotes(w http.ResponseWriter, r *http.Request) {
 	if !h.require(w, r, "note/view") {
 		return
@@ -28,8 +28,17 @@ func (h *Handlers) listNotes(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	q := r.URL.Query()
-	filter := storage.NoteFilter{Channel: model.ChannelNotes, Mention: q.Get("mention"), State: q.Get("state"), Limit: queryInt(r, "limit", 50)}
+	filter := storage.NoteFilter{Channel: model.ChannelNotes, Mention: anyMatch(q.Get("mention")), State: anyMatch(q.Get("state")), Limit: queryInt(r, "limit", 50)}
 	h.writeThreads(w, r, filter)
+}
+
+// anyMatch is a filter's value as a listing takes it: * matches
+// anything, as empty does.
+func anyMatch(value string) string {
+	if value == "*" {
+		return ""
+	}
+	return value
 }
 
 // writeThreads answers with the threads a filter lists, each with its
