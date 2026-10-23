@@ -7,7 +7,10 @@ import (
 
 	_ "modernc.org/sqlite" // the driver storage opens
 
+	"github.com/go-bridget/mig/migrate"
+
 	"github.com/titpetric/task-ui/internal/assert"
+	"github.com/titpetric/task-ui/schema"
 	"github.com/titpetric/task-ui/storage"
 )
 
@@ -46,7 +49,7 @@ func TestMigrate(t *testing.T) {
 
 	var count int
 	assert.NoError(t, db.GetContext(ctx, &count, "SELECT COUNT(*) FROM migrations WHERE project = ?", storage.Project))
-	assert.Equal(t, 45, count)
+	assert.Equal(t, 46, count)
 }
 
 func TestOpenAndMigrate(t *testing.T) {
@@ -70,4 +73,36 @@ func TestErrNotFound(t *testing.T) {
 func TestVacuum(t *testing.T) {
 	t.Parallel()
 	assert.NoError(t, storage.Vacuum(context.Background(), newDB(t)))
+}
+
+// TestMigrate_scheduleUTC rewrites the times of schedules written with
+// the local offset, as Go's time text has them, to the same instants
+// in UTC.
+func TestMigrate_scheduleUTC(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	db := newDB(t)
+	_, err := db.ExecContext(ctx, `INSERT INTO schedule (id, folder, job, expression, next_run_at, last_run_at) VALUES
+		('a', '_', 'weather', '0 7 * * *', '2026-10-23 07:00:00 +0200 CEST', '2026-10-22 09:00:28.172944004 +0200 CEST m=+26340.112136230'),
+		('b', '_', 'west', '@daily', '2026-01-10 00:30:00 -0330 NST', NULL),
+		('c', '_', 'utc', '@daily', '2026-10-23 05:00:00.5 +0000 UTC', NULL)`)
+	assert.NoError(t, err)
+	statements, err := migrate.Statements(schema.Migrations(), "schedule_utc.up.sql")
+	assert.NoError(t, err)
+	for _, statement := range statements {
+		_, err := db.ExecContext(ctx, statement)
+		assert.NoError(t, err)
+	}
+	type times struct {
+		Next string  `db:"next_run_at"`
+		Last *string `db:"last_run_at"`
+	}
+	var got []times
+	assert.NoError(t, db.SelectContext(ctx, &got, "SELECT CAST(next_run_at AS TEXT) AS next_run_at, CAST(last_run_at AS TEXT) AS last_run_at FROM schedule ORDER BY id"))
+	assert.Len(t, got, 3)
+	assert.Equal(t, "2026-10-23 05:00:00 +0000 UTC", got[0].Next)
+	assert.Equal(t, "2026-10-22 07:00:28 +0000 UTC", *got[0].Last)
+	assert.Equal(t, "2026-01-10 04:00:00 +0000 UTC", got[1].Next)
+	assert.Nil(t, got[1].Last)
+	assert.Equal(t, "2026-10-23 05:00:00.5 +0000 UTC", got[2].Next, "a time in UTC stays")
 }

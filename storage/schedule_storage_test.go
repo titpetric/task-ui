@@ -67,6 +67,38 @@ func TestScheduleStorage_Due(t *testing.T) {
 	assert.True(t, due[0].Due(now))
 }
 
+// TestScheduleStorage_Due_local fires a schedule at 07:00 on a clock
+// east of UTC at 07:00 there, not hours later: the row and now compare
+// in UTC whatever zone each comes in.
+func TestScheduleStorage_Due_local(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	ljubljana, err := time.LoadLocation("Europe/Ljubljana")
+	assert.NoError(t, err)
+	schedules := storage.NewScheduleStorage(newDB(t))
+	seven := time.Date(2026, time.October, 23, 7, 0, 0, 0, ljubljana)
+	schedule := &model.Schedule{Folder: "a", Job: "weather", Expression: "0 7 * * *", Enabled: 1, NextRunAt: &seven}
+	assert.NoError(t, schedules.Create(ctx, schedule))
+
+	due, err := schedules.Due(ctx, seven.Add(-time.Second))
+	assert.NoError(t, err)
+	assert.Len(t, due, 0, "not before 07:00")
+	due, err = schedules.Due(ctx, seven)
+	assert.NoError(t, err)
+	assert.Len(t, due, 1, "due at 07:00 local")
+	assert.True(t, due[0].NextRunAt.Equal(seven))
+
+	later := seven.Add(24 * time.Hour)
+	schedule.LastRunAt, schedule.NextRunAt = &seven, &later
+	assert.NoError(t, schedules.Update(ctx, schedule))
+	due, err = schedules.Due(ctx, later.Add(-time.Second))
+	assert.NoError(t, err)
+	assert.Len(t, due, 0)
+	due, err = schedules.Due(ctx, later)
+	assert.NoError(t, err)
+	assert.Len(t, due, 1)
+}
+
 func TestScheduleStorage_Update(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
