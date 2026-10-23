@@ -162,6 +162,7 @@
 	<symbol id="i-list" viewBox="0 0 16 16"><path d="M5 4h9M5 8h9M5 12h9" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><circle cx="2.5" cy="4" r="1" fill="currentColor"/><circle cx="2.5" cy="8" r="1" fill="currentColor"/><circle cx="2.5" cy="12" r="1" fill="currentColor"/></symbol>
 	<symbol id="i-box" viewBox="0 0 16 16"><path d="M2 5.5 8 2.5l6 3v5l-6 3-6-3zM2 5.5l6 3 6-3M8 8.5v5" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></symbol>
 	<symbol id="i-flow" viewBox="0 0 16 16"><circle cx="3" cy="4" r="1.6" fill="none" stroke="currentColor" stroke-width="1.2"/><circle cx="13" cy="8" r="1.6" fill="none" stroke="currentColor" stroke-width="1.2"/><circle cx="3" cy="12" r="1.6" fill="none" stroke="currentColor" stroke-width="1.2"/><path d="M4.6 4h3.4a2 2 0 0 1 2 2v.4M10 9.6v.4a2 2 0 0 1-2 2H4.6M10 6.4 11.4 8" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+	<symbol id="i-prompt" viewBox="0 0 16 16"><path d="M2.5 3.5a1 1 0 0 1 1-1h9a1 1 0 0 1 1 1v6.5a1 1 0 0 1-1 1H7l-3 2.5v-2.5h-.5a1 1 0 0 1-1-1z" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/><path d="M5.5 5.5 7 7 5.5 8.5M8.5 8.5h2" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
 	<symbol id="i-server" viewBox="0 0 16 16"><rect x="2.5" y="2.5" width="11" height="4.5" rx="1" fill="none" stroke="currentColor" stroke-width="1.2"/><rect x="2.5" y="9" width="11" height="4.5" rx="1" fill="none" stroke="currentColor" stroke-width="1.2"/><circle cx="5" cy="4.75" r=".8" fill="currentColor"/><circle cx="5" cy="11.25" r=".8" fill="currentColor"/></symbol>
 	<symbol id="i-plug" viewBox="0 0 16 16"><path d="M6 1.5v3M10 1.5v3M4 4.5h8v3a4 4 0 0 1-8 0zM8 11.5v3" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
 	<symbol id="i-note" viewBox="0 0 16 16"><path d="M3 2.5h10v7.5l-3.5 3.5H3zM13 10H9.5v3.5M5.5 5.5h5M5.5 8h3" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round"/></symbol>
@@ -356,8 +357,8 @@
 {{ define "hours" }}{{ $text := index . 0 }}{{ $page := index . 1 }}{{ if $text }}{{ hoursLine $text }} {{ if $page.InHours $text }}<span class="badge ok">open now</span>{{ else }}<span class="badge bad">out of hours now</span>{{ end }}{{ else }}<span class="faint">always</span>{{ end }}{{ end }}
 
 {{/* stepeditor is the workflow form: a name, the steps in order, each
-     with its toggle, and for a user with prompt/edit the prompt Claude
-     gets once they end and where it runs. list: page, workflow (nil for
+     with its toggle, and for a user with prompt/edit the prompt steps,
+     the prompt Claude gets once they end and where it runs. list: page, workflow (nil for
      a new one), API path, method, where to go after, the submit label. A
      step lists every job the user sees. */}}
 {{ define "stepeditor" }}
@@ -371,9 +372,12 @@
 		<label class="check"><input type="checkbox" id="wf-sidebar{{ if $w }}-{{ $w.ID }}{{ end }}" name="sidebar"{{ if or (not $w) (not $w.SidebarHidden) }} checked{{ end }}> Show in sidebar <span class="faint">turn off for a workflow you only use as a step of others</span></label>
 	</div>
 	<ol class="steps" data-steps>
-		{{- if $w }}{{ range $w.Steps }}{{ template "steprow" (list $p .Folder .Job .WorkflowID .Disabled .Args) }}{{ end }}{{ else }}{{ template "steprow" (list $p "" "" "" false "") }}{{ end }}
+		{{- if $w }}{{ range $w.Steps }}{{ if .Prompt }}{{ template "promptrow" (list $p .Folder .Dir .Prompt .Disabled) }}{{ else }}{{ template "steprow" (list $p .Folder .Job .WorkflowID .Disabled .Args) }}{{ end }}{{ end }}{{ else }}{{ template "steprow" (list $p "" "" "" false "") }}{{ end }}
 	</ol>
 	<template data-step-template>{{ template "steprow" (list $p "" "" "" false "") }}</template>
+	{{- if $p.Can "prompt/edit" }}
+	<template data-prompt-template>{{ template "promptrow" (list $p "_" "" "" false) }}</template>
+	{{- end }}
 	{{- $id := "" }}{{ if $w }}{{ $id = print "-" $w.ID }}{{ end }}
 	{{- if $p.Can "prompt/edit" }}
 	{{- $on := and $w $w.Prompted }}
@@ -405,6 +409,9 @@
 	{{- end }}
 	<div class="form-foot">
 		<button type="button" class="btn" data-step-add>Add step</button>
+		{{- if $p.Can "prompt/edit" }}
+		<button type="button" class="btn" data-step-add-prompt><svg class="ic"><use href="#i-prompt"/></svg>Add prompt step</button>
+		{{- end }}
 		<button class="btn btn-primary" type="submit">{{ $label }}</button>
 	</div>
 </form>
@@ -463,11 +470,36 @@
 </li>
 {{- end }}
 
+{{/* promptrow is a prompt step of the workflow form: the prompt Claude
+     gets with the output of the steps before it, and the folder it runs
+     in; list: page, folder, dir, prompt, off. Its answer is its output
+     for the prompts after it. */}}
+{{ define "promptrow" }}
+{{- $p := index . 0 }}{{ $folder := index . 1 }}{{ $dir := index . 2 }}{{ $prompt := index . 3 }}{{ $off := index . 4 -}}
+<li class="step prompt-step switchable{{ if $off }} off{{ end }}" data-step data-step-prompt data-switchable>
+	{{- template "switch" (list (not $off) "Run this step") }}
+	<span class="step-head" data-step-head><svg class="ic"><use href="#i-prompt"/></svg>prompt in {{ $folder }}{{ with $dir }}/{{ . }}{{ end }}</span>
+	<textarea data-step-prompt-text rows="3" spellcheck="false" aria-label="The prompt" placeholder="fetch the data, print a short table" required>{{ $prompt }}</textarea>
+	<select data-step-place aria-label="Run in">
+		<option value="_"{{ if eq $folder "_" }} selected{{ end }}>the root</option>
+		{{- range $p.Folders }}
+		<option value="{{ .ID }}"{{ if eq .ID $folder }} selected{{ end }}>{{ .ID }}</option>
+		{{- end }}
+	</select>
+	<input type="hidden" data-step-dir value="{{ $dir }}">
+	<span class="step-tools">
+		<button type="button" class="btn-icon" data-step-up title="Move up" aria-label="Move step up">↑</button>
+		<button type="button" class="btn-icon" data-step-down title="Move down" aria-label="Move step down">↓</button>
+		<button type="button" class="btn-icon danger" data-step-remove title="Remove" aria-label="Remove step"><svg class="ic"><use href="#i-trash"/></svg></button>
+	</span>
+</li>
+{{- end }}
+
 {{/* chain draws a workflow's steps, or a run's: a folder once for the
      steps that follow in it, a workflow step by its name, each linked. */}}
 {{- define "chain" }}
 {{- $ := index . 0 }}
-{{- range $i, $l := $.Links (index . 1) }}{{ if $i }}<span class="faint then" aria-hidden="true"></span>{{ end }}<a class="nowrap" href="{{ $l.Href }}">{{ if $l.State }}<i class="dot {{ $l.State }}"></i>{{ end }}{{ if $l.Workflow }}<svg class="ic"><use href="#i-flow"/></svg>{{ end }}{{ $l.Text }}</a>{{ end }}
+{{- range $i, $l := $.Links (index . 1) }}{{ if $i }}<span class="faint then" aria-hidden="true"></span>{{ end }}<a class="nowrap" href="{{ $l.Href }}"{{ with $l.Prompt }} title="{{ . }}"{{ end }}>{{ if $l.State }}<i class="dot {{ $l.State }}"></i>{{ end }}{{ if $l.Workflow }}<svg class="ic"><use href="#i-flow"/></svg>{{ else if $l.Prompt }}<svg class="ic"><use href="#i-prompt"/></svg>{{ end }}{{ $l.Text }}</a>{{ end }}
 {{- end }}
 
 {{- /* sideproject is a project in the sidebar: its row, its jobs and
@@ -922,10 +954,13 @@
 	<span class="rail"><i class="dot{{ with $l.State }} {{ . }}{{ end }}"></i></span>
 	<div class="what">
 		<div class="step-head">
-			<a href="{{ $l.Href }}"{{ if $l.RunID }} data-run-link="{{ $l.RunID }}"{{ end }}>{{ if $l.Workflow }}<svg class="ic"><use href="#i-flow"/></svg>{{ end }}{{ $l.Text }}</a>
+			<a href="{{ $l.Href }}"{{ if $l.RunID }} data-run-link="{{ $l.RunID }}"{{ end }}>{{ if $l.Workflow }}<svg class="ic"><use href="#i-flow"/></svg>{{ else if $l.Prompt }}<svg class="ic"><use href="#i-prompt"/></svg>{{ end }}{{ $l.Text }}</a>
 			{{- if and $l.RunID (not $l.Complete) }}<button type="button" class="btn btn-sm" data-expand="{{ $l.RunID }}" aria-expanded="false"><svg class="ic"><use href="#i-expand"/></svg><span>Expand{{ with $l.Lines }} {{ . }} lines{{ end }}</span></button>{{ end }}
 		</div>
 		<small>{{ if $l.State }}{{ $l.State }}{{ else if $l.Disabled }}step {{ add $i 1 }}, off: runs skip it{{ else }}step {{ add $i 1 }}{{ end }}</small>
+		{{- with $l.Prompt }}
+		<p class="step-prompt">{{ . }}</p>
+		{{- end }}
 		{{- if $l.RunID }}<a class="frame" href="/runs/{{ $l.RunID }}" data-attach="{{ $l.RunID }}"{{ if eq $l.State "running" }} data-frame="{{ $l.RunID }}"{{ end }} role="img" aria-label="Terminal of {{ $l.Text }}">{{ $l.FrameSVG }}</a>{{ end }}
 		{{- if $l.WorkflowRunID }}
 		<ol class="pipeline sub" data-sub="{{ $l.WorkflowRunID }}" data-workflow="{{ $l.WorkflowID }}">

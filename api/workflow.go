@@ -62,9 +62,16 @@ func (h *Handlers) expand(r *http.Request, steps []model.WorkflowStep) []model.W
 }
 
 // mayRun returns the first job the user may not run, or "" when the
-// user may run them all, the jobs of the workflows the steps run too.
+// user may run them all, the jobs of the workflows the steps run too; a
+// prompt step takes prompt/edit.
 func (h *Handlers) mayRun(r *http.Request, steps []model.WorkflowStep) string {
 	for _, step := range h.expand(r, steps) {
+		if step.IsPrompt() {
+			if !h.can(r, "prompt/edit") {
+				return "the prompt in " + step.Place()
+			}
+			continue
+		}
 		f, job, _ := h.target(r, step.Folder, step.Job)
 		if !h.canRun(r, f, job) {
 			return step.Folder + " / " + step.Job
@@ -115,6 +122,15 @@ func (h *Handlers) checkSteps(r *http.Request, req WorkflowRequest) ([]model.Wor
 	steps := make([]model.WorkflowStep, 0, len(req.Steps))
 	for i, step := range req.Steps {
 		disabled := step.Enabled != nil && !*step.Enabled
+		if strings.TrimSpace(step.Prompt) != "" {
+			row, err := h.promptStep(r, step)
+			if err != nil {
+				return nil, fmt.Errorf("step %d: %w", i+1, err)
+			}
+			row.Disabled = disabled
+			steps = append(steps, row)
+			continue
+		}
 		if step.Workflow != "" {
 			wf, err := h.opts.Workflows.Get(r.Context(), step.Workflow)
 			var inner []model.WorkflowStep
@@ -146,10 +162,16 @@ func (h *Handlers) checkSteps(r *http.Request, req WorkflowRequest) ([]model.Wor
 }
 
 // checkWorkflow reads a request into the workflow and its steps: the
-// steps checkSteps takes, and the prompt, which takes prompt/edit and a
-// place the user sees. It answers the error and returns false for a
+// steps checkSteps takes, a prompt step's taking prompt/edit, and the
+// prompt, which takes prompt/edit and a place the user sees. It answers the error and returns false for a
 // request it refuses, and for one with no enabled step and no prompt.
 func (h *Handlers) checkWorkflow(w http.ResponseWriter, r *http.Request, req WorkflowRequest, wf *model.Workflow) ([]model.WorkflowStep, bool) {
+	for _, step := range req.Steps {
+		if strings.TrimSpace(step.Prompt) != "" && !h.can(r, "prompt/edit") {
+			fail(w, http.StatusForbidden, "you don't have permission to prompt Claude")
+			return nil, false
+		}
+	}
 	steps, err := h.checkSteps(r, req)
 	if err != nil {
 		fail(w, http.StatusBadRequest, err.Error())
@@ -406,11 +428,7 @@ func (h *Handlers) visibleRun(r *http.Request, runID string) bool {
 	if err != nil {
 		return false
 	}
-	steps := make([]model.WorkflowStep, 0, len(rows))
-	for _, row := range rows {
-		steps = append(steps, model.WorkflowStep{Folder: row.Folder, Job: row.Job, WorkflowRef: row.WorkflowRef})
-	}
-	return h.visibleSteps(r, steps)
+	return h.visibleSteps(r, rowSteps(rows))
 }
 
 // stopWorkflowRun ends a workflow run, for a user who may run its steps.
@@ -425,10 +443,7 @@ func (h *Handlers) stopWorkflowRun(w http.ResponseWriter, r *http.Request) {
 		failErr(w, err)
 		return
 	}
-	steps := make([]model.WorkflowStep, 0, len(rows))
-	for _, row := range rows {
-		steps = append(steps, model.WorkflowStep{Folder: row.Folder, Job: row.Job, WorkflowRef: row.WorkflowRef})
-	}
+	steps := rowSteps(rows)
 	if !h.visibleSteps(r, steps) {
 		failErr(w, storage.ErrNotFound)
 		return

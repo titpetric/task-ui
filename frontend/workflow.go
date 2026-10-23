@@ -24,7 +24,7 @@ func (h *Handlers) workflowNames(ctx context.Context) map[string]string {
 func viewSteps(steps []model.WorkflowStep, names map[string]string) []view.Step {
 	out := make([]view.Step, 0, len(steps))
 	for _, s := range steps {
-		out = append(out, view.Step{Folder: s.Folder, Job: s.Job, WorkflowID: s.WorkflowRef, WorkflowName: names[s.WorkflowRef], Disabled: s.Disabled, Args: s.Args})
+		out = append(out, view.Step{Folder: s.Folder, Job: s.Job, WorkflowID: s.WorkflowRef, WorkflowName: names[s.WorkflowRef], Disabled: s.Disabled, Args: s.Args, Prompt: s.Prompt, Dir: s.Dir})
 	}
 	return out
 }
@@ -35,7 +35,7 @@ func viewRunSteps(rows []model.WorkflowRunStep, names map[string]string) []view.
 	for _, s := range rows {
 		out = append(out, view.Step{
 			Folder: s.Folder, Job: s.Job, WorkflowID: s.WorkflowRef, WorkflowName: names[s.WorkflowRef],
-			State: s.State, RunID: s.RunID, WorkflowRunID: s.WorkflowRunRef,
+			State: s.State, RunID: s.RunID, WorkflowRunID: s.WorkflowRunRef, Prompt: s.Prompt,
 		})
 	}
 	return out
@@ -58,6 +58,10 @@ func (h *Handlers) workflowView(ctx context.Context, p *view.Page, wf model.Work
 	for _, step := range jobs {
 		if !user.CanSee(step.Folder) {
 			return nil
+		}
+		if step.IsPrompt() {
+			v.CanRun = v.CanRun && p.Can("prompt/edit")
+			continue
 		}
 		if !p.CanRunJob(step.Folder, "", step.Job) {
 			v.CanRun = false

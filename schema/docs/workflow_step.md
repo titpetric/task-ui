@@ -10,6 +10,8 @@ Workflow Step.
 | folder       | varchar  |     | Folder       |
 | job          | varchar  |     | Job          |
 | disabled     | boolean  |     | Disabled     |
+| prompt       | varchar  |     | Prompt       |
+| dir          | varchar  |     | Dir          |
 | workflow_ref | char(26) |     | Workflow Ref |
 | target       | varchar  |     | Target       |
 | args         | varchar  |     | Args         |

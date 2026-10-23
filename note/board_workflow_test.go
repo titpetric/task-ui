@@ -57,7 +57,7 @@ func TestBoard_AskWorkflow(t *testing.T) {
 		assert.NoError(t, f.board.WorkflowRuns.UpdateStep(ctx, &steps[i]))
 	}
 
-	assert.NoError(t, f.board.AskWorkflow(ctx, admin, run, wf, "for the 1.2 tag"))
+	assert.NoError(t, askErr(f.board.AskWorkflow(ctx, admin, run, wf, "for the 1.2 tag")))
 	threads, err := f.board.Notes.List(ctx, storage.NoteFilter{Prompts: true, AboutWorkflowRunID: run.ID})
 	assert.NoError(t, err)
 	assert.Len(t, threads, 1)
@@ -100,17 +100,17 @@ func TestBoard_AskWorkflow_refused(t *testing.T) {
 	run := &model.WorkflowRun{WorkflowID: model.NewID(), Name: "alone", UserID: admin.ID, UserName: admin.Name}
 	assert.NoError(t, f.board.WorkflowRuns.Create(ctx, run, nil))
 
-	assert.NoError(t, f.board.AskWorkflow(ctx, admin, run, &model.Workflow{Name: "alone", Prompt: "say ok"}, ""))
+	assert.NoError(t, askErr(f.board.AskWorkflow(ctx, admin, run, &model.Workflow{Name: "alone", Prompt: "say ok"}, "")))
 	threads, _ := f.board.Notes.List(ctx, storage.NoteFilter{Prompts: true, AboutWorkflowRunID: run.ID})
 	assert.Len(t, threads, 1)
 	assert.Equal(t, model.Default, threads[0].Dir)
 	assert.Contains(t, replies(t, f, threads[0].ID)[0].Body, "The workflow has no steps: the prompt is the whole of it.")
 
-	assert.ErrorIs(t, f.board.AskWorkflow(ctx, admin, run, &model.Workflow{Prompt: "fail"}, ""), note.ErrPromptFailed)
-	assert.ErrorIs(t, f.board.AskWorkflow(ctx, f.ops, run, &model.Workflow{Prompt: "say ok"}, ""), note.ErrForbidden)
-	assert.ErrorIs(t, f.board.AskWorkflow(ctx, admin, run, &model.Workflow{Prompt: "say ok", PromptFolder: "gone"}, ""), note.ErrNoPrompt)
-	assert.ErrorIs(t, f.board.AskWorkflow(ctx, admin, run, &model.Workflow{}, ""), note.ErrInvalid)
-	assert.ErrorIs(t, (&note.Board{}).AskWorkflow(ctx, admin, run, &model.Workflow{Prompt: "say ok"}, ""), note.ErrNoPrompt)
+	assert.ErrorIs(t, askErr(f.board.AskWorkflow(ctx, admin, run, &model.Workflow{Prompt: "fail"}, "")), note.ErrPromptFailed)
+	assert.ErrorIs(t, askErr(f.board.AskWorkflow(ctx, f.ops, run, &model.Workflow{Prompt: "say ok"}, "")), note.ErrForbidden)
+	assert.ErrorIs(t, askErr(f.board.AskWorkflow(ctx, admin, run, &model.Workflow{Prompt: "say ok", PromptFolder: "gone"}, "")), note.ErrNoPrompt)
+	assert.ErrorIs(t, askErr(f.board.AskWorkflow(ctx, admin, run, &model.Workflow{}, "")), note.ErrInvalid)
+	assert.ErrorIs(t, askErr((&note.Board{}).AskWorkflow(ctx, admin, run, &model.Workflow{Prompt: "say ok"}, "")), note.ErrNoPrompt)
 	assert.NoError(t, f.board.PromptPlace(ctx, admin, "proj/images"))
 	assert.ErrorIs(t, f.board.PromptPlace(ctx, admin, "proj/gone"), note.ErrNoPrompt)
 
@@ -120,7 +120,7 @@ func TestBoard_AskWorkflow_refused(t *testing.T) {
 		cancel()
 	}()
 	started := time.Now()
-	assert.ErrorIs(t, f.board.AskWorkflow(stop, admin, run, &model.Workflow{Prompt: "slow"}, ""), context.Canceled)
+	assert.ErrorIs(t, askErr(f.board.AskWorkflow(stop, admin, run, &model.Workflow{Prompt: "slow"}, "")), context.Canceled)
 	assert.True(t, time.Since(started) < 20*time.Second, "the stop ends the prompt's run")
 	slow, _ := f.board.Notes.List(ctx, storage.NoteFilter{Prompts: true, AboutWorkflowRunID: run.ID})
 	assert.Equal(t, model.NoteFailed, slow[0].State)
@@ -151,7 +151,7 @@ func TestBoard_AskWorkflow_cut(t *testing.T) {
 	steps[0].State, steps[0].RunID = model.StateOK, big.ID
 	assert.NoError(t, f.board.WorkflowRuns.UpdateStep(ctx, &steps[0]))
 
-	assert.NoError(t, f.board.AskWorkflow(ctx, admin, run, &model.Workflow{Prompt: "summarize"}, ""))
+	assert.NoError(t, askErr(f.board.AskWorkflow(ctx, admin, run, &model.Workflow{Prompt: "summarize"}, "")))
 	threads, _ := f.board.Notes.List(ctx, storage.NoteFilter{Prompts: true, AboutWorkflowRunID: run.ID})
 	body := replies(t, f, threads[0].ID)[0].Body
 	assert.Contains(t, body, "The end of its output, cut to fit the 256 KiB the steps share:")
@@ -161,4 +161,54 @@ func TestBoard_AskWorkflow_cut(t *testing.T) {
 	_, err := fmt.Sscanf(body[strings.Index(body, "bytes: "):], "bytes: %d", &size)
 	assert.NoError(t, err)
 	assert.True(t, size > 100<<10 && size < 260<<10, size)
+}
+
+// askErr keeps the error of AskWorkflow.
+func askErr(_ string, err error) error { return err }
+
+// AskStep puts a prompt step to Claude in its place as a thread about the workflow
+// run: Claude gets the steps that ended before it, a prompt step's
+// answer as its output, and not the steps to come; AskStep returns the
+// prompt's run and Claude's answer.
+func TestBoard_AskStep(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t, "")
+	admin := f.withPrompts(t)
+	ctx := context.Background()
+	f.board.AgentCommand = []string{"sh", "-c", `{ printf 'Q: %s\n' "$TASK_UI_PROMPT"; cat "$TASK_UI_PROMPT_WORKFLOW"; } > "$TASK_UI_PROMPT_REPLY"`}
+
+	build := ran(t, f, admin, "build", "echo built image v1.2")
+	run := &model.WorkflowRun{WorkflowID: model.NewID(), Name: "weather", UserID: admin.ID, UserName: admin.Name}
+	assert.NoError(t, f.board.WorkflowRuns.Create(ctx, run, []model.WorkflowStep{
+		{Folder: "proj", Job: "build"},
+		{Folder: "_", Job: model.PromptJob, Prompt: "fetch the weather"},
+		{Folder: "proj/images", Job: model.PromptJob, Prompt: "water today?"},
+		{Folder: "proj", Job: "push"},
+	}))
+	steps, _ := f.board.WorkflowRuns.Steps(ctx, run.ID)
+	steps[0].State, steps[0].RunID = model.StateOK, build.ID
+	steps[1].State, steps[1].Answer = model.StateOK, "rain 3 mm today"
+	steps[2].State = model.StateRunning
+	for i := range steps {
+		assert.NoError(t, f.board.WorkflowRuns.UpdateStep(ctx, &steps[i]))
+	}
+
+	runID, answer, err := f.board.AskStep(ctx, admin, run, &steps[2], "proj/images", "porec")
+	assert.NoError(t, err)
+	assert.True(t, runID != "")
+	assert.True(t, strings.HasPrefix(answer, "Q: water today?\n\nInput:\nporec\n"), answer)
+	assert.Contains(t, answer, "The prompt asks after step 2; the steps after it have not run.")
+	assert.Contains(t, answer, "## Step 1, proj / build: ok, exit code 0")
+	assert.Contains(t, answer, "built image v1.2")
+	assert.Contains(t, answer, `## Step 2, a prompt to Claude in _, "fetch the weather": ok`)
+	assert.Contains(t, answer, "Its answer:\n\n```\nrain 3 mm today\n```")
+	assert.NotContains(t, answer, "Step 3")
+	assert.NotContains(t, answer, "proj / push")
+	threads, _ := f.board.Notes.List(ctx, storage.NoteFilter{Prompts: true, AboutWorkflowRunID: run.ID})
+	assert.Len(t, threads, 1)
+	assert.Equal(t, "proj/images", threads[0].Dir)
+	assert.Equal(t, runID, threads[0].RunID)
+
+	_, _, err = f.board.AskStep(ctx, f.ops, run, &steps[2], "proj/images", "")
+	assert.ErrorIs(t, err, note.ErrForbidden)
 }

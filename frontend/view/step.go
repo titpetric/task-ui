@@ -14,6 +14,10 @@ type Step struct {
 	// Args are what the step passes its job, a JSON list: the command of
 	// @host:<host>.
 	Args string
+	// Prompt is what a prompt step asks Claude, in Folder, _ for the
+	// root, and Dir inside it; empty for a job or a workflow.
+	Prompt string
+	Dir    string
 	// State is how a run's step ended; RunID the run it made of a job,
 	// WorkflowRunID the run it made of a workflow.
 	State         string

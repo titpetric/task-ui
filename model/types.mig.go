@@ -2312,6 +2312,12 @@ type WorkflowRunStep struct {
 	// Updated At
 	UpdatedAt *time.Time `db:"updated_at" json:"updated_at"`
 
+	// Prompt
+	Prompt string `db:"prompt" json:"prompt"`
+
+	// Answer
+	Answer string `db:"answer" json:"answer"`
+
 	// Workflow Ref
 	WorkflowRef string `db:"workflow_ref" json:"workflow_ref"`
 
@@ -2373,6 +2379,18 @@ func (w *WorkflowRunStep) GetUpdatedAt() *time.Time { return w.UpdatedAt }
 // SetUpdatedAt sets UpdatedAt to the provided value.
 func (w *WorkflowRunStep) SetUpdatedAt(stamp time.Time) { w.UpdatedAt = &stamp }
 
+// GetPrompt will return the value of Prompt.
+func (w *WorkflowRunStep) GetPrompt() string { return w.Prompt }
+
+// SetPrompt sets Prompt to the provided value.
+func (w *WorkflowRunStep) SetPrompt(val string) { w.Prompt = val }
+
+// GetAnswer will return the value of Answer.
+func (w *WorkflowRunStep) GetAnswer() string { return w.Answer }
+
+// SetAnswer sets Answer to the provided value.
+func (w *WorkflowRunStep) SetAnswer(val string) { w.Answer = val }
+
 // GetWorkflowRef will return the value of WorkflowRef.
 func (w *WorkflowRunStep) GetWorkflowRef() string { return w.WorkflowRef }
 
@@ -2389,7 +2407,7 @@ func (w *WorkflowRunStep) SetWorkflowRunRef(val string) { w.WorkflowRunRef = val
 const WorkflowRunStepTable = "`workflow_run_step`"
 
 // WorkflowRunStepFields is a list of all columns in the DB table.
-var WorkflowRunStepFields = []string{"id", "workflow_run_id", "position", "folder", "job", "run_id", "state", "created_at", "updated_at", "workflow_ref", "workflow_run_ref"}
+var WorkflowRunStepFields = []string{"id", "workflow_run_id", "position", "folder", "job", "run_id", "state", "created_at", "updated_at", "prompt", "answer", "workflow_ref", "workflow_run_ref"}
 
 // WorkflowRunStepPrimaryFields are the primary key fields in the DB table.
 var WorkflowRunStepPrimaryFields = []string{"id"}
@@ -2415,6 +2433,12 @@ type WorkflowStep struct {
 
 	// Disabled
 	Disabled bool `db:"disabled" json:"disabled"`
+
+	// Prompt
+	Prompt string `db:"prompt" json:"prompt"`
+
+	// Dir
+	Dir string `db:"dir" json:"dir"`
 
 	// Workflow Ref
 	WorkflowRef string `db:"workflow_ref" json:"workflow_ref"`
@@ -2462,6 +2486,18 @@ func (w *WorkflowStep) GetDisabled() bool { return w.Disabled }
 // SetDisabled sets Disabled to the provided value.
 func (w *WorkflowStep) SetDisabled(val bool) { w.Disabled = val }
 
+// GetPrompt will return the value of Prompt.
+func (w *WorkflowStep) GetPrompt() string { return w.Prompt }
+
+// SetPrompt sets Prompt to the provided value.
+func (w *WorkflowStep) SetPrompt(val string) { w.Prompt = val }
+
+// GetDir will return the value of Dir.
+func (w *WorkflowStep) GetDir() string { return w.Dir }
+
+// SetDir sets Dir to the provided value.
+func (w *WorkflowStep) SetDir(val string) { w.Dir = val }
+
 // GetWorkflowRef will return the value of WorkflowRef.
 func (w *WorkflowStep) GetWorkflowRef() string { return w.WorkflowRef }
 
@@ -2484,7 +2520,7 @@ func (w *WorkflowStep) SetArgs(val string) { w.Args = val }
 const WorkflowStepTable = "`workflow_step`"
 
 // WorkflowStepFields is a list of all columns in the DB table.
-var WorkflowStepFields = []string{"id", "workflow_id", "position", "folder", "job", "disabled", "workflow_ref", "target", "args"}
+var WorkflowStepFields = []string{"id", "workflow_id", "position", "folder", "job", "disabled", "prompt", "dir", "workflow_ref", "target", "args"}
 
 // WorkflowStepPrimaryFields are the primary key fields in the DB table.
 var WorkflowStepPrimaryFields = []string{"id"}

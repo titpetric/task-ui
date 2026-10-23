@@ -1398,11 +1398,22 @@
   var WORKFLOW = "workflow:";
 
   // workflowSteps reads a workflow form's steps, in their order: a job of
-  // a folder, or a workflow, each enabled or not.
+  // a folder, a workflow, or a prompt in a folder, each enabled or not.
   function workflowSteps(form) {
     return Array.prototype.map.call(form.querySelectorAll("[data-step]"), function (row) {
-      var folder = row.querySelector("[data-step-folder]").value;
       var enabled = row.querySelector("[data-switch]").checked;
+      if (row.hasAttribute("data-step-prompt")) {
+        var place = row.querySelector("[data-step-place]").value;
+        var dir = row.querySelector("[data-step-dir]");
+        return {
+          prompt: row.querySelector("[data-step-prompt-text]").value,
+          folder: place,
+          // The directory belongs to the folder it was picked in.
+          dir: place === dir.dataset.folder || !dir.dataset.folder ? dir.value : "",
+          enabled: enabled
+        };
+      }
+      var folder = row.querySelector("[data-step-folder]").value;
       if (folder.indexOf(WORKFLOW) === 0) return { workflow: folder.slice(WORKFLOW.length), enabled: enabled };
       var step = { folder: folder, job: row.querySelector("[data-step-job]").value, enabled: enabled };
       var args = argsOf(row.querySelector("[data-step-args]").value, step.job);
@@ -1415,6 +1426,7 @@
   // and the job picked when it still belongs. A step that runs a
   // workflow has no job to pick.
   function narrowStep(row) {
+    if (row.hasAttribute("data-step-prompt")) return;
     var folder = row.querySelector("[data-step-folder]");
     var job = row.querySelector("[data-step-job]");
     var flow = folder.value.indexOf(WORKFLOW) === 0;
@@ -1431,6 +1443,16 @@
   // stepHead names a step by what it runs, the heading it keeps when
   // it is off: folder / job, or the workflow.
   function stepHead(row) {
+    if (row.hasAttribute("data-step-prompt")) {
+      var place = row.querySelector("[data-step-place]").value;
+      var dir = row.querySelector("[data-step-dir]");
+      var at = dir.value && (!dir.dataset.folder || dir.dataset.folder === place) ? place + "/" + dir.value : place;
+      var promptHead = row.querySelector("[data-step-head]");
+      promptHead.textContent = "";
+      promptHead.appendChild(icon("i-prompt"));
+      promptHead.appendChild(document.createTextNode("prompt in " + at));
+      return;
+    }
     var folder = row.querySelector("[data-step-folder]");
     var job = row.querySelector("[data-step-job]");
     var head = row.querySelector("[data-step-head]");
@@ -1452,8 +1474,16 @@
   document.querySelectorAll("form[data-workflow]").forEach(function (form) {
     var list = form.querySelector("[data-steps]");
     list.querySelectorAll("[data-step]").forEach(narrowStep);
+    // A prompt step's directory goes with the folder it came in.
+    list.querySelectorAll("[data-step-prompt]").forEach(function (row) {
+      row.querySelector("[data-step-dir]").dataset.folder = row.querySelector("[data-step-place]").value;
+    });
     stepTools(list);
     form.addEventListener("change", function (event) {
+      if (event.target.matches("[data-step-place]")) {
+        stepHead(event.target.closest("[data-step]"));
+        return;
+      }
       if (event.target.matches("[data-step-folder], [data-step-job]")) {
         var step = event.target.closest("[data-step]");
         if (event.target.matches("[data-step-folder]")) narrowStep(step);
@@ -1470,13 +1500,18 @@
         text.focus();
         return;
       }
-      var btn = event.target.closest("[data-step-add], [data-step-up], [data-step-down], [data-step-remove]");
+      var btn = event.target.closest("[data-step-add], [data-step-add-prompt], [data-step-up], [data-step-down], [data-step-remove]");
       if (!btn) return;
       event.preventDefault();
       var row = btn.closest("[data-step]");
-      if (btn.hasAttribute("data-step-add")) {
+      if (btn.hasAttribute("data-step-add-prompt")) {
+        var asks = form.querySelector("[data-prompt-template]").content.firstElementChild.cloneNode(true);
+        list.appendChild(asks);
+        asks.querySelectorAll("select").forEach(enhanceSelect);
+        asks.querySelector("[data-step-prompt-text]").focus();
+      } else if (btn.hasAttribute("data-step-add")) {
         var fresh = form.querySelector("[data-step-template]").content.firstElementChild.cloneNode(true);
-        var last = list.querySelector("[data-step]:last-child");
+        var last = list.querySelector("[data-step]:not([data-step-prompt]):last-child");
         // A new step starts in the folder of the one before it.
         if (last) fresh.querySelector("[data-step-folder]").value = last.querySelector("[data-step-folder]").value;
         list.appendChild(fresh);
@@ -1809,6 +1844,10 @@
           a.href = "/workflows/" + data.workflow_ref;
           a.appendChild(icon("i-flow"));
           a.appendChild(document.createTextNode("workflow"));
+        } else if (data.prompt) {
+          a.href = folderHref(data.folder);
+          a.appendChild(icon("i-prompt"));
+          a.appendChild(document.createTextNode("prompt in " + data.folder));
         } else {
           a.href = folderHref(data.folder) + "/" + data.job;
           a.textContent = data.folder + " / " + data.job;

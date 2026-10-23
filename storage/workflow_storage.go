@@ -35,6 +35,8 @@ func checkChain(workflow *model.Workflow, steps []model.WorkflowStep) error {
 	for _, step := range steps {
 		job := step.Folder != "" || step.Job != ""
 		switch {
+		case step.IsPrompt() && (step.IsWorkflow() || step.Folder == "" || step.Job != model.PromptJob):
+			return errors.New("a prompt step names the folder it asks in, and no job or workflow")
 		case step.IsWorkflow() && job:
 			return errors.New("a step names a job or a workflow, not both")
 		case !step.IsWorkflow() && (step.Folder == "" || step.Job == ""):
@@ -111,7 +113,7 @@ func inTx(ctx context.Context, db DB, fn func(c conn) error) error {
 // insertSteps writes a workflow's steps in order, positions from zero.
 func insertSteps(ctx context.Context, c conn, workflowID string, steps []model.WorkflowStep) error {
 	for i, step := range steps {
-		row := model.WorkflowStep{ID: model.NewID(), WorkflowID: workflowID, Position: int64(i), Folder: step.Folder, Job: step.Job, WorkflowRef: step.WorkflowRef, Disabled: step.Disabled, Target: step.Target, Args: step.Args}
+		row := model.WorkflowStep{ID: model.NewID(), WorkflowID: workflowID, Position: int64(i), Folder: step.Folder, Job: step.Job, WorkflowRef: step.WorkflowRef, Disabled: step.Disabled, Target: step.Target, Args: step.Args, Prompt: step.Prompt, Dir: step.Dir}
 		if row.Args == "" {
 			row.Args = "[]"
 		}
@@ -276,7 +278,7 @@ func (s *WorkflowRunStorage) Create(ctx context.Context, run *model.WorkflowRun,
 		for i, step := range steps {
 			row := model.WorkflowRunStep{
 				ID: model.NewID(), WorkflowRunID: run.ID, Position: int64(i),
-				Folder: step.Folder, Job: step.Job, WorkflowRef: step.WorkflowRef, State: model.StepPending,
+				Folder: step.Folder, Job: step.Job, WorkflowRef: step.WorkflowRef, Prompt: step.Prompt, State: model.StepPending,
 				CreatedAt: run.StartedAt, UpdatedAt: run.StartedAt,
 			}
 			if err := c.Insert(ctx, model.WorkflowRunStepTable, &row); err != nil {

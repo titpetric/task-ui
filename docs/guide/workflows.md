@@ -15,8 +15,9 @@ it ended ok. The first step that does not end ok ends the workflow, and
 the rest do not run. While a workflow runs, the play button in the
 sidebar becomes an eye: open it to watch.
 
-A step is a job of a folder, or another workflow, which then runs in its
-place, all its steps. In the editor, a switch leads each step. Switch
+A step is a job of a folder, another workflow, which then runs in its
+place, all its steps, or a prompt to Claude (see [Prompt
+steps](#prompt-steps)). In the editor, a switch leads each step. Switch
 a step off and it collapses to its name, folder / job, dimmed; it stays
 in the chain and a run skips it: its row reads skipped, and the steps
 after it run. Switch it on and its selects come back.
@@ -68,6 +69,30 @@ works: the prompt and the input as the question, Claude's answer under
 it. A reply in the thread asks again with the same steps. Making a
 workflow with a prompt, and running one, takes the `prompt/edit`
 permission.
+
+## Prompt steps
+
+A prompt step asks Claude in place of running a job: **Add prompt
+step** in the editor, beside **Add step**, adds one, a field for the
+prompt and **Run in**, the folder Claude works in, the root by default.
+It runs `@claude-prompt` there as the user who started the run, with
+the run's input and the output of the steps before it, as the final
+prompt gets them, within the same budget. Claude's reply is the step's
+output: the prompt steps after it and the final prompt read it as the
+step's answer. The step ends ok when Claude's run ends ok; one that
+fails ends the workflow, as a job does.
+
+The pipeline shows a prompt step with the prompt icon, as a prompt in
+its folder, its prompt under it, and its run once it ran. Its switch
+works as a job step's: off, a run skips it. Its thread lists on the
+workflow run's page with the final prompt's. Saving a prompt step, and
+running a workflow with one, takes the `prompt/edit` permission.
+
+Through `/api/workflows`, a prompt step is `{"prompt": "fetch the
+weather", "folder": "_", "dir": ""}`: `folder` the folder Claude runs
+in, `_` or empty for the root, and `dir` a directory inside it.
+
+The final prompt stays the last prompt: the one that reads every step.
 
 ## The workflow page
 

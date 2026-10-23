@@ -311,3 +311,41 @@ func TestWorkflowRunStorage_ListByWorkflow(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Len(t, none, 0)
 }
+
+// A prompt step keeps its prompt and its place, the root or a directory
+// of a folder; a run's step copies the prompt and keeps Claude's answer.
+func TestWorkflowStorage_PromptStep(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	db := newDB(t)
+	workflows := storage.NewWorkflowStorage(db)
+	runs := storage.NewWorkflowRunStorage(db)
+
+	ask := model.WorkflowStep{Folder: "malta", Dir: "docs", Job: model.PromptJob, Prompt: "fetch the weather"}
+	wf := &model.Workflow{Name: "weather"}
+	assert.NoError(t, workflows.Create(ctx, wf, append(steps("infra", "build"), ask)))
+	got, err := workflows.Steps(ctx, wf.ID)
+	assert.NoError(t, err)
+	assert.Len(t, got, 2)
+	assert.True(t, got[1].IsPrompt())
+	assert.Equal(t, "malta/docs", got[1].Place())
+
+	bad := []model.WorkflowStep{
+		{Job: model.PromptJob, Prompt: "where"},
+		{Folder: "_", Job: "build", Prompt: "which job"},
+		{Folder: "_", Job: model.PromptJob, WorkflowRef: wf.ID, Prompt: "both"},
+	}
+	for _, step := range bad {
+		assert.Error(t, workflows.Create(ctx, &model.Workflow{Name: "bad"}, []model.WorkflowStep{step}))
+	}
+
+	run := &model.WorkflowRun{WorkflowID: wf.ID, Name: wf.Name}
+	assert.NoError(t, runs.Create(ctx, run, got))
+	rows, err := runs.Steps(ctx, run.ID)
+	assert.NoError(t, err)
+	assert.Equal(t, "fetch the weather", rows[1].Prompt)
+	rows[1].Answer, rows[1].State = "sunny, 21 °C", model.StateOK
+	assert.NoError(t, runs.UpdateStep(ctx, &rows[1]))
+	rows, _ = runs.Steps(ctx, run.ID)
+	assert.Equal(t, "sunny, 21 °C", rows[1].Answer)
+}

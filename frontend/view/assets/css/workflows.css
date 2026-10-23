@@ -76,6 +76,15 @@
     }
   }
 
+  /* A prompt step's prompt, under its name. */
+  & .what .step-prompt {
+    max-width: 60rem;
+    margin: 0.2rem 0 0;
+    color: var(--text-dim);
+    white-space: pre-wrap;
+    font-size: var(--fs-data);
+  }
+
   /* The step's name, with Expand on its row at the terminal's right edge. */
   & .what .step-head {
     display: flex;
@@ -204,6 +213,30 @@
   }
 }
 
+/* A prompt step: the prompt over two columns, then the folder it runs
+   in; off, its heading in their place. */
+.workflow-form .prompt-step {
+  align-items: start;
+
+  & textarea {
+    grid-column: span 2;
+    min-height: 3.6rem;
+    font-family: var(--font);
+    font-size: var(--fs-data);
+  }
+
+  & .step-head .ic {
+    width: 0.9rem;
+    height: 0.9rem;
+    margin-inline-end: 0.3rem;
+    vertical-align: -0.1rem;
+  }
+
+  &.off > textarea {
+    display: none;
+  }
+}
+
 /* The switch leads a part of the workflow form: switched off, the part
    collapses to its heading. */
 .workflow-form .switch {
@@ -269,7 +302,13 @@
   .workflow-form .step [data-step-job],
   .workflow-form .step .dd:has([data-step-job]),
   .workflow-form .step [data-step-args],
+  .workflow-form .prompt-step [data-step-place],
+  .workflow-form .prompt-step .dd:has([data-step-place]),
   .workflow-form .step-tools {
+    grid-column: 3;
+  }
+
+  .workflow-form .prompt-step textarea {
     grid-column: 3;
   }
 }

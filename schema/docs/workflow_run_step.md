@@ -13,5 +13,7 @@ Workflow Run Step.
 | state            | varchar  |     | State            |
 | created_at       | datetime |     | Created At       |
 | updated_at       | datetime |     | Updated At       |
+| prompt           | varchar  |     | Prompt           |
+| answer           | varchar  |     | Answer           |
 | workflow_ref     | char(26) |     | Workflow Ref     |
 | workflow_run_ref | char(26) |     | Workflow Run Ref |

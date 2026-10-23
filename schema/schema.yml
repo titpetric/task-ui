@@ -1394,6 +1394,14 @@
       type: timestamp
       comment: Updated At
       datatype: datetime
+    - name: prompt
+      type: text
+      comment: Prompt
+      datatype: varchar
+    - name: answer
+      type: text
+      comment: Answer
+      datatype: varchar
     - name: workflow_ref
       type: text
       comment: Workflow Ref
@@ -1443,6 +1451,14 @@
       type: boolean
       comment: Disabled
       datatype: boolean
+    - name: prompt
+      type: text
+      comment: Prompt
+      datatype: varchar
+    - name: dir
+      type: text
+      comment: Dir
+      datatype: varchar
     - name: workflow_ref
       type: text
       comment: Workflow Ref

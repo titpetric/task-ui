@@ -30,6 +30,25 @@ func TestChain(t *testing.T) {
 	assert.Equal(t, "ok", links[4].State)
 }
 
+// A prompt step reads as a prompt in its place, links to its folder's
+// page, or to its run once it ran, and names its folder again for the
+// job after it.
+func TestChain_Prompt(t *testing.T) {
+	t.Parallel()
+	links := view.Chain([]view.Step{
+		{Folder: "infra", Job: "plan"},
+		{Folder: "infra", Dir: "docs", Job: "@claude-prompt", Prompt: "fetch the weather"},
+		{Folder: "infra", Job: "apply"},
+		{Folder: "_", Job: "@claude-prompt", Prompt: "water today?", RunID: "r1"},
+	}, nil)
+	assert.Equal(t, "prompt in infra/docs", links[1].Text)
+	assert.Equal(t, "fetch the weather", links[1].Prompt)
+	assert.Equal(t, "/f/_/infra", links[1].Href)
+	assert.Equal(t, "infra / apply", links[2].Text)
+	assert.Equal(t, "prompt in _", links[3].Text)
+	assert.Equal(t, "/runs/r1", links[3].Href)
+}
+
 // A link of a run's chain points at the run a step made, and one of a
 // workflow step at the run it made of the workflow.
 func TestLink(t *testing.T) {

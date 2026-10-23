@@ -4,8 +4,10 @@
 // run, and the runner skips the steps after it. A step names a job or
 // another workflow; a workflow runs as a run of its own, and ends the
 // step as it ended. The runner skips a disabled step and runs the rest.
-// A workflow with a prompt puts it to Claude once its steps end, with
-// their output, and its run ends with Claude's reply.
+// A step may ask Claude a prompt in place of a job, with the output of
+// the steps before it; Claude's answer is the step's output for the
+// prompts after it. A workflow with a prompt puts it to Claude once its
+// steps end, with their output, and its run ends with Claude's reply.
 package workflow
 
 import (
@@ -51,17 +53,25 @@ type Step struct {
 	Workflow *model.Workflow
 	// Disabled is a step the run skips, resolved to nothing.
 	Disabled bool
+	// Prompt is what a prompt step asks Claude, in Place, a folder and
+	// a directory in it or _ for the root; empty for a job or a
+	// workflow.
+	Prompt string
+	Place  string
 	// Args follow the job's argv after --, for a job that takes args;
 	// for a step of @host:<host> they are the shell command.
 	Args []string
 }
 
-// Prompter puts a workflow's prompt to Claude once a run's steps ended,
-// as the user who started the run, with the run's input, and returns
-// when Claude replied, nil, or the prompt failed; a stop of ctx ends
-// the prompt's run. note.Board is one.
+// Prompter puts a workflow's prompts to Claude, as the user who started
+// the run, with the run's input: AskWorkflow the workflow's prompt once
+// a run's steps ended, AskStep a prompt step's in its place, with the
+// steps before it. Each returns when Claude replied, with the reply
+// and AskStep the prompt's run, or when the prompt failed; a stop of
+// ctx ends the prompt's run. note.Board is one.
 type Prompter interface {
-	AskWorkflow(ctx context.Context, user *model.User, run *model.WorkflowRun, workflow *model.Workflow, input string) error
+	AskWorkflow(ctx context.Context, user *model.User, run *model.WorkflowRun, workflow *model.Workflow, input string) (string, error)
+	AskStep(ctx context.Context, user *model.User, run *model.WorkflowRun, step *model.WorkflowRunStep, place, input string) (string, string, error)
 }
 
 // Runner starts workflow runs and walks their steps.
@@ -114,6 +124,10 @@ func (r *Runner) Resolve(ctx context.Context, steps []model.WorkflowStep) ([]Ste
 	for _, step := range steps {
 		if step.Disabled {
 			resolved = append(resolved, Step{Disabled: true})
+			continue
+		}
+		if step.IsPrompt() {
+			resolved = append(resolved, Step{Prompt: step.Prompt, Place: step.Place()})
 			continue
 		}
 		if step.IsWorkflow() {
@@ -196,11 +210,13 @@ type RunEvent struct {
 // StepEvent is the payload of a workflow's `step` event: the step as
 // its row stands.
 type StepEvent struct {
-	RunID          string `json:"run_id"`
-	Position       int64  `json:"position"`
-	Folder         string `json:"folder,omitempty"`
-	Job            string `json:"job,omitempty"`
-	WorkflowRef    string `json:"workflow_ref,omitempty"`
+	RunID       string `json:"run_id"`
+	Position    int64  `json:"position"`
+	Folder      string `json:"folder,omitempty"`
+	Job         string `json:"job,omitempty"`
+	WorkflowRef string `json:"workflow_ref,omitempty"`
+	// Prompt says the step asks Claude in Folder.
+	Prompt         bool   `json:"prompt,omitempty"`
 	State          string `json:"state"`
 	StepRunID      string `json:"step_run_id,omitempty"`
 	WorkflowRunRef string `json:"workflow_run_ref,omitempty"`
@@ -275,9 +291,12 @@ func (r *Runner) walk(ctx context.Context, a *active, steps []Step, rows []model
 		row.State = model.StateRunning
 		r.saveStep(store, row)
 		var state, message string
-		if step.Workflow != nil {
+		switch {
+		case step.Prompt != "":
+			state, row.RunID, row.Answer, message = r.promptStep(ctx, a, row, step, user)
+		case step.Workflow != nil:
 			state, row.WorkflowRunRef, message = r.nested(ctx, step.Workflow, user)
-		} else {
+		default:
 			state, row.RunID, message = r.step(ctx, step, user)
 		}
 		row.State = state
@@ -298,27 +317,6 @@ func (r *Runner) walk(ctx context.Context, a *active, steps []Step, rows []model
 	}
 	slog.Info("workflow finished", "workflow", run.Name, "user", run.UserName, "state", run.State)
 	r.publish(run.WorkflowID, "done", RunEvent{RunID: run.ID, WorkflowID: run.WorkflowID, Name: run.Name, State: run.State, Message: run.Message, UserName: run.UserName})
-}
-
-// prompt runs the workflow's prompt once the steps ended, through the
-// Prompter, and returns when Claude replied. The run keeps the steps'
-// state, or fails with a prompt that fails after steps that ended ok; a
-// stop during the prompt stops the run.
-func (r *Runner) prompt(ctx context.Context, a *active, user *model.User) {
-	run := a.run
-	var err error
-	if r.Prompter == nil {
-		err = errors.New("prompts aren't available on this instance")
-	} else {
-		err = r.Prompter.AskWorkflow(ctx, user, run, a.workflow, a.input)
-	}
-	switch {
-	case err == nil:
-	case ctx.Err() != nil:
-		run.State, run.Message = model.StateStopped, "stopped at the prompt"
-	case run.State == model.StateOK:
-		run.State, run.Message = model.StateFailed, "the prompt: "+err.Error()
-	}
 }
 
 // step starts one job and waits for it. When the job is already
@@ -428,7 +426,7 @@ func (r *Runner) saveStep(ctx context.Context, row *model.WorkflowRunStep) {
 	}
 	r.publish(r.workflowOf(row), "step", StepEvent{
 		RunID: row.WorkflowRunID, Position: row.Position, Folder: row.Folder, Job: row.Job, WorkflowRef: row.WorkflowRef,
-		State: row.State, StepRunID: row.RunID, WorkflowRunRef: row.WorkflowRunRef,
+		Prompt: row.IsPrompt(), State: row.State, StepRunID: row.RunID, WorkflowRunRef: row.WorkflowRunRef,
 	})
 }
 
@@ -444,6 +442,9 @@ func (r *Runner) workflowOf(row *model.WorkflowRunStep) string {
 }
 
 func label(step Step) string {
+	if step.Prompt != "" {
+		return "the prompt in " + step.Place
+	}
 	if step.Workflow != nil {
 		return step.Workflow.Name
 	}
