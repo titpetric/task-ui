@@ -46,6 +46,23 @@ func TestBoard_AskRun(t *testing.T) {
 	assert.ErrorIs(t, err, note.ErrNoPrompt)
 }
 
+// SummarizeBatch asks about a batch's first run with the hosts'
+// question, in a thread about that run.
+func TestBoard_SummarizeBatch(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t, "")
+	admin := f.withPrompts(t)
+	ctx := context.Background()
+	run := &model.Run{Folder: model.Default, Job: model.HostJob, UserName: "admin", State: string(model.StateOK)}
+	assert.NoError(t, f.board.Runs.Create(ctx, run))
+
+	asked, err := f.board.SummarizeBatch(ctx, admin, run.ID)
+	assert.NoError(t, err)
+	assert.Equal(t, note.BatchSummaryQuestion, asked.Body)
+	assert.Equal(t, run.ID, asked.AboutRunID)
+	f.settled(t, asked.ID)
+}
+
 // SummarizeRun asks about a run with the short question; the prompt's
 // run gets the summary's shape in TASK_UI_PROMPT_INSTRUCTIONS, and a
 // reply in the thread asks without it.

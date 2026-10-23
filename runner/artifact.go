@@ -62,6 +62,12 @@ func (m *Manager) collectArtifacts(ctx context.Context, session *Session) {
 		return
 	}
 	_ = os.RemoveAll(dir)
+	m.squashArtifacts(ctx)
+}
+
+// squashArtifacts squashes the store's history when it grows past what
+// it keeps, and the records with it.
+func (m *Manager) squashArtifacts(ctx context.Context) {
 	head, err := m.opts.ArtifactStore.Squash(ctx)
 	if err != nil {
 		slog.Warn("artifact history not squashed", "err", err)
@@ -72,6 +78,33 @@ func (m *Manager) collectArtifacts(ctx context.Context, session *Session) {
 			slog.Warn("artifact versions not updated after the squash", "err", err)
 		}
 	}
+}
+
+// WriteArtifact puts a file into the artifact tree at a path, as a user
+// and with no run, over the API or MCP: the store commits it under the
+// user's name and keeps the version it replaces, and the record names the
+// user where a run's names its run, folder and job.
+func (m *Manager) WriteArtifact(ctx context.Context, rel string, data []byte, user string) (*model.Artifact, error) {
+	if m.opts.ArtifactStore == nil || m.opts.Artifacts == nil {
+		return nil, ErrNotFound
+	}
+	commit, err := m.opts.ArtifactStore.Write(ctx, rel, data, user)
+	if err != nil {
+		return nil, err
+	}
+	artifact := &model.Artifact{
+		Name:        rel,
+		Path:        rel,
+		ByteSize:    int64(len(data)),
+		ContentType: ContentType(rel),
+		CommitID:    commit,
+		UserName:    user,
+	}
+	if err := m.opts.Artifacts.Create(ctx, artifact); err != nil {
+		return nil, err
+	}
+	m.squashArtifacts(ctx)
+	return artifact, nil
 }
 
 // storeArtifacts commits a run's directory into the artifact store and

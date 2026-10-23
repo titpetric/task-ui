@@ -343,7 +343,9 @@ func (a *App) wire(version string) error {
 	r := chi.NewRouter()
 	// MCP clients sign with a bearer token; its tools call the API as
 	// the token's user.
-	r.Mount("/api/mcp", a.Guard.Require(access.SameOrigin(mcp.New(routes, version))))
+	server := mcp.New(routes, version)
+	server.BaseURL = cfg.URL
+	r.Mount("/api/mcp", a.Guard.Require(access.SameOrigin(server)))
 	r.Mount("/api", a.Guard.Require(access.SameOrigin(routes)))
 	r.Mount("/", pages.Routes())
 	a.handler = r

@@ -11,7 +11,9 @@ import (
 	"io"
 	"net/http"
 	"slices"
+	"strings"
 
+	"github.com/titpetric/task-ui/access"
 	"github.com/titpetric/task-ui/config"
 )
 
@@ -27,8 +29,9 @@ const (
 	codeInvalidParams  = -32602
 )
 
-// maxBody bounds a request body.
-const maxBody = 1 << 20
+// maxBody bounds a request body: a file for write_artifact, 16 MiB at
+// most, in base64.
+const maxBody = 24 << 20
 
 // Server answers MCP requests over the API.
 type Server struct {
@@ -36,6 +39,9 @@ type Server struct {
 	API http.Handler
 	// Version is task-ui's, which the server reports.
 	Version string
+	// BaseURL is the public base link of the instance, TASK_UI_URL, for
+	// the links the tools return; empty derives it from each request.
+	BaseURL string
 	tools   []Tool
 }
 
@@ -133,6 +139,7 @@ const toolGuide = "task-ui runs the jobs of folders (atkins, Taskfile, make, npm
 	"and can wait for the outcome, list_runs and get_run show how runs went and their output. " +
 	"list_notes and note_comment read and answer the notes that name you, each an instruction to you to report on, " +
 	"post_note leaves one for whoever it names, " +
+	"list_artifacts, read_artifact and write_artifact browse, read and write the artifact tree, the files runs leave, " +
 	"and ask_prompt asks Claude in a folder and can wait for the answer. " +
 	"Call whoami to see what you may do: your role, your permissions and the folders you see."
 
@@ -210,13 +217,30 @@ func (s *Server) handle(r *http.Request, req request) (any, *rpcError) {
 		if tool == nil {
 			return nil, &rpcError{Code: codeInvalidParams, Message: "no tool " + params.Name}
 		}
-		text, err := tool.call(r.Context(), &client{api: s.API}, params.Arguments)
+		text, err := tool.call(r.Context(), &client{api: s.API, base: s.baseURL(r)}, params.Arguments)
 		if err != nil {
 			return callResult{Content: []content{{Type: "text", Text: err.Error()}}, IsError: true}, nil
 		}
 		return callResult{Content: []content{{Type: "text", Text: text}}}, nil
 	}
 	return nil, &rpcError{Code: codeMethodNotFound, Message: "no method " + req.Method}
+}
+
+// baseURL returns the public base link: BaseURL, or the scheme and host
+// the request came to, as the proxy in front forwards them.
+func (s *Server) baseURL(r *http.Request) string {
+	if s.BaseURL != "" {
+		return s.BaseURL
+	}
+	scheme := "http"
+	if access.IsHTTPS(r) {
+		scheme = "https"
+	}
+	host := r.Host
+	if forwarded, _, _ := strings.Cut(r.Header.Get("X-Forwarded-Host"), ","); strings.TrimSpace(forwarded) != "" {
+		host = strings.TrimSpace(forwarded)
+	}
+	return scheme + "://" + host
 }
 
 // tool returns the tool by name, or nil.

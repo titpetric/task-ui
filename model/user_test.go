@@ -48,6 +48,18 @@ func TestUser_CanSee(t *testing.T) {
 	assert.False(t, (&model.User{Role: model.RoleRunner, Folders: `["internal"]`}).CanSee(model.Internal))
 }
 
+// An artifact a user wrote with no run belongs to no folder, so whoever
+// sees artifacts sees it; a run's is its folder's.
+func TestUser_SeesArtifact(t *testing.T) {
+	t.Parallel()
+	scoped := &model.User{Name: "web", Role: model.RoleRunner, Folders: `["web"]`}
+	assert.True(t, scoped.SeesArtifact(&model.Artifact{RunID: "r", Folder: "web"}))
+	assert.False(t, scoped.SeesArtifact(&model.Artifact{RunID: "r", Folder: "infra"}))
+	assert.True(t, scoped.SeesArtifact(&model.Artifact{UserName: "ops", CommitID: "abc1234"}))
+	assert.False(t, (*model.User)(nil).SeesArtifact(&model.Artifact{UserName: "ops"}))
+	assert.False(t, scoped.SeesArtifact(nil))
+}
+
 func TestUser_Listed(t *testing.T) {
 	t.Parallel()
 	ops := &model.User{Name: "ops", Role: model.RoleRunner}

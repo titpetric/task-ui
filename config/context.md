@@ -102,7 +102,12 @@ Artifacts are the files runs leave. Every run gets an empty directory in
 tree at the same paths when the run ends. A later run that writes the
 same path replaces the file, and the history keeps the earlier
 versions. A generated file worth keeping, such as a report, a build or
-an image, belongs there. Page: `/artifacts`; API: `/api/artifacts`.
+an image, belongs there. An agent writes into the tree as its user,
+with `write_artifact`, over the version there, which the history keeps;
+`list_artifacts` lists a directory and `read_artifact` reads a file.
+`artifact/edit` writes and takes a file out of the tree; the runner role
+holds it. Page: `/artifacts`; API: `/api/artifacts`; MCP:
+`list_artifacts`, `read_artifact`, `write_artifact`.
 
 ## Env files (`env`)
 
@@ -158,7 +163,8 @@ MCP and API: `whoami`, `GET /api/me`, what the token's user may do.
 The MCP server at `/api/mcp` calls the API as the token's user, with
 the same permissions. Its tools: `whoami`, `list_jobs`, `run_job`,
 `list_runs`, `get_run`, `list_workflows`, `run_workflow`,
-`list_workflow_runs`, `list_notes`, `note_comment`, `post_note` and
-`ask_prompt`. A user with `user/edit` enables a token on a user's
-profile; it lasts 30 days, and its user rotates or disables it. A
-refused call names the permission it needs.
+`list_workflow_runs`, `list_notes`, `note_comment`, `post_note`,
+`ask_prompt`, `list_artifacts`, `read_artifact` and `write_artifact`.
+A user with `user/edit` enables a token on a user's profile; it lasts
+30 days, and its user rotates or disables it. A refused call names the
+permission it needs.

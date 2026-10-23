@@ -10,6 +10,8 @@ import (
 	"testing"
 	"time"
 
+	_ "modernc.org/sqlite" // the driver storage opens
+
 	"github.com/titpetric/task-ui/beszel"
 	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/hostrun"
@@ -19,8 +21,6 @@ import (
 	"github.com/titpetric/task-ui/runner"
 	"github.com/titpetric/task-ui/sshprobe"
 	"github.com/titpetric/task-ui/storage"
-
-	_ "modernc.org/sqlite" // the driver storage opens
 )
 
 // root is a catalogue of the root folder alone.
@@ -120,6 +120,24 @@ func TestStarter_Start(t *testing.T) {
 	assert.ErrorIs(t, err, hostrun.ErrUnknownHost)
 	_, _, err = s.Start(ctx, user, hostrun.Request{Command: " "})
 	assert.ErrorIs(t, err, hostrun.ErrNoCommand)
+}
+
+// Resolve names every host with a login for *, in the inventory's
+// order, a named host whatever its login, and refuses one it doesn't
+// list.
+func TestStarter_Resolve(t *testing.T) {
+	t.Parallel()
+	s, _ := starter(t)
+	ctx := context.Background()
+	hosts, logins, err := s.Resolve(ctx, []string{"*"})
+	assert.NoError(t, err)
+	assert.Equal(t, []string{"dev1", "dev2"}, hosts)
+	assert.Equal(t, "debian@dev1", logins["dev1"])
+	hosts, _, err = s.Resolve(ctx, []string{"dev3"})
+	assert.NoError(t, err)
+	assert.Equal(t, []string{"dev3"}, hosts)
+	_, _, err = s.Resolve(ctx, []string{"elsewhere"})
+	assert.ErrorIs(t, err, hostrun.ErrUnknownHost)
 }
 
 // collect reads a session until its status, returning the output seen.

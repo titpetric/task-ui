@@ -154,7 +154,7 @@ func TestNew(t *testing.T) {
 		names = append(names, tool.Name)
 		assert.Equal(t, "object", tool.InputSchema.Type)
 	}
-	assert.Equal(t, []string{"list_jobs", "list_workflows", "run_job", "run_workflow", "list_runs", "get_run", "list_notes", "note_comment", "list_workflow_runs", "post_note", "ask_prompt", "whoami"}, names)
+	assert.Equal(t, []string{"list_jobs", "list_workflows", "run_job", "run_workflow", "list_runs", "get_run", "list_notes", "note_comment", "list_workflow_runs", "post_note", "ask_prompt", "list_artifacts", "read_artifact", "write_artifact", "whoami"}, names)
 }
 
 // Only a token of a user gets in.
@@ -197,7 +197,7 @@ func TestServer_ServeHTTP(t *testing.T) {
 	assert.Equal(t, http.StatusAccepted, status)
 	assert.Len(t, raw, 0)
 
-	assert.Len(t, f.rpc(t, "admin", "tools/list", nil).Result.Tools, 12)
+	assert.Len(t, f.rpc(t, "admin", "tools/list", nil).Result.Tools, 15)
 	assert.Equal(t, -32601, f.rpc(t, "admin", "prompts/list", nil).Error.Code)
 	assert.Equal(t, -32602, f.rpc(t, "admin", "tools/call", map[string]any{"name": "nothing"}).Error.Code)
 

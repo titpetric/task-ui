@@ -278,9 +278,10 @@ else is a runner.
 
 What a role may do comes from permission policies over the rules of
 `config/permissions.yml`, which [Permissions](#permissions) sets. An
-admin may do everything. A runner runs jobs, and reads and writes notes,
-workflows and schedules; a viewer does the same without running; both
-read artifacts and the inventory. A policy of a user's own adds to the
+admin may do everything. A runner runs jobs, reads and writes notes,
+workflows, schedules and the artifact tree, and reads the inventory; a
+viewer does the same without running and without writing the artifact
+tree. A policy of a user's own adds to the
 role's, and a deny in either wins; [Permissions](#permissions) lists
 what each role starts with.
 
@@ -364,8 +365,8 @@ lack until a policy allows it:
 
 | Subject       | Allowed at the start |
 |---------------|----------------------|
-| runner role   | Run Jobs; view, edit and delete on Notes, Workflows and Schedules; Allow View on Artifacts and Inventory |
-| viewer role   | the runner's, without Run Jobs |
+| runner role   | Run Jobs; view, edit and delete on Notes, Workflows and Schedules; Allow View and Allow Edits on Artifacts; Allow View on Inventory |
+| viewer role   | the runner's, without Run Jobs and Allow Edits on Artifacts |
 | `claude` user | Run Jobs; Allow View and Allow Edits on Notes and on Prompts |
 
 So no role but admin starts with Enter Shell, Run on Hosts, the

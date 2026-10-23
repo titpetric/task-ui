@@ -42,7 +42,7 @@ func TestMeView(t *testing.T) {
 	}
 	assert.Equal(t, "Artifacts", artifact.Title)
 	assert.Equal(t, "Artifacts are the files runs leave.", artifact.About)
-	assert.Equal(t, []string{"view"}, artifact.Rules)
+	assert.Equal(t, []string{"view", "edit"}, artifact.Rules)
 	assert.True(t, artifact.Allowed)
 	assert.Equal(t, "run", ops.Permissions[0].Key)
 	assert.True(t, ops.Permissions[0].Allowed)

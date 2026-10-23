@@ -48,6 +48,10 @@
       key: MUL
       comment: Commit ID
       datatype: varchar
+    - name: user_name
+      type: text
+      comment: User Name
+      datatype: varchar
   indexes:
     - name: sqlite_autoindex_artifact_1
       columns:

@@ -68,7 +68,7 @@ func (h *Handlers) artifacts(w http.ResponseWriter, r *http.Request) {
 	artifacts, _ := h.opts.Artifacts.List(r.Context(), storage.ArtifactFilter{Folder: q.Get("folder"), Job: q.Get("job"), Limit: 200})
 	p.Artifacts = []model.Artifact{}
 	for _, artifact := range artifacts {
-		if user.CanSee(artifact.Folder) {
+		if user.SeesArtifact(&artifact) {
 			p.Artifacts = append(p.Artifacts, artifact)
 		}
 	}
@@ -128,7 +128,7 @@ func (h *Handlers) artifactVersion(w http.ResponseWriter, r *http.Request, rel, 
 	var when time.Time
 	found := false
 	for _, record := range records {
-		if record.CommitID == version && (user.CanAdmin() || user.CanSee(record.Folder)) {
+		if record.CommitID == version && (user.CanAdmin() || user.SeesArtifact(&record)) {
 			found = true
 			if record.CreatedAt != nil {
 				when = *record.CreatedAt
@@ -177,7 +177,7 @@ func (h *Handlers) visibleArtifacts(r *http.Request) artifactPaths {
 	latest, _ := h.opts.Artifacts.Latest(r.Context())
 	paths := artifactPaths{}
 	for _, artifact := range latest {
-		if user.CanSee(artifact.Folder) {
+		if user.SeesArtifact(&artifact) {
 			paths[artifact.Path] = true
 		}
 	}
