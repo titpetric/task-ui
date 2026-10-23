@@ -43,7 +43,7 @@ func TestBoard_MCPConfig(t *testing.T) {
 	assert.Contains(t, config, `"url":"http://127.0.0.1:1/api/mcp"`)
 	_, token, _ := strings.Cut(config, `"Authorization":"Bearer `)
 	token, _, _ = strings.Cut(token, `"`)
-	// The cleanup follows the answer, a moment after it.
+	// The cleanup comes a moment after the reply.
 	assert.Eventually(t, func() bool {
 		_, live := tokens.User(token)
 		_, err := os.Stat(filepath.Dir(path))
