@@ -152,7 +152,7 @@ Open a folder from the sidebar:
   page, `/f/_` among them, behind the rule of each item:
   - **Project settings**, with `project/view`, or **Workspace
     settings**, with `workspace/view`, opens the configure page, the
-    one **Configure** in **Settings**, **Projects** opens;
+    one **Project settings** in **Settings**, **Projects** opens;
   - **Pull now**, on a checkout with the `git` skill, for a user who
     may run the folder's jobs, runs `@git:pull` there;
   - **Remove checkout**, last and in red, on a project that is a git

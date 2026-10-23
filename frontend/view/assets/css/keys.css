@@ -103,18 +103,19 @@
   margin-bottom: 0.75rem;
 }
 
-/* A keys table, on the Keys page and the Instance page: Name,
-   Algorithm, Size, Public key with its copy button, Purpose, and the
-   row's actions behind a menu that opens over the table. */
+/* A keys table, wherever keys list, from the keyhead and keyrow
+   templates: Name, Algorithm, Size, Public key with its copy button,
+   Purpose, and the row's actions behind a menu that opens over the
+   table. */
 .key-table {
   table-layout: fixed;
 
   & col.c-name {
-    width: 24%;
+    width: 40%;
   }
 
   & col.c-algo {
-    width: 6.5rem;
+    width: 6rem;
   }
 
   & col.c-size {
@@ -139,18 +140,14 @@
     }
   }
 
-  & .pub-line {
-    display: flex;
-    align-items: center;
-    gap: 0.35rem;
-    min-width: 0;
-
-    & .mono {
-      min-width: 0;
-      color: var(--text-dim);
-      font-size: var(--fs-xs);
-      overflow-wrap: anywhere;
-    }
+  & .copyable code {
+    padding: 0;
+    background: none;
+    border: 0;
+    color: var(--text-dim);
+    font-size: var(--fs-xs);
+    white-space: normal;
+    overflow-wrap: anywhere;
   }
 
   & td.actions {

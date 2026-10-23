@@ -27,7 +27,10 @@ type MenuItem struct {
 	Href     string
 	Download bool
 	// Danger puts the item in the last group, in the bad colour.
-	Danger   bool
+	Danger bool
+	// Primary draws the item as the main button of a head; a menu
+	// draws it as any other item.
+	Primary  bool
 	Disabled bool
 	// Attrs are the item's data-*, aria-* and title attributes, their
 	// values escaped.
@@ -77,5 +80,12 @@ func NewMenuItem(icon, label string, attrs ...string) (MenuItem, error) {
 func NewDangerItem(icon, label string, attrs ...string) (MenuItem, error) {
 	item, err := NewMenuItem(icon, label, attrs...)
 	item.Danger = true
+	return item, err
+}
+
+// NewPrimaryItem returns an item as NewMenuItem does, the main button of a head: Add project, Add workflow.
+func NewPrimaryItem(icon, label string, attrs ...string) (MenuItem, error) {
+	item, err := NewMenuItem(icon, label, attrs...)
+	item.Primary = true
 	return item, err
 }

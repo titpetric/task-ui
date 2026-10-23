@@ -4,39 +4,45 @@
 <div class="page-head">
 	<div>
 		<h2>Configure {{ $ws.Folder }}</h2>
-		<p>Change the workspace's title, description and Recursive. You can't change its folder, repository or branch; for another checkout, add another workspace.{{ if $default }} The default workspace is the root, and you can't remove it.{{ end }}</p>
+		<p>The workspace's settings, its projects and the SSH keys its runs get. Its folder, repository and branch stay as cloned; for another checkout, add another workspace.{{ if $default }} The default workspace is the root, and it stays.{{ end }}</p>
 	</div>
-	{{- if or .KeysDir (not $default) }}
 	<div class="actions">
-		{{- if .KeysDir }}
+		{{- if .Can "project/edit" }}
+		<a class="btn btn-primary" href="/settings/projects/new?workspace={{ $ws.Folder }}"><svg class="ic"><use href="#i-plus"/></svg>Add project</a>
+		{{- end }}
+		{{- if and .KeysDir (.Can "workspace/edit") }}
 		<button type="button" class="btn" data-dialog-open="export-dialog"><svg class="ic"><use href="#i-download"/></svg>Export</button>
 		{{- end }}
-		{{- if not $default }}
-		{{- template "workspacedelete" (list $ws $nested "/settings/workspaces?notice=Workspace+removed" "Delete") }}
-		{{- end }}
+		{{ template "menu" (menu (print "Actions on " $ws.Folder)
+			(item "folder-open" "Open" "href" ($.Href $ws.Folder))
+			(and (not $default) (.Can "workspace/delete") (danger "trash" "Delete" "data-delete" (print "/api/workspaces/" $ws.Folder) "data-confirm" (deleteWorkspaceConfirm $ws.Folder $ws.SourceURL $nested) "data-confirm-ok" "Delete" "data-next" "/settings/workspaces?notice=Workspace+deleted"))
+		) }}
 	</div>
-	{{- end }}
 </div>
 
-<form class="form" data-api="/api/workspaces/{{ $ws.Folder }}" data-method="PUT" data-next="/settings/workspaces?notice=Saved">
-	<div class="field">
-		<span class="label">Repository</span>
-		<span class="mono-break">{{ if $default }}<span class="faint">the root, {{ .Root }}</span>{{ else }}{{ $ws.SourceURL }}{{ with $ws.Branch }} <span class="badge">{{ . }}</span>{{ end }}{{ end }}</span>
-	</div>
-	<div class="field">
-		<label for="we-title">Title</label>
-		<input type="text" id="we-title" name="title" value="{{ index .Form "title" }}" autocomplete="off">
-	</div>
-	<div class="field">
-		<label for="we-description">Description</label>
-		<input type="text" id="we-description" name="description" value="{{ index .Form "description" }}" autocomplete="off">
-	</div>
-	{{- template "recursivefield" (list "we-recursive" (not $ws.Shallow)) }}
-	<div class="form-foot">
-		<a class="btn" href="/settings/workspaces">Cancel</a>
-		<button class="btn btn-primary" type="submit">Save</button>
-	</div>
-</form>
+<section class="block">
+	<h3>Settings <small class="mono-break">{{ if $default }}the root, {{ .Root }}{{ else }}{{ $ws.SourceURL }}{{ with $ws.Branch }}, {{ . }}{{ end }}{{ end }}</small></h3>
+	<form class="form" data-api="/api/workspaces/{{ $ws.Folder }}" data-method="PUT" data-next="/settings/workspaces/{{ $ws.Folder }}?notice=Saved">
+		<div class="field">
+			<label for="we-title">Title</label>
+			<input type="text" id="we-title" name="title" value="{{ index .Form "title" }}" autocomplete="off">
+		</div>
+		<div class="field">
+			<label for="we-description">Description</label>
+			<input type="text" id="we-description" name="description" value="{{ index .Form "description" }}" autocomplete="off">
+		</div>
+		{{- template "recursivefield" (list "we-recursive" (not $ws.Shallow)) }}
+		<div class="form-foot">
+			<a class="btn" href="/settings/workspaces">Cancel</a>
+			<button class="btn btn-primary" type="submit">Save</button>
+		</div>
+	</form>
+</section>
+
+<section class="block" id="projects">
+	{{- template "blockhead" (head "Projects" (or (and $default "at the top of the root") (print "inside " $ws.Folder "/")) (and (not .Entries) (print "No projects in " $ws.Folder " yet."))) }}
+	{{- with .Entries }}{{ template "projecttable" (list $ .) }}{{ end }}
+</section>
 {{- if .KeysDir }}
 {{ template "workspacekeys" . }}
 {{ template "workspaceexport" . }}
@@ -75,28 +81,24 @@
 
 {{- /* workspacekeys are a workspace's SSH keys, which its runs get,
      each to every run in the workspace or to the roles and users
-     linked. */}}
+     linked: the keys table every page shares, or one line with Upload
+     key and Generate key while there is none. */}}
 {{- define "workspacekeys" }}
-{{- $ws := .Workspace }}{{ $base := printf "/settings/workspaces/%s/keys" $ws.Folder }}
+{{- $ws := .Workspace }}{{ $base := printf "/settings/workspaces/%s/keys" $ws.Folder }}{{ $edit := .Can "workspace/edit" }}
 <section class="block workspace-keys" id="keys">
-	<div class="block-head">
-		<h3>Keys</h3>
-		<div class="actions">
-			<a class="btn btn-sm" href="{{ $base }}/upload">Upload key</a>
-			<a class="btn btn-sm btn-primary" href="{{ $base }}/generate">Generate key</a>
-		</div>
-	</div>
-	<p class="dim">The workspace's own keys, named <span class="mono">workspace_{{ $ws.Folder }}_&lt;name&gt;_&lt;algorithm&gt;</span> in the key folder, <span class="mono-break">{{ .KeysDir }}</span>, out of the checkout. Its runs get its SSH keys in their ssh agent, next to the instance keys linked to them. A key with no link goes to every run in the workspace; links limit it to the checked roles and users. The instance's encryption key protects the workspace's secrets.</p>
+	{{- template "blockhead" (head "Keys" "SSH keys the workspace's runs get" (and (not .Keys) "No keys added.")
+		(and $edit (item "upload" "Upload key" "href" (print $base "/upload")))
+		(and $edit (item "key" "Generate key" "href" (print $base "/generate")))) }}
+	{{- with .Keys }}
+	<p class="dim">A key goes to every run in the workspace, or to the roles and users its links name, through the run's ssh agent.</p>
 	<div class="table-wrap">
 	<table class="table keys key-table cards">
 		{{ template "keyhead" }}
 		<tbody>
-		{{- range .Keys }}{{ template "keyrow" (list $ . (print "/settings/workspaces/" $ws.Folder) $ws.Folder) }}
-		{{- else }}
-			<tr class="empty"><td colspan="6">No SSH key yet. Generate one, or upload the private key the workspace's runs use.</td></tr>
-		{{- end }}
+		{{- range . }}{{ template "keyrow" (list $ . (print "/settings/workspaces/" $ws.Folder) $ws.Folder) }}{{ end }}
 		</tbody>
 	</table>
 	</div>
+	{{- end }}
 </section>
 {{- end }}

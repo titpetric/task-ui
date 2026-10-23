@@ -1,4 +1,5 @@
 {{ define "content" }}
+{{- $ws := index .Form "workspace" }}{{ $back := "/settings/projects" }}{{ if $ws }}{{ $back = print "/settings/workspaces/" $ws }}{{ end }}
 <div class="page-head">
 	<div>
 		<h2>Add project</h2>
@@ -6,7 +7,7 @@
 	</div>
 </div>
 
-<form class="form" data-api="/api/projects" data-method="POST" data-next="/settings/projects?notice=Project+added">
+<form class="form" data-api="/api/projects" data-method="POST" data-next="{{ $back }}?notice=Project+added">
 	<div class="field">
 		<label for="p-url">Repository URL</label>
 		<input type="text" id="p-url" name="url" placeholder="git@github.com:org/infra.git" spellcheck="false" autocomplete="off" required autofocus>
@@ -18,9 +19,9 @@
 	<div class="field">
 		<label for="p-workspace">Workspace <span class="faint">_ clones the project at the top of the root; any other clones it inside that workspace, as workspace/folder</span></label>
 		<select id="p-workspace" name="workspace">
-			<option value="_" selected>_ · the root</option>
+			<option value="_"{{ if or (not $ws) (eq $ws "_") }} selected{{ end }}>_ · the root</option>
 			{{- range .WorkspaceList }}{{ if ne .Folder "_" }}
-			<option value="{{ .Folder }}">{{ .Folder }}{{ with .Title }} · {{ . }}{{ end }}</option>
+			<option value="{{ .Folder }}"{{ if eq .Folder $ws }} selected{{ end }}>{{ .Folder }}{{ with .Title }} · {{ . }}{{ end }}</option>
 			{{- end }}{{ end }}
 		</select>
 	</div>
@@ -33,7 +34,7 @@
 		<label class="check"><input type="checkbox" id="p-sidebar" name="sidebar" checked> Show in sidebar <span class="faint">off hides the project from the sidebar; its pages still work</span></label>
 	</div>
 	<div class="form-foot">
-		<a class="btn" href="/settings/projects">Cancel</a>
+		<a class="btn" href="{{ $back }}">Cancel</a>
 		<button class="btn btn-primary" type="submit">Clone</button>
 	</div>
 </form>

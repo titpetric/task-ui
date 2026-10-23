@@ -6,6 +6,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/frontend/view"
 	"github.com/titpetric/task-ui/model"
 )
@@ -35,7 +36,7 @@ func (h *Handlers) workspaceNew(w http.ResponseWriter, r *http.Request) {
 	h.render(w, http.StatusOK, "workspace_new", p)
 }
 
-// workspaceEdit shows a workspace's title and description, its keys,
+// workspaceEdit shows a workspace's settings, its projects, its keys,
 // and its delete, which names the projects that go with it.
 func (h *Handlers) workspaceEdit(w http.ResponseWriter, r *http.Request) {
 	if !h.require(w, r, "workspace/view") {
@@ -61,8 +62,23 @@ func (h *Handlers) workspaceEdit(w http.ResponseWriter, r *http.Request) {
 		"title":       workspace.Title,
 		"description": workspace.Description,
 	}
+	h.workspaceProjects(r.Context(), p, workspace.Folder)
 	h.workspaceKeys(r, p)
 	h.render(w, http.StatusOK, "workspace_edit", p)
+}
+
+// workspaceProjects puts the projects of a workspace on its page, as
+// the Projects page lists them: the checkouts inside a named workspace,
+// the folders at the top of the root, less the workspaces, for _.
+func (h *Handlers) workspaceProjects(ctx context.Context, p *view.Page, name string) {
+	named := h.workspaceFolders(ctx)
+	for _, entry := range folder.Entries(h.opts.Root, h.opts.Git, named) {
+		top, _, nested := strings.Cut(entry.ID, "/")
+		if (name == model.Default && !nested && !slices.Contains(named, top)) || (nested && top == name) {
+			p.Entries = append(p.Entries, entry)
+		}
+	}
+	h.measure(p)
 }
 
 // workspaceList returns every workspace, none without the storage or on

@@ -1,9 +1,3 @@
-{{/* copy-line is a value in a code field with a copy button: (list value label). */}}
-{{ define "copy-line" }}
-{{- $value := index . 0 }}{{ $label := index . 1 -}}
-<div class="copy-line"><code>{{ $value }}</code><button type="button" class="btn-icon" data-copy="{{ $value }}" title="Copy {{ $label }}" aria-label="Copy {{ $label }}"><svg class="ic"><use href="#i-copy"/></svg></button></div>
-{{- end }}
-
 {{/* mcp-connect tells how to connect an MCP client to this instance, with the base link to copy. */}}
 {{ define "mcp-connect" }}
 {{- $base := .BaseURL }}
@@ -12,14 +6,14 @@
 	<p>task-ui is an MCP server. An agent such as Claude Code can list jobs and workflows, run them and read the results, with the permissions of the user whose token it uses.</p>
 	<dl class="copy-list">
 		<dt>Base link</dt>
-		<dd>{{ template "copy-line" (list $base "the base link") }}</dd>
+		<dd>{{ template "copyable" (list $base "the base link") }}</dd>
 		<dt>MCP endpoint</dt>
-		<dd>{{ template "copy-line" (list (printf "%s/api/mcp" $base) "the MCP endpoint") }}</dd>
+		<dd>{{ template "copyable" (list (printf "%s/api/mcp" $base) "the MCP endpoint") }}</dd>
 	</dl>
 	<ol class="mcp-steps">
 		<li>{{ if .User }}Enable MCP on <a href="/users/{{ .User.Name }}#mcp">your profile</a>{{ else }}Enable MCP on your profile{{ end }} and copy the token. It shows once and lasts 30 days, or until you rotate it. A token needs MCP agent user on, which an admin sets, and enabling needs Allow Edits on Users; if you don't have them, ask someone who does.</li>
 		<li>Add the server to Claude Code:
-			{{ template "copy-line" (list (printf "claude mcp add --transport http --scope user task %s/api/mcp --header \"Authorization: Bearer <token>\"" $base) "the claude mcp add command") }}</li>
+			{{ template "copyable" (list (printf "claude mcp add --transport http --scope user task %s/api/mcp --header \"Authorization: Bearer <token>\"" $base) "the claude mcp add command") }}</li>
 		<li>Other clients connect to the endpoint over HTTP with the header <code>Authorization: Bearer &lt;token&gt;</code>. Check with <code>claude mcp list</code>: it shows <code>task</code> as connected.</li>
 	</ol>
 	<p class="faint">For the list of tools, read <a href="https://github.com/titpetric/task-ui/blob/main/docs/guide/mcp.md">the MCP chapter of the guide</a>.</p>
@@ -62,10 +56,10 @@
 		<div class="alert">Copy the token now; you won't see it again. It works until <b data-fill="{expires_at}"></b>. Rotate it here before then.</div>
 		<dl class="copy-list">
 			<dt>Token</dt>
-			<dd><div class="copy-line"><code data-fill="{token}"></code><button type="button" class="btn-icon" data-copy="" data-fill="{token}" title="Copy the token" aria-label="Copy the token"><svg class="ic"><use href="#i-copy"/></svg></button></div></dd>
+			<dd><span class="copyable"><code data-fill="{token}"></code><button type="button" class="btn-icon" data-copy="" data-fill="{token}" title="Copy the token" aria-label="Copy the token"><svg class="ic"><use href="#i-copy"/></svg></button></span></dd>
 			<dt>Claude Code</dt>
 			{{- $add := printf "claude mcp add --transport http --scope user task %s/api/mcp --header \"Authorization: Bearer {token}\"" $p.BaseURL }}
-			<dd><div class="copy-line"><code data-fill="{{ $add }}"></code><button type="button" class="btn-icon" data-copy="" data-fill="{{ $add }}" title="Copy the claude mcp add command" aria-label="Copy the claude mcp add command"><svg class="ic"><use href="#i-copy"/></svg></button></div></dd>
+			<dd><span class="copyable"><code data-fill="{{ $add }}"></code><button type="button" class="btn-icon" data-copy="" data-fill="{{ $add }}" title="Copy the claude mcp add command" aria-label="Copy the claude mcp add command"><svg class="ic"><use href="#i-copy"/></svg></button></span></dd>
 		</dl>
 		<a class="btn" href="/users/{{ $u.Name }}#mcp">Done</a>
 	</div>

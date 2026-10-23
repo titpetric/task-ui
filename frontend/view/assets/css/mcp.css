@@ -1,17 +1,9 @@
 /* The MCP block of the users page and a user's MCP access: values to
-   copy, each a code field with its copy button. */
-.copy-line {
+   copy, each from the copyable template; a step's command sits on a
+   line of its own. */
+.mcp-steps .copyable {
   display: flex;
-  align-items: center;
-  gap: 0.35rem;
-  max-width: 100%;
   margin: 0.3rem 0;
-
-  & code {
-    padding: 0.2rem 0.45rem;
-    overflow-x: auto;
-    white-space: nowrap;
-  }
 }
 
 .copy-list {

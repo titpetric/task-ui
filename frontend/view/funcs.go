@@ -49,8 +49,15 @@ func Funcs() template.FuncMap {
 		"danger": NewDangerItem,
 		"detail": NewMenuDetail,
 		"sep":    func() MenuItem { return MenuItem{Sep: true} },
+		// head and primary build the head of a block for the blockhead
+		// template: its title, its empty line and its buttons, the main
+		// one from primary.
+		"head":    NewHead,
+		"primary": NewPrimaryItem,
 		// removeConfirm is what Remove checkout of a project asks.
 		"removeConfirm": RemoveConfirm,
+		// deleteWorkspaceConfirm is what Delete of a workspace asks.
+		"deleteWorkspaceConfirm": DeleteWorkspaceConfirm,
 		// bytes and megabytes word a size in bytes, or in MB as Beszel
 		// counts memory, as size does.
 		"bytes":     func(n uint64) string { return Size(int64(n)) },

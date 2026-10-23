@@ -1,9 +1,10 @@
 /* A block head: the title of a block and its actions on the right. */
 .block-head {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
+  gap: 0.5rem 1rem;
   margin-bottom: var(--head-gap);
 
   & h3 {

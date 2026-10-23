@@ -80,5 +80,7 @@ Beside the guide:
 - [API](api.md): the JSON endpoints and the MCP server;
 - [Development](development.md): the packages, the lint and test bar, and
   the screenshots;
+- [Sitemap](sitemap.md): every page, its lists, actions, forms and empty
+  lines;
 - [Testing](testing.md): the unit tests of the default run and the
   integration tests behind a build tag.

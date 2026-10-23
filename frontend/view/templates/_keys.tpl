@@ -2,9 +2,10 @@
      it: BACKUP ACTIVE and the backup's name. */}}
 {{ define "backup-active" }}<span class="backup-active" title="The previous material serves beside the key until you delete the backup">BACKUP ACTIVE: {{ . }}</span>{{ end }}
 
-{{/* The head of a keys table, the same on the Keys page and the
-     Instance page: Name, Algorithm, Size, Public key with its copy
-     button, Purpose and the row's ⋯ menu. */}}
+{{/* The head of a keys table, the same wherever keys list: the Keys
+     page, the Instance page, a workspace's page, Your SSH keys and a
+     profile: Name, Algorithm, Size, Public key with its copy button,
+     Purpose and the row's ⋯ menu. */}}
 {{ define "keyhead" }}<colgroup><col class="c-name"><col class="c-algo"><col class="c-size"><col class="c-pub"><col class="c-purpose"><col class="c-actions"></colgroup>
 		<thead><tr><th>Name</th><th>Algorithm</th><th>Size</th><th>Public key</th><th>Purpose</th><th class="actions" aria-label="Actions"></th></tr></thead>{{ end }}
 
@@ -21,10 +22,10 @@
 {{- $links := join $k.Roles ", " }}{{ with $k.Users }}{{ if $links }}{{ $links = print $links ", " }}{{ end }}{{ $links = print $links (join . ", ") }}{{ end }}
 {{- if $k.Encrypts }}{{ $links = "never handed out" }}{{ else if not $links }}{{ if $k.Workspace }}{{ $links = "every run of the workspace" }}{{ else }}{{ $links = "none" }}{{ end }}{{ end }}
 <tr id="key-{{ $k.Name }}">
-	<td class="key">{{ if $k.Encrypts }}<span class="mono">{{ $k.Name }}</span>{{ else }}<a class="mono" href="{{ $edit }}">{{ $k.Name }}</a>{{ end }}{{ with $k.Backup }}{{ template "backup-active" . }}{{ end }}{{ with $k.Comment }}<div class="faint">{{ . }}</div>{{ end }}</td>
+	<td class="key">{{ if or $k.Encrypts (not $canEdit) }}<span class="mono">{{ $k.Name }}</span>{{ else }}<a class="mono" href="{{ $edit }}">{{ $k.Name }}</a>{{ end }}{{ with $k.Backup }}{{ template "backup-active" . }}{{ end }}{{ with $k.Comment }}<div class="faint">{{ . }}</div>{{ end }}</td>
 	<td class="mono" data-label="Algorithm">{{ $k.Algo }}</td>
 	<td class="mono nowrap" data-label="Size">{{ $k.Size }} bits</td>
-	<td class="pubkey" data-label="Public key"><div class="pub-line"><span class="mono" title="{{ $k.PublicKey }}">{{ $k.ShortPublic }}</span><button type="button" class="btn-icon" data-copy="{{ $k.PublicKey }}" title="Copy public key" aria-label="Copy the public key of {{ $k.Name }}"><svg class="ic"><use href="#i-copy"/></svg></button></div></td>
+	<td class="pubkey" data-label="Public key">{{ template "copyable" (list $k.PublicKey (print "the public key of " $k.Name) $k.ShortPublic) }}</td>
 	<td data-label="Purpose"><span class="badge{{ if $k.Encrypts }} signal{{ end }}"{{ if $k.Git }} title="git pulls and clones with it"{{ end }}>{{ if $k.Encrypts }}encryption{{ else }}git + ssh{{ end }}</span></td>
 	<td class="actions">{{ template "menu" (menu (print "Actions on " $k.Name)
 		(detail "Fingerprint" $k.Fingerprint "mono" "")
@@ -32,7 +33,7 @@
 		(and $k.RotatedAt (detail "Rotated" (ago $k.RotatedAt) "title" (stamp $k.RotatedAt)))
 		(and $k.Backup (detail "Backup" (print $k.Backup " " $k.BackupFingerprint) "mono" ""))
 		(detail "Scope" (or (and $k.Workspace (print "workspace " $k.Workspace)) "instance"))
-		(detail "Links" $links)
+		(and (or ($p.Can "key/view") $ws) (detail "Links" $links))
 		(and $p.KeyReads (index $p.KeyReads $k.Name) (detail "Reads" (print (index $p.KeyReads $k.Name))))
 		(item "copy" "Copy public key" "data-copy" $k.PublicKey)
 		(item "download" "Download public key" "data-download" $k.PublicKey "data-filename" (print $k.Name ".pub"))

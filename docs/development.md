@@ -73,10 +73,60 @@ draws no button. `menuHTML` in `task-ui.js` draws the same for the rows
 a script adds. The CSS is in `css/menus.css`.
 
 A keys table has the same columns on every page, the Keys page, the
-Instance page, a workspace's page and Your SSH keys: Name, Algorithm,
-Size in bits, Public key shortened with a copy button for the whole
-line, Purpose, and the **⋯** menu with the fingerprint, the dates and
-the links in its details.
+Instance page, a workspace's page, Your SSH keys and a profile: Name,
+Algorithm, Size in bits, Public key shortened with a copy button for
+the whole line, Purpose, and the **⋯** menu with the fingerprint, the
+dates and the links in its details.
+
+## Lists and actions
+
+[Sitemap](sitemap.md) lists every page with its lists, its head
+actions, its row actions, its forms and its empty lines. The pages
+follow one set of rules:
+
+- **Create actions** sit in the page head, top right, for the page's
+  main list: **Add project**, **Add workspace**, **Add user**, **Add
+  secret**, **Add workflow**, each with the plus icon, and **Upload
+  key** and **Generate key** for keys. One button per head is primary.
+  A second list on a page holds its own in its block head, small and
+  plain: a workspace's keys, a profile's keys, a workspace's secrets.
+- **Page-level danger**, deleting what the page shows, goes in a **⋯**
+  menu at the end of the page head, never a loose red button: a
+  workspace, a project's checkout, a workflow, a user, every artifact.
+- **Words**: "Add <thing>" creates. "Delete" ends a record or data for
+  good: a user, a secret, a schedule, a workflow, a note, an artifact, a
+  key's backup, a workspace with its keys and secrets. "Remove" lets go
+  of what can come back: an SSH key, whose files stay in the key folder;
+  "Remove checkout", which the remote can clone again; a step of a
+  workflow. The confirm button repeats the item's label. A link to a
+  configure page reads "<Kind> settings": Project settings, Workspace
+  settings.
+- **Empty lists**: a list with no rows draws no table. Its block head
+  holds one line, "No keys added.", between the heading and the buttons
+  that add to it, from `blockhead`:
+
+  ```
+  {{ template "blockhead" (head "Keys" "SSH keys the workspace's runs get" (and (not .Keys) "No keys added.")
+  	(item "upload" "Upload key" "href" "/settings/workspaces/acme/keys/upload")
+  	(item "key" "Generate key" "href" "/settings/workspaces/acme/keys/generate")) }}
+  {{ with .Keys }}...the table...{{ end }}
+  ```
+
+  `head` takes the title, a note, the empty line or a false value, and
+  buttons made with `item`, `primary` or `danger`, a false value left
+  out. A list a filter empties, runs or artifacts, keeps its table and
+  an empty row.
+- **Copy**: a value to copy is the `copyable` template, `(list value
+  label [shown])`: the value in code and the copy button right after it,
+  for a public key, an ssh login, a link or a command. The same value
+  may also have Copy in the row's menu.
+- **One template per entity**: keys list through `keyhead` and
+  `keyrow`, projects through `projecttable`, a user through `user`, a
+  row's menu through `menu`. A page that lists them again uses those.
+- **Forms**: a label above each field, its help in faint text beside
+  the label, Cancel and the primary submit at the bottom right in
+  `form-foot`. A page of more than one form or list puts each in a block
+  with a heading: a workspace's Settings, Projects and Keys.
 
 ## Layout
 

@@ -122,14 +122,17 @@ the sidebar's order.
 - Any number of workspaces may come from one repository, each under its
   own folder: two teams can start from the same tooling and clone
   different projects into it.
-- **Configure** changes a workspace's title, description and
-  **Recursive**, which, as a project's does, lists the folders inside it
-  as deep as they go, or, off, the workspace and its top-level folders
-  alone; the repository and the folder stay.
+- **Workspace settings** opens the workspace's configure page. Its
+  **Settings** change the title, description and **Recursive**, which,
+  as a project's does, lists the folders inside it as deep as they go,
+  or, off, the workspace and its top-level folders alone; the
+  repository and the folder stay. Its **Projects** lists the projects
+  inside it in the table of the Projects page, and **Add project**, at
+  the top right, clones one into it.
 - **Move up** and **Move down**, in a workspace's **⋯** menu, change the order of the workspaces, in
   the sidebar and on the page. An added workspace goes last. The default
   workspace lists first and keeps its place.
-- **Remove**, last in the menu, deletes the checkout, every project inside it and
+- **Delete**, last in the menu, deletes the checkout, every project inside it and
   their rows, the env files task-ui keeps for them, the workspace's
   secrets and its keys, and its confirm names those projects first. The
   default workspace has none: `DELETE /api/workspaces/_` answers `409`.
@@ -211,8 +214,8 @@ publish them: `workspace_<folder>_<name>_<algorithm>.key` and `.pub`,
 the files `0600`. The **Keys** section of a workspace's configure page,
 `/settings/workspaces/malta`, lists them in the keys table of the Keys
 page, name, algorithm, size, public key with its copy button, purpose
-and the **⋯** menu, never
-a private key.
+and the **⋯** menu, never a private key. With none, it says "No keys
+added." beside **Upload key** and **Generate key**.
 
 - The **SSH keys**, zero or more, are for the workspace's runs. A
   workspace has no encryption key: the instance's encrypts its

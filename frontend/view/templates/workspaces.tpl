@@ -6,7 +6,7 @@
 	</div>
 	<div class="actions">
 		<button type="button" class="btn" data-dialog-open="import-dialog"><svg class="ic"><use href="#i-upload"/></svg>Import</button>
-		<a class="btn btn-primary" href="/settings/workspaces/new">Add workspace</a>
+		<a class="btn btn-primary" href="/settings/workspaces/new"><svg class="ic"><use href="#i-plus"/></svg>Add workspace</a>
 	</div>
 </div>
 
@@ -27,11 +27,11 @@
 				<td class="hide-sm">{{ range $i, $id := $nested }}{{ if $i }}, {{ end }}<a href="{{ $.Href $id }}">{{ $id }}</a>{{ else }}<span class="faint">none yet</span>{{ end }}</td>
 				<td class="actions">{{ template "menu" (menu (print "Actions on " .Folder)
 					(item "folder-open" "Open" "href" ($.Href .Folder))
-					(item "edit" "Configure" "href" (print "/settings/workspaces/" .Folder))
+					(item "settings" "Workspace settings" "href" (print "/settings/workspaces/" .Folder))
 					sep
 					(and (not $default) (ne $i $first) (item "up" "Move up" "data-workspace-move" "up" "data-folder" .Folder))
 					(and (not $default) (ne (add $i 1) $last) (item "down" "Move down" "data-workspace-move" "down" "data-folder" .Folder))
-					(and (not $default) (danger "trash" "Remove" "data-delete" (print "/api/workspaces/" .Folder) "data-confirm" (print "Remove the workspace " .Folder " with its checkout, keys and secrets" (or (and $nested (print ", and the projects inside it: " (join $nested ", "))) "") "? You can clone it again from " .SourceURL ".") "data-confirm-ok" "Remove" "data-next" "reload"))
+					(and (not $default) ($.Can "workspace/delete") (danger "trash" "Delete" "data-delete" (print "/api/workspaces/" .Folder) "data-confirm" (deleteWorkspaceConfirm .Folder .SourceURL $nested) "data-confirm-ok" "Delete" "data-next" "reload"))
 				) }}</td>
 			</tr>
 		{{- else }}

@@ -84,3 +84,22 @@ select {
   gap: 0.4rem;
   flex-wrap: wrap;
 }
+
+/* A value to copy, from the copyable template: the value in code and
+   its copy button right after it, on every page the same: a public key,
+   a link, a command, a token that shows once. */
+.copyable {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  max-width: 100%;
+  min-width: 0;
+  vertical-align: middle;
+
+  & code {
+    min-width: 0;
+    padding: 0.15rem 0.45rem;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+}
