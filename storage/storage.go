@@ -99,6 +99,17 @@ func stamp() *time.Time {
 	return &now
 }
 
+// utc returns a time as the database keeps it, in UTC to the
+// millisecond: a column compared as text against another time holds
+// one zone, whatever the zone of the clock that made it. Nil stays nil.
+func utc(t *time.Time) *time.Time {
+	if t == nil {
+		return nil
+	}
+	at := t.UTC().Truncate(time.Millisecond)
+	return &at
+}
+
 // Vacuum rebuilds the database to free the space of deleted rows,
 // while the server runs, and folds the write-ahead log into the file.
 func Vacuum(ctx context.Context, db DB) error {
