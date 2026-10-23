@@ -5,3 +5,6 @@ imports:
     # The run socket's test is a websocket client of the one file that
     # serves it; counting the test reports the dependency twice.
     include-tests: false
+integration:
+  enabled: true
+  storage: [github.com/titpetric/task-ui/storage]
