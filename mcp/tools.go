@@ -28,7 +28,7 @@ func tools() []Tool {
 		},
 		{
 			Name:        "list_workflows",
-			Description: "List the workflows, each a chain of jobs and other workflows, with their last run.",
+			Description: "List the workflows, each a chain of steps (jobs, other workflows, prompts and summaries), with their last run.",
 			InputSchema: object(map[string]Property{}),
 			call:        listWorkflows,
 		},
@@ -50,7 +50,7 @@ func tools() []Tool {
 			Description: "Start a workflow by ID or name, and wait for it to end if asked. Returns the run and its steps.",
 			InputSchema: object(map[string]Property{
 				"workflow": str("The workflow's ID or name."),
-				"input":    str("Text for the workflow's prompt, which Claude reads after it under Input:, for a workflow with a prompt."),
+				"input":    str("Text for the workflow's prompt steps, which Claude reads after each prompt under Input:, for a workflow with prompt or summary steps."),
 				"wait":     wait,
 			}, "workflow"),
 			call: runWorkflow,

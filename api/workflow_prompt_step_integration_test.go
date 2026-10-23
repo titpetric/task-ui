@@ -13,7 +13,7 @@ import (
 )
 
 // A prompt step asks Claude in its place, the root by default, with the
-// steps before it; its answer is its output for the final prompt. A
+// steps before it; its answer is its output for the prompts after it. A
 // prompt step takes prompt/edit, a place the user sees, and no job.
 func TestWorkflow_PromptStep(t *testing.T) {
 	t.Parallel()
@@ -30,14 +30,15 @@ func TestWorkflow_PromptStep(t *testing.T) {
 	assert.Equal(t, http.StatusBadRequest, both.Status, string(both.Raw))
 
 	made := f.call(t, asAdmin, http.MethodPost, "/workflows", api.WorkflowRequest{
-		Name: "weather", Prompt: "water today?",
-		Steps: []api.StepRequest{ask, {Folder: "infra", Job: "plan"}},
+		Name:  "weather",
+		Steps: []api.StepRequest{ask, {Folder: "infra", Job: "plan"}, {Kind: model.StepPrompt, Prompt: "water today?"}},
 	})
 	assert.Equal(t, http.StatusCreated, made.Status, string(made.Raw))
 	step := made.list("steps")[0].(map[string]any)
 	assert.Equal(t, "fetch the weather", step["prompt"])
 	assert.Equal(t, model.Default, step["folder"])
 	assert.Equal(t, model.PromptJob, step["job"])
+	assert.Equal(t, model.StepPrompt, step["kind"])
 	id := made.str("id")
 	assert.Equal(t, http.StatusForbidden, f.call(t, asOps, http.MethodPost, "/workflows/"+id+"/runs", nil).Status)
 
@@ -46,7 +47,8 @@ func TestWorkflow_PromptStep(t *testing.T) {
 	runID := started.str("id")
 	run := f.workflowRun(t, id, runID)
 	assert.Equal(t, model.StateOK, run["state"])
-	assert.Equal(t, []string{"ok", "ok"}, stepStates(run))
+	assert.Equal(t, []string{"ok", "ok", "ok"}, stepStates(run))
+	assert.Contains(t, run["answer"].(string), "Q: water today?")
 	first := run["steps"].([]any)[0].(map[string]any)
 	assert.Equal(t, "fetch the weather", first["prompt"])
 	assert.True(t, first["run_id"] != "")

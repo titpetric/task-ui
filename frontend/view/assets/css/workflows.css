@@ -154,168 +154,495 @@
   }
 }
 
-/* The workflow's prompt under its pipeline, as written. */
-.workflow-prompt-head {
-  margin-top: 1.4rem;
+/* A workflow's description, under its name in the list. */
+.wf-desc {
+  display: block;
+  margin-top: 0.15rem;
+  font-family: var(--font-ui);
+  font-size: var(--fs-xs);
 }
 
-.workflow-prompt {
-  max-width: 60rem;
-  white-space: pre-wrap;
-  color: var(--text);
+/* The workflow form: the name, the description and the sidebar toggle,
+   then the steps on a rail and Add step at its foot. */
+.workflow-form {
+  max-width: 56rem;
+
+  & .wf-meta {
+    margin-bottom: var(--block-gap);
+
+    & textarea {
+      min-height: 3.4rem;
+      font-family: var(--font-ui);
+      font-size: var(--fs-field);
+    }
+  }
 }
 
-.workflow-form .steps {
-  display: grid;
-  gap: 0.4rem;
-  margin: 0 0 0.8rem;
+.wf-steps-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+
+  & h3 {
+    margin: 0 0 var(--head-gap);
+  }
+
+  & p {
+    margin: 0;
+    font-size: var(--fs-sm);
+  }
+
+  & .btn {
+    flex: none;
+  }
+}
+
+/* The rail: a numbered node a step down the left, joined by a line, and
+   the step's card beside its node. A kind has its colour, --kind, on its
+   node, its label and the edge of its card. */
+.wf-rail,
+.wf-add {
+  --node: 1.75rem;
+  --node-top: 0.55rem;
+  --rail-gap: 0.9rem;
+}
+
+.wf-rail {
+  margin: 0;
   padding: 0;
   list-style: none;
-  counter-reset: step;
 }
 
-.workflow-form .step {
+.wf-step,
+.wf-add {
+  position: relative;
   display: grid;
-  grid-template-columns: auto auto minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 0.5rem;
-  counter-increment: step;
+  grid-template-columns: var(--node) minmax(0, 1fr);
+  gap: 0 var(--rail-gap);
+}
 
-  /* The switch leads the row; the heading shows only while the step is
-     off, in place of its selects. */
-  & .switch {
-    order: -1;
+.wf-step {
+  --kind: var(--text-dim);
+  padding-bottom: 0.65rem;
+
+  &.kind-workflow {
+    --kind: var(--series-4);
   }
 
-  & .step-head {
-    display: none;
-    grid-column: span 3;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    font-family: var(--font);
-    font-size: var(--fs-data);
+  &.kind-prompt {
+    --kind: var(--signal);
   }
 
-  /* A step switched off stays in the chain, dimmed: a run skips it. */
-  &.off {
-    & > :is(.dd, select, [data-step-args]) {
-      display: none;
-    }
+  &.kind-summary {
+    --kind: var(--ok);
+  }
 
-    & .step-head {
-      display: block;
-    }
-
-    & > :not(.switch) {
-      opacity: 0.5;
-    }
+  /* The line from this node down to the next, or to Add step. */
+  &::before {
+    content: "";
+    position: absolute;
+    top: calc(var(--node-top) + var(--node));
+    bottom: calc(var(--node-top) * -1);
+    left: calc(var(--node) / 2 - 1px);
+    border-left: 2px solid var(--line-2);
   }
 }
 
-/* A prompt step: the prompt over two columns, then the folder it runs
-   in; off, its heading in their place. */
-.workflow-form .prompt-step {
-  align-items: start;
+.wf-node {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: var(--node);
+  height: var(--node);
+  margin-top: var(--node-top);
+  border: 2px solid var(--kind, var(--line-2));
+  border-radius: var(--radius-round);
+  background: var(--ink-1);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.wf-card {
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--kind);
+  border-radius: var(--radius);
+  background: var(--ink-2);
+  transition: border-color 0.12s, box-shadow 0.12s;
+
+  &:hover {
+    border-color: var(--line-2);
+    border-left-color: var(--kind);
+  }
+}
+
+/* The head: the grip, the toggle with the kind and the step in one
+   line, and the [...] menu. */
+.wf-card-head {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  min-height: calc(var(--node) + var(--node-top) * 2 - 2px);
+  padding: 0 0.35rem 0 0.2rem;
+}
+
+.wf-grip {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 1.4rem;
+  height: 1.9rem;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--text-faint);
+  cursor: grab;
+  touch-action: none;
+
+  & .ic {
+    width: 0.95rem;
+    height: 0.95rem;
+  }
+
+  &:hover,
+  &:focus-visible {
+    color: var(--text);
+    background: var(--ink-3);
+  }
+}
+
+.wf-toggle {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+  padding: 0.5rem 0.3rem;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  text-align: start;
+  cursor: pointer;
+
+  & .wf-chev {
+    flex: none;
+    width: 0.85rem;
+    height: 0.85rem;
+    margin-inline-start: auto;
+    color: var(--text-faint);
+    transition: transform 0.12s;
+  }
+
+  &[aria-expanded="true"] .wf-chev {
+    transform: rotate(90deg);
+  }
+
+  &:hover .wf-chev {
+    color: var(--text);
+  }
+}
+
+.wf-kind {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 6.6rem;
+  color: var(--kind);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  letter-spacing: var(--ls-label);
+  text-transform: uppercase;
+
+  & .ic {
+    width: 1rem;
+    height: 1rem;
+  }
+}
+
+.wf-line {
+  overflow: hidden;
+  min-width: 0;
+  font-family: var(--font);
+  font-size: var(--fs-data);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  &.unset {
+    color: var(--text-faint);
+    font-style: italic;
+  }
+}
+
+.wf-off {
+  display: none;
+  flex: none;
+}
+
+/* The fields, under the head while the card is open, in line with the
+   kind's label. */
+.wf-card-body {
+  display: none;
+  padding: 0.9rem 0.9rem 0.3rem 1.95rem;
+  border-top: 1px dashed var(--line-2);
 
   & textarea {
-    grid-column: span 2;
-    min-height: 3.6rem;
+    min-height: 7.5rem;
     font-family: var(--font);
     font-size: var(--fs-data);
+    line-height: 1.55;
   }
 
-  & .step-head .ic {
-    width: 0.9rem;
-    height: 0.9rem;
-    margin-inline-end: 0.3rem;
-    vertical-align: -0.1rem;
-  }
-
-  &.off > textarea {
-    display: none;
+  & .field-note {
+    margin: 0.35rem 0 0;
+    font-size: var(--fs-xs);
   }
 }
 
-/* The switch leads a part of the workflow form: switched off, the part
-   collapses to its heading. */
-.workflow-form .switch {
-  margin-inline-start: 0;
+.wf-step.open .wf-card-body {
+  display: block;
 }
 
-.workflow-form .switch-head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 0.3rem 0.6rem;
-  margin-bottom: 0.4rem;
+.wf-fields {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 0 0.9rem;
 
-  & .switch {
-    align-self: center;
+  & .wf-wide {
+    grid-column: 1 / -1;
   }
+}
+
+/* A summary's question and instruction, as Claude gets them. */
+.wf-builtin {
+  margin-bottom: 0.8rem;
 
   & .label {
-    display: inline;
+    display: block;
+    margin-bottom: 0.3rem;
+    color: var(--text-faint);
+    font-size: var(--fs-caption);
+    font-weight: 600;
+    letter-spacing: var(--ls-label);
+    text-transform: uppercase;
+  }
+
+  & blockquote {
     margin: 0;
+    padding: 0.6rem 0.8rem;
+    border-left: 2px solid var(--ok);
+    background: var(--ok-wash);
+    color: var(--text-dim);
+    font-size: var(--fs-sm);
+
+    & p {
+      margin: 0;
+    }
+
+    & .wf-question {
+      margin-bottom: 0.35rem;
+      color: var(--text);
+      font-weight: 500;
+    }
   }
 }
 
-.workflow-form .prompt-section {
-  margin: 0 0 1rem;
+.wf-error {
+  margin: 0 0 0.8rem;
+  color: var(--bad);
+  font-size: var(--fs-sm);
+}
 
-  &.off {
-    & .switch-body {
+/* A step that is off stays on the rail, dimmed, its node hollow: a run
+   skips it. */
+.wf-step.off {
+  & .wf-node {
+    border-style: dashed;
+    color: var(--text-faint);
+  }
+
+  & .wf-kind,
+  & .wf-line {
+    opacity: 0.5;
+  }
+
+  & .wf-off {
+    display: inline-block;
+  }
+}
+
+.wf-step.invalid .wf-card {
+  border-color: var(--bad);
+  border-left-color: var(--bad);
+}
+
+/* The card under the pointer while it moves. */
+.wf-rail.sorting {
+  cursor: grabbing;
+  user-select: none;
+}
+
+.wf-step.dragging {
+  & .wf-card {
+    border-color: var(--signal);
+    box-shadow: var(--shadow-pop);
+  }
+
+  & .wf-grip {
+    cursor: grabbing;
+  }
+}
+
+/* Add step, the node at the foot of the rail, and the kinds it offers. */
+.wf-add {
+  align-items: start;
+}
+
+.wf-node-add {
+  border: 2px dashed var(--line-2);
+  color: var(--text-faint);
+
+  & .ic {
+    width: 0.8rem;
+    height: 0.8rem;
+  }
+}
+
+.wf-add-body {
+  padding-top: calc(var(--node-top) - 0.2rem);
+
+  & .wf-empty {
+    margin: 0.2rem 0 0.6rem;
+    font-size: var(--fs-sm);
+  }
+}
+
+.wf-add-menu {
+  position: relative;
+  display: inline-block;
+
+  & > summary {
+    list-style: none;
+
+    &::-webkit-details-marker {
       display: none;
     }
+  }
+}
 
-    & .switch-head > :not(.switch) {
-      opacity: 0.6;
+.wf-add-list {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 0.3rem);
+  left: 0;
+  display: grid;
+  width: min(27rem, calc(100vw - 2rem));
+  padding: 0.3rem;
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius);
+  background: var(--ink-1);
+  box-shadow: var(--shadow-menu);
+
+  & button {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.7rem;
+    padding: 0.6rem 0.65rem;
+    border: 0;
+    border-radius: var(--radius);
+    background: transparent;
+    color: var(--text);
+    text-align: start;
+    cursor: pointer;
+
+    &:hover,
+    &:focus-visible {
+      background: var(--ink-3);
+    }
+
+    & .ic {
+      flex: none;
+      width: 1.05rem;
+      height: 1.05rem;
+      margin-top: 0.1rem;
+      color: var(--text-dim);
+    }
+
+    &[data-step-add="prompt"] .ic {
+      color: var(--signal);
+    }
+
+    &[data-step-add="summary"] .ic {
+      color: var(--ok);
+    }
+
+    & b {
+      display: block;
+      font-size: var(--fs-md);
+      font-weight: 600;
+    }
+
+    & small {
+      display: block;
+      color: var(--text-dim);
+      font-size: var(--fs-xs);
     }
   }
 }
 
-/* Summarize, under the prompt, fills it with the short summary. */
-.workflow-form .field-tools {
-  display: flex;
-  gap: 0.4rem;
-  margin-top: 0.3rem;
-}
-
-/* The line under the prompt on what else Claude gets. */
-.workflow-form .field-note {
-  margin: 0.3rem 0 0;
-  font-size: var(--fs-data);
-}
-
-.workflow-form .step::before {
-  content: counter(step);
-  min-width: 1.4rem;
-  color: var(--text-faint);
-  font-variant-numeric: tabular-nums;
-  text-align: end;
-}
-
-.workflow-form .step-tools {
-  display: flex;
-  gap: 0.2rem;
+/* What a move or a change did, for a screen reader alone. */
+.wf-live {
+  position: absolute;
+  overflow: hidden;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 @media (max-width: 640px) {
-  .workflow-form .step {
-    grid-template-columns: auto auto minmax(0, 1fr);
+  .wf-rail,
+  .wf-add {
+    --node: 1.45rem;
+    --node-top: 0.6rem;
+    --rail-gap: 0.55rem;
   }
 
-  .workflow-form .step [data-step-job],
-  .workflow-form .step .dd:has([data-step-job]),
-  .workflow-form .step [data-step-args],
-  .workflow-form .prompt-step [data-step-place],
-  .workflow-form .prompt-step .dd:has([data-step-place]),
-  .workflow-form .step-tools {
-    grid-column: 3;
+  .wf-steps-head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
   }
 
-  .workflow-form .prompt-step textarea {
-    grid-column: 3;
+  .wf-toggle {
+    flex-wrap: wrap;
+    gap: 0.15rem 0.6rem;
+  }
+
+  .wf-kind {
+    min-width: 0;
+  }
+
+  .wf-line {
+    flex-basis: 100%;
+    order: 3;
+  }
+
+  .wf-card-body {
+    padding: 0.8rem 0.7rem 0.2rem;
+  }
+
+  .wf-fields {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 

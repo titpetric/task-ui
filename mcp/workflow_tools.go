@@ -20,21 +20,23 @@ import (
 func workflowTools() []Tool {
 	str := func(text string) Property { return Property{Type: "string", Description: text} }
 	step := Schema{Type: "object", Properties: map[string]Property{
-		"folder":   str("The folder of a job step, or the folder a prompt step asks in, _ for the root."),
+		"kind": {Type: "string", Enum: []string{model.StepJob, model.StepWorkflow, model.StepPrompt, model.StepSummary}, Description: "What the step does: job runs a job of a folder, workflow runs another workflow, " +
+			"prompt asks Claude its prompt, summary asks Claude for task-ui's summary of the steps before it, with no prompt. Left out, prompt with a prompt, workflow with a workflow, else job."},
+		"folder":   str("The folder of a job step, or the folder a prompt or summary step asks in, _ for the root."),
 		"job":      str("The job of a job step, as list_jobs names it."),
-		"workflow": str("The ID or name of a workflow the step runs in place of a job."),
+		"workflow": str("The ID or name of a workflow a workflow step runs."),
 		"prompt":   str("What a prompt step asks Claude, with the output of the steps before it; its answer is its output."),
-		"dir":      str("A directory inside the folder a prompt step asks in."),
+		"dir":      str("A directory inside the folder a prompt or summary step asks in."),
 		"args":     {Type: "array", Description: "Args for a job that takes them.", Items: &Schema{Type: "string"}},
 		"enabled":  {Type: "boolean", Description: "False keeps the step and a run skips it; true unless given."},
 	}}
 	fields := func() map[string]Property {
 		return map[string]Property{
-			"name":          str("The workflow's name."),
-			"steps":         {Type: "array", Description: "The steps in the order they run: each a job, a workflow or a prompt.", Items: &step},
-			"prompt":        str("The final prompt, what Claude gets once the steps end, with their output; empty for none."),
-			"prompt_folder": str("Where the final prompt runs: a folder or folder/dir; empty for the root."),
-			"sidebar":       {Type: "boolean", Description: "List the workflow in the sidebar; true unless given."},
+			"name":        str("The workflow's name."),
+			"description": str("What the workflow is for, a line or two."),
+			"steps": {Type: "array", Description: "The steps in the order they run, each a job, a workflow, a prompt or a summary. " +
+				"The last prompt or summary step's answer is the run's answer.", Items: &step},
+			"sidebar": {Type: "boolean", Description: "List the workflow in the sidebar; true unless given."},
 		}
 	}
 	update := fields()
@@ -42,14 +44,14 @@ func workflowTools() []Tool {
 	return []Tool{
 		{
 			Name:        "get_workflow",
-			Description: "Show a workflow by ID or name: its steps, each a job, a workflow or a prompt, its final prompt and where it runs, and its last run.",
+			Description: "Show a workflow by ID or name: its steps in order, each a job, a workflow, a prompt or a summary, and its last run.",
 			InputSchema: object(map[string]Property{"workflow": str("The workflow's ID or name.")}, "workflow"),
 			call:        getWorkflow,
 		},
 		{
 			Name: "create_workflow",
-			Description: "Make a workflow as you: a name and its steps in order, each a job of a folder, another workflow or a prompt to Claude, " +
-				"and a final prompt that reads every step. Prompts take prompt/edit. Test it with run_workflow.",
+			Description: "Make a workflow as you: a name and its steps in order, each a job of a folder, another workflow, a prompt to Claude " +
+				"or a summary of the steps before it. Prompts and summaries take prompt/edit. Test it with run_workflow.",
 			InputSchema: object(fields(), "name"),
 			call:        createWorkflow,
 		},
@@ -65,6 +67,7 @@ func workflowTools() []Tool {
 
 // stepArgs is a step as a tool takes it.
 type stepArgs struct {
+	Kind     string   `json:"kind"`
 	Folder   string   `json:"folder"`
 	Job      string   `json:"job"`
 	Workflow string   `json:"workflow"`
@@ -77,12 +80,11 @@ type stepArgs struct {
 // workflowFields are the fields create_workflow and update_workflow
 // take; a nil one keeps the workflow's own on an update.
 type workflowFields struct {
-	Workflow     string      `json:"workflow"`
-	Name         *string     `json:"name"`
-	Steps        *[]stepArgs `json:"steps"`
-	Prompt       *string     `json:"prompt"`
-	PromptFolder *string     `json:"prompt_folder"`
-	Sidebar      *bool       `json:"sidebar"`
+	Workflow    string      `json:"workflow"`
+	Name        *string     `json:"name"`
+	Description *string     `json:"description"`
+	Steps       *[]stepArgs `json:"steps"`
+	Sidebar     *bool       `json:"sidebar"`
 }
 
 func getWorkflow(ctx context.Context, c *client, args json.RawMessage) (string, error) {
@@ -118,7 +120,7 @@ func updateWorkflow(ctx context.Context, c *client, args json.RawMessage) (strin
 	if err != nil {
 		return "", err
 	}
-	req := api.WorkflowRequest{Name: wf.Name, Prompt: wf.Prompt, PromptFolder: wf.PromptFolder, Sidebar: in.Sidebar}
+	req := api.WorkflowRequest{Name: wf.Name, Description: wf.Description, Sidebar: in.Sidebar}
 	if in.Name != nil {
 		req.Name = *in.Name
 	}
@@ -132,7 +134,7 @@ func updateWorkflow(ctx context.Context, c *client, args json.RawMessage) (strin
 // keptStep is a workflow's step as a request carries it unchanged.
 func keptStep(step model.WorkflowStep) api.StepRequest {
 	enabled := !step.Disabled
-	out := api.StepRequest{Enabled: &enabled}
+	out := api.StepRequest{Kind: step.StepKind(), Enabled: &enabled}
 	switch {
 	case step.IsPrompt():
 		out.Prompt, out.Folder, out.Dir = step.Prompt, step.Folder, step.Dir
@@ -147,16 +149,13 @@ func keptStep(step model.WorkflowStep) api.StepRequest {
 // saveWorkflow fills the request with the fields given, the steps'
 // workflows by ID, sends it and shows the workflow saved.
 func saveWorkflow(ctx context.Context, c *client, method, path string, in workflowFields, req api.WorkflowRequest) (string, error) {
-	if in.Prompt != nil {
-		req.Prompt = *in.Prompt
-	}
-	if in.PromptFolder != nil {
-		req.PromptFolder = *in.PromptFolder
+	if in.Description != nil {
+		req.Description = *in.Description
 	}
 	if in.Steps != nil {
 		req.Steps = make([]api.StepRequest, 0, len(*in.Steps))
 		for i, step := range *in.Steps {
-			out := api.StepRequest{Folder: step.Folder, Job: step.Job, Prompt: step.Prompt, Dir: step.Dir, Args: step.Args, Enabled: step.Enabled}
+			out := api.StepRequest{Kind: step.Kind, Folder: step.Folder, Job: step.Job, Prompt: step.Prompt, Dir: step.Dir, Args: step.Args, Enabled: step.Enabled}
 			if step.Workflow != "" {
 				ref, _, err := findWorkflow(ctx, c, step.Workflow)
 				if err != nil {
@@ -182,8 +181,8 @@ func saveWorkflow(ctx context.Context, c *client, method, path string, in workfl
 	return showWorkflow(view, names), nil
 }
 
-// showWorkflow describes a workflow: its steps in order, its final
-// prompt and its last run.
+// showWorkflow describes a workflow: its description, its steps in
+// order and its last run.
 func showWorkflow(wf api.WorkflowView, names map[string]string) string {
 	var b strings.Builder
 	fmt.Fprintf(&b, "workflow %s (id %s) by %s", wf.Name, wf.ID, wf.UserName)
@@ -197,12 +196,17 @@ func showWorkflow(wf api.WorkflowView, names map[string]string) string {
 		b.WriteString(" [you may not change it]")
 	}
 	b.WriteString("\n")
+	if wf.Description != "" {
+		b.WriteString(wf.Description + "\n")
+	}
 	if len(wf.Steps) == 0 {
 		b.WriteString("no steps\n")
 	}
 	for i, step := range wf.Steps {
 		fmt.Fprintf(&b, "  %d. ", i+1)
 		switch {
+		case step.IsSummary():
+			fmt.Fprintf(&b, "summary in %s", step.Place())
 		case step.IsPrompt():
 			fmt.Fprintf(&b, "prompt in %s: %s", step.Place(), step.Prompt)
 		case step.IsWorkflow():
@@ -217,9 +221,6 @@ func showWorkflow(wf api.WorkflowView, names map[string]string) string {
 			b.WriteString(" [off]")
 		}
 		b.WriteString("\n")
-	}
-	if wf.HasPrompt() {
-		fmt.Fprintf(&b, "final prompt, in %s: %s\n", wf.PromptPlace(), wf.Prompt)
 	}
 	if wf.LastRun != nil {
 		fmt.Fprintf(&b, "last run %s: %s\n", wf.LastRun.ID, flowOutcome(wf.LastRun))

@@ -50,48 +50,46 @@ func TestSummaryChain(t *testing.T) {
 }
 
 // A workflow run: its steps' runs in order, no run for a skipped step
-// or one that runs another workflow, and its prompt's run last.
+// or one that runs another workflow, and its summary's run last.
 func TestWorkflowChain(t *testing.T) {
 	t.Parallel()
 	running := model.WorkflowRun{ID: "w1", State: model.StateRunning}
 	steps := []model.WorkflowRunStep{
 		{Position: 0, RunID: "s1", State: model.StateOK},
-		{Position: 1, WorkflowRef: "other", WorkflowRunRef: "w2", State: model.StateOK},
+		{Position: 1, Kind: model.StepWorkflow, WorkflowRef: "other", WorkflowRunRef: "w2", State: model.StateOK},
 		{Position: 2, RunID: "s2", State: model.StateRunning},
 		{Position: 3, State: model.StepPending},
+		{Position: 4, Kind: model.StepSummary, Folder: "_", Job: model.PromptJob, State: model.StepPending},
 	}
-	mid := api.WorkflowChain("s2", running, steps, true, nil)
+	mid := api.WorkflowChain("s2", running, steps, nil)
 	assert.Equal(t, api.RunChain{ID: "w1", Kind: api.ChainWorkflow, Position: 2, Total: 4, Prev: "s1"}, *mid)
-	first := api.WorkflowChain("s1", running, steps, true, nil)
+	first := api.WorkflowChain("s1", running, steps, nil)
 	assert.Equal(t, "s2", first.Next)
 
 	steps[2].State, steps[3].RunID, steps[3].State = model.StateOK, "s3", model.StateOK
-	last := api.WorkflowChain("s3", running, steps, true, nil)
+	last := api.WorkflowChain("s3", running, steps, nil)
 	assert.Equal(t, api.RunChain{ID: "w1", Kind: api.ChainWorkflow, Position: 3, Total: 4, Prev: "s2"}, *last)
-	assert.False(t, last.Complete, "the prompt is to come")
+	assert.False(t, last.Complete, "the summary is to come")
 
+	// The summary in progress stands in for Claude's run, then names it.
+	steps[4].State = model.StateRunning
+	asking := api.WorkflowChain("p1", running, steps, []string{"p1"})
+	assert.Equal(t, api.RunChain{ID: "w1", Kind: api.ChainWorkflow, Position: 4, Total: 4, Prev: "s3"}, *asking)
+	assert.Equal(t, "p1", api.WorkflowChain("s3", running, steps, []string{"p1"}).Next)
 	done := running
 	done.State = model.StateOK
-	prompt := api.WorkflowChain("p1", done, steps, true, []string{"p1"})
-	assert.Equal(t, api.RunChain{ID: "w1", Kind: api.ChainWorkflow, Position: 4, Total: 4, Prev: "s3", Complete: true}, *prompt)
+	steps[4].State, steps[4].RunID = model.StateOK, "p1"
+	summary := api.WorkflowChain("p1", done, steps, nil)
+	assert.Equal(t, api.RunChain{ID: "w1", Kind: api.ChainWorkflow, Position: 4, Total: 4, Prev: "s3", Complete: true}, *summary)
 
 	// A step that failed skips the rest: the chain ends with it.
 	steps[3] = model.WorkflowRunStep{Position: 3, State: model.StepSkipped}
+	steps[4] = model.WorkflowRunStep{Position: 4, Kind: model.StepSummary, State: model.StepSkipped}
 	failed := running
 	failed.State = model.StateFailed
-	end := api.WorkflowChain("s2", failed, steps, false, nil)
+	end := api.WorkflowChain("s2", failed, steps, nil)
 	assert.Equal(t, api.RunChain{ID: "w1", Kind: api.ChainWorkflow, Position: 2, Total: 2, Prev: "s1", Complete: true}, *end)
-	assert.Nil(t, api.WorkflowChain("x", running, steps, false, nil))
-
-	// A prompt step names its run once it ends; Claude's run in progress
-	// stands in its place until then, and the workflow's prompt follows.
-	asking := []model.WorkflowRunStep{
-		{Position: 0, RunID: "s1", State: model.StateOK},
-		{Position: 1, Prompt: "what changed", State: model.StateRunning},
-	}
-	ask := api.WorkflowChain("c1", running, asking, true, []string{"c1"})
-	assert.Equal(t, api.RunChain{ID: "w1", Kind: api.ChainWorkflow, Position: 2, Total: 3, Prev: "s1"}, *ask)
-	assert.Equal(t, "c1", api.WorkflowChain("s1", running, asking, true, []string{"c1"}).Next)
+	assert.Nil(t, api.WorkflowChain("x", running, steps, nil))
 }
 
 // A batch of host runs, then their summary with Run and summarize.

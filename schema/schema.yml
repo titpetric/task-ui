@@ -1271,6 +1271,10 @@
       type: timestamp
       comment: Updated At
       datatype: datetime
+    - name: description
+      type: text
+      comment: Description
+      datatype: varchar
     - name: prompt
       type: text
       comment: Prompt
@@ -1438,6 +1442,10 @@
       type: text
       comment: Workflow Run Ref
       datatype: char(26)
+    - name: kind
+      type: text
+      comment: Kind
+      datatype: varchar
   indexes:
     - name: sqlite_autoindex_workflow_run_step_1
       columns:
@@ -1498,6 +1506,10 @@
     - name: args
       type: text
       comment: Args
+      datatype: varchar
+    - name: kind
+      type: text
+      comment: Kind
       datatype: varchar
   indexes:
     - name: sqlite_autoindex_workflow_step_1

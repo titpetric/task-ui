@@ -229,9 +229,9 @@ with `-p`, `/loop` with `list_notes` polls in its place:
 | `list_jobs`          | `folder`                                         | The folders and their jobs, `default` first, whether you may run each, how it last went |
 | `list_workflows`     |                                                  | The workflows, their steps and their last run |
 | `run_job`            | `folder`, `job`, `force`, `reason`, `wait`, `lines` | Starts a job; with `wait`, up to 900 seconds, returns how it ended and the end of its output |
-| `run_workflow`       | `workflow`, `input`, `wait`                      | Starts a workflow by ID or name, `input` going to its prompt; with `wait`, returns how each step went and the run's answer, Claude's reply to its last prompt |
-| `get_workflow`       | `workflow`                                       | A workflow by ID or name: its steps, each a job, a workflow or a prompt, its final prompt and where it runs, and its last run |
-| `create_workflow`    | `name`, `steps`, `prompt`, `prompt_folder`, `sidebar` | Makes a workflow as you: `steps` in order, each `{folder, job, args}`, `{workflow}` or `{prompt, folder, dir}`, and `enabled`; takes `workflow/edit`, and `prompt/edit` for a prompt |
+| `run_workflow`       | `workflow`, `input`, `wait`                      | Starts a workflow by ID or name, `input` going to its prompt and summary steps; with `wait`, returns how each step went and the run's answer, Claude's reply to its last prompt or summary |
+| `get_workflow`       | `workflow`                                       | A workflow by ID or name: its description, its steps in order, each a job, a workflow, a prompt or a summary, and its last run |
+| `create_workflow`    | `name`, `description`, `steps`, `sidebar`        | Makes a workflow as you: `steps` in order, each with its `kind`, `{kind: "job", folder, job, args}`, `{kind: "workflow", workflow}`, `{kind: "prompt", prompt, folder, dir}` or `{kind: "summary", folder, dir}`, and `enabled`; takes `workflow/edit`, and `prompt/edit` for a prompt or a summary |
 | `update_workflow`    | `workflow`, and the fields of `create_workflow`  | Changes a workflow you own, or any as an admin: a field left out stays, `steps` given replace them all; there is no delete |
 | `list_runs`          | `folder`, `job`, `state`, `limit`                | The latest runs, newest first, a directory's run as `folder/dir/job` |
 | `get_run`            | `id`, `lines`                                    | A run and the end of its output, as the terminal showed it |

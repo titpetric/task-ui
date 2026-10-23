@@ -6,7 +6,7 @@
      about the run, with its output, and lists the threads about it; one
      who only reads prompts sees those threads without the box, a running
      run's box hidden until a thread about it comes. A workflow run's box
-     lists the thread of the workflow's prompt alone. Open on a
+     lists the threads of its prompt and summary steps alone. Open on a
      workspace's page, a run's page and where a thread exists, folded
      elsewhere. */}}
 {{- define "promptbox" }}
@@ -15,7 +15,7 @@
 	{{- if .Area }}
 	<summary><h3 class="section-title"><svg class="ic chev"><use href="#i-chev"/></svg>Prompt <small>Claude Code builds or changes a workflow with the task tools, runs it and answers with its link</small></h3></summary>
 	{{- else if .WorkflowRun }}
-	<summary><h3 class="section-title"><svg class="ic chev"><use href="#i-chev"/></svg>Prompt <small>the workflow's prompt, run in {{ .Where }} after the steps, with their output</small></h3></summary>
+	<summary><h3 class="section-title"><svg class="ic chev"><use href="#i-chev"/></svg>Prompts <small>the run's prompt and summary steps, each with the output of the steps before it</small></h3></summary>
 	{{- else if .Run }}
 	<summary><h3 class="section-title"><svg class="ic chev"><use href="#i-chev"/></svg>Prompt <small>ask Claude Code about this run and its output, in {{ .Where }}</small></h3></summary>
 	{{- else }}

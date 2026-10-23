@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"slices"
 	"strings"
 
 	"github.com/titpetric/task-ui/access"
@@ -13,17 +14,16 @@ import (
 	"github.com/titpetric/task-ui/workflow"
 )
 
-// WorkflowRequest creates or changes a workflow: a name and its jobs, in
-// the order they run, and a prompt to ask Claude once they end. It needs
-// an enabled step or a prompt.
+// WorkflowRequest creates or changes a workflow: a name, a description
+// and its steps, in the order they run. It needs an enabled step.
 type WorkflowRequest struct {
-	Name  string        `json:"name"`
-	Steps []StepRequest `json:"steps"`
-	// Prompt is what Claude gets once the workflow's steps end, with
-	// their output, as the user who runs it; it takes prompt/edit.
-	Prompt string `json:"prompt,omitempty"`
-	// PromptFolder is where the prompt runs: a folder, or folder/dir,
-	// the user sees; empty runs it in the root, _.
+	Name        string        `json:"name"`
+	Description string        `json:"description,omitempty"`
+	Steps       []StepRequest `json:"steps"`
+	// Prompt and PromptFolder are the final prompt of a client that
+	// sends one: the workflow takes it as its last prompt step, asked in
+	// PromptFolder, a folder or folder/dir, the root when empty.
+	Prompt       string `json:"prompt,omitempty"`
 	PromptFolder string `json:"prompt_folder,omitempty"`
 	// Sidebar lists the workflow in the sidebar, the default; false
 	// keeps it out, for one that is a step of others. Left out on a
@@ -34,7 +34,11 @@ type WorkflowRequest struct {
 // WorkflowView is a workflow as the API shows it.
 type WorkflowView struct {
 	model.Workflow
-	Steps []model.WorkflowStep `json:"steps"`
+	// Prompt and PromptFolder hide the workflow's columns of the same
+	// name, which no workflow uses: its prompts are steps.
+	Prompt       string               `json:"prompt,omitempty"`
+	PromptFolder string               `json:"prompt_folder,omitempty"`
+	Steps        []model.WorkflowStep `json:"steps"`
 	// Running is the ID of the run in progress, if any.
 	Running string `json:"running,omitempty"`
 	// LastRun is the newest run.
@@ -117,89 +121,89 @@ func (h *Handlers) workflowView(r *http.Request, wf model.Workflow, steps []mode
 }
 
 // checkSteps turns the requested steps into rows, each a job the user
-// may see, or a workflow whose jobs they all see.
+// may see, a workflow whose jobs they all see, or a prompt or summary
+// in a place they see, with a final prompt as the last prompt step.
 func (h *Handlers) checkSteps(r *http.Request, req WorkflowRequest) ([]model.WorkflowStep, error) {
-	steps := make([]model.WorkflowStep, 0, len(req.Steps))
-	for i, step := range req.Steps {
-		disabled := step.Enabled != nil && !*step.Enabled
-		if strings.TrimSpace(step.Prompt) != "" {
-			row, err := h.promptStep(r, step)
-			if err != nil {
-				return nil, fmt.Errorf("step %d: %w", i+1, err)
-			}
-			row.Disabled = disabled
-			steps = append(steps, row)
-			continue
+	requested := req.Steps
+	if prompt := strings.TrimSpace(req.Prompt); prompt != "" {
+		requested = append(slices.Clip(requested), StepRequest{Kind: model.StepPrompt, Folder: req.PromptFolder, Prompt: prompt})
+	}
+	steps := make([]model.WorkflowStep, 0, len(requested))
+	for i, step := range requested {
+		row, err := h.checkStep(r, step)
+		if err != nil {
+			return nil, fmt.Errorf("step %d: %w", i+1, err)
 		}
-		if step.Workflow != "" {
-			wf, err := h.opts.Workflows.Get(r.Context(), step.Workflow)
-			var inner []model.WorkflowStep
-			if err == nil {
-				inner, err = h.opts.Workflows.Steps(r.Context(), wf.ID)
-			}
-			if err != nil || !h.visibleSteps(r, inner) {
-				return nil, fmt.Errorf("step %d: no workflow %s", i+1, step.Workflow)
-			}
-			steps = append(steps, model.WorkflowStep{WorkflowRef: wf.ID, Disabled: disabled})
-			continue
-		}
-		if step.Job == model.HostBare {
-			return nil, fmt.Errorf("step %d, %s / %s: %w", i+1, step.Folder, step.Job, folder.ErrHostBare)
-		}
-		f, job, problem := h.target(r, step.Folder, step.Job)
-		if problem != "" {
-			return nil, fmt.Errorf("step %d, %s / %s: %s", i+1, step.Folder, step.Job, problem)
-		}
-		if job.IsShell() {
-			return nil, fmt.Errorf("step %d, %s / %s: %w", i+1, step.Folder, step.Job, folder.ErrShellUnattended)
-		}
-		if problem := jobArgs(job, step.Args); problem != "" {
-			return nil, fmt.Errorf("step %d, %s / %s: %s", i+1, step.Folder, step.Job, problem)
-		}
-		steps = append(steps, model.WorkflowStep{Folder: f.ID, Job: job.ID, Disabled: disabled, Args: model.EncodeList(step.Args)})
+		row.Disabled = step.Enabled != nil && !*step.Enabled
+		steps = append(steps, row)
 	}
 	return steps, nil
 }
 
-// checkWorkflow reads a request into the workflow and its steps: the
-// steps checkSteps takes, a prompt step's taking prompt/edit, and the
-// prompt, which takes prompt/edit and a place the user sees. It answers the error and returns false for a
-// request it refuses, and for one with no enabled step and no prompt.
-func (h *Handlers) checkWorkflow(w http.ResponseWriter, r *http.Request, req WorkflowRequest, wf *model.Workflow) ([]model.WorkflowStep, bool) {
-	for _, step := range req.Steps {
-		if strings.TrimSpace(step.Prompt) != "" && !h.can(r, "prompt/edit") {
-			fail(w, http.StatusForbidden, "you don't have permission to prompt Claude")
-			return nil, false
+// checkStep turns one requested step into its row, by its kind.
+func (h *Handlers) checkStep(r *http.Request, step StepRequest) (model.WorkflowStep, error) {
+	switch step.StepKind() {
+	case model.StepPrompt, model.StepSummary:
+		return h.promptStep(r, step)
+	case model.StepWorkflow:
+		wf, err := h.opts.Workflows.Get(r.Context(), step.Workflow)
+		var inner []model.WorkflowStep
+		if err == nil {
+			inner, err = h.opts.Workflows.Steps(r.Context(), wf.ID)
 		}
+		if err != nil || !h.visibleSteps(r, inner) {
+			return model.WorkflowStep{}, fmt.Errorf("no workflow %s", step.Workflow)
+		}
+		return model.WorkflowStep{Kind: model.StepWorkflow, WorkflowRef: wf.ID}, nil
+	case model.StepJob:
+		return h.jobStep(r, step)
+	}
+	return model.WorkflowStep{}, fmt.Errorf("no step kind %q: job, workflow, prompt or summary", step.Kind)
+}
+
+// jobStep turns a requested job step into its row: a job of a folder
+// the user sees, with the args it takes; not a shell, nor the bare @host.
+func (h *Handlers) jobStep(r *http.Request, step StepRequest) (model.WorkflowStep, error) {
+	if step.Folder == "" || step.Job == "" {
+		return model.WorkflowStep{}, errors.New("a job step needs a folder and a job")
+	}
+	if step.Job == model.HostBare {
+		return model.WorkflowStep{}, fmt.Errorf("%s / %s: %w", step.Folder, step.Job, folder.ErrHostBare)
+	}
+	f, job, problem := h.target(r, step.Folder, step.Job)
+	if problem != "" {
+		return model.WorkflowStep{}, fmt.Errorf("%s / %s: %s", step.Folder, step.Job, problem)
+	}
+	if job.IsShell() {
+		return model.WorkflowStep{}, fmt.Errorf("%s / %s: %w", step.Folder, step.Job, folder.ErrShellUnattended)
+	}
+	if problem := jobArgs(job, step.Args); problem != "" {
+		return model.WorkflowStep{}, fmt.Errorf("%s / %s: %s", step.Folder, step.Job, problem)
+	}
+	return model.WorkflowStep{Kind: model.StepJob, Folder: f.ID, Job: job.ID, Args: model.EncodeList(step.Args)}, nil
+}
+
+// checkWorkflow reads a request into the workflow and its steps, those
+// checkSteps takes; a prompt or summary step takes prompt/edit. It
+// answers the error and returns false for a request it refuses, and for
+// one with no enabled step.
+func (h *Handlers) checkWorkflow(w http.ResponseWriter, r *http.Request, req WorkflowRequest, wf *model.Workflow) ([]model.WorkflowStep, bool) {
+	asks := strings.TrimSpace(req.Prompt) != ""
+	for _, step := range req.Steps {
+		asks = asks || step.StepKind() == model.StepPrompt || step.StepKind() == model.StepSummary
+	}
+	if asks && !h.can(r, "prompt/edit") {
+		fail(w, http.StatusForbidden, "you don't have permission to prompt Claude")
+		return nil, false
 	}
 	steps, err := h.checkSteps(r, req)
 	if err != nil {
 		fail(w, http.StatusBadRequest, err.Error())
 		return nil, false
 	}
-	wf.Name = req.Name
-	wf.Prompt, wf.PromptFolder = strings.TrimSpace(req.Prompt), strings.Trim(req.PromptFolder, "/")
-	if wf.PromptFolder == model.Default {
-		wf.PromptFolder = ""
-	}
+	wf.Name, wf.Description = strings.TrimSpace(req.Name), strings.TrimSpace(req.Description)
 	if !wf.Runs(steps) {
-		fail(w, http.StatusBadRequest, "a workflow needs an enabled step or a prompt")
-		return nil, false
-	}
-	if !wf.HasPrompt() {
-		wf.PromptFolder = ""
-		return steps, true
-	}
-	if !h.can(r, "prompt/edit") {
-		fail(w, http.StatusForbidden, "you don't have permission to prompt Claude")
-		return nil, false
-	}
-	if h.opts.Board == nil {
-		fail(w, http.StatusBadRequest, "prompts aren't available on this instance")
-		return nil, false
-	}
-	if err := h.opts.Board.PromptPlace(r.Context(), access.UserFrom(r.Context()), wf.PromptPlace()); err != nil {
-		fail(w, http.StatusBadRequest, "can't run the prompt there: "+err.Error())
+		fail(w, http.StatusBadRequest, "a workflow needs an enabled step")
 		return nil, false
 	}
 	return steps, true
@@ -338,9 +342,9 @@ func (h *Handlers) deleteWorkflow(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-// startWorkflow runs a workflow, when the user may run every step, and
-// ask its prompt, with prompt/edit; an optional body's input goes to the
-// prompt. A workflow already running answers 409 with its run.
+// startWorkflow runs a workflow, when the user may run every step, its
+// prompts with prompt/edit; an optional body's input goes to the
+// prompts. A workflow already running answers 409 with its run.
 func (h *Handlers) startWorkflow(w http.ResponseWriter, r *http.Request) {
 	wf, steps, err := h.workflowOf(r)
 	if err != nil {
@@ -354,10 +358,6 @@ func (h *Handlers) startWorkflow(w http.ResponseWriter, r *http.Request) {
 	}
 	if step := h.mayRun(r, steps); step != "" {
 		fail(w, http.StatusForbidden, "you don't have permission to run "+step)
-		return
-	}
-	if wf.HasPrompt() && !h.can(r, "prompt/edit") {
-		fail(w, http.StatusForbidden, "the workflow ends with a prompt, and you don't have permission to prompt Claude")
 		return
 	}
 	run, err := h.opts.Flows.Start(r.Context(), wf, access.UserFrom(r.Context()), req.Input)

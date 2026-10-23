@@ -13,9 +13,10 @@ import (
 	"github.com/titpetric/task-ui/model"
 )
 
-// A workflow takes a prompt and where it runs, and steps that are off;
-// one with no enabled step and no prompt answers 400, a prompt takes
-// prompt/edit and a place the user sees.
+// A workflow takes steps of every kind and steps that are off; one with
+// no enabled step answers 400, a prompt or summary takes prompt/edit
+// and a place the user sees. A final prompt of a request is its last
+// prompt step, in prompt_folder, and the workflow shows no prompt.
 func TestWorkflow_PromptAndToggles(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
@@ -23,40 +24,60 @@ func TestWorkflow_PromptAndToggles(t *testing.T) {
 
 	refused := f.call(t, asAdmin, http.MethodPost, "/workflows", api.WorkflowRequest{Name: "idle", Steps: []api.StepRequest{{Folder: "infra", Job: "plan", Enabled: &off}}})
 	assert.Equal(t, http.StatusBadRequest, refused.Status, string(refused.Raw))
-	assert.Contains(t, refused.str("error"), "an enabled step or a prompt")
+	assert.Contains(t, refused.str("error"), "a workflow needs an enabled step")
 	empty := f.call(t, asAdmin, http.MethodPost, "/workflows", api.WorkflowRequest{Name: "idle"})
 	assert.Equal(t, http.StatusBadRequest, empty.Status)
 
 	ops := f.call(t, asOps, http.MethodPost, "/workflows", api.WorkflowRequest{Name: "asks", Prompt: "say ok"})
 	assert.Equal(t, http.StatusForbidden, ops.Status, string(ops.Raw))
+	opsSummary := f.call(t, asOps, http.MethodPost, "/workflows", api.WorkflowRequest{Name: "asks", Steps: []api.StepRequest{{Kind: model.StepSummary}}})
+	assert.Equal(t, http.StatusForbidden, opsSummary.Status, string(opsSummary.Raw))
 	gone := f.call(t, asAdmin, http.MethodPost, "/workflows", api.WorkflowRequest{Name: "asks", Prompt: "say ok", PromptFolder: "nowhere"})
 	assert.Equal(t, http.StatusBadRequest, gone.Status, string(gone.Raw))
 
 	made := f.call(t, asAdmin, http.MethodPost, "/workflows", api.WorkflowRequest{
-		Name: "summed", Prompt: " summarize, change nothing ", PromptFolder: "infra",
+		Name: "summed", Description: " the plan, summed ", Prompt: " summarize, change nothing ", PromptFolder: "infra",
 		Steps: []api.StepRequest{{Folder: "infra", Job: "plan"}, {Folder: "infra", Job: "fail", Enabled: &off}},
 	})
 	assert.Equal(t, http.StatusCreated, made.Status, string(made.Raw))
-	assert.Equal(t, "summarize, change nothing", made.str("prompt"))
-	assert.Equal(t, "infra", made.str("prompt_folder"))
+	assert.Equal(t, "", made.str("prompt"))
+	assert.Equal(t, "", made.str("prompt_folder"))
+	assert.Equal(t, "the plan, summed", made.str("description"))
 	steps := made.list("steps")
+	assert.Len(t, steps, 3)
 	assert.Equal(t, false, steps[0].(map[string]any)["disabled"])
 	assert.Equal(t, true, steps[1].(map[string]any)["disabled"])
+	last := steps[2].(map[string]any)
+	assert.Equal(t, model.StepPrompt, last["kind"])
+	assert.Equal(t, "summarize, change nothing", last["prompt"])
+	assert.Equal(t, "infra", last["folder"])
 
-	// The root is the empty place; a workflow without a prompt keeps none.
+	// A summary step asks in the root without a folder, and takes no
+	// prompt; a prompt step needs one.
 	id := made.str("id")
-	root := f.call(t, asAdmin, http.MethodPut, "/workflows/"+id, api.WorkflowRequest{Name: "summed", Prompt: "say ok", PromptFolder: "_", Steps: chain("infra", "plan")})
-	assert.Equal(t, http.StatusOK, root.Status, string(root.Raw))
-	assert.Equal(t, "", root.str("prompt_folder"))
-	plain := f.call(t, asAdmin, http.MethodPut, "/workflows/"+id, api.WorkflowRequest{Name: "summed", PromptFolder: "infra", Steps: chain("infra", "plan")})
-	assert.Equal(t, "", plain.str("prompt"))
-	assert.Equal(t, "", plain.str("prompt_folder"))
+	summed := f.call(t, asAdmin, http.MethodPut, "/workflows/"+id, api.WorkflowRequest{Name: "summed", Steps: append(chain("infra", "plan"), api.StepRequest{Kind: model.StepSummary})})
+	assert.Equal(t, http.StatusOK, summed.Status, string(summed.Raw))
+	summary := summed.list("steps")[1].(map[string]any)
+	assert.Equal(t, model.StepSummary, summary["kind"])
+	assert.Equal(t, model.Default, summary["folder"])
+	assert.Equal(t, model.PromptJob, summary["job"])
+	for _, bad := range []api.StepRequest{
+		{Kind: model.StepSummary, Prompt: "say ok"},
+		{Kind: model.StepPrompt},
+		{Kind: model.StepJob, Folder: "infra"},
+		{Kind: "other", Folder: "infra", Job: "plan"},
+		{Kind: model.StepPrompt, Prompt: "say ok", Job: "plan"},
+	} {
+		res := f.call(t, asAdmin, http.MethodPut, "/workflows/"+id, api.WorkflowRequest{Name: "summed", Steps: append(chain("infra", "plan"), bad)})
+		assert.Equal(t, http.StatusBadRequest, res.Status, string(res.Raw))
+		assert.Contains(t, res.str("error"), "step 2")
+	}
 }
 
-// A run of a workflow with a prompt runs its enabled steps, skips the
-// rest, then puts the prompt to Claude with the run's input as the user
-// who ran it; the thread lists by the workflow run, and the run ends
-// with Claude's reply. A prompt-only workflow is the prompt alone.
+// A run of a workflow with a last prompt step runs its enabled steps,
+// skips the rest, then puts the prompt to Claude with the run's input as
+// the user who ran it; the thread lists by the workflow run, and the run
+// ends with Claude's reply. A workflow of a prompt step alone is that.
 // Running one takes prompt/edit.
 func TestWorkflow_RunPrompt(t *testing.T) {
 	t.Parallel()
@@ -79,7 +100,7 @@ func TestWorkflow_RunPrompt(t *testing.T) {
 	runID := started.str("id")
 	run := f.workflowRun(t, id, runID)
 	assert.Equal(t, model.StateOK, run["state"])
-	assert.Equal(t, []string{"ok", "skipped"}, stepStates(run))
+	assert.Equal(t, []string{"ok", "skipped", "ok"}, stepStates(run))
 
 	threads := f.call(t, asAdmin, http.MethodGet, "/prompts?workflow_run="+runID, nil).list("notes")
 	assert.Len(t, threads, 1)
@@ -101,9 +122,9 @@ func TestWorkflow_RunPrompt(t *testing.T) {
 	again := f.call(t, asAdmin, http.MethodPost, "/workflows/"+aloneID+"/runs", nil)
 	assert.Equal(t, http.StatusCreated, again.Status, string(again.Raw))
 	assert.Equal(t, model.StateOK, f.workflowRun(t, aloneID, again.str("id"))["state"])
-	assert.Len(t, alone.list("steps"), 0)
+	assert.Len(t, alone.list("steps"), 1)
 	runs := f.call(t, asAdmin, http.MethodGet, "/workflows/"+aloneID+"/runs", nil).list("runs")
-	assert.Len(t, runs[0].(map[string]any)["steps"].([]any), 0)
+	assert.Len(t, runs[0].(map[string]any)["steps"].([]any), 1)
 	said := f.call(t, asAdmin, http.MethodGet, "/prompts?workflow_run="+again.str("id"), nil).list("notes")
 	assert.Len(t, said, 1)
 	assert.Equal(t, "say ok, change nothing", said[0].(map[string]any)["body"])
@@ -127,7 +148,7 @@ func TestWorkflow_StopPrompt(t *testing.T) {
 	assert.Equal(t, http.StatusNoContent, f.call(t, asAdmin, http.MethodPost, "/workflow-runs/"+runID+"/stop", nil).Status)
 	run := f.workflowRun(t, id, runID)
 	assert.Equal(t, model.StateStopped, run["state"])
-	assert.Equal(t, "stopped at the prompt", run["message"])
+	assert.Equal(t, "stopped at the prompt in _", run["message"])
 	threads := f.call(t, asAdmin, http.MethodGet, "/prompts?workflow_run="+runID, nil).list("notes")
 	assert.Equal(t, model.NoteFailed, threads[0].(map[string]any)["state"])
 }

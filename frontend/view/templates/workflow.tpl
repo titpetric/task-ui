@@ -3,7 +3,10 @@
 <div class="page-head">
 	<div>
 		<h2>{{ $w.Name }}</h2>
-		<p class="faint">{{ len $w.Steps }} step{{ if ne (len $w.Steps) 1 }}s{{ end }}{{ if $w.Prompted }} and a prompt{{ end }}, by {{ $w.UserName }}</p>
+		{{- with $w.Description }}
+		<p>{{ . }}</p>
+		{{- end }}
+		<p class="faint">{{ len $w.Steps }} step{{ if ne (len $w.Steps) 1 }}s{{ end }}, by {{ $w.UserName }}</p>
 	</div>
 	<div class="actions" data-actions>
 		{{- if $w.CanRun }}{{ if $w.Running }}
@@ -31,10 +34,6 @@
 	<ol class="pipeline" data-pipeline>
 		{{- range $i, $l := $.Pipeline }}{{ template "pipenode" (list $l $i) }}{{ end }}
 	</ol>
-	{{- if $w.Prompted }}
-	<h3 class="workflow-prompt-head">Prompt <small>Claude gets this in {{ $w.PromptWhere }} after the steps finish, with their output.{{ if $w.CanRun }} Run lets you add input.{{ end }}</small></h3>
-	<p class="workflow-prompt" data-workflow-prompt-shown>{{ $w.Prompt }}</p>
-	{{- end }}
 </section>
 
 <section class="block">
@@ -53,7 +52,7 @@
 				<td class="nowrap" data-label="Started" title="{{ stamp .StartedAt }}">{{ ago .StartedAt }}</td>
 				<td data-label="By">{{ template "user" (list $ .UserName) }}</td>
 				<td data-label="Result" data-result><span class="state"><i class="dot {{ .State }}"></i>{{ .State }}</span>{{ if .Message }} <span class="faint">{{ .Message }}</span>{{ end }}</td>
-				<td data-label="Steps"><span class="chain">{{ range $i, $l := $.Links .Steps }}{{ if $i }}<span class="faint then" aria-hidden="true"></span>{{ end }}<a class="nowrap" href="{{ $l.Href }}" data-pos="{{ $i }}"><i class="dot {{ $l.State }}"></i>{{ if $l.Workflow }}<svg class="ic"><use href="#i-flow"/></svg>{{ else if $l.Prompt }}<svg class="ic"><use href="#i-prompt"/></svg>{{ end }}{{ $l.Text }}</a>{{ end }}</span></td>
+				<td data-label="Steps"><span class="chain">{{ range $i, $l := $.Links .Steps }}{{ if $i }}<span class="faint then" aria-hidden="true"></span>{{ end }}<a class="nowrap" href="{{ $l.Href }}" data-pos="{{ $i }}"><i class="dot {{ $l.State }}"></i>{{ if $l.Workflow }}<svg class="ic"><use href="#i-flow"/></svg>{{ else if $l.Summary }}<svg class="ic"><use href="#i-summary"/></svg>{{ else if $l.Prompt }}<svg class="ic"><use href="#i-prompt"/></svg>{{ end }}{{ $l.Text }}</a>{{ end }}</span></td>
 				<td class="actions"><a class="btn btn-sm" href="/workflows/{{ $w.ID }}/runs/{{ .ID }}" data-workflow-view>View</a>{{ template "menu" (menu (print "Actions on the run of " $w.Name)
 					(detail "Run" .ID "mono" "")
 					(detail "Started" (stamp .StartedAt))

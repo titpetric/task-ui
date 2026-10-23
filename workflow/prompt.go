@@ -2,39 +2,13 @@ package workflow
 
 import (
 	"context"
-	"errors"
 
 	"github.com/titpetric/task-ui/model"
 )
 
-// prompt runs the workflow's prompt once the steps ended, through the
-// Prompter, and returns when Claude replied. The run keeps the steps'
-// state, or fails with a prompt that fails after steps that ended ok; a
-// stop during the prompt stops the run. Claude's reply is the run's
-// answer, none for a prompt that failed.
-func (r *Runner) prompt(ctx context.Context, a *active, user *model.User) {
-	run := a.run
-	run.Answer = ""
-	var answer string
-	var err error
-	if r.Prompter == nil {
-		err = errors.New("prompts aren't available on this instance")
-	} else {
-		answer, err = r.Prompter.AskWorkflow(ctx, user, run, a.workflow, a.input)
-	}
-	switch {
-	case err == nil:
-		run.Answer = answer
-	case ctx.Err() != nil:
-		run.State, run.Message = model.StateStopped, "stopped at the prompt"
-	case run.State == model.StateOK:
-		run.State, run.Message = model.StateFailed, "the prompt: "+err.Error()
-	}
-}
-
-// promptStep puts a prompt step to Claude through the Prompter and
-// waits for the reply: the step ends ok with it when Claude ended ok,
-// stopped after a stop, and failed otherwise.
+// promptStep puts a prompt or summary step to Claude through the
+// Prompter and waits for the reply: the step ends ok with it when Claude
+// ended ok, stopped after a stop, and failed otherwise.
 func (r *Runner) promptStep(ctx context.Context, a *active, row *model.WorkflowRunStep, step Step, user *model.User) (state, runID, answer, message string) {
 	if r.Prompter == nil {
 		return model.StateFailed, "", "", "prompts aren't available on this instance"

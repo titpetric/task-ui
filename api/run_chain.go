@@ -111,12 +111,12 @@ func BatchChain(current, batchID string, batch []model.Run, summary *model.Run, 
 	return NewRunChain(ChainBatch, batchID, runs, total, complete, current)
 }
 
-// WorkflowChain is the ChainWorkflow chain of a workflow run; prompt says the workflow has a prompt.
-func WorkflowChain(current string, run model.WorkflowRun, steps []model.WorkflowRunStep, prompt bool, claude []string) *RunChain {
+// WorkflowChain is a workflow run's chain, the runs of its steps in order, claude standing in for a prompt step's run in progress.
+func WorkflowChain(current string, run model.WorkflowRun, steps []model.WorkflowRunStep, claude []string) *RunChain {
 	var runs []string
 	total := 0
 	for _, step := range steps {
-		if step.WorkflowRef != "" || step.State == model.StepSkipped {
+		if step.IsWorkflow() || step.State == model.StepSkipped {
 			continue
 		}
 		total++
@@ -126,12 +126,6 @@ func WorkflowChain(current string, run model.WorkflowRun, steps []model.Workflow
 		case step.IsPrompt() && step.State == model.StateRunning && len(claude) > 0:
 			runs = append(runs, claude[0])
 			claude = claude[1:]
-		}
-	}
-	if prompt {
-		total++
-		if len(claude) > 0 {
-			runs = append(runs, claude[len(claude)-1])
 		}
 	}
 	return NewRunChain(ChainWorkflow, run.ID, runs, total, model.Finished(run.State), current)
@@ -169,14 +163,8 @@ func (h *Handlers) workflowChain(ctx context.Context, run model.Run) *RunChain {
 	if err != nil {
 		return nil
 	}
-	prompt := false
-	if h.opts.Workflows != nil {
-		if wf, err := h.opts.Workflows.Get(ctx, wr.WorkflowID); err == nil {
-			prompt = wf.HasPrompt()
-		}
-	}
 	// Claude's runs: the threads about the workflow run, of its prompt
-	// steps and its prompt, oldest first, that no step names.
+	// and summary steps, oldest first, that no step names.
 	var claude []string
 	if h.opts.Board != nil {
 		threads, _ := h.opts.Board.Notes.List(ctx, storage.NoteFilter{Prompts: true, AboutWorkflowRunID: id})
@@ -186,7 +174,7 @@ func (h *Handlers) workflowChain(ctx context.Context, run model.Run) *RunChain {
 			}
 		}
 	}
-	return WorkflowChain(run.ID, *wr, steps, prompt, claude)
+	return WorkflowChain(run.ID, *wr, steps, claude)
 }
 
 // summaryChain finds the chain of a Run and summarize, or of a batch:

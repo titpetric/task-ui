@@ -17,3 +17,4 @@ Workflow Run Step.
 | answer           | varchar  |     | Answer           |
 | workflow_ref     | char(26) |     | Workflow Ref     |
 | workflow_run_ref | char(26) |     | Workflow Run Ref |
+| kind             | varchar  |     | Kind             |

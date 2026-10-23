@@ -89,12 +89,15 @@ func SummaryRunID(thread *model.Note, replies []model.Note) string {
 
 // instructions are what a prompt's run tells Claude besides the
 // thread, TASK_UI_PROMPT_INSTRUCTIONS: the summary's shape for the
-// question of SummarizeRun or SummarizeBatch alone in its thread, the
-// builder's of claude.WorkflowBuilder for every run of a thread of the
-// Workflows page; nothing otherwise.
+// question of SummarizeRun, SummarizeBatch or a workflow's summary step
+// alone in its thread, the builder's of claude.WorkflowBuilder for
+// every run of a thread of the Workflows page; nothing otherwise.
 func instructions(note *model.Note, thread string) []string {
 	if note.Area == model.AreaWorkflows {
 		return []string{"TASK_UI_PROMPT_INSTRUCTIONS=" + claude.WorkflowBuilder}
+	}
+	if note.AboutWorkflowRunID != "" && note.Body == WorkflowSummaryQuestion && thread == note.Body {
+		return []string{"TASK_UI_PROMPT_INSTRUCTIONS=" + claude.RunSummary}
 	}
 	if note.AboutRunID == "" || thread != note.Body {
 		return nil

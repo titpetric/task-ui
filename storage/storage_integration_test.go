@@ -5,6 +5,7 @@ package storage_test
 import (
 	"context"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/go-bridget/mig/migrate"
@@ -50,7 +51,7 @@ func TestMigrate(t *testing.T) {
 
 	var count int
 	assert.NoError(t, db.GetContext(ctx, &count, "SELECT COUNT(*) FROM migrations WHERE project = ?", storage.Project))
-	assert.Equal(t, 60, count)
+	assert.Equal(t, 62, count)
 }
 
 func TestOpenAndMigrate(t *testing.T) {
@@ -143,4 +144,61 @@ func TestMigrate_hostJobs(t *testing.T) {
 	assert.Equal(t, row{"@host:*", ""}, schedule)
 	assert.NoError(t, db.GetContext(ctx, &step, "SELECT job, target FROM workflow_step"))
 	assert.Equal(t, row{"@host:dev2", ""}, step)
+}
+
+// TestMigrate_stepKinds sets the kind of the steps of a workflow and of
+// its runs from their fields, and moves a workflow's final prompt to a
+// last prompt step, after its steps, in prompt_folder or the root;
+// the workflow's prompt columns read empty after.
+func TestMigrate_stepKinds(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	db := newDB(t)
+	for _, insert := range []string{
+		`INSERT INTO workflow (id, name, prompt, prompt_folder) VALUES ('w1', 'porec', ' water today? ', ''), ('w2', 'deploy', 'summarize', 'malta/dockerfiles'), ('w3', 'plain', '', '')`,
+		`INSERT INTO workflow_step (id, workflow_id, position, folder, job, prompt, workflow_ref, kind) VALUES
+			('s1', 'w1', 0, '_', '@claude-prompt', 'fetch the weather', '', 'job'),
+			('s2', 'w3', 0, '', '', '', 'w2', 'job'),
+			('s3', 'w3', 1, 'infra', 'plan', '', '', 'job')`,
+		`INSERT INTO workflow_run_step (id, workflow_run_id, position, folder, job, prompt, workflow_ref, kind) VALUES
+			('r1', 'run', 0, '_', '@claude-prompt', 'fetch', '', 'job'),
+			('r2', 'run', 1, '', '', '', 'w2', 'job')`,
+	} {
+		_, err := db.ExecContext(ctx, insert)
+		assert.NoError(t, err)
+	}
+	statements, err := migrate.Statements(schema.Migrations(), "workflow_step_with_kind.up.sql")
+	assert.NoError(t, err)
+	// The columns are there already; the rest of the migration runs
+	// over the rows above.
+	for _, statement := range statements {
+		if strings.HasPrefix(strings.TrimSpace(statement), "ALTER TABLE") {
+			continue
+		}
+		_, err := db.ExecContext(ctx, statement)
+		assert.NoError(t, err)
+	}
+	type row struct {
+		Workflow string `db:"workflow_id"`
+		Position int64  `db:"position"`
+		Folder   string `db:"folder"`
+		Job      string `db:"job"`
+		Kind     string `db:"kind"`
+		Prompt   string `db:"prompt"`
+	}
+	var steps []row
+	assert.NoError(t, db.SelectContext(ctx, &steps, "SELECT workflow_id, position, folder, job, kind, prompt FROM workflow_step ORDER BY workflow_id, position"))
+	assert.Equal(t, []row{
+		{"w1", 0, "_", "@claude-prompt", "prompt", "fetch the weather"},
+		{"w1", 1, "_", "@claude-prompt", "prompt", "water today?"},
+		{"w2", 0, "malta/dockerfiles", "@claude-prompt", "prompt", "summarize"},
+		{"w3", 0, "", "", "workflow", ""},
+		{"w3", 1, "infra", "plan", "job", ""},
+	}, steps)
+	var kinds []string
+	assert.NoError(t, db.SelectContext(ctx, &kinds, "SELECT kind FROM workflow_run_step ORDER BY position"))
+	assert.Equal(t, []string{"prompt", "workflow"}, kinds)
+	var left int
+	assert.NoError(t, db.GetContext(ctx, &left, "SELECT COUNT(*) FROM workflow WHERE prompt <> '' OR prompt_folder <> ''"))
+	assert.Equal(t, 0, left)
 }
