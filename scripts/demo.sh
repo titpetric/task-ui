@@ -323,3 +323,6 @@ for file in "${shots[@]}"; do
   echo "$out"
 done
 cp docs/assets/dashboard-dark.png docs/assets/task-ui.png
+
+# The Inventory page's shots, from a hub and hosts of their own.
+scripts/inventory-shots.sh
