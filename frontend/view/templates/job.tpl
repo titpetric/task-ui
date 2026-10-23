@@ -75,6 +75,7 @@
 				<td colspan="5"><details class="summary-details">
 					<summary>Summary{{ with .By }} <span class="faint">asked by {{ . }}</span>{{ end }}</summary>
 					<div class="markdown-doc">{{ markdown .Body }}</div>
+					<a class="btn btn-sm" href="{{ .Href }}">Report</a>
 				</details></td>
 			</tr>
 			{{- end }}{{ end }}

@@ -37,6 +37,7 @@
     prev: document.getElementById("run-prev"),
     pos: document.getElementById("run-pos"),
     next: document.getElementById("run-next"),
+    report: document.getElementById("run-report"),
   };
 
   var session = null; // { run, spec, ws, term, fit, timer, onResize, finished, changed }
@@ -305,12 +306,37 @@
     els.reasonText.value = "";
     pageLink("");
     chainNav(null);
+    reportLink("");
     els.rec.hidden = true;
     els.replay.hidden = true;
     if (!dialog.open) dialog.showModal();
     session = newTerminal();
     session.term.focus();
     return session;
+  }
+
+  // reportLink shows Report in the foot when the window's run has a
+  // report page: a finished prompt's answer, or a run's summary.
+  function reportLink(href) {
+    if (!els.report) return;
+    els.report.hidden = !href;
+    els.report.href = href || "#";
+  }
+
+  // reportOnEnd looks again for the report of a prompt's run that ended
+  // in the window: Claude's answer lands just after its run ends.
+  function reportOnEnd(s) {
+    if (!s.run || !s.run.id) return;
+    var tries = 0;
+    var look = function () {
+      if (session !== s) return;
+      api("GET", "/api/runs/" + encodeURIComponent(s.run.id)).then(function (res) {
+        if (session !== s || res.status !== 200) return;
+        if (res.data.report) reportLink(res.data.report);
+        else if (++tries < 3) setTimeout(look, 1500 * tries);
+      });
+    };
+    setTimeout(look, 800);
   }
 
   // pageLink points Open run page at the run of the window, and hides it
@@ -400,6 +426,7 @@
         return;
       }
       chainNav(s.chain);
+      reportLink(run.report);
       // A finished run stays live in memory for a while, for the windows
       // on it; opened afterwards it is history, not something to attach to.
       if (run.live && !ended(run.state)) {
@@ -474,7 +501,10 @@
       }
       var msg;
       try { msg = JSON.parse(event.data); } catch (e) { return; }
-      if (msg.type === "status") finish(s, msg);
+      if (msg.type === "status") {
+        finish(s, msg);
+        if (s.run && s.run.job === "@claude-prompt") reportOnEnd(s);
+      }
       if (msg.type === "chain") onChain(s, msg.chain);
       if (msg.type === "title") termTitle(msg.title);
       if (msg.type === "input") {

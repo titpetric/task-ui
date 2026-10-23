@@ -55,6 +55,10 @@ type RunView struct {
 	// Chain is the chain of runs the run is part of, on GET of the run:
 	// a Run and summarize, a workflow run or a batch of host runs.
 	Chain *RunChain `json:"chain,omitempty"`
+	// Report is the run's report page, on GET of the run, when it has
+	// one: Claude's answer of a finished prompt's run, or the run's
+	// summary.
+	Report string `json:"report,omitempty"`
 }
 
 // view decorates a run row with what the runner knows, for the user
@@ -247,6 +251,7 @@ func (h *Handlers) getRun(w http.ResponseWriter, r *http.Request) {
 	}
 	v := h.view(r, *run)
 	v.Chain = h.chain(r.Context(), v.Run)
+	v.Report = h.reportOf(r, &v.Run)
 	writeJSON(w, http.StatusOK, v)
 }
 
@@ -385,4 +390,16 @@ func (h *Handlers) cast(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/x-asciicast")
 	http.ServeFile(w, r, filepath.Join(h.opts.Recordings.Root, filepath.FromSlash(run.CastPath)))
+}
+
+// reportOf returns the report page of a run, for a user with
+// prompt/view, "" when it has none.
+func (h *Handlers) reportOf(r *http.Request, run *model.Run) string {
+	if h.opts.Board == nil || !h.can(r, "prompt/view") {
+		return ""
+	}
+	if report := h.opts.Board.Report(r.Context(), run); report != nil {
+		return report.Href()
+	}
+	return ""
 }

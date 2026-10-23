@@ -203,8 +203,10 @@ type Page struct {
 	// RunReports are the summaries of the runs a job page lists, by run
 	// ID, those under way as well.
 	RunReports map[string]*note.Report
-	// Report is the report page's report.
-	Report *note.Report
+	// Report is the report page's report, and ReportOf the run Claude
+	// summarized or answered about, else Run.
+	Report   *note.Report
+	ReportOf *Run
 	// KeyHolders are the roles and the users, and the keys each gets.
 	KeyHolders []KeyHolder
 	Key        *keystore.Key

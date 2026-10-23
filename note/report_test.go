@@ -37,3 +37,13 @@ func TestSummaryOf(t *testing.T) {
 	assert.Nil(t, note.SummaryOf(&failed, nil))
 	assert.Nil(t, note.SummaryOf(&model.Note{ID: "x", Body: "why?", AboutRunID: "r1"}, nil))
 }
+
+// A summary kept without a thread, or a thread that reads a summary's
+// question, is a summary; another question has an answer.
+func TestReport_IsSummary(t *testing.T) {
+	t.Parallel()
+	assert.True(t, (&note.Report{}).IsSummary())
+	assert.True(t, (&note.Report{ThreadID: "t", Question: note.SummaryQuestion}).IsSummary())
+	assert.True(t, (&note.Report{ThreadID: "t", Question: note.BatchSummaryQuestion}).IsSummary())
+	assert.False(t, (&note.Report{ThreadID: "t", Question: "why did it fail?"}).IsSummary())
+}

@@ -140,11 +140,11 @@ func TestView_RenderTree(t *testing.T) {
 	assert.NotContains(t, plain, "summary-link")
 
 	p := tree(true)
-	p.TreeSummaries = map[string]*view.SummaryLink{"Makefile": view.NewSummaryLink("r1", "n1", "The build passed.")}
+	p.TreeSummaries = map[string]*view.SummaryLink{"Makefile": view.NewSummaryLink("r1", "The build passed.")}
 	out := render(p)
 	assert.Contains(t, out, "data-summarize")
-	assert.Contains(t, out, `href="/runs/r1#note-n1" title="The build passed."`)
-	assert.Equal(t, "/runs/r1#note-n1", p.TreeSummary("Makefile").Href)
+	assert.Contains(t, out, `href="/runs/r1/report" title="The build passed."`)
+	assert.Equal(t, "/runs/r1/report", p.TreeSummary("Makefile").Href)
 	assert.Nil(t, p.TreeSummary("other"))
 }
 
@@ -195,4 +195,60 @@ func TestView_RenderJobSummary(t *testing.T) {
 	assert.Contains(t, out, "<li>3 images</li>")
 	assert.Contains(t, out, "asked by ops")
 	assert.NotContains(t, out, `<pre class="summary">## Passed`)
+}
+
+// The report page shows Claude's markdown as a document, with links to
+// the run, Claude's run and the job, and no terminal; a question that
+// is no summary's shows above its answer.
+func TestView_RenderReport(t *testing.T) {
+	t.Parallel()
+
+	v, err := view.New()
+	assert.NoError(t, err)
+	render := func(p *view.Page) string {
+		var buf bytes.Buffer
+		assert.NoError(t, v.Render(&buf, "report", p))
+		return buf.String()
+	}
+	p := admin(t)
+	about := p.Runs[0]
+	about.State = model.StateOK
+	claude := view.Run{Run: model.Run{ID: "c1", Folder: "infra", Job: model.PromptJob, UserName: "ops", State: model.StateOK}}
+	p.Run, p.ReportOf = &claude, &about
+	p.Report = &note.Report{RunID: "c1", AboutRunID: about.ID, ThreadID: "t", Question: note.SummaryQuestion, By: "ops", Body: "## Passed\n\n<script>x</script>"}
+	out := render(p)
+	assert.Contains(t, out, "Claude's summary of the run")
+	assert.Contains(t, out, "<h3>Summary</h3>")
+	assert.Contains(t, out, `href="/runs/`+about.ID+`">Run</a>`)
+	assert.Contains(t, out, `href="/runs/c1">Claude's run</a>`)
+	assert.Contains(t, out, `href="/f/_/infra/plan">Job</a>`)
+	assert.Contains(t, out, "&lt;script&gt;")
+	assert.NotContains(t, out, `data-output=`)
+	assert.NotContains(t, out, "<h3>Question</h3>")
+
+	p.Report.Question = "why so slow?"
+	out = render(p)
+	assert.Contains(t, out, "<h3>Question</h3>")
+	assert.Contains(t, out, "<h3>Answer</h3>")
+}
+
+// A run with a report links it from its page and from its row's
+// summary on the job page.
+func TestView_RenderReportLinks(t *testing.T) {
+	t.Parallel()
+
+	v, err := view.New()
+	assert.NoError(t, err)
+	p := admin(t)
+	id := p.Runs[0].ID
+	p.Report = &note.Report{RunID: id, Body: "done"}
+	p.RunReports = map[string]*note.Report{id: p.Report}
+	for _, name := range []string{"run", "job"} {
+		var buf bytes.Buffer
+		assert.NoError(t, v.Render(&buf, name, p), name)
+		assert.Contains(t, buf.String(), `href="/runs/`+id+`/report">Report</a>`, name)
+	}
+	var buf bytes.Buffer
+	assert.NoError(t, v.Render(&buf, "home", p))
+	assert.Contains(t, buf.String(), `id="run-report"`)
 }

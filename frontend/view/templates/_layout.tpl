@@ -224,6 +224,7 @@
 			<span class="run-pos" id="run-pos"></span>
 			<button type="button" class="btn btn-sm" id="run-next" title="The run after this one">Next ›</button>
 		</nav>
+		<a class="btn btn-sm" id="run-report" href="#" title="Claude's answer or summary, as a document" hidden>Report</a>
 		<span class="hint" id="run-hint"></span>
 		<button type="button" class="btn" id="run-attach" hidden>Attach</button>
 		<button type="button" class="btn btn-primary" id="run-force" hidden>Run force</button>
