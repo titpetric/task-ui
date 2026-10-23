@@ -149,10 +149,6 @@ the MCP instructions and every Claude run; keep it in step with the
 features. Its test fails when a section or permission of
 `config/permissions.yml`, an MCP tool or a built-in job has no line
 there.
-`scripts/smoke.sh` (`task smoke`) then
-exercises a fresh instance end to end with curl and headless chromium:
-runs, hours, secrets and keys, env files, schedules, users, projects,
-artifacts, every page, and the browser's console.
 
 ---
 

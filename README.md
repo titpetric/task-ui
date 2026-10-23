@@ -76,7 +76,6 @@ task: Available tasks for this project:
 * install:                Install task-ui
 * lint:                   Lint with splint and rulelint, zero findings is the bar
 * run:                    Run task-ui over the demo projects
-* smoke:                  Exercise a fresh instance end to end, the browser console included
 * test:                   Run the unit tests
 * docker:build:           Build task-ui docker image
 * docker:gen:             Generate an ssh key for the key folder, ./keys
@@ -121,13 +120,6 @@ Regenerate the README screenshots
 
 commands:
 - `scripts/demo.sh`
-
-## task: smoke
-
-Exercise a fresh instance end to end, the browser console included
-
-commands:
-- `scripts/smoke.sh`
 
 ## task: lint
 

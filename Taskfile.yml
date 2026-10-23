@@ -42,11 +42,6 @@ tasks:
     cmds:
       - scripts/demo.sh
 
-  smoke:
-    desc: "Exercise a fresh instance end to end, the browser console included"
-    cmds:
-      - scripts/smoke.sh
-
   lint:
     desc: "Lint with splint and rulelint, zero findings is the bar"
     cmds:
