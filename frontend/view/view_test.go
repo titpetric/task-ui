@@ -11,6 +11,7 @@ import (
 	"github.com/titpetric/task-ui/frontend/view"
 	"github.com/titpetric/task-ui/internal/assert"
 	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/note"
 	"github.com/titpetric/task-ui/permission"
 )
 
@@ -145,4 +146,35 @@ func TestView_RenderTree(t *testing.T) {
 	assert.Contains(t, out, `href="/runs/r1#note-n1" title="The build passed."`)
 	assert.Equal(t, "/runs/r1#note-n1", p.TreeSummary("Makefile").Href)
 	assert.Nil(t, p.TreeSummary("other"))
+}
+
+// A job's runs have Summarize for a user who may, on a run that ended
+// without a summary; a summary under way says so in its place.
+func TestView_RenderJobSummarize(t *testing.T) {
+	t.Parallel()
+
+	v, err := view.New()
+	assert.NoError(t, err)
+	render := func(p *view.Page) string {
+		var buf bytes.Buffer
+		assert.NoError(t, v.Render(&buf, "job", p))
+		return buf.String()
+	}
+	p := admin(t)
+	p.Runs[0].State = model.StateOK
+	assert.NotContains(t, render(p), "data-summarize-run", "no Summaries")
+
+	p.Summaries = true
+	out := render(p)
+	assert.Contains(t, out, `data-summarize-run="`+p.Runs[0].ID+`"`)
+	assert.Contains(t, out, `data-question="Summarize this run."`)
+
+	p.RunReports = map[string]*note.Report{p.Runs[0].ID: {RunID: p.Runs[0].ID, Pending: true}}
+	out = render(p)
+	assert.NotContains(t, out, "data-summarize-run")
+	assert.Contains(t, out, ">summarizing<")
+
+	p.RunReports = nil
+	p.Runs[0].State = model.StateRunning
+	assert.NotContains(t, render(p), "data-summarize-run", "still running")
 }

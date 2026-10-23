@@ -13,6 +13,7 @@ import (
 	"github.com/titpetric/task-ui/hostinfo"
 	"github.com/titpetric/task-ui/keystore"
 	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/note"
 	"github.com/titpetric/task-ui/permission"
 )
 
@@ -199,6 +200,11 @@ type Page struct {
 	// TreeSummaries are the summaries of the last runs of the rows Tree
 	// lists, by the entry's name, for its Summary column.
 	TreeSummaries map[string]*SummaryLink
+	// RunReports are the summaries of the runs a job page lists, by run
+	// ID, those under way as well.
+	RunReports map[string]*note.Report
+	// Report is the report page's report.
+	Report *note.Report
 	// KeyHolders are the roles and the users, and the keys each gets.
 	KeyHolders []KeyHolder
 	Key        *keystore.Key
@@ -373,6 +379,19 @@ func (p *Page) CanRun(f *folder.Folder, job *folder.Job) bool {
 // shell, prompt, Notes agent or interactive job.
 func (p *Page) Summarizes(job *folder.Job) bool {
 	return p.Summaries && job != nil && !job.IsShell() && !job.IsPrompt() && !job.IsNote() && !job.Interactive
+}
+
+// RunReport returns the summary of a run the page lists, nil for none.
+func (p *Page) RunReport(id string) *note.Report {
+	return p.RunReports[id]
+}
+
+// SummarizesRun reports whether a job page's run row has Summarize.
+func (p *Page) SummarizesRun(job *folder.Job, run Run) bool {
+	// A run that ended, of a job that Summarizes, with no summary yet
+	// nor one under way, and none of Claude's own.
+	ended := model.Finished(run.State) && !run.IsClaude()
+	return ended && p.Summarizes(job) && p.RunReports[run.ID] == nil
 }
 
 // Deletes reports whether the signed in user may delete a note: their

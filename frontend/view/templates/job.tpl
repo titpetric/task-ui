@@ -65,6 +65,8 @@
 				<td class="actions">
 					<a class="btn btn-sm" href="/runs/{{ .ID }}" data-attach="{{ .ID }}">{{ if not (ended .State) }}Attach{{ else }}View{{ end }}</a>
 					{{- template "replay" . }}
+					{{- if $.SummarizesRun $r . }}<button type="button" class="btn btn-sm" data-summarize-run="{{ .ID }}" data-question="{{ summaryQuestion }}" title="Claude summarizes the run's output, in this window">Summarize</button>
+					{{- else }}{{ with $.RunReport .ID }}{{ if .Pending }}<span class="faint">summarizing</span>{{ end }}{{ end }}{{ end }}
 					{{- if and (not (ended .State)) $can }}<button type="button" class="btn-icon danger" data-kill="{{ .ID }}" title="Kill the run" aria-label="Kill the run"><svg class="ic"><use href="#i-stop"/></svg></button>{{ end }}
 				</td>
 			</tr>

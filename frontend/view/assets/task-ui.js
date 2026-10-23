@@ -3351,7 +3351,7 @@
   // --------------------------------------------------------------- clicks
 
   document.addEventListener("click", function (event) {
-    var btn = event.target.closest("[data-run], [data-attach], [data-replay], [data-stop], [data-kill], [data-delete], [data-copy]");
+    var btn = event.target.closest("[data-run], [data-attach], [data-replay], [data-stop], [data-kill], [data-delete], [data-copy], [data-summarize-run]");
     if (!btn) return;
     // A link inside the element matched is a link: it navigates, it does
     // not run or attach for the element around it.
@@ -3401,6 +3401,21 @@
 
     if (btn.hasAttribute("data-attach")) {
       attach(btn.dataset.attach);
+      return;
+    }
+    // Summarize asks Claude about a run that ended, the question of Run
+    // and summarize, and opens the window on the run: the chain moves it
+    // on to Claude's run, 2/2, once that starts.
+    if (btn.hasAttribute("data-summarize-run")) {
+      var about = btn.dataset.summarizeRun;
+      btn.disabled = true;
+      api("POST", "/api/prompts", { run: about, prompt: btn.dataset.question }).then(function (res) {
+        btn.disabled = false;
+        if (res.status >= 300) { window.alert(res.data.error || ("HTTP " + res.status)); return; }
+        btn.hidden = true;
+        attach(about);
+        if (session) session.changed = true;
+      });
       return;
     }
     if (btn.hasAttribute("data-replay")) {
