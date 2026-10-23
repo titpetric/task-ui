@@ -201,8 +201,8 @@
 		<span class="label" id="run-kind">Run</span>
 		<h3 id="run-title"></h3>
 		<span class="run-subtitle" id="run-subtitle" hidden></span>
-		<span class="rec" id="run-rec" hidden>( * recording )</span>
-		<span class="input-on" id="run-input" hidden>( &gt; input on )</span>
+		<span class="tag rec" id="run-rec" hidden>Recording</span>
+		<span class="tag input-on" id="run-input" hidden>Input on</span>
 		<span class="spacer"></span>
 		<span class="dim" id="run-who"></span>
 		<span class="elapsed" id="run-elapsed"></span>

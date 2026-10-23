@@ -31,7 +31,7 @@ func TestPage_Chrome(t *testing.T) {
 	assert.Contains(t, recents, `<a href="/runs" class="recent more" data-recents-more hidden>`)
 	assert.Contains(t, body, `<a class="btn btn-sm" id="run-page" href="/runs" hidden>Open run page</a>`)
 	// The window says when it plays a recording; hidden until then.
-	assert.Contains(t, body, `<span class="rec" id="run-rec" hidden>( * recording )</span>`)
+	assert.Contains(t, body, `<span class="tag rec" id="run-rec" hidden>Recording</span>`)
 	assert.Contains(t, body, `id="run-replay" title="Replay the recording"`)
 	assert.Contains(t, body, `<button type="button" class="btn" id="run-pause" hidden>Pause</button>`)
 	assert.Contains(t, body, `<button type="button" class="btn" id="run-restart" hidden>Restart</button>`)
