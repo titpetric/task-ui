@@ -8,7 +8,7 @@
 <div class="tooling">
 	{{- range .Scopes }}
 	<section class="tooling-scope">
-		<p class="tooling-sum"><span class="tooling-db" title="{{ .Database }}">&lrm;{{ .Database }}</span><span class="key">{{ .Name }}</span>{{ with .Repository }} <span class="faint">{{ . }}</span>{{ end }} · {{ .Runs }} command{{ if ne .Runs 1 }}s{{ end }} in {{ .Days }} days · {{ duration .Total }} of tooling</p>
+		<p class="tooling-sum"><span class="tooling-db" title="{{ .Database }}">&lrm;{{ .Database }}</span><span><span class="key">{{ .Name }}</span>{{ with .Repository }} <span class="faint">{{ . }}</span>{{ end }} · {{ .Runs }} command{{ if ne .Runs 1 }}s{{ end }} in {{ .Days }} days · {{ duration .Total }} of tooling</span></p>
 		<div class="tooling-charts">
 			{{- range .Windows }}
 			<figure class="tooling-chart">
