@@ -197,7 +197,7 @@ func (a *App) ensureKeys(ctx context.Context) error {
 // one the users in storage stay as they are.
 func (a *App) seed(ctx context.Context) error {
 	if a.Config.Htpasswd == "" {
-		slog.Warn("no password file: nobody new can sign in", "hint", "set TASK_UI_HTPASSWD or put .htpasswd in the root")
+		slog.Warn("no password file: nobody new can sign in", "hint", "task-ui passwd <user> makes <data>/.htpasswd")
 		return nil
 	}
 	a.UsersFile = NewUsersFile(a.Config.Htpasswd)
@@ -275,7 +275,9 @@ func (a *App) wire(version string) error {
 	cleaner.Store = store
 	summaries := storage.NewRunSummaryStorage(a.DB)
 	secretReads := storage.NewSecretReadStorage(a.DB)
+	mounts, hostData := hostPaths(cfg)
 	a.Runner = runner.New(runner.Options{
+		HostPaths: mounts, HostData: hostData,
 		KeyDir: keys.Dir, KeyPolicies: keyPolicies,
 		Runs:          runs,
 		Artifacts:     artifacts,
@@ -349,7 +351,7 @@ func (a *App) wire(version string) error {
 		SSH: prober, AddUsers: a.UsersFile != nil, BaseURL: cfg.URL,
 		Facts: &hostinfo.Reader{Run: prober.Output, Timeout: 20 * time.Second, TTL: 5 * time.Minute},
 		Instance: &view.Instance{
-			URL: cfg.URL, Listen: cfg.Listen, Root: cfg.Root, DataDir: cfg.DataDir, SSHDir: cfg.SSHDir, Htpasswd: cfg.Htpasswd,
+			URL: cfg.URL, Listen: cfg.Listen, Root: cfg.Root, DataDir: cfg.DataDir, SSHDir: cfg.SSHDir, Htpasswd: cfg.Htpasswd, HostData: hostDataShown(cfg.DataDir, hostData),
 			Discover: cfg.Discover, AutoLogin: cfg.AutoLogin,
 		},
 	})

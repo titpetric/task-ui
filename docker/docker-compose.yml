@@ -2,13 +2,13 @@ services:
   runner:
     image: titpetric/task-ui
     restart: always
-    # Users sign in from /app/.htpasswd: `task-ui passwd <user>` adds one.
+    # Users sign in from /data/.htpasswd: `task-ui passwd <user>` adds one.
+    # The folders with jobs go in /data/workspaces, the keys in /keys.
     # The first users of an empty database are admins; `task-ui user`
     # sets the roles after.
     ports:
     - 3000:3000
     volumes:
-    - $PWD/app:/app
     - $PWD/data:/data
-    - $PWD/root/.ssh:/root/.ssh
+    - $PWD/keys:/keys
     - /var/run/docker.sock:/var/run/docker.sock:ro

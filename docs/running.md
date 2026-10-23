@@ -7,27 +7,38 @@ services:
   runner:
     image: titpetric/task-ui
     restart: always
-    environment:
-      TASK_UI_SSH_DIR: /keys
     ports:
     - 3000:3000
     volumes:
-    - $PWD/app:/app
     - $PWD/data:/data
     - $PWD/keys:/keys
     - /var/run/docker.sock:/var/run/docker.sock:ro
 ```
 
-Mount your folders at `/app`. Each subfolder with something to run
-becomes a folder in the UI, and `/app` itself is one too when it has.
-The database, the recordings and the artifacts live under `/data`, and
-the users sign in from `/app/.htpasswd`. The image bundles `task`,
+Two mounts hold everything the instance keeps:
+
+- `/data`, `TASK_UI_DATA`: the database, the recordings, the artifacts,
+  the password file, `/data/.htpasswd`, and the workspace folder,
+  `/data/workspaces`, `TASK_UI_WORKSPACE`. Each subfolder of the
+  workspace folder with something to run becomes a folder in the UI,
+  and the workspace folder itself is one too when it has.
+- `/keys`, `TASK_UI_SSH_DIR`: the keys of the instance. Keep it out of
+  `/root/.ssh`, so `ssh` in a job does not find them by default; a run
+  receives the keys its policies grant it.
+
+`/app`, the working directory, holds the image's own configuration and
+nothing a run writes; mount nothing there. The image bundles `task`,
 `atkins`, `docker` and `docker compose`.
 
-- To run without Docker, remove the volume for `docker.sock`.
-- Mount `/keys` with `TASK_UI_SSH_DIR` to keep the SSH keys managed from
-  the UI. Keep it out of `/root/.ssh`, so `ssh` in a job does not find
-  them by default; a run receives the keys its policies grant it.
+- To run without Docker, remove the volume for `docker.sock`. Without
+  `/data` and `/keys`, task-ui uses `./data` and `./keys`.
+- A job's `docker run -v $PWD:/src` goes to the host's docker daemon,
+  which resolves `$PWD` on the host, where `/data` has another path.
+  Every run gets `TASK_UI_HOST_PWD`, its directory as the host sees it,
+  and `TASK_UI_HOST_DATA`, the data directory there: write `docker run
+  -v "${TASK_UI_HOST_PWD:-$PWD}:/src"`. task-ui reads the host paths
+  from the mounts of its container; `TASK_UI_HOST_DATA` set in its
+  environment overrides the data directory's.
 - The keys that encrypt live under `/data`, apart from the SSH keys:
   `TASK_UI_DATA/instance/encrypt/id_ed25519` encrypts the integrations'
   settings, and `TASK_UI_DATA/workspaces/<id>/encrypt` each workspace's
@@ -42,12 +53,12 @@ The environment sets the whole configuration:
 | Variable              | Default              | Meaning                                                           |
 |-----------------------|----------------------|-------------------------------------------------------------------|
 | `TASK_UI_LISTEN`      | `:3000`              | Listen address                                                    |
-| `TASK_UI_ROOT`        | `.`                  | Root folder holding the folders                                   |
-| `TASK_UI_DISCOVER`    | `true`               | List every folder under the root with something to run            |
-| `TASK_UI_HTPASSWD`    | `.htpasswd`          | The password file, looked up in the root                          |
-| `TASK_UI_DATA`        | `data`               | Database, recordings, artifacts, workspace keys and the encryption key |
+| `TASK_UI_DATA`        | `/data`, else `data` | Database, recordings, artifacts, the password file `.htpasswd`, the workspace folder |
+| `TASK_UI_WORKSPACE`   | `<data>/workspaces`  | The workspace folder: the folders with jobs, the default workspace `_` |
+| `TASK_UI_DISCOVER`    | `true`               | List every folder under the workspace folder with something to run |
 | `TASK_UI_DB`          | `<data>/task-ui.db`  | Database file (sqlite)                                            |
-| `TASK_UI_SSH_DIR`     | `$HOME/.ssh`         | Folder the SSH key settings manage; its keys only authenticate    |
+| `TASK_UI_SSH_DIR`     | `/keys`, else `keys` | The key folder, every key of the instance                         |
+| `TASK_UI_HOST_DATA`   |                      | The data directory on the docker host; empty reads it from the container's mounts |
 | `TASK_UI_SESSION_TTL` | `12h`                | How long a sign in lasts                                          |
 | `TASK_UI_KEEP`        | `15m`                | How long a finished run stays attachable with its frame in memory |
 | `TASK_UI_GRACE`       | `10s`                | How long a stopped process gets before task-ui kills it           |
@@ -57,14 +68,16 @@ The environment sets the whole configuration:
 | `TASK_UI_AUTOLOGIN`   |                      | Sign every request in as this user, for development only          |
 | `TASK_UI_NOW`         |                      | Pin the clock the hours read (RFC 3339), for the screenshots only |
 
-The flags `-l`, `--root`, `--htpasswd` and `--data` override the
-matching variables; `-v` prints the build.
+The flags `-l`, `--workspace` and `--data` override the matching
+variables; `-v` prints the build. `TASK_UI_ROOT` and `TASK_UI_HTPASSWD`
+set stop task-ui at start, with where the folders and the password file
+go.
 
 ## Users and roles
 
 Login is mandatory, through the sign in screen; there is no HTTP basic
-auth. Who may sign in is the password file, `.htpasswd` in the root or
-wherever `TASK_UI_HTPASSWD` points: one `name:hash` per line, the
+auth. Who may sign in is the password file, `.htpasswd` in the data
+directory: one `name:hash` per line, the
 htpasswd format, bcrypt hashes only. The file is the truth. task-ui reads
 it on startup and again whenever it changes, so adding, resetting or
 removing a user needs no restart: a user not in the file cannot sign in

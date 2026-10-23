@@ -15,6 +15,7 @@ import (
 
 	"github.com/spf13/pflag"
 
+	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/sshkey"
 	"github.com/titpetric/task-ui/workspace"
 )
@@ -24,28 +25,34 @@ import (
 type Config struct {
 	// Listen is the listen address. TASK_UI_LISTEN, -l.
 	Listen string
-	// Root is the directory holding the folders. TASK_UI_ROOT, --root.
+	// Root is the workspace folder, the directory holding the folders
+	// with jobs and the default workspace, _. TASK_UI_WORKSPACE,
+	// --workspace, default <data>/workspaces.
 	Root string
 	// Discover lists every directory under Root with something to run.
 	// TASK_UI_DISCOVER, default true.
 	Discover bool
-	// Htpasswd is the password file, htpasswd style, read for sign in.
-	// TASK_UI_HTPASSWD, --htpasswd, default .htpasswd in Root when it
-	// exists.
+	// Htpasswd is the password file, htpasswd style, read for sign in:
+	// .htpasswd in the data directory, set by no variable.
 	Htpasswd string
 	// Import holds the role lists of an older configuration,
 	// TASK_UI_ADMINS, TASK_UI_VIEWERS and TASK_UI_AGENT, which the first
 	// start over a database applies to its users once; nil without any of them
 	// set. Storage holds the roles after.
 	Import *RoleImport
-	// DataDir holds the database, the recordings and the artifacts.
-	// TASK_UI_DATA, --data, default ./data.
+	// DataDir holds the database, the recordings, the artifacts, the
+	// password file and the workspace folder. TASK_UI_DATA, --data,
+	// default /data when it exists, else ./data.
 	DataDir string
 	// DB is the database DSN. TASK_UI_DB, default <data>/task-ui.db.
 	DB string
-	// SSHDir is the directory the key settings manage. TASK_UI_SSH_DIR,
-	// default $HOME/.ssh.
+	// SSHDir is the key folder, where every key of the instance lives.
+	// TASK_UI_SSH_DIR, default /keys when it exists, else ./keys.
 	SSHDir string
+	// HostData is the data directory as the host's docker daemon sees
+	// it, for a run's docker run -v. TASK_UI_HOST_DATA; empty reads the
+	// mounts of the container task-ui runs in.
+	HostData string
 	// SessionTTL is the session lifetime. TASK_UI_SESSION_TTL, default 12h.
 	SessionTTL time.Duration
 	// AutoLogin signs every request in as this user, without a password.
@@ -124,18 +131,36 @@ func envDuration(name string, fallback time.Duration) (time.Duration, error) {
 	return d, nil
 }
 
+// gone are the variables of an older layout, with what took their
+// place: task-ui reads none of them, and one set stops it at start.
+var gone = map[string]string{
+	"TASK_UI_ROOT":     "the folders live in TASK_UI_WORKSPACE, by default <data>/workspaces: move them there and unset TASK_UI_ROOT",
+	"TASK_UI_HTPASSWD": "the password file is <data>/.htpasswd: move it there and unset TASK_UI_HTPASSWD",
+}
+
 // NewConfig reads the environment and the command line flags.
 func NewConfig(args []string) (*Config, error) {
-	home, _ := os.UserHomeDir()
+	return NewConfigAt("/", args)
+}
+
+// NewConfigAt reads the configuration as NewConfig does, with the
+// default data and key folders under base in place of /: /data and
+// /keys when they exist there, else ./data and ./keys.
+func NewConfigAt(base string, args []string) (*Config, error) {
+	for _, name := range model.SortedKeys(gone) {
+		if _, ok := os.LookupEnv(name); ok {
+			return nil, fmt.Errorf("%s is not read: %s", name, gone[name])
+		}
+	}
 	cfg := &Config{
 		Listen:    env("TASK_UI_LISTEN", ":3000"),
-		Root:      env("TASK_UI_ROOT", "."),
+		Root:      env("TASK_UI_WORKSPACE", ""),
 		Discover:  envBool("TASK_UI_DISCOVER", true),
-		Htpasswd:  env("TASK_UI_HTPASSWD", ""),
 		Import:    roleImport(),
-		DataDir:   env("TASK_UI_DATA", "data"),
+		DataDir:   env("TASK_UI_DATA", existing(filepath.Join(base, "data"), "data")),
 		DB:        env("TASK_UI_DB", ""),
-		SSHDir:    env("TASK_UI_SSH_DIR", filepath.Join(home, ".ssh")),
+		SSHDir:    env("TASK_UI_SSH_DIR", existing(filepath.Join(base, "keys"), "keys")),
+		HostData:  env("TASK_UI_HOST_DATA", ""),
 		AutoLogin: env("TASK_UI_AUTOLOGIN", ""),
 
 		ComposeProject: env("TASK_UI_COMPOSE_PROJECT", ""),
@@ -162,9 +187,8 @@ func NewConfig(args []string) (*Config, error) {
 
 	flags := pflag.NewFlagSet("task-ui", pflag.ContinueOnError)
 	flags.StringVarP(&cfg.Listen, "listen", "l", cfg.Listen, "Listen address (TASK_UI_LISTEN)")
-	flags.StringVar(&cfg.Root, "root", cfg.Root, "Root directory holding the folders (TASK_UI_ROOT)")
-	flags.StringVar(&cfg.Htpasswd, "htpasswd", cfg.Htpasswd, "Password file, htpasswd style (TASK_UI_HTPASSWD)")
-	flags.StringVar(&cfg.DataDir, "data", cfg.DataDir, "Data directory: database, recordings, artifacts (TASK_UI_DATA)")
+	flags.StringVar(&cfg.Root, "workspace", cfg.Root, "Workspace folder holding the folders, default <data>/workspaces (TASK_UI_WORKSPACE)")
+	flags.StringVar(&cfg.DataDir, "data", cfg.DataDir, "Data directory: database, password file, workspaces (TASK_UI_DATA)")
 	flags.BoolVarP(&cfg.PrintBuildInfo, "version", "v", false, "Print build info")
 	if err := flags.Parse(args); err != nil {
 		return nil, err
@@ -172,18 +196,31 @@ func NewConfig(args []string) (*Config, error) {
 	return cfg, cfg.Validate()
 }
 
-// Validate fills the derived defaults and checks the root.
+// existing returns dir for a directory, else the fallback.
+func existing(dir, fallback string) string {
+	if info, err := os.Stat(dir); err == nil && info.IsDir() {
+		return dir
+	}
+	return fallback
+}
+
+// Validate fills the derived defaults and checks the workspace folder:
+// the default one, under the data directory, it makes.
 func (c *Config) Validate() error {
 	if c.Root == "" {
-		return errors.New("TASK_UI_ROOT: a root directory is needed")
+		if c.DataDir == "" {
+			return errors.New("TASK_UI_DATA: a data directory is needed for the workspace folder")
+		}
+		c.Root = c.WorkspacesDir()
+		if err := os.MkdirAll(c.Root, 0o755); err != nil {
+			return fmt.Errorf("TASK_UI_WORKSPACE: %w", err)
+		}
 	}
 	if info, err := os.Stat(c.Root); err != nil || !info.IsDir() {
-		return fmt.Errorf("TASK_UI_ROOT: %s is not a directory", c.Root)
+		return fmt.Errorf("TASK_UI_WORKSPACE: %s is not a directory", c.Root)
 	}
 	if c.Htpasswd == "" {
-		if _, err := os.Stat(filepath.Join(c.Root, ".htpasswd")); err == nil {
-			c.Htpasswd = filepath.Join(c.Root, ".htpasswd")
-		}
+		c.Htpasswd = filepath.Join(c.DataDir, ".htpasswd")
 	}
 	if c.DB == "" {
 		c.DB = filepath.Join(c.DataDir, "task-ui.db")
@@ -192,6 +229,12 @@ func (c *Config) Validate() error {
 		return errors.New("TASK_UI_SESSION_TTL: must be positive")
 	}
 	return nil
+}
+
+// WorkspacesDir is the workspace folder by default, under the data
+// directory.
+func (c *Config) WorkspacesDir() string {
+	return filepath.Join(c.DataDir, "workspaces")
 }
 
 // RecordingsDir is where the recordings go.

@@ -18,7 +18,7 @@ func TestAgent_Note(t *testing.T) {
 	reply := filepath.Join(t.TempDir(), "reply.md")
 	var out bytes.Buffer
 	a := &agent.Agent{Stdout: &out, Stderr: io.Discard, Env: []string{
-		"PATH=" + fakeClaude(t), "HOME=/home/server", "CLAUDE_CODE_OAUTH_TOKEN=sk-1", "TASK_UI_ROOT=" + root,
+		"PATH=" + fakeClaude(t), "HOME=/home/server", "CLAUDE_CODE_OAUTH_TOKEN=sk-1", "TASK_UI_WORKSPACE_DIR=" + root,
 		"TASK_UI_NOTE=ops:\n@claude bump it", "TASK_UI_NOTE_ID=n1", "TASK_UI_NOTE_AUTHOR=ops", "TASK_UI_NOTE_REPLY=" + reply,
 		"TASK_UI_USER=claude", "TASK_UI_ROLE=runner",
 	}}

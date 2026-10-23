@@ -26,12 +26,12 @@ trap cleanup EXIT
 go build -o "$work/task-ui" .
 cp -r testdata/demo "$work/demo"
 for user in admin ops guest; do
-  TASK_UI_ROOT="$work/demo" TASK_UI_HTPASSWD="$work/demo/.htpasswd" "$work/task-ui" passwd "$user" demo >/dev/null
+  TASK_UI_WORKSPACE="$work/demo" TASK_UI_DATA="$work/data" "$work/task-ui" passwd "$user" demo >/dev/null
 done
 
 port=3301
 export TASK_UI_BASE="http://127.0.0.1:${port}"
-env TASK_UI_ROOT="$work/demo" TASK_UI_LISTEN="127.0.0.1:${port}" TASK_UI_DATA="$work/data" \
+env TASK_UI_WORKSPACE="$work/demo" TASK_UI_LISTEN="127.0.0.1:${port}" TASK_UI_DATA="$work/data" \
   TASK_UI_SSH_DIR="$work/ssh" TASK_UI_ADMINS=admin TASK_UI_VIEWERS=guest \
   TASK_UI_AUTOLOGIN=admin TASK_UI_NOW=2026-10-16T22:00:00+02:00 \
   "$work/task-ui" >"$work/task-ui.log" 2>&1 &
@@ -126,13 +126,13 @@ check "it can be deleted" '204' curl -sS -o /dev/null -w '%{http_code}' -X DELET
 
 # ---- users, from the password file
 check "the users come from the file" '"name":"guest"' api GET /users
-check "the roles come from the environment" '"role":"viewer"' api GET /users
+check "the roles of the environment import once" '"role":"viewer"' api GET /users
 uid="$(api GET /users | grep -o '{"id":"[^"]*","name":"ops"' | cut -d'"' -f4)"
 check "folders are set here" '"folders":"[\"infra\"]"' api PUT "/users/${uid}" '{"folders":["infra"]}'
 check "users are not made here" '405' curl -sS -o /dev/null -w '%{http_code}' -X POST -H "Origin: ${TASK_UI_BASE}" -H "Content-Type: application/json" -d '{"name":"x"}' "${TASK_UI_BASE}/api/users"
 check "a new line in the file signs in without a restart" '"name":"late"' bash -c "
-  TASK_UI_ROOT='$work/demo' TASK_UI_HTPASSWD='$work/demo/.htpasswd' '$work/task-ui' passwd late demo >/dev/null
-  touch -d '+2 seconds' '$work/demo/.htpasswd'
+  TASK_UI_WORKSPACE='$work/demo' TASK_UI_DATA='$work/data' '$work/task-ui' passwd late demo >/dev/null
+  touch -d '+2 seconds' '$work/data/.htpasswd'
   for _ in \$(seq 1 80); do api GET /users | grep -q '\"name\":\"late\"' && break; sleep 0.25; done
   api GET /users"
 check "signing in with the file's password works" '303' bash -c "curl -sS -o /dev/null -w '%{http_code}' -d 'username=late&password=demo' '${TASK_UI_BASE}/login'"

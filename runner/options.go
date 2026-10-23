@@ -6,6 +6,7 @@ import (
 	"github.com/titpetric/task-ui/artifactstore"
 	"github.com/titpetric/task-ui/envfile"
 	"github.com/titpetric/task-ui/git"
+	"github.com/titpetric/task-ui/hostpath"
 	"github.com/titpetric/task-ui/recording"
 	"github.com/titpetric/task-ui/secret"
 	"github.com/titpetric/task-ui/storage"
@@ -48,6 +49,11 @@ type Options struct {
 	Keep time.Duration
 	// Now is the clock the hours gate reads. Nil is time.Now.
 	Now func() time.Time
+	// HostPaths maps the run's directory to the host's, for
+	// TASK_UI_HOST_PWD, and HostData is the data directory on the host,
+	// TASK_UI_HOST_DATA: a job's docker run -v goes to the host's daemon.
+	HostPaths hostpath.Mounts
+	HostData  string
 	// Root is where the folders are, and Workspaces the checkouts under it
 	// whose folder is a namespace: a run of a folder inside one names the
 	// workspace in its environment. Nil Workspaces knows none.

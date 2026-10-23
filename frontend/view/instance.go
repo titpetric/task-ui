@@ -11,6 +11,8 @@ type Instance struct {
 	DataDir  string
 	SSHDir   string
 	Htpasswd string
+	// HostData is the data directory on the host, empty when the same.
+	HostData string
 	Discover bool
 	// AutoLogin is the user every request signs in as, if any.
 	AutoLogin string

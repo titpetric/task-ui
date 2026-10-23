@@ -12,8 +12,9 @@ import (
 // naming the agent, the thread in TASK_UI_NOTE, TASK_UI_NOTE_ID and
 // TASK_UI_NOTE_AUTHOR. Claude's answer goes to the terminal and to the
 // file TASK_UI_NOTE_REPLY names, which the board replies with: what
-// changed, or why it declined. It works in TASK_UI_ROOT, the projects,
-// with the context in its system prompt.
+// changed, or why it declined. It works in TASK_UI_WORKSPACE_DIR, the
+// default workspace with the projects, with the context in its system
+// prompt.
 func (a *Agent) Note(ctx context.Context) error {
 	thread := a.getenv("TASK_UI_NOTE")
 	if thread == "" {
@@ -39,5 +40,5 @@ func (a *Agent) Note(ctx context.Context) error {
 		defer reply.Close()
 		out = io.MultiWriter(a.Stdout, reply)
 	}
-	return a.ask(ctx, a.getenv("TASK_UI_ROOT"), prompt, a.context(), out)
+	return a.ask(ctx, a.getenv("TASK_UI_WORKSPACE_DIR"), prompt, a.context(), out)
 }

@@ -1,4 +1,4 @@
-# Copy to task-ui.yml next to your folders (TASK_UI_ROOT), or point
+# Copy to task-ui.yml next to your folders (TASK_UI_WORKSPACE), or point
 # TASK_UI_CONFIG at it. The file is re-read when it changes.
 title: production
 
@@ -21,7 +21,7 @@ users:
     password: $2a$10$replace.with.output.of.task-ui.hash
     role: viewer
 
-# Optional: folders are discovered under TASK_UI_ROOT. List one here to
+# Optional: folders are discovered under TASK_UI_WORKSPACE. List one here to
 # restrict who runs it, run it with another command, or point it elsewhere.
 # The pipeline files are never changed.
 projects:
