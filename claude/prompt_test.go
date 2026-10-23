@@ -16,3 +16,10 @@ func TestRunSummary(t *testing.T) {
 	assert.Contains(t, claude.RunSummary, "No preamble, no headings")
 	assert.Contains(t, claude.RunSummary, "Change nothing.")
 }
+
+func TestHostsSummary(t *testing.T) {
+	t.Parallel()
+	assert.Contains(t, claude.HostsSummary, "one or two short paragraphs")
+	assert.Contains(t, claude.HostsSummary, "a markdown table with a row a host")
+	assert.Contains(t, claude.HostsSummary, "Change nothing.")
+}

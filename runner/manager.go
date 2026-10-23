@@ -130,7 +130,7 @@ func (m *Manager) Start(ctx context.Context, req Request) (*Session, error) {
 	}
 	session := newSession(run, req.Folder, req.Job)
 	session.env = req.Env
-	session.dir, session.args = req.Dir, req.Args
+	session.dir, session.args, session.timeout = req.Dir, req.Args, req.Timeout
 	session.workspaceName, session.workspace = m.workspace(ctx, req)
 	session.workspaceID = m.workspaceID(ctx, session.workspaceName)
 	if req.User != nil {
@@ -326,6 +326,13 @@ func (m *Manager) execute(ctx context.Context, session *Session) Status {
 		return failed(session, "cannot start: "+err.Error())
 	}
 	session.setProcess(proc, m.opts.Grace)
+	if session.timeout > 0 {
+		limit := time.AfterFunc(session.timeout, func() {
+			fmt.Fprintf(session, "\r\n\x1b[31mthe run went past %s\x1b[0m\r\n", session.timeout)
+			session.Kill(m.opts.Grace)
+		})
+		defer limit.Stop()
+	}
 	pump(proc, session)
 	return session.outcome(proc.Wait())
 }
@@ -359,7 +366,9 @@ func pump(proc *Process, session *Session) {
 func (m *Manager) command(ctx context.Context, session *Session) (*exec.Cmd, error) {
 	f, job, run := session.Folder, session.Job, session.Run
 	args := append([]string{"-l", "-c", `exec "$0" "$@"`}, job.Command...)
-	if len(session.args) > 0 {
+	// A host job's command carries its args already, as the remote
+	// command of ssh.
+	if len(session.args) > 0 && !job.IsHost() {
 		args = append(append(args, "--"), session.args...)
 	}
 	cmd := exec.Command("bash", args...)

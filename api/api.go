@@ -20,6 +20,8 @@ import (
 
 	chi "github.com/go-chi/chi/v5"
 
+	"github.com/titpetric/task-ui/beszel"
+	"github.com/titpetric/task-ui/hostrun"
 	"github.com/titpetric/task-ui/hours"
 	"github.com/titpetric/task-ui/integration"
 	"github.com/titpetric/task-ui/note"
@@ -214,6 +216,10 @@ func statusOf(err error) int {
 		return http.StatusBadRequest
 	case errors.Is(err, runner.ErrNotInteractive), errors.Is(err, runner.ErrNotRunning), errors.Is(err, runner.ErrNoArgs), errors.Is(err, storage.ErrInvalidName):
 		return http.StatusBadRequest
+	case errors.Is(err, hostrun.ErrUnknownHost), errors.Is(err, hostrun.ErrNoCommand), errors.Is(err, hostrun.ErrNoHosts):
+		return http.StatusBadRequest
+	case errors.Is(err, beszel.ErrOff):
+		return http.StatusNotFound
 	}
 	return http.StatusInternalServerError
 }

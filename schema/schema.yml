@@ -470,12 +470,24 @@
       type: text
       comment: Args
       datatype: varchar
+    - name: target
+      type: text
+      comment: Target
+      datatype: varchar
+    - name: batch_id
+      type: text
+      key: MUL
+      comment: Batch ID
+      datatype: char(26)
   indexes:
     - name: sqlite_autoindex_run_1
       columns:
         - id
       primary: true
       unique: true
+    - name: idx_run_batch
+      columns:
+        - batch_id
     - name: idx_run_folder_job
       columns:
         - folder
@@ -566,6 +578,14 @@
       type: timestamp
       comment: Updated At
       datatype: datetime
+    - name: target
+      type: text
+      comment: Target
+      datatype: varchar
+    - name: args
+      type: text
+      comment: Args
+      datatype: varchar
   indexes:
     - name: sqlite_autoindex_schedule_1
       columns:
@@ -1209,6 +1229,14 @@
       type: text
       comment: Workflow Ref
       datatype: char(26)
+    - name: target
+      type: text
+      comment: Target
+      datatype: varchar
+    - name: args
+      type: text
+      comment: Args
+      datatype: varchar
   indexes:
     - name: sqlite_autoindex_workflow_step_1
       columns:

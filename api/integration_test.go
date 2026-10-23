@@ -8,6 +8,7 @@ import (
 
 	"github.com/titpetric/task-ui/api"
 	"github.com/titpetric/task-ui/internal/assert"
+	"github.com/titpetric/task-ui/model"
 )
 
 // An admin saves an integration; the API shows its plain settings and of
@@ -59,31 +60,26 @@ func TestIntegration_Hosts(t *testing.T) {
 	assert.Equal(t, http.StatusOK, hosts.Status, string(hosts.Raw))
 	assert.Len(t, hosts.list("hosts"), 1)
 
-	// An admin runs a command on the hosts; nobody else may.
+	// An admin runs a command on the hosts, a run of @host each, under
+	// one batch; nobody else may.
 	denied := f.call(t, asOps, http.MethodPost, "/inventory/run", api.InventoryRequest{Command: "uptime"})
 	assert.Equal(t, http.StatusForbidden, denied.Status)
 	ran := f.call(t, asAdmin, http.MethodPost, "/inventory/run", api.InventoryRequest{Command: "echo hi from $(echo dev1)"})
-	assert.Equal(t, http.StatusOK, ran.Status, string(ran.Raw))
-	results := ran.list("results")
-	assert.Len(t, results, 1)
-	first := results[0].(map[string]any)
-	assert.Equal(t, "debian@dev1", first["login"])
-	assert.Equal(t, "hi from dev1\n", first["output"])
+	assert.Equal(t, http.StatusCreated, ran.Status, string(ran.Raw))
+	assert.True(t, model.ValidID(ran.str("batch")))
+	runs := ran.list("runs")
+	assert.Len(t, runs, 1)
+	run := f.finished(t, runs[0].(map[string]any)["id"].(string))
+	assert.Equal(t, model.StateOK, run.State)
+	assert.Equal(t, "dev1", run.Target)
+	assert.Equal(t, ran.str("batch"), run.BatchID)
+	assert.Equal(t, []string{"echo hi from $(echo dev1)"}, run.ArgList())
+	text := f.call(t, asAdmin, http.MethodGet, "/runs/"+run.ID+"/frame.txt", nil)
+	assert.Contains(t, string(text.Raw), "hi from dev1")
 	empty := f.call(t, asAdmin, http.MethodPost, "/inventory/run", api.InventoryRequest{Command: " "})
 	assert.Equal(t, http.StatusBadRequest, empty.Status)
 	stranger := f.call(t, asAdmin, http.MethodPost, "/inventory/run", api.InventoryRequest{Command: "uptime", Hosts: []string{"elsewhere"}})
 	assert.Equal(t, http.StatusBadRequest, stranger.Status)
-
-	// With summarize, Claude writes a summary after the run, signed in with
-	// the token the Claude integration holds for the admin.
-	unsigned := f.call(t, asAdmin, http.MethodPost, "/inventory/run", api.InventoryRequest{Command: "uptime", Summarize: true})
-	assert.Equal(t, http.StatusOK, unsigned.Status)
-	assert.Contains(t, string(unsigned.Raw), `"summary_error":"the Claude Code integration has no token for you"`)
-	f.call(t, asAdmin, http.MethodPut, "/integrations/claude", api.IntegrationRequest{Values: map[string]string{"token": "sk-1", "who": "admin"}})
-	summed := f.call(t, asAdmin, http.MethodPost, "/inventory/run", api.InventoryRequest{Command: "echo up", Summarize: true})
-	assert.Equal(t, http.StatusOK, summed.Status, string(summed.Raw))
-	assert.Equal(t, "summary by sk-1 of # `echo up` on 1 hosts", summed.Body["summary"])
-	assert.Contains(t, summed.Body["report"].(string), "## debian@dev1")
 
 	f.call(t, asAdmin, http.MethodPut, "/integrations/beszel", api.IntegrationRequest{Values: map[string]string{"url": hub.URL, "token": "expired"}})
 	assert.Equal(t, http.StatusBadGateway, f.call(t, asViewer, http.MethodGet, "/inventory", nil).Status)

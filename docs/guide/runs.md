@@ -10,6 +10,11 @@ the `prompt/view` permission; your own always do (see
 [Prompt](projects.md#prompt)). A run of the root names its job alone, as
 `@claude-note` or `@shell`, and a directory of the root by its path.
 
+A command on a host of the [inventory](inventory.md) runs as `@host`,
+the root's built-in job: one run a host, named `@host · <host>`, its
+command the run's args. `/runs?job=@host` lists them, and
+`/runs?batch=<id>` the runs started together on more than one host.
+
 ![The runs](../assets/runs-dark.png)
 
 ## Activity
@@ -38,7 +43,8 @@ run count, how many failed and the median duration.
 
 Each row is a run: when it started, the folder and job, who started it,
 how long it took and how it ended. **Filter** narrows it by folder, job,
-state and who started it, **By**. The **⋯** next to a name opens that
+state and who started it, **By**; `?batch=` in the address keeps the
+runs of one batch. The **⋯** next to a name opens that
 user's menu: their profile, their runs, and their permissions for those
 who may change them. A run in progress has **Attach**, a finished one **View**.
 

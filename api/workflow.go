@@ -134,7 +134,10 @@ func (h *Handlers) checkSteps(r *http.Request, req WorkflowRequest) ([]model.Wor
 		if job.IsShell() {
 			return nil, fmt.Errorf("step %d, %s / %s: %w", i+1, step.Folder, step.Job, folder.ErrShellUnattended)
 		}
-		steps = append(steps, model.WorkflowStep{Folder: f.ID, Job: job.ID, Disabled: disabled})
+		if problem := hostTarget(job, step.Target, step.Args); problem != "" {
+			return nil, fmt.Errorf("step %d, %s / %s: %s", i+1, step.Folder, step.Job, problem)
+		}
+		steps = append(steps, model.WorkflowStep{Folder: f.ID, Job: job.ID, Disabled: disabled, Target: strings.TrimSpace(step.Target), Args: model.EncodeList(step.Args)})
 	}
 	return steps, nil
 }

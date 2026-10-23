@@ -483,3 +483,35 @@ func TestManager_Integrations(t *testing.T) {
 		assert.Contains(t, out, want, user)
 	}
 }
+
+// Runs of a host job lock per target, so one runs on every host at
+// once; the args are the row's and not the command's, and a timeout
+// kills a run that goes past it.
+func TestManager_HostTargets(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	ctx := context.Background()
+	root := &folder.Folder{ID: model.Default, Dir: f.root}
+	start := func(target, script string, timeout time.Duration) *runner.Session {
+		job := root.HostJob()
+		job.Command = []string{"sh", "-c", script, "sh"}
+		session, err := f.manager.Start(ctx, runner.Request{Folder: root, Job: job, User: &model.User{ID: "u1", Name: "ops"}, Target: target, BatchID: "b1", Args: []string{"uptime"}, Timeout: timeout})
+		assert.NoError(t, err)
+		return session
+	}
+	slow := start("web1", "sleep 5", 300*time.Millisecond)
+	fast := start("web2", `echo "on web2 with $# args"`, 0)
+
+	out, status := collect(t, fast.Attach(true))
+	assert.Equal(t, model.StateOK, status.State)
+	assert.Contains(t, out, "on web2 with 0 args")
+	out, status = collect(t, slow.Attach(true))
+	assert.Equal(t, model.StateKilled, status.State)
+	assert.Contains(t, out, "the run went past 300ms")
+
+	row, err := f.runs.Get(ctx, fast.ID())
+	assert.NoError(t, err)
+	assert.Equal(t, "web2", row.Target)
+	assert.Equal(t, "b1", row.BatchID)
+	assert.Equal(t, []string{"uptime"}, row.ArgList())
+}

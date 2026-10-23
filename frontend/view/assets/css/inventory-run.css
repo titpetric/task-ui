@@ -120,8 +120,11 @@
   margin-top: 1rem;
 }
 
+/* The output takes the width the host and the result leave, and a
+   wide one scrolls inside it. */
 .run-results td.run-output {
   width: 100%;
+  max-width: 0;
   font-family: var(--font);
   font-size: var(--fs-xs);
   line-height: 1.45;
@@ -129,58 +132,17 @@
   overflow-wrap: anywhere;
 }
 
-.run-results .run-error {
-  color: var(--bad);
-}
-
-/* Every cell from the top, the host and its exit level with the first
-   line of its output; a long output shows its last screen, with Expand
-   over it. */
+/* Every cell from the top, the host and its result level with the
+   first line of its output. */
 .run-results td {
   vertical-align: top;
 }
 
-.run-results .output-toggle {
-  float: inline-end;
-  margin: 0 0 0.4rem 0.6rem;
-}
-
-.run-summary {
-  margin-bottom: 1rem;
-  padding: 0.75rem 1rem;
-  border: 1px solid var(--line);
-  border-inline-start: 3px solid var(--signal);
-  border-radius: var(--radius);
-
-  & h4 {
-    margin: 0;
-  }
-}
-
-.summary-text {
-  font-size: var(--fs-md);
-  line-height: 1.55;
-
-  & h5 {
-    margin: 0.9rem 0 0.3rem;
-    font-size: var(--fs-md);
-  }
-
-  & :is(p, ul, ol) {
-    margin: 0.4rem 0;
-  }
-
-  & :is(ul, ol) {
-    padding-inline-start: 1.25rem;
-  }
-
-  & pre {
-    padding: 0.5rem 0.75rem;
-    overflow-x: auto;
-    font-size: var(--fs-xs);
-    background: var(--ink-1);
-    border-radius: var(--radius);
-  }
+/* A host's output scrolls inside its cell. */
+.run-results .output {
+  max-height: 24rem;
+  margin: 0;
+  overflow: auto;
 }
 
 .note-form-foot .actions {

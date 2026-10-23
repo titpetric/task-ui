@@ -58,7 +58,7 @@ func newFixture(t *testing.T) *fixture {
 	t.Cleanup(func() { manager.Shutdown(context.Background()) })
 	schedules := storage.NewScheduleStorage(db)
 	users := storage.NewUserStorage(db)
-	loop := scheduler.NewLoop(schedules, users, catalogue{"infra": infra}, manager)
+	loop := scheduler.NewLoop(schedules, users, catalogue{"infra": infra, model.Default: {ID: model.Default, Dir: dir}}, manager)
 	ops := &model.User{Name: "ops", Role: model.RoleRunner}
 	assert.NoError(t, users.Create(context.Background(), ops))
 	f := &fixture{loop: loop, schedules: schedules, runs: runs, users: users, ops: ops, now: time.Date(2026, time.October, 17, 10, 0, 0, 0, time.UTC)}
@@ -254,4 +254,27 @@ func TestLoop_TickMayRun(t *testing.T) {
 	runs, err := f.runs.List(ctx, storage.RunFilter{Folder: "infra"})
 	assert.NoError(t, err)
 	assert.Len(t, runs, 0)
+}
+
+// A schedule of @host stays: the hosts permission decides whether it
+// runs, and without the hosts to run on it starts nothing.
+func TestLoop_HostSchedule(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	ctx := context.Background()
+	admin := &model.User{Name: "root", Role: model.RoleAdmin}
+	assert.NoError(t, f.users.Create(ctx, admin))
+	due := f.now.Add(-time.Minute)
+	for _, user := range []*model.User{f.ops, admin} {
+		schedule := &model.Schedule{Folder: model.Default, Job: model.HostJob, Target: "*", Args: `["uptime"]`, Expression: "@hourly", Enabled: 1, NextRunAt: &due, UserID: user.ID, UserName: user.Name}
+		assert.NoError(t, f.schedules.Create(ctx, schedule))
+	}
+	started, err := f.loop.Tick(ctx)
+	assert.NoError(t, err)
+	assert.Equal(t, 0, started)
+	schedules, err := f.schedules.List(ctx)
+	assert.NoError(t, err)
+	for _, schedule := range schedules {
+		assert.Equal(t, int64(1), schedule.Enabled)
+	}
 }

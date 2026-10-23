@@ -9,6 +9,7 @@ import (
 	"github.com/titpetric/task-ui/frontend/view"
 	"github.com/titpetric/task-ui/integration"
 	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/storage"
 )
 
 // integrations shows Settings, Integrations: a form for each integration.
@@ -62,7 +63,28 @@ func (h *Handlers) inventory(w http.ResponseWriter, r *http.Request) {
 		p.Logins = h.opts.SSH.Logins(r.Context(), hosts, 4*time.Second)
 	}
 	p.Summarize = p.Can("hosts") && h.claudeFor(r, p.User)
+	if p.Can("hosts") {
+		h.lastBatch(r, p)
+	}
 	h.render(w, http.StatusOK, "inventory", p)
+}
+
+// lastBatch puts the user's last Run on the inventory on the page: its
+// runs, one a host, and the prompt box about them, where Run and
+// summarize's thread shows.
+func (h *Handlers) lastBatch(r *http.Request, p *view.Page) {
+	last, err := h.opts.Runs.List(r.Context(), storage.RunFilter{Folder: model.Default, Job: model.HostJob, UserName: p.User.Name, Limit: 1})
+	if err != nil || len(last) == 0 {
+		return
+	}
+	runs := h.batch(r.Context(), last[0].BatchID)
+	if len(runs) == 0 {
+		runs = last
+	}
+	for _, run := range runs {
+		p.Batch = append(p.Batch, h.framed(h.runView(run)))
+	}
+	p.Prompt = h.runPrompt(r, p, &p.Batch[0])
 }
 
 // claudeFor reports whether the Claude Code integration has a token for

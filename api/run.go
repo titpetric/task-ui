@@ -7,9 +7,11 @@ import (
 	"net/http"
 	"path/filepath"
 	"strconv"
+	"strings"
 
 	"github.com/titpetric/task-ui/access"
 	"github.com/titpetric/task-ui/folder"
+	"github.com/titpetric/task-ui/hostrun"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/runner"
 	"github.com/titpetric/task-ui/storage"
@@ -32,6 +34,9 @@ type RunRequest struct {
 	// Summarize asks Claude, when the run ends, for its summary in a
 	// prompt about the run, as the user who starts it: prompt/edit.
 	Summarize bool `json:"summarize"`
+	// Target is the host a run of @host runs its command on, the args,
+	// or * for every host with an ssh login, a batch.
+	Target string `json:"target,omitempty"`
 }
 
 // RunView is a run as the API shows it: the row, and the live status
@@ -87,7 +92,7 @@ func (h *Handlers) endsNote(r *http.Request, run *model.Run) bool {
 func (h *Handlers) listRuns(w http.ResponseWriter, r *http.Request) {
 	user := access.UserFrom(r.Context())
 	q := r.URL.Query()
-	filter := storage.RunFilter{Folder: q.Get("folder"), Folders: user.FolderList(), Job: q.Get("job"), Dir: q.Get("dir"), State: q.Get("state"), Limit: queryInt(r, "limit", 50)}
+	filter := storage.RunFilter{Folder: q.Get("folder"), Folders: user.FolderList(), Job: q.Get("job"), Dir: q.Get("dir"), State: q.Get("state"), BatchID: q.Get("batch"), Limit: queryInt(r, "limit", 50)}
 	runs, err := h.opts.Runs.List(r.Context(), filter)
 	if err != nil {
 		failErr(w, err)
@@ -140,6 +145,10 @@ func (h *Handlers) startRun(w http.ResponseWriter, r *http.Request) {
 	if req.Summarize && !h.summarizes(w, r, job) {
 		return
 	}
+	if job.IsHost() {
+		h.startHostRun(w, r, req)
+		return
+	}
 	session, err := h.opts.Runner.Start(r.Context(), runner.Request{Folder: f, Job: job, User: user, Force: req.Force, Reason: req.Reason, Cols: req.Cols, Rows: req.Rows, Dir: dir, Args: req.Args})
 	if errors.Is(err, runner.ErrBusy) {
 		writeJSON(w, http.StatusConflict, map[string]any{"error": "already running", "run": h.view(r, session.Snapshot())})
@@ -161,6 +170,23 @@ func (h *Handlers) startRun(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusCreated, h.view(r, session.Snapshot()))
 }
 
+// startHostRun starts a run of @host on the request's target, the
+// command its args, and answers the run; a target of * starts a batch,
+// one run a host, and answers the first.
+func (h *Handlers) startHostRun(w http.ResponseWriter, r *http.Request, req RunRequest) {
+	target := strings.TrimSpace(req.Target)
+	if target == "" {
+		fail(w, http.StatusBadRequest, "a run of @host needs a target: a host of the inventory, or *")
+		return
+	}
+	host := hostrun.Request{Targets: []string{target}, Command: strings.Join(req.Args, " "), Batch: target == "*", Force: req.Force, Reason: req.Reason, Cols: req.Cols, Rows: req.Rows}
+	_, sessions, ok := h.startHosts(w, r, host, req.Summarize)
+	if !ok {
+		return
+	}
+	writeJSON(w, http.StatusCreated, h.view(r, sessions[0].Snapshot()))
+}
+
 // summarizes reports whether a run of the job may take a summary when
 // it ends: with prompt/edit and prompts on, for a job that runs to
 // an end of its own, no shell, Claude or interactive job. It answers the
@@ -173,7 +199,7 @@ func (h *Handlers) summarizes(w http.ResponseWriter, r *http.Request, job *folde
 	case h.opts.Board == nil:
 		fail(w, http.StatusNotFound, "prompts aren't available on this instance")
 		return false
-	case job.IsShell() || job.Interactive:
+	case job != nil && (job.IsShell() || job.Interactive):
 		fail(w, http.StatusBadRequest, "an interactive job can't have a summary")
 		return false
 	}

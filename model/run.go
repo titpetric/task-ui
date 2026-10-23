@@ -16,7 +16,15 @@ const (
 	// ClaudeJob is Claude Code in a terminal, in the folder or a
 	// directory inside it.
 	ClaudeJob = "@claude"
+	// HostJob is a command on a host of the inventory over ssh, a job
+	// of the root, _, whose run names the host as its target.
+	HostJob = "@host"
 )
+
+// IsHost reports whether the run is a command on a host, @host.
+func (r *Run) IsHost() bool {
+	return r != nil && r.Job == HostJob
+}
 
 // IsPrompt reports whether the run is a prompt's: @claude-prompt, or
 // internal/claude-prompt, which ran the prompts of older threads.
@@ -47,8 +55,12 @@ func (r *Run) IsClaude() bool {
 }
 
 // Key is the identity the run lock uses: one run per job per folder
-// and directory inside it.
+// and directory inside it, and per target: @host runs on many hosts at
+// once, one at a time on each.
 func (r *Run) Key() string {
+	if r.Target != "" {
+		return RunKey(r.Folder, r.Dir, r.Job) + " " + r.Target
+	}
 	return RunKey(r.Folder, r.Dir, r.Job)
 }
 
@@ -80,19 +92,23 @@ func (r Run) Place() string {
 }
 
 // Name returns the title of the run on a page: Place / job, or the job
-// alone for a job of the root, such as @claude-note. The stored row
-// keeps the folder _.
+// alone for a job of the root, such as @claude-note, and the target
+// after a dot: @host · web1. The stored row keeps the folder _.
 func (r Run) Name() string {
+	name := r.Place() + " / " + r.Job
 	if r.Folder == Default && r.Dir == "" {
-		return r.Job
+		name = r.Job
 	}
-	return r.Place() + " / " + r.Job
+	if r.Target != "" {
+		name += " · " + r.Target
+	}
+	return name
 }
 
 // Path is the run as text names it in one word, folder/job, with the
 // root's _/ dropped like Name does: @claude-note, deploy/up.
 func (r Run) Path() string {
-	return strings.TrimPrefix(r.Key(), Default+"/")
+	return strings.TrimPrefix(RunKey(r.Folder, r.Dir, r.Job), Default+"/")
 }
 
 // ArgList returns the arguments the run passed the job, after --.

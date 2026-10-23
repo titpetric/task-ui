@@ -15,3 +15,5 @@ Schedule.
 | next_run_at | datetime | MUL | Next Run At |
 | created_at  | datetime |     | Created At  |
 | updated_at  | datetime |     | Updated At  |
+| target      | varchar  |     | Target      |
+| args        | varchar  |     | Args        |

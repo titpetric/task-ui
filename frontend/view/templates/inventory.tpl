@@ -2,7 +2,7 @@
 <div class="page-head">
 	<div>
 		<h2>Inventory</h2>
-		<p>The hosts Beszel monitors, largest first. For each host: whether it's up, the ssh login task-ui uses, its cores, and how busy its CPU, memory and disk are. With Run on Hosts, you can run a command on many hosts at once, like pssh.</p>
+		<p>The hosts Beszel monitors, largest first. For each host: whether it's up, the ssh login task-ui uses, its cores, and how busy its CPU, memory and disk are. With Run on Hosts, you can run a command on many hosts at once, like pssh: each host gets a run of its own, with a recording, in Runs and the recents.</p>
 	</div>
 </div>
 
@@ -34,7 +34,32 @@
 		</div>
 		<div class="note-form-foot"><span></span><span class="actions">{{ if .Summarize }}<button class="btn" type="submit" name="summarize" value="1"><svg class="ic"><use href="#i-note"/></svg>Run and summarize</button>{{ end }}<button class="btn btn-primary" type="submit"><svg class="ic"><use href="#i-play"/></svg>Run</button></span></div>
 	</form>
-	<div class="inventory-results" data-inventory-results></div>
+	{{- /* The user's last Run: a run of @host a host, one batch. While one
+	     runs, the page fetches itself and puts this back. */}}
+	<div class="inventory-results" data-inventory-results>
+		{{- with .Batch }}
+		{{- $first := index . 0 }}{{ $live := false }}{{ range . }}{{ if eq .State "running" }}{{ $live = true }}{{ end }}{{ end }}
+		<div class="block-head"{{ if $live }} data-batch-live{{ end }}>
+			<h4>Your last run <small><code>{{ range $first.ArgList }}{{ . }}{{ end }}</code> on {{ len . }} host{{ if ne (len .) 1 }}s{{ end }}, {{ ago $first.StartedAt }}</small></h4>
+			{{- with $first.BatchID }}<a class="btn btn-sm" href="/runs?batch={{ . }}">In Runs</a>{{ end }}
+		</div>
+		<div class="table-wrap">
+		<table class="table run-results">
+			<thead><tr><th>Host</th><th>Result</th><th>Output</th></tr></thead>
+			<tbody>
+			{{- range . }}
+				<tr>
+					<td class="nowrap"><a href="/runs/{{ .ID }}"><code>{{ .Target }}</code></a></td>
+					<td class="nowrap">{{ template "state" . }} <span class="faint">{{ duration .Elapsed }}</span> <button type="button" class="btn btn-sm" data-attach="{{ .ID }}">{{ if eq .State "running" }}Attach{{ else }}View{{ end }}</button></td>
+					<td class="run-output">{{ if eq .State "running" }}<div class="frame" role="img" aria-label="Terminal of {{ .Target }}">{{ .FrameSVG }}</div>{{ else if .CastPath }}<pre class="output" data-output="{{ .ID }}" data-cols="{{ .TermCols }}" data-rows="{{ .TermRows }}"><span class="faint">Reading the recording…</span></pre>{{ else }}<span class="faint">No recording.</span>{{ end }}</td>
+				</tr>
+			{{- end }}
+			</tbody>
+		</table>
+		</div>
+		{{- end }}
+	</div>
+	{{- template "promptbox" . }}
 </section>
 {{- end }}
 {{- /* The hosts follow Beszel: the page fetches itself once a minute and

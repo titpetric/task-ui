@@ -1,6 +1,8 @@
 package runner
 
 import (
+	"time"
+
 	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/model"
 )
@@ -34,6 +36,15 @@ type Request struct {
 	// Args follow the job's argv after --, as argv and never through a
 	// shell: only for a job that takes args.
 	Args []string
+	// Target is the host a run of @host runs on, which the row keeps;
+	// two runs of a job with different targets run at once.
+	Target string
+	// BatchID groups the run with others started together, the ID of
+	// the batch's first run; the row keeps it.
+	BatchID string
+	// Timeout ends the run, killed, once it runs that long. Zero lets
+	// it run.
+	Timeout time.Duration
 	// ID runs the request again under the ID of a run of the same job,
 	// in the same directory: the new attempt replaces the run's row,
 	// recording, summary and artifacts. Empty takes a new ID.
@@ -49,6 +60,8 @@ func (req Request) newRun() *model.Run {
 		Job:      req.Job.ID,
 		Dir:      req.Job.Dir,
 		Args:     model.EncodeList(req.Args),
+		Target:   req.Target,
+		BatchID:  req.BatchID,
 		TermCols: int64(req.Cols),
 		TermRows: int64(req.Rows),
 	}

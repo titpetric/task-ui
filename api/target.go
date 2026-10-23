@@ -50,6 +50,11 @@ func (h *Handlers) canRun(r *http.Request, f *folder.Folder, job *folder.Job) bo
 	if job.IsShell() && !set.Allowed("shell") {
 		return false
 	}
+	// A command on a host takes the hosts permission, which no allow
+	// list of the root opens.
+	if job.IsHost() {
+		return f != nil && set.Allowed("hosts")
+	}
 	return f != nil && job != nil && set.Run(f.ID, f.Allow, job.Allow)
 }
 

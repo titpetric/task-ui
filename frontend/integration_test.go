@@ -5,9 +5,11 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/titpetric/task-ui/integration"
 	"github.com/titpetric/task-ui/internal/assert"
+	"github.com/titpetric/task-ui/model"
 )
 
 // Settings, Integrations shows a form per integration: a secret only as
@@ -78,4 +80,47 @@ func TestInventory(t *testing.T) {
 	assert.NotContains(t, body, "EPYC")
 	assert.Contains(t, body, `href="/inventory" class="active"`)
 	assert.Equal(t, http.StatusNotFound, f.get(t, asViewer, "/hosts").Status)
+}
+
+// The run panel shows the user's last Run, a row a host, linked to its
+// run, with the batch in Runs; each run page of the batch lists the
+// prompt threads about its first run, and names its host.
+func TestInventory_LastBatch(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	f.withKey(t)
+	hub := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte(`{"items":[{"id":"a","name":"dev1","host":"10.10.10.11","status":"up","info":{"t":4}}]}`))
+	}))
+	t.Cleanup(hub.Close)
+	ctx := context.Background()
+	assert.NoError(t, f.opts.Integrations.Save(ctx, integration.Beszel, map[string]string{"url": hub.URL, "token": "t1"}))
+	assert.NotContains(t, f.page(t, asAdmin, "/inventory"), "Your last run")
+
+	batch := model.NewID()
+	var runs []*model.Run
+	for _, host := range []string{"dev1", "dev2"} {
+		now := time.Now()
+		run := &model.Run{Folder: model.Default, Job: model.HostJob, Target: host, BatchID: batch, Args: `["uptime"]`, UserID: f.users[asAdmin].ID, UserName: asAdmin, State: model.StateOK, StartedAt: &now, FinishedAt: &now, CastPath: "x.cast"}
+		assert.NoError(t, f.opts.Runs.Create(ctx, run))
+		runs = append(runs, run)
+	}
+	thread := &model.Note{Channel: model.ChannelNotes, UserID: f.users[asAdmin].ID, UserName: asAdmin, Body: "Summarize the runs on these hosts.", State: model.NoteDone, WorkspaceID: model.Default, Dir: model.Default, AboutRunID: runs[0].ID}
+	assert.NoError(t, f.opts.Board.Notes.Create(ctx, thread))
+
+	body := f.page(t, asAdmin, "/inventory")
+	assert.Contains(t, body, "Your last run <small><code>uptime</code> on 2 hosts")
+	assert.Contains(t, body, `<a class="btn btn-sm" href="/runs?batch=`+batch+`">In Runs</a>`)
+	assert.Contains(t, body, `<a href="/runs/`+runs[1].ID+`"><code>dev2</code></a>`)
+	assert.Contains(t, body, `data-output="`+runs[0].ID+`"`)
+	assert.NotContains(t, body, "data-batch-live")
+	assert.Contains(t, body, "Summarize the runs on these hosts.")
+	assert.NotContains(t, f.page(t, asViewer, "/inventory"), "Your last run")
+
+	page := f.page(t, asAdmin, "/runs/"+runs[1].ID)
+	assert.Contains(t, page, "<h2>@host · dev2")
+	assert.Contains(t, page, "Summarize the runs on these hosts.")
+	listed := f.page(t, asAdmin, "/runs?batch="+batch)
+	assert.Contains(t, listed, runs[0].ID)
+	assert.Contains(t, listed, runs[1].ID)
 }

@@ -1,16 +1,18 @@
 package api
 
 import (
+	"context"
 	"errors"
+	"log/slog"
 	"net/http"
-	"strings"
-	"time"
 
 	"github.com/titpetric/task-ui/access"
 	"github.com/titpetric/task-ui/beszel"
 	"github.com/titpetric/task-ui/claude"
+	"github.com/titpetric/task-ui/hostrun"
 	"github.com/titpetric/task-ui/integration"
-	"github.com/titpetric/task-ui/sshprobe"
+	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/runner"
 )
 
 // integrationView reads an integration's settings for the user: the plain
@@ -117,18 +119,14 @@ func (h *Handlers) listHosts(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"hosts": beszel.ByCapacity(systems)})
 }
 
-// runTimeout bounds a command on one host.
-const runTimeout = 2 * time.Minute
-
-// runOnHosts runs a command on hosts of the inventory, all at once, over
-// the ssh login task-ui has to each, and returns each host's output and
-// exit code. Takes hosts: the logins reach the hosts as debian or root.
+// runOnHosts runs a command on hosts of the inventory, all at once, a
+// run of @host each over the ssh login task-ui has to the host, under
+// one batch, and answers the batch's ID and its runs. With summarize,
+// Claude summarizes the batch once every run ended, in a thread about
+// its first run. Takes hosts: the logins reach the hosts as debian or
+// root.
 func (h *Handlers) runOnHosts(w http.ResponseWriter, r *http.Request) {
 	if !h.require(w, r, "hosts") {
-		return
-	}
-	if h.opts.Hosts == nil || h.opts.SSH == nil {
-		fail(w, http.StatusNotFound, beszel.ErrOff.Error())
 		return
 	}
 	var req InventoryRequest
@@ -136,60 +134,57 @@ func (h *Handlers) runOnHosts(w http.ResponseWriter, r *http.Request) {
 		fail(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	if strings.TrimSpace(req.Command) == "" {
-		fail(w, http.StatusBadRequest, "enter a command")
+	if req.Summarize && !h.summarizes(w, r, nil) {
 		return
 	}
-	systems, err := h.opts.Hosts.Systems(r.Context())
-	if err != nil {
-		fail(w, http.StatusBadGateway, err.Error())
+	batch, sessions, ok := h.startHosts(w, r, hostrun.Request{Targets: req.Hosts, Command: req.Command, Batch: true}, req.Summarize)
+	if !ok {
 		return
 	}
-	known := map[string]bool{}
-	var all []string
-	for _, system := range beszel.ByCapacity(systems) {
-		known[system.Host] = true
-		all = append(all, system.Host)
+	views := make([]RunView, 0, len(sessions))
+	for _, session := range sessions {
+		views = append(views, h.view(r, session.Snapshot()))
 	}
-	hosts := req.Hosts
-	if len(hosts) == 0 {
-		hosts = all
-	}
-	for _, host := range hosts {
-		if !known[host] {
-			fail(w, http.StatusBadRequest, "no host "+host+" in the inventory")
-			return
-		}
-	}
-	logins := h.opts.SSH.Logins(r.Context(), hosts, 10*time.Second)
-	if len(req.Hosts) == 0 {
-		var reachable []string
-		for _, host := range hosts {
-			if logins[host] != "" {
-				reachable = append(reachable, host)
-			}
-		}
-		hosts = reachable
-	}
-	results := h.opts.SSH.Run(r.Context(), hosts, logins, req.Command, runTimeout)
-	body := map[string]any{"results": results}
-	if req.Summarize {
-		report := sshprobe.Report(req.Command, results)
-		body["report"] = report
-		summary, err := h.summarize(r, summaryPrompt, report)
-		if err != nil {
-			body["summary_error"] = err.Error()
-		} else {
-			body["summary"] = summary
-		}
-	}
-	writeJSON(w, http.StatusOK, body)
+	writeJSON(w, http.StatusCreated, map[string]any{"batch": batch, "runs": views})
 }
 
-// summaryPrompt is what Claude reads the report with.
-const summaryPrompt = "The input is a markdown report of one shell command run on several hosts over ssh: a section a host, with its exit code and output. " +
-	"Summarise it for the operator in one or two short paragraphs: lead with what needs attention (failures, hosts that differ, warnings, anything near a limit), then a line on what is fine, naming the hosts. " +
-	"Then, only if it helps, a markdown table with a row a host. No preamble, no headings, don't explain the obvious, and say only what the report shows."
+// startHosts starts the runs of @host a request names, as the user,
+// and with summarize asks Claude about them once they ended: about the
+// batch when there are more than one, about the run when one. It answers the
+// request and returns false when nothing started.
+func (h *Handlers) startHosts(w http.ResponseWriter, r *http.Request, req hostrun.Request, summarize bool) (string, []*runner.Session, bool) {
+	if h.opts.HostRuns == nil {
+		fail(w, http.StatusNotFound, beszel.ErrOff.Error())
+		return "", nil, false
+	}
+	user := access.UserFrom(r.Context())
+	batch, sessions, err := h.opts.HostRuns.Start(r.Context(), user, req)
+	if err != nil {
+		failErr(w, err)
+		return "", nil, false
+	}
+	if summarize {
+		go h.summarizeHosts(user, sessions)
+	}
+	return batch, sessions, true
+}
+
+// summarizeHosts waits for the host runs to end, then asks Claude for
+// their summary as the user who started them: a thread about the first
+// run, of the batch when there are more than one.
+func (h *Handlers) summarizeHosts(user *model.User, sessions []*runner.Session) {
+	for _, session := range sessions {
+		<-session.Done()
+	}
+	first := sessions[0].ID()
+	ask := h.opts.Board.SummarizeRun
+	if len(sessions) > 1 {
+		ask = h.opts.Board.SummarizeBatch
+	}
+	if _, err := ask(context.Background(), user, first); err != nil {
+		slog.Warn("host runs summary not asked", "run", first, "err", err)
+	}
+}
 
 // summarize sends the report to Claude, signed in with the token the
 // Claude integration holds for the user, with task-ui's context and

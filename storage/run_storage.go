@@ -36,9 +36,12 @@ type RunFilter struct {
 	// UserName narrows to the runs a user started, by name, which a run
 	// keeps after its user leaves.
 	UserName string
-	Before   string
-	After    string
-	Limit    int
+	// BatchID keeps the runs started together, the host runs of one Run
+	// on the inventory.
+	BatchID string
+	Before  string
+	After   string
+	Limit   int
 }
 
 // Create inserts a run as running, started now.
@@ -111,6 +114,7 @@ func runQuery(filter RunFilter) (string, []any) {
 	add("state", filter.State)
 	add("user_id", filter.UserID)
 	add("user_name", filter.UserName)
+	add("batch_id", filter.BatchID)
 	if len(filter.Folders) > 0 {
 		where = append(where, "folder IN (?"+strings.Repeat(", ?", len(filter.Folders)-1)+")")
 		for _, folder := range filter.Folders {

@@ -780,6 +780,12 @@ type Run struct {
 
 	// Args
 	Args string `db:"args" json:"args"`
+
+	// Target
+	Target string `db:"target" json:"target"`
+
+	// Batch ID
+	BatchID string `db:"batch_id" json:"batch_id"`
 }
 
 // GetID will return the value of ID.
@@ -896,11 +902,23 @@ func (r *Run) GetArgs() string { return r.Args }
 // SetArgs sets Args to the provided value.
 func (r *Run) SetArgs(val string) { r.Args = val }
 
+// GetTarget will return the value of Target.
+func (r *Run) GetTarget() string { return r.Target }
+
+// SetTarget sets Target to the provided value.
+func (r *Run) SetTarget(val string) { r.Target = val }
+
+// GetBatchID will return the value of BatchID.
+func (r *Run) GetBatchID() string { return r.BatchID }
+
+// SetBatchID sets BatchID to the provided value.
+func (r *Run) SetBatchID(val string) { r.BatchID = val }
+
 // RunTable is the name of the table in the DB.
 const RunTable = "`run`"
 
 // RunFields is a list of all columns in the DB table.
-var RunFields = []string{"id", "folder", "job", "user_id", "user_name", "state", "exit_code", "forced", "scheduled", "term_cols", "term_rows", "cast_path", "reason", "started_at", "finished_at", "created_at", "updated_at", "dir", "args"}
+var RunFields = []string{"id", "folder", "job", "user_id", "user_name", "state", "exit_code", "forced", "scheduled", "term_cols", "term_rows", "cast_path", "reason", "started_at", "finished_at", "created_at", "updated_at", "dir", "args", "target", "batch_id"}
 
 // RunPrimaryFields are the primary key fields in the DB table.
 var RunPrimaryFields = []string{"id"}
@@ -989,6 +1007,12 @@ type Schedule struct {
 
 	// Updated At
 	UpdatedAt *time.Time `db:"updated_at" json:"updated_at"`
+
+	// Target
+	Target string `db:"target" json:"target"`
+
+	// Args
+	Args string `db:"args" json:"args"`
 }
 
 // GetID will return the value of ID.
@@ -1057,11 +1081,23 @@ func (s *Schedule) GetUpdatedAt() *time.Time { return s.UpdatedAt }
 // SetUpdatedAt sets UpdatedAt to the provided value.
 func (s *Schedule) SetUpdatedAt(stamp time.Time) { s.UpdatedAt = &stamp }
 
+// GetTarget will return the value of Target.
+func (s *Schedule) GetTarget() string { return s.Target }
+
+// SetTarget sets Target to the provided value.
+func (s *Schedule) SetTarget(val string) { s.Target = val }
+
+// GetArgs will return the value of Args.
+func (s *Schedule) GetArgs() string { return s.Args }
+
+// SetArgs sets Args to the provided value.
+func (s *Schedule) SetArgs(val string) { s.Args = val }
+
 // ScheduleTable is the name of the table in the DB.
 const ScheduleTable = "`schedule`"
 
 // ScheduleFields is a list of all columns in the DB table.
-var ScheduleFields = []string{"id", "folder", "job", "user_id", "user_name", "expression", "enabled", "last_run_at", "next_run_at", "created_at", "updated_at"}
+var ScheduleFields = []string{"id", "folder", "job", "user_id", "user_name", "expression", "enabled", "last_run_at", "next_run_at", "created_at", "updated_at", "target", "args"}
 
 // SchedulePrimaryFields are the primary key fields in the DB table.
 var SchedulePrimaryFields = []string{"id"}
@@ -2035,6 +2071,12 @@ type WorkflowStep struct {
 
 	// Workflow Ref
 	WorkflowRef string `db:"workflow_ref" json:"workflow_ref"`
+
+	// Target
+	Target string `db:"target" json:"target"`
+
+	// Args
+	Args string `db:"args" json:"args"`
 }
 
 // GetID will return the value of ID.
@@ -2079,11 +2121,23 @@ func (w *WorkflowStep) GetWorkflowRef() string { return w.WorkflowRef }
 // SetWorkflowRef sets WorkflowRef to the provided value.
 func (w *WorkflowStep) SetWorkflowRef(val string) { w.WorkflowRef = val }
 
+// GetTarget will return the value of Target.
+func (w *WorkflowStep) GetTarget() string { return w.Target }
+
+// SetTarget sets Target to the provided value.
+func (w *WorkflowStep) SetTarget(val string) { w.Target = val }
+
+// GetArgs will return the value of Args.
+func (w *WorkflowStep) GetArgs() string { return w.Args }
+
+// SetArgs sets Args to the provided value.
+func (w *WorkflowStep) SetArgs(val string) { w.Args = val }
+
 // WorkflowStepTable is the name of the table in the DB.
 const WorkflowStepTable = "`workflow_step`"
 
 // WorkflowStepFields is a list of all columns in the DB table.
-var WorkflowStepFields = []string{"id", "workflow_id", "position", "folder", "job", "disabled", "workflow_ref"}
+var WorkflowStepFields = []string{"id", "workflow_id", "position", "folder", "job", "disabled", "workflow_ref", "target", "args"}
 
 // WorkflowStepPrimaryFields are the primary key fields in the DB table.
 var WorkflowStepPrimaryFields = []string{"id"}

@@ -26,6 +26,7 @@ import (
 	"github.com/titpetric/task-ui/frontend"
 	"github.com/titpetric/task-ui/frontend/view"
 	"github.com/titpetric/task-ui/git"
+	"github.com/titpetric/task-ui/hostrun"
 	"github.com/titpetric/task-ui/integration"
 	"github.com/titpetric/task-ui/mcp"
 	"github.com/titpetric/task-ui/model"
@@ -281,8 +282,11 @@ func (a *App) wire(version string) error {
 		KeyGrants:     grants,
 		Users:         a.Users,
 	})
+	hostRuns := &hostrun.Starter{Catalogue: a.Catalogue, Hosts: hosts, SSH: prober, Runner: a.Runner}
 	a.Scheduler = scheduler.NewLoop(schedules, a.Users, a.Catalogue, a.Runner)
+	a.Scheduler.Hosts = hostRuns
 	a.Workflows = workflow.New(workflows, workflowRuns, a.Catalogue, a.Runner)
+	a.Workflows.Hosts = hostRuns
 	events := event.NewBus()
 	a.Workflows.Events = events
 	a.Runner.Events = events
@@ -315,7 +319,7 @@ func (a *App) wire(version string) error {
 		FolderRefs: refs, WorkspaceKeys: keyring, KeyGrants: grants,
 		Workflows: workflows, WorkflowRuns: workflowRuns, Flows: a.Workflows, Events: events,
 		Runner: a.Runner, Catalogue: a.Catalogue, Git: g, Keys: keys, KeyPolicies: keyPolicies, Env: env, Recordings: recordings, Root: cfg.Root, Board: a.Board,
-		Integrations: integrations, Hosts: hosts, SSH: prober, Summarizer: &claude.Summarizer{Timeout: 3 * time.Minute},
+		Integrations: integrations, Hosts: hosts, HostRuns: hostRuns, Summarizer: &claude.Summarizer{Timeout: 3 * time.Minute},
 		AddUser: addUser, RemoveUser: removeUser, Tokens: a.Guard.Tokens, Now: cfg.Clock(), Summaries: summaries, Version: version,
 	})
 	pages, err := frontend.New(frontend.Options{

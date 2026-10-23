@@ -102,6 +102,9 @@ type Page struct {
 	// Inventory and Summary on runs and workflow runs: the Claude
 	// integration has a token for the user.
 	Summarize bool
+	// Batch are the runs of the user's last Run on the inventory, one a
+	// host, oldest first.
+	Batch []Run
 
 	Runs []Run
 	// Pager links the runs of the page to the newer and the older ones,
@@ -337,10 +340,14 @@ func (p *Page) UserNames() []string {
 }
 
 // CanRun reports whether the signed in user may run a job: a shell job
-// takes the shell permission besides.
+// takes the shell permission besides, and a command on a host the hosts
+// permission alone.
 func (p *Page) CanRun(f *folder.Folder, job *folder.Job) bool {
 	if f == nil || job == nil || (job.IsShell() && !p.Can("shell")) {
 		return false
+	}
+	if job.IsHost() {
+		return p.Can("hosts")
 	}
 	return p.permissions().Run(f.ID, f.Allow, job.Allow)
 }
