@@ -281,3 +281,51 @@ func TestView_RenderTableHeadings(t *testing.T) {
 	assert.NoError(t, v.Render(&buf, "job", admin(t)))
 	assert.Contains(t, buf.String(), "<h4>Runs <small>newest first</small></h4>")
 }
+
+// A workspace's configure page lists no projects, and holds Export and
+// Delete at the top right, Export opening the dialog of the
+// passphrase, typed or generated.
+func TestWorkspaceEdit_Page(t *testing.T) {
+	t.Parallel()
+	v, err := view.New()
+	assert.NoError(t, err)
+	p := admin(t)
+	p.Workspace = &model.Workspace{Folder: "malta", SourceURL: "git@example.com:malta.git"}
+	p.Nested = map[string][]string{"malta": {"malta/api"}}
+	p.KeysDir = "/keys"
+	p.Form = map[string]string{"title": "Malta"}
+	var buf bytes.Buffer
+	assert.NoError(t, v.Render(&buf, "workspace_edit", p))
+	body := buf.String()
+	assert.NotContains(t, body, `<span class="label">Projects`)
+	assert.NotContains(t, body, `href="/settings/projects/malta/api"`)
+
+	head := body[strings.Index(body, `<div class="page-head">`):strings.Index(body, `<form class="form" data-api="/api/workspaces/malta"`)]
+	exportAt, deleteAt := strings.Index(head, `data-dialog-open="export-dialog"`), strings.Index(head, `data-delete="/api/workspaces/malta"`)
+	assert.True(t, exportAt > 0 && deleteAt > exportAt, "Export, then Delete, in the page head")
+	assert.Contains(t, head, `class="btn btn-danger"`)
+	assert.Contains(t, body, `<dialog class="confirm workspace-export" id="export-dialog"`)
+	assert.Contains(t, body, `data-export="/api/workspaces/malta/export"`)
+	assert.Contains(t, body, `data-passphrase-generate`)
+	assert.Contains(t, body, `minlength="12"`)
+	assert.Contains(t, body, `malta.tui.age`)
+
+	p.Workspace = &model.Workspace{Folder: model.Default}
+	buf.Reset()
+	assert.NoError(t, v.Render(&buf, "workspace_edit", p))
+	assert.Contains(t, buf.String(), `data-dialog-open="export-dialog"`)
+	assert.NotContains(t, buf.String(), `data-delete="/api/workspaces/_"`, "the default workspace stays")
+}
+
+// The Workspaces page opens Import in a dialog from its head.
+func TestWorkspaces_ImportDialog(t *testing.T) {
+	t.Parallel()
+	v, err := view.New()
+	assert.NoError(t, err)
+	var buf bytes.Buffer
+	assert.NoError(t, v.Render(&buf, "workspaces", admin(t)))
+	body := buf.String()
+	assert.Contains(t, body, `data-dialog-open="import-dialog"`)
+	assert.Contains(t, body, `<dialog class="confirm workspace-import" id="import-dialog"`)
+	assert.Contains(t, body, `data-import="/api/workspaces/import"`)
+}

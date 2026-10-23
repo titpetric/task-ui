@@ -44,7 +44,7 @@ func (f *fixture) importBundle(t *testing.T, user string, bundle []byte, passphr
 	t.Helper()
 	var body bytes.Buffer
 	form := multipart.NewWriter(&body)
-	part, err := form.CreateFormFile("bundle", "acme.taskui-ws")
+	part, err := form.CreateFormFile("bundle", "acme"+workspace.Extension)
 	assert.NoError(t, err)
 	_, err = part.Write(bundle)
 	assert.NoError(t, err)
@@ -63,14 +63,16 @@ func TestWorkspaceExport_AdminOnly(t *testing.T) {
 	f := newFixture(t)
 	f.withKeyring(t)
 	for _, user := range []string{asOps, asViewer, asLimited} {
-		res := f.call(t, user, http.MethodPost, "/workspaces/_/export", api.WorkspaceExportRequest{Passphrase: "p"})
+		res := f.call(t, user, http.MethodPost, "/workspaces/_/export", api.WorkspaceExportRequest{Passphrase: passphrase})
 		assert.Equal(t, http.StatusForbidden, res.Status, user)
 		res = f.importBundle(t, user, []byte("x"), "p", "acme")
 		assert.Equal(t, http.StatusForbidden, res.Status, user)
 	}
 	res := f.call(t, asAdmin, http.MethodPost, "/workspaces/_/export", api.WorkspaceExportRequest{})
 	assert.Equal(t, http.StatusBadRequest, res.Status, "a passphrase is required")
-	res = f.call(t, asAdmin, http.MethodPost, "/workspaces/nope/export", api.WorkspaceExportRequest{Passphrase: "p"})
+	res = f.call(t, asAdmin, http.MethodPost, "/workspaces/_/export", api.WorkspaceExportRequest{Passphrase: "short"})
+	assert.Equal(t, http.StatusBadRequest, res.Status, "a passphrase takes 12 characters")
+	res = f.call(t, asAdmin, http.MethodPost, "/workspaces/nope/export", api.WorkspaceExportRequest{Passphrase: passphrase})
 	assert.Equal(t, http.StatusNotFound, res.Status)
 }
 
@@ -80,5 +82,5 @@ func TestWorkspaceExport_NamedImport(t *testing.T) {
 	f := newFixture(t)
 	f.withKeyring(t)
 	assert.NoError(t, f.opts.Workspaces.Create(context.Background(), &model.Workspace{Folder: "import"}))
-	assert.NotEmpty(t, f.export(t, "import", "p"))
+	assert.NotEmpty(t, f.export(t, "import", passphrase))
 }

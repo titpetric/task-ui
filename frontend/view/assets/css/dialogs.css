@@ -39,6 +39,38 @@ dialog.confirm {
   gap: 0.5rem;
 }
 
+/* A workspace's Export and Import: a form in the confirm dialog, a
+   passphrase field with Copy and Generate beside it. */
+dialog.workspace-export,
+dialog.workspace-import {
+  width: min(34rem, calc(100vw - 2rem));
+
+  & p {
+    color: var(--text-dim);
+    font-size: var(--fs-sm);
+  }
+
+  & .passphrase {
+    display: flex;
+    gap: 0.4rem;
+    align-items: center;
+
+    & input {
+      flex: 1 1 auto;
+      min-width: 0;
+      font-family: var(--font);
+    }
+  }
+
+  & p.passphrase-note {
+    padding: 0.5rem 0.7rem;
+    border: 1px solid var(--signal);
+    border-radius: var(--radius);
+    background: var(--signal-wash);
+    color: var(--text);
+  }
+}
+
 /* ------------------------------------------------------------------- modal */
 
 dialog.run {

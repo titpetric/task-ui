@@ -524,8 +524,9 @@ the folder you name, **Move up** and **Move down** order them, and the
 remove button deletes one with the projects inside it. **Configure**
 changes a workspace's title, description and **Recursive**, the toggle
 a project has, and holds its **Keys**, the SSH keys of its runs, which the
-[Keys](#keys) page also lists, and
-**Export**, which **Import** on another instance reads.
+[Keys](#keys) page also lists. **Export** at the top right of that page
+downloads the workspace, encrypted to a passphrase, which **Import** at
+the top right of the Workspaces page reads on another instance.
 [Workspaces](workspaces.md) covers them, their keys and runs, the move
 between instances, what they keep apart, and the prompt against a
 workspace.

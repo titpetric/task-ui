@@ -110,28 +110,19 @@ func TestLocal_Bundle(t *testing.T) {
 	files, roles, users, err := from.Bundle(ctx, scope)
 	assert.NoError(t, err)
 	assert.Len(t, files, 2)
-	assert.Contains(t, files, "ssh/workspace_malta_ssh_ed25519.key")
+	assert.Contains(t, files, "workspace_malta_ssh_ed25519.key")
 
 	assert.ErrorIs(t, from.CheckBundle(ctx, files), keystore.ErrExists)
 	to := newStore(t)
 	assert.NoError(t, to.CheckBundle(ctx, files))
 	taken, err := to.Restore(ctx, keystore.ScopeWorkspace("w9"), "malta", "malta2", files, roles, users)
 	assert.NoError(t, err)
-	assert.Len(t, taken, 2)
+	assert.Len(t, taken, 1)
 	got, err := to.Get(ctx, "workspace_malta2_ssh_ed25519")
 	assert.NoError(t, err, "the workspace's name follows its folder")
 	assert.Equal(t, []string{"ops"}, got.Users)
 	assert.Equal(t, keystore.ScopeWorkspace("w9"), got.Scope)
 
-	// An older bundle names its keys by type; they take the workspace's names.
-	old := &sshkey.Store{Dir: t.TempDir()}
-	_, err = old.GenerateAs("ed25519", "deploy", "")
-	assert.NoError(t, err)
-	pem, err := os.ReadFile(filepath.Join(old.Dir, "id_ed25519_deploy"))
-	assert.NoError(t, err)
-	taken, err = newStore(t).Restore(ctx, keystore.ScopeWorkspace("w2"), "", "acme", map[string][]byte{"ssh/id_ed25519_deploy": pem, "ssh/id_ed25519_deploy.pub": []byte("x")}, nil, nil)
-	assert.NoError(t, err)
-	assert.Equal(t, []string{"workspace_acme_deploy_ed25519"}, taken)
-	_, err = to.Restore(ctx, scope, "", "x", map[string][]byte{"other/x.key": pem}, nil, nil)
+	_, err = to.Restore(ctx, scope, "", "x", map[string][]byte{"other/x.key": []byte("x")}, nil, nil)
 	assert.Error(t, err)
 }

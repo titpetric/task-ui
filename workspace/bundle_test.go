@@ -47,9 +47,35 @@ func raw(t *testing.T, passphrase string, entries map[string]string) []byte {
 	return out.Bytes()
 }
 
-const manifest = `{"format":1,"workspace":{"folder":"acme"}}`
+const manifest = `{"format":2,"workspace":{"folder":"acme"}}`
 
-// A bundle reads back as written with its passphrase, and with no other.
+// passphrase is long enough for an export.
+const passphrase = "correct horse battery"
+
+// entries lists the names of a bundle's archive, decrypted.
+func entries(t *testing.T, data []byte, passphrase string) []string {
+	t.Helper()
+	identity, err := age.NewScryptIdentity(passphrase)
+	assert.NoError(t, err)
+	decrypted, err := age.Decrypt(bytes.NewReader(data), identity)
+	assert.NoError(t, err)
+	zipped, err := gzip.NewReader(decrypted)
+	assert.NoError(t, err)
+	archive := tar.NewReader(zipped)
+	var names []string
+	for {
+		header, err := archive.Next()
+		if err != nil {
+			break
+		}
+		names = append(names, header.Name)
+	}
+	return names
+}
+
+// A bundle reads back as written with its passphrase, and with no
+// other: the manifest with its secrets in plain text, and the SSH keys
+// under .ssh/, nothing else.
 func TestBundle(t *testing.T) {
 	t.Parallel()
 	bundle := &workspace.Bundle{
@@ -57,57 +83,71 @@ func TestBundle(t *testing.T) {
 			Format: workspace.Format, Version: "test",
 			Workspace: model.Workspace{Folder: "acme", Title: "Acme"},
 			Projects:  []model.Project{{Folder: "api", SourceURL: "file:///api.git"}},
-			Secrets:   []model.Secret{{Scope: "workspace:", Name: "TOKEN", Content: "ciphertext"}},
+			Secrets:   []model.Secret{{Scope: "workspace:", Name: "TOKEN", Content: "plain value"}},
 		},
-		Keys:       map[string][]byte{"encrypt/id_ed25519": []byte("private"), "ssh/id_ed25519_deploy.pub": []byte("public")},
+		Keys:       map[string][]byte{"workspace_acme_deploy_ed25519.key": []byte("private"), "workspace_acme_deploy_ed25519.pub": []byte("public")},
 		WorkFactor: fast,
 	}
 	var out bytes.Buffer
-	assert.NoError(t, bundle.Write(&out, "correct horse"))
-	assert.Error(t, bundle.Write(&bytes.Buffer{}, ""), "a passphrase is required")
+	assert.NoError(t, bundle.Write(&out, passphrase))
+	assert.Equal(t, []string{"manifest.json", ".ssh/workspace_acme_deploy_ed25519.key", ".ssh/workspace_acme_deploy_ed25519.pub"}, entries(t, out.Bytes(), passphrase))
+	assert.False(t, bytes.Contains(out.Bytes(), []byte("plain value")), "the secrets are plain inside the encryption alone")
+	assert.ErrorIs(t, bundle.Write(&bytes.Buffer{}, ""), workspace.ErrWeakPassphrase)
+	assert.ErrorIs(t, bundle.Write(&bytes.Buffer{}, "short"), workspace.ErrWeakPassphrase)
 
-	got, err := workspace.ReadBundle(bytes.NewReader(out.Bytes()), "correct horse")
+	got, err := workspace.ReadBundle(bytes.NewReader(out.Bytes()), passphrase)
 	assert.NoError(t, err)
 	assert.Equal(t, "Acme", got.Manifest.Workspace.Title)
 	assert.Equal(t, "api", got.Manifest.Projects[0].Folder)
-	assert.Equal(t, "ciphertext", got.Manifest.Secrets[0].Content)
-	assert.Equal(t, "private", string(got.Keys["encrypt/id_ed25519"]))
-	assert.Equal(t, "public", string(got.Keys["ssh/id_ed25519_deploy.pub"]))
+	assert.Equal(t, "plain value", got.Manifest.Secrets[0].Content)
+	assert.Equal(t, "private", string(got.Keys["workspace_acme_deploy_ed25519.key"]))
+	assert.Equal(t, "public", string(got.Keys["workspace_acme_deploy_ed25519.pub"]))
 
-	_, err = workspace.ReadBundle(bytes.NewReader(out.Bytes()), "wrong")
-	assert.True(t, errors.Is(err, workspace.ErrPassphrase), err)
-	_, err = workspace.ReadBundle(strings.NewReader("not age"), "correct horse")
-	assert.True(t, errors.Is(err, workspace.ErrBundle), err)
+	_, err = workspace.ReadBundle(bytes.NewReader(out.Bytes()), "wrong passphrase")
+	assert.ErrorIs(t, err, workspace.ErrPassphrase)
+	_, err = workspace.ReadBundle(strings.NewReader("not age"), passphrase)
+	assert.ErrorIs(t, err, workspace.ErrBundle)
 }
 
-// A bundle with an entry outside manifest.json and keys/, a link, a
+// A passphrase takes MinPassphrase characters, counted as runes.
+func TestCheckPassphrase(t *testing.T) {
+	t.Parallel()
+	assert.NoError(t, workspace.CheckPassphrase(strings.Repeat("x", workspace.MinPassphrase)))
+	assert.NoError(t, workspace.CheckPassphrase("abcd-efgh-ijkl-mnop-qrst-uvwx"))
+	assert.ErrorIs(t, workspace.CheckPassphrase(strings.Repeat("x", workspace.MinPassphrase-1)), workspace.ErrWeakPassphrase)
+	assert.ErrorIs(t, workspace.CheckPassphrase(strings.Repeat("č", workspace.MinPassphrase-1)), workspace.ErrWeakPassphrase)
+}
+
+// A bundle with an entry outside manifest.json and .ssh/, a link, a
 // key file over its limit, no manifest or another format fails.
 func TestReadBundle_Refused(t *testing.T) {
 	t.Parallel()
 	for name, entries := range map[string]map[string]string{
 		"traversal":        {"manifest.json": manifest, "../evil": "x"},
-		"traversal inside": {"manifest.json": manifest, "keys/ssh/../../evil": "x"},
+		"traversal inside": {"manifest.json": manifest, ".ssh/../../evil.key": "x"},
 		"absolute":         {"manifest.json": manifest, "/etc/evil": "x"},
-		"other dir":        {"manifest.json": manifest, "keys/other/id_ed25519": "x"},
-		"nested":           {"manifest.json": manifest, "keys/ssh/a/id_ed25519": "x"},
-		"dot file":         {"manifest.json": manifest, "keys/ssh/.hidden": "x"},
-		"symlink":          {"manifest.json": manifest, "keys/ssh/id_ed25519@": "/etc/shadow"},
-		"key over limit":   {"manifest.json": manifest, "keys/ssh/id_ed25519": strings.Repeat("x", workspace.MaxKeyFile+1)},
-		"no manifest":      {"keys/ssh/id_ed25519": "x"},
-		"format":           {"manifest.json": `{"format":2}`},
+		"other dir":        {"manifest.json": manifest, "keys/ssh/id_ed25519.key": "x"},
+		"nested":           {"manifest.json": manifest, ".ssh/a/id_ed25519.key": "x"},
+		"dot file":         {"manifest.json": manifest, ".ssh/.hidden.key": "x"},
+		"no extension":     {"manifest.json": manifest, ".ssh/id_ed25519": "x"},
+		"bare extension":   {"manifest.json": manifest, ".ssh/.key": "x"},
+		"symlink":          {"manifest.json": manifest, ".ssh/id_ed25519.key@": "/etc/shadow"},
+		"key over limit":   {"manifest.json": manifest, ".ssh/id_ed25519.key": strings.Repeat("x", workspace.MaxKeyFile+1)},
+		"no manifest":      {".ssh/id_ed25519.key": "x"},
+		"format":           {"manifest.json": `{"format":1}`},
 	} {
 		_, err := workspace.ReadBundle(bytes.NewReader(raw(t, "pass", entries)), "pass")
 		assert.True(t, errors.Is(err, workspace.ErrBundle), name, err)
 	}
-	ok, err := workspace.ReadBundle(bytes.NewReader(raw(t, "pass", map[string]string{"manifest.json": manifest, "keys/ssh/id_ed25519": "x"})), "pass")
+	ok, err := workspace.ReadBundle(bytes.NewReader(raw(t, "pass", map[string]string{"manifest.json": manifest, ".ssh/id_ed25519.key": "x"})), "pass")
 	assert.NoError(t, err)
-	assert.Equal(t, "x", string(ok.Keys["ssh/id_ed25519"]))
+	assert.Equal(t, "x", string(ok.Keys["id_ed25519.key"]))
 }
 
 // ReadBundle refuses a file over MaxBundle before reading it through.
 func TestReadBundle_TooLarge(t *testing.T) {
 	t.Parallel()
-	big := raw(t, "pass", map[string]string{"manifest.json": manifest, "keys/ssh/id_ed25519": strings.Repeat("x", 1000)})
+	big := raw(t, "pass", map[string]string{"manifest.json": manifest, ".ssh/id_ed25519.key": strings.Repeat("x", 1000)})
 	padded := append(big, bytes.Repeat([]byte{0}, workspace.MaxBundle)...)
 	_, err := workspace.ReadBundle(bytes.NewReader(padded), "pass")
 	assert.True(t, errors.Is(err, workspace.ErrBundle), err)

@@ -75,8 +75,9 @@ no permission of its own.
 A workspace is a checkout under the root that holds projects, with its
 own SSH keys and secrets, kept from other workspaces.
 The default workspace, `_`, is the root itself. A workspace exports and
-imports between instances. Page: `/settings/workspaces`; API:
-`/api/workspaces`.
+imports between instances as one age file encrypted to a passphrase,
+its secrets and its own SSH keys inside; no instance key goes with it.
+Page: `/settings/workspaces`; API: `/api/workspaces`.
 
 ## Projects (`project`)
 
