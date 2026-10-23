@@ -10,6 +10,8 @@ import (
 	"strings"
 
 	chi "github.com/go-chi/chi/v5"
+
+	"github.com/titpetric/task-ui/access"
 )
 
 // client calls the API in process, as the user on the context.
@@ -58,6 +60,7 @@ func (c *client) send(ctx context.Context, method, path, contentType string, bod
 	// The API is a router of its own; the route context of the request
 	// that reached the server would steer it, so it starts without one.
 	ctx = context.WithValue(ctx, chi.RouteCtxKey, (*chi.Context)(nil))
+	ctx = access.WithVia(ctx, access.ViaMCP)
 	req, err := http.NewRequestWithContext(ctx, method, path, bytes.NewReader(body))
 	if err != nil {
 		return nil, nil, err

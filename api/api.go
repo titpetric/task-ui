@@ -153,6 +153,7 @@ func (h *Handlers) Routes() http.Handler {
 	r.Post("/keys/upload", h.uploadKey)
 	r.Post("/keys/encrypt/rotate", h.rotateEncryptKey)
 	r.Put("/keys/{name}", h.updateKey)
+	r.Get("/keys/{name}/private", h.readKey)
 	r.Delete("/keys/{name}", h.deleteKey)
 
 	r.Get("/sources/*", h.getSource)

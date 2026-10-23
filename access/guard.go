@@ -45,50 +45,51 @@ func (g *Guard) LoginRequired() bool {
 // or the session cookie. Nobody is nil, and so is a request with a token
 // that signs in nobody, whatever else it carries.
 func (g *Guard) User(r *http.Request) *model.User {
-	user, _ := g.resolve(r)
+	user, _, _ := g.resolve(r)
 	return user
 }
 
-// resolve is User, with why a bearer token signs in nobody:
-// ErrTokenExpired for one past its expiry.
-func (g *Guard) resolve(r *http.Request) (*model.User, error) {
+// resolve is User, with the ID of the token it signed in with and why
+// a bearer token signs in nobody: ErrTokenExpired for one past its
+// expiry.
+func (g *Guard) resolve(r *http.Request) (*model.User, string, error) {
 	if token := BearerToken(r); token != "" {
 		return g.bearer(r.Context(), token)
 	}
 	if !g.LoginRequired() {
-		return g.lookup(r.Context(), g.AutoLogin), nil
+		return g.lookup(r.Context(), g.AutoLogin), "", nil
 	}
 	cookie, err := r.Cookie(Cookie)
 	if err != nil {
-		return nil, nil
+		return nil, "", nil
 	}
 	user, err := g.Sessions.Resolve(r.Context(), cookie.Value)
 	if err != nil {
-		return nil, nil
+		return nil, "", nil
 	}
-	return user, nil
+	return user, "", nil
 }
 
 // bearer resolves the user of a token, and records its use. A token
 // with an expiry signs in until then; one without signs in until a
 // delete.
-func (g *Guard) bearer(ctx context.Context, token string) (*model.User, error) {
+func (g *Guard) bearer(ctx context.Context, token string) (*model.User, string, error) {
 	if g.Tokens == nil {
-		return nil, nil
+		return nil, "", nil
 	}
 	row, err := g.Tokens.Find(ctx, HashToken(token))
 	if err != nil {
-		return nil, nil
+		return nil, "", nil
 	}
 	if row.ExpiresAt != nil && !g.now().Before(*row.ExpiresAt) {
-		return nil, ErrTokenExpired
+		return nil, "", ErrTokenExpired
 	}
 	user, err := g.Users.Get(ctx, row.UserID)
 	if err != nil {
-		return nil, nil
+		return nil, "", nil
 	}
 	_ = g.Tokens.Touch(ctx, row.ID)
-	return user, nil
+	return user, row.ID, nil
 }
 
 func (g *Guard) now() time.Time {
@@ -110,7 +111,7 @@ func (g *Guard) lookup(ctx context.Context, name string) *model.User {
 // answers API and websocket requests with 401.
 func (g *Guard) Require(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		user, err := g.resolve(r)
+		user, token, err := g.resolve(r)
 		if user == nil {
 			if errors.Is(err, ErrTokenExpired) {
 				http.Error(w, err.Error(), http.StatusUnauthorized)
@@ -123,7 +124,11 @@ func (g *Guard) Require(next http.Handler) http.Handler {
 			http.Error(w, "unauthorized", http.StatusUnauthorized)
 			return
 		}
-		next.ServeHTTP(w, r.WithContext(WithUser(r.Context(), user)))
+		ctx := WithUser(r.Context(), user)
+		if token != "" {
+			ctx = WithToken(ctx, token)
+		}
+		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
 

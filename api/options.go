@@ -52,7 +52,9 @@ type Options struct {
 	Git       *git.Git
 	// Keys are the key folder: every key of the instance and its
 	// workspaces.
-	Keys       *keystore.Local
+	Keys *keystore.Local
+	// KeyReads log who read which private key. Nil logs none.
+	KeyReads   *storage.KeyReadStorage
 	Env        *envfile.Store
 	Recordings *recording.Store
 	// Cleaner holds the Data retention rules; nil turns their route off.

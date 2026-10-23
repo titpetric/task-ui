@@ -23,6 +23,7 @@ func NewCleaner(db storage.DB, cfg *Config) *retention.Cleaner {
 		Artifacts:     storage.NewArtifactStorage(db),
 		Store:         &artifactstore.Store{Dir: cfg.ArtifactTree(), Keep: cfg.ArtifactHistory},
 		SecretReads:   storage.NewSecretReadStorage(db),
+		KeyReads:      storage.NewKeyReadStorage(db),
 		RecordingsDir: cfg.RecordingsDir(),
 		Now:           cfg.Clock(),
 	}

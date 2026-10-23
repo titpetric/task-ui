@@ -90,7 +90,7 @@
 	<p class="dim">Every key lives in the key folder as <code>&lt;name&gt;.key</code> and <code>&lt;name&gt;.pub</code>, the name ending in its algorithm and size. An instance SSH key goes to the runs of the roles and users it links, through their ssh agent, and the inventory signs in to hosts with it; a workspace's SSH key goes to the runs of that workspace. The <span class="badge ok">git</span> key pulls and clones the checkouts. An encryption key never leaves task-ui.</p>
 	<div class="table-wrap">
 	<table class="table keys">
-		<thead><tr><th>Name</th><th>Purpose</th><th>Fingerprint</th><th>Scope</th><th>Linked</th><th>Date</th><th>Actions</th></tr></thead>
+		<thead><tr><th>Name</th><th>Purpose</th><th>Fingerprint</th><th>Scope</th><th>Linked</th><th>Reads</th><th>Last read</th><th>Date</th><th>Actions</th></tr></thead>
 		<tbody>
 		{{- range .Keys }}
 			<tr id="key-{{ .Name }}">
@@ -99,6 +99,8 @@
 				<td class="fingerprint" data-label="Fingerprint"><span class="kind dim">{{ .Kind }}</span>{{ .Fingerprint }}</td>
 				<td class="nowrap" data-label="Scope">{{ with .Workspace }}workspace{{ else }}instance{{ end }}</td>
 				<td class="nowrap" data-label="Linked">{{ if .Encrypts }}<span class="faint">never handed out</span>{{ else }}{{ range .Roles }}<span class="badge">{{ . }}</span> {{ end }}{{ range .Users }}{{ template "avatar" (list $ .) }} {{ end }}{{ if not (or .Roles .Users) }}<span class="faint">{{ if .Workspace }}every run of the workspace{{ else }}none{{ end }}</span>{{ end }}{{ end }}</td>
+				<td class="nowrap" data-label="Reads">{{ with index $.KeyReads .Name }}{{ . }}{{ else }}<span class="faint">0</span>{{ end }}</td>
+				<td class="nowrap" data-label="Last read">{{ with index $.KeyLastRead .Name }}<span title="{{ stamp .CreatedAt }}">{{ ago .CreatedAt }}</span> {{ template "user" (list $ .UserName) }} <span class="faint">{{ .Via }}</span>{{ else }}<span class="faint">never</span>{{ end }}</td>
 				<td class="nowrap" data-label="Date" title="{{ stamp .CreatedAt }}">{{ ago .CreatedAt }}</td>
 				<td class="actions">
 					<button type="button" class="btn-icon" data-copy="{{ .PublicKey }}" title="Copy public key" aria-label="Copy public key"><svg class="ic"><use href="#i-copy"/></svg></button>
@@ -109,7 +111,7 @@
 				</td>
 			</tr>
 		{{- else }}
-			<tr class="empty"><td colspan="7">No key yet. Generate one, or upload the private key you already use.</td></tr>
+			<tr class="empty"><td colspan="9">No key yet. Generate one, or upload the private key you already use.</td></tr>
 		{{- end }}
 		</tbody>
 	</table>

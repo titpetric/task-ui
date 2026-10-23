@@ -6,8 +6,8 @@ import (
 )
 
 // Matrix is a policy as the permissions pages draw it: a row for each
-// section with a cell for each rule, then a row for each application
-// permission. A cell cycles inherit, allow and deny; Save puts the
+// section with a cell for each rule, then a row for each rule a section
+// adds and each application permission. A cell cycles inherit, allow and deny; Save puts the
 // cells that changed to API.
 type Matrix struct {
 	// ID anchors the matrix on its page.
@@ -47,6 +47,17 @@ func NewMatrix(p *config.Permissions, policy permission.Policy, effective map[st
 			row.Cells = append(row.Cells, cell(section.Key+"/"+rule.Key, section.Title+", "+rule.Title))
 		}
 		m.Sections = append(m.Sections, row)
+	}
+	// A rule a section adds, as key/read, is a row of its own: no
+	// column of every section holds it.
+	for _, extra := range p.Extra {
+		title := extra.Title
+		for _, section := range p.Sections {
+			if section.Key == extra.Section {
+				title = section.Title + ", " + extra.Title
+			}
+		}
+		m.Permissions = append(m.Permissions, cell(extra.Path(), title))
 	}
 	for _, entry := range p.Permissions {
 		m.Permissions = append(m.Permissions, cell(entry.Key, entry.Title))

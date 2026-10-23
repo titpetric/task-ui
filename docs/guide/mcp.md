@@ -117,6 +117,43 @@ A reply that names the user again opens the note again, and it shows in
 the next `list_notes`. The state is for the users the note names, its
 author and an admin; anyone who may post replies.
 
+## An SSH key for a task
+
+An agent elsewhere that needs an instance SSH key, such as the deploy
+key the hosts accept, borrows it for one task, and the key never
+crosses in clear. It takes **Allow Read Private** on Instance Keys,
+`key/read`: admins hold it, and no other role does unless an admin
+allows it in [Settings, Permissions](settings.md#permissions). The
+user has MCP agent user on, and the key is an SSH key linked to the
+user or their role; an admin reads any SSH key. An encryption key never
+leaves task-ui. `whoami` names the keys you may read.
+
+1. Make an age identity for this request alone:
+
+   ```bash
+   umask 077
+   age-keygen -o /tmp/task-key.id 2>/dev/null
+   age-keygen -y /tmp/task-key.id    # the recipient, age1...
+   ```
+
+2. Call `get_ssh_key` with the key's name and the recipient, or `GET
+   /api/keys/{name}/private?recipient=age1...`. It returns the key's
+   name, algorithm and fingerprint and the private key armored and
+   encrypted to the recipient.
+
+3. Decrypt into `/tmp`, use it, and delete both files after the task:
+
+   ```bash
+   age -d -i /tmp/task-key.id -o /tmp/deploy.key reply.age
+   ssh -i /tmp/deploy.key root@host uptime
+   rm -f /tmp/deploy.key /tmp/task-key.id
+   ```
+
+A missing or wrong recipient answers `400`, and each read lands in the
+key's read log: who, by which token, over MCP or the API. The Keys page
+shows a key's **Reads** and **Last read**, and [Data
+retention](settings.md#data-retention) keeps the log.
+
 ## Live notes for an agent elsewhere
 
 `task-ui channel` pushes the notes to an open Claude Code session as they
@@ -182,6 +219,7 @@ with `-p`, `/loop` with `list_notes` polls in its place:
 | `list_artifacts`     | `path`                                           | A directory of the artifact tree, the top unless given: each file's size, time, and the run or the user that wrote it; takes `artifact/view` |
 | `read_artifact`      | `path`, `version`                                | A file of the tree, the latest or `version`: text up to 256 KiB, saying where it cut, and for anything else its type, size and download link; takes `artifact/view` |
 | `write_artifact`     | `path`, `content`, `encoding`                    | Writes a file into the tree as you, at most 16 MiB, `encoding` `base64` for a binary one, over the version there, which the history keeps; a relative path with no `..` and no dot file; takes `artifact/edit` |
+| `get_ssh_key`        | `name`, `recipient`                              | An instance SSH key for the length of a task, its private half encrypted to your age recipient; takes `key/read` and MCP agent user (see [An SSH key for a task](#an-ssh-key-for-a-task)) |
 
 Each tool takes the permissions of the token's user, the ones a page
 takes in the browser: the role's policy and the user's own, which

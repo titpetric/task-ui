@@ -170,6 +170,50 @@
       columns:
         - scope
         - purpose
+- name: key_read
+  comment: Key Read
+  columns:
+    - name: id
+      type: text
+      key: PRI
+      comment: ID
+      datatype: char(26)
+    - name: key_name
+      type: text
+      key: MUL
+      comment: Key Name
+      datatype: varchar
+    - name: user_name
+      type: text
+      comment: User Name
+      datatype: varchar
+    - name: token_id
+      type: text
+      key: MUL
+      comment: Token ID
+      datatype: varchar
+    - name: via
+      type: TEXT
+      comment: Via
+      datatype: varchar
+      values:
+        - api
+        - mcp
+    - name: created_at
+      type: timestamp
+      key: MUL
+      comment: Created At
+      datatype: datetime
+  indexes:
+    - name: sqlite_autoindex_key_read_1
+      columns:
+        - id
+      primary: true
+      unique: true
+    - name: idx_key_read_key
+      columns:
+        - key_name
+        - created_at
 - name: key_role
   comment: Key Role
   columns:

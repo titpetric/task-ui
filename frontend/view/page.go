@@ -176,6 +176,10 @@ type Page struct {
 	KeysDir string
 	// GitKey names the key git pulls and clones with.
 	GitKey string
+	// KeyReads count the reads of each private key, by name, and
+	// KeyLastRead is the newest of each.
+	KeyReads    map[string]int
+	KeyLastRead map[string]model.KeyRead
 	// KeyFolders are the projects' .ssh/ folders with keys in them.
 	KeyFolders []KeyFolder
 	// KeyPolicies are the roles whose runs get each SSH key, by key

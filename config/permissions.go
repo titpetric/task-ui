@@ -28,6 +28,8 @@ type Permissions struct {
 	Rules []Entry
 	// Sections of the application, each with every rule.
 	Sections []Entry
+	// Extra are the rules one section adds, which its All leaves out.
+	Extra []Extra
 	// Permissions are application wide, beyond the sections.
 	Permissions []Entry
 }
@@ -41,6 +43,7 @@ func Parse(data []byte) (*Permissions, error) {
 	var doc struct {
 		Rules       yaml.Node `yaml:"rules"`
 		Sections    yaml.Node `yaml:"sections"`
+		Extra       yaml.Node `yaml:"extra"`
 		Permissions yaml.Node `yaml:"permissions"`
 	}
 	if err := yaml.Unmarshal(data, &doc); err != nil {
@@ -55,6 +58,9 @@ func Parse(data []byte) (*Permissions, error) {
 		return nil, err
 	}
 	if p.Permissions, err = entries("permissions", &doc.Permissions); err != nil {
+		return nil, err
+	}
+	if p.Extra, err = extras(&doc.Extra, p); err != nil {
 		return nil, err
 	}
 	rules := map[string]bool{}
@@ -74,6 +80,46 @@ func Parse(data []byte) (*Permissions, error) {
 		seen[entry.Key] = true
 	}
 	return p, nil
+}
+
+// extras reads the rules of the sections that add some: a mapping of
+// sections to a mapping of rules to titles. None is no extra.
+func extras(node *yaml.Node, p *Permissions) ([]Extra, error) {
+	if node.Kind == 0 {
+		return nil, nil
+	}
+	if node.Kind != yaml.MappingNode {
+		return nil, errors.New("permissions: extra: a mapping of sections to rules is needed")
+	}
+	var list []Extra
+	for i := 0; i+1 < len(node.Content); i += 2 {
+		section := node.Content[i].Value
+		if !has(p.Sections, section) {
+			return nil, fmt.Errorf("permissions: extra: %q is no section", section)
+		}
+		rules, err := entries("extra."+section, node.Content[i+1])
+		if err != nil {
+			return nil, err
+		}
+		for _, rule := range rules {
+			if has(p.Rules, rule.Key) {
+				return nil, fmt.Errorf("permissions: extra.%s: %q is a rule of every section", section, rule.Key)
+			}
+			list = append(list, Extra{Section: section, Entry: rule})
+		}
+	}
+	return list, nil
+}
+
+// IsExtra reports whether a path is a rule one section adds.
+func (p *Permissions) IsExtra(path string) bool {
+	section, rule, _ := strings.Cut(path, "/")
+	for _, extra := range p.Extra {
+		if extra.Section == section && extra.Key == rule {
+			return true
+		}
+	}
+	return false
 }
 
 // entries reads a mapping of keys to titles, in order.
@@ -128,6 +174,11 @@ func (p *Permissions) Paths() []string {
 		for _, rule := range p.Rules {
 			paths = append(paths, section.Key+"/"+rule.Key)
 		}
+		for _, extra := range p.Extra {
+			if extra.Section == section.Key {
+				paths = append(paths, extra.Path())
+			}
+		}
 	}
 	for _, permission := range p.Permissions {
 		paths = append(paths, permission.Key)
@@ -152,7 +203,7 @@ func (p *Permissions) Valid(path string) bool {
 	if !nested {
 		return has(p.Permissions, path)
 	}
-	return has(p.Sections, section) && has(p.Rules, rule)
+	return has(p.Sections, section) && (has(p.Rules, rule) || p.IsExtra(path))
 }
 
 // Checkable reports whether a check may name a path: valid, and not an

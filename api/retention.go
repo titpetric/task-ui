@@ -50,7 +50,7 @@ func (h *Handlers) saveRetention(w http.ResponseWriter, r *http.Request) {
 		}
 		rules[kind] = rule
 	}
-	settings = retention.Settings{Recordings: rules[retention.Recordings], Artifacts: rules[retention.Artifacts], SecretReads: rules[retention.SecretReads]}
+	settings = retention.Settings{Recordings: rules[retention.Recordings], Artifacts: rules[retention.Artifacts], SecretReads: rules[retention.SecretReads], KeyReads: rules[retention.KeyReads]}
 	if err := h.opts.Cleaner.Save(r.Context(), settings); err != nil {
 		failErr(w, err)
 		return

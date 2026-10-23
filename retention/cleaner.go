@@ -31,6 +31,8 @@ type Cleaner struct {
 	Artifacts   *storage.ArtifactStorage
 	Store       *artifactstore.Store
 	SecretReads *storage.SecretReadStorage
+	// KeyReads is the log of the private keys users read.
+	KeyReads *storage.KeyReadStorage
 	// RecordingsDir holds the recordings the run rows name.
 	RecordingsDir string
 	// Now is the clock, time.Now unless set.
@@ -68,7 +70,7 @@ func (c *Cleaner) Usage(ctx context.Context) (map[string]Usage, error) {
 }
 
 // titles name the kinds in what Clean prints.
-var titles = map[string]string{Recordings: "Run recordings", Artifacts: "Artifact history", SecretReads: "Secret read log"}
+var titles = map[string]string{Recordings: "Run recordings", Artifacts: "Artifact history", SecretReads: "Secret read log", KeyReads: "Key read log"}
 
 // Clean applies the rules, oldest first, and prints what each kind lost
 // and holds after; dry prints what would go and changes nothing. Once it
@@ -153,6 +155,8 @@ func (c *Cleaner) items(ctx context.Context, kind string) ([]Item, error) {
 		return c.recordings(ctx)
 	case Artifacts:
 		return c.history(ctx)
+	case KeyReads:
+		return c.keyReads(ctx)
 	}
 	return c.reads(ctx)
 }
@@ -244,6 +248,27 @@ func (c *Cleaner) reads(ctx context.Context) ([]Item, error) {
 	return items, nil
 }
 
+// keyReads are the reads of the key read log, each the size of its row.
+func (c *Cleaner) keyReads(ctx context.Context) ([]Item, error) {
+	if c.KeyReads == nil {
+		return nil, nil
+	}
+	reads, err := c.KeyReads.All(ctx)
+	if err != nil {
+		return nil, err
+	}
+	items := make([]Item, 0, len(reads))
+	for _, read := range reads {
+		at := time.Time{}
+		if read.CreatedAt != nil {
+			at = *read.CreatedAt
+		}
+		size := len(read.ID) + len(read.KeyName) + len(read.UserName) + len(read.TokenID) + len(read.Via) + 24
+		items = append(items, Item{ID: read.ID, At: at, Size: int64(size)})
+	}
+	return items, nil
+}
+
 // remove takes the items out of a kind and returns how many rows went.
 func (c *Cleaner) remove(ctx context.Context, kind string, items []Item) (int, error) {
 	switch kind {
@@ -257,6 +282,11 @@ func (c *Cleaner) remove(ctx context.Context, kind string, items []Item) (int, e
 		return 0, nil
 	case Artifacts:
 		return c.expireHistory(ctx, items)
+	case KeyReads:
+		if err := c.KeyReads.DeleteThrough(ctx, items[len(items)-1].ID); err != nil {
+			return 0, err
+		}
+		return len(items), nil
 	}
 	if err := c.SecretReads.DeleteThrough(ctx, items[len(items)-1].ID); err != nil {
 		return 0, err
