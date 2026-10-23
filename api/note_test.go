@@ -37,6 +37,9 @@ func TestNote_PostListComment(t *testing.T) {
 	done := f.call(t, asAdmin, http.MethodPost, "/notes/"+id+"/comments", api.CommentRequest{Body: "Done.", State: model.NoteDone})
 	assert.Equal(t, http.StatusCreated, done.Status, string(done.Raw))
 	assert.Len(t, f.call(t, asAdmin, http.MethodGet, "/notes?state=done", nil).list("notes"), 1)
+	// * is anyone and any state, as list_notes takes it.
+	assert.Len(t, f.call(t, asAdmin, http.MethodGet, "/notes?mention=*&state=*", nil).list("notes"), 2)
+	assert.Len(t, f.call(t, asAdmin, http.MethodGet, "/notes?mention=*&state=done", nil).list("notes"), 1)
 
 	bad := f.call(t, asOps, http.MethodPost, "/notes", api.NoteRequest{ParentID: reply.str("id"), Body: "a reply to a reply"})
 	assert.Equal(t, http.StatusBadRequest, bad.Status)

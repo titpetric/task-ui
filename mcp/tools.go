@@ -520,16 +520,12 @@ func listNotes(ctx context.Context, c *client, args json.RawMessage) (string, er
 	if err := decode(args, &in); err != nil {
 		return "", err
 	}
-	switch in.Mention {
-	case "":
+	// The API takes * as any user and any state; empty mention is the
+	// caller here.
+	if in.Mention == "" {
 		if user := access.UserFrom(ctx); user != nil {
 			in.Mention = user.Name
 		}
-	case "*":
-		in.Mention = ""
-	}
-	if in.State == "*" {
-		in.State = ""
 	}
 	q := url.Values{}
 	q.Set("mention", in.Mention)
