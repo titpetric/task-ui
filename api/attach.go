@@ -16,6 +16,7 @@ import (
 //
 //	server: {"type":"status","state":"running|ok|failed|stopped|killed","exit_code":0,"message":""}
 //	server: {"type":"input","state":"on|off","message":""}
+//	server: {"type":"title","title":"..."}
 //	client: {"type":"input","message":"..."} | {"type":"resize","cols":120,"rows":30} | {"type":"stop"} | {"type":"kill"}
 //	client: {"type":"take"} | {"type":"release"}
 //
@@ -24,12 +25,16 @@ import (
 // release turns it back. The server answers either with an input
 // message, its state on or off and why when refused.
 //
+// A title message names what the run's terminal set as its title, on
+// attach and on every change; no title clears it.
+//
 // Closing the socket detaches the window; the run goes on.
 type control struct {
 	Type     string `json:"type"`
 	State    string `json:"state,omitempty"`
 	ExitCode int    `json:"exit_code,omitempty"`
 	Message  string `json:"message,omitempty"`
+	Title    string `json:"title,omitempty"`
 	Cols     int    `json:"cols,omitempty"`
 	Rows     int    `json:"rows,omitempty"`
 }
@@ -108,11 +113,14 @@ func (h *Handlers) window(ws *websocket.Conn, session *runner.Session, w *Window
 			if !ok {
 				return
 			}
-			if event.Status != nil {
-				sendControl(ws, control{Type: "status", State: event.Status.State, ExitCode: event.Status.ExitCode, Message: event.Status.Message})
-				return
+			frame, text := w.Frame(event)
+			var err error
+			if text {
+				err = websocket.Message.Send(ws, string(frame))
+			} else {
+				err = websocket.Message.Send(ws, frame)
 			}
-			if err := websocket.Message.Send(ws, event.Output); err != nil {
+			if err != nil || event.Status != nil {
 				return
 			}
 		}

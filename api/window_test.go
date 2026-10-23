@@ -5,6 +5,8 @@ import (
 
 	"github.com/titpetric/task-ui/api"
 	"github.com/titpetric/task-ui/internal/assert"
+	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/runner"
 )
 
 func TestWindow_Apply(t *testing.T) {
@@ -57,4 +59,26 @@ func TestWindow_Apply_refused(t *testing.T) {
 	w.Apply([]byte(`{"type":"input","message":"ls"}`))
 	w.Apply([]byte(`not json`))
 	assert.Equal(t, "", shell.input.String())
+}
+
+func TestWindow_Frame(t *testing.T) {
+	t.Parallel()
+	w := &api.Window{Terminal: &terminal{}}
+
+	frame, text := w.Frame(runner.Event{Output: []byte("ls\r\n")})
+	assert.False(t, text)
+	assert.Equal(t, "ls\r\n", string(frame))
+
+	title := "building images"
+	frame, text = w.Frame(runner.Event{Title: &title})
+	assert.True(t, text)
+	assert.Equal(t, `{"type":"title","title":"building images"}`, string(frame))
+
+	cleared := ""
+	frame, _ = w.Frame(runner.Event{Title: &cleared})
+	assert.Equal(t, `{"type":"title"}`, string(frame))
+
+	frame, text = w.Frame(runner.Event{Status: &runner.Status{State: model.StateFailed, ExitCode: 2}})
+	assert.True(t, text)
+	assert.Equal(t, `{"type":"status","state":"failed","exit_code":2}`, string(frame))
 }

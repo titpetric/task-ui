@@ -100,6 +100,12 @@ page: the run's terminal, live.
   `killed`.
 - **Run again** starts the job once more when it has ended.
 - **Open run page** in the window's header goes to the run's page.
+- **A job can name itself.** A terminal title the job sets, such as
+  `printf '\033]0;building images\007'` (OSC 0 or 2), shows beside the
+  job's name in the window's header and in the browser tab while the
+  window is open, and changes as the job sets another. An empty title
+  clears it. The dashboard and this list show it too, and the run keeps
+  the last one when it ends.
 
 A finished run stays attachable, its last frame in memory, for
 `TASK_UI_KEEP`, fifteen minutes; after that it opens as history: its

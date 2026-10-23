@@ -1070,6 +1070,9 @@ type Run struct {
 
 	// Message
 	Message string `db:"message" json:"message"`
+
+	// Title
+	Title string `db:"title" json:"title"`
 }
 
 // GetID will return the value of ID.
@@ -1204,11 +1207,17 @@ func (r *Run) GetMessage() string { return r.Message }
 // SetMessage sets Message to the provided value.
 func (r *Run) SetMessage(val string) { r.Message = val }
 
+// GetTitle will return the value of Title.
+func (r *Run) GetTitle() string { return r.Title }
+
+// SetTitle sets Title to the provided value.
+func (r *Run) SetTitle(val string) { r.Title = val }
+
 // RunTable is the name of the table in the DB.
 const RunTable = "`run`"
 
 // RunFields is a list of all columns in the DB table.
-var RunFields = []string{"id", "folder", "job", "user_id", "user_name", "state", "exit_code", "forced", "scheduled", "term_cols", "term_rows", "cast_path", "reason", "started_at", "finished_at", "created_at", "updated_at", "dir", "args", "target", "batch_id", "message"}
+var RunFields = []string{"id", "folder", "job", "user_id", "user_name", "state", "exit_code", "forced", "scheduled", "term_cols", "term_rows", "cast_path", "reason", "started_at", "finished_at", "created_at", "updated_at", "dir", "args", "target", "batch_id", "message", "title"}
 
 // RunPrimaryFields are the primary key fields in the DB table.
 var RunPrimaryFields = []string{"id"}

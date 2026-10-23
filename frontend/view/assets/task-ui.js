@@ -11,6 +11,7 @@
   var els = dialog && {
     kind: document.getElementById("run-kind"),
     title: document.getElementById("run-title"),
+    subtitle: document.getElementById("run-subtitle"),
     who: document.getElementById("run-who"),
     state: document.getElementById("run-state"),
     elapsed: document.getElementById("run-elapsed"),
@@ -266,16 +267,30 @@
     if (session.term) session.term.dispose();
     if (session.onResize) window.removeEventListener("resize", session.onResize);
     var changed = session.changed;
+    termTitle("");
     session = null;
     if (/^#run=/.test(location.hash)) history.replaceState(null, "", location.pathname + location.search);
     // A page that follows its topic drew the change already.
     if (changed && !follows) window.location.reload();
   }
 
+  // termTitle shows the title the run's terminal set, under the job's
+  // name in the window and in the browser tab while the window is open;
+  // "" clears it and gives the tab its own title back.
+  var pageTitle = document.title;
+  function termTitle(title) {
+    if (!els.subtitle) return;
+    els.subtitle.textContent = title || "";
+    els.subtitle.title = title || "";
+    els.subtitle.hidden = !title;
+    document.title = title ? title + " · " + pageTitle : pageTitle;
+  }
+
   function open(kind, title, who) {
     if (session) teardown();
     els.kind.textContent = kind;
     els.title.textContent = title;
+    termTitle("");
     els.who.textContent = who || "";
     els.elapsed.textContent = "";
     els.hint.textContent = "Closing this window doesn't stop the run.";
@@ -370,6 +385,7 @@
       var run = res.data;
       els.title.textContent = runTitle(run);
       els.who.textContent = run.user_name || "";
+      termTitle(run.title);
       s.spec = { folder: run.folder, dir: run.dir || "", job: run.job, args: runArgs(run), title: runTitle(run) };
       // A finished run stays live in memory for a while, for the windows
       // on it; opened afterwards it is history, not something to attach to.
@@ -447,6 +463,7 @@
       var msg;
       try { msg = JSON.parse(event.data); } catch (e) { return; }
       if (msg.type === "status") finish(s, msg);
+      if (msg.type === "title") termTitle(msg.title);
       if (msg.type === "input") {
         taking(s, msg.state === "on", "");
         if (msg.message) notice(msg.message, "bad");
@@ -3058,6 +3075,9 @@
       return '<span class="state"><i class="dot ' + escapeHTML(run.state) + '"></i>' + escapeHTML(run.state) +
         (run.state !== "ok" && ended(run.state) ? ' <span class="faint">(' + (run.exit_code || 0) + ")</span>" : "") + "</span>";
     };
+    var termTitleHTML = function (run) {
+      return run.title ? ' <span class="term-title" title="' + escapeHTML(run.title) + '">' + escapeHTML(run.title) + "</span>" : "";
+    };
     var actionsHTML = function (run, canRun) {
       var id = escapeHTML(run.id);
       var html = '<a class="btn btn-sm" href="/runs/' + id + '" data-attach="' + id + '">' + (!ended(run.state) ? "Attach" : "View") + "</a>";
@@ -3083,7 +3103,7 @@
       var row = runsTable.querySelector('[data-run-id="' + run.id + '"]');
       if (row) {
         if (!matches(run)) { row.remove(); return; }
-        row.querySelector("[data-result]").innerHTML = stateHTML(run);
+        row.querySelector("[data-result]").innerHTML = stateHTML(run) + termTitleHTML(run);
         row.querySelector("[data-took]").textContent = took(run);
         var canRun = !!row.querySelector("[data-stop]");
         row.querySelector("[data-actions]").innerHTML = actionsHTML(run, canRun);
@@ -3103,7 +3123,7 @@
         '<td class="key"><a href="' + place + "/" + job + '">' + job + "</a></td>" +
         '<td data-label="By">' + whoHTML(run) + "</td>" +
         '<td class="nowrap" data-label="Took" data-took>' + took(run) + "</td>" +
-        '<td data-label="Result" data-result>' + stateHTML(run) + "</td>" +
+        '<td data-label="Result" data-result>' + stateHTML(run) + termTitleHTML(run) + "</td>" +
         '<td class="actions" data-actions>' + actionsHTML(run, false) + "</td>";
       runsTable.insertBefore(row, runsTable.firstChild);
       // Whether this user may end it comes with the run's own view.
@@ -3134,7 +3154,7 @@
     var what = escapeHTML(slot.dataset.folder + " / " + slot.dataset.name);
     if (run && run.state === "running") {
       return '<a class="cc' + named + ' running" href="/runs/' + escapeHTML(run.id) + '" data-attach="' + escapeHTML(run.id) +
-        '" title="Attach to ' + what + ', running"><svg class="ic"><use href="#i-eye"/></svg>' + label + "</a>";
+        '" title="Attach to ' + what + ", running" + (run.title ? ": " + escapeHTML(run.title) : "") + '"><svg class="ic"><use href="#i-eye"/></svg>' + label + "</a>";
     }
     if (slot.hasAttribute("data-can")) {
       return '<button type="button" class="cc' + named + last + '" data-run data-folder="' + escapeHTML(slot.dataset.folder) + '" data-job="' +
@@ -3185,6 +3205,7 @@
         tile.dataset.attach = run.id;
         tile.dataset.tile = run.id;
         tile.innerHTML = '<div class="tile-head"><i class="dot running"></i><b>' + escapeHTML(runTitle(run)) + "</b>" +
+          '<span class="term-title" data-term-title></span>' +
           '<span class="spacer"></span><span class="faint"></span>' +
           avatarHTML(run.user_name) + "</div>" +
           '<div class="frame" data-frame="' + escapeHTML(run.id) + '" role="img" aria-label="Terminal of ' + escapeHTML(runTitle(run)) + '"></div>';
@@ -3200,6 +3221,12 @@
             .then(function (svg) { if (svg) frame.innerHTML = svg; })
             .catch(function () {});
         }
+      }
+      // A run that names itself in its terminal carries the name.
+      var named = tile && tile.querySelector("[data-term-title]");
+      if (named) {
+        named.textContent = run.title || "";
+        named.title = run.title || "";
       }
       countRunning();
     });
