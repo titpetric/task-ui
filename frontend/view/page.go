@@ -10,6 +10,7 @@ import (
 	"github.com/titpetric/task-ui/envfile"
 	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/git"
+	"github.com/titpetric/task-ui/hostinfo"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/permission"
 	"github.com/titpetric/task-ui/sshkey"
@@ -98,6 +99,8 @@ type Page struct {
 	// Logins are who task-ui signs in to each host as over ssh, user@host
 	// by the host's address; nil leaves the SSH column out.
 	Logins map[string]string
+	// Cluster sums the hosts into pools, over the hosts table.
+	Cluster *hostinfo.Cluster
 	// HostJobs are the jobs of the root that run a command on hosts, for
 	// the job pickers of schedules and workflow steps: @host:* and
 	// @host:<host> a host with an ssh login, for a user with hosts.

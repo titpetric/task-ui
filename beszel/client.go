@@ -36,6 +36,12 @@ type Client struct {
 	mu      sync.Mutex
 	systems []System
 	at      time.Time
+
+	containers       map[string][]Container
+	containersAt     time.Time
+	history          map[string][]Sample
+	historyAt        time.Time
+	containerHistory map[string]containerHistory
 }
 
 // systemList is a page of the systems collection.

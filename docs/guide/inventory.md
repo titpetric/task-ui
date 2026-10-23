@@ -6,6 +6,25 @@ cores, how busy its CPU is, and how full its memory and disk are, with what
 it uses of each and the size, in GB. A share turns amber past 75% and red
 past 90%. A host whose agent sends no core count shows its threads.
 
+## The cluster
+
+Over the hosts table, the cluster sums the hosts into pools, one a
+resource: **CPU**, the cores and how many of them are busy, **Memory**,
+**Disk** and the running **Containers**, each with its sum, used of
+total, and its share used. A pool is a bar of a segment a host, as wide
+as the host's share of the whole, the used part in the host's colour
+and the free part a wash of it; a hover names the host and its part.
+A host keeps its colour in every pool and in the legend under them.
+
+The pools count the hosts that are up and report their measures; a
+host that is down, or sends none, counts in the hosts over the pools
+and shows struck through in the legend. The disk of a host is its
+durable filesystems (see [The expanded row](#the-expanded-row)) once
+task-ui read them over ssh, Beszel's root disk and the extra
+filesystems its agent watches before that. For a user with `hosts`,
+a view reads again, over ssh, the filesystems of a host whose filesystems task-ui read more than five
+minutes ago, in the background, for the next view.
+
 The SSH column is the first of `debian@` and `root@` that signs in to the
 host with the instance keys, without a password; the button beside it
 copies the `ssh` command. task-ui tries every ten minutes, and a host it

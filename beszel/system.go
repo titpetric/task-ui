@@ -20,32 +20,6 @@ type System struct {
 	Stats *Stats `json:"stats,omitempty"`
 }
 
-// Stats is a minute of a host's measures, from the system_stats
-// collection: sizes in GB.
-type Stats struct {
-	CPU        float64 `json:"cpu"`
-	Memory     float64 `json:"m"`
-	MemoryUsed float64 `json:"mu"`
-	Disk       float64 `json:"d"`
-	DiskUsed   float64 `json:"du"`
-}
-
-// Info is what a host's agent last sent: the machine, and its load.
-type Info struct {
-	Hostname string  `json:"h"`
-	Kernel   string  `json:"k"`
-	Cores    int     `json:"c"`
-	Threads  int     `json:"t"`
-	CPUModel string  `json:"m"`
-	Uptime   float64 `json:"u"`
-	CPU      float64 `json:"cpu"`
-	Memory   float64 `json:"mp"`
-	Disk     float64 `json:"dp"`
-	// Bandwidth is the network traffic, in MB/s.
-	Bandwidth float64 `json:"b"`
-	Agent     string  `json:"v"`
-}
-
 // CPUs is how many cores the host has, or threads when the agent sends
 // no core count.
 func (s System) CPUs() int {
