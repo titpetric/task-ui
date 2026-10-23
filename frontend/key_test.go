@@ -9,33 +9,47 @@ import (
 	"testing"
 
 	"github.com/titpetric/task-ui/internal/assert"
+	"github.com/titpetric/task-ui/keystore"
 	"github.com/titpetric/task-ui/model"
-	"github.com/titpetric/task-ui/secret"
 	"github.com/titpetric/task-ui/sshkey"
+	"github.com/titpetric/task-ui/storage"
 )
 
+// gen makes a key of the fixture's key folder.
+func (f *fixture) gen(t *testing.T, spec keystore.Spec) *keystore.Key {
+	t.Helper()
+	key, err := f.opts.Keys.Generate(context.Background(), spec)
+	assert.NoError(t, err)
+	return key
+}
+
+// The Keys page lists every key with its purpose, algorithm,
+// fingerprint, scope and links, the git key marked.
 func TestKeys(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
 
 	empty := f.page(t, asAdmin, "/settings/keys")
 	assert.Contains(t, empty, "<h2>Keys</h2>")
-	assert.Contains(t, empty, "No key pair yet")
+	assert.Contains(t, empty, "No key yet")
 
-	key, err := f.opts.Keys.Generate("ed25519", "deploy")
-	assert.NoError(t, err)
-	_, err = f.opts.Keys.Generate("ed25519", "rotated")
-	assert.NoError(t, err)
+	key := f.gen(t, keystore.Spec{Name: "deploy", Comment: "deploy"})
+	assert.NoError(t, f.opts.Keys.SetGit(context.Background(), key.Name))
+	f.gen(t, keystore.Spec{Name: "task_encryption", Purpose: keystore.PurposeEncrypt})
 
 	body := f.page(t, asAdmin, "/settings/keys")
-	assert.Contains(t, body, "rotated")
-	assert.Contains(t, body, "Backups")
+	assert.Contains(t, body, `<tr id="key-deploy_ed25519">`)
+	assert.Contains(t, body, `<span class="badge ok" title="git pulls and clones with it">git</span>`)
 	assert.Contains(t, body, strings.ReplaceAll(key.Fingerprint, "+", "&#43;"))
 	assert.Contains(t, body, `data-copy="ssh-ed25519`)
-	assert.Contains(t, body, `data-delete="/api/keys/id_ed25519"`)
-	assert.Contains(t, body, `data-api="/api/keys/generate"`)
+	assert.Contains(t, body, `data-delete="/api/keys/deploy_ed25519"`)
+	assert.NotContains(t, body, `data-delete="/api/keys/task_encryption_ed25519"`, "an encryption key stays")
+	assert.Contains(t, body, `<span class="badge signal">encryption</span>`)
+	assert.Contains(t, body, `<span class="faint">never handed out</span>`)
 }
 
+// The forms take a name, the algorithm with its size, the purpose and
+// the links; ?for=<user> starts a key of that user.
 func TestKeyForms(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
@@ -43,43 +57,39 @@ func TestKeyForms(t *testing.T) {
 	generate := f.page(t, asAdmin, "/settings/keys/generate")
 	assert.Contains(t, generate, "<h2>Generate key</h2>")
 	assert.Contains(t, generate, f.opts.Keys.Dir)
-	assert.Contains(t, generate, `<option value="ed25519">`)
+	assert.Contains(t, generate, `<option value="ed25519" selected>ed25519</option>`)
+	assert.Contains(t, generate, `<option value="rsa" data-bits="4096">RSA 4096</option>`)
+	assert.Contains(t, generate, `name="purpose" value="encrypt"`)
+	assert.Contains(t, generate, `name="policies" value="runner" data-type="set"`)
+	assert.Contains(t, generate, `id="key-name" name="name" value="" required`)
 
 	upload := f.page(t, asAdmin, "/settings/keys/upload")
 	assert.Contains(t, upload, "<h2>Upload key</h2>")
 	assert.Contains(t, upload, `data-read-into="up-content"`)
 	assert.Contains(t, upload, `data-api="/api/keys/upload"`)
+
+	forOps := f.page(t, asAdmin, "/settings/keys/generate?for="+asOps)
+	assert.Contains(t, forOps, `name="name" value="user_`+asOps+`" required`)
+	assert.Contains(t, forOps, `name="users" value="`+asOps+`" data-type="set" checked`)
 }
 
-// The SSH keys list only SSH keys; the instance's encryption key has a
-// box of its own with its fingerprint and a rotation. A copy of it in
-// the SSH folder stays off the list, and a warning names it.
+// The instance's encryption key has a box of its own on Keys, and on
+// the Instance page with the git key.
 func TestKeys_Encryption(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
 	f.withKey(t)
-	instance := f.opts.WorkspaceKeys.InstanceKey()
-	fingerprint := strings.ReplaceAll(instance.Fingerprint, "+", "&#43;")
-
+	instance := f.opts.Keys.EncryptKey(context.Background(), storage.ScopeInstance)
 	body := f.page(t, asAdmin, "/settings/keys")
-	assert.Contains(t, body, `<span class="badge">id_ed25519</span>`)
 	assert.Contains(t, body, `<tr class="key-instance" id="instance">`)
-	assert.Contains(t, body, `<div class="key-fp faint" title="`+f.opts.WorkspaceKeys.Instance().Dir+`">`+fingerprint+`</div>`)
+	assert.Contains(t, body, strings.ReplaceAll(instance.Fingerprint, "+", "&#43;"))
 	assert.Contains(t, body, `data-api="/api/keys/encrypt/rotate"`)
-	assert.Contains(t, body, `data-next="/settings/keys?rekeyed={rekeyed}&what=integration+setting"`)
-	assert.Equal(t, 1, strings.Count(body, `<a class="key-chip" href="/settings/keys/id_ed25519"`))
-	assert.NotContains(t, body, `class="alert bad"`)
 
-	for _, suffix := range []string{"", ".pub"} {
-		data, err := os.ReadFile(filepath.Join(f.opts.WorkspaceKeys.Instance().Dir, "id_ed25519"+suffix))
-		assert.NoError(t, err)
-		assert.NoError(t, os.WriteFile(filepath.Join(f.opts.Keys.Dir, "id_ed25519_copy"+suffix), data, 0o600))
-	}
-	body = f.page(t, asAdmin, "/settings/keys")
-	assert.NotContains(t, body, `<span class="badge">id_ed25519_copy</span>`)
-	assert.Contains(t, body, `class="alert bad"`)
-	assert.Contains(t, body, filepath.Join(f.opts.Keys.Dir, "id_ed25519_copy"))
-	assert.Equal(t, http.StatusNotFound, f.get(t, asAdmin, "/settings/keys/id_ed25519_copy").Status)
+	assert.NoError(t, f.opts.Keys.SetGit(context.Background(), "task_ssh_ed25519"))
+	page := f.page(t, asAdmin, "/settings/instance")
+	assert.Contains(t, page, `<span class="mono">task_encryption_ed25519</span>`)
+	assert.Contains(t, page, `<a class="mono" href="/settings/keys/task_ssh_ed25519">task_ssh_ed25519</a>`)
+	assert.Contains(t, page, ">Regenerate</button>")
 }
 
 // A project that is a checkout with keys in its .ssh/ folder gets a
@@ -102,83 +112,40 @@ func TestKeys_ProjectFolders(t *testing.T) {
 	assert.NotContains(t, body, `data-delete="/api/keys/id_rsa"`)
 }
 
-// A key shows the roles whose runs get it, and its edit form has a box
-// per role, checked for those; generate and upload show the same boxes.
-func TestKeys_Policies(t *testing.T) {
+// A key's edit form has a box per role and user, checked for its links,
+// and the git box; a missing key is not found.
+func TestKeys_Links(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
-	_, err := f.opts.Keys.Generate("ed25519", "deploy")
-	assert.NoError(t, err)
-	assert.NoError(t, f.opts.KeyPolicies.Set(context.Background(), "id_ed25519", []string{"runner"}))
+	key := f.gen(t, keystore.Spec{Name: "deploy"})
+	assert.NoError(t, f.opts.Keys.Link(context.Background(), key.Name, []string{"runner"}, []string{asOps}))
 
 	list := f.page(t, asAdmin, "/settings/keys")
 	assert.Contains(t, list, `<span class="badge">runner</span>`)
-	assert.Contains(t, list, `href="/settings/keys/id_ed25519"`)
+	assert.Contains(t, list, `href="/settings/keys/deploy_ed25519"`)
 
-	edit := f.page(t, asAdmin, "/settings/keys/id_ed25519")
-	assert.Contains(t, edit, `data-api="/api/keys/id_ed25519" data-method="PUT"`)
+	edit := f.page(t, asAdmin, "/settings/keys/deploy_ed25519")
+	assert.Contains(t, edit, `data-api="/api/keys/deploy_ed25519" data-method="PUT"`)
 	assert.Contains(t, edit, `value="runner" data-type="set" checked`)
 	assert.Contains(t, edit, `value="admin" data-type="set">`)
-	assert.Contains(t, edit, `value="viewer" data-type="set">`)
-
-	missing := f.get(t, asAdmin, "/settings/keys/id_rsa")
-	assert.Equal(t, http.StatusNotFound, missing.Status)
-
-	for _, path := range []string{"/settings/keys/generate", "/settings/keys/upload"} {
-		assert.Contains(t, f.page(t, asAdmin, path), `name="policies" value="runner" data-type="set"`)
-	}
-}
-
-// The forms show a name and a box per user; a user's SSH keys page lists
-// the keys given to them or their role, to copy.
-func TestKeys_ForAUser(t *testing.T) {
-	t.Parallel()
-	f := newFixture(t)
-	ctx := context.Background()
-	_, err := f.opts.Keys.Generate("ed25519", "instance")
-	assert.NoError(t, err)
-	mine, err := f.opts.Keys.GenerateAs("ed25519", "ops", "ops key")
-	assert.NoError(t, err)
-	assert.NoError(t, f.opts.KeyPolicies.SetUsers(ctx, "id_ed25519_ops", []string{asOps}))
-	assert.NoError(t, f.opts.KeyPolicies.Set(ctx, "id_ed25519", []string{"runner"}))
-
-	generate := f.page(t, asAdmin, "/settings/keys/generate")
-	assert.Contains(t, generate, `<select id="key-for" name="users" data-type="list" data-key-for>`)
-	assert.Contains(t, generate, `<option value="`+asOps+`">`+asOps+` (runner)</option>`)
-	assert.NotContains(t, generate, `name="users" value="`+asOps+`" data-type="set"`)
-	edit := f.page(t, asAdmin, "/settings/keys/id_ed25519_ops")
 	assert.Contains(t, edit, `name="users" value="`+asOps+`" data-type="set" checked`)
-	list := f.page(t, asAdmin, "/settings/keys")
-	assert.Contains(t, list, `<input type="hidden" name="name" value="ops">`)
-	// The policy table: ops gets its own key and, from the runner role,
-	// the instance's.
+	assert.Contains(t, edit, `<input type="checkbox" name="git"> git pulls and clones with this key`)
+	assert.Equal(t, http.StatusNotFound, f.get(t, asAdmin, "/settings/keys/missing").Status)
+
+	// The policy table: ops gets the key by name and the runner role.
 	holders := list[strings.Index(list, `class="table key-holders"`):]
-	assert.Contains(t, holders, `<a class="key-chip" href="/settings/keys/id_ed25519_ops" title="id_ed25519_ops, `)
-	assert.Contains(t, holders, `<a class="key-chip faint" href="/settings/keys/id_ed25519" title="id_ed25519, from the runner role">instance <small>via role</small></a>`)
+	assert.Contains(t, holders, `<a class="key-chip" href="/settings/keys/deploy_ed25519" title="deploy_ed25519, `)
 
 	ops := f.page(t, asOps, "/keys")
 	assert.Contains(t, ops, "Your SSH keys")
-	assert.Contains(t, ops, strings.ReplaceAll(mine.Fingerprint, "+", "&#43;"))
-	assert.Contains(t, ops, "id_ed25519_ops")
-	assert.Contains(t, ops, "id_ed25519</span>") // the runner role's
-	assert.Contains(t, ops, `href="/keys"`)
-
+	assert.Contains(t, ops, strings.ReplaceAll(key.Fingerprint, "+", "&#43;"))
+	assert.Contains(t, ops, ">you<")
 	viewer := f.page(t, asViewer, "/keys")
 	assert.Contains(t, viewer, "No keys for you or your role yet")
-}
 
-// The server user's own keys, in its ~/.ssh, show apart and read-only:
-// copy, no edit or delete.
-func TestKeys_HomeKeys(t *testing.T) {
-	t.Parallel()
-	f := newFixture(t)
-	assert.NotContains(t, f.page(t, asAdmin, "/settings/keys"), "Server user's keys")
-	_, err := f.opts.HomeKeys.Generate("ed25519", "root@task")
-	assert.NoError(t, err)
-	body := f.page(t, asAdmin, "/settings/keys")
-	assert.Contains(t, body, "Server user's keys <small>"+f.opts.HomeKeys.Dir+"</small>")
-	assert.Contains(t, body, `data-copy="ssh-ed25519`)
-	assert.NotContains(t, body, `data-delete="/api/keys/id_ed25519"`)
+	profile := f.page(t, asAdmin, "/users/"+asOps)
+	assert.Contains(t, profile, `<span class="mono">deploy_ed25519</span>`)
+	assert.Contains(t, profile, `href="/settings/keys/generate?for=`+asOps+`"`)
 }
 
 // The keys page has a row per workspace: its projects, a count of its
@@ -193,22 +160,22 @@ func TestKeys_Workspaces(t *testing.T) {
 	assert.NoError(t, f.opts.Workspaces.Create(ctx, &model.Workspace{Folder: "acme", Title: "Acme"}))
 	acme, err := f.opts.Workspaces.GetByFolder(ctx, "acme")
 	assert.NoError(t, err)
-	_, err = f.opts.WorkspaceKeys.Ensure(acme.ID, "task-ui acme")
-	assert.NoError(t, err)
-	_, err = f.opts.WorkspaceKeys.SSH(acme.ID).GenerateAs("ed25519", "deploy", "deploy")
-	assert.NoError(t, err)
-	f.opts.Secrets.Workspaces = &secret.Workspaces{Rows: f.opts.Workspaces, Keys: f.opts.WorkspaceKeys}
+	scope := keystore.ScopeWorkspace(acme.ID)
+	enc := f.gen(t, keystore.Spec{Name: "workspace_acme_encryption", Purpose: keystore.PurposeEncrypt, Scope: scope})
+	f.gen(t, keystore.Spec{Name: "workspace_acme_deploy", Scope: scope})
+	f.opts.Secrets.Workspaces = f.workspaceVaults()
 	assert.NoError(t, f.opts.Secrets.Set(ctx, &model.Secret{Scope: "workspace:acme", Name: "TOKEN", Content: "x"}))
 	assert.NoError(t, f.opts.Secrets.Set(ctx, &model.Secret{Scope: "workspace:acme", Name: "OTHER", Content: "y"}))
 
 	body := f.page(t, asAdmin, "/settings/keys")
 	assert.Contains(t, body, `<tr id="ws-acme">`)
 	assert.Contains(t, body, `<a href="/settings/secrets?workspace=acme">2 secrets</a>`)
-	assert.Contains(t, body, `<a class="key-chip" href="/settings/workspaces/acme/keys/id_ed25519_deploy"`)
-	assert.Contains(t, body, html(f.opts.WorkspaceKeys.EncryptKey(acme.ID).Fingerprint))
+	assert.Contains(t, body, `<a class="key-chip" href="/settings/workspaces/acme/keys/workspace_acme_deploy_ed25519"`)
+	assert.Contains(t, body, html(enc.Fingerprint))
 	assert.Contains(t, body, `<tr id="ws-_" class="key-missing">`)
 	assert.Contains(t, body, "You can't add secrets until it has one.")
 	assert.Contains(t, body, "This workspace has no SSH key of its own")
 	assert.Contains(t, body, `href="/settings/workspaces/_/keys/upload?encrypt=1"`)
 	assert.Contains(t, body, `<div class="faint key-projects">infra, private</div>`, "the root's projects are the default workspace's")
+	assert.Contains(t, body, "every run of the workspace")
 }

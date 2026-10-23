@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/titpetric/task-ui/integration"
+	"github.com/titpetric/task-ui/keystore"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/storage"
 )
@@ -146,7 +147,7 @@ func (h *Handlers) secretScope(r *http.Request, scope string) error {
 // secretKey says why a scope's workspace stores no secret: it has no
 // encryption key yet. "" when it has one, or keeps no keys of its own.
 func (h *Handlers) secretKey(r *http.Request, scope string) string {
-	if h.opts.WorkspaceKeys == nil || h.opts.Workspaces == nil || h.opts.Secrets == nil || h.opts.Secrets.Workspaces == nil {
+	if h.opts.Keys == nil || h.opts.Workspaces == nil || h.opts.Secrets == nil || h.opts.Secrets.Workspaces == nil {
 		return ""
 	}
 	name, err := h.opts.Secrets.Workspace(r.Context(), scope)
@@ -154,7 +155,7 @@ func (h *Handlers) secretKey(r *http.Request, scope string) string {
 		return ""
 	}
 	row, err := h.opts.Workspaces.GetByFolder(r.Context(), name)
-	if err != nil || h.opts.WorkspaceKeys.EncryptKey(row.ID) != nil {
+	if err != nil || h.opts.Keys.EncryptKey(r.Context(), keystore.ScopeWorkspace(row.ID)) != nil {
 		return ""
 	}
 	return "the workspace " + name + " has no encryption key, so it stores no secrets: generate or upload one in Settings, Keys"

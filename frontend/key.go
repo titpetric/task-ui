@@ -8,13 +8,15 @@ import (
 
 	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/frontend/view"
+	"github.com/titpetric/task-ui/keystore"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/sshkey"
+	"github.com/titpetric/task-ui/storage"
 )
 
-// keys lists the keys by purpose: the instance's and each workspace's
-// encryption key, which stores secrets, and their SSH keys, which
-// connect to hosts; then the instance's SSH keys with their policies.
+// keys lists every key of the key folder: the instance's and each
+// workspace's encryption key, which stores secrets, and the SSH keys,
+// which connect to hosts, with who gets each and the one git pulls with.
 func (h *Handlers) keys(w http.ResponseWriter, r *http.Request) {
 	if !h.require(w, r, "key/view") {
 		return
@@ -22,32 +24,37 @@ func (h *Handlers) keys(w http.ResponseWriter, r *http.Request) {
 	p := h.page(r, "Keys")
 	p.Crumbs = view.Crumbs("Settings", "/settings", "Keys")
 	p.Step = view.StepKeys
-	p.Keys, p.KeysDir = h.accessKeys(h.opts.Keys), h.opts.Keys.Dir
+	h.fillKeys(r.Context(), p)
 	p.KeyFolders = h.keyFolders()
-	if h.opts.HomeKeys != nil {
-		for _, key := range h.accessKeys(h.opts.HomeKeys) {
-			if !key.Backup {
-				p.HomeKeys = append(p.HomeKeys, key)
-			}
-		}
-		p.HomeKeysDir = h.opts.HomeKeys.Dir
-	}
-	p.KeyPolicies, p.KeyUsers = h.keyPolicies(r), h.keyUsers(r)
 	users, _ := h.opts.Users.List(r.Context())
-	p.KeyHolders = view.KeyHolders(p.Keys, p.KeyPolicies, p.KeyUsers, users)
-	h.instanceKey(p)
-	if h.opts.WorkspaceKeys != nil {
-		p.KeyOverlaps = h.opts.WorkspaceKeys.Overlaps()
-	}
+	p.KeyHolders = view.KeyHolders(p.Keys, users)
 	p.KeyWorkspaces = h.keyWorkspaces(r.Context(), p.Folders)
 	h.render(w, http.StatusOK, "keys", p)
+}
+
+// fillKeys puts the key folder on a page: every key, the links of each
+// by name, the git key and the instance's encryption key.
+func (h *Handlers) fillKeys(ctx context.Context, p *view.Page) {
+	p.KeyPolicies, p.KeyUsers = map[string][]string{}, map[string][]string{}
+	if h.opts.Keys == nil {
+		return
+	}
+	p.Keys, _ = h.opts.Keys.List(ctx)
+	p.KeysDir = h.opts.Keys.Dir
+	for _, key := range p.Keys {
+		p.KeyPolicies[key.Name], p.KeyUsers[key.Name] = key.Roles, key.Users
+		if key.Git {
+			p.GitKey = key.Name
+		}
+	}
+	p.InstanceKey = h.opts.Keys.EncryptKey(ctx, storage.ScopeInstance)
 }
 
 // keyWorkspaces returns a row per workspace, the default one first: its
 // projects, the count of its secrets, its encryption key and its SSH
 // keys.
 func (h *Handlers) keyWorkspaces(ctx context.Context, folders []*folder.Folder) []view.KeyWorkspace {
-	if h.opts.Workspaces == nil || h.opts.WorkspaceKeys == nil {
+	if h.opts.Workspaces == nil || h.opts.Keys == nil {
 		return nil
 	}
 	workspaces, err := h.opts.Workspaces.List(ctx)
@@ -58,12 +65,9 @@ func (h *Handlers) keyWorkspaces(ctx context.Context, folders []*folder.Folder) 
 	index := map[string]int{}
 	for _, ws := range workspaces {
 		index[ws.Folder] = len(rows)
-		row := view.KeyWorkspace{Workspace: ws, Encrypt: h.opts.WorkspaceKeys.EncryptKey(ws.ID)}
-		for _, key := range h.opts.WorkspaceKeys.SSH(ws.ID).List() {
-			if !key.Backup {
-				row.SSH = append(row.SSH, key)
-			}
-		}
+		scope := keystore.ScopeWorkspace(ws.ID)
+		row := view.KeyWorkspace{Workspace: ws, Encrypt: h.opts.Keys.EncryptKey(ctx, scope)}
+		row.SSH, _ = h.opts.Keys.Of(ctx, scope, keystore.PurposeSSH)
 		rows = append(rows, row)
 	}
 	for _, f := range folders {
@@ -96,60 +100,45 @@ func project(f *folder.Folder, workspace string, workspaces map[string]int) bool
 	return f.Depth() == 0 && !named
 }
 
-// instanceKey puts the instance's encryption key on a page.
-func (h *Handlers) instanceKey(p *view.Page) {
-	if h.opts.WorkspaceKeys != nil {
-		p.InstanceKey, p.InstanceKeyDir = h.opts.WorkspaceKeys.InstanceKey(), h.opts.WorkspaceKeys.Instance().Dir
-	}
-}
-
-// accessKeys returns the key pairs of an SSH folder, backups among
-// them, without a copy of an encryption key: that is no SSH key,
-// whatever folder holds it.
-func (h *Handlers) accessKeys(store *sshkey.Store) []sshkey.Key {
-	keys := store.List()
-	if h.opts.WorkspaceKeys == nil {
-		return keys
-	}
-	result := []sshkey.Key{}
-	for _, key := range keys {
-		if !h.opts.WorkspaceKeys.Encrypts(filepath.Join(store.Dir, key.Name)) {
-			result = append(result, key)
-		}
-	}
-	return result
+// instanceKey puts the instance's encryption key and the git key on a
+// page.
+func (h *Handlers) instanceKey(r *http.Request, p *view.Page) {
+	h.fillKeys(r.Context(), p)
 }
 
 // keyGenerate shows the generate form.
 func (h *Handlers) keyGenerate(w http.ResponseWriter, r *http.Request) {
-	if !h.require(w, r, "key/edit") {
-		return
-	}
-	p := h.page(r, "Generate key")
-	p.Crumbs = view.Crumbs("Settings", "/settings", "Keys", "/settings/keys", "Generate")
-	p.Step = view.StepKeys
-	p.KeysDir = h.opts.Keys.Dir
-	p.Users, _ = h.opts.Users.List(r.Context())
-	h.render(w, http.StatusOK, "key_generate", p)
+	h.keyForm(w, r, "Generate key", "Generate", "key_generate")
 }
 
 // keyUpload shows the upload form.
 func (h *Handlers) keyUpload(w http.ResponseWriter, r *http.Request) {
+	h.keyForm(w, r, "Upload key", "Upload", "key_upload")
+}
+
+// keyForm shows a form that adds a key.
+func (h *Handlers) keyForm(w http.ResponseWriter, r *http.Request, title, crumb, template string) {
 	if !h.require(w, r, "key/edit") {
 		return
 	}
-	p := h.page(r, "Upload key")
-	p.Crumbs = view.Crumbs("Settings", "/settings", "Keys", "/settings/keys", "Upload")
+	p := h.page(r, title)
+	p.Crumbs = view.Crumbs("Settings", "/settings", "Keys", "/settings/keys", crumb)
 	p.Step = view.StepKeys
-	p.KeysDir = h.opts.Keys.Dir
+	if h.opts.Keys != nil {
+		p.KeysDir = h.opts.Keys.Dir
+	}
 	p.Users, _ = h.opts.Users.List(r.Context())
-	h.render(w, http.StatusOK, "key_upload", p)
+	// ?for=<user> starts a key of a user: user_<name>, linked to them.
+	p.Form = map[string]string{}
+	if user := r.URL.Query().Get("for"); user != "" {
+		p.Form["name"], p.Form["for"] = "user_"+user, user
+	}
+	h.render(w, http.StatusOK, template, p)
 }
 
 // keyFolders lists the .ssh/ folders of the projects, the checkouts at
 // the top of the root, that hold a private key. Runs do not load them, so
-// the page warns: an admin uploads a key a project needs and assigns it by
-// policy.
+// the page warns: an admin uploads a key a project needs and links it.
 func (h *Handlers) keyFolders() []view.KeyFolder {
 	var result []view.KeyFolder
 	for _, f := range h.opts.Catalogue.List() {
@@ -166,68 +155,55 @@ func (h *Handlers) keyFolders() []view.KeyFolder {
 	return result
 }
 
-// keyPolicies returns the roles that receive each instance key, none when
-// reading the policies fails.
-func (h *Handlers) keyPolicies(r *http.Request) map[string][]string {
-	if h.opts.KeyPolicies == nil {
-		return map[string][]string{}
-	}
-	policies, err := h.opts.KeyPolicies.All(r.Context())
-	if err != nil {
-		return map[string][]string{}
-	}
-	return policies
-}
-
-// keyEdit shows the form that sets the roles whose runs get a key.
+// keyEdit shows the form that sets whose runs get an SSH key and
+// whether git pulls with it.
 func (h *Handlers) keyEdit(w http.ResponseWriter, r *http.Request) {
-	if !h.require(w, r, "key/view") {
+	if !h.require(w, r, "key/view") || h.opts.Keys == nil {
 		return
 	}
-	name := param(r, "name")
-	for _, key := range h.accessKeys(h.opts.Keys) {
-		if key.Name != name || key.Backup {
-			continue
-		}
-		p := h.page(r, key.Name)
-		p.Crumbs = view.Crumbs("Settings", "/settings", "Keys", "/settings/keys", key.Name)
-		p.Step = view.StepKeys
-		p.Key, p.KeyPolicies, p.KeyUsers = &key, h.keyPolicies(r), h.keyUsers(r)
-		p.Users, _ = h.opts.Users.List(r.Context())
-		h.render(w, http.StatusOK, "key_edit", p)
-		return
-	}
-	h.notFound(w, r)
-}
-
-// keyUsers returns the users that receive each instance key, by name,
-// none when reading them fails.
-func (h *Handlers) keyUsers(r *http.Request) map[string][]string {
-	if h.opts.KeyPolicies == nil {
-		return map[string][]string{}
-	}
-	users, err := h.opts.KeyPolicies.AllUsers(r.Context())
+	key, err := h.opts.Keys.Get(r.Context(), param(r, "name"))
 	if err != nil {
-		return map[string][]string{}
+		h.notFound(w, r)
+		return
 	}
-	return users
+	p := h.page(r, key.Name)
+	p.Crumbs = view.Crumbs("Settings", "/settings", "Keys", "/settings/keys", key.Name)
+	p.Step = view.StepKeys
+	h.fillKeys(r.Context(), p)
+	p.Key = key
+	p.Users, _ = h.opts.Users.List(r.Context())
+	h.render(w, http.StatusOK, "key_edit", p)
 }
 
-// myKeys lists the keys the signed in user's runs get, by role or by
-// name, to copy their public halves. Every user has it.
+// myKeys lists the instance SSH keys the signed in user's runs get, by
+// role or by name, to copy their public halves. Every user has it.
 func (h *Handlers) myKeys(w http.ResponseWriter, r *http.Request) {
 	p := h.page(r, "Your SSH keys")
 	p.Crumbs = view.Crumbs("Your SSH keys")
-	p.KeyUsers = h.keyUsers(r)
-	if h.opts.KeyPolicies != nil && p.User != nil {
-		names, err := h.opts.KeyPolicies.For(r.Context(), p.User.EffectiveRole(), p.User.Name)
-		if err == nil {
-			for _, key := range h.accessKeys(h.opts.Keys) {
-				if !key.Backup && slices.Contains(names, key.Name) {
-					p.Keys = append(p.Keys, key)
-				}
+	p.KeyUsers = map[string][]string{}
+	if h.opts.Keys != nil && p.User != nil {
+		keys, _ := h.opts.Keys.List(r.Context())
+		for _, key := range keys {
+			if key.Purpose == keystore.PurposeSSH && key.Workspace() == "" && (slices.Contains(key.Roles, p.User.EffectiveRole()) || slices.Contains(key.Users, p.User.Name)) {
+				p.Keys = append(p.Keys, key)
+				p.KeyUsers[key.Name] = key.Users
 			}
 		}
 	}
 	h.render(w, http.StatusOK, "my_keys", p)
+}
+
+// userKeys returns the instance SSH keys linked to a user by name.
+func (h *Handlers) userKeys(ctx context.Context, user *model.User) []keystore.Key {
+	if h.opts.Keys == nil {
+		return nil
+	}
+	keys, _ := h.opts.Keys.List(ctx)
+	var result []keystore.Key
+	for _, key := range keys {
+		if slices.Contains(key.Users, user.Name) {
+			result = append(result, key)
+		}
+	}
+	return result
 }

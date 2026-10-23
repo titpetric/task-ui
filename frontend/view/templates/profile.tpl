@@ -117,5 +117,25 @@
 </section>
 {{- end }}
 
+{{- if or $pr.Own (.Can "key/view") }}
+<section class="block" id="keys">
+	<div class="block-head">
+		<h3>Keys <small>linked to {{ $u.Name }}, in the ssh agent of their runs</small></h3>
+		{{- if .Can "key/edit" }}
+		<div class="actions"><a class="btn btn-sm" href="/settings/keys/generate?for={{ $u.Name }}">Generate a key for {{ $u.Name }}</a></div>
+		{{- end }}
+	</div>
+	{{- with .Keys }}
+	<ul class="profile-list">
+		{{- range . }}
+		<li><svg class="ic"><use href="#i-key"/></svg><span class="mono">{{ .Name }}</span> <span class="faint">{{ .Fingerprint }}</span> <button type="button" class="btn-icon" data-copy="{{ .PublicKey }}" title="Copy public key" aria-label="Copy public key"><svg class="ic"><use href="#i-copy"/></svg></button></li>
+		{{- end }}
+	</ul>
+	{{- else }}
+	<p class="faint">No key linked to {{ $u.Name }} by name; their role's keys come with the role.</p>
+	{{- end }}
+</section>
+{{- end }}
+
 {{ template "mcp-access" (list $ $u) }}
 {{ end }}

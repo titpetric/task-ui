@@ -13,16 +13,15 @@ import (
 	"github.com/titpetric/task-ui/git"
 	"github.com/titpetric/task-ui/hostinfo"
 	"github.com/titpetric/task-ui/integration"
+	"github.com/titpetric/task-ui/keystore"
 	"github.com/titpetric/task-ui/note"
 	"github.com/titpetric/task-ui/recording"
 	"github.com/titpetric/task-ui/retention"
 	"github.com/titpetric/task-ui/runner"
 	"github.com/titpetric/task-ui/secret"
-	"github.com/titpetric/task-ui/sshkey"
 	"github.com/titpetric/task-ui/sshprobe"
 	"github.com/titpetric/task-ui/storage"
 	"github.com/titpetric/task-ui/workflow"
-	"github.com/titpetric/task-ui/workspace"
 )
 
 // Options are what the pages read from.
@@ -33,15 +32,11 @@ type Options struct {
 
 	Users    *storage.UserStorage
 	Projects *storage.ProjectStorage
-	// Workspaces are the checkouts the projects may clone inside,
-	// WorkspaceKeys their keys, and KeyGrants whose runs get each of a
-	// workspace's SSH keys.
-	Workspaces    *storage.WorkspaceStorage
-	WorkspaceKeys *workspace.Keyring
-	KeyGrants     *storage.WorkspaceKeyGrantStorage
-	Runs          *storage.RunStorage
-	Artifacts     *storage.ArtifactStorage
-	Schedules     *storage.ScheduleStorage
+	// Workspaces are the checkouts the projects may clone inside.
+	Workspaces *storage.WorkspaceStorage
+	Runs       *storage.RunStorage
+	Artifacts  *storage.ArtifactStorage
+	Schedules  *storage.ScheduleStorage
 	// FolderRefs find the rows that name a folder, which a move leaves.
 	FolderRefs *storage.FolderRefStorage
 	Secrets    *secret.Store
@@ -56,13 +51,10 @@ type Options struct {
 	Runner    *runner.Manager
 	Catalogue folder.Catalogue
 	Git       *git.Git
-	Keys      *sshkey.Store
-	// HomeKeys are the keys in the ~/.ssh of the user task-ui runs as,
-	// which ssh and git take by default; nil when they are the instance keys.
-	HomeKeys *sshkey.Store
-	// KeyPolicies assign the instance keys to roles' runs.
-	KeyPolicies *storage.SSHKeyPolicyStorage
-	Env         *envfile.Store
+	// Keys are the key folder: every key of the instance and its
+	// workspaces.
+	Keys *keystore.Local
+	Env  *envfile.Store
 	// Recordings holds the runs' recordings, for the last screen of a
 	// run whose session has ended.
 	Recordings *recording.Store

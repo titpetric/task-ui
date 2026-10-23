@@ -23,7 +23,7 @@ func (h *Handlers) integrations(w http.ResponseWriter, r *http.Request) {
 	p := h.page(r, "Integrations")
 	p.Crumbs = view.Crumbs("Settings", "/settings", "Integrations")
 	p.Step = view.StepIntegrations
-	h.instanceKey(p)
+	h.instanceKey(r, p)
 	p.Users, _ = h.opts.Users.List(r.Context())
 	for _, kind := range integration.Kinds() {
 		values, err := h.opts.Integrations.Values(r.Context(), kind.ID)

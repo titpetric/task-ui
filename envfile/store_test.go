@@ -26,7 +26,7 @@ func newStore(t *testing.T) *envfile.Store {
 	keys := &sshkey.Store{Dir: t.TempDir()}
 	_, err = keys.Generate("ed25519", "test")
 	assert.NoError(t, err)
-	return envfile.New(storage.NewEnvFileStorage(db), secret.New(storage.NewSecretStorage(db), secret.NewVault(keys)))
+	return envfile.New(storage.NewEnvFileStorage(db), secret.New(storage.NewSecretStorage(db), secret.NewVault(secret.DirKeys{Store: keys})))
 }
 
 func TestNew(t *testing.T) {

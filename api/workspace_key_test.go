@@ -3,15 +3,13 @@ package api_test
 import (
 	"context"
 	"net/http"
-	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 
 	"github.com/titpetric/task-ui/api"
 	"github.com/titpetric/task-ui/internal/assert"
+	"github.com/titpetric/task-ui/keystore"
 	"github.com/titpetric/task-ui/model"
-	"github.com/titpetric/task-ui/sshkey"
 )
 
 func TestWorkspaceKey_AdminOnly(t *testing.T) {
@@ -23,8 +21,8 @@ func TestWorkspaceKey_AdminOnly(t *testing.T) {
 		{http.MethodGet, "/workspaces/malta/keys"},
 		{http.MethodPost, "/workspaces/malta/keys/generate"},
 		{http.MethodPost, "/workspaces/malta/keys/upload"},
-		{http.MethodPut, "/workspaces/malta/keys/id_ed25519"},
-		{http.MethodDelete, "/workspaces/malta/keys/id_ed25519"},
+		{http.MethodPut, "/workspaces/malta/keys/workspace_malta_ssh_ed25519"},
+		{http.MethodDelete, "/workspaces/malta/keys/workspace_malta_ssh_ed25519"},
 	} {
 		for _, user := range []string{asOps, asViewer, asLimited} {
 			res := f.call(t, user, c.method, c.path, map[string]any{})
@@ -34,118 +32,51 @@ func TestWorkspaceKey_AdminOnly(t *testing.T) {
 	assert.Equal(t, http.StatusNotFound, f.call(t, asAdmin, http.MethodGet, "/workspaces/nope/keys", nil).Status)
 }
 
-// A workspace made has its key directories and no encryption key until
-// an admin generates or uploads one; an admin generates, uploads,
-// grants and deletes its SSH keys, and no answer carries a private key.
-// Deleting the workspace takes its keys.
+// A workspace made has no encryption key until an admin generates or
+// uploads one; an admin generates, links and removes its SSH keys,
+// named workspace_<folder>_<name>_<algorithm>, and no answer carries a
+// private key. Deleting the workspace takes its keys.
 func TestWorkspaceKey_CRUD(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
+	ctx := context.Background()
 	repo := "file://" + localRepo(t)
 	created := f.call(t, asAdmin, http.MethodPost, "/workspaces", api.WorkspaceRequest{URL: repo, Folder: "malta"})
 	assert.Equal(t, http.StatusCreated, created.Status, string(created.Raw))
-	id := created.str("workspace", "id")
-	keyring := f.opts.WorkspaceKeys
-	assert.DirExists(t, filepath.Join(keyring.Dir(id), "encrypt"))
-	assert.Nil(t, keyring.EncryptKey(id))
+	scope := keystore.ScopeWorkspace(created.str("workspace", "id"))
+	assert.Nil(t, f.opts.Keys.EncryptKey(ctx, scope))
 	made := f.call(t, asAdmin, http.MethodPost, "/workspaces/malta/keys/generate", api.WorkspaceKeyRequest{Encrypt: true, Comment: "task-ui malta"})
 	assert.Equal(t, http.StatusCreated, made.Status, string(made.Raw))
-	assert.FileExists(t, filepath.Join(keyring.Dir(id), "encrypt", "id_ed25519"))
+	assert.Equal(t, "workspace_malta_encryption_ed25519", made.str("key", "name"))
+	assert.FileExists(t, filepath.Join(f.opts.Keys.Dir, "workspace_malta_encryption_ed25519.key"))
+	again := f.call(t, asAdmin, http.MethodPost, "/workspaces/malta/keys/generate", api.WorkspaceKeyRequest{Encrypt: true})
+	assert.Equal(t, http.StatusCreated, again.Status, "new material for the one it has")
+	assert.NotEqual(t, made.str("key", "fingerprint"), again.str("key", "fingerprint"))
 
-	private := func(res response) {
-		t.Helper()
-		assert.NotContains(t, string(res.Raw), "PRIVATE KEY")
-	}
+	ssh := f.call(t, asAdmin, http.MethodPost, "/workspaces/malta/keys/generate", api.WorkspaceKeyRequest{Name: "build", Policies: []string{model.RoleAdmin}})
+	assert.Equal(t, http.StatusCreated, ssh.Status, string(ssh.Raw))
+	name := ssh.str("key", "name")
+	assert.Equal(t, "workspace_malta_build_ed25519", name)
+	plain := f.call(t, asAdmin, http.MethodPost, "/workspaces/malta/keys/generate", api.WorkspaceKeyRequest{Algo: "ecdsa", Bits: 256})
+	assert.Equal(t, "workspace_malta_ssh_ecdsa256", plain.str("key", "name"))
 
 	list := f.call(t, asAdmin, http.MethodGet, "/workspaces/malta/keys", nil)
-	assert.Equal(t, http.StatusOK, list.Status, string(list.Raw))
-	private(list)
-	assert.Equal(t, keyring.EncryptKey(id).Fingerprint, list.str("encrypt", "fingerprint"))
-	assert.Len(t, list.list("keys"), 0)
+	assert.Equal(t, http.StatusOK, list.Status)
+	assert.Len(t, list.list("keys"), 2, "the SSH keys")
+	assert.Equal(t, "workspace_malta_encryption_ed25519", list.str("encrypt", "name"))
+	assert.NotContains(t, string(list.Raw), "PRIVATE KEY")
 
-	generated := f.call(t, asAdmin, http.MethodPost, "/workspaces/malta/keys/generate", api.WorkspaceKeyRequest{Type: "ed25519", Name: "deploy", Comment: "deploy"})
-	assert.Equal(t, http.StatusCreated, generated.Status, string(generated.Raw))
-	private(generated)
-	assert.Equal(t, "id_ed25519_deploy", generated.str("key", "name"))
-	assert.True(t, strings.HasPrefix(generated.str("key", "public_key"), "ssh-ed25519 "))
-
-	granted := f.call(t, asAdmin, http.MethodPost, "/workspaces/malta/keys/generate", api.WorkspaceKeyRequest{Type: "ed25519", Name: "admin", Policies: []string{model.RoleAdmin}, Users: []string{" ops "}})
-	assert.Equal(t, http.StatusCreated, granted.Status, string(granted.Raw))
-	for _, name := range []string{"id_ed25519_deploy", "id_ed25519_admin"} {
-		info, err := os.Stat(filepath.Join(keyring.SSH(id).Dir, name))
-		assert.NoError(t, err)
-		assert.Equal(t, os.FileMode(0o600), info.Mode().Perm())
-	}
-
-	// An encryption key is no SSH key, and an SSH key no encryption
-	// key: the workspace's, the instance's, the instance's SSH key.
-	f.withKey(t)
-	for _, c := range []struct {
-		path    string
-		encrypt bool
-	}{
-		{filepath.Join(keyring.Encrypt(id).Dir, "id_ed25519"), false},
-		{filepath.Join(keyring.Instance().Dir, "id_ed25519"), false},
-		{filepath.Join(keyring.Instance().Dir, "id_ed25519"), true},
-		{filepath.Join(f.opts.Keys.Dir, "id_ed25519"), true},
-		{filepath.Join(keyring.SSH(id).Dir, "id_ed25519_deploy"), true},
-	} {
-		data, err := os.ReadFile(c.path)
-		assert.NoError(t, err)
-		refused := f.call(t, asAdmin, http.MethodPost, "/workspaces/malta/keys/upload", api.WorkspaceKeyRequest{Content: string(data), Name: "copy", Encrypt: c.encrypt})
-		assert.Equal(t, http.StatusConflict, refused.Status, c.path)
-		assert.Contains(t, refused.str("error"), "never both")
-	}
-	assert.Equal(t, keyring.EncryptKey(id).Name, "id_ed25519")
-	assert.Len(t, keyring.Encrypt(id).List(), 1, "a refused encryption key moves nothing aside")
-
-	// An upload: the private key of another pair.
-	other := &sshkey.Store{Dir: t.TempDir()}
-	_, err := other.Generate("ed25519", "other")
-	assert.NoError(t, err)
-	data, err := os.ReadFile(filepath.Join(other.Dir, "id_ed25519"))
-	assert.NoError(t, err)
-	uploaded := f.call(t, asAdmin, http.MethodPost, "/workspaces/malta/keys/upload", api.WorkspaceKeyRequest{Content: string(data), Name: "copy"})
-	assert.Equal(t, http.StatusCreated, uploaded.Status, string(uploaded.Raw))
-	private(uploaded)
-	assert.Equal(t, "id_ed25519_copy", uploaded.str("key", "name"))
-	bad := f.call(t, asAdmin, http.MethodPost, "/workspaces/malta/keys/upload", api.WorkspaceKeyRequest{Content: "not a key"})
-	assert.Equal(t, http.StatusBadRequest, bad.Status)
-
-	list = f.call(t, asAdmin, http.MethodGet, "/workspaces/malta/keys", nil)
-	private(list)
-	assert.Len(t, list.list("keys"), 3)
-	assert.Equal(t, []any{model.RoleAdmin}, list.get("policies", "id_ed25519_admin"))
-	assert.Equal(t, []any{"ops"}, list.get("users", "id_ed25519_admin"))
-	assert.Nil(t, list.get("policies", "id_ed25519_deploy"))
-
-	// A rotation keeps the grants; a PUT replaces them, none is every run.
-	rotated := f.call(t, asAdmin, http.MethodPost, "/workspaces/malta/keys/generate", api.WorkspaceKeyRequest{Type: "ed25519", Name: "admin"})
-	assert.Equal(t, http.StatusCreated, rotated.Status)
-	list = f.call(t, asAdmin, http.MethodGet, "/workspaces/malta/keys", nil)
-	assert.Equal(t, []any{model.RoleAdmin}, list.get("policies", "id_ed25519_admin"))
-	put := f.call(t, asAdmin, http.MethodPut, "/workspaces/malta/keys/id_ed25519_admin", api.WorkspaceKeyRequest{Policies: []string{model.RoleRunner}})
+	put := f.call(t, asAdmin, http.MethodPut, "/workspaces/malta/keys/"+name, api.WorkspaceKeyRequest{Users: []string{"ops"}})
 	assert.Equal(t, http.StatusOK, put.Status, string(put.Raw))
-	list = f.call(t, asAdmin, http.MethodGet, "/workspaces/malta/keys", nil)
-	assert.Equal(t, []any{model.RoleRunner}, list.get("policies", "id_ed25519_admin"))
-	assert.Nil(t, list.get("users", "id_ed25519_admin"))
-	assert.Equal(t, http.StatusBadRequest, f.call(t, asAdmin, http.MethodPut, "/workspaces/malta/keys/id_ed25519_admin", api.WorkspaceKeyRequest{Policies: []string{"root"}}).Status)
-	assert.Equal(t, http.StatusNotFound, f.call(t, asAdmin, http.MethodPut, "/workspaces/malta/keys/id_ed25519_nope", api.WorkspaceKeyRequest{}).Status)
+	key, err := f.opts.Keys.Get(ctx, name)
+	assert.NoError(t, err)
+	assert.Equal(t, []string{"ops"}, key.Users)
+	assert.Equal(t, http.StatusNotFound, f.call(t, asAdmin, http.MethodPut, "/workspaces/malta/keys/workspace_malta_encryption_ed25519", api.WorkspaceKeyRequest{}).Status, "the encryption key links nothing")
 
-	// The encryption key rotates, and no route deletes it.
-	before := keyring.EncryptKey(id).Fingerprint
-	encrypt := f.call(t, asAdmin, http.MethodPost, "/workspaces/malta/keys/generate", api.WorkspaceKeyRequest{Encrypt: true, Comment: "rotated"})
-	assert.Equal(t, http.StatusCreated, encrypt.Status, string(encrypt.Raw))
-	private(encrypt)
-	assert.NotEqual(t, before, encrypt.str("key", "fingerprint"))
-	assert.Equal(t, encrypt.str("key", "fingerprint"), keyring.EncryptKey(id).Fingerprint)
-	assert.Equal(t, http.StatusNotFound, f.call(t, asAdmin, http.MethodDelete, "/workspaces/malta/keys/id_ed25519", nil).Status)
-
-	assert.Equal(t, http.StatusNoContent, f.call(t, asAdmin, http.MethodDelete, "/workspaces/malta/keys/id_ed25519_admin", nil).Status)
-	list = f.call(t, asAdmin, http.MethodGet, "/workspaces/malta/keys", nil)
-	assert.Nil(t, list.get("policies", "id_ed25519_admin"))
-	assert.Equal(t, http.StatusNotFound, f.call(t, asAdmin, http.MethodDelete, "/workspaces/malta/keys/id_ed25519_admin", nil).Status)
+	assert.Equal(t, http.StatusNoContent, f.call(t, asAdmin, http.MethodDelete, "/workspaces/malta/keys/"+name, nil).Status)
+	assert.Equal(t, http.StatusNotFound, f.call(t, asAdmin, http.MethodDelete, "/workspaces/malta/keys/"+name, nil).Status)
 
 	assert.Equal(t, http.StatusNoContent, f.call(t, asAdmin, http.MethodDelete, "/workspaces/malta", nil).Status)
-	assert.NoDirExists(t, keyring.Dir(id))
+	left, _ := f.opts.Keys.Of(ctx, scope, "")
+	assert.Len(t, left, 0, "the workspace's keys go with it")
 }

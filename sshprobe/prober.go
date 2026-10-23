@@ -7,9 +7,7 @@ import (
 	"context"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"strconv"
-	"strings"
 	"sync"
 	"time"
 )
@@ -19,8 +17,10 @@ type Prober struct {
 	// Users are the logins Logins tries, in order; the first that signs in
 	// wins.
 	Users []string
-	// KeyDirs hold the private keys tried, the id_* files.
-	KeyDirs []string
+	// Keys serve the instance's SSH keys to a probe in an ssh agent; nil
+	// probes with none. A run of a host command gets them in the run's
+	// own agent.
+	Keys Keys
 	// KnownHosts is the file host keys go to on first contact.
 	KnownHosts string
 	// Timeout bounds one attempt; TTL is how long an answer stays good.
@@ -101,9 +101,24 @@ func (p *Prober) start(host string) bool {
 
 // try returns the first user that signs in to the host, or "".
 func (p *Prober) try(ctx context.Context, host string) string {
+	socket := ""
+	if p.Keys != nil {
+		agent, err := p.Keys.LoginAgent(ctx)
+		if err != nil {
+			return ""
+		}
+		defer agent.Close()
+		if agent != nil {
+			socket = agent.Socket
+		}
+	}
 	for _, user := range p.Users {
 		attempt, cancel := context.WithTimeout(ctx, p.Timeout)
-		err := p.ssh(attempt, user+"@"+host, "true").Run()
+		cmd := p.ssh(attempt, user+"@"+host, "true")
+		if socket != "" {
+			cmd.Args = append([]string{cmd.Args[0], "-o", "IdentityAgent=" + socket}, cmd.Args[1:]...)
+		}
+		err := cmd.Run()
 		cancel()
 		if err == nil {
 			return user
@@ -112,15 +127,12 @@ func (p *Prober) try(ctx context.Context, host string) string {
 	return ""
 }
 
-// ssh is the ssh command for a login: batch mode, the instance keys, the
-// known hosts file, and the remote command.
+// ssh is the ssh command for a login: batch mode, the known hosts file,
+// and the remote command; the keys come from an agent.
 func (p *Prober) ssh(ctx context.Context, login, remote string) *exec.Cmd {
 	args := []string{"-n", "-o", "BatchMode=yes", "-o", "ConnectTimeout=" + seconds(p.Timeout), "-o", "StrictHostKeyChecking=accept-new"}
 	if p.KnownHosts != "" {
 		args = append(args, "-o", "UserKnownHostsFile="+p.KnownHosts)
-	}
-	for _, key := range p.keys() {
-		args = append(args, "-i", key)
 	}
 	args = append(args, login, remote)
 	command := p.Command
@@ -145,21 +157,6 @@ func (p *Prober) terminal(ctx context.Context, login, remote string) *exec.Cmd {
 	// dumb terminal and print no colours.
 	cmd.Env = append(os.Environ(), "TERM=xterm-256color")
 	return cmd
-}
-
-// keys lists the private keys in the key directories.
-func (p *Prober) keys() []string {
-	var keys []string
-	for _, dir := range p.KeyDirs {
-		entries, _ := os.ReadDir(dir)
-		for _, entry := range entries {
-			name := entry.Name()
-			if !entry.IsDir() && strings.HasPrefix(name, "id_") && !strings.HasSuffix(name, ".pub") {
-				keys = append(keys, filepath.Join(dir, name))
-			}
-		}
-	}
-	return keys
 }
 
 // seconds is a timeout in whole seconds, at least one, for ssh.

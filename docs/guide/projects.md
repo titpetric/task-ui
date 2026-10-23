@@ -376,23 +376,26 @@ checkout first (see [Workspaces](workspaces.md#runs-in-a-workspace)).
 ## Keys for a run
 
 A run gets SSH keys only through an ssh agent served for that run alone:
-the instance keys whose policies name the role of whoever started it, or
-them by name (see [Settings](settings.md#keys)), and the SSH keys of
-its workspace that its grants let through (see
-[Workspaces](workspaces.md#keys)). A scheduled run gets
+the instance keys linked to the role of whoever started it, or to them
+by name (see [Settings](settings.md#keys)), and the SSH keys of its
+workspace its links let through (see [Workspaces](workspaces.md#keys)).
+The agent's socket is in a `0700` directory under `/tmp`, and no key
+file lands on disk; a start of task-ui removes the directories a process
+before it left. A scheduled run gets
 the keys of the schedule's creator. The job gets `SSH_AUTH_SOCK`, and
 `ssh`, `git`, `rsync` and terraform's agent authentication use it. The
 keys stay in memory and the agent ends with the run; the terminal says
 which keys it loaded, or `(none)`. A run with no key has an empty
 `SSH_AUTH_SOCK`, never the server's own.
 
-`ssh` and `git` in a job also try the server's own keys in `~/.ssh`,
-the identity of the host task-ui runs on, such as the key it pulls with.
-terraform's agent authentication uses only the agent.
+The pull before a run, and a clone, use the git key, the one SSH key
+marked for git on its edit form, from an agent of their own; nothing
+reads the server's `~/.ssh`. terraform's agent authentication uses only
+the agent.
 
 A checkout's `.ssh/` folder is not loaded. The SSH keys page warns about
 one with private keys in it: upload a key the project needs as an
-instance key and grant it by policy.
+instance key and link it.
 
 ## Hours
 

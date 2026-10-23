@@ -9,8 +9,8 @@ import (
 
 	"github.com/titpetric/task-ui/api"
 	"github.com/titpetric/task-ui/internal/assert"
+	"github.com/titpetric/task-ui/keystore"
 	"github.com/titpetric/task-ui/model"
-	"github.com/titpetric/task-ui/secret"
 	"github.com/titpetric/task-ui/workspace"
 )
 
@@ -22,9 +22,9 @@ func (f *fixture) withKeyring(t *testing.T) {
 	assert.NoError(t, f.opts.Workspaces.EnsureDefault(ctx))
 	row, err := f.opts.Workspaces.GetByFolder(ctx, model.Default)
 	assert.NoError(t, err)
-	_, err = f.opts.WorkspaceKeys.Ensure(row.ID, "task-ui _")
+	_, err = f.opts.Keys.Generate(ctx, keystore.Spec{Name: keystore.WorkspaceKeyName(row.Folder, "encryption"), Purpose: keystore.PurposeEncrypt, Scope: keystore.ScopeWorkspace(row.ID)})
 	assert.NoError(t, err)
-	f.opts.Secrets.Workspaces = &secret.Workspaces{Rows: f.opts.Workspaces, Keys: f.opts.WorkspaceKeys}
+	f.opts.Secrets.Workspaces = f.workspaceVaults()
 }
 
 // export answers with a workspace's bundle.

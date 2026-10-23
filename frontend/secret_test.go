@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/titpetric/task-ui/internal/assert"
+	"github.com/titpetric/task-ui/keystore"
 	"github.com/titpetric/task-ui/model"
 )
 
@@ -35,8 +36,7 @@ func TestSecretForms(t *testing.T) {
 	assert.NoError(t, f.opts.Workspaces.EnsureDefault(ctx))
 	root, err := f.opts.Workspaces.GetByFolder(ctx, model.Default)
 	assert.NoError(t, err)
-	_, err = f.opts.WorkspaceKeys.Ensure(root.ID, "task-ui _")
-	assert.NoError(t, err)
+	f.gen(t, keystore.Spec{Name: "workspace_default_encryption", Purpose: keystore.PurposeEncrypt, Scope: keystore.ScopeWorkspace(root.ID)})
 	assert.NoError(t, f.opts.Secrets.Set(context.Background(), &model.Secret{Scope: "infra", Name: "DB_PASS", Content: "x"}))
 
 	add := f.page(t, asAdmin, "/settings/secrets/new?scope=infra")
@@ -66,8 +66,7 @@ func TestSecrets_Encryption(t *testing.T) {
 	assert.NoError(t, f.opts.Workspaces.Create(ctx, &model.Workspace{Folder: "acme", Title: "Acme"}))
 	acme, err := f.opts.Workspaces.GetByFolder(ctx, "acme")
 	assert.NoError(t, err)
-	_, err = f.opts.WorkspaceKeys.Ensure(acme.ID, "task-ui acme")
-	assert.NoError(t, err)
+	f.gen(t, keystore.Spec{Name: "workspace_acme_encryption", Purpose: keystore.PurposeEncrypt, Scope: keystore.ScopeWorkspace(acme.ID)})
 
 	body := f.page(t, asAdmin, "/settings/secrets")
 	assert.NotContains(t, body, "SHA256:")

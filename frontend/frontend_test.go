@@ -27,17 +27,16 @@ import (
 	"github.com/titpetric/task-ui/hostinfo"
 	"github.com/titpetric/task-ui/integration"
 	"github.com/titpetric/task-ui/internal/assert"
+	"github.com/titpetric/task-ui/keystore"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/note"
 	"github.com/titpetric/task-ui/recording"
 	"github.com/titpetric/task-ui/retention"
 	"github.com/titpetric/task-ui/runner"
 	"github.com/titpetric/task-ui/secret"
-	"github.com/titpetric/task-ui/sshkey"
 	"github.com/titpetric/task-ui/sshprobe"
 	"github.com/titpetric/task-ui/storage"
 	"github.com/titpetric/task-ui/workflow"
-	"github.com/titpetric/task-ui/workspace"
 )
 
 // catalogue is a fixed set of folders.
@@ -107,9 +106,8 @@ func newFixture(t *testing.T) *fixture {
 	}
 
 	runs := storage.NewRunStorage(db)
-	keys := &sshkey.Store{Dir: t.TempDir()}
-	keyring := &workspace.Keyring{Data: t.TempDir(), Access: []*sshkey.Store{keys}}
-	secrets := secret.New(storage.NewSecretStorage(db), secret.NewVault(keyring.Instance()))
+	keys := &keystore.Local{Dir: t.TempDir(), Rows: storage.NewKeyInfoStorage(db), Settings: storage.NewSettingStorage(db), Tmp: t.TempDir()}
+	secrets := secret.New(storage.NewSecretStorage(db), secret.NewVault(keys.Vault(storage.ScopeInstance)))
 	recordings := &recording.Store{Root: t.TempDir()}
 	manager := runner.New(runner.Options{Runs: runs, Recordings: recordings, Grace: time.Second, Keep: time.Minute})
 	t.Cleanup(func() { manager.Shutdown(context.Background()) })
@@ -126,8 +124,6 @@ func newFixture(t *testing.T) *fixture {
 		Users:         users,
 		Projects:      storage.NewProjectStorage(db),
 		Workspaces:    storage.NewWorkspaceStorage(db),
-		WorkspaceKeys: keyring,
-		KeyGrants:     storage.NewWorkspaceKeyGrantStorage(db),
 		Runs:          runs,
 		Artifacts:     storage.NewArtifactStorage(db),
 		Schedules:     storage.NewScheduleStorage(db),
@@ -138,8 +134,6 @@ func newFixture(t *testing.T) *fixture {
 		Catalogue:     cat,
 		Git:           &git.Git{},
 		Keys:          keys,
-		HomeKeys:      &sshkey.Store{Dir: t.TempDir()},
-		KeyPolicies:   storage.NewSSHKeyPolicyStorage(db),
 		Env:           envfile.New(storage.NewEnvFileStorage(db), secrets),
 		Root:          root,
 		Version:       "test",
@@ -227,13 +221,13 @@ func (f *fixture) page(t *testing.T, user, path string) string {
 	return res.Body
 }
 
-// withKey puts an ed25519 key in the SSH folder and makes the
-// instance's encryption key, so the vault can keep secrets.
+// withKey puts an SSH key, task_ssh_ed25519, in the key folder and
+// makes the instance's encryption key, so the vault can keep secrets.
 func (f *fixture) withKey(t *testing.T) {
 	t.Helper()
-	_, err := f.opts.Keys.Generate("ed25519", "test")
+	_, err := f.opts.Keys.Generate(context.Background(), keystore.Spec{Name: "task_ssh", Comment: "test"})
 	assert.NoError(t, err)
-	_, err = f.opts.WorkspaceKeys.EnsureInstance("task-ui instance")
+	_, err = f.opts.Keys.Generate(context.Background(), keystore.Spec{Name: "task_encryption", Purpose: keystore.PurposeEncrypt, Comment: "task-ui instance"})
 	assert.NoError(t, err)
 }
 
@@ -326,4 +320,10 @@ func fakeSSH(t *testing.T) string {
 		"'@@docker' '{\"Names\":\"db\",\"Image\":\"postgres:17\",\"State\":\"running\",\"Status\":\"Up 2 days\",\"Size\":\"1kB (virtual 2MB)\"}' '@@exit 0';; esac\nexit 0\n"
 	assert.NoError(t, os.WriteFile(script, []byte(body), 0o755))
 	return script
+}
+
+// workspaceVaults keeps the secrets of each workspace on its key of the
+// key folder.
+func (f *fixture) workspaceVaults() *secret.Workspaces {
+	return &secret.Workspaces{Rows: f.opts.Workspaces, Keys: func(id string) secret.Keys { return f.opts.Keys.Vault(keystore.ScopeWorkspace(id)) }}
 }

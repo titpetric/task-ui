@@ -11,10 +11,9 @@ import (
 	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/git"
 	"github.com/titpetric/task-ui/hostinfo"
+	"github.com/titpetric/task-ui/keystore"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/permission"
-	"github.com/titpetric/task-ui/sshkey"
-	"github.com/titpetric/task-ui/workspace"
 )
 
 // Page is what a template binds to: the chrome every page shares, and
@@ -173,17 +172,16 @@ type Page struct {
 	MoveLeft []string
 	// Nested are the project rows inside each workspace, by its folder.
 	Nested  map[string][]string
-	Keys    []sshkey.Key
+	Keys    []keystore.Key
 	KeysDir string
-	// HomeKeys are the key pairs in ~/.ssh of the user task-ui runs as.
-	HomeKeys    []sshkey.Key
-	HomeKeysDir string
+	// GitKey names the key git pulls and clones with.
+	GitKey string
 	// KeyFolders are the projects' .ssh/ folders with keys in them.
 	KeyFolders []KeyFolder
-	// KeyPolicies are the roles whose runs get each instance key, by
-	// key name; Key is the key an edit form changes.
+	// KeyPolicies are the roles whose runs get each SSH key, by key
+	// name; Key is the key an edit form changes.
 	KeyPolicies map[string][]string
-	// KeyUsers are the users, by name, whose runs get each instance key.
+	// KeyUsers are the users, by name, whose runs get each SSH key.
 	KeyUsers map[string][]string
 	// SubFolders are the folders right under the folder a page shows.
 	SubFolders []*folder.Folder
@@ -196,16 +194,12 @@ type Page struct {
 	TreeMenus map[string]*RunMenu
 	// KeyHolders are the roles and the users, and the keys each gets.
 	KeyHolders []KeyHolder
-	Key        *sshkey.Key
+	Key        *keystore.Key
 	// InstanceKey is the instance's encryption key, the services'
-	// secrets', such as the integrations' settings, in InstanceKeyDir;
-	// EncryptKey is a workspace's encryption key, on its pages.
-	InstanceKey    *sshkey.Key
-	InstanceKeyDir string
-	EncryptKey     *sshkey.Key
-	// KeyOverlaps are the keys held both as an encryption key and as an
-	// SSH key, which runs and git leave out.
-	KeyOverlaps []workspace.Overlap
+	// secrets', such as the integrations' settings; EncryptKey is a
+	// workspace's encryption key, on its pages.
+	InstanceKey *keystore.Key
+	EncryptKey  *keystore.Key
 	Users       []model.User
 	// Account is the user a form or a profile shows, and AccountMCP
 	// their MCP token.

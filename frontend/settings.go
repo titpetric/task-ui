@@ -22,14 +22,8 @@ func (h *Handlers) settings(w http.ResponseWriter, r *http.Request) {
 	p.StepCounts = map[string]string{}
 	// Each step shows how much it holds of what the user may see.
 	if p.Can("key/view") {
-		p.Keys, p.KeysDir = h.accessKeys(h.opts.Keys), h.opts.Keys.Dir
-		keys := 0
-		for _, key := range p.Keys {
-			if !key.Backup {
-				keys++
-			}
-		}
-		p.StepCounts[view.StepKeys] = count(keys, "key", "keys")
+		h.fillKeys(r.Context(), p)
+		p.StepCounts[view.StepKeys] = count(len(p.Keys), "key", "keys")
 	}
 	if p.Can("secret/view") {
 		secrets, _ := h.opts.Secrets.List(r.Context())
@@ -72,6 +66,9 @@ func (h *Handlers) instance(w http.ResponseWriter, r *http.Request) {
 		instance.Beszel = values["url"] != "" && values["token"] != ""
 	}
 	p.Instance = &instance
+	if p.Can("key/view") {
+		h.fillKeys(r.Context(), p)
+	}
 	h.render(w, http.StatusOK, "instance", p)
 }
 

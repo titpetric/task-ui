@@ -1,8 +1,8 @@
 package view
 
 import (
+	"github.com/titpetric/task-ui/keystore"
 	"github.com/titpetric/task-ui/model"
-	"github.com/titpetric/task-ui/sshkey"
 )
 
 // KeyWorkspace is a workspace on the keys page: its projects, how many
@@ -12,8 +12,8 @@ type KeyWorkspace struct {
 	Workspace model.Workspace
 	Projects  []string
 	Secrets   int
-	Encrypt   *sshkey.Key
-	SSH       []sshkey.Key
+	Encrypt   *keystore.Key
+	SSH       []keystore.Key
 }
 
 // Names returns the names of the workspace's SSH keys.

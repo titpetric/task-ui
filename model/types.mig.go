@@ -303,6 +303,201 @@ var EnvFileFields = []string{"id", "folder", "path", "content", "created_at", "u
 // EnvFilePrimaryFields are the primary key fields in the DB table.
 var EnvFilePrimaryFields = []string{"id"}
 
+// KeyInfo generated for db table `key_info`.
+//
+// Key Info.
+type KeyInfo struct {
+	// Name
+	Name string `db:"name" json:"name"`
+
+	// Purpose
+	Purpose string `db:"purpose" json:"purpose"`
+
+	// Algo
+	Algo string `db:"algo" json:"algo"`
+
+	// Bits
+	Bits int64 `db:"bits" json:"bits"`
+
+	// Fingerprint
+	Fingerprint string `db:"fingerprint" json:"fingerprint"`
+
+	// Scope
+	Scope string `db:"scope" json:"scope"`
+
+	// Comment
+	Comment string `db:"comment" json:"comment"`
+
+	// Created At
+	CreatedAt *time.Time `db:"created_at" json:"created_at"`
+
+	// Updated At
+	UpdatedAt *time.Time `db:"updated_at" json:"updated_at"`
+}
+
+// GetName will return the value of Name.
+func (k *KeyInfo) GetName() string { return k.Name }
+
+// SetName sets Name to the provided value.
+func (k *KeyInfo) SetName(val string) { k.Name = val }
+
+// GetPurpose will return the value of Purpose.
+func (k *KeyInfo) GetPurpose() string { return k.Purpose }
+
+// SetPurpose sets Purpose to the provided value.
+func (k *KeyInfo) SetPurpose(val string) { k.Purpose = val }
+
+// GetAlgo will return the value of Algo.
+func (k *KeyInfo) GetAlgo() string { return k.Algo }
+
+// SetAlgo sets Algo to the provided value.
+func (k *KeyInfo) SetAlgo(val string) { k.Algo = val }
+
+// GetBits will return the value of Bits.
+func (k *KeyInfo) GetBits() int64 { return k.Bits }
+
+// SetBits sets Bits to the provided value.
+func (k *KeyInfo) SetBits(val int64) { k.Bits = val }
+
+// GetFingerprint will return the value of Fingerprint.
+func (k *KeyInfo) GetFingerprint() string { return k.Fingerprint }
+
+// SetFingerprint sets Fingerprint to the provided value.
+func (k *KeyInfo) SetFingerprint(val string) { k.Fingerprint = val }
+
+// GetScope will return the value of Scope.
+func (k *KeyInfo) GetScope() string { return k.Scope }
+
+// SetScope sets Scope to the provided value.
+func (k *KeyInfo) SetScope(val string) { k.Scope = val }
+
+// GetComment will return the value of Comment.
+func (k *KeyInfo) GetComment() string { return k.Comment }
+
+// SetComment sets Comment to the provided value.
+func (k *KeyInfo) SetComment(val string) { k.Comment = val }
+
+// GetCreatedAt will return the value of CreatedAt.
+func (k *KeyInfo) GetCreatedAt() *time.Time { return k.CreatedAt }
+
+// SetCreatedAt sets CreatedAt to the provided value.
+func (k *KeyInfo) SetCreatedAt(stamp time.Time) { k.CreatedAt = &stamp }
+
+// GetUpdatedAt will return the value of UpdatedAt.
+func (k *KeyInfo) GetUpdatedAt() *time.Time { return k.UpdatedAt }
+
+// SetUpdatedAt sets UpdatedAt to the provided value.
+func (k *KeyInfo) SetUpdatedAt(stamp time.Time) { k.UpdatedAt = &stamp }
+
+// KeyInfoTable is the name of the table in the DB.
+const KeyInfoTable = "`key_info`"
+
+// KeyInfoFields is a list of all columns in the DB table.
+var KeyInfoFields = []string{"name", "purpose", "algo", "bits", "fingerprint", "scope", "comment", "created_at", "updated_at"}
+
+// KeyInfoPrimaryFields are the primary key fields in the DB table.
+var KeyInfoPrimaryFields = []string{"name"}
+
+// KeyRole generated for db table `key_role`.
+//
+// Key Role.
+type KeyRole struct {
+	// ID
+	ID string `db:"id" json:"id"`
+
+	// Key Name
+	KeyName string `db:"key_name" json:"key_name"`
+
+	// Role
+	Role string `db:"role" json:"role"`
+
+	// Created At
+	CreatedAt *time.Time `db:"created_at" json:"created_at"`
+}
+
+// GetID will return the value of ID.
+func (k *KeyRole) GetID() string { return k.ID }
+
+// SetID sets ID to the provided value.
+func (k *KeyRole) SetID(val string) { k.ID = val }
+
+// GetKeyName will return the value of KeyName.
+func (k *KeyRole) GetKeyName() string { return k.KeyName }
+
+// SetKeyName sets KeyName to the provided value.
+func (k *KeyRole) SetKeyName(val string) { k.KeyName = val }
+
+// GetRole will return the value of Role.
+func (k *KeyRole) GetRole() string { return k.Role }
+
+// SetRole sets Role to the provided value.
+func (k *KeyRole) SetRole(val string) { k.Role = val }
+
+// GetCreatedAt will return the value of CreatedAt.
+func (k *KeyRole) GetCreatedAt() *time.Time { return k.CreatedAt }
+
+// SetCreatedAt sets CreatedAt to the provided value.
+func (k *KeyRole) SetCreatedAt(stamp time.Time) { k.CreatedAt = &stamp }
+
+// KeyRoleTable is the name of the table in the DB.
+const KeyRoleTable = "`key_role`"
+
+// KeyRoleFields is a list of all columns in the DB table.
+var KeyRoleFields = []string{"id", "key_name", "role", "created_at"}
+
+// KeyRolePrimaryFields are the primary key fields in the DB table.
+var KeyRolePrimaryFields = []string{"id"}
+
+// KeyUser generated for db table `key_user`.
+//
+// Key User.
+type KeyUser struct {
+	// ID
+	ID string `db:"id" json:"id"`
+
+	// Key Name
+	KeyName string `db:"key_name" json:"key_name"`
+
+	// User Name
+	UserName string `db:"user_name" json:"user_name"`
+
+	// Created At
+	CreatedAt *time.Time `db:"created_at" json:"created_at"`
+}
+
+// GetID will return the value of ID.
+func (k *KeyUser) GetID() string { return k.ID }
+
+// SetID sets ID to the provided value.
+func (k *KeyUser) SetID(val string) { k.ID = val }
+
+// GetKeyName will return the value of KeyName.
+func (k *KeyUser) GetKeyName() string { return k.KeyName }
+
+// SetKeyName sets KeyName to the provided value.
+func (k *KeyUser) SetKeyName(val string) { k.KeyName = val }
+
+// GetUserName will return the value of UserName.
+func (k *KeyUser) GetUserName() string { return k.UserName }
+
+// SetUserName sets UserName to the provided value.
+func (k *KeyUser) SetUserName(val string) { k.UserName = val }
+
+// GetCreatedAt will return the value of CreatedAt.
+func (k *KeyUser) GetCreatedAt() *time.Time { return k.CreatedAt }
+
+// SetCreatedAt sets CreatedAt to the provided value.
+func (k *KeyUser) SetCreatedAt(stamp time.Time) { k.CreatedAt = &stamp }
+
+// KeyUserTable is the name of the table in the DB.
+const KeyUserTable = "`key_user`"
+
+// KeyUserFields is a list of all columns in the DB table.
+var KeyUserFields = []string{"id", "key_name", "user_name", "created_at"}
+
+// KeyUserPrimaryFields are the primary key fields in the DB table.
+var KeyUserPrimaryFields = []string{"id"}
+
 // Migrations generated for db table `migrations`.
 type Migrations struct {
 	// Project
@@ -2511,6 +2706,189 @@ func (e *EnvFile) Update(opts ...QueryOption) string {
 // Delete starts building a DELETE query.
 func (e *EnvFile) Delete(opts ...QueryOption) string {
 	cfg := (&QueryConfig{Table: EnvFileTable}).Apply(opts...)
+	query := fmt.Sprintf("DELETE FROM %s", cfg.Table)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	return query
+}
+
+// Insert starts building an INSERT INTO query.
+func (k *KeyInfo) Insert(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: KeyInfoTable, Statement: "INSERT INTO"}).Apply(opts...)
+	cols := KeyInfoFields
+	if len(cfg.Columns) > 0 {
+		cols = cfg.Columns
+	}
+	return fmt.Sprintf("%s %s (%s) VALUES (:%s)", cfg.Statement, cfg.Table, strings.Join(cols, ", "), strings.Join(cols, ", :"))
+}
+
+// Select starts building a SELECT query.
+func (k *KeyInfo) Select(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: KeyInfoTable}).Apply(opts...)
+	cols := "*"
+	if len(cfg.Columns) > 0 {
+		cols = strings.Join(cfg.Columns, ", ")
+	}
+	query := fmt.Sprintf("SELECT %s FROM %s", cols, cfg.Table)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	if cfg.OrderBy != "" {
+		query += " ORDER BY " + cfg.OrderBy
+	}
+	if cfg.LimitOffset > 0 {
+		query += fmt.Sprintf(" LIMIT %d, %d", cfg.LimitStart, cfg.LimitOffset)
+	}
+	return query
+}
+
+// Update starts building a UPDATE query.
+func (k *KeyInfo) Update(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: KeyInfoTable}).Apply(opts...)
+	cols := KeyInfoFields
+	if len(cfg.Columns) > 0 {
+		cols = cfg.Columns
+	}
+	setClause := ""
+	for i, col := range cols {
+		if i > 0 {
+			setClause += ", "
+		}
+		setClause += col + "=:" + col
+	}
+	query := fmt.Sprintf("UPDATE %s SET %s", cfg.Table, setClause)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	return query
+}
+
+// Delete starts building a DELETE query.
+func (k *KeyInfo) Delete(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: KeyInfoTable}).Apply(opts...)
+	query := fmt.Sprintf("DELETE FROM %s", cfg.Table)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	return query
+}
+
+// Insert starts building an INSERT INTO query.
+func (k *KeyRole) Insert(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: KeyRoleTable, Statement: "INSERT INTO"}).Apply(opts...)
+	cols := KeyRoleFields
+	if len(cfg.Columns) > 0 {
+		cols = cfg.Columns
+	}
+	return fmt.Sprintf("%s %s (%s) VALUES (:%s)", cfg.Statement, cfg.Table, strings.Join(cols, ", "), strings.Join(cols, ", :"))
+}
+
+// Select starts building a SELECT query.
+func (k *KeyRole) Select(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: KeyRoleTable}).Apply(opts...)
+	cols := "*"
+	if len(cfg.Columns) > 0 {
+		cols = strings.Join(cfg.Columns, ", ")
+	}
+	query := fmt.Sprintf("SELECT %s FROM %s", cols, cfg.Table)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	if cfg.OrderBy != "" {
+		query += " ORDER BY " + cfg.OrderBy
+	}
+	if cfg.LimitOffset > 0 {
+		query += fmt.Sprintf(" LIMIT %d, %d", cfg.LimitStart, cfg.LimitOffset)
+	}
+	return query
+}
+
+// Update starts building a UPDATE query.
+func (k *KeyRole) Update(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: KeyRoleTable}).Apply(opts...)
+	cols := KeyRoleFields
+	if len(cfg.Columns) > 0 {
+		cols = cfg.Columns
+	}
+	setClause := ""
+	for i, col := range cols {
+		if i > 0 {
+			setClause += ", "
+		}
+		setClause += col + "=:" + col
+	}
+	query := fmt.Sprintf("UPDATE %s SET %s", cfg.Table, setClause)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	return query
+}
+
+// Delete starts building a DELETE query.
+func (k *KeyRole) Delete(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: KeyRoleTable}).Apply(opts...)
+	query := fmt.Sprintf("DELETE FROM %s", cfg.Table)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	return query
+}
+
+// Insert starts building an INSERT INTO query.
+func (k *KeyUser) Insert(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: KeyUserTable, Statement: "INSERT INTO"}).Apply(opts...)
+	cols := KeyUserFields
+	if len(cfg.Columns) > 0 {
+		cols = cfg.Columns
+	}
+	return fmt.Sprintf("%s %s (%s) VALUES (:%s)", cfg.Statement, cfg.Table, strings.Join(cols, ", "), strings.Join(cols, ", :"))
+}
+
+// Select starts building a SELECT query.
+func (k *KeyUser) Select(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: KeyUserTable}).Apply(opts...)
+	cols := "*"
+	if len(cfg.Columns) > 0 {
+		cols = strings.Join(cfg.Columns, ", ")
+	}
+	query := fmt.Sprintf("SELECT %s FROM %s", cols, cfg.Table)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	if cfg.OrderBy != "" {
+		query += " ORDER BY " + cfg.OrderBy
+	}
+	if cfg.LimitOffset > 0 {
+		query += fmt.Sprintf(" LIMIT %d, %d", cfg.LimitStart, cfg.LimitOffset)
+	}
+	return query
+}
+
+// Update starts building a UPDATE query.
+func (k *KeyUser) Update(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: KeyUserTable}).Apply(opts...)
+	cols := KeyUserFields
+	if len(cfg.Columns) > 0 {
+		cols = cfg.Columns
+	}
+	setClause := ""
+	for i, col := range cols {
+		if i > 0 {
+			setClause += ", "
+		}
+		setClause += col + "=:" + col
+	}
+	query := fmt.Sprintf("UPDATE %s SET %s", cfg.Table, setClause)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	return query
+}
+
+// Delete starts building a DELETE query.
+func (k *KeyUser) Delete(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: KeyUserTable}).Apply(opts...)
 	query := fmt.Sprintf("DELETE FROM %s", cfg.Table)
 	if cfg.Where != "" {
 		query += " WHERE " + cfg.Where

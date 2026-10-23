@@ -9,6 +9,7 @@ import (
 
 	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/internal/assert"
+	"github.com/titpetric/task-ui/keystore"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/runner"
 	"github.com/titpetric/task-ui/sshkey"
@@ -42,28 +43,29 @@ func TestManager_CheckoutKeys(t *testing.T) {
 	assert.Contains(t, out, "hello")
 }
 
-// An instance key reaches the runs of the roles and the users its policy
-// names, and no other run: ssh-add lists it in a mapped user's run, and
-// an unmapped user's run has no agent.
-func TestManager_PolicyKeys(t *testing.T) {
+// An instance key reaches the runs of the roles and the users it links,
+// and no other run: ssh-add lists it in a linked user's run, and an
+// unlinked user's run has no agent.
+func TestManager_LinkedKeys(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
-	assert.NoError(t, f.policies.Set(context.Background(), "id_ed25519", []string{model.RoleRunner}))
+	ctx := context.Background()
+	assert.NoError(t, f.keys.Link(ctx, "task_ssh_ed25519", []string{model.RoleRunner}, nil))
 	script := `ssh-add -l && echo agent-ok; echo "sock=[$SSH_AUTH_SOCK]"`
 
 	runner := f.shellJob("policy-runner", script, false)
 	runner.User = &model.User{ID: "u1", Name: "ops", Role: model.RoleRunner}
-	session, err := f.manager.Start(context.Background(), runner)
+	session, err := f.manager.Start(ctx, runner)
 	assert.NoError(t, err)
 	out, status := collect(t, session.Attach(false))
 	assert.Equal(t, model.StateOK, status.State, out)
-	assert.Contains(t, out, "ssh-agent: id_ed25519")
-	assert.Contains(t, out, "id_ed25519 (ED25519)")
+	assert.Contains(t, out, "ssh-agent: task_ssh_ed25519")
+	assert.Contains(t, out, "task_ssh_ed25519 (ED25519)")
 	assert.Contains(t, out, "agent-ok")
 
 	admin := f.shellJob("policy-admin", script, false)
 	admin.User = &model.User{ID: "u2", Name: "root", Role: model.RoleAdmin}
-	session, err = f.manager.Start(context.Background(), admin)
+	session, err = f.manager.Start(ctx, admin)
 	assert.NoError(t, err)
 	out, status = collect(t, session.Attach(false))
 	assert.Equal(t, model.StateOK, status.State, out)
@@ -71,39 +73,40 @@ func TestManager_PolicyKeys(t *testing.T) {
 	assert.NotContains(t, out, "agent-ok")
 	assert.Contains(t, out, "sock=[]")
 
-	// Given to the admin by name, the key reaches their runs too.
-	assert.NoError(t, f.policies.SetUsers(context.Background(), "id_ed25519", []string{"root"}))
+	// Linked to the admin by name, the key reaches their runs too.
+	assert.NoError(t, f.keys.Link(ctx, "task_ssh_ed25519", []string{model.RoleRunner}, []string{"root"}))
 	admin = f.shellJob("policy-admin-named", script, false)
 	admin.User = &model.User{ID: "u2", Name: "root", Role: model.RoleAdmin}
-	session, err = f.manager.Start(context.Background(), admin)
+	session, err = f.manager.Start(ctx, admin)
 	assert.NoError(t, err)
 	out, _ = collect(t, session.Attach(false))
-	assert.Contains(t, out, "ssh-agent: id_ed25519")
+	assert.Contains(t, out, "ssh-agent: task_ssh_ed25519")
 	assert.Contains(t, out, "agent-ok")
+	entries, _ := os.ReadDir(f.keys.Tmp)
+	assert.Len(t, entries, 0, "no key, no socket on disk after the runs")
 }
 
-// A run gets its workspace's SSH keys beside the instance ones, each as
-// ws:<name>: a key without a grant goes to every run in the workspace, a
-// key granted to admins skips a runner's run, and the encryption key
-// goes to none. A run in _ gets _'s keys, and a run in another
-// workspace none of these.
+// A run gets its workspace's SSH keys beside the instance ones: a key
+// without a link goes to every run in the workspace, a key linked to
+// admins skips a runner's run, and the encryption key goes to none. A
+// run in _ gets _'s keys, and a run in another workspace none of these.
 func TestManager_WorkspaceKeys(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
 	ctx := context.Background()
-	assert.NoError(t, f.policies.Set(ctx, "id_ed25519", []string{model.RoleRunner, model.RoleAdmin}))
+	assert.NoError(t, f.keys.Link(ctx, "task_ssh_ed25519", []string{model.RoleRunner, model.RoleAdmin}, nil))
 	assert.NoError(t, f.workspaces.Create(ctx, &model.Workspace{Folder: "ws"}))
 	assert.NoError(t, f.workspaces.EnsureDefault(ctx))
 	ws, err := f.workspaces.GetByFolder(ctx, "ws")
 	assert.NoError(t, err)
-	_, err = f.keys.Ensure(ws.ID, "encrypt")
+	scope := keystore.ScopeWorkspace(ws.ID)
+	encrypt, err := f.keys.Generate(ctx, keystore.Spec{Name: "workspace_ws_encryption", Purpose: keystore.PurposeEncrypt, Scope: scope})
 	assert.NoError(t, err)
-	encrypt := f.keys.EncryptKey(ws.ID)
-	deploy, err := f.keys.SSH(ws.ID).GenerateAs("ed25519", "deploy", "deploy")
+	deploy, err := f.keys.Generate(ctx, keystore.Spec{Name: "workspace_ws_deploy", Scope: scope})
 	assert.NoError(t, err)
-	admin, err := f.keys.SSH(ws.ID).GenerateAs("ed25519", "admin", "admin")
+	admin, err := f.keys.Generate(ctx, keystore.Spec{Name: "workspace_ws_admin", Scope: scope})
 	assert.NoError(t, err)
-	assert.NoError(t, f.grants.Set(ctx, ws.ID, admin.Name, []string{model.RoleAdmin}, nil))
+	assert.NoError(t, f.keys.Link(ctx, admin.Name, []string{model.RoleAdmin}, nil))
 	script := `ssh-add -l; ssh-add -L`
 
 	run := func(id, role string) string {
@@ -115,66 +118,24 @@ func TestManager_WorkspaceKeys(t *testing.T) {
 		out, _ := collect(t, session.Attach(false))
 		return out
 	}
+	pub := func(k *keystore.Key) string { return strings.Fields(k.PublicKey)[1] }
 
 	out := run("ws/runner", model.RoleRunner)
-	assert.Contains(t, out, "ssh-agent: id_ed25519, ws:id_ed25519_deploy\x1b")
-	assert.Contains(t, out, "id_ed25519 (ED25519)")
-	assert.Contains(t, out, deploy.Fingerprint)
-	assert.NotContains(t, out, admin.Fingerprint)
-	assert.NotContains(t, out, encrypt.Fingerprint)
+	assert.Contains(t, out, "ssh-agent: task_ssh_ed25519, workspace_ws_deploy_ed25519\x1b")
+	assert.Contains(t, out, pub(deploy))
+	assert.NotContains(t, out, pub(admin))
+	assert.NotContains(t, out, pub(encrypt))
 
 	out = run("ws/admin", model.RoleAdmin)
-	assert.Contains(t, out, "ssh-agent: id_ed25519, ws:id_ed25519_deploy, ws:id_ed25519_admin\x1b")
-	assert.Contains(t, out, admin.Fingerprint)
-	assert.NotContains(t, out, encrypt.Fingerprint)
+	assert.Contains(t, out, "ssh-agent: task_ssh_ed25519, workspace_ws_admin_ed25519, workspace_ws_deploy_ed25519\x1b")
+	assert.NotContains(t, out, pub(encrypt))
 
 	// The default workspace's own keys, and none of ws's.
 	root, err := f.workspaces.GetByFolder(ctx, model.Default)
 	assert.NoError(t, err)
-	_, err = f.keys.SSH(root.ID).GenerateAs("ed25519", "root", "root")
+	_, err = f.keys.Generate(ctx, keystore.Spec{Name: "workspace_default_root", Scope: keystore.ScopeWorkspace(root.ID)})
 	assert.NoError(t, err)
 	out = run("plain", model.RoleViewer)
-	assert.Contains(t, out, "ssh-agent: ws:id_ed25519_root\x1b")
-	assert.NotContains(t, out, deploy.Fingerprint)
-}
-
-// copyKey copies a key pair under another name.
-func copyKey(t *testing.T, from, to string) {
-	t.Helper()
-	for _, suffix := range []string{"", ".pub"} {
-		data, err := os.ReadFile(from + suffix)
-		assert.NoError(t, err)
-		assert.NoError(t, os.WriteFile(to+suffix, data, 0o600))
-	}
-}
-
-// No run gets an encryption key in its agent: not a copy of the
-// instance's in the SSH folder that a policy grants, not a copy of a
-// workspace's among its SSH keys. The other keys still load.
-func TestManager_EncryptionKeysWithheld(t *testing.T) {
-	t.Parallel()
-	f := newFixture(t)
-	ctx := context.Background()
-	assert.NoError(t, f.workspaces.Create(ctx, &model.Workspace{Folder: "ws"}))
-	ws, err := f.workspaces.GetByFolder(ctx, "ws")
-	assert.NoError(t, err)
-	_, err = f.keys.Ensure(ws.ID, "encrypt")
-	assert.NoError(t, err)
-	copyKey(t, filepath.Join(f.keys.Instance().Dir, "id_ed25519"), filepath.Join(f.keyDir, "id_ed25519_copy"))
-	copyKey(t, filepath.Join(f.keys.Encrypt(ws.ID).Dir, "id_ed25519"), filepath.Join(f.keys.SSH(ws.ID).Dir, "id_ed25519_enc"))
-	assert.NoError(t, f.policies.Set(ctx, "id_ed25519", []string{model.RoleRunner}))
-	assert.NoError(t, f.policies.Set(ctx, "id_ed25519_copy", []string{model.RoleRunner}))
-
-	req := f.shellJob("ws/run", `ssh-add -L`, false)
-	req.User = &model.User{ID: "u1", Name: "ops", Role: model.RoleRunner}
-	session, err := f.manager.Start(ctx, req)
-	assert.NoError(t, err)
-	out, _ := collect(t, session.Attach(false))
-	assert.Contains(t, out, "ssh-agent: id_ed25519\x1b")
-	assert.NotContains(t, out, "id_ed25519_copy")
-	assert.NotContains(t, out, "id_ed25519_enc")
-	for _, key := range []*sshkey.Key{f.keys.InstanceKey(), f.keys.EncryptKey(ws.ID)} {
-		pub := strings.Fields(key.PublicKey)[1]
-		assert.NotContains(t, out, pub)
-	}
+	assert.Contains(t, out, "ssh-agent: workspace_default_root_ed25519\x1b")
+	assert.NotContains(t, out, pub(deploy))
 }

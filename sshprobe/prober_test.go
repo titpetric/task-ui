@@ -2,15 +2,22 @@ package sshprobe_test
 
 import (
 	"context"
+	"crypto/ed25519"
+	"crypto/rand"
+	"encoding/pem"
 	"errors"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"sync"
 	"syscall"
 	"testing"
 	"time"
 
+	gossh "golang.org/x/crypto/ssh"
+
 	"github.com/titpetric/task-ui/internal/assert"
+	"github.com/titpetric/task-ui/sshagent"
 	"github.com/titpetric/task-ui/sshprobe"
 )
 
@@ -44,10 +51,8 @@ func writeScript(t *testing.T, path, body string) {
 func TestProber_Logins(t *testing.T) {
 	t.Parallel()
 	ssh, log := fakeSSH(t)
-	keys := t.TempDir()
-	assert.NoError(t, os.WriteFile(filepath.Join(keys, "id_ed25519"), []byte("k"), 0o600))
-	assert.NoError(t, os.WriteFile(filepath.Join(keys, "id_ed25519.pub"), []byte("k"), 0o644))
-	p := &sshprobe.Prober{Users: []string{"debian", "root"}, KeyDirs: []string{keys}, KnownHosts: "/dev/null", Timeout: 5 * time.Second, TTL: time.Hour, Command: ssh}
+	keys := &agentKeys{t: t}
+	p := &sshprobe.Prober{Users: []string{"debian", "root"}, Keys: keys, KnownHosts: "/dev/null", Timeout: 5 * time.Second, TTL: time.Hour, Command: ssh}
 
 	logins := p.Logins(context.Background(), []string{"a", "b", "z", "c", ""}, 500*time.Millisecond)
 	assert.Equal(t, "debian@a", logins["a"])
@@ -61,7 +66,29 @@ func TestProber_Logins(t *testing.T) {
 
 	args, err := os.ReadFile(log)
 	assert.NoError(t, err)
-	assert.Contains(t, string(args), "-i "+filepath.Join(keys, "id_ed25519")+" ")
-	assert.NotContains(t, string(args), "id_ed25519.pub")
+	assert.Contains(t, string(args), "IdentityAgent="+filepath.Join(keys.dir, "task-ui-agent-"), "the keys come from an agent")
+	assert.NotContains(t, string(args), "-i ")
 	assert.Contains(t, string(args), "BatchMode=yes")
+}
+
+// agentKeys serve one generated key to a probe, in an agent under dir.
+type agentKeys struct {
+	t   *testing.T
+	dir string
+	mu  sync.Mutex
+}
+
+func (k *agentKeys) LoginAgent(context.Context) (*sshagent.Agent, error) {
+	k.mu.Lock()
+	if k.dir == "" {
+		k.dir = k.t.TempDir()
+	}
+	dir := k.dir
+	k.mu.Unlock()
+	_, private, _ := ed25519.GenerateKey(rand.Reader)
+	block, err := gossh.MarshalPrivateKey(private, "")
+	if err != nil {
+		return nil, err
+	}
+	return sshagent.LoadKeys(dir, sshagent.Named{Name: "task_ssh_ed25519", PEM: pem.EncodeToMemory(block)})
 }

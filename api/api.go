@@ -24,12 +24,12 @@ import (
 	"github.com/titpetric/task-ui/hostrun"
 	"github.com/titpetric/task-ui/hours"
 	"github.com/titpetric/task-ui/integration"
+	"github.com/titpetric/task-ui/keystore"
 	"github.com/titpetric/task-ui/note"
 	"github.com/titpetric/task-ui/recording"
 	"github.com/titpetric/task-ui/runner"
 	"github.com/titpetric/task-ui/secret"
 	"github.com/titpetric/task-ui/storage"
-	"github.com/titpetric/task-ui/workspace"
 )
 
 // Handlers serves the API.
@@ -218,7 +218,7 @@ func statusOf(err error) int {
 		return http.StatusConflict
 	case errors.Is(err, runner.ErrOutOfHours), errors.Is(err, note.ErrForbidden), errors.Is(err, note.ErrNotAuthor), errors.Is(err, note.ErrNotAssigned):
 		return http.StatusForbidden
-	case errors.Is(err, secret.ErrNoKey), errors.Is(err, workspace.ErrRole):
+	case errors.Is(err, secret.ErrNoKey), errors.Is(err, keystore.ErrExists):
 		return http.StatusConflict
 	case errors.Is(err, runner.ErrReasonNeeded), errors.Is(err, hours.ErrInvalid), errors.Is(err, note.ErrInvalid), errors.Is(err, integration.ErrUnknown):
 		return http.StatusBadRequest
@@ -231,10 +231,6 @@ func statusOf(err error) int {
 	}
 	return http.StatusInternalServerError
 }
-
-// keyRole is the error of a key held for the other use, named for the
-// handlers whose workspace variable hides the package.
-var keyRole = workspace.ErrRole
 
 // storageNotFound is the not found error, named for the handlers that
 // find nothing themselves.

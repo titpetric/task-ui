@@ -3,8 +3,8 @@ package view
 import (
 	"sort"
 
+	"github.com/titpetric/task-ui/keystore"
 	"github.com/titpetric/task-ui/model"
-	"github.com/titpetric/task-ui/sshkey"
 )
 
 // SecretGroup is a workspace on the secrets pages: the secrets its
@@ -15,7 +15,7 @@ type SecretGroup struct {
 	Workspace string
 	Title     string
 	// Key is the workspace's encryption key, nil while it has none.
-	Key     *sshkey.Key
+	Key     *keystore.Key
 	Secrets []model.Secret
 	Folders []string
 }

@@ -28,4 +28,22 @@
 </table>
 </div>
 {{- end }}
+
+{{- if .Can "key/view" }}
+<section class="block" id="keys">
+	<h3>Keys <small>in the key folder</small></h3>
+	<div class="table-wrap">
+	<table class="table settings">
+		<tbody>
+			<tr><td class="key nowrap">Encryption key</td><td>{{ with .InstanceKey }}<span class="mono">{{ .Name }}</span> <span class="faint">{{ .Fingerprint }}</span>{{ else }}<span class="badge bad">missing</span>{{ end }}</td>
+				<td class="actions">{{ if .Can "key/edit" }}<form class="inline" data-api="/api/keys/encrypt/rotate" data-method="POST" data-next="/settings/instance?rekeyed={rekeyed}#keys" data-confirm="{{ if .InstanceKey }}Regenerate the instance's encryption key? The current material stays as a backup, and task-ui re-encrypts the integrations' settings.{{ else }}Generate the instance's encryption key?{{ end }}" data-confirm-ok="{{ if .InstanceKey }}Regenerate{{ else }}Generate{{ end }}"><button class="btn btn-sm" type="submit">{{ if .InstanceKey }}Regenerate{{ else }}Generate{{ end }}</button></form>{{ if not .InstanceKey }} <a class="btn btn-sm" href="/settings/keys/upload">Upload</a>{{ end }}{{ end }}</td>
+				<td class="desc dim">Encrypts the integrations' settings; never leaves task-ui.</td></tr>
+			<tr><td class="key nowrap">Git key</td><td>{{ with .GitKey }}<a class="mono" href="/settings/keys/{{ . }}">{{ . }}</a>{{ else }}<span class="faint">none: git uses ssh's own</span>{{ end }}</td>
+				<td class="actions">{{ if .Can "key/edit" }}<a class="btn btn-sm" href="/settings/keys">Choose</a>{{ end }}</td>
+				<td class="desc dim">The SSH key that pulls and clones the checkouts; set it on a key's page.</td></tr>
+		</tbody>
+	</table>
+	</div>
+</section>
+{{- end }}
 {{ end }}

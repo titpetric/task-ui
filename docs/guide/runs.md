@@ -243,12 +243,13 @@ runs, as a login shell, with:
   [Running the server](../running.md));
 - the secrets of its folder and its workspace's shared secrets, never
   another workspace's (see [Settings](settings.md#secrets));
-- an ssh agent, through `SSH_AUTH_SOCK`, with the instance keys whose
-  policies name the role or the name of whoever started the run (see
+- an ssh agent, through `SSH_AUTH_SOCK`, with the instance keys linked
+  to the role or the name of whoever started the run (see
   [Projects and jobs](projects.md#keys-for-a-run)), and the SSH keys of
-  its workspace its grants let through, as `ws:<name>` (see
-  [Workspaces](workspaces.md#keys)); the terminal says which, or
-  `(none)`.
+  its workspace its links let through (see
+  [Workspaces](workspaces.md#keys)); a host command gets every instance
+  SSH key, as the inventory signs in with them; the terminal says which,
+  or `(none)`.
 
 A job that takes arguments, an atkins job with `args: true`, gets them
 after `--`, as argv: `POST /api/runs` with `"args": "ps -a"` runs

@@ -3,7 +3,7 @@
 <div class="page-head">
 	<div>
 		<h2>{{ if $encrypt }}Upload encryption key{{ else }}Upload key{{ end }}</h2>
-		<p>{{ if $encrypt }}Saves an ed25519 private key as the key that encrypts the secrets of {{ $ws.Folder }}. No run gets it.{{ else }}Saves a private key you already use as an SSH key of the workspace {{ $ws.Folder }}. Its runs get it as ws:&lt;name&gt;.{{ end }} task-ui works out the public key from it and stores both in {{ .KeysDir }}. If a pair with the same name exists, task-ui keeps it as a backup.</p>
+		<p>{{ if $encrypt }}Saves an ed25519 or RSA private key as the key that encrypts the secrets of {{ $ws.Folder }}, when it has none. No run gets it.{{ else }}Saves a private key you already use as an SSH key of the workspace {{ $ws.Folder }}. Its runs get it in their ssh agent.{{ end }} task-ui reads its algorithm, works out the public key and stores both in {{ .KeysDir }}. The folder refuses a key it holds, under any name.</p>
 	</div>
 </div>
 
@@ -21,7 +21,7 @@
 	</div>
 	{{- if not $encrypt }}
 	<div class="field">
-		<label for="wk-name">Name <span class="faint">lower case letters, digits and dashes: id_&lt;type&gt;_&lt;name&gt;</span></label>
+		<label for="wk-name">Name <span class="faint">lower case letters, digits, dashes and underscores; empty is ssh</span></label>
 		<input type="text" id="wk-name" name="name" value="" autocomplete="off" placeholder="deploy">
 	</div>
 	{{- end }}

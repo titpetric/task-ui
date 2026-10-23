@@ -16,6 +16,7 @@ import (
 	"github.com/titpetric/task-ui/access"
 	"github.com/titpetric/task-ui/app"
 	"github.com/titpetric/task-ui/internal/assert"
+	"github.com/titpetric/task-ui/keystore"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/storage"
 )
@@ -109,12 +110,13 @@ func TestNew_Errors(t *testing.T) {
 	assert.True(t, dev.Mcp, "the auto login user may use MCP too")
 	status, _, _ := get(t, a.Handler(), "/")
 	assert.Equal(t, http.StatusOK, status)
-	// The default workspace has its key directories from the start and
-	// no encryption key: an admin adds one before it stores a secret.
+	// The default workspace has no encryption key from the start: an
+	// admin adds one before it stores a secret. The instance has one.
 	root, err := storage.NewWorkspaceStorage(a.DB).GetByFolder(context.Background(), model.Default)
 	assert.NoError(t, err)
-	assert.Nil(t, none.Keyring().EncryptKey(root.ID))
-	assert.DirExists(t, none.Keyring().Encrypt(root.ID).Dir)
+	folder := &keystore.Local{Dir: none.SSHDir, Rows: storage.NewKeyInfoStorage(a.DB), Settings: storage.NewSettingStorage(a.DB)}
+	assert.Nil(t, folder.EncryptKey(context.Background(), keystore.ScopeWorkspace(root.ID)))
+	assert.NotNil(t, folder.EncryptKey(context.Background(), storage.ScopeInstance))
 	a.Close()
 
 	unwritable := &app.Config{Root: t.TempDir(), DataDir: "/proc/task-ui-nope", DB: ":memory:", SessionTTL: time.Hour}

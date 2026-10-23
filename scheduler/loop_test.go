@@ -11,11 +11,11 @@ import (
 
 	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/internal/assert"
+	"github.com/titpetric/task-ui/keystore"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/recording"
 	"github.com/titpetric/task-ui/runner"
 	"github.com/titpetric/task-ui/scheduler"
-	"github.com/titpetric/task-ui/sshkey"
 	"github.com/titpetric/task-ui/storage"
 )
 
@@ -130,11 +130,10 @@ func TestLoop_TickKeys(t *testing.T) {
 	db, err := storage.OpenAndMigrate(ctx, ":memory:")
 	assert.NoError(t, err)
 	t.Cleanup(func() { db.Close() })
-	keys := &sshkey.Store{Dir: t.TempDir()}
-	_, err = keys.Generate("ed25519", "deploy")
+	keys := &keystore.Local{Dir: t.TempDir(), Rows: storage.NewKeyInfoStorage(db), Settings: storage.NewSettingStorage(db), Tmp: t.TempDir()}
+	deploy, err := keys.Generate(ctx, keystore.Spec{Name: "deploy"})
 	assert.NoError(t, err)
-	policies := storage.NewSSHKeyPolicyStorage(db)
-	assert.NoError(t, policies.SetUsers(ctx, "id_ed25519", []string{"black"}))
+	assert.NoError(t, keys.Link(ctx, deploy.Name, nil, []string{"black"}))
 
 	dir := t.TempDir()
 	infra := &folder.Folder{ID: "infra", Dir: dir}
@@ -146,11 +145,10 @@ func TestLoop_TickKeys(t *testing.T) {
 	}
 	runs := storage.NewRunStorage(db)
 	manager := runner.New(runner.Options{
-		Runs:        runs,
-		Recordings:  &recording.Store{Root: t.TempDir()},
-		Grace:       time.Second,
-		KeyDir:      keys.Dir,
-		KeyPolicies: policies,
+		Runs:       runs,
+		Recordings: &recording.Store{Root: t.TempDir()},
+		Grace:      time.Second,
+		Keys:       keys,
 	})
 	t.Cleanup(func() { manager.Shutdown(context.Background()) })
 	schedules := storage.NewScheduleStorage(db)
@@ -176,7 +174,7 @@ func TestLoop_TickKeys(t *testing.T) {
 
 	mapped, err := os.ReadFile(filepath.Join(dir, "black.txt"))
 	assert.NoError(t, err)
-	assert.Contains(t, string(mapped), "id_ed25519 (ED25519)")
+	assert.Contains(t, string(mapped), "deploy_ed25519 (ED25519)")
 	unmapped, err := os.ReadFile(filepath.Join(dir, "ops.txt"))
 	assert.NoError(t, err)
 	assert.Contains(t, string(unmapped), "no-agent")

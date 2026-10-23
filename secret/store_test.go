@@ -23,7 +23,7 @@ func newStore(t *testing.T) (*secret.Store, *storage.SecretStorage) {
 	_, err = keys.Generate("ed25519", "task-ui")
 	assert.NoError(t, err)
 	rows := storage.NewSecretStorage(db)
-	return secret.New(rows, secret.NewVault(keys)), rows
+	return secret.New(rows, secret.NewVault(secret.DirKeys{Store: keys})), rows
 }
 
 func TestNew(t *testing.T) {
@@ -99,7 +99,7 @@ func TestStore_Rekey(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
 	s, rows := newStore(t)
-	keys := s.Vault.Keys
+	keys := s.Vault.Keys.(secret.DirKeys).Store
 	assert.NoError(t, s.Set(ctx, &model.Secret{Scope: storage.SharedScope(model.Default), Name: "A", Content: "one"}))
 	assert.NoError(t, s.Set(ctx, &model.Secret{Scope: "infra", Name: "B", Content: "two"}))
 	before, _ := rows.List(ctx)

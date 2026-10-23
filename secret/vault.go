@@ -12,28 +12,36 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"os"
-	"path/filepath"
 	"strings"
 
 	"filippo.io/age"
 	"filippo.io/age/agessh"
 	"filippo.io/age/armor"
 	"golang.org/x/crypto/ssh"
-
-	"github.com/titpetric/task-ui/sshkey"
 )
 
-// ErrNoKey reports that no key in the vault's store can encrypt.
-var ErrNoKey = errors.New("no encryption key to encrypt the secrets with: rotate it in Settings, Keys")
+// ErrNoKey reports that the vault has no key to encrypt with.
+var ErrNoKey = errors.New("no encryption key to encrypt the secrets with: generate or upload it in Settings")
 
-// Vault encrypts and decrypts with the keys of one encryption store.
-type Vault struct {
-	Keys *sshkey.Store
+// Keys are what a vault encrypts and decrypts with: one encryption key,
+// and the private halves that open what it and its earlier material
+// encrypted.
+type Keys interface {
+	// Recipient returns the name and the authorized_keys line of the
+	// key that encrypts; ok false for none.
+	Recipient() (name, public string, ok bool)
+	// Identities returns the private keys that decrypt, the current
+	// first.
+	Identities() [][]byte
 }
 
-// NewVault returns a vault over the key store.
-func NewVault(keys *sshkey.Store) *Vault {
+// Vault encrypts and decrypts with one encryption key.
+type Vault struct {
+	Keys Keys
+}
+
+// NewVault returns a vault over the keys.
+func NewVault(keys Keys) *Vault {
 	return &Vault{Keys: keys}
 }
 
@@ -42,35 +50,34 @@ func Encrypted(text string) bool {
 	return strings.HasPrefix(text, armor.Header)
 }
 
-// Recipients returns the store's key, by name, the one key that
-// encrypts the secrets, or none; it skips the names excluded.
+// Recipients returns the key, by name, that encrypts the secrets, or
+// none; it skips the names excluded.
 func (v *Vault) Recipients(exclude ...string) []string {
-	if key, _, ok := v.instanceKey(exclude); ok {
-		return []string{key.Name}
+	if name, _, ok := v.recipient(exclude); ok {
+		return []string{name}
 	}
 	return nil
 }
 
-// instanceKey picks the key that encrypts the secrets: a type's own
-// key, id_ed25519 before id_rsa, never a backup and never a key made for
-// someone or for a use, such as id_rsa_deploy. ECDSA keys cannot encrypt.
-func (v *Vault) instanceKey(exclude []string) (sshkey.Key, age.Recipient, bool) {
-	for _, kind := range []string{"ed25519", "rsa"} {
-		for _, key := range v.Keys.List() {
-			if key.Backup || key.Label != "" || sshkey.KindOf(key.Name) != kind || contains(exclude, key.Name) {
-				continue
-			}
-			if r, err := recipient(key); err == nil {
-				return key, r, true
-			}
-		}
+// recipient returns the key that encrypts, as an age recipient.
+func (v *Vault) recipient(exclude []string) (string, age.Recipient, bool) {
+	if v == nil || v.Keys == nil {
+		return "", nil, false
 	}
-	return sshkey.Key{}, nil, false
+	name, public, ok := v.Keys.Recipient()
+	if !ok || contains(exclude, name) {
+		return "", nil, false
+	}
+	r, err := recipient(public)
+	if err != nil {
+		return "", nil, false
+	}
+	return name, r, true
 }
 
-// recipient turns a key into an age recipient.
-func recipient(key sshkey.Key) (age.Recipient, error) {
-	pub, _, _, _, err := ssh.ParseAuthorizedKey([]byte(key.PublicKey))
+// recipient turns a public key into an age recipient.
+func recipient(public string) (age.Recipient, error) {
+	pub, _, _, _, err := ssh.ParseAuthorizedKey([]byte(public))
 	if err != nil {
 		return nil, err
 	}
@@ -83,15 +90,13 @@ func recipient(key sshkey.Key) (age.Recipient, error) {
 	return nil, fmt.Errorf("%s keys cannot encrypt", pub.Type())
 }
 
-// identities returns every private key in the store that can decrypt,
-// backups included.
+// identities returns every private key that can decrypt.
 func (v *Vault) identities() []age.Identity {
+	if v == nil || v.Keys == nil {
+		return nil
+	}
 	var result []age.Identity
-	for _, key := range v.Keys.List() {
-		data, err := os.ReadFile(filepath.Join(v.Keys.Dir, key.Name))
-		if err != nil {
-			continue
-		}
+	for _, data := range v.Keys.Identities() {
 		if identity, err := agessh.ParseIdentity(data); err == nil {
 			result = append(result, identity)
 		}
@@ -102,7 +107,7 @@ func (v *Vault) identities() []age.Identity {
 // Encrypt writes a value for the store's key, the excluded names
 // passed over, as armored text.
 func (v *Vault) Encrypt(plain string, exclude ...string) (string, error) {
-	_, r, ok := v.instanceKey(exclude)
+	_, r, ok := v.recipient(exclude)
 	if !ok {
 		return "", ErrNoKey
 	}

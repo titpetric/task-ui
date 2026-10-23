@@ -29,17 +29,16 @@ import (
 	"github.com/titpetric/task-ui/hostrun"
 	"github.com/titpetric/task-ui/integration"
 	"github.com/titpetric/task-ui/internal/assert"
+	"github.com/titpetric/task-ui/keystore"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/note"
 	"github.com/titpetric/task-ui/recording"
 	"github.com/titpetric/task-ui/retention"
 	"github.com/titpetric/task-ui/runner"
 	"github.com/titpetric/task-ui/secret"
-	"github.com/titpetric/task-ui/sshkey"
 	"github.com/titpetric/task-ui/sshprobe"
 	"github.com/titpetric/task-ui/storage"
 	"github.com/titpetric/task-ui/workflow"
-	"github.com/titpetric/task-ui/workspace"
 )
 
 // catalogue is a fixed set of folders.
@@ -132,11 +131,10 @@ func newFixture(t *testing.T) *fixture {
 		f.users[name] = user
 	}
 
-	keys := &sshkey.Store{Dir: t.TempDir()}
-	keyring := &workspace.Keyring{Data: t.TempDir(), Access: []*sshkey.Store{keys}}
-	_, err = keyring.EnsureInstance("task-ui instance")
+	keys := &keystore.Local{Dir: t.TempDir(), Rows: storage.NewKeyInfoStorage(db), Settings: storage.NewSettingStorage(db), Tmp: t.TempDir()}
+	_, err = keys.Generate(context.Background(), keystore.Spec{Name: "task_encryption", Purpose: keystore.PurposeEncrypt, Comment: "task-ui instance"})
 	assert.NoError(t, err)
-	secrets := secret.New(storage.NewSecretStorage(db), secret.NewVault(keyring.Instance()))
+	secrets := secret.New(storage.NewSecretStorage(db), secret.NewVault(keys.Vault(storage.ScopeInstance)))
 	cat := catalogue{"infra": infra, "private": private, "infra/edge": edge, model.Default: {ID: model.Default, Dir: root}}
 	workflows, workflowRuns := storage.NewWorkflowStorage(db), storage.NewWorkflowRunStorage(db)
 	flows := workflow.New(workflows, workflowRuns, cat, manager)
@@ -150,8 +148,6 @@ func newFixture(t *testing.T) *fixture {
 		Users:         users,
 		Projects:      storage.NewProjectStorage(db),
 		Workspaces:    storage.NewWorkspaceStorage(db),
-		WorkspaceKeys: keyring,
-		KeyGrants:     storage.NewWorkspaceKeyGrantStorage(db),
 		Runs:          runs,
 		Artifacts:     artifacts,
 		ArtifactStore: tree,
@@ -162,7 +158,6 @@ func newFixture(t *testing.T) *fixture {
 		Catalogue:     cat,
 		Git:           &git.Git{},
 		Keys:          keys,
-		KeyPolicies:   storage.NewSSHKeyPolicyStorage(db),
 		Env:           envfile.New(storage.NewEnvFileStorage(db), secrets),
 		Recordings:    recordings,
 		Root:          root,
@@ -300,10 +295,11 @@ func (f *fixture) do(t *testing.T, req *http.Request) response {
 	return result
 }
 
-// withKey puts an ed25519 key in the SSH folder, so the store can keep secrets.
+// withKey puts an SSH key, task_ssh_ed25519, in the key folder beside
+// the instance's encryption key.
 func (f *fixture) withKey(t *testing.T) {
 	t.Helper()
-	_, err := f.opts.Keys.Generate("ed25519", "test")
+	_, err := f.opts.Keys.Generate(context.Background(), keystore.Spec{Name: "task_ssh", Comment: "test"})
 	assert.NoError(t, err)
 }
 

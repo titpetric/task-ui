@@ -7,6 +7,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/titpetric/task-ui/keystore"
 	"github.com/titpetric/task-ui/secret"
 	"github.com/titpetric/task-ui/sshkey"
 	"github.com/titpetric/task-ui/storage"
@@ -16,9 +17,11 @@ import (
 // instance's encryption key, the workspaces' on each workspace's key.
 // No SSH key encrypts or decrypts with it.
 func (a *App) secrets() *secret.Store {
-	keyring := a.Config.Keyring()
-	store := secret.New(storage.NewSecretStorage(a.DB), secret.NewVault(keyring.Instance()))
-	store.Workspaces = &secret.Workspaces{Rows: storage.NewWorkspaceStorage(a.DB), Keys: keyring}
+	keys := a.keys()
+	store := secret.New(storage.NewSecretStorage(a.DB), secret.NewVault(keys.Vault(storage.ScopeInstance)))
+	store.Workspaces = &secret.Workspaces{Rows: storage.NewWorkspaceStorage(a.DB), Keys: func(id string) secret.Keys {
+		return keys.Vault(keystore.ScopeWorkspace(id))
+	}}
 	return store
 }
 
@@ -52,7 +55,7 @@ func (a *App) copyDB(suffix string) func(context.Context) error {
 // nothing to migrate they copy nothing.
 func (a *App) migrateSecrets(ctx context.Context) error {
 	store := a.secrets()
-	store.Legacy = secret.NewVault(&sshkey.Store{Dir: a.Config.SSHDir})
+	store.Legacy = secret.NewVault(secret.DirKeys{Store: &sshkey.Store{Dir: a.Config.SSHDir}})
 	result, err := store.Migrate(ctx, a.copyDB("pre-workspace-keys"))
 	if err != nil {
 		return err

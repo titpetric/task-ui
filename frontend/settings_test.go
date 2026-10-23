@@ -22,7 +22,7 @@ func TestSettings(t *testing.T) {
 	body := f.page(t, asAdmin, "/settings")
 	assert.Contains(t, body, "<h2>Settings</h2>")
 	assert.Contains(t, body, "2 folders")
-	assert.Contains(t, body, "1 key<")
+	assert.Contains(t, body, "2 keys<", "the SSH key and the encryption key")
 	assert.Contains(t, body, "1 secret<")
 	assert.Contains(t, body, "4 users")
 	assert.Contains(t, body, f.opts.Keys.Dir)

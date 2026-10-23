@@ -133,10 +133,12 @@ or a folder. A value is never shown again once saved. Page:
 
 ## Keys (`key`)
 
-The instance's keys: an encryption key for the integrations' settings,
-and SSH keys that runs get through their ssh agent by role or user
-grants. A key encrypts or connects, never both. Private keys are never
-shown. Page: `/settings/keys`; API: `/api/keys`.
+Every key of the instance and its workspaces, in one folder, named with
+its algorithm, as `deploy_rsa4096`: encryption keys for the secrets,
+and SSH keys that runs get through their ssh agent by the roles and
+users they link, one of which git pulls with. A key encrypts or
+connects, never both. Private keys are never shown. Page:
+`/settings/keys`; API: `/api/keys`.
 
 ## Integrations (`integration`)
 

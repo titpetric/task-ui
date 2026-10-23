@@ -182,11 +182,11 @@ could not reach. A question for instance:
 > frankenphp images
 
 The ssh agent of the run holds the keys that sign in: the instance keys
-[Settings, Keys](settings.md#keys) grants your role or your name, and the
-SSH keys of the workspace its grants let through. The SSH column comes
-from every instance key, so a host there may still refuse a prompt whose
-run lacks the key that reaches it; grant that key to the admin role, or
-to you, in Settings, Keys. When Beszel does not answer, the prompt runs
+[Settings, Keys](settings.md#keys) links to your role or your name, and
+the SSH keys of the workspace its links let through. The SSH column
+comes from every instance SSH key, as a host command does, so a host
+there may still refuse a prompt whose run lacks the key that reaches it;
+link that key to the admin role, or to you, in Settings, Keys. When Beszel does not answer, the prompt runs
 all the same, and Claude reads that task-ui got no inventory. The
 notes agent, `@claude` on the Notes board, gets no inventory.
 

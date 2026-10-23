@@ -84,3 +84,35 @@ func TestLoadFiles(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Nil(t, none)
 }
+
+// LoadKeys serves keys from memory under their names, and Clean
+// removes the directories agents left.
+func TestLoadKeys(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	_, err := (&sshkey.Store{Dir: dir}).Generate("ed25519", "deploy")
+	assert.NoError(t, err)
+	pem, err := os.ReadFile(filepath.Join(dir, "id_ed25519"))
+	assert.NoError(t, err)
+	tmp := t.TempDir()
+	a, err := sshagent.LoadKeys(tmp, sshagent.Named{Name: "deploy_ed25519", PEM: pem}, sshagent.Named{Name: "deploy_ed25519", PEM: pem})
+	assert.NoError(t, err)
+	assert.Equal(t, []string{"deploy_ed25519"}, a.Keys)
+	conn, err := net.Dial("unix", a.Socket)
+	assert.NoError(t, err)
+	keys, err := agent.NewClient(conn).List()
+	assert.NoError(t, err)
+	assert.Len(t, keys, 1)
+	conn.Close()
+	entries, _ := os.ReadDir(filepath.Dir(a.Socket))
+	assert.Len(t, entries, 1, "the socket alone, no key file")
+
+	none, err := sshagent.LoadKeys(tmp)
+	assert.NoError(t, err)
+	assert.Nil(t, none)
+	_, err = sshagent.LoadKeys(tmp, sshagent.Named{Name: "bad", PEM: []byte("x")})
+	assert.Error(t, err)
+
+	assert.Equal(t, 1, sshagent.Clean(tmp), "the agent's directory, as one left behind")
+	assert.NoError(t, a.Close())
+}

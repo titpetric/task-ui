@@ -13,15 +13,14 @@ import (
 	"github.com/titpetric/task-ui/git"
 	"github.com/titpetric/task-ui/hostrun"
 	"github.com/titpetric/task-ui/integration"
+	"github.com/titpetric/task-ui/keystore"
 	"github.com/titpetric/task-ui/note"
 	"github.com/titpetric/task-ui/recording"
 	"github.com/titpetric/task-ui/retention"
 	"github.com/titpetric/task-ui/runner"
 	"github.com/titpetric/task-ui/secret"
-	"github.com/titpetric/task-ui/sshkey"
 	"github.com/titpetric/task-ui/storage"
 	"github.com/titpetric/task-ui/workflow"
-	"github.com/titpetric/task-ui/workspace"
 )
 
 // Options are what the handlers work with.
@@ -29,13 +28,9 @@ type Options struct {
 	Users    *storage.UserStorage
 	Projects *storage.ProjectStorage
 	// Workspaces are the checkouts the projects may clone inside,
-	// WorkspaceKeys their keys, and KeyGrants whose runs get each of a
-	// workspace's SSH keys.
-	Workspaces    *storage.WorkspaceStorage
-	WorkspaceKeys *workspace.Keyring
-	KeyGrants     *storage.WorkspaceKeyGrantStorage
-	Runs          *storage.RunStorage
-	Artifacts     *storage.ArtifactStorage
+	Workspaces *storage.WorkspaceStorage
+	Runs       *storage.RunStorage
+	Artifacts  *storage.ArtifactStorage
 	// ArtifactStore is the tree of the files the runs leave.
 	ArtifactStore *artifactstore.Store
 	Schedules     *storage.ScheduleStorage
@@ -55,11 +50,11 @@ type Options struct {
 	Runner    *runner.Manager
 	Catalogue folder.Catalogue
 	Git       *git.Git
-	Keys      *sshkey.Store
-	// KeyPolicies name the roles whose runs get each instance key.
-	KeyPolicies *storage.SSHKeyPolicyStorage
-	Env         *envfile.Store
-	Recordings  *recording.Store
+	// Keys are the key folder: every key of the instance and its
+	// workspaces.
+	Keys       *keystore.Local
+	Env        *envfile.Store
+	Recordings *recording.Store
 	// Cleaner holds the Data retention rules; nil turns their route off.
 	Cleaner *retention.Cleaner
 	// Root is the folder that holds cloned projects.

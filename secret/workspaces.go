@@ -7,7 +7,6 @@ import (
 
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/storage"
-	"github.com/titpetric/task-ui/workspace"
 )
 
 // Workspaces finds the workspace a secret's scope belongs to and the
@@ -16,7 +15,8 @@ import (
 // workspace, else the default one, _.
 type Workspaces struct {
 	Rows *storage.WorkspaceStorage
-	Keys *workspace.Keyring
+	// Keys returns the encryption key of a workspace, by ID.
+	Keys func(id string) Keys
 }
 
 // Service reports whether a scope is a service's, such as
@@ -61,5 +61,5 @@ func (w *Workspaces) Of(ctx context.Context, scope string) (*model.Workspace, er
 
 // Vault returns the vault over a workspace's encryption key.
 func (w *Workspaces) Vault(row *model.Workspace) *Vault {
-	return NewVault(w.Keys.Encrypt(row.ID))
+	return NewVault(w.Keys(row.ID))
 }
