@@ -76,6 +76,9 @@ type Board struct {
 	// in TASK_UI_HOSTS; nil, or an error of beszel.ErrOff, leaves it out.
 	// The notes agent's runs never get it.
 	Hosts func(ctx context.Context) (string, error)
+	// BaseURL is the public link of the instance, which the links a
+	// prompt reads start with; empty leaves them paths.
+	BaseURL string
 }
 
 // Post leaves a note on the board, or a reply to one. A note naming

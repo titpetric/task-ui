@@ -281,6 +281,12 @@
   margin-top: 0.3rem;
 }
 
+/* The line under the prompt on what else Claude gets. */
+.workflow-form .field-note {
+  margin: 0.3rem 0 0;
+  font-size: var(--fs-data);
+}
+
 .workflow-form .step::before {
   content: counter(step);
   min-width: 1.4rem;

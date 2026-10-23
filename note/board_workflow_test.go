@@ -69,7 +69,8 @@ func TestBoard_AskWorkflow(t *testing.T) {
 	assert.Len(t, answer, 1)
 	body := answer[0].Body
 	assert.Equal(t, run.ID, answer[0].AboutWorkflowRunID)
-	assert.True(t, strings.HasPrefix(body, "Q: summarize, change nothing\n\nInput:\nfor the 1.2 tag\nWorkflow run "+run.ID+" of the workflow release, by admin, with 3 steps."), body)
+	assert.True(t, strings.HasPrefix(body, "Q: summarize, change nothing\n\nInput:\nfor the 1.2 tag\n## Workflow context\n"), body)
+	assert.Contains(t, body, "\nWorkflow run "+run.ID+" of the workflow release, by admin, with 3 steps.")
 	assert.Contains(t, body, "## Step 1, proj / build: ok, exit code 0")
 	assert.Contains(t, body, "built image v1.2")
 	assert.Contains(t, body, "## Step 2, proj / test: failed, exit code 1")

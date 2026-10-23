@@ -349,3 +349,46 @@ func TestWorkflowStorage_PromptStep(t *testing.T) {
 	rows, _ = runs.Steps(ctx, run.ID)
 	assert.Equal(t, "sunny, 21 °C", rows[1].Answer)
 }
+
+// Answered lists a workflow's finished runs with an answer, newest
+// first, without the run named and the running ones; Number counts a
+// run's place among its workflow's runs.
+func TestWorkflowRunStorage_Answered(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	runs := storage.NewWorkflowRunStorage(newDB(t))
+	flow := model.NewID()
+	made := []*model.WorkflowRun{}
+	for i, answer := range []string{"one", "", "three", "four"} {
+		run := &model.WorkflowRun{WorkflowID: flow, Name: "w"}
+		assert.NoError(t, runs.Create(ctx, run, nil))
+		run.State, run.Answer = model.StateOK, answer
+		if i == 3 {
+			run.State = model.StateRunning
+		}
+		assert.NoError(t, runs.Update(ctx, run))
+		made = append(made, run)
+	}
+	got, err := runs.Answered(ctx, flow, made[2].ID, 3)
+	assert.NoError(t, err)
+	assert.Len(t, got, 1)
+	assert.Equal(t, "one", got[0].Answer)
+	got, _ = runs.Answered(ctx, flow, "", 3)
+	assert.Len(t, got, 2)
+	assert.Equal(t, "three", got[0].Answer)
+
+	n, err := runs.Number(ctx, made[2])
+	assert.NoError(t, err)
+	assert.Equal(t, 3, n)
+}
+
+func TestWorkflowRunStorage_Number(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	runs := storage.NewWorkflowRunStorage(newDB(t))
+	run := &model.WorkflowRun{WorkflowID: model.NewID(), Name: "w"}
+	assert.NoError(t, runs.Create(ctx, run, nil))
+	n, err := runs.Number(ctx, run)
+	assert.NoError(t, err)
+	assert.Equal(t, 1, n)
+}

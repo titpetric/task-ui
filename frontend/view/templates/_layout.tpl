@@ -391,6 +391,7 @@
 			<div class="field">
 				<textarea id="wf-prompt{{ $id }}" name="prompt" rows="4" spellcheck="false" placeholder="summarize the run, change nothing" data-workflow-prompt-text{{ if not $on }} disabled{{ end }}>{{ if $w }}{{ $w.Prompt }}{{ end }}</textarea>
 				<div class="field-tools"><button type="button" class="btn btn-sm" data-workflow-preset="{{ summaryPrompt }}" title="Fill the prompt with the short summary of Run and summarize">Summarize</button></div>
+				<p class="faint field-note">Claude also gets the last 3 answers of this workflow.</p>
 			</div>
 			<div class="field">
 				<label for="wf-prompt-folder{{ $id }}">Run in <span class="faint">the folder Claude works in, as you</span></label>

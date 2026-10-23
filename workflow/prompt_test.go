@@ -129,6 +129,16 @@ func TestRunner_PromptStep(t *testing.T) {
 	steps, _ := f.wfRuns.Steps(ctx, run.ID)
 	assert.Equal(t, "r1", steps[0].RunID)
 	assert.Equal(t, "fetch the weather", steps[0].Prompt)
+	ended, _ := f.wfRuns.Get(ctx, run.ID)
+	assert.Equal(t, "porec", ended.Input)
+	assert.Equal(t, "the answer to water today?", ended.Answer)
+
+	// Without a final prompt, the last prompt step's answer is the run's.
+	asks := &model.Workflow{Name: "asks"}
+	assert.NoError(t, f.workflows.Create(ctx, asks, []model.WorkflowStep{ask, {Folder: "infra", Job: "build"}}))
+	run, err = f.runner.Start(ctx, asks, ops, "")
+	assert.NoError(t, err)
+	assert.Equal(t, "the answer to fetch the weather", f.wait(t, run.ID).Answer)
 
 	p.err = errors.New("no answer")
 	run, err = f.runner.Start(ctx, wf, ops, "")
@@ -136,6 +146,7 @@ func TestRunner_PromptStep(t *testing.T) {
 	failed := f.wait(t, run.ID)
 	assert.Equal(t, model.StateFailed, failed.State)
 	assert.Equal(t, "the prompt in _ no answer", failed.Message)
+	assert.Equal(t, "", failed.Answer)
 	steps, _ = f.wfRuns.Steps(ctx, run.ID)
 	assert.Equal(t, model.StateFailed, steps[0].State)
 	assert.Equal(t, "", steps[0].Answer)

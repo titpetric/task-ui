@@ -94,6 +94,22 @@ in, `_` or empty for the root, and `dir` a directory inside it.
 
 The final prompt stays the last prompt: the one that reads every step.
 
+## Workflow context
+
+Every prompt a workflow runs, a prompt step's and the final prompt,
+starts with a **Workflow context** block, before the steps' output: the
+workflow's name and link, the run's number, when it started, who
+started it and its input, and what the last 3 finished runs of the
+workflow replied, newest first, each with its date and how the run
+ended. A run's answer is the reply to its final prompt, or for a
+workflow without one, the reply to its last prompt step. The block
+skips a run without one, and it does not count. Each keeps its first
+1.5 KiB, and a cut one says so; the block takes its share of the run's
+output budget. The first run of a workflow reads that there are no
+earlier runs. So a prompt can stay consistent with what it said before,
+such as "yesterday I said water tomorrow". The editor says so under
+**Prompt**: Claude also gets the last 3 answers of this workflow.
+
 ## The workflow page
 
 ![A workflow: its chain and its runs](../assets/workflow-dark.png)
