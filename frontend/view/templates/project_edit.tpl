@@ -5,6 +5,13 @@
 		<h2>Configure {{ $p.ID }}</h2>
 		<p>Settings task-ui keeps for the folder: a title, who can run it, and which sources to read. task-ui doesn't change the files in the folder.</p>
 	</div>
+	{{- if and $.Checkout ($.Can "project/delete") }}
+	<div class="actions">
+		{{ template "menu" (menu (print "Actions on " $p.ID)
+			(danger "trash" "Remove checkout" "data-delete" (print "/api/projects/" $p.ID) "data-confirm" (removeConfirm $p.ID $.Checkout.Remote) "data-confirm-ok" "Remove" "data-next" (print "/settings/projects?notice=" (urlquery "Removed " $p.ID)))
+		) }}
+	</div>
+	{{- end }}
 </div>
 
 <form class="form" data-api="/api/projects/{{ $p.ID }}" data-method="PUT" data-next="/settings/projects?notice=Saved">

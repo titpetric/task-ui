@@ -123,6 +123,22 @@ went.
 
 Open a folder from the sidebar:
 
+- **The `[...]` menu** at the top right of a project's or a workspace's
+  page, `/f/_` among them, behind the rule of each item:
+  - **Project settings**, with `project/view`, or **Workspace
+    settings**, with `workspace/view`, opens the configure page, the
+    one **Configure** in **Settings**, **Projects** opens;
+  - **Pull now**, on a checkout with the `git` skill, for a user who
+    may run the folder's jobs, runs `@git:pull` there;
+  - **Remove checkout**, last and in red, on a project that is a git
+    checkout, with `project/delete`, asks `Remove the folder apps and
+    its checkout? You can clone it again from <remote>.`, deletes the
+    folder with its files and its configuration, and goes on to
+    **Projects** with a notice. The project's configure page has the
+    same item in its `[...]` menu.
+
+  A folder inside a project, and a user with none of the rules, gets no
+  menu.
 - **Actions**: a bar under the title, on a folder's page and on the page
   of a directory inside it (see [Actions](#actions)).
 - **Jobs**: a card each, `default` first, with what it does, its first
@@ -201,12 +217,10 @@ on load.
 ![The actions bar of a directory: the git line, then git, compose and dockerfile chips](../assets/actions-dark.png)
 
 The bar under a folder's title, and under a directory's inside a folder,
-has two parts, and at its top right, with the `shell` permission, Enter
-Shell, **Enter Shell** and, with a Claude token besides, **Enter
-Claude**. **Workspace Settings** on a workspace's own page, `/f/_` among
-them, for a user with `workspace/view`, and **Project Settings** on a
-project's own page, for a user with `project/view`, link to their
-settings pages. A directory inside them has neither link.
+has two parts, and at its top right, with the `shell` permission,
+**Enter Shell** and, with a Claude token besides, **Enter Claude**. The
+links to a project's or a workspace's settings are in the `[...]` menu
+of its page head (see [A folder's page](#a-folders-page)).
 
 - **The git line**: `⎇ main ↑1 ↓3 ●2 · malta/dockerfiles`. It reads the
   checkout the page is in, the nearest one up from it and no higher than

@@ -543,6 +543,12 @@ and the folder appears in the sidebar, or the page shows git's output and
 keeps nothing. git reaches private repositories with the instance SSH
 keys.
 
+**Remove checkout** in a checkout's `[...]` menu, in this list, on its
+configure page and on its folder's page, deletes the folder, its files
+and its configuration, for a user with Allow Deletes on Projects,
+`project/delete`. It names the folder and the remote to clone it again
+from before it does.
+
 **Configure** on a folder sets what the instance adds to it; its files
 stay as they are:
 
