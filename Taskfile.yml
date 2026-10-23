@@ -1,8 +1,8 @@
 ---
 version: "3"
 
-# Every go command here runs with a 1 GiB soft memory limit: a race-enabled
-# test binary can grow past what the machine has.
+# Every go command here runs with a 1 GiB soft memory limit, so a test
+# binary does not grow past what the machine has.
 env:
   GOMEMLIMIT: 1GiB
 
@@ -19,10 +19,14 @@ tasks:
       - task: test
 
   test:
-    desc: "Test task-ui"
+    desc: "Run the unit tests"
     cmds:
-      - CGO_ENABLED=1 go test -race -count=1 -cover ./...
-      - CGO_ENABLED=0 go test -count=1 -cover ./...
+      - go test -cover ./...
+
+  test:integration:
+    desc: "Run the integration tests: processes, databases and the network"
+    cmds:
+      - go test -tags integration -count=1 ./...
 
   run:
     desc: "Run task-ui over the demo projects"

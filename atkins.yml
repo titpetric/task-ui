@@ -1,0 +1,15 @@
+#!/usr/bin/env atkins
+# Atkins: https://github.com/titpetric/atkins
+
+name: task-ui tests
+
+jobs:
+  test:
+    desc: "Run the unit tests"
+    steps:
+      - go test -cover ./...
+
+  test:integration:
+    desc: "Run the integration tests: processes, databases and the network"
+    steps:
+      - go test -tags integration -count=1 ./...

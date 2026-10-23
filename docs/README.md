@@ -78,4 +78,6 @@ Beside the guide:
   variables, the password file and the server commands;
 - [API](api.md): the JSON endpoints and the MCP server;
 - [Development](development.md): the packages, the lint and test bar, and
-  the screenshots.
+  the screenshots;
+- [Testing](testing.md): the unit tests of the default run and the
+  integration tests behind a build tag.

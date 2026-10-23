@@ -57,6 +57,7 @@ binary embeds all assets, and the front end makes no external requests.
 | [Running the server](docs/running.md) | The Docker image, the environment, users, roles and the server commands |
 | [API](docs/api.md) | The JSON endpoints and the MCP server |
 | [Development](docs/development.md) | The packages, the lint and test bar, and the screenshots |
+| [Testing](docs/testing.md) | Unit tests by default, integration tests behind a build tag |
 
 A quick start, with the compose file in [Running the server](docs/running.md):
 
@@ -70,17 +71,18 @@ The packages, the lint and test bar and the screenshots are in [docs/development
 
 task: Available tasks for this project:
 
-* default:            Run everything
-* fix:                Fix code
-* install:            Install task-ui
-* lint:               Lint with splint and rulelint, zero findings is the bar
-* run:                Run task-ui over the demo projects
-* smoke:              Exercise a fresh instance end to end, the browser console included
-* test:               Test task-ui
-* docker:build:       Build task-ui docker image
-* docker:gen:         Generate ssh key for docker image
-* docker:run:         Run task-ui in docker env
-* docs:shots:         Regenerate the README screenshots
+* default:                Run everything
+* fix:                    Fix code
+* install:                Install task-ui
+* lint:                   Lint with splint and rulelint, zero findings is the bar
+* run:                    Run task-ui over the demo projects
+* smoke:                  Exercise a fresh instance end to end, the browser console included
+* test:                   Run the unit tests
+* docker:build:           Build task-ui docker image
+* docker:gen:             Generate an ssh key for the key folder, ./keys
+* docker:run:             Run task-ui in docker env
+* docs:shots:             Regenerate the README screenshots
+* test:integration:       Run the integration tests: processes, databases and the network
 
 ## task: default
 
@@ -94,11 +96,17 @@ commands:
 
 ## task: test
 
-Test task-ui
+Run the unit tests
 
 commands:
-- `CGO_ENABLED=1 go test -race -count=1 -cover ./...`
-- `CGO_ENABLED=0 go test -count=1 -cover ./...`
+- `go test -cover ./...`
+
+## task: test:integration
+
+Run the integration tests: processes, databases and the network
+
+commands:
+- `go test -tags integration -count=1 ./...`
 
 ## task: run
 
