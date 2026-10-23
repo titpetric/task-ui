@@ -758,14 +758,6 @@
 </div>
 {{- end }}
 
-{{- /* workspacedelete removes a workspace: the workspace, the folders
-     of the projects inside it that go with it, where to go after and,
-     optionally, the label of a button in place of the icon. */}}
-{{- define "workspacedelete" }}
-{{- $ws := index . 0 }}{{ $nested := index . 1 }}{{ $label := "" }}{{ if gt (len .) 3 }}{{ $label = index . 3 }}{{ end }}
-<button type="button" class="{{ if $label }}btn btn-danger{{ else }}btn-icon danger{{ end }}" data-delete="/api/workspaces/{{ $ws.Folder }}" data-confirm="Remove the workspace {{ $ws.Folder }} with its checkout, keys and secrets{{ with $nested }}, and the projects inside it: {{ join . ", " }}{{ end }}? You can clone it again from {{ $ws.SourceURL }}." data-confirm-ok="Remove" data-next="{{ index . 2 }}" title="Remove the workspace" aria-label="Remove {{ $ws.Folder }}"><svg class="ic"><use href="#i-trash"/></svg>{{ $label }}</button>
-{{- end }}
-
 {{- define "keypolicies" }}
 <div class="field">
 	<span class="label">Who gets it <span class="faint">their runs get the key through the ssh agent; check any roles and users</span></span>

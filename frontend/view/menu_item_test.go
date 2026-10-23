@@ -38,3 +38,17 @@ func TestNewMenuItem(t *testing.T) {
 	assert.NoError(t, err)
 	assert.True(t, del.Danger)
 }
+
+// A primary item is the main button of a head, an item as any other.
+func TestNewPrimaryItem(t *testing.T) {
+	t.Parallel()
+
+	add, err := view.NewPrimaryItem("plus", "Add project", "href", "/settings/projects/new")
+	assert.NoError(t, err)
+	assert.True(t, add.Primary)
+	assert.False(t, add.Danger)
+	assert.Equal(t, "/settings/projects/new", add.Href)
+
+	_, err = view.NewPrimaryItem("plus", "Add", "onclick", "x")
+	assert.Error(t, err)
+}

@@ -134,3 +134,12 @@ func TestFolderMenu_ProjectEdit(t *testing.T) {
 	assert.NoError(t, v.Render(&buf, "project_edit", p))
 	assert.NotContains(t, pageHead(t, buf.String()), "data-delete", "a local folder has no checkout to remove")
 }
+
+// Delete of a workspace names the projects that go with it and where
+// to clone it again from.
+func TestDeleteWorkspaceConfirm(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, "Delete the workspace acme with its checkout, keys and secrets, and the projects inside it: acme/api, acme/web? You can clone it again from git@example.com:acme.git.", view.DeleteWorkspaceConfirm("acme", "git@example.com:acme.git", []string{"acme/api", "acme/web"}))
+	assert.Equal(t, "Delete the workspace labs with its checkout, keys and secrets? You can clone it again from file:///labs.git.", view.DeleteWorkspaceConfirm("labs", "file:///labs.git", nil))
+}

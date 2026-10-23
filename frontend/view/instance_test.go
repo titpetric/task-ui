@@ -76,7 +76,7 @@ func TestInstance_Keys(t *testing.T) {
 		"<th>Name</th><th>Algorithm</th><th>Size</th><th>Public key</th><th>Purpose</th>",
 		`<span class="badge signal">encryption</span>`, `title="git pulls and clones with it">git + ssh</span>`,
 		`data-label="Size">4096 bits</td>`, `data-label="Size">256 bits</td>`,
-		`<span class="mono" title="ssh-rsa AAAAgit">ssh-rsa AAAAgit</span>`,
+		`<span class="copyable"><code>ssh-rsa AAAAgit</code>`,
 		`<dt>Fingerprint</dt><dd class="mono">SHA256:git</dd>`, `aria-haspopup="menu"`,
 		`data-copy="ssh-rsa AAAAgit"`, `data-download="ssh-ed25519 AAAAenc" data-filename="task_encryption_ed25519.pub"`,
 		`<details class="more-menu">`, "Rotate Key",

@@ -1,6 +1,8 @@
 package view
 
 import (
+	"strings"
+
 	"github.com/titpetric/task-ui/folder"
 )
 
@@ -39,4 +41,13 @@ func RemoveConfirm(id, remote string) string {
 		return "Remove the folder " + id + " and its checkout? The checkout has no remote to clone it again from."
 	}
 	return "Remove the folder " + id + " and its checkout? You can clone it again from " + remote + "."
+}
+
+// DeleteWorkspaceConfirm returns what Delete of a workspace asks, naming its nested projects.
+func DeleteWorkspaceConfirm(folder, remote string, nested []string) string {
+	text := "Delete the workspace " + folder + " with its checkout, keys and secrets"
+	if len(nested) > 0 {
+		text += ", and the projects inside it: " + strings.Join(nested, ", ")
+	}
+	return text + "? You can clone it again from " + remote + "."
 }

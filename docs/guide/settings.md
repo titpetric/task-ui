@@ -174,7 +174,7 @@ public key, Edit links, Rotate Key or Delete backup, and Remove last.
   link stays the instance's: the inventory's logins use it, runs don't.
 - **git pulls and clones with this key**, on a key's edit form, makes it
   the one key git uses for every checkout; the Instance page shows it.
-- **A key for someone**: **Generate a key for alice** on her profile
+- **A key for someone**: **Generate key** in the **Keys** of her profile
   starts `user_alice_ed25519`, linked to her. She finds it under **SSH
   keys** in her user menu, and copies the public half to her git host or
   servers. The key files are still readable by any job, as jobs run as
@@ -439,7 +439,7 @@ Enabling takes Allow Edits on Users; you rotate or disable your own from
 your own profile. `/settings/users/<id>` opens the profile too. See
 [MCP](mcp.md).
 
-![Create user](../assets/user-new-dark.png)
+![Add user](../assets/user-new-dark.png)
 
 A client that is not a browser, such as an agent over [MCP](mcp.md),
 signs in with a token instead: `task-ui token <user> <name>` on the
@@ -520,11 +520,13 @@ Permissions before it and Workspaces after it.
 
 Checkouts under the root that hold projects: an organisation's tooling,
 with the projects cloned inside it. **Add workspace** clones one under
-the folder you name, **Move up** and **Move down** order them, and the
-remove button deletes one with the projects inside it. **Configure**
-changes a workspace's title, description and **Recursive**, the toggle
-a project has, and holds its **Keys**, the SSH keys of its runs, which the
-[Keys](#keys) page also lists. **Export** at the top right of that page
+the folder you name, **Move up** and **Move down** order them, and
+**Delete** deletes one with the projects inside it. **Workspace
+settings** opens a workspace's configure page: its title, description
+and **Recursive**, the toggle a project has, its **Projects**, in the
+table of the Projects page, and its **Keys**, the SSH keys of its runs,
+which the [Keys](#keys) page also lists. At the top right of that page,
+**Add project** clones a project into the workspace, and **Export**
 downloads the workspace, encrypted to a passphrase, which **Import** at
 the top right of the Workspaces page reads on another instance.
 [Workspaces](workspaces.md) covers them, their keys and runs, the move
@@ -549,7 +551,7 @@ and its configuration, for a user with Allow Deletes on Projects,
 `project/delete`. It names the folder and the remote to clone it again
 from before it does.
 
-**Configure** on a folder sets what the instance adds to it; its files
+**Project settings** on a folder sets what the instance adds to it; its files
 stay as they are:
 
 - a title and a description;

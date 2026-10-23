@@ -33,7 +33,7 @@ func TestKeys(t *testing.T) {
 
 	empty := f.page(t, asAdmin, "/settings/keys")
 	assert.Contains(t, empty, "<h2>Keys</h2>")
-	assert.Contains(t, empty, "No key yet")
+	assert.Contains(t, empty, "No keys added.")
 
 	key := f.gen(t, keystore.Spec{Name: "deploy", Comment: "deploy"})
 	assert.NoError(t, f.opts.Keys.SetGit(context.Background(), key.Name))
@@ -85,7 +85,7 @@ func TestKeys_Encryption(t *testing.T) {
 	body := f.page(t, asAdmin, "/settings/keys")
 	assert.Contains(t, body, `<tr class="key-instance" id="instance">`)
 	assert.Contains(t, body, strings.ReplaceAll(instance.Fingerprint, "+", "&#43;"))
-	assert.Contains(t, body, `data-api="/api/keys/encrypt/rotate"`)
+	assert.Contains(t, body, `<a class="badge ok" href="#key-`)
 
 	assert.NoError(t, f.opts.Keys.SetGit(context.Background(), "task_ssh_ed25519"))
 	page := f.page(t, asAdmin, "/settings/instance")

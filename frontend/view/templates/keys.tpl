@@ -4,6 +4,12 @@
 		<h2>Keys</h2>
 		<p>There are two kinds of key, and a key can't be both. The <b>encryption key</b> protects secrets: the instance has one, and it encrypts every secret, the workspaces' and the integrations'. <b>SSH keys</b> let runs and git connect to hosts and remotes; git runs over ssh. Instance SSH keys go to the runs of the roles and users they link; a workspace's SSH keys go to that workspace's runs.</p>
 	</div>
+	{{- if .Can "key/edit" }}
+	<div class="actions">
+		<a class="btn" href="/settings/keys/upload"><svg class="ic"><use href="#i-upload"/></svg>Upload key</a>
+		<a class="btn btn-primary" href="/settings/keys/generate"><svg class="ic"><use href="#i-key"/></svg>Generate key</a>
+	</div>
+	{{- end }}
 </div>
 
 <section class="block key-overview">
@@ -18,15 +24,7 @@
 				<td><a href="/settings/integrations">integrations</a><div class="faint">their settings</div></td>
 				<td>
 					{{- with .InstanceKey }}
-					<span class="badge ok">set</span>
-					{{- if .Backup }}
-					<button class="btn btn-sm" type="button" disabled title="Delete the backup first"><svg class="ic"><use href="#i-rotate"/></svg> Rotate Key</button>
-					<button type="button" class="btn btn-sm danger" data-delete="/api/keys/{{ .Name }}/backup" data-confirm="Delete the backup {{ .Backup }}, {{ .BackupFingerprint }}? Secrets the new key has not re-encrypted stop opening." data-next="reload">Delete backup</button>
-					{{- else }}
-					<form class="inline" data-api="/api/keys/{{ .Name }}/rotate" data-method="POST" data-next="/settings/keys?rekeyed={rekeyed}&what=integration+setting" data-confirm="Rotate the instance's encryption key {{ .Fingerprint }}? task-ui gives it new material, keeps the current one as {{ backupName .Name }}, and re-encrypts the integrations' settings." data-confirm-ok="Rotate Key">
-						<button class="btn btn-sm" type="submit" title="Generate a new encryption key"><svg class="ic"><use href="#i-rotate"/></svg> Rotate Key</button>
-					</form>
-					{{- end }}
+					<a class="badge ok" href="#key-{{ .Name }}" title="Its [...] in Every key rotates it">set</a>{{ with .Backup }} {{ template "backup-active" . }}{{ end }}
 					<div class="key-fp faint" title="{{ .Name }}">{{ .Fingerprint }}</div>
 					{{- else }}
 					<span class="badge bad">missing</span> <span class="faint">task-ui creates it on start</span>
@@ -37,7 +35,7 @@
 					<a href="#instance-ssh">{{ $instance }} key{{ if ne $instance 1 }}s{{ end }}</a>
 					<div class="key-names">{{ range .Keys }}{{ if and (not .Encrypts) (not .Workspace) }}<a class="key-chip" href="/settings/keys/{{ .Name }}" title="Links of {{ .Name }}">{{ .Name }}</a>{{ end }}{{ end }}</div>
 					{{- else }}
-					<span class="faint">none: runs get no SSH key from the instance</span> <a href="/settings/keys/generate">Generate</a>
+					<span class="faint">none: runs get no SSH key from the instance</span>
 					{{- end }}
 				</td>
 			</tr>
@@ -57,8 +55,8 @@
 					<a href="{{ $base }}#keys">{{ len .SSH }} key{{ if ne (len .SSH) 1 }}s{{ end }}</a>
 					<div class="key-names">{{ range .SSH }}<a class="key-chip" href="{{ $base }}/keys/{{ .Name }}" title="Grants of {{ .Name }}">{{ .Name }}</a>{{ end }}</div>
 					{{- else }}
-					<span class="faint">none</span> <a href="{{ $base }}/keys/generate">Generate</a> · <a href="{{ $base }}/keys/upload">Upload</a>
-					<div class="faint">This workspace has no SSH key of its own. Its runs get only the instance SSH keys their policies grant.</div>
+					<a class="faint" href="{{ $base }}#keys">none</a>
+					<div class="faint">Its runs get only the instance SSH keys their policies grant.</div>
 					{{- end }}
 				</td>
 			</tr>
@@ -69,25 +67,18 @@
 </section>
 
 <section class="block" id="instance-ssh">
-	<div class="block-head">
-		<h3>Every key <small>{{ .KeysDir }}</small></h3>
-		<div class="actions">
-			<a class="btn btn-sm" href="/settings/keys/upload">Upload key</a>
-			<a class="btn btn-sm btn-primary" href="/settings/keys/generate">Generate key</a>
-		</div>
-	</div>
+	{{- template "blockhead" (head "Every key" .KeysDir (and (not .Keys) "No keys added.")) }}
+	{{- with .Keys }}
 	<p class="dim">Every key lives in the key folder as <code>&lt;name&gt;.key</code> and <code>&lt;name&gt;.pub</code>, the name ending in its algorithm and size. An instance SSH key goes to the runs of the roles and users it links, through their ssh agent, and the inventory signs in to hosts with it; a workspace's SSH key goes to the runs of that workspace. The git key, which a key's page sets, pulls and clones the checkouts. An encryption key never leaves task-ui.</p>
 	<div class="table-wrap">
 	<table class="table keys key-table cards">
 		{{ template "keyhead" }}
 		<tbody>
-		{{- range .Keys }}{{ template "keyrow" (list $ . "/settings/keys") }}
-		{{- else }}
-			<tr class="empty"><td colspan="6">No key yet. Generate one, or upload the private key you already use.</td></tr>
-		{{- end }}
+		{{- range . }}{{ template "keyrow" (list $ . "/settings/keys") }}{{ end }}
 		</tbody>
 	</table>
 	</div>
+	{{- end }}
 </section>
 
 <section class="block">

@@ -94,7 +94,7 @@ func TestWorkspaceEdit_DeleteNamesProjects(t *testing.T) {
 		assert.NotContains(t, body, "maltese")
 	}
 	edit := f.page(t, asAdmin, "/settings/workspaces/malta")
-	assert.Contains(t, edit, `data-next="/settings/workspaces?notice=Workspace&#43;removed"`)
+	assert.Contains(t, edit, `data-next="/settings/workspaces?notice=Workspace&#43;deleted"`)
 }
 
 func TestWorkspaces_AdminOnly(t *testing.T) {
@@ -132,5 +132,5 @@ func TestWorkspaces_Default(t *testing.T) {
 	edit := f.page(t, asAdmin, "/settings/workspaces/_")
 	assert.Contains(t, edit, `data-api="/api/workspaces/_"`)
 	assert.Contains(t, edit, "the root, "+f.root)
-	assert.NotContains(t, edit, "data-delete=")
+	assert.NotContains(t, edit, `data-delete="/api/workspaces/`)
 }

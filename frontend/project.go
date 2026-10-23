@@ -23,13 +23,20 @@ func (h *Handlers) projects(w http.ResponseWriter, r *http.Request) {
 	p.Step = view.StepProjects
 	p.Root = h.opts.Root
 	p.Entries = folder.Entries(h.opts.Root, h.opts.Git, h.workspaceFolders(r.Context()))
-	if h.opts.Disk != nil {
-		p.Spaces = map[string]diskusage.Usage{}
-		for _, entry := range p.Entries {
-			p.Spaces[entry.ID] = h.opts.Disk.Measure(entry.Dir)
-		}
-	}
+	h.measure(p)
 	h.render(w, http.StatusOK, "projects", p)
+}
+
+// measure puts the size on disk of each entry of a page on it, nothing
+// without a measure.
+func (h *Handlers) measure(p *view.Page) {
+	if h.opts.Disk == nil {
+		return
+	}
+	p.Spaces = map[string]diskusage.Usage{}
+	for _, entry := range p.Entries {
+		p.Spaces[entry.ID] = h.opts.Disk.Measure(entry.Dir)
+	}
 }
 
 // projectNew shows the clone form.
@@ -41,6 +48,7 @@ func (h *Handlers) projectNew(w http.ResponseWriter, r *http.Request) {
 	p.Crumbs = view.Crumbs("Settings", "/settings", "Projects", "/settings/projects", "Add")
 	p.Step = view.StepProjects
 	p.WorkspaceList = h.workspaceList(r.Context())
+	p.Form = map[string]string{"workspace": r.URL.Query().Get("workspace")}
 	h.render(w, http.StatusOK, "project_new", p)
 }
 

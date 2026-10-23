@@ -11,9 +11,9 @@
 	</div>
 	<div class="actions">
 		<a class="btn" href="/runs?user={{ $u.Name }}"><svg class="ic"><use href="#i-list"/></svg>Runs</a>
-		{{- if and .CanAddUsers (.Can "user/delete") (not $u.CanAdmin) .User (ne $u.ID .User.ID) }}
-		<button type="button" class="btn btn-danger" data-delete="/api/users/{{ $u.ID }}" data-confirm="Delete the user {{ $u.Name }}? This removes them from the password file and ends their sessions and tokens right away. Their runs, notes and history keep the name." data-confirm-ok="Delete" data-next="/settings/users?notice=User+deleted"><svg class="ic"><use href="#i-trash"/></svg>Delete user</button>
-		{{- end }}
+		{{ template "menu" (menu (print "Actions on " $u.Name)
+			(and .CanAddUsers (.Can "user/delete") (not $u.CanAdmin) .User (ne $u.ID .User.ID) (danger "trash" "Delete" "data-delete" (print "/api/users/" $u.ID) "data-confirm" (print "Delete the user " $u.Name "? This removes them from the password file and ends their sessions and tokens right away. Their runs, notes and history keep the name.") "data-confirm-ok" "Delete" "data-next" "/settings/users?notice=User+deleted"))
+		) }}
 	</div>
 </div>
 
@@ -124,20 +124,17 @@
 
 {{- if or $pr.Own (.Can "key/view") }}
 <section class="block" id="keys">
-	<div class="block-head">
-		<h3>Keys <small>linked to {{ $u.Name }}, in the ssh agent of their runs</small></h3>
-		{{- if .Can "key/edit" }}
-		<div class="actions"><a class="btn btn-sm" href="/settings/keys/generate?for={{ $u.Name }}">Generate a key for {{ $u.Name }}</a></div>
-		{{- end }}
-	</div>
+	{{- template "blockhead" (head "Keys" (print "linked to " $u.Name ", in the ssh agent of their runs") (and (not .Keys) (print "No key linked to " $u.Name "; the role's keys come with the role."))
+		(and (.Can "key/edit") (item "key" "Generate key" "href" (print "/settings/keys/generate?for=" $u.Name)))) }}
 	{{- with .Keys }}
-	<ul class="profile-list">
-		{{- range . }}
-		<li><svg class="ic"><use href="#i-key"/></svg><span class="mono">{{ .Name }}</span> <span class="faint">{{ .Fingerprint }}</span> <button type="button" class="btn-icon" data-copy="{{ .PublicKey }}" title="Copy public key" aria-label="Copy public key"><svg class="ic"><use href="#i-copy"/></svg></button></li>
-		{{- end }}
-	</ul>
-	{{- else }}
-	<p class="faint">No key linked to {{ $u.Name }} by name; their role's keys come with the role.</p>
+	<div class="table-wrap">
+	<table class="table keys key-table cards">
+		{{ template "keyhead" }}
+		<tbody>
+		{{- range . }}{{ template "keyrow" (list $ . (print "/users/" $u.Name)) }}{{ end }}
+		</tbody>
+	</table>
+	</div>
 	{{- end }}
 </section>
 {{- end }}
