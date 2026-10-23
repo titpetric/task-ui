@@ -127,6 +127,9 @@
 					{{- else }}
 					<div class="empty">Runs started by anyone show up here.</div>
 					{{- end }}
+					{{- /* The last slot when the rail can't show every entry:
+					     the script shows it in place of the last one that fits. */}}
+					<a href="/runs" class="recent more" data-recents-more hidden><svg class="ic"><use href="#i-list"/></svg><span class="what"><b>All runs</b><small></small></span></a>
 				</nav>
 			</div>
 		</aside>

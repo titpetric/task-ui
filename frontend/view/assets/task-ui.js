@@ -3374,6 +3374,9 @@
   // recents, the dots on the folders, and the frames on the dashboard.
   var recents = document.getElementById("recents");
   var known = null;
+  // recentsMore is the rail's last slot, as the layout draws it: shown in
+  // place of the last entry that fits when some don't.
+  var recentsMore = '<a href="/runs" class="recent more" data-recents-more hidden><svg class="ic"><use href="#i-list"/></svg><span class="what"><b>All runs</b><small></small></span></a>';
 
   // renderRecents draws the runs of jobs and of workflows, newest first.
   function renderRecents(runs, flows) {
@@ -3392,13 +3395,15 @@
       var head = label !== heading ? '<div class="recent-group">' + label + "</div>" : "";
       heading = label;
       return head + recentHTML(e);
-    }).join("");
+    }).join("") + recentsMore;
     fitRecents();
   }
 
   // fitRecents hides the recents that run past the rail's column or the
   // bottom of the screen, whichever comes first, and a heading left with
-  // no entry under it: the list is trimmed, not scrolled.
+  // no entry under it: the list is trimmed, not scrolled. When it hides
+  // any, the last slot that fits links to Runs and says how many more
+  // there are, so the rail never ends silently.
   function fitRecents() {
     if (!recents) return;
     var rail = recents.closest(".rail-inner");
@@ -3407,16 +3412,29 @@
     // holds wherever the page is scrolled to.
     var top = rail.getBoundingClientRect().top + window.scrollY;
     var limit = Math.min(rail.clientHeight, window.innerHeight - top);
-    var items = Array.prototype.slice.call(recents.children);
+    var more = recents.querySelector("[data-recents-more]");
+    var items = Array.prototype.slice.call(recents.children).filter(function (item) { return item !== more; });
+    var overflows = function (item) { return item.offsetTop + item.offsetHeight > limit; };
+    if (more) more.hidden = true;
     items.forEach(function (item) { item.hidden = false; });
     items.forEach(function (item) {
-      if (item.offsetTop + item.offsetHeight > limit) item.hidden = true;
+      if (overflows(item)) item.hidden = true;
     });
+    var hidden = items.filter(function (item) { return item.hidden && item.classList.contains("recent"); });
+    if (more && hidden.length) {
+      more.hidden = false;
+      // The link takes the place of the last entries that fit until it
+      // fits itself.
+      var shown = items.filter(function (item) { return !item.hidden; });
+      while (shown.length && overflows(more)) shown.pop().hidden = true;
+      var count = items.filter(function (item) { return item.hidden && item.classList.contains("recent"); }).length;
+      more.querySelector("small").textContent = count + " more";
+    }
     for (var i = items.length - 1; i >= 0; i--) {
       var item = items[i];
       if (!item.classList.contains("recent-group") || item.hidden) continue;
       var next = item.nextElementSibling;
-      if (!next || next.hidden || next.classList.contains("recent-group")) item.hidden = true;
+      if (!next || next.hidden || next === more || next.classList.contains("recent-group")) item.hidden = true;
     }
   }
   fitRecents();

@@ -24,6 +24,9 @@ func TestPage_Chrome(t *testing.T) {
 	recents := body[strings.Index(body, `id="recents"`):]
 	assert.Contains(t, recents, `<a href="/runs/`+plan.ID+`" class="recent" title="Open infra / plan, ops, ok">`)
 	assert.NotContains(t, recents, "data-attach")
+	// The rail's last slot links to Runs; the script shows it when some
+	// entries don't fit.
+	assert.Contains(t, recents, `<a href="/runs" class="recent more" data-recents-more hidden>`)
 	assert.Contains(t, body, `<a class="btn btn-sm" id="run-page" href="/runs" hidden>Open run page</a>`)
 	// The window says when it plays a recording; hidden until then.
 	assert.Contains(t, body, `<span class="rec" id="run-rec" hidden>( * recording )</span>`)
