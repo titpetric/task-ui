@@ -15,7 +15,8 @@ type Run struct {
 	Live bool
 	// Attached counts the windows on the session.
 	Attached int
-	// Message is what the status says, when it says something.
+	// Message is what the status says, when it says something, or the
+	// row: why the run ended, when its state needs saying.
 	Message string
 	// FrameSVG is the last frame of the terminal, rendered, when the
 	// page shows it.

@@ -210,10 +210,13 @@ func (h *Handlers) live(sees func(*model.Run) bool) []view.Run {
 
 // runView decorates a run row with what the runner knows.
 func (h *Handlers) runView(run model.Run) view.Run {
-	v := view.Run{Run: run}
+	v := view.Run{Run: run, Message: run.Message}
 	if session, ok := h.opts.Runner.Get(run.ID); ok {
 		status := session.Status()
-		v.Run, v.Live, v.Attached, v.Message = session.Snapshot(), true, session.Attached(), status.Message
+		v.Run, v.Live, v.Attached = session.Snapshot(), true, session.Attached()
+		if status.Message != "" {
+			v.Message = status.Message
+		}
 	}
 	return v
 }

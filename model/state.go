@@ -6,6 +6,9 @@ type State = string
 
 // The states a run passes through and ends in.
 const (
+	// StateQueued is a run that waits for the run before it of its job
+	// to end: a command on a host the host is still running one of.
+	StateQueued State = "queued"
 	// StateRunning is a run in progress.
 	StateRunning State = "running"
 	// StateOK is a run that exited with zero.
@@ -19,12 +22,17 @@ const (
 	StateKilled State = "killed"
 )
 
-// States returns every state, running first.
+// QueuedLost is the message of a queued run the instance stopped or
+// restarted before the run started.
+const QueuedLost = "the instance restarted before it ran"
+
+// States returns every state, queued and running first.
 func States() []State {
-	return []State{StateRunning, StateOK, StateFailed, StateStopped, StateKilled}
+	return []State{StateQueued, StateRunning, StateOK, StateFailed, StateStopped, StateKilled}
 }
 
-// Finished reports whether a state is one a run ended in.
+// Finished reports whether a state is one a run ended in: neither
+// queued nor running.
 func Finished(state State) bool {
-	return state != StateRunning && state != ""
+	return state != StateQueued && state != StateRunning && state != ""
 }

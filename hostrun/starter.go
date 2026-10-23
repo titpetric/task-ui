@@ -105,9 +105,10 @@ func (s *Starter) Resolve(ctx context.Context, targets []string) ([]string, map[
 
 // Start starts the command on each host the request names as the user,
 // one run each, at once, and returns the batch's ID, "" without one,
-// and the sessions, a run of @host:<host> a host. It skips a host
-// already running a command; a host without a login gets a run that
-// fails saying so. The caller checks the user may run on hosts.
+// and the sessions, a run of @host:<host> a host. A run on a host still
+// running a command waits, queued, and starts once the runs before it
+// ended, at most runner.MaxQueued of them; a host without a login gets a
+// run that fails saying so. The caller checks the user may run on hosts.
 func (s *Starter) Start(ctx context.Context, user *model.User, req Request) (string, []*runner.Session, error) {
 	command := strings.TrimSpace(req.Command)
 	if command == "" {
@@ -138,7 +139,7 @@ func (s *Starter) Start(ctx context.Context, user *model.User, req Request) (str
 		job := root.HostJob(host)
 		job.Command = s.command(host, logins[host], command)
 		session, err := s.Runner.Start(ctx, runner.Request{
-			Folder: root, Job: job, User: user, Target: host, BatchID: batch, Args: []string{command}, Timeout: timeout,
+			Folder: root, Job: job, User: user, Target: host, BatchID: batch, Args: []string{command}, Timeout: timeout, Queue: true,
 			Scheduled: req.Scheduled, Force: req.Force, Reason: req.Reason, Cols: req.Cols, Rows: req.Rows,
 		})
 		if err != nil {

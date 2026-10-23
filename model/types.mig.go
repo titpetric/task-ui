@@ -795,6 +795,9 @@ type Run struct {
 
 	// Batch ID
 	BatchID string `db:"batch_id" json:"batch_id"`
+
+	// Message
+	Message string `db:"message" json:"message"`
 }
 
 // GetID will return the value of ID.
@@ -923,11 +926,17 @@ func (r *Run) GetBatchID() string { return r.BatchID }
 // SetBatchID sets BatchID to the provided value.
 func (r *Run) SetBatchID(val string) { r.BatchID = val }
 
+// GetMessage will return the value of Message.
+func (r *Run) GetMessage() string { return r.Message }
+
+// SetMessage sets Message to the provided value.
+func (r *Run) SetMessage(val string) { r.Message = val }
+
 // RunTable is the name of the table in the DB.
 const RunTable = "`run`"
 
 // RunFields is a list of all columns in the DB table.
-var RunFields = []string{"id", "folder", "job", "user_id", "user_name", "state", "exit_code", "forced", "scheduled", "term_cols", "term_rows", "cast_path", "reason", "started_at", "finished_at", "created_at", "updated_at", "dir", "args", "target", "batch_id"}
+var RunFields = []string{"id", "folder", "job", "user_id", "user_name", "state", "exit_code", "forced", "scheduled", "term_cols", "term_rows", "cast_path", "reason", "started_at", "finished_at", "created_at", "updated_at", "dir", "args", "target", "batch_id", "message"}
 
 // RunPrimaryFields are the primary key fields in the DB table.
 var RunPrimaryFields = []string{"id"}

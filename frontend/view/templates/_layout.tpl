@@ -110,7 +110,7 @@
 					<a href="/workflows/{{ .WorkflowID }}" class="recent flow" title="Workflow {{ .Name }}, {{ .UserName }}, {{ .State }}">
 						<i class="dot {{ .State }}"></i>
 						<span class="what"><b>{{ .Name }}</b><small><svg class="ic"><use href="#i-flow"/></svg>workflow</small></span>
-						{{- if eq .State "running" }}<svg class="ic act"><use href="#i-eye"/></svg>{{ end }}
+						{{- if not (ended .State) }}<svg class="ic act"><use href="#i-eye"/></svg>{{ end }}
 						{{ template "avatar" (list $ .UserName) }}
 					</a>
 					{{- end }}
@@ -119,7 +119,7 @@
 					<a href="/runs/{{ .ID }}" class="recent" title="Open {{ .Name }}, {{ .UserName }}, {{ .State }}">
 						<i class="dot {{ .State }}"></i>
 						<span class="what"><b>{{ .Job }}</b><small>{{ .Place }}</small></span>
-						{{- if eq .State "running" }}<svg class="ic act"><use href="#i-{{ if $can }}play{{ else }}eye{{ end }}"/></svg>{{ end }}
+						{{- if not (ended .State) }}<svg class="ic act"><use href="#i-{{ if $can }}play{{ else }}eye{{ end }}"/></svg>{{ end }}
 						{{ template "avatar" (list $ .UserName) }}
 					</a>
 					{{- end }}
@@ -192,7 +192,7 @@
 {{- /* The replay button of a finished run with a recording: it plays
      the recording in the run window at its recorded pace, and reads
      nothing from the server but the recording. */}}
-{{ define "replay" }}{{ if and .CastPath (ne .State "running") }}<button type="button" class="btn btn-sm replay" data-replay="{{ .ID }}" data-replay-title="{{ .Name }}" data-replay-who="{{ .UserName }}" title="Replay the recording" aria-label="Replay the recording">|&gt;</button>{{ end }}{{ end }}
+{{ define "replay" }}{{ if and .CastPath (ended .State) }}<button type="button" class="btn btn-sm replay" data-replay="{{ .ID }}" data-replay-title="{{ .Name }}" data-replay-who="{{ .UserName }}" title="Replay the recording" aria-label="Replay the recording">|&gt;</button>{{ end }}{{ end }}
 
 {{ define "dialog" }}
 <dialog class="run" id="run-dialog" aria-labelledby="run-title">
@@ -310,7 +310,7 @@
 
 {{ define "state" }}
 {{- if . -}}
-<span class="state"><i class="dot {{ .State }}"></i>{{ .State }}{{ if and (ne .State "ok") (ne .State "running") }} <span class="faint">({{ .ExitCode }})</span>{{ end }}</span>
+<span class="state"><i class="dot {{ .State }}"></i>{{ .State }}{{ if and (ne .State "ok") (ended .State) }} <span class="faint">({{ .ExitCode }})</span>{{ end }}</span>
 {{- else -}}
 <span class="faint">never run</span>
 {{- end -}}

@@ -25,3 +25,4 @@ Run.
 | args        | varchar  |     | Args        |
 | target      | varchar  |     | Target      |
 | batch_id    | char(26) | MUL | Batch ID    |
+| message     | varchar  |     | Message     |

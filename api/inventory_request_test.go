@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -167,4 +168,26 @@ func TestInventoryRequest_SchedulesAndWorkflows(t *testing.T) {
 	}
 	ops := f.call(t, asOps, http.MethodPost, "/workflows/"+id+"/runs", nil)
 	assert.Equal(t, http.StatusForbidden, ops.Status)
+}
+
+// A run on a host still running one answers queued, lists on /runs in
+// that state, and a stop takes it out of the queue.
+func TestInventoryRequest_Queue(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	f.withHosts(t)
+	gate := filepath.Join(t.TempDir(), "gate")
+
+	busy := f.call(t, asAdmin, http.MethodPost, "/runs", api.RunRequest{Folder: model.Default, Job: "@host:dev1", Args: api.RunArgs{`while [ ! -f "` + gate + `" ]; do sleep 0.05; done`}})
+	assert.Equal(t, http.StatusCreated, busy.Status, string(busy.Raw))
+	waits := f.call(t, asAdmin, http.MethodPost, "/runs", api.RunRequest{Folder: model.Default, Job: "@host:dev1", Args: api.RunArgs{"echo later"}})
+	assert.Equal(t, http.StatusCreated, waits.Status, string(waits.Raw))
+	assert.Equal(t, model.StateQueued, waits.str("state"))
+	assert.Len(t, f.call(t, asAdmin, http.MethodGet, "/runs?state=queued", nil).list("runs"), 1)
+
+	stopped := f.call(t, asAdmin, http.MethodPost, "/runs/"+waits.str("id")+"/stop", nil)
+	assert.True(t, stopped.Status < 300, string(stopped.Raw))
+	assert.Equal(t, model.StateStopped, f.finished(t, waits.str("id")).State)
+	assert.NoError(t, os.WriteFile(gate, nil, 0o644))
+	assert.Equal(t, model.StateOK, f.finished(t, busy.str("id")).State)
 }

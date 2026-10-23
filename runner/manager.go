@@ -38,7 +38,13 @@ var (
 	ErrMoving = errors.New("the project is moving")
 	// ErrNoArgs refuses arguments for a job that takes none.
 	ErrNoArgs = errors.New("the job takes no arguments")
+	// ErrQueueFull refuses a run that would wait behind MaxQueued runs of
+	// its job.
+	ErrQueueFull = fmt.Errorf("%d runs of the job wait already; start it again once one of them started", MaxQueued)
 )
+
+// MaxQueued is how many runs of a job wait at most for the run going.
+const MaxQueued = 10
 
 // Manager starts runs and holds their sessions.
 type Manager struct {
@@ -50,6 +56,10 @@ type Manager struct {
 	mu       sync.Mutex
 	sessions map[string]*Session
 	byKey    map[string]*Session
+	// queued are the sessions that wait for the session of their key, in
+	// the order they came; closing starts none of them any more.
+	queued  map[string][]*Session
+	closing bool
 	// pulls holds one lock per checkout, so its runs pull one at a time.
 	pulls map[string]*sync.Mutex
 	// frozen are the folders that are moving: no run of them or of a
@@ -68,7 +78,7 @@ func New(opts Options) *Manager {
 	if opts.Keep <= 0 {
 		opts.Keep = time.Hour
 	}
-	return &Manager{opts: opts, sessions: map[string]*Session{}, byKey: map[string]*Session{}}
+	return &Manager{opts: opts, sessions: map[string]*Session{}, byKey: map[string]*Session{}, queued: map[string][]*Session{}}
 }
 
 // Get returns a session by run id.
@@ -101,7 +111,9 @@ func (m *Manager) List() []*Session {
 
 // Start starts a run. When the job is running already it returns the
 // session in the way and ErrBusy, unless the request forces: then Start
-// kills the run in the way, waits for it, and the new run takes its place.
+// kills the run in the way, waits for it, and the new run takes its
+// place; or unless the request queues: then the new run waits, queued,
+// and starts once the runs before it ended.
 func (m *Manager) Start(ctx context.Context, req Request) (*Session, error) {
 	if req.Folder == nil || req.Job == nil {
 		return nil, errors.New("a run needs a folder and a job")
@@ -118,6 +130,9 @@ func (m *Manager) Start(ctx context.Context, req Request) (*Session, error) {
 		run.Reason = strings.TrimSpace(req.Reason)
 	}
 	if current, err := m.acquire(run.Key(), run.Folder, req.Force); err != nil {
+		if req.Queue && req.ID == "" && errors.Is(err, ErrBusy) {
+			return m.enqueue(ctx, req, run)
+		}
 		return current, err
 	}
 	if current, err := m.replace(ctx, run); err != nil {
@@ -128,6 +143,19 @@ func (m *Manager) Start(ctx context.Context, req Request) (*Session, error) {
 		m.release(run.Key(), nil)
 		return nil, err
 	}
+	session := m.newSession(ctx, req, run)
+	m.mu.Lock()
+	m.sessions[run.ID] = session
+	m.byKey[run.Key()] = session
+	m.mu.Unlock()
+	m.publish(*run)
+	go m.serve(session)
+	return session, nil
+}
+
+// newSession is the session of a run a request starts, with what the
+// run needs of the request.
+func (m *Manager) newSession(ctx context.Context, req Request, run *model.Run) *Session {
 	session := newSession(run, req.Folder, req.Job)
 	session.env = req.Env
 	session.dir, session.args, session.timeout = req.Dir, req.Args, req.Timeout
@@ -139,13 +167,7 @@ func (m *Manager) Start(ctx context.Context, req Request) (*Session, error) {
 			session.permissions = m.opts.Users.Permissions(ctx, req.User).Summary()
 		}
 	}
-	m.mu.Lock()
-	m.sessions[run.ID] = session
-	m.byKey[run.Key()] = session
-	m.mu.Unlock()
-	m.publish(*run)
-	go m.serve(session)
-	return session, nil
+	return session
 }
 
 // RunsTopic is the topic the manager publishes every run on.
@@ -158,76 +180,45 @@ func (m *Manager) publish(run model.Run) {
 	}
 }
 
-// acquire takes the lock of a key, killing the holder when forced. A
-// folder that is moving takes none.
-func (m *Manager) acquire(key, folder string, force bool) (*Session, error) {
-	deadline := time.Now().Add(m.opts.KillTimeout)
-	for {
-		m.mu.Lock()
-		if m.isFrozen(folder) {
-			m.mu.Unlock()
-			return nil, ErrMoving
-		}
-		current, busy := m.byKey[key]
-		if !busy {
-			m.byKey[key] = nil
-			m.mu.Unlock()
-			return nil, nil
-		}
-		m.mu.Unlock()
-		if !force {
-			return current, ErrBusy
-		}
-		current.Kill(m.opts.Grace)
-		select {
-		case <-current.Done():
-		case <-time.After(time.Until(deadline)):
-			return current, ErrBusy
-		}
-	}
-}
-
-// release frees the lock of a key, when the session holds it.
-func (m *Manager) release(key string, session *Session) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	if m.byKey[key] == session {
-		delete(m.byKey, key)
-	}
-}
-
-// forget drops a finished session from memory after a while.
-func (m *Manager) forget(session *Session) {
-	time.Sleep(m.opts.Keep)
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	if m.sessions[session.ID()] == session {
-		delete(m.sessions, session.ID())
-	}
-}
-
-// Stop ends a run as stopped.
+// Stop ends a run as stopped; a queued run leaves the queue, stopped.
 func (m *Manager) Stop(id string) error {
 	session, ok := m.Get(id)
 	if !ok {
 		return ErrNotFound
 	}
+	if m.dequeue(session, Status{State: model.StateStopped}) {
+		return nil
+	}
 	session.Stop(m.opts.Grace)
 	return nil
 }
 
-// Kill ends a run as killed.
+// Kill ends a run as killed; a queued run leaves the queue, killed.
 func (m *Manager) Kill(id string) error {
 	session, ok := m.Get(id)
 	if !ok {
 		return ErrNotFound
 	}
+	if m.dequeue(session, Status{State: model.StateKilled}) {
+		return nil
+	}
 	session.Kill(m.opts.Grace)
 	return nil
 }
 
-// Shutdown kills every run and waits for the sessions to settle.
+// Shutdown ends the queued runs as failed, kills every run and waits
+// for the sessions to settle.
 func (m *Manager) Shutdown(ctx context.Context) {
+	m.mu.Lock()
+	m.closing = true
+	var waiting []*Session
+	for _, queue := range m.queued {
+		waiting = append(waiting, queue...)
+	}
+	m.mu.Unlock()
+	for _, session := range waiting {
+		m.dequeue(session, Status{State: model.StateFailed, ExitCode: 1, Message: model.QueuedLost})
+	}
 	for _, session := range m.List() {
 		session.Kill(m.opts.Grace)
 	}
@@ -263,8 +254,9 @@ func (m *Manager) serve(session *Session) {
 		_ = rec.Close()
 	}
 	// The lock goes before the windows hear the outcome, so a window
-	// that runs again on the status finds the job free.
-	m.release(run.Key(), session)
+	// that runs again on the status finds the job free, or to the run
+	// that waits next.
+	m.handOff(run.Key(), session)
 	m.settle(ctx, session, status)
 	go m.forget(session)
 }
