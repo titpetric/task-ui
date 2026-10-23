@@ -1,9 +1,5 @@
 package runner
 
-import (
-	"context"
-)
-
 // BacklogState is how the slots and the line for them stand, as the
 // Instance page and GET /api/instance show it.
 type BacklogState struct {
@@ -18,18 +14,4 @@ type BacklogState struct {
 	Auto       int `json:"backlog_length_auto"`
 	Configured int `json:"backlog_length"`
 	Length     int `json:"backlog_length_effective"`
-}
-
-// Backlog says how the slots and the line for them stand.
-func (m *Manager) Backlog(ctx context.Context) BacklogState {
-	return BacklogState{
-		Parallel: m.slots.Limit(), Going: m.slots.Going(), Waiting: m.slots.Waiting(),
-		Auto: m.opts.Backlog.Auto(), Configured: m.opts.Backlog.Configured(ctx), Length: m.opts.Backlog.Length(ctx),
-	}
-}
-
-// SetBacklog stores the backlog length, empty or 0 for the automatic
-// one; the next start reads it.
-func (m *Manager) SetBacklog(ctx context.Context, value string) error {
-	return m.opts.Backlog.Set(ctx, value)
 }

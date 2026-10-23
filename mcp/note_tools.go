@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/titpetric/task-ui/access"
 	"github.com/titpetric/task-ui/api"
 	"github.com/titpetric/task-ui/model"
 )
@@ -146,4 +147,96 @@ func showPrompt(thread api.NoteView) string {
 		fmt.Fprintf(&b, "\nreply %s by %s:\n%s\n", reply.ID, reply.UserName, reply.Body)
 	}
 	return b.String()
+}
+
+type notesArgs struct {
+	Mention string `json:"mention"`
+	State   string `json:"state"`
+	Limit   int    `json:"limit"`
+}
+
+type noteList struct {
+	Notes []api.NoteView `json:"notes"`
+}
+
+func listNotes(ctx context.Context, c *client, args json.RawMessage) (string, error) {
+	in := notesArgs{State: model.NoteOpen, Limit: 20}
+	if err := decode(args, &in); err != nil {
+		return "", err
+	}
+	// The API takes * as any user and any state; empty mention is the
+	// caller here.
+	if in.Mention == "" {
+		if user := access.UserFrom(ctx); user != nil {
+			in.Mention = user.Name
+		}
+	}
+	q := url.Values{}
+	q.Set("mention", in.Mention)
+	q.Set("state", in.State)
+	q.Set("limit", fmt.Sprint(in.Limit))
+	var out noteList
+	if err := c.get(ctx, "/notes?"+q.Encode(), &out); err != nil {
+		return "", err
+	}
+	if len(out.Notes) == 0 {
+		return "No notes.", nil
+	}
+	shown := make([]string, 0, len(out.Notes))
+	for _, view := range out.Notes {
+		shown = append(shown, showNote(view))
+	}
+	return strings.Join(shown, "\n"), nil
+}
+
+// showNote is a note with its replies, as text.
+func showNote(view api.NoteView) string {
+	var b strings.Builder
+	state := view.State
+	if state == "" {
+		state = "message"
+	}
+	fmt.Fprintf(&b, "note %s by %s, %s, %s\n%s\n", view.ID, view.UserName, state, when(view.CreatedAt), view.Body)
+	if view.RunID != "" {
+		fmt.Fprintf(&b, "(run %s)\n", view.RunID)
+	}
+	for _, reply := range view.Replies {
+		fmt.Fprintf(&b, "  reply by %s, %s: %s\n", reply.UserName, when(reply.CreatedAt), strings.ReplaceAll(reply.Body, "\n", "\n    "))
+	}
+	return b.String()
+}
+
+// when is a time as the tools print it.
+func when(t *time.Time) string {
+	if t == nil {
+		return "-"
+	}
+	return t.Local().Format("2006-01-02 15:04:05")
+}
+
+type commentArgs struct {
+	ID    string `json:"id"`
+	Body  string `json:"body"`
+	State string `json:"state"`
+}
+
+func noteComment(ctx context.Context, c *client, args json.RawMessage) (string, error) {
+	var in commentArgs
+	if err := decode(args, &in); err != nil {
+		return "", err
+	}
+	if in.ID == "" {
+		return "", errors.New("a note ID is needed")
+	}
+	if strings.TrimSpace(in.Body) == "" && in.State == "" {
+		return "", errors.New("a reply, a state, or both are needed")
+	}
+	if _, err := c.call(ctx, http.MethodPost, "/notes/"+url.PathEscape(in.ID)+"/comments", api.CommentRequest{Body: in.Body, State: in.State}); err != nil {
+		return "", err
+	}
+	text := "Replied to note " + in.ID
+	if in.State != "" {
+		text += "; it is " + in.State
+	}
+	return text + ".", nil
 }
