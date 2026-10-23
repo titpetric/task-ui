@@ -43,6 +43,8 @@ type Options struct {
 	// FolderRefs find the rows that name a folder, which a move leaves.
 	FolderRefs *storage.FolderRefStorage
 	Secrets    *secret.Store
+	// SecretReads log which run got which secret. Nil shows no reads.
+	SecretReads *storage.SecretReadStorage
 
 	Workflows    *storage.WorkflowStorage
 	WorkflowRuns *storage.WorkflowRunStorage

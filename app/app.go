@@ -257,12 +257,14 @@ func (a *App) wire(version string) error {
 	}
 	store := &artifactstore.Store{Dir: cfg.ArtifactTree(), Keep: cfg.ArtifactHistory}
 	summaries := storage.NewRunSummaryStorage(a.DB)
+	secretReads := storage.NewSecretReadStorage(a.DB)
 	a.Runner = runner.New(runner.Options{
 		KeyDir: keys.Dir, KeyPolicies: keyPolicies,
 		Runs:          runs,
 		Artifacts:     artifacts,
 		Summaries:     summaries,
 		Secrets:       secrets,
+		SecretReads:   secretReads,
 		Env:           env,
 		Git:           g,
 		Recordings:    recordings,
@@ -309,7 +311,7 @@ func (a *App) wire(version string) error {
 		}
 	}
 	apiHandlers := api.New(api.Options{
-		Users: a.Users, Projects: projects, Workspaces: workspaces, Runs: runs, Artifacts: artifacts, ArtifactStore: store, Schedules: schedules, Secrets: secrets,
+		Users: a.Users, Projects: projects, Workspaces: workspaces, Runs: runs, Artifacts: artifacts, ArtifactStore: store, Schedules: schedules, Secrets: secrets, SecretReads: secretReads,
 		FolderRefs: refs, WorkspaceKeys: keyring, KeyGrants: grants,
 		Workflows: workflows, WorkflowRuns: workflowRuns, Flows: a.Workflows, Events: events,
 		Runner: a.Runner, Catalogue: a.Catalogue, Git: g, Keys: keys, KeyPolicies: keyPolicies, Env: env, Recordings: recordings, Root: cfg.Root, Board: a.Board,
@@ -317,7 +319,7 @@ func (a *App) wire(version string) error {
 		AddUser: addUser, RemoveUser: removeUser, Tokens: a.Guard.Tokens, Now: cfg.Clock(), Summaries: summaries, Version: version,
 	})
 	pages, err := frontend.New(frontend.Options{
-		Guard: a.Guard, Auth: access.NewAuthenticator(a.Users, a.Emails, a.Passwords), Users: a.Users, Projects: projects, Workspaces: workspaces, Runs: runs, Artifacts: artifacts, Schedules: schedules, Secrets: secrets,
+		Guard: a.Guard, Auth: access.NewAuthenticator(a.Users, a.Emails, a.Passwords), Users: a.Users, Projects: projects, Workspaces: workspaces, Runs: runs, Artifacts: artifacts, Schedules: schedules, Secrets: secrets, SecretReads: secretReads,
 		FolderRefs: refs, WorkspaceKeys: keyring, KeyGrants: grants,
 		Workflows: workflows, WorkflowRuns: workflowRuns, Flows: a.Workflows,
 		Runner: a.Runner, Catalogue: a.Catalogue, Git: g, Keys: keys, HomeKeys: homeKeys, KeyPolicies: keyPolicies, Env: env, Recordings: recordings, Root: cfg.Root, Version: version, Now: cfg.Clock(),

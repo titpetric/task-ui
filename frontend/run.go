@@ -101,6 +101,10 @@ func (h *Handlers) run(w http.ResponseWriter, r *http.Request) {
 	artifacts, _ := h.opts.Artifacts.List(r.Context(), storage.ArtifactFilter{RunID: run.ID, Limit: 200})
 	p.Artifacts = artifacts
 	p.Prompt = h.runPrompt(r, p, &run)
+	// Which secrets the run got, by name, for whoever may see secrets.
+	if h.opts.SecretReads != nil && p.Can("secret/view") {
+		p.SecretReads, _ = h.opts.SecretReads.ForRun(r.Context(), run.ID)
+	}
 	h.render(w, http.StatusOK, "run", p)
 }
 

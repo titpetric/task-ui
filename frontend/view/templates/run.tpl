@@ -50,6 +50,9 @@
 			{{- if $run.Reason }}<tr><th>Reason</th><td>{{ $run.Reason }} <span class="badge bad">out of hours</span></td></tr>{{ end }}
 			<tr><th>Terminal</th><td>{{ $run.TermCols }}×{{ $run.TermRows }}</td></tr>
 			<tr><th>ID</th><td class="faint">{{ $run.ID }}</td></tr>
+			{{- with .SecretReads }}
+			<tr><th>Secrets</th><td>{{ range . }}<code>{{ .Name }}</code> {{ end }}<span class="dim">in its environment, names only</span></td></tr>
+			{{- end }}
 		</tbody>
 	</table>
 	</div>

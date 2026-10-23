@@ -21,6 +21,7 @@ func TestSecret_AdminOnly(t *testing.T) {
 		{http.MethodGet, "/secrets"},
 		{http.MethodPost, "/secrets"},
 		{http.MethodDelete, "/secrets/" + model.NewID()},
+		{http.MethodGet, "/secrets/" + model.NewID() + "/reads"},
 	} {
 		res := f.call(t, asOps, c.method, c.path, map[string]any{})
 		assert.Equal(t, http.StatusForbidden, res.Status, c.method+" "+c.path)
@@ -214,4 +215,44 @@ func TestSecret_NoKey(t *testing.T) {
 	assert.Equal(t, http.StatusCreated, made.Status, string(made.Raw))
 	stored := f.call(t, asAdmin, http.MethodPost, "/secrets", api.SecretRequest{Scope: "workspace:acme", Name: "TOKEN", Content: "x"})
 	assert.Equal(t, http.StatusOK, stored.Status, string(stored.Raw))
+}
+
+// The list says how many runs read each secret and the last one; the
+// log lists the reads, newest first, names only.
+func TestSecret_Reads(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	f.withKey(t)
+	ctx := context.Background()
+	token := f.call(t, asAdmin, http.MethodPost, "/secrets", api.SecretRequest{Name: "API_TOKEN", Content: "hunter2"}).str("id")
+	region := f.call(t, asAdmin, http.MethodPost, "/secrets", api.SecretRequest{Scope: "infra", Name: "REGION", Content: "eu-central"}).str("id")
+	for _, run := range []string{model.NewID(), model.NewID()} {
+		assert.NoError(t, f.opts.SecretReads.Record(ctx, []model.SecretRead{
+			{SecretID: token, Name: "API_TOKEN", RunID: run, Folder: "infra", Job: "deploy", UserName: asOps},
+			{SecretID: region, Name: "REGION", RunID: run, Folder: "infra", Job: "deploy", UserName: asOps},
+		}))
+	}
+	last := model.NewID()
+	assert.NoError(t, f.opts.SecretReads.Record(ctx, []model.SecretRead{{SecretID: token, Name: "API_TOKEN", RunID: last, Folder: "infra", Dir: "edge", Job: "plan", UserName: asAdmin}}))
+
+	list := f.call(t, asAdmin, http.MethodGet, "/secrets", nil)
+	assert.Equal(t, http.StatusOK, list.Status)
+	assert.False(t, contains(list.Raw, "hunter2") || contains(list.Raw, "eu-central"))
+	var body struct{ Secrets []api.SecretView }
+	assert.NoError(t, json.Unmarshal(list.Raw, &body))
+	byName := map[string]api.SecretView{}
+	for _, view := range body.Secrets {
+		byName[view.Name] = view
+	}
+	assert.Equal(t, 3, byName["API_TOKEN"].Reads)
+	assert.Equal(t, last, byName["API_TOKEN"].LastRead.RunID)
+	assert.Equal(t, "edge", byName["API_TOKEN"].LastRead.Dir)
+	assert.Equal(t, 2, byName["REGION"].Reads)
+
+	reads := f.call(t, asAdmin, http.MethodGet, "/secrets/"+token+"/reads?limit=2", nil)
+	assert.Equal(t, http.StatusOK, reads.Status, string(reads.Raw))
+	assert.Len(t, reads.list("reads"), 2)
+	assert.Equal(t, last, reads.list("reads")[0].(map[string]any)["run_id"])
+	assert.False(t, contains(reads.Raw, "hunter2"))
+	assert.Equal(t, http.StatusNotFound, f.call(t, asAdmin, http.MethodGet, "/secrets/"+model.NewID()+"/reads", nil).Status)
 }

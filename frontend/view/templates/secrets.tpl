@@ -47,22 +47,22 @@
 	{{- if or .Key .Secrets }}
 	<div class="table-wrap">
 	<table class="table secrets">
-		<thead><tr><th>Name</th><th>Scope</th><th>Updated</th><th>Actions</th></tr></thead>
+		<thead><tr><th>Name</th><th>Scope</th><th>Updated</th><th>Reads</th><th>Last read</th><th>Actions</th></tr></thead>
 		{{- with .SharedSecrets }}
 		<tbody>
-			<tr class="secret-scope"><th colspan="4">Every project in {{ $g.Workspace }}</th></tr>
+			<tr class="secret-scope"><th colspan="6">Every project in {{ $g.Workspace }}</th></tr>
 			{{- range . }}{{ template "secretrow" (list $ $g .) }}{{ end }}
 		</tbody>
 		{{- end }}
 		{{- range .Projects }}
 		<tbody>
-			<tr class="secret-scope"><th colspan="4"><a href="{{ $.Href .Folder }}"><svg class="ic"><use href="#i-folder"/></svg> {{ .Folder }}</a></th></tr>
+			<tr class="secret-scope"><th colspan="6"><a href="{{ $.Href .Folder }}"><svg class="ic"><use href="#i-folder"/></svg> {{ .Folder }}</a></th></tr>
 			{{- range .Secrets }}{{ template "secretrow" (list $ $g .) }}{{ end }}
 		</tbody>
 		{{- end }}
 		{{- if not .Secrets }}
 		<tbody>
-			<tr class="empty"><td colspan="4">No secrets yet. Add one for every project in {{ .Workspace }}, or for a single project.</td></tr>
+			<tr class="empty"><td colspan="6">No secrets yet. Add one for every project in {{ .Workspace }}, or for a single project.</td></tr>
 		</tbody>
 		{{- end }}
 	</table>
@@ -73,13 +73,17 @@
 {{ end }}
 
 {{- /* secretrow is a secret's row: its name, its scope, when it changed,
-     and replace and delete. The value never shows. */}}
+     how many runs read it, linking to its read log, the last run that
+     did, and replace and delete. The value never shows. */}}
 {{- define "secretrow" }}
-{{- $g := index . 1 }}{{ $s := index . 2 }}
+{{- $p := index . 0 }}{{ $g := index . 1 }}{{ $s := index . 2 }}
 			<tr>
 				<td class="key">{{ $s.Name }}</td>
 				<td class="scope faint">{{ $s.Scope }}</td>
 				<td class="nowrap" title="{{ stamp $s.UpdatedAt }}">{{ ago $s.UpdatedAt }}</td>
+				<td class="nowrap">{{ with index $p.SecretReadCounts $s.ID }}<a href="/settings/secrets/{{ $s.ID }}/reads" title="The runs that got {{ $s.Name }}">{{ . }}</a>{{ else }}<span class="faint">0</span>{{ end }}</td>
+				{{- $last := index $p.SecretLastReads $s.ID }}
+				<td class="nowrap">{{ if $last.RunID }}<span title="{{ stamp $last.CreatedAt }}">{{ ago $last.CreatedAt }}</span> <a href="/runs/{{ $last.RunID }}">{{ $last.Folder }}/{{ with $last.Dir }}{{ . }}/{{ end }}{{ $last.Job }}</a>{{ else }}<span class="faint">never</span>{{ end }}</td>
 				<td class="actions">
 					<a class="btn-icon" href="/settings/secrets/edit?scope={{ $s.Scope }}&name={{ $s.Name }}" title="Replace the value" aria-label="Replace {{ $s.Name }}"><svg class="ic"><use href="#i-edit"/></svg></a>
 					<button type="button" class="btn-icon danger" data-delete="/api/secrets/{{ $s.ID }}" data-confirm="Delete {{ $s.Name }} from {{ if eq $s.Scope $g.Shared }}every project in {{ $g.Workspace }}{{ else }}{{ $s.Scope }}{{ end }}? Runs no longer get it." data-next="reload" title="Delete" aria-label="Delete {{ $s.Name }}"><svg class="ic"><use href="#i-trash"/></svg></button>

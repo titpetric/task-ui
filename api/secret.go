@@ -3,6 +3,7 @@ package api
 import (
 	"errors"
 	"net/http"
+	"slices"
 	"strings"
 
 	"github.com/titpetric/task-ui/integration"
@@ -17,11 +18,15 @@ type SecretRequest struct {
 	Content string `json:"content"`
 }
 
-// SecretView is a secret as the API shows it: never its content.
+// SecretView is a secret as the API shows it: never its content. The
+// list adds how many runs read it, in the log's newest
+// storage.SecretReadKeep, and the last of them.
 type SecretView struct {
-	ID    string `json:"id"`
-	Scope string `json:"scope"`
-	Name  string `json:"name"`
+	ID       string            `json:"id"`
+	Scope    string            `json:"scope"`
+	Name     string            `json:"name"`
+	Reads    int               `json:"reads"`
+	LastRead *model.SecretRead `json:"last_read,omitempty"`
 }
 
 // listSecrets returns every secret, content withheld. Takes secret/view.
@@ -34,14 +39,60 @@ func (h *Handlers) listSecrets(w http.ResponseWriter, r *http.Request) {
 		failErr(w, err)
 		return
 	}
+	counts, last := map[string]int{}, map[string]model.SecretRead{}
+	if h.opts.SecretReads != nil {
+		if counts, err = h.opts.SecretReads.Counts(r.Context()); err == nil {
+			last, err = h.opts.SecretReads.Last(r.Context())
+		}
+		if err != nil {
+			failErr(w, err)
+			return
+		}
+	}
 	views := []SecretView{}
 	for _, secret := range secrets {
 		if integration.Internal(secret.Scope) {
 			continue
 		}
-		views = append(views, SecretView{ID: secret.ID, Scope: secret.Scope, Name: secret.Name})
+		view := SecretView{ID: secret.ID, Scope: secret.Scope, Name: secret.Name, Reads: counts[secret.ID]}
+		if read, ok := last[secret.ID]; ok {
+			view.LastRead = &read
+		}
+		views = append(views, view)
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"secrets": views})
+}
+
+// secretReads returns the log of a secret's reads, newest first: the
+// runs that got it, ?limit= at a time (50 unless given), ?before= and
+// ?after= a read's ID to page. Takes secret/view.
+func (h *Handlers) secretReads(w http.ResponseWriter, r *http.Request) {
+	if !h.require(w, r, "secret/view") {
+		return
+	}
+	id := param(r, "id")
+	secrets, err := h.opts.Secrets.Secrets.List(r.Context())
+	if err != nil {
+		failErr(w, err)
+		return
+	}
+	known := slices.ContainsFunc(secrets, func(secret model.Secret) bool {
+		return secret.ID == id && !integration.Internal(secret.Scope)
+	})
+	if !known {
+		fail(w, http.StatusNotFound, "no secret with that ID")
+		return
+	}
+	reads := []model.SecretRead{}
+	if h.opts.SecretReads != nil {
+		q := r.URL.Query()
+		limit := min(max(queryInt(r, "limit", 50), 1), 200)
+		if reads, err = h.opts.SecretReads.List(r.Context(), id, q.Get("before"), q.Get("after"), limit); err != nil {
+			failErr(w, err)
+			return
+		}
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"reads": reads})
 }
 
 // setSecret creates a secret or replaces its content.

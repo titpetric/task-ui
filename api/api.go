@@ -137,6 +137,7 @@ func (h *Handlers) Routes() http.Handler {
 	r.Get("/secrets", h.listSecrets)
 	r.Post("/secrets", h.setSecret)
 	r.Delete("/secrets/{id}", h.deleteSecret)
+	r.Get("/secrets/{id}/reads", h.secretReads)
 	r.Post("/secrets/rekey", h.rekeySecrets)
 
 	r.Get("/keys", h.listKeys)

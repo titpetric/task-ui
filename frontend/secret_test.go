@@ -96,3 +96,48 @@ func TestSecrets_Encryption(t *testing.T) {
 	assert.Contains(t, form, `<option value="workspace:_" disabled>every project in _</option>`)
 	assert.Contains(t, f.page(t, asAdmin, "/settings/secrets/new"), `<option value="workspace:acme" selected>`, "a workspace without a key is passed over")
 }
+
+// A secret's row counts its reads and names the last run; the count
+// links to its read log, paged, and a run's page names the secrets it
+// got for whoever may see secrets, never a value.
+func TestSecrets_Reads(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	f.withKey(t)
+	ctx := context.Background()
+	assert.NoError(t, f.opts.Secrets.Set(ctx, &model.Secret{Scope: "infra", Name: "DB_PASS", Content: "hunter2secret"}))
+	assert.NoError(t, f.opts.Secrets.Set(ctx, &model.Secret{Scope: "infra", Name: "UNREAD", Content: "x"}))
+	rows, err := f.opts.Secrets.Reaching(ctx, "infra")
+	assert.NoError(t, err)
+	var id string
+	for _, row := range rows {
+		if row.Name == "DB_PASS" {
+			id = row.ID
+		}
+	}
+	var last *model.Run
+	for i := 0; i < 52; i++ {
+		last = f.run(t, "infra", "plan", "ops", model.StateOK)
+		assert.NoError(t, f.opts.SecretReads.Record(ctx, []model.SecretRead{{SecretID: id, Name: "DB_PASS", RunID: last.ID, Folder: "infra", Job: "plan", UserName: "ops"}}))
+	}
+
+	body := f.page(t, asAdmin, "/settings/secrets")
+	assert.Contains(t, body, `<th>Reads</th><th>Last read</th>`)
+	assert.Contains(t, body, `<a href="/settings/secrets/`+id+`/reads" title="The runs that got DB_PASS">52</a>`)
+	assert.Contains(t, body, `<a href="/runs/`+last.ID+`">infra/plan</a>`)
+	assert.Contains(t, body, `<span class="faint">never</span>`)
+
+	log := f.page(t, asAdmin, "/settings/secrets/"+id+"/reads")
+	assert.Contains(t, log, "<h2>Reads of DB_PASS")
+	assert.Equal(t, 50, strings.Count(log, `<td class="key">infra/plan</td>`))
+	assert.Contains(t, log, `href="/runs/`+last.ID+`"`)
+	assert.Contains(t, log, `rel="next">Next</a>`)
+	assert.NotContains(t, log, "hunter2secret")
+	assert.Equal(t, http.StatusNotFound, f.get(t, asAdmin, "/settings/secrets/"+model.NewID()+"/reads").Status)
+	assert.Equal(t, http.StatusForbidden, f.get(t, asOps, "/settings/secrets/"+id+"/reads").Status)
+
+	run := f.page(t, asAdmin, "/runs/"+last.ID)
+	assert.Contains(t, run, `<tr><th>Secrets</th><td><code>DB_PASS</code> <span class="dim">in its environment, names only</span></td></tr>`)
+	assert.NotContains(t, run, "hunter2secret")
+	assert.NotContains(t, f.page(t, asOps, "/runs/"+last.ID), "<th>Secrets</th>")
+}

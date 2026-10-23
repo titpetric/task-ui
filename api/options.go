@@ -39,6 +39,8 @@ type Options struct {
 	ArtifactStore *artifactstore.Store
 	Schedules     *storage.ScheduleStorage
 	Secrets       *secret.Store
+	// SecretReads log which run got which secret. Nil lists no reads.
+	SecretReads *storage.SecretReadStorage
 	// FolderRefs find the rows that name a folder, which a move leaves.
 	FolderRefs *storage.FolderRefStorage
 

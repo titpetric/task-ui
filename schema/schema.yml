@@ -621,6 +621,62 @@
         - scope
         - name
       unique: true
+- name: secret_read
+  comment: Secret Read
+  columns:
+    - name: id
+      type: text
+      key: PRI
+      comment: ID
+      datatype: char(26)
+    - name: secret_id
+      type: text
+      key: MUL
+      comment: Secret ID
+      datatype: char(26)
+    - name: name
+      type: text
+      comment: Name
+      datatype: varchar
+    - name: run_id
+      type: text
+      key: MUL
+      comment: Run ID
+      datatype: char(26)
+    - name: folder
+      type: text
+      comment: Folder
+      datatype: varchar
+    - name: dir
+      type: text
+      comment: Dir
+      datatype: varchar
+    - name: job
+      type: text
+      comment: Job
+      datatype: varchar
+    - name: user_name
+      type: text
+      comment: User Name
+      datatype: varchar
+    - name: created_at
+      type: timestamp
+      key: MUL
+      comment: Created At
+      datatype: datetime
+  indexes:
+    - name: sqlite_autoindex_secret_read_1
+      columns:
+        - id
+      primary: true
+      unique: true
+    - name: idx_secret_read_run
+      columns:
+        - run_id
+    - name: idx_secret_read_secret
+      columns:
+        - secret_id
+        - created_at
 - name: ssh_key_policy
   comment: SSH Key Policy
   columns:
