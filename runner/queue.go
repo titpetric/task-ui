@@ -28,10 +28,11 @@ func (m *Manager) enqueue(ctx context.Context, req Request, run *model.Run) (*Se
 
 	m.mu.Lock()
 	m.sessions[run.ID] = session
+	session.slot = TakesSlot(req.Job)
 	if _, busy := m.byKey[key]; !busy {
 		m.byKey[key] = session
 		m.mu.Unlock()
-		m.launch(session)
+		m.admit(session)
 		return session, nil
 	}
 	if len(m.queued[key]) >= MaxQueued {
@@ -83,11 +84,13 @@ func (m *Manager) handOff(key string, session *Session) {
 	}
 	m.byKey[key] = next
 	m.mu.Unlock()
-	m.launch(next)
+	m.admit(next)
 }
 
-// dequeue takes a queued session out of its queue and ends it in the
-// status, and reports whether it waited: a run that started is none.
+// dequeue takes a queued session out of its queue, or out of the line
+// for a slot, which frees its job for the run that waits next, and ends
+// it in the status; it reports whether it waited: a run that started
+// is none.
 func (m *Manager) dequeue(session *Session, status Status) bool {
 	key := session.Key()
 	m.mu.Lock()
@@ -100,7 +103,12 @@ func (m *Manager) dequeue(session *Session, status Status) bool {
 	}
 	if at < 0 {
 		m.mu.Unlock()
-		return false
+		if !m.slots.Drop(session.ID()) {
+			return false
+		}
+		m.handOff(key, session)
+		m.end(session, status)
+		return true
 	}
 	queue = append(queue[:at:at], queue[at+1:]...)
 	if len(queue) == 0 {
@@ -109,10 +117,63 @@ func (m *Manager) dequeue(session *Session, status Status) bool {
 		m.queued[key] = queue
 	}
 	m.mu.Unlock()
+	m.end(session, status)
+	return true
+}
+
+// end settles a session that never ran in the status.
+func (m *Manager) end(session *Session, status Status) {
 	session.mu.Lock()
 	session.Run.Message = status.Message
 	session.mu.Unlock()
 	m.settle(context.Background(), session, status)
 	go m.forget(session)
-	return true
+}
+
+// admit starts a session that holds its job's lock: at once when it
+// does no work that takes a slot or one is free, else it waits, queued,
+// for a slot. A session that waited for its job starts running here.
+func (m *Manager) admit(session *Session) {
+	m.mu.Lock()
+	going := !session.slot || m.slots.Take(session.ID())
+	m.mu.Unlock()
+	if !going {
+		session.mu.Lock()
+		marked := session.status.State == model.StateQueued
+		session.Run.State, session.status = model.StateQueued, Status{State: model.StateQueued}
+		run := *session.Run
+		session.mu.Unlock()
+		if !marked {
+			if err := m.opts.Runs.Update(context.Background(), &run); err != nil {
+				slog.Warn("run not marked queued", "run", run.ID, "err", err)
+			}
+		}
+		m.publish(run)
+		return
+	}
+	if session.Status().State == model.StateQueued {
+		m.launch(session)
+		return
+	}
+	m.publish(session.Snapshot())
+	go m.serve(session)
+}
+
+// freeSlot releases the slot of a session that ended, and starts the
+// sessions that waited first for one.
+func (m *Manager) freeSlot(session *Session) {
+	if !session.slot {
+		return
+	}
+	m.mu.Lock()
+	var next []*Session
+	for _, id := range m.slots.Free(session.ID()) {
+		if waiting, ok := m.sessions[id]; ok && !m.closing {
+			next = append(next, waiting)
+		}
+	}
+	m.mu.Unlock()
+	for _, waiting := range next {
+		m.launch(waiting)
+	}
 }

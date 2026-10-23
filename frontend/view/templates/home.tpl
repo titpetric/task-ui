@@ -20,7 +20,7 @@
 </div>
 
 <section class="block">
-	<h3>Running now <small>each job runs once at a time, across the instance</small></h3>
+	<h3>Running now <small>one run per job, up to a run per CPU; terminals take no turn</small></h3>
 	<div class="tiles" data-tiles>
 	{{- range .Runs }}
 		<a class="tile" href="/runs/{{ .ID }}" data-attach="{{ .ID }}" data-tile="{{ .ID }}">
@@ -29,7 +29,7 @@
 				<b>{{ .Name }}</b>
 				<span class="term-title" data-term-title{{ with .Title }} title="{{ . }}"{{ end }}>{{ .Title }}</span>
 				<span class="spacer"></span>
-				<span class="faint">{{ if .Attached }}{{ .Attached }} watching{{ end }}</span>
+				<span class="faint">{{ if and (eq .State "queued") .Message }}{{ .Message }}{{ else if .Attached }}{{ .Attached }} watching{{ end }}</span>
 				{{ template "avatar" (list $ .UserName) }}
 			</div>
 			<div class="frame"{{ if eq .State "running" }} data-frame="{{ .ID }}"{{ end }} role="img" aria-label="Terminal of {{ .Name }}">{{ .FrameSVG }}</div>

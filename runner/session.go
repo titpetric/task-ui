@@ -74,9 +74,11 @@ type Session struct {
 	subs     map[*Subscriber]struct{}
 	sinks    []io.Writer
 	status   Status
-	stopped  bool
-	killed   bool
-	done     chan struct{}
+	// slot says the run takes one of the instance's slots while it runs.
+	slot    bool
+	stopped bool
+	killed  bool
+	done    chan struct{}
 }
 
 // NewSession returns the session of a run whose process has not

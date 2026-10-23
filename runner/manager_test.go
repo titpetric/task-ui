@@ -16,6 +16,7 @@ func TestNew(t *testing.T) {
 	assert.Len(t, m.List(), 0)
 	_, ok := m.Get("missing")
 	assert.False(t, ok)
+	assert.Equal(t, 0, m.Position("missing"))
 	_, ok = m.Active("missing")
 	assert.False(t, ok)
 	assert.ErrorIs(t, m.Stop("missing"), runner.ErrNotFound)
