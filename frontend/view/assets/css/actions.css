@@ -176,13 +176,6 @@ a.chip-act:not(.running) {
     }
   }
 
-  & .chev {
-    transition: transform 0.15s;
-  }
-
-  &[open] .chev {
-    transform: rotate(90deg);
-  }
 }
 
 /* ------------------------------------------------------------- args line */

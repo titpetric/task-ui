@@ -9,7 +9,10 @@
   margin: 0 0 var(--stack-gap);
 }
 
+/* The line holds its key, floated to its end, so the charts under it
+   take the full width however the key wraps. */
 .activity-sum {
+  display: flow-root;
   margin: 0 0 0.6rem;
   color: var(--text-dim);
   font-size: var(--fs-sm);
@@ -47,6 +50,10 @@
   color: var(--text-dim);
   font-family: var(--font-ui);
   font-size: var(--fs-xs);
+
+  & > span:first-child {
+    white-space: nowrap;
+  }
 
   & .faint {
     font-family: var(--font);

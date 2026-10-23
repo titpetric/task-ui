@@ -65,25 +65,12 @@
   }
 
   & .chev {
-    flex: none;
-    width: 0.85rem;
-    height: 0.85rem;
     margin-inline-end: 0.6rem;
-    color: var(--text-faint);
-    transition: transform 0.15s ease-out;
-  }
-
-  &:hover .chev {
-    color: var(--text);
   }
 }
 
 .folders details.project:first-child > summary {
   margin-top: 0;
-}
-
-.folders details.project[open] > summary .chev {
-  transform: rotate(90deg);
 }
 
 /* A workspace is a disclosure above its projects: a label row with the
@@ -125,16 +112,7 @@
     }
 
     & .chev {
-      flex: none;
-      width: var(--ws-chev);
-      height: var(--ws-chev);
       margin-inline-start: calc(var(--tree-0) + var(--ws-centre));
-      color: var(--text-faint);
-      transition: transform 0.15s ease-out;
-    }
-
-    &:hover .chev {
-      color: var(--text);
     }
 
     & a.section {
@@ -154,10 +132,6 @@
     margin-top: 0;
     padding-top: 0;
     border-top: 0;
-  }
-
-  &[open] > summary .chev {
-    transform: rotate(90deg);
   }
 
   /* Its projects follow the label closely; the next workspace or project
@@ -271,16 +245,10 @@
     }
   }
 
-  & .ic {
+  & .ic:not(.chev) {
     width: var(--tree-icon);
     height: 10px;
     color: var(--text-faint);
-  }
-
-  & .chev {
-    width: 0.85rem;
-    height: 0.85rem;
-    transition: transform 0.15s ease-out;
   }
 
   & small {
@@ -300,10 +268,6 @@
     color: var(--text);
     background: var(--ink-2);
   }
-}
-
-.folders details.folder[open] summary .chev {
-  transform: rotate(90deg);
 }
 
 .folders details.folder.active summary {

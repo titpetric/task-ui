@@ -4,7 +4,7 @@ import (
 	"html/template"
 )
 
-// ToolingSegment is one command's share of a day's bar.
+// ToolingSegment is one command's bar in a day's group.
 type ToolingSegment struct {
 	// Name is the command key, or the tool, or "other" for the rest.
 	Name string
@@ -13,9 +13,10 @@ type ToolingSegment struct {
 	Color string
 
 	// Title is what a hover over it says: the day, the name, the time
-	// and the runs.
+	// and the runs. Empty for a command that did not run that day.
 	Title string
 
-	// Style is its height, in percent of the day.
+	// Style is its height, in percent of the window's tallest bar, and
+	// empty for a command that did not run that day.
 	Style template.CSS
 }
