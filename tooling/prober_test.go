@@ -50,11 +50,18 @@ func calls(t *testing.T, path string) []string {
 }
 
 const listing = `cat <<'JSON'
-{"database":"/w/.atkins/atkins.db","days":31,"from":"2026-09-22","to":"2026-10-23",
- "runs":44,"total_ms":184900,
- "commands":[{"command":"go test","tool":"go","runs":42,"total_ms":184000,"average_ms":4380,"max_ms":9100,"failures":3}],
- "tools":[{"tool":"go","commands":1,"runs":42,"total_ms":184000,"failures":3}],
- "usage":[{"date":"2026-10-23","tool":"go","runs":42,"total_ms":184000}]}
+{"project":{"name":"project","repository":"titpetric/atkins",
+  "database":"/w/atkins/.atkins/atkins.db","days":31,"from":"2026-09-22","to":"2026-10-23",
+  "runs":44,"total_ms":184900,
+  "commands":[{"command":"go test","tool":"go","runs":42,"total_ms":184000,"average_ms":4380,"max_ms":9100,"failures":3}],
+  "tools":[{"tool":"go","commands":1,"runs":42,"total_ms":184000,"failures":3}],
+  "usage":[{"date":"2026-10-23","tool":"go","runs":42,"total_ms":184000}]},
+ "workspace":{"name":"workspace",
+  "database":"/home/you/.atkins/atkins.db","days":31,"from":"2026-09-22","to":"2026-10-23",
+  "runs":90,"total_ms":252000,
+  "commands":[{"command":"npm run build","tool":"npm","runs":4,"total_ms":60000}],
+  "tools":[{"tool":"npm","commands":1,"runs":4,"total_ms":60000}],
+  "usage":[{"date":"2026-10-23","tool":"npm","runs":4,"total_ms":60000}]}}
 JSON`
 
 func TestProber_Probe(t *testing.T) {
@@ -63,13 +70,23 @@ func TestProber_Probe(t *testing.T) {
 
 	report := prober.Probe(dir)
 	assert.NotNil(t, report)
-	assert.Equal(t, "/w/.atkins/atkins.db", report.Database)
-	assert.Equal(t, 31, report.Days)
-	assert.Equal(t, int64(44), report.Runs)
-	assert.Len(t, report.Commands, 1)
-	assert.Equal(t, "go test", report.Commands[0].Command)
-	assert.Len(t, report.Tools, 1)
-	assert.Len(t, report.Usage, 1)
+
+	// A scope per database atkins records to, the project first.
+	assert.Len(t, report.Scopes(), 2)
+	assert.Equal(t, "project", report.Project.Name)
+	assert.Equal(t, "titpetric/atkins", report.Project.Repository)
+	assert.Equal(t, "/w/atkins/.atkins/atkins.db", report.Project.Database)
+	assert.Equal(t, 31, report.Project.Days)
+	assert.Equal(t, int64(44), report.Project.Runs)
+	assert.Len(t, report.Project.Commands, 1)
+	assert.Equal(t, "go test", report.Project.Commands[0].Command)
+	assert.Len(t, report.Project.Tools, 1)
+	assert.Len(t, report.Project.Usage, 1)
+
+	// The workspace holds every project together and names none.
+	assert.Equal(t, "/home/you/.atkins/atkins.db", report.Workspace.Database)
+	assert.Equal(t, "", report.Workspace.Repository)
+	assert.Equal(t, int64(90), report.Workspace.Runs)
 
 	// atkins is asked in the directory it is asked about, because that
 	// is how it finds the database.

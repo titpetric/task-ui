@@ -8,10 +8,16 @@ import (
 	"github.com/titpetric/task-ui/tooling"
 )
 
-// report is three days of two tools, the last of them the day the
-// report ends on.
+// report is a project of three days of two tools, the last of them the
+// day the report ends on.
 func report() *tooling.Report {
-	return &tooling.Report{
+	return &tooling.Report{Project: scope()}
+}
+
+// scope is one database of three days of two tools.
+func scope() *tooling.Scope {
+	return &tooling.Scope{
+		Name:     "project",
 		Database: "/w/.atkins/atkins.db",
 		Days:     31,
 		From:     "2026-09-22",
@@ -39,36 +45,66 @@ func TestReport_Empty(t *testing.T) {
 	assert.True(t, none.Empty())
 	assert.True(t, (&tooling.Report{}).Empty())
 
-	// A report with a database and a window but nothing recorded is
-	// still nothing to draw.
-	assert.True(t, (&tooling.Report{Database: "/w/x.db", Days: 31}).Empty())
+	// A scope with a database and a window but nothing recorded is
+	// still nothing to draw, and a report of only those is empty.
+	assert.True(t, (&tooling.Report{Workspace: &tooling.Scope{Database: "/w/x.db", Days: 31}}).Empty())
 	assert.False(t, report().Empty())
+}
+
+// TestScope_Empty covers one database with nothing recorded in it.
+func TestScope_Empty(t *testing.T) {
+	var none *tooling.Scope
+	assert.True(t, none.Empty())
+	assert.True(t, (&tooling.Scope{Database: "/w/x.db", Days: 31}).Empty())
+	assert.False(t, scope().Empty())
+}
+
+// TestReport_Scopes covers the order the report hands its scopes over:
+// the project first, because standing in one is the context the reader
+// is in.
+func TestReport_Scopes(t *testing.T) {
+	assert.Len(t, (&tooling.Report{}).Scopes(), 0)
+
+	project, workspace := scope(), scope()
+	workspace.Name = "workspace"
+
+	only := (&tooling.Report{Workspace: workspace}).Scopes()
+	assert.Len(t, only, 1)
+	assert.Equal(t, "workspace", only[0].Name)
+
+	both := (&tooling.Report{Project: project, Workspace: workspace}).Scopes()
+	assert.Len(t, both, 2)
+	assert.Equal(t, "project", both[0].Name)
+	assert.Equal(t, "workspace", both[1].Name)
+
+	// A scope with nothing in it is no scope to draw.
+	assert.Len(t, (&tooling.Report{Project: &tooling.Scope{Name: "project"}, Workspace: workspace}).Scopes(), 1)
 }
 
 func TestReport_Since(t *testing.T) {
 	// The window counts back from the day the report ends on, and
 	// includes it: seven days ending on the 23rd starts on the 17th.
-	assert.Len(t, report().Since(1), 2)
-	assert.Len(t, report().Since(3), 3)
-	assert.Len(t, report().Since(5), 3)
-	assert.Len(t, report().Since(7), 4)
-	assert.Len(t, report().Since(30), 4)
+	assert.Len(t, scope().Since(1), 2)
+	assert.Len(t, scope().Since(3), 3)
+	assert.Len(t, scope().Since(5), 3)
+	assert.Len(t, scope().Since(7), 4)
+	assert.Len(t, scope().Since(30), 4)
 
-	assert.Nil(t, report().Since(0))
-	assert.Nil(t, report().Since(-1))
+	assert.Nil(t, scope().Since(0))
+	assert.Nil(t, scope().Since(-1))
 
-	var none *tooling.Report
+	var none *tooling.Scope
 	assert.Nil(t, none.Since(7))
 
 	// A report whose last day is not a date has no window to count
 	// back from.
-	assert.Nil(t, (&tooling.Report{To: "never", Usage: report().Usage}).Since(7))
+	assert.Nil(t, (&tooling.Scope{To: "never", Usage: scope().Usage}).Since(7))
 }
 
 func TestReport_ToolsSince(t *testing.T) {
 	// A week rolls up from the usage rows rather than from the
 	// report's own tools, which cover its whole window.
-	week := report().ToolsSince(7)
+	week := scope().ToolsSince(7)
 	assert.Len(t, week, 2)
 	assert.Equal(t, "go", week[0].Tool)
 	assert.Equal(t, int64(184_000), week[0].TotalMs)
@@ -77,23 +113,23 @@ func TestReport_ToolsSince(t *testing.T) {
 	assert.Equal(t, int64(900), week[1].TotalMs)
 
 	// A shorter window leaves out the days before it.
-	shorter := report().ToolsSince(5)
+	shorter := scope().ToolsSince(5)
 	assert.Equal(t, int64(124_000), shorter[0].TotalMs)
 	assert.Equal(t, int64(32), shorter[0].Runs)
 
 	// A day holds one tool of the two.
-	day := report().ToolsSince(1)
+	day := scope().ToolsSince(1)
 	assert.Len(t, day, 2)
 	assert.Equal(t, "go", day[0].Tool)
 	assert.Equal(t, int64(34_000), day[0].TotalMs)
 
-	assert.Len(t, report().ToolsSince(0), 0)
+	assert.Len(t, scope().ToolsSince(0), 0)
 }
 
 // Two tools that cost the same are ordered by name, so the list does
 // not shuffle between reloads.
 func TestReport_ToolsSinceTies(t *testing.T) {
-	tied := &tooling.Report{
+	tied := &tooling.Scope{
 		Days: 31, To: "2026-10-23",
 		Usage: []tooling.Usage{
 			{Date: "2026-10-23", Tool: "npm", Runs: 1, TotalMs: 100},
@@ -110,7 +146,7 @@ func TestReport_ToolsSinceTies(t *testing.T) {
 }
 
 func TestReport_Daily(t *testing.T) {
-	days := report().Daily(7)
+	days := scope().Daily(7)
 	assert.Len(t, days, 7)
 
 	// Oldest first, ending on the report's last day.
@@ -126,17 +162,17 @@ func TestReport_Daily(t *testing.T) {
 	assert.Equal(t, int64(34_900), days[6].TotalMs)
 	assert.Equal(t, int64(14), days[6].Runs)
 
-	assert.Nil(t, report().Daily(0))
+	assert.Nil(t, scope().Daily(0))
 
-	var none *tooling.Report
+	var none *tooling.Scope
 	assert.Nil(t, none.Daily(7))
-	assert.Nil(t, (&tooling.Report{To: "never"}).Daily(7))
+	assert.Nil(t, (&tooling.Scope{To: "never"}).Daily(7))
 }
 
 // A report of thirty days draws thirty bars, so the chart is the width
 // of its window whatever is in it.
 func TestReport_DailyFillsTheWindow(t *testing.T) {
-	days := report().Daily(30)
+	days := scope().Daily(30)
 	assert.Len(t, days, 30)
 	assert.Equal(t, "2026-09-24", days[0].Date)
 	assert.Equal(t, "2026-10-23", days[29].Date)
@@ -152,8 +188,8 @@ func TestReport_DailyFillsTheWindow(t *testing.T) {
 
 // The report's window is the one atkins keeps, which the panel reads
 // to decide which charts it can draw.
-func TestReport(t *testing.T) {
-	r := report()
+func TestScope(t *testing.T) {
+	r := scope()
 	assert.Equal(t, 31, r.Days)
 	assert.Equal(t, "/w/.atkins/atkins.db", r.Database)
 
@@ -164,7 +200,7 @@ func TestReport(t *testing.T) {
 
 // TestCommand covers one normalized command as the report carries it.
 func TestCommand(t *testing.T) {
-	command := report().Commands[0]
+	command := scope().Commands[0]
 	assert.Equal(t, "go test -cover", command.Command)
 	assert.Equal(t, "go", command.Tool)
 	assert.Equal(t, int64(42), command.Runs)
@@ -173,7 +209,7 @@ func TestCommand(t *testing.T) {
 
 // TestTool covers one tool rolled up across every form of it.
 func TestTool(t *testing.T) {
-	tool := report().Tools[0]
+	tool := scope().Tools[0]
 	assert.Equal(t, "go", tool.Tool)
 	assert.Equal(t, int64(1), tool.Commands)
 	assert.Equal(t, int64(42), tool.Runs)
@@ -181,7 +217,7 @@ func TestTool(t *testing.T) {
 
 // TestUsage covers one tool on one day, the row a chart is drawn from.
 func TestUsage(t *testing.T) {
-	usage := report().Usage[0]
+	usage := scope().Usage[0]
 	assert.Equal(t, "2026-10-17", usage.Date)
 	assert.Equal(t, "go", usage.Tool)
 	assert.Equal(t, int64(10), usage.Runs)
@@ -190,7 +226,7 @@ func TestUsage(t *testing.T) {
 
 // TestDay covers one day of a window, as Daily fills it.
 func TestDay(t *testing.T) {
-	day := report().Daily(1)[0]
+	day := scope().Daily(1)[0]
 	assert.Equal(t, "2026-10-23", day.Date)
 	assert.Equal(t, int64(14), day.Runs)
 	assert.Equal(t, int64(34_900), day.TotalMs)
