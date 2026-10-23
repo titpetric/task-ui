@@ -8,6 +8,22 @@ play button.
 
 ![Workflows](../assets/workflows-dark.png)
 
+## Building one with Claude
+
+With `prompt/edit` and the Claude Code integration set up for you, the
+Workflows page has a **Prompt** box: describe a workflow to build or
+change, and Claude Code builds it, as a run of `@claude-prompt` as you
+in the root, or the folder **Run in** picks. Claude works with the task
+tools of [MCP](mcp.md#claude-code-inside-task-ui), as you: it reads the
+workflows and jobs there are, saves the workflow with prompt steps and
+existing jobs before it writes any file, runs it and waits, reads how it
+went, and fixes and runs it again until it works, at most 3 runs. It
+answers with the workflow's link, its steps, and the output of the
+final step verbatim. Its threads list under the box, apart from the
+root's prompts, and a reply in one asks again.
+
+Over MCP, `ask_prompt` with `area` `workflows` posts the same prompt.
+
 ## Running one
 
 **Run** starts the first step. Each next step starts when the one before

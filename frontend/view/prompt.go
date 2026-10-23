@@ -17,6 +17,10 @@ type Prompt struct {
 	// WorkflowRun is the workflow run whose prompt's thread the box of a
 	// workflow run's page lists, without a box to ask.
 	WorkflowRun string
+	// Area is the area's page the box asks from in place of a folder's,
+	// model.AreaWorkflows on the Workflows page, with a pick of the
+	// folder Claude runs in; its threads are the area's.
+	Area string
 	// Watch lists the threads without the box to ask, for a user who
 	// reads them only.
 	Watch bool
@@ -39,6 +43,12 @@ func PromptIn(folderID, dir string) *Prompt {
 		place += "/" + dir
 	}
 	return &Prompt{API: "/api/prompts", Folder: folderID, Dir: dir, Where: place + "/", Place: place}
+}
+
+// PromptOfArea returns the prompt box of an area's page, such as the
+// Workflows page: asked in the root unless the form picks a folder.
+func PromptOfArea(area string) *Prompt {
+	return &Prompt{API: "/api/prompts", Area: area, Folder: "_", Where: "the root", Place: "_", Open: true}
 }
 
 // PromptOfWorkflowRun returns the box of a workflow run's page: the

@@ -29,12 +29,23 @@ var ErrNoPrompt = errors.New("no prompt runs here")
 // and replies with Claude's answer when the run ends. Asking takes
 // prompt/edit.
 func (b *Board) Ask(ctx context.Context, user *model.User, parentID, dir, body string) (*model.Note, error) {
-	return b.ask(ctx, user, parentID, dir, "", body)
+	return b.ask(ctx, user, parentID, dir, "", "", body)
+}
+
+// AskArea puts a prompt of an area's page to Claude in dir, as Ask
+// does: a thread marked with the area, such as model.AreaWorkflows,
+// whose runs get the area's instruction. Asking takes prompt/edit.
+func (b *Board) AskArea(ctx context.Context, user *model.User, area, dir, body string) (*model.Note, error) {
+	if area != model.AreaWorkflows {
+		return nil, fmt.Errorf("%w: no area %q", ErrInvalid, area)
+	}
+	return b.ask(ctx, user, "", dir, "", area, body)
 }
 
 // ask puts a prompt as Ask does, a new thread about the run aboutRun
-// names when it names one; a reply keeps its thread's run.
-func (b *Board) ask(ctx context.Context, user *model.User, parentID, dir, aboutRun, body string) (*model.Note, error) {
+// names when it names one, of the area when it names one; a reply keeps
+// its thread's run and area.
+func (b *Board) ask(ctx context.Context, user *model.User, parentID, dir, aboutRun, area, body string) (*model.Note, error) {
 	if user == nil || strings.TrimSpace(body) == "" {
 		return nil, fmt.Errorf("%w: a prompt needs an author and some text", ErrInvalid)
 	}
@@ -50,13 +61,13 @@ func (b *Board) ask(ctx context.Context, user *model.User, parentID, dir, aboutR
 		if parent.ParentID != "" || !parent.IsPrompt() {
 			return nil, fmt.Errorf("%w: a reply to a prompt goes to the prompt", ErrInvalid)
 		}
-		dir, aboutRun = parent.Dir, parent.AboutRunID
+		dir, aboutRun, area = parent.Dir, parent.AboutRunID, parent.Area
 	}
 	req, err := b.promptRequest(ctx, user, dir)
 	if err != nil {
 		return nil, err
 	}
-	note := &model.Note{Channel: model.ChannelNotes, ParentID: parentID, UserID: user.ID, UserName: user.Name, Body: body, Dir: dir, AboutRunID: aboutRun}
+	note := &model.Note{Channel: model.ChannelNotes, ParentID: parentID, UserID: user.ID, UserName: user.Name, Body: body, Dir: dir, AboutRunID: aboutRun, Area: area}
 	thread := note
 	if parent != nil {
 		note.WorkspaceID, note.AboutWorkflowRunID = parent.WorkspaceID, parent.AboutWorkflowRunID

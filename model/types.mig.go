@@ -655,6 +655,9 @@ type Note struct {
 	// About Workflow Run ID
 	AboutWorkflowRunID string `db:"about_workflow_run_id" json:"about_workflow_run_id"`
 
+	// Area
+	Area string `db:"area" json:"area"`
+
 	// Edited At
 	EditedAt *time.Time `db:"edited_at" json:"edited_at"`
 
@@ -743,6 +746,12 @@ func (n *Note) GetAboutWorkflowRunID() string { return n.AboutWorkflowRunID }
 // SetAboutWorkflowRunID sets AboutWorkflowRunID to the provided value.
 func (n *Note) SetAboutWorkflowRunID(val string) { n.AboutWorkflowRunID = val }
 
+// GetArea will return the value of Area.
+func (n *Note) GetArea() string { return n.Area }
+
+// SetArea sets Area to the provided value.
+func (n *Note) SetArea(val string) { n.Area = val }
+
 // GetEditedAt will return the value of EditedAt.
 func (n *Note) GetEditedAt() *time.Time { return n.EditedAt }
 
@@ -765,7 +774,7 @@ func (n *Note) SetDir(val string) { n.Dir = val }
 const NoteTable = "`note`"
 
 // NoteFields is a list of all columns in the DB table.
-var NoteFields = []string{"id", "channel", "parent_id", "user_id", "user_name", "body", "mentions", "state", "run_id", "created_at", "updated_at", "about_run_id", "about_workflow_run_id", "edited_at", "workspace_id", "dir"}
+var NoteFields = []string{"id", "channel", "parent_id", "user_id", "user_name", "body", "mentions", "state", "run_id", "created_at", "updated_at", "about_run_id", "about_workflow_run_id", "area", "edited_at", "workspace_id", "dir"}
 
 // NotePrimaryFields are the primary key fields in the DB table.
 var NotePrimaryFields = []string{"id"}

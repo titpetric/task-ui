@@ -34,13 +34,15 @@ func noteTools() []Tool {
 		{
 			Name: "ask_prompt",
 			Description: "Ask Claude a prompt in a folder, or a directory inside it, as you, as the Prompt box of its page does. " +
-				"Claude Code runs there and answers in a reply; wait returns the answer.",
+				"Claude Code runs there and answers in a reply; wait returns the answer. " +
+				"With area workflows, it is the prompt of the Workflows page: Claude builds or changes the workflow the prompt describes, runs it and answers with its link, steps and last output.",
 			InputSchema: object(map[string]Property{
-				"folder": str("The folder, such as malta, or _ for the root."),
+				"folder": str("The folder, such as malta, or _ for the root, which area workflows takes unless given."),
 				"dir":    str("A directory inside the folder, such as dockerfiles."),
 				"prompt": str("What to ask."),
+				"area":   {Type: "string", Description: "workflows asks as the Workflows page's prompt does.", Enum: []string{model.AreaWorkflows}},
 				"wait":   {Type: "integer", Description: "Seconds to wait for the answer, up to 900; 0 returns once it is asked."},
-			}, "folder", "prompt"),
+			}, "prompt"),
 			call: askPrompt,
 		},
 	}
@@ -74,6 +76,7 @@ func postNote(ctx context.Context, c *client, args json.RawMessage) (string, err
 }
 
 type askArgs struct {
+	Area   string `json:"area"`
 	Folder string `json:"folder"`
 	Dir    string `json:"dir"`
 	Prompt string `json:"prompt"`
@@ -85,10 +88,13 @@ func askPrompt(ctx context.Context, c *client, args json.RawMessage) (string, er
 	if err := decode(args, &in); err != nil {
 		return "", err
 	}
+	if in.Area != "" && in.Folder == "" {
+		in.Folder = model.Default
+	}
 	if in.Folder == "" || strings.TrimSpace(in.Prompt) == "" {
 		return "", errors.New("a folder and a prompt are needed")
 	}
-	data, err := c.call(ctx, http.MethodPost, "/prompts", api.PromptRequest{Folder: in.Folder, Dir: in.Dir, Prompt: in.Prompt})
+	data, err := c.call(ctx, http.MethodPost, "/prompts", api.PromptRequest{Area: in.Area, Folder: in.Folder, Dir: in.Dir, Prompt: in.Prompt})
 	if err != nil {
 		return "", err
 	}
@@ -99,6 +105,9 @@ func askPrompt(ctx context.Context, c *client, args json.RawMessage) (string, er
 	q := url.Values{}
 	q.Set("folder", in.Folder)
 	q.Set("dir", in.Dir)
+	if in.Area != "" {
+		q = url.Values{"area": {in.Area}}
+	}
 	path := "/prompts?" + q.Encode()
 	deadline := time.Now().Add(min(time.Duration(in.Wait)*time.Second, maxWait))
 	thread := api.NoteView{Note: asked}

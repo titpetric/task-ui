@@ -145,3 +145,20 @@ func TestNoteStorage_Edit(t *testing.T) {
 	assert.Nil(t, got.EditedAt, "an answer run again is no edit")
 	assert.ErrorIs(t, notes.Answer(ctx, "missing", "x", "", ""), storage.ErrNotFound)
 }
+
+// A filter by area lists an area's prompts; a filter by place leaves
+// them out.
+func TestNoteStorage_Area(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	notes := storage.NewNoteStorage(newDB(t))
+	assert.NoError(t, notes.Create(ctx, &model.Note{UserName: "ops", Body: "build one", WorkspaceID: "_", Dir: "_", Area: model.AreaWorkflows}))
+	assert.NoError(t, notes.Create(ctx, &model.Note{UserName: "ops", Body: "a root prompt", WorkspaceID: "_", Dir: "_"}))
+	area, err := notes.List(ctx, storage.NoteFilter{Prompts: true, Area: model.AreaWorkflows})
+	assert.NoError(t, err)
+	assert.Len(t, area, 1)
+	assert.Equal(t, "build one", area[0].Body)
+	root, _ := notes.List(ctx, storage.NoteFilter{Prompts: true, Dir: "_"})
+	assert.Len(t, root, 1)
+	assert.Equal(t, "a root prompt", root[0].Body)
+}

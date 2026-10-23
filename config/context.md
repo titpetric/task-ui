@@ -94,7 +94,9 @@ workflow, run one after another until one fails. A switch on each step
 skips it. A workflow can end with a prompt to Claude, which reads the
 steps' output and the run's input, or be a prompt alone. Running one
 takes the right to run every step. A step may also be a prompt to
-Claude, whose answer the prompts after it read. Page: `/workflows`; API:
+Claude, whose answer the prompts after it read. The page's Prompt box,
+and `ask_prompt` with `area` `workflows`, have Claude build or change a
+workflow with these tools, run it and fix it. Page: `/workflows`; API:
 `/api/workflows`; MCP: `list_workflows`, `get_workflow`,
 `create_workflow`, `update_workflow`, `run_workflow`,
 `list_workflow_runs`.

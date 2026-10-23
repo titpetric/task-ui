@@ -20,3 +20,14 @@ func TestPromptAbout(t *testing.T) {
 	t.Parallel()
 	assert.Equal(t, &view.Prompt{API: "/api/prompts", Run: "01RUN", Where: "malta/dockerfiles/", Place: "malta/dockerfiles", Open: true}, view.PromptAbout("01RUN", "malta/dockerfiles"))
 }
+
+// The Workflows page's box asks in the area, in the root unless its
+// form picks a folder, open.
+func TestPromptOfArea(t *testing.T) {
+	t.Parallel()
+	p := view.PromptOfArea("workflows")
+	assert.Equal(t, "workflows", p.Area)
+	assert.Equal(t, "/api/prompts", p.API)
+	assert.Equal(t, "_", p.Place)
+	assert.True(t, p.Open)
+}

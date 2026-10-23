@@ -11,6 +11,10 @@ type PromptRequest struct {
 	Run    string `json:"run"`
 	Prompt string `json:"prompt"`
 	Parent string `json:"parent"`
-	Cols   int    `json:"cols"`
-	Rows   int    `json:"rows"`
+	// Area asks from an area's page in place of a folder's: workflows,
+	// the Workflows page's box, which builds and changes workflows with
+	// the task tools, in Folder and Dir, the root unless given.
+	Area string `json:"area"`
+	Cols int    `json:"cols"`
+	Rows int    `json:"rows"`
 }

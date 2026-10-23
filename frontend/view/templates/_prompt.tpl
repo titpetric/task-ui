@@ -1,5 +1,5 @@
 {{/* promptbox is the prompt box of a folder page, of a directory browsed
-     inside a folder and of a run's page, for a user with prompt/edit and
+     inside a folder, of the Workflows page and of a run's page, for a user with prompt/edit and
      a Claude token: Claude Code on a prompt in that directory, a run of
      @claude-prompt there, and the threads asked there under it, each
      question with Claude's answer once its run ends. A run's box asks
@@ -12,7 +12,9 @@
 {{- define "promptbox" }}
 {{- with .Prompt }}
 <details class="promptbox"{{ if or .Open .Threads }} open{{ end }}{{ if and .Watch (not .Threads) }} hidden{{ end }}>
-	{{- if .WorkflowRun }}
+	{{- if .Area }}
+	<summary><h3 class="section-title"><svg class="ic chev"><use href="#i-chev"/></svg>Prompt <small>Claude Code builds or changes a workflow with the task tools, runs it and answers with its link</small></h3></summary>
+	{{- else if .WorkflowRun }}
 	<summary><h3 class="section-title"><svg class="ic chev"><use href="#i-chev"/></svg>Prompt <small>the workflow's prompt, run in {{ .Where }} after the steps, with their output</small></h3></summary>
 	{{- else if .Run }}
 	<summary><h3 class="section-title"><svg class="ic chev"><use href="#i-chev"/></svg>Prompt <small>ask Claude Code about this run and its output, in {{ .Where }}</small></h3></summary>
@@ -25,6 +27,10 @@
 		<input type="hidden" name="run" value="{{ .Run }}">
 		<textarea name="prompt" rows="3" required spellcheck="false" placeholder="why did this run end the way it did" aria-label="The prompt"></textarea>
 		<div class="note-form-foot"><span class="faint">Runs @claude-prompt as you in {{ .Where }}, with this run's output. If Claude makes a fix, it commits to main. Claude replies under your question.</span><button class="btn btn-primary" type="submit"><svg class="ic"><use href="#i-play"/></svg>Run prompt</button></div>
+		{{- else if .Area }}
+		<input type="hidden" name="area" value="{{ .Area }}">
+		<textarea name="prompt" rows="3" required spellcheck="false" placeholder="Describe a workflow to build or change" aria-label="The prompt"></textarea>
+		<div class="note-form-foot"><span class="faint run-in">Runs @claude-prompt as you in <select name="folder" aria-label="Run in"><option value="_">the root</option>{{ range $.Folders }}<option value="{{ .ID }}">{{ .ID }}</option>{{ end }}</select> with the task tools: it saves the workflow and runs it up to 3 times.</span><button class="btn btn-primary" type="submit"><svg class="ic"><use href="#i-play"/></svg>Run prompt</button></div>
 		{{- else }}
 		{{- if .Folder }}
 		<input type="hidden" name="folder" value="{{ .Folder }}">
@@ -35,7 +41,7 @@
 		{{- end }}
 	</form>
 	{{- end }}
-	<div class="notes prompt-threads" data-notes data-dir="{{ .Place }}">
+	<div class="notes prompt-threads" data-notes data-dir="{{ .Place }}"{{ with .Area }} data-area="{{ . }}"{{ end }}>
 		{{- range .Threads }}
 		{{- template "thread" (list $ .) }}
 		{{- end }}

@@ -117,3 +117,20 @@ func TestTools_RunToken(t *testing.T) {
 	status, _ = f.post(t, token, "/api/mcp", map[string]any{"jsonrpc": "2.0", "id": 1, "method": "ping"})
 	assert.Equal(t, http.StatusUnauthorized, status)
 }
+
+// ask_prompt with area workflows asks as the Workflows page's prompt:
+// in the root, with the builder's instruction and the run's MCP
+// configuration, and waits for Claude's reply.
+func TestTools_AskWorkflows(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	f.board.MCPURL = func() string { return f.server.URL + "/api/mcp" }
+	f.board.AgentCommand = []string{"sh", "-c", `{ printf '%s\n' "$TASK_UI_PROMPT_INSTRUCTIONS"; test -f "$TASK_UI_MCP_CONFIG" && echo mcp; } > "$TASK_UI_PROMPT_REPLY"`}
+	text, failed := f.tool(t, "admin", "ask_prompt", map[string]any{"area": "workflows", "prompt": "build a weather workflow", "wait": 30})
+	assert.False(t, failed, text)
+	assert.Contains(t, text, " in _ by admin, done")
+	assert.Contains(t, text, "create_workflow or update_workflow")
+	assert.Contains(t, text, "\nmcp\n")
+	threads, _ := f.notes.List(context.Background(), storage.NoteFilter{Prompts: true, Area: "workflows"})
+	assert.Len(t, threads, 1)
+}

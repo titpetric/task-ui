@@ -385,6 +385,10 @@
       key: MUL
       comment: About Workflow Run ID
       datatype: char(26)
+    - name: area
+      type: text
+      comment: Area
+      datatype: varchar
     - name: edited_at
       type: timestamp
       comment: Edited At

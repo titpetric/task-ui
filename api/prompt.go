@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/titpetric/task-ui/access"
+	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/storage"
 )
@@ -28,6 +29,10 @@ func (h *Handlers) startPrompt(w http.ResponseWriter, r *http.Request) {
 	}
 	if req.Run != "" && req.Parent == "" {
 		h.askRun(w, r, req)
+		return
+	}
+	if req.Area != "" && req.Parent == "" {
+		h.askArea(w, r, req)
 		return
 	}
 	where := ""
@@ -77,6 +82,35 @@ func (h *Handlers) ask(w http.ResponseWriter, r *http.Request, req PromptRequest
 	writeJSON(w, http.StatusCreated, note)
 }
 
+// askArea puts the request's prompt of an area's page to the board, in
+// its folder and directory, the root unless given, and answers 201 with
+// the note; 400 for an area there is none of.
+func (h *Handlers) askArea(w http.ResponseWriter, r *http.Request, req PromptRequest) {
+	if req.Area != model.AreaWorkflows {
+		fail(w, http.StatusBadRequest, "no area "+req.Area)
+		return
+	}
+	prompt := strings.TrimSpace(req.Prompt)
+	if prompt == "" {
+		fail(w, http.StatusBadRequest, "write a prompt")
+		return
+	}
+	if req.Folder == "" {
+		req.Folder = model.Default
+	}
+	where, problem := h.promptPlace(r, req.Folder, req.Dir)
+	if problem != "" {
+		fail(w, http.StatusNotFound, problem)
+		return
+	}
+	note, err := h.opts.Board.AskArea(r.Context(), access.UserFrom(r.Context()), req.Area, where, prompt)
+	if err != nil {
+		failErr(w, err)
+		return
+	}
+	writeJSON(w, http.StatusCreated, note)
+}
+
 // askRun puts the request's prompt about its run to the board, and
 // answers 201 with the note.
 func (h *Handlers) askRun(w http.ResponseWriter, r *http.Request, req PromptRequest) {
@@ -95,6 +129,7 @@ func (h *Handlers) askRun(w http.ResponseWriter, r *http.Request, req PromptRequ
 
 // listPrompts returns the prompt threads of a folder, or of ?dir= inside
 // it, ?folder=_ for the root, or those about a run the user sees, ?run=,
+// those of an area's page, ?area=workflows,
 // or the prompt's of a workflow run the user sees, ?workflow_run=,
 // newest first, each with its replies: ?limit=. Takes prompt/view.
 func (h *Handlers) listPrompts(w http.ResponseWriter, r *http.Request) {
@@ -102,6 +137,13 @@ func (h *Handlers) listPrompts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	q := r.URL.Query()
+	if area := q.Get("area"); area != "" {
+		user := access.UserFrom(r.Context())
+		h.writeThreads(w, r, storage.NoteFilter{Prompts: true, Area: area, Limit: queryInt(r, "limit", 20)}, func(note model.Note) bool {
+			return seesPlace(h.opts.Catalogue, user, note.Dir)
+		})
+		return
+	}
 	if id := q.Get("workflow_run"); id != "" {
 		if _, err := h.opts.WorkflowRuns.Get(r.Context(), id); err != nil || !h.visibleRun(r, id) {
 			fail(w, http.StatusNotFound, "no such workflow run")
@@ -125,4 +167,14 @@ func (h *Handlers) listPrompts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	h.writeThreads(w, r, storage.NoteFilter{Prompts: true, Dir: where, Limit: queryInt(r, "limit", 20)})
+}
+
+// seesPlace reports whether the user sees the place a prompt ran in:
+// the folder it lies in, or the root for one who sees every folder.
+func seesPlace(c folder.Catalogue, user *model.User, place string) bool {
+	if place == model.Default {
+		return user != nil && len(user.FolderList()) == 0
+	}
+	f, _ := folder.Resolve(c, place)
+	return f != nil && user.CanSee(f.ID)
 }

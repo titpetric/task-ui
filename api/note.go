@@ -2,6 +2,7 @@ package api
 
 import (
 	"net/http"
+	"slices"
 
 	"github.com/titpetric/task-ui/access"
 	"github.com/titpetric/task-ui/model"
@@ -43,11 +44,14 @@ func anyMatch(value string) string {
 
 // writeThreads answers with the threads a filter lists, each with its
 // replies.
-func (h *Handlers) writeThreads(w http.ResponseWriter, r *http.Request, filter storage.NoteFilter) {
+func (h *Handlers) writeThreads(w http.ResponseWriter, r *http.Request, filter storage.NoteFilter, keep ...func(model.Note) bool) {
 	notes, err := h.opts.Board.Notes.List(r.Context(), filter)
 	if err != nil {
 		failErr(w, err)
 		return
+	}
+	for _, ok := range keep {
+		notes = slices.DeleteFunc(notes, func(note model.Note) bool { return !ok(note) })
 	}
 	ids := make([]string, len(notes))
 	for i, note := range notes {

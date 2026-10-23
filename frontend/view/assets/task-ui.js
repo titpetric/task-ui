@@ -2494,10 +2494,13 @@
   if (notesList && window.EventSource) {
     var pending;
     var place = notesList.dataset.dir || "";
+    var area = notesList.dataset.area || "";
     new EventSource("/api/sse/notes").addEventListener("note", function (event) {
       var changed = {};
       try { changed = JSON.parse(event.data); } catch (e) { /* refresh anyway */ }
-      if (changed.id && (changed.dir || "") !== place) return;
+      // An area's box, the Workflows page's, follows the area's notes.
+      if (changed.id && area && (changed.area || "") !== area) return;
+      if (changed.id && !area && ((changed.dir || "") !== place || changed.area)) return;
       clearTimeout(pending);
       pending = setTimeout(refreshNotes, 150);
     });
