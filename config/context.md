@@ -50,7 +50,11 @@ keep a run's recording for an age and within a size; once it expires
 the run and its details stay, without the output. Pages: `/runs`,
 `/runs/<id>`; API: `/api/runs`; MCP: `run_job`, `list_runs`, `get_run`.
 You see the runs of folders you see; ending one takes the right to run
-its job.
+its job. The **Tooling** panel on `/runs` is what the commands inside
+the runs spent their time on, from `atkins --stats --json`: a chart of
+the last 30 and 7 days, the tools of each by total time, and the
+commands behind a toggle. It reports commands and not runs, so it needs
+no permission of its own.
 
 ## Workspaces (`workspace`)
 
