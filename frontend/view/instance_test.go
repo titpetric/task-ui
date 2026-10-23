@@ -73,9 +73,11 @@ func TestInstance_Keys(t *testing.T) {
 	assert.NoError(t, v.Render(&buf, "instance", p))
 	body := buf.String()
 	for _, want := range []string{
-		"<th>Name</th><th>Algorithm</th><th>Size (bits)</th><th>Fingerprint</th><th>Purpose</th>",
-		`<span class="badge">encryption</span>`, `<span class="badge">git &#43; ssh</span>`,
-		`data-label="Size">4096</td>`, `data-label="Size">256</td>`,
+		"<th>Name</th><th>Algorithm</th><th>Size</th><th>Public key</th><th>Purpose</th>",
+		`<span class="badge signal">encryption</span>`, `title="git pulls and clones with it">git + ssh</span>`,
+		`data-label="Size">4096 bits</td>`, `data-label="Size">256 bits</td>`,
+		`<span class="mono" title="ssh-rsa AAAAgit">ssh-rsa AAAAgit</span>`,
+		`<dt>Fingerprint</dt><dd class="mono">SHA256:git</dd>`, `aria-haspopup="menu"`,
 		`data-copy="ssh-rsa AAAAgit"`, `data-download="ssh-ed25519 AAAAenc" data-filename="task_encryption_ed25519.pub"`,
 		`<details class="more-menu row-more">`, "Rotate Key",
 	} {
@@ -113,5 +115,6 @@ func TestInstance_KeyBackup(t *testing.T) {
 	body = buf.String()
 	assert.Contains(t, body, `data-api="/api/keys/deploy_ed25519/rotate"`)
 	assert.Contains(t, body, "backup/deploy_ed25519, which runs and git keep using")
+	assert.Contains(t, body, `<hr class="more-sep">`)
 	assert.NotContains(t, body, "BACKUP ACTIVE")
 }

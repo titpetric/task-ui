@@ -171,3 +171,97 @@
     margin-inline-start: auto;
   }
 }
+
+/* A keys table, on the Keys page and the Instance page: Name,
+   Algorithm, Size, Public key with its copy button, Purpose, and the
+   row's actions behind a menu that opens over the table. */
+.key-table {
+  table-layout: fixed;
+
+  & col.c-name {
+    width: 24%;
+  }
+
+  & col.c-algo {
+    width: 6.5rem;
+  }
+
+  & col.c-size {
+    width: 5.5rem;
+  }
+
+  & col.c-purpose {
+    width: 7.5rem;
+  }
+
+  & col.c-actions {
+    width: 3.5rem;
+  }
+
+  & td.key {
+    font-size: var(--fs-md);
+    white-space: normal;
+    overflow-wrap: anywhere;
+
+    & a {
+      color: var(--text);
+    }
+  }
+
+  & .pub-line {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    min-width: 0;
+
+    & .mono {
+      min-width: 0;
+      color: var(--text-dim);
+      font-size: var(--fs-xs);
+      overflow-wrap: anywhere;
+    }
+  }
+
+  & td.actions {
+    text-align: right;
+  }
+
+  & .row-more .more-list {
+    position: fixed;
+    right: auto;
+    min-width: 18rem;
+  }
+}
+
+/* The details a row's menu holds above its items, such as a key's
+   fingerprint and dates, and the line between its groups. */
+.more-details {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.2rem 0.6rem;
+  margin: 0 0 0.25rem;
+  padding: 0.4rem 0.5rem 0.5rem;
+  border-bottom: 1px solid var(--line);
+  font-size: var(--fs-xs);
+  text-align: start;
+
+  & dt {
+    color: var(--text-faint);
+    font-size: var(--fs-label);
+    letter-spacing: var(--ls-label);
+    text-transform: uppercase;
+  }
+
+  & dd {
+    margin: 0;
+    color: var(--text-dim);
+    overflow-wrap: anywhere;
+    max-width: 22rem;
+  }
+}
+
+.more-sep {
+  margin: 0.25rem 0;
+  border: 0;
+  border-top: 1px solid var(--line);
+}
