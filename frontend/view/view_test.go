@@ -2,6 +2,9 @@ package view_test
 
 import (
 	"bytes"
+	"regexp"
+	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -251,4 +254,30 @@ func TestView_RenderReportLinks(t *testing.T) {
 	var buf bytes.Buffer
 	assert.NoError(t, v.Render(&buf, "home", p))
 	assert.Contains(t, buf.String(), `id="run-report"`)
+}
+
+// Every data table on every page has a heading of its own since the
+// table before it: an h3 for a block, an h4 inside a block of more, or
+// the label of the form field a table of inputs is.
+func TestView_RenderTableHeadings(t *testing.T) {
+	t.Parallel()
+
+	v, err := view.New()
+	assert.NoError(t, err)
+	heading := regexp.MustCompile(`<h[34][ >]|<span class="label">`)
+	for _, name := range v.Names() {
+		var buf bytes.Buffer
+		assert.NoError(t, v.Render(&buf, name, admin(t)), name)
+		parts := strings.Split(buf.String(), `<table class="table`)
+		for i := 1; i < len(parts); i++ {
+			before := parts[i-1]
+			if at := strings.LastIndex(before, "</table>"); at >= 0 {
+				before = before[at:]
+			}
+			assert.True(t, heading.MatchString(before), name+": table "+strconv.Itoa(i)+" has no heading")
+		}
+	}
+	var buf bytes.Buffer
+	assert.NoError(t, v.Render(&buf, "job", admin(t)))
+	assert.Contains(t, buf.String(), "<h4>Runs <small>newest first</small></h4>")
 }

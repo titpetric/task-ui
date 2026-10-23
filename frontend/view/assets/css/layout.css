@@ -204,15 +204,37 @@ main {
 }
 
 section.block {
-  margin-bottom: 1.6rem;
+  margin-bottom: var(--block-gap);
+
+  /* A block of more than one table names each with a sub-heading. */
+  & > h4 {
+    margin: var(--stack-gap) 0 var(--head-gap);
+    color: var(--text-dim);
+    font-size: var(--fs-label);
+    font-weight: 600;
+    letter-spacing: var(--ls-label);
+    text-transform: uppercase;
+
+    & small {
+      color: var(--text-faint);
+      font-weight: 400;
+      letter-spacing: var(--ls-xs);
+      text-transform: none;
+    }
+  }
+
+  & > .table-wrap + .table-wrap {
+    margin-top: var(--stack-gap);
+  }
 }
 
 section.block > h3,
+section.block > .block-head > h3,
 .section-title {
   display: flex;
   align-items: baseline;
   gap: 0.6rem;
-  margin-bottom: 0.45rem;
+  margin-bottom: var(--head-gap);
   color: var(--text-faint);
   font-size: var(--fs-caption);
   font-weight: 600;
@@ -220,7 +242,12 @@ section.block > h3,
   text-transform: uppercase;
 }
 
-section.block > h3 small {
+/* A heading beside its actions: the head holds the gap below. */
+section.block > .block-head > h3 {
+  margin-bottom: 0;
+}
+
+:is(section.block > h3, section.block > .block-head > h3) small {
   color: var(--text-faint);
   font-weight: 400;
   letter-spacing: var(--ls-xs);

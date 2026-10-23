@@ -6,7 +6,7 @@
    whole column is the hover target. The duration line is drawn the way
    oida draws its memory graph. */
 .activity {
-  margin: 0 0 1rem;
+  margin: 0 0 var(--stack-gap);
 }
 
 .activity-sum {

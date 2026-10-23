@@ -139,7 +139,7 @@ api PUT /projects/tools -d '{"sources":["make","npm","script"]}'
 # An SSH key for the keys page, and the default workspace's encryption
 # key, which its secrets need: a workspace starts without one. Then
 # secrets and a managed env file, so the runs and the pages have them.
-api POST /keys/generate -d '{"type":"ed25519","comment":"task-ui"}'
+api POST /keys/generate -d '{"type":"ed25519","name":"task-ui","comment":"task-ui"}'
 api POST /workspaces/_/keys/generate -d '{"encrypt":true,"comment":"task-ui _"}'
 api POST /secrets -d '{"scope":"all","name":"CDN_PURGE_URL","content":"https://cdn.example/purge"}'
 api POST /secrets -d '{"scope":"infra","name":"REGION","content":"eu-central-1"}'

@@ -398,7 +398,7 @@ func TestFolder_BrowseJobs(t *testing.T) {
 	assert.Contains(t, page, "infra/images / build")
 	assert.Contains(t, page, `data-attach="`+run.ID+`"`)
 	assert.Contains(t, page, "the job runs here")
-	assert.NotContains(t, page, "<h3>Scheduled")
+	assert.NotContains(t, page, "<h3>Schedules")
 	own := f.run(t, "infra", "plan", "ops", model.StateOK)
 	inDir := f.run(t, "infra", "plan", "ops", model.StateOK)
 	inDir.Dir = "images"

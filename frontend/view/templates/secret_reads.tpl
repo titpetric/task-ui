@@ -11,6 +11,7 @@
 </div>
 
 <section class="block">
+	<h3>Reads <small>newest first</small></h3>
 	<div class="table-wrap">
 	<table class="table secret-reads">
 		<thead><tr><th>When</th><th>Run</th><th>Job</th><th>By</th></tr></thead>

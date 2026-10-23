@@ -44,28 +44,31 @@
 </form>
 {{- end }}
 
-<div class="table-wrap fit">
-<table class="table fit-cards">
-	<thead><tr><th>Folder</th><th>Job</th><th>Expression</th><th>Next run</th><th class="hide-narrow">Last run</th><th>Runs as</th><th>State</th><th></th></tr></thead>
-	<tbody>
-	{{- range .Schedules }}
-		<tr>
-			<td data-label="Folder"><a href="{{ $.Href .Folder }}">{{ .Folder }}</a></td>
-			<td class="key" data-label="Job">{{ if and (eq .Folder "_") (hasPrefix .Job "@") }}{{ .Job }}{{ else }}<a href="{{ $.Href .Folder }}/{{ .Job }}">{{ .Job }}</a>{{ end }}{{ with argLine .Job .Args }} <code>{{ . }}</code>{{ end }}</td>
-			<td data-label="Expression"><code class="nowrap">{{ .Expression }}</code></td>
-			<td data-label="Next run">{{ template "nextrun" . }}</td>
-			<td class="nowrap hide-narrow" data-label="Last run">{{ if .LastRunAt }}{{ ago .LastRunAt }}{{ else }}<span class="faint">never</span>{{ end }}</td>
-			<td data-label="Runs as">{{ template "runas-row" (list $ .) }}</td>
-			<td data-label="State">{{ if .IsEnabled }}<span class="badge ok">enabled</span>{{ else }}<span class="badge">disabled</span>{{ end }}</td>
-			<td class="actions">
-				<form data-api="/api/schedules/{{ .ID }}" data-method="PUT" data-next="reload"><input type="hidden" name="enabled" data-type="bool" value="{{ if .IsEnabled }}false{{ else }}true{{ end }}"><button class="btn btn-sm" type="submit">{{ if .IsEnabled }}Disable{{ else }}Enable{{ end }}</button></form>
-				<button type="button" class="btn-icon danger" data-delete="/api/schedules/{{ .ID }}" data-confirm="Delete the schedule {{ .Expression }} for {{ .Folder }} / {{ .Job }}?" data-next="reload" title="Delete" aria-label="Delete schedule"><svg class="ic"><use href="#i-trash"/></svg></button>
-			</td>
-		</tr>
-	{{- else }}
-		<tr class="empty"><td colspan="8">No schedules yet.{{ if $any }} Pick a job and a cron expression above.{{ end }}</td></tr>
-	{{- end }}
-	</tbody>
-</table>
-</div>
+<section class="block">
+	<h3>Schedules</h3>
+	<div class="table-wrap fit">
+	<table class="table fit-cards">
+		<thead><tr><th>Folder</th><th>Job</th><th>Expression</th><th>Next run</th><th class="hide-narrow">Last run</th><th>Runs as</th><th>State</th><th></th></tr></thead>
+		<tbody>
+		{{- range .Schedules }}
+			<tr>
+				<td data-label="Folder"><a href="{{ $.Href .Folder }}">{{ .Folder }}</a></td>
+				<td class="key" data-label="Job">{{ if and (eq .Folder "_") (hasPrefix .Job "@") }}{{ .Job }}{{ else }}<a href="{{ $.Href .Folder }}/{{ .Job }}">{{ .Job }}</a>{{ end }}{{ with argLine .Job .Args }} <code>{{ . }}</code>{{ end }}</td>
+				<td data-label="Expression"><code class="nowrap">{{ .Expression }}</code></td>
+				<td data-label="Next run">{{ template "nextrun" . }}</td>
+				<td class="nowrap hide-narrow" data-label="Last run">{{ if .LastRunAt }}{{ ago .LastRunAt }}{{ else }}<span class="faint">never</span>{{ end }}</td>
+				<td data-label="Runs as">{{ template "runas-row" (list $ .) }}</td>
+				<td data-label="State">{{ if .IsEnabled }}<span class="badge ok">enabled</span>{{ else }}<span class="badge">disabled</span>{{ end }}</td>
+				<td class="actions">
+					<form data-api="/api/schedules/{{ .ID }}" data-method="PUT" data-next="reload"><input type="hidden" name="enabled" data-type="bool" value="{{ if .IsEnabled }}false{{ else }}true{{ end }}"><button class="btn btn-sm" type="submit">{{ if .IsEnabled }}Disable{{ else }}Enable{{ end }}</button></form>
+					<button type="button" class="btn-icon danger" data-delete="/api/schedules/{{ .ID }}" data-confirm="Delete the schedule {{ .Expression }} for {{ .Folder }} / {{ .Job }}?" data-next="reload" title="Delete" aria-label="Delete schedule"><svg class="ic"><use href="#i-trash"/></svg></button>
+				</td>
+			</tr>
+		{{- else }}
+			<tr class="empty"><td colspan="8">No schedules yet.{{ if $any }} Pick a job and a cron expression above.{{ end }}</td></tr>
+		{{- end }}
+		</tbody>
+	</table>
+	</div>
+</section>
 {{ end }}

@@ -4,7 +4,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  margin-bottom: 0.6rem;
+  margin-bottom: var(--head-gap);
 
   & h3 {
     margin: 0;

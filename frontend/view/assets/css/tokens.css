@@ -139,6 +139,13 @@
   --shadow-dialog: 0 1.5rem 4rem rgba(0, 0, 0, 0.55);
   --scrim: rgba(4, 6, 9, 0.72);
 
+  /* The vertical rhythm of a page: between blocks, under a block's
+     heading, and between the parts of a block, its intro, chart and
+     tables, a sub-heading's top included. */
+  --block-gap: 1.6rem;
+  --head-gap: 0.45rem;
+  --stack-gap: 1rem;
+
   --radius: 2px;
   --radius-pill: 999px;
   --radius-round: 50%;

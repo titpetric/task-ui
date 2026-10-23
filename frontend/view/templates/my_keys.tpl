@@ -7,6 +7,7 @@
 </div>
 
 <section class="block">
+	<h3>Keys</h3>
 	<div class="table-wrap">
 	<table class="table">
 		<thead><tr><th>Key</th><th>Fingerprint</th><th>For</th><th>Actions</th></tr></thead>

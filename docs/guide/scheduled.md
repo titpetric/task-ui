@@ -6,7 +6,7 @@ Jobs that run on their own, on a cron expression.
 
 ## Scheduling a job
 
-A job's page (open it from the sidebar) has a **Scheduled** section:
+A job's page (open it from the sidebar) has a **Schedules** section:
 enter an expression and **Schedule**. The Scheduled page lists every
 schedule with its next and last run, and the form there takes a folder
 and job too.

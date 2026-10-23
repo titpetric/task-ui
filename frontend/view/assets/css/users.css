@@ -58,7 +58,7 @@
 
 .profile-activity {
   & h4 {
-    margin: 1rem 0 0.4rem;
+    margin: var(--stack-gap) 0 var(--head-gap);
     color: var(--text-dim);
     font-size: var(--fs-label);
     font-weight: 600;
