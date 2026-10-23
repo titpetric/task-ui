@@ -192,13 +192,13 @@
     border-end-start-radius: 0;
   }
 
-  & .chev {
+  & .menu-chev {
     width: 0.7rem;
     height: 0.7rem;
     transform: rotate(90deg);
   }
 
-  & .run-menu[open] .chev {
+  & .run-menu[open] .menu-chev {
     transform: rotate(-90deg);
   }
 

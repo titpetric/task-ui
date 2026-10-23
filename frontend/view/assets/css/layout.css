@@ -272,16 +272,6 @@ section.block > .block-head > h3 {
   &:hover {
     color: var(--text);
   }
-
-  & .chev {
-    width: 0.8rem;
-    height: 0.8rem;
-    transition: transform 0.15s;
-  }
-
-  &[aria-expanded="true"] .chev {
-    transform: rotate(90deg);
-  }
 }
 
 .summary {

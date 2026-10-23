@@ -12,18 +12,11 @@
 
     & .ic.chev {
       margin-inline-end: 0.35rem;
-      color: var(--text-faint);
-      transition: transform 0.15s;
     }
 
     &[aria-expanded="true"] {
       & td {
         background: var(--ink-2);
-      }
-
-      & .ic.chev {
-        transform: rotate(90deg);
-        color: var(--signal);
       }
     }
   }

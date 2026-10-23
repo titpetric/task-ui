@@ -42,18 +42,18 @@ run count, how many failed and the median duration.
 
 ## Tooling
 
-The Activity and Tooling headings each carry a toggle that shows and hides the block. Every block starts open, and the browser remembers a hidden one for the user who hid it.
+The Activity and Tooling headings each carry a toggle that shows and hides the block: the chevron the sidebar's workspaces, projects and folders fold on, pointing right while the block hides and down while it shows. Every block starts open, and the browser remembers a hidden one for the user who hid it.
 
 Under the activity, what the commands inside the runs spent their time on, as atkins recorded it. A run of a job is one row in the list above; the twenty commands inside it are twenty rows here, so this answers a question the run history cannot: how much of a month goes to `go test`, and whether that has been true all month or only since Tuesday.
 
 A section per database atkins records to, the project first. The **project** is the checkout the root belongs to, named by its repository, and says what standing in it costs. The **workspace** is `$HOME/.atkins`, which every run on the machine records to, and says where a week went across every project. A root that belongs to no checkout has the workspace alone.
 
-Each section holds two charts, a bar a day, the busiest day full height and a day nothing ran an empty column:
+Each section holds two charts, in the columns of the activity charts above them, so the month lines up with the month and the week with the day. A day is a column, and a day nothing ran is an empty one:
 
 - **Last 30 days**, the shape of a month;
 - **Last 7 days**, the shape of a week, for reading against it.
 
-Each bar stacks the five commands that took the most time in its window, in a colour each, the first at the bottom, and the rest together as **other**. A command keeps its colour in both windows and both sections. The legend under the chart names them, with their time and how often they ran in the window. Hover a segment for its day, its command, its time and its runs. An atkins too old to report its commands per day stacks the bars by tool instead.
+In each day's column stands a bar per command of the five that took the most time in the window, side by side in the legend's order, and one for the rest together as **other**. A command that did not run that day leaves its place empty. Every bar measures against the tallest bar of the window. A command keeps its colour in both windows and both sections, and no two commands of one legend share one. The legend under the chart names them, with their time and how often they ran in the window. Hover a bar for its day, its command, its time and its runs. An atkins too old to report its commands per day draws a bar per tool instead.
 
 A command is its key, as atkins names it: the words up to the first argument that starts with `-`, at most three, and none that is a path or a value. `go test ./...` and `go test -v ./pkg` are `go test`, `docker build -q -t app .` is `docker build`, `docker compose up -d` is `docker compose up`, and `git clone --depth 1 <url>` is `git clone`. Shell builtins such as `set -eu` and `cd` count as nothing.
 

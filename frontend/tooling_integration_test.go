@@ -25,7 +25,7 @@ func stubAtkins(t *testing.T, f *fixture, body string) {
 	assert.NoError(t, os.WriteFile(command, []byte("#!/bin/sh\n[ \"$1\" = warm ] && exit 0\n"+body+"\n"), 0o755))
 
 	// A parallel test that forks while the file is open for writing
-	// hands the child the open file until it execs: wait for one clean
+	// leaves the open file to the child until it execs: wait for one clean
 	// run.
 	for range 100 {
 		if err := exec.Command(command, "warm").Run(); !errors.Is(err, syscall.ETXTBSY) {
@@ -77,13 +77,13 @@ func TestToolingOnTheRunsPage(t *testing.T) {
 	assert.Contains(t, res.Body, "docker compose up")
 
 	// The tools of a window, and the table behind the toggle.
-	assert.Contains(t, res.Body, "tooling-tools")
+	assert.Contains(t, res.Body, "tooling-legend")
 	assert.Contains(t, res.Body, "<details")
 	assert.Contains(t, res.Body, "go test -cover")
 }
 
-// An atkins that answers nothing leaves the page the page it was: the
-// panel is beside the runs, not the reason for them.
+// An atkins that answers nothing leaves the page without the panel:
+// the runs stand on their own.
 func TestToolingWithoutAnAnswer(t *testing.T) {
 	f := newFixture(t)
 

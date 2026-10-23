@@ -774,7 +774,7 @@
 	{{- if $m.Menu }}
 	<details class="cc-more run-menu">
 		<summary class="btn btn-sm{{ if not $sum }} btn-primary{{ end }}" title="Pick the target to run{{ if $sum }} and summarize{{ end }}" aria-label="Pick the target to run{{ if $sum }} and summarize{{ end }}">
-			{{- if not $shown }}{{ if $sum }}|&gt;summarize{{ else }}<svg class="ic"><use href="#i-play"/></svg>Run{{ end }}{{ end }}<svg class="ic chev"><use href="#i-chev"/></svg></summary>
+			{{- if not $shown }}{{ if $sum }}|&gt;summarize{{ else }}<svg class="ic"><use href="#i-play"/></svg>Run{{ end }}{{ end }}<svg class="ic menu-chev"><use href="#i-chev"/></svg></summary>
 		<div class="cc-menu" role="menu">
 			<table class="menu-table"><tbody>
 			{{- range $m.Jobs }}{{ $run := $.RunningRun .Key }}

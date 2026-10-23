@@ -2,11 +2,11 @@
 
 /* What the commands inside the runs spent their time on, as atkins
    recorded it. A chart per window, drawn the way activity draws its
-   buckets: a bar a day, the busiest one full height, each stacked by the
-   window's top commands, a segment the hover target. Under each chart
-   the legend of those commands, longest first, so a reader sees the
-   shape of a month and what it went on without reading a table. The table is behind a details element, which
-   needs no script. */
+   buckets: a day a column, in it a bar per top command of the window,
+   side by side, each its own hover target. Under each chart the legend
+   of those commands, longest first, so a reader sees the shape of a
+   month and what it went on without reading a table. The table is
+   behind a details element, which needs no script. */
 .tooling {
   margin: 0 0 1rem;
 }
@@ -19,19 +19,17 @@
 }
 
 .tooling-sum {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  align-items: baseline;
+  display: flow-root;
   margin: 0 0 0.6rem;
   color: var(--text-dim);
   font-size: var(--fs-sm);
 }
 
-/* The file the rows came from, pushed to the end: it answers "why is
+/* The file the rows came from, floated to the end: it answers "why is
    this empty" and nothing else, so it reads as a footnote. */
 .tooling-db {
-  margin-left: auto;
+  float: inline-end;
+  margin-inline-start: 0.5rem;
   overflow: hidden;
   max-width: 24rem;
   color: var(--text-faint);
@@ -42,9 +40,12 @@
   direction: rtl;
 }
 
+/* The charts take the activity charts' columns, so the month lines up
+   with the month above it and the week with the day; a lone chart
+   takes the row. */
 .tooling-charts {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 5fr) minmax(0, 4fr);
   gap: 0.8rem;
 }
 
@@ -52,6 +53,11 @@
   margin: 0;
   min-width: 0;
   padding: 0.55rem 0.8rem 0.5rem;
+
+  &:only-child {
+    grid-column: 1 / -1;
+  }
+
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--ink-1);
@@ -66,28 +72,36 @@
   font-family: var(--font-ui);
   font-size: var(--fs-xs);
 
+  & > span {
+    white-space: nowrap;
+  }
+
   & small {
     color: var(--text-faint);
     font-family: var(--font);
+    text-align: end;
   }
 }
 
-/* A bar a day, measured from zero against the busiest. A day nothing
-   ran is an empty column and not a missing one, so a run of days reads
-   as time. */
+/* A group of bars a day, a slot per command of the legend in its
+   order, each measured from zero against the window's tallest bar. A
+   command that did not run that day leaves its slot empty, and a day
+   nothing ran is an empty column and not a missing one, so a run of
+   days reads as time. On a week the bars stand apart; on a month they
+   touch and the days stand apart. */
 .tooling-bars {
   display: grid;
   grid-template-columns: repeat(var(--n), minmax(0, 1fr));
   align-items: stretch;
-  gap: 2px;
-  height: 3rem;
+  gap: 3px;
+  height: 4rem;
   border-bottom: 1px solid var(--line-2);
 
   & span {
     position: relative;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-end;
+    display: grid;
+    grid-template-columns: repeat(var(--k), minmax(0, 1fr));
+    align-items: end;
     min-width: 0;
 
     &:hover {
@@ -95,23 +109,22 @@
     }
   }
 
-  & i {
-    display: flex;
-    flex-direction: column-reverse;
-    width: 100%;
-    min-height: 1px;
-  }
-
-  /* A segment per top command, the first at the bottom, and its hover
-     says which and for how long. */
   & b {
     position: relative;
     display: block;
-    min-height: 1px;
+    min-width: 0;
     background: var(--seg);
 
     &:hover {
       filter: brightness(1.2);
+    }
+  }
+
+  &.week {
+    gap: 0.5rem;
+
+    & span {
+      column-gap: 1px;
     }
   }
 }
@@ -123,7 +136,7 @@
 /* The legend of a window: a swatch, the command, its time and how often
    it ran. */
 .tooling-legend {
-  margin: 0.6rem 0 0;
+  margin: 0.3rem 0 0;
   padding: 0;
   list-style: none;
 
@@ -161,9 +174,17 @@
   margin-top: 0.8rem;
 
   & summary {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    list-style: none;
     cursor: pointer;
     color: var(--text-dim);
     font-size: var(--fs-sm);
+
+    &::-webkit-details-marker {
+      display: none;
+    }
   }
 
   & summary:hover {

@@ -104,22 +104,33 @@ func TestNewToolingSkipsAWindowItCannotFill(t *testing.T) {
 	assert.Equal(t, 7, panel.Scopes[0].Windows[0].Days)
 }
 
-// Every bar is measured from zero against the busiest day, and a day
-// nothing ran has no bar at all.
+// Every day is a group of bars, a slot per legend entry, each measured
+// from zero against the window's tallest bar; a command that did not
+// run that day leaves its slot empty, and a day nothing ran has none.
 func TestToolingBars(t *testing.T) {
 	window := view.NewTooling(toolingReport()).Scopes[0].Windows[1]
 
 	assert.Equal(t, 7, len(window.Bars))
 	assert.Equal(t, "2026-10-17", window.Bars[0].Date)
 	assert.Equal(t, "2026-10-23", window.Bars[6].Date)
+	assert.Equal(t, 90_000*time.Millisecond, window.Tallest)
 
-	// The 21st is the busiest of the week, so it is full height, and
-	// the 23rd is its share of it.
-	assert.Equal(t, "height: 100.0%", string(window.Bars[4].Style))
-	assert.Contains(t, string(window.Bars[6].Style), "height: 38.")
+	// The 21st ran go alone, the tallest bar of the week, and npm's
+	// slot beside it stays empty.
+	day := window.Bars[4]
+	assert.Len(t, day.Segments, 2)
+	assert.Equal(t, "height: 100.0%", string(day.Segments[0].Style))
+	assert.Equal(t, "npm", day.Segments[1].Name)
+	assert.Equal(t, "", string(day.Segments[1].Style))
+	assert.Equal(t, "", day.Segments[1].Title)
+
+	// The 23rd ran both, each its share of the tallest, the quiet one
+	// on the floor.
+	assert.Contains(t, string(window.Bars[6].Segments[0].Style), "height: 37.")
+	assert.Equal(t, "height: 4.0%", string(window.Bars[6].Segments[1].Style))
 
 	// A day nothing ran draws nothing, and says so on hover.
-	assert.Equal(t, "", string(window.Bars[0].Style))
+	assert.Len(t, window.Bars[0].Segments, 0)
 	assert.Equal(t, "2026-10-17: nothing ran", window.Bars[0].Title)
 
 	// A day that ran says what and for how long.
@@ -127,19 +138,19 @@ func TestToolingBars(t *testing.T) {
 	assert.Equal(t, 90_000*time.Millisecond, window.Busiest)
 }
 
-// A bar with anything in it is drawn, however small, so a quiet day
-// beside a busy one still shows.
+// The chart draws a bar with anything in it at least at the floor, so
+// a quiet command beside a busy one still shows.
 func TestToolingBarsFloor(t *testing.T) {
 	report := toolingReport()
 	report.Project.Usage = append(report.Project.Usage, tooling.Usage{Date: "2026-10-22", Tool: "go", Runs: 1, TotalMs: 1})
 
 	window := view.NewTooling(report).Scopes[0].Windows[1]
-	assert.Equal(t, "height: 4.0%", string(window.Bars[5].Style))
+	assert.Equal(t, "height: 4.0%", string(window.Bars[5].Segments[0].Style))
 	assert.Contains(t, window.Bars[5].Title, "1 command in ")
 }
 
-// Without a command series, from an older atkins, the bars stack by
-// tool and the legend names the tools, rolled up from the window's days.
+// Without a command series, from an older atkins, the bars are of the
+// tools and the legend names them, rolled up from the window's days.
 func TestToolingStacksByToolWithoutCommandUsage(t *testing.T) {
 	window := view.NewTooling(toolingReport()).Scopes[0].Windows[1]
 	assert.Equal(t, "tool", window.By)
@@ -152,14 +163,14 @@ func TestToolingStacksByToolWithoutCommandUsage(t *testing.T) {
 	assert.Equal(t, "npm", window.Legend[1].Name)
 	assert.Equal(t, "s1", window.Legend[1].Color)
 
-	// The 23rd ran both, go at the bottom.
+	// The 23rd ran both, go first.
 	day := window.Bars[6]
 	assert.Len(t, day.Segments, 2)
 	assert.Equal(t, "go", day.Segments[0].Name)
 	assert.Equal(t, "npm", day.Segments[1].Name)
 	assert.Equal(t, "tip-end", day.Edge)
 
-	// The window's own totals, not the report's.
+	// The totals count the window's days alone.
 	assert.Equal(t, int64(34), window.Runs)
 	assert.Equal(t, 124_900*time.Millisecond, window.Total)
 }
@@ -177,8 +188,8 @@ func commandScope() *tooling.Scope {
 	return scope
 }
 
-// With a command series the bars stack by the window's top five
-// commands, the rest together as other, and the legend names them.
+// With a command series each day draws a bar per top five command of
+// the window, the rest together as other, and the legend names them.
 func TestToolingStacksTopCommands(t *testing.T) {
 	window := view.NewTooling(&tooling.Report{Project: commandScope()}).Scopes[0].Windows[1]
 	assert.Equal(t, "command", window.By)
@@ -196,9 +207,12 @@ func TestToolingStacksTopCommands(t *testing.T) {
 	assert.Len(t, day.Segments, 6)
 	assert.Equal(t, "go test", day.Segments[0].Name)
 	assert.Equal(t, "s0", day.Segments[0].Color)
-	assert.Equal(t, "height: 25.0%", string(day.Segments[0].Style))
+	assert.Equal(t, "height: 100.0%", string(day.Segments[0].Style))
 	assert.Equal(t, "2026-10-23 · go test: 7.0s, 1 run", day.Segments[0].Title)
+	assert.Equal(t, "height: 85.7%", string(day.Segments[1].Style))
 	assert.Equal(t, "other", day.Segments[5].Name)
+	assert.Equal(t, "s-other", day.Segments[5].Color)
+	assert.Equal(t, "2026-10-23 · other: 3.0s, 2 runs", day.Segments[5].Title)
 
 	// A day nothing ran has no segments.
 	assert.Len(t, window.Bars[0].Segments, 0)
@@ -250,6 +264,30 @@ func TestToolingRenders(t *testing.T) {
 	assert.Contains(t, html, "<details")
 	assert.Contains(t, html, "by the time they have taken")
 	assert.Contains(t, html, "tooling-legend")
+	assert.Contains(t, html, `<span class="swatch s0"></span><span class="key" title="go">go</span>`)
+	assert.Contains(t, html, `<span style="left: 92.86%">Fri</span>`)
+	// The 21st ran go alone: npm's slot beside it stays bare.
+	assert.Contains(t, html, `data-tip="2026-10-21 · go: 1m30s, 20 runs"></b><b></b></span>`)
+	// The details toggle wears the shared disclosure chevron.
+	assert.Contains(t, html, `<summary><svg class="ic chev"><use href="#i-chev"/></svg>2 commands by the time they have taken</summary>`)
+}
+
+// The axis marks every day of the week and a day a week of the month,
+// the last day last.
+func TestToolingTicks(t *testing.T) {
+	t.Parallel()
+
+	scope := view.NewTooling(toolingReport()).Scopes[0]
+
+	week := scope.Windows[1].Ticks
+	assert.Len(t, week, 7)
+	assert.Equal(t, view.ActivityTick{Label: "Fri", At: "92.86"}, week[6])
+	assert.Equal(t, view.ActivityTick{Label: "Sat", At: "7.14"}, week[0])
+
+	month := scope.Windows[0].Ticks
+	assert.Len(t, month, 5)
+	assert.Equal(t, view.ActivityTick{Label: "Oct 23", At: "98.33"}, month[4])
+	assert.Equal(t, view.ActivityTick{Label: "Sep 25", At: "5.00"}, month[0])
 }
 
 // The Activity and Tooling blocks of the runs page each fold on a
@@ -264,10 +302,14 @@ func TestToolingRendersFoldToggles(t *testing.T) {
 
 	html := out.String()
 	assert.Contains(t, html, `data-fold="runs-tooling"`)
-	assert.Contains(t, html, `class="fold-toggle" aria-expanded="true" aria-controls="runs-tooling"`)
+	// The fold toggle wears the shared disclosure chevron, the one the
+	// sidebar's workspaces, projects and folders fold on.
+	assert.Contains(t, html, `class="fold-toggle" aria-expanded="true" aria-controls="runs-tooling"><svg class="ic chev"><use href="#i-chev"/></svg>Tooling</button>`)
 	assert.Contains(t, html, `id="runs-tooling"`)
 	assert.Contains(t, html, "docker compose up")
 	assert.Contains(t, html, `data-tip="2026-10-23 · go test: 7.0s, 1 run"`)
+	// A day's group holds a slot per legend entry.
+	assert.Contains(t, html, `style="--n: 7; --k: 6"`)
 }
 
 // A page with nothing recorded draws no panel at all.
@@ -306,10 +348,11 @@ func TestToolingBar(t *testing.T) {
 	bar := view.NewTooling(toolingReport()).Scopes[0].Windows[1].Bars[4]
 	assert.Equal(t, "2026-10-21", bar.Date)
 	assert.Contains(t, bar.Title, "20 commands")
-	assert.Equal(t, "height: 100.0%", string(bar.Style))
+	assert.Len(t, bar.Segments, 2)
 
-	// A bar nobody drew has no style, and the template draws nothing.
-	assert.Equal(t, "", string(view.ToolingBar{Date: "2026-10-22"}.Style))
+	// A day nobody drew has no slots, and the template draws an empty
+	// column.
+	assert.Len(t, view.ToolingBar{Date: "2026-10-22"}.Segments, 0)
 }
 
 // TestToolingCommand covers one row of the table behind the toggle.
@@ -359,4 +402,30 @@ func TestToolingRendersBothScopes(t *testing.T) {
 	assert.Contains(t, html, "titpetric/atkins")
 	assert.Contains(t, html, "/home/you/.atkins/atkins.db")
 	assert.Equal(t, 2, strings.Count(html, "<details"))
+}
+
+// More commands than colours across the windows: each window's legend
+// still holds a colour once, and a command keeps its colour.
+func TestToolingColorsAreDistinctInAWindow(t *testing.T) {
+	t.Parallel()
+
+	scope := toolingScope()
+	for index, command := range []string{"a", "b", "c", "d", "e"} {
+		scope.CommandUsage = append(scope.CommandUsage, tooling.CommandUsage{Date: "2026-10-01", Command: command, Tool: command, Runs: 1, TotalMs: int64(90_000 - 1000*index)})
+	}
+	for _, command := range []string{"f", "g", "h"} {
+		scope.CommandUsage = append(scope.CommandUsage, tooling.CommandUsage{Date: "2026-10-23", Command: command, Tool: command, Runs: 1, TotalMs: 500})
+	}
+
+	windows := view.NewTooling(&tooling.Report{Project: scope}).Scopes[0].Windows
+	for _, window := range windows {
+		seen := map[string]string{}
+		for _, entry := range window.Legend {
+			other, ok := seen[entry.Color]
+			assert.False(t, ok, entry.Name+" shares "+entry.Color+" with "+other)
+			seen[entry.Color] = entry.Name
+		}
+	}
+	assert.Equal(t, "s5", windows[1].Legend[0].Color)
+	assert.Equal(t, "f", windows[1].Legend[0].Name)
 }

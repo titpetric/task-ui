@@ -8,6 +8,26 @@
   flex: none;
 }
 
+/* The disclosure chevron, one look wherever something folds: the
+   sidebar's workspaces, projects and folders, a block's heading, the
+   prompt box, a host's row, a details toggle. It points right while
+   folded and turns down while open, faint until its row is hovered.
+   Where it sits is the place's own; what it looks like is this. */
+.ic.chev {
+  width: 0.85rem;
+  height: 0.85rem;
+  color: var(--text-faint);
+  transition: transform 0.15s ease-out;
+}
+
+:is(summary, [aria-expanded]):hover .ic.chev {
+  color: var(--text);
+}
+
+:is(details[open] > summary, [aria-expanded="true"]) .ic.chev {
+  transform: rotate(90deg);
+}
+
 .btn-icon {
   display: inline-flex;
   align-items: center;
