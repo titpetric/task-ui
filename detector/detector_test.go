@@ -68,6 +68,11 @@ func TestAll(t *testing.T) {
 }
 
 func TestFromFile(t *testing.T) {
+	// A yaml file no convention claims is read as an atkins pipeline,
+	// which means asking atkins to list it.
+	stubAtkins(t, `[{"kind":"pipeline","active":true,"desc":"Jobs","cmds":[
+	  {"id":"sync","name":"sync","desc":"Sync","cmd":"atkins sync","active":true}]}]`)
+
 	dir := t.TempDir()
 	write(t, filepath.Join(dir, "jobs.yml"), "jobs:\n  sync:\n    desc: Sync\n")
 	source := FromFile(filepath.Join(dir, "jobs.yml"))

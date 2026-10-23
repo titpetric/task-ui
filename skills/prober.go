@@ -42,37 +42,57 @@ type probe struct {
 // Probe returns the sections atkins lists for dir, inactive skills among
 // them. Nil when atkins is missing, fails, or reports a broken pipeline.
 func (p *Prober) Probe(dir string) []Section {
+	return p.probe(dir, "")
+}
+
+// ProbeFile returns the sections atkins lists for one pipeline file in
+// dir, for a configuration that names a file no convention claims.
+func (p *Prober) ProbeFile(dir, file string) []Section {
+	if file == "" {
+		return nil
+	}
+	return p.probe(dir, file)
+}
+
+// probe answers from the cache when the files it read have not changed
+// and the answer is younger than the TTL, and asks atkins otherwise.
+func (p *Prober) probe(dir, file string) []Section {
 	if p == nil || dir == "" {
 		return nil
 	}
+	key := dir + "\x00" + file
 	stamp := Stamp(dir)
 	p.mu.Lock()
-	cached, ok := p.cache[dir]
+	cached, ok := p.cache[key]
 	p.mu.Unlock()
 	if ok && cached.stamp == stamp && time.Since(cached.at) < p.ttl() {
 		return cached.sections
 	}
-	sections := p.run(dir)
+	sections := p.run(dir, file)
 	p.mu.Lock()
 	if p.cache == nil {
 		p.cache = map[string]probe{}
 	}
-	p.cache[dir] = probe{sections: sections, at: time.Now(), stamp: stamp}
+	p.cache[key] = probe{sections: sections, at: time.Now(), stamp: stamp}
 	p.mu.Unlock()
 	return sections
 }
 
 // run execs atkins in dir. Its stdin is /dev/null: atkins reads a pipe
 // on stdin as the pipeline.
-func (p *Prober) run(dir string) []Section {
+func (p *Prober) run(dir, file string) []Section {
 	timeout := p.Timeout
 	if timeout <= 0 {
 		timeout = 3 * time.Second
 	}
+	args := []string{"-l", "--json", "--all"}
+	if file != "" {
+		args = append([]string{"-f", file}, args...)
+	}
 	command := p.Bin()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	cmd := exec.CommandContext(ctx, command, "-l", "--json", "--all")
+	cmd := exec.CommandContext(ctx, command, args...)
 	cmd.Dir = dir
 	cmd.Stdin = nil
 	cmd.WaitDelay = time.Second

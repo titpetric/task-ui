@@ -20,14 +20,14 @@ const (
 	yamlSequence = yaml.SequenceNode
 )
 
-// atkinsNames are the file names atkins discovers, in its order.
-var atkinsNames = []string{".atkins.yml", ".atkins.yaml", "atkins.yml", "atkins.yaml"}
-
 // taskfileNames are the file names go-task discovers.
 var taskfileNames = []string{"Taskfile.yml", "taskfile.yml", "Taskfile.yaml", "taskfile.yaml", "Taskfile.dist.yml", "taskfile.dist.yml", "Taskfile.dist.yaml", "taskfile.dist.yaml"}
 
-// pipelineDetector reads an atkins pipeline or a Taskfile: the first of
-// its file names present in the folder.
+// pipelineDetector reads a Taskfile: the first of its file names
+// present in the folder.
+//
+// An atkins pipeline is read by asking atkins, in atkins.go. go-task has
+// no equivalent listing this reads, so its file is parsed here.
 type pipelineDetector struct {
 	kind  string
 	names []string
@@ -37,18 +37,21 @@ func (d pipelineDetector) Kind() string { return d.kind }
 
 func (d pipelineDetector) Detect(dir string) *Source {
 	for _, name := range d.names {
-		path := filepath.Join(dir, name)
-		if info, err := os.Stat(path); err == nil && !info.IsDir() {
+		if isFile(dir, name) {
 			return d.detectFile(dir, name)
 		}
 	}
 	return nil
 }
 
-// detectFile reads one pipeline file. An atkins file lists every job, as
-// `atkins -l` does, and a job without a desc takes its first step as
-// its description; a Taskfile lists the jobs with a desc, as `task -l`
-// does. Neither lists internal and hidden jobs.
+// isFile reports whether a folder holds a regular file by that name.
+func isFile(dir, name string) bool {
+	info, err := os.Stat(filepath.Join(dir, name))
+	return err == nil && !info.IsDir()
+}
+
+// detectFile reads one pipeline file: a Taskfile lists the jobs with a
+// desc, as `task -l` does, and lists no internal or hidden job.
 func (d pipelineDetector) detectFile(dir, name string) *Source {
 	source := &Source{Kind: d.kind, File: name, Command: defaultCommand(d.kind, name)}
 
@@ -74,22 +77,15 @@ func (d pipelineDetector) detectFile(dir, name string) *Source {
 	source.EnvFiles = appendUnique(nil, spec.Env.Include...)
 	source.EnvFiles = appendUnique(source.EnvFiles, spec.Dotenv...)
 
-	jobs := spec.Jobs
-	if len(jobs) == 0 {
-		jobs = spec.Tasks
-	}
-	names := make([]string, 0, len(jobs))
-	for name := range jobs {
+	names := make([]string, 0, len(spec.Tasks))
+	for name := range spec.Tasks {
 		names = append(names, name)
 	}
 	sort.Strings(names)
 
 	for _, name := range names {
-		job := jobs[name]
+		job := spec.Tasks[name]
 		desc := job.Desc
-		if desc == "" && d.kind == "atkins" {
-			desc = job.firstLabel()
-		}
 		if job.Internal || desc == "" || (job.Show != nil && !*job.Show) {
 			continue
 		}
@@ -99,12 +95,8 @@ func (d pipelineDetector) detectFile(dir, name string) *Source {
 			Summary:     strings.TrimSpace(job.Summary),
 			Aliases:     job.Aliases,
 			Interactive: job.Interactive,
-			TakesArgs:   job.Args && d.kind == "atkins",
 			DependsOn:   job.DependsOn,
 			EnvFiles:    job.Env.Include,
-		}
-		if j.TakesArgs {
-			j.Exec = job.exec()
 		}
 		for _, dep := range job.Deps {
 			if dep.Task != "" {
