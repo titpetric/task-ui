@@ -2,10 +2,10 @@
 
 /* What the commands inside the runs spent their time on, as atkins
    recorded it. A chart per window, drawn the way activity draws its
-   buckets: a bar a day, the busiest one full height, the whole column
-   the hover target. Under each chart the tools that made it, longest
-   first, so a reader sees the shape of a month and what it went on
-   without reading a table. The table is behind a details element, which
+   buckets: a bar a day, the busiest one full height, each stacked by the
+   window's top commands, a segment the hover target. Under each chart
+   the legend of those commands, longest first, so a reader sees the
+   shape of a month and what it went on without reading a table. The table is behind a details element, which
    needs no script. */
 .tooling {
   margin: 0 0 1rem;
@@ -96,23 +96,40 @@
   }
 
   & i {
-    display: block;
+    display: flex;
+    flex-direction: column-reverse;
     width: 100%;
     min-height: 1px;
-    background: linear-gradient(to top, var(--signal), color-mix(in oklch, var(--signal) 55%, transparent));
+  }
+
+  /* A segment per top command, the first at the bottom, and its hover
+     says which and for how long. */
+  & b {
+    position: relative;
+    display: block;
+    min-height: 1px;
+    background: var(--seg);
+
+    &:hover {
+      filter: brightness(1.2);
+    }
   }
 }
 
-/* The tools of a window, longest first: the name, a bar of its share,
-   its time and how often it ran. */
-.tooling-tools {
+.s-other {
+  --seg: var(--text-faint);
+}
+
+/* The legend of a window: a swatch, the command, its time and how often
+   it ran. */
+.tooling-legend {
   margin: 0.6rem 0 0;
   padding: 0;
   list-style: none;
 
   & li {
     display: grid;
-    grid-template-columns: minmax(3.5rem, auto) minmax(0, 1fr) auto auto;
+    grid-template-columns: auto minmax(0, 1fr) auto auto;
     gap: 0.5rem;
     align-items: center;
     padding: 0.12rem 0;
@@ -124,26 +141,19 @@
     color: var(--text-faint);
   }
 
+  & .swatch {
+    display: inline-block;
+    width: 0.6rem;
+    height: 0.6rem;
+    border-radius: 2px;
+    background: var(--seg);
+  }
+
   & .key {
     overflow: hidden;
     font-family: var(--font);
     text-overflow: ellipsis;
     white-space: nowrap;
-  }
-}
-
-.tooling-bar {
-  display: block;
-  height: 0.5rem;
-  border-radius: 2px;
-  background: var(--ink-2);
-
-  & i {
-    display: block;
-    height: 100%;
-    min-width: 1px;
-    border-radius: 2px;
-    background: var(--signal);
   }
 }
 

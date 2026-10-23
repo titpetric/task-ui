@@ -3938,6 +3938,35 @@
     });
   });
 
+  // A block with data-fold shows and hides its body on the toggle in
+  // its heading. The folded blocks are remembered in this browser per
+  // user; every block starts open.
+  var FOLDS = "task-ui.folds." + (document.body.dataset.me || "");
+  var folds = [];
+  try { folds = JSON.parse(localStorage.getItem(FOLDS) || "[]"); } catch (e) { folds = []; }
+  function setFold(block, open) {
+    var button = block.querySelector(".fold-toggle");
+    var body = document.getElementById(block.dataset.fold);
+    if (!button || !body) return;
+    button.setAttribute("aria-expanded", open ? "true" : "false");
+    body.hidden = !open;
+  }
+  document.querySelectorAll("[data-fold]").forEach(function (block) {
+    if (folds.indexOf(block.dataset.fold) >= 0) setFold(block, false);
+  });
+  document.addEventListener("click", function (event) {
+    var button = event.target.closest(".fold-toggle");
+    if (!button) return;
+    var block = button.closest("[data-fold]");
+    if (!block) return;
+    var open = button.getAttribute("aria-expanded") !== "true";
+    setFold(block, open);
+    var i = folds.indexOf(block.dataset.fold);
+    if (open && i >= 0) folds.splice(i, 1);
+    else if (!open && i < 0) folds.push(block.dataset.fold);
+    try { localStorage.setItem(FOLDS, JSON.stringify(folds)); } catch (e) { /* not remembered */ }
+  });
+
   // The user menu closes when the page is clicked elsewhere.
   var userMenu = document.getElementById("user-menu");
   if (userMenu) {

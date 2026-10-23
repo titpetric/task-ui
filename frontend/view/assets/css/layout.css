@@ -254,6 +254,36 @@ section.block > .block-head > h3 {
   text-transform: none;
 }
 
+/* The toggle of a folding block is its heading's own text, with a
+   chevron that points down while the block is open. */
+.fold-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  cursor: pointer;
+
+  &:hover {
+    color: var(--text);
+  }
+
+  & .chev {
+    width: 0.8rem;
+    height: 0.8rem;
+    transition: transform 0.15s;
+  }
+
+  &[aria-expanded="true"] .chev {
+    transform: rotate(90deg);
+  }
+}
+
 .summary {
   margin: 0 0 1rem;
   padding: 0.6rem 0.8rem;

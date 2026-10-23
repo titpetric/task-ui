@@ -42,6 +42,8 @@ run count, how many failed and the median duration.
 
 ## Tooling
 
+The Activity and Tooling headings each carry a toggle that shows and hides the block. Every block starts open, and the browser remembers a hidden one for the user who hid it.
+
 Under the activity, what the commands inside the runs spent their time on, as atkins recorded it. A run of a job is one row in the list above; the twenty commands inside it are twenty rows here, so this answers a question the run history cannot: how much of a month goes to `go test`, and whether that has been true all month or only since Tuesday.
 
 A section per database atkins records to, the project first. The **project** is the checkout the root belongs to, named by its repository, and says what standing in it costs. The **workspace** is `$HOME/.atkins`, which every run on the machine records to, and says where a week went across every project. A root that belongs to no checkout has the workspace alone.
@@ -51,9 +53,11 @@ Each section holds two charts, a bar a day, the busiest day full height and a da
 - **Last 30 days**, the shape of a month;
 - **Last 7 days**, the shape of a week, for reading against it.
 
-Under each, the tools of that window by the time they have taken, longest first: `go` counts whether it built, tested or vetted, because the question is how much of the week went to Go. Hover a bar for the day, how many commands ran in it and how long they took.
+Each bar stacks the five commands that took the most time in its window, in a colour each, the first at the bottom, and the rest together as **other**. A command keeps its colour in both windows and both sections. The legend under the chart names them, with their time and how often they ran in the window. Hover a segment for its day, its command, its time and its runs. An atkins too old to report its commands per day stacks the bars by tool instead.
 
-The toggle under the charts opens the commands themselves, by total time: the normalised command, its tool, how often it ran, its total, its average, its slowest run, how many failed and when it last ran. A command is normalised by atkins, so `go test ./...` and `go test ./pkg` are one row and `go test -race` is another.
+A command is its key, as atkins names it: the words up to the first argument that starts with `-`, at most three, and none that is a path or a value. `go test ./...` and `go test -v ./pkg` are `go test`, `docker build -q -t app .` is `docker build`, `docker compose up -d` is `docker compose up`, and `git clone --depth 1 <url>` is `git clone`. Shell builtins such as `set -eu` and `cd` count as nothing.
+
+The toggle under the charts opens the commands themselves, by total time: the key, its tool, how often it ran, its total, its average, its slowest run, how many failed and when it last ran.
 
 A section is there when its database has something recorded, and absent when it has not. The file each reads sits at the end of its summary line. See [Statistics](https://atkins.incubator.to/usage/stats) for what atkins records, the two databases it records to and the 31 day window it keeps.
 
