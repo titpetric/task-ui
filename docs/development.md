@@ -74,7 +74,10 @@ are.
 `splint ./...` (`task lint`) is the bar: every file has a test beside it,
 every exported symbol a test that reaches it, every symbol a file named
 for it, and every dependency one import per package. Tests are black box,
-parallel, and share nothing. `go run ./internal/cmd/rulelint` (`task
+parallel, and share nothing. `go test ./...` runs the unit tests alone;
+the tests that run processes, open a database or use the network sit
+behind the `integration` build tag, see [Testing](testing.md).
+`go run ./internal/cmd/rulelint` (`task
 lint` too) matches the permission checks against
 `config/permissions.yml`: every rule a check names is in the file, and
 every rule the file holds has a check. A check names its rule as a

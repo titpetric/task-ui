@@ -57,6 +57,7 @@ binary embeds all assets, and the front end makes no external requests.
 | [Running the server](docs/running.md) | The Docker image, the environment, users, roles and the server commands |
 | [API](docs/api.md) | The JSON endpoints and the MCP server |
 | [Development](docs/development.md) | The packages, the lint and test bar, and the screenshots |
+| [Testing](docs/testing.md) | Unit tests by default, integration tests behind a build tag |
 
 A quick start, with the compose file in [Running the server](docs/running.md):
 
