@@ -142,9 +142,8 @@ func (p *Prober) ssh(ctx context.Context, login, remote string) *exec.Cmd {
 	return exec.CommandContext(ctx, command, args...)
 }
 
-// terminal is the ssh command for a command of Run: batch mode, -tt when
-// Terminal says so, the pagers turned off. The run's agent holds the
-// instance keys.
+// terminal is the ssh command of Run in batch mode, -tt when Terminal says
+// so, the pagers off; the run's agent holds the instance keys.
 func (p *Prober) terminal(ctx context.Context, login, remote string) *exec.Cmd {
 	if !p.Terminal {
 		return p.ssh(ctx, login, remote)
