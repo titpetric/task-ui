@@ -101,8 +101,10 @@ again** for whoever may run it.
 
 A job runs once at a time across the instance; the same target of two
 directories in one folder, such as `build` in `images/` and in
-`docs/`, is two jobs. Starting a job that runs
-already attaches to the run in the way. **Run force** kills that run and
+`docs/`, is two jobs. The Claude jobs of a prompt and of the Notes
+agent, `@claude-prompt` and `@claude-note`, are each a Claude session of
+their own and go side by side: no prompt waits for another. Starting any
+other job that runs already attaches to the run in the way. **Run force** kills that run and
 starts again; out of a folder's hours it also asks why, and keeps the
 reason with the run (see [Projects and jobs](projects.md#hours)).
 

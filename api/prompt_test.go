@@ -73,8 +73,8 @@ func TestPrompts(t *testing.T) {
 	last := replies()[2].(map[string]any)
 	assert.Equal(t, "Answer to: admin:\nwhat runs here\n\nclaude:\nAnswer to: what runs here\n\nadmin:\nand then", last["body"])
 
-	// A prompt holds its directory: another there waits for it, one in
-	// another directory runs at once.
+	// Prompts go side by side: another in the same directory runs at
+	// once, as one in another directory does.
 	hold := func(rel string) string {
 		dir := filepath.Join(infra, rel)
 		assert.NoError(t, os.MkdirAll(dir, 0o755))
@@ -85,26 +85,25 @@ func TestPrompts(t *testing.T) {
 	first := f.call(t, asAdmin, http.MethodPost, "/prompts", api.PromptRequest{Folder: "infra", Dir: "images", Prompt: "build"})
 	assert.Equal(t, http.StatusCreated, first.Status, string(first.Raw))
 	assert.Equal(t, "infra/images", first.str("dir"))
-	queued := f.call(t, asAdmin, http.MethodPost, "/prompts", api.PromptRequest{Folder: "infra", Dir: "images/", Prompt: "again"})
-	assert.Equal(t, http.StatusCreated, queued.Status, string(queued.Raw))
+	beside := f.call(t, asAdmin, http.MethodPost, "/prompts", api.PromptRequest{Folder: "infra", Dir: "images/", Prompt: "again"})
+	assert.Equal(t, http.StatusCreated, beside.Status, string(beside.Raw))
 	second := f.call(t, asAdmin, http.MethodPost, "/prompts", api.PromptRequest{Folder: "infra", Dir: "docs", Prompt: "read"})
 	assert.Equal(t, http.StatusCreated, second.Status, string(second.Raw))
 	working := func(id string) bool {
 		note, err := f.opts.Board.Notes.Get(t.Context(), id)
 		return err == nil && note.State == model.NoteWorking
 	}
-	assert.Eventually(t, func() bool { return working(first.str("id")) && working(second.str("id")) }, 10*time.Second, 20*time.Millisecond)
-	waiting, err := f.opts.Board.Notes.Get(t.Context(), queued.str("id"))
-	assert.NoError(t, err)
-	assert.Equal(t, model.NoteOpen, waiting.State, "it waits for the prompt in its directory")
+	assert.Eventually(t, func() bool {
+		return working(first.str("id")) && working(beside.str("id")) && working(second.str("id"))
+	}, 10*time.Second, 20*time.Millisecond)
 	for _, dir := range []string{images, docs} {
 		assert.NoError(t, os.WriteFile(filepath.Join(dir, "release"), nil, 0o644))
 	}
-	for _, id := range []string{first.str("id"), queued.str("id"), second.str("id")} {
+	for _, id := range []string{first.str("id"), beside.str("id"), second.str("id")} {
 		assert.Equal(t, model.NoteDone, f.answered(t, id).State)
 	}
 	imagesRun := f.finished(t, f.answered(t, first.str("id")).RunID)
-	assert.Equal(t, "infra/images/"+model.PromptJob, imagesRun.Key(), "the queue keys on folder/dir/@claude-prompt")
+	assert.Equal(t, "infra/images/"+model.PromptJob, imagesRun.Key(), "the run's job is folder/dir/@claude-prompt")
 	listed := f.call(t, asAdmin, http.MethodGet, "/prompts?folder=infra&dir=images", nil)
 	assert.Len(t, listed.list("notes"), 2)
 	assert.Equal(t, "again", listed.list("notes")[0].(map[string]any)["body"], "newest first")

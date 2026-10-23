@@ -180,3 +180,19 @@ func TestAgent_Prompt_mcp(t *testing.T) {
 	assert.NotContains(t, out.String(), "--mcp-config")
 	assert.NotContains(t, out.String(), "is connected for this run")
 }
+
+// With TASK_UI_PROMPT_SOURCE, the system prompt names the thread to
+// reply in over MCP, and the final message is the fallback reply.
+func TestAgent_Prompt_source(t *testing.T) {
+	t.Parallel()
+	here := realDir(t)
+	var out bytes.Buffer
+	a := &agent.Agent{Stdout: &out, Stderr: io.Discard, Env: []string{
+		"PATH=" + fakeClaude(t), "CLAUDE_CODE_OAUTH_TOKEN=sk-1", "TASK_UI_PROMPT_DIR=" + here, "TASK_UI_PROMPT=build it",
+		"TASK_UI_PROMPT_SOURCE=## The prompt's source\n\nnote_comment with the id n1",
+	}}
+	assert.NoError(t, a.Run(context.Background(), []string{"prompt"}))
+	text := out.String()
+	assert.Contains(t, text, "arg=--append-system-prompt\narg=## The prompt's source\n\nnote_comment with the id n1\n\n")
+	assert.Contains(t, text, "build it\n\nPost the answer as a reply in the thread, as the prompt's source in the system prompt says; your final message is the fallback")
+}

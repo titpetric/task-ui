@@ -138,8 +138,8 @@ func (g *Guard) Require(next http.Handler) http.Handler {
 		if token != "" {
 			ctx = WithToken(ctx, token)
 		}
-		if _, ok := g.RunTokens.User(BearerToken(r)); ok {
-			ctx = withRun(ctx)
+		if run, ok := g.RunTokens.run(BearerToken(r)); ok {
+			ctx = withRun(ctx, run)
 		}
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})

@@ -80,9 +80,10 @@ func (s *Session) ID() string {
 	return s.Run.ID
 }
 
-// Key is the lock key: one session per job per folder and directory.
+// Key is the lock key: one session per job per folder and directory,
+// or per run for a job whose runs go in parallel.
 func (s *Session) Key() string {
-	return s.Run.Key()
+	return s.Run.LockKey()
 }
 
 // Done returns a channel that closes when the run ended and the session

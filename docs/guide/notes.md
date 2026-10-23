@@ -46,8 +46,8 @@ A note naming a user with **Run instance Claude when mentioned**,
   run for the users who see it. The job writes its answer to the file `TASK_UI_NOTE_REPLY` names,
   and when the run ends, the agent replies with that answer alone, with a
   link to the run for the output. A job that writes no answer replies with
-  how the run ended and the end of its output. One run of the job goes at
-  a time; another instruction waits for it.
+  how the run ended and the end of its output. Each instruction gets a
+  run of its own, side by side with the runs of others.
 - The agent may decline an instruction: its reply says why, and the note
   ends there.
 - With the flag off, the note stays open until an agent reads the board
