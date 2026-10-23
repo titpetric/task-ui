@@ -2,13 +2,10 @@ package keystore
 
 import (
 	"context"
-	"encoding/pem"
 	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
-
-	"golang.org/x/crypto/ssh"
 )
 
 // Rotate writes new material for a key of its algorithm and size, and
@@ -28,11 +25,7 @@ func (l *Local) Rotate(ctx context.Context, name string) (*Key, error) {
 	if err != nil {
 		return nil, err
 	}
-	block, err := ssh.MarshalPrivateKey(private, row.Comment)
-	if err != nil {
-		return nil, err
-	}
-	signer, err := ssh.NewSignerFromKey(private)
+	privatePEM, public, fingerprint, err := encode(private, row.Comment)
 	if err != nil {
 		return nil, err
 	}
@@ -46,10 +39,10 @@ func (l *Local) Rotate(ctx context.Context, name string) (*Key, error) {
 			return nil, err
 		}
 	}
-	if err := l.write(name, pem.EncodeToMemory(block), signer.PublicKey(), row.Comment); err != nil {
+	if err := l.write(name, privatePEM, public, row.Comment); err != nil {
 		return nil, err
 	}
-	if err := l.Rows.SetBackup(ctx, name, ssh.FingerprintSHA256(signer.PublicKey()), BackupName(name), row.Fingerprint); err != nil {
+	if err := l.Rows.SetBackup(ctx, name, fingerprint, BackupName(name), row.Fingerprint); err != nil {
 		return nil, err
 	}
 	return l.Get(ctx, name)

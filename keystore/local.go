@@ -117,8 +117,7 @@ func (l *Local) path(name, ext string) string {
 	return filepath.Join(l.Dir, name+ext)
 }
 
-// PublicPath returns the public key file of a key, which ssh takes with
-// -i while the run's agent holds the private half.
+// PublicPath returns a key's public file, for ssh -i while the run's agent holds the private half.
 func (l *Local) PublicPath(name string) string {
 	return l.path(name, ".pub")
 }
@@ -239,11 +238,25 @@ func (l *Local) Generate(ctx context.Context, spec Spec) (*Key, error) {
 		return nil, err
 	}
 	spec.Bits = bits
-	block, err := ssh.MarshalPrivateKey(private, spec.Comment)
+	privatePEM, _, _, err := encode(private, spec.Comment)
 	if err != nil {
 		return nil, err
 	}
-	return l.add(ctx, spec, pem.EncodeToMemory(block), private)
+	return l.add(ctx, spec, privatePEM, private)
+}
+
+// encode returns the PEM of a private key, its public half and that
+// half's fingerprint.
+func encode(private any, comment string) ([]byte, ssh.PublicKey, string, error) {
+	block, err := ssh.MarshalPrivateKey(private, comment)
+	if err != nil {
+		return nil, nil, "", err
+	}
+	signer, err := ssh.NewSignerFromKey(private)
+	if err != nil {
+		return nil, nil, "", err
+	}
+	return pem.EncodeToMemory(block), signer.PublicKey(), ssh.FingerprintSHA256(signer.PublicKey()), nil
 }
 
 // Import takes a private key in PEM or OpenSSH form, its algorithm and
