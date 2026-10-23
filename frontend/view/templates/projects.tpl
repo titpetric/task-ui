@@ -2,7 +2,7 @@
 <div class="page-head">
 	<div>
 		<h2>Projects</h2>
-		<p>The folders under the root. A folder with jobs appears in the sidebar. task-ui pulls a folder cloned from git before every run.</p>
+		<p>The folders under the root. task-ui pulls a git checkout before every run.</p>
 	</div>
 	<div class="actions">
 		<a class="btn btn-primary" href="/settings/projects/new">Add project</a>

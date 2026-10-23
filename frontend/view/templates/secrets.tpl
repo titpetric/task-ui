@@ -3,7 +3,7 @@
 <div class="page-head">
 	<div>
 		<h2>Secrets</h2>
-		<p>Secrets are variables added to the environment of runs. A workspace secret goes to every project in the workspace. A project secret goes only to that project, and replaces a workspace secret with the same name. After you save a value, task-ui never shows it again.</p>
+		<p>Variables for the environment of runs, per workspace or per project; a project secret replaces a workspace one of the same name. Values are never shown again.</p>
 	</div>
 	<div class="actions">
 		{{- if $keyed }}
