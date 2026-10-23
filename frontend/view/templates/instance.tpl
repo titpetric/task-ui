@@ -90,23 +90,56 @@
 	</div>{{ end }}
 
 {{/* The keys of the instance on its page: the encryption key and the
-     key git pulls with. */}}
+     key git pulls with, each with its actions behind a menu. */}}
 {{ define "instance-keys" }}
+{{- $git := "" }}{{ range .Keys }}{{ if .Git }}{{ $git = . }}{{ end }}{{ end }}
 <section class="block instance-section" id="keys">
 	<h3>Keys <small>in the key folder</small></h3>
 	<p class="section-intro">The encryption key of the instance's secrets and the SSH key git pulls and clones with. <a href="/settings/keys">Every key</a></p>
 	<div class="table-wrap">
-	<table class="table instance-table cards">
-		<colgroup><col class="c-key"><col class="c-value"><col class="c-var"><col class="c-desc"></colgroup>
+	<table class="table instance-keys cards">
+		<colgroup><col class="c-name"><col class="c-algo"><col class="c-size"><col><col class="c-purpose"><col class="c-actions"></colgroup>
+		<thead><tr><th>Name</th><th>Algorithm</th><th>Size (bits)</th><th>Fingerprint</th><th>Purpose</th><th class="actions" aria-label="Actions"></th></tr></thead>
 		<tbody>
-			<tr><td class="key">Encryption key</td><td class="value" data-label="Key">{{ with .InstanceKey }}<span class="mono">{{ .Name }}</span> <span class="faint">{{ .Fingerprint }}</span>{{ else }}<span class="badge bad">missing</span>{{ end }}</td>
-				<td class="actions">{{ if .Can "key/edit" }}<form class="inline" data-api="/api/keys/encrypt/rotate" data-method="POST" data-next="/settings/instance?rekeyed={rekeyed}#keys" data-confirm="{{ if .InstanceKey }}Regenerate the instance's encryption key? The current material stays as a backup, and task-ui re-encrypts the integrations' settings.{{ else }}Generate the instance's encryption key?{{ end }}" data-confirm-ok="{{ if .InstanceKey }}Regenerate{{ else }}Generate{{ end }}"><button class="btn btn-sm" type="submit">{{ if .InstanceKey }}Regenerate{{ else }}Generate{{ end }}</button></form>{{ if not .InstanceKey }} <a class="btn btn-sm" href="/settings/keys/upload">Upload</a>{{ end }}{{ end }}</td>
-				<td class="desc" data-label="About"><span>Encrypts the integrations' settings; never leaves task-ui.</span></td></tr>
-			<tr><td class="key">Git key</td><td class="value" data-label="Key">{{ with .GitKey }}<a class="mono" href="/settings/keys/{{ . }}">{{ . }}</a>{{ else }}<span class="faint">none: git uses ssh's own</span>{{ end }}</td>
-				<td class="actions">{{ if .Can "key/edit" }}<a class="btn btn-sm" href="/settings/keys">Choose</a>{{ end }}</td>
-				<td class="desc" data-label="About"><span>The SSH key that pulls and clones the checkouts; set it on a key's page.</span></td></tr>
+			{{- with .InstanceKey }}{{ template "instance-keyrow" (list $ . "encryption") }}
+			{{- else }}
+			<tr><td class="key">Encryption key</td><td colspan="4" data-label="Key"><span class="badge bad">missing</span> <span class="faint">The integrations' settings and the secrets need one.</span></td>
+				<td class="actions">{{ if $.Can "key/edit" }}<form class="inline" data-api="/api/keys/encrypt/rotate" data-method="POST" data-next="/settings/instance#keys" data-confirm="Generate the instance's encryption key?" data-confirm-ok="Generate"><button class="btn btn-sm" type="submit">Generate</button></form> <a class="btn btn-sm" href="/settings/keys/upload">Upload</a>{{ end }}</td></tr>
+			{{- end }}
+			{{- with $git }}{{ template "instance-keyrow" (list $ . "git + ssh") }}
+			{{- else }}
+			<tr><td class="key">Git key</td><td colspan="4" data-label="Key"><span class="faint">none: git uses ssh's own</span></td>
+				<td class="actions">{{ if $.Can "key/edit" }}<a class="btn btn-sm" href="/settings/keys">Choose</a>{{ end }}</td></tr>
+			{{- end }}
 		</tbody>
 	</table>
 	</div>
 </section>
 {{ end }}
+
+{{/* A key of the Instance page, (list page key purpose): its kind,
+     and Copy, Download and Rotate Key behind its menu. */}}
+{{ define "instance-keyrow" }}
+{{- $p := index . 0 }}{{ $k := index . 1 }}{{ $purpose := index . 2 }}
+<tr id="key-{{ $k.Name }}">
+	<td class="key"><a class="mono" href="/settings/keys/{{ $k.Name }}">{{ $k.Name }}</a></td>
+	<td class="mono" data-label="Algorithm">{{ $k.Algo }}</td>
+	<td class="mono" data-label="Size">{{ if $k.Bits }}{{ $k.Bits }}{{ else }}256{{ end }}</td>
+	<td class="mono fingerprint" data-label="Fingerprint">{{ $k.Fingerprint }}</td>
+	<td data-label="Purpose"><span class="badge">{{ $purpose }}</span></td>
+	<td class="actions">
+		<details class="more-menu row-more">
+			<summary class="btn-icon" title="Actions on {{ $k.Name }}" aria-label="Actions on {{ $k.Name }}"><svg class="ic"><use href="#i-more"/></svg></summary>
+			<div class="more-list" role="menu">
+				<button type="button" class="more-item" role="menuitem" data-copy="{{ $k.PublicKey }}"><svg class="ic"><use href="#i-copy"/></svg> Copy public key</button>
+				<button type="button" class="more-item" role="menuitem" data-download="{{ $k.PublicKey }}" data-filename="{{ $k.Name }}.pub"><svg class="ic"><use href="#i-download"/></svg> Download public key</button>
+				{{- if and ($p.Can "key/edit") $k.Encrypts }}
+				<form data-api="/api/keys/encrypt/rotate" data-method="POST" data-next="/settings/instance?rekeyed={rekeyed}#keys" data-confirm="Rotate the instance's encryption key {{ $k.Fingerprint }}? The current key stays as a backup, and task-ui re-encrypts the integrations' settings." data-confirm-ok="Rotate Key">
+					<button class="more-item" type="submit" role="menuitem"><svg class="ic"><use href="#i-rotate"/></svg> Rotate Key</button>
+				</form>
+				{{- end }}
+			</div>
+		</details>
+	</td>
+</tr>
+{{- end }}

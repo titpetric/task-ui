@@ -89,9 +89,9 @@ func TestKeys_Encryption(t *testing.T) {
 
 	assert.NoError(t, f.opts.Keys.SetGit(context.Background(), "task_ssh_ed25519"))
 	page := f.page(t, asAdmin, "/settings/instance")
-	assert.Contains(t, page, `<span class="mono">task_encryption_ed25519</span>`)
+	assert.Contains(t, page, `<a class="mono" href="/settings/keys/task_encryption_ed25519">task_encryption_ed25519</a>`)
 	assert.Contains(t, page, `<a class="mono" href="/settings/keys/task_ssh_ed25519">task_ssh_ed25519</a>`)
-	assert.Contains(t, page, ">Regenerate</button>")
+	assert.Contains(t, page, "Rotate Key</button>")
 }
 
 // A project that is a checkout with keys in its .ssh/ folder gets a

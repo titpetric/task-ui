@@ -6,6 +6,7 @@ import (
 
 	"github.com/titpetric/task-ui/frontend/view"
 	"github.com/titpetric/task-ui/internal/assert"
+	"github.com/titpetric/task-ui/keystore"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/runner"
 )
@@ -54,4 +55,32 @@ func TestInstance_Viewer(t *testing.T) {
 	assert.NotContains(t, body, `data-api="/api/instance"`)
 	assert.Contains(t, body, `<span class="mono">12</span>`)
 	assert.Contains(t, body, "in effect: 12")
+}
+
+// The keys of the Instance page: what each is, and its actions behind a
+// menu, the public half only.
+func TestInstance_Keys(t *testing.T) {
+	t.Parallel()
+	v, err := view.New()
+	assert.NoError(t, err)
+
+	p := admin(t)
+	p.Instance = &view.Instance{}
+	enc := keystore.Key{Name: "task_encryption_ed25519", Purpose: keystore.PurposeEncrypt, Algo: "ed25519", Fingerprint: "SHA256:enc", PublicKey: "ssh-ed25519 AAAAenc"}
+	git := keystore.Key{Name: "deploy_rsa4096", Purpose: keystore.PurposeSSH, Algo: "rsa", Bits: 4096, Fingerprint: "SHA256:git", PublicKey: "ssh-rsa AAAAgit", Git: true}
+	p.InstanceKey, p.Keys = &enc, []keystore.Key{enc, git}
+	var buf bytes.Buffer
+	assert.NoError(t, v.Render(&buf, "instance", p))
+	body := buf.String()
+	for _, want := range []string{
+		"<th>Name</th><th>Algorithm</th><th>Size (bits)</th><th>Fingerprint</th><th>Purpose</th>",
+		`<span class="badge">encryption</span>`, `<span class="badge">git &#43; ssh</span>`,
+		`data-label="Size">4096</td>`, `data-label="Size">256</td>`,
+		`data-copy="ssh-rsa AAAAgit"`, `data-download="ssh-ed25519 AAAAenc" data-filename="task_encryption_ed25519.pub"`,
+		`<details class="more-menu row-more">`, "Rotate Key",
+	} {
+		assert.Contains(t, body, want)
+	}
+	assert.NotContains(t, body, "Regenerate")
+	assert.NotContains(t, body, "PRIVATE KEY")
 }

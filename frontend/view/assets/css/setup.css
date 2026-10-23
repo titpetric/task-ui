@@ -158,3 +158,59 @@
     flex: 1 1 100%;
   }
 }
+
+/* The keys of the Instance step: what each key is, and its actions
+   behind a menu that opens over the table. */
+.instance-keys {
+  table-layout: fixed;
+
+  & col.c-name {
+    width: 28%;
+  }
+
+  & col.c-algo {
+    width: 6.5rem;
+  }
+
+  & col.c-size {
+    width: 6.5rem;
+  }
+
+  & col.c-purpose {
+    width: 8rem;
+  }
+
+  & col.c-actions {
+    width: 3.5rem;
+  }
+
+  & td.key {
+    font-size: var(--fs-md);
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  & td.key a {
+    color: var(--text);
+  }
+
+  & td.fingerprint {
+    color: var(--text-dim);
+    font-size: var(--fs-xs);
+    word-break: break-all;
+  }
+
+  & td.actions {
+    text-align: right;
+  }
+
+  & .row-more .more-list {
+    position: fixed;
+    right: auto;
+  }
+
+  & .backup-active {
+    display: block;
+    margin-top: 0.3rem;
+  }
+}

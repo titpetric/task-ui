@@ -39,8 +39,11 @@ does:
   artifact history and a link to Data retention.
 - **Paths**: the workspace folder, discovery, the data folder and how
   the host sees it, the key folder and the compose project.
-- **Keys**: the instance's encryption key and the git key (see
-  [Keys](#keys)).
+- **Keys**: the instance's encryption key and the git key, each with
+  its algorithm, size, fingerprint and purpose, `encryption` or
+  `git + ssh`. The **⋯** menu of a key copies its public key, downloads
+  it as `<name>.pub` and rotates the key (see [Keys](#keys)); it never
+  shows the private key.
 - **Integrations**: whether the Beszel integration lists the
   Inventory's hosts.
 
