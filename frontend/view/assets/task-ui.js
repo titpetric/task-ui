@@ -235,6 +235,7 @@
     stopClock();
     if (session.stop) session.stop();
     els.rec.hidden = true;
+    dialog.classList.remove("replaying");
     if (session.ws && session.ws.readyState <= 1) session.ws.close();
     if (session.term) session.term.dispose();
     if (session.onResize) window.removeEventListener("resize", session.onResize);
@@ -492,6 +493,7 @@
   function replay(id, title, who) {
     var s = open("Recording", title, who);
     s.replaying = true;
+    dialog.classList.add("replaying");
     var term = s.term;
     term.options.disableStdin = true;
     term.options.cursorBlink = false;
