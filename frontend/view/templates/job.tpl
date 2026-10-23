@@ -64,6 +64,7 @@
 				<td data-label="Result">{{ template "state" . }}</td>
 				<td class="actions">
 					<a class="btn btn-sm" href="/runs/{{ .ID }}" data-attach="{{ .ID }}">{{ if eq .State "running" }}Attach{{ else }}View{{ end }}</a>
+					{{- template "replay" . }}
 					{{- if and (eq .State "running") $can }}<button type="button" class="btn-icon danger" data-kill="{{ .ID }}" title="Kill the run" aria-label="Kill the run"><svg class="ic"><use href="#i-stop"/></svg></button>{{ end }}
 				</td>
 			</tr>

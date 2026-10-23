@@ -186,15 +186,22 @@
 </svg>
 {{ end }}
 
+{{- /* The replay button of a finished run with a recording: it plays
+     the recording in the run window at its recorded pace, and reads
+     nothing from the server but the recording. */}}
+{{ define "replay" }}{{ if and .CastPath (ne .State "running") }}<button type="button" class="btn btn-sm replay" data-replay="{{ .ID }}" data-replay-title="{{ .Name }}" data-replay-who="{{ .UserName }}" title="Replay the recording" aria-label="Replay the recording">|&gt;</button>{{ end }}{{ end }}
+
 {{ define "dialog" }}
 <dialog class="run" id="run-dialog" aria-labelledby="run-title">
 	<div class="run-head">
 		<span class="label" id="run-kind">Run</span>
 		<h3 id="run-title"></h3>
+		<span class="rec" id="run-rec" hidden>( * recording )</span>
 		<span class="spacer"></span>
 		<span class="dim" id="run-who"></span>
 		<span class="elapsed" id="run-elapsed"></span>
 		<span class="state" id="run-state"></span>
+		<button type="button" class="btn btn-sm" id="run-replay" title="Replay the recording" aria-label="Replay the recording" hidden>|&gt;</button>
 		<a class="btn btn-sm" id="run-page" href="/runs" hidden>Open run page</a>
 	</div>
 	<div class="run-body">
@@ -212,6 +219,8 @@
 		<button type="button" class="btn" id="run-again" hidden>Run again</button>
 		<button type="button" class="btn" id="run-stop" hidden>Stop</button>
 		<button type="button" class="btn btn-danger" id="run-kill" hidden>Kill</button>
+		<button type="button" class="btn" id="run-pause" hidden>Pause</button>
+		<button type="button" class="btn" id="run-restart" hidden>Restart</button>
 		<button type="button" class="btn" id="run-close" aria-label="Close">Close</button>
 	</div>
 </dialog>

@@ -93,6 +93,28 @@ dialog.run {
     color: var(--text-dim);
     font-size: var(--fs-sm);
   }
+
+  /* A replay of a recording says so after the title, blinking. */
+  & .rec {
+    color: var(--bad);
+    font-size: var(--fs-sm);
+    white-space: nowrap;
+    animation: rec-blink 1s step-end infinite;
+
+    &[hidden] {
+      display: none;
+    }
+  }
+}
+
+@keyframes rec-blink {
+  50% { opacity: 0.25; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .run-head .rec {
+    animation: none;
+  }
 }
 
 .run-body {
