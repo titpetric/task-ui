@@ -81,3 +81,13 @@ func TestFrame_Trim(t *testing.T) {
 	painted.Lines[5][0].BG = 4
 	assert.Equal(t, 6, painted.Trim(1).Rows)
 }
+
+// A text frame wraps its text to the width and shows no cursor.
+func TestTextFrame(t *testing.T) {
+	t.Parallel()
+	f := runner.TextFrame(12, 2, "the recording expired today")
+	assert.Equal(t, "the\nrecording\nexpired\ntoday", strings.TrimSpace(f.Text()))
+	assert.Equal(t, 4, f.Rows)
+	assert.NotContains(t, f.SVG(runner.DarkPalette), `opacity="0.6"`)
+	assert.Equal(t, 80, runner.TextFrame(0, 1, "x").Cols)
+}

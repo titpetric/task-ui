@@ -12,14 +12,16 @@ user's profile or a project's configure page, end with the footer of
 their step. The trail lists only the steps you may open.
 
 1. [Instance](#instance): what the server runs with.
-2. [Keys](#keys): the encryption keys and the SSH keys.
-3. [Secrets](#secrets), which need an encryption key.
-4. [Integrations](#integrations): Claude Code and Beszel.
-5. [Users](#users): who may sign in.
-6. [Permissions](#permissions): what each role may do.
-7. [Workflows](workflows.md): chains of jobs.
-8. [Workspaces](#workspaces): checkouts that hold projects.
-9. [Projects](#projects): the folders under the root.
+2. [Data retention](#data-retention): how long the instance keeps what it
+   records.
+3. [Keys](#keys): the encryption keys and the SSH keys.
+4. [Secrets](#secrets), which need an encryption key.
+5. [Integrations](#integrations): Claude Code and Beszel.
+6. [Users](#users): who may sign in.
+7. [Permissions](#permissions): what each role may do.
+8. [Workflows](workflows.md): chains of jobs.
+9. [Workspaces](#workspaces): checkouts that hold projects.
+10. [Projects](#projects): the folders under the root.
 
 ![Settings](../assets/settings-dark.png)
 
@@ -36,6 +38,41 @@ never a password, token or key. Anyone who may open a step of the
 settings may open it.
 
 ![Instance](../assets/instance-dark.png)
+
+## Data retention
+
+`/settings/retention` holds how long the instance keeps what it records,
+and how much of it, one block per kind of data:
+
+| Block | What goes | What stays | Keep for, at the start |
+|-------|-----------|------------|------------------------|
+| **Run recordings** | the `.cast` file of a finished run | the run, its details and its artifacts; its page says the recording expired | 31 days |
+| **Artifact history** | earlier versions of the artifact tree's files, with their records | the latest version of every file in the tree | Never |
+| **Secret read log** | which run got which secret | the last 1000 reads of each secret, which the log keeps whatever the rule | Never |
+
+Each block shows what it holds, the count, the size and the oldest,
+and two rules:
+
+- **Keep for**: 24 hours, 7 days, 31 days or Never.
+- **Size limit**: none at the start; 100 MB, 1 GB, 10 GB, or any size
+  in the field, such as `500MB` or `2GB`. Beside it, the page estimates
+  how many runs, versions or reads the size holds, at the average size
+  of what there is, as you type.
+
+Past either rule the oldest go first, until both hold. A recording of
+a run in progress, or of a step of a workflow run in progress, stays
+and counts towards the limit. A run of `internal/*`, from before
+prompts had folders of their own, falls under the same rules. A file
+deleted from the tree keeps its versions in the history until they
+expire.
+
+Anyone who may open a step of the settings reads the page; an admin
+saves the rules, with `PUT /api/retention`, and **Clean up now** starts
+`@cleanup` at once, as a run whose output shows what went. A save
+takes effect at the next run of `@cleanup`: task-ui schedules it
+`@daily`, at midnight, as the first admin, once, when it first starts;
+the [Schedules](scheduled.md#cleanup) page changes or deletes that
+schedule.
 
 
 ## Keys

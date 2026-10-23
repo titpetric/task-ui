@@ -67,3 +67,17 @@ func TestSecretReadStorage(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, 0, rows)
 }
+
+// DeleteThrough removes the reads up to one, oldest first.
+func TestSecretReadStorage_DeleteThrough(t *testing.T) {
+	t.Parallel()
+	reads := storage.NewSecretReadStorage(newDB(t))
+	ctx := context.Background()
+	batch := []model.SecretRead{{SecretID: "s1", RunID: "r1"}, {SecretID: "s1", RunID: "r2"}, {SecretID: "s2", RunID: "r3"}}
+	assert.NoError(t, reads.Record(ctx, batch))
+	assert.NoError(t, reads.DeleteThrough(ctx, batch[1].ID))
+	left, err := reads.All(ctx)
+	assert.NoError(t, err)
+	assert.Len(t, left, 1)
+	assert.Equal(t, batch[2].ID, left[0].ID)
+}

@@ -32,6 +32,7 @@ import (
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/note"
 	"github.com/titpetric/task-ui/recording"
+	"github.com/titpetric/task-ui/retention"
 	"github.com/titpetric/task-ui/runner"
 	"github.com/titpetric/task-ui/secret"
 	"github.com/titpetric/task-ui/sshkey"
@@ -182,6 +183,7 @@ func newFixture(t *testing.T) *fixture {
 	flows.Hosts = f.opts.HostRuns
 	f.opts.Summarizer = &claude.Summarizer{Command: fakeClaude(t), Timeout: 10 * time.Second}
 	f.opts.Summaries = storage.NewRunSummaryStorage(db)
+	f.opts.Cleaner = &retention.Cleaner{Values: storage.NewSettingStorage(db), Runs: runs, Artifacts: artifacts, Store: tree, SecretReads: storage.NewSecretReadStorage(db), RecordingsDir: recordings.Root}
 	f.opts.SecretReads = storage.NewSecretReadStorage(db)
 	f.opts.Tokens = storage.NewUserAuthTokenStorage(db)
 	// AddUser stands in for the password file: a new name becomes a runner.

@@ -43,6 +43,23 @@ host with an ssh login, and the command as its `args`, through
 
 Its user needs the `hosts` permission; `*` starts a batch, a run a host.
 
+## Cleanup
+
+`@cleanup` of the root, `_`, is `task-ui cleanup`: it applies the
+[Data retention](settings.md#data-retention) rules. It removes the
+recording files of finished runs, and only those, the earlier versions
+of the artifact tree, never the latest of a file in the tree, and the
+reads of the secret read log, the oldest first, and prints, for each
+kind, what it removed and what stays. After it removed rows it
+vacuums the database and prints its size before and after. With
+`--dry-run` as its arguments it prints what would go and changes
+nothing.
+
+When task-ui first starts it schedules `@cleanup` `@daily` as the first
+admin, once: the schedule is yours to change, disable or delete, and
+task-ui adds no other. Admins alone run `@cleanup`, by hand, on a
+schedule, or as a workflow step.
+
 ## How a scheduled run runs
 
 It starts in the background as the schedule's user, with their

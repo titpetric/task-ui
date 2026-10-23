@@ -204,3 +204,30 @@ func (s *RunStorage) KillActive(ctx context.Context) (int64, error) {
 	}
 	return db.RowsAffected(), nil
 }
+
+// Recorded returns the runs with a recording, oldest first, for the
+// data retention rules: the recording files are theirs to measure.
+func (s *RunStorage) Recorded(ctx context.Context) ([]model.Run, error) {
+	return client(s.db).Select[model.Run](ctx, "SELECT * FROM run WHERE cast_path != '' ORDER BY started_at ASC, id ASC")
+}
+
+// Busy returns the IDs of the runs whose recordings stay whatever the
+// retention rules say: the runs in progress, and every step run of a
+// workflow run in progress, whose prompt reads their output.
+func (s *RunStorage) Busy(ctx context.Context) (map[string]bool, error) {
+	ids, err := client(s.db).Select[runID](ctx, `SELECT id FROM run WHERE state = ?
+		UNION SELECT run_id AS id FROM workflow_run_step WHERE run_id != '' AND workflow_run_id IN (SELECT id FROM workflow_run WHERE state = ?)`, model.StateRunning, model.StateRunning)
+	if err != nil {
+		return nil, err
+	}
+	busy := map[string]bool{}
+	for _, id := range ids {
+		busy[id.ID] = true
+	}
+	return busy, nil
+}
+
+// runID is a run's ID, as Busy reads it.
+type runID struct {
+	ID string `db:"id"`
+}

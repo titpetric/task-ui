@@ -11,6 +11,7 @@ import (
 	"github.com/titpetric/task-ui/claude"
 	"github.com/titpetric/task-ui/markdown"
 	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/recording"
 	"github.com/titpetric/task-ui/runner"
 )
 
@@ -61,6 +62,10 @@ func (h *Handlers) summarizeRun(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	output, err := h.runOutput(run)
+	if errors.Is(err, recording.ErrExpired) {
+		fail(w, http.StatusGone, recording.Expired)
+		return
+	}
 	if err != nil {
 		fail(w, http.StatusNotFound, "the run left no output to summarize")
 		return

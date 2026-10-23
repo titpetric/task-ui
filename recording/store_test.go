@@ -68,6 +68,12 @@ func TestStore_Read(t *testing.T) {
 
 	_, err = s.Read(&model.Run{})
 	assert.ErrorIs(t, err, os.ErrNotExist)
-	_, err = s.Read(&model.Run{CastPath: "infra/plan/gone.cast"})
+	gone := &model.Run{CastPath: "infra/plan/gone.cast", State: model.StateOK}
+	_, err = s.Read(gone)
 	assert.ErrorIs(t, err, os.ErrNotExist)
+	assert.ErrorIs(t, err, recording.ErrExpired)
+	assert.True(t, s.IsExpired(gone))
+	assert.False(t, s.IsExpired(run))
+	assert.False(t, s.IsExpired(&model.Run{}))
+	assert.False(t, s.IsExpired(&model.Run{CastPath: gone.CastPath, State: model.StateRunning}))
 }

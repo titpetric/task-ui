@@ -27,7 +27,7 @@ func TestSettings(t *testing.T) {
 	assert.Contains(t, body, "4 users")
 	assert.Contains(t, body, f.opts.Keys.Dir)
 	assert.Contains(t, body, `<td class="num dim">1</td>`)
-	order := []string{"/settings/instance", "/settings/keys", "/settings/secrets", "/settings/integrations", "/settings/users", "/settings/permissions", "/workflows", "/settings/workspaces", "/settings/projects"}
+	order := []string{"/settings/instance", "/settings/retention", "/settings/keys", "/settings/secrets", "/settings/integrations", "/settings/users", "/settings/permissions", "/workflows", "/settings/workspaces", "/settings/projects"}
 	at := -1
 	for _, href := range order {
 		i := strings.Index(body, `<td class="key nowrap"><a href="`+href+`"`)
@@ -53,7 +53,7 @@ func TestSettings_Instance(t *testing.T) {
 	assert.Contains(t, body, `<span class="badge ok">on</span></td><td class="desc dim">The Beszel integration`)
 	assert.NotContains(t, body, "beszel-secret-1")
 	assert.NotContains(t, body, "sk-claude-1")
-	assert.Contains(t, body, `rel="next">Next: Keys<svg`)
+	assert.Contains(t, body, `rel="next">Next: Data retention<svg`)
 
 	assert.Equal(t, http.StatusForbidden, f.get(t, asViewer, "/settings/instance").Status)
 }
@@ -68,8 +68,8 @@ func TestSettings_Footer(t *testing.T) {
 	assert.NoError(t, f.opts.Workspaces.Create(ctx, &model.Workspace{Folder: "acme", Title: "Acme"}))
 
 	for path, want := range map[string][2]string{
-		"/settings/keys":            {"Instance", "Secrets"},
-		"/settings/keys/generate":   {"Instance", "Secrets"},
+		"/settings/keys":            {"Data retention", "Secrets"},
+		"/settings/keys/generate":   {"Data retention", "Secrets"},
 		"/settings/secrets":         {"Keys", "Integrations"},
 		"/settings/integrations":    {"Secrets", "Users"},
 		"/settings/users":           {"Integrations", "Permissions"},

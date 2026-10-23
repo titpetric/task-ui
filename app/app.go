@@ -111,6 +111,9 @@ func (a *App) prepare(ctx context.Context) error {
 	if err := a.autoLogin(ctx); err != nil {
 		return err
 	}
+	if err := a.seedCleanup(ctx); err != nil {
+		return err
+	}
 	if err := storage.NewWorkspaceStorage(a.DB).EnsureDefault(ctx); err != nil {
 		return err
 	}
@@ -257,6 +260,8 @@ func (a *App) wire(version string) error {
 		self = ComposeProject("docker")
 	}
 	store := &artifactstore.Store{Dir: cfg.ArtifactTree(), Keep: cfg.ArtifactHistory}
+	cleaner := NewCleaner(db, cfg)
+	cleaner.Store = store
 	summaries := storage.NewRunSummaryStorage(a.DB)
 	secretReads := storage.NewSecretReadStorage(a.DB)
 	a.Runner = runner.New(runner.Options{
@@ -321,13 +326,14 @@ func (a *App) wire(version string) error {
 		Runner: a.Runner, Catalogue: a.Catalogue, Git: g, Keys: keys, KeyPolicies: keyPolicies, Env: env, Recordings: recordings, Root: cfg.Root, Board: a.Board,
 		Integrations: integrations, Hosts: hosts, HostRuns: hostRuns, Summarizer: &claude.Summarizer{Timeout: 3 * time.Minute},
 		AddUser: addUser, RemoveUser: removeUser, Tokens: a.Guard.Tokens, Now: cfg.Clock(), Summaries: summaries, Version: version,
+		Cleaner: cleaner,
 	})
 	pages, err := frontend.New(frontend.Options{
 		Guard: a.Guard, Auth: access.NewAuthenticator(a.Users, a.Emails, a.Passwords), Users: a.Users, Projects: projects, Workspaces: workspaces, Runs: runs, Artifacts: artifacts, Schedules: schedules, Secrets: secrets, SecretReads: secretReads,
 		FolderRefs: refs, WorkspaceKeys: keyring, KeyGrants: grants,
 		Workflows: workflows, WorkflowRuns: workflowRuns, Flows: a.Workflows,
 		Runner: a.Runner, Catalogue: a.Catalogue, Git: g, Keys: keys, HomeKeys: homeKeys, KeyPolicies: keyPolicies, Env: env, Recordings: recordings, Root: cfg.Root, Version: version, Now: cfg.Clock(),
-		ArtifactStore: store, Disk: &diskusage.Meter{TTL: 10 * time.Minute}, Board: a.Board, ComposeProject: self,
+		ArtifactStore: store, Disk: &diskusage.Meter{TTL: 10 * time.Minute}, Board: a.Board, ComposeProject: self, Cleaner: cleaner,
 		Integrations: integrations, Hosts: hosts,
 		SSH: prober, AddUsers: a.UsersFile != nil, BaseURL: cfg.URL,
 		Instance: &view.Instance{

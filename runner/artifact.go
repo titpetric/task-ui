@@ -49,16 +49,19 @@ func (m *Manager) collectArtifacts(ctx context.Context, session *Session) {
 		_ = os.RemoveAll(dir)
 		return
 	}
-	commit := m.storeArtifacts(ctx, run, dir)
-	for _, artifact := range found {
-		if commit != "" {
-			artifact.Path, artifact.CommitID = artifact.Name, commit
+	record := func(commit string) error {
+		for _, artifact := range found {
+			if commit != "" {
+				artifact.Path, artifact.CommitID = artifact.Name, commit
+			}
+			if err := m.opts.Artifacts.Create(ctx, artifact); err != nil {
+				slog.Warn("artifact not recorded", "run", run.ID, "name", artifact.Name, "err", err)
+			}
 		}
-		if err := m.opts.Artifacts.Create(ctx, artifact); err != nil {
-			slog.Warn("artifact not recorded", "run", run.ID, "name", artifact.Name, "err", err)
-		}
+		return nil
 	}
-	if commit == "" {
+	if m.storeArtifacts(ctx, run, dir, record) == "" {
+		_ = record("")
 		return
 	}
 	_ = os.RemoveAll(dir)
@@ -68,15 +71,14 @@ func (m *Manager) collectArtifacts(ctx context.Context, session *Session) {
 // squashArtifacts squashes the store's history when it grows past what
 // it keeps, and the records with it.
 func (m *Manager) squashArtifacts(ctx context.Context) {
-	head, err := m.opts.ArtifactStore.Squash(ctx)
-	if err != nil {
-		slog.Warn("artifact history not squashed", "err", err)
-		return
-	}
-	if head != "" {
+	_, err := m.opts.ArtifactStore.SquashThen(ctx, func(head string) error {
 		if err := m.opts.Artifacts.Squash(ctx, head); err != nil {
 			slog.Warn("artifact versions not updated after the squash", "err", err)
 		}
+		return nil
+	})
+	if err != nil {
+		slog.Warn("artifact history not squashed", "err", err)
 	}
 }
 
@@ -88,28 +90,28 @@ func (m *Manager) WriteArtifact(ctx context.Context, rel string, data []byte, us
 	if m.opts.ArtifactStore == nil || m.opts.Artifacts == nil {
 		return nil, ErrNotFound
 	}
-	commit, err := m.opts.ArtifactStore.Write(ctx, rel, data, user)
-	if err != nil {
-		return nil, err
-	}
 	artifact := &model.Artifact{
 		Name:        rel,
 		Path:        rel,
 		ByteSize:    int64(len(data)),
 		ContentType: ContentType(rel),
-		CommitID:    commit,
 		UserName:    user,
 	}
-	if err := m.opts.Artifacts.Create(ctx, artifact); err != nil {
+	_, err := m.opts.ArtifactStore.WriteThen(ctx, rel, data, user, func(commit string) error {
+		artifact.CommitID = commit
+		return m.opts.Artifacts.Create(ctx, artifact)
+	})
+	if err != nil {
 		return nil, err
 	}
 	m.squashArtifacts(ctx)
 	return artifact, nil
 }
 
-// storeArtifacts commits a run's directory into the artifact store and
-// returns the commit, or "" without a store or when it fails.
-func (m *Manager) storeArtifacts(ctx context.Context, run *model.Run, dir string) string {
+// storeArtifacts commits a run's directory into the artifact store,
+// records the artifacts with record while it holds the tree, and returns
+// the commit, or "" without a store or when it fails.
+func (m *Manager) storeArtifacts(ctx context.Context, run *model.Run, dir string, record func(commit string) error) string {
 	if m.opts.ArtifactStore == nil {
 		return ""
 	}
@@ -117,7 +119,7 @@ func (m *Manager) storeArtifacts(ctx context.Context, run *model.Run, dir string
 	if author == "" {
 		author = "task-ui"
 	}
-	commit, err := m.opts.ArtifactStore.Ingest(ctx, dir, run.Folder+"/"+run.Job+" run "+run.ID, author)
+	commit, err := m.opts.ArtifactStore.IngestThen(ctx, dir, run.Folder+"/"+run.Job+" run "+run.ID, author, record)
 	if err != nil || commit == "" {
 		slog.Warn("artifacts not stored", "run", run.ID, "err", err)
 		return ""

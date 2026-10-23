@@ -71,6 +71,12 @@ unless set), task-ui squashes it to one commit of the latest files, and
 the earlier versions and their records go. See
 [Running the server](../running.md).
 
+**Artifact history** on the [Data retention](settings.md#data-retention)
+settings page keeps the earlier versions for an age and within a size:
+`@cleanup` drops the oldest commits of the history, and the versions
+only they held, until both rules hold. The latest version of every file
+in the tree stays.
+
 ---
 
 Previous: [Runs](runs.md) · Next: [Scheduled](scheduled.md) · [Contents](../README.md)

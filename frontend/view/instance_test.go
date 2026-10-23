@@ -23,6 +23,6 @@ func TestInstance(t *testing.T) {
 	assert.Contains(t, body, "/srv/root")
 	assert.Contains(t, body, "@claude-note")
 	assert.Contains(t, body, `class="setup-trail"`)
-	assert.Contains(t, body, `rel="next">Next: Keys<svg`)
+	assert.Contains(t, body, `rel="next">Next: Data retention<svg`)
 	assert.NotContains(t, body, `rel="prev"`)
 }

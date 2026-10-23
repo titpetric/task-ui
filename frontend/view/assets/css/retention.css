@@ -1,0 +1,76 @@
+/* Settings, Data retention: a block per kind of data, a row of ages to
+   pick one of, and a size field with its presets and estimate. */
+.retention-block {
+  & > p {
+    font-size: var(--fs-data);
+    line-height: 1.5;
+  }
+
+  & fieldset.field {
+    margin: 0.8rem 0 0;
+    padding: 0;
+    border: 0;
+  }
+
+  & fieldset[disabled] {
+    opacity: 0.7;
+  }
+
+  & small[data-estimate] {
+    display: block;
+    min-height: 1.2em;
+    margin-top: 0.3rem;
+  }
+}
+
+.segmented {
+  display: inline-flex;
+  flex-wrap: wrap;
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius);
+  overflow: hidden;
+
+  & label {
+    position: relative;
+    cursor: pointer;
+  }
+
+  & input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  & span {
+    display: block;
+    padding: 0.35rem 0.8rem;
+    font-size: var(--fs-button);
+    color: var(--text-dim);
+    border-inline-end: 1px solid var(--line-2);
+  }
+
+  & label:last-child span {
+    border-inline-end: 0;
+  }
+
+  & input:checked + span {
+    color: var(--signal-ink);
+    background: var(--signal);
+  }
+
+  & input:focus-visible + span {
+    outline: 2px solid var(--signal);
+    outline-offset: -2px;
+  }
+}
+
+.size-limit {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+
+  & input {
+    width: 9rem;
+  }
+}

@@ -23,3 +23,9 @@ func TestRun(t *testing.T) {
 	assert.True(t, run.IsScheduled())
 	assert.False(t, run.IsForced())
 }
+
+// A run whose recording expired says so in place of its output.
+func TestRun_ExpiredText(t *testing.T) {
+	t.Parallel()
+	assert.Contains(t, view.Run{Expired: true}.ExpiredText(), "expired under the Data retention settings")
+}

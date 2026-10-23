@@ -14,6 +14,7 @@ import (
 	"github.com/titpetric/task-ui/integration"
 	"github.com/titpetric/task-ui/note"
 	"github.com/titpetric/task-ui/recording"
+	"github.com/titpetric/task-ui/retention"
 	"github.com/titpetric/task-ui/runner"
 	"github.com/titpetric/task-ui/secret"
 	"github.com/titpetric/task-ui/sshkey"
@@ -96,4 +97,7 @@ type Options struct {
 	// Instance is what the server runs with, for the Instance step of
 	// the settings; nil shows an empty page.
 	Instance *view.Instance
+	// Cleaner measures what the instance keeps and holds the Data
+	// retention rules; nil shows an empty page.
+	Cleaner *retention.Cleaner
 }

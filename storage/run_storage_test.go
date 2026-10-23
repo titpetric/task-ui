@@ -259,3 +259,46 @@ func TestRunStorage_ListPages(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Len(t, missing, 0)
 }
+
+// Recorded lists the runs with a recording, oldest first; Busy names the
+// runs in progress and the steps of a workflow run in progress.
+func TestRunStorage_Recorded(t *testing.T) {
+	t.Parallel()
+	db := newDB(t)
+	runs := storage.NewRunStorage(db)
+	ctx := context.Background()
+	older := time.Now().Add(-time.Hour)
+	first := &model.Run{Folder: "infra", Job: "plan", State: model.StateOK, CastPath: "a.cast", StartedAt: &older}
+	second := &model.Run{Folder: "infra", Job: "plan", State: model.StateRunning, CastPath: "b.cast"}
+	none := &model.Run{Folder: "infra", Job: "plan", State: model.StateOK}
+	for _, run := range []*model.Run{second, first, none} {
+		assert.NoError(t, runs.Create(ctx, run))
+	}
+	recorded, err := runs.Recorded(ctx)
+	assert.NoError(t, err)
+	assert.Len(t, recorded, 2)
+	assert.Equal(t, first.ID, recorded[0].ID)
+}
+
+func TestRunStorage_Busy(t *testing.T) {
+	t.Parallel()
+	db := newDB(t)
+	runs := storage.NewRunStorage(db)
+	flows := storage.NewWorkflowRunStorage(db)
+	ctx := context.Background()
+	running := &model.Run{Folder: "infra", Job: "plan"}
+	step := &model.Run{Folder: "infra", Job: "plan", State: model.StateOK}
+	done := &model.Run{Folder: "infra", Job: "plan", State: model.StateOK}
+	for _, run := range []*model.Run{running, step, done} {
+		assert.NoError(t, runs.Create(ctx, run))
+	}
+	flow := &model.WorkflowRun{WorkflowID: "w1", Name: "ship"}
+	assert.NoError(t, flows.Create(ctx, flow, []model.WorkflowStep{{Folder: "infra", Job: "plan"}}))
+	steps, _ := flows.Steps(ctx, flow.ID)
+	steps[0].RunID = step.ID
+	assert.NoError(t, flows.UpdateStep(ctx, &steps[0]))
+
+	busy, err := runs.Busy(ctx)
+	assert.NoError(t, err)
+	assert.Equal(t, map[string]bool{running.ID: true, step.ID: true}, busy)
+}

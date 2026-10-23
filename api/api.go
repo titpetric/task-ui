@@ -25,6 +25,7 @@ import (
 	"github.com/titpetric/task-ui/hours"
 	"github.com/titpetric/task-ui/integration"
 	"github.com/titpetric/task-ui/note"
+	"github.com/titpetric/task-ui/recording"
 	"github.com/titpetric/task-ui/runner"
 	"github.com/titpetric/task-ui/secret"
 	"github.com/titpetric/task-ui/storage"
@@ -90,6 +91,8 @@ func (h *Handlers) Routes() http.Handler {
 	r.Get("/workflow-runs/{id}/summary", h.workflowRunSummary)
 	r.Post("/workflow-runs/{id}/summary", h.summarizeWorkflowRun)
 	r.Get("/sse/{topic}", h.sse)
+
+	r.Put("/retention", h.saveRetention)
 
 	r.Get("/integrations", h.listIntegrations)
 	r.Put("/integrations/{id}", h.saveIntegration)
@@ -207,6 +210,8 @@ func failErr(w http.ResponseWriter, err error) {
 // statusOf maps the errors the packages return to HTTP statuses.
 func statusOf(err error) int {
 	switch {
+	case errors.Is(err, recording.ErrExpired):
+		return http.StatusGone
 	case errors.Is(err, storage.ErrNotFound), errors.Is(err, runner.ErrNotFound), errors.Is(err, fs.ErrNotExist), errors.Is(err, note.ErrNoPrompt):
 		return http.StatusNotFound
 	case errors.Is(err, runner.ErrBusy), errors.Is(err, runner.ErrMoving):

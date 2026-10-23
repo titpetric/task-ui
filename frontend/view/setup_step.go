@@ -3,6 +3,7 @@ package view
 // The steps of the settings, by name, as a page's Step names its own.
 const (
 	StepInstance     = "Instance"
+	StepRetention    = "Data retention"
 	StepKeys         = "Keys"
 	StepSecrets      = "Secrets"
 	StepIntegrations = "Integrations"
@@ -29,8 +30,8 @@ type SetupStep struct {
 }
 
 // setupOrder is the order of the settings, the one list the Settings
-// page and the footer of every step read: the instance first, then the
-// keys and the secrets they encrypt, the integrations, the users and
+// page and the footer of every step read: the instance first and how
+// long it keeps what it records, then the keys and the secrets they encrypt, the integrations, the users and
 // what they may do, the workflows, and the workspaces and projects
 // they run in. Opens says whether a user may open the step's page.
 var setupOrder = []struct {
@@ -38,6 +39,7 @@ var setupOrder = []struct {
 	opens func(p *Page) bool
 }{
 	{SetupStep{Name: StepInstance, Href: "/settings/instance", Icon: "settings", Desc: "What the server runs with: its link, version, folders, admins and viewers, and the agent job. Read only here: the environment sets it."}, (*Page).CanSettings},
+	{SetupStep{Name: StepRetention, Href: "/settings/retention", Icon: "clock", Desc: "How long the instance keeps run recordings, earlier artifact versions and the secret read log, and how much of each; the oldest go first."}, (*Page).CanSettings},
 	{SetupStep{Name: StepKeys, Href: "/settings/keys", Icon: "key", Desc: "The encryption key of each workspace, which stores its secrets, and the SSH keys that connect runs and git to hosts."}, func(p *Page) bool { return p.Can("key/view") }},
 	{SetupStep{Name: StepSecrets, Href: "/settings/secrets", Icon: "secret", Desc: "Variables that runs in a workspace get in their environment, for every project in it or for one. Secrets need an encryption key."}, func(p *Page) bool { return p.Can("secret/view") }},
 	{SetupStep{Name: StepIntegrations, Href: "/settings/integrations", Icon: "plug", Desc: "The services task-ui talks to, Claude Code and Beszel, with their API keys and tokens, encrypted with the instance key."}, func(p *Page) bool { return p.Can("integration/view") }},

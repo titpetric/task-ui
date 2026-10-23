@@ -46,7 +46,7 @@ func TestMigrate(t *testing.T) {
 
 	var count int
 	assert.NoError(t, db.GetContext(ctx, &count, "SELECT COUNT(*) FROM migrations WHERE project = ?", storage.Project))
-	assert.Equal(t, 44, count)
+	assert.Equal(t, 45, count)
 }
 
 func TestOpenAndMigrate(t *testing.T) {
@@ -64,4 +64,10 @@ func TestErrNotFound(t *testing.T) {
 	t.Parallel()
 	assert.Error(t, storage.ErrNotFound)
 	assert.Equal(t, "not found", storage.ErrNotFound.Error())
+}
+
+// Vacuum works on a live database.
+func TestVacuum(t *testing.T) {
+	t.Parallel()
+	assert.NoError(t, storage.Vacuum(context.Background(), newDB(t)))
 }

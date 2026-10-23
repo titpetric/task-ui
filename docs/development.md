@@ -49,6 +49,8 @@ domains, the domains to `model` and `storage`, `model` to nothing of ours.
 | `integration` | the settings of the services task-ui talks to, encrypted with the instance key |
 | `beszel`    | the client of a Beszel hub, for the host inventory                           |
 | `artifactstore` | the files runs leave, as one tree with its history in git                    |
+| `retention` | the Data retention rules and `task-ui cleanup`, which applies them           |
+| `channel`   | `task-ui channel`, the Claude Code channel of the notes that name a user     |
 | `event`     | the in-memory bus the pages follow, by topic                                 |
 | `sshagent`  | an ssh agent on a socket of its own, serving keys from memory to a run       |
 | `sshprobe`  | who task-ui signs in to a host as over ssh                                   |
