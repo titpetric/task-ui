@@ -302,7 +302,12 @@ func (r *Runner) walk(ctx context.Context, a *active, steps []Step, rows []model
 		case step.Workflow != nil:
 			state, row.WorkflowRunRef, message = r.nested(ctx, step.Workflow, user)
 		default:
-			state, row.RunID, message = r.step(ctx, step, user)
+			// The step's row names its run once it starts, so the
+			// run window follows the workflow from run to run.
+			state, row.RunID, message = r.step(ctx, step, user, func(runID string) {
+				row.RunID = runID
+				r.saveStep(store, row)
+			})
 		}
 		row.State = state
 		r.saveStep(store, row)
@@ -324,11 +329,12 @@ func (r *Runner) walk(ctx context.Context, a *active, steps []Step, rows []model
 	r.publish(run.WorkflowID, "done", RunEvent{RunID: run.ID, WorkflowID: run.WorkflowID, Name: run.Name, State: run.State, Message: run.Message, UserName: run.UserName})
 }
 
-// step starts one job and waits for it. When the job is already
-// running, step waits for that run and then starts the job again; a stop ends the run in progress.
-func (r *Runner) step(ctx context.Context, step Step, user *model.User) (state, runID, message string) {
+// step starts one job and waits for it, and tells started the run once
+// it starts. When the job is already running, step waits for that run
+// and then starts the job again; a stop ends the run in progress.
+func (r *Runner) step(ctx context.Context, step Step, user *model.User, started func(runID string)) (state, runID, message string) {
 	if step.Job.IsHost() {
-		return r.hosts(ctx, step, user)
+		return r.hosts(ctx, step, user, started)
 	}
 	for {
 		if ctx.Err() != nil {
@@ -348,6 +354,7 @@ func (r *Runner) step(ctx context.Context, step Step, user *model.User) (state, 
 		if err != nil {
 			return model.StateFailed, "", err.Error()
 		}
+		started(session.ID())
 		select {
 		case <-session.Done():
 		case <-ctx.Done():
@@ -362,7 +369,7 @@ func (r *Runner) step(ctx context.Context, step Step, user *model.User) (state, 
 // hosts starts a step of @host:<host> and waits for its runs: one on
 // the host, or a batch for *. The step ends ok when every run did, else as the
 // first that did not, and keeps the first run; a stop ends the runs.
-func (r *Runner) hosts(ctx context.Context, step Step, user *model.User) (state, runID, message string) {
+func (r *Runner) hosts(ctx context.Context, step Step, user *model.User, started func(runID string)) (state, runID, message string) {
 	if r.Hosts == nil {
 		return model.StateFailed, "", "no hosts on this instance"
 	}
@@ -372,6 +379,7 @@ func (r *Runner) hosts(ctx context.Context, step Step, user *model.User) (state,
 	if err != nil {
 		return model.StateFailed, "", err.Error()
 	}
+	started(sessions[0].ID())
 	state = model.StateOK
 	for _, session := range sessions {
 		select {

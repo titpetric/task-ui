@@ -48,7 +48,8 @@ replaces it. As many runs go at once as the machine has CPUs, and a run
 over that waits, queued, for a free slot, in order; terminals, `@shell`,
 `@claude` and interactive jobs, take none. **Run again** starts the same job, directory and arguments.
 **|>summarize** runs a job and has Claude summarise the run on its page
-when it ends. A job names its current step with its terminal title,
+when it ends; the run window follows the chain to the summary's run, as
+it does a workflow run's steps, with Previous and Next in its foot. A job names its current step with its terminal title,
 `printf '\033]0;building images\007'`, which shows beside the run on
 its window, the dashboard and the runs list, and the run keeps the last.
 A run's page takes prompts about the run. The Data retention settings

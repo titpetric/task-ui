@@ -52,6 +52,9 @@ type RunView struct {
 	CanInput bool `json:"can_input"`
 	// InputBy names who took input on the run in progress, if anyone.
 	InputBy string `json:"input_by,omitempty"`
+	// Chain is the chain of runs the run is part of, on GET of the run:
+	// a Run and summarize, a workflow run or a batch of host runs.
+	Chain *RunChain `json:"chain,omitempty"`
 }
 
 // view decorates a run row with what the runner knows, for the user
@@ -173,6 +176,7 @@ func (h *Handlers) startRun(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if req.Summarize {
+		h.summarizing.Store(session.ID(), true)
 		go h.summarizeAfter(user, session)
 	}
 	writeJSON(w, http.StatusCreated, h.view(r, session.Snapshot()))
@@ -214,6 +218,7 @@ func (h *Handlers) summarizes(w http.ResponseWriter, r *http.Request, job *folde
 // before the run ends asks nothing.
 func (h *Handlers) summarizeAfter(user *model.User, session *runner.Session) {
 	<-session.Done()
+	defer h.summarizing.Delete(session.ID())
 	if _, err := h.opts.Board.SummarizeRun(context.Background(), user, session.ID()); err != nil {
 		slog.Warn("run summary not asked", "run", session.ID(), "err", err)
 	}
@@ -240,7 +245,9 @@ func (h *Handlers) getRun(w http.ResponseWriter, r *http.Request) {
 		failErr(w, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, h.view(r, *run))
+	v := h.view(r, *run)
+	v.Chain = h.chain(r.Context(), v.Run)
+	writeJSON(w, http.StatusOK, v)
 }
 
 // endRun stops or kills a run, for a user allowed to run its job, or

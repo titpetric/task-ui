@@ -37,6 +37,9 @@ type NoteFilter struct {
 	// AboutRunID narrows the prompts to the threads about a run; without
 	// it, a filter by Dir leaves those out, as the run's page lists them.
 	AboutRunID string
+	// AboutRunIDs narrows the prompts to the threads about any of the
+	// runs, as the Files list looks up the summaries of the last runs.
+	AboutRunIDs []string
 	// AboutWorkflowRunID narrows the prompts to the thread of a workflow
 	// run's prompt; a filter by Dir leaves those out, as the workflow
 	// run's page lists them.
@@ -74,6 +77,22 @@ func (s *NoteStorage) Get(ctx context.Context, id string) (*model.Note, error) {
 	return note, notFound(err)
 }
 
+// ByRun returns the thread a run of Claude's answers, by the run the
+// thread or one of its replies names, or ErrNotFound.
+func (s *NoteStorage) ByRun(ctx context.Context, runID string) (*model.Note, error) {
+	if runID == "" {
+		return nil, ErrNotFound
+	}
+	note, err := client(s.db).Get[model.Note](ctx, "SELECT * FROM note WHERE run_id = ? ORDER BY rowid LIMIT 1", runID)
+	if err != nil {
+		return nil, notFound(err)
+	}
+	if note.ParentID != "" {
+		return s.Get(ctx, note.ParentID)
+	}
+	return note, nil
+}
+
 // List returns the notes that start a thread, newest first.
 func (s *NoteStorage) List(ctx context.Context, filter NoteFilter) ([]model.Note, error) {
 	where := []string{"parent_id = ''"}
@@ -109,6 +128,12 @@ func (s *NoteStorage) List(ctx context.Context, filter NoteFilter) ([]model.Note
 		if filter.AboutRunID != "" || filter.Dir != "" {
 			where = append(where, "about_run_id = ?")
 			args = append(args, filter.AboutRunID)
+		}
+		if len(filter.AboutRunIDs) > 0 {
+			where = append(where, "about_run_id IN ("+strings.TrimSuffix(strings.Repeat("?,", len(filter.AboutRunIDs)), ",")+")")
+			for _, id := range filter.AboutRunIDs {
+				args = append(args, id)
+			}
 		}
 		if filter.AboutWorkflowRunID != "" || filter.Dir != "" {
 			where = append(where, "about_workflow_run_id = ?")

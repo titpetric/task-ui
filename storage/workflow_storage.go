@@ -305,6 +305,16 @@ func (s *WorkflowRunStorage) Steps(ctx context.Context, id string) ([]model.Work
 	return steps, err
 }
 
+// StepOf returns the step of a workflow run that started a run, or
+// ErrNotFound for a run no step started.
+func (s *WorkflowRunStorage) StepOf(ctx context.Context, runID string) (*model.WorkflowRunStep, error) {
+	if runID == "" {
+		return nil, ErrNotFound
+	}
+	step, err := client(s.db).Get[model.WorkflowRunStep](ctx, "SELECT * FROM workflow_run_step WHERE run_id = ? ORDER BY rowid LIMIT 1", runID)
+	return step, notFound(err)
+}
+
 // WorkflowRunFilter pages a workflow's runs: Limit of them, 20 when
 // zero, older than the run Before names or newer than the one After
 // names.

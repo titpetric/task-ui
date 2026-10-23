@@ -235,7 +235,7 @@ func TestRunner_StopNested(t *testing.T) {
 }
 
 // A run reports on the workflow's topic: the run, each step as it
-// starts and ends, and the end.
+// starts, as its run starts and as it ends, and the end.
 func TestRunner_Events(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
@@ -261,8 +261,8 @@ func TestRunner_Events(t *testing.T) {
 			t.Fatalf("events so far: %v", names)
 		}
 	}
-	assert.Equal(t, []string{"run", "step", "step", "step", "step", "done"}, names)
-	assert.Equal(t, []string{"running", "ok", "running", "ok"}, states)
+	assert.Equal(t, []string{"run", "step", "step", "step", "step", "step", "step", "done"}, names)
+	assert.Equal(t, []string{"running", "running", "ok", "running", "running", "ok"}, states)
 }
 
 // Resolve finds every step's folder and job, or its workflow, and says

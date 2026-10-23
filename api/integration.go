@@ -163,7 +163,8 @@ func (h *Handlers) startHosts(w http.ResponseWriter, r *http.Request, req hostru
 		failErr(w, err)
 		return "", nil, false
 	}
-	if summarize {
+	if summarize && len(sessions) > 0 {
+		h.summarizing.Store(sessions[0].ID(), true)
 		go h.summarizeHosts(user, sessions)
 	}
 	return batch, sessions, true
@@ -177,6 +178,7 @@ func (h *Handlers) summarizeHosts(user *model.User, sessions []*runner.Session) 
 		<-session.Done()
 	}
 	first := sessions[0].ID()
+	defer h.summarizing.Delete(first)
 	ask := h.opts.Board.SummarizeRun
 	if len(sessions) > 1 {
 		ask = h.opts.Board.SummarizeBatch

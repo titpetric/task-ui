@@ -105,3 +105,44 @@ func TestView_RenderDialog(t *testing.T) {
 	assert.Contains(t, buf.String(), `id="run-reason-text"`)
 	assert.Contains(t, buf.String(), `id="run-force"`)
 }
+
+// The Files list has an Action column, Run, and a Summary column,
+// |>summarize for a user who may and the link to the summary of the
+// row's last run.
+func TestView_RenderTree(t *testing.T) {
+	t.Parallel()
+
+	v, err := view.New()
+	assert.NoError(t, err)
+	render := func(p *view.Page) string {
+		var buf bytes.Buffer
+		assert.NoError(t, v.Render(&buf, "browse", p))
+		return buf.String()
+	}
+	tree := func(summaries bool) *view.Page {
+		p := admin(t)
+		build := &folder.Job{Folder: "infra", ID: "build", Command: []string{"make", "build"}}
+		build.Name = "build"
+		p.Folder.Jobs = append(p.Folder.Jobs, build)
+		p.Summaries = summaries
+		p.Tree = []folder.Item{{Name: "Makefile", Path: "Makefile", Href: "/f/infra/Makefile"}}
+		p.TreeMenus = map[string]*view.RunMenu{"Makefile": view.NewRunMenu(p.Folder, []*folder.Job{build}, build)}
+		return p
+	}
+
+	plain := render(tree(false))
+	assert.Contains(t, plain, "<th>Action</th><th>Summary</th>")
+	assert.Contains(t, plain, `data-label="Action"`)
+	assert.Contains(t, plain, `data-label="Summary"`)
+	assert.Contains(t, plain, `data-job="build"`)
+	assert.NotContains(t, plain, "data-summarize", "no prompt/edit")
+	assert.NotContains(t, plain, "summary-link")
+
+	p := tree(true)
+	p.TreeSummaries = map[string]*view.SummaryLink{"Makefile": view.NewSummaryLink("r1", "n1", "The build passed.")}
+	out := render(p)
+	assert.Contains(t, out, "data-summarize")
+	assert.Contains(t, out, `href="/runs/r1#note-n1" title="The build passed."`)
+	assert.Equal(t, "/runs/r1#note-n1", p.TreeSummary("Makefile").Href)
+	assert.Nil(t, p.TreeSummary("other"))
+}

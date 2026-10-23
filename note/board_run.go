@@ -70,6 +70,29 @@ func (b *Board) SummarizeBatch(ctx context.Context, user *model.User, runID stri
 	return b.AskRun(ctx, user, runID, BatchSummaryQuestion)
 }
 
+// IsSummary reports whether a thread is the summary of Run and summarize.
+func IsSummary(thread *model.Note) bool {
+	if thread == nil || thread.ParentID != "" || thread.AboutRunID == "" {
+		return false
+	}
+	return thread.Body == SummaryQuestion || thread.Body == BatchSummaryQuestion
+}
+
+// SummaryRunID returns the run that answers a thread's question: the
+// run its first reply names, or while there is none, the thread's run.
+// A reply asked later runs again; the first answer stays the summary.
+func SummaryRunID(thread *model.Note, replies []model.Note) string {
+	for _, reply := range replies {
+		if reply.RunID != "" {
+			return reply.RunID
+		}
+	}
+	if thread == nil {
+		return ""
+	}
+	return thread.RunID
+}
+
 // instructions are what a prompt's run tells Claude besides the
 // thread, TASK_UI_PROMPT_INSTRUCTIONS: the summary's shape for the
 // question of SummarizeRun or SummarizeBatch alone in its thread, the

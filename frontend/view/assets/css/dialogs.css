@@ -236,6 +236,26 @@ dialog.source {
     color: var(--text-faint);
     font-size: var(--fs-xs);
   }
+
+  /* The paginator of a run's chain, a Run and summarize or a workflow
+     run, left of the hint: Previous, where the run stands, Next. */
+  & .run-chain {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex: none;
+
+    &[hidden] {
+      display: none;
+    }
+  }
+
+  & .run-pos {
+    color: var(--text-dim);
+    font-size: var(--fs-xs);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
 }
 
 .xterm .xterm-viewport {

@@ -109,6 +109,30 @@ page: the run's terminal, live.
   clears it. The dashboard and this list show it too, and the run keeps
   the last one when it ends.
 
+### The window follows a chain
+
+Some runs come in a chain: **|>summarize**, the job's run and then
+Claude's summary of it; a workflow run, the runs of its steps in order
+and then its prompt's; a command on every host, a run a host and the
+summary with **Run and summarize**. A window on a run of a chain keeps
+following it: when the run ends and the next one starts, the window
+moves to it, without a click, and the terminal streams it. The foot of
+the window, left of its hint, holds the chain's paginator:
+
+- **‹ Previous** opens the run before this one, played from its recording
+  once it ended.
+- **Run 2/3** says where the run stands, of how many the chain holds;
+  `Run 1/…` while that is not known yet.
+- **Next ›** opens the run after this one. It stays disabled while the
+  chain waits for the next run to start, and goes away on the last run
+  of a chain that is complete.
+
+The hint says the chain goes on while it does, such as "Claude's
+summary of it streams in this window next", and reads "Finished" once
+the chain is complete. A window on a run of no chain has no paginator.
+`GET /api/runs/<id>` carries the chain as `chain`, and the attach socket
+sends it as a `chain` message (see the [API](../api.md)).
+
 A finished run stays attachable, its last frame in memory, for
 `TASK_UI_KEEP`, fifteen minutes; after that it opens as history: its
 whole recording played into the window, with how it ended, and **Run
@@ -217,14 +241,17 @@ curl -s "https://task.example.com/api/prompts?run=<run id>" \
 
 ### Run and summarize
 
-**|>summarize**, beside **Run** on a job's card and page, runs the job
-as **Run** does, in its window, and when the run ends, in any state,
+**|>summarize**, beside **Run** on a job's card and page and in the
+Summary column of the Files list, runs the job as **Run** does, in its
+window, and when the run ends, in any state,
 task-ui asks Claude about it on the run's page, as you: a thread whose
 question reads "Summarize this run.", answered in the shape of a
 **Summary**, one or two paragraphs and a table of the values worth a
 glance. Claude gets that shape with the question, and changes nothing.
 The thread shows under the output as it gets answered, and **Reply**
-asks more about the run. The button shows with `prompt/edit` and a
+asks more about the run. The window moves on to Claude's run when it
+starts, `Run 2/2`, and streams the summary as Claude writes it (see
+[The window follows a chain](#the-window-follows-a-chain)). The button shows with `prompt/edit` and a
 Claude Code token, on jobs that end on their own: not `@shell`,
 `@claude` or an interactive job. **Run again** in the window brings
 another summary.

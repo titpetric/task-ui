@@ -219,6 +219,11 @@
 		<input type="text" id="run-reason-text" placeholder="customer is waiting on the hotfix" autocomplete="off" maxlength="200">
 	</div>
 	<div class="run-foot">
+		<nav class="run-chain" id="run-chain" aria-label="The runs of the chain" hidden>
+			<button type="button" class="btn btn-sm" id="run-prev" title="The run before this one">‹ Previous</button>
+			<span class="run-pos" id="run-pos"></span>
+			<button type="button" class="btn btn-sm" id="run-next" title="The run after this one">Next ›</button>
+		</nav>
 		<span class="hint" id="run-hint">Closing this window doesn't stop the run.</span>
 		<button type="button" class="btn" id="run-attach" hidden>Attach</button>
 		<button type="button" class="btn btn-primary" id="run-force" hidden>Run force</button>
@@ -593,15 +598,16 @@
 {{- define "tree" }}
 <div class="table-wrap">
 <table class="table file-table col-hover">
-	<thead><tr><th>Name</th><th>Jobs</th><th class="num">Size</th><th class="hide-sm">Changed</th><th></th></tr></thead>
+	<thead><tr><th>Name</th><th>Action</th><th>Summary</th><th class="num">Size</th><th class="hide-sm">Changed</th><th></th></tr></thead>
 	<tbody>
 	{{- with $.Up }}
-		<tr class="up"><td class="key"><svg class="ic dir"><use href="#i-folder"/></svg> <a href="{{ . }}" title="Up a level">..</a></td><td></td><td></td><td class="hide-sm"></td><td></td></tr>
+		<tr class="up"><td class="key"><svg class="ic dir"><use href="#i-folder"/></svg> <a href="{{ . }}" title="Up a level">..</a></td><td></td><td></td><td></td><td class="hide-sm"></td><td></td></tr>
 	{{- end }}
 	{{- range .Tree }}
 		{{- if .Sealed }}
 		<tr class="sealed" aria-disabled="true" title="task-ui lists {{ .Name }} but does not open it">
 			<td class="key"><svg class="ic"><use href="#i-secret"/></svg> <span>{{ .Name }}</span></td>
+			<td></td>
 			<td></td>
 			<td class="num nowrap">{{ if not .Dir }}{{ size .Size }}{{ end }}</td>
 			<td class="hide-sm nowrap" title="{{ stamp .ModTime }}">{{ ago .ModTime }}</td>
@@ -615,14 +621,20 @@
 				{{- else if .Href }} <a href="{{ .Href }}" data-file="{{ .Path }}">{{ .Name }}</a>
 				{{- else }} <span>{{ .Name }}</span>{{ end }}
 				{{- if .Exec }} <span class="badge exec" title="Runs: executable, or a shebang on its first line">exec</span>{{ end }}</td>
-			<td class="jobs">
-				{{- $menu := index $.TreeMenus .Name }}{{ if $menu }}{{ template "runmenus" (list $ $menu) }}
-				{{- else if and (not .Dir) .Exec .Path }}{{ with $.Folder.Job (print "./" .Path) }}
+			{{- $menu := index $.TreeMenus .Name }}{{ $exec := false }}{{ if and (not $menu) (not .Dir) .Exec .Path }}{{ $exec = $.Folder.Job (print "./" .Path) }}{{ end }}
+			<td class="jobs" data-label="Action">
+				{{- if $menu }}{{ template "runmenus" (list $ $menu) }}
+				{{- else if $exec }}{{ with $exec }}
 				{{- $run := $.RunningRun .Key }}
 				{{- if $run }}<a class="btn btn-sm" href="/runs/{{ $run.ID }}" data-attach="{{ $run.ID }}"><svg class="ic"><use href="#i-eye"/></svg>Attach</a>
-				{{- else if $.CanRun $.Folder . }}<div class="actions">{{ template "runButtons" (list $ $.Folder .) }}</div>{{ end }}
+				{{- else if $.CanRun $.Folder . }}<div class="actions">{{ template "runButton" (list $ $.Folder .) }}{{ template "forceButton" (list $ $.Folder .) }}</div>{{ end }}
 				{{- end }}{{ end }}
 			</td>
+			<td class="jobs summary" data-label="Summary"><div class="actions">
+				{{- if $menu }}{{ with $.SummaryMenu $menu }}{{ if $.CanRunMenu . }}{{ template "runsplit" (list $ . true) }}{{ end }}{{ end }}
+				{{- else if $exec }}{{ with $exec }}{{ if and (not ($.RunningRun .Key)) ($.CanRun $.Folder .) }}{{ template "summarizeButton" (list $ $.Folder .) }}{{ end }}{{ end }}{{ end }}
+				{{- with $.TreeSummary .Name }}<a class="btn btn-sm summary-link" href="{{ .Href }}" title="{{ .Preview }}"><svg class="ic"><use href="#i-file"/></svg>Summary</a>{{ end -}}
+			</div></td>
 			<td class="num nowrap">{{ if not .Dir }}{{ size .Size }}{{ end }}</td>
 			<td class="hide-sm nowrap" title="{{ stamp .ModTime }}">{{ ago .ModTime }}</td>
 			<td class="actions">
@@ -633,7 +645,7 @@
 		</tr>
 		{{- end }}
 	{{- else }}
-		<tr class="empty"><td colspan="5">This directory is empty.</td></tr>
+		<tr class="empty"><td colspan="6">This directory is empty.</td></tr>
 	{{- end }}
 	</tbody>
 </table>
@@ -723,16 +735,16 @@
 {{- end }}
 {{- end }}
 
-{{- /* runmenus holds Run and |>summarize of a Files list row, from its
-     RunMenu, and Run force beside them for a default with hours; for a
-     user who may run none of the jobs, the default's History. (list $
+{{- /* runmenus holds Run of a Files list row's Action column, from its
+     RunMenu, and Run force beside it for a default with hours; for a
+     user who may run none of the jobs, the default's History. The
+     Summary column holds |>summarize, from Page.SummaryMenu. (list $
      menu) */}}
 {{- define "runmenus" }}
 {{- $ := index . 0 }}{{ $m := index . 1 }}{{ $f := $m.Folder }}
 {{- if $.CanRunMenu $m }}
 <div class="actions">
 	{{- template "runsplit" (list $ $m false) }}
-	{{- with $.SummaryMenu $m }}{{ if $.CanRunMenu . }}{{ template "runsplit" (list $ . true) }}{{ end }}{{ end }}
 	{{- with $m.Main }}{{ if and ($f.HoursOf .) ($.CanRun $f .) (not ($.RunningRun .Key)) }}
 	<button type="button" class="btn btn-danger btn-sm" data-run data-force data-folder="{{ $f.ID }}"{{ with .Dir }} data-dir="{{ . }}"{{ end }} data-job="{{ .ID }}" data-title="{{ $f.ID }}{{ with .Dir }}/{{ . }}{{ end }} / {{ .Name }}" title="Run out of hours, with a reason">Run force</button>
 	{{- end }}{{ end }}
@@ -785,12 +797,29 @@
      the job the same way, and Claude summarises the run on its page when
      it ends. */}}
 {{ define "runButtons" }}
+{{- template "runButton" . }}{{ template "summarizeButton" . }}{{ template "forceButton" . }}
+{{- end }}
+
+{{- /* runButton holds Run of a job. (list $ folder job) */}}
+{{ define "runButton" }}
 {{- $ := index . 0 }}{{ $p := index . 1 }}{{ $r := index . 2 -}}
 <button type="button" class="btn btn-primary btn-sm" data-run data-folder="{{ $p.ID }}"{{ with $r.Dir }} data-dir="{{ . }}"{{ end }} data-job="{{ $r.ID }}" data-title="{{ $p.ID }}{{ with $r.Dir }}/{{ . }}{{ end }} / {{ $r.Name }}"{{ with $r.ArgsCommand }} data-args="{{ . }}" title="Run with arguments after {{ . }}"{{ end }}><svg class="ic"><use href="#i-play"/></svg>Run{{ if $r.TakesArgs }}...{{ end }}</button>
+{{- end }}
+
+{{- /* summarizeButton is |>summarize of a job Claude summarizes for the
+     user, Page.Summarizes. (list $ folder job) */}}
+{{ define "summarizeButton" }}
+{{- $ := index . 0 }}{{ $p := index . 1 }}{{ $r := index . 2 -}}
 {{- if $.Summarizes $r }}
 <button type="button" class="btn btn-sm" data-run data-summarize data-folder="{{ $p.ID }}"{{ with $r.Dir }} data-dir="{{ . }}"{{ end }} data-job="{{ $r.ID }}" data-title="{{ $p.ID }}{{ with $r.Dir }}/{{ . }}{{ end }} / {{ $r.Name }}"{{ with $r.ArgsCommand }} data-args="{{ . }}"{{ end }} title="Run and summarize">|&gt;summarize</button>
 {{- end }}
-{{- /* Run force stands beside Run only for a job with hours, where task-ui refuses a plain run outside them. To force a run that failed, use its window. */}}
+{{- end }}
+
+{{- /* forceButton holds Run force, beside Run only for a job with hours,
+     where task-ui refuses a plain run outside them. To force a run that
+     failed, use its window. (list $ folder job) */}}
+{{ define "forceButton" }}
+{{- $ := index . 0 }}{{ $p := index . 1 }}{{ $r := index . 2 -}}
 {{- if $p.HoursOf $r }}
 <button type="button" class="btn btn-danger btn-sm" data-run data-force data-folder="{{ $p.ID }}"{{ with $r.Dir }} data-dir="{{ . }}"{{ end }} data-job="{{ $r.ID }}" data-title="{{ $p.ID }}{{ with $r.Dir }}/{{ . }}{{ end }} / {{ $r.Name }}" title="Run out of hours, with a reason">Run force</button>
 {{- end }}
