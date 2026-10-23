@@ -38,6 +38,7 @@ import (
 	"github.com/titpetric/task-ui/secret"
 	"github.com/titpetric/task-ui/sshprobe"
 	"github.com/titpetric/task-ui/storage"
+	"github.com/titpetric/task-ui/tooling"
 	"github.com/titpetric/task-ui/workflow"
 )
 
@@ -134,6 +135,10 @@ func newFixture(t *testing.T) *fixture {
 		return values["url"], values["token"], err
 	}}
 	f.opts.Facts = &hostinfo.Reader{Run: f.opts.SSH.Output, Timeout: 5 * time.Second, TTL: time.Hour}
+	// The tooling panel asks an atkins that is not there, so the pages
+	// draw none. A test of the panel points this one at an atkins of
+	// its own; the TTL keeps no answer, so each case gets a fresh one.
+	f.opts.Tooling = &tooling.Prober{Command: filepath.Join(t.TempDir(), "no-atkins"), TTL: time.Nanosecond}
 	f.opts.Guard.Tokens = storage.NewUserAuthTokenStorage(db)
 	f.opts.Cleaner = &retention.Cleaner{
 		Values: storage.NewSettingStorage(db), Runs: runs, Artifacts: f.opts.Artifacts, Store: f.opts.ArtifactStore,
