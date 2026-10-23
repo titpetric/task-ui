@@ -191,3 +191,34 @@ table.table-kv th {
     }
   }
 }
+
+/* A run's summary opens under its row: the row above it loses its
+   rule, and the markdown reads as a document, not as table cells. */
+.table tr:has(+ .summary-row) td {
+  border-bottom-style: dashed;
+}
+
+.table .summary-row td {
+  padding-block: 0.2rem 0.45rem;
+  white-space: normal;
+}
+
+.summary-details {
+  & > summary {
+    cursor: pointer;
+    color: var(--text-dim);
+    font-size: var(--fs-label);
+    font-weight: 600;
+    letter-spacing: var(--ls-label);
+    text-transform: uppercase;
+  }
+
+  & > .markdown-doc {
+    max-width: 72ch;
+    padding: 0.4rem 0 0.2rem;
+  }
+
+  & .markdown-doc table {
+    width: auto;
+  }
+}

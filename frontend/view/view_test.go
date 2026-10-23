@@ -178,3 +178,21 @@ func TestView_RenderJobSummarize(t *testing.T) {
 	p.Runs[0].State = model.StateRunning
 	assert.NotContains(t, render(p), "data-summarize-run", "still running")
 }
+
+// A run with a summary has a row under it holding the summary as
+// rendered markdown, not as plain text.
+func TestView_RenderJobSummary(t *testing.T) {
+	t.Parallel()
+
+	v, err := view.New()
+	assert.NoError(t, err)
+	p := admin(t)
+	p.RunReports = map[string]*note.Report{p.Runs[0].ID: {RunID: p.Runs[0].ID, By: "ops", Body: "## Passed\n\n- 3 images"}}
+	var buf bytes.Buffer
+	assert.NoError(t, v.Render(&buf, "job", p))
+	out := buf.String()
+	assert.Contains(t, out, `class="summary-row"`)
+	assert.Contains(t, out, "<li>3 images</li>")
+	assert.Contains(t, out, "asked by ops")
+	assert.NotContains(t, out, `<pre class="summary">## Passed`)
+}

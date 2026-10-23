@@ -262,8 +262,10 @@ another summary.
 a run that ended without a summary, with the same question; the window
 opens on the run and moves on to Claude's run, `Run 2/2`. It shows with
 the same rights as **|>summarize**; while Claude writes, the row reads
-"summarizing". The API takes it as a prompt about the run that reads
-the question:
+"summarizing". Once Claude answered, a **Summary** line under the row
+opens to the summary, rendered as markdown: headings, lists, tables and
+code, with any raw HTML in it shown as text. The API takes Summarize as
+a prompt about the run that reads the question:
 
 ```sh
 curl -s -X POST https://task.example.com/api/prompts \

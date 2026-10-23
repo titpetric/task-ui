@@ -88,7 +88,8 @@ dialog.run-summary .preview-doc {
   overflow-wrap: anywhere;
 }
 
-.preview-doc.markdown {
+.preview-doc.markdown,
+.markdown-doc {
   font-size: var(--fs-body);
   line-height: 1.6;
 

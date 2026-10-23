@@ -70,6 +70,14 @@
 					{{- if and (not (ended .State)) $can }}<button type="button" class="btn-icon danger" data-kill="{{ .ID }}" title="Kill the run" aria-label="Kill the run"><svg class="ic"><use href="#i-stop"/></svg></button>{{ end }}
 				</td>
 			</tr>
+			{{- with $.RunReport .ID }}{{ if .Body }}
+			<tr class="summary-row">
+				<td colspan="5"><details class="summary-details">
+					<summary>Summary{{ with .By }} <span class="faint">asked by {{ . }}</span>{{ end }}</summary>
+					<div class="markdown-doc">{{ markdown .Body }}</div>
+				</details></td>
+			</tr>
+			{{- end }}{{ end }}
 		{{- else }}
 			<tr class="empty"><td colspan="5">No runs yet.{{ if $can }} Press Run to start the first one.{{ end }}</td></tr>
 		{{- end }}

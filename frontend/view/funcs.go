@@ -36,6 +36,7 @@ func Funcs() template.FuncMap {
 		"groups":       Groups,
 		"hasPrefix":    strings.HasPrefix,
 		"message":      Message,
+		"markdown":     Markdown,
 		"json":         JSON,
 		"ended":        model.Finished,
 		"argLine":      ArgLine,
