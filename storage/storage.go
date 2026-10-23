@@ -99,14 +99,21 @@ func stamp() *time.Time {
 	return &now
 }
 
-// utc returns a time as the database keeps it, in UTC to the
-// millisecond: a column compared as text against another time holds
-// one zone, whatever the zone of the clock that made it. Nil stays nil.
+// utc returns a time as the database keeps it, in UTC: a column
+// compared as text against another time holds one zone, whatever the
+// zone of the clock that made it. Nil stays nil.
+//
+// The precision it came with is kept. stamp() rounds the clock it reads
+// to the millisecond, which is resolution enough for a row nobody else
+// is racing; a time a caller hands over is a moment it measured, and two
+// of them in one millisecond are two moments. Rounding them together
+// makes a tie, and a list ordered by started_at then falls back to the
+// id for an order the caller did not mean.
 func utc(t *time.Time) *time.Time {
 	if t == nil {
 		return nil
 	}
-	at := t.UTC().Truncate(time.Millisecond)
+	at := t.UTC()
 	return &at
 }
 

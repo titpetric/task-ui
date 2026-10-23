@@ -61,6 +61,10 @@ func (s *RunStorage) Create(ctx context.Context, run *model.Run) error {
 	if run.StartedAt == nil {
 		run.StartedAt = now
 	}
+	// A caller's time comes in the caller's zone, and started_at is
+	// compared and ordered as text: two zones in one column sort by
+	// their offset rather than by their instant.
+	run.StartedAt = utc(run.StartedAt)
 	run.CreatedAt = now
 	run.UpdatedAt = now
 	return client(s.db).Insert(ctx, model.RunTable, run)

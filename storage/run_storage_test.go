@@ -302,3 +302,33 @@ func TestRunStorage_Busy(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, map[string]bool{running.ID: true, step.ID: true}, busy)
 }
+
+// TestRunStorage_CreateNormalisesTheClock covers the ordering of runs on
+// a host that is not on UTC.
+//
+// started_at is compared and ordered as text, so two zones in one column
+// sort by their offset rather than by their instant: without the
+// conversion a run started an hour ago in CEST sorts above one started
+// now, and the list is not newest first.
+func TestRunStorage_CreateNormalisesTheClock(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	runs := storage.NewRunStorage(newDB(t))
+
+	zone := time.FixedZone("CEST", 2*60*60)
+	earlier := time.Now().In(zone).Add(-time.Hour)
+	assert.NoError(t, runs.Create(ctx, &model.Run{Folder: "infra", Job: "deploy", UserName: "old", StartedAt: &earlier}))
+	assert.NoError(t, runs.Create(ctx, &model.Run{Folder: "infra", Job: "deploy", UserName: "new"}))
+
+	// The row the caller handed a zoned time keeps its instant, in UTC.
+	rows, err := runs.List(ctx, storage.RunFilter{})
+	assert.NoError(t, err)
+	assert.Len(t, rows, 2)
+	assert.Equal(t, "new", rows[0].UserName, "newest first")
+	assert.Equal(t, time.UTC, rows[1].StartedAt.Location())
+	assert.Equal(t, earlier.UTC(), rows[1].StartedAt.UTC())
+
+	last, err := runs.Last(ctx, storage.RunFilter{Folder: "infra", Job: "deploy"})
+	assert.NoError(t, err)
+	assert.Equal(t, "new", last.UserName)
+}
