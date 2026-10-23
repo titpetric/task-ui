@@ -27,15 +27,27 @@ their step. The trail lists only the steps you may open.
 
 ## Instance
 
-`/settings/instance` shows what the server runs with, from the
-environment and the command line: the base link (`TASK_UI_URL`), the
-version, the listen address, the root, the data folder, the SSH folder,
-the password file, whether users sign in with a password, the admins and
-viewers, the agent and its job, whether the Beszel integration lists the
-Inventory's hosts, and the MCP endpoint. You read it here and change
-it on the server, then restart task-ui. The page shows paths and names,
-never a password, token or key. Anyone who may open a step of the
-settings may open it.
+`/settings/instance` shows what the server runs with, in sections, each
+a table of the setting, its value, the variable that sets it and what it
+does:
+
+- **General**: the base link (`TASK_UI_URL`), the version, the listen
+  address, the time zone of the server's clock, how users sign in, the
+  session lifetime, the password file, the roles and the MCP endpoint.
+- **Runs**: the runs that go at once, the backlog of runs that wait for
+  a slot, how long a finished run stays attachable, the stop grace, the
+  artifact history and a link to Data retention.
+- **Paths**: the workspace folder, discovery, the data folder and how
+  the host sees it, the key folder and the compose project.
+- **Keys**: the instance's encryption key and the git key (see
+  [Keys](#keys)).
+- **Integrations**: whether the Beszel integration lists the
+  Inventory's hosts.
+
+The environment sets most of these: change one on the server, then
+restart task-ui. The backlog length is the one setting the page saves.
+The page shows paths and names, never a password, token or key. Anyone
+who may open a step of the settings may open it.
 
 ![Instance](../assets/instance-dark.png)
 

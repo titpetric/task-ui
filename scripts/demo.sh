@@ -218,7 +218,7 @@ shot schedules-dark /schedules dark
 shot workflows-dark /workflows dark
 shot workflow-dark "/workflows/${release}" dark
 shot settings-dark /settings dark
-shot instance-dark /settings/instance dark
+shot instance-dark /settings/instance dark 1440x2400
 shot projects-dark /settings/projects dark
 shot project-new-dark /settings/projects/new dark
 shot project-edit-dark /settings/projects/infra dark

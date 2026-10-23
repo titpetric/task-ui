@@ -68,8 +68,93 @@
   & td.mono {
     word-break: break-all;
   }
+}
 
-  &.instance td.desc {
-    width: 40%;
+/* The Instance step: a section per group of settings, each a heading,
+   a line on what it holds, and a table whose four columns keep one
+   width down the page. A computed value reads quieter than one the
+   environment or the page sets; the backlog length saves in place. */
+.instance-section {
+  & > h3 {
+    padding-bottom: 0.35rem;
+    border-bottom: 1px solid var(--line);
+  }
+
+  & .section-intro {
+    margin: 0 0 var(--stack-gap);
+    color: var(--text-dim);
+    font-size: var(--fs-data);
+    line-height: 1.5;
+  }
+}
+
+.instance-table {
+  table-layout: fixed;
+
+  & col.c-key {
+    width: 9.5rem;
+  }
+
+  & col.c-value {
+    width: 25%;
+  }
+
+  & col.c-var {
+    width: 13rem;
+  }
+
+  & td {
+    vertical-align: baseline;
+  }
+
+  & td.key {
+    color: var(--text);
+    font-weight: 500;
+  }
+
+  & td.value.mono {
+    word-break: break-all;
+  }
+
+  & td.ro {
+    color: var(--text-dim);
+  }
+
+  & td.var {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+    & code {
+      font-size: var(--fs-xs);
+    }
+  }
+
+  & td.desc {
+    color: var(--text-dim);
+    font-size: var(--fs-sm);
+    line-height: 1.45;
+  }
+
+  & td.value small {
+    display: block;
+    margin-top: 0.2rem;
+  }
+}
+
+.inline-setting {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+
+  & input {
+    width: 8rem;
+    height: var(--control-sm);
+    padding: 0 0.5rem;
+    font-family: var(--font);
+  }
+
+  & .form-error {
+    flex: 1 1 100%;
   }
 }

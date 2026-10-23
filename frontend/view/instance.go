@@ -1,5 +1,9 @@
 package view
 
+import (
+	"github.com/titpetric/task-ui/runner"
+)
+
 // Instance is what the server runs with, as the Instance step of the
 // settings shows it: the configuration from the environment and the
 // command line, less anything secret. A path shows; a token never does.
@@ -16,7 +20,22 @@ type Instance struct {
 	Discover bool
 	// AutoLogin is the user every request signs in as, if any.
 	AutoLogin string
+	// TimeZone is the zone of the server's clock, as the pages and the
+	// hours read it.
+	TimeZone string
+	// SessionTTL, Keep and Grace are TASK_UI_SESSION_TTL, TASK_UI_KEEP
+	// and TASK_UI_GRACE, as durations read.
+	SessionTTL string
+	Keep       string
+	Grace      string
+	// ArtifactHistory is TASK_UI_ARTIFACT_HISTORY, 0 for every version.
+	ArtifactHistory int
+	// ComposeProject is the compose project task-ui runs in, if any.
+	ComposeProject string
 	// Beszel says the Beszel integration has a hub and a token, which
 	// the Inventory reads.
 	Beszel bool
+	// Backlog is how the slots and the line for them stand, nil without
+	// a runner.
+	Backlog *runner.BacklogState
 }

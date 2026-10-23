@@ -301,7 +301,8 @@ func (a *App) wire(version string) error {
 		Facts:   &hostinfo.Reader{Run: prober.Output, Timeout: 20 * time.Second, TTL: 5 * time.Minute},
 		Instance: &view.Instance{
 			URL: cfg.URL, Listen: cfg.Listen, Root: cfg.Root, DataDir: cfg.DataDir, SSHDir: cfg.SSHDir, Htpasswd: cfg.Htpasswd, HostData: hostDataShown(cfg.DataDir, hostData),
-			Discover: cfg.Discover, AutoLogin: cfg.AutoLogin,
+			Discover: cfg.Discover, AutoLogin: cfg.AutoLogin, TimeZone: timeZone(cfg.Clock()()),
+			SessionTTL: cfg.SessionTTL.String(), Keep: cfg.Keep.String(), Grace: cfg.Grace.String(), ArtifactHistory: cfg.ArtifactHistory, ComposeProject: self,
 		},
 	})
 	if err != nil {
