@@ -1,0 +1,323 @@
+//go:build integration
+
+package api_test
+
+import (
+	"context"
+	"net/http"
+	"os"
+	"path/filepath"
+	"testing"
+	"time"
+
+	"github.com/titpetric/task-ui/api"
+	"github.com/titpetric/task-ui/internal/assert"
+	"github.com/titpetric/task-ui/model"
+)
+
+func TestWorkspace_AdminOnly(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+
+	for _, c := range []struct{ method, path string }{
+		{http.MethodGet, "/workspaces"},
+		{http.MethodPost, "/workspaces"},
+		{http.MethodGet, "/workspaces/malta"},
+		{http.MethodPut, "/workspaces/malta"},
+		{http.MethodDelete, "/workspaces/malta"},
+		{http.MethodPost, "/workspaces/malta/prompt"},
+	} {
+		for _, user := range []string{asOps, asViewer, asLimited} {
+			res := f.call(t, user, c.method, c.path, map[string]any{})
+			assert.Equal(t, http.StatusForbidden, res.Status, user+" "+c.method+" "+c.path)
+		}
+	}
+}
+
+func TestWorkspace_CRUD(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	repo := "file://" + localRepo(t)
+
+	empty := f.call(t, asAdmin, http.MethodGet, "/workspaces", nil)
+	assert.Equal(t, http.StatusOK, empty.Status)
+	assert.Contains(t, string(empty.Raw), `"workspaces":[]`)
+
+	created := f.call(t, asAdmin, http.MethodPost, "/workspaces", api.WorkspaceRequest{URL: repo, Folder: "malta", Title: "Malta", Branch: "main"})
+	assert.Equal(t, http.StatusCreated, created.Status, string(created.Raw))
+	assert.Equal(t, "malta", created.str("workspace", "folder"))
+	assert.Equal(t, repo, created.str("workspace", "source_url"))
+	assert.Equal(t, false, created.get("workspace", "shallow"), "Recursive is the default")
+	assert.FileExists(t, filepath.Join(f.root, "malta", "Makefile"))
+
+	// A second workspace from the same repository, under its own name.
+	again := f.call(t, asAdmin, http.MethodPost, "/workspaces", api.WorkspaceRequest{URL: repo, Folder: "gozo"})
+	assert.Equal(t, http.StatusCreated, again.Status, string(again.Raw))
+
+	list := f.call(t, asAdmin, http.MethodGet, "/workspaces", nil)
+	assert.Len(t, list.list("workspaces"), 2)
+	assert.Equal(t, "malta", list.list("workspaces")[0].(map[string]any)["folder"], "an added workspace goes last")
+
+	got := f.call(t, asAdmin, http.MethodGet, "/workspaces/malta", nil)
+	assert.Equal(t, http.StatusOK, got.Status)
+	assert.Equal(t, "Malta", got.str("title"))
+
+	updated := f.call(t, asAdmin, http.MethodPut, "/workspaces/malta", api.WorkspaceRequest{Title: "The island", Description: "org tooling", URL: "file:///elsewhere.git"})
+	assert.Equal(t, http.StatusOK, updated.Status, string(updated.Raw))
+	assert.Equal(t, "The island", updated.str("title"))
+	assert.Equal(t, "org tooling", updated.str("description"))
+	assert.Equal(t, repo, updated.str("source_url"), "an update keeps the repository")
+	assert.Equal(t, got.str("id"), updated.str("id"))
+	assert.Equal(t, float64(0), updated.get("sort"))
+
+	// A sort places the workspace; left out, it stays.
+	sort := int64(5)
+	sorted := f.call(t, asAdmin, http.MethodPut, "/workspaces/malta", api.WorkspaceRequest{Title: "The island", Sort: &sort})
+	assert.Equal(t, http.StatusOK, sorted.Status, string(sorted.Raw))
+	assert.Equal(t, float64(5), sorted.get("sort"))
+	list = f.call(t, asAdmin, http.MethodGet, "/workspaces", nil)
+	assert.Equal(t, "gozo", list.list("workspaces")[0].(map[string]any)["folder"])
+	kept := f.call(t, asAdmin, http.MethodPut, "/workspaces/malta", api.WorkspaceRequest{Title: "The island"})
+	assert.Equal(t, float64(5), kept.get("sort"))
+
+	// Recursive off makes the workspace shallow; left out, it stays.
+	flat := f.call(t, asAdmin, http.MethodPut, "/workspaces/malta", api.WorkspaceRequest{Title: "The island", Recursive: new(false)})
+	assert.Equal(t, true, flat.get("shallow"))
+	kept = f.call(t, asAdmin, http.MethodPut, "/workspaces/malta", api.WorkspaceRequest{Title: "The island"})
+	assert.Equal(t, true, kept.get("shallow"))
+	deep := f.call(t, asAdmin, http.MethodPut, "/workspaces/malta", api.WorkspaceRequest{Title: "The island", Recursive: new(true)})
+	assert.Equal(t, false, deep.get("shallow"))
+
+	deleted := f.call(t, asAdmin, http.MethodDelete, "/workspaces/malta", nil)
+	assert.Equal(t, http.StatusNoContent, deleted.Status)
+	assert.NoDirExists(t, filepath.Join(f.root, "malta"))
+	assert.Equal(t, http.StatusNotFound, f.call(t, asAdmin, http.MethodGet, "/workspaces/malta", nil).Status)
+
+	for _, method := range []string{http.MethodGet, http.MethodPut, http.MethodDelete} {
+		res := f.call(t, asAdmin, method, "/workspaces/missing", api.WorkspaceRequest{})
+		assert.Equal(t, http.StatusNotFound, res.Status, method)
+	}
+}
+
+func TestWorkspace_CreateRefused(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	repo := "file://" + localRepo(t)
+
+	for _, c := range []struct {
+		name string
+		req  api.WorkspaceRequest
+	}{
+		{"no url", api.WorkspaceRequest{URL: "not a url", Folder: "malta"}},
+		{"no folder", api.WorkspaceRequest{URL: repo}},
+		{"nested folder", api.WorkspaceRequest{URL: repo, Folder: "malta/x"}},
+		{"unsafe folder", api.WorkspaceRequest{URL: repo, Folder: ".."}},
+		{"internal", api.WorkspaceRequest{URL: repo, Folder: "internal"}},
+	} {
+		res := f.call(t, asAdmin, http.MethodPost, "/workspaces", c.req)
+		assert.Equal(t, http.StatusBadRequest, res.Status, c.name)
+	}
+	internal := f.call(t, asAdmin, http.MethodPost, "/workspaces", api.WorkspaceRequest{URL: repo, Folder: "internal"})
+	assert.Contains(t, internal.str("error"), "task-ui's own namespace")
+	assert.NoDirExists(t, filepath.Join(f.root, "internal"))
+
+	assert.Equal(t, http.StatusCreated, f.call(t, asAdmin, http.MethodPost, "/workspaces", api.WorkspaceRequest{URL: repo, Folder: "malta"}).Status)
+	duplicate := f.call(t, asAdmin, http.MethodPost, "/workspaces", api.WorkspaceRequest{URL: repo, Folder: "malta"})
+	assert.Equal(t, http.StatusConflict, duplicate.Status)
+
+	// infra is a directory under the root already.
+	onDisk := f.call(t, asAdmin, http.MethodPost, "/workspaces", api.WorkspaceRequest{URL: repo, Folder: "infra"})
+	assert.Equal(t, http.StatusConflict, onDisk.Status)
+
+	assert.Equal(t, http.StatusOK, f.call(t, asAdmin, http.MethodPut, "/projects/gone", api.ProjectRequest{Title: "Gone"}).Status)
+	project := f.call(t, asAdmin, http.MethodPost, "/workspaces", api.WorkspaceRequest{URL: repo, Folder: "gone"})
+	assert.Equal(t, http.StatusConflict, project.Status)
+	assert.NoDirExists(t, filepath.Join(f.root, "gone"))
+
+	missing := f.call(t, asAdmin, http.MethodPost, "/workspaces", api.WorkspaceRequest{URL: "file://" + filepath.Join(t.TempDir(), "nothing.git"), Folder: "nothing"})
+	assert.Equal(t, http.StatusBadGateway, missing.Status)
+	assert.NotEqual(t, "", missing.str("error"))
+	assert.NoDirExists(t, filepath.Join(f.root, "nothing"))
+	assert.Equal(t, http.StatusNotFound, f.call(t, asAdmin, http.MethodGet, "/workspaces/nothing", nil).Status)
+}
+
+func TestWorkspace_CloneProject(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	repo := "file://" + localRepo(t)
+
+	assert.Equal(t, http.StatusCreated, f.call(t, asAdmin, http.MethodPost, "/workspaces", api.WorkspaceRequest{URL: repo, Folder: "malta"}).Status)
+
+	res := f.call(t, asAdmin, http.MethodPost, "/projects", api.ProjectCloneRequest{URL: repo, ID: "dockerfiles", Workspace: "malta"})
+	assert.Equal(t, http.StatusCreated, res.Status, string(res.Raw))
+	assert.Equal(t, "malta/dockerfiles", res.str("project", "folder"))
+	assert.FileExists(t, filepath.Join(f.root, "malta", "dockerfiles", "Makefile"))
+
+	named := f.call(t, asAdmin, http.MethodPost, "/projects", api.ProjectCloneRequest{URL: repo, Workspace: "malta"})
+	assert.Equal(t, http.StatusCreated, named.Status, string(named.Raw))
+	assert.Equal(t, "malta/website", named.str("project", "folder"), "the ID comes from the URL")
+
+	got := f.call(t, asAdmin, http.MethodGet, "/projects/malta/dockerfiles", nil)
+	assert.Equal(t, http.StatusOK, got.Status)
+
+	missing := f.call(t, asAdmin, http.MethodPost, "/projects", api.ProjectCloneRequest{URL: repo, ID: "x", Workspace: "gozo"})
+	assert.Equal(t, http.StatusBadRequest, missing.Status)
+	assert.NoDirExists(t, filepath.Join(f.root, "gozo"))
+
+	internal := f.call(t, asAdmin, http.MethodPost, "/projects", api.ProjectCloneRequest{URL: repo, ID: "x", Workspace: "internal"})
+	assert.Equal(t, http.StatusBadRequest, internal.Status)
+	assert.Contains(t, internal.str("error"), "task-ui's own namespace")
+	assert.NoDirExists(t, filepath.Join(f.root, "internal"))
+}
+
+func TestWorkspace_DeleteNested(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	repo := "file://" + localRepo(t)
+	ctx := context.Background()
+
+	assert.Equal(t, http.StatusCreated, f.call(t, asAdmin, http.MethodPost, "/workspaces", api.WorkspaceRequest{URL: repo, Folder: "malta"}).Status)
+	assert.Equal(t, http.StatusCreated, f.call(t, asAdmin, http.MethodPost, "/projects", api.ProjectCloneRequest{URL: repo, ID: "dockerfiles", Workspace: "malta"}).Status)
+	assert.Equal(t, http.StatusOK, f.call(t, asAdmin, http.MethodPut, "/projects/malta/dockerfiles/sub", api.ProjectRequest{Title: "Sub"}).Status)
+	// A project whose name only starts like the workspace's stays.
+	assert.Equal(t, http.StatusOK, f.call(t, asAdmin, http.MethodPut, "/projects/maltase", api.ProjectRequest{Title: "Other"}).Status)
+
+	res := f.call(t, asAdmin, http.MethodDelete, "/workspaces/malta", nil)
+	assert.Equal(t, http.StatusNoContent, res.Status)
+	assert.NoDirExists(t, filepath.Join(f.root, "malta"))
+
+	projects, err := f.opts.Projects.List(ctx)
+	assert.NoError(t, err)
+	assert.Len(t, projects, 1)
+	assert.Equal(t, "maltase", projects[0].Folder)
+
+	// A workspace whose checkout went keeps no rows either.
+	assert.Equal(t, http.StatusCreated, f.call(t, asAdmin, http.MethodPost, "/workspaces", api.WorkspaceRequest{URL: repo, Folder: "gozo"}).Status)
+	assert.NoError(t, os.RemoveAll(filepath.Join(f.root, "gozo")))
+	assert.Equal(t, http.StatusNoContent, f.call(t, asAdmin, http.MethodDelete, "/workspaces/gozo", nil).Status)
+	assert.Equal(t, http.StatusNotFound, f.call(t, asAdmin, http.MethodGet, "/workspaces/gozo", nil).Status)
+}
+
+func TestWorkspace_Prompt(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	repo := "file://" + localRepo(t)
+	promptCommand(t, f)
+	out := promptOut(f, "env.out")
+
+	assert.Equal(t, http.StatusCreated, f.call(t, asAdmin, http.MethodPost, "/workspaces", api.WorkspaceRequest{URL: repo, Folder: "malta"}).Status)
+
+	res := f.call(t, asAdmin, http.MethodPost, "/workspaces/malta/prompt", api.PromptRequest{Prompt: " list the skills ", Cols: 80, Rows: 24})
+	assert.Equal(t, http.StatusCreated, res.Status, string(res.Raw))
+	assert.Equal(t, "malta", res.str("dir"))
+	assert.Equal(t, "list the skills", res.str("body"))
+	asked := f.answered(t, res.str("id"))
+	run := f.finished(t, asked.RunID)
+	assert.Equal(t, model.StateOK, run.State)
+	assert.Equal(t, "malta", run.Folder, "the run is the workspace's")
+	assert.Equal(t, model.PromptJob, run.Job)
+	assert.Equal(t, asAdmin, run.UserName)
+
+	env, err := os.ReadFile(out)
+	assert.NoError(t, err)
+	dir := filepath.Join(f.root, "malta")
+	assert.Equal(t, "TASK_UI_PROMPT=list the skills\nTASK_UI_WORKSPACE=malta\nTASK_UI_WORKSPACE_DIR="+dir+"\npwd="+dir+"\n", string(env))
+
+	empty := f.call(t, asAdmin, http.MethodPost, "/workspaces/malta/prompt", api.PromptRequest{Prompt: "  "})
+	assert.Equal(t, http.StatusBadRequest, empty.Status)
+	missing := f.call(t, asAdmin, http.MethodPost, "/workspaces/gozo/prompt", api.PromptRequest{Prompt: "hello"})
+	assert.Equal(t, http.StatusNotFound, missing.Status)
+	for _, user := range []string{asOps, asViewer, asLimited} {
+		refused := f.call(t, user, http.MethodPost, "/workspaces/malta/prompt", api.PromptRequest{Prompt: "hello"})
+		assert.Equal(t, http.StatusForbidden, refused.Status, user)
+	}
+}
+
+// answered waits for a prompt's note to end, and returns it.
+func (f *fixture) answered(t *testing.T, id string) *model.Note {
+	t.Helper()
+	var note *model.Note
+	assert.Eventually(t, func() bool {
+		var err error
+		note, err = f.opts.Board.Notes.Get(context.Background(), id)
+		return err == nil && note.Finished()
+	}, 10*time.Second, 20*time.Millisecond)
+	return note
+}
+
+// promptCommand stands a script in for task-ui agent, the command a
+// prompt's @claude-prompt runs: it writes the prompt's environment and
+// where it runs to promptOut env.out, the run a prompt about a run gets
+// to run.out, waits for a file named release in the directory it runs
+// in, when that directory holds a file named hold, then answers with the
+// prompt in the reply file.
+func promptCommand(t *testing.T, f *fixture) {
+	t.Helper()
+	assert.NoError(t, os.MkdirAll(promptOut(f, ""), 0o755))
+	f.opts.Board.AgentCommand = []string{"sh", "-c", `{ env | grep '^TASK_UI_\(PROMPT\|WORKSPACE\|WORKSPACE_DIR\|PROMPT_DIR\)=' | sort; echo "pwd=$(pwd -P)"; } > "` + promptOut(f, "env.out") + `"; if [ -n "$TASK_UI_PROMPT_RUN" ]; then cp "$TASK_UI_PROMPT_RUN" "` + promptOut(f, "run.out") + `"; fi; while [ -e hold ] && [ ! -e release ]; do sleep 0.05; done; printf 'Answer to: %s' "$TASK_UI_PROMPT" > "$TASK_UI_PROMPT_REPLY"`}
+}
+
+// promptOut is where promptCommand's script writes a file, in a
+// directory of the root with nothing to run.
+func promptOut(f *fixture, name string) string {
+	return filepath.Join(f.root, ".prompt", name)
+}
+
+// The default workspace, _, is the root: it lists first, takes a title,
+// keeps its place, and stays. No workspace or project takes its name.
+func TestWorkspace_Default(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	ctx := context.Background()
+	repo := "file://" + localRepo(t)
+	assert.NoError(t, f.opts.Workspaces.EnsureDefault(ctx))
+	assert.Equal(t, http.StatusCreated, f.call(t, asAdmin, http.MethodPost, "/workspaces", api.WorkspaceRequest{URL: repo, Folder: "malta"}).Status)
+
+	list := f.call(t, asAdmin, http.MethodGet, "/workspaces", nil)
+	assert.Len(t, list.list("workspaces"), 2)
+	assert.Equal(t, model.Default, list.list("workspaces")[0].(map[string]any)["folder"])
+
+	sort := int64(9)
+	updated := f.call(t, asAdmin, http.MethodPut, "/workspaces/_", api.WorkspaceRequest{Title: "Root", Sort: &sort})
+	assert.Equal(t, http.StatusOK, updated.Status, string(updated.Raw))
+	assert.Equal(t, "Root", updated.str("title"))
+	assert.NotEqual(t, float64(9), updated.get("sort"), "the default keeps its place")
+
+	refused := f.call(t, asAdmin, http.MethodDelete, "/workspaces/_", nil)
+	assert.Equal(t, http.StatusConflict, refused.Status)
+	assert.Equal(t, http.StatusOK, f.call(t, asAdmin, http.MethodGet, "/workspaces/_", nil).Status)
+	assert.DirExists(t, f.root)
+
+	taken := f.call(t, asAdmin, http.MethodPost, "/workspaces", api.WorkspaceRequest{URL: repo, Folder: model.Default})
+	assert.Equal(t, http.StatusBadRequest, taken.Status)
+	for _, id := range []string{"_", "_/web"} {
+		res := f.call(t, asAdmin, http.MethodPost, "/projects", api.ProjectCloneRequest{URL: repo, ID: id})
+		assert.Equal(t, http.StatusBadRequest, res.Status, id)
+		assert.Equal(t, http.StatusBadRequest, f.call(t, asAdmin, http.MethodPut, "/projects/"+id, api.ProjectRequest{Title: "Mine"}).Status, id)
+	}
+	assert.NoDirExists(t, filepath.Join(f.root, model.Default))
+
+	// _ clones into the root, as no workspace does.
+	root := f.call(t, asAdmin, http.MethodPost, "/projects", api.ProjectCloneRequest{URL: repo, ID: "site", Workspace: model.Default})
+	assert.Equal(t, http.StatusCreated, root.Status, string(root.Raw))
+	assert.Equal(t, "site", root.str("project", "folder"))
+	assert.FileExists(t, filepath.Join(f.root, "site", "Makefile"))
+}
+
+// A project cloned into the root may not take a workspace's name, or
+// one a directory holds, and git does not run: a repository that is not
+// there would answer 502.
+func TestWorkspace_RootCloneTaken(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	repo := "file://" + localRepo(t)
+	nothing := "file://" + filepath.Join(t.TempDir(), "nothing.git")
+	assert.Equal(t, http.StatusCreated, f.call(t, asAdmin, http.MethodPost, "/workspaces", api.WorkspaceRequest{URL: repo, Folder: "malta"}).Status)
+
+	for _, id := range []string{"malta", "malta/x", "infra"} {
+		res := f.call(t, asAdmin, http.MethodPost, "/projects", api.ProjectCloneRequest{URL: nothing, ID: id})
+		assert.Equal(t, http.StatusConflict, res.Status, id)
+		assert.Equal(t, "", res.str("output"), id)
+	}
+	assert.NoDirExists(t, filepath.Join(f.root, "malta", "x"))
+}

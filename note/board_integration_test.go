@@ -1,0 +1,466 @@
+//go:build integration
+
+package note_test
+
+import (
+	"context"
+	"errors"
+	"os"
+	"path/filepath"
+	"sync"
+	"testing"
+	"time"
+
+	"github.com/titpetric/task-ui/beszel"
+	"github.com/titpetric/task-ui/event"
+	"github.com/titpetric/task-ui/folder"
+	"github.com/titpetric/task-ui/internal/assert"
+	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/note"
+	"github.com/titpetric/task-ui/recording"
+	"github.com/titpetric/task-ui/runner"
+	"github.com/titpetric/task-ui/storage"
+	_ "modernc.org/sqlite"
+)
+
+// fixture is a board over a private database, with the users ops and
+// claude and an agent job that echoes its note, and writes the reply file
+// for a note with the word answer, a second late for one with slow.
+type fixture struct {
+	board *note.Board
+	ops   *model.User
+}
+
+func newFixture(t *testing.T, agentJob string) *fixture {
+	t.Helper()
+	ctx := context.Background()
+	db, err := storage.OpenAndMigrate(ctx, ":memory:")
+	assert.NoError(t, err)
+	t.Cleanup(func() { db.Close() })
+	users := storage.NewUserStorage(db)
+	ops := &model.User{Name: "ops", Role: model.RoleRunner}
+	assert.NoError(t, users.Create(ctx, ops))
+	// claude runs instance Claude when mentioned unless the fixture has
+	// no agent, "", and then waits for its agent over MCP.
+	assert.NoError(t, users.Create(ctx, &model.User{Name: "claude", Role: model.RoleRunner, Mcp: true, AgentReply: agentJob != ""}))
+
+	dir := filepath.Join(t.TempDir(), "agent")
+	assert.NoError(t, os.MkdirAll(dir, 0o755))
+	script := []string{"sh", "-c", `echo "note $TASK_UI_NOTE_ID from $TASK_UI_NOTE_AUTHOR: $TASK_UI_NOTE"; case "$TASK_UI_NOTE" in *slow*) sleep 1;; esac; case "$TASK_UI_NOTE" in *answer*) echo "Done: $TASK_UI_NOTE" > "$TASK_UI_NOTE_REPLY";; esac; test "$TASK_UI_NOTE" != "@claude fail" && test "$TASK_UI_NOTE" != "@claude answer, fail"`}
+
+	recordings := &recording.Store{Root: t.TempDir()}
+	manager := runner.New(runner.Options{Runs: storage.NewRunStorage(db), Recordings: recordings, Grace: time.Second, KillTimeout: 5 * time.Second, Keep: time.Minute})
+	t.Cleanup(func() { manager.Shutdown(context.Background()) })
+	board := &note.Board{
+		Notes: storage.NewNoteStorage(db), Users: users, Runs: storage.NewRunStorage(db), WorkflowRuns: storage.NewWorkflowRunStorage(db), Catalogue: catalogue{},
+		Runner: manager, Recordings: recordings, Events: event.NewBus(),
+	}
+	// "agent/run" runs the script as the Notes agent in a root of its own;
+	// "agent/nothing" leaves the board no root to run it in.
+	if agentJob == "agent/run" {
+		board.Root, board.AgentCommand = dir, script
+	}
+	return &fixture{board: board, ops: ops}
+}
+
+// settled waits for a note to leave the open and working states.
+func (f *fixture) settled(t *testing.T, id string) *model.Note {
+	t.Helper()
+	var got *model.Note
+	assert.Eventually(t, func() bool {
+		var err error
+		got, err = f.board.Notes.Get(context.Background(), id)
+		return err == nil && got.Finished()
+	}, 10*time.Second, 20*time.Millisecond)
+	return got
+}
+
+func replies(t *testing.T, f *fixture, id string) []model.Note {
+	t.Helper()
+	all, err := f.board.Notes.Replies(context.Background(), []string{id})
+	assert.NoError(t, err)
+	return all[id]
+}
+
+// A note naming the agent runs the agent job with the note in its
+// environment; the agent replies with how the run ended and its output.
+func TestBoard_Instruction(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t, "agent/run")
+	ctx := context.Background()
+
+	posted, err := f.board.Post(ctx, f.ops, "", "@claude update the weather job")
+	assert.NoError(t, err)
+	assert.Equal(t, model.NoteOpen, posted.State)
+
+	done := f.settled(t, posted.ID)
+	assert.Equal(t, model.NoteDone, done.State)
+	assert.NotEqual(t, "", done.RunID)
+	reply := replies(t, f, posted.ID)
+	assert.Len(t, reply, 1)
+	assert.Equal(t, "claude", reply[0].UserName)
+	assert.Contains(t, reply[0].Body, "ended ok")
+	assert.Contains(t, reply[0].Body, "note "+posted.ID+" from ops: @claude update the weather job")
+
+	failed, err := f.board.Post(ctx, f.ops, "", "@claude fail")
+	assert.NoError(t, err)
+	assert.Equal(t, model.NoteFailed, f.settled(t, failed.ID).State)
+}
+
+// A reply naming the agent opens its note again, and the agent works from
+// the whole thread.
+func TestBoard_ReplyInstruction(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t, "agent/run")
+	ctx := context.Background()
+	first, err := f.board.Post(ctx, f.ops, "", "@claude update the weather job")
+	assert.NoError(t, err)
+	assert.Equal(t, model.NoteDone, f.settled(t, first.ID).State)
+
+	reply, err := f.board.Post(ctx, f.ops, first.ID, "@claude and add Lisbon")
+	assert.NoError(t, err)
+	assert.Equal(t, "", reply.State, "the reply carries no state, its note does")
+	assert.Eventually(t, func() bool { return len(replies(t, f, first.ID)) == 3 }, 10*time.Second, 20*time.Millisecond)
+	again := f.settled(t, first.ID)
+	assert.Equal(t, model.NoteDone, again.State)
+	last := replies(t, f, first.ID)[2]
+	assert.Equal(t, "claude", last.UserName)
+	assert.Contains(t, last.Body, "ops:")
+	assert.Contains(t, last.Body, "@claude and add Lisbon")
+}
+
+// A note to someone else, a reply that names no agent, a viewer's note and
+// the agent's own note are messages, not instructions.
+func TestBoard_Messages(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t, "agent/run")
+	ctx := context.Background()
+	claude, err := f.board.Users.GetByName(ctx, "claude")
+	assert.NoError(t, err)
+
+	other, err := f.board.Post(ctx, f.ops, "", "@alice have a look")
+	assert.NoError(t, err)
+	assert.Equal(t, "", other.State)
+	reply, err := f.board.Post(ctx, f.ops, other.ID, "and you, @alice")
+	assert.NoError(t, err)
+	assert.Equal(t, "", reply.State)
+	own, err := f.board.Post(ctx, claude, "", "@claude a reminder")
+	assert.NoError(t, err)
+	assert.Equal(t, "", own.State)
+
+	viewer := &model.User{Name: "guest", Role: model.RoleViewer}
+	assert.NoError(t, f.board.Users.Create(ctx, viewer))
+	watched, err := f.board.Post(ctx, viewer, "", "@claude delete everything")
+	assert.NoError(t, err)
+	assert.Equal(t, "", watched.State, "a viewer cannot hand out work")
+
+	_, err = f.board.Post(ctx, f.ops, "", "  ")
+	assert.ErrorIs(t, err, note.ErrInvalid)
+	_, err = f.board.Post(ctx, f.ops, reply.ID, "a reply to a reply")
+	assert.ErrorIs(t, err, note.ErrInvalid)
+	_, err = f.board.Post(ctx, f.ops, "missing", "x")
+	assert.ErrorIs(t, err, storage.ErrNotFound)
+	_, err = f.board.Post(ctx, nil, "", "x")
+	assert.ErrorIs(t, err, note.ErrInvalid)
+}
+
+// Without an agent job an instruction stays open, and an agent reports on
+// it with Comment; a missing job fails it.
+func TestBoard_Comment(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t, "")
+	ctx := context.Background()
+	claude, _ := f.board.Users.GetByName(ctx, "claude")
+
+	open, err := f.board.Post(ctx, f.ops, "", "@claude tidy the README")
+	assert.NoError(t, err)
+	assert.Equal(t, model.NoteOpen, open.State)
+	time.Sleep(50 * time.Millisecond)
+	got, _ := f.board.Notes.Get(ctx, open.ID)
+	assert.Equal(t, model.NoteOpen, got.State, "no job: it waits")
+
+	reply, err := f.board.Comment(ctx, claude, open.ID, "Done in commit abc123.", model.NoteDone)
+	assert.NoError(t, err)
+	assert.Equal(t, open.ID, reply.ParentID)
+	got, _ = f.board.Notes.Get(ctx, open.ID)
+	assert.Equal(t, model.NoteDone, got.State)
+
+	plain, _ := f.board.Post(ctx, f.ops, "", "a note")
+	_, err = f.board.Comment(ctx, claude, plain.ID, "", model.NoteDone)
+	assert.ErrorIs(t, err, note.ErrInvalid, "not an instruction")
+	_, err = f.board.Comment(ctx, claude, open.ID, "x", "lost")
+	assert.ErrorIs(t, err, note.ErrInvalid)
+	stated, err := f.board.Comment(ctx, claude, open.ID, "", model.NoteWorking)
+	assert.NoError(t, err)
+	assert.Equal(t, model.NoteWorking, stated.State)
+
+	missing := newFixture(t, "agent/nothing")
+	lost, err := missing.board.Post(ctx, missing.ops, "", "@claude go")
+	assert.NoError(t, err)
+	failed := missing.settled(t, lost.ID)
+	assert.Equal(t, model.NoteFailed, failed.State)
+	assert.Contains(t, replies(t, missing, lost.ID)[0].Body, "has no root")
+}
+
+// After a restart, an instruction left working with no run fails.
+func TestBoard_Recover(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t, "")
+	ctx := context.Background()
+	open, _ := f.board.Post(ctx, f.ops, "", "@claude go")
+	assert.NoError(t, f.board.Notes.SetState(ctx, open.ID, model.NoteWorking, "gone"))
+	assert.NoError(t, f.board.Recover(ctx))
+	got, _ := f.board.Notes.Get(ctx, open.ID)
+	assert.Equal(t, model.NoteFailed, got.State)
+	assert.Contains(t, replies(t, f, open.ID)[0].Body, "restarted")
+}
+
+// After a restart, an open instruction with no run starts the agent.
+func TestBoard_RecoverOpen(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t, "agent/run")
+	ctx := context.Background()
+	note := &model.Note{Channel: model.ChannelNotes, UserID: f.ops.ID, UserName: f.ops.Name, Body: "@claude go", State: model.NoteOpen}
+	assert.NoError(t, f.board.Notes.Create(ctx, note))
+	assert.NoError(t, f.board.Recover(ctx))
+	assert.Equal(t, model.NoteDone, f.settled(t, note.ID).State)
+}
+
+// A job that writes the reply file answers with it alone; the reply links
+// the run, which keeps the output.
+func TestBoard_InstructionAnswer(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t, "agent/run")
+	ctx := context.Background()
+	posted, err := f.board.Post(ctx, f.ops, "", "@claude answer me")
+	assert.NoError(t, err)
+	done := f.settled(t, posted.ID)
+	assert.Equal(t, model.NoteDone, done.State)
+	reply := replies(t, f, posted.ID)[0]
+	assert.Equal(t, "Done: @claude answer me", reply.Body)
+	assert.Equal(t, done.RunID, reply.RunID)
+
+	failed, err := f.board.Post(ctx, f.ops, "", "@claude answer, fail")
+	assert.NoError(t, err)
+	assert.Equal(t, model.NoteFailed, f.settled(t, failed.ID).State)
+	assert.Equal(t, "Done: @claude answer, fail\n\nThe run ended failed (exit 1).", replies(t, f, failed.ID)[0].Body)
+}
+
+// The agent job by default is the root's Notes agent, @claude-note,
+// which runs in the root as the agent's user, who sees no folder of it:
+// the board starts it all the same.
+func TestBoard_NoteJob(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t, model.NoteJob)
+	root, err := filepath.EvalSymlinks(t.TempDir())
+	assert.NoError(t, err)
+	f.board.Root = root
+	f.board.AgentCommand = []string{"sh", "-c", `echo "Done in $(pwd -P): $TASK_UI_NOTE ($TASK_UI_FOLDER/$TASK_UI_JOB $0)" > "$TASK_UI_NOTE_REPLY"`}
+
+	posted, err := f.board.Post(context.Background(), f.ops, "", "@claude answer this")
+	assert.NoError(t, err)
+	done := f.settled(t, posted.ID)
+	assert.Equal(t, model.NoteDone, done.State)
+	reply := replies(t, f, posted.ID)
+	assert.Len(t, reply, 1)
+	assert.Equal(t, "Done in "+root+": @claude answer this (_/@claude-note note)", reply[0].Body)
+	run, ok := f.board.Runner.Get(done.RunID)
+	assert.True(t, ok)
+	assert.Equal(t, model.Default+"/"+model.NoteJob, snapshotKey(run))
+	assert.Equal(t, "claude", run.Snapshot().UserName)
+	snapshot := run.Snapshot()
+	assert.True(t, snapshot.IsNote())
+}
+
+// snapshotKey is the run key of a session's run.
+func snapshotKey(session *runner.Session) string {
+	run := session.Snapshot()
+	return run.Key()
+}
+
+// withPrompts sets up the fixture's board with a root with the folder
+// proj, and an agent command whose prompt answers in the reply file with
+// the thread, and fails a thread that ends in fail. It returns an admin.
+func (f *fixture) withPrompts(t *testing.T) *model.User {
+	t.Helper()
+	ctx := context.Background()
+	root, err := filepath.EvalSymlinks(t.TempDir())
+	assert.NoError(t, err)
+	proj := &folder.Folder{ID: "proj", Title: "proj", Dir: filepath.Join(root, "proj")}
+	assert.NoError(t, os.MkdirAll(filepath.Join(proj.Dir, "images"), 0o755))
+	f.board.AgentCommand = []string{"sh", "-c", `printf 'In %s: %s' "$(pwd -P)" "$TASK_UI_PROMPT" > "$TASK_UI_PROMPT_REPLY"; case "$TASK_UI_PROMPT" in *fail) exit 3;; esac`}
+	f.board.Catalogue = catalogue{"proj": proj}
+	f.board.Root = root
+	admin := &model.User{Name: "admin", Role: model.RoleAdmin}
+	assert.NoError(t, f.board.Users.Create(ctx, admin))
+	return admin
+}
+
+// A prompt is a note of its place, open, which the prompt job answers
+// with a reply from Claude; it stays off the board.
+func TestBoard_Ask(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t, "")
+	admin := f.withPrompts(t)
+	ctx := context.Background()
+
+	asked, err := f.board.Ask(ctx, admin, "", "proj/images", "what builds here")
+	assert.NoError(t, err)
+	assert.Equal(t, model.NoteOpen, asked.State)
+	assert.Equal(t, "proj/images", asked.Dir)
+	assert.True(t, asked.IsPrompt())
+	done := f.settled(t, asked.ID)
+	assert.Equal(t, model.NoteDone, done.State)
+	answer := replies(t, f, asked.ID)
+	assert.Len(t, answer, 1)
+	assert.Equal(t, "claude", answer[0].UserName)
+	assert.Equal(t, "In "+filepath.Join(f.board.Root, "proj", "images")+": what builds here", answer[0].Body)
+	assert.Equal(t, done.RunID, answer[0].RunID)
+	assert.Equal(t, asked.Dir, answer[0].Dir)
+	assert.Equal(t, asked.WorkspaceID, answer[0].WorkspaceID)
+	run, ok := f.board.Runner.Get(done.RunID)
+	assert.True(t, ok)
+	assert.Equal(t, admin.Name, run.Snapshot().UserName, "a prompt runs as who asks")
+	assert.Equal(t, "proj", run.Snapshot().Folder, "the run is its place's")
+	assert.Equal(t, "images", run.Snapshot().Dir)
+	assert.Equal(t, model.PromptJob, run.Snapshot().Job)
+
+	board, err := f.board.Notes.List(ctx, storage.NoteFilter{})
+	assert.NoError(t, err)
+	assert.Len(t, board, 0, "the board lists no prompt")
+	listed, err := f.board.Notes.List(ctx, storage.NoteFilter{Prompts: true, Dir: "proj/images"})
+	assert.NoError(t, err)
+	assert.Len(t, listed, 1)
+
+	// A reply asks again with the thread, through Post as on the page.
+	reply, err := f.board.Post(ctx, admin, asked.ID, "and which first")
+	assert.NoError(t, err)
+	assert.Equal(t, "proj/images", reply.Dir)
+	assert.Eventually(t, func() bool { return len(replies(t, f, asked.ID)) == 3 }, 10*time.Second, 20*time.Millisecond)
+	assert.Equal(t, model.NoteDone, f.settled(t, asked.ID).State)
+	assert.Contains(t, replies(t, f, asked.ID)[2].Body, "admin:\nwhat builds here\n\nclaude:\nIn ")
+	assert.Contains(t, replies(t, f, asked.ID)[2].Body, "admin:\nand which first")
+
+	// The root is _.
+	root, err := f.board.Ask(ctx, admin, "", model.Default, "what is here")
+	assert.NoError(t, err)
+	assert.Equal(t, model.NoteDone, f.settled(t, root.ID).State)
+	assert.Equal(t, "In "+f.board.Root+": what is here", replies(t, f, root.ID)[0].Body)
+	rootRun, ok := f.board.Runner.Get(f.settled(t, root.ID).RunID)
+	assert.True(t, ok)
+	assert.Equal(t, model.Default+"/"+model.PromptJob, snapshotKey(rootRun))
+}
+
+// A failed run fails the prompt, and Claude's reply says how it ended;
+// only an admin asks, in a place there is.
+func TestBoard_AskFailed(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t, "")
+	admin := f.withPrompts(t)
+	ctx := context.Background()
+
+	asked, err := f.board.Ask(ctx, admin, "", "proj", "now fail")
+	assert.NoError(t, err)
+	assert.Equal(t, model.NoteFailed, f.settled(t, asked.ID).State)
+	assert.Contains(t, replies(t, f, asked.ID)[0].Body, "now fail\n\nThe run ended failed (exit 3).")
+
+	_, err = f.board.Ask(ctx, f.ops, "", "proj", "hello")
+	assert.ErrorIs(t, err, note.ErrForbidden)
+	_, err = f.board.Post(ctx, f.ops, asked.ID, "hello")
+	assert.ErrorIs(t, err, note.ErrForbidden, "a reply in a prompt's thread is a prompt")
+	_, err = f.board.Ask(ctx, admin, "", "proj/nothing", "hello")
+	assert.ErrorIs(t, err, note.ErrNoPrompt)
+	_, err = f.board.Ask(ctx, admin, "", "", "hello")
+	assert.ErrorIs(t, err, note.ErrNoPrompt)
+	_, err = f.board.Ask(ctx, admin, "", "proj", " ")
+	assert.ErrorIs(t, err, note.ErrInvalid)
+	plain, _ := f.board.Post(ctx, f.ops, "", "a note")
+	_, err = f.board.Ask(ctx, admin, plain.ID, "", "hello")
+	assert.ErrorIs(t, err, note.ErrInvalid)
+}
+
+// After a restart, an open prompt with no run starts it as its author.
+func TestBoard_RecoverPrompt(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t, "")
+	admin := f.withPrompts(t)
+	ctx := context.Background()
+	open := &model.Note{UserID: admin.ID, UserName: admin.Name, Body: "go", State: model.NoteOpen, WorkspaceID: model.Default, Dir: "proj"}
+	assert.NoError(t, f.board.Notes.Create(ctx, open))
+	working := &model.Note{UserID: admin.ID, UserName: admin.Name, Body: "gone", State: model.NoteWorking, RunID: "gone", WorkspaceID: model.Default, Dir: "proj"}
+	assert.NoError(t, f.board.Notes.Create(ctx, working))
+	assert.NoError(t, f.board.Recover(ctx))
+	assert.Equal(t, model.NoteDone, f.settled(t, open.ID).State)
+	assert.Equal(t, model.NoteFailed, f.settled(t, working.ID).State)
+}
+
+// A prompt's run gets the inventory in TASK_UI_HOSTS, or why task-ui got
+// none, and runs either way; the notes agent's run never gets it.
+func TestBoard_AskHosts(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t, "agent/run")
+	admin := f.withPrompts(t)
+	ctx := context.Background()
+	f.board.AgentCommand = []string{"sh", "-c", `printf 'hosts: %s' "${TASK_UI_HOSTS-unset}" > "${TASK_UI_PROMPT_REPLY:-$TASK_UI_NOTE_REPLY}"`}
+
+	var mu sync.Mutex
+	hosts, fail := "web\tweb.example\troot\tup", error(nil)
+	f.board.Hosts = func(context.Context) (string, error) {
+		mu.Lock()
+		defer mu.Unlock()
+		return hosts, fail
+	}
+	failWith := func(err error) {
+		mu.Lock()
+		defer mu.Unlock()
+		fail = err
+	}
+	asked, askErr := f.board.Ask(ctx, admin, "", "proj", "list the containers")
+	assert.NoError(t, askErr)
+	assert.Equal(t, model.NoteDone, f.settled(t, asked.ID).State)
+	assert.Equal(t, "hosts: web\tweb.example\troot\tup", replies(t, f, asked.ID)[0].Body)
+
+	posted, postErr := f.board.Post(ctx, f.ops, "", "@claude list the containers")
+	assert.NoError(t, postErr)
+	assert.Equal(t, model.NoteDone, f.settled(t, posted.ID).State)
+	assert.Equal(t, "hosts: unset", replies(t, f, posted.ID)[0].Body, "the notes agent sees no inventory")
+
+	failWith(errors.New("hub down"))
+	failing, askErr := f.board.Ask(ctx, admin, "", "proj", "again")
+	assert.NoError(t, askErr)
+	assert.Equal(t, model.NoteDone, f.settled(t, failing.ID).State)
+	assert.Equal(t, "hosts: The inventory could not be read: hub down", replies(t, f, failing.ID)[0].Body)
+
+	failWith(beszel.ErrOff)
+	off, askErr := f.board.Ask(ctx, admin, "", "proj", "once more")
+	assert.NoError(t, askErr)
+	assert.Equal(t, model.NoteDone, f.settled(t, off.ID).State)
+	assert.Equal(t, "hosts: unset", replies(t, f, off.ID)[0].Body)
+}
+
+// A user with prompt/edit asks in a folder the user sees, whatever the
+// folder's allow list says.
+func TestBoard_AskByPermission(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t, "")
+	f.withPrompts(t)
+	ctx := context.Background()
+	f.board.Catalogue.Find("proj").Allow = []string{"admin"}
+	claude, err := f.board.Users.GetByName(ctx, "claude")
+	assert.NoError(t, err)
+
+	asked, err := f.board.Ask(ctx, claude, "", "proj", "what is here")
+	assert.NoError(t, err)
+	done := f.settled(t, asked.ID)
+	assert.Equal(t, model.NoteDone, done.State)
+	assert.Equal(t, "claude", asked.UserName)
+	assert.Contains(t, replies(t, f, asked.ID)[0].Body, ": what is here")
+
+	scoped := &model.User{Name: "web", Role: model.RoleRunner, Folders: model.EncodeList([]string{"web"})}
+	assert.NoError(t, f.board.Users.Create(ctx, scoped))
+	assert.NoError(t, f.board.Users.Policies().Put(ctx, "user", "web", "prompt/edit", "allow"))
+	_, err = f.board.Ask(ctx, scoped, "", "proj", "what is here")
+	assert.ErrorIs(t, err, note.ErrNoPrompt, "a folder the user does not see")
+	_, err = f.board.Ask(ctx, scoped, "", model.Default, "what is here")
+	assert.ErrorIs(t, err, note.ErrNoPrompt, "the root is for a user who sees every folder")
+}
