@@ -26,6 +26,7 @@ import (
 	"github.com/titpetric/task-ui/event"
 	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/git"
+	"github.com/titpetric/task-ui/hostrun"
 	"github.com/titpetric/task-ui/integration"
 	"github.com/titpetric/task-ui/internal/assert"
 	"github.com/titpetric/task-ui/model"
@@ -48,7 +49,10 @@ func (c catalogue) Find(id string) *folder.Folder { return c[id] }
 func (c catalogue) List() []*folder.Folder {
 	ids := make([]string, 0, len(c))
 	for id := range c {
-		ids = append(ids, id)
+		// The root holds @host alone here, and lists as no folder.
+		if id != model.Default {
+			ids = append(ids, id)
+		}
 	}
 	sort.Strings(ids)
 	result := make([]*folder.Folder, 0, len(ids))
@@ -130,7 +134,7 @@ func newFixture(t *testing.T) *fixture {
 	_, err = keyring.EnsureInstance("task-ui instance")
 	assert.NoError(t, err)
 	secrets := secret.New(storage.NewSecretStorage(db), secret.NewVault(keyring.Instance()))
-	cat := catalogue{"infra": infra, "private": private, "infra/edge": edge}
+	cat := catalogue{"infra": infra, "private": private, "infra/edge": edge, model.Default: {ID: model.Default, Dir: root}}
 	workflows, workflowRuns := storage.NewWorkflowStorage(db), storage.NewWorkflowRunStorage(db)
 	flows := workflow.New(workflows, workflowRuns, cat, manager)
 	flows.Events = event.NewBus()
@@ -169,7 +173,11 @@ func newFixture(t *testing.T) *fixture {
 		values, err := f.opts.Integrations.Values(ctx, integration.Beszel)
 		return values["url"], values["token"], err
 	}}
-	f.opts.SSH = &sshprobe.Prober{Users: []string{"debian"}, Timeout: 2 * time.Second, TTL: time.Hour, Command: fakeSSH(t)}
+	f.opts.HostRuns = &hostrun.Starter{
+		Catalogue: cat, Hosts: f.opts.Hosts, Runner: manager, Timeout: 10 * time.Second,
+		SSH: &sshprobe.Prober{Users: []string{"debian"}, Timeout: 2 * time.Second, TTL: time.Hour, Command: fakeSSH(t), Terminal: true},
+	}
+	flows.Hosts = f.opts.HostRuns
 	f.opts.Summarizer = &claude.Summarizer{Command: fakeClaude(t), Timeout: 10 * time.Second}
 	f.opts.Summaries = storage.NewRunSummaryStorage(db)
 	f.opts.SecretReads = storage.NewSecretReadStorage(db)
@@ -364,7 +372,7 @@ func fakeClaude(t *testing.T) string {
 func fakeSSH(t *testing.T) string {
 	t.Helper()
 	script := filepath.Join(t.TempDir(), "ssh")
-	body := "#!/bin/sh\nlogin=$(eval echo \\${$(($# - 1))})\nremote=$(eval echo \\${$#})\n[ \"$login\" = debian@dev1 ] && exec sh -c \"$remote\"\nexit 255\n"
+	body := "#!/bin/sh\nlogin=$(eval echo \\${$(($# - 1))})\nremote=$(eval echo \\${$#})\ncase \"$login\" in debian@dev1|debian@dev2) exec sh -c \"$remote\";; esac\nexit 255\n"
 	assert.NoError(t, os.WriteFile(script, []byte(body), 0o755))
 	return script
 }

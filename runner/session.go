@@ -36,6 +36,8 @@ type Session struct {
 	// and args what follows the job's argv after --.
 	dir  string
 	args []string
+	// timeout kills the run once it runs that long; zero lets it run.
+	timeout time.Duration
 	// workspace is the directory of the run's workspace, "" for none, and
 	// workspaceName its folder: _ for the default workspace, the root.
 	// workspaceID is its row's ID, whose keys the run gets; "" without

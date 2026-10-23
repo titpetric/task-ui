@@ -1,9 +1,8 @@
 package sshprobe_test
 
 import (
-	"context"
+	"os/exec"
 	"path/filepath"
-	"strings"
 	"testing"
 	"time"
 
@@ -11,50 +10,38 @@ import (
 	"github.com/titpetric/task-ui/sshprobe"
 )
 
-// runSSH is an ssh that runs the remote command locally for debian@a and
-// debian@slow, and fails to connect anywhere else.
+// runSSH is an ssh that runs the remote command locally for debian@a,
+// and fails to connect anywhere else.
 func runSSH(t *testing.T) string {
 	t.Helper()
 	script := filepath.Join(t.TempDir(), "ssh")
-	body := "#!/bin/sh\nlogin=$(eval echo \\${$(($# - 1))})\nremote=$(eval echo \\${$#})\ncase \"$login\" in debian@a|debian@slow) exec sh -c \"$remote\";; esac\necho 'ssh: connect refused' >&2\nexit 255\n"
+	body := "#!/bin/sh\nlogin=$(eval echo \\${$(($# - 1))})\nremote=$(eval echo \\${$#})\ncase \"$login\" in debian@a) exec sh -c \"$remote\";; esac\necho 'ssh: connect refused' >&2\nexit 255\n"
 	writeScript(t, script, body)
 	return script
 }
 
-// Run runs on every host at once and reports each: the output, the exit
-// code, a host it cannot reach, and one that runs past the time limit.
-func TestProber_Run(t *testing.T) {
-	t.Parallel()
-	p := &sshprobe.Prober{Timeout: time.Second, Command: runSSH(t)}
-	logins := map[string]string{"a": "debian@a", "down": "debian@down", "slow": "debian@slow"}
-	command := `if [ "$(hostname)" = never ]; then :; fi; echo out; echo err >&2; sleep ${SLOW:-0}; exit 3`
-
-	results := p.Run(context.Background(), []string{"a", "down", "nologin"}, logins, command, 5*time.Second)
-	assert.Len(t, results, 3)
-	a := results[0]
-	assert.Equal(t, "debian@a", a.Login)
-	assert.Equal(t, 3, a.ExitCode)
-	assert.Contains(t, a.Output, "out")
-	assert.Contains(t, a.Output, "err")
-	assert.Equal(t, "", a.Error)
-	assert.Equal(t, 255, results[1].ExitCode)
-	assert.Contains(t, results[1].Error, "could not run")
-	assert.Contains(t, results[2].Error, "no ssh login")
-
-	slow := p.Run(context.Background(), []string{"slow"}, logins, "sleep 3", 300*time.Millisecond)
-	assert.Contains(t, slow[0].Error, "ran past")
-
-	big := p.Run(context.Background(), []string{"a"}, logins, "head -c 400000 /dev/zero | tr '\\\\0' x", 5*time.Second)
-	assert.Equal(t, 256<<10, len(big[0].Output))
-	assert.False(t, strings.Contains(big[0].Output, "\x00"))
-}
-
-// On a terminal, ssh gets -tt, the pagers are off, and the carriage
-// returns of the terminal's line ends go.
-func TestProber_RunTerminal(t *testing.T) {
+// Argv is ssh with the login and the remote command last; on a
+// terminal it gets -tt and the pagers are off.
+func TestProber_Argv(t *testing.T) {
 	t.Parallel()
 	p := &sshprobe.Prober{Timeout: time.Second, Command: runSSH(t), Terminal: true}
-	logins := map[string]string{"a": "debian@a"}
-	results := p.Run(context.Background(), []string{"a"}, logins, `printf 'pager=%s term=%s\r\n' "$PAGER" "$TERM"`, 5*time.Second)
-	assert.Equal(t, "pager=cat term=xterm-256color\n", results[0].Output)
+	argv := p.Argv("debian@a", `printf 'pager=%s\n' "$PAGER"`)
+	assert.Equal(t, p.Command, argv[0])
+	assert.Equal(t, "-tt", argv[1])
+	assert.Equal(t, "debian@a", argv[len(argv)-2])
+
+	var out []byte
+	var err error
+	for range 5 {
+		// A script written a moment ago can still be busy for exec.
+		if out, err = exec.Command(argv[0], argv[1:]...).Output(); err == nil {
+			break
+		}
+		time.Sleep(50 * time.Millisecond)
+	}
+	assert.NoError(t, err)
+	assert.Equal(t, "pager=cat\n", string(out))
+
+	plain := (&sshprobe.Prober{Command: "ssh"}).Argv("debian@a", "true")
+	assert.Equal(t, "-n", plain[1])
 }

@@ -45,13 +45,14 @@ domains, the domains to `model` and `storage`, `model` to nothing of ours.
 | `workflow`  | workflows: named chains of jobs, started one after another as ordinary runs  |
 | `workspace` | what a workspace holds beside its checkout: its keys, and its export bundle  |
 | `agent`     | the host commands of the Claude built-ins, `task-ui agent note\|prompt\|shell` |
-| `claude`    | Claude Code for task-ui's own uses, such as the summary of the hosts' output |
+| `claude`    | Claude Code for task-ui's own uses, such as the summary of a run's output   |
 | `integration` | the settings of the services task-ui talks to, encrypted with the instance key |
 | `beszel`    | the client of a Beszel hub, for the host inventory                           |
 | `artifactstore` | the files runs leave, as one tree with its history in git                    |
 | `event`     | the in-memory bus the pages follow, by topic                                 |
 | `sshagent`  | an ssh agent on a socket of its own, serving keys from memory to a run       |
 | `sshprobe`  | who task-ui signs in to a host as over ssh                                   |
+| `hostrun`   | the runs of `@host`: a command on hosts of the inventory, a run a host     |
 | `skills`    | asks atkins what runs in a directory: its pipeline and the skills that apply |
 | `markdown`  | markdown rendered as HTML                                                    |
 | `highlight` | the coloured HTML of the files a pipeline reads                              |

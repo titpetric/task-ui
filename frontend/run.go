@@ -1,6 +1,7 @@
 package frontend
 
 import (
+	"context"
 	"net/http"
 	"net/url"
 	"slices"
@@ -63,10 +64,10 @@ func (h *Handlers) runs(w http.ResponseWriter, r *http.Request) {
 	p := h.page(r, "Runs")
 	p.Crumbs = view.Crumbs("Runs")
 	n := pageSize(q)
-	p.Form = map[string]string{"folder": q.Get("folder"), "job": q.Get("job"), "state": q.Get("state"), "user": q.Get("user"), "n": q.Get("n")}
+	p.Form = map[string]string{"folder": q.Get("folder"), "job": q.Get("job"), "state": q.Get("state"), "user": q.Get("user"), "n": q.Get("n"), "batch": q.Get("batch")}
 	filter := storage.RunFilter{
 		Folder: q.Get("folder"), Folders: user.FolderList(), Job: q.Get("job"), Dir: q.Get("dir"), State: q.Get("state"), UserName: q.Get("user"),
-		Before: q.Get("before"), After: q.Get("after"), Limit: n + 1,
+		BatchID: q.Get("batch"), Before: q.Get("before"), After: q.Get("after"), Limit: n + 1,
 	}
 	runs := h.visibleRuns(r.Context(), h.runSeer(r), filter)
 	var prev, next string
@@ -108,6 +109,19 @@ func (h *Handlers) run(w http.ResponseWriter, r *http.Request) {
 	h.render(w, http.StatusOK, "run", p)
 }
 
+// batch returns the runs of a batch, oldest first; none for "".
+func (h *Handlers) batch(ctx context.Context, id string) []model.Run {
+	if id == "" {
+		return nil
+	}
+	runs, err := h.opts.Runs.List(ctx, storage.RunFilter{BatchID: id, Limit: 200})
+	if err != nil {
+		return nil
+	}
+	slices.Reverse(runs)
+	return runs
+}
+
 // runPrompt returns the prompt box of a run's page with the threads
 // about the run: to ask, for a user with prompt/edit and a Claude token
 // once the run ended; to read them only, with prompt/view. A running
@@ -118,8 +132,14 @@ func (h *Handlers) runPrompt(r *http.Request, p *view.Page, run *view.Run) *view
 	if h.opts.Board == nil || run.IsClaude() || !p.Can("prompt/view") {
 		return nil
 	}
-	prompt := view.PromptAbout(run.ID, run.Where())
-	prompt.Threads = h.threads(r, storage.NoteFilter{Prompts: true, AboutRunID: run.ID, Limit: 20})
+	// A run of a batch asks about the batch, its threads the first
+	// run's, which every run page of the batch lists.
+	about := run.ID
+	if batch := h.batch(r.Context(), run.BatchID); len(batch) > 0 {
+		about = batch[0].ID
+	}
+	prompt := view.PromptAbout(about, run.Where())
+	prompt.Threads = h.threads(r, storage.NoteFilter{Prompts: true, AboutRunID: about, Limit: 20})
 	if run.State == model.StateRunning || !p.Can("prompt/edit") || !h.claudeFor(r, p.User) {
 		if len(prompt.Threads) == 0 && run.State != model.StateRunning {
 			return nil

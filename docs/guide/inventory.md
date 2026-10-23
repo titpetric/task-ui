@@ -18,22 +18,43 @@ on the hosts at once, like pssh: pick the
 hosts, by default every one with an ssh login (**All**, **None** and
 **Invert** set them at once), write the command or take a
 quick one (`uptime`, `df -h /`, `free -h`, the containers, the kernel, the
-OS), and **Run**, or Ctrl+Enter. Each host runs it over its login, on a
-terminal, for at most two minutes, and the page shows a row a host: its
-exit code, how long it took, and what it printed, both streams, with the
-colours a program prints on a terminal. A long output shows its last screen,
-the final 24 lines; **Expand** shows the whole output, as on a job run's steps. Pagers are off (`PAGER=cat`), so
-`systemctl status` and the like end on their own.
+OS), and **Run**, or Ctrl+Enter.
+
+Each host gets a run of its own, a run of `@host`, the root's built-in
+job beside `@shell`: it runs the command over the host's login, on a
+terminal, for at most two minutes; task-ui kills it past that. Pagers are
+off (`PAGER=cat`), so `systemctl status` and the like end on their own.
+A run of `@host` is a run like any other: it has a row, a recording, live
+output, a place in the recents and on [Runs](runs.md), where
+`job=@host` keeps them, and its page, which names it `@host · <host>`.
+Its target is the host, its args the command, so **Run again** runs the
+same command on the same host. A host without an ssh login gets a run
+that fails saying so; task-ui skips a host still running a command of
+`@host`. Who ran what on which host is the run history.
+
+The runs started together are a batch. The panel shows your last batch
+under the form, a row a host: the host, linked to its run's page, how
+the run ended and how long it took, **View** or **Attach**, and what it
+printed, both streams, in the colours a program prints on a terminal,
+scrolling inside the row. While a run of the batch runs, the panel
+follows it on its own; after a reload it shows the batch again. **In
+Runs** lists the batch at `/runs?batch=<id>`.
 
 **Run and summarize** runs the command the same way, and after the last
-host finishes, sends Claude every output as one markdown report: a
-section a host with its login, exit code and output, without colours.
-Claude's summary, one or two short paragraphs and a table with a row a
-host when that helps, leads with what needs attention, and shows above the
-rows, with the report to download as `.md`. The button shows when the
-Claude Code integration has a token for you (see
-[Settings](settings.md#integrations)); Claude only reads the report and
-runs no tools, for at most three minutes.
+host finishes asks Claude about the batch, as you: a prompt thread about
+the batch's first run, "Summarize the runs on these hosts.", which
+Claude answers with every host's run and output in one or two short
+paragraphs, leading with what needs attention, and a table with a row a
+host. The thread shows under the panel and on the page of every run of
+the batch, where you can ask about the batch again. The button shows
+when the Claude Code integration has a token for you (see
+[Settings](settings.md#integrations)).
+
+A [schedule](scheduled.md) or a [workflow](workflows.md) step runs
+`@host` too, with a target, a host or `*` for every host with an ssh
+login, and the command as its args; `*` starts a batch. A workflow step
+on `*` ends ok when every host's run did. Both take the `hosts`
+permission of the user they run as.
 
 The logins sign in as `debian` or `root`, so the panel shows only with
 `hosts`, which no role but admin holds until

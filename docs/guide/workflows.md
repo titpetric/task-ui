@@ -104,6 +104,13 @@ with a toggle that runs it or skips it; with `prompt/edit`, the
 Anyone can make one. Its owner, or an admin, edits or deletes it; the runs so far
 keep the steps they had.
 
+A step of `/api/workflows` runs a command on hosts of the
+[inventory](inventory.md) as `@host` of the root, `_`, with a `target`,
+a host or `*` for every host with an ssh login, and the command as its
+`args`: `{"folder": "_", "job": "@host", "target": "*", "args":
+["uptime"]}`. A step on `*` runs on every host at once and ends ok when
+every host's run did; running it takes the `hosts` permission.
+
 ---
 
 Previous: [Inventory](inventory.md) · Next: [Runs](runs.md) · [Contents](../README.md)

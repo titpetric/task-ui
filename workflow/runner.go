@@ -13,10 +13,12 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"strings"
 	"sync"
 
 	"github.com/titpetric/task-ui/event"
 	"github.com/titpetric/task-ui/folder"
+	"github.com/titpetric/task-ui/hostrun"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/runner"
 	"github.com/titpetric/task-ui/storage"
@@ -27,6 +29,9 @@ var ErrBusy = errors.New("the workflow is running")
 
 // ErrNotRunning refuses a stop of a workflow run that ended.
 var ErrNotRunning = errors.New("the workflow run is not running")
+
+// ErrHostStep refuses a step of @host without a host or a command.
+var ErrHostStep = errors.New("a step of @host needs a host, or * for every host, and a command")
 
 // ErrNothing refuses a run of a workflow with no enabled step and no
 // prompt.
@@ -46,6 +51,10 @@ type Step struct {
 	Workflow *model.Workflow
 	// Disabled is a step the run skips, resolved to nothing.
 	Disabled bool
+	// Target and Command are what a step of @host runs: the host, or *
+	// for every host with an ssh login, and the shell command.
+	Target  string
+	Command string
 }
 
 // Prompter puts a workflow's prompt to Claude once a run's steps ended,
@@ -69,6 +78,8 @@ type Runner struct {
 	// Prompter runs the prompt of a workflow that has one; nil fails a
 	// run of such a workflow once its steps end.
 	Prompter Prompter
+	// Hosts start a step of @host on its target. Nil fails such a step.
+	Hosts *hostrun.Starter
 
 	mu     sync.Mutex
 	byFlow map[string]*active // workflow ID -> its run in progress
@@ -125,7 +136,11 @@ func (r *Runner) Resolve(ctx context.Context, steps []model.WorkflowStep) ([]Ste
 		if job.IsShell() {
 			return nil, fmt.Errorf("%s / %s: %w", step.Folder, step.Job, folder.ErrShellUnattended)
 		}
-		resolved = append(resolved, Step{Folder: f, Job: job})
+		command := strings.Join(model.DecodeList(step.Args), " ")
+		if job.IsHost() && (step.Target == "" || strings.TrimSpace(command) == "") {
+			return nil, fmt.Errorf("%s: %w", step.Job, ErrHostStep)
+		}
+		resolved = append(resolved, Step{Folder: f, Job: job, Target: step.Target, Command: command})
 	}
 	return resolved, nil
 }
@@ -310,6 +325,9 @@ func (r *Runner) prompt(ctx context.Context, a *active, user *model.User) {
 // step starts one job and waits for it. When the job is already
 // running, step waits for that run and then starts the job again; a stop ends the run in progress.
 func (r *Runner) step(ctx context.Context, step Step, user *model.User) (state, runID, message string) {
+	if step.Job.IsHost() {
+		return r.hosts(ctx, step, user)
+	}
 	for {
 		if ctx.Err() != nil {
 			return model.StateStopped, "", ""
@@ -337,6 +355,34 @@ func (r *Runner) step(ctx context.Context, step Step, user *model.User) (state, 
 		ended := session.Snapshot()
 		return ended.State, ended.ID, ""
 	}
+}
+
+// hosts starts a step of @host and waits for its runs: one on a host,
+// or a batch for *. The step ends ok when every run did, else as the
+// first that did not, and keeps the first run; a stop ends the runs.
+func (r *Runner) hosts(ctx context.Context, step Step, user *model.User) (state, runID, message string) {
+	if r.Hosts == nil {
+		return model.StateFailed, "", "no hosts on this instance"
+	}
+	req := hostrun.Request{Targets: []string{step.Target}, Command: step.Command, Batch: step.Target == "*"}
+	_, sessions, err := r.Hosts.Start(context.WithoutCancel(ctx), user, req)
+	if err != nil {
+		return model.StateFailed, "", err.Error()
+	}
+	state = model.StateOK
+	for _, session := range sessions {
+		select {
+		case <-session.Done():
+		case <-ctx.Done():
+			_ = r.manager.Stop(session.ID())
+			<-session.Done()
+		}
+		ended := session.Snapshot()
+		if state == model.StateOK && ended.State != model.StateOK {
+			state, message = ended.State, "on "+ended.Target
+		}
+	}
+	return state, sessions[0].ID(), message
 }
 
 // nested runs the workflow a step names and waits for it. When that

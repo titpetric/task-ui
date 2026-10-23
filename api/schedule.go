@@ -2,6 +2,7 @@ package api
 
 import (
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/titpetric/task-ui/access"
@@ -21,6 +22,27 @@ type ScheduleRequest struct {
 	// anyone, everyone else only themselves. Empty is the caller on
 	// create, and no change on update.
 	User string `json:"user"`
+	// Target and Args are what a schedule of @host runs: a host of the
+	// inventory, or * for every host with an ssh login, and the command.
+	// Only @host takes them; on update, empty keeps them.
+	Target string  `json:"target,omitempty"`
+	Args   RunArgs `json:"args,omitempty"`
+}
+
+// hostTarget checks the target and the command of a schedule or a
+// workflow step: both for @host, neither for any other job. It returns
+// what is wrong, "" for nothing.
+func hostTarget(job *folder.Job, target string, args []string) string {
+	if !job.IsHost() {
+		if target != "" || len(args) > 0 {
+			return "only @host takes a target and args here"
+		}
+		return ""
+	}
+	if strings.TrimSpace(target) == "" || strings.TrimSpace(strings.Join(args, " ")) == "" {
+		return "@host needs a target, a host or * for every host, and a command as its args"
+	}
+	return ""
 }
 
 // listSchedules returns the schedules of the folders the user may see.
@@ -63,6 +85,10 @@ func (h *Handlers) createSchedule(w http.ResponseWriter, r *http.Request) {
 		fail(w, http.StatusBadRequest, folder.ErrShellUnattended.Error())
 		return
 	}
+	if problem := hostTarget(job, req.Target, req.Args); problem != "" {
+		fail(w, http.StatusBadRequest, problem)
+		return
+	}
 	if !h.canRun(r, f, job) {
 		fail(w, http.StatusForbidden, "you can view this job, but you don't have permission to schedule it")
 		return
@@ -80,7 +106,7 @@ func (h *Handlers) createSchedule(w http.ResponseWriter, r *http.Request) {
 		fail(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	schedule := &model.Schedule{Folder: f.ID, Job: job.ID, UserID: runAs.ID, UserName: runAs.Name, Expression: req.Expression, Enabled: 1, NextRunAt: &next}
+	schedule := &model.Schedule{Folder: f.ID, Job: job.ID, UserID: runAs.ID, UserName: runAs.Name, Expression: req.Expression, Enabled: 1, NextRunAt: &next, Target: strings.TrimSpace(req.Target), Args: model.EncodeList(req.Args)}
 	if req.Enabled != nil && !*req.Enabled {
 		schedule.Enabled = 0
 	}
@@ -183,6 +209,21 @@ func (h *Handlers) updateSchedule(w http.ResponseWriter, r *http.Request) {
 	}
 	if runAs != nil {
 		schedule.UserID, schedule.UserName = runAs.ID, runAs.Name
+	}
+	if req.Target != "" || len(req.Args) > 0 {
+		target, args := strings.TrimSpace(req.Target), []string(req.Args)
+		if target == "" {
+			target = schedule.Target
+		}
+		if len(args) == 0 {
+			args = model.DecodeList(schedule.Args)
+		}
+		_, job, _ := h.target(r, schedule.Folder, schedule.Job)
+		if problem := hostTarget(job, target, args); problem != "" {
+			fail(w, http.StatusBadRequest, problem)
+			return
+		}
+		schedule.Target, schedule.Args = target, model.EncodeList(args)
 	}
 	if req.Expression != "" {
 		next, err := scheduler.NextRun(req.Expression, time.Now())

@@ -32,6 +32,17 @@ day of week, in the server's time zone:
 
 Month and day names work too (`mon-fri`, `jan`).
 
+A schedule runs a command on hosts of the [inventory](inventory.md)
+too: `@host` of the root, `_`, with a `target`, a host or `*` for every
+host with an ssh login, and the command as its `args`, through
+`POST /api/schedules`:
+
+```json
+{"folder": "_", "job": "@host", "target": "*", "args": ["df -h /"], "expression": "0 6 * * *"}
+```
+
+Its user needs the `hosts` permission; `*` starts a batch, a run a host.
+
 ## How a scheduled run runs
 
 It starts in the background as the schedule's user, with their

@@ -11,3 +11,5 @@ Workflow Step.
 | job          | varchar  |     | Job          |
 | disabled     | boolean  |     | Disabled     |
 | workflow_ref | char(26) |     | Workflow Ref |
+| target       | varchar  |     | Target       |
+| args         | varchar  |     | Args         |

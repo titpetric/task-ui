@@ -23,3 +23,5 @@ Run.
 | updated_at  | datetime |     | Updated At  |
 | dir         | varchar  |     | Dir         |
 | args        | varchar  |     | Args        |
+| target      | varchar  |     | Target      |
+| batch_id    | char(26) | MUL | Batch ID    |

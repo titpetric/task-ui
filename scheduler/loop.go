@@ -4,9 +4,11 @@ import (
 	"context"
 	"errors"
 	"log/slog"
+	"strings"
 	"time"
 
 	"github.com/titpetric/task-ui/folder"
+	"github.com/titpetric/task-ui/hostrun"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/runner"
 	"github.com/titpetric/task-ui/storage"
@@ -24,6 +26,9 @@ type Loop struct {
 	Users     *storage.UserStorage
 	Catalogue Catalogue
 	Runner    *runner.Manager
+	// Hosts start a schedule of @host on its target. Nil skips such a
+	// schedule.
+	Hosts *hostrun.Starter
 	// Interval is how often the loop looks. Zero is a minute.
 	Interval time.Duration
 	// Now is the clock; tests move it.
@@ -109,6 +114,9 @@ func (l *Loop) fire(ctx context.Context, schedule *model.Schedule, now time.Time
 		slog.Warn("scheduled run skipped, its user may not run the job", "folder", schedule.Folder, "job", schedule.Job, "user", user.Name)
 		return false, nil
 	}
+	if job.IsHost() {
+		return l.fireHosts(ctx, schedule, user)
+	}
 	_, err = l.Runner.Start(ctx, runner.Request{
 		Folder:    f,
 		Job:       job,
@@ -119,6 +127,18 @@ func (l *Loop) fire(ctx context.Context, schedule *model.Schedule, now time.Time
 		slog.Info("scheduled run skipped, the job is running", "folder", schedule.Folder, "job", schedule.Job)
 		return false, nil
 	}
+	return err == nil, err
+}
+
+// fireHosts starts a schedule of @host: its command, the args, on its
+// target, a host or * for every host with an ssh login, a batch.
+func (l *Loop) fireHosts(ctx context.Context, schedule *model.Schedule, user *model.User) (bool, error) {
+	if l.Hosts == nil {
+		slog.Warn("scheduled run skipped, no hosts on this instance", "job", schedule.Job, "target", schedule.Target)
+		return false, nil
+	}
+	req := hostrun.Request{Targets: []string{schedule.Target}, Command: strings.Join(model.DecodeList(schedule.Args), " "), Batch: schedule.Target == "*", Scheduled: true}
+	_, _, err := l.Hosts.Start(ctx, user, req)
 	return err == nil, err
 }
 
@@ -143,7 +163,11 @@ func (l *Loop) mayRun(ctx context.Context, user *model.User, f *folder.Folder, j
 	if l.Users == nil {
 		return true
 	}
-	return l.Users.Permissions(ctx, user).Run(f.ID, f.Allow, job.Allow)
+	set := l.Users.Permissions(ctx, user)
+	if job.IsHost() {
+		return set.Allowed("hosts")
+	}
+	return set.Run(f.ID, f.Allow, job.Allow)
 }
 
 // user resolves whom to attribute the run to: the schedule's user when

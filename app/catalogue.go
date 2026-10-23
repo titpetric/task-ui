@@ -5,6 +5,7 @@ import (
 	"log/slog"
 
 	"github.com/titpetric/task-ui/folder"
+	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/skills"
 	"github.com/titpetric/task-ui/storage"
 )
@@ -54,7 +55,12 @@ func (c *Catalogue) List() []*folder.Folder {
 	return c.discovery().List()
 }
 
-// Find returns a folder by ID, or nil.
+// Find returns a folder by ID, or nil. _ is the root itself when no
+// folder takes the ID: the folder of the root's built-in jobs, @shell,
+// @claude and @host, which discovery lists under no ID.
 func (c *Catalogue) Find(id string) *folder.Folder {
-	return c.discovery().Find(id)
+	if f := c.discovery().Find(id); f != nil || id != model.Default {
+		return f
+	}
+	return &folder.Folder{ID: model.Default, Title: model.Default, Dir: c.Root}
 }

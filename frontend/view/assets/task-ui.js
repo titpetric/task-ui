@@ -288,6 +288,8 @@
     // the list a run row keeps, or the line typed.
     if (spec.dir) body.dir = spec.dir;
     if (spec.args && spec.args.length) body.args = spec.args;
+    // A command on a host runs again on its host.
+    if (spec.target) body.target = spec.target;
     // Run and summarize: Claude summarises the run on its page when it
     // ends.
     if (spec.summarize) body.summarize = true;
@@ -344,7 +346,7 @@
       var run = res.data;
       els.title.textContent = runTitle(run);
       els.who.textContent = run.user_name || "";
-      s.spec = { folder: run.folder, dir: run.dir || "", job: run.job, args: runArgs(run), title: runTitle(run) };
+      s.spec = { folder: run.folder, dir: run.dir || "", job: run.job, args: runArgs(run), target: run.target || "", title: runTitle(run) };
       // A finished run stays live in memory for a while, for the windows
       // on it; opened afterwards it is history, not something to attach to.
       if (run.live && run.state === "running") {
@@ -359,8 +361,8 @@
   // inside it when the job is one of that directory's, and the job; a
   // job of the root, _, by its name alone, as Run.Name does.
   function runTitle(run) {
-    if (run.folder === "_" && !run.dir) return run.job;
-    return runPlace(run) + " / " + run.job;
+    var title = run.folder === "_" && !run.dir ? run.job : runPlace(run) + " / " + run.job;
+    return run.target ? title + " · " + run.target : title;
   }
 
   // runPlace is the folder a run names: folder/dir, a directory of the
@@ -2600,26 +2602,38 @@
       if (!hosts.length) return;
       var buttons = inventoryRun.querySelectorAll("button[type=submit]");
       buttons.forEach(function (button) { button.disabled = true; });
-      results.innerHTML = '<p class="faint">Running on ' + hosts.length + " host" + (hosts.length === 1 ? "" : "s") + (summarize ? ", then Claude summarizes the outputs" : "") + "…</p>";
+      // Each host's run is a run of @host, under one batch: the page
+      // shows the batch, the user's last, as it loads.
       api("POST", "/api/inventory/run", { command: inventoryRun.elements.command.value, hosts: hosts, summarize: summarize }).then(function (res) {
         buttons.forEach(function (button) { button.disabled = false; });
         if (res.status >= 300) {
           results.innerHTML = '<p class="form-error">' + escapeHTML(res.data.error || ("HTTP " + res.status)) + "</p>";
           return;
         }
-        results.innerHTML = runSummary(res.data) + '<div class="table-wrap"><table class="table run-results"><thead><tr><th>Host</th><th>Exit</th><th>Output</th></tr></thead><tbody>' +
-          res.data.results.map(function (r) {
-            var ok = !r.error && r.exit_code === 0;
-            var state = r.error ? "error" : String(r.exit_code);
-            var took = r.duration ? (r.duration / 1e9).toFixed(1) + "s" : "";
-            return "<tr>" +
-              '<td class="nowrap"><code>' + escapeHTML(r.login || r.host) + "</code></td>" +
-              '<td class="nowrap"><span class="badge ' + (ok ? "ok" : "bad") + '">' + state + '</span> <span class="faint">' + took + "</span></td>" +
-              '<td class="run-output">' + (r.error ? '<div class="run-error">' + escapeHTML(r.error) + "</div>" : "") + outputHTML(r.output || "") + "</td>" +
-              "</tr>";
-          }).join("") + "</tbody></table></div>";
+        window.location.reload();
       });
     });
+    // While a run of the batch runs, the page fetches itself and puts
+    // the batch back, the outputs of the runs that ended read from
+    // their recordings.
+    var followBatch = function () {
+      if (!results.querySelector("[data-batch-live]")) return;
+      setTimeout(function () {
+        if (document.hidden) return followBatch();
+        fetch(location.pathname, { credentials: "same-origin" })
+          .then(function (res) { return res.ok ? res.text() : null; })
+          .then(function (text) {
+            var fresh = text && new DOMParser().parseFromString(text, "text/html").querySelector("[data-inventory-results]");
+            if (fresh) {
+              results.innerHTML = fresh.innerHTML;
+              readOutputs(results);
+            }
+            followBatch();
+          })
+          .catch(followBatch);
+      }, 2000);
+    };
+    followBatch();
   }
 
   // The inventory's hosts refresh once a minute, the rate task-ui reads
@@ -2660,41 +2674,6 @@
     });
     tally();
   });
-
-  // outputHTML shows a host's output as its last screen, the final
-  // screenLines lines, and the whole of it behind Expand, as a job run's
-  // step does; output that fits a screen shows whole.
-  var screenLines = 24;
-  function outputHTML(output) {
-    var lines = output.replace(/\n+$/, "").split("\n");
-    if (lines.length <= screenLines) return ansiHTML(output);
-    return '<button type="button" class="btn btn-sm output-toggle" data-output-expand aria-expanded="false">' +
-      '<svg class="ic"><use href="#i-expand"/></svg><span>Expand ' + lines.length + " lines</span></button>" +
-      '<div class="output-screen">' + ansiHTML(lines.slice(-screenLines).join("\n")) + "</div>" +
-      '<div class="output-all" hidden>' + ansiHTML(output) + "</div>";
-  }
-  document.addEventListener("click", function (event) {
-    var btn = event.target.closest("[data-output-expand]");
-    if (!btn) return;
-    var cell = btn.closest(".run-output");
-    var open = btn.getAttribute("aria-expanded") !== "true";
-    cell.querySelector(".output-screen").hidden = open;
-    cell.querySelector(".output-all").hidden = !open;
-    btn.setAttribute("aria-expanded", open ? "true" : "false");
-    if (!btn.dataset.label) btn.dataset.label = btn.querySelector("span").textContent;
-    btn.querySelector("use").setAttribute("href", open ? "#i-collapse" : "#i-expand");
-    btn.querySelector("span").textContent = open ? "Collapse" : btn.dataset.label;
-  });
-
-  // runSummary shows Claude's summary of a run on the hosts, with the
-  // report it read to download; a run without one shows nothing.
-  function runSummary(data) {
-    if (!data.report) return "";
-    var report = URL.createObjectURL(new Blob([data.report], { type: "text/markdown" }));
-    var head = '<div class="block-head"><h4>Summary</h4><a class="btn btn-sm" href="' + report + '" download="report.md"><svg class="ic"><use href="#i-download"/></svg>Report .md</a></div>';
-    var body = data.summary ? '<div class="summary-text">' + markdownHTML(data.summary) + "</div>" : '<p class="form-error">' + escapeHTML(data.summary_error || "No summary.") + "</p>";
-    return '<section class="run-summary">' + head + body + "</section>";
-  }
 
   // markdownHTML renders the markdown Claude answers in: headings, lists,
   // fences, **bold**, `code` and paragraphs. The text is escaped first.
@@ -3255,7 +3234,14 @@
     return lines.join("\n");
   }
 
-  Array.prototype.forEach.call(document.querySelectorAll("[data-output]"), function (pre) {
+  // readOutputs fills each data-output block under root with the output
+  // of its run, read from the recording.
+  function readOutputs(root) {
+    Array.prototype.forEach.call(root.querySelectorAll("[data-output]"), readOutput);
+  }
+  readOutputs(document);
+
+  function readOutput(pre) {
     if (!window.Terminal) return;
     var id = pre.dataset.output;
     fetch("/api/runs/" + encodeURIComponent(id) + "/cast", { credentials: "same-origin" })
@@ -3291,7 +3277,7 @@
       .catch(function (err) {
         pre.innerHTML = '<span class="faint">Could not load the recording: ' + escapeHTML(err.message) + "</span>";
       });
-  });
+  }
 
   // #run=<id> opens a run on load, so a window can be shared;
   // #start=<folder>/<job> starts one.
@@ -3466,7 +3452,7 @@
     return '<a href="/runs/' + encodeURIComponent(r.id) + '" class="recent" title="' +
       escapeHTML("Open " + runTitle(r) + ", " + r.user_name + ", " + r.state) + '">' +
       '<i class="dot ' + escapeHTML(r.state) + '"></i>' +
-      '<span class="what"><b>' + escapeHTML(r.job) + '</b><small>' + escapeHTML(runPlace(r)) + '</small></span>' +
+      '<span class="what"><b>' + escapeHTML(r.job + (r.target ? " · " + r.target : "")) + '</b><small>' + escapeHTML(runPlace(r)) + '</small></span>' +
       (running ? '<svg class="ic act"><use href="#i-' + (r.can_run ? "play" : "eye") + '"/></svg>' : "") +
       avatarHTML(r.user_name) + "</a>";
   }

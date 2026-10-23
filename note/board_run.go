@@ -4,12 +4,14 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"slices"
 	"strings"
 	"time"
 
 	"github.com/titpetric/task-ui/claude"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/runner"
+	"github.com/titpetric/task-ui/storage"
 )
 
 // The most of a run's output a prompt about the run gets: its last
@@ -52,14 +54,35 @@ func (b *Board) SummarizeRun(ctx context.Context, user *model.User, runID string
 	return b.AskRun(ctx, user, runID, SummaryQuestion)
 }
 
+// BatchSummaryQuestion is the question of the thread Run and
+// summarize on the inventory asks about a batch of host runs; its
+// prompt run sets claude.HostsSummary beside it.
+const BatchSummaryQuestion = "Summarize the runs on these hosts."
+
+// SummarizeBatch asks Claude for the summary of a batch of host runs
+// that ended, as SummarizeRun does for one: a thread about the batch's
+// first run, which Claude gets with every run of the batch, answered in
+// the shape claude.HostsSummary sets. Every run page of the batch lists
+// the thread.
+func (b *Board) SummarizeBatch(ctx context.Context, user *model.User, runID string) (*model.Note, error) {
+	return b.AskRun(ctx, user, runID, BatchSummaryQuestion)
+}
+
 // instructions are what a prompt's run tells Claude besides the
 // thread, TASK_UI_PROMPT_INSTRUCTIONS: the summary's shape for the
-// question of SummarizeRun alone in its thread; nothing otherwise.
+// question of SummarizeRun or SummarizeBatch alone in its thread;
+// nothing otherwise.
 func instructions(note *model.Note, thread string) []string {
-	if note.AboutRunID == "" || note.Body != SummaryQuestion || thread != note.Body {
+	if note.AboutRunID == "" || thread != note.Body {
 		return nil
 	}
-	return []string{"TASK_UI_PROMPT_INSTRUCTIONS=" + claude.RunSummary}
+	switch note.Body {
+	case SummaryQuestion:
+		return []string{"TASK_UI_PROMPT_INSTRUCTIONS=" + claude.RunSummary}
+	case BatchSummaryQuestion:
+		return []string{"TASK_UI_PROMPT_INSTRUCTIONS=" + claude.HostsSummary}
+	}
+	return nil
 }
 
 // aboutRun writes what a prompt about a run tells Claude of it to a
@@ -73,11 +96,15 @@ func (b *Board) aboutRun(ctx context.Context, runID string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	text := b.runText(run)
+	if run.BatchID != "" {
+		text = b.batchText(ctx, run)
+	}
 	file, err := os.CreateTemp("", "note-run-*.md")
 	if err != nil {
 		return "", err
 	}
-	_, err = file.WriteString(b.runText(run))
+	_, err = file.WriteString(text)
 	if closeErr := file.Close(); err == nil {
 		err = closeErr
 	}
@@ -88,12 +115,38 @@ func (b *Board) aboutRun(ctx context.Context, runID string) (string, error) {
 	return file.Name(), nil
 }
 
+// batchText describes the batch of a run for a prompt: every run of it,
+// oldest first, as runText does one, each with the end of its output
+// cut to its share of what a prompt gets.
+func (b *Board) batchText(ctx context.Context, run *model.Run) string {
+	runs, err := b.Runs.List(ctx, storage.RunFilter{BatchID: run.BatchID, Limit: 200})
+	if err != nil || len(runs) == 0 {
+		return b.runText(run)
+	}
+	slices.Reverse(runs)
+	var text strings.Builder
+	fmt.Fprintf(&text, "A batch of %d runs started together, one a host.\n", len(runs))
+	for i := range runs {
+		text.WriteString("\n## " + runs[i].Target + "\n\n")
+		text.WriteString(b.runTextCut(&runs[i], aboutBytes/len(runs)))
+	}
+	return text.String()
+}
+
 // runText describes a run for a prompt: who ran what where, how it
 // ended, the job's command when the catalogue still has the job, and
 // the end of the output, marked when cut.
 func (b *Board) runText(run *model.Run) string {
+	return b.runTextCut(run, aboutBytes)
+}
+
+// runTextCut is runText with the output cut to limit bytes.
+func (b *Board) runTextCut(run *model.Run, limit int) string {
 	var text strings.Builder
 	fmt.Fprintf(&text, "Run %s of the job %s in %s, by %s.\n", run.ID, run.Job, run.Where(), run.UserName)
+	if run.Target != "" {
+		text.WriteString("On the host " + run.Target + ".\n")
+	}
 	fmt.Fprintf(&text, "State: %s, exit code %d.\n", run.State, run.ExitCode)
 	if run.Reason != "" {
 		text.WriteString("Forced out of hours, because: " + run.Reason + "\n")
@@ -107,12 +160,12 @@ func (b *Board) runText(run *model.Run) string {
 	if command := b.command(run); command != "" {
 		text.WriteString("The job's command: " + command + "\n")
 	}
-	output, cut := b.outputTail(run)
+	output, cut := cutTail(b.outputText(run), limit)
 	switch {
 	case output == "":
 		text.WriteString("\nThe run's output is not there to read.\n")
 	case cut:
-		fmt.Fprintf(&text, "\nThe end of the run's output, cut to its last %d lines or %d KiB:\n\n```\n%s\n```\n", aboutLines, aboutBytes>>10, output)
+		fmt.Fprintf(&text, "\nThe end of the run's output, cut to its last %d lines or %d KiB:\n\n```\n%s\n```\n", aboutLines, max(limit>>10, 1), output)
 	default:
 		text.WriteString("\nThe run's output:\n\n```\n" + output + "\n```\n")
 	}
@@ -137,13 +190,6 @@ func (b *Board) command(run *model.Run) string {
 		return strings.Join(job.Command, " ")
 	}
 	return ""
-}
-
-// outputTail returns the end of a run's output as text, from its
-// recording: the last aboutLines lines, fewer when those pass
-// aboutBytes, and whether it left any out.
-func (b *Board) outputTail(run *model.Run) (string, bool) {
-	return cutTail(b.outputText(run), aboutBytes)
 }
 
 // outputText returns a run's output as text, its colours and cursor

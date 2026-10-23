@@ -11,13 +11,13 @@ import (
 	"github.com/titpetric/task-ui/event"
 	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/git"
+	"github.com/titpetric/task-ui/hostrun"
 	"github.com/titpetric/task-ui/integration"
 	"github.com/titpetric/task-ui/note"
 	"github.com/titpetric/task-ui/recording"
 	"github.com/titpetric/task-ui/runner"
 	"github.com/titpetric/task-ui/secret"
 	"github.com/titpetric/task-ui/sshkey"
-	"github.com/titpetric/task-ui/sshprobe"
 	"github.com/titpetric/task-ui/storage"
 	"github.com/titpetric/task-ui/workflow"
 	"github.com/titpetric/task-ui/workspace"
@@ -67,8 +67,9 @@ type Options struct {
 	// host inventory through the Beszel one.
 	Integrations *integration.Store
 	Hosts        *beszel.Inventory
-	// SSH runs a command on the hosts over the logins it finds.
-	SSH *sshprobe.Prober
+	// HostRuns start the runs of @host, a command on hosts of the
+	// inventory. Nil runs on no host.
+	HostRuns *hostrun.Starter
 	// AddUser puts a new user in the password file; nil leaves users to
 	// the file and task-ui passwd.
 	AddUser func(ctx context.Context, name, password string) error

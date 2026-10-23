@@ -23,9 +23,9 @@ func (m *Manager) checkout(session *Session) string {
 // checkout. Runs of one checkout pull one at a time: two pulls at once
 // fight over the index lock, and a workflow starts them one after another.
 // A shell pulls nothing: it opens on the checkout as it stands, the place
-// to mend one a pull fails in.
+// to mend one a pull fails in. Nor does a host job, which runs on a host.
 func (m *Manager) pull(ctx context.Context, session *Session) error {
-	if m.opts.Git == nil || session.Job.IsShell() {
+	if m.opts.Git == nil || session.Job.IsShell() || session.Job.IsHost() {
 		return nil
 	}
 	ws := session.workspace

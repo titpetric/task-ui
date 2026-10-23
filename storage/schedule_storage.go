@@ -27,6 +27,9 @@ func (s *ScheduleStorage) Create(ctx context.Context, schedule *model.Schedule) 
 	if schedule.ID == "" {
 		schedule.ID = model.NewID()
 	}
+	if schedule.Args == "" {
+		schedule.Args = "[]"
+	}
 	schedule.CreatedAt = stamp()
 	schedule.UpdatedAt = schedule.CreatedAt
 	return client(s.db).Insert(ctx, model.ScheduleTable, schedule)

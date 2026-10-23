@@ -111,7 +111,10 @@ func inTx(ctx context.Context, db DB, fn func(c conn) error) error {
 // insertSteps writes a workflow's steps in order, positions from zero.
 func insertSteps(ctx context.Context, c conn, workflowID string, steps []model.WorkflowStep) error {
 	for i, step := range steps {
-		row := model.WorkflowStep{ID: model.NewID(), WorkflowID: workflowID, Position: int64(i), Folder: step.Folder, Job: step.Job, WorkflowRef: step.WorkflowRef, Disabled: step.Disabled}
+		row := model.WorkflowStep{ID: model.NewID(), WorkflowID: workflowID, Position: int64(i), Folder: step.Folder, Job: step.Job, WorkflowRef: step.WorkflowRef, Disabled: step.Disabled, Target: step.Target, Args: step.Args}
+		if row.Args == "" {
+			row.Args = "[]"
+		}
 		if err := c.Insert(ctx, model.WorkflowStepTable, &row); err != nil {
 			return err
 		}
