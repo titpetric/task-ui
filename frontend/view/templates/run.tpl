@@ -2,21 +2,21 @@
 {{- $run := .Run }}{{ $can := .CanRun .Folder .Job }}
 <div class="page-head">
 	<div>
-		<h2>{{ $run.Name }} <span class="badge {{ tone $run.State }}">{{ $run.State }}{{ if and (ne $run.State "ok") (ne $run.State "running") }} {{ $run.ExitCode }}{{ end }}</span></h2>
-		<p>Started by {{ $run.UserName }} {{ ago $run.StartedAt }}{{ if $run.IsScheduled }} by the scheduler{{ end }}{{ if $run.IsForced }}, with Run force{{ end }}.{{ if eq $run.State "running" }} It's still running: attach to follow it{{ if $can }}, or stop it{{ end }}.{{ else if $run.Expired }} The run has finished; its recording expired.{{ else }} The run has finished; its full output is below.{{ end }}</p>
+		<h2>{{ $run.Name }} <span class="badge {{ tone $run.State }}">{{ $run.State }}{{ if and (ne $run.State "ok") (ended $run.State) }} {{ $run.ExitCode }}{{ end }}</span></h2>
+		<p>Started by {{ $run.UserName }} {{ ago $run.StartedAt }}{{ if $run.IsScheduled }} by the scheduler{{ end }}{{ if $run.IsForced }}, with Run force{{ end }}.{{ if eq $run.State "queued" }} It waits, queued, for the run of its job before it to end: attach to follow it once it starts{{ if $can }}, or stop it to take it out of the queue{{ end }}.{{ else if not (ended $run.State) }} It's still running: attach to follow it{{ if $can }}, or stop it{{ end }}.{{ else if $run.Expired }} The run has finished; its recording expired.{{ else }} The run has finished; its full output is below.{{ end }}</p>
 	</div>
 	<div class="actions">
-		<button type="button" class="btn btn-primary" data-attach="{{ $run.ID }}">{{ if eq $run.State "running" }}Attach{{ else }}View{{ end }}</button>
-		{{- if and $run.Live (eq $run.State "running") $can }}
+		<button type="button" class="btn btn-primary" data-attach="{{ $run.ID }}">{{ if not (ended $run.State) }}Attach{{ else }}View{{ end }}</button>
+		{{- if and $run.Live (not (ended $run.State)) $can }}
 		<button type="button" class="btn" data-stop="{{ $run.ID }}">Stop</button>
 		<button type="button" class="btn btn-danger" data-kill="{{ $run.ID }}">Kill</button>
 		{{- end }}
 		{{- if and $run.CastPath (not $run.Expired) }}<a class="btn" href="/api/runs/{{ $run.ID }}/cast" download="{{ $run.ID }}.cast">Recording</a>{{ end }}
-		{{- if and $run.CastPath (ne $run.State "running") (not $run.Expired) }}<button type="button" class="btn" data-replay="{{ $run.ID }}" data-replay-title="{{ $run.Name }}" data-replay-who="{{ $run.UserName }}" title="Replay the recording" aria-label="Replay the recording">|&gt;</button>{{ end }}
+		{{- if and $run.CastPath (ended $run.State) (not $run.Expired) }}<button type="button" class="btn" data-replay="{{ $run.ID }}" data-replay-title="{{ $run.Name }}" data-replay-who="{{ $run.UserName }}" title="Replay the recording" aria-label="Replay the recording">|&gt;</button>{{ end }}
 	</div>
 </div>
 
-{{- if and $run.Live (eq $run.State "running") }}
+{{- if and $run.Live (not (ended $run.State)) }}
 <section class="block" data-live>
 	<h3>Terminal <small>as it looks now, {{ if $run.Attached }}{{ $run.Attached }} watching{{ else }}nobody attached{{ end }}</small></h3>
 	<a class="tile wide" href="#" data-attach="{{ $run.ID }}"><div class="frame" data-frame="{{ $run.ID }}" role="img" aria-label="Terminal of {{ $run.Name }}">{{ $run.FrameSVG }}</div></a>
@@ -28,7 +28,7 @@
 	<h3>Output <small>the recording expired</small></h3>
 	<p class="dim">{{ $run.ExpiredText }} <a href="/settings/retention">Data retention</a></p>
 </section>
-{{- else if and $run.CastPath (ne $run.State "running") }}
+{{- else if and $run.CastPath (ended $run.State) }}
 <section class="block">
 	<h3>Output <small>every line the run printed</small></h3>
 	<pre class="output" data-output="{{ $run.ID }}" data-cols="{{ $run.TermCols }}" data-rows="{{ $run.TermRows }}"><span class="faint">Reading the recording…</span></pre>

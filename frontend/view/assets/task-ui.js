@@ -357,12 +357,18 @@
       s.spec = { folder: run.folder, dir: run.dir || "", job: run.job, args: runArgs(run), title: runTitle(run) };
       // A finished run stays live in memory for a while, for the windows
       // on it; opened afterwards it is history, not something to attach to.
-      if (run.live && run.state === "running") {
+      if (run.live && !ended(run.state)) {
         connect(s, run);
       } else {
         playback(s, run);
       }
     });
+  }
+
+  // ended reports whether a run's state is one it ended in: neither
+  // queued, waiting for the run of its job before it, nor running.
+  function ended(state) {
+    return !!state && state !== "queued" && state !== "running";
   }
 
   // runTitle names a run as its window does: folder, the directory
@@ -2885,20 +2891,20 @@
     };
     var stateHTML = function (run) {
       return '<span class="state"><i class="dot ' + escapeHTML(run.state) + '"></i>' + escapeHTML(run.state) +
-        (run.state !== "ok" && run.state !== "running" ? ' <span class="faint">(' + (run.exit_code || 0) + ")</span>" : "") + "</span>";
+        (run.state !== "ok" && ended(run.state) ? ' <span class="faint">(' + (run.exit_code || 0) + ")</span>" : "") + "</span>";
     };
     var actionsHTML = function (run, canRun) {
       var id = escapeHTML(run.id);
-      var html = '<a class="btn btn-sm" href="/runs/' + id + '" data-attach="' + id + '">' + (run.state === "running" ? "Attach" : "View") + "</a>";
-      if (run.state !== "running" && run.cast_path) {
+      var html = '<a class="btn btn-sm" href="/runs/' + id + '" data-attach="' + id + '">' + (!ended(run.state) ? "Attach" : "View") + "</a>";
+      if (ended(run.state) && run.cast_path) {
         html += '<button type="button" class="btn btn-sm replay" data-replay="' + id + '" data-replay-title="' + escapeHTML(runTitle(run)) + '" data-replay-who="' + escapeHTML(run.user_name || "") +
           '" title="Replay the recording" aria-label="Replay the recording">|&gt;</button>';
       }
-      if (run.state === "running" && canRun) {
+      if (!ended(run.state) && canRun) {
         html += '<button type="button" class="btn-icon" data-stop="' + id + '" title="Stop the run" aria-label="Stop the run"><svg class="ic"><use href="#i-stop"/></svg></button>' +
           '<button type="button" class="btn-icon danger" data-kill="' + id + '" title="Kill the run" aria-label="Kill the run"><svg class="ic"><use href="#i-trash"/></svg></button>';
       }
-      if (run.state !== "running" && runsTable.hasAttribute("data-summarize")) {
+      if (ended(run.state) && runsTable.hasAttribute("data-summarize")) {
         html += '<button type="button" class="btn btn-sm" data-summary="/api/runs/' + id + '/summary" data-summary-page="/runs/' + id + '" data-summary-title="' + escapeHTML(runTitle(run)) +
           '" title="Claude\'s summary of the output">Summary</button>';
       }
@@ -2937,7 +2943,7 @@
       runsTable.insertBefore(row, runsTable.firstChild);
       // Whether this user may end it comes with the run's own view.
       api("GET", "/api/runs/" + encodeURIComponent(run.id)).then(function (res) {
-        if (res.status === 200 && res.data.state === "running") row.querySelector("[data-actions]").innerHTML = actionsHTML(res.data, res.data.can_run);
+        if (res.status === 200 && !ended(res.data.state)) row.querySelector("[data-actions]").innerHTML = actionsHTML(res.data, res.data.can_run);
       });
     });
     // The running rows count their time.

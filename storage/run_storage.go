@@ -212,6 +212,19 @@ func (s *RunStorage) KillActive(ctx context.Context) (int64, error) {
 	return db.RowsAffected(), nil
 }
 
+// FailQueued marks every queued run failed with the message: what the
+// instance does when it starts, for the runs that waited in the queue of
+// the previous process and never started.
+func (s *RunStorage) FailQueued(ctx context.Context, message string) (int64, error) {
+	db := client(s.db)
+	now := stamp()
+	if err := db.Exec(ctx, "UPDATE run SET state = ?, exit_code = 1, message = ?, finished_at = ?, updated_at = ? WHERE state = ?",
+		model.StateFailed, message, now, now, model.StateQueued); err != nil {
+		return 0, err
+	}
+	return db.RowsAffected(), nil
+}
+
 // Recorded returns the runs with a recording, oldest first, for the
 // data retention rules: the recording files are theirs to measure.
 func (s *RunStorage) Recorded(ctx context.Context) ([]model.Run, error) {

@@ -31,8 +31,16 @@ output, a place in the recents and on [Runs](runs.md), where
 every host, and its page, which names it by its job. Its target is the
 host, its args the command, so **Run again** runs the same command on
 the same host. A host without an ssh login gets a run that fails saying
-so; task-ui skips a host still running a command. Who ran what on which
-host is the run history.
+so. Who ran what on which host is the run history.
+
+### Queued commands
+
+A host runs one command at a time. A command for a host that still runs
+one waits, a **queued** run, in the batch and on [Runs](runs.md), and
+starts once the runs before it ended, in the order they came. At most
+ten wait for a host; past that, task-ui refuses the command and says so.
+**Stop** on a queued run takes it out of the queue. A queued run the
+instance restarted before it ran ends failed, saying so.
 
 The colon keeps a job apart from a mention: `@host:dev1` in a
 [note](notes.md) names no user `host`. `POST /api/runs` starts

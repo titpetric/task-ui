@@ -161,3 +161,31 @@ func collect(t *testing.T, session *runner.Session) (string, runner.Status) {
 		}
 	}
 }
+
+// A second command on a host still running one waits, queued, and runs
+// once the first ended; the other hosts don't wait.
+func TestStarter_Queue(t *testing.T) {
+	t.Parallel()
+	s, runs := starter(t)
+	ctx := context.Background()
+	user := &model.User{ID: "u1", Name: "ops"}
+	gate := filepath.Join(t.TempDir(), "gate")
+
+	_, first, err := s.Start(ctx, user, hostrun.Request{Targets: []string{"dev1"}, Command: `while [ ! -f "` + gate + `" ]; do sleep 0.05; done`})
+	assert.NoError(t, err)
+	_, second, err := s.Start(ctx, user, hostrun.Request{Targets: []string{"dev1"}, Command: "echo after"})
+	assert.NoError(t, err)
+	assert.Equal(t, model.StateQueued, second[0].Status().State)
+	_, other, err := s.Start(ctx, user, hostrun.Request{Targets: []string{"dev2"}, Command: "true"})
+	assert.NoError(t, err)
+	wait(t, other)
+	assert.Equal(t, model.StateQueued, second[0].Status().State, "dev2's run doesn't start dev1's queue")
+
+	assert.NoError(t, os.WriteFile(gate, nil, 0o644))
+	wait(t, append(first, second...))
+	row, err := runs.Get(ctx, second[0].ID())
+	assert.NoError(t, err)
+	assert.Equal(t, model.StateOK, row.State)
+	assert.Equal(t, "@host:dev1", row.Job)
+	assert.True(t, row.StartedAt.After(*first[0].Snapshot().StartedAt), "the start is when it left the queue")
+}

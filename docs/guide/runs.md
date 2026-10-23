@@ -49,6 +49,13 @@ runs of one batch. The **⋯** next to a name opens that
 user's menu: their profile, their runs, and their permissions for those
 who may change them. A run in progress has **Attach**, a finished one **View**.
 
+A run waits, **queued**, its dot a ring, behind the run of its
+job before it: a command on a host that still runs one (see
+[Inventory](inventory.md#queued-commands)). It starts once that run
+ended, and its page says so; **Stop** takes it out of the queue,
+stopped. A queued run the instance restarted before it ran ends failed,
+its page saying "the instance restarted before it ran".
+
 The list shows a page of runs at a time. **Page size** picks 15, the
 default, 50 or 100 rows. Under the table, **Next** goes to older runs
 and **Previous** back to newer ones; both keep the filter and the page

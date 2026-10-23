@@ -38,7 +38,7 @@
 	     runs, the page fetches itself and puts this back. */}}
 	<div class="inventory-results" data-inventory-results>
 		{{- with .Batch }}
-		{{- $first := index . 0 }}{{ $live := false }}{{ range . }}{{ if eq .State "running" }}{{ $live = true }}{{ end }}{{ end }}
+		{{- $first := index . 0 }}{{ $live := false }}{{ range . }}{{ if not (ended .State) }}{{ $live = true }}{{ end }}{{ end }}
 		<div class="block-head"{{ if $live }} data-batch-live{{ end }}>
 			<h4>Your last run <small><code>{{ range $first.ArgList }}{{ . }}{{ end }}</code> on {{ len . }} host{{ if ne (len .) 1 }}s{{ end }}, {{ ago $first.StartedAt }}</small></h4>
 			{{- with $first.BatchID }}<a class="btn btn-sm" href="/runs?batch={{ . }}">In Runs</a>{{ end }}
@@ -50,8 +50,8 @@
 			{{- range . }}
 				<tr>
 					<td class="nowrap"><a href="/runs/{{ .ID }}"><code>{{ .Target }}</code></a></td>
-					<td class="nowrap">{{ template "state" . }} <span class="faint">{{ duration .Elapsed }}</span> <button type="button" class="btn btn-sm" data-attach="{{ .ID }}">{{ if eq .State "running" }}Attach{{ else }}View{{ end }}</button></td>
-					<td class="run-output">{{ if eq .State "running" }}<div class="frame" role="img" aria-label="Terminal of {{ .Target }}">{{ .FrameSVG }}</div>{{ else if .CastPath }}<pre class="output" data-output="{{ .ID }}" data-cols="{{ .TermCols }}" data-rows="{{ .TermRows }}"><span class="faint">Reading the recording…</span></pre>{{ else }}<span class="faint">No recording.</span>{{ end }}</td>
+					<td class="nowrap">{{ template "state" . }} <span class="faint">{{ duration .Elapsed }}</span> <button type="button" class="btn btn-sm" data-attach="{{ .ID }}">{{ if not (ended .State) }}Attach{{ else }}View{{ end }}</button></td>
+					<td class="run-output">{{ if eq .State "queued" }}<span class="faint">Queued: waits for the run on {{ .Target }} before it.</span>{{ else if not (ended .State) }}<div class="frame" role="img" aria-label="Terminal of {{ .Target }}">{{ .FrameSVG }}</div>{{ else if .CastPath }}<pre class="output" data-output="{{ .ID }}" data-cols="{{ .TermCols }}" data-rows="{{ .TermRows }}"><span class="faint">Reading the recording…</span></pre>{{ else }}<span class="faint">No recording.</span>{{ end }}</td>
 				</tr>
 			{{- end }}
 			</tbody>

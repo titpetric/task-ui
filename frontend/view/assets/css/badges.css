@@ -42,6 +42,7 @@
   &:is(.failed, .killed) { background: var(--bad); }
   &.stopped { background: var(--text-faint); }
   &.pending { background: transparent; box-shadow: inset 0 0 0 1px var(--line-2); }
+  &.queued { background: transparent; box-shadow: inset 0 0 0 1px var(--signal); }
   &.skipped { background: var(--line); }
 
   &.running {

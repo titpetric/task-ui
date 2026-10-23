@@ -414,6 +414,7 @@
         - failed
         - killed
         - ok
+        - queued
         - running
         - stopped
     - name: exit_code
@@ -483,6 +484,10 @@
       key: MUL
       comment: Batch ID
       datatype: char(26)
+    - name: message
+      type: text
+      comment: Message
+      datatype: varchar
   indexes:
     - name: sqlite_autoindex_run_1
       columns:

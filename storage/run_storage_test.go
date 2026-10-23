@@ -201,6 +201,29 @@ func TestRunStorage_KillActive(t *testing.T) {
 	assert.NotNil(t, list[0].FinishedAt)
 }
 
+// A run queued when the instance went down never started: the next
+// start marks it failed, saying so; a running run stays for KillActive.
+func TestRunStorage_FailQueued(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	runs := storage.NewRunStorage(newDB(t))
+	queued := &model.Run{Folder: "_", Job: "@host:dev1", Target: "dev1", State: model.StateQueued}
+	assert.NoError(t, runs.Create(ctx, queued))
+	assert.NoError(t, runs.Create(ctx, &model.Run{Folder: "_", Job: "@host:dev2", Target: "dev2"}))
+
+	failed, err := runs.FailQueued(ctx, model.QueuedLost)
+	assert.NoError(t, err)
+	assert.Equal(t, int64(1), failed)
+	got, err := runs.Get(ctx, queued.ID)
+	assert.NoError(t, err)
+	assert.Equal(t, model.StateFailed, got.State)
+	assert.Equal(t, "the instance restarted before it ran", got.Message)
+	assert.NotNil(t, got.FinishedAt)
+	running, err := runs.List(ctx, storage.RunFilter{State: model.StateRunning})
+	assert.NoError(t, err)
+	assert.Len(t, running, 1)
+}
+
 // ids returns the IDs of runs, in order.
 func ids(runs []model.Run) []string {
 	out := make([]string, 0, len(runs))

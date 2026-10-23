@@ -53,12 +53,12 @@
 				<td class="nowrap" data-label="Took" data-took>{{ duration .Elapsed }}</td>
 				<td data-label="Result" data-result>{{ template "state" . }}{{ if .Attached }} <span class="faint">{{ .Attached }} watching</span>{{ end }}</td>
 				<td class="actions" data-actions>
-					<a class="btn btn-sm" href="/runs/{{ .ID }}" data-attach="{{ .ID }}">{{ if eq .State "running" }}Attach{{ else }}View{{ end }}</a>
+					<a class="btn btn-sm" href="/runs/{{ .ID }}" data-attach="{{ .ID }}">{{ if not (ended .State) }}Attach{{ else }}View{{ end }}</a>
 					{{- template "replay" . }}
-					{{- if and $.Summarize (ne .State "running") }}
+					{{- if and $.Summarize (ended .State) }}
 					<button type="button" class="btn btn-sm" data-summary="/api/runs/{{ .ID }}/summary" data-summary-page="/runs/{{ .ID }}" data-summary-title="{{ .Name }}" title="Claude's summary of the output">Summary</button>
 					{{- end }}
-					{{- if and .Live (eq .State "running") }}
+					{{- if and .Live (not (ended .State)) }}
 					<button type="button" class="btn-icon" data-stop="{{ .ID }}" title="Stop the run" aria-label="Stop the run"><svg class="ic"><use href="#i-stop"/></svg></button>
 					<button type="button" class="btn-icon danger" data-kill="{{ .ID }}" title="Kill the run" aria-label="Kill the run"><svg class="ic"><use href="#i-trash"/></svg></button>
 					{{- end }}

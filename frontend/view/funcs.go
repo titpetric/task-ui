@@ -36,6 +36,7 @@ func Funcs() template.FuncMap {
 		"hasPrefix":    strings.HasPrefix,
 		"message":      Message,
 		"json":         JSON,
+		"ended":        model.Finished,
 		"argLine":      ArgLine,
 		// summaryPrompt is the short summary instruction, the Summarize
 		// preset of a workflow's prompt.

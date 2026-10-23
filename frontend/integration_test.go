@@ -151,3 +151,33 @@ func TestHostJobs(t *testing.T) {
 	assert.Contains(t, f.page(t, asAdmin, "/schedules"), `name="args" data-type="args"`)
 	assert.Contains(t, f.page(t, asOps, "/workflows/new"), `data-step-args`)
 }
+
+// A queued run of a batch says it waits, on the inventory panel and on
+// its page, with Attach; a failed one says why.
+func TestInventory_Queued(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	f.withKey(t)
+	hub := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte(`{"items":[{"id":"a","name":"dev1","host":"10.10.10.11","status":"up","info":{"t":4}}]}`))
+	}))
+	t.Cleanup(hub.Close)
+	ctx := context.Background()
+	assert.NoError(t, f.opts.Integrations.Save(ctx, integration.Beszel, map[string]string{"url": hub.URL, "token": "t1"}))
+	now := time.Now()
+	run := &model.Run{Folder: model.Default, Job: model.HostJob("dev1"), Target: "dev1", BatchID: model.NewID(), Args: `["uptime"]`, UserID: f.users[asAdmin].ID, UserName: asAdmin, State: model.StateQueued, StartedAt: &now}
+	assert.NoError(t, f.opts.Runs.Create(ctx, run))
+
+	panel := f.page(t, asAdmin, "/inventory")
+	assert.Contains(t, panel, "Queued: waits for the run on dev1 before it.")
+	assert.Contains(t, panel, `<i class="dot queued"></i>queued</span>`)
+	assert.Contains(t, panel, "data-batch-live")
+	page := f.page(t, asAdmin, "/runs/"+run.ID)
+	assert.Contains(t, page, "It waits, queued, for the run of its job before it to end")
+	assert.Contains(t, page, ">Attach</button>")
+	assert.Contains(t, f.page(t, asAdmin, "/runs?state=queued"), run.ID)
+
+	failed := &model.Run{Folder: model.Default, Job: model.HostJob("dev1"), Target: "dev1", UserName: asAdmin, State: model.StateFailed, Message: model.QueuedLost, StartedAt: &now, FinishedAt: &now}
+	assert.NoError(t, f.opts.Runs.Create(ctx, failed))
+	assert.Contains(t, f.page(t, asAdmin, "/runs/"+failed.ID), `<span class="dim">the instance restarted before it ran</span></td></tr>`)
+}

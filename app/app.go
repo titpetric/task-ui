@@ -130,6 +130,13 @@ func (a *App) prepare(ctx context.Context) error {
 	if n > 0 {
 		slog.Warn("runs left running by the previous process marked killed", "count", n)
 	}
+	n, err = storage.NewRunStorage(a.DB).FailQueued(ctx, model.QueuedLost)
+	if err != nil {
+		return err
+	}
+	if n > 0 {
+		slog.Warn("runs left queued by the previous process marked failed", "count", n)
+	}
 	return storage.NewWorkflowRunStorage(a.DB).Interrupt(ctx, "task-ui restarted while it ran")
 }
 

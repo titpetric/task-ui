@@ -42,6 +42,11 @@ type Request struct {
 	// BatchID groups the run with others started together, the ID of
 	// the batch's first run; the row keeps it.
 	BatchID string
+	// Queue lets the run wait, queued, when its job is running: it
+	// starts once the runs before it ended, in the order they came, and
+	// at most MaxQueued wait. A request that forces or reuses an ID
+	// queues not.
+	Queue bool
 	// Timeout ends the run, killed, once it runs that long. Zero lets
 	// it run.
 	Timeout time.Duration

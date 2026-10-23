@@ -480,8 +480,13 @@ func outcome(run *model.Run) string {
 		when = " at " + run.StartedAt.Local().Format("2006-01-02 15:04:05")
 	}
 	took := run.Elapsed().Round(time.Second).String()
-	if !run.Finished() {
+	switch {
+	case run.State == model.StateQueued:
+		return fmt.Sprintf("queued for %s, behind the run of its job before it, since%s", took, strings.TrimPrefix(when, " at"))
+	case !run.Finished():
 		return fmt.Sprintf("%s for %s, started%s", run.State, took, when)
+	case run.Message != "":
+		return fmt.Sprintf("%s (exit %d) in %s, started%s: %s", run.State, run.ExitCode, took, when, run.Message)
 	}
 	return fmt.Sprintf("%s (exit %d) in %s, started%s", run.State, run.ExitCode, took, when)
 }
