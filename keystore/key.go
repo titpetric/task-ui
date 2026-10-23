@@ -56,8 +56,7 @@ func (k Key) Encrypts() bool {
 	return k.Purpose == PurposeEncrypt
 }
 
-// Kind returns the algorithm and the size as the name ends with them:
-// ed25519, ecdsa256, rsa4096.
+// Kind returns the algorithm and the size the name ends with: ed25519, ecdsa256, rsa4096.
 func (k Key) Kind() string {
 	return tag(k.Algo, k.Bits)
 }

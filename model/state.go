@@ -31,8 +31,7 @@ func States() []State {
 	return []State{StateQueued, StateRunning, StateOK, StateFailed, StateStopped, StateKilled}
 }
 
-// Finished reports whether a state is one a run ended in: neither
-// queued nor running.
+// Finished reports whether a state is one a run ended in: neither queued nor running.
 func Finished(state State) bool {
 	return state != StateQueued && state != StateRunning && state != ""
 }

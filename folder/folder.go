@@ -155,8 +155,7 @@ func (f *Folder) name() string {
 	return f.ID
 }
 
-// Depth is how far below the root the folder is: zero for a folder of
-// the root, one for a folder inside one of those.
+// Depth is how far below the root the folder is: zero for a folder of the root.
 func (f *Folder) Depth() int {
 	return strings.Count(f.ID, "/")
 }

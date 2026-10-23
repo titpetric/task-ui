@@ -23,8 +23,7 @@ type Authenticator struct {
 	passwords *storage.UserAuthPasswordStorage
 }
 
-// NewAuthenticator returns the authenticator over the users and the
-// credentials they sign in with.
+// NewAuthenticator returns the authenticator over the users and their sign-in credentials.
 func NewAuthenticator(users *storage.UserStorage, emails *storage.UserEmailStorage, passwords *storage.UserAuthPasswordStorage) *Authenticator {
 	return &Authenticator{users: users, emails: emails, passwords: passwords}
 }

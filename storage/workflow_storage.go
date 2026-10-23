@@ -166,21 +166,17 @@ func (s *WorkflowStorage) List(ctx context.Context) ([]model.Workflow, error) {
 	return client(s.db).Select[model.Workflow](ctx, "SELECT * FROM workflow ORDER BY name COLLATE NOCASE, id")
 }
 
-// UsedBy returns the workflows with a step that runs the workflow, by
-// name.
+// UsedBy returns, by name, the workflows with a step that runs the workflow.
 func (s *WorkflowStorage) UsedBy(ctx context.Context, id string) ([]model.Workflow, error) {
 	return client(s.db).Select[model.Workflow](ctx, "SELECT w.* FROM workflow w WHERE w.id IN (SELECT workflow_id FROM workflow_step WHERE workflow_ref = ?) ORDER BY w.name COLLATE NOCASE, w.id", id)
 }
 
-// Reaches reports whether a workflow runs the target, through any
-// workflows its steps run; a workflow reaches itself.
+// Reaches reports whether a workflow runs the target through its steps; a workflow reaches itself.
 func (s *WorkflowStorage) Reaches(ctx context.Context, from, target string) (bool, error) {
 	return reaches(ctx, client(s.db), from, target, map[string]bool{})
 }
 
-// Expand replaces each step that runs a workflow with that workflow's
-// steps, through any depth, so a check sees every job the chain runs. Expand
-// drops a step whose workflow does not exist.
+// Expand replaces each workflow step with that workflow's steps at any depth, dropping a missing one.
 func (s *WorkflowStorage) Expand(ctx context.Context, steps []model.WorkflowStep) ([]model.WorkflowStep, error) {
 	return s.expand(ctx, steps, map[string]bool{})
 }

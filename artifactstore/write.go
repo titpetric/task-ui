@@ -7,15 +7,15 @@ import (
 	"strings"
 )
 
-// Write puts one file into the tree at a path, over the version it
-// holds, and commits the change under the author's name, as Ingest does
-// for a run's files. It returns the commit that holds the file.
+// Write is WriteThen with no callback.
 func (s *Store) Write(ctx context.Context, rel string, data []byte, author string) (string, error) {
 	return s.WriteThen(ctx, rel, data, author, nil)
 }
 
-// WriteThen is Write, and calls then with the commit while it still
-// holds the tree, as IngestThen does.
+// WriteThen puts one file into the tree at a path, over the version it
+// holds, and commits the change under the author's name, as IngestThen
+// does for a run's files. It returns the commit that holds the file and
+// calls then with it while it still holds the tree.
 func (s *Store) WriteThen(ctx context.Context, rel string, data []byte, author string, then func(commit string) error) (string, error) {
 	clean, err := writePath(rel)
 	if err != nil {

@@ -11,9 +11,8 @@ import (
 // replays into: the most of a run's output it shows.
 const OutputRows = 5000
 
-// FrameFromCast replays an asciicast v2 recording into a terminal of the
-// size its header names and returns the frame it ended on: the last
-// screen of a run without a session in memory.
+// FrameFromCast replays an asciicast v2 recording and returns the screen it ended on,
+// the last frame of a run without a session in memory.
 func FrameFromCast(r io.Reader) (Frame, error) {
 	replay, err := ReplayCast(r)
 	return replay.Screen, err

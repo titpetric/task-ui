@@ -75,17 +75,12 @@ func (u *User) SeesRun(run *Run, prompts, notes bool) bool {
 	return u.CanSee(run.Folder) && (prompts || !run.IsPrompt()) && (notes || !run.IsNote())
 }
 
-// Listed reports whether allow lists let the user run a job: the list
-// of its folder and the list of the job, each empty or naming the user
-// or the user's role. What the user may do besides is the permission
-// package's to say.
+// Listed reports whether the allow lists of a job's folder and of the job both let the user run it.
 func (u *User) Listed(folderAllow, jobAllow []string) bool {
 	return u != nil && u.allowed(folderAllow) && u.allowed(jobAllow)
 }
 
-// CanAdmin reports whether the user is an admin, which may do
-// everything, whatever the permission policies say: the admin flag, or
-// the admin role a user made outside storage holds.
+// CanAdmin reports whether the user is an admin by the flag or the role, whatever the policies say.
 func (u *User) CanAdmin() bool {
 	return u != nil && (u.Admin || u.Role == RoleAdmin)
 }
@@ -102,6 +97,8 @@ func (u *User) EffectiveRole() Role {
 	return u.Role
 }
 
+// allowed reports whether an allow list is empty or names the user or the
+// user's role. What the user may do besides is the permission package's.
 func (u *User) allowed(list []string) bool {
 	if len(list) == 0 {
 		return true

@@ -15,8 +15,7 @@ const Internal = "internal"
 // project or other workspace takes the name.
 const Default = "_"
 
-// IsInternal reports whether a folder ID is the internal folder or one
-// under it.
+// IsInternal reports whether a folder ID is the internal folder or one under it.
 func IsInternal(folder string) bool {
 	return folder == Internal || strings.HasPrefix(folder, Internal+"/")
 }

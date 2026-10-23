@@ -36,8 +36,7 @@ type Job struct {
 	Hours string `json:"hours,omitempty"`
 }
 
-// Key is the identity used for the run lock and the history: one run per
-// job per folder and directory, across the instance.
+// Key is the identity of the run lock and the history: one run per job per folder and directory.
 func (j *Job) Key() string {
 	return model.RunKey(j.Folder, j.Dir, j.ID)
 }

@@ -21,13 +21,7 @@ var ErrForbidden = errors.New("you need the prompt/edit permission to prompt Cla
 // not there.
 var ErrNoPrompt = errors.New("no prompt runs here")
 
-// Ask puts a prompt to Claude in dir, a folder and a directory inside it
-// as Run.Where names them, or _ for the root, and answers with the note:
-// open, of the folder's workspace. With parentID it replies in a
-// prompt's thread instead, in the thread's place, and opens it again.
-// Either way the board starts the prompt job on the thread as the user
-// and replies with Claude's answer when the run ends. Asking takes
-// prompt/edit.
+// Ask puts a prompt to Claude in dir, or in the thread of parentID, as ask does.
 func (b *Board) Ask(ctx context.Context, user *model.User, parentID, dir, body string) (*model.Note, error) {
 	return b.ask(ctx, user, parentID, dir, "", "", body)
 }
@@ -42,9 +36,14 @@ func (b *Board) AskArea(ctx context.Context, user *model.User, area, dir, body s
 	return b.ask(ctx, user, "", dir, "", area, body)
 }
 
-// ask puts a prompt as Ask does, a new thread about the run aboutRun
-// names when it names one, of the area when it names one; a reply keeps
-// its thread's run and area.
+// ask puts a prompt to Claude in dir, a folder and a directory inside it
+// as Run.Where names them, or _ for the root, and answers with the note:
+// open, of the folder's workspace, about the run aboutRun names and of
+// the area when they name one. With parentID it replies in a prompt's
+// thread instead, in the thread's place, keeps its run and area, and
+// opens it again. Either way the board starts the prompt job on the
+// thread as the user and replies with Claude's answer when the run ends.
+// Asking takes prompt/edit.
 func (b *Board) ask(ctx context.Context, user *model.User, parentID, dir, aboutRun, area, body string) (*model.Note, error) {
 	if user == nil || strings.TrimSpace(body) == "" {
 		return nil, fmt.Errorf("%w: a prompt needs an author and some text", ErrInvalid)

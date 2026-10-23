@@ -14,8 +14,7 @@ func UserFrom(ctx context.Context) *model.User {
 	return user
 }
 
-// WithUser returns a context carrying a user, for handlers called
-// outside the guard.
+// WithUser returns a context carrying a user, for handlers called outside the guard.
 func WithUser(ctx context.Context, user *model.User) context.Context {
 	return context.WithValue(ctx, userKey{}, user)
 }

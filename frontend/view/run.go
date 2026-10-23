@@ -26,8 +26,7 @@ type Run struct {
 	Expired bool
 }
 
-// ExpiredText is what a page says in place of the output of a run
-// whose recording expired.
+// ExpiredText is what a page shows in place of the output of a run whose recording expired.
 func (r Run) ExpiredText() string {
 	return recording.Expired
 }

@@ -30,8 +30,7 @@ func CheckHash(hash, password string) bool {
 	return bcrypt.CompareHashAndPassword([]byte(hash), []byte(password)) == nil
 }
 
-// Hashed reports whether text is a bcrypt hash, as a configured password
-// must be.
+// Hashed reports whether text is a bcrypt hash, as a configured password must be.
 func Hashed(text string) bool {
 	return len(text) > 4 && text[0] == '$' && text[1] == '2'
 }

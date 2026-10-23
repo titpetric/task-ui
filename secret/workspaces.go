@@ -16,9 +16,7 @@ type Workspaces struct {
 	Rows *storage.WorkspaceStorage
 }
 
-// Service reports whether a scope is a service's, such as
-// integration:<kind>, encrypted with the instance key: a scope with a
-// colon that is not a workspace's. No folder ID has a colon.
+// Service reports whether a scope belongs to a service, such as integration:<kind>, under the instance key.
 func Service(scope string) bool {
 	return strings.Contains(scope, ":") && !strings.HasPrefix(scope, storage.ScopeWorkspace)
 }

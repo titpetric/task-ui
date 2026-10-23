@@ -262,8 +262,7 @@ func (p *Page) Groups() []Group {
 	return Groups(p.SideFolders, p.Workspaces)
 }
 
-// Href returns the path of a folder's page, as FolderHref places it
-// among the page's workspaces.
+// Href returns the path of a folder's page among the page's workspaces.
 func (p *Page) Href(id string) string {
 	return FolderHref(id, p.Workspaces)
 }
@@ -310,14 +309,12 @@ func (p *Page) PlaceHref(place string) string {
 	return p.Href(best) + strings.TrimPrefix(place, best)
 }
 
-// Links turns steps into links, as Chain does among the page's
-// workspaces.
+// Links turns steps into links among the page's workspaces.
 func (p *Page) Links(steps []Step) []Link {
 	return Chain(steps, p.Workspaces)
 }
 
-// Can reports whether the signed in user may do what a path of
-// `config/permissions.yml` names: {{ if $.Can "secret/edit" }}.
+// Can reports whether the signed in user may do what a permissions.yml path names: {{ if $.Can "secret/edit" }}.
 func (p *Page) Can(path string) bool {
 	return p.permissions().Allowed(path)
 }
@@ -331,8 +328,7 @@ func (p *Page) permissions() permission.Set {
 	return p.Permissions
 }
 
-// CanSettings reports whether the signed in user may see a page of the
-// settings: any of the sections they list.
+// CanSettings reports whether the signed in user may see any section of the settings.
 func (p *Page) CanSettings() bool {
 	return p.Can("workspace/view") || p.Can("project/view") || p.Can("key/view") || p.Can("secret/view") || p.Can("integration/view") || p.Can("user/view")
 }
@@ -377,9 +373,7 @@ func (p *Page) CanRun(f *folder.Folder, job *folder.Job) bool {
 	return p.permissions().Run(f.ID, f.Allow, job.Allow)
 }
 
-// Summarizes reports whether a job's Run has |>summarize beside it: for
-// a user with Summaries, on a job that runs to an end of its own, no
-// shell, prompt, Notes agent or interactive job.
+// Summarizes reports whether a job's Run has |>summarize beside it: for Summaries, on a job that ends on its own.
 func (p *Page) Summarizes(job *folder.Job) bool {
 	return p.Summaries && job != nil && !job.IsShell() && !job.IsPrompt() && !job.IsNote() && !job.Interactive
 }
@@ -408,8 +402,7 @@ func (p *Page) Deletes(note model.Note) bool {
 	return allowed && p.User != nil && (note.UserName == p.User.Name || p.User.CanAdmin())
 }
 
-// Edits reports whether the signed in user may edit a note of a thread,
-// with note/edit, as Thread.Edits says.
+// Edits reports whether the signed in user may edit a note of a thread, with note/edit.
 func (p *Page) Edits(note model.Note, t Thread) bool {
 	return p.Can("note/edit") && t.Edits(p.User, note)
 }

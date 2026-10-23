@@ -15,8 +15,7 @@ func TokenFrom(ctx context.Context) string {
 	return id
 }
 
-// WithToken returns a context carrying the ID of the token a request
-// signed in with.
+// WithToken returns a context carrying the ID of the token a request signed in with.
 func WithToken(ctx context.Context, id string) context.Context {
 	return context.WithValue(ctx, tokenKey{}, id)
 }

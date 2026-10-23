@@ -137,8 +137,7 @@ func (s *Store) rows(ctx context.Context, id string) (map[string]model.Secret, e
 	return rows, nil
 }
 
-// Internal reports whether a secret's scope belongs to an integration, so
-// the secrets page leaves it out.
+// Internal reports whether a secret's scope belongs to an integration, hidden from the secrets page.
 func Internal(scope string) bool {
 	return strings.HasPrefix(scope, ScopePrefix)
 }

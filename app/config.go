@@ -245,8 +245,7 @@ func (c *Config) Validate() error {
 	return nil
 }
 
-// WorkspacesDir is the workspace folder by default, under the data
-// directory.
+// WorkspacesDir is the default workspace folder, under the data directory.
 func (c *Config) WorkspacesDir() string {
 	return filepath.Join(c.DataDir, "workspaces")
 }

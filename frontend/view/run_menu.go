@@ -46,8 +46,7 @@ func NewRunMenu(f *folder.Folder, jobs []*folder.Job, main *folder.Job) *RunMenu
 	return &RunMenu{Folder: f, Main: main, Jobs: jobs}
 }
 
-// Menu reports whether the button has a menu: a target to pick that is
-// not the one the button runs.
+// Menu reports whether the button has a menu: a target to pick besides the one it runs.
 func (m *RunMenu) Menu() bool {
 	return len(m.Jobs) > 1 || (len(m.Jobs) == 1 && m.Jobs[0] != m.Main)
 }

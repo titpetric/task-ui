@@ -20,8 +20,7 @@ type SecretGroup struct {
 	Folders []string
 }
 
-// Shared returns the scope of the secrets the workspace shares with its
-// folders.
+// Shared returns the scope of the secrets the workspace shares with its folders.
 func (g SecretGroup) Shared() string {
 	return "workspace:" + g.Workspace
 }

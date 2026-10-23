@@ -24,8 +24,7 @@ type Settings struct {
 	KeyReads    Rule `json:"key_reads"`
 }
 
-// Defaults keep a recording 31 days, and the artifact history and the
-// read logs of the secrets and the keys for ever, with no size limit.
+// Defaults keep a recording 31 days and the rest for ever, with no size limit.
 func Defaults() Settings {
 	return Settings{Recordings: Rule{Age: Month}, Artifacts: Rule{Age: Never}, SecretReads: Rule{Age: Never}, KeyReads: Rule{Age: Never}}
 }

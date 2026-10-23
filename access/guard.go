@@ -44,9 +44,8 @@ func (g *Guard) LoginRequired() bool {
 	return g.AutoLogin == ""
 }
 
-// User resolves the user of a request: a bearer token, the auto login,
-// or the session cookie. Nobody is nil, and so is a request with a token
-// that signs in nobody, whatever else it carries.
+// User resolves the user of a request from a bearer token, the auto login or the session cookie.
+// It returns nil for nobody, and for a token that signs in nobody, whatever else the request carries.
 func (g *Guard) User(r *http.Request) *model.User {
 	user, _, _ := g.resolve(r)
 	return user
@@ -189,8 +188,7 @@ func (g *Guard) ClearCookie(w http.ResponseWriter, r *http.Request) error {
 	return err
 }
 
-// IsHTTPS reports whether the request came over TLS, directly or through
-// a proxy that says so.
+// IsHTTPS reports whether the request came over TLS, directly or through a proxy that says so.
 func IsHTTPS(r *http.Request) bool {
 	return r.TLS != nil || strings.EqualFold(r.Header.Get("X-Forwarded-Proto"), "https")
 }

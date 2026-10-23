@@ -42,8 +42,7 @@ func (f *Folder) HostJob(host string) *Job {
 	return job
 }
 
-// IsHost reports whether the job is a host job of the root,
-// @host:<host>.
+// IsHost reports whether the job is a host job of the root, @host:<host>.
 func (j *Job) IsHost() bool {
 	return j != nil && j.Kind == "host" && strings.HasPrefix(j.ID, HostPrefix)
 }

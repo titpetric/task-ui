@@ -19,8 +19,7 @@ func mustRead(name string) string {
 	return string(data)
 }
 
-// Context returns context.md, which the MCP server and every Claude run
-// task-ui starts read.
+// Context returns context.md, which the MCP server and every Claude run task-ui starts read.
 func Context() string {
 	return context
 }

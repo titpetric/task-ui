@@ -43,8 +43,7 @@ func NewChart(title string, unit ChartUnit, from, to time.Time, series ...ChartS
 	return newChart(title, unit, from, to, false, series)
 }
 
-// NewStackedChart draws series one on another, each an area over the one
-// before, the top the sum; every series has its points at the same times.
+// NewStackedChart draws each series as an area over the one before; the series share their times.
 func NewStackedChart(title string, unit ChartUnit, from, to time.Time, series ...ChartSeries) Chart {
 	return newChart(title, unit, from, to, true, series)
 }

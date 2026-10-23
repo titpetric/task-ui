@@ -27,8 +27,7 @@ const (
 	HostBare = "@host"
 )
 
-// HostJob returns the ID of the job of a command on a host, or on
-// every host for *.
+// HostJob returns the ID of the job of a command on a host, or on every host for *.
 func HostJob(host string) string {
 	return HostPrefix + host
 }
@@ -66,16 +65,12 @@ func (r *Run) IsClaude() bool {
 	return r.IsPrompt() || r.IsNote() || r.Job == ClaudeJob || IsInternal(r.Folder)
 }
 
-// Key is the identity of a job's runs, which the run lock uses: one
-// run per job per folder and directory inside it. A command on a host has a job a host, so
-// the hosts run at once, one at a time on each.
+// Key is the identity of a job's runs that the run lock takes, as RunKey builds it.
 func (r *Run) Key() string {
 	return RunKey(r.Folder, r.Dir, r.Job)
 }
 
-// Parallel reports whether runs of the job go side by side, none
-// waiting for another: a prompt's and the Notes agent's, each a Claude
-// session of its own with its own reply file.
+// Parallel reports whether a job's runs go side by side: a prompt's and the Notes agent's, each a Claude session.
 func (r *Run) Parallel() bool {
 	return r.Job == PromptJob || r.Job == NoteJob
 }
@@ -91,7 +86,8 @@ func (r *Run) LockKey() string {
 }
 
 // RunKey is the key of a job: folder/job, or folder/dir/job for a job
-// of a directory inside the folder.
+// of a directory inside the folder. A host job's ID names its host, so
+// the hosts run at once, one at a time on each.
 func RunKey(folder, dir, job string) string {
 	if dir != "" {
 		return folder + "/" + dir + "/" + job
@@ -127,8 +123,7 @@ func (r Run) Name() string {
 	return r.Place() + " / " + r.Job
 }
 
-// Path is the run as text names it in one word, folder/job, with the
-// root's _/ dropped like Name does: @claude-note, deploy/up.
+// Path names the run in one word, folder/job without the root's _/: @claude-note, deploy/up.
 func (r Run) Path() string {
 	return strings.TrimPrefix(RunKey(r.Folder, r.Dir, r.Job), Default+"/")
 }

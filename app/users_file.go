@@ -112,11 +112,9 @@ func (f *UsersFile) Changed() bool {
 	return !info.ModTime().Equal(f.modified)
 }
 
-// Sync writes the file to storage: it creates the users it names that
-// storage lacks, as the bootstrap of UsersFile says, sets their hash as
-// their password, and removes
-// the users it does not name, with what they sign in with. It returns
-// how many users it created and removed.
+// Sync writes the file to storage: it creates the users it names that storage lacks, with
+// their hash as their password, and removes the users it does not name, with what they
+// sign in with. It returns how many users it created and removed.
 func (f *UsersFile) Sync(ctx context.Context, users *storage.UserStorage, passwords *storage.UserAuthPasswordStorage) (int, int, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()

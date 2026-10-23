@@ -26,6 +26,10 @@ func AssetsFS() fs.FS {
 	return sub
 }
 
+// assetVersion hashes the embedded assets: the URL changes when a file
+// does, so a browser that keeps them for an hour never keeps an old one
+// past a deploy. The build version cannot do it, a `go install` build is
+// "dev" every time.
 var assetVersion = sync.OnceValue(func() string {
 	h := sha256.New()
 	_ = fs.WalkDir(assets, "assets", func(path string, d fs.DirEntry, err error) error {
@@ -43,10 +47,7 @@ var assetVersion = sync.OnceValue(func() string {
 	return hex.EncodeToString(h.Sum(nil))[:12]
 })
 
-// AssetVersion is a hash of the embedded assets, for the ?v= of their
-// URLs: the URL changes when a file does, so a browser that keeps them for
-// an hour never keeps an old one past a deploy. The build version could
-// not do it, a `go install` build is "dev" every time.
+// AssetVersion is the hash of the embedded assets that their URLs carry as ?v=.
 func AssetVersion() string {
 	return assetVersion()
 }
@@ -54,6 +55,8 @@ func AssetVersion() string {
 // importURL matches the url of an @import in the stylesheet.
 var importURL = regexp.MustCompile(`@import url\("(css/[^"?]+\.css)"\)`)
 
+// stylesheet versions every import of task-ui.css, so a deploy that
+// changes one file changes that import's URL with it.
 var stylesheet = sync.OnceValue(func() []byte {
 	data, err := assets.ReadFile("assets/task-ui.css")
 	if err != nil {
@@ -62,9 +65,7 @@ var stylesheet = sync.OnceValue(func() []byte {
 	return importURL.ReplaceAll(data, []byte(`@import url("$1?v=`+AssetVersion()+`")`))
 })
 
-// Stylesheet is task-ui.css as the server serves it: a list of imports
-// of the files in css/, each with the ?v= of AssetVersion, so a deploy
-// that changes one file changes every import's URL with it.
+// Stylesheet is task-ui.css as served, each import of css/ carrying the ?v= of AssetVersion.
 func Stylesheet() []byte {
 	return stylesheet()
 }
