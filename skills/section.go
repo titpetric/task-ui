@@ -13,7 +13,7 @@ type Section struct {
 	When   *When  `json:"when,omitempty"`
 	Desc   string `json:"desc,omitempty"`
 
-	// Help is what the pipeline says it is for, its help: block.
+	// Help is the pipeline's own account of its purpose, its help: block.
 	Help string `json:"help,omitempty"`
 
 	// Include are the files the section reads into its variables, and

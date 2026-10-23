@@ -15,8 +15,8 @@ import (
 //
 // A probe that fails, times out, or prints something that is not a
 // report answers nothing: the page it feeds is a panel beside the runs,
-// and a checkout with no atkins is a checkout with no panel rather than
-// a page that will not load.
+// and a checkout with no atkins gets a page with no panel, one that
+// still loads.
 type Prober struct {
 	// Command is the atkins binary, atkins unless set.
 	Command string
@@ -24,9 +24,9 @@ type Prober struct {
 	// Timeout bounds one probe, 5s unless set; TTL keeps an answer, 60s
 	// unless set.
 	//
-	// The window is a month of history and the report is read by a page
-	// anyone may reload, so the answer is worth keeping longer than the
-	// listing of a folder's jobs is.
+	// The window is a month of history and a page anyone may reload reads
+	// the report, so a report outlives the listing of a folder's jobs in
+	// the cache.
 	Timeout time.Duration
 	TTL     time.Duration
 

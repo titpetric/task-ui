@@ -30,7 +30,7 @@ func TestPipelineFile(t *testing.T) {
 	dir := withPipeline(t, "atkins.yaml")
 	assert.Equal(t, "atkins.yaml", pipelineFile(dir))
 
-	// A folder holding several answers with the one atkins reads first.
+	// A folder holding two pipeline files answers with the one atkins reads first.
 	assert.NoError(t, os.WriteFile(filepath.Join(dir, ".atkins.yml"), []byte("jobs:\n"), 0o644))
 	assert.Equal(t, ".atkins.yml", pipelineFile(dir))
 
@@ -79,7 +79,7 @@ func TestUseProber(t *testing.T) {
 	assert.Equal(t, "first", prober.Bin())
 
 	// Each call puts back the one it replaced, so nested wiring unwinds
-	// in the order it was made.
+	// in reverse order.
 	inner := UseProber(second)
 	assert.Equal(t, "second", prober.Bin())
 	inner()

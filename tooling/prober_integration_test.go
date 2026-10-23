@@ -16,9 +16,8 @@ import (
 	"github.com/titpetric/task-ui/tooling"
 )
 
-// stub writes an atkins that prints what it is given and logs the
-// directories it was asked about, and returns a prober over it with the
-// log's path.
+// stub writes an atkins that prints body and logs the directory of each
+// call, and returns a prober over it with the log's path.
 func stub(t *testing.T, body string) (*tooling.Prober, string) {
 	t.Helper()
 
@@ -27,8 +26,8 @@ func stub(t *testing.T, body string) (*tooling.Prober, string) {
 	assert.NoError(t, os.WriteFile(command, []byte(script), 0o755))
 
 	// A parallel test that forks while the file is open for writing
-	// hands the child the open file until it execs: wait for one clean
-	// run.
+	// leaves the child holding the open file until it execs: wait for
+	// one clean run.
 	for range 100 {
 		if err := exec.Command(command, "warm").Run(); !errors.Is(err, syscall.ETXTBSY) {
 			break
@@ -39,7 +38,7 @@ func stub(t *testing.T, body string) (*tooling.Prober, string) {
 	return &tooling.Prober{Command: command, TTL: time.Hour}, command + ".calls"
 }
 
-// calls returns the directories the stub was asked about.
+// calls returns the directories the stub ran in.
 func calls(t *testing.T, path string) []string {
 	t.Helper()
 
@@ -90,13 +89,13 @@ func TestProber_Probe(t *testing.T) {
 	assert.Equal(t, "", report.Workspace.Repository)
 	assert.Equal(t, int64(90), report.Workspace.Runs)
 
-	// atkins is asked in the directory it is asked about, because that
-	// is how it finds the database.
+	// atkins runs in the directory the probe covers, because that is how
+	// it finds the database.
 	assert.Equal(t, []string{dir}, calls(t, log))
 }
 
-// An answer is kept for the TTL, so a page anyone may reload does not
-// run atkins once a reader.
+// The prober keeps an answer for the TTL, so a page anyone may reload
+// does not run atkins once a reader.
 func TestProber_ProbeCaches(t *testing.T) {
 	prober, log := stub(t, listing)
 	dir := t.TempDir()
@@ -114,8 +113,7 @@ func TestProber_ProbeCaches(t *testing.T) {
 }
 
 // An atkins that fails, times out, or prints something that is not a
-// report answers nothing, and the page shows no panel rather than
-// refusing to load.
+// report answers nothing, and the page loads with no panel.
 func TestProber_ProbeWithoutAnAnswer(t *testing.T) {
 	failing, _ := stub(t, "exit 1")
 	assert.Nil(t, failing.Probe(t.TempDir()))

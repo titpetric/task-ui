@@ -59,7 +59,7 @@ func TestScope_Empty(t *testing.T) {
 	assert.False(t, scope().Empty())
 }
 
-// TestReport_Scopes covers the order the report hands its scopes over:
+// TestReport_Scopes covers the order the report returns its scopes in:
 // the project first, because standing in one is the context the reader
 // is in.
 func TestReport_Scopes(t *testing.T) {
@@ -77,7 +77,7 @@ func TestReport_Scopes(t *testing.T) {
 	assert.Equal(t, "project", both[0].Name)
 	assert.Equal(t, "workspace", both[1].Name)
 
-	// A scope with nothing in it is no scope to draw.
+	// An empty scope is no scope to draw.
 	assert.Len(t, (&tooling.Report{Project: &tooling.Scope{Name: "project"}, Workspace: workspace}).Scopes(), 1)
 }
 
@@ -102,8 +102,8 @@ func TestReport_Since(t *testing.T) {
 }
 
 func TestReport_ToolsSince(t *testing.T) {
-	// A week rolls up from the usage rows rather than from the
-	// report's own tools, which cover its whole window.
+	// A week rolls up from the usage rows; the report's own tools cover
+	// its whole window.
 	week := scope().ToolsSince(7)
 	assert.Len(t, week, 2)
 	assert.Equal(t, "go", week[0].Tool)
@@ -126,8 +126,8 @@ func TestReport_ToolsSince(t *testing.T) {
 	assert.Len(t, scope().ToolsSince(0), 0)
 }
 
-// Two tools that cost the same are ordered by name, so the list does
-// not shuffle between reloads.
+// Two tools that cost the same sort by name, so the list does not
+// shuffle between reloads.
 func TestReport_ToolsSinceTies(t *testing.T) {
 	tied := &tooling.Scope{
 		Days: 31, To: "2026-10-23",
@@ -215,7 +215,7 @@ func TestTool(t *testing.T) {
 	assert.Equal(t, int64(42), tool.Runs)
 }
 
-// TestUsage covers one tool on one day, the row a chart is drawn from.
+// TestUsage covers one tool on one day, the row a chart draws from.
 func TestUsage(t *testing.T) {
 	usage := scope().Usage[0]
 	assert.Equal(t, "2026-10-17", usage.Date)
