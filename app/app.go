@@ -39,6 +39,7 @@ import (
 	"github.com/titpetric/task-ui/sshkey"
 	"github.com/titpetric/task-ui/sshprobe"
 	"github.com/titpetric/task-ui/storage"
+	"github.com/titpetric/task-ui/tooling"
 	"github.com/titpetric/task-ui/workflow"
 )
 
@@ -339,7 +340,8 @@ func (a *App) wire(version string) error {
 		Runner: a.Runner, Catalogue: a.Catalogue, Git: g, Keys: keys, HomeKeys: homeKeys, KeyPolicies: keyPolicies, Env: env, Recordings: recordings, Root: cfg.Root, Version: version, Now: cfg.Clock(),
 		ArtifactStore: store, Disk: &diskusage.Meter{TTL: 10 * time.Minute}, Board: a.Board, ComposeProject: self, Cleaner: cleaner,
 		Integrations: integrations, Hosts: hosts,
-		SSH: prober, AddUsers: a.UsersFile != nil, BaseURL: cfg.URL,
+		Tooling: &tooling.Prober{Timeout: 5 * time.Second, TTL: time.Minute},
+		SSH:     prober, AddUsers: a.UsersFile != nil, BaseURL: cfg.URL,
 		Instance: &view.Instance{
 			URL: cfg.URL, Listen: cfg.Listen, Root: cfg.Root, DataDir: cfg.DataDir, SSHDir: cfg.SSHDir, Htpasswd: cfg.Htpasswd,
 			Discover: cfg.Discover, Admins: cfg.Admins, Viewers: cfg.Viewers, AutoLogin: cfg.AutoLogin, Agent: cfg.Agent, AgentJob: cfg.AgentJob,

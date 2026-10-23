@@ -75,6 +75,7 @@ func (h *Handlers) runs(w http.ResponseWriter, r *http.Request) {
 	p.Pager = view.NewPager("/runs", q, prev, next)
 	filter.Before, filter.After, filter.Limit = "", "", activityLimit
 	p.Activity = h.activity(r.Context(), h.runSeer(r), filter, p.Now, false)
+	p.Tooling = h.tooling()
 	p.Summarize = h.claudeFor(r, p.User)
 	h.render(w, http.StatusOK, "runs", p)
 }

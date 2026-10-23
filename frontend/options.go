@@ -20,6 +20,7 @@ import (
 	"github.com/titpetric/task-ui/sshkey"
 	"github.com/titpetric/task-ui/sshprobe"
 	"github.com/titpetric/task-ui/storage"
+	"github.com/titpetric/task-ui/tooling"
 	"github.com/titpetric/task-ui/workflow"
 	"github.com/titpetric/task-ui/workspace"
 )
@@ -65,6 +66,9 @@ type Options struct {
 	// Recordings holds the runs' recordings, for the last screen of a
 	// run whose session has ended.
 	Recordings *recording.Store
+	// Tooling asks atkins what the tree has been running, for the panel
+	// on the runs page. Nil shows no panel.
+	Tooling *tooling.Prober
 	// Root is where the folders are, for the projects page.
 	Root    string
 	Version string

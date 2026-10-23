@@ -1,0 +1,170 @@
+/* ---------------------------------------------------------------- tooling */
+
+/* What the commands inside the runs spent their time on, as atkins
+   recorded it. A chart per window, drawn the way activity draws its
+   buckets: a bar a day, the busiest one full height, the whole column
+   the hover target. Under each chart the tools that made it, longest
+   first, so a reader sees the shape of a month and what it went on
+   without reading a table. The table is behind a details element, which
+   needs no script. */
+.tooling {
+  margin: 0 0 1rem;
+}
+
+.tooling-sum {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: baseline;
+  margin: 0 0 0.6rem;
+  color: var(--text-dim);
+  font-size: var(--fs-sm);
+}
+
+/* The file the rows came from, pushed to the end: it answers "why is
+   this empty" and nothing else, so it reads as a footnote. */
+.tooling-db {
+  margin-left: auto;
+  overflow: hidden;
+  max-width: 24rem;
+  color: var(--text-faint);
+  font-family: var(--font);
+  font-size: var(--fs-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  direction: rtl;
+}
+
+.tooling-charts {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 0.8rem;
+}
+
+.tooling-chart {
+  margin: 0;
+  min-width: 0;
+  padding: 0.55rem 0.8rem 0.5rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--ink-1);
+}
+
+.tooling-title {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin: 0 0 0.4rem;
+  color: var(--text-dim);
+  font-family: var(--font-ui);
+  font-size: var(--fs-xs);
+
+  & small {
+    color: var(--text-faint);
+    font-family: var(--font);
+  }
+}
+
+/* A bar a day, measured from zero against the busiest. A day nothing
+   ran is an empty column and not a missing one, so a run of days reads
+   as time. */
+.tooling-bars {
+  display: grid;
+  grid-template-columns: repeat(var(--n), minmax(0, 1fr));
+  align-items: stretch;
+  gap: 2px;
+  height: 3rem;
+  border-bottom: 1px solid var(--line-2);
+
+  & span {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    min-width: 0;
+
+    &:hover {
+      background: var(--ink-2);
+    }
+  }
+
+  & i {
+    display: block;
+    width: 100%;
+    min-height: 1px;
+    background: linear-gradient(to top, var(--signal), color-mix(in oklch, var(--signal) 55%, transparent));
+  }
+}
+
+/* The tools of a window, longest first: the name, a bar of its share,
+   its time and how often it ran. */
+.tooling-tools {
+  margin: 0.6rem 0 0;
+  padding: 0;
+  list-style: none;
+
+  & li {
+    display: grid;
+    grid-template-columns: minmax(3.5rem, auto) minmax(0, 1fr) auto auto;
+    gap: 0.5rem;
+    align-items: center;
+    padding: 0.12rem 0;
+    font-size: var(--fs-xs);
+  }
+
+  & li.empty {
+    display: block;
+    color: var(--text-faint);
+  }
+
+  & .key {
+    overflow: hidden;
+    font-family: var(--font);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.tooling-bar {
+  display: block;
+  height: 0.5rem;
+  border-radius: 2px;
+  background: var(--ink-2);
+
+  & i {
+    display: block;
+    height: 100%;
+    min-width: 1px;
+    border-radius: 2px;
+    background: var(--signal);
+  }
+}
+
+.tooling-details {
+  margin-top: 0.8rem;
+
+  & summary {
+    cursor: pointer;
+    color: var(--text-dim);
+    font-size: var(--fs-sm);
+  }
+
+  & summary:hover {
+    color: var(--text);
+  }
+
+  & .table-wrap {
+    margin-top: 0.6rem;
+  }
+}
+
+/* Under the fold the two charts stack, as the activity charts do. */
+@media (width <= 860px) {
+  .tooling-charts {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .tooling-db {
+    max-width: 100%;
+  }
+}

@@ -115,7 +115,10 @@ type Page struct {
 	// nil when they fit on one page.
 	Pager *Pager
 	// Activity charts when the runs of the page ran, nil without any.
-	Activity  *Activity
+	Activity *Activity
+	// Tooling is what atkins has recorded for the tree, nil without a
+	// record of anything.
+	Tooling   *Tooling
 	Run       *Run
 	Artifacts []model.Artifact
 	Schedules []model.Schedule
