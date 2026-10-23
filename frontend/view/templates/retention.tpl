@@ -3,7 +3,7 @@
 <div class="page-head">
 	<div>
 		<h2>Data retention</h2>
-		<p>How long the instance keeps what it records, and how much of it. Past either rule the oldest go first, until both hold. A save takes effect at the next run of <code>@cleanup</code>, which the schedules start every day at midnight.{{ if not $admin }} An admin changes these rules.{{ end }}</p>
+		<p>How long task-ui keeps recordings, artifact history and the secret read log. <code>@cleanup</code> applies the rules every midnight, oldest first.{{ if not $admin }} An admin changes them.{{ end }}</p>
 	</div>
 	{{- if $admin }}
 	<div class="actions">

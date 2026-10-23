@@ -2,7 +2,7 @@
 <div class="page-head">
 	<div>
 		<h2>Workflows</h2>
-		<p>A workflow runs jobs from any folders, one after another. Run starts the first step; each next step starts when the one before it ends ok. If a step fails, the workflow stops and skips the rest. A step can also run another workflow. Anyone can create a workflow, but to run it you need permission to run every step.</p>
+		<p>Chains of jobs from any folders. Each step starts when the one before ends ok; a failure stops the rest. Running one needs permission to run every step.</p>
 	</div>
 	<div class="actions">
 		<a class="btn btn-primary" href="/workflows/new">Add workflow</a>

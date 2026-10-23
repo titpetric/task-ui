@@ -59,7 +59,7 @@ func TestDataRetention(t *testing.T) {
 	assert.NoError(t, f.opts.Users.Policies().Put(context.Background(), permission.KindUser, asOps, "secret/view", permission.Allow))
 	read := f.page(t, asOps, "/settings/retention")
 	assert.Contains(t, read, "<fieldset class=\"field\" disabled>")
-	assert.Contains(t, read, "An admin changes these rules.")
+	assert.Contains(t, read, "An admin changes them.")
 	assert.NotContains(t, read, `data-job="@cleanup"`)
 	assert.NotContains(t, read, `type="submit">Save`)
 

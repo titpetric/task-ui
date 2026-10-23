@@ -2,7 +2,7 @@
 <div class="page-head">
 	<div>
 		<h2>Integrations</h2>
-		<p>The services task-ui talks to. task-ui encrypts their keys and tokens with the instance's encryption key {{ with .InstanceKey }}<b>{{ .Fingerprint }}</b>{{ else }}<span class="badge bad">none yet</span>{{ end }}, used only for this, and never shows them again. Leave a secret field empty to keep its current value.</p>
+		<p>The services task-ui talks to. task-ui encrypts their tokens with the instance key {{ with .InstanceKey }}<b>{{ .Fingerprint }}</b>{{ else }}<span class="badge bad">none yet</span>{{ end }}; leave a secret field empty to keep it.</p>
 	</div>
 </div>
 

@@ -2,7 +2,7 @@
 <div class="page-head">
 	<div>
 		<h2>Workspaces</h2>
-		<p>A workspace is a git checkout under the root that holds projects, such as an organisation's tooling with its projects cloned inside. Its folder name is the namespace of its projects, and you can add one repository as more than one workspace. The default workspace, _, is the root itself. It holds the projects cloned at the top, always comes first, and you can't remove it.</p>
+		<p>Checkouts under the root that hold projects. The folder name is the projects' namespace; <code>_</code> is the root itself.</p>
 	</div>
 	<div class="actions">
 		<a class="btn btn-primary" href="/settings/workspaces/new">Add workspace</a>
