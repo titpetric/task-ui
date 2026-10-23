@@ -84,7 +84,7 @@ SSH
 chmod +x "$work/bin/ssh"
 
 env PATH="$work/bin:$PATH" \
-  TASK_UI_ROOT="$work/demo" \
+  TASK_UI_WORKSPACE="$work/demo" \
   TASK_UI_LISTEN="127.0.0.1:${port}" \
   TASK_UI_DATA="$work/data" \
   TASK_UI_SSH_DIR="$work/ssh" \
