@@ -1,10 +1,12 @@
 package mcp
 
 // Schema is the JSON schema of a tool's arguments: an object of named
-// properties.
+// properties. An empty Properties stays out of the JSON: the schema of an
+// array's string elements has none, and a null there makes a client drop
+// the tool.
 type Schema struct {
 	Type       string              `json:"type"`
-	Properties map[string]Property `json:"properties"`
+	Properties map[string]Property `json:"properties,omitempty"`
 	Required   []string            `json:"required,omitempty"`
 }
 

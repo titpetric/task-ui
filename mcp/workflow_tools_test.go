@@ -103,13 +103,17 @@ func TestTools_RunToken(t *testing.T) {
 	text, failed = f.tool(t, "run", "whoami", nil)
 	assert.False(t, failed, text)
 	assert.Contains(t, text, "admin")
+	// A run's token starts no prompt.
+	text, failed = f.tool(t, "run", "ask_prompt", map[string]any{"area": "workflows", "prompt": "build it for me"})
+	assert.True(t, failed, text)
+	assert.Contains(t, text, "can't start a prompt")
 
 	assert.NoError(t, os.WriteFile(filepath.Join(out, "go"), nil, 0o644))
 	assert.Eventually(t, func() bool {
 		threads, _ := f.notes.List(ctx, storage.NoteFilter{Prompts: true, Dir: "site"})
 		return len(threads) == 1 && threads[0].State == "done"
 	}, 20*time.Second, 20*time.Millisecond)
-	// The cleanup follows the answer, a moment after it.
+	// The cleanup comes a moment after the reply.
 	assert.Eventually(t, func() bool {
 		_, err := os.Stat(strings.TrimSpace(string(path)))
 		return os.IsNotExist(err)

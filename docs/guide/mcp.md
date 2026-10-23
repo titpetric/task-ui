@@ -88,7 +88,8 @@ own, mode 0700, that `TASK_UI_MCP_CONFIG` names, and Claude starts with
 shows nowhere, and is none of the user's tokens: it needs no MCP agent user
 on the user's profile. The configuration goes with the run. So a
 prompt can build a workflow with `create_workflow`, run it with
-`run_workflow` and read how it went.
+`run_workflow` and read how it went. A run's token can't start a prompt,
+`ask_prompt` answers 409: the prompt's run would wait for the run holding the token.
 
 A Claude terminal, **Enter Claude**, reaches the same tools when its own
 configuration has the server. Add it with a token of the agent's user and
