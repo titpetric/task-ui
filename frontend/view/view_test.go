@@ -64,6 +64,7 @@ func TestNew(t *testing.T) {
 	assert.Contains(t, names, "schedules")
 	assert.Contains(t, names, "settings")
 	assert.Contains(t, names, "notfound")
+	assert.Contains(t, names, "forbidden")
 	assert.NotContains(t, names, "_layout")
 }
 

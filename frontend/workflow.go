@@ -266,7 +266,7 @@ func (h *Handlers) workflowEdit(w http.ResponseWriter, r *http.Request) {
 	if !p.Workflow.CanChange {
 		p.Title = "Not yours"
 		p.Error = "Its owner or an admin changes a workflow."
-		h.render(w, http.StatusForbidden, "notfound", p)
+		h.render(w, http.StatusForbidden, "forbidden", p)
 		return
 	}
 	p.Title = "Edit " + p.Workflow.Name
