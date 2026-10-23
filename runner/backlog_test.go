@@ -28,8 +28,6 @@ func (s settings) Set(_ context.Context, values map[string]string) error {
 	return nil
 }
 
-var _ runner.SettingValues = settings{}
-
 // brokenSettings fail every read.
 type brokenSettings struct{}
 
@@ -64,6 +62,16 @@ func TestBacklog(t *testing.T) {
 
 	values[runner.BacklogSetting] = "garbage"
 	assert.Equal(t, 80, b.Length(ctx), "a stored value that does not parse is the automatic length")
+}
+
+func TestSettingValues(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	var values runner.SettingValues = settings{}
+	assert.NoError(t, (&runner.Backlog{Settings: values}).Set(ctx, "9"))
+	stored, err := values.Values(ctx)
+	assert.NoError(t, err)
+	assert.Equal(t, "9", stored[runner.BacklogSetting], "a backlog writes its length under BacklogSetting")
 }
 
 func TestBacklog_Defaults(t *testing.T) {
