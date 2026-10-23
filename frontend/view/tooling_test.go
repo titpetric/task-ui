@@ -10,6 +10,10 @@ import (
 	"github.com/titpetric/task-ui/tooling"
 )
 
+// toolingNow is when the page draws the panel, the evening of the report's
+// last day.
+var toolingNow = time.Date(2026, 10, 23, 18, 0, 0, 0, time.UTC)
+
 // toolingReport is a project with a month of history, three days in it.
 func toolingReport() *tooling.Report {
 	return &tooling.Report{Project: toolingScope()}
@@ -40,7 +44,7 @@ func toolingScope() *tooling.Scope {
 }
 
 func TestNewTooling(t *testing.T) {
-	panel := view.NewTooling(toolingReport())
+	panel := view.NewTooling(toolingReport(), toolingNow)
 	assert.NotNil(t, panel)
 	assert.Len(t, panel.Scopes, 1)
 
@@ -75,7 +79,7 @@ func TestNewToolingBothScopes(t *testing.T) {
 	workspace.Name = "workspace"
 	workspace.Database = "/home/you/.atkins/atkins.db"
 
-	panel := view.NewTooling(&tooling.Report{Project: toolingScope(), Workspace: workspace})
+	panel := view.NewTooling(&tooling.Report{Project: toolingScope(), Workspace: workspace}, toolingNow)
 	assert.NotNil(t, panel)
 	assert.Len(t, panel.Scopes, 2)
 	assert.Equal(t, "project", panel.Scopes[0].Name)
@@ -86,9 +90,9 @@ func TestNewToolingBothScopes(t *testing.T) {
 // A tree that has never run a job through atkins shows no panel rather
 // than an empty one.
 func TestNewToolingWithNothingRecorded(t *testing.T) {
-	assert.Nil(t, view.NewTooling(nil))
-	assert.Nil(t, view.NewTooling(&tooling.Report{}))
-	assert.Nil(t, view.NewTooling(&tooling.Report{Workspace: &tooling.Scope{Database: "/w/x.db", Days: 31}}))
+	assert.Nil(t, view.NewTooling(nil, toolingNow))
+	assert.Nil(t, view.NewTooling(&tooling.Report{}, toolingNow))
+	assert.Nil(t, view.NewTooling(&tooling.Report{Workspace: &tooling.Scope{Database: "/w/x.db", Days: 31}}, toolingNow))
 }
 
 // A report shorter than a window draws no chart for it: a week of
@@ -98,7 +102,7 @@ func TestNewToolingSkipsAWindowItCannotFill(t *testing.T) {
 	report := toolingReport()
 	report.Project.Days = 7
 
-	panel := view.NewTooling(report)
+	panel := view.NewTooling(report, toolingNow)
 	assert.NotNil(t, panel)
 	assert.Len(t, panel.Scopes[0].Windows, 1)
 	assert.Equal(t, 7, panel.Scopes[0].Windows[0].Days)
@@ -108,7 +112,7 @@ func TestNewToolingSkipsAWindowItCannotFill(t *testing.T) {
 // from zero against the window's tallest bar; a command that did not
 // run that day leaves its slot empty, and a day nothing ran has none.
 func TestToolingBars(t *testing.T) {
-	window := view.NewTooling(toolingReport()).Scopes[0].Windows[1]
+	window := view.NewTooling(toolingReport(), toolingNow).Scopes[0].Windows[1]
 
 	assert.Equal(t, 7, len(window.Bars))
 	assert.Equal(t, "2026-10-17", window.Bars[0].Date)
@@ -144,7 +148,7 @@ func TestToolingBarsFloor(t *testing.T) {
 	report := toolingReport()
 	report.Project.Usage = append(report.Project.Usage, tooling.Usage{Date: "2026-10-22", Tool: "go", Runs: 1, TotalMs: 1})
 
-	window := view.NewTooling(report).Scopes[0].Windows[1]
+	window := view.NewTooling(report, toolingNow).Scopes[0].Windows[1]
 	assert.Equal(t, "height: 4.0%", string(window.Bars[5].Segments[0].Style))
 	assert.Contains(t, window.Bars[5].Title, "1 command in ")
 }
@@ -152,7 +156,7 @@ func TestToolingBarsFloor(t *testing.T) {
 // Without a command series, from an older atkins, the bars are of the
 // tools and the legend names them, rolled up from the window's days.
 func TestToolingStacksByToolWithoutCommandUsage(t *testing.T) {
-	window := view.NewTooling(toolingReport()).Scopes[0].Windows[1]
+	window := view.NewTooling(toolingReport(), toolingNow).Scopes[0].Windows[1]
 	assert.Equal(t, "tool", window.By)
 
 	assert.Len(t, window.Legend, 2)
@@ -191,7 +195,7 @@ func commandScope() *tooling.Scope {
 // With a command series each day draws a bar per top five command of
 // the window, the rest together as other, and the legend names them.
 func TestToolingStacksTopCommands(t *testing.T) {
-	window := view.NewTooling(&tooling.Report{Project: commandScope()}).Scopes[0].Windows[1]
+	window := view.NewTooling(&tooling.Report{Project: commandScope()}, toolingNow).Scopes[0].Windows[1]
 	assert.Equal(t, "command", window.By)
 
 	assert.Len(t, window.Legend, 6)
@@ -225,7 +229,7 @@ func TestToolingColorsAreStable(t *testing.T) {
 	workspace.Name = "workspace"
 	workspace.CommandUsage = append(workspace.CommandUsage, tooling.CommandUsage{Date: "2026-10-01", Command: "make", Tool: "make", Runs: 1, TotalMs: 99_000})
 
-	panel := view.NewTooling(&tooling.Report{Project: commandScope(), Workspace: workspace})
+	panel := view.NewTooling(&tooling.Report{Project: commandScope(), Workspace: workspace}, toolingNow)
 	colors := map[string]string{}
 	for _, scope := range panel.Scopes {
 		for _, window := range scope.Windows {
@@ -249,7 +253,7 @@ func TestToolingRenders(t *testing.T) {
 	assert.NoError(t, err)
 
 	var out strings.Builder
-	page := &view.Page{Title: "Runs", Tooling: view.NewTooling(toolingReport())}
+	page := &view.Page{Title: "Runs", Tooling: view.NewTooling(toolingReport(), toolingNow)}
 	assert.NoError(t, v.Render(&out, "runs", page))
 
 	html := out.String()
@@ -277,7 +281,7 @@ func TestToolingRenders(t *testing.T) {
 func TestToolingTicks(t *testing.T) {
 	t.Parallel()
 
-	scope := view.NewTooling(toolingReport()).Scopes[0]
+	scope := view.NewTooling(toolingReport(), toolingNow).Scopes[0]
 
 	week := scope.Windows[1].Ticks
 	assert.Len(t, week, 7)
@@ -297,7 +301,7 @@ func TestToolingRendersFoldToggles(t *testing.T) {
 	assert.NoError(t, err)
 
 	var out strings.Builder
-	page := &view.Page{Title: "Runs", Tooling: view.NewTooling(&tooling.Report{Project: commandScope()})}
+	page := &view.Page{Title: "Runs", Tooling: view.NewTooling(&tooling.Report{Project: commandScope()}, toolingNow)}
 	assert.NoError(t, v.Render(&out, "runs", page))
 
 	html := out.String()
@@ -328,7 +332,7 @@ func TestTooling(t *testing.T) {
 	var panel view.Tooling
 	assert.Len(t, panel.Scopes, 0)
 
-	panel = *view.NewTooling(toolingReport())
+	panel = *view.NewTooling(toolingReport(), toolingNow)
 	assert.Len(t, panel.Scopes, 1)
 }
 
@@ -337,7 +341,7 @@ func TestToolingWindow(t *testing.T) {
 	var window view.ToolingWindow
 	assert.Equal(t, 0, window.Days)
 
-	window = view.NewTooling(toolingReport()).Scopes[0].Windows[0]
+	window = view.NewTooling(toolingReport(), toolingNow).Scopes[0].Windows[0]
 	assert.Equal(t, 30, window.Days)
 	assert.Len(t, window.Bars, 30)
 	assert.NotNil(t, window.Legend)
@@ -345,7 +349,7 @@ func TestToolingWindow(t *testing.T) {
 
 // TestToolingBar covers one day of a chart.
 func TestToolingBar(t *testing.T) {
-	bar := view.NewTooling(toolingReport()).Scopes[0].Windows[1].Bars[4]
+	bar := view.NewTooling(toolingReport(), toolingNow).Scopes[0].Windows[1].Bars[4]
 	assert.Equal(t, "2026-10-21", bar.Date)
 	assert.Contains(t, bar.Title, "20 commands")
 	assert.Len(t, bar.Segments, 2)
@@ -357,7 +361,7 @@ func TestToolingBar(t *testing.T) {
 
 // TestToolingCommand covers one row of the table behind the toggle.
 func TestToolingCommand(t *testing.T) {
-	command := view.NewTooling(toolingReport()).Scopes[0].Commands[0]
+	command := view.NewTooling(toolingReport(), toolingNow).Scopes[0].Commands[0]
 	assert.Equal(t, "go test -cover", command.Command)
 	assert.Equal(t, "go", command.Tool)
 	assert.Equal(t, int64(3), command.Failures)
@@ -375,7 +379,7 @@ func TestToolingScope(t *testing.T) {
 	workspace.Name = "workspace"
 	workspace.Repository = ""
 
-	panel := view.NewTooling(&tooling.Report{Project: toolingScope(), Workspace: workspace})
+	panel := view.NewTooling(&tooling.Report{Project: toolingScope(), Workspace: workspace}, toolingNow)
 	assert.Equal(t, "project", panel.Scopes[0].Name)
 	assert.Equal(t, 31, panel.Scopes[0].Days)
 	assert.Len(t, panel.Scopes[0].Windows, 2)
@@ -394,7 +398,7 @@ func TestToolingRendersBothScopes(t *testing.T) {
 	workspace.Database = "/home/you/.atkins/atkins.db"
 
 	var out strings.Builder
-	page := &view.Page{Title: "Runs", Tooling: view.NewTooling(&tooling.Report{Project: project, Workspace: workspace})}
+	page := &view.Page{Title: "Runs", Tooling: view.NewTooling(&tooling.Report{Project: project, Workspace: workspace}, toolingNow)}
 	assert.NoError(t, v.Render(&out, "runs", page))
 
 	html := out.String()
@@ -417,7 +421,7 @@ func TestToolingColorsAreDistinctInAWindow(t *testing.T) {
 		scope.CommandUsage = append(scope.CommandUsage, tooling.CommandUsage{Date: "2026-10-23", Command: command, Tool: command, Runs: 1, TotalMs: 500})
 	}
 
-	windows := view.NewTooling(&tooling.Report{Project: scope}).Scopes[0].Windows
+	windows := view.NewTooling(&tooling.Report{Project: scope}, toolingNow).Scopes[0].Windows
 	for _, window := range windows {
 		seen := map[string]string{}
 		for _, entry := range window.Legend {

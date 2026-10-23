@@ -18,6 +18,10 @@ var ToolingWindows = []int{30, 7}
 // percent, so a quiet command next to a busy one still shows.
 const toolingStub = 4.0
 
+// toolingLatest is how many of the newest commands the list under the
+// charts names.
+const toolingLatest = 20
+
 // toolingTop is how many commands a window draws a bar each for, the
 // rest drawn together as "other". Beyond a handful of colours a day's
 // group stops reading as one.
@@ -53,24 +57,40 @@ type ToolingScope struct {
 	Runs  int64
 	Total time.Duration
 
-	// Windows are the charts, the longer first.
+	// Windows are the charts: from the samples the month, the day and
+	// the week, as Spans orders them; from an atkins without them the
+	// month and the week by day.
 	Windows []ToolingWindow
+
+	// Latest are the newest commands, newest first, from the samples.
+	Latest []ToolingInvocation
 
 	// Commands are the command keys by total time, the table behind
 	// the toggle.
 	Commands []ToolingCommand
 }
 
-// ToolingWindow is one chart: a group of bars a day over its days, a
+// ToolingWindow is one chart: a group of bars a slot over its span, a
 // bar per top command of the window, and the legend that names them.
 type ToolingWindow struct {
-	Days   int
+	// Days is how many days the window reaches back, Title what heads
+	// it, Unit what one slot is, and Wide whether it takes a row of its
+	// own.
+	Days  int
+	Title string
+	Unit  string
+	Wide  bool
+
 	Bars   []ToolingBar
 	Legend []ToolingLegend
 
-	// Ticks mark the days under the chart: a day a week on the month,
-	// every day on the week.
+	// Ticks mark the slots under the chart, as the activity chart of
+	// the same span marks them.
 	Ticks []ActivityTick
+
+	// Density spaces the bars: sparse for a week of days, fine for
+	// more slots than a month has, empty between.
+	Density string
 
 	// By is what the bars are of: "command", or "tool" from an atkins
 	// that reports no command series.
@@ -80,15 +100,16 @@ type ToolingWindow struct {
 	Runs  int64
 	Total time.Duration
 
-	// Busiest is the longest day, and Tallest the longest one command
-	// took in a day, which every bar measures against.
+	// Busiest is the longest slot, and Tallest the longest one command
+	// took in a slot, which every bar measures against.
 	Busiest time.Duration
 	Tallest time.Duration
 }
 
-// ToolingBar is one day of a chart: a slot per entry of the legend, in
-// its order, each a bar against the window's tallest, empty for a
-// command that did not run that day. A day nothing ran has no slots.
+// ToolingBar is one slot of a chart, a day or some hours: a bar per
+// entry of the legend, in its order, each against the window's tallest,
+// empty for a command that did not run then. A slot nothing ran in has
+// no segments. Date names the slot.
 type ToolingBar struct {
 	Date     string
 	Title    string
@@ -114,7 +135,9 @@ type ToolingCommand struct {
 // NewTooling turns a report into the panel. Nil for a report with
 // nothing in it, which is a tree that has never run a job through
 // atkins: the page then shows no panel at all.
-func NewTooling(report *tooling.Report) *Tooling {
+//
+// The samples' charts count their slots in now's time zone.
+func NewTooling(report *tooling.Report, now time.Time) *Tooling {
 	scopes := report.Scopes()
 	if len(scopes) == 0 {
 		return nil
@@ -123,7 +146,7 @@ func NewTooling(report *tooling.Report) *Tooling {
 	out := &Tooling{}
 	palette := toolingPalette{}
 	for _, scope := range scopes {
-		out.Scopes = append(out.Scopes, newToolingScope(scope, palette))
+		out.Scopes = append(out.Scopes, newToolingScope(scope, now, palette))
 	}
 	return out
 }
@@ -163,7 +186,7 @@ func (p toolingPalette) color(name string, taken map[string]bool) string {
 }
 
 // newToolingScope turns one database into its section of the panel.
-func newToolingScope(scope *tooling.Scope, palette toolingPalette) ToolingScope {
+func newToolingScope(scope *tooling.Scope, now time.Time, palette toolingPalette) ToolingScope {
 	out := ToolingScope{
 		Name:       scope.Name,
 		Repository: scope.Repository,
@@ -173,9 +196,18 @@ func newToolingScope(scope *tooling.Scope, palette toolingPalette) ToolingScope 
 		Total:      milliseconds(scope.TotalMs),
 	}
 
-	for _, days := range ToolingWindows {
-		if window := newToolingWindow(scope, days, palette); window != nil {
-			out.Windows = append(out.Windows, *window)
+	if len(scope.Samples) > 0 {
+		for _, span := range Spans {
+			if window := sampleWindow(scope, span, now, palette); window != nil {
+				out.Windows = append(out.Windows, *window)
+			}
+		}
+		out.Latest = latest(scope.Samples, now, palette)
+	} else {
+		for _, days := range ToolingWindows {
+			if window := newToolingWindow(scope, days, palette); window != nil {
+				out.Windows = append(out.Windows, *window)
+			}
 		}
 	}
 
@@ -195,7 +227,8 @@ func newToolingScope(scope *tooling.Scope, palette toolingPalette) ToolingScope 
 	return out
 }
 
-// newToolingWindow builds one chart. Nil when the report is shorter
+// newToolingWindow builds one chart of days from the daily series,
+// for an atkins that lists no samples. Nil when the report is shorter
 // than the window: a week of history drawn as a month is a month of
 // empty bars with a week at the end.
 func newToolingWindow(report *tooling.Scope, days int, palette toolingPalette) *ToolingWindow {
@@ -204,21 +237,91 @@ func newToolingWindow(report *tooling.Scope, days int, palette toolingPalette) *
 	}
 
 	daily := report.Daily(days)
-	window := &ToolingWindow{Days: days}
+	slots := make([]toolingSlot, len(daily))
+	slot := map[string]int{}
+	for i, day := range daily {
+		slots[i] = toolingSlot{label: day.Date, title: toolingDayTitle(day), runs: day.Runs, ms: day.TotalMs}
+		slot[day.Date] = i
+	}
+
+	rows, by := toolingRows(report, daily)
+	for i := range rows {
+		rows[i].slot = slot[rows[i].date]
+	}
+
+	window := toolingWindow(slots, rows, palette)
+	window.Days = days
+	window.Title = fmt.Sprintf("Last %d days", days)
+	window.Unit = "day"
+	window.By = by
+	window.Ticks = toolingTicks(daily)
+	if days <= 7 {
+		window.Density = "sparse"
+	}
+	return window
+}
+
+// sampleWindow builds one chart of a span from the samples, a slot per
+// span slot in now's time zone. Nil for a month the report is too short
+// to fill.
+func sampleWindow(report *tooling.Scope, span Span, now time.Time, palette toolingPalette) *ToolingWindow {
+	if report.Days < span.Days() {
+		return nil
+	}
+
+	edges := span.Edges(now)
+	slots := make([]toolingSlot, span.Slots)
+	for i := range slots {
+		slots[i].label = span.Label(edges, i)
+	}
+
+	var rows []toolingRow
+	for _, sample := range report.Samples {
+		i := span.Index(sample.At.In(now.Location()), edges)
+		if i < 0 {
+			continue
+		}
+		rows = append(rows, toolingRow{slot: i, name: sample.Command, runs: 1, ms: sample.DurationMs})
+		slots[i].runs++
+		slots[i].ms += sample.DurationMs
+	}
+	for i := range slots {
+		slots[i].title = toolingSlotTitle(slots[i])
+	}
+
+	window := toolingWindow(slots, rows, palette)
+	window.Days = span.Days()
+	window.Title = span.Title
+	window.Unit = span.Unit
+	window.Wide = span.Wide
+	window.By = "command"
+	window.Ticks = span.Ticks(edges)
+	if span.Slots > 30 {
+		window.Density = "fine"
+	}
+	return window
+}
+
+// toolingSlot is one column of a chart while it fills: its name, what its hover says, and everything that ran in it.
+type toolingSlot struct {
+	label, title string
+	runs, ms     int64
+}
+
+// toolingWindow draws the slots: the window's top names by their total,
+// which the legend lists and each slot draws a bar of in that order, the
+// rest together as other.
+func toolingWindow(slots []toolingSlot, rows []toolingRow, palette toolingPalette) *ToolingWindow {
+	window := &ToolingWindow{}
 
 	var busiest int64
-	for _, day := range daily {
-		busiest = max(busiest, day.TotalMs)
-		window.Runs += day.Runs
-		window.Total += milliseconds(day.TotalMs)
+	for _, slot := range slots {
+		busiest = max(busiest, slot.ms)
+		window.Runs += slot.runs
+		window.Total += milliseconds(slot.ms)
 	}
 	window.Busiest = milliseconds(busiest)
 
-	rows, by := toolingRows(report, daily)
-	window.By = by
-
-	// The top names by the window's total, which the legend lists and
-	// each day draws a bar of, in that order.
 	totals := map[string]*ToolingLegend{}
 	var names []string
 	for _, row := range rows {
@@ -264,42 +367,66 @@ func newToolingWindow(report *tooling.Scope, days int, palette toolingPalette) *
 		window.Legend = append(window.Legend, other)
 	}
 
-	// A day's rows summed per slot: the top names, then other.
-	slots := map[string][]toolingRow{}
+	// A slot's rows summed per legend entry: the top names, then other.
+	sums := make([][]toolingRow, len(slots))
 	var tallest int64
 	for _, row := range rows {
-		day, ok := slots[row.date]
-		if !ok {
-			day = make([]toolingRow, len(window.Legend))
-			slots[row.date] = day
+		if sums[row.slot] == nil {
+			sums[row.slot] = make([]toolingRow, len(window.Legend))
 		}
 		index, ok := rank[row.name]
 		if !ok {
 			index = len(top)
 		}
-		day[index].runs += row.runs
-		day[index].ms += row.ms
-		tallest = max(tallest, day[index].ms)
+		sum := &sums[row.slot][index]
+		sum.runs += row.runs
+		sum.ms += row.ms
+		tallest = max(tallest, sum.ms)
 	}
 	window.Tallest = milliseconds(tallest)
 
-	for index, day := range daily {
-		bar := ToolingBar{
-			Date:  day.Date,
-			Title: toolingDayTitle(day),
-		}
-		switch {
-		case index < 4:
-			bar.Edge = "tip-start"
-		case index >= len(daily)-4:
-			bar.Edge = "tip-end"
-		}
-		bar.Segments = toolingSegments(day, slots[day.Date], window.Legend, tallest)
-		window.Bars = append(window.Bars, bar)
+	for index, slot := range slots {
+		window.Bars = append(window.Bars, ToolingBar{
+			Date:     slot.label,
+			Title:    slot.title,
+			Edge:     tipEdge(index, len(slots)),
+			Segments: toolingSegments(slot.label, sums[index], window.Legend, tallest),
+		})
 	}
-	window.Ticks = toolingTicks(daily)
 
 	return window
+}
+
+// latest lists the newest samples, newest first, each in the colour its
+// command has on the charts, at its clock time today and with its
+// weekday before.
+func latest(samples []tooling.Sample, now time.Time, palette toolingPalette) []ToolingInvocation {
+	today := now.Format(time.DateOnly)
+	n := min(len(samples), toolingLatest)
+	out := make([]ToolingInvocation, 0, n)
+	for i := len(samples) - 1; i >= len(samples)-n; i-- {
+		sample := samples[i]
+		color, ok := palette[sample.Command]
+		if !ok {
+			color = toolingOther
+		}
+		at := sample.At.In(now.Location())
+		when := at.Format("15:04")
+		if at.Format(time.DateOnly) != today {
+			when = at.Format("Mon 15:04")
+		}
+		out = append(out, ToolingInvocation{
+			At:      sample.At,
+			When:    when,
+			Command: sample.Command,
+			Job:     sample.Job,
+			Color:   color,
+			Took:    milliseconds(sample.DurationMs),
+			Failed:  sample.Failed || sample.ExitCode != 0,
+			Exit:    sample.ExitCode,
+		})
+	}
+	return out
 }
 
 // toolingTicks marks the days under a chart, centred on their column:
@@ -323,8 +450,10 @@ func toolingTicks(daily []tooling.Day) []ActivityTick {
 	return ticks
 }
 
-// toolingRow is one name on one day, a command or a tool.
+// toolingRow is one name in one slot, a command or a tool; date names
+// the day of a daily row until the window sets its slot.
 type toolingRow struct {
+	slot       int
 	date, name string
 	runs, ms   int64
 }
@@ -355,11 +484,11 @@ func toolingRows(report *tooling.Scope, daily []tooling.Day) ([]toolingRow, stri
 	return rows, "tool"
 }
 
-// toolingSegments is one day's group: a slot per legend entry, in its
-// order, each a bar against the window's tallest. A slot of a command
-// that did not run that day is empty and says nothing; a day nothing
-// ran has no slots, and its column says so.
-func toolingSegments(day tooling.Day, slots []toolingRow, legend []ToolingLegend, tallest int64) []ToolingSegment {
+// toolingSegments is one slot's group: a bar per legend entry, in its
+// order, each against the window's tallest. The bar of a command that
+// did not run then is empty and says nothing; a slot nothing ran in has
+// no bars, and its column says so.
+func toolingSegments(when string, slots []toolingRow, legend []ToolingLegend, tallest int64) []ToolingSegment {
 	var sum int64
 	for _, slot := range slots {
 		sum += slot.ms
@@ -375,7 +504,7 @@ func toolingSegments(day tooling.Day, slots []toolingRow, legend []ToolingLegend
 		if slot.ms <= 0 {
 			continue
 		}
-		segments[index].Title = fmt.Sprintf("%s · %s: %s, %s", day.Date, entry.Name, Duration(milliseconds(slot.ms)), plural(int(slot.runs), "run"))
+		segments[index].Title = fmt.Sprintf("%s · %s: %s, %s", when, entry.Name, Duration(milliseconds(slot.ms)), plural(int(slot.runs), "run"))
 		segments[index].Style = heightStyle(slot.ms, tallest)
 	}
 	return segments
@@ -387,6 +516,14 @@ func toolingDayTitle(day tooling.Day) string {
 		return day.Date + ": nothing ran"
 	}
 	return fmt.Sprintf("%s: %s in %s", day.Date, plural(int(day.Runs), "command"), Duration(milliseconds(day.TotalMs)))
+}
+
+// toolingSlotTitle is what a hover over a slot of the samples says.
+func toolingSlotTitle(slot toolingSlot) string {
+	if slot.runs == 0 {
+		return slot.label + ": nothing ran"
+	}
+	return fmt.Sprintf("%s: %s in %s", slot.label, plural(int(slot.runs), "command"), Duration(milliseconds(slot.ms)))
 }
 
 // heightStyle is the height of a bar, in percent of the tallest, with a

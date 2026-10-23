@@ -20,12 +20,15 @@ started together on more than one host.
 
 ## Activity
 
-Above the list, two charts, in the server's time zone, following the
+Above the list, three charts, in the server's time zone, following the
 filter:
 
 - **Last 30 days**, a bar a day, today on the right;
 - **Last 24 hours**, a bar an hour, this hour on the right, with a time
-  marker every six hours.
+  marker every six hours;
+- **Last 7 days**, on a row of its own under the two, a bar every three
+  clock hours, 00:00 to 03:00 and so on, 56 of them, the slot this
+  hour is in on the right, each day named at its noon.
 
 Each chart's head reads `min/avg/max/total:`, the fastest, the mean and
 the slowest finished run of its window and their time together.
@@ -35,8 +38,10 @@ that ended ok (amber), failed or got killed (red), and the rest, running
 or stopped (faint). Hover a bar for its counts. Under each, the same days or
 hours as a **line graph of their durations**: the average in the text
 colour, the slowest dimmer and the fastest faint, against the slowest run
-of the chart, a smooth curve through the middle of each column. A day or
-an hour without a finished run sits on the baseline. Hover a column for the average, the
+of the chart, through the middle of each column: a smooth curve on the
+month, a straight line from slot to slot on the hours and the week,
+since a curve through a ragged hour reads as a trend that isn't there. A slot
+without a finished run sits on the baseline. Hover a column for the average, the
 fastest, the slowest and how many runs they cover. A line above shows the
 run count, how many failed and the median duration.
 
@@ -48,16 +53,23 @@ Under the activity, what the commands inside the runs spent their time on, as at
 
 A section per database atkins records to, the project first. The **project** is the checkout the root belongs to, named by its repository, and says what standing in it costs. The **workspace** is `$HOME/.atkins`, which every run on the machine records to, and says where a week went across every project. A root that belongs to no checkout has the workspace alone.
 
-Each section holds two charts, in the columns of the activity charts above them, so the month lines up with the month and the week with the day. A day is a column, and a day nothing ran is an empty one:
+Each section holds the activity's three charts, in the same places and with the same slots, so each tooling chart lines up with the activity chart of the same span above it. A slot nothing ran in is an empty column:
 
-- **Last 30 days**, the shape of a month;
-- **Last 7 days**, the shape of a week, for reading against it.
+- **Last 30 days**, a column a day, the shape of a month;
+- **Last 24 hours**, a column an hour;
+- **Last 7 days**, a column every three clock hours, the shape of a week.
 
-In each day's column stands a bar per command of the five that took the most time in the window, side by side in the legend's order, and one for the rest together as **other**. A command that did not run that day leaves its place empty. Every bar measures against the tallest bar of the window. A command keeps its colour in both windows and both sections, and no two commands of one legend share one. The legend under the chart names them, with their time and how often they ran in the window. Hover a bar for its day, its command, its time and its runs. An atkins too old to report its commands per day draws a bar per tool instead.
+atkins lists every command it recorded with `atkins --stats --json --all`, each with its start time, and the charts count them into their slots. An atkins without `--all` reports days alone: the section then draws the month and the week a column a day, and no day chart.
+
+In each slot's column stands a bar per command of the five that took the most time in the window, side by side in the legend's order, and one for the rest together as **other**. A command that did not run in that slot leaves its place empty. Every bar measures against the tallest bar of the window. A command keeps its colour in both windows and both sections, and no two commands of one legend share one. The legend under the chart names them, with their time and how often they ran in the window. Hover a bar for its slot, its command, its time and its runs. An atkins too old to report its commands per day draws a bar per tool instead.
 
 A command is its key, as atkins names it: the words up to the first argument that starts with `-`, at most three, and none that is a path or a value. `go test ./...` and `go test -v ./pkg` are `go test`, `docker build -q -t app .` is `docker build`, `docker compose up -d` is `docker compose up`, and `git clone --depth 1 <url>` is `git clone`. Shell builtins such as `set -eu` and `cd` count as nothing.
 
-The toggle under the charts opens the commands themselves, by total time: the key, its tool, how often it ran, its total, its average, its slowest run, how many failed and when it last ran.
+Under the charts, **Latest commands** lists the twenty newest, newest first: the time, with the weekday before an earlier day's, the command in its chart colour and its job, how long it took, and **ok** or **failed** (hover for the exit code).
+
+The toggle under the list opens the commands themselves, by total time: the key, its tool, how often it ran, its total, its average, its slowest run, how many failed and when it last ran.
+
+The two blocks follow the runs: when a run ends, the page fetches itself again, at most four times a minute, and redraws Activity and Tooling in place, without a reload. task-ui keeps what atkins answered for a minute, and asks again as soon as a database it read from changes, so the commands of the run that ended are in the redraw.
 
 A section is there when its database has something recorded, and absent when it has not. The file each reads sits at the end of its summary line. See [Statistics](https://atkins.incubator.to/usage/stats) for what atkins records, the two databases it records to and the 31 day window it keeps.
 

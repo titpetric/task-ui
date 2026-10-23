@@ -39,7 +39,10 @@ type ActivityRun struct {
 type ActivityBar struct {
 	Label string
 	Title string
-	OK    int
+	// Edge anchors the hover near either end of the chart, so it stays
+	// inside it: tip-start, tip-end or nothing.
+	Edge string
+	OK   int
 	// Failed counts the failed and killed runs, Other those
 	// still running or stopped.
 	Failed int
@@ -101,26 +104,42 @@ type ActivityTick struct {
 }
 
 // Activity is when runs ran: a bar per day of the last ActivityDays, a
-// bar per hour of the last 24, the counts, and the duration line.
+// bar per hour of the last 24, a bar per three hours of the last week,
+// the counts, and the duration line.
 type Activity struct {
 	Days  []ActivityBar
 	Hours []ActivityBar
-	// DayLines and HourLines are the durations of the days and the hours
-	// as lines, nil when none of their runs finished.
+	Week  []ActivityBar
+	// DayLines, HourLines and WeekLines are the durations of the days,
+	// the hours and the week's slots as lines, nil when none of their
+	// runs finished.
 	DayLines  *ActivityLines
 	HourLines *ActivityLines
+	WeekLines *ActivityLines
 	// DayTicks mark a day a week, today the last; HourTicks every third
-	// clock hour, labelled at 03:00, 09:00, 15:00 and 21:00.
+	// clock hour, labelled at 03:00, 09:00, 15:00 and 21:00; WeekTicks
+	// each day at its noon.
 	DayTicks  []ActivityTick
 	HourTicks []ActivityTick
+	WeekTicks []ActivityTick
 	Total     int
 	Failed    int
 	Median    time.Duration
 	// DayStats are the finished runs of the days, HourStats of the last
-	// 24 hours.
+	// 24 hours, WeekStats of the last week.
 	DayStats  ActivityStats
 	HourStats ActivityStats
+	WeekStats ActivityStats
 	Durations *ActivitySpark
+}
+
+// activitySeries is one chart of the activity while it fills: its span,
+// where its slots start, its bars and the stats of its finished runs.
+type activitySeries struct {
+	span  Span
+	edges []time.Time
+	bars  []ActivityBar
+	stats *ActivityStats
 }
 
 // NewActivity charts the runs that started in a window of days up to now,
@@ -133,89 +152,87 @@ func NewActivity(runs []ActivityRun, now time.Time, days int) *Activity {
 		now = time.Now()
 	}
 	loc := now.Location()
-	first := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, loc).AddDate(0, 0, 1-days)
-	end := first.AddDate(0, 0, days)
+	month := SpanMonth
+	month.Slots = days
 
-	a := &Activity{Days: make([]ActivityBar, days), Hours: make([]ActivityBar, 24)}
-	index := map[string]int{}
-	for i := range a.Days {
-		day := first.AddDate(0, 0, i)
-		index[day.Format(time.DateOnly)] = i
-		a.Days[i].Label = day.Format("Mon 2006-01-02")
-	}
-	// The hours are the last 24 clock hours, this one the last.
-	firstHour := now.Truncate(time.Hour).Add(-23 * time.Hour)
-	for h := range a.Hours {
-		a.Hours[h].Label = strconv.Itoa(firstHour.Add(time.Duration(h) * time.Hour).In(loc).Hour())
-	}
-	for i := days - 1; i >= 0; i -= 7 {
-		day := first.AddDate(0, 0, i)
-		a.DayTicks = append([]ActivityTick{{Label: day.Format("Jan 2"), At: svgNumber((float64(i) + 0.5) * 100 / float64(days))}}, a.DayTicks...)
-	}
-	for h := range a.Hours {
-		clock := firstHour.Add(time.Duration(h) * time.Hour).In(loc).Hour()
-		if clock%3 != 0 {
-			continue
+	a := &Activity{}
+	series := []*activitySeries{{span: month, stats: &a.DayStats}, {span: SpanDay, stats: &a.HourStats}, {span: SpanWeek, stats: &a.WeekStats}}
+	for _, chart := range series {
+		chart.edges = chart.span.Edges(now)
+		chart.bars = make([]ActivityBar, chart.span.Slots)
+		for i := range chart.bars {
+			chart.bars[i].Label = chart.span.Label(chart.edges, i)
 		}
-		tick := ActivityTick{At: svgNumber((float64(h) + 0.5) * 100 / 24)}
-		if clock%6 == 3 {
-			tick.Label = twoDigits(clock) + ":00"
-		}
-		a.HourTicks = append(a.HourTicks, tick)
+	}
+	// A day bar carries its date as its label, and an hour its clock
+	// hour.
+	for i := range series[1].bars {
+		series[1].bars[i].Label = strconv.Itoa(series[1].edges[i].Hour())
 	}
 
 	var finished []ActivityRun
 	for _, run := range runs {
 		at := run.StartedAt.In(loc)
-		if at.Before(first) || !at.Before(end) {
+		// The month holds every other span: a run outside the month
+		// stays off the charts.
+		if series[0].span.Index(at, series[0].edges) < 0 {
 			continue
 		}
 		a.Total++
-		day := &a.Days[index[at.Format(time.DateOnly)]]
-		// A run of the last 24 hours counts in its hour too; an older one
-		// counts in a bar no chart draws.
-		hour, recent := &ActivityBar{}, false
-		if h := int(at.Sub(firstHour) / time.Hour); !at.Before(firstHour) && h < 24 {
-			hour, recent = &a.Hours[h], true
-		}
-		switch run.State {
-		case model.StateOK:
-			day.OK++
-			hour.OK++
-		case model.StateFailed, model.StateKilled:
-			day.Failed++
-			hour.Failed++
+		failed := run.State == model.StateFailed || run.State == model.StateKilled
+		if failed {
 			a.Failed++
-		default:
-			day.Other++
-			hour.Other++
 		}
 		if run.State != model.StateRunning {
 			finished = append(finished, run)
-			a.DayStats.add(run.Elapsed)
-			day.add(run.Elapsed)
-			if recent {
-				a.HourStats.add(run.Elapsed)
-				hour.add(run.Elapsed)
+		}
+		for _, chart := range series {
+			i := chart.span.Index(at, chart.edges)
+			if i < 0 {
+				continue
+			}
+			bar := &chart.bars[i]
+			switch {
+			case run.State == model.StateOK:
+				bar.OK++
+			case failed:
+				bar.Failed++
+			default:
+				bar.Other++
+			}
+			if run.State != model.StateRunning {
+				chart.stats.add(run.Elapsed)
+				bar.add(run.Elapsed)
 			}
 		}
 	}
 	if a.Total == 0 {
 		return nil
 	}
-	scale(a.Days)
-	scale(a.Hours)
-	a.DayLines = lines(a.Days)
-	a.HourLines = lines(a.Hours)
-	for i := range a.Days {
-		a.Days[i].Title = counts(a.Days[i], a.Days[i].Label)
-		a.Days[i].AverageTitle = averageText(a.Days[i], a.Days[i].Label)
-	}
-	for h := range a.Hours {
-		start := firstHour.Add(time.Duration(h) * time.Hour).In(loc)
-		when := start.Format("Mon ") + twoDigits(start.Hour()) + ":00–" + twoDigits(start.Add(time.Hour).Hour()) + ":00"
-		a.Hours[h].Title = counts(a.Hours[h], when)
-		a.Hours[h].AverageTitle = averageText(a.Hours[h], when)
+	for index, chart := range series {
+		scale(chart.bars)
+		// The month's line is a curve; the hours and the week draw a
+		// straight line from slot to slot, since a curve through a
+		// ragged hour reads as a trend that is not there.
+		lines := lines(chart.bars, index == 0)
+		for i := range chart.bars {
+			when := chart.bars[i].Label
+			if index > 0 {
+				when = chart.span.Label(chart.edges, i)
+			}
+			chart.bars[i].Edge = tipEdge(i, len(chart.bars))
+			chart.bars[i].Title = counts(chart.bars[i], when)
+			chart.bars[i].AverageTitle = averageText(chart.bars[i], when)
+		}
+		ticks := chart.span.Ticks(chart.edges)
+		switch index {
+		case 0:
+			a.Days, a.DayLines, a.DayTicks = chart.bars, lines, ticks
+		case 1:
+			a.Hours, a.HourLines, a.HourTicks = chart.bars, lines, ticks
+		default:
+			a.Week, a.WeekLines, a.WeekTicks = chart.bars, lines, ticks
+		}
 	}
 	sort.SliceStable(finished, func(i, j int) bool { return finished[i].StartedAt.Before(finished[j].StartedAt) })
 	a.Median = median(finished)
@@ -263,8 +280,10 @@ func (b *ActivityBar) add(elapsed time.Duration) {
 }
 
 // lines draws the buckets' average, fastest and slowest durations as
-// lines against the slowest run, a point at the middle of each column.
-func lines(bars []ActivityBar) *ActivityLines {
+// lines against the slowest run, a point at the middle of each column,
+// a curve through them when smooth and straight from point to point
+// when not.
+func lines(bars []ActivityBar, smooth bool) *ActivityLines {
 	l := &ActivityLines{}
 	for i := range bars {
 		b := &bars[i]
@@ -282,9 +301,9 @@ func lines(bars []ActivityBar) *ActivityLines {
 		}
 		return 100 - float64(d)/float64(l.Slowest)*(100-activityHeadroom)
 	}
-	l.Average = linePath(bars, func(b ActivityBar) float64 { return y(b.Average) })
-	l.Min = linePath(bars, func(b ActivityBar) float64 { return y(b.Min) })
-	l.Max = linePath(bars, func(b ActivityBar) float64 { return y(b.Max) })
+	l.Average = linePath(bars, smooth, func(b ActivityBar) float64 { return y(b.Average) })
+	l.Min = linePath(bars, smooth, func(b ActivityBar) float64 { return y(b.Min) })
+	l.Max = linePath(bars, smooth, func(b ActivityBar) float64 { return y(b.Max) })
 	return l
 }
 
@@ -301,8 +320,9 @@ func anyFinished(bars []ActivityBar) bool {
 // each column: a bucket with no finished run sits on the baseline, so the
 // line runs the width of the chart. The line is a monotone cubic curve
 // (Fritsch and Carlson): smooth, and it never swings past its points,
-// below the baseline or over the slowest run. A bucket alone is a dot.
-func linePath(bars []ActivityBar, y func(ActivityBar) float64) string {
+// below the baseline or over the slowest run. Not smooth, the line goes
+// straight from point to point. A bucket alone is a dot.
+func linePath(bars []ActivityBar, smooth bool, y func(ActivityBar) float64) string {
 	n := len(bars)
 	if n == 0 {
 		return ""
@@ -320,9 +340,15 @@ func linePath(bars []ActivityBar, y func(ActivityBar) float64) string {
 	if n == 1 {
 		return "M " + point(xs[0], ys[0]) + " L " + point(xs[0], ys[0])
 	}
-	tangents := monotoneTangents(ys, step)
 	var out strings.Builder
 	out.WriteString("M " + point(xs[0], ys[0]))
+	if !smooth {
+		for i := 1; i < n; i++ {
+			out.WriteString(" L " + point(xs[i], ys[i]))
+		}
+		return out.String()
+	}
+	tangents := monotoneTangents(ys, step)
 	for i := 0; i < n-1; i++ {
 		third := step / 3
 		out.WriteString(" C " + point(xs[i]+third, ys[i]+tangents[i]*third) +

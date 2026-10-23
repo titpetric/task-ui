@@ -1,6 +1,8 @@
 package frontend
 
 import (
+	"time"
+
 	"github.com/titpetric/task-ui/frontend/view"
 )
 
@@ -13,10 +15,11 @@ import (
 // because the runs are there.
 //
 // Nil without a prober, and nil when atkins has recorded nothing, which
-// is the usual answer on a tree nobody has run a job in yet.
-func (h *Handlers) tooling() *view.Tooling {
+// is the usual answer on a tree nobody has run a job in yet. The charts
+// count their slots in now's time zone, the activity charts' own.
+func (h *Handlers) tooling(now time.Time) *view.Tooling {
 	if h.opts.Tooling == nil || h.opts.Root == "" {
 		return nil
 	}
-	return view.NewTooling(h.opts.Tooling.Probe(h.opts.Root))
+	return view.NewTooling(h.opts.Tooling.Probe(h.opts.Root), now)
 }

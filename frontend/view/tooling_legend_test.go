@@ -13,7 +13,7 @@ import (
 func TestToolingLegend(t *testing.T) {
 	t.Parallel()
 
-	entry := view.NewTooling(&tooling.Report{Project: commandScope()}).Scopes[0].Windows[1].Legend[0]
+	entry := view.NewTooling(&tooling.Report{Project: commandScope()}, toolingNow).Scopes[0].Windows[1].Legend[0]
 	assert.Equal(t, "go test", entry.Name)
 	assert.Equal(t, "s0", entry.Color)
 	assert.Equal(t, int64(1), entry.Runs)

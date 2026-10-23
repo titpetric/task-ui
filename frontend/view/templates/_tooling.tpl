@@ -1,7 +1,8 @@
 {{- /* The tooling panel: what atkins recorded the tree running, a
      section per database it records to. Each holds a chart per window,
-     a group of bars a day, one per top command of the window, with a
-     legend, and the commands behind a toggle. The toggle is a details
+     the activity charts' own spans, a group of bars a slot, one per top
+     command of the window, with a legend; the newest commands; and the
+     commands by their time behind a toggle. The toggle is a details
      element, so it needs no script and the browser remembers nothing
      to go wrong. */}}
 {{- define "tooling" }}
@@ -11,9 +12,9 @@
 		<p class="tooling-sum"><span class="tooling-db" title="{{ .Database }}">&lrm;{{ .Database }}</span><span><span class="key">{{ .Name }}</span>{{ with .Repository }} <span class="faint">{{ . }}</span>{{ end }} · {{ .Runs }} command{{ if ne .Runs 1 }}s{{ end }} in {{ .Days }} days · {{ duration .Total }} of tooling</span></p>
 		<div class="tooling-charts">
 			{{- range .Windows }}
-			<figure class="tooling-chart">
-				<figcaption class="tooling-title"><span>Last {{ .Days }} days</span><small>{{ .Runs }} command{{ if ne .Runs 1 }}s{{ end }} · {{ duration .Total }}{{ if .Busiest }} · busiest day {{ duration .Busiest }}{{ end }}</small></figcaption>
-				<div class="tooling-bars{{ if le .Days 7 }} week{{ end }}" style="--n: {{ len .Bars }}; --k: {{ len .Legend }}" role="img" aria-label="Time spent per day by {{ .By }}, the last {{ .Days }} days">
+			<figure class="tooling-chart{{ if .Wide }} wide{{ end }}">
+				<figcaption class="tooling-title"><span>{{ .Title }}</span><small>{{ .Runs }} command{{ if ne .Runs 1 }}s{{ end }} · {{ duration .Total }}{{ if .Busiest }} · busiest {{ .Unit }} {{ duration .Busiest }}{{ end }}</small></figcaption>
+				<div class="tooling-bars{{ with .Density }} {{ . }}{{ end }}" style="--n: {{ len .Bars }}; --k: {{ len .Legend }}" role="img" aria-label="Time spent per {{ .Unit }} by {{ .By }}, {{ lower .Title }}">
 					{{- range $bar := .Bars }}
 					{{- if .Segments }}
 					<span aria-label="{{ .Title }}">{{ range .Segments }}{{ if .Title }}<b class="tip {{ $bar.Edge }} {{ .Color }}" style="{{ .Style }}" data-tip="{{ .Title }}"></b>{{ else }}<b></b>{{ end }}{{ end }}</span>
@@ -33,6 +34,16 @@
 			</figure>
 			{{- end }}
 		</div>
+		{{- with .Latest }}
+		<div class="tooling-latest">
+			<h4>Latest commands</h4>
+			<ol>
+				{{- range . }}
+				<li><time datetime="{{ stamp .At }}" title="{{ stamp .At }}">{{ .When }}</time><span class="swatch {{ .Color }}"></span><span class="key" title="{{ .Command }}{{ with .Job }}, job {{ . }}{{ end }}">{{ .Command }}{{ with .Job }} <span class="faint">{{ . }}</span>{{ end }}</span><span class="nowrap">{{ duration .Took }}</span>{{ if .Failed }}<span class="bad" title="exit {{ .Exit }}">failed</span>{{ else }}<span class="ok">ok</span>{{ end }}</li>
+				{{- end }}
+			</ol>
+		</div>
+		{{- end }}
 		{{- with .Commands }}
 		<details class="tooling-details">
 			<summary><svg class="ic chev"><use href="#i-chev"/></svg>{{ len . }} command{{ if ne (len .) 1 }}s{{ end }} by the time they have taken</summary>

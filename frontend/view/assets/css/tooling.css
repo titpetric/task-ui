@@ -54,7 +54,8 @@
   min-width: 0;
   padding: 0.55rem 0.8rem 0.5rem;
 
-  &:only-child {
+  &:only-child,
+  &.wide {
     grid-column: 1 / -1;
   }
 
@@ -120,12 +121,18 @@
     }
   }
 
-  &.week {
+  &.sparse {
     gap: 0.5rem;
 
     & span {
       column-gap: 1px;
     }
+  }
+
+  /* More slots than a month: the slots touch but for a hairline, and
+     the commands in one share it. */
+  &.fine {
+    gap: 1px;
   }
 }
 
@@ -154,6 +161,14 @@
     color: var(--text-faint);
   }
 
+  /* Under the wide week the legend runs in columns, so a name and its
+     time stay close. */
+  .wide & {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+    column-gap: 1.6rem;
+  }
+
   & .swatch {
     display: inline-block;
     width: 0.6rem;
@@ -167,6 +182,72 @@
     font-family: var(--font);
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+}
+
+/* The newest commands, newest first: the time, the command in its
+   chart colour and its job, how long it took and how it ended. Two columns
+   on a wide screen, one on a phone. */
+.tooling-latest {
+  margin-top: 0.8rem;
+
+  & h4 {
+    margin: 0 0 0.3rem;
+    color: var(--text-dim);
+    font-family: var(--font-ui);
+    font-size: var(--fs-xs);
+    font-weight: normal;
+  }
+
+  & ol {
+    columns: 2;
+    column-gap: 1.6rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  & li {
+    display: grid;
+    grid-template-columns: 4.4rem auto minmax(0, 1fr) 3.4rem 2.6rem;
+    gap: 0.5rem;
+    align-items: center;
+    padding: 0.1rem 0;
+    break-inside: avoid;
+    font-size: var(--fs-xs);
+  }
+
+  & time {
+    color: var(--text-faint);
+    font-family: var(--font);
+    white-space: nowrap;
+  }
+
+  & .swatch {
+    display: inline-block;
+    width: 0.6rem;
+    height: 0.6rem;
+    border-radius: 2px;
+    background: var(--seg);
+  }
+
+  & .key {
+    overflow: hidden;
+    font-family: var(--font);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  & .nowrap {
+    text-align: end;
+  }
+
+  & .ok {
+    color: var(--text-faint);
+  }
+
+  & .bad {
+    color: var(--bad);
   }
 }
 
@@ -196,10 +277,15 @@
   }
 }
 
-/* Under the fold the two charts stack, as the activity charts do. */
+/* Under the fold the charts stack, as the activity charts do, and the
+   newest commands take one column. */
 @media (width <= 860px) {
   .tooling-charts {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .tooling-latest ol {
+    columns: 1;
   }
 
   /* On a phone the file goes under the line, on its own. */

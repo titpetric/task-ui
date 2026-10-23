@@ -42,6 +42,12 @@
   background: var(--ink-1);
 }
 
+/* The week in three-hour slots takes a row of its own under the month
+   and the day: 56 columns need the width. */
+.activity-charts .activity-chart.wide {
+  grid-column: 1 / -1;
+}
+
 .activity-chart .activity-title {
   display: flex;
   justify-content: space-between;
@@ -97,6 +103,11 @@
   grid-template-columns: repeat(var(--n), minmax(0, 1fr));
   align-items: stretch;
   gap: 2px;
+
+  .wide & {
+    gap: 1px;
+  }
+
   height: 3.5rem;
   border-bottom: 1px solid var(--line-2);
 

@@ -4,13 +4,14 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"os"
 	"os/exec"
 	"sync"
 	"time"
 )
 
-// Prober runs `atkins --stats --json` in a directory and keeps the
-// answer for a TTL.
+// Prober runs `atkins --stats --json --all` in a directory and keeps
+// what it printed for a TTL, or until a database it read from changes.
 //
 // A probe that fails, times out, or prints something that is not a
 // report answers nothing: the page it feeds is a panel beside the runs,
@@ -28,6 +29,10 @@ type Prober struct {
 	// listing of a folder's jobs is.
 	Timeout time.Duration
 	TTL     time.Duration
+
+	// Output runs atkins in dir with args and returns what it printed,
+	// exec unless set.
+	Output func(ctx context.Context, dir string, args ...string) ([]byte, error)
 
 	mu    sync.Mutex
 	cache map[string]probe
@@ -49,7 +54,7 @@ func (p *Prober) Probe(dir string) *Report {
 	p.mu.Lock()
 	cached, ok := p.cache[dir]
 	p.mu.Unlock()
-	if ok && time.Since(cached.at) < p.ttl() {
+	if ok && time.Since(cached.at) < p.ttl() && !changed(cached) {
 		return cached.report
 	}
 
@@ -64,13 +69,50 @@ func (p *Prober) Probe(dir string) *Report {
 	return report
 }
 
-// run execs atkins in dir. Its stdin is /dev/null: atkins reads a pipe
-// on stdin as a pipeline.
+// changed reports whether a database the probe read from changed
+// since: a run that ends records to it, and the panel shows
+// that run on the next page without waiting out the TTL.
+func changed(cached probe) bool {
+	for _, scope := range cached.report.Scopes() {
+		info, err := os.Stat(scope.Database)
+		if err == nil && info.ModTime().After(cached.at) {
+			return true
+		}
+	}
+	return false
+}
+
+// run asks atkins in dir for the report with every command listed, and
+// without them from an atkins that refuses the flag.
 func (p *Prober) run(dir string) *Report {
 	ctx, cancel := context.WithTimeout(context.Background(), p.timeout())
 	defer cancel()
 
-	cmd := exec.CommandContext(ctx, p.Bin(), "--stats", "--json")
+	for _, args := range [][]string{{"--stats", "--json", "--all"}, {"--stats", "--json"}} {
+		out, err := p.output()(ctx, dir, args...)
+		if err != nil {
+			continue
+		}
+		var report Report
+		if err := json.Unmarshal(out, &report); err != nil {
+			return nil
+		}
+		return &report
+	}
+	return nil
+}
+
+func (p *Prober) output() func(ctx context.Context, dir string, args ...string) ([]byte, error) {
+	if p.Output != nil {
+		return p.Output
+	}
+	return p.exec
+}
+
+// exec runs atkins in dir. Its stdin is /dev/null: atkins reads a pipe
+// on stdin as a pipeline.
+func (p *Prober) exec(ctx context.Context, dir string, args ...string) ([]byte, error) {
+	cmd := exec.CommandContext(ctx, p.Bin(), args...)
 	cmd.Dir = dir
 	cmd.Stdin = nil
 	cmd.WaitDelay = time.Second
@@ -78,14 +120,9 @@ func (p *Prober) run(dir string) *Report {
 	var out bytes.Buffer
 	cmd.Stdout = &out
 	if err := cmd.Run(); err != nil {
-		return nil
+		return nil, err
 	}
-
-	var report Report
-	if err := json.Unmarshal(out.Bytes(), &report); err != nil {
-		return nil
-	}
-	return &report
+	return out.Bytes(), nil
 }
 
 // Bin is the atkins the probe runs: Command, or atkins from the PATH.
