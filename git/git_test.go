@@ -7,8 +7,9 @@ import (
 	"encoding/pem"
 	"testing"
 
-	"github.com/titpetric/task-ui/sshagent"
 	"golang.org/x/crypto/ssh"
+
+	"github.com/titpetric/task-ui/sshagent"
 )
 
 // fakeKeys hand git a key in an agent, with key, or none.

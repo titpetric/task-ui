@@ -8,8 +8,9 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/titpetric/task-ui/sshagent"
 	gossh "golang.org/x/crypto/ssh"
+
+	"github.com/titpetric/task-ui/sshagent"
 )
 
 // agentKeys serve one generated key to a probe, in an agent under dir.

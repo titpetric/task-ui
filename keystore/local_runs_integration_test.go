@@ -10,10 +10,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/titpetric/task-ui/internal/assert"
-	"github.com/titpetric/task-ui/keystore"
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/agent"
+
+	"github.com/titpetric/task-ui/internal/assert"
+	"github.com/titpetric/task-ui/keystore"
 )
 
 // Links decide which runs get an SSH key: an instance key goes to the

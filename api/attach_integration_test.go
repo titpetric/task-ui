@@ -9,9 +9,10 @@ import (
 	"testing"
 	"time"
 
+	"golang.org/x/net/websocket"
+
 	"github.com/titpetric/task-ui/internal/assert"
 	"github.com/titpetric/task-ui/model"
-	"golang.org/x/net/websocket"
 )
 
 // message is a frame the attach socket sent: output, or a control.

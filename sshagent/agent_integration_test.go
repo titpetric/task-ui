@@ -8,10 +8,11 @@ import (
 	"path/filepath"
 	"testing"
 
+	"golang.org/x/crypto/ssh/agent"
+
 	"github.com/titpetric/task-ui/internal/assert"
 	"github.com/titpetric/task-ui/sshagent"
 	"github.com/titpetric/task-ui/sshkey"
-	"golang.org/x/crypto/ssh/agent"
 )
 
 // A directory as a checkout's .ssh/ holds it: a key pair, known_hosts and

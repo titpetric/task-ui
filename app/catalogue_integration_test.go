@@ -8,12 +8,13 @@ import (
 	"path/filepath"
 	"testing"
 
+	_ "modernc.org/sqlite"
+
 	"github.com/titpetric/task-ui/app"
 	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/internal/assert"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/storage"
-	_ "modernc.org/sqlite"
 )
 
 func TestCatalogue(t *testing.T) {

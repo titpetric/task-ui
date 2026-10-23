@@ -11,6 +11,8 @@ import (
 	"testing"
 	"time"
 
+	_ "modernc.org/sqlite"
+
 	"github.com/titpetric/task-ui/beszel"
 	"github.com/titpetric/task-ui/event"
 	"github.com/titpetric/task-ui/folder"
@@ -20,7 +22,6 @@ import (
 	"github.com/titpetric/task-ui/recording"
 	"github.com/titpetric/task-ui/runner"
 	"github.com/titpetric/task-ui/storage"
-	_ "modernc.org/sqlite"
 )
 
 // fixture is a board over a private database, with the users ops and

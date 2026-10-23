@@ -8,10 +8,11 @@ import (
 	"testing"
 
 	"github.com/go-bridget/mig/migrate"
+	_ "modernc.org/sqlite"
+
 	"github.com/titpetric/task-ui/internal/assert"
 	"github.com/titpetric/task-ui/schema"
 	"github.com/titpetric/task-ui/storage"
-	_ "modernc.org/sqlite"
 )
 
 // newDB opens a private in-memory database with the schema applied.
