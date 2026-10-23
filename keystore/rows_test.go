@@ -13,10 +13,12 @@ import (
 	"github.com/titpetric/task-ui/storage"
 )
 
-// memRows are the key table in memory.
+// memRows are the key table in memory, with the roles and the users
+// linked to each key.
 type memRows struct {
-	mu   sync.Mutex
-	rows map[string]model.KeyInfo
+	mu           sync.Mutex
+	rows         map[string]model.KeyInfo
+	roles, users map[string][]string
 }
 
 var _ keystore.Rows = (*memRows)(nil)
@@ -102,10 +104,27 @@ func (m *memRows) Delete(_ context.Context, name string) error {
 	return nil
 }
 
-func (m *memRows) Link(context.Context, string, []string, []string) error { return nil }
+func (m *memRows) Link(_ context.Context, name string, roles, users []string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if m.roles == nil {
+		m.roles, m.users = map[string][]string{}, map[string][]string{}
+	}
+	m.roles[name], m.users[name] = roles, users
+	return nil
+}
 
 func (m *memRows) Links(context.Context) (map[string][]string, map[string][]string, error) {
-	return map[string][]string{}, map[string][]string{}, nil
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	roles, users := map[string][]string{}, map[string][]string{}
+	for name, list := range m.roles {
+		roles[name] = list
+	}
+	for name, list := range m.users {
+		users[name] = list
+	}
+	return roles, users, nil
 }
 
 // memSettings are the instance settings in memory.

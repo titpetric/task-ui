@@ -5,6 +5,7 @@
 		<p>Checkouts under the root that hold projects. The folder name is the projects' namespace; <code>_</code> is the root itself.</p>
 	</div>
 	<div class="actions">
+		<button type="button" class="btn" data-dialog-open="import-dialog"><svg class="ic"><use href="#i-upload"/></svg>Import</button>
 		<a class="btn btn-primary" href="/settings/workspaces/new">Add workspace</a>
 	</div>
 </div>
@@ -42,27 +43,26 @@
 </section>
 <p class="faint" style="margin-top:0.6rem">Root: {{ .Root }}</p>
 
-<section class="block workspace-import">
-	<div class="block-head">
-		<h3>Import</h3>
-	</div>
-	<p class="dim">Add a workspace from a bundle that another task-ui exported. Import clones the workspace's repository into the folder, writes its keys, adds its projects, env files, secrets and grants, and then clones each project. If a project fails to clone, it stays listed with git's output. If anything before the projects fails, task-ui keeps nothing. To import a bundle of the default workspace, _, enter a folder name.</p>
+<dialog class="confirm workspace-import" id="import-dialog" aria-labelledby="import-title">
 	<form class="form" data-import="/api/workspaces/import">
+		<h3 id="import-title">Import a workspace</h3>
+		<p>Adds a workspace from a bundle another task-ui exported, opened with its passphrase. Import clones the workspace's repository into the folder, adds its SSH keys to the key folder, encrypts its secrets with this instance's encryption key, adds its projects, env files and grants, and then clones each project. If a project fails to clone, it stays listed with git's output. If anything before the projects fails, task-ui keeps nothing. To import a bundle of the default workspace, _, enter a folder name.</p>
 		<div class="field">
-			<label for="wi-bundle">Bundle <span class="faint">a .taskui-ws file</span></label>
-			<input type="file" id="wi-bundle" name="bundle" accept=".taskui-ws" required>
+			<label for="wi-bundle">Bundle <span class="faint">a .tui.age file</span></label>
+			<input type="file" id="wi-bundle" name="bundle" accept=".age" required>
 		</div>
 		<div class="field">
 			<label for="wi-passphrase">Passphrase</label>
-			<input type="password" id="wi-passphrase" name="passphrase" autocomplete="off" required>
+			<input type="password" id="wi-passphrase" name="passphrase" autocomplete="off" spellcheck="false" required>
 		</div>
 		<div class="field">
 			<label for="wi-folder">Folder <span class="faint">optional, defaults to the bundle's folder; one name, no slashes</span></label>
 			<input type="text" id="wi-folder" name="folder" pattern="[A-Za-z0-9._-]+" spellcheck="false" autocomplete="off">
 		</div>
-		<div class="form-foot">
+		<div class="confirm-foot">
+			<button type="button" class="btn" data-dialog-close>Cancel</button>
 			<button class="btn btn-primary" type="submit">Import</button>
 		</div>
 	</form>
-</section>
+</dialog>
 {{ end }}

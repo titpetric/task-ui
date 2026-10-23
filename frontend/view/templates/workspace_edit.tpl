@@ -6,9 +6,14 @@
 		<h2>Configure {{ $ws.Folder }}</h2>
 		<p>Change the workspace's title, description and Recursive. You can't change its folder, repository or branch; for another checkout, add another workspace.{{ if $default }} The default workspace is the root, and you can't remove it.{{ end }}</p>
 	</div>
-	{{- if not $default }}
+	{{- if or .KeysDir (not $default) }}
 	<div class="actions">
-		{{- template "workspacedelete" (list $ws $nested "/settings/workspaces?notice=Workspace+removed") }}
+		{{- if .KeysDir }}
+		<button type="button" class="btn" data-dialog-open="export-dialog"><svg class="ic"><use href="#i-download"/></svg>Export</button>
+		{{- end }}
+		{{- if not $default }}
+		{{- template "workspacedelete" (list $ws $nested "/settings/workspaces?notice=Workspace+removed" "Delete") }}
+		{{- end }}
 	</div>
 	{{- end }}
 </div>
@@ -27,10 +32,6 @@
 		<input type="text" id="we-description" name="description" value="{{ index .Form "description" }}" autocomplete="off">
 	</div>
 	{{- template "recursivefield" (list "we-recursive" (not $ws.Shallow)) }}
-	<div class="field">
-		<span class="label">Projects <span class="faint">{{ if $default }}at the top of the root{{ else }}cloned inside it; removing the workspace removes them{{ end }}</span></span>
-		<span>{{ range $i, $id := $nested }}{{ if $i }}, {{ end }}<a href="/settings/projects/{{ $id }}">{{ $id }}</a>{{ else }}<span class="faint">none yet</span>{{ end }}</span>
-	</div>
 	<div class="form-foot">
 		<a class="btn" href="/settings/workspaces">Cancel</a>
 		<button class="btn btn-primary" type="submit">Save</button>
@@ -42,25 +43,34 @@
 {{- end }}
 {{ end }}
 
-{{- /* workspaceexport downloads a workspace as a bundle another task-ui
-     imports, encrypted to a passphrase. */}}
+{{- /* workspaceexport is the dialog that downloads a workspace as a
+     bundle another task-ui imports, an age file encrypted to a
+     passphrase typed twice or generated. */}}
 {{- define "workspaceexport" }}
 {{- $ws := .Workspace }}
-<section class="block workspace-export">
-	<div class="block-head">
-		<h3>Export</h3>
-	</div>
-	<p class="dim">Downloads <span class="mono-break">{{ $ws.Folder }}.taskui-ws</span> for Import on another task-ui's Workspaces page. The file holds the workspace, its projects, its env files, its secrets (still encrypted) and its keys with their links. The passphrase encrypts the file: anyone with the file and the passphrase has the keys. Schedules, workflows, runs and artifacts stay here.</p>
+<dialog class="confirm workspace-export" id="export-dialog" aria-labelledby="export-title">
 	<form class="form" data-export="/api/workspaces/{{ $ws.Folder }}/export">
+		<h3 id="export-title">Export {{ $ws.Folder }}</h3>
+		<p>Downloads <span class="mono-break">{{ $ws.Folder }}.tui.age</span> for Import on another task-ui's Workspaces page: the workspace, its projects, env files and grants, its secrets and the SSH keys its runs get, encrypted to the passphrase. Anyone with the file and the passphrase has the secrets and the keys. No instance key and no encryption key goes; schedules, workflows, runs and artifacts stay here.</p>
 		<div class="field">
-			<label for="wx-passphrase">Passphrase <span class="faint">you need it again to import</span></label>
-			<input type="password" id="wx-passphrase" name="passphrase" autocomplete="new-password" required>
+			<label for="wx-passphrase">Passphrase <span class="faint">at least 12 characters</span></label>
+			<div class="passphrase">
+				<input type="password" id="wx-passphrase" name="passphrase" minlength="12" autocomplete="new-password" spellcheck="false" required>
+				<button type="button" class="btn-icon" data-copy="" data-passphrase-copy title="Copy passphrase" aria-label="Copy passphrase" hidden><svg class="ic"><use href="#i-copy"/></svg></button>
+				<button type="button" class="btn" data-passphrase-generate>Generate</button>
+			</div>
 		</div>
-		<div class="form-foot">
+		<div class="field" data-passphrase-confirm>
+			<label for="wx-confirm">Confirm passphrase</label>
+			<input type="password" id="wx-confirm" name="confirm" autocomplete="new-password" spellcheck="false">
+		</div>
+		<p class="passphrase-note" data-passphrase-note hidden>Store this passphrase before you export: task-ui keeps no copy, and nothing recovers it.</p>
+		<div class="confirm-foot">
+			<button type="button" class="btn" data-dialog-close>Cancel</button>
 			<button class="btn btn-primary" type="submit"><svg class="ic"><use href="#i-download"/></svg>Export</button>
 		</div>
 	</form>
-</section>
+</dialog>
 {{- end }}
 
 {{- /* workspacekeys are a workspace's SSH keys, which its runs get,

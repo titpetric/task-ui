@@ -40,8 +40,6 @@ func (f *fixture) acme(t *testing.T) string {
 	assert.Equal(t, http.StatusCreated, res.Status, string(res.Raw))
 	res = f.call(t, asAdmin, http.MethodPost, "/workspaces/acme/keys/generate", api.WorkspaceKeyRequest{Type: "ed25519", Name: "deploy", Users: []string{asOps, "ghost"}})
 	assert.Equal(t, http.StatusCreated, res.Status, string(res.Raw))
-	res = f.call(t, asAdmin, http.MethodPost, "/workspaces/acme/keys/generate", api.WorkspaceKeyRequest{Encrypt: true})
-	assert.Equal(t, http.StatusCreated, res.Status, string(res.Raw))
 	assert.NoError(t, f.opts.Secrets.Set(ctx, &model.Secret{Scope: "workspace:acme", Name: "TOKEN", Content: "shared value"}))
 	assert.NoError(t, f.opts.Secrets.Set(ctx, &model.Secret{Scope: "acme/api", Name: "OWN", Content: "own value"}))
 	assert.NoError(t, f.opts.Env.Managed.Create(ctx, &model.EnvFile{Folder: "acme/api", Path: ".env", Content: "MODE=prod\n"}))
@@ -83,8 +81,7 @@ func TestWorkspaceImport(t *testing.T) {
 	for name, data := range want {
 		name = strings.Replace(name, "workspace_acme_", "workspace_acme2_", 1)
 		assert.True(t, bytes.Equal(data, got[name]), name)
-		_, file := filepath.Split(name)
-		info, err := os.Stat(filepath.Join(to.opts.Keys.Dir, file))
+		info, err := os.Stat(filepath.Join(to.opts.Keys.Dir, name))
 		assert.NoError(t, err)
 		assert.Equal(t, os.FileMode(0o600), info.Mode().Perm(), name)
 	}
@@ -149,13 +146,12 @@ func nothing(t *testing.T, f *fixture, name string) {
 	}
 	keys, err := f.opts.Keys.List(ctx)
 	assert.NoError(t, err)
-	assert.Len(t, keys, 4, "the instance's, _'s and acme's two alone")
+	assert.Len(t, keys, 3, "the instance's, _'s and acme's SSH key alone")
 }
 
-// A wrong passphrase, a hand made tar that leaves keys/, and a bundle
-// whose secrets the bundled key does not open answer 400 and leave
-// nothing; a bundle whose encryption key a workspace here holds answers
-// 409 and leaves nothing.
+// A wrong passphrase and a hand made tar that leaves .ssh/ answer 400
+// and leave nothing; a bundle whose SSH key a workspace here holds
+// answers 409 and leaves nothing.
 func TestWorkspaceImport_Refused(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
@@ -171,7 +167,7 @@ func TestWorkspaceImport_Refused(t *testing.T) {
 	none := f.importBundle(t, asAdmin, bundle, "", "acme3")
 	assert.Equal(t, http.StatusBadRequest, none.Status)
 
-	evil := f.importBundle(t, asAdmin, handMade(t, map[string]string{"manifest.json": `{"format":1,"workspace":{"folder":"evil"}}`, "../escape": "x"}), passphrase, "acme3")
+	evil := f.importBundle(t, asAdmin, handMade(t, map[string]string{"manifest.json": `{"format":2,"workspace":{"folder":"evil"}}`, "../escape": "x"}), passphrase, "acme3")
 	assert.Equal(t, http.StatusBadRequest, evil.Status, string(evil.Raw))
 	assert.Contains(t, evil.str("error"), "../escape")
 	assert.NoFileExists(t, filepath.Join(filepath.Dir(f.root), "escape"))
@@ -180,22 +176,6 @@ func TestWorkspaceImport_Refused(t *testing.T) {
 	held := f.importBundle(t, asAdmin, bundle, passphrase, "acme3")
 	assert.Equal(t, http.StatusConflict, held.Status, string(held.Raw))
 	nothing(t, f, "acme3")
-
-	// Every secret must open with the bundled key; one that does not
-	// undoes the checkout, the row, the keys and the rows made, on an
-	// instance where the bundle's key is free.
-	other := newFixture(t)
-	other.withKeyring(t)
-	other.acme(t)
-	read, err := workspace.ReadBundle(bytes.NewReader(bundle), passphrase)
-	assert.NoError(t, err)
-	read.Manifest.Secrets[len(read.Manifest.Secrets)-1].Content = "not a ciphertext"
-	read.WorkFactor = 10
-	var broken bytes.Buffer
-	assert.NoError(t, read.Write(&broken, passphrase))
-	res := other.importBundle(t, asAdmin, broken.Bytes(), passphrase, "acme3")
-	assert.Equal(t, http.StatusBadRequest, res.Status, string(res.Raw))
-	nothing(t, other, "acme3")
 
 	reserved := f.importBundle(t, asAdmin, bundle, passphrase, "internal")
 	assert.Equal(t, http.StatusBadRequest, reserved.Status)

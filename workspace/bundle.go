@@ -15,8 +15,13 @@ import (
 	"filippo.io/age"
 )
 
-// Extension ends the file name of a bundle: <folder>.taskui-ws.
-const Extension = ".taskui-ws"
+// Extension ends the file name of a bundle: <folder>.tui.age, an age
+// file.
+const Extension = ".tui.age"
+
+// MinPassphrase is the length a passphrase an export encrypts to takes
+// at least.
+const MinPassphrase = 12
 
 // The limits ReadBundle holds a bundle to: the encrypted file, the manifest,
 // each key file and the number of entries.
@@ -27,11 +32,11 @@ const (
 	MaxEntries  = 1024
 )
 
-// manifestName and keysDir are where a bundle keeps the manifest and
-// the key files.
+// manifestName and sshDir are where a bundle keeps the manifest and
+// the SSH key files.
 const (
 	manifestName = "manifest.json"
-	keysDir      = "keys/"
+	sshDir       = ".ssh/"
 )
 
 // ErrPassphrase reports a passphrase that does not open a bundle.
@@ -41,13 +46,26 @@ var ErrPassphrase = errors.New("the passphrase does not open the bundle")
 // limits.
 var ErrBundle = errors.New("not a workspace bundle")
 
+// ErrWeakPassphrase refuses a passphrase shorter than MinPassphrase.
+var ErrWeakPassphrase = fmt.Errorf("a passphrase takes at least %d characters", MinPassphrase)
+
+// CheckPassphrase refuses a passphrase too short to encrypt a bundle
+// to.
+func CheckPassphrase(passphrase string) error {
+	if len([]rune(passphrase)) < MinPassphrase {
+		return ErrWeakPassphrase
+	}
+	return nil
+}
+
 // Bundle is a workspace as one instance exports it for another: a tar.gz
-// of manifest.json and keys/, the workspace's key files, encrypted to
-// a passphrase with age's scrypt.
+// of manifest.json and .ssh/, the SSH keys of the workspace, encrypted
+// to a passphrase with age's scrypt. The secrets in the manifest are
+// plain inside it; nothing else encrypts them.
 type Bundle struct {
 	Manifest Manifest
-	// Keys are the key files by their path in the keyring's directory
-	// of the workspace: encrypt/<name> and ssh/<name>.
+	// Keys are the SSH key files by file name, <name>.key and
+	// <name>.pub, which the archive keeps under .ssh/.
 	Keys map[string][]byte
 	// WorkFactor is the scrypt work factor, log2 of N, Write uses;
 	// zero is age's default.
@@ -56,8 +74,8 @@ type Bundle struct {
 
 // Write encrypts the bundle to a passphrase into w.
 func (b *Bundle) Write(w io.Writer, passphrase string) error {
-	if passphrase == "" {
-		return errors.New("enter the bundle's passphrase")
+	if err := CheckPassphrase(passphrase); err != nil {
+		return err
 	}
 	recipient, err := age.NewScryptRecipient(passphrase)
 	if err != nil {
@@ -85,7 +103,7 @@ func (b *Bundle) Write(w io.Writer, passphrase string) error {
 	}
 	sort.Strings(names)
 	for _, name := range names {
-		if err := entry(archive, keysDir+name, b.Keys[name]); err != nil {
+		if err := entry(archive, sshDir+name, b.Keys[name]); err != nil {
 			return err
 		}
 	}
@@ -109,8 +127,8 @@ func entry(archive *tar.Writer, name string, data []byte) error {
 
 // ReadBundle decrypts a bundle with its passphrase and reads it. It
 // refuses a file over MaxBundle, an entry over its limit, an entry that
-// is not a plain file, and a path that would leave keys/encrypt or
-// keys/ssh.
+// is not a plain file, and a path other than manifest.json or a key file
+// of .ssh/.
 func ReadBundle(r io.Reader, passphrase string) (*Bundle, error) {
 	identity, err := age.NewScryptIdentity(passphrase)
 	if err != nil {
@@ -187,7 +205,7 @@ func readArchive(archive *tar.Reader) (*Bundle, error) {
 }
 
 // entryName checks an entry and returns its name, a key file's relative
-// to keys/, and the limit of its size.
+// to .ssh/, and the limit of its size.
 func entryName(header *tar.Header) (string, int64, error) {
 	name := header.Name
 	if header.Typeflag != tar.TypeReg {
@@ -196,10 +214,10 @@ func entryName(header *tar.Header) (string, int64, error) {
 	if name == manifestName {
 		return name, MaxManifest, nil
 	}
-	rel, ok := strings.CutPrefix(name, keysDir)
-	dir, base := path.Split(rel)
-	if !ok || path.Clean(name) != name || (dir != "encrypt/" && dir != "ssh/") || base == "" || strings.HasPrefix(base, ".") {
-		return "", 0, fmt.Errorf("%w: %s is outside manifest.json, keys/encrypt and keys/ssh", ErrBundle, name)
+	base, ok := strings.CutPrefix(name, sshDir)
+	stem := strings.TrimSuffix(strings.TrimSuffix(base, ".key"), ".pub")
+	if !ok || path.Clean(name) != name || strings.Contains(base, "/") || stem == base || stem == "" || strings.HasPrefix(base, ".") {
+		return "", 0, fmt.Errorf("%w: %s is neither manifest.json nor a .key or .pub file of .ssh", ErrBundle, name)
 	}
-	return rel, MaxKeyFile, nil
+	return base, MaxKeyFile, nil
 }

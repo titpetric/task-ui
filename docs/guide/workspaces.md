@@ -263,11 +263,12 @@ them by workspace, each project's under its name.
 
 ## Move to another instance
 
-A workspace moves to another task-ui as a bundle, `<folder>.taskui-ws`:
-a tar.gz of `manifest.json` and `keys/`, encrypted with
-[age](https://age-encryption.org) to a passphrase. Every bundle needs
-one, and whoever holds the file and the passphrase holds the
-workspace's keys.
+A workspace moves to another task-ui as a bundle, `<folder>.tui.age`:
+a tar.gz of `manifest.json` and `.ssh/`, encrypted with
+[age](https://age-encryption.org) to a passphrase of at least 12
+characters. Whoever holds the file and the passphrase holds the
+workspace's secrets and SSH keys: nothing else protects them inside it,
+and task-ui keeps no copy of the passphrase.
 
 The bundle carries:
 
@@ -276,34 +277,41 @@ The bundle carries:
 - its projects, by folder relative to the workspace, with their
   repository, branch and settings;
 - its env files, by folder and path;
-- its secrets, inside the passphrase, which the importing instance
-  encrypts with its own encryption key; an older bundle's secrets come
-  encrypted with the workspace's encryption key, which opens them on
-  import and stays out of the key folder;
-- its private SSH keys, by name, and their links; an import names them
-  after its folder, `workspace_<folder>_...`.
+- its secrets in plain text in `manifest.json`, which the importing
+  instance encrypts with its own encryption key as they go into its
+  vault;
+- the SSH keys the workspace's runs get, its own keys, as
+  `.ssh/<name>.key` and `.ssh/<name>.pub`, and their links; an import
+  names them after its folder, `workspace_<folder>_...`.
 
-Schedules, workflows, runs and artifacts stay on the instance, as do the
-integrations, which the instance's encryption key encrypts. The bundle of `_` leaves
+It never carries the instance's encryption key, the instance's SSH keys
+or another workspace's keys. Schedules, workflows, runs and artifacts
+stay on the instance, as do the integrations. The bundle of `_` leaves
 out the named workspaces and `internal`.
 
-**Export** on a workspace's configure page takes the passphrase and
-downloads the bundle. **Import** on the Workspaces page takes the file,
-the passphrase and the folder to import it as, the bundle's own when
-left out. The folder must be free, as for Add workspace: a folder held
-answers `409`. The import clones the workspace's repository, or makes
-its directory when it has none, writes the keys `0600`, adds the rows
-under the folder, clones each project, then writes the env files into
-the folders the clones made. A project that does not clone keeps its
-row, and the import reports git's output for it. Any failure before the
+**Export** at the top right of a workspace's configure page opens a
+dialog for the passphrase, typed twice, or made by **Generate**: 24
+random characters, shown once with a copy button. Store it before you
+export, since nothing recovers it. **Export** in the dialog then
+downloads the bundle; the passphrase goes in the request body, never
+in the URL or the logs. **Import** at the top right of the Workspaces
+page opens a dialog for the file, the passphrase and the folder to
+import it as, the bundle's own when left out. The folder must be free,
+as for Add workspace: a folder held answers `409`. The import clones
+the workspace's repository, or makes its directory when it has none,
+writes the keys `0600` into the key folder, adds the rows under the
+folder, clones each project, then writes the env files into the
+folders the clones made. A project that does not clone keeps its row,
+and the import reports git's output for it. Any failure before the
 projects keeps nothing: no checkout, no keys, no rows. Env files and
 secrets that a removed workspace of the same folder left behind take
 the bundle's content.
 
-The import keeps a key to one use too. A bundle whose SSH key this
-instance holds answers `409` before it clones anything, so a workspace
-exported and imported again on the same instance needs the original
-removed first, or another instance.
+The import refuses a key it would hold twice, and renames none. A bundle
+whose SSH key this instance holds, under any name, or whose key name the
+key folder holds answers `409` with the key's name before it clones
+anything, so a workspace exported and imported again on the same
+instance needs the original removed first, or another instance.
 
 The bundle of the default workspace, `_`, imports as a named workspace,
 so it needs a folder, such as `legacy`. Its projects move under that
@@ -313,20 +321,20 @@ folder, `web` becomes `legacy/web`, and its shared secrets become
 ```sh
 curl -s -X POST https://task.example.com/api/workspaces/malta/export \
   -H "Authorization: Bearer $TOKEN" \
-  -d '{"passphrase": "correct horse battery"}' -o malta.taskui-ws
+  -d '{"passphrase": "correct horse battery"}' -o malta.tui.age
 curl -s -X POST https://other.example.com/api/workspaces/import \
   -H "Authorization: Bearer $OTHER_TOKEN" \
-  -F bundle=@malta.taskui-ws -F passphrase='correct horse battery' -F folder=malta
+  -F bundle=@malta.tui.age -F passphrase='correct horse battery' -F folder=malta
 ```
 
 The import answers `{workspace, projects, unknown_users}`: each project
 with `cloned` and git's `output`, and the users the grants name that the
 instance doesn't have. Their grants stay and reach a run once a user of
-that name exists. A wrong passphrase, a file that is not a bundle, an
-entry outside `manifest.json`, `keys/encrypt` and `keys/ssh`, and a
-secret the bundled key does not open answer `400`; bundled keys refused
-for their use answer `409`, and a file over the upload limit `413`. Both routes take
-`workspace/edit`.
+that name exists. An export's passphrase under 12 characters, a wrong
+passphrase on import, a file that is not a bundle, and an entry other
+than `manifest.json` or a `.key` or `.pub` file of `.ssh/` answer `400`;
+bundled keys held here answer `409`, and a file over the upload limit
+`413`. Both routes take `workspace/edit`.
 
 | Limit | Size |
 |-------|------|

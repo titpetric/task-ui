@@ -1149,19 +1149,89 @@
     submit(form);
   });
 
+  // A button with data-dialog-open opens the dialog of that ID, and
+  // one with data-dialog-close inside a dialog closes it.
+  document.addEventListener("click", function (event) {
+    var open = event.target.closest("[data-dialog-open]");
+    if (open) {
+      var dialog = document.getElementById(open.dataset.dialogOpen);
+      if (dialog && typeof dialog.showModal === "function" && !dialog.open) dialog.showModal();
+      return;
+    }
+    var close = event.target.closest("[data-dialog-close]");
+    if (close && close.closest("dialog")) close.closest("dialog").close();
+  });
+
+  // minPassphrase is the length an export's passphrase takes at least,
+  // as the server checks it.
+  var minPassphrase = 12;
+
+  // generatePassphrase returns 24 random base32 characters, 120 bits,
+  // in groups of four.
+  function generatePassphrase() {
+    var alphabet = "abcdefghijklmnopqrstuvwxyz234567";
+    var bytes = new Uint8Array(24);
+    window.crypto.getRandomValues(bytes);
+    var out = "";
+    for (var i = 0; i < bytes.length; i++) {
+      if (i && i % 4 === 0) out += "-";
+      out += alphabet.charAt(bytes[i] & 31);
+    }
+    return out;
+  }
+
+  // passphraseMode shows a generated passphrase in the clear with its
+  // copy button and the note to store it, or a typed one hidden with
+  // its confirm field.
+  function passphraseMode(form, generated) {
+    var input = form.elements.passphrase;
+    var copy = form.querySelector("[data-passphrase-copy]");
+    input.type = generated ? "text" : "password";
+    form.dataset.generated = generated ? "1" : "";
+    copy.hidden = !generated;
+    copy.setAttribute("data-copy", generated ? input.value : "");
+    form.querySelector("[data-passphrase-note]").hidden = !generated;
+    form.querySelector("[data-passphrase-confirm]").hidden = generated;
+    form.elements.confirm.value = "";
+  }
+
+  document.addEventListener("click", function (event) {
+    var button = event.target.closest("[data-passphrase-generate]");
+    if (!button) return;
+    var form = button.closest("form[data-export]");
+    form.elements.passphrase.value = generatePassphrase();
+    passphraseMode(form, true);
+    formError(form, "");
+  });
+
+  document.addEventListener("input", function (event) {
+    var form = event.target.closest("form[data-export]");
+    if (form && event.target.name === "passphrase" && form.dataset.generated) passphraseMode(form, false);
+  });
+
   // A workspace's Export posts the passphrase, which keeps it out of the
-  // URL, and saves the bundle the answer carries under its file name.
+  // URL, and saves the bundle the answer carries under its file name. A
+  // typed passphrase needs its confirmation.
   document.addEventListener("submit", function (event) {
     var form = event.target.closest("form[data-export]");
     if (!form) return;
     event.preventDefault();
+    var passphrase = form.elements.passphrase.value;
+    if (passphrase.length < minPassphrase) {
+      formError(form, "A passphrase takes at least " + minPassphrase + " characters.");
+      return;
+    }
+    if (!form.dataset.generated && form.elements.confirm.value !== passphrase) {
+      formError(form, "The passphrases don't match.");
+      return;
+    }
     var button = form.querySelector("[type=submit]");
     button.disabled = true;
     formError(form, "");
     fetch(form.dataset.export, {
       method: "POST", credentials: "same-origin",
       headers: { "Content-Type": "application/json", Accept: "application/octet-stream" },
-      body: JSON.stringify({ passphrase: form.elements.passphrase.value })
+      body: JSON.stringify({ passphrase: passphrase })
     }).then(function (res) {
       if (!res.ok) {
         return res.text().then(function (text) {
@@ -1170,7 +1240,7 @@
           throw new Error(data.error || ("HTTP " + res.status));
         });
       }
-      var name = (/filename="?([^";]+)"?/.exec(res.headers.get("Content-Disposition") || "") || [])[1] || "workspace.taskui-ws";
+      var name = (/filename="?([^";]+)"?/.exec(res.headers.get("Content-Disposition") || "") || [])[1] || "workspace.tui.age";
       return res.blob().then(function (blob) {
         var link = document.createElement("a");
         link.href = URL.createObjectURL(blob);
@@ -1180,6 +1250,9 @@
         link.remove();
         setTimeout(function () { URL.revokeObjectURL(link.href); }, 1000);
         form.reset();
+        passphraseMode(form, false);
+        var dialog = form.closest("dialog");
+        if (dialog) dialog.close();
       });
     }).catch(function (err) {
       formError(form, err.message);

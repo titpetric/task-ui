@@ -298,7 +298,7 @@ func (a *App) wire(version string) error {
 		Integrations: integrations, Hosts: hosts,
 		Tooling: &tooling.Prober{Timeout: 5 * time.Second, TTL: time.Minute},
 		SSH:     prober, AddUsers: a.UsersFile != nil, BaseURL: cfg.URL,
-		Facts:   &hostinfo.Reader{Run: prober.Output, Timeout: 20 * time.Second, TTL: 5 * time.Minute},
+		Facts: &hostinfo.Reader{Run: prober.Output, Timeout: 20 * time.Second, TTL: 5 * time.Minute},
 		Instance: &view.Instance{
 			URL: cfg.URL, Listen: cfg.Listen, Root: cfg.Root, DataDir: cfg.DataDir, SSHDir: cfg.SSHDir, Htpasswd: cfg.Htpasswd, HostData: hostDataShown(cfg.DataDir, hostData),
 			Discover: cfg.Discover, AutoLogin: cfg.AutoLogin, TimeZone: timeZone(cfg.Clock()()),

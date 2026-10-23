@@ -187,6 +187,7 @@
 	<symbol id="i-more" viewBox="0 0 16 16"><circle cx="3.5" cy="8" r="1.3" fill="currentColor"/><circle cx="8" cy="8" r="1.3" fill="currentColor"/><circle cx="12.5" cy="8" r="1.3" fill="currentColor"/></symbol>
 	<symbol id="i-chev" viewBox="0 0 16 16"><path d="M6 3.5 10.5 8 6 12.5" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></symbol>
 	<symbol id="i-download" viewBox="0 0 16 16"><path d="M8 2.5v8M4.5 7 8 10.5 11.5 7M2.5 13.5h11" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+	<symbol id="i-upload" viewBox="0 0 16 16"><path d="M8 10.5v-8M4.5 6 8 2.5 11.5 6M2.5 13.5h11" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
 </svg>
 {{ end }}
 
@@ -885,10 +886,11 @@
 {{- end }}
 
 {{- /* workspacedelete removes a workspace: the workspace, the folders
-     of the projects inside it that go with it, and where to go after. */}}
+     of the projects inside it that go with it, where to go after and,
+     optionally, the label of a button in place of the icon. */}}
 {{- define "workspacedelete" }}
-{{- $ws := index . 0 }}{{ $nested := index . 1 }}
-<button type="button" class="btn-icon danger" data-delete="/api/workspaces/{{ $ws.Folder }}" data-confirm="Remove the workspace {{ $ws.Folder }} with its checkout, keys and secrets{{ with $nested }}, and the projects inside it: {{ join . ", " }}{{ end }}? You can clone it again from {{ $ws.SourceURL }}." data-confirm-ok="Remove" data-next="{{ index . 2 }}" title="Remove the workspace" aria-label="Remove {{ $ws.Folder }}"><svg class="ic"><use href="#i-trash"/></svg></button>
+{{- $ws := index . 0 }}{{ $nested := index . 1 }}{{ $label := "" }}{{ if gt (len .) 3 }}{{ $label = index . 3 }}{{ end }}
+<button type="button" class="{{ if $label }}btn btn-danger{{ else }}btn-icon danger{{ end }}" data-delete="/api/workspaces/{{ $ws.Folder }}" data-confirm="Remove the workspace {{ $ws.Folder }} with its checkout, keys and secrets{{ with $nested }}, and the projects inside it: {{ join . ", " }}{{ end }}? You can clone it again from {{ $ws.SourceURL }}." data-confirm-ok="Remove" data-next="{{ index . 2 }}" title="Remove the workspace" aria-label="Remove {{ $ws.Folder }}"><svg class="ic"><use href="#i-trash"/></svg>{{ $label }}</button>
 {{- end }}
 
 {{- define "keypolicies" }}

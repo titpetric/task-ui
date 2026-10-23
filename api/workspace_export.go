@@ -13,9 +13,11 @@ import (
 
 // exportWorkspace answers with a workspace as a bundle another instance
 // imports: its row, its projects, the grants of its SSH keys, its env
-// files, its secrets as ciphertext and its key files, encrypted to the
-// passphrase. Schedules, workflows, runs and artifacts stay. A POST
-// keeps the passphrase out of the URL. Takes workspace/edit.
+// files, its secrets in plain text and the SSH keys its runs get,
+// encrypted to the passphrase, at least MinPassphrase characters. No
+// instance key and no encryption key goes. Schedules, workflows, runs
+// and artifacts stay. A POST keeps the passphrase out of the URL and
+// the logs. Takes workspace/edit.
 func (h *Handlers) exportWorkspace(w http.ResponseWriter, r *http.Request) {
 	if !h.require(w, r, "workspace/edit") {
 		return
@@ -25,8 +27,8 @@ func (h *Handlers) exportWorkspace(w http.ResponseWriter, r *http.Request) {
 		fail(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	if req.Passphrase == "" {
-		fail(w, http.StatusBadRequest, "enter the bundle's passphrase")
+	if err := workspace.CheckPassphrase(req.Passphrase); err != nil {
+		fail(w, http.StatusBadRequest, err.Error())
 		return
 	}
 	row, err := h.opts.Workspaces.GetByFolder(r.Context(), param(r, "folder"))
