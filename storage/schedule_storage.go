@@ -53,9 +53,7 @@ func (s *ScheduleStorage) ListByFolder(ctx context.Context, folder string) ([]mo
 	return client(s.db).Select[model.Schedule](ctx, "SELECT * FROM schedule WHERE folder = ? ORDER BY job, id", folder)
 }
 
-// Due returns the enabled schedules whose next run is not after now.
-// The column compares as text, which orders times in one zone: the rows
-// and now are in UTC.
+// Due returns the enabled schedules due by now, comparing the UTC times as text.
 func (s *ScheduleStorage) Due(ctx context.Context, now time.Time) ([]model.Schedule, error) {
 	return client(s.db).Select[model.Schedule](ctx, "SELECT * FROM schedule WHERE enabled = 1 AND next_run_at IS NOT NULL AND next_run_at <= ? ORDER BY next_run_at", *utc(&now))
 }

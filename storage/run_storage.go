@@ -61,9 +61,9 @@ func (s *RunStorage) Create(ctx context.Context, run *model.Run) error {
 	if run.StartedAt == nil {
 		run.StartedAt = now
 	}
-	// A caller's time comes in the caller's zone, and started_at is
-	// compared and ordered as text: two zones in one column sort by
-	// their offset rather than by their instant.
+	// A caller's time comes in the caller's zone, and SQLite compares
+	// and orders started_at as text: two zones in one column sort by
+	// their offset, not by their instant.
 	run.StartedAt = utc(run.StartedAt)
 	run.CreatedAt = now
 	run.UpdatedAt = now
@@ -229,8 +229,7 @@ func (s *RunStorage) FailQueued(ctx context.Context, message string) (int64, err
 	return db.RowsAffected(), nil
 }
 
-// Recorded returns the runs with a recording, oldest first, for the
-// data retention rules: the recording files are theirs to measure.
+// Recorded returns the runs with a recording, oldest first, for the data retention rules.
 func (s *RunStorage) Recorded(ctx context.Context) ([]model.Run, error) {
 	return client(s.db).Select[model.Run](ctx, "SELECT * FROM run WHERE cast_path != '' ORDER BY started_at ASC, id ASC")
 }

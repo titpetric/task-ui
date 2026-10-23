@@ -18,8 +18,7 @@ func (r Replay) Lines() int {
 	return lines
 }
 
-// Complete reports whether the screen already shows the whole output:
-// nothing scrolled off it.
+// Complete reports whether the screen shows the whole output, nothing scrolled off it.
 func (r Replay) Complete() bool {
 	return r.Screen.Trim(1).Text() == r.Output.Text()
 }

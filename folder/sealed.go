@@ -9,11 +9,7 @@ import (
 // repository of a checkout.
 const repository = ".git"
 
-// Sealed reports whether an entry of a checkout is one task-ui lists but
-// does not open, show, run or go into: .git, and any dot file, a file
-// whose name starts with a dot. dir says the entry is a directory, or a
-// symlink to one: a dot directory other than .git opens, the dot files
-// in it stay sealed.
+// Sealed reports whether task-ui lists an entry but keeps it closed: .git, or a dot file that is not a dir.
 func Sealed(name string, dir bool) bool {
 	return name == repository || (!dir && strings.HasPrefix(name, ".") && name != "." && name != "..")
 }

@@ -153,8 +153,7 @@ func keyBits(pub ssh.PublicKey) int {
 	return 0
 }
 
-// Generate creates a new key pair of the given type, moving an existing pair
-// of the same type aside. It returns the new key.
+// Generate creates and returns a key pair of the given type, moving an existing pair of it aside.
 func (k *Store) Generate(kind, comment string) (Key, error) {
 	return k.GenerateAs(kind, "", comment)
 }
@@ -198,8 +197,7 @@ func (k *Store) GenerateAs(kind, label, comment string) (Key, error) {
 	return k.write(name, pem.EncodeToMemory(block), private, comment)
 }
 
-// Upload stores a private key given in PEM or OpenSSH format, moving an
-// existing pair of the same type aside.
+// Upload stores a PEM or OpenSSH private key, moving an existing pair of its type aside.
 func (k *Store) Upload(data []byte, comment string) (Key, error) {
 	return k.UploadAs(data, "", comment)
 }

@@ -39,8 +39,7 @@ type probe struct {
 	stamp    string
 }
 
-// Probe returns the sections atkins lists for dir, inactive skills among
-// them. Nil when atkins is missing, fails, or reports a broken pipeline.
+// Probe returns the sections atkins lists for dir, inactive skills included, nil on any failure.
 func (p *Prober) Probe(dir string) []Section {
 	return p.probe(dir, "")
 }
@@ -55,7 +54,8 @@ func (p *Prober) ProbeFile(dir, file string) []Section {
 }
 
 // probe answers from the cache when the files it read have not changed
-// and the answer is younger than the TTL, and asks atkins otherwise.
+// and the cached sections are younger than the TTL, and asks atkins
+// otherwise.
 func (p *Prober) probe(dir, file string) []Section {
 	if p == nil || dir == "" {
 		return nil

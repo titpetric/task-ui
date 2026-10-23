@@ -206,8 +206,7 @@ func (p *Permissions) Valid(path string) bool {
 	return has(p.Sections, section) && (has(p.Rules, rule) || p.IsExtra(path))
 }
 
-// Checkable reports whether a check may name a path: valid, and not an
-// All rule.
+// Checkable reports whether a check may name a path: a valid one that is not an All rule.
 func (p *Permissions) Checkable(path string) bool {
 	return p.Valid(path) && !strings.HasSuffix(path, "/"+All)
 }

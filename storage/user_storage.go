@@ -148,8 +148,7 @@ func (s *UserStorage) SetFlags(ctx context.Context, user *model.User, admin bool
 	return nil
 }
 
-// Agents returns the users whose mention in a note starts the Notes
-// agent as them, by name.
+// Agents returns, by name, the users whose mention in a note starts the Notes agent as them.
 func (s *UserStorage) Agents(ctx context.Context) ([]model.User, error) {
 	return client(s.db).Select[model.User](ctx, "SELECT * FROM user WHERE agent_reply = 1 AND mcp = 1 ORDER BY name")
 }

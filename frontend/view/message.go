@@ -13,21 +13,20 @@ import (
 // other than a space, makes it a job ID such as @host:dev1, no mention.
 var mentionText = regexp.MustCompile(`(^|[\s(\[{,;])@([A-Za-z0-9][A-Za-z0-9._-]*[A-Za-z0-9_]|[A-Za-z0-9])((?::\S)?)`)
 
-// Message renders the text of a note as markdown: lists, **bold**,
-// headings, `code` and ``` fences, with a line break kept a line break
-// and @name marked as a mention. Raw HTML in the text shows as text.
+// Message renders the text of a note as markdown, as message does, linking no mention.
 func Message(text string) template.HTML {
 	return message(text, func(string) bool { return false })
 }
 
-// Message renders the text of a note as the Message function does, and
-// links a mention of a user to their profile when the signed in user may
-// open it.
+// Message renders the text of a note, linking a mention to a profile the signed in user may open.
 func (p *Page) Message(text string) template.HTML {
 	return message(text, p.CanProfile)
 }
 
-// message renders a note's text, linking the mentions that link names.
+// message renders a note's text as markdown: lists, **bold**, headings,
+// `code` and ``` fences, with a line break kept a line break and @name
+// marked as a mention, linked when link names it. Raw HTML in the text
+// shows as text.
 func message(text string, link func(name string) bool) template.HTML {
 	return template.HTML(markdown.Render(markdown.Options{
 		HardBreaks: true,

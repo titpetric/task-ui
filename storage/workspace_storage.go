@@ -62,8 +62,7 @@ func (s *WorkspaceStorage) EnsureDefault(ctx context.Context) error {
 	return s.Create(ctx, &model.Workspace{Folder: model.Default, Title: "Default"})
 }
 
-// List returns every workspace: the default first, then by sort, then
-// by folder.
+// List returns every workspace: the default first, then by sort, then by folder.
 func (s *WorkspaceStorage) List(ctx context.Context) ([]model.Workspace, error) {
 	return client(s.db).Select[model.Workspace](ctx, "SELECT * FROM workspace ORDER BY CASE WHEN folder = ? THEN 0 ELSE 1 END, sort, folder", model.Default)
 }
@@ -90,8 +89,7 @@ func (s *WorkspaceStorage) Update(ctx context.Context, workspace *model.Workspac
 	return client(s.db).Update(ctx, model.WorkspaceTable, workspace, "id")
 }
 
-// Delete removes a workspace by ID. The project rows inside it are the
-// caller's to remove.
+// Delete removes a workspace by ID, leaving its project rows to the caller.
 func (s *WorkspaceStorage) Delete(ctx context.Context, id string) error {
 	return client(s.db).Exec(ctx, "DELETE FROM workspace WHERE id = ?", id)
 }

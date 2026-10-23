@@ -49,9 +49,7 @@ func (b *Board) AskRun(ctx context.Context, user *model.User, runID, body string
 // asks about its run; its prompt run sets claude.RunSummary beside it.
 const SummaryQuestion = "Summarize this run."
 
-// SummarizeRun asks Claude for the summary of a run that ended, as AskRun
-// does, from the user who started it: a thread about the run that
-// reads SummaryQuestion, answered in the shape claude.RunSummary sets.
+// SummarizeRun asks Claude, as the run's starter, for the summary of a run that ended.
 func (b *Board) SummarizeRun(ctx context.Context, user *model.User, runID string) (*model.Note, error) {
 	return b.AskRun(ctx, user, runID, SummaryQuestion)
 }
@@ -61,11 +59,7 @@ func (b *Board) SummarizeRun(ctx context.Context, user *model.User, runID string
 // prompt run sets claude.HostsSummary beside it.
 const BatchSummaryQuestion = "Summarize the runs on these hosts."
 
-// SummarizeBatch asks Claude for the summary of a batch of host runs
-// that ended, as SummarizeRun does for one: a thread about the batch's
-// first run, which Claude gets with every run of the batch, answered in
-// the shape claude.HostsSummary sets. Every run page of the batch lists
-// the thread.
+// SummarizeBatch asks Claude for the summary of a batch of host runs, a thread every run page of the batch lists.
 func (b *Board) SummarizeBatch(ctx context.Context, user *model.User, runID string) (*model.Note, error) {
 	return b.AskRun(ctx, user, runID, BatchSummaryQuestion)
 }

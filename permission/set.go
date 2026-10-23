@@ -15,10 +15,7 @@ type Set struct {
 	Own  Policy
 }
 
-// Allowed reports whether the user may do what a path names. An admin
-// may do everything; anyone else what the user's own entry says, or
-// without one what the role's says. Nobody may do anything. A check names its
-// path as a string literal, which rulelint reads.
+// Allowed reports whether the user may do what a path names, a string literal that rulelint reads.
 func (s Set) Allowed(path string) bool {
 	return s.decide(path)
 }
@@ -62,7 +59,9 @@ func (s Set) Summary() string {
 	}
 }
 
-// decide answers as Allowed does, for any path.
+// decide answers Allowed for any path: an admin may do everything, anyone
+// else what the user's own entry says, or without one what the role's
+// says, and nobody may do anything.
 func (s Set) decide(path string) bool {
 	if s.User == nil {
 		return false

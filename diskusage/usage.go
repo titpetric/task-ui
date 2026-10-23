@@ -21,8 +21,7 @@ type Usage struct {
 	Ignored int64
 }
 
-// Total is the space the files and the history take, the ignored files
-// left out.
+// Total is the space the files and the history take, leaving out the ignored files.
 func (u Usage) Total() int64 {
 	return u.Files + u.History
 }

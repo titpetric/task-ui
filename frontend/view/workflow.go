@@ -20,8 +20,7 @@ type Workflow struct {
 	CanChange bool
 }
 
-// Prompted reports whether the workflow asks Claude once its steps
-// end, so its Run takes input.
+// Prompted reports whether the workflow asks Claude once its steps end, so its Run takes input.
 func (w Workflow) Prompted() bool {
 	return w.Workflow.HasPrompt()
 }
@@ -41,8 +40,7 @@ type WorkflowRun struct {
 	Steps []Step
 }
 
-// Took is how long the run took, or has taken so far; a template calls it
-// on a copy, which Elapsed, on a pointer, does not allow.
+// Took is how long the run took so far, on a copy, which the pointer method Elapsed does not allow.
 func (r WorkflowRun) Took() time.Duration {
 	return r.WorkflowRun.Elapsed()
 }

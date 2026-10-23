@@ -72,9 +72,7 @@ func (n *Note) Finished() bool {
 	return n.State == NoteDone || n.State == NoteFailed
 }
 
-// IsPrompt reports whether a note is a prompt to Claude from a folder
-// page, or a reply in its thread: a note with a workspace, which the
-// notes board does not list.
+// IsPrompt reports whether a note is a folder page's prompt or a reply in its thread, kept off the board.
 func (n *Note) IsPrompt() bool {
 	return n.WorkspaceID != ""
 }

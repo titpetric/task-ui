@@ -212,8 +212,7 @@ func (s *Store) inWorkspace(ctx context.Context, workspace string) ([]model.Secr
 	})
 }
 
-// Encrypted returns the rows of a workspace's secrets as storage keeps
-// them, encrypted: its shared ones and its folders'.
+// Encrypted returns a workspace's secrets as storage keeps them, encrypted: shared and its folders'.
 func (s *Store) Encrypted(ctx context.Context, workspace string) ([]model.Secret, error) {
 	return s.inWorkspace(ctx, workspace)
 }

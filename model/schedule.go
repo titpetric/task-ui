@@ -18,8 +18,7 @@ func (s *Schedule) IsEnabled() bool {
 	return s != nil && s.Enabled != 0
 }
 
-// ArgList returns the arguments the schedule's runs pass the job, the
-// command of @host:<host>.
+// ArgList returns the arguments the schedule's runs pass the job, the command of @host:<host>.
 func (s *Schedule) ArgList() []string {
 	return DecodeList(s.Args)
 }

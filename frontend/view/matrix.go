@@ -65,8 +65,7 @@ func NewMatrix(p *config.Permissions, policy permission.Policy, effective map[st
 	return m
 }
 
-// Columns is how many columns a row of the matrix spans: the section,
-// and a cell for each rule.
+// Columns is how many columns a matrix row spans: the section and a cell for each rule.
 func (m Matrix) Columns() int {
 	return len(m.Rules) + 1
 }

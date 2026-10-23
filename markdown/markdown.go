@@ -26,16 +26,15 @@ type Options struct {
 	Text func(escaped string) string
 }
 
-// HTML renders markdown as HTML. Raw HTML in the source shows as text,
-// links
-// keep to safe schemes and open in a new view, and a relative link or
-// image resolves against dir, the directory of the file, and links under
-// prefix, the URL the files of the tree are at.
+// HTML renders markdown as Render does, with links under prefix and relative paths against dir.
 func HTML(src []byte, prefix, dir string) string {
 	return Render(Options{Prefix: prefix, Dir: dir}, src)
 }
 
-// Render renders markdown as HTML, as HTML does, shaped by the options.
+// Render renders markdown as HTML, shaped by the options. Raw HTML in the
+// source shows as text, links keep to safe schemes and open in a new view,
+// and a relative link or image resolves against Dir, the directory of the
+// file, and links under Prefix, the URL the files of the tree are at.
 func Render(opts Options, src []byte) string {
 	src = fenceBreaks(bytes.ReplaceAll(src, []byte("\r\n"), []byte("\n")))
 	renderer := blackfriday.NewHTMLRenderer(blackfriday.HTMLRendererParameters{

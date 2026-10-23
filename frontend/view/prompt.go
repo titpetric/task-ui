@@ -45,21 +45,17 @@ func PromptIn(folderID, dir string) *Prompt {
 	return &Prompt{API: "/api/prompts", Folder: folderID, Dir: dir, Where: place + "/", Place: place}
 }
 
-// PromptOfArea returns the prompt box of an area's page, such as the
-// Workflows page: asked in the root unless the form picks a folder.
+// PromptOfArea returns the prompt box of an area's page, asked in the root unless the form picks a folder.
 func PromptOfArea(area string) *Prompt {
 	return &Prompt{API: "/api/prompts", Area: area, Folder: "_", Where: "the root", Place: "_", Open: true}
 }
 
-// PromptOfWorkflowRun returns the box of a workflow run's page: the
-// thread of the workflow's prompt, asked in place once the steps
-// ended, where names place.
+// PromptOfWorkflowRun returns the box of the workflow prompt's thread, asked in place once the steps end.
 func PromptOfWorkflowRun(runID, place, where string) *Prompt {
 	return &Prompt{WorkflowRun: runID, Watch: true, Open: true, Where: where, Place: place}
 }
 
-// PromptAbout returns the prompt box of a run's page, about the run in
-// where, its folder and directory.
+// PromptAbout returns the prompt box of a run's page, asked in where, the run's folder and directory.
 func PromptAbout(runID, where string) *Prompt {
 	return &Prompt{API: "/api/prompts", Run: runID, Where: where + "/", Place: where, Open: true}
 }

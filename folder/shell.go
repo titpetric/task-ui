@@ -35,8 +35,7 @@ func (f *Folder) ShellJob() *Job {
 // keyboard: a schedule or a workflow step.
 var ErrShellUnattended = errors.New("an interactive shell needs someone at the keyboard, so a schedule or workflow step can't run it")
 
-// IsShell reports whether the job is one of a folder's shells, @shell or
-// @claude: a terminal for an admin, which the shell permission gates.
+// IsShell reports whether the job is a folder's @shell or @claude, which the shell permission gates.
 func (j *Job) IsShell() bool {
 	return j != nil && (j.ID == ShellID || j.ID == ClaudeID) && j.Kind == "shell"
 }

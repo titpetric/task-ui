@@ -37,14 +37,10 @@ func (b *Board) PromptPlace(ctx context.Context, user *model.User, place string)
 	return err
 }
 
-// AskWorkflow puts a workflow's prompt to Claude once a run's steps
-// ended, as the user who started the run, and returns when Claude
-// replied: a thread about the workflow run in the workflow's prompt
-// place, which Claude gets with the steps' output in
-// TASK_UI_PROMPT_WORKFLOW. A stop ends the prompt's run. It returns
-// Claude's answer for a reply, the stop's error after a stop, and
-// ErrPromptFailed, or why it did not start, otherwise. It takes
-// prompt/edit.
+// AskWorkflow puts a workflow's prompt to Claude once a run's steps end, as the user who
+// started the run, with the steps' output in TASK_UI_PROMPT_WORKFLOW, and takes prompt/edit.
+// It returns Claude's answer, the stop's error after a stop, which ends the prompt's run, or
+// ErrPromptFailed, or why the prompt did not start.
 func (b *Board) AskWorkflow(stop context.Context, user *model.User, run *model.WorkflowRun, wf *model.Workflow, input string) (string, error) {
 	note, err := b.askWorkflowRun(stop, user, run, wf.PromptPlace(), WorkflowQuestion(wf.Prompt, input))
 	if err != nil {

@@ -54,16 +54,16 @@ type Store struct {
 	mu sync.Mutex
 }
 
-// Ingest copies every file under src into the tree, over the version a
-// path holds, and commits the change under the author's name. It returns
-// the commit that holds the files: a new one, or the current one when
-// nothing changed. Ingest skips a path element named .git, so a run cannot
-// write into the repository.
+// Ingest is IngestThen with no callback.
 func (s *Store) Ingest(ctx context.Context, src, message, author string) (string, error) {
 	return s.IngestThen(ctx, src, message, author, nil)
 }
 
-// IngestThen is Ingest, and calls then with the commit while it still
+// IngestThen copies every file under src into the tree, over the version a
+// path holds, and commits the change under the author's name. It returns
+// the commit that holds the files: a new one, or the current one when
+// nothing changed. It skips a path element named .git, so a run cannot
+// write into the repository. It calls then with the commit while it still
 // holds the tree, so the records of the commit are in place before
 // Expire, in this process or another, renames it.
 func (s *Store) IngestThen(ctx context.Context, src, message, author string, then func(commit string) error) (string, error) {
@@ -141,15 +141,15 @@ func (s *Store) Remove(ctx context.Context, rel, author string) (string, error) 
 	return s.head(ctx), nil
 }
 
-// Squash flattens the history to one commit of the current tree when it
-// holds more than Keep commits, and drops the versions only the history
-// held. It returns the new commit, or "" when the history is within Keep.
+// Squash is SquashThen with no callback.
 func (s *Store) Squash(ctx context.Context) (string, error) {
 	return s.SquashThen(ctx, nil)
 }
 
-// SquashThen is Squash, and calls then with the new commit while it
-// still holds the tree, when it squashed.
+// SquashThen flattens the history to one commit of the current tree when it
+// holds more than Keep commits, and drops the versions only the history
+// held. It returns the new commit, or "" when the history is within Keep,
+// and calls then with the new commit while it still holds the tree.
 func (s *Store) SquashThen(ctx context.Context, then func(head string) error) (string, error) {
 	unlock, err := s.lock()
 	if err != nil {

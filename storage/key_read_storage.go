@@ -77,8 +77,7 @@ func (s *KeyReadStorage) All(ctx context.Context) ([]model.KeyRead, error) {
 	return client(s.db).Select[model.KeyRead](ctx, "SELECT * FROM key_read ORDER BY rowid ASC")
 }
 
-// DeleteThrough removes the reads up to and including the one named, in
-// the order All returns them.
+// DeleteThrough removes the reads up to and including the one named, in the order of All.
 func (s *KeyReadStorage) DeleteThrough(ctx context.Context, id string) error {
 	return client(s.db).Exec(ctx, "DELETE FROM key_read WHERE rowid <= (SELECT rowid FROM key_read WHERE id = ?)", id)
 }
