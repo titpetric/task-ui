@@ -17,9 +17,12 @@ func TestNewRunChain(t *testing.T) {
 	assert.Nil(t, api.NewRunChain(api.ChainWorkflow, "w1", []string{"a", "b"}, 3, false, "x"), "not in the chain")
 
 	first := api.NewRunChain(api.ChainWorkflow, "w1", []string{"a", "b"}, 3, false, "a")
-	assert.Equal(t, api.RunChain{ID: "w1", Kind: api.ChainWorkflow, Position: 1, Total: 3, Next: "b"}, *first)
+	assert.Equal(t, api.RunChain{ID: "w1", Kind: api.ChainWorkflow, Position: 1, Total: 3, Next: "b", Last: "b"}, *first)
 	mid := api.NewRunChain(api.ChainWorkflow, "w1", []string{"a", "b", "c"}, 0, false, "b")
-	assert.Equal(t, api.RunChain{ID: "w1", Kind: api.ChainWorkflow, Position: 2, Total: 3, Prev: "a", Next: "c"}, *mid)
+	assert.Equal(t, api.RunChain{ID: "w1", Kind: api.ChainWorkflow, Position: 2, Total: 3, Prev: "a", Next: "c", Last: "c"}, *mid)
+	// Viewed from its first run, a chain that went on names its newest run.
+	back := api.NewRunChain(api.ChainWorkflow, "w1", []string{"a", "b", "c"}, 3, true, "a")
+	assert.Equal(t, "c", back.Last)
 	done := api.NewRunChain(api.ChainWorkflow, "w1", []string{"a", "b"}, 5, true, "b")
 	assert.Equal(t, api.RunChain{ID: "w1", Kind: api.ChainWorkflow, Position: 2, Total: 2, Prev: "a", Complete: true}, *done)
 }
@@ -36,7 +39,7 @@ func TestSummaryChain(t *testing.T) {
 
 	summary := &model.Run{ID: "r2", State: model.StateRunning}
 	started := api.SummaryChain("r1", job, summary, false)
-	assert.Equal(t, api.RunChain{ID: "r1", Kind: api.ChainSummary, Position: 1, Total: 2, Next: "r2"}, *started)
+	assert.Equal(t, api.RunChain{ID: "r1", Kind: api.ChainSummary, Position: 1, Total: 2, Next: "r2", Last: "r2"}, *started)
 	on := api.SummaryChain("r2", job, summary, false)
 	assert.Equal(t, api.RunChain{ID: "r1", Kind: api.ChainSummary, Position: 2, Total: 2, Prev: "r1"}, *on)
 
@@ -96,7 +99,7 @@ func TestBatchChain(t *testing.T) {
 	t.Parallel()
 	batch := []model.Run{{ID: "h1", State: model.StateOK}, {ID: "h2", State: model.StateRunning}}
 	plain := api.BatchChain("h1", "b1", batch, nil, false)
-	assert.Equal(t, api.RunChain{ID: "b1", Kind: api.ChainBatch, Position: 1, Total: 2, Next: "h2"}, *plain)
+	assert.Equal(t, api.RunChain{ID: "b1", Kind: api.ChainBatch, Position: 1, Total: 2, Next: "h2", Last: "h2"}, *plain)
 
 	asked := api.BatchChain("h2", "b1", batch, nil, true)
 	assert.Equal(t, api.RunChain{ID: "b1", Kind: api.ChainBatch, Position: 2, Total: 3, Prev: "h1"}, *asked)

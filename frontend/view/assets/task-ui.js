@@ -374,7 +374,9 @@
 
   // attach opens a window on a run: live over the socket, finished from
   // the recording.
-  function attach(id) {
+  // attach opens the window on a run; opened on a run of a chain whose
+  // newer runs have started, it goes to the newest, the chain's end.
+  function attach(id, stay) {
     var s = open("Run", "", "");
     s.id = id;
     pageLink(id);
@@ -393,6 +395,10 @@
       termTitle(run.title);
       s.spec = { folder: run.folder, dir: run.dir || "", job: run.job, args: runArgs(run), title: runTitle(run) };
       s.chain = run.chain || null;
+      if (!stay && s.chain && s.chain.last && s.chain.last !== run.id) {
+        attach(s.chain.last, true);
+        return;
+      }
       chainNav(s.chain);
       // A finished run stays live in memory for a while, for the windows
       // on it; opened afterwards it is history, not something to attach to.
@@ -571,7 +577,7 @@
   function goChain(id) {
     var changed = session && session.changed;
     if (session) session.changed = false;
-    attach(id);
+    attach(id, true);
     if (session) session.changed = !!changed;
   }
 

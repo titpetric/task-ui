@@ -116,7 +116,9 @@ Claude's summary of it; a workflow run, the runs of its steps in order
 and then its prompt's; a command on every host, a run a host and the
 summary with **Run and summarize**. A window on a run of a chain keeps
 following it: when the run ends and the next one starts, the window
-moves to it, without a click, and the terminal streams it. The foot of
+moves to it, without a click, and the terminal streams it. **View** on
+any run of a chain opens the newest run that started, the chain's last
+page; **‹ Previous** goes back from there. The foot of
 the window, left of its hint, holds the chain's paginator:
 
 - **‹ Previous** opens the run before this one, played from its recording
