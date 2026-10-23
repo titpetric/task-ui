@@ -2,7 +2,7 @@
 <div class="page-head">
 	<div>
 		<h2>Permissions</h2>
-		<p>Set what each role can do, using the rules in <code>config/permissions.yml</code>. Click a box to cycle it: empty (inherit), ✓ allow, ✕ deny. A user's own settings on their profile add to their role's. A deny always wins, and task-ui refuses anything not allowed.</p>
+		<p>What each role may do. Click a box to cycle it: inherit, ✓ allow, ✕ deny. A user's own allow or deny, on their profile, decides first.</p>
 	</div>
 </div>
 

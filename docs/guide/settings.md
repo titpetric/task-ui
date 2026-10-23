@@ -318,9 +318,9 @@ What a role may do comes from permission policies over the rules of
 admin may do everything. A runner runs jobs, reads and writes notes,
 workflows, schedules and the artifact tree, and reads the inventory; a
 viewer does the same without running and without writing the artifact
-tree. A policy of a user's own adds to the
-role's, and a deny in either wins; [Permissions](#permissions) lists
-what each role starts with.
+tree. A user's own allow or deny decides first; where the user has
+none, the role's rules decide, and a deny there wins over an allow.
+[Permissions](#permissions) lists what each role starts with.
 
 ![Users](../assets/users-dark.png)
 
@@ -372,16 +372,18 @@ application's permissions under them.
 
 A cell inherits, empty, allows, a green ✓, or denies, a red ✕; a click
 moves it to the next, and **Save** keeps the cells that changed. **Allow
-All** sets every rule of its section, and a rule set on its own
-overrides it. The admin role shows every cell allowed and none changes:
+All** sets every rule of its section; where it and a rule set on its
+own disagree, the deny wins. The admin role shows every cell allowed and none changes:
 an admin may do everything. The page opens with Allow View on Users and
 changes with Allow Edits on Users; your own role's matrix changes only
 when your role grants Allow Edits on Users.
 
 A user's profile has the same matrix under **Permissions**, for their own
 policy over their role's, with the result after each cell: a muted ✓
-where the user may do it, ✕ where not. A deny in the role's policy or the
-user's wins; what neither allows, the user may not do. An admin's matrix shows
+where the user may do it, ✕ where not. The user's own allow or deny
+decides first, whatever the role says; an empty cell inherits the role's
+rules, where a deny wins over an allow; what neither allows, the user may
+not do. An admin's matrix shows
 everything allowed and does not change, and your own changes only with
 Allow Edits on Users through your role, so no one grants themselves
 more.

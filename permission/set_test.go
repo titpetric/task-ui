@@ -24,7 +24,9 @@ func TestSet_Allowed(t *testing.T) {
 	assert.True(t, set.Allowed("secret/view"), "the user's allow adds to the role")
 
 	set.Role = permission.Policy{"secret/all": permission.Deny}
-	assert.False(t, set.Allowed("secret/view"), "the role's deny beats the user's allow")
+	assert.True(t, set.Allowed("secret/view"), "the user's allow overrides the role's deny")
+	set.Own = nil
+	assert.False(t, set.Allowed("secret/view"), "without an entry of their own the user inherits the role's deny")
 
 	admin := permission.Set{User: &model.User{Name: "root", Role: model.RoleAdmin}, Own: permission.Policy{"run": permission.Deny}}
 	assert.True(t, admin.Allowed("run"), "an admin may do everything")

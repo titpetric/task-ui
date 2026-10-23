@@ -23,6 +23,8 @@ func TestUsers(t *testing.T) {
 	assert.Contains(t, body, "TASK_UI_ADMINS")
 	for _, name := range []string{asAdmin, asOps, asViewer, asLimited} {
 		assert.Contains(t, body, `href="/users/`+name+`" title="Profile of `+name+`"`)
+		assert.Contains(t, body, `<tr class="row-link" data-href="/users/`+name+`">`, "a click on the row opens the profile")
+		assert.Contains(t, body, `<a class="user-name" href="/users/`+name+`">`+name+`</a>`)
 	}
 	// The page removes no user, and makes one only with a password file
 	// to write.

@@ -134,6 +134,16 @@
     document.querySelectorAll("details.user-more[open]").forEach(function (menu) { menu.removeAttribute("open"); });
   }, true);
 
+  // A row with data-href opens that page on a click anywhere in it, but
+  // not on a link, a button or a menu of its own, nor when text is
+  // selected.
+  document.addEventListener("click", function (event) {
+    var row = event.target.closest("tr[data-href]");
+    if (!row || event.target.closest("a, button, summary, details, input, label, select, textarea")) return;
+    if (String(window.getSelection() || "") !== "") return;
+    window.location.href = row.dataset.href;
+  });
+
   // ------------------------------------------------------------- terminal
 
   function css(name) {

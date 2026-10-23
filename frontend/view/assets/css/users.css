@@ -227,3 +227,21 @@ table.matrix {
     font-size: var(--fs-data);
   }
 }
+
+/* A row that opens a page on a click anywhere in it. */
+tr.row-link {
+  cursor: pointer;
+
+  &:hover > td {
+    background: var(--ink-2);
+  }
+
+  & .user-name {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  &:hover .user-name {
+    text-decoration: underline;
+  }
+}
