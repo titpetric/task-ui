@@ -85,9 +85,8 @@ func (r *Run) LockKey() string {
 	return r.Key()
 }
 
-// RunKey is the key of a job: folder/job, or folder/dir/job for a job
-// of a directory inside the folder. A host job's ID names its host, so
-// the hosts run at once, one at a time on each.
+// RunKey is folder/dir/job for a job of a directory inside the folder, else
+// folder/job; a host job's ID names its host, so hosts run at once, one each.
 func RunKey(folder, dir, job string) string {
 	if dir != "" {
 		return folder + "/" + dir + "/" + job
