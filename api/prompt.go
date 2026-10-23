@@ -22,8 +22,8 @@ func (h *Handlers) startPrompt(w http.ResponseWriter, r *http.Request) {
 	if !h.require(w, r, "prompt/edit") || !h.board(w) {
 		return
 	}
-	// A run token starts no prompt: the prompt's run waits for the run
-	// that holds the token, and a builder would start another builder.
+	// A run token starts no prompt: a builder would start another
+	// builder.
 	if access.FromRun(r.Context()) {
 		fail(w, http.StatusConflict, "a run's token can't start a prompt: do the work with the task tools")
 		return

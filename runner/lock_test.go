@@ -33,3 +33,35 @@ func TestManager_Lock(t *testing.T) {
 	assert.NoError(t, err)
 	wait(t, again)
 }
+
+// The runs of a prompt go side by side in one folder, each holding a
+// lock of its own, while an ordinary job of the folder still runs once
+// at a time.
+func TestManager_LockParallel(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	ctx := context.Background()
+	prompt := func() runner.Request {
+		req := f.shellJob("prompts", "sleep 30", false)
+		req.Job.ID = model.PromptJob
+		return req
+	}
+	first, err := f.manager.Start(ctx, prompt())
+	assert.NoError(t, err)
+	second, err := f.manager.Start(ctx, prompt())
+	assert.NoError(t, err)
+	assert.NotEqual(t, first.ID(), second.ID())
+	assert.NotEqual(t, first.Key(), second.Key())
+	assert.Equal(t, model.StateRunning, first.Status().State)
+	assert.Equal(t, model.StateRunning, second.Status().State)
+
+	job, err := f.manager.Start(ctx, f.shellJob("prompts", "sleep 30", false))
+	assert.NoError(t, err)
+	in, err := f.manager.Start(ctx, f.shellJob("prompts", "true", false))
+	assert.ErrorIs(t, err, runner.ErrBusy)
+	assert.Equal(t, job.ID(), in.ID())
+	for _, session := range []*runner.Session{first, second, job} {
+		assert.NoError(t, f.manager.Kill(session.ID()))
+		wait(t, session)
+	}
+}

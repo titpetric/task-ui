@@ -23,6 +23,7 @@ import (
 	"log/slog"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/titpetric/task-ui/access"
@@ -85,6 +86,12 @@ type Board struct {
 	// the runs without task-ui's tools.
 	RunTokens *access.RunTokens
 	MCPURL    func() string
+
+	// replied are the prompt threads whose run replied with RunReply
+	// while it ran, by the thread's note ID: that run's final message is
+	// then no reply.
+	repliedMu sync.Mutex
+	replied   map[string]bool
 }
 
 // Post leaves a note on the board, or a reply to one. A note naming
@@ -228,7 +235,7 @@ func (b *Board) dispatch(note, again *model.Note, agent *model.User) {
 			"TASK_UI_NOTE_REPLY=" + answer,
 		},
 	}
-	mcp, closeMCP := b.mcpEnv(agent)
+	mcp, closeMCP := b.mcpEnv(agent, "")
 	req.Env = append(req.Env, mcp...)
 	go func() {
 		defer closeMCP()
@@ -238,15 +245,17 @@ func (b *Board) dispatch(note, again *model.Note, agent *model.User) {
 
 // run starts a request for a note and replies when the run ends: with
 // what the job wrote to the reply file, or else with how the run ended
-// and the end of its output, which stays in the run. One run of a job
-// in a directory at a time: the note waits for the run in the way, then
-// starts its own. An answer run again, again, takes the ID of its run
-// when that run is of the same job and place, else a new one, and shows
-// working until the new answer takes its place. A stop ends the run,
-// and the note fails with how it ended.
+// and the end of its output, which stays in the run; a prompt's run
+// that replied with RunReply gets no second reply. The Claude jobs run
+// side by side, each its own run; another job waits for the run in the
+// way, then starts its own. An answer run again, again, takes the ID of
+// its run when that run is of the same job and place, else a new one,
+// and shows working until the new answer takes its place. A stop ends
+// the run, and the note fails with how it ended.
 func (b *Board) run(stop context.Context, note *model.Note, req runner.Request, answer, what string, again *model.Note) {
 	ctx := context.Background()
 	defer os.Remove(answer)
+	b.takeReplied(note.ID)
 	if again != nil {
 		req.ID = again.RunID
 	}
@@ -288,6 +297,12 @@ func (b *Board) run(stop context.Context, note *model.Note, req runner.Request, 
 		state = model.NoteFailed
 	}
 	run := session.Snapshot()
+	if b.takeReplied(note.ID) {
+		// Claude replied in the thread over MCP: its final message is no
+		// second reply.
+		b.settle(ctx, note, state)
+		return
+	}
 	if reply := readReply(answer); reply != "" {
 		if state == model.NoteFailed {
 			reply += fmt.Sprintf("\n\nThe run ended %s (exit %d).", status.State, status.ExitCode)
@@ -370,6 +385,11 @@ func (b *Board) finish(ctx context.Context, note *model.Note, state, body string
 	} else {
 		b.reply(ctx, note, body)
 	}
+	b.settle(ctx, note, state)
+}
+
+// settle records the state an instruction ended in.
+func (b *Board) settle(ctx context.Context, note *model.Note, state string) {
 	if err := b.Notes.SetState(ctx, note.ID, state, ""); err != nil {
 		slog.Warn("note state not saved", "note", note.ID, "err", err)
 	}
@@ -389,8 +409,9 @@ func (b *Board) answer(ctx context.Context, note, again *model.Note, body string
 	b.publish(again)
 }
 
-// reply replies to a note as the agent, with the note's run.
-func (b *Board) reply(ctx context.Context, note *model.Note, body string) {
+// reply replies to a note as the agent, with the note's run, and
+// returns the reply, nil on a failed save.
+func (b *Board) reply(ctx context.Context, note *model.Note, body string) *model.Note {
 	name := b.AnswererOf(ctx, note)
 	if name == "" {
 		name = answerer
@@ -404,9 +425,10 @@ func (b *Board) reply(ctx context.Context, note *model.Note, body string) {
 	}
 	if err := b.Notes.Create(ctx, reply); err != nil {
 		slog.Warn("agent reply not saved", "note", note.ID, "err", err)
-	} else {
-		b.publish(reply)
+		return nil
 	}
+	b.publish(reply)
+	return reply
 }
 
 // Answerer is the user name Claude's answers to prompts carry.

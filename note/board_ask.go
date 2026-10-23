@@ -134,8 +134,10 @@ func (b *Board) dispatchPrompt(note *model.Note, req runner.Request, again *mode
 // file, TASK_UI_PROMPT_RUN, as its output may pass what an environment
 // variable holds, a workflow run's prompt the run's steps in
 // TASK_UI_PROMPT_WORKFLOW, and the summary of Run and summarize its
-// shape in TASK_UI_PROMPT_INSTRUCTIONS. When one is not there to read,
-// the note fails and promptEnv returns false.
+// shape in TASK_UI_PROMPT_INSTRUCTIONS; a run with task-ui's MCP tools
+// gets the thread it answers in TASK_UI_PROMPT_SOURCE, to reply there.
+// When a file is not there to read, the note fails and promptEnv
+// returns false.
 func (b *Board) promptEnv(note *model.Note, req runner.Request, again *model.Note) (runner.Request, string, func(), bool) {
 	ctx := context.Background()
 	answer, err := replyFile()
@@ -147,8 +149,11 @@ func (b *Board) promptEnv(note *model.Note, req runner.Request, again *model.Not
 	req.Env = append(append([]string{}, req.Env...), "TASK_UI_PROMPT="+thread, "TASK_UI_PROMPT_REPLY="+answer)
 	req.Env = append(req.Env, instructions(note, thread)...)
 	var files []string
-	mcp, closeMCP := b.mcpEnv(req.User)
+	mcp, closeMCP := b.mcpEnv(req.User, note.ID)
 	req.Env = append(req.Env, mcp...)
+	if len(mcp) > 0 {
+		req.Env = append(req.Env, "TASK_UI_PROMPT_SOURCE="+b.source(ctx, note))
+	}
 	cleanup := func() {
 		closeMCP()
 		for _, file := range files {

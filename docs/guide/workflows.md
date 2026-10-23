@@ -17,10 +17,14 @@ in the root, or the folder **Run in** picks. Claude works with the task
 tools of [MCP](mcp.md#claude-code-inside-task-ui), as you: it reads the
 workflows and jobs there are, saves the workflow with prompt steps and
 existing jobs before it writes any file, runs it and waits, reads how it
-went, and fixes and runs it again until it works, at most 3 runs. It
-answers with the workflow's link, its steps, and the output of the
-final step verbatim. Its threads list under the box, apart from the
-root's prompts, and a reply in one asks again.
+went, and fixes and runs it again until it works, at most 3 runs. A
+prompt step of the workflow runs beside the builder's own run, as every
+prompt does, so the test run goes while the builder waits, and the
+builder waits for a run until it ended. It replies in the thread with
+`note_comment` (see [MCP](mcp.md#claude-code-inside-task-ui)): the
+workflow's link, the run's link, its steps, and the output of the final
+step verbatim. Its threads list under the box, apart from the root's
+prompts, and a reply in one asks again.
 
 Over MCP, `ask_prompt` with `area` `workflows` posts the same prompt.
 

@@ -42,7 +42,8 @@ ssh login, a run a host; they take `hosts`.
 ## Runs
 
 A run is one start of a job: who started it, how it ended, its output
-and its recording. One run per job goes at a time; **Run force**
+and its recording. One run per job goes at a time, except the Claude
+runs of prompts and notes, which go side by side; **Run force**
 replaces it. **Run again** starts the same job, directory and arguments.
 **|>summarize** runs a job and has Claude summarise the run on its page
 when it ends. A run's page takes prompts about the run. The Data retention settings

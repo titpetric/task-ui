@@ -88,8 +88,18 @@ own, mode 0700, that `TASK_UI_MCP_CONFIG` names, and Claude starts with
 shows nowhere, and is none of the user's tokens: it needs no MCP agent user
 on the user's profile. The configuration goes with the run. So a
 prompt can build a workflow with `create_workflow`, run it with
-`run_workflow` and read how it went. A run's token can't start a prompt,
-`ask_prompt` answers 409: the prompt's run would wait for the run holding the token.
+`run_workflow` and read how it went.
+
+A prompt's run also gets its source in `TASK_UI_PROMPT_SOURCE`, which
+goes to Claude's system prompt: the thread's note ID, the reply that asks
+when a reply asks, its place or area and its link, and the instruction to
+reply there with `note_comment` once the result is in. The token
+comments on that thread alone, with the asker's `prompt/edit`, and any
+other note answers 403. The reply comes as Claude, the author of the
+thread's answers, and a state given with it changes nothing: the thread
+ends with its run. Claude's final message is the fallback: task-ui posts
+it only when the run posted no reply. A run's token can't start a prompt,
+`ask_prompt` answers 409: a builder would start another builder.
 
 A Claude terminal, **Enter Claude**, reaches the same tools when its own
 configuration has the server. Add it with a token of the agent's user and
@@ -227,7 +237,7 @@ with `-p`, `/loop` with `list_notes` polls in its place:
 | `get_run`            | `id`, `lines`                                    | A run and the end of its output, as the terminal showed it |
 | `list_workflow_runs` | `workflow`, `limit`                              | A workflow's latest runs and their steps |
 | `list_notes`         | `mention`, `state`, `limit`                      | The notes with their replies; by default the open ones that name you |
-| `note_comment`       | `id`, `body`, `state`                            | Replies to a note and sets its instruction to working, done or failed; the state is for a user the note names, its author or an admin |
+| `note_comment`       | `id`, `body`, `state`                            | Replies to a note and sets its instruction to working, done or failed; the state is for a user the note names, its author or an admin. A prompt's run replies in its own thread alone, as Claude |
 | `post_note`          | `body`, `parent`                                 | Leaves a note on the board as you, or a reply to `parent`; takes `note/edit` |
 | `ask_prompt`         | `folder`, `dir`, `prompt`, `area`, `wait`        | Asks Claude in a folder, or `dir` inside it, as the folder's **Prompt** box does; with `wait`, up to 900 seconds, returns Claude's answer; `area` `workflows` asks as the Workflows page's box does, in the root unless `folder` names one: Claude builds or changes the workflow the prompt describes, runs it and answers with its link; takes `prompt/edit` |
 | `list_artifacts`     | `path`                                           | A directory of the artifact tree, the top unless given: each file's size, time, and the run or the user that wrote it; takes `artifact/view` |

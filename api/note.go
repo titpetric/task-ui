@@ -114,8 +114,18 @@ func (h *Handlers) editNote(w http.ResponseWriter, r *http.Request) {
 }
 
 // commentNote replies to a note and, with a state, moves its instruction.
+// A prompt's run, by its token, replies in its own thread alone, as
+// Claude, with the asker's prompt/edit.
 func (h *Handlers) commentNote(w http.ResponseWriter, r *http.Request) {
-	if !h.require(w, r, "note/edit") {
+	thread := access.RunThread(r.Context())
+	if thread != "" && param(r, "id") != thread {
+		fail(w, http.StatusForbidden, "a prompt's run replies in its own thread, note "+thread+", alone")
+		return
+	}
+	if thread != "" && !h.require(w, r, "prompt/edit") {
+		return
+	}
+	if thread == "" && !h.require(w, r, "note/edit") {
 		return
 	}
 	if !h.board(w) {
@@ -126,7 +136,11 @@ func (h *Handlers) commentNote(w http.ResponseWriter, r *http.Request) {
 		fail(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	note, err := h.opts.Board.Comment(r.Context(), access.UserFrom(r.Context()), param(r, "id"), req.Body, req.State)
+	comment := h.opts.Board.Comment
+	if thread != "" {
+		comment = h.opts.Board.RunReply
+	}
+	note, err := comment(r.Context(), access.UserFrom(r.Context()), param(r, "id"), req.Body, req.State)
 	if err != nil {
 		failErr(w, err)
 		return

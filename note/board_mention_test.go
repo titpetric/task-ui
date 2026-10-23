@@ -134,8 +134,11 @@ func TestBoard_RecoverHandedOver(t *testing.T) {
 	got, _ := f.board.Notes.Get(ctx, first.ID)
 	assert.Equal(t, "", got.RunID, "no run of the board's works on it")
 
-	restarted := *f.board
-	restarted.Runner = runner.New(runner.Options{Runs: f.board.Runs, Grace: time.Second, KillTimeout: time.Second, Keep: time.Minute})
+	restarted := note.Board{
+		Notes: f.board.Notes, Users: f.board.Users, Runs: f.board.Runs, WorkflowRuns: f.board.WorkflowRuns, Catalogue: f.board.Catalogue,
+		Recordings: f.board.Recordings, Events: f.board.Events, AgentCommand: f.board.AgentCommand, Root: f.board.Root,
+		Runner: runner.New(runner.Options{Runs: f.board.Runs, Grace: time.Second, KillTimeout: time.Second, Keep: time.Minute}),
+	}
 	assert.NoError(t, restarted.Recover(ctx))
 	time.Sleep(100 * time.Millisecond)
 	got, _ = f.board.Notes.Get(ctx, first.ID)

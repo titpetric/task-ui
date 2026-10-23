@@ -138,3 +138,83 @@ func TestTools_AskWorkflows(t *testing.T) {
 	threads, _ := f.notes.List(context.Background(), storage.NoteFilter{Prompts: true, Area: "workflows"})
 	assert.Len(t, threads, 1)
 }
+
+// porecBuilder starts a builder prompt whose fake Claude keeps its
+// source, waits for the file go in out, and then ends with "fallback"
+// as its final message; a prompt step of a workflow answers at once. It
+// returns the builder run's token and the source, the test acting as
+// Claude with them.
+func porecBuilder(t *testing.T, f *fixture, out string) (string, string) {
+	t.Helper()
+	f.board.MCPURL = func() string { return f.server.URL + "/api/mcp" }
+	f.board.AgentCommand = []string{"sh", "-c", `if [ -n "$TASK_UI_PROMPT_WORKFLOW" ]; then printf 'Water: %s' "$TASK_UI_PROMPT" > "$TASK_UI_PROMPT_REPLY"; exit 0; fi; ` +
+		`printf '%s' "$TASK_UI_PROMPT_SOURCE" > ` + out + `/source; cp "$TASK_UI_MCP_CONFIG" ` + out + `/config.json; ` +
+		`i=0; while [ ! -f ` + out + `/go ] && [ $i -lt 600 ]; do sleep 0.05; i=$((i+1)); done; echo fallback > "$TASK_UI_PROMPT_REPLY"`}
+	text, failed := f.tool(t, "admin", "create_workflow", map[string]any{"name": "Porec", "steps": []map[string]any{{"prompt": "rain in Porec?", "folder": "_"}}})
+	assert.False(t, failed, text)
+	text, failed = f.tool(t, "admin", "ask_prompt", map[string]any{"area": "workflows", "prompt": "build Porec watering"})
+	assert.False(t, failed, text)
+	config := filepath.Join(out, "config.json")
+	assert.Eventually(t, func() bool { _, err := os.Stat(config); return err == nil }, 20*time.Second, 20*time.Millisecond)
+	data, err := os.ReadFile(config)
+	assert.NoError(t, err)
+	_, token, _ := strings.Cut(string(data), `"Authorization":"Bearer `)
+	token, _, _ = strings.Cut(token, `"`)
+	source, err := os.ReadFile(filepath.Join(out, "source"))
+	assert.NoError(t, err)
+	return token, string(source)
+}
+
+// The builder's run_workflow with a wait ends within seconds with the
+// reply of a workflow whose prompt step asks in the builder's own place,
+// as the prompts run side by side. The builder replies in the thread its
+// source names with note_comment, as Claude, and the thread gets that
+// reply alone, not the run's final message; the run's token comments on
+// no other note.
+func TestTools_BuilderReplies(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	ctx := context.Background()
+	out := t.TempDir()
+	token, source := porecBuilder(t, f, out)
+	f.tokens["run"] = token
+	threads, err := f.notes.List(ctx, storage.NoteFilter{Prompts: true, Area: "workflows"})
+	assert.NoError(t, err)
+	assert.Len(t, threads, 1)
+	thread := threads[0].ID
+	assert.Contains(t, source, "## The prompt's source\n\nThe prompt is the thread of the task-ui note "+thread+", the prompt of the Workflows page, in _, ")
+	assert.Contains(t, source, "/workflows#note-"+thread+".")
+	assert.Contains(t, source, "note_comment with the id "+thread+" and the answer as the body")
+
+	started := time.Now()
+	text, failed := f.tool(t, "run", "run_workflow", map[string]any{"workflow": "Porec", "wait": 60})
+	assert.False(t, failed, text)
+	assert.True(t, time.Since(started) < 20*time.Second, time.Since(started).String())
+	assert.Contains(t, text, "Porec by admin, ok")
+	assert.Contains(t, text, "answer:\nWater: rain in Porec?")
+	answer := "Porec watering:\n\n" + text
+
+	text, failed = f.tool(t, "admin", "post_note", map[string]any{"body": "someone else's note"})
+	assert.False(t, failed, text)
+	others, err := f.notes.List(ctx, storage.NoteFilter{})
+	assert.NoError(t, err)
+	assert.Len(t, others, 1)
+	text, failed = f.tool(t, "run", "note_comment", map[string]any{"id": others[0].ID, "body": "not mine"})
+	assert.True(t, failed, text)
+	assert.Contains(t, text, "403")
+
+	text, failed = f.tool(t, "run", "note_comment", map[string]any{"id": thread, "body": answer, "state": "done"})
+	assert.False(t, failed, text)
+	assert.NoError(t, os.WriteFile(filepath.Join(out, "go"), nil, 0o644))
+	assert.Eventually(t, func() bool {
+		note, err := f.notes.Get(ctx, thread)
+		return err == nil && note.State == "done"
+	}, 20*time.Second, 20*time.Millisecond)
+	replies, err := f.notes.Replies(ctx, []string{thread})
+	assert.NoError(t, err)
+	assert.Len(t, replies[thread], 1)
+	assert.Equal(t, strings.TrimSpace(answer), strings.TrimSpace(replies[thread][0].Body))
+	assert.Equal(t, "claude", replies[thread][0].UserName)
+	assert.NotEqual(t, "", replies[thread][0].RunID)
+	assert.Contains(t, replies[thread][0].Body, "Water: rain in Porec?")
+}

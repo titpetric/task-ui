@@ -66,11 +66,28 @@ func (r *Run) IsClaude() bool {
 	return r.IsPrompt() || r.IsNote() || r.Job == ClaudeJob || IsInternal(r.Folder)
 }
 
-// Key is the identity the run lock uses: one run per job per folder
-// and directory inside it. A command on a host has a job a host, so
+// Key is the identity of a job's runs, which the run lock uses: one
+// run per job per folder and directory inside it. A command on a host has a job a host, so
 // the hosts run at once, one at a time on each.
 func (r *Run) Key() string {
 	return RunKey(r.Folder, r.Dir, r.Job)
+}
+
+// Parallel reports whether runs of the job go side by side, none
+// waiting for another: a prompt's and the Notes agent's, each a Claude
+// session of its own with its own reply file.
+func (r *Run) Parallel() bool {
+	return r.Job == PromptJob || r.Job == NoteJob
+}
+
+// LockKey is the key a run holds while it runs: Key, one run per job,
+// and for a job whose runs go in parallel Key and the run's ID, so each
+// run holds its own.
+func (r *Run) LockKey() string {
+	if r.Parallel() {
+		return r.Key() + "#" + r.ID
+	}
+	return r.Key()
 }
 
 // RunKey is the key of a job: folder/job, or folder/dir/job for a job

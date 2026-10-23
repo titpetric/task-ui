@@ -43,7 +43,8 @@ Three ideas carry the rest of the guide.
 - **A run** is a job running on the server, on a terminal of its own. It
   belongs to no window: anyone allowed attaches to it, and it goes on when
   you close every window. One job runs once at a time across the
-  instance; different jobs run side by side.
+  instance; different jobs run side by side, and so do the prompts to
+  Claude.
 - **A role** decides what you can do, with each user's own policy on
   top. Viewers watch and read history, runners start the jobs the allow
   lists let them, and admins may do everything; what each role may do is

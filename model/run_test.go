@@ -19,6 +19,18 @@ func TestRun_Key(t *testing.T) {
 	assert.False(t, (&model.Run{Job: "@shell"}).IsHost())
 }
 
+// A prompt's run and the Notes agent's hold a lock of their own, by
+// their ID; any other run the lock of its job.
+func TestRun_LockKey(t *testing.T) {
+	t.Parallel()
+	assert.Equal(t, "infra/build", (&model.Run{ID: "r1", Folder: "infra", Job: "build"}).LockKey())
+	prompt := &model.Run{ID: "r1", Folder: model.Default, Job: model.PromptJob}
+	assert.True(t, prompt.Parallel())
+	assert.Equal(t, "_/@claude-prompt#r1", prompt.LockKey())
+	assert.Equal(t, "_/@claude-note#r2", (&model.Run{ID: "r2", Folder: model.Default, Job: model.NoteJob}).LockKey())
+	assert.False(t, (&model.Run{Job: model.ClaudeJob}).Parallel())
+}
+
 func TestRunKey(t *testing.T) {
 	t.Parallel()
 	assert.Equal(t, "infra/plan", model.RunKey("infra", "", "plan"))

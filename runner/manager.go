@@ -2,7 +2,8 @@
 // detached from any window, with a terminal emulator behind it that
 // holds the screen at every moment, windows that attach and detach, a
 // lock that allows one run per job across the instance, and the
-// artifacts a run leaves behind.
+// artifacts a run leaves behind. A prompt's runs and the Notes agent's
+// are each a Claude session of their own and go side by side.
 package runner
 
 import (
@@ -126,27 +127,31 @@ func (m *Manager) Start(ctx context.Context, req Request) (*Session, error) {
 		return nil, err
 	}
 	run := req.newRun()
+	if run.Parallel() && run.ID == "" {
+		// The run's own lock takes its ID.
+		run.ID = model.NewID()
+	}
 	if outOfHours {
 		run.Reason = strings.TrimSpace(req.Reason)
 	}
-	if current, err := m.acquire(run.Key(), run.Folder, req.Force); err != nil {
+	if current, err := m.acquire(run.LockKey(), run.Folder, req.Force); err != nil {
 		if req.Queue && req.ID == "" && errors.Is(err, ErrBusy) {
 			return m.enqueue(ctx, req, run)
 		}
 		return current, err
 	}
 	if current, err := m.replace(ctx, run); err != nil {
-		m.release(run.Key(), nil)
+		m.release(run.LockKey(), nil)
 		return current, err
 	}
 	if err := m.opts.Runs.Create(ctx, run); err != nil {
-		m.release(run.Key(), nil)
+		m.release(run.LockKey(), nil)
 		return nil, err
 	}
 	session := m.newSession(ctx, req, run)
 	m.mu.Lock()
 	m.sessions[run.ID] = session
-	m.byKey[run.Key()] = session
+	m.byKey[run.LockKey()] = session
 	m.mu.Unlock()
 	m.publish(*run)
 	go m.serve(session)
@@ -256,7 +261,7 @@ func (m *Manager) serve(session *Session) {
 	// The lock goes before the windows hear the outcome, so a window
 	// that runs again on the status finds the job free, or to the run
 	// that waits next.
-	m.handOff(run.Key(), session)
+	m.handOff(run.LockKey(), session)
 	m.settle(ctx, session, status)
 	go m.forget(session)
 }

@@ -12,7 +12,7 @@ import (
 // behind the runs that wait already, at most MaxQueued; a job that ended
 // meanwhile starts the run at once.
 func (m *Manager) enqueue(ctx context.Context, req Request, run *model.Run) (*Session, error) {
-	key := run.Key()
+	key := run.LockKey()
 	m.mu.Lock()
 	full := len(m.queued[key]) >= MaxQueued
 	m.mu.Unlock()

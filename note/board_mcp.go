@@ -13,12 +13,14 @@ import (
 const mcpServer = "task"
 
 // mcpEnv returns the environment that connects a Claude run the board
-// starts to task-ui's MCP server as the user: a run token, minted now, in an MCP configuration file of a 0700
+// starts to task-ui's MCP server as the user: a run token, minted now
+// for the run that answers the thread, a prompt's note ID or empty for
+// none, in an MCP configuration file of a 0700
 // directory of its own, which TASK_UI_MCP_CONFIG names. The returned
 // cleanup revokes the token and removes the directory, once the run
 // ended. Without RunTokens or an MCP URL, or when the file is not made,
 // the run goes without, and the cleanup does nothing.
-func (b *Board) mcpEnv(user *model.User) ([]string, func()) {
+func (b *Board) mcpEnv(user *model.User, thread string) ([]string, func()) {
 	none := func() {}
 	if b.RunTokens == nil || b.MCPURL == nil || user == nil {
 		return nil, none
@@ -27,7 +29,7 @@ func (b *Board) mcpEnv(user *model.User) ([]string, func()) {
 	if url == "" {
 		return nil, none
 	}
-	token, revoke, err := b.RunTokens.Issue(user.ID)
+	token, revoke, err := b.RunTokens.Issue(user.ID, thread)
 	if err != nil {
 		slog.Warn("run token not made", "user", user.Name, "err", err)
 		return nil, none
