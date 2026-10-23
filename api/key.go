@@ -46,8 +46,10 @@ func (req *KeyRequest) spec(scope string) keystore.Spec {
 // keyStatus maps an error of the key folder to its status.
 func keyStatus(err error) int {
 	switch {
-	case errors.Is(err, keystore.ErrExists):
+	case errors.Is(err, keystore.ErrExists), errors.Is(err, keystore.ErrBackup):
 		return http.StatusConflict
+	case errors.Is(err, keystore.ErrNoBackup):
+		return http.StatusNotFound
 	case errors.Is(err, storage.ErrNotFound):
 		return http.StatusNotFound
 	}
@@ -236,8 +238,9 @@ func (h *Handlers) deleteKey(w http.ResponseWriter, r *http.Request) {
 
 // rotateEncryptKey rotates the instance's encryption key to new material and
 // writes the services' secrets, the integrations' settings, again for
-// it. The previous material stays as a backup and still opens them, so
-// a rekey that fails sets rekey_error. Takes key/edit.
+// it. The previous material stays as the key's backup and still opens
+// them, so a rekey that fails sets rekey_error. A key with a backup
+// answers 409: delete the backup first. Takes key/edit.
 func (h *Handlers) rotateEncryptKey(w http.ResponseWriter, r *http.Request) {
 	if !h.require(w, r, "key/edit") || h.keysOff(w) {
 		return
@@ -260,4 +263,53 @@ func (h *Handlers) rotateEncryptKey(w http.ResponseWriter, r *http.Request) {
 		body["rekey_error"] = err.Error()
 	}
 	writeJSON(w, http.StatusCreated, body)
+}
+
+// rotateKey rotates an instance key, Rotate Key: new material of its
+// algorithm and size under its name, the previous material kept as its
+// one backup, backup/<name>, which serves beside it. The encryption key
+// writes the instance's secrets again for the new material, as
+// /keys/encrypt/rotate does. A key with a backup answers 409: delete
+// the backup first. Takes key/edit.
+func (h *Handlers) rotateKey(w http.ResponseWriter, r *http.Request) {
+	if !h.require(w, r, "key/edit") || h.keysOff(w) {
+		return
+	}
+	current, err := h.opts.Keys.Get(r.Context(), param(r, "name"))
+	if err != nil {
+		failKey(w, err)
+		return
+	}
+	if current.Encrypts() && current.Scope != storage.ScopeInstance {
+		fail(w, http.StatusBadRequest, "a workspace's encryption key rotates on its workspace's page")
+		return
+	}
+	key, err := h.opts.Keys.Rotate(r.Context(), current.Name)
+	if err != nil {
+		failKey(w, err)
+		return
+	}
+	body := map[string]any{"key": key}
+	if key.Encrypts() {
+		n, err := h.opts.Secrets.RekeyInstance(r.Context())
+		body["rekeyed"] = n
+		if err != nil {
+			body["rekey_error"] = err.Error()
+		}
+	}
+	writeJSON(w, http.StatusCreated, body)
+}
+
+// deleteKeyBackup removes the backup a rotation kept of a key, after
+// which the key rotates again; a key without one answers 404. Takes
+// key/edit.
+func (h *Handlers) deleteKeyBackup(w http.ResponseWriter, r *http.Request) {
+	if !h.require(w, r, "key/edit") || h.keysOff(w) {
+		return
+	}
+	if err := h.opts.Keys.DeleteBackup(r.Context(), param(r, "name")); err != nil {
+		failKey(w, err)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
 }

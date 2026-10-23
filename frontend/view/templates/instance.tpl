@@ -122,7 +122,7 @@
 {{ define "instance-keyrow" }}
 {{- $p := index . 0 }}{{ $k := index . 1 }}{{ $purpose := index . 2 }}
 <tr id="key-{{ $k.Name }}">
-	<td class="key"><a class="mono" href="/settings/keys/{{ $k.Name }}">{{ $k.Name }}</a></td>
+	<td class="key"><a class="mono" href="/settings/keys/{{ $k.Name }}">{{ $k.Name }}</a>{{ with $k.Backup }}{{ template "backup-active" . }}{{ end }}</td>
 	<td class="mono" data-label="Algorithm">{{ $k.Algo }}</td>
 	<td class="mono" data-label="Size">{{ if $k.Bits }}{{ $k.Bits }}{{ else }}256{{ end }}</td>
 	<td class="mono fingerprint" data-label="Fingerprint">{{ $k.Fingerprint }}</td>
@@ -133,13 +133,19 @@
 			<div class="more-list" role="menu">
 				<button type="button" class="more-item" role="menuitem" data-copy="{{ $k.PublicKey }}"><svg class="ic"><use href="#i-copy"/></svg> Copy public key</button>
 				<button type="button" class="more-item" role="menuitem" data-download="{{ $k.PublicKey }}" data-filename="{{ $k.Name }}.pub"><svg class="ic"><use href="#i-download"/></svg> Download public key</button>
-				{{- if and ($p.Can "key/edit") $k.Encrypts }}
-				<form data-api="/api/keys/encrypt/rotate" data-method="POST" data-next="/settings/instance?rekeyed={rekeyed}#keys" data-confirm="Rotate the instance's encryption key {{ $k.Fingerprint }}? The current key stays as a backup, and task-ui re-encrypts the integrations' settings." data-confirm-ok="Rotate Key">
+				{{- if $p.Can "key/edit" }}
+				{{- if $k.Backup }}
+				<button class="more-item" type="button" role="menuitem" disabled title="Delete the backup first"><svg class="ic"><use href="#i-rotate"/></svg> Rotate Key <small class="faint">Delete the backup first</small></button>
+				<button type="button" class="more-item danger" role="menuitem" data-delete="/api/keys/{{ $k.Name }}/backup" data-confirm="Delete the backup {{ $k.Backup }}, {{ $k.BackupFingerprint }}? {{ if $k.Encrypts }}Secrets the new key has not re-encrypted stop opening.{{ else }}Hosts that know only its public key stop letting runs in.{{ end }}" data-next="reload"><svg class="ic"><use href="#i-trash"/></svg> Delete backup</button>
+				{{- else }}
+				<form data-api="/api/keys/{{ $k.Name }}/rotate" data-method="POST" data-next="/settings/instance{{ if $k.Encrypts }}?rekeyed={rekeyed}{{ end }}#keys" data-confirm="Rotate {{ $k.Name }}, {{ $k.Fingerprint }}? task-ui makes a new {{ $k.Algo }} key under its name and keeps this one as {{ backupName $k.Name }}, which {{ if $k.Encrypts }}still decrypts while task-ui re-encrypts the integrations' settings{{ else }}runs and git keep using beside the new key until you delete it: add the new public key to the hosts and remotes first{{ end }}." data-confirm-ok="Rotate Key">
 					<button class="more-item" type="submit" role="menuitem"><svg class="ic"><use href="#i-rotate"/></svg> Rotate Key</button>
 				</form>
+				{{- end }}
 				{{- end }}
 			</div>
 		</details>
 	</td>
 </tr>
 {{- end }}
+

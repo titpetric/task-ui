@@ -39,9 +39,20 @@ func (l *Local) ForRun(ctx context.Context, role, user, workspaceID string) ([]s
 }
 
 // Materialize serves SSH keys in an ssh agent, from memory, on a socket
-// in a 0700 directory under Tmp. An encryption key is ErrNotSSH. No key
-// is a nil agent.
+// in a 0700 directory under Tmp, each key's backup after it. An
+// encryption key is ErrNotSSH. No key is a nil agent.
 func (l *Local) Materialize(ctx context.Context, names []string) (*sshagent.Agent, error) {
+	keys, err := l.AgentKeys(ctx, names)
+	if err != nil {
+		return nil, err
+	}
+	return sshagent.LoadKeys(l.Tmp, keys...)
+}
+
+// AgentKeys returns the private halves an agent serves for SSH keys, in
+// order, each key's backup right after it: a rotated key keeps a host
+// that knows its previous public key alone letting the run in.
+func (l *Local) AgentKeys(ctx context.Context, names []string) ([]sshagent.Named, error) {
 	var keys []sshagent.Named
 	for _, name := range names {
 		row, err := l.Rows.Get(ctx, name)
@@ -56,8 +67,13 @@ func (l *Local) Materialize(ctx context.Context, names []string) (*sshagent.Agen
 			return nil, err
 		}
 		keys = append(keys, sshagent.Named{Name: name, PEM: data})
+		if row.Backup != "" {
+			if data, err := os.ReadFile(l.backupPath(name, ".key")); err == nil {
+				keys = append(keys, sshagent.Named{Name: row.Backup, PEM: data})
+			}
+		}
 	}
-	return sshagent.LoadKeys(l.Tmp, keys...)
+	return keys, nil
 }
 
 // Logins returns the instance's SSH keys, by name, the ones the

@@ -333,6 +333,15 @@ type KeyInfo struct {
 
 	// Updated At
 	UpdatedAt *time.Time `db:"updated_at" json:"updated_at"`
+
+	// Backup
+	Backup string `db:"backup" json:"backup"`
+
+	// Backup Fingerprint
+	BackupFingerprint string `db:"backup_fingerprint" json:"backup_fingerprint"`
+
+	// Rotated At
+	RotatedAt *time.Time `db:"rotated_at" json:"rotated_at"`
 }
 
 // GetName will return the value of Name.
@@ -389,11 +398,29 @@ func (k *KeyInfo) GetUpdatedAt() *time.Time { return k.UpdatedAt }
 // SetUpdatedAt sets UpdatedAt to the provided value.
 func (k *KeyInfo) SetUpdatedAt(stamp time.Time) { k.UpdatedAt = &stamp }
 
+// GetBackup will return the value of Backup.
+func (k *KeyInfo) GetBackup() string { return k.Backup }
+
+// SetBackup sets Backup to the provided value.
+func (k *KeyInfo) SetBackup(val string) { k.Backup = val }
+
+// GetBackupFingerprint will return the value of BackupFingerprint.
+func (k *KeyInfo) GetBackupFingerprint() string { return k.BackupFingerprint }
+
+// SetBackupFingerprint sets BackupFingerprint to the provided value.
+func (k *KeyInfo) SetBackupFingerprint(val string) { k.BackupFingerprint = val }
+
+// GetRotatedAt will return the value of RotatedAt.
+func (k *KeyInfo) GetRotatedAt() *time.Time { return k.RotatedAt }
+
+// SetRotatedAt sets RotatedAt to the provided value.
+func (k *KeyInfo) SetRotatedAt(stamp time.Time) { k.RotatedAt = &stamp }
+
 // KeyInfoTable is the name of the table in the DB.
 const KeyInfoTable = "`key_info`"
 
 // KeyInfoFields is a list of all columns in the DB table.
-var KeyInfoFields = []string{"name", "purpose", "algo", "bits", "fingerprint", "scope", "comment", "created_at", "updated_at"}
+var KeyInfoFields = []string{"name", "purpose", "algo", "bits", "fingerprint", "scope", "comment", "created_at", "updated_at", "backup", "backup_fingerprint", "rotated_at"}
 
 // KeyInfoPrimaryFields are the primary key fields in the DB table.
 var KeyInfoPrimaryFields = []string{"name"}

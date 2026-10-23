@@ -76,6 +76,18 @@ func (s *KeyInfoStorage) SetFingerprint(ctx context.Context, name, fingerprint s
 	return client(s.db).Exec(ctx, "UPDATE key_info SET fingerprint = ?, updated_at = ? WHERE name = ?", fingerprint, stamp(), name)
 }
 
+// SetBackup records a rotation: the key's new fingerprint, and the
+// backup of its previous material by name and fingerprint.
+func (s *KeyInfoStorage) SetBackup(ctx context.Context, name, fingerprint, backup, backupFingerprint string) error {
+	now := stamp()
+	return client(s.db).Exec(ctx, "UPDATE key_info SET fingerprint = ?, backup = ?, backup_fingerprint = ?, rotated_at = ?, updated_at = ? WHERE name = ?", fingerprint, backup, backupFingerprint, now, now, name)
+}
+
+// ClearBackup forgets a key's backup, once its files went.
+func (s *KeyInfoStorage) ClearBackup(ctx context.Context, name string) error {
+	return client(s.db).Exec(ctx, "UPDATE key_info SET backup = '', backup_fingerprint = '', updated_at = ? WHERE name = ?", stamp(), name)
+}
+
 // Delete removes a key's row and its links.
 func (s *KeyInfoStorage) Delete(ctx context.Context, name string) error {
 	return inTx(ctx, s.db, func(c conn) error {

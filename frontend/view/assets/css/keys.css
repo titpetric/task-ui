@@ -156,4 +156,18 @@
     background: var(--ink-2);
     color: var(--signal);
   }
+
+  &.danger {
+    color: var(--bad);
+  }
+
+  &[disabled] {
+    color: var(--text-faint);
+    cursor: not-allowed;
+    background: transparent;
+  }
+
+  & small {
+    margin-inline-start: auto;
+  }
 }

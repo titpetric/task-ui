@@ -209,8 +209,15 @@
     right: auto;
   }
 
-  & .backup-active {
-    display: block;
-    margin-top: 0.3rem;
-  }
+}
+
+/* A rotated key's label while its backup serves beside it. */
+.backup-active {
+  display: block;
+  margin-top: 0.3rem;
+  color: var(--signal);
+  font-family: var(--font);
+  font-size: var(--fs-label);
+  font-weight: 600;
+  letter-spacing: var(--ls-xs);
 }

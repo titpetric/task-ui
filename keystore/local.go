@@ -22,6 +22,8 @@ import (
 	"github.com/titpetric/task-ui/storage"
 )
 
+var _ Rows = (*storage.KeyInfoStorage)(nil)
+
 // The purposes of a key.
 const (
 	PurposeEncrypt = storage.KeyEncrypt
@@ -44,8 +46,8 @@ const gitSetting = "keys.git"
 // 0700, every file in it 0600.
 type Local struct {
 	Dir      string
-	Rows     *storage.KeyInfoStorage
-	Settings *storage.SettingStorage
+	Rows     Rows
+	Settings Settings
 	// Tmp is where agents put their sockets, "" for the system's.
 	Tmp string
 
@@ -61,7 +63,24 @@ var (
 	ErrEncrypt = errors.New("an encryption key is ed25519 or rsa")
 	ErrNotSSH  = errors.New("an encryption key never authenticates: it serves no run, no git and no login")
 	ErrExists  = storage.ErrKeyExists
+	// ErrBackup refuses a rotation of a key that holds a backup still.
+	ErrBackup = errors.New("the key holds a backup from its last rotation: delete the backup first")
+	// ErrNoBackup reports a key without a backup to delete.
+	ErrNoBackup = errors.New("the key holds no backup")
 )
+
+// backupDir is the folder of the key folder that holds the backups.
+const backupDir = "backup"
+
+// BackupName names the backup of a key: backup/<name>.
+func BackupName(name string) string {
+	return backupDir + "/" + name
+}
+
+// backupPath returns the path of a file of a key's backup.
+func (l *Local) backupPath(name, ext string) string {
+	return filepath.Join(l.Dir, backupDir, name+ext)
+}
 
 // base is what a key's name holds before its algorithm.
 var base = regexp.MustCompile(`^[a-z0-9][a-z0-9_-]{0,63}$`)
@@ -132,6 +151,7 @@ func (l *Local) key(row *model.KeyInfo, roles, users []string, git string) Key {
 	k := Key{
 		Name: row.Name, Purpose: row.Purpose, Scope: row.Scope, Algo: row.Algo, Bits: int(row.Bits),
 		Fingerprint: row.Fingerprint, Comment: row.Comment, Roles: roles, Users: users, Git: row.Name == git,
+		Backup: row.Backup, BackupFingerprint: row.BackupFingerprint, RotatedAt: row.RotatedAt,
 	}
 	if k.Roles == nil {
 		k.Roles = []string{}
@@ -354,12 +374,18 @@ func (l *Local) Remove(ctx context.Context, name string) error {
 	return l.Rows.Delete(ctx, name)
 }
 
-// Rotate writes new material for a key of its algorithm and size; the old
-// files stay as a backup that decrypts what they encrypted.
+// Rotate writes new material for a key of its algorithm and size, and
+// moves the previous material to backup/<name>.key and .pub, which the
+// key serves beside the new one: an SSH key loads both into an agent,
+// an encryption key decrypts with both. A key keeps one backup: while
+// it has one, Rotate answers ErrBackup.
 func (l *Local) Rotate(ctx context.Context, name string) (*Key, error) {
 	row, err := l.Rows.Get(ctx, name)
 	if err != nil {
 		return nil, err
+	}
+	if row.Backup != "" || exists(l.backupPath(name, ".key")) {
+		return nil, fmt.Errorf("%w: %s", ErrBackup, BackupName(name))
 	}
 	private, _, err := generate(row.Algo, int(row.Bits))
 	if err != nil {
@@ -375,16 +401,42 @@ func (l *Local) Rotate(ctx context.Context, name string) (*Key, error) {
 	}
 	l.mu.Lock()
 	defer l.mu.Unlock()
-	if err := l.retire(name); err != nil {
+	if err := os.MkdirAll(filepath.Join(l.Dir, backupDir), 0o700); err != nil {
 		return nil, err
+	}
+	for _, ext := range []string{".key", ".pub"} {
+		if err := os.Rename(l.path(name, ext), l.backupPath(name, ext)); err != nil && !errors.Is(err, os.ErrNotExist) {
+			return nil, err
+		}
 	}
 	if err := l.write(name, pem.EncodeToMemory(block), signer.PublicKey(), row.Comment); err != nil {
 		return nil, err
 	}
-	if err := l.Rows.SetFingerprint(ctx, name, ssh.FingerprintSHA256(signer.PublicKey())); err != nil {
+	if err := l.Rows.SetBackup(ctx, name, ssh.FingerprintSHA256(signer.PublicKey()), BackupName(name), row.Fingerprint); err != nil {
 		return nil, err
 	}
 	return l.Get(ctx, name)
+}
+
+// DeleteBackup removes the backup a rotation kept of a key, its files
+// and its record, after which the key rotates again. A key without one
+// answers ErrNoBackup.
+func (l *Local) DeleteBackup(ctx context.Context, name string) error {
+	row, err := l.Rows.Get(ctx, name)
+	if err != nil {
+		return err
+	}
+	if row.Backup == "" && !exists(l.backupPath(name, ".key")) {
+		return fmt.Errorf("%w: %s", ErrNoBackup, name)
+	}
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	for _, ext := range []string{".key", ".pub"} {
+		if err := os.Remove(l.backupPath(name, ext)); err != nil && !errors.Is(err, os.ErrNotExist) {
+			return err
+		}
+	}
+	return l.Rows.ClearBackup(ctx, name)
 }
 
 // Link sets the roles and users whose runs get an SSH key.
@@ -409,11 +461,13 @@ func (l *Local) Private(ctx context.Context, name string) ([]byte, error) {
 }
 
 // identities returns a key's private half and its backups', current
-// first.
+// first, then the backup of its last rotation, then older ones.
 func (l *Local) identities(name string) [][]byte {
 	var result [][]byte
-	if data, err := os.ReadFile(l.path(name, ".key")); err == nil {
-		result = append(result, data)
+	for _, path := range []string{l.path(name, ".key"), l.backupPath(name, ".key")} {
+		if data, err := os.ReadFile(path); err == nil {
+			result = append(result, data)
+		}
 	}
 	backups, _ := filepath.Glob(l.path(name, ".key.bak-*"))
 	sort.Sort(sort.Reverse(sort.StringSlice(backups)))
