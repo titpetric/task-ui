@@ -31,6 +31,8 @@ func TestRuns(t *testing.T) {
 	assert.Contains(t, body, `<td data-label="Folder"><a href="/f/_/infra">infra</a></td>`)
 	assert.Contains(t, body, `<td class="key"><a href="/f/_/infra/plan">plan</a></td>`)
 	assert.NotContains(t, body, `data-live`)
+	// A run without a recording has no replay.
+	assert.NotContains(t, body, `data-replay="`+plan.ID+`"`)
 
 	// The sidebar lists every recent run; the table only the filtered ones.
 	filtered := f.page(t, asAdmin, "/runs?folder=infra&state=ok")
@@ -64,6 +66,7 @@ func TestRun(t *testing.T) {
 	assert.Contains(t, body, `<h2>infra / plan <span class="badge bad">failed 2</span></h2>`)
 	assert.Contains(t, body, `data-attach="`+run.ID+`">View</button>`)
 	assert.Contains(t, body, `href="/api/runs/`+run.ID+`/cast"`)
+	assert.Contains(t, body, `<button type="button" class="btn" data-replay="`+run.ID+`" data-replay-title="infra / plan" data-replay-who="ops" title="Replay the recording"`)
 	assert.Contains(t, body, "report.txt")
 	assert.Contains(t, body, "2.0 KB")
 	assert.Contains(t, body, `<span class="who-ran"><span class="user-ref"><span class="avatar sm role-runner" title="ops">OP</span> <span class="user-name">ops</span><details class="more-menu user-more">`)
@@ -74,6 +77,9 @@ func TestRun(t *testing.T) {
 	assert.NotContains(t, body, `href="/users/ops#permissions"`)
 	assert.NotContains(t, body, "data-frame")
 	assert.NotContains(t, body, "data-delete")
+
+	// The row of a run with a recording replays it beside View.
+	assert.Contains(t, f.page(t, asViewer, "/runs"), `data-replay="`+run.ID+`"`)
 
 	admin := f.page(t, asAdmin, "/runs/"+run.ID)
 	assert.Contains(t, admin, `data-delete="/api/artifacts/`)
@@ -93,6 +99,8 @@ func TestRun_Live(t *testing.T) {
 
 	viewer := f.page(t, asViewer, "/runs/"+session.ID())
 	assert.NotContains(t, viewer, "data-stop")
+	// A run in progress has nothing to replay yet.
+	assert.NotContains(t, viewer, "data-replay")
 	assert.Contains(t, viewer, "data-frame")
 }
 

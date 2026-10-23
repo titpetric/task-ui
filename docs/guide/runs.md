@@ -117,6 +117,12 @@ attaches to it.
 - **Artifacts**: the files the run left (see [Artifacts](artifacts.md)).
 - **Recording** downloads the run as an asciicast file, for `asciinema
   play`.
+- **|>** replays the recording in the run window as the run printed it,
+  idle gaps and all, under a blinking `( * recording )` beside the
+  title, with **Pause** and **Restart**. It reads the recording and
+  nothing more: no run starts, the recents stay as they are, and typing
+  goes nowhere. A finished run's row in a list and its window's header
+  have the same **|>**.
 
 While the run is in progress the page shows its terminal as it looks now,
 and **Attach**, **Stop** and **Kill** instead.

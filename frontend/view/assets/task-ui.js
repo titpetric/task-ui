@@ -26,6 +26,10 @@
     page: document.getElementById("run-page"),
     reason: document.getElementById("run-reason"),
     reasonText: document.getElementById("run-reason-text"),
+    rec: document.getElementById("run-rec"),
+    replay: document.getElementById("run-replay"),
+    pause: document.getElementById("run-pause"),
+    restart: document.getElementById("run-restart"),
   };
 
   var session = null; // { run, spec, ws, term, fit, timer, onResize, finished, changed }
@@ -220,6 +224,8 @@
     els.again.hidden = !opts.again;
     els.stop.hidden = !opts.stop;
     els.kill.hidden = !opts.kill;
+    els.pause.hidden = !opts.pause;
+    els.restart.hidden = !opts.restart;
   }
 
   // teardown closes the window: the socket and the terminal go, the run
@@ -227,6 +233,8 @@
   function teardown() {
     if (!session) return;
     stopClock();
+    if (session.stop) session.stop();
+    els.rec.hidden = true;
     if (session.ws && session.ws.readyState <= 1) session.ws.close();
     if (session.term) session.term.dispose();
     if (session.onResize) window.removeEventListener("resize", session.onResize);
@@ -250,6 +258,8 @@
     els.reason.hidden = true;
     els.reasonText.value = "";
     pageLink("");
+    els.rec.hidden = true;
+    els.replay.hidden = true;
     if (!dialog.open) dialog.showModal();
     session = newTerminal();
     session.term.focus();
@@ -465,11 +475,149 @@
         s.term.write(out.join("") + "\x1b[?25l");
         finish(s, { state: run.state, exit_code: run.exit_code, message: run.status && run.status.message });
         s.changed = false;
+        els.replay.hidden = false;
       })
       .catch(function (err) {
         if (session !== s) return;
         setState(run.state);
         notice("Couldn't load the recording: " + err.message, "bad");
+      });
+  }
+
+  // replay plays the recording of a finished run into the window at
+  // the pace it printed, idle gaps and all. It asks the server for the
+  // recording and nothing else: no run, no socket, nothing in the
+  // recents, and what is typed into the terminal goes nowhere. The
+  // recording streams in, so a long one starts playing at once.
+  function replay(id, title, who) {
+    var s = open("Recording", title, who);
+    s.replaying = true;
+    var term = s.term;
+    term.options.disableStdin = true;
+    term.options.cursorBlink = false;
+    els.rec.hidden = false;
+    pageLink(id);
+    els.hint.textContent = "A recording, played as the run printed it. Nothing runs, and what you type goes nowhere.";
+    buttons({ pause: true, restart: true });
+    els.pause.textContent = "Pause";
+
+    var size = null, events = [], at = 0, done = false, timer = null;
+    var base = 0, pausedAt = 0, total = 0;
+    var ctrl = window.AbortController ? new AbortController() : null;
+    var clock = function () { return base ? (pausedAt || performance.now()) - base : 0; };
+    var show = function () {
+      var now = Math.min(clock(), done ? total : Infinity);
+      els.elapsed.textContent = elapsedText(now) + (done ? " / " + elapsedText(total) : "");
+    };
+    var resize = function (cols, rows) {
+      if (cols > 0 && rows > 0) term.write("", function () { term.resize(cols, rows); });
+    };
+    var step = function () {
+      timer = null;
+      if (session !== s || pausedAt || !base) return;
+      var now = clock(), out = "";
+      while (at < events.length && events[at][0] * 1000 <= now) {
+        var ev = events[at++];
+        if (ev[1] === "o") {
+          out += ev[2];
+        } else if (ev[1] === "r") {
+          var wh = String(ev[2]).split("x");
+          term.write(out);
+          out = "";
+          resize(parseInt(wh[0], 10), parseInt(wh[1], 10));
+        }
+      }
+      if (out) term.write(out);
+      if (at < events.length) {
+        timer = setTimeout(step, events[at][0] * 1000 - now);
+      } else if (done) {
+        term.write("\x1b[?25l");
+        pausedAt = base + total;
+        show();
+        notice("End of the recording.");
+        buttons({ restart: true });
+      }
+    };
+    var line = function (text) {
+      if (!text) return;
+      var v;
+      try { v = JSON.parse(text); } catch (e) { return; /* torn last line */ }
+      if (!size) {
+        size = v;
+        resize(v.width, v.height);
+        base = performance.now();
+        return;
+      }
+      if (Array.isArray(v) && typeof v[0] === "number") {
+        events.push(v);
+        total = Math.max(total, v[0] * 1000);
+      }
+    };
+    s.stop = function () {
+      if (timer) clearTimeout(timer);
+      timer = null;
+      if (ctrl) ctrl.abort();
+    };
+    s.pause = function () {
+      if (done && at >= events.length) return;
+      if (pausedAt) {
+        base += performance.now() - pausedAt;
+        pausedAt = 0;
+        els.pause.textContent = "Pause";
+        step();
+      } else {
+        pausedAt = performance.now();
+        if (timer) clearTimeout(timer);
+        timer = null;
+        els.pause.textContent = "Resume";
+      }
+      show();
+    };
+    s.restart = function () {
+      if (timer) clearTimeout(timer);
+      timer = null;
+      term.reset();
+      term.options.disableStdin = true;
+      if (size) resize(size.width, size.height);
+      at = 0;
+      pausedAt = 0;
+      base = performance.now();
+      notice("");
+      buttons({ pause: true, restart: true });
+      els.pause.textContent = "Pause";
+      step();
+    };
+    s.timer = setInterval(show, 250);
+
+    var buf = "";
+    var feed = function (chunk, last) {
+      var lines = (buf + chunk).split("\n");
+      buf = last ? "" : lines.pop();
+      lines.forEach(line);
+      if (last) done = true;
+      if (!timer) step();
+      show();
+    };
+    fetch("/api/runs/" + encodeURIComponent(id) + "/cast", { credentials: "same-origin", signal: ctrl ? ctrl.signal : undefined })
+      .then(function (res) {
+        if (!res.ok) throw new Error(res.status === 404 ? "no recording" : "HTTP " + res.status);
+        if (!res.body || !res.body.getReader || !window.TextDecoder) return res.text().then(function (text) { feed(text, true); });
+        var reader = res.body.getReader(), dec = new TextDecoder();
+        var pump = function () {
+          return reader.read().then(function (r) {
+            if (session !== s) return reader.cancel();
+            if (r.done) return feed(dec.decode(), true);
+            feed(dec.decode(r.value, { stream: true }), false);
+            return pump();
+          });
+        };
+        return pump();
+      })
+      .catch(function (err) {
+        if (session !== s) return;
+        setState("error");
+        notice("Couldn't load the recording: " + err.message, "bad");
+        buttons({});
       });
   }
 
@@ -510,6 +658,17 @@
       }
       start(Object.assign({}, spec, { force: true, reason: reason }));
     });
+    els.replay.addEventListener("click", function () {
+      var run = session && session.run;
+      if (run) replay(run.id, runTitle(run), run.user_name || "");
+    });
+    els.pause.addEventListener("click", function () { if (session && session.pause) session.pause(); });
+    // The terminal keeps Esc for the job; a replay has none, so Esc
+    // closes its window.
+    dialog.addEventListener("keydown", function (event) {
+      if (event.key === "Escape" && session && session.replaying) dialog.close();
+    }, true);
+    els.restart.addEventListener("click", function () { if (session && session.restart) session.restart(); });
     els.again.addEventListener("click", function () {
       var spec = session && session.spec;
       if (spec) start(Object.assign({}, spec, { force: false }));
@@ -2675,6 +2834,10 @@
     var actionsHTML = function (run, canRun) {
       var id = escapeHTML(run.id);
       var html = '<a class="btn btn-sm" href="/runs/' + id + '" data-attach="' + id + '">' + (run.state === "running" ? "Attach" : "View") + "</a>";
+      if (run.state !== "running" && run.cast_path) {
+        html += '<button type="button" class="btn btn-sm replay" data-replay="' + id + '" data-replay-title="' + escapeHTML(runTitle(run)) + '" data-replay-who="' + escapeHTML(run.user_name || "") +
+          '" title="Replay the recording" aria-label="Replay the recording">|&gt;</button>';
+      }
       if (run.state === "running" && canRun) {
         html += '<button type="button" class="btn-icon" data-stop="' + id + '" title="Stop the run" aria-label="Stop the run"><svg class="ic"><use href="#i-stop"/></svg></button>' +
           '<button type="button" class="btn-icon danger" data-kill="' + id + '" title="Kill the run" aria-label="Kill the run"><svg class="ic"><use href="#i-trash"/></svg></button>';
@@ -2849,7 +3012,7 @@
   // --------------------------------------------------------------- clicks
 
   document.addEventListener("click", function (event) {
-    var btn = event.target.closest("[data-run], [data-attach], [data-stop], [data-kill], [data-delete], [data-copy]");
+    var btn = event.target.closest("[data-run], [data-attach], [data-replay], [data-stop], [data-kill], [data-delete], [data-copy]");
     if (!btn) return;
     // A link inside the element matched is a link: it navigates, it does
     // not run or attach for the element around it.
@@ -2899,6 +3062,10 @@
 
     if (btn.hasAttribute("data-attach")) {
       attach(btn.dataset.attach);
+      return;
+    }
+    if (btn.hasAttribute("data-replay")) {
+      replay(btn.dataset.replay, btn.dataset.replayTitle || "", btn.dataset.replayWho || "");
       return;
     }
     var spec = {
