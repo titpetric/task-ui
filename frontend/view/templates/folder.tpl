@@ -7,6 +7,14 @@
 	</div>
 	<div class="actions">
 		<span class="dim nowrap">{{ range $p.Sources }}<span class="badge">{{ .Kind }}</span> {{ end }}</span>
+		{{- with $.FolderMenu }}
+		{{ template "menu" (menu (print "Actions on " $p.Title)
+			(and .Workspace ($.Can "workspace/view") (item "settings" "Workspace settings" "href" .Settings))
+			(and .Project ($.Can "project/view") (item "settings" "Project settings" "href" .Settings))
+			(and .Pull ($.CanRun $p .Pull) (item "download" "Pull now" "data-run" "" "data-folder" $p.ID "data-dir" .Pull.Dir "data-job" .Pull.ID "data-title" (print $p.ID " / " .Pull.Name)))
+			(and .Project $.Checkout ($.Can "project/delete") (danger "trash" "Remove checkout" "data-delete" (print "/api/projects/" .ID) "data-confirm" (removeConfirm .ID $.Checkout.Remote) "data-confirm-ok" "Remove" "data-next" (print "/settings/projects?notice=" (urlquery "Removed " .ID))))
+		) }}
+		{{- end }}
 	</div>
 </div>
 {{- template "actions" $ }}

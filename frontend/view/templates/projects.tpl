@@ -25,7 +25,7 @@
 				<td class="actions">{{ template "menu" (menu (print "Actions on " .ID)
 					(and .Sources (item "folder" "Open" "href" ($.Href .ID)))
 					(item "edit" "Configure" "href" (print "/settings/projects/" .ID))
-					(and .Checkout (danger "trash" "Remove" "data-delete" (print "/api/projects/" .ID) "data-confirm" (print "Remove the folder " .ID " and its checkout? You can clone it again from " .Checkout.Remote ".") "data-confirm-ok" "Remove" "data-next" "reload"))
+					(and .Checkout ($.Can "project/delete") (danger "trash" "Remove checkout" "data-delete" (print "/api/projects/" .ID) "data-confirm" (removeConfirm .ID .Checkout.Remote) "data-confirm-ok" "Remove" "data-next" "reload"))
 				) }}</td>
 			</tr>
 		{{- else }}

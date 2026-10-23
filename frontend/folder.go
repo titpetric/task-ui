@@ -131,8 +131,8 @@ func (h *Handlers) defaultWorkspace(w http.ResponseWriter, r *http.Request) {
 	p.Last = h.latestRuns(r, withTreeFolders(p, root, p.SubFolders))
 	h.treeMenus(p, f, nil, false)
 	h.treeSummaries(r, p)
-	if workspace != nil && p.Can("workspace/view") {
-		p.Actions = &view.Actions{WorkspaceSettings: "/settings/workspaces/" + model.Default}
+	if workspace != nil {
+		p.FolderMenu = &view.FolderMenu{ID: model.Default, Workspace: true}
 	}
 	if workspace != nil && p.Can("prompt/edit") && h.claudeFor(r, p.User) {
 		p.Prompt = h.withThreads(r, &view.Prompt{API: "/api/workspaces/" + model.Default + "/prompt", Where: "the root", Open: true, Place: model.Default})
@@ -227,7 +227,7 @@ func (h *Handlers) folder(w http.ResponseWriter, r *http.Request, f *folder.Fold
 	}
 	p.Crumbs = crumbsOf(f.ID, "", p.Workspaces)
 	p.Actions = h.actions(r, p, f)
-	h.settingsLinks(r, p, f)
+	p.FolderMenu = folderMenu(p, f)
 	p.Prompt = h.prompt(r, p, f, "")
 	p.Summaries = h.summaries(r, p)
 	if h.opts.Git != nil && h.opts.Git.IsRepo(f.Dir) {
@@ -305,18 +305,40 @@ func withTreeFolders(p *view.Page, dir string, subs []*folder.Folder) []*folder.
 	return found
 }
 
-// settingsLinks puts the links to the settings of the workspace or the
-// project a folder is in the actions bar of its own page, for a user who
-// may see them.
-func (h *Handlers) settingsLinks(r *http.Request, p *view.Page, f *folder.Folder) {
-	if _, ok := p.Workspaces[f.ID]; ok && p.Can("workspace/view") {
-		p.Actions.WorkspaceSettings = "/settings/workspaces/" + escapePath(f.ID)
+// folderMenu returns the [...] menu of the head of a folder's page, for
+// a workspace or a project, nil for a folder inside one. The template
+// checks the permissions of its items.
+func folderMenu(p *view.Page, f *folder.Folder) *view.FolderMenu {
+	m := &view.FolderMenu{ID: f.ID}
+	top, _, _ := strings.Cut(f.ID, "/")
+	_, named := p.Workspaces[top]
+	switch {
+	case named && f.Depth() == 0:
+		m.Workspace = true
+	case (named && f.Depth() == 1) || (!named && f.Depth() == 0):
+		m.Project = true
+	default:
+		return nil
 	}
-	if h.opts.Projects != nil && p.Can("project/view") {
-		if _, err := h.opts.Projects.GetByFolder(r.Context(), f.ID); err == nil {
-			p.Actions.ProjectSettings = "/settings/projects/" + escapePath(f.ID)
+	if p.Actions != nil {
+		m.Pull = pullJob(p.Actions.Skills)
+	}
+	return m
+}
+
+// pullJob returns the pull job of the git skill, nil without one.
+func pullJob(skills []*folder.Skill) *folder.Job {
+	for _, skill := range skills {
+		if skill.ID != "git" {
+			continue
+		}
+		for _, job := range skill.Jobs {
+			if job.Name == "pull" {
+				return job
+			}
 		}
 	}
+	return nil
 }
 
 // lastRuns returns the latest run of each job of a folder.

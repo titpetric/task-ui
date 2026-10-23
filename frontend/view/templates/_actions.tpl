@@ -3,10 +3,8 @@
      chip per atkins skill that applies there, and a chip of the place's own
      atkins jobs. Every action is a Run of the place's folder, run where the
      job runs; a running one attaches, one the user may not run links to
-     its page. At the top right, each behind its permission: the links to
-     the settings of the folder page's workspace (workspace/view) or
-     project (project/view), Enter Shell (shell) and Enter Claude (shell
-     and a Claude token). */}}
+     its page. At the top right, each behind its permission: Enter Shell
+     (shell) and Enter Claude (shell and a Claude token). */}}
 {{- define "actions" }}
 {{- with .Actions }}{{ if not .Empty }}
 {{- $a := . }}
@@ -21,14 +19,8 @@
 		<span class="where">· {{ if .Checkout }}{{ .Checkout }}{{ else }}the root{{ end }}</span>
 	</div>
 	{{- end }}
-	{{- if or .Shell .Claude .WorkspaceSettings .ProjectSettings }}
+	{{- if or .Shell .Claude }}
 	<div class="bar-end">
-		{{- with .WorkspaceSettings }}
-		<a class="btn btn-sm" href="{{ . }}" title="The settings of this workspace"><svg class="ic"><use href="#i-settings"/></svg>Workspace Settings</a>
-		{{- end }}
-		{{- with .ProjectSettings }}
-		<a class="btn btn-sm" href="{{ . }}" title="The settings of this project"><svg class="ic"><use href="#i-settings"/></svg>Project Settings</a>
-		{{- end }}
 		{{- with .Shell }}{{ template "enterTerminal" (list $ $a.Place . "Shell" "bash -l") }}{{ end }}
 		{{- with .Claude }}{{ template "enterTerminal" (list $ $a.Place . "Claude" "Claude Code") }}{{ end }}
 	</div>

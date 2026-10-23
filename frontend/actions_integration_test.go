@@ -180,9 +180,9 @@ func TestFolder_Claude(t *testing.T) {
 	assert.Equal(t, http.StatusOK, f.get(t, asAdmin, "/f/_/infra/@claude").Status, "its job page")
 }
 
-// An admin's actions bar links the settings of the workspace or the
-// project a folder page is of, beside Enter Shell; no one else's does,
-// nor a directory's inside them.
+// An admin's [...] menu in the page head links the settings of the
+// workspace or the project a folder page is of; no one else's does, nor
+// a directory's inside them.
 func TestFolder_SettingsLinks(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
@@ -191,7 +191,7 @@ func TestFolder_SettingsLinks(t *testing.T) {
 	assert.NoError(t, f.opts.Workspaces.EnsureDefault(ctx))
 	assert.NoError(t, f.opts.Workspaces.Create(ctx, &model.Workspace{Folder: "infra", Title: "Infra"}))
 	assert.NoError(t, f.opts.Projects.Create(ctx, &model.Project{Folder: "private", Title: "Private"}))
-	const workspace, project = `>Workspace Settings</a>`, `>Project Settings</a>`
+	const workspace, project = `<span>Workspace settings</span>`, `<span>Project settings</span>`
 
 	ws := f.page(t, asAdmin, "/f/infra")
 	assert.Contains(t, ws, `href="/settings/workspaces/infra"`)

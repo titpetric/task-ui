@@ -64,6 +64,9 @@ type Page struct {
 	Job   *folder.Job
 	// Actions are the actions bar of the folder or the directory browsed.
 	Actions *Actions
+	// FolderMenu is the [...] menu in the head of a workspace's or a
+	// project's page.
+	FolderMenu *FolderMenu
 	// Prompt is the prompt box of the folder or the directory browsed,
 	// for a user with prompt/edit and a Claude token.
 	Prompt *Prompt

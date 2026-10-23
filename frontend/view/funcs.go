@@ -49,6 +49,8 @@ func Funcs() template.FuncMap {
 		"danger": NewDangerItem,
 		"detail": NewMenuDetail,
 		"sep":    func() MenuItem { return MenuItem{Sep: true} },
+		// removeConfirm is what Remove checkout of a project asks.
+		"removeConfirm": RemoveConfirm,
 		// bytes and megabytes word a size in bytes, or in MB as Beszel
 		// counts memory, as size does.
 		"bytes":     func(n uint64) string { return Size(int64(n)) },

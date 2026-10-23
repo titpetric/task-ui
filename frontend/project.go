@@ -3,6 +3,7 @@ package frontend
 import (
 	"context"
 	"net/http"
+	"path/filepath"
 	"slices"
 	"strings"
 
@@ -61,6 +62,9 @@ func (h *Handlers) projectEdit(w http.ResponseWriter, r *http.Request) {
 	p.Folder = f
 	p.Crumbs = view.Crumbs("Settings", "/settings", "Projects", "/settings/projects", id)
 	p.Step = view.StepProjects
+	if h.opts.Git != nil {
+		p.Checkout = h.opts.Git.Info(filepath.Join(h.opts.Root, filepath.FromSlash(id)))
+	}
 	if project, err := h.opts.Projects.GetByFolder(r.Context(), id); err == nil {
 		p.Project = project
 		p.Form = map[string]string{
