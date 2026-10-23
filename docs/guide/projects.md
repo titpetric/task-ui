@@ -143,10 +143,13 @@ Open a folder from the sidebar:
   package scripts or scripts folder read as a folder's are, that
   discovery leaves out, such as the Makefile of a directory inside a
   checkout with an `atkins.yml`, lists them as job cards on its page.
-  The **Jobs** column of a directory with jobs, a folder or one with a
-  job source at its top, holds **Run** and **|>summarize**; so does the
-  row of a file that is a job source, such as `atkins.yml`, and the
-  file's window. **Run** runs `default`, or the only job, and its dot
+  The **Action** column of a directory with jobs, a folder or one with a
+  job source at its top, holds **Run**, and its **Summary** column
+  **|>summarize**, for those who may ask Claude, and **Summary**, a link
+  to Claude's summary of the row's last run on that run's page, its
+  start on hover, once the run has one; so does the row of a file that
+  is a job source, such as `atkins.yml`, and the file's window holds
+  both. **Run** runs `default`, or the only job, and its dot
   shows how that job last went, live as runs start and end, or an eye
   on a run in progress. With more jobs, the chevron beside it opens a
   table of them, `default` first and the rest by name: the play glyph
@@ -164,7 +167,7 @@ Open a folder from the sidebar:
   the directory, such as `/f/acme/api/tools/build`.
   A file that runs, executable or with a shebang on its first line,
   carries `#!` and **exec**, and **Run** for those the folder lets run,
-  in its Jobs column and in the file's window: it starts the file as the job
+  in its Action column and in the file's window: it starts the file as the job
   `./<path>`, from the top of the folder, and opens the run's window.
   Its history is at the file's path under the folder.
 - **Sealed entries**: `.git` and every dot file, such as `.env`,

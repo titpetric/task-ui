@@ -118,6 +118,13 @@ func TestWorkflowRunStorage(t *testing.T) {
 	assert.NoError(t, runs.UpdateStep(ctx, &chain[0]))
 	chain, _ = runs.Steps(ctx, run.ID)
 	assert.Equal(t, "run1", chain[0].RunID)
+	step, err := runs.StepOf(ctx, "run1")
+	assert.NoError(t, err)
+	assert.Equal(t, run.ID, step.WorkflowRunID)
+	_, err = runs.StepOf(ctx, "")
+	assert.ErrorIs(t, err, storage.ErrNotFound)
+	_, err = runs.StepOf(ctx, "other")
+	assert.ErrorIs(t, err, storage.ErrNotFound)
 
 	run.State, run.Message = model.StateFailed, "push failed"
 	assert.NoError(t, runs.Update(ctx, run))

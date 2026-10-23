@@ -1,6 +1,7 @@
 package frontend
 
 import (
+	"net/http"
 	"path"
 	"slices"
 	"sync"
@@ -8,6 +9,8 @@ import (
 
 	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/frontend/view"
+	"github.com/titpetric/task-ui/note"
+	"github.com/titpetric/task-ui/storage"
 )
 
 // treeDetect caps the directories of one Files list detected for their
@@ -63,6 +66,74 @@ func (h *Handlers) treeMenus(p *view.Page, f, place *folder.Folder, detect bool)
 		}
 	}
 	return detected
+}
+
+// treeSummaries puts the summaries of the rows' last runs in
+// TreeSummaries, for a user with prompt/view: of each row's jobs, the
+// newest last run that Claude summarized with Run and summarize. Call
+// it once Last and TreeMenus hold the rows' runs and jobs.
+func (h *Handlers) treeSummaries(r *http.Request, p *view.Page) {
+	p.TreeSummaries = map[string]*view.SummaryLink{}
+	if h.opts.Board == nil || !p.Can("prompt/view") {
+		return
+	}
+	rows := map[string][]*view.Run{}
+	var ids []string
+	for _, item := range p.Tree {
+		var jobs []*folder.Job
+		if m := p.TreeMenus[item.Name]; m != nil {
+			jobs = append([]*folder.Job{m.Main}, m.Jobs...)
+		} else if !item.Dir && item.Exec && item.Path != "" && p.Folder != nil {
+			jobs = []*folder.Job{p.Folder.Job(folder.FilePrefix + item.Path)}
+		}
+		for _, job := range jobs {
+			if job == nil {
+				continue
+			}
+			if run := p.LastRun(job.Key()); run != nil {
+				rows[item.Name] = append(rows[item.Name], run)
+				ids = append(ids, run.ID)
+			}
+		}
+	}
+	if len(ids) == 0 {
+		return
+	}
+	threads, err := h.opts.Board.Notes.List(r.Context(), storage.NoteFilter{Prompts: true, AboutRunIDs: ids})
+	if err != nil {
+		return
+	}
+	byRun := map[string]string{}
+	var threadIDs []string
+	for i := range threads {
+		if note.IsSummary(&threads[i]) {
+			byRun[threads[i].AboutRunID] = threads[i].ID
+			threadIDs = append(threadIDs, threads[i].ID)
+		}
+	}
+	replies, _ := h.opts.Board.Notes.Replies(r.Context(), threadIDs)
+	for name, runs := range rows {
+		var newest *view.Run
+		for _, run := range runs {
+			if _, ok := byRun[run.ID]; ok && (newest == nil || newer(run, newest)) {
+				newest = run
+			}
+		}
+		if newest == nil {
+			continue
+		}
+		thread := byRun[newest.ID]
+		text := ""
+		if answers := replies[thread]; len(answers) > 0 {
+			text = answers[0].Body
+		}
+		p.TreeSummaries[name] = view.NewSummaryLink(newest.ID, thread, text)
+	}
+}
+
+// newer reports whether run a started after run b.
+func newer(a, b *view.Run) bool {
+	return a.StartedAt != nil && (b.StartedAt == nil || a.StartedAt.After(*b.StartedAt))
 }
 
 // subTTL is how long a directory's detected sources hold for the Files

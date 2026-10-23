@@ -17,6 +17,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 
 	chi "github.com/go-chi/chi/v5"
 
@@ -35,6 +36,9 @@ import (
 // Handlers serves the API.
 type Handlers struct {
 	opts Options
+	// summarizing holds the runs Run and summarize waits on, by ID, the
+	// first of a batch, until the summary's thread exists.
+	summarizing sync.Map
 }
 
 // New returns the handlers over the options.

@@ -33,6 +33,10 @@
     restart: document.getElementById("run-restart"),
     take: document.getElementById("run-take"),
     input: document.getElementById("run-input"),
+    chain: document.getElementById("run-chain"),
+    prev: document.getElementById("run-prev"),
+    pos: document.getElementById("run-pos"),
+    next: document.getElementById("run-next"),
   };
 
   var session = null; // { run, spec, ws, term, fit, timer, onResize, finished, changed }
@@ -300,6 +304,7 @@
     els.reason.hidden = true;
     els.reasonText.value = "";
     pageLink("");
+    chainNav(null);
     els.rec.hidden = true;
     els.replay.hidden = true;
     if (!dialog.open) dialog.showModal();
@@ -387,6 +392,8 @@
       els.who.textContent = run.user_name || "";
       termTitle(run.title);
       s.spec = { folder: run.folder, dir: run.dir || "", job: run.job, args: runArgs(run), title: runTitle(run) };
+      s.chain = run.chain || null;
+      chainNav(s.chain);
       // A finished run stays live in memory for a while, for the windows
       // on it; opened afterwards it is history, not something to attach to.
       if (run.live && !ended(run.state)) {
@@ -433,6 +440,8 @@
     var ws = new WebSocket(proto + "//" + location.host + "/api/runs/" + encodeURIComponent(run.id) + "/attach");
     ws.binaryType = "arraybuffer";
     s.ws = ws;
+    // A window that sees its run end follows the chain of the run on.
+    s.follow = true;
     setState("running", "attaching");
     buttons({ stop: run.can_run, kill: run.can_run, take: run.can_input });
     taking(s, false, run.input_by || "");
@@ -463,6 +472,7 @@
       var msg;
       try { msg = JSON.parse(event.data); } catch (e) { return; }
       if (msg.type === "status") finish(s, msg);
+      if (msg.type === "chain") onChain(s, msg.chain);
       if (msg.type === "title") termTitle(msg.title);
       if (msg.type === "input") {
         taking(s, msg.state === "on", "");
@@ -498,13 +508,74 @@
     else if (msg.state === "failed") notice(msg.message || ("The job exited with status " + msg.exit_code + "."), "bad");
     else if (msg.state === "stopped") notice("Stopped.", "");
     else notice("");
-    els.hint.textContent = s.spec && s.spec.summarize
-      ? "Finished. Claude writes a summary on the run's page, under the output."
-      : "Finished. You can find the run and its recording in the history.";
+    els.hint.textContent = endHint(s);
     // A run that ended well is run again; one that did not is forced,
     // which also gets past what refused it.
     var can = s.run && s.run.can_run;
     buttons({ again: can && msg.state === "ok", force: can && msg.state !== "ok" });
+  }
+
+  // endHint says how a run that ended goes on: Finished once its chain
+  // is complete, or with none; the run to come while it is not.
+  function endHint(s) {
+    var c = s.chain;
+    if (c && !c.complete) {
+      return c.kind === "summary" && c.position === 1
+        ? "The run ended. Claude's summary of it streams in this window next."
+        : "The run ended. The next run of the chain opens in this window when it starts.";
+    }
+    if (c && c.kind === "summary") return "Finished. The summary stays on the run's page, under the output.";
+    return "Finished. You can find the run and its recording in the history.";
+  }
+
+  // chainNav draws the paginator of a run's chain in the window's foot:
+  // Previous, Run 2/N, and Next, disabled while the next run is yet to
+  // start and gone at the end of a complete chain. A run of no chain
+  // has none.
+  function chainNav(c) {
+    if (!els.chain) return;
+    els.chain.hidden = !c;
+    if (!c) return;
+    els.pos.textContent = "Run " + c.position + "/" + (c.total ? c.total : "…");
+    els.prev.disabled = !c.prev;
+    els.next.hidden = c.complete && !c.next;
+    els.next.disabled = !c.next;
+  }
+
+  // onChain takes the chain the server says the run stands in: the
+  // paginator follows it, and a window that follows its run moves on
+  // to the next run once that started.
+  function onChain(s, c) {
+    if (session !== s || !c) return;
+    s.chain = c;
+    chainNav(c);
+    if (!s.finished) return;
+    els.hint.textContent = endHint(s);
+    if (s.follow && c.next) goChain(c.next);
+  }
+
+  // followChain waits, over the run's socket, for the next run of the
+  // chain of a run that ended.
+  function followChain(s, run) {
+    var proto = location.protocol === "https:" ? "wss:" : "ws:";
+    var ws = new WebSocket(proto + "//" + location.host + "/api/runs/" + encodeURIComponent(run.id) + "/attach");
+    s.ws = ws;
+    s.follow = true;
+    ws.onmessage = function (event) {
+      if (typeof event.data !== "string") return;
+      var msg;
+      try { msg = JSON.parse(event.data); } catch (e) { return; }
+      if (msg.type === "chain") onChain(s, msg.chain);
+    };
+  }
+
+  // goChain moves the window to another run of its chain; the page
+  // refreshes for a change once the window closes, as for the first.
+  function goChain(id) {
+    var changed = session && session.changed;
+    if (session) session.changed = false;
+    attach(id);
+    if (session) session.changed = !!changed;
   }
 
   // playback writes the recording of a finished run into the terminal.
@@ -533,6 +604,9 @@
         finish(s, { state: run.state, exit_code: run.exit_code, message: run.status && run.status.message });
         s.changed = false;
         els.replay.hidden = false;
+        // A chain that waits for the run after this one moves the window
+        // on to it once it starts.
+        if (s.chain && !s.chain.complete && !s.chain.next) followChain(s, run);
       })
       .catch(function (err) {
         if (session !== s) return;
@@ -732,6 +806,14 @@
       if (event.key === "Escape" && session && session.replaying) dialog.close();
     }, true);
     els.restart.addEventListener("click", function () { if (session && session.restart) session.restart(); });
+    if (els.chain) {
+      els.prev.addEventListener("click", function () {
+        if (session && session.chain && session.chain.prev) goChain(session.chain.prev);
+      });
+      els.next.addEventListener("click", function () {
+        if (session && session.chain && session.chain.next) goChain(session.chain.next);
+      });
+    }
     els.again.addEventListener("click", function () {
       var spec = session && session.spec;
       if (spec) start(Object.assign({}, spec, { force: false }));

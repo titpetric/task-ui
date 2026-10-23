@@ -196,6 +196,9 @@ type Page struct {
 	// name: a directory that is a folder or holds a job source, and a
 	// file that is a job source.
 	TreeMenus map[string]*RunMenu
+	// TreeSummaries are the summaries of the last runs of the rows Tree
+	// lists, by the entry's name, for its Summary column.
+	TreeSummaries map[string]*SummaryLink
 	// KeyHolders are the roles and the users, and the keys each gets.
 	KeyHolders []KeyHolder
 	Key        *keystore.Key
@@ -430,6 +433,11 @@ func (p *Page) RunningRun(key string) *Run {
 		return &run
 	}
 	return nil
+}
+
+// TreeSummary returns the summary of a Files list row's last run.
+func (p *Page) TreeSummary(name string) *SummaryLink {
+	return p.TreeSummaries[name]
 }
 
 // LastRun returns the latest run of a job, or nil.
