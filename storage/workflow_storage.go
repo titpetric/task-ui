@@ -30,18 +30,41 @@ func checkChain(workflow *model.Workflow, steps []model.WorkflowStep) error {
 		return errors.New("a workflow needs a name")
 	}
 	if !workflow.Runs(steps) {
-		return errors.New("a workflow needs a step to run or a prompt")
+		return errors.New("a workflow needs an enabled step")
 	}
-	for _, step := range steps {
-		job := step.Folder != "" || step.Job != ""
-		switch {
-		case step.IsPrompt() && (step.IsWorkflow() || step.Folder == "" || step.Job != model.PromptJob):
-			return errors.New("a prompt step names the folder it asks in, and no job or workflow")
-		case step.IsWorkflow() && job:
-			return errors.New("a step names a job or a workflow, not both")
-		case !step.IsWorkflow() && (step.Folder == "" || step.Job == ""):
-			return errors.New("every step names a folder and a job, or a workflow")
+	for i, step := range steps {
+		if err := checkStep(step); err != nil {
+			return fmt.Errorf("step %d: %w", i+1, err)
 		}
+	}
+	return nil
+}
+
+// checkStep says what is wrong with one step for its kind: a job names
+// its folder and job, a workflow the workflow alone, a prompt its text
+// and folder, and a summary its folder and no text.
+func checkStep(step model.WorkflowStep) error {
+	job := step.Folder != "" || step.Job != ""
+	asks := step.Folder != "" && step.Job == model.PromptJob && step.WorkflowRef == ""
+	switch step.StepKind() {
+	case model.StepJob:
+		if step.Folder == "" || step.Job == "" || step.WorkflowRef != "" || step.Prompt != "" {
+			return errors.New("a job step names a folder and a job")
+		}
+	case model.StepWorkflow:
+		if step.WorkflowRef == "" || job || step.Prompt != "" {
+			return errors.New("a workflow step names a workflow, and no job")
+		}
+	case model.StepPrompt:
+		if strings.TrimSpace(step.Prompt) == "" || !asks {
+			return errors.New("a prompt step names the folder it asks in and its prompt, and no job or workflow")
+		}
+	case model.StepSummary:
+		if step.Prompt != "" || !asks {
+			return errors.New("a summary step names the folder it asks in, and no prompt, job or workflow")
+		}
+	default:
+		return fmt.Errorf("no step kind %q", step.Kind)
 	}
 	return nil
 }
@@ -113,7 +136,7 @@ func inTx(ctx context.Context, db DB, fn func(c conn) error) error {
 // insertSteps writes a workflow's steps in order, positions from zero.
 func insertSteps(ctx context.Context, c conn, workflowID string, steps []model.WorkflowStep) error {
 	for i, step := range steps {
-		row := model.WorkflowStep{ID: model.NewID(), WorkflowID: workflowID, Position: int64(i), Folder: step.Folder, Job: step.Job, WorkflowRef: step.WorkflowRef, Disabled: step.Disabled, Target: step.Target, Args: step.Args, Prompt: step.Prompt, Dir: step.Dir}
+		row := model.WorkflowStep{ID: model.NewID(), WorkflowID: workflowID, Position: int64(i), Kind: step.StepKind(), Folder: step.Folder, Job: step.Job, WorkflowRef: step.WorkflowRef, Disabled: step.Disabled, Target: step.Target, Args: step.Args, Prompt: step.Prompt, Dir: step.Dir}
 		if row.Args == "" {
 			row.Args = "[]"
 		}
@@ -151,7 +174,7 @@ func (s *WorkflowStorage) Get(ctx context.Context, id string) (*model.Workflow, 
 	return workflow, notFound(err)
 }
 
-// Steps returns a workflow's steps in order, an empty list for a workflow of a prompt alone.
+// Steps returns a workflow's steps in order, an empty list for a workflow without any.
 func (s *WorkflowStorage) Steps(ctx context.Context, id string) ([]model.WorkflowStep, error) {
 	steps, err := client(s.db).Select[model.WorkflowStep](ctx, "SELECT * FROM workflow_step WHERE workflow_id = ? ORDER BY position", id)
 	if steps == nil && err == nil {
@@ -270,7 +293,7 @@ func (s *WorkflowRunStorage) Create(ctx context.Context, run *model.WorkflowRun,
 		for i, step := range steps {
 			row := model.WorkflowRunStep{
 				ID: model.NewID(), WorkflowRunID: run.ID, Position: int64(i),
-				Folder: step.Folder, Job: step.Job, WorkflowRef: step.WorkflowRef, Prompt: step.Prompt, State: model.StepPending,
+				Kind: step.StepKind(), Folder: step.Folder, Job: step.Job, WorkflowRef: step.WorkflowRef, Prompt: step.Prompt, State: model.StepPending,
 				CreatedAt: run.StartedAt, UpdatedAt: run.StartedAt,
 			}
 			if err := c.Insert(ctx, model.WorkflowRunStepTable, &row); err != nil {
@@ -287,7 +310,7 @@ func (s *WorkflowRunStorage) Get(ctx context.Context, id string) (*model.Workflo
 	return run, notFound(err)
 }
 
-// Steps returns a workflow run's steps in order, an empty list for a run of a prompt alone.
+// Steps returns a workflow run's steps in order, an empty list for a run without any.
 func (s *WorkflowRunStorage) Steps(ctx context.Context, id string) ([]model.WorkflowRunStep, error) {
 	steps, err := client(s.db).Select[model.WorkflowRunStep](ctx, "SELECT * FROM workflow_run_step WHERE workflow_run_id = ? ORDER BY position", id)
 	if steps == nil && err == nil {

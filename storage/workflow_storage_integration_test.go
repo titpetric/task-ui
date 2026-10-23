@@ -38,27 +38,32 @@ func TestWorkflowStorage_Create(t *testing.T) {
 
 	assert.Error(t, workflows.Create(ctx, &model.Workflow{Name: "empty"}, nil), "no steps")
 	off := []model.WorkflowStep{{Folder: "a", Job: "b", Disabled: true}}
-	assert.Error(t, workflows.Create(ctx, &model.Workflow{Name: "off"}, off), "every step disabled, no prompt")
+	assert.ErrorContains(t, workflows.Create(ctx, &model.Workflow{Name: "off"}, off), "a workflow needs an enabled step")
 
-	// A prompt runs a workflow with every step disabled, or with none,
-	// and the prompt, its place and the step toggles round trip.
-	asks := &model.Workflow{Name: "asks", Prompt: "summarize, change nothing", PromptFolder: "malta/dockerfiles"}
-	assert.NoError(t, workflows.Create(ctx, asks, append(off, model.WorkflowStep{Folder: "a", Job: "c"})))
+	// A prompt or a summary step runs a workflow with every job step
+	// disabled; the kinds, the description and the step toggles round
+	// trip.
+	asks := &model.Workflow{Name: "asks", Description: "summarise the build"}
+	summary := model.WorkflowStep{Kind: model.StepSummary, Folder: "malta", Dir: "dockerfiles", Job: model.PromptJob}
+	assert.NoError(t, workflows.Create(ctx, asks, append(off, model.WorkflowStep{Folder: "a", Job: "c"}, summary)))
 	read, err := workflows.Get(ctx, asks.ID)
 	assert.NoError(t, err)
-	assert.Equal(t, "summarize, change nothing", read.Prompt)
-	assert.Equal(t, "malta/dockerfiles", read.PromptFolder)
+	assert.Equal(t, "summarise the build", read.Description)
 	toggled, err := workflows.Steps(ctx, asks.ID)
 	assert.NoError(t, err)
 	assert.True(t, toggled[0].Disabled)
 	assert.False(t, toggled[1].Disabled)
-	alone := &model.Workflow{Name: "alone", Prompt: "say ok"}
-	assert.NoError(t, workflows.Create(ctx, alone, nil))
-	none, err := workflows.Steps(ctx, alone.ID)
+	assert.Equal(t, model.StepJob, toggled[1].Kind)
+	assert.Equal(t, model.StepSummary, toggled[2].Kind)
+	assert.Equal(t, "malta/dockerfiles", toggled[2].Place())
+	alone := &model.Workflow{Name: "alone"}
+	assert.NoError(t, workflows.Create(ctx, alone, []model.WorkflowStep{{Folder: "_", Job: model.PromptJob, Prompt: "say ok"}}))
+	one, err := workflows.Steps(ctx, alone.ID)
 	assert.NoError(t, err)
-	assert.Len(t, none, 0)
+	assert.Len(t, one, 1)
+	assert.Equal(t, model.StepPrompt, one[0].Kind, "a row's kind from its fields")
 	assert.Error(t, workflows.Create(ctx, &model.Workflow{}, steps("a", "b")), "no name")
-	assert.Error(t, workflows.Create(ctx, &model.Workflow{Name: "half"}, steps("a", "")), "a step without a job")
+	assert.ErrorContains(t, workflows.Create(ctx, &model.Workflow{Name: "half"}, steps("a", "")), "step 1: a job step names a folder and a job")
 }
 
 func TestWorkflowStorage_GetListUpdateDelete(t *testing.T) {
@@ -343,6 +348,10 @@ func TestWorkflowStorage_PromptStep(t *testing.T) {
 		{Job: model.PromptJob, Prompt: "where"},
 		{Folder: "_", Job: "build", Prompt: "which job"},
 		{Folder: "_", Job: model.PromptJob, WorkflowRef: wf.ID, Prompt: "both"},
+		{Kind: model.StepPrompt, Folder: "_", Job: model.PromptJob, Prompt: "  "},
+		{Kind: model.StepSummary, Folder: "_", Job: model.PromptJob, Prompt: "a summary takes none"},
+		{Kind: model.StepSummary, Job: model.PromptJob},
+		{Kind: "other", Folder: "a", Job: "b"},
 	}
 	for _, step := range bad {
 		assert.Error(t, workflows.Create(ctx, &model.Workflow{Name: "bad"}, []model.WorkflowStep{step}))
@@ -353,6 +362,7 @@ func TestWorkflowStorage_PromptStep(t *testing.T) {
 	rows, err := runs.Steps(ctx, run.ID)
 	assert.NoError(t, err)
 	assert.Equal(t, "fetch the weather", rows[1].Prompt)
+	assert.Equal(t, model.StepPrompt, rows[1].Kind, "a run's step keeps its kind")
 	rows[1].Answer, rows[1].State = "sunny, 21 °C", model.StateOK
 	assert.NoError(t, runs.UpdateStep(ctx, &rows[1]))
 	rows, _ = runs.Steps(ctx, run.ID)

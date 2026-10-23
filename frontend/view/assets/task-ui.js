@@ -1103,11 +1103,18 @@
     if (button) button.disabled = true;
     formError(form, "");
     var body = serialize(form);
-    if (form.hasAttribute("data-workflow")) body.steps = workflowSteps(form);
+    if (form.hasAttribute("data-workflow")) {
+      if (!workflowValid(form)) {
+        if (button) button.disabled = false;
+        return;
+      }
+      body.steps = workflowSteps(form);
+    }
     api(method, form.dataset.api, body).then(function (res) {
       if (res.status >= 300) {
         if (button) button.disabled = false;
         formError(form, (res.data.error || ("HTTP " + res.status)) + (res.data.output ? "\n\n" + res.data.output : ""));
+        if (form.hasAttribute("data-workflow")) stepError(form, res.data.error || "");
         return;
       }
       // A prompt is a note: the form empties and its thread shows at the
@@ -1359,25 +1366,6 @@
   document.querySelectorAll("select[data-narrows]").forEach(function (select) {
     narrow(select);
     select.addEventListener("change", function () { narrow(select); });
-  });
-
-  // A switch turns a part of a form on or off: a workflow's prompt, or
-  // one of its steps. Off collapses the part to its switch and heading,
-  // and its fields leave the form, so a prompt that is off saves as none;
-  // the text stays, for the switch to bring back.
-  document.addEventListener("change", function (event) {
-    if (!event.target.matches("[data-switch]")) return;
-    var part = event.target.closest("[data-switchable]");
-    if (!part) return;
-    var on = event.target.checked;
-    part.classList.toggle("off", !on);
-    part.querySelectorAll(".switch-body textarea, .switch-body select, .switch-body input").forEach(function (field) {
-      field.disabled = !on;
-    });
-    if (on) {
-      var first = part.querySelector(".switch-body textarea");
-      if (first) first.focus();
-    }
   });
 
   // A select with data-submit saves its form on a change: who a
@@ -1740,45 +1728,62 @@
 
   // ------------------------------------------------------------- workflows
 
-  // A step's folder select also lists the workflows, as workflow:<id>.
+  // The workflow form's steps are cards on a rail, one per step, each of
+  // a kind: data-kind is job, workflow, prompt or summary, and data-off
+  // a step a run skips. A command card's folder select also lists the
+  // workflows, as workflow:<id>, and picking one makes it a workflow
+  // step. A card folds to its head, the step in one line; its [...] menu
+  // moves, disables, duplicates and removes it, and its grip drags it, or
+  // takes the up and down arrows.
   var WORKFLOW = "workflow:";
+  var STEP_KINDS = {
+    job: ["Command", "i-terminal"],
+    workflow: ["Workflow", "i-flow"],
+    prompt: ["Prompt", "i-prompt"],
+    summary: ["Summary", "i-summary"]
+  };
 
-  // workflowSteps reads a workflow form's steps, in their order: a job of
-  // a folder, a workflow, or a prompt in a folder, each enabled or not.
+  // stepPlace is where a prompt or summary card asks: its folder, and
+  // the directory inside it without slashes around it.
+  function stepPlace(row) {
+    return {
+      folder: row.querySelector("[data-step-place]").value || "_",
+      dir: row.querySelector("[data-step-dir]").value.trim().replace(/^\/+|\/+$/g, "")
+    };
+  }
+
+  // workflowSteps reads a workflow form's cards, in their order, into
+  // the steps of its request.
   function workflowSteps(form) {
     return Array.prototype.map.call(form.querySelectorAll("[data-step]"), function (row) {
-      var enabled = row.querySelector("[data-switch]").checked;
-      if (row.hasAttribute("data-step-prompt")) {
-        var place = row.querySelector("[data-step-place]").value;
-        var dir = row.querySelector("[data-step-dir]");
-        return {
-          prompt: row.querySelector("[data-step-prompt-text]").value,
-          folder: place,
-          // The directory belongs to the folder it was picked in.
-          dir: place === dir.dataset.folder || !dir.dataset.folder ? dir.value : "",
-          enabled: enabled
-        };
+      var kind = row.dataset.kind, enabled = !row.hasAttribute("data-off");
+      if (kind === "prompt" || kind === "summary") {
+        var place = stepPlace(row);
+        var asks = { kind: kind, folder: place.folder, dir: place.dir, enabled: enabled };
+        if (kind === "prompt") asks.prompt = row.querySelector("[data-step-prompt-text]").value;
+        return asks;
       }
       var folder = row.querySelector("[data-step-folder]").value;
-      if (folder.indexOf(WORKFLOW) === 0) return { workflow: folder.slice(WORKFLOW.length), enabled: enabled };
-      var step = { folder: folder, job: row.querySelector("[data-step-job]").value, enabled: enabled };
+      if (folder.indexOf(WORKFLOW) === 0) return { kind: "workflow", workflow: folder.slice(WORKFLOW.length), enabled: enabled };
+      var step = { kind: "job", folder: folder, job: row.querySelector("[data-step-job]").value, enabled: enabled };
       var args = argsOf(row.querySelector("[data-step-args]").value, step.job);
       if (args !== null) step.args = args;
       return step;
     });
   }
 
-  // narrowStep keeps the jobs of the step's folder in its job select,
-  // and the job picked when it still belongs. A step that runs a
-  // workflow has no job to pick.
+  // narrowStep keeps the jobs of a command card's folder in its job
+  // select, and the job picked when it still belongs; a workflow picked
+  // in the folder select makes the card a workflow step, with no job or
+  // args.
   function narrowStep(row) {
-    if (row.hasAttribute("data-step-prompt")) return;
     var folder = row.querySelector("[data-step-folder]");
+    if (!folder) return;
     var job = row.querySelector("[data-step-job]");
     var flow = folder.value.indexOf(WORKFLOW) === 0;
-    job.hidden = flow;
-    job.required = !flow;
-    row.querySelector("[data-step-args]").hidden = flow;
+    row.dataset.kind = flow ? "workflow" : "job";
+    row.querySelector("[data-step-job-field]").hidden = flow || !folder.value;
+    row.querySelector("[data-step-args-field]").hidden = flow || !folder.value;
     if (flow) return;
     var picked = job.value;
     keepFolder(job, folder.value);
@@ -1786,95 +1791,310 @@
     if (job.dropdown) job.dropdown();
   }
 
-  // stepHead names a step by what it runs, the heading it keeps when
-  // it is off: folder / job, or the workflow.
-  function stepHead(row) {
-    if (row.hasAttribute("data-step-prompt")) {
-      var place = row.querySelector("[data-step-place]").value;
-      var dir = row.querySelector("[data-step-dir]");
-      var at = dir.value && (!dir.dataset.folder || dir.dataset.folder === place) ? place + "/" + dir.value : place;
-      var promptHead = row.querySelector("[data-step-head]");
-      promptHead.textContent = "";
-      promptHead.appendChild(icon("i-prompt"));
-      promptHead.appendChild(document.createTextNode("prompt in " + at));
-      return;
+  // stepLine writes a card's head from its fields: its kind and the
+  // step in one line, as the page drew it.
+  function stepLine(row) {
+    var kind = row.dataset.kind, line = "";
+    var named = STEP_KINDS[kind] || STEP_KINDS.job;
+    row.className = row.className.replace(/\bkind-\w+/, "kind-" + kind);
+    row.querySelector("[data-step-kind]").textContent = named[0];
+    row.querySelector("[data-step-icon] use").setAttribute("href", "#" + named[1]);
+    if (kind === "prompt") {
+      line = row.querySelector("[data-step-prompt-text]").value.trim().split("\n")[0];
+    } else if (kind === "summary") {
+      var place = stepPlace(row);
+      var at = place.dir ? place.folder + "/" + place.dir : place.folder;
+      line = "of the steps before it, in " + (at === "_" ? "the root" : at);
+    } else {
+      var folder = row.querySelector("[data-step-folder]");
+      if (kind === "workflow") {
+        line = folder.options[folder.selectedIndex].text;
+      } else if (folder.value) {
+        var job = row.querySelector("[data-step-job]").value;
+        var args = row.querySelector("[data-step-args]").value.trim();
+        line = job ? folder.value + " / " + job + (args ? " " + args : "") : "";
+      }
     }
-    var folder = row.querySelector("[data-step-folder]");
-    var job = row.querySelector("[data-step-job]");
-    var head = row.querySelector("[data-step-head]");
-    var picked = folder.options[folder.selectedIndex];
-    if (!picked) return;
-    head.textContent = folder.value.indexOf(WORKFLOW) === 0 ? picked.text : folder.value + " / " + job.value;
+    var head = row.querySelector("[data-step-line]");
+    head.textContent = line || (kind === "prompt" ? "no prompt yet" : "no job picked yet");
+    head.classList.toggle("unset", !line);
   }
 
-  // stepTools enables the move buttons that have somewhere to go, and
-  // keeps one step at least.
-  function stepTools(list) {
-    var rows = list.querySelectorAll("[data-step]");
+  // stepFold opens a card on its fields, or folds it to its head.
+  function stepFold(row, open) {
+    row.classList.toggle("open", open);
+    row.querySelector("[data-step-toggle]").setAttribute("aria-expanded", open ? "true" : "false");
+  }
+
+  // stepOff turns a step off, which a run skips, or back on; its menu
+  // item says what a pick does next.
+  function stepOff(row, off) {
+    row.classList.toggle("off", off);
+    row.toggleAttribute("data-off", off);
+    var item = row.querySelector("[data-step-off]");
+    item.querySelector("span").textContent = off ? "Enable" : "Disable";
+    item.querySelector("use").setAttribute("href", off ? "#i-play" : "#i-stop");
+  }
+
+  // stepsChanged numbers the cards on the rail, enables the moves that
+  // have somewhere to go, and shows the empty line without a step.
+  function stepsChanged(form) {
+    var rows = form.querySelectorAll("[data-step]");
     Array.prototype.forEach.call(rows, function (row, i) {
-      row.querySelector("[data-step-up]").disabled = i === 0;
-      row.querySelector("[data-step-down]").disabled = i === rows.length - 1;
+      row.querySelector("[data-step-num]").textContent = i + 1;
+      row.querySelector("[data-step-grip]").setAttribute("aria-label", "Move step " + (i + 1) + " of " + rows.length);
+      row.querySelector('[data-step-move="up"]').disabled = i === 0;
+      row.querySelector('[data-step-move="down"]').disabled = i === rows.length - 1;
     });
+    form.querySelector("[data-steps-empty]").hidden = rows.length > 0;
+  }
+
+  // stepSay tells a screen reader what a move or a change did.
+  function stepSay(form, text) {
+    var live = form.querySelector("[data-steps-live]");
+    live.textContent = "";
+    window.setTimeout(function () { live.textContent = text; }, 30);
+  }
+
+  // stepAdd puts a new card of a kind after the cards, or after the card
+  // given, open; a command starts in the folder of the command before it.
+  function stepAdd(form, kind, after) {
+    var tpl = form.querySelector('[data-step-template="' + kind + '"]');
+    if (!tpl) return null;
+    var list = form.querySelector("[data-steps]");
+    var row = tpl.content.firstElementChild.cloneNode(true);
+    list.insertBefore(row, after ? after.nextElementSibling : null);
+    row.querySelectorAll("select").forEach(enhanceSelect);
+    if (kind === "job" && !after) {
+      var commands = list.querySelectorAll('[data-step][data-kind="job"]');
+      var prev = commands.length > 1 ? commands[commands.length - 2] : null;
+      if (prev) setValue(row.querySelector("[data-step-folder]"), prev.querySelector("[data-step-folder]").value);
+    }
+    narrowStep(row);
+    stepLine(row);
+    stepsChanged(form);
+    return row;
+  }
+
+  // setValue picks a value in a field, a select's dropdown with it.
+  function setValue(field, value) {
+    field.value = value;
+    if (field.dropdown) field.dropdown();
+  }
+
+  // stepDuplicate copies a card, its fields and its state, under it.
+  function stepDuplicate(form, row) {
+    var copy = stepAdd(form, row.dataset.kind === "workflow" ? "job" : row.dataset.kind, row);
+    if (!copy) return null;
+    ["[data-step-folder]", "[data-step-prompt-text]", "[data-step-place]", "[data-step-dir]"].forEach(function (sel) {
+      var from = row.querySelector(sel), to = copy.querySelector(sel);
+      if (from && to) setValue(to, from.value);
+    });
+    narrowStep(copy);
+    ["[data-step-job]", "[data-step-args]"].forEach(function (sel) {
+      var from = row.querySelector(sel), to = copy.querySelector(sel);
+      if (from && to) setValue(to, from.value);
+    });
+    stepOff(copy, row.hasAttribute("data-off"));
+    stepLine(copy);
+    return copy;
+  }
+
+  // stepMove moves a card by delta places, and keeps the focus where it
+  // was.
+  function stepMove(form, row, delta) {
+    var list = form.querySelector("[data-steps]");
+    var focused = document.activeElement;
+    if (delta < 0 && row.previousElementSibling) list.insertBefore(row, row.previousElementSibling);
+    else if (delta > 0 && row.nextElementSibling) list.insertBefore(row.nextElementSibling, row);
+    else return;
+    stepsChanged(form);
+    if (focused && row.contains(focused)) focused.focus();
+    var rows = Array.prototype.indexOf.call(list.children, row);
+    stepSay(form, "Step moved to " + (rows + 1) + " of " + list.children.length);
+  }
+
+  // stepProblem marks a card with what is wrong with it, and opens it;
+  // no text clears it.
+  function stepProblem(row, text) {
+    var box = row.querySelector("[data-step-error]");
+    box.textContent = text || "";
+    box.hidden = !text;
+    row.classList.toggle("invalid", !!text);
+    if (text) stepFold(row, true);
+  }
+
+  // workflowValid checks the form before it goes: a name, a step, and
+  // each card its folder and job, or its prompt; it marks what is
+  // missing and says so on top.
+  function workflowValid(form) {
+    var first = null;
+    form.querySelectorAll("[data-step]").forEach(function (row) {
+      var kind = row.dataset.kind, problem = "";
+      if (kind === "job") {
+        var folder = row.querySelector("[data-step-folder]").value, job = row.querySelector("[data-step-job]").value;
+        if (!folder) problem = "Pick a folder and its job, or a workflow.";
+        else if (!job) problem = "Pick the job of " + folder + ".";
+      } else if (kind === "prompt" && !row.querySelector("[data-step-prompt-text]").value.trim()) {
+        problem = "Write the prompt Claude answers.";
+      }
+      stepProblem(row, problem);
+      if (problem && !first) first = row;
+    });
+    var name = form.querySelector('[name="name"]');
+    var count = form.querySelectorAll("[data-step]").length;
+    if (!name.value.trim()) {
+      formError(form, "A workflow needs a name.");
+      name.focus();
+      return false;
+    }
+    if (!count) {
+      formError(form, "Add a step: a workflow needs one to run.");
+      return false;
+    }
+    if (first) {
+      formError(form, "Step " + (Array.prototype.indexOf.call(first.parentNode.children, first) + 1) + " needs a look.");
+      first.scrollIntoView({ block: "center" });
+      return false;
+    }
+    return true;
+  }
+
+  // stepError puts an error of the API that names a step, "step 2: ..."
+  // or "step 2, folder / job: ...", under that card.
+  function stepError(form, text) {
+    var m = /^step (\d+)[,:]\s*(.*)$/i.exec(text);
+    if (!m) return;
+    var row = form.querySelectorAll("[data-step]")[parseInt(m[1], 10) - 1];
+    if (!row) return;
+    stepProblem(row, m[2].charAt(0).toUpperCase() + m[2].slice(1));
+    row.scrollIntoView({ block: "center" });
   }
 
   document.querySelectorAll("form[data-workflow]").forEach(function (form) {
     var list = form.querySelector("[data-steps]");
-    list.querySelectorAll("[data-step]").forEach(narrowStep);
-    // A prompt step's directory goes with the folder it came in.
-    list.querySelectorAll("[data-step-prompt]").forEach(function (row) {
-      row.querySelector("[data-step-dir]").dataset.folder = row.querySelector("[data-step-place]").value;
+    list.querySelectorAll("[data-step]").forEach(function (row) {
+      narrowStep(row);
+      stepLine(row);
     });
-    stepTools(list);
+    stepsChanged(form);
+
     form.addEventListener("change", function (event) {
-      if (event.target.matches("[data-step-place]")) {
-        stepHead(event.target.closest("[data-step]"));
-        return;
-      }
-      if (event.target.matches("[data-step-folder], [data-step-job]")) {
-        var step = event.target.closest("[data-step]");
-        if (event.target.matches("[data-step-folder]")) narrowStep(step);
-        stepHead(step);
-      }
+      var row = event.target.closest("[data-step]");
+      if (!row) return;
+      if (event.target.matches("[data-step-folder]")) narrowStep(row);
+      stepLine(row);
     });
+    form.addEventListener("input", function (event) {
+      var row = event.target.closest("[data-step]");
+      if (!row) return;
+      if (row.classList.contains("invalid")) stepProblem(row, "");
+      stepLine(row);
+    });
+
     form.addEventListener("click", function (event) {
-      // Summarize fills the prompt with the short summary instruction.
-      var preset = event.target.closest("[data-workflow-preset]");
-      if (preset) {
+      var add = event.target.closest("[data-step-add]");
+      if (add) {
         event.preventDefault();
-        var text = form.querySelector("[data-workflow-prompt-text]");
-        text.value = preset.dataset.workflowPreset;
-        text.focus();
+        add.closest("details").removeAttribute("open");
+        var fresh = stepAdd(form, add.dataset.stepAdd);
+        if (!fresh) return;
+        stepFold(fresh, true);
+        var field = fresh.querySelector("[data-step-prompt-text], .dd-button, input");
+        if (field) field.focus();
+        fresh.scrollIntoView({ block: "nearest" });
+        stepSay(form, STEP_KINDS[add.dataset.stepAdd][0] + " step added");
         return;
       }
-      var btn = event.target.closest("[data-step-add], [data-step-add-prompt], [data-step-up], [data-step-down], [data-step-remove]");
+      var fold = event.target.closest("[data-steps-fold]");
+      if (fold) {
+        var open = fold.getAttribute("aria-pressed") !== "true";
+        list.querySelectorAll("[data-step]").forEach(function (row) { stepFold(row, open); });
+        fold.setAttribute("aria-pressed", open ? "true" : "false");
+        fold.textContent = open ? "Fold all" : "Expand all";
+        return;
+      }
+      var row = event.target.closest("[data-step]");
+      if (!row) return;
+      if (event.target.closest("[data-step-toggle]")) {
+        stepFold(row, !row.classList.contains("open"));
+        return;
+      }
+      var btn = event.target.closest("[data-step-move], [data-step-off], [data-step-duplicate], [data-step-remove]");
       if (!btn) return;
       event.preventDefault();
-      var row = btn.closest("[data-step]");
-      if (btn.hasAttribute("data-step-add-prompt")) {
-        var asks = form.querySelector("[data-prompt-template]").content.firstElementChild.cloneNode(true);
-        list.appendChild(asks);
-        asks.querySelectorAll("select").forEach(enhanceSelect);
-        asks.querySelector("[data-step-prompt-text]").focus();
-      } else if (btn.hasAttribute("data-step-add")) {
-        var fresh = form.querySelector("[data-step-template]").content.firstElementChild.cloneNode(true);
-        var last = list.querySelector("[data-step]:not([data-step-prompt]):last-child");
-        // A new step starts in the folder of the one before it.
-        if (last) fresh.querySelector("[data-step-folder]").value = last.querySelector("[data-step-folder]").value;
-        list.appendChild(fresh);
-        fresh.querySelectorAll("select").forEach(enhanceSelect);
-        narrowStep(fresh);
-        stepHead(fresh);
-        fresh.querySelector("[data-step-job]").focus();
-      } else if (btn.hasAttribute("data-step-up") && row.previousElementSibling) {
-        list.insertBefore(row, row.previousElementSibling);
-      } else if (btn.hasAttribute("data-step-down") && row.nextElementSibling) {
-        list.insertBefore(row.nextElementSibling, row);
-      } else if (btn.hasAttribute("data-step-remove")) {
-        // The last step goes too: a workflow of a prompt alone has none.
+      if (btn.hasAttribute("data-step-move")) {
+        stepMove(form, row, btn.dataset.stepMove === "up" ? -1 : 1);
+        row.querySelector("[data-step-grip]").focus();
+      } else if (btn.hasAttribute("data-step-off")) {
+        stepOff(row, !row.hasAttribute("data-off"));
+        stepSay(form, row.hasAttribute("data-off") ? "Step off: a run skips it" : "Step on");
+      } else if (btn.hasAttribute("data-step-duplicate")) {
+        var copy = stepDuplicate(form, row);
+        if (copy) copy.querySelector("[data-step-toggle]").focus();
+        stepSay(form, "Step duplicated");
+      } else {
+        var next = row.nextElementSibling || row.previousElementSibling;
         row.remove();
+        stepsChanged(form);
+        (next ? next.querySelector("[data-step-toggle]") : form.querySelector(".wf-add-menu summary")).focus();
+        stepSay(form, "Step removed");
       }
-      stepTools(list);
     });
+
+    // The grip takes the up and down arrows: the step moves one place.
+    form.addEventListener("keydown", function (event) {
+      var grip = event.target.closest && event.target.closest("[data-step-grip]");
+      if (!grip || (event.key !== "ArrowUp" && event.key !== "ArrowDown")) return;
+      event.preventDefault();
+      stepMove(form, grip.closest("[data-step]"), event.key === "ArrowUp" ? -1 : 1);
+      grip.focus();
+    });
+
+    // A drag by the grip moves the card under the pointer as it goes:
+    // above the middle of a card, it goes before that card.
+    var drag = null;
+    list.addEventListener("pointerdown", function (event) {
+      var grip = event.target.closest("[data-step-grip]");
+      if (!grip || event.button !== 0) return;
+      event.preventDefault();
+      try {
+        grip.setPointerCapture(event.pointerId);
+      } catch (e) {
+        // A pointer the browser does not track moves the card all the same.
+      }
+      drag = { row: grip.closest("[data-step]"), grip: grip };
+      drag.row.classList.add("dragging");
+      list.classList.add("sorting");
+    });
+    list.addEventListener("pointermove", function (event) {
+      if (!drag) return;
+      var before = null;
+      var rows = list.querySelectorAll("[data-step]");
+      for (var i = 0; i < rows.length; i++) {
+        if (rows[i] === drag.row) continue;
+        var box = rows[i].getBoundingClientRect();
+        if (event.clientY < box.top + box.height / 2) {
+          before = rows[i];
+          break;
+        }
+      }
+      if (before !== drag.row.nextElementSibling) {
+        list.insertBefore(drag.row, before);
+        stepsChanged(form);
+      }
+    });
+    var drop = function () {
+      if (!drag) return;
+      drag.row.classList.remove("dragging");
+      list.classList.remove("sorting");
+      var at = Array.prototype.indexOf.call(list.children, drag.row);
+      drag.grip.focus();
+      drag = null;
+      stepSay(form, "Step moved to " + (at + 1) + " of " + list.children.length);
+    };
+    list.addEventListener("pointerup", drop);
+    list.addEventListener("pointercancel", drop);
   });
 
   // Move up and Move down on the Workspaces page: the workspace trades
@@ -2192,9 +2412,10 @@
           a.appendChild(icon("i-flow"));
           a.appendChild(document.createTextNode("workflow"));
         } else if (data.prompt) {
+          var summary = data.kind === "summary";
           a.href = folderHref(data.folder);
-          a.appendChild(icon("i-prompt"));
-          a.appendChild(document.createTextNode("prompt in " + data.folder));
+          a.appendChild(icon(summary ? "i-summary" : "i-prompt"));
+          a.appendChild(document.createTextNode((summary ? "summary in " : "prompt in ") + data.folder));
         } else {
           a.href = folderHref(data.folder) + "/" + data.job;
           a.textContent = data.folder + " / " + data.job;

@@ -22,6 +22,9 @@ type Link struct {
 	// Prompt says the step asks Claude: the prompt, which the page shows
 	// on hover.
 	Prompt string
+	// Summary says the step asks Claude for the summary of the steps
+	// before it.
+	Summary bool
 	// Disabled is a step the workflow's runs skip.
 	Disabled bool
 	// Sub is the chain of the run the step made of a workflow, when the

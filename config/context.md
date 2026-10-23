@@ -105,20 +105,23 @@ Page: `/notes`; API: `/api/notes`; MCP: `list_notes`, `note_comment`,
 A prompt asks Claude Code a question in a place, as a run of
 `@claude-prompt` as the asking user, and Claude answers in a thread that
 **Reply** continues. Prompts come from the Prompt box of a folder or a
-directory, the header's prompt, a run's page, and a workflow's prompt.
-API: `/api/prompts`; MCP: `ask_prompt`. `prompt/edit` asks, `prompt/view`
-reads other users' prompts and their runs.
+directory, the header's prompt, a run's page, and a workflow's prompt
+and summary steps. API: `/api/prompts`; MCP: `ask_prompt`.
+`prompt/edit` asks, `prompt/view` reads other users' prompts and their
+runs.
 
 ## Workflows (`workflow`)
 
-A workflow is a named chain of steps, each a job of a folder or another
-workflow, run one after another until one fails. A switch on each step
-skips it. A workflow can end with a prompt to Claude, which reads the
-steps' output and the run's input, or be a prompt alone. Running one
-takes the right to run every step. A step may also be a prompt to
-Claude, whose answer the prompts after it read. The page's Prompt box,
-and `ask_prompt` with `area` `workflows`, have Claude build or change a
-workflow with these tools, run it and fix it. Page: `/workflows`; API:
+A workflow is a named chain of steps, each of a kind: `job`, a job of
+a folder, `workflow`, another workflow, `prompt`, a prompt to Claude
+with the output of the steps before it, or `summary`, Claude's summary
+of the steps before it. The steps run one after another until one
+fails; a summary runs after a failure too. A run skips a step that is
+off. The last answer of a prompt or a summary is the run's answer.
+Running one takes the right to run every step, and `prompt/edit` for a
+prompt or a summary. The page's Prompt box, and `ask_prompt` with
+`area` `workflows`, have Claude build or change a workflow with these
+tools, run it and fix it. Page: `/workflows`; API:
 `/api/workflows`; MCP: `list_workflows`, `get_workflow`,
 `create_workflow`, `update_workflow`, `run_workflow`,
 `list_workflow_runs`.

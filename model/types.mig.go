@@ -2140,6 +2140,9 @@ type Workflow struct {
 	// Updated At
 	UpdatedAt *time.Time `db:"updated_at" json:"updated_at"`
 
+	// Description
+	Description string `db:"description" json:"description"`
+
 	// Prompt
 	Prompt string `db:"prompt" json:"prompt"`
 
@@ -2186,6 +2189,12 @@ func (w *Workflow) GetUpdatedAt() *time.Time { return w.UpdatedAt }
 // SetUpdatedAt sets UpdatedAt to the provided value.
 func (w *Workflow) SetUpdatedAt(stamp time.Time) { w.UpdatedAt = &stamp }
 
+// GetDescription will return the value of Description.
+func (w *Workflow) GetDescription() string { return w.Description }
+
+// SetDescription sets Description to the provided value.
+func (w *Workflow) SetDescription(val string) { w.Description = val }
+
 // GetPrompt will return the value of Prompt.
 func (w *Workflow) GetPrompt() string { return w.Prompt }
 
@@ -2208,7 +2217,7 @@ func (w *Workflow) SetSidebarHidden(val bool) { w.SidebarHidden = val }
 const WorkflowTable = "`workflow`"
 
 // WorkflowFields is a list of all columns in the DB table.
-var WorkflowFields = []string{"id", "name", "user_id", "user_name", "created_at", "updated_at", "prompt", "prompt_folder", "sidebar_hidden"}
+var WorkflowFields = []string{"id", "name", "user_id", "user_name", "created_at", "updated_at", "description", "prompt", "prompt_folder", "sidebar_hidden"}
 
 // WorkflowPrimaryFields are the primary key fields in the DB table.
 var WorkflowPrimaryFields = []string{"id"}
@@ -2386,6 +2395,9 @@ type WorkflowRunStep struct {
 
 	// Workflow Run Ref
 	WorkflowRunRef string `db:"workflow_run_ref" json:"workflow_run_ref"`
+
+	// Kind
+	Kind string `db:"kind" json:"kind"`
 }
 
 // GetID will return the value of ID.
@@ -2466,11 +2478,17 @@ func (w *WorkflowRunStep) GetWorkflowRunRef() string { return w.WorkflowRunRef }
 // SetWorkflowRunRef sets WorkflowRunRef to the provided value.
 func (w *WorkflowRunStep) SetWorkflowRunRef(val string) { w.WorkflowRunRef = val }
 
+// GetKind will return the value of Kind.
+func (w *WorkflowRunStep) GetKind() string { return w.Kind }
+
+// SetKind sets Kind to the provided value.
+func (w *WorkflowRunStep) SetKind(val string) { w.Kind = val }
+
 // WorkflowRunStepTable is the name of the table in the DB.
 const WorkflowRunStepTable = "`workflow_run_step`"
 
 // WorkflowRunStepFields is a list of all columns in the DB table.
-var WorkflowRunStepFields = []string{"id", "workflow_run_id", "position", "folder", "job", "run_id", "state", "created_at", "updated_at", "prompt", "answer", "workflow_ref", "workflow_run_ref"}
+var WorkflowRunStepFields = []string{"id", "workflow_run_id", "position", "folder", "job", "run_id", "state", "created_at", "updated_at", "prompt", "answer", "workflow_ref", "workflow_run_ref", "kind"}
 
 // WorkflowRunStepPrimaryFields are the primary key fields in the DB table.
 var WorkflowRunStepPrimaryFields = []string{"id"}
@@ -2511,6 +2529,9 @@ type WorkflowStep struct {
 
 	// Args
 	Args string `db:"args" json:"args"`
+
+	// Kind
+	Kind string `db:"kind" json:"kind"`
 }
 
 // GetID will return the value of ID.
@@ -2579,11 +2600,17 @@ func (w *WorkflowStep) GetArgs() string { return w.Args }
 // SetArgs sets Args to the provided value.
 func (w *WorkflowStep) SetArgs(val string) { w.Args = val }
 
+// GetKind will return the value of Kind.
+func (w *WorkflowStep) GetKind() string { return w.Kind }
+
+// SetKind sets Kind to the provided value.
+func (w *WorkflowStep) SetKind(val string) { w.Kind = val }
+
 // WorkflowStepTable is the name of the table in the DB.
 const WorkflowStepTable = "`workflow_step`"
 
 // WorkflowStepFields is a list of all columns in the DB table.
-var WorkflowStepFields = []string{"id", "workflow_id", "position", "folder", "job", "disabled", "prompt", "dir", "workflow_ref", "target", "args"}
+var WorkflowStepFields = []string{"id", "workflow_id", "position", "folder", "job", "disabled", "prompt", "dir", "workflow_ref", "target", "args", "kind"}
 
 // WorkflowStepPrimaryFields are the primary key fields in the DB table.
 var WorkflowStepPrimaryFields = []string{"id"}

@@ -15,3 +15,4 @@ Workflow Step.
 | workflow_ref | char(26) |     | Workflow Ref |
 | target       | varchar  |     | Target       |
 | args         | varchar  |     | Args         |
+| kind         | varchar  |     | Kind         |

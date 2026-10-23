@@ -170,6 +170,8 @@ func showFlowRun(view api.WorkflowRunView, names map[string]string) string {
 	for i, step := range view.Steps {
 		name := step.Folder + "/" + step.Job
 		switch {
+		case step.IsSummary():
+			name = "summary in " + step.Folder
 		case step.IsPrompt():
 			name = "prompt in " + step.Folder
 		case step.WorkflowRef != "":

@@ -149,10 +149,12 @@ api PUT /env/infra/.env -d '{"content":"# Managed from task-ui; the secrets are 
 api POST /schedules -d '{"folder":"backups","job":"verify","expression":"0 3 * * *"}'
 api POST /schedules -d '{"folder":"infra","job":"plan","expression":"@hourly","enabled":false}'
 
-# Two workflows: a release chain, and one that runs it as a step.
+# Two workflows: a release chain, and one that runs it as a step, asks
+# Claude about the build and ends with a summary, which the editor shows.
 api POST /workflows -d '{"name":"release","steps":[{"folder":"infra","job":"plan"},{"folder":"infra","job":"deploy"},{"folder":"tools","job":"make:build"}]}'
 release="$(grep -o '"id":"[a-z0-9]*"' "$work/api.out" | head -1 | cut -d'"' -f4)"
-api POST /workflows -d "{\"name\":\"ship\",\"steps\":[{\"folder\":\"tools\",\"job\":\"make:test\"},{\"workflow\":\"${release}\"}]}"
+api POST /workflows -d "{\"name\":\"ship\",\"description\":\"Tests the tools, releases them, and says how it went.\",\"steps\":[{\"kind\":\"job\",\"folder\":\"tools\",\"job\":\"make:test\"},{\"kind\":\"workflow\",\"workflow\":\"${release}\"},{\"kind\":\"prompt\",\"folder\":\"tools\",\"prompt\":\"List the images the build pushed, with their tags.\"},{\"kind\":\"summary\",\"folder\":\"_\"}]}"
+ship="$(grep -o '"id":"[a-z0-9]*"' "$work/api.out" | head -1 | cut -d'"' -f4)"
 
 # Real runs, so the history has something to show: a forced run that kills
 # the one before it, a plain one, a failure, and runs in the other folders.
@@ -216,6 +218,8 @@ shot artifacts-dark /artifacts dark
 shot schedules-dark /schedules dark
 shot workflows-dark /workflows dark
 shot workflow-dark "/workflows/${release}" dark
+shot workflow-edit-dark "/workflows/${ship}/edit" dark 1440x1200
+shot workflow-edit-light "/workflows/${ship}/edit" light 1440x1200
 shot settings-dark /settings dark
 shot instance-dark /settings/instance dark 1440x2400
 shot projects-dark /settings/projects dark

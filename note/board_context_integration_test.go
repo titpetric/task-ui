@@ -34,7 +34,7 @@ func TestBoard_WorkflowContext(t *testing.T) {
 		return run
 	}
 	asked := func(run *model.WorkflowRun) string {
-		answer, err := f.board.AskWorkflow(ctx, admin, run, wf, run.Input)
+		answer, err := askFinal(f.board, ctx, admin, run, wf, run.Input)
 		assert.NoError(t, err)
 		return answer
 	}

@@ -20,18 +20,25 @@ type Workflow struct {
 	CanChange bool
 }
 
-// Prompted reports whether the workflow asks Claude once its steps end, so its Run takes input.
+// Prompted reports whether a step of the workflow asks Claude, a prompt or a summary, so its Run takes input.
 func (w Workflow) Prompted() bool {
-	return w.Workflow.HasPrompt()
+	for _, step := range w.Steps {
+		if kind := step.StepKind(); !step.Disabled && (kind == model.StepPrompt || kind == model.StepSummary) {
+			return true
+		}
+	}
+	return false
 }
 
-// PromptWhere is where the workflow's prompt runs, as a page names it:
-// a folder, a directory in one, or the root.
-func (w Workflow) PromptWhere() string {
-	if place := w.Workflow.PromptPlace(); place != model.Default {
-		return place + "/"
+// PromptPlace is where the workflow's first prompt or summary step asks
+// Claude, the place its thread shows before it starts: _ without one.
+func (w Workflow) PromptPlace() string {
+	for _, step := range w.Steps {
+		if kind := step.StepKind(); kind == model.StepPrompt || kind == model.StepSummary {
+			return model.WorkflowStep{Folder: step.Folder, Dir: step.Dir}.Place()
+		}
 	}
-	return "the root"
+	return model.Default
 }
 
 // WorkflowRun is a run of a workflow with its steps.

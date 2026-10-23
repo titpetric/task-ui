@@ -1,8 +1,18 @@
 package view
 
+import (
+	"strings"
+
+	"github.com/titpetric/task-ui/model"
+)
+
 // Step is a step of a workflow, or of a run of one, as a page shows
-// it: a job of a folder, or another workflow.
+// it: a job of a folder, another workflow, a prompt to Claude or a
+// summary by Claude, as Kind says.
 type Step struct {
+	// Kind is model.StepJob, StepWorkflow, StepPrompt or StepSummary;
+	// empty reads as the fields say, as model.WorkflowStep.StepKind.
+	Kind   string
 	Folder string
 	Job    string
 	// WorkflowID and WorkflowName are the workflow a step runs in place
@@ -15,7 +25,8 @@ type Step struct {
 	// @host:<host>.
 	Args string
 	// Prompt is what a prompt step asks Claude, in Folder, _ for the
-	// root, and Dir inside it; empty for a job or a workflow.
+	// root, and Dir inside it; empty for any other step. A summary step
+	// asks in the same place.
 	Prompt string
 	Dir    string
 	// State is how a run's step ended; RunID the run it made of a job,
@@ -23,4 +34,81 @@ type Step struct {
 	State         string
 	RunID         string
 	WorkflowRunID string
+}
+
+// NewStep returns a blank step of a kind, as the workflow editor adds
+// one: a prompt or a summary asks in the root.
+func NewStep(kind string) Step {
+	if kind == model.StepPrompt || kind == model.StepSummary {
+		return Step{Kind: kind, Folder: model.Default}
+	}
+	return Step{Kind: kind}
+}
+
+// StepKind is what the step does, from its fields when Kind is empty.
+func (s Step) StepKind() string {
+	return model.WorkflowStep{Kind: s.Kind, Prompt: s.Prompt, WorkflowRef: s.WorkflowID}.StepKind()
+}
+
+// KindLabel names the step's kind as the editor shows it.
+func (s Step) KindLabel() string {
+	switch s.StepKind() {
+	case model.StepWorkflow:
+		return "Workflow"
+	case model.StepPrompt:
+		return "Prompt"
+	case model.StepSummary:
+		return "Summary"
+	}
+	return "Command"
+}
+
+// Icon is the symbol of the step's kind, #i-<Icon> of the sprite.
+func (s Step) Icon() string {
+	switch s.StepKind() {
+	case model.StepWorkflow:
+		return "flow"
+	case model.StepPrompt:
+		return "prompt"
+	case model.StepSummary:
+		return "summary"
+	}
+	return "terminal"
+}
+
+// Place is where a prompt or summary step asks Claude, folder or
+// folder/dir, the root as "the root".
+func (s Step) Place() string {
+	place := model.WorkflowStep{Folder: s.Folder, Dir: s.Dir}.Place()
+	if place == model.Default {
+		return "the root"
+	}
+	return place
+}
+
+// Line is the step in one line, its card's heading while folded: the
+// job and its args, the workflow, the first line of the prompt, or
+// where the summary asks.
+func (s Step) Line() string {
+	switch s.StepKind() {
+	case model.StepWorkflow:
+		if s.WorkflowName == "" {
+			return "a workflow that is gone"
+		}
+		return s.WorkflowName
+	case model.StepPrompt:
+		line, _, _ := strings.Cut(strings.TrimSpace(s.Prompt), "\n")
+		return line
+	case model.StepSummary:
+		return "of the steps before it, in " + s.Place()
+	case model.StepJob:
+		if s.Job == "" {
+			return ""
+		}
+	}
+	line := s.Folder + " / " + s.Job
+	if args := ArgLine(s.Job, s.Args); args != "" {
+		line += " " + args
+	}
+	return line
 }

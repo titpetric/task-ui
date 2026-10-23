@@ -16,23 +16,23 @@ import (
 	"github.com/titpetric/task-ui/storage"
 )
 
-// create_workflow makes a workflow of a job and a prompt step,
-// get_workflow shows it, update_workflow renames it and keeps its steps,
-// and run_workflow runs it and ends with the final prompt's answer. A
-// prompt step takes prompt/edit.
+// create_workflow makes a workflow of a job, a prompt step and a
+// summary step, get_workflow shows it, update_workflow renames it and
+// keeps its steps and description, and run_workflow runs it and ends
+// with the last answer, the summary's. A prompt step takes prompt/edit.
 func TestTools_WorkflowEdits(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
 	f.board.AgentCommand = []string{"sh", "-c", `printf 'Asked: %s' "$TASK_UI_PROMPT" > "$TASK_UI_PROMPT_REPLY"`}
-	steps := []map[string]any{{"folder": "site", "job": "build"}, {"prompt": "fetch the weather", "folder": "_"}}
+	steps := []map[string]any{{"folder": "site", "job": "build"}, {"prompt": "fetch the weather", "folder": "_"}, {"kind": "summary"}}
 
-	text, failed := f.tool(t, "admin", "create_workflow", map[string]any{"name": "Weather", "steps": steps, "prompt": "water today?"})
+	text, failed := f.tool(t, "admin", "create_workflow", map[string]any{"name": "Weather", "description": "water or not", "steps": steps})
 	assert.False(t, failed, text)
 	assert.Contains(t, text, "workflow Weather (id ")
-	assert.Contains(t, text, "  1. site/build\n  2. prompt in _: fetch the weather\n")
-	assert.Contains(t, text, "final prompt, in _: water today?")
+	assert.Contains(t, text, "water or not\n")
+	assert.Contains(t, text, "  1. site/build\n  2. prompt in _: fetch the weather\n  3. summary in _\n")
 
-	text, failed = f.tool(t, "ops", "create_workflow", map[string]any{"name": "Asks", "steps": steps[1:]})
+	text, failed = f.tool(t, "ops", "create_workflow", map[string]any{"name": "Asks", "steps": steps[1:2]})
 	assert.True(t, failed, text)
 	assert.Contains(t, text, "403")
 
@@ -40,8 +40,8 @@ func TestTools_WorkflowEdits(t *testing.T) {
 	assert.False(t, failed, text)
 	assert.Contains(t, text, "workflow Watering (id ")
 	assert.Contains(t, text, ", not in the sidebar")
-	assert.Contains(t, text, "  2. prompt in _: fetch the weather\n")
-	assert.Contains(t, text, "final prompt, in _: water today?")
+	assert.Contains(t, text, "water or not\n")
+	assert.Contains(t, text, "  2. prompt in _: fetch the weather\n  3. summary in _\n")
 
 	text, failed = f.tool(t, "admin", "get_workflow", map[string]any{"workflow": "watering"})
 	assert.False(t, failed, text)
@@ -51,7 +51,12 @@ func TestTools_WorkflowEdits(t *testing.T) {
 	assert.False(t, failed, text)
 	assert.Contains(t, text, "Watering by admin, ok")
 	assert.Contains(t, text, "  2. prompt in _: ok")
-	assert.Contains(t, text, "answer:\nAsked: water today?")
+	assert.Contains(t, text, "  3. summary in _: ok")
+	assert.Contains(t, text, "answer:\nAsked: Summarize this workflow run.")
+
+	text, failed = f.tool(t, "admin", "create_workflow", map[string]any{"name": "Bad", "steps": []map[string]any{{"kind": "summary", "prompt": "no"}}})
+	assert.True(t, failed, text)
+	assert.Contains(t, text, "step 1")
 
 	_, failed = f.tool(t, "admin", "get_workflow", map[string]any{"workflow": "nothing"})
 	assert.True(t, failed)

@@ -56,9 +56,13 @@ func Funcs() template.FuncMap {
 		"bytes":     func(n uint64) string { return Size(int64(n)) },
 		"megabytes": func(v float64) string { return Size(int64(v * (1 << 20))) },
 		"rate":      func(v float64) string { return Size(int64(v)) + "/s" },
-		// summaryPrompt is the short summary instruction, the Summarize
-		// preset of a workflow's prompt.
-		"summaryPrompt": func() string { return claude.RunSummary },
+		// summaryPrompt is the short summary instruction, which a
+		// workflow's summary step sets beside its question,
+		// workflowSummaryQuestion; newStep is a blank step of a kind,
+		// for the editor's Add step.
+		"summaryPrompt":           func() string { return claude.RunSummary },
+		"workflowSummaryQuestion": func() string { return note.WorkflowSummaryQuestion },
+		"newStep":                 NewStep,
 		// summaryQuestion is the question of Run and summarize, which
 		// Summarize on a run that ended asks as well.
 		"summaryQuestion": func() string { return note.SummaryQuestion },

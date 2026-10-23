@@ -26,6 +26,7 @@ type fixture struct {
 	workflows *storage.WorkflowStorage
 	wfRuns    *storage.WorkflowRunStorage
 	runs      *storage.RunStorage
+	db        storage.DB
 }
 
 func newFixture(t *testing.T) *fixture {
@@ -48,7 +49,7 @@ func newFixture(t *testing.T) *fixture {
 	manager := runner.New(runner.Options{Runs: runs, Recordings: &recording.Store{Root: t.TempDir()}, Grace: time.Second})
 	t.Cleanup(func() { manager.Shutdown(context.Background()) })
 
-	f := &fixture{workflows: storage.NewWorkflowStorage(db), wfRuns: storage.NewWorkflowRunStorage(db), runs: runs}
+	f := &fixture{workflows: storage.NewWorkflowStorage(db), wfRuns: storage.NewWorkflowRunStorage(db), runs: runs, db: db}
 	f.runner = workflow.New(f.workflows, f.wfRuns, catalogue{"infra": infra}, manager)
 	return f
 }
@@ -315,9 +316,11 @@ func TestRunner_DisabledStep(t *testing.T) {
 	assert.Equal(t, model.StateOK, steps[2].State)
 
 	// Storage keeps such a workflow out; the runner refuses one too.
-	off := &model.Workflow{Name: "off", Prompt: "say ok"}
-	assert.NoError(t, f.workflows.Create(ctx, off, []model.WorkflowStep{{Folder: "infra", Job: "build", Disabled: true}}))
-	off.Prompt = ""
+	off := &model.Workflow{Name: "off"}
+	assert.ErrorContains(t, f.workflows.Create(ctx, off, []model.WorkflowStep{{Folder: "infra", Job: "build", Disabled: true}}), "a workflow needs an enabled step")
+	assert.NoError(t, f.workflows.Create(ctx, off, []model.WorkflowStep{{Folder: "infra", Job: "build"}}))
+	_, err = f.db.ExecContext(ctx, "UPDATE workflow_step SET disabled = 1 WHERE workflow_id = ?", off.ID)
+	assert.NoError(t, err)
 	_, err = f.runner.Start(ctx, off, ops, "")
 	assert.ErrorIs(t, err, workflow.ErrNothing)
 }

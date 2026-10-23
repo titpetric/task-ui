@@ -25,7 +25,7 @@ func (h *Handlers) workflowNames(ctx context.Context) map[string]string {
 func viewSteps(steps []model.WorkflowStep, names map[string]string) []view.Step {
 	out := make([]view.Step, 0, len(steps))
 	for _, s := range steps {
-		out = append(out, view.Step{Folder: s.Folder, Job: s.Job, WorkflowID: s.WorkflowRef, WorkflowName: names[s.WorkflowRef], Disabled: s.Disabled, Args: s.Args, Prompt: s.Prompt, Dir: s.Dir})
+		out = append(out, view.Step{Kind: s.StepKind(), Folder: s.Folder, Job: s.Job, WorkflowID: s.WorkflowRef, WorkflowName: names[s.WorkflowRef], Disabled: s.Disabled, Args: s.Args, Prompt: s.Prompt, Dir: s.Dir})
 	}
 	return out
 }
@@ -35,7 +35,7 @@ func viewRunSteps(rows []model.WorkflowRunStep, names map[string]string) []view.
 	out := make([]view.Step, 0, len(rows))
 	for _, s := range rows {
 		out = append(out, view.Step{
-			Folder: s.Folder, Job: s.Job, WorkflowID: s.WorkflowRef, WorkflowName: names[s.WorkflowRef],
+			Kind: s.StepKind(), Folder: s.Folder, Job: s.Job, WorkflowID: s.WorkflowRef, WorkflowName: names[s.WorkflowRef],
 			State: s.State, RunID: s.RunID, WorkflowRunID: s.WorkflowRunRef, Prompt: s.Prompt,
 		})
 	}
@@ -228,10 +228,10 @@ func (h *Handlers) workflowRun(w http.ResponseWriter, r *http.Request) {
 	h.render(w, http.StatusOK, "workflow_run", p)
 }
 
-// workflowRunPrompt is the box of a workflow run's page: the thread of
-// the workflow's prompt, live while it runs, for a user with
-// prompt/view. None for a run whose workflow asks nothing and that has
-// no thread.
+// workflowRunPrompt is the box of a workflow run's page: the threads of
+// the workflow's prompt and summary steps, live while it runs, for a
+// user with prompt/view. None for a run whose workflow asks nothing and
+// that has no thread.
 func (h *Handlers) workflowRunPrompt(r *http.Request, p *view.Page, run *model.WorkflowRun) *view.Prompt {
 	if h.opts.Board == nil || !p.Can("prompt/view") {
 		return nil

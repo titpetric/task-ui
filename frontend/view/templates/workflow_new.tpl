@@ -2,7 +2,7 @@
 <div class="page-head">
 	<div>
 		<h2>New workflow</h2>
-		<p>Name the workflow and add its steps in the order they run. A step is a job of a folder or another workflow. Each step starts when the one before it ends ok.</p>
+		<p>Name the workflow, then add its steps in the order they run: commands, prompts for Claude and a summary. Each step starts when the one before it ends ok.</p>
 	</div>
 </div>
 

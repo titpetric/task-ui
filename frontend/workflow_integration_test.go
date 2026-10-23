@@ -337,51 +337,57 @@ func TestWorkflow_Pages(t *testing.T) {
 	assert.Contains(t, back, `<tr data-run-id="`+made[0]+`">`)
 }
 
-// The editor leads every step with a switch, a disabled step off and
-// collapsed to its heading, and for a user with prompt/edit the Prompt
-// behind its own switch, with its Summarize preset and Run in: on for a
-// workflow with a prompt, off and its fields out of the form without; the workflow page shows the prompt under the steps, and its Run
-// opens the input dialog.
+// The editor draws every step as a card of its kind on the rail, a
+// disabled one off with Enable in its menu, a prompt step with its text
+// and place; for a user with prompt/edit Add step lists the prompt and
+// summary kinds. The workflow page shows the prompt step in the
+// pipeline, and its Run opens the input dialog.
 func TestWorkflow_PromptEditor(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
 	ctx := context.Background()
 	admin := f.users[asAdmin]
-	wf := &model.Workflow{Name: "summed", UserID: admin.ID, UserName: admin.Name, Prompt: "summarize, change nothing", PromptFolder: "infra"}
-	assert.NoError(t, f.opts.Workflows.Create(ctx, wf, []model.WorkflowStep{{Folder: "infra", Job: "plan"}, {Folder: "infra", Job: "many", Disabled: true}}))
+	wf := &model.Workflow{Name: "summed", Description: "the plan, summed", UserID: admin.ID, UserName: admin.Name}
+	assert.NoError(t, f.opts.Workflows.Create(ctx, wf, []model.WorkflowStep{
+		{Folder: "infra", Job: "plan"},
+		{Folder: "infra", Job: "many", Disabled: true},
+		{Kind: model.StepPrompt, Folder: "infra", Job: model.PromptJob, Prompt: "summarize, change nothing"},
+		{Kind: model.StepSummary, Folder: "_", Job: model.PromptJob},
+	}))
 
 	edit := f.page(t, asAdmin, "/workflows/"+wf.ID+"/edit")
-	assert.Equal(t, 2, strings.Count(edit, `<input type="checkbox" data-switch aria-label="Run this step"`)-2, "two rows and the templates of a step and a prompt step")
-	assert.Contains(t, edit, `<li class="step switchable off" data-step data-switchable>`)
-	assert.Contains(t, edit, `<span class="step-head" data-step-head>infra / many</span>`)
-	assert.Contains(t, edit, `data-switch aria-label="Run this step" checked>`)
-	assert.Contains(t, edit, `<section class="switchable prompt-section" data-switchable>`)
-	assert.Contains(t, edit, `data-switch aria-label="Ask Claude once the steps end" checked>`)
-	assert.Contains(t, edit, `name="prompt" rows="4" spellcheck="false" placeholder="summarize the run, change nothing" data-workflow-prompt-text>`)
+	assert.Equal(t, 4, strings.Count(edit, `<li class="wf-step kind-`)-3, "four cards and the templates of the three kinds")
+	assert.Contains(t, edit, `<li class="wf-step kind-job off" data-step data-kind="job" data-off>`)
+	assert.Contains(t, edit, `<span class="wf-line" data-step-line>infra / many</span>`)
+	assert.Contains(t, edit, `<span>Enable</span>`)
 	assert.Contains(t, edit, `>summarize, change nothing</textarea>`)
-	assert.Contains(t, edit, `Claude also gets the last 3 answers of this workflow.`)
-	assert.Contains(t, edit, `data-workflow-preset="Summarise the run in one or two short paragraphs`)
 	assert.Contains(t, edit, `<option value="infra" selected>infra</option>`)
-	assert.Contains(t, edit, `<option value="">the root</option>`)
+	assert.Contains(t, edit, `data-kind="summary"`)
+	assert.Contains(t, edit, `Summarise the run in one or two short paragraphs`)
+	assert.Contains(t, edit, `>the plan, summed</textarea>`)
+	assert.Contains(t, edit, `data-step-add="prompt"`)
+	assert.Contains(t, edit, `data-step-add="summary"`)
+	assert.NotContains(t, edit, `name="prompt_folder"`)
 
-	// A new workflow starts with the prompt off, its fields out of the form.
+	// A new workflow starts with no step.
 	fresh := f.page(t, asAdmin, "/workflows/new")
-	assert.Contains(t, fresh, `<section class="switchable prompt-section off" data-switchable>`)
-	assert.Contains(t, fresh, `data-switch aria-label="Ask Claude once the steps end"><i`)
-	assert.Contains(t, fresh, `data-workflow-prompt-text disabled>`)
-	assert.Contains(t, fresh, `name="prompt_folder" disabled>`)
+	assert.Contains(t, fresh, `<ol class="wf-rail" data-steps>
+		</ol>`)
+	assert.Contains(t, fresh, `data-steps-empty>No steps yet.`)
 
-	// Without prompt/edit the form has no prompt fields.
+	// Without prompt/edit Add step lists commands alone.
 	ops := f.page(t, asOps, "/workflows/new")
-	assert.NotContains(t, ops, `name="prompt" rows="4"`)
-	assert.Contains(t, ops, `data-switch aria-label="Run this step"`)
+	assert.Contains(t, ops, `data-step-add="job"`)
+	assert.NotContains(t, ops, `data-step-add="prompt"`)
+	assert.NotContains(t, ops, `data-step-template="summary"`)
 
 	page := f.page(t, asAdmin, "/workflows/"+wf.ID)
 	assert.Contains(t, page, `data-workflow-run="`+wf.ID+`" data-workflow-prompt="summed"`)
-	assert.Contains(t, page, `<p class="workflow-prompt" data-workflow-prompt-shown>summarize, change nothing</p>`)
-	assert.Contains(t, page, "Claude gets this in infra/ after the steps finish")
+	assert.Contains(t, page, "the plan, summed")
 	assert.Contains(t, page, `<li class="node disabled" data-step="1">`)
 	assert.Contains(t, page, "step 2, off: runs skip it")
+	assert.Contains(t, page, `<p class="step-prompt">summarize, change nothing</p>`)
+	assert.Contains(t, page, `<use href="#i-summary"/></svg>summary in _</a>`)
 	assert.Contains(t, page, `id="workflow-input-dialog"`)
 
 	plain := f.workflow(t, asOps, "plain", "infra", "plan")
@@ -395,8 +401,8 @@ func TestWorkflow_RunPromptThread(t *testing.T) {
 	f := newFixture(t)
 	ctx := context.Background()
 	admin := f.users[asAdmin]
-	wf := &model.Workflow{Name: "summed", UserID: admin.ID, UserName: admin.Name, Prompt: "summarize, change nothing"}
-	assert.NoError(t, f.opts.Workflows.Create(ctx, wf, []model.WorkflowStep{{Folder: "infra", Job: "plan", Disabled: true}}))
+	wf := &model.Workflow{Name: "summed", UserID: admin.ID, UserName: admin.Name}
+	assert.NoError(t, f.opts.Workflows.Create(ctx, wf, []model.WorkflowStep{{Folder: "infra", Job: "plan", Disabled: true}, {Kind: model.StepPrompt, Folder: "_", Job: model.PromptJob, Prompt: "summarize, change nothing"}}))
 	run := &model.WorkflowRun{WorkflowID: wf.ID, Name: wf.Name, UserID: admin.ID, UserName: admin.Name}
 	steps, _ := f.opts.Workflows.Steps(ctx, wf.ID)
 	assert.NoError(t, f.opts.WorkflowRuns.Create(ctx, run, steps))
@@ -411,7 +417,7 @@ func TestWorkflow_RunPromptThread(t *testing.T) {
 
 	page := f.page(t, asAdmin, "/workflows/"+wf.ID+"/runs/"+run.ID)
 	assert.Contains(t, page, "<small>skipped</small>")
-	assert.Contains(t, page, "the workflow's prompt, run in the root after the steps")
+	assert.Contains(t, page, "the run's prompt and summary steps, each with the output of the steps before it")
 	assert.Contains(t, page, `data-notes data-dir="_"`)
 	assert.Contains(t, page, "for 1.2")
 	assert.Contains(t, page, "<strong>quiet</strong>")
@@ -419,8 +425,9 @@ func TestWorkflow_RunPromptThread(t *testing.T) {
 	assert.NotContains(t, f.page(t, asAdmin, "/f/_"), "for 1.2")
 }
 
-// A prompt step edits as a prompt and the folder it runs in, behind its
-// switch; Add prompt step and its template come with prompt/edit only.
+// A prompt step edits as a prompt, the folder it runs in and the
+// directory inside it; the prompt kind of Add step and its template come
+// with prompt/edit only.
 // The pipeline shows it with the prompt icon and its prompt.
 func TestWorkflow_PromptStepEditor(t *testing.T) {
 	t.Parallel()
@@ -434,17 +441,17 @@ func TestWorkflow_PromptStepEditor(t *testing.T) {
 	}))
 
 	edit := f.page(t, asAdmin, "/workflows/"+wf.ID+"/edit")
-	assert.Contains(t, edit, `<li class="step prompt-step switchable" data-step data-step-prompt data-switchable>`)
-	assert.Contains(t, edit, `>prompt in infra/docs</span>`)
+	assert.Contains(t, edit, `<li class="wf-step kind-prompt" data-step data-kind="prompt">`)
+	assert.Contains(t, edit, `<span class="wf-line" data-step-line>fetch the weather</span>`)
 	assert.Contains(t, edit, `>fetch the weather</textarea>`)
 	assert.Contains(t, edit, `<option value="infra" selected>infra</option>`)
-	assert.Contains(t, edit, `<input type="hidden" data-step-dir value="docs">`)
-	assert.Contains(t, edit, `data-step-add-prompt>`)
-	assert.Contains(t, edit, `<template data-prompt-template>`)
+	assert.Contains(t, edit, `data-step-dir aria-label="Directory inside the folder" placeholder="none" value="docs"`)
+	assert.Contains(t, edit, `data-step-add="prompt"`)
+	assert.Contains(t, edit, `<template data-step-template="prompt">`)
 
 	fresh := f.page(t, asOps, "/workflows/new")
-	assert.NotContains(t, fresh, `data-step-add-prompt`)
-	assert.NotContains(t, fresh, `data-prompt-template`)
+	assert.NotContains(t, fresh, `data-step-add="prompt"`)
+	assert.NotContains(t, fresh, `data-step-template="prompt"`)
 
 	page := f.page(t, asAdmin, "/workflows/"+wf.ID)
 	assert.Contains(t, page, `<use href="#i-prompt"/></svg>prompt in infra/docs</a>`)

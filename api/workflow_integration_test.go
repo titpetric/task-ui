@@ -177,6 +177,27 @@ func TestWorkflow_ChangeAndDelete(t *testing.T) {
 	assert.Equal(t, http.StatusNotFound, f.call(t, asOps, http.MethodGet, "/workflows/"+id, nil).Status)
 }
 
+// The editor saves the whole list in its new order: a step moved up
+// reads back at its new position, with its kind and fields.
+func TestWorkflow_Reorder(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	summary := api.StepRequest{Kind: model.StepSummary, Folder: "infra"}
+	id := f.createWorkflow(t, asAdmin, "order", append(chain("infra", "plan", "infra", "fail"), summary))
+	moved := append([]api.StepRequest{summary}, chain("infra", "fail", "infra", "plan")...)
+	res := f.call(t, asAdmin, http.MethodPut, "/workflows/"+id, api.WorkflowRequest{Name: "order", Steps: moved})
+	assert.Equal(t, http.StatusOK, res.Status, string(res.Raw))
+	var view api.WorkflowView
+	assert.NoError(t, json.Unmarshal(f.call(t, asAdmin, http.MethodGet, "/workflows/"+id, nil).Raw, &view))
+	assert.Len(t, view.Steps, 3)
+	assert.Equal(t, model.StepSummary, view.Steps[0].Kind)
+	assert.Equal(t, "infra", view.Steps[0].Folder)
+	assert.Equal(t, int64(0), view.Steps[0].Position)
+	assert.Equal(t, "fail", view.Steps[1].Job)
+	assert.Equal(t, "plan", view.Steps[2].Job)
+	assert.Equal(t, int64(2), view.Steps[2].Position)
+}
+
 // A step may name another workflow: the user sees it when they see
 // every step of it, and runs it when they may run them all.
 func TestWorkflow_Nested(t *testing.T) {
@@ -188,6 +209,7 @@ func TestWorkflow_Nested(t *testing.T) {
 	assert.Equal(t, http.StatusCreated, res.Status, string(res.Raw))
 	outer := res.str("id")
 	assert.Equal(t, inner, res.list("steps")[1].(map[string]any)["workflow_ref"])
+	assert.Equal(t, model.StepWorkflow, res.list("steps")[1].(map[string]any)["kind"])
 
 	missing := f.call(t, asOps, http.MethodPost, "/workflows", api.WorkflowRequest{Name: "gone", Steps: []api.StepRequest{{Workflow: "nope"}}})
 	assert.Equal(t, http.StatusBadRequest, missing.Status)

@@ -20,8 +20,8 @@ const workflowBytes = 256 << 10
 // answer: its run failed, or it did not start.
 var ErrPromptFailed = errors.New("its run failed, see the thread")
 
-// WorkflowQuestion is the question of a workflow run's prompt: the
-// workflow's prompt, and the run's input under "Input:".
+// WorkflowQuestion is the question of a workflow run's prompt step: the
+// step's prompt, and the run's input under "Input:".
 func WorkflowQuestion(prompt, input string) string {
 	prompt, input = strings.TrimSpace(prompt), strings.TrimSpace(input)
 	if input == "" {
@@ -30,27 +30,23 @@ func WorkflowQuestion(prompt, input string) string {
 	return prompt + "\n\nInput:\n" + input
 }
 
+// WorkflowSummaryQuestion is the question of a workflow run's summary step; claude.RunSummary goes beside it.
+const WorkflowSummaryQuestion = "Summarize this workflow run."
+
 // PromptPlace checks a place a workflow's prompt runs in as the user: a folder or directory the user sees, or _.
 func (b *Board) PromptPlace(ctx context.Context, user *model.User, place string) error {
 	_, err := b.promptRequest(ctx, user, place)
 	return err
 }
 
-// AskWorkflow puts a workflow's prompt to Claude as the run's starter, the steps' output in
-// TASK_UI_PROMPT_WORKFLOW, and returns Claude's answer, or why it has none; it takes prompt/edit.
-func (b *Board) AskWorkflow(stop context.Context, user *model.User, run *model.WorkflowRun, wf *model.Workflow, input string) (string, error) {
-	note, err := b.askWorkflowRun(stop, user, run, wf.PromptPlace(), WorkflowQuestion(wf.Prompt, input))
-	if err != nil {
-		return "", err
-	}
-	return b.lastReply(context.Background(), note), nil
-}
-
-// AskStep puts a workflow run's prompt step to Claude in the step's place, as AskWorkflow does the workflow's prompt.
-// The thread is about the workflow run, and Claude gets the steps before it.
-// It returns the prompt's run and Claude's answer, the step's output.
+// AskStep puts a prompt or summary step to Claude as the run's starter in place, a thread about the run;
+// it returns the prompt's run and Claude's answer, the step's output, or why there is none.
 func (b *Board) AskStep(stop context.Context, user *model.User, run *model.WorkflowRun, step *model.WorkflowRunStep, place, input string) (string, string, error) {
-	note, err := b.askWorkflowRun(stop, user, run, place, WorkflowQuestion(step.Prompt, input))
+	body := WorkflowQuestion(step.Prompt, input)
+	if step.IsSummary() {
+		body = WorkflowSummaryQuestion
+	}
+	note, err := b.askWorkflowRun(stop, user, run, place, body)
 	if note == nil {
 		return "", "", err
 	}
@@ -198,10 +194,7 @@ func (b *Board) workflowText(ctx context.Context, run *model.WorkflowRun, all []
 
 	var text strings.Builder
 	fmt.Fprintf(&text, "Workflow run %s of the workflow %s, by %s, with %d step%s.\n", run.ID, run.Name, run.UserName, len(all), plural(len(all)))
-	switch {
-	case len(all) == 0:
-		text.WriteString("The workflow has no steps: the prompt is the whole of it.\n")
-	case len(steps) < len(all):
+	if len(steps) < len(all) {
 		fmt.Fprintf(&text, "The prompt asks after step %d; the steps after it have not run.\n", len(steps))
 	}
 	for _, t := range texts {
@@ -225,6 +218,8 @@ func (b *Board) workflowText(ctx context.Context, run *model.WorkflowRun, all []
 func (b *Board) stepHead(ctx context.Context, i int, step model.WorkflowRunStep) string {
 	name := step.Folder + " / " + step.Job
 	switch {
+	case step.IsSummary():
+		name = "a summary by Claude in " + step.Folder
 	case step.IsPrompt():
 		name = "a prompt to Claude in " + step.Folder + ", " + strconv.Quote(step.Prompt)
 	case step.IsWorkflow():

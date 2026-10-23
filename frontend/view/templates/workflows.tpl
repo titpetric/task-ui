@@ -2,7 +2,7 @@
 <div class="page-head">
 	<div>
 		<h2>Workflows</h2>
-		<p>Chains of jobs from any folders. Each step starts when the one before ends ok; a failure stops the rest. Running one needs permission to run every step.</p>
+		<p>Chains of steps: commands from any folders, prompts to Claude and summaries. Each step starts when the one before ends ok; a failure stops the rest, but for a summary. Running one needs permission to run every step.</p>
 	</div>
 	<div class="actions">
 		<a class="btn btn-primary" href="/workflows/new">Add workflow</a>
@@ -19,7 +19,7 @@
 		<tbody>
 		{{- range .Workflows }}
 			<tr>
-				<td class="key"><a href="/workflows/{{ .ID }}">{{ .Name }}</a></td>
+				<td class="key"><a href="/workflows/{{ .ID }}">{{ .Name }}</a>{{ with .Description }}<small class="faint wf-desc">{{ . }}</small>{{ end }}</td>
 				<td data-label="Steps"><span class="chain">{{ template "chain" (list $ .Steps) }}</span></td>
 				<td class="nowrap" data-label="Last run">{{ if .Running }}<span class="state"><i class="dot running"></i>running</span>{{ else if .LastRun }}<span class="state"><i class="dot {{ .LastRun.State }}"></i>{{ .LastRun.State }}</span> <span class="faint" title="{{ stamp .LastRun.StartedAt }}">{{ ago .LastRun.StartedAt }}</span>{{ else }}<span class="faint">never run</span>{{ end }}</td>
 				<td data-label="By">{{ template "user" (list $ .UserName) }}</td>
@@ -37,7 +37,7 @@
 				</td>
 			</tr>
 		{{- else }}
-			<tr class="empty"><td colspan="5">No workflows yet. Add one with a name and its jobs, in order.</td></tr>
+			<tr class="empty"><td colspan="5">No workflows yet. Add one with a name and its steps, in order.</td></tr>
 		{{- end }}
 		</tbody>
 	</table>

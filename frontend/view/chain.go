@@ -1,20 +1,25 @@
 package view
 
-// Chain turns steps into links, naming a folder once for the steps that follow in it.
+import (
+	"github.com/titpetric/task-ui/model"
+)
+
+// Chain turns steps into links, a folder named once for the steps that follow in it, each linked to its page or the run it made.
 func Chain(steps []Step, workspaces map[string]int) []Link {
 	links := make([]Link, 0, len(steps))
 	last := ""
 	for _, s := range steps {
 		l := Link{State: s.State, RunID: s.RunID, Disabled: s.Disabled}
-		switch {
-		case s.Prompt != "":
-			place := s.Folder
-			if s.Dir != "" {
-				place += "/" + s.Dir
-			}
+		switch s.StepKind() {
+		case model.StepSummary:
+			place := model.WorkflowStep{Folder: s.Folder, Dir: s.Dir}.Place()
+			l.Summary, l.Text, l.Href = true, "summary in "+place, FolderHref(s.Folder, workspaces)
+			last = ""
+		case model.StepPrompt:
+			place := model.WorkflowStep{Folder: s.Folder, Dir: s.Dir}.Place()
 			l.Prompt, l.Text, l.Href = s.Prompt, "prompt in "+place, FolderHref(s.Folder, workspaces)
 			last = ""
-		case s.WorkflowID != "":
+		case model.StepWorkflow:
 			l.Workflow, l.Text, l.Href = true, s.WorkflowName, "/workflows/"+s.WorkflowID
 			l.WorkflowID, l.WorkflowRunID = s.WorkflowID, s.WorkflowRunID
 			if l.Text == "" {

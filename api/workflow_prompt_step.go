@@ -10,17 +10,22 @@ import (
 	"github.com/titpetric/task-ui/model"
 )
 
-// promptStep turns a requested prompt step into its row: the prompt,
-// asked in a folder and a directory inside it the user sees, or in the
-// root, _, for one without a folder. It names no job or workflow.
+// promptStep turns a requested prompt or summary step into its row: the
+// prompt, none for a summary, asked in a folder and a directory inside
+// it the user sees, or in the root, _, for one without a folder. It
+// names no job or workflow.
 func (h *Handlers) promptStep(r *http.Request, step StepRequest) (model.WorkflowStep, error) {
-	row := model.WorkflowStep{Folder: strings.Trim(step.Folder, "/"), Dir: strings.Trim(step.Dir, "/"), Job: model.PromptJob, Prompt: strings.TrimSpace(step.Prompt)}
+	row := model.WorkflowStep{Kind: step.StepKind(), Folder: strings.Trim(step.Folder, "/"), Dir: strings.Trim(step.Dir, "/"), Job: model.PromptJob, Prompt: strings.TrimSpace(step.Prompt)}
 	if row.Folder == "" {
 		row.Folder = model.Default
 	}
 	switch {
 	case step.Job != "" || step.Workflow != "":
-		return row, errors.New("a prompt step names no job or workflow")
+		return row, errors.New("a prompt or summary step names no job or workflow")
+	case row.IsSummary() && row.Prompt != "":
+		return row, errors.New("a summary step takes no prompt: Claude summarises the steps before it")
+	case !row.IsSummary() && row.Prompt == "":
+		return row, errors.New("a prompt step needs its prompt")
 	case h.opts.Board == nil:
 		return row, errors.New("prompts aren't available on this instance")
 	}
@@ -35,7 +40,7 @@ func (h *Handlers) promptStep(r *http.Request, step StepRequest) (model.Workflow
 func rowSteps(rows []model.WorkflowRunStep) []model.WorkflowStep {
 	steps := make([]model.WorkflowStep, 0, len(rows))
 	for _, row := range rows {
-		steps = append(steps, model.WorkflowStep{Folder: row.Folder, Job: row.Job, WorkflowRef: row.WorkflowRef, Prompt: row.Prompt})
+		steps = append(steps, model.WorkflowStep{Kind: row.Kind, Folder: row.Folder, Job: row.Job, WorkflowRef: row.WorkflowRef, Prompt: row.Prompt})
 	}
 	return steps
 }
