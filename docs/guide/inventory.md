@@ -6,6 +6,8 @@ cores, how busy its CPU is, and how full its memory and disk are, with what
 it uses of each and the size, in GB. A share turns amber past 75% and red
 past 90%. A host whose agent sends no core count shows its threads.
 
+![The Inventory page: the cluster's pools and month, and the hosts](../assets/inventory-dark.png)
+
 ## The cluster
 
 Over the hosts table, the cluster sums the hosts into pools, one a
@@ -40,6 +42,8 @@ opens and kept half a minute. The hosts you open stay open through the
 page's refresh and a reload, and `/inventory#host=<name>` opens one.
 Over the tables, the host's address, its ssh login, cores, uptime,
 Beszel agent and when task-ui last read it over ssh.
+
+![A host's expanded row: its containers, filesystems and month](../assets/inventory-host-dark.png)
 
 **Containers** lists the host's containers, the busiest first, by CPU
 then memory; a click on a header sorts by it, the next the other way.
