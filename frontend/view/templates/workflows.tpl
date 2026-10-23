@@ -5,19 +5,20 @@
 		<p>Chains of steps: commands from any folders, prompts to Claude and summaries. Each step starts when the one before ends ok; a failure stops the rest, but for a summary. Running one needs permission to run every step.</p>
 	</div>
 	<div class="actions">
-		<a class="btn btn-primary" href="/workflows/new">Add workflow</a>
+		<a class="btn btn-primary" href="/workflows/new"><svg class="ic"><use href="#i-plus"/></svg>Add workflow</a>
 	</div>
 </div>
 
 {{- template "promptbox" . }}
 
 <section class="block">
-	<h3>Workflows</h3>
+	{{- template "blockhead" (head "Workflows" "" (and (not .Workflows) "No workflows yet. Add one with a name and its steps, in order.")) }}
+	{{- with .Workflows }}
 	<div class="table-wrap">
 	<table class="table cards">
 		<thead><tr><th>Workflow</th><th>Steps</th><th>Last run</th><th>By</th><th></th></tr></thead>
 		<tbody>
-		{{- range .Workflows }}
+		{{- range . }}
 			<tr>
 				<td class="key"><a href="/workflows/{{ .ID }}">{{ .Name }}</a>{{ with .Description }}<small class="faint wf-desc">{{ . }}</small>{{ end }}</td>
 				<td data-label="Steps"><span class="chain">{{ template "chain" (list $ .Steps) }}</span></td>
@@ -36,11 +37,10 @@
 					) }}
 				</td>
 			</tr>
-		{{- else }}
-			<tr class="empty"><td colspan="5">No workflows yet. Add one with a name and its steps, in order.</td></tr>
 		{{- end }}
 		</tbody>
 	</table>
 	</div>
+	{{- end }}
 </section>
 {{ end }}

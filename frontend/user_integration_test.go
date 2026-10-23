@@ -89,12 +89,12 @@ func TestUserForm(t *testing.T) {
 	assert.Equal(t, http.StatusNotFound, f.get(t, asAdmin, "/settings/users/"+model.NewID()).Status)
 	assert.Equal(t, http.StatusNotFound, f.get(t, asAdmin, "/settings/users/new").Status)
 
-	// With a password file to write, Create user makes one.
+	// With a password file to write, Add user makes one.
 	f.opts.AddUsers = true
 	h, err := frontend.New(f.opts)
 	assert.NoError(t, err)
 	f.server.Config.Handler = h.Routes()
-	assert.Contains(t, f.page(t, asAdmin, "/settings/users"), `href="/settings/users/new">Create user</a>`)
+	assert.Contains(t, f.page(t, asAdmin, "/settings/users"), `href="/settings/users/new"><svg class="ic"><use href="#i-plus"/></svg>Add user</a>`)
 	created := f.page(t, asAdmin, "/settings/users/new")
 	assert.Contains(t, created, `data-api="/api/users" data-method="POST"`)
 	assert.Contains(t, created, `name="password" required minlength="8"`)

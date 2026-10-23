@@ -7,9 +7,9 @@
 	</div>
 	<div class="actions">
 		{{- if $keyed }}
-		<a class="btn btn-primary" href="/settings/secrets/new{{ with .SecretWorkspace }}?scope=workspace:{{ . }}{{ end }}">Add secret</a>
+		<a class="btn btn-primary" href="/settings/secrets/new{{ with .SecretWorkspace }}?scope=workspace:{{ . }}{{ end }}"><svg class="ic"><use href="#i-plus"/></svg>Add secret</a>
 		{{- else }}
-		<button class="btn btn-primary" type="button" disabled title="The instance has no encryption key yet">Add secret</button>
+		<button class="btn btn-primary" type="button" disabled title="The instance has no encryption key yet"><svg class="ic"><use href="#i-plus"/></svg>Add secret</button>
 		{{- end }}
 	</div>
 </div>
@@ -21,20 +21,13 @@
 {{- range .SecretGroups }}
 {{- $g := . }}
 <section class="block secret-group" id="ws-{{ .Workspace }}">
-	<div class="block-head">
-		<h3>{{ .Title }} {{ if ne .Title .Workspace }}<span class="badge">{{ .Workspace }}</span>{{ end }} <small>{{ len .Secrets }} secret{{ if ne (len .Secrets) 1 }}s{{ end }}</small></h3>
-		<div class="actions">
-			{{- if .Key }}
-			<a class="btn btn-sm" href="/settings/secrets/new?scope={{ .Shared }}">Add secret</a>
-			{{- else }}
-			<button class="btn btn-sm" type="button" disabled title="The instance has no encryption key yet">Add secret</button>
-			{{- end }}
-		</div>
-	</div>
+	{{- $note := print (len .Secrets) " secret" (or (and (ne (len .Secrets) 1) "s") "") }}{{ if ne .Title .Workspace }}{{ $note = print .Workspace ", " $note }}{{ end }}
+	{{- template "blockhead" (head .Title $note (and (not .Secrets) (print "No secrets in " .Workspace " yet."))
+		(or (and .Key (item "plus" "Add secret" "href" (print "/settings/secrets/new?scope=" .Shared))) (item "plus" "Add secret" "disabled" "The instance has no encryption key yet"))) }}
 	{{- if not .Key }}
 	<div class="alert signal secret-nokey"><svg class="ic"><use href="#i-secret"/></svg> The instance has no encryption key, so it stores no secret. <a href="/settings/instance#keys">Instance</a></div>
 	{{- end }}
-	{{- if or .Key .Secrets }}
+	{{- if .Secrets }}
 	<div class="table-wrap">
 	<table class="table secrets">
 		<thead><tr><th>Name</th><th>Scope</th><th>Updated</th><th>Reads</th><th>Last read</th><th class="actions" aria-label="Actions"></th></tr></thead>
@@ -48,11 +41,6 @@
 		<tbody>
 			<tr class="secret-scope"><th colspan="6"><a href="{{ $.Href .Folder }}"><svg class="ic"><use href="#i-folder"/></svg> {{ .Folder }}</a></th></tr>
 			{{- range .Secrets }}{{ template "secretrow" (list $ $g .) }}{{ end }}
-		</tbody>
-		{{- end }}
-		{{- if not .Secrets }}
-		<tbody>
-			<tr class="empty"><td colspan="6">No secrets yet. Add one for every project in {{ .Workspace }}, or for a single project.</td></tr>
 		</tbody>
 		{{- end }}
 	</table>

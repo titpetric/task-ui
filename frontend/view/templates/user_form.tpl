@@ -18,7 +18,7 @@
 	{{- template "folder-pick" (list .FolderChoices true true) }}
 	<div class="form-foot">
 		<a class="btn" href="/settings/users">Cancel</a>
-		<button class="btn btn-primary" type="submit">Create user</button>
+		<button class="btn btn-primary" type="submit">Add user</button>
 	</div>
 </form>
 {{ end }}

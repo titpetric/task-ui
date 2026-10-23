@@ -10,7 +10,7 @@ and hours.
 
 1. Pick the user the agent signs in as. A runner suits an agent that runs
    jobs; a viewer only reads. Add one to the password file if the agent
-   gets a user of its own: **Create user** on Settings, Users, or on the
+   gets a user of its own: **Add user** on Settings, Users, or on the
    server:
 
    ```bash

@@ -167,7 +167,7 @@ func TestArtifacts_Archive(t *testing.T) {
 	page := f.page(t, asAdmin, "/artifacts")
 	assert.Contains(t, page, `data-copy="/artifacts/reports.tgz"`)
 	assert.Contains(t, page, `href="/artifacts/files/job1.txt?download"`)
-	assert.Contains(t, page, `Delete all</button>`)
+	assert.Contains(t, page, `<span>Delete all</span></button>`)
 	assert.Contains(t, page, `href="/artifacts.tgz" download`)
 	assert.Equal(t, http.StatusNotFound, f.get(t, asAdmin, "/artifacts/reports").Status, "only a .tgz")
 }

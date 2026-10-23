@@ -109,7 +109,7 @@
 		<tr{{ if $open }} class="host-row" data-host-row="{{ .Name }}" tabindex="0" aria-expanded="false"{{ end }}>
 			<td class="key nowrap" title="{{ .Host }}, {{ .Status }}">{{ if $open }}<svg class="ic chev" aria-hidden="true"><use href="#i-chev"/></svg>{{ end }}<svg class="ic host-state {{ if .Up }}up{{ else }}down{{ end }}" role="img" aria-label="{{ .Status }}"><use href="#i-server"/></svg> {{ .Name }}</td>
 			{{- if $.Logins }}
-			<td class="nowrap">{{ with index $.Logins .Host }}<code>{{ . }}</code>{{ else }}<span class="faint">-</span>{{ end }}</td>
+			<td class="nowrap">{{ with index $.Logins .Host }}{{ template "copyable" (list (print "ssh " .) (print "ssh " .) .) }}{{ else }}<span class="faint">-</span>{{ end }}</td>
 			{{- end }}
 			<td class="center">{{ with .CPUs }}{{ . }}{{ else }}<span class="faint">-</span>{{ end }}</td>
 			<td>{{ template "meter" .Info.CPU }}</td>

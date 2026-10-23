@@ -47,8 +47,8 @@ You see the files of the folders you may see, in the table and in a
 file or a directory from the tree, with the button on its row: the
 history keeps its versions, and the preview window still shows them.
 With Allow Deletes on Artifacts, `artifact/delete`, you delete a record,
-and **Delete all**, at the top right, deletes every file, its history
-and every record.
+and **Delete all**, in the **⋯** menu at the top right, deletes every
+file, its history and every record.
 
 ## Writing one
 

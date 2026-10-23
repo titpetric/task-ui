@@ -6,13 +6,13 @@
 	</div>
 	{{- if .CanAddUsers }}
 	<div class="actions">
-		<a class="btn btn-primary" href="/settings/users/new">Create user</a>
+		<a class="btn btn-primary" href="/settings/users/new"><svg class="ic"><use href="#i-plus"/></svg>Add user</a>
 	</div>
 	{{- end }}
 </div>
 
 <div class="alert">
-	Users come from the password file; <b>Create user</b> or <code>task-ui passwd &lt;user&gt;</code> adds one or resets a password. A new user starts as a viewer. An admin sets the admin flag, the role and MCP on the user's profile, or with <code>task-ui user</code>.
+	Users come from the password file; <b>Add user</b> or <code>task-ui passwd &lt;user&gt;</code> adds one or resets a password. A new user starts as a viewer. An admin sets the admin flag, the role and MCP on the user's profile, or with <code>task-ui user</code>.
 </div>
 
 <section class="block">

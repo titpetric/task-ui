@@ -13,7 +13,7 @@ route or a tool only for a need these cannot serve, and states the reason.
 | `DELETE /api/artifacts` | **Delete all** on the Artifacts page: deleting the records one by one leaves the files and their history |
 | `/api/runs/{id}/summary` | **Summary** on the Runs page: Claude's summary of a run, written once and kept |
 | `/api/workflow-runs/{id}/summary` | **Summary** on a workflow's runs: Claude's summary of every step, written once and kept |
-| `POST /api/users` | **Create user** on the Users page: the password file had no writer but `task-ui passwd` on the server |
+| `POST /api/users` | **Add user** on the Users page: the password file had no writer but `task-ui passwd` on the server |
 | `/api/artifacts/files/{path}` | The preview window: a file of the tree, rendered, with its versions, and the delete of one file, which the records cannot reach |
 | `/api/notes`, `list_notes`, `note_comment` | Notes, and instructions to the agent, which reads and reports on them over MCP |
 | `/api/integrations`, `/api/inventory` | Settings, Integrations, which keeps the services' tokens encrypted, the inventory from Beszel, and commands run on its hosts |

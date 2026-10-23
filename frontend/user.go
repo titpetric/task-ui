@@ -31,7 +31,7 @@ func (h *Handlers) userNew(w http.ResponseWriter, r *http.Request) {
 		h.missing(w, r, "task-ui has no password file to add users to.")
 		return
 	}
-	p := h.page(r, "Create user")
+	p := h.page(r, "Add user")
 	p.Crumbs = view.Crumbs("Settings", "/settings", "Users", "/settings/users", "Create")
 	p.Step = view.StepUsers
 	p.FolderChoices = view.FolderChoices(h.opts.Catalogue.List(), nil)
