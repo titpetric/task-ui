@@ -97,6 +97,8 @@ func (h *Handlers) Routes() http.Handler {
 	r.Get("/sse/{topic}", h.sse)
 
 	r.Put("/retention", h.saveRetention)
+	r.Get("/instance", h.getInstance)
+	r.Put("/instance", h.putInstance)
 
 	r.Get("/integrations", h.listIntegrations)
 	r.Put("/integrations/{id}", h.saveIntegration)
@@ -221,6 +223,8 @@ func statusOf(err error) int {
 		return http.StatusNotFound
 	case errors.Is(err, runner.ErrBusy), errors.Is(err, runner.ErrMoving), errors.Is(err, runner.ErrQueueFull):
 		return http.StatusConflict
+	case errors.Is(err, runner.ErrBacklogFull):
+		return http.StatusTooManyRequests
 	case errors.Is(err, runner.ErrOutOfHours), errors.Is(err, note.ErrForbidden), errors.Is(err, note.ErrNotAuthor), errors.Is(err, note.ErrNotAssigned):
 		return http.StatusForbidden
 	case errors.Is(err, secret.ErrNoKey), errors.Is(err, keystore.ErrExists):

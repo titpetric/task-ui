@@ -125,7 +125,8 @@ func (m *Manager) List() []*Session {
 // kills the run in the way, waits for it, and the new run takes its
 // place; or unless the request queues: then the new run waits, queued,
 // and starts once the runs before it ended. A run that does work while
-// runs fill every slot waits, queued, for one.
+// runs fill every slot waits, queued, for one, unless the line holds
+// the backlog already: then Start answers ErrBacklogFull.
 func (m *Manager) Start(ctx context.Context, req Request) (*Session, error) {
 	if req.Folder == nil || req.Job == nil {
 		return nil, errors.New("a run needs a folder and a job")
@@ -136,6 +137,9 @@ func (m *Manager) Start(ctx context.Context, req Request) (*Session, error) {
 	outOfHours, err := m.gate(req)
 	if err != nil {
 		return nil, err
+	}
+	if TakesSlot(req.Job) && !m.slots.Room(m.opts.Backlog.Length(ctx)) {
+		return nil, backlogFull(m.slots.Waiting())
 	}
 	run := req.newRun()
 	if run.Parallel() && run.ID == "" {

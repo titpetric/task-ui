@@ -39,6 +39,16 @@ settings may open it.
 
 ![Instance](../assets/instance-dark.png)
 
+### Runs
+
+**Parallel runs** is how many runs do work at once, the CPUs of the
+machine. A run over that waits for a slot, in a line that holds the
+**Backlog length**: 20 runs per CPU by default, **Automatic backlog**,
+80 on a host with 4 CPUs. An admin sets another length here, a whole
+number up to 100000, and **Save** applies it to the next start; empty
+goes back to the automatic one. A start while the line is full answers
+`429` (see [Runs](runs.md#runs-at-once)).
+
 ## Data retention
 
 `/settings/retention` holds how long the instance keeps what it records,

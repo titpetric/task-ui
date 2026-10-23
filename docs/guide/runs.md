@@ -196,6 +196,15 @@ stands in line, and **Stop** takes it out. A terminal takes no slot:
 input, so an open shell never holds up a run. A prompt's run and the
 Notes agent's do work and take one.
 
+The line for a slot is the **backlog**, 20 runs per CPU, 80 on a host
+with 4 CPUs, so a flood of requests never piles up runs without end. An
+admin sets another length on the [Instance](settings.md#runs) page,
+**Backlog length**; empty is the automatic one, and a change applies to
+the next start. A run that comes while the backlog is full starts
+nothing: the page says so, `POST /api/runs` answers `429` "80 runs wait
+for a free slot already; start it again later", and `run_job` over MCP
+ends in that error.
+
 ### From an agent
 
 An agent starts runs over [MCP](mcp.md) as the user of its token:
