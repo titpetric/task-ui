@@ -3435,6 +3435,35 @@
         if (res.status === 200 && !ended(res.data.state)) row.querySelector("[data-actions]").innerHTML = actionsHTML(res.data, res.data.can_run);
       });
     });
+    // The charts over the table follow the runs too: a run that ends
+    // fetches the page again, at most once in 15 seconds, and swaps the
+    // Activity and Tooling blocks in place, an open commands table
+    // left open.
+    var chartsAt = 0, chartsTimer = null;
+    var refreshCharts = function () {
+      if (chartsTimer) return;
+      chartsTimer = setTimeout(function () {
+        chartsTimer = null;
+        chartsAt = Date.now();
+        fetch(location.href, { credentials: "same-origin" })
+          .then(function (res) { return res.ok ? res.text() : null; })
+          .then(function (html) {
+            if (!html) return;
+            var doc = new DOMParser().parseFromString(html, "text/html");
+            ["runs-activity", "runs-tooling"].forEach(function (id) {
+              var block = document.getElementById(id), next = doc.getElementById(id);
+              if (!block || !next) return;
+              var open = Array.prototype.map.call(block.querySelectorAll("details"), function (d) { return d.open; });
+              block.innerHTML = next.innerHTML;
+              block.querySelectorAll("details").forEach(function (d, i) { if (open[i]) d.open = true; });
+            });
+          })
+          .catch(function () {});
+      }, Math.max(1000, chartsAt + 15000 - Date.now()));
+    };
+    if (document.getElementById("runs-activity") || document.getElementById("runs-tooling")) {
+      onRuns(function (run) { if (ended(run.state)) refreshCharts(); });
+    }
     // The running rows count their time.
     setInterval(function () {
       runsTable.querySelectorAll("tr[data-run-id]").forEach(function (row) {

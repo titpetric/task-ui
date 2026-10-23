@@ -188,3 +188,32 @@ func TestActivityRun(t *testing.T) {
 	run := view.ActivityRun{StartedAt: at(19, 7, 0), Elapsed: time.Minute, State: model.StateOK}
 	assert.Equal(t, 1, view.NewActivity([]view.ActivityRun{run}, at(19, 8, 0), 1).Days[0].OK)
 }
+
+// The week is 56 slots of three clock hours, the slot now is in the
+// last, matching the tooling chart of the same span; its lines and the
+// hours' run straight from slot to slot.
+func TestNewActivityWeek(t *testing.T) {
+	t.Parallel()
+	now := at(19, 22, 0)
+	runs := []view.ActivityRun{
+		{StartedAt: at(19, 21, 30), Elapsed: 2 * time.Second, State: model.StateOK},
+		{StartedAt: at(19, 1, 30), Elapsed: 4 * time.Second, State: model.StateFailed},
+		{StartedAt: at(13, 0, 30), Elapsed: 6 * time.Second, State: model.StateOK},
+		{StartedAt: at(12, 23, 0), Elapsed: 8 * time.Second, State: model.StateOK}, // before the week
+	}
+
+	a := view.NewActivity(runs, now, view.ActivityDays)
+	assert.Len(t, a.Week, 56)
+	assert.Equal(t, 1, a.Week[55].OK)
+	assert.Equal(t, "1 run, Mon 21:00–00:00", a.Week[55].Title)
+	assert.Equal(t, "tip-end", a.Week[55].Edge)
+	assert.Equal(t, 1, a.Week[48].Failed)
+	assert.Equal(t, 1, a.Week[0].OK)
+	assert.Equal(t, 3, a.WeekStats.Count)
+	assert.Len(t, a.WeekTicks, 7)
+
+	assert.True(t, strings.HasPrefix(a.WeekLines.Average, "M "))
+	assert.Equal(t, 55, strings.Count(a.WeekLines.Average, " L "))
+	assert.Equal(t, 0, strings.Count(a.HourLines.Average, " C "))
+	assert.Equal(t, 29, strings.Count(a.DayLines.Average, " C "))
+}

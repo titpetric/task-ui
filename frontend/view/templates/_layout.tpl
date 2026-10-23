@@ -937,27 +937,9 @@
 <div class="activity">
 	<p class="activity-sum">{{ .Total }} run{{ if ne .Total 1 }}s{{ end }} in {{ len .Days }} days{{ if .Failed }} · <span class="bad">{{ .Failed }} failed</span>{{ end }}{{ if .Median }} · median {{ duration .Median }}{{ end }}<span class="activity-key"><i class="ok"></i>runs <i class="line avg"></i>average <i class="line max"></i>slowest <i class="line min"></i>fastest</span></p>
 	<div class="activity-charts">
-		<figure class="activity-chart">
-			<figcaption class="activity-title"><span>Last {{ len .Days }} days</span>{{ template "activity-stats" .DayStats }}</figcaption>
-			<div class="activity-bars" style="--n: {{ len .Days }}" role="img" aria-label="Runs per day, the last {{ len .Days }} days">
-				{{- $last := sub (len .Days) 4 }}
-				{{- range $i, $b := .Days }}{{ with $b }}
-				<span class="tip{{ if lt $i 4 }} tip-start{{ else if ge $i $last }} tip-end{{ end }}" data-tip="{{ .Title }}" aria-label="{{ .Title }}">{{ if .OtherStyle }}<i class="other" style="{{ .OtherStyle }}"></i>{{ end }}{{ if .FailedStyle }}<i class="bad" style="{{ .FailedStyle }}"></i>{{ end }}{{ if .OKStyle }}<i class="ok" style="{{ .OKStyle }}"></i>{{ end }}</span>
-				{{- end }}{{ end }}
-			</div>
-			{{- with $.DayLines }}{{ template "activity-lines" (list . $.Days) }}{{ end }}
-			<div class="activity-axis">{{ range .DayTicks }}<span style="left: {{ .At }}%">{{ .Label }}</span>{{ end }}</div>
-		</figure>
-		<figure class="activity-chart hours">
-			<figcaption class="activity-title"><span>Last 24 hours</span>{{ template "activity-stats" .HourStats }}</figcaption>
-			<div class="activity-bars" style="--n: 24" role="img" aria-label="Runs per hour, the last 24 hours">
-				{{- range $i, $b := .Hours }}{{ with $b }}
-				<span class="tip{{ if lt $i 4 }} tip-start{{ else if ge $i 20 }} tip-end{{ end }}" data-tip="{{ .Title }}" aria-label="{{ .Title }}">{{ if .OtherStyle }}<i class="other" style="{{ .OtherStyle }}"></i>{{ end }}{{ if .FailedStyle }}<i class="bad" style="{{ .FailedStyle }}"></i>{{ end }}{{ if .OKStyle }}<i class="ok" style="{{ .OKStyle }}"></i>{{ end }}</span>
-				{{- end }}{{ end }}
-			</div>
-			{{- with $.HourLines }}{{ template "activity-lines" (list . $.Hours) }}{{ end }}
-			<div class="activity-axis">{{ range .HourTicks }}<span style="left: {{ .At }}%">{{ .Label }}</span>{{ end }}</div>
-		</figure>
+		{{- template "activity-chart" (list (printf "Last %d days" (len .Days)) "day" .Days .DayLines .DayTicks .DayStats "") }}
+		{{- template "activity-chart" (list "Last 24 hours" "hour" .Hours .HourLines .HourTicks .HourStats "hours") }}
+		{{- template "activity-chart" (list "Last 7 days" "3 hours" .Week .WeekLines .WeekTicks .WeekStats "wide") }}
 	</div>
 	{{- with .Durations }}
 	<figure class="activity-chart durations">
@@ -1009,13 +991,31 @@
 
 {{- /* activity-stats are a chart's finished runs in one line: the
      fastest, the mean, the slowest and their time together. */}}
+{{- /* One count chart of the activity: its title and stats, a bar a
+     slot split by how the runs ended, the durations as lines under it,
+     and its time markers. Takes the title, what a slot is, the bars,
+     the lines, the ticks, the stats and a class. */}}
+{{- define "activity-chart" }}
+{{- $title := index . 0 }}{{ $unit := index . 1 }}{{ $bars := index . 2 }}{{ $lines := index . 3 }}{{ $ticks := index . 4 }}{{ $stats := index . 5 }}{{ $class := index . 6 }}
+<figure class="activity-chart{{ with $class }} {{ . }}{{ end }}">
+	<figcaption class="activity-title"><span>{{ $title }}</span>{{ template "activity-stats" $stats }}</figcaption>
+	<div class="activity-bars" style="--n: {{ len $bars }}" role="img" aria-label="Runs per {{ $unit }}, {{ lower $title }}">
+		{{- range $bars }}
+		<span class="tip {{ .Edge }}" data-tip="{{ .Title }}" aria-label="{{ .Title }}">{{ if .OtherStyle }}<i class="other" style="{{ .OtherStyle }}"></i>{{ end }}{{ if .FailedStyle }}<i class="bad" style="{{ .FailedStyle }}"></i>{{ end }}{{ if .OKStyle }}<i class="ok" style="{{ .OKStyle }}"></i>{{ end }}</span>
+		{{- end }}
+	</div>
+	{{- with $lines }}{{ template "activity-lines" (list . $bars) }}{{ end }}
+	<div class="activity-axis">{{ range $ticks }}<span style="left: {{ .At }}%">{{ .Label }}</span>{{ end }}</div>
+</figure>
+{{- end }}
+
 {{- define "activity-stats" }}{{ if .Count }}<span class="faint" title="{{ .Count }} finished run{{ if ne .Count 1 }}s{{ end }}: the fastest, the mean, the slowest and their time together">min/avg/max/total: {{ duration .Fastest }} {{ duration .Mean }} {{ duration .Slowest }} {{ duration .Spent }}</span>{{ end }}{{ end }}
 
 {{- /* The durations under a count chart: the average, the slowest and the
      fastest run of each bucket as lines, a point in the middle of its
      column; each column hovers its numbers. */}}
 {{- define "activity-lines" }}
-{{- $l := index . 0 }}{{ $bars := index . 1 }}{{ $n := len $bars }}{{ $last := sub $n 4 }}
+{{- $l := index . 0 }}{{ $bars := index . 1 }}{{ $n := len $bars }}
 <div class="activity-line durations" style="--n: {{ $n }}">
 	<svg viewBox="0 0 100 100" preserveAspectRatio="none" role="img" aria-label="Average, slowest and fastest run per column, the slowest {{ duration $l.Slowest }}">
 		<path class="max" d="{{ $l.Max }}" vector-effect="non-scaling-stroke"></path>
@@ -1024,7 +1024,7 @@
 	</svg>
 	<div class="activity-hits">
 		{{- range $i, $b := $bars }}
-		<span class="tip{{ if lt $i 4 }} tip-start{{ else if ge $i $last }} tip-end{{ end }}" data-tip="{{ $b.AverageTitle }}" aria-label="{{ $b.AverageTitle }}"></span>
+		<span class="tip {{ $b.Edge }}" data-tip="{{ $b.AverageTitle }}" aria-label="{{ $b.AverageTitle }}"></span>
 		{{- end }}
 	</div>
 </div>

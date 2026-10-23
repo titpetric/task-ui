@@ -1,7 +1,8 @@
 // Package tooling asks atkins what a checkout has been running.
 //
-// `atkins --stats --json` reports the commands a run executed, rolled up
-// per tool and per day, over the window atkins keeps. task-ui reads it
+// `atkins --stats --json --all` reports the commands a run executed,
+// rolled up per tool and per day and listed one by one, over the window
+// atkins keeps. task-ui reads it
 // to answer a question its own run history cannot: a run of a job is one
 // row here, and the twenty commands inside it are twenty rows there, so
 // the time a repository spends on go, npm or docker is atkins' to
@@ -84,6 +85,11 @@ type Scope struct {
 	Tools        []Tool         `json:"tools"`
 	Usage        []Usage        `json:"usage"`
 	CommandUsage []CommandUsage `json:"command_usage"`
+
+	// Samples are the commands of the window one by one, oldest first,
+	// which a chart buckets finer than a day. An atkins older than
+	// `--stats --all` reports none.
+	Samples []Sample `json:"samples,omitempty"`
 }
 
 // Command is one command key and what it has cost. The key is the

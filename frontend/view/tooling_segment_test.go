@@ -12,7 +12,7 @@ import (
 func TestToolingSegment(t *testing.T) {
 	t.Parallel()
 
-	segment := view.NewTooling(&tooling.Report{Project: commandScope()}).Scopes[0].Windows[1].Bars[6].Segments[1]
+	segment := view.NewTooling(&tooling.Report{Project: commandScope()}, toolingNow).Scopes[0].Windows[1].Bars[6].Segments[1]
 	assert.Equal(t, "docker build", segment.Name)
 	assert.Equal(t, "s1", segment.Color)
 	assert.Contains(t, segment.Title, "docker build: 6.0s")
