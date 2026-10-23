@@ -17,10 +17,12 @@ type Store interface {
 	// Generate makes a key; Import takes one in PEM or OpenSSH form.
 	Generate(ctx context.Context, spec Spec) (*Key, error)
 	Import(ctx context.Context, spec Spec, data []byte) (*Key, error)
-	// Remove retires a key; Rotate writes new material for it, the old kept
-	// to decrypt what it encrypted.
+	// Remove retires a key; Rotate writes new material for it, the old
+	// kept as its one backup, which serves beside it until DeleteBackup
+	// removes it.
 	Remove(ctx context.Context, name string) error
 	Rotate(ctx context.Context, name string) (*Key, error)
+	DeleteBackup(ctx context.Context, name string) error
 	// Materialize serves SSH keys to a run in an ssh agent of its own;
 	// closing the agent ends it.
 	Materialize(ctx context.Context, names []string) (*sshagent.Agent, error)

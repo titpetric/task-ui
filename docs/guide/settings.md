@@ -187,10 +187,33 @@ and fingerprint, scope, the roles and users it links, and its date.
 
 The instance's encryption key, `task_encryption_ed25519`, encrypts the
 integrations' settings. No run, git remote or SSH connection gets it,
-and with it gone the workspaces' secrets still open. **Rotate**, or
-**Regenerate** on the Instance page, rotates it to new material, keeps the
-old as a backup that still decrypts, and writes the integrations again:
-`POST /api/keys/encrypt/rotate`.
+and with it gone the workspaces' secrets still open.
+
+### Rotate Key
+
+**Rotate Key**, in the **⋯** menu of a key on the Instance page and
+beside the instance's encryption key here, makes a new key of the same
+algorithm and size under the key's name and moves the previous one to
+`backup/<name>.key` and `.pub` in the key folder, `0600` in a `0700`
+folder. The key's row records the backup's fingerprint and when it
+rotated, and shows `BACKUP ACTIVE: backup/<name>` while the backup is
+there. Both keys serve meanwhile:
+
+- the encryption key decrypts with the new key, then the backup, and
+  the rotation writes the integrations' settings again for the new key;
+  the page says how many it re-encrypted.
+- an SSH key goes into the ssh agent of runs, git pulls and host probes
+  with its backup after it, so a host or a remote that knows the old
+  public key alone still lets them in. Add the new public key there,
+  then delete the backup.
+
+A key keeps one backup: while it has one, **Rotate Key** stays off with
+"Delete the backup first". **Delete backup** removes the backup's files
+and record, after a confirm that names its fingerprint; the key then
+rotates again. The routes are `POST /api/keys/{name}/rotate` and
+`DELETE /api/keys/{name}/backup`; `POST /api/keys/encrypt/rotate`
+rotates the instance's encryption key the same way, and a key with a
+backup answers `409`.
 
 ### One key, one use
 

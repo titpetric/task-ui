@@ -156,6 +156,18 @@
       type: timestamp
       comment: Updated At
       datatype: datetime
+    - name: backup
+      type: text
+      comment: Backup
+      datatype: varchar
+    - name: backup_fingerprint
+      type: text
+      comment: Backup Fingerprint
+      datatype: varchar
+    - name: rotated_at
+      type: timestamp
+      comment: Rotated At
+      datatype: datetime
   indexes:
     - name: sqlite_autoindex_key_info_1
       columns:

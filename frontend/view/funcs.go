@@ -9,6 +9,7 @@ import (
 
 	"github.com/titpetric/task-ui/claude"
 	"github.com/titpetric/task-ui/hours"
+	"github.com/titpetric/task-ui/keystore"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/note"
 )
@@ -21,6 +22,7 @@ func Funcs() template.FuncMap {
 		"duration":     Duration,
 		"size":         Size,
 		"join":         strings.Join,
+		"backupName":   keystore.BackupName,
 		"split":        strings.Split,
 		"lower":        strings.ToLower,
 		"add":          func(a, b int) int { return a + b },

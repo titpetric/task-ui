@@ -19,9 +19,14 @@
 				<td>
 					{{- with .InstanceKey }}
 					<span class="badge ok">set</span>
-					<form class="inline" data-api="/api/keys/encrypt/rotate" data-method="POST" data-next="/settings/keys?rekeyed={rekeyed}&what=integration+setting" data-confirm="Rotate the instance's encryption key? task-ui gives it new material, keeps the current one as a backup, and re-encrypts the integrations' settings." data-confirm-ok="Rotate">
-						<button class="btn btn-sm" type="submit" title="Generate a new encryption key"><svg class="ic"><use href="#i-rotate"/></svg> Rotate</button>
+					{{- if .Backup }}
+					<button class="btn btn-sm" type="button" disabled title="Delete the backup first"><svg class="ic"><use href="#i-rotate"/></svg> Rotate Key</button>
+					<button type="button" class="btn btn-sm danger" data-delete="/api/keys/{{ .Name }}/backup" data-confirm="Delete the backup {{ .Backup }}, {{ .BackupFingerprint }}? Secrets the new key has not re-encrypted stop opening." data-next="reload">Delete backup</button>
+					{{- else }}
+					<form class="inline" data-api="/api/keys/{{ .Name }}/rotate" data-method="POST" data-next="/settings/keys?rekeyed={rekeyed}&what=integration+setting" data-confirm="Rotate the instance's encryption key {{ .Fingerprint }}? task-ui gives it new material, keeps the current one as {{ backupName .Name }}, and re-encrypts the integrations' settings." data-confirm-ok="Rotate Key">
+						<button class="btn btn-sm" type="submit" title="Generate a new encryption key"><svg class="ic"><use href="#i-rotate"/></svg> Rotate Key</button>
 					</form>
+					{{- end }}
 					<div class="key-fp faint" title="{{ .Name }}">{{ .Fingerprint }}</div>
 					{{- else }}
 					<span class="badge bad">missing</span> <span class="faint">task-ui creates it on start</span>
@@ -47,10 +52,10 @@
 				<td>
 					{{- with .Encrypt }}
 					<span class="badge ok">set</span>
-					<form class="inline" data-api="{{ $api }}/generate" data-method="POST" data-next="/settings/keys?rekeyed={rekeyed}#ws-{{ $ws.Folder }}" data-confirm="Rotate the encryption key of {{ $ws.Folder }}? task-ui gives it new material, keeps the current one as a backup, and re-encrypts the workspace's secrets." data-confirm-ok="Rotate">
+					<form class="inline" data-api="{{ $api }}/generate" data-method="POST" data-next="/settings/keys?rekeyed={rekeyed}#ws-{{ $ws.Folder }}" data-confirm="Rotate the encryption key of {{ $ws.Folder }}? task-ui gives it new material, keeps the current one as a backup, and re-encrypts the workspace's secrets." data-confirm-ok="Rotate Key">
 						<input type="hidden" name="encrypt" value="true" data-type="bool">
 						<input type="hidden" name="comment" value="{{ .Comment }}">
-						<button class="btn btn-sm" type="submit" title="Generate a new encryption key"><svg class="ic"><use href="#i-rotate"/></svg> Rotate</button>
+						<button class="btn btn-sm" type="submit" title="Generate a new encryption key"><svg class="ic"><use href="#i-rotate"/></svg> Rotate Key</button>
 					</form>
 					<div class="key-fp faint">{{ .Fingerprint }}</div>
 					{{- else }}
@@ -95,7 +100,7 @@
 		<tbody>
 		{{- range .Keys }}
 			<tr id="key-{{ .Name }}">
-				<td class="key"><span class="mono">{{ .Name }}</span>{{ if .Git }} <span class="badge ok" title="git pulls and clones with it">git</span>{{ end }}{{ with .Comment }}<div class="faint">{{ . }}</div>{{ end }}</td>
+				<td class="key"><span class="mono">{{ .Name }}</span>{{ with .Backup }}{{ template "backup-active" . }}{{ end }}{{ if .Git }} <span class="badge ok" title="git pulls and clones with it">git</span>{{ end }}{{ with .Comment }}<div class="faint">{{ . }}</div>{{ end }}</td>
 				<td data-label="Purpose"><span class="badge{{ if .Encrypts }} signal{{ end }}">{{ if .Encrypts }}encryption{{ else }}SSH{{ end }}</span></td>
 				<td class="fingerprint" data-label="Fingerprint"><span class="kind dim">{{ .Kind }}</span>{{ .Fingerprint }}</td>
 				<td class="nowrap" data-label="Scope">{{ with .Workspace }}workspace{{ else }}instance{{ end }}</td>

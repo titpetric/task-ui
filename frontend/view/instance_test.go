@@ -84,3 +84,34 @@ func TestInstance_Keys(t *testing.T) {
 	assert.NotContains(t, body, "Regenerate")
 	assert.NotContains(t, body, "PRIVATE KEY")
 }
+
+// A rotated key shows its backup, rotates no more and lists Delete
+// backup.
+func TestInstance_KeyBackup(t *testing.T) {
+	t.Parallel()
+	v, err := view.New()
+	assert.NoError(t, err)
+
+	p := admin(t)
+	p.Instance = &view.Instance{}
+	git := keystore.Key{Name: "deploy_ed25519", Purpose: keystore.PurposeSSH, Algo: "ed25519", Fingerprint: "SHA256:new", PublicKey: "ssh-ed25519 AAAAnew", Git: true,
+		Backup: "backup/deploy_ed25519", BackupFingerprint: "SHA256:old"}
+	p.Keys = []keystore.Key{git}
+	var buf bytes.Buffer
+	assert.NoError(t, v.Render(&buf, "instance", p))
+	body := buf.String()
+	assert.Contains(t, body, "BACKUP ACTIVE: backup/deploy_ed25519")
+	assert.Contains(t, body, `disabled title="Delete the backup first"`)
+	assert.Contains(t, body, `data-delete="/api/keys/deploy_ed25519/backup"`)
+	assert.Contains(t, body, "SHA256:old")
+	assert.NotContains(t, body, `data-api="/api/keys/deploy_ed25519/rotate"`)
+
+	git.Backup = ""
+	p.Keys = []keystore.Key{git}
+	buf.Reset()
+	assert.NoError(t, v.Render(&buf, "instance", p))
+	body = buf.String()
+	assert.Contains(t, body, `data-api="/api/keys/deploy_ed25519/rotate"`)
+	assert.Contains(t, body, "backup/deploy_ed25519, which runs and git keep using")
+	assert.NotContains(t, body, "BACKUP ACTIVE")
+}

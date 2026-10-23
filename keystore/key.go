@@ -33,6 +33,12 @@ type Key struct {
 	Users []string `json:"users"`
 	// Git marks the SSH key git pulls and clones with.
 	Git bool `json:"git,omitempty"`
+	// Backup names the backup of the previous material a rotation kept,
+	// backup/<name>, "" for none, and BackupFingerprint its fingerprint.
+	// Until an admin deletes it, the key serves both and rotates no more.
+	Backup            string     `json:"backup,omitempty"`
+	BackupFingerprint string     `json:"backup_fingerprint,omitempty"`
+	RotatedAt         *time.Time `json:"rotated_at,omitempty"`
 }
 
 // Workspace returns the ID of the workspace a key belongs to, "" for an
