@@ -82,6 +82,7 @@
     margin: 0.2rem 0 0;
     color: var(--text-dim);
     white-space: pre-wrap;
+    overflow-wrap: anywhere;
     font-size: var(--fs-data);
   }
 

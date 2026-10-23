@@ -1824,6 +1824,14 @@
   function stepFold(row, open) {
     row.classList.toggle("open", open);
     row.querySelector("[data-step-toggle]").setAttribute("aria-expanded", open ? "true" : "false");
+    if (open) row.querySelectorAll("[data-step-prompt-text]").forEach(fitText);
+  }
+
+  // fitText grows a prompt's field to its text, up to about 24 lines,
+  // so a long prompt reads whole once its card opens.
+  function fitText(text) {
+    text.style.height = "";
+    text.style.height = Math.min(text.scrollHeight + 2, 34 * 16) + "px";
   }
 
   // stepOff turns a step off, which a run skips, or back on; its menu
@@ -1988,6 +1996,7 @@
     form.addEventListener("input", function (event) {
       var row = event.target.closest("[data-step]");
       if (!row) return;
+      if (event.target.matches("[data-step-prompt-text]")) fitText(event.target);
       if (row.classList.contains("invalid")) stepProblem(row, "");
       stepLine(row);
     });
