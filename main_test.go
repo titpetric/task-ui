@@ -99,6 +99,7 @@ func TestRun_EmailAndBackup(t *testing.T) {
 	root := t.TempDir()
 	t.Setenv("TASK_UI_WORKSPACE", root)
 	t.Setenv("TASK_UI_DATA", filepath.Join(root, "data"))
+	t.Setenv("TASK_UI_SSH_DIR", filepath.Join(root, "keys"))
 	ctx := context.Background()
 
 	// Not a user until the server has read the file.
@@ -156,6 +157,7 @@ func TestRun_User(t *testing.T) {
 	root := t.TempDir()
 	t.Setenv("TASK_UI_WORKSPACE", root)
 	t.Setenv("TASK_UI_DATA", filepath.Join(root, "data"))
+	t.Setenv("TASK_UI_SSH_DIR", filepath.Join(root, "keys"))
 	ctx := context.Background()
 	assert.NoError(t, run(ctx, []string{"passwd", "alice", "secret"}, strings.NewReader(""), &out))
 	assert.NoError(t, run(ctx, []string{"passwd", "bob", "secret"}, strings.NewReader(""), &out))
