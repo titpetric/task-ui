@@ -21,7 +21,7 @@ func (h *Handlers) listFolders(w http.ResponseWriter, r *http.Request) {
 		if !user.CanSee(f.ID) || only != "" && f.ID != only {
 			continue
 		}
-		view := FolderView{ID: f.ID, Title: f.Title, Description: f.Description, Error: f.Error, Jobs: []JobView{}}
+		view := FolderView{ID: f.ID, Title: f.Title, Description: f.Description, Error: f.Error, Errors: f.Errors, Jobs: []JobView{}}
 		for _, job := range f.Jobs {
 			last, err := h.opts.Runs.Last(r.Context(), storage.RunFilter{Folder: f.ID, Job: job.ID})
 			if err != nil && !errors.Is(err, storage.ErrNotFound) {

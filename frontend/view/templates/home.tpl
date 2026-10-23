@@ -9,6 +9,8 @@
 {{- /* The dashboard follows the runs topic: a run that starts adds its
      tile, one that ends marks it, and the count and the control centre's
      buttons keep up; no reload. */}}
+{{- template "pipelinenote" (list $ ($.PipelineAlert "")) }}
+
 <div data-sse="runs" data-dashboard>
 {{- $jobs := 0 }}{{ range .Folders }}{{ $jobs = len .Jobs | add $jobs }}{{ end }}
 <div class="metrics">

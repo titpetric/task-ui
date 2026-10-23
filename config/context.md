@@ -22,8 +22,11 @@ file speaks for its folder. **Recursive**, on by default, lists the
 folders inside a project as deep as they go; off lists the project and
 its top-level folders alone. Discovery skips what `.gitignore` ignores,
 except an ignored checkout right below a workspace or a project that
-holds a job source. Pages: `/f/<workspace>/<folder>`; API: `GET
-/api/folders`; MCP: `list_jobs`.
+holds a job source. A pipeline atkins' linter refuses lists no jobs:
+its folder, and the pages of the workspace and project above it, show
+an alert with each finding, the file, the job and the detail, and
+`list_jobs` lists them as `errors`. Pages: `/f/<workspace>/<folder>`;
+API: `GET /api/folders`; MCP: `list_jobs`.
 
 Job IDs a run takes besides the listed jobs: `./<path>` runs a file of
 the folder that runs, `@<skill>:<job>` runs a job of an atkins skill

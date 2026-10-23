@@ -139,6 +139,45 @@ func TestAtkinsDetectorOnABrokenPipeline(t *testing.T) {
 	assert.Len(t, source.Targets, 0)
 }
 
+// A pipeline atkins' linter refuses answers its findings and exits 1;
+// the source carries them, so the folder says what is wrong. The
+// listing closes the stub's heredoc to exit 1 after it.
+func TestAtkinsDetectorOnALintedPipeline(t *testing.T) {
+	stubAtkins(t, `{"error":"pipeline 'Broken' has errors","lint":[{"pipeline":"Broken","job":"build","issue":"missing task reference","detail":"no go:fmt"}]}
+LISTING
+exit 1
+cat <<'LISTING'`)
+	dir := withPipeline(t, "atkins.yml")
+
+	source := atkinsDetector{}.Detect(dir)
+	assert.NotNil(t, source)
+	assert.Equal(t, "atkins.yml: pipeline 'Broken' has errors", source.Error)
+	assert.Len(t, source.Errors, 1)
+	assert.Equal(t, "no go:fmt", source.Errors[0].Detail)
+	assert.Equal(t, "atkins.yml", source.Errors[0].Path)
+}
+
+// The atkins on the PATH refuses a step that calls a job it lacks, and
+// the source names the job and the file.
+func TestAtkinsDetectorWithAtkins(t *testing.T) {
+	command, err := exec.LookPath("atkins")
+	if err != nil {
+		t.Skip("no atkins on the PATH")
+	}
+	t.Cleanup(UseProber(&skills.Prober{Command: command, Timeout: 10 * time.Second}))
+	dir := t.TempDir()
+	pipeline := "name: Broken\njobs:\n  build:\n    desc: Build\n    steps:\n      - task: go:fmt\n"
+	assert.NoError(t, os.WriteFile(filepath.Join(dir, "atkins.yml"), []byte(pipeline), 0o644))
+
+	source := atkinsDetector{}.Detect(dir)
+	assert.NotNil(t, source)
+	assert.Len(t, source.Targets, 0)
+	assert.Len(t, source.Errors, 1)
+	assert.Equal(t, "atkins.yml", source.Errors[0].Path)
+	assert.Equal(t, "build", source.Errors[0].Job)
+	assert.Contains(t, source.Errors[0].Detail, "go:fmt")
+}
+
 // Every name atkins discovers is a pipeline, in its order.
 func TestAtkinsDetectorFileNames(t *testing.T) {
 	stubAtkins(t, infra)

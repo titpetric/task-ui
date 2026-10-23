@@ -54,6 +54,9 @@ type Folder struct {
 	// Error holds the parse errors of the sources, so a folder with a
 	// broken file still shows in the listing and says what is wrong.
 	Error string `json:"error,omitempty"`
+	// Errors are the findings of atkins' linter in the folder's
+	// pipelines, what a page lists for a pipeline it refuses.
+	Errors []skills.Finding `json:"errors,omitempty"`
 }
 
 // Job returns the job by ID, name or alias, or nil. The ID is what URLs

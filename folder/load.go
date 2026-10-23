@@ -72,6 +72,7 @@ func finish(f *Folder) {
 		if source.Error != "" {
 			failures = append(failures, source.Error)
 		}
+		f.Errors = append(f.Errors, source.Errors...)
 		for _, target := range source.Targets {
 			job := &Job{
 				Target: *target,

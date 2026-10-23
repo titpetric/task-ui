@@ -6,7 +6,6 @@ package skills
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -17,10 +16,11 @@ import (
 )
 
 // Prober runs `atkins -l --json --all` in a directory and keeps the
-// sections for TTL, or until the pipeline file or a skills folder it read changes.
-// A probe that fails or takes longer than Timeout answers nothing. Stamp
-// tells a change apart: it reads the nearest pipeline file and the files of
-// every .atkins/skills folder from the directory up.
+// listing for TTL, or until the pipeline file or a skills folder it read changes.
+// A probe that fails or takes longer than Timeout answers nothing; one
+// atkins' linter refuses answers its findings. Stamp tells a change
+// apart: it reads the nearest pipeline file and the files of every
+// .atkins/skills folder from the directory up.
 type Prober struct {
 	// Command is the atkins binary, atkins unless set.
 	Command string
@@ -36,14 +36,14 @@ type Prober struct {
 // probe is what a directory answered, when, and the stamp of the files
 // it read then.
 type probe struct {
-	sections []Section
-	at       time.Time
-	stamp    string
+	listing Listing
+	at      time.Time
+	stamp   string
 }
 
 // Probe returns the sections atkins lists for dir, inactive skills included, nil on any failure.
 func (p *Prober) Probe(dir string) []Section {
-	return p.probe(dir, "")
+	return p.probe(dir, "").Sections
 }
 
 // ProbeFile returns the sections atkins lists for one pipeline file in
@@ -52,15 +52,20 @@ func (p *Prober) ProbeFile(dir, file string) []Section {
 	if file == "" {
 		return nil
 	}
+	return p.probe(dir, file).Sections
+}
+
+// List returns what atkins answers for dir, or for one file in it.
+func (p *Prober) List(dir, file string) Listing {
 	return p.probe(dir, file)
 }
 
 // probe answers from the cache when the files it read have not changed
-// and the cached sections are younger than the TTL, and asks atkins
+// and the cached listing is younger than the TTL, and asks atkins
 // otherwise.
-func (p *Prober) probe(dir, file string) []Section {
+func (p *Prober) probe(dir, file string) Listing {
 	if p == nil || dir == "" {
-		return nil
+		return Listing{}
 	}
 	key := dir + "\x00" + file
 	stamp := Stamp(dir)
@@ -68,21 +73,22 @@ func (p *Prober) probe(dir, file string) []Section {
 	cached, ok := p.cache[key]
 	p.mu.Unlock()
 	if ok && cached.stamp == stamp && time.Since(cached.at) < p.ttl() {
-		return cached.sections
+		return cached.listing
 	}
-	sections := p.run(dir, file)
+	listing := p.run(dir, file)
 	p.mu.Lock()
 	if p.cache == nil {
 		p.cache = map[string]probe{}
 	}
-	p.cache[key] = probe{sections: sections, at: time.Now(), stamp: stamp}
+	p.cache[key] = probe{listing: listing, at: time.Now(), stamp: stamp}
 	p.mu.Unlock()
-	return sections
+	return listing
 }
 
 // run execs atkins in dir. Its stdin is /dev/null: atkins reads a pipe
-// on stdin as the pipeline.
-func (p *Prober) run(dir, file string) []Section {
+// on stdin as the pipeline. A failing atkins answers only when it
+// prints lint findings, which it does with a non-zero exit.
+func (p *Prober) run(dir, file string) Listing {
 	timeout := p.Timeout
 	if timeout <= 0 {
 		timeout = 3 * time.Second
@@ -100,14 +106,12 @@ func (p *Prober) run(dir, file string) []Section {
 	cmd.WaitDelay = time.Second
 	var out bytes.Buffer
 	cmd.Stdout = &out
-	if err := cmd.Run(); err != nil {
-		return nil
+	failed := cmd.Run() != nil
+	listing, err := ParseListing(out.Bytes())
+	if err != nil || failed && !listing.Broken() {
+		return Listing{}
 	}
-	var sections []Section
-	if err := json.Unmarshal(out.Bytes(), &sections); err != nil {
-		return nil
-	}
-	return sections
+	return listing
 }
 
 // Bin is the atkins the probe runs, and the one a skill's job runs with:

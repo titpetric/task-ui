@@ -527,7 +527,7 @@
 					<summary{{ if $here }} class="active"{{ end }} title="{{ $p.ID }}/{{ range $i, $s := $p.Sources }}{{ if $i }}, {{ end }}{{ $s.File }}{{ end }}">
 						<a class="section{{ if $here }} active{{ end }}" href="{{ $.Href $p.ID }}" data-folder="{{ $p.ID }}">
 							<svg class="ic"><use href="#i-project"/></svg><span>{{ $p.Name }}</span>
-							{{- if $p.Error }}<small class="bad">!</small>{{ else if $p.Jobs }}<small>{{ len $p.Jobs }}</small>{{ end }}
+							{{- if $p.Error }}{{ template "sidebad" $p }}{{ else if $p.Jobs }}<small>{{ len $p.Jobs }}</small>{{ end }}
 						</a>
 						<svg class="ic chev"><use href="#i-chev"/></svg>
 					</summary>
@@ -556,7 +556,7 @@
 		<svg class="ic chev"><use href="#i-chev"/></svg>
 		<a class="section{{ if $here }} active{{ end }}" href="{{ $.Href $p.ID }}" data-folder="{{ $p.ID }}">
 			<span>{{ $p.Name }}</span>
-			{{- if $p.Error }}<small class="bad">!</small>{{ else }}<small>{{ len $g.Projects }}</small>{{ end }}
+			{{- if $p.Error }}{{ template "sidebad" $p }}{{ else }}<small>{{ len $g.Projects }}</small>{{ end }}
 		</a>
 	</summary>
 	{{- if $p.Jobs }}
@@ -581,7 +581,7 @@
 	<summary title="{{ $p.ID }}/{{ range $i, $s := $p.Sources }}{{ if $i }}, {{ end }}{{ $s.File }}{{ end }}">
 		<a href="{{ $.Href $p.ID }}"><svg class="ic"><use href="#i-folder{{ if $active }}-open{{ end }}"/></svg><span>{{ with folderDir $p.ID $top }}<i>{{ . }}/</i>{{ end }}<b>{{ $p.Name }}</b></span></a>
 		<i class="dot"></i>
-		{{- if $p.Error }}<small class="bad">!</small>{{ else }}<small>{{ len $p.Jobs }}</small>{{ end }}
+		{{- if $p.Error }}{{ template "sidebad" $p }}{{ else }}<small>{{ len $p.Jobs }}</small>{{ end }}
 		<svg class="ic chev"><use href="#i-chev"/></svg>
 	</summary>
 	<div class="jobs">
@@ -730,7 +730,7 @@
 			</div>
 		</article>
 	{{- else }}
-		<div class="alert">{{ if $s.Error }}{{ $s.Error }}{{ else }}No targets in {{ $s.File }}.{{ end }}</div>
+		<div class="alert">{{ if $s.Errors }}atkins lists no jobs of {{ $s.File }} until a fix clears its errors.{{ else if $s.Error }}{{ $s.Error }}{{ else }}No targets in {{ $s.File }}.{{ end }}</div>
 	{{- end }}
 	</div>
 </section>
@@ -841,7 +841,7 @@
 	{{- end }}
 </div>
 {{- else }}
-<div class="empty">Nothing to run.</div>
+<div class="empty">{{ if $p.Errors }}The pipeline has errors.{{ else }}Nothing to run.{{ end }}</div>
 {{- end }}
 {{- end }}
 

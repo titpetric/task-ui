@@ -5,6 +5,9 @@ import (
 	"path/filepath"
 	"slices"
 	"testing"
+
+	"github.com/titpetric/task-ui/detector"
+	"github.com/titpetric/task-ui/skills"
 )
 
 func TestLoad(t *testing.T) {
@@ -147,5 +150,17 @@ func TestLoad_DefaultFirst(t *testing.T) {
 	}
 	if len(ids) != 3 || ids[0] != "default" {
 		t.Fatalf("ids: %v", ids)
+	}
+}
+
+// A folder takes the lint findings of its sources, in source order.
+func TestFinish_Errors(t *testing.T) {
+	f := &Folder{ID: "app", Title: "app", Sources: []*detector.Source{
+		{Kind: "atkins", File: "atkins.yml", Error: "atkins.yml: pipeline 'app' has errors", Errors: []skills.Finding{{Path: "atkins.yml", Job: "build", Detail: "no go:fmt"}}},
+		{Kind: "script", File: "scripts", Aside: true},
+	}}
+	finish(f)
+	if len(f.Errors) != 1 || f.Errors[0].Job != "build" || f.Error != "atkins.yml: pipeline 'app' has errors" {
+		t.Fatalf("errors: %+v %q", f.Errors, f.Error)
 	}
 }

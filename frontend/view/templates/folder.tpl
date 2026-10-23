@@ -17,9 +17,10 @@
 		{{- end }}
 	</div>
 </div>
+{{- template "pipelinealert" (list $ ($.PipelineAlert $p.ID)) }}
 {{- template "actions" $ }}
 
-{{- if $p.Error }}
+{{- if and $p.Error (not $p.Errors) }}
 <div class="alert bad"><b>Could not read a source.</b> {{ $p.Error }}</div>
 {{- end }}
 

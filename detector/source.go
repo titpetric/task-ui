@@ -1,5 +1,9 @@
 package detector
 
+import (
+	"github.com/titpetric/task-ui/skills"
+)
+
 // Source is one convention found in a folder: the file the detector
 // read, the command that runs its targets, and the targets.
 type Source struct {
@@ -24,6 +28,9 @@ type Source struct {
 
 	// Error holds the parse error when the file does not parse.
 	Error string `json:"error,omitempty"`
+	// Errors are the findings of atkins' linter for a pipeline it lists
+	// no jobs of, each naming its file relative to the folder.
+	Errors []skills.Finding `json:"errors,omitempty"`
 
 	// Aside marks a source listed beside the one that reads the folder,
 	// whose targets keep their names: the loose scripts of a scripts
