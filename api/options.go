@@ -82,6 +82,8 @@ type Options struct {
 	// Now is the clock a token's expiry starts from; nil is the real
 	// time.
 	Now func() time.Time
+	// Pins keep what each user pins to the sidebar; nil turns /pins off.
+	Pins PinStore
 	// Summaries keep Claude's summary of each run that has one.
 	Summaries *storage.RunSummaryStorage
 	// Summarizer writes the summary of a run on the hosts with Claude.

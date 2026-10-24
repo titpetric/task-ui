@@ -33,7 +33,7 @@ func TestFolder_FilesDashboard(t *testing.T) {
 	assert.NotContains(t, body, "<th>Summary</th>")
 	assert.Contains(t, body, `<a href="/f/_/infra/edge">edge</a>`)
 
-	assert.Contains(t, jobsTable(body), `<a href="/f/_/infra/web">web/</a>`, "a folder inside with jobs is a row, its jobs its own")
+	assert.Contains(t, jobsTable(body), `<a class="badge" href="/f/_/infra/web">web/scripts</a>`, "a folder inside with jobs is a row, its jobs its own")
 	assert.Contains(t, jobsTable(body), `data-cc="infra/web/build" data-folder="infra/web"`)
 
 	tool := jobRow(t, body, "infra/./tool.py")
@@ -60,7 +60,7 @@ func TestFolder_DirJobs(t *testing.T) {
 
 	body := f.page(t, asAdmin, "/f/_/infra")
 	table := jobsTable(body)
-	assert.Contains(t, table, `<a href="/f/_/infra/images">images/</a>`)
+	assert.Contains(t, table, `<a class="badge" href="/f/_/infra/images">images/atkins.yml</a>`)
 	assert.Contains(t, table, `data-run data-folder="infra" data-dir="images" data-job="default" data-title="infra/images / default"`)
 	assert.Contains(t, jobRow(t, body, "infra/images/push"), "Push one")
 	assert.Contains(t, jobRow(t, body, "infra/images/push"), `<span>Run and summarize push</span>`)

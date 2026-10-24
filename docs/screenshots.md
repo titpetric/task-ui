@@ -34,4 +34,5 @@ it with headless chromium; `task docs:shots` regenerates them into
 | ![A key's actions menu: its details, then Copy, Download, Edit links, Rotate Key, and Remove last](assets/keys-menu-dark.png) | ![A key's actions menu, light theme](assets/keys-menu-light.png) |
 | ![A job's run: its actions menu beside View, its ID, Open, Replay](assets/job-menu-dark.png) | ![A run's actions menu, light theme](assets/job-menu-light.png) |
 | ![The phone: a row's actions menu as a sheet along the bottom](assets/mobile-actions-dark.png) | ![Configure a workspace, light theme](assets/workspace-edit-light.png) |
-| ![The phone: a workspace's configure page, its home project with Change, Replace and Remove](assets/mobile-workspace-edit-dark.png) | |
+| ![The phone: a workspace's configure page, its home project with Change, Replace and Remove](assets/mobile-workspace-edit-dark.png) | ![The sidebar with pins: a directory under its project, a file as a run item](assets/sidebar-pin-dark.png) |
+| ![Pins, light theme](assets/sidebar-pin-light.png) | |

@@ -141,6 +141,9 @@ func (h *Handlers) Routes() http.Handler {
 	r.Delete("/users/{id}/mcp", h.disableMCP)
 
 	r.Get("/me", h.getMe)
+	r.Get("/pins", h.listPins)
+	r.Post("/pins", h.addPin)
+	r.Delete("/pins/{id}", h.deletePin)
 	r.Get("/permissions", h.getPermissions)
 	r.Get("/permissions/roles/{role}", h.getRolePolicy)
 	r.Put("/permissions/roles/{role}", h.putRolePolicy)

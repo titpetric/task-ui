@@ -25,7 +25,7 @@ func (p *Page) RunConfirm(job *folder.Job) string {
 	return ""
 }
 
-// ControlMenu returns a Jobs row's [...]: per job, Run and summarize, its last run and summary, History, Run force and Kill.
+// ControlMenu returns a Jobs row's [...]: per job, Run and summarize, its last run and summary, History, Pin, Run force and Kill.
 func (p *Page) ControlMenu(row ControlRow) *Menu {
 	m := &Menu{Label: "Actions on " + row.Label}
 	f := row.Folder
@@ -62,6 +62,9 @@ func (p *Page) ControlMenu(row ControlRow) *Menu {
 			add(NewMenuItem("summary", "Summary of "+job.ID, "href", summary.Href, "title", summary.Preview))
 		}
 		add(NewMenuItem("list", "History of "+job.ID, "href", p.JobHref(f, job)))
+		if p.Pinning {
+			add(p.PinItem(f.ID, job.ID, job.Dir, job.ID), nil)
+		}
 		if run == nil && can && f.HoursOf(job) != "" {
 			add(NewDangerItem("play", "Run force "+job.ID, append([]string{"data-force", "", "title", "Run out of hours, with a reason"}, start...)...))
 		}

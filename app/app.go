@@ -280,6 +280,7 @@ func (a *App) wire(version string) error {
 			return a.UsersFile.Remove(ctx, a.Users, a.Passwords, name)
 		}
 	}
+	pins := storage.NewPinStorage(db)
 	apiHandlers := api.New(api.Options{
 		Users: a.Users, Projects: projects, Workspaces: workspaces, Runs: runs, Artifacts: artifacts, ArtifactStore: store, Schedules: schedules, Secrets: secrets, SecretReads: secretReads,
 		FolderRefs: refs,
@@ -287,7 +288,7 @@ func (a *App) wire(version string) error {
 		Runner: a.Runner, Catalogue: a.Catalogue, Git: g, Keys: keys, KeyReads: storage.NewKeyReadStorage(db), Env: env, Recordings: recordings, Root: cfg.Root, Board: a.Board,
 		Integrations: integrations, Hosts: hosts, HostRuns: hostRuns, Summarizer: &claude.Summarizer{Timeout: 3 * time.Minute},
 		AddUser: addUser, RemoveUser: removeUser, Tokens: a.Guard.Tokens, Now: cfg.Clock(), Summaries: summaries, Version: version,
-		Cleaner: cleaner,
+		Cleaner: cleaner, Pins: pins,
 	})
 	pages, err := frontend.New(frontend.Options{
 		Guard: a.Guard, Auth: access.NewAuthenticator(a.Users, a.Emails, a.Passwords), Users: a.Users, Projects: projects, Workspaces: workspaces, Runs: runs, Artifacts: artifacts, Schedules: schedules, Secrets: secrets, SecretReads: secretReads,
@@ -295,7 +296,7 @@ func (a *App) wire(version string) error {
 		Workflows:  workflows, WorkflowRuns: workflowRuns, Flows: a.Workflows,
 		Runner: a.Runner, Catalogue: a.Catalogue, Steps: a.Catalogue.Steps(), Git: g, Keys: keys, KeyReads: storage.NewKeyReadStorage(db), Env: env, Recordings: recordings, Root: cfg.Root, Version: version, Now: cfg.Clock(),
 		ArtifactStore: store, Disk: &diskusage.Meter{TTL: 10 * time.Minute}, Board: a.Board, ComposeProject: self, Cleaner: cleaner,
-		Integrations: integrations, Hosts: hosts,
+		Integrations: integrations, Hosts: hosts, Pins: pins,
 		Tooling: &tooling.Prober{Timeout: 5 * time.Second, TTL: time.Minute},
 		SSH:     prober, AddUsers: a.UsersFile != nil, BaseURL: cfg.URL,
 		Facts: &hostinfo.Reader{Run: prober.Output, Timeout: 20 * time.Second, TTL: 5 * time.Minute},

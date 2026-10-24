@@ -40,6 +40,13 @@ type Page struct {
 	// SideFolders are the folders the sidebar lists: Folders less the
 	// projects set not to show there.
 	SideFolders []*folder.Folder
+	// SidePins are the pinned jobs a folder of the sidebar lists besides
+	// its own, by folder ID.
+	SidePins map[string][]SidePin
+	// Pins are the user's pins, for Pin and Unpin; Pinning says the user
+	// may pin, signed in with pins on.
+	Pins    []model.Pin
+	Pinning bool
 	// StepFolders are the folders the workflow editor's steps pick, every
 	// folder with a job the user sees, whatever the settings hide.
 	StepFolders []*folder.Folder
@@ -67,8 +74,7 @@ type Page struct {
 	Job   *folder.Job
 	// Actions are the actions bar of the folder or the directory browsed.
 	Actions *Actions
-	// FolderMenu is the [...] menu in the head of a workspace's or a
-	// project's page.
+	// FolderMenu is the [...] menu in the head of a folder's page.
 	FolderMenu *FolderMenu
 	// Prompt is the prompt box of the folder or the directory browsed,
 	// for a user with prompt/edit and a Claude token.

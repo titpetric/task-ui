@@ -313,9 +313,9 @@ func withTreeFolders(p *view.Page, dir string, subs []*folder.Folder) {
 	p.Tree = slices.Insert(p.Tree, dirs, missing...)
 }
 
-// folderMenu returns the [...] menu of the head of a folder's page, for
-// a workspace or a project, nil for a folder inside one. The template
-// checks the permissions of its items.
+// folderMenu returns the [...] menu of the head of a folder's page: a
+// workspace's or a project's, or a folder's inside one, which pins
+// alone. The template checks the permissions of its items.
 func folderMenu(p *view.Page, f *folder.Folder) *view.FolderMenu {
 	m := &view.FolderMenu{ID: f.ID}
 	top, _, _ := strings.Cut(f.ID, "/")
@@ -326,7 +326,7 @@ func folderMenu(p *view.Page, f *folder.Folder) *view.FolderMenu {
 	case (named && f.Depth() == 1) || (!named && f.Depth() == 0):
 		m.Project = true
 	default:
-		return nil
+		return m
 	}
 	if p.Actions != nil {
 		m.Pull = pullJob(p.Actions.Skills)

@@ -1,12 +1,13 @@
 {{- /* The control buttons of a folder's jobs, the dashboard's control
      centre's. */}}
 
-{{/* controltable is the control centre's table: a row per folder, or
-     on a folder's page per place with targets, a column per job name
-     that repeats, the rest under other. A Named row holds its jobs as
-     named buttons across the row, and a table of Named rows alone has no
-     head; with menus, each row ends with a
-     [...] of what the buttons leave out. (list $ control menus) */}}
+{{/* controltable is the control centre's table: a row per folder, a
+     column per job name that repeats, the rest under other. On a
+     folder's page every row holds Named buttons: its label, the source's file
+     linked to where it runs or the group's kind, then its jobs as named
+     buttons; a table of Named rows has no head. With menus, each row
+     ends with a [...] of what the buttons leave out.
+     (list $ control menus) */}}
 {{- define "controltable" }}
 {{- $ := index . 0 }}{{ $c := index . 1 }}{{ $menus := index . 2 }}
 	<div class="table-wrap">
@@ -19,7 +20,8 @@
 		{{- range $row := $c.Rows }}
 			<tr{{ if $row.Named }} class="named" data-span{{ end }}>
 				{{- if $row.Named }}
-				<td colspan="{{ add (len $c.Columns) 2 }}"><div class="cc-row"><span class="badge"{{ with $row.Title }} title="{{ . }}"{{ end }}>{{ $row.Label }}</span>{{ range $row.Extra }}{{ template "controljob" (list $ $row.Folder . true) }}{{ end }}</div></td>
+				<td class="key nowrap"{{ with $row.Title }} title="{{ . }}"{{ end }}>{{ if $row.Place }}<a class="badge" href="{{ $.Href $row.Folder.ID }}{{ with $row.Folder.Rel }}/{{ . }}{{ end }}">{{ $row.Label }}</a>{{ else }}<span class="badge">{{ $row.Label }}</span>{{ end }}</td>
+				<td colspan="{{ add (len $c.Columns) 1 }}">{{ if and $row.Empty (not $row.Extra) }}<span class="faint">{{ $row.Empty }}</span>{{ else }}<div class="cc-row">{{ range $row.Extra }}{{ template "controljob" (list $ $row.Folder . true) }}{{ end }}</div>{{ end }}</td>
 				{{- else }}
 				<td class="key nowrap"{{ with $row.Title }} title="{{ . }}"{{ end }}><a href="{{ $.Href $row.Folder.ID }}{{ with $row.Folder.Rel }}/{{ . }}{{ end }}">{{ or $row.Label $row.Folder.ID }}</a></td>
 				{{- if and $row.Empty (not $row.Jobs) }}

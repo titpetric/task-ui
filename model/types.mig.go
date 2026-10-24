@@ -874,6 +874,81 @@ var PermissionPolicyFields = []string{"id", "subject_kind", "subject", "path", "
 // PermissionPolicyPrimaryFields are the primary key fields in the DB table.
 var PermissionPolicyPrimaryFields = []string{"id"}
 
+// Pin generated for db table `pin`.
+type Pin struct {
+	// ID
+	ID string `db:"id" json:"id"`
+
+	// User Name
+	UserName string `db:"user_name" json:"user_name"`
+
+	// Folder
+	Folder string `db:"folder" json:"folder"`
+
+	// Job
+	Job string `db:"job" json:"job"`
+
+	// Dir
+	Dir string `db:"dir" json:"dir"`
+
+	// Args
+	Args string `db:"args" json:"args"`
+
+	// Created At
+	CreatedAt *time.Time `db:"created_at" json:"created_at"`
+}
+
+// GetID will return the value of ID.
+func (p *Pin) GetID() string { return p.ID }
+
+// SetID sets ID to the provided value.
+func (p *Pin) SetID(val string) { p.ID = val }
+
+// GetUserName will return the value of UserName.
+func (p *Pin) GetUserName() string { return p.UserName }
+
+// SetUserName sets UserName to the provided value.
+func (p *Pin) SetUserName(val string) { p.UserName = val }
+
+// GetFolder will return the value of Folder.
+func (p *Pin) GetFolder() string { return p.Folder }
+
+// SetFolder sets Folder to the provided value.
+func (p *Pin) SetFolder(val string) { p.Folder = val }
+
+// GetJob will return the value of Job.
+func (p *Pin) GetJob() string { return p.Job }
+
+// SetJob sets Job to the provided value.
+func (p *Pin) SetJob(val string) { p.Job = val }
+
+// GetDir will return the value of Dir.
+func (p *Pin) GetDir() string { return p.Dir }
+
+// SetDir sets Dir to the provided value.
+func (p *Pin) SetDir(val string) { p.Dir = val }
+
+// GetArgs will return the value of Args.
+func (p *Pin) GetArgs() string { return p.Args }
+
+// SetArgs sets Args to the provided value.
+func (p *Pin) SetArgs(val string) { p.Args = val }
+
+// GetCreatedAt will return the value of CreatedAt.
+func (p *Pin) GetCreatedAt() *time.Time { return p.CreatedAt }
+
+// SetCreatedAt sets CreatedAt to the provided value.
+func (p *Pin) SetCreatedAt(stamp time.Time) { p.CreatedAt = &stamp }
+
+// PinTable is the name of the table in the DB.
+const PinTable = "`pin`"
+
+// PinFields is a list of all columns in the DB table.
+var PinFields = []string{"id", "user_name", "folder", "job", "dir", "args", "created_at"}
+
+// PinPrimaryFields are the primary key fields in the DB table.
+var PinPrimaryFields = []string{"id"}
+
 // Project generated for db table `project`.
 type Project struct {
 	// ID
@@ -3318,6 +3393,67 @@ func (p *PermissionPolicy) Update(opts ...QueryOption) string {
 // Delete starts building a DELETE query.
 func (p *PermissionPolicy) Delete(opts ...QueryOption) string {
 	cfg := (&QueryConfig{Table: PermissionPolicyTable}).Apply(opts...)
+	query := fmt.Sprintf("DELETE FROM %s", cfg.Table)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	return query
+}
+
+// Insert starts building an INSERT INTO query.
+func (p *Pin) Insert(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: PinTable, Statement: "INSERT INTO"}).Apply(opts...)
+	cols := PinFields
+	if len(cfg.Columns) > 0 {
+		cols = cfg.Columns
+	}
+	return fmt.Sprintf("%s %s (%s) VALUES (:%s)", cfg.Statement, cfg.Table, strings.Join(cols, ", "), strings.Join(cols, ", :"))
+}
+
+// Select starts building a SELECT query.
+func (p *Pin) Select(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: PinTable}).Apply(opts...)
+	cols := "*"
+	if len(cfg.Columns) > 0 {
+		cols = strings.Join(cfg.Columns, ", ")
+	}
+	query := fmt.Sprintf("SELECT %s FROM %s", cols, cfg.Table)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	if cfg.OrderBy != "" {
+		query += " ORDER BY " + cfg.OrderBy
+	}
+	if cfg.LimitOffset > 0 {
+		query += fmt.Sprintf(" LIMIT %d, %d", cfg.LimitStart, cfg.LimitOffset)
+	}
+	return query
+}
+
+// Update starts building a UPDATE query.
+func (p *Pin) Update(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: PinTable}).Apply(opts...)
+	cols := PinFields
+	if len(cfg.Columns) > 0 {
+		cols = cfg.Columns
+	}
+	setClause := ""
+	for i, col := range cols {
+		if i > 0 {
+			setClause += ", "
+		}
+		setClause += col + "=:" + col
+	}
+	query := fmt.Sprintf("UPDATE %s SET %s", cfg.Table, setClause)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	return query
+}
+
+// Delete starts building a DELETE query.
+func (p *Pin) Delete(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: PinTable}).Apply(opts...)
 	query := fmt.Sprintf("DELETE FROM %s", cfg.Table)
 	if cfg.Where != "" {
 		query += " WHERE " + cfg.Where

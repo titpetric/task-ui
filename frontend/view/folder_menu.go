@@ -6,10 +6,11 @@ import (
 	"github.com/titpetric/task-ui/folder"
 )
 
-// FolderMenu is the [...] menu in the head of a folder page of a
-// workspace or a project: a link to its settings, for a workspace its
-// SSH keys and secrets, Pull now, and for a project with a checkout
-// Remove checkout, each behind its permission in the folder template.
+// FolderMenu is the [...] menu in the head of a folder page: Pin or
+// Unpin, and for a workspace or a project a link to its settings, for a
+// workspace its SSH keys and secrets, Pull now, and for a project with a
+// checkout Remove checkout, each behind its permission in the folder
+// template.
 type FolderMenu struct {
 	// ID is the folder's: _ for the root.
 	ID string
@@ -18,6 +19,17 @@ type FolderMenu struct {
 	Project   bool
 	// Pull is the pull job of the git skill there, nil without one.
 	Pull *folder.Job
+}
+
+// Kind names what the page is a folder of, for Pin: workspace, project or folder.
+func (m *FolderMenu) Kind() string {
+	switch {
+	case m.Workspace:
+		return "workspace"
+	case m.Project:
+		return "project"
+	}
+	return "folder"
 }
 
 // Settings returns the path of the settings page of the workspace or

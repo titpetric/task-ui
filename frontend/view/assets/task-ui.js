@@ -4052,6 +4052,10 @@
       force: btn.hasAttribute("data-force"),
       summarize: btn.hasAttribute("data-summarize"),
     };
+    // A pinned job in the sidebar runs with the args it was pinned with.
+    if (btn.dataset.runArgs) {
+      try { spec.args = JSON.parse(btn.dataset.runArgs); } catch (e) { spec.args = []; }
+    }
     // A job that takes args opens a field for them first, under its
     // row or the page head.
     if (btn.hasAttribute("data-args") && !spec.force) {
@@ -4341,14 +4345,51 @@
   var FOLDED = "task-ui.folded";
   var folded = [];
   try { folded = JSON.parse(localStorage.getItem(FOLDED) || "[]"); } catch (e) { folded = []; }
-  document.querySelectorAll(".folders details[data-project]").forEach(function (project) {
-    var id = project.dataset.project;
-    if (folded.indexOf(id) >= 0 && !project.classList.contains("active")) project.open = false;
-    project.addEventListener("toggle", function () {
-      var i = folded.indexOf(id);
-      if (project.open && i >= 0) folded.splice(i, 1);
-      else if (!project.open && i < 0) folded.push(id);
-      try { localStorage.setItem(FOLDED, JSON.stringify(folded)); } catch (e) { /* no storage */ }
+  function bindFolds(root) {
+    root.querySelectorAll("details[data-project]").forEach(function (project) {
+      var id = project.dataset.project;
+      if (folded.indexOf(id) >= 0 && !project.classList.contains("active")) project.open = false;
+      project.addEventListener("toggle", function () {
+        var i = folded.indexOf(id);
+        if (project.open && i >= 0) folded.splice(i, 1);
+        else if (!project.open && i < 0) folded.push(id);
+        try { localStorage.setItem(FOLDED, JSON.stringify(folded)); } catch (e) { /* no storage */ }
+      });
+    });
+  }
+  var sideTree = document.querySelector("nav.folders");
+  if (sideTree) bindFolds(sideTree);
+
+  // Pin and Unpin, items of a [...] menu, put a folder or a job in the
+  // sidebar or take it out, then draw the sidebar's tree again from the
+  // page, and every Pin item of the page with it, so the next click
+  // undoes the last.
+  document.addEventListener("click", function (event) {
+    var btn = event.target.closest("button[data-pin-folder]");
+    if (!btn) return;
+    event.preventDefault();
+    var call = btn.dataset.pinId
+      ? api("DELETE", "/api/pins/" + encodeURIComponent(btn.dataset.pinId))
+      : api("POST", "/api/pins", { folder: btn.dataset.pinFolder, job: btn.dataset.pinJob || "", dir: btn.dataset.pinDir || "" });
+    btn.disabled = true;
+    call.then(function (res) {
+      btn.disabled = false;
+      if (res.status >= 300) { window.alert(res.data.error || ("HTTP " + res.status)); return; }
+      return fetch(location.pathname + location.search, { credentials: "same-origin" })
+        .then(function (r) { return r.text(); })
+        .then(function (text) {
+          var fresh = new DOMParser().parseFromString(text, "text/html");
+          var tree = fresh.querySelector("nav.folders");
+          if (sideTree && tree) {
+            sideTree.innerHTML = tree.innerHTML;
+            bindFolds(sideTree);
+          }
+          document.querySelectorAll("button[data-pin-key]").forEach(function (old) {
+            var key = old.dataset.pinKey;
+            var now = Array.prototype.find.call(fresh.querySelectorAll("button[data-pin-key]"), function (b) { return b.dataset.pinKey === key; });
+            if (now) old.replaceWith(document.importNode(now, true));
+          });
+        });
     });
   });
 

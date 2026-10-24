@@ -282,6 +282,10 @@ done
 # The tooling repository as the home project, the HOME of acme's runs,
 # where atkins finds the skills of the actions bar.
 api POST /projects -d "{\"url\":\"file://$work/repos/acme.git\",\"id\":\"workspace\",\"workspace\":\"acme\",\"home\":true}"
+# A directory beside the projects with nothing to run, which the
+# sidebar lists under acme all the same; the home project it leaves out.
+mkdir -p "$work/demo/acme/design"
+printf '# Design\n\nMockups and the style guide.\n' >"$work/demo/acme/design/README.md"
 
 # Every link on every page answers, the workspace's included.
 scripts/crawl.sh
@@ -333,6 +337,15 @@ for theme in dark light; do
   shot "job-menu-${theme}" "/f/_/infra/deploy#actions=1" "$theme" 1440x1400
 done
 shot mobile-actions-dark "/settings/users#actions=2" dark 390x844
+
+# Two pins of the admin: the api's docs directory, which the sidebar
+# lists under acme/api, and its ./serve file, a run item under the
+# project.
+api POST /pins -d '{"folder":"acme/api/docs"}'
+api POST /pins -d '{"folder":"acme/api","job":"./serve"}'
+for theme in dark light; do
+  shot "sidebar-pin-${theme}" /f/acme/api "$theme" 1440x1900
+done
 
 mkdir -p docs/assets
 rm -f docs/assets/*.png

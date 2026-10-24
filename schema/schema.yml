@@ -490,6 +490,57 @@
         - subject
         - path
       unique: true
+- name: pin
+  comment: Pin
+  columns:
+    - name: id
+      type: text
+      key: PRI
+      comment: ID
+      datatype: char(26)
+    - name: user_name
+      type: text
+      key: MUL
+      comment: User Name
+      datatype: varchar
+    - name: folder
+      type: text
+      key: MUL
+      comment: Folder
+      datatype: varchar
+    - name: job
+      type: text
+      key: MUL
+      comment: Job
+      datatype: varchar
+    - name: dir
+      type: text
+      key: MUL
+      comment: Dir
+      datatype: varchar
+    - name: args
+      type: text
+      key: MUL
+      comment: Args
+      datatype: varchar
+    - name: created_at
+      type: timestamp
+      comment: Created At
+      datatype: datetime
+  indexes:
+    - name: sqlite_autoindex_pin_1
+      columns:
+        - id
+      primary: true
+      unique: true
+    - name: pin_user_target
+      columns:
+        - user_name
+        - folder
+        - job
+        - dir
+        - args
+      unique: true
 - name: project
   comment: Project
   columns:
