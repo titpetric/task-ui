@@ -8,8 +8,8 @@ import (
 
 	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/frontend/view"
+	"github.com/titpetric/task-ui/layout"
 	"github.com/titpetric/task-ui/model"
-	"github.com/titpetric/task-ui/workspace"
 )
 
 // workspaces lists the workspaces and the projects cloned inside each.
@@ -23,7 +23,7 @@ func (h *Handlers) workspaces(w http.ResponseWriter, r *http.Request) {
 	p.Root = h.opts.Root
 	p.WorkspaceList = h.workspaceList(r.Context())
 	p.Nested = h.nestedProjects(r.Context())
-	p.Homes = h.homes(r.Context(), p.WorkspaceList)
+	p.Homes = h.homes(p.WorkspaceList)
 	h.render(w, http.StatusOK, "workspaces", p)
 }
 
@@ -38,7 +38,7 @@ func (h *Handlers) workspaceNew(w http.ResponseWriter, r *http.Request) {
 	h.render(w, http.StatusOK, "workspace_new", p)
 }
 
-// workspaceEdit shows a workspace's settings, its home project, its
+// workspaceEdit shows a workspace's settings, its home repository, its
 // projects, its keys, and its delete, which names the projects that go
 // with it.
 func (h *Handlers) workspaceEdit(w http.ResponseWriter, r *http.Request) {
@@ -66,7 +66,7 @@ func (h *Handlers) workspaceEdit(w http.ResponseWriter, r *http.Request) {
 		"description": workspace.Description,
 	}
 	h.workspaceProjects(r.Context(), p, workspace.Folder)
-	h.workspaceHome(r.Context(), p, workspace)
+	h.workspaceHome(r, p, workspace)
 	h.workspaceKeys(r, p)
 	h.render(w, http.StatusOK, "workspace_edit", p)
 }
@@ -86,31 +86,28 @@ func (h *Handlers) workspaceProjects(ctx context.Context, p *view.Page, name str
 	h.pulls(p)
 }
 
-// workspaceHome puts a workspace's home project on its page, with the
-// projects at its top that Change picks from.
-func (h *Handlers) workspaceHome(ctx context.Context, p *view.Page, ws *model.Workspace) {
-	projects, _ := h.opts.Projects.List(ctx)
-	named := h.workspaceFolders(ctx)
-	for _, project := range projects {
-		relative := workspace.Relative(ws.Folder, project.Folder)
-		if relative == "" || strings.Contains(relative, "/") || !workspace.Contains(ws.Folder, named, project.Folder) {
-			continue
-		}
-		p.HomeChoices = append(p.HomeChoices, project.Folder)
-		if project.ID == ws.HomeProjectID {
-			p.HomeProject = &project
+// workspaceHome puts a workspace's home on its settings page: its
+// repository, what git knows about the checkout, and the pull job of
+// its git skill when the user may run it.
+func (h *Handlers) workspaceHome(r *http.Request, p *view.Page, ws *model.Workspace) {
+	home := &view.WorkspaceHome{Folder: layout.HomeID(ws.Folder), Dir: layout.HomeDir(h.opts.Root, ws.Folder), URL: ws.HomeURL, Branch: ws.HomeBranch}
+	if h.opts.Git != nil && h.opts.Git.IsRepo(home.Dir) {
+		home.Checkout = h.opts.Git.Info(home.Dir)
+	}
+	if f := h.opts.Catalogue.Find(home.Folder); f != nil {
+		if job := pullJob(f.Skills()); job != nil && p.CanRun(f, job) {
+			home.Pull = job
 		}
 	}
+	p.Home = home
 }
 
-// homes returns the folder of each workspace's home project, by the
-// workspace's folder; one without has no entry.
-func (h *Handlers) homes(ctx context.Context, workspaces []model.Workspace) map[string]string {
+// homes returns the URL of each workspace's home repository, by the
+// workspace's folder; an empty home has an empty URL.
+func (h *Handlers) homes(workspaces []model.Workspace) map[string]string {
 	homes := map[string]string{}
 	for _, ws := range workspaces {
-		if home, err := h.opts.Workspaces.Home(ctx, ws.Folder); err == nil && home != "" {
-			homes[ws.Folder] = home
-		}
+		homes[ws.Folder] = ws.HomeURL
 	}
 	return homes
 }

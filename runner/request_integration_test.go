@@ -14,9 +14,10 @@ import (
 )
 
 // A run of a folder inside a workspace names the workspace and its
-// directory; HOME stays the server's. A run outside a named one gets the
-// default workspace, _ at the root, once there is one, and a request's
-// Workspace, or WorkspaceOf's, wins over the folder's.
+// directory, and gets HOME at the workspace's home. A run outside a
+// named one gets the default workspace, _ at the root, once there is
+// one, and the home at the root; before that it keeps the server's
+// HOME. A request's Workspace, or WorkspaceOf's, wins over the folder's.
 func TestManager_Workspace(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
@@ -36,20 +37,20 @@ func TestManager_Workspace(t *testing.T) {
 	}
 
 	inside := run(f.shellJob("ws/project", script, false))
-	assert.Contains(t, inside, "home=["+home+"] ws=[ws] dir=["+filepath.Join(f.root, "ws")+"] set=[y]")
+	assert.Contains(t, inside, "home=["+filepath.Join(f.root, "ws", "home")+"] ws=[ws] dir=["+filepath.Join(f.root, "ws")+"] set=[y]")
 
 	outside := run(f.shellJob("plain", script, false))
 	assert.Contains(t, outside, "home=["+home+"] ws=[] dir=[] set=[]")
 
 	assert.NoError(t, f.workspaces.EnsureDefault(ctx))
 	root := run(f.shellJob("plain", script, false))
-	assert.Contains(t, root, "home=["+home+"] ws=[_] dir=["+f.root+"] set=[y]")
+	assert.Contains(t, root, "home=["+filepath.Join(f.root, "home")+"] ws=[_] dir=["+f.root+"] set=[y]")
 	assert.Contains(t, run(f.shellJob("ws/project", script, false)), "ws=[ws] dir=["+filepath.Join(f.root, "ws")+"]")
 
 	other := filepath.Join(f.root, "gozo")
 	req := f.shellJob("ws/other", script, false)
 	req.Workspace = other
-	assert.Contains(t, run(req), "ws=[gozo] dir=["+other+"]")
+	assert.Contains(t, run(req), "home=["+filepath.Join(other, "home")+"] ws=[gozo] dir=["+other+"]")
 	req = f.shellJob("tools/prompt", script, false)
 	req.Workspace = f.root
 	assert.Contains(t, run(req), "ws=[_] dir=["+f.root+"]")

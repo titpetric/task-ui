@@ -12,12 +12,14 @@ import (
 )
 
 func TestEntries(t *testing.T) {
-	root := t.TempDir()
+	top := t.TempDir()
+	root := filepath.Join(top, "src")
 	write(t, filepath.Join(root, "tools", "Makefile"), "build:\n\tgo build\n")
 	write(t, filepath.Join(root, "tools", "package.json"), `{"scripts": {"dev": "vite"}}`)
 	write(t, filepath.Join(root, "docs", "README.md"), "nothing to run")
 	write(t, filepath.Join(root, "broken", "atkins.yml"), "jobs: [")
 	write(t, filepath.Join(root, ".git", "HEAD"), "")
+	write(t, filepath.Join(top, "home", "atkins.yml"), "jobs:\n  setup: echo setup\n")
 	// A project whose jobs are all in its subfolders.
 	write(t, filepath.Join(root, "apps", "README.md"), "apps")
 	write(t, filepath.Join(root, "apps", "blog", "atkins.yml"), "jobs:\n  serve: phpscript serve\n  test: go test ./...\n")
@@ -33,13 +35,13 @@ func TestEntries(t *testing.T) {
 		}
 	}
 
-	entries := Entries(root, &git.Git{}, nil)
+	entries := Entries(top, &git.Git{}, nil)
 	byID := map[string]Entry{}
 	for _, entry := range entries {
 		byID[entry.ID] = entry
 	}
 	if len(entries) != 5 {
-		t.Fatalf("entries: %+v", entries)
+		t.Fatalf("entries: the folders of src, not the home: %+v", entries)
 	}
 	tools := byID["tools"]
 	// The Makefile reads tools; its package.json is the Makefile's business.
@@ -60,16 +62,16 @@ func TestEntries(t *testing.T) {
 	}
 }
 
-// A workspace's checkouts list as entries of their own, ws/name, though
-// the workspace's .gitignore hides them; its other directories do not.
+// A workspace's checkouts under src list as entries of their own,
+// ws/name; its home, with its jobs, is no project and does not.
 func TestEntries_Workspace(t *testing.T) {
 	t.Parallel()
 	root := t.TempDir()
-	ws := filepath.Join(root, "malta")
-	gitInit(t, ws)
-	write(t, filepath.Join(ws, ".gitignore"), "/dockerfiles\n")
-	write(t, filepath.Join(ws, "atkins.yml"), "jobs:\n  setup: echo setup\n")
-	write(t, filepath.Join(ws, "policies", "README.md"), "policies")
+	ws := filepath.Join(root, "malta", "src")
+	home := filepath.Join(root, "malta", "home")
+	gitInit(t, home)
+	write(t, filepath.Join(home, "atkins.yml"), "jobs:\n  setup: echo setup\n")
+	write(t, filepath.Join(home, "policies", "README.md"), "policies")
 	project := filepath.Join(ws, "dockerfiles")
 	gitInit(t, project)
 	write(t, filepath.Join(project, "atkins.yml"), "jobs:\n  build: echo build\n")
@@ -87,10 +89,10 @@ func TestEntries_Workspace(t *testing.T) {
 	if entry := byID["malta/dockerfiles"]; entry.Dir != project || entry.Jobs != 2 || entry.Checkout == nil {
 		t.Fatalf("malta/dockerfiles: %+v", entry)
 	}
-	if entry := byID["malta"]; entry.Jobs != 3 {
+	if entry := byID["malta"]; entry.Jobs != 2 {
 		t.Fatalf("malta counts its projects' jobs: %+v", entry)
 	}
-	if ids := Entries(root, &git.Git{}, nil); len(ids) != 1 {
+	if ids := Entries(root, &git.Git{}, nil); len(ids) != 0 {
 		t.Fatalf("without the workspace: %+v", ids)
 	}
 }

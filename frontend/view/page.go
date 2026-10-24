@@ -91,9 +91,9 @@ type Page struct {
 	// Up is where the Files panel's .. goes: the directory or the folder
 	// above. Empty shows no .. row.
 	Up string
-	// HomeFolder is the home project of the workspace a folder page
-	// shows, the $HOME of its runs, and HomeTree what it holds; an empty
-	// HomeFolder leaves the Home section out.
+	// HomeFolder is the home of the workspace a folder page shows, the
+	// $HOME of its runs, and HomeTree what it holds; an empty HomeFolder
+	// leaves the Home section out.
 	HomeFolder string
 	HomeTree   []folder.Item
 	// Archive is where the directory the page shows downloads as a .tgz.
@@ -198,15 +198,13 @@ type Page struct {
 	MoveLeft []string
 	// Nested are the project rows inside each workspace, by its folder.
 	Nested map[string][]string
-	// Homes are the home projects' folders, by workspace folder.
-	// HomeProject is the home project of the workspace a configure page
-	// edits, nil for none, and HomeChoices the projects at its top that
-	// Change picks from.
-	Homes       map[string]string
-	HomeProject *model.Project
-	HomeChoices []string
-	Keys        []keystore.Key
-	KeysDir     string
+	// Homes are the URLs of the workspaces' home repositories, by
+	// workspace folder, "" for an empty home. Home is the home of the
+	// workspace a settings page edits.
+	Homes   map[string]string
+	Home    *WorkspaceHome
+	Keys    []keystore.Key
+	KeysDir string
 	// GitKey names the key git pulls and clones with.
 	GitKey string
 	// KeyReads count the reads of each private key, by name, and

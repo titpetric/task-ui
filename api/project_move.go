@@ -10,6 +10,7 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/titpetric/task-ui/layout"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/runner"
 )
@@ -46,8 +47,8 @@ func (h *Handlers) moveTarget(r *http.Request, id, ws string) (string, int, stri
 	if ws == from {
 		return id, 0, ""
 	}
-	if model.IsInternal(ws) {
-		return "", http.StatusBadRequest, internalRefused
+	if model.IsInternal(ws) || layout.IsHome(h.workspaceFolders(ctx), id) {
+		return "", http.StatusBadRequest, reservedRefused
 	}
 	to := last
 	if ws != model.Default {
@@ -56,8 +57,8 @@ func (h *Handlers) moveTarget(r *http.Request, id, ws string) (string, int, stri
 		}
 		to = ws + "/" + last
 	}
-	if model.IsReserved(to) {
-		return "", http.StatusBadRequest, internalRefused
+	if model.IsReserved(to) || layout.Reserved(last) {
+		return "", http.StatusBadRequest, reservedRefused
 	}
 	if _, err := h.opts.Projects.GetByFolder(ctx, to); err == nil {
 		return "", http.StatusConflict, "a project " + to + " exists already"
@@ -66,15 +67,14 @@ func (h *Handlers) moveTarget(r *http.Request, id, ws string) (string, int, stri
 		if problem := h.rootTaken(r, to); problem != "" {
 			return "", http.StatusConflict, problem
 		}
-	} else if _, err := os.Lstat(filepath.Join(h.opts.Root, filepath.FromSlash(to))); err == nil {
+	} else if _, err := os.Lstat(h.dirOf(ctx, to)); err == nil {
 		return "", http.StatusConflict, to + " exists in the workspace already"
 	}
 	return to, 0, ""
 }
 
 // moveProject moves a project's checkout and row to a new ID, and the
-// user folder grants and the pins with them; a home project leaves its
-// workspace's home unset. The runs of the project stay out while
+// user folder grants and the pins with them. The runs of the project stay out while
 // it moves; one running refuses the move. A step that fails puts back
 // what the steps before it did.
 func (h *Handlers) moveProject(w http.ResponseWriter, r *http.Request, project *model.Project, to string) {
@@ -91,8 +91,11 @@ func (h *Handlers) moveProject(w http.ResponseWriter, r *http.Request, project *
 		}
 		defer release()
 	}
-	src := filepath.Join(h.opts.Root, filepath.FromSlash(from))
-	dst := filepath.Join(h.opts.Root, filepath.FromSlash(to))
+	src, dst := h.dirOf(ctx, from), h.dirOf(ctx, to)
+	if err := os.MkdirAll(filepath.Dir(dst), 0o755); err != nil {
+		failErr(w, err)
+		return
+	}
 	if err := os.Rename(src, dst); err != nil {
 		if errors.Is(err, syscall.EXDEV) {
 			fail(w, http.StatusConflict, "the workspace is on another file system; task-ui moves a project by renaming it and can't copy it")
@@ -121,9 +124,6 @@ func (h *Handlers) moveProject(w http.ResponseWriter, r *http.Request, project *
 			failErr(w, err)
 			return
 		}
-	}
-	if err := h.opts.Workspaces.ClearHome(ctx, project.ID); err != nil {
-		slog.Warn("unsetting a moved home project", "folder", to, "err", err)
 	}
 	pins := 0
 	if h.opts.Pins != nil {

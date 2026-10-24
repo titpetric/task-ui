@@ -11,6 +11,7 @@ import (
 	"github.com/titpetric/task-ui/access"
 	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/frontend/view"
+	"github.com/titpetric/task-ui/layout"
 	"github.com/titpetric/task-ui/model"
 )
 
@@ -89,7 +90,7 @@ func (h *Handlers) folderAt(w http.ResponseWriter, r *http.Request, path string)
 // project/view what the root holds, each project and workspace linked.
 func (h *Handlers) defaultWorkspace(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	f := &folder.Folder{ID: model.Default, Title: "Default", Dir: h.opts.Root}
+	f := &folder.Folder{ID: model.Default, Title: "Default", Dir: layout.SrcDir(h.opts.Root, model.Default)}
 	var workspace *model.Workspace
 	if h.opts.Workspaces != nil {
 		if row, err := h.opts.Workspaces.GetByFolder(ctx, model.Default); err == nil {
@@ -105,7 +106,7 @@ func (h *Handlers) defaultWorkspace(w http.ResponseWriter, r *http.Request) {
 	projects := map[string]bool{}
 	for _, sub := range p.Folders {
 		top, _, _ := strings.Cut(sub.ID, "/")
-		if _, named := p.Workspaces[top]; named || model.IsReserved(top) {
+		if _, named := p.Workspaces[top]; named || layout.Reserved(top) {
 			continue
 		}
 		if !strings.Contains(sub.ID, "/") {
@@ -116,7 +117,7 @@ func (h *Handlers) defaultWorkspace(w http.ResponseWriter, r *http.Request) {
 	// The root's directories, projects or not, are what project/view
 	// lists in the settings.
 	if p.Can("project/view") {
-		for _, item := range folder.Listing(h.opts.Root) {
+		for _, item := range folder.Listing(f.Dir) {
 			id := folder.SafeID(item.Name)
 			if _, named := p.Workspaces[id]; item.Dir && (projects[id] || named) {
 				item.Href = p.Href(id)
@@ -124,11 +125,7 @@ func (h *Handlers) defaultWorkspace(w http.ResponseWriter, r *http.Request) {
 			p.Tree = append(p.Tree, item)
 		}
 	}
-	root, err := filepath.Abs(h.opts.Root)
-	if err != nil {
-		root = h.opts.Root
-	}
-	withTreeFolders(p, root, p.SubFolders)
+	withTreeFolders(p, f.Dir, p.SubFolders)
 	if workspace != nil {
 		p.FolderMenu = &view.FolderMenu{ID: model.Default, Workspace: true}
 		h.homeTree(r, p, model.Default)
@@ -139,19 +136,14 @@ func (h *Handlers) defaultWorkspace(w http.ResponseWriter, r *http.Request) {
 	h.render(w, http.StatusOK, "folder", p)
 }
 
-// homeTree puts on a workspace's page its home project, the $HOME of
-// its runs, and what it holds as the Files panel lists it, each path
-// under ~/. A workspace without one, or one the user does not see,
-// shows none.
+// homeTree puts on a workspace's page its home, the $HOME of its runs,
+// and what it holds as the Files panel lists it, each path under ~/. A
+// home the user does not see shows none.
 func (h *Handlers) homeTree(r *http.Request, p *view.Page, workspace string) {
 	if h.opts.Workspaces == nil {
 		return
 	}
-	home, err := h.opts.Workspaces.Home(r.Context(), workspace)
-	if err != nil || home == "" {
-		return
-	}
-	f := h.opts.Catalogue.Find(home)
+	f := h.opts.Catalogue.Find(layout.HomeID(workspace))
 	if f == nil || !access.UserFrom(r.Context()).CanSee(f.ID) {
 		return
 	}
@@ -260,8 +252,9 @@ func (h *Handlers) folder(w http.ResponseWriter, r *http.Request, f *folder.Fold
 		p.EnvFiles = h.opts.Env.Files(r.Context(), f)
 	}
 	p.Schedules = h.visibleSchedules(r, f.ID, "")
+	_, workspace := p.Workspaces[f.ID]
 	for _, sub := range p.Folders {
-		if rest, ok := strings.CutPrefix(sub.ID, f.ID+"/"); ok && !strings.Contains(rest, "/") {
+		if rest, ok := strings.CutPrefix(sub.ID, f.ID+"/"); ok && !strings.Contains(rest, "/") && !(workspace && rest == layout.Home) {
 			p.SubFolders = append(p.SubFolders, sub)
 		}
 	}

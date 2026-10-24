@@ -11,12 +11,11 @@ import (
 // Sidebar is the folder tree of the sidebar: the folders it lists, in
 // the catalogue's order, and the pinned jobs each lists besides its own.
 // With no pins it lists the folders seen and the directories right
-// inside the workspaces, less the projects set not to show there, the
-// workspaces' home projects and the folders inside those. A pin adds
+// inside the workspaces' src, less the projects set not to show there,
+// the workspaces' homes and the folders inside those. A pin adds
 // to that in its place: a pinned folder with its workspace and project
 // above it, a pinned job under its folder; a folder listed for its
-// pinned jobs alone lists only those, and a pin in a home project stays
-// out.
+// pinned jobs alone lists only those, and a pin in a home stays out.
 type Sidebar struct {
 	Folders []*folder.Folder
 	// Pins are the pinned jobs a folder's row does not list, by folder ID.

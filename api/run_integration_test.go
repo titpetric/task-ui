@@ -282,11 +282,11 @@ func TestFrame_FromRecording(t *testing.T) {
 func TestRun_StartInDir(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
-	images := filepath.Join(f.root, "infra", "images")
+	images := filepath.Join(f.root, "src", "infra", "images")
 	assert.NoError(t, os.MkdirAll(filepath.Join(images, "scripts"), 0o755))
 	assert.NoError(t, os.WriteFile(filepath.Join(images, "scripts", "where.sh"), []byte("# Where it runs\npwd -P\n"), 0o644))
-	assert.NoError(t, os.MkdirAll(filepath.Join(f.root, "infra", ".git"), 0o755))
-	assert.NoError(t, os.Symlink(f.root, filepath.Join(f.root, "infra", "up")))
+	assert.NoError(t, os.MkdirAll(filepath.Join(f.root, "src", "infra", ".git"), 0o755))
+	assert.NoError(t, os.Symlink(f.root, filepath.Join(f.root, "src", "infra", "up")))
 
 	res := f.call(t, asOps, http.MethodPost, "/runs", api.RunRequest{Folder: "infra", Dir: "images", Job: "where", Cols: 80, Rows: 24})
 	assert.Equal(t, http.StatusCreated, res.Status, string(res.Raw))
@@ -331,7 +331,7 @@ func TestRun_StartInDir(t *testing.T) {
 func TestRun_Shell(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
-	assert.NoError(t, os.MkdirAll(filepath.Join(f.root, "infra", "images"), 0o755))
+	assert.NoError(t, os.MkdirAll(filepath.Join(f.root, "src", "infra", "images"), 0o755))
 
 	for _, user := range []string{asOps, asViewer, asLimited} {
 		for _, dir := range []string{"", "images"} {
@@ -347,7 +347,7 @@ func TestRun_Shell(t *testing.T) {
 	ws := f.attach(t, asAdmin, res.str("id"))
 	send(t, ws, map[string]any{"type": "input", "message": "cd \"$(pwd -P)\" && echo \"at=$PWD\" && exit 7\n"})
 	out, status := untilStatus(t, ws)
-	want, err := filepath.EvalSymlinks(filepath.Join(f.root, "infra", "images"))
+	want, err := filepath.EvalSymlinks(filepath.Join(f.root, "src", "infra", "images"))
 	assert.NoError(t, err)
 	assert.Contains(t, out, "at="+want)
 	assert.Equal(t, 7, status.ExitCode)

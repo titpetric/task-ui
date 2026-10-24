@@ -8,7 +8,6 @@ import (
 	"github.com/titpetric/task-ui/argv"
 	"github.com/titpetric/task-ui/frontend/view"
 	"github.com/titpetric/task-ui/internal/assert"
-	"github.com/titpetric/task-ui/model"
 )
 
 func TestFuncs(t *testing.T) {
@@ -126,12 +125,4 @@ func TestArgLine(t *testing.T) {
 	assert.Equal(t, []string{"a", "two words", "it's", ""}, words)
 	assert.Equal(t, `echo "a b" | wc -c`, view.ArgLine("@host:dev1", `["echo \"a b\" | wc -c"]`))
 	assert.Equal(t, "", view.ArgLine("plan", "[]"))
-}
-
-// The body of Remove keeps the workspace's text and unsets the home.
-func TestHomeBody(t *testing.T) {
-	t.Parallel()
-	ws := &model.Workspace{Folder: "malta", Title: "Malta", Description: "org"}
-	assert.Equal(t, `{"description":"org","home_project":"","title":"Malta"}`, view.HomeBody(ws, ""))
-	assert.Equal(t, `{"description":"org","home_project":"malta/workspace","title":"Malta"}`, view.HomeBody(ws, "malta/workspace"))
 }

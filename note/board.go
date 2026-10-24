@@ -74,9 +74,12 @@ type Board struct {
 	// prompt's and the Notes agent's, their subcommand after it; nil runs
 	// the jobs' own, task-ui agent.
 	AgentCommand []string
-	// Root is the directory of the projects, the default workspace, where
-	// a prompt at the root and the Notes agent run.
-	Root string
+	// Root is the directory of the workspaces; a prompt at the root and
+	// the Notes agent run in the default workspace's home. Workspaces
+	// tells a workspace's folder from a project's, for the prompt that
+	// works in a workspace's home; nil knows none.
+	Root       string
+	Workspaces *storage.WorkspaceStorage
 	// Hosts lists the inventory for a prompt's run, as beszel.Hosts does,
 	// in TASK_UI_HOSTS; nil, or an error of beszel.ErrOff, leaves it out.
 	// The notes agent's runs never get it.

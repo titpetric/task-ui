@@ -38,7 +38,7 @@ var BaseEnv = []string{
 	"PATH", "HOME", "USER", "LOGNAME", "SHELL", "HOSTNAME", "TMPDIR",
 	"LANG", "LANGUAGE", "LC_*", "TZ", "TERM",
 	"TASK_UI_*",
-	"DOCKER_HOST", "ATKINS_DB", "DOCKER_CONFIG", "GIT_CONFIG_GLOBAL", "XDG_*", "GOPATH", "HISTFILE", "CLAUDE_CONFIG_DIR",
+	"DOCKER_HOST", "DOCKER_CONFIG", "CLAUDE_CONFIG_DIR", "XDG_CACHE_HOME", "GOPATH",
 }
 
 // SensitiveWords mark a variable that may hold a credential when its

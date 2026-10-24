@@ -8,6 +8,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 	"sync/atomic"
 	"time"
@@ -29,6 +30,7 @@ import (
 	"github.com/titpetric/task-ui/hostinfo"
 	"github.com/titpetric/task-ui/hostrun"
 	"github.com/titpetric/task-ui/integration"
+	"github.com/titpetric/task-ui/layout"
 	"github.com/titpetric/task-ui/mcp"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/note"
@@ -118,7 +120,7 @@ func (a *App) prepare(ctx context.Context) error {
 	if err := a.seedCleanup(ctx); err != nil {
 		return err
 	}
-	if err := storage.NewWorkspaceStorage(a.DB).EnsureDefault(ctx); err != nil {
+	if err := a.ensureWorkspaces(ctx); err != nil {
 		return err
 	}
 	if err := a.ensureKeys(ctx); err != nil {
@@ -264,7 +266,7 @@ func (a *App) wire(version string) error {
 	a.Guard.RunTokens = access.NewRunTokens()
 	a.Board = &note.Board{
 		Notes: storage.NewNoteStorage(a.DB), Users: a.Users, Runs: runs, WorkflowRuns: workflowRuns, RunSummaries: summaries, Catalogue: a.Catalogue, Runner: a.Runner,
-		Recordings: recordings, Events: events, Root: cfg.Root,
+		Recordings: recordings, Events: events, Root: cfg.Root, Workspaces: workspaces,
 		Hosts: promptHosts(hosts, prober), BaseURL: cfg.URL,
 		RunTokens: a.Guard.RunTokens, MCPURL: func() string { return MCPURL(a.Addr()) },
 	}
@@ -299,6 +301,7 @@ func (a *App) wire(version string) error {
 		Workflows:  workflows, WorkflowRuns: workflowRuns, Flows: a.Workflows,
 		Runner: a.Runner, Catalogue: a.Catalogue, Steps: a.Catalogue.Steps(), Git: g, Keys: keys, KeyReads: storage.NewKeyReadStorage(db), Env: env, Recordings: recordings, Root: cfg.Root, Version: version, Now: cfg.Clock(),
 		ArtifactStore: store, Disk: &diskusage.Meter{TTL: 10 * time.Minute}, Board: a.Board, ComposeProject: self, Cleaner: cleaner,
+		Storage:      &diskusage.Inventory{TTL: 30 * time.Second, Wait: 2 * time.Second, Items: storageItems(cfg, workspaces, os.Getenv("HOME"))},
 		Integrations: integrations, Hosts: hosts, Pins: pins,
 		Tooling: &tooling.Prober{Timeout: 5 * time.Second, TTL: time.Minute},
 		SSH:     prober, AddUsers: a.UsersFile != nil, BaseURL: cfg.URL,
@@ -410,5 +413,55 @@ func promptHosts(hosts *beszel.Inventory, prober *sshprobe.Prober) func(ctx cont
 			names[i] = system.Host
 		}
 		return beszel.Hosts(systems, prober.Logins(ctx, names, 10*time.Second)), nil
+	}
+}
+
+// ensureWorkspaces adds the default workspace's row when there is none
+// and makes the home and src of every workspace, so a run has a HOME
+// and a clone has a place before the first page.
+func (a *App) ensureWorkspaces(ctx context.Context) error {
+	workspaces := storage.NewWorkspaceStorage(a.DB)
+	if err := workspaces.EnsureDefault(ctx); err != nil {
+		return err
+	}
+	rows, err := workspaces.List(ctx)
+	if err != nil {
+		return err
+	}
+	for _, row := range rows {
+		if err := layout.Ensure(a.Config.Root, row.Folder); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// storageItems names what the Storage table of the Instance page
+// measures: the database with its journal, the recordings, the
+// artifacts, the tool history of each workspace's home and the
+// instance's own copy under the server's HOME, and the checkouts under
+// each workspace's src. Every measure reads the workspaces again.
+func storageItems(cfg *Config, workspaces *storage.WorkspaceStorage, serverHome string) func() []diskusage.Item {
+	return func() []diskusage.Item {
+		db, _, _ := strings.Cut(cfg.DB, "?")
+		items := []diskusage.Item{
+			{Name: "task-ui database", Where: db, Paths: []string{db, db + "-wal", db + "-shm"}},
+			{Name: "Recordings", Where: cfg.RecordingsDir(), Paths: []string{cfg.RecordingsDir()}},
+			{Name: "Artifacts", Where: cfg.ArtifactsDir(), Paths: []string{cfg.ArtifactsDir()}},
+		}
+		rows, _ := workspaces.List(context.Background())
+		for _, row := range rows {
+			history := filepath.Join(layout.HomeDir(cfg.Root, row.Folder), ".atkins", "atkins.db")
+			items = append(items, diskusage.Item{Name: "Tool history · " + row.Folder, Where: history, Paths: []string{history, history + "-wal", history + "-shm"}})
+		}
+		if serverHome != "" {
+			history := filepath.Join(serverHome, ".atkins", "atkins.db")
+			items = append(items, diskusage.Item{Name: "Tool history · instance", Where: history, Paths: []string{history, history + "-wal", history + "-shm"}})
+		}
+		for _, row := range rows {
+			src := layout.SrcDir(cfg.Root, row.Folder)
+			items = append(items, diskusage.Item{Name: "Checkouts · " + row.Folder, Where: src, Paths: []string{src}})
+		}
+		return items
 	}
 }

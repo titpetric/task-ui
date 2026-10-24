@@ -32,6 +32,7 @@ import (
 	"github.com/titpetric/task-ui/integration"
 	"github.com/titpetric/task-ui/internal/assert"
 	"github.com/titpetric/task-ui/keystore"
+	"github.com/titpetric/task-ui/layout"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/note"
 	"github.com/titpetric/task-ui/recording"
@@ -115,7 +116,7 @@ func newFixture(t *testing.T) *fixture {
 	_, err = keys.Generate(context.Background(), keystore.Spec{Name: "task_encryption", Purpose: keystore.PurposeEncrypt, Comment: "task-ui instance"})
 	assert.NoError(t, err)
 	secrets := secret.New(storage.NewSecretStorage(db), secret.NewVault(keys.Vault(storage.ScopeInstance)))
-	cat := catalogue{"infra": infra, "private": private, "infra/edge": edge, model.Default: {ID: model.Default, Dir: root}}
+	cat := catalogue{"infra": infra, "private": private, "infra/edge": edge, model.Default: {ID: model.Default, Dir: layout.SrcDir(root, model.Default)}}
 	// The steps' catalogue lists a folder the settings hide from the
 	// listings besides, as the workflow editor does.
 	hidden := shellFolder(t, root, "infra/hidden", map[string]string{"deploy": "echo hidden"})
@@ -201,7 +202,7 @@ func newFixture(t *testing.T) *fixture {
 // shellFolder makes a folder under root with one shell job per script.
 func shellFolder(t *testing.T, root, id string, scripts map[string]string) *folder.Folder {
 	t.Helper()
-	dir := filepath.Join(root, id)
+	dir := filepath.Join(root, layout.Src, id)
 	assert.NoError(t, os.MkdirAll(dir, 0o755))
 	f := &folder.Folder{ID: id, Title: id, Dir: dir}
 	names := make([]string, 0, len(scripts))

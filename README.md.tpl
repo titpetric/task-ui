@@ -8,9 +8,9 @@ Makefile targets, package.json and composer.json scripts, and a
 terminal that anyone allowed can attach to, from any window, for as long
 as it runs.
 
-Projects live in workspaces: a directory of checkouts side by side, one
-of them the home project of shared tooling that the workspace's runs
-get as `HOME`, its own secrets and SSH keys, and an export
+Projects live in workspaces: a directory with a home, the checkout of
+shared tooling that the workspace's runs get as `HOME`, its checkouts
+side by side under `src`, its own secrets and SSH keys, and an export
 that moves it, keys and all, to another instance. A project's Files
 panel browses its checkout like a file manager: a file opens in a
 preview window. Every folder and directory has the git state of its

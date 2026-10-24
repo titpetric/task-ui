@@ -18,7 +18,7 @@ import (
 // package.json without scripts) stays out as well.
 func TestDiscovery_SkipsIgnoredAndEmpty(t *testing.T) {
 	root := t.TempDir()
-	repo := filepath.Join(root, "dockerfiles")
+	repo := filepath.Join(root, "src", "dockerfiles")
 	gitInit(t, repo)
 	write(t, filepath.Join(repo, ".gitignore"), "/app/src\n")
 	write(t, filepath.Join(repo, "app", "atkins.yml"), "jobs:\n  build: docker build .\n")
@@ -50,7 +50,7 @@ func gitInit(t *testing.T, dir string) {
 // still the top level folder the listing puts those apps under.
 func TestDiscovery_ProjectSection(t *testing.T) {
 	root := t.TempDir()
-	apps := filepath.Join(root, "apps")
+	apps := filepath.Join(root, "src", "apps")
 	gitInit(t, apps)
 	write(t, filepath.Join(apps, "README.md"), "apps")
 	write(t, filepath.Join(apps, "blog", "atkins.yml"), "jobs:\n  serve: phpscript serve\n")
@@ -76,7 +76,7 @@ func TestDiscovery_ProjectSection(t *testing.T) {
 // inside it as deep as they go.
 func TestDiscovery_Shallow(t *testing.T) {
 	root := t.TempDir()
-	for _, name := range []string{"mono", "apps", "ws/inner", "ws/deep"} {
+	for _, name := range []string{"src/mono", "src/apps", "ws/src/inner", "ws/src/deep"} {
 		dir := filepath.Join(root, filepath.FromSlash(name))
 		gitInit(t, dir)
 		write(t, filepath.Join(dir, "atkins.yml"), "jobs:\n  all: echo all\n")
@@ -85,7 +85,7 @@ func TestDiscovery_Shallow(t *testing.T) {
 		write(t, filepath.Join(dir, "lib", "web", "atkins.yml"), "jobs:\n  build: echo build\n")
 	}
 
-	d := &Discovery{Root: root, Discover: true, Config: []Config{
+	d := &Discovery{Root: root, Discover: true, Workspaces: []Config{{ID: "ws"}}, Config: []Config{
 		{ID: "mono", Shallow: true}, {ID: "apps"},
 		{ID: "ws/inner", Shallow: true}, {ID: "ws/deep"},
 	}}
@@ -111,21 +111,24 @@ func TestDiscovery_Shallow(t *testing.T) {
 	}
 }
 
-// A project cloned inside a workspace lists, with the folders inside it,
-// though the workspace's .gitignore ignores it: the walk goes into every
-// configured folder.
+// A workspace is its home, a checkout with its own jobs, and the
+// projects under src, each a checkout of its own with the folders inside
+// it; a configured folder lists though the project's own .gitignore
+// ignores it. A directory under the root that is no named workspace
+// lists nothing.
 func TestDiscovery_Workspace(t *testing.T) {
 	t.Parallel()
 	root := t.TempDir()
-	ws := filepath.Join(root, "ws")
-	gitInit(t, ws)
-	write(t, filepath.Join(ws, ".gitignore"), "/project\n/scratch\n")
-	write(t, filepath.Join(ws, "atkins.yml"), "jobs:\n  setup: echo setup\n")
-	project := filepath.Join(ws, "project")
+	home := filepath.Join(root, "ws", "home")
+	gitInit(t, home)
+	write(t, filepath.Join(home, "atkins.yml"), "jobs:\n  setup: echo setup\n")
+	project := filepath.Join(root, "ws", "src", "project")
 	gitInit(t, project)
+	write(t, filepath.Join(project, ".gitignore"), "/vendor\n")
 	write(t, filepath.Join(project, "atkins.yml"), "jobs:\n  build: echo build\n")
 	write(t, filepath.Join(project, "sub", "atkins.yml"), "jobs:\n  test: echo test\n")
-	write(t, filepath.Join(ws, "scratch", "atkins.yml"), "jobs:\n  tmp: echo tmp\n")
+	write(t, filepath.Join(project, "vendor", "atkins.yml"), "jobs:\n  tmp: echo tmp\n")
+	write(t, filepath.Join(root, "ws", "scratch", "atkins.yml"), "jobs:\n  x: echo x\n")
 
 	list := func(d *Discovery) []string {
 		ids := []string{}
@@ -134,28 +137,37 @@ func TestDiscovery_Workspace(t *testing.T) {
 		}
 		return ids
 	}
-	d := &Discovery{Root: root, Discover: true, Config: []Config{{ID: "ws/project"}}}
-	if got, want := list(d), []string{"ws", "ws/project", "ws/project/sub"}; !slices.Equal(got, want) {
+	d := &Discovery{Root: root, Discover: true, Workspaces: []Config{{ID: "ws"}}, Config: []Config{{ID: "ws/project/vendor"}}}
+	if got, want := list(d), []string{"ws", "ws/home", "ws/project", "ws/project/sub", "ws/project/vendor"}; !slices.Equal(got, want) {
 		t.Fatalf("folders: got %v, want %v", got, want)
 	}
 	if sub := d.Find("ws/project/sub"); sub == nil || sub.Job("test") == nil {
 		t.Fatalf("ws/project/sub: %+v", sub)
 	}
-	// Unconfigured, the ignored project stays out.
-	if got, want := list(&Discovery{Root: root, Discover: true}), []string{"ws"}; !slices.Equal(got, want) {
+	if home := d.Find("ws/home"); home == nil || home.Job("setup") == nil {
+		t.Fatalf("ws/home: %+v", home)
+	}
+	// Unconfigured, the ignored folder stays out.
+	plain := &Discovery{Root: root, Discover: true, Workspaces: []Config{{ID: "ws"}}}
+	if got, want := list(plain), []string{"ws", "ws/home", "ws/project", "ws/project/sub"}; !slices.Equal(got, want) {
 		t.Fatalf("folders: got %v, want %v", got, want)
+	}
+	// Without the workspace named, nothing under its directory lists.
+	if got := list(&Discovery{Root: root, Discover: true}); len(got) != 0 {
+		t.Fatalf("folders: got %v, want none", got)
 	}
 }
 
-// A directory a workspace's checkout ignores, right below it, lists
-// when it holds a job source, on top or further in, such as another
-// checkout; the folders inside it follow the workspace's Recursive. One
-// with no job source stays out, as does an ignored directory deeper
-// down. A project row on the directory wins over the discovered one.
+// A directory git ignores right below a workspace's src, when src is a
+// checkout, lists when it holds a job source, on top or further in, such
+// as another checkout; the folders inside it follow the workspace's
+// Recursive. One with no job source stays out, as does an ignored
+// directory deeper down. A project row on the directory wins over the
+// discovered one.
 func TestDiscovery_IgnoredCheckouts(t *testing.T) {
 	t.Parallel()
 	root := t.TempDir()
-	ws := filepath.Join(root, "ws")
+	ws := filepath.Join(root, "ws", "src")
 	gitInit(t, ws)
 	write(t, filepath.Join(ws, ".gitignore"), "/deploy\n/empty\n/lib/cache\n/ops\n")
 	write(t, filepath.Join(ws, "atkins.yml"), "jobs:\n  setup: echo setup\n")
@@ -197,11 +209,11 @@ func TestDiscovery_IgnoredCheckouts(t *testing.T) {
 		t.Fatalf("project row: %+v", f)
 	}
 
-	// The default workspace is the root, by Path.
+	// The default workspace is the root: its projects are under src.
 	other := t.TempDir()
-	gitInit(t, other)
-	write(t, filepath.Join(other, ".gitignore"), "/tools\n")
-	write(t, filepath.Join(other, "tools", "Makefile"), "## Build\nbuild:\n\techo build\n")
+	gitInit(t, filepath.Join(other, "src"))
+	write(t, filepath.Join(other, "src", ".gitignore"), "/tools\n")
+	write(t, filepath.Join(other, "src", "tools", "Makefile"), "## Build\nbuild:\n\techo build\n")
 	top := &Discovery{Root: other, Discover: true, Workspaces: WorkspaceConfigsOf([]model.Workspace{{Folder: model.Default}})}
 	if got, want := list(top), []string{"tools"}; !slices.Equal(got, want) {
 		t.Fatalf("root: got %v, want %v", got, want)

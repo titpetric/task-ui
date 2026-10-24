@@ -13,6 +13,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/titpetric/task-ui/layout"
 )
 
 // Prober runs `atkins -l --json --all` in a directory and keeps the
@@ -28,9 +30,9 @@ type Prober struct {
 	// unless set.
 	Timeout time.Duration
 	TTL     time.Duration
-	// Home returns the HOME a probe of dir runs atkins with, the home
-	// project of dir's workspace, for its ~/.atkins/skills; "" keeps the
-	// server's. Nil is "" everywhere.
+	// Home returns the HOME a probe of dir runs atkins with, the home of
+	// dir's workspace, for its ~/.atkins/skills; "" keeps the server's.
+	// Nil is "" everywhere.
 	Home func(dir string) string
 
 	mu    sync.Mutex
@@ -101,10 +103,11 @@ func (p *Prober) home(dir string) string {
 	return p.Home(dir)
 }
 
-// run execs atkins in dir, with HOME at home when set. Its stdin is
-// /dev/null: atkins reads a pipe on stdin as the pipeline. A failing
-// atkins answers only when it prints lint findings, which it does with
-// a non-zero exit.
+// run execs atkins in dir, with HOME at home when set and ATKINS_DB as a
+// run there gets it, the home's history and the instance's mirror. Its
+// stdin is /dev/null: atkins reads a pipe on stdin as the pipeline. A
+// failing atkins answers only when it prints lint findings, which it
+// does with a non-zero exit.
 func (p *Prober) run(dir, file, home string) Listing {
 	timeout := p.Timeout
 	if timeout <= 0 {
@@ -120,7 +123,7 @@ func (p *Prober) run(dir, file, home string) Listing {
 	cmd := exec.CommandContext(ctx, command, args...)
 	cmd.Dir = dir
 	if home != "" {
-		cmd.Env = append(os.Environ(), "HOME="+home)
+		cmd.Env = append(os.Environ(), "HOME="+home, "ATKINS_DB="+layout.AtkinsDB(home, os.Getenv("HOME")))
 	}
 	cmd.Stdin = nil
 	cmd.WaitDelay = time.Second

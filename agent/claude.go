@@ -29,7 +29,7 @@ func (a *Agent) getenv(name string) string {
 
 // environ is the environment Claude Code runs with. IS_SANDBOX lets it
 // skip the permission prompts as root in the task container; with a
-// home project, Claude reads the CLAUDE.md of the directories it adds.
+// home, Claude reads the CLAUDE.md of the directories it adds.
 func (a *Agent) environ() []string {
 	env := append(append([]string{}, a.Env...), "IS_SANDBOX=1")
 	if a.getenv("TASK_UI_HOME") != "" {
@@ -38,9 +38,9 @@ func (a *Agent) environ() []string {
 	return env
 }
 
-// homeArgs adds the run's home project, TASK_UI_HOME, as a directory
-// Claude Code reads, its CLAUDE.md and its .claude skills with it, for
-// a session in dir. None without a home project, or in it.
+// homeArgs adds the run's home, TASK_UI_HOME, as a directory Claude
+// Code reads, its CLAUDE.md and its .claude skills with it, for a
+// session in dir. None without a home, or in it.
 func (a *Agent) homeArgs(dir string) []string {
 	home := a.getenv("TASK_UI_HOME")
 	if home == "" || filepath.Clean(home) == filepath.Clean(dir) {
@@ -86,7 +86,7 @@ func (a *Agent) claudePath() (string, error) {
 // ask runs claude -p on the prompt in dir and writes its reply to out,
 // with system, when not empty, after Claude's own system prompt, and
 // the MCP configuration of TASK_UI_MCP_CONFIG, task-ui's tools as the
-// run's user, when the run has one, and the home project's directory.
+// run's user, when the run has one, and the workspace's home.
 func (a *Agent) ask(ctx context.Context, dir, prompt, system string, out io.Writer) error {
 	if a.getenv("CLAUDE_CODE_OAUTH_TOKEN") == "" {
 		return errNoToken

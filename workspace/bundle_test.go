@@ -47,7 +47,7 @@ func raw(t *testing.T, passphrase string, entries map[string]string) []byte {
 	return out.Bytes()
 }
 
-const manifest = `{"format":3,"workspace":{"folder":"acme"}}`
+const manifest = `{"format":4,"workspace":{"folder":"acme"}}`
 
 // passphrase is long enough for an export.
 const passphrase = "correct horse battery"
@@ -81,10 +81,10 @@ func TestBundle(t *testing.T) {
 	bundle := &workspace.Bundle{
 		Manifest: workspace.Manifest{
 			Format: workspace.Format, Version: "test",
-			Workspace:   model.Workspace{Folder: "acme", Title: "Acme"},
-			Projects:    []model.Project{{Folder: "api", SourceURL: "file:///api.git"}},
-			HomeProject: "api",
-			Secrets:     []model.Secret{{Scope: "workspace:", Name: "TOKEN", Content: "plain value"}},
+			Workspace: model.Workspace{Folder: "acme", Title: "Acme"},
+			Projects:  []model.Project{{Folder: "api", SourceURL: "file:///api.git"}},
+			Home:      workspace.Home{URL: "file:///tooling.git", Branch: "main"},
+			Secrets:   []model.Secret{{Scope: "workspace:", Name: "TOKEN", Content: "plain value"}},
 		},
 		Keys:       map[string][]byte{"workspace_acme_deploy_ed25519.key": []byte("private"), "workspace_acme_deploy_ed25519.pub": []byte("public")},
 		WorkFactor: fast,
@@ -100,7 +100,7 @@ func TestBundle(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "Acme", got.Manifest.Workspace.Title)
 	assert.Equal(t, "api", got.Manifest.Projects[0].Folder)
-	assert.Equal(t, "api", got.Manifest.HomeProject, "the home project goes by its folder")
+	assert.Equal(t, workspace.Home{URL: "file:///tooling.git", Branch: "main"}, got.Manifest.Home, "the home repository goes with its branch")
 	assert.Equal(t, "plain value", got.Manifest.Secrets[0].Content)
 	assert.Equal(t, "private", string(got.Keys["workspace_acme_deploy_ed25519.key"]))
 	assert.Equal(t, "public", string(got.Keys["workspace_acme_deploy_ed25519.pub"]))

@@ -58,9 +58,6 @@ func Funcs() template.FuncMap {
 		"removeConfirm": RemoveConfirm,
 		// deleteWorkspaceConfirm is what Delete of a workspace asks.
 		"deleteWorkspaceConfirm": DeleteWorkspaceConfirm,
-		// homeBody is the body of a workspace's update that sets its
-		// home project.
-		"homeBody": HomeBody,
 		// bytes and megabytes word a size in bytes, or in MB as Beszel
 		// counts memory, as size does.
 		"bytes":     func(n uint64) string { return Size(int64(n)) },
@@ -94,11 +91,6 @@ func ArgLine(job, args string) string {
 		}
 	}
 	return strings.Join(words, " ")
-}
-
-// HomeBody returns the JSON of a workspace's update setting its home project by folder, "" unsets, title and description kept.
-func HomeBody(ws *model.Workspace, home string) string {
-	return JSON(map[string]string{"title": ws.Title, "description": ws.Description, "home_project": home})
 }
 
 // JSON encodes a value for an attribute a script reads; a value that

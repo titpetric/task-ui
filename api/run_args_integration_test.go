@@ -22,7 +22,7 @@ func TestRun_ArgsThroughAtkins(t *testing.T) {
 		t.Skip("atkins not in PATH")
 	}
 	f := newFixture(t)
-	stack := filepath.Join(f.root, "infra", "stack")
+	stack := filepath.Join(f.root, "src", "infra", "stack")
 	assert.NoError(t, os.MkdirAll(stack, 0o755))
 	assert.NoError(t, os.WriteFile(filepath.Join(stack, "atkins.yml"), []byte("jobs:\n  custom:\n    desc: Custom\n    args: true\n    steps:\n      - exec: [sh, -c, 'printf \"[%s]\" \"$@\" > out.txt', sh]\n"), 0o644))
 

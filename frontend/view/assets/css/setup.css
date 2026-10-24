@@ -88,6 +88,43 @@
   }
 }
 
+.storage-table {
+  table-layout: fixed;
+
+  & col.c-item {
+    width: 14rem;
+  }
+
+  & col.c-size,
+  & col.c-files {
+    width: 7rem;
+  }
+
+  & td.key {
+    color: var(--text);
+    font-weight: 500;
+  }
+
+  & td.where {
+    color: var(--text-dim);
+    word-break: break-all;
+  }
+
+  & .num {
+    text-align: right;
+  }
+
+  & .pending::after {
+    content: "\2026";
+  }
+
+  & tfoot th,
+  & tfoot td {
+    border-top: 1px solid var(--border);
+    font-weight: 600;
+  }
+}
+
 .instance-table {
   table-layout: fixed;
 

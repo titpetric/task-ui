@@ -12,6 +12,7 @@ import (
 
 	"github.com/titpetric/task-ui/api"
 	"github.com/titpetric/task-ui/internal/assert"
+	"github.com/titpetric/task-ui/layout"
 	"github.com/titpetric/task-ui/model"
 )
 
@@ -20,11 +21,11 @@ func inWorkspace(ws string) api.ProjectRequest {
 	return api.ProjectRequest{Workspace: &ws}
 }
 
-// withWorkspace makes a workspace row and its checkout under the root.
+// withWorkspace makes a workspace row and its directories under the root.
 func (f *fixture) withWorkspace(t *testing.T, ws string) {
 	t.Helper()
 	assert.NoError(t, f.opts.Workspaces.Create(context.Background(), &model.Workspace{Folder: ws}))
-	assert.NoError(t, os.MkdirAll(filepath.Join(f.root, ws), 0o755))
+	assert.NoError(t, layout.Ensure(f.root, ws))
 }
 
 func TestProject_Move(t *testing.T) {
@@ -54,8 +55,8 @@ func TestProject_Move(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "acme/infra/edge", pinned[0].Folder)
 	assert.Equal(t, "private", pinned[1].Folder)
-	assert.DirExists(t, filepath.Join(f.root, "acme", "infra", "edge"), "the checkout moves with the folders inside it")
-	assert.NoDirExists(t, filepath.Join(f.root, "infra"))
+	assert.DirExists(t, filepath.Join(f.root, "acme", "src", "infra", "edge"), "the checkout moves with the folders inside it")
+	assert.NoDirExists(t, filepath.Join(f.root, "src", "infra"))
 	assert.Equal(t, http.StatusNotFound, f.call(t, asAdmin, http.MethodGet, "/projects/infra", nil).Status)
 
 	limited, err := f.opts.Users.Get(ctx, f.users[asLimited].ID)
@@ -77,7 +78,7 @@ func TestProject_Move(t *testing.T) {
 	pinned, err = f.opts.Pins.List(ctx, asLimited)
 	assert.NoError(t, err)
 	assert.Equal(t, "infra", pinned[0].Folder)
-	assert.DirExists(t, filepath.Join(f.root, "infra", "edge"))
+	assert.DirExists(t, filepath.Join(f.root, "src", "infra", "edge"))
 	limited, err = f.opts.Users.Get(ctx, f.users[asLimited].ID)
 	assert.NoError(t, err)
 	assert.Equal(t, []string{"infra"}, limited.FolderList())
@@ -89,7 +90,7 @@ func TestProject_MoveConflicts(t *testing.T) {
 	ctx := context.Background()
 	f.withWorkspace(t, "acme")
 	f.withWorkspace(t, "taken")
-	assert.NoError(t, os.MkdirAll(filepath.Join(f.root, "taken", "infra"), 0o755))
+	assert.NoError(t, os.MkdirAll(filepath.Join(f.root, "taken", "src", "infra"), 0o755))
 
 	for _, c := range []struct {
 		name, path, ws string
@@ -101,11 +102,12 @@ func TestProject_MoveConflicts(t *testing.T) {
 		{"a workspace holds the name at the root", "/projects/taken/infra", model.Default, http.StatusConflict},
 		{"a folder inside a project", "/projects/infra/edge", "acme", http.StatusBadRequest},
 		{"into internal", "/projects/infra", model.Internal, http.StatusBadRequest},
+		{"into src", "/projects/infra", layout.Src, http.StatusBadRequest},
 	} {
 		res := f.call(t, asAdmin, http.MethodPut, c.path, inWorkspace(c.ws))
 		assert.Equal(t, c.status, res.Status, c.name+": "+string(res.Raw))
 	}
-	assert.DirExists(t, filepath.Join(f.root, "infra"))
+	assert.DirExists(t, filepath.Join(f.root, "src", "infra"))
 
 	held := &model.Project{Folder: "acme/infra"}
 	assert.NoError(t, f.opts.Projects.Create(ctx, held))
@@ -117,7 +119,7 @@ func TestProject_MoveConflicts(t *testing.T) {
 	busy := f.call(t, asAdmin, http.MethodPut, "/projects/infra", inWorkspace("acme"))
 	assert.Equal(t, http.StatusConflict, busy.Status, string(busy.Raw))
 	assert.Contains(t, busy.str("error"), "run")
-	assert.DirExists(t, filepath.Join(f.root, "infra"))
+	assert.DirExists(t, filepath.Join(f.root, "src", "infra"))
 	assert.Equal(t, http.StatusNoContent, f.call(t, asAdmin, http.MethodPost, "/runs/"+slow+"/kill", nil).Status)
 	f.finished(t, slow)
 

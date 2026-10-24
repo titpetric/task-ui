@@ -2,19 +2,20 @@ package folder
 
 import (
 	"os"
-	"path/filepath"
 	"sort"
 	"strings"
 
 	"github.com/titpetric/task-ui/detector"
 	"github.com/titpetric/task-ui/git"
+	"github.com/titpetric/task-ui/layout"
 	"github.com/titpetric/task-ui/model"
 )
 
-// Entry is one directory under the root, as the settings list it: with or
-// without something to run, with or without a git remote. A checkout
-// inside a workspace has the ID `<workspace>/<name>`, and Jobs counts the
-// jobs of the directory and of the folders discovered inside it.
+// Entry is one project directory, under the src of a workspace, as the
+// settings list it: with or without something to run, with or without a
+// git remote. A checkout inside a named workspace has the ID
+// `<workspace>/<name>`, and Jobs counts the jobs of the directory and of
+// the folders discovered inside it.
 type Entry struct {
 	ID  string `json:"id"`
 	Dir string `json:"dir"`
@@ -28,7 +29,7 @@ type Entry struct {
 	Error string `json:"error,omitempty"`
 }
 
-// Entries lists the directories under root, less internal and _, and the checkouts inside each workspace.
+// Entries lists the directories of _'s src and the checkouts of each named workspace's src.
 func Entries(root string, g *git.Git, workspaces []string) []Entry {
 	dirs := map[string]string{}
 	ids := []string{}
@@ -36,16 +37,17 @@ func Entries(root string, g *git.Git, workspaces []string) []Entry {
 		dirs[id] = dir
 		ids = append(ids, id)
 	}
-	for _, name := range subdirs(root) {
+	for _, name := range subdirs(layout.SrcDir(root, model.Default)) {
 		if model.IsReserved(SafeID(name)) {
 			continue
 		}
-		add(SafeID(name), filepath.Join(root, name))
+		add(SafeID(name), layout.ProjectDir(root, model.Default, name))
 	}
 	d := &Discovery{Root: root, Discover: true}
 	for _, ws := range workspaces {
-		for _, name := range subdirs(filepath.Join(root, ws)) {
-			dir := filepath.Join(root, ws, name)
+		d.Workspaces = append(d.Workspaces, Config{ID: ws})
+		for _, name := range subdirs(layout.SrcDir(root, ws)) {
+			dir := layout.ProjectDir(root, ws, name)
 			if g.IsRepo(dir) {
 				id := ws + "/" + SafeID(name)
 				add(id, dir)

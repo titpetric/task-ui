@@ -2713,6 +2713,12 @@ type Workspace struct {
 	// Home Project ID
 	HomeProjectID string `db:"home_project_id" json:"home_project_id"`
 
+	// Home URL
+	HomeURL string `db:"home_url" json:"home_url"`
+
+	// Home Branch
+	HomeBranch string `db:"home_branch" json:"home_branch"`
+
 	// Shallow
 	Shallow bool `db:"shallow" json:"shallow"`
 
@@ -2762,6 +2768,18 @@ func (w *Workspace) GetHomeProjectID() string { return w.HomeProjectID }
 // SetHomeProjectID sets HomeProjectID to the provided value.
 func (w *Workspace) SetHomeProjectID(val string) { w.HomeProjectID = val }
 
+// GetHomeURL will return the value of HomeURL.
+func (w *Workspace) GetHomeURL() string { return w.HomeURL }
+
+// SetHomeURL sets HomeURL to the provided value.
+func (w *Workspace) SetHomeURL(val string) { w.HomeURL = val }
+
+// GetHomeBranch will return the value of HomeBranch.
+func (w *Workspace) GetHomeBranch() string { return w.HomeBranch }
+
+// SetHomeBranch sets HomeBranch to the provided value.
+func (w *Workspace) SetHomeBranch(val string) { w.HomeBranch = val }
+
 // GetShallow will return the value of Shallow.
 func (w *Workspace) GetShallow() bool { return w.Shallow }
 
@@ -2778,7 +2796,7 @@ func (w *Workspace) SetSort(val int64) { w.Sort = val }
 const WorkspaceTable = "`workspace`"
 
 // WorkspaceFields is a list of all columns in the DB table.
-var WorkspaceFields = []string{"id", "folder", "title", "description", "created_at", "updated_at", "home_project_id", "shallow", "sort"}
+var WorkspaceFields = []string{"id", "folder", "title", "description", "created_at", "updated_at", "home_project_id", "home_url", "home_branch", "shallow", "sort"}
 
 // WorkspacePrimaryFields are the primary key fields in the DB table.
 var WorkspacePrimaryFields = []string{"id"}

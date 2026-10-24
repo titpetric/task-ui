@@ -131,34 +131,26 @@ func TestWorkspaceStorage_EnsureDefault(t *testing.T) {
 	assert.Equal(t, []string{"malta"}, folders)
 }
 
+// A workspace's home repository, its URL and branch, is a column of the
+// row: Create and Update keep it, and an empty URL is an empty home.
 func TestWorkspaceStorage_Home(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
 	db := newDB(t)
-	workspaces, projects := storage.NewWorkspaceStorage(db), storage.NewProjectStorage(db)
-	workspace := &model.Workspace{Folder: "malta"}
+	workspaces := storage.NewWorkspaceStorage(db)
+	workspace := &model.Workspace{Folder: "malta", HomeURL: "git@example.com:org/workspace.git", HomeBranch: "main"}
 	assert.NoError(t, workspaces.Create(ctx, workspace))
 
-	home, err := workspaces.Home(ctx, "malta")
+	got, err := workspaces.GetByFolder(ctx, "malta")
 	assert.NoError(t, err)
-	assert.Equal(t, "", home, "no home project")
+	assert.Equal(t, "git@example.com:org/workspace.git", got.HomeURL)
+	assert.Equal(t, "main", got.HomeBranch)
+	assert.Equal(t, "", got.HomeProjectID, "the old column stays empty")
 
-	project := &model.Project{Folder: "malta/workspace"}
-	assert.NoError(t, projects.Create(ctx, project))
-	workspace.HomeProjectID = project.ID
-	assert.NoError(t, workspaces.Update(ctx, workspace))
-	home, err = workspaces.Home(ctx, "malta")
+	got.HomeURL, got.HomeBranch = "", ""
+	assert.NoError(t, workspaces.Update(ctx, got))
+	got, err = workspaces.Get(ctx, workspace.ID)
 	assert.NoError(t, err)
-	assert.Equal(t, "malta/workspace", home)
-
-	assert.NoError(t, workspaces.ClearHome(ctx, project.ID))
-	home, _ = workspaces.Home(ctx, "malta")
-	assert.Equal(t, "", home, "a cleared home")
-
-	workspace.HomeProjectID = project.ID
-	assert.NoError(t, workspaces.Update(ctx, workspace))
-	assert.NoError(t, projects.Delete(ctx, project.ID))
-	got, err := workspaces.Get(ctx, workspace.ID)
-	assert.NoError(t, err)
-	assert.Equal(t, "", got.HomeProjectID, "deleting the home project unsets it")
+	assert.Equal(t, "", got.HomeURL, "Remove leaves an empty home")
+	assert.Equal(t, "", got.HomeBranch)
 }

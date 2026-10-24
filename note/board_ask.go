@@ -10,6 +10,7 @@ import (
 
 	"github.com/titpetric/task-ui/beszel"
 	"github.com/titpetric/task-ui/folder"
+	"github.com/titpetric/task-ui/layout"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/runner"
 )
@@ -214,13 +215,18 @@ func (b *Board) promptRequest(ctx context.Context, user *model.User, dir string)
 		return req, fmt.Errorf("%w: prompts aren't available on this instance", ErrNoPrompt)
 	}
 	var place *folder.Folder
-	at, inside := b.Root, ""
+	at, inside := layout.HomeDir(b.Root, model.Default), ""
 	switch f, rest := folder.Resolve(b.Catalogue, dir); {
 	case !sees(user, f, dir):
 		return req, fmt.Errorf("%w: no such directory", ErrNoPrompt)
 	case dir == model.Default:
-		place = &folder.Folder{ID: model.Default, Title: model.Default, Dir: at}
-		req.Workspace = at
+		// The root: Claude works in the default workspace's home.
+		place = &folder.Folder{ID: model.Default, Title: model.Default, Dir: layout.SrcDir(b.Root, model.Default)}
+		req.Workspace = b.Root
+	case f != nil && rest == "" && b.isWorkspace(ctx, f.ID):
+		// A workspace: Claude works in its home, TASK_UI_HOME.
+		at, place = layout.HomeDir(b.Root, f.ID), f
+		req.Workspace = layout.WorkspaceDir(b.Root, f.ID)
 	case f != nil:
 		path, ok := f.Path(rest)
 		if !ok {
@@ -228,11 +234,11 @@ func (b *Board) promptRequest(ctx context.Context, user *model.User, dir string)
 		}
 		at, place, inside = path, f, rest
 		req.Env = []string{"TASK_UI_PROMPT_DIR=" + at}
-	case dir != "" && !strings.Contains(dir, "..") && !model.IsInternal(dir):
-		// A workspace's directory that is no folder of the catalogue.
-		at = filepath.Join(b.Root, filepath.FromSlash(dir))
-		place = &folder.Folder{ID: dir, Title: dir, Dir: at}
-		req.Workspace = at
+	case dir != "" && !strings.Contains(dir, "/") && !strings.Contains(dir, "..") && b.isWorkspace(ctx, dir):
+		// A workspace with no folder of the catalogue, its src empty.
+		at = layout.HomeDir(b.Root, dir)
+		place = &folder.Folder{ID: dir, Title: dir, Dir: layout.SrcDir(b.Root, dir)}
+		req.Workspace = layout.WorkspaceDir(b.Root, dir)
 	default:
 		return req, fmt.Errorf("%w: no such directory", ErrNoPrompt)
 	}
@@ -259,6 +265,15 @@ func sees(user *model.User, f *folder.Folder, dir string) bool {
 		return len(user.FolderList()) == 0
 	}
 	return user.CanSee(dir)
+}
+
+// isWorkspace reports whether a folder ID is a named workspace's.
+func (b *Board) isWorkspace(ctx context.Context, id string) bool {
+	if b.Workspaces == nil {
+		return false
+	}
+	_, err := b.Workspaces.GetByFolder(ctx, id)
+	return err == nil
 }
 
 // underRoot returns where a directory is under the root, a slash path,

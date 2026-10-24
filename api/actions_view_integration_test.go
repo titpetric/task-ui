@@ -22,8 +22,8 @@ func skillFixture(t *testing.T, f *fixture) string {
 	t.Helper()
 	probe, _ := skillstest.Prober(t)
 	f.opts.Catalogue.Find("infra").Probe = probe
-	app := filepath.Join(f.root, "infra", "app")
-	out, err := exec.Command("git", "-c", "init.defaultBranch=main", "init", "-q", filepath.Join(f.root, "infra")).CombinedOutput()
+	app := filepath.Join(f.root, "src", "infra", "app")
+	out, err := exec.Command("git", "-c", "init.defaultBranch=main", "init", "-q", filepath.Join(f.root, "src", "infra")).CombinedOutput()
 	assert.NoError(t, err, string(out))
 	assert.NoError(t, os.MkdirAll(app, 0o755))
 	assert.NoError(t, os.WriteFile(filepath.Join(app, "compose.yml"), []byte("services:\n  a:\n    build: .\n"), 0o644))
@@ -85,7 +85,7 @@ func TestRun_Skill(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
 	app := skillFixture(t, f)
-	checkout, err := filepath.EvalSymlinks(filepath.Join(f.root, "infra"))
+	checkout, err := filepath.EvalSymlinks(filepath.Join(f.root, "src", "infra"))
 	assert.NoError(t, err)
 
 	res := f.call(t, asOps, http.MethodPost, "/runs", api.RunRequest{Folder: "infra", Dir: "app", Job: "@git:status", Cols: 250, Rows: 24})

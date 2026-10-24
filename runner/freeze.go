@@ -1,7 +1,7 @@
 package runner
 
 import (
-	"path/filepath"
+	"context"
 	"strings"
 
 	"github.com/titpetric/task-ui/model"
@@ -27,7 +27,7 @@ func (m *Manager) Freeze(id string) (release func(), err error) {
 	m.frozen[id] = true
 	m.mu.Unlock()
 
-	lock := m.pullLock(filepath.Join(m.opts.Root, filepath.FromSlash(id)))
+	lock := m.pullLock(m.dirOf(context.Background(), id))
 	lock.Lock()
 	return func() {
 		lock.Unlock()

@@ -4,6 +4,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/titpetric/task-ui/layout"
 	"github.com/titpetric/task-ui/model"
 )
 
@@ -33,16 +34,17 @@ type Config struct {
 	Shallow bool `yaml:"shallow"`
 }
 
-// dir returns the directory the configuration names, under root.
-func (c Config) dir(root string) string {
-	dir := c.Path
-	if dir == "" {
-		dir = filepath.FromSlash(c.ID)
+// dir returns the directory the configuration names: its Path, under
+// root unless absolute, or the directory of its ID among the named
+// workspaces.
+func (c Config) dir(root string, named []string) string {
+	if c.Path == "" {
+		return layout.Dir(root, named, c.ID)
 	}
-	if !filepath.IsAbs(dir) {
-		dir = filepath.Join(root, dir)
+	if !filepath.IsAbs(c.Path) {
+		return filepath.Join(root, c.Path)
 	}
-	return dir
+	return c.Path
 }
 
 // Apply puts the configuration on a loaded folder.
@@ -105,15 +107,11 @@ func ConfigOf(p *model.Project) Config {
 	}
 }
 
-// WorkspaceConfigsOf reads workspace rows as the configurations of their directories, the default one the root's.
+// WorkspaceConfigsOf reads workspace rows as the configurations of their folders.
 func WorkspaceConfigsOf(workspaces []model.Workspace) []Config {
 	configs := make([]Config, 0, len(workspaces))
 	for _, w := range workspaces {
-		cfg := Config{ID: w.Folder, Shallow: w.Shallow}
-		if w.Folder == model.Default {
-			cfg.Path = "."
-		}
-		configs = append(configs, cfg)
+		configs = append(configs, Config{ID: w.Folder, Shallow: w.Shallow})
 	}
 	return configs
 }

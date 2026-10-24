@@ -18,6 +18,7 @@ import (
 	"github.com/titpetric/task-ui/git"
 	"github.com/titpetric/task-ui/internal/assert"
 	"github.com/titpetric/task-ui/keystore"
+	"github.com/titpetric/task-ui/layout"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/recording"
 	"github.com/titpetric/task-ui/runner"
@@ -96,7 +97,8 @@ func newFixture(t *testing.T) *fixture {
 
 // shellJob is a folder with one job that runs a shell script.
 func (f *fixture) shellJob(id string, script string, interactive bool) runner.Request {
-	dir := filepath.Join(f.root, id)
+	named, _ := f.workspaces.Folders(context.Background())
+	dir := layout.Dir(f.root, named, id)
 	_ = os.MkdirAll(dir, 0o755)
 	fold := &folder.Folder{ID: id, Dir: dir}
 	job := &folder.Job{Folder: id, ID: "run", Kind: "script", Command: []string{"sh", "-c", script}}

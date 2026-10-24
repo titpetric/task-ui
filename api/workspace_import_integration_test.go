@@ -25,15 +25,15 @@ import (
 
 const passphrase = "correct horse battery"
 
-// acme makes the acme workspace on a fixture, with its home project,
-// home, and the api project cloned inside it, an SSH key granted to ops and to a
+// acme makes the acme workspace on a fixture, its home a clone of the
+// repository, the api project cloned inside it, an SSH key granted to ops and to a
 // user the other instance does not have, a shared secret, a folder
 // secret and an env file. It returns the workspace's ID.
 func (f *fixture) acme(t *testing.T) string {
 	t.Helper()
 	ctx := context.Background()
 	repo := "file://" + localRepo(t)
-	res := f.call(t, asAdmin, http.MethodPost, "/workspaces", api.WorkspaceRequest{URL: repo, Folder: "acme", Project: "home", Title: "Acme", Recursive: new(false)})
+	res := f.call(t, asAdmin, http.MethodPost, "/workspaces", api.WorkspaceRequest{URL: repo, Folder: "acme", Branch: "main", Title: "Acme", Recursive: new(false)})
 	assert.Equal(t, http.StatusCreated, res.Status, string(res.Raw))
 	id := res.str("workspace", "id")
 	res = f.call(t, asAdmin, http.MethodPost, "/projects", api.ProjectCloneRequest{URL: repo, ID: "api", Workspace: "acme"})
@@ -48,7 +48,8 @@ func (f *fixture) acme(t *testing.T) string {
 
 // A workspace exported from one instance imports on another under a
 // new name: the keys byte for byte, the secrets open with them, the
-// env file, the grants and the project come along under the new name.
+// env file, the grants, the home and the project come along under the
+// new name.
 func TestWorkspaceImport(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
@@ -65,18 +66,20 @@ func TestWorkspaceImport(t *testing.T) {
 	assert.Equal(t, true, res.get("workspace", "shallow"), "Recursive off comes along")
 	toID := res.str("workspace", "id")
 	projects := res.list("projects")
-	assert.Len(t, projects, 2)
+	assert.Len(t, projects, 1)
 	project := projects[0].(map[string]any)
 	assert.Equal(t, "acme2/api", project["folder"])
 	assert.Equal(t, true, project["cloned"], project["output"])
-	assert.Equal(t, "acme2/home", projects[1].(map[string]any)["folder"])
+	assert.Equal(t, "acme2/home", res.str("home", "folder"))
+	assert.Equal(t, true, res.get("home", "cloned"), res.str("home", "output"))
 	assert.Equal(t, []any{"ghost"}, res.get("unknown_users"))
 	assert.NoFileExists(t, filepath.Join(to.root, "acme2", "Makefile"), "the workspace is a plain directory")
 	assert.FileExists(t, filepath.Join(to.root, "acme2", "home", "Makefile"))
-	assert.FileExists(t, filepath.Join(to.root, "acme2", "api", "Makefile"))
-	home, err := to.opts.Workspaces.Home(ctx, "acme2")
+	assert.FileExists(t, filepath.Join(to.root, "acme2", "src", "api", "Makefile"))
+	imported, err := to.opts.Workspaces.GetByFolder(ctx, "acme2")
 	assert.NoError(t, err)
-	assert.Equal(t, "acme2/home", home, "the home project comes along")
+	assert.Contains(t, imported.HomeURL, "file://", "the home repository comes along")
+	assert.Equal(t, "main", imported.HomeBranch)
 
 	want, _, _, err := from.opts.Keys.Bundle(ctx, keystore.ScopeWorkspace(fromID))
 	assert.NoError(t, err)
@@ -97,7 +100,7 @@ func TestWorkspaceImport(t *testing.T) {
 	file, err := to.opts.Env.Managed.Get(ctx, model.EnvFile{Folder: "acme2/api", Path: ".env"})
 	assert.NoError(t, err)
 	assert.Equal(t, "MODE=prod\n", file.Content)
-	written, err := os.ReadFile(filepath.Join(to.root, "acme2", "api", ".env"))
+	written, err := os.ReadFile(filepath.Join(to.root, "acme2", "src", "api", ".env"))
 	assert.NoError(t, err)
 	assert.Contains(t, string(written), "MODE=prod")
 	assert.Contains(t, string(written), `TOKEN=`)

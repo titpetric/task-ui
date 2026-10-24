@@ -97,9 +97,9 @@ func TestManager_NoPull(t *testing.T) {
 	assert.NotContains(t, out, "git pull")
 }
 
-// A run inside a workspace pulls the workspace's home project first,
-// then its own project, a sibling, sees both up to date, and runs with
-// HOME at the home project.
+// A run inside a workspace pulls the workspace's home first, then its
+// own project under src, sees both up to date, and runs with HOME at
+// the home.
 func TestManager_PullHomeFirst(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
@@ -118,12 +118,14 @@ func TestManager_PullHomeFirst(t *testing.T) {
 		gitRun(t, origin, "commit", "-q", "-am", "second")
 		return origin
 	}
+	assert.NoError(t, f.workspaces.Create(ctx, &model.Workspace{Folder: "ws"}))
 	home := filepath.Join(f.root, "ws", "home")
-	clone("home", home)
-	clone("project", filepath.Join(f.root, "ws", "project"))
-	project := &model.Project{Folder: "ws/home"}
-	assert.NoError(t, f.projects.Create(ctx, project))
-	assert.NoError(t, f.workspaces.Create(ctx, &model.Workspace{Folder: "ws", HomeProjectID: project.ID}))
+	origin := clone("home", home)
+	clone("project", filepath.Join(f.root, "ws", "src", "project"))
+	ws, err := f.workspaces.GetByFolder(ctx, "ws")
+	assert.NoError(t, err)
+	ws.HomeURL = origin
+	assert.NoError(t, f.workspaces.Update(ctx, ws))
 
 	req := f.shellJob("ws/project", "cat $HOME/home.txt project.txt && echo home=$HOME", false)
 	session, err := f.manager.Start(ctx, req)

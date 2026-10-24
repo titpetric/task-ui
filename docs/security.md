@@ -566,23 +566,27 @@ own, carries a stricter policy still: no script, in a sandbox
 
 ## Workspaces
 
-A workspace is a directory under the root that holds projects, with its
-own SSH keys, its own secrets and an optional home project
-([Workspaces](guide/workspaces.md)). A run in a workspace with a home
-project gets that project's directory as `HOME`, so atkins finds the
-workspace's skills and Claude Code reads its `CLAUDE.md`
-(`runner/home.go`, `HomeEnv`). What the server keeps in its own `HOME`
-stays in use, through variables pointed back at it: atkins' stats, the
-registry logins (`DOCKER_CONFIG`), the git identity, the XDG caches,
-`GOPATH`, the shell history (`HISTFILE`) and Claude Code's settings
-(`CLAUDE_CONFIG_DIR`). ssh reads `~/.ssh` from the password database,
-not from `HOME`, so its configuration stays the server's.
+A workspace is a directory under the root with a `home`, the checkout
+of its home repository or an empty directory, and a `src` of projects,
+with its own SSH keys and its own secrets
+([Workspaces](guide/workspaces.md)). Every run in a workspace gets the
+home as `HOME`, always, the server's `HOME` never: atkins finds the
+workspace's skills there, `bash -l` reads its `.profile`, and Claude
+Code reads its `CLAUDE.md` (`runner/home.go`, `HomeEnv`). So whoever
+commits to the workspace's home repository controls that workspace's
+runs. What the server keeps in its own `HOME` stays in use through four
+variables pointed back at it, each set only when the server does not
+set it: the registry logins (`DOCKER_CONFIG`), Claude Code's settings
+(`CLAUDE_CONFIG_DIR`), the cache (`XDG_CACHE_HOME`) and `GOPATH`.
+atkins' history, `ATKINS_DB`, is the home's, with the instance's copy
+as a mirror it writes and never reads. ssh reads `~/.ssh` from the
+password database, not from `HOME`, so its configuration stays the
+server's.
 
 What a workspace keeps apart: which secrets enter a run's environment
 and which SSH keys enter its agent. What it does not keep apart: the
 OS user, the container, the key folder, the database, every checkout
-under the root, the registry logins, the shell history and Claude
-Code's sessions. A job someone in one workspace can change can read
+under the root, the registry logins and Claude Code's sessions. A job someone in one workspace can change can read
 another workspace's secrets. Workspaces organise trusted people; they
 do not separate untrusted ones.
 

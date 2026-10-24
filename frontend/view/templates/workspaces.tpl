@@ -2,7 +2,7 @@
 <div class="page-head">
 	<div>
 		<h2>Workspaces</h2>
-		<p>Directories under the root that hold projects side by side, one of them the home project, the <code>HOME</code> of the workspace's runs. The folder name is the projects' namespace; <code>_</code> is the root itself.</p>
+		<p>Directories under the root, each with a home, the <code>HOME</code> of the workspace's runs and a checkout of its home repository when it has one, and its projects side by side under <code>src/</code>. The folder name is the projects' namespace; <code>_</code> is the root itself.</p>
 	</div>
 	<div class="actions">
 		<button type="button" class="btn" data-dialog-open="import-dialog"><svg class="ic"><use href="#i-upload"/></svg>Import</button>
@@ -14,7 +14,7 @@
 	<h3>Workspaces</h3>
 	<div class="table-wrap">
 	<table class="table">
-		<thead><tr><th>Folder</th><th>Title</th><th>Home project</th><th class="hide-sm">Projects</th><th></th></tr></thead>
+		<thead><tr><th>Folder</th><th>Title</th><th>Home repository</th><th class="hide-sm">Projects</th><th></th></tr></thead>
 		<tbody>
 		{{- $first := 0 }}{{ $last := len .WorkspaceList }}
 		{{- with .WorkspaceList }}{{ if eq (index . 0).Folder "_" }}{{ $first = 1 }}{{ end }}{{ end }}
@@ -23,7 +23,7 @@
 			<tr>
 				<td class="key nowrap"><a href="{{ $.Href .Folder }}"><svg class="ic"><use href="#i-folder-open"/></svg> {{ .Folder }}</a></td>
 				<td class="desc">{{ .Title }}{{ with .Description }} <span class="faint">{{ . }}</span>{{ end }}</td>
-				<td class="nowrap">{{ with index $.Homes .Folder }}<a href="{{ $.Href . }}">{{ . }}</a>{{ else }}<span class="faint">none</span>{{ end }}</td>
+				<td class="origin">{{ with index $.Homes .Folder }}<span class="remote mono" title="{{ . }}">{{ . }}</span>{{ else }}<span class="faint">empty</span>{{ end }}</td>
 				<td class="hide-sm">{{ range $i, $id := $nested }}{{ if $i }}, {{ end }}<a href="{{ $.Href $id }}">{{ $id }}</a>{{ else }}<span class="faint">none yet</span>{{ end }}</td>
 				<td class="actions">{{ template "menu" (menu (print "Actions on " .Folder)
 					(item "folder-open" "Open" "href" ($.Href .Folder))
@@ -35,7 +35,7 @@
 				) }}</td>
 			</tr>
 		{{- else }}
-			<tr class="empty"><td colspan="5">No workspaces yet. Add one, with its home project from a git repository, then clone projects into it with Add project.</td></tr>
+			<tr class="empty"><td colspan="5">No workspaces yet. Add one, with its home from a git repository, then clone projects into it with Add project.</td></tr>
 		{{- end }}
 		</tbody>
 	</table>
@@ -46,7 +46,7 @@
 <dialog class="confirm workspace-import" id="import-dialog" aria-labelledby="import-title">
 	<form class="form" data-import="/api/workspaces/import">
 		<h3 id="import-title">Import a workspace</h3>
-		<p>Adds a workspace from a bundle another task-ui exported, opened with its passphrase. Import makes the workspace's folder, adds its SSH keys to the key folder, encrypts its secrets with this instance's encryption key, adds its projects, its home project among them, env files and grants, and then clones each project. If a project fails to clone, it stays listed with git's output. If anything before the projects fails, task-ui keeps nothing. To import a bundle of the default workspace, _, enter a folder name.</p>
+		<p>Adds a workspace from a bundle another task-ui exported, opened with its passphrase. Import makes the workspace's folder with its home and src, adds its SSH keys to the key folder, encrypts its secrets with this instance's encryption key, adds its projects, env files and grants, and then clones its home repository and each project. If a clone fails, it stays listed with git's output. If anything before the clones fails, task-ui keeps nothing. To import a bundle of the default workspace, _, enter a folder name.</p>
 		<div class="field">
 			<label for="wi-bundle">Bundle <span class="faint">a .tui.age file</span></label>
 			<input type="file" id="wi-bundle" name="bundle" accept=".age" required>

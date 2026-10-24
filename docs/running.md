@@ -19,9 +19,11 @@ Two mounts hold everything the instance keeps:
 
 - `/data`, `TASK_UI_DATA`: the database, the recordings, the artifacts,
   the password file, `/data/.htpasswd`, and the workspace folder,
-  `/data/workspaces`, `TASK_UI_WORKSPACE`. Each subfolder of the
-  workspace folder with something to run becomes a folder in the UI,
-  and the workspace folder itself is one too when it has.
+  `/data/workspaces`, `TASK_UI_WORKSPACE`. The workspace folder holds
+  `home/`, the `HOME` of every run at the root, `src/`, whose
+  subfolders with something to run are the folders of the UI, and a
+  directory per named workspace, each with a `home/` and a `src/` of its
+  own ([Workspaces](guide/workspaces.md)).
 - `/keys`, `TASK_UI_SSH_DIR`: the keys of the instance. Keep it out of
   `/root/.ssh`, so `ssh` in a job does not find them by default; a run
   receives the keys its policies grant it.
@@ -54,7 +56,7 @@ The environment sets the whole configuration:
 |-----------------------|----------------------|-------------------------------------------------------------------|
 | `TASK_UI_LISTEN`      | `:3000`              | Listen address                                                    |
 | `TASK_UI_DATA`        | `/data`, else `data` | Database, recordings, artifacts, the password file `.htpasswd`, the workspace folder |
-| `TASK_UI_WORKSPACE`   | `<data>/workspaces`  | The workspace folder: the folders with jobs, the default workspace `_` |
+| `TASK_UI_WORKSPACE`   | `<data>/workspaces`  | The workspace folder: the default workspace `_`, its `home` and `src`, and a directory per named workspace |
 | `TASK_UI_DISCOVER`    | `true`               | List every folder under the workspace folder with something to run |
 | `TASK_UI_DB`          | `<data>/task-ui.db`  | Database file (sqlite)                                            |
 | `TASK_UI_SSH_DIR`     | `/keys`, else `keys` | The key folder, every key of the instance                         |
@@ -73,6 +75,15 @@ variables; `-v` prints the build. `TASK_UI_ROOT` and `TASK_UI_HTPASSWD`
 set stop task-ui at start, with where the folders and the password file
 go. `/healthz` answers `ok` to anyone, for a proxy or a compose
 health check.
+
+`task-ui migrate-layout` brings a workspace folder laid out as before,
+the projects right under the root and under each workspace, to the
+`home` and `src` layout: it reads the configuration and the database,
+moves each workspace's home project to `home/`, every other directory
+of the workspace to `src/`, and makes `home/` and `src/` where they are
+not, printing each move; `--dry-run` prints them and moves nothing. Run
+it with the server stopped. A folder laid out already prints nothing to
+move, so the command runs again without harm.
 
 ## Users and roles
 

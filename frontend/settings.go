@@ -73,6 +73,10 @@ func (h *Handlers) instance(w http.ResponseWriter, r *http.Request) {
 			instance.Env = h.opts.Runner.EnvNames()
 		}
 	}
+	if h.opts.Storage != nil && p.User != nil && p.User.CanAdmin() {
+		table := h.opts.Storage.Table()
+		instance.Storage = &table
+	}
 	p.Instance = &instance
 	if p.Can("key/view") {
 		h.fillKeys(r.Context(), p)
