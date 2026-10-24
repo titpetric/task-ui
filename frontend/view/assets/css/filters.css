@@ -49,6 +49,11 @@
     margin: 0;
   }
 
+  /* A toggle and its help take a row of their own. */
+  & .field.whole {
+    flex-basis: 100%;
+  }
+
   & .form-foot {
     margin: 0;
   }
