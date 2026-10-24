@@ -58,7 +58,7 @@
 				<td class="key"><a href="/workflows/{{ .WorkflowID }}/runs/{{ .ID }}">{{ .Name }}</a><small class="faint wf-desc" title="{{ stamp .StartedAt }}">{{ ago .StartedAt }}</small></td>
 				<td data-label="By">{{ template "user" (list $ .UserName) }}</td>
 				<td class="nowrap" data-label="Result"><span class="state"><i class="dot {{ .State }}"></i>{{ .State }}</span></td>
-				<td class="wf-excerpt" data-label="Input and answer">{{ template "wfexcerpt" . }}</td>
+				<td class="wf-excerpt"{{ if or .Question .Agent }} data-label="Input and answer"{{ end }}>{{ template "wfexcerpt" . }}</td>
 			</tr>
 		{{- end }}
 		</tbody>

@@ -52,7 +52,7 @@
 				<td class="nowrap" data-label="Started" title="{{ stamp .StartedAt }}">{{ ago .StartedAt }}</td>
 				<td data-label="By">{{ template "user" (list $ .UserName) }}</td>
 				<td data-label="Result" data-result><span class="state"><i class="dot {{ .State }}"></i>{{ .State }}</span>{{ if .Message }} <span class="faint">{{ .Message }}</span>{{ end }}</td>
-				<td class="wf-excerpt" data-label="Input and answer">{{ template "wfexcerpt" . }}</td>
+				<td class="wf-excerpt"{{ if or .Question .Agent }} data-label="Input and answer"{{ end }}>{{ template "wfexcerpt" . }}</td>
 				<td data-label="Steps"><span class="chain">{{ range $i, $l := $.Links .Steps }}{{ if $i }}<span class="faint then" aria-hidden="true"></span>{{ end }}<a class="nowrap" href="{{ $l.Href }}" data-pos="{{ $i }}"><i class="dot {{ $l.State }}"></i>{{ if $l.Workflow }}<svg class="ic"><use href="#i-flow"/></svg>{{ else if $l.Summary }}<svg class="ic"><use href="#i-summary"/></svg>{{ else if $l.Prompt }}<svg class="ic"><use href="#i-prompt"/></svg>{{ end }}{{ $l.Text }}</a>{{ end }}</span></td>
 				<td class="actions"><a class="btn btn-sm" href="/workflows/{{ $w.ID }}/runs/{{ .ID }}" data-workflow-view>View</a>{{ template "menu" (menu (print "Actions on the run of " $w.Name)
 					(detail "Run" .ID "mono" "")
