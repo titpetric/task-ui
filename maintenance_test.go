@@ -22,3 +22,28 @@ func TestDryRun(t *testing.T) {
 	assert.Error(t, err)
 	assert.Equal(t, "usage: task-ui cleanup [--dry-run]", err.Error())
 }
+
+// A maintenance command in a run of task-ui, where TASK_UI_WORKSPACE names
+// the run's workspace, takes the root from TASK_UI_WORKSPACE_DIR; outside
+// a run it reads the server's configuration, TASK_UI_WORKSPACE the root.
+func TestMaintenanceConfig(t *testing.T) {
+	root := t.TempDir()
+	t.Setenv("TASK_UI_DATA", t.TempDir())
+	t.Setenv("TASK_UI_RUN_ID", "run")
+	t.Setenv("TASK_UI_WORKSPACE", "_")
+	t.Setenv("TASK_UI_WORKSPACE_DIR", root)
+	cfg, err := maintenanceConfig()
+	assert.NoError(t, err)
+	assert.Equal(t, root, cfg.Root)
+
+	t.Setenv("TASK_UI_RUN_ID", "")
+	_, err = maintenanceConfig()
+	assert.Error(t, err)
+	assert.Equal(t, "TASK_UI_WORKSPACE: _ is not a directory", err.Error())
+
+	server := t.TempDir()
+	t.Setenv("TASK_UI_WORKSPACE", server)
+	cfg, err = maintenanceConfig()
+	assert.NoError(t, err)
+	assert.Equal(t, server, cfg.Root)
+}

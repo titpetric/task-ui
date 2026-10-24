@@ -135,7 +135,10 @@ expire.
 
 Anyone who may open a step of the settings reads the page; an admin
 saves the rules, with `PUT /api/retention`, and **Clean up now** starts
-`@cleanup` at once, as a run whose output shows what went. A save
+`@cleanup` at once, as a run whose output shows what went. A run of
+`@cleanup` takes the workspace folder from its own workspace directory,
+`TASK_UI_WORKSPACE_DIR`, because `TASK_UI_WORKSPACE` names a run's
+workspace. A save
 takes effect at the next run of `@cleanup`: task-ui schedules it
 `@daily`, at midnight, as the first admin, once, when it first starts;
 the [Schedules](scheduled.md#cleanup) page changes or deletes that
