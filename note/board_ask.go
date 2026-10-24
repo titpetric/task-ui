@@ -203,7 +203,7 @@ func (b *Board) hosts(ctx context.Context) []string {
 
 // promptRequest resolves where a prompt runs, as the user: the prompt
 // job, @claude-prompt, of the place dir names, a folder and a directory
-// in it, a workspace's checkout, or _ for the root, with the directory
+// in it, a workspace's directory, or _ for the root, with the directory
 // in TASK_UI_PROMPT_DIR for a folder's, and the run's workspace. The run
 // is the place's, as its @shell run is, with the place's secrets. The
 // user sees the place; the prompt job runs by prompt/edit, which the
@@ -229,7 +229,7 @@ func (b *Board) promptRequest(ctx context.Context, user *model.User, dir string)
 		at, place, inside = path, f, rest
 		req.Env = []string{"TASK_UI_PROMPT_DIR=" + at}
 	case dir != "" && !strings.Contains(dir, "..") && !model.IsInternal(dir):
-		// A workspace's checkout that is no folder of the catalogue.
+		// A workspace's directory that is no folder of the catalogue.
 		at = filepath.Join(b.Root, filepath.FromSlash(dir))
 		place = &folder.Folder{ID: dir, Title: dir, Dir: at}
 		req.Workspace = at
@@ -249,7 +249,7 @@ func (b *Board) promptRequest(ctx context.Context, user *model.User, dir string)
 }
 
 // sees reports whether a user sees the place of a prompt: the folder dir
-// resolves to, a workspace's checkout by its name, and the root for a
+// resolves to, a workspace's directory by its name, and the root for a
 // user who sees every folder.
 func sees(user *model.User, f *folder.Folder, dir string) bool {
 	switch {

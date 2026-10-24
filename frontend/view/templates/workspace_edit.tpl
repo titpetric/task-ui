@@ -4,7 +4,7 @@
 <div class="page-head">
 	<div>
 		<h2>Configure {{ $ws.Folder }}</h2>
-		<p>The workspace's settings, its projects and the SSH keys its runs get. Its folder, repository and branch stay as cloned; for another checkout, add another workspace.{{ if $default }} The default workspace is the root, and it stays.{{ end }}</p>
+		<p>The workspace's settings, its home project, its projects and the SSH keys its runs get. The workspace is a directory of projects side by side; its folder stays as added.{{ if $default }} The default workspace is the root, and it stays.{{ end }}</p>
 	</div>
 	<div class="actions">
 		{{- if .Can "project/edit" }}
@@ -15,13 +15,13 @@
 		{{- end }}
 		{{ template "menu" (menu (print "Actions on " $ws.Folder)
 			(item "folder-open" "Open" "href" ($.Href $ws.Folder))
-			(and (not $default) (.Can "workspace/delete") (danger "trash" "Delete" "data-delete" (print "/api/workspaces/" $ws.Folder) "data-confirm" (deleteWorkspaceConfirm $ws.Folder $ws.SourceURL $nested) "data-confirm-ok" "Delete" "data-next" "/settings/workspaces?notice=Workspace+deleted"))
+			(and (not $default) (.Can "workspace/delete") (danger "trash" "Delete" "data-delete" (print "/api/workspaces/" $ws.Folder) "data-confirm" (deleteWorkspaceConfirm $ws.Folder $nested) "data-confirm-ok" "Delete" "data-next" "/settings/workspaces?notice=Workspace+deleted"))
 		) }}
 	</div>
 </div>
 
 <section class="block">
-	<h3>Settings <small class="mono-break">{{ if $default }}the root, {{ .Root }}{{ else }}{{ $ws.SourceURL }}{{ with $ws.Branch }}, {{ . }}{{ end }}{{ end }}</small></h3>
+	<h3>Settings <small class="mono-break">{{ if $default }}the root, {{ .Root }}{{ else }}{{ $ws.Dir .Root }}{{ end }}</small></h3>
 	<form class="form" data-api="/api/workspaces/{{ $ws.Folder }}" data-method="PUT" data-next="/settings/workspaces/{{ $ws.Folder }}?notice=Saved">
 		<div class="field">
 			<label for="we-title">Title</label>
@@ -39,6 +39,8 @@
 	</form>
 </section>
 
+{{ template "workspacehome" . }}
+
 <section class="block" id="projects">
 	{{- template "blockhead" (head "Projects" (or (and $default "at the top of the root") (print "inside " $ws.Folder "/")) (and (not .Entries) (print "No projects in " $ws.Folder " yet."))) }}
 	{{- with .Entries }}{{ template "projecttable" (list $ .) }}{{ end }}
@@ -48,6 +50,73 @@
 {{ template "workspaceexport" . }}
 {{- end }}
 {{ end }}
+
+{{- /* workspacehome is a workspace's home project, the HOME of its
+     runs: the project and its repository, or "No home project.", with
+     Change, a dialog that picks a project at the workspace's top,
+     Add or Replace, a dialog that clones one and makes it home, and
+     Remove, which unsets it and keeps the project. */}}
+{{- define "workspacehome" }}
+{{- $ws := .Workspace }}{{ $home := .HomeProject }}{{ $edit := .Can "workspace/edit" }}
+<section class="block workspace-home" id="home">
+	{{- template "blockhead" (head "Home project" "the HOME of the workspace's runs" (and (not $home) "No home project.")
+		(and $edit .HomeChoices (item "edit" "Change" "data-dialog-open" "home-change-dialog"))
+		(and $edit (.Can "project/edit") (item "plus" (or (and $home "Replace") "Add") "data-dialog-open" "home-replace-dialog"))
+		(and $edit $home (danger "" "Remove" "data-api" (print "/api/workspaces/" $ws.Folder) "data-method" "PUT" "data-body" (homeBody $ws "") "data-confirm" (print "Unset " $home.Folder " as the home project of " $ws.Folder "? The project stays; runs get the server's HOME.") "data-confirm-ok" "Remove" "data-next" (print "/settings/workspaces/" $ws.Folder "?notice=Home+project+removed")))) }}
+	{{- with $home }}
+	<p><a class="mono-break" href="{{ $.Href .Folder }}"><svg class="ic"><use href="#i-folder-open"/></svg> {{ .Folder }}</a>{{ with .SourceURL }} <span class="faint mono-break">{{ . }}</span>{{ end }}{{ with .Branch }} <span class="badge">{{ . }}</span>{{ end }}</p>
+	<p class="dim">Runs in {{ $ws.Folder }} get <code>HOME</code> here: atkins reads its <code>.atkins/skills</code> and Claude its <code>CLAUDE.md</code> and <code>.claude</code> skills. Stats, registry logins, the git identity and caches stay in the server's home.</p>
+	{{- end }}
+</section>
+{{- if and $edit .HomeChoices }}
+<dialog class="confirm" id="home-change-dialog" aria-labelledby="home-change-title">
+	<form class="form" data-api="/api/workspaces/{{ $ws.Folder }}" data-method="PUT" data-next="/settings/workspaces/{{ $ws.Folder }}?notice=Home+project+changed">
+		<h3 id="home-change-title">Change the home project</h3>
+		<p>Runs in {{ $ws.Folder }} get the project's directory as <code>HOME</code>.</p>
+		<input type="hidden" name="title" value="{{ index .Form "title" }}">
+		<input type="hidden" name="description" value="{{ index .Form "description" }}">
+		<div class="field">
+			<label for="hc-project">Project</label>
+			<select id="hc-project" name="home_project">
+				{{- range .HomeChoices }}
+				<option value="{{ . }}"{{ if and $home (eq . $home.Folder) }} selected{{ end }}>{{ . }}</option>
+				{{- end }}
+			</select>
+		</div>
+		<div class="confirm-foot">
+			<button type="button" class="btn" data-dialog-close>Cancel</button>
+			<button class="btn btn-primary" type="submit">Save</button>
+		</div>
+	</form>
+</dialog>
+{{- end }}
+{{- if and $edit (.Can "project/edit") }}
+<dialog class="confirm" id="home-replace-dialog" aria-labelledby="home-replace-title">
+	<form class="form" data-api="/api/projects" data-method="POST" data-next="/settings/workspaces/{{ $ws.Folder }}?notice=Home+project+cloned">
+		<h3 id="home-replace-title">{{ if $home }}Replace{{ else }}Add{{ end }} the home project</h3>
+		<p>Clones the repository into {{ $ws.Folder }} as a project and makes it the home project.{{ with $home }} {{ .Folder }} stays as a project.{{ end }} If the clone fails, you see git's output and task-ui keeps nothing.</p>
+		<input type="hidden" name="workspace" value="{{ $ws.Folder }}">
+		<input type="hidden" name="home" value="true" data-type="bool">
+		<div class="field">
+			<label for="hr-url">Repository URL</label>
+			<input type="text" id="hr-url" name="url" placeholder="git@github.com:org/workspace.git" spellcheck="false" autocomplete="off" required>
+		</div>
+		<div class="field">
+			<label for="hr-id">Folder <span class="faint">optional, defaults to the repository's name</span></label>
+			<input type="text" id="hr-id" name="id" pattern="[A-Za-z0-9._-]+" spellcheck="false" autocomplete="off">
+		</div>
+		<div class="field">
+			<label for="hr-branch">Branch <span class="faint">optional</span></label>
+			<input type="text" id="hr-branch" name="branch" spellcheck="false" autocomplete="off">
+		</div>
+		<div class="confirm-foot">
+			<button type="button" class="btn" data-dialog-close>Cancel</button>
+			<button class="btn btn-primary" type="submit">Clone</button>
+		</div>
+	</form>
+</dialog>
+{{- end }}
+{{- end }}
 
 {{- /* workspaceexport is the dialog that downloads a workspace as a
      bundle another task-ui imports, an age file encrypted to a

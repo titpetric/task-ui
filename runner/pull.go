@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 	"sync"
-
-	"github.com/titpetric/task-ui/model"
 )
 
 // checkout returns the checkout the run's folder belongs to: the folder
@@ -18,9 +16,9 @@ func (m *Manager) checkout(session *Session) string {
 }
 
 // pull brings the checkouts of the run up to date, in the run's own
-// terminal: a named workspace's first, so its tooling is current, then the
-// folder's when that differs; a folder inside a checkout pulls the
-// checkout. Runs of one checkout pull one at a time: two pulls at once
+// terminal: the workspace's home project first, so its tooling is
+// current, then the folder's when that differs; a folder inside a
+// checkout pulls the checkout. Runs of one checkout pull one at a time: two pulls at once
 // fight over the index lock, and a workflow starts them one after another.
 // A shell pulls nothing: it opens on the checkout as it stands, the place
 // to mend one a pull fails in. Nor does a host job, which runs on a host.
@@ -28,17 +26,14 @@ func (m *Manager) pull(ctx context.Context, session *Session) error {
 	if m.opts.Git == nil || session.Job.IsShell() || session.Job.IsHost() {
 		return nil
 	}
-	ws := session.workspace
-	if session.workspaceName == model.Default {
-		ws = ""
-	}
-	if ws != "" && m.opts.Git.IsRepo(ws) {
-		if err := m.pullDir(ctx, session, ws, "git -C "+ws+" pull --ff-only"); err != nil {
+	home := session.home
+	if home != "" && m.opts.Git.IsRepo(home) {
+		if err := m.pullDir(ctx, session, home, "git -C "+home+" pull --ff-only"); err != nil {
 			return err
 		}
 	}
 	dir := m.checkout(session)
-	if dir == "" || dir == ws {
+	if dir == "" || dir == home {
 		return nil
 	}
 	return m.pullDir(ctx, session, dir, "git pull --ff-only")

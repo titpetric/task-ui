@@ -186,6 +186,7 @@ func (m *Manager) newSession(ctx context.Context, req Request, run *model.Run) *
 	session.Titled = m.publish
 	session.workspaceName, session.workspace = m.workspace(ctx, req)
 	session.workspaceID = m.workspaceID(ctx, session.workspaceName)
+	session.home = m.home(ctx, session.workspaceName)
 	if req.User != nil {
 		session.role = req.User.EffectiveRole()
 		if m.opts.Users != nil {
@@ -401,6 +402,19 @@ func (m *Manager) workspace(ctx context.Context, req Request) (string, string) {
 func (m *Manager) WorkspaceID(ctx context.Context, req Request) string {
 	name, _ := m.workspace(ctx, req)
 	return m.workspaceID(ctx, name)
+}
+
+// home returns the directory of the home project of a workspace, by its
+// folder, "" for none or with no workspaces known.
+func (m *Manager) home(ctx context.Context, name string) string {
+	if name == "" || m.opts.Workspaces == nil {
+		return ""
+	}
+	home, err := m.opts.Workspaces.Home(ctx, name)
+	if err != nil || home == "" {
+		return ""
+	}
+	return filepath.Join(m.opts.Root, filepath.FromSlash(home))
 }
 
 // workspaceID returns the ID of the workspace row of a folder, "" for

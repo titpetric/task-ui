@@ -55,8 +55,8 @@ mv "$work/demo/infra" "$work/repos/infra"
 printf '.env\n' >"$work/repos/infra/.gitignore"
 repo infra "Provisioning and deploy jobs"
 
-# The acme workspace and its two projects are repositories of their own:
-# the projects clone inside the workspace's checkout once it is added.
+# The acme workspace's home project and its two projects are
+# repositories of their own, cloned side by side in the workspace.
 mv "$work/demo/acme" "$work/repos/acme"
 mv "$work/repos/acme/api" "$work/repos/acme-api"
 mv "$work/repos/acme/web" "$work/repos/acme-web"
@@ -254,11 +254,13 @@ for theme in dark light; do
 done
 
 # The workspace comes last, so the shots above keep a sidebar without
-# one: the acme checkout, its two projects cloned inside it, and a Claude
+# one: the acme directory, its two projects cloned inside it, and a Claude
 # token for the admin, which the Prompt box needs: open on the
 # workspace's page, folded on every other. The prompt instance asks one
-# prompt there, so the box shows a question and its answer.
-api POST /workspaces -d "{\"url\":\"file://$work/repos/acme.git\",\"folder\":\"acme\",\"title\":\"Acme\",\"description\":\"The tooling every Acme project shares\"}"
+# prompt there, so the box shows a question and its answer. The home
+# project comes after the prompt: its HOME would hide the prompt
+# instance's .profile, which puts the stand-in claude in the PATH.
+api POST /workspaces -d '{"folder":"acme","title":"Acme","description":"The tooling every Acme project shares"}'
 api POST /projects -d "{\"url\":\"file://$work/repos/acme-api.git\",\"id\":\"api\",\"workspace\":\"acme\"}"
 api POST /projects -d "{\"url\":\"file://$work/repos/acme-web.git\",\"id\":\"web\",\"workspace\":\"acme\"}"
 api PUT /integrations/claude -d '{"values":{"token":"sk-ant-oat01-demo","who":"admin"}}'
@@ -277,11 +279,17 @@ for _ in $(seq 1 100); do
   sleep 0.2
 done
 
+# The tooling repository as the home project, the HOME of acme's runs,
+# where atkins finds the skills of the actions bar.
+api POST /projects -d "{\"url\":\"file://$work/repos/acme.git\",\"id\":\"workspace\",\"workspace\":\"acme\",\"home\":true}"
+
 # Every link on every page answers, the workspace's included.
 scripts/crawl.sh
 
 shot workspaces-dark /settings/workspaces dark 1440x1000
-shot workspace-edit-dark /settings/workspaces/acme dark 1440x1300
+shot workspace-edit-dark /settings/workspaces/acme dark 1440x1500
+shot workspace-edit-light /settings/workspaces/acme light 1440x1500
+shot mobile-workspace-edit-dark /settings/workspaces/acme dark 390x1600
 # The workspaces list after the projects at the root: a window tall
 # enough for the sidebar to reach acme and its projects.
 shot sidebar-workspace-dark /f/acme/api dark 1440x1900
@@ -306,7 +314,7 @@ shot args-dark "/f/acme/api/deploy#args=@compose:custom;ps%20-a%20%27;%20id%27" 
 mkdir -p "$work/repos/labs"
 printf '# Labs\n\nExperiments that share nothing yet.\n' >"$work/repos/labs/README.md"
 repo labs "Experiments"
-api POST /workspaces -d "{\"url\":\"file://$work/repos/labs.git\",\"folder\":\"labs\",\"title\":\"Labs\"}"
+api POST /workspaces -d "{\"url\":\"file://$work/repos/labs.git\",\"folder\":\"labs\",\"project\":\"notes\",\"title\":\"Labs\"}"
 shot keys-dark /settings/keys dark 1440x1100
 shot secrets-dark /settings/secrets dark 1440x1300
 # A row's [...] menu open, #actions=<n> opening row n's: a key's, its

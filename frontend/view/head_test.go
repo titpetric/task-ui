@@ -80,7 +80,7 @@ func TestHead_WorkspacePage(t *testing.T) {
 	t.Parallel()
 
 	p := admin(t)
-	p.Workspace = &model.Workspace{Folder: "acme", SourceURL: "git@example.com:acme.git"}
+	p.Workspace = &model.Workspace{Folder: "acme"}
 	p.Nested = map[string][]string{"acme": {"acme/api"}}
 	p.KeysDir = "/keys"
 	p.Entries = []folder.Entry{{ID: "acme/api", Sources: []string{"atkins.yml"}, Jobs: 2}}
@@ -92,7 +92,7 @@ func TestHead_WorkspacePage(t *testing.T) {
 	add, export, del := strings.Index(head, `href="/settings/projects/new?workspace=acme"`), strings.Index(head, `data-dialog-open="export-dialog"`), strings.Index(head, `data-delete="/api/workspaces/acme"`)
 	assert.True(t, add > 0 && export > add && del > export, "Add project, Export, then Delete in the [...]")
 	assert.Contains(t, head, `class="more-item danger"`)
-	assert.Contains(t, head, `data-confirm="Delete the workspace acme with its checkout, keys and secrets, and the projects inside it: acme/api?`)
+	assert.Contains(t, head, `data-confirm="Delete the workspace acme with its keys and secrets, and the projects inside it with their checkouts: acme/api?`)
 
 	keys := body[strings.Index(body, `id="keys"`):]
 	assert.Contains(t, keys, `<p class="empty-line">No keys added.</p>`)

@@ -44,10 +44,10 @@ func RemoveConfirm(id, remote string) string {
 }
 
 // DeleteWorkspaceConfirm returns what Delete of a workspace asks, naming its nested projects.
-func DeleteWorkspaceConfirm(folder, remote string, nested []string) string {
-	text := "Delete the workspace " + folder + " with its checkout, keys and secrets"
+func DeleteWorkspaceConfirm(folder string, nested []string) string {
+	text := "Delete the workspace " + folder + " with its keys and secrets"
 	if len(nested) > 0 {
-		text += ", and the projects inside it: " + strings.Join(nested, ", ")
+		text += ", and the projects inside it with their checkouts: " + strings.Join(nested, ", ")
 	}
-	return text + "? You can clone it again from " + remote + "."
+	return text + "? Its directory goes once nothing else is in it."
 }

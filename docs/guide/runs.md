@@ -368,8 +368,11 @@ runs, as a login shell, with:
   `note/view, note/edit, run; everything else is denied`;
 - `TASK_UI_WORKSPACE`, the name of its [workspace](workspaces.md),
   `_` at the top of the workspace folder, and `TASK_UI_WORKSPACE_DIR`,
-  its checkout, the workspace folder for `_`; `HOME` stays the
-  server's;
+  its directory, the workspace folder for `_`;
+- `HOME` and `TASK_UI_HOME`, the directory of the workspace's [home
+  project](workspaces.md#the-home-project), with the server's stats,
+  logins, git identity and caches kept in use; without a home project,
+  `HOME` stays the server's;
 - `TASK_UI_HOST_PWD`, its directory as the docker host sees it, and
   `TASK_UI_HOST_DATA`, the data directory there, for a `docker run -v
   "${TASK_UI_HOST_PWD:-$PWD}:/src"` that the host's daemon resolves (see
@@ -406,7 +409,8 @@ that job on load with the line typed in.
 
 Before the job, a folder in a git checkout pulls it, in the run's own
 terminal; when the pull fails, the run fails with it. A folder in a
-workspace pulls the workspace's checkout first, then its own. A shell,
+workspace with a home project pulls the home project first, then its
+own. A shell,
 `@shell`, pulls nothing: it opens on the checkout as it stands.
 
 ---

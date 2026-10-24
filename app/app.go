@@ -209,7 +209,7 @@ func (a *App) wire(version string) error {
 
 	a.Catalogue = NewCatalogue(cfg.Root, cfg.Discover, projects)
 	a.Catalogue.Workspaces = workspaces
-	a.Catalogue.Skills = &skills.Prober{Timeout: 3 * time.Second, TTL: 30 * time.Second}
+	a.Catalogue.Skills = &skills.Prober{Timeout: 3 * time.Second, TTL: 30 * time.Second, Home: a.Catalogue.Home}
 	// The detector reads a folder's pipeline from the same listing the
 	// skill chips come from, so one atkins answers both.
 	detector.UseProber(a.Catalogue.Skills)

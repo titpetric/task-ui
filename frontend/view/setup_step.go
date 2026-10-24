@@ -46,7 +46,7 @@ var setupOrder = []struct {
 	{SetupStep{Name: StepUsers, Href: "/settings/users", Icon: "users", Desc: "Who signs in, their role and folders."}, func(p *Page) bool { return p.Can("user/view") }},
 	{SetupStep{Name: StepPermissions, Href: "/settings/permissions", Icon: "key", Desc: "What each role may do."}, func(p *Page) bool { return p.Can("user/view") }},
 	{SetupStep{Name: StepWorkflows, Href: "/workflows", Icon: "flow", Desc: "Chains of jobs, by hand, schedule or webhook."}, func(p *Page) bool { return p.Can("workflow/view") }},
-	{SetupStep{Name: StepWorkspaces, Href: "/settings/workspaces", Icon: "folder-open", Desc: "Checkouts that hold projects and their tooling."}, func(p *Page) bool { return p.Can("workspace/view") }},
+	{SetupStep{Name: StepWorkspaces, Href: "/settings/workspaces", Icon: "folder-open", Desc: "Directories that hold projects and their tooling."}, func(p *Page) bool { return p.Can("workspace/view") }},
 	{SetupStep{Name: StepProjects, Href: "/settings/projects", Icon: "folder", Desc: "Git checkouts under the root, pulled before each run."}, func(p *Page) bool { return p.Can("project/view") }},
 }
 

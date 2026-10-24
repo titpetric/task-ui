@@ -70,7 +70,8 @@ func (h *Handlers) moveTarget(r *http.Request, id, ws string) (string, int, stri
 }
 
 // moveProject moves a project's checkout and row to a new ID, and the
-// user folder grants with them. The runs of the project stay out while
+// user folder grants with them; a home project leaves its workspace's
+// home unset. The runs of the project stay out while
 // it moves; one running refuses the move. A step that fails puts back
 // what the steps before it did.
 func (h *Handlers) moveProject(w http.ResponseWriter, r *http.Request, project *model.Project, to string) {
@@ -117,6 +118,9 @@ func (h *Handlers) moveProject(w http.ResponseWriter, r *http.Request, project *
 			failErr(w, err)
 			return
 		}
+	}
+	if err := h.opts.Workspaces.ClearHome(ctx, project.ID); err != nil {
+		slog.Warn("unsetting a moved home project", "folder", to, "err", err)
 	}
 	left := []model.FolderRef{}
 	if h.opts.FolderRefs != nil {

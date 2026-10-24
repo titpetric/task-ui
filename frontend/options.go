@@ -33,7 +33,7 @@ type Options struct {
 
 	Users    *storage.UserStorage
 	Projects *storage.ProjectStorage
-	// Workspaces are the checkouts the projects may clone inside.
+	// Workspaces are the directories the projects may clone inside.
 	Workspaces *storage.WorkspaceStorage
 	Runs       *storage.RunStorage
 	Artifacts  *storage.ArtifactStorage

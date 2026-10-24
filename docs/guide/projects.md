@@ -412,8 +412,8 @@ duration.
 A folder in a git checkout pulls it with `git pull --ff-only` before every
 run, in the run's own terminal, so a job always runs the latest version.
 A folder inside a checkout pulls the checkout. When the pull fails, the
-run fails with it. A project in a workspace pulls the workspace's
-checkout first (see [Workspaces](workspaces.md#runs-in-a-workspace)).
+run fails with it. A project in a workspace with a home project pulls
+the home project first (see [Workspaces](workspaces.md#runs-in-a-workspace)).
 
 ## Keys for a run
 

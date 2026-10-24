@@ -97,15 +97,15 @@ func TestManager_NoPull(t *testing.T) {
 	assert.NotContains(t, out, "git pull")
 }
 
-// A run inside a workspace pulls the workspace's checkout first, then
-// its project's, and sees both up to date.
-func TestManager_PullWorkspaceFirst(t *testing.T) {
+// A run inside a workspace pulls the workspace's home project first,
+// then its own project, a sibling, sees both up to date, and runs with
+// HOME at the home project.
+func TestManager_PullHomeFirst(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
 	ctx := context.Background()
-	assert.NoError(t, f.workspaces.Create(ctx, &model.Workspace{Folder: "ws"}))
 
-	// The workspace and a project inside it, each a clone of its own origin.
+	// The home project and another project, each a clone of its own origin.
 	clone := func(name, dir string) string {
 		origin := filepath.Join(f.root, "origin", name)
 		assert.NoError(t, os.MkdirAll(origin, 0o755))
@@ -118,19 +118,22 @@ func TestManager_PullWorkspaceFirst(t *testing.T) {
 		gitRun(t, origin, "commit", "-q", "-am", "second")
 		return origin
 	}
-	ws := filepath.Join(f.root, "ws")
-	clone("ws", ws)
-	assert.NoError(t, os.WriteFile(filepath.Join(ws, ".git", "info", "exclude"), []byte("/project\n"), 0o644))
-	clone("project", filepath.Join(ws, "project"))
+	home := filepath.Join(f.root, "ws", "home")
+	clone("home", home)
+	clone("project", filepath.Join(f.root, "ws", "project"))
+	project := &model.Project{Folder: "ws/home"}
+	assert.NoError(t, f.projects.Create(ctx, project))
+	assert.NoError(t, f.workspaces.Create(ctx, &model.Workspace{Folder: "ws", HomeProjectID: project.ID}))
 
-	req := f.shellJob("ws/project", "cat ../ws.txt project.txt", false)
+	req := f.shellJob("ws/project", "cat $HOME/home.txt project.txt && echo home=$HOME", false)
 	session, err := f.manager.Start(ctx, req)
 	assert.NoError(t, err)
 	out, status := collect(t, session.Attach(true))
 	assert.Equal(t, model.StateOK, status.State, out)
-	first := strings.Index(out, "git -C "+ws+" pull --ff-only")
+	first := strings.Index(out, "git -C "+home+" pull --ff-only")
 	second := strings.Index(out, "$ git pull --ff-only")
 	assert.True(t, first >= 0 && second > first, out)
-	assert.Contains(t, out, "ws v2")
+	assert.Contains(t, out, "home v2")
 	assert.Contains(t, out, "project v2")
+	assert.Contains(t, out, "home="+home)
 }

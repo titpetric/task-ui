@@ -52,9 +52,9 @@ row's **⋯** menu; "Delete" and "Remove" are in red, last.
 | Users | `/settings/users` | the users, Connect an MCP client | **Add user** | `[...]`: Profile, Runs, Permissions, Delete | none | none |
 | Add user | `/settings/users/new` | none | none | none | name, password, Cancel and **Add user** | none |
 | Permissions | `/settings/permissions` | a matrix per role | none | none | the matrices, Save | none |
-| Workspaces | `/settings/workspaces` | the workspaces and their projects | Import, **Add workspace** | `[...]`: Open, Workspace settings, Move up, Move down, Delete | Import in a dialog | none: `_` always lists |
-| Add workspace | `/settings/workspaces/new` | none | none | none | repository, folder, title, Cancel and Clone | none |
-| Workspace | `/settings/workspaces/<folder>`, `_` too | Settings, Projects, Keys | **Add project**, Export, `[...]`: Open, Delete | Projects: the projects table; Keys: the keys table | Settings, Cancel and Save; Export in a dialog | "No projects in <folder> yet."; "No keys added." beside **Upload key** and **Generate key** |
+| Workspaces | `/settings/workspaces` | the workspaces, their home projects and projects | Import, **Add workspace** | `[...]`: Open, Workspace settings, Move up, Move down, Delete | Import in a dialog | none: `_` always lists |
+| Add workspace | `/settings/workspaces/new` | none | none | none | folder, home project URL and folder, title, branch, Cancel and Add workspace | none |
+| Workspace | `/settings/workspaces/<folder>`, `_` too | Settings, Home project, Projects, Keys | **Add project**, Export, `[...]`: Open, Delete | Home project: Change, Add or Replace, Remove; Projects: the projects table; Keys: the keys table | Settings, Cancel and Save; Change and Replace in dialogs; Export in a dialog | "No home project." beside **Change** and **Add**; "No projects in <folder> yet."; "No keys added." beside **Upload key** and **Generate key** |
 | Workspace key | `/settings/workspaces/<folder>/keys/upload`, `/generate`, `/<name>` | none | none | none | as the instance key's forms | none |
 | Projects | `/settings/projects` | every project under the root | **Add project** | the projects table: `[...]`: Open, Project settings, Remove checkout | none | "No projects yet." |
 | Add project | `/settings/projects/new`, `?workspace=<folder>` | none | none | none | repository, folder, workspace, branch, Cancel and Clone | none |

@@ -20,7 +20,7 @@ type ProjectCloneRequest struct {
 	URL    string `json:"url"`
 	ID     string `json:"id"`
 	Branch string `json:"branch"`
-	// Workspace clones the project inside that workspace's checkout:
+	// Workspace clones the project inside that workspace's directory:
 	// the folder becomes <workspace>/<id>. Empty or _, the default
 	// workspace, clones into the root.
 	Workspace string `json:"workspace,omitempty"`
@@ -30,6 +30,9 @@ type ProjectCloneRequest struct {
 	// Sidebar lists the project in the sidebar, the default; false keeps
 	// it, and the folders inside it, out. Its pages stay.
 	Sidebar *bool `json:"sidebar,omitempty"`
+	// Home makes the project its workspace's home project, in place of
+	// the one before.
+	Home bool `json:"home,omitempty"`
 }
 
 // ProjectRequest changes what the configuration says about a folder.
@@ -115,9 +118,10 @@ func folderIDFromURL(repo string) string {
 	return folder.SafeID(base)
 }
 
-// cloneProject clones a repository into the root, or into a workspace's
-// checkout, and records it. The clone is the test: a failure reports
-// git's output and keeps nothing.
+// cloneProject clones a repository into the root, or into a workspace,
+// and records it, as the workspace's home project when the request says
+// so. The clone is the test: a failure reports git's output and keeps
+// nothing.
 func (h *Handlers) cloneProject(w http.ResponseWriter, r *http.Request) {
 	if !h.require(w, r, "project/edit") {
 		return
@@ -172,6 +176,12 @@ func (h *Handlers) cloneProject(w http.ResponseWriter, r *http.Request) {
 	if err := h.opts.Projects.Upsert(r.Context(), project); err != nil {
 		failErr(w, err)
 		return
+	}
+	if req.Home {
+		if err := h.setHome(r.Context(), req.Workspace, project.ID); err != nil {
+			failErr(w, err)
+			return
+		}
 	}
 	writeJSON(w, http.StatusCreated, map[string]any{"project": project, "runnable": detector.Any(dir), "output": output})
 }

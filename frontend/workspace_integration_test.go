@@ -24,11 +24,14 @@ func TestWorkspaces(t *testing.T) {
 	assert.Contains(t, empty, `type="file" id="wi-bundle" name="bundle"`)
 
 	ctx := context.Background()
-	assert.NoError(t, f.opts.Workspaces.Create(ctx, &model.Workspace{Folder: "malta", Title: "Malta", SourceURL: "git@example.com:org/workspace.git", Branch: "main"}))
+	home := &model.Project{Folder: "malta/workspace", SourceURL: "git@example.com:org/workspace.git"}
+	assert.NoError(t, f.opts.Projects.Create(ctx, home))
+	assert.NoError(t, f.opts.Workspaces.Create(ctx, &model.Workspace{Folder: "malta", Title: "Malta", HomeProjectID: home.ID}))
 	body := f.page(t, asAdmin, "/settings/workspaces")
 	assert.Contains(t, body, `href="/f/malta"`)
 	assert.Contains(t, body, "Malta")
-	assert.Contains(t, body, "git@example.com:org/workspace.git")
+	assert.Contains(t, body, `<th>Home project</th>`)
+	assert.Contains(t, body, `>malta/workspace</a>`, "the home project lists")
 	assert.Contains(t, body, `href="/settings/workspaces/malta"`)
 	assert.Contains(t, body, `data-delete="/api/workspaces/malta"`)
 	// One workspace has nowhere to move.
@@ -58,7 +61,7 @@ func TestWorkspaceEdit(t *testing.T) {
 	f := newFixture(t)
 
 	ctx := context.Background()
-	assert.NoError(t, f.opts.Workspaces.Create(ctx, &model.Workspace{Folder: "malta", Title: "Malta", Description: "The org", SourceURL: "git@example.com:org/workspace.git"}))
+	assert.NoError(t, f.opts.Workspaces.Create(ctx, &model.Workspace{Folder: "malta", Title: "Malta", Description: "The org"}))
 	body := f.page(t, asAdmin, "/settings/workspaces/malta")
 	assert.Contains(t, body, "<h2>Configure malta</h2>")
 	assert.Contains(t, body, `data-api="/api/workspaces/malta" data-method="PUT"`)
@@ -83,7 +86,7 @@ func TestWorkspaceEdit_DeleteNamesProjects(t *testing.T) {
 	f := newFixture(t)
 
 	ctx := context.Background()
-	assert.NoError(t, f.opts.Workspaces.Create(ctx, &model.Workspace{Folder: "malta", SourceURL: "git@example.com:org/workspace.git"}))
+	assert.NoError(t, f.opts.Workspaces.Create(ctx, &model.Workspace{Folder: "malta"}))
 	for _, folder := range []string{"malta/deploy", "malta/dockerfiles", "maltese", "infra"} {
 		assert.NoError(t, f.opts.Projects.Create(ctx, &model.Project{Folder: folder}))
 	}

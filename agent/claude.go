@@ -28,9 +28,25 @@ func (a *Agent) getenv(name string) string {
 }
 
 // environ is the environment Claude Code runs with. IS_SANDBOX lets it
-// skip the permission prompts as root in the task container.
+// skip the permission prompts as root in the task container; with a
+// home project, Claude reads the CLAUDE.md of the directories it adds.
 func (a *Agent) environ() []string {
-	return append(append([]string{}, a.Env...), "IS_SANDBOX=1")
+	env := append(append([]string{}, a.Env...), "IS_SANDBOX=1")
+	if a.getenv("TASK_UI_HOME") != "" {
+		env = append(env, "CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1")
+	}
+	return env
+}
+
+// homeArgs adds the run's home project, TASK_UI_HOME, as a directory
+// Claude Code reads, its CLAUDE.md and its .claude skills with it, for
+// a session in dir. None without a home project, or in it.
+func (a *Agent) homeArgs(dir string) []string {
+	home := a.getenv("TASK_UI_HOME")
+	if home == "" || filepath.Clean(home) == filepath.Clean(dir) {
+		return nil
+	}
+	return []string{"--add-dir", home}
 }
 
 // context is what every Claude run here reads after the instructions
@@ -70,7 +86,7 @@ func (a *Agent) claudePath() (string, error) {
 // ask runs claude -p on the prompt in dir and writes its reply to out,
 // with system, when not empty, after Claude's own system prompt, and
 // the MCP configuration of TASK_UI_MCP_CONFIG, task-ui's tools as the
-// run's user, when the run has one.
+// run's user, when the run has one, and the home project's directory.
 func (a *Agent) ask(ctx context.Context, dir, prompt, system string, out io.Writer) error {
 	if a.getenv("CLAUDE_CODE_OAUTH_TOKEN") == "" {
 		return errNoToken
@@ -79,7 +95,7 @@ func (a *Agent) ask(ctx context.Context, dir, prompt, system string, out io.Writ
 	if err != nil {
 		return err
 	}
-	args := []string{"-p", "--dangerously-skip-permissions", "--output-format", "text"}
+	args := append([]string{"-p", "--dangerously-skip-permissions", "--output-format", "text"}, a.homeArgs(dir)...)
 	if config := a.getenv("TASK_UI_MCP_CONFIG"); config != "" {
 		args = append(args, "--mcp-config", config)
 	}

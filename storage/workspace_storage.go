@@ -7,8 +7,9 @@ import (
 	"github.com/titpetric/task-ui/model"
 )
 
-// WorkspaceStorage keeps the workspaces: checkouts under the root whose
-// folder is the namespace of the projects cloned inside them.
+// WorkspaceStorage keeps the workspaces: plain directories under the
+// root whose folder is the namespace of the projects cloned inside them,
+// one of which may be the workspace's home project.
 type WorkspaceStorage struct {
 	db DB
 }
@@ -18,9 +19,8 @@ func NewWorkspaceStorage(db DB) *WorkspaceStorage {
 	return &WorkspaceStorage{db: db}
 }
 
-// Create inserts a workspace. The folder is its identity; any number
-// of workspaces may share a repository. One without a sort goes after
-// the others.
+// Create inserts a workspace. The folder is its identity. One without a
+// sort goes after the others.
 func (s *WorkspaceStorage) Create(ctx context.Context, workspace *model.Workspace) error {
 	if workspace.Folder == "" {
 		return errors.New("a workspace needs a folder")
@@ -91,4 +91,23 @@ func (s *WorkspaceStorage) Update(ctx context.Context, workspace *model.Workspac
 // Delete removes a workspace by ID, leaving its project rows to the caller.
 func (s *WorkspaceStorage) Delete(ctx context.Context, id string) error {
 	return client(s.db).Exec(ctx, "DELETE FROM workspace WHERE id = ?", id)
+}
+
+// Home returns the folder of a workspace's home project, by the
+// workspace's folder: "" for none, a workspace unknown, or a home with
+// no project row.
+func (s *WorkspaceStorage) Home(ctx context.Context, folder string) (string, error) {
+	home, err := client(s.db).Get[string](ctx, "SELECT p.folder FROM workspace w JOIN project p ON p.id = w.home_project_id WHERE w.folder = ?", folder)
+	if err != nil {
+		if errors.Is(notFound(err), ErrNotFound) {
+			return "", nil
+		}
+		return "", err
+	}
+	return *home, nil
+}
+
+// ClearHome unsets a project as any workspace's home project, as one that leaves its workspace.
+func (s *WorkspaceStorage) ClearHome(ctx context.Context, projectID string) error {
+	return client(s.db).Exec(ctx, "UPDATE workspace SET home_project_id = '' WHERE home_project_id = ?", projectID)
 }

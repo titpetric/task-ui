@@ -34,9 +34,9 @@ var errImport = errors.New("the bundle")
 // importWorkspace adds a workspace from a bundle an export wrote: a
 // multipart form of the bundle, its passphrase and the folder to import
 // it as, the bundle's own when left out; a bundle of the default
-// workspace needs one. It checks the folder as a create does, clones
-// the workspace's repository or makes its directory, writes its keys,
-// adds its rows under the folder and clones its projects. Up to the
+// workspace needs one. It checks the folder as a create does, makes its
+// directory, writes its keys, adds its rows under the folder, the home
+// project set, and clones its projects. Up to the
 // projects' clones a failure keeps nothing; a project that does not
 // clone keeps its row and reports git's output. Takes workspace/edit.
 func (h *Handlers) importWorkspace(w http.ResponseWriter, r *http.Request) {
@@ -57,12 +57,10 @@ func (h *Handlers) importWorkspace(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	undo := &rollback{}
-	row, projects, output, err := h.restore(ctx, bundle, target, undo)
+	row, projects, err := h.restore(ctx, bundle, target, undo)
 	if err != nil {
 		undo.run()
 		switch {
-		case output != "":
-			writeJSON(w, http.StatusBadGateway, map[string]string{"error": err.Error(), "output": output})
 		case errors.Is(err, errImport):
 			fail(w, http.StatusBadRequest, err.Error())
 		default:
@@ -134,35 +132,30 @@ func (u *rollback) run() {
 }
 
 // restore makes the workspace of a bundle under the target folder: its
-// checkout, its row, its keys and the rows of what it holds, each
+// directory, its row, its keys and the rows of what it holds, each
 // undone on a failure. It returns the workspace and the projects to
-// clone; output is git's when the workspace's clone failed.
-func (h *Handlers) restore(ctx context.Context, bundle *workspace.Bundle, target string, undo *rollback) (*model.Workspace, []model.Project, string, error) {
+// clone.
+func (h *Handlers) restore(ctx context.Context, bundle *workspace.Bundle, target string, undo *rollback) (*model.Workspace, []model.Project, error) {
 	manifest := bundle.Manifest
 	source := manifest.Workspace
 	dir := filepath.Join(h.opts.Root, target)
 	if err := h.opts.Keys.CheckBundle(ctx, bundle.Keys); err != nil {
-		return nil, nil, "", err
+		return nil, nil, err
 	}
-	if source.SourceURL != "" {
-		if output, err := h.opts.Git.Clone(ctx, source.SourceURL, dir, source.Branch); err != nil {
-			return nil, nil, output, err
-		}
-	} else if err := os.Mkdir(dir, 0o755); err != nil {
-		return nil, nil, "", err
+	if err := os.Mkdir(dir, 0o755); err != nil {
+		return nil, nil, err
 	}
 	undo.add(func() { os.RemoveAll(dir) })
 
 	row := &model.Workspace{
 		Folder: target, Title: source.Title, Description: source.Description,
-		SourceURL: source.SourceURL, Branch: source.Branch, Sort: source.Sort,
-		Shallow: source.Shallow,
+		Sort: source.Sort, Shallow: source.Shallow,
 	}
 	if source.Folder == model.Default {
 		row.Title = target
 	}
 	if err := h.opts.Workspaces.Create(ctx, row); err != nil {
-		return nil, nil, "", err
+		return nil, nil, err
 	}
 	undo.add(func() { _ = h.opts.Workspaces.Delete(context.WithoutCancel(ctx), row.ID) })
 	scope := keystore.ScopeWorkspace(row.ID)
@@ -170,21 +163,41 @@ func (h *Handlers) restore(ctx context.Context, bundle *workspace.Bundle, target
 	roles, users := grants(manifest.Grants)
 	if _, err := h.opts.Keys.Restore(ctx, scope, source.Folder, target, bundle.Keys, roles, users); err != nil {
 		if errors.Is(err, keystore.ErrExists) {
-			return nil, nil, "", err
+			return nil, nil, err
 		}
-		return nil, nil, "", fmt.Errorf("%w: %v", errImport, err)
+		return nil, nil, fmt.Errorf("%w: %v", errImport, err)
 	}
 	if err := h.restoreEnvFiles(ctx, target, manifest.EnvFiles, undo); err != nil {
-		return nil, nil, "", err
+		return nil, nil, err
 	}
 	if err := h.restoreSecrets(ctx, row, manifest.Secrets, undo); err != nil {
-		return nil, nil, "", err
+		return nil, nil, err
 	}
 	projects, err := h.restoreProjects(ctx, target, manifest.Projects, undo)
 	if err != nil {
-		return nil, nil, "", err
+		return nil, nil, err
 	}
-	return row, projects, "", nil
+	if err := h.restoreHome(ctx, row, projects, manifest.HomeProject); err != nil {
+		return nil, nil, err
+	}
+	return row, projects, nil
+}
+
+// restoreHome sets the imported project the bundle names home as the
+// workspace's home project; a name no project of the bundle has is a
+// refused bundle.
+func (h *Handlers) restoreHome(ctx context.Context, row *model.Workspace, projects []model.Project, home string) error {
+	if home == "" {
+		return nil
+	}
+	folder := workspace.Absolute(row.Folder, home)
+	for _, project := range projects {
+		if project.Folder == folder {
+			row.HomeProjectID = project.ID
+			return h.opts.Workspaces.Update(ctx, row)
+		}
+	}
+	return fmt.Errorf("%w names the home project %q, which it does not hold", errImport, home)
 }
 
 // importedFolder returns the folder a relative one of a bundle names
