@@ -8,7 +8,8 @@
 // the steps before it; Claude's answer is the step's output for the
 // prompts after it. A summary step asks Claude for task-ui's summary of
 // the steps before it, and runs after a step that failed too, to say
-// why. The last answer is the run's.
+// why. The run's answer, the reply to its input, comes from the last
+// prompt or summary step that answered.
 package workflow
 
 import (
@@ -190,7 +191,7 @@ func (r *Runner) Start(ctx context.Context, workflow *model.Workflow, user *mode
 	a := &active{run: run, workflow: workflow, input: input, cancel: cancel, done: make(chan struct{})}
 	r.byFlow[workflow.ID], r.byRun[run.ID] = a, a
 	snapshot := *run
-	r.publish(workflow.ID, "run", RunEvent{RunID: run.ID, WorkflowID: workflow.ID, Name: run.Name, State: run.State, UserName: run.UserName})
+	r.publish(workflow.ID, "run", RunEvent{RunID: run.ID, WorkflowID: workflow.ID, Name: run.Name, State: run.State, UserName: run.UserName, Input: input})
 	go r.walk(walkCtx, a, resolved, rows, user)
 	return &snapshot, nil
 }
@@ -203,6 +204,9 @@ type RunEvent struct {
 	State      string `json:"state"`
 	Message    string `json:"message,omitempty"`
 	UserName   string `json:"user_name"`
+	// Input is what the run started with, on `run`; Answer is its answer, on `done`.
+	Input  string `json:"input,omitempty"`
+	Answer string `json:"answer,omitempty"`
 }
 
 // StepEvent is the payload of a workflow's `step` event: the step as
@@ -294,10 +298,6 @@ func (r *Runner) walk(ctx context.Context, a *active, steps []Step, rows []model
 		switch {
 		case step.Asks:
 			state, row.RunID, row.Answer, message = r.promptStep(ctx, a, row, step, user)
-			// The last answer is the run's.
-			if row.Answer != "" {
-				run.Answer = row.Answer
-			}
 		case step.Workflow != nil:
 			state, row.WorkflowRunRef, message = r.nested(ctx, step.Workflow, user)
 		default:
@@ -318,11 +318,12 @@ func (r *Runner) walk(ctx context.Context, a *active, steps []Step, rows []model
 			run.State, run.Message = model.StateFailed, fmt.Sprintf("%s %s", label(step), firstOf(message, state))
 		}
 	}
+	run.AnswerFrom(rows)
 	if err := r.runs.Update(store, run); err != nil {
 		slog.Warn("workflow run not saved", "workflow", run.Name, "err", err)
 	}
 	slog.Info("workflow finished", "workflow", run.Name, "user", run.UserName, "state", run.State)
-	r.publish(run.WorkflowID, "done", RunEvent{RunID: run.ID, WorkflowID: run.WorkflowID, Name: run.Name, State: run.State, Message: run.Message, UserName: run.UserName})
+	r.publish(run.WorkflowID, "done", RunEvent{RunID: run.ID, WorkflowID: run.WorkflowID, Name: run.Name, State: run.State, Message: run.Message, UserName: run.UserName, Answer: run.Answer})
 }
 
 // step starts one job and waits for it, and tells started the run once

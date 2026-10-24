@@ -163,7 +163,7 @@ func findWorkflow(ctx context.Context, c *client, ref string) (*api.WorkflowView
 	return found, names, nil
 }
 
-// showFlowRun describes a workflow run and its steps.
+// showFlowRun describes a workflow run, its steps, its input and its answer.
 func showFlowRun(view api.WorkflowRunView, names map[string]string) string {
 	var b strings.Builder
 	fmt.Fprintf(&b, "workflow run %s: %s by %s, %s\n", view.ID, view.Name, view.UserName, flowOutcome(&view.WorkflowRun))
@@ -189,6 +189,9 @@ func showFlowRun(view api.WorkflowRunView, names map[string]string) string {
 			fmt.Fprintf(&b, " (workflow run %s)", step.WorkflowRunRef)
 		}
 		b.WriteString("\n")
+	}
+	if view.Input != "" {
+		b.WriteString("input:\n" + view.Input + "\n")
 	}
 	if view.Answer != "" {
 		b.WriteString("answer:\n" + view.Answer + "\n")

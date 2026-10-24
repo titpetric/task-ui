@@ -229,13 +229,13 @@ with `-p`, `/loop` with `list_notes` polls in its place:
 | `list_jobs`          | `folder`                                         | The folders and their jobs, `default` first, whether you may run each, how it last went |
 | `list_workflows`     |                                                  | The workflows, their steps and their last run |
 | `run_job`            | `folder`, `job`, `force`, `reason`, `wait`, `lines` | Starts a job; with `wait`, up to 900 seconds, returns how it ended and the end of its output |
-| `run_workflow`       | `workflow`, `input`, `wait`                      | Starts a workflow by ID or name, `input` going to its prompt and summary steps; with `wait`, returns how each step went and the run's answer, Claude's reply to its last prompt or summary |
+| `run_workflow`       | `workflow`, `input`, `wait`                      | Starts a workflow by ID or name, `input` going to its prompt and summary steps; with `wait`, returns how each step went, the input and the run's answer, Claude's reply to its last prompt or summary |
 | `get_workflow`       | `workflow`                                       | A workflow by ID or name: its description, its steps in order, each a job, a workflow, a prompt or a summary, and its last run |
 | `create_workflow`    | `name`, `description`, `steps`, `sidebar`        | Makes a workflow as you: `steps` in order, each with its `kind`, `{kind: "job", folder, job, args}`, `{kind: "workflow", workflow}`, `{kind: "prompt", prompt, folder, dir}` or `{kind: "summary", folder, dir}`, and `enabled`; takes `workflow/edit`, and `prompt/edit` for a prompt or a summary |
 | `update_workflow`    | `workflow`, and the fields of `create_workflow`  | Changes a workflow you own, or any as an admin: a field left out stays, `steps` given replace them all; there is no delete |
 | `list_runs`          | `folder`, `job`, `state`, `limit`                | The latest runs, newest first, a directory's run as `folder/dir/job` |
 | `get_run`            | `id`, `lines`                                    | A run and the end of its output, as the terminal showed it |
-| `list_workflow_runs` | `workflow`, `limit`                              | A workflow's latest runs and their steps |
+| `list_workflow_runs` | `workflow`, `limit`                              | A workflow's latest runs, their steps, input and answer |
 | `list_notes`         | `mention`, `state`, `limit`                      | The notes with their replies; by default the open ones that name you |
 | `note_comment`       | `id`, `body`, `state`                            | Replies to a note and sets its instruction to working, done or failed; the state is for a user the note names, its author or an admin. A prompt's run replies in its own thread alone, as Claude |
 | `post_note`          | `body`, `parent`                                 | Leaves a note on the board as you, or a reply to `parent`; takes `note/edit` |

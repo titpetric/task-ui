@@ -190,3 +190,50 @@
 	</select>
 </div>
 {{- end }}
+
+{{/* wfthread takes (list $ run): a workflow run as a thread, its input,
+     or else its first prompt, under who started it, and the reply: the
+     answer of its last prompt or summary step under Claude, in markdown,
+     or for a run of commands alone how it ended. While the run goes the
+     reply shows working, and task-ui.js puts the thread in again from
+     the page once the workflow's topic says the run ended. */}}
+{{- define "wfthread" }}{{ $p := index . 0 }}{{ with index . 1 }}
+<div class="notes wf-thread" data-workflow-thread="{{ .ID }}"{{ if .Running }} data-follow="{{ .WorkflowID }}" data-page="/workflows/{{ .WorkflowID }}/runs/{{ .ID }}"{{ end }}>
+	<article class="note instruction {{ .NoteState }}">
+		<header>
+			<span class="author">{{ template "user" (list $p .UserName) }}</span>
+			<span class="faint" title="{{ stamp .StartedAt }}">{{ ago .StartedAt }}</span>
+			<span class="spacer"></span>
+		</header>
+		{{- if .Question }}
+		<div class="note-body">{{ $p.Message .Question }}</div>
+		{{- else }}
+		<div class="note-body"><p class="faint">Ran {{ .Name }}, with no input.</p></div>
+		{{- end }}
+		<ol class="replies">
+			<li>
+				<header>
+					{{- if .Agent }}<span class="author">{{ template "user" (list $p .Agent) }}</span>{{ else }}<span class="author">{{ .Name }}</span>{{ end }}
+					{{- if .Running }} <span class="badge note-state working">working</span>
+					{{- else }} <span class="faint" title="{{ stamp .FinishedAt }}">{{ ago .FinishedAt }}</span> <span class="state"><i class="dot {{ .State }}"></i>{{ .State }}</span>{{ end }}
+				</header>
+				{{- if .Answer }}
+				<div class="note-body">{{ $p.Message .Answer }}</div>
+				{{- else if .Running }}
+				<div class="note-body"><p class="faint">{{ if .Agent }}Works through the steps; Claude replies here when the run ends.{{ else }}Works through the steps; how the run ended shows here.{{ end }}</p></div>
+				{{- else }}
+				<div class="note-body"><p>{{ if .Agent }}No answer: the run{{ else }}The run{{ end }} ended {{ .State }}{{ with .Message }}, {{ . }}{{ end }}{{ if .FinishedAt }}, in {{ duration .Took }}{{ end }}.</p></div>
+				{{- end }}
+			</li>
+		</ol>
+	</article>
+</div>
+{{- end }}{{ end }}
+
+{{/* wfexcerpt takes a workflow run: its thread on one line each, the
+     input over Claude's reply, cut short, for a list of runs; task-ui.js
+     fills data-answer in once a run ends. */}}
+{{- define "wfexcerpt" }}<div class="wf-lines">
+{{- with .Question }}<span class="wf-q" title="The input">{{ excerpt . 120 }}</span>{{ end }}
+<span class="wf-a{{ if not .Answer }} faint{{ end }}" data-answer>{{ if .Answer }}{{ excerpt .Answer 200 }}{{ else if .Running }}{{ if .Agent }}Answer to come.{{ end }}{{ else if .Agent }}No answer.{{ end }}</span>
+</div>{{- end }}

@@ -254,8 +254,9 @@ func (b *Board) dispatch(note, again *model.Note, agent *model.User) {
 // way, then starts its own. An answer run again, again, takes the ID of
 // its run when that run is of the same job and place, else a new one,
 // and shows working until the new answer takes its place. A stop ends
-// the run, and the note fails with how it ended.
-func (b *Board) run(stop context.Context, note *model.Note, req runner.Request, answer, what string, again *model.Note) {
+// the run, and the note fails with how it ended. It reports whether the
+// reply is what the job wrote; false for the report of how its run ended.
+func (b *Board) run(stop context.Context, note *model.Note, req runner.Request, answer, what string, again *model.Note) bool {
 	ctx := context.Background()
 	defer os.Remove(answer)
 	b.takeReplied(note.ID)
@@ -274,7 +275,7 @@ func (b *Board) run(stop context.Context, note *model.Note, req runner.Request, 
 	}
 	if err != nil {
 		b.finish(ctx, note, model.NoteFailed, what+" did not start: "+err.Error(), again)
-		return
+		return false
 	}
 	if err := b.Notes.SetState(ctx, note.ID, model.NoteWorking, session.ID()); err != nil {
 		slog.Warn("note state not saved", "note", note.ID, "err", err)
@@ -304,16 +305,17 @@ func (b *Board) run(stop context.Context, note *model.Note, req runner.Request, 
 		// Claude replied in the thread over MCP: its final message is no
 		// second reply.
 		b.settle(ctx, note, state)
-		return
+		return true
 	}
 	if reply := readReply(answer); reply != "" {
 		if state == model.NoteFailed {
 			reply += fmt.Sprintf("\n\nThe run ended %s (exit %d).", status.State, status.ExitCode)
 		}
 		b.finish(ctx, note, state, reply, again)
-		return
+		return true
 	}
 	b.finish(ctx, note, state, report(&run, status, b.output(&run)), again)
+	return false
 }
 
 // start starts a request, after the run in the way of its job ends, or

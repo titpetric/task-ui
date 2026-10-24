@@ -107,3 +107,110 @@ func TestView_RenderWorkflowEditor(t *testing.T) {
 	assert.NotContains(t, out, `data-step-add="prompt"`, "no prompt/edit")
 	assert.Contains(t, out, "No steps yet. Start with a command.")
 }
+
+// threadRun is a finished run of Porec watering: its input and Claude's
+// answer.
+func threadRun(answer string) view.WorkflowRun {
+	start := time.Now().Add(-2 * time.Minute)
+	end := start.Add(90 * time.Second)
+	return view.WorkflowRun{
+		WorkflowRun: model.WorkflowRun{
+			ID: "wr1", WorkflowID: "w1", Name: "Porec watering", UserName: "claude", State: model.StateOK,
+			StartedAt: &start, FinishedAt: &end, Input: "I didn't water yesterday", Answer: answer,
+		},
+		Question: "I didn't water yesterday",
+		Agent:    "claude",
+	}
+}
+
+// The Workflows page lists the recent runs, each with its input and
+// its reply cut to a line, linked to the run; with none, one line.
+func TestView_RenderWorkflowsRecentRuns(t *testing.T) {
+	t.Parallel()
+	v, err := view.New()
+	assert.NoError(t, err)
+	p := admin(t)
+	p.WorkflowRuns = []view.WorkflowRun{threadRun("## Skip watering\n\nToday is **rainy**, 1.8 mm.")}
+	var buf bytes.Buffer
+	assert.NoError(t, v.Render(&buf, "workflows", p))
+	out := buf.String()
+	assert.Contains(t, out, "Recent runs")
+	assert.Contains(t, out, `<a href="/workflows/w1/runs/wr1">Porec watering</a>`)
+	assert.Contains(t, out, `<span class="wf-q" title="The input">I didn&#39;t water yesterday</span>`)
+	assert.Contains(t, out, ">Skip watering Today is rainy, 1.8 mm.</span>")
+	assert.NotContains(t, out, "No workflow has run yet.")
+
+	p.WorkflowRuns = nil
+	buf.Reset()
+	assert.NoError(t, v.Render(&buf, "workflows", p))
+	out = buf.String()
+	assert.Contains(t, out, `<p class="empty-line">No workflow has run yet.</p>`)
+	assert.NotContains(t, out, "Input and answer")
+}
+
+// A run's page is its thread: the input under who started it and the
+// answer under Claude, in markdown with raw HTML shown as text, above
+// the steps.
+func TestView_RenderWorkflowRunThread(t *testing.T) {
+	t.Parallel()
+	v, err := view.New()
+	assert.NoError(t, err)
+	p := admin(t)
+	p.Workflow = &view.Workflow{Workflow: model.Workflow{ID: "w1", Name: "Porec watering"}}
+	p.WorkflowRuns = []view.WorkflowRun{threadRun("Skip **watering**.\n\n<script>alert(1)</script>")}
+	var buf bytes.Buffer
+	assert.NoError(t, v.Render(&buf, "workflow_run", p))
+	out := buf.String()
+	assert.Contains(t, out, `data-workflow-thread="wr1"`)
+	assert.NotContains(t, out, "data-follow=", "a run that ended is not followed")
+	assert.Contains(t, out, `class="note instruction done"`)
+	assert.Contains(t, out, "I didn&#39;t water yesterday")
+	assert.Contains(t, out, "<strong>watering</strong>")
+	assert.NotContains(t, out, "<script>alert(1)</script>")
+	assert.Contains(t, out, "&lt;script&gt;")
+	assert.Contains(t, out, "Steps</h3>")
+
+	// While it runs the reply works, and the page follows the workflow.
+	run := threadRun("")
+	run.State, run.FinishedAt = model.StateRunning, nil
+	p.WorkflowRuns = []view.WorkflowRun{run}
+	buf.Reset()
+	assert.NoError(t, v.Render(&buf, "workflow_run", p))
+	out = buf.String()
+	assert.Contains(t, out, `data-follow="w1" data-page="/workflows/w1/runs/wr1"`)
+	assert.Contains(t, out, `<span class="badge note-state working">working</span>`)
+	assert.Contains(t, out, "Claude replies here when the run ends")
+}
+
+// A run of commands alone answers with how it ended, no markdown, and
+// without input says what ran.
+func TestView_RenderWorkflowRunOutcome(t *testing.T) {
+	t.Parallel()
+	v, err := view.New()
+	assert.NoError(t, err)
+	p := admin(t)
+	p.Workflow = &view.Workflow{Workflow: model.Workflow{ID: "w2", Name: "Deploy vhosts"}}
+	run := threadRun("")
+	run.Name, run.WorkflowID, run.Question, run.Agent, run.Input = "Deploy vhosts", "w2", "", "", ""
+	run.State, run.Message = model.StateFailed, "malta/dockerfiles / push failed"
+	p.WorkflowRuns = []view.WorkflowRun{run}
+	var buf bytes.Buffer
+	assert.NoError(t, v.Render(&buf, "workflow_run", p))
+	out := buf.String()
+	assert.Contains(t, out, "Ran Deploy vhosts, with no input.")
+	assert.Contains(t, out, "The run ended failed, malta/dockerfiles / push failed, in 1m30s.")
+	assert.Contains(t, out, `class="note instruction failed"`)
+	assert.NotContains(t, out, "No answer")
+}
+
+// The thread's state is a note's: working, done or failed.
+func TestWorkflowRun_NoteState(t *testing.T) {
+	t.Parallel()
+	run := view.WorkflowRun{WorkflowRun: model.WorkflowRun{State: model.StateRunning}}
+	assert.True(t, run.Running())
+	assert.Equal(t, model.NoteWorking, run.NoteState())
+	run.State = model.StateOK
+	assert.Equal(t, model.NoteDone, run.NoteState())
+	run.State = model.StateStopped
+	assert.Equal(t, model.NoteFailed, run.NoteState())
+}

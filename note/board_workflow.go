@@ -41,39 +41,40 @@ func (b *Board) PromptPlace(ctx context.Context, user *model.User, place string)
 
 // AskStep puts a prompt or summary step to Claude as the run's starter in place, a thread about the run;
 // it returns the prompt's run and Claude's answer, the step's output, or why there is none.
+// A run that ends without Claude's own answer, only the report of how it ended, answers nothing.
 func (b *Board) AskStep(stop context.Context, user *model.User, run *model.WorkflowRun, step *model.WorkflowRunStep, place, input string) (string, string, error) {
 	body := WorkflowQuestion(step.Prompt, input)
 	if step.IsSummary() {
 		body = WorkflowSummaryQuestion
 	}
-	note, err := b.askWorkflowRun(stop, user, run, place, body)
+	note, answered, err := b.askWorkflowRun(stop, user, run, place, body)
 	if note == nil {
 		return "", "", err
 	}
-	if err != nil {
+	if err != nil || !answered {
 		return note.RunID, "", err
 	}
 	return note.RunID, b.lastReply(context.Background(), note), nil
 }
 
 // askWorkflowRun asks body in place as a thread about a workflow run,
-// and returns the thread once Claude replied, or the stop's error, a stop
-// ending the prompt's run, or ErrPromptFailed with the thread for a prompt
-// that failed.
-func (b *Board) askWorkflowRun(stop context.Context, user *model.User, run *model.WorkflowRun, place, body string) (*model.Note, error) {
+// and returns the thread once Claude replied, and whether the reply is
+// Claude's answer, or the stop's error, a stop ending the prompt's run,
+// or ErrPromptFailed with the thread for a prompt that failed.
+func (b *Board) askWorkflowRun(stop context.Context, user *model.User, run *model.WorkflowRun, place, body string) (*model.Note, bool, error) {
 	ctx := context.Background()
 	if b.WorkflowRuns == nil {
-		return nil, fmt.Errorf("%w: workflow prompts aren't available on this instance", ErrNoPrompt)
+		return nil, false, fmt.Errorf("%w: workflow prompts aren't available on this instance", ErrNoPrompt)
 	}
 	if user == nil || body == "" {
-		return nil, fmt.Errorf("%w: a prompt needs an author and some text", ErrInvalid)
+		return nil, false, fmt.Errorf("%w: a prompt needs an author and some text", ErrInvalid)
 	}
 	if !b.permissions(ctx, user).Allowed("prompt/edit") {
-		return nil, ErrForbidden
+		return nil, false, ErrForbidden
 	}
 	req, err := b.promptRequest(ctx, user, place)
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 	note := &model.Note{
 		Channel: model.ChannelNotes, UserID: user.ID, UserName: user.Name, Body: body,
@@ -83,34 +84,34 @@ func (b *Board) askWorkflowRun(stop context.Context, user *model.User, run *mode
 		note.WorkspaceID = model.Default
 	}
 	if err := b.Notes.Create(ctx, note); err != nil {
-		return nil, err
+		return nil, false, err
 	}
 	b.publish(note)
 	req, answer, cleanup, ok := b.promptEnv(note, req, nil)
 	if !ok {
-		return note, ErrPromptFailed
+		return note, false, ErrPromptFailed
 	}
 	defer cleanup()
 	req.Env = append(req.Env, b.hosts(ctx)...)
-	b.run(stop, note, req, answer, "The prompt", nil)
+	answered := b.run(stop, note, req, answer, "The prompt", nil)
 	switch {
 	case stop.Err() != nil:
-		return note, stop.Err()
+		return note, false, stop.Err()
 	case note.State != model.NoteDone:
-		return note, ErrPromptFailed
+		return note, false, ErrPromptFailed
 	}
-	return note, nil
+	return note, answered, nil
 }
 
 // lastReply is the text of a thread's last reply: Claude's answer, once
-// its run ended.
+// its run ended, without the space around it.
 func (b *Board) lastReply(ctx context.Context, note *model.Note) string {
 	replies, err := b.Notes.Replies(ctx, []string{note.ID})
 	if err != nil || len(replies[note.ID]) == 0 {
 		return ""
 	}
 	thread := replies[note.ID]
-	return thread[len(thread)-1].Body
+	return strings.TrimSpace(thread[len(thread)-1].Body)
 }
 
 // aboutWorkflowRun writes what a workflow run's prompt tells Claude of

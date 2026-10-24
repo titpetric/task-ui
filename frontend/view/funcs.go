@@ -39,6 +39,7 @@ func Funcs() template.FuncMap {
 		"hasPrefix":    strings.HasPrefix,
 		"message":      Message,
 		"markdown":     Markdown,
+		"excerpt":      Excerpt,
 		"json":         JSON,
 		"ended":        model.Finished,
 		"argLine":      ArgLine,

@@ -41,10 +41,35 @@ func (w Workflow) PromptPlace() string {
 	return model.Default
 }
 
-// WorkflowRun is a run of a workflow with its steps.
+// WorkflowRun is a run of a workflow with its steps, and the thread it
+// is: Question, what it started with, under its starter, and its answer
+// under Agent, the reply.
 type WorkflowRun struct {
 	model.WorkflowRun
 	Steps []Step
+	// Question is the run's input, or else its first prompt: none for a
+	// run of commands started without input.
+	Question string
+	// Agent is the name Claude answers with, for a run that asks Claude;
+	// empty for one of commands alone, whose reply is how it ended.
+	Agent string
+}
+
+// Running reports whether the run has not ended, its reply still to come.
+func (r WorkflowRun) Running() bool {
+	return !model.Finished(r.State)
+}
+
+// NoteState is the run's state as its thread shows it, a note's: working
+// while it runs, done once it ended ok, else failed.
+func (r WorkflowRun) NoteState() string {
+	switch {
+	case r.Running():
+		return model.NoteWorking
+	case r.State == model.StateOK:
+		return model.NoteDone
+	}
+	return model.NoteFailed
 }
 
 // Took is how long the run took so far, on a copy, which the pointer method Elapsed does not allow.
