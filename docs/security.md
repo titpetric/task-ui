@@ -548,6 +548,22 @@ A secret printed in a shell, a token pasted on a command line, a
 `cat .env`: each lands in the recording and on the screens of
 everyone attached.
 
+## Pages and markdown
+
+Every page carries a content security policy (`markdown/markdown.go`,
+`CSP`; `frontend/frontend.go`, `policy`): scripts, styles, fonts and
+images come from task-ui itself, an image may be inline as a data URL,
+forms post to task-ui alone, and no other site shows a page in a frame.
+Inline styles stay allowed, as the templates size bars with style
+attributes and the terminal writes its own. A note, a reply, a prompt's
+answer, a run's summary and a markdown file of a checkout or of the
+artifacts render through the same renderer: raw HTML shows as text,
+links keep to safe schemes, and an image from elsewhere shows as a link
+to it, so no reader's browser fetches it and no host outside learns who
+reads what, and when. A file a run or a checkout wrote, served on its
+own, carries a stricter policy still: no script, in a sandbox
+(`frontend/artifact.go`, `serveFile`).
+
 ## Workspaces
 
 A workspace is a directory under the root that holds projects, with its

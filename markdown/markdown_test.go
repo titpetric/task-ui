@@ -22,6 +22,29 @@ func TestHTML(t *testing.T) {
 	assert.Contains(t, markdown.HTML([]byte("[out](../../../etc/passwd)"), "/f/", "a"), `href="/f/etc/passwd"`)
 }
 
+// An image from elsewhere shows as a link to it, under its alt text or
+// its address, and never as an image; one of the tree, an absolute
+// path or a data URL stays an image. The policy the pages carry allows
+// those alone.
+func TestRender_ExternalImage(t *testing.T) {
+	t.Parallel()
+	html := markdown.HTML([]byte("![pixel](https://x.example/px.png) ![](//x.example/px.png) ![js](javascript:alert(1))"), "", "")
+	assert.NotContains(t, html, "<img")
+	assert.Contains(t, html, `<a href="https://x.example/px.png" target="_blank" rel="nofollow noreferrer">pixel</a>`)
+	assert.Contains(t, html, "<tt>//x.example/px.png</tt>", "a link without a scheme is no safe link: its address shows as text")
+	assert.Contains(t, html, "<tt>js</tt>")
+	assert.NotContains(t, html, "javascript:")
+
+	html = markdown.HTML([]byte("![plot](plot.png) ![icon](/static/icon.svg) ![dot](data:image/gif;base64,R0lGODlhAQABAAAAACw=)"), "/artifacts/files/", "reports")
+	assert.Contains(t, html, `<img src="/artifacts/files/reports/plot.png" alt="plot" />`)
+	assert.Contains(t, html, `<img src="/static/icon.svg" alt="icon" />`)
+	assert.Contains(t, html, `<img src="data:image/gif;base64,R0lGODlhAQABAAAAACw=" alt="dot" />`)
+
+	assert.Contains(t, markdown.CSP, "img-src 'self' data:")
+	assert.Contains(t, markdown.CSP, "script-src 'self'")
+	assert.NotContains(t, markdown.CSP, "script-src 'self' 'unsafe-inline'")
+}
+
 // Render keeps a single line break with HardBreaks, and the hook rewrites
 // the text outside code and links.
 func TestRender(t *testing.T) {
