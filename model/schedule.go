@@ -22,3 +22,8 @@ func (s *Schedule) IsEnabled() bool {
 func (s *Schedule) ArgList() []string {
 	return DecodeList(s.Args)
 }
+
+// Triages reports whether a failed run of the schedule gets Claude's triage.
+func (s *Schedule) Triages() bool {
+	return s != nil && s.Triage != 0
+}

@@ -33,3 +33,10 @@ func TestSchedule_ArgList(t *testing.T) {
 	assert.Equal(t, []string{"df -h /"}, (&model.Schedule{Args: `["df -h /"]`}).ArgList())
 	assert.Empty(t, (&model.Schedule{}).ArgList())
 }
+
+func TestSchedule_Triages(t *testing.T) {
+	t.Parallel()
+	assert.False(t, (*model.Schedule)(nil).Triages())
+	assert.False(t, (&model.Schedule{}).Triages())
+	assert.True(t, (&model.Schedule{Triage: 1}).Triages())
+}

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log/slog"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/titpetric/task-ui/folder"
@@ -20,7 +21,8 @@ type Catalogue interface {
 }
 
 // Loop starts the due schedules as detached runs, as the user each
-// schedule runs as, when that user may still run the job.
+// schedule runs as, when that user may still run the job, and has the
+// failed run of a schedule with triage on triaged.
 type Loop struct {
 	Schedules *storage.ScheduleStorage
 	Users     *storage.UserStorage
@@ -29,10 +31,16 @@ type Loop struct {
 	// Hosts start a schedule of @host:<host> on its host. Nil skips such a
 	// schedule.
 	Hosts *hostrun.Starter
+	// Board triages the failed run of a schedule with triage on, once
+	// the run ended. Nil triages nothing.
+	Board Triager
 	// Interval is how often the loop looks. Zero is a minute.
 	Interval time.Duration
 	// Now is the clock; tests move it.
 	Now func() time.Time
+
+	// triaged are the runs Triage took, by ID: one triage a run.
+	triaged sync.Map
 }
 
 // NewLoop returns a loop with the defaults filled in.
@@ -113,9 +121,12 @@ func (l *Loop) fire(ctx context.Context, schedule *model.Schedule, now time.Time
 		return false, nil
 	}
 	if job.IsHost() {
+		if schedule.Triages() {
+			slog.Info("scheduled run not triaged, a host schedule", "job", schedule.Job)
+		}
 		return l.fireHosts(ctx, schedule, job, user)
 	}
-	_, err = l.Runner.Start(ctx, runner.Request{
+	session, err := l.Runner.Start(ctx, runner.Request{
 		Folder:    f,
 		Job:       job,
 		User:      user,
@@ -125,6 +136,9 @@ func (l *Loop) fire(ctx context.Context, schedule *model.Schedule, now time.Time
 	if errors.Is(err, runner.ErrBusy) {
 		slog.Info("scheduled run skipped, the job is running", "folder", schedule.Folder, "job", schedule.Job)
 		return false, nil
+	}
+	if err == nil && schedule.Triages() && l.Board != nil {
+		go l.triageAfter(schedule, user, session)
 	}
 	return err == nil, err
 }

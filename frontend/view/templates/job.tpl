@@ -107,7 +107,7 @@
 				<td data-label="Next run">{{ template "nextrun" . }}</td>
 				<td class="nowrap hide-narrow" data-label="Last run">{{ if .LastRunAt }}{{ ago .LastRunAt }}{{ else }}<span class="faint">never</span>{{ end }}</td>
 				<td data-label="Runs as">{{ template "runas-row" (list $ .) }}</td>
-				<td data-label="State">{{ if .IsEnabled }}<span class="badge ok">enabled</span>{{ else }}<span class="badge">disabled</span>{{ end }}</td>
+				<td data-label="State">{{ if .IsEnabled }}<span class="badge ok">enabled</span>{{ else }}<span class="badge">disabled</span>{{ end }}{{ if .Triages }} <span class="badge signal" title="Claude triages a failed run">triage</span>{{ end }}</td>
 				<td class="actions">{{ if $can }}{{ template "menu" (menu (print "Actions on the schedule " .Expression)
 					(item (or (and .IsEnabled "stop") "play") (or (and .IsEnabled "Disable") "Enable") "data-api" (print "/api/schedules/" .ID) "data-method" "PUT" "data-body" (or (and .IsEnabled `{"enabled":false}`) `{"enabled":true}`) "data-next" "reload")
 					(danger "trash" "Delete" "data-delete" (print "/api/schedules/" .ID) "data-confirm" (print "Delete the schedule " .Expression " for " $r.Name "?") "data-confirm-ok" "Delete" "data-next" "reload")
@@ -125,6 +125,9 @@
 		<div class="field">
 			<label for="sch-expr">Expression</label>
 			<input type="text" id="sch-expr" name="expression" placeholder="0 3 * * *  or  @daily" spellcheck="false" autocomplete="off" required>
+		</div>
+		<div class="field">
+			<label class="check"><input type="checkbox" id="sch-triage" name="triage"> Triage failures with Claude <span class="faint">when the run fails, Claude reads the run in its folder, fixes the cause when it can, replies on the run's page and posts a note</span></label>
 		</div>
 		{{- template "runas" (list $ "sch-user") }}
 		<div class="form-foot">

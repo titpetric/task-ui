@@ -143,7 +143,11 @@ A schedule runs a job on a cron expression, in the server's time zone,
 as its user. An admin picks who it runs as; anyone else schedules as
 themselves. `@cleanup` of the root, `_`, applies the Data retention
 settings, `/settings/retention`, on a daily schedule task-ui adds once;
-admins alone run it. Page: `/schedules`; API: `/api/schedules`.
+admins alone run it. A schedule with `triage` on has Claude triage a run
+of it that fails, as its user: a thread on the run's page that reads the
+run, fixes the cause in the folder when it can and ends with `resolved`,
+`not resolved` or `no action`, and a note on the board naming the task,
+the result and the run. Page: `/schedules`; API: `/api/schedules`.
 
 ## Artifacts (`artifact`)
 

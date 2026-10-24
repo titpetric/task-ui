@@ -1414,6 +1414,9 @@ type Schedule struct {
 
 	// Args
 	Args string `db:"args" json:"args"`
+
+	// Triage
+	Triage int64 `db:"triage" json:"triage"`
 }
 
 // GetID will return the value of ID.
@@ -1494,11 +1497,17 @@ func (s *Schedule) GetArgs() string { return s.Args }
 // SetArgs sets Args to the provided value.
 func (s *Schedule) SetArgs(val string) { s.Args = val }
 
+// GetTriage will return the value of Triage.
+func (s *Schedule) GetTriage() int64 { return s.Triage }
+
+// SetTriage sets Triage to the provided value.
+func (s *Schedule) SetTriage(val int64) { s.Triage = val }
+
 // ScheduleTable is the name of the table in the DB.
 const ScheduleTable = "`schedule`"
 
 // ScheduleFields is a list of all columns in the DB table.
-var ScheduleFields = []string{"id", "folder", "job", "user_id", "user_name", "expression", "enabled", "last_run_at", "next_run_at", "created_at", "updated_at", "target", "args"}
+var ScheduleFields = []string{"id", "folder", "job", "user_id", "user_name", "expression", "enabled", "last_run_at", "next_run_at", "created_at", "updated_at", "target", "args", "triage"}
 
 // SchedulePrimaryFields are the primary key fields in the DB table.
 var SchedulePrimaryFields = []string{"id"}

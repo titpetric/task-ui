@@ -30,3 +30,12 @@ func TestWorkflowBuilder(t *testing.T) {
 	assert.Contains(t, claude.WorkflowBuilder, "at most 3 runs")
 	assert.Contains(t, claude.WorkflowBuilder, "verbatim")
 }
+
+// A triage finds the cause, fixes it in the folder alone and ends with
+// the one line the scheduler reads.
+func TestRunTriage(t *testing.T) {
+	t.Parallel()
+	assert.Contains(t, claude.RunTriage, "Find the root cause")
+	assert.Contains(t, claude.RunTriage, "Do not change task-ui's settings, its users or its secrets")
+	assert.Contains(t, claude.RunTriage, "`Result: resolved`, `Result: not resolved` or `Result: no action`")
+}

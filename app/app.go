@@ -271,6 +271,7 @@ func (a *App) wire(version string) error {
 		RunTokens: a.Guard.RunTokens, MCPURL: func() string { return MCPURL(a.Addr()) },
 	}
 	a.Workflows.Prompter = a.Board
+	a.Scheduler.Board = a.Board
 	if err := a.Board.Recover(context.Background()); err != nil {
 		return err
 	}

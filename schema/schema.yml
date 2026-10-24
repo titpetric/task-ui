@@ -841,6 +841,11 @@
       type: text
       comment: Args
       datatype: varchar
+    - name: triage
+      type: integer
+      comment: Triage
+      datatype: bigint
+      size: 8
   indexes:
     - name: sqlite_autoindex_schedule_1
       columns:

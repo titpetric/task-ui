@@ -27,6 +27,18 @@ type ScheduleRequest struct {
 	// the command of @host:<host>, which needs one. On update, empty
 	// keeps them.
 	Args RunArgs `json:"args,omitempty"`
+	// Triage has Claude triage a run of the schedule that fails: a
+	// thread on the run's page and a note on the board, as the
+	// schedule's user, who needs prompt/edit. Nil keeps it on update.
+	Triage *bool `json:"triage"`
+}
+
+// onOff is the row's value of a switch of a request, 1 or 0.
+func onOff(on bool) int64 {
+	if on {
+		return 1
+	}
+	return 0
 }
 
 // jobArgs checks the args of a schedule or a workflow step: a command
@@ -111,6 +123,9 @@ func (h *Handlers) createSchedule(w http.ResponseWriter, r *http.Request) {
 	if req.Enabled != nil && !*req.Enabled {
 		schedule.Enabled = 0
 	}
+	if req.Triage != nil {
+		schedule.Triage = onOff(*req.Triage)
+	}
 	if err := h.opts.Schedules.Create(r.Context(), schedule); err != nil {
 		failErr(w, err)
 		return
@@ -184,7 +199,8 @@ func (h *Handlers) mayChange(r *http.Request, schedule *model.Schedule) bool {
 	return h.canRun(r, f, job)
 }
 
-// updateSchedule changes the expression or switches a schedule.
+// updateSchedule changes the expression, the user, the args or the
+// triage of a schedule, or switches it.
 func (h *Handlers) updateSchedule(w http.ResponseWriter, r *http.Request) {
 	if !h.require(w, r, "schedule/edit") {
 		return
@@ -232,10 +248,10 @@ func (h *Handlers) updateSchedule(w http.ResponseWriter, r *http.Request) {
 		schedule.Expression, schedule.NextRunAt = req.Expression, &next
 	}
 	if req.Enabled != nil {
-		schedule.Enabled = 0
-		if *req.Enabled {
-			schedule.Enabled = 1
-		}
+		schedule.Enabled = onOff(*req.Enabled)
+	}
+	if req.Triage != nil {
+		schedule.Triage = onOff(*req.Triage)
 	}
 	if err := h.opts.Schedules.Update(r.Context(), schedule); err != nil {
 		failErr(w, err)
