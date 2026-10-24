@@ -1,7 +1,6 @@
 package frontend
 
 import (
-	"maps"
 	"net/http"
 	"os"
 	"path"
@@ -13,7 +12,6 @@ import (
 	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/frontend/view"
 	"github.com/titpetric/task-ui/model"
-	"github.com/titpetric/task-ui/storage"
 )
 
 // folderPath serves everything under /f: the folder a path names, a
@@ -130,9 +128,7 @@ func (h *Handlers) defaultWorkspace(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		root = h.opts.Root
 	}
-	p.Last = h.latestRuns(r, withTreeFolders(p, root, p.SubFolders))
-	h.treeMenus(p, f, nil, false)
-	h.treeSummaries(r, p)
+	withTreeFolders(p, root, p.SubFolders)
 	if workspace != nil {
 		p.FolderMenu = &view.FolderMenu{ID: model.Default, Workspace: true}
 	}
@@ -186,29 +182,19 @@ func (h *Handlers) browse(w http.ResponseWriter, r *http.Request, f *folder.Fold
 	p.Folder = f
 	p.Browse = rel + "/"
 	dir, _ := f.Path(rel)
-	if sub := f.Sub(rel); sub != nil {
+	sub := f.Sub(rel)
+	if sub != nil {
 		p.Actions = h.actions(r, p, sub)
 		p.Prompt = h.prompt(r, p, f, rel)
 		p.Summaries = h.summaries(r, p)
 		if len(sub.Sources) > 0 {
 			p.Place = sub
-			p.Last = h.lastRuns(r, sub)
 		}
 	}
 	p.Tree = h.checkoutTree(p, f, rel, folder.Listing(dir))
-	if subs := withTreeFolders(p, dir, nil); len(subs) > 0 {
-		if p.Last == nil {
-			p.Last = map[string]view.Run{}
-		}
-		maps.Copy(p.Last, h.latestRuns(r, subs))
-	}
-	if h.treeMenus(p, f, p.Place, true) {
-		if p.Last == nil {
-			p.Last = map[string]view.Run{}
-		}
-		maps.Copy(p.Last, h.latestRuns(r, []*folder.Folder{f}))
-	}
-	h.treeSummaries(r, p)
+	withTreeFolders(p, dir, nil)
+	p.Last = h.latestRuns(r, []*folder.Folder{f})
+	h.jobTable(r, p, f, sub)
 	p.Up = p.Href(f.ID)
 	if parent := path.Dir(rel); parent != "." {
 		p.Up += "/" + escapePath(parent)
@@ -250,9 +236,9 @@ func (h *Handlers) folder(w http.ResponseWriter, r *http.Request, f *folder.Fold
 			p.SubFolders = append(p.SubFolders, sub)
 		}
 	}
-	p.Last = h.latestRuns(r, append([]*folder.Folder{f}, withTreeFolders(p, f.Dir, p.SubFolders)...))
-	h.treeMenus(p, f, f, true)
-	h.treeSummaries(r, p)
+	withTreeFolders(p, f.Dir, p.SubFolders)
+	p.Last = h.latestRuns(r, []*folder.Folder{f})
+	h.jobTable(r, p, f, f)
 	// A workspace's page shows its prompt box open.
 	if _, ok := p.Workspaces[f.ID]; ok && p.Prompt != nil {
 		p.Prompt.Open = true
@@ -260,20 +246,14 @@ func (h *Handlers) folder(w http.ResponseWriter, r *http.Request, f *folder.Fold
 	h.render(w, http.StatusOK, "folder", p)
 }
 
-// withTreeFolders links the directories of a page's Files list, the
-// listing of dir, that are folders the user sees to their pages, and puts
-// them in TreeFolders, so the list holds their jobs beside them. A folder
-// of subs the listing lacks, such as one a project row places elsewhere,
-// joins it as a directory row, after the directories it has. It returns
-// the folders the list holds, for their last runs.
-func withTreeFolders(p *view.Page, dir string, subs []*folder.Folder) []*folder.Folder {
+// withTreeFolders links the listing's directories that are folders, into TreeFolders, and adds the subs it lacks as rows.
+func withTreeFolders(p *view.Page, dir string, subs []*folder.Folder) {
 	byDir := map[string]*folder.Folder{}
 	for _, f := range p.Folders {
 		byDir[filepath.Clean(f.Dir)] = f
 	}
 	p.TreeFolders = map[string]*folder.Folder{}
 	held := map[string]bool{}
-	var found []*folder.Folder
 	dirs := 0
 	for i := range p.Tree {
 		item := &p.Tree[i]
@@ -287,7 +267,6 @@ func withTreeFolders(p *view.Page, dir string, subs []*folder.Folder) []*folder.
 		}
 		item.Href = p.Href(f.ID)
 		p.TreeFolders[item.Name], held[f.ID] = f, true
-		found = append(found, f)
 	}
 	var missing []folder.Item
 	for _, f := range subs {
@@ -301,10 +280,8 @@ func withTreeFolders(p *view.Page, dir string, subs []*folder.Folder) []*folder.
 		}
 		missing = append(missing, item)
 		p.TreeFolders[name] = f
-		found = append(found, f)
 	}
 	p.Tree = slices.Insert(p.Tree, dirs, missing...)
-	return found
 }
 
 // folderMenu returns the [...] menu of the head of a folder's page, for
@@ -341,19 +318,4 @@ func pullJob(skills []*folder.Skill) *folder.Job {
 		}
 	}
 	return nil
-}
-
-// lastRuns returns the latest run of each job of a folder.
-func (h *Handlers) lastRuns(r *http.Request, f *folder.Folder) map[string]view.Run {
-	runs, err := h.opts.Runs.List(r.Context(), storage.RunFilter{Folder: f.ID, Limit: 20 * len(f.Jobs)})
-	if err != nil {
-		return nil
-	}
-	last := map[string]view.Run{}
-	for _, run := range runs {
-		if _, seen := last[run.Key()]; !seen && run.State != model.StateRunning {
-			last[run.Key()] = h.runView(run)
-		}
-	}
-	return last
 }

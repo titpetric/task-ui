@@ -100,7 +100,11 @@ func fromListing(dir, name string, listing skills.Listing) *Source {
 		return source
 	}
 
-	source.Name = section.Desc
+	// atkins names a pipeline without a name by its file, which is no
+	// title.
+	if section.Desc != filepath.Base(name) {
+		source.Name = section.Desc
+	}
 	source.Description = strings.TrimSpace(section.Help)
 	source.Includes = appendUnique(nil, section.Include...)
 

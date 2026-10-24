@@ -1,224 +1,99 @@
-/* -------------------------------------------------------------- job cards */
+/* -------------------------------------------------------------- jobs table */
 
-/* A folder's jobs as cards, as many as it has. The cards of a row share
-   four rows, so the names, the descriptions, the last runs and the code
-   blocks line up across the row whatever each card holds. */
-.jobcards {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(19rem, 1fr));
-  gap: 0.8rem;
-}
-
-.jobcard {
-  display: grid;
-  grid-row: span 4;
-  grid-template-rows: subgrid;
-  row-gap: 0.55rem;
-  min-width: 0;
-  padding: 0.75rem 0.95rem 0.9rem;
-  border: 1px solid var(--line);
-  border-top: 2px solid var(--line-2);
-  border-radius: var(--radius);
-  background: var(--ink-1);
-
-  &.running {
-    border-top-color: var(--signal);
+/* A folder's Jobs table: a row per job, under a heading row per group,
+   the source, the files that run, a skill, the built-ins or a directory
+   with targets of its own. The job's ID reads as code; Run and the [...]
+   stay at the end of the row. */
+.table.jobs {
+  & tbody + tbody tr.group th {
+    border-top: 1px solid var(--line-2);
   }
 
-  &:hover {
-    border-color: var(--line-2);
-    border-top-color: var(--signal);
-  }
+  & tr.group th {
+    padding-block: 0.55rem 0.35rem;
+    background: transparent;
+    color: var(--text-dim);
+    font-weight: 400;
+    letter-spacing: normal;
+    text-transform: none;
 
-  /* The name, its kind, and Run at the end of the row. */
-  & header {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    min-width: 0;
-    min-height: var(--control-sm);
-
-    /* Short of room, the badges give way before the name does. */
-    & .name {
-      flex: 0 1 auto;
-      min-width: 4ch;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      color: var(--text);
-      font-size: 1rem;
+    & a {
+      margin-inline-end: 0.35rem;
       font-weight: 600;
 
-      &:hover {
+      & .ic {
+        width: 0.9rem;
+        height: 0.9rem;
+        margin-inline-end: 0.3rem;
+        vertical-align: -0.12rem;
         color: var(--signal);
-        text-decoration: none;
       }
     }
 
-    & .badge {
-      flex: 0 100 auto;
-      min-width: 0;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    & .actions {
-      display: inline-flex;
-      flex: none;
-      align-items: center;
-      gap: 0.35rem;
-      margin-inline-start: auto;
+    & small {
+      margin-inline-start: 0.4rem;
+      color: var(--text-faint);
     }
   }
 
-  & .desc {
-    margin: 0;
-    color: var(--text-dim);
-    font-size: var(--fs-md);
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-
-  /* How it last went, one line in one order: the dot, the state, when,
-     who. One size of text centred in a row the avatar's height, so the
-     state and the time sit on one baseline, in every card. */
-  & .meta {
-    display: flex;
-    align-items: center;
-    gap: 0.45rem;
-    min-width: 0;
-    height: round(1.45rem, 1px);
-    color: var(--text-dim);
+  & td.key a {
     font-family: var(--font);
-    font-size: var(--fs-xs);
-    line-height: 1;
+    font-weight: 600;
+  }
+
+  & td.key .badge {
+    margin-inline-start: 0.4rem;
+  }
+
+  & td.desc {
+    min-width: 16ch;
+    color: var(--text-dim);
+  }
+
+  & td.last {
+    & .dot {
+      margin-inline-end: 0.35rem;
+    }
+
+    & .summary-link {
+      margin-inline-start: 0.5rem;
+
+      & .ic {
+        width: 0.8rem;
+        height: 0.8rem;
+        margin-inline-end: 0.2rem;
+        vertical-align: -0.1rem;
+      }
+    }
+  }
+
+  & td.actions {
+    width: 1%;
     white-space: nowrap;
+  }
 
-    & .state-label {
-      color: var(--text);
-
-      &.faint {
-        color: var(--text-faint);
-      }
+  /* On a phone each row is a card: the heading of a group a line of its
+     own, Run and the [...] side by side. */
+  @media (max-width: 860px) {
+    & tr.group th {
+      display: block;
+      padding: 0.7rem 0 0.2rem;
+      border: 0;
     }
 
-    & .when::before,
-    & .who-ran::before {
-      content: "·";
-      margin-inline-end: 0.45rem;
-      color: var(--text-faint);
-    }
-
-    & .who-ran {
-      display: inline-flex;
+    & td.actions {
+      width: auto;
+      flex-wrap: nowrap;
       align-items: center;
-      gap: 0.35rem;
-      min-width: 0;
-      overflow: hidden;
-      text-overflow: ellipsis;
-
-      &::before {
-        margin-inline-end: 0;
-      }
     }
   }
 
-  /* What it runs, as a code block: numbered lines in a gutter washed in
-     the accent. Long lines wrap inside the block. */
-  & .code {
-    --gutter: 2.1rem;
-    min-width: 0;
-    padding: 0.35rem 0;
-    border: 1px solid var(--line);
-    border-radius: var(--radius);
-    background:
-      linear-gradient(to right, var(--signal-wash) var(--gutter), var(--line) var(--gutter) calc(var(--gutter) + 1px), transparent calc(var(--gutter) + 1px)),
-      var(--ink-2);
-    font-family: var(--font);
-    font-size: var(--fs-xs);
-    line-height: 1.6;
+  & tr.running td.key a {
+    color: var(--signal);
+  }
 
-    & ol {
-      margin: 0;
-      padding: 0;
-      list-style: none;
-      counter-reset: line;
-    }
-
-    & ol[start="4"] {
-      counter-reset: line 3;
-    }
-
-    & :is(li, .comment, summary) {
-      display: grid;
-      grid-template-columns: var(--gutter) minmax(0, 1fr);
-      column-gap: 0.6rem;
-      padding-inline-end: 0.6rem;
-    }
-
-    & li {
-      color: var(--text);
-      white-space: pre-wrap;
-      overflow-wrap: anywhere;
-      counter-increment: line;
-
-      &::before {
-        content: counter(line);
-        padding-inline-end: 0.5rem;
-        color: var(--signal);
-        text-align: end;
-        opacity: 0.8;
-      }
-    }
-
-    & .comment {
-      color: var(--text-faint);
-
-      &::before {
-        content: "";
-      }
-    }
-
-    /* The lines past the third open in place. The control stays under the
-       last line, open or closed, and says what it does. */
-    & details {
-      display: flex;
-      flex-direction: column-reverse;
-    }
-
-    & summary {
-      list-style: none;
-      cursor: pointer;
-      color: var(--signal);
-
-      &::-webkit-details-marker {
-        display: none;
-      }
-
-      &::before {
-        content: "";
-      }
-
-      &:hover span {
-        text-decoration: underline;
-      }
-
-      &:focus-visible {
-        outline: none;
-
-        & span {
-          outline: 1px solid var(--signal);
-          outline-offset: 1px;
-        }
-      }
-    }
-
-    & details:not([open]) .less,
-    & details[open] .more {
-      display: none;
-    }
+  & tr.argsrow td {
+    padding-top: 0;
   }
 }
 
@@ -311,21 +186,5 @@
   .folders .jobs .job .play,
   .menu .flows .play {
     opacity: 1;
-  }
-
-  /* One card to a row has no neighbours to line up with: the rows close
-     up, and a card that says nothing past its name skips the line. */
-  .jobcards {
-    grid-template-columns: 1fr;
-  }
-
-  .jobcard {
-    display: flex;
-    flex-direction: column;
-    gap: 0.55rem;
-
-    & .desc:empty {
-      display: none;
-    }
   }
 }

@@ -25,13 +25,12 @@
 <div class="alert bad"><b>Could not read a source.</b> {{ $p.Error }}</div>
 {{- end }}
 
-{{- template "promptbox" $ }}
-
-{{- if $p.Sources }}
-{{- template "sources" (list $ $p) }}
-{{- else if and (not $.SubFolders) (not $default) }}
+{{- template "jobtable" $ }}
+{{- if and (not $.JobGroups) (not $.SubFolders) (not $default) }}
 <div class="alert">task-ui found nothing to run in this folder: no pipeline file, Makefile, package scripts or scripts folder.</div>
 {{- end }}
+
+{{- template "promptbox" $ }}
 
 {{- if or (not $default) $.Tree }}
 <section class="block">

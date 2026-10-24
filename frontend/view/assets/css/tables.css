@@ -93,17 +93,6 @@ table.table-kv td {
   font-size: var(--fs-button);
 }
 
-.table.jobs {
-  & :is(th, td).steps {
-    width: 40%;
-    max-width: 0;
-  }
-
-  & td.desc {
-    min-width: 16ch;
-  }
-}
-
 .table td {
   & .ic {
     color: var(--text-faint);

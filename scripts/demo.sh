@@ -295,19 +295,19 @@ shot mobile-workspace-edit-dark /settings/workspaces/acme dark 390x1600
 shot sidebar-workspace-dark /f/acme/api dark 1440x1900
 shot workspace-prompt-dark /f/acme dark
 # The default workspace's page as a dashboard of the root: each project
-# in its Files list with Run and |>summarize beside it.
+# in its Files list.
 shot folder-dashboard-dark /f/_ dark 1440x800
 # The api project's Files: .git and .env sealed, ./serve marked to run,
 # and its README in the preview window.
 shot files-dark /f/acme/api dark
 shot file-dark "/f/acme/api#file=README.md" dark
-# The actions bar of a directory inside the api project: the git line of
-# its checkout, the git, compose and dockerfile skills of acme's
-# .atkins/skills that apply there, and Enter Shell, which the admin gets.
-# Then the field of compose: custom... with a line typed in, and what it
+# The Jobs table of a directory inside the api project under the git
+# line of its checkout: the git, compose and dockerfile skills of acme's
+# .atkins/skills that apply there, and @shell, which the admin gets.
+# Then the field of @compose:custom with a line typed in, and what it
 # runs as argv under it.
-shot actions-dark /f/acme/api/deploy dark 1440x700
-shot args-dark "/f/acme/api/deploy#args=@compose:custom;ps%20-a%20%27;%20id%27" dark 1440x700
+shot actions-dark /f/acme/api/deploy dark 1440x1100
+shot args-dark "/f/acme/api/deploy#args=@compose:custom;ps%20-a%20%27;%20id%27" dark 1440x1100
 
 # A second workspace, labs, with no SSH key, so the keys page shows a
 # workspace without one.

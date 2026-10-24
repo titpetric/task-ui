@@ -64,10 +64,10 @@ directory.
 
 ## Skills
 
-The skills of a workspace's home project, its `.atkins/skills/`, put chips on the [actions
-bar](projects.md#actions) of every project and directory inside it:
-`[git: pull · rebase]` on each checkout, `[compose: down · up]` beside
-a compose file. A skill is an atkins
+The skills of a workspace's home project, its `.atkins/skills/`, add
+rows to the [Jobs table](projects.md#skills) of every project and
+directory inside it: `@git:pull` and `@git:rebase` on each checkout,
+`@compose:down` and `@compose:up` beside a compose file. A skill is an atkins
 pipeline file, `<name>.yml`, its jobs named `<name>:<job>`, and its
 `when:` decides where it applies:
 
@@ -79,11 +79,11 @@ pipeline file, `<name>.yml`, its jobs named `<name>:<job>`, and its
 - `contains:` is a regular expression the matched file must match, such
   as a compose file with a `build:` key.
 - A job takes a `when:` of its own, with the same keys. Where it fails,
-  the job has no chip and a run of it fails, and the rest of the skill
+  the job has no row and a run of it fails, and the rest of the skill
   stays.
 - `args: true` on a job takes arguments after `--`, which atkins appends
-  to the job's `exec:` steps as argv, with no shell between. Its chip
-  reads `custom...` and opens a field for them (see
+  to the job's `exec:` steps as argv, with no shell between. Its row
+  carries `args`, and its **Run...** opens a field for them (see
   [Runs](runs.md#what-a-job-gets)).
 
 A skill job runs in the directory of the file its `when:` matched, so
@@ -120,10 +120,10 @@ jobs:
       - exec: [docker, compose]
 ```
 
-In a directory whose `compose.yml` builds an image, the chip reads
-`[compose: build · custom... · down · up]`; beside one that only pulls
-images, the chip leaves `build` out. `atkins -l` in a directory lists what applies
-there, as the bar does. The atkins [skills
+In a directory whose `compose.yml` builds an image, the `@compose`
+rows are `build`, `custom`, `down` and `up`; beside one that only pulls
+images, they leave `build` out. `atkins -l` in a directory lists what applies
+there, as the Jobs table does. The atkins [skills
 guide](https://github.com/titpetric/atkins/blob/main/docs/content/usage/skills.md)
 covers the rest: aliases, `help:`, the `-l --json` fields task-ui reads,
 vendoring.

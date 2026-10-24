@@ -30,13 +30,6 @@
     }
   }
 
-  /* Action: Run of a directory or a file; Summary: |>summarize and the
-     link to the summary of its last run. The row stays as tall as a
-     button. */
-  & td.jobs {
-    padding-block: 0.2rem;
-  }
-
   & .num {
     text-align: end;
     font-variant-numeric: tabular-nums;

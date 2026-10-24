@@ -204,15 +204,14 @@ type Page struct {
 	// SubFolders are the folders right under the folder a page shows.
 	SubFolders []*folder.Folder
 	// TreeFolders are the folders of the directories Tree lists, by the
-	// directory's name, whose jobs the list holds beside them.
+	// directory's name; their jobs stay on their own pages.
 	TreeFolders map[string]*folder.Folder
-	// TreeMenus are the Run menus of the rows Tree lists, by the entry's
-	// name: a directory that is a folder or holds a job source, and a
-	// file that is a job source.
-	TreeMenus map[string]*RunMenu
-	// TreeSummaries are the summaries of the last runs of the rows Tree
-	// lists, by the entry's name, for its Summary column.
-	TreeSummaries map[string]*SummaryLink
+	// JobGroups are the rows of the Jobs table of a folder's page, or of
+	// a directory's inside one, by group.
+	JobGroups []JobGroup
+	// JobSummaries are the summaries of the last runs of the rows
+	// JobGroups lists, by the job's key.
+	JobSummaries map[string]*SummaryLink
 	// RunReports are the summaries of the runs a job page lists, by run
 	// ID, those under way as well.
 	RunReports map[string]*note.Report
@@ -455,9 +454,9 @@ func (p *Page) RunningRun(key string) *Run {
 	return nil
 }
 
-// TreeSummary returns the summary of a Files list row's last run.
-func (p *Page) TreeSummary(name string) *SummaryLink {
-	return p.TreeSummaries[name]
+// JobSummary returns the summary of the last run of a job the Jobs table lists, nil for none.
+func (p *Page) JobSummary(key string) *SummaryLink {
+	return p.JobSummaries[key]
 }
 
 // LastRun returns the latest run of a job, or nil.
@@ -494,48 +493,6 @@ func (p *Page) WhoCanRun(f *folder.Folder, job *folder.Job) string {
 		return "admin, runner"
 	}
 	return "admin, " + strings.Join(allow, ", ")
-}
-
-// SummaryMenu returns the menu of |>summarize: the jobs of m that Claude
-// summarizes, without the interactive ones; Main the same when Claude
-// summarizes it, else the only job remaining. Nil for none.
-func (p *Page) SummaryMenu(m *RunMenu) *RunMenu {
-	if m == nil {
-		return nil
-	}
-	var jobs []*folder.Job
-	for _, job := range m.Jobs {
-		if p.Summarizes(job) {
-			jobs = append(jobs, job)
-		}
-	}
-	main := m.Main
-	if !p.Summarizes(main) {
-		main = nil
-	}
-	if main == nil && len(jobs) == 1 {
-		main = jobs[0]
-	}
-	if main == nil && len(jobs) == 0 {
-		return nil
-	}
-	return &RunMenu{Folder: m.Folder, Main: main, Jobs: jobs}
-}
-
-// CanRunMenu reports whether the user may run any job of a menu.
-func (p *Page) CanRunMenu(m *RunMenu) bool {
-	if m == nil {
-		return false
-	}
-	if p.CanRun(m.Folder, m.Main) {
-		return true
-	}
-	for _, job := range m.Jobs {
-		if p.CanRun(m.Folder, job) {
-			return true
-		}
-	}
-	return false
 }
 
 // LastState is the class of a job's dot: how its last run ended, pending

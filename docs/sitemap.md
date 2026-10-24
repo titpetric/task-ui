@@ -29,8 +29,8 @@ row's **⋯** menu; "Delete" and "Remove" are in red, last.
 
 | Page | Path | Lists | Head, top right | Row actions | Forms | Empty |
 |------|------|-------|-----------------|-------------|-------|-------|
-| Workspace or project | `/f/<workspace>/<folder>` | the actions bar, the sources' jobs, Files, the folder's details, Environment when a user filled an env file, its block head with **Add env file** | source badges, `[...]`: Workspace or Project settings, Add env file, Pull now, Remove checkout | a job: **Run**, `[...]`; a file: Run menus; an env file: `[...]` Edit | the Prompt box | none: no env file, no Environment section |
-| Directory | `/f/<folder>/<dir>` | the actions bar, its jobs, Files | source badges | as a folder's | the Prompt box | none |
+| Workspace or project | `/f/<workspace>/<folder>` | the git line, Jobs (a row per job, grouped by source, files, skill, built-in and directory), Files, the folder's details, Environment when a user filled an env file, its block head with **Add env file** | source badges, `[...]`: Workspace or Project settings, Add env file, Pull now, Remove checkout | a job: **Run**, **Attach** or **History**, `[...]`: Run and summarize, View the last run, History, Run force, Kill; a file: `[...]`; an env file: `[...]` Edit | the Prompt box | "No targets in <file>."; no env file, no Environment section |
+| Directory | `/f/<folder>/<dir>` | the git line, Jobs, Files | source badges | as a folder's | the Prompt box | none |
 | Job | `/f/<folder>/<job>` | the job, History, Schedules | **Run**, or **Attach** and Kill | History: **View** or **Attach**, `[...]`; Schedules: `[...]` | **Add schedule** | "No runs yet.", "Not scheduled." |
 | Env file | `/f/<folder>/env/<path>`, `/f/<folder>/env` to add | the file, the secrets appended | none | none | the path when adding, the content, Cancel and **Save** | "No secrets reach this folder." |
 | Checkout file | `/files/<path>` | the file in the preview window | none | none | none | none |
