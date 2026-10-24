@@ -131,11 +131,37 @@ func (h *Handlers) defaultWorkspace(w http.ResponseWriter, r *http.Request) {
 	withTreeFolders(p, root, p.SubFolders)
 	if workspace != nil {
 		p.FolderMenu = &view.FolderMenu{ID: model.Default, Workspace: true}
+		h.homeTree(r, p, model.Default)
 	}
 	if workspace != nil && p.Can("prompt/edit") && h.claudeFor(r, p.User) {
 		p.Prompt = h.withThreads(r, &view.Prompt{API: "/api/workspaces/" + model.Default + "/prompt", Where: "the root", Open: true, Place: model.Default})
 	}
 	h.render(w, http.StatusOK, "folder", p)
+}
+
+// homeTree puts on a workspace's page its home project, the $HOME of
+// its runs, and what it holds as the Files panel lists it, each path
+// under ~/. A workspace without one, or one the user does not see,
+// shows none.
+func (h *Handlers) homeTree(r *http.Request, p *view.Page, workspace string) {
+	if h.opts.Workspaces == nil {
+		return
+	}
+	home, err := h.opts.Workspaces.Home(r.Context(), workspace)
+	if err != nil || home == "" {
+		return
+	}
+	f := h.opts.Catalogue.Find(home)
+	if f == nil || !access.UserFrom(r.Context()).CanSee(f.ID) {
+		return
+	}
+	p.HomeFolder = f.ID
+	p.HomeTree = h.checkoutTree(p, f, "", folder.Listing(f.Dir))
+	for i := range p.HomeTree {
+		if p.HomeTree[i].Path != "" {
+			p.HomeTree[i].Path = "~/" + p.HomeTree[i].Path
+		}
+	}
 }
 
 // isDirIn reports whether rel names a directory inside the folder that
@@ -216,6 +242,9 @@ func (h *Handlers) folder(w http.ResponseWriter, r *http.Request, f *folder.Fold
 	p.Crumbs = crumbsOf(f.ID, "", p.Workspaces)
 	p.Actions = h.actions(r, p, f)
 	p.FolderMenu = folderMenu(p, f)
+	if p.FolderMenu != nil && p.FolderMenu.Workspace {
+		h.homeTree(r, p, f.ID)
+	}
 	p.Prompt = h.prompt(r, p, f, "")
 	p.Summaries = h.summaries(r, p)
 	if h.opts.Git != nil && h.opts.Git.IsRepo(f.Dir) {

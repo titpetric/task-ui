@@ -1186,12 +1186,21 @@
   });
 
   // A button with data-dialog-open opens the dialog of that ID, and
-  // one with data-dialog-close inside a dialog closes it.
+  // one with data-dialog-close inside a dialog closes it. Its
+  // data-fill-<name> attributes set the dialog's field of that name and
+  // the text of its [data-fill-text=<name>].
   document.addEventListener("click", function (event) {
     var open = event.target.closest("[data-dialog-open]");
     if (open) {
       var dialog = document.getElementById(open.dataset.dialogOpen);
-      if (dialog && typeof dialog.showModal === "function" && !dialog.open) dialog.showModal();
+      if (!dialog || typeof dialog.showModal !== "function" || dialog.open) return;
+      Object.keys(open.dataset).forEach(function (key) {
+        if (key.indexOf("fill") !== 0 || key.length === 4) return;
+        var name = key.charAt(4).toLowerCase() + key.slice(5);
+        dialog.querySelectorAll('[name="' + name + '"]').forEach(function (field) { field.value = open.dataset[key]; });
+        dialog.querySelectorAll('[data-fill-text="' + name + '"]').forEach(function (el) { el.textContent = open.dataset[key]; });
+      });
+      dialog.showModal();
       return;
     }
     var close = event.target.closest("[data-dialog-close]");
@@ -1488,10 +1497,12 @@
     items[i].focus();
   });
   // #actions opens the [...] menu of the first row of the page on load,
-  // #actions=<n> the menu of row n, so a shot can show one open.
-  var actionsHash = /^#actions(?:=(\d+))?$/.exec(location.hash);
+  // #actions=<n> the menu of row n, #actions=head the page head's, so a
+  // shot can show one open.
+  var actionsHash = /^#actions(?:=(\d+|head))?$/.exec(location.hash);
   if (actionsHash) {
-    var rowMenu = document.querySelectorAll("td.actions details.more-menu")[(parseInt(actionsHash[1], 10) || 1) - 1];
+    var rowMenu = actionsHash[1] === "head" ? document.querySelector(".page-head details.more-menu")
+      : document.querySelectorAll("td.actions details.more-menu")[(parseInt(actionsHash[1], 10) || 1) - 1];
     if (rowMenu) rowMenu.open = true;
   }
   // A button with data-api, an item of a [...] menu, puts data-body, its

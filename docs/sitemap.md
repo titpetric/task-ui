@@ -29,7 +29,7 @@ row's **⋯** menu; "Delete" and "Remove" are in red, last.
 
 | Page | Path | Lists | Head, top right | Row actions | Forms | Empty |
 |------|------|-------|-----------------|-------------|-------|-------|
-| Workspace or project | `/f/<workspace>/<folder>` | the git line, Jobs (the dashboard's control centre for the folder: a row for it and each directory or folder inside with targets, a column per shared job name, then named buttons for files, skills and built-ins), Files, the folder's details, Environment when a user filled an env file, its block head with **Add env file** | source badges, `[...]`: Workspace or Project settings, Add env file, Pull now, Remove checkout | a job: its round button, Run, Attach or `#!`; a Jobs row: `[...]`: Run and summarize, View the last run, Summary, History, Run force, Kill; a file: `[...]`; an env file: `[...]` Edit | the Prompt box | "No targets in <file>."; no env file, no Environment section |
+| Workspace or project | `/f/<workspace>/<folder>` | the git line, Jobs (the dashboard's control centre for the folder: a row for it and each directory or folder inside with targets, a column per shared job name, then named buttons for files, skills and built-ins), Files, on a workspace Home, its home project's files, the folder's details, Environment when a user filled an env file, its block head with **Add env file** | source badges, `[...]`: Workspace or Project settings, a workspace's SSH keys and Secrets, Add env file, Pull now, Remove checkout | a job: its round button, Run, Attach or `#!`; a Jobs row: `[...]`: Run and summarize, View the last run, Summary, History, Run force, Kill; a file: `[...]`; an env file: `[...]` Edit | the Prompt box | "No targets in <file>."; no env file, no Environment section |
 | Directory | `/f/<folder>/<dir>` | the git line, Jobs, Files | source badges | as a folder's | the Prompt box | none |
 | Job | `/f/<folder>/<job>` | the job, History, Schedules | **Run**, or **Attach** and Kill | History: **View** or **Attach**, `[...]`; Schedules: `[...]` | **Add schedule** | "No runs yet.", "Not scheduled." |
 | Env file | `/f/<folder>/env/<path>`, `/f/<folder>/env` to add | the file, the secrets appended | none | none | the path when adding, the content, Cancel and **Save** | "No secrets reach this folder." |
@@ -55,6 +55,8 @@ row's **⋯** menu; "Delete" and "Remove" are in red, last.
 | Workspaces | `/settings/workspaces` | the workspaces, their home projects and projects | Import, **Add workspace** | `[...]`: Open, Workspace settings, Move up, Move down, Delete | Import in a dialog | none: `_` always lists |
 | Add workspace | `/settings/workspaces/new` | none | none | none | folder, home project URL and folder, title, branch, Cancel and Add workspace | none |
 | Workspace | `/settings/workspaces/<folder>`, `_` too | Settings, Home project, Projects, Keys | **Add project**, Export, `[...]`: Open, Delete | Home project: Change, Add or Replace, Remove; Projects: the projects table; Keys: the keys table | Settings, Cancel and Save; Change and Replace in dialogs; Export in a dialog | "No home project." beside **Change** and **Add**; "No projects in <folder> yet."; "No keys added." beside **Upload key** and **Generate key** |
+| Workspace keys | `/settings/workspaces/<folder>/keys` | the workspace's SSH keys | **Upload key**, **Generate key**, `[...]`: Open, Workspace settings, Secrets | the keys table, Edit links in a dialog | Upload, Generate and Edit links in dialogs | "No keys added." |
+| Workspace secrets | `/settings/workspaces/<folder>/secrets` | the workspace's secrets by project | **Add secret**, `[...]`: Open, Workspace settings, SSH keys, Every workspace's secrets | `[...]`: Replace the value in a dialog, Reads, Delete | Add secret and Replace in dialogs | "No secrets in <folder> yet." |
 | Workspace key | `/settings/workspaces/<folder>/keys/upload`, `/generate`, `/<name>` | none | none | none | as the instance key's forms | none |
 | Projects | `/settings/projects` | every project under the root | **Add project** | the projects table: `[...]`: Open, Project settings, Remove checkout | none | "No projects yet." |
 | Add project | `/settings/projects/new`, `?workspace=<folder>` | none | none | none | repository, folder, workspace, branch, Cancel and Clone | none |
@@ -72,7 +74,9 @@ row's **⋯** menu; "Delete" and "Remove" are in red, last.
 
 | Part | Template | Where |
 |------|----------|-------|
-| Keys table | `keyhead`, `keyrow` | Keys, Instance, a workspace's page, Your SSH keys, a profile |
+| Keys table | `keyhead`, `keyrow` | Keys, Instance, a workspace's page and its SSH keys page, Your SSH keys, a profile |
+| Secrets table | `secretgroup`, `secretrow`, `secretfields` | Secrets, Add secret and Replace, a workspace's secrets page |
+| Files table | `tree`, `filetable` | a folder's Files and a workspace's Home, a directory's page |
 | Projects table | `projecttable` | Projects, a workspace's page |
 | Block head | `blockhead`, from `head` | a block's title, its note, its buttons and the line of an empty list |
 | Buttons | `buttons` | the buttons of a block head |

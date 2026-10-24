@@ -294,6 +294,13 @@ shot mobile-workspace-edit-dark /settings/workspaces/acme dark 390x1600
 # enough for the sidebar to reach acme and its projects.
 shot sidebar-workspace-dark /f/acme/api dark 1440x1900
 shot workspace-prompt-dark /f/acme dark
+# The workspace page's [...] menu open, with its SSH keys and Secrets,
+# its Home section, the home project's files, and the two pages that
+# edit the workspace's keys and secrets in place.
+shot workspace-menu-dark "/f/acme#actions=head" dark
+shot workspace-home-dark /f/acme dark 1440x1700
+shot workspace-keys-dark /settings/workspaces/acme/keys dark
+shot workspace-secrets-dark /settings/workspaces/acme/secrets dark
 # The default workspace's page as a dashboard of the root: each project
 # in its Files list.
 shot folder-dashboard-dark /f/_ dark 1440x800

@@ -143,3 +143,23 @@ func TestSecrets_Reads(t *testing.T) {
 	assert.NotContains(t, run, "DB_PASS")
 	assert.NotContains(t, run, "hunter2secret")
 }
+
+// The secrets page of a workspace lists its secrets alone and edits
+// them in place; no value shows, and a workspace unknown is not found.
+func TestSecrets_Workspace(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	f.withKey(t)
+	ctx := context.Background()
+	assert.NoError(t, f.opts.Workspaces.EnsureDefault(ctx))
+	assert.NoError(t, f.opts.Secrets.Set(ctx, &model.Secret{Scope: "infra", Name: "DB_PASS", Content: "hunter2secret"}))
+
+	body := f.page(t, asAdmin, "/settings/workspaces/_/secrets")
+	assert.Contains(t, body, "<h2>Secrets of _</h2>")
+	assert.Contains(t, body, `<td class="key">DB_PASS</td>`)
+	assert.Contains(t, body, `data-fill-scope="infra" data-fill-name="DB_PASS"`)
+	assert.Contains(t, body, `id="secret-add-dialog"`)
+	assert.NotContains(t, body, "hunter2secret")
+
+	assert.Equal(t, http.StatusNotFound, f.get(t, asAdmin, "/settings/workspaces/nope/secrets").Status)
+}

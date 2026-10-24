@@ -469,15 +469,20 @@
      folder links to its page. A file that runs carries #! and exec; it
      runs from the Jobs table, whose Run its preview window carries too.
      A sealed entry shows plain and locked. */}}
-{{- define "tree" }}
+{{- define "tree" }}{{ template "filetable" (list $.Up $.Tree) }}{{ end }}
+
+{{/* filetable is the table of the tree, (list up items): a .. row to
+     up unless up is empty, then the items. */}}
+{{- define "filetable" }}
+{{- $up := index . 0 }}{{ $items := index . 1 }}
 <div class="table-wrap">
 <table class="table file-table col-hover">
 	<thead><tr><th>Name</th><th class="num">Size</th><th class="hide-sm">Changed</th><th></th></tr></thead>
 	<tbody>
-	{{- with $.Up }}
+	{{- with $up }}
 		<tr class="up"><td class="key"><svg class="ic dir"><use href="#i-folder"/></svg> <a href="{{ . }}" title="Up a level">..</a></td><td></td><td class="hide-sm"></td><td></td></tr>
 	{{- end }}
-	{{- range .Tree }}
+	{{- range $items }}
 		{{- if .Sealed }}
 		<tr class="sealed" aria-disabled="true" title="task-ui lists {{ .Name }} but does not open it">
 			<td class="key"><svg class="ic"><use href="#i-secret"/></svg> <span>{{ .Name }}</span></td>

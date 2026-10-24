@@ -41,6 +41,14 @@ workspace's files there:
 - **Claude Code** gets the home project as a directory it reads, with
   its `CLAUDE.md` and `.claude/` skills, beside its working directory.
 
+The workspace's page, `/f/malta`, lists the home project's files in
+its **Home** section, the `$HOME` of every run in the workspace, in the
+table of the Files section: a directory opens its page, a file opens in
+the preview window, a dot file and `.git` list sealed and never open.
+A workspace without a home project shows no Home section.
+
+![The acme workspace's page: its Home section lists the home project's files](../assets/workspace-home-dark.png)
+
 A workspace without a home project, and the default workspace without
 one, keep the server's `HOME`. The run keeps what the server holds in
 its own `HOME` in use, each a variable the server does not set itself,
@@ -262,6 +270,18 @@ page, name, algorithm, size, public key with its copy button, purpose
 and the **⋯** menu, never a private key. With none, it says "No keys
 added." beside **Upload key** and **Generate key**.
 
+**SSH keys**, in the **⋯** menu at the top right of the workspace's
+page, `/f/malta`, opens `/settings/workspaces/malta/keys`, the
+workspace's keys alone, edited in place: **Generate key** and **Upload
+key** at the top right, and **Edit links** in a key's **⋯** menu, open
+their forms in a dialog over the list, and **Remove** retires a key.
+The page and the menu item take `workspace/view`, the forms
+`workspace/edit`, as the key routes do.
+
+![The workspace page's menu with SSH keys and Secrets](../assets/workspace-menu-dark.png)
+
+![The SSH keys of acme, edited in place](../assets/workspace-keys-dark.png)
+
 - The **SSH keys**, zero or more, are for the workspace's runs. A
   workspace has no encryption key: the instance's encrypts its
   [secrets](settings.md#secrets), as every secret.
@@ -310,6 +330,17 @@ named workspace: a project in `malta` gets `malta`'s shared secrets and
 its own, never `_`'s. The instance's encryption key encrypts them all.
 The Secrets page groups
 them by workspace, each project's under its name.
+
+**Secrets**, in the **⋯** menu at the top right of the workspace's
+page, opens `/settings/workspaces/malta/secrets`, the workspace's
+secrets alone, edited in place: **Add secret** opens a dialog with the
+workspace's scopes, the shared one and each project's, **Replace the
+value** in a secret's **⋯** menu opens one that takes the new value, and
+**Delete** removes it. A value never shows again once saved. The page
+and the menu item take `secret/view`, Add and Replace `secret/edit`,
+Delete `secret/delete`.
+
+![The secrets of acme, edited in place](../assets/workspace-secrets-dark.png)
 
 ## Move to another instance
 

@@ -10,6 +10,8 @@
 		{{- with $.FolderMenu }}
 		{{ template "menu" (menu (print "Actions on " $p.Title)
 			(and .Workspace ($.Can "workspace/view") (item "settings" "Workspace settings" "href" .Settings))
+			(and .Workspace ($.Can "workspace/view") (item "key" "SSH keys" "href" .KeysPage))
+			(and .Workspace ($.Can "secret/view") (item "secret" "Secrets" "href" .SecretsPage))
 			(and .Project ($.Can "project/view") (item "settings" "Project settings" "href" .Settings))
 			(and (not $default) ($.Can "env/edit") (item "plus" "Add env file" "href" (print ($.Href $p.ID) "/env")))
 			(and .Pull ($.CanRun $p .Pull) (item "download" "Pull now" "data-run" "" "data-folder" $p.ID "data-dir" .Pull.Dir "data-job" .Pull.ID "data-title" (print $p.ID " / " .Pull.Name)))
@@ -36,6 +38,13 @@
 <section class="block">
 	<h3>Files <small>{{ if $default }}the root{{ else }}{{ $p.ID }}/{{ end }}</small></h3>
 	{{ template "tree" $ }}
+</section>
+{{- end }}
+
+{{- with $.HomeFolder }}
+<section class="block folder-home" id="home">
+	<h3>Home <small>{{ . }}/, the $HOME of every run in the workspace</small></h3>
+	{{ template "filetable" (list "" $.HomeTree) }}
 </section>
 {{- end }}
 
