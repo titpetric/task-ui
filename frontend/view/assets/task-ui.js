@@ -2061,13 +2061,17 @@
   }
 
   // stepError puts an error of the API that names a step, "step 2: ..."
-  // or "step 2, folder / job: ...", under that card.
+  // or "step 2, folder / job: ...", under that card. A sentence gets a
+  // capital; one that names the step's folder and job before a colon
+  // stays as it is, a folder being a path.
   function stepError(form, text) {
     var m = /^step (\d+)[,:]\s*(.*)$/i.exec(text);
     if (!m) return;
     var row = form.querySelectorAll("[data-step]")[parseInt(m[1], 10) - 1];
     if (!row) return;
-    stepProblem(row, m[2].charAt(0).toUpperCase() + m[2].slice(1));
+    var problem = m[2];
+    if (problem.indexOf(": ") < 0) problem = problem.charAt(0).toUpperCase() + problem.slice(1);
+    stepProblem(row, problem);
     row.scrollIntoView({ block: "center" });
   }
 

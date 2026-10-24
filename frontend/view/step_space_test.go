@@ -2,6 +2,8 @@ package view_test
 
 import (
 	"bytes"
+	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/titpetric/task-ui/folder"
@@ -134,6 +136,60 @@ func TestMoveSteps(t *testing.T) {
 	moved, missed = p.StepMove(steps[:1], "malta")
 	assert.Equal(t, 1, missed)
 	assert.Equal(t, view.Step{Kind: model.StepJob, Folder: "malta/infra", Missing: "infra has no job plan in Malta."}, moved[0])
+}
+
+// A move names the workspace by its title and writes its folder: the
+// moved steps hold folder IDs, never the title; the title itself names
+// no workspace to move to.
+func TestMoveSteps_FolderNotTitle(t *testing.T) {
+	t.Parallel()
+	p := movePage(t)
+	steps := []view.Step{
+		{Kind: model.StepJob, Folder: "infra", Job: "plan"},
+		{Kind: model.StepPrompt, Folder: "infra"},
+		{Kind: model.StepSummary, Folder: "_"},
+	}
+	moved, missed := p.StepMove(steps, "malta")
+	assert.Equal(t, 0, missed)
+	for _, s := range moved {
+		assert.Equal(t, "malta", p.StepSpaceOf(s.Folder), s.Folder)
+		assert.False(t, strings.HasPrefix(s.Folder, "Malta"), s.Folder)
+	}
+	assert.Equal(t, "malta/infra", moved[0].Folder)
+	assert.Equal(t, "malta", moved[2].Folder)
+	assert.Equal(t, "malta/infra", view.StepFolderIn("malta", "infra"))
+	assert.False(t, p.StepSpaceHas("Malta"), "a title moves nothing")
+	assert.True(t, p.StepSpaceHas("malta"))
+}
+
+// Every option of the edit page's workspace and folder selects carries
+// an ID: a workspace's folder, a folder's ID or a workflow's; a title
+// shows as the text alone.
+func TestView_RenderStepValuesAreIDs(t *testing.T) {
+	t.Parallel()
+	v, err := view.New()
+	assert.NoError(t, err)
+	p := movePage(t)
+	p.WorkspaceList = append(p.WorkspaceList, model.Workspace{Folder: "_", Title: "Root"}, model.Workspace{Folder: "ops", Title: "Operations"})
+	p.StepWorkflows = []view.Workflow{{Workflow: model.Workflow{ID: "w2", Name: "nightly"}}}
+	p.Workflow.Steps, _ = p.StepMove([]view.Step{{Kind: model.StepJob, Folder: "infra", Job: "plan"}, {Kind: model.StepPrompt, Folder: "ops/deploy", Prompt: "Why?"}}, "malta")
+	var buf bytes.Buffer
+	assert.NoError(t, v.Render(&buf, "workflow_edit", p))
+	out := buf.String()
+	titles := []string{}
+	for _, s := range p.StepSpaces() {
+		titles = append(titles, s.Title)
+	}
+	assert.Equal(t, []string{"Root", "Malta", "Operations"}, titles)
+	values := regexp.MustCompile(`<option value="([^"]*)"`).FindAllStringSubmatch(out, -1)
+	assert.True(t, len(values) > 6, "options rendered")
+	for _, m := range values {
+		for _, title := range titles {
+			assert.False(t, m[1] == title || strings.HasPrefix(m[1], title+"/"), m[1])
+		}
+	}
+	assert.Contains(t, out, `<option value="malta" selected>Malta</option>`)
+	assert.Contains(t, out, `<option value="malta/infra" data-workspace="malta" data-rel="infra" selected>infra</option>`)
 }
 
 // The edit page's menu moves the steps to each workspace, and a moved

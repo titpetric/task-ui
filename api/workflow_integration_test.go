@@ -3,6 +3,7 @@
 package api_test
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"testing"
@@ -87,6 +88,63 @@ func TestWorkflow_Create(t *testing.T) {
 		res := f.call(t, c.user, http.MethodPost, "/workflows", c.req)
 		assert.Equal(t, http.StatusBadRequest, res.Status, c.name)
 	}
+}
+
+// A step picks from the catalogue the editor lists, every folder with a
+// job, so a folder the settings hide from the listings saves and runs;
+// the folders a user may see still bound it.
+func TestWorkflow_HiddenFolder(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+
+	listed := f.call(t, asOps, http.MethodGet, "/folders", nil)
+	assert.NotContains(t, string(listed.Raw), `"infra/hidden"`, "the listings hide it")
+
+	res := f.call(t, asOps, http.MethodPost, "/workflows", api.WorkflowRequest{Name: "hidden", Steps: chain("infra/hidden", "deploy")})
+	assert.Equal(t, http.StatusCreated, res.Status, string(res.Raw))
+	assert.Equal(t, true, res.get("can_run"))
+	id := res.str("id")
+
+	limited := f.call(t, asLimited, http.MethodGet, "/workflows/"+id, nil)
+	assert.Equal(t, http.StatusNotFound, limited.Status, "the user's folders name infra alone")
+	refused := f.call(t, asLimited, http.MethodPost, "/workflows", api.WorkflowRequest{Name: "x", Steps: chain("infra/hidden", "deploy")})
+	assert.Equal(t, http.StatusBadRequest, refused.Status)
+	assert.Equal(t, "step 1: infra/hidden / deploy: Default has no folder infra/hidden", refused.str("error"))
+
+	denied := f.call(t, asViewer, http.MethodPost, "/workflows/"+id+"/runs", nil)
+	assert.Equal(t, http.StatusForbidden, denied.Status)
+
+	started := f.call(t, asOps, http.MethodPost, "/workflows/"+id+"/runs", nil)
+	assert.Equal(t, http.StatusCreated, started.Status, string(started.Raw))
+	run := f.workflowRun(t, id, started.str("id"))
+	assert.Equal(t, model.StateOK, run["state"])
+}
+
+// The error of a step whose folder is not there names the step by its
+// folder relative to its workspace and the job, and the workspace by
+// its title.
+func TestWorkflow_FolderError(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	assert.NoError(t, f.opts.Workspaces.EnsureDefault(context.Background()))
+	assert.NoError(t, f.opts.Workspaces.Create(context.Background(), &model.Workspace{Folder: "malta", Title: "Malta"}))
+
+	for req, want := range map[string]string{
+		"nowhere":                "step 1: nowhere / plan: Default has no folder nowhere",
+		"malta/deploy/terraform": "step 1: deploy/terraform / plan: Malta has no folder deploy/terraform",
+		"malta":                  "step 1: the root / plan: Malta has no jobs at its root",
+		"private":                "step 1: private / plan: Default has no folder private",
+	} {
+		user := asOps
+		if req == "private" {
+			user = asLimited
+		}
+		res := f.call(t, user, http.MethodPost, "/workflows", api.WorkflowRequest{Name: "x", Steps: chain(req, "plan")})
+		assert.Equal(t, http.StatusBadRequest, res.Status, req)
+		assert.Equal(t, want, res.str("error"), req)
+	}
+	res := f.call(t, asOps, http.MethodPost, "/workflows", api.WorkflowRequest{Name: "x", Steps: chain("infra", "plan", "infra", "nope")})
+	assert.Equal(t, "step 2: infra / nope: no such job", res.str("error"))
 }
 
 func TestWorkflow_List(t *testing.T) {

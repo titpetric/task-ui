@@ -211,7 +211,10 @@ run, and the step's card beside it, in the colour of its kind.
   the folder of the same relative name and its job when that workspace
   has them; what it lacks goes back to pick one, and a line under the
   card says so, such as `apps/blog is not in Malta.` A step you edit
-  opens on the workspace of its folder.
+  opens on the workspace of its folder. Save refuses a step whose
+  folder its workspace lacks and says so under the card, naming the
+  step and the workspace: `apps/blog / build: Malta has no folder
+  apps/blog`.
 - **Move to** a workspace in the edit page's [...] menu does that for
   every step at once: the form opens with the steps moved, each one the
   workspace lacks a folder or a job of saying so under its card, and

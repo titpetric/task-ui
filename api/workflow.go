@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/titpetric/task-ui/access"
-	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/storage"
 	"github.com/titpetric/task-ui/workflow"
@@ -76,7 +75,7 @@ func (h *Handlers) mayRun(r *http.Request, steps []model.WorkflowStep) string {
 			}
 			continue
 		}
-		f, job, _ := h.target(r, step.Folder, step.Job)
+		f, job, _ := h.stepTarget(r, step.Folder, step.Job)
 		if !h.canRun(r, f, job) {
 			return step.Folder + " / " + step.Job
 		}
@@ -159,28 +158,6 @@ func (h *Handlers) checkStep(r *http.Request, step StepRequest) (model.WorkflowS
 		return h.jobStep(r, step)
 	}
 	return model.WorkflowStep{}, fmt.Errorf("no step kind %q: job, workflow, prompt or summary", step.Kind)
-}
-
-// jobStep turns a requested job step into its row: a job of a folder
-// the user sees, with the args it takes; not a shell, nor the bare @host.
-func (h *Handlers) jobStep(r *http.Request, step StepRequest) (model.WorkflowStep, error) {
-	if step.Folder == "" || step.Job == "" {
-		return model.WorkflowStep{}, errors.New("a job step needs a folder and a job")
-	}
-	if step.Job == model.HostBare {
-		return model.WorkflowStep{}, fmt.Errorf("%s / %s: %w", step.Folder, step.Job, folder.ErrHostBare)
-	}
-	f, job, problem := h.target(r, step.Folder, step.Job)
-	if problem != "" {
-		return model.WorkflowStep{}, fmt.Errorf("%s / %s: %s", step.Folder, step.Job, problem)
-	}
-	if job.IsShell() {
-		return model.WorkflowStep{}, fmt.Errorf("%s / %s: %w", step.Folder, step.Job, folder.ErrShellUnattended)
-	}
-	if problem := jobArgs(job, step.Args); problem != "" {
-		return model.WorkflowStep{}, fmt.Errorf("%s / %s: %s", step.Folder, step.Job, problem)
-	}
-	return model.WorkflowStep{Kind: model.StepJob, Folder: f.ID, Job: job.ID, Args: model.EncodeList(step.Args)}, nil
 }
 
 // checkWorkflow reads a request into the workflow and its steps, those
