@@ -15,10 +15,10 @@ import (
 // job sources.
 const treeDetect = 200
 
-// jobTable fills JobGroups and JobSummaries from place, the listing's files and directories of no folder, and the page's Actions.
+// jobTable fills JobGroups and JobSummaries from place, the listing's files, its directories and folders with jobs, and the page's Actions.
 func (h *Handlers) jobTable(r *http.Request, p *view.Page, f, place *folder.Folder) {
 	var files []*folder.Job
-	var dirs []*folder.Folder
+	var dirs, children []*folder.Folder
 	looked := 0
 	for _, item := range p.Tree {
 		if item.Sealed || item.Path == "" {
@@ -32,13 +32,26 @@ func (h *Handlers) jobTable(r *http.Request, p *view.Page, f, place *folder.Fold
 			}
 			continue
 		}
-		if p.TreeFolders[item.Name] != nil || looked >= treeDetect {
+		if child := p.TreeFolders[item.Name]; child != nil {
+			if len(child.Jobs) > 0 {
+				dirs = append(dirs, child)
+				children = append(children, child)
+			}
+			continue
+		}
+		if looked >= treeDetect {
 			continue
 		}
 		looked++
 		if sub := h.subs.get(f, item.Path); sub != nil && len(sub.Jobs) > 0 {
 			dirs = append(dirs, sub)
 		}
+	}
+	if len(children) > 0 && p.Last == nil {
+		p.Last = map[string]view.Run{}
+	}
+	for key, run := range h.latestRuns(r, children) {
+		p.Last[key] = run
 	}
 	p.JobGroups = view.NewJobGroups(f, place, files, p.Actions, dirs)
 	h.jobSummaries(r, p)

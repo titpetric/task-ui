@@ -181,7 +181,7 @@ when the run started, who started it and who asked, with links to the
 run, Claude's run and the job. The page reads the reply Claude saved,
 not the terminal, so no output, spinner or tool call shows in it.
 **Report** on a run's page, in the run window, under a summary on a
-job page and in the Last run column of a folder's Jobs table all open it. The
+job page and in the `[...]` of a row of a folder's Jobs table all open it. The
 page takes `prompt/view` and a run you see; `GET /api/runs/<id>` names
 it as `report` when the run has one.
 
@@ -394,8 +394,8 @@ splits words, with quotes and backslashes, and nothing in it expands:
 `"; id"` reaches the job as one argument, `; id`. Every other job
 refuses arguments.
 
-On a page, **Run...** of such a job, on its row of the Jobs table, such
-as `@compose:custom`, or on its page, opens a field under it first. The field starts
+On a page, the button of such a job in the Jobs table, such
+as `@compose:custom`, or **Run...** on its page, opens a field under it first. The field starts
 with the command the arguments follow: the `exec:` step of the job, such
 as `docker compose`, or the job's own argv and `--`. Below it, task-ui
 shows the whole command as each word reaches it, `docker compose ps -a '; id'`,

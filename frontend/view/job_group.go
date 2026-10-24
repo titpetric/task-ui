@@ -32,9 +32,12 @@ type JobGroup struct {
 	Jobs  []*folder.Job
 	// Empty is what a group without jobs says.
 	Empty string
+	// Targets marks a group of a source's targets, of the place or a
+	// directory inside: each place is a row of the Jobs table.
+	Targets bool
 }
 
-// NewJobGroups groups what runs in place, f or a directory of it: place's sources, f's files, a's skills and built-ins, then dirs' sources.
+// NewJobGroups groups what runs in place, f or a directory of it: place's sources, f's files, a's skills and built-ins, then the sources of dirs, directories and folders inside.
 func NewJobGroups(f, place *folder.Folder, files []*folder.Job, a *Actions, dirs []*folder.Folder) []JobGroup {
 	var groups []JobGroup
 	if place != nil {
@@ -62,7 +65,11 @@ func NewJobGroups(f, place *folder.Folder, files []*folder.Job, a *Actions, dirs
 		}
 	}
 	for _, dir := range dirs {
-		groups = append(groups, sourceGroups(dir, strings.TrimPrefix(dir.Rel, placeRel(place)))...)
+		rel := strings.TrimPrefix(dir.Rel, placeRel(place))
+		if dir.ID != f.ID {
+			rel = strings.TrimPrefix(dir.ID, f.ID+"/")
+		}
+		groups = append(groups, sourceGroups(dir, rel)...)
 	}
 	return groups
 }
@@ -79,8 +86,8 @@ func placeRel(place *folder.Folder) string {
 func sourceGroups(f *folder.Folder, dir string) []JobGroup {
 	var groups []JobGroup
 	for _, source := range f.Sources {
-		g := JobGroup{Kind: source.Kind, Note: source.File, Dir: dir, Folder: f, Jobs: f.SourceJobs(source)}
-		if source.Kind != "script" && f.Rel == "" {
+		g := JobGroup{Kind: source.Kind, Note: source.File, Dir: dir, Folder: f, Jobs: f.SourceJobs(source), Targets: true}
+		if source.Kind != "script" && f.Rel == "" && dir == "" {
 			g.File = source.File
 		}
 		if len(source.Command) > 0 {

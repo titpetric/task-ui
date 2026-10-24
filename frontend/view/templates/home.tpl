@@ -44,27 +44,7 @@
 <section class="block">
 	<h3>Control centre <small>job names that many folders share get a column; the rest go under other</small></h3>
 	{{- with $c := .Control }}
-	<div class="table-wrap">
-	<table class="table control col-hover">
-		<thead><tr><th>Folder</th>{{ range $c.Columns }}<th class="col"><span>{{ . }}</span></th>{{ end }}<th class="col"><span>other</span></th></tr></thead>
-		<tbody>
-		{{- range $row := $c.Rows }}
-			<tr>
-				<td class="key nowrap"><a href="{{ $.Href $row.Folder.ID }}">{{ $row.Folder.ID }}</a></td>
-				{{- range $i, $cell := $row.Cells }}
-				{{- /* One job is a bare button; jobs that share a name carry their kinds. */}}
-				<td class="col" data-label="{{ index $c.Columns $i }}">{{ if $cell }}<div>{{ range $cell }}{{ template "controljob" (list $ $row.Folder . (gt (len $cell) 1)) }}{{ end }}</div>{{ end }}</td>
-				{{- end }}
-				<td class="col other" data-label="Other">
-					{{- template "controlmore" (list $ $row.Folder $row.Extra) }}
-				</td>
-			</tr>
-		{{- else }}
-			<tr class="empty"><td colspan="{{ add (len $c.Columns) 2 }}">No jobs yet. Add a project from a git repository in Settings, or put a folder with jobs under the root.</td></tr>
-		{{- end }}
-		</tbody>
-	</table>
-	</div>
+	{{- template "controltable" (list $ $c false) }}
 	{{- end }}
 </section>
 </div>

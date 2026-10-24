@@ -30,7 +30,7 @@ func actionsBar(body string) string {
 
 // jobsTable cuts the Jobs table out of a page.
 func jobsTable(body string) string {
-	_, rest, ok := strings.Cut(body, `<table class="table jobs cards">`)
+	_, rest, ok := strings.Cut(body, `<table class="table control col-hover">`)
 	if !ok {
 		return ""
 	}
@@ -76,10 +76,9 @@ func TestFolder_Actions(t *testing.T) {
 	// compose custom takes args: its Run opens a field naming what they
 	// follow first.
 	assert.Contains(t, bar, `data-job="@compose:custom" data-title="infra/app / custom" data-args="docker compose" title=`)
-	assert.Contains(t, bar, `<span class="badge" title="Takes arguments after docker compose">args</span>`)
-	assert.Contains(t, bar, `>Run...</button>`)
+	assert.Contains(t, bar, `, with arguments after docker compose"`)
 	assert.NotContains(t, bar, `data-job="@compose:up" data-title="infra/app / up" data-args`)
-	assert.Contains(t, bar, `<span class="badge">atkins</span>`)
+	assert.Contains(t, bar, `title="atkins `)
 	assert.Contains(t, f.page(t, asOps, "/f/_/infra/app"), "Its jobs run in infra/app/")
 	deploy := filepath.Join(f.infra.Dir, "deploy")
 	assert.NoError(t, os.MkdirAll(deploy, 0o755))
@@ -91,9 +90,9 @@ func TestFolder_Actions(t *testing.T) {
 	assert.NotContains(t, bar, "data-confirm")
 
 	viewer := jobsTable(f.page(t, asViewer, "/f/_/infra/app"))
-	assert.Contains(t, viewer, `<a href="/f/_/infra/app/@compose:up">@compose:up</a>`)
-	assert.Contains(t, viewer, `<a href="/f/_/infra/@git:status">@git:status</a>`)
-	assert.Contains(t, viewer, `title="No permission to run infra/app / up">History</a>`)
+	assert.Contains(t, viewer, `<a class="cc named idle never" href="/f/_/infra/app/@compose:up"`)
+	assert.Contains(t, viewer, `<a class="cc named idle never" href="/f/_/infra/@git:status"`)
+	assert.Contains(t, viewer, `: no permission to run it">`)
 	assert.NotContains(t, viewer, "data-run")
 	page := f.page(t, asViewer, "/f/_/infra/app/@compose:up")
 	assert.Contains(t, page, "infra/app / up")

@@ -30,6 +30,33 @@
   transform: rotate(180deg);
 }
 
+/* On a folder's page a row of named buttons, the files that run, a
+   skill's jobs or the built-ins, spans the columns under its kind; the
+   [...] of each row ends it. */
+.table.control tr.named td {
+  padding-block: 0.35rem;
+}
+
+.table.control tr.named {
+  & .badge {
+    margin-inline-end: 0.4rem;
+    font-weight: 400;
+  }
+
+  & td > div {
+    justify-content: flex-start;
+  }
+}
+
+.table.control td.actions {
+  width: 1%;
+  white-space: nowrap;
+}
+
+.table.control tr.argsrow td {
+  padding-top: 0;
+}
+
 .cc-slot {
   display: contents;
 }
