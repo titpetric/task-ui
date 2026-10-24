@@ -270,8 +270,8 @@ folder's own directory, such as `@git:status`. It has no `dir` and no
 `args`: the targets of a directory inside a folder and a job's arguments
 start from the browser or `POST /api/runs`, and `list_runs` and
 `get_run` name such a run `folder/dir/job`, as `malta/dockerfiles/blog/build`. `@shell`, the interactive
-shell of **Enter Shell**, and `@claude`, Claude Code in one, answer `403`
-to every token whose user lacks the `shell` permission, Enter Shell; `@claude-note` and `@claude-prompt` start
+shell of **Enter Shell**, and `@claude`, Claude Code in one, are for
+admins alone and answer `403` to every other token; `@claude-note` and `@claude-prompt` start
 from the Notes board and the prompt routes alone. The Notes agent's runs,
 `@claude-note`, list with `note/view`, and to the agent's user always.
 

@@ -13,10 +13,10 @@ of them the home project of shared tooling that the workspace's runs
 get as `HOME`, its own secrets and SSH keys, and an export
 that moves it, keys and all, to another instance. A project's Files
 panel browses its checkout like a file manager: a file opens in a
-preview window, and a file that runs gets a Run button. Every folder
-and directory has an actions bar: the git state of its checkout, a chip
-per atkins skill that applies there, and, with the Enter Shell
-permission, a shell and Claude Code in a terminal in that directory.
+preview window. Every folder and directory has the git state of its
+checkout and one Jobs table of what runs there: its targets, the files
+that run, the jobs of each atkins skill that applies, and, for an
+admin, a shell and Claude Code in a terminal in that directory.
 
 Claude works beside the jobs. A prompt asks Claude Code in a folder, a
 directory, about a run, from the header on any page, or at the end of a

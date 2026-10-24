@@ -197,8 +197,8 @@ Open a folder from the sidebar:
   it runs in; a directory or a folder inside with targets of its own
   gets a row of its own, as `task/atkins.yml`. Rows follow for the files
   that run, `./<path>`, each atkins skill that applies, such as `@git`
-  with `@git:pull`, and the built-ins your permissions allow, `@shell`
-  and `@claude`. A button carries the play and the job's name, coloured
+  with `@git:pull`, and, for an admin, the built-ins `@shell` and
+  `@claude`. A button carries the play and the job's name, coloured
   by its last run: green when it succeeded, red when it failed or
   someone stopped or killed it, grey when it never ran. While the job
   runs the button is an eye that attaches to it; a job that takes a
@@ -322,7 +322,8 @@ The API answers the git line and the skills with `GET
 
 ### Enter Shell
 
-A user with the `shell` permission, Enter Shell in [Settings, Permissions](settings.md#permissions), gets the button `@shell` among the built-ins of the Jobs table: it starts `bash -l` in
+An admin gets the button `@shell` among the built-ins of the Jobs
+table: it starts `bash -l` in
 the folder's directory, or in the directory the page browses, with the
 run's window attached and the keyboard yours: the job `@shell` of the
 folder, run with the environment, secrets and keys of any job there,
@@ -330,21 +331,23 @@ and its history keeps under that directory. Close the window and the
 shell keeps running; **Attach** in its place opens it again, `exit` ends
 it.
 
-Only a user with `shell` starts a shell: `POST /api/runs` with `@shell`
-answers `403` to anyone else, whatever the folder's allow rules say, and
-the row shows to those users alone. No schedule or workflow step takes
-`@shell`: there is no one at its keyboard.
+Admins alone start a shell: the job's allow list names the admin role,
+no folder or job rule widens it, and task-ui checks the `shell`
+permission, Enter Shell in [Settings,
+Permissions](settings.md#permissions), besides. `POST /api/runs` with
+`@shell` answers `403` to anyone else, and the row shows to admins
+alone. No schedule or workflow step takes `@shell`: there is no one at
+its keyboard.
 
 ### Enter Claude
 
-Below it, a user with `shell` and a token in the
+Below it, an admin with a token in the
 [Claude Code integration](settings.md#integrations) gets the row
 `@claude`: Claude Code in a terminal in the folder's directory, or in the
 directory the page browses, the job `@claude` of the folder, which runs
-`task-ui agent shell`, a shell as `@shell` is: the **Enter Shell**
-permission gates it, `POST /api/runs` with `@claude` answers `403` to
-anyone without it, no schedule or workflow step takes it, and it pulls
-nothing. Claude reads the `CLAUDE.md` and `.claude/` of that directory
+`task-ui agent shell`, a shell as `@shell` is: for admins alone,
+`POST /api/runs` with `@claude` answers `403` to anyone else, no
+schedule or workflow step takes it, and it pulls nothing. Claude reads the `CLAUDE.md` and `.claude/` of that directory
 and above, and the run's history keeps under the directory.
 
 ### Prompt
@@ -481,7 +484,7 @@ An admin runs everything. A runner runs a folder's jobs unless its allow
 list names other users or roles. A viewer runs nothing, but sees the jobs
 and watches the runs. Run Jobs, a permission of
 [Settings, Permissions](settings.md#permissions), decides who runs at
-all, Enter Shell who starts `@shell` and `@claude`; a user with
+all; `@shell` and `@claude` are the admins' alone; a user with
 `user/edit` sets which folders each user sees on the user's profile.
 
 ---

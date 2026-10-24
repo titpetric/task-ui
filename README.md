@@ -15,9 +15,8 @@ that moves it, keys and all, to another instance. A project's Files
 panel browses its checkout like a file manager: a file opens in a
 preview window. Every folder and directory has the git state of its
 checkout and one Jobs table of what runs there: its targets, the files
-that run, the jobs of each atkins skill that applies, and, with the
-Enter Shell permission, a shell and Claude Code in a terminal in that
-directory.
+that run, the jobs of each atkins skill that applies, and, for an
+admin, a shell and Claude Code in a terminal in that directory.
 
 Claude works beside the jobs. A prompt asks Claude Code in a folder, a
 directory, about a run, from the header on any page, or at the end of a

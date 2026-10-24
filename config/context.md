@@ -21,8 +21,8 @@ files when asked to. A pipeline
 file speaks for its folder. **Recursive**, on by default, lists the
 folders inside a project as deep as they go; off lists the project and
 its top-level folders alone. Discovery skips what `.gitignore` ignores,
-except an ignored checkout right below a project that holds a job
-source. A pipeline atkins' linter refuses lists no jobs:
+except an ignored checkout right below a workspace or a project that
+holds a job source. A pipeline atkins' linter refuses lists no jobs:
 its folder, and the pages of the workspace and project above it, show
 an alert with each finding, the file, the job and the detail, and
 `list_jobs` lists them as `errors`. Pages: `/f/<workspace>/<folder>`;
@@ -37,7 +37,9 @@ terminal, `@claude-prompt`, Claude Code on a prompt, and `@claude-note`,
 Claude Code on a note to the agent. `run` lets a user run jobs, in a
 folder the user sees, when the allow lists of the folder and the job
 name the user or the role, or are empty, and inside the folder's hours
-unless forced with a reason. `@shell` and `@claude` take `shell`. The
+unless forced with a reason. `@shell` and `@claude` are for admins
+alone: their allow list names the admin role, no folder rule widens it,
+and they take `shell` besides. The
 root, `_`, has `@host:<name>`, a shell command, its args, on a host of
 the inventory over ssh, and `@host:*`, the command on every host with an
 ssh login, a run a host; they take `hosts`.
@@ -218,7 +220,7 @@ the folders the user sees, the user's permissions and MCP access. Page:
 
 A policy allows or denies a rule, for a role or for a user. Every
 section has the rules view, edit and delete, and the application has
-`run`, `shell` and `hosts`. A user's own allow or deny decides first;
+`run`, `shell`, `hosts` and `input`. A user's own allow or deny decides first;
 without one the role's decides, where a deny wins over an allow, and
 task-ui refuses what neither allows. An admin may do everything and
 holds no policy. Page: `/settings/permissions`; API: `/api/permissions`;
@@ -231,7 +233,8 @@ the same permissions. Its tools: `whoami`, `list_jobs`, `run_job`,
 `list_runs`, `get_run`, `list_workflows`, `run_workflow`,
 `list_workflow_runs`, `get_workflow`, `create_workflow`,
 `update_workflow`, `list_notes`, `note_comment`, `post_note`,
-`ask_prompt`, `list_artifacts`, `read_artifact` and `write_artifact`.
+`ask_prompt`, `list_artifacts`, `read_artifact`, `write_artifact` and
+`get_ssh_key`.
 A prompt's run and the Notes agent's reach these tools as their user
 for as long as they run, with no token of the user's.
 `task-ui channel`, a Claude Code channel, pushes the open notes naming
