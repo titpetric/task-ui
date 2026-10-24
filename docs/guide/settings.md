@@ -473,7 +473,7 @@ Beszel revokes it.
 Who may sign in comes from the password file on the server. **Create
 user** adds one to it, with a name and a password of at least 8
 characters, and they can sign in at once; `task-ui passwd <user>` on the
-server adds or resets one too. **Delete**, in a user's row's **⋯** menu or on the page,
+server adds or resets one too. **Delete**, in a user's row's **⋯** menu or on the profile,
 removes one who is no admin and not you: their line leaves the file, and
 their sessions, tokens and policy end at once, while runs, notes and
 history keep their name. Deleting takes Allow Deletes on Users,
@@ -496,45 +496,59 @@ none, the role's rules decide, and a deny there wins over an allow.
 
 ![Users](../assets/users-dark.png)
 
-A user's name opens their **profile**, at `/users/<name>`: the name and
-the role, and what the
-user ran and wrote lately, as far as you see it: runs and workflow runs
-in folders you see, notes with Allow View on Notes, and prompts with
-Allow View on Prompts in places you see. With Allow Edits on Users the
-profile sets which folders the user sees: **All projects**, or
-**Custom** and the folders checked. The profile also holds the user's
-own permissions and their MCP access, and **Delete user**. Under
-**Roles** an admin sets what the user is:
-
-- **Administrative privileges (all)**: every permission, whatever the
-  role says. The last admin keeps it: unchecking it answers "the last
-  admin".
-- **Role**: runner or viewer, what the user's permissions start from
-  without the flag.
-- **MCP agent user**: the user's token reaches the MCP endpoint, and an
-  agent learns of work from the notes that name the user. Off, it ends
-  the user's MCP token.
-- **Run instance Claude when mentioned**: a note naming the user starts
-  the Notes agent as them. It needs MCP agent user.
-
-Anyone else reads them there. Anyone with
-Allow View on Users opens any profile; everyone opens their own, from
-**Profile** in the user menu.
+A user's name opens their **profile**, at `/users/<name>`: the name,
+when they joined, and what the user did lately, as far as you see it,
+in the order you look at a person: **Runs** in folders you see, each
+with its result and **View** or **Attach**, **Workflow runs**, **Notes**
+with Allow View on Notes, each as one line of plain text, and
+**Prompts** with Allow View on Prompts in places you see. A section
+with nothing says so in one line. Anyone with Allow View on Users opens
+any profile; everyone opens their own, from **Profile** in the user
+menu. The profile shows no roles, permissions or forms; **Edit**, top
+right, for your own page or with Allow Edits on Users, opens them, and
+the **⋯** menu holds **Runs by this user** and **Delete**.
 
 ![A profile: the activity of a user](../assets/profile-dark.png)
 
+The **edit page**, at `/users/<name>/edit`, from **Edit** on the profile
+or in a user's row's **⋯** menu, holds what the user is and may do, with
+**View profile** top right and **Cancel** under a form back to the
+profile. It opens as the profile does; each form saves through the API,
+which takes Allow Edits on Users, and shows its values as text to anyone
+else. Its sections, in order:
+
+- **Roles**, which an admin sets:
+  - **Administrative privileges (all)**: every permission, whatever the
+    role says. The last admin keeps it: unchecking it answers "the last
+    admin".
+  - **Role**: runner or viewer, what the user's permissions start from
+    without the flag.
+  - **MCP agent user**: the user's token reaches the MCP endpoint, and
+    an agent learns of work from the notes that name the user. Off, it
+    ends the user's MCP token.
+  - **Run instance Claude when mentioned**: a note naming the user
+    starts the Notes agent as them. It needs MCP agent user.
+- **Folders**: which folders the user sees, **All projects**, or
+  **Custom** and the folders checked.
+- **Permissions**: the user's own rules over the role's (see
+  [Permissions](#permissions)).
+- **Keys**: the SSH keys linked to the user, with **Generate key** (see
+  [Keys](#keys)).
+- **MCP access**: **Enable MCP** makes a token for an MCP client that
+  lasts 30 days and shows it once, with the `claude mcp add` command
+  filled in. Once on, the section shows its dates, the expiry in amber
+  within a week and red once past, with **Rotate** and **Disable**.
+  Enabling takes Allow Edits on Users; you rotate or disable your own
+  from your own edit page. See [MCP](mcp.md).
+
+`/settings/users/<id>` opens the edit page too.
+
+![The edit page of a user: Roles first, then Folders, Permissions, Keys and MCP access](../assets/user-edit-dark.png)
+
 Next to a user's name, on every page that shows one, a **⋯** button
 opens a menu: **Profile**, **Runs by this user**, which opens Runs
-filtered to them, and **Permissions** with Allow Edits on Users. A name
-that no user holds, such as the agent a note names, has no profile.
-
-A profile's **MCP access**: **Enable MCP** makes a token for an MCP
-client that lasts 30 days and shows it once, with the `claude mcp add`
-command filled in. Once on, the section shows its dates, the expiry in
-amber within a week and red once past, with **Rotate** and **Disable**.
-Enabling takes Allow Edits on Users; you rotate or disable your own from
-your own profile. `/settings/users/<id>` opens the profile too. See
-[MCP](mcp.md).
+filtered to them, and **Edit** with Allow Edits on Users. A name that
+no user holds, such as the agent a note names, has no profile.
 
 ![Add user](../assets/user-new-dark.png)
 
@@ -569,8 +583,8 @@ an admin may do everything. The page opens with Allow View on Users and
 changes with Allow Edits on Users; your own role's matrix changes only
 when your role grants Allow Edits on Users.
 
-A user's profile has the same matrix under **Permissions**, for their own
-policy over their role's, with the result after each cell: a muted ✓
+A user's edit page has the same matrix under **Permissions**, for their
+own policy over their role's, with the result after each cell: a muted ✓
 where the user may do it, ✕ where not. The user's own allow or deny
 decides first, whatever the role says; an empty cell inherits the role's
 rules, where a deny wins over an allow; what neither allows, the user may
@@ -579,7 +593,7 @@ everything allowed and does not change, and your own changes only with
 Allow Edits on Users through your role, so no one grants themselves
 more.
 
-![A profile's permissions: shell denied, the secrets readable](../assets/profile-permissions-dark.png)
+![A user's permissions on their edit page: shell denied, the secrets readable](../assets/user-edit-light.png)
 
 The application's permissions gate what the sections do not:
 

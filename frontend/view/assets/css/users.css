@@ -33,7 +33,8 @@
   font-weight: 600;
 }
 
-/* The profile: a large avatar beside the name and the role. */
+/* The profile: a large avatar beside the name and when they joined,
+   the role in the avatar's colour. */
 .avatar.lg {
   --avatar-size: round(3rem, 1px);
   font-size: var(--fs-md);
@@ -43,28 +44,16 @@
   display: flex;
   align-items: flex-start;
   gap: 0.9rem;
-
-  & h2 .badge {
-    vertical-align: middle;
-  }
 }
 
-.profile-activity {
-  & h4 {
-    margin: var(--stack-gap) 0 var(--head-gap);
-    color: var(--text-dim);
-    font-size: var(--fs-label);
-    font-weight: 600;
-    letter-spacing: var(--ls-label);
-    text-transform: uppercase;
-  }
-
-  & .more-link {
-    margin: 0.4rem 0 0;
-    font-size: var(--fs-sm);
-  }
+/* The line under a profile's runs that leads to every run by them. */
+.block .more-link {
+  margin: 0.4rem 0 0;
+  font-size: var(--fs-sm);
 }
 
+/* The notes and prompts of a profile, one a row: the excerpt on one
+   line, cut with an ellipsis, and when it was written at the end. */
 .profile-list {
   display: grid;
   gap: 0.1rem;

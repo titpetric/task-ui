@@ -6,6 +6,7 @@ import (
 	"context"
 	"io"
 	"net/http"
+	"strings"
 	"testing"
 	"time"
 
@@ -60,7 +61,7 @@ func TestUsers_MCP(t *testing.T) {
 	assert.Contains(t, derived, "Connect an MCP client")
 	assert.Contains(t, derived, `data-copy="https://task.example.com"`)
 	assert.Contains(t, derived, `data-copy="https://task.example.com/api/mcp"`)
-	assert.Contains(t, derived, `href="/users/`+asAdmin+`#mcp">your profile</a>`)
+	assert.Contains(t, derived, `href="/users/`+asAdmin+`/edit#mcp">your MCP access</a>`)
 	assert.NotContains(t, derived, access.TokenPrefix)
 
 	f.opts.BaseURL = "https://task.cdn.si"
@@ -79,13 +80,14 @@ func TestUserForm(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
 
-	// The settings link of a user opens their profile, which holds the
+	// The settings link of a user opens their edit page, which holds the
 	// folders; your own opens without user/view.
 	res := f.get(t, asAdmin, "/settings/users/"+f.users[asLimited].ID)
 	assert.Equal(t, http.StatusFound, res.Status)
-	assert.Equal(t, "/users/limited", res.Location)
-	assert.Equal(t, "/users/ops", f.get(t, asOps, "/settings/users/"+f.users[asOps].ID).Location)
+	assert.Equal(t, "/users/limited/edit", res.Location)
+	assert.Equal(t, "/users/ops/edit", f.get(t, asOps, "/settings/users/"+f.users[asOps].ID).Location)
 	assert.Equal(t, http.StatusForbidden, f.get(t, asOps, "/users/"+asViewer).Status)
+	assert.Equal(t, http.StatusForbidden, f.get(t, asOps, "/users/"+asViewer+"/edit").Status)
 	assert.Equal(t, http.StatusNotFound, f.get(t, asAdmin, "/settings/users/"+model.NewID()).Status)
 	assert.Equal(t, http.StatusNotFound, f.get(t, asAdmin, "/settings/users/new").Status)
 
@@ -101,14 +103,14 @@ func TestUserForm(t *testing.T) {
 	assert.Contains(t, created, `<input type="radio" name="scope" value="all" checked>`)
 }
 
-// A user's page shows their MCP access: Enable for user/edit, the dates
-// with Rotate and Disable once on, for its own user too, and never the
-// token. The expiry turns amber within a week and red when past.
+// A user's edit page shows their MCP access: Enable for user/edit, the
+// dates with Rotate and Disable once on, for its own user too, and never
+// the token. The expiry turns amber within a week and red when past.
 func TestUserForm_MCP(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
 	ops := f.users[asOps]
-	own := "/users/" + ops.Name
+	own := "/users/" + ops.Name + "/edit"
 
 	off := f.page(t, asAdmin, own)
 	assert.Contains(t, off, "MCP access")
@@ -116,8 +118,8 @@ func TestUserForm_MCP(t *testing.T) {
 	assert.Contains(t, off, "Enable MCP</button>")
 	assert.Contains(t, off, `data-fill="claude mcp add --transport http --scope user task http://127.0.0.1`)
 
-	// Their own profile opens for ops without user/view, with no folders
-	// form and no Enable; another user's stays closed.
+	// Their own edit page opens for ops without user/view, with no
+	// folders form and no Enable; another user's stays closed.
 	mine := f.page(t, asOps, own)
 	assert.Contains(t, mine, "MCP access")
 	assert.Contains(t, mine, "Ask someone who has it")
@@ -148,27 +150,28 @@ func TestUserForm_MCP(t *testing.T) {
 	assert.Contains(t, expired, ">expired ")
 }
 
-// A profile shows what the user is: an admin edits the admin flag, the
-// role, MCP agent user and Run instance Claude when mentioned; the user
-// reads them. A token waits for MCP agent user.
+// The edit page shows what the user is, Roles first: an admin edits the
+// admin flag, the role, MCP agent user and Run instance Claude when
+// mentioned; the user reads them. A token waits for MCP agent user.
 func TestProfile_Roles(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
 	ops := f.users[asOps]
-	admin := f.page(t, asAdmin, "/users/"+ops.Name)
+	admin := f.page(t, asAdmin, "/users/"+ops.Name+"/edit")
 	assert.Contains(t, admin, `<section class="block" id="roles">`)
 	assert.Contains(t, admin, `<input type="checkbox" name="admin"> Administrative privileges (all)`)
 	assert.Contains(t, admin, `<option value="runner" selected>runner</option>`)
 	assert.Contains(t, admin, `<input type="checkbox" name="mcp" checked> MCP agent user`)
 	assert.Contains(t, admin, `<input type="checkbox" name="agent_reply"> Run instance Claude when mentioned`)
 
-	own := f.page(t, asOps, "/users/"+ops.Name)
+	assert.True(t, strings.Index(admin, `id="roles"`) < strings.Index(admin, `id="folders"`))
+	own := f.page(t, asOps, "/users/"+ops.Name+"/edit")
 	assert.NotContains(t, own, `name="admin"`)
 	assert.Contains(t, own, "Role: runner. MCP agent user.")
 
 	ops.Mcp = false
 	assert.NoError(t, f.opts.Users.Update(context.Background(), ops))
-	off := f.page(t, asAdmin, "/users/"+ops.Name)
+	off := f.page(t, asAdmin, "/users/"+ops.Name+"/edit")
 	assert.Contains(t, off, "A token needs MCP agent user")
 	assert.NotContains(t, off, "Enable MCP</button>")
 }

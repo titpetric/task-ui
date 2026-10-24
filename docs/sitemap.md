@@ -51,7 +51,7 @@ row's **⋯** menu; "Delete" and "Remove" are in red, last.
 | Add secret, Replace | `/settings/secrets/new`, `/edit` | none | none | none | scope, name, value, Cancel and Save | none |
 | Reads | `/settings/secrets/<id>/reads` | the runs that got a secret | Secrets | none | none | "No run got <name> yet." |
 | Integrations | `/settings/integrations` | a block per service | none | Show | the service's settings, Save and Clear | none |
-| Users | `/settings/users` | the users, Connect an MCP client | **Add user** | `[...]`: Profile, Runs, Permissions, Delete | none | none |
+| Users | `/settings/users` | the users, Connect an MCP client | **Add user** | `[...]`: Edit, Profile, Runs, Delete | none | none |
 | Add user | `/settings/users/new` | none | none | none | name, password, Cancel and **Add user** | none |
 | Permissions | `/settings/permissions` | a matrix per role | none | none | the matrices, Save | none |
 | Workspaces | `/settings/workspaces` | the workspaces, their home repositories and projects | Import, **Add workspace** | `[...]`: Open, Workspace settings, Move up, Move down, Delete | Import in a dialog | none: `_` always lists; "empty" for a workspace without a home repository |
@@ -68,7 +68,8 @@ row's **⋯** menu; "Delete" and "Remove" are in red, last.
 
 | Page | Path | Lists | Head, top right | Row actions | Forms | Empty |
 |------|------|-------|-----------------|-------------|-------|-------|
-| Profile | `/users/<name>` | Activity, Roles, Folders, Permissions, Keys, MCP access | Runs, `[...]`: Delete | Activity: **View**, `[...]`; Keys: the keys table, **Generate key** | Roles, Folders, Permissions, each Save; MCP Enable or Rotate | "Nothing you can see yet."; "No key linked to <name>." |
+| Profile | `/users/<name>` | Runs, Workflow runs, Notes, Prompts | **Edit** for your own or with `user/edit`, `[...]`: Runs by this user, Delete | Runs: **View** or **Attach**, `[...]`; Workflow runs: **View** | none | "No runs yet.", "No workflow runs yet.", "No notes yet.", "No prompts yet." |
+| Edit user | `/users/<name>/edit` | Roles, Folders, Permissions, Keys, MCP access | View profile | Keys: the keys table, **Generate key** | Roles, Folders, each Cancel and Save; Permissions, Save; MCP Enable or Rotate | "No key linked to <name>." |
 | Your SSH keys | `/keys` | the keys your runs get | none | the keys table | none | "No keys for you or your role yet." |
 | Sign in | `/login` | none | none | none | name, password | none |
 
@@ -76,7 +77,7 @@ row's **⋯** menu; "Delete" and "Remove" are in red, last.
 
 | Part | Template | Where |
 |------|----------|-------|
-| Keys table | `keyhead`, `keyrow` | Keys, Instance, a workspace's page and its SSH keys page, Your SSH keys, a profile |
+| Keys table | `keyhead`, `keyrow` | Keys, Instance, a workspace's page and its SSH keys page, Your SSH keys, a user's edit page |
 | Secrets table | `secretgroup`, `secretrow`, `secretfields` | Secrets, Add secret and Replace, a workspace's secrets page |
 | Files table | `tree`, `filetable` | a folder's Files and a workspace's Home, a directory's page |
 | Projects table | `projecttable` | each block of Projects, a workspace's page |

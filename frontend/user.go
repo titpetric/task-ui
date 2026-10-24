@@ -38,10 +38,32 @@ func (h *Handlers) userNew(w http.ResponseWriter, r *http.Request) {
 	h.render(w, http.StatusOK, "user_form", p)
 }
 
-// userEdit sends the settings link of a user to their profile, which
-// holds their folders, permissions and MCP access. Your own opens
-// without user/view.
+// userEdit holds the forms of a user, their roles, folders, permissions, keys and MCP access, which change through the API with user/edit.
+// It opens as the profile does, for your own or with user/view.
 func (h *Handlers) userEdit(w http.ResponseWriter, r *http.Request) {
+	user, own, ok := h.userPage(w, r)
+	if !ok {
+		return
+	}
+	p := h.page(r, "Edit "+user.Name)
+	p.Crumbs = view.Crumbs(user.Name, profileHref(user.Name), "Edit")
+	if p.Can("user/view") {
+		p.Crumbs = view.Crumbs("Settings", "/settings", "Users", "/settings/users", user.Name, profileHref(user.Name), "Edit")
+		p.Step = view.StepUsers
+	}
+	p.Account = user
+	p.FolderChoices = view.FolderChoices(h.opts.Catalogue.List(), user.FolderList())
+	p.AccountMCP = h.mcpAccess(r, user, own)
+	if own || p.Can("key/view") {
+		p.Keys = h.userKeys(r.Context(), user)
+	}
+	p.Profile = &view.Profile{Own: own, Matrix: h.userMatrix(r, p, user, own)}
+	h.render(w, http.StatusOK, "user_edit", p)
+}
+
+// userByID sends the settings link of a user, by ID, to their edit page; your own opens without user/view.
+// An ID no user holds answers not found.
+func (h *Handlers) userByID(w http.ResponseWriter, r *http.Request) {
 	me := access.UserFrom(r.Context())
 	own := me != nil && me.ID == param(r, "id")
 	if !own && !h.require(w, r, "user/view") {
@@ -52,12 +74,17 @@ func (h *Handlers) userEdit(w http.ResponseWriter, r *http.Request) {
 		h.missing(w, r, "No user with that ID.")
 		return
 	}
-	http.Redirect(w, r, profileHref(user.Name), http.StatusFound)
+	http.Redirect(w, r, editHref(user.Name), http.StatusFound)
 }
 
 // profileHref returns the path of a user's profile.
 func profileHref(name string) string {
 	return "/users/" + url.PathEscape(name)
+}
+
+// editHref returns the path of a user's edit page.
+func editHref(name string) string {
+	return profileHref(name) + "/edit"
 }
 
 // mcpAccess returns a user's MCP token as their page shows it.
