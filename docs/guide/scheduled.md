@@ -66,6 +66,43 @@ admin, once: the schedule is yours to change, disable or delete, and
 task-ui adds no other. Admins alone run `@cleanup`, by hand, on a
 schedule, or as a workflow step.
 
+## Triage with Claude
+
+**Triage failures with Claude**, a checkbox of both schedule forms,
+has Claude look into a run of the schedule that ends `failed` or
+`killed`. The schedule's user asks, so the user needs `prompt/edit` and
+the Claude token the folder's runs get, as a prompt from the folder's
+page would; a schedule whose user lacks either skips the triage and
+logs why. Over the API, `triage` on `POST` and `PUT /api/schedules`
+switches it; the lists carry it, and the Scheduled table marks a
+schedule with the **triage** badge.
+
+The triage is a prompt thread on the failed run's page, which Claude
+answers in the run's folder with the run's details and the end of its
+output. Claude reads the job in the folder, finds the root cause and,
+when the fix is inside the folder, in its code, its pipeline file or
+configuration it may edit, makes it and commits it. It changes no
+task-ui setting, user or secret, and runs the job again only when the
+fix is trivially safe. Its answer ends with one of three results:
+
+| Result | Meaning |
+|--------|---------|
+| `resolved` | Claude found the cause and fixed it in the folder |
+| `not resolved` | Claude found no fix it could make, or the prompt itself failed |
+| `no action` | nothing to fix from the folder: the cause is outside it, or transient |
+
+The thread on the run's page keeps the full record of what Claude read
+and did. Once it answered, the schedule's user leaves a note on the
+[Notes](notes.md) board that names the task, the result and the run:
+
+> Attempted triage of failing infra/plan task, result: resolved. Info:
+> https://task.example/runs/01K8ABCDEFGHJKMNPQRSTVWXYZ
+
+One note per triaged run, whichever the result. A run that ends `ok`,
+or one a person stops, gets no triage. A schedule of `@host:<name>` or
+`@host:*` gets none either, as its runs have no folder to fix in: the
+scheduler logs that it skipped.
+
 ## How a scheduled run runs
 
 It starts in the background as the schedule's user, with their

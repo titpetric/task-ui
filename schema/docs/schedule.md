@@ -17,3 +17,4 @@ Schedule.
 | updated_at  | datetime |     | Updated At  |
 | target      | varchar  |     | Target      |
 | args        | varchar  |     | Args        |
+| triage      | bigint   |     | Triage      |

@@ -84,6 +84,15 @@ func TestMenu_Pages(t *testing.T) {
 	body = render(t, "schedules", p)
 	assert.Contains(t, body, `data-api="/api/schedules/s1" data-method="PUT" data-body="{&#34;enabled&#34;:false}" data-next="reload"><svg class="ic"><use href="#i-stop"/></svg><span>Disable</span>`)
 	assert.Contains(t, body, `class="more-item danger" role="menuitem" data-delete="/api/schedules/s1" data-confirm="Delete the schedule @daily for infra / plan?"`)
+	assert.Contains(t, body, `<input type="checkbox" id="sch-triage" name="triage"> Triage failures with Claude`, "the form offers the triage")
+	assert.NotContains(t, body, `>triage</span>`, "no badge while off")
+	p.Schedules[0].Triage = 1
+	body = render(t, "schedules", p)
+	assert.Contains(t, body, `<span class="badge ok">enabled</span> <span class="badge signal" title="Claude triages a failed run">triage</span></td>`)
+	p.Schedules[0].Folder, p.Schedules[0].Job = "infra", "plan"
+	body = render(t, "job", p)
+	assert.Contains(t, body, `<input type="checkbox" id="sch-triage" name="triage"> Triage failures with Claude`)
+	assert.Contains(t, body, `>triage</span>`)
 
 	p = admin(t)
 	body = render(t, "runs", p)

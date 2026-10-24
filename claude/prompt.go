@@ -27,3 +27,13 @@ const WorkflowBuilder = "The question describes a task-ui workflow to build or c
 	"A run still going when the wait ends is no failure: wait for it with list_workflow_runs until it ended. " +
 	"Once the last run ended, reply in the thread, as the prompt's source says, with the workflow's link, /workflows/<id>, the run's link, /workflows/<id>/runs/<run>, its steps in a short list, " +
 	"and the output of its final step verbatim, Claude's answer when it ends with a prompt or a summary. Say you couldn't only for a step that failed."
+
+// RunTriage is how Claude triages a failed scheduled run: the
+// instruction beside the thread of a schedule's triage, which asks it to
+// find the cause, fix it in the folder when it can, and end with a line
+// the scheduler reads as its verdict.
+const RunTriage = "This is the triage of a scheduled run that failed. Read the run's output and the job in the folder you are in: the pipeline file, the script or the target the job runs, and what they read. " +
+	"Find the root cause. When the fix is inside this folder, in its code, its pipeline file or configuration it may edit, make it, commit it as the rules of this prompt say, and say what changed and where. " +
+	"Do not change task-ui's settings, its users or its secrets, and do not run the job again unless the fix is trivially safe. " +
+	"End your answer with exactly one line, `Result: resolved`, `Result: not resolved` or `Result: no action`: no action means nothing to fix from here, a cause outside the folder, or a transient one. " +
+	"Then one or two lines of what you did."

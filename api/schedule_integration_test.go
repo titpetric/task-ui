@@ -105,6 +105,43 @@ func TestSchedule_Update(t *testing.T) {
 	assert.Equal(t, http.StatusNotFound, missing.Status)
 }
 
+// triage goes on a schedule at create and update, and lists with it;
+// a request without it keeps the row's.
+func TestSchedule_Triage(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+
+	plain := f.call(t, asOps, http.MethodPost, "/schedules", api.ScheduleRequest{Folder: "infra", Job: "plan", Expression: "@hourly"})
+	assert.Equal(t, http.StatusCreated, plain.Status, string(plain.Raw))
+	assert.Equal(t, float64(0), plain.get("triage"), "off by default")
+
+	created := f.call(t, asOps, http.MethodPost, "/schedules", api.ScheduleRequest{Folder: "infra", Job: "plan", Expression: "@daily", Triage: ptr(true)})
+	assert.Equal(t, http.StatusCreated, created.Status, string(created.Raw))
+	assert.Equal(t, float64(1), created.get("triage"))
+	path := "/schedules/" + created.str("id")
+
+	kept := f.call(t, asOps, http.MethodPut, path, api.ScheduleRequest{Expression: "@weekly"})
+	assert.Equal(t, http.StatusOK, kept.Status)
+	assert.Equal(t, float64(1), kept.get("triage"), "left out keeps it")
+
+	off := f.call(t, asOps, http.MethodPut, path, api.ScheduleRequest{Triage: ptr(false)})
+	assert.Equal(t, http.StatusOK, off.Status)
+	assert.Equal(t, float64(0), off.get("triage"))
+
+	on := f.call(t, asOps, http.MethodPut, path, api.ScheduleRequest{Triage: ptr(true)})
+	assert.Equal(t, float64(1), on.get("triage"))
+	one := f.call(t, asViewer, http.MethodGet, path, nil)
+	assert.Equal(t, float64(1), one.get("triage"))
+	all := f.call(t, asViewer, http.MethodGet, "/schedules", nil)
+	triaged := 0
+	for _, row := range all.list("schedules") {
+		if row.(map[string]any)["triage"] == float64(1) {
+			triaged++
+		}
+	}
+	assert.Equal(t, 1, triaged)
+}
+
 func TestSchedule_Delete(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)

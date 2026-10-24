@@ -22,7 +22,7 @@ row's **⋯** menu; "Delete" and "Remove" are in red, last.
 | Artifacts | `/artifacts` | Space, Files of the tree, History | `[...]`: Delete all | Files and History: `[...]`: open, download, copy the link, Delete | the History filter | "This folder is empty.", "No artifacts yet." |
 | Artifact file | `/artifacts/files/<path>?version=` | the file itself, inline; `?download` saves it; a directory goes to its listing | none | none | none | none |
 | Artifact archive | `/artifacts.tgz`, `/artifacts/<directory>.tgz` | the tree, or a directory of it, as a `.tgz` of the files you see | none | none | none | none |
-| Scheduled | `/schedules` | every schedule | none | `[...]`: Enable or Disable, Delete | **Add schedule**: folder, job, args, expression, Run as | "No schedules yet." |
+| Scheduled | `/schedules` | every schedule | none | `[...]`: Enable or Disable, Delete | **Add schedule**: folder, job, args, expression, Triage failures with Claude, Run as | "No schedules yet." |
 | Notes | `/notes` | notes and their replies | none | a note's `[...]`: Edit, Open its run, Delete | the note box, **Post note** | "No notes yet." |
 | Inventory | `/inventory` | hosts by cluster, Run on the hosts | none | the ssh login to copy inline, `[...]`: open, copy ssh | Run on the hosts | "Beszel isn't monitoring any hosts." |
 | Host | `/inventory/hosts/<name>` | the host's charts and details | none | none | none | none |
