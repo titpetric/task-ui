@@ -2344,22 +2344,20 @@
         if (empty) empty.remove();
         row = el("tr");
         row.dataset.runId = data.run_id;
-        var started = el("td", "nowrap", "just now");
-        started.dataset.label = "Started";
+        var page = location.pathname.replace(/\/$/, "") + "/runs/" + encodeURIComponent(data.run_id);
+        var started = el("td", "key");
+        started.dataset.result = "";
+        var fold = el("span", "wf-fold");
+        fold.setAttribute("aria-hidden", "true");
+        started.appendChild(fold);
+        var runLink = el("a");
+        runLink.href = page;
+        runLink.appendChild(el("i", "dot running"));
+        runLink.appendChild(document.createTextNode("just now"));
+        started.appendChild(runLink);
         var by = el("td");
         if (data.user_name) by.innerHTML = userHTML(data.user_name);
         by.dataset.label = "By";
-        var result = el("td");
-        result.dataset.label = "Result";
-        result.dataset.result = "";
-        result.appendChild(stateSpan("running"));
-        var thread = el("td", "wf-excerpt");
-        thread.dataset.label = "Input and answer";
-        var lines = el("div", "wf-lines");
-        if (data.input) lines.appendChild(el("span", "wf-q", excerpt(data.input, 120)));
-        lines.appendChild(el("span", "wf-a faint", ""));
-        lines.lastChild.dataset.answer = "";
-        thread.appendChild(lines);
         var steps = el("td");
         steps.dataset.label = "Steps";
         var chain = el("span", "chain");
@@ -2377,13 +2375,11 @@
         steps.appendChild(chain);
         var view = el("td", "actions");
         var viewLink = el("a", "btn btn-sm", "View");
-        viewLink.href = location.pathname.replace(/\/$/, "") + "/runs/" + encodeURIComponent(data.run_id);
+        viewLink.href = page;
         viewLink.dataset.workflowView = "";
         view.appendChild(viewLink);
         row.appendChild(started);
         row.appendChild(by);
-        row.appendChild(result);
-        row.appendChild(thread);
         row.appendChild(steps);
         row.appendChild(view);
         runs.insertBefore(row, runs.firstChild);
@@ -2434,13 +2430,15 @@
       }
       if (row) {
         var result = row.querySelector("[data-result]");
-        result.innerHTML = "";
-        result.appendChild(stateSpan(data.state, data.message));
-        var answer = row.querySelector("[data-answer]");
-        if (answer) {
-          answer.textContent = data.answer ? excerpt(data.answer, 200) : "";
-          answer.classList.toggle("faint", !data.answer);
+        var dot = result.querySelector(".dot");
+        if (dot) {
+          dot.className = "dot " + data.state;
+          dot.title = data.state;
         }
+        if (data.message && !result.querySelector(".wf-desc")) result.appendChild(el("small", "faint wf-desc", data.message));
+        // An answer comes rendered from the page: the row again, with its
+        // chevron, and the folded row under it.
+        if (data.answer) answerRow(row, data.run_id);
         // A run that ended takes Summary in its menu, where the page
         // offers it.
         var cell = row.querySelector("td.actions");
@@ -2470,25 +2468,34 @@
     }
   }
 
-  // excerpt is markdown on one line, as view.Excerpt cuts it for a list:
-  // without the marks of headings, lists, emphasis and code, its fences
-  // and tables, cut at a word.
-  function excerpt(text, n) {
-    var words = [];
-    String(text).split("\n").forEach(function (line) {
-      line = line.trim();
-      if (/^(```|~~~|\|)/.test(line)) return;
-      line = line.replace(/^[#>*+\-\s]+/, "").replace(/\*\*|__|`/g, "");
-      words = words.concat(line.split(/\s+/).filter(Boolean));
+  // answerRow puts a run's row in again from the page once the run
+  // ended with an answer: its chevron and the folded row of the answer,
+  // which the server renders from markdown.
+  function answerRow(row, id) {
+    fetch(location.pathname + location.search, { credentials: "same-origin" }).then(function (res) { return res.text(); }).then(function (text) {
+      var doc = new DOMParser().parseFromString(text, "text/html");
+      var fresh = doc.querySelector('[data-run-id="' + id + '"]');
+      var answer = doc.querySelector('[data-answer-of="' + id + '"]');
+      if (!fresh || !answer || !row.isConnected || row.parentNode.querySelector('[data-answer-of="' + id + '"]')) return;
+      row.replaceWith(fresh);
+      fresh.after(answer);
     });
-    var short = words.join(" ");
-    var chars = Array.from(short);
-    if (chars.length <= n) return short;
-    var cut = chars.slice(0, n).join("");
-    var space = cut.lastIndexOf(" ");
-    if (space > n / 2) cut = cut.slice(0, space);
-    return cut.replace(/[ ,.;:]+$/, "") + "\u2026";
   }
+
+  // A run's chevron in a list of runs unfolds its answer in the row
+  // under it, and folds it again.
+  document.addEventListener("click", function (event) {
+    var button = event.target.closest("[data-answer-toggle]");
+    if (!button) return;
+    var body = document.getElementById(button.getAttribute("aria-controls"));
+    if (!body) return;
+    var open = button.getAttribute("aria-expanded") !== "true";
+    button.setAttribute("aria-expanded", open ? "true" : "false");
+    var label = open ? "Hide the answer" : "Show the answer";
+    button.title = label;
+    button.setAttribute("aria-label", label);
+    body.hidden = !open;
+  });
 
   // followThread puts a running workflow run's thread in again once the
   // workflow's topic says the run ended: data-follow names the workflow,

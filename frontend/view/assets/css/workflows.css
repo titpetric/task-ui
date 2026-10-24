@@ -672,28 +672,47 @@
   margin-top: 1.4rem;
 }
 
-/* A run's thread on two lines in a list of runs: the input it started
-   with over the answer, each cut short. */
-.wf-excerpt {
-  min-width: 16rem;
-  white-space: normal;
+/* A list of workflow runs: the chevron that unfolds the answer, then
+   the run's state on its dot by the link to the run; the answer opens
+   in the row under it, as wide as the table. */
+.wf-runs {
+  & td.key {
+    & a {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+    }
 
-  & .wf-q,
-  & .wf-a {
-    display: block;
+    & .wf-desc {
+      margin-inline-start: 1.75rem;
+    }
   }
 
-  & .wf-q {
-    font-weight: 500;
+  & .wf-fold {
+    display: inline-flex;
+    width: 1.35rem;
+    height: 1.35rem;
+    margin-inline-end: 0.4rem;
+    vertical-align: middle;
   }
 
-  /* The answer keeps to two lines. */
-  & .wf-a {
-    display: -webkit-box;
-    overflow: hidden;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
-    font-size: var(--fs-sm);
+  & tr:has(+ .wf-answer-row:not([hidden])) td {
+    background: var(--ink-2);
+  }
+
+  & tr.wf-answer-row > td {
+    padding: 0.6rem 0.9rem 0.9rem 2.65rem;
+    white-space: normal;
+    background: var(--ink-0);
+
+    & .note-body {
+      max-width: 72rem;
+      margin-top: 0;
+    }
+  }
+
+  & tbody tr.wf-answer-row:hover > td {
+    background: var(--ink-0);
   }
 }
 
@@ -707,10 +726,10 @@
   margin-bottom: 0.75rem;
 }
 
-/* On a phone a run of commands without input leaves its thread's line
-   out of the card. */
+/* On a phone the answer under a run's card takes the card's width. */
 @media (max-width: 860px) {
-  .table.cards td.wf-excerpt:not([data-label]) {
-    display: none;
+  .wf-runs tr.wf-answer-row > td {
+    display: block;
+    padding: 0.2rem 0 0.4rem;
   }
 }

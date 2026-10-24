@@ -14,9 +14,9 @@ row's **⋯** menu; "Delete" and "Remove" are in red, last.
 | Runs | `/runs` | every run, newest first, with filters; Activity and Tooling folds | none | **View** or **Attach**, `[...]`: open, replay, Summary, Stop, Kill | the filter bar | "No runs match." |
 | Run | `/runs/<id>` | the terminal, its output, the run's details, its artifacts | **View** or **Attach**, Stop, Kill, Report, Recording, Replay | artifacts: `[...]` | the prompt about the run | "None: a job keeps files by writing them to $TASK_UI_ARTIFACTS." |
 | Report | `/runs/<id>/report` | the question and Claude's answer | Run, Claude's run, Job | none | none | none |
-| Workflows | `/workflows` | the workflows, their steps and last run | **Add workflow** | **Run** or **Stop**, `[...]`: Open, Edit, the run going | the Prompt box | "No workflows yet." |
+| Workflows | `/workflows` | the workflows, their steps and last run; Recent runs, each with its state dot and its answer folded under a chevron | **Add workflow** | **Run** or **Stop**, `[...]`: Open, Edit, the run going; a recent run: the chevron of its answer | the Prompt box | "No workflows yet." |
 | Add workflow | `/workflows/new` | none | none | none | name and steps, Cancel and Save | none |
-| Workflow | `/workflows/<id>` | its pipeline and its runs | **Run** or **Stop**, Edit | runs: **View**, `[...]` | the runs' filter | "Not run yet." |
+| Workflow | `/workflows/<id>` | its pipeline and its runs, each with its state dot and its answer folded under a chevron | **Run** or **Stop**, Edit | runs: the chevron, **View**, `[...]` | the runs' filter | "Not run yet." |
 | Edit workflow | `/workflows/<id>/edit` | the steps | `[...]`: Open, Delete | a step's `[...]`: Move up, Move down, Duplicate, Remove | the step editor, Save | none |
 | Workflow run | `/workflows/<id>/runs/<run>` | the steps of a run, each its run | none | **View** on a step | none | none |
 | Artifacts | `/artifacts` | Space, Files of the tree, History | `[...]`: Delete all | Files and History: `[...]`: open, download, copy the link, Delete | the History filter | "This folder is empty.", "No artifacts yet." |
