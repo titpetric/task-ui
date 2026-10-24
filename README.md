@@ -58,6 +58,7 @@ binary embeds all assets, and the front end makes no external requests.
 | [Usage guide](docs/README.md) | The screen, a chapter per sidebar section, and MCP |
 | [Running the server](docs/running.md) | The Docker image, the environment, users, roles and the server commands |
 | [API](docs/api.md) | The JSON endpoints and the MCP server |
+| [Security](docs/security.md) | The threat model, identity and roles, keys, secrets, terminals and agents, and the review's findings |
 | [Development](docs/development.md) | The packages, the lint and test bar, and the screenshots |
 | [Testing](docs/testing.md) | Unit tests by default, integration tests behind a build tag |
 

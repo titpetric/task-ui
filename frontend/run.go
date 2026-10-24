@@ -107,10 +107,6 @@ func (h *Handlers) run(w http.ResponseWriter, r *http.Request) {
 	if h.opts.Board != nil && p.Can("prompt/view") {
 		p.Report = h.opts.Board.Report(r.Context(), row)
 	}
-	// Which secrets the run got, by name, for whoever may see secrets.
-	if h.opts.SecretReads != nil && p.Can("secret/view") {
-		p.SecretReads, _ = h.opts.SecretReads.ForRun(r.Context(), run.ID)
-	}
 	h.render(w, http.StatusOK, "run", p)
 }
 

@@ -1,7 +1,7 @@
 // Package secret keeps the secrets encrypted at rest with age, to
-// ed25519 or RSA keys kept for nothing else: the instance's encryption
-// key for the services' secrets, each workspace's for its own. The
-// public key encrypts, the private key file decrypts. A rotation keeps
+// ed25519 or RSA keys kept for nothing else: the instance's one
+// encryption key for every secret, the workspaces' and the services'.
+// The public key encrypts, the private key file decrypts. A rotation keeps
 // the old pair as a backup, so what it encrypted still opens, and a
 // rekey writes everything to the current keys again. No SSH key, the
 // ones runs and git authenticate with, encrypts or decrypts.

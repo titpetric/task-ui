@@ -280,9 +280,10 @@ last run got the secret and names its job as `folder/dir/job`, a link to
 that run. The count links to the secret's read log,
 `/settings/secrets/<id>/reads`: the runs that got it, newest first, 50 a
 page, each with when, the run, the job and who started it. task-ui keeps
-the last 1000 reads of each secret and drops older ones. A run's page
-lists the names of the secrets the run got, never a value, for users
-with `secret/view`.
+the last 1000 reads of each secret and drops older ones. The log on
+the secret's page is the only trace: task-ui writes nothing of a run's
+environment into the run's page, its output or its recording, neither
+values nor names. What a job prints itself, it records.
 
 A secret has a scope:
 
