@@ -166,7 +166,11 @@ run, and the step's card beside it, in the colour of its kind.
 - A workflow belongs to no workspace, so every step starts with its
   **Workspace**: **Default** for the root and the projects at its top,
   then each workspace that holds a folder you see. The folder list
-  next to it holds that workspace's folders, and picking another
+  next to it holds that workspace's folders with a job, every one you
+  see, also the ones the sidebar leaves out: a checkout the
+  workspace's `.gitignore` ignores, a folder below a project or a
+  workspace with **Recursive** off, a folder hidden from the sidebar.
+  A folder with no job isn't listed. Picking another
   workspace clears the folder and the job. A step you edit opens on the
   workspace of its folder.
 - A **Command** picks its workspace, then its folder, the job and its

@@ -142,6 +142,7 @@ func (h *Handlers) workflowNew(w http.ResponseWriter, r *http.Request) {
 	p.Crumbs = view.Crumbs("Workflows", "/workflows", "New")
 	p.Step = view.StepWorkflows
 	p.StepWorkflows = p.SideWorkflows
+	p.StepFolders = h.stepFolders(r)
 	p.WorkspaceList = h.workspaceList(r.Context())
 	h.hostJobs(r, p)
 	h.render(w, http.StatusOK, "workflow_new", p)
@@ -290,9 +291,26 @@ func (h *Handlers) workflowEdit(w http.ResponseWriter, r *http.Request) {
 	p.Crumbs = view.Crumbs("Workflows", "/workflows", p.Workflow.Name, "/workflows/"+p.Workflow.ID, "Edit")
 	p.Step = view.StepWorkflows
 	p.StepWorkflows = h.stepWorkflows(r.Context(), p, p.Workflow.ID)
+	p.StepFolders = h.stepFolders(r)
 	p.WorkspaceList = h.workspaceList(r.Context())
 	h.hostJobs(r, p)
 	h.render(w, http.StatusOK, "workflow_edit", p)
+}
+
+// stepFolders returns the folders with a job the user sees that a workflow step may pick.
+func (h *Handlers) stepFolders(r *http.Request) []*folder.Folder {
+	c := h.opts.Steps
+	if c == nil {
+		c = h.opts.Catalogue
+	}
+	user := access.UserFrom(r.Context())
+	result := []*folder.Folder{}
+	for _, f := range c.List() {
+		if len(f.Jobs) > 0 && user.CanSee(f.ID) {
+			result = append(result, f)
+		}
+	}
+	return result
 }
 
 // seesPlace reports whether the user sees the place a prompt ran in:

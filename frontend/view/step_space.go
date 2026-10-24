@@ -15,14 +15,14 @@ type StepSpace struct {
 	Title string
 }
 
-// StepSpaces lists the default workspace, then by rank each one holding a folder the user sees.
+// StepSpaces lists the default workspace, then by rank each one holding a folder of StepFolders.
 func (p *Page) StepSpaces() []StepSpace {
 	titles := map[string]string{}
 	for _, ws := range p.WorkspaceList {
 		titles[ws.Folder] = ws.Title
 	}
 	seen := map[string]bool{}
-	for _, f := range p.Folders {
+	for _, f := range p.StepFolders {
 		if ws := p.workspaceOf(f.ID); ws != model.Default {
 			seen[ws] = true
 		}
