@@ -6,9 +6,6 @@
 		<p>A directory of <a href="{{ $.Href $p.ID }}">{{ $p.ID }}</a>.{{ if $.Place }} Its jobs run in {{ $p.ID }}/{{ .Browse }}, under the rules of {{ $p.ID }}.{{ else if $.JobGroups }} It has no pipeline file, Makefile, package scripts or scripts folder of its own; the jobs below run here, under the rules of {{ $p.ID }}.{{ else }} Nothing to run here: no pipeline file, Makefile, package scripts or scripts folder.{{ end }}</p>
 	</div>
 	<div class="actions">
-		{{- with $.Place }}
-		<span class="dim nowrap">{{ range .Sources }}<span class="badge">{{ .Kind }}</span> {{ end }}</span>
-		{{- end }}
 		{{- if $.Pinning }}
 		{{ template "menu" (menu (print "Actions on " $.BrowseID) ($.PinItem $.BrowseID "" "" "folder")) }}
 		{{- end }}

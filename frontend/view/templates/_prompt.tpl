@@ -6,12 +6,13 @@
      about the run, with its output, and lists the threads about it; one
      who only reads prompts sees those threads without the box, a running
      run's box hidden until a thread about it comes. A workflow run's box
-     lists the threads of its prompt and summary steps alone. Open on a
-     workspace's page, a run's page and where a thread exists, folded
-     elsewhere. */}}
+     lists the threads of its prompt and summary steps alone, open while
+     the run goes and folded once it ends, when the thread above it has
+     what Claude replied. Open on a workspace's page, a run's page and where a thread exists,
+     folded elsewhere. */}}
 {{- define "promptbox" }}
 {{- with .Prompt }}
-<details class="promptbox"{{ if or .Open .Threads }} open{{ end }}{{ if and .Watch (not .Threads) }} hidden{{ end }}>
+<details class="promptbox"{{ if or .Open (and .Threads (not .WorkflowRun)) }} open{{ end }}{{ if and .Watch (not .Threads) }} hidden{{ end }}>
 	{{- if .Area }}
 	<summary><h3 class="section-title"><svg class="ic chev"><use href="#i-chev"/></svg>Prompt <small>Claude Code builds or changes a workflow with the task tools, runs it and answers with its link</small></h3></summary>
 	{{- else if .WorkflowRun }}

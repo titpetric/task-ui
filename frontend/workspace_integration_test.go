@@ -63,7 +63,7 @@ func TestWorkspaceEdit(t *testing.T) {
 	ctx := context.Background()
 	assert.NoError(t, f.opts.Workspaces.Create(ctx, &model.Workspace{Folder: "malta", Title: "Malta", Description: "The org"}))
 	body := f.page(t, asAdmin, "/settings/workspaces/malta")
-	assert.Contains(t, body, "<h2>Configure malta</h2>")
+	assert.Contains(t, body, `<h2>Workspace settings <span class="badge">malta</span></h2>`)
 	assert.Contains(t, body, `data-api="/api/workspaces/malta" data-method="PUT"`)
 	assert.Contains(t, body, `value="Malta"`)
 	assert.Contains(t, body, `value="The org"`)

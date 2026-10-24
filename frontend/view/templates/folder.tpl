@@ -6,7 +6,6 @@
 		{{- if $p.Description }}<p>{{ $p.Description }}</p>{{ end }}
 	</div>
 	<div class="actions">
-		<span class="dim nowrap">{{ range $p.Sources }}<span class="badge">{{ .Kind }}</span> {{ end }}</span>
 		{{- with $.FolderMenu }}
 		{{ template "menu" (menu (print "Actions on " $p.Title)
 			(and .Workspace ($.Can "workspace/view") (item "settings" "Workspace settings" "href" .Settings))
@@ -16,7 +15,7 @@
 			(and (not $default) $.Pinning ($.PinItem $p.ID "" "" .Kind))
 			(and (not $default) (or .Workspace .Project) ($.Can "env/edit") (item "plus" "Add env file" "href" (print ($.Href $p.ID) "/env")))
 			(and .Pull ($.CanRun $p .Pull) (item "download" "Pull now" "data-run" "" "data-folder" $p.ID "data-dir" .Pull.Dir "data-job" .Pull.ID "data-title" (print $p.ID " / " .Pull.Name)))
-			(and .Project $.Checkout ($.Can "project/delete") (danger "trash" "Remove checkout" "data-delete" (print "/api/projects/" .ID) "data-confirm" (removeConfirm .ID $.Checkout.Remote) "data-confirm-ok" "Remove" "data-next" (print "/settings/projects?notice=" (urlquery "Removed " .ID))))
+			(and .Project $.Checkout ($.Can "project/delete") (danger "trash" "Remove checkout" "data-delete" (print "/api/projects/" .ID) "data-confirm" (removeConfirm .ID $.Checkout.Remote) "data-confirm-ok" "Remove checkout" "data-next" (print "/settings/projects?notice=" (urlquery "Removed " .ID))))
 		) }}
 		{{- end }}
 	</div>

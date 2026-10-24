@@ -2,7 +2,7 @@
 <div class="page-head">
 	<div>
 		<h2>Projects</h2>
-		<p>The folders under the root. task-ui pulls a git checkout before every run.</p>
+		<p>The folders under the root, a block per workspace. task-ui pulls a git checkout before every run.</p>
 	</div>
 	{{- if .Can "project/edit" }}
 	<div class="actions">
@@ -11,8 +11,11 @@
 	{{- end }}
 </div>
 
+{{- range .ProjectGroups }}
 <section class="block">
-	{{- template "blockhead" (head "Projects" (print "under " .Root) (and (not .Entries) "No projects yet: add one from a git repository, or put a folder with jobs under the root.")) }}
+	{{- template "blockhead" (head .Title (.Note $.Root) (and (not .Entries) .Empty)
+		(and (not .Default) ($.Can "project/edit") (item "plus" "Add project" "href" (print "/settings/projects/new?workspace=" .Workspace)))) }}
 	{{- with .Entries }}{{ template "projecttable" (list $ .) }}{{ end }}
 </section>
+{{- end }}
 {{ end }}

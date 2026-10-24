@@ -18,7 +18,7 @@ row's **⋯** menu; "Delete" and "Remove" are in red, last.
 | Add workflow | `/workflows/new` | none | none | none | name and steps, Cancel and Save | none |
 | Workflow | `/workflows/<id>` | its pipeline and its runs, each with its state dot and its answer folded under a chevron | **Run** or **Stop**, Edit | runs: the chevron, **View**, `[...]` | the runs' filter | "Not run yet." |
 | Edit workflow | `/workflows/<id>/edit` | the steps | `[...]`: Open, Delete | a step's `[...]`: Move up, Move down, Duplicate, Remove | the step editor, Save | none |
-| Workflow run | `/workflows/<id>/runs/<run>` | the steps of a run, each its run | none | **View** on a step | none | none |
+| Workflow run | `/workflows/<id>/runs/<run>` | the run's thread, its question and answer, the steps of the run, each its run, and Prompts, the threads of its prompt and summary steps, open while it runs and folded once it ends | none | **View** on a step | none | none |
 | Artifacts | `/artifacts` | Space, Files of the tree, History | `[...]`: Delete all | Files and History: `[...]`: open, download, copy the link, Delete | the History filter | "This folder is empty.", "No artifacts yet." |
 | Artifact file | `/artifacts/files/<path>?version=` | the file itself, inline; `?download` saves it; a directory goes to its listing | none | none | none | none |
 | Artifact archive | `/artifacts.tgz`, `/artifacts/<directory>.tgz` | the tree, or a directory of it, as a `.tgz` of the files you see | none | none | none | none |
@@ -31,8 +31,8 @@ row's **⋯** menu; "Delete" and "Remove" are in red, last.
 
 | Page | Path | Lists | Head, top right | Row actions | Forms | Empty |
 |------|------|-------|-----------------|-------------|-------|-------|
-| Workspace, project or folder | `/f/<workspace>/<folder>` | the git line, Jobs (a row per job source under its file, as `atkins.yml` or `task/atkins.yml`, then the files, skills and built-ins, each with a named button per job), Files, on a workspace Home, its home project's files, the folder's details, Environment when a user filled an env file, its block head with **Add env file** | source badges, `[...]`: Pin or Unpin, Workspace or Project settings, a workspace's SSH keys and Secrets, Add env file, Pull now, Remove checkout | a job: its named button, Run, Attach or `#!`; a Jobs row: `[...]`: Run and summarize, View the last run, Summary, History, Pin or Unpin, Run force, Kill; a file: `[...]`; an env file: `[...]` Edit | the Prompt box | "No targets in <file>."; no env file, no Environment section |
-| Directory | `/f/<folder>/<dir>` | the git line, Jobs, Files | source badges, `[...]`: Pin or Unpin | as a folder's | the Prompt box | none |
+| Workspace, project or folder | `/f/<workspace>/<folder>` | the git line, Jobs (a row per job source under its file, as `atkins.yml` or `task/atkins.yml`, then the files, skills and built-ins, each with a named button per job), Files, on a workspace Home, its home project's files, the folder's details, Environment when a user filled an env file, its block head with **Add env file** | `[...]`: Pin or Unpin, Workspace or Project settings, a workspace's SSH keys and Secrets, Add env file, Pull now, Remove checkout | a job: its named button, Run, Attach or `#!`; a Jobs row: `[...]`: Run and summarize, View the last run, Summary, History, Pin or Unpin, Run force, Kill; a file: `[...]`; an env file: `[...]` Edit | the Prompt box | "No targets in <file>."; no env file, no Environment section |
+| Directory | `/f/<folder>/<dir>` | the git line, Jobs, Files | `[...]`: Pin or Unpin | as a folder's | the Prompt box | none |
 | Job | `/f/<folder>/<job>` | the job, History, Schedules | **Run**, or **Attach** and Kill | History: **View** or **Attach**, `[...]`; Schedules: `[...]` | **Add schedule** | "No runs yet.", "Not scheduled." |
 | Env file | `/f/<folder>/env/<path>`, `/f/<folder>/env` to add | the file, the secrets appended | none | none | the path when adding, the content, Cancel and **Save** | "No secrets reach this folder." |
 | Checkout file | `/files/<path>` | the file in the preview window | none | none | none | none |
@@ -56,13 +56,13 @@ row's **⋯** menu; "Delete" and "Remove" are in red, last.
 | Permissions | `/settings/permissions` | a matrix per role | none | none | the matrices, Save | none |
 | Workspaces | `/settings/workspaces` | the workspaces, their home projects and projects | Import, **Add workspace** | `[...]`: Open, Workspace settings, Move up, Move down, Delete | Import in a dialog | none: `_` always lists |
 | Add workspace | `/settings/workspaces/new` | none | none | none | folder, home project URL and folder, title, branch, Cancel and Add workspace | none |
-| Workspace | `/settings/workspaces/<folder>`, `_` too | Settings, Home project, Projects, Keys | **Add project**, Export, `[...]`: Open, Delete | Home project: Change, Add or Replace, Remove; Projects: the projects table; Keys: the keys table | Settings, Cancel and Save; Change and Replace in dialogs; Export in a dialog | "No home project." beside **Change** and **Add**; "No projects in <folder> yet."; "No keys added." beside **Upload key** and **Generate key** |
+| Workspace settings | `/settings/workspaces/<folder>`, `_` too | Settings, Home project, Projects, Keys | **Add project**, Export, `[...]`: Open, Delete | Home project: Change, Add or Replace, Remove; Projects: the projects table; Keys: the keys table | Settings, Cancel and Save; Change and Replace in dialogs; Export in a dialog | "No home project." beside **Change** and **Add**; "No projects in <folder> yet."; "No keys added." beside **Upload key** and **Generate key** |
 | Workspace keys | `/settings/workspaces/<folder>/keys` | the workspace's SSH keys | **Upload key**, **Generate key**, `[...]`: Open, Workspace settings, Secrets | the keys table, Edit links in a dialog | Upload, Generate and Edit links in dialogs | "No keys added." |
 | Workspace secrets | `/settings/workspaces/<folder>/secrets` | the workspace's secrets by project | **Add secret**, `[...]`: Open, Workspace settings, SSH keys, Every workspace's secrets | `[...]`: Replace the value in a dialog, Reads, Delete | Add secret and Replace in dialogs | "No secrets in <folder> yet." |
 | Workspace key | `/settings/workspaces/<folder>/keys/upload`, `/generate`, `/<name>` | none | none | none | as the instance key's forms | none |
-| Projects | `/settings/projects` | every project under the root | **Add project** | the projects table: `[...]`: Open, Project settings, Remove checkout | none | "No projects yet." |
+| Projects | `/settings/projects` | a block per workspace: the folders at the top of the root, then each workspace's projects | **Add project** | a workspace's block: **Add project** into it; the projects table: `[...]`: Open, Project settings, Pull now, Remove checkout | none | "No projects yet.", "No projects in <folder> yet." |
 | Add project | `/settings/projects/new`, `?workspace=<folder>` | none | none | none | repository, folder, workspace, branch, Cancel and Clone | none |
-| Project | `/settings/projects/<folder>` | its jobs' rules | `[...]`: Remove checkout | none | title, who can run, workspace, sources, hours, per job, Cancel and Save | none |
+| Project settings | `/settings/projects/<folder>` | its jobs' rules | `[...]`: Remove checkout | none | title, who can run, workspace, sources, hours, per job, Cancel and Save | none |
 
 ## You
 
@@ -79,7 +79,7 @@ row's **⋯** menu; "Delete" and "Remove" are in red, last.
 | Keys table | `keyhead`, `keyrow` | Keys, Instance, a workspace's page and its SSH keys page, Your SSH keys, a profile |
 | Secrets table | `secretgroup`, `secretrow`, `secretfields` | Secrets, Add secret and Replace, a workspace's secrets page |
 | Files table | `tree`, `filetable` | a folder's Files and a workspace's Home, a directory's page |
-| Projects table | `projecttable` | Projects, a workspace's page |
+| Projects table | `projecttable` | each block of Projects, a workspace's page |
 | Block head | `blockhead`, from `head` | a block's title, its note, its buttons and the line of an empty list |
 | Buttons | `buttons` | the buttons of a block head |
 | Copy | `copyable` | a public key, an ssh login, the MCP links and command, a token shown once |

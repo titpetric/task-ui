@@ -8,6 +8,7 @@ import (
 
 	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/frontend/view"
+	"github.com/titpetric/task-ui/git"
 	"github.com/titpetric/task-ui/internal/assert"
 	"github.com/titpetric/task-ui/keystore"
 	"github.com/titpetric/task-ui/model"
@@ -84,6 +85,7 @@ func TestHead_WorkspacePage(t *testing.T) {
 	p.Nested = map[string][]string{"acme": {"acme/api"}}
 	p.KeysDir = "/keys"
 	p.Entries = []folder.Entry{{ID: "acme/api", Sources: []string{"atkins.yml"}, Jobs: 2}}
+	p.ProjectGroups = view.ProjectGroups(p.Entries, []model.Workspace{{Folder: "acme"}})
 	body := render(t, "workspace_edit", p)
 	assert.Equal(t, projectTable(t, render(t, "projects", p)), projectTable(t, body))
 	assert.Contains(t, body, `href="/settings/projects/acme/api"><svg class="ic"><use href="#i-settings"/></svg><span>Project settings</span>`)
@@ -125,4 +127,57 @@ func TestHead_CreateActions(t *testing.T) {
 		head = head[:strings.Index(head, "\n</div>")]
 		assert.Contains(t, head, add, page)
 	}
+}
+
+// The Projects page is a block per workspace, the root's first: each
+// with the projects table, a workspace's with its own small Add project
+// into it, an empty one with its line and no table. A row's [...] opens
+// the folder, its Project settings and, with a pull job the user may
+// run, Pull now; a remote fits its column and shows whole on a hover.
+func TestHead_ProjectsPage(t *testing.T) {
+	t.Parallel()
+
+	p := admin(t)
+	p.Root = "/srv"
+	p.Workspaces = map[string]int{"acme": 1}
+	entries := []folder.Entry{
+		{ID: "infra", Sources: []string{"atkins.yml"}, Jobs: 2},
+		{ID: "acme/api", Sources: []string{"atkins.yml"}, Jobs: 2, Checkout: &git.Info{Remote: "ssh://git@git.example:2222/acme/api.git", Branch: "main"}},
+	}
+	p.Entries = entries
+	p.ProjectGroups = view.ProjectGroups(entries, []model.Workspace{{Folder: model.Default}, {Folder: "acme"}, {Folder: "labs"}})
+	pull := &folder.Job{Folder: "acme/api", ID: "@git:pull", Dir: ""}
+	pull.Name = "pull"
+	p.Pulls = map[string]*folder.Job{"acme/api": pull}
+	body := render(t, "projects", p)
+
+	root, acme := strings.Index(body, `<h3>Projects <small>at the top of /srv</small></h3>`), strings.Index(body, `<h3>acme <small>inside acme/</small></h3>`)
+	labs := strings.Index(body, `<h3>labs <small>inside labs/</small></h3>`)
+	assert.True(t, root > 0 && acme > root && labs > acme, "the root's block, then each workspace's")
+	assert.Equal(t, 2, strings.Count(body, `<table class="table projects cards">`), "two blocks with rows, the empty one without a table")
+	assert.Contains(t, body[labs:], `<p class="empty-line">No projects in labs yet.</p>`)
+	assert.Contains(t, body[acme:labs], `<a class="btn btn-sm" href="/settings/projects/new?workspace=acme">`)
+	assert.NotContains(t, body[root:acme], `href="/settings/projects/new?workspace=_"`)
+
+	api := body[acme:labs]
+	assert.Contains(t, api, `<span class="remote mono" title="ssh://git@git.example:2222/acme/api.git">ssh://git@git.example:2222/acme/api.git</span>`)
+	assert.Contains(t, api, `href="/f/acme/api"><svg class="ic"><use href="#i-folder-open"/></svg><span>Open</span>`)
+	assert.Contains(t, api, `data-run="" data-folder="acme/api" data-dir="" data-job="@git:pull" data-title="acme/api / pull"`)
+	assert.Contains(t, api, `<span>Pull now</span>`)
+	assert.NotContains(t, body[root:acme], `Pull now`)
+}
+
+// The settings page of a project and of a workspace takes the title of
+// the menu item that opens it, with the folder as a badge, and Remove
+// checkout confirms with its own label.
+func TestHead_SettingsTitles(t *testing.T) {
+	t.Parallel()
+
+	p := admin(t)
+	p.Checkout = &git.Info{Remote: "ssh://git@git.example/infra.git"}
+	body := render(t, "project_edit", p)
+	assert.Contains(t, body, `<h2>Project settings <span class="badge">infra</span></h2>`)
+	assert.Contains(t, body, `data-confirm-ok="Remove checkout"`)
+	assert.NotContains(t, body, `data-confirm-ok="Remove"`)
+	assert.Contains(t, render(t, "workspace_edit", p), `<h2>Workspace settings <span class="badge">malta</span></h2>`)
 }

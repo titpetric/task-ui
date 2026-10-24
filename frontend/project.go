@@ -13,7 +13,8 @@ import (
 	"github.com/titpetric/task-ui/model"
 )
 
-// projects lists the directories under the root.
+// projects lists the directories under the root, a block per
+// workspace.
 func (h *Handlers) projects(w http.ResponseWriter, r *http.Request) {
 	if !h.require(w, r, "project/view") {
 		return
@@ -23,8 +24,30 @@ func (h *Handlers) projects(w http.ResponseWriter, r *http.Request) {
 	p.Step = view.StepProjects
 	p.Root = h.opts.Root
 	p.Entries = folder.Entries(h.opts.Root, h.opts.Git, h.workspaceFolders(r.Context()))
+	p.ProjectGroups = view.ProjectGroups(p.Entries, h.workspaceList(r.Context()))
 	h.measure(p)
+	h.pulls(p)
 	h.render(w, http.StatusOK, "projects", p)
+}
+
+// pulls puts the pull job of each entry of a page on it, for the
+// entries the catalogue holds whose git skill has one and that the user
+// may run: Pull now in the row's menu.
+func (h *Handlers) pulls(p *view.Page) {
+	for _, entry := range p.Entries {
+		f := h.opts.Catalogue.Find(entry.ID)
+		if f == nil {
+			continue
+		}
+		job := pullJob(f.Skills())
+		if job == nil || !p.CanRun(f, job) {
+			continue
+		}
+		if p.Pulls == nil {
+			p.Pulls = map[string]*folder.Job{}
+		}
+		p.Pulls[entry.ID] = job
+	}
 }
 
 // measure puts the size on disk of each entry of a page on it, nothing
@@ -66,7 +89,7 @@ func (h *Handlers) projectEdit(w http.ResponseWriter, r *http.Request) {
 		}
 		f = &folder.Folder{ID: id, Title: id}
 	}
-	p := h.page(r, "Configure "+id)
+	p := h.page(r, "Project settings: "+id)
 	p.Folder = f
 	p.Crumbs = view.Crumbs("Settings", "/settings", "Projects", "/settings/projects", id)
 	p.Step = view.StepProjects

@@ -14,7 +14,7 @@
 <form class="form" data-api="/api/env/{{ $p.ID }}/{path}" data-method="PUT" data-next="{{ $.Href $p.ID }}?notice=Saved+{path}">
 	<div class="field">
 		<label for="env-path">Path <span class="faint">relative to the folder, such as .env</span></label>
-		<input id="env-path" name="path" required spellcheck="false" autocomplete="off" placeholder=".env">
+		<input type="text" id="env-path" name="path" required spellcheck="false" autocomplete="off" placeholder=".env">
 	</div>
 {{- end }}
 	<div class="field">

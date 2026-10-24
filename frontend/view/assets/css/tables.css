@@ -217,3 +217,27 @@ table.table-kv th {
     width: auto;
   }
 }
+
+/* The projects table's Origin takes the width the other columns leave,
+   a long remote on one line, cut with an ellipsis and whole on a hover,
+   its branch badge under it; a phone's card lays the two out beside the
+   label. */
+.table.projects {
+  & td.origin {
+    max-width: 0;
+    min-width: 9rem;
+  }
+
+  & .remote {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 860px) {
+  .table.projects td.origin {
+    max-width: none;
+  }
+}

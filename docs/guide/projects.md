@@ -50,7 +50,7 @@ project at the top of the root, `_`, or inside a named workspace (see
 
 ## Move a project to another workspace
 
-A project's configure page, **Settings**, **Projects**, then the
+A project's settings page, **Settings**, **Projects**, then the
 project, has the same **Workspace** select, on the workspace the
 project is in. Pick another one and **Save** moves it: `web` in `_`
 becomes `acme/web` in `acme`, and `acme/web` picked back to `_` becomes
@@ -177,7 +177,7 @@ Open a folder from the sidebar:
 - **The `[...]` menu** at the top right of a project's or a workspace's
   page, `/f/_` among them, behind the rule of each item:
   - **Project settings**, with `project/view`, or **Workspace
-    settings**, with `workspace/view`, opens the configure page, the
+    settings**, with `workspace/view`, opens the settings page, the
     one **Project settings** in **Settings**, **Projects** opens;
   - **Pull now**, on a checkout with the `git` skill, for a user who
     may run the folder's jobs, runs `@git:pull` there;
@@ -185,7 +185,7 @@ Open a folder from the sidebar:
     checkout, with `project/delete`, asks `Remove the folder apps and
     its checkout? You can clone it again from <remote>.`, deletes the
     folder with its files and its configuration, and goes on to
-    **Projects** with a notice. The project's configure page has the
+    **Projects** with a notice. The project's settings page has the
     same item in its `[...]` menu.
 
   - **Pin** or **Unpin**, the workspace, the project or the folder, for
