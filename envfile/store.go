@@ -1,7 +1,3 @@
-// Package envfile manages the dotenv files a folder's sources read: the
-// content an admin edits, kept in storage, and the file generated into
-// the folder with the secrets appended before each run. A source file is
-// never written.
 package envfile
 
 import (
@@ -15,26 +11,24 @@ import (
 	"github.com/titpetric/task-ui/dotenv"
 	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/model"
-	"github.com/titpetric/task-ui/secret"
 	"github.com/titpetric/task-ui/storage"
 )
 
-// Marker separates the managed content from the secrets task-ui appends.
-// Reading a generated file back drops everything after it.
+// Marker separates the filled content from the secrets task-ui appends.
 const Marker = "# --- task-ui secrets, generated before each run ---"
 
-// Store reads and writes the env files of folders. When it generates them
-// for a run, a file storage never managed and the folder lacks holds the
-// secrets alone.
+// Store writes the env files users fill into their folders. It never
+// reads a folder's sources or files: a folder has the env files a user
+// filled for it and nothing else.
 type Store struct {
-	// Managed holds the content saved from the UI.
-	Managed *storage.EnvFileStorage
-	// Secrets holds what Generate appends.
-	Secrets *secret.Store
+	// Managed holds the content users fill.
+	Managed Rows
+	// Secrets returns what a written file carries after the content.
+	Secrets Secrets
 }
 
-// New returns the store over the two storages it reads.
-func New(managed *storage.EnvFileStorage, secrets *secret.Store) *Store {
+// New returns the store over the rows and the secrets it reads.
+func New(managed Rows, secrets Secrets) *Store {
 	return &Store{Managed: managed, Secrets: secrets}
 }
 
@@ -52,91 +46,97 @@ func SafeRelative(path string) (string, error) {
 	return clean, nil
 }
 
-// File returns a folder's env file as task-ui sees it: the managed
-// content when there is one, the folder's own file otherwise.
+// File returns a folder's env file with the content a user filled, empty
+// for a file nobody filled; an unsafe path or a storage failure errs.
 func (s *Store) File(ctx context.Context, f *folder.Folder, path string) (File, error) {
 	rel, err := SafeRelative(path)
 	if err != nil {
 		return File{}, err
 	}
-	file := File{Folder: f.ID, Path: rel}
-	managed, err := s.Managed.Get(ctx, model.EnvFile{Folder: f.ID, Path: rel})
-	if err == nil {
-		file.Managed = true
-		file.Content = managed.Content
-	} else if !errors.Is(err, storage.ErrNotFound) {
+	row, err := s.Managed.Get(ctx, model.EnvFile{Folder: f.ID, Path: rel})
+	switch {
+	case errors.Is(err, storage.ErrNotFound):
+		return File{Folder: f.ID, Path: rel}, nil
+	case err != nil:
 		return File{}, err
 	}
-	if data, err := os.ReadFile(filepath.Join(f.Dir, rel)); err == nil {
-		file.Exists = true
-		if !file.Managed {
-			file.Content = StripGenerated(string(data))
-		}
-	}
-	vars, _ := dotenv.Parse(strings.NewReader(file.Content))
-	file.Keys = dotenv.Keys(vars)
-	return file, nil
+	return File{Folder: f.ID, Path: rel, Content: row.Content}, nil
 }
 
-// Files returns the env files a folder reads.
+// Files returns the env files users filled for a folder, none when
+// storage fails.
 func (s *Store) Files(ctx context.Context, f *folder.Folder) []File {
-	result := []File{}
-	for _, path := range f.EnvFiles {
-		file, err := s.File(ctx, f, path)
-		if err != nil {
-			continue
-		}
-		result = append(result, file)
+	rows, err := s.Managed.List(ctx, f.ID)
+	if err != nil {
+		return []File{}
+	}
+	result := make([]File, 0, len(rows))
+	for _, row := range rows {
+		result = append(result, File{Folder: f.ID, Path: row.Path, Content: row.Content})
 	}
 	return result
 }
 
-// Save stores the managed content of a folder's env file and generates
-// the file in the folder.
+// Save keeps the content of a folder's env file and writes the file in
+// the folder; no content deletes the row and the written file.
 func (s *Store) Save(ctx context.Context, f *folder.Folder, file File) error {
 	rel, err := SafeRelative(file.Path)
 	if err != nil {
 		return err
 	}
 	content := strings.ReplaceAll(file.Content, "\r\n", "\n")
-	if content != "" && !strings.HasSuffix(content, "\n") {
+	if strings.TrimSpace(content) == "" {
+		return s.clear(ctx, f, rel)
+	}
+	if !strings.HasSuffix(content, "\n") {
 		content += "\n"
 	}
 	if err := s.Managed.Set(ctx, &model.EnvFile{Folder: f.ID, Path: rel, Content: content}); err != nil {
 		return err
 	}
-	return s.generate(ctx, f, rel)
+	return s.write(ctx, f, rel, content)
 }
 
-// StripGenerated returns the content before the secrets marker.
-func StripGenerated(content string) string {
-	if i := strings.Index(content, Marker); i >= 0 {
-		return strings.TrimRight(content[:i], "\n") + "\n"
+// clear deletes the row of a file and the file task-ui wrote from it.
+func (s *Store) clear(ctx context.Context, f *folder.Folder, rel string) error {
+	row, err := s.Managed.Get(ctx, model.EnvFile{Folder: f.ID, Path: rel})
+	switch {
+	case errors.Is(err, storage.ErrNotFound):
+		return nil
+	case err != nil:
+		return err
 	}
-	return content
+	if err := s.Managed.Delete(ctx, row.ID); err != nil {
+		return err
+	}
+	if err := os.Remove(filepath.Join(f.Dir, rel)); err != nil && !errors.Is(err, os.ErrNotExist) {
+		return err
+	}
+	return nil
 }
 
-// Generate writes each env file a folder reads into the folder, with the secrets appended, ready for a run.
+// Generate writes each env file a user filled for the folder, with the
+// secrets appended, ready for a run.
 func (s *Store) Generate(ctx context.Context, f *folder.Folder) error {
+	rows, err := s.Managed.List(ctx, f.ID)
+	if err != nil {
+		return err
+	}
 	var failures []error
-	for _, path := range f.EnvFiles {
-		rel, err := SafeRelative(path)
+	for _, row := range rows {
+		rel, err := SafeRelative(row.Path)
 		if err != nil {
 			failures = append(failures, err)
 			continue
 		}
-		if err := s.generate(ctx, f, rel); err != nil {
+		if err := s.write(ctx, f, rel, row.Content); err != nil {
 			failures = append(failures, err)
 		}
 	}
 	return errors.Join(failures...)
 }
 
-func (s *Store) generate(ctx context.Context, f *folder.Folder, rel string) error {
-	file, err := s.File(ctx, f, rel)
-	if err != nil {
-		return err
-	}
+func (s *Store) write(ctx context.Context, f *folder.Folder, rel, content string) error {
 	secrets, err := s.Secrets.For(ctx, f.ID)
 	if err != nil {
 		return err
@@ -145,10 +145,10 @@ func (s *Store) generate(ctx context.Context, f *folder.Folder, rel string) erro
 	if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil {
 		return err
 	}
-	return os.WriteFile(target, []byte(Render(file.Content, secrets)), 0o600)
+	return os.WriteFile(target, []byte(Render(content, secrets)), 0o600)
 }
 
-// Render joins the managed content and the secrets into what the folder
+// Render joins the filled content and the secrets into what the folder
 // file holds.
 func Render(content string, secrets map[string]string) string {
 	content = strings.TrimRight(content, "\n")

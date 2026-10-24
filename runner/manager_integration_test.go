@@ -31,6 +31,8 @@ type fixture struct {
 	runs    *storage.RunStorage
 	files   *storage.ArtifactStorage
 	secrets *secret.Store
+	// env keeps the env files users fill, written before each run.
+	env *storage.EnvFileStorage
 	// reads log which run got which secret.
 	reads *storage.SecretReadStorage
 	root  string
@@ -59,7 +61,7 @@ func newFixture(t *testing.T) *fixture {
 	assert.NoError(t, err)
 	secrets := secret.New(storage.NewSecretStorage(db), secret.NewVault(keys.Vault(storage.ScopeInstance)))
 	f := &fixture{
-		runs: runs, files: artifacts, secrets: secrets, reads: storage.NewSecretReadStorage(db), root: t.TempDir(),
+		runs: runs, files: artifacts, secrets: secrets, env: storage.NewEnvFileStorage(db), reads: storage.NewSecretReadStorage(db), root: t.TempDir(),
 		workspaces: storage.NewWorkspaceStorage(db), keys: keys,
 		summaries: storage.NewRunSummaryStorage(db), recordings: &recording.Store{Root: t.TempDir()},
 	}
@@ -75,7 +77,7 @@ func newFixture(t *testing.T) *fixture {
 		Summaries:    f.summaries,
 		Secrets:      secrets,
 		SecretReads:  f.reads,
-		Env:          envfile.New(storage.NewEnvFileStorage(db), secrets),
+		Env:          envfile.New(f.env, secrets),
 		Git:          &git.Git{},
 		Recordings:   f.recordings,
 		ArtifactRoot: t.TempDir(),

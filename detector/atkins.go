@@ -103,11 +103,9 @@ func fromListing(dir, name string, listing skills.Listing) *Source {
 	source.Name = section.Desc
 	source.Description = strings.TrimSpace(section.Help)
 	source.Includes = appendUnique(nil, section.Include...)
-	source.EnvFiles = appendUnique(nil, section.Env...)
 
 	for _, cmd := range section.Cmds {
 		if target := atkinsTarget(cmd); target != nil {
-			source.EnvFiles = appendUnique(source.EnvFiles, target.EnvFiles...)
 			source.Targets = append(source.Targets, target)
 		}
 	}
@@ -188,6 +186,5 @@ func atkinsTarget(cmd skills.Command) *Target {
 		Exec:        cmd.Exec,
 		Steps:       cmd.Steps,
 		DependsOn:   cmd.DependsOn,
-		EnvFiles:    cmd.Env,
 	}
 }

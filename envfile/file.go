@@ -1,27 +1,11 @@
 package envfile
 
-// File is a dotenv file a folder reads, as task-ui manages it.
+// File is a dotenv file a user filled for a folder, which task-ui writes
+// into the folder before each run.
 type File struct {
 	Folder string `json:"folder"`
-	// Path is the file path relative to the folder, as the source names it.
+	// Path is the file path relative to the folder.
 	Path string `json:"path"`
-	// Managed reports whether the UI holds a saved copy of the content.
-	Managed bool `json:"managed"`
-	// Exists reports whether the file is present in the folder.
-	Exists bool `json:"exists"`
-	// Content is the managed content, or the folder's file when not managed.
+	// Content is what the user filled, never in JSON.
 	Content string `json:"-"`
-	// Keys are the variable names the content declares.
-	Keys []string `json:"keys"`
-}
-
-// State names what the folder page shows for the file.
-func (f File) State() string {
-	switch {
-	case f.Managed:
-		return "managed"
-	case f.Exists:
-		return "in folder"
-	}
-	return "missing"
 }

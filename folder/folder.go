@@ -33,9 +33,6 @@ type Folder struct {
 
 	// Includes are the files the sources read into their variables.
 	Includes []string `json:"includes,omitempty"`
-	// EnvFiles are the dotenv files the sources read, relative to Dir.
-	// These are the files task-ui can manage.
-	EnvFiles []string `json:"env_files,omitempty"`
 
 	// Allow lists the users and roles that may run this folder's jobs,
 	// from the configuration. Empty allows every runner.

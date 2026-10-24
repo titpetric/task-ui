@@ -16,10 +16,8 @@ type Section struct {
 	// Help is the pipeline's own account of its purpose, its help: block.
 	Help string `json:"help,omitempty"`
 
-	// Include are the files the section reads into its variables, and
-	// Env the dotenv files it reads into the environment.
+	// Include are the files the section reads into its variables.
 	Include []string `json:"include,omitempty"`
-	Env     []string `json:"env,omitempty"`
 
 	Cmds []Command `json:"cmds"`
 }

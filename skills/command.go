@@ -22,9 +22,6 @@ type Command struct {
 	// Steps are the step labels, the lines a run prints under the job.
 	Steps []string `json:"steps,omitempty"`
 
-	// Env are the dotenv files the job reads on top of its section's.
-	Env []string `json:"env,omitempty"`
-
 	// Hidden reports a job the file hides from the job list with
 	// show: false. The listing keeps it so a reader knows it exists.
 	Hidden bool `json:"hidden,omitempty"`

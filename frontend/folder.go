@@ -77,6 +77,8 @@ func (h *Handlers) folderAt(w http.ResponseWriter, r *http.Request, path string)
 		h.job(w, r, f, fileJob(f, rest))
 	case dirJob(f, rest) != nil:
 		h.job(w, r, dirJob(f, rest), rest[strings.LastIndex(rest, "/")+1:])
+	case rest == "env":
+		h.envFile(w, r, f, "")
 	case !strings.Contains(rest, "/"):
 		h.job(w, r, f, rest)
 	default:

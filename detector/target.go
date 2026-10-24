@@ -26,8 +26,6 @@ type Target struct {
 	Steps []string `json:"steps,omitempty"`
 	// DependsOn names the targets that run first.
 	DependsOn []string `json:"depends_on,omitempty"`
-	// EnvFiles are the dotenv files this target reads on top of the source's.
-	EnvFiles []string `json:"env_files,omitempty"`
 }
 
 // Argv returns what follows the source command: Args, or the name.

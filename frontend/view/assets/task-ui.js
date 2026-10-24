@@ -1075,6 +1075,16 @@
     });
   }
 
+  // filledPath puts the form's fields in a data-api path the way filled
+  // does, a field's slashes kept as path separators: {path} of an env file.
+  function filledPath(target, data) {
+    if (!target) return target;
+    return target.replace(/\{(\w+)\}/g, function (all, name) {
+      var value = data && data[name] !== undefined ? String(data[name]) : "";
+      return value.split("/").map(encodeURIComponent).join("/");
+    });
+  }
+
   // reveal shows what an answer holds once, such as a new token, in the
   // block a form's data-reveal names, and hides what it replaces: the
   // block's section's [data-before-reveal]. Each [data-fill] there takes
@@ -1110,7 +1120,7 @@
       }
       body.steps = workflowSteps(form);
     }
-    api(method, form.dataset.api, body).then(function (res) {
+    api(method, filledPath(form.dataset.api, body), body).then(function (res) {
       if (res.status >= 300) {
         if (button) button.disabled = false;
         formError(form, (res.data.error || ("HTTP " + res.status)) + (res.data.output ? "\n\n" + res.data.output : ""));

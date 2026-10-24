@@ -7,24 +7,18 @@ import (
 
 // fileSpec is the subset of an atkins pipeline or a Taskfile that task-ui
 // reads. Both share `tasks:` with `desc`, `summary`, `aliases`, `internal`
-// and `interactive`; atkins adds `jobs:`, `name:`, `help:`, `include:` and
-// `env.include:`, Taskfiles add `dotenv:`. The decoder skips unknown keys,
-// so either file parses, and nothing task-ui needs is an extension.
+// and `interactive`; atkins adds `jobs:`, `name:`, `help:` and `include:`,
+// Taskfiles add `includes:`. The decoder skips unknown keys, `env:` and
+// `dotenv:` among them, so either file parses, and nothing task-ui needs
+// is an extension.
 type fileSpec struct {
 	Name    string     `yaml:"name"`
 	Help    string     `yaml:"help"`
 	Include stringList `yaml:"include"`
-	Env     envSpec    `yaml:"env"`
-	Dotenv  stringList `yaml:"dotenv"`
 	// Includes is the Taskfile map of namespace to included Taskfile.
 	Includes map[string]taskfileInclude `yaml:"includes"`
 	Jobs     map[string]jobSpec         `yaml:"jobs"`
 	Tasks    map[string]jobSpec         `yaml:"tasks"`
-}
-
-// envSpec is an atkins env declaration: `{vars, include}`.
-type envSpec struct {
-	Include stringList `yaml:"include"`
 }
 
 // taskfileInclude is one Taskfile include: a path, or a mapping with the
@@ -77,7 +71,6 @@ type jobSpec struct {
 	Cmds        []stepSpec `yaml:"cmds"`
 	DependsOn   stringList `yaml:"depends_on"`
 	Deps        []stepSpec `yaml:"deps"`
-	Env         envSpec    `yaml:"env"`
 }
 
 // UnmarshalYAML accepts the short forms: a job given as a single command

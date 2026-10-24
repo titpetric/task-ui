@@ -25,7 +25,7 @@ func TestManager_Secrets(t *testing.T) {
 	assert.NoError(t, f.secrets.Set(ctx, &model.Secret{Scope: storage.ScopeAll, Name: "REGION", Content: "eu"}))
 
 	req := f.shellJob("env", `echo "$GREETING" "$TASK_UI_FOLDER" "$TASK_UI_JOB" "$TASK_UI_USER"; test -d "$TASK_UI_ARTIFACTS"`, false)
-	req.Folder.EnvFiles = []string{".env"}
+	assert.NoError(t, f.env.Set(ctx, &model.EnvFile{Folder: req.Folder.ID, Path: ".env", Content: "MODE=test\n"}))
 	session, err := f.manager.Start(ctx, req)
 	assert.NoError(t, err)
 	out, status := collect(t, session.Attach(true))
@@ -48,7 +48,8 @@ func TestManager_Secrets(t *testing.T) {
 
 	data, err := os.ReadFile(filepath.Join(req.Folder.Dir, ".env"))
 	assert.NoError(t, err)
-	assert.Contains(t, string(data), "GREETING=\"hello from the folder\"", "the env file was generated")
+	assert.Contains(t, string(data), "MODE=test", "the filled env file was written")
+	assert.Contains(t, string(data), "GREETING=\"hello from the folder\"", "with the secrets appended")
 }
 
 // A request's Env reaches the run; the TASK_UI_ variables still win.

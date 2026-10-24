@@ -21,8 +21,6 @@ type Source struct {
 
 	// Includes are the files the source reads into its variables.
 	Includes []string `json:"includes,omitempty"`
-	// EnvFiles are the dotenv files the source reads, relative to the folder.
-	EnvFiles []string `json:"env_files,omitempty"`
 
 	Targets []*Target `json:"targets"`
 

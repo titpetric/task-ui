@@ -11,6 +11,7 @@
 		{{ template "menu" (menu (print "Actions on " $p.Title)
 			(and .Workspace ($.Can "workspace/view") (item "settings" "Workspace settings" "href" .Settings))
 			(and .Project ($.Can "project/view") (item "settings" "Project settings" "href" .Settings))
+			(and ($.Can "env/edit") (item "plus" "Add env file" "href" (print ($.Href $p.ID) "/env")))
 			(and .Pull ($.CanRun $p .Pull) (item "download" "Pull now" "data-run" "" "data-folder" $p.ID "data-dir" .Pull.Dir "data-job" .Pull.ID "data-title" (print $p.ID " / " .Pull.Name)))
 			(and .Project $.Checkout ($.Can "project/delete") (danger "trash" "Remove checkout" "data-delete" (print "/api/projects/" .ID) "data-confirm" (removeConfirm .ID $.Checkout.Remote) "data-confirm-ok" "Remove" "data-next" (print "/settings/projects?notice=" (urlquery "Removed " .ID))))
 		) }}
@@ -59,29 +60,28 @@
 	</div>
 </section>
 
+{{- with .EnvFiles }}
 <section class="block">
-	<h3>Environment <small>dotenv files the sources read</small></h3>
+	{{- template "blockhead" (head "Environment" "env files written into the folder before each run, the secrets appended" false
+		(and ($.Can "env/edit") (item "plus" "Add env file" "href" (print ($.Href $p.ID) "/env")))) }}
 	<div class="table-wrap">
 	<table class="table">
-		<thead><tr><th>File</th><th>Variables</th><th>State</th>{{ if $.Can "env/view" }}<th></th>{{ end }}</tr></thead>
+		<thead><tr><th>File</th>{{ if $.Can "env/view" }}<th></th>{{ end }}</tr></thead>
 		<tbody>
-		{{- range .EnvFiles }}
+		{{- range . }}
 			<tr>
 				<td class="key"><svg class="ic"><use href="#i-file"/></svg> {{ .Path }}</td>
-				<td class="desc">{{ if .Keys }}{{ join .Keys ", " }}{{ else }}<span class="faint">none</span>{{ end }}</td>
-				<td>{{ if .Managed }}<span class="badge ok">managed</span>{{ else if .Exists }}<span class="badge">in folder</span>{{ else }}<span class="badge bad">missing</span>{{ end }}</td>
 				{{- if $.Can "env/view" }}
 				<td class="actions">{{ template "menu" (menu (print "Actions on " .Path)
 					(item "edit" "Edit" "href" (print ($.Href $p.ID) "/env/" .Path))) }}</td>
 				{{- end }}
 			</tr>
-		{{- else }}
-			<tr class="empty"><td colspan="4">No source uses an env file. Runs still get secrets through their environment.</td></tr>
 		{{- end }}
 		</tbody>
 	</table>
 	</div>
 </section>
+{{- end }}
 </div>
 {{- end }}
 {{ end }}

@@ -10,6 +10,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/titpetric/task-ui/envfile"
 	"github.com/titpetric/task-ui/integration"
 	"github.com/titpetric/task-ui/internal/assert"
 	"github.com/titpetric/task-ui/model"
@@ -34,9 +35,8 @@ func TestFolder(t *testing.T) {
 	assert.Contains(t, body, `data-force data-folder="infra" data-job="plan"`)
 	assert.Equal(t, 1, strings.Count(body, "data-force"), "only plan has hours")
 	assert.Contains(t, body, `<i class="dot failed"></i><span class="state-label">failed`)
-	assert.Contains(t, body, ".env")
-	assert.Contains(t, body, `class="badge bad">missing`)
-	assert.NotContains(t, body, "/f/_/infra/env/.env") // admins edit env files
+	// No env file filled: no Environment section at all.
+	assert.NotContains(t, body, "Environment")
 
 	viewer := f.page(t, asViewer, "/f/_/infra")
 	assert.NotContains(t, viewer, "data-run-all")
@@ -44,7 +44,18 @@ func TestFolder(t *testing.T) {
 	assert.Contains(t, viewer, "History</a>")
 
 	admin := f.page(t, asAdmin, "/f/_/infra")
+	assert.NotContains(t, admin, "Environment")
+	assert.NotContains(t, admin, `href="/f/_/infra/env/.env"`)
+
+	// A filled one shows, with its edit link for admins alone.
+	f.withKey(t)
+	assert.NoError(t, f.opts.Env.Save(context.Background(), f.infra, envfile.File{Path: ".env", Content: "A=1\n"}))
+	admin = f.page(t, asAdmin, "/f/_/infra")
+	assert.Contains(t, admin, "Environment")
 	assert.Contains(t, admin, `href="/f/_/infra/env/.env"`)
+	ops := f.page(t, asOps, "/f/_/infra")
+	assert.Contains(t, ops, "Environment")
+	assert.NotContains(t, ops, `href="/f/_/infra/env/.env"`)
 }
 
 func TestFolder_Running(t *testing.T) {

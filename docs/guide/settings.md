@@ -589,11 +589,20 @@ run and when, per job.
 
 ## Env files
 
-A folder's page lists the dotenv files its pipeline reads. A user with
-Allow View on Env Files, `env/view`, opens one, and with Allow Edits,
-`env/edit`, edits it there: on saving, and again before every run, task-ui writes the file in the
-folder from it with the secrets appended. For a file nobody has
-edited, task-ui reads the one in the folder unchanged.
+An env file is a dotenv file a user fills for a folder. On saving, and
+again before every run, task-ui writes it into the folder with the
+folder's secrets appended. task-ui reads no env file and no source on
+its own: atkins and the job tools read what they need, and every run
+gets the folder's secrets in its environment, with or without an env
+file.
+
+A user with Allow Edits on Env Files, `env/edit`, adds one with **Add
+env file** in a project's or a workspace's **⋯** menu: a path relative
+to the folder, such as `.env`, and its content. The folder's page then
+lists it under Environment, a section it shows only for a folder with
+an env file. A user with Allow View, `env/view`, opens one from there,
+and saving it empty deletes it, which takes Allow Deletes,
+`env/delete`.
 
 ![An env file](../assets/envfile-dark.png)
 

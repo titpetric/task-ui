@@ -150,8 +150,11 @@ holds it. Page: `/artifacts`; API: `/api/artifacts`; MCP:
 
 ## Env files (`env`)
 
-The dotenv files a folder's pipeline reads, as task-ui keeps them, with
-the secrets appended on save and before every run. API: `/api/env`.
+The dotenv files a user fills for a folder, which task-ui writes into
+the folder with the secrets appended, on save and before every run.
+task-ui reads no env file of a folder: atkins and the job tools read
+what they need, and runs get the secrets in their environment. API:
+`/api/env`.
 
 ## Secrets (`secret`)
 
