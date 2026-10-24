@@ -154,38 +154,54 @@ func TestView_RenderJobTable(t *testing.T) {
 		up.Name = "up"
 		script := &folder.Job{Folder: "infra", ID: "./deploy.sh", Kind: "file", Source: "deploy.sh", Command: []string{"./deploy.sh"}}
 		script.Name = "deploy.sh"
-		p.Actions = &view.Actions{Place: f, Self: "infra", Shell: f.ShellJob()}
+		compose := &folder.Skill{ID: "compose", Project: "infra", Jobs: []*folder.Job{custom, up}}
+		p.Actions = &view.Actions{Place: f, Self: "infra", Shell: f.ShellJob(), Skills: []*folder.Skill{compose}}
 		p.JobGroups = []view.JobGroup{
-			{Kind: "make", Note: "Makefile · make", Folder: f, Jobs: []*folder.Job{build}},
+			{Kind: "make", Note: "Makefile · make", Folder: f, Jobs: []*folder.Job{build}, Targets: true},
 			{Kind: "files", Folder: f, Jobs: []*folder.Job{script}},
-			{Kind: "@compose", Folder: f, Skill: &folder.Skill{ID: "compose", Project: "infra"}, Jobs: []*folder.Job{custom, up}},
+			{Kind: "@compose", Folder: f, Skill: compose, Jobs: compose.Jobs},
 			{Kind: "built-in", Folder: f, Jobs: []*folder.Job{f.ShellJob()}},
-			{Kind: "make", Dir: "tools", Folder: &folder.Folder{ID: "infra", Rel: "tools"}, Empty: "No targets in Makefile."},
+			{Kind: "make", Dir: "tools", Folder: &folder.Folder{ID: "infra", Rel: "tools"}, Empty: "No targets in Makefile.", Targets: true},
 		}
 	}
 
 	p := admin(t)
 	p.Summaries = true
 	table(p)
-	p.Last = map[string]view.Run{"infra/build": {Run: model.Run{ID: "r1", Folder: "infra", Job: "build", State: model.StateOK}}}
+	p.Last = map[string]view.Run{
+		"infra/build":       {Run: model.Run{ID: "r1", Folder: "infra", Job: "build", State: model.StateOK}},
+		"infra/./deploy.sh": {Run: model.Run{ID: "r3", Folder: "infra", Job: "./deploy.sh", State: model.StateFailed}},
+	}
 	p.JobSummaries = map[string]*view.SummaryLink{"infra/build": view.NewSummaryLink("r1", "The build passed.")}
 	out := render(p)
-	assert.Equal(t, 5, strings.Count(out, `<tr class="group">`))
-	assert.Equal(t, 5, strings.Count(out, "<tr data-job-row"))
+	// The dashboard's control component: a row per place with targets,
+	// a column per job, named rows for the files, the skill and the
+	// built-ins, each with its [...].
+	assert.Contains(t, out, `<table class="table control col-hover">`)
+	assert.Contains(t, out, `<th class="col"><span>build</span></th>`)
+	assert.Contains(t, out, `<a href="/f/_/infra">./</a>`)
+	assert.Contains(t, out, `<a href="/f/_/infra/tools">tools/</a>`)
+	assert.Contains(t, out, "No targets in Makefile.")
+	assert.Equal(t, 3, strings.Count(out, `<tr class="named" data-span>`))
+	for _, kind := range []string{"files", "@compose", "built-in"} {
+		assert.Contains(t, out, `<span class="badge">`+kind+`</span>`, kind)
+	}
 	for _, id := range []string{"build", "./deploy.sh", "@compose:custom", "@compose:up", "@shell"} {
 		assert.Contains(t, out, `data-job="`+id+`"`, id)
 	}
-	assert.Contains(t, out, `<a href="/f/_/infra/tools"><svg class="ic"><use href="#i-folder"/></svg>tools/</a>`)
-	assert.Contains(t, out, "No targets in Makefile.")
+	assert.Contains(t, out, `<button type="button" class="cc ok" data-run data-folder="infra" data-job="build" data-title="infra / build" title="Run infra / build: Build the images">`)
+	assert.Contains(t, out, `class="cc named bad" data-run data-folder="infra" data-job="./deploy.sh"`)
+	assert.Contains(t, out, `class="cc named never" data-run data-folder="infra" data-job="@compose:custom"`)
 	assert.Contains(t, out, `data-path="deploy.sh"`)
 	assert.Contains(t, out, `data-args="atkins compose:custom --"`)
 	assert.Contains(t, out, `data-confirm="Run compose up for infra?`)
-	assert.Contains(t, out, `<span>Run and summarize</span>`)
-	assert.Contains(t, out, `<span>Run and summarize...</span>`)
-	assert.Contains(t, out, `<span>Run force</span>`)
-	assert.Contains(t, out, `data-force="" data-folder="infra" data-dir="" data-job="build"`)
+	assert.Contains(t, out, `<span>Run and summarize build</span>`)
+	assert.Contains(t, out, `<span>Run and summarize @compose:custom...</span>`)
+	assert.Contains(t, out, `<span>Run force build</span>`)
+	assert.Contains(t, out, `data-force="" title="Run out of hours, with a reason" data-run="" data-folder="infra" data-dir="" data-job="build"`)
 	assert.Equal(t, 1, strings.Count(out, "data-force="), "Run force only on a job with hours")
-	assert.Contains(t, out, `<span>View the last run</span>`)
+	assert.Contains(t, out, `<span>View the last run of build</span>`)
+	assert.Contains(t, out, `<span>History of @shell</span>`)
 	assert.Contains(t, out, `href="/runs/r1/report" title="The build passed."`)
 	assert.Equal(t, "/runs/r1/report", p.JobSummary("infra/build").Href)
 	assert.Nil(t, p.JobSummary("infra/other"))
@@ -195,7 +211,7 @@ func TestView_RenderJobTable(t *testing.T) {
 	signIn(viewer, &model.User{Name: "guest", Role: model.RoleViewer}, nil)
 	out = render(viewer)
 	assert.NotContains(t, out, "data-run ")
-	assert.Contains(t, out, `title="No permission to run infra / build">History</a>`)
+	assert.Contains(t, out, `<a class="cc idle never" href="/f/_/infra/build" title="infra / build: Build the images: no permission to run it">`)
 
 	running := admin(t)
 	table(running)
@@ -203,7 +219,7 @@ func TestView_RenderJobTable(t *testing.T) {
 	run := view.Run{Run: model.Run{ID: "r2", Folder: "infra", Job: "build", State: model.StateRunning, StartedAt: &now}}
 	running.Running = map[string]view.Run{"infra/build": run}
 	out = render(running)
-	assert.Contains(t, out, `data-attach="r2" title="Attach to infra / build, running"`)
+	assert.Contains(t, out, `<a class="cc running" href="/runs/r2" data-attach="r2" title="Attach to infra / build, running">`)
 	assert.Contains(t, out, `data-kill="r2"`)
 }
 

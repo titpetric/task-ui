@@ -32,12 +32,14 @@ func TestFolder_FilesDashboard(t *testing.T) {
 	assert.NotContains(t, body, "<th>Action</th>")
 	assert.NotContains(t, body, "<th>Summary</th>")
 	assert.Contains(t, body, `<a href="/f/_/infra/edge">edge</a>`)
-	assert.NotContains(t, jobsTable(body), `data-folder="infra/web"`, "a folder's jobs stay on its page")
+
+	assert.Contains(t, jobsTable(body), `<a href="/f/_/infra/web">web/</a>`, "a folder inside with jobs is a row, its jobs its own")
+	assert.Contains(t, jobsTable(body), `data-cc="infra/web/build" data-folder="infra/web"`)
 
 	tool := jobRow(t, body, "infra/./tool.py")
 	assert.Contains(t, tool, `data-path="tool.py"`)
 	assert.Contains(t, tool, `data-run data-folder="infra" data-job="./tool.py"`)
-	assert.Contains(t, tool, `<i class="dot ok"></i>ok</a>`)
+	assert.Contains(t, tool, `class="cc named ok" data-run data-folder="infra" data-job="./tool.py"`)
 }
 
 // A directory of a Files list that is no folder, with a job source at
@@ -58,10 +60,10 @@ func TestFolder_DirJobs(t *testing.T) {
 
 	body := f.page(t, asAdmin, "/f/_/infra")
 	table := jobsTable(body)
-	assert.Contains(t, table, `<a href="/f/_/infra/images"><svg class="ic"><use href="#i-folder"/></svg>images/</a> <span class="badge">atkins</span>`)
+	assert.Contains(t, table, `<a href="/f/_/infra/images">images/</a>`)
 	assert.Contains(t, table, `data-run data-folder="infra" data-dir="images" data-job="default" data-title="infra/images / default"`)
 	assert.Contains(t, jobRow(t, body, "infra/images/push"), "Push one")
-	assert.Contains(t, jobRow(t, body, "infra/images/push"), `<span>Run and summarize</span>`)
+	assert.Contains(t, jobRow(t, body, "infra/images/push"), `<span>Run and summarize push</span>`)
 	assert.NotContains(t, jobRow(t, body, "infra/images/shell"), "Run and summarize", "no interactive job to summarize")
 	assert.NotContains(t, table, "docs/", "nothing to run")
 
@@ -75,11 +77,11 @@ func TestFolder_DirJobs(t *testing.T) {
 	}
 }
 
-// jobRow returns the row of the Jobs table of a job by its key.
+// jobRow returns the row of the Jobs table that holds a job by its key.
 func jobRow(t *testing.T, body, key string) string {
 	t.Helper()
-	for _, row := range strings.Split(jobsTable(body), "<tr data-job-row")[1:] {
-		if strings.HasPrefix(row, ` data-key="`+key+`"`) {
+	for _, row := range strings.Split(jobsTable(body), "<tr")[1:] {
+		if strings.Contains(row, ` data-cc="`+key+`"`) {
 			row, _, _ = strings.Cut(row, "</tr>")
 			return row
 		}

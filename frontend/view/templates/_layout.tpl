@@ -536,69 +536,19 @@
 {{- end }}
 
 {{/* jobtable is the Jobs table of a folder's page, and of a directory's
-     inside one: a row per job that runs there, under a heading row per
-     group, from Page.JobGroups. A row names the job by its ID, says what
-     it does and how it last went, and holds Run, Attach while it runs,
-     or History for a user who may not run it; its [...] holds Run and
-     summarize, Run force for a job with hours, the last run and the
-     history. A job that takes args opens a field for them under its row
-     first. */}}
+     inside one, as the dashboard's control centre lays out its folders:
+     a row for the place and one per directory inside with targets, a
+     column per job name they share, then a row of named buttons for the
+     files that run, each skill's jobs and the built-ins, from
+     Page.JobGroups. A row's [...] holds Run and summarize, the last run
+     and its summary, the history, Run force and Kill of its jobs. */}}
 {{- define "jobtable" }}
-{{- with $.JobGroups }}
+{{- if $.JobGroups }}
 <section class="block" data-live>
-	<h3>Jobs <small>a row per job that runs here</small></h3>
-	<div class="table-wrap">
-	<table class="table jobs cards">
-		<thead><tr><th>Job</th><th>Does</th><th>Last run</th><th></th></tr></thead>
-		{{- range $g := . }}
-		<tbody>
-			<tr class="group"><th colspan="4">{{ if $g.Dir }}<a href="{{ $.Href $.Folder.ID }}/{{ $g.Folder.Rel }}"><svg class="ic"><use href="#i-folder"/></svg>{{ $g.Dir }}/</a> {{ end }}<span class="badge">{{ $g.Kind }}</span>{{ with $g.Note }} <small>{{ . }}</small>{{ end }}</th></tr>
-			{{- range $r := $g.Jobs }}{{ template "jobrow" (list $ $g $r) }}
-			{{- else }}
-			<tr class="empty"><td colspan="4">{{ $g.Empty }}</td></tr>
-			{{- end }}
-		</tbody>
-		{{- end }}
-	</table>
-	</div>
+	<h3>Jobs <small>a row per place with targets, a column per job they share; files, skills and terminals below</small></h3>
+	{{- template "controltable" (list $ $.JobControl true) }}
 </section>
 {{- end }}
-{{- end }}
-
-{{/* jobrow is a row of the Jobs table. (list $ group job) */}}
-{{- define "jobrow" }}
-{{- $ := index . 0 }}{{ $g := index . 1 }}{{ $r := index . 2 }}{{ $f := $g.Folder }}
-{{- $run := $.RunningRun $r.Key }}{{ $can := $.CanRun $f $r }}{{ $last := $.LastRun $r.Key }}
-{{- $what := print $f.ID (or (and $r.Dir (print "/" $r.Dir)) "") " / " $r.Name }}
-{{- $confirm := $.Actions.Confirm $g.Skill $r }}
-			<tr data-job-row data-key="{{ $r.Key }}"{{ if eq $r.Kind "file" }} data-path="{{ $r.Source }}"{{ end }}{{ if $run }} class="running"{{ end }}>
-				<td class="key"><a href="{{ $.JobHref $f $r }}">{{ $r.ID }}</a>{{ if $r.Interactive }} <span class="badge">interactive</span>{{ end }}{{ if $r.TakesArgs }} <span class="badge" title="Takes arguments after {{ $r.ArgsCommand }}">args</span>{{ end }}</td>
-				<td class="desc" data-label="Does">{{ if and $r.Description (ne $r.Description $r.Name) }}{{ $r.Description }}{{ else }}<span class="faint">{{ join $r.Command " " }}</span>{{ end }}</td>
-				<td class="last" data-label="Last run">
-					{{- if $run }}<i class="dot running"></i>running <span class="faint" title="{{ stamp $run.StartedAt }}, by {{ $run.UserName }}">{{ ago $run.StartedAt }}</span>
-					{{- else if $last }}<a href="/runs/{{ $last.ID }}" title="Open the run's page"><i class="dot {{ $last.State }}"></i>{{ $last.State }}{{ if and (ne $last.State "ok") (ne $last.State "killed") }} <span class="faint">({{ $last.ExitCode }})</span>{{ end }}</a> <span class="faint" title="{{ stamp $last.StartedAt }}, by {{ $last.UserName }}">{{ ago $last.StartedAt }}</span>
-					{{- else }}<span class="faint">never run</span>{{ end }}
-					{{- with $.JobSummary $r.Key }} <a class="summary-link" href="{{ .Href }}" title="{{ with .Preview }}{{ . }}{{ else }}Claude's summary of the run{{ end }}"><svg class="ic"><use href="#i-summary"/></svg>Summary</a>{{ end -}}
-				</td>
-				<td class="actions">
-					{{- if $run }}
-					<a class="btn btn-sm" href="/runs/{{ $run.ID }}" data-attach="{{ $run.ID }}" title="Attach to {{ $what }}, running"><svg class="ic"><use href="#i-eye"/></svg>Attach</a>
-					{{- else if $can }}
-					<button type="button" class="btn btn-primary btn-sm" data-run data-folder="{{ $f.ID }}"{{ with $r.Dir }} data-dir="{{ . }}"{{ end }} data-job="{{ $r.ID }}" data-title="{{ $what }}"{{ with $confirm }} data-confirm="{{ . }}" data-confirm-ok="Run {{ $r.Name }}"{{ end }}{{ with $r.ArgsCommand }} data-args="{{ . }}"{{ end }} title="Run {{ $what }}{{ with $r.ArgsCommand }}, with arguments after {{ . }}{{ end }}"><svg class="ic"><use href="#i-play"/></svg>Run{{ if $r.TakesArgs }}...{{ end }}</button>
-					{{- else }}
-					<a class="btn btn-sm" href="{{ $.JobHref $f $r }}" title="No permission to run {{ $what }}">History</a>
-					{{- end }}
-					{{- $sum := and (not $run) $can ($.Summarizes $r) }}
-					{{- template "menu" (menu (print "Actions on " $r.ID)
-						(and $sum (not $r.TakesArgs) (item "summary" "Run and summarize" "data-run" "" "data-summarize" "" "data-folder" $f.ID "data-dir" $r.Dir "data-job" $r.ID "data-title" $what "data-confirm" $confirm "data-confirm-ok" (print "Run " $r.Name)))
-						(and $sum $r.TakesArgs (item "summary" "Run and summarize..." "data-run" "" "data-summarize" "" "data-folder" $f.ID "data-dir" $r.Dir "data-job" $r.ID "data-title" $what "data-args" $r.ArgsCommand "data-confirm" $confirm "data-confirm-ok" (print "Run " $r.Name)))
-						(and $last (item "eye" "View the last run" "data-attach" $last.ID))
-						(item "list" "History" "href" ($.JobHref $f $r))
-						(and (not $run) $can ($f.HoursOf $r) (danger "play" "Run force" "data-run" "" "data-force" "" "data-folder" $f.ID "data-dir" $r.Dir "data-job" $r.ID "data-title" $what "title" "Run out of hours, with a reason"))
-						(and $run $can (danger "stop" "Kill" "data-kill" $run.ID))
-					) }}
-				</td>
-			</tr>
 {{- end }}
 
 {{- /* runButtons hold Run, |>summarize, and Run force for a job with

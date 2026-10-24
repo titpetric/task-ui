@@ -46,8 +46,10 @@ the job has no runs. A run that ends recolours its button with no reload.
 Under the pointer the whole column lights up, so one job reads down every
 folder at once.
 
-A folder's page is the same for its scope: its **Files** list holds each
-folder inside it with these buttons beside it (see [A folder's
+A folder's page draws the same table for its scope: a row for the
+folder and one per directory or folder inside with targets, the files,
+skills and built-ins as named buttons, and a `[...]` per row with Run
+and summarize, History, Run force and Kill (see [A folder's
 page](projects.md#a-folders-page)).
 
 ---

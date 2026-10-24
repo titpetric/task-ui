@@ -2724,9 +2724,9 @@
       }
       else showDoc('<p class="faint">No preview for this file, ' + escapeHTML(view.content_type) + ". Download it to open it.</p>", "text");
     };
-    // previewActions carries a file's Run or Attach from its row of the
-    // Jobs table into the window's foot; the window closes for the run
-    // window to open.
+    // previewActions carries a file's Run or Attach from its button in
+    // the Jobs table into the window's foot; the window closes for the
+    // run window to open.
     var previewActions = document.getElementById("preview-actions");
     previewActions.addEventListener("click", function (event) {
       if (event.target.closest("[data-run], [data-attach]")) previewDialog.close();
@@ -2736,14 +2736,15 @@
       var link = Array.prototype.find.call(document.querySelectorAll("a[data-file]"), function (a) {
         return a.getAttribute("href") === href;
       });
-      var row = link && Array.prototype.find.call(document.querySelectorAll("tr[data-job-row][data-path]"), function (tr) {
-        return tr.dataset.path === link.dataset.file;
+      var slot = link && Array.prototype.find.call(document.querySelectorAll(".cc-slot[data-path]"), function (el) {
+        return el.dataset.path === link.dataset.file;
       });
-      if (!row) return;
-      row.querySelectorAll(".actions > [data-run], .actions > [data-attach]").forEach(function (btn) {
+      if (!slot) return;
+      slot.querySelectorAll("[data-run], [data-attach]").forEach(function (btn) {
         var copy = btn.cloneNode(true);
-        copy.classList.remove("btn-sm");
-        copy.querySelectorAll(".btn-sm").forEach(function (part) { part.classList.remove("btn-sm"); });
+        copy.className = btn.hasAttribute("data-run") ? "btn btn-primary" : "btn";
+        copy.querySelectorAll("span").forEach(function (part) { part.remove(); });
+        copy.appendChild(document.createTextNode(btn.hasAttribute("data-run") ? "Run" : "Attach"));
         previewActions.appendChild(copy);
       });
     };
@@ -3834,31 +3835,40 @@
     }, 1000);
   }
 
-  // A job's control button in the dashboard's control centre follows
-  // the runs topic: an eye on the job
+  // A job's control button in the dashboard's control centre, and in a
+  // folder's Jobs table, follows the runs topic: an eye on the job
   // running, Run again when it ended, in the colour of how it ended. Its
-  // slot keeps that colour in data-last.
+  // slot keeps that colour in data-last, and what the button carries:
+  // the directory, the args command, the question before the run.
   function slotHTML(slot, run) {
-    var label = slot.dataset.label ? "<span>" + escapeHTML(slot.dataset.label) + "</span>" : "";
-    var named = slot.dataset.label ? " named" : "";
-    if (run && run.state && run.state !== "running") slot.dataset.last = run.state === "ok" ? "ok" : "bad";
-    var last = " " + escapeHTML(slot.dataset.last || "never");
-    var what = escapeHTML(slot.dataset.folder + " / " + slot.dataset.name);
+    var d = slot.dataset;
+    var label = d.label ? "<span>" + escapeHTML(d.label) + "</span>" : "";
+    var named = d.label ? " named" : "";
+    if (run && run.state && run.state !== "running") d.last = run.state === "ok" ? "ok" : "bad";
+    var last = " " + escapeHTML(d.last || "never");
+    var what = escapeHTML(d.folder + (d.dir ? "/" + d.dir : "") + " / " + d.name);
+    var desc = d.desc ? ": " + escapeHTML(d.desc) : "";
+    var term = slot.hasAttribute("data-interactive");
     if (run && run.state === "running") {
       return '<a class="cc' + named + ' running" href="/runs/' + escapeHTML(run.id) + '" data-attach="' + escapeHTML(run.id) +
         '" title="Attach to ' + what + ", running" + (run.title ? ": " + escapeHTML(run.title) : "") + '"><svg class="ic"><use href="#i-eye"/></svg>' + label + "</a>";
     }
     if (slot.hasAttribute("data-can")) {
-      return '<button type="button" class="cc' + named + last + '" data-run data-folder="' + escapeHTML(slot.dataset.folder) + '" data-job="' +
-        escapeHTML(slot.dataset.job) + '" data-title="' + what + '" title="Run ' + what + '"><svg class="ic"><use href="#i-play"/></svg>' + label + "</button>";
+      return '<button type="button" class="cc' + named + last + '" data-run data-folder="' + escapeHTML(d.folder) + '"' +
+        (d.dir ? ' data-dir="' + escapeHTML(d.dir) + '"' : "") + ' data-job="' + escapeHTML(d.job) + '" data-title="' + what + '"' +
+        (d.confirm ? ' data-confirm="' + escapeHTML(d.confirm) + '" data-confirm-ok="Run ' + escapeHTML(d.name) + '"' : "") +
+        (d.args ? ' data-args="' + escapeHTML(d.args) + '"' : "") +
+        ' title="Run ' + what + desc + (d.args ? ", with arguments after " + escapeHTML(d.args) : "") + (term ? ", in a terminal" : "") +
+        '"><svg class="ic"><use href="#i-' + (term ? "terminal" : "play") + '"/></svg>' + label + "</button>";
     }
-    return '<a class="cc' + named + " idle" + last + '" href="' + escapeHTML(folderHref(slot.dataset.folder)) + "/" + escapeHTML(slot.dataset.job) + '" title="' + what +
+    return '<a class="cc' + named + " idle" + last + '" href="' + escapeHTML(folderHref(d.folder)) + "/" + (d.dir ? escapeHTML(d.dir) + "/" : "") + escapeHTML(d.job) + '" title="' + what + desc +
       ': no permission to run it"><i class="shebang" aria-hidden="true">#!</i>' + label + "</a>";
   }
   if (document.querySelector(".cc-slot") && window.EventSource) {
     onRuns(function (run) {
-      document.querySelectorAll('.cc-slot[data-cc="' + run.folder + "/" + run.job + '"]').forEach(function (slot) {
-        slot.innerHTML = slotHTML(slot, run);
+      var key = run.folder + (run.dir ? "/" + run.dir : "") + "/" + run.job;
+      document.querySelectorAll(".cc-slot").forEach(function (slot) {
+        if (slot.dataset.cc === key) slot.innerHTML = slotHTML(slot, run);
       });
     });
   }
@@ -3922,7 +3932,7 @@
       if (index < 0) return;
       Array.prototype.forEach.call(table.rows, function (row) {
         var cell = row.cells[index];
-        if (cell && row.cells.length > 1) cell.classList.add("col-hot");
+        if (cell && row.cells.length > 1 && !row.hasAttribute("data-span")) cell.classList.add("col-hot");
       });
     };
     table.addEventListener("mouseover", function (event) {
@@ -4086,7 +4096,7 @@
   // after it as they reach it, and Run. In a table the field takes a row
   // of its own.
   function argsLine(btn, spec) {
-    var anchor = btn.closest("tr[data-job-row], .page-head") || btn.parentNode;
+    var anchor = btn.closest("table.control tr, .page-head") || btn.parentNode;
     var dismiss = function (f) { (f.closest("tr.argsrow") || f).remove(); };
     var open = document.querySelector("form.argsline");
     if (open) {

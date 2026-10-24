@@ -1,11 +1,13 @@
 package view_test
 
 import (
+	"bytes"
 	"testing"
 
 	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/frontend/view"
 	"github.com/titpetric/task-ui/internal/assert"
+	"github.com/titpetric/task-ui/model"
 )
 
 // jobs makes a folder of jobs: "name" or "kind:name".
@@ -96,4 +98,68 @@ func TestControlRow(t *testing.T) {
 	assert.Equal(t, "web", row.Folder.ID)
 	assert.Equal(t, []string{"build"}, names(row.Cells[0]))
 	assert.Equal(t, []string{"serve"}, names(row.Extra))
+}
+
+// A folder's page lays its Jobs out as the dashboard does: a row for the
+// folder and one per directory inside with targets, a column per name
+// they share, then a named row per other group. With one row of targets
+// every name gets a column.
+func TestNewJobControl(t *testing.T) {
+	t.Parallel()
+	place := jobs("malta/dockerfiles", "default", "build", "push")
+	task := jobs("malta/dockerfiles", "default", "build", "push", "deploy")
+	task.Rel = "task"
+	blog := jobs("malta/dockerfiles", "default")
+	blog.Rel = "blog"
+	broken := &folder.Folder{ID: "malta/dockerfiles", Rel: "broken"}
+	git := jobs("malta/dockerfiles", "@git:pull", "@git:status")
+	groups := []view.JobGroup{
+		{Kind: "atkins", Note: "atkins.yml", Folder: place, Jobs: place.Jobs, Targets: true},
+		{Kind: "@git", Note: "Git", Folder: place, Jobs: git.Jobs},
+		{Kind: "atkins", Note: "atkins.yml", Dir: "task", Folder: task, Jobs: task.Jobs, Targets: true},
+		{Kind: "atkins", Note: "atkins.yml", Dir: "blog", Folder: blog, Jobs: blog.Jobs, Targets: true},
+		{Kind: "make", Note: "Makefile", Dir: "broken", Folder: broken, Targets: true, Empty: "No targets in Makefile."},
+	}
+	c := view.NewJobControl(groups)
+	assert.Equal(t, []string{"default", "build", "push"}, c.Columns)
+	assert.Len(t, c.Rows, 5)
+	labels := []string{}
+	for _, row := range c.Rows {
+		labels = append(labels, row.Label)
+	}
+	assert.Equal(t, []string{"./", "task/", "blog/", "broken/", "@git"}, labels)
+	assert.Equal(t, []string{"deploy"}, names(c.Rows[1].Extra))
+	assert.Len(t, c.Rows[2].Cells[1], 0) // blog has no build
+	assert.Equal(t, "No targets in Makefile.", c.Rows[3].Empty)
+	assert.True(t, c.Rows[4].Named)
+	assert.Equal(t, []string{"@git:pull", "@git:status"}, names(c.Rows[4].Extra))
+	assert.Equal(t, []string{"default", "build", "push", "deploy"}, names(c.Rows[1].Jobs()))
+
+	one := view.NewJobControl(groups[:2])
+	assert.Equal(t, []string{"default", "build", "push"}, one.Columns)
+	assert.Len(t, one.Rows[0].Extra, 0)
+}
+
+// The dashboard draws the same control component: a row per folder, a
+// column per shared job, the rest under other, and no [...] per row.
+func TestView_RenderDashboard(t *testing.T) {
+	t.Parallel()
+
+	v, err := view.New()
+	assert.NoError(t, err)
+	p := admin(t)
+	p.Running = nil
+	web := &folder.Job{Folder: "web", ID: "plan"}
+	web.Name = "plan"
+	p.Folders = append(p.Folders, &folder.Folder{ID: "web", Jobs: []*folder.Job{web}})
+	p.Control = view.NewControl(p.Folders, view.ControlRepeats)
+	p.Last = map[string]view.Run{"infra/plan": {Run: model.Run{ID: "r1", Folder: "infra", Job: "plan", State: model.StateOK}}}
+	var buf bytes.Buffer
+	assert.NoError(t, v.Render(&buf, "home", p))
+	out := buf.String()
+	assert.Contains(t, out, `<thead><tr><th>Folder</th><th class="col"><span>plan</span></th><th class="col"><span>other</span></th></tr></thead>`)
+	assert.Contains(t, out, `<td class="key nowrap"><a href="/f/_/infra">infra</a></td>`)
+	assert.Contains(t, out, `<span class="cc-slot" data-cc="infra/plan" data-folder="infra" data-job="plan" data-name="plan" data-label="" data-last="ok" data-can><button type="button" class="cc ok" data-run data-folder="infra" data-job="plan" data-title="infra / plan" title="Run infra / plan"><svg class="ic"><use href="#i-play"/></svg></button></span>`)
+	assert.NotContains(t, out, `class="named"`)
+	assert.NotContains(t, out, `<td class="actions">`)
 }

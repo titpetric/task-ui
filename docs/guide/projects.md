@@ -166,25 +166,30 @@ Open a folder from the sidebar:
   menu.
 - **The git line**: under the title, on a folder's page and on the
   page of a directory inside it (see [The git line](#the-git-line)).
-- **Jobs**: one table of everything that runs there, a row per job,
-  under a heading row per group: each job source's targets, such as
-  `atkins atkins.yml · atkins -f atkins.yml`, the files that run,
-  `./<path>`, the jobs of each atkins skill that applies, `@git:pull`,
-  the built-ins your permissions allow, `@shell` and `@claude`, and
-  last the targets of each directory inside with a job source of its
-  own, its heading linked to the directory's page. A row names the job
-  by its ID, linked to its page, says what it does, or the command it
-  runs, and how it last went: the state, linked to the run's page, when
-  and who, and **Summary**, a link to Claude's summary of that run on
-  its report page, its start on hover, once it has one. At the end of
-  the row, **Run**, which opens the run's window, **Attach** while it
-  runs, or **History** for a user who may not run it; its `[...]`
-  holds **Run and summarize**, which runs the job and has Claude
-  summarise the run on its page when it ends (see
-  [Runs](runs.md#run-and-summarize)), **View the last run**,
-  **History**, and, on a job with hours, **Run force**; any other job
-  forces from its run's window. **Kill** ends a run in progress. A
-  folder of folders leaves their jobs to their own pages.
+- **Jobs**: everything that runs there in the [control
+  centre](dashboard.md#control-centre) of the dashboard, laid out for
+  the one folder. The first row, `./`, holds the targets of the
+  folder's job sources; a row follows for each directory and each
+  folder inside with targets of its own, such as `task/`, linked to its
+  page. A job name the rows share gets a column, `default` first, so
+  `build` and `push` of every image of `malta/dockerfiles` line up;
+  with only one row, every name does. The names that do not repeat sit
+  behind **Other**. A round button runs the job, coloured by its last
+  run: green when it succeeded, red when it failed or someone stopped
+  or killed it, grey when it never ran. While the job runs the button
+  is an eye that attaches to it; a user who may not run it gets a `#!`
+  linked to the job's page. Its title names the job and what it does.
+  A row of named buttons follows for the files that run, `./<path>`,
+  each atkins skill that applies, such as `@git` with `@git:pull`, and
+  the built-ins your permissions allow, `@shell` and `@claude`, which
+  show a terminal in place of the play. Each row ends in a `[...]`
+  with, per job, **Run and summarize**, which runs the job and has
+  Claude summarise the run on its page when it ends (see
+  [Runs](runs.md#run-and-summarize)), **View the last run**, the
+  **Summary** of that run once Claude wrote one, **History**, and, on a
+  job with hours, **Run force**; any other job forces from its run's
+  window. **Kill** ends a run in progress. The buttons follow the runs
+  as they start and end, with no reload.
 - **Prompt**: the box that asks Claude Code there, below the jobs (see
   [Prompt](#prompt)).
 - **Files**: what the folder holds, dot entries too, the directories
@@ -192,7 +197,8 @@ Open a folder from the sidebar:
   A directory opens as a page of its own; a file opens in a window, an
   image shown, markdown rendered, text coloured and cut past 1 MiB,
   with **Download** beside and in the row.
-  A directory that is a folder links to the folder's page. A folder the
+  A directory that is a folder links to the folder's page, and its
+  jobs, run as that folder's, take a row of Jobs. A folder the
   listing lacks, such as one a project row places elsewhere, gets a row
   of its own.
   A directory with targets of its own, a pipeline file, Makefile,
@@ -207,7 +213,7 @@ Open a folder from the sidebar:
   [Runs](runs.md#what-a-job-gets)). Each has its page and history under
   the directory, such as `/f/acme/api/tools/build`.
   A file that runs, executable or with a shebang on its first line,
-  carries `#!` and **exec**, and its row in Jobs, `./<path>`, runs it
+  carries `#!` and **exec**, and its button in Jobs, `./<path>`, runs it
   from the top of the folder; the file's window holds the same **Run**.
   Its history is at the file's path under the folder.
 - **Sealed entries**: `.git` and every dot file, such as `.env`,
@@ -253,8 +259,8 @@ page](#a-folders-page)).
 ![The Jobs table of a directory: its targets, then the git, compose and dockerfile skills](../assets/actions-dark.png)
 
 An [atkins](https://github.com/titpetric/atkins) skill that applies in
-a directory adds its jobs to the Jobs table there, under a heading of
-its own, such as `@git` with `@git:pull`, `@git:rebase` and
+a directory adds its jobs to the Jobs table there, a row of named
+buttons of its own, such as `@git` with `@git:pull`, `@git:rebase` and
 `@git:status`, or `@compose` with `@compose:build`, `@compose:custom`,
 `@compose:down`, `@compose:pull` and `@compose:up`.
 A skill comes from a `.atkins/skills/` folder of the directory or of any
@@ -294,7 +300,7 @@ The API answers the git line and the skills with `GET
 
 ### Enter Shell
 
-A user with the `shell` permission, Enter Shell in [Settings, Permissions](settings.md#permissions), gets the row `@shell` among the built-ins of the Jobs table: its **Run** starts `bash -l` in
+A user with the `shell` permission, Enter Shell in [Settings, Permissions](settings.md#permissions), gets the button `@shell` among the built-ins of the Jobs table: it starts `bash -l` in
 the folder's directory, or in the directory the page browses, with the
 run's window attached and the keyboard yours: the job `@shell` of the
 folder, run with the environment, secrets and keys of any job there,
