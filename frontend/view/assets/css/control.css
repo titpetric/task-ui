@@ -218,3 +218,30 @@
     }
   }
 }
+
+/* On a phone a named row's label and its [...] share the first line and
+   the buttons wrap below them, across the row. */
+@media (max-width: 720px) {
+  .table.control tr.named {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+
+    & td.key {
+      grid-column: 1;
+      width: auto;
+      border-bottom: 0;
+    }
+
+    & td.actions {
+      grid-column: 2;
+      grid-row: 1;
+      border-bottom: 0;
+    }
+
+    & td:not(.key, .actions) {
+      grid-column: 1 / -1;
+      padding-top: 0;
+    }
+  }
+}
