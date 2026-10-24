@@ -163,11 +163,19 @@ run, and the step's card beside it, in the colour of its kind.
 - A card folds to one line: its kind, and the job and its args, the
   workflow, the first line of the prompt, or where the summary asks. A
   click on it opens it on its fields; **Expand all** opens them all.
-- A **Command** picks its folder, or a workflow under **Workflows** in
-  the same list, then the job and its arguments. A **Prompt** takes its
-  text, **Asks in**, the folder Claude works in, and a directory inside
-  it. A **Summary** takes **Asks in** and the directory, and shows what
-  Claude gets.
+- A workflow belongs to no workspace, so every step starts with its
+  **Workspace**: **Default** for the root and the projects at its top,
+  then each workspace that holds a folder you see. The folder list
+  next to it holds that workspace's folders, and picking another
+  workspace clears the folder and the job. A step you edit opens on the
+  workspace of its folder.
+- A **Command** picks its workspace, then its folder, the job and its
+  arguments; **Workflows** in place of a workspace lists the workflows
+  it may run. A **Prompt** takes its text, its workspace, **Asks in**,
+  the folder Claude works in, and a directory inside it. A **Summary**
+  takes the workspace, **Asks in** and the directory, and shows what
+  Claude gets. The step keeps the folder alone, whose ID names its
+  workspace.
 - The grip at a card's left moves it: drag it, or focus it and press the
   up and down arrows. The card's [...] menu has **Move up**, **Move
   down**, **Disable** or **Enable**, **Duplicate** and **Remove**.
@@ -185,8 +193,8 @@ A step's args field goes to a job that takes arguments, after `--`.
 A step runs a command on hosts of the [inventory](inventory.md) as
 `@host:<name>` of the root, `_`, on the host, or `@host:*` on every host
 with an ssh login, with the command as its args. With the `hosts`
-permission, the step's job picker lists them under **Hosts** once you
-pick the root `_`, and the args field takes the command whole. Through
+permission, the folder list of the **Default** workspace has `_ hosts`,
+and once you pick it the job picker lists them under **Hosts**, and the args field takes the command whole. Through
 `/api/workflows`: `{"folder": "_", "job": "@host:*", "args":
 ["uptime"]}`. A step of `@host:*` runs on every host at once and ends ok
 when every host's run did; running it takes the `hosts` permission.

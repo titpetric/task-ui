@@ -1333,6 +1333,12 @@
   // keepFolder keeps the options of a folder in a job select, each in
   // the group it came in, such as Hosts, and drops the rest.
   function keepFolder(select, folder) {
+    keepOptions(select, "folder", folder, false);
+  }
+
+  // keepOptions keeps the options of a select whose data-<key> is value,
+  // and those without one when bare, each in the group it came in.
+  function keepOptions(select, key, value, bare) {
     if (!select.allOptions) {
       select.allOptions = Array.prototype.map.call(select.options, function (option) {
         return { option: option, group: option.parentNode.tagName === "OPTGROUP" ? option.parentNode.label : "" };
@@ -1341,7 +1347,8 @@
     select.innerHTML = "";
     var groups = {};
     select.allOptions.forEach(function (item) {
-      if (item.option.dataset.folder !== folder) return;
+      var of = item.option.dataset[key];
+      if (of !== value && !(bare && of === undefined)) return;
       if (!item.group) {
         select.appendChild(item.option);
         return;
@@ -1772,6 +1779,30 @@
     });
   }
 
+  // stepSpaceFolder is the folder select a card's workspace narrows: a
+  // command's folder or workflow, or where a prompt or summary asks.
+  function stepSpaceFolder(row) {
+    return row.querySelector("[data-step-folder], [data-step-place]");
+  }
+
+  // narrowSpace keeps the folders of a card's workspace in its folder
+  // select, and the folder picked when it still belongs; else a command
+  // goes back to pick one and a prompt or summary to the workspace's
+  // first folder. Workflows lists the workflows in its place.
+  function narrowSpace(row) {
+    var space = row.querySelector("[data-step-space]");
+    var folder = space && stepSpaceFolder(row);
+    if (!folder) return;
+    var picked = folder.value;
+    keepOptions(folder, "workspace", space.value, true);
+    var kept = Array.prototype.filter.call(folder.options, function (o) { return o.dataset.workspace === space.value; });
+    if (kept.some(function (o) { return o.value === picked; })) folder.value = picked;
+    else folder.value = folder.matches("[data-step-place]") && kept.length ? kept[0].value : "";
+    var label = row.querySelector("[data-step-folder-label]");
+    if (label) label.textContent = space.value === WORKFLOW ? "Workflow" : "Folder";
+    if (folder.dropdown) folder.dropdown();
+  }
+
   // narrowStep keeps the jobs of a command card's folder in its job
   // select, and the job picked when it still belongs; a workflow picked
   // in the folder select makes the card a workflow step, with no job or
@@ -1876,8 +1907,13 @@
     if (kind === "job" && !after) {
       var commands = list.querySelectorAll('[data-step][data-kind="job"]');
       var prev = commands.length > 1 ? commands[commands.length - 2] : null;
-      if (prev) setValue(row.querySelector("[data-step-folder]"), prev.querySelector("[data-step-folder]").value);
+      if (prev) {
+        setValue(row.querySelector("[data-step-space]"), prev.querySelector("[data-step-space]").value);
+        narrowSpace(row);
+        setValue(row.querySelector("[data-step-folder]"), prev.querySelector("[data-step-folder]").value);
+      }
     }
+    narrowSpace(row);
     narrowStep(row);
     stepLine(row);
     stepsChanged(form);
@@ -1894,6 +1930,8 @@
   function stepDuplicate(form, row) {
     var copy = stepAdd(form, row.dataset.kind === "workflow" ? "job" : row.dataset.kind, row);
     if (!copy) return null;
+    setValue(copy.querySelector("[data-step-space]"), row.querySelector("[data-step-space]").value);
+    narrowSpace(copy);
     ["[data-step-folder]", "[data-step-prompt-text]", "[data-step-place]", "[data-step-dir]"].forEach(function (sel) {
       var from = row.querySelector(sel), to = copy.querySelector(sel);
       if (from && to) setValue(to, from.value);
@@ -1982,6 +2020,7 @@
   document.querySelectorAll("form[data-workflow]").forEach(function (form) {
     var list = form.querySelector("[data-steps]");
     list.querySelectorAll("[data-step]").forEach(function (row) {
+      narrowSpace(row);
       narrowStep(row);
       stepLine(row);
     });
@@ -1990,7 +2029,8 @@
     form.addEventListener("change", function (event) {
       var row = event.target.closest("[data-step]");
       if (!row) return;
-      if (event.target.matches("[data-step-folder]")) narrowStep(row);
+      if (event.target.matches("[data-step-space]")) narrowSpace(row);
+      if (event.target.matches("[data-step-space], [data-step-folder]")) narrowStep(row);
       stepLine(row);
     });
     form.addEventListener("input", function (event) {

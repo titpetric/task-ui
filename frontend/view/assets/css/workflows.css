@@ -425,6 +425,13 @@
   & .wf-wide {
     grid-column: 1 / -1;
   }
+
+  /* Workspace, folder and job side by side, their fields in line
+     under labels of any length. */
+  &.wf-cascade {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: end;
+  }
 }
 
 /* A summary's question and instruction, as Claude gets them. */
@@ -647,7 +654,8 @@
     padding: 0.8rem 0.7rem 0.2rem;
   }
 
-  .wf-fields {
+  .wf-fields,
+  .wf-fields.wf-cascade {
     grid-template-columns: minmax(0, 1fr);
   }
 }
