@@ -11,7 +11,7 @@
 		{{ template "menu" (menu (print "Actions on " $p.Title)
 			(and .Workspace ($.Can "workspace/view") (item "settings" "Workspace settings" "href" .Settings))
 			(and .Project ($.Can "project/view") (item "settings" "Project settings" "href" .Settings))
-			(and ($.Can "env/edit") (item "plus" "Add env file" "href" (print ($.Href $p.ID) "/env")))
+			(and (not $default) ($.Can "env/edit") (item "plus" "Add env file" "href" (print ($.Href $p.ID) "/env")))
 			(and .Pull ($.CanRun $p .Pull) (item "download" "Pull now" "data-run" "" "data-folder" $p.ID "data-dir" .Pull.Dir "data-job" .Pull.ID "data-title" (print $p.ID " / " .Pull.Name)))
 			(and .Project $.Checkout ($.Can "project/delete") (danger "trash" "Remove checkout" "data-delete" (print "/api/projects/" .ID) "data-confirm" (removeConfirm .ID $.Checkout.Remote) "data-confirm-ok" "Remove" "data-next" (print "/settings/projects?notice=" (urlquery "Removed " .ID))))
 		) }}
@@ -63,7 +63,7 @@
 {{- with .EnvFiles }}
 <section class="block">
 	{{- template "blockhead" (head "Environment" "env files written into the folder before each run, the secrets appended" false
-		(and ($.Can "env/edit") (item "plus" "Add env file" "href" (print ($.Href $p.ID) "/env")))) }}
+		(and (not $default) ($.Can "env/edit") (item "plus" "Add env file" "href" (print ($.Href $p.ID) "/env")))) }}
 	<div class="table-wrap">
 	<table class="table">
 		<thead><tr><th>File</th>{{ if $.Can "env/view" }}<th></th>{{ end }}</tr></thead>
