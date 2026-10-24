@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/titpetric/task-ui/detector"
+	"github.com/titpetric/task-ui/layout"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/skills"
 )
@@ -19,22 +20,19 @@ const maxDepth = 6
 // skipped are the directories discovery never looks into.
 var skipped = map[string]bool{"node_modules": true, "vendor": true, "testdata": true}
 
-// Discovery finds the folders under a root: the root itself when it holds
-// something to run, and every directory below it that does, as deep as
-// they go. Under a folder with a pipeline file Discovery lists only folders with
+// Discovery finds the folders under a root, laid out as the layout
+// package says: each workspace's home, a folder of its own, and every
+// directory under its src that holds something to run, as deep as they
+// go. Under a folder with a pipeline file Discovery lists only folders with
 // a pipeline file of their own: a Go tree's Makefiles are the pipeline's
 // business. Configured folders override the discovered ones by ID, and
 // Discovery adds a configured folder whose path the walk did not find.
-//
-// The root, the workspaces and the configured folders are roots: a
-// directory right below one that its checkout ignores, such as another
-// checkout, lists when it holds a job source, on top or further in.
 type Discovery struct {
 	Root     string
 	Discover bool
 	Config   []Config
-	// Workspaces are the workspaces' directories, by Path or ID under the
-	// root, and their Shallow; the root is one whether they name it or not.
+	// Workspaces are the workspace rows, by ID, and their Shallow; the
+	// default workspace, _, is one whether they name it or not.
 	Workspaces []Config
 	// Probe is every folder's Probe, for the skills atkins applies in it.
 	Probe *skills.Prober
@@ -74,17 +72,18 @@ func (d *Discovery) List() []*Folder {
 		root = d.Root
 	}
 	c := &catalogue{byID: map[string]*Folder{}, byDir: map[string]*Folder{}}
+	named := d.named()
 	// Configured folders first, so their paths win over discovery; one
 	// under internal lists nothing, as the folder of older runs.
 	for _, cfg := range d.Config {
-		if f := configured(root, cfg); !model.IsInternal(f.ID) {
+		if f := configured(root, named, cfg); !model.IsInternal(f.ID) {
 			c.add(f)
 		}
 	}
 	if d.Discover {
-		d.discover(root, c)
+		d.discover(root, named, c)
 		if !d.Every {
-			sections(root, c)
+			sections(root, named, c)
 		}
 	}
 
@@ -102,12 +101,24 @@ func (d *Discovery) List() []*Folder {
 	return result
 }
 
+// named returns the folders of the named workspaces, which tell a
+// workspace's project from a project of _ with a folder inside it.
+func (d *Discovery) named() []string {
+	var named []string
+	for _, cfg := range d.Workspaces {
+		if cfg.ID != model.Default {
+			named = append(named, cfg.ID)
+		}
+	}
+	return named
+}
+
 // configured loads the folder a configuration names: a directory, a
 // single file, or a directory with nothing to run of its own, which holds
 // folders that do. A path that is missing carries an error, so the
 // configuration shows as wrong.
-func configured(root string, cfg Config) *Folder {
-	dir := cfg.dir(root)
+func configured(root string, named []string, cfg Config) *Folder {
+	dir := cfg.dir(root, named)
 	id := cfg.ID
 	if id == "" {
 		id = SafeID(filepath.Base(dir))
@@ -140,30 +151,25 @@ func isFile(path string) bool {
 	return err == nil && !info.IsDir()
 }
 
-// discover adds the root when it has something to run, and walks the
-// tree below it, one level into a shallow project or workspace. A
-// directory of the root named internal or _ lists nothing: the names are
-// task-ui's own. The walk goes into every configured folder, even one a
-// checkout ignores, such as a project cloned inside a workspace, and into
-// an ignored directory right below a root that holds a job source
-// anywhere inside it.
-func (d *Discovery) discover(root string, c *catalogue) {
-	if !c.seen(root) && detector.Any(root) {
-		if f := Load(SafeID(filepath.Base(root)), root); runnable(f) {
-			c.add(f)
-		}
-	}
-	shallow, keep, roots := map[string]bool{}, map[string]bool{}, map[string]bool{root: true}
+// discover adds the home of every workspace, the default one's too, as
+// a folder whether it holds something to run or not, and walks the src
+// of each, one level into a shallow project or workspace. The walk goes
+// into every configured folder, even one a checkout ignores, such as a
+// project cloned inside another, and into an ignored directory right
+// below a root that holds a job source anywhere inside it.
+func (d *Discovery) discover(root string, named []string, c *catalogue) {
+	shallow, keep, roots := map[string]bool{}, map[string]bool{}, map[string]bool{}
+	workspaces := append([]string{model.Default}, named...)
 	for _, cfg := range d.Workspaces {
-		roots[cfg.dir(root)] = true
 		if cfg.Shallow {
-			shallow[cfg.dir(root)] = true
+			shallow[layout.SrcDir(root, cfg.ID)] = true
 		}
 	}
 	for _, cfg := range d.Config {
-		keep[cfg.dir(root)], roots[cfg.dir(root)] = true, true
+		dir := cfg.dir(root, named)
+		keep[dir], roots[dir] = true, true
 		if cfg.Shallow {
-			shallow[cfg.dir(root)] = true
+			shallow[dir] = true
 		}
 	}
 	ls := d.Ignored
@@ -181,13 +187,27 @@ func (d *Discovery) discover(root string, c *catalogue) {
 			c.add(f)
 		}
 	}}
-	w.walk(root, "", 1, detector.HasPipeline(root) && !d.Every, w.ignore(root, nil), shallow[root])
+	for _, workspace := range workspaces {
+		if home := layout.HomeDir(root, workspace); isDir(home) && !c.seen(home) {
+			if f := Load(layout.HomeID(workspace), home); !d.Every || runnable(f) {
+				c.add(f)
+			}
+		}
+		src := layout.SrcDir(root, workspace)
+		roots[src] = true
+		id := ""
+		if workspace != model.Default {
+			id = workspace
+		}
+		w.walk(src, id, 1, false, w.ignore(src, nil), shallow[src])
+	}
 }
 
 // sections adds the top level folder of every listed folder below one
-// that has nothing to run itself, such as a checkout of many apps: the
-// sidebar lists the folders inside it under it.
-func sections(root string, c *catalogue) {
+// that has nothing to run itself, such as a checkout of many apps, and
+// the workspace of a folder inside one: the sidebar lists the folders
+// inside it under it.
+func sections(root string, named []string, c *catalogue) {
 	ids := make([]string, 0, len(c.byID))
 	for id := range c.byID {
 		ids = append(ids, id)
@@ -197,7 +217,7 @@ func sections(root string, c *catalogue) {
 		if !nested || model.IsReserved(top) {
 			continue
 		}
-		if dir := filepath.Join(root, top); !c.seen(dir) {
+		if dir := layout.Dir(root, named, top); !c.seen(dir) {
 			c.add(Load(top, dir))
 		}
 	}

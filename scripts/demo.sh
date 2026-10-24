@@ -51,12 +51,13 @@ repo() {
   git clone -q --bare "$work/repos/$1" "$work/repos/$1.git"
 }
 mkdir -p "$work/repos"
-mv "$work/demo/infra" "$work/repos/infra"
+mv "$work/demo/src/infra" "$work/repos/infra"
 printf '.env\n' >"$work/repos/infra/.gitignore"
 repo infra "Provisioning and deploy jobs"
 
-# The acme workspace's home project and its two projects are
-# repositories of their own, cloned side by side in the workspace.
+# The acme workspace's home repository and its two projects are
+# repositories of their own: the home cloned into acme/home, the
+# projects side by side in acme/src.
 mv "$work/demo/acme" "$work/repos/acme"
 mv "$work/repos/acme/api" "$work/repos/acme-api"
 mv "$work/repos/acme/web" "$work/repos/acme-web"
@@ -98,23 +99,9 @@ friday="$(date -d friday +%F)"
 serve "$admin" TASK_UI_AUTOLOGIN=admin TASK_UI_NOW="${friday}T22:00:00+02:00"
 serve "$viewer" TASK_UI_AUTOLOGIN=guest
 serve "$login"
-# The prompt instance answers the Prompt box with a Claude Code stand-in:
-# its HOME's .profile puts a claude first in the PATH of its runs, which
-# prints the answer in markdown.
-mkdir -p "$work/home/bin"
-printf 'PATH="$HOME/bin:$PATH"\n' >"$work/home/.profile"
-cat >"$work/home/bin/claude" <<'ANSWER'
-#!/bin/sh
-cat <<'MD'
-The tooling every Acme project shares:
-
-- **Skills** in `.atkins/skills/`: `git`, `compose` and `dockerfile`, which apply in each project's checkout.
-- **Jobs** in `atkins.yml`: `bootstrap` clones the projects beside it, `policy` checks them before a release.
-- **Projects**: `api` and `web`, each with a `release` job of its own.
-MD
-ANSWER
-chmod +x "$work/home/bin/claude"
-serve "$prompter" TASK_UI_AUTOLOGIN=admin HOME="$work/home"
+# The prompt instance answers the Prompt box with a Claude Code stand-in,
+# which the acme workspace's home holds while it is empty, below.
+serve "$prompter" TASK_UI_AUTOLOGIN=admin
 export TASK_UI_BASE="http://127.0.0.1:${admin}"
 
 # api calls the admin instance the way the pages do.
@@ -254,13 +241,27 @@ for theme in dark light; do
 done
 
 # The workspace comes last, so the shots above keep a sidebar without
-# one: the acme directory, its two projects cloned inside it, and a Claude
-# token for the admin, which the Prompt box needs: open on the
-# workspace's page, folded on every other. The prompt instance asks one
-# prompt there, so the box shows a question and its answer. The home
-# project comes after the prompt: its HOME would hide the prompt
-# instance's .profile, which puts the stand-in claude in the PATH.
+# one: the acme directory with an empty home, its two projects cloned
+# into its src, and a Claude token for the admin, which the Prompt box
+# needs: open on the workspace's page, folded on every other. The prompt
+# instance asks one prompt there, so the box shows a question and its
+# answer. The home repository comes after the prompt: while the home is
+# empty, its .profile puts a claude stand-in first in the PATH of the
+# runs, which prints the answer in markdown; the clone replaces it.
 api POST /workspaces -d '{"folder":"acme","title":"Acme","description":"The tooling every Acme project shares"}'
+mkdir -p "$work/demo/acme/home/bin"
+printf 'PATH="$HOME/bin:$PATH"\n' >"$work/demo/acme/home/.profile"
+cat >"$work/demo/acme/home/bin/claude" <<'ANSWER'
+#!/bin/sh
+cat <<'MD'
+The tooling every Acme project shares:
+
+- **Skills** in `.atkins/skills/`: `git`, `compose` and `dockerfile`, which apply in each project's checkout.
+- **Jobs** in `atkins.yml`: `bootstrap` clones the projects beside it, `policy` checks them before a release.
+- **Projects**: `api` and `web`, each with a `release` job of its own.
+MD
+ANSWER
+chmod +x "$work/demo/acme/home/bin/claude"
 api POST /projects -d "{\"url\":\"file://$work/repos/acme-api.git\",\"id\":\"api\",\"workspace\":\"acme\"}"
 api POST /projects -d "{\"url\":\"file://$work/repos/acme-web.git\",\"id\":\"web\",\"workspace\":\"acme\"}"
 api PUT /integrations/claude -d '{"values":{"token":"sk-ant-oat01-demo","who":"admin"}}'
@@ -271,7 +272,7 @@ api POST /secrets -d '{"scope":"workspace:acme","name":"REGISTRY_URL","content":
 api POST /secrets -d '{"scope":"acme/api","name":"DATABASE_URL","content":"postgres://api@db/api"}'
 api POST /workspaces/acme/keys/generate -d '{"type":"ed25519","name":"git","comment":"acme git"}'
 api POST /workspaces/acme/keys/generate -d '{"type":"ed25519","name":"deploy","comment":"acme deploy","policies":["admin"]}'
-printf 'DATABASE_URL=postgres://localhost/api\n' >"$work/demo/acme/api/.env"
+printf 'DATABASE_URL=postgres://localhost/api\n' >"$work/demo/acme/src/api/.env"
 
 TASK_UI_BASE="http://127.0.0.1:${prompter}" api POST /workspaces/acme/prompt -d '{"prompt":"what does this workspace hold, in a few lines"}'
 for _ in $(seq 1 100); do
@@ -279,13 +280,14 @@ for _ in $(seq 1 100); do
   sleep 0.2
 done
 
-# The tooling repository as the home project, the HOME of acme's runs,
-# where atkins finds the skills of the actions bar.
-api POST /projects -d "{\"url\":\"file://$work/repos/acme.git\",\"id\":\"workspace\",\"workspace\":\"acme\",\"home\":true}"
-# A directory beside the projects with nothing to run, which the
-# sidebar lists under acme all the same; the home project it leaves out.
-mkdir -p "$work/demo/acme/design"
-printf '# Design\n\nMockups and the style guide.\n' >"$work/demo/acme/design/README.md"
+# The tooling repository as the home repository, the HOME of acme's
+# runs, where atkins finds the skills of the actions bar: the clone
+# replaces the empty home with the stand-in.
+api PUT /workspaces/acme/home -d "{\"url\":\"file://$work/repos/acme.git\"}"
+# A directory beside the projects in src with nothing to run, which the
+# sidebar lists under acme all the same; the home it leaves out.
+mkdir -p "$work/demo/acme/src/design"
+printf '# Design\n\nMockups and the style guide.\n' >"$work/demo/acme/src/design/README.md"
 
 # Every link on every page answers, the workspace's included.
 scripts/crawl.sh
@@ -299,7 +301,7 @@ shot mobile-workspace-edit-dark /settings/workspaces/acme dark 390x1600
 shot sidebar-workspace-dark /f/acme/api dark 1440x1900
 shot workspace-prompt-dark /f/acme dark
 # The workspace page's [...] menu open, with its SSH keys and Secrets,
-# its Home section, the home project's files, and the two pages that
+# its Home section, the home's files, and the two pages that
 # edit the workspace's keys and secrets in place.
 shot workspace-menu-dark "/f/acme#actions=head" dark
 shot workspace-home-dark /f/acme dark 1440x1700
@@ -325,7 +327,7 @@ shot args-dark "/f/acme/api/deploy#args=@compose:custom;ps%20-a%20%27;%20id%27" 
 mkdir -p "$work/repos/labs"
 printf '# Labs\n\nExperiments that share nothing yet.\n' >"$work/repos/labs/README.md"
 repo labs "Experiments"
-api POST /workspaces -d "{\"url\":\"file://$work/repos/labs.git\",\"folder\":\"labs\",\"project\":\"notes\",\"title\":\"Labs\"}"
+api POST /workspaces -d "{\"url\":\"file://$work/repos/labs.git\",\"folder\":\"labs\",\"title\":\"Labs\"}"
 shot keys-dark /settings/keys dark 1440x1100
 shot secrets-dark /settings/secrets dark 1440x1300
 # A row's [...] menu open, #actions=<n> opening row n's: a key's, its

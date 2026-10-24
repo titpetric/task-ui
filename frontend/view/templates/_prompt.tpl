@@ -20,7 +20,7 @@
 	{{- else if .Run }}
 	<summary><h3 class="section-title"><svg class="ic chev"><use href="#i-chev"/></svg>Prompt <small>ask Claude Code about this run and its output, in {{ .Where }}</small></h3></summary>
 	{{- else }}
-	<summary><h3 class="section-title"><svg class="ic chev"><use href="#i-chev"/></svg>Prompt <small>ask Claude Code in {{ .Where }}; it reads the CLAUDE.md and .claude/ there, in the folders above and in the workspace's home project</small></h3></summary>
+	<summary><h3 class="section-title"><svg class="ic chev"><use href="#i-chev"/></svg>Prompt <small>ask Claude Code in {{ .Where }}; it reads the CLAUDE.md and .claude/ there, in the folders above and in the workspace's home</small></h3></summary>
 	{{- end }}
 	{{- if not .Watch }}
 	<form class="note-form" data-api="{{ .API }}" data-refresh-notes>

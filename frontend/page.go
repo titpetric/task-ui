@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"os"
 	"path"
-	"path/filepath"
 	"sort"
 	"strings"
 	"time"
@@ -17,6 +16,7 @@ import (
 	"github.com/titpetric/task-ui/access"
 	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/frontend/view"
+	"github.com/titpetric/task-ui/layout"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/permission"
 	"github.com/titpetric/task-ui/recording"
@@ -145,7 +145,7 @@ func (h *Handlers) seesFlowRun(ctx context.Context, user *model.User, runID stri
 	return true
 }
 
-// sidebar fills the page's folder tree: the folders seen and the workspaces' directories, less hidden and home projects, then the user's pins.
+// sidebar fills the page's folder tree: the folders seen and the workspaces' directories, less hidden and the homes, then the user's pins.
 func (h *Handlers) sidebar(ctx context.Context, p *view.Page) {
 	hidden, homes := map[string]bool{}, map[string]bool{}
 	if h.opts.Projects != nil {
@@ -156,10 +156,10 @@ func (h *Handlers) sidebar(ctx context.Context, p *view.Page) {
 			}
 		}
 	}
+	hidden[layout.Home], homes[layout.Home] = true, true
 	for ws := range p.Workspaces {
-		if home, _ := h.opts.Workspaces.Home(ctx, ws); home != "" {
-			hidden[home], homes[home] = true, true
-		}
+		home := layout.HomeID(ws)
+		hidden[home], homes[home] = true, true
 	}
 	side := view.SideDefaults(p.Folders, h.workspaceDirs(p.Workspaces), hidden, p.User.CanSee)
 	p.Pinning = h.opts.Pins != nil && p.User != nil
@@ -176,14 +176,14 @@ func (h *Handlers) sidebar(ctx context.Context, p *view.Page) {
 	p.SideFolders, p.SidePins = tree.Folders, tree.Pins
 }
 
-// workspaceDirs returns the directories right inside each named workspace by ID, none without a root.
+// workspaceDirs returns the directories in the src of each named workspace by ID, none without a root.
 func (h *Handlers) workspaceDirs(workspaces map[string]int) []string {
 	var ids []string
 	for ws := range workspaces {
 		if h.opts.Root == "" {
 			return nil
 		}
-		entries, _ := os.ReadDir(filepath.Join(h.opts.Root, filepath.FromSlash(ws)))
+		entries, _ := os.ReadDir(layout.SrcDir(h.opts.Root, ws))
 		for _, entry := range entries {
 			if entry.IsDir() && !strings.HasPrefix(entry.Name(), ".") {
 				ids = append(ids, ws+"/"+entry.Name())

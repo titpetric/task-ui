@@ -94,6 +94,25 @@
 </section>
 {{- end }}
 
+{{- with .Instance }}{{ with .Storage }}
+<section class="block instance-section" id="storage">
+	<h3>Storage</h3>
+	<p class="section-intro">What the instance keeps on disk: its database, the recordings and the artifacts of the runs, the tool history of each workspace's home and the instance's own copy, and the checkouts under each workspace's <code>src</code>. Measured now and then; an ellipsis stands for a measure still under way.</p>
+	<div class="table-wrap">
+	<table class="table storage-table cards">
+		<colgroup><col class="c-item"><col class="c-where"><col class="c-size"><col class="c-files"></colgroup>
+		<thead><tr><th>Item</th><th>Where</th><th class="num">Size</th><th class="num">Files</th></tr></thead>
+		<tbody>
+		{{- range .Rows }}
+		<tr><td class="key">{{ .Name }}</td><td class="where mono" data-label="Where">{{ .Where }}</td><td class="num mono" data-label="Size">{{ if .Pending }}<span class="faint pending" aria-label="not measured yet"></span>{{ else }}{{ size .Size }}{{ end }}</td><td class="num mono" data-label="Files">{{ if .Pending }}<span class="faint pending" aria-label="not measured yet"></span>{{ else }}{{ .Files }}{{ end }}</td></tr>
+		{{- end }}
+		</tbody>
+		<tfoot><tr><th>Total</th><td></td><td class="num mono" data-label="Size">{{ if .Total.Pending }}<span class="faint pending" aria-label="not measured yet"></span>{{ else }}{{ size .Total.Size }}{{ end }}</td><td class="num mono" data-label="Files">{{ if .Total.Pending }}<span class="faint pending" aria-label="not measured yet"></span>{{ else }}{{ .Total.Files }}{{ end }}</td></tr></tfoot>
+	</table>
+	</div>
+</section>
+{{- end }}{{ end }}
+
 {{- if .Can "key/view" }}
 {{ template "instance-keys" . }}
 {{- end }}

@@ -12,7 +12,7 @@ func TestMigrations(t *testing.T) {
 	t.Parallel()
 	files, err := fs.Glob(schema.Migrations(), "*.up.sql")
 	assert.NoError(t, err)
-	assert.Len(t, files, 65)
+	assert.Len(t, files, 66)
 	assert.Contains(t, files, "run.up.sql")
 	assert.Contains(t, files, "workspace.up.sql")
 	for _, name := range []string{"workflow.up.sql", "workflow_step.up.sql", "workflow_run.up.sql", "workflow_run_step.up.sql"} {

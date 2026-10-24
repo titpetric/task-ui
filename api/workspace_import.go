@@ -8,7 +8,6 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"path/filepath"
 	"slices"
 	"sort"
 	"strings"
@@ -16,6 +15,7 @@ import (
 	"github.com/titpetric/task-ui/envfile"
 	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/keystore"
+	"github.com/titpetric/task-ui/layout"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/storage"
 	"github.com/titpetric/task-ui/workspace"
@@ -35,10 +35,11 @@ var errImport = errors.New("the bundle")
 // multipart form of the bundle, its passphrase and the folder to import
 // it as, the bundle's own when left out; a bundle of the default
 // workspace needs one. It checks the folder as a create does, makes its
-// directory, writes its keys, adds its rows under the folder, the home
-// project set, and clones its projects. Up to the
-// projects' clones a failure keeps nothing; a project that does not
-// clone keeps its row and reports git's output. Takes workspace/edit.
+// directory with its home and src, writes its keys, adds its rows under
+// the folder, clones its home repository and then its projects. Up to
+// the clones a failure keeps nothing; a home or a project that does not
+// clone leaves an empty directory and reports git's output. Takes
+// workspace/edit.
 func (h *Handlers) importWorkspace(w http.ResponseWriter, r *http.Request) {
 	if !h.require(w, r, "workspace/edit") {
 		return
@@ -69,9 +70,17 @@ func (h *Handlers) importWorkspace(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	unknown := h.unknownUsers(ctx, bundle.Manifest.Grants)
+	home := importedProject{Folder: layout.HomeID(target)}
+	if row.HomeURL != "" {
+		output, err := h.makeHome(ctx, target, row.HomeURL, row.HomeBranch)
+		home.Cloned, home.Output = err == nil, output
+		if err != nil && output == "" {
+			home.Output = err.Error()
+		}
+	}
 	cloned := h.cloneImported(ctx, projects)
 	h.writeImportedEnv(ctx, target, bundle.Manifest.EnvFiles)
-	writeJSON(w, http.StatusCreated, map[string]any{"workspace": row, "projects": cloned, "unknown_users": unknown})
+	writeJSON(w, http.StatusCreated, map[string]any{"workspace": row, "home": home, "projects": cloned, "unknown_users": unknown})
 }
 
 // readImport reads the multipart form of an import: the bundle,
@@ -138,7 +147,7 @@ func (u *rollback) run() {
 func (h *Handlers) restore(ctx context.Context, bundle *workspace.Bundle, target string, undo *rollback) (*model.Workspace, []model.Project, error) {
 	manifest := bundle.Manifest
 	source := manifest.Workspace
-	dir := filepath.Join(h.opts.Root, target)
+	dir := layout.WorkspaceDir(h.opts.Root, target)
 	if err := h.opts.Keys.CheckBundle(ctx, bundle.Keys); err != nil {
 		return nil, nil, err
 	}
@@ -146,10 +155,14 @@ func (h *Handlers) restore(ctx context.Context, bundle *workspace.Bundle, target
 		return nil, nil, err
 	}
 	undo.add(func() { os.RemoveAll(dir) })
+	if err := layout.Ensure(h.opts.Root, target); err != nil {
+		return nil, nil, err
+	}
 
 	row := &model.Workspace{
 		Folder: target, Title: source.Title, Description: source.Description,
 		Sort: source.Sort, Shallow: source.Shallow,
+		HomeURL: manifest.Home.URL, HomeBranch: manifest.Home.Branch,
 	}
 	if source.Folder == model.Default {
 		row.Title = target
@@ -177,34 +190,15 @@ func (h *Handlers) restore(ctx context.Context, bundle *workspace.Bundle, target
 	if err != nil {
 		return nil, nil, err
 	}
-	if err := h.restoreHome(ctx, row, projects, manifest.HomeProject); err != nil {
-		return nil, nil, err
-	}
 	return row, projects, nil
 }
 
-// restoreHome sets the imported project the bundle names home as the
-// workspace's home project; a name no project of the bundle has is a
-// refused bundle.
-func (h *Handlers) restoreHome(ctx context.Context, row *model.Workspace, projects []model.Project, home string) error {
-	if home == "" {
-		return nil
-	}
-	folder := workspace.Absolute(row.Folder, home)
-	for _, project := range projects {
-		if project.Folder == folder {
-			row.HomeProjectID = project.ID
-			return h.opts.Workspaces.Update(ctx, row)
-		}
-	}
-	return fmt.Errorf("%w names the home project %q, which it does not hold", errImport, home)
-}
-
 // importedFolder returns the folder a relative one of a bundle names
-// under the target, refusing one that is not a folder ID inside it.
+// under the target, refusing one that is not a folder ID inside it, or
+// that is the workspace's home.
 func importedFolder(target, relative string) (string, error) {
 	id := workspace.Absolute(target, relative)
-	if !folder.ValidID(id) || (id != target && !strings.HasPrefix(id, target+"/")) {
+	if !folder.ValidID(id) || (id != target && !strings.HasPrefix(id, target+"/")) || layout.IsHome([]string{target}, id) {
 		return "", fmt.Errorf("%w names the folder %q, which is not one inside %s", errImport, relative, target)
 	}
 	return id, nil
@@ -333,12 +327,12 @@ func (h *Handlers) restoreProjects(ctx context.Context, target string, projects 
 }
 
 // cloneImported clones each imported project's repository into the
-// workspace, or makes the directory of one without. A failure keeps the
-// row and reports git's output.
+// workspace's src, or makes the directory of one without. A failure
+// keeps the row and reports git's output.
 func (h *Handlers) cloneImported(ctx context.Context, projects []model.Project) []importedProject {
 	result := make([]importedProject, 0, len(projects))
 	for _, project := range projects {
-		dir := filepath.Join(h.opts.Root, filepath.FromSlash(project.Folder))
+		dir := h.dirOf(ctx, project.Folder)
 		item := importedProject{Folder: project.Folder}
 		if project.SourceURL == "" {
 			if err := os.MkdirAll(dir, 0o755); err != nil {
@@ -367,7 +361,7 @@ func (h *Handlers) writeImportedEnv(ctx context.Context, target string, files []
 	}
 	for _, file := range files {
 		id := workspace.Absolute(target, file.Folder)
-		dir := filepath.Join(h.opts.Root, filepath.FromSlash(id))
+		dir := h.dirOf(ctx, id)
 		if info, err := os.Stat(dir); err != nil || !info.IsDir() {
 			continue
 		}

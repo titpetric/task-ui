@@ -101,32 +101,29 @@ func TestWorkspaceKeys_Scoped(t *testing.T) {
 	assert.Equal(t, http.StatusForbidden, f.get(t, asOps, "/settings/workspaces/malta/keys").Status)
 }
 
-// A workspace's page lists the files of its home project, the $HOME of
-// its runs, dot files sealed; without a home project it has none.
+// A workspace's page lists the files of its home, the $HOME of its
+// runs, dot files sealed, once the catalogue knows the home folder.
 func TestFolder_Home(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
 	ctx := context.Background()
 	cat := f.opts.Catalogue.(catalogue)
-	cat["malta"] = shellFolder(t, f.root, "malta", nil)
-	home := shellFolder(t, f.root, "malta/workspace", nil)
-	cat["malta/workspace"] = home
+	ws := shellFolder(t, f.root, "malta", nil)
+	ws.Dir = filepath.Join(f.root, "malta", "src")
+	cat["malta"] = ws
+	home := shellFolder(t, f.root, "malta/home", nil)
+	home.Dir = filepath.Join(f.root, "malta", "home")
+	assert.NoError(t, os.MkdirAll(home.Dir, 0o755))
 	assert.NoError(t, os.WriteFile(filepath.Join(home.Dir, "CLAUDE.md"), []byte("# home\n"), 0o644))
 	assert.NoError(t, os.WriteFile(filepath.Join(home.Dir, ".env"), []byte("TOKEN=x\n"), 0o644))
 	assert.NoError(t, f.opts.Workspaces.Create(ctx, &model.Workspace{Folder: "malta"}))
 
 	assert.NotContains(t, f.page(t, asAdmin, "/f/malta"), `id="home"`)
 
-	project := &model.Project{Folder: "malta/workspace", Title: "workspace"}
-	assert.NoError(t, f.opts.Projects.Create(ctx, project))
-	ws, err := f.opts.Workspaces.GetByFolder(ctx, "malta")
-	assert.NoError(t, err)
-	ws.HomeProjectID = project.ID
-	assert.NoError(t, f.opts.Workspaces.Update(ctx, ws))
-
+	cat["malta/home"] = home
 	body := f.page(t, asAdmin, "/f/malta")
 	assert.Contains(t, body, `<section class="block folder-home" id="home">`)
-	assert.Contains(t, body, `<a href="/files/malta/workspace/CLAUDE.md" data-file="~/CLAUDE.md">CLAUDE.md</a>`)
+	assert.Contains(t, body, `<a href="/files/malta/home/CLAUDE.md" data-file="~/CLAUDE.md">CLAUDE.md</a>`)
 	assert.Contains(t, body, `title="task-ui lists .env but does not open it"`)
 	assert.Contains(t, body, `href="/settings/workspaces/malta/keys"`)
 	assert.Contains(t, body, `href="/settings/workspaces/malta/secrets"`)

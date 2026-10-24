@@ -1606,6 +1606,14 @@
       key: MUL
       comment: Home Project ID
       datatype: char(26)
+    - name: home_url
+      type: text
+      comment: Home URL
+      datatype: varchar
+    - name: home_branch
+      type: text
+      comment: Home Branch
+      datatype: varchar
     - name: shallow
       type: boolean
       comment: Shallow

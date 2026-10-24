@@ -4,11 +4,11 @@ import (
 	"context"
 	"log/slog"
 	"path/filepath"
-	"strings"
 	"sync"
 	"time"
 
 	"github.com/titpetric/task-ui/folder"
+	"github.com/titpetric/task-ui/layout"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/skills"
 	"github.com/titpetric/task-ui/storage"
@@ -16,8 +16,9 @@ import (
 
 // Catalogue discovers the folders under the root on every call, with the
 // project rows applied, so a clone or a configuration change shows at
-// once. Discovery lists the root under no ID, so Find answers _ with the root itself: the folder of
-// the root's built-in jobs, @shell, @claude and @host:<host>.
+// once. Discovery lists the root under no ID, so Find answers _ with the
+// src of the default workspace: the folder of the root's built-in jobs,
+// @shell, @claude and @host:<host>.
 type Catalogue struct {
 	Root     string
 	Discover bool
@@ -79,12 +80,12 @@ func (c *Catalogue) Find(id string) *folder.Folder {
 	if f := c.discovery().Find(id); f != nil || id != model.Default {
 		return f
 	}
-	return &folder.Folder{ID: model.Default, Title: model.Default, Dir: c.Root}
+	return &folder.Folder{ID: model.Default, Title: model.Default, Dir: layout.SrcDir(c.Root, model.Default)}
 }
 
-// Home returns the directory of the home project of the workspace a
-// directory under the root is in, the HOME atkins lists its skills with
-// there; "" for none, or a directory outside the root.
+// Home returns the home of the workspace a directory under the root is
+// in, the HOME atkins lists its skills with there; "" for a directory
+// outside the root or with no workspaces known.
 func (c *Catalogue) Home(dir string) string {
 	if c.Workspaces == nil {
 		return ""
@@ -93,20 +94,12 @@ func (c *Catalogue) Home(dir string) string {
 	if err != nil {
 		return ""
 	}
-	rel, err := filepath.Rel(root, dir)
-	if err != nil || rel == ".." || strings.HasPrefix(rel, "../") {
+	named, _ := c.Workspaces.Folders(context.Background())
+	workspace, ok := layout.Workspace(root, named, dir)
+	if !ok {
 		return ""
 	}
-	name, _, _ := strings.Cut(filepath.ToSlash(rel), "/")
-	ctx := context.Background()
-	if _, err := c.Workspaces.GetByFolder(ctx, name); err != nil || name == "." {
-		name = model.Default
-	}
-	home, err := c.Workspaces.Home(ctx, name)
-	if err != nil || home == "" {
-		return ""
-	}
-	return filepath.Join(root, filepath.FromSlash(home))
+	return layout.HomeDir(root, workspace)
 }
 
 // Every returns each folder with a job, whatever the settings hide, cached for everyTTL.

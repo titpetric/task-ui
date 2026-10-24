@@ -8,10 +8,10 @@ import (
 )
 
 // Format is the version of the manifest a bundle holds.
-const Format = 3
+const Format = 4
 
 // Manifest is what a bundle holds beside the keys: the workspace's
-// row, its projects and its home project among them, the grants of its
+// row, its home repository, its projects, the grants of its
 // SSH keys, its env files and its secrets. Folders are relative to the workspace, "" its own folder; a
 // secret's scope is a relative folder, or workspace: for the secrets it
 // shares. Secrets go plain, inside the bundle's passphrase, and the
@@ -23,12 +23,19 @@ type Manifest struct {
 	Version   string          `json:"version"`
 	Workspace model.Workspace `json:"workspace"`
 	Projects  []model.Project `json:"projects"`
-	// HomeProject is the folder of the home project, relative to the
-	// workspace, "" for none.
-	HomeProject string                    `json:"home_project"`
-	Grants      []model.WorkspaceKeyGrant `json:"grants"`
-	EnvFiles    []model.EnvFile           `json:"env_files"`
-	Secrets     []model.Secret            `json:"secrets"`
+	// Home is the repository of the workspace's home, empty for an
+	// empty home.
+	Home     Home                      `json:"home"`
+	Grants   []model.WorkspaceKeyGrant `json:"grants"`
+	EnvFiles []model.EnvFile           `json:"env_files"`
+	Secrets  []model.Secret            `json:"secrets"`
+}
+
+// Home is the repository a workspace's home is a checkout of, and its
+// branch, "" for the default.
+type Home struct {
+	URL    string `json:"url"`
+	Branch string `json:"branch"`
 }
 
 // Contains reports whether a folder belongs to a workspace: the

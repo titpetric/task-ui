@@ -87,12 +87,7 @@ func (s *ProjectStorage) Upsert(ctx context.Context, project *model.Project) err
 	return s.Update(ctx, project)
 }
 
-// Delete removes a project by ID, unsetting it as a workspace's home project.
+// Delete removes a project by ID.
 func (s *ProjectStorage) Delete(ctx context.Context, id string) error {
-	return inTx(ctx, s.db, func(c conn) error {
-		if err := c.Exec(ctx, "UPDATE workspace SET home_project_id = '' WHERE home_project_id = ?", id); err != nil {
-			return err
-		}
-		return c.Exec(ctx, "DELETE FROM project WHERE id = ?", id)
-	})
+	return client(s.db).Exec(ctx, "DELETE FROM project WHERE id = ?", id)
 }

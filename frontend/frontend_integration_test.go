@@ -30,6 +30,7 @@ import (
 	"github.com/titpetric/task-ui/integration"
 	"github.com/titpetric/task-ui/internal/assert"
 	"github.com/titpetric/task-ui/keystore"
+	"github.com/titpetric/task-ui/layout"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/note"
 	"github.com/titpetric/task-ui/recording"
@@ -152,7 +153,7 @@ func newFixture(t *testing.T) *fixture {
 // shellFolder makes a folder under root with one shell job per script.
 func shellFolder(t *testing.T, root, id string, scripts map[string]string) *folder.Folder {
 	t.Helper()
-	dir := filepath.Join(root, id)
+	dir := filepath.Join(root, layout.Src, id)
 	assert.NoError(t, os.MkdirAll(dir, 0o755))
 	f := &folder.Folder{ID: id, Title: id, Dir: dir, Sources: []*detector.Source{{Kind: "script", File: "scripts"}}}
 	names := make([]string, 0, len(scripts))

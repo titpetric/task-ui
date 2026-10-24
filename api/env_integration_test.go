@@ -58,7 +58,7 @@ func TestEnv_GetAndPut(t *testing.T) {
 	assert.Equal(t, "A=1\nB=two\n", view.Content)
 
 	// The file in the folder carries the secret, the managed content does not.
-	generated, err := os.ReadFile(filepath.Join(f.root, "infra", ".env"))
+	generated, err := os.ReadFile(filepath.Join(f.root, "src", "infra", ".env"))
 	assert.NoError(t, err)
 	assert.Contains(t, string(generated), "A=1")
 	assert.Contains(t, string(generated), "TOKEN=t")
@@ -69,7 +69,7 @@ func TestEnv_GetAndPut(t *testing.T) {
 	// Saving it empty deletes the row and the written file.
 	cleared := f.call(t, asAdmin, http.MethodPut, "/env/infra/.env", api.EnvRequest{Content: ""})
 	assert.Equal(t, http.StatusOK, cleared.Status, string(cleared.Raw))
-	assert.NoFileExists(t, filepath.Join(f.root, "infra", ".env"))
+	assert.NoFileExists(t, filepath.Join(f.root, "src", "infra", ".env"))
 	assert.Len(t, f.call(t, asAdmin, http.MethodGet, "/env/infra", nil).list("files"), 0)
 }
 
@@ -101,7 +101,7 @@ func TestEnv_Nested(t *testing.T) {
 	assert.Equal(t, http.StatusOK, list.Status, string(list.Raw))
 	assert.Len(t, list.list("files"), 1)
 	assert.Equal(t, "infra/edge", put.str("folder"))
-	assert.FileExists(t, filepath.Join(f.root, "infra", "edge", ".env"))
+	assert.FileExists(t, filepath.Join(f.root, "src", "infra", "edge", ".env"))
 
 	got := f.call(t, asAdmin, http.MethodGet, "/env/infra/edge/.env", nil)
 	assert.Equal(t, "EDGE=1\n", got.str("content"))

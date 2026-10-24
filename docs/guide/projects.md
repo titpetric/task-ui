@@ -15,10 +15,10 @@ page you are on stays open.
 ## What the sidebar lists
 
 With nothing pinned, the sidebar lists every folder you see with
-something to run, and every directory right inside a named workspace,
-the checkouts side by side there, with jobs or without. A project set
-not to show there (**Show in sidebar** off in its settings), a
-workspace's home project and the folders inside them stay out.
+something to run, and every directory right inside a named workspace's
+`src/`, the checkouts side by side there, with jobs or without. A
+project set not to show there (**Show in sidebar** off in its
+settings), a workspace's home and the folders inside them stay out.
 
 **Pin** adds to that, for you alone: a workspace, a project, a folder
 or a directory inside one, or a job. Pin a folder from the `[...]` of
@@ -30,7 +30,7 @@ the project; a pinned job as a run item, the play button and its name,
 under its folder. A folder there for its pinned jobs alone lists those.
 A job pinned with a directory or args runs with them. The same item
 reads **Unpin** once pinned; what the sidebar lists only for the pin
-leaves it. A home project stays out, pinned or not. The API keeps the
+leaves it. A workspace's home stays out, pinned or not. The API keeps the
 pins under `/api/pins` (see [API](../api.md)).
 
 ![The sidebar with two pins of the admin: acme/api's docs directory under the project, and its ./serve file as a run item](../assets/sidebar-pin-dark.png)
@@ -445,8 +445,8 @@ duration.
 A folder in a git checkout pulls it with `git pull --ff-only` before every
 run, in the run's own terminal, so a job always runs the latest version.
 A folder inside a checkout pulls the checkout. When the pull fails, the
-run fails with it. A project in a workspace with a home project pulls
-the home project first (see [Workspaces](workspaces.md#runs-in-a-workspace)).
+run fails with it. A project in a workspace whose home is a checkout
+pulls the home first (see [Workspaces](workspaces.md#runs-in-a-workspace)).
 
 ## Keys for a run
 

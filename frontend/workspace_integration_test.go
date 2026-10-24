@@ -24,14 +24,12 @@ func TestWorkspaces(t *testing.T) {
 	assert.Contains(t, empty, `type="file" id="wi-bundle" name="bundle"`)
 
 	ctx := context.Background()
-	home := &model.Project{Folder: "malta/workspace", SourceURL: "git@example.com:org/workspace.git"}
-	assert.NoError(t, f.opts.Projects.Create(ctx, home))
-	assert.NoError(t, f.opts.Workspaces.Create(ctx, &model.Workspace{Folder: "malta", Title: "Malta", HomeProjectID: home.ID}))
+	assert.NoError(t, f.opts.Workspaces.Create(ctx, &model.Workspace{Folder: "malta", Title: "Malta", HomeURL: "git@example.com:org/workspace.git"}))
 	body := f.page(t, asAdmin, "/settings/workspaces")
 	assert.Contains(t, body, `href="/f/malta"`)
 	assert.Contains(t, body, "Malta")
-	assert.Contains(t, body, `<th>Home project</th>`)
-	assert.Contains(t, body, `>malta/workspace</a>`, "the home project lists")
+	assert.Contains(t, body, `<th>Home repository</th>`)
+	assert.Contains(t, body, `>git@example.com:org/workspace.git</span>`, "the home repository lists")
 	assert.Contains(t, body, `href="/settings/workspaces/malta"`)
 	assert.Contains(t, body, `data-delete="/api/workspaces/malta"`)
 	// One workspace has nowhere to move.
@@ -44,6 +42,7 @@ func TestWorkspaces(t *testing.T) {
 	// The workspaces list in their order, each movable toward the other.
 	assert.NoError(t, f.opts.Workspaces.Create(ctx, &model.Workspace{Folder: "gozo", Title: "Gozo"}))
 	body = f.page(t, asAdmin, "/settings/workspaces")
+	assert.Contains(t, body, `<span class="faint">empty</span>`, "a workspace without a home repository")
 	assert.True(t, strings.Index(body, `href="/f/malta"`) < strings.Index(body, `href="/f/gozo"`), "malta, added first, lists first")
 	assert.NotContains(t, body, `data-workspace-move="up" data-folder="malta"`)
 	assert.Contains(t, body, `data-workspace-move="down" data-folder="malta"><svg class="ic"><use href="#i-down"/></svg><span>Move down</span>`)
@@ -54,6 +53,8 @@ func TestWorkspaces(t *testing.T) {
 	assert.Contains(t, form, `data-api="/api/workspaces"`)
 	assert.Contains(t, form, `name="folder"`)
 	assert.Contains(t, form, `name="url"`)
+	assert.Contains(t, form, `name="branch"`)
+	assert.NotContains(t, form, `name="project"`)
 }
 
 func TestWorkspaceEdit(t *testing.T) {

@@ -20,7 +20,7 @@ their step. The trail lists only the steps you may open.
 6. [Users](#users): who may sign in.
 7. [Permissions](#permissions): what each role may do.
 8. [Workflows](workflows.md): chains of jobs.
-9. [Workspaces](#workspaces): directories that hold projects, one of them home.
+9. [Workspaces](#workspaces): directories of a home and projects under src.
 10. [Projects](#projects): the folders under the root.
 
 ![Settings](../assets/settings-dark.png)
@@ -41,6 +41,13 @@ does:
   starts with, and, for an admin, the server's variables by name.
 - **Paths**: the workspace folder, discovery, the data folder and how
   the host sees it, the key folder and the compose project.
+- **Storage**, for an admin: what the instance keeps on disk, an item a
+  row with its place, its size and its files, and a total: the
+  database with its journal, the recordings, the artifacts, the tool
+  history of each workspace's home and the instance's own copy, and the
+  checkouts under each workspace's `src`. The instance measures it now
+  and then and shows the last measure; an ellipsis stands where a
+  measure is still under way.
 - **Integrations**: whether the Beszel integration lists the
   Inventory's hosts.
 - **Keys**: the instance's encryption key and the git key, in the
@@ -75,9 +82,9 @@ What of the server's own environment a run starts with, one of three:
 - **None**, secure, the default of a fresh instance: the base variables
   alone, `PATH`, `HOME`, `USER`, `LOGNAME`, `SHELL`, `HOSTNAME`,
   `TMPDIR`, `LANG`, `LANGUAGE`, `LC_*`, `TZ`, `TERM`, `TASK_UI_*`,
-  `DOCKER_HOST`, and the ones a home project keeps in use, `ATKINS_DB`,
-  `DOCKER_CONFIG`, `GIT_CONFIG_GLOBAL`, `XDG_*`, `GOPATH`, `HISTFILE`
-  and `CLAUDE_CONFIG_DIR`, less any sensitive one;
+  `DOCKER_HOST`, and the ones a workspace's home keeps in use,
+  `DOCKER_CONFIG`, `CLAUDE_CONFIG_DIR`, `XDG_CACHE_HOME` and `GOPATH`,
+  less any sensitive one;
 - **Auto**, filtered: every variable but the sensitive ones;
 - **All**: every variable, sensitive ones too.
 
@@ -605,17 +612,18 @@ Permissions before it and Workspaces after it.
 
 ## Workspaces
 
-Directories under the root that hold projects side by side, one of them
-the home project, an organisation's tooling, which the workspace's runs
-get as `HOME`. **Add workspace** makes one under the folder you name,
-with its home project cloned from a repository URL when the form has one,
-**Move up** and **Move down** order them, and **Delete** deletes one
-with the projects inside it. **Workspace settings** opens a workspace's
-settings page: its title, description and **Recursive**, the toggle a
-project has, its **Home project**, with **Change**, **Add** or
-**Replace**, and **Remove**, its **Projects**, in the table of the
-Projects page, and its **Keys**, the SSH keys of its runs,
-which the [Keys](#keys) page also lists.
+Directories under the root, each with a `home`, the checkout of an
+organisation's tooling or an empty directory, which the workspace's
+runs get as `HOME`, and a `src` of projects side by side. **Add
+workspace** makes one under the folder you name, its home cloned from a
+**Home repository** when the form has one, **Move up** and **Move
+down** order them, and **Delete** deletes one with everything inside
+it. **Workspace settings** opens a workspace's settings page: its
+title, description and **Recursive**, the toggle a project has, its
+**Home repository**, with **Pull now**, **Replace** or **Clone**, and
+**Remove**, its **Projects**, in the table of the Projects page, and
+its **Keys**, the SSH keys of its runs, which the [Keys](#keys) page
+also lists.
 `/settings/workspaces/<folder>/keys` and `/secrets`, **SSH keys** and
 **Secrets** in the **⋯** menu of the workspace's page, edit its keys
 and its secrets in place. At the top right of that page,

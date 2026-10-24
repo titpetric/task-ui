@@ -151,8 +151,8 @@ func TestHead_ProjectsPage(t *testing.T) {
 	p.Pulls = map[string]*folder.Job{"acme/api": pull}
 	body := render(t, "projects", p)
 
-	root, acme := strings.Index(body, `<h3>Projects <small>at the top of /srv</small></h3>`), strings.Index(body, `<h3>acme <small>inside acme/</small></h3>`)
-	labs := strings.Index(body, `<h3>labs <small>inside labs/</small></h3>`)
+	root, acme := strings.Index(body, `<h3>Projects <small>in /srv/src</small></h3>`), strings.Index(body, `<h3>acme <small>inside acme/src/</small></h3>`)
+	labs := strings.Index(body, `<h3>labs <small>inside labs/src/</small></h3>`)
 	assert.True(t, root > 0 && acme > root && labs > acme, "the root's block, then each workspace's")
 	assert.Equal(t, 2, strings.Count(body, `<table class="table projects cards">`), "two blocks with rows, the empty one without a table")
 	assert.Contains(t, body[labs:], `<p class="empty-line">No projects in labs yet.</p>`)

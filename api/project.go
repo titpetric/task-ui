@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/titpetric/task-ui/detector"
 	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/hours"
+	"github.com/titpetric/task-ui/layout"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/storage"
 )
@@ -30,9 +30,6 @@ type ProjectCloneRequest struct {
 	// Sidebar lists the project in the sidebar, the default; false keeps
 	// it, and the folders inside it, out. Its pages stay.
 	Sidebar *bool `json:"sidebar,omitempty"`
-	// Home makes the project its workspace's home project, in place of
-	// the one before.
-	Home bool `json:"home,omitempty"`
 }
 
 // ProjectRequest changes what the configuration says about a folder.
@@ -106,8 +103,9 @@ func (h *Handlers) listProjects(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"entries": entries, "projects": projects})
 }
 
-// internalRefused refuses a project in the internal namespace, or in _.
-const internalRefused = "internal and _ are task-ui's own namespaces: name the folder otherwise"
+// reservedRefused refuses a project or a workspace named internal, _,
+// home or src, task-ui's own.
+const reservedRefused = "internal, _, home and src are task-ui's own names: name the folder otherwise"
 
 // folderIDFromURL derives a folder name from a repository URL.
 func folderIDFromURL(repo string) string {
@@ -118,10 +116,9 @@ func folderIDFromURL(repo string) string {
 	return folder.SafeID(base)
 }
 
-// cloneProject clones a repository into the root, or into a workspace,
-// and records it, as the workspace's home project when the request says
-// so. The clone is the test: a failure reports git's output and keeps
-// nothing.
+// cloneProject clones a repository into the src of the default
+// workspace, or of a named one, and records it. The clone is the test: a
+// failure reports git's output and keeps nothing.
 func (h *Handlers) cloneProject(w http.ResponseWriter, r *http.Request) {
 	if !h.require(w, r, "project/edit") {
 		return
@@ -147,8 +144,8 @@ func (h *Handlers) cloneProject(w http.ResponseWriter, r *http.Request) {
 	if req.Workspace == "" {
 		req.Workspace = model.Default
 	}
-	if model.IsReserved(req.ID) || model.IsInternal(req.Workspace) {
-		fail(w, http.StatusBadRequest, internalRefused)
+	if top, _, _ := strings.Cut(req.ID, "/"); layout.Reserved(top) || model.IsInternal(req.Workspace) {
+		fail(w, http.StatusBadRequest, reservedRefused)
 		return
 	}
 	id := req.ID
@@ -162,7 +159,7 @@ func (h *Handlers) cloneProject(w http.ResponseWriter, r *http.Request) {
 		fail(w, http.StatusConflict, problem)
 		return
 	}
-	dir := filepath.Join(h.opts.Root, filepath.FromSlash(id))
+	dir := h.dirOf(r.Context(), id)
 	output, err := h.opts.Git.Clone(r.Context(), req.URL, dir, req.Branch)
 	if err != nil {
 		writeJSON(w, http.StatusBadGateway, map[string]string{"error": err.Error(), "output": output})
@@ -177,24 +174,18 @@ func (h *Handlers) cloneProject(w http.ResponseWriter, r *http.Request) {
 		failErr(w, err)
 		return
 	}
-	if req.Home {
-		if err := h.setHome(r.Context(), req.Workspace, project.ID); err != nil {
-			failErr(w, err)
-			return
-		}
-	}
 	writeJSON(w, http.StatusCreated, map[string]any{"project": project, "runnable": detector.Any(dir), "output": output})
 }
 
-// rootTaken says why a project cloned into the root may not take a
-// folder: a workspace holds its first segment, or a directory is there.
-// "" for a free folder.
+// rootTaken says why a project cloned into the default workspace may
+// not take a folder: a workspace holds its first segment, or a directory
+// is there. "" for a free folder.
 func (h *Handlers) rootTaken(r *http.Request, id string) string {
 	top, _, _ := strings.Cut(id, "/")
 	if _, err := h.opts.Workspaces.GetByFolder(r.Context(), top); err == nil {
 		return "a workspace named " + top + " exists already: clone into it, or name the folder otherwise"
 	}
-	if _, err := os.Stat(filepath.Join(h.opts.Root, filepath.FromSlash(id))); err == nil {
+	if _, err := os.Stat(layout.ProjectDir(h.opts.Root, model.Default, id)); err == nil {
 		return id + " exists under the root already"
 	}
 	return ""
@@ -224,8 +215,8 @@ func (h *Handlers) updateProject(w http.ResponseWriter, r *http.Request) {
 		fail(w, http.StatusBadRequest, "invalid folder name")
 		return
 	}
-	if model.IsReserved(id) {
-		fail(w, http.StatusBadRequest, internalRefused)
+	if model.IsReserved(id) || layout.IsHome(h.workspaceFolders(r.Context()), id) {
+		fail(w, http.StatusBadRequest, reservedRefused)
 		return
 	}
 	var req ProjectRequest
@@ -276,7 +267,11 @@ func (h *Handlers) deleteProject(w http.ResponseWriter, r *http.Request) {
 		fail(w, http.StatusBadRequest, "invalid folder name")
 		return
 	}
-	dir := filepath.Join(h.opts.Root, filepath.FromSlash(id))
+	if layout.IsHome(h.workspaceFolders(r.Context()), id) {
+		fail(w, http.StatusBadRequest, "a workspace's home is no project: its settings page replaces or removes it")
+		return
+	}
+	dir := h.dirOf(r.Context(), id)
 	if h.opts.Git.IsRepo(dir) {
 		if err := h.opts.Git.Remove(dir); err != nil {
 			failErr(w, err)

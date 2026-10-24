@@ -3,34 +3,31 @@ package runner
 import (
 	"path/filepath"
 	"strings"
+
+	"github.com/titpetric/task-ui/layout"
 )
 
-// homeKept are the variables a run in a home project gets set to the
-// server's HOME, so what the server keeps there stays in use when HOME
-// moves: atkins' stats, the registry logins, the git identity, the
-// caches and configuration of the XDG tools, Go's module cache, the
-// shell's history and Claude Code's settings and sessions. One the
-// server sets already keeps its value.
+// homeKept are the variables a run gets set to the server's HOME, so what
+// the instance keeps there stays in use when HOME moves to the
+// workspace's home: the registry logins, Claude Code's settings and
+// sessions, the shared build caches of the XDG tools and Go's module
+// cache. One the server sets already keeps its value. Everything else a
+// tool reads from HOME, the git identity, the shell's history, the XDG
+// configuration, data and state, is the workspace's own, in its home.
 var homeKept = []struct{ name, path string }{
-	{"ATKINS_DB", ".atkins/atkins.db"},
 	{"DOCKER_CONFIG", ".docker"},
-	{"GIT_CONFIG_GLOBAL", ".gitconfig"},
-	{"XDG_CONFIG_HOME", ".config"},
-	{"XDG_CACHE_HOME", ".cache"},
-	{"XDG_DATA_HOME", ".local/share"},
-	{"XDG_STATE_HOME", ".local/state"},
-	{"GOPATH", "go"},
-	{"HISTFILE", ".bash_history"},
 	{"CLAUDE_CONFIG_DIR", ".claude"},
+	{"XDG_CACHE_HOME", ".cache"},
+	{"GOPATH", "go"},
 }
 
-// HomeEnv returns HOME and TASK_UI_HOME at home, with homeKept under the server's HOME from environ.
-// Nil for no home, or a home that is the server's HOME.
+// HomeEnv returns HOME, TASK_UI_HOME, ATKINS_DB and the kept variables
+// for a run with HOME at home, from environ; nil for no home.
 func HomeEnv(environ []string, home string) []string {
-	server := lookup(environ, "HOME")
-	if home == "" || filepath.Clean(home) == filepath.Clean(server) {
+	if home == "" {
 		return nil
 	}
+	server := lookup(environ, "HOME")
 	env := []string{}
 	if server != "" {
 		for _, kept := range homeKept {
@@ -39,7 +36,7 @@ func HomeEnv(environ []string, home string) []string {
 			}
 		}
 	}
-	return append(env, "HOME="+home, "TASK_UI_HOME="+home)
+	return append(env, "HOME="+home, "TASK_UI_HOME="+home, "ATKINS_DB="+layout.AtkinsDB(home, server))
 }
 
 // lookup returns a variable of environ, the last one set winning, as it

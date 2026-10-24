@@ -20,6 +20,7 @@ import (
 	"time"
 
 	"github.com/titpetric/task-ui/event"
+	"github.com/titpetric/task-ui/layout"
 	"github.com/titpetric/task-ui/model"
 )
 
@@ -399,7 +400,7 @@ func (m *Manager) workspace(ctx context.Context, req Request) (string, string) {
 	top, _, _ := strings.Cut(of, "/")
 	if top != model.Default {
 		if _, err := m.opts.Workspaces.GetByFolder(ctx, top); err == nil {
-			return top, filepath.Join(m.opts.Root, top)
+			return top, layout.WorkspaceDir(m.opts.Root, top)
 		}
 	}
 	if _, err := m.opts.Workspaces.GetByFolder(ctx, model.Default); err != nil {
@@ -414,17 +415,23 @@ func (m *Manager) WorkspaceID(ctx context.Context, req Request) string {
 	return m.workspaceID(ctx, name)
 }
 
-// home returns the directory of the home project of a workspace, by its
-// folder, "" for none or with no workspaces known.
+// home returns the home of a workspace, by its folder, the HOME of its
+// runs: "" with no workspace known.
 func (m *Manager) home(ctx context.Context, name string) string {
 	if name == "" || m.opts.Workspaces == nil {
 		return ""
 	}
-	home, err := m.opts.Workspaces.Home(ctx, name)
-	if err != nil || home == "" {
-		return ""
+	return layout.HomeDir(m.opts.Root, name)
+}
+
+// dirOf returns the directory of a folder ID, as the layout places it
+// among the named workspaces.
+func (m *Manager) dirOf(ctx context.Context, id string) string {
+	var named []string
+	if m.opts.Workspaces != nil {
+		named, _ = m.opts.Workspaces.Folders(ctx)
 	}
-	return filepath.Join(m.opts.Root, filepath.FromSlash(home))
+	return layout.Dir(m.opts.Root, named, id)
 }
 
 // workspaceID returns the ID of the workspace row of a folder, "" for

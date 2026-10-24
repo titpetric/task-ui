@@ -31,18 +31,18 @@ func TestProjectGroups(t *testing.T) {
 	assert.Equal(t, model.Default, groups[0].Workspace)
 	assert.True(t, groups[0].Default())
 	assert.Equal(t, "Projects", groups[0].Title())
-	assert.Equal(t, "at the top of /srv", groups[0].Note("/srv"))
+	assert.Equal(t, "in /srv/src", groups[0].Note("/srv"))
 	assert.Equal(t, []string{"infra", "tools"}, ids(groups[0].Entries))
 
 	assert.Equal(t, "acme", groups[1].Workspace)
 	assert.Equal(t, "acme", groups[1].Title())
-	assert.Equal(t, "inside acme/", groups[1].Note("/srv"))
+	assert.Equal(t, "inside acme/src/", groups[1].Note("/srv"))
 	assert.Equal(t, []string{"acme/api", "acme/web"}, ids(groups[1].Entries))
 
 	assert.Equal(t, "labs", groups[2].Workspace)
 	assert.Len(t, groups[2].Entries, 0)
 	assert.Equal(t, "No projects in labs yet.", groups[2].Empty())
-	assert.Equal(t, "No projects yet: add one from a git repository, or put a folder with jobs under the root.", groups[0].Empty())
+	assert.Equal(t, "No projects yet: add one from a git repository, or put a folder with jobs under src.", groups[0].Empty())
 
 	// Without workspaces every entry at the top is the root's.
 	groups = view.ProjectGroups(entries[3:], nil)

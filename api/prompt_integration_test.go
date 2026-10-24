@@ -24,7 +24,7 @@ func TestPrompts(t *testing.T) {
 	f := newFixture(t)
 	promptCommand(t, f)
 	out := promptOut(f, "env.out")
-	infra := filepath.Join(f.root, "infra")
+	infra := filepath.Join(f.root, "src", "infra")
 
 	for _, user := range []string{asOps, asViewer, asLimited} {
 		res := f.call(t, user, http.MethodPost, "/prompts", api.PromptRequest{Folder: "infra", Prompt: "hello"})

@@ -36,15 +36,15 @@ func (g ProjectGroup) Title() string {
 // Note is what the heading says after the title: where the projects are.
 func (g ProjectGroup) Note(root string) string {
 	if g.Default() {
-		return "at the top of " + root
+		return "in " + root + "/src"
 	}
-	return "inside " + g.Workspace + "/"
+	return "inside " + g.Workspace + "/src/"
 }
 
 // Empty is the line of a group without projects.
 func (g ProjectGroup) Empty() string {
 	if g.Default() {
-		return "No projects yet: add one from a git repository, or put a folder with jobs under the root."
+		return "No projects yet: add one from a git repository, or put a folder with jobs under src."
 	}
 	return "No projects in " + g.Workspace + " yet."
 }

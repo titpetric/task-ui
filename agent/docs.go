@@ -8,8 +8,8 @@
 // TASK_UI_NOTE_ID and TASK_UI_NOTE_AUTHOR, and Claude's final message
 // says what changed, or why it declined. It works in TASK_UI_WORKSPACE_DIR,
 // the default workspace with the projects, with the context in its system
-// prompt. A workspace's home project, TASK_UI_HOME, is a directory every
-// Claude session here reads, and where a workspace's prompt works.
+// prompt. A workspace's home, TASK_UI_HOME, is a directory every Claude
+// session here reads, and where a workspace's prompt works.
 //
 // The shell command is a development tool with someone at the keyboard.
 package agent

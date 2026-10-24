@@ -12,8 +12,8 @@ import (
 func TestCatalogue(t *testing.T) {
 	t.Parallel()
 	root := t.TempDir()
-	assert.NoError(t, os.MkdirAll(filepath.Join(root, "site"), 0o755))
-	assert.NoError(t, os.WriteFile(filepath.Join(root, "site", "Makefile"), []byte("build:\n\techo ok\n"), 0o644))
+	assert.NoError(t, os.MkdirAll(filepath.Join(root, "src", "site"), 0o755))
+	assert.NoError(t, os.WriteFile(filepath.Join(root, "src", "site", "Makefile"), []byte("build:\n\techo ok\n"), 0o644))
 
 	var c folder.Catalogue = &folder.Discovery{Root: root, Discover: true}
 	list := c.List()

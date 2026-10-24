@@ -80,6 +80,9 @@ type Options struct {
 	// Disk measures the space the artifacts and the checkouts take. Nil
 	// leaves the space bars out.
 	Disk *diskusage.Meter
+	// Storage measures what the instance keeps on disk for the Storage
+	// table of the Instance page, an admin's. Nil leaves the table out.
+	Storage *diskusage.Inventory
 	// ComposeProject is the docker compose project task-ui runs in: up
 	// and down of it on the actions bar ask first.
 	ComposeProject string

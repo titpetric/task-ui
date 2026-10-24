@@ -12,7 +12,7 @@ import (
 )
 
 // exportWorkspace answers with a workspace as a bundle another instance
-// imports: its row, its projects and which is home, the grants of its SSH keys, its env
+// imports: its row, its home repository, its projects, the grants of its SSH keys, its env
 // files, its secrets in plain text and the SSH keys its runs get,
 // encrypted to the passphrase, at least MinPassphrase characters. No
 // instance key and no encryption key goes. Schedules, workflows, runs
@@ -58,9 +58,8 @@ func (h *Handlers) bundle(ctx context.Context, row *model.Workspace) (*workspace
 	named := h.workspaceFolders(ctx)
 	name := row.Folder
 	in := func(folder string) bool { return workspace.Contains(name, named, folder) }
-	manifest := workspace.Manifest{Format: workspace.Format, Version: h.opts.Version, Workspace: *row}
+	manifest := workspace.Manifest{Format: workspace.Format, Version: h.opts.Version, Workspace: *row, Home: workspace.Home{URL: row.HomeURL, Branch: row.HomeBranch}}
 	manifest.Workspace.ID, manifest.Workspace.CreatedAt, manifest.Workspace.UpdatedAt = "", nil, nil
-	manifest.Workspace.HomeProjectID = ""
 
 	projects, err := h.opts.Projects.List(ctx)
 	if err != nil {
@@ -69,9 +68,6 @@ func (h *Handlers) bundle(ctx context.Context, row *model.Workspace) (*workspace
 	for _, project := range projects {
 		if !in(project.Folder) || project.Folder == name {
 			continue
-		}
-		if project.ID == row.HomeProjectID {
-			manifest.HomeProject = workspace.Relative(name, project.Folder)
 		}
 		project.ID, project.CreatedAt, project.UpdatedAt = "", nil, nil
 		project.Folder = workspace.Relative(name, project.Folder)

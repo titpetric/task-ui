@@ -68,7 +68,7 @@ func TestProject_Clone(t *testing.T) {
 	assert.Equal(t, http.StatusCreated, res.Status, string(res.Raw))
 	assert.Equal(t, "website", res.str("project", "folder"))
 	assert.Equal(t, true, res.get("runnable"))
-	assert.FileExists(t, filepath.Join(f.root, "website", "Makefile"))
+	assert.FileExists(t, filepath.Join(f.root, "src", "website", "Makefile"))
 
 	got := f.call(t, asAdmin, http.MethodGet, "/projects/website", nil)
 	assert.Equal(t, http.StatusOK, got.Status)
@@ -80,7 +80,7 @@ func TestProject_Clone(t *testing.T) {
 	assert.Equal(t, http.StatusCreated, named.Status, string(named.Raw))
 	assert.Equal(t, "main", named.str("project", "branch"))
 	assert.Equal(t, true, f.call(t, asAdmin, http.MethodGet, "/projects/site", nil).get("shallow"))
-	assert.DirExists(t, filepath.Join(f.root, "site"))
+	assert.DirExists(t, filepath.Join(f.root, "src", "site"))
 }
 
 func TestProject_CloneRefused(t *testing.T) {
@@ -95,7 +95,7 @@ func TestProject_CloneRefused(t *testing.T) {
 
 	internal := f.call(t, asAdmin, http.MethodPost, "/projects", api.ProjectCloneRequest{URL: "file://" + localRepo(t), ID: "internal"})
 	assert.Equal(t, http.StatusBadRequest, internal.Status)
-	assert.Contains(t, internal.str("error"), "task-ui's own namespace")
+	assert.Contains(t, internal.str("error"), "task-ui's own names")
 	under := f.call(t, asAdmin, http.MethodPost, "/projects", api.ProjectCloneRequest{URL: "file://" + localRepo(t), ID: "internal/tools"})
 	assert.Equal(t, http.StatusBadRequest, under.Status)
 	assert.NoDirExists(t, filepath.Join(f.root, "internal"))
@@ -103,7 +103,7 @@ func TestProject_CloneRefused(t *testing.T) {
 	missing := f.call(t, asAdmin, http.MethodPost, "/projects", api.ProjectCloneRequest{URL: "file://" + filepath.Join(t.TempDir(), "nothing.git")})
 	assert.Equal(t, http.StatusBadGateway, missing.Status)
 	assert.NotEqual(t, "", missing.str("error"))
-	assert.NoDirExists(t, filepath.Join(f.root, "nothing"))
+	assert.NoDirExists(t, filepath.Join(f.root, "src", "nothing"))
 }
 
 func TestProject_Update(t *testing.T) {
@@ -145,13 +145,13 @@ func TestProject_Delete(t *testing.T) {
 
 	res := f.call(t, asAdmin, http.MethodDelete, "/projects/website", nil)
 	assert.Equal(t, http.StatusNoContent, res.Status)
-	assert.NoDirExists(t, filepath.Join(f.root, "website"))
+	assert.NoDirExists(t, filepath.Join(f.root, "src", "website"))
 	assert.Equal(t, http.StatusNotFound, f.call(t, asAdmin, http.MethodGet, "/projects/website", nil).Status)
 
 	// A plain directory is not a checkout: the files stay.
 	plain := f.call(t, asAdmin, http.MethodDelete, "/projects/infra", nil)
 	assert.Equal(t, http.StatusNoContent, plain.Status)
-	assert.DirExists(t, filepath.Join(f.root, "infra"))
+	assert.DirExists(t, filepath.Join(f.root, "src", "infra"))
 
 	bad := f.call(t, asAdmin, http.MethodDelete, "/projects/..", nil)
 	assert.Equal(t, http.StatusBadRequest, bad.Status)

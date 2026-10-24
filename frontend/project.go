@@ -3,13 +3,13 @@ package frontend
 import (
 	"context"
 	"net/http"
-	"path/filepath"
 	"slices"
 	"strings"
 
 	"github.com/titpetric/task-ui/diskusage"
 	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/frontend/view"
+	"github.com/titpetric/task-ui/layout"
 	"github.com/titpetric/task-ui/model"
 )
 
@@ -94,7 +94,7 @@ func (h *Handlers) projectEdit(w http.ResponseWriter, r *http.Request) {
 	p.Crumbs = view.Crumbs("Settings", "/settings", "Projects", "/settings/projects", id)
 	p.Step = view.StepProjects
 	if h.opts.Git != nil {
-		p.Checkout = h.opts.Git.Info(filepath.Join(h.opts.Root, filepath.FromSlash(id)))
+		p.Checkout = h.opts.Git.Info(layout.Dir(h.opts.Root, h.workspaceFolders(r.Context()), id))
 	}
 	if project, err := h.opts.Projects.GetByFolder(r.Context(), id); err == nil {
 		p.Project = project

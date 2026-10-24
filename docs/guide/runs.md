@@ -367,10 +367,10 @@ runs, as a login shell, with:
 - `TASK_UI_WORKSPACE`, the name of its [workspace](workspaces.md),
   `_` at the top of the workspace folder, and `TASK_UI_WORKSPACE_DIR`,
   its directory, the workspace folder for `_`;
-- `HOME` and `TASK_UI_HOME`, the directory of the workspace's [home
-  project](workspaces.md#the-home-project), with the server's stats,
-  logins, git identity and caches kept in use; without a home project,
-  `HOME` stays the server's;
+- `HOME` and `TASK_UI_HOME`, the workspace's [home](workspaces.md#the-home),
+  `<root>/<workspace>/home`, with the server's registry logins, Claude
+  Code settings, cache and `GOPATH` kept in use, and `ATKINS_DB`, the
+  home's history with the instance's copy as its mirror;
 - `TASK_UI_HOST_PWD`, its directory as the docker host sees it, and
   `TASK_UI_HOST_DATA`, the data directory there, for a `docker run -v
   "${TASK_UI_HOST_PWD:-$PWD}:/src"` that the host's daemon resolves (see
@@ -414,7 +414,7 @@ that job on load with the line typed in.
 
 Before the job, a folder in a git checkout pulls it, in the run's own
 terminal; when the pull fails, the run fails with it. A folder in a
-workspace with a home project pulls the home project first, then its
+workspace whose home is a checkout pulls the home first, then its
 own. A shell,
 `@shell`, pulls nothing: it opens on the checkout as it stands.
 

@@ -20,9 +20,10 @@ jobs it runs, and Claude in a run, work in the folder and may change its
 files when asked to. A pipeline
 file speaks for its folder. **Recursive**, on by default, lists the
 folders inside a project as deep as they go; off lists the project and
-its top-level folders alone. Discovery skips what `.gitignore` ignores,
-except an ignored checkout right below a workspace or a project that
-holds a job source. A pipeline atkins' linter refuses lists no jobs:
+its top-level folders alone. A workspace is `<root>/<ws>/home`, the
+HOME of its runs, and `<root>/<ws>/src/<project>`, its projects; `_` is
+the same at the root. Discovery skips what `.gitignore` ignores, except
+an ignored checkout right below a project that holds a job source. A pipeline atkins' linter refuses lists no jobs:
 its folder, and the pages of the workspace and project above it, show
 an alert with each finding, the file, the job and the detail, and
 `list_jobs` lists them as `errors`. Pages: `/f/<workspace>/<folder>`;
@@ -77,10 +78,12 @@ no permission of its own.
 
 ## Workspaces (`workspace`)
 
-A workspace is a directory under the root that holds projects side by
-side, with its own SSH keys and secrets, kept from other workspaces.
-Its home project, one of them, is the HOME of the workspace's runs, where
-atkins finds `~/.atkins/skills`.
+A workspace is a directory under the root with a `home`, the checkout of
+its home repository or an empty directory, and a `src` of projects side
+by side, with its own SSH keys and secrets, kept from other workspaces.
+The home is the HOME of every run in the workspace, where atkins finds
+`~/.atkins/skills` and Claude its `CLAUDE.md`; the folder `<ws>/home`,
+no project.
 The default workspace, `_`, is the root itself. A workspace exports and
 imports between instances as one age file encrypted to a passphrase,
 its secrets and its own SSH keys inside; no instance key goes with it.

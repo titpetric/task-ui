@@ -17,7 +17,7 @@ func TestCatalogueSteps(t *testing.T) {
 		"proj/sub/Makefile":  "test:\n\techo test\n",
 		"proj/docs/index.md": "nothing to run",
 	} {
-		path = filepath.Join(root, filepath.FromSlash(path))
+		path = filepath.Join(root, "src", filepath.FromSlash(path))
 		assert.NoError(t, os.MkdirAll(filepath.Dir(path), 0o755))
 		assert.NoError(t, os.WriteFile(path, []byte(body), 0o644))
 	}

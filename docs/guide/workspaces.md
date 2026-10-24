@@ -1,78 +1,91 @@
 # Workspaces
 
-A workspace is a plain directory under the root that holds projects
-side by side, each a checkout of its own, none inside another. One of
-them may be the workspace's **home project**: the checkout of what an
-organisation's projects share, such as `.atkins/skills`, a `CLAUDE.md`
-with `.claude/`, and its policies. You name the workspace's folder, and
-the folder is the namespace of its projects: `dockerfiles` cloned into
-the workspace `malta` lives at `<root>/malta/dockerfiles`, its folder ID
-is `malta/dockerfiles`, and it opens at `/f/malta/dockerfiles`.
+A workspace is a directory under the root with two directories in it:
+`home/`, the `HOME` of every run in the workspace, and `src/`, where its
+projects live side by side, each a checkout of its own, none inside
+another. The home is a checkout of the workspace's **home repository**,
+what an organisation's projects share, such as `.atkins/skills`, a
+`CLAUDE.md` with `.claude/`, and its policies, or an empty directory
+while the workspace has none. You name the workspace's folder, and the
+folder is the namespace of its projects: `dockerfiles` cloned into the
+workspace `malta` lives at `<root>/malta/src/dockerfiles`, its folder ID
+is `malta/dockerfiles`, and it opens at `/f/malta/dockerfiles`. The home
+is the folder `malta/home`, at `/f/malta/home`.
 
 ```
-<root>/malta/            the workspace, a plain directory
-<root>/malta/workspace/  the home project, HOME of every run in malta
-<root>/malta/dockerfiles/
-<root>/malta/apps/
+<root>/malta/                 the workspace
+<root>/malta/home/            the home repository's checkout, HOME of every run in malta
+<root>/malta/src/dockerfiles/ a project, the folder malta/dockerfiles
+<root>/malta/src/apps/        another, malta/apps
 ```
 
 Every project is in a workspace. The **default workspace**, `_`, is the
-root itself: it holds the projects cloned at the top of the root, and
-their pages open under `/f/_/`, so `infra` opens at `/f/_/infra`. A link
-without the `_`, such as a bookmarked `/f/infra`, redirects there for
-good, its query kept. `/f/_` lists the projects at the root you can see.
-task-ui adds the default workspace when it starts, and nobody can
-remove it. No workspace, project or directory under the root takes the
-name `_`, nor `internal`; discovery skips a directory of the root with
-either name.
+root itself, laid out the same: `<root>/home` is its home, an empty
+directory task-ui makes, and `<root>/src` holds the projects cloned at
+the root, whose pages open under `/f/_/`, so `<root>/src/infra` is the
+folder `infra` and opens at `/f/_/infra`. A link without the `_`, such
+as a bookmarked `/f/infra`, redirects there for good, its query kept.
+`/f/_` lists the projects at the root you can see. task-ui adds the
+default workspace when it starts, makes the home and src of every
+workspace, and nobody can remove it. No workspace, project or directory
+under a workspace takes the name `_`, `internal`, `home` or `src`;
+discovery skips a directory of `src` named `_` or `internal`, and a
+directory of the root or of a workspace that is neither `home` nor
+`src` is not a folder.
 
 ![The sidebar with the workspace acme open, its projects api and web under it](../assets/sidebar-workspace-dark.png)
 
-## The home project
+## The home
 
-A run in any folder of a workspace with a home project gets the home
-project's directory as `HOME`, so the tools a job calls find the
+Every run in a workspace gets the workspace's home as `HOME`, always:
+the server's `HOME` is no fallback. The tools a job calls find the
 workspace's files there:
 
 - **atkins** reads its skills from the `.atkins/skills` of the working
   directory and of every folder above it, nearest first, then from
-  `$HOME/.atkins/skills`: the home project's. A project skill of the same
-  name shadows the workspace's. Its pipeline is the project's own.
-- **Claude Code** gets the home project as a directory it reads, with
-  its `CLAUDE.md` and `.claude/` skills, beside its working directory.
+  `$HOME/.atkins/skills`: the home's. A project skill of the same name
+  shadows the workspace's. Its pipeline is the project's own. Its
+  history, `ATKINS_DB`, is `~/.atkins/atkins.db` in the home, and the
+  instance's copy under the server's `HOME`, which the Tooling charts
+  read, is its mirror.
+- **Claude Code** gets the home as a directory it reads, with its
+  `CLAUDE.md` and `.claude/` skills, beside its working directory.
+- `bash -l` reads the home's `.profile` or `.bash_profile`, when it has
+  one.
 
-The workspace's page, `/f/malta`, lists the home project's files in
-its **Home** section, the `$HOME` of every run in the workspace, in the
-table of the Files section: a directory opens its page, a file opens in
-the preview window, a dot file and `.git` list sealed and never open.
-A workspace without a home project shows no Home section.
+The workspace's page, `/f/malta`, lists the home's files in its **Home**
+section, in the table of the Files section: a directory opens its page,
+a file opens in the preview window, a dot file and `.git` list sealed
+and never open. The home is a folder of its own, `malta/home`, with the
+jobs of its `atkins.yml` when it has one, so `@git:pull` runs on it as
+on any checkout; the home is no project: the Projects list, the sidebar and
+the pins leave it out.
 
-![The acme workspace's page: its Home section lists the home project's files](../assets/workspace-home-dark.png)
+![The acme workspace's page: its Home section lists the home's files](../assets/workspace-home-dark.png)
 
-A workspace without a home project, and the default workspace without
-one, keep the server's `HOME`. The run keeps what the server holds in
-its own `HOME` in use, each a variable the server does not set itself,
-pointed at the server's `HOME`:
+Whoever commits to the workspace's home repository controls that
+workspace's runs: its `.profile` runs first in every `bash -l`, and its
+skills and `CLAUDE.md` shape every job and every prompt there. What the
+instance keeps in the server's own `HOME` stays in use, each through a
+variable the run gets when the server does not set it itself:
 
 | What | Variable |
 |------|----------|
-| atkins' stats, which the Tooling charts read | `ATKINS_DB`, `~/.atkins/atkins.db` |
 | registry logins of `docker login` | `DOCKER_CONFIG`, `~/.docker` |
-| the git identity and settings | `GIT_CONFIG_GLOBAL`, `~/.gitconfig` |
-| the caches and configuration of XDG tools, Go's build cache among them | `XDG_CONFIG_HOME`, `XDG_CACHE_HOME`, `XDG_DATA_HOME`, `XDG_STATE_HOME` |
-| Go's modules | `GOPATH`, `~/go` |
-| a shell's history | `HISTFILE`, `~/.bash_history` |
 | Claude Code's settings and sessions | `CLAUDE_CONFIG_DIR`, `~/.claude` |
+| the caches of XDG tools, Go's build cache among them | `XDG_CACHE_HOME`, `~/.cache` |
+| Go's modules | `GOPATH`, `~/go` |
 
-ssh reads `~/.ssh` from the user's entry in the password database, not
-from `HOME`, so its configuration and known hosts stay the server's.
-`bash -l` reads the home project's `.profile` or `.bash_profile`, when
-it has one. The run also gets `TASK_UI_HOME`, the home project's
-directory.
+Everything else of `HOME` is the workspace's: the git identity,
+`~/.gitconfig`, the shell history, the XDG configuration, data and
+state. ssh reads `~/.ssh` from the user's entry in the password
+database, not from `HOME`, so its configuration and known hosts stay the
+server's. The run also gets `TASK_UI_HOME`, the home's directory, the
+same as `HOME`.
 
 ## Skills
 
-The skills of a workspace's home project, its `.atkins/skills/`, add
+The skills of a workspace's home, its `.atkins/skills/`, add
 rows to the [Jobs table](projects.md#skills) of every project and
 directory inside it: `@git:pull` and `@git:rebase` on each checkout,
 `@compose:down` and `@compose:up` beside a compose file. A skill is an atkins
@@ -99,7 +112,7 @@ A skill job runs in the directory of the file its `when:` matched, so
 compose file. One without `when:` runs in the folder that holds its
 `.atkins/`.
 
-`<home project>/.atkins/skills/compose.yml`:
+`<root>/malta/home/.atkins/skills/compose.yml`:
 
 ```yaml
 name: Docker Compose
@@ -141,43 +154,45 @@ vendoring.
 Settings, **Workspaces** manages them: Allow View on Workspaces,
 `workspace/view`, opens the page, Allow Edits, `workspace/edit`, adds,
 configures, orders, exports and imports, and Allow Deletes,
-`workspace/delete`, removes one. The page lists
-each workspace with its home project and the projects cloned inside it,
-in the sidebar's order.
+`workspace/delete`, removes one. The page lists each workspace with its
+home repository, or "empty", and the projects cloned inside it, in the
+sidebar's order.
 
-![Workspaces, each with its home project and projects](../assets/workspaces-dark.png)
+![Workspaces, each with its home repository and projects](../assets/workspaces-dark.png)
 
 - **Add workspace** makes the directory under the root, the folder you
-  name. A **Home project URL** clones that repository into the workspace
-  as a project, in a folder you name or one named after the repository,
-  and makes it the home project. The clone works, or the page shows
-  git's output and keeps nothing. task-ui refuses a folder that a
+  name, with `home/` and `src/` in it. A **Home repository** clones that
+  repository into `home/`, at its **Home branch** when you name one; left
+  out, the home is an empty directory. The clone works, or the page
+  shows git's output and keeps nothing. task-ui refuses a folder that a
   workspace, a project or a directory under the root holds already, and
-  `internal` and `_`, its own.
-- Any number of workspaces may take the same repository as their home
-  project, each under its own folder: two teams can start from the same
-  tooling and clone different projects beside it.
+  `internal`, `_`, `home` and `src`, its own names.
+- Any number of workspaces may take the same home repository, each under
+  its own folder: two teams can start from the same tooling and clone
+  different projects beside it.
 - **Workspace settings** opens the workspace's settings page. Its
   **Settings** change the title, description and **Recursive**, which,
   as a project's does, lists the folders inside it as deep as they go,
   or, off, the workspace and its top-level folders alone; the folder
-  stays. Its **Home project** shows the home project with its
-  repository, or "No home project.", and beside it **Change**, which
-  picks another project at the top of the workspace, **Add**, or
-  **Replace** with one set, which clones a repository into the workspace
-  as a project and makes it home, and **Remove**, which unsets it and
-  keeps the project. Its **Projects** lists the projects inside it in the
-  table of the Projects page, and **Add project**, at the top right,
-  clones one into it.
+  stays. Its **Home repository** shows the repository and branch of the
+  home with what git knows of the checkout, or "The home is an empty
+  directory.", and beside it **Pull now**, the home's `@git:pull`,
+  **Replace**, or **Clone** while the home is empty, which removes the
+  home and clones a repository in its place, and **Remove**, which
+  removes the checkout and leaves the home an empty directory. Replace
+  and Remove refuse, a `409`, while a run of the workspace is active:
+  the home is that run's `HOME`. Its **Projects** lists the projects
+  inside it in the table of the Projects page, and **Add project**, at
+  the top right, clones one into its `src/`.
 - **Move up** and **Move down**, in a workspace's **⋯** menu, change the order of the workspaces, in
   the sidebar and on the page. An added workspace goes last. The default
   workspace lists first and keeps its place.
 - **Delete**, last in the menu, deletes every project inside the
   workspace with its checkout and its row, the env files task-ui keeps
-  for them, the workspace's secrets and its keys, and the directory once
-  nothing else is in it; its confirm names those projects first.
-  Deleting the home project, as any project, unsets it. The default
-  workspace has none: `DELETE /api/workspaces/_` answers `409`.
+  for them, the workspace's secrets and its keys, and the workspace's
+  directory with everything in it, the home included; its confirm names
+  those projects first. The default workspace has none: `DELETE
+  /api/workspaces/_` answers `409`.
 - **Import**, under the list, adds a workspace from a bundle another
   instance exported (see [Move to another
   instance](#move-to-another-instance)).
@@ -185,18 +200,19 @@ in the sidebar's order.
 ## Clone a project into one
 
 **Add project** under Settings, Projects has a **Workspace** select.
-`_`, the default, clones the project at the top of the root; a named
-workspace clones it inside, as `malta/dockerfiles`. The Projects page
-lists it under that name. In the API an empty `workspace` means `_`. A
-project cloned at the root may not take a workspace's name or a
-directory that's there already: that answers `409` before git runs.
+`_`, the default, clones the project into `src/` at the root; a named
+workspace clones it into its `src/`, as `malta/dockerfiles`. The
+Projects page lists it under that name. In the API an empty `workspace`
+means `_`. A project may not take a workspace's name, `home`, `src` or
+a directory that's there already: that answers `409`, or `400` for one
+of task-ui's names, before git runs.
 
-A checkout in the workspace without a project row lists too, when it
-holds a job source anywhere inside it, such as `malta/deploy` with its
-`scripts/atkins.yml`: it opens at `/f/malta/deploy` with its jobs and the
-folders inside it, as a project does (see [Where the jobs come from](projects.md#where-the-jobs-come-from)).
-A checkout that a project's `.gitignore` ignores right below it lists
-the same way.
+A checkout in the workspace's `src/` without a project row lists too,
+when it holds a job source anywhere inside it, such as `malta/deploy`
+with its `scripts/atkins.yml`: it opens at `/f/malta/deploy` with its
+jobs and the folders inside it, as a project does (see [Where the jobs
+come from](projects.md#where-the-jobs-come-from)). A checkout that a
+project's `.gitignore` ignores right below it lists the same way.
 
 **Recursive**, on the workspace's add and configure forms as on a
 project's, is on by default: discovery lists the folders inside the
@@ -212,24 +228,24 @@ curl -s -X POST https://task.example.com/api/workspaces \
 curl -s -X POST https://task.example.com/api/projects \
   -H "Authorization: Bearer $TOKEN" \
   -d '{"url": "git@example.com:org/dockerfiles.git", "workspace": "malta"}'
-curl -s -X PUT https://task.example.com/api/workspaces/malta \
+curl -s -X PUT https://task.example.com/api/workspaces/malta/home \
   -H "Authorization: Bearer $TOKEN" \
-  -d '{"title": "Malta", "home_project": "malta/workspace"}'
+  -d '{"url": "git@example.com:org/workspace.git", "branch": "main"}'
 ```
 
-The create's `url` is optional: with it, `project` names the home
-project's folder, the repository's name when left out, and `branch` its
-branch; the reply carries the `project` it cloned. A taken folder
-answers `409`. `PUT /api/workspaces/malta` with `{title, description}`
-changes its text, `recursive` its Recursive, `home_project` the home
-project by its folder, `""` to unset it, and `DELETE
-/api/workspaces/malta` removes it. A workspace's row names its home
-project's ID in `home_project_id`, `""` for none. A `home_project` that
-is no project at the top of the workspace answers `400`. `POST
-/api/projects` with `"home": true` clones a project into its workspace
-and makes it home, the Replace of the page. A `sort` in the `PUT` places the workspace: the lowest comes
-first, and workspaces of one sort go by folder. Left out, the sort
-stays.
+The create's `url` is optional: with it, the home is a clone of that
+repository at `branch`, its default branch when left out; without it
+the home is an empty directory. The reply is `{workspace, output}`,
+git's output in `output`. A taken folder answers `409`. `PUT
+/api/workspaces/malta` with `{title, description}` changes its text,
+`recursive` its Recursive, and `DELETE /api/workspaces/malta` removes
+it. `PUT /api/workspaces/malta/home` with `{url, branch}` replaces the
+home with a clone, `DELETE /api/workspaces/malta/home` empties it, and
+both answer `409` while a run of the workspace is active. A workspace's
+row names its home repository in `home_url` and `home_branch`, `""` for
+an empty home. A `sort` in the `PUT` places the workspace: the lowest
+comes first, and workspaces of one sort go by folder. Left out, the
+sort stays.
 
 ## In the sidebar
 
@@ -239,9 +255,9 @@ its projects: a label row with the
 workspace's name, the count of its projects and a chevron that points
 down while it's open. Under it come the workspace's own jobs, then its
 projects, each with a fold of its own: every directory right inside the
-workspace, a checkout with jobs or without, less the home project, which
-never shows in the sidebar, pinned or not; its files are on the
-workspace's page. This browser remembers each fold apart, so `malta` and
+workspace's `src/`, a checkout with jobs or without; the home never
+shows in the sidebar, pinned or not; its files are on the workspace's
+page. This browser remembers each fold apart, so `malta` and
 `malta/dockerfiles` open and close on their own. **Pin workspace** in
 the `[...]` of the workspace's page, and **Pin** on a folder or a job
 inside it, add to what the sidebar lists, for you (see [What the
@@ -258,12 +274,12 @@ variables (see [Runs](runs.md#what-a-job-gets)):
   for a project at the root;
 - `TASK_UI_WORKSPACE_DIR`, its directory, such as `<root>/malta`, or the
   root for `_`;
-- `HOME` and `TASK_UI_HOME`, the home project's directory, when the
-  workspace has one (see [The home project](#the-home-project)).
+- `HOME` and `TASK_UI_HOME`, the workspace's home, `<root>/malta/home`,
+  or `<root>/home` for `_` (see [The home](#the-home)).
 
-Before the job, the run pulls the home project, then the project's
-checkout, so the shared tooling is current when the job starts. When
-either pull fails, the run fails with it.
+Before the job, the run pulls a home that holds a checkout, then the
+project's checkout, so the shared tooling is current when the job
+starts. When either pull fails, the run fails with it.
 
 ## Keys
 
@@ -302,7 +318,7 @@ A key has one use (see [One key, one use](settings.md#one-key-one-use)):
 an upload of key material the key folder holds already, under any name,
 answers `409`.
 
-![A workspace's settings page: its home project, keys, and Export](../assets/workspace-edit-dark.png)
+![A workspace's settings page: its home repository, keys, and Export](../assets/workspace-edit-dark.png)
 
 A run gets the instance keys linked to it (see
 [Settings](settings.md#keys)), then its workspace's SSH keys, and the
@@ -361,9 +377,10 @@ The bundle carries:
 
 - the workspace's row: title, description, sort and Recursive, as
   `shallow`;
+- its home repository and branch in `home`, `{url, branch}`, empty
+  for an empty home;
 - its projects, by folder relative to the workspace, with their
-  repository, branch and settings, and the home project's folder in
-  `home_project`;
+  repository, branch and settings;
 - its env files, by folder and path;
 - its secrets in plain text in `manifest.json`, which the importing
   instance encrypts with its own encryption key as they go into its
@@ -386,10 +403,12 @@ in the URL or the logs. **Import** at the top right of the Workspaces
 page opens a dialog for the file, the passphrase and the folder to
 import it as, the bundle's own when left out. The folder must be free,
 as for Add workspace: a folder held answers `409`. The import makes the
-workspace's directory, writes the keys `0600` into the key folder, adds
-the rows under the folder with the home project set, clones each
-project, then writes the env files into the folders the clones made. A
-bundle of another format answers `400`. A project that does not clone keeps its row,
+workspace's directory with its home and src, writes the keys `0600`
+into the key folder, adds the rows under the folder, clones the home
+repository into the home, clones each project into src, then writes
+the env files into the folders the clones made. A bundle of another
+format answers `400`: the format is 4, and an older bundle does not
+import. A project that does not clone keeps its row,
 and the import reports git's output for it. Any failure before the
 projects' clones keeps nothing: no directory, no keys, no rows. Env files and
 secrets that a removed workspace of the same folder left behind take
@@ -415,9 +434,9 @@ curl -s -X POST https://other.example.com/api/workspaces/import \
   -F bundle=@malta.tui.age -F passphrase='correct horse battery' -F folder=malta
 ```
 
-The import answers `{workspace, projects, unknown_users}`: each project
-with `cloned` and git's `output`, and the users the grants name that the
-instance doesn't have. Their grants stay and reach a run once a user of
+The import answers `{workspace, home, projects, unknown_users}`: the
+home and each project with `cloned` and git's `output`, and the users
+the grants name that the instance doesn't have. Their grants stay and reach a run once a user of
 that name exists. An export's passphrase under 12 characters, a wrong
 passphrase on import, a file that is not a bundle, and an entry other
 than `manifest.json` or a `.key` or `.pub` file of `.ssh/` answer `400`;
@@ -442,15 +461,17 @@ a job can read what that user can:
   keys among them; in the image, mount `/keys` and nothing else there;
 - the database, with every workspace's secrets as ciphertext, which the
   keys beside it open;
-- every checkout under the root, the home projects among them, sealed entries such as `.git` and
-  `.env` included: sealing keeps them off the pages and the API, not
-  out of a job's reach.
+- every checkout under the root, the homes among them, sealed entries
+  such as `.git` and `.env` included: sealing keeps them off the pages
+  and the API, not out of a job's reach.
 
 A job that someone in one workspace can change can read another
-workspace's secrets. Runner rights, and the right to push to a
-workspace's repositories, belong with people you would trust with every
-workspace on the instance; where that does not hold, run one instance
-per trust boundary.
+workspace's secrets, and whoever commits to a workspace's home
+repository controls that workspace's runs: its `.profile`, skills and
+`CLAUDE.md` run in every one of them. Runner rights, and the right to
+push to a workspace's repositories, its home repository first, belong
+with people you would trust with every workspace on the instance; where
+that does not hold, run one instance per trust boundary.
 
 ## A prompt against a workspace
 
@@ -465,15 +486,14 @@ run ends.
 
 ![The Prompt box on a workspace's page](../assets/workspace-prompt-dark.png)
 
-Claude Code works in the workspace's home project, so it reads the
-workspace's `CLAUDE.md` and `.claude/`, or in the workspace's directory
-without one. The run's environment holds the thread in
-`TASK_UI_PROMPT`, the home project in `TASK_UI_HOME`, the workspace's
-directory in `TASK_UI_WORKSPACE_DIR`, and the file Claude writes its
-answer to in `TASK_UI_PROMPT_REPLY`. `task-ui agent prompt` works in
-`TASK_UI_PROMPT_DIR`, which a prompt of a folder or a directory sets, or
-else in `TASK_UI_HOME`, or else in `TASK_UI_WORKSPACE_DIR`, and exits
-with an error when the prompt or all three are empty. The run
+Claude Code works in the workspace's home, so it reads the workspace's
+`CLAUDE.md` and `.claude/`, in an empty home too. The run's environment
+holds the thread in `TASK_UI_PROMPT`, the home in `TASK_UI_HOME`, the
+workspace's directory in `TASK_UI_WORKSPACE_DIR`, and the file Claude
+writes its answer to in `TASK_UI_PROMPT_REPLY`. `task-ui agent prompt`
+works in `TASK_UI_PROMPT_DIR`, which a prompt of a folder or a directory
+sets, or else in `TASK_UI_HOME`, or else in `TASK_UI_WORKSPACE_DIR`,
+and exits with an error when the prompt or all three are empty. The run
 lists under Runs as the workspace's, `malta/@claude-prompt`.
 
 ```sh
@@ -485,9 +505,9 @@ curl -s -X POST https://task.example.com/api/workspaces/malta/prompt \
 The reply is the note, with its `id`, and its `run_id` once the run
 starts; Claude's answer is a reply to it, which `GET
 /api/prompts?folder=malta` lists. The run starts in the workspace's
-directory and holds it as `POST /api/prompts` holds one: a
-second prompt there waits for it, and a prompt in a project of the
-workspace runs beside it.
+home and holds it as `POST /api/prompts` holds one: a second prompt
+there waits for it, and a prompt in a project of the workspace runs
+beside it.
 
 ---
 

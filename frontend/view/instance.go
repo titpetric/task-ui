@@ -1,6 +1,7 @@
 package view
 
 import (
+	"github.com/titpetric/task-ui/diskusage"
 	"github.com/titpetric/task-ui/runner"
 )
 
@@ -43,6 +44,9 @@ type Instance struct {
 	// values, for an admin alone.
 	ParentEnv string
 	Env       []runner.EnvName
+	// Storage is what the instance keeps on disk, by item, for an admin
+	// alone; nil leaves the Storage table out.
+	Storage *diskusage.Table
 }
 
 // EnvBase returns runner.BaseEnv, the variables None passes.

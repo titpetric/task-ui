@@ -108,8 +108,9 @@ func makeFolder(t *testing.T, root, id string) {
 	assert.NoError(t, os.WriteFile(filepath.Join(root, id, "Makefile"), []byte("build:\n\techo built\n"), 0o644))
 }
 
-// A directory in a workspace with a home project lists its skills with
-// HOME there; one outside the root, or in a workspace without, has none.
+// A directory under a workspace has the workspace's home as the HOME of
+// its runs, whether the home holds a checkout or not; one outside the
+// root has none.
 func TestCatalogue_Home(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
@@ -118,18 +119,16 @@ func TestCatalogue_Home(t *testing.T) {
 	t.Cleanup(func() { db.Close() })
 	root := t.TempDir()
 	projects, workspaces := storage.NewProjectStorage(db), storage.NewWorkspaceStorage(db)
-	home := &model.Project{Folder: "malta/workspace"}
-	assert.NoError(t, projects.Create(ctx, home))
-	assert.NoError(t, workspaces.Create(ctx, &model.Workspace{Folder: "malta", HomeProjectID: home.ID}))
+	assert.NoError(t, workspaces.Create(ctx, &model.Workspace{Folder: "malta", HomeURL: "git@example.com:org/workspace.git"}))
 	assert.NoError(t, workspaces.Create(ctx, &model.Workspace{Folder: "gozo"}))
 	assert.NoError(t, workspaces.EnsureDefault(ctx))
 
 	c := app.NewCatalogue(root, true, projects)
 	c.Workspaces = workspaces
-	want := filepath.Join(root, "malta", "workspace")
-	assert.Equal(t, want, c.Home(filepath.Join(root, "malta", "dockerfiles")))
-	assert.Equal(t, want, c.Home(filepath.Join(root, "malta", "workspace", "scripts")))
-	assert.Equal(t, "", c.Home(filepath.Join(root, "gozo", "api")))
-	assert.Equal(t, "", c.Home(filepath.Join(root, "deploy")), "the default workspace has none")
+	want := filepath.Join(root, "malta", "home")
+	assert.Equal(t, want, c.Home(filepath.Join(root, "malta", "src", "dockerfiles")))
+	assert.Equal(t, want, c.Home(filepath.Join(root, "malta", "home", "scripts")))
+	assert.Equal(t, filepath.Join(root, "gozo", "home"), c.Home(filepath.Join(root, "gozo", "src", "api")), "an empty home is a home")
+	assert.Equal(t, filepath.Join(root, "home"), c.Home(filepath.Join(root, "src", "deploy")), "the default workspace's home is at the root")
 	assert.Equal(t, "", c.Home(t.TempDir()))
 }
