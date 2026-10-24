@@ -3,6 +3,7 @@ package frontend
 import (
 	"context"
 	"net/http"
+	"strings"
 
 	"github.com/titpetric/task-ui/access"
 	"github.com/titpetric/task-ui/folder"
@@ -40,6 +41,76 @@ func viewRunSteps(rows []model.WorkflowRunStep, names map[string]string) []view.
 		})
 	}
 	return out
+}
+
+// recentWorkflowRuns is how many runs the Workflows page lists under
+// Recent runs.
+const recentWorkflowRuns = 15
+
+// workflowThread is a workflow run as a thread: what it started with,
+// its input or else its first prompt, and who answers it, Claude for a
+// run that asks Claude.
+func (h *Handlers) workflowThread(run model.WorkflowRun, rows []model.WorkflowRunStep, names map[string]string) view.WorkflowRun {
+	v := view.WorkflowRun{WorkflowRun: run, Steps: viewRunSteps(rows, names), Question: strings.TrimSpace(run.Input)}
+	for _, row := range rows {
+		if !row.IsPrompt() {
+			continue
+		}
+		v.Agent = h.opts.Board.Answerer()
+		if v.Question == "" && !row.IsSummary() {
+			v.Question = strings.TrimSpace(row.Prompt)
+		}
+	}
+	return v
+}
+
+// recentRuns returns the newest runs of the workflows the page's user
+// sees, at most recentWorkflowRuns, each a run whose steps ran in
+// folders the user sees, the workflows they ran included.
+func (h *Handlers) recentRuns(ctx context.Context, p *view.Page) []view.WorkflowRun {
+	if len(p.SideWorkflows) == 0 {
+		return nil
+	}
+	seen := map[string]bool{}
+	names := map[string]string{}
+	for _, wf := range p.SideWorkflows {
+		seen[wf.ID], names[wf.ID] = true, wf.Name
+	}
+	runs, _ := h.opts.WorkflowRuns.List(ctx, 4*recentWorkflowRuns)
+	user := access.UserFrom(ctx)
+	var out []view.WorkflowRun
+	for _, run := range runs {
+		if !seen[run.WorkflowID] {
+			continue
+		}
+		rows, err := h.opts.WorkflowRuns.Steps(ctx, run.ID)
+		if err != nil || !h.seesWorkflowRun(ctx, user, rows) {
+			continue
+		}
+		if out = append(out, h.workflowThread(run, rows, names)); len(out) == recentWorkflowRuns {
+			break
+		}
+	}
+	return out
+}
+
+// seesWorkflowRun reports whether the user sees every folder a workflow run's
+// steps ran in, the workflows they ran included.
+func (h *Handlers) seesWorkflowRun(ctx context.Context, user *model.User, rows []model.WorkflowRunStep) bool {
+	steps := make([]model.WorkflowStep, 0, len(rows))
+	for _, row := range rows {
+		steps = append(steps, model.WorkflowStep{Kind: row.Kind, Folder: row.Folder, Job: row.Job, WorkflowRef: row.WorkflowRef, Prompt: row.Prompt})
+	}
+	jobs, err := h.opts.Workflows.Expand(ctx, steps)
+	if err != nil {
+		return false
+	}
+	for _, step := range jobs {
+		if !user.CanSee(step.Folder) {
+			return false
+		}
+	}
+	return true
 }
 
 // workflowView decorates a workflow for the page's user. It returns nil when
@@ -120,6 +191,7 @@ func (h *Handlers) workflows(w http.ResponseWriter, r *http.Request) {
 	p.Step = view.StepWorkflows
 	p.Workflows = p.SideWorkflows
 	p.StepWorkflows = p.SideWorkflows
+	p.WorkflowRuns = h.recentRuns(r.Context(), p)
 	if h.opts.Board != nil && p.Can("prompt/edit") && h.claudeFor(r, p.User) {
 		p.Prompt = view.PromptOfArea(model.AreaWorkflows)
 		user := access.UserFrom(r.Context())
@@ -188,7 +260,7 @@ func (h *Handlers) workflow(w http.ResponseWriter, r *http.Request) {
 	p.Pager = view.NewPager("/workflows/"+p.Workflow.ID, q, prev, next)
 	for _, run := range runs {
 		rows, _ := h.opts.WorkflowRuns.Steps(r.Context(), run.ID)
-		p.WorkflowRuns = append(p.WorkflowRuns, view.WorkflowRun{WorkflowRun: run, Steps: viewRunSteps(rows, names)})
+		p.WorkflowRuns = append(p.WorkflowRuns, h.workflowThread(run, rows, names))
 	}
 	// The pipeline follows the newest run, which a page further down
 	// does not hold.
@@ -208,9 +280,10 @@ func (h *Handlers) workflow(w http.ResponseWriter, r *http.Request) {
 	h.render(w, http.StatusOK, "workflow", p)
 }
 
-// workflowRun shows one run of a workflow: its pipeline as the run left
-// it, each step's state and the screen its run ended on. The workflow
-// page opens it in a window.
+// workflowRun shows one run of a workflow as a thread, its input over
+// Claude's reply, then its pipeline as the run left it, each step's
+// state and the screen its run ended on. The workflow page opens it in a
+// window.
 func (h *Handlers) workflowRun(w http.ResponseWriter, r *http.Request) {
 	p, names := h.loadWorkflow(w, r)
 	if p == nil {
@@ -222,7 +295,7 @@ func (h *Handlers) workflowRun(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	rows, _ := h.opts.WorkflowRuns.Steps(r.Context(), run.ID)
-	p.WorkflowRuns = []view.WorkflowRun{{WorkflowRun: *run, Steps: viewRunSteps(rows, names)}}
+	p.WorkflowRuns = []view.WorkflowRun{h.workflowThread(*run, rows, names)}
 	p.Pipeline = view.Chain(p.WorkflowRuns[0].Steps, p.Workspaces)
 	h.frames(r.Context(), p.Pipeline, names, p.Workspaces, true)
 	p.Prompt = h.workflowRunPrompt(r, p, run)

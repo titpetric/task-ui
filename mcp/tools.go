@@ -47,7 +47,7 @@ func tools() []Tool {
 		},
 		{
 			Name:        "run_workflow",
-			Description: "Start a workflow by ID or name, and wait for it to end if asked. Returns the run and its steps.",
+			Description: "Start a workflow by ID or name, and wait for it to end if asked. Returns the run, its steps, its input and, once it ended, its answer.",
 			InputSchema: object(map[string]Property{
 				"workflow": str("The workflow's ID or name."),
 				"input":    str("Text for the workflow's prompt steps, which Claude reads after each prompt under Input:, for a workflow with prompt or summary steps."),
@@ -97,7 +97,7 @@ func tools() []Tool {
 		},
 		{
 			Name:        "list_workflow_runs",
-			Description: "List a workflow's latest runs with how each step went.",
+			Description: "List a workflow's latest runs with how each step went, the input and the answer.",
 			InputSchema: object(map[string]Property{
 				"workflow": str("The workflow's ID or name."),
 				"limit":    num("How many, 5 unless given."),

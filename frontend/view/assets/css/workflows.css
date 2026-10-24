@@ -664,3 +664,38 @@
 [data-pipeline-view] .promptbox {
   margin-top: 1.4rem;
 }
+
+/* A run's thread on two lines in a list of runs: the input it started
+   with over the answer, each cut short. */
+.wf-excerpt {
+  min-width: 16rem;
+  white-space: normal;
+
+  & .wf-q,
+  & .wf-a {
+    display: block;
+  }
+
+  & .wf-q {
+    font-weight: 500;
+  }
+
+  /* The answer keeps to two lines. */
+  & .wf-a {
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    font-size: var(--fs-sm);
+  }
+}
+
+/* A workflow run's page: the thread, its input and the answer, above
+   the steps. */
+.wf-thread {
+  margin: 0.25rem 0 1.25rem;
+}
+
+.wf-steps-title {
+  margin-bottom: 0.75rem;
+}

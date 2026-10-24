@@ -45,13 +45,14 @@
 	</form>
 	<div class="table-wrap">
 	<table class="table cards">
-		<thead><tr><th>Started</th><th>By</th><th>Result</th><th>Steps</th><th></th></tr></thead>
+		<thead><tr><th>Started</th><th>By</th><th>Result</th><th>Input and answer</th><th>Steps</th><th></th></tr></thead>
 		<tbody data-runs{{ if $.Summarize }} data-summarize{{ end }}>
 		{{- range $.WorkflowRuns }}
 			<tr data-run-id="{{ .ID }}">
 				<td class="nowrap" data-label="Started" title="{{ stamp .StartedAt }}">{{ ago .StartedAt }}</td>
 				<td data-label="By">{{ template "user" (list $ .UserName) }}</td>
 				<td data-label="Result" data-result><span class="state"><i class="dot {{ .State }}"></i>{{ .State }}</span>{{ if .Message }} <span class="faint">{{ .Message }}</span>{{ end }}</td>
+				<td class="wf-excerpt" data-label="Input and answer">{{ template "wfexcerpt" . }}</td>
 				<td data-label="Steps"><span class="chain">{{ range $i, $l := $.Links .Steps }}{{ if $i }}<span class="faint then" aria-hidden="true"></span>{{ end }}<a class="nowrap" href="{{ $l.Href }}" data-pos="{{ $i }}"><i class="dot {{ $l.State }}"></i>{{ if $l.Workflow }}<svg class="ic"><use href="#i-flow"/></svg>{{ else if $l.Summary }}<svg class="ic"><use href="#i-summary"/></svg>{{ else if $l.Prompt }}<svg class="ic"><use href="#i-prompt"/></svg>{{ end }}{{ $l.Text }}</a>{{ end }}</span></td>
 				<td class="actions"><a class="btn btn-sm" href="/workflows/{{ $w.ID }}/runs/{{ .ID }}" data-workflow-view>View</a>{{ template "menu" (menu (print "Actions on the run of " $w.Name)
 					(detail "Run" .ID "mono" "")
@@ -61,7 +62,7 @@
 				) }}</td>
 			</tr>
 		{{- else }}
-			<tr class="empty"><td colspan="5">Not run yet.</td></tr>
+			<tr class="empty"><td colspan="6">Not run yet.</td></tr>
 		{{- end }}
 		</tbody>
 	</table>

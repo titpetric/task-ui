@@ -2322,6 +2322,13 @@
         result.dataset.label = "Result";
         result.dataset.result = "";
         result.appendChild(stateSpan("running"));
+        var thread = el("td", "wf-excerpt");
+        thread.dataset.label = "Input and answer";
+        var lines = el("div", "wf-lines");
+        if (data.input) lines.appendChild(el("span", "wf-q", excerpt(data.input, 120)));
+        lines.appendChild(el("span", "wf-a faint", ""));
+        lines.lastChild.dataset.answer = "";
+        thread.appendChild(lines);
         var steps = el("td");
         steps.dataset.label = "Steps";
         var chain = el("span", "chain");
@@ -2345,6 +2352,7 @@
         row.appendChild(started);
         row.appendChild(by);
         row.appendChild(result);
+        row.appendChild(thread);
         row.appendChild(steps);
         row.appendChild(view);
         runs.insertBefore(row, runs.firstChild);
@@ -2397,6 +2405,11 @@
         var result = row.querySelector("[data-result]");
         result.innerHTML = "";
         result.appendChild(stateSpan(data.state, data.message));
+        var answer = row.querySelector("[data-answer]");
+        if (answer) {
+          answer.textContent = data.answer ? excerpt(data.answer, 200) : "";
+          answer.classList.toggle("faint", !data.answer);
+        }
         // A run that ended takes Summary in its menu, where the page
         // offers it.
         var cell = row.querySelector("td.actions");
@@ -2425,6 +2438,45 @@
       }
     }
   }
+
+  // excerpt is markdown on one line, as view.Excerpt cuts it for a list:
+  // without the marks of headings, lists, emphasis and code, its fences
+  // and tables, cut at a word.
+  function excerpt(text, n) {
+    var words = [];
+    String(text).split("\n").forEach(function (line) {
+      line = line.trim();
+      if (/^(```|~~~|\|)/.test(line)) return;
+      line = line.replace(/^[#>*+\-\s]+/, "").replace(/\*\*|__|`/g, "");
+      words = words.concat(line.split(/\s+/).filter(Boolean));
+    });
+    var short = words.join(" ");
+    var chars = Array.from(short);
+    if (chars.length <= n) return short;
+    var cut = chars.slice(0, n).join("");
+    var space = cut.lastIndexOf(" ");
+    if (space > n / 2) cut = cut.slice(0, space);
+    return cut.replace(/[ ,.;:]+$/, "") + "\u2026";
+  }
+
+  // followThread puts a running workflow run's thread in again once the
+  // workflow's topic says the run ended: data-follow names the workflow,
+  // and the thread comes from the run's page, data-page, with its answer.
+  function followThread(thread) {
+    if (!window.EventSource || !thread.dataset.follow) return;
+    var source = new EventSource("/api/sse/workflow:" + encodeURIComponent(thread.dataset.follow));
+    source.addEventListener("done", function (event) {
+      var data;
+      try { data = JSON.parse(event.data); } catch (e) { return; }
+      if (data.run_id !== thread.dataset.workflowThread) return;
+      source.close();
+      fetch(thread.dataset.page, { credentials: "same-origin" }).then(function (res) { return res.text(); }).then(function (text) {
+        var fresh = new DOMParser().parseFromString(text, "text/html").querySelector('[data-workflow-thread="' + data.run_id + '"]');
+        if (fresh && thread.isConnected) thread.replaceWith(fresh);
+      });
+    });
+  }
+  document.querySelectorAll("[data-workflow-thread][data-follow]").forEach(followThread);
 
   // subChain follows the workflow a step runs: its steps are drawn under
   // the step as its topic reports them, with their terminals, and a
@@ -2554,7 +2606,9 @@
     document.querySelectorAll("[data-pipeline] > [data-step] .pipeline.sub[data-workflow]").forEach(function (sub) {
       subChain(sub.closest("[data-step]"), sub.dataset.workflow, sub.dataset.sub);
     });
-    var source = new EventSource("/api/sse/" + encodeURIComponent(live.dataset.sse));
+    // The colon between the topic's kind and its ID stays a colon: the
+    // route reads the topic as the path has it.
+    var source = new EventSource("/api/sse/" + live.dataset.sse.split(":").map(encodeURIComponent).join(":"));
     ["run", "step", "done"].forEach(function (name) {
       source.addEventListener(name, function (event) {
         var data;
@@ -2752,6 +2806,7 @@
       fetch(href, { credentials: "same-origin" }).then(function (res) { return res.text(); }).then(function (text) {
         var view = new DOMParser().parseFromString(text, "text/html").querySelector("[data-pipeline-view]");
         pipelineBody.innerHTML = view ? view.innerHTML : '<p class="form-error">The run is not there.</p>';
+        pipelineBody.querySelectorAll("[data-workflow-thread][data-follow]").forEach(followThread);
       }).catch(function () {
         pipelineBody.innerHTML = '<p class="form-error">The run did not load.</p>';
       });
