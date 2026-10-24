@@ -14,6 +14,7 @@ import (
 
 	"github.com/titpetric/task-ui/access"
 	"github.com/titpetric/task-ui/frontend/view"
+	"github.com/titpetric/task-ui/markdown"
 )
 
 // Handlers serves the pages.
@@ -33,9 +34,10 @@ func New(opts Options) (*Handlers, error) {
 	return &Handlers{opts: opts, view: v, subs: &subCache{}}, nil
 }
 
-// Routes returns the router of the pages, to mount at the root.
+// Routes returns the router of the pages, to mount at the root, every response under markdown.CSP.
 func (h *Handlers) Routes() http.Handler {
 	r := chi.NewRouter()
+	r.Use(policy)
 
 	r.Handle(view.AssetPrefix+"*", assets())
 	r.Get("/login", h.loginForm)
@@ -97,6 +99,14 @@ func (h *Handlers) Routes() http.Handler {
 	r.NotFound(h.opts.Guard.Require(http.HandlerFunc(h.notFound)).ServeHTTP)
 
 	return r
+}
+
+// policy sets markdown.CSP on a response; a served file sets a stricter one of its own.
+func policy(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Security-Policy", markdown.CSP)
+		next.ServeHTTP(w, r)
+	})
 }
 
 // assets serves the embedded assets, cacheable for an hour. The

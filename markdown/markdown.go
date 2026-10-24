@@ -1,5 +1,8 @@
-// Package markdown renders the markdown files runs leave as HTML, with
-// blackfriday, the renderer the blog on incubator.to uses.
+// Package markdown renders the markdown files runs leave, and the notes
+// and answers people and Claude write, as HTML, with blackfriday, the
+// renderer the blog on incubator.to uses. It owns the content security
+// policy of the pages: what it renders loads nothing from elsewhere, and
+// CSP is the header the pages carry so that nothing else does either.
 package markdown
 
 import (
@@ -12,6 +15,16 @@ import (
 
 	blackfriday "github.com/russross/blackfriday/v2"
 )
+
+// CSP is the value of the Content-Security-Policy header of every page
+// task-ui serves. Scripts, styles, fonts, images and the connections of
+// a page, the websocket of a terminal and the event streams, come from
+// task-ui itself; an image may also be inline, a data URL, as the
+// stylesheet's icons are; a form posts to task-ui alone, no page sets a
+// base URL, loads a plugin or shows in a frame of another site. Styles
+// stay inline as well: the templates size bars and columns with style
+// attributes and xterm.js writes the style of its terminal.
+const CSP = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'"
 
 // Options shape a Render.
 type Options struct {
@@ -31,8 +44,8 @@ func HTML(src []byte, prefix, dir string) string {
 	return Render(Options{Prefix: prefix, Dir: dir}, src)
 }
 
-// Render renders markdown as HTML, shaped by the options.
-// Raw HTML in the source shows as text, and links keep to safe schemes and open in a new view.
+// Render renders markdown as HTML, shaped by the options: raw HTML shows as text, links keep to
+// safe schemes and open in a new view, and an image from elsewhere shows as a link to it.
 func Render(opts Options, src []byte) string {
 	src = fenceBreaks(bytes.ReplaceAll(src, []byte("\r\n"), []byte("\n")))
 	renderer := blackfriday.NewHTMLRenderer(blackfriday.HTMLRendererParameters{
@@ -48,7 +61,11 @@ func Render(opts Options, src []byte) string {
 	root := blackfriday.New(blackfriday.WithExtensions(extensions)).Parse(src)
 	root.Walk(func(node *blackfriday.Node, entering bool) blackfriday.WalkStatus {
 		if entering && (node.Type == blackfriday.Link || node.Type == blackfriday.Image) {
-			node.LinkData.Destination = []byte(resolve(opts.Prefix, opts.Dir, string(node.LinkData.Destination)))
+			dest := resolve(opts.Prefix, opts.Dir, string(node.LinkData.Destination))
+			node.LinkData.Destination = []byte(dest)
+			if node.Type == blackfriday.Image && external(dest) {
+				linkImage(node, dest)
+			}
 		}
 		return blackfriday.GoToNext
 	})
@@ -118,6 +135,33 @@ func fenceBreaks(src []byte) []byte {
 		out = append(out, line)
 	}
 	return []byte(strings.Join(out, "\n"))
+}
+
+// external reports whether a link leaves task-ui: a scheme other than
+// data, or a host. A link that does not parse counts as leaving.
+func external(link string) bool {
+	u, err := url.Parse(link)
+	if err != nil {
+		return true
+	}
+	return (u.Scheme != "" && u.Scheme != "data") || u.Host != ""
+}
+
+// linkImage turns an image from elsewhere into a link to it, under its
+// alt text, or its address when the alt text is blank: no reader fetches it.
+func linkImage(node *blackfriday.Node, dest string) {
+	node.Type = blackfriday.Link
+	for child := node.FirstChild; child != nil; child = child.Next {
+		if len(bytes.TrimSpace(child.Literal)) > 0 {
+			return
+		}
+	}
+	for node.FirstChild != nil {
+		node.FirstChild.Unlink()
+	}
+	text := blackfriday.NewNode(blackfriday.Text)
+	text.Literal = []byte(dest)
+	node.AppendChild(text)
 }
 
 // inLink reports whether a node sits inside a link or an image.
