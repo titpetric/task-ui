@@ -574,7 +574,7 @@
 			<tr data-job-row data-key="{{ $r.Key }}"{{ if eq $r.Kind "file" }} data-path="{{ $r.Source }}"{{ end }}{{ if $run }} class="running"{{ end }}>
 				<td class="key"><a href="{{ $.JobHref $f $r }}">{{ $r.ID }}</a>{{ if $r.Interactive }} <span class="badge">interactive</span>{{ end }}{{ if $r.TakesArgs }} <span class="badge" title="Takes arguments after {{ $r.ArgsCommand }}">args</span>{{ end }}</td>
 				<td class="desc" data-label="Does">{{ if and $r.Description (ne $r.Description $r.Name) }}{{ $r.Description }}{{ else }}<span class="faint">{{ join $r.Command " " }}</span>{{ end }}</td>
-				<td class="last nowrap" data-label="Last run">
+				<td class="last" data-label="Last run">
 					{{- if $run }}<i class="dot running"></i>running <span class="faint" title="{{ stamp $run.StartedAt }}, by {{ $run.UserName }}">{{ ago $run.StartedAt }}</span>
 					{{- else if $last }}<a href="/runs/{{ $last.ID }}" title="Open the run's page"><i class="dot {{ $last.State }}"></i>{{ $last.State }}{{ if and (ne $last.State "ok") (ne $last.State "killed") }} <span class="faint">({{ $last.ExitCode }})</span>{{ end }}</a> <span class="faint" title="{{ stamp $last.StartedAt }}, by {{ $last.UserName }}">{{ ago $last.StartedAt }}</span>
 					{{- else }}<span class="faint">never run</span>{{ end }}
