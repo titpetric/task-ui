@@ -9,7 +9,7 @@ import (
 	"github.com/titpetric/task-ui/folder"
 )
 
-// EnvRequest saves the managed content of an env file.
+// EnvRequest saves the content of an env file.
 type EnvRequest struct {
 	Content string `json:"content"`
 }
@@ -32,7 +32,7 @@ func (h *Handlers) envTarget(r *http.Request) (*folder.Folder, string) {
 	return f, rest
 }
 
-// listEnv returns the env files a folder's sources read, without content.
+// listEnv returns the env files users filled for a folder, without content.
 func (h *Handlers) listEnv(w http.ResponseWriter, r *http.Request, f *folder.Folder) {
 	writeJSON(w, http.StatusOK, map[string]any{"files": h.opts.Env.Files(r.Context(), f)})
 }
@@ -54,9 +54,8 @@ func (h *Handlers) envView(r *http.Request, fold *folder.Folder, path string) (*
 	return &EnvView{File: file, Content: file.Content, Secrets: sorted(names)}, nil
 }
 
-// getEnv lists a folder's env files, or returns one with its content.
-// The content takes env/view: it may hold what the folder's own
-// file keeps.
+// getEnv lists a folder's env files, or returns one with the content a
+// user filled, empty for a file nobody filled. The content takes env/view.
 func (h *Handlers) getEnv(w http.ResponseWriter, r *http.Request) {
 	f, path := h.envTarget(r)
 	if f == nil {
@@ -78,9 +77,9 @@ func (h *Handlers) getEnv(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, view)
 }
 
-// putEnv saves the managed content of an env file and generates it in
-// the folder, with the secrets appended. Content takes env/edit, and
-// no content, which clears it, env/delete.
+// putEnv saves the content of an env file and writes it in the folder,
+// with the secrets appended. Content takes env/edit, and no content,
+// which deletes the file, env/delete.
 func (h *Handlers) putEnv(w http.ResponseWriter, r *http.Request) {
 	if !h.can(r, "env/edit") && !h.require(w, r, "env/delete") {
 		return

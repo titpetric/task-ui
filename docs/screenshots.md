@@ -11,7 +11,7 @@ it with headless chromium; `task docs:shots` regenerates them into
 | ![The workflow editor: the steps on a rail, each a card of its kind](assets/workflow-edit-dark.png) | ![The workflow editor, light theme](assets/workflow-edit-light.png) |
 | ![The runs](assets/runs-dark.png) | ![A run's page](assets/run-page-dark.png) |
 | ![A run in its window, attached](assets/run-dark.png) | ![A run in its window, light theme](assets/run-light.png) |
-| ![A folder: the actions bar with its git line, its jobs, files, folder and env files](assets/folder-dark.png) | ![A folder, light theme](assets/folder-light.png) |
+| ![A folder: the actions bar with its git line, its jobs, files and folder](assets/folder-dark.png) | ![A folder, light theme](assets/folder-light.png) |
 | ![A job: what it runs, its history and schedules](assets/job-dark.png) | ![A job as a viewer sees it](assets/viewer-job-dark.png) |
 | ![A folder with a Makefile, package scripts and a scripts folder](assets/tools-dark.png) | ![Out of hours: Run force asks why](assets/out-of-hours-dark.png) |
 | ![Artifacts](assets/artifacts-dark.png) | ![Scheduled](assets/schedules-dark.png) |

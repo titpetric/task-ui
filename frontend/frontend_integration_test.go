@@ -73,11 +73,9 @@ func newFixture(t *testing.T) *fixture {
 	root := t.TempDir()
 	infra := shellFolder(t, root, "infra", map[string]string{"plan": "echo planned", "slow": "sleep 30", "many": "seq 1 200"})
 	infra.Description = "The servers"
-	infra.EnvFiles = []string{".env"}
 	private := shellFolder(t, root, "private", map[string]string{"deploy": "echo deployed"})
 	private.Allow = []string{"admin"}
 	edge := shellFolder(t, root, "infra/edge", map[string]string{"deploy": "echo edge"})
-	edge.EnvFiles = []string{".env"}
 
 	users := storage.NewUserStorage(db)
 	f := &fixture{root: root, users: map[string]*model.User{}, infra: infra, passwords: storage.NewUserAuthPasswordStorage(db), emails: storage.NewUserEmailStorage(db)}

@@ -224,8 +224,8 @@ Open a folder from the sidebar:
   files it includes, its schedules. **Show** beside a pipeline file opens
   it, coloured, in a window. A folder in a git checkout also shows the
   checkout's size: its files, and the history in `.git`.
-- **Environment**: the dotenv files the pipeline reads (see
-  [Settings](settings.md#env-files)).
+- **Environment**: the env files a user filled for the folder, shown
+  only when there is one (see [Settings](settings.md#env-files)).
 
 ![A project's Files: .git and .env sealed, ./serve marked to run](../assets/files-dark.png)
 

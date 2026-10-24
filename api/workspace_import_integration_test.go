@@ -42,7 +42,7 @@ func (f *fixture) acme(t *testing.T) string {
 	assert.Equal(t, http.StatusCreated, res.Status, string(res.Raw))
 	assert.NoError(t, f.opts.Secrets.Set(ctx, &model.Secret{Scope: "workspace:acme", Name: "TOKEN", Content: "shared value"}))
 	assert.NoError(t, f.opts.Secrets.Set(ctx, &model.Secret{Scope: "acme/api", Name: "OWN", Content: "own value"}))
-	assert.NoError(t, f.opts.Env.Managed.Create(ctx, &model.EnvFile{Folder: "acme/api", Path: ".env", Content: "MODE=prod\n"}))
+	assert.NoError(t, f.opts.Env.Managed.Set(ctx, &model.EnvFile{Folder: "acme/api", Path: ".env", Content: "MODE=prod\n"}))
 	return id
 }
 
@@ -220,7 +220,7 @@ func TestWorkspaceImport_Default(t *testing.T) {
 	assert.NoError(t, from.opts.Secrets.Set(ctx, &model.Secret{Scope: "all", Name: "ROOT", Content: "root value"}))
 	assert.NoError(t, from.opts.Secrets.Set(ctx, &model.Secret{Scope: "infra", Name: "INFRA", Content: "infra value"}))
 	assert.NoError(t, from.opts.Secrets.Set(ctx, &model.Secret{Scope: "internal/claude-prompt", Name: "KEEP", Content: "instance"}))
-	assert.NoError(t, from.opts.Env.Managed.Create(ctx, &model.EnvFile{Folder: "infra", Path: ".env", Content: "A=1\n"}))
+	assert.NoError(t, from.opts.Env.Managed.Set(ctx, &model.EnvFile{Folder: "infra", Path: ".env", Content: "A=1\n"}))
 	assert.NoError(t, from.opts.Projects.Create(ctx, &model.Project{Folder: "web", Title: "Web"}))
 	bundle := from.export(t, "_", passphrase)
 

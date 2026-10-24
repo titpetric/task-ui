@@ -85,9 +85,6 @@ func TestAtkinsDetector(t *testing.T) {
 	assert.Equal(t, "Deploys things.", source.Description)
 	assert.Equal(t, []string{"vars.yml"}, source.Includes)
 
-	// The pipeline's dotenv files, then each job's, once each.
-	assert.Equal(t, []string{".env", "secrets.env", "deploy.env"}, source.EnvFiles)
-
 	// The listing's order is atkins' own, and the skill section beside
 	// the pipeline is not this folder's jobs.
 	var names []string
@@ -100,7 +97,6 @@ func TestAtkinsDetector(t *testing.T) {
 	assert.Equal(t, "Deploy", deploy.Description)
 	assert.Equal(t, []string{"ship"}, deploy.Aliases)
 	assert.Equal(t, []string{"build"}, deploy.DependsOn)
-	assert.Equal(t, []string{"deploy.env"}, deploy.EnvFiles)
 	assert.Equal(t, []string{"run: echo deploy", "Verify", "task: notify", "defer: rm -f lock"}, deploy.Steps)
 
 	// A job that takes arguments carries the command they follow.

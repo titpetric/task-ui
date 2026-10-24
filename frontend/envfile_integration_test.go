@@ -21,15 +21,20 @@ func TestEnvFile(t *testing.T) {
 	assert.NoError(t, f.opts.Secrets.Set(ctx, &model.Secret{Scope: "all", Name: "CDN", Content: "c"}))
 
 	missing := f.page(t, asAdmin, "/f/_/infra/env/.env")
-	assert.Contains(t, missing, `class="badge bad">missing`)
 	assert.Contains(t, missing, `data-api="/api/env/infra/.env"`)
+	assert.Contains(t, missing, "></textarea>")
 	assert.Contains(t, missing, "<td class=\"key\">CDN</td>")
 	assert.Contains(t, missing, "<td class=\"key\">TOKEN</td>")
 
 	assert.NoError(t, f.opts.Env.Save(ctx, f.infra, envfile.File{Path: ".env", Content: "A=1\n"}))
 	managed := f.page(t, asAdmin, "/f/_/infra/env/.env")
-	assert.Contains(t, managed, `class="badge ok">managed`)
 	assert.Contains(t, managed, ">A=1\n</textarea>")
+
+	// With no path, the form that adds one names its path.
+	add := f.page(t, asAdmin, "/f/_/infra/env")
+	assert.Contains(t, add, `data-api="/api/env/infra/{path}"`)
+	assert.Contains(t, add, `name="path"`)
+	assert.Equal(t, http.StatusForbidden, f.get(t, asViewer, "/f/_/infra/env").Status)
 
 	assert.Equal(t, http.StatusNotFound, f.get(t, asAdmin, "/f/_/nowhere/env/.env").Status)
 	assert.Equal(t, http.StatusNotFound, f.get(t, asAdmin, "/f/_/infra/env/../x").Status)

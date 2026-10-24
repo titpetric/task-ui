@@ -49,7 +49,7 @@ func LoadFile(id, path string) *Folder {
 
 // finish fills the folder from its sources: title and description from
 // the first that has them, the job list with IDs that stay apart across
-// sources, and the merged include and env file lists.
+// sources, and the merged include list.
 func finish(f *Folder) {
 	var failures []string
 	// A source aside keeps its targets' names; the others take their
@@ -68,7 +68,6 @@ func finish(f *Folder) {
 			f.Description = source.Description
 		}
 		f.Includes = appendUnique(f.Includes, source.Includes...)
-		f.EnvFiles = appendUnique(f.EnvFiles, source.EnvFiles...)
 		if source.Error != "" {
 			failures = append(failures, source.Error)
 		}

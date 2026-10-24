@@ -1,9 +1,11 @@
 package detector
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"slices"
+	"strings"
 	"testing"
 )
 
@@ -48,8 +50,9 @@ tasks:
 	if !slices.Equal(build.Steps, []string{"go build ./...", "task: package"}) || !slices.Equal(build.DependsOn, []string{"lint"}) || !slices.Equal(build.Aliases, []string{"b"}) {
 		t.Fatalf("taskfile build: %+v", build)
 	}
-	if !slices.Equal(source.EnvFiles, []string{".env"}) {
-		t.Fatalf("dotenv: %v", source.EnvFiles)
+	// The dotenv files a Taskfile names are atkins' and task's to read.
+	if data, _ := json.Marshal(source); strings.Contains(string(data), ".env") {
+		t.Fatalf("dotenv listed: %s", data)
 	}
 	if !slices.Equal(source.Includes, []string{"./docker/Taskfile.yml", "docs/Taskfile.yml"}) {
 		t.Fatalf("includes: %v", source.Includes)

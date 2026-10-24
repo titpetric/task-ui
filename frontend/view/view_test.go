@@ -320,3 +320,40 @@ func TestWorkspaces_ImportDialog(t *testing.T) {
 	assert.Contains(t, body, `<dialog class="confirm workspace-import" id="import-dialog"`)
 	assert.Contains(t, body, `data-import="/api/workspaces/import"`)
 }
+
+// A folder page draws its Environment section only for a folder with an
+// env file a user filled: none at all otherwise, no table, no empty line.
+func TestView_RenderEnvironment(t *testing.T) {
+	t.Parallel()
+
+	v, err := view.New()
+	assert.NoError(t, err)
+	var buf bytes.Buffer
+	assert.NoError(t, v.Render(&buf, "folder", admin(t)))
+	assert.NotContains(t, buf.String(), "Environment")
+	assert.NotContains(t, buf.String(), "env file")
+	assert.NotContains(t, buf.String(), "/env/")
+
+	p := admin(t)
+	p.EnvFiles = []envfile.File{{Folder: "infra", Path: "conf/.env", Content: "A=1\n"}}
+	buf.Reset()
+	assert.NoError(t, v.Render(&buf, "folder", p))
+	assert.Contains(t, buf.String(), "Environment")
+	assert.Contains(t, buf.String(), `href="/f/_/infra/env/conf/.env"`)
+	assert.NotContains(t, buf.String(), "A=1")
+}
+
+// The env file page with no path is the form that adds one, its path a
+// field the API path takes.
+func TestView_RenderEnvFileAdd(t *testing.T) {
+	t.Parallel()
+
+	v, err := view.New()
+	assert.NoError(t, err)
+	p := admin(t)
+	p.EnvFile = &envfile.File{Folder: "infra"}
+	var buf bytes.Buffer
+	assert.NoError(t, v.Render(&buf, "envfile", p))
+	assert.Contains(t, buf.String(), `data-api="/api/env/infra/{path}"`)
+	assert.Contains(t, buf.String(), `name="path"`)
+}

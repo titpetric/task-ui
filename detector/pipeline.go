@@ -74,8 +74,6 @@ func (d pipelineDetector) detectFile(dir, name string) *Source {
 			source.Includes = appendUnique(source.Includes, path)
 		}
 	}
-	source.EnvFiles = appendUnique(nil, spec.Env.Include...)
-	source.EnvFiles = appendUnique(source.EnvFiles, spec.Dotenv...)
 
 	names := make([]string, 0, len(spec.Tasks))
 	for name := range spec.Tasks {
@@ -96,7 +94,6 @@ func (d pipelineDetector) detectFile(dir, name string) *Source {
 			Aliases:     job.Aliases,
 			Interactive: job.Interactive,
 			DependsOn:   job.DependsOn,
-			EnvFiles:    job.Env.Include,
 		}
 		for _, dep := range job.Deps {
 			if dep.Task != "" {
@@ -110,7 +107,6 @@ func (d pipelineDetector) detectFile(dir, name string) *Source {
 				j.Steps = append(j.Steps, label)
 			}
 		}
-		source.EnvFiles = appendUnique(source.EnvFiles, j.EnvFiles...)
 		source.Targets = append(source.Targets, j)
 	}
 	return source

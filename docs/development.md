@@ -147,8 +147,8 @@ domains, the domains to `model` and `storage`, `model` to nothing of ours.
 | `recording` | the asciicast files                                                          |
 | `access`    | who may do what: the password file, `Sessions`, tokens, the `Guard`          |
 | `secret`    | the secrets, encrypted at rest per workspace, through each one's `Vault`     |
-| `envfile`   | the dotenv files a folder reads, as task-ui manages and generates them       |
-| `sshkey`, `git`, `dotenv` | the key pairs, the checkouts, the file format                 |
+| `envfile`   | the env files users fill for a folder, written in it before each run          |
+| `sshkey`, `git`, `dotenv` | the key pairs, the checkouts, the dotenv lines it writes      |
 | `permission` | what a user may do, from `config/permissions.yml` and the policies of the user and the role |
 | `config`    | the embedded configuration: `permissions.yml` and `context.md`               |
 | `note`      | the notes board: messages, replies and the notes that hand someone an instruction |

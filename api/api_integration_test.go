@@ -81,10 +81,8 @@ func newFixture(t *testing.T) *fixture {
 	private := shellFolder(t, root, "private", map[string]string{"deploy": "echo deployed"})
 	private.Allow = []string{"admin"}
 	edge := shellFolder(t, root, "infra/edge", map[string]string{"deploy": "echo edge"})
-	edge.EnvFiles = []string{".env"}
 
 	infra.Job("echo").Interactive = true
-	infra.EnvFiles = []string{".env"}
 
 	runs := storage.NewRunStorage(db)
 	artifacts := storage.NewArtifactStorage(db)

@@ -2,21 +2,28 @@
 {{- $p := .Folder }}{{ $f := .EnvFile }}
 <div class="page-head">
 	<div>
-		<h2><svg class="ic"><use href="#i-file"/></svg> {{ $f.Path }}</h2>
-		<p>The file the pipeline reads with env.include. Save writes it into the folder with the secrets below added at the end. task-ui does the same before every run.</p>
+		<h2><svg class="ic"><use href="#i-file"/></svg> {{ if $f.Path }}{{ $f.Path }}{{ else }}Add env file{{ end }}</h2>
+		<p>A dotenv file task-ui writes into the folder, on save and before every run, with the secrets below added at the end. Saving it empty deletes it.</p>
 	</div>
-	<div class="dim nowrap">{{ if $f.Managed }}<span class="badge ok">managed</span>{{ else if $f.Exists }}<span class="badge">from the folder</span>{{ else }}<span class="badge bad">missing</span>{{ end }}</div>
 </div>
 
 <div class="grid-2 wide">
-<form class="form" data-api="/api/env/{{ $p.ID }}/{{ $f.Path }}" data-method="PUT" data-next="{{ $.Href $p.ID }}?notice=Saved+and+generated+{{ $f.Path }}">
+{{- if $f.Path }}
+<form class="form" data-api="/api/env/{{ $p.ID }}/{{ $f.Path }}" data-method="PUT" data-next="{{ $.Href $p.ID }}?notice=Saved+{{ $f.Path }}">
+{{- else }}
+<form class="form" data-api="/api/env/{{ $p.ID }}/{path}" data-method="PUT" data-next="{{ $.Href $p.ID }}?notice=Saved+{path}">
+	<div class="field">
+		<label for="env-path">Path <span class="faint">relative to the folder, such as .env</span></label>
+		<input id="env-path" name="path" required spellcheck="false" autocomplete="off" placeholder=".env">
+	</div>
+{{- end }}
 	<div class="field">
 		<label for="env-content">Content <span class="faint">KEY=value, one per line, # comments</span></label>
 		<textarea id="env-content" name="content" rows="18" spellcheck="false" autocomplete="off">{{ $f.Content }}</textarea>
 	</div>
 	<div class="form-foot">
 		<a class="btn" href="{{ $.Href $p.ID }}">Cancel</a>
-		<button class="btn btn-primary" type="submit">Save and generate</button>
+		<button class="btn btn-primary" type="submit">Save</button>
 	</div>
 </form>
 
