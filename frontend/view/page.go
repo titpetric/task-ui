@@ -368,7 +368,7 @@ func (p *Page) CanProfile(name string) bool {
 	return p.User.Name == name || p.Can("user/view")
 }
 
-// CanPermissions reports whether the menu of a user, by name, links their permissions, for user/edit.
+// CanPermissions reports whether the menu of a user, by name, links their edit page, for user/edit.
 func (p *Page) CanPermissions(name string) bool {
 	_, ok := p.Roles[name]
 	return ok && p.Can("user/edit")

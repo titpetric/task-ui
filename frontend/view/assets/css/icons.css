@@ -8,6 +8,13 @@
   flex: none;
 }
 
+/* An icon that leads text in a line, the workflow icon before a
+   workflow's name in a chain, a row or the rail: a gap between them,
+   where flex or a button gives none. */
+.ic.lead {
+  margin-inline-end: 0.3rem;
+}
+
 /* The disclosure chevron, one look wherever something folds: the
    sidebar's workspaces, projects and folders, a block's heading, the
    prompt box, a host's row, a details toggle. It points right while

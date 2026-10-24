@@ -77,11 +77,11 @@ func TestRun(t *testing.T) {
 	assert.Contains(t, body, "report.txt")
 	assert.Contains(t, body, "2.0 KB")
 	assert.Contains(t, body, `<span class="who-ran"><span class="user-ref"><span class="avatar sm role-runner" title="ops">OP</span> <span class="user-name">ops</span><details class="more-menu">`)
-	// The viewer's menu of ops: the runs by ops, no profile and no
-	// permissions without user/view and user/edit.
+	// The viewer's menu of ops: the runs by ops, no profile and no Edit
+	// without user/view and user/edit.
 	assert.Contains(t, body, `href="/runs?user=ops"><svg class="ic"><use href="#i-list"/></svg>Runs by this user</a>`)
 	assert.NotContains(t, body, `href="/users/ops"`)
-	assert.NotContains(t, body, `href="/users/ops#permissions"`)
+	assert.NotContains(t, body, `href="/users/ops/edit"`)
 	assert.NotContains(t, body, "data-frame")
 	assert.NotContains(t, body, "data-delete")
 

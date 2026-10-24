@@ -11,7 +11,7 @@
 		<dd>{{ template "copyable" (list (printf "%s/api/mcp" $base) "the MCP endpoint") }}</dd>
 	</dl>
 	<ol class="mcp-steps">
-		<li>{{ if .User }}Enable MCP on <a href="/users/{{ .User.Name }}#mcp">your profile</a>{{ else }}Enable MCP on your profile{{ end }} and copy the token. It shows once and lasts 30 days, or until you rotate it. A token needs MCP agent user on, which an admin sets, and enabling needs Allow Edits on Users; if you don't have them, ask someone who does.</li>
+		<li>{{ if .User }}Enable MCP under <a href="/users/{{ .User.Name }}/edit#mcp">your MCP access</a>{{ else }}Enable MCP under your MCP access{{ end }} and copy the token. It shows once and lasts 30 days, or until you rotate it. A token needs MCP agent user on, which an admin sets, and enabling needs Allow Edits on Users; if you don't have them, ask someone who does.</li>
 		<li>Add the server to Claude Code:
 			{{ template "copyable" (list (printf "claude mcp add --transport http --scope user task %s/api/mcp --header \"Authorization: Bearer <token>\"" $base) "the claude mcp add command") }}</li>
 		<li>Other clients connect to the endpoint over HTTP with the header <code>Authorization: Bearer &lt;token&gt;</code>. Check with <code>claude mcp list</code>: it shows <code>task</code> as connected.</li>
@@ -21,7 +21,7 @@
 {{- end }}
 
 
-{{/* mcp-access is a user's MCP token on their profile: (list page user). The token shows once, in #mcp-token, from the response to Enable or Rotate. */}}
+{{/* mcp-access is a user's MCP token on their edit page: (list page user). The token shows once, in #mcp-token, from the response to Enable or Rotate. */}}
 {{ define "mcp-access" }}
 {{- $p := index . 0 }}{{ $u := index . 1 }}{{ $m := $p.AccountMCP }}
 {{- $api := printf "/api/users/%s/mcp" $u.ID }}
@@ -61,7 +61,7 @@
 			{{- $add := printf "claude mcp add --transport http --scope user task %s/api/mcp --header \"Authorization: Bearer {token}\"" $p.BaseURL }}
 			<dd><span class="copyable"><code data-fill="{{ $add }}"></code><button type="button" class="btn-icon" data-copy="" data-fill="{{ $add }}" title="Copy the claude mcp add command" aria-label="Copy the claude mcp add command"><svg class="ic"><use href="#i-copy"/></svg></button></span></dd>
 		</dl>
-		<a class="btn" href="/users/{{ $u.Name }}#mcp">Done</a>
+		<a class="btn" href="/users/{{ $u.Name }}/edit#mcp">Done</a>
 	</div>
 </section>
 {{- end }}

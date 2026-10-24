@@ -1,6 +1,6 @@
 {{/* user takes (list $ name): a user's avatar and name, with the [...]
      menu next to them: the profile, for yourself or with user/view; the
-     runs by the user; their permissions, with user/edit. userHTML in
+     runs by the user; their edit page, with user/edit. userHTML in
      task-ui.js draws the same for the rows a script adds. */}}
 {{ define "user" }}{{ $p := index . 0 }}{{ $name := index . 1 }}<span class="user-ref">{{ template "avatar" (list $p $name) }} <span class="user-name">{{ $name }}</span>{{ template "user-menu" (list $p $name) }}</span>{{ end }}
 
@@ -8,7 +8,7 @@
 {{ template "menu" (menu (print "More on " $name)
 	(and ($p.CanProfile $name) (item "users" "Profile" "href" (print "/users/" $name)))
 	(item "list" "Runs by this user" "href" (print "/runs?user=" (urlquery $name)))
-	(and ($p.CanPermissions $name) (item "key" "Permissions" "href" (print "/users/" $name "#permissions")))) }}
+	(and ($p.CanPermissions $name) (item "edit" "Edit" "href" (print "/users/" $name "/edit")))) }}
 {{- end }}
 
 {{/* user-options takes (list users selected [short]): an option per

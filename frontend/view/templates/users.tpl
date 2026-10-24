@@ -2,7 +2,7 @@
 <div class="page-head">
 	<div>
 		<h2>Users</h2>
-		<p>Who can sign in, their role and folders. Click a user for their profile.</p>
+		<p>Who can sign in, their role and folders. A name opens the user's profile; <b>Edit</b> in the row's menu opens their roles, folders, permissions, keys and MCP access.</p>
 	</div>
 	{{- if .CanAddUsers }}
 	<div class="actions">
@@ -12,7 +12,7 @@
 </div>
 
 <div class="alert">
-	Users come from the password file; <b>Add user</b> or <code>task-ui passwd &lt;user&gt;</code> adds one or resets a password. A new user starts as a viewer. An admin sets the admin flag, the role and MCP on the user's profile, or with <code>task-ui user</code>.
+	Users come from the password file; <b>Add user</b> or <code>task-ui passwd &lt;user&gt;</code> adds one or resets a password. A new user starts as a viewer. An admin sets the admin flag, the role and MCP on the user's edit page, or with <code>task-ui user</code>.
 </div>
 
 <section class="block">
@@ -29,9 +29,9 @@
 				<td class="desc" data-label="Folders">{{ with .FolderList }}{{ join . ", " }}{{ else }}<span class="faint">all</span>{{ end }}</td>
 				<td class="nowrap" data-label="Since" title="{{ stamp .CreatedAt }}">{{ ago .CreatedAt }}</td>
 				<td class="actions">{{ template "menu" (menu (print "Actions on " .Name)
+					(item "edit" "Edit" "href" (print "/users/" .Name "/edit"))
 					(item "users" "Profile" "href" (print "/users/" .Name))
 					(item "list" "Runs by this user" "href" (print "/runs?user=" (urlquery .Name)))
-					(and ($.CanPermissions .Name) (item "key" "Permissions" "href" (print "/users/" .Name "#permissions")))
 					(and $.CanAddUsers ($.Can "user/delete") (not .CanAdmin) $.User (ne .ID $.User.ID) (danger "trash" "Delete" "data-delete" (print "/api/users/" .ID) "data-confirm" (print "Delete the user " .Name "? This removes them from the password file and ends their sessions and tokens right away. Their runs, notes and history keep the name.") "data-confirm-ok" "Delete" "data-next" "/settings/users?notice=User+deleted"))
 				) }}</td>
 			</tr>

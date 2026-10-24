@@ -5,10 +5,14 @@ import (
 )
 
 // Profile is a user's page beyond the user: what they did lately, as
-// far as the one who looks may see, and their permissions.
+// far as the one who looks may see, on the profile, and their
+// permissions on the edit page.
 type Profile struct {
 	// Own says the page is the signed in user's.
 	Own bool
+	// CanEdit shows Edit on the profile: the signed in user's own, or
+	// user/edit.
+	CanEdit bool
 	// Runs are the user's latest runs in folders the viewer sees, and
 	// FlowRuns their latest workflow runs.
 	Runs     []Run
@@ -18,8 +22,8 @@ type Profile struct {
 	// places the viewer sees.
 	Notes   []model.Note
 	Prompts []model.Note
-	// Matrix is the user's policy with what they may do; nil without
-	// user/view, unless the viewer looks at their own.
+	// Matrix is the user's policy with what they may do, on the edit
+	// page.
 	Matrix *Matrix
 }
 

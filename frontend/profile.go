@@ -15,19 +15,11 @@ import (
 // profileCount is how many of each kind of activity a profile lists.
 const profileCount = 10
 
-// profile shows a user: their role and folders, what they did lately as
-// far as the one who looks sees it, their permissions and their MCP
-// access. Your own opens without user/view.
+// profile shows a user to read: who they are and what they did lately, as far as the one who looks sees it.
+// Edit, for your own page or with user/edit, opens the forms of the roles, folders, permissions, keys and MCP access.
 func (h *Handlers) profile(w http.ResponseWriter, r *http.Request) {
-	me := access.UserFrom(r.Context())
-	name := param(r, "name")
-	own := me != nil && me.Name == name
-	if !own && !h.require(w, r, "user/view") {
-		return
-	}
-	user, err := h.opts.Users.GetByName(r.Context(), name)
-	if err != nil {
-		h.missing(w, r, "No user by that name.")
+	user, own, ok := h.userPage(w, r)
+	if !ok {
 		return
 	}
 	p := h.page(r, user.Name)
@@ -37,18 +29,28 @@ func (h *Handlers) profile(w http.ResponseWriter, r *http.Request) {
 		p.Step = view.StepUsers
 	}
 	p.Account = user
-	p.FolderChoices = view.FolderChoices(h.opts.Catalogue.List(), user.FolderList())
-	p.AccountMCP = h.mcpAccess(r, user, own)
-	if own || p.Can("key/view") {
-		p.Keys = h.userKeys(r.Context(), user)
-	}
 	p.CanAddUsers = h.opts.AddUsers
-	p.Profile = &view.Profile{Own: own}
+	p.Profile = &view.Profile{Own: own, CanEdit: own || p.Can("user/edit")}
 	h.activityOf(r, p, user)
-	if own || p.Can("user/view") {
-		p.Profile.Matrix = h.userMatrix(r, p, user, own)
-	}
 	h.render(w, http.StatusOK, "profile", p)
+}
+
+// userPage returns the user a page under /users/{name} shows and whether the page is the signed in user's own.
+// Another user's page takes user/view, and the page answers forbidden itself.
+// A name no user holds answers not found.
+func (h *Handlers) userPage(w http.ResponseWriter, r *http.Request) (*model.User, bool, bool) {
+	me := access.UserFrom(r.Context())
+	name := param(r, "name")
+	own := me != nil && me.Name == name
+	if !own && !h.require(w, r, "user/view") {
+		return nil, own, false
+	}
+	user, err := h.opts.Users.GetByName(r.Context(), name)
+	if err != nil {
+		h.missing(w, r, "No user by that name.")
+		return nil, own, false
+	}
+	return user, own, true
 }
 
 // activityOf fills a profile with the latest runs, workflow runs, notes

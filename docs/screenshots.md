@@ -24,7 +24,8 @@ it with headless chromium; `task docs:shots` regenerates them into
 | ![A directory's Jobs table: its targets, the git, compose and dockerfile skills and the built-ins](assets/actions-dark.png) | ![The arguments field of compose: custom..., and the argv it runs](assets/args-dark.png) |
 | ![Users, from the password file](assets/users-dark.png) | ![Secrets, grouped by workspace, each on its own key](assets/secrets-dark.png) |
 | ![Permissions: a matrix per role](assets/permissions-dark.png) | ![A profile: a user's activity](assets/profile-dark.png) |
-| ![A profile's permissions over the role's](assets/profile-permissions-dark.png) | ![Integrations: Claude Code and Beszel](assets/integrations-dark.png) |
+| ![The edit page of a user: Roles, Folders, Permissions, Keys, MCP access](assets/user-edit-dark.png) | ![The edit page, light theme](assets/user-edit-light.png) |
+| ![A profile, light theme](assets/profile-light.png) | ![Integrations: Claude Code and Beszel](assets/integrations-dark.png) |
 | ![Notes: messages, replies and instructions](assets/notes-dark.png) | ![Add user](assets/user-new-dark.png) |
 | ![Add a secret](assets/secret-new-dark.png) | ![An env file](assets/envfile-dark.png) |
 | ![SSH keys](assets/keys-dark.png) | ![Generate a key](assets/keys-generate-dark.png) |

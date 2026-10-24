@@ -73,7 +73,7 @@ draws no button. `menuHTML` in `task-ui.js` draws the same for the rows
 a script adds. The CSS is in `css/menus.css`.
 
 A keys table has the same columns on every page, the Keys page, the
-Instance page, a workspace's page, Your SSH keys and a profile: Name,
+Instance page, a workspace's page, Your SSH keys and a user's edit page: Name,
 Algorithm, Size in bits, Public key shortened with a copy button for
 the whole line, Purpose, and the **⋯** menu with the fingerprint, the
 dates and the links in its details.
@@ -89,7 +89,8 @@ follow one set of rules:
   secret**, **Add workflow**, each with the plus icon, and **Upload
   key** and **Generate key** for keys. One button per head is primary.
   A second list on a page holds its own in its block head, small and
-  plain: a workspace's keys, a profile's keys, a workspace's secrets.
+  plain: a workspace's keys, a user's keys on their edit page, a
+  workspace's secrets.
 - **Page-level danger**, deleting what the page shows, goes in a **⋯**
   menu at the end of the page head, never a loose red button: a
   workspace, a project's checkout, a workflow, a user, every artifact.

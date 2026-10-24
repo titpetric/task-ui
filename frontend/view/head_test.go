@@ -49,7 +49,7 @@ func keyRow(t *testing.T, body, name string) string {
 }
 
 // An SSH key renders the same row on every page that lists keys: the
-// Keys page, Your SSH keys and a profile, with its public key to copy
+// Keys page, Your SSH keys and a user's edit page, with its public key to copy
 // inline, in code with the copy button right after it.
 func TestHead_SharedKeyRows(t *testing.T) {
 	t.Parallel()
@@ -60,7 +60,7 @@ func TestHead_SharedKeyRows(t *testing.T) {
 	p.Keys = []keystore.Key{key}
 	keys := keyRow(t, render(t, "keys", p), key.Name)
 	assert.Equal(t, keys, keyRow(t, render(t, "my_keys", p), key.Name))
-	assert.Equal(t, keys, keyRow(t, render(t, "profile", p), key.Name))
+	assert.Equal(t, keys, keyRow(t, render(t, "user_edit", p), key.Name))
 	assert.Contains(t, keys, `<span class="copyable"><code title="ssh-ed25519 AAAAdeploy task-ui">`)
 	assert.Contains(t, keys, `</code><button type="button" class="btn-icon" data-copy="ssh-ed25519 AAAAdeploy task-ui" title="Copy the public key of deploy_ed25519"`)
 }

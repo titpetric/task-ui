@@ -18,17 +18,17 @@ and hours.
    ```
 
    A new user comes in as a viewer; an admin sets the role on the user's
-   profile, under **Roles**, or with `task-ui user role claude runner`
+   edit page, under **Roles**, or with `task-ui user role claude runner`
    (see [Running the server](../running.md#users-and-roles)).
 
-2. Turn on **MCP agent user** under **Roles** on the user's profile, as
+2. Turn on **MCP agent user** under **Roles** on the user's edit page, as
    an admin, or with `task-ui user mcp claude on`: the endpoint takes the
    tokens of such a user alone, and answers `403` "MCP is off for this
    user" to any other, an admin's too. Turning it off ends the user's MCP
    token.
 
-3. Open the user's profile, from Settings, Users or the **⋯** menu next to
-   their name, and press **Enable MCP** under **MCP access**. task-ui makes a token that lasts 30 days and shows it once,
+3. Open the user's edit page, **Edit** in Settings, Users or in the **⋯**
+   menu next to their name, and press **Enable MCP** under **MCP access**. task-ui makes a token that lasts 30 days and shows it once,
    beside the ready `claude mcp add` command; copy both before you leave
    the page, which keeps only the token's hash. The section shows the
    token's creation, its expiry, in amber within a week and red once
@@ -38,7 +38,7 @@ and hours.
    Enabling takes Allow Edits on Users, `user/edit`, which the admin role
    holds and a policy can grant (see
    [Settings](settings.md#permissions)); a user rotates
-   or disables their own token once on, from their own profile. A
+   or disables their own token once on, from their own edit page. A
    token past its expiry gets `401` "the token has expired; rotate it on
    your profile".
 
@@ -86,7 +86,7 @@ run ends, writes an MCP configuration with it to a directory of the run's
 own, mode 0700, that `TASK_UI_MCP_CONFIG` names, and Claude starts with
 `--mcp-config` on it. The token has that user's permissions and no more,
 shows nowhere, and is none of the user's tokens: it needs no MCP agent user
-on the user's profile. The configuration goes with the run. So a
+on the user's edit page. The configuration goes with the run. So a
 prompt can build a workflow with `create_workflow`, run it with
 `run_workflow` and read how it went.
 
@@ -247,7 +247,7 @@ with `-p`, `/loop` with `list_notes` polls in its place:
 
 Each tool takes the permissions of the token's user, the ones a page
 takes in the browser: the role's policy and the user's own, which
-Settings, Permissions and the user's profile set (see
+Settings, Permissions and the user's edit page set (see
 [Settings](settings.md#permissions)). An agent that should post notes or
 ask prompts gets Allow Edits on Notes or on Prompts in its own policy;
 the `claude` user starts with both. A note from `post_note` and a prompt from

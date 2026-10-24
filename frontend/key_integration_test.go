@@ -145,7 +145,7 @@ func TestKeys_Links(t *testing.T) {
 	viewer := f.page(t, asViewer, "/keys")
 	assert.Contains(t, viewer, "No keys for you or your role yet")
 
-	profile := f.page(t, asAdmin, "/users/"+asOps)
+	profile := f.page(t, asAdmin, "/users/"+asOps+"/edit")
 	assert.Contains(t, profile, `<span class="mono">deploy_ed25519</span>`)
 	assert.Contains(t, profile, `href="/settings/keys/generate?for=`+asOps+`"`)
 }

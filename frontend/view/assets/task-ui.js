@@ -146,7 +146,7 @@
 
   // userHTML draws a user's avatar and name with the [...] menu next to
   // them, as the user template does: the profile, for yourself or with
-  // user/view; the runs by the user; their permissions, with user/edit.
+  // user/view; the runs by the user; their edit page, with user/edit.
   // The body says who is signed in and what they may see of users; a
   // name no user holds, such as the agent a note names, has no profile.
   function userHTML(name) {
@@ -157,7 +157,7 @@
       menuHTML("More on " + name, [], [
         known && (name === me || may) && { icon: "users", label: "Profile", href: "/users/" + q },
         { icon: "list", label: "Runs by this user", href: "/runs?user=" + q },
-        known && may === "edit" && { icon: "key", label: "Permissions", href: "/users/" + q + "#permissions" }
+        known && may === "edit" && { icon: "edit", label: "Edit", href: "/users/" + q + "/edit" }
       ]) + "</span>";
   }
 
@@ -2319,9 +2319,11 @@
     return node;
   }
 
-  function icon(name) {
+  // icon draws a symbol of the sprite; a class besides ic, lead, sets
+  // the icon off from the text after it.
+  function icon(name, cls) {
     var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-    svg.setAttribute("class", "ic");
+    svg.setAttribute("class", cls ? "ic " + cls : "ic");
     var use = document.createElementNS("http://www.w3.org/2000/svg", "use");
     use.setAttribute("href", "#" + name);
     svg.appendChild(use);
@@ -2396,7 +2398,7 @@
           a.href = link.dataset.target || link.getAttribute("href");
           a.dataset.pos = i;
           a.appendChild(el("i", "dot pending"));
-          if (link.querySelector(".ic")) a.appendChild(icon("i-flow"));
+          if (link.querySelector(".ic")) a.appendChild(icon("i-flow", "lead"));
           a.appendChild(document.createTextNode(link.textContent.trim()));
           chain.appendChild(a);
         });
@@ -2577,7 +2579,7 @@
         var a = el("a");
         if (data.workflow_ref) {
           a.href = "/workflows/" + data.workflow_ref;
-          a.appendChild(icon("i-flow"));
+          a.appendChild(icon("i-flow", "lead"));
           a.appendChild(document.createTextNode("workflow"));
         } else if (data.prompt) {
           var summary = data.kind === "summary";
@@ -4536,7 +4538,7 @@
       return '<a href="/workflows/' + encodeURIComponent(f.workflow_id) + '" class="recent flow" title="' +
         escapeHTML("Workflow " + f.name + ", " + f.user_name + ", " + f.state) + '">' +
         '<i class="dot ' + escapeHTML(f.state) + '"></i>' +
-        '<span class="what"><b>' + escapeHTML(f.name) + '</b><small><svg class="ic"><use href="#i-flow"/></svg>workflow</small></span>' +
+        '<span class="what"><b>' + escapeHTML(f.name) + '</b><small><svg class="ic lead"><use href="#i-flow"/></svg>workflow</small></span>' +
         (f.state === "running" ? '<svg class="ic act"><use href="#i-eye"/></svg>' : "") +
         avatarHTML(f.user_name) + "</a>";
     }

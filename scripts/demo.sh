@@ -216,13 +216,15 @@ shot keys-generate-dark /settings/keys/generate dark
 shot keys-upload-dark /settings/keys/upload dark
 shot secret-new-dark "/settings/secrets/new?scope=infra" dark
 shot users-dark /settings/users dark
-# The roles' permissions, and two profiles: the admin's, with the
-# activity of the runs above, and ops', with a policy of its own over
+# The roles' permissions, the admin's profile, with the activity of the
+# runs above, and the edit page of ops, with a policy of its own over
 # the runner role's: shell denied, the secrets readable.
 shot permissions-dark /settings/permissions dark 1440x2400
 api PUT /permissions/users/ops -d '{"shell":"deny","secret/view":"allow"}'
-shot profile-dark /users/admin dark 1440x1500
-shot profile-permissions-dark /users/ops dark 1440x2000
+for theme in dark light; do
+  shot "profile-${theme}" /users/admin "$theme" 1440x1200
+  shot "user-edit-${theme}" /users/ops/edit "$theme" 1440x2000
+done
 shot user-new-dark /settings/users/new dark
 shot integrations-dark /settings/integrations dark
 shot notes-dark /notes dark

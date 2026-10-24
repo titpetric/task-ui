@@ -78,6 +78,7 @@ func TestSettings_Footer(t *testing.T) {
 		"/settings/integrations":    {"Secrets", "Users"},
 		"/settings/users":           {"Integrations", "Permissions"},
 		"/users/" + asOps:           {"Integrations", "Permissions"},
+		"/users/" + asOps + "/edit": {"Integrations", "Permissions"},
 		"/settings/permissions":     {"Users", "Workflows"},
 		"/workflows":                {"Permissions", "Workspaces"},
 		"/settings/workspaces":      {"Workflows", "Projects"},

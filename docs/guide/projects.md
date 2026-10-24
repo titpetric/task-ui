@@ -488,7 +488,7 @@ list names other users or roles. A viewer runs nothing, but sees the jobs
 and watches the runs. Run Jobs, a permission of
 [Settings, Permissions](settings.md#permissions), decides who runs at
 all; `@shell` and `@claude` are the admins' alone; a user with
-`user/edit` sets which folders each user sees on the user's profile.
+`user/edit` sets which folders each user sees on the user's edit page.
 
 ---
 
