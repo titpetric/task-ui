@@ -64,11 +64,95 @@ func TestView_RenderStepSpace(t *testing.T) {
 	assert.Contains(t, out, `<option value="malta" selected>Malta</option>`, "the command's workspace")
 	assert.Contains(t, out, `<option value="workflow:" selected>Workflows</option>`, "the workflow step's")
 	assert.Contains(t, out, `<option value="ops" selected>ops</option>`, "the prompt's")
-	assert.Contains(t, out, `<option value="malta/vhosts" data-workspace="malta" selected>malta/vhosts</option>`)
-	assert.Contains(t, out, `<option value="infra" data-workspace="_">infra</option>`)
+	assert.Contains(t, out, `<option value="malta/vhosts" data-workspace="malta" data-rel="vhosts" selected>vhosts</option>`)
+	assert.Contains(t, out, `<option value="infra" data-workspace="_" data-rel="infra">infra</option>`)
 	assert.Contains(t, out, `<option value="workflow:w2" data-workspace="workflow:" selected>nightly</option>`)
-	assert.Contains(t, out, `<option value="_" data-workspace="_">the root</option>`)
-	assert.Contains(t, out, `<option value="ops/deploy" data-workspace="ops" selected>ops/deploy</option>`)
+	assert.Contains(t, out, `<option value="_" data-workspace="_" data-rel=".">the root</option>`)
+	assert.Contains(t, out, `<option value="ops/deploy" data-workspace="ops" data-rel="deploy" selected>deploy</option>`)
 	assert.Contains(t, out, `data-step-folder-label>Workflow</span>`)
 	assert.NotContains(t, out, `value="empty"`, "a workspace without a folder the user sees")
+}
+
+// movePage is spacePage with infra in malta too, its job plan alone.
+func movePage(t *testing.T) *view.Page {
+	t.Helper()
+	p := spacePage(t)
+	job := &folder.Job{Folder: "malta/infra", ID: "plan"}
+	job.Name = "plan"
+	p.StepFolders = append(p.StepFolders, &folder.Folder{ID: "malta/infra", Jobs: []*folder.Job{job}})
+	p.Workflow = &view.Workflow{Workflow: model.Workflow{ID: "w1", Name: "release"}, CanChange: true}
+	return p
+}
+
+// A folder shows relative to its workspace; the root of either is ".".
+func TestStepRel(t *testing.T) {
+	t.Parallel()
+	p := spacePage(t)
+	assert.Equal(t, "vhosts", p.StepRel("malta/vhosts"))
+	assert.Equal(t, "apps/blog", p.StepRel("malta/apps/blog"))
+	assert.Equal(t, "apps/blog", p.StepRel("apps/blog"))
+	assert.Equal(t, ".", p.StepRel("malta"))
+	assert.Equal(t, ".", p.StepRel("_"))
+	assert.Equal(t, "the root", p.StepLabel("malta"))
+	assert.Equal(t, "vhosts", p.StepLabel("malta/vhosts"))
+
+	assert.Equal(t, "malta/apps/blog", view.StepFolderIn("malta", "apps/blog"))
+	assert.Equal(t, "apps/blog", view.StepFolderIn("_", "apps/blog"))
+	assert.Equal(t, "malta", view.StepFolderIn("malta", "."))
+	assert.Equal(t, "_", view.StepFolderIn("_", "."))
+}
+
+// Moving the steps keeps each folder and job the workspace has, and
+// clears and names what it lacks; a workflow step stays.
+func TestMoveSteps(t *testing.T) {
+	t.Parallel()
+	p := movePage(t)
+	steps := []view.Step{
+		{Kind: model.StepJob, Folder: "infra", Job: "plan", Args: `["-v"]`},
+		{Kind: model.StepJob, Folder: "ops/deploy", Job: "up"},
+		{Kind: model.StepWorkflow, WorkflowID: "w2"},
+		{Kind: model.StepPrompt, Folder: "infra", Dir: "docs", Prompt: "Why?"},
+		{Kind: model.StepSummary, Folder: "ops/deploy"},
+		{Kind: model.StepSummary, Folder: "_"},
+	}
+	moved, missed := p.StepMove(steps, "malta")
+	assert.Equal(t, 2, missed)
+	assert.Equal(t, view.Step{Kind: model.StepJob, Folder: "malta/infra", Job: "plan", Args: `["-v"]`}, moved[0])
+	assert.Equal(t, view.Step{Kind: model.StepJob, Missing: "deploy is not in Malta."}, moved[1])
+	assert.Equal(t, steps[2], moved[2])
+	assert.Equal(t, view.Step{Kind: model.StepPrompt, Folder: "malta/infra", Dir: "docs", Prompt: "Why?"}, moved[3])
+	assert.Equal(t, view.Step{Kind: model.StepSummary, Folder: "malta", Missing: "deploy is not in Malta."}, moved[4])
+	assert.Equal(t, view.Step{Kind: model.StepSummary, Folder: "malta"}, moved[5])
+
+	back, missed := p.StepMove(moved, "_")
+	assert.Equal(t, 0, missed)
+	assert.Equal(t, "infra", back[0].Folder)
+	assert.Equal(t, "plan", back[0].Job)
+	assert.Equal(t, "", back[4].Missing, "a move clears the last one's note")
+
+	p.StepFolders[len(p.StepFolders)-1].Jobs[0].ID = "apply"
+	moved, missed = p.StepMove(steps[:1], "malta")
+	assert.Equal(t, 1, missed)
+	assert.Equal(t, view.Step{Kind: model.StepJob, Folder: "malta/infra", Missing: "infra has no job plan in Malta."}, moved[0])
+}
+
+// The edit page's menu moves the steps to each workspace, and a moved
+// step says under its card what the workspace lacks.
+func TestView_RenderMoveSteps(t *testing.T) {
+	t.Parallel()
+	v, err := view.New()
+	assert.NoError(t, err)
+	p := movePage(t)
+	assert.True(t, p.StepSpaceHas("malta"))
+	assert.False(t, p.StepSpaceHas("empty"))
+	p.Workflow.Steps, _ = p.StepMove([]view.Step{{Kind: model.StepJob, Folder: "ops/deploy", Job: "up"}}, "malta")
+	var buf bytes.Buffer
+	assert.NoError(t, v.Render(&buf, "workflow_edit", p))
+	out := buf.String()
+	assert.Contains(t, out, `href="/workflows/w1/edit?workspace=malta"><svg class="ic"><use href="#i-folder"/></svg><span>Move to Malta</span>`)
+	assert.Contains(t, out, `href="/workflows/w1/edit?workspace=_">`)
+	assert.Contains(t, out, `<p class="wf-hint" data-step-hint role="status">deploy is not in Malta.</p>`)
+
+	p.StepFolders, p.Workspaces = p.StepFolders[:1], nil
+	assert.Equal(t, 0, len(p.StepMoveItems()), "one workspace has nowhere to move to")
 }

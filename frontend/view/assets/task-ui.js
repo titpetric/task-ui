@@ -1787,28 +1787,52 @@
   }
 
   // narrowSpace keeps the folders of a card's workspace in its folder
-  // select, and the folder picked when it still belongs; else a command
-  // goes back to pick one and a prompt or summary to the workspace's
-  // first folder. Workflows lists the workflows in its place.
-  function narrowSpace(row) {
+  // select, and the folder picked when it still belongs, else the one
+  // of the same data-rel, the folder relative to its workspace. A card
+  // whose workspace the user changed, moved, says under it what the new
+  // workspace lacks: a command goes back to pick one, a prompt or
+  // summary to the workspace's root or first folder. Workflows lists
+  // the workflows in its place.
+  function narrowSpace(row, moved) {
     var space = row.querySelector("[data-step-space]");
     var folder = space && stepSpaceFolder(row);
     if (!folder) return;
     var picked = folder.value;
+    var was = folder.options[folder.selectedIndex];
+    var rel = was && was.value ? was.dataset.rel : "";
     keepOptions(folder, "workspace", space.value, true);
     var kept = Array.prototype.filter.call(folder.options, function (o) { return o.dataset.workspace === space.value; });
-    if (kept.some(function (o) { return o.value === picked; })) folder.value = picked;
-    else folder.value = folder.matches("[data-step-place]") && kept.length ? kept[0].value : "";
+    var same = kept.find(function (o) { return o.value === picked; }) || kept.find(function (o) { return rel && o.dataset.rel === rel; });
+    var place = folder.matches("[data-step-place]");
+    if (same) folder.value = same.value;
+    else {
+      var root = kept.find(function (o) { return o.dataset.rel === "."; });
+      folder.value = place && kept.length ? (root || kept[0]).value : "";
+    }
+    if (moved) {
+      var title = space.options[space.selectedIndex].text;
+      stepHint(row, rel && !same && space.value !== WORKFLOW ? (rel === "." ? "the root" : rel) + " is not in " + title + "." : "");
+    }
     var label = row.querySelector("[data-step-folder-label]");
     if (label) label.textContent = space.value === WORKFLOW ? "Workflow" : "Folder";
     if (folder.dropdown) folder.dropdown();
   }
 
+  // stepHint says under a card what a move to another workspace did not
+  // find there; no text clears it.
+  function stepHint(row, text) {
+    var hint = row.querySelector("[data-step-hint]");
+    if (!hint) return;
+    hint.textContent = text || "";
+    hint.hidden = !text;
+  }
+
   // narrowStep keeps the jobs of a command card's folder in its job
   // select, and the job picked when it still belongs; a workflow picked
   // in the folder select makes the card a workflow step, with no job or
-  // args.
-  function narrowStep(row) {
+  // args. A card moved to another workspace keeps no other job in place
+  // of its own, and says so.
+  function narrowStep(row, moved) {
     var folder = row.querySelector("[data-step-folder]");
     if (!folder) return;
     var job = row.querySelector("[data-step-job]");
@@ -1820,6 +1844,11 @@
     var picked = job.value;
     keepFolder(job, folder.value);
     if (picked && Array.prototype.some.call(job.options, function (o) { return o.value === picked; })) job.value = picked;
+    else if (picked && moved && folder.value) {
+      job.value = "";
+      var space = row.querySelector("[data-step-space]");
+      stepHint(row, folder.options[folder.selectedIndex].text + " has no job " + picked + " in " + space.options[space.selectedIndex].text + ".");
+    }
     if (job.dropdown) job.dropdown();
   }
 
@@ -2030,8 +2059,10 @@
     form.addEventListener("change", function (event) {
       var row = event.target.closest("[data-step]");
       if (!row) return;
-      if (event.target.matches("[data-step-space]")) narrowSpace(row);
-      if (event.target.matches("[data-step-space], [data-step-folder]")) narrowStep(row);
+      var moved = event.target.matches("[data-step-space]");
+      if (!moved) stepHint(row, "");
+      if (moved) narrowSpace(row, true);
+      if (moved || event.target.matches("[data-step-folder]")) narrowStep(row, moved);
       stepLine(row);
     });
     form.addEventListener("input", function (event) {

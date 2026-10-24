@@ -19,7 +19,7 @@ type Menu struct {
 	Items []MenuItem
 }
 
-// NewMenu returns a menu from its label and parts: each a MenuItem, a MenuDetail, or a false value it skips.
+// NewMenu returns a menu from its label and parts: each a MenuItem, a list of them, a MenuDetail, or a false value it skips.
 // A false value is one a template counts as false, so (and $cond (item ...)) leaves the item out.
 func NewMenu(label string, parts ...any) (*Menu, error) {
 	m := &Menu{Label: label}
@@ -27,6 +27,8 @@ func NewMenu(label string, parts ...any) (*Menu, error) {
 		switch part := part.(type) {
 		case MenuItem:
 			m.Items = append(m.Items, part)
+		case []MenuItem:
+			m.Items = append(m.Items, part...)
 		case MenuDetail:
 			m.Details = append(m.Details, part)
 		default:

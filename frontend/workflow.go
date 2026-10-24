@@ -2,6 +2,7 @@ package frontend
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -348,7 +349,7 @@ func (h *Handlers) frames(ctx context.Context, links []view.Link, names map[stri
 }
 
 // workflowEdit shows the form that changes a workflow, for its owner or
-// an admin.
+// an admin; ?workspace= opens it with the steps moved to that workspace.
 func (h *Handlers) workflowEdit(w http.ResponseWriter, r *http.Request) {
 	p, _ := h.loadWorkflow(w, r)
 	if p == nil {
@@ -367,6 +368,14 @@ func (h *Handlers) workflowEdit(w http.ResponseWriter, r *http.Request) {
 	p.StepFolders = h.stepFolders(r)
 	p.WorkspaceList = h.workspaceList(r.Context())
 	h.hostJobs(r, p)
+	if ws := r.URL.Query().Get("workspace"); ws != "" && p.StepSpaceHas(ws) {
+		var missed int
+		p.Workflow.Steps, missed = p.StepMove(p.Workflow.Steps, ws)
+		p.Notice = "The steps moved to another workspace; Save keeps it."
+		if missed > 0 {
+			p.Notice = fmt.Sprintf("The steps moved to another workspace; %d of them say under their card what it lacks. Save keeps it.", missed)
+		}
+	}
 	h.render(w, http.StatusOK, "workflow_edit", p)
 }
 

@@ -468,6 +468,13 @@
   }
 }
 
+/* What a move to another workspace did not find there, under the card. */
+.wf-hint {
+  margin: 0 0 0.8rem;
+  color: var(--signal);
+  font-size: var(--fs-sm);
+}
+
 .wf-error {
   margin: 0 0 0.8rem;
   color: var(--bad);

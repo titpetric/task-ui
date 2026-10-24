@@ -201,9 +201,17 @@ run, and the step's card beside it, in the colour of its kind.
   see, also the ones the sidebar leaves out: a checkout the
   workspace's `.gitignore` ignores, a folder below a project or a
   workspace with **Recursive** off, a folder hidden from the sidebar.
-  A folder with no job isn't listed. Picking another
-  workspace clears the folder and the job. A step you edit opens on the
-  workspace of its folder.
+  A folder with no job isn't listed. The list names each folder
+  relative to its workspace, `apps/blog` for `malta/apps/blog`, and
+  `the root` for the workspace's own. Picking another workspace keeps
+  the folder of the same relative name and its job when that workspace
+  has them; what it lacks goes back to pick one, and a line under the
+  card says so, such as `apps/blog is not in Malta.` A step you edit
+  opens on the workspace of its folder.
+- **Move to** a workspace in the edit page's [...] menu does that for
+  every step at once: the form opens with the steps moved, each one the
+  workspace lacks a folder or a job of saying so under its card, and
+  **Save** keeps it. A step that runs another workflow stays put.
 - A **Command** picks its workspace, then its folder, the job and its
   arguments; **Workflows** in place of a workspace lists the workflows
   it may run. A **Prompt** takes its text, its workspace, **Asks in**,
