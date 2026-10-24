@@ -54,3 +54,21 @@ func TestRender_runTitle(t *testing.T) {
 		assert.Contains(t, html, `id="run-subtitle"`, name)
 	}
 }
+
+// A finished run's page replays its recording and reads it into Output,
+// and links no .cast to download.
+func TestRender_runRecording(t *testing.T) {
+	t.Parallel()
+	v, err := view.New()
+	assert.NoError(t, err)
+	page := admin(t)
+	page.Run.State, page.Run.CastPath = model.StateOK, "infra/plan/x.cast"
+	var buf bytes.Buffer
+	assert.NoError(t, v.Render(&buf, "run", page))
+	html := buf.String()
+	assert.Contains(t, html, `data-replay="`+page.Run.ID+`"`)
+	assert.Contains(t, html, `data-output="`+page.Run.ID+`"`)
+	assert.NotContains(t, html, "/cast")
+	assert.NotContains(t, html, `.cast"`)
+	assert.NotContains(t, html, ">Recording</a>")
+}

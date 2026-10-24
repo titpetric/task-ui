@@ -68,8 +68,7 @@ func TestDataRetention(t *testing.T) {
 	assert.Equal(t, http.StatusForbidden, f.get(t, asViewer, "/settings/retention").Status)
 }
 
-// A run whose recording expired says so on its page, with no Replay and
-// no Recording download.
+// A run whose recording expired says so on its page, with no Replay.
 func TestRun_ExpiredRecording(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
@@ -78,6 +77,5 @@ func TestRun_ExpiredRecording(t *testing.T) {
 	assert.Contains(t, body, "The run has finished; its recording expired.")
 	assert.Contains(t, body, "The recording of this run expired under the Data retention settings")
 	assert.NotContains(t, body, `data-replay="`+run.ID+`"`)
-	assert.NotContains(t, body, `/api/runs/`+run.ID+`/cast" download`)
 	assert.NotContains(t, body, `data-output="`+run.ID+`"`)
 }

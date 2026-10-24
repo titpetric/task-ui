@@ -72,7 +72,7 @@ func TestRun(t *testing.T) {
 	body := f.page(t, asViewer, "/runs/"+run.ID)
 	assert.Contains(t, body, `<h2>infra / plan <span class="badge bad">failed 2</span></h2>`)
 	assert.Contains(t, body, `data-attach="`+run.ID+`">View</button>`)
-	assert.Contains(t, body, `href="/api/runs/`+run.ID+`/cast"`)
+	assert.NotContains(t, body, `/cast"`)
 	assert.Contains(t, body, `<button type="button" class="btn" data-replay="`+run.ID+`" data-replay-title="infra / plan" data-replay-who="ops" title="Replay the recording"`)
 	assert.Contains(t, body, "report.txt")
 	assert.Contains(t, body, "2.0 KB")
