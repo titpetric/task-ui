@@ -4,6 +4,7 @@ import (
 	"context"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/titpetric/task-ui/internal/assert"
 	"github.com/titpetric/task-ui/model"
@@ -12,20 +13,28 @@ import (
 )
 
 // board is the Triager of the tests: it records the triages asked of
-// it and answers each with its verdict, or its error.
+// it and answers each with its verdict, or its error, once hold, when
+// set, closes.
 type board struct {
 	mu      sync.Mutex
 	runs    []string
 	users   []string
 	verdict string
 	err     error
+	hold    chan struct{}
 }
 
 func (b *board) TriageRun(_ context.Context, user *model.User, runID string) (*model.Note, string, error) {
 	b.mu.Lock()
-	defer b.mu.Unlock()
 	b.runs = append(b.runs, runID)
 	b.users = append(b.users, user.Name)
+	hold := b.hold
+	b.mu.Unlock()
+	if hold != nil {
+		<-hold
+	}
+	b.mu.Lock()
+	defer b.mu.Unlock()
 	if b.err != nil {
 		return nil, "", b.err
 	}
@@ -57,8 +66,10 @@ func TestLoop_Triage(t *testing.T) {
 	loop := scheduler.NewLoop(nil, nil, catalogue{}, nil)
 	loop.Board = b
 	ops := &model.User{ID: "u1", Name: "ops"}
-	on := &model.Schedule{Folder: "infra", Job: "plan", Triage: 1}
+	on := &model.Schedule{ID: "s1", Folder: "infra", Job: "plan", Triage: 1}
 	failed := &model.Run{ID: "r1", Folder: "infra", Job: "plan", State: string(model.StateFailed)}
+	now := time.Now()
+	loop.Now = func() time.Time { return now }
 
 	verdict, err := loop.Triage(ctx, on, ops, failed)
 	assert.NoError(t, err)
@@ -74,8 +85,20 @@ func TestLoop_Triage(t *testing.T) {
 	killed := &model.Run{ID: "r2", Folder: "infra", Job: "plan", State: string(model.StateKilled)}
 	verdict, err = loop.Triage(ctx, on, ops, killed)
 	assert.NoError(t, err)
-	assert.Equal(t, note.TriageResolved, verdict, "a killed run is a failure")
-	assert.Equal(t, []string{"r1", "r2"}, b.triaged())
+	assert.Equal(t, "", verdict, "the schedule cools down for an hour")
+	assert.Equal(t, []string{"r1"}, b.triaged())
+	other := &model.Schedule{ID: "s2", Folder: "infra", Job: "plan", Triage: 1}
+	verdict, err = loop.Triage(ctx, other, ops, &model.Run{ID: "r2b", Folder: "infra", Job: "plan", State: string(model.StateFailed)})
+	assert.NoError(t, err)
+	assert.Equal(t, note.TriageResolved, verdict, "another schedule of the job has its own cooldown")
+	assert.Equal(t, []string{"r1", "r2b"}, b.triaged())
+
+	now = now.Add(scheduler.TriageCooldown + time.Second)
+	verdict, err = loop.Triage(ctx, on, ops, killed)
+	assert.NoError(t, err)
+	assert.Equal(t, note.TriageResolved, verdict, "a killed run is a failure, triaged once the cooldown passed")
+	assert.Equal(t, []string{"r1", "r2b", "r2"}, b.triaged())
+	now = now.Add(scheduler.TriageCooldown + time.Second)
 
 	left := []struct {
 		name     string
@@ -94,7 +117,7 @@ func TestLoop_Triage(t *testing.T) {
 		assert.NoError(t, err, c.name)
 		assert.Equal(t, "", verdict, c.name)
 	}
-	assert.Equal(t, []string{"r1", "r2"}, b.triaged())
+	assert.Equal(t, []string{"r1", "r2b", "r2"}, b.triaged())
 
 	off := scheduler.NewLoop(nil, nil, catalogue{}, nil)
 	verdict, err = off.Triage(ctx, on, ops, failed)
@@ -108,7 +131,7 @@ func TestLoop_Triage(t *testing.T) {
 func TestLoop_TriageRefused(t *testing.T) {
 	t.Parallel()
 	ops := &model.User{ID: "u1", Name: "ops"}
-	on := &model.Schedule{Folder: "infra", Job: "plan", Triage: 1}
+	on := &model.Schedule{ID: "s1", Folder: "infra", Job: "plan", Triage: 1}
 	failed := &model.Run{ID: "r1", Folder: "infra", Job: "plan", State: string(model.StateFailed)}
 
 	for _, refusal := range []error{note.ErrForbidden, note.ErrNoPrompt, note.ErrPromptFailed} {
@@ -128,4 +151,41 @@ func TestLoop_TriageRefused(t *testing.T) {
 	loop.Board = b
 	_, err := loop.Triage(stopped, on, ops, failed)
 	assert.ErrorIs(t, err, context.Canceled)
+}
+
+// While a schedule's triage still works, the next failed run of the
+// schedule gets none; a loop's Cooldown shortens the hour.
+func TestLoop_TriageOneAtATime(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	b := &board{verdict: note.TriageNoAction, hold: make(chan struct{})}
+	loop := scheduler.NewLoop(nil, nil, catalogue{}, nil)
+	loop.Board = b
+	loop.Cooldown = time.Minute
+	now := time.Now()
+	loop.Now = func() time.Time { return now }
+	ops := &model.User{ID: "u1", Name: "ops"}
+	on := &model.Schedule{ID: "s1", Folder: "infra", Job: "plan", Triage: 1}
+
+	done := make(chan string)
+	go func() {
+		verdict, _ := loop.Triage(ctx, on, ops, &model.Run{ID: "r1", Folder: "infra", Job: "plan", State: string(model.StateFailed)})
+		done <- verdict
+	}()
+	assert.Eventually(t, func() bool { return len(b.triaged()) == 1 }, 5*time.Second, 10*time.Millisecond)
+	verdict, err := loop.Triage(ctx, on, ops, &model.Run{ID: "r2", Folder: "infra", Job: "plan", State: string(model.StateFailed)})
+	assert.NoError(t, err)
+	assert.Equal(t, "", verdict, "the first triage still works")
+	close(b.hold)
+	assert.Equal(t, note.TriageNoAction, <-done)
+	assert.Equal(t, []string{"r1"}, b.triaged())
+
+	verdict, err = loop.Triage(ctx, on, ops, &model.Run{ID: "r3", Folder: "infra", Job: "plan", State: string(model.StateFailed)})
+	assert.NoError(t, err)
+	assert.Equal(t, "", verdict, "within the cooldown")
+	now = now.Add(2 * time.Minute)
+	verdict, err = loop.Triage(ctx, on, ops, &model.Run{ID: "r4", Folder: "infra", Job: "plan", State: string(model.StateFailed)})
+	assert.NoError(t, err)
+	assert.Equal(t, note.TriageNoAction, verdict)
+	assert.Equal(t, []string{"r1", "r4"}, b.triaged())
 }

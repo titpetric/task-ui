@@ -34,13 +34,20 @@ type Loop struct {
 	// Board triages the failed run of a schedule with triage on, once
 	// the run ended. Nil triages nothing.
 	Board Triager
+	// Cooldown is how long a schedule waits after a triage ended before
+	// its next failed run gets one; zero is TriageCooldown.
+	Cooldown time.Duration
 	// Interval is how often the loop looks. Zero is a minute.
 	Interval time.Duration
 	// Now is the clock; tests move it.
 	Now func() time.Time
 
 	// triaged are the runs Triage took, by ID: one triage a run.
-	triaged sync.Map
+	// triaging are the schedules whose triage still works, by ID, and
+	// cooled, by ID, when each schedule's last triage stops cooling down.
+	triaged  sync.Map
+	triaging sync.Map
+	cooled   sync.Map
 }
 
 // NewLoop returns a loop with the defaults filled in.
