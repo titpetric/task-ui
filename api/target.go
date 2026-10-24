@@ -74,8 +74,36 @@ func (h *Handlers) target(r *http.Request, folderID, jobID string) (*folder.Fold
 // Path refuses, sealed, through .git or out by a symlink, is no such
 // directory.
 func (h *Handlers) targetIn(r *http.Request, folderID, dir, jobID string) (*folder.Folder, *folder.Job, string, string) {
-	user := access.UserFrom(r.Context())
-	f := h.visibleFolder(user, folderID)
+	return jobIn(h.visibleFolder(access.UserFrom(r.Context()), folderID), dir, jobID)
+}
+
+// stepFolder returns the folder a workflow step names, as the user may
+// see it, or nil. A step picks from Steps, the catalogue of every folder
+// with a job, so a folder the workspace or project settings hide from
+// the listings runs in a workflow all the same; the user's own folders
+// still bound it.
+func (h *Handlers) stepFolder(user *model.User, id string) *folder.Folder {
+	c := h.opts.Steps
+	if c == nil {
+		c = h.opts.Catalogue
+	}
+	f := c.Find(id)
+	if f == nil || !user.CanSee(f.ID) {
+		return nil
+	}
+	return f
+}
+
+// stepTarget resolves the folder and job of a workflow step as target
+// does, through the steps' catalogue.
+func (h *Handlers) stepTarget(r *http.Request, folderID, jobID string) (*folder.Folder, *folder.Job, string) {
+	f, job, _, problem := jobIn(h.stepFolder(access.UserFrom(r.Context()), folderID), "", jobID)
+	return f, job, problem
+}
+
+// jobIn resolves a job of a directory inside a folder already resolved
+// for the user, as targetIn says; a nil folder is no such folder.
+func jobIn(f *folder.Folder, dir, jobID string) (*folder.Folder, *folder.Job, string, string) {
 	if f == nil {
 		return nil, nil, "", "no such folder"
 	}

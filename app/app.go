@@ -288,7 +288,7 @@ func (a *App) wire(version string) error {
 		Users: a.Users, Projects: projects, Workspaces: workspaces, Runs: runs, Artifacts: artifacts, ArtifactStore: store, Schedules: schedules, Secrets: secrets, SecretReads: secretReads,
 		FolderRefs: refs,
 		Workflows:  workflows, WorkflowRuns: workflowRuns, Flows: a.Workflows, Events: events,
-		Runner: a.Runner, Catalogue: a.Catalogue, Git: g, Keys: keys, KeyReads: storage.NewKeyReadStorage(db), Env: env, Recordings: recordings, Root: cfg.Root, Board: a.Board,
+		Runner: a.Runner, Catalogue: a.Catalogue, Steps: a.Catalogue.Steps(), Git: g, Keys: keys, KeyReads: storage.NewKeyReadStorage(db), Env: env, Recordings: recordings, Root: cfg.Root, Board: a.Board,
 		Integrations: integrations, Hosts: hosts, HostRuns: hostRuns, Summarizer: &claude.Summarizer{Timeout: 3 * time.Minute},
 		AddUser: addUser, RemoveUser: removeUser, Tokens: a.Guard.Tokens, Now: cfg.Clock(), Summaries: summaries, Version: version,
 		Cleaner: cleaner, Pins: pins,

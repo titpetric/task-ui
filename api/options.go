@@ -49,7 +49,11 @@ type Options struct {
 
 	Runner    *runner.Manager
 	Catalogue folder.Catalogue
-	Git       *git.Git
+	// Steps is the catalogue a workflow step picks its folder from: every
+	// folder with a job, the ones the workspace and project settings hide
+	// too, as the workflow editor lists them. Nil picks from Catalogue.
+	Steps folder.Catalogue
+	Git   *git.Git
 	// Keys are the key folder: every key of the instance and its
 	// workspaces.
 	Keys *keystore.Local

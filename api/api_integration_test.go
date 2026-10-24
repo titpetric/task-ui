@@ -116,8 +116,15 @@ func newFixture(t *testing.T) *fixture {
 	assert.NoError(t, err)
 	secrets := secret.New(storage.NewSecretStorage(db), secret.NewVault(keys.Vault(storage.ScopeInstance)))
 	cat := catalogue{"infra": infra, "private": private, "infra/edge": edge, model.Default: {ID: model.Default, Dir: root}}
+	// The steps' catalogue lists a folder the settings hide from the
+	// listings besides, as the workflow editor does.
+	hidden := shellFolder(t, root, "infra/hidden", map[string]string{"deploy": "echo hidden"})
+	steps := catalogue{"infra/hidden": hidden}
+	for id, f := range cat {
+		steps[id] = f
+	}
 	workflows, workflowRuns := storage.NewWorkflowStorage(db), storage.NewWorkflowRunStorage(db)
-	flows := workflow.New(workflows, workflowRuns, cat, manager)
+	flows := workflow.New(workflows, workflowRuns, steps, manager)
 	flows.Events = event.NewBus()
 	manager.Events = flows.Events
 	f.opts = api.Options{
@@ -137,6 +144,7 @@ func newFixture(t *testing.T) *fixture {
 		FolderRefs:    storage.NewFolderRefStorage(db),
 		Runner:        manager,
 		Catalogue:     cat,
+		Steps:         steps,
 		Git:           &git.Git{},
 		Keys:          keys,
 		KeyReads:      storage.NewKeyReadStorage(db),
