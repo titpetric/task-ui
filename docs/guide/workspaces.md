@@ -238,8 +238,14 @@ workspaces follow them, in their order. A workspace adds a level above
 its projects: a label row with the
 workspace's name, the count of its projects and a chevron that points
 down while it's open. Under it come the workspace's own jobs, then its
-projects, each with a fold of its own. This browser remembers each fold
-apart, so `malta` and `malta/dockerfiles` open and close on their own.
+projects, each with a fold of its own: every directory right inside the
+workspace, a checkout with jobs or without, less the home project, which
+never shows in the sidebar, pinned or not; its files are on the
+workspace's page. This browser remembers each fold apart, so `malta` and
+`malta/dockerfiles` open and close on their own. **Pin workspace** in
+the `[...]` of the workspace's page, and **Pin** on a folder or a job
+inside it, add to what the sidebar lists, for you (see [What the
+sidebar lists](projects.md#what-the-sidebar-lists)).
 With no named workspace, the sidebar lists the projects alone (see
 [Projects and jobs](projects.md)).
 

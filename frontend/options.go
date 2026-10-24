@@ -43,6 +43,8 @@ type Options struct {
 	Secrets    *secret.Store
 	// SecretReads log which run got which secret. Nil shows no reads.
 	SecretReads *storage.SecretReadStorage
+	// Pins keep what each user pins to the sidebar; nil pins nothing.
+	Pins *storage.PinStorage
 
 	Workflows    *storage.WorkflowStorage
 	WorkflowRuns *storage.WorkflowRunStorage

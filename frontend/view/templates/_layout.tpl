@@ -183,6 +183,7 @@
 	<symbol id="i-terminal" viewBox="0 0 16 16"><rect x="1.5" y="2.5" width="13" height="11" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.2"/><path d="M4.5 6l2 2-2 2M8 10.5h3.5" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
 	<symbol id="i-play" viewBox="0 0 16 16"><path d="M4.5 2.5v11l8-5.5z" fill="currentColor"/></symbol>
 	<symbol id="i-stop" viewBox="0 0 16 16"><rect x="3.5" y="3.5" width="9" height="9" rx="1" fill="currentColor"/></symbol>
+	<symbol id="i-pin" viewBox="0 0 16 16"><path d="M6 1.5h4M7 1.5v4.2L4.5 8.5h7L9 5.7V1.5M8 8.5v6" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
 	<symbol id="i-eye" viewBox="0 0 16 16"><path d="M1.5 8s2.5-4.5 6.5-4.5S14.5 8 14.5 8 12 12.5 8 12.5 1.5 8 1.5 8z" fill="none" stroke="currentColor" stroke-width="1.2"/><circle cx="8" cy="8" r="2" fill="none" stroke="currentColor" stroke-width="1.2"/></symbol>
 	<symbol id="i-menu" viewBox="0 0 16 16"><path d="M2.5 4h11M2.5 8h11M2.5 12h11" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></symbol>
 	<symbol id="i-expand" viewBox="0 0 16 16"><path d="M9.5 2.5h4v4M13.5 2.5 9 7M6.5 13.5h-4v-4M2.5 13.5 7 9" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
@@ -404,7 +405,7 @@
 						</a>
 						<svg class="ic chev"><use href="#i-chev"/></svg>
 					</summary>
-					{{- if $p.Jobs }}
+					{{- if or $p.Jobs ($.PinnedJobs $p.ID) }}
 					<div class="jobs top">
 						{{- template "sidejobs" (list $ $p) }}
 					</div>
@@ -432,7 +433,7 @@
 			{{- if $p.Error }}{{ template "sidebad" $p }}{{ else }}<small>{{ len $g.Projects }}</small>{{ end }}
 		</a>
 	</summary>
-	{{- if $p.Jobs }}
+	{{- if or $p.Jobs ($.PinnedJobs $p.ID) }}
 	<div class="jobs top">
 		{{- template "sidejobs" (list $ $p) }}
 	</div>
@@ -454,7 +455,7 @@
 	<summary title="{{ $p.ID }}/{{ range $i, $s := $p.Sources }}{{ if $i }}, {{ end }}{{ $s.File }}{{ end }}">
 		<a href="{{ $.Href $p.ID }}"><svg class="ic"><use href="#i-folder{{ if $active }}-open{{ end }}"/></svg><span>{{ with folderDir $p.ID $top }}<i>{{ . }}/</i>{{ end }}<b>{{ $p.Name }}</b></span></a>
 		<i class="dot"></i>
-		{{- if $p.Error }}{{ template "sidebad" $p }}{{ else }}<small>{{ len $p.Jobs }}</small>{{ end }}
+		{{- if $p.Error }}{{ template "sidebad" $p }}{{ else }}<small>{{ add (len $p.Jobs) (len ($.PinnedJobs $p.ID)) }}</small>{{ end }}
 		<svg class="ic chev"><use href="#i-chev"/></svg>
 	</summary>
 	<div class="jobs">
@@ -541,16 +542,16 @@
 {{- end }}
 
 {{/* jobtable is the Jobs table of a folder's page, and of a directory's
-     inside one, as the dashboard's control centre lays out its folders:
-     a row for the place and one per directory inside with targets, a
-     column per job name they share, then a row of named buttons for the
+     inside one, with the buttons of the dashboard's control centre: a
+     row of named buttons per job source of the place and of each
+     directory inside with targets, under the source's file, then the
      files that run, each skill's jobs and the built-ins, from
      Page.JobGroups. A row's [...] holds Run and summarize, the last run
-     and its summary, the history, Run force and Kill of its jobs. */}}
+     and its summary, the history, Pin, Run force and Kill of its jobs. */}}
 {{- define "jobtable" }}
 {{- if $.JobGroups }}
 <section class="block" data-live>
-	<h3>Jobs <small>a row per place with targets, a column per job they share; files, skills and terminals below</small></h3>
+	<h3>Jobs <small>a row per job source, then files, skills and terminals</small></h3>
 	{{- template "controltable" (list $ $.JobControl true) }}
 </section>
 {{- end }}
@@ -603,9 +604,28 @@
 	<button type="button" class="play" data-run data-folder="{{ $p.ID }}" data-job="{{ $r.ID }}" data-title="{{ $p.ID }} / {{ $r.Name }}" title="Run {{ $r.Name }}" aria-label="Run {{ $r.Name }}"><svg class="ic"><use href="#i-play"/></svg></button>
 	{{- end }}
 </div>
-{{- else }}
+{{- else }}{{ if not ($.PinnedJobs $p.ID) }}
 <div class="empty">{{ if $p.Errors }}The pipeline has errors.{{ else }}Nothing to run.{{ end }}</div>
+{{- end }}{{ end }}
+{{- range $.PinnedJobs $p.ID }}{{ template "sidepin" (list $ $p .) }}{{ end }}
 {{- end }}
+
+{{- /* sidepin is a pinned job in the sidebar, under its folder: a job
+     the folder's row does not list, as its directory or its args set it
+     apart, or one of a folder listed for its pinned jobs alone. It runs
+     as a job of the row does, with its directory and its args. */}}
+{{- define "sidepin" }}
+{{- $ := index . 0 }}{{ $p := index . 1 }}{{ $s := index . 2 }}{{ $r := $s.Job }}
+{{- $run := $.RunningRun $r.Key }}
+<div class="job pinned{{ if and $.Job (eq $.Job.Key $r.Key) }} active{{ end }}" data-job-key="{{ $r.Key }}">
+	<i class="shebang{{ if $run }} running{{ end }}" aria-hidden="true">#!</i>
+	<a href="{{ $.JobHref $p $r }}" title="Pinned: {{ $p.ID }} / {{ $s.Label }}">{{ $s.Label }}</a>
+	{{- if $run }}
+	<button type="button" class="play" data-attach="{{ $run.ID }}" title="Attach to {{ $r.Name }}, running" aria-label="Attach to {{ $r.Name }}"><svg class="ic"><use href="#i-eye"/></svg></button>
+	{{- else if $.CanRun $p $r }}
+	<button type="button" class="play" data-run data-folder="{{ $p.ID }}"{{ with $s.Pin.Dir }} data-dir="{{ . }}"{{ end }} data-job="{{ $r.ID }}"{{ with $s.ArgsJSON }} data-run-args="{{ . }}"{{ end }} data-title="{{ $p.ID }} / {{ $s.Label }}" title="Run {{ $s.Label }}" aria-label="Run {{ $s.Label }}"><svg class="ic"><use href="#i-play"/></svg></button>
+	{{- end }}
+</div>
 {{- end }}
 
 {{- define "logo" }}<svg class="logo" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="3"/><path class="prompt" d="M8 10l6 6-6 6"/><path class="cursor" d="M16 23h8"/></svg>{{ end }}

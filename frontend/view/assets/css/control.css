@@ -30,9 +30,9 @@
   transform: rotate(180deg);
 }
 
-/* On a folder's page a row of named buttons, the files that run, a
-   skill's jobs or the built-ins, spans the columns under its kind; the
-   [...] of each row ends it. */
+/* On a folder's page every row holds named buttons: a source's targets
+   under its file, the files that run, a skill's jobs or the built-ins
+   under their kind; the [...] of each row ends it. */
 .table.control tr.named td {
   padding-block: 0.35rem;
 }
@@ -41,6 +41,24 @@
   & .badge {
     margin-inline-end: 0.4rem;
     font-weight: 400;
+  }
+
+  /* The label column is as wide as its longest label, a source's file
+     or a group's kind; the buttons take the rest. */
+  & td.key {
+    width: 1%;
+  }
+
+  /* A source's file keeps its case, as the Files list names it. */
+  & a.badge {
+    text-transform: none;
+    letter-spacing: 0;
+  }
+
+  & a.badge:hover {
+    border-color: var(--signal);
+    color: var(--signal);
+    text-decoration: none;
   }
 
   & td > div {

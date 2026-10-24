@@ -32,6 +32,9 @@ type JobGroup struct {
 	Jobs  []*folder.Job
 	// Empty is what a group without jobs says.
 	Empty string
+	// Source is the file of a group of a source's targets, as its folder
+	// names it.
+	Source string
 	// Targets marks a group of a source's targets, of the place or a
 	// directory inside: each place is a row of the Jobs table.
 	Targets bool
@@ -86,7 +89,7 @@ func placeRel(place *folder.Folder) string {
 func sourceGroups(f *folder.Folder, dir string) []JobGroup {
 	var groups []JobGroup
 	for _, source := range f.Sources {
-		g := JobGroup{Kind: source.Kind, Note: source.File, Dir: dir, Folder: f, Jobs: f.SourceJobs(source), Targets: true}
+		g := JobGroup{Kind: source.Kind, Note: source.File, Source: source.File, Dir: dir, Folder: f, Jobs: f.SourceJobs(source), Targets: true}
 		if source.Kind != "script" && f.Rel == "" && dir == "" {
 			g.File = source.File
 		}

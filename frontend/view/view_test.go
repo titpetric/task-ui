@@ -157,11 +157,11 @@ func TestView_RenderJobTable(t *testing.T) {
 		compose := &folder.Skill{ID: "compose", Project: "infra", Jobs: []*folder.Job{custom, up}}
 		p.Actions = &view.Actions{Place: f, Self: "infra", Shell: f.ShellJob(), Skills: []*folder.Skill{compose}}
 		p.JobGroups = []view.JobGroup{
-			{Kind: "make", Note: "Makefile · make", Folder: f, Jobs: []*folder.Job{build}, Targets: true},
+			{Kind: "make", Note: "Makefile · make", Source: "Makefile", Folder: f, Jobs: []*folder.Job{build}, Targets: true},
 			{Kind: "files", Folder: f, Jobs: []*folder.Job{script}},
 			{Kind: "@compose", Folder: f, Skill: compose, Jobs: compose.Jobs},
 			{Kind: "built-in", Folder: f, Jobs: []*folder.Job{f.ShellJob()}},
-			{Kind: "make", Dir: "tools", Folder: &folder.Folder{ID: "infra", Rel: "tools"}, Empty: "No targets in Makefile.", Targets: true},
+			{Kind: "make", Source: "Makefile", Dir: "tools", Folder: &folder.Folder{ID: "infra", Rel: "tools"}, Empty: "No targets in Makefile.", Targets: true},
 		}
 	}
 
@@ -174,22 +174,23 @@ func TestView_RenderJobTable(t *testing.T) {
 	}
 	p.JobSummaries = map[string]*view.SummaryLink{"infra/build": view.NewSummaryLink("r1", "The build passed.")}
 	out := render(p)
-	// The dashboard's control component: a row per place with targets,
-	// a column per job, named rows for the files, the skill and the
-	// built-ins, each with its [...].
+	// The dashboard's control component as named rows: a source's
+	// targets under its file, linked to where they run, then the files,
+	// the skill and the built-ins, each with its [...]; no columns, no
+	// other.
 	assert.Contains(t, out, `<table class="table control col-hover">`)
-	assert.Contains(t, out, `<th class="col"><span>build</span></th>`)
-	assert.Contains(t, out, `<a href="/f/_/infra">./</a>`)
-	assert.Contains(t, out, `<a href="/f/_/infra/tools">tools/</a>`)
-	assert.Contains(t, out, "No targets in Makefile.")
-	assert.Equal(t, 3, strings.Count(out, `<tr class="named" data-span>`))
+	assert.NotContains(t, out, `<th class="col">`)
+	assert.Contains(t, out, `<a class="badge" href="/f/_/infra">Makefile</a>`)
+	assert.Contains(t, out, `<a class="badge" href="/f/_/infra/tools">tools/Makefile</a>`)
+	assert.Contains(t, out, `<span class="faint">No targets in Makefile.</span>`)
+	assert.Equal(t, 5, strings.Count(out, `<tr class="named" data-span>`))
 	for _, kind := range []string{"files", "@compose", "built-in"} {
 		assert.Contains(t, out, `<span class="badge">`+kind+`</span>`, kind)
 	}
 	for _, id := range []string{"build", "./deploy.sh", "@compose:custom", "@compose:up", "@shell"} {
 		assert.Contains(t, out, `data-job="`+id+`"`, id)
 	}
-	assert.Contains(t, out, `<button type="button" class="cc ok" data-run data-folder="infra" data-job="build" data-title="infra / build" title="Run infra / build: Build the images">`)
+	assert.Contains(t, out, `<button type="button" class="cc named ok" data-run data-folder="infra" data-job="build" data-title="infra / build" title="Run infra / build: Build the images">`)
 	assert.Contains(t, out, `class="cc named bad" data-run data-folder="infra" data-job="./deploy.sh"`)
 	assert.Contains(t, out, `class="cc named never" data-run data-folder="infra" data-job="@compose:custom"`)
 	assert.Contains(t, out, `data-path="deploy.sh"`)
@@ -211,7 +212,7 @@ func TestView_RenderJobTable(t *testing.T) {
 	signIn(viewer, &model.User{Name: "guest", Role: model.RoleViewer}, nil)
 	out = render(viewer)
 	assert.NotContains(t, out, "data-run ")
-	assert.Contains(t, out, `<a class="cc idle never" href="/f/_/infra/build" title="infra / build: Build the images: no permission to run it">`)
+	assert.Contains(t, out, `<a class="cc named idle never" href="/f/_/infra/build" title="infra / build: Build the images: no permission to run it">`)
 
 	running := admin(t)
 	table(running)
@@ -219,7 +220,7 @@ func TestView_RenderJobTable(t *testing.T) {
 	run := view.Run{Run: model.Run{ID: "r2", Folder: "infra", Job: "build", State: model.StateRunning, StartedAt: &now}}
 	running.Running = map[string]view.Run{"infra/build": run}
 	out = render(running)
-	assert.Contains(t, out, `<a class="cc running" href="/runs/r2" data-attach="r2" title="Attach to infra / build, running">`)
+	assert.Contains(t, out, `<a class="cc named running" href="/runs/r2" data-attach="r2" title="Attach to infra / build, running">`)
 	assert.Contains(t, out, `data-kill="r2"`)
 }
 

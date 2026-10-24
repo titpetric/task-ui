@@ -200,3 +200,11 @@ func TestFolder_Home(t *testing.T) {
 	assert.Contains(t, body, `<a href="/f/malta/workspace/.claude">.claude</a>`)
 	assert.Contains(t, body, `title="task-ui lists .env but does not open it"`)
 }
+
+// Pin names what the page is a folder of.
+func TestFolderMenu_Kind(t *testing.T) {
+	t.Parallel()
+	assert.Equal(t, "workspace", (&view.FolderMenu{ID: "malta", Workspace: true}).Kind())
+	assert.Equal(t, "project", (&view.FolderMenu{ID: "malta/api", Project: true}).Kind())
+	assert.Equal(t, "folder", (&view.FolderMenu{ID: "malta/api/web"}).Kind())
+}

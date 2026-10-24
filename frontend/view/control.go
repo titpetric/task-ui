@@ -14,9 +14,8 @@ const ControlRepeats = 2
 // Control is the dashboard's control centre: a row per folder with
 // jobs, a column per job name that repeats enough. A name counts across folders and within one, and
 // the column of a job follows its name, so a Makefile's build and a pipeline's build share the
-// column, and a folder's two builds share its cell. A folder's page lays its Jobs out the same
-// way, a row for the folder and one per directory inside with targets, then a row of named
-// buttons for its files, each skill and the built-ins.
+// column, and a folder's two builds share its cell. A folder's page lays its Jobs out
+// as named rows: one per job source, its files, each skill and the built-ins.
 type Control struct {
 	// Columns are the job names with a column, default first, then the
 	// most common, then by name.
@@ -25,14 +24,15 @@ type Control struct {
 }
 
 // ControlRow is a folder in the control centre, or on a folder's page
-// the folder, a directory inside it, or a group of named buttons.
+// a group of named buttons: a job source's targets, the files, a skill's
+// jobs or the built-ins.
 type ControlRow struct {
 	Folder *folder.Folder
-	// Label names the row where the folder's ID does not: "./" for the
-	// folder of the page, the directory, the group's kind.
+	// Label names the row where the folder's ID does not: the source's
+	// file, below its directory for one inside, or the group's kind.
 	Label string
-	// Title says on a hover what the row holds: its sources, the
-	// group's note.
+	// Title says on a hover what the row holds: the source's kind and
+	// command, the group's note.
 	Title string
 	// Cells hold the folder's jobs of each column, none where it has
 	// none.
@@ -40,9 +40,12 @@ type ControlRow struct {
 	// Extra are the folder's jobs whose names have no column, in their
 	// order; a Named row's jobs, every one.
 	Extra []*folder.Job
-	// Named rows hold their jobs as named buttons across the columns:
-	// the files that run, a skill's jobs, the built-ins.
+	// Named rows hold their jobs as named buttons beside their label:
+	// every row of a folder's page.
 	Named bool
+	// Place marks a named row of a source's targets, whose label links to
+	// the place they run in.
+	Place bool
 	// Empty is what a row without jobs says, as a source atkins cannot
 	// read.
 	Empty string
@@ -68,42 +71,20 @@ func NewControl(folders []*folder.Folder, min int) Control {
 	return layout(rows, min)
 }
 
-// NewJobControl lays a page's Jobs out, a row per place of the groups' targets then a Named row per group; with one place every name has a column.
+// NewJobControl lays a page's Jobs out as named rows, one per group, a source's under its file.
 func NewJobControl(groups []JobGroup) Control {
-	var places, named []ControlRow
-	index := map[*folder.Folder]int{}
+	c := Control{Columns: []string{}}
 	for _, g := range groups {
-		if !g.Targets {
-			named = append(named, ControlRow{Folder: g.Folder, Label: g.Kind, Title: g.Note, Extra: g.Jobs, Named: true})
-			continue
-		}
-		i, ok := index[g.Folder]
-		if !ok {
-			label := "./"
+		row := ControlRow{Folder: g.Folder, Label: g.Kind, Title: g.Note, Extra: g.Jobs, Named: true}
+		if g.Targets {
+			row.Label, row.Title, row.Place, row.Empty = g.Source, g.Kind+" "+g.Note, true, g.Empty
 			if g.Dir != "" {
-				label = g.Dir + "/"
+				row.Label = g.Dir + "/" + g.Source
 			}
-			places = append(places, ControlRow{Folder: g.Folder, Label: label, Title: g.Kind + " " + g.Note})
-			i = len(places) - 1
-			index[g.Folder] = i
-		} else {
-			places[i].Title += "\n" + g.Kind + " " + g.Note
 		}
-		places[i].Extra = append(places[i].Extra, g.Jobs...)
-		if len(places[i].Extra) == 0 {
-			places[i].Empty = g.Empty
-		}
+		c.Rows = append(c.Rows, row)
 	}
-	min, targets := ControlRepeats, 0
-	for _, row := range places {
-		if len(row.Extra) > 0 {
-			targets++
-		}
-	}
-	if targets < 2 {
-		min = 1
-	}
-	return layout(append(places, named...), min)
+	return c
 }
 
 // layout returns a column for each name the rows' jobs repeat min times, and moves the jobs of a column from Extra to their cell.

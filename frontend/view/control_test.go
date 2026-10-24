@@ -100,44 +100,36 @@ func TestControlRow(t *testing.T) {
 	assert.Equal(t, []string{"serve"}, names(row.Extra))
 }
 
-// A folder's page lays its Jobs out as the dashboard does: a row for the
-// folder and one per directory inside with targets, a column per name
-// they share, then a named row per other group. With one row of targets
-// every name gets a column.
+// A folder's page lays its Jobs out as named rows, no columns and no
+// other: a row per job source under its file, below its directory for
+// one inside, then a row per other group under its kind.
 func TestNewJobControl(t *testing.T) {
 	t.Parallel()
 	place := jobs("malta/dockerfiles", "default", "build", "push")
 	task := jobs("malta/dockerfiles", "default", "build", "push", "deploy")
 	task.Rel = "task"
-	blog := jobs("malta/dockerfiles", "default")
-	blog.Rel = "blog"
 	broken := &folder.Folder{ID: "malta/dockerfiles", Rel: "broken"}
 	git := jobs("malta/dockerfiles", "@git:pull", "@git:status")
 	groups := []view.JobGroup{
-		{Kind: "atkins", Note: "atkins.yml", Folder: place, Jobs: place.Jobs, Targets: true},
+		{Kind: "atkins", Note: "atkins.yml · atkins -f atkins.yml", Source: "atkins.yml", Folder: place, Jobs: place.Jobs, Targets: true},
 		{Kind: "@git", Note: "Git", Folder: place, Jobs: git.Jobs},
-		{Kind: "atkins", Note: "atkins.yml", Dir: "task", Folder: task, Jobs: task.Jobs, Targets: true},
-		{Kind: "atkins", Note: "atkins.yml", Dir: "blog", Folder: blog, Jobs: blog.Jobs, Targets: true},
-		{Kind: "make", Note: "Makefile", Dir: "broken", Folder: broken, Targets: true, Empty: "No targets in Makefile."},
+		{Kind: "atkins", Note: "atkins.yml", Source: "atkins.yml", Dir: "task", Folder: task, Jobs: task.Jobs, Targets: true},
+		{Kind: "make", Note: "Makefile", Source: "Makefile", Dir: "broken", Folder: broken, Targets: true, Empty: "No targets in Makefile."},
 	}
 	c := view.NewJobControl(groups)
-	assert.Equal(t, []string{"default", "build", "push"}, c.Columns)
-	assert.Len(t, c.Rows, 5)
+	assert.Len(t, c.Columns, 0)
 	labels := []string{}
 	for _, row := range c.Rows {
+		assert.True(t, row.Named)
 		labels = append(labels, row.Label)
 	}
-	assert.Equal(t, []string{"./", "task/", "blog/", "broken/", "@git"}, labels)
-	assert.Equal(t, []string{"deploy"}, names(c.Rows[1].Extra))
-	assert.Len(t, c.Rows[2].Cells[1], 0) // blog has no build
+	assert.Equal(t, []string{"atkins.yml", "@git", "task/atkins.yml", "broken/Makefile"}, labels)
+	assert.True(t, c.Rows[0].Place)
+	assert.False(t, c.Rows[1].Place)
+	assert.Equal(t, "atkins atkins.yml · atkins -f atkins.yml", c.Rows[0].Title)
+	assert.Equal(t, []string{"default", "build", "push", "deploy"}, names(c.Rows[2].Jobs()))
+	assert.Equal(t, []string{"@git:pull", "@git:status"}, names(c.Rows[1].Extra))
 	assert.Equal(t, "No targets in Makefile.", c.Rows[3].Empty)
-	assert.True(t, c.Rows[4].Named)
-	assert.Equal(t, []string{"@git:pull", "@git:status"}, names(c.Rows[4].Extra))
-	assert.Equal(t, []string{"default", "build", "push", "deploy"}, names(c.Rows[1].Jobs()))
-
-	one := view.NewJobControl(groups[:2])
-	assert.Equal(t, []string{"default", "build", "push"}, one.Columns)
-	assert.Len(t, one.Rows[0].Extra, 0)
 }
 
 // The dashboard draws the same control component: a row per folder, a

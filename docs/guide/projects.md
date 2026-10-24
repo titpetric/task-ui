@@ -12,6 +12,29 @@ that runs has an eye instead, to watch it. A project folds on its
 chevron, and this browser remembers the folded ones. The project of the
 page you are on stays open.
 
+## What the sidebar lists
+
+With nothing pinned, the sidebar lists every folder you see with
+something to run, and every directory right inside a named workspace,
+the checkouts side by side there, with jobs or without. A project set
+not to show there (**Show in sidebar** off in its settings), a
+workspace's home project and the folders inside them stay out.
+
+**Pin** adds to that, for you alone: a workspace, a project, a folder
+or a directory inside one, or a job. Pin a folder from the `[...]` of
+its page's head, **Pin workspace**, **Pin project** or **Pin folder**,
+and a job from the `[...]` of its row in **Jobs**, **Pin build**. The
+sidebar draws itself again at once, the pin in its place: a deep folder
+under its workspace and project, in the sidebar's order, its path below
+the project; a pinned job as a run item, the play button and its name,
+under its folder. A folder there for its pinned jobs alone lists those.
+A job pinned with a directory or args runs with them. The same item
+reads **Unpin** once pinned; what the sidebar lists only for the pin
+leaves it. A home project stays out, pinned or not. The API keeps the
+pins under `/api/pins` (see [API](../api.md)).
+
+![The sidebar with two pins of the admin: acme/api's docs directory under the project, and its ./serve file as a run item](../assets/sidebar-pin-dark.png)
+
 A [workspace](workspaces.md) adds a level above its projects: a label
 row with the workspace's name, and its projects folded under it. Their
 links carry the workspace, as `/f/malta/dockerfiles`. The projects at
@@ -162,34 +185,33 @@ Open a folder from the sidebar:
     **Projects** with a notice. The project's configure page has the
     same item in its `[...]` menu.
 
-  A folder inside a project, and a user with none of the rules, gets no
-  menu.
+  - **Pin** or **Unpin**, the workspace, the project or the folder, for
+    anyone signed in (see [What the sidebar lists](#what-the-sidebar-lists)).
+    A folder inside a project, and a directory's page, has this item
+    alone.
 - **The git line**: under the title, on a folder's page and on the
   page of a directory inside it (see [The git line](#the-git-line)).
-- **Jobs**: everything that runs there in the [control
-  centre](dashboard.md#control-centre) of the dashboard, laid out for
-  the one folder. The first row, `./`, holds the targets of the
-  folder's job sources; a row follows for each directory and each
-  folder inside with targets of its own, such as `task/`, linked to its
-  page. A job name the rows share gets a column, `default` first, so
-  `build` and `push` of every image of `malta/dockerfiles` line up;
-  with only one row, every name does. The names that do not repeat sit
-  behind **Other**. A round button runs the job, coloured by its last
-  run: green when it succeeded, red when it failed or someone stopped
-  or killed it, grey when it never ran. While the job runs the button
-  is an eye that attaches to it; a user who may not run it gets a `#!`
-  linked to the job's page. Its title names the job and what it does.
-  A row of named buttons follows for the files that run, `./<path>`,
-  each atkins skill that applies, such as `@git` with `@git:pull`, and
-  the built-ins your permissions allow, `@shell` and `@claude`, which
-  show a terminal in place of the play. Each row ends in a `[...]`
-  with, per job, **Run and summarize**, which runs the job and has
-  Claude summarise the run on its page when it ends (see
+- **Jobs**: everything that runs there, a row per group, each with its
+  label and a named button per job. A job source's row carries its
+  file, `atkins.yml`, `Taskfile.yml` or `Makefile`, linked to the place
+  it runs in; a directory or a folder inside with targets of its own
+  gets a row of its own, as `task/atkins.yml`. Rows follow for the files
+  that run, `./<path>`, each atkins skill that applies, such as `@git`
+  with `@git:pull`, and the built-ins your permissions allow, `@shell`
+  and `@claude`. A button carries the play and the job's name, coloured
+  by its last run: green when it succeeded, red when it failed or
+  someone stopped or killed it, grey when it never ran. While the job
+  runs the button is an eye that attaches to it; a job that takes a
+  terminal shows one in place of the play; a user who may not run it
+  gets a `#!` linked to the job's page. Its title names the job and what
+  it does; a job that takes args opens a field for them first. Each row
+  ends in a `[...]` with, per job, **Run and summarize**, which runs the
+  job and has Claude summarise the run on its page when it ends (see
   [Runs](runs.md#run-and-summarize)), **View the last run**, the
-  **Summary** of that run once Claude wrote one, **History**, and, on a
-  job with hours, **Run force**; any other job forces from its run's
-  window. **Kill** ends a run in progress. The buttons follow the runs
-  as they start and end, with no reload.
+  **Summary** of that run once Claude wrote one, **History**, **Pin**,
+  and, on a job with hours, **Run force**; any other job forces from its
+  run's window. **Kill** ends a run in progress. The buttons follow the
+  runs as they start and end, with no reload.
 - **Prompt**: the box that asks Claude Code there, below the jobs (see
   [Prompt](#prompt)).
 - **Files**: what the folder holds, dot entries too, the directories

@@ -7,6 +7,9 @@ import (
 	"html/template"
 	"log/slog"
 	"net/http"
+	"os"
+	"path"
+	"path/filepath"
 	"sort"
 	"strings"
 	"time"
@@ -54,11 +57,11 @@ func (h *Handlers) page(r *http.Request, title string) *view.Page {
 			p.Folders = append(p.Folders, f)
 		}
 	}
-	p.SideFolders = h.sideFolders(r.Context(), p.Folders)
 	p.Workspaces = map[string]int{}
 	for i, ws := range h.workspaceFolders(r.Context()) {
 		p.Workspaces[ws] = i
 	}
+	h.sidebar(r.Context(), p)
 	p.Roles = h.roles(r.Context(), user)
 	sees := h.runSeer(r)
 	p.Running = h.running(sees)
@@ -142,10 +145,9 @@ func (h *Handlers) seesFlowRun(ctx context.Context, user *model.User, runID stri
 	return true
 }
 
-// sideFolders returns the folders the sidebar lists: every folder but
-// the projects set not to show there, and the folders inside those.
-func (h *Handlers) sideFolders(ctx context.Context, folders []*folder.Folder) []*folder.Folder {
-	hidden := map[string]bool{}
+// sidebar fills the page's folder tree: the folders seen and the workspaces' directories, less hidden and home projects, then the user's pins.
+func (h *Handlers) sidebar(ctx context.Context, p *view.Page) {
+	hidden, homes := map[string]bool{}, map[string]bool{}
 	if h.opts.Projects != nil {
 		projects, _ := h.opts.Projects.List(ctx)
 		for _, project := range projects {
@@ -154,31 +156,79 @@ func (h *Handlers) sideFolders(ctx context.Context, folders []*folder.Folder) []
 			}
 		}
 	}
-	if len(hidden) == 0 {
-		return folders
-	}
-	side := make([]*folder.Folder, 0, len(folders))
-	for _, f := range folders {
-		if !hiddenUnder(hidden, f.ID) {
-			side = append(side, f)
+	for ws := range p.Workspaces {
+		if home, _ := h.opts.Workspaces.Home(ctx, ws); home != "" {
+			hidden[home], homes[home] = true, true
 		}
 	}
-	return side
+	side := view.SideDefaults(p.Folders, h.workspaceDirs(p.Workspaces), hidden, p.User.CanSee)
+	p.Pinning = h.opts.Pins != nil && p.User != nil
+	var pins []view.SidePin
+	if p.Pinning {
+		p.Pins, _ = h.opts.Pins.List(ctx, p.User.Name)
+		for _, pin := range p.Pins {
+			if side, ok := sidePin(p, pin); ok {
+				pins = append(pins, side)
+			}
+		}
+	}
+	tree := view.NewSidebar(side, pins, p.Workspaces, homes)
+	p.SideFolders, p.SidePins = tree.Folders, tree.Pins
 }
 
-// hiddenUnder reports whether the sidebar hides a folder or one above it:
-// hidden project hides its folders, in a workspace too.
-func hiddenUnder(hidden map[string]bool, id string) bool {
-	for {
-		if hidden[id] {
-			return true
+// workspaceDirs returns the directories right inside each named workspace by ID, none without a root.
+func (h *Handlers) workspaceDirs(workspaces map[string]int) []string {
+	var ids []string
+	for ws := range workspaces {
+		if h.opts.Root == "" {
+			return nil
 		}
-		i := strings.LastIndex(id, "/")
-		if i < 0 {
-			return false
+		entries, _ := os.ReadDir(filepath.Join(h.opts.Root, filepath.FromSlash(ws)))
+		for _, entry := range entries {
+			if entry.IsDir() && !strings.HasPrefix(entry.Name(), ".") {
+				ids = append(ids, ws+"/"+entry.Name())
+			}
 		}
-		id = id[:i]
 	}
+	return ids
+}
+
+// sidePin resolves a pin among the folders the page's user sees: a job
+// of a folder, a folder, or a directory inside one; false for one that
+// is not there or not seen.
+func sidePin(p *view.Page, pin model.Pin) (view.SidePin, bool) {
+	f, rest := folder.Resolve(seen(p.Folders), pin.Folder)
+	switch {
+	case f == nil:
+		return view.SidePin{}, false
+	case pin.Job != "":
+		sub := f.Sub(pin.Dir)
+		if rest != "" || sub == nil || sub.Job(pin.Job) == nil {
+			return view.SidePin{}, false
+		}
+		return view.SidePin{Pin: pin, Folder: f, Job: sub.Job(pin.Job)}, true
+	case rest != "":
+		dir, ok := f.Path(rest)
+		if info, err := os.Stat(dir); !ok || err != nil || !info.IsDir() {
+			return view.SidePin{}, false
+		}
+		f = &folder.Folder{ID: pin.Folder, Title: path.Base(pin.Folder)}
+	}
+	return view.SidePin{Pin: pin, Folder: f}, true
+}
+
+// seen is the folders a user sees as a catalogue, for folder.Resolve.
+type seen []*folder.Folder
+
+func (s seen) List() []*folder.Folder { return s }
+
+func (s seen) Find(id string) *folder.Folder {
+	for _, f := range s {
+		if f.ID == id {
+			return f
+		}
+	}
+	return nil
 }
 
 // running returns the live runs the user sees, by job key.
