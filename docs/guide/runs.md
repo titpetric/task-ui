@@ -246,8 +246,6 @@ attaches to it.
   secret's value and not its name: the secret's read log names the run
   (see [Settings](settings.md#secrets) and [Security](../security.md#secrets)).
 - **Artifacts**: the files the run left (see [Artifacts](artifacts.md)).
-- **Recording** downloads the run as an asciicast file, for `asciinema
-  play`.
 - **|>** replays the recording in the run window as the run printed it,
   idle gaps and all, under a blinking `( * recording )` beside the
   title, with **Pause** and **Restart**. It reads the recording and
@@ -258,7 +256,7 @@ attaches to it.
 Once its recording expires under the
 [Data retention](settings.md#data-retention) settings, a run keeps its
 page, its details and its artifacts: **Output** says the recording
-expired, **Recording** and **|>** go, its frame says so, and a prompt
+expired, **|>** goes, its frame says so, and a prompt
 about the run reads that the run has no output any more.
 
 While the run is in progress the page shows its terminal as it looks now,

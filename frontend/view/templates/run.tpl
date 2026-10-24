@@ -12,7 +12,6 @@
 		<button type="button" class="btn btn-danger" data-kill="{{ $run.ID }}">Kill</button>
 		{{- end }}
 		{{- with .Report }}<a class="btn" href="{{ .Href }}">Report</a>{{ end }}
-		{{- if and $run.CastPath (not $run.Expired) }}<a class="btn" href="/api/runs/{{ $run.ID }}/cast" download="{{ $run.ID }}.cast">Recording</a>{{ end }}
 		{{- if and $run.CastPath (ended $run.State) (not $run.Expired) }}<button type="button" class="btn" data-replay="{{ $run.ID }}" data-replay-title="{{ $run.Name }}" data-replay-who="{{ $run.UserName }}" title="Replay the recording" aria-label="Replay the recording">|&gt;</button>{{ end }}
 	</div>
 </div>

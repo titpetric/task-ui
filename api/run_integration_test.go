@@ -198,6 +198,7 @@ func TestRun_Cast(t *testing.T) {
 		return cast.Status == http.StatusOK && strings.Contains(string(cast.Raw), "planned")
 	}, 5*time.Second, 20*time.Millisecond)
 	assert.Contains(t, string(cast.Raw), `"version":2`)
+	assert.Equal(t, "inline", cast.Headers.Get("Content-Disposition"))
 
 	bare := &model.Run{Folder: "infra", Job: "plan", State: model.StateOK}
 	assert.NoError(t, f.opts.Runs.Create(context.Background(), bare))

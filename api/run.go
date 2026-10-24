@@ -373,7 +373,8 @@ func (h *Handlers) frameText(w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write([]byte(frame.Text()))
 }
 
-// cast serves the recording of a run.
+// cast serves the recording of a run inline, to the page's replay and
+// output, which read it; no page links it as a file to download.
 func (h *Handlers) cast(w http.ResponseWriter, r *http.Request) {
 	run, err := h.runOf(r)
 	if err != nil {
@@ -389,6 +390,7 @@ func (h *Handlers) cast(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Content-Type", "application/x-asciicast")
+	w.Header().Set("Content-Disposition", "inline")
 	http.ServeFile(w, r, filepath.Join(h.opts.Recordings.Root, filepath.FromSlash(run.CastPath)))
 }
 
