@@ -699,3 +699,11 @@
 .wf-steps-title {
   margin-bottom: 0.75rem;
 }
+
+/* On a phone a run of commands without input leaves its thread's line
+   out of the card. */
+@media (max-width: 860px) {
+  .table.cards td.wf-excerpt:not([data-label]) {
+    display: none;
+  }
+}
