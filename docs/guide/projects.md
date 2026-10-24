@@ -63,6 +63,9 @@ What moves and what stays:
 - the project row moves, with its title, allow lists and hours;
 - the users whose folder list names the project, or a folder inside it,
   get the new ID in its place, so access follows the project;
+- the pins of every user that name the project, a folder inside it or a
+  job of either get the new ID too, so the sidebar keeps them; `pins`
+  in the API's answer counts them;
 - the runs stay under the old ID: their pages, recordings and artifacts
   still open from the Runs page;
 - schedules, secrets, env files and workflow steps that name the old ID

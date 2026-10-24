@@ -63,6 +63,19 @@ func (m *memPins) Delete(_ context.Context, user, id string) error {
 	return storage.ErrNotFound
 }
 
+func (m *memPins) MoveFolder(_ context.Context, from, to string) (int, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	moved := 0
+	for i := range m.pins {
+		if folder, ok := model.Moved(m.pins[i].Folder, from, to); ok {
+			m.pins[i].Folder = folder
+			moved++
+		}
+	}
+	return moved, nil
+}
+
 // pinCall sends a request to the pins routes as a user.
 func pinCall(t *testing.T, h http.Handler, user *model.User, method, path, body string) (int, map[string]any) {
 	t.Helper()
@@ -153,9 +166,26 @@ func TestPinRequest(t *testing.T) {
 	assert.Equal(t, api.RunArgs{"-v"}, req.Args)
 }
 
-// A store of pins is what the handlers take.
+// A store of pins is what the handlers take; a project that moves
+// takes the pins of the folders inside it along, and its answer counts
+// them.
 func TestPinStore(t *testing.T) {
 	t.Parallel()
+	ctx := context.Background()
 	var store api.PinStore = &memPins{}
-	assert.NoError(t, store.Add(context.Background(), &model.Pin{UserName: "claude", Folder: "malta"}))
+	assert.NoError(t, store.Add(ctx, &model.Pin{UserName: "claude", Folder: "malta"}))
+	assert.NoError(t, store.Add(ctx, &model.Pin{UserName: "claude", Folder: "malta/apps", Job: "build"}))
+	assert.NoError(t, store.Add(ctx, &model.Pin{UserName: "black", Folder: "maltese"}))
+	moved, err := store.MoveFolder(ctx, "malta", "acme/malta")
+	assert.NoError(t, err)
+	assert.Equal(t, 2, moved)
+	pins, err := store.List(ctx, "claude")
+	assert.NoError(t, err)
+	assert.Equal(t, "acme/malta", pins[0].Folder)
+	assert.Equal(t, "acme/malta/apps", pins[1].Folder)
+
+	data, err := json.Marshal(api.ProjectMoved{Project: &model.Project{Folder: "acme/malta"}, Pins: moved, Left: []model.FolderRef{}})
+	assert.NoError(t, err)
+	assert.Contains(t, string(data), `"pins":2`)
+	assert.Contains(t, string(data), `"left":[]`)
 }
