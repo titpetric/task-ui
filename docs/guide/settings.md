@@ -299,6 +299,10 @@ workspace has an **Add secret** of its own that starts on its shared
 scope. In the API, the scope `all`, or none, is `workspace:_`.
 `/settings/secrets?workspace=malta` shows one workspace alone; the keys
 page links each workspace's count of secrets there.
+`/settings/workspaces/malta/secrets`, **Secrets** in the **⋯** menu of
+the workspace's page, lists one workspace's secrets and edits them in
+place, Add secret and Replace the value in dialogs (see
+[Workspaces](workspaces.md#secrets)).
 
 ![Secrets, grouped by workspace](../assets/secrets-dark.png)
 
@@ -529,7 +533,10 @@ configure page: its title, description and **Recursive**, the toggle a
 project has, its **Home project**, with **Change**, **Add** or
 **Replace**, and **Remove**, its **Projects**, in the table of the
 Projects page, and its **Keys**, the SSH keys of its runs,
-which the [Keys](#keys) page also lists. At the top right of that page,
+which the [Keys](#keys) page also lists.
+`/settings/workspaces/<folder>/keys` and `/secrets`, **SSH keys** and
+**Secrets** in the **⋯** menu of the workspace's page, edit its keys
+and its secrets in place. At the top right of that page,
 **Add project** clones a project into the workspace, and **Export**
 downloads the workspace, encrypted to a passphrase, which **Import** at
 the top right of the Workspaces page reads on another instance.

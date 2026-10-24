@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/frontend/view"
@@ -21,6 +22,21 @@ func TestFolderMenu_Settings(t *testing.T) {
 	assert.Equal(t, "/settings/projects/malta/api", (&view.FolderMenu{ID: "malta/api", Project: true}).Settings())
 	assert.Equal(t, "", (&view.FolderMenu{ID: "apps/web"}).Settings())
 	assert.Equal(t, "", (*view.FolderMenu)(nil).Settings())
+}
+
+// A workspace's menu links its SSH keys and its secrets; a project's
+// has neither.
+func TestFolderMenu_ScopedPages(t *testing.T) {
+	t.Parallel()
+
+	ws := &view.FolderMenu{ID: "malta", Workspace: true}
+	assert.Equal(t, "/settings/workspaces/malta/keys", ws.KeysPage())
+	assert.Equal(t, "/settings/workspaces/malta/secrets", ws.SecretsPage())
+	assert.Equal(t, "/settings/workspaces/_/keys", (&view.FolderMenu{ID: "_", Workspace: true}).KeysPage())
+	project := &view.FolderMenu{ID: "malta/api", Project: true}
+	assert.Equal(t, "", project.KeysPage())
+	assert.Equal(t, "", project.SecretsPage())
+	assert.Equal(t, "", (*view.FolderMenu)(nil).SecretsPage())
 }
 
 // Remove checkout names the folder and where to clone it again from.
@@ -106,7 +122,23 @@ func TestFolderMenu_Workspace(t *testing.T) {
 	head := pageHead(t, buf.String())
 	assert.Contains(t, head, `href="/settings/workspaces/malta"`)
 	assert.Contains(t, head, "Workspace settings")
+	assert.Contains(t, head, `href="/settings/workspaces/malta/keys"`)
+	assert.Contains(t, head, `href="/settings/workspaces/malta/secrets"`)
 	assert.NotContains(t, head, "data-delete")
+
+	signIn(p, &model.User{Name: "ops", Role: model.RoleRunner}, permission.Policy{"secret/view": permission.Allow})
+	buf.Reset()
+	assert.NoError(t, v.Render(&buf, "folder", p))
+	head = pageHead(t, buf.String())
+	assert.Contains(t, head, `href="/settings/workspaces/malta/secrets"`, "secret/view links the secrets")
+	assert.NotContains(t, head, `href="/settings/workspaces/malta/keys"`, "the keys take workspace/view")
+
+	signIn(p, &model.User{Name: "ops", Role: model.RoleRunner}, permission.Policy{"workspace/view": permission.Allow})
+	buf.Reset()
+	assert.NoError(t, v.Render(&buf, "folder", p))
+	head = pageHead(t, buf.String())
+	assert.Contains(t, head, `href="/settings/workspaces/malta/keys"`)
+	assert.NotContains(t, head, `href="/settings/workspaces/malta/secrets"`)
 
 	signIn(p, &model.User{Name: "ops", Role: model.RoleRunner}, permission.Policy{"run": permission.Allow})
 	buf.Reset()
@@ -142,4 +174,29 @@ func TestDeleteWorkspaceConfirm(t *testing.T) {
 
 	assert.Equal(t, "Delete the workspace acme with its keys and secrets, and the projects inside it with their checkouts: acme/api, acme/web? Its directory goes once nothing else is in it.", view.DeleteWorkspaceConfirm("acme", []string{"acme/api", "acme/web"}))
 	assert.Equal(t, "Delete the workspace labs with its keys and secrets? Its directory goes once nothing else is in it.", view.DeleteWorkspaceConfirm("labs", nil))
+}
+
+// A workspace's page lists its home project's files under ~/, each
+// opening in the preview window, and has no Home without one.
+func TestFolder_Home(t *testing.T) {
+	t.Parallel()
+
+	p := admin(t)
+	p.Folder = &folder.Folder{ID: "malta", Title: "Malta"}
+	p.FolderMenu = &view.FolderMenu{ID: "malta", Workspace: true}
+	body := render(t, "folder", p)
+	assert.NotContains(t, body, `id="home"`)
+
+	p.HomeFolder = "malta/workspace"
+	p.HomeTree = []folder.Item{
+		{Name: ".claude", Dir: true, Href: "/f/malta/workspace/.claude", Path: "~/.claude"},
+		{Name: "CLAUDE.md", Size: 12, ModTime: time.Now(), Href: "/files/malta/workspace/CLAUDE.md", Path: "~/CLAUDE.md"},
+		{Name: ".env", Sealed: true},
+	}
+	body = render(t, "folder", p)
+	assert.Contains(t, body, `<section class="block folder-home" id="home">`)
+	assert.Contains(t, body, "malta/workspace/, the $HOME of every run in the workspace")
+	assert.Contains(t, body, `<a href="/files/malta/workspace/CLAUDE.md" data-file="~/CLAUDE.md">CLAUDE.md</a>`)
+	assert.Contains(t, body, `<a href="/f/malta/workspace/.claude">.claude</a>`)
+	assert.Contains(t, body, `title="task-ui lists .env but does not open it"`)
 }

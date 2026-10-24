@@ -8,12 +8,6 @@
 	</div>
 </div>
 
-<form class="form" data-api="/api/workspaces/{{ $ws.Folder }}/keys/{{ $k.Name }}" data-method="PUT" data-next="/settings/workspaces/{{ $ws.Folder }}?notice=Links+saved">
-	{{- template "keygrants" (list (index $.KeyPolicies $k.Name) (index $.KeyUsers $k.Name) $.Users) }}
-	<div class="form-foot">
-		<a class="btn" href="/settings/workspaces/{{ $ws.Folder }}">Cancel</a>
-		<button class="btn btn-primary" type="submit">Save</button>
-	</div>
-</form>
+{{ template "wskeylinks" (list $ $k (print "/settings/workspaces/" $ws.Folder) false) }}
 {{- end }}
 {{ end }}

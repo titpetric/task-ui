@@ -52,6 +52,19 @@ func (h *Handlers) workspaceKeyPage(r *http.Request, workspace *model.Workspace,
 	return p
 }
 
+// workspaceKeyList lists a workspace's SSH keys, with Generate key,
+// Upload key and Edit links in dialogs on the page.
+func (h *Handlers) workspaceKeyList(w http.ResponseWriter, r *http.Request) {
+	if !h.require(w, r, "workspace/view") {
+		return
+	}
+	workspace := h.keyWorkspace(w, r)
+	if workspace == nil {
+		return
+	}
+	h.render(w, http.StatusOK, "workspace_keys", h.workspaceKeyPage(r, workspace, "SSH keys of "+workspace.Folder, "SSH keys"))
+}
+
 // workspaceKeyGenerate shows the form that generates an SSH key for a
 // workspace.
 func (h *Handlers) workspaceKeyGenerate(w http.ResponseWriter, r *http.Request) {

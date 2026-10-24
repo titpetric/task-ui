@@ -43,6 +43,43 @@ func (h *Handlers) secrets(w http.ResponseWriter, r *http.Request) {
 	h.render(w, http.StatusOK, "secrets", p)
 }
 
+// workspaceSecrets lists the secrets of one workspace, values withheld,
+// with Add secret and Replace the value in dialogs on the page. A
+// workspace unknown is not found.
+func (h *Handlers) workspaceSecrets(w http.ResponseWriter, r *http.Request) {
+	if !h.require(w, r, "secret/view") {
+		return
+	}
+	ctx, name := r.Context(), param(r, "folder")
+	var workspace *model.Workspace
+	if h.opts.Workspaces != nil {
+		workspace, _ = h.opts.Workspaces.GetByFolder(ctx, name)
+	}
+	if workspace == nil {
+		h.missing(w, r, "No workspace named "+name+".")
+		return
+	}
+	p := h.page(r, "Secrets of "+workspace.Folder)
+	p.Crumbs = view.Crumbs("Settings", "/settings", "Workspaces", "/settings/workspaces", workspace.Folder, "/settings/workspaces/"+workspace.Folder, "Secrets")
+	p.Step = view.StepSecrets
+	p.Workspace = workspace
+	secrets, err := h.opts.Secrets.List(ctx)
+	if err != nil {
+		p.Error = err.Error()
+	}
+	for _, group := range h.secretGroups(ctx, userSecrets(secrets), p.Folders) {
+		if group.Workspace == workspace.Folder {
+			p.SecretGroups = []view.SecretGroup{group}
+		}
+	}
+	p.Secret = &model.Secret{Scope: storage.SharedScope(workspace.Folder)}
+	if h.opts.SecretReads != nil {
+		p.SecretReadCounts, _ = h.opts.SecretReads.Counts(ctx)
+		p.SecretLastReads, _ = h.opts.SecretReads.Last(ctx)
+	}
+	h.render(w, http.StatusOK, "workspace_secrets", p)
+}
+
 // secretReads lists the runs that got a secret, newest first, a page
 // at a time; the value never shows.
 func (h *Handlers) secretReads(w http.ResponseWriter, r *http.Request) {

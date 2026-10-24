@@ -7,9 +7,9 @@ import (
 )
 
 // FolderMenu is the [...] menu in the head of a folder page of a
-// workspace or a project: a link to its settings, Pull now, and for a
-// project with a checkout Remove checkout, each behind its permission in
-// the folder template.
+// workspace or a project: a link to its settings, for a workspace its
+// SSH keys and secrets, Pull now, and for a project with a checkout
+// Remove checkout, each behind its permission in the folder template.
 type FolderMenu struct {
 	// ID is the folder's: _ for the root.
 	ID string
@@ -32,6 +32,24 @@ func (m *FolderMenu) Settings() string {
 		return "/settings/projects/" + m.ID
 	}
 	return ""
+}
+
+// KeysPage returns the path of the page of a workspace's SSH keys, ""
+// for a project.
+func (m *FolderMenu) KeysPage() string {
+	if m == nil || !m.Workspace {
+		return ""
+	}
+	return "/settings/workspaces/" + m.ID + "/keys"
+}
+
+// SecretsPage returns the path of the page of a workspace's secrets, ""
+// for a project.
+func (m *FolderMenu) SecretsPage() string {
+	if m == nil || !m.Workspace {
+		return ""
+	}
+	return "/settings/workspaces/" + m.ID + "/secrets"
 }
 
 // RemoveConfirm returns what Remove checkout asks before it removes the

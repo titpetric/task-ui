@@ -5,6 +5,8 @@ package frontend_test
 import (
 	"context"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -74,4 +76,58 @@ func TestWorkspaceKeys(t *testing.T) {
 // html is a fingerprint as a page writes it, its plus signs escaped.
 func html(fingerprint string) string {
 	return strings.ReplaceAll(fingerprint, "+", "&#43;")
+}
+
+// The SSH keys page of a workspace edits its keys in place: the table,
+// and Generate, Upload and Edit links in dialogs that return to it.
+func TestWorkspaceKeys_Scoped(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	ctx := context.Background()
+	assert.NoError(t, f.opts.Workspaces.Create(ctx, &model.Workspace{Folder: "malta"}))
+	ws, err := f.opts.Workspaces.GetByFolder(ctx, "malta")
+	assert.NoError(t, err)
+	deploy := f.gen(t, keystore.Spec{Name: "workspace_malta_deploy", Scope: keystore.ScopeWorkspace(ws.ID)})
+
+	body := f.page(t, asAdmin, "/settings/workspaces/malta/keys")
+	assert.Contains(t, body, "<h2>SSH keys of malta</h2>")
+	assert.Contains(t, body, html(deploy.Fingerprint))
+	assert.Contains(t, body, `id="key-generate-dialog"`)
+	assert.Contains(t, body, `id="key-links-`+deploy.Name+`"`)
+	assert.Contains(t, body, `data-next="/settings/workspaces/malta/keys?notice=Key+uploaded"`)
+	assert.NotContains(t, body, "PRIVATE KEY-----\n")
+
+	assert.Equal(t, http.StatusNotFound, f.get(t, asAdmin, "/settings/workspaces/nope/keys").Status)
+	assert.Equal(t, http.StatusForbidden, f.get(t, asOps, "/settings/workspaces/malta/keys").Status)
+}
+
+// A workspace's page lists the files of its home project, the $HOME of
+// its runs, dot files sealed; without a home project it has none.
+func TestFolder_Home(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	ctx := context.Background()
+	cat := f.opts.Catalogue.(catalogue)
+	cat["malta"] = shellFolder(t, f.root, "malta", nil)
+	home := shellFolder(t, f.root, "malta/workspace", nil)
+	cat["malta/workspace"] = home
+	assert.NoError(t, os.WriteFile(filepath.Join(home.Dir, "CLAUDE.md"), []byte("# home\n"), 0o644))
+	assert.NoError(t, os.WriteFile(filepath.Join(home.Dir, ".env"), []byte("TOKEN=x\n"), 0o644))
+	assert.NoError(t, f.opts.Workspaces.Create(ctx, &model.Workspace{Folder: "malta"}))
+
+	assert.NotContains(t, f.page(t, asAdmin, "/f/malta"), `id="home"`)
+
+	project := &model.Project{Folder: "malta/workspace", Title: "workspace"}
+	assert.NoError(t, f.opts.Projects.Create(ctx, project))
+	ws, err := f.opts.Workspaces.GetByFolder(ctx, "malta")
+	assert.NoError(t, err)
+	ws.HomeProjectID = project.ID
+	assert.NoError(t, f.opts.Workspaces.Update(ctx, ws))
+
+	body := f.page(t, asAdmin, "/f/malta")
+	assert.Contains(t, body, `<section class="block folder-home" id="home">`)
+	assert.Contains(t, body, `<a href="/files/malta/workspace/CLAUDE.md" data-file="~/CLAUDE.md">CLAUDE.md</a>`)
+	assert.Contains(t, body, `title="task-ui lists .env but does not open it"`)
+	assert.Contains(t, body, `href="/settings/workspaces/malta/keys"`)
+	assert.Contains(t, body, `href="/settings/workspaces/malta/secrets"`)
 }

@@ -85,6 +85,11 @@ type Page struct {
 	// Up is where the Files panel's .. goes: the directory or the folder
 	// above. Empty shows no .. row.
 	Up string
+	// HomeFolder is the home project of the workspace a folder page
+	// shows, the $HOME of its runs, and HomeTree what it holds; an empty
+	// HomeFolder leaves the Home section out.
+	HomeFolder string
+	HomeTree   []folder.Item
 	// Archive is where the directory the page shows downloads as a .tgz.
 	Archive string
 	// Space is how much the directory the page shows takes, files and
