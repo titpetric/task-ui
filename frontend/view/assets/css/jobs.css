@@ -51,6 +51,13 @@
   }
 
   & td.last {
+    min-width: 9rem;
+
+    & > a,
+    & > span {
+      white-space: nowrap;
+    }
+
     & .dot {
       margin-inline-end: 0.35rem;
     }
