@@ -28,12 +28,21 @@ func actionsBar(body string) string {
 	return bar
 }
 
-// A folder page and a directory browsed inside a folder carry the
-// actions bar: the git line of the checkout, a chip per skill atkins
+// jobsTable cuts the Jobs table out of a page.
+func jobsTable(body string) string {
+	_, rest, ok := strings.Cut(body, `<table class="table jobs cards">`)
+	if !ok {
+		return ""
+	}
+	table, _, _ := strings.Cut(rest, "</table>")
+	return table
+}
+
+// A folder page and a directory browsed inside a folder carry the git
+// line of the checkout, and in the Jobs table a group per skill atkins
 // applies there, each job a Run of the folder in the directory the job
-// runs in, and a chip of the place's own atkins jobs. A viewer gets the
-// job pages instead; compose up and down of task-ui's own project ask
-// first.
+// runs in, beside the place's own atkins jobs. A viewer gets History
+// instead; compose up and down of task-ui's own project ask first.
 func TestFolder_Actions(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
@@ -47,39 +56,44 @@ func TestFolder_Actions(t *testing.T) {
 	assert.NoError(t, os.WriteFile(filepath.Join(app, "atkins.yml"), []byte("jobs:\n  default:\n    steps:\n      - run: echo hi\n"), 0o644))
 	assert.NoError(t, os.WriteFile(filepath.Join(f.infra.Dir, "new.txt"), []byte("x\n"), 0o644))
 
-	top := actionsBar(f.page(t, asOps, "/f/_/infra"))
+	topPage := f.page(t, asOps, "/f/_/infra")
+	top := actionsBar(topPage)
 	assert.Contains(t, top, `<span class="glyph" aria-hidden="true">⎇</span> main`)
 	assert.Contains(t, top, `●2`, "new.txt and app/")
 	assert.Contains(t, top, `· infra`)
-	assert.Contains(t, top, `<span class="chip-name">git</span>`)
-	assert.Contains(t, top, `data-folder="infra" data-job="@git:pull" data-title="infra / pull"`)
-	assert.NotContains(t, top, "compose")
+	assert.NotContains(t, top, "data-run", "the bar is the git line alone")
+	topJobs := jobsTable(topPage)
+	assert.Contains(t, topJobs, `<span class="badge">@git</span>`)
+	assert.Contains(t, topJobs, `data-folder="infra" data-job="@git:pull" data-title="infra / pull"`)
+	assert.NotContains(t, topJobs, "@compose")
 
-	bar := actionsBar(f.page(t, asOps, "/f/_/infra/app"))
-	assert.Contains(t, bar, `⎇</span> main`)
+	appPage := f.page(t, asOps, "/f/_/infra/app")
+	assert.Contains(t, actionsBar(appPage), `⎇</span> main`)
+	bar := jobsTable(appPage)
 	assert.Contains(t, bar, `data-folder="infra" data-job="@git:status" data-title="infra / status"`, "git runs in the checkout")
 	assert.Contains(t, bar, `data-folder="infra" data-dir="app" data-job="@compose:build" data-title="infra/app / build"`)
 	assert.Contains(t, bar, `data-dir="app" data-job="@compose:up"`)
 	// compose custom takes args: its Run opens a field naming what they
 	// follow first.
 	assert.Contains(t, bar, `data-job="@compose:custom" data-title="infra/app / custom" data-args="docker compose" title=`)
-	assert.Contains(t, bar, `>custom...</button>`)
+	assert.Contains(t, bar, `<span class="badge" title="Takes arguments after docker compose">args</span>`)
+	assert.Contains(t, bar, `>Run...</button>`)
 	assert.NotContains(t, bar, `data-job="@compose:up" data-title="infra/app / up" data-args`)
-	assert.Contains(t, bar, `when compose.yml here, matched compose.yml; runs in app/`)
-	assert.Contains(t, bar, `<span class="chip-name">atkins</span>`)
+	assert.Contains(t, bar, `<span class="badge">atkins</span>`)
 	assert.Contains(t, f.page(t, asOps, "/f/_/infra/app"), "Its jobs run in infra/app/")
 	deploy := filepath.Join(f.infra.Dir, "deploy")
 	assert.NoError(t, os.MkdirAll(deploy, 0o755))
 	assert.NoError(t, os.WriteFile(filepath.Join(deploy, "compose.yml"), []byte("services:\n  a:\n    image: x\n"), 0o644))
 	skillsOnly := f.page(t, asOps, "/f/_/infra/deploy")
-	assert.Contains(t, skillsOnly, "the skills below run here")
-	assert.NotContains(t, actionsBar(skillsOnly), "@compose:build")
+	assert.Contains(t, skillsOnly, "the jobs below run here")
+	assert.NotContains(t, jobsTable(skillsOnly), "@compose:build")
 	assert.Contains(t, bar, `data-folder="infra" data-dir="app" data-job="default"`)
 	assert.NotContains(t, bar, "data-confirm")
 
-	viewer := actionsBar(f.page(t, asViewer, "/f/_/infra/app"))
-	assert.Contains(t, viewer, `<a class="chip-act" href="/f/_/infra/app/@compose:up"`)
-	assert.Contains(t, viewer, `<a class="chip-act" href="/f/_/infra/@git:status"`)
+	viewer := jobsTable(f.page(t, asViewer, "/f/_/infra/app"))
+	assert.Contains(t, viewer, `<a href="/f/_/infra/app/@compose:up">@compose:up</a>`)
+	assert.Contains(t, viewer, `<a href="/f/_/infra/@git:status">@git:status</a>`)
+	assert.Contains(t, viewer, `title="No permission to run infra/app / up">History</a>`)
 	assert.NotContains(t, viewer, "data-run")
 	page := f.page(t, asViewer, "/f/_/infra/app/@compose:up")
 	assert.Contains(t, page, "infra/app / up")
@@ -91,12 +105,12 @@ func TestFolder_Actions(t *testing.T) {
 	h, err := frontend.New(f.opts)
 	assert.NoError(t, err)
 	f.server.Config.Handler = h.Routes()
-	bar = actionsBar(f.page(t, asOps, "/f/_/infra/app"))
+	bar = jobsTable(f.page(t, asOps, "/f/_/infra/app"))
 	assert.Contains(t, bar, `data-job="@compose:up" data-title="infra/app / up" data-confirm="Run compose up for app?`)
 	assert.Contains(t, bar, `data-job="@compose:down" data-title="infra/app / down" data-confirm="Run compose down for app?`)
 	assert.NotContains(t, bar, `data-job="@compose:build" data-title="infra/app / build" data-confirm`)
 
-	// No checkout and no skills: no bar.
+	// No checkout: no git line.
 	assert.Equal(t, "", actionsBar(f.page(t, asOps, "/f/_/private")))
 }
 
@@ -137,8 +151,8 @@ func TestFolder_Prompt(t *testing.T) {
 	assert.NotContains(t, f.page(t, asOps, "/f/infra/images"), block)
 }
 
-// Enter Shell sits in the actions bar of a folder and of a directory
-// inside one for an admin, and for no one else.
+// @shell is a built-in row of the Jobs table of a folder and of a
+// directory inside one for an admin, and for no one else.
 func TestFolder_Shell(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
@@ -156,8 +170,8 @@ func TestFolder_Shell(t *testing.T) {
 	}
 }
 
-// Enter Claude sits beside Enter Shell, for an admin with a Claude
-// token: @claude of the folder or of the directory inside it.
+// @claude follows @shell among the built-ins, for an admin with a
+// Claude token: @claude of the folder or of the directory inside it.
 func TestFolder_Claude(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
@@ -170,8 +184,8 @@ func TestFolder_Claude(t *testing.T) {
 	assert.NoError(t, f.opts.Integrations.Save(ctx, integration.Claude, map[string]string{"token": "sk-1"}))
 	admin := f.page(t, asAdmin, "/f/_/infra")
 	assert.Contains(t, admin, `data-folder="infra" data-job="@claude" data-title="infra / claude"`)
-	assert.Contains(t, admin, ">Enter Claude</button>")
-	assert.Contains(t, admin, ">Enter Shell</button>")
+	assert.Contains(t, admin, `<a href="/f/_/infra/@claude">@claude</a>`)
+	assert.Contains(t, admin, `<a href="/f/_/infra/@shell">@shell</a>`)
 	browse := f.page(t, asAdmin, "/f/_/infra/images")
 	assert.Contains(t, browse, `data-dir="images" data-job="@claude" data-title="infra/images / claude"`)
 	for _, user := range []string{asOps, asViewer, asLimited} {

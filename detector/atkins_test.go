@@ -130,4 +130,8 @@ func TestFromListing_ErrorAndJobs(t *testing.T) {
 	clean := fromListing(t.TempDir(), "atkins.yml", skills.Listing{Sections: listing.Sections})
 	assert.Equal(t, "", clean.Error)
 	assert.Nil(t, clean.Errors)
+
+	// A pipeline atkins names by its file has no name.
+	unnamed := skills.Listing{Sections: []skills.Section{{Kind: skills.KindPipeline, Desc: "atkins.yml"}}}
+	assert.Equal(t, "", fromListing(t.TempDir(), "atkins.yml", unnamed).Name)
 }

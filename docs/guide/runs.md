@@ -181,7 +181,7 @@ when the run started, who started it and who asked, with links to the
 run, Claude's run and the job. The page reads the reply Claude saved,
 not the terminal, so no output, spinner or tool call shows in it.
 **Report** on a run's page, in the run window, under a summary on a
-job page and in the Summary column of the Files list all open it. The
+job page and in the Last run column of a folder's Jobs table all open it. The
 page takes `prompt/view` and a run you see; `GET /api/runs/<id>` names
 it as `report` when the run has one.
 
@@ -302,8 +302,8 @@ curl -s "https://task.example.com/api/prompts?run=<run id>" \
 
 ### Run and summarize
 
-**|>summarize**, beside **Run** on a job's card and page and in the
-Summary column of the Files list, runs the job as **Run** does, in its
+**|>summarize** beside **Run** on a job's page, and **Run and
+summarize** in the `[...]` of its row in a folder's Jobs table, run the job as **Run** does, in its
 window, and when the run ends, in any state,
 task-ui asks Claude about it on the run's page, as you: a thread whose
 question reads "Summarize this run.", answered in the shape of a
@@ -394,8 +394,8 @@ splits words, with quotes and backslashes, and nothing in it expands:
 `"; id"` reaches the job as one argument, `; id`. Every other job
 refuses arguments.
 
-On a page, **Run...** of such a job, on its card, its page or a chip such
-as `compose: custom...`, opens a field under it first. The field starts
+On a page, **Run...** of such a job, on its row of the Jobs table, such
+as `@compose:custom`, or on its page, opens a field under it first. The field starts
 with the command the arguments follow: the `exec:` step of the job, such
 as `docker compose`, or the job's own argv and `--`. Below it, task-ui
 shows the whole command as each word reaches it, `docker compose ps -a '; id'`,

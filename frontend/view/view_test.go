@@ -110,45 +110,101 @@ func TestView_RenderDialog(t *testing.T) {
 	assert.Contains(t, buf.String(), `id="run-force"`)
 }
 
-// The Files list has an Action column, Run, and a Summary column,
-// |>summarize for a user who may and the link to the summary of the
-// row's last run.
+// The Files list holds no Action or Summary column: what runs is in the
+// Jobs table above it.
 func TestView_RenderTree(t *testing.T) {
+	t.Parallel()
+
+	v, err := view.New()
+	assert.NoError(t, err)
+	p := admin(t)
+	p.Tree = []folder.Item{{Name: "deploy.sh", Path: "deploy.sh", Href: "/files/infra/deploy.sh", Exec: true}, {Name: "docs", Dir: true}}
+	var buf bytes.Buffer
+	assert.NoError(t, v.Render(&buf, "browse", p))
+	out := buf.String()
+	assert.Contains(t, out, `<thead><tr><th>Name</th><th class="num">Size</th><th class="hide-sm">Changed</th><th></th></tr></thead>`)
+	assert.NotContains(t, out, "<th>Action</th>")
+	assert.NotContains(t, out, "<th>Summary</th>")
+	assert.NotContains(t, out, `data-label="Action"`)
+	assert.Contains(t, out, `<span class="badge exec"`)
+}
+
+// The Jobs table has a row per job of its groups, under a heading row
+// per group: the job's ID linked to its page, Run, with the field for
+// args, and the confirm of a skill job, and a [...] of Run and
+// summarize, the last run, History, and Run force for a job with hours.
+// A job the user may not run has History; a running one Attach and Kill.
+func TestView_RenderJobTable(t *testing.T) {
 	t.Parallel()
 
 	v, err := view.New()
 	assert.NoError(t, err)
 	render := func(p *view.Page) string {
 		var buf bytes.Buffer
-		assert.NoError(t, v.Render(&buf, "browse", p))
+		assert.NoError(t, v.Render(&buf, "folder", p))
 		return buf.String()
 	}
-	tree := func(summaries bool) *view.Page {
-		p := admin(t)
-		build := &folder.Job{Folder: "infra", ID: "build", Command: []string{"make", "build"}}
-		build.Name = "build"
-		p.Folder.Jobs = append(p.Folder.Jobs, build)
-		p.Summaries = summaries
-		p.Tree = []folder.Item{{Name: "Makefile", Path: "Makefile", Href: "/f/infra/Makefile"}}
-		p.TreeMenus = map[string]*view.RunMenu{"Makefile": view.NewRunMenu(p.Folder, []*folder.Job{build}, build)}
-		return p
+	table := func(p *view.Page) {
+		f := p.Folder
+		build := &folder.Job{Folder: "infra", ID: "build", Command: []string{"make", "build"}, Hours: "Mon-Fri 9-17"}
+		build.Name, build.Description = "build", "Build the images"
+		custom := &folder.Job{Folder: "infra", ID: "@compose:custom", Command: []string{"atkins", "compose:custom"}}
+		custom.Name, custom.TakesArgs = "custom", true
+		up := &folder.Job{Folder: "infra", ID: "@compose:up", Command: []string{"atkins", "compose:up"}}
+		up.Name = "up"
+		script := &folder.Job{Folder: "infra", ID: "./deploy.sh", Kind: "file", Source: "deploy.sh", Command: []string{"./deploy.sh"}}
+		script.Name = "deploy.sh"
+		p.Actions = &view.Actions{Place: f, Self: "infra", Shell: f.ShellJob()}
+		p.JobGroups = []view.JobGroup{
+			{Kind: "make", Note: "Makefile · make", Folder: f, Jobs: []*folder.Job{build}},
+			{Kind: "files", Folder: f, Jobs: []*folder.Job{script}},
+			{Kind: "@compose", Folder: f, Skill: &folder.Skill{ID: "compose", Project: "infra"}, Jobs: []*folder.Job{custom, up}},
+			{Kind: "built-in", Folder: f, Jobs: []*folder.Job{f.ShellJob()}},
+			{Kind: "make", Dir: "tools", Folder: &folder.Folder{ID: "infra", Rel: "tools"}, Empty: "No targets in Makefile."},
+		}
 	}
 
-	plain := render(tree(false))
-	assert.Contains(t, plain, "<th>Action</th><th>Summary</th>")
-	assert.Contains(t, plain, `data-label="Action"`)
-	assert.Contains(t, plain, `data-label="Summary"`)
-	assert.Contains(t, plain, `data-job="build"`)
-	assert.NotContains(t, plain, "data-summarize", "no prompt/edit")
-	assert.NotContains(t, plain, "summary-link")
-
-	p := tree(true)
-	p.TreeSummaries = map[string]*view.SummaryLink{"Makefile": view.NewSummaryLink("r1", "The build passed.")}
+	p := admin(t)
+	p.Summaries = true
+	table(p)
+	p.Last = map[string]view.Run{"infra/build": {Run: model.Run{ID: "r1", Folder: "infra", Job: "build", State: model.StateOK}}}
+	p.JobSummaries = map[string]*view.SummaryLink{"infra/build": view.NewSummaryLink("r1", "The build passed.")}
 	out := render(p)
-	assert.Contains(t, out, "data-summarize")
+	assert.Equal(t, 5, strings.Count(out, `<tr class="group">`))
+	assert.Equal(t, 5, strings.Count(out, "<tr data-job-row"))
+	for _, id := range []string{"build", "./deploy.sh", "@compose:custom", "@compose:up", "@shell"} {
+		assert.Contains(t, out, `data-job="`+id+`"`, id)
+	}
+	assert.Contains(t, out, `<a href="/f/_/infra/tools"><svg class="ic"><use href="#i-folder"/></svg>tools/</a>`)
+	assert.Contains(t, out, "No targets in Makefile.")
+	assert.Contains(t, out, `data-path="deploy.sh"`)
+	assert.Contains(t, out, `data-args="atkins compose:custom --"`)
+	assert.Contains(t, out, `data-confirm="Run compose up for infra?`)
+	assert.Contains(t, out, `<span>Run and summarize</span>`)
+	assert.Contains(t, out, `<span>Run and summarize...</span>`)
+	assert.Contains(t, out, `<span>Run force</span>`)
+	assert.Contains(t, out, `data-force="" data-folder="infra" data-dir="" data-job="build"`)
+	assert.Equal(t, 1, strings.Count(out, "data-force="), "Run force only on a job with hours")
+	assert.Contains(t, out, `<span>View the last run</span>`)
 	assert.Contains(t, out, `href="/runs/r1/report" title="The build passed."`)
-	assert.Equal(t, "/runs/r1/report", p.TreeSummary("Makefile").Href)
-	assert.Nil(t, p.TreeSummary("other"))
+	assert.Equal(t, "/runs/r1/report", p.JobSummary("infra/build").Href)
+	assert.Nil(t, p.JobSummary("infra/other"))
+
+	viewer := admin(t)
+	table(viewer)
+	signIn(viewer, &model.User{Name: "guest", Role: model.RoleViewer}, nil)
+	out = render(viewer)
+	assert.NotContains(t, out, "data-run ")
+	assert.Contains(t, out, `title="No permission to run infra / build">History</a>`)
+
+	running := admin(t)
+	table(running)
+	now := time.Now()
+	run := view.Run{Run: model.Run{ID: "r2", Folder: "infra", Job: "build", State: model.StateRunning, StartedAt: &now}}
+	running.Running = map[string]view.Run{"infra/build": run}
+	out = render(running)
+	assert.Contains(t, out, `data-attach="r2" title="Attach to infra / build, running"`)
+	assert.Contains(t, out, `data-kill="r2"`)
 }
 
 // A job's runs have Summarize for a user who may, on a run that ended

@@ -1,8 +1,7 @@
 /* ----------------------------------------------------------- actions bar */
 
 /* Under the head of a folder page and of a directory browsed inside a
-   folder: the git line of the checkout, then a chip per atkins skill
-   that applies there, each job of it a small Run. The chips wrap. */
+   folder: the git line of the checkout. */
 .actionsbar {
   display: flex;
   flex-wrap: wrap;
@@ -50,101 +49,6 @@
   }
 }
 
-.chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  min-width: 0;
-}
-
-/* [git: pull · rebase · status]: the skill's name, then its jobs, which
-   wrap inside the chip on a narrow screen. */
-.chip {
-  display: inline-flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0 0.15rem;
-  max-width: 100%;
-  min-height: var(--control-sm);
-  padding: 0.1rem 0.3rem 0.1rem 0.6rem;
-  border: 1px solid var(--line-2);
-  border-radius: var(--radius);
-  background: var(--ink-1);
-
-  &:hover {
-    border-color: var(--signal);
-  }
-
-  & .chip-name {
-    margin-right: 0.3rem;
-    white-space: nowrap;
-    color: var(--text-faint);
-    font-size: var(--fs-label);
-    letter-spacing: var(--ls-button);
-    text-transform: uppercase;
-
-    &::after {
-      content: ":";
-    }
-  }
-
-  & .sep {
-    color: var(--text-faint);
-  }
-}
-
-/* A job of a chip: Run as a word, Attach with the running dot, or a
-   link to the job's page for whoever may not run it. */
-.chip-act {
-  display: inline-flex;
-  white-space: nowrap;
-  align-items: center;
-  gap: 0.3rem;
-  height: var(--control-xs);
-  padding: 0 0.35rem;
-  border: 0;
-  border-radius: var(--radius);
-  background: none;
-  color: var(--text);
-  font: inherit;
-  cursor: pointer;
-
-  &:hover {
-    background: var(--signal-wash);
-    color: var(--signal);
-    text-decoration: none;
-  }
-
-  &:focus-visible {
-    outline: 1px solid var(--signal);
-  }
-
-  &.running {
-    color: var(--signal);
-  }
-
-  &[data-confirm] {
-    color: var(--bad);
-  }
-}
-
-a.chip-act:not(.running) {
-  color: var(--text-dim);
-}
-
-/* Enter Shell: the top right of the bar, the chips on the line below. */
-/* The settings links and Enter Shell, at the right of the bar. */
-.bar-end {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-  margin-left: auto;
-}
-
-.actionsbar:has(.bar-end) .chips {
-  flex-basis: 100%;
-}
-
 /* ------------------------------------------------------------ prompt box */
 
 /* The prompt box under the bar: a section title that folds the form
@@ -180,8 +84,8 @@ a.chip-act:not(.running) {
 
 /* ------------------------------------------------------------- args line */
 
-/* The arguments of a job that takes them, under its chips, its card's
-   head or the page's head: the command they follow, the field, and what
+/* The arguments of a job that takes them, under its row of the Jobs
+   table or the page's head: the command they follow, the field, and what
    runs, each word one argument. */
 .argsline {
   display: grid;

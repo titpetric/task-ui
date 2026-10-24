@@ -24,12 +24,12 @@ into cards.
 A row of a table shows its main action as a button and the rest
 behind its **⋯** button, the same menu on every page: users, keys,
 secrets, projects, workspaces, schedules, workflows, runs, notes and
-prompts, artifacts, a folder's Files and env files, and the inventory's
+prompts, artifacts, a folder's Jobs, Files and env files, and the inventory's
 hosts.
 
 - **Visible**: the row's main purpose, at most one or two buttons:
   **Run** on a job or a workflow, **View** or **Attach** on a run, the
-  Run menus of the Files list, the copy button of a key's public key.
+  copy button of a key's public key.
   Everything else goes in the menu.
 - **Items**: an icon and a text label each, never an icon alone. A link
   navigates; a button does what its data attributes say, as a loose

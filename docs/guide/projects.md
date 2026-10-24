@@ -164,52 +164,51 @@ Open a folder from the sidebar:
 
   A folder inside a project, and a user with none of the rules, gets no
   menu.
-- **Actions**: a bar under the title, on a folder's page and on the page
-  of a directory inside it (see [Actions](#actions)).
-- **Jobs**: a card each, `default` first, with what it does, its first
-  steps, how it last went, **Run**, **|>summarize**, which runs the job
-  and has Claude summarise the run on its page when it ends (see
-  [Runs](runs.md#run-and-summarize)), and, on a job with hours, **Run
-  force**; any other job forces from its run's window. A folder with more
-  than one source has a section per source.
+- **The git line**: under the title, on a folder's page and on the
+  page of a directory inside it (see [The git line](#the-git-line)).
+- **Jobs**: one table of everything that runs there, a row per job,
+  under a heading row per group: each job source's targets, such as
+  `atkins atkins.yml · atkins -f atkins.yml`, the files that run,
+  `./<path>`, the jobs of each atkins skill that applies, `@git:pull`,
+  the built-ins your permissions allow, `@shell` and `@claude`, and
+  last the targets of each directory inside with a job source of its
+  own, its heading linked to the directory's page. A row names the job
+  by its ID, linked to its page, says what it does, or the command it
+  runs, and how it last went: the state, linked to the run's page, when
+  and who, and **Summary**, a link to Claude's summary of that run on
+  its report page, its start on hover, once it has one. At the end of
+  the row, **Run**, which opens the run's window, **Attach** while it
+  runs, or **History** for a user who may not run it; its `[...]`
+  holds **Run and summarize**, which runs the job and has Claude
+  summarise the run on its page when it ends (see
+  [Runs](runs.md#run-and-summarize)), **View the last run**,
+  **History**, and, on a job with hours, **Run force**; any other job
+  forces from its run's window. **Kill** ends a run in progress. A
+  folder of folders leaves their jobs to their own pages.
+- **Prompt**: the box that asks Claude Code there, below the jobs (see
+  [Prompt](#prompt)).
 - **Files**: what the folder holds, dot entries too, the directories
-  first, each with its size and when it changed, and `..` up a level:
-  the folder's dashboard. A directory opens as a page of its own; a file
-  opens in a window, an image shown, markdown rendered, text coloured and
-  cut past 1 MiB, with **Download** beside and in the row.
+  first, each with its size and when it changed, and `..` up a level.
+  A directory opens as a page of its own; a file opens in a window, an
+  image shown, markdown rendered, text coloured and cut past 1 MiB,
+  with **Download** beside and in the row.
   A directory that is a folder links to the folder's page. A folder the
   listing lacks, such as one a project row places elsewhere, gets a row
   of its own.
   A directory with targets of its own, a pipeline file, Makefile,
   package scripts or scripts folder read as a folder's are, that
   discovery leaves out, such as the Makefile of a directory inside a
-  checkout with an `atkins.yml`, lists them as job cards on its page.
-  The **Action** column of a directory with jobs, a folder or one with a
-  job source at its top, holds **Run**, and its **Summary** column
-  **|>summarize**, for those who may ask Claude, and **Summary**, a link
-  to Claude's summary of the row's last run on that run's page, its
-  start on hover, once the run has one; so does the row of a file that
-  is a job source, such as `atkins.yml`, and the file's window holds
-  both. **Run** runs `default`, or the only job, and its dot
-  shows how that job last went, live as runs start and end, or an eye
-  on a run in progress. With more jobs, the chevron beside it opens a
-  table of them, `default` first and the rest by name: the play glyph
-  in the colour of the job's last run, the name and what it does, or `Run the <name> target` when its file
-  says nothing. A row runs its job, or attaches to it while it runs; a
-  job your role may not run lists faint. A directory without `default`
-  opens the table from **Run** itself. **|>summarize** does the same
-  with Claude's summary, the interactive jobs left out, and runs the
-  one job left directly. The sidebar and the folder list stay as
-  discovery reads them: the jobs of a directory found here run as the
+  checkout with an `atkins.yml`, lists them in the Jobs table of the
+  folder above and of its own page. The sidebar and the folder list
+  stay as discovery reads them: the jobs of such a directory run as the
   folder's in that directory.
   They run in that directory under the folder's allow rules and hours,
   and pull the folder's checkout; the API names them with `dir` (see
   [Runs](runs.md#what-a-job-gets)). Each has its page and history under
   the directory, such as `/f/acme/api/tools/build`.
   A file that runs, executable or with a shebang on its first line,
-  carries `#!` and **exec**, and **Run** for those the folder lets run,
-  in its Action column and in the file's window: it starts the file as the job
-  `./<path>`, from the top of the folder, and opens the run's window.
+  carries `#!` and **exec**, and its row in Jobs, `./<path>`, runs it
+  from the top of the folder; the file's window holds the same **Run**.
   Its history is at the file's path under the folder.
 - **Sealed entries**: `.git` and every dot file, such as `.env`,
   `.gitignore` or `.claude/.secret`, list with a lock and open nothing,
@@ -229,53 +228,53 @@ Open a folder from the sidebar:
 
 ![A project's Files: .git and .env sealed, ./serve marked to run](../assets/files-dark.png)
 
-![The default workspace's Files: each project with Run and |>summarize, a dot of how the default last ran](../assets/folder-dashboard-dark.png)
-
 ![A file of the checkout in the preview window](../assets/file-dark.png)
 
 A link to the folder's page with `#file=<name>`, such as
 `/f/acme/api#file=README.md`, opens that file of its Files in the window
 on load.
 
-## Actions
+## The git line
 
-![The actions bar of a directory: the git line, then git, compose and dockerfile chips](../assets/actions-dark.png)
+The line under a folder's title, and under a directory's inside a
+folder, reads `⎇ main ↑1 ↓3 ●2 · malta/dockerfiles`: the checkout the
+page is in, the nearest one up from it and no higher than the root: its
+branch, or `detached` and the commit of a checkout off any branch; `↑`
+the commits to push and `↓` those to pull from its upstream, as last
+fetched; `●` the files changed or untracked; then where the checkout
+is. A checkout level with its upstream and with nothing changed reads
+`up to date`. Hover it for the upstream. The line reads `git status`
+and changes nothing; the pulls are jobs of the git skill. The links to a project's or a workspace's
+settings are in the `[...]` menu of its page head (see [A folder's
+page](#a-folders-page)).
 
-The bar under a folder's title, and under a directory's inside a folder,
-has two parts, and at its top right, with the `shell` permission,
-**Enter Shell** and, with a Claude token besides, **Enter Claude**. The
-links to a project's or a workspace's settings are in the `[...]` menu
-of its page head (see [A folder's page](#a-folders-page)).
+## Skills
 
-- **The git line**: `⎇ main ↑1 ↓3 ●2 · malta/dockerfiles`. It reads the
-  checkout the page is in, the nearest one up from it and no higher than
-  the root: its branch, or `detached` and the commit of a checkout off any
-  branch; `↑` the commits to push and `↓` those to pull from its upstream,
-  as last fetched; `●` the files changed or untracked; then where the
-  checkout is. A checkout level with its upstream and with nothing changed
-  reads `up to date`. Hover it for the upstream. The line reads
-  `git status` and stays good for 5 seconds; it changes nothing, and the
-  pulls are jobs of the git chip.
-- **Chips**: one per [atkins](https://github.com/titpetric/atkins) skill
-  that applies there, such as `[git: pull · rebase · status]` or
-  `[compose: build · custom... · down · pull · up]`, and an
-  `[atkins: default · build]` chip of the place's own pipeline jobs.
-  A skill comes from a `.atkins/skills/` folder of the directory or of any
-  directory above it, a workspace's among them, and applies where its
-  `when:` holds; a job of it with a `when:` of its own that fails, such
-  as `compose: build` beside a compose file that builds nothing, has no
-  chip ([Workspaces](workspaces.md#skills) shows how to write one).
-  Hover a chip for what the skill is and the file its `when:` matched.
-  task-ui asks `atkins -l --json --all` in the directory as a page opens,
-  and keeps what it lists for 30 seconds, or until the pipeline file or a
-  skill file changes; an atkins that is missing, fails or takes longer
-  than 3 seconds shows no chips.
+![The Jobs table of a directory: its targets, then the git, compose and dockerfile skills](../assets/actions-dark.png)
 
-Each job of a chip, `default` first, is a **Run**, which opens the run's
-window as a job card's does, and **Attach** while it runs; a user who may not run it gets
-a link to its page. A job whose name ends in `...`, such as
-`compose: custom...`, takes arguments: its Run opens a field for them
-first (see [Runs](runs.md#what-a-job-gets)).
+An [atkins](https://github.com/titpetric/atkins) skill that applies in
+a directory adds its jobs to the Jobs table there, under a heading of
+its own, such as `@git` with `@git:pull`, `@git:rebase` and
+`@git:status`, or `@compose` with `@compose:build`, `@compose:custom`,
+`@compose:down`, `@compose:pull` and `@compose:up`.
+A skill comes from a `.atkins/skills/` folder of the directory or of any
+directory above it, a workspace's among them, and applies where its
+`when:` holds; a job of it with a `when:` of its own that fails, such
+as `compose: build` beside a compose file that builds nothing, has no
+row ([Workspaces](workspaces.md#skills) shows how to write one).
+task-ui asks `atkins -l --json --all` in the directory as a page opens,
+and keeps what it lists until the pipeline file or a skill file changes,
+or its time runs out; an atkins that is missing, fails or runs out of
+time lists no skills:
+
+| What                                 | Kept for   | Times out after |
+|--------------------------------------|------------|-----------------|
+| The git line, `git status`           | 5 seconds  |                 |
+| The skills, `atkins -l --json --all` | 30 seconds | 3 seconds       |
+
+A job with the `args` badge, such as `@compose:custom`, takes
+arguments: its **Run...** opens a field for them under its row first
+(see [Runs](runs.md#what-a-job-gets)).
 
 A skill job is the job `@<skill>:<job>` of the folder, such as
 `@git:status`: it runs `atkins git:status` in the directory of the file
@@ -290,12 +289,12 @@ task-ui reads its project from the compose label of its container, or
 from `TASK_UI_COMPOSE_PROJECT`, and a compose file's project is its
 `name:`, or its directory's name.
 
-The API answers the bar with `GET /api/folders/{id}/actions?dir=`, for
-whoever sees the folder.
+The API answers the git line and the skills with `GET
+/api/folders/{id}/actions?dir=`, for whoever sees the folder.
 
 ### Enter Shell
 
-A user with the `shell` permission, Enter Shell in [Settings, Permissions](settings.md#permissions), gets **Enter Shell** at the top right of the bar: `bash -l` in
+A user with the `shell` permission, Enter Shell in [Settings, Permissions](settings.md#permissions), gets the row `@shell` among the built-ins of the Jobs table: its **Run** starts `bash -l` in
 the folder's directory, or in the directory the page browses, with the
 run's window attached and the keyboard yours: the job `@shell` of the
 folder, run with the environment, secrets and keys of any job there,
@@ -305,14 +304,14 @@ it.
 
 Only a user with `shell` starts a shell: `POST /api/runs` with `@shell`
 answers `403` to anyone else, whatever the folder's allow rules say, and
-the button shows to those users alone. No schedule or workflow step takes
+the row shows to those users alone. No schedule or workflow step takes
 `@shell`: there is no one at its keyboard.
 
 ### Enter Claude
 
-Beside it, a user with `shell` and a token in the
-[Claude Code integration](settings.md#integrations) gets **Enter
-Claude**: Claude Code in a terminal in the folder's directory, or in the
+Below it, a user with `shell` and a token in the
+[Claude Code integration](settings.md#integrations) gets the row
+`@claude`: Claude Code in a terminal in the folder's directory, or in the
 directory the page browses, the job `@claude` of the folder, which runs
 `task-ui agent shell`, a shell as `@shell` is: the **Enter Shell**
 permission gates it, `POST /api/runs` with `@claude` answers `403` to
@@ -323,7 +322,7 @@ and above, and the run's history keeps under the directory.
 ### Prompt
 
 A user with Allow Edits on Prompts, `prompt/edit`, and a token in the
-[Claude Code integration](settings.md#integrations) gets a **Prompt** box under the bar of every folder page and every
+[Claude Code integration](settings.md#integrations) gets a **Prompt** box under the Jobs table of every folder page and every
 directory inside a folder: open on a workspace's page, on `/f/_`,
 which prompts at the root, and wherever its directory holds a prompt, folded
 elsewhere until clicked. The prompt runs `@claude-prompt` of that

@@ -1494,15 +1494,6 @@
     var rowMenu = document.querySelectorAll("td.actions details.more-menu")[(parseInt(actionsHash[1], 10) || 1) - 1];
     if (rowMenu) rowMenu.open = true;
   }
-  // A row of a Run menu's table runs on Enter or Space, as a button does.
-  document.addEventListener("keydown", function (event) {
-    if (event.key !== "Enter" && event.key !== " ") return;
-    var row = event.target.closest && event.target.closest('.cc-menu tr[role="menuitem"]');
-    if (!row) return;
-    event.preventDefault();
-    row.click();
-  });
-
   // A button with data-api, an item of a [...] menu, puts data-body, its
   // JSON, with data-method, after its data-confirm, as a form with
   // data-api does: on success it goes to data-next, the answer's fields
@@ -2648,9 +2639,9 @@
       }
       else showDoc('<p class="faint">No preview for this file, ' + escapeHTML(view.content_type) + ". Download it to open it.</p>", "text");
     };
-    // previewActions carries a file's Run, Run force or Attach from its
-    // row of the Files panel into the window's foot; the window closes for
-    // the run window to open.
+    // previewActions carries a file's Run or Attach from its row of the
+    // Jobs table into the window's foot; the window closes for the run
+    // window to open.
     var previewActions = document.getElementById("preview-actions");
     previewActions.addEventListener("click", function (event) {
       if (event.target.closest("[data-run], [data-attach]")) previewDialog.close();
@@ -2660,9 +2651,11 @@
       var link = Array.prototype.find.call(document.querySelectorAll("a[data-file]"), function (a) {
         return a.getAttribute("href") === href;
       });
-      var row = link && link.closest("tr");
+      var row = link && Array.prototype.find.call(document.querySelectorAll("tr[data-job-row][data-path]"), function (tr) {
+        return tr.dataset.path === link.dataset.file;
+      });
       if (!row) return;
-      row.querySelectorAll(".actions > [data-run], .actions > [data-attach], .actions > .runsplit").forEach(function (btn) {
+      row.querySelectorAll(".actions > [data-run], .actions > [data-attach]").forEach(function (btn) {
         var copy = btn.cloneNode(true);
         copy.classList.remove("btn-sm");
         copy.querySelectorAll(".btn-sm").forEach(function (part) { part.classList.remove("btn-sm"); });
@@ -3783,19 +3776,6 @@
       });
     });
   }
-  // The dot on a Files list row's Run follows the runs topic too: it
-  // pulses while the job runs and takes how it ended.
-  if (document.querySelector(".runsplit[data-key]") && window.EventSource) {
-    onRuns(function (run) {
-      var key = run.folder + (run.dir ? "/" + run.dir : "") + "/" + run.job;
-      document.querySelectorAll(".runsplit[data-key]").forEach(function (split) {
-        if (split.dataset.key !== key) return;
-        var dot = split.querySelector(":scope > .btn .dot");
-        if (dot) dot.className = "dot " + (run.state || "pending");
-      });
-    });
-  }
-
   // The dashboard follows the runs topic too: a run that starts adds its
   // tile, polled for its frame; one that ends marks its tile and the last
   // frame is fetched. The running count follows.
@@ -3959,7 +3939,7 @@
       summarize: btn.hasAttribute("data-summarize"),
     };
     // A job that takes args opens a field for them first, under its
-    // card or chips.
+    // row or the page head.
     if (btn.hasAttribute("data-args") && !spec.force) {
       argsLine(btn, spec);
       return;
@@ -4015,15 +3995,17 @@
     return "'" + word.replace(/'/g, "'\\''") + "'";
   }
 
-  // argsLine opens the field for the arguments of a job under its chips,
-  // its card's head or the page's head: what the job runs, the words
-  // typed after it as they reach it, and Run.
+  // argsLine opens the field for the arguments of a job under its row of
+  // the Jobs table or the page's head: what the job runs, the words typed
+  // after it as they reach it, and Run. In a table the field takes a row
+  // of its own.
   function argsLine(btn, spec) {
-    var anchor = btn.closest(".chips, .jobcard > header, .page-head, .runsplit") || btn.parentNode;
+    var anchor = btn.closest("tr[data-job-row], .page-head") || btn.parentNode;
+    var dismiss = function (f) { (f.closest("tr.argsrow") || f).remove(); };
     var open = document.querySelector("form.argsline");
     if (open) {
       var same = open.dataset.job === spec.job && open.dataset.dir === spec.dir && open.dataset.folder === spec.folder;
-      open.remove();
+      dismiss(open);
       if (same) return;
     }
     var cmd = btn.dataset.args;
@@ -4054,21 +4036,30 @@
     };
     input.addEventListener("input", show);
     input.addEventListener("keydown", function (event) {
-      if (event.key === "Escape") form.remove();
+      if (event.key === "Escape") dismiss(form);
     });
-    form.querySelector("[data-args-cancel]").addEventListener("click", function () { form.remove(); });
+    form.querySelector("[data-args-cancel]").addEventListener("click", function () { dismiss(form); });
     form.addEventListener("submit", function (event) {
       event.preventDefault();
       if (splitArgs(input.value) === null) return;
       var run = Object.assign({}, spec, { args: input.value.trim() });
-      form.remove();
+      dismiss(form);
       if (btn.dataset.confirm) {
         confirm(btn.dataset.confirm, btn.dataset.confirmOk || "Run").then(function (ok) { if (ok) start(run); });
         return;
       }
       start(run);
     });
-    anchor.insertAdjacentElement("afterend", form);
+    if (anchor.matches("tr")) {
+      var row = document.createElement("tr");
+      row.className = "argsrow";
+      var cell = row.insertCell();
+      cell.colSpan = anchor.cells.length;
+      cell.appendChild(form);
+      anchor.insertAdjacentElement("afterend", row);
+    } else {
+      anchor.insertAdjacentElement("afterend", form);
+    }
     show();
     input.focus();
   }
@@ -4432,16 +4423,6 @@
   function frameURL(runId, all) {
     return "/api/runs/" + encodeURIComponent(runId) + "/frame.svg" + (all ? "?all=1" : "");
   }
-
-  // A job card's "show N more" is a details element, open without a
-  // script; its summary says aloud whether the lines past the third show.
-  function syncMore(details) {
-    details.querySelector(":scope > summary").setAttribute("aria-expanded", details.open ? "true" : "false");
-  }
-  document.querySelectorAll(".jobcard .code details").forEach(syncMore);
-  document.addEventListener("toggle", function (event) {
-    if (event.target.matches && event.target.matches(".jobcard .code details")) syncMore(event.target);
-  }, true);
 
   // Expand on a step's row asks the API for the run's whole output and
   // shows it in place of the last screen; Collapse puts back the screen
