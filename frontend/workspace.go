@@ -55,7 +55,7 @@ func (h *Handlers) workspaceEdit(w http.ResponseWriter, r *http.Request) {
 		h.missing(w, r, "No workspace named "+name+".")
 		return
 	}
-	p := h.page(r, "Configure "+workspace.Folder)
+	p := h.page(r, "Workspace settings: "+workspace.Folder)
 	p.Crumbs = view.Crumbs("Settings", "/settings", "Workspaces", "/settings/workspaces", workspace.Folder)
 	p.Step = view.StepWorkspaces
 	p.Workspace = workspace
@@ -83,6 +83,7 @@ func (h *Handlers) workspaceProjects(ctx context.Context, p *view.Page, name str
 		}
 	}
 	h.measure(p)
+	h.pulls(p)
 }
 
 // workspaceHome puts a workspace's home project on its page, with the

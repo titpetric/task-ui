@@ -38,10 +38,12 @@ func TestWorkflow(t *testing.T) {
 	assert.Equal(t, "summary in infra/app", view.Chain(w.Steps, nil)[2].Text)
 	w.Steps[2].Disabled = true
 	assert.False(t, w.Prompted(), "a step that is off asks nothing")
-	box := view.PromptOfWorkflowRun("wr1", "infra/app", "infra/app/")
+	box := view.PromptOfWorkflowRun("wr1", "infra/app", "infra/app/", true)
 	assert.True(t, box.Watch)
+	assert.True(t, box.Open, "open while the run goes")
 	assert.Equal(t, "infra/app", box.Place)
 	assert.Equal(t, "wr1", box.WorkflowRun)
+	assert.False(t, view.PromptOfWorkflowRun("wr1", "infra/app", "infra/app/", false).Open, "folded once it ends")
 }
 
 // A run of a workflow carries the states of its steps.

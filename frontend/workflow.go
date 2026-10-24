@@ -212,7 +212,7 @@ func (h *Handlers) workflowNew(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	p := h.page(r, "Add workflow")
-	p.Crumbs = view.Crumbs("Workflows", "/workflows", "New")
+	p.Crumbs = view.Crumbs("Workflows", "/workflows", "Add")
 	p.Step = view.StepWorkflows
 	p.StepWorkflows = p.SideWorkflows
 	p.StepFolders = h.stepFolders(r)
@@ -324,7 +324,7 @@ func (h *Handlers) workflowRunPrompt(r *http.Request, p *view.Page, run *model.W
 	if place != model.Default {
 		where = place + "/"
 	}
-	prompt := view.PromptOfWorkflowRun(run.ID, place, where)
+	prompt := view.PromptOfWorkflowRun(run.ID, place, where, run.State == model.StateRunning)
 	prompt.Threads = threads
 	return prompt
 }

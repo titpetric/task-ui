@@ -3,7 +3,7 @@
 {{- $nested := index .Nested $ws.Folder }}{{ $default := eq $ws.Folder "_" }}
 <div class="page-head">
 	<div>
-		<h2>Configure {{ $ws.Folder }}</h2>
+		<h2>Workspace settings <span class="badge">{{ $ws.Folder }}</span></h2>
 		<p>The workspace's settings, its home project, its projects and the SSH keys its runs get. The workspace is a directory of projects side by side; its folder stays as added.{{ if $default }} The default workspace is the root, and it stays.{{ end }}</p>
 	</div>
 	<div class="actions">

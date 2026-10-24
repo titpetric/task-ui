@@ -8,7 +8,7 @@ lists the steps in the order you set up an instance, numbered, and
 each step's page ends with a footer: **Previous** on the left,
 **Next** on the right, and the steps between them as links, with the
 current one in bold. A step's sub-pages, such as a key's grants, a
-user's profile or a project's configure page, end with the footer of
+user's profile or a project's settings page, end with the footer of
 their step. The trail lists only the steps you may open.
 
 1. [Instance](#instance): what the server runs with.
@@ -153,7 +153,7 @@ The page opens on one table, a row for the instance and one per
 workspace:
 
 - **Scope**: the instance, or the workspace with its projects under its
-  name. The name links to the workspace's configure page.
+  name. The name links to the workspace's settings page.
 - **Secrets**: how many the workspace stores, linked to
   `/settings/secrets?workspace=<name>`. For the instance, the
   integrations.
@@ -166,7 +166,7 @@ workspace:
   keys linked to them, with **Generate** and **Upload**.
 
 The only key task-ui makes on its own is the instance's encryption key,
-at start when it's missing. The workspace's configure page has its SSH
+at start when it's missing. The workspace's settings page has its SSH
 keys in its [Keys](workspaces.md#keys) section.
 
 Every key lives in one folder, the key folder, `TASK_UI_SSH_DIR`,
@@ -611,7 +611,7 @@ get as `HOME`. **Add workspace** makes one under the folder you name,
 with its home project cloned from a repository URL when the form has one,
 **Move up** and **Move down** order them, and **Delete** deletes one
 with the projects inside it. **Workspace settings** opens a workspace's
-configure page: its title, description and **Recursive**, the toggle a
+settings page: its title, description and **Recursive**, the toggle a
 project has, its **Home project**, with **Change**, **Add** or
 **Replace**, and **Remove**, its **Projects**, in the table of the
 Projects page, and its **Keys**, the SSH keys of its runs,
@@ -628,8 +628,12 @@ workspace.
 
 ## Projects
 
-The folders under the root, with their sources, where they came from, and
-the space each takes: its files, and the git history beside them.
+The folders under the root, a block per workspace: the folders at the
+top of the root first, then each workspace's projects, with their
+sources, where they came from, and the space each takes: its files, and
+the git history beside them. A workspace's block has its own **Add
+project**, which clones into it; the Origin column holds a long remote
+on one line, whole on a hover.
 
 ![Projects](../assets/projects-dark.png)
 
@@ -638,11 +642,13 @@ and the folder appears in the sidebar, or the page shows git's output and
 keeps nothing. git reaches private repositories with the instance SSH
 keys.
 
-**Remove checkout** in a checkout's `[...]` menu, in this list, on its
-configure page and on its folder's page, deletes the folder, its files
-and its configuration, for a user with Allow Deletes on Projects,
-`project/delete`. It names the folder and the remote to clone it again
-from before it does.
+A row's `[...]` menu opens the folder, its **Project settings**, and
+**Pull now**, which runs `@git:pull` there, on a checkout with the `git`
+skill for a user who may run the folder's jobs. **Remove checkout**, last
+in the menu, in this list, on the settings page and on the folder's
+page, deletes the folder, its files and its configuration, for a user
+with Allow Deletes on Projects, `project/delete`. It names the folder and
+the remote to clone it again from before it does.
 
 **Project settings** on a folder sets what the instance adds to it; its files
 stay as they are:
@@ -678,7 +684,7 @@ The API sets three more on a project: `commands`, the program a kind of
 job runs with (`make: gmake`), and `job_allow` and `job_hours`, who may
 run and when, per job.
 
-![Configure a folder](../assets/project-edit-dark.png)
+![Project settings](../assets/project-edit-dark.png)
 
 ## Env files
 

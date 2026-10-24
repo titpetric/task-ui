@@ -40,7 +40,7 @@ var setupOrder = []struct {
 }{
 	{SetupStep{Name: StepInstance, Href: "/settings/instance", Icon: "settings", Desc: "The server's settings, from the environment."}, (*Page).CanSettings},
 	{SetupStep{Name: StepRetention, Href: "/settings/retention", Icon: "clock", Desc: "How long recordings, artifact history and read logs stay."}, (*Page).CanSettings},
-	{SetupStep{Name: StepKeys, Href: "/settings/keys", Icon: "key", Desc: "The encryption key of each workspace, which stores its secrets, and the SSH keys that connect runs and git to hosts."}, func(p *Page) bool { return p.Can("key/view") }},
+	{SetupStep{Name: StepKeys, Href: "/settings/keys", Icon: "key", Desc: "The encryption key that stores the secrets, and the SSH keys that connect runs and git to hosts."}, func(p *Page) bool { return p.Can("key/view") }},
 	{SetupStep{Name: StepSecrets, Href: "/settings/secrets", Icon: "secret", Desc: "Run environment variables, per workspace or project."}, func(p *Page) bool { return p.Can("secret/view") }},
 	{SetupStep{Name: StepIntegrations, Href: "/settings/integrations", Icon: "plug", Desc: "Claude Code and Beszel, and their tokens."}, func(p *Page) bool { return p.Can("integration/view") }},
 	{SetupStep{Name: StepUsers, Href: "/settings/users", Icon: "users", Desc: "Who signs in, their role and folders."}, func(p *Page) bool { return p.Can("user/view") }},

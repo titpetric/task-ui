@@ -177,6 +177,12 @@ type Page struct {
 	// KeyWorkspaces are the rows of the keys page, one per workspace.
 	KeyWorkspaces []KeyWorkspace
 	Entries       []folder.Entry
+	// ProjectGroups are the blocks of the Projects page, a workspace
+	// each with its entries; Pulls are the pull jobs of the entries that
+	// have one the user may run, by entry ID, for Pull now in a row's
+	// menu.
+	ProjectGroups []ProjectGroup
+	Pulls         map[string]*folder.Job
 	Projects      []model.Project
 	// Project is the row a configure page edits, nil for a fresh folder.
 	Project *model.Project

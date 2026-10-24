@@ -6,7 +6,7 @@
 	<div class="page-head">
 		<div>
 			<h2>{{ $w.Name }}</h2>
-			<p class="faint"><span class="state"><i class="dot {{ $r.State }}"></i>{{ $r.State }}</span>{{ if $r.Message }} {{ $r.Message }},{{ end }} started <span title="{{ stamp $r.StartedAt }}">{{ ago $r.StartedAt }}</span> by {{ $r.UserName }}{{ if $r.FinishedAt }}, took {{ duration $r.Took }}{{ end }}</p>
+			<p class="faint"><span class="state"><i class="dot {{ $r.State }}"></i>{{ $r.State }}</span>{{ with $r.Message }}: {{ . }};{{ end }} started <span title="{{ stamp $r.StartedAt }}">{{ ago $r.StartedAt }}</span> by {{ $r.UserName }}{{ if $r.FinishedAt }}, took {{ duration $r.Took }}{{ end }}</p>
 		</div>
 	</div>
 	{{- template "wfthread" (list $ $r) }}

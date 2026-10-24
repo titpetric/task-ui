@@ -34,7 +34,7 @@ func TestProjectEdit(t *testing.T) {
 	f := newFixture(t)
 
 	empty := f.page(t, asAdmin, "/settings/projects/infra")
-	assert.Contains(t, empty, "<h2>Configure infra</h2>")
+	assert.Contains(t, empty, `<h2>Project settings <span class="badge">infra</span></h2>`)
 	assert.Contains(t, empty, `data-api="/api/projects/infra"`)
 	// Who can run is a box a role and a user; none checked is everyone.
 	assert.Contains(t, empty, `<input type="checkbox" name="allow" value="runner" data-type="set">`)

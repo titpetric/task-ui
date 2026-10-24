@@ -157,7 +157,7 @@ in the sidebar's order.
 - Any number of workspaces may take the same repository as their home
   project, each under its own folder: two teams can start from the same
   tooling and clone different projects beside it.
-- **Workspace settings** opens the workspace's configure page. Its
+- **Workspace settings** opens the workspace's settings page. Its
   **Settings** change the title, description and **Recursive**, which,
   as a project's does, lists the folders inside it as deep as they go,
   or, off, the workspace and its top-level folders alone; the folder
@@ -270,7 +270,7 @@ either pull fails, the run fails with it.
 Every workspace has SSH keys of its own, in the key folder,
 `TASK_UI_SSH_DIR`, out of its directory, where a `git add -A` would
 publish them: `workspace_<folder>_<name>_<algorithm>.key` and `.pub`,
-the files `0600`. The **Keys** section of a workspace's configure page,
+the files `0600`. The **Keys** section of a workspace's settings page,
 `/settings/workspaces/malta`, lists them in the keys table of the Keys
 page, name, algorithm, size, public key with its copy button, purpose
 and the **⋯** menu, never a private key. With none, it says "No keys
@@ -302,7 +302,7 @@ A key has one use (see [One key, one use](settings.md#one-key-one-use)):
 an upload of key material the key folder holds already, under any name,
 answers `409`.
 
-![A workspace's configure page: its home project, keys, and Export](../assets/workspace-edit-dark.png)
+![A workspace's settings page: its home project, keys, and Export](../assets/workspace-edit-dark.png)
 
 A run gets the instance keys linked to it (see
 [Settings](settings.md#keys)), then its workspace's SSH keys, and the
@@ -377,7 +377,7 @@ or another workspace's keys. Schedules, workflows, runs and artifacts
 stay on the instance, as do the integrations. The bundle of `_` leaves
 out the named workspaces and `internal`.
 
-**Export** at the top right of a workspace's configure page opens a
+**Export** at the top right of a workspace's settings page opens a
 dialog for the passphrase, typed twice, or made by **Generate**: 24
 random characters, shown once with a copy button. Store it before you
 export, since nothing recovers it. **Export** in the dialog then

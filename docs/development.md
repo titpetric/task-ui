@@ -99,8 +99,9 @@ follow one set of rules:
   of what can come back: an SSH key, whose files stay in the key folder;
   "Remove checkout", which the remote can clone again; a step of a
   workflow. The confirm button repeats the item's label. A link to a
-  configure page reads "<Kind> settings": Project settings, Workspace
-  settings.
+  settings page reads "<Kind> settings", Project settings, Workspace
+  settings, and the page's title repeats it, with the folder as a
+  badge.
 - **Empty lists**: a list with no rows draws no table. Its block head
   holds one line, "No keys added.", between the heading and the buttons
   that add to it, from `blockhead`:

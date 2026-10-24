@@ -49,9 +49,9 @@ func PromptOfArea(area string) *Prompt {
 	return &Prompt{API: "/api/prompts", Area: area, Folder: "_", Where: "the root", Place: "_", Open: true}
 }
 
-// PromptOfWorkflowRun returns the box of the workflow prompt's thread, asked in place once the steps end.
-func PromptOfWorkflowRun(runID, place, where string) *Prompt {
-	return &Prompt{WorkflowRun: runID, Watch: true, Open: true, Where: where, Place: place}
+// PromptOfWorkflowRun returns the box of the workflow prompt's threads, asked in place, open while running and folded after.
+func PromptOfWorkflowRun(runID, place, where string, running bool) *Prompt {
+	return &Prompt{WorkflowRun: runID, Watch: true, Open: running, Where: where, Place: place}
 }
 
 // PromptAbout returns the prompt box of a run's page, asked in where, the run's folder and directory.
