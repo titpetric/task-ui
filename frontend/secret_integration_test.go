@@ -137,8 +137,9 @@ func TestSecrets_Reads(t *testing.T) {
 	assert.Equal(t, http.StatusNotFound, f.get(t, asAdmin, "/settings/secrets/"+model.NewID()+"/reads").Status)
 	assert.Equal(t, http.StatusForbidden, f.get(t, asOps, "/settings/secrets/"+id+"/reads").Status)
 
+	// A run's page says nothing of its environment, to an admin too.
 	run := f.page(t, asAdmin, "/runs/"+last.ID)
-	assert.Contains(t, run, `<tr><th>Secrets</th><td><code>DB_PASS</code> <span class="dim">in its environment, names only</span></td></tr>`)
+	assert.NotContains(t, run, "<th>Secrets</th>")
+	assert.NotContains(t, run, "DB_PASS")
 	assert.NotContains(t, run, "hunter2secret")
-	assert.NotContains(t, f.page(t, asOps, "/runs/"+last.ID), "<th>Secrets</th>")
 }

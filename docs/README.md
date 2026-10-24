@@ -78,6 +78,8 @@ Beside the guide:
 - [Running the server](running.md): the Docker image, the environment
   variables, the password file and the server commands;
 - [API](api.md): the JSON endpoints and the MCP server;
+- [Security](security.md): the threat model, identity and roles, keys,
+  secrets, terminals and agents, with the findings of a review;
 - [Development](development.md): the packages, the lint and test bar, and
   the screenshots;
 - [Sitemap](sitemap.md): every page, its lists, actions, forms and empty

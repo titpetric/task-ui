@@ -161,8 +161,7 @@ type Page struct {
 	// secret and the last of them, by secret ID, on the secrets page.
 	SecretReadCounts map[string]int
 	SecretLastReads  map[string]model.SecretRead
-	// SecretReads are a secret's read log on its page, and on a run's
-	// page the secrets the run got, by name.
+	// SecretReads are a secret's read log on its page.
 	SecretReads []model.SecretRead
 	// KeyWorkspaces are the rows of the keys page, one per workspace.
 	KeyWorkspaces []KeyWorkspace
