@@ -14,7 +14,7 @@ their step. The trail lists only the steps you may open.
 1. [Instance](#instance): what the server runs with.
 2. [Data retention](#data-retention): how long the instance keeps what it
    records.
-3. [Keys](#keys): the encryption keys and the SSH keys.
+3. [Keys](#keys): the encryption key and the SSH keys.
 4. [Secrets](#secrets), on the instance's encryption key.
 5. [Integrations](#integrations): Claude Code and Beszel.
 6. [Users](#users): who may sign in.
@@ -41,14 +41,14 @@ does:
   starts with, and, for an admin, the server's variables by name.
 - **Paths**: the workspace folder, discovery, the data folder and how
   the host sees it, the key folder and the compose project.
+- **Integrations**: whether the Beszel integration lists the
+  Inventory's hosts.
 - **Keys**: the instance's encryption key and the git key, in the
   columns of the Keys page: name, algorithm, size, public key with its
   copy button, purpose, `encryption` or `git + ssh`. The **⋯** menu of
   a key shows its fingerprint and dates, copies its public key,
   downloads it as `<name>.pub` and rotates the key (see [Keys](#keys));
   nothing shows the private key.
-- **Integrations**: whether the Beszel integration lists the
-  Inventory's hosts.
 
 The environment sets most of these: change one on the server, then
 restart task-ui. The backlog length and the parent environment are the
@@ -157,9 +157,10 @@ workspace:
 - **Secrets**: how many the workspace stores, linked to
   `/settings/secrets?workspace=<name>`. For the instance, the
   integrations.
-- **Encryption key**: for the instance, **set**, with **Rotate Key** and
-  the key's fingerprint in small type; for a workspace, the instance's,
-  which encrypts its secrets too.
+- **Encryption key**: for the instance, **set**, a link to the key's
+  row in Every key, whose **⋯** menu rotates it, and the key's
+  fingerprint in small type; for a workspace, the instance's, which
+  encrypts its secrets too.
 - **SSH keys**: how many, and their names, each linked to its edit
   form. A workspace with none says its runs get only the instance SSH
   keys linked to them, with **Generate** and **Upload**.
@@ -227,8 +228,8 @@ and with it gone the workspaces' secrets still open.
 
 ### Rotate Key
 
-**Rotate Key**, in the **⋯** menu of a key on the Instance page and
-beside the instance's encryption key here, makes a new key of the same
+**Rotate Key**, in the **⋯** menu of a key on the Instance page and in
+Every key here, makes a new key of the same
 algorithm and size under the key's name and moves the previous one to
 `backup/<name>.key` and `.pub` in the key folder, `0600` in a `0700`
 folder. The key's row records the backup's fingerprint and when it
@@ -575,7 +576,7 @@ The application's permissions gate what the sections do not:
 | Permission   | Rule    | Gates |
 |--------------|---------|-------|
 | Run Jobs     | `run`   | starting a folder's jobs and ending their runs, from the pages, the API and `run_job`; a workflow takes it for every step, and a schedule for its job |
-| Enter Shell  | `shell` | **Enter Shell**, the job `@shell`, an interactive `bash -l`, and **Enter Claude**, the job `@claude`, which also takes a Claude token |
+| Enter Shell  | `shell` | **Enter Shell**, the job `@shell`, an interactive `bash -l`, and **Enter Claude**, the job `@claude`, which also takes a Claude token; task-ui checks it besides their allow list, which names the admin role and no folder rule widens, so admins alone start them |
 | Run on Hosts | `hosts` | the command form of [Inventory](inventory.md), which runs a command on its hosts over ssh, and its **Run and summarize** |
 | Allow interactive mode | `input` | **Take input** in the run window: typing into a running run of a job that takes no input, to answer a prompt it waits on (see [Runs](runs.md#the-run-window)) |
 

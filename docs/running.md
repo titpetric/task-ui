@@ -71,7 +71,8 @@ The environment sets the whole configuration:
 The flags `-l`, `--workspace` and `--data` override the matching
 variables; `-v` prints the build. `TASK_UI_ROOT` and `TASK_UI_HTPASSWD`
 set stop task-ui at start, with where the folders and the password file
-go.
+go. `/healthz` answers `ok` to anyone, for a proxy or a compose
+health check.
 
 ## Users and roles
 
@@ -108,6 +109,7 @@ task-ui user mcp alice on                    # MCP agent user; off ends alice's 
 task-ui user agent alice on                  # Run instance Claude when mentioned, with MCP
 task-ui channel --url https://task.example.com --token-file task.token  # pushes alice's notes into a Claude Code session
 task-ui cleanup --dry-run                    # what the Data retention rules would remove; without the flag, removes it
+task-ui get-secret GITHUB_TOKEN              # in a run: prints a secret of the run's folder, for a script that reads it where it needs it
 task-ui -v                                   # the version and the commit
 ```
 

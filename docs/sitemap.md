@@ -20,6 +20,8 @@ row's **⋯** menu; "Delete" and "Remove" are in red, last.
 | Edit workflow | `/workflows/<id>/edit` | the steps | `[...]`: Open, Delete | a step's `[...]`: Move up, Move down, Duplicate, Remove | the step editor, Save | none |
 | Workflow run | `/workflows/<id>/runs/<run>` | the steps of a run, each its run | none | **View** on a step | none | none |
 | Artifacts | `/artifacts` | Space, Files of the tree, History | `[...]`: Delete all | Files and History: `[...]`: open, download, copy the link, Delete | the History filter | "This folder is empty.", "No artifacts yet." |
+| Artifact file | `/artifacts/files/<path>?version=` | the file itself, inline; `?download` saves it; a directory goes to its listing | none | none | none | none |
+| Artifact archive | `/artifacts.tgz`, `/artifacts/<directory>.tgz` | the tree, or a directory of it, as a `.tgz` of the files you see | none | none | none | none |
 | Scheduled | `/schedules` | every schedule | none | `[...]`: Enable or Disable, Delete | **Add schedule**: folder, job, args, expression, Run as | "No schedules yet." |
 | Notes | `/notes` | notes and their replies | none | a note's `[...]`: Edit, Open its run, Delete | the note box, **Post note** | "No notes yet." |
 | Inventory | `/inventory` | hosts by cluster, Run on the hosts | none | the ssh login to copy inline, `[...]`: open, copy ssh | Run on the hosts | "Beszel isn't monitoring any hosts." |
@@ -40,7 +42,7 @@ row's **⋯** menu; "Delete" and "Remove" are in red, last.
 | Page | Path | Lists | Head, top right | Row actions | Forms | Empty |
 |------|------|-------|-----------------|-------------|-------|-------|
 | Settings | `/settings` | the setup steps in order | none | **Open** | none | none |
-| Instance | `/settings/instance` | General, Runs, Parent environment, Paths, Keys, Integrations | none | Keys: the keys table; Parent environment: the server's variables by name, forwarded or not, sensitive flagged, for an admin | the backlog length, the parent environment's None, Auto or All | a missing key's Generate and Upload |
+| Instance | `/settings/instance` | General, Runs, Parent environment, Paths, Integrations, Keys | none | Keys: the keys table; Parent environment: the server's variables by name, forwarded or not, sensitive flagged, for an admin | the backlog length, the parent environment's None, Auto or All | a missing key's Generate and Upload |
 | Data retention | `/settings/retention` | the rules and what each keeps | Clean up now | none | the rules, Save | none |
 | Keys | `/settings/keys` | Scopes, Every key, Who gets which key | **Upload key**, **Generate key** | the keys table | none | "No keys added." |
 | Upload key, Generate key | `/settings/keys/upload`, `/generate` | none | none | none | the key, Cancel and Upload or Generate | none |

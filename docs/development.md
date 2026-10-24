@@ -146,7 +146,8 @@ domains, the domains to `model` and `storage`, `model` to nothing of ours.
 | `hours`     | the office hours `Rules` a folder or job may run in                          |
 | `recording` | the asciicast files                                                          |
 | `access`    | who may do what: the password file, `Sessions`, tokens, the `Guard`          |
-| `secret`    | the secrets, encrypted at rest per workspace, through each one's `Vault`     |
+| `secret`    | the secrets, encrypted at rest with the instance's encryption key through its `Vault`, their scopes and their read log |
+| `keystore`  | every key of the instance in one flat folder, what each is for and whose runs get it |
 | `envfile`   | the env files users fill for a folder, written in it before each run          |
 | `sshkey`, `git`, `dotenv` | the key pairs, the checkouts, the dotenv lines it writes      |
 | `permission` | what a user may do, from `config/permissions.yml` and the policies of the user and the role |
@@ -165,6 +166,8 @@ domains, the domains to `model` and `storage`, `model` to nothing of ours.
 | `sshagent`  | an ssh agent on a socket of its own, serving keys from memory to a run       |
 | `sshprobe`  | who task-ui signs in to a host as over ssh                                   |
 | `hostrun`   | the runs of `@host:<host>`, a command on a host of the inventory             |
+| `hostinfo`  | a host's filesystems and its containers' sizes over its ssh login, for the expanded row of the inventory |
+| `hostpath`  | the paths of the container task-ui runs in as its docker host sees them, for a run's `docker run -v` |
 | `skills`    | asks atkins what runs in a directory: its pipeline and the skills that apply |
 | `tooling`   | asks atkins what the tree has been running, every command with its time, the `Report` behind the panel on the runs page |
 | `markdown`  | markdown rendered as HTML                                                    |

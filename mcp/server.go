@@ -137,12 +137,14 @@ func instructions() string {
 // toolGuide tells a client what the tools are for.
 const toolGuide = "task-ui runs the jobs of folders (atkins, Taskfile, make, npm, scripts) and workflows, a chain of jobs, " +
 	"as the user of the token. list_jobs and list_workflows show what there is, run_job and run_workflow start one " +
-	"and can wait for the outcome, list_runs and get_run show how runs went and their output. " +
+	"and can wait for the outcome, list_runs, get_run and list_workflow_runs show how runs went and their output, " +
+	"get_workflow, create_workflow and update_workflow read, make and change a workflow and its steps. " +
 	"list_notes and note_comment read and answer the notes that name you, each an instruction to you to report on, " +
 	"post_note leaves one for whoever it names, " +
 	"list_artifacts, read_artifact and write_artifact browse, read and write the artifact tree, the files runs leave, " +
-	"and ask_prompt asks Claude in a folder and can wait for the answer. " +
-	"Call whoami to see what you may do: your role, your permissions and the folders you see."
+	"ask_prompt asks Claude in a folder and can wait for the answer, " +
+	"and get_ssh_key hands an SSH key linked to you to an age recipient of yours for the length of a task. " +
+	"Call whoami to see what you may do: your role, your permissions, the keys you may read and the folders you see."
 
 // ServeHTTP answers one JSON-RPC message per POST, in JSON.
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
