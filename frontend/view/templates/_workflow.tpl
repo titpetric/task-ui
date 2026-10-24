@@ -234,10 +234,14 @@
 </div>
 {{- end }}{{ end }}
 
-{{/* wfexcerpt takes a workflow run: its thread on one line each, the
-     input over Claude's reply, cut short, for a list of runs; task-ui.js
-     fills data-answer in once a run ends. */}}
-{{- define "wfexcerpt" }}<div class="wf-lines">
-{{- with .Question }}<span class="wf-q" title="The input">{{ excerpt . 120 }}</span>{{ end }}
-<span class="wf-a{{ if not .Answer }} faint{{ end }}" data-answer>{{ if .Answer }}{{ excerpt .Answer 200 }}{{ else if .Running }}{{ if .Agent }}Answer to come.{{ end }}{{ else if .Agent }}No answer.{{ end }}</span>
-</div>{{- end }}
+{{/* wffold takes a workflow run: the chevron that shows its answer in
+     the row under it, for a run with an answer; a run without one keeps
+     the place empty, its state on the dot beside it saying how it ended. */}}
+{{- define "wffold" }}{{ if .Answer }}<button type="button" class="btn-icon wf-fold" data-answer-toggle aria-expanded="false" aria-controls="wf-answer-{{ .ID }}" title="Show the answer" aria-label="Show the answer"><svg class="ic chev"><use href="#i-chev"/></svg></button>{{ else }}<span class="wf-fold" aria-hidden="true"></span>{{ end }}{{ end }}
+
+{{/* wfanswer takes (list $ run columns): the folded row under a run with
+     Claude's answer in full, in markdown, as wide as the table; none for
+     a run without an answer. */}}
+{{- define "wfanswer" }}{{ $p := index . 0 }}{{ $cols := index . 2 }}{{ with index . 1 }}{{ if .Answer }}
+<tr class="wf-answer-row" id="wf-answer-{{ .ID }}" data-answer-of="{{ .ID }}" hidden><td colspan="{{ $cols }}"><div class="note-body">{{ $p.Message .Answer }}</div></td></tr>
+{{- end }}{{ end }}{{ end }}

@@ -2,6 +2,7 @@ package view_test
 
 import (
 	"bytes"
+	"strings"
 	"testing"
 	"time"
 
@@ -123,21 +124,37 @@ func threadRun(answer string) view.WorkflowRun {
 	}
 }
 
-// The Workflows page lists the recent runs, each with its input and
-// its reply cut to a line, linked to the run; with none, one line.
+// The Workflows page lists the recent runs, each a line with its state
+// on the dot by the link to the run, and Claude's answer in full, in
+// markdown with raw HTML shown as text, folded under a chevron; a run
+// without an answer has no chevron, and the input stays out.
 func TestView_RenderWorkflowsRecentRuns(t *testing.T) {
 	t.Parallel()
 	v, err := view.New()
 	assert.NoError(t, err)
 	p := admin(t)
-	p.WorkflowRuns = []view.WorkflowRun{threadRun("## Skip watering\n\nToday is **rainy**, 1.8 mm.")}
+	long := strings.Repeat("Rain all week. ", 40)
+	failed := threadRun("")
+	failed.ID, failed.State = "wr2", model.StateFailed
+	running := threadRun("")
+	running.ID, running.State, running.FinishedAt = "wr3", model.StateRunning, nil
+	p.WorkflowRuns = []view.WorkflowRun{threadRun("## Skip watering\n\nToday is **rainy**.\n\n<script>alert(1)</script>\n\n" + long), failed, running}
 	var buf bytes.Buffer
 	assert.NoError(t, v.Render(&buf, "workflows", p))
 	out := buf.String()
 	assert.Contains(t, out, "Recent runs")
-	assert.Contains(t, out, `<a href="/workflows/w1/runs/wr1">Porec watering</a>`)
-	assert.Contains(t, out, `<span class="wf-q" title="The input">I didn&#39;t water yesterday</span>`)
-	assert.Contains(t, out, ">Skip watering Today is rainy, 1.8 mm.</span>")
+	assert.Contains(t, out, `<a href="/workflows/w1/runs/wr1" title="ok"><i class="dot ok"></i>Porec watering</a>`)
+	assert.Contains(t, out, `<i class="dot failed"></i>`)
+	assert.Contains(t, out, `<i class="dot running"></i>`)
+	assert.NotContains(t, out, "I didn&#39;t water yesterday", "no input")
+	assert.Contains(t, out, `<tr class="wf-answer-row" id="wf-answer-wr1" data-answer-of="wr1" hidden><td colspan="3">`)
+	assert.Contains(t, out, "<strong>rainy</strong>")
+	assert.Contains(t, out, strings.TrimSpace(long), "the answer in full")
+	assert.NotContains(t, out, "<script>alert(1)</script>")
+	assert.Contains(t, out, "&lt;script&gt;")
+	assert.Equal(t, 1, strings.Count(out, "data-answer-toggle"), "a chevron for the run with an answer alone")
+	assert.Contains(t, out, `aria-controls="wf-answer-wr1"`)
+	assert.NotContains(t, out, `wf-answer-wr2`)
 	assert.NotContains(t, out, "No workflow has run yet.")
 
 	p.WorkflowRuns = nil
@@ -145,7 +162,30 @@ func TestView_RenderWorkflowsRecentRuns(t *testing.T) {
 	assert.NoError(t, v.Render(&buf, "workflows", p))
 	out = buf.String()
 	assert.Contains(t, out, `<p class="empty-line">No workflow has run yet.</p>`)
-	assert.NotContains(t, out, "Input and answer")
+	assert.NotContains(t, out, "wf-answer-row")
+}
+
+// A workflow's page lists its runs as Workflows does: the state on the
+// dot by the run's link, how it ended, and Claude's reply folded under it.
+func TestView_RenderWorkflowRuns(t *testing.T) {
+	t.Parallel()
+	v, err := view.New()
+	assert.NoError(t, err)
+	p := admin(t)
+	p.Workflow = &view.Workflow{Workflow: model.Workflow{ID: "w1", Name: "Porec watering"}}
+	failed := threadRun("")
+	failed.ID, failed.State, failed.Message = "wr2", model.StateFailed, "step 2 failed"
+	p.WorkflowRuns = []view.WorkflowRun{threadRun("Skip **watering**."), failed}
+	var buf bytes.Buffer
+	assert.NoError(t, v.Render(&buf, "workflow", p))
+	out := buf.String()
+	assert.Contains(t, out, `<i class="dot ok" title="ok"></i>`)
+	assert.Contains(t, out, `<i class="dot failed" title="failed"></i>`)
+	assert.Contains(t, out, `<small class="faint wf-desc">step 2 failed</small>`)
+	assert.Contains(t, out, `data-answer-of="wr1" hidden><td colspan="4">`)
+	assert.Contains(t, out, "Skip <strong>watering</strong>.")
+	assert.Equal(t, 1, strings.Count(out, "data-answer-toggle"))
+	assert.NotContains(t, out, "I didn&#39;t water yesterday", "no input")
 }
 
 // A run's page is its thread: the input under who started it and the

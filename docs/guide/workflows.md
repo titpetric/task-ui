@@ -145,9 +145,12 @@ prompt: Claude also gets the last 3 answers of this workflow.
 
 **Workflows** lists the workflows you may see, each with its chain, its
 last run and **Run**. **Recent runs** under it lists the newest 15 runs
-of those workflows, each with the workflow, who started it, when and how
-it ended, and its thread on two lines: the input over the start of the
-answer. A run links to its page. A run shows when you see every folder
+of those workflows, each with the workflow, who started it and when. The
+dot by the workflow's name says how the run went: green for ok, red for
+failed or killed, grey for stopped, pulsing while it runs; the name links
+to the run's page. A run with an answer has a chevron before it that
+unfolds Claude's answer in full, in markdown, in the row under it; a run
+of commands alone has no answer, only its dot. A run shows when you see every folder
 its steps ran in.
 
 ## The workflow page
@@ -159,9 +162,10 @@ its steps ran in.
   follows that run live: each step's state and terminal.
 - **Runs**: the workflow's activity, its runs of the last thirty days by
   day and of the last 24 hours by hour, and the duration of its latest thirty (see
-  [Runs](runs.md#activity)), then every run of the workflow, newest first, with who started it,
-  how it ended, its input and the start of its answer, and each step's
-  run, which opens like any other run.
+  [Runs](runs.md#activity)), then every run of the workflow, newest first: when it started,
+  linked to its page, with the dot of how it ended and the message of a
+  failure, who started it and each step's run, which opens like any other run.
+  A run with an answer folds it under a chevron, as on Workflows.
   **View** opens that run in a window, its thread over its steps, each
   step with its state and the screen it ended on; Ctrl and a click open
   it as a page.

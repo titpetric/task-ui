@@ -44,22 +44,23 @@
 	{{- end }}
 </section>
 
-{{- /* The newest runs of the workflows the user sees, each a thread on
-     one line: what it started with and its reply, linked to the run. */}}
+{{- /* The newest runs of the workflows the user sees, a line each: its
+     state on the dot by the workflow's name, linked to the run, and the
+     chevron that unfolds Claude's answer under the line. */}}
 <section class="block">
 	{{- template "blockhead" (head "Recent runs" "" (and (not .WorkflowRuns) "No workflow has run yet.")) }}
 	{{- with .WorkflowRuns }}
 	<div class="table-wrap">
-	<table class="table cards">
-		<thead><tr><th>Run</th><th>By</th><th>Result</th><th>Input and answer</th></tr></thead>
+	<table class="table cards wf-runs">
+		<thead><tr><th>Run</th><th>By</th><th>Started</th></tr></thead>
 		<tbody>
 		{{- range . }}
-			<tr>
-				<td class="key"><a href="/workflows/{{ .WorkflowID }}/runs/{{ .ID }}">{{ .Name }}</a><small class="faint wf-desc" title="{{ stamp .StartedAt }}">{{ ago .StartedAt }}</small></td>
+			<tr data-run-id="{{ .ID }}">
+				<td class="key">{{ template "wffold" . }}<a href="/workflows/{{ .WorkflowID }}/runs/{{ .ID }}" title="{{ .State }}{{ with .Message }}, {{ . }}{{ end }}"><i class="dot {{ .State }}"></i>{{ .Name }}</a></td>
 				<td data-label="By">{{ template "user" (list $ .UserName) }}</td>
-				<td class="nowrap" data-label="Result"><span class="state"><i class="dot {{ .State }}"></i>{{ .State }}</span></td>
-				<td class="wf-excerpt"{{ if or .Question .Agent }} data-label="Input and answer"{{ end }}>{{ template "wfexcerpt" . }}</td>
+				<td class="nowrap" data-label="Started" title="{{ stamp .StartedAt }}">{{ ago .StartedAt }}</td>
 			</tr>
+			{{- template "wfanswer" (list $ . 3) }}
 		{{- end }}
 		</tbody>
 	</table>
