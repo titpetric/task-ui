@@ -5,6 +5,8 @@ import (
 	"log/slog"
 	"path/filepath"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/model"
@@ -26,7 +28,15 @@ type Catalogue struct {
 	// Skills asks atkins for the skills of a folder's directory, for
 	// every folder the catalogue lists.
 	Skills *skills.Prober
+
+	mu      sync.Mutex
+	every   []*folder.Folder
+	everyAt time.Time
 }
+
+// everyTTL is how long the workflow editor's listing of every folder
+// with a job lasts: the walk goes into every checkout.
+const everyTTL = 30 * time.Second
 
 // NewCatalogue returns a catalogue over the root and the project rows.
 func NewCatalogue(root string, discover bool, projects *storage.ProjectStorage) *Catalogue {
@@ -35,7 +45,12 @@ func NewCatalogue(root string, discover bool, projects *storage.ProjectStorage) 
 
 // discovery builds the discovery of the moment.
 func (c *Catalogue) discovery() *folder.Discovery {
-	d := &folder.Discovery{Root: c.Root, Discover: c.Discover, Probe: c.Skills}
+	return c.discover(false)
+}
+
+// discover builds the discovery of the moment, listing every folder with a job for every.
+func (c *Catalogue) discover(every bool) *folder.Discovery {
+	d := &folder.Discovery{Root: c.Root, Discover: c.Discover, Probe: c.Skills, Every: every}
 	if c.Projects != nil {
 		projects, err := c.Projects.List(context.Background())
 		if err != nil {
@@ -92,4 +107,42 @@ func (c *Catalogue) Home(dir string) string {
 		return ""
 	}
 	return filepath.Join(root, filepath.FromSlash(home))
+}
+
+// Every returns each folder with a job, whatever the settings hide, cached for everyTTL.
+func (c *Catalogue) Every() []*folder.Folder {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.every == nil || time.Since(c.everyAt) > everyTTL {
+		c.every, c.everyAt = c.discover(true).List(), time.Now()
+	}
+	return c.every
+}
+
+// Steps returns the catalogue of workflow steps, which lists and finds by Every too.
+func (c *Catalogue) Steps() folder.Catalogue {
+	return steps{c}
+}
+
+// steps is the catalogue of a workflow's steps: the workflow editor
+// picks from Every, and the workflow runner finds a folder the
+// workspace and project settings hide.
+type steps struct{ c *Catalogue }
+
+// List returns every folder with a job.
+func (s steps) List() []*folder.Folder {
+	return s.c.Every()
+}
+
+// Find returns a folder of the catalogue, else one of Every, or nil.
+func (s steps) Find(id string) *folder.Folder {
+	if f := s.c.Find(id); f != nil {
+		return f
+	}
+	for _, f := range s.c.Every() {
+		if f.ID == id {
+			return f
+		}
+	}
+	return nil
 }

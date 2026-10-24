@@ -117,7 +117,9 @@ runs.
 A workflow is a named chain of steps, each of a kind: `job`, a job of
 a folder, `workflow`, another workflow, `prompt`, a prompt to Claude
 with the output of the steps before it, or `summary`, Claude's summary
-of the steps before it. The steps run one after another until one
+of the steps before it. A step's folder is any folder with a job, also
+one the sidebar leaves out: a checkout `.gitignore` ignores, a folder
+below one with Recursive off. The steps run one after another until one
 fails; a summary runs after a failure too. A run skips a step that is
 off. The last answer of a prompt or a summary is the run's answer.
 Running one takes the right to run every step, and `prompt/edit` for a

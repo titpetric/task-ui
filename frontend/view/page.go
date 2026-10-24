@@ -40,6 +40,9 @@ type Page struct {
 	// SideFolders are the folders the sidebar lists: Folders less the
 	// projects set not to show there.
 	SideFolders []*folder.Folder
+	// StepFolders are the folders the workflow editor's steps pick, every
+	// folder with a job the user sees, whatever the settings hide.
+	StepFolders []*folder.Folder
 	// Workspaces are the folders of the workspaces, each with its rank,
 	// which the sidebar lists in that order, after the projects at the
 	// root, with their projects under them.

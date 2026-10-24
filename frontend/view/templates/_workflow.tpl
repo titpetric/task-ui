@@ -104,7 +104,7 @@
 					<span class="label" data-step-folder-label>{{ if eq $kind "workflow" }}Workflow{{ else }}Folder{{ end }}</span>
 					<select data-step-folder aria-label="Folder or workflow">
 						<option value="" disabled{{ if and (not $s.Folder) (not $s.WorkflowID) }} selected{{ end }}>pick one</option>
-						{{- range $p.Folders }}{{ if .Jobs }}
+						{{- range $p.StepFolders }}{{ if .Jobs }}
 						<option value="{{ .ID }}" data-workspace="{{ $p.StepSpaceOf .ID }}"{{ if eq .ID $s.Folder }} selected{{ end }}>{{ .ID }}</option>
 						{{- end }}{{ end }}
 						{{- if $p.HostJobs }}
@@ -118,7 +118,7 @@
 				<div class="field" data-step-job-field>
 					<span class="label">Job</span>
 					<select data-step-job aria-label="Job">
-						{{- range $f := $p.Folders }}{{ range $f.Jobs }}
+						{{- range $f := $p.StepFolders }}{{ range $f.Jobs }}
 						<option value="{{ .ID }}" data-folder="{{ $f.ID }}"{{ if and (eq $f.ID $s.Folder) (eq .ID $s.Job) }} selected{{ end }}>{{ .Name }}</option>
 						{{- end }}{{ end }}
 						{{- template "hostjobs" (list $p $s.Job) }}
@@ -144,7 +144,7 @@
 					{{- $found := eq $s.Folder "_" }}
 					<select data-step-place aria-label="Folder Claude works in">
 						<option value="_" data-workspace="_"{{ if eq $s.Folder "_" }} selected{{ end }}>the root</option>
-						{{- range $p.Folders }}{{ if eq .ID $s.Folder }}{{ $found = true }}{{ end }}
+						{{- range $p.StepFolders }}{{ if eq .ID $s.Folder }}{{ $found = true }}{{ end }}
 						<option value="{{ .ID }}" data-workspace="{{ $p.StepSpaceOf .ID }}"{{ if eq .ID $s.Folder }} selected{{ end }}>{{ .ID }}</option>
 						{{- end }}
 						{{- if and $s.Folder (not $found) }}

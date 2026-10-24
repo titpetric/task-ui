@@ -41,6 +41,10 @@ type Discovery struct {
 	// Ignored lists the paths, relative to dir, that a git checkout at dir
 	// ignores, nil for none; git ls-files unless set.
 	Ignored func(dir string) []string
+	// Every lists each folder with a job, for the workflow editor: the
+	// walk goes into what checkouts ignore, past Shallow and below
+	// pipeline folders, and lists no folder without a job.
+	Every bool
 }
 
 // catalogue collects folders by ID and by directory, the first of each
@@ -79,11 +83,16 @@ func (d *Discovery) List() []*Folder {
 	}
 	if d.Discover {
 		d.discover(root, c)
-		sections(root, c)
+		if !d.Every {
+			sections(root, c)
+		}
 	}
 
 	result := make([]*Folder, 0, len(c.byID))
 	for _, f := range c.byID {
+		if d.Every && len(f.Jobs) == 0 {
+			continue
+		}
 		f.Probe = d.Probe
 		result = append(result, f)
 	}
@@ -161,7 +170,10 @@ func (d *Discovery) discover(root string, c *catalogue) {
 	if ls == nil {
 		ls = gitIgnored
 	}
-	w := walker{shallow: shallow, keep: keep, roots: roots, ls: ls, found: func(id, dir string) {
+	if d.Every {
+		shallow, ls = map[string]bool{}, func(string) []string { return nil }
+	}
+	w := walker{shallow: shallow, keep: keep, roots: roots, ls: ls, every: d.Every, found: func(id, dir string) {
 		if c.seen(dir) || model.IsReserved(id) {
 			return
 		}
@@ -169,7 +181,7 @@ func (d *Discovery) discover(root string, c *catalogue) {
 			c.add(f)
 		}
 	}}
-	w.walk(root, "", 1, detector.HasPipeline(root), w.ignore(root, nil), shallow[root])
+	w.walk(root, "", 1, detector.HasPipeline(root) && !d.Every, w.ignore(root, nil), shallow[root])
 }
 
 // sections adds the top level folder of every listed folder below one
@@ -249,6 +261,8 @@ type walker struct {
 	found                func(id, dir string)
 	// ls lists what the checkout at a directory ignores.
 	ls func(dir string) []string
+	// every reports a folder with a job below a pipeline folder too.
+	every bool
 }
 
 // walk visits the directories below dir, in name order. Below a pipeline
@@ -281,7 +295,7 @@ func (w walker) walk(dir, id string, depth int, underPipeline bool, ignored map[
 		if last && !w.roots[sub] {
 			continue
 		}
-		w.walk(sub, subID, depth+1, underPipeline || pipeline, ignored, w.shallow[sub])
+		w.walk(sub, subID, depth+1, !w.every && (underPipeline || pipeline), ignored, w.shallow[sub])
 	}
 }
 

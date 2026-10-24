@@ -15,10 +15,11 @@ import (
 func spacePage(t *testing.T) *view.Page {
 	t.Helper()
 	p := admin(t)
+	p.StepFolders = append(p.StepFolders, p.Folders...)
 	for _, id := range []string{"ops/deploy", "malta/vhosts"} {
 		job := &folder.Job{Folder: id, ID: "up"}
 		job.Name = "up"
-		p.Folders = append(p.Folders, &folder.Folder{ID: id, Jobs: []*folder.Job{job}})
+		p.StepFolders = append(p.StepFolders, &folder.Folder{ID: id, Jobs: []*folder.Job{job}})
 	}
 	p.Workspaces = map[string]int{"malta": 0, "ops": 1, "empty": 2}
 	p.WorkspaceList = []model.Workspace{{Folder: "malta", Title: "Malta"}}

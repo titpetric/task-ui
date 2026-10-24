@@ -249,7 +249,7 @@ func (a *App) wire(version string) error {
 	hostRuns := &hostrun.Starter{Catalogue: a.Catalogue, Hosts: hosts, SSH: prober, Runner: a.Runner}
 	a.Scheduler = scheduler.NewLoop(schedules, a.Users, a.Catalogue, a.Runner)
 	a.Scheduler.Hosts = hostRuns
-	a.Workflows = workflow.New(workflows, workflowRuns, a.Catalogue, a.Runner)
+	a.Workflows = workflow.New(workflows, workflowRuns, a.Catalogue.Steps(), a.Runner)
 	a.Workflows.Hosts = hostRuns
 	events := event.NewBus()
 	a.Workflows.Events = events
@@ -293,7 +293,7 @@ func (a *App) wire(version string) error {
 		Guard: a.Guard, Auth: access.NewAuthenticator(a.Users, a.Emails, a.Passwords), Users: a.Users, Projects: projects, Workspaces: workspaces, Runs: runs, Artifacts: artifacts, Schedules: schedules, Secrets: secrets, SecretReads: secretReads,
 		FolderRefs: refs,
 		Workflows:  workflows, WorkflowRuns: workflowRuns, Flows: a.Workflows,
-		Runner: a.Runner, Catalogue: a.Catalogue, Git: g, Keys: keys, KeyReads: storage.NewKeyReadStorage(db), Env: env, Recordings: recordings, Root: cfg.Root, Version: version, Now: cfg.Clock(),
+		Runner: a.Runner, Catalogue: a.Catalogue, Steps: a.Catalogue.Steps(), Git: g, Keys: keys, KeyReads: storage.NewKeyReadStorage(db), Env: env, Recordings: recordings, Root: cfg.Root, Version: version, Now: cfg.Clock(),
 		ArtifactStore: store, Disk: &diskusage.Meter{TTL: 10 * time.Minute}, Board: a.Board, ComposeProject: self, Cleaner: cleaner,
 		Integrations: integrations, Hosts: hosts,
 		Tooling: &tooling.Prober{Timeout: 5 * time.Second, TTL: time.Minute},

@@ -165,3 +165,61 @@ func TestDiscovery_Ignored(t *testing.T) {
 		t.Fatalf("asked: got %v, want %v", asked, want)
 	}
 }
+
+func folderIDs(list []*Folder) []string {
+	result := []string{}
+	for _, f := range list {
+		result = append(result, f.ID)
+	}
+	slices.Sort(result)
+	return result
+}
+
+// everyTree is a root with a workspace whose checkout ignores a deep
+// checkout with jobs, a shallow project with a nested folder and a
+// folder with nothing to run.
+func everyTree(t *testing.T) (string, func(string) []string) {
+	t.Helper()
+	root := t.TempDir()
+	const task = "tasks:\n  build:\n    desc: Build\n"
+	write(t, filepath.Join(root, "ws", ".git", "HEAD"), "ref: main\n")
+	write(t, filepath.Join(root, "ws", "Taskfile.yml"), task)
+	write(t, filepath.Join(root, "ws", "lib", "app", "Taskfile.yml"), task)
+	write(t, filepath.Join(root, "ws", "docs", "README.md"), "nothing to run")
+	write(t, filepath.Join(root, "proj", "Taskfile.yml"), task)
+	write(t, filepath.Join(root, "proj", "sub", "deep", "Taskfile.yml"), task)
+	ignored := func(dir string) []string {
+		if dir == filepath.Join(root, "ws") {
+			return []string{"lib/app"}
+		}
+		return nil
+	}
+	return root, ignored
+}
+
+func TestDiscoveryEvery(t *testing.T) {
+	t.Parallel()
+	root, ignored := everyTree(t)
+	config := []Config{{ID: "proj", Shallow: true, Allow: []string{"ops"}}}
+	workspaces := []Config{{ID: "ws"}}
+
+	sidebar := &Discovery{Root: root, Discover: true, Config: config, Workspaces: workspaces, Ignored: ignored}
+	if got, want := folderIDs(sidebar.List()), []string{"proj", "ws"}; !slices.Equal(got, want) {
+		t.Fatalf("settings listing: got %v, want %v", got, want)
+	}
+
+	every := &Discovery{Root: root, Discover: true, Config: config, Workspaces: workspaces, Ignored: ignored, Every: true}
+	if got, want := folderIDs(every.List()), []string{"proj", "proj/sub/deep", "ws", "ws/lib/app"}; !slices.Equal(got, want) {
+		t.Fatalf("every listing: got %v, want %v", got, want)
+	}
+	app := every.Find("ws/lib/app")
+	if app == nil || app.Job("build") == nil {
+		t.Fatalf("ignored checkout's jobs: %+v", app)
+	}
+	if proj := every.Find("proj"); proj == nil || !slices.Equal(proj.Allow, []string{"ops"}) {
+		t.Fatalf("project configuration not applied: %+v", proj)
+	}
+	if every.Find("ws/docs") != nil {
+		t.Fatal("a folder without jobs lists")
+	}
+}
