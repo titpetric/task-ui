@@ -14,11 +14,14 @@ import (
 	"github.com/titpetric/task-ui/runner"
 )
 
-// ProjectMoved answers a move: the project row under its new ID, and
-// the rows that still name the old one. Those stay behind, as do the
-// runs, under the old ID.
+// ProjectMoved answers a move: the project row under its new ID, the
+// pins that followed it, and the rows that still name the old one.
+// Those stay behind, as do the runs, under the old ID.
 type ProjectMoved struct {
 	*model.Project
+	// Pins counts the pins, of every user, that name the new ID now:
+	// the project's, and those of the folders and jobs inside it.
+	Pins int               `json:"pins"`
 	Left []model.FolderRef `json:"left"`
 }
 
@@ -70,8 +73,8 @@ func (h *Handlers) moveTarget(r *http.Request, id, ws string) (string, int, stri
 }
 
 // moveProject moves a project's checkout and row to a new ID, and the
-// user folder grants with them; a home project leaves its workspace's
-// home unset. The runs of the project stay out while
+// user folder grants and the pins with them; a home project leaves its
+// workspace's home unset. The runs of the project stay out while
 // it moves; one running refuses the move. A step that fails puts back
 // what the steps before it did.
 func (h *Handlers) moveProject(w http.ResponseWriter, r *http.Request, project *model.Project, to string) {
@@ -122,6 +125,14 @@ func (h *Handlers) moveProject(w http.ResponseWriter, r *http.Request, project *
 	if err := h.opts.Workspaces.ClearHome(ctx, project.ID); err != nil {
 		slog.Warn("unsetting a moved home project", "folder", to, "err", err)
 	}
+	pins := 0
+	if h.opts.Pins != nil {
+		n, err := h.opts.Pins.MoveFolder(ctx, from, to)
+		if err != nil {
+			slog.Warn("moving the pins of a moved project", "folder", from, "err", err)
+		}
+		pins = n
+	}
 	left := []model.FolderRef{}
 	if h.opts.FolderRefs != nil {
 		refs, err := h.opts.FolderRefs.Under(ctx, from)
@@ -131,8 +142,8 @@ func (h *Handlers) moveProject(w http.ResponseWriter, r *http.Request, project *
 			left = refs
 		}
 	}
-	slog.Info("project moved", "from", from, "to", to, "left", len(left))
-	writeJSON(w, http.StatusOK, ProjectMoved{Project: project, Left: left})
+	slog.Info("project moved", "from", from, "to", to, "pins", pins, "left", len(left))
+	writeJSON(w, http.StatusOK, ProjectMoved{Project: project, Pins: pins, Left: left})
 }
 
 // saveProject writes a project row back by its ID, or makes it.

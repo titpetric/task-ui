@@ -131,6 +131,7 @@ func newFixture(t *testing.T) *fixture {
 		Runs:          runs,
 		Artifacts:     artifacts,
 		ArtifactStore: tree,
+		Pins:          storage.NewPinStorage(db),
 		Schedules:     storage.NewScheduleStorage(db),
 		Secrets:       secrets,
 		FolderRefs:    storage.NewFolderRefStorage(db),

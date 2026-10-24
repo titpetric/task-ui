@@ -54,3 +54,34 @@ func (s *PinStorage) Delete(ctx context.Context, user, id string) error {
 	}
 	return client(s.db).Exec(ctx, "DELETE FROM pin WHERE id = ?", id)
 }
+
+// MoveFolder renames the pins that name a folder, or a directory inside
+// it, to its new ID, for every user: pins follow a project that moves. A
+// pin whose user pins the new target already goes, the target's pin
+// stays. It returns how many pins moved.
+func (s *PinStorage) MoveFolder(ctx context.Context, from, to string) (int, error) {
+	prefix := from + "/"
+	pins, err := client(s.db).Select[model.Pin](ctx, "SELECT * FROM pin WHERE folder = ?1 OR substr(folder, 1, ?2) = ?3 ORDER BY rowid", from, len(prefix), prefix)
+	if err != nil {
+		return 0, err
+	}
+	moved := 0
+	for _, pin := range pins {
+		folder, _ := model.Moved(pin.Folder, from, to)
+		_, err := client(s.db).Get[model.Pin](ctx, "SELECT * FROM pin WHERE user_name = ? AND folder = ? AND job = ? AND dir = ? AND args = ?", pin.UserName, folder, pin.Job, pin.Dir, pin.Args)
+		if err = notFound(err); err == nil {
+			if err := client(s.db).Exec(ctx, "DELETE FROM pin WHERE id = ?", pin.ID); err != nil {
+				return moved, err
+			}
+			continue
+		}
+		if !errors.Is(err, ErrNotFound) {
+			return moved, err
+		}
+		if err := client(s.db).Exec(ctx, "UPDATE pin SET folder = ? WHERE id = ?", folder, pin.ID); err != nil {
+			return moved, err
+		}
+		moved++
+	}
+	return moved, nil
+}

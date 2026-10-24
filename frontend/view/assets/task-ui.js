@@ -1025,7 +1025,7 @@
     var last = id.slice(id.lastIndexOf("/") + 1);
     var to = pick.value === "_" ? last : pick.value + "/" + last;
     var left = pick.dataset.moveLeft;
-    form.dataset.confirm = "Move " + id + " to " + to + "? The checkout, the project and the users' folder access move with it; earlier runs stay under " + id + ". " +
+    form.dataset.confirm = "Move " + id + " to " + to + "? The checkout, the project, the users' folder access and the pins move with it; earlier runs stay under " + id + ". " +
       (left ? "These still point to " + id + " and won't move: " + left + "." : "Nothing else points to " + id + ".");
     form.dataset.confirmOk = "Move";
     form.dataset.next = "/settings/projects?notice=" + encodeURIComponent("Moved to " + to);
