@@ -142,6 +142,7 @@ func (h *Handlers) workflowNew(w http.ResponseWriter, r *http.Request) {
 	p.Crumbs = view.Crumbs("Workflows", "/workflows", "New")
 	p.Step = view.StepWorkflows
 	p.StepWorkflows = p.SideWorkflows
+	p.WorkspaceList = h.workspaceList(r.Context())
 	h.hostJobs(r, p)
 	h.render(w, http.StatusOK, "workflow_new", p)
 }
@@ -289,6 +290,7 @@ func (h *Handlers) workflowEdit(w http.ResponseWriter, r *http.Request) {
 	p.Crumbs = view.Crumbs("Workflows", "/workflows", p.Workflow.Name, "/workflows/"+p.Workflow.ID, "Edit")
 	p.Step = view.StepWorkflows
 	p.StepWorkflows = h.stepWorkflows(r.Context(), p, p.Workflow.ID)
+	p.WorkspaceList = h.workspaceList(r.Context())
 	h.hostJobs(r, p)
 	h.render(w, http.StatusOK, "workflow_edit", p)
 }
