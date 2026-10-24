@@ -98,8 +98,11 @@ and did. Once it answered, the schedule's user leaves a note on the
 > Attempted triage of failing infra/plan task, result: resolved. Info:
 > https://task.example/runs/01K8ABCDEFGHJKMNPQRSTVWXYZ
 
-One note per triaged run, whichever the result. A run that ends `ok`,
-or one a person stops, gets no triage. A schedule of `@host:<name>` or
+One note per triaged run, whichever the result. A schedule gets one
+triage at a time, and none for an hour after its last triage ended: a
+job that keeps failing every minute gets one thread and one note an
+hour, and the scheduler logs each run it leaves alone. A run that ends
+`ok`, or one a person stops, gets no triage. A schedule of `@host:<name>` or
 `@host:*` gets none either, as its runs have no folder to fix in: the
 scheduler logs that it skipped.
 
