@@ -1,10 +1,17 @@
 # Security
 
-This is a security review of task-ui, and a tour of the features that
-handle identity, keys, encryption and roles. Each section says what the
-code does, names the file that does it, and says where the protection
-ends. The [findings](#findings) table at the end lists what to fix or
-watch, by severity.
+<!-- vale off -->
+Least access is an important security management principle, where access of credentials is limited to what they require, and not more. TaskUI may give a wide surface of execution, or may be limited to read-only or exec-only users that can only invoke something in a secured system. The barriers between container and machine can be a little bit blurred. Credential management is simplified and the SRE usability for the tool and its Claude bindings has proven to be pretty good. Integrations with Beszel give access to a deployment cluster, and even without specific automation in place it can sort of be used as a mix of terminal interface and claude prompts. It tells me I should water my plants.
+<!-- vale on -->
+
+This page says how the configuration of task-ui moves it between wide
+reach and least access: what least access means here, the
+[decisions](#decisions) an operator makes and what each one opens up,
+and a [checklist](#checklist). A review follows, a tour of the features
+that handle identity, keys, encryption and roles: each section says what
+the code does, names the file that does it, and says where the
+protection ends. The [findings](#findings) table at the end lists what
+to fix or watch, by severity.
 
 task-ui runs jobs from source trees as the user who asks, records each
 run, and hands each run the secrets and SSH keys its user and its
@@ -12,6 +19,154 @@ workspace allow. task-ui works as a CI/CD system you can type into: a
 run is a terminal that people and agents watch, attach to and answer. It manages
 who may do what, which keys a run carries, and how secrets sit at rest.
 It does not sandbox the jobs it runs.
+
+## Managing task-ui security is managing Linux security
+
+task-ui is a server in a container, and every run is a process in that
+container: `bash -l`, `make`, `docker`, `ssh`, Claude Code. A configured
+instance is as secure as the Linux system and the container it runs in:
+the mounts it gets, the daemons it reaches, the keys in its key folder,
+the network around it and the people who sign in. Managing its security
+is managing Linux security, with the same two moves:
+
+- **Limit the attack surface.** Leave out the mounts, sockets and
+  integrations the jobs don't need, scope keys and secrets to the runs
+  that use them, and grant each user the narrowest role.
+- **Block access.** A policy deny, a folder limit or an allow list
+  removes a path; an instance of its own for each trust boundary
+  removes every path between them.
+
+Admin is root inside task-ui. An admin passes every permission check,
+sees every folder, opens `@shell` and `@claude`, reads and rotates every
+key, and edits users and policies. Anyone who holds admin credentials, a
+password, a session or an MCP token of an admin, can act anywhere in the
+system and can disrupt task-ui itself: end runs, rotate or delete keys,
+delete users, projects and workspaces, or stop the container through the
+docker socket. Guard an admin account as you guard a root login on the
+host.
+
+## What least access means here
+
+Least access grants each credential the permissions its work needs and no
+more. A credential in task-ui is a user: a password, a session or an MCP
+token. What it may do is its role, its own policy over the role, the
+folders an admin limits it to, and the allow lists of folders and jobs
+(see [Roles and policies](#roles-and-policies)). The default roles are a
+starting point, not least access: the viewer role starts with edit and
+delete on notes, workflows and schedules.
+
+| Profile | Set up as | What it does | What it costs |
+|---------|-----------|--------------|------------------|
+| Read-only | the viewer role; the user's policy denies `note/edit`, `note/delete`, `workflow/edit`, `workflow/delete`, `schedule/edit` and `schedule/delete`; a folder limit to the folders to watch | sees those folders' jobs, runs, live terminals and recordings; reads their files in the preview, the artifacts and the inventory | running jobs, notes and replies, prompts, workflows and schedules, every setting |
+| Exec-only | the runner role; a folder limit to a secured folder, one whose code the user cannot push to; the folder's allow list names the user or the role; denies on the workflow, schedule and artifact rules the user doesn't need | starts the folder's jobs and ends their runs; types into the interactive jobs they may run; sees the folder's runs | `@shell` and `@claude`, Claude prompts, notes to the agent, editing pipelines (no push to the checkout, no workflow edits), env files, secrets, keys, projects, workspaces and their export, commands on hosts, **Take input** on jobs that take none |
+| Agent | a user of its own with **MCP agent user**, `run` on chosen folders and notes; `prompt/edit` only where Claude may run commands | the MCP tools as that user, for 30 days a token | the limits of its user; a leaked token is the user until it expires or rotates |
+| Admin | the admin role or flag | everything | nothing: an admin holds the host |
+
+What the profiles leave open:
+
+- **Read-only is not blind.** A viewer sees what a run prints, live and
+  in its recording: a secret a job echoes, and an admin's `@shell` in a
+  folder the viewer sees (see [Terminals](#terminals)). The file preview
+  serves any file of a folder the viewer sees, an env file at a path
+  that doesn't start with a dot included (see the findings). The folder
+  limit is what keeps a viewer out.
+- **Exec-only holds while the code holds.** `run` on a folder whose
+  `atkins.yml`, `Taskfile.yml`, `Makefile` or `scripts/*` the user can
+  change through git is a command of their choosing. A job's allow list
+  narrows that job alone: `./<path>`, any executable file of the
+  folder, and `@skill:<job>`, an atkins skill that applies there, run
+  under the folder's allow list (`folder/folder_path.go`, `FileJob`;
+  `folder/skill.go`, `SkillJob`). Name in the folder's allow list only
+  those who may run every one of them.
+- **Least access costs reach.** Without admin and `prompt/edit` a user
+  can't look around in a terminal or ask Claude; without `run` on a
+  folder they can't start its jobs; without the Claude Code integration,
+  docker or Beszel, no run builds images, asks Claude or reaches the
+  inventory. Each [decision](#decisions) names what its less secure
+  setting enables, which the more secure one forgoes.
+
+## Decisions
+
+Each row is a choice an operator makes. **Default** says where the
+image, the compose files or the database start: **on** in the compose
+files (`docker/docker-compose.yml` in this repository and
+`malta/dockerfiles/task/compose.yml` in production), **built in** to the
+image or the code, **default** for a setting with a starting value, or
+**opt-in**, off until someone turns it on.
+
+| # | Decision | Default | The less secure choice enables | The more secure alternative, and what it costs |
+|---|----------|---------|--------------------------------|---------------------------------------------------|
+| D1 | The host's docker socket mounted at `/var/run/docker.sock` | on | To build and push docker images. To run docker images on the host, such as `docker compose up` of a deployment beside task-ui. The socket is root on the host: `docker run -v /:/host` reads and writes everything. A `:ro` mount, as in this repository's compose file, limits nothing: a client still connects and uses the whole API. | **A docker-in-docker (dind) sidecar**, with `DOCKER_HOST` in task-ui's environment, which runs inherit: builds, pushes and containers stay in the sidecar's daemon, which runs privileged. Costs: deploying on the host, and a `docker run -v` resolves its paths in the sidecar, which needs the data folder at the host's path. **A socket proxy** that allows build and push alone: costs running containers. **No socket**: no docker at all, and no image builds. |
+| D2 | One container and one OS user, root, for task-ui and every run | built in | To run any tool a job needs, beside `/keys`, the database, the registry logins and Claude Code's settings. Any run reads every key file, the encryption key included. | task-ui has no setting for a run user of its own. Run one instance per trust boundary; the instances share nothing but the host. |
+| D3 | The container's network | on: a bridge network in both compose files; production publishes no port and its proxy forwards to it | Host networking (`network_mode: host`) lets runs reach the host's loopback services and every port the host listens on. Neither compose file uses it. | A bridge network, with the port behind a TLS proxy. Costs: services bound to the host's loopback. |
+| D4 | Home folders mounted from the host: `/root/.docker`, the registry logins, and `/root/.claude`, Claude Code's settings and sessions | on in production | To push docker images with a stored login, and to keep Claude Code's sign-in and sessions across deploys. Every run of every user reads both. | A registry token as a scoped secret and `docker login --password-stdin` in the job that pushes; no mount for Claude Code's settings. Costs: a login shared by every job, and Claude's sessions after a redeploy. |
+| D5 | Secrets in the server's environment, such as `SECRETSMANAGER_KEY` | on in production | To let every job open the secretsmanager stores without a secret of its own. Every run inherits it, and no read log records it (`runner/host.go`, `inherited`). | A secret scoped to the folders or workspace that use it, with its read log. Costs nothing but the move. |
+| D6 | Host keys: `StrictHostKeyChecking accept-new` | built in | To clone and push over SSH and to reach new hosts with no "continue connecting?" question: the first answer for a host becomes its key. | Seed `/keys/known_hosts` with the git remotes and inventory hosts: ssh checks a key the file holds, and `accept-new` adds only hosts it lacks. For the jobs' own ssh, `StrictHostKeyChecking yes` in the image's `ssh_config`; task-ui's git and inventory probe keep `accept-new`. Costs: reaching an unseeded host. |
+| D7 | Which runs get an SSH key (**Who gets it**) and the git key | opt-in per key; a workspace key linked to nobody goes to every run of the workspace | To clone and push over SSH, and to deploy from any run of a workspace. A job pushes anywhere the key may. | Link each key to the roles and users that need it; scope keys on the git host to the repositories they serve; make the git key a read-only deploy key where task-ui only pulls. Costs: keys in the runs of users not linked. |
+| D8 | The Beszel integration | opt-in | To list the hosts on Inventory, and to reach inventory hosts: `@host:<name>` and `@host:*` run a command over ssh with every instance SSH key, for users with `hosts`. | Leave it off: no inventory and no host commands (`hostrun/starter.go`, `beszel.ErrOff`). Or keep it on with `hosts` for admins alone and a token of a read-only Beszel user. |
+| D9 | The Claude Code integration and its **Who** | opt-in; with **Who** empty, every run gets the token | To let Claude act in runs: `@claude`, `@claude-prompt` and `@claude-note` sign in with it. | **Who** naming the agent user and the roles that use Claude; or no integration, and no Claude in runs. |
+| D10 | Prompts and notes to the agent (`prompt/edit`, the user flag **Run instance Claude when mentioned**) | the `claude` user holds `prompt/edit`; no role does | To let Claude act in runs on a prompt or a note. Claude Code runs with `--dangerously-skip-permissions`, any command as root. | `prompt/edit` for admins and the agent user; the flag on the agent user alone. Costs: prompts for everyone else. |
+| D11 | **MCP agent user** | opt-in per user | To let an agent outside task-ui run jobs, read runs and artifacts, and post notes, with a 30-day token. | An account of its own for each agent, with `run` on chosen folders. Costs: an account to keep for each agent. |
+| D12 | `key/read`, an agent's read of an SSH private key | admins alone; outside `key/all` | To return an SSH key to an agent for a task, encrypted to its recipient. | Keep it with admins. Costs: agents that fetch keys. |
+| D13 | Interactive input: the `input` rule and jobs marked interactive | `input` for admins alone; `@shell`, `@claude` and jobs marked `interactive` take keystrokes | To answer a job's prompt from the run window, and to watch and type into shells together. | Keep `input` with admins; mark interactive only the jobs that need it. Costs: answering a waiting job from the browser. |
+| D14 | Who sees a folder's runs | default: every user who sees the folder | To watch terminals live, an admin's `@shell` included, as a shared remote desktop. | Folder limits per user; admins work in folders viewers don't see. Costs: watching those runs. |
+| D15 | Recording retention | default: 31 days, no size cap | To replay a run's terminal after it ends. | A shorter age and a size cap where jobs touch secrets. Costs: older replays; the run's row stays. |
+| D16 | Secret scope | per secret | To reach every folder of a workspace with one secret (`workspace:<name>`). | A folder's own secret. Costs: one secret for many folders. |
+| D17 | Env file path | per env file | To write an env file where a tool expects it, such as `deploy/app.env`. Secret values sit there in plain text, and the file preview serves it. | A dot path, such as `.env`, which task-ui seals. Costs: tools that read a fixed path without a dot. |
+| D18 | Workflow webhooks: a git host calls `POST /api/workflows/{id}/runs` with a token | opt-in | To start a workflow on a push. A leaked hook token starts the workflow. | A user of its own with `run` on the workflow's folders alone, and the token's 30-day expiry; or no webhook. Costs: push-started workflows. |
+| D19 | Workspace export and import (`workspace/edit`) | admins alone | To move a workspace with its secrets and SSH keys between instances. | Keep `workspace/edit` with admins; a passphrase of 12 characters or more; delete the file after the import. Costs non-admins nothing. |
+| D20 | `TASK_UI_AUTOLOGIN` | opt-in; unset | To skip sign in, for development and screenshots. | Unset. |
+| D21 | `TASK_UI_SESSION_TTL` | default: 12 hours | To stay signed in for a working day. | A shorter session. Costs more sign-ins. |
+
+## Checklist
+
+- [ ] Admins are people you trust with the host; each admin signs in with
+      their own account ([D2](#decisions)).
+- [ ] `prompt/edit`, `hosts`, `env/edit`, `project/edit` and
+      `workspace/edit` go only to people trusted with the host
+      ([D10](#decisions), [D8](#decisions), [D19](#decisions)).
+- [ ] Runners run folders whose code they cannot change, or you trust
+      them with the host; a folder's allow list names only those who
+      may run every job, file and skill job of it
+      ([Least access](#what-least-access-means-here)).
+- [ ] Viewers that should only read have denies on the edit and delete
+      rules of notes, workflows and schedules, and folder limits
+      ([D14](#decisions)).
+- [ ] The compose file mounts the docker socket only where jobs build or deploy;
+      otherwise a dind sidecar, a socket proxy, or no docker
+      ([D1](#decisions)).
+- [ ] The container runs on a bridge network behind the TLS proxy
+      ([D3](#decisions)).
+- [ ] The compose file mounts registry logins and Claude Code's settings
+      only where jobs need them ([D4](#decisions)).
+- [ ] No secret sits in the server's environment; `SECRETSMANAGER_KEY`
+      and the like live in scoped secrets ([D5](#decisions)).
+- [ ] `/keys/known_hosts` holds the git remotes and inventory hosts
+      before the first run ([D6](#decisions)).
+- [ ] Each SSH key links to the roles and users that need it; the git
+      key exists; no production key goes to a role it doesn't need
+      ([D7](#decisions)).
+- [ ] Beszel, when on, signs in as a read-only user, and `hosts` stays
+      with admins ([D8](#decisions)).
+- [ ] The Claude Code integration's **Who** names the agent user and
+      the roles that use Claude ([D9](#decisions)).
+- [ ] Each MCP agent user is an account of its own, with only what the
+      agent needs, and its token rotates within 30 days
+      ([D11](#decisions), [D18](#decisions)).
+- [ ] `key/read` and `input` stay with admins ([D12](#decisions),
+      [D13](#decisions)).
+- [ ] Recording retention fits what the jobs print; jobs do not echo
+      secrets ([D15](#decisions)).
+- [ ] Each secret's scope is the folder or workspace that uses it
+      ([D16](#decisions)).
+- [ ] Env files use dot-file paths, such as `.env` ([D17](#decisions)).
+- [ ] Backups of the database live outside the data folder, `0700`; a
+      copy of the database and `/keys` together opens every secret, so
+      no backup off the host holds both.
+- [ ] Workspace exports use a long passphrase; delete the file after the
+      import ([D19](#decisions)).
+- [ ] `TASK_UI_AUTOLOGIN` is unset ([D20](#decisions)).
+- [ ] `/login` has a rate limit at the proxy (see the findings).
 
 ## Stance and threat model
 
@@ -45,12 +200,12 @@ What the image grants by design (`malta/dockerfiles/task/compose.yml`):
 The consequence: **anyone who can make task-ui run a command of their
 choosing is root on the host**, through `docker run -v /:/host`, and can
 read every key and every secret of the instance. Running a command of
-your choosing takes less than `shell`. Each of these does it, in the
+your choosing takes less than admin. Each of these does it, in the
 container or, for `hosts`, on the inventory's hosts:
 
 | Permission | How it runs a command of the user's choosing |
 |------------|----------------------------------------------|
-| `shell` | `@shell` and `@claude`, a login shell and Claude Code in a terminal |
+| admin | `@shell` and `@claude`, a login shell and Claude Code in a terminal: their allow list names the admin role, and no folder or job rule changes it (`folder/shell.go`, `folder/claude.go`); task-ui checks `shell` besides |
 | `prompt/edit` | a prompt starts `@claude-prompt`, Claude Code with `--dangerously-skip-permissions` (`agent/claude.go`) |
 | `run` with push access to a checkout | the job runs whatever the pushed `atkins.yml`, `Taskfile.yml`, `Makefile` or `scripts/*` says; `./<path>` runs any executable file of the folder |
 | `run` and `note/edit` | a note naming the agent starts `@claude-note` on the thread |
@@ -158,7 +313,9 @@ it types depends on the job:
 
 - an interactive job, `@shell`, `@claude` or a job marked interactive,
   takes keystrokes from every window whose user may run that job
-  (`api/attach.go`, `ReadOnly: !canRun`);
+  (`api/attach.go`, `ReadOnly: !canRun`): any admin for `@shell` and
+  `@claude`, any runner the allow lists name for a job marked
+  interactive;
 - a job that takes no input types only after **Take input**, which takes
   the `input` permission, which only admins hold by default
   (`api/attach.go`, `takesInput`).
@@ -362,9 +519,11 @@ sees the same screen, and an agent's run shows next to it.
 
 Identity carries into the terminal:
 
-- `@shell`, a login shell, and `@claude`, Claude Code in a terminal, take
-  the `shell` permission (`api/target.go`, `canRun`); `@claude` also
-  takes a Claude token from the Claude Code integration.
+- `@shell`, a login shell, and `@claude`, Claude Code in a terminal, run
+  for admins alone: their allow list names the admin role, and the
+  task-ui checks the `shell` permission besides (`folder/shell.go`,
+  `api/target.go`, `canRun`); `@claude` also takes a Claude token from
+  the Claude Code integration.
 - The shell runs with the opener's SSH keys in its agent, and with
   `TASK_UI_USER`, `TASK_UI_ROLE` and `TASK_UI_PERMISSIONS` in its
   environment (`runner/command.go`).
@@ -436,7 +595,7 @@ page checks. The tools: `whoami`, `list_jobs`, `list_workflows`,
 `update_workflow`, `list_runs`, `get_run`, `list_workflow_runs`,
 `list_notes`, `note_comment`, `post_note`, `ask_prompt`,
 `list_artifacts`, `read_artifact`, `write_artifact` and `get_ssh_key`.
-`run_job` cannot open `@shell` or `@claude` without `shell`, and cannot
+`run_job` opens `@shell` or `@claude` for admins alone, and cannot
 start `@claude-prompt` or `@claude-note`, which start from their own
 routes ([MCP](guide/mcp.md)). A refused call names the permission it
 needs.
@@ -446,65 +605,25 @@ token for 30 days. Treat it as the user's password: a dedicated user
 with only the permissions the agent needs, `run` on chosen folders and
 notes, is the usual setup.
 
-## Integrations against their risks
-
-| What task-ui enables | The risk | The control |
-|----------------------|----------|-------------|
-| git over ssh with instance keys: clones, pulls, pushes from jobs | a job pushes anywhere the key may | link the git and deploy keys to the roles that need them; scope keys on the git host to the repositories they serve |
-| `docker build`, `docker push`, `docker compose up` from jobs | the host's docker daemon is root on the host | grant `run` on folders whose code only trusted people change; keep `shell` and `prompt/edit` with admins |
-| `ssh` to inventory hosts, `@host:<name>` and `@host:*` | a command on every host at once, signed in with every instance login key | `hosts` for admins alone; host keys in `known_hosts` before the first run |
-| pushes from a git host starting workflows (a hook that calls `POST /api/workflows/{id}/runs` with a token) | a leaked hook token starts the workflow | a dedicated user with `run` on the workflow's folders alone; the token's 30-day expiry |
-| agents leaving notes and answering threads | an agent posts as a user and runs that user's jobs | an agent user with notes and `run` on chosen folders; `prompt/edit` only where Claude may run commands |
-| Claude Code on a prompt, a note, a terminal | Claude runs any command as root, with the user's keys | the user's role and folders; the run token for its MCP calls; `prompt/edit` and `shell` for trusted people |
-| secrets in every run's environment | a job prints or ships a secret | scope secrets to the folders that need them; the read log names every run that got one |
-| private SSH keys handed to an agent for a task | the key leaves the instance | `key/read` and MCP agent user; age encryption to the agent's recipient; the key read log |
-| workspace export and import | the bundle holds the workspace's secrets and SSH keys | a passphrase of 12 characters or more; keep the file like a key |
-| watching and sharing terminals | output, secrets included, reaches every viewer of the folder and the recording | folder limits for users; retention on recordings; jobs that do not print secrets |
-
 ## Findings
 
 | Severity | Finding | Where | Recommendation |
 |----------|---------|-------|----------------|
-| High | The task container mounts the host's docker socket, so any user who can run a command of their choosing (`shell`, `prompt/edit`, `run` on code they can change, `env/edit`, `project/edit`, `workspace/edit`) is root on the host. | `malta/dockerfiles/task/compose.yml` | Grant those permissions only to people trusted with the host. Where builds need docker but users don't need the host, put a socket proxy that allows build and push alone in front of the daemon, or run one instance per trust boundary. |
+| High | The task container mounts the host's docker socket, so any user who can run a command of their choosing (admin, `prompt/edit`, `run` on code they can change, `env/edit`, `project/edit`, `workspace/edit`) is root on the host. | `malta/dockerfiles/task/compose.yml` | Grant those permissions only to people trusted with the host. Where builds need docker but users don't need the host, put a socket proxy that allows build and push alone in front of the daemon, or run one instance per trust boundary. |
 | High | Every run is root in the container beside `/keys`, the database, `/root/.docker` and `/root/.claude`. Key links, ssh agents and secret scopes decide what task-ui loads for a run, not what it can read: any run reads every private key, the encryption key included, and so every secret. | `malta/dockerfiles/task/Dockerfile` (no `USER`), `keystore/docs.go` | State it to operators (this page, [Workspaces](guide/workspaces.md#what-a-workspace-keeps-apart)). For real separation, run jobs as another uid without read access to `/keys` and the data folder, or in a container of their own that gets only the run's agent socket. |
 | Medium | An env file saved at a path that does not start with a dot, such as `deploy/app.env`, carries the folder's secret values in plain text, and the file preview serves the file to every user who sees the folder, viewers included. | `envfile/store.go` (`SafeRelative`), `api/file.go` (`viewFile`), `frontend/file.go` (`checkoutFile`) | Refuse an env file path whose last segment does not start with a dot on save, so task-ui seals the file; have both file viewers refuse a file that holds `envfile.Marker`. |
 | Medium | A workspace export takes `workspace/edit` alone, yet returns the workspace's secrets in plain text and its SSH private keys, under a passphrase the caller picks. It goes around `secret/view` and `key/read`. | `api/workspace_export.go` | Require `key/read` and `secret/edit` besides `workspace/edit`, or an admin. |
 | Medium | Runs inherit the server's environment. `SECRETSMANAGER_KEY`, set in production, reaches every run of every user and workspace, and no read log records it. | `runner/host.go` (`inherited`), `compose.yml` | Move it into a scoped secret, so scopes and the read log apply, or strip it from the inherited environment. |
 | Medium | ssh trusts host keys on first use: `accept-new` everywhere ssh runs. The first answer for a host, right or wrong, becomes its key. | Dockerfile (`ssh_config.d/task-ui.conf`), `git/git.go`, `sshprobe/prober.go` | Seed `/keys/known_hosts` for the git remotes and inventory hosts; review it after adding hosts. |
 | Low | The Claude Code token reaches every run of the users and roles **Who** names, every run when it names nobody, not only the Claude runs. | `integration/store.go` (`Env`) | Check a **Who** box; better, set the token only for `@claude`, `@claude-prompt` and `@claude-note`. |
-| Low | An interactive run takes keystrokes from any window whose user may run the job, so a user with `shell` types into another user's `@shell`, which carries that user's SSH agent. Nobody records who typed. | `api/attach.go` (`serveAttach`) | Let only the starter, or an admin, type into `@shell` and `@claude`; log the users who attach with input. |
+| Low | An interactive run takes keystrokes from any window whose user may run the job: any admin types into another admin's `@shell`, which carries that admin's SSH agent, and any runner the allow lists name types into a job marked interactive that someone else started. Nobody records who typed. | `api/attach.go` (`serveAttach`) | Let only the starter type into `@shell` and `@claude`; log the users who attach with input. |
+| Low | A job's allow list narrows that job alone. `./<path>`, any executable file of the folder, and `@skill:<job>` run under the folder's allow list, so a user the folder names runs them though the folder's listed jobs name others. | `folder/folder_path.go` (`FileJob`), `folder/skill.go` (`SkillJob`) | Name in a folder's allow list only users who may run every job of it, or have file and skill jobs take the strictest job allow list of the folder. |
 | Low | Terminal output reaches every user who sees the folder and stays in the recording, 31 days by default. A recording is `0644` in a `0755` tree on the host. | `model/user.go` (`SeesRun`), `recording/store.go`, `retention/settings.go` | Limit folders per user where admins work in shells; shorten retention where jobs touch secrets; write recordings `0600` in `0700` folders. |
 | Low | The production data folder holds 32 copies of the database and 58 of its WAL and SHM files, `task-ui.db*.pre-*`, `0644` in a `0755` folder. They hold secret ciphertext, password and token hashes. `/keys` still holds the old-layout `id_ed25519` and `id_rsa_deploy`, which may open secrets in the older copies. | `/mnt/apps/task/data`, `/mnt/apps/task/keys` | Move the copies to `/mnt/apps/task/backup/<date>-<name>/` under `0700`, or delete them; remove the old-layout key files once the migrated keys work. |
 | Low | Sign in has no limit on attempts; bcrypt slows each guess, nothing stops many. | `access/authenticator.go`, the login handler | Rate limit `/login` at the proxy or in the handler. |
 | Low | Every run's shell history goes to the server's `~/.bash_history`, across users and workspaces. | `runner/home.go` (`homeKept`) | Point `HISTFILE` per user, or nowhere for `@shell`. |
 | Info | A run token's MCP configuration file sits in a `0700` temporary directory, owned by root, which every other run can read while the run lasts. | `note/board_mcp.go` | Covered by the High findings; separate uids would close it. |
 | Info | `TASK_UI_AUTOLOGIN` signs every request in as one user. Production leaves it unset (checked). | `app/config.go` | Keep it out of production configuration. |
-
-## Operator checklist
-
-- [ ] Admins, `shell`, `prompt/edit`, `hosts`, `env/edit`, `project/edit`
-      and `workspace/edit` go only to people trusted with the host.
-- [ ] Runners run folders whose code they cannot change, or you trust
-      them with the host.
-- [ ] Each SSH key links to the roles and users that need it; the git
-      key exists; no production key goes to a role it doesn't need.
-- [ ] `/keys/known_hosts` holds the git remotes and inventory hosts
-      before the first run.
-- [ ] Each secret's scope is the folder or workspace that uses it; the
-      server-level secrets of the compose file live in scoped secrets.
-- [ ] Env files use dot-file paths, such as `.env`.
-- [ ] The Claude Code integration's **Who** names the agent user and
-      the roles that use Claude.
-- [ ] Each MCP agent user is an account of its own, with only what the agent
-      needs, and its token rotates within 30 days.
-- [ ] Recordings retention fits what the jobs print; jobs do not echo
-      secrets.
-- [ ] Backups of the database live outside the data folder, `0700`; a
-      copy of the database and `/keys` together opens every secret, so
-      no backup off the host holds both.
-- [ ] Workspace exports use a long passphrase; delete the file after the
-      import.
-- [ ] `TASK_UI_AUTOLOGIN` is unset.
 
 ---
 
