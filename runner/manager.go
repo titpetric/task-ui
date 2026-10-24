@@ -121,7 +121,8 @@ func (m *Manager) List() []*Session {
 }
 
 // Start starts a run. When the job is running already it returns the
-// session in the way and ErrBusy, unless the request forces: then Start
+// session in the way and ErrBusy, nil for a run whose start is still
+// under way, unless the request forces: then Start
 // kills the run in the way, waits for it, and the new run takes its
 // place; or unless the request queues: then the new run waits, queued,
 // and starts once the runs before it ended. A run that does work while
@@ -156,7 +157,7 @@ func (m *Manager) Start(ctx context.Context, req Request) (*Session, error) {
 		return current, err
 	}
 	if current, err := m.replace(ctx, run); err != nil {
-		m.release(run.LockKey(), nil)
+		m.release(run.LockKey())
 		return current, err
 	}
 	slot := TakesSlot(req.Job)
@@ -164,7 +165,7 @@ func (m *Manager) Start(ctx context.Context, req Request) (*Session, error) {
 		run.State = model.StateQueued
 	}
 	if err := m.opts.Runs.Create(ctx, run); err != nil {
-		m.release(run.LockKey(), nil)
+		m.release(run.LockKey())
 		return nil, err
 	}
 	session := m.newSession(ctx, req, run)

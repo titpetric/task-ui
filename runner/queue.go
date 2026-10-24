@@ -62,8 +62,9 @@ func (m *Manager) launch(session *Session) {
 	go m.serve(session)
 }
 
-// handOff frees the lock of a key a session ends, or passes the lock to the
-// first run that waits for it, which starts.
+// handOff frees the lock of a key a session ends, nil for a start that
+// gave the lock up, or passes the lock to the first run that waits for
+// it, which starts.
 func (m *Manager) handOff(key string, session *Session) {
 	m.mu.Lock()
 	if m.byKey[key] != session {

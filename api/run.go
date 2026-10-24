@@ -166,7 +166,13 @@ func (h *Handlers) startRun(w http.ResponseWriter, r *http.Request) {
 	}
 	session, err := h.opts.Runner.Start(r.Context(), runner.Request{Folder: f, Job: job, User: user, Force: req.Force, Reason: req.Reason, Cols: req.Cols, Rows: req.Rows, Dir: dir, Args: req.Args})
 	if errors.Is(err, runner.ErrBusy) {
-		writeJSON(w, http.StatusConflict, map[string]any{"error": "already running", "run": h.view(r, session.Snapshot())})
+		// A start under way has no session yet: the conflict then
+		// answers without the run in the way.
+		busy := map[string]any{"error": "already running"}
+		if session != nil {
+			busy["run"] = h.view(r, session.Snapshot())
+		}
+		writeJSON(w, http.StatusConflict, busy)
 		return
 	}
 	if errors.Is(err, runner.ErrOutOfHours) || errors.Is(err, runner.ErrReasonNeeded) {
