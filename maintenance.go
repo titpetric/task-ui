@@ -31,16 +31,27 @@ func dryRun(args []string, usage string) (bool, error) {
 	return dry, nil
 }
 
+// maintenanceConfig reads the configuration a maintenance command works
+// on: the server's own, or in a run of task-ui, where TASK_UI_WORKSPACE
+// names the run's workspace, with the root at TASK_UI_WORKSPACE_DIR.
+func maintenanceConfig() (*app.Config, error) {
+	dir := os.Getenv("TASK_UI_WORKSPACE_DIR")
+	if os.Getenv("TASK_UI_RUN_ID") == "" || dir == "" {
+		return app.NewConfig(nil)
+	}
+	return app.NewConfig([]string{"--workspace", dir})
+}
+
 // cleanup runs task-ui cleanup, the root's @cleanup: the Data retention
-// rules applied to the data of the configuration, the server's own when
-// a run of @cleanup inherits its environment. --dry-run prints what
-// would go and changes nothing.
+// rules applied to the data of the configuration, read as
+// maintenanceConfig does. --dry-run prints what would go and changes
+// nothing.
 func cleanup(ctx context.Context, args []string, stdout io.Writer) error {
 	dry, err := dryRun(args, "usage: task-ui cleanup [--dry-run]")
 	if err != nil {
 		return err
 	}
-	cfg, err := app.NewConfig(nil)
+	cfg, err := maintenanceConfig()
 	if err != nil {
 		return err
 	}
@@ -72,7 +83,7 @@ func migrateLayout(ctx context.Context, args []string, stdout io.Writer) error {
 	if err != nil {
 		return err
 	}
-	cfg, err := app.NewConfig(nil)
+	cfg, err := maintenanceConfig()
 	if err != nil {
 		return err
 	}
