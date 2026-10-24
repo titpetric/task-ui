@@ -29,6 +29,9 @@ type Step struct {
 	// asks in the same place.
 	Prompt string
 	Dir    string
+	// Missing says what of the step a move to another workspace did not
+	// find there, for the editor to show under it.
+	Missing string
 	// State is how a run's step ended; RunID the run it made of a job,
 	// WorkflowRunID the run it made of a workflow.
 	State         string

@@ -8,6 +8,7 @@
 	<div class="actions">
 		{{ template "menu" (menu (print "Actions on " $w.Name)
 			(item "flow" "Open" "href" (print "/workflows/" $w.ID))
+			$.StepMoveItems
 			(danger "trash" "Delete" "data-delete" (print "/api/workflows/" $w.ID) "data-confirm" (print "Delete the workflow " $w.Name "? Its runs stay in the history.") "data-confirm-ok" "Delete" "data-next" "/workflows")
 		) }}
 	</div>

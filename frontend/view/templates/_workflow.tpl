@@ -105,10 +105,10 @@
 					<select data-step-folder aria-label="Folder or workflow">
 						<option value="" disabled{{ if and (not $s.Folder) (not $s.WorkflowID) }} selected{{ end }}>pick one</option>
 						{{- range $p.StepFolders }}{{ if .Jobs }}
-						<option value="{{ .ID }}" data-workspace="{{ $p.StepSpaceOf .ID }}"{{ if eq .ID $s.Folder }} selected{{ end }}>{{ .ID }}</option>
+						<option value="{{ .ID }}" data-workspace="{{ $p.StepSpaceOf .ID }}" data-rel="{{ $p.StepRel .ID }}"{{ if eq .ID $s.Folder }} selected{{ end }}>{{ $p.StepLabel .ID }}</option>
 						{{- end }}{{ end }}
 						{{- if $p.HostJobs }}
-						<option value="_" data-workspace="_"{{ if eq "_" $s.Folder }} selected{{ end }}>_ hosts</option>
+						<option value="_" data-workspace="_" data-rel="."{{ if eq "_" $s.Folder }} selected{{ end }}>_ hosts</option>
 						{{- end }}
 						{{- range $p.StepWorkflows }}
 						<option value="workflow:{{ .ID }}" data-workspace="workflow:"{{ if eq .ID $s.WorkflowID }} selected{{ end }}>{{ .Name }}</option>
@@ -143,12 +143,12 @@
 					<span class="label">Asks in <span class="faint">the folder Claude works in, as you</span></span>
 					{{- $found := eq $s.Folder "_" }}
 					<select data-step-place aria-label="Folder Claude works in">
-						<option value="_" data-workspace="_"{{ if eq $s.Folder "_" }} selected{{ end }}>the root</option>
+						<option value="_" data-workspace="_" data-rel="."{{ if eq $s.Folder "_" }} selected{{ end }}>the root</option>
 						{{- range $p.StepFolders }}{{ if eq .ID $s.Folder }}{{ $found = true }}{{ end }}
-						<option value="{{ .ID }}" data-workspace="{{ $p.StepSpaceOf .ID }}"{{ if eq .ID $s.Folder }} selected{{ end }}>{{ .ID }}</option>
+						<option value="{{ .ID }}" data-workspace="{{ $p.StepSpaceOf .ID }}" data-rel="{{ $p.StepRel .ID }}"{{ if eq .ID $s.Folder }} selected{{ end }}>{{ $p.StepLabel .ID }}</option>
 						{{- end }}
 						{{- if and $s.Folder (not $found) }}
-						<option value="{{ $s.Folder }}" data-workspace="{{ $p.StepSpaceOf $s.Folder }}" selected>{{ $s.Folder }}</option>
+						<option value="{{ $s.Folder }}" data-workspace="{{ $p.StepSpaceOf $s.Folder }}" data-rel="{{ $p.StepRel $s.Folder }}" selected>{{ $p.StepLabel $s.Folder }}</option>
 						{{- end }}
 					</select>
 				</div>
@@ -165,6 +165,7 @@
 			</div>
 			{{- end }}
 			{{- end }}
+			<p class="wf-hint" data-step-hint role="status"{{ if not $s.Missing }} hidden{{ end }}>{{ $s.Missing }}</p>
 			<p class="wf-error" data-step-error role="alert" hidden></p>
 		</div>
 	</div>
@@ -174,8 +175,11 @@
 {{/* stepspace is the Workspace field of a step card, (list page
      selected workflows): the default workspace, the named ones the user
      sees a folder of, and Workflows for a command. The folder select
-     next to it lists the options whose data-workspace matches;
-     task-ui.js narrows it when the workspace changes. */}}
+     next to it lists the options whose data-workspace matches, each by
+     its folder relative to the workspace, data-rel; when the workspace
+     changes, task-ui.js narrows it and keeps the folder of the same
+     data-rel and its job, or says under the card what the workspace
+     lacks. */}}
 {{ define "stepspace" }}
 {{- $p := index . 0 }}{{ $sel := index . 1 }}{{ $flows := index . 2 -}}
 <div class="field">
