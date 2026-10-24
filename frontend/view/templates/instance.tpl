@@ -3,7 +3,7 @@
 <div class="page-head">
 	<div>
 		<h2>Instance</h2>
-		<p>What the server runs with. The environment sets most of these: change one there and restart task-ui. The backlog length is a setting of its own, saved here{{ if not $admin }} by an admin{{ end }}.</p>
+		<p>What the server runs with. The environment sets most of these: change one there and restart task-ui. The backlog length and the parent environment are settings of their own, saved here{{ if not $admin }} by an admin{{ end }}.</p>
 	</div>
 </div>
 
@@ -47,6 +47,38 @@
 		<tr><td class="key">Retention</td><td class="value" data-label="Value"><a href="/settings/retention">Data retention</a></td><td class="var" data-label="Variable"><span class="faint">none</span></td><td class="desc" data-label="About"><span>How long recordings, artifact history and the read logs stay.</span></td></tr>
 	{{ template "instance-table-foot" }}
 </section>
+
+{{- if .ParentEnv }}
+<section class="block instance-section" id="environment">
+	<h3>Parent environment</h3>
+	<p class="section-intro">How much of the server's own environment a run starts with. The folder's secrets and the integrations' variables reach a run under every choice; a script reads any other secret with <code>task-ui get-secret NAME</code>, as <a href="https://github.com/titpetric/task-ui/blob/main/docs/guide/settings.md#secrets-in-scripts">Secrets in scripts</a> shows.</p>
+	{{- if $admin }}
+	<form class="parent-env" data-api="/api/instance" data-method="PUT" data-next="/settings/instance?notice=Parent+environment+saved#environment" data-parent-env>
+		<label class="check"><input type="radio" name="parent_env" value="none"{{ if eq .ParentEnv "none" }} checked{{ end }}> <strong>None</strong> <span class="faint">secure: the base variables alone, less the sensitive ones</span></label>
+		<label class="check"><input type="radio" name="parent_env" value="auto"{{ if eq .ParentEnv "auto" }} checked{{ end }}> <strong>Auto</strong> <span class="faint">filtered: every variable but the sensitive ones</span></label>
+		<label class="check"><input type="radio" name="parent_env" value="all"{{ if eq .ParentEnv "all" }} checked{{ end }}> <strong>All</strong> <span class="faint">every variable, sensitive ones too</span></label>
+		<button class="btn btn-sm" type="submit">Save</button>
+	</form>
+	<p class="faint">Base variables: {{ range $i, $n := .EnvBase }}{{ if $i }}, {{ end }}<code>{{ $n }}</code>{{ end }}. A name holding {{ range $i, $n := .EnvSensitive }}{{ if $i }}, {{ end }}<code>{{ $n }}</code>{{ end }} is sensitive.</p>
+	{{- with .Env }}
+	<div class="table-wrap">
+	<table class="table env-table cards">
+		<thead><tr><th>Variable</th><th>Forwarded</th><th>Flag</th></tr></thead>
+		<tbody>
+		{{- range . }}
+		<tr data-env-none="{{ .None }}" data-env-auto="{{ .Auto }}"><td class="mono">{{ .Name }}</td>
+			<td data-label="Forwarded" data-env-forwarded>{{ if .Forwarded $.Instance.ParentEnv }}<span class="badge ok">yes</span>{{ else }}<span class="badge">no</span>{{ end }}</td>
+			<td data-label="Flag">{{ if .Sensitive }}<span class="badge bad" title="The name looks like a credential's">sensitive</span>{{ end }}</td></tr>
+		{{- end }}
+		</tbody>
+	</table>
+	</div>
+	{{- end }}
+	{{- else }}
+	<p>In effect: <strong>{{ .ParentEnv }}</strong>; an admin changes it here.</p>
+	{{- end }}
+</section>
+{{- end }}
 
 <section class="block instance-section" id="paths">
 	<h3>Paths</h3>

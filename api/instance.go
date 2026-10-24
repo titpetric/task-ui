@@ -15,6 +15,14 @@ type InstanceRequest struct {
 	// number or a string; empty or 0 is the automatic length,
 	// backlog_length_auto.
 	BacklogLength *backlogValue `json:"backlog_length"`
+	// ParentEnv is how much of the server's environment a run starts
+	// with: none, auto or all.
+	ParentEnv *string `json:"parent_env"`
+}
+
+// instanceState reads the state GET and PUT /api/instance answer.
+func (h *Handlers) instanceState(r *http.Request) InstanceState {
+	return InstanceState{BacklogState: h.opts.Runner.Backlog(r.Context()), ParentEnv: h.opts.Runner.ParentEnv(r.Context())}
 }
 
 // backlogValue takes a backlog length as a JSON number or string.
@@ -40,17 +48,18 @@ func (v *backlogValue) UnmarshalJSON(data []byte) error {
 
 // getInstance answers how the slots and the backlog stand: the runs
 // that go at once, the ones that wait, and the backlog lengths, the
-// automatic one, the one set and the one in effect.
+// automatic one, the one set and the one in effect; and the parent
+// environment mode.
 func (h *Handlers) getInstance(w http.ResponseWriter, r *http.Request) {
 	if h.opts.Runner == nil {
 		fail(w, http.StatusNotFound, "the runner isn't available on this instance")
 		return
 	}
-	writeJSON(w, http.StatusOK, h.opts.Runner.Backlog(r.Context()))
+	writeJSON(w, http.StatusOK, h.instanceState(r))
 }
 
-// putInstance sets the backlog length, for admins alone; the next start
-// reads it.
+// putInstance sets the backlog length and the parent environment, for
+// admins alone; the next start reads them.
 func (h *Handlers) putInstance(w http.ResponseWriter, r *http.Request) {
 	if !access.UserFrom(r.Context()).CanAdmin() {
 		fail(w, http.StatusForbidden, "only an admin sets the instance settings")
@@ -75,5 +84,15 @@ func (h *Handlers) putInstance(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	writeJSON(w, http.StatusOK, h.opts.Runner.Backlog(r.Context()))
+	if req.ParentEnv != nil {
+		if err := h.opts.Runner.SetParentEnv(r.Context(), *req.ParentEnv); err != nil {
+			status := http.StatusInternalServerError
+			if errors.Is(err, runner.ErrEnvironmentInvalid) {
+				status = http.StatusBadRequest
+			}
+			fail(w, status, err.Error())
+			return
+		}
+	}
+	writeJSON(w, http.StatusOK, h.instanceState(r))
 }

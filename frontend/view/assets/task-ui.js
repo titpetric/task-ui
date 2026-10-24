@@ -1038,6 +1038,19 @@
     if (pick) pick.form.elements.bits.value = pick.selectedOptions[0].dataset.bits || "0";
   });
 
+  // The parent environment's choice shows at once which variables a run
+  // would get under it, before the save: every one under all.
+  document.addEventListener("change", function (event) {
+    var radio = event.target.closest("form[data-parent-env] input[name=parent_env]");
+    if (!radio) return;
+    var section = radio.closest("section");
+    section.querySelectorAll("tr[data-env-none]").forEach(function (row) {
+      var on = radio.value === "all" || row.getAttribute("data-env-" + radio.value) === "true";
+      var cell = row.querySelector("[data-env-forwarded]");
+      cell.innerHTML = on ? '<span class="badge ok">yes</span>' : '<span class="badge">no</span>';
+    });
+  });
+
   // A show/hide switch remembers its choice, in this browser.
   Array.prototype.forEach.call(document.querySelectorAll("input[data-peek]"), function (input) {
     var key = "task-ui.peek." + input.dataset.peek;

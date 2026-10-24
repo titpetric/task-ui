@@ -167,7 +167,13 @@ what they need, and runs get the secrets in their environment. API:
 Variables added to the environment of runs, encrypted with the
 instance's one encryption key. A secret's scope is a workspace, `workspace:<name>`,
 or a folder. A value is never shown again once saved. Page:
-`/settings/secrets`; API: `/api/secrets`.
+`/settings/secrets`; API: `/api/secrets`. A script in a run reads a
+secret of its folder with `task-ui get-secret NAME`, which prints the
+value, as `GITHUB_TOKEN=$(task-ui get-secret GITHUB_TOKEN)`. The
+Instance page's **Parent environment** says how much of the server's own
+environment runs get: None, the base variables alone, the default; Auto,
+all but names holding KEY, TOKEN, SECRET, PASS, CREDENTIAL or PRIVATE;
+All, every variable.
 
 ## Keys (`key`)
 

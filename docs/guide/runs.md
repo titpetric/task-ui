@@ -377,6 +377,13 @@ runs, as a login shell, with:
   [Running the server](../running.md));
 - the secrets of its folder and its workspace's shared secrets, never
   another workspace's (see [Settings](settings.md#secrets));
+- `TASK_UI_API` and `TASK_UI_RUN_TOKEN`, for `task-ui get-secret NAME`,
+  which prints a secret of the folder (see
+  [Secrets in scripts](settings.md#secrets-in-scripts));
+- of the server's own environment, what the
+  [Parent environment](settings.md#parent-environment) passes: the base
+  variables alone by default, every variable but the sensitive ones, or
+  every one;
 - an ssh agent, through `SSH_AUTH_SOCK`, with the instance keys linked
   to the role or the name of whoever started the run (see
   [Projects and jobs](projects.md#keys-for-a-run)), and the SSH keys of

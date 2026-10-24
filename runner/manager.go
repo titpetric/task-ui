@@ -68,6 +68,9 @@ type Manager struct {
 	// slots hold the runs that do work, as many at once as the machine
 	// has CPUs; a run over that waits, queued, holding its job's lock.
 	slots *Slots
+	// runTokens are the live runs by the hash of their token, the one
+	// task-ui get-secret signs in with.
+	runTokens map[string]*Session
 }
 
 // New returns a manager. Zero durations get defaults.
@@ -81,7 +84,7 @@ func New(opts Options) *Manager {
 	if opts.Keep <= 0 {
 		opts.Keep = time.Hour
 	}
-	return &Manager{opts: opts, sessions: map[string]*Session{}, byKey: map[string]*Session{}, queued: map[string][]*Session{}, slots: NewSlots(runtime.NumCPU())}
+	return &Manager{opts: opts, sessions: map[string]*Session{}, byKey: map[string]*Session{}, queued: map[string][]*Session{}, runTokens: map[string]*Session{}, slots: NewSlots(runtime.NumCPU())}
 }
 
 // Get returns a session by run id.
@@ -351,6 +354,12 @@ func (m *Manager) execute(ctx context.Context, session *Session) Status {
 		socket = keys.Socket
 	}
 	cmd.Env = append(cmd.Env, "SSH_AUTH_SOCK="+socket)
+	env, revoke, err := m.runToken(session)
+	if err != nil {
+		return failed(session, err.Error())
+	}
+	defer revoke()
+	cmd.Env = append(cmd.Env, env...)
 	proc, err := StartProcess(cmd, int(run.TermCols), int(run.TermRows))
 	if err != nil {
 		return failed(session, "cannot start: "+err.Error())
@@ -435,4 +444,28 @@ func (m *Manager) artifactDir(run *model.Run) string {
 		return ""
 	}
 	return filepath.Join(m.opts.ArtifactRoot, run.ID)
+}
+
+// parentEnv returns the server's variables a run starts with, under the
+// mode in effect.
+func (m *Manager) parentEnv(ctx context.Context) []string {
+	if m.opts.Environment == nil {
+		return inherited(m.opts.Environment.environ())
+	}
+	return m.opts.Environment.Env(ctx)
+}
+
+// ParentEnv returns the parent environment mode in effect.
+func (m *Manager) ParentEnv(ctx context.Context) string {
+	return m.opts.Environment.Mode(ctx)
+}
+
+// SetParentEnv stores the parent environment mode for the next run.
+func (m *Manager) SetParentEnv(ctx context.Context, mode string) error {
+	return m.opts.Environment.Set(ctx, mode)
+}
+
+// EnvNames lists the server's variables by name, as Environment.Names.
+func (m *Manager) EnvNames() []EnvName {
+	return m.opts.Environment.Names()
 }
