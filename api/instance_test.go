@@ -68,6 +68,9 @@ func TestInstanceRoutes(t *testing.T) {
 	viewer := &model.User{Name: "ann", Role: model.RoleViewer}
 
 	status, body := instanceCall(t, h, viewer, http.MethodGet, "")
+	assert.Equal(t, http.StatusForbidden, status, "only an admin reads it")
+	assert.Nil(t, body["backlog_length_auto"])
+	status, body = instanceCall(t, h, admin, http.MethodGet, "")
 	assert.Equal(t, http.StatusOK, status)
 	assert.Equal(t, float64(80), body["backlog_length_auto"])
 	assert.Equal(t, float64(80), body["backlog_length_effective"])

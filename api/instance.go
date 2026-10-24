@@ -46,11 +46,14 @@ func (v *backlogValue) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-// getInstance answers how the slots and the backlog stand: the runs
-// that go at once, the ones that wait, and the backlog lengths, the
-// automatic one, the one set and the one in effect; and the parent
-// environment mode.
+// getInstance answers the slots, the backlog and its lengths, and the
+// parent environment, as the Instance page shows them: for admins
+// alone, whose settings they are.
 func (h *Handlers) getInstance(w http.ResponseWriter, r *http.Request) {
+	if !access.UserFrom(r.Context()).CanAdmin() {
+		fail(w, http.StatusForbidden, "only an admin reads the instance settings")
+		return
+	}
 	if h.opts.Runner == nil {
 		fail(w, http.StatusNotFound, "the runner isn't available on this instance")
 		return
