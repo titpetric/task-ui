@@ -107,3 +107,29 @@ func makeFolder(t *testing.T, root, id string) {
 	assert.NoError(t, os.MkdirAll(filepath.Join(root, id), 0o755))
 	assert.NoError(t, os.WriteFile(filepath.Join(root, id, "Makefile"), []byte("build:\n\techo built\n"), 0o644))
 }
+
+// A directory in a workspace with a home project lists its skills with
+// HOME there; one outside the root, or in a workspace without, has none.
+func TestCatalogue_Home(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	db, err := storage.OpenAndMigrate(ctx, ":memory:")
+	assert.NoError(t, err)
+	t.Cleanup(func() { db.Close() })
+	root := t.TempDir()
+	projects, workspaces := storage.NewProjectStorage(db), storage.NewWorkspaceStorage(db)
+	home := &model.Project{Folder: "malta/workspace"}
+	assert.NoError(t, projects.Create(ctx, home))
+	assert.NoError(t, workspaces.Create(ctx, &model.Workspace{Folder: "malta", HomeProjectID: home.ID}))
+	assert.NoError(t, workspaces.Create(ctx, &model.Workspace{Folder: "gozo"}))
+	assert.NoError(t, workspaces.EnsureDefault(ctx))
+
+	c := app.NewCatalogue(root, true, projects)
+	c.Workspaces = workspaces
+	want := filepath.Join(root, "malta", "workspace")
+	assert.Equal(t, want, c.Home(filepath.Join(root, "malta", "dockerfiles")))
+	assert.Equal(t, want, c.Home(filepath.Join(root, "malta", "workspace", "scripts")))
+	assert.Equal(t, "", c.Home(filepath.Join(root, "gozo", "api")))
+	assert.Equal(t, "", c.Home(filepath.Join(root, "deploy")), "the default workspace has none")
+	assert.Equal(t, "", c.Home(t.TempDir()))
+}

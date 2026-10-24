@@ -16,13 +16,10 @@ func TestWorkspaceStorage_Create(t *testing.T) {
 	ctx := context.Background()
 	workspaces := storage.NewWorkspaceStorage(newDB(t))
 
-	workspace := &model.Workspace{Folder: "malta", SourceURL: "git@example.com:malta/workspace.git"}
+	workspace := &model.Workspace{Folder: "malta"}
 	assert.NoError(t, workspaces.Create(ctx, workspace))
 	assert.True(t, model.ValidID(workspace.ID))
 	assert.NotNil(t, workspace.CreatedAt)
-
-	same := &model.Workspace{Folder: "gozo", SourceURL: workspace.SourceURL}
-	assert.NoError(t, workspaces.Create(ctx, same), "a repository may back more than one workspace")
 
 	assert.Error(t, workspaces.Create(ctx, &model.Workspace{}), "no folder")
 	assert.Error(t, workspaces.Create(ctx, &model.Workspace{Folder: "malta"}), "duplicate folder")
@@ -132,4 +129,36 @@ func TestWorkspaceStorage_EnsureDefault(t *testing.T) {
 	folders, err := workspaces.Folders(ctx)
 	assert.NoError(t, err)
 	assert.Equal(t, []string{"malta"}, folders)
+}
+
+func TestWorkspaceStorage_Home(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	db := newDB(t)
+	workspaces, projects := storage.NewWorkspaceStorage(db), storage.NewProjectStorage(db)
+	workspace := &model.Workspace{Folder: "malta"}
+	assert.NoError(t, workspaces.Create(ctx, workspace))
+
+	home, err := workspaces.Home(ctx, "malta")
+	assert.NoError(t, err)
+	assert.Equal(t, "", home, "no home project")
+
+	project := &model.Project{Folder: "malta/workspace"}
+	assert.NoError(t, projects.Create(ctx, project))
+	workspace.HomeProjectID = project.ID
+	assert.NoError(t, workspaces.Update(ctx, workspace))
+	home, err = workspaces.Home(ctx, "malta")
+	assert.NoError(t, err)
+	assert.Equal(t, "malta/workspace", home)
+
+	assert.NoError(t, workspaces.ClearHome(ctx, project.ID))
+	home, _ = workspaces.Home(ctx, "malta")
+	assert.Equal(t, "", home, "a cleared home")
+
+	workspace.HomeProjectID = project.ID
+	assert.NoError(t, workspaces.Update(ctx, workspace))
+	assert.NoError(t, projects.Delete(ctx, project.ID))
+	got, err := workspaces.Get(ctx, workspace.ID)
+	assert.NoError(t, err)
+	assert.Equal(t, "", got.HomeProjectID, "deleting the home project unsets it")
 }

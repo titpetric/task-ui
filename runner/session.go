@@ -53,6 +53,9 @@ type Session struct {
 	workspace     string
 	workspaceName string
 	workspaceID   string
+	// home is the directory of the workspace's home project, the run's
+	// HOME; "" keeps the server's.
+	home string
 	// Titled hears the run row when the terminal's title changes, at
 	// most every TitleEvery with the title of the moment; nil tells
 	// nobody. The manager publishes it on the runs topic.

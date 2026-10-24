@@ -41,6 +41,7 @@ type fixture struct {
 	// workspaces are the workspaces under root the manager knows, and
 	// keys the key folder, with an instance SSH key, task_ssh_ed25519.
 	workspaces *storage.WorkspaceStorage
+	projects   *storage.ProjectStorage
 	keys       *keystore.Local
 	// summaries are Claude's summaries of the runs, recordings their casts.
 	summaries  *storage.RunSummaryStorage
@@ -62,7 +63,7 @@ func newFixture(t *testing.T) *fixture {
 	secrets := secret.New(storage.NewSecretStorage(db), secret.NewVault(keys.Vault(storage.ScopeInstance)))
 	f := &fixture{
 		runs: runs, files: artifacts, secrets: secrets, env: storage.NewEnvFileStorage(db), reads: storage.NewSecretReadStorage(db), root: t.TempDir(),
-		workspaces: storage.NewWorkspaceStorage(db), keys: keys,
+		workspaces: storage.NewWorkspaceStorage(db), projects: storage.NewProjectStorage(db), keys: keys,
 		summaries: storage.NewRunSummaryStorage(db), recordings: &recording.Store{Root: t.TempDir()},
 	}
 	manager := runner.New(runner.Options{

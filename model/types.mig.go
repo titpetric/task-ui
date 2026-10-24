@@ -2629,17 +2629,14 @@ type Workspace struct {
 	// Description
 	Description string `db:"description" json:"description"`
 
-	// Source URL
-	SourceURL string `db:"source_url" json:"source_url"`
-
-	// Branch
-	Branch string `db:"branch" json:"branch"`
-
 	// Created At
 	CreatedAt *time.Time `db:"created_at" json:"created_at"`
 
 	// Updated At
 	UpdatedAt *time.Time `db:"updated_at" json:"updated_at"`
+
+	// Home Project ID
+	HomeProjectID string `db:"home_project_id" json:"home_project_id"`
 
 	// Shallow
 	Shallow bool `db:"shallow" json:"shallow"`
@@ -2672,18 +2669,6 @@ func (w *Workspace) GetDescription() string { return w.Description }
 // SetDescription sets Description to the provided value.
 func (w *Workspace) SetDescription(val string) { w.Description = val }
 
-// GetSourceURL will return the value of SourceURL.
-func (w *Workspace) GetSourceURL() string { return w.SourceURL }
-
-// SetSourceURL sets SourceURL to the provided value.
-func (w *Workspace) SetSourceURL(val string) { w.SourceURL = val }
-
-// GetBranch will return the value of Branch.
-func (w *Workspace) GetBranch() string { return w.Branch }
-
-// SetBranch sets Branch to the provided value.
-func (w *Workspace) SetBranch(val string) { w.Branch = val }
-
 // GetCreatedAt will return the value of CreatedAt.
 func (w *Workspace) GetCreatedAt() *time.Time { return w.CreatedAt }
 
@@ -2695,6 +2680,12 @@ func (w *Workspace) GetUpdatedAt() *time.Time { return w.UpdatedAt }
 
 // SetUpdatedAt sets UpdatedAt to the provided value.
 func (w *Workspace) SetUpdatedAt(stamp time.Time) { w.UpdatedAt = &stamp }
+
+// GetHomeProjectID will return the value of HomeProjectID.
+func (w *Workspace) GetHomeProjectID() string { return w.HomeProjectID }
+
+// SetHomeProjectID sets HomeProjectID to the provided value.
+func (w *Workspace) SetHomeProjectID(val string) { w.HomeProjectID = val }
 
 // GetShallow will return the value of Shallow.
 func (w *Workspace) GetShallow() bool { return w.Shallow }
@@ -2712,7 +2703,7 @@ func (w *Workspace) SetSort(val int64) { w.Sort = val }
 const WorkspaceTable = "`workspace`"
 
 // WorkspaceFields is a list of all columns in the DB table.
-var WorkspaceFields = []string{"id", "folder", "title", "description", "source_url", "branch", "created_at", "updated_at", "shallow", "sort"}
+var WorkspaceFields = []string{"id", "folder", "title", "description", "created_at", "updated_at", "home_project_id", "shallow", "sort"}
 
 // WorkspacePrimaryFields are the primary key fields in the DB table.
 var WorkspacePrimaryFields = []string{"id"}

@@ -28,6 +28,10 @@ type Prober struct {
 	// unless set.
 	Timeout time.Duration
 	TTL     time.Duration
+	// Home returns the HOME a probe of dir runs atkins with, the home
+	// project of dir's workspace, for its ~/.atkins/skills; "" keeps the
+	// server's. Nil is "" everywhere.
+	Home func(dir string) string
 
 	mu    sync.Mutex
 	cache map[string]probe
@@ -68,14 +72,18 @@ func (p *Prober) probe(dir, file string) Listing {
 		return Listing{}
 	}
 	key := dir + "\x00" + file
+	home := p.home(dir)
 	stamp := Stamp(dir)
+	if home != "" {
+		stamp += ";home=" + Stamp(home)
+	}
 	p.mu.Lock()
 	cached, ok := p.cache[key]
 	p.mu.Unlock()
 	if ok && cached.stamp == stamp && time.Since(cached.at) < p.ttl() {
 		return cached.listing
 	}
-	listing := p.run(dir, file)
+	listing := p.run(dir, file, home)
 	p.mu.Lock()
 	if p.cache == nil {
 		p.cache = map[string]probe{}
@@ -85,10 +93,19 @@ func (p *Prober) probe(dir, file string) Listing {
 	return listing
 }
 
-// run execs atkins in dir. Its stdin is /dev/null: atkins reads a pipe
-// on stdin as the pipeline. A failing atkins answers only when it
-// prints lint findings, which it does with a non-zero exit.
-func (p *Prober) run(dir, file string) Listing {
+// home returns the HOME of a probe of dir, "" for the server's.
+func (p *Prober) home(dir string) string {
+	if p.Home == nil {
+		return ""
+	}
+	return p.Home(dir)
+}
+
+// run execs atkins in dir, with HOME at home when set. Its stdin is
+// /dev/null: atkins reads a pipe on stdin as the pipeline. A failing
+// atkins answers only when it prints lint findings, which it does with
+// a non-zero exit.
+func (p *Prober) run(dir, file, home string) Listing {
 	timeout := p.Timeout
 	if timeout <= 0 {
 		timeout = 3 * time.Second
@@ -102,6 +119,9 @@ func (p *Prober) run(dir, file string) Listing {
 	defer cancel()
 	cmd := exec.CommandContext(ctx, command, args...)
 	cmd.Dir = dir
+	if home != "" {
+		cmd.Env = append(os.Environ(), "HOME="+home)
+	}
 	cmd.Stdin = nil
 	cmd.WaitDelay = time.Second
 	var out bytes.Buffer

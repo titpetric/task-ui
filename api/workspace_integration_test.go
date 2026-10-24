@@ -46,9 +46,12 @@ func TestWorkspace_CRUD(t *testing.T) {
 	created := f.call(t, asAdmin, http.MethodPost, "/workspaces", api.WorkspaceRequest{URL: repo, Folder: "malta", Title: "Malta", Branch: "main"})
 	assert.Equal(t, http.StatusCreated, created.Status, string(created.Raw))
 	assert.Equal(t, "malta", created.str("workspace", "folder"))
-	assert.Equal(t, repo, created.str("workspace", "source_url"))
+	assert.Equal(t, "malta/website", created.str("project", "folder"), "the URL clones as a project, named from the URL")
+	assert.Equal(t, repo, created.str("project", "source_url"))
+	assert.Equal(t, created.str("project", "id"), created.str("workspace", "home_project_id"), "and is the home project")
 	assert.Equal(t, false, created.get("workspace", "shallow"), "Recursive is the default")
-	assert.FileExists(t, filepath.Join(f.root, "malta", "Makefile"))
+	assert.FileExists(t, filepath.Join(f.root, "malta", "website", "Makefile"))
+	assert.NoFileExists(t, filepath.Join(f.root, "malta", "Makefile"))
 
 	// A second workspace from the same repository, under its own name.
 	again := f.call(t, asAdmin, http.MethodPost, "/workspaces", api.WorkspaceRequest{URL: repo, Folder: "gozo"})
@@ -66,7 +69,7 @@ func TestWorkspace_CRUD(t *testing.T) {
 	assert.Equal(t, http.StatusOK, updated.Status, string(updated.Raw))
 	assert.Equal(t, "The island", updated.str("title"))
 	assert.Equal(t, "org tooling", updated.str("description"))
-	assert.Equal(t, repo, updated.str("source_url"), "an update keeps the repository")
+	assert.Equal(t, created.str("project", "id"), updated.str("home_project_id"), "an update without home_project keeps it")
 	assert.Equal(t, got.str("id"), updated.str("id"))
 	assert.Equal(t, float64(0), updated.get("sort"))
 
@@ -146,7 +149,10 @@ func TestWorkspace_CloneProject(t *testing.T) {
 	f := newFixture(t)
 	repo := "file://" + localRepo(t)
 
-	assert.Equal(t, http.StatusCreated, f.call(t, asAdmin, http.MethodPost, "/workspaces", api.WorkspaceRequest{URL: repo, Folder: "malta"}).Status)
+	plain := f.call(t, asAdmin, http.MethodPost, "/workspaces", api.WorkspaceRequest{Folder: "malta"})
+	assert.Equal(t, http.StatusCreated, plain.Status, string(plain.Raw))
+	assert.Equal(t, "", plain.str("workspace", "home_project_id"), "no URL, no home project")
+	assert.DirExists(t, filepath.Join(f.root, "malta"))
 
 	res := f.call(t, asAdmin, http.MethodPost, "/projects", api.ProjectCloneRequest{URL: repo, ID: "dockerfiles", Workspace: "malta"})
 	assert.Equal(t, http.StatusCreated, res.Status, string(res.Raw))
@@ -320,4 +326,51 @@ func TestWorkspace_RootCloneTaken(t *testing.T) {
 		assert.Equal(t, "", res.str("output"), id)
 	}
 	assert.NoDirExists(t, filepath.Join(f.root, "malta", "x"))
+}
+
+// A workspace's home project changes to another of its projects, a
+// clone takes its place, Remove and its delete unset it; the API refuses
+// a folder that is no project at the top of the workspace.
+func TestWorkspace_Home(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	ctx := context.Background()
+	repo := "file://" + localRepo(t)
+	assert.Equal(t, http.StatusCreated, f.call(t, asAdmin, http.MethodPost, "/workspaces", api.WorkspaceRequest{Folder: "malta"}).Status)
+	assert.Equal(t, http.StatusCreated, f.call(t, asAdmin, http.MethodPost, "/workspaces", api.WorkspaceRequest{Folder: "gozo"}).Status)
+	a := f.call(t, asAdmin, http.MethodPost, "/projects", api.ProjectCloneRequest{URL: repo, ID: "a", Workspace: "malta"})
+	b := f.call(t, asAdmin, http.MethodPost, "/projects", api.ProjectCloneRequest{URL: repo, ID: "b", Workspace: "malta"})
+	other := f.call(t, asAdmin, http.MethodPost, "/projects", api.ProjectCloneRequest{URL: repo, ID: "c", Workspace: "gozo"})
+	assert.Equal(t, http.StatusCreated, other.Status, string(other.Raw))
+	home := func() string {
+		got := f.call(t, asAdmin, http.MethodGet, "/workspaces/malta", nil)
+		return got.str("home_project_id")
+	}
+	set := func(folder string) response {
+		return f.call(t, asAdmin, http.MethodPut, "/workspaces/malta", api.WorkspaceRequest{Title: "Malta", HomeProject: &folder})
+	}
+
+	assert.Equal(t, http.StatusOK, set("malta/a").Status)
+	assert.Equal(t, a.str("project", "id"), home())
+	assert.Equal(t, http.StatusOK, set("malta/b").Status, "Change")
+	assert.Equal(t, b.str("project", "id"), home())
+	for _, folder := range []string{"malta/x", "gozo/c", "malta", "malta/a/sub"} {
+		refused := set(folder)
+		assert.Equal(t, http.StatusBadRequest, refused.Status, folder)
+	}
+	assert.Equal(t, b.str("project", "id"), home(), "a refusal keeps the home")
+
+	assert.Equal(t, http.StatusOK, set("").Status, "Remove")
+	assert.Equal(t, "", home())
+	assert.DirExists(t, filepath.Join(f.root, "malta", "b"), "the project stays")
+
+	replaced := f.call(t, asAdmin, http.MethodPost, "/projects", api.ProjectCloneRequest{URL: repo, ID: "workspace", Workspace: "malta", Home: true})
+	assert.Equal(t, http.StatusCreated, replaced.Status, string(replaced.Raw))
+	assert.Equal(t, replaced.str("project", "id"), home(), "Replace")
+	folder, err := f.opts.Workspaces.Home(ctx, "malta")
+	assert.NoError(t, err)
+	assert.Equal(t, "malta/workspace", folder)
+
+	assert.Equal(t, http.StatusNoContent, f.call(t, asAdmin, http.MethodDelete, "/projects/malta/workspace", nil).Status)
+	assert.Equal(t, "", home(), "deleting the home project unsets it")
 }

@@ -17,8 +17,8 @@ it with headless chromium; `task docs:shots` regenerates them into
 | ![Artifacts](assets/artifacts-dark.png) | ![Scheduled](assets/schedules-dark.png) |
 | ![Settings](assets/settings-dark.png) | ![Projects](assets/projects-dark.png) |
 | ![Add a project from git](assets/project-new-dark.png) | ![Configure a folder](assets/project-edit-dark.png) |
-| ![Workspaces: checkouts that hold projects, and Import](assets/workspaces-dark.png) | ![The sidebar with a workspace open, its projects under it](assets/sidebar-workspace-dark.png) |
-| ![A workspace's page, with the Prompt box open](assets/workspace-prompt-dark.png) | ![Configure a workspace: its keys, and Export](assets/workspace-edit-dark.png) |
+| ![Workspaces: directories that hold projects, each with its home project, and Import](assets/workspaces-dark.png) | ![The sidebar with a workspace open, its projects under it](assets/sidebar-workspace-dark.png) |
+| ![A workspace's page, with the Prompt box open](assets/workspace-prompt-dark.png) | ![Configure a workspace: its home project, keys, and Export](assets/workspace-edit-dark.png) |
 | ![A project's Files: .git and .env sealed, a file that runs marked exec](assets/files-dark.png) | ![A file of the checkout in the preview window](assets/file-dark.png) |
 | ![The default workspace's page: each project in Files with Run and summarize](assets/folder-dashboard-dark.png) | ![Instance: what the server runs with, read only](assets/instance-dark.png) |
 | ![A directory's actions bar: the git line, Enter Shell, and the git, compose and dockerfile skills](assets/actions-dark.png) | ![The arguments field of compose: custom..., and the argv it runs](assets/args-dark.png) |
@@ -33,4 +33,5 @@ it with headless chromium; `task docs:shots` regenerates them into
 | ![The phone: the drawer with the projects, folders and jobs](assets/mobile-menu-dark.png) | ![Sign in, light theme](assets/login-light.png) |
 | ![A key's actions menu: its details, then Copy, Download, Edit links, Rotate Key, and Remove last](assets/keys-menu-dark.png) | ![A key's actions menu, light theme](assets/keys-menu-light.png) |
 | ![A job's run: its actions menu beside View, its ID, Open, Replay](assets/job-menu-dark.png) | ![A run's actions menu, light theme](assets/job-menu-light.png) |
-| ![The phone: a row's actions menu as a sheet along the bottom](assets/mobile-actions-dark.png) | |
+| ![The phone: a row's actions menu as a sheet along the bottom](assets/mobile-actions-dark.png) | ![Configure a workspace, light theme](assets/workspace-edit-light.png) |
+| ![The phone: a workspace's configure page, its home project with Change, Replace and Remove](assets/mobile-workspace-edit-dark.png) | |

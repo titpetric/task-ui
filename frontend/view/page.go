@@ -178,9 +178,16 @@ type Page struct {
 	MoveFrom string
 	MoveLeft []string
 	// Nested are the project rows inside each workspace, by its folder.
-	Nested  map[string][]string
-	Keys    []keystore.Key
-	KeysDir string
+	Nested map[string][]string
+	// Homes are the home projects' folders, by workspace folder.
+	// HomeProject is the home project of the workspace a configure page
+	// edits, nil for none, and HomeChoices the projects at its top that
+	// Change picks from.
+	Homes       map[string]string
+	HomeProject *model.Project
+	HomeChoices []string
+	Keys        []keystore.Key
+	KeysDir     string
 	// GitKey names the key git pulls and clones with.
 	GitKey string
 	// KeyReads count the reads of each private key, by name, and

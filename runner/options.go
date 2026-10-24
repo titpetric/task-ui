@@ -53,9 +53,10 @@ type Options struct {
 	// TASK_UI_HOST_DATA: a job's docker run -v goes to the host's daemon.
 	HostPaths hostpath.Mounts
 	HostData  string
-	// Root is where the folders are, and Workspaces the checkouts under it
+	// Root is where the folders are, and Workspaces the directories under it
 	// whose folder is a namespace: a run of a folder inside one names the
-	// workspace in its environment. Nil Workspaces knows none.
+	// workspace in its environment, and its home project is the run's HOME.
+	// Nil Workspaces knows none.
 	Root       string
 	Workspaces *storage.WorkspaceStorage
 	// Users say what the user of a run may do, which the run reads in

@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -10,6 +11,8 @@ import (
 	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/keystore"
 	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/storage"
+	"github.com/titpetric/task-ui/workspace"
 )
 
 // listWorkspaces returns every workspace, the default first, then in
@@ -29,11 +32,13 @@ func (h *Handlers) listWorkspaces(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"workspaces": workspaces})
 }
 
-// createWorkspace clones a repository into <root>/<folder> and records
-// it. The folder is the user's to name, one segment that no workspace,
-// project or directory under the root holds yet. As with a project, the
-// clone is the test: a failure reports git's output and keeps nothing.
-// A workspace made gets its encryption key.
+// createWorkspace makes the directory <root>/<folder> and records it.
+// The folder is the user's to name, one segment that no workspace,
+// project or directory under the root holds yet. With a URL it clones
+// the repository into the workspace as a project, the folder the
+// request names or the repository's, and makes it the home project. As
+// with a project, the clone is the test: a failure reports git's output
+// and keeps nothing.
 func (h *Handlers) createWorkspace(w http.ResponseWriter, r *http.Request) {
 	if !h.require(w, r, "workspace/edit") {
 		return
@@ -43,9 +48,16 @@ func (h *Handlers) createWorkspace(w http.ResponseWriter, r *http.Request) {
 		fail(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	req.URL, req.Folder = strings.TrimSpace(req.URL), strings.TrimSpace(req.Folder)
-	if !h.opts.Git.ValidURL(req.URL) {
+	req.URL, req.Folder, req.Project = strings.TrimSpace(req.URL), strings.TrimSpace(req.Folder), strings.TrimSpace(req.Project)
+	if req.URL != "" && !h.opts.Git.ValidURL(req.URL) {
 		fail(w, http.StatusBadRequest, "enter a git URL: https://, ssh://, git@host:path or file://")
+		return
+	}
+	if req.URL != "" && req.Project == "" {
+		req.Project = folderIDFromURL(req.URL)
+	}
+	if req.URL != "" && (!folder.ValidID(req.Project) || strings.Contains(req.Project, "/") || model.IsReserved(req.Project)) {
+		fail(w, http.StatusBadRequest, "name the home project's folder: letters, digits, dots, dashes and underscores, no slashes")
 		return
 	}
 	ctx := r.Context()
@@ -54,21 +66,94 @@ func (h *Handlers) createWorkspace(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	dir := filepath.Join(h.opts.Root, req.Folder)
-	output, err := h.opts.Git.Clone(ctx, req.URL, dir, req.Branch)
-	if err != nil {
-		writeJSON(w, http.StatusBadGateway, map[string]string{"error": err.Error(), "output": output})
-		return
-	}
-	workspace := &model.Workspace{
-		Folder: req.Folder, Title: req.Title, Description: req.Description,
-		SourceURL: req.URL, Branch: req.Branch,
-		Shallow: req.Recursive != nil && !*req.Recursive,
-	}
-	if err := h.opts.Workspaces.Create(ctx, workspace); err != nil {
+	if err := os.Mkdir(dir, 0o755); err != nil {
 		failErr(w, err)
 		return
 	}
-	writeJSON(w, http.StatusCreated, map[string]any{"workspace": workspace, "output": output})
+	output := ""
+	if req.URL != "" {
+		out, err := h.opts.Git.Clone(ctx, req.URL, filepath.Join(dir, req.Project), req.Branch)
+		if err != nil {
+			os.RemoveAll(dir)
+			writeJSON(w, http.StatusBadGateway, map[string]string{"error": err.Error(), "output": out})
+			return
+		}
+		output = out
+	}
+	workspace := &model.Workspace{
+		Folder: req.Folder, Title: req.Title, Description: req.Description,
+		Shallow: req.Recursive != nil && !*req.Recursive,
+	}
+	project, err := h.recordWorkspace(ctx, workspace, req)
+	if err != nil {
+		os.RemoveAll(dir)
+		failErr(w, err)
+		return
+	}
+	writeJSON(w, http.StatusCreated, map[string]any{"workspace": workspace, "project": project, "output": output})
+}
+
+// recordWorkspace adds a new workspace's row, and with a URL the row of
+// its home project, nil without. A failure keeps no row.
+func (h *Handlers) recordWorkspace(ctx context.Context, workspace *model.Workspace, req WorkspaceRequest) (*model.Project, error) {
+	if err := h.opts.Workspaces.Create(ctx, workspace); err != nil {
+		return nil, err
+	}
+	if req.URL == "" {
+		return nil, nil
+	}
+	project := &model.Project{Folder: workspace.Folder + "/" + req.Project, SourceURL: req.URL, Branch: req.Branch}
+	if err := h.opts.Projects.Upsert(ctx, project); err != nil {
+		_ = h.opts.Workspaces.Delete(context.WithoutCancel(ctx), workspace.ID)
+		return nil, err
+	}
+	workspace.HomeProjectID = project.ID
+	if err := h.opts.Workspaces.Update(ctx, workspace); err != nil {
+		_ = h.opts.Projects.Delete(context.WithoutCancel(ctx), project.ID)
+		_ = h.opts.Workspaces.Delete(context.WithoutCancel(ctx), workspace.ID)
+		return nil, err
+	}
+	return project, nil
+}
+
+// errHome refuses a home project that is no project at the top of the
+// workspace, a 400.
+var errHome = errors.New("the home project is a project at the top of its workspace")
+
+// homeProject returns the ID of the project a request names as a
+// workspace's home, by its folder: "" for "", errHome for a folder that
+// is no project at the top of the workspace.
+func (h *Handlers) homeProject(ctx context.Context, ws *model.Workspace, name string) (string, error) {
+	name = strings.TrimSpace(name)
+	if name == "" {
+		return "", nil
+	}
+	relative := workspace.Relative(ws.Folder, name)
+	if relative == "" || strings.Contains(relative, "/") || !workspace.Contains(ws.Folder, h.workspaceFolders(ctx), name) {
+		return "", errHome
+	}
+	project, err := h.opts.Projects.GetByFolder(ctx, name)
+	if errors.Is(err, storage.ErrNotFound) {
+		return "", errHome
+	}
+	if err != nil {
+		return "", err
+	}
+	return project.ID, nil
+}
+
+// setHome makes a project the home project of the workspace of a
+// folder, _ for the default workspace.
+func (h *Handlers) setHome(ctx context.Context, folder, projectID string) error {
+	if folder == "" {
+		folder = model.Default
+	}
+	ws, err := h.opts.Workspaces.GetByFolder(ctx, folder)
+	if err != nil {
+		return err
+	}
+	ws.HomeProjectID = projectID
+	return h.opts.Workspaces.Update(ctx, ws)
 }
 
 // freeWorkspace says why a new workspace may not take a folder, with
@@ -107,9 +192,10 @@ func (h *Handlers) getWorkspace(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, workspace)
 }
 
-// updateWorkspace writes a workspace's title, description and
-// Recursive. Its folder, repository and branch stay: another checkout is
-// another workspace. The default workspace keeps its place, first.
+// updateWorkspace writes a workspace's title, description, Recursive
+// and home project. Its folder stays. The default workspace keeps its
+// place, first. A home project that is no project at the top of the
+// workspace is a 400.
 func (h *Handlers) updateWorkspace(w http.ResponseWriter, r *http.Request) {
 	if !h.require(w, r, "workspace/edit") {
 		return
@@ -131,6 +217,18 @@ func (h *Handlers) updateWorkspace(w http.ResponseWriter, r *http.Request) {
 	if req.Recursive != nil {
 		workspace.Shallow = !*req.Recursive
 	}
+	if req.HomeProject != nil {
+		id, err := h.homeProject(r.Context(), workspace, *req.HomeProject)
+		if errors.Is(err, errHome) {
+			fail(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		if err != nil {
+			failErr(w, err)
+			return
+		}
+		workspace.HomeProjectID = id
+	}
 	if err := h.opts.Workspaces.Update(r.Context(), workspace); err != nil {
 		failErr(w, err)
 		return
@@ -138,11 +236,10 @@ func (h *Handlers) updateWorkspace(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, workspace)
 }
 
-// deleteWorkspace removes a workspace's checkout, the projects cloned
-// inside it with their rows, its secrets, its row, and its keys with
-// their grants.
-// A workspace whose folder is not a checkout keeps its files; only the
-// rows and the keys go. The default workspace, the root, stays.
+// deleteWorkspace removes the projects cloned inside a workspace, their
+// checkouts and rows, its secrets, its row, its keys with their grants,
+// and its directory once empty: what else it holds stays. The default
+// workspace, the root, stays.
 func (h *Handlers) deleteWorkspace(w http.ResponseWriter, r *http.Request) {
 	if !h.require(w, r, "workspace/delete") {
 		return
@@ -157,13 +254,6 @@ func (h *Handlers) deleteWorkspace(w http.ResponseWriter, r *http.Request) {
 		fail(w, http.StatusConflict, "you can't remove the default workspace: it holds the projects at the root")
 		return
 	}
-	dir := workspace.Dir(h.opts.Root)
-	if h.opts.Git.IsRepo(dir) {
-		if err := h.opts.Git.Remove(dir); err != nil {
-			failErr(w, err)
-			return
-		}
-	}
 	projects, err := h.opts.Projects.List(ctx)
 	if err != nil {
 		failErr(w, err)
@@ -172,6 +262,12 @@ func (h *Handlers) deleteWorkspace(w http.ResponseWriter, r *http.Request) {
 	for _, project := range projects {
 		if !strings.HasPrefix(project.Folder, workspace.Folder+"/") {
 			continue
+		}
+		if dir := filepath.Join(h.opts.Root, filepath.FromSlash(project.Folder)); h.opts.Git.IsRepo(dir) {
+			if err := h.opts.Git.Remove(dir); err != nil {
+				failErr(w, err)
+				return
+			}
 		}
 		if err := h.opts.Projects.Delete(ctx, project.ID); err != nil {
 			failErr(w, err)
@@ -198,13 +294,15 @@ func (h *Handlers) deleteWorkspace(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+	_ = os.Remove(workspace.Dir(h.opts.Root))
 	w.WriteHeader(http.StatusNoContent)
 }
 
-// promptWorkspace puts a prompt to Claude in a workspace's checkout, as
-// POST /api/prompts does in a folder, and answers the same: the note,
-// which the board answers by running @claude-prompt there as the user,
-// with the checkout in TASK_UI_WORKSPACE_DIR, which Claude Code works in.
+// promptWorkspace puts a prompt to Claude in a workspace, as POST
+// /api/prompts does in a folder, and answers the same: the note, which
+// the board answers by running @claude-prompt there as the user. Claude
+// Code works in the home project, TASK_UI_HOME, or else the workspace's
+// directory, TASK_UI_WORKSPACE_DIR.
 func (h *Handlers) promptWorkspace(w http.ResponseWriter, r *http.Request) {
 	if !h.require(w, r, "prompt/edit") || !h.board(w) {
 		return

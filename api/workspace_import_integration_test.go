@@ -25,15 +25,15 @@ import (
 
 const passphrase = "correct horse battery"
 
-// acme makes the acme workspace on a fixture from a repository, with
-// the api project cloned inside it, an SSH key granted to ops and to a
+// acme makes the acme workspace on a fixture, with its home project,
+// home, and the api project cloned inside it, an SSH key granted to ops and to a
 // user the other instance does not have, a shared secret, a folder
 // secret and an env file. It returns the workspace's ID.
 func (f *fixture) acme(t *testing.T) string {
 	t.Helper()
 	ctx := context.Background()
 	repo := "file://" + localRepo(t)
-	res := f.call(t, asAdmin, http.MethodPost, "/workspaces", api.WorkspaceRequest{URL: repo, Folder: "acme", Title: "Acme", Recursive: new(false)})
+	res := f.call(t, asAdmin, http.MethodPost, "/workspaces", api.WorkspaceRequest{URL: repo, Folder: "acme", Project: "home", Title: "Acme", Recursive: new(false)})
 	assert.Equal(t, http.StatusCreated, res.Status, string(res.Raw))
 	id := res.str("workspace", "id")
 	res = f.call(t, asAdmin, http.MethodPost, "/projects", api.ProjectCloneRequest{URL: repo, ID: "api", Workspace: "acme"})
@@ -65,13 +65,18 @@ func TestWorkspaceImport(t *testing.T) {
 	assert.Equal(t, true, res.get("workspace", "shallow"), "Recursive off comes along")
 	toID := res.str("workspace", "id")
 	projects := res.list("projects")
-	assert.Len(t, projects, 1)
+	assert.Len(t, projects, 2)
 	project := projects[0].(map[string]any)
 	assert.Equal(t, "acme2/api", project["folder"])
 	assert.Equal(t, true, project["cloned"], project["output"])
+	assert.Equal(t, "acme2/home", projects[1].(map[string]any)["folder"])
 	assert.Equal(t, []any{"ghost"}, res.get("unknown_users"))
-	assert.FileExists(t, filepath.Join(to.root, "acme2", "Makefile"))
+	assert.NoFileExists(t, filepath.Join(to.root, "acme2", "Makefile"), "the workspace is a plain directory")
+	assert.FileExists(t, filepath.Join(to.root, "acme2", "home", "Makefile"))
 	assert.FileExists(t, filepath.Join(to.root, "acme2", "api", "Makefile"))
+	home, err := to.opts.Workspaces.Home(ctx, "acme2")
+	assert.NoError(t, err)
+	assert.Equal(t, "acme2/home", home, "the home project comes along")
 
 	want, _, _, err := from.opts.Keys.Bundle(ctx, keystore.ScopeWorkspace(fromID))
 	assert.NoError(t, err)
@@ -138,7 +143,7 @@ func nothing(t *testing.T, f *fixture, name string) {
 	assert.Error(t, err, name+" has no row")
 	projects, err := f.opts.Projects.List(ctx)
 	assert.NoError(t, err)
-	assert.Len(t, projects, 1, "the acme project alone")
+	assert.Len(t, projects, 2, "acme's projects alone")
 	secrets, err := f.opts.Secrets.Secrets.List(ctx)
 	assert.NoError(t, err)
 	for _, s := range secrets {
@@ -167,7 +172,7 @@ func TestWorkspaceImport_Refused(t *testing.T) {
 	none := f.importBundle(t, asAdmin, bundle, "", "acme3")
 	assert.Equal(t, http.StatusBadRequest, none.Status)
 
-	evil := f.importBundle(t, asAdmin, handMade(t, map[string]string{"manifest.json": `{"format":2,"workspace":{"folder":"evil"}}`, "../escape": "x"}), passphrase, "acme3")
+	evil := f.importBundle(t, asAdmin, handMade(t, map[string]string{"manifest.json": `{"format":3,"workspace":{"folder":"evil"}}`, "../escape": "x"}), passphrase, "acme3")
 	assert.Equal(t, http.StatusBadRequest, evil.Status, string(evil.Raw))
 	assert.Contains(t, evil.str("error"), "../escape")
 	assert.NoFileExists(t, filepath.Join(filepath.Dir(f.root), "escape"))

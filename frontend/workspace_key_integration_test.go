@@ -21,7 +21,7 @@ func TestWorkspaceKeys(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
 	ctx := context.Background()
-	assert.NoError(t, f.opts.Workspaces.Create(ctx, &model.Workspace{Folder: "malta", SourceURL: "git@example.com:org/workspace.git"}))
+	assert.NoError(t, f.opts.Workspaces.Create(ctx, &model.Workspace{Folder: "malta"}))
 	ws, err := f.opts.Workspaces.GetByFolder(ctx, "malta")
 	assert.NoError(t, err)
 	missing := f.page(t, asAdmin, "/settings/workspaces/malta")

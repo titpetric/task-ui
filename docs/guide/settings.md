@@ -20,7 +20,7 @@ their step. The trail lists only the steps you may open.
 6. [Users](#users): who may sign in.
 7. [Permissions](#permissions): what each role may do.
 8. [Workflows](workflows.md): chains of jobs.
-9. [Workspaces](#workspaces): checkouts that hold projects.
+9. [Workspaces](#workspaces): directories that hold projects, one of them home.
 10. [Projects](#projects): the folders under the root.
 
 ![Settings](../assets/settings-dark.png)
@@ -518,13 +518,16 @@ Permissions before it and Workspaces after it.
 
 ## Workspaces
 
-Checkouts under the root that hold projects: an organisation's tooling,
-with the projects cloned inside it. **Add workspace** clones one under
-the folder you name, **Move up** and **Move down** order them, and
-**Delete** deletes one with the projects inside it. **Workspace
-settings** opens a workspace's configure page: its title, description
-and **Recursive**, the toggle a project has, its **Projects**, in the
-table of the Projects page, and its **Keys**, the SSH keys of its runs,
+Directories under the root that hold projects side by side, one of them
+the home project, an organisation's tooling, which the workspace's runs
+get as `HOME`. **Add workspace** makes one under the folder you name,
+with its home project cloned from a repository URL when the form has one,
+**Move up** and **Move down** order them, and **Delete** deletes one
+with the projects inside it. **Workspace settings** opens a workspace's
+configure page: its title, description and **Recursive**, the toggle a
+project has, its **Home project**, with **Change**, **Add** or
+**Replace**, and **Remove**, its **Projects**, in the table of the
+Projects page, and its **Keys**, the SSH keys of its runs,
 which the [Keys](#keys) page also lists. At the top right of that page,
 **Add project** clones a project into the workspace, and **Export**
 downloads the workspace, encrypted to a passphrase, which **Import** at

@@ -3,6 +3,8 @@ package app
 import (
 	"context"
 	"log/slog"
+	"path/filepath"
+	"strings"
 
 	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/model"
@@ -63,4 +65,31 @@ func (c *Catalogue) Find(id string) *folder.Folder {
 		return f
 	}
 	return &folder.Folder{ID: model.Default, Title: model.Default, Dir: c.Root}
+}
+
+// Home returns the directory of the home project of the workspace a
+// directory under the root is in, the HOME atkins lists its skills with
+// there; "" for none, or a directory outside the root.
+func (c *Catalogue) Home(dir string) string {
+	if c.Workspaces == nil {
+		return ""
+	}
+	root, err := filepath.Abs(c.Root)
+	if err != nil {
+		return ""
+	}
+	rel, err := filepath.Rel(root, dir)
+	if err != nil || rel == ".." || strings.HasPrefix(rel, "../") {
+		return ""
+	}
+	name, _, _ := strings.Cut(filepath.ToSlash(rel), "/")
+	ctx := context.Background()
+	if _, err := c.Workspaces.GetByFolder(ctx, name); err != nil || name == "." {
+		name = model.Default
+	}
+	home, err := c.Workspaces.Home(ctx, name)
+	if err != nil || home == "" {
+		return ""
+	}
+	return filepath.Join(root, filepath.FromSlash(home))
 }

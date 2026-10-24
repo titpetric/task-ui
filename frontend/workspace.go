@@ -9,6 +9,7 @@ import (
 	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/frontend/view"
 	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/workspace"
 )
 
 // workspaces lists the workspaces and the projects cloned inside each.
@@ -22,10 +23,11 @@ func (h *Handlers) workspaces(w http.ResponseWriter, r *http.Request) {
 	p.Root = h.opts.Root
 	p.WorkspaceList = h.workspaceList(r.Context())
 	p.Nested = h.nestedProjects(r.Context())
+	p.Homes = h.homes(r.Context(), p.WorkspaceList)
 	h.render(w, http.StatusOK, "workspaces", p)
 }
 
-// workspaceNew shows the form that clones a workspace.
+// workspaceNew shows the form that adds a workspace.
 func (h *Handlers) workspaceNew(w http.ResponseWriter, r *http.Request) {
 	if !h.require(w, r, "workspace/edit") {
 		return
@@ -36,8 +38,9 @@ func (h *Handlers) workspaceNew(w http.ResponseWriter, r *http.Request) {
 	h.render(w, http.StatusOK, "workspace_new", p)
 }
 
-// workspaceEdit shows a workspace's settings, its projects, its keys,
-// and its delete, which names the projects that go with it.
+// workspaceEdit shows a workspace's settings, its home project, its
+// projects, its keys, and its delete, which names the projects that go
+// with it.
 func (h *Handlers) workspaceEdit(w http.ResponseWriter, r *http.Request) {
 	if !h.require(w, r, "workspace/view") {
 		return
@@ -63,6 +66,7 @@ func (h *Handlers) workspaceEdit(w http.ResponseWriter, r *http.Request) {
 		"description": workspace.Description,
 	}
 	h.workspaceProjects(r.Context(), p, workspace.Folder)
+	h.workspaceHome(r.Context(), p, workspace)
 	h.workspaceKeys(r, p)
 	h.render(w, http.StatusOK, "workspace_edit", p)
 }
@@ -79,6 +83,35 @@ func (h *Handlers) workspaceProjects(ctx context.Context, p *view.Page, name str
 		}
 	}
 	h.measure(p)
+}
+
+// workspaceHome puts a workspace's home project on its page, with the
+// projects at its top that Change picks from.
+func (h *Handlers) workspaceHome(ctx context.Context, p *view.Page, ws *model.Workspace) {
+	projects, _ := h.opts.Projects.List(ctx)
+	named := h.workspaceFolders(ctx)
+	for _, project := range projects {
+		relative := workspace.Relative(ws.Folder, project.Folder)
+		if relative == "" || strings.Contains(relative, "/") || !workspace.Contains(ws.Folder, named, project.Folder) {
+			continue
+		}
+		p.HomeChoices = append(p.HomeChoices, project.Folder)
+		if project.ID == ws.HomeProjectID {
+			p.HomeProject = &project
+		}
+	}
+}
+
+// homes returns the folder of each workspace's home project, by the
+// workspace's folder; one without has no entry.
+func (h *Handlers) homes(ctx context.Context, workspaces []model.Workspace) map[string]string {
+	homes := map[string]string{}
+	for _, ws := range workspaces {
+		if home, err := h.opts.Workspaces.Home(ctx, ws.Folder); err == nil && home != "" {
+			homes[ws.Folder] = home
+		}
+	}
+	return homes
 }
 
 // workspaceList returns every workspace, none without the storage or on

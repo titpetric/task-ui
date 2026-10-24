@@ -1542,14 +1542,6 @@
       type: text
       comment: Description
       datatype: varchar
-    - name: source_url
-      type: text
-      comment: Source URL
-      datatype: varchar
-    - name: branch
-      type: text
-      comment: Branch
-      datatype: varchar
     - name: created_at
       type: timestamp
       comment: Created At
@@ -1558,6 +1550,11 @@
       type: timestamp
       comment: Updated At
       datatype: datetime
+    - name: home_project_id
+      type: text
+      key: MUL
+      comment: Home Project ID
+      datatype: char(26)
     - name: shallow
       type: boolean
       comment: Shallow

@@ -8,8 +8,9 @@ import (
 
 // serverOnly are the variables of the server's own configuration that a
 // run sets for itself: TASK_UI_WORKSPACE names the run's workspace, and
-// the server's names its workspace folder.
-var serverOnly = []string{"TASK_UI_WORKSPACE=", "TASK_UI_HOST_DATA=", "TASK_UI_HOST_PWD="}
+// the server's names its workspace folder; TASK_UI_HOME is the run's
+// home project.
+var serverOnly = []string{"TASK_UI_WORKSPACE=", "TASK_UI_HOST_DATA=", "TASK_UI_HOST_PWD=", "TASK_UI_HOME="}
 
 // inherited returns the server's environment as a run starts from it,
 // without serverOnly.

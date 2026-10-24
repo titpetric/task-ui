@@ -48,7 +48,7 @@ func admin(t *testing.T) *view.Page {
 		Account:       &model.User{ID: "u1", Name: "ops", Role: model.RoleRunner},
 		Profile:       &view.Profile{Runs: []view.Run{run}, Prompts: []model.Note{{ID: "n1", Body: "why", Dir: "infra"}}, Matrix: &matrix},
 		Matrices:      []view.Matrix{matrix},
-		Workspace:     &model.Workspace{Folder: "malta", SourceURL: "git@example.com:org/workspace.git"},
+		Workspace:     &model.Workspace{Folder: "malta"},
 	}
 }
 
@@ -289,7 +289,7 @@ func TestWorkspaceEdit_Page(t *testing.T) {
 	v, err := view.New()
 	assert.NoError(t, err)
 	p := admin(t)
-	p.Workspace = &model.Workspace{Folder: "malta", SourceURL: "git@example.com:malta.git"}
+	p.Workspace = &model.Workspace{Folder: "malta"}
 	p.KeysDir = "/keys"
 	p.Form = map[string]string{"title": "Malta"}
 	var buf bytes.Buffer
@@ -306,6 +306,38 @@ func TestWorkspaceEdit_Page(t *testing.T) {
 	assert.NoError(t, v.Render(&buf, "workspace_edit", p))
 	assert.Contains(t, buf.String(), `data-dialog-open="export-dialog"`)
 	assert.NotContains(t, buf.String(), `data-delete="/api/workspaces/_"`, "the default workspace stays")
+}
+
+// A workspace's page shows its home project, with Change, Replace and
+// Remove; without one, "No home project." with Change and Add beside it.
+func TestWorkspaceEdit_Home(t *testing.T) {
+	t.Parallel()
+	v, err := view.New()
+	assert.NoError(t, err)
+	p := admin(t)
+	p.Workspace = &model.Workspace{Folder: "malta", Title: "Malta"}
+	p.Form = map[string]string{"title": "Malta"}
+	p.HomeChoices = []string{"malta/apps", "malta/workspace"}
+	var buf bytes.Buffer
+	assert.NoError(t, v.Render(&buf, "workspace_edit", p))
+	body := buf.String()
+	assert.Contains(t, body, `<h3>Home project <small>the HOME of the workspace&#39;s runs</small></h3>`)
+	assert.Contains(t, body, `<p class="empty-line">No home project.</p>`)
+	assert.Contains(t, body, `data-dialog-open="home-change-dialog">`)
+	assert.Contains(t, body, `>Add</button>`)
+	assert.Contains(t, body, `<option value="malta/workspace">malta/workspace</option>`)
+	assert.NotContains(t, body, `>Remove</button>`)
+
+	p.HomeProject = &model.Project{Folder: "malta/workspace", SourceURL: "git@example.com:malta/workspace.git"}
+	buf.Reset()
+	assert.NoError(t, v.Render(&buf, "workspace_edit", p))
+	body = buf.String()
+	assert.NotContains(t, body, `No home project.`)
+	assert.Contains(t, body, `git@example.com:malta/workspace.git`)
+	assert.Contains(t, body, `<option value="malta/workspace" selected>`)
+	assert.Contains(t, body, `>Replace</button>`)
+	assert.Contains(t, body, `>Remove</button>`)
+	assert.Contains(t, body, `data-body="{&#34;description&#34;:&#34;&#34;,&#34;home_project&#34;:&#34;&#34;,&#34;title&#34;:&#34;Malta&#34;}"`)
 }
 
 // The Workspaces page opens Import in a dialog from its head.
