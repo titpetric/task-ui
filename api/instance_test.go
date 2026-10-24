@@ -62,7 +62,7 @@ func TestInstanceRequest(t *testing.T) {
 func TestInstanceRoutes(t *testing.T) {
 	t.Parallel()
 	values := memSettings{}
-	manager := runner.New(runner.Options{Backlog: &runner.Backlog{Settings: values, CPUs: 4}})
+	manager := runner.New(runner.Options{Backlog: &runner.Backlog{Settings: values, CPUs: 4}, Environment: &runner.Environment{Settings: values}})
 	h := api.New(api.Options{Runner: manager}).Routes()
 	admin := &model.User{Name: "root", Role: model.RoleAdmin}
 	viewer := &model.User{Name: "ann", Role: model.RoleViewer}
@@ -88,4 +88,23 @@ func TestInstanceRoutes(t *testing.T) {
 	status, body = instanceCall(t, h, admin, http.MethodPut, `{"backlog_length": ""}`)
 	assert.Equal(t, http.StatusOK, status)
 	assert.Equal(t, float64(80), body["backlog_length_effective"], "empty is the automatic length")
+	assert.Equal(t, runner.EnvNone, body["parent_env"])
+
+	status, _ = instanceCall(t, h, viewer, http.MethodPut, `{"parent_env": "all"}`)
+	assert.Equal(t, http.StatusForbidden, status, "only an admin sets it")
+	status, body = instanceCall(t, h, admin, http.MethodPut, `{"parent_env": "auto"}`)
+	assert.Equal(t, http.StatusOK, status)
+	assert.Equal(t, runner.EnvAuto, body["parent_env"])
+	assert.Equal(t, runner.EnvAuto, values[runner.EnvironmentSetting])
+	status, _ = instanceCall(t, h, admin, http.MethodPut, `{"parent_env": "everything"}`)
+	assert.Equal(t, http.StatusBadRequest, status)
+}
+
+// The state embeds the backlog's fields beside the parent environment.
+func TestInstanceState(t *testing.T) {
+	t.Parallel()
+	data, err := json.Marshal(api.InstanceState{BacklogState: runner.BacklogState{Auto: 80}, ParentEnv: runner.EnvAll})
+	assert.NoError(t, err)
+	assert.Contains(t, string(data), `"backlog_length_auto":80`)
+	assert.Contains(t, string(data), `"parent_env":"all"`)
 }

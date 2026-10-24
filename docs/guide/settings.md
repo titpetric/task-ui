@@ -37,6 +37,8 @@ does:
 - **Runs**: the runs that go at once, the backlog of runs that wait for
   a slot, how long a finished run stays attachable, the stop grace, the
   artifact history and a link to Data retention.
+- **Parent environment**: how much of the server's own environment a run
+  starts with, and, for an admin, the server's variables by name.
 - **Paths**: the workspace folder, discovery, the data folder and how
   the host sees it, the key folder and the compose project.
 - **Keys**: the instance's encryption key and the git key, in the
@@ -49,7 +51,8 @@ does:
   Inventory's hosts.
 
 The environment sets most of these: change one on the server, then
-restart task-ui. The backlog length is the one setting the page saves.
+restart task-ui. The backlog length and the parent environment are the
+settings the page saves.
 The page shows paths and names, never a password, token or key. Anyone
 who may open a step of the settings may open it.
 
@@ -64,6 +67,36 @@ machine. A run over that waits for a slot, in a line that holds the
 number up to 100000, and **Save** applies it to the next start; empty
 goes back to the automatic one. A start while the line is full answers
 `429` (see [Runs](runs.md#runs-at-once)).
+
+### Parent environment
+
+What of the server's own environment a run starts with, one of three:
+
+- **None**, secure, the default of a fresh instance: the base variables
+  alone, `PATH`, `HOME`, `USER`, `LOGNAME`, `SHELL`, `HOSTNAME`,
+  `TMPDIR`, `LANG`, `LANGUAGE`, `LC_*`, `TZ`, `TERM`, `TASK_UI_*`,
+  `DOCKER_HOST`, and the ones a home project keeps in use, `ATKINS_DB`,
+  `DOCKER_CONFIG`, `GIT_CONFIG_GLOBAL`, `XDG_*`, `GOPATH`, `HISTFILE`
+  and `CLAUDE_CONFIG_DIR`, less any sensitive one;
+- **Auto**, filtered: every variable but the sensitive ones;
+- **All**: every variable, sensitive ones too.
+
+A name is sensitive when it holds `KEY`, `TOKEN`, `SECRET`, `PASS`,
+`CREDENTIAL` or `PRIVATE`, in any case: `WORKSPACE_KEY`,
+`SECRETSMANAGER_KEY`, `GITHUB_TOKEN`, `DB_PASSWORD`. Under every choice
+a run gets what task-ui sets for it, its `TASK_UI_*` facts, its `HOME`,
+the `SSH_AUTH_SOCK` of its own agent, the secrets of its folder and the
+integrations' variables, which are grants of their own.
+
+Below the choice, an admin sees every variable of the server by name,
+never its value, whether a run gets it under the choice and a
+**sensitive** badge on a sensitive name. Picking another choice shows at
+once what it would pass; **Save** applies it to the next run. An
+instance that had runs before the setting existed starts on **All**, as
+runs got the whole environment then; switching to None or Auto is the
+admin's call, once the scripts read their secrets as
+[Secrets in scripts](#secrets-in-scripts) shows. The setting lives in
+the `setting` table as `runs.parent_env`.
 
 ## Data retention
 
@@ -318,6 +351,54 @@ A folder's workspace is its first segment when that's a named
 workspace, else `_`. Removing a workspace removes its secrets with its
 SSH keys. The integrations' settings aren't on this page: the
 [Integrations](#integrations) page holds them.
+
+### Secrets in scripts
+
+A run gets its folder's secrets in its environment. A script reads one
+where it needs it with `task-ui get-secret NAME`, which prints the value
+and nothing after it, and fails with a message on stderr when no secret
+of the name reaches the folder:
+
+```bash
+GITHUB_TOKEN=$(task-ui get-secret GITHUB_TOKEN) gh release list
+```
+
+A value the server's environment holds, which [Parent
+environment](#parent-environment) None or Auto keeps from the runs,
+belongs in a secret of the folders or workspace that use it. For
+secretsmanager, which opens a project's `.secrets.json` with
+`SECRETSMANAGER_KEY`, save the key as a secret of that scope and set it
+for the one command that needs it:
+
+```bash
+SECRETSMANAGER_KEY=$(task-ui get-secret SECRETSMANAGER_KEY) secretsmanager ...
+```
+
+A Taskfile or an atkins step takes the same line:
+
+```yaml
+# Taskfile.yml
+tasks:
+  release:
+    cmds:
+      - GITHUB_TOKEN=$(task-ui get-secret GITHUB_TOKEN) gh release create {{.TAG}}
+```
+
+```yaml
+# atkins.yml
+jobs:
+  decrypt:
+    steps:
+      - SECRETSMANAGER_KEY=$(task-ui get-secret SECRETSMANAGER_KEY) secretsmanager ...
+```
+
+`task-ui get-secret` reads `TASK_UI_API`, the instance's API as the run
+reaches it, and `TASK_UI_RUN_TOKEN`, a token of the run's own that
+signs in `GET /api/run/secrets/{name}` alone and stops working when the
+run ends. It returns the secrets that reach the run's folder, the set
+its environment holds, never a variable of the server's environment,
+and each read lands in the secret's read log under the run. Outside a
+run of task-ui it fails: neither variable is there.
 
 At start, task-ui writes every secret the instance's encryption key
 can't open again for that key: a secret of a workspace's encryption key

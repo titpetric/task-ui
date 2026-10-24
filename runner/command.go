@@ -11,7 +11,8 @@ import (
 
 // command builds the process: bash -l for the login environment, the
 // job's argv passed as arguments so the shell never parses a name, and
-// the request's args after --, the same way; the secrets and the run
+// the request's args after --, the same way; the share of the server's
+// environment the parent environment passes, the secrets and the run
 // facts in the environment, HOME at the workspace's home project, the
 // artifact directory ready. The process starts in the request's
 // directory, or the folder's.
@@ -28,7 +29,7 @@ func (m *Manager) command(ctx context.Context, session *Session) (*exec.Cmd, err
 	if session.dir != "" {
 		cmd.Dir = session.dir
 	}
-	cmd.Env = inherited(os.Environ())
+	cmd.Env = m.parentEnv(ctx)
 	cmd.Env = append(cmd.Env, HomeEnv(cmd.Env, session.home)...)
 	// Every run gets its folder's secrets, Claude's built-ins too, and
 	// the log of each secret records the run.

@@ -65,4 +65,11 @@ type Options struct {
 	// Backlog caps the runs that wait for a free slot; a start over it
 	// answers ErrBacklogFull. Nil is the automatic length.
 	Backlog *Backlog
+	// Environment says how much of the server's environment a run
+	// starts with. Nil passes the whole environment.
+	Environment *Environment
+	// APIURL returns the link of task-ui's API as a run reaches it; with
+	// one, each run gets a token of its own in TASK_UI_RUN_TOKEN and the
+	// link in TASK_UI_API, for task-ui get-secret. Nil sets neither.
+	APIURL func() string
 }

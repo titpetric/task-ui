@@ -68,6 +68,10 @@ func (h *Handlers) instance(w http.ResponseWriter, r *http.Request) {
 	if h.opts.Runner != nil {
 		backlog := h.opts.Runner.Backlog(r.Context())
 		instance.Backlog = &backlog
+		instance.ParentEnv = h.opts.Runner.ParentEnv(r.Context())
+		if p.User != nil && p.User.CanAdmin() {
+			instance.Env = h.opts.Runner.EnvNames()
+		}
 	}
 	p.Instance = &instance
 	if p.Can("key/view") {

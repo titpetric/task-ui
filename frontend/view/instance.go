@@ -38,4 +38,19 @@ type Instance struct {
 	// Backlog is how the slots and the line for them stand, nil without
 	// a runner.
 	Backlog *runner.BacklogState
+	// ParentEnv is the parent environment mode in effect, empty without
+	// a runner; Env the names of the server's variables, never their
+	// values, for an admin alone.
+	ParentEnv string
+	Env       []runner.EnvName
+}
+
+// EnvBase returns runner.BaseEnv, the variables None passes.
+func (i *Instance) EnvBase() []string {
+	return runner.BaseEnv
+}
+
+// EnvSensitive returns runner.SensitiveWords.
+func (i *Instance) EnvSensitive() []string {
+	return runner.SensitiveWords
 }

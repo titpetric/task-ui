@@ -27,6 +27,7 @@ import (
 	"github.com/titpetric/task-ui/app"
 	"github.com/titpetric/task-ui/channel"
 	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/secret"
 	"github.com/titpetric/task-ui/storage"
 )
 
@@ -367,9 +368,31 @@ func cleanup(ctx context.Context, args []string, stdout io.Writer) error {
 	return cleaner.Clean(ctx, dry, stdout)
 }
 
+// getSecret runs task-ui get-secret <name> in a run: the content of a
+// secret that reaches the run's folder on stdout, with nothing after it.
+func getSecret(ctx context.Context, args []string, getenv func(string) string, stdout io.Writer) error {
+	if len(args) != 1 {
+		return errors.New("usage: task-ui get-secret <name>, in a run task-ui started")
+	}
+	client, err := secret.ClientFromEnv(getenv)
+	if err != nil {
+		return err
+	}
+	value, err := client.Get(ctx, args[0])
+	if err != nil {
+		return err
+	}
+	_, err = io.WriteString(stdout, value)
+	return err
+}
+
 // run is main without the exit: the hash, agent, channel, cleanup,
-// passwd, email, backup, token and user commands, the version, or the server until a signal.
+// get-secret, passwd, email, backup, token and user commands, the
+// version, or the server until a signal.
 func run(ctx context.Context, args []string, stdin io.Reader, stdout io.Writer) error {
+	if len(args) > 0 && args[0] == "get-secret" {
+		return getSecret(ctx, args[1:], os.Getenv, stdout)
+	}
 	if len(args) > 0 && args[0] == "hash" {
 		return hash(args[1:], stdin, stdout)
 	}

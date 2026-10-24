@@ -57,6 +57,49 @@ func TestInstance_Viewer(t *testing.T) {
 	assert.Contains(t, body, "in effect: 12")
 }
 
+// An admin picks the parent environment and sees the server's
+// variables by name, each with whether a run gets it and a flag on a
+// sensitive one; a value never shows. Anyone else reads the mode.
+func TestInstance_ParentEnv(t *testing.T) {
+	t.Parallel()
+	v, err := view.New()
+	assert.NoError(t, err)
+
+	env := &runner.Environment{Environ: func() []string {
+		return []string{"PATH=/usr/bin", "WORKSPACE_KEY=hunter2", "GOTOOLCHAIN=auto"}
+	}}
+	p := admin(t)
+	p.Instance = &view.Instance{ParentEnv: runner.EnvAuto, Env: env.Names()}
+	var buf bytes.Buffer
+	assert.NoError(t, v.Render(&buf, "instance", p))
+	body := buf.String()
+	assert.Contains(t, body, `id="environment"`)
+	assert.Contains(t, body, `name="parent_env" value="auto" checked`)
+	assert.Contains(t, body, `<td class="mono">WORKSPACE_KEY</td>`)
+	assert.Contains(t, body, `data-env-none="false" data-env-auto="true"><td class="mono">GOTOOLCHAIN</td>`)
+	assert.Contains(t, body, ">sensitive</span>")
+	assert.Contains(t, body, "<code>LC_*</code>")
+	assert.NotContains(t, body, "hunter2")
+	assert.NotContains(t, body, "/usr/bin")
+
+	p.User = &model.User{Name: "ann", Role: model.RoleViewer}
+	p.Instance = &view.Instance{ParentEnv: runner.EnvAll}
+	buf.Reset()
+	assert.NoError(t, v.Render(&buf, "instance", p))
+	body = buf.String()
+	assert.NotContains(t, body, `name="parent_env"`)
+	assert.Contains(t, body, "In effect: <strong>all</strong>")
+}
+
+// The base variables and the sensitive words the page lists are the
+// runner's.
+func TestInstance_EnvBase(t *testing.T) {
+	t.Parallel()
+	i := &view.Instance{}
+	assert.Equal(t, runner.BaseEnv, i.EnvBase())
+	assert.Equal(t, runner.SensitiveWords, i.EnvSensitive())
+}
+
 // The keys of the Instance page: what each is, and its actions behind a
 // menu, the public half only.
 func TestInstance_Keys(t *testing.T) {

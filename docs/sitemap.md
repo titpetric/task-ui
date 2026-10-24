@@ -40,7 +40,7 @@ row's **⋯** menu; "Delete" and "Remove" are in red, last.
 | Page | Path | Lists | Head, top right | Row actions | Forms | Empty |
 |------|------|-------|-----------------|-------------|-------|-------|
 | Settings | `/settings` | the setup steps in order | none | **Open** | none | none |
-| Instance | `/settings/instance` | General, Runs, Paths, Keys, Integrations | none | Keys: the keys table | the backlog length | a missing key's Generate and Upload |
+| Instance | `/settings/instance` | General, Runs, Parent environment, Paths, Keys, Integrations | none | Keys: the keys table; Parent environment: the server's variables by name, forwarded or not, sensitive flagged, for an admin | the backlog length, the parent environment's None, Auto or All | a missing key's Generate and Upload |
 | Data retention | `/settings/retention` | the rules and what each keeps | Clean up now | none | the rules, Save | none |
 | Keys | `/settings/keys` | Scopes, Every key, Who gets which key | **Upload key**, **Generate key** | the keys table | none | "No keys added." |
 | Upload key, Generate key | `/settings/keys/upload`, `/generate` | none | none | none | the key, Cancel and Upload or Generate | none |

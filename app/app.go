@@ -8,6 +8,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"strings"
 	"sync/atomic"
 	"time"
 
@@ -245,6 +246,8 @@ func (a *App) wire(version string) error {
 		Workspaces:    workspaces,
 		Users:         a.Users,
 		Backlog:       &runner.Backlog{Settings: storage.NewSettingStorage(a.DB)},
+		Environment:   &runner.Environment{Settings: storage.NewSettingStorage(a.DB)},
+		APIURL:        func() string { return strings.TrimSuffix(MCPURL(a.Addr()), "/mcp") },
 	})
 	hostRuns := &hostrun.Starter{Catalogue: a.Catalogue, Hosts: hosts, SSH: prober, Runner: a.Runner}
 	a.Scheduler = scheduler.NewLoop(schedules, a.Users, a.Catalogue, a.Runner)
@@ -316,6 +319,9 @@ func (a *App) wire(version string) error {
 	// the token's user.
 	server := mcp.New(routes, version)
 	server.BaseURL = cfg.URL
+	// A run's task-ui get-secret signs in with the run's own token,
+	// which no other route takes.
+	r.Get("/api/run/secrets/{name}", (&api.RunSecret{Source: a.Runner}).ServeHTTP)
 	r.Mount("/api/mcp", a.Guard.Require(access.RequireMCP(access.SameOrigin(server))))
 	r.Mount("/api", a.Guard.Require(access.SameOrigin(routes)))
 	r.Mount("/", pages.Routes())
