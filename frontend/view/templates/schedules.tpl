@@ -35,7 +35,7 @@
 		<label for="sch-args">Args <span class="faint">for a job that takes them; the command of a host</span></label>
 		<input type="text" id="sch-args" name="args" data-type="args" placeholder="df -h /" spellcheck="false" autocomplete="off">
 	</div>
-	<div class="field">
+	<div class="field whole">
 		<label class="check"><input type="checkbox" id="sch-triage" name="triage"> Triage failures with Claude <span class="faint">when the run fails, Claude reads the run in its folder, fixes the cause when it can, replies on the run's page and posts a note</span></label>
 	</div>
 	<div class="field">
