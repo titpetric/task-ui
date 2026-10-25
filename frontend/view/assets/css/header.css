@@ -101,7 +101,7 @@ header.top .spacer {
    logo, the header's own colour until it has focus or text, then typed
    at the logo's prompt, amber and monospace, while the logo's cursor
    holds still. Enter asks Claude where the page is; the answer drops
-   under the header in a terminal panel. */
+   under the header in a panel. */
 header.top .header-prompt {
   flex: 1;
   min-width: 0;
@@ -162,6 +162,9 @@ header.top:has(.header-prompt:focus, .header-prompt.typed, .header-runas:focus-w
   pointer-events: auto;
 }
 
+/* The answer drops under the header as a panel in the page's own
+   colours, as a dialog is: the question at the logo's prompt in amber,
+   the place and the state muted. */
 header.top .header-answer {
   position: absolute;
   top: 100%;
@@ -173,15 +176,15 @@ header.top .header-answer {
   border: 1px solid var(--line-2);
   border-top: 0;
   border-radius: 0 0 var(--radius) var(--radius);
-  background: var(--logo-bg);
-  color: var(--logo-fg);
+  background: var(--ink-1);
+  color: var(--text);
   font-family: var(--font);
   font-size: var(--fs-sm);
   box-shadow: var(--shadow-menu);
 
   & .place {
     margin: 0 0 0.5rem;
-    color: var(--logo-muted);
+    color: var(--text-dim);
     font-size: var(--fs-xs);
 
     & a {
@@ -195,12 +198,12 @@ header.top .header-answer {
 
     &::before {
       content: "> ";
-      color: var(--logo-signal);
+      color: var(--signal);
     }
   }
 
   & .working {
-    color: var(--logo-signal);
+    color: var(--signal);
   }
 
   & .failed {
@@ -215,13 +218,8 @@ header.top .header-answer {
     white-space: pre-wrap;
   }
 
-  & .answer code {
-    background: color-mix(in srgb, var(--logo-fg) 12%, transparent);
-    color: var(--logo-fg);
-  }
-
   & a.thread {
-    color: var(--logo-signal);
+    color: var(--signal);
     font-size: var(--fs-xs);
   }
 }
