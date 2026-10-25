@@ -381,13 +381,6 @@
 			</optgroup>
 {{- end }}{{ end }}{{ end }}
 
-{{/* chain draws a workflow's steps, or a run's: a folder once for the
-     steps that follow in it, a workflow step by its name, each linked. */}}
-{{- define "chain" }}
-{{- $ := index . 0 }}
-{{- range $i, $l := $.Links (index . 1) }}{{ if $i }}<span class="faint then" aria-hidden="true"></span>{{ end }}<a class="nowrap" href="{{ $l.Href }}"{{ with $l.Prompt }} title="{{ . }}"{{ end }}>{{ if $l.State }}<i class="dot {{ $l.State }}"></i>{{ end }}{{ if $l.Workflow }}<svg class="ic lead"><use href="#i-flow"/></svg>{{ else if $l.Summary }}<svg class="ic lead"><use href="#i-summary"/></svg>{{ else if $l.Prompt }}<svg class="ic lead"><use href="#i-prompt"/></svg>{{ end }}{{ $l.Text }}</a>{{ end }}
-{{- end }}
-
 {{- /* sideproject is a project in the sidebar: its row, its jobs and
      the folders inside it. A project folds on its chevron; the row opens
      it. The project of the open page shows as active and stays open. Without its

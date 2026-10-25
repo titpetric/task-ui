@@ -142,6 +142,8 @@ api POST /workflows -d '{"name":"release","steps":[{"folder":"infra","job":"plan
 release="$(grep -o '"id":"[a-z0-9]*"' "$work/api.out" | head -1 | cut -d'"' -f4)"
 api POST /workflows -d "{\"name\":\"ship\",\"description\":\"Tests the tools, releases them, and says how it went.\",\"steps\":[{\"kind\":\"job\",\"folder\":\"tools\",\"job\":\"make:test\"},{\"kind\":\"workflow\",\"workflow\":\"${release}\"},{\"kind\":\"prompt\",\"folder\":\"tools\",\"prompt\":\"List the images the build pushed, with their tags.\"},{\"kind\":\"summary\",\"folder\":\"_\"}]}"
 ship="$(grep -o '"id":"[a-z0-9]*"' "$work/api.out" | head -1 | cut -d'"' -f4)"
+# The ship workflow on a schedule, for the Schedule block of its edit page.
+api POST /schedules -d "{\"workflow\":\"${ship}\",\"expression\":\"0 7 * * 1-5\"}"
 
 # Real runs, so the history has something to show: a forced run that kills
 # the one before it, a plain one, a failure, and runs in the other folders.
@@ -203,7 +205,7 @@ shot tools-dark /f/_/tools dark 1440x1000
 shot run-page-dark "/runs/${run}" dark
 shot artifacts-dark /artifacts dark
 shot schedules-dark /schedules dark
-shot workflows-dark /workflows dark
+shot schedules-light /schedules light
 shot workflow-dark "/workflows/${release}" dark
 shot workflow-edit-dark "/workflows/${ship}/edit" dark 1440x1200
 shot workflow-edit-light "/workflows/${ship}/edit" light 1440x1200
@@ -289,6 +291,18 @@ for _ in $(seq 1 100); do
   curl -fsS "${TASK_UI_BASE}/api/prompts?folder=acme" | grep -q '"state":"done"' && break
   sleep 0.2
 done
+# A workflow of one prompt in acme, run from the prompt instance while
+# the stand-in answers, so the Workflows page has a run with an answer
+# to show open under Recent runs.
+api POST /workflows -d '{"name":"acme brief","description":"Asks Claude what the Acme workspace holds.","steps":[{"kind":"prompt","folder":"acme","prompt":"what does this workspace hold, in a few lines"}]}'
+brief="$(grep -o '"id":"[a-z0-9]*"' "$work/api.out" | head -1 | cut -d'"' -f4)"
+TASK_UI_BASE="http://127.0.0.1:${prompter}" api POST "/workflows/${brief}/runs"
+for _ in $(seq 1 200); do
+  curl -fsS "${TASK_UI_BASE}/api/workflows/${brief}/runs?limit=1" | grep -q '"state":"running"' || break
+  sleep 0.3
+done
+shot workflows-dark /workflows dark 1440x1500
+shot workflows-light /workflows light 1440x1500
 
 # The tooling repository as the home repository, the HOME of acme's
 # runs, where atkins finds the skills of the actions bar: the clone

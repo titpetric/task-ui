@@ -846,6 +846,11 @@
       comment: Triage
       datatype: bigint
       size: 8
+    - name: workflow_id
+      type: text
+      key: MUL
+      comment: Workflow ID
+      datatype: char(26)
   indexes:
     - name: sqlite_autoindex_schedule_1
       columns:

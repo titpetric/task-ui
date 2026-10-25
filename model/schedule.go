@@ -27,3 +27,8 @@ func (s *Schedule) ArgList() []string {
 func (s *Schedule) Triages() bool {
 	return s != nil && s.Triage != 0
 }
+
+// IsWorkflow reports whether the schedule starts a workflow; one of a job names a folder and a job.
+func (s *Schedule) IsWorkflow() bool {
+	return s != nil && s.WorkflowID != ""
+}

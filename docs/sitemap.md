@@ -14,15 +14,15 @@ row's **⋯** menu; "Delete" and "Remove" are in red, last.
 | Runs | `/runs` | every run, newest first, with filters; Activity and Tooling folds | none | **View** or **Attach**, `[...]`: open, replay, Summary, Stop, Kill | the filter bar | "No runs match." |
 | Run | `/runs/<id>` | the terminal, its output, the run's details, its artifacts | **View** or **Attach**, Stop, Kill, Report, Replay | artifacts: `[...]` | the prompt about the run | "None: a job keeps files by writing them to $TASK_UI_ARTIFACTS." |
 | Report | `/runs/<id>/report` | the question and Claude's answer | Run, Claude's run, Job | none | none | none |
-| Workflows | `/workflows` | the workflows, their steps and last run; Recent runs, each with its state dot and its answer folded under a chevron | **Add workflow** | **Run** or **Stop**, `[...]`: Open, Edit, the run going; a recent run: the chevron of its answer | the Prompt box | "No workflows yet." |
+| Workflows | `/workflows` | the workflows, each with its schedules and last run; Recent runs, each with its state dot and its answer open under it | **Add workflow** | **Run** or **Stop**, `[...]`: Edit, the run going; a recent run: the chevron that folds its answer | the Prompt box | "No workflows yet." |
 | Add workflow | `/workflows/new` | none | none | none | name and steps, Cancel and Save | none |
 | Workflow | `/workflows/<id>` | its pipeline and its runs, each with its state dot and its answer folded under a chevron | **Run** or **Stop**, Edit | runs: the chevron, **View**, `[...]` | the runs' filter | "Not run yet." |
-| Edit workflow | `/workflows/<id>/edit` | the steps | `[...]`: Open, Delete | a step's `[...]`: Move up, Move down, Duplicate, Remove | the step editor, Save | none |
+| Edit workflow | `/workflows/<id>/edit` | the steps; Schedule, the workflow's schedules | `[...]`: Open, Delete | a step's `[...]`: Move up, Move down, Duplicate, Remove; a schedule's `[...]`: Enable or Disable, Delete | the step editor, Save; **Add schedule**: expression, Run as | "Not scheduled." |
 | Workflow run | `/workflows/<id>/runs/<run>` | the run's thread, its question and answer, the steps of the run, each its run, and Prompts, the threads of its prompt and summary steps, open while it runs and folded once it ends | none | **View** on a step | none | none |
 | Artifacts | `/artifacts` | Space, Files of the tree, History | `[...]`: Delete all | Files and History: `[...]`: open, download, copy the link, Delete | the History filter | "This folder is empty.", "No artifacts yet." |
 | Artifact file | `/artifacts/files/<path>?version=` | the file itself, inline; `?download` saves it; a directory goes to its listing | none | none | none | none |
 | Artifact archive | `/artifacts.tgz`, `/artifacts/<directory>.tgz` | the tree, or a directory of it, as a `.tgz` of the files you see | none | none | none | none |
-| Scheduled | `/schedules` | every schedule | none | `[...]`: Enable or Disable, Delete | **Add schedule**: folder, job, args, expression, Triage failures with Claude, Run as | "No schedules yet." |
+| Scheduled | `/schedules` | every schedule, of a job or a workflow | none | `[...]`: Enable or Disable, Delete | **Add schedule**: folder, job, args, expression, Triage failures with Claude, Run as | "No schedules yet." |
 | Notes | `/notes` | notes and their replies | none | a note's `[...]`: Edit, Open its run, Delete | the note box, **Post note** | "No notes yet." |
 | Inventory | `/inventory` | hosts by cluster, Run on the hosts | none | the ssh login to copy inline, `[...]`: open, copy ssh | Run on the hosts | "Beszel isn't monitoring any hosts." |
 | Host | `/inventory/hosts/<name>` | the host's charts and details | none | none | none | none |

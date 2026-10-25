@@ -18,3 +18,4 @@ Schedule.
 | target      | varchar  |     | Target      |
 | args        | varchar  |     | Args        |
 | triage      | bigint   |     | Triage      |
+| workflow_id | char(26) | MUL | Workflow ID |

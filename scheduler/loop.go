@@ -11,8 +11,10 @@ import (
 	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/hostrun"
 	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/permission"
 	"github.com/titpetric/task-ui/runner"
 	"github.com/titpetric/task-ui/storage"
+	"github.com/titpetric/task-ui/workflow"
 )
 
 // Catalogue finds the folder a schedule names: every folder with a job,
@@ -23,14 +25,27 @@ type Catalogue interface {
 	Find(id string) *folder.Folder
 }
 
+// Starter starts a run of a workflow as a user, with the run's input,
+// and says which step a user with a set of permissions may not run, ""
+// for none. *workflow.Runner is one.
+type Starter interface {
+	Start(ctx context.Context, wf *model.Workflow, user *model.User, input string) (*model.WorkflowRun, error)
+	MayRun(ctx context.Context, set permission.Set, steps []model.WorkflowStep) string
+}
+
 // Loop starts the due schedules as detached runs, as the user each
-// schedule runs as, when that user may still run the job, and has the
-// failed run of a schedule with triage on triaged.
+// schedule runs as, when that user may still run the job, or every step
+// of the workflow, and has the failed run of a schedule with triage on
+// triaged.
 type Loop struct {
 	Schedules *storage.ScheduleStorage
 	Users     *storage.UserStorage
 	Catalogue Catalogue
 	Runner    *runner.Manager
+	// Workflows holds the workflows the schedules of workflows name, and
+	// Flows starts their runs. Nil skips such a schedule.
+	Workflows *storage.WorkflowStorage
+	Flows     Starter
 	// Hosts start a schedule of @host:<host> on its host. Nil skips such a
 	// schedule.
 	Hosts *hostrun.Starter
@@ -86,7 +101,7 @@ func (l *Loop) Run(ctx context.Context) {
 }
 
 // Tick starts every due schedule, moves it to its next time and returns how many runs it started.
-// It skips a schedule whose job is busy and disables one whose folder or job is missing.
+// It skips a schedule whose job or workflow is busy and disables one whose folder, job or workflow is missing.
 func (l *Loop) Tick(ctx context.Context) (int, error) {
 	now := l.Now()
 	due, err := l.Schedules.Due(ctx, now)
@@ -109,20 +124,16 @@ func (l *Loop) Tick(ctx context.Context) (int, error) {
 
 // fire starts one schedule's run and advances it.
 func (l *Loop) fire(ctx context.Context, schedule *model.Schedule, now time.Time) (bool, error) {
+	if schedule.IsWorkflow() {
+		return l.fireWorkflow(ctx, schedule, now)
+	}
 	f, job := l.target(schedule)
 	if job == nil {
 		schedule.Enabled = 0
 		slog.Warn("schedule disabled, its job is gone", "folder", schedule.Folder, "job", schedule.Job)
 		return false, l.Schedules.Update(ctx, schedule)
 	}
-	next, err := NextRun(schedule.Expression, now)
-	if err != nil {
-		schedule.Enabled = 0
-		return false, errors.Join(err, l.Schedules.Update(ctx, schedule))
-	}
-	schedule.LastRunAt = &now
-	schedule.NextRunAt = &next
-	if err := l.Schedules.Update(ctx, schedule); err != nil {
+	if err := l.advance(ctx, schedule, now); err != nil {
 		return false, err
 	}
 	user := l.user(ctx, schedule)
@@ -149,6 +160,59 @@ func (l *Loop) fire(ctx context.Context, schedule *model.Schedule, now time.Time
 	}
 	if err == nil && schedule.Triages() && l.Board != nil {
 		go l.triageAfter(schedule, user, session)
+	}
+	return err == nil, err
+}
+
+// advance moves a schedule to its next time, now its last; an expression
+// that fails to parse disables it.
+func (l *Loop) advance(ctx context.Context, schedule *model.Schedule, now time.Time) error {
+	next, err := NextRun(schedule.Expression, now)
+	if err != nil {
+		schedule.Enabled = 0
+		return errors.Join(err, l.Schedules.Update(ctx, schedule))
+	}
+	schedule.LastRunAt = &now
+	schedule.NextRunAt = &next
+	return l.Schedules.Update(ctx, schedule)
+}
+
+// fireWorkflow starts a schedule of a workflow: a run of every step as
+// the schedule's user, with no input, when the user may run them all;
+// a workflow nobody holds disables the schedule, one with a run in
+// progress skips it. A workflow run is no run of a job, so no triage follows it.
+func (l *Loop) fireWorkflow(ctx context.Context, schedule *model.Schedule, now time.Time) (bool, error) {
+	if l.Workflows == nil || l.Flows == nil {
+		slog.Warn("scheduled run skipped, no workflows on this instance", "workflow", schedule.WorkflowID)
+		return false, nil
+	}
+	wf, err := l.Workflows.Get(ctx, schedule.WorkflowID)
+	if err != nil {
+		schedule.Enabled = 0
+		slog.Warn("schedule disabled, its workflow is gone", "workflow", schedule.WorkflowID)
+		return false, l.Schedules.Update(ctx, schedule)
+	}
+	if err := l.advance(ctx, schedule, now); err != nil {
+		return false, err
+	}
+	user := l.user(ctx, schedule)
+	if l.Users != nil {
+		steps, err := l.Workflows.Steps(ctx, wf.ID)
+		if err != nil {
+			return false, err
+		}
+		if step := l.Flows.MayRun(ctx, l.Users.Permissions(ctx, user), steps); step != "" {
+			slog.Warn("scheduled run skipped, its user may not run a step of the workflow", "workflow", wf.Name, "step", step, "user", user.Name)
+			return false, nil
+		}
+	}
+	if schedule.Triages() {
+		slog.Info("scheduled run not triaged, a workflow schedule", "workflow", wf.Name)
+	}
+	_, err = l.Flows.Start(ctx, wf, user, "")
+	if errors.Is(err, workflow.ErrBusy) {
+		slog.Info("scheduled run skipped, the workflow is running", "workflow", wf.Name)
+		return false, nil
 	}
 	return err == nil, err
 }

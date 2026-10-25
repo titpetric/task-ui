@@ -43,6 +43,26 @@ func TestSchedules(t *testing.T) {
 	assert.NotContains(t, limited, `<code class="nowrap">0 3 * * *</code>`)
 }
 
+// A workflow's schedule lists as a workflow with the name linked, for
+// users who see every step of it; the page's own form stays jobs only.
+func TestSchedules_Workflow(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	ctx := context.Background()
+	wf := f.workflow(t, asOps, "release", "infra", "plan", "infra/edge", "deploy")
+	assert.NoError(t, f.opts.Schedules.Create(ctx, &model.Schedule{WorkflowID: wf.ID, UserID: f.users[asOps].ID, UserName: asOps, Expression: "0 7 * * 1-5", Enabled: 1}))
+
+	body := f.page(t, asOps, "/schedules")
+	assert.Contains(t, body, "Schedule a workflow from its edit page.")
+	assert.Contains(t, body, `<td data-label="Folder"><svg class="ic lead"><use href="#i-flow"/></svg>workflow</td>`)
+	assert.Contains(t, body, `<td class="key" data-label="Job"><a href="/workflows/`+wf.ID+`">release</a></td>`)
+	assert.Contains(t, body, `data-confirm="Delete the schedule 0 7 * * 1-5 for release?"`)
+	assert.NotContains(t, body, `name="workflow"`)
+
+	limited := f.page(t, asLimited, "/schedules")
+	assert.NotContains(t, limited, `0 7 * * 1-5`, "limited does not see infra/edge")
+}
+
 // The folder select narrows the job select; viewers get neither.
 func TestSchedules_Selects(t *testing.T) {
 	t.Parallel()

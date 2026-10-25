@@ -7,8 +7,8 @@ it with headless chromium; `task docs:shots` regenerates them into
 | | |
 |-|-|
 | ![The dashboard: every live terminal as its last frame, and the control centre](assets/dashboard-dark.png) | ![Dashboard, light theme](assets/dashboard-light.png) |
-| ![Workflows: chains of commands, prompts and summaries](assets/workflows-dark.png) | ![A workflow: its chain, its runs and the steps of each](assets/workflow-dark.png) |
-| ![The workflow editor: the steps on a rail, each a card of its kind](assets/workflow-edit-dark.png) | ![The workflow editor, light theme](assets/workflow-edit-light.png) |
+| ![Workflows: the chains with their schedules, and the recent runs with their answers open](assets/workflows-dark.png) | ![A workflow: its chain, its runs and the steps of each](assets/workflow-dark.png) |
+| ![The workflow editor: the steps on a rail, each a card of its kind, and the Schedule block under them](assets/workflow-edit-dark.png) | ![The workflow editor, light theme](assets/workflow-edit-light.png) |
 | ![The runs](assets/runs-dark.png) | ![A run's page](assets/run-page-dark.png) |
 | ![A run in its window, attached](assets/run-dark.png) | ![A run in its window, light theme](assets/run-light.png) |
 | ![A folder: its git line, the Jobs table, files and folder](assets/folder-dark.png) | ![A folder, light theme](assets/folder-light.png) |
@@ -38,3 +38,4 @@ it with headless chromium; `task docs:shots` regenerates them into
 | ![The phone: a workspace's settings page, its home repository with Pull now, Replace and Remove](assets/mobile-workspace-edit-dark.png) | ![The sidebar with pins: a directory under its project, a file as a run item](assets/sidebar-pin-dark.png) |
 | ![Pins, light theme](assets/sidebar-pin-light.png) | ![Data retention: a table, a row per area, with Keep and Size limit selects](assets/retention-dark.png) |
 | ![Data retention, light theme](assets/retention-light.png) | ![Integrations, light theme: the Who field with a user who gets the token as admin and two who do not](assets/integrations-light.png) |
+| ![Workflows, light theme](assets/workflows-light.png) | ![Scheduled, light theme: a workflow's schedule among the jobs'](assets/schedules-light.png) |

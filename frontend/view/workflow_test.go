@@ -149,13 +149,14 @@ func TestView_RenderWorkflowsRecentRuns(t *testing.T) {
 	assert.Contains(t, out, `<i class="dot failed"></i>`)
 	assert.Contains(t, out, `<i class="dot running"></i>`)
 	assert.NotContains(t, out, "I didn&#39;t water yesterday", "no input")
-	assert.Contains(t, out, `<tr class="wf-answer-row" id="wf-answer-wr1" data-answer-of="wr1" hidden><td colspan="3">`)
+	assert.Contains(t, out, `<tr class="wf-answer-row" id="wf-answer-wr1" data-answer-of="wr1"><td colspan="3">`, "the answer open from the start")
+	assert.NotContains(t, out, `data-answer-of="wr1" hidden`)
 	assert.Contains(t, out, "<strong>rainy</strong>")
 	assert.Contains(t, out, strings.TrimSpace(long), "the answer in full")
 	assert.NotContains(t, out, "<script>alert(1)</script>")
 	assert.Contains(t, out, "&lt;script&gt;")
 	assert.Equal(t, 1, strings.Count(out, "data-answer-toggle"), "a chevron for the run with an answer alone")
-	assert.Contains(t, out, `aria-controls="wf-answer-wr1"`)
+	assert.Contains(t, out, `data-answer-toggle aria-expanded="true" aria-controls="wf-answer-wr1" title="Hide the answer" aria-label="Hide the answer"`)
 	assert.NotContains(t, out, `wf-answer-wr2`)
 	assert.NotContains(t, out, "No workflow has run yet.")
 
@@ -184,7 +185,8 @@ func TestView_RenderWorkflowRuns(t *testing.T) {
 	assert.Contains(t, out, `<i class="dot ok" title="ok"></i>`)
 	assert.Contains(t, out, `<i class="dot failed" title="failed"></i>`)
 	assert.Contains(t, out, `<small class="faint wf-desc">step 2 failed</small>`)
-	assert.Contains(t, out, `data-answer-of="wr1" hidden><td colspan="4">`)
+	assert.Contains(t, out, `data-answer-of="wr1" hidden><td colspan="4">`, "folded on the workflow's page")
+	assert.Contains(t, out, `data-answer-toggle aria-expanded="false" aria-controls="wf-answer-wr1" title="Show the answer"`)
 	assert.Contains(t, out, "Skip <strong>watering</strong>.")
 	assert.Equal(t, 1, strings.Count(out, "data-answer-toggle"))
 	assert.NotContains(t, out, "I didn&#39;t water yesterday", "no input")
@@ -255,4 +257,97 @@ func TestWorkflowRun_NoteState(t *testing.T) {
 	assert.Equal(t, model.NoteDone, run.NoteState())
 	run.State = model.StateStopped
 	assert.Equal(t, model.NoteFailed, run.NoteState())
+}
+
+// The Workflows table names each workflow with its schedules under it,
+// its last run and who made it, and the row's menu edits it: the chain
+// of its steps and a link to the page the name is stay off the row.
+func TestView_RenderWorkflowsTable(t *testing.T) {
+	t.Parallel()
+	v, err := view.New()
+	assert.NoError(t, err)
+	p := admin(t)
+	p.Workflows = []view.Workflow{
+		{Workflow: model.Workflow{ID: "w1", Name: "release", UserName: "ops"}, Steps: []view.Step{{Folder: "infra", Job: "plan"}}, CanRun: true, CanChange: true,
+			Schedules: []model.Schedule{{ID: "s1", WorkflowID: "w1", Expression: "0 7 * * 1-5", Enabled: 1, UserName: "ops"}, {ID: "s2", WorkflowID: "w1", Expression: "@weekly", UserName: "admin"}}},
+		{Workflow: model.Workflow{ID: "w2", Name: "ship", UserName: "ops"}, Steps: []view.Step{{Folder: "infra", Job: "plan"}}, Running: "wr9"},
+	}
+	var buf bytes.Buffer
+	assert.NoError(t, v.Render(&buf, "workflows", p))
+	out := buf.String()
+	assert.Contains(t, out, `<thead><tr><th>Workflow</th><th>Last run</th><th>By</th><th></th></tr></thead>`)
+	assert.NotContains(t, out, `data-label="Steps"`)
+	assert.Contains(t, out, `<a href="/workflows/w1">release</a>`)
+	assert.Contains(t, out, `<small class="faint wf-desc" title="Scheduled, as ops"><svg class="ic lead"><use href="#i-clock"/></svg><code>0 7 * * 1-5</code></small>`)
+	assert.Contains(t, out, `<small class="faint wf-desc" title="A schedule, disabled, as admin"><svg class="ic lead"><use href="#i-clock"/></svg><code>@weekly</code> disabled</small>`)
+	assert.Contains(t, out, `<a class="more-item" role="menuitem" href="/workflows/w1/edit">`)
+	assert.NotContains(t, out, `<span>Open</span>`, "the name is the link")
+	assert.Contains(t, out, `href="/workflows/w2/runs/wr9"`)
+	assert.Equal(t, 1, strings.Count(out[strings.Index(out, "<main>"):], `href="/workflows/w1/edit"`), "Edit for the owner's alone")
+}
+
+// The edit page ends with the workflow's schedules and the form that
+// adds one, which posts the workflow's ID, with Run as for an admin.
+func TestView_RenderWorkflowEditSchedule(t *testing.T) {
+	t.Parallel()
+	v, err := view.New()
+	assert.NoError(t, err)
+	p := admin(t)
+	p.Users = []model.User{{ID: "u1", Name: "admin", Role: model.RoleAdmin}, {ID: "u2", Name: "ops", Role: model.RoleRunner}}
+	p.Workflow = &view.Workflow{Workflow: model.Workflow{ID: "w1", Name: "release"}, Steps: []view.Step{{Kind: model.StepJob, Folder: "infra", Job: "plan"}}, CanRun: true, CanChange: true}
+	next := time.Now()
+	p.Schedules = []model.Schedule{{ID: "s1", WorkflowID: "w1", Expression: "0 7 * * 1-5", Enabled: 1, UserName: "ops", NextRunAt: &next}}
+	var buf bytes.Buffer
+	assert.NoError(t, v.Render(&buf, "workflow_edit", p))
+	out := buf.String()
+	block := out[strings.Index(out, `<section class="block" id="schedule">`):]
+	assert.Contains(t, block, "<h3>Schedule <small>Runs the workflow on a cron expression, as you, or as the user you pick. Each run needs permission to run every step at that time.</small></h3>")
+	assert.Contains(t, block, `<form class="form inline" data-api="/api/schedules" data-method="POST" data-next="reload">`)
+	assert.Contains(t, block, `<input type="hidden" name="workflow" value="w1">`)
+	assert.Contains(t, block, `<input type="text" id="sch-expr" name="expression" placeholder="0 3 * * *  or  @daily" spellcheck="false" autocomplete="off" required>`)
+	assert.Contains(t, block, `<label for="sch-user">Run as</label>`)
+	assert.NotContains(t, block, `name="triage"`, "no triage for a workflow")
+	assert.NotContains(t, block, `name="folder"`)
+	assert.Contains(t, block, `<td class="key" data-label="Expression"><code>0 7 * * 1-5</code></td>`)
+	assert.Contains(t, block, `<span class="badge ok">enabled</span>`)
+	assert.Contains(t, block, `data-confirm="Delete the schedule 0 7 * * 1-5 for release?"`)
+	assert.NotContains(t, block, "Not scheduled.")
+	assert.True(t, strings.Index(out, `data-api="/api/workflows/w1"`) < strings.Index(out, `id="schedule"`), "the schedule block ends the page")
+	editor := strings.Index(out, `data-workflow data-api="/api/workflows/w1"`)
+	assert.True(t, editor > 0)
+	assert.True(t, editor+strings.Index(out[editor:], "</form>") < strings.Index(out, `id="schedule"`), "the editor's form closes before the schedule block: no nested forms")
+
+	runner := &model.User{ID: "u2", Name: "ops", Role: model.RoleRunner}
+	p.User, p.Permissions, p.Users, p.Schedules = runner, permission.Set{User: runner, Role: permission.Policy{"workflow/edit": permission.Allow}}, nil, nil
+	buf.Reset()
+	assert.NoError(t, v.Render(&buf, "workflow_edit", p))
+	block = buf.String()[strings.Index(buf.String(), `id="schedule"`):]
+	assert.Contains(t, block, "Runs the workflow on a cron expression, as you. Each run needs")
+	assert.NotContains(t, block, "Run as</label>", "no picker without admin")
+	assert.Contains(t, block, `<p class="empty-line">Not scheduled.</p>`)
+	assert.Contains(t, block, `<input type="hidden" name="workflow" value="w1">`)
+}
+
+// Scheduled lists a workflow's schedule as a workflow, the name linked to
+// it, and the delete confirm names the workflow.
+func TestView_RenderSchedulesWorkflow(t *testing.T) {
+	t.Parallel()
+	v, err := view.New()
+	assert.NoError(t, err)
+	p := admin(t)
+	next := time.Now()
+	p.WorkflowNames = map[string]string{"w1": "release"}
+	p.Schedules = []model.Schedule{
+		{ID: "s1", WorkflowID: "w1", Expression: "0 7 * * 1-5", Enabled: 1, UserName: "ops", NextRunAt: &next},
+		{ID: "s2", Folder: "infra", Job: "plan", Expression: "@daily", Enabled: 1, UserName: "ops", NextRunAt: &next},
+	}
+	var buf bytes.Buffer
+	assert.NoError(t, v.Render(&buf, "schedules", p))
+	out := buf.String()
+	assert.Contains(t, out, `<td data-label="Folder"><svg class="ic lead"><use href="#i-flow"/></svg>workflow</td>`)
+	assert.Contains(t, out, `<td class="key" data-label="Job"><a href="/workflows/w1">release</a></td>`)
+	assert.Contains(t, out, `data-confirm="Delete the schedule 0 7 * * 1-5 for release?"`)
+	assert.Contains(t, out, `<td data-label="Folder"><a href="/f/_/infra">infra</a></td>`)
+	assert.Contains(t, out, `data-confirm="Delete the schedule @daily for infra / plan?"`)
+	assert.Contains(t, out, "Schedule a workflow from its edit page.")
 }

@@ -49,7 +49,7 @@
 		<tbody data-runs{{ if $.Summarize }} data-summarize{{ end }}>
 		{{- range $.WorkflowRuns }}
 			<tr data-run-id="{{ .ID }}">
-				<td class="key" data-result>{{ template "wffold" . }}<a href="/workflows/{{ $w.ID }}/runs/{{ .ID }}" title="{{ stamp .StartedAt }}"><i class="dot {{ .State }}" title="{{ .State }}"></i>{{ ago .StartedAt }}</a>{{ with .Message }}<small class="faint wf-desc">{{ . }}</small>{{ end }}</td>
+				<td class="key" data-result>{{ template "wffold" (list .) }}<a href="/workflows/{{ $w.ID }}/runs/{{ .ID }}" title="{{ stamp .StartedAt }}"><i class="dot {{ .State }}" title="{{ .State }}"></i>{{ ago .StartedAt }}</a>{{ with .Message }}<small class="faint wf-desc">{{ . }}</small>{{ end }}</td>
 				<td data-label="By">{{ template "user" (list $ .UserName) }}</td>
 				<td data-label="Steps"><span class="chain">{{ range $i, $l := $.Links .Steps }}{{ if $i }}<span class="faint then" aria-hidden="true"></span>{{ end }}<a class="nowrap" href="{{ $l.Href }}" data-pos="{{ $i }}"><i class="dot {{ $l.State }}"></i>{{ if $l.Workflow }}<svg class="ic lead"><use href="#i-flow"/></svg>{{ else if $l.Summary }}<svg class="ic lead"><use href="#i-summary"/></svg>{{ else if $l.Prompt }}<svg class="ic lead"><use href="#i-prompt"/></svg>{{ end }}{{ $l.Text }}</a>{{ end }}</span></td>
 				<td class="actions"><a class="btn btn-sm" href="/workflows/{{ $w.ID }}/runs/{{ .ID }}" data-workflow-view>View</a>{{ template "menu" (menu (print "Actions on the run of " $w.Name)

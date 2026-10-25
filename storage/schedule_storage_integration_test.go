@@ -127,3 +127,35 @@ func TestScheduleStorage_Delete(t *testing.T) {
 	_, err := schedules.Get(ctx, schedule.ID)
 	assert.ErrorIs(t, err, storage.ErrNotFound)
 }
+
+// A schedule of a workflow keeps the workflow's ID with no folder or
+// job, and lists by the workflow.
+func TestScheduleStorage_Workflow(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	schedules := storage.NewScheduleStorage(newDB(t))
+	assert.Error(t, schedules.Create(ctx, &model.Schedule{Expression: "@daily"}), "no job and no workflow")
+	assert.Error(t, schedules.Create(ctx, &model.Schedule{WorkflowID: "w1"}), "no expression")
+	schedule := &model.Schedule{WorkflowID: "w1", Expression: "0 7 * * 1-5", Enabled: 1, UserName: "ops"}
+	assert.NoError(t, schedules.Create(ctx, schedule))
+	assert.NoError(t, schedules.Create(ctx, &model.Schedule{WorkflowID: "w2", Expression: "@daily"}))
+	assert.NoError(t, schedules.Create(ctx, &model.Schedule{Folder: "infra", Job: "plan", Expression: "@daily"}))
+
+	got, err := schedules.Get(ctx, schedule.ID)
+	assert.NoError(t, err)
+	assert.Equal(t, "w1", got.WorkflowID)
+	assert.Equal(t, "", got.Folder)
+	assert.Equal(t, "", got.Job)
+	assert.True(t, got.IsWorkflow())
+
+	byWorkflow, err := schedules.ListByWorkflow(ctx, "w1")
+	assert.NoError(t, err)
+	assert.Len(t, byWorkflow, 1)
+	assert.Equal(t, schedule.ID, byWorkflow[0].ID)
+	none, err := schedules.ListByWorkflow(ctx, "w9")
+	assert.NoError(t, err)
+	assert.Len(t, none, 0)
+	all, err := schedules.List(ctx)
+	assert.NoError(t, err)
+	assert.Len(t, all, 3)
+}

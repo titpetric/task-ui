@@ -143,15 +143,19 @@ prompt: Claude also gets the last 3 answers of this workflow.
 
 ## The Workflows page
 
-**Workflows** lists the workflows you may see, each with its chain, its
-last run and **Run**. **Recent runs** under it lists the newest 15 runs
-of those workflows, each with the workflow, who started it and when. The
-dot by the workflow's name says how the run went: green for ok, red for
-failed or killed, grey for stopped, pulsing while it runs; the name links
-to the run's page. A run with an answer has a chevron before it that
-unfolds Claude's answer in full, in markdown, in the row under it; a run
-of commands alone has no answer, only its dot. A run shows when you see every folder
-its steps ran in.
+**Workflows** lists the workflows you may see, each with its name,
+linked to its page, its description and its schedules under the name,
+each a clock and its expression, its last run, who made it and **Run**;
+the row's menu has **Edit** for its owner or an admin, and the run going
+while one runs. The chain of steps is the workflow page's. **Recent
+runs** under it lists the newest 15 runs of those workflows, each with
+the workflow, who started it and when. The dot by the workflow's name
+says how the run went: green for ok, red for failed or killed, grey for
+stopped, pulsing while it runs; the name links to the run's page. A run
+with an answer shows Claude's answer in full, in markdown, in the row
+under it, open; the chevron before the run folds it and unfolds it
+again. A run of commands alone has no answer, only its dot. A run shows
+when you see every folder its steps ran in.
 
 ## The workflow page
 
@@ -165,7 +169,8 @@ its steps ran in.
   [Runs](runs.md#activity)), then every run of the workflow, newest first: when it started,
   linked to its page, with the dot of how it ended and the message of a
   failure, who started it and each step's run, which opens like any other run.
-  A run with an answer folds it under a chevron, as on Workflows.
+  A run with an answer folds it under a chevron; Workflows shows the
+  answers open.
   **View** opens that run in a window, its thread over its steps, each
   step with its state and the screen it ended on; Ctrl and a click open
   it as a page.
@@ -248,6 +253,32 @@ and once you pick it the job picker lists them under **Hosts**, and the args fie
 `/api/workflows`: `{"folder": "_", "job": "@host:*", "args":
 ["uptime"]}`. A step of `@host:*` runs on every host at once and ends ok
 when every host's run did; running it takes the `hosts` permission.
+
+## Scheduling one
+
+The edit page ends with **Schedule**: the workflow's schedules, each
+with its expression, its next and last run, who it runs as and its
+state, with **Enable** or **Disable** and **Delete** in the row's menu,
+and under them the form that adds one: an **Expression** (see
+[Scheduled](scheduled.md#scheduling-a-job) for the syntax) and, for an
+admin, **Run as**. **Add schedule** saves it. The schedule starts a run
+of the workflow at each time, as its user, with no input, as **Run**
+does without the input field; the run shows under Recent runs and on
+the workflow's page like any other. Scheduling a workflow takes the
+right to run every step, as running it does, and the scheduler checks
+again at each time: when the user may not run a step by then, it skips
+the run and logs why. A run skips its time while the workflow is still
+running. A schedule of a workflow has no **Triage failures with
+Claude**, a job's run has that; a workflow with a prompt or a summary
+step reads how its steps went on its own. Deleting the workflow
+disables the schedule when its time comes.
+
+The workflows list shows each workflow's schedules under its name, a
+clock and the expression, and [Scheduled](scheduled.md) lists them
+among the jobs' with the workflow in place of the folder and the job.
+Through `POST /api/schedules`: `{"workflow": "<id>", "expression":
+"0 7 * * 1-5"}`, with `user` for an admin; `folder`, `job`, `args` and
+`triage` stay out of it.
 
 ---
 

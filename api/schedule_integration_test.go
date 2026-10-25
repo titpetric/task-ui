@@ -220,3 +220,80 @@ func TestSchedule_RunAsRefused(t *testing.T) {
 	refused := f.call(t, asOps, http.MethodPut, "/schedules/"+own.str("id"), api.ScheduleRequest{User: asLimited})
 	assert.Equal(t, http.StatusForbidden, refused.Status)
 }
+
+// A schedule of a workflow names it in place of a folder and a job, for
+// a user who may run every step; the row carries workflow_id and no
+// folder or job, and lists among the schedules. Its enabled switch
+// updates as a job's does.
+func TestSchedule_Workflow(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	wf := f.createWorkflow(t, asOps, "release", chain("infra", "plan", "infra/edge", "deploy"))
+
+	res := f.call(t, asOps, http.MethodPost, "/schedules", api.ScheduleRequest{Workflow: wf, Expression: "0 7 * * 1-5"})
+	assert.Equal(t, http.StatusCreated, res.Status, string(res.Raw))
+	assert.True(t, model.ValidID(res.str("id")))
+	assert.Equal(t, wf, res.str("workflow_id"))
+	assert.Equal(t, "", res.str("folder"))
+	assert.Equal(t, "", res.str("job"))
+	assert.Equal(t, "ops", res.str("user_name"))
+	assert.Equal(t, float64(1), res.get("enabled"))
+	assert.Equal(t, float64(0), res.get("triage"))
+	assert.NotEqual(t, "", res.str("next_run_at"))
+
+	all := f.call(t, asViewer, http.MethodGet, "/schedules", nil)
+	assert.Len(t, all.list("schedules"), 1)
+	// limited sees infra alone; the workflow has a step in infra/edge.
+	assert.Len(t, f.call(t, asLimited, http.MethodGet, "/schedules", nil).list("schedules"), 0)
+	assert.Equal(t, http.StatusNotFound, f.call(t, asLimited, http.MethodGet, "/schedules/"+res.str("id"), nil).Status)
+
+	path := "/schedules/" + res.str("id")
+	off := f.call(t, asOps, http.MethodPut, path, api.ScheduleRequest{Enabled: ptr(false)})
+	assert.Equal(t, http.StatusOK, off.Status, string(off.Raw))
+	assert.Equal(t, float64(0), off.get("enabled"))
+	assert.Equal(t, wf, off.str("workflow_id"))
+	// An admin, who may run the steps, switches it back and picks its user.
+	on := f.call(t, asAdmin, http.MethodPut, path, api.ScheduleRequest{Enabled: ptr(true), User: "ops"})
+	assert.Equal(t, http.StatusOK, on.Status, string(on.Raw))
+	assert.Equal(t, float64(1), on.get("enabled"))
+	assert.Equal(t, "ops", on.str("user_name"))
+	assert.Equal(t, http.StatusBadRequest, f.call(t, asOps, http.MethodPut, path, api.ScheduleRequest{Args: api.RunArgs{"x"}}).Status, "no args on a workflow schedule")
+	assert.Equal(t, http.StatusBadRequest, f.call(t, asOps, http.MethodPut, path, api.ScheduleRequest{Triage: ptr(true)}).Status, "no triage on a workflow schedule")
+
+	assert.Equal(t, http.StatusNoContent, f.call(t, asOps, http.MethodDelete, path, nil).Status)
+}
+
+// A workflow schedule takes no folder, job, args or triage (400), names
+// a workflow there is (404), and needs the right to run every step
+// (403); an admin picks a user who may run them all (400 otherwise).
+func TestSchedule_WorkflowRefused(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	wf := f.createWorkflow(t, asOps, "release", chain("infra", "plan"))
+	private := f.createWorkflow(t, asAdmin, "private", chain("infra", "plan", "private", "deploy"))
+
+	cases := []struct {
+		name   string
+		user   string
+		req    api.ScheduleRequest
+		status int
+	}{
+		{"with a folder", asOps, api.ScheduleRequest{Workflow: wf, Folder: "infra", Expression: "@daily"}, http.StatusBadRequest},
+		{"with a job", asOps, api.ScheduleRequest{Workflow: wf, Job: "plan", Expression: "@daily"}, http.StatusBadRequest},
+		{"with args", asOps, api.ScheduleRequest{Workflow: wf, Args: api.RunArgs{"x"}, Expression: "@daily"}, http.StatusBadRequest},
+		{"with triage", asOps, api.ScheduleRequest{Workflow: wf, Triage: ptr(true), Expression: "@daily"}, http.StatusBadRequest},
+		{"bad expression", asOps, api.ScheduleRequest{Workflow: wf, Expression: "every day"}, http.StatusBadRequest},
+		{"no workflow", asOps, api.ScheduleRequest{Workflow: model.NewID(), Expression: "@daily"}, http.StatusNotFound},
+		{"a step the user may not run", asOps, api.ScheduleRequest{Workflow: private, Expression: "@daily"}, http.StatusForbidden},
+		{"viewer", asViewer, api.ScheduleRequest{Workflow: wf, Expression: "@daily"}, http.StatusForbidden},
+		{"as someone else", asOps, api.ScheduleRequest{Workflow: wf, Expression: "@daily", User: asAdmin}, http.StatusForbidden},
+		{"as one who may not run a step", asAdmin, api.ScheduleRequest{Workflow: private, Expression: "@daily", User: asOps}, http.StatusBadRequest},
+	}
+	for _, c := range cases {
+		res := f.call(t, c.user, http.MethodPost, "/schedules", c.req)
+		assert.Equal(t, c.status, res.Status, c.name+": "+string(res.Raw))
+	}
+	refused := f.call(t, asOps, http.MethodPost, "/schedules", api.ScheduleRequest{Workflow: private, Expression: "@daily"})
+	assert.Contains(t, string(refused.Raw), "you don't have permission to run private / deploy")
+	assert.Len(t, f.call(t, asAdmin, http.MethodGet, "/schedules", nil).list("schedules"), 0)
+}

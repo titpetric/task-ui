@@ -190,7 +190,7 @@ func (h *Handlers) workflows(w http.ResponseWriter, r *http.Request) {
 	p := h.page(r, "Workflows")
 	p.Crumbs = view.Crumbs("Workflows")
 	p.Step = view.StepWorkflows
-	p.Workflows = p.SideWorkflows
+	p.Workflows = h.scheduled(r.Context(), p.SideWorkflows)
 	p.StepWorkflows = p.SideWorkflows
 	p.WorkflowRuns = h.recentRuns(r.Context(), p)
 	if h.opts.Board != nil && p.Can("prompt/edit") && h.claudeFor(r, p.User) {
@@ -203,6 +203,22 @@ func (h *Handlers) workflows(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	h.render(w, http.StatusOK, "workflows", p)
+}
+
+// scheduled puts on each workflow the schedules that start it.
+func (h *Handlers) scheduled(ctx context.Context, workflows []view.Workflow) []view.Workflow {
+	schedules, _ := h.opts.Schedules.List(ctx)
+	out := make([]view.Workflow, 0, len(workflows))
+	for _, wf := range workflows {
+		wf.Schedules = nil
+		for _, schedule := range schedules {
+			if schedule.WorkflowID == wf.ID {
+				wf.Schedules = append(wf.Schedules, schedule)
+			}
+		}
+		out = append(out, wf)
+	}
+	return out
 }
 
 // workflowNew shows the form for a new workflow. Any user may make one,
@@ -349,7 +365,8 @@ func (h *Handlers) frames(ctx context.Context, links []view.Link, names map[stri
 }
 
 // workflowEdit shows the form that changes a workflow, for its owner or
-// an admin; ?workspace= opens it with the steps moved to that workspace.
+// an admin, and under it the workflow's schedules with the form that
+// adds one; ?workspace= opens it with the steps moved to that workspace.
 func (h *Handlers) workflowEdit(w http.ResponseWriter, r *http.Request) {
 	p, _ := h.loadWorkflow(w, r)
 	if p == nil {
@@ -368,6 +385,8 @@ func (h *Handlers) workflowEdit(w http.ResponseWriter, r *http.Request) {
 	p.StepFolders = h.stepFolders(r)
 	p.WorkspaceList = h.workspaceList(r.Context())
 	h.hostJobs(r, p)
+	p.Schedules, _ = h.opts.Schedules.ListByWorkflow(r.Context(), p.Workflow.ID)
+	h.runAsUsers(r, p)
 	if ws := r.URL.Query().Get("workspace"); ws != "" && p.StepSpaceHas(ws) {
 		var missed int
 		p.Workflow.Steps, missed = p.StepMove(p.Workflow.Steps, ws)
