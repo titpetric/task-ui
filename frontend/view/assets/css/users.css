@@ -122,6 +122,25 @@ table.matrix {
   }
 }
 
+/* On a phone a matrix scrolls sideways under its first column, which
+   stays in view, so a row keeps its name beside its cells. */
+@media (max-width: 860px) {
+  table.matrix {
+    & th[scope="row"],
+    & thead th:first-child {
+      position: sticky;
+      z-index: 1;
+      inset-inline-start: 0;
+      background: var(--ink-1);
+      box-shadow: 1px 0 0 var(--line);
+    }
+
+    & thead th:first-child {
+      background: var(--ink-2);
+    }
+  }
+}
+
 .tri-cell {
   display: inline-flex;
   vertical-align: middle;

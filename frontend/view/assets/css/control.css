@@ -245,3 +245,78 @@
     }
   }
 }
+
+/* On a phone the control centre folds as the other tables fold into
+   cards: a folder is a heading, each job it has a line under it, the
+   job's name and its button beside it, the columns it lacks left out,
+   its other jobs behind their [...] as before. A folder's page keeps
+   its named rows, which fold on their own above. */
+@media (max-width: 860px) {
+  .table.control:has(thead) {
+    display: block;
+
+    & thead {
+      display: none;
+    }
+
+    & tbody,
+    & tr {
+      display: block;
+    }
+
+    & tr {
+      padding: 0.55rem 0.7rem;
+      border-bottom: 1px solid var(--line);
+
+      &:last-child {
+        border-bottom: 0;
+      }
+    }
+
+    & tbody tr:hover td {
+      background: transparent;
+    }
+
+    & td {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      width: auto;
+      padding: 0.15rem 0;
+      border: 0;
+      white-space: normal;
+    }
+
+    & td.key {
+      display: block;
+      padding-bottom: 0.25rem;
+      font-size: var(--fs-lg);
+    }
+
+    /* A column the folder has no job in, and an empty Other, go. */
+    & td.col:not(:has(*)) {
+      display: none;
+    }
+
+    & td.col::before {
+      content: attr(data-label);
+      flex: 0 0 auto;
+      min-width: 5.5rem;
+      color: var(--text-faint);
+      text-align: start;
+      font-size: 0.64rem;
+      font-weight: 600;
+      letter-spacing: var(--ls-label);
+      text-transform: uppercase;
+    }
+
+    & td > div {
+      justify-content: flex-start;
+    }
+
+    & tr.empty td {
+      display: block;
+      padding: 0.4rem 0;
+    }
+  }
+}
