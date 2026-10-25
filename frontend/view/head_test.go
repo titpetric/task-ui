@@ -90,7 +90,7 @@ func TestHead_WorkspacePage(t *testing.T) {
 	p.ProjectGroups = view.ProjectGroups(p.Entries, []model.Workspace{{Folder: "acme"}})
 	body := render(t, "workspace_edit", p)
 	assert.Equal(t, projectTable(t, render(t, "projects", p)), projectTable(t, body))
-	assert.Contains(t, body, `href="/settings/projects/acme/api"><svg class="ic"><use href="#i-settings"/></svg><span>Project settings</span>`)
+	assert.Contains(t, body, `href="/settings/projects/acme/api"><svg class="ic"><use href="#i-settings"/></svg><span>Edit project</span>`)
 
 	head := body[strings.Index(body, `<div class="page-head">`):strings.Index(body, `<section class="block">`)]
 	add, export, del := strings.Index(head, `href="/settings/projects/new?workspace=acme"`), strings.Index(head, `data-dialog-open="export-dialog"`), strings.Index(head, `data-delete="/api/workspaces/acme"`)
@@ -134,7 +134,7 @@ func TestHead_CreateActions(t *testing.T) {
 // The Projects page is a block per workspace, the root's first: each
 // with the projects table, a workspace's with its own small Add project
 // into it, an empty one with its line and no table. A row's [...] opens
-// the folder, its Project settings and, with a pull job the user may
+// the folder, its Edit project and, with a pull job the user may
 // run, Pull now; a remote fits its column and shows whole on a hover.
 func TestHead_ProjectsPage(t *testing.T) {
 	t.Parallel()
@@ -178,8 +178,8 @@ func TestHead_SettingsTitles(t *testing.T) {
 	p := admin(t)
 	p.Checkout = &git.Info{Remote: "ssh://git@git.example/infra.git"}
 	body := render(t, "project_edit", p)
-	assert.Contains(t, body, `<h2>Project settings <span class="badge">infra</span></h2>`)
+	assert.Contains(t, body, "<h2>Edit infra</h2>")
 	assert.Contains(t, body, `data-confirm-ok="Remove checkout"`)
 	assert.NotContains(t, body, `data-confirm-ok="Remove"`)
-	assert.Contains(t, render(t, "workspace_edit", p), `<h2>Workspace settings <span class="badge">malta</span></h2>`)
+	assert.Contains(t, render(t, "workspace_edit", p), "<h2>Edit malta</h2>")
 }

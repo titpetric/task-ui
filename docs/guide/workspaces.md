@@ -182,7 +182,7 @@ order.
 - Any number of workspaces may take the same home repository, each under
   its own folder: two teams can start from the same tooling and clone
   different projects beside it.
-- **Workspace settings** opens the workspace's settings page. Its
+- **Edit workspace** opens the workspace's settings page. Its
   **Settings** change the title, description, **Recursive**, which,
   as a project's does, lists the folders inside it as deep as they go,
   or, off, the workspace and its top-level folders alone, and

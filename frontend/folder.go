@@ -110,7 +110,7 @@ func (h *Handlers) defaultWorkspace(w http.ResponseWriter, r *http.Request) {
 	}
 	p := h.page(r, f.Title)
 	p.Folder = f
-	p.Crumbs = view.Crumbs(model.Default)
+	p.Crumbs = view.Crumbs(crumbName(model.Default))
 	projects := map[string]bool{}
 	for _, sub := range p.Folders {
 		top, _, _ := strings.Cut(sub.ID, "/")

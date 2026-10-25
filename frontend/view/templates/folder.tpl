@@ -8,10 +8,10 @@
 	<div class="actions">
 		{{- with $.FolderMenu }}
 		{{ template "menu" (menu (print "Actions on " $p.Title)
-			(and .Workspace ($.Can "workspace/view") (item "settings" "Workspace settings" "href" .Settings))
+			(and .Workspace ($.Can "workspace/view") (item "settings" "Edit workspace" "href" .Settings))
 			(and .Workspace ($.Can "workspace/view") (item "key" "SSH keys" "href" .KeysPage))
 			(and .Workspace ($.Can "secret/view") (item "secret" "Secrets" "href" .SecretsPage))
-			(and .Project ($.Can "project/view") (item "settings" "Project settings" "href" .Settings))
+			(and .Project ($.Can "project/view") (item "settings" "Edit project" "href" .Settings))
 			(and (not $default) $.Pinning ($.PinItem $p.ID "" "" .Kind))
 			(and (not $default) (or .Workspace .Project) ($.Can "env/edit") (item "plus" "Add env file" "href" (print ($.Href $p.ID) "/env")))
 			(and .Pull ($.CanRun $p .Pull) (item "download" "Pull now" "data-run" "" "data-folder" $p.ID "data-dir" .Pull.Dir "data-job" .Pull.ID "data-title" (print $p.ID " / " .Pull.Name)))

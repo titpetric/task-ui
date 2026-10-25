@@ -213,7 +213,6 @@ func (h *Handlers) workflows(w http.ResponseWriter, r *http.Request) {
 	}
 	p := h.page(r, "Workflows")
 	p.Crumbs = view.Crumbs("Workflows")
-	p.Step = view.StepWorkflows
 	p.Workflows = h.scheduled(r.Context(), p.SideWorkflows)
 	p.StepWorkflows = p.SideWorkflows
 	p.WorkflowRuns = h.recentRuns(r.Context(), p)
@@ -252,8 +251,7 @@ func (h *Handlers) workflowNew(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	p := h.page(r, "Add workflow")
-	p.Crumbs = view.Crumbs("Workflows", "/workflows", "Add")
-	p.Step = view.StepWorkflows
+	p.Crumbs = view.Crumbs("Workflows", "/workflows", "Add workflow")
 	p.StepWorkflows = p.SideWorkflows
 	p.StepFolders = h.stepFolders(r)
 	p.WorkspaceList = h.workspaceList(r.Context())
@@ -405,7 +403,6 @@ func (h *Handlers) workflowEdit(w http.ResponseWriter, r *http.Request) {
 	}
 	p.Title = "Edit " + p.Workflow.Name
 	p.Crumbs = view.Crumbs("Workflows", "/workflows", p.Workflow.Name, "/workflows/"+p.Workflow.ID, "Edit")
-	p.Step = view.StepWorkflows
 	p.StepWorkflows = h.stepWorkflows(r.Context(), p, p.Workflow.ID)
 	p.StepFolders = h.stepFolders(r)
 	p.WorkspaceList = h.workspaceList(r.Context())

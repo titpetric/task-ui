@@ -217,7 +217,7 @@ func TestFolder_SettingsLinks(t *testing.T) {
 	assert.NoError(t, f.opts.Workspaces.EnsureDefault(ctx))
 	assert.NoError(t, f.opts.Workspaces.Create(ctx, &model.Workspace{Folder: "infra", Title: "Infra"}))
 	assert.NoError(t, f.opts.Projects.Create(ctx, &model.Project{Folder: "private", Title: "Private"}))
-	const workspace, project = `<span>Workspace settings</span>`, `<span>Project settings</span>`
+	const workspace, project = `<span>Edit workspace</span>`, `<span>Edit project</span>`
 
 	ws := f.page(t, asAdmin, "/f/infra")
 	assert.Contains(t, ws, `href="/settings/workspaces/infra"`)

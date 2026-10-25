@@ -60,7 +60,7 @@ func (h *Handlers) workspaceSecrets(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	p := h.page(r, "Secrets of "+workspace.Folder)
-	p.Crumbs = view.Crumbs("Settings", "/settings", "Workspaces", "/settings/workspaces", workspace.Folder, "/settings/workspaces/"+workspace.Folder, "Secrets")
+	p.Crumbs = view.Crumbs("Settings", "/settings", "Workspaces", "/settings/workspaces", crumbName(workspace.Folder), "/settings/workspaces/"+workspace.Folder, "Secrets")
 	p.Step = view.StepSecrets
 	p.Workspace = workspace
 	secrets, err := h.opts.Secrets.List(ctx)
@@ -149,7 +149,7 @@ func (h *Handlers) secretNew(w http.ResponseWriter, r *http.Request) {
 		scope = storage.SharedScope(model.Default)
 	}
 	p := h.page(r, "Add secret")
-	p.Crumbs = view.Crumbs("Settings", "/settings", "Secrets", "/settings/secrets", "Add")
+	p.Crumbs = view.Crumbs("Settings", "/settings", "Secrets", "/settings/secrets", "Add secret")
 	p.Step = view.StepSecrets
 	p.SecretGroups = h.secretGroups(r.Context(), nil, p.Folders)
 	p.Secret = &model.Secret{Scope: keyedScope(p.SecretGroups, scope, h.workspaceOf(r.Context(), scope))}

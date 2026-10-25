@@ -79,10 +79,7 @@ func TestSettings_Footer(t *testing.T) {
 		"/settings/secrets":         {"Keys", "Integrations"},
 		"/settings/integrations":    {"Secrets", "Users"},
 		"/settings/users":           {"Integrations", "Permissions"},
-		"/users/" + asOps:           {"Integrations", "Permissions"},
-		"/users/" + asOps + "/edit": {"Integrations", "Permissions"},
 		"/settings/permissions":     {"Users", "Workflows"},
-		"/workflows":                {"Permissions", "Workspaces"},
 		"/settings/workspaces":      {"Workflows", "Projects"},
 		"/settings/workspaces/acme": {"Workflows", "Projects"},
 		"/settings/projects/infra":  {"Workspaces", ""},
@@ -96,6 +93,9 @@ func TestSettings_Footer(t *testing.T) {
 		assert.Contains(t, body, `rel="next">Next: `+want[1]+`<svg`, path)
 	}
 
-	// A page outside the steps has no footer.
-	assert.NotContains(t, f.page(t, asAdmin, "/runs"), `class="setup-trail"`)
+	// A page outside the settings has no footer, the Workflows page, a
+	// profile and a user's edit page among them.
+	for _, path := range []string{"/runs", "/workflows", "/workflows/new", "/users/" + asOps, "/users/" + asOps + "/edit"} {
+		assert.NotContains(t, f.page(t, asAdmin, path), `class="setup-trail"`, path)
+	}
 }

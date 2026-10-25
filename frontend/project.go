@@ -69,7 +69,7 @@ func (h *Handlers) projectNew(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	p := h.page(r, "Add project")
-	p.Crumbs = view.Crumbs("Settings", "/settings", "Projects", "/settings/projects", "Add")
+	p.Crumbs = view.Crumbs("Settings", "/settings", "Projects", "/settings/projects", "Add project")
 	p.Step = view.StepProjects
 	p.WorkspaceList = h.workspaceList(r.Context())
 	p.Form = map[string]string{"workspace": r.URL.Query().Get("workspace")}
@@ -90,9 +90,9 @@ func (h *Handlers) projectEdit(w http.ResponseWriter, r *http.Request) {
 		}
 		f = &folder.Folder{ID: id, Title: id}
 	}
-	p := h.page(r, "Project settings: "+id)
+	p := h.page(r, "Edit "+id)
 	p.Folder = f
-	p.Crumbs = view.Crumbs("Settings", "/settings", "Projects", "/settings/projects", id)
+	p.Crumbs = view.Crumbs("Settings", "/settings", "Projects", "/settings/projects", id, view.FolderHref(id, p.Workspaces), "Edit")
 	p.Step = view.StepProjects
 	if h.opts.Git != nil {
 		p.Checkout = h.opts.Git.Info(layout.Dir(h.opts.Root, h.workspaceFolders(r.Context()), id))

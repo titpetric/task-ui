@@ -30,7 +30,7 @@
 				<td class="hide-sm num">{{ if $secrets }}<a href="/settings/workspaces/{{ $ws.Folder }}/secrets" title="delete them before deleting the workspace">{{ $secrets }}</a>{{ else }}<span class="faint">none</span>{{ end }}</td>
 				<td class="actions">{{ template "menu" (menu (print "Actions on " .Folder)
 					(item "folder-open" "Open" "href" ($.Href .Folder))
-					(item "settings" "Workspace settings" "href" (print "/settings/workspaces/" .Folder))
+					(item "settings" "Edit workspace" "href" (print "/settings/workspaces/" .Folder))
 					sep
 					(and (not $default) (ne $i $first) (item "up" "Move up" "data-workspace-move" "up" "data-folder" .Folder))
 					(and (not $default) (ne (add $i 1) $last) (item "down" "Move down" "data-workspace-move" "down" "data-folder" .Folder))
