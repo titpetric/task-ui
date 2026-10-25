@@ -51,7 +51,8 @@ type Options struct {
 	Catalogue folder.Catalogue
 	// Steps is the catalogue a workflow step picks its folder from: every
 	// folder with a job, the ones the workspace and project settings hide
-	// too, as the workflow editor lists them. Nil picks from Catalogue.
+	// too, as the workflow editor lists them. A run start and a pin
+	// resolve their folder through it as well. Nil picks from Catalogue.
 	Steps folder.Catalogue
 	Git   *git.Git
 	// Keys are the key folder: every key of the instance and its

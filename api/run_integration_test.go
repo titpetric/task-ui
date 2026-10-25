@@ -467,3 +467,14 @@ func TestRuns_Summarize(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, claude.RunSummary, string(instructions))
 }
+
+// A run starts in a folder the settings hide from the listings: the
+// start resolves through the steps' catalogue, as a workflow step does.
+func TestRun_StartHidden(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	id := f.start(t, asOps, "infra/hidden", "deploy")
+	run := f.finished(t, id)
+	assert.Equal(t, model.StateOK, run.State)
+	assert.Equal(t, "infra/hidden", run.Folder)
+}

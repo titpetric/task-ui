@@ -19,7 +19,7 @@
 		{{- range .SecretReads }}
 			<tr>
 				<td class="nowrap" title="{{ stamp .CreatedAt }}">{{ ago .CreatedAt }}</td>
-				<td class="faint"><a href="/runs/{{ .RunID }}">{{ .RunID }}</a></td>
+				<td><a class="faint mono" href="/runs/{{ .RunID }}" title="{{ .RunID }}">{{ slice .RunID 0 8 }}</a></td>
 				<td class="key">{{ .Folder }}/{{ with .Dir }}{{ . }}/{{ end }}{{ .Job }}</td>
 				<td>{{ template "user" (list $ .UserName) }}</td>
 			</tr>

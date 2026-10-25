@@ -27,7 +27,8 @@ func TestSettings(t *testing.T) {
 	assert.Contains(t, body, "2 keys<", "the SSH key and the encryption key")
 	assert.Contains(t, body, "1 secret<")
 	assert.Contains(t, body, "4 users")
-	assert.Contains(t, body, f.opts.Keys.Dir)
+	// The key folder's path is the Keys page's to show.
+	assert.NotContains(t, body, f.opts.Keys.Dir)
 	assert.Contains(t, body, `<td class="num dim">1</td>`)
 	order := []string{"/settings/instance", "/settings/retention", "/settings/keys", "/settings/secrets", "/settings/integrations", "/settings/users", "/settings/permissions", "/workflows", "/settings/workspaces", "/settings/projects"}
 	at := -1

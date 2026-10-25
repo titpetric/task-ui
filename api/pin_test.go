@@ -189,3 +189,26 @@ func TestPinStore(t *testing.T) {
 	assert.Contains(t, string(data), `"pins":2`)
 	assert.Contains(t, string(data), `"left":[]`)
 }
+
+// A pin resolves its folder through the steps' catalogue: a folder the
+// project settings hide from the listings takes a pin, on its job or
+// on the folder itself.
+func TestPins_Hidden(t *testing.T) {
+	t.Parallel()
+	malta := &folder.Folder{ID: "malta", Dir: t.TempDir()}
+	deploy := &folder.Job{Folder: "malta/apps/blog", ID: "deploy"}
+	deploy.Name = "deploy"
+	blog := &folder.Folder{ID: "malta/apps/blog", Dir: t.TempDir(), Jobs: []*folder.Job{deploy}}
+	h := api.New(api.Options{Catalogue: catalogue{"malta": malta}, Steps: catalogue{"malta": malta, "malta/apps/blog": blog}, Pins: &memPins{}}).Routes()
+	claude := &model.User{Name: "claude", Role: model.RoleRunner}
+
+	code, out := pinCall(t, h, claude, http.MethodPost, "/pins", `{"folder":"malta/apps/blog","job":"deploy"}`)
+	assert.Equal(t, http.StatusCreated, code, out)
+	code, out = pinCall(t, h, claude, http.MethodPost, "/pins", `{"folder":"malta/apps/blog"}`)
+	assert.Equal(t, http.StatusCreated, code, out)
+	assert.Equal(t, "malta/apps/blog", out["folder"])
+
+	limited := &model.User{Name: "guest", Role: model.RoleRunner, Folders: model.EncodeList([]string{"gozo"})}
+	code, _ = pinCall(t, h, limited, http.MethodPost, "/pins", `{"folder":"malta/apps/blog","job":"deploy"}`)
+	assert.Equal(t, http.StatusNotFound, code, "the user's folders still bound it")
+}

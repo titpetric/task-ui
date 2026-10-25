@@ -241,3 +241,12 @@ table.table-kv th {
     max-width: none;
   }
 }
+
+/* In a box narrower than 44rem, the table leaves out Last commit and
+   Size rather than scroll sideways with Size cut off; a phone's card
+   shows them, labelled. */
+@container (max-width: 44rem) {
+  .table.projects .hide-narrow {
+    display: none;
+  }
+}

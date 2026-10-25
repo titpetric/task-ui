@@ -252,7 +252,7 @@ func (a *App) wire(version string) error {
 		APIURL:        func() string { return strings.TrimSuffix(MCPURL(a.Addr()), "/mcp") },
 	})
 	hostRuns := &hostrun.Starter{Catalogue: a.Catalogue, Hosts: hosts, SSH: prober, Runner: a.Runner}
-	a.Scheduler = scheduler.NewLoop(schedules, a.Users, a.Catalogue, a.Runner)
+	a.Scheduler = scheduler.NewLoop(schedules, a.Users, a.Catalogue.Steps(), a.Runner)
 	a.Scheduler.Hosts = hostRuns
 	a.Workflows = workflow.New(workflows, workflowRuns, a.Catalogue.Steps(), a.Runner)
 	a.Workflows.Hosts = hostRuns

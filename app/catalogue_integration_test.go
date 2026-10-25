@@ -13,6 +13,7 @@ import (
 	"github.com/titpetric/task-ui/app"
 	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/internal/assert"
+	"github.com/titpetric/task-ui/layout"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/storage"
 )
@@ -37,7 +38,7 @@ func TestCatalogue(t *testing.T) {
 	assert.Nil(t, c.Find("nowhere"))
 	// _ is the root, for its built-in jobs, and lists as no folder.
 	rootFolder := c.Find(model.Default)
-	assert.Equal(t, root, rootFolder.Dir)
+	assert.Equal(t, layout.SrcDir(root, model.Default), rootFolder.Dir)
 	assert.NotNil(t, rootFolder.Job("@host:dev1"))
 
 	// A project row changes what the folder says, on the next call.
@@ -76,6 +77,7 @@ func TestCatalogue_Shallow(t *testing.T) {
 	assert.NoError(t, projects.Create(ctx, &model.Project{Folder: "mono", Shallow: true}))
 	assert.NotNil(t, c.Find("mono/blog"))
 	assert.Nil(t, c.Find("mono/blog/admin"))
+	assert.NotNil(t, c.Steps().Find("mono/blog/admin"), "hidden, not gone")
 	f, rest := folder.Resolve(c, "mono/blog/admin")
 	assert.Equal(t, "mono/blog", f.ID)
 	assert.Equal(t, "admin", rest)
@@ -101,11 +103,12 @@ func TestCatalogue_internal(t *testing.T) {
 	assert.Len(t, c.List(), 0)
 }
 
-// makeFolder puts a Makefile with one target under root.
+// makeFolder puts a Makefile with one target in a folder of the root's src.
 func makeFolder(t *testing.T, root, id string) {
 	t.Helper()
-	assert.NoError(t, os.MkdirAll(filepath.Join(root, id), 0o755))
-	assert.NoError(t, os.WriteFile(filepath.Join(root, id, "Makefile"), []byte("build:\n\techo built\n"), 0o644))
+	dir := filepath.Join(root, layout.Src, id)
+	assert.NoError(t, os.MkdirAll(dir, 0o755))
+	assert.NoError(t, os.WriteFile(filepath.Join(dir, "Makefile"), []byte("build:\n\techo built\n"), 0o644))
 }
 
 // A directory under a workspace has the workspace's home as the HOME of
