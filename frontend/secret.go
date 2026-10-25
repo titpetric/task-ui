@@ -233,8 +233,13 @@ func (h *Handlers) secretGroups(ctx context.Context, secrets []model.Secret, fol
 		i := add(name, "", key)
 		groups[i].Secrets = append(groups[i].Secrets, secret)
 	}
+	// A folder joins the group of its workspace; one whose workspace has
+	// no row, the root's folders once _ is deleted, has no group to join.
 	for _, f := range folders {
 		name, _ := h.opts.Secrets.Workspace(ctx, f.ID)
+		if _, ok := index[name]; !ok && h.opts.Workspaces != nil {
+			continue
+		}
 		i := add(name, "", key)
 		groups[i].Folders = append(groups[i].Folders, f.ID)
 	}
