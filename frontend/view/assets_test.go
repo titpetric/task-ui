@@ -26,6 +26,30 @@ func TestAssetsFS(t *testing.T) {
 	}
 }
 
+// The page reports through its toasts and its forms' errors, never a
+// browser alert; forms.css styles the error box once, beside the fields.
+func TestAssetsFS_Feedback(t *testing.T) {
+	t.Parallel()
+
+	js, err := fs.ReadFile(view.AssetsFS(), "task-ui.js")
+	assert.NoError(t, err)
+	assert.NotContains(t, string(js), "window.alert")
+	assert.Contains(t, string(js), "function fail(el, res)")
+
+	for _, name := range []string{"css/filters.css", "css/login.css", "css/setup.css"} {
+		data, err := fs.ReadFile(view.AssetsFS(), name)
+		assert.NoError(t, err, name)
+		assert.NotContains(t, string(data), "-error", name)
+	}
+	forms, err := fs.ReadFile(view.AssetsFS(), "css/forms.css")
+	assert.NoError(t, err)
+	assert.Contains(t, string(forms), ".form-error,\n.login-error {\n  grid-column: 1 / -1;")
+	assert.Contains(t, string(forms), ":user-invalid")
+	dialogs, err := fs.ReadFile(view.AssetsFS(), "css/dialogs.css")
+	assert.NoError(t, err)
+	assert.Contains(t, string(dialogs), ".toasts {")
+}
+
 // The version of the assets is a short hash of them, the same every call.
 func TestAssetVersion(t *testing.T) {
 	t.Parallel()

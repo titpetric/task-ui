@@ -32,6 +32,36 @@
   text-transform: none;
 }
 
+/* What the API answered to a form that failed: a box over the fields,
+   as wide as the form whatever its shape, a grid's every column or a
+   wrapped flex row of its own; the sign-in page's error looks the same.
+   The field the error names takes the bad colour, at the end of this
+   file, which loads after the borders of controls.css. */
+.form-error,
+.login-error {
+  grid-column: 1 / -1;
+  flex: 1 1 100%;
+  margin: 0 0 0.8rem;
+  padding: 0.5rem 0.7rem;
+  background: var(--bad-wash);
+  border: 1px solid var(--bad);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-size: var(--fs-sm);
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+  white-space: pre-wrap;
+
+  &:empty {
+    display: none;
+  }
+}
+
+:is(.run-as, .inline-setting):has(> .form-error:not(:empty)) {
+  flex-wrap: wrap;
+}
+
 /* The help under a control is a sentence of its own, on its own line. */
 .field > small {
   display: block;
@@ -271,4 +301,12 @@
     color: var(--text-dim);
     font-size: var(--fs-sm);
   }
+}
+
+/* The field an error names, and a field the browser finds wanting once
+   the user has been at it, take the bad colour alike. */
+.field.invalid :is(input, textarea, select, .dd-button),
+:is(input, textarea, select)[aria-invalid="true"],
+:is(input, textarea, select):user-invalid {
+  border-color: var(--bad);
 }

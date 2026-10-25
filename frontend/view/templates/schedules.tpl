@@ -10,7 +10,7 @@
 {{- if $any }}
 <section class="block" id="add-schedule">
 <h3>Add schedule</h3>
-<form class="form inline" data-api="/api/schedules" data-method="POST" data-next="reload">
+<form class="form inline" data-api="/api/schedules" data-method="POST" data-next="reload" data-notice="Schedule added">
 	<div class="field">
 		<label for="sch-folder">Folder</label>
 		<select id="sch-folder" name="folder" data-narrows="sch-job" required>

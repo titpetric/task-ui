@@ -821,7 +821,7 @@
 
   function endRun(id, how) {
     return api("POST", "/api/runs/" + encodeURIComponent(id) + "/" + how).then(function (res) {
-      if (res.status >= 300) window.alert(res.data.error || ("HTTP " + res.status));
+      if (res.status >= 300) fail(null, res);
       else if (!session && !follows) window.location.reload();
     });
   }
@@ -1104,6 +1104,74 @@
     });
   });
 
+  // ---------------------------------------------------------------- feedback
+
+  // toast shows a line of feedback at the foot of the page, in the ok
+  // colour or, with tone bad, the bad one; it hides by itself, a bad one
+  // later, and a click hides it sooner. Several stack.
+  var toasts = document.getElementById("toasts");
+  var toastKey = "task-ui.toast";
+  function toast(text, tone) {
+    if (!toasts || !text) return;
+    var item = document.createElement("div");
+    item.className = "toast " + (tone || "ok");
+    item.textContent = text;
+    var hide = function () { if (item.parentNode) item.parentNode.removeChild(item); };
+    item.addEventListener("click", hide);
+    toasts.appendChild(item);
+    setTimeout(hide, tone === "bad" ? 8000 : 4000);
+  }
+
+  // A toast kept for the page a reload brings shows once it loads.
+  try {
+    var kept = sessionStorage.getItem(toastKey);
+    if (kept) {
+      sessionStorage.removeItem(toastKey);
+      toast(kept);
+    }
+  } catch (e) { /* no storage: no toast across the reload */ }
+
+  // errorText is what a failed answer says, the output of a job after it.
+  function errorText(res) {
+    return (res.data.error || ("HTTP " + res.status)) + (res.data.output ? "\n\n" + res.data.output : "");
+  }
+
+  // fail reports a failed answer, or a message: in the form the element
+  // sits in, over its fields, or else as a bad toast.
+  function fail(el, res) {
+    var text = typeof res === "string" ? res : errorText(res);
+    var form = el && el.closest ? el.closest("form:not([method=dialog])") : null;
+    if (form) formError(form, text);
+    else toast(text.charAt(0).toUpperCase() + text.slice(1), "bad");
+  }
+
+  // fieldOf names the field an error is about, by the words it starts
+  // with: the first pair whose words the error holds and whose field
+  // the form has. Nothing when no pair fits.
+  var fieldWords = [
+    [/cron expression|\bexpression\b/, "expression"],
+    [/folder name/, "id"],
+    [/variable name|secret name|\bname\b/, "name"],
+    [/\burl\b/, "url"],
+    [/\bfolder\b/, "folder"],
+    [/\bjob\b/, "job"],
+    [/\bargs\b|\barguments\b/, "args"],
+    [/passphrase/, "passphrase"],
+    [/password/, "password"],
+    [/backlog/, "backlog_length"],
+  ];
+  function fieldOf(form, text) {
+    var head = text.toLowerCase().split("\n")[0];
+    for (var i = 0; i < fieldWords.length; i++) {
+      if (!fieldWords[i][0].test(head)) continue;
+      var el = form.elements[fieldWords[i][1]];
+      if (el && el.nodeType === 1) return el;
+    }
+    return null;
+  }
+
+  // formError writes an error over a form's fields, its first letter a
+  // capital, and marks the field it names; empty text clears both.
   function formError(form, text) {
     var box = form.querySelector(".form-error");
     if (!box) {
@@ -1112,12 +1180,46 @@
       box.setAttribute("role", "alert");
       form.insertBefore(box, form.firstChild);
     }
-    box.textContent = text || "";
+    text = text || "";
+    box.textContent = text.charAt(0).toUpperCase() + text.slice(1);
+    form.querySelectorAll("[aria-invalid]").forEach(unmark);
+    var field = text && fieldOf(form, text);
+    if (field) {
+      field.setAttribute("aria-invalid", "true");
+      var wrap = field.closest(".field");
+      if (wrap) wrap.classList.add("invalid");
+      field.addEventListener("input", function () { unmark(field); }, { once: true });
+      field.addEventListener("change", function () { unmark(field); }, { once: true });
+    }
   }
 
-  function next(target) {
-    if (!target || target === "reload") window.location.reload();
-    else window.location.href = target;
+  function unmark(field) {
+    field.removeAttribute("aria-invalid");
+    var wrap = field.closest(".field");
+    if (wrap) wrap.classList.remove("invalid");
+  }
+
+  // pastTense is the toast of a change that reloads the page, from what
+  // the element that made it says: its data-notice, or by its method
+  // and its confirm button, Deleted, Removed, Cleared, Disabled, Added
+  // or Saved.
+  function pastTense(el, method) {
+    if (!el) return "Saved";
+    if (el.dataset.notice) return el.dataset.notice;
+    var ok = (el.dataset.confirmOk || "").split(" ")[0];
+    var done = { Delete: "Deleted", Remove: "Removed", Clear: "Cleared", Disable: "Disabled" }[ok];
+    if (done) return done;
+    method = (method || el.dataset.method || "POST").toUpperCase();
+    return { DELETE: "Deleted", POST: "Added" }[method] || "Saved";
+  }
+
+  // next goes where a change leads; a reload keeps the notice, from the
+  // element that made the change, for a toast on the page it brings.
+  function next(target, el, method) {
+    if (!target || target === "reload") {
+      try { sessionStorage.setItem(toastKey, pastTense(el, method)); } catch (e) { /* no toast */ }
+      window.location.reload();
+    } else window.location.href = target;
   }
 
   // filled puts the answer's fields into a data-next: {rekeyed} becomes
@@ -1177,7 +1279,7 @@
     api(method, filledPath(form.dataset.api, body), body).then(function (res) {
       if (res.status >= 300) {
         if (button) button.disabled = false;
-        formError(form, (res.data.error || ("HTTP " + res.status)) + (res.data.output ? "\n\n" + res.data.output : ""));
+        fail(form, res);
         if (form.hasAttribute("data-workflow")) stepError(form, res.data.error || "");
         return;
       }
@@ -1193,7 +1295,7 @@
         reveal(form.dataset.reveal, res.data);
         return;
       }
-      next(filled(form.dataset.next, res.data));
+      next(filled(form.dataset.next, res.data), form, method);
     }).catch(function (err) {
       if (button) button.disabled = false;
       formError(form, err.message);
@@ -1545,8 +1647,8 @@
       btn.disabled = true;
       api((btn.dataset.method || "POST").toUpperCase(), btn.dataset.api, body).then(function (res) {
         btn.disabled = false;
-        if (res.status >= 300) window.alert((res.data.error || ("HTTP " + res.status)) + (res.data.output ? "\n\n" + res.data.output : ""));
-        else next(filled(btn.dataset.next, res.data));
+        if (res.status >= 300) fail(btn, res);
+        else next(filled(btn.dataset.next, res.data), btn);
       });
     };
     if (btn.dataset.confirm) confirm(btn.dataset.confirm, btn.dataset.confirmOk).then(function (ok) { if (ok) send(); });
@@ -2246,10 +2348,10 @@
     }).then(function (results) {
       var failed = (results || []).find(function (res) { return res && res.status >= 300; });
       if (failed) throw new Error(failed.data.error || ("HTTP " + failed.status));
-      next("reload");
+      next("reload", btn, "PUT");
     }).catch(function (err) {
       btn.disabled = false;
-      window.alert(err.message);
+      fail(btn, err.message);
     });
   });
 
@@ -2311,7 +2413,7 @@
       // A workflow already running answers 409; its page shows that run.
       if (res.status >= 300 && res.status !== 409) {
         btn.disabled = false;
-        window.alert(res.data.error || ("HTTP " + res.status));
+        fail(btn, res);
         return;
       }
       // The workflow's own page hears of the run from its events and
@@ -2972,11 +3074,12 @@
     if (!body) return;
     var button = form.querySelector("button[type=submit]");
     button.disabled = true;
+    formError(form, "");
     api("POST", "/api/notes", { parent_id: form.dataset.parent || "", body: body })
       .then(function (res) {
         button.disabled = false;
         if (res.status >= 300) {
-          window.alert(res.data.error || ("HTTP " + res.status));
+          fail(form, res);
           return;
         }
         form.elements.body.value = "";
@@ -3031,11 +3134,12 @@
     if (!value) return;
     var button = form.querySelector("button[type=submit]");
     button.disabled = true;
+    formError(form, "");
     api("PUT", "/api/notes/" + encodeURIComponent(form.dataset.noteEdit), { body: value })
       .then(function (res) {
         button.disabled = false;
         if (res.status >= 300) {
-          window.alert(res.data.error || ("HTTP " + res.status));
+          fail(form, res);
           return;
         }
         closeEdit(form);
@@ -4036,8 +4140,8 @@
       confirm(btn.dataset.confirm || "Delete?", btn.dataset.confirmOk).then(function (ok) {
         if (!ok) return;
         api("DELETE", btn.dataset.delete).then(function (res) {
-          if (res.status >= 300) window.alert(res.data.error || ("HTTP " + res.status));
-          else next(btn.dataset.next);
+          if (res.status >= 300) fail(btn, res);
+          else next(btn.dataset.next, btn, "DELETE");
         });
       });
       return;
@@ -4069,7 +4173,7 @@
       btn.disabled = true;
       api("POST", "/api/prompts", { run: about, prompt: btn.dataset.question }).then(function (res) {
         btn.disabled = false;
-        if (res.status >= 300) { window.alert(res.data.error || ("HTTP " + res.status)); return; }
+        if (res.status >= 300) { fail(btn, res); return; }
         btn.hidden = true;
         attach(about);
         if (session) session.changed = true;
@@ -4410,7 +4514,7 @@
     btn.disabled = true;
     call.then(function (res) {
       btn.disabled = false;
-      if (res.status >= 300) { window.alert(res.data.error || ("HTTP " + res.status)); return; }
+      if (res.status >= 300) { fail(btn, res); return; }
       return fetch(location.pathname + location.search, { credentials: "same-origin" })
         .then(function (r) { return r.text(); })
         .then(function (text) {
