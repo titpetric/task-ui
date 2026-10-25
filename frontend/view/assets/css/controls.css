@@ -1,0 +1,361 @@
+/* ---------------------------------------------------------------- controls */
+
+/* The controls: text fields, textareas and selects, the dropdown that
+   stands in for a select, and the buttons, each in one place. The data
+   wears the mono face in them as it does on the page. */
+.filters input,
+input[type="text"],
+input[type="password"],
+textarea,
+select {
+  font-family: var(--font);
+}
+
+.btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.7rem;
+  height: 1.7rem;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+
+  & .ic {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  &:hover {
+    color: var(--text);
+    border-color: var(--line-2);
+    background: var(--ink-3);
+    text-decoration: none;
+  }
+
+  /* As .btn: a move with nowhere to go, the first row's Move up. */
+  &:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+
+    &:hover {
+      color: var(--text-dim);
+      border-color: transparent;
+      background: transparent;
+    }
+  }
+
+  /* Destructive actions wear the one red on the page. */
+  &.danger {
+    color: var(--bad);
+
+    &:hover {
+      border-color: var(--bad);
+      background: var(--bad-wash);
+    }
+  }
+}
+
+/* Every control in a row is --control high. The caption is uppercase,
+   which has no descenders, so it sits a hair lower than the line box's
+   middle to look centred. */
+input:is([type="text"], [type="password"], [type="email"], [type="number"], [type="search"], [type="url"]),
+select {
+  height: var(--control);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  height: var(--control);
+  padding: 0.12em 0.9rem 0;
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius);
+  background: var(--ink-2);
+  color: var(--text);
+  font: 500 var(--fs-button)/1 var(--font);
+  letter-spacing: var(--ls-button);
+  text-transform: uppercase;
+  white-space: nowrap;
+  cursor: pointer;
+
+  &:hover {
+    text-decoration: none;
+    border-color: var(--text-faint);
+    background: var(--ink-3);
+  }
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+}
+
+.btn-primary {
+  background: var(--signal);
+  border-color: var(--signal);
+  color: var(--signal-ink);
+  font-weight: 600;
+
+  &:hover {
+    background: var(--signal);
+    border-color: var(--text);
+    filter: brightness(1.08);
+  }
+}
+
+.btn-danger {
+  color: var(--bad);
+  border-color: color-mix(in srgb, var(--bad) 55%, var(--line-2));
+  background: transparent;
+
+  &:hover {
+    background: var(--bad-wash);
+    border-color: var(--bad);
+  }
+}
+
+.btn-ghost {
+  background: transparent;
+  border-color: transparent;
+  color: var(--text-dim);
+
+  &:hover {
+    background: var(--ink-2);
+    border-color: var(--line);
+    color: var(--text);
+  }
+}
+
+.btn-sm {
+  height: var(--control-sm);
+  padding: 0.12em 0.55rem 0;
+  font-size: var(--fs-label);
+}
+
+.btn-group {
+  display: inline-flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+input:is([type="text"], [type="password"]),
+textarea {
+  width: 100%;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius);
+  background: var(--ink-2);
+  color: var(--text);
+  font: inherit;
+}
+
+textarea {
+  min-height: 9rem;
+  resize: vertical;
+  font-size: var(--fs-xs);
+}
+
+/* A one-line field takes its height from --control: no padding above or
+   below, the text centred in it. A field and a select set their text
+   alike, whatever the label around them sets. */
+input:is([type="text"], [type="password"]) {
+  padding-block: 0;
+  line-height: normal;
+}
+
+input:is([type="text"], [type="password"]),
+select {
+  font-size: var(--fs-field);
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+select {
+  width: 100%;
+  padding: 0 0.65rem;
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius);
+  background: var(--ink-2);
+  color: var(--text);
+  font: inherit;
+}
+
+/* A dropdown: the select stays in the form under it, out of sight, and
+   a button shows the choice, drawn like a text field; its list opens
+   under it, or over it when the screen ends first. */
+.dd {
+  position: relative;
+  width: 100%;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+
+  & > select {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    pointer-events: none;
+  }
+}
+
+.dd-button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  width: 100%;
+  height: var(--control);
+  padding: 0 0.6rem 0 0.65rem;
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius);
+  background: var(--ink-2);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: var(--fs-field);
+  text-align: start;
+  cursor: pointer;
+
+  &:hover {
+    border-color: var(--text-faint);
+  }
+}
+
+.dd-button:focus-visible,
+.dd.open .dd-button {
+  outline: none;
+  border-color: var(--signal);
+}
+
+.dd-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.dd-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dd-chev {
+  flex: none;
+  color: var(--text-faint);
+  transform: rotate(90deg);
+}
+
+.dd.open .dd-chev {
+  transform: rotate(-90deg);
+}
+
+.dd-list {
+  position: absolute;
+  top: calc(100% + 4px);
+  inset-inline-start: 0;
+  z-index: 60;
+  min-width: 100%;
+  max-height: 18rem;
+  overflow-y: auto;
+  padding: 0.25rem;
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius);
+  background: var(--ink-1);
+  box-shadow: var(--shadow-pop);
+}
+
+.dd.up .dd-list {
+  top: auto;
+  bottom: calc(100% + 4px);
+}
+
+.dd-option {
+  padding: 0.4rem 0.6rem;
+  border-radius: var(--radius);
+  color: var(--text-dim);
+  font-family: var(--font);
+  font-size: var(--fs-field);
+  white-space: nowrap;
+  cursor: pointer;
+
+  &.active {
+    background: var(--ink-3);
+    color: var(--text);
+  }
+
+  &[aria-selected="true"] {
+    color: var(--signal);
+  }
+
+  &[aria-disabled] {
+    opacity: 0.45;
+    cursor: default;
+  }
+}
+
+.dd-group {
+  padding: 0.45rem 0.6rem 0.2rem;
+  color: var(--text-faint);
+  font-size: var(--fs-label);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+input[type="file"] {
+  color: var(--text-dim);
+  font: inherit;
+  font-size: var(--fs-sm);
+
+  &::file-selector-button {
+    margin-inline-end: 0.7rem;
+    padding: 0.3rem 0.7rem;
+    border: 1px solid var(--line-2);
+    border-radius: var(--radius);
+    background: var(--ink-2);
+    color: var(--text);
+    font: 500 var(--fs-caption) var(--font);
+    letter-spacing: var(--ls-button);
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+}
+
+/* A value to copy, from the copyable template: the value in code and
+   its copy button right after it, on every page the same: a public key,
+   a link, a command, a token that shows once. */
+.copyable {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  max-width: 100%;
+  min-width: 0;
+  vertical-align: middle;
+
+  & code {
+    min-width: 0;
+    padding: 0.15rem 0.45rem;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  /* fill takes the width it has, the value cut with an ellipsis and
+     whole in its tooltip, the button beside it staying in view. */
+  &.fill {
+    display: flex;
+    width: 100%;
+
+    & code {
+      flex: 1 1 auto;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
+}
