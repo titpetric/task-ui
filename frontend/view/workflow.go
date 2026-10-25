@@ -18,6 +18,9 @@ type Workflow struct {
 	CanRun bool
 	// CanChange says whether the user may change or delete it.
 	CanChange bool
+	// Schedules are the schedules that start it, for the list's hint
+	// under its name.
+	Schedules []model.Schedule
 }
 
 // Prompted reports whether a step of the workflow asks Claude, a prompt or a summary, so its Run takes input.

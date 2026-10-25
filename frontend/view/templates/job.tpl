@@ -96,28 +96,7 @@
 <section class="block">
 	{{- $none := "Not scheduled." }}{{ if $can }}{{ $none = "Not scheduled. Add a cron expression below to run it on a schedule." }}{{ end }}
 	{{- template "blockhead" (head "Schedules" "cron expressions, in the server's time zone" (and (not .Schedules) $none)) }}
-	{{- with .Schedules }}
-	<div class="table-wrap fit">
-	<table class="table fit-cards">
-		<thead><tr><th>Expression</th><th>Next run</th><th class="hide-narrow">Last run</th><th>Runs as</th><th>State</th><th></th></tr></thead>
-		<tbody>
-		{{- range . }}
-			<tr>
-				<td class="key" data-label="Expression"><code>{{ .Expression }}</code></td>
-				<td data-label="Next run">{{ template "nextrun" . }}</td>
-				<td class="nowrap hide-narrow" data-label="Last run">{{ if .LastRunAt }}{{ ago .LastRunAt }}{{ else }}<span class="faint">never</span>{{ end }}</td>
-				<td data-label="Runs as">{{ template "runas-row" (list $ .) }}</td>
-				<td data-label="State">{{ if .IsEnabled }}<span class="badge ok">enabled</span>{{ else }}<span class="badge">disabled</span>{{ end }}{{ if .Triages }} <span class="badge signal" title="Claude triages a failed run">triage</span>{{ end }}</td>
-				<td class="actions">{{ if $can }}{{ template "menu" (menu (print "Actions on the schedule " .Expression)
-					(item (or (and .IsEnabled "stop") "play") (or (and .IsEnabled "Disable") "Enable") "data-api" (print "/api/schedules/" .ID) "data-method" "PUT" "data-body" (or (and .IsEnabled `{"enabled":false}`) `{"enabled":true}`) "data-next" "reload")
-					(danger "trash" "Delete" "data-delete" (print "/api/schedules/" .ID) "data-confirm" (print "Delete the schedule " .Expression " for " $r.Name "?") "data-confirm-ok" "Delete" "data-next" "reload")
-				) }}{{ end }}</td>
-			</tr>
-		{{- end }}
-		</tbody>
-	</table>
-	</div>
-	{{- end }}
+	{{- template "schedtable" (list $ .Schedules $can $r.Name) }}
 	{{- if $can }}
 	<form class="form inline" data-api="/api/schedules" data-method="POST" data-next="reload">
 		<input type="hidden" name="folder" value="{{ $p.ID }}">

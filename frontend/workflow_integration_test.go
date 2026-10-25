@@ -90,11 +90,15 @@ func TestWorkflows_List(t *testing.T) {
 	ops := f.page(t, asOps, "/workflows")
 	assert.Contains(t, ops, "<h2>Workflows</h2>")
 	assert.Contains(t, ops, ">release</a>")
-	assert.Contains(t, ops, "infra / plan")
-	assert.Contains(t, ops, "infra/edge / deploy")
+	// The row names the workflow, its last run and its maker; the steps
+	// are the workflow page's.
+	assert.Contains(t, ops, `<thead><tr><th>Workflow</th><th>Last run</th><th>By</th><th></th></tr></thead>`)
 	// ops may run release, not private, which needs the admin's folder.
-	// The sidebar lists them too: count the page's own buttons.
+	// The sidebar lists them too, each with its chain as the link's
+	// title: look at the page's own content.
 	content := ops[strings.Index(ops, "<main>"):]
+	assert.NotContains(t, content, "infra/edge / deploy")
+	assert.NotContains(t, content, `<span>Open</span>`)
 	assert.Contains(t, content, `data-workflow-run="`)
 	assert.Equal(t, 2, strings.Count(content, `data-workflow-run="`))
 	// The list links to the form for a new one, which lists every job
@@ -241,15 +245,28 @@ func TestWorkflow_EditPage(t *testing.T) {
 	assert.Contains(t, edit, "<h2>Edit release</h2>")
 	assert.Contains(t, edit, `data-api="/api/workflows/`+wf.ID+`" data-method="PUT"`)
 	assert.Contains(t, edit, `value="release"`)
-	assert.Contains(t, f.page(t, asAdmin, "/workflows/"+wf.ID+"/edit"), `data-method="PUT"`)
+	// The page ends with the workflow's schedules and the form for one.
+	assert.Contains(t, edit, `<input type="hidden" name="workflow" value="`+wf.ID+`">`)
+	assert.Contains(t, edit, `<p class="empty-line">Not scheduled.</p>`)
+	assert.NotContains(t, edit, `<label for="sch-user">Run as</label>`)
+	assert.NoError(t, f.opts.Schedules.Create(context.Background(), &model.Schedule{WorkflowID: wf.ID, UserID: f.users[asOps].ID, UserName: asOps, Expression: "0 7 * * 1-5", Enabled: 1}))
+	admin := f.page(t, asAdmin, "/workflows/"+wf.ID+"/edit")
+	assert.Contains(t, admin, `data-method="PUT"`)
+	assert.Contains(t, admin, `<label for="sch-user">Run as</label>`)
+	assert.Contains(t, admin, `<td class="key" data-label="Expression"><code>0 7 * * 1-5</code></td>`)
+	assert.Contains(t, admin, `data-confirm="Delete the schedule 0 7 * * 1-5 for release?"`)
+	assert.NotContains(t, admin, "Not scheduled.")
+	list := f.page(t, asOps, "/workflows")
+	assert.Contains(t, list, `<svg class="ic lead"><use href="#i-clock"/></svg><code>0 7 * * 1-5</code></small>`, "the list hints at the schedule")
 
 	assert.Equal(t, 403, f.get(t, asLimited, "/workflows/"+wf.ID+"/edit").Status)
 	assert.Equal(t, 404, f.get(t, asOps, "/workflows/nope/edit").Status)
 }
 
-// A chain names a folder once for the steps that follow in it; a step
-// that runs a workflow links to it. The step editor lists the
-// workflows, except the one edited and those that run it.
+// A workflow's pipeline names each step's folder and job, and a step
+// that runs a workflow links to it; the list keeps the chain off its
+// rows. The step editor lists the workflows, except the one edited and
+// those that run it.
 func TestWorkflows_ChainAndNested(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
@@ -258,11 +275,11 @@ func TestWorkflows_ChainAndNested(t *testing.T) {
 	outer := &model.Workflow{Name: "outer", UserID: user.ID, UserName: user.Name}
 	assert.NoError(t, f.opts.Workflows.Create(context.Background(), outer, []model.WorkflowStep{{Folder: "infra", Job: "plan"}, {WorkflowRef: same.ID}}))
 
+	page := f.page(t, asOps, "/workflows/"+outer.ID)
+	assert.Contains(t, page, "infra / plan</a>")
+	assert.Contains(t, page, `href="/workflows/`+same.ID+`"><svg class="ic lead"><use href="#i-flow"/></svg>same</a>`)
 	list := f.page(t, asOps, "/workflows")
-	assert.Contains(t, list, "infra / plan")
-	assert.Contains(t, list, `>deploy</a>`)
-	assert.NotContains(t, list, "infra / deploy")
-	assert.Contains(t, list, `href="/workflows/`+same.ID+`"><svg class="ic lead"><use href="#i-flow"/></svg>same</a>`)
+	assert.NotContains(t, list[strings.Index(list, "<main>"):], "infra / plan")
 	form := f.page(t, asOps, "/workflows/new")
 	assert.Contains(t, form, `<option value="workflow:`+same.ID+`" data-workspace="workflow:">same</option>`)
 	assert.Contains(t, form, `<option value="workflow:`+outer.ID+`" data-workspace="workflow:">outer</option>`)

@@ -16,12 +16,12 @@
 	{{- with .Workflows }}
 	<div class="table-wrap">
 	<table class="table cards">
-		<thead><tr><th>Workflow</th><th>Steps</th><th>Last run</th><th>By</th><th></th></tr></thead>
+		<thead><tr><th>Workflow</th><th>Last run</th><th>By</th><th></th></tr></thead>
 		<tbody>
 		{{- range . }}
 			<tr>
-				<td class="key"><a href="/workflows/{{ .ID }}">{{ .Name }}</a>{{ with .Description }}<small class="faint wf-desc">{{ . }}</small>{{ end }}</td>
-				<td data-label="Steps"><span class="chain">{{ template "chain" (list $ .Steps) }}</span></td>
+				<td class="key"><a href="/workflows/{{ .ID }}">{{ .Name }}</a>{{ with .Description }}<small class="faint wf-desc">{{ . }}</small>{{ end }}
+					{{- range .Schedules }}<small class="faint wf-desc" title="{{ if .IsEnabled }}Scheduled{{ else }}A schedule, disabled{{ end }}, as {{ .UserName }}"><svg class="ic lead"><use href="#i-clock"/></svg><code>{{ .Expression }}</code>{{ if not .IsEnabled }} disabled{{ end }}</small>{{ end }}</td>
 				<td class="nowrap" data-label="Last run">{{ if .Running }}<span class="state"><i class="dot running"></i>running</span>{{ else if .LastRun }}<span class="state"><i class="dot {{ .LastRun.State }}"></i>{{ .LastRun.State }}</span> <span class="faint" title="{{ stamp .LastRun.StartedAt }}">{{ ago .LastRun.StartedAt }}</span>{{ else }}<span class="faint">never run</span>{{ end }}</td>
 				<td data-label="By">{{ template "user" (list $ .UserName) }}</td>
 				<td class="actions">
@@ -31,7 +31,6 @@
 					<button type="button" class="btn btn-primary btn-sm" data-workflow-run="{{ .ID }}"{{ if .Prompted }} data-workflow-prompt="{{ .Name }}"{{ end }}><svg class="ic"><use href="#i-play"/></svg>Run</button>
 					{{- end }}{{ end }}
 					{{- template "menu" (menu (print "Actions on " .Name)
-						(item "flow" "Open" "href" (print "/workflows/" .ID))
 						(and .CanChange (item "edit" "Edit" "href" (print "/workflows/" .ID "/edit")))
 						(and .Running (item "eye" "The run going" "href" (print "/workflows/" .ID "/runs/" .Running)))
 					) }}
@@ -45,8 +44,8 @@
 </section>
 
 {{- /* The newest runs of the workflows the user sees, a line each: its
-     state on the dot by the workflow's name, linked to the run, and the
-     chevron that unfolds Claude's answer under the line. */}}
+     state on the dot by the workflow's name, linked to the run, and
+     Claude's answer open under the line, with the chevron that folds it. */}}
 <section class="block">
 	{{- template "blockhead" (head "Recent runs" "" (and (not .WorkflowRuns) "No workflow has run yet.")) }}
 	{{- with .WorkflowRuns }}
@@ -56,11 +55,11 @@
 		<tbody>
 		{{- range . }}
 			<tr data-run-id="{{ .ID }}">
-				<td class="key">{{ template "wffold" . }}<a href="/workflows/{{ .WorkflowID }}/runs/{{ .ID }}" title="{{ .State }}{{ with .Message }}, {{ . }}{{ end }}"><i class="dot {{ .State }}"></i>{{ .Name }}</a></td>
+				<td class="key">{{ template "wffold" (list . true) }}<a href="/workflows/{{ .WorkflowID }}/runs/{{ .ID }}" title="{{ .State }}{{ with .Message }}, {{ . }}{{ end }}"><i class="dot {{ .State }}"></i>{{ .Name }}</a></td>
 				<td data-label="By">{{ template "user" (list $ .UserName) }}</td>
 				<td class="nowrap" data-label="Started" title="{{ stamp .StartedAt }}">{{ ago .StartedAt }}</td>
 			</tr>
-			{{- template "wfanswer" (list $ . 3) }}
+			{{- template "wfanswer" (list $ . 3 true) }}
 		{{- end }}
 		</tbody>
 	</table>

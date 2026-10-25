@@ -234,14 +234,16 @@
 </div>
 {{- end }}{{ end }}
 
-{{/* wffold takes a workflow run: the chevron that shows its answer in
-     the row under it, for a run with an answer; a run without one keeps
-     the place empty, its state on the dot beside it saying how it ended. */}}
-{{- define "wffold" }}{{ if .Answer }}<button type="button" class="btn-icon wf-fold" data-answer-toggle aria-expanded="false" aria-controls="wf-answer-{{ .ID }}" title="Show the answer" aria-label="Show the answer"><svg class="ic chev"><use href="#i-chev"/></svg></button>{{ else }}<span class="wf-fold" aria-hidden="true"></span>{{ end }}{{ end }}
+{{/* wffold takes (list run open): the chevron that shows a run's answer
+     in the row under it, for a run with an answer, open from the start
+     with open, as the Workflows page has it, folded without, as the
+     workflow's page does; a run without an answer keeps the place empty,
+     its state on the dot beside it saying how it ended. */}}
+{{- define "wffold" }}{{ $open := false }}{{ if gt (len .) 1 }}{{ $open = index . 1 }}{{ end }}{{ with index . 0 }}{{ if .Answer }}<button type="button" class="btn-icon wf-fold" data-answer-toggle aria-expanded="{{ $open }}" aria-controls="wf-answer-{{ .ID }}" title="{{ if $open }}Hide{{ else }}Show{{ end }} the answer" aria-label="{{ if $open }}Hide{{ else }}Show{{ end }} the answer"><svg class="ic chev"><use href="#i-chev"/></svg></button>{{ else }}<span class="wf-fold" aria-hidden="true"></span>{{ end }}{{ end }}{{ end }}
 
-{{/* wfanswer takes (list $ run columns): the folded row under a run with
-     Claude's answer in full, in markdown, as wide as the table; none for
-     a run without an answer. */}}
-{{- define "wfanswer" }}{{ $p := index . 0 }}{{ $cols := index . 2 }}{{ with index . 1 }}{{ if .Answer }}
-<tr class="wf-answer-row" id="wf-answer-{{ .ID }}" data-answer-of="{{ .ID }}" hidden><td colspan="{{ $cols }}"><div class="note-body">{{ $p.Message .Answer }}</div></td></tr>
+{{/* wfanswer takes (list $ run columns open): the row under a run with
+     Claude's answer in full, in markdown, as wide as the table, folded
+     unless open; none for a run without an answer. */}}
+{{- define "wfanswer" }}{{ $p := index . 0 }}{{ $cols := index . 2 }}{{ $open := false }}{{ if gt (len .) 3 }}{{ $open = index . 3 }}{{ end }}{{ with index . 1 }}{{ if .Answer }}
+<tr class="wf-answer-row" id="wf-answer-{{ .ID }}" data-answer-of="{{ .ID }}"{{ if not $open }} hidden{{ end }}><td colspan="{{ $cols }}"><div class="note-body">{{ $p.Message .Answer }}</div></td></tr>
 {{- end }}{{ end }}{{ end }}

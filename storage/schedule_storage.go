@@ -20,9 +20,13 @@ func NewScheduleStorage(db DB) *ScheduleStorage {
 
 // Create inserts a schedule, whose NextRunAt the caller sets: the scheduler knows the expression.
 // The row keeps NextRunAt and LastRunAt in UTC, which Due compares against.
+// A schedule names a folder and a job, or a workflow.
 func (s *ScheduleStorage) Create(ctx context.Context, schedule *model.Schedule) error {
-	if schedule.Folder == "" || schedule.Job == "" || schedule.Expression == "" {
-		return errors.New("a schedule needs a folder, a job and an expression")
+	if (schedule.Folder == "" || schedule.Job == "") && !schedule.IsWorkflow() {
+		return errors.New("a schedule needs a folder and a job, or a workflow")
+	}
+	if schedule.Expression == "" {
+		return errors.New("a schedule needs an expression")
 	}
 	if schedule.ID == "" {
 		schedule.ID = model.NewID()
@@ -50,6 +54,11 @@ func (s *ScheduleStorage) List(ctx context.Context) ([]model.Schedule, error) {
 // ListByFolder returns the schedules of a folder.
 func (s *ScheduleStorage) ListByFolder(ctx context.Context, folder string) ([]model.Schedule, error) {
 	return client(s.db).Select[model.Schedule](ctx, "SELECT * FROM schedule WHERE folder = ? ORDER BY job, id", folder)
+}
+
+// ListByWorkflow returns the schedules of a workflow.
+func (s *ScheduleStorage) ListByWorkflow(ctx context.Context, workflowID string) ([]model.Schedule, error) {
+	return client(s.db).Select[model.Schedule](ctx, "SELECT * FROM schedule WHERE workflow_id = ? ORDER BY id", workflowID)
 }
 
 // Due returns the enabled schedules due by now, comparing the UTC times as text.

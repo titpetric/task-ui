@@ -139,9 +139,12 @@ tools, run it and fix it. Page: `/workflows`; API:
 
 ## Schedules (`schedule`)
 
-A schedule runs a job on a cron expression, in the server's time zone,
-as its user. An admin picks who it runs as; anyone else schedules as
-themselves. `@cleanup` of the root, `_`, applies the Data retention
+A schedule runs a job, or a workflow, on a cron expression, in the
+server's time zone, as its user. An admin picks who it runs as; anyone
+else schedules as themselves. A workflow's schedule, `workflow` with
+its ID in place of `folder` and `job`, made on the workflow's edit
+page, starts a run of every step with no input, for a user who may run
+them all; it takes no args and no triage. `@cleanup` of the root, `_`, applies the Data retention
 settings, `/settings/retention`, a table with a row per area of data,
 each kept 31 days unless set otherwise, the tool history among them
 through `atkins --prune`, on a daily schedule task-ui adds once; admins

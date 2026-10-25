@@ -64,23 +64,12 @@ func (h *Handlers) expand(r *http.Request, steps []model.WorkflowStep) []model.W
 	return flat
 }
 
-// mayRun returns the first job the user may not run, or "" when the
-// user may run them all, the jobs of the workflows the steps run too; a
-// prompt step takes prompt/edit.
+// mayRun returns the first step the user of a request may not run, or
+// "" when the user may run them all, the steps of the workflows the
+// steps run too, as the runner's MayRun says, which the scheduler asks
+// as well.
 func (h *Handlers) mayRun(r *http.Request, steps []model.WorkflowStep) string {
-	for _, step := range h.expand(r, steps) {
-		if step.IsPrompt() {
-			if !h.can(r, "prompt/edit") {
-				return "the prompt in " + step.Place()
-			}
-			continue
-		}
-		f, job, _ := h.target(r, step.Folder, step.Job)
-		if !h.canRun(r, f, job) {
-			return step.Folder + " / " + step.Job
-		}
-	}
-	return ""
+	return h.opts.Flows.MayRun(r.Context(), h.permissions(r), steps)
 }
 
 // visibleSteps reports whether the user may see every step's folder,
@@ -189,7 +178,13 @@ func (h *Handlers) checkWorkflow(w http.ResponseWriter, r *http.Request, req Wor
 // workflowOf returns the workflow a route names and its steps, when the
 // user may see every step.
 func (h *Handlers) workflowOf(r *http.Request) (*model.Workflow, []model.WorkflowStep, error) {
-	wf, err := h.opts.Workflows.Get(r.Context(), param(r, "id"))
+	return h.workflowByID(r, param(r, "id"))
+}
+
+// workflowByID returns a workflow by ID and its steps, when the user may
+// see every step; storage.ErrNotFound otherwise.
+func (h *Handlers) workflowByID(r *http.Request, id string) (*model.Workflow, []model.WorkflowStep, error) {
+	wf, err := h.opts.Workflows.Get(r.Context(), id)
 	if err != nil {
 		return nil, nil, err
 	}

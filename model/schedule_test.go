@@ -40,3 +40,10 @@ func TestSchedule_Triages(t *testing.T) {
 	assert.False(t, (&model.Schedule{}).Triages())
 	assert.True(t, (&model.Schedule{Triage: 1}).Triages())
 }
+
+func TestSchedule_IsWorkflow(t *testing.T) {
+	t.Parallel()
+	assert.False(t, (*model.Schedule)(nil).IsWorkflow())
+	assert.False(t, (&model.Schedule{Folder: "infra", Job: "plan"}).IsWorkflow())
+	assert.True(t, (&model.Schedule{WorkflowID: "w1"}).IsWorkflow())
+}

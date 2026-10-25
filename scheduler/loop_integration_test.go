@@ -6,6 +6,8 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"strconv"
+	"sync"
 	"testing"
 	"time"
 
@@ -19,6 +21,7 @@ import (
 	"github.com/titpetric/task-ui/runner"
 	"github.com/titpetric/task-ui/scheduler"
 	"github.com/titpetric/task-ui/storage"
+	"github.com/titpetric/task-ui/workflow"
 )
 
 type fixture struct {
@@ -26,9 +29,37 @@ type fixture struct {
 	schedules *storage.ScheduleStorage
 	runs      *storage.RunStorage
 	users     *storage.UserStorage
-	now       time.Time
+	workflows *storage.WorkflowStorage
+	// flows records the workflow runs the loop starts.
+	flows *fakeStarter
+	now   time.Time
 	// ops is the runner every schedule of the fixture runs as.
 	ops *model.User
+}
+
+// fakeStarter records the workflow runs the loop starts, with the real
+// runner's MayRun; busy answers every start with ErrBusy.
+type fakeStarter struct {
+	*workflow.Runner
+	mu     sync.Mutex
+	starts []string
+	busy   bool
+}
+
+func (s *fakeStarter) Start(_ context.Context, wf *model.Workflow, user *model.User, input string) (*model.WorkflowRun, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.busy {
+		return nil, workflow.ErrBusy
+	}
+	s.starts = append(s.starts, wf.Name+" as "+user.Name+" with "+strconv.Quote(input))
+	return &model.WorkflowRun{ID: model.NewID(), WorkflowID: wf.ID}, nil
+}
+
+func (s *fakeStarter) started() []string {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return append([]string(nil), s.starts...)
 }
 
 func newFixture(t *testing.T) *fixture {
@@ -57,10 +88,14 @@ func newFixture(t *testing.T) *fixture {
 	t.Cleanup(func() { manager.Shutdown(context.Background()) })
 	schedules := storage.NewScheduleStorage(db)
 	users := storage.NewUserStorage(db)
-	loop := scheduler.NewLoop(schedules, users, catalogue{"infra": infra, model.Default: {ID: model.Default, Dir: dir}}, manager)
+	folders := catalogue{"infra": infra, model.Default: {ID: model.Default, Dir: dir}}
+	loop := scheduler.NewLoop(schedules, users, folders, manager)
+	workflows := storage.NewWorkflowStorage(db)
+	flows := &fakeStarter{Runner: workflow.New(workflows, storage.NewWorkflowRunStorage(db), folders, manager)}
+	loop.Workflows, loop.Flows = workflows, flows
 	ops := &model.User{Name: "ops", Role: model.RoleRunner}
 	assert.NoError(t, users.Create(context.Background(), ops))
-	f := &fixture{loop: loop, schedules: schedules, runs: runs, users: users, ops: ops, now: time.Date(2026, time.October, 17, 10, 0, 0, 0, time.UTC)}
+	f := &fixture{loop: loop, schedules: schedules, runs: runs, users: users, workflows: workflows, flows: flows, ops: ops, now: time.Date(2026, time.October, 17, 10, 0, 0, 0, time.UTC)}
 	loop.Now = func() time.Time { return f.now }
 	return f
 }
@@ -71,6 +106,87 @@ func (f *fixture) schedule(t *testing.T, job, expression string) *model.Schedule
 	schedule := &model.Schedule{Folder: "infra", Job: job, Expression: expression, Enabled: 1, NextRunAt: &due, UserID: f.ops.ID, UserName: "ops"}
 	assert.NoError(t, f.schedules.Create(context.Background(), schedule))
 	return schedule
+}
+
+// workflow makes a workflow of infra jobs and a due schedule of it as ops.
+func (f *fixture) workflow(t *testing.T, name string, jobs ...string) (*model.Workflow, *model.Schedule) {
+	t.Helper()
+	steps := make([]model.WorkflowStep, 0, len(jobs))
+	for _, job := range jobs {
+		steps = append(steps, model.WorkflowStep{Folder: "infra", Job: job})
+	}
+	wf := &model.Workflow{Name: name, UserID: f.ops.ID, UserName: "ops"}
+	assert.NoError(t, f.workflows.Create(context.Background(), wf, steps))
+	due := f.now.Add(-time.Minute)
+	schedule := &model.Schedule{WorkflowID: wf.ID, Expression: "0 * * * *", Enabled: 1, NextRunAt: &due, UserID: f.ops.ID, UserName: "ops"}
+	assert.NoError(t, f.schedules.Create(context.Background(), schedule))
+	return wf, schedule
+}
+
+// A due schedule of a workflow starts a run of it as the schedule's user
+// with no input, and moves to its next time.
+func TestLoop_TickWorkflow(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	ctx := context.Background()
+	_, schedule := f.workflow(t, "release", "plan")
+
+	started, err := f.loop.Tick(ctx)
+	assert.NoError(t, err)
+	assert.Equal(t, 1, started)
+	assert.Equal(t, []string{`release as ops with ""`}, f.flows.started())
+	got, err := f.schedules.Get(ctx, schedule.ID)
+	assert.NoError(t, err)
+	assert.Equal(t, f.now, got.LastRunAt.UTC())
+	assert.Equal(t, f.now.Add(time.Hour), got.NextRunAt.UTC())
+	assert.True(t, got.IsEnabled())
+
+	// Not due again until then.
+	started, err = f.loop.Tick(ctx)
+	assert.NoError(t, err)
+	assert.Equal(t, 0, started)
+	assert.Len(t, f.flows.started(), 1)
+}
+
+// The loop disables a schedule whose workflow nobody holds, skips one
+// whose workflow runs and one whose user may not run a step, and moves
+// each on all the same.
+func TestLoop_TickWorkflowSkipped(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	ctx := context.Background()
+	wf, gone := f.workflow(t, "gone", "plan")
+	assert.NoError(t, f.workflows.Delete(ctx, wf.ID))
+	f.loop.Catalogue.Find("infra").Job("slow").Allow = []string{"admin"}
+	_, forbidden := f.workflow(t, "slow one", "plan", "slow")
+	_, busy := f.workflow(t, "busy", "plan")
+	f.flows.busy = true
+
+	started, err := f.loop.Tick(ctx)
+	assert.NoError(t, err)
+	assert.Equal(t, 0, started)
+	assert.Len(t, f.flows.started(), 0)
+	got, err := f.schedules.Get(ctx, gone.ID)
+	assert.NoError(t, err)
+	assert.False(t, got.IsEnabled(), "the gone workflow's schedule is off")
+	assert.Nil(t, got.LastRunAt)
+	for _, schedule := range []*model.Schedule{forbidden, busy} {
+		got, err := f.schedules.Get(ctx, schedule.ID)
+		assert.NoError(t, err)
+		assert.True(t, got.IsEnabled())
+		assert.Equal(t, f.now.Add(time.Hour), got.NextRunAt.UTC(), "moved on")
+	}
+
+	// Without the runner to start it, a workflow schedule waits.
+	f.flows.busy = false
+	f.loop.Flows = nil
+	_, waits := f.workflow(t, "waits", "plan")
+	started, err = f.loop.Tick(ctx)
+	assert.NoError(t, err)
+	assert.Equal(t, 0, started)
+	got, err = f.schedules.Get(ctx, waits.ID)
+	assert.NoError(t, err)
+	assert.Nil(t, got.LastRunAt)
 }
 
 func TestLoop_Tick(t *testing.T) {

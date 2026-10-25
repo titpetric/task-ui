@@ -2,7 +2,7 @@
 <div class="page-head">
 	<div>
 		<h2>Scheduled</h2>
-		<p>Jobs that run in the background on a cron expression. Each schedule runs as its user: whoever created it, or the user an admin picks under Run as. The scheduler skips a job if it's still running when its time comes, or if its user can't run it at that time.</p>
+		<p>Jobs and workflows that run in the background on a cron expression. Each schedule runs as its user: whoever created it, or the user an admin picks under Run as. The scheduler skips a job if it's still running when its time comes, or if its user can't run it at that time. Schedule a workflow from its edit page.</p>
 	</div>
 </div>
 
@@ -59,17 +59,15 @@
 		<tbody>
 		{{- range . }}
 			<tr>
-				<td data-label="Folder"><a href="{{ $.Href .Folder }}">{{ .Folder }}</a></td>
-				<td class="key" data-label="Job">{{ if and (eq .Folder "_") (hasPrefix .Job "@") }}{{ .Job }}{{ else }}<a href="{{ $.Href .Folder }}/{{ .Job }}">{{ .Job }}</a>{{ end }}{{ with argLine .Job .Args }} <code>{{ . }}</code>{{ end }}</td>
+				{{- $what := print .Folder " / " .Job }}{{ if .IsWorkflow }}{{ $what = or (index $.WorkflowNames .WorkflowID) .WorkflowID }}{{ end }}
+				<td data-label="Folder">{{ if .IsWorkflow }}<svg class="ic lead"><use href="#i-flow"/></svg>workflow{{ else }}<a href="{{ $.Href .Folder }}">{{ .Folder }}</a>{{ end }}</td>
+				<td class="key" data-label="Job">{{ if .IsWorkflow }}<a href="/workflows/{{ .WorkflowID }}">{{ $what }}</a>{{ else if and (eq .Folder "_") (hasPrefix .Job "@") }}{{ .Job }}{{ else }}<a href="{{ $.Href .Folder }}/{{ .Job }}">{{ .Job }}</a>{{ end }}{{ with argLine .Job .Args }} <code>{{ . }}</code>{{ end }}</td>
 				<td data-label="Expression"><code class="nowrap">{{ .Expression }}</code></td>
 				<td data-label="Next run">{{ template "nextrun" . }}</td>
 				<td class="nowrap hide-narrow" data-label="Last run">{{ if .LastRunAt }}{{ ago .LastRunAt }}{{ else }}<span class="faint">never</span>{{ end }}</td>
 				<td data-label="Runs as">{{ template "runas-row" (list $ .) }}</td>
 				<td data-label="State">{{ if .IsEnabled }}<span class="badge ok">enabled</span>{{ else }}<span class="badge">disabled</span>{{ end }}{{ if .Triages }} <span class="badge signal" title="Claude triages a failed run">triage</span>{{ end }}</td>
-				<td class="actions">{{ template "menu" (menu (print "Actions on the schedule " .Expression)
-					(item (or (and .IsEnabled "stop") "play") (or (and .IsEnabled "Disable") "Enable") "data-api" (print "/api/schedules/" .ID) "data-method" "PUT" "data-body" (or (and .IsEnabled `{"enabled":false}`) `{"enabled":true}`) "data-next" "reload")
-					(danger "trash" "Delete" "data-delete" (print "/api/schedules/" .ID) "data-confirm" (print "Delete the schedule " .Expression " for " .Folder " / " .Job "?") "data-confirm-ok" "Delete" "data-next" "reload")
-				) }}</td>
+				<td class="actions">{{ template "schedmenu" (list . .IsEnabled $what) }}</td>
 			</tr>
 		{{- end }}
 		</tbody>

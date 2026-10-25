@@ -147,7 +147,10 @@ type Page struct {
 	Run       *Run
 	Artifacts []model.Artifact
 	Schedules []model.Schedule
-	Workflows []Workflow
+	// WorkflowNames names the workflows the schedules of workflows
+	// start, by ID, those the user sees.
+	WorkflowNames map[string]string
+	Workflows     []Workflow
 	// Pipeline is a workflow's steps top to bottom, with the latest run's
 	// states.
 	Pipeline []Link
