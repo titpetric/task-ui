@@ -17,12 +17,13 @@
 		<input type="text" id="p-id" name="id" pattern="[A-Za-z0-9._-]+" spellcheck="false" autocomplete="off">
 	</div>
 	<div class="field">
-		<label for="p-workspace">Workspace <span class="faint">_, the default workspace while there is one, clones the project at the top of the root; any other clones it inside that workspace, as workspace/folder</span></label>
+		<label for="p-workspace">Workspace</label>
 		<select id="p-workspace" name="workspace" required>
 			{{- range $i, $w := .WorkspaceList }}
 			<option value="{{ .Folder }}"{{ if or (eq .Folder $ws) (and (not $ws) (eq $i 0)) }} selected{{ end }}>{{ .Folder }} · {{ if eq .Folder "_" }}the root{{ else }}{{ or .Title .Folder }}{{ end }}</option>
 			{{- end }}
 		</select>
+		<small class="faint">_, the default workspace while there is one, clones the project at the top of the root; any other clones it inside that workspace, as workspace/folder.</small>
 	</div>
 	<div class="field">
 		<label for="p-branch">Branch <span class="faint">optional, defaults to the repository's default branch</span></label>
@@ -30,7 +31,8 @@
 	</div>
 	{{- template "recursivefield" (list "p-recursive" true) }}
 	<div class="field">
-		<label class="check"><input type="checkbox" id="p-sidebar" name="sidebar" checked> Show in sidebar <span class="faint">off hides the project from the sidebar; its pages still work</span></label>
+		<label class="check"><input type="checkbox" id="p-sidebar" name="sidebar" checked> Show in sidebar</label>
+		<small class="faint">Off hides the project from the sidebar; its pages still work.</small>
 	</div>
 	<div class="form-foot">
 		<a class="btn" href="{{ $back }}">Cancel</a>

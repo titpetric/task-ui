@@ -406,11 +406,6 @@
     font-size: var(--fs-data);
     line-height: 1.55;
   }
-
-  & .field-note {
-    margin: 0.35rem 0 0;
-    font-size: var(--fs-xs);
-  }
 }
 
 .wf-step.open .wf-card-body {
@@ -434,9 +429,16 @@
   }
 }
 
-/* A summary's question and instruction, as Claude gets them. */
+/* A summary's question and instruction, as Claude gets them, with the
+   help under them as under a field's control. */
 .wf-builtin {
   margin-bottom: 0.8rem;
+
+  & > small {
+    display: block;
+    margin-top: 0.35rem;
+    font-size: var(--fs-xs);
+  }
 
   & .label {
     display: block;

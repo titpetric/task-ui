@@ -55,10 +55,13 @@
 	{{- if $admin }}
 	<form class="form parent-env" data-api="/api/instance" data-method="PUT" data-next="/settings/instance?notice=Parent+environment+saved#environment" data-parent-env>
 		<div class="field">
-			<span class="label">Forward <span class="faint">what a run starts with; the choice applies to the next run</span></span>
-			<label class="check"><input type="radio" name="parent_env" value="none"{{ if eq .ParentEnv "none" }} checked{{ end }}> <strong>None</strong> <span class="faint">secure: the base variables alone, less the sensitive ones</span></label>
-			<label class="check"><input type="radio" name="parent_env" value="auto"{{ if eq .ParentEnv "auto" }} checked{{ end }}> <strong>Auto</strong> <span class="faint">filtered: every variable but the sensitive ones</span></label>
-			<label class="check"><input type="radio" name="parent_env" value="all"{{ if eq .ParentEnv "all" }} checked{{ end }}> <strong>All</strong> <span class="faint">every variable, sensitive ones too</span></label>
+			<span class="label">Forward <span class="faint">applies to the next run</span></span>
+			<label class="check"><input type="radio" name="parent_env" value="none"{{ if eq .ParentEnv "none" }} checked{{ end }}> <strong>None</strong></label>
+			<small class="faint">Secure: the base variables alone, less the sensitive ones.</small>
+			<label class="check"><input type="radio" name="parent_env" value="auto"{{ if eq .ParentEnv "auto" }} checked{{ end }}> <strong>Auto</strong></label>
+			<small class="faint">Filtered: every variable but the sensitive ones.</small>
+			<label class="check"><input type="radio" name="parent_env" value="all"{{ if eq .ParentEnv "all" }} checked{{ end }}> <strong>All</strong></label>
+			<small class="faint">Every variable, sensitive ones too.</small>
 		</div>
 		<div class="form-foot">
 			<button class="btn btn-primary" type="submit">Save</button>

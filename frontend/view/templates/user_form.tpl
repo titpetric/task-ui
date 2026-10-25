@@ -8,12 +8,14 @@
 
 <form class="form" data-api="/api/users" data-method="POST" data-next="/settings/users?notice=User+created">
 	<div class="field">
-		<label for="u-name">Name <span class="faint">lowercase letters, digits and dashes; it also names their SSH keys</span></label>
+		<label for="u-name">Name</label>
 		<input type="text" id="u-name" name="name" required pattern="[a-z0-9][a-z0-9\-]{0,31}" spellcheck="false" autocomplete="off" autofocus>
+		<small class="faint">Lowercase letters, digits and dashes; it also names their SSH keys.</small>
 	</div>
 	<div class="field">
-		<label for="u-password">Password <span class="faint">at least 8 characters, stored as a bcrypt hash</span></label>
+		<label for="u-password">Password <span class="faint">at least 8 characters</span></label>
 		<input type="password" id="u-password" name="password" required minlength="8" autocomplete="new-password">
+		<small class="faint">Stored as a bcrypt hash.</small>
 	</div>
 	{{- template "folder-pick" (list .FolderChoices true true) }}
 	<div class="form-foot">

@@ -32,6 +32,16 @@
   font-size: var(--fs-xs);
 }
 
+/* The help under a toggle hangs under its text, past the box, so it
+   never wraps into a column beside the label. */
+.field > label.check + small {
+  margin: 0 0 0.5rem 1.5rem;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
 /* A number stands in a box as wide as the number, not the form. */
 .field > input[type="number"] {
   width: 8rem;

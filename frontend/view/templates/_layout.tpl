@@ -632,8 +632,9 @@
      algorithm, which task-ui adds. */}}
 {{- define "keyname" }}
 <div class="field">
-	<label for="key-name">Name <span class="faint">lower case letters, digits, dashes and underscores; the algorithm follows, as deploy_ed25519</span></label>
+	<label for="key-name">Name</label>
 	<input type="text" id="key-name" name="name" value="{{ . }}" required pattern="[a-z0-9][a-z0-9_\-]{0,63}" spellcheck="false" autocomplete="off">
+	<small class="faint">Lower case letters, digits, dashes and underscores; the algorithm follows, as deploy_ed25519.</small>
 </div>
 {{- end }}
 
@@ -641,10 +642,10 @@
 {{- define "keypurpose" }}
 <div class="field">
 	<span class="label">Purpose</span>
-	<div class="checks">
-		<label class="check"><input type="radio" name="purpose" value="ssh" checked> SSH key <span class="faint">runs, git and logins authenticate with it</span></label>
-		<label class="check"><input type="radio" name="purpose" value="encrypt"> Encryption key <span class="faint">ed25519 or RSA; encrypts the secrets, never handed out</span></label>
-	</div>
+	<label class="check"><input type="radio" name="purpose" value="ssh" checked> SSH key</label>
+	<small class="faint">Runs, git and logins authenticate with it.</small>
+	<label class="check"><input type="radio" name="purpose" value="encrypt"> Encryption key</label>
+	<small class="faint">ed25519 or RSA; encrypts the secrets, never handed out.</small>
 </div>
 {{- end }}
 
@@ -686,8 +687,9 @@
      checked no run gets it. */}}
 {{- define "keypolicies" }}
 <div class="field">
-	<span class="label">Who gets it <span class="faint">their runs get the key through the ssh agent; check any roles and users, or none to keep it from every run</span></span>
+	<span class="label">Who gets it</span>
 	{{- template "whofield" ((who "policies" "set" (index . 0) (index . 1) (index . 2) "").UsersNamed "users") }}
+	<small class="faint">Their runs get the key through the ssh agent; check any roles and users, or none to keep it from every run.</small>
 </div>
 {{- end }}
 
@@ -696,8 +698,9 @@
      workspace with none checked. */}}
 {{- define "keygrants" }}
 <div class="field">
-	<span class="label">Who gets it <span class="faint">with nothing checked, every run in the workspace gets it; check roles or users to limit it to their runs</span></span>
+	<span class="label">Who gets it</span>
 	{{- template "whofield" ((who "policies" "set" (index . 0) (index . 1) (index . 2) "every run in the workspace gets it").UsersNamed "users") }}
+	<small class="faint">With nothing checked, every run in the workspace gets it; check roles or users to limit it to their runs.</small>
 </div>
 {{- end }}
 

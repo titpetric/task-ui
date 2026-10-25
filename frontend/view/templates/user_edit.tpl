@@ -16,7 +16,8 @@
 	{{- if .User.CanAdmin }}
 	<form class="form" data-api="/api/users/{{ $u.ID }}" data-method="PUT" data-next="{{ $edit }}?notice=Roles+saved#roles">
 		<div class="field">
-			<label class="check"><input type="checkbox" name="admin"{{ if $u.Admin }} checked{{ end }}> Administrative privileges (all) <span class="faint">every permission, whatever the role; the last admin keeps it</span></label>
+			<label class="check"><input type="checkbox" name="admin"{{ if $u.Admin }} checked{{ end }}> Administrative privileges (all)</label>
+			<small class="faint">Every permission, whatever the role; the last admin keeps it.</small>
 		</div>
 		<div class="field">
 			<label for="u-role">Role <span class="faint">without the admin flag</span></label>
@@ -26,10 +27,12 @@
 			</select>
 		</div>
 		<div class="field">
-			<label class="check"><input type="checkbox" name="mcp"{{ if $u.Mcp }} checked{{ end }}> MCP agent user <span class="faint">a token reaches the MCP endpoint; an agent learns of work from the notes that name the user</span></label>
+			<label class="check"><input type="checkbox" name="mcp"{{ if $u.Mcp }} checked{{ end }}> MCP agent user</label>
+			<small class="faint">A token reaches the MCP endpoint; an agent learns of work from the notes that name the user.</small>
 		</div>
 		<div class="field">
-			<label class="check"><input type="checkbox" name="agent_reply"{{ if $u.AgentReply }} checked{{ end }}> Run instance Claude when mentioned <span class="faint">a note naming {{ $u.Name }} starts the Notes agent as them; needs MCP agent user</span></label>
+			<label class="check"><input type="checkbox" name="agent_reply"{{ if $u.AgentReply }} checked{{ end }}> Run instance Claude when mentioned</label>
+			<small class="faint">A note naming {{ $u.Name }} starts the Notes agent as them; needs MCP agent user.</small>
 		</div>
 		<div class="form-foot">
 			<a class="btn" href="{{ $view }}">Cancel</a>

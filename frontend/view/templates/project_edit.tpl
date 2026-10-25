@@ -24,36 +24,41 @@
 		<input type="text" id="pe-description" name="description" value="{{ index .Form "description" }}" autocomplete="off">
 	</div>
 	<div class="field">
-		<span class="label">Who can run <span class="faint">with nothing checked, everyone who may run can</span></span>
+		<span class="label">Who can run</span>
 		{{- template "whofield" (who "allow" "set" .Allow .Allow .Users "everyone who may run can") }}
+		<small class="faint">With nothing checked, everyone who may run can.</small>
 	</div>
 	{{- if .MoveFrom }}
 	<div class="field">
-		<label for="pe-workspace">Workspace <span class="faint">picking another workspace moves the checkout there, with the users' folder access; earlier runs stay under {{ $p.ID }}</span></label>
+		<label for="pe-workspace">Workspace</label>
 		<select id="pe-workspace" name="workspace" data-move="{{ $p.ID }}" data-move-from="{{ .MoveFrom }}" data-move-left="{{ join .MoveLeft "; " }}">
 			<option value="_"{{ if eq .MoveFrom "_" }} selected{{ end }}>_ · the root</option>
 			{{- range .WorkspaceList }}{{ if ne .Folder "_" }}
 			<option value="{{ .Folder }}"{{ if eq .Folder $.MoveFrom }} selected{{ end }}>{{ .Folder }}{{ with .Title }} · {{ . }}{{ end }}</option>
 			{{- end }}{{ end }}
 		</select>
+		<small class="faint">Picking another workspace moves the checkout there, with the users' folder access; earlier runs stay under {{ $p.ID }}.</small>
 	</div>
 	{{- end }}
 	<div class="field">
-		<label for="pe-sources">Sources <span class="faint">files to read, comma separated; leave empty to detect them</span></label>
+		<label for="pe-sources">Sources</label>
 		<input type="text" id="pe-sources" name="sources" data-type="list" value="{{ index .Form "sources" }}" placeholder="atkins.yml, Makefile" spellcheck="false" autocomplete="off">
+		<small class="faint">Files to read, comma separated; leave empty to detect them.</small>
 	</div>
 	<div class="field">
-		<label for="pe-hours">Hours <span class="faint">when the jobs can run, one rule per line; the last rule for a day wins; leave empty for any time</span></label>
+		<label for="pe-hours">Hours</label>
 		<textarea id="pe-hours" name="hours" rows="3" spellcheck="false" autocomplete="off" placeholder="mon-fri 9-17&#10;fri 9-13">{{ index .Form "hours" }}</textarea>
+		<small class="faint">When the jobs can run, one rule per line; the last rule for a day wins; leave empty for any time.</small>
 	</div>
 	{{- template "recursivefield" (list "pe-recursive" (or (not $.Project) (not $.Project.Shallow))) }}
 	<div class="field">
-		<label class="check"><input type="checkbox" id="pe-sidebar" name="sidebar"{{ if or (not $.Project) (not $.Project.SidebarHidden) }} checked{{ end }}> Show in sidebar <span class="faint">off hides the project and its folders from the sidebar; their pages still work</span></label>
+		<label class="check"><input type="checkbox" id="pe-sidebar" name="sidebar"{{ if or (not $.Project) (not $.Project.SidebarHidden) }} checked{{ end }}> Show in sidebar</label>
+		<small class="faint">Off hides the project and its folders from the sidebar; their pages still work.</small>
 	</div>
 	{{- if $p.Jobs }}
 	{{- $hours := $.Project.JobHoursMap }}
 	<div class="field">
-		<span class="label">Per job <span class="faint">who can run each job and when, on top of the folder's settings; leave unchecked and empty to use the folder's</span></span>
+		<span class="label">Per job</span>
 		<div class="table-wrap">
 		<table class="table cards">
 			<thead><tr><th>Job</th><th>Who can run</th><th>Hours</th></tr></thead>
@@ -68,6 +73,7 @@
 			</tbody>
 		</table>
 		</div>
+		<small class="faint">Who can run each job and when, on top of the folder's settings; leave unchecked and empty to use the folder's.</small>
 	</div>
 	{{- end }}
 	<div class="form-foot">

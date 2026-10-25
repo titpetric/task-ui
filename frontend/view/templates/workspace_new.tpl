@@ -8,8 +8,9 @@
 
 <form class="form" data-api="/api/workspaces" data-method="POST" data-next="/settings/workspaces?notice=Workspace+added">
 	<div class="field">
-		<label for="w-folder">Folder <span class="faint">the namespace of its projects; one name, no slashes</span></label>
+		<label for="w-folder">Folder <span class="faint">one name, no slashes</span></label>
 		<input type="text" id="w-folder" name="folder" pattern="[A-Za-z0-9._-]+" spellcheck="false" autocomplete="off" required autofocus>
+		<small class="faint">The namespace of its projects.</small>
 	</div>
 	<div class="field">
 		<label for="w-url">Home repository <span class="faint">optional, a repository to clone into the home</span></label>
