@@ -162,8 +162,9 @@ Settings, **Workspaces** manages them: Allow View on Workspaces,
 configures and orders, and Allow Deletes, `workspace/delete`, removes
 one. Export and Import are an admin's: the bundle holds the workspace's
 private keys and secrets. The page lists each workspace with its
-home repository, or "empty", and the projects cloned inside it, in the
-sidebar's order.
+home repository, or "empty", and how many projects are inside it, the
+checkouts under its `src/` and the project rows there, each once, the
+names in the number's tooltip, in the sidebar's order.
 
 ![Workspaces, each with its home repository and projects](../assets/workspaces-dark.png)
 
@@ -198,8 +199,12 @@ sidebar's order.
   workspace with its checkout and its row, the env files task-ui keeps
   for them, the workspace's secrets and its keys, and the workspace's
   directory with everything in it, the home included; its confirm names
-  those projects first. The default workspace has none: `DELETE
-  /api/workspaces/_` answers `409`.
+  those projects first. It refuses, a `409`, while a run of the
+  workspace is active. The default workspace, the root, has **Empty**
+  in its place: the same removal of its projects, env files, secrets
+  and keys, and of its home checkout, after which the root stays with
+  an empty `home/` and `src/`, its row and the other workspaces
+  untouched.
 - **Import**, at the top right for an admin, adds a workspace from a
   bundle another instance exported (see [Move to another
   instance](#move-to-another-instance)).

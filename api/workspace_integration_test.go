@@ -299,11 +299,6 @@ func TestWorkspace_Default(t *testing.T) {
 	assert.Equal(t, "Root", updated.str("title"))
 	assert.NotEqual(t, float64(9), updated.get("sort"), "the default keeps its place")
 
-	refused := f.call(t, asAdmin, http.MethodDelete, "/workspaces/_", nil)
-	assert.Equal(t, http.StatusConflict, refused.Status)
-	assert.Equal(t, http.StatusOK, f.call(t, asAdmin, http.MethodGet, "/workspaces/_", nil).Status)
-	assert.DirExists(t, f.root)
-
 	taken := f.call(t, asAdmin, http.MethodPost, "/workspaces", api.WorkspaceRequest{URL: repo, Folder: model.Default})
 	assert.Equal(t, http.StatusBadRequest, taken.Status)
 	for _, id := range []string{"_", "_/web"} {
@@ -319,6 +314,29 @@ func TestWorkspace_Default(t *testing.T) {
 	assert.Equal(t, "site", root.str("project", "folder"))
 	assert.FileExists(t, filepath.Join(f.root, "src", "site", "Makefile"))
 	assert.DirExists(t, filepath.Join(f.root, "home"), "the root has an empty home")
+
+	// Deleting _ empties the root: its project rows and checkouts go, a
+	// checkout without a row too, and it forgets its home; the row,
+	// the root with an empty home and src, and the other workspaces stay.
+	assert.Equal(t, http.StatusOK, f.call(t, asAdmin, http.MethodPut, "/projects/plain", api.ProjectRequest{Title: "Plain"}).Status)
+	assert.NoError(t, os.MkdirAll(filepath.Join(f.root, "src", "loose", ".git"), 0o755))
+	assert.NoError(t, os.WriteFile(filepath.Join(f.root, "home", ".profile"), []byte("export A=1\n"), 0o644))
+	assert.Equal(t, http.StatusOK, f.call(t, asAdmin, http.MethodPut, "/workspaces/_/home", api.WorkspaceHomeRequest{URL: repo}).Status)
+	emptied := f.call(t, asAdmin, http.MethodDelete, "/workspaces/_", nil)
+	assert.Equal(t, http.StatusNoContent, emptied.Status, string(emptied.Raw))
+	assert.DirExists(t, f.root)
+	assert.DirExists(t, filepath.Join(f.root, "malta", "home"), "a named workspace stays")
+	for _, dir := range []string{"home", "src"} {
+		entries, err := os.ReadDir(filepath.Join(f.root, dir))
+		assert.NoError(t, err)
+		assert.Empty(t, entries, dir+" is empty")
+	}
+	kept := f.call(t, asAdmin, http.MethodGet, "/workspaces/_", nil)
+	assert.Equal(t, http.StatusOK, kept.Status)
+	assert.Equal(t, "", kept.str("home_url"), "the home repository is forgotten")
+	projects, err := f.opts.Projects.List(ctx)
+	assert.NoError(t, err)
+	assert.Empty(t, projects, "the root's project rows go")
 }
 
 // A project cloned into the root may not take a workspace's name, or

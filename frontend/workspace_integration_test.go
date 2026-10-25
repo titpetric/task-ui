@@ -5,6 +5,8 @@ package frontend_test
 import (
 	"context"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -124,11 +126,20 @@ func TestWorkspaces_Default(t *testing.T) {
 	assert.NoError(t, f.opts.Workspaces.EnsureDefault(ctx))
 	assert.NoError(t, f.opts.Workspaces.Create(ctx, &model.Workspace{Folder: "malta", Title: "Malta"}))
 	assert.NoError(t, f.opts.Projects.Create(ctx, &model.Project{Folder: "site"}))
+	// A checkout under src counts with or without a project row; the
+	// workspace's checkouts count under it, a directory that is no
+	// checkout does not.
+	for _, dir := range []string{"src/site", "src/extra", "malta/src/deploy/.git", "malta/src/notes"} {
+		assert.NoError(t, os.MkdirAll(filepath.Join(f.root, dir), 0o755))
+	}
 
 	body := f.page(t, asAdmin, "/settings/workspaces")
 	assert.True(t, strings.Index(body, `href="/f/_"`) < strings.Index(body, `href="/f/malta"`), "_ lists first")
-	assert.Contains(t, body, `<a href="/f/_/site">site</a>`)
-	assert.NotContains(t, body, `data-delete="/api/workspaces/_"`)
+	assert.Contains(t, body, `<a href="/settings/workspaces/_" title="extra, infra, private, site">4</a>`)
+	assert.Contains(t, body, `<a href="/settings/workspaces/malta" title="malta/deploy">1</a>`)
+	assert.Contains(t, body, `data-delete="/api/workspaces/_"`)
+	assert.Contains(t, body, `Empty the default workspace _? This deletes its home checkout, its keys and secrets, and the projects inside it with their checkouts: extra, infra, private, site.`)
+	assert.Contains(t, body, `<span>Empty</span>`)
 	assert.NotContains(t, body, `data-folder="_"`)
 	assert.NotContains(t, body, `data-workspace-move="up" data-folder="malta"`)
 	assert.Contains(t, body, `data-delete="/api/workspaces/malta"`)
@@ -136,5 +147,11 @@ func TestWorkspaces_Default(t *testing.T) {
 	edit := f.page(t, asAdmin, "/settings/workspaces/_")
 	assert.Contains(t, edit, `data-api="/api/workspaces/_"`)
 	assert.Contains(t, edit, "the root, "+f.root)
-	assert.NotContains(t, edit, `data-delete="/api/workspaces/`)
+	assert.Contains(t, edit, `data-delete="/api/workspaces/_"`)
+	assert.Contains(t, edit, `data-next="/settings/workspaces?notice=Workspace+emptied"`)
+
+	// A workspace with nothing in it.
+	assert.NoError(t, f.opts.Workspaces.Create(ctx, &model.Workspace{Folder: "gozo"}))
+	body = f.page(t, asAdmin, "/settings/workspaces")
+	assert.Contains(t, body, `<span class="faint">none</span>`)
 }

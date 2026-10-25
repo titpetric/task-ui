@@ -379,7 +379,10 @@ func TestWorkspaceEdit_Page(t *testing.T) {
 	buf.Reset()
 	assert.NoError(t, v.Render(&buf, "workspace_edit", p))
 	assert.Contains(t, buf.String(), `data-dialog-open="export-dialog"`)
-	assert.NotContains(t, buf.String(), `data-delete="/api/workspaces/_"`, "the default workspace stays")
+	assert.Contains(t, buf.String(), `data-delete="/api/workspaces/_"`, "the default workspace is emptied, not removed")
+	assert.Contains(t, buf.String(), `<span>Empty</span>`)
+	assert.Contains(t, buf.String(), `data-confirm-ok="Empty"`)
+	assert.Contains(t, buf.String(), `Empty the default workspace _? This deletes its home checkout, its keys and secrets. The root stays, with an empty home and src, as do the other workspaces.`)
 }
 
 // A workspace's settings page shows its home: an empty one with Clone,

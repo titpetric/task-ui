@@ -252,63 +252,93 @@ func (h *Handlers) workspaceBusy(ctx context.Context, name string) (string, erro
 	return "", nil
 }
 
-// deleteWorkspace removes the projects cloned inside a workspace, their
-// checkouts and rows, its secrets, its row, its keys with their grants,
-// and its directory, home and src with everything in them. The default
-// workspace, the root, stays.
+// deleteWorkspace removes the projects inside a workspace, their rows
+// and their checkouts, their managed env files, its secrets and its keys
+// with their grants, and then the workspace: a named one loses its row
+// and its directory, home and src with everything in them; the default
+// workspace, the root, keeps its row and its directory and ends with an
+// empty home and an empty src, its home repository forgotten. It
+// refuses, a 409, while a run of the workspace is active.
 func (h *Handlers) deleteWorkspace(w http.ResponseWriter, r *http.Request) {
 	if !h.require(w, r, "workspace/delete") {
 		return
 	}
 	ctx := r.Context()
-	workspace, err := h.opts.Workspaces.GetByFolder(ctx, param(r, "folder"))
+	ws, err := h.opts.Workspaces.GetByFolder(ctx, param(r, "folder"))
 	if err != nil {
 		failErr(w, err)
 		return
 	}
-	if workspace.Folder == model.Default {
-		fail(w, http.StatusConflict, "you can't remove the default workspace: it holds the projects at the root")
+	if busy, err := h.workspaceBusy(ctx, ws.Folder); err != nil {
+		failErr(w, err)
+		return
+	} else if busy != "" {
+		fail(w, http.StatusConflict, busy+" is running in "+ws.Folder+": delete the workspace after the run ends")
 		return
 	}
-	projects, err := h.opts.Projects.List(ctx)
-	if err != nil {
+	if err := h.emptyWorkspace(ctx, ws); err != nil {
 		failErr(w, err)
 		return
 	}
-	for _, project := range projects {
-		if !strings.HasPrefix(project.Folder, workspace.Folder+"/") {
-			continue
-		}
-		if err := h.opts.Projects.Delete(ctx, project.ID); err != nil {
+	if ws.Folder == model.Default {
+		ws.HomeURL, ws.HomeBranch = "", ""
+		if err := h.opts.Workspaces.Update(ctx, ws); err != nil {
 			failErr(w, err)
 			return
 		}
-	}
-	if h.opts.Secrets != nil {
-		if _, err := h.opts.Secrets.Forget(ctx, workspace.Folder); err != nil {
+		for _, dir := range []string{layout.HomeDir(h.opts.Root, ws.Folder), layout.SrcDir(h.opts.Root, ws.Folder)} {
+			if err := os.RemoveAll(dir); err != nil {
+				failErr(w, err)
+				return
+			}
+		}
+		if err := layout.Ensure(h.opts.Root, ws.Folder); err != nil {
 			failErr(w, err)
 			return
 		}
+		w.WriteHeader(http.StatusNoContent)
+		return
 	}
-	if err := h.forgetEnvFiles(ctx, workspace.Folder); err != nil {
+	if err := h.opts.Workspaces.Delete(ctx, ws.ID); err != nil {
 		failErr(w, err)
 		return
 	}
-	if err := h.opts.Workspaces.Delete(ctx, workspace.ID); err != nil {
-		failErr(w, err)
-		return
-	}
-	if h.opts.Keys != nil {
-		if err := h.opts.Keys.RemoveScope(ctx, keystore.ScopeWorkspace(workspace.ID)); err != nil {
-			failErr(w, err)
-			return
-		}
-	}
-	if err := os.RemoveAll(layout.WorkspaceDir(h.opts.Root, workspace.Folder)); err != nil {
+	if err := os.RemoveAll(layout.WorkspaceDir(h.opts.Root, ws.Folder)); err != nil {
 		failErr(w, err)
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
+}
+
+// emptyWorkspace removes what a workspace holds in the database: the
+// rows of the projects inside it, their managed env files, its secrets
+// and its keys with their grants. The directories are the caller's.
+func (h *Handlers) emptyWorkspace(ctx context.Context, ws *model.Workspace) error {
+	projects, err := h.opts.Projects.List(ctx)
+	if err != nil {
+		return err
+	}
+	named := h.workspaceFolders(ctx)
+	for _, project := range projects {
+		if !workspace.Contains(ws.Folder, named, project.Folder) {
+			continue
+		}
+		if err := h.opts.Projects.Delete(ctx, project.ID); err != nil {
+			return err
+		}
+	}
+	if h.opts.Secrets != nil {
+		if _, err := h.opts.Secrets.Forget(ctx, ws.Folder); err != nil {
+			return err
+		}
+	}
+	if err := h.forgetEnvFiles(ctx, ws.Folder, named); err != nil {
+		return err
+	}
+	if h.opts.Keys != nil {
+		return h.opts.Keys.RemoveScope(ctx, keystore.ScopeWorkspace(ws.ID))
+	}
+	return nil
 }
 
 // promptWorkspace puts a prompt to Claude in a workspace, as POST
@@ -348,9 +378,10 @@ func (h *Handlers) dirOf(ctx context.Context, id string) string {
 	return layout.Dir(h.opts.Root, h.workspaceFolders(ctx), id)
 }
 
-// forgetEnvFiles deletes the managed env files of a named workspace's
-// folders: the workspace's own and its projects'.
-func (h *Handlers) forgetEnvFiles(ctx context.Context, name string) error {
+// forgetEnvFiles deletes the managed env files of a workspace's
+// folders, its own and its projects': for _, the root's folders outside
+// the named workspaces.
+func (h *Handlers) forgetEnvFiles(ctx context.Context, name string, named []string) error {
 	if h.opts.Env == nil {
 		return nil
 	}
@@ -359,7 +390,7 @@ func (h *Handlers) forgetEnvFiles(ctx context.Context, name string) error {
 		return err
 	}
 	for _, file := range files {
-		if top, _, _ := strings.Cut(file.Folder, "/"); top != name {
+		if !workspace.Contains(name, named, file.Folder) {
 			continue
 		}
 		if err := h.opts.Env.Managed.Delete(ctx, file.ID); err != nil {
