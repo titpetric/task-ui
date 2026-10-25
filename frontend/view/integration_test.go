@@ -60,7 +60,7 @@ func TestIntegration_Page(t *testing.T) {
 	assert.Contains(t, body, `<h4>Get the OAuth token</h4>`)
 	assert.Contains(t, body, `<h4>Get the token</h4>`)
 	assert.Contains(t, body, "<li><p>On a machine where you are signed in to Claude Code, run <code>claude setup-token</code>.</p>\n</li>")
-	assert.Contains(t, body, `<div class="field who">`)
+	assert.Contains(t, body, `<div class="whofield" data-who-empty="every run gets the token">`)
 	assert.Contains(t, body, `value="admin" data-type="joined" checked> admin <small class="count">· 2</small></label>`)
 	assert.Contains(t, body, `value="runner" data-type="joined"> runner <small class="count">· 1</small></label>`)
 	assert.Contains(t, body, `<label class="check who-user" data-role="admin"><input type="checkbox" name="values.who" value="ops" data-type="joined"> ops <small class="role">admin</small> <small class="who-state"></small></label>`)

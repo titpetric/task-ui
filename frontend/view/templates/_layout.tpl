@@ -650,58 +650,57 @@
 </div>
 {{- end }}
 
-{{- /* whopicker is a "who may run" field as boxes: the roles that run,
-     then the users, each a value of the set the name holds. */}}
-{{- define "whopicker" }}
-{{- $name := index . 0 }}{{ $choices := index . 1 }}
-<div class="checks who">
-	<span class="faint">Roles</span>
-	{{- range $choices }}{{ if .Role }}
-	<label class="check"><input type="checkbox" name="{{ $name }}" value="{{ .Name }}" data-type="set"{{ if .Checked }} checked{{ end }}> {{ .Name }}</label>
-	{{- end }}{{ end }}
-</div>
-<div class="checks who">
-	<span class="faint">Users</span>
-	{{- range $choices }}{{ if not .Role }}
-	<label class="check"><input type="checkbox" name="{{ $name }}" value="{{ .Name }}" data-type="set"{{ if .Checked }} checked{{ end }}> {{ .Name }}</label>
-	{{- end }}{{ end }}
+{{- /* whofield is the one "who gets it" element, a Who from the who
+     function: the roles, each with how many users act with it, the
+     users, each with the role a run checks for them and the state the
+     script fills from the boxes, and the summary line, which reads the
+     sentence for nothing checked from data-who-empty; an empty sentence
+     means no run gets it then. The caller's field holds the label and
+     the help. The compact form puts the roles and the users on one
+     wrapped line, with no summary, for a table cell. */}}
+{{- define "whofield" }}
+<div class="whofield{{ if .Compact }} compact{{ end }}" data-who-empty="{{ .Empty }}">
+	<div class="checks who-roles">
+		<span class="faint">Roles</span>
+		{{- range roles }}
+		<label class="check"><input type="checkbox" name="{{ $.Name }}" value="{{ . }}" data-type="{{ $.Type }}"{{ if $.RoleChecked . }} checked{{ end }}> {{ . }} <small class="count">· {{ $.RoleCount . }}</small></label>
+		{{- end }}
+	</div>
+	<div class="checks who-users">
+		<span class="faint">Users</span>
+		<ul class="who-list">
+		{{- range .All }}
+		<li><label class="check who-user" data-role="{{ .EffectiveRole }}"><input type="checkbox" name="{{ $.UserName }}" value="{{ .Name }}" data-type="{{ $.Type }}"{{ if $.UserChecked .Name }} checked{{ end }}> {{ .Name }} <small class="role">{{ .EffectiveRole }}</small> <small class="who-state"></small></label></li>
+		{{- end }}
+		{{- range .Extra }}
+		<li><label class="check who-user" data-role=""><input type="checkbox" name="{{ $.UserName }}" value="{{ . }}" data-type="{{ $.Type }}" checked> {{ . }} <small class="role">no such user</small> <small class="who-state"></small></label></li>
+		{{- end }}
+		</ul>
+	</div>
+	{{- if not .Compact }}
+	<p class="dim who-summary"></p>
+	{{- end }}
 </div>
 {{- end }}
 
+{{- /* keypolicies is who gets an instance SSH key, (list roles users
+     all): the roles' boxes are policies, the users' users; with nothing
+     checked no run gets it. */}}
 {{- define "keypolicies" }}
 <div class="field">
-	<span class="label">Who gets it <span class="faint">their runs get the key through the ssh agent; check any roles and users</span></span>
-	{{- template "keychecks" . }}
+	<span class="label">Who gets it <span class="faint">their runs get the key through the ssh agent; check any roles and users, or none to keep it from every run</span></span>
+	{{- template "whofield" ((who "policies" "set" (index . 0) (index . 1) (index . 2) "").UsersNamed "users") }}
 </div>
 {{- end }}
 
-{{- /* keygrants is who gets a workspace's SSH key: the roles and the
-     users checked, or every run in the workspace with none checked. */}}
+{{- /* keygrants is who gets a workspace's SSH key, (list roles users
+     all): the roles and the users checked, or every run in the
+     workspace with none checked. */}}
 {{- define "keygrants" }}
 <div class="field">
 	<span class="label">Who gets it <span class="faint">with nothing checked, every run in the workspace gets it; check roles or users to limit it to their runs</span></span>
-	{{- template "keychecks" . }}
+	{{- template "whofield" ((who "policies" "set" (index . 0) (index . 1) (index . 2) "every run in the workspace gets it").UsersNamed "users") }}
 </div>
-{{- end }}
-
-{{- /* keychecks are a key's roles and users as boxes: the roles and the
-     users it goes to, and every user to choose from. */}}
-{{- define "keychecks" }}
-{{- $roles := index . 0 }}{{ $users := index . 1 }}{{ $all := index . 2 }}
-	<div class="checks who">
-		<span class="faint">Roles</span>
-		{{- range roles }}
-		{{- $role := . }}{{ $on := false }}{{ range $roles }}{{ if eq . $role }}{{ $on = true }}{{ end }}{{ end }}
-		<label class="check"><input type="checkbox" name="policies" value="{{ $role }}" data-type="set"{{ if $on }} checked{{ end }}> {{ $role }}</label>
-		{{- end }}
-	</div>
-	<div class="checks who">
-		<span class="faint">Users</span>
-		{{- range $all }}
-		{{- $name := .Name }}{{ $on := false }}{{ range $users }}{{ if eq . $name }}{{ $on = true }}{{ end }}{{ end }}
-		<label class="check"><input type="checkbox" name="users" value="{{ $name }}" data-type="set"{{ if $on }} checked{{ end }}> {{ $name }} <span class="faint">{{ .Role }}</span></label>
-		{{- end }}
-	</div>
 {{- end }}
 
 {{- /* When runs ran: a bar per day and per hour of the last 24, each split

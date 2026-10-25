@@ -55,6 +55,8 @@ func Funcs() template.FuncMap {
 		// one from primary.
 		"head":    NewHead,
 		"primary": NewPrimaryItem,
+		// who builds the "who gets it" element for the whofield template.
+		"who": NewWho,
 		// removeConfirm is what Remove checkout of a project asks.
 		"removeConfirm": RemoveConfirm,
 		// deleteWorkspaceConfirm is what Delete of a workspace asks.

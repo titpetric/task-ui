@@ -24,8 +24,8 @@
 		<input type="text" id="pe-description" name="description" value="{{ index .Form "description" }}" autocomplete="off">
 	</div>
 	<div class="field">
-		<span class="label">Who can run <span class="faint">with nothing checked, every runner can</span></span>
-		{{- template "whopicker" (list "allow" .AllowChoices) }}
+		<span class="label">Who can run <span class="faint">with nothing checked, everyone who may run can</span></span>
+		{{- template "whofield" (who "allow" "set" .Allow .Allow .Users "everyone who may run can") }}
 	</div>
 	{{- if .MoveFrom }}
 	<div class="field">
@@ -61,7 +61,7 @@
 			{{- range $p.Jobs }}
 			<tr>
 				<td class="key">{{ .Name }}</td>
-				<td data-label="Who can run">{{ template "whopicker" (list (printf "job_allow.%s" .ID) (index $.JobAllowChoices .ID)) }}</td>
+				<td data-label="Who can run">{{ $allow := index $.JobAllow .ID }}{{ template "whofield" (who (printf "job_allow.%s" .ID) "set" $allow $allow $.Users "the folder's Who can run applies").AsCompact }}</td>
 				<td data-label="Hours"><input type="text" name="job_hours.{{ .ID }}" value="{{ index $hours .ID }}" placeholder="mon-fri 9-17" spellcheck="false" autocomplete="off"></td>
 			</tr>
 			{{- end }}

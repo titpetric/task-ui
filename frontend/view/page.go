@@ -247,10 +247,10 @@ type Page struct {
 	Profile *Profile
 	// Matrices are the roles' policies on the permissions page.
 	Matrices []Matrix
-	// AllowChoices are the boxes of a project's "who may run", and
-	// JobAllowChoices those of each job, by job ID.
-	AllowChoices    []WhoChoice
-	JobAllowChoices map[string][]WhoChoice
+	// Allow names who may run a project, roles and users, and JobAllow
+	// who may run each of its jobs, by job ID.
+	Allow    []string
+	JobAllow map[string][]string
 	// FolderChoices are the boxes of the user form's folders.
 	FolderChoices []FolderChoice
 	// CanAddUsers shows Add user: the server writes a password file.
@@ -472,17 +472,6 @@ func (p *Page) RunningRun(key string) *Run {
 // JobSummary returns the summary of the last run of a job the Jobs table lists, nil for none.
 func (p *Page) JobSummary(key string) *SummaryLink {
 	return p.JobSummaries[key]
-}
-
-// RoleCount returns how many of the page's users act with a role.
-func (p *Page) RoleCount(role model.Role) int {
-	count := 0
-	for i := range p.Users {
-		if p.Users[i].EffectiveRole() == role {
-			count++
-		}
-	}
-	return count
 }
 
 // LastRun returns the latest run of a job, or nil.

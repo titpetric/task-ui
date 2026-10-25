@@ -25,24 +25,9 @@
 					{{- $i := . }}
 					{{- range .Fields }}
 					{{- if .Who }}
-					<div class="field who">
+					<div class="field">
 						<span class="label">{{ .Label }}</span>
-						{{- $name := .Name }}
-						<div class="checks who-roles">
-							<span class="faint">Roles</span>
-							{{- range roles }}
-							<label class="check"><input type="checkbox" name="values.{{ $name }}" value="{{ . }}" data-type="joined"{{ if index $i.Checked . }} checked{{ end }}> {{ . }} <small class="count">· {{ $.RoleCount . }}</small></label>
-							{{- end }}
-						</div>
-						<div class="checks who-users">
-							<span class="faint">Users</span>
-							<ul class="who-list">
-							{{- range $users }}
-							<li><label class="check who-user" data-role="{{ .EffectiveRole }}"><input type="checkbox" name="values.{{ $name }}" value="{{ .Name }}" data-type="joined"{{ if index $i.Checked .Name }} checked{{ end }}> {{ .Name }} <small class="role">{{ .EffectiveRole }}</small> <small class="who-state"></small></label></li>
-							{{- end }}
-							</ul>
-						</div>
-						<p class="dim who-summary"></p>
+						{{- template "whofield" (who (print "values." .Name) "joined" $i.Checked $i.Checked $users "every run gets the token") }}
 						{{- with .Help }}<small class="faint">{{ . }}</small>{{ end }}
 					</div>
 					{{- else }}
