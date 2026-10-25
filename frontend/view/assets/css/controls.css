@@ -211,9 +211,10 @@ select {
   }
 }
 
-.dd-button:focus-visible,
+/* The focus of a control is the page's outline, as base.css draws it
+   on a field, a textarea, the dropdown's button and every button alike;
+   the open dropdown's button carries the accent on its border as well. */
 .dd.open .dd-button {
-  outline: none;
   border-color: var(--signal);
 }
 
