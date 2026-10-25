@@ -207,11 +207,19 @@
   letter-spacing: var(--ls-xs);
 }
 
-/* The parent environment's choice: a radio a line, Save after them. */
+/* The parent environment's choice: a radio a line under the field's
+   label, Save in the form's foot. */
 .parent-env {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.4rem;
   margin-bottom: 0.75rem;
+
+  & .field {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.4rem;
+  }
+
+  & .field > .label {
+    align-self: stretch;
+  }
 }

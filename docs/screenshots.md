@@ -16,7 +16,7 @@ it with headless chromium; `task docs:shots` regenerates them into
 | ![A folder with a Makefile, package scripts and a scripts folder](assets/tools-dark.png) | ![Out of hours: Run force asks why](assets/out-of-hours-dark.png) |
 | ![Artifacts](assets/artifacts-dark.png) | ![Scheduled](assets/schedules-dark.png) |
 | ![Settings](assets/settings-dark.png) | ![Projects](assets/projects-dark.png) |
-| ![Add a project from git](assets/project-new-dark.png) | ![Project settings](assets/project-edit-dark.png) |
+| ![Add a project from git](assets/project-new-dark.png) | ![Project settings: Who can run, and the per-job table with the same element, compact](assets/project-edit-dark.png) |
 | ![Workspaces: directories of a home and projects, each with its home repository, and Import](assets/workspaces-dark.png) | ![The sidebar with a workspace open, its projects under it](assets/sidebar-workspace-dark.png) |
 | ![A workspace's page, with the Prompt box open](assets/workspace-prompt-dark.png) | ![Workspace settings: its home repository, keys, and Export](assets/workspace-edit-dark.png) |
 | ![A project's Files: .git and .env sealed, a file that runs marked exec](assets/files-dark.png) | ![A file of the checkout in the preview window](assets/file-dark.png) |
@@ -28,7 +28,7 @@ it with headless chromium; `task docs:shots` regenerates them into
 | ![A profile, light theme](assets/profile-light.png) | ![Integrations: a row per integration, its form on the left and the steps to its key on the right; Who shows which users get the Claude token](assets/integrations-dark.png) |
 | ![Notes: messages, replies and instructions](assets/notes-dark.png) | ![Add user](assets/user-new-dark.png) |
 | ![Add a secret](assets/secret-new-dark.png) | ![An env file](assets/envfile-dark.png) |
-| ![SSH keys](assets/keys-dark.png) | ![Generate a key](assets/keys-generate-dark.png) |
+| ![SSH keys: Name as wide as the names, Public key filling the rest](assets/keys-dark.png) | ![Generate a key](assets/keys-generate-dark.png) |
 | ![Upload a key](assets/keys-upload-dark.png) | ![Sign in](assets/login-dark.png) |
 | ![The phone: the dashboard](assets/mobile-dashboard-dark.png) | ![The phone: a folder, its Jobs table](assets/mobile-folder-dark.png) |
 | ![The phone: the drawer with the projects, folders and jobs](assets/mobile-menu-dark.png) | ![Sign in, light theme](assets/login-light.png) |
@@ -39,3 +39,4 @@ it with headless chromium; `task docs:shots` regenerates them into
 | ![Pins, light theme](assets/sidebar-pin-light.png) | ![Data retention: a table, a row per area, with Keep and Size limit selects](assets/retention-dark.png) |
 | ![Data retention, light theme](assets/retention-light.png) | ![Integrations, light theme: the Who field with a user who gets the token as admin and two who do not](assets/integrations-light.png) |
 | ![Workflows, light theme](assets/workflows-light.png) | ![Scheduled, light theme: a workflow's schedule among the jobs'](assets/schedules-light.png) |
+| ![A key's edit form: Who gets it, the roles with their counts and each user's state](assets/key-edit-dark.png) | |

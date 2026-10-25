@@ -96,7 +96,7 @@ func TestKeys_Encryption(t *testing.T) {
 	assert.NoError(t, f.opts.Keys.SetGit(context.Background(), "task_ssh_ed25519"))
 	page := f.page(t, asAdmin, "/settings/instance")
 	assert.Contains(t, page, `<span class="mono">task_encryption_ed25519</span>`)
-	assert.Contains(t, page, `<a class="mono" href="/settings/keys/task_ssh_ed25519">task_ssh_ed25519</a>`)
+	assert.Contains(t, page, `<a class="mono" href="/settings/keys/task_ssh_ed25519?next=%2Fsettings%2Finstance">task_ssh_ed25519</a>`, "Edit links returns to the Instance page")
 	assert.Contains(t, page, `data-api="/api/keys/task_encryption_ed25519/rotate" data-method="POST"`)
 	assert.Contains(t, page, "<span>Rotate Key</span>")
 }
@@ -122,7 +122,8 @@ func TestKeys_ProjectFolders(t *testing.T) {
 }
 
 // A key's edit form has a box per role and user, checked for its links,
-// and the git box; a missing key is not found.
+// and the git box in a field of its own; it returns to the page that
+// opened it; a missing key is not found.
 func TestKeys_Links(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
@@ -138,8 +139,18 @@ func TestKeys_Links(t *testing.T) {
 	assert.Contains(t, edit, `value="runner" data-type="set" checked`)
 	assert.Contains(t, edit, `value="admin" data-type="set">`)
 	assert.Contains(t, edit, `name="users" value="`+asOps+`" data-type="set" checked`)
-	assert.Contains(t, edit, `<input type="checkbox" name="git"> git pulls and clones with this key`)
+	assert.Contains(t, edit, `<div class="field">
+		<label class="check"><input type="checkbox" name="git"> git pulls and clones with this key`)
+	assert.Contains(t, edit, `data-next="/settings/keys?notice=Links+saved#key-deploy_ed25519"`)
+	assert.Contains(t, edit, `<a class="btn" href="/settings/keys">Cancel</a>`)
 	assert.Equal(t, http.StatusNotFound, f.get(t, asAdmin, "/settings/keys/missing").Status)
+
+	// Opened from another page, the form returns there: a user's edit
+	// page's Edit links says so; a link off the instance goes to Keys.
+	from := f.page(t, asAdmin, "/settings/keys/deploy_ed25519?next=/users/ops/edit")
+	assert.Contains(t, from, `data-next="/users/ops/edit?notice=Links+saved#key-deploy_ed25519"`)
+	assert.Contains(t, from, `<a class="btn" href="/users/ops/edit">Cancel</a>`)
+	assert.Contains(t, f.page(t, asAdmin, "/settings/keys/deploy_ed25519?next=//evil.example"), `<a class="btn" href="/settings/keys">Cancel</a>`)
 
 	// The policy table: ops gets the key by name and the runner role.
 	holders := list[strings.Index(list, `class="table key-holders"`):]
@@ -154,7 +165,7 @@ func TestKeys_Links(t *testing.T) {
 	assert.Contains(t, viewer, "No keys for you or your role yet")
 
 	profile := f.page(t, asAdmin, "/users/"+asOps+"/edit")
-	assert.Contains(t, profile, `<a class="mono" href="/settings/keys/deploy_ed25519">deploy_ed25519</a>`)
+	assert.Contains(t, profile, `<a class="mono" href="/settings/keys/deploy_ed25519?next=%2Fusers%2Fops%2Fedit">deploy_ed25519</a>`)
 	assert.Contains(t, profile, `href="/settings/keys/generate?for=`+asOps+`"`)
 }
 

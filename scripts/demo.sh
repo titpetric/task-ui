@@ -353,6 +353,8 @@ printf '# Labs\n\nExperiments that share nothing yet.\n' >"$work/repos/labs/READ
 repo labs "Experiments"
 api POST /workspaces -d "{\"url\":\"file://$work/repos/labs.git\",\"folder\":\"labs\",\"title\":\"Labs\"}"
 shot keys-dark /settings/keys dark 1440x1100
+# A key's edit form: Who gets it, the element every such form shares.
+shot key-edit-dark /settings/keys/deploy_ed25519 dark 1440x1000
 shot secrets-dark /settings/secrets dark 1440x1300
 # A row's [...] menu open, #actions=<n> opening row n's: a key's, its
 # details on top and Remove last, in both themes; a run of a job beside

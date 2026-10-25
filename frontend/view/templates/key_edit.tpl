@@ -7,11 +7,14 @@
 	</div>
 </div>
 
-<form class="form" data-api="/api/keys/{{ $k.Name }}" data-method="PUT" data-next="/settings/keys?notice=Links+saved">
+{{- $next := index $.Form "next" }}
+<form class="form" data-api="/api/keys/{{ $k.Name }}" data-method="PUT" data-next="{{ $next }}?notice=Links+saved#key-{{ $k.Name }}">
 	{{- template "keypolicies" (list $k.Roles $k.Users $.Users) }}
-	<label class="check"><input type="checkbox" name="git"{{ if $k.Git }} checked{{ end }}> git pulls and clones with this key <span class="faint">one key at a time; the remotes trust its public half</span></label>
+	<div class="field">
+		<label class="check"><input type="checkbox" name="git"{{ if $k.Git }} checked{{ end }}> git pulls and clones with this key <span class="faint">one key at a time; the remotes trust its public half</span></label>
+	</div>
 	<div class="form-foot">
-		<a class="btn" href="/settings/keys">Cancel</a>
+		<a class="btn" href="{{ $next }}">Cancel</a>
 		<button class="btn btn-primary" type="submit">Save</button>
 	</div>
 </form>

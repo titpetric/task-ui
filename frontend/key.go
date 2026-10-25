@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"path/filepath"
 	"slices"
+	"strings"
 
 	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/frontend/view"
@@ -172,6 +173,12 @@ func (h *Handlers) keyEdit(w http.ResponseWriter, r *http.Request) {
 	h.fillKeys(r.Context(), p)
 	p.Key = key
 	p.Users, _ = h.opts.Users.List(r.Context())
+	// The form returns to the page that opened it, ?next=, a page of
+	// this instance; anywhere else goes back to the Keys page.
+	p.Form = map[string]string{"next": "/settings/keys"}
+	if next := r.URL.Query().Get("next"); strings.HasPrefix(next, "/") && !strings.HasPrefix(next, "//") {
+		p.Form["next"] = next
+	}
 	h.render(w, http.StatusOK, "key_edit", p)
 }
 
