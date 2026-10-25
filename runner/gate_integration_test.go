@@ -49,26 +49,27 @@ func TestManager_Gate(t *testing.T) {
 	assert.Equal(t, int64(1), run.Forced)
 }
 
-// The job's own hours win over the folder's, the schedule skips the gate,
-// and bad hours refuse the run with what is wrong.
-func TestManager_GateJobAndSchedule(t *testing.T) {
+// The schedule skips the gate, a built-in takes it as any job does, and
+// bad hours refuse the run with what is wrong.
+func TestManager_GateSchedule(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
 	req := f.shellJob("gated", "echo gated", false)
 	req.Folder.Hours = "sun 0-1"
-	req.Job.Hours = "daily 0-24"
 	f.now = time.Date(2026, time.October, 14, 12, 0, 0, 0, time.Local)
 
-	session, err := f.manager.Start(context.Background(), req)
-	assert.NoError(t, err)
-	collect(t, session.Attach(false))
+	shell := req
+	shell.Job = req.Folder.Job("@shell")
+	if shell.Job != nil {
+		_, err := f.manager.Start(context.Background(), shell)
+		assert.ErrorIs(t, err, runner.ErrOutOfHours)
+	}
 
-	req.Job.Hours = ""
-	_, err = f.manager.Start(context.Background(), req)
+	_, err := f.manager.Start(context.Background(), req)
 	assert.ErrorIs(t, err, runner.ErrOutOfHours)
 
 	req.Scheduled = true
-	session, err = f.manager.Start(context.Background(), req)
+	session, err := f.manager.Start(context.Background(), req)
 	assert.NoError(t, err)
 	collect(t, session.Attach(false))
 

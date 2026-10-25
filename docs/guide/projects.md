@@ -67,7 +67,8 @@ stays behind.
 What moves and what stays:
 
 - the checkout moves, renamed in place, with the folders inside it;
-- the project row moves, with its title, allow lists and hours;
+- the project row moves, with its title and allow lists, and the
+  project takes the hours of the workspace it moves into;
 - the users whose folder list names the project, or a folder inside it,
   get the new ID in its place, so access follows the project;
 - the pins of every user that name the project, a folder inside it or a
@@ -222,8 +223,8 @@ Open a folder from the sidebar:
   job and has Claude summarise the run on its page when it ends (see
   [Runs](runs.md#run-and-summarize)), **View the last run**, the
   **Summary** of that run once Claude wrote one, **History**, **Pin**,
-  and, on a job with hours, **Run force**; any other job forces from its
-  run's window. **Kill** ends a run in progress. The buttons follow the
+  and, in a workspace with hours, **Run force**; without hours a job
+  forces from its run's window. **Kill** ends a run in progress. The buttons follow the
   runs as they start and end, with no reload.
 - **Prompt**: the box that asks Claude Code there, below the jobs (see
   [Prompt](#prompt)).
@@ -260,7 +261,7 @@ Open a folder from the sidebar:
   front. A symlink that leads out of the checkout opens nothing either.
   Whoever has the server reaches the sealed entries there, and so does
   a job, which runs as the server's user.
-- **Folder**: its path, its sources, who can run it, its hours, the
+- **Folder**: its path, its sources, who can run it, its workspace's hours, the
   files it includes, its schedules. **Show** beside a pipeline file opens
   it, coloured, in a window. A folder in a git checkout also shows the
   checkout's size: its files, and the history in `.git`.
@@ -416,7 +417,7 @@ directory in `TASK_UI_PROMPT_DIR`; the recents and the runs list show it
 under the folder. A prompt at the root runs as `@claude-prompt` of the folder `_`, and its
 run shows as `@claude-prompt`. The
 run gets the secrets of the folder, as its other jobs do, and runs out of
-its hours too, as it runs none of the folder's jobs; no `POST /api/runs`
+the workspace's hours too, as it runs none of the folder's jobs; no `POST /api/runs`
 starts it, as a prompt needs its thread. Who sees the folder sees its
 prompt runs with the `prompt/view` permission; who asks always sees
 theirs, and may stop it. One prompt runs per directory: another there
@@ -489,8 +490,9 @@ instance key and link it.
 
 ## Hours
 
-A user with `project/edit` can limit a folder or a job to office hours (see
-[Settings](settings.md#projects)). Out of hours **Run** fails.
+A workspace's office hours gate every run of a job in its folders, the
+built-ins too (see [Workspaces](workspaces.md#hours)); a project and a
+job have no hours of their own. Out of hours **Run** fails.
 **Run force** still works, but asks why: it needs a reason, keeps it
 with the run, and every list of runs shows it.
 

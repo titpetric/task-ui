@@ -21,9 +21,9 @@ func TestFolder(t *testing.T) {
 	f := newFixture(t)
 	f.run(t, "infra", "plan", "ops", model.StateFailed)
 
-	// Run force stands beside Run only for a job with hours, where the
-	// server can refuse a plain run; the window of a failed run forces it.
-	f.infra.Job("plan").Hours = "mon-fri 9-17"
+	// Run force stands beside Run only in a workspace with hours, where
+	// the server can refuse a plain run; the window of a failed run forces it.
+	f.infra.Hours = "mon-fri 9-17"
 
 	body := f.page(t, asOps, "/f/_/infra")
 	assert.Contains(t, body, "The servers")
@@ -34,7 +34,7 @@ func TestFolder(t *testing.T) {
 	assert.Contains(t, body, `data-run data-folder="infra" data-job="plan"`)
 	// Run force sits in the row's menu; the button carries the last run's colour.
 	assert.Contains(t, body, `data-force="" title="Run out of hours, with a reason" data-run="" data-folder="infra" data-dir="" data-job="plan"`)
-	assert.Equal(t, 1, strings.Count(body, "data-force"), "only plan has hours")
+	assert.Equal(t, 3, strings.Count(body, "data-force"), "every job of a workspace with hours")
 	assert.Contains(t, body, `class="cc named bad" data-run data-folder="infra" data-job="plan"`)
 	// No env file filled: no Environment section at all.
 	assert.NotContains(t, body, "Environment")
@@ -252,15 +252,14 @@ func TestFolder_Hours(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
 	f.infra.Hours = "mon-fri 9-17\nfri 9-13"
-	f.infra.Job("plan").Hours = "daily 0-24"
 
-	// The fixture's clock is a Friday night.
+	// The fixture's clock is a Friday night; a job runs in its
+	// workspace's hours, which the folder carries.
 	body := f.page(t, asOps, "/f/_/infra")
 	assert.Contains(t, body, "mon-fri 9-17, fri 9-13 <span class=\"badge bad\">out of hours now</span>")
 
 	job := f.page(t, asOps, "/f/_/infra/plan")
-	assert.Contains(t, job, "daily 0-24 <span class=\"badge ok\">open now</span>")
-	assert.Contains(t, job, "the folder runs mon-fri 9-17, fri 9-13")
+	assert.Contains(t, job, "mon-fri 9-17, fri 9-13 <span class=\"badge bad\">out of hours now</span>")
 
 	slow := f.page(t, asOps, "/f/_/infra/slow")
 	assert.Contains(t, slow, "out of hours now")

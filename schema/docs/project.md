@@ -14,8 +14,6 @@ Project.
 | commands       | varchar  |     | Commands       |
 | sources        | varchar  |     | Sources        |
 | job_allow      | varchar  |     | Job Allow      |
-| hours          | varchar  |     | Hours          |
-| job_hours      | varchar  |     | Job Hours      |
 | created_at     | datetime |     | Created At     |
 | updated_at     | datetime |     | Updated At     |
 | shallow        | boolean  |     | Shallow        |

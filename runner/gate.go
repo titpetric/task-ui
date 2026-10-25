@@ -18,15 +18,16 @@ var (
 	ErrReasonNeeded = errors.New("enter a reason to run outside its hours")
 )
 
-// gate checks the hours of the job: inside them a run goes ahead; outside
-// them it needs Force and a reason, which the run records. Scheduled runs
-// are not gated: the schedule is the decision; nor is a prompt's, which
-// asks Claude about the folder and runs none of its jobs.
+// gate checks the hours of the folder's workspace, which every job of the
+// folder runs under, the built-ins too: inside them a run goes ahead;
+// outside them it needs Force and a reason, which the run records.
+// Scheduled runs are not gated: the schedule is the decision; nor is a
+// prompt's, which asks Claude about the folder and runs none of its jobs.
 func (m *Manager) gate(req Request) (bool, error) {
-	if req.Scheduled || req.Job.IsPrompt() {
+	if req.Scheduled || req.Job.IsPrompt() || req.Folder == nil {
 		return false, nil
 	}
-	rules, err := hours.Parse(req.Folder.HoursOf(req.Job))
+	rules, err := hours.Parse(req.Folder.Hours)
 	if err != nil {
 		return false, err
 	}

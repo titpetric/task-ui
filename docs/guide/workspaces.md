@@ -346,6 +346,30 @@ Before the job, the run pulls a home that holds a checkout, then the
 project's checkout, so the shared tooling is current when the job
 starts. When either pull fails, the run fails with it.
 
+## Hours
+
+**Hours** on a workspace's settings page says when runs in the
+workspace may start: every job of its folders and projects, the
+built-ins such as `@shell` too. One rule per line, days then a span;
+the last rule that covers a day decides it:
+
+```
+mon-fri 9-17
+fri 9-13
+```
+
+runs Monday to Thursday nine to five, Friday mornings, and never on the
+weekend. Days are names or ranges (`mon-fri`, `sat,sun`, `weekdays`,
+`daily`); spans are hours or `hh:mm`. Empty, the default, allows any
+time. The workspace is the one place hours live: a project and a job
+take their workspace's, and the default workspace's apply to the
+projects at the root.
+
+Out of hours **Run** fails, and **Run force** asks why: it needs a
+reason, keeps it with the run, and every list of runs shows it. A
+schedule and a prompt go ahead at any time: the schedule is the
+decision, and a prompt runs none of the folder's jobs.
+
 ## Keys
 
 Every workspace has SSH keys of its own, in the key folder,

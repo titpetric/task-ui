@@ -579,12 +579,12 @@
 {{- end }}
 {{- end }}
 
-{{- /* forceButton holds Run force, beside Run only for a job with hours,
-     where task-ui refuses a plain run outside them. To force a run that
+{{- /* forceButton holds Run force, beside Run only in a workspace with
+     hours, where task-ui refuses a plain run outside them. To force a run that
      failed, use its window. (list $ folder job) */}}
 {{ define "forceButton" }}
 {{- $ := index . 0 }}{{ $p := index . 1 }}{{ $r := index . 2 -}}
-{{- if $p.HoursOf $r }}
+{{- if $p.Hours }}
 <button type="button" class="btn btn-danger btn-sm" data-run data-force data-folder="{{ $p.ID }}"{{ with $r.Dir }} data-dir="{{ . }}"{{ end }} data-job="{{ $r.ID }}" data-title="{{ $p.ID }}{{ with $r.Dir }}/{{ . }}{{ end }} / {{ $r.Name }}" title="Run out of hours, with a reason">Run force</button>
 {{- end }}
 {{- end }}

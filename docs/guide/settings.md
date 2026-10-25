@@ -824,7 +824,9 @@ workspace** makes one under the folder you name, its home cloned from a
 **Home repository** when the form has one, **Move up** and **Move
 down** order them, and **Delete** deletes one with everything inside
 it. **Workspace settings** opens a workspace's settings page: its
-title, description and **Recursive**, the toggle a project has, its
+title, description, **Recursive**, the toggle a project has, and
+**Hours**, when its runs may start (see
+[Workspaces](workspaces.md#hours)), its
 **Home repository**, with **Pull now**, **Replace** or **Clone**, and
 **Remove**, its **Projects**, in the table of the Projects page, and
 its **Keys**, the SSH keys of its runs, which the [Keys](#keys) page
@@ -874,17 +876,6 @@ stay as they are:
   folder's, and none checked there inherits;
 - which **sources** to read, which is also how a folder with a pipeline
   gets its Makefile or scripts back as jobs;
-- **hours**, one rule per line, days then a span. The last rule that
-  covers a day decides it:
-
-  ```
-  mon-fri 9-17
-  fri 9-13
-  ```
-
-  runs Monday to Thursday nine to five, Friday mornings, and never on the
-  weekend. Days are names or ranges (`mon-fri`, `sat,sun`, `weekdays`,
-  `daily`); spans are hours or `hh:mm`;
 - **Recursive**, on by default, lists the folders inside the project as
   deep as they go; off lists the project and its top-level folders
   alone, to keep a tree's nested folders out of the catalogue (see
@@ -894,9 +885,9 @@ stay as they are:
   [Move a project](projects.md#move-a-project-to-another-workspace)
   describes.
 
-The API sets three more on a project: `commands`, the program a kind of
-job runs with (`make: gmake`), and `job_allow` and `job_hours`, who may
-run and when, per job.
+The API sets two more on a project: `commands`, the program a kind of
+job runs with (`make: gmake`), and `job_allow`, who may run, per job.
+A project has no hours: its workspace's apply.
 
 ![Project settings](../assets/project-edit-dark.png)
 

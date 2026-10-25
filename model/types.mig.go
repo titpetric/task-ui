@@ -981,12 +981,6 @@ type Project struct {
 	// Job Allow
 	JobAllow string `db:"job_allow" json:"job_allow"`
 
-	// Hours
-	Hours string `db:"hours" json:"hours"`
-
-	// Job Hours
-	JobHours string `db:"job_hours" json:"job_hours"`
-
 	// Created At
 	CreatedAt *time.Time `db:"created_at" json:"created_at"`
 
@@ -1060,18 +1054,6 @@ func (p *Project) GetJobAllow() string { return p.JobAllow }
 // SetJobAllow sets JobAllow to the provided value.
 func (p *Project) SetJobAllow(val string) { p.JobAllow = val }
 
-// GetHours will return the value of Hours.
-func (p *Project) GetHours() string { return p.Hours }
-
-// SetHours sets Hours to the provided value.
-func (p *Project) SetHours(val string) { p.Hours = val }
-
-// GetJobHours will return the value of JobHours.
-func (p *Project) GetJobHours() string { return p.JobHours }
-
-// SetJobHours sets JobHours to the provided value.
-func (p *Project) SetJobHours(val string) { p.JobHours = val }
-
 // GetCreatedAt will return the value of CreatedAt.
 func (p *Project) GetCreatedAt() *time.Time { return p.CreatedAt }
 
@@ -1100,7 +1082,7 @@ func (p *Project) SetSidebarHidden(val bool) { p.SidebarHidden = val }
 const ProjectTable = "`project`"
 
 // ProjectFields is a list of all columns in the DB table.
-var ProjectFields = []string{"id", "folder", "title", "description", "source_url", "branch", "allow", "commands", "sources", "job_allow", "hours", "job_hours", "created_at", "updated_at", "shallow", "sidebar_hidden"}
+var ProjectFields = []string{"id", "folder", "title", "description", "source_url", "branch", "allow", "commands", "sources", "job_allow", "created_at", "updated_at", "shallow", "sidebar_hidden"}
 
 // ProjectPrimaryFields are the primary key fields in the DB table.
 var ProjectPrimaryFields = []string{"id"}
@@ -2746,6 +2728,9 @@ type Workspace struct {
 	// Home Branch
 	HomeBranch string `db:"home_branch" json:"home_branch"`
 
+	// Hours
+	Hours string `db:"hours" json:"hours"`
+
 	// Shallow
 	Shallow bool `db:"shallow" json:"shallow"`
 
@@ -2810,6 +2795,12 @@ func (w *Workspace) GetHomeBranch() string { return w.HomeBranch }
 // SetHomeBranch sets HomeBranch to the provided value.
 func (w *Workspace) SetHomeBranch(val string) { w.HomeBranch = val }
 
+// GetHours will return the value of Hours.
+func (w *Workspace) GetHours() string { return w.Hours }
+
+// SetHours sets Hours to the provided value.
+func (w *Workspace) SetHours(val string) { w.Hours = val }
+
 // GetShallow will return the value of Shallow.
 func (w *Workspace) GetShallow() bool { return w.Shallow }
 
@@ -2832,7 +2823,7 @@ func (w *Workspace) SetSort(val int64) { w.Sort = val }
 const WorkspaceTable = "`workspace`"
 
 // WorkspaceFields is a list of all columns in the DB table.
-var WorkspaceFields = []string{"id", "folder", "title", "description", "created_at", "updated_at", "home_project_id", "home_url", "home_branch", "shallow", "sidebar_limit", "sort"}
+var WorkspaceFields = []string{"id", "folder", "title", "description", "created_at", "updated_at", "home_project_id", "home_url", "home_branch", "hours", "shallow", "sidebar_limit", "sort"}
 
 // WorkspacePrimaryFields are the primary key fields in the DB table.
 var WorkspacePrimaryFields = []string{"id"}

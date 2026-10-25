@@ -103,7 +103,6 @@ func (h *Handlers) projectEdit(w http.ResponseWriter, r *http.Request) {
 			"title":       project.Title,
 			"description": project.Description,
 			"sources":     strings.Join(project.SourceList(), ", "),
-			"hours":       project.Hours,
 		}
 	}
 	p.Users, _ = h.opts.Users.List(r.Context())

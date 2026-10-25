@@ -586,14 +586,6 @@
       type: text
       comment: Job Allow
       datatype: varchar
-    - name: hours
-      type: text
-      comment: Hours
-      datatype: varchar
-    - name: job_hours
-      type: text
-      comment: Job Hours
-      datatype: varchar
     - name: created_at
       type: timestamp
       comment: Created At
@@ -1628,6 +1620,10 @@
     - name: home_branch
       type: text
       comment: Home Branch
+      datatype: varchar
+    - name: hours
+      type: text
+      comment: Hours
       datatype: varchar
     - name: shallow
       type: boolean

@@ -149,7 +149,7 @@ domains, the domains to `model` and `storage`, `model` to nothing of ours.
 | `folder`    | the catalogue: a `Folder` with its `Job`s, discovery under the root, the project configuration |
 | `runner`    | sessions: a `Process` on a pty, the terminal `Frame`, subscribers, artifacts |
 | `scheduler` | cron `Expression`s and the `Loop` that starts due schedules                  |
-| `hours`     | the office hours `Rules` a folder or job may run in                          |
+| `hours`     | the office hours `Rules` the runs of a workspace may start in                |
 | `recording` | the asciicast files                                                          |
 | `access`    | who may do what: the password file, `Sessions`, tokens, the `Guard`          |
 | `secret`    | the secrets, encrypted at rest with the instance's encryption key through its `Vault`, their scopes and their read log |

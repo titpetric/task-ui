@@ -25,9 +25,9 @@ type Config struct {
 	Sources []string `yaml:"sources"`
 	// Jobs narrows who may run single jobs: job ID to users or roles.
 	Jobs map[string][]string `yaml:"jobs"`
-	// Hours says when the folder's jobs may run; JobHours does so per job.
-	Hours    string            `yaml:"hours"`
-	JobHours map[string]string `yaml:"job_hours"`
+	// Hours says when the runs of a workspace's folders may start; only
+	// the configuration of a workspace carries it.
+	Hours string `yaml:"hours"`
 	// Shallow lists the folder and its top-level folders alone:
 	// discovery goes one level into it, no deeper. Off, the default, the
 	// listing shows the folders inside it as deep as they go.
@@ -78,14 +78,6 @@ func (c Config) Apply(f *Folder) {
 			job.Allow = allow
 		}
 	}
-	if c.Hours != "" {
-		f.Hours = c.Hours
-	}
-	for name, hours := range c.JobHours {
-		if job := f.Job(name); job != nil {
-			job.Hours = hours
-		}
-	}
 }
 
 // ConfigOf reads a project row as the configuration of its folder.
@@ -101,8 +93,6 @@ func ConfigOf(p *model.Project) Config {
 		Commands:    p.CommandMap(),
 		Sources:     p.SourceList(),
 		Jobs:        p.JobAllowMap(),
-		Hours:       p.Hours,
-		JobHours:    p.JobHoursMap(),
 		Shallow:     p.Shallow,
 	}
 }
@@ -111,7 +101,7 @@ func ConfigOf(p *model.Project) Config {
 func WorkspaceConfigsOf(workspaces []model.Workspace) []Config {
 	configs := make([]Config, 0, len(workspaces))
 	for _, w := range workspaces {
-		configs = append(configs, Config{ID: w.Folder, Shallow: w.Shallow})
+		configs = append(configs, Config{ID: w.Folder, Shallow: w.Shallow, Hours: w.Hours})
 	}
 	return configs
 }

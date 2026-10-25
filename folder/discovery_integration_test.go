@@ -209,6 +209,18 @@ func TestDiscovery_IgnoredCheckouts(t *testing.T) {
 		t.Fatalf("project row: %+v", f)
 	}
 
+	// Every folder of a workspace runs in its hours; the default
+	// workspace's hours stay with its own folders.
+	gated := &Discovery{Root: root, Discover: true, Workspaces: []Config{{ID: "ws", Hours: "mon-fri 9-17"}, {ID: "_", Hours: "sun 1-2"}}}
+	for _, f := range gated.List() {
+		if f.Hours != "mon-fri 9-17" {
+			t.Fatalf("hours of %s: %q", f.ID, f.Hours)
+		}
+	}
+	if gated.HoursOf("_") != "sun 1-2" || gated.HoursOf("nope") != "" {
+		t.Fatalf("hours of the workspaces: %q", gated.HoursOf("_"))
+	}
+
 	// The default workspace is the root: its projects are under src.
 	other := t.TempDir()
 	gitInit(t, filepath.Join(other, "src"))

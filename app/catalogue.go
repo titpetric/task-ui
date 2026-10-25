@@ -82,7 +82,7 @@ func (c *Catalogue) Find(id string) *folder.Folder {
 	if f := d.Find(id); f != nil || id != model.Default {
 		return f
 	}
-	root := &folder.Folder{ID: model.Default, Title: model.Default, Dir: c.Root}
+	root := &folder.Folder{ID: model.Default, Title: model.Default, Dir: c.Root, Hours: d.HoursOf(model.Default)}
 	if slices.ContainsFunc(d.Workspaces, func(cfg folder.Config) bool { return cfg.ID == model.Default }) {
 		root.Dir = layout.SrcDir(c.Root, model.Default)
 	}
