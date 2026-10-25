@@ -14,8 +14,9 @@ with a play button.
 
 With `prompt/edit` and the Claude Code integration set up for you, the
 Workflows page has a **Prompt** box: describe a workflow to build or
-change, and Claude Code builds it, as a run of `@claude-prompt` as you
-in the root, or the folder **Run in** picks. Claude works with the task
+change, and Claude Code builds it, as a run of `@claude-prompt` as you,
+or as the user an admin picks beside it, in the root, or the folder
+**Run in** picks. Claude works with the task
 tools of [MCP](mcp.md#claude-code-inside-task-ui), as you: it reads the
 workflows and jobs there are, saves the workflow with prompt steps and
 existing jobs before it writes any file, runs it and waits, reads how it

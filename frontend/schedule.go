@@ -43,9 +43,17 @@ func (h *Handlers) runAsUsers(r *http.Request, p *view.Page) {
 		return
 	}
 	p.Users, _ = h.opts.Users.List(r.Context())
+	if p.UserKeys == nil {
+		p.UserKeys = h.runAsKeys(r, p.Users)
+	}
+}
+
+// runAsKeys returns the instance SSH keys each user's runs get, by name;
+// nil without a key folder.
+func (h *Handlers) runAsKeys(r *http.Request, users []model.User) map[string][]string {
 	if h.opts.Keys == nil {
-		return
+		return nil
 	}
 	keys, _ := h.opts.Keys.List(r.Context())
-	p.UserKeys = view.UserKeys(keys, p.Users)
+	return view.UserKeys(keys, users)
 }

@@ -136,6 +136,32 @@ header.top:has(.header-prompt:focus) h1 .logo .cursor {
   animation: none;
 }
 
+/* Who an admin's header prompt runs as: a small dropdown beside the
+   field, out of sight with it until the field has focus or text, and
+   while the pick itself is in use. */
+header.top .header-runas {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s;
+
+  & .dd {
+    width: auto;
+  }
+
+  & .dd-button {
+    height: var(--control-xs);
+    padding-inline: 0.5rem;
+    background: var(--ink-1);
+    color: var(--text-dim);
+    font-size: var(--fs-xs);
+  }
+}
+
+header.top:has(.header-prompt:focus, .header-prompt.typed, .header-runas:focus-within, .header-runas .open) .header-runas {
+  opacity: 1;
+  pointer-events: auto;
+}
+
 header.top .header-answer {
   position: absolute;
   top: 100%;

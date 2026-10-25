@@ -58,7 +58,9 @@ func TestPage_Chrome(t *testing.T) {
 	assert.Contains(t, body, prompt)
 	head := body[strings.Index(body, `<header class="top"`):strings.Index(body, `</header>`)]
 	assert.NotContains(t, head, "placeholder")
-	assert.NotContains(t, head[strings.Index(head, "header-prompt"):strings.Index(head, `<details class="user"`)], "aria-label")
+	assert.NotContains(t, head[strings.Index(head, "header-prompt"):strings.Index(head, "header-runas")], "aria-label")
+	// An admin picks who the prompt runs as, after the field.
+	assert.Contains(t, head, prompt+"\n\t\t"+`<span class="header-runas"><select class="header-prompt-user" id="header-prompt-user" tabindex="-1" aria-label="Runs as">`)
 	// Off a folder or a run it asks at the root, and the logo is a button
 	// of its own that opens the panel, the name a link home.
 	assert.Contains(t, head, `<header class="top" data-prompt-folder="_" data-prompt-dir="" data-prompt-run="" data-prompt-label="_" data-prompt-href="/f/_">`)

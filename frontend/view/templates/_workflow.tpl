@@ -160,7 +160,7 @@
 			<div class="wf-fields wf-cascade">
 				{{- template "stepspace" (list $p ($p.StepSpaceOf $s.Folder) false) }}
 				<div class="field">
-					<span class="label">Asks in <span class="faint">the folder Claude works in, as you</span></span>
+					<span class="label">Asks in <span class="faint">the folder Claude works in, as the workflow's user</span></span>
 					{{- $found := eq $s.Folder "_" }}
 					<select data-step-place aria-label="Folder Claude works in">
 						<option value="_" data-workspace="_" data-rel="."{{ if eq $s.Folder "_" }} selected{{ end }}>the root</option>

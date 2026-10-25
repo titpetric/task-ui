@@ -126,7 +126,8 @@ the recents, the runs list, a run's page and the MCP tools' text, and a
 directory of the root by its path, as `deploy / up`; the run's row keeps
 the folder `_`.
 A prompt on a folder page runs `@claude-prompt` of that folder as the
-user who asks (see [Prompt](projects.md#prompt)); that prompt and its
+user who asks, or as the user an admin picks (see
+[Prompt](projects.md#prompt)); that prompt and its
 answer are a thread of the folder's page, never of the board.
 
 The runs of older versions keep their folder, `internal`, and their
