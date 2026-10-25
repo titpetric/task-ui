@@ -1,6 +1,7 @@
 package view
 
 import (
+	"strconv"
 	"strings"
 
 	"github.com/titpetric/task-ui/folder"
@@ -72,6 +73,14 @@ func RemoveConfirm(id, remote string) string {
 		return "Remove the folder " + id + " and its checkout? The checkout has no remote to clone it again from."
 	}
 	return "Remove the folder " + id + " and its checkout? You can clone it again from " + remote + "."
+}
+
+// DeleteBlocked returns the menu line of a workspace that holds secrets: delete them first.
+func DeleteBlocked(secrets int) string {
+	if secrets == 1 {
+		return "Delete its 1 secret first"
+	}
+	return "Delete its " + strconv.Itoa(secrets) + " secrets first"
 }
 
 // DeleteWorkspaceConfirm returns what Delete of a workspace asks, or

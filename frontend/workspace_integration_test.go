@@ -133,8 +133,15 @@ func TestWorkspaces_Default(t *testing.T) {
 		assert.NoError(t, os.MkdirAll(filepath.Join(f.root, dir), 0o755))
 	}
 
+	f.withKey(t)
+	assert.NoError(t, f.opts.Secrets.Set(ctx, &model.Secret{Scope: "workspace:malta", Name: "TOKEN", Content: "shared value"}))
+
 	body := f.page(t, asAdmin, "/settings/workspaces")
 	assert.True(t, strings.Index(body, `href="/f/_"`) < strings.Index(body, `href="/f/malta"`), "_ lists first")
+	assert.Contains(t, body, `<th class="hide-sm">Secrets</th>`)
+	assert.Contains(t, body, `<a href="/settings/workspaces/malta/secrets" title="delete them before deleting the workspace">1</a>`)
+	assert.Contains(t, body, `href="/settings/workspaces/malta/secrets"><svg class="ic"><use href="#i-secret"/></svg><span>Delete its 1 secret first</span>`)
+	assert.NotContains(t, body, `data-delete="/api/workspaces/malta"`, "a workspace with secrets has no Delete")
 	assert.Contains(t, body, `<a href="/settings/workspaces/_" title="extra, infra, private, site">4</a>`)
 	assert.Contains(t, body, `<a href="/settings/workspaces/malta" title="malta/deploy">1</a>`)
 	assert.Contains(t, body, `data-delete="/api/workspaces/_"`)
@@ -142,8 +149,6 @@ func TestWorkspaces_Default(t *testing.T) {
 	assert.Contains(t, body, `<span>Empty</span>`)
 	assert.NotContains(t, body, `data-folder="_"`)
 	assert.NotContains(t, body, `data-workspace-move="up" data-folder="malta"`)
-	assert.Contains(t, body, `data-delete="/api/workspaces/malta"`)
-
 	edit := f.page(t, asAdmin, "/settings/workspaces/_")
 	assert.Contains(t, edit, `data-api="/api/workspaces/_"`)
 	assert.Contains(t, edit, "the root, "+f.root)
@@ -154,4 +159,9 @@ func TestWorkspaces_Default(t *testing.T) {
 	assert.NoError(t, f.opts.Workspaces.Create(ctx, &model.Workspace{Folder: "gozo"}))
 	body = f.page(t, asAdmin, "/settings/workspaces")
 	assert.Contains(t, body, `<span class="faint">none</span>`)
+	assert.Contains(t, body, `data-delete="/api/workspaces/gozo"`)
+
+	malta := f.page(t, asAdmin, "/settings/workspaces/malta")
+	assert.Contains(t, malta, `<span>Delete its 1 secret first</span>`)
+	assert.NotContains(t, malta, `data-delete="/api/workspaces/malta"`)
 }

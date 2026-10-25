@@ -1,6 +1,6 @@
 {{ define "content" }}
 {{- $ws := .Workspace }}
-{{- $nested := index .Nested $ws.Folder }}{{ $default := eq $ws.Folder "_" }}
+{{- $nested := index .Nested $ws.Folder }}{{ $default := eq $ws.Folder "_" }}{{ $secrets := index .SecretCounts $ws.Folder }}
 <div class="page-head">
 	<div>
 		<h2>Workspace settings <span class="badge">{{ $ws.Folder }}</span></h2>
@@ -15,7 +15,8 @@
 		{{- end }}
 		{{ template "menu" (menu (print "Actions on " $ws.Folder)
 			(item "folder-open" "Open" "href" ($.Href $ws.Folder))
-			(and (.Can "workspace/delete") (danger "trash" (or (and $default "Empty") "Delete") "data-delete" (print "/api/workspaces/" $ws.Folder) "data-confirm" (deleteWorkspaceConfirm $ws.Folder $nested) "data-confirm-ok" (or (and $default "Empty") "Delete") "data-next" (or (and $default "/settings/workspaces?notice=Workspace+emptied") "/settings/workspaces?notice=Workspace+deleted")))
+			(and (.Can "workspace/delete") $secrets (item "secret" (deleteBlocked $secrets) "href" (print "/settings/workspaces/" $ws.Folder "/secrets")))
+			(and (.Can "workspace/delete") (not $secrets) (danger "trash" (or (and $default "Empty") "Delete") "data-delete" (print "/api/workspaces/" $ws.Folder) "data-confirm" (deleteWorkspaceConfirm $ws.Folder $nested) "data-confirm-ok" (or (and $default "Empty") "Delete") "data-next" (or (and $default "/settings/workspaces?notice=Workspace+emptied") "/settings/workspaces?notice=Workspace+deleted")))
 		) }}
 	</div>
 </div>

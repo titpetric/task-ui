@@ -23,6 +23,7 @@ func (h *Handlers) workspaces(w http.ResponseWriter, r *http.Request) {
 	p.Root = h.opts.Root
 	p.WorkspaceList = h.workspaceList(r.Context())
 	p.Nested = h.nestedProjects(r.Context())
+	p.SecretCounts = h.secretCounts(r.Context(), p.WorkspaceList)
 	p.Homes = h.homes(p.WorkspaceList)
 	h.render(w, http.StatusOK, "workspaces", p)
 }
@@ -61,6 +62,7 @@ func (h *Handlers) workspaceEdit(w http.ResponseWriter, r *http.Request) {
 	p.Workspace = workspace
 	p.Root = h.opts.Root
 	p.Nested = h.nestedProjects(r.Context())
+	p.SecretCounts = h.secretCounts(r.Context(), []model.Workspace{*workspace})
 	p.Form = map[string]string{
 		"title":       workspace.Title,
 		"description": workspace.Description,
@@ -120,6 +122,20 @@ func (h *Handlers) workspaceList(ctx context.Context) []model.Workspace {
 	}
 	workspaces, _ := h.opts.Workspaces.List(ctx)
 	return workspaces
+}
+
+// secretCounts returns how many secrets each workspace holds, by its
+// folder, none without a secret store.
+func (h *Handlers) secretCounts(ctx context.Context, workspaces []model.Workspace) map[string]int {
+	counts := map[string]int{}
+	if h.opts.Secrets == nil {
+		return counts
+	}
+	for _, ws := range workspaces {
+		secrets, _ := h.opts.Secrets.Encrypted(ctx, ws.Folder)
+		counts[ws.Folder] = len(secrets)
+	}
+	return counts
 }
 
 // nestedProjects returns the projects inside each workspace, by
