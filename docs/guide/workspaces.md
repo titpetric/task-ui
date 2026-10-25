@@ -159,8 +159,9 @@ vendoring.
 
 Settings, **Workspaces** manages them: Allow View on Workspaces,
 `workspace/view`, opens the page, Allow Edits, `workspace/edit`, adds,
-configures, orders, exports and imports, and Allow Deletes,
-`workspace/delete`, removes one. The page lists each workspace with its
+configures and orders, and Allow Deletes, `workspace/delete`, removes
+one. Export and Import are an admin's: the bundle holds the workspace's
+private keys and secrets. The page lists each workspace with its
 home repository, or "empty", and the projects cloned inside it, in the
 sidebar's order.
 
@@ -199,8 +200,8 @@ sidebar's order.
   directory with everything in it, the home included; its confirm names
   those projects first. The default workspace has none: `DELETE
   /api/workspaces/_` answers `409`.
-- **Import**, under the list, adds a workspace from a bundle another
-  instance exported (see [Move to another
+- **Import**, at the top right for an admin, adds a workspace from a
+  bundle another instance exported (see [Move to another
   instance](#move-to-another-instance)).
 
 ## Clone a project into one
@@ -400,8 +401,8 @@ or another workspace's keys. Schedules, workflows, runs and artifacts
 stay on the instance, as do the integrations. The bundle of `_` leaves
 out the named workspaces and `internal`.
 
-**Export** at the top right of a workspace's settings page opens a
-dialog for the passphrase, typed twice, or made by **Generate**: 24
+**Export** at the top right of a workspace's settings page, which an
+admin sees, opens a dialog for the passphrase, typed twice, or made by **Generate**: 24
 random characters, shown once with a copy button. Store it before you
 export, since nothing recovers it. **Export** in the dialog then
 downloads the bundle; the passphrase goes in the request body, never
@@ -447,7 +448,10 @@ that name exists. An export's passphrase under 12 characters, a wrong
 passphrase on import, a file that is not a bundle, and an entry other
 than `manifest.json` or a `.key` or `.pub` file of `.ssh/` answer `400`;
 bundled keys held here answer `409`, and a file over the upload limit
-`413`. Both routes take `workspace/edit`.
+`413`. Both routes take an admin, `403` for anyone else, `workspace/edit`
+or not: the bundle alone, of everything task-ui hands out, holds private
+keys, inside its passphrase, and the import writes them into the key
+folder.
 
 | Limit | Size |
 |-------|------|

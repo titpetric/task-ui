@@ -46,8 +46,8 @@ func NewMatrix(p *config.Permissions, policy permission.Policy, effective map[st
 		}
 		m.Sections = append(m.Sections, row)
 	}
-	// A rule a section adds, as key/read, is a row of its own: no
-	// column of every section holds it.
+	// A rule a section adds is a row of its own: no column of every
+	// section holds it.
 	for _, extra := range p.Extra {
 		title := extra.Title
 		for _, section := range p.Sections {

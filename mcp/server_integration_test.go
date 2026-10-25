@@ -193,7 +193,7 @@ func TestServer_ServeHTTP(t *testing.T) {
 	assert.Equal(t, http.StatusAccepted, status)
 	assert.Len(t, raw, 0)
 
-	assert.Len(t, f.rpc(t, "admin", "tools/list", nil).Result.Tools, 19)
+	assert.Len(t, f.rpc(t, "admin", "tools/list", nil).Result.Tools, 18)
 	assert.Equal(t, -32601, f.rpc(t, "admin", "prompts/list", nil).Error.Code)
 	assert.Equal(t, -32602, f.rpc(t, "admin", "tools/call", map[string]any{"name": "nothing"}).Error.Code)
 

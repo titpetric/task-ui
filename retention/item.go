@@ -4,10 +4,10 @@ import (
 	"time"
 )
 
-// Item is what a rule keeps or lets go: a recording, a version of
-// an artifact, a read of a secret. A busy item stays whatever the rule
-// says, such as the recording of a run in progress, and counts towards
-// the limit.
+// Item is what a rule keeps or lets go: a recording, a run, a thread, a
+// version of an artifact, a read of a secret. A busy item stays whatever
+// the rule says, such as the recording of a run in progress, and counts
+// towards the limit. Size is zero in an area whose items have none.
 type Item struct {
 	ID   string
 	At   time.Time

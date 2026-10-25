@@ -72,8 +72,7 @@ func (h *Handlers) keysOff(w http.ResponseWriter) bool {
 
 // listKeys returns every key of the key folder, public halves and
 // fingerprints only: purpose, algorithm and size, scope, the roles and
-// users an SSH key goes to, the one git pulls with, and the reads of each
-// over MCP or the API, with the last read. Takes key/view.
+// users an SSH key goes to, and the one git pulls with. Takes key/view.
 func (h *Handlers) listKeys(w http.ResponseWriter, r *http.Request) {
 	if !h.require(w, r, "key/view") || h.keysOff(w) {
 		return
@@ -84,19 +83,6 @@ func (h *Handlers) listKeys(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	body := map[string]any{"keys": keys, "dir": h.opts.Keys.Dir}
-	if h.opts.KeyReads != nil {
-		counts, err := h.opts.KeyReads.Counts(r.Context())
-		if err != nil {
-			failErr(w, err)
-			return
-		}
-		last, err := h.opts.KeyReads.Last(r.Context())
-		if err != nil {
-			failErr(w, err)
-			return
-		}
-		body["reads"], body["last_read"] = counts, last
-	}
 	if git := h.opts.Keys.Git(r.Context()); git != nil {
 		body["git"] = git.Name
 	}

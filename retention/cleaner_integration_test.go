@@ -28,64 +28,126 @@ func newCleaner(t *testing.T) *fixture {
 	now := time.Date(2026, 10, 23, 12, 0, 0, 0, time.UTC)
 	return &fixture{
 		cleaner: &retention.Cleaner{
-			DB: db, DBPath: path, Values: storage.NewSettingStorage(db), Runs: storage.NewRunStorage(db),
+			DB: db, DBPath: path, Values: storage.NewSettingStorage(db), Runs: storage.NewRunStorage(db), Summaries: storage.NewRunSummaryStorage(db),
+			Notes: storage.NewNoteStorage(db), Flows: storage.NewWorkflowRunStorage(db),
 			Artifacts: storage.NewArtifactStorage(db), Store: &artifactstore.Store{Dir: filepath.Join(dir, "tree")},
-			SecretReads: storage.NewSecretReadStorage(db), KeyReads: storage.NewKeyReadStorage(db), RecordingsDir: filepath.Join(dir, "recordings"),
-			Now: func() time.Time { return now },
+			SecretReads: storage.NewSecretReadStorage(db), Tokens: storage.NewUserAuthTokenStorage(db), Sessions: storage.NewUserSessionStorage(db),
+			RecordingsDir: filepath.Join(dir, "recordings"),
+			Now:           func() time.Time { return now },
 		},
 		now: now,
 		ctx: context.Background(),
 	}
 }
 
-// Recordings older than the rule go, the oldest first past the limit;
-// a running run's, and a running workflow's step's, stay; the run rows
-// stay; a dry run removes nothing.
-func TestCleaner_Recordings(t *testing.T) {
+// keep returns the defaults with the kinds named kept for ever, so a
+// test sees one rule at work.
+func keep(kinds ...string) retention.Settings {
+	s := retention.Defaults()
+	for _, kind := range retention.Kinds {
+		s[kind] = retention.Rule{Age: retention.Never}
+	}
+	for i := 0; i+1 < len(kinds); i += 2 {
+		s[kinds[i]] = retention.Rule{Age: kinds[i+1]}
+	}
+	return s
+}
+
+// A dry run prints a line per area in the table's order, the fixed rows
+// too, and no key read log.
+func TestCleaner_DryRunPrintsEveryArea(t *testing.T) {
 	t.Parallel()
 	f := newCleaner(t)
-	old := f.recorded(t, 40, 100, model.StateOK)
-	running := f.recorded(t, 40, 100, model.StateRunning)
-	step := f.recorded(t, 39, 100, model.StateFailed)
-	mid := f.recorded(t, 10, 100, model.StateOK)
-	fresh := f.recorded(t, 1, 100, model.StateOK)
-	flows := storage.NewWorkflowRunStorage(f.cleaner.DB)
-	flow := &model.WorkflowRun{WorkflowID: "w1", Name: "ship"}
-	assert.NoError(t, flows.Create(f.ctx, flow, []model.WorkflowStep{{Folder: "internal/tools", Job: "build"}}))
-	steps, _ := flows.Steps(f.ctx, flow.ID)
-	steps[0].RunID = step.ID
-	assert.NoError(t, flows.UpdateStep(f.ctx, &steps[0]))
-
-	usage, err := f.cleaner.Usage(f.ctx)
-	assert.NoError(t, err)
-	assert.Equal(t, 5, usage[retention.Recordings].Count)
-	assert.Equal(t, int64(500), usage[retention.Recordings].Bytes)
-
 	var out bytes.Buffer
 	assert.NoError(t, f.cleaner.Clean(f.ctx, true, &out))
-	assert.Contains(t, out.String(), "Run recordings (keep for 31 days, no size limit): would remove 1 item, 100 B; 4 items, 400 B left")
-	assert.True(t, f.exists(old))
+	lines := out.String()
+	assert.Contains(t, lines, "Run recordings (keep for 31 days, no size limit): would remove 0 recordings, 0 B; 0 recordings, 0 B left\n")
+	assert.Contains(t, lines, "Run history (keep for 31 days, no size limit): would remove 0 runs, 0 B; 0 runs, 0 B left\n")
+	assert.Contains(t, lines, "Prompt threads (keep for 31 days): would remove 0 threads; 0 threads left\n")
+	assert.Contains(t, lines, "Workflow run history (keep for 31 days): would remove 0 runs; 0 runs left\n")
+	assert.Contains(t, lines, "Artifact history (keep for 31 days, no size limit): would remove 0 versions, 0 B; 0 versions, 0 B left\n")
+	assert.Contains(t, lines, "Secret read log (keep for 31 days): would remove 0 reads; 0 reads left\n")
+	assert.Contains(t, lines, "Expired sign-ins (removed every cleanup): would remove 0 rows; 0 rows left\n")
+	assert.Contains(t, lines, "Tool history (keep for 31 days): 0 databases, 0 B\n")
+	assert.NotContains(t, lines, "Key read log")
+	for i, area := range retention.Areas {
+		if i > 0 {
+			assert.Less(t, bytes.Index(out.Bytes(), []byte(retention.Areas[i-1].Title)), bytes.Index(out.Bytes(), []byte(area.Title)), area.Title)
+		}
+	}
+}
 
-	out.Reset()
+// Prompt threads whose last reply is older than the age go with their
+// replies; a thread with a fresh reply, one with an open instruction,
+// and the board's notes stay, and so do the runs.
+func TestCleaner_Prompts(t *testing.T) {
+	t.Parallel()
+	f := newCleaner(t)
+	run := f.recorded(t, 40, 100, model.StateOK)
+	old := f.thread(t, 40, run.ID, "")
+	revived := f.thread(t, 40, "", "")
+	reply := &model.Note{Channel: model.ChannelNotes, ParentID: revived.ID, UserName: "claude", Body: "more", WorkspaceID: revived.WorkspaceID}
+	assert.NoError(t, f.cleaner.Notes.Create(f.ctx, reply))
+	f.backdate(t, reply.ID, f.now.Add(-2*24*time.Hour))
+	open := f.thread(t, 40, "", model.NoteOpen)
+	board := &model.Note{Channel: model.ChannelNotes, UserName: "ops", Body: "remember the milk"}
+	assert.NoError(t, f.cleaner.Notes.Create(f.ctx, board))
+	f.backdate(t, board.ID, f.now.Add(-400*24*time.Hour))
+	assert.NoError(t, f.cleaner.Save(f.ctx, keep(retention.Prompts, retention.Month)))
+
+	usage, _ := f.cleaner.Usage(f.ctx)
+	assert.Equal(t, 3, usage[retention.Prompts].Count, "the board's note is no thread")
+
+	var out bytes.Buffer
 	assert.NoError(t, f.cleaner.Clean(f.ctx, false, &out))
-	assert.Contains(t, out.String(), "Run recordings (keep for 31 days, no size limit): removed 1 item, 100 B; 4 items, 400 B left")
-	assert.False(t, f.exists(old))
-	assert.True(t, f.exists(running))
-	assert.True(t, f.exists(step))
-	row, err := f.cleaner.Runs.Get(f.ctx, old.ID)
+	assert.Contains(t, out.String(), "Prompt threads (keep for 31 days): removed 1 thread; 2 threads left")
+	_, err := f.cleaner.Notes.Get(f.ctx, old.ID)
+	assert.ErrorIs(t, err, storage.ErrNotFound)
+	for _, note := range []*model.Note{revived, reply, open, board} {
+		_, err := f.cleaner.Notes.Get(f.ctx, note.ID)
+		assert.NoError(t, err, note.Body)
+	}
+	_, err = f.cleaner.Runs.Get(f.ctx, run.ID)
 	assert.NoError(t, err, "the run stays")
-	assert.Equal(t, old.CastPath, row.CastPath)
+}
 
-	// A size limit takes the oldest idle ones until the rest, the busy
-	// ones among them, fit.
-	assert.NoError(t, f.cleaner.Save(f.ctx, retention.Settings{Recordings: retention.Rule{Age: retention.Never, Limit: 350}, Artifacts: retention.Rule{Age: retention.Never}, SecretReads: retention.Rule{Age: retention.Never}}))
-	out.Reset()
+// Workflow runs older than the age go with their steps and the threads
+// of their prompts; one in progress stays, and the workflow is not a
+// row of this table.
+func TestCleaner_WorkflowRuns(t *testing.T) {
+	t.Parallel()
+	f := newCleaner(t)
+	flows := f.cleaner.Flows
+	old := &model.WorkflowRun{WorkflowID: "w1", Name: "ship"}
+	assert.NoError(t, flows.Create(f.ctx, old, []model.WorkflowStep{{Folder: "infra", Job: "build"}}))
+	old.State = model.StateOK
+	assert.NoError(t, flows.Update(f.ctx, old))
+	f.backdateFlow(t, old.ID, f.now.Add(-40*24*time.Hour))
+	live := &model.WorkflowRun{WorkflowID: "w1", Name: "ship"}
+	assert.NoError(t, flows.Create(f.ctx, live, []model.WorkflowStep{{Folder: "infra", Job: "build"}}))
+	f.backdateFlow(t, live.ID, f.now.Add(-40*24*time.Hour))
+	fresh := &model.WorkflowRun{WorkflowID: "w1", Name: "ship"}
+	assert.NoError(t, flows.Create(f.ctx, fresh, []model.WorkflowStep{{Folder: "infra", Job: "build"}}))
+	thread := f.thread(t, 1, "", "")
+	f.about(t, thread.ID, old.ID)
+	assert.NoError(t, f.cleaner.Save(f.ctx, keep(retention.WorkflowRuns, retention.Month)))
+
+	var out bytes.Buffer
 	assert.NoError(t, f.cleaner.Clean(f.ctx, false, &out))
-	assert.False(t, f.exists(mid))
-	assert.True(t, f.exists(fresh))
-	assert.True(t, f.exists(running))
-	assert.True(t, f.exists(step))
-	assert.NotContains(t, out.String(), "Database: vacuumed", "no rows went")
+	assert.Contains(t, out.String(), "Workflow run history (keep for 31 days): removed 1 run; 2 runs left")
+	_, err := flows.Get(f.ctx, old.ID)
+	assert.ErrorIs(t, err, storage.ErrNotFound)
+	steps, err := flows.Steps(f.ctx, old.ID)
+	assert.NoError(t, err)
+	assert.Len(t, steps, 0)
+	_, err = f.cleaner.Notes.Get(f.ctx, thread.ID)
+	assert.ErrorIs(t, err, storage.ErrNotFound, "the thread of its prompt goes")
+	for _, run := range []*model.WorkflowRun{live, fresh} {
+		_, err := flows.Get(f.ctx, run.ID)
+		assert.NoError(t, err)
+		steps, _ := flows.Steps(f.ctx, run.ID)
+		assert.Len(t, steps, 1)
+	}
 }
 
 // Earlier versions older than the rule go with their commits; the
@@ -99,11 +161,11 @@ func TestCleaner_Artifacts(t *testing.T) {
 	f.version(t, 18, "a.txt", "a two")
 	f.version(t, 2, "a.txt", "a three")
 	f.version(t, 1, "a.txt", "a four")
-	assert.NoError(t, f.cleaner.Save(f.ctx, retention.Settings{Recordings: retention.Rule{Age: retention.Month}, Artifacts: retention.Rule{Age: retention.Week}, SecretReads: retention.Rule{Age: retention.Never}}))
+	assert.NoError(t, f.cleaner.Save(f.ctx, keep(retention.Artifacts, retention.Week)))
 
 	var out bytes.Buffer
 	assert.NoError(t, f.cleaner.Clean(f.ctx, false, &out))
-	assert.Contains(t, out.String(), "Artifact history (keep for 7 days, no size limit): removed 2 items, 10 B; 1 item, 7 B left")
+	assert.Contains(t, out.String(), "Artifact history (keep for 7 days, no size limit): removed 2 versions, 10 B; 1 version, 7 B left")
 	assert.Contains(t, out.String(), "Database: vacuumed, ")
 
 	latest, err := f.cleaner.Artifacts.Latest(f.ctx)
@@ -124,13 +186,13 @@ func TestCleaner_Artifacts(t *testing.T) {
 	assert.Len(t, commits, 2)
 
 	// Never with no limit keeps the rest.
-	assert.NoError(t, f.cleaner.Save(f.ctx, retention.Defaults()))
+	assert.NoError(t, f.cleaner.Save(f.ctx, keep()))
 	out.Reset()
 	assert.NoError(t, f.cleaner.Clean(f.ctx, false, &out))
-	assert.Contains(t, out.String(), "Artifact history (keep for ever, no size limit): removed 0 items, 0 B; 1 item, 7 B left")
+	assert.Contains(t, out.String(), "Artifact history (keep for ever, no size limit): removed 0 versions, 0 B; 1 version, 7 B left")
 }
 
-// The secret read log loses its oldest reads past the limit.
+// The secret read log loses the reads older than its age.
 func TestCleaner_SecretReads(t *testing.T) {
 	t.Parallel()
 	f := newCleaner(t)
@@ -139,35 +201,53 @@ func TestCleaner_SecretReads(t *testing.T) {
 		reads = append(reads, model.SecretRead{SecretID: "s1", Name: "TOKEN", RunID: model.NewID(), Folder: "infra", Job: "build", UserName: "ops"})
 	}
 	assert.NoError(t, f.cleaner.SecretReads.Record(f.ctx, reads))
-	usage, _ := f.cleaner.Usage(f.ctx)
-	each := usage[retention.SecretReads].Bytes / 5
-	assert.NoError(t, f.cleaner.Save(f.ctx, retention.Settings{Recordings: retention.Rule{Age: retention.Month}, Artifacts: retention.Rule{Age: retention.Never}, SecretReads: retention.Rule{Age: retention.Never, Limit: 2 * each}}))
+	for _, read := range reads[:3] {
+		f.backdateRead(t, read.ID, f.now.Add(-40*24*time.Hour))
+	}
+	assert.NoError(t, f.cleaner.Save(f.ctx, keep(retention.SecretReads, retention.Month)))
 	var out bytes.Buffer
 	assert.NoError(t, f.cleaner.Clean(f.ctx, false, &out))
-	assert.Contains(t, out.String(), "Secret read log (keep for ever, at most ")
-	assert.Contains(t, out.String(), "removed 3 items")
+	assert.Contains(t, out.String(), "Secret read log (keep for 31 days): removed 3 reads; 2 reads left")
 	left, _ := f.cleaner.SecretReads.All(f.ctx)
 	assert.Len(t, left, 2)
 	assert.Equal(t, reads[3].ID, left[0].ID)
 }
 
-// The key read log keeps to its rule as the secret read log does.
-func TestCleaner_KeyReads(t *testing.T) {
+// Expired tokens and sessions go every cleanup, whatever the rules; the
+// live ones and the tokens without an expiry stay.
+func TestCleaner_Signins(t *testing.T) {
 	t.Parallel()
 	f := newCleaner(t)
-	var reads []*model.KeyRead
-	for i := 0; i < 4; i++ {
-		read := &model.KeyRead{KeyName: "deploy_rsa4096", UserName: "claude", TokenID: "t1", Via: "mcp"}
-		assert.NoError(t, f.cleaner.KeyReads.Record(f.ctx, read))
-		reads = append(reads, read)
-	}
+	assert.NoError(t, f.cleaner.Tokens.Set(f.ctx, "u1", "cli", "h1"))
+	_, err := f.cleaner.Tokens.SetUntil(f.ctx, "u1", "mcp", "h2", f.now.Add(-time.Hour))
+	assert.NoError(t, err)
+	_, err = f.cleaner.Tokens.SetUntil(f.ctx, "u2", "mcp", "h3", f.now.Add(time.Hour))
+	assert.NoError(t, err)
+	_, err = f.cleaner.Sessions.Create(f.ctx, "u1", "s1", f.now.Add(-time.Minute))
+	assert.NoError(t, err)
+	_, err = f.cleaner.Sessions.Create(f.ctx, "u1", "s2", f.now.Add(time.Minute))
+	assert.NoError(t, err)
+	assert.NoError(t, f.cleaner.Save(f.ctx, keep()))
+
 	usage, _ := f.cleaner.Usage(f.ctx)
-	each := usage[retention.KeyReads].Bytes / 4
-	assert.NoError(t, f.cleaner.Save(f.ctx, retention.Settings{Recordings: retention.Rule{Age: retention.Month}, Artifacts: retention.Rule{Age: retention.Never}, SecretReads: retention.Rule{Age: retention.Never}, KeyReads: retention.Rule{Age: retention.Never, Limit: each}}))
+	assert.Equal(t, 2, usage[retention.Signins].Count)
 	var out bytes.Buffer
+	assert.NoError(t, f.cleaner.Clean(f.ctx, true, &out))
+	assert.Contains(t, out.String(), "Expired sign-ins (removed every cleanup): would remove 2 rows; 0 rows left")
+	_, err = f.cleaner.Tokens.Find(f.ctx, "h2")
+	assert.NoError(t, err, "a dry run removes nothing")
+
+	out.Reset()
 	assert.NoError(t, f.cleaner.Clean(f.ctx, false, &out))
-	assert.Contains(t, out.String(), "Key read log (keep for ever, at most ")
-	left, _ := f.cleaner.KeyReads.All(f.ctx)
-	assert.Len(t, left, 1)
-	assert.Equal(t, reads[3].ID, left[0].ID)
+	assert.Contains(t, out.String(), "Expired sign-ins (removed every cleanup): removed 2 rows; 0 rows left")
+	_, err = f.cleaner.Tokens.Find(f.ctx, "h2")
+	assert.ErrorIs(t, err, storage.ErrNotFound)
+	_, err = f.cleaner.Sessions.Find(f.ctx, "s1")
+	assert.ErrorIs(t, err, storage.ErrNotFound)
+	for _, hash := range []string{"h1", "h3"} {
+		_, err := f.cleaner.Tokens.Find(f.ctx, hash)
+		assert.NoError(t, err, hash)
+	}
+	_, err = f.cleaner.Sessions.Find(f.ctx, "s2")
+	assert.NoError(t, err)
 }

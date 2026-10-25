@@ -1,76 +1,41 @@
-/* Settings, Data retention: a block per kind of data, a row of ages to
-   pick one of, and a size field with its presets and estimate. */
-.retention-block {
-  & > p {
+/* Settings, Data retention: a table with a row per area that fits the
+   page without a scroll, the Keep and Size limit selects in their
+   cells, the What goes column taking what the others leave. */
+.form.retention {
+  max-width: none;
+}
+
+.table.retention {
+  table-layout: fixed;
+
+  & th {
+    white-space: normal;
+  }
+
+  & th:nth-child(1) { width: 15%; }
+  & th:nth-child(2) { width: auto; }
+  & th:nth-child(3) { width: 8.25rem; }
+  & th:nth-child(4) { width: 8.25rem; }
+  & th:nth-child(5) { width: 13%; }
+  & th:nth-child(6) { width: 12%; }
+
+  & td.key {
+    white-space: normal;
+  }
+
+  & td.desc {
     font-size: var(--fs-data);
-    line-height: 1.5;
-  }
-
-  & fieldset.field {
-    margin: 0.8rem 0 0;
-    padding: 0;
-    border: 0;
-  }
-
-  & fieldset[disabled] {
-    opacity: 0.7;
-  }
-
-  & small[data-estimate] {
-    display: block;
-    min-height: 1.2em;
-    margin-top: 0.3rem;
-  }
-}
-
-.segmented {
-  display: inline-flex;
-  flex-wrap: wrap;
-  border: 1px solid var(--line-2);
-  border-radius: var(--radius);
-  overflow: hidden;
-
-  & label {
-    position: relative;
-    cursor: pointer;
-  }
-
-  & input {
-    position: absolute;
-    opacity: 0;
-    pointer-events: none;
-  }
-
-  & span {
-    display: block;
-    padding: 0.35rem 0.8rem;
-    font-size: var(--fs-button);
+    line-height: 1.4;
     color: var(--text-dim);
-    border-inline-end: 1px solid var(--line-2);
   }
 
-  & label:last-child span {
-    border-inline-end: 0;
+  & td.nowrap {
+    white-space: normal;
   }
 
-  & input:checked + span {
-    color: var(--signal-ink);
-    background: var(--signal);
-  }
-
-  & input:focus-visible + span {
-    outline: 2px solid var(--signal);
-    outline-offset: -2px;
-  }
-}
-
-.size-limit {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.4rem;
-
-  & input {
-    width: 9rem;
+  & select {
+    width: 100%;
+    min-width: 0;
+    height: var(--control);
   }
 }

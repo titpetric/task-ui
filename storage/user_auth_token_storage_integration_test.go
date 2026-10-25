@@ -83,3 +83,31 @@ func TestUserAuthTokenStorage_DeleteMCP(t *testing.T) {
 	assert.Len(t, list, 1)
 	assert.Equal(t, "cli", list[0].Name)
 }
+
+// Expired lists the tokens past their expiry, oldest expiry first;
+// DeleteExpired removes them and leaves the live ones and the tokens
+// without an expiry.
+func TestUserAuthTokenStorage_Expired(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	tokens := storage.NewUserAuthTokenStorage(newDB(t))
+	now := time.Now()
+	assert.NoError(t, tokens.Set(ctx, "u1", "cli", "h1"))
+	_, err := tokens.SetUntil(ctx, "u1", "mcp", "h2", now.Add(-time.Hour))
+	assert.NoError(t, err)
+	_, err = tokens.SetUntil(ctx, "u2", "mcp", "h3", now.Add(-2*time.Hour))
+	assert.NoError(t, err)
+	_, err = tokens.SetUntil(ctx, "u3", "mcp", "h4", now.Add(time.Hour))
+	assert.NoError(t, err)
+	expired, err := tokens.Expired(ctx, now)
+	assert.NoError(t, err)
+	assert.Len(t, expired, 2)
+	assert.Equal(t, "h3", expired[0].Hash)
+	assert.NoError(t, tokens.DeleteExpired(ctx, now))
+	expired, _ = tokens.Expired(ctx, now)
+	assert.Len(t, expired, 0)
+	for _, hash := range []string{"h1", "h4"} {
+		_, err := tokens.Find(ctx, hash)
+		assert.NoError(t, err, hash)
+	}
+}

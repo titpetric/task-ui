@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/titpetric/task-ui/access"
 	"github.com/titpetric/task-ui/keystore"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/workspace"
@@ -17,9 +18,11 @@ import (
 // encrypted to the passphrase, at least MinPassphrase characters. No
 // instance key and no encryption key goes. Schedules, workflows, runs
 // and artifacts stay. A POST keeps the passphrase out of the URL and
-// the logs. Takes workspace/edit.
+// the logs. For admins alone: the bundle carries the workspace's
+// private keys and secrets, which workspace/edit does not reach.
 func (h *Handlers) exportWorkspace(w http.ResponseWriter, r *http.Request) {
-	if !h.require(w, r, "workspace/edit") {
+	if !access.UserFrom(r.Context()).CanAdmin() {
+		fail(w, http.StatusForbidden, "only an admin exports a workspace: the bundle holds its private keys and secrets")
 		return
 	}
 	var req WorkspaceExportRequest

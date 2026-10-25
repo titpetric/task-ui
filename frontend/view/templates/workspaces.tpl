@@ -5,7 +5,9 @@
 		<p>Directories under the root, each with a home, the <code>HOME</code> of the workspace's runs and a checkout of its home repository when it has one, and its projects side by side under <code>src/</code>. The folder name is the projects' namespace; <code>_</code> is the root itself.</p>
 	</div>
 	<div class="actions">
+		{{- if and .User .User.CanAdmin }}
 		<button type="button" class="btn" data-dialog-open="import-dialog"><svg class="ic"><use href="#i-upload"/></svg>Import</button>
+		{{- end }}
 		<a class="btn btn-primary" href="/settings/workspaces/new"><svg class="ic"><use href="#i-plus"/></svg>Add workspace</a>
 	</div>
 </div>
@@ -43,6 +45,7 @@
 </section>
 <p class="faint" style="margin-top:0.6rem">Root: {{ .Root }}</p>
 
+{{- if and .User .User.CanAdmin }}
 <dialog class="confirm workspace-import" id="import-dialog" aria-labelledby="import-title">
 	<form class="form" data-import="/api/workspaces/import">
 		<h3 id="import-title">Import a workspace</h3>
@@ -65,4 +68,5 @@
 		</div>
 	</form>
 </dialog>
+{{- end }}
 {{ end }}

@@ -36,4 +36,5 @@ it with headless chromium; `task docs:shots` regenerates them into
 | ![A job's run: its actions menu beside View, its ID, Open, Replay](assets/job-menu-dark.png) | ![A run's actions menu, light theme](assets/job-menu-light.png) |
 | ![The phone: a row's actions menu as a sheet along the bottom](assets/mobile-actions-dark.png) | ![Workspace settings, light theme](assets/workspace-edit-light.png) |
 | ![The phone: a workspace's settings page, its home repository with Pull now, Replace and Remove](assets/mobile-workspace-edit-dark.png) | ![The sidebar with pins: a directory under its project, a file as a run item](assets/sidebar-pin-dark.png) |
-| ![Pins, light theme](assets/sidebar-pin-light.png) | |
+| ![Pins, light theme](assets/sidebar-pin-light.png) | ![Data retention: a table, a row per area, with Keep and Size limit selects](assets/retention-dark.png) |
+| ![Data retention, light theme](assets/retention-light.png) | |

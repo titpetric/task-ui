@@ -7,25 +7,27 @@ import (
 	"github.com/titpetric/task-ui/retention"
 )
 
-// The defaults keep recordings 31 days and the rest for ever; stored
-// values round trip, and a wrong one falls back to the default.
+// The defaults keep every kind 31 days with no size limit; stored
+// values round trip, a wrong one falls back to the default, and a kind
+// the settings lack reads the default.
 func TestSettings(t *testing.T) {
 	t.Parallel()
 	defaults := retention.Load(nil)
-	assert.Equal(t, retention.Rule{Age: retention.Month}, defaults.Recordings)
-	assert.Equal(t, retention.Rule{Age: retention.Never}, defaults.Artifacts)
-	assert.Equal(t, retention.Rule{Age: retention.Never}, defaults.SecretReads)
-	assert.Equal(t, retention.Rule{Age: retention.Never}, defaults.KeyReads)
+	assert.Len(t, defaults, len(retention.Kinds))
+	for _, kind := range retention.Kinds {
+		assert.Equal(t, retention.Rule{Age: retention.Month}, defaults.Rule(kind), kind)
+	}
+	assert.Equal(t, []string{"recordings", "runs", "prompts", "workflow_runs", "artifacts", "secret_reads", "tooling"}, retention.Kinds)
 
-	s := retention.Settings{Recordings: retention.Rule{Age: retention.Week, Limit: 1 << 30}, Artifacts: retention.Rule{Age: retention.Day}, SecretReads: retention.Rule{Age: retention.Never, Limit: 100}, KeyReads: retention.Rule{Age: retention.Week}}
+	s := retention.Settings{retention.Recordings: retention.Rule{Age: retention.Week, Limit: 1 << 30}, retention.Runs: retention.Rule{Age: retention.Year}, retention.Prompts: retention.Rule{Age: retention.Quarter},
+		retention.WorkflowRuns: retention.Rule{Age: retention.Never}, retention.Artifacts: retention.Rule{Age: retention.Day}, retention.SecretReads: retention.Rule{Age: retention.Never}, retention.Tooling: retention.Rule{Age: retention.Month}}
 	assert.True(t, s.Valid())
-	assert.Equal(t, s.KeyReads, s.Rule(retention.KeyReads))
 	assert.Equal(t, s, retention.Load(s.Values()))
-	assert.Equal(t, s.Artifacts, s.Rule(retention.Artifacts))
+	assert.Equal(t, retention.Rule{Age: retention.Year}, s.Rule(retention.Runs))
+	assert.Equal(t, retention.Rule{Age: retention.Month}, retention.Settings{}.Rule(retention.Runs), "a kind the settings lack keeps the default")
 
 	values := s.Values()
 	values["retention.artifacts.age"] = "3d"
-	assert.Equal(t, defaults.Artifacts, retention.Load(values).Artifacts)
-	assert.False(t, retention.Settings{Recordings: retention.Rule{Age: "x"}}.Valid())
-	assert.Equal(t, []string{"recordings", "artifacts", "secret_reads", "key_reads"}, retention.Kinds)
+	assert.Equal(t, defaults.Rule(retention.Artifacts), retention.Load(values).Rule(retention.Artifacts))
+	assert.False(t, retention.Settings{retention.Recordings: retention.Rule{Age: "x"}}.Valid())
 }

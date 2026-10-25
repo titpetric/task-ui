@@ -61,7 +61,7 @@ func TestNewCleaner(t *testing.T) {
 	db, err := storage.OpenAndMigrate(context.Background(), ":memory:")
 	assert.NoError(t, err)
 	defer db.Close()
-	c := app.NewCleaner(db, cfg)
+	c := app.NewCleaner(db, cfg, "")
 	assert.Equal(t, cfg.RecordingsDir(), c.RecordingsDir)
 	assert.Equal(t, cfg.ArtifactTree(), c.Store.Dir)
 	assert.Equal(t, 7, c.Store.Keep)

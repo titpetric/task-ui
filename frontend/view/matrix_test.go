@@ -33,10 +33,11 @@ func TestMatrix(t *testing.T) {
 	assert.True(t, notes.Cells[1].Allowed)
 	assert.Equal(t, "", notes.Cells[1].Effect, "unset inherits")
 	assert.Equal(t, permission.Deny, notes.Cells[3].Effect)
-	assert.Equal(t, "key/read", m.Permissions[0].Path, "a section's own rule, a row of its own")
-	assert.Equal(t, "Instance Keys, Allow Read Private", m.Permissions[0].Title)
-	assert.Equal(t, "run", m.Permissions[1].Path)
-	assert.False(t, m.Permissions[1].Allowed)
+	assert.Equal(t, "run", m.Permissions[0].Path)
+	assert.False(t, m.Permissions[0].Allowed)
+	for _, cell := range m.Permissions {
+		assert.NotEqual(t, "key/read", cell.Path, "no section adds a rule")
+	}
 
 	fixed := view.NewMatrix(p, nil, nil, true)
 	assert.True(t, fixed.Fixed)

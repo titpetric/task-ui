@@ -107,43 +107,65 @@ the `setting` table as `runs.parent_env`.
 
 ## Data retention
 
-`/settings/retention` holds how long the instance keeps what it records,
-and how much of it, one block per kind of data:
+`/settings/retention` is one table of what the instance keeps, a row per
+area, with the columns **Area**, **What goes**, **Keep**, **Size
+limit**, **Holds now** and **Last cleanup**. Every area the instance
+records has a row, so nothing grows without a rule:
 
-| Block | What goes | What stays | Keep for, at the start |
-|-------|-----------|------------|------------------------|
-| **Run recordings** | the `.cast` file of a finished run | the run, its details and its artifacts; its page says the recording expired | 31 days |
-| **Artifact history** | earlier versions of the artifact tree's files, with their records | the latest version of every file in the tree | Never |
-| **Secret read log** | which run got which secret | the last 1000 reads of each secret, which the log keeps whatever the rule | Never |
-| **Key read log** | who read which private key, over MCP or the API | the last 1000 reads of each key, which the log keeps whatever the rule | Never |
+| Area | What goes | What stays | Rule |
+|------|-----------|------------|------|
+| **Run recordings** | the `.cast` file of a finished run, its output | the run, who started it and how it ended; its page says the recording expired | age and size |
+| **Run history** | the rows of runs older than the age, with their recordings, summaries and the prompt threads about them | runs in progress or queued, and the cleanup's own | age and size, the size their recordings' |
+| **Prompt threads** | prompt threads whose last reply is older than the age, with their replies | the runs; the board's notes, which people write, whatever their age; a thread with an open or working instruction | age |
+| **Workflow run history** | workflow runs older than the age, with their steps, answers and the threads of their prompts | the workflows; a workflow run in progress | age |
+| **Artifact history** | earlier versions of the artifact tree's files, with their records | the latest version of every file in the tree | age and size |
+| **Secret read log** | which run got which secret | the last 1000 reads of each secret, which the log keeps whatever the rule | age |
+| **Expired sign-ins** | tokens and browser sessions past their expiry | the ones still signing in | fixed: removed every cleanup, no setting |
+| **Tool history** | the runs and commands older than the age in `atkins.db` of each workspace's home and the instance's own copy, which atkins prunes and vacuums | the newer runs and commands, the databases | age |
 
-Each block shows what it holds, the count, the size and the oldest,
-and two rules:
+Every rule keeps 31 days at the start. **Keep** picks 24 hours, 7 days,
+31 days, 90 days, 365 days or Never; **Size limit**, in the rows whose
+items have a size, picks one of these, and a limit saved through the
+API that is none of them shows as an option of its own, so the closed
+select always shows the saved limit:
 
-- **Keep for**: 24 hours, 7 days, 31 days or Never.
-- **Size limit**: none at the start; 100 MB, 1 GB, 10 GB, or any size
-  in the field, such as `500MB` or `2GB`. Beside it, the page estimates
-  how many runs, versions or reads the size holds, at the average size
-  of what there is, as you type.
+| Size limit |
+|------------|
+| No limit |
+| 100 MB |
+| 500 MB |
+| 1 GB |
+| 5 GB |
+| 10 GB |
+| 50 GB |
 
-Past either rule the oldest go first, until both hold. A recording of
-a run in progress, or of a step of a workflow run in progress, stays
-and counts towards the limit. A run of `internal/*`, from before
-prompts had folders of their own, falls under the same rules. A file
-deleted from the tree keeps its versions in the history until they
-expire.
+The rows without a size show a dash there. **Holds now** is the count,
+with the bytes where the items have them. **Last cleanup** is when
+`@cleanup` last ran and how it ended, linking the run. The fixed rows
+say their rule across the two columns.
+
+Past either rule the oldest go first, until both hold. `@cleanup`
+applies the rows in the order of the table: run recordings, then run
+history, which takes a run's recording, summary and threads with it,
+then prompt threads, workflow runs, artifact history and the secret
+read log, and the expired sign-ins last. A thread run history removes
+counts to it, not to the Prompt threads row. A recording of a run in
+progress, or of a step of a workflow run in progress, stays and counts
+towards the limit. A run of `internal/*`, from before prompts had
+folders of their own, falls under the same rules. A file deleted from
+the tree keeps its versions in the history until they expire.
 
 Anyone who may open a step of the settings reads the page; an admin
 saves the rules, with `PUT /api/retention`, and **Clean up now** starts
 `@cleanup` at once, as a run whose output shows what went. A run of
 `@cleanup` takes the workspace folder from its own workspace directory,
 `TASK_UI_WORKSPACE_DIR`, because `TASK_UI_WORKSPACE` names a run's
-workspace. A save
-takes effect at the next run of `@cleanup`: task-ui schedules it
-`@daily`, at midnight, as the first admin, once, when it first starts;
-the [Schedules](scheduled.md#cleanup) page changes or deletes that
-schedule.
+workspace. A save takes effect at the next run of `@cleanup`: task-ui
+schedules it `@daily`, at midnight, as the first admin, once, when it
+first starts; the [Schedules](scheduled.md#cleanup) page changes or
+deletes that schedule.
 
+![Data retention: a table, a row per area](../assets/retention-dark.png)
 
 ## Keys
 
@@ -197,7 +219,7 @@ to its type and the end of its material with the whole line in its
 tooltip and a copy button that copies the whole line, **Purpose**,
 `encryption` or `git + ssh`, and the row's **⋯** menu. The menu opens
 on the key's details, its fingerprint, its creation and rotation dates,
-its backup, scope, links and reads, then Copy public key, Download
+its backup, scope and links, then Copy public key, Download
 public key, Edit links, Rotate Key or Delete backup, and Remove last.
 
 - **Generate key** makes a key: a name, the algorithm and the size,
@@ -644,13 +666,9 @@ What each role may do, rule by rule, over `config/permissions.yml`: each
 section, such as Notes, Secrets or Users, has the rules **Allow All**,
 **Allow View**, **Allow Edits** and **Allow Deletes**, and the
 application has **Run Jobs**, **Enter Shell**, **Run on Hosts** and
-**Allow interactive mode**.
-Instance Keys adds **Allow Read Private**, `key/read`, an agent's read
-of an SSH key's private half (see [MCP](mcp.md#an-ssh-key-for-a-task)):
-Allow All leaves it out, so it takes an allow of its own, and only
-admins hold it at the start. A matrix per role holds a row per section,
-a column per rule, and under them Allow Read Private and the
-application's permissions.
+**Allow interactive mode**. A matrix per role holds a row per section,
+a column per rule, and under them the application's permissions. No
+rule reads a private key: none leaves task-ui.
 
 ![Permissions: a matrix per role](../assets/permissions-dark.png)
 
@@ -723,9 +741,10 @@ also lists.
 `/settings/workspaces/<folder>/keys` and `/secrets`, **SSH keys** and
 **Secrets** in the **⋯** menu of the workspace's page, edit its keys
 and its secrets in place. At the top right of that page,
-**Add project** clones a project into the workspace, and **Export**
-downloads the workspace, encrypted to a passphrase, which **Import** at
-the top right of the Workspaces page reads on another instance.
+**Add project** clones a project into the workspace, and, for an admin,
+**Export** downloads the workspace, encrypted to a passphrase, which
+**Import** at the top right of the Workspaces page reads on another
+instance, for an admin there.
 [Workspaces](workspaces.md) covers them, their keys and runs, the move
 between instances, what they keep apart, and the prompt against a
 workspace.

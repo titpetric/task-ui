@@ -142,8 +142,10 @@ tools, run it and fix it. Page: `/workflows`; API:
 A schedule runs a job on a cron expression, in the server's time zone,
 as its user. An admin picks who it runs as; anyone else schedules as
 themselves. `@cleanup` of the root, `_`, applies the Data retention
-settings, `/settings/retention`, on a daily schedule task-ui adds once;
-admins alone run it. A schedule with `triage` on has Claude triage a run
+settings, `/settings/retention`, a table with a row per area of data,
+each kept 31 days unless set otherwise, the tool history among them
+through `atkins --prune`, on a daily schedule task-ui adds once; admins
+alone run it. A schedule with `triage` on has Claude triage a run
 of it that fails, as its user: a thread on the run's page that reads the
 run, fixes the cause in the folder when it can and ends with `resolved`,
 `not resolved` or `no action`, and a note on the board naming the task,
@@ -190,12 +192,8 @@ Every key of the instance and its workspaces, in one folder, named with
 its algorithm, as `deploy_rsa4096`: the instance's encryption key for
 the secrets, and SSH keys that runs get through their ssh agent by the roles and
 users they link, one of which git pulls with. A key encrypts or
-connects, never both. Private keys are never shown. An MCP agent user
-with Allow Read Private, `key/read`, which admins hold and no other role
-by default, gets an SSH key linked to them with `get_ssh_key`: make an
-age identity with `age-keygen` for the request, pass its recipient,
-decrypt it with `age -d -i <identity>` into `/tmp`, use it for
-the task and delete it. `whoami` names the keys you may read. Page:
+connects, never both. Private keys never leave: the ssh agent of a run
+reads them, and no page, API route or MCP tool returns one. Page:
 `/settings/keys`; API: `/api/keys`.
 
 ## Integrations (`integration`)
@@ -244,8 +242,7 @@ the same permissions. Its tools: `whoami`, `list_jobs`, `run_job`,
 `list_runs`, `get_run`, `list_workflows`, `run_workflow`,
 `list_workflow_runs`, `get_workflow`, `create_workflow`,
 `update_workflow`, `list_notes`, `note_comment`, `post_note`,
-`ask_prompt`, `list_artifacts`, `read_artifact`, `write_artifact` and
-`get_ssh_key`.
+`ask_prompt`, `list_artifacts`, `read_artifact` and `write_artifact`.
 A prompt's run and the Notes agent's reach these tools as their user
 for as long as they run, with no token of the user's.
 `task-ui channel`, a Claude Code channel, pushes the open notes naming

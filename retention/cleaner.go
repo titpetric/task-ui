@@ -5,10 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path/filepath"
 	"slices"
-	"sort"
-	"strings"
 	"time"
 
 	"github.com/titpetric/task-ui/artifactstore"
@@ -16,10 +13,15 @@ import (
 	"github.com/titpetric/task-ui/storage"
 )
 
-// Cleaner measures what each kind of data holds and applies the rules:
-// it removes the recording files of finished runs, and only those, the
-// earlier versions of the artifact tree, never the latest of a file in
-// the tree, and the reads of the secret read log.
+// Cleaner measures what each area of data holds and applies the rules,
+// one area after another in the order of Areas: the recording files of
+// finished runs, the rows of old runs with their recordings, summaries
+// and threads, old prompt threads, old workflow runs with their steps,
+// the earlier versions of the artifact tree, never the latest of a file,
+// and the reads of the secret read log; then the expired tokens and
+// sessions, which go every time. A run in progress or queued, a thread
+// with an open instruction, a workflow run in progress and the cleanup's
+// own run stay whatever the rules say.
 type Cleaner struct {
 	// DB is the database, which a clean that removed rows vacuums, and
 	// DBPath its file, for the size before and after; empty skips both.
@@ -28,13 +30,24 @@ type Cleaner struct {
 	// Values keep the rules.
 	Values      *storage.SettingStorage
 	Runs        *storage.RunStorage
+	Summaries   *storage.RunSummaryStorage
+	Notes       *storage.NoteStorage
+	Flows       *storage.WorkflowRunStorage
 	Artifacts   *storage.ArtifactStorage
 	Store       *artifactstore.Store
 	SecretReads *storage.SecretReadStorage
-	// KeyReads is the log of the private keys users read.
-	KeyReads *storage.KeyReadStorage
+	Tokens      *storage.UserAuthTokenStorage
+	Sessions    *storage.UserSessionStorage
 	// RecordingsDir holds the recordings the run rows name.
 	RecordingsDir string
+	// Tooling lists the atkins.db files of the workspaces' homes and the
+	// instance, which the Tool history row measures; nil measures none.
+	Tooling func() []string
+	// Atkins runs the atkins binary with arguments and returns its output;
+	// nil, when atkins is not on PATH, measures the databases and prunes none.
+	Atkins func(ctx context.Context, args ...string) ([]byte, error)
+	// Self is the ID of the run the cleanup runs in, which stays.
+	Self string
 	// Now is the clock, time.Now unless set.
 	Now func() time.Time
 }
@@ -56,26 +69,24 @@ func (c *Cleaner) Save(ctx context.Context, s Settings) error {
 	return c.Values.Set(ctx, s.Values())
 }
 
-// Usage returns what each kind holds, by kind.
+// Usage returns what each area holds, by kind, the fixed areas too.
 func (c *Cleaner) Usage(ctx context.Context) (map[string]Usage, error) {
 	usage := map[string]Usage{}
-	for _, kind := range Kinds {
-		items, err := c.items(ctx, kind)
+	for _, area := range Areas {
+		items, err := c.items(ctx, area.Kind)
 		if err != nil {
 			return nil, err
 		}
-		usage[kind] = usageOf(items)
+		usage[area.Kind] = usageOf(items)
 	}
 	return usage, nil
 }
 
-// titles name the kinds in what Clean prints.
-var titles = map[string]string{Recordings: "Run recordings", Artifacts: "Artifact history", SecretReads: "Secret read log", KeyReads: "Key read log"}
-
-// Clean applies the rules, oldest first, and prints what each kind lost
-// and holds after; dry prints what would go and changes nothing. Once it
-// removed rows it vacuums the database and prints its size before and
-// after.
+// Clean applies the rules area by area, oldest first, and prints what
+// each lost and holds after; dry prints what would go and changes
+// nothing. The expired sign-ins go every time, and atkins prunes the
+// tool history, a line per database. Once it removed rows it
+// vacuums the database and prints its size before and after.
 func (c *Cleaner) Clean(ctx context.Context, dry bool, out io.Writer) error {
 	settings, err := c.Load(ctx)
 	if err != nil {
@@ -83,39 +94,47 @@ func (c *Cleaner) Clean(ctx context.Context, dry bool, out io.Writer) error {
 	}
 	now := c.now()
 	rows := 0
-	for _, kind := range Kinds {
-		rule := settings.Rule(kind)
-		items, err := c.items(ctx, kind)
+	for _, area := range Areas {
+		items, err := c.items(ctx, area.Kind)
 		if err != nil {
 			return err
 		}
-		if kind == Recordings {
-			if err := c.busy(ctx, items); err != nil {
+		if area.Kind == Tooling {
+			if err := c.prune(ctx, area, settings.Rule(area.Kind), items, dry, out); err != nil {
 				return err
 			}
+			continue
 		}
-		expired := Expire(items, rule, now)
+		rule, says, expired := settings.Rule(area.Kind), "", items
+		switch {
+		case area.Kind == Signins:
+			says = "removed every cleanup"
+		case area.Sized:
+			says = rule.Says()
+			expired = Expire(items, rule, now)
+		default:
+			says = rule.Keeps()
+			expired = Expire(items, rule, now)
+		}
 		gone, all := usageOf(expired), usageOf(items)
 		left := Usage{Count: all.Count - gone.Count, Bytes: all.Bytes - gone.Bytes}
 		verb := "would remove"
 		if !dry {
 			verb = "removed"
 			if len(expired) > 0 {
-				removed, err := c.remove(ctx, kind, expired)
+				removed, err := c.remove(ctx, area.Kind, expired, now)
 				if err != nil {
-					return fmt.Errorf("%s: %w", titles[kind], err)
+					return fmt.Errorf("%s: %w", area.Title, err)
 				}
-				if kind != Recordings {
-					rows += removed
-				}
+				rows += removed
 			}
-			after, err := c.items(ctx, kind)
+			after, err := c.items(ctx, area.Kind)
 			if err != nil {
 				return err
 			}
 			left = usageOf(after)
 		}
-		fmt.Fprintf(out, "%s (%s): %s %s; %s left\n", titles[kind], rule.Says(), verb, gone.Says("item", "items"), left.Says("item", "items"))
+		fmt.Fprintf(out, "%s (%s): %s %s; %s left\n", area.Title, says, verb, area.Holds(gone), area.Holds(left))
 	}
 	if rows == 0 || dry || c.DB == nil {
 		return nil
@@ -148,62 +167,66 @@ func (c *Cleaner) dbSize() int64 {
 	return size
 }
 
-// items returns what a kind holds, oldest first.
+// items returns what an area holds, oldest first.
 func (c *Cleaner) items(ctx context.Context, kind string) ([]Item, error) {
 	switch kind {
 	case Recordings:
 		return c.recordings(ctx)
+	case Runs:
+		return c.runs(ctx)
+	case Prompts:
+		return c.threads(ctx)
+	case WorkflowRuns:
+		return c.flows(ctx)
 	case Artifacts:
 		return c.history(ctx)
-	case KeyReads:
-		return c.keyReads(ctx)
+	case Signins:
+		return c.signins(ctx)
+	case Tooling:
+		return c.tooling(), nil
 	}
 	return c.reads(ctx)
 }
 
-// recordings are the recording files that are there, of every run that
-// names one.
-func (c *Cleaner) recordings(ctx context.Context) ([]Item, error) {
-	if c.Runs == nil || c.RecordingsDir == "" {
+// threads are the prompt threads by their last reply, one with an open
+// or working instruction busy.
+func (c *Cleaner) threads(ctx context.Context) ([]Item, error) {
+	if c.Notes == nil {
 		return nil, nil
 	}
-	runs, err := c.Runs.Recorded(ctx)
+	threads, err := c.Notes.Threads(ctx)
 	if err != nil {
 		return nil, err
 	}
-	items := []Item{}
-	for _, run := range runs {
-		info, err := os.Stat(c.recordingPath(run.CastPath))
-		if err != nil {
-			continue
+	items := make([]Item, 0, len(threads))
+	for _, thread := range threads {
+		item := Item{ID: thread.ID, Busy: thread.Open}
+		if thread.LastAt != nil {
+			item.At = *thread.LastAt
 		}
-		at := info.ModTime()
-		if run.StartedAt != nil {
-			at = *run.StartedAt
-		}
-		// The item names the run and its recording, apart by a NUL.
-		items = append(items, Item{ID: run.ID + "\x00" + run.CastPath, At: at, Size: info.Size()})
+		items = append(items, item)
 	}
-	sort.SliceStable(items, func(i, j int) bool { return items[i].At.Before(items[j].At) })
 	return items, nil
 }
 
-func (c *Cleaner) recordingPath(rel string) string {
-	return filepath.Join(c.RecordingsDir, filepath.FromSlash(rel))
-}
-
-// busy marks the recordings that stay whatever the rules say: of a run
-// in progress, or a step of a workflow run in progress.
-func (c *Cleaner) busy(ctx context.Context, items []Item) error {
-	busy, err := c.Runs.Busy(ctx)
+// flows are the workflow runs, one in progress busy.
+func (c *Cleaner) flows(ctx context.Context) ([]Item, error) {
+	if c.Flows == nil {
+		return nil, nil
+	}
+	runs, err := c.Flows.History(ctx)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	for i := range items {
-		run, _, _ := strings.Cut(items[i].ID, "\x00")
-		items[i].Busy = busy[run]
+	items := make([]Item, 0, len(runs))
+	for _, run := range runs {
+		item := Item{ID: run.ID, Busy: !model.Finished(run.State)}
+		if run.StartedAt != nil {
+			item.At = *run.StartedAt
+		}
+		items = append(items, item)
 	}
-	return nil
+	return items, nil
 }
 
 // history are the earlier versions of the artifact tree's files.
@@ -226,8 +249,7 @@ func (c *Cleaner) history(ctx context.Context) ([]Item, error) {
 	return items, nil
 }
 
-// reads are the reads of the secret read log, each the size Usage of
-// the log counts.
+// reads are the reads of the secret read log.
 func (c *Cleaner) reads(ctx context.Context) ([]Item, error) {
 	if c.SecretReads == nil {
 		return nil, nil
@@ -238,60 +260,86 @@ func (c *Cleaner) reads(ctx context.Context) ([]Item, error) {
 	}
 	items := make([]Item, 0, len(reads))
 	for _, read := range reads {
-		at := time.Time{}
+		item := Item{ID: read.ID}
 		if read.CreatedAt != nil {
-			at = *read.CreatedAt
+			item.At = *read.CreatedAt
 		}
-		size := len(read.ID) + len(read.SecretID) + len(read.Name) + len(read.RunID) + len(read.Folder) + len(read.Dir) + len(read.Job) + len(read.UserName) + 24
-		items = append(items, Item{ID: read.ID, At: at, Size: int64(size)})
+		items = append(items, item)
 	}
 	return items, nil
 }
 
-// keyReads are the reads of the key read log, each the size of its row.
-func (c *Cleaner) keyReads(ctx context.Context) ([]Item, error) {
-	if c.KeyReads == nil {
-		return nil, nil
-	}
-	reads, err := c.KeyReads.All(ctx)
-	if err != nil {
-		return nil, err
-	}
-	items := make([]Item, 0, len(reads))
-	for _, read := range reads {
-		at := time.Time{}
-		if read.CreatedAt != nil {
-			at = *read.CreatedAt
+// signins are the tokens and sessions past their expiry.
+func (c *Cleaner) signins(ctx context.Context) ([]Item, error) {
+	items := []Item{}
+	now := c.now()
+	if c.Tokens != nil {
+		tokens, err := c.Tokens.Expired(ctx, now)
+		if err != nil {
+			return nil, err
 		}
-		size := len(read.ID) + len(read.KeyName) + len(read.UserName) + len(read.TokenID) + len(read.Via) + 24
-		items = append(items, Item{ID: read.ID, At: at, Size: int64(size)})
+		for _, token := range tokens {
+			items = append(items, Item{ID: "token:" + token.ID, At: *token.ExpiresAt})
+		}
+	}
+	if c.Sessions != nil {
+		sessions, err := c.Sessions.Expired(ctx, now)
+		if err != nil {
+			return nil, err
+		}
+		for _, session := range sessions {
+			items = append(items, Item{ID: "session:" + session.ID, At: *session.ExpiresAt})
+		}
 	}
 	return items, nil
 }
 
-// remove takes the items out of a kind and returns how many rows went.
-func (c *Cleaner) remove(ctx context.Context, kind string, items []Item) (int, error) {
+// remove takes the items out of an area and returns how many rows went.
+func (c *Cleaner) remove(ctx context.Context, kind string, items []Item, now time.Time) (int, error) {
 	switch kind {
 	case Recordings:
+		return 0, c.removeRecordings(items)
+	case Runs:
+		return c.removeRuns(ctx, items)
+	case Prompts:
 		for _, item := range items {
-			_, rel, _ := strings.Cut(item.ID, "\x00")
-			if err := os.Remove(c.recordingPath(rel)); err != nil && !os.IsNotExist(err) {
+			if err := c.Notes.Delete(ctx, item.ID); err != nil {
 				return 0, err
 			}
 		}
-		return 0, nil
-	case Artifacts:
-		return c.expireHistory(ctx, items)
-	case KeyReads:
-		if err := c.KeyReads.DeleteThrough(ctx, items[len(items)-1].ID); err != nil {
-			return 0, err
+		return len(items), nil
+	case WorkflowRuns:
+		for _, item := range items {
+			if err := c.Notes.DeleteAboutWorkflowRun(ctx, item.ID); err != nil {
+				return 0, err
+			}
+			if err := c.Flows.Delete(ctx, item.ID); err != nil {
+				return 0, err
+			}
 		}
 		return len(items), nil
+	case Artifacts:
+		return c.expireHistory(ctx, items)
+	case Signins:
+		return len(items), c.removeSignins(ctx, now)
 	}
 	if err := c.SecretReads.DeleteThrough(ctx, items[len(items)-1].ID); err != nil {
 		return 0, err
 	}
 	return len(items), nil
+}
+
+// removeSignins deletes the tokens and sessions past their expiry.
+func (c *Cleaner) removeSignins(ctx context.Context, now time.Time) error {
+	if c.Tokens != nil {
+		if err := c.Tokens.DeleteExpired(ctx, now); err != nil {
+			return err
+		}
+	}
+	if c.Sessions != nil {
+		return c.Sessions.DeleteExpired(ctx, now)
+	}
+	return nil
 }
 
 // expireHistory drops the history of the artifact tree up to the newest

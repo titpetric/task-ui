@@ -357,3 +357,22 @@ func TestRunStorage_CreateNormalisesTheClock(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "new", last.UserName)
 }
+
+// History lists every run, oldest first, recorded or not.
+func TestRunStorage_History(t *testing.T) {
+	t.Parallel()
+	db := newDB(t)
+	runs := storage.NewRunStorage(db)
+	ctx := context.Background()
+	older := time.Now().Add(-time.Hour)
+	first := &model.Run{Folder: "infra", Job: "plan", State: model.StateOK, StartedAt: &older}
+	second := &model.Run{Folder: "infra", Job: "plan", State: model.StateRunning, CastPath: "b.cast"}
+	for _, run := range []*model.Run{second, first} {
+		assert.NoError(t, runs.Create(ctx, run))
+	}
+	history, err := runs.History(ctx)
+	assert.NoError(t, err)
+	assert.Len(t, history, 2)
+	assert.Equal(t, first.ID, history[0].ID)
+	assert.Equal(t, second.ID, history[1].ID)
+}

@@ -21,11 +21,9 @@ sections:
   inventory: "Inventory"
   user: "Users"
 
-# Rules one section adds to the rules above. Its all leaves them out:
-# each needs an allow of its own, and only admins hold one by default.
-extra:
-  key:
-    read: "Allow Read Private"
+# A section may add rules of its own under extra, <section>: <rule>:
+# <title>; its all leaves them out, so each needs an allow of its own.
+# None does.
 
 # What a user may do in the application, beyond the sections.
 permissions:

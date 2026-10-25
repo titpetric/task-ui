@@ -60,9 +60,7 @@ type Options struct {
 	// Keys are the key folder: every key of the instance and its
 	// workspaces.
 	Keys *keystore.Local
-	// KeyReads log who read which private key; nil shows no reads.
-	KeyReads *storage.KeyReadStorage
-	Env      *envfile.Store
+	Env  *envfile.Store
 	// Recordings holds the runs' recordings, for the last screen of a
 	// run whose session has ended.
 	Recordings *recording.Store

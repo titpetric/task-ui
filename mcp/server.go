@@ -142,9 +142,8 @@ const toolGuide = "task-ui runs the jobs of folders (atkins, Taskfile, make, npm
 	"list_notes and note_comment read and answer the notes that name you, each an instruction to you to report on, " +
 	"post_note leaves one for whoever it names, " +
 	"list_artifacts, read_artifact and write_artifact browse, read and write the artifact tree, the files runs leave, " +
-	"ask_prompt asks Claude in a folder and can wait for the answer, " +
-	"and get_ssh_key hands an SSH key linked to you to an age recipient of yours for the length of a task. " +
-	"Call whoami to see what you may do: your role, your permissions, the keys you may read and the folders you see."
+	"and ask_prompt asks Claude in a folder and can wait for the answer. " +
+	"Call whoami to see what you may do: your role, your permissions and the folders you see."
 
 // ServeHTTP answers one JSON-RPC message per POST, in JSON.
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {

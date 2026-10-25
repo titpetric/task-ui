@@ -208,6 +208,8 @@ shot workflow-dark "/workflows/${release}" dark
 shot workflow-edit-dark "/workflows/${ship}/edit" dark 1440x1200
 shot workflow-edit-light "/workflows/${ship}/edit" light 1440x1200
 shot settings-dark /settings dark
+shot retention-dark /settings/retention dark 1440x1300
+shot retention-light /settings/retention light 1440x1300
 shot instance-dark /settings/instance dark 1440x2400
 shot projects-dark /settings/projects dark
 shot project-new-dark /settings/projects/new dark

@@ -10,7 +10,7 @@
 		{{- if .Can "project/edit" }}
 		<a class="btn btn-primary" href="/settings/projects/new?workspace={{ $ws.Folder }}"><svg class="ic"><use href="#i-plus"/></svg>Add project</a>
 		{{- end }}
-		{{- if and .KeysDir (.Can "workspace/edit") }}
+		{{- if and .KeysDir .User .User.CanAdmin }}
 		<button type="button" class="btn" data-dialog-open="export-dialog"><svg class="ic"><use href="#i-download"/></svg>Export</button>
 		{{- end }}
 		{{ template "menu" (menu (print "Actions on " $ws.Folder)

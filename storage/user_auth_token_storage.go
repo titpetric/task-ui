@@ -76,6 +76,16 @@ func (s *UserAuthTokenStorage) DeleteByUser(ctx context.Context, userID string) 
 	return client(s.db).Exec(ctx, "DELETE FROM user_auth_token WHERE user_id = ?", userID)
 }
 
+// Expired returns the tokens that stopped signing in by now, oldest expiry first.
+func (s *UserAuthTokenStorage) Expired(ctx context.Context, now time.Time) ([]model.UserAuthToken, error) {
+	return client(s.db).Select[model.UserAuthToken](ctx, "SELECT * FROM user_auth_token WHERE expires_at IS NOT NULL AND expires_at <= ? ORDER BY expires_at ASC", now.UTC())
+}
+
+// DeleteExpired removes the tokens that stopped signing in by now.
+func (s *UserAuthTokenStorage) DeleteExpired(ctx context.Context, now time.Time) error {
+	return client(s.db).Exec(ctx, "DELETE FROM user_auth_token WHERE expires_at IS NOT NULL AND expires_at <= ?", now.UTC())
+}
+
 // DeleteMCP removes the expiring MCP tokens of a user; the tokens of `task-ui token` stay.
 func (s *UserAuthTokenStorage) DeleteMCP(ctx context.Context, userID string) error {
 	return client(s.db).Exec(ctx, "DELETE FROM user_auth_token WHERE user_id = ? AND expires_at IS NOT NULL", userID)

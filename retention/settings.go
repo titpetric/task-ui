@@ -4,36 +4,41 @@ import (
 	"strconv"
 )
 
-// The kinds of data the rules keep, in the order the page shows them.
+// The kinds of data a rule keeps, in the order the page shows them and
+// Clean applies them.
 const (
-	Recordings  = "recordings"
-	Artifacts   = "artifacts"
-	SecretReads = "secret_reads"
-	KeyReads    = "key_reads"
+	Recordings   = "recordings"
+	Runs         = "runs"
+	Prompts      = "prompts"
+	WorkflowRuns = "workflow_runs"
+	Artifacts    = "artifacts"
+	SecretReads  = "secret_reads"
+	// Tooling is the tool history atkins keeps in each workspace's home
+	// and the instance's own, which the cleanup prunes through atkins.
+	Tooling = "tooling"
 )
 
-// Kinds are the kinds of data, in the order the page shows them.
-var Kinds = []string{Recordings, Artifacts, SecretReads, KeyReads}
+// Kinds are the kinds of data with a rule, in the order the page shows them.
+var Kinds = []string{Recordings, Runs, Prompts, WorkflowRuns, Artifacts, SecretReads, Tooling}
 
-// Settings are the rules of every kind of data, as the Data retention
-// page sets them.
-type Settings struct {
-	Recordings  Rule `json:"recordings"`
-	Artifacts   Rule `json:"artifacts"`
-	SecretReads Rule `json:"secret_reads"`
-	KeyReads    Rule `json:"key_reads"`
-}
+// Settings are the rules of every kind of data, by kind, as the Data
+// retention page sets them. A kind the map lacks keeps the default.
+type Settings map[string]Rule
 
-// Defaults keep a recording 31 days and the rest for ever, with no size limit.
+// Defaults keep every kind 31 days, with no size limit.
 func Defaults() Settings {
-	return Settings{Recordings: Rule{Age: Month}, Artifacts: Rule{Age: Never}, SecretReads: Rule{Age: Never}, KeyReads: Rule{Age: Never}}
+	s := Settings{}
+	for _, kind := range Kinds {
+		s[kind] = Rule{Age: Month}
+	}
+	return s
 }
 
 // Load reads the settings from stored values, with the defaults for what is missing or wrong.
 func Load(values map[string]string) Settings {
 	s := Defaults()
 	for _, kind := range Kinds {
-		rule := s.Rule(kind)
+		rule := s[kind]
 		if age := values["retention."+kind+".age"]; age != "" {
 			rule.Age = age
 		}
@@ -41,7 +46,7 @@ func Load(values map[string]string) Settings {
 			rule.Limit = limit
 		}
 		if rule.Valid() {
-			s.set(kind, rule)
+			s[kind] = rule
 		}
 	}
 	return s
@@ -60,33 +65,20 @@ func (s Settings) Values() map[string]string {
 
 // Valid reports whether every rule is.
 func (s Settings) Valid() bool {
-	return s.Recordings.Valid() && s.Artifacts.Valid() && s.SecretReads.Valid() && s.KeyReads.Valid()
+	for _, kind := range Kinds {
+		if !s.Rule(kind).Valid() {
+			return false
+		}
+	}
+	return true
 }
 
-// Rule returns the rule of a kind.
+// Rule returns the rule of a kind, the default for one the settings lack.
 func (s Settings) Rule(kind string) Rule {
-	switch kind {
-	case Recordings:
-		return s.Recordings
-	case Artifacts:
-		return s.Artifacts
-	case KeyReads:
-		return s.KeyReads
+	if rule, ok := s[kind]; ok {
+		return rule
 	}
-	return s.SecretReads
-}
-
-func (s *Settings) set(kind string, rule Rule) {
-	switch kind {
-	case Recordings:
-		s.Recordings = rule
-	case Artifacts:
-		s.Artifacts = rule
-	case KeyReads:
-		s.KeyReads = rule
-	default:
-		s.SecretReads = rule
-	}
+	return Rule{Age: Month}
 }
 
 func itoa(n int) string {

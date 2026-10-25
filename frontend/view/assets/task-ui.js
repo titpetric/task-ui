@@ -1159,34 +1159,6 @@
     });
   }
 
-  // Data retention: a preset fills the size field, and the estimate
-  // under it follows the field, at the average size of what the kind
-  // holds.
-  function parseSize(text) {
-    var m = /^\s*([\d.]+)\s*([kmgt]?)i?b?\s*$/i.exec(text || "");
-    if (!m) return 0;
-    var unit = { "": 1, k: 1024, m: 1048576, g: 1073741824, t: 1099511627776 }[m[2].toLowerCase()];
-    return parseFloat(m[1]) * unit;
-  }
-  function estimate(block) {
-    var input = block.querySelector("[data-size-input]"), out = block.querySelector("[data-estimate]");
-    var average = parseFloat(block.dataset.average) || 0, limit = parseSize(input.value);
-    if (!average || !limit) { out.textContent = ""; return; }
-    var n = Math.floor(limit / average);
-    out.textContent = "about " + n + " " + (n === 1 ? block.dataset.one : block.dataset.many);
-  }
-  document.addEventListener("click", function (event) {
-    var btn = event.target.closest("[data-retention] [data-size]");
-    if (!btn) return;
-    var block = btn.closest("[data-retention]");
-    block.querySelector("[data-size-input]").value = btn.dataset.size;
-    estimate(block);
-  });
-  document.addEventListener("input", function (event) {
-    if (!event.target.matches("[data-retention] [data-size-input]")) return;
-    estimate(event.target.closest("[data-retention]"));
-  });
-
   document.addEventListener("submit", function (event) {
     var form = event.target.closest("form[data-api]");
     if (!form) return;

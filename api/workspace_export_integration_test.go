@@ -58,10 +58,13 @@ func (f *fixture) importBundle(t *testing.T, user string, bundle []byte, passphr
 	return f.do(t, req)
 }
 
+// Export and import are for admins alone: a user with workspace/edit,
+// which the bundle's keys and secrets are beyond, gets a 403.
 func TestWorkspaceExport_AdminOnly(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
 	f.withKeyring(t)
+	assert.NoError(t, f.opts.Users.Policies().Put(t.Context(), "user", asOps, "workspace/edit", "allow"))
 	for _, user := range []string{asOps, asViewer, asLimited} {
 		res := f.call(t, user, http.MethodPost, "/workspaces/_/export", api.WorkspaceExportRequest{Passphrase: passphrase})
 		assert.Equal(t, http.StatusForbidden, res.Status, user)

@@ -17,5 +17,5 @@ func TestNew(t *testing.T) {
 		names = append(names, tool.Name)
 		assert.Equal(t, "object", tool.InputSchema.Type)
 	}
-	assert.Equal(t, []string{"list_jobs", "list_workflows", "run_job", "run_workflow", "list_runs", "get_run", "list_notes", "note_comment", "list_workflow_runs", "post_note", "ask_prompt", "list_artifacts", "read_artifact", "write_artifact", "get_workflow", "create_workflow", "update_workflow", "whoami", "get_ssh_key"}, names)
+	assert.Equal(t, []string{"list_jobs", "list_workflows", "run_job", "run_workflow", "list_runs", "get_run", "list_notes", "note_comment", "list_workflow_runs", "post_note", "ask_prompt", "list_artifacts", "read_artifact", "write_artifact", "get_workflow", "create_workflow", "update_workflow", "whoami"}, names)
 }

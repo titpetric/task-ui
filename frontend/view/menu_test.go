@@ -107,10 +107,8 @@ func TestMenu_Pages(t *testing.T) {
 	ws := keystore.Key{Name: "workspace_acme_git_ed25519", Purpose: keystore.PurposeSSH, Scope: "workspace:acme", Algo: "ed25519", Fingerprint: "SHA256:ws",
 		PublicKey: "ssh-ed25519 AAAAws", CreatedAt: time.Now(), RotatedAt: &rotated, Roles: []string{"admin"}, Users: []string{"ann"}}
 	p.Keys = []keystore.Key{ws}
-	p.KeyReads = map[string]int{ws.Name: 3}
 	body = render(t, "keys", p)
 	assert.Contains(t, body, `<dt>Links</dt><dd>admin, ann</dd>`)
-	assert.Contains(t, body, `<dt>Reads</dt><dd>3</dd>`)
 	assert.Contains(t, body, `<dt>Scope</dt><dd>workspace acme</dd>`)
 	assert.Contains(t, body, `data-delete="/api/keys/workspace_acme_git_ed25519"`)
 
