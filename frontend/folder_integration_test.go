@@ -73,6 +73,21 @@ func TestFolder_Running(t *testing.T) {
 	assert.NotContains(t, viewer, "data-kill")
 }
 
+// The root's own jobs, which no listed folder holds, have their job page
+// under /f/_/<job>, as the dashboard links them.
+func TestFolder_RootJob(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	root := shellFolder(t, f.root, model.Default, map[string]string{"@forgejo-sync": "echo synced"})
+	root.Jobs[0].Name = "Forgejo sync"
+	f.opts.Catalogue.(catalogue)[model.Default] = root
+
+	body := f.page(t, asAdmin, "/f/_/@forgejo-sync")
+	assert.Contains(t, body, "Forgejo sync")
+	assert.Contains(t, body, `data-folder="_"`)
+	assert.Equal(t, http.StatusNotFound, f.get(t, asAdmin, "/f/_/@nothing").Status)
+}
+
 func TestFolder_Missing(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
