@@ -4,7 +4,7 @@
 <div class="page-head">
 	<div>
 		<h2>Workspace settings <span class="badge">{{ $ws.Folder }}</span></h2>
-		<p>The workspace's settings, its home repository, its projects and the SSH keys its runs get. The workspace holds its home, the <code>HOME</code> of its runs, and its projects side by side under <code>src/</code>; its folder stays as added.{{ if $default }} The default workspace is the root, and it stays.{{ end }}</p>
+		<p>The workspace's settings, its home repository, its projects and the SSH keys its runs get. The workspace holds its home, the <code>HOME</code> of its runs, and its projects side by side under <code>src/</code>; its folder stays as added.{{ if $default }} The default workspace is the root itself: deleting it removes the root's home and projects, and the instance runs without one.{{ end }}</p>
 	</div>
 	<div class="actions">
 		{{- if .Can "project/edit" }}
@@ -16,7 +16,7 @@
 		{{ template "menu" (menu (print "Actions on " $ws.Folder)
 			(item "folder-open" "Open" "href" ($.Href $ws.Folder))
 			(and (.Can "workspace/delete") $secrets (item "secret" (deleteBlocked $secrets) "href" (print "/settings/workspaces/" $ws.Folder "/secrets")))
-			(and (.Can "workspace/delete") (not $secrets) (danger "trash" (or (and $default "Empty") "Delete") "data-delete" (print "/api/workspaces/" $ws.Folder) "data-confirm" (deleteWorkspaceConfirm $ws.Folder $nested) "data-confirm-ok" (or (and $default "Empty") "Delete") "data-next" (or (and $default "/settings/workspaces?notice=Workspace+emptied") "/settings/workspaces?notice=Workspace+deleted")))
+			(and (.Can "workspace/delete") (not $secrets) (danger "trash" "Delete" "data-delete" (print "/api/workspaces/" $ws.Folder) "data-confirm" (deleteWorkspaceConfirm $ws.Folder $nested) "data-confirm-ok" "Delete" "data-next" "/settings/workspaces?notice=Workspace+deleted"))
 		) }}
 	</div>
 </div>

@@ -94,7 +94,7 @@ func (h *Handlers) listProjects(w http.ResponseWriter, r *http.Request) {
 	if !h.require(w, r, "project/view") {
 		return
 	}
-	entries := folder.Entries(h.opts.Root, h.opts.Git, h.workspaceFolders(r.Context()))
+	entries := folder.Entries(h.opts.Root, h.opts.Git, h.workspaceRows(r.Context()))
 	projects, err := h.opts.Projects.List(r.Context())
 	if err != nil {
 		failErr(w, err)
@@ -149,11 +149,14 @@ func (h *Handlers) cloneProject(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	id := req.ID
+	if _, err := h.opts.Workspaces.GetByFolder(r.Context(), req.Workspace); err != nil && req.Workspace == model.Default {
+		fail(w, http.StatusBadRequest, "pick a workspace: the instance has no default workspace")
+		return
+	} else if err != nil {
+		fail(w, http.StatusBadRequest, "there is no workspace named "+req.Workspace)
+		return
+	}
 	if req.Workspace != model.Default {
-		if _, err := h.opts.Workspaces.GetByFolder(r.Context(), req.Workspace); err != nil {
-			fail(w, http.StatusBadRequest, "there is no workspace named "+req.Workspace)
-			return
-		}
 		id = req.Workspace + "/" + req.ID
 	} else if problem := h.rootTaken(r, id); problem != "" {
 		fail(w, http.StatusConflict, problem)

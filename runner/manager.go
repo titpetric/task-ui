@@ -382,7 +382,8 @@ func (m *Manager) execute(ctx context.Context, session *Session) Status {
 // workspace: the one it names, or the workspace of the first segment
 // of WorkspaceOf, else of the folder, under the root, or the default
 // workspace, _ at the root, for a folder in no named one. Empty with no
-// workspace known.
+// workspace known: without a default workspace a run at the root gets
+// no workspace, no TASK_UI_WORKSPACE and the server's HOME.
 func (m *Manager) workspace(ctx context.Context, req Request) (string, string) {
 	if req.Workspace != "" {
 		if m.opts.Root != "" && filepath.Clean(req.Workspace) == filepath.Clean(m.opts.Root) {

@@ -215,14 +215,19 @@ func (b *Board) promptRequest(ctx context.Context, user *model.User, dir string)
 		return req, fmt.Errorf("%w: prompts aren't available on this instance", ErrNoPrompt)
 	}
 	var place *folder.Folder
-	at, inside := layout.HomeDir(b.Root, model.Default), ""
+	at, inside := b.Root, ""
 	switch f, rest := folder.Resolve(b.Catalogue, dir); {
 	case !sees(user, f, dir):
 		return req, fmt.Errorf("%w: no such directory", ErrNoPrompt)
-	case dir == model.Default:
-		// The root: Claude works in the default workspace's home.
+	case dir == model.Default && b.isWorkspace(ctx, model.Default):
+		// The root with a default workspace: Claude works in its home.
+		at = layout.HomeDir(b.Root, model.Default)
 		place = &folder.Folder{ID: model.Default, Title: model.Default, Dir: layout.SrcDir(b.Root, model.Default)}
 		req.Workspace = b.Root
+	case dir == model.Default:
+		// The root without one: Claude works in the root directory, as
+		// the Notes agent does, with the server's HOME.
+		place = &folder.Folder{ID: model.Default, Title: model.Default, Dir: b.Root}
 	case f != nil && rest == "" && b.isWorkspace(ctx, f.ID):
 		// A workspace: Claude works in its home, TASK_UI_HOME.
 		at, place = layout.HomeDir(b.Root, f.ID), f

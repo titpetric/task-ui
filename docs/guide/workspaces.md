@@ -26,8 +26,10 @@ the root, whose pages open under `/f/_/`, so `<root>/src/infra` is the
 folder `infra` and opens at `/f/_/infra`. A link without the `_`, such
 as a bookmarked `/f/infra`, redirects there for good, its query kept.
 `/f/_` lists the projects at the root you can see. task-ui adds the
-default workspace when it starts, makes the home and src of every
-workspace, and nobody can remove it. No workspace, project or directory
+default workspace on its first start, when it has no workspace at all,
+and makes the home and src of every workspace it has when it starts.
+The default workspace deletes like any other (see [Delete the default
+workspace](#delete-the-default-workspace)). No workspace, project or directory
 under a workspace takes the name `_`, `internal`, `home` or `src`;
 discovery skips a directory of `src` named `_` or `internal`, and a
 directory of the root or of a workspace that is neither `home` nor
@@ -207,22 +209,48 @@ order.
   workspace is active. A workspace that holds a secret has no Delete:
   the menu says **Delete its N secrets first** and opens its Secrets
   page, and `DELETE` answers `409` until you delete each one by hand,
-  so a delete never takes a secret with it unseen. The default workspace, the root, has **Empty**
-  in its place: the same removal of its projects, env files, secrets
-  and keys, and of its home checkout, after which the root stays with
-  an empty `home/` and `src/`, its row and the other workspaces
-  untouched.
+  so a delete never takes a secret with it unseen. The default
+  workspace, the root, deletes the same way: its projects at the root
+  with their checkouts, their env files, its keys and its home go, and
+  so does its row; the root directory stays with the named workspaces
+  in it.
 - **Import**, at the top right for an admin, adds a workspace from a
   bundle another instance exported (see [Move to another
   instance](#move-to-another-instance)).
 
+### Delete the default workspace
+
+An instance runs without a default workspace. Without `_`, the
+Workspaces page lists the named workspaces alone, and task-ui makes no
+`home/` or `src/` at the root again. What changes:
+
+- **Add project** needs a workspace: the Workspace select lists the
+  named ones, and `POST /api/projects` with no `workspace` answers `400`
+  "pick a workspace: the instance has no default workspace".
+- The Projects page, the dashboard and the sidebar list no projects at
+  the root; the sidebar starts with the workspaces.
+- `/f/_` still opens: the root's page, with its built-in jobs, `@host:*`,
+  `@forgejo-sync` and `@cleanup`, which keep running, on their schedules
+  too. A run of one of them has no workspace: no `TASK_UI_WORKSPACE`, no
+  `TASK_UI_WORKSPACE_DIR`, and `HOME` stays the server's. Its keys are
+  the instance keys linked to it, as before.
+- A prompt at the root, and `@claude-note` on the Notes board, run in
+  the root directory with the server's `HOME`.
+- The Secrets page has no `_` group and no shared scope `workspace:_`;
+  the integrations' settings, under the instance key, stay.
+- A workflow step lists `_` as a place only for the root's own jobs.
+
+Like any workspace, `_` deletes once it holds no secret and no run of
+the root is active: delete its secrets by hand first, then Delete.
+
 ## Clone a project into one
 
 **Add project** under Settings, Projects has a **Workspace** select.
-`_`, the default, clones the project into `src/` at the root; a named
-workspace clones it into its `src/`, as `malta/dockerfiles`. The
-Projects page lists it under that name. In the API an empty `workspace`
-means `_`. A project may not take a workspace's name, `home`, `src` or
+`_`, the default, while the instance has it, clones the project into
+`src/` at the root; a named workspace clones it into its `src/`, as
+`malta/dockerfiles`. The Projects page lists it under that name. In the
+API an empty `workspace` means `_`, and answers `400` on an instance
+without a default workspace. A project may not take a workspace's name, `home`, `src` or
 a directory that's there already: that answers `409`, or `400` for one
 of task-ui's names, before git runs.
 
@@ -310,6 +338,9 @@ variables (see [Runs](runs.md#what-a-job-gets)):
   root for `_`;
 - `HOME` and `TASK_UI_HOME`, the workspace's home, `<root>/malta/home`,
   or `<root>/home` for `_` (see [The home](#the-home)).
+
+A run at the root of an instance without a default workspace gets none
+of them: `HOME` stays the server's.
 
 Before the job, the run pulls a home that holds a checkout, then the
 project's checkout, so the shared tooling is current when the job

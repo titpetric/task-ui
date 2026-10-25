@@ -12,6 +12,7 @@ import (
 
 	"github.com/titpetric/task-ui/api"
 	"github.com/titpetric/task-ui/internal/assert"
+	"github.com/titpetric/task-ui/layout"
 	"github.com/titpetric/task-ui/model"
 )
 
@@ -39,9 +40,11 @@ func TestWorkspace_CRUD(t *testing.T) {
 	f := newFixture(t)
 	repo := "file://" + localRepo(t)
 
+	// A fresh instance has the default workspace alone.
 	empty := f.call(t, asAdmin, http.MethodGet, "/workspaces", nil)
 	assert.Equal(t, http.StatusOK, empty.Status)
-	assert.Contains(t, string(empty.Raw), `"workspaces":[]`)
+	assert.Len(t, empty.list("workspaces"), 1)
+	assert.Equal(t, model.Default, empty.list("workspaces")[0].(map[string]any)["folder"])
 
 	created := f.call(t, asAdmin, http.MethodPost, "/workspaces", api.WorkspaceRequest{URL: repo, Folder: "malta", Title: "Malta", Branch: "main"})
 	assert.Equal(t, http.StatusCreated, created.Status, string(created.Raw))
@@ -60,8 +63,8 @@ func TestWorkspace_CRUD(t *testing.T) {
 	assert.Equal(t, http.StatusCreated, again.Status, string(again.Raw))
 
 	list := f.call(t, asAdmin, http.MethodGet, "/workspaces", nil)
-	assert.Len(t, list.list("workspaces"), 2)
-	assert.Equal(t, "malta", list.list("workspaces")[0].(map[string]any)["folder"], "an added workspace goes last")
+	assert.Len(t, list.list("workspaces"), 3)
+	assert.Equal(t, "malta", list.list("workspaces")[1].(map[string]any)["folder"], "an added workspace goes last, after the default one")
 
 	got := f.call(t, asAdmin, http.MethodGet, "/workspaces/malta", nil)
 	assert.Equal(t, http.StatusOK, got.Status)
@@ -73,7 +76,7 @@ func TestWorkspace_CRUD(t *testing.T) {
 	assert.Equal(t, "org tooling", updated.str("description"))
 	assert.Equal(t, repo, updated.str("home_url"), "an update keeps the home")
 	assert.Equal(t, got.str("id"), updated.str("id"))
-	assert.Equal(t, float64(0), updated.get("sort"))
+	assert.Equal(t, float64(1), updated.get("sort"), "after the default workspace's 0")
 
 	// A sort places the workspace; left out, it stays.
 	sort := int64(5)
@@ -81,7 +84,7 @@ func TestWorkspace_CRUD(t *testing.T) {
 	assert.Equal(t, http.StatusOK, sorted.Status, string(sorted.Raw))
 	assert.Equal(t, float64(5), sorted.get("sort"))
 	list = f.call(t, asAdmin, http.MethodGet, "/workspaces", nil)
-	assert.Equal(t, "gozo", list.list("workspaces")[0].(map[string]any)["folder"])
+	assert.Equal(t, "gozo", list.list("workspaces")[1].(map[string]any)["folder"])
 	kept := f.call(t, asAdmin, http.MethodPut, "/workspaces/malta", api.WorkspaceRequest{Title: "The island"})
 	assert.Equal(t, float64(5), kept.get("sort"))
 
@@ -344,28 +347,64 @@ func TestWorkspace_Default(t *testing.T) {
 	assert.FileExists(t, filepath.Join(f.root, "src", "site", "Makefile"))
 	assert.DirExists(t, filepath.Join(f.root, "home"), "the root has an empty home")
 
-	// Deleting _ empties the root: its project rows and checkouts go, a
-	// checkout without a row too, and it forgets its home; the row,
-	// the root with an empty home and src, and the other workspaces stay.
+	// Deleting _ deletes it like any other workspace: 409 while a run
+	// of the root is active and while it holds a secret; then its
+	// project rows and checkouts go, a checkout without a row too, its
+	// home with its checkout, and its row; the root directory and the
+	// other workspaces stay.
 	assert.Equal(t, http.StatusOK, f.call(t, asAdmin, http.MethodPut, "/projects/plain", api.ProjectRequest{Title: "Plain"}).Status)
 	assert.NoError(t, os.MkdirAll(filepath.Join(f.root, "src", "loose", ".git"), 0o755))
 	assert.NoError(t, os.WriteFile(filepath.Join(f.root, "home", ".profile"), []byte("export A=1\n"), 0o644))
 	assert.Equal(t, http.StatusOK, f.call(t, asAdmin, http.MethodPut, "/workspaces/_/home", api.WorkspaceHomeRequest{URL: repo}).Status)
-	emptied := f.call(t, asAdmin, http.MethodDelete, "/workspaces/_", nil)
-	assert.Equal(t, http.StatusNoContent, emptied.Status, string(emptied.Raw))
+	slow := f.start(t, asAdmin, "infra", "slow")
+	busy := f.call(t, asAdmin, http.MethodDelete, "/workspaces/_", nil)
+	assert.Equal(t, http.StatusConflict, busy.Status, string(busy.Raw))
+	assert.Contains(t, busy.str("error"), "infra/slow is running in _")
+	assert.Equal(t, http.StatusNoContent, f.call(t, asAdmin, http.MethodPost, "/runs/"+slow+"/kill", nil).Status)
+	f.finished(t, slow)
+	assert.NoError(t, f.opts.Secrets.Set(ctx, &model.Secret{Scope: "workspace:_", Name: "TOKEN", Content: "shared value"}))
+	blocked := f.call(t, asAdmin, http.MethodDelete, "/workspaces/_", nil)
+	assert.Equal(t, http.StatusConflict, blocked.Status, string(blocked.Raw))
+	assert.Contains(t, blocked.str("error"), "holds 1 secrets: delete them first")
+	held, err := f.opts.Secrets.Encrypted(ctx, model.Default)
+	assert.NoError(t, err)
+	assert.Len(t, held, 1)
+	assert.NoError(t, f.opts.Secrets.Delete(ctx, held[0].ID))
+
+	deleted := f.call(t, asAdmin, http.MethodDelete, "/workspaces/_", nil)
+	assert.Equal(t, http.StatusNoContent, deleted.Status, string(deleted.Raw))
 	assert.DirExists(t, f.root)
 	assert.DirExists(t, filepath.Join(f.root, "malta", "home"), "a named workspace stays")
-	for _, dir := range []string{"home", "src"} {
-		entries, err := os.ReadDir(filepath.Join(f.root, dir))
-		assert.NoError(t, err)
-		assert.Empty(t, entries, dir+" is empty")
-	}
-	kept := f.call(t, asAdmin, http.MethodGet, "/workspaces/_", nil)
-	assert.Equal(t, http.StatusOK, kept.Status)
-	assert.Equal(t, "", kept.str("home_url"), "the home repository is forgotten")
+	assert.NoDirExists(t, filepath.Join(f.root, "home"))
+	assert.NoDirExists(t, filepath.Join(f.root, "src"))
+	assert.Equal(t, http.StatusNotFound, f.call(t, asAdmin, http.MethodGet, "/workspaces/_", nil).Status)
 	projects, err := f.opts.Projects.List(ctx)
 	assert.NoError(t, err)
 	assert.Empty(t, projects, "the root's project rows go")
+	list = f.call(t, asAdmin, http.MethodGet, "/workspaces", nil)
+	assert.Len(t, list.list("workspaces"), 1)
+	assert.Equal(t, "malta", list.list("workspaces")[0].(map[string]any)["folder"])
+
+	// A restart brings nothing back: the row stays gone and the root
+	// gets no home or src.
+	assert.NoError(t, f.opts.Workspaces.EnsureDefault(ctx))
+	rows, err := f.opts.Workspaces.List(ctx)
+	assert.NoError(t, err)
+	for _, row := range rows {
+		assert.NoError(t, layout.Ensure(f.root, row.Folder))
+	}
+	assert.Len(t, rows, 1)
+	assert.NoDirExists(t, filepath.Join(f.root, "home"))
+	assert.NoDirExists(t, filepath.Join(f.root, "src"))
+
+	// A clone needs a workspace now.
+	none := f.call(t, asAdmin, http.MethodPost, "/projects", api.ProjectCloneRequest{URL: repo, ID: "site"})
+	assert.Equal(t, http.StatusBadRequest, none.Status, string(none.Raw))
+	assert.Equal(t, "pick a workspace: the instance has no default workspace", none.str("error"))
+	assert.NoDirExists(t, filepath.Join(f.root, "src"))
+	inMalta := f.call(t, asAdmin, http.MethodPost, "/projects", api.ProjectCloneRequest{URL: repo, ID: "site", Workspace: "malta"})
+	assert.Equal(t, http.StatusCreated, inMalta.Status, string(inMalta.Raw))
+	assert.FileExists(t, filepath.Join(f.root, "malta", "src", "site", "Makefile"))
 }
 
 // A project cloned into the root may not take a workspace's name, or

@@ -26,7 +26,7 @@ func TestPlan(t *testing.T) {
 	assert.NoError(t, os.WriteFile(filepath.Join(root, "notes.txt"), []byte("a file at the root stays\n"), 0o644))
 	assert.NoError(t, os.WriteFile(filepath.Join(root, "malta", "workspace", "CLAUDE.md"), []byte("# malta\n"), 0o644))
 
-	moves, err := layout.Plan(root, []string{"malta"}, map[string]string{"malta": "workspace"})
+	moves, err := layout.Plan(root, []string{"_", "malta"}, map[string]string{"malta": "workspace"})
 	assert.NoError(t, err)
 	lines := []string{}
 	for _, move := range moves {
@@ -58,9 +58,25 @@ func TestPlan(t *testing.T) {
 	assert.NoDirExists(t, filepath.Join(root, "malta", "workspace"))
 	assert.FileExists(t, filepath.Join(root, "notes.txt"))
 
-	again, err := layout.Plan(root, []string{"malta"}, map[string]string{"malta": "workspace"})
+	again, err := layout.Plan(root, []string{"_", "malta"}, map[string]string{"malta": "workspace"})
 	assert.NoError(t, err)
 	assert.Len(t, again, 0, "laid out already")
+
+	// Without the default workspace the root gets no home and no src:
+	// Plan lays out the named workspaces alone.
+	bare := t.TempDir()
+	assert.NoError(t, os.MkdirAll(filepath.Join(bare, "malta", "apps"), 0o755))
+	moves, err = layout.Plan(bare, []string{"malta"}, nil)
+	assert.NoError(t, err)
+	lines = lines[:0]
+	for _, move := range moves {
+		lines = append(lines, move.String())
+	}
+	assert.Equal(t, []string{
+		"mkdir " + filepath.Join(bare, "malta", "home"),
+		"mkdir " + filepath.Join(bare, "malta", "src"),
+		"mv " + filepath.Join(bare, "malta", "apps") + " " + filepath.Join(bare, "malta", "src", "apps"),
+	}, lines)
 }
 
 // A directory that exists on both sides of a move is an error.
@@ -70,7 +86,7 @@ func TestPlan_Conflict(t *testing.T) {
 	for _, dir := range []string{"apps", "src/apps", "home"} {
 		assert.NoError(t, os.MkdirAll(filepath.Join(root, filepath.FromSlash(dir)), 0o755))
 	}
-	_, err := layout.Plan(root, nil, nil)
+	_, err := layout.Plan(root, []string{"_"}, nil)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "src/apps")
 }

@@ -40,6 +40,14 @@ func TestStepSpace(t *testing.T) {
 
 	p.WorkspaceList = append(p.WorkspaceList, model.Workspace{Folder: "_", Title: "Root"})
 	assert.Equal(t, "Root", p.StepSpaces()[0].Title)
+
+	// Without the default workspace and without a folder at the root,
+	// the named workspaces alone are places.
+	p.WorkspaceList = p.WorkspaceList[:1]
+	p.StepFolders = p.StepFolders[len(p.Folders):]
+	assert.Equal(t, []view.StepSpace{{ID: "malta", Title: "Malta"}, {ID: "ops", Title: "ops"}}, p.StepSpaces())
+	p.WorkspaceList = append(p.WorkspaceList, model.Workspace{Folder: "_", Title: "Root"})
+	assert.Equal(t, "Root", p.StepSpaces()[0].Title, "the default workspace is a place while it exists")
 }
 
 // Each step card picks a workspace first, preselected from the step's

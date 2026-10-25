@@ -168,7 +168,7 @@ func NewConfigAt(base string, args []string) (*Config, error) {
 	}
 	cfg := &Config{
 		Listen:    env("TASK_UI_LISTEN", ":3000"),
-		Root:      env("TASK_UI_WORKSPACE", ""),
+		Root:      serverRoot(),
 		Discover:  envBool("TASK_UI_DISCOVER", true),
 		Import:    roleImport(),
 		DataDir:   env("TASK_UI_DATA", existing(filepath.Join(base, "data"), "data")),
@@ -208,6 +208,17 @@ func NewConfigAt(base string, args []string) (*Config, error) {
 		return nil, err
 	}
 	return cfg, cfg.Validate()
+}
+
+// serverRoot reads the root from TASK_UI_WORKSPACE, the server's
+// variable, outside a run of task-ui alone: in a run, TASK_UI_RUN_ID
+// set, TASK_UI_WORKSPACE names the run's workspace, and a maintenance
+// command there works on the data directory, its root <data>/workspaces.
+func serverRoot() string {
+	if os.Getenv("TASK_UI_RUN_ID") != "" {
+		return ""
+	}
+	return env("TASK_UI_WORKSPACE", "")
 }
 
 // existing returns dir for a directory, else the fallback.

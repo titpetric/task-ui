@@ -71,8 +71,10 @@ func newFixture(t *testing.T) *fixture {
 	t.Cleanup(func() { db.Close() })
 
 	root := t.TempDir()
-	// The root's home, where a prompt of the root runs.
+	// The default workspace, as the first start makes it, with the
+	// root's home, where a prompt of the root runs.
 	assert.NoError(t, layout.Ensure(root, model.Default))
+	assert.NoError(t, storage.NewWorkspaceStorage(db).EnsureDefault(context.Background()))
 	infra := shellFolder(t, root, "infra", map[string]string{
 		"plan":     "echo planned",
 		"slow":     "sleep 30",

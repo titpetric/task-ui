@@ -4,6 +4,7 @@ import (
 	"context"
 	"log/slog"
 	"path/filepath"
+	"slices"
 	"sync"
 	"time"
 
@@ -74,13 +75,18 @@ func (c *Catalogue) List() []*folder.Folder {
 	return c.discovery().List()
 }
 
-// Find returns a folder by ID, or nil.
-// An ID of _ that no folder takes is the root itself.
+// Find returns a folder by ID, or nil; _ that no folder takes is the
+// root, in its src while the default workspace exists, else the root itself.
 func (c *Catalogue) Find(id string) *folder.Folder {
-	if f := c.discovery().Find(id); f != nil || id != model.Default {
+	d := c.discovery()
+	if f := d.Find(id); f != nil || id != model.Default {
 		return f
 	}
-	return &folder.Folder{ID: model.Default, Title: model.Default, Dir: layout.SrcDir(c.Root, model.Default)}
+	root := &folder.Folder{ID: model.Default, Title: model.Default, Dir: c.Root}
+	if slices.ContainsFunc(d.Workspaces, func(cfg folder.Config) bool { return cfg.ID == model.Default }) {
+		root.Dir = layout.SrcDir(c.Root, model.Default)
+	}
+	return root
 }
 
 // Home returns the home of the workspace a directory under the root is

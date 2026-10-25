@@ -37,14 +37,12 @@ func dryRun(args []string, usage string) (bool, error) {
 }
 
 // maintenanceConfig reads the configuration a maintenance command works
-// on: the server's own, or in a run of task-ui, where TASK_UI_WORKSPACE
-// names the run's workspace, with the root at TASK_UI_WORKSPACE_DIR.
+// on: the server's own, TASK_UI_DATA and TASK_UI_WORKSPACE, or in a run
+// of task-ui, where TASK_UI_WORKSPACE names the run's workspace when it
+// has one, the data directory the run inherits, TASK_UI_DATA, with its
+// root at <data>/workspaces.
 func maintenanceConfig() (*app.Config, error) {
-	dir := os.Getenv("TASK_UI_WORKSPACE_DIR")
-	if os.Getenv("TASK_UI_RUN_ID") == "" || dir == "" {
-		return app.NewConfig(nil)
-	}
-	return app.NewConfig([]string{"--workspace", dir})
+	return app.NewConfig(nil)
 }
 
 // cleanup runs task-ui cleanup, the root's @cleanup: the Data retention
@@ -97,11 +95,11 @@ func migrateLayout(ctx context.Context, args []string, stdout io.Writer) error {
 		return err
 	}
 	defer db.Close()
-	named, homes, err := layoutRows(ctx, db)
+	workspaces, homes, err := layoutRows(ctx, db)
 	if err != nil {
 		return err
 	}
-	moves, err := layout.Plan(cfg.Root, named, homes)
+	moves, err := layout.Plan(cfg.Root, workspaces, homes)
 	if err != nil {
 		return err
 	}
@@ -119,19 +117,20 @@ func migrateLayout(ctx context.Context, args []string, stdout io.Writer) error {
 	return layout.Apply(moves)
 }
 
-// layoutRows reads the named workspaces and, by workspace, the name of
-// the directory of its home project, from a database before or after the
-// migration that replaced the home project with the home repository: a
-// database already migrated names no home project.
+// layoutRows reads the workspaces, the default one first when the
+// instance has it, and, by workspace, the name of the directory of its
+// home project, from a database before or after the migration that
+// replaced the home project with the home repository: a database
+// already migrated names no home project.
 func layoutRows(ctx context.Context, db storage.DB) ([]string, map[string]string, error) {
-	var named []string
-	if err := db.SelectContext(ctx, &named, "SELECT folder FROM workspace WHERE folder <> ? ORDER BY folder", model.Default); err != nil {
+	var workspaces []string
+	if err := db.SelectContext(ctx, &workspaces, "SELECT folder FROM workspace ORDER BY CASE WHEN folder = ? THEN 0 ELSE 1 END, folder", model.Default); err != nil {
 		return nil, nil, err
 	}
 	homes := map[string]string{}
 	rows, err := db.QueryContext(ctx, "SELECT w.folder, p.folder FROM workspace w JOIN project p ON p.id = w.home_project_id WHERE w.home_project_id <> ''")
 	if err != nil {
-		return named, homes, nil
+		return workspaces, homes, nil
 	}
 	defer rows.Close()
 	for rows.Next() {
@@ -141,7 +140,7 @@ func layoutRows(ctx context.Context, db storage.DB) ([]string, map[string]string
 		}
 		homes[workspace] = path.Base(project)
 	}
-	return named, homes, rows.Err()
+	return workspaces, homes, rows.Err()
 }
 
 // errForgejoOff refuses a sync while the Forgejo integration lacks its

@@ -2,7 +2,7 @@
 <div class="page-head">
 	<div>
 		<h2>Workspaces</h2>
-		<p>Directories under the root, each with a home, the <code>HOME</code> of the workspace's runs and a checkout of its home repository when it has one, and its projects side by side under <code>src/</code>. The folder name is the projects' namespace; <code>_</code> is the root itself.</p>
+		<p>Directories under the root, each with a home, the <code>HOME</code> of the workspace's runs and a checkout of its home repository when it has one, and its projects side by side under <code>src/</code>. The folder name is the projects' namespace; <code>_</code>, the default workspace, is the root itself; the instance runs without it after Delete.</p>
 	</div>
 	<div class="actions">
 		{{- if and .User .User.CanAdmin }}
@@ -35,7 +35,7 @@
 					(and (not $default) (ne $i $first) (item "up" "Move up" "data-workspace-move" "up" "data-folder" .Folder))
 					(and (not $default) (ne (add $i 1) $last) (item "down" "Move down" "data-workspace-move" "down" "data-folder" .Folder))
 					(and ($.Can "workspace/delete") $secrets (item "secret" (deleteBlocked $secrets) "href" (print "/settings/workspaces/" .Folder "/secrets")))
-					(and ($.Can "workspace/delete") (not $secrets) (danger "trash" (or (and $default "Empty") "Delete") "data-delete" (print "/api/workspaces/" .Folder) "data-confirm" (deleteWorkspaceConfirm .Folder $nested) "data-confirm-ok" "Delete" "data-next" "reload"))
+					(and ($.Can "workspace/delete") (not $secrets) (danger "trash" "Delete" "data-delete" (print "/api/workspaces/" .Folder) "data-confirm" (deleteWorkspaceConfirm .Folder $nested) "data-confirm-ok" "Delete" "data-next" "reload"))
 				) }}</td>
 			</tr>
 		{{- else }}

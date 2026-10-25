@@ -199,8 +199,9 @@ func (h *Handlers) secretEdit(w http.ResponseWriter, r *http.Request) {
 }
 
 // secretGroups sorts the secrets and the folders by workspace, in the
-// order of the workspaces, the default one first; each takes the
-// instance's encryption key, which encrypts every secret.
+// order of the workspaces, the default one first while the instance has
+// it; each takes the instance's encryption key, which encrypts every
+// secret.
 func (h *Handlers) secretGroups(ctx context.Context, secrets []model.Secret, folders []*folder.Folder) []view.SecretGroup {
 	var groups []view.SecretGroup
 	var key *keystore.Key
@@ -219,8 +220,9 @@ func (h *Handlers) secretGroups(ctx context.Context, secrets []model.Secret, fol
 		groups = append(groups, view.SecretGroup{Workspace: name, Title: title, Key: key})
 		return index[name]
 	}
-	add(model.Default, "Default", key)
-	if h.opts.Workspaces != nil {
+	if h.opts.Workspaces == nil {
+		add(model.Default, "Default", key)
+	} else {
 		workspaces, _ := h.opts.Workspaces.List(ctx)
 		for _, ws := range workspaces {
 			add(ws.Folder, ws.Title, key)

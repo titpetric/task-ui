@@ -105,16 +105,24 @@ func TestWorkspaceStorage_Delete(t *testing.T) {
 	assert.ErrorIs(t, err, storage.ErrNotFound)
 }
 
+// EnsureDefault makes the default workspace on an empty table alone: an
+// instance with a named workspace and no default one, which deleted it,
+// stays without.
 func TestWorkspaceStorage_EnsureDefault(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
-	workspaces := storage.NewWorkspaceStorage(newDB(t))
-	assert.NoError(t, workspaces.Create(ctx, &model.Workspace{Folder: "malta"}))
+	named := storage.NewWorkspaceStorage(newDB(t))
+	assert.NoError(t, named.Create(ctx, &model.Workspace{Folder: "malta"}))
+	assert.NoError(t, named.EnsureDefault(ctx))
+	_, err := named.GetByFolder(ctx, model.Default)
+	assert.ErrorIs(t, err, storage.ErrNotFound, "a named workspace alone brings no default one")
 
+	workspaces := storage.NewWorkspaceStorage(newDB(t))
 	assert.NoError(t, workspaces.EnsureDefault(ctx))
 	def, err := workspaces.GetByFolder(ctx, model.Default)
 	assert.NoError(t, err)
 	assert.Equal(t, "Default", def.Title)
+	assert.NoError(t, workspaces.Create(ctx, &model.Workspace{Folder: "malta"}))
 
 	// Again, it keeps the row and its title.
 	def.Title = "The root"

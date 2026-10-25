@@ -122,8 +122,8 @@ func TestWorkspaces_AdminOnly(t *testing.T) {
 	}
 }
 
-// The default workspace lists first, links to /f/_, and neither moves
-// nor goes; the first named workspace has nowhere up to go.
+// The default workspace lists first, links to /f/_, does not move and
+// deletes like any other; the first named workspace has nowhere up to go.
 func TestWorkspaces_Default(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
@@ -150,15 +150,16 @@ func TestWorkspaces_Default(t *testing.T) {
 	assert.Contains(t, body, `<a href="/settings/workspaces/_" title="extra, infra, private, site">4</a>`)
 	assert.Contains(t, body, `<a href="/settings/workspaces/malta" title="malta/deploy">1</a>`)
 	assert.Contains(t, body, `data-delete="/api/workspaces/_"`)
-	assert.Contains(t, body, `Empty the default workspace _? This deletes its home checkout, its keys and secrets, and the projects inside it with their checkouts: extra, infra, private, site.`)
-	assert.Contains(t, body, `<span>Empty</span>`)
+	assert.Contains(t, body, `Delete the default workspace _ with its keys, its home and the projects at the root with their checkouts: extra, infra, private, site? The root&#39;s built-in jobs keep running; Add project then needs a workspace.`)
+	assert.NotContains(t, body, `Empty</span>`)
 	assert.NotContains(t, body, `data-folder="_"`)
 	assert.NotContains(t, body, `data-workspace-move="up" data-folder="malta"`)
 	edit := f.page(t, asAdmin, "/settings/workspaces/_")
 	assert.Contains(t, edit, `data-api="/api/workspaces/_"`)
 	assert.Contains(t, edit, "the root, "+f.root)
 	assert.Contains(t, edit, `data-delete="/api/workspaces/_"`)
-	assert.Contains(t, edit, `data-next="/settings/workspaces?notice=Workspace+emptied"`)
+	assert.Contains(t, edit, `data-next="/settings/workspaces?notice=Workspace+deleted"`)
+	assert.NotContains(t, edit, "emptied")
 
 	// A workspace with nothing in it.
 	assert.NoError(t, f.opts.Workspaces.Create(ctx, &model.Workspace{Folder: "gozo"}))
@@ -169,4 +170,37 @@ func TestWorkspaces_Default(t *testing.T) {
 	malta := f.page(t, asAdmin, "/settings/workspaces/malta")
 	assert.Contains(t, malta, `<span>Delete its 1 secret first</span>`)
 	assert.NotContains(t, malta, `data-delete="/api/workspaces/malta"`)
+}
+
+// An instance without the default workspace, which deleted it, lists
+// the named workspaces alone: no _ on the Workspaces page, the clone
+// form, the Projects page or the Secrets page, and nothing says Empty;
+// /f/_ still renders, the root's page, with no workspace menu.
+func TestWorkspaces_NoDefault(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	ctx := context.Background()
+	assert.NoError(t, f.opts.Workspaces.Create(ctx, &model.Workspace{Folder: "malta", Title: "Malta"}))
+	assert.NoError(t, os.MkdirAll(filepath.Join(f.root, "malta", "src", "deploy", ".git"), 0o755))
+	f.withKey(t)
+
+	body := f.page(t, asAdmin, "/settings/workspaces")
+	assert.Contains(t, body, `href="/f/malta"`)
+	assert.NotContains(t, body, `href="/f/_"`)
+	assert.NotContains(t, body, "Empty")
+	assert.Contains(t, body, `data-delete="/api/workspaces/malta"`)
+	assert.Contains(t, body, `data-confirm-ok="Delete"`)
+
+	projects := f.page(t, asAdmin, "/settings/projects")
+	assert.Contains(t, projects, "inside malta/src/")
+	assert.NotContains(t, projects, "in "+f.root+"/src")
+
+	secrets := f.page(t, asAdmin, "/settings/secrets")
+	assert.Contains(t, secrets, `scope=workspace:malta`)
+	assert.NotContains(t, secrets, `scope=workspace:_`)
+
+	root := f.get(t, asAdmin, "/f/_")
+	assert.Equal(t, http.StatusOK, root.Status)
+	assert.NotContains(t, root.Body, `data-delete="/api/workspaces/_"`)
+	assert.NotContains(t, root.Body, `/api/workspaces/_/prompt`)
 }

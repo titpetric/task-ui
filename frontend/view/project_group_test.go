@@ -44,10 +44,13 @@ func TestProjectGroups(t *testing.T) {
 	assert.Equal(t, "No projects in labs yet.", groups[2].Empty())
 	assert.Equal(t, "No projects yet: add one from a git repository, or put a folder with jobs under src.", groups[0].Empty())
 
-	// Without workspaces every entry at the top is the root's.
-	groups = view.ProjectGroups(entries[3:], nil)
-	assert.Len(t, groups, 1)
-	assert.Equal(t, []string{"infra", "labs", "tools"}, ids(groups[0].Entries))
+	// Without the default workspace there is no root group, and an
+	// entry at the top belongs to no group.
+	groups = view.ProjectGroups(entries, workspaces[1:])
+	assert.Len(t, groups, 2)
+	assert.Equal(t, "acme", groups[0].Workspace)
+	assert.Equal(t, []string{"acme/api", "acme/web"}, ids(groups[0].Entries))
+	assert.Len(t, view.ProjectGroups(entries[3:], nil), 0)
 }
 
 // ids returns the entries' IDs in order.

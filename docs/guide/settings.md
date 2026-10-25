@@ -159,9 +159,10 @@ the tree keeps its versions in the history until they expire.
 Anyone who may open a step of the settings reads the page; an admin
 saves the rules, with `PUT /api/retention`, and **Clean up now** starts
 `@cleanup` at once, as a run whose output shows what went. A run of
-`@cleanup` takes the workspace folder from its own workspace directory,
-`TASK_UI_WORKSPACE_DIR`, because `TASK_UI_WORKSPACE` names a run's
-workspace. A save takes effect at the next run of `@cleanup`: task-ui
+`@cleanup` works on the data directory it inherits, `TASK_UI_DATA`, with
+the workspace folder at `<data>/workspaces`: inside a run
+`TASK_UI_WORKSPACE` names the run's workspace, not the folder, and
+task-ui reads it as the folder outside a run alone. A save takes effect at the next run of `@cleanup`: task-ui
 schedules it `@daily`, at midnight, as the first admin, once, when it
 first starts; the [Schedules](scheduled.md#cleanup) page changes or
 deletes that schedule.
@@ -385,7 +386,8 @@ The scopes keep a workspace's secrets out of the environment of
 another workspace's runs, not out of their reach on disk (see
 [What a workspace keeps apart](workspaces.md#what-a-workspace-keeps-apart)).
 A folder's workspace is its first segment when that's a named
-workspace, else `_`. Removing a workspace removes its secrets with its
+workspace, else `_`, while the instance has the default workspace.
+Removing a workspace waits for its secrets to go first and takes its
 SSH keys. The integrations' settings aren't on this page: the
 [Integrations](#integrations) page holds them.
 

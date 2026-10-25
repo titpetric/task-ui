@@ -55,7 +55,7 @@ func newFixture(t *testing.T, agentJob string) *fixture {
 	t.Cleanup(func() { manager.Shutdown(context.Background()) })
 	board := &note.Board{
 		Notes: storage.NewNoteStorage(db), Users: users, Runs: storage.NewRunStorage(db), WorkflowRuns: storage.NewWorkflowRunStorage(db), Catalogue: catalogue{},
-		Runner: manager, Recordings: recordings, Events: event.NewBus(),
+		Runner: manager, Recordings: recordings, Events: event.NewBus(), Workspaces: storage.NewWorkspaceStorage(db),
 	}
 	// "agent/run" runs the script as the Notes agent in a root of its own;
 	// "agent/nothing" leaves the board no root to run it in.
@@ -344,7 +344,13 @@ func TestBoard_Ask(t *testing.T) {
 	assert.Contains(t, replies(t, f, asked.ID)[2].Body, "admin:\nwhat builds here\n\nclaude:\nIn ")
 	assert.Contains(t, replies(t, f, asked.ID)[2].Body, "admin:\nand which first")
 
-	// The root is _: Claude works in the default workspace's home.
+	// The root is _: without the default workspace Claude works in the
+	// root directory, with it in the default workspace's home.
+	bare, err := f.board.Ask(ctx, admin, "", model.Default, "what is at the root")
+	assert.NoError(t, err)
+	assert.Equal(t, model.NoteDone, f.settled(t, bare.ID).State)
+	assert.Equal(t, "In "+f.board.Root+": what is at the root", replies(t, f, bare.ID)[0].Body)
+	assert.NoError(t, f.board.Workspaces.EnsureDefault(ctx))
 	root, err := f.board.Ask(ctx, admin, "", model.Default, "what is here")
 	assert.NoError(t, err)
 	assert.Equal(t, model.NoteDone, f.settled(t, root.ID).State)

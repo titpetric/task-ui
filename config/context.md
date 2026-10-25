@@ -84,7 +84,8 @@ by side, with its own SSH keys and secrets, kept from other workspaces.
 The home is the HOME of every run in the workspace, where atkins finds
 `~/.atkins/skills` and Claude its `CLAUDE.md`; the folder `<ws>/home`,
 no project.
-The default workspace, `_`, is the root itself. A workspace exports and
+The default workspace, `_`, is the root itself; an instance deletes it
+like any other and runs without one, its root jobs with no workspace. A workspace exports and
 imports between instances as one age file encrypted to a passphrase,
 its secrets and its own SSH keys inside; no instance key goes with it.
 Page: `/settings/workspaces`; API: `/api/workspaces`.

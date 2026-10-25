@@ -17,12 +17,11 @@
 		<input type="text" id="p-id" name="id" pattern="[A-Za-z0-9._-]+" spellcheck="false" autocomplete="off">
 	</div>
 	<div class="field">
-		<label for="p-workspace">Workspace <span class="faint">_ clones the project at the top of the root; any other clones it inside that workspace, as workspace/folder</span></label>
-		<select id="p-workspace" name="workspace">
-			<option value="_"{{ if or (not $ws) (eq $ws "_") }} selected{{ end }}>_ · the root</option>
-			{{- range .WorkspaceList }}{{ if ne .Folder "_" }}
-			<option value="{{ .Folder }}"{{ if eq .Folder $ws }} selected{{ end }}>{{ .Folder }}{{ with .Title }} · {{ . }}{{ end }}</option>
-			{{- end }}{{ end }}
+		<label for="p-workspace">Workspace <span class="faint">_, the default workspace while there is one, clones the project at the top of the root; any other clones it inside that workspace, as workspace/folder</span></label>
+		<select id="p-workspace" name="workspace" required>
+			{{- range $i, $w := .WorkspaceList }}
+			<option value="{{ .Folder }}"{{ if or (eq .Folder $ws) (and (not $ws) (eq $i 0)) }} selected{{ end }}>{{ .Folder }} · {{ if eq .Folder "_" }}the root{{ else }}{{ or .Title .Folder }}{{ end }}</option>
+			{{- end }}
 		</select>
 	</div>
 	<div class="field">

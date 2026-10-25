@@ -125,7 +125,7 @@ func (h *Handlers) setSecret(w http.ResponseWriter, r *http.Request) {
 // workspace:<folder>, or a folder.
 func (h *Handlers) secretScope(r *http.Request, scope string) error {
 	if name, ok := strings.CutPrefix(scope, storage.ScopeWorkspace); ok {
-		if name == model.Default || h.opts.Workspaces == nil {
+		if h.opts.Workspaces == nil {
 			return nil
 		}
 		if _, err := h.opts.Workspaces.GetByFolder(r.Context(), name); err != nil {

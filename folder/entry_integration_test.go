@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/titpetric/task-ui/git"
+	"github.com/titpetric/task-ui/model"
 )
 
 func TestEntries(t *testing.T) {
@@ -35,7 +36,7 @@ func TestEntries(t *testing.T) {
 		}
 	}
 
-	entries := Entries(top, &git.Git{}, nil)
+	entries := Entries(top, &git.Git{}, []model.Workspace{{Folder: model.Default}})
 	byID := map[string]Entry{}
 	for _, entry := range entries {
 		byID[entry.ID] = entry
@@ -79,7 +80,7 @@ func TestEntries_Workspace(t *testing.T) {
 
 	byID := map[string]Entry{}
 	ids := []string{}
-	for _, entry := range Entries(root, &git.Git{}, []string{"malta"}) {
+	for _, entry := range Entries(root, &git.Git{}, []model.Workspace{{Folder: "malta"}}) {
 		byID[entry.ID] = entry
 		ids = append(ids, entry.ID)
 	}
@@ -91,5 +92,10 @@ func TestEntries_Workspace(t *testing.T) {
 	}
 	if ids := Entries(root, &git.Git{}, nil); len(ids) != 0 {
 		t.Fatalf("without the workspace: %+v", ids)
+	}
+	// Without the default workspace, the root's src lists nothing.
+	write(t, filepath.Join(root, "src", "loose", "Makefile"), "all:\n")
+	if ids := Entries(root, &git.Git{}, []model.Workspace{{Folder: "malta"}}); len(ids) != 1 {
+		t.Fatalf("without the default workspace: %+v", ids)
 	}
 }

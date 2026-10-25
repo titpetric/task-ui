@@ -29,22 +29,26 @@ type Entry struct {
 	Error string `json:"error,omitempty"`
 }
 
-// Entries lists the directories of _'s src and the checkouts of each named workspace's src.
-func Entries(root string, g *git.Git, workspaces []string) []Entry {
+// Entries lists the directories of _'s src, when _ is among the workspaces, and the checkouts of each named one's src.
+func Entries(root string, g *git.Git, workspaces []model.Workspace) []Entry {
 	dirs := map[string]string{}
 	ids := []string{}
 	add := func(id, dir string) {
 		dirs[id] = dir
 		ids = append(ids, id)
 	}
-	for _, name := range subdirs(layout.SrcDir(root, model.Default)) {
-		if model.IsReserved(SafeID(name)) {
+	d := &Discovery{Root: root, Discover: true}
+	for _, row := range workspaces {
+		ws := row.Folder
+		if ws == model.Default {
+			for _, name := range subdirs(layout.SrcDir(root, ws)) {
+				if model.IsReserved(SafeID(name)) {
+					continue
+				}
+				add(SafeID(name), layout.ProjectDir(root, ws, name))
+			}
 			continue
 		}
-		add(SafeID(name), layout.ProjectDir(root, model.Default, name))
-	}
-	d := &Discovery{Root: root, Discover: true}
-	for _, ws := range workspaces {
 		d.Workspaces = append(d.Workspaces, Config{ID: ws})
 		for _, name := range subdirs(layout.SrcDir(root, ws)) {
 			dir := layout.ProjectDir(root, ws, name)

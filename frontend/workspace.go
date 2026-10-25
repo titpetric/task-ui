@@ -78,7 +78,7 @@ func (h *Handlers) workspaceEdit(w http.ResponseWriter, r *http.Request) {
 // the folders at the top of the root, less the workspaces, for _.
 func (h *Handlers) workspaceProjects(ctx context.Context, p *view.Page, name string) {
 	named := h.workspaceFolders(ctx)
-	for _, entry := range folder.Entries(h.opts.Root, h.opts.Git, named) {
+	for _, entry := range folder.Entries(h.opts.Root, h.opts.Git, h.workspaceList(ctx)) {
 		top, _, nested := strings.Cut(entry.ID, "/")
 		if (name == model.Default && !nested && !slices.Contains(named, top)) || (nested && top == name) {
 			p.Entries = append(p.Entries, entry)
@@ -152,7 +152,7 @@ func (h *Handlers) nestedProjects(ctx context.Context) map[string][]string {
 		}
 		nested[ws] = append(nested[ws], id)
 	}
-	for _, entry := range folder.Entries(h.opts.Root, h.opts.Git, named) {
+	for _, entry := range folder.Entries(h.opts.Root, h.opts.Git, h.workspaceList(ctx)) {
 		add(entry.ID)
 	}
 	projects, _ := h.opts.Projects.List(ctx)
