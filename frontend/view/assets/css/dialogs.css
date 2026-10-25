@@ -315,6 +315,14 @@ dialog.source {
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
   }
+
+  /* The pick of who a prompt runs as, as wide as its choice within
+     reason. */
+  & .dd {
+    width: auto;
+    min-width: var(--control-w-l);
+    max-width: 22rem;
+  }
 }
 
 .xterm .xterm-viewport {

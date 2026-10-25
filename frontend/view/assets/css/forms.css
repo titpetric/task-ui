@@ -54,20 +54,6 @@
   width: var(--control-w-s);
 }
 
-.filters .dd {
-  width: var(--control-w-m);
-}
-
-.filters .page-size :is(select, .dd) {
-  width: 5.5rem;
-}
-
-.run-foot .dd {
-  width: auto;
-  min-width: var(--control-w-l);
-  max-width: 22rem;
-}
-
 .form {
   max-width: var(--form-w);
 }
