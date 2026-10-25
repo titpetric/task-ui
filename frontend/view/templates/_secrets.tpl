@@ -99,7 +99,7 @@
 		<h3 id="secret-add-title">Add secret</h3>
 		<p>task-ui encrypts the value and never shows it again. Saving an existing name replaces its value.</p>
 		{{- template "secretfields" (list $p.Secret $p.SecretGroups) }}
-		<div class="confirm-foot">
+		<div class="form-foot">
 			<button type="button" class="btn" data-dialog-close>Cancel</button>
 			<button class="btn btn-primary" type="submit">Save</button>
 		</div>
@@ -115,7 +115,7 @@
 			<label for="sr-content">Value</label>
 			<textarea id="sr-content" name="content" rows="3" spellcheck="false" autocomplete="off" required></textarea>
 		</div>
-		<div class="confirm-foot">
+		<div class="form-foot">
 			<button type="button" class="btn" data-dialog-close>Cancel</button>
 			<button class="btn btn-primary" type="submit">Save</button>
 		</div>

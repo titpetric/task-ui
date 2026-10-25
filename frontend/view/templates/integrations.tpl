@@ -18,6 +18,9 @@
 				<div class="integration-head">
 					<h3>{{ .Title }} {{ if .Configured }}<span class="badge ok">set up</span>{{ else }}<span class="badge">not set up</span>{{ end }}</h3>
 					<label class="peek-toggle">Show<input type="checkbox" data-peek="integration.{{ .ID }}" checked aria-label="Show {{ .Title }}"><i aria-hidden="true"></i></label>
+					{{ template "menu" (menu (print "Actions on " .Title)
+						(danger "trash" "Clear" "data-delete" (print "/api/integrations/" .ID) "data-confirm" (print "Clear every setting of " .Title "?") "data-confirm-ok" "Clear" "data-next" "reload")
+					) }}
 				</div>
 				<div class="integration-body">
 				<div class="dim desc">{{ message .Description }}</div>
@@ -50,12 +53,11 @@
 					{{- end }}
 					{{- end }}
 					<div class="form-foot">
-						<button class="btn btn-primary" type="submit">Save</button>
 						{{- if and (eq .ID "forgejo") .Configured $admin }}
-						<button type="button" class="btn" data-run data-folder="_" data-job="@forgejo-sync" data-title="_ / forgejo-sync" title="Run @forgejo-sync now: workspaces, homes, projects and hooks">Sync now</button>
 						<button type="button" class="btn" data-run data-folder="_" data-job="@forgejo-sync" data-run-args='["--dry-run"]' data-title="_ / forgejo-sync --dry-run" title="Run @forgejo-sync --dry-run: the report alone, nothing changes">Dry run</button>
+						<button type="button" class="btn" data-run data-folder="_" data-job="@forgejo-sync" data-title="_ / forgejo-sync" title="Run @forgejo-sync now: workspaces, homes, projects and hooks">Sync now</button>
 						{{- end }}
-						<button type="button" class="btn btn-danger" data-delete="/api/integrations/{{ .ID }}" data-confirm="Clear every setting of {{ .Title }}?" data-confirm-ok="Clear" data-next="reload">Clear</button>
+						<button class="btn btn-primary" type="submit">Save</button>
 					</div>
 				</form>
 				{{- if eq .ID "forgejo" }}

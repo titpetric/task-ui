@@ -65,7 +65,7 @@
 			<input type="text" id="wi-folder" name="folder" pattern="[A-Za-z0-9._-]+" spellcheck="false" autocomplete="off">
 			<small class="faint">Defaults to the bundle's folder.</small>
 		</div>
-		<div class="confirm-foot">
+		<div class="form-foot">
 			<button type="button" class="btn" data-dialog-close>Cancel</button>
 			<button class="btn btn-primary" type="submit">Import</button>
 		</div>

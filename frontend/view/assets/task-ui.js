@@ -2991,7 +2991,7 @@
     form.className = "note-form note-edit";
     form.dataset.noteEdit = body.dataset.edit;
     form.innerHTML = '<textarea name="body" rows="3" required data-mentions aria-label="The note"></textarea>' +
-      '<div class="note-form-foot"><span class="faint">Ctrl+Enter saves, Esc cancels.</span>' +
+      '<div class="form-foot note"><span class="faint">Ctrl+Enter saves, Esc cancels.</span>' +
       '<span><button class="btn" type="button" data-edit-cancel>Cancel</button> <button class="btn btn-primary" type="submit">Save</button></span></div>';
     form.elements.body.value = value === undefined ? body.dataset.body : value;
     body.hidden = true;

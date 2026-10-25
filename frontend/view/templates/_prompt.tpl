@@ -33,18 +33,18 @@
 		{{- if .Run }}
 		<input type="hidden" name="run" value="{{ .Run }}">
 		<textarea name="prompt" rows="3" required spellcheck="false" placeholder="why did this run end the way it did" aria-label="The prompt"></textarea>
-		<div class="note-form-foot"><span class="faint run-in">Runs @claude-prompt as {{ template "prompt-as" $ }} in {{ .Where }}, with this run's output. If Claude makes a fix, it commits to main. Claude replies under your question.</span><button class="btn btn-primary" type="submit"><svg class="ic"><use href="#i-play"/></svg>Run prompt</button></div>
+		<div class="form-foot note"><span class="faint run-in">Runs @claude-prompt as {{ template "prompt-as" $ }} in {{ .Where }}, with this run's output. If Claude makes a fix, it commits to main. Claude replies under your question.</span><button class="btn btn-primary" type="submit"><svg class="ic"><use href="#i-play"/></svg>Run prompt</button></div>
 		{{- else if .Area }}
 		<input type="hidden" name="area" value="{{ .Area }}">
 		<textarea name="prompt" rows="3" required spellcheck="false" placeholder="Describe a workflow to build or change" aria-label="The prompt"></textarea>
-		<div class="note-form-foot"><span class="faint run-in">Runs @claude-prompt as {{ template "prompt-as" $ }} in <select name="folder" aria-label="Run in"><option value="_">the root</option>{{ range $.Folders }}<option value="{{ .ID }}">{{ .ID }}</option>{{ end }}</select> with the task tools: it saves the workflow and runs it up to 3 times.</span><button class="btn btn-primary" type="submit"><svg class="ic"><use href="#i-play"/></svg>Run prompt</button></div>
+		<div class="form-foot note"><span class="faint run-in">Runs @claude-prompt as {{ template "prompt-as" $ }} in <select name="folder" aria-label="Run in"><option value="_">the root</option>{{ range $.Folders }}<option value="{{ .ID }}">{{ .ID }}</option>{{ end }}</select> with the task tools: it saves the workflow and runs it up to 3 times.</span><button class="btn btn-primary" type="submit"><svg class="ic"><use href="#i-play"/></svg>Run prompt</button></div>
 		{{- else }}
 		{{- if .Folder }}
 		<input type="hidden" name="folder" value="{{ .Folder }}">
 		<input type="hidden" name="dir" value="{{ .Dir }}">
 		{{- end }}
 		<textarea name="prompt" rows="3" required spellcheck="false" placeholder="what does this directory build, and how" aria-label="The prompt"></textarea>
-		<div class="note-form-foot"><span class="faint run-in">Runs @claude-prompt as {{ template "prompt-as" $ }} in {{ .Where }}, one prompt at a time. Claude replies under your question.</span><button class="btn btn-primary" type="submit"><svg class="ic"><use href="#i-play"/></svg>Run prompt</button></div>
+		<div class="form-foot note"><span class="faint run-in">Runs @claude-prompt as {{ template "prompt-as" $ }} in {{ .Where }}, one prompt at a time. Claude replies under your question.</span><button class="btn btn-primary" type="submit"><svg class="ic"><use href="#i-play"/></svg>Run prompt</button></div>
 		{{- end }}
 	</form>
 	{{- end }}

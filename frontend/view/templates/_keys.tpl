@@ -59,7 +59,7 @@
      next, beside the submit button. */}}
 {{ define "wskeyfoot" }}
 {{- $next := index . 0 }}{{ $dialog := index . 1 }}{{ $label := index . 2 }}
-	<div class="{{ if $dialog }}confirm-foot{{ else }}form-foot{{ end }}">
+	<div class="form-foot">
 		{{- if $dialog }}
 		<button type="button" class="btn" data-dialog-close>Cancel</button>
 		{{- else }}
