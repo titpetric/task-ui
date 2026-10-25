@@ -179,7 +179,7 @@ func TestPrompts_AboutRun(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
 	promptCommand(t, f)
-	f.opts.Catalogue.(catalogue)["logs"] = shellFolder(t, f.root, "logs", map[string]string{"long": "seq 1 2600; exit 4"})
+	f.addFolder("logs", shellFolder(t, f.root, "logs", map[string]string{"long": "seq 1 2600; exit 4"}))
 	about := f.finished(t, f.start(t, asAdmin, "logs", "long"))
 	assert.Equal(t, model.StateFailed, about.State)
 

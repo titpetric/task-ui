@@ -23,7 +23,7 @@ import (
 func fakeClaude(t *testing.T) string {
 	t.Helper()
 	dir := t.TempDir()
-	body := "#!/bin/sh\necho \"cwd=$(pwd -P)\"\necho \"sandbox=$IS_SANDBOX\"\necho \"home=$HOME\"\nfor a; do echo \"arg=$a\"; done\nexit ${FAKE_EXIT:-0}\n"
+	body := "#!/bin/sh\necho \"cwd=$(pwd -P)\"\necho \"sandbox=$IS_SANDBOX\"\necho \"home=$HOME\"\nfor a; do printf 'arg=%s\\n' \"$a\"; done\nexit ${FAKE_EXIT:-0}\n"
 	claude := filepath.Join(dir, "claude")
 	assert.NoError(t, os.WriteFile(claude, []byte(body), 0o755))
 	// A parallel test that forks while the file is open for writing hands

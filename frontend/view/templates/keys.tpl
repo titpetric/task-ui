@@ -70,7 +70,7 @@
 	{{- template "blockhead" (head "Every key" .KeysDir (and (not .Keys) "No keys added.")) }}
 	{{- with .Keys }}
 	<p class="dim">Every key lives in the key folder as <code>&lt;name&gt;.key</code> and <code>&lt;name&gt;.pub</code>, the name ending in its algorithm and size. An instance SSH key goes to the runs of the roles and users it links, through their ssh agent, and the inventory signs in to hosts with it; a workspace's SSH key goes to the runs of that workspace. The git key, which a key's page sets, pulls and clones the checkouts. An encryption key never leaves task-ui.</p>
-	<div class="table-wrap">
+	<div class="table-wrap fit">
 	<table class="table keys key-table cards">
 		{{ template "keyhead" }}
 		<tbody>

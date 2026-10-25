@@ -18,6 +18,7 @@ import (
 func TestRun(t *testing.T) {
 	var out bytes.Buffer
 	root := t.TempDir()
+	t.Setenv("HOME", filepath.Join(root, "serverhome"))
 	t.Setenv("TASK_UI_WORKSPACE", root)
 	t.Setenv("TASK_UI_DATA", filepath.Join(root, "data"))
 	t.Setenv("TASK_UI_LISTEN", "127.0.0.1:0")
@@ -36,7 +37,7 @@ func TestRun(t *testing.T) {
 	out.Reset()
 	assert.NoError(t, run(context.Background(), []string{"cleanup", "--", "--dry-run"}, strings.NewReader(""), &out))
 	assert.Contains(t, out.String(), "a dry run: nothing changes")
-	assert.Contains(t, out.String(), "Run recordings (keep for 31 days, no size limit): would remove 0 items")
+	assert.Contains(t, out.String(), "Run recordings (keep for 31 days, no size limit): would remove 0 recordings, 0 B")
 	assert.Error(t, run(context.Background(), []string{"cleanup", "--all"}, strings.NewReader(""), &out))
 
 	// The channel needs a token file and an instance; it ends with stdin.

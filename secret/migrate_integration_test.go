@@ -92,9 +92,10 @@ func TestStore_MigrateConflict(t *testing.T) {
 
 // MigrateInstance writes the integrations for the instance's
 // encryption key, copying first: after it the legacy SSH keys can go
-// and the integrations still open. A workspace's secrets stay as they
-// are, an integration nothing opens stays and counts, and a second
-// run does nothing.
+// and the integrations still open. A secret the instance's key already
+// opens, a workspace's say, is current and stays as it is, an
+// integration nothing opens stays and counts, and a second run does
+// nothing.
 func TestStore_MigrateInstance(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
@@ -120,12 +121,12 @@ func TestStore_MigrateInstance(t *testing.T) {
 	before := func(context.Context) error { copies++; return nil }
 	result, err := s.store.MigrateInstance(ctx, before)
 	assert.NoError(t, err)
-	assert.Equal(t, secret.Migration{Migrated: 3, Current: 1, Failed: 1}, result)
+	assert.Equal(t, secret.Migration{Migrated: 3, Current: 2, Failed: 1}, result)
 	assert.Equal(t, 1, copies)
 	left, _ := s.rows.Get(ctx, model.Secret{Scope: "integration:lost", Name: "token"})
 	assert.Equal(t, lost, left.Content, "a secret nothing opens stays unchanged")
 	after, _ := s.rows.Get(ctx, model.Secret{Scope: "web", Name: "WEB"})
-	assert.Equal(t, web.Content, after.Content, "a workspace's secret stays")
+	assert.Equal(t, web.Content, after.Content, "a workspace's secret on the instance key is current")
 
 	hide(t, s.legacy)
 	assert.NoError(t, s.rows.Delete(ctx, left.ID))
@@ -143,7 +144,7 @@ func TestStore_MigrateInstance(t *testing.T) {
 
 	again, err := s.store.MigrateInstance(ctx, before)
 	assert.NoError(t, err)
-	assert.Equal(t, secret.Migration{Current: 4}, again)
+	assert.Equal(t, secret.Migration{Current: 5}, again)
 	assert.Equal(t, 1, copies, "nothing to do copies nothing")
 }
 

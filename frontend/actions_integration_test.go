@@ -60,7 +60,7 @@ func TestFolder_Actions(t *testing.T) {
 	top := actionsBar(topPage)
 	assert.Contains(t, top, `<span class="glyph" aria-hidden="true">⎇</span> main`)
 	assert.Contains(t, top, `●2`, "new.txt and app/")
-	assert.Contains(t, top, `· infra`)
+	assert.Contains(t, top, `· src/infra`, "the checkout under the root")
 	assert.NotContains(t, top, "data-run", "the bar is the git line alone")
 	topJobs := jobsTable(topPage)
 	assert.Contains(t, topJobs, `<span class="badge">@git</span>`)
@@ -183,8 +183,8 @@ func TestFolder_Claude(t *testing.T) {
 	assert.NoError(t, f.opts.Integrations.Save(ctx, integration.Claude, map[string]string{"token": "sk-1"}))
 	admin := f.page(t, asAdmin, "/f/_/infra")
 	assert.Contains(t, admin, `data-folder="infra" data-job="@claude" data-title="infra / claude"`)
-	assert.Contains(t, admin, `<a href="/f/_/infra/@claude">@claude</a>`)
-	assert.Contains(t, admin, `<a href="/f/_/infra/@shell">@shell</a>`)
+	assert.Contains(t, admin, `href="/f/_/infra/@claude"><svg class="ic"><use href="#i-list"/></svg><span>History of @claude</span></a>`)
+	assert.Contains(t, admin, `href="/f/_/infra/@shell"><svg class="ic"><use href="#i-list"/></svg><span>History of @shell</span></a>`)
 	browse := f.page(t, asAdmin, "/f/_/infra/images")
 	assert.Contains(t, browse, `data-dir="images" data-job="@claude" data-title="infra/images / claude"`)
 	for _, user := range []string{asOps, asViewer, asLimited} {
@@ -228,9 +228,10 @@ func TestFolder_SettingsLinks(t *testing.T) {
 	}
 }
 
-// |>summarize stands beside Run for a user with prompt/edit and a
-// Claude token, on the folder's cards and the job's page; no one else
-// gets it, and neither does an interactive job.
+// |>summarize stands beside Run on the job's page, and in the row's
+// menu of the folder's Jobs table, for a user with prompt/edit and a
+// Claude token; no one else gets it, and neither does an interactive
+// job.
 func TestFolder_Summarize(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
@@ -240,11 +241,11 @@ func TestFolder_Summarize(t *testing.T) {
 	assert.NotContains(t, f.page(t, asAdmin, "/f/_/infra"), "data-summarize", "no Claude token")
 	f.withKey(t)
 	assert.NoError(t, f.opts.Integrations.Save(ctx, integration.Claude, map[string]string{"token": "sk-1"}))
-	assert.Contains(t, f.page(t, asAdmin, "/f/_/infra"), button)
+	assert.Contains(t, f.page(t, asAdmin, "/f/_/infra"), `data-summarize="" data-run="" data-folder="infra" data-dir="" data-job="plan" data-title="infra / plan"><svg class="ic"><use href="#i-summary"/></svg><span>Run and summarize plan</span>`)
 	assert.Contains(t, f.page(t, asAdmin, "/f/_/infra/plan"), button)
 	for _, user := range []string{asOps, asViewer, asLimited} {
 		assert.NotContains(t, f.page(t, user, "/f/_/infra"), "data-summarize", user)
 	}
 	f.infra.Job("many").Interactive = true
-	assert.NotContains(t, f.page(t, asAdmin, "/f/_/infra"), `data-summarize data-folder="infra" data-job="many"`)
+	assert.NotContains(t, f.page(t, asAdmin, "/f/_/infra"), "Run and summarize many")
 }

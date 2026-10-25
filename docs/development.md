@@ -195,6 +195,10 @@ for it, and every dependency one import per package. Tests are black box,
 parallel, and share nothing. `go test ./...` runs the unit tests alone;
 the tests that run processes, open a database or use the network sit
 behind the `integration` build tag, see [Testing](testing.md).
+The integration suite runs in chunks of test names under the memory
+cap, as `go test -tags integration -run 'TestFolder' ./frontend` chunk by
+chunk, since the `frontend` package alone needs more than the cap at
+once; every chunk, and every other package, is green before a release.
 `go run ./internal/cmd/rulelint` (`task
 lint` too) matches the permission checks against
 `config/permissions.yml`: every rule a check names is in the file, and

@@ -20,6 +20,8 @@ import (
 	"github.com/titpetric/task-ui/access"
 	"github.com/titpetric/task-ui/app"
 	"github.com/titpetric/task-ui/internal/assert"
+	"github.com/titpetric/task-ui/layout"
+	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/note"
 	"github.com/titpetric/task-ui/storage"
 )
@@ -38,8 +40,9 @@ func newFixture(t *testing.T) *fixture {
 	t.Helper()
 	ctx := context.Background()
 	root := t.TempDir()
-	assert.NoError(t, os.MkdirAll(filepath.Join(root, "site"), 0o755))
-	assert.NoError(t, os.WriteFile(filepath.Join(root, "site", "Makefile"), []byte("build: ## Build the site\n\techo built\ndefault: ## Check the site\n\techo checked\n"), 0o644))
+	site := layout.ProjectDir(root, model.Default, "site")
+	assert.NoError(t, os.MkdirAll(site, 0o755))
+	assert.NoError(t, os.WriteFile(filepath.Join(site, "Makefile"), []byte("build: ## Build the site\n\techo built\ndefault: ## Check the site\n\techo checked\n"), 0o644))
 
 	hash, err := access.HashPassword("demo")
 	assert.NoError(t, err)

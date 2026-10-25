@@ -99,7 +99,8 @@ func TestKey_Delete(t *testing.T) {
 }
 
 // Rotating the instance's encryption key writes the integrations again;
-// the old material is a backup.
+// the old material is the key's one backup, backup/<name>, which goes
+// through DELETE /keys/<name>/backup.
 func TestKey_Secrets(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
@@ -113,11 +114,11 @@ func TestKey_Secrets(t *testing.T) {
 	assert.Equal(t, float64(1), res.get("rekeyed"))
 	assert.Equal(t, old.Name, res.str("key", "name"))
 	assert.NotEqual(t, old.Fingerprint, res.str("key", "fingerprint"))
-	backups, _ := filepath.Glob(filepath.Join(f.opts.Keys.Dir, old.Name+".key.bak-*"))
-	assert.Len(t, backups, 1)
-	for _, backup := range backups {
-		assert.NoError(t, os.Remove(backup))
-	}
+	assert.Equal(t, keystore.BackupName(old.Name), res.str("key", "backup"))
+	assert.FileExists(t, filepath.Join(f.opts.Keys.Dir, "backup", old.Name+".key"))
+	assert.Equal(t, http.StatusConflict, f.call(t, asAdmin, http.MethodPost, "/keys/encrypt/rotate", nil).Status, "a key with a backup rotates no further")
+	assert.Equal(t, http.StatusNoContent, f.call(t, asAdmin, http.MethodDelete, "/keys/"+old.Name+"/backup", nil).Status)
+	assert.NoFileExists(t, filepath.Join(f.opts.Keys.Dir, "backup", old.Name+".key"))
 	got, err := f.opts.Secrets.Get(ctx, model.Secret{Scope: "integration:beszel", Name: "token"})
 	assert.NoError(t, err)
 	assert.Equal(t, "hunter2", got.Content, "rekeyed onto the new material")

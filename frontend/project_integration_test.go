@@ -21,7 +21,7 @@ func TestProjects(t *testing.T) {
 	assert.Contains(t, body, "infra")
 	assert.Contains(t, body, "local folder")
 	assert.Contains(t, body, `href="/settings/projects/infra"`)
-	assert.Contains(t, body, "Root: "+f.root)
+	assert.Contains(t, body, "<h3>Projects <small>in "+f.root+"/src</small></h3>")
 	assert.NotContains(t, body, "data-delete") // nothing is a checkout
 
 	form := f.page(t, asAdmin, "/settings/projects/new")

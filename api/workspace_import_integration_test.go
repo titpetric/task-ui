@@ -18,6 +18,7 @@ import (
 	"github.com/titpetric/task-ui/api"
 	"github.com/titpetric/task-ui/internal/assert"
 	"github.com/titpetric/task-ui/keystore"
+	"github.com/titpetric/task-ui/layout"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/storage"
 	"github.com/titpetric/task-ui/workspace"
@@ -146,7 +147,7 @@ func nothing(t *testing.T, f *fixture, name string) {
 	assert.Error(t, err, name+" has no row")
 	projects, err := f.opts.Projects.List(ctx)
 	assert.NoError(t, err)
-	assert.Len(t, projects, 2, "acme's projects alone")
+	assert.Len(t, projects, 1, "acme's project alone: the home is no project")
 	secrets, err := f.opts.Secrets.Secrets.List(ctx)
 	assert.NoError(t, err)
 	for _, s := range secrets {
@@ -245,7 +246,7 @@ func TestWorkspaceImport_Default(t *testing.T) {
 	project := res.list("projects")[0].(map[string]any)
 	assert.Equal(t, "legacy/web", project["folder"])
 	assert.Equal(t, false, project["cloned"])
-	assert.DirExists(t, filepath.Join(to.root, "legacy", "web"))
+	assert.DirExists(t, layout.ProjectDir(to.root, "legacy", "web"))
 
 	secrets, err := to.opts.Secrets.For(ctx, "legacy/infra")
 	assert.NoError(t, err)

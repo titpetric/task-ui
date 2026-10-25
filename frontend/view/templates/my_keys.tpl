@@ -9,7 +9,7 @@
 <section class="block">
 	{{- template "blockhead" (head "Keys" "" (and (not .Keys) "No keys for you or your role yet. Someone with Allow Edits on Instance Keys can grant one under Settings, Keys.")) }}
 	{{- with .Keys }}
-	<div class="table-wrap">
+	<div class="table-wrap fit">
 	<table class="table keys key-table cards">
 		{{ template "keyhead" }}
 		<tbody>

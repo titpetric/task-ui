@@ -132,8 +132,9 @@ func TestWorkspace_CreateRefused(t *testing.T) {
 	duplicate := f.call(t, asAdmin, http.MethodPost, "/workspaces", api.WorkspaceRequest{URL: repo, Folder: "malta"})
 	assert.Equal(t, http.StatusConflict, duplicate.Status)
 
-	// infra is a directory under the root already.
-	onDisk := f.call(t, asAdmin, http.MethodPost, "/workspaces", api.WorkspaceRequest{URL: repo, Folder: "infra"})
+	// stray is a directory under the root already.
+	assert.NoError(t, os.MkdirAll(filepath.Join(f.root, "stray"), 0o755))
+	onDisk := f.call(t, asAdmin, http.MethodPost, "/workspaces", api.WorkspaceRequest{URL: repo, Folder: "stray"})
 	assert.Equal(t, http.StatusConflict, onDisk.Status)
 
 	assert.Equal(t, http.StatusOK, f.call(t, asAdmin, http.MethodPut, "/projects/gone", api.ProjectRequest{Title: "Gone"}).Status)
@@ -224,7 +225,7 @@ func TestWorkspace_Prompt(t *testing.T) {
 
 	res := f.call(t, asAdmin, http.MethodPost, "/workspaces/malta/prompt", api.PromptRequest{Prompt: " list the skills ", Cols: 80, Rows: 24})
 	assert.Equal(t, http.StatusCreated, res.Status, string(res.Raw))
-	assert.Equal(t, "malta/home", res.str("dir"), "Claude works in the home")
+	assert.Equal(t, "malta", res.str("dir"), "filed at the workspace; Claude works in its home")
 	assert.Equal(t, "list the skills", res.str("body"))
 	asked := f.answered(t, res.str("id"))
 	run := f.finished(t, asked.RunID)
@@ -372,7 +373,7 @@ func TestWorkspace_Home(t *testing.T) {
 	assert.Equal(t, http.StatusNotFound, f.call(t, asAdmin, http.MethodPut, "/workspaces/gozo/home", api.WorkspaceHomeRequest{URL: repo}).Status)
 
 	// A run in the workspace holds the home.
-	f.opts.Catalogue.(catalogue)["malta/a"] = shellFolder(t, f.root, "malta/a", map[string]string{"slow": "sleep 30"})
+	f.addFolder("malta/a", shellFolder(t, f.root, "malta/a", map[string]string{"slow": "sleep 30"}))
 	slow := f.start(t, asAdmin, "malta/a", "slow")
 	busy := f.call(t, asAdmin, http.MethodDelete, "/workspaces/malta/home", nil)
 	assert.Equal(t, http.StatusConflict, busy.Status, string(busy.Raw))

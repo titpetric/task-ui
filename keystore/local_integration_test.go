@@ -48,7 +48,8 @@ func TestLocal_Import(t *testing.T) {
 	assert.Error(t, err)
 }
 
-// Rotate writes new material for a key and keeps the old as a backup;
+// Rotate writes new material for a key and keeps the old as its one
+// backup, backup/<name>.key, which the key names;
 // Remove retires the files, drops the row, and the git setting with it.
 func TestLocal_RotateRemoveGit(t *testing.T) {
 	t.Parallel()
@@ -70,8 +71,8 @@ func TestLocal_RotateRemoveGit(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, key.Name, rotated.Name)
 	assert.NotEqual(t, key.Fingerprint, rotated.Fingerprint)
-	backups, _ := filepath.Glob(filepath.Join(l.Dir, key.Name+".key.bak-*"))
-	assert.Len(t, backups, 1)
+	assert.FileExists(t, filepath.Join(l.Dir, "backup", key.Name+".key"))
+	assert.Equal(t, keystore.BackupName(key.Name), rotated.Backup)
 	assert.True(t, l.Git(ctx).Git)
 
 	enc, err := l.Generate(ctx, keystore.Spec{Name: "task_encryption", Purpose: keystore.PurposeEncrypt})

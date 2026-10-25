@@ -259,7 +259,8 @@ func TestManager_GitPull(t *testing.T) {
 	bare := filepath.Join(f.root, "origin.git")
 	gitRun(t, f.root, "clone", "-q", "--bare", origin, bare)
 	gitRun(t, origin, "remote", "add", "origin", bare)
-	gitRun(t, f.root, "clone", "-q", bare, filepath.Join(f.root, "notes"))
+	named, _ := f.workspaces.Folders(ctx)
+	gitRun(t, f.root, "clone", "-q", bare, layout.Dir(f.root, named, "notes"))
 
 	req := f.shellJob("notes", "cat note.txt", false)
 	assert.NoError(t, os.WriteFile(filepath.Join(origin, "note.txt"), []byte("v2\n"), 0o644))

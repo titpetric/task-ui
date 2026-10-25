@@ -71,6 +71,8 @@ func newFixture(t *testing.T) *fixture {
 	t.Cleanup(func() { db.Close() })
 
 	root := t.TempDir()
+	// The root's home, where a prompt of the root runs.
+	assert.NoError(t, layout.Ensure(root, model.Default))
 	infra := shellFolder(t, root, "infra", map[string]string{
 		"plan":     "echo planned",
 		"slow":     "sleep 30",
@@ -154,7 +156,7 @@ func newFixture(t *testing.T) *fixture {
 		Integrations:  &integration.Store{Secrets: secrets},
 		// A cheap scrypt keeps the exports quick under -race.
 		ExportWorkFactor: 10,
-		Board:            &note.Board{Notes: storage.NewNoteStorage(db), Users: users, Runs: runs, WorkflowRuns: workflowRuns, Catalogue: cat, Runner: manager, Recordings: recordings, Events: flows.Events, Root: root},
+		Board:            &note.Board{Notes: storage.NewNoteStorage(db), Users: users, Runs: runs, WorkflowRuns: workflowRuns, Catalogue: cat, Runner: manager, Recordings: recordings, Events: flows.Events, Root: root, Workspaces: storage.NewWorkspaceStorage(db)},
 	}
 	flows.Prompter = f.opts.Board
 	f.opts.Hosts = &beszel.Inventory{TTL: time.Minute, Settings: func(ctx context.Context) (string, string, error) {
@@ -215,6 +217,13 @@ func shellFolder(t *testing.T, root, id string, scripts map[string]string) *fold
 		f.Jobs = append(f.Jobs, job)
 	}
 	return f
+}
+
+// addFolder adds a folder to the catalogue of the listings and the
+// steps' catalogue, which a run start resolves through.
+func (f *fixture) addFolder(id string, fold *folder.Folder) {
+	f.opts.Catalogue.(catalogue)[id] = fold
+	f.opts.Steps.(catalogue)[id] = fold
 }
 
 // contains reports whether raw holds the text.

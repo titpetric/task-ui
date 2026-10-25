@@ -17,6 +17,7 @@ import (
 	"github.com/titpetric/task-ui/event"
 	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/internal/assert"
+	"github.com/titpetric/task-ui/layout"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/note"
 	"github.com/titpetric/task-ui/recording"
@@ -287,7 +288,8 @@ func (f *fixture) withPrompts(t *testing.T) *model.User {
 	ctx := context.Background()
 	root, err := filepath.EvalSymlinks(t.TempDir())
 	assert.NoError(t, err)
-	proj := &folder.Folder{ID: "proj", Title: "proj", Dir: filepath.Join(root, "proj")}
+	assert.NoError(t, layout.Ensure(root, model.Default))
+	proj := &folder.Folder{ID: "proj", Title: "proj", Dir: layout.ProjectDir(root, model.Default, "proj")}
 	assert.NoError(t, os.MkdirAll(filepath.Join(proj.Dir, "images"), 0o755))
 	f.board.AgentCommand = []string{"sh", "-c", `printf 'In %s: %s' "$(pwd -P)" "$TASK_UI_PROMPT" > "$TASK_UI_PROMPT_REPLY"; case "$TASK_UI_PROMPT" in *fail) exit 3;; esac`}
 	f.board.Catalogue = catalogue{"proj": proj}
@@ -315,7 +317,7 @@ func TestBoard_Ask(t *testing.T) {
 	answer := replies(t, f, asked.ID)
 	assert.Len(t, answer, 1)
 	assert.Equal(t, "claude", answer[0].UserName)
-	assert.Equal(t, "In "+filepath.Join(f.board.Root, "proj", "images")+": what builds here", answer[0].Body)
+	assert.Equal(t, "In "+filepath.Join(f.board.Root, "src", "proj", "images")+": what builds here", answer[0].Body)
 	assert.Equal(t, done.RunID, answer[0].RunID)
 	assert.Equal(t, asked.Dir, answer[0].Dir)
 	assert.Equal(t, asked.WorkspaceID, answer[0].WorkspaceID)
@@ -342,11 +344,11 @@ func TestBoard_Ask(t *testing.T) {
 	assert.Contains(t, replies(t, f, asked.ID)[2].Body, "admin:\nwhat builds here\n\nclaude:\nIn ")
 	assert.Contains(t, replies(t, f, asked.ID)[2].Body, "admin:\nand which first")
 
-	// The root is _.
+	// The root is _: Claude works in the default workspace's home.
 	root, err := f.board.Ask(ctx, admin, "", model.Default, "what is here")
 	assert.NoError(t, err)
 	assert.Equal(t, model.NoteDone, f.settled(t, root.ID).State)
-	assert.Equal(t, "In "+f.board.Root+": what is here", replies(t, f, root.ID)[0].Body)
+	assert.Equal(t, "In "+layout.HomeDir(f.board.Root, model.Default)+": what is here", replies(t, f, root.ID)[0].Body)
 	rootRun, ok := f.board.Runner.Get(f.settled(t, root.ID).RunID)
 	assert.True(t, ok)
 	assert.Equal(t, model.Default+"/"+model.PromptJob, snapshotKey(rootRun))

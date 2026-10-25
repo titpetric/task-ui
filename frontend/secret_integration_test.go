@@ -9,7 +9,6 @@ import (
 	"testing"
 
 	"github.com/titpetric/task-ui/internal/assert"
-	"github.com/titpetric/task-ui/keystore"
 	"github.com/titpetric/task-ui/model"
 )
 
@@ -26,7 +25,7 @@ func TestSecrets(t *testing.T) {
 	assert.Contains(t, body, `<td class="scope faint">infra</td>`)
 	assert.NotContains(t, body, "hunter2secret")
 	assert.NotContains(t, body, "hun")
-	assert.Contains(t, body, `href="/settings/secrets/edit?scope=infra&name=DB_PASS"`)
+	assert.Contains(t, body, `href="/settings/secrets/edit?scope=infra&amp;name=DB_PASS"`)
 	assert.Contains(t, body, `data-delete="/api/secrets/`)
 }
 
@@ -36,10 +35,7 @@ func TestSecretForms(t *testing.T) {
 	f.withKey(t)
 	ctx := context.Background()
 	assert.NoError(t, f.opts.Workspaces.EnsureDefault(ctx))
-	root, err := f.opts.Workspaces.GetByFolder(ctx, model.Default)
-	assert.NoError(t, err)
-	f.gen(t, keystore.Spec{Name: "workspace_default_encryption", Purpose: keystore.PurposeEncrypt, Scope: keystore.ScopeWorkspace(root.ID)})
-	assert.NoError(t, f.opts.Secrets.Set(context.Background(), &model.Secret{Scope: "infra", Name: "DB_PASS", Content: "x"}))
+	assert.NoError(t, f.opts.Secrets.Set(ctx, &model.Secret{Scope: "infra", Name: "DB_PASS", Content: "x"}))
 
 	add := f.page(t, asAdmin, "/settings/secrets/new?scope=infra")
 	assert.Contains(t, add, "<h2>Add secret</h2>")
@@ -55,36 +51,37 @@ func TestSecretForms(t *testing.T) {
 	assert.Equal(t, http.StatusNotFound, f.get(t, asAdmin, "/settings/secrets/edit?scope=all&name=NOPE").Status)
 }
 
-// The secrets page is about secrets: no fingerprint. A workspace with
-// an encryption key has Add secret and a rotation behind its menu; one
-// without says to add a key, its Add secret off. ?workspace= shows one,
-// and ?rekeyed= says what a rotation wrote again.
+// The secrets page is about secrets: no fingerprint and no key to
+// rotate, since the instance's one encryption key encrypts every
+// workspace's. Without it Add secret is off; with it every workspace
+// group adds a secret of its scope. ?workspace= shows one group, and
+// ?rekeyed= says what a rotation of the instance key wrote again.
 func TestSecrets_Encryption(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
 	ctx := context.Background()
-	f.withKey(t)
 	assert.NoError(t, f.opts.Workspaces.EnsureDefault(ctx))
 	assert.NoError(t, f.opts.Workspaces.Create(ctx, &model.Workspace{Folder: "acme", Title: "Acme"}))
-	acme, err := f.opts.Workspaces.GetByFolder(ctx, "acme")
-	assert.NoError(t, err)
-	f.gen(t, keystore.Spec{Name: "workspace_acme_encryption", Purpose: keystore.PurposeEncrypt, Scope: keystore.ScopeWorkspace(acme.ID)})
 
+	noKey := f.page(t, asAdmin, "/settings/secrets")
+	assert.Contains(t, noKey, `disabled title="The instance has no encryption key yet"`)
+	assert.NotContains(t, noKey, `href="/settings/secrets/new`)
+
+	f.withKey(t)
 	body := f.page(t, asAdmin, "/settings/secrets")
 	assert.NotContains(t, body, "SHA256:")
 	assert.NotContains(t, body, `data-api="/api/secrets/rekey"`)
+	assert.NotContains(t, body, "/keys/generate")
 	assert.Contains(t, body, `<section class="block secret-group" id="ws-_">`)
-	assert.Contains(t, body, `Add an encryption key to store secrets in _. <a href="/settings/keys#ws-_">Keys</a>`)
-	assert.Contains(t, body, `<button class="btn btn-sm" type="button" disabled title="Add an encryption key to _ first">Add secret</button>`)
-	assert.Contains(t, body, `href="/settings/secrets/new?scope=workspace%3aacme"`)
-	assert.Contains(t, body, `data-api="/api/workspaces/acme/keys/generate"`)
-	assert.Contains(t, body, "Rotate encryption key")
-	assert.Equal(t, 1, strings.Count(body, `class="more-menu"`))
+	assert.Contains(t, body, `<a class="btn btn-sm" href="/settings/secrets/new?scope=workspace:_">`)
+	assert.Contains(t, body, `<section class="block secret-group" id="ws-acme">`)
+	assert.Contains(t, body, `<a class="btn btn-sm" href="/settings/secrets/new?scope=workspace:acme">`)
+	assert.Equal(t, 0, strings.Count(body, `class="more-menu"`), "no secret, no menu")
 
 	one := f.page(t, asAdmin, "/settings/secrets?workspace=acme")
 	assert.Contains(t, one, `id="ws-acme"`)
 	assert.NotContains(t, one, `id="ws-_"`)
-	assert.Contains(t, one, "&workspace=acme#ws-acme")
+	assert.Contains(t, one, `href="/settings/secrets/new?scope=workspace:acme"`)
 
 	assert.Contains(t, f.page(t, asAdmin, "/settings/secrets?rekeyed=3"), "Encryption key rotated. Re-encrypted 3 secrets.")
 	assert.Contains(t, f.page(t, asAdmin, "/settings/secrets?rekeyed=1"), "Re-encrypted 1 secret.")
@@ -93,9 +90,9 @@ func TestSecrets_Encryption(t *testing.T) {
 	form := f.page(t, asAdmin, "/settings/secrets/new?scope=workspace:acme")
 	assert.Contains(t, form, `<optgroup label="Acme">`)
 	assert.Contains(t, form, `<option value="workspace:acme" selected>every project in acme</option>`)
-	assert.Contains(t, form, `<optgroup label="Default: no encryption key" disabled>`)
-	assert.Contains(t, form, `<option value="workspace:_" disabled>every project in _</option>`)
-	assert.Contains(t, f.page(t, asAdmin, "/settings/secrets/new"), `<option value="workspace:acme" selected>`, "a workspace without a key is passed over")
+	assert.Contains(t, form, `<optgroup label="Default">`)
+	assert.Contains(t, form, `<option value="workspace:_">every project in _</option>`)
+	assert.Contains(t, f.page(t, asAdmin, "/settings/secrets/new"), `<option value="workspace:_" selected>every project in _</option>`, "the root first")
 }
 
 // A secret's row counts its reads and names the last run; the count

@@ -64,7 +64,7 @@ func TestFolder_DirJobs(t *testing.T) {
 	assert.Contains(t, table, `data-run data-folder="infra" data-dir="images" data-job="default" data-title="infra/images / default"`)
 	assert.Contains(t, jobRow(t, body, "infra/images/push"), "Push one")
 	assert.Contains(t, jobRow(t, body, "infra/images/push"), `<span>Run and summarize push</span>`)
-	assert.NotContains(t, jobRow(t, body, "infra/images/shell"), "Run and summarize", "no interactive job to summarize")
+	assert.NotContains(t, table, "Run and summarize shell", "no interactive job to summarize")
 	assert.NotContains(t, table, "docs/", "nothing to run")
 
 	// The directory's own page lists them as its own.

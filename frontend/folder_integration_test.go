@@ -32,16 +32,17 @@ func TestFolder(t *testing.T) {
 	assert.NotContains(t, body, "task-ui found nothing to run")
 	assert.NotContains(t, body, "data-run-all") // workflows chain jobs instead
 	assert.Contains(t, body, `data-run data-folder="infra" data-job="plan"`)
-	assert.Contains(t, body, `data-force data-folder="infra" data-job="plan"`)
+	// Run force sits in the row's menu; the button carries the last run's colour.
+	assert.Contains(t, body, `data-force="" title="Run out of hours, with a reason" data-run="" data-folder="infra" data-dir="" data-job="plan"`)
 	assert.Equal(t, 1, strings.Count(body, "data-force"), "only plan has hours")
-	assert.Contains(t, body, `<i class="dot failed"></i><span class="state-label">failed`)
+	assert.Contains(t, body, `class="cc named bad" data-run data-folder="infra" data-job="plan"`)
 	// No env file filled: no Environment section at all.
 	assert.NotContains(t, body, "Environment")
 
 	viewer := f.page(t, asViewer, "/f/_/infra")
 	assert.NotContains(t, viewer, "data-run-all")
 	assert.NotContains(t, viewer, "data-force")
-	assert.Contains(t, viewer, "History</a>")
+	assert.Contains(t, viewer, `<span>History of plan</span></a>`)
 
 	admin := f.page(t, asAdmin, "/f/_/infra")
 	assert.NotContains(t, admin, "Environment")
@@ -64,9 +65,7 @@ func TestFolder_Running(t *testing.T) {
 	session := f.start(t, f.infra, "slow")
 
 	body := f.page(t, asOps, "/f/_/infra")
-	assert.Contains(t, body, `<i class="dot running"></i><span class="state-label">running</span>`)
-	assert.Contains(t, body, `<span class="when">just now</span><span class="who-ran"><span class="user-ref"><span class="avatar sm role-runner" title="ops">OP</span> <span class="user-name">ops</span><details class="more-menu">`)
-	assert.Contains(t, body, `data-attach="`+session.ID()+`"`)
+	assert.Contains(t, body, `<a class="cc named running" href="/runs/`+session.ID()+`" data-attach="`+session.ID()+`"`)
 	assert.Contains(t, body, `data-kill="`+session.ID()+`"`)
 
 	viewer := f.page(t, asViewer, "/f/_/infra")
@@ -190,7 +189,7 @@ func TestFolder_Executable(t *testing.T) {
 
 	viewer := f.page(t, asViewer, "/f/_/infra/bin")
 	assert.Contains(t, viewer, `<span class="badge exec"`)
-	assert.NotContains(t, viewer, `data-job="./bin/hello"`)
+	assert.NotContains(t, viewer, `data-run data-folder="infra" data-job="./bin/hello"`)
 
 	job := f.get(t, asOps, "/f/_/infra/bin/hello")
 	assert.Equal(t, http.StatusOK, job.Status)
@@ -223,7 +222,7 @@ func TestFolder_SidebarAndCards(t *testing.T) {
 	assert.Contains(t, body, `id="menu-backdrop"`)
 	assert.Contains(t, body, `<table class="table control col-hover">`)
 	assert.Contains(t, body, `<span class="cc-slot" data-cc="infra/plan"`)
-	assert.Contains(t, body, `<a class="cc running" href="/runs/`+session.ID()+`"`)
+	assert.Contains(t, body, `<a class="cc named running" href="/runs/`+session.ID()+`"`)
 	assert.Contains(t, body, "<th>Hours</th><td><span class=\"faint\">always</span></td>")
 
 	job := f.page(t, asOps, "/f/_/infra/plan")
@@ -304,7 +303,7 @@ func TestFolder_Namespace(t *testing.T) {
 	body := f.page(t, asOps, "/f/_/infra")
 	assert.Contains(t, body, `<a class="section active" href="/f/_/infra" data-folder="infra">`)
 	assert.Contains(t, body, `<a href="/f/_/infra/edge">`)
-	assert.Contains(t, body, `<a class="name" href="/f/_/infra/plan">`)
+	assert.Contains(t, body, `<span class="cc-slot" data-cc="infra/plan"`)
 	assert.Contains(t, body, `<a class="section" href="/f/acme" data-folder="acme">`)
 	assert.Contains(t, body, `<a class="section" href="/f/acme/api" data-folder="acme/api">`)
 	assert.Contains(t, body, `data-workspaces='{&#34;acme&#34;:0}'`)
@@ -332,11 +331,10 @@ func TestFolder_Namespace(t *testing.T) {
 	assert.Contains(t, admin, `<a href="/f/acme">acme</a>`)
 }
 
-// A job card names the job once, with its kind beside it; it numbers
-// the lines it runs, shows the first three and keeps the rest behind
-// "show N more"; it drops a description that repeats the name or the
-// first step.
-func TestFolder_JobCard(t *testing.T) {
+// The Jobs table names each job once on a button whose title carries
+// its description, and drops a description that repeats the name; the
+// job's page lists what it depends on and every step it runs.
+func TestFolder_JobRow(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
 	plan := f.infra.Job("plan")
@@ -344,38 +342,21 @@ func TestFolder_JobCard(t *testing.T) {
 	plan.Steps = []string{"task setup:checkout", "go build ./...", "go test ./...", "docker build .", "docker push"}
 	plan.DependsOn = []string{"lint"}
 	f.infra.Job("slow").Description = "slow"
-	f.infra.Job("many").Description = "seq 1 200"
-	f.infra.Job("many").Steps = []string{"seq 1 200"}
 
 	body := f.page(t, asOps, "/f/_/infra")
-	assert.Contains(t, body, `<a class="name" href="/f/_/infra/plan">plan</a>
-				<span class="badge">script</span>`)
-	assert.Contains(t, body, `<p class="desc">Show the plan</p>`)
-	assert.Contains(t, body, `<div class="code"><div class="comment"># after lint</div>
-				<ol><li>task setup:checkout</li><li>go build ./...</li><li>go test ./...</li></ol>
-				<details>
-					<summary><span class="more">show 2 more</span><span class="less">show less</span></summary>
-					<ol start="4"><li>docker build .</li><li>docker push</li></ol>
-				</details>`)
-	// The name and the first step are not said twice.
-	slow := card(body, "slow")
-	assert.Equal(t, 1, strings.Count(slow, ">slow<"))
-	assert.Contains(t, slow, `<p class="desc"></p>`)
-	many := card(body, "many")
-	assert.Equal(t, 1, strings.Count(many, "seq 1 200"))
-	assert.Contains(t, many, `<p class="desc"></p>`)
-	// Three lines or fewer have no control; a job without steps shows its command.
-	assert.Equal(t, 1, strings.Count(body, "<details>"))
-	assert.Contains(t, body, `<ol><li>sh -c sleep 30</li></ol>`)
-	// One meta row: the state, then when, then who.
-	assert.Contains(t, body, `<div class="meta"><i class="dot pending"></i><span class="state-label faint">never run</span></div>`)
-}
+	assert.Contains(t, jobRow(t, body, "infra/plan"), `data-desc="Show the plan"`)
+	assert.Contains(t, jobRow(t, body, "infra/plan"), `title="Run infra / plan: Show the plan"><svg class="ic"><use href="#i-play"/></svg><span>plan</span></button>`)
+	slow := jobRow(t, body, "infra/slow")
+	assert.Equal(t, 1, strings.Count(slow, "<span>slow</span>"))
+	assert.Contains(t, slow, `data-cc="infra/slow" data-folder="infra" data-job="slow" data-name="slow" data-label="slow" data-last="never" data-can><button`)
+	assert.Contains(t, slow, `title="Run infra / slow"><svg class="ic">`)
 
-// card cuts the job card of a job out of a folder page.
-func card(body, job string) string {
-	_, rest, _ := strings.Cut(body, `<a class="name" href="/f/_/infra/`+job+`">`)
-	rest, _, _ = strings.Cut(rest, "</article>")
-	return `<a class="name">` + rest
+	page := f.page(t, asOps, "/f/_/infra/plan")
+	assert.Contains(t, page, "<h2>plan <span class=\"badge\">script</span>")
+	assert.Contains(t, page, "<p>Show the plan</p>")
+	assert.Contains(t, page, "<tr><th>Depends on</th><td>lint </td></tr>")
+	assert.Contains(t, page, `<td class="steps"><code>task setup:checkout</code><code>go build ./...</code><code>go test ./...</code><code>docker build .</code><code>docker push</code></td>`)
+	assert.Contains(t, f.page(t, asOps, "/f/_/infra/slow"), `<tr><th>Command</th><td><code>sh -c sleep 30</code></td></tr>`)
 }
 
 // A directory browsed inside a folder lists its own targets as job
@@ -396,14 +377,14 @@ func TestFolder_BrowseJobs(t *testing.T) {
 	assert.Contains(t, body, "Its jobs run in infra/images/")
 	assert.NotContains(t, body, "Nothing to run here")
 	for _, job := range []string{"default", "build", "push"} {
-		assert.Contains(t, body, `<a class="name" href="/f/_/infra/images/`+job+`">`+job+`</a>`)
-		assert.Contains(t, body, `data-folder="infra" data-dir="images" data-job="`+job+`" data-title="infra/images / `+job+`"`)
+		assert.Contains(t, body, `data-run data-folder="infra" data-dir="images" data-job="`+job+`" data-title="infra/images / `+job+`"`)
+		assert.Contains(t, body, `href="/f/_/infra/images/`+job+`"><svg class="ic"><use href="#i-list"/></svg><span>History of `+job+`</span></a>`)
 	}
-	assert.Contains(t, body, `<i class="dot failed"></i>`)
+	assert.Contains(t, body, `class="cc named bad" data-run data-folder="infra" data-dir="images" data-job="build"`)
 	assert.Contains(t, body, "atkins -f atkins.yml")
 	viewer := f.page(t, asViewer, "/f/_/infra/images")
-	assert.Contains(t, viewer, `<a class="btn btn-sm" href="/f/_/infra/images/build">History</a>`)
-	assert.NotContains(t, viewer, `data-dir="images"`)
+	assert.Contains(t, viewer, `<a class="cc named idle bad" href="/f/_/infra/images/build"`)
+	assert.NotContains(t, viewer, `data-run data-folder`)
 
 	page := f.page(t, asOps, "/f/_/infra/images/build")
 	assert.Contains(t, page, "infra/images / build")

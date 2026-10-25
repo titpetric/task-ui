@@ -139,7 +139,7 @@
 		(and $edit (item "key" "Generate key" "href" (print $base "/generate")))) }}
 	{{- with .Keys }}
 	<p class="dim">A key goes to every run in the workspace, or to the roles and users its links name, through the run's ssh agent.</p>
-	<div class="table-wrap">
+	<div class="table-wrap fit">
 	<table class="table keys key-table cards">
 		{{ template "keyhead" }}
 		<tbody>

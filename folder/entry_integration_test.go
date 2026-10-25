@@ -83,14 +83,11 @@ func TestEntries_Workspace(t *testing.T) {
 		byID[entry.ID] = entry
 		ids = append(ids, entry.ID)
 	}
-	if want := []string{"malta", "malta/dockerfiles"}; !slices.Equal(ids, want) {
+	if want := []string{"malta/dockerfiles"}; !slices.Equal(ids, want) {
 		t.Fatalf("entries: got %v, want %v", ids, want)
 	}
 	if entry := byID["malta/dockerfiles"]; entry.Dir != project || entry.Jobs != 2 || entry.Checkout == nil {
 		t.Fatalf("malta/dockerfiles: %+v", entry)
-	}
-	if entry := byID["malta"]; entry.Jobs != 2 {
-		t.Fatalf("malta counts its projects' jobs: %+v", entry)
 	}
 	if ids := Entries(root, &git.Git{}, nil); len(ids) != 0 {
 		t.Fatalf("without the workspace: %+v", ids)

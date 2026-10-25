@@ -11,6 +11,8 @@ import (
 
 	"github.com/titpetric/task-ui/api"
 	"github.com/titpetric/task-ui/internal/assert"
+	"github.com/titpetric/task-ui/layout"
+	"github.com/titpetric/task-ui/model"
 )
 
 // A run of a directory inside a folder reads as folder/dir/job in
@@ -18,10 +20,11 @@ import (
 func TestTools_RunInDir(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
-	images := filepath.Join(f.root, "site", "images", "scripts")
+	site := layout.ProjectDir(f.root, model.Default, "site")
+	images := filepath.Join(site, "images", "scripts")
 	assert.NoError(t, os.MkdirAll(images, 0o755))
 	assert.NoError(t, os.WriteFile(filepath.Join(images, "where.sh"), []byte("# Where it runs\npwd -P\n"), 0o644))
-	assert.NoError(t, os.MkdirAll(filepath.Join(f.root, "site", ".git"), 0o755))
+	assert.NoError(t, os.MkdirAll(filepath.Join(site, ".git"), 0o755))
 
 	status, raw := f.post(t, f.tokens["admin"], "/api/runs", api.RunRequest{Folder: "site", Dir: "images", Job: "where", Cols: 80, Rows: 24})
 	assert.Equal(t, http.StatusCreated, status, string(raw))
