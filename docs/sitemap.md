@@ -62,7 +62,7 @@ row's **⋯** menu; "Delete" and "Remove" are in red, last.
 | Workspace key | `/settings/workspaces/<folder>/keys/upload`, `/generate`, `/<name>` | none | none | none | as the instance key's forms | none |
 | Projects | `/settings/projects` | a block per workspace: the folders at the top of the root, then each workspace's projects | **Add project** | a workspace's block: **Add project** into it; the projects table: `[...]`: Open, Project settings, Pull now, Remove checkout | none | "No projects yet.", "No projects in <folder> yet." |
 | Add project | `/settings/projects/new`, `?workspace=<folder>` | none | none | none | repository, folder, workspace, branch, Cancel and Clone | none |
-| Project settings | `/settings/projects/<folder>` | its jobs' rules | `[...]`: Remove checkout | none | title, who can run, workspace, sources, hours, per job, Cancel and Save | none |
+| Project settings | `/settings/projects/<folder>` | its jobs' rules | `[...]`: Remove checkout | none | title, who can run, workspace, sources, per job, Cancel and Save | none |
 
 ## You
 

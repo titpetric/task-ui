@@ -65,7 +65,7 @@ func (p *Page) ControlMenu(row ControlRow) *Menu {
 		if p.Pinning {
 			add(p.PinItem(f.ID, job.ID, job.Dir, job.ID), nil)
 		}
-		if run == nil && can && f.HoursOf(job) != "" {
+		if run == nil && can && f.Hours != "" {
 			add(NewDangerItem("play", "Run force "+job.ID, append([]string{"data-force", "", "title", "Run out of hours, with a reason"}, start...)...))
 		}
 		if run != nil && can {

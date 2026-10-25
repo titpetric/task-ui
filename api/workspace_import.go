@@ -164,7 +164,7 @@ func (h *Handlers) restore(ctx context.Context, bundle *workspace.Bundle, target
 
 	row := &model.Workspace{
 		Folder: target, Title: source.Title, Description: source.Description,
-		Sort: source.Sort, Shallow: source.Shallow,
+		Sort: source.Sort, Shallow: source.Shallow, Hours: source.Hours,
 		HomeURL: manifest.Home.URL, HomeBranch: manifest.Home.Branch,
 	}
 	if source.Folder == model.Default {

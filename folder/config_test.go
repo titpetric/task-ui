@@ -65,24 +65,3 @@ func TestConfigsOf(t *testing.T) {
 		t.Fatalf("configs: %+v", configs)
 	}
 }
-
-func TestConfig_ApplyHours(t *testing.T) {
-	dir := t.TempDir()
-	write(t, filepath.Join(dir, "Makefile"), "build:\n\tgo build\ntest:\n\tgo test\n")
-	f := Load("tools", dir)
-	Config{Hours: "mon-fri 9-17", JobHours: map[string]string{"test": "daily 0-24", "nothing": "sun 1-2"}}.Apply(f)
-	if f.Hours != "mon-fri 9-17" || f.Job("test").Hours != "daily 0-24" || f.Job("build").Hours != "" {
-		t.Fatalf("hours: %+v", f)
-	}
-	if f.HoursOf(f.Job("build")) != "mon-fri 9-17" || f.HoursOf(f.Job("test")) != "daily 0-24" || f.HoursOf(nil) != "mon-fri 9-17" {
-		t.Fatalf("hours of: %q %q", f.HoursOf(f.Job("build")), f.HoursOf(f.Job("test")))
-	}
-	if (*Folder)(nil).HoursOf(nil) != "" {
-		t.Fatal("nil folder has hours")
-	}
-
-	cfg := ConfigOf(&model.Project{Folder: "tools", Hours: "sat 1-2", JobHours: `{"build":"sun 1-2"}`})
-	if cfg.Hours != "sat 1-2" || cfg.JobHours["build"] != "sun 1-2" {
-		t.Fatalf("config of: %+v", cfg)
-	}
-}

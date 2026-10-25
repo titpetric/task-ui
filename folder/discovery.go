@@ -87,18 +87,36 @@ func (d *Discovery) List() []*Folder {
 		}
 	}
 
+	hours := d.hours()
 	result := make([]*Folder, 0, len(c.byID))
 	for _, f := range c.byID {
 		if d.Every && len(f.Jobs) == 0 {
 			continue
 		}
 		f.Probe = d.Probe
+		if workspace, ok := layout.Workspace(root, named, f.Dir); ok {
+			f.Hours = hours[workspace]
+		}
 		result = append(result, f)
 	}
 	sort.Slice(result, func(i, j int) bool {
 		return strings.ToLower(result[i].ID) < strings.ToLower(result[j].ID)
 	})
 	return result
+}
+
+// hours returns the hours of the workspaces, by folder.
+func (d *Discovery) hours() map[string]string {
+	hours := map[string]string{}
+	for _, cfg := range d.Workspaces {
+		hours[cfg.ID] = cfg.Hours
+	}
+	return hours
+}
+
+// HoursOf returns the hours of a workspace, by folder: "" for none.
+func (d *Discovery) HoursOf(workspace string) string {
+	return d.hours()[workspace]
 }
 
 // named returns the folders of the named workspaces, which tell a

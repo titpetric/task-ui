@@ -45,29 +45,22 @@
 		<input type="text" id="pe-sources" name="sources" data-type="list" value="{{ index .Form "sources" }}" placeholder="atkins.yml, Makefile" spellcheck="false" autocomplete="off">
 		<small class="faint">Files to read, comma separated; leave empty to detect them.</small>
 	</div>
-	<div class="field">
-		<label for="pe-hours">Hours</label>
-		<textarea id="pe-hours" name="hours" rows="3" spellcheck="false" autocomplete="off" placeholder="mon-fri 9-17&#10;fri 9-13">{{ index .Form "hours" }}</textarea>
-		<small class="faint">When the jobs can run, one rule per line; the last rule for a day wins; leave empty for any time.</small>
-	</div>
 	{{- template "recursivefield" (list "pe-recursive" (or (not $.Project) (not $.Project.Shallow))) }}
 	<div class="field">
 		<label class="check"><input type="checkbox" id="pe-sidebar" name="sidebar"{{ if or (not $.Project) (not $.Project.SidebarHidden) }} checked{{ end }}> Show in sidebar</label>
 		<small class="faint">Off hides the project and its folders from the sidebar; their pages still work.</small>
 	</div>
 	{{- if $p.Jobs }}
-	{{- $hours := $.Project.JobHoursMap }}
 	<div class="field">
 		<span class="label">Per job</span>
 		<div class="table-wrap">
 		<table class="table cards">
-			<thead><tr><th>Job</th><th>Who can run</th><th>Hours</th></tr></thead>
+			<thead><tr><th>Job</th><th>Who can run</th></tr></thead>
 			<tbody>
 			{{- range $p.Jobs }}
 			<tr>
 				<td class="key">{{ .Name }}</td>
 				<td data-label="Who can run">{{ $allow := index $.JobAllow .ID }}{{ template "whofield" (who (printf "job_allow.%s" .ID) "set" $allow $allow $.Users "the folder's Who can run applies").AsCompact }}</td>
-				<td data-label="Hours"><input type="text" name="job_hours.{{ .ID }}" value="{{ index $hours .ID }}" placeholder="mon-fri 9-17" spellcheck="false" autocomplete="off"></td>
 			</tr>
 			{{- end }}
 			</tbody>

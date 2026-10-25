@@ -38,6 +38,11 @@
 			<input type="number" id="we-sidebar" name="sidebar_limit" data-type="int" min="0" step="1" placeholder="all" value="{{ if gt $ws.SidebarLimit 0 }}{{ $ws.SidebarLimit }}{{ end }}" autocomplete="off">
 			<small class="faint">How many projects the sidebar lists for this workspace, the most recently committed first. Empty or 0 lists them all, by name.</small>
 		</div>
+		<div class="field">
+			<label for="we-hours">Hours</label>
+			<textarea id="we-hours" name="hours" rows="3" spellcheck="false" autocomplete="off" placeholder="mon-fri 9-17&#10;fri 9-13">{{ $ws.Hours }}</textarea>
+			<small class="faint">When runs in this workspace can start, every job of its folders and the built-ins; one rule per line, the last rule for a day wins. Empty allows any time. Outside the hours a run needs Run force and a reason; scheduled runs and prompts go ahead.</small>
+		</div>
 		<div class="form-foot">
 			<a class="btn" href="/settings/workspaces">Cancel</a>
 			<button class="btn btn-primary" type="submit">Save</button>

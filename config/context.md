@@ -37,8 +37,8 @@ folder runs its own targets with `dir`. Every folder has the built-ins
 terminal, `@claude-prompt`, Claude Code on a prompt, and `@claude-note`,
 Claude Code on a note to the agent. `run` lets a user run jobs, in a
 folder the user sees, when the allow lists of the folder and the job
-name the user or the role, or are empty, and inside the folder's hours
-unless forced with a reason. `@shell` and `@claude` are for admins
+name the user or the role, or are empty, and inside the hours of the folder's
+workspace unless forced with a reason. `@shell` and `@claude` are for admins
 alone: their allow list names the admin role, no folder rule widens it,
 and they take `shell` besides. The
 root, `_`, has `@host:<name>`, a shell command, its args, on a host of

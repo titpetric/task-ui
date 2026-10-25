@@ -13,6 +13,7 @@ Workspace.
 | home_project_id | char(26) | MUL | Home Project ID |
 | home_url        | varchar  |     | Home URL        |
 | home_branch     | varchar  |     | Home Branch     |
+| hours           | varchar  |     | Hours           |
 | shallow         | boolean  |     | Shallow         |
 | sidebar_limit   | bigint   |     | Sidebar Limit   |
 | sort            | bigint   |     | Sort            |

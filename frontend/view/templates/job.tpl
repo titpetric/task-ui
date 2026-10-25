@@ -41,7 +41,7 @@
 			<tr><th>Steps</th><td class="steps">{{ range $r.Steps }}<code>{{ . }}</code>{{ else }}<span class="faint">none listed</span>{{ end }}</td></tr>
 			{{- if $r.Aliases }}<tr><th>Aliases</th><td>{{ range $r.Aliases }}<span class="badge">{{ . }}</span> {{ end }}</td></tr>{{ end }}
 			<tr><th>Who can run</th><td>{{ .WhoCanRun $p $r }}</td></tr>
-			<tr><th>Hours</th><td>{{ template "hours" (list ($p.HoursOf $r) $) }}{{ if and $r.Hours $p.Hours }} <span class="faint">(the job's own; the folder runs {{ hoursLine $p.Hours }})</span>{{ end }}</td></tr>
+			<tr><th>Hours</th><td>{{ template "hours" (list $p.Hours $) }}</td></tr>
 			<tr><th>Input</th><td>{{ if $r.Interactive }}the job takes keyboard input{{ else }}output only{{ end }}</td></tr>
 		</tbody>
 	</table>

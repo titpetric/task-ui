@@ -38,7 +38,7 @@ type Folder struct {
 	// from the configuration. Empty allows every runner.
 	Allow []string `json:"allow,omitempty"`
 	// Hours says when the folder's jobs may run, as the hours package
-	// reads them. Empty is always.
+	// reads them: the hours of the folder's workspace. Empty is always.
 	Hours string `json:"hours,omitempty"`
 
 	// Jobs are every source's jobs, in source order.
@@ -112,17 +112,6 @@ func (f *Folder) SourceJobs(source *detector.Source) []*Job {
 		}
 	}
 	return jobs
-}
-
-// HoursOf returns the hours a job may run in: its own, or the folder's.
-func (f *Folder) HoursOf(job *Job) string {
-	if job != nil && job.Hours != "" {
-		return job.Hours
-	}
-	if f == nil {
-		return ""
-	}
-	return f.Hours
 }
 
 // Name is the last segment of the ID: what the sidebar shows at its depth.

@@ -198,8 +198,8 @@ directories in one folder, such as `build` in `images/` and in
 agent, `@claude-prompt` and `@claude-note`, are each a Claude session of
 their own and go side by side: no prompt waits for another. Starting any
 other job that runs already attaches to the run in the way. **Run force** kills that run and
-starts again; out of a folder's hours it also asks why, and keeps the
-reason with the run (see [Projects and jobs](projects.md#hours)).
+starts again; out of its workspace's hours it also asks why, and keeps the
+reason with the run (see [Workspaces](workspaces.md#hours)).
 
 ### Runs at once
 

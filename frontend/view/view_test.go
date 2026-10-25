@@ -147,7 +147,8 @@ func TestView_RenderJobTable(t *testing.T) {
 	}
 	table := func(p *view.Page) {
 		f := p.Folder
-		build := &folder.Job{Folder: "infra", ID: "build", Command: []string{"make", "build"}, Hours: "Mon-Fri 9-17"}
+		f.Hours = "Mon-Fri 9-17"
+		build := &folder.Job{Folder: "infra", ID: "build", Command: []string{"make", "build"}}
 		build.Name, build.Description = "build", "Build the images"
 		custom := &folder.Job{Folder: "infra", ID: "@compose:custom", Command: []string{"atkins", "compose:custom"}}
 		custom.Name, custom.TakesArgs = "custom", true
@@ -201,7 +202,7 @@ func TestView_RenderJobTable(t *testing.T) {
 	assert.Contains(t, out, `<span>Run and summarize @compose:custom...</span>`)
 	assert.Contains(t, out, `<span>Run force build</span>`)
 	assert.Contains(t, out, `data-force="" title="Run out of hours, with a reason" data-run="" data-folder="infra" data-dir="" data-job="build"`)
-	assert.Equal(t, 1, strings.Count(out, "data-force="), "Run force only on a job with hours")
+	assert.Equal(t, 5, strings.Count(out, "data-force="), "Run force on every job, the built-ins too, in a workspace with hours")
 	assert.Contains(t, out, `<span>View the last run of build</span>`)
 	assert.Contains(t, out, `<span>History of @shell</span>`)
 	assert.Contains(t, out, `href="/runs/r1/report" title="The build passed."`)

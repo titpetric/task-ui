@@ -114,6 +114,22 @@ func TestWorkspace_CRUD(t *testing.T) {
 	all := f.call(t, asAdmin, http.MethodPut, "/workspaces/malta", api.WorkspaceRequest{Title: "The island", SidebarLimit: &limit})
 	assert.Equal(t, float64(0), all.get("sidebar_limit"))
 
+	// The hours, trimmed; left out, they stay; empty allows any time;
+	// hours the hours package does not read answer 400.
+	hours := " mon-fri 9-17\nfri 9-13 "
+	gated := f.call(t, asAdmin, http.MethodPut, "/workspaces/malta", api.WorkspaceRequest{Title: "The island", Hours: &hours})
+	assert.Equal(t, http.StatusOK, gated.Status, string(gated.Raw))
+	assert.Equal(t, "mon-fri 9-17\nfri 9-13", gated.str("hours"))
+	kept = f.call(t, asAdmin, http.MethodPut, "/workspaces/malta", api.WorkspaceRequest{Title: "The island"})
+	assert.Equal(t, "mon-fri 9-17\nfri 9-13", kept.str("hours"))
+	hours = "someday 9-17"
+	badHours := f.call(t, asAdmin, http.MethodPut, "/workspaces/malta", api.WorkspaceRequest{Title: "The island", Hours: &hours})
+	assert.Equal(t, http.StatusBadRequest, badHours.Status)
+	assert.Contains(t, badHours.str("error"), "someday")
+	hours = ""
+	open := f.call(t, asAdmin, http.MethodPut, "/workspaces/malta", api.WorkspaceRequest{Title: "The island", Hours: &hours})
+	assert.Equal(t, "", open.str("hours"))
+
 	deleted := f.call(t, asAdmin, http.MethodDelete, "/workspaces/malta", nil)
 	assert.Equal(t, http.StatusNoContent, deleted.Status)
 	assert.NoDirExists(t, filepath.Join(f.root, "malta"))

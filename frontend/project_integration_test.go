@@ -56,17 +56,6 @@ func TestProjectEdit(t *testing.T) {
 	assert.Equal(t, http.StatusNotFound, f.get(t, asAdmin, "/settings/projects/..").Status)
 }
 
-func TestProjectEdit_Hours(t *testing.T) {
-	t.Parallel()
-	f := newFixture(t)
-
-	project := &model.Project{Folder: "infra", Hours: "mon-fri 9-17\nfri 9-13"}
-	assert.NoError(t, f.opts.Projects.Create(context.Background(), project))
-	body := f.page(t, asAdmin, "/settings/projects/infra")
-	assert.Contains(t, body, `name="hours"`)
-	assert.Contains(t, body, ">mon-fri 9-17\nfri 9-13</textarea>")
-}
-
 // The configure page takes who may run and the hours per job, filled
 // from the row, as "map.key" fields the form turns into objects.
 func TestProjectEdit_PerJob(t *testing.T) {
@@ -76,14 +65,14 @@ func TestProjectEdit_PerJob(t *testing.T) {
 	fresh := f.page(t, asAdmin, "/settings/projects/infra")
 	assert.Contains(t, fresh, `<input type="checkbox" name="job_allow.plan" value="ops" data-type="set">`)
 	assert.Contains(t, fresh, `<div class="whofield compact" data-who-empty="the folder&#39;s Who can run applies">`)
-	assert.Contains(t, fresh, `name="job_hours.slow" value=""`)
+	assert.NotContains(t, fresh, `job_hours`, "hours live on the workspace")
+	assert.NotContains(t, fresh, `name="hours"`)
 
-	project := &model.Project{Folder: "infra", JobAllow: model.EncodeMap(map[string][]string{"plan": {"ops", "release"}}), JobHours: `{"slow":"mon-fri 9-17"}`}
+	project := &model.Project{Folder: "infra", JobAllow: model.EncodeMap(map[string][]string{"plan": {"ops", "release"}})}
 	assert.NoError(t, f.opts.Projects.Create(context.Background(), project))
 	filled := f.page(t, asAdmin, "/settings/projects/infra")
 	assert.Contains(t, filled, `<input type="checkbox" name="job_allow.plan" value="ops" data-type="set" checked>`)
 	assert.Contains(t, filled, `<input type="checkbox" name="job_allow.plan" value="release" data-type="set" checked>`) // no such user: kept
-	assert.Contains(t, filled, `name="job_hours.slow" value="mon-fri 9-17"`)
 }
 
 // The clone and configure forms have the recursive toggle, on unless

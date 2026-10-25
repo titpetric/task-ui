@@ -157,24 +157,6 @@ func TestProject_Delete(t *testing.T) {
 	assert.Equal(t, http.StatusBadRequest, bad.Status)
 }
 
-func TestProject_UpdateHours(t *testing.T) {
-	t.Parallel()
-	f := newFixture(t)
-
-	res := f.call(t, asAdmin, http.MethodPut, "/projects/infra", api.ProjectRequest{Hours: " mon-fri 9-17\nfri 9-13 ", JobHours: map[string]string{"plan": "daily 0-24"}})
-	assert.Equal(t, http.StatusOK, res.Status, string(res.Raw))
-	assert.Equal(t, "mon-fri 9-17\nfri 9-13", res.str("hours"))
-	assert.Contains(t, res.str("job_hours"), "daily 0-24")
-
-	bad := f.call(t, asAdmin, http.MethodPut, "/projects/infra", api.ProjectRequest{Hours: "someday 9-17"})
-	assert.Equal(t, http.StatusBadRequest, bad.Status)
-	assert.Contains(t, bad.str("error"), "someday")
-
-	job := f.call(t, asAdmin, http.MethodPut, "/projects/infra", api.ProjectRequest{JobHours: map[string]string{"plan": "mon 17-9"}})
-	assert.Equal(t, http.StatusBadRequest, job.Status)
-	assert.Contains(t, job.str("error"), "plan:")
-}
-
 // A project is recursive unless made or set shallow: then the listing
 // shows the project and its top-level folders alone.
 func TestProject_Shallow(t *testing.T) {

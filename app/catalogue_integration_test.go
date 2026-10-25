@@ -36,9 +36,10 @@ func TestCatalogue(t *testing.T) {
 	assert.Nil(t, c.Find(model.Internal), "no internal folder")
 	assert.Equal(t, "site", c.Find("site").ID)
 	assert.Nil(t, c.Find("nowhere"))
-	// _ is the root, for its built-in jobs, and lists as no folder.
+	// _ is the root, for its built-in jobs, and lists as no folder;
+	// with no default workspace row, the root itself.
 	rootFolder := c.Find(model.Default)
-	assert.Equal(t, layout.SrcDir(root, model.Default), rootFolder.Dir)
+	assert.Equal(t, root, rootFolder.Dir)
 	assert.NotNil(t, rootFolder.Job("@host:dev1"))
 
 	// A project row changes what the folder says, on the next call.

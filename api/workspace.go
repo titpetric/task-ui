@@ -51,6 +51,11 @@ func (h *Handlers) createWorkspace(w http.ResponseWriter, r *http.Request) {
 		fail(w, http.StatusBadRequest, "enter a git URL: https://, ssh://, git@host:path or file://")
 		return
 	}
+	hours, _, err := req.hours()
+	if err != nil {
+		fail(w, http.StatusBadRequest, err.Error())
+		return
+	}
 	ctx := r.Context()
 	if status, problem := h.freeWorkspace(ctx, req.Folder); problem != "" {
 		fail(w, status, problem)
@@ -70,7 +75,7 @@ func (h *Handlers) createWorkspace(w http.ResponseWriter, r *http.Request) {
 	workspace := &model.Workspace{
 		Folder: req.Folder, Title: req.Title, Description: req.Description,
 		Shallow: req.Recursive != nil && !*req.Recursive,
-		HomeURL: req.URL, HomeBranch: req.Branch,
+		HomeURL: req.URL, HomeBranch: req.Branch, Hours: hours,
 	}
 	if err := h.opts.Workspaces.Create(ctx, workspace); err != nil {
 		os.RemoveAll(dir)
@@ -159,7 +164,15 @@ func (h *Handlers) updateWorkspace(w http.ResponseWriter, r *http.Request) {
 		fail(w, http.StatusBadRequest, "sidebar_limit takes 0, every project, or how many to list")
 		return
 	}
+	text, setHours, err := req.hours()
+	if err != nil {
+		fail(w, http.StatusBadRequest, err.Error())
+		return
+	}
 	workspace.Title, workspace.Description = req.Title, req.Description
+	if setHours {
+		workspace.Hours = text
+	}
 	if req.Sort != nil && workspace.Folder != model.Default {
 		workspace.Sort = *req.Sort
 	}

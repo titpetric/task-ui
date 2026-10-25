@@ -178,7 +178,7 @@ func (h *Handlers) startRun(w http.ResponseWriter, r *http.Request) {
 	if errors.Is(err, runner.ErrOutOfHours) || errors.Is(err, runner.ErrReasonNeeded) {
 		// The window prompts for the reason and forces; it needs the hours
 		// to say what they are.
-		writeJSON(w, statusOf(err), map[string]any{"error": err.Error(), "out_of_hours": true, "hours": f.HoursOf(job)})
+		writeJSON(w, statusOf(err), map[string]any{"error": err.Error(), "out_of_hours": true, "hours": f.Hours})
 		return
 	}
 	if err != nil {
