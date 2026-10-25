@@ -74,9 +74,10 @@ a script adds. The CSS is in `css/menus.css`.
 
 A keys table has the same columns on every page, the Keys page, the
 Instance page, a workspace's page, Your SSH keys and a user's edit page: Name,
-Algorithm, Size in bits, Public key shortened with a copy button for
-the whole line, Purpose, and the **⋯** menu with the fingerprint, the
-dates and the links in its details.
+as wide as the names, with the encryption key marked, Algorithm, Size in
+bits, Public key filling the rest, cut with an ellipsis, with a copy
+button for the whole line, and the **⋯** menu with the fingerprint, the
+dates, the purpose and the links in its details.
 
 ## Lists and actions
 
@@ -119,9 +120,11 @@ follow one set of rules:
   out. A list a filter empties, runs or artifacts, keeps its table and
   an empty row.
 - **Copy**: a value to copy is the `copyable` template, `(list value
-  label [shown])`: the value in code and the copy button right after it,
-  for a public key, an ssh login, a link or a command. The same value
-  may also have Copy in the row's menu.
+  label [shown [fill]])`: the value in code and the copy button right
+  after it, for a public key, an ssh login, a link or a command; `fill`
+  makes it take the width it has, the value cut with an ellipsis and
+  whole in the tooltip. The same value may also have Copy in the row's
+  menu.
 - **One template per entity**: keys list through `keyhead` and
   `keyrow`, projects through `projecttable`, a user through `user`, a
   row's menu through `menu`. A page that lists them again uses those.

@@ -4,14 +4,17 @@
 
 {{/* The head of a keys table, the same wherever keys list: the Keys
      page, the Instance page, a workspace's page, Your SSH keys and a
-     profile: Name, Algorithm, Size, Public key with its copy button,
-     Purpose and the row's ⋯ menu. The table sits in a table-wrap fit;
-     a narrow one leaves out Algorithm and Size, hide-narrow. */}}
-{{ define "keyhead" }}<colgroup><col class="c-name"><col class="c-algo"><col class="c-size"><col class="c-pub"><col class="c-purpose"><col class="c-actions"></colgroup>
-		<thead><tr><th>Name</th><th class="hide-narrow">Algorithm</th><th class="hide-narrow">Size</th><th>Public key</th><th>Purpose</th><th class="actions" aria-label="Actions"></th></tr></thead>{{ end }}
+     profile: Name, as wide as the names, Algorithm, Size, Public key,
+     which takes the rest of the width with its copy button, and the
+     row's ⋯ menu. The table sits in a table-wrap fit; a narrow one
+     leaves out Algorithm and Size, hide-narrow. */}}
+{{ define "keyhead" }}<colgroup><col class="c-name"><col class="c-algo"><col class="c-size"><col class="c-pub"><col class="c-actions"></colgroup>
+		<thead><tr><th>Name</th><th class="hide-narrow">Algorithm</th><th class="hide-narrow">Size</th><th>Public key</th><th class="actions" aria-label="Actions"></th></tr></thead>{{ end }}
 
-{{/* A key's row, (list page key next [workspace [inline]]): its kind,
-     its public key to copy, and the [...] menu, its details on top, then
+{{/* A key's row, (list page key next [workspace [inline]]): its name,
+     the encryption key marked, its public key, as much as fits with the
+     whole line in its tooltip, to copy, and the [...] menu, its details
+     on top, the purpose among them, then
      Copy and Download, Edit links, Rotate Key or Delete backup, and
      Remove last. next is the page a change returns to. On a workspace's
      page, a key of the workspace links and removes through the
@@ -25,17 +28,17 @@
 {{- $links := join $k.Roles ", " }}{{ with $k.Users }}{{ if $links }}{{ $links = print $links ", " }}{{ end }}{{ $links = print $links (join . ", ") }}{{ end }}
 {{- if $k.Encrypts }}{{ $links = "never handed out" }}{{ else if not $links }}{{ if $k.Workspace }}{{ $links = "every run of the workspace" }}{{ else }}{{ $links = "none" }}{{ end }}{{ end }}
 <tr id="key-{{ $k.Name }}">
-	<td class="key">{{ if or $k.Encrypts (not $canEdit) $inline }}<span class="mono">{{ $k.Name }}</span>{{ else }}<a class="mono" href="{{ $edit }}">{{ $k.Name }}</a>{{ end }}{{ with $k.Backup }}{{ template "backup-active" . }}{{ end }}{{ with $k.Comment }}<div class="faint">{{ . }}</div>{{ end }}</td>
+	<td class="key">{{ if or $k.Encrypts (not $canEdit) $inline }}<span class="mono">{{ $k.Name }}</span>{{ else }}<a class="mono" href="{{ $edit }}">{{ $k.Name }}</a>{{ end }}{{ if $k.Encrypts }} <span class="badge signal">encryption</span>{{ end }}{{ with $k.Backup }}{{ template "backup-active" . }}{{ end }}{{ with $k.Comment }}<div class="faint">{{ . }}</div>{{ end }}</td>
 	<td class="mono hide-narrow" data-label="Algorithm">{{ $k.Algo }}</td>
 	<td class="mono nowrap hide-narrow" data-label="Size">{{ $k.Size }} bits</td>
-	<td class="pubkey" data-label="Public key">{{ template "copyable" (list $k.PublicKey (print "the public key of " $k.Name) $k.ShortPublic) }}</td>
-	<td data-label="Purpose"><span class="badge{{ if $k.Encrypts }} signal{{ end }}"{{ if $k.Git }} title="git pulls and clones with it"{{ end }}>{{ if $k.Encrypts }}encryption{{ else }}git + ssh{{ end }}</span></td>
+	<td class="pubkey" data-label="Public key">{{ template "copyable" (list $k.PublicKey (print "the public key of " $k.Name) $k.PublicKey true) }}</td>
 	<td class="actions">{{ template "menu" (menu (print "Actions on " $k.Name)
 		(detail "Fingerprint" $k.Fingerprint "mono" "")
 		(and (not $k.CreatedAt.IsZero) (detail "Created" (ago $k.CreatedAt) "title" (stamp $k.CreatedAt)))
 		(and $k.RotatedAt (detail "Rotated" (ago $k.RotatedAt) "title" (stamp $k.RotatedAt)))
 		(and $k.Backup (detail "Backup" (print $k.Backup " " $k.BackupFingerprint) "mono" ""))
 		(detail "Scope" (or (and $k.Workspace (print "workspace " $k.Workspace)) "instance"))
+		(detail "Purpose" (or (and $k.Encrypts "encryption") "git + ssh") "title" (or (and $k.Git "git pulls and clones with it") ""))
 		(and (or ($p.Can "key/view") $ws) (detail "Links" $links))
 		(item "copy" "Copy public key" "data-copy" $k.PublicKey)
 		(item "download" "Download public key" "data-download" $k.PublicKey "data-filename" (print $k.Name ".pub"))

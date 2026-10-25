@@ -102,4 +102,17 @@ select {
     overflow-x: auto;
     white-space: nowrap;
   }
+
+  /* fill takes the width it has, the value cut with an ellipsis and
+     whole in its tooltip, the button beside it staying in view. */
+  &.fill {
+    display: flex;
+    width: 100%;
+
+    & code {
+      flex: 1 1 auto;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
 }

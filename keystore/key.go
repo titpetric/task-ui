@@ -1,7 +1,6 @@
 package keystore
 
 import (
-	"strings"
 	"time"
 )
 
@@ -59,18 +58,4 @@ func (k Key) Size() int {
 		return 256
 	}
 	return k.Bits
-}
-
-// ShortPublic is the public key as a table shows it: its type and the end of its material, where keys differ.
-// PublicKey holds the whole line, with the comment, to copy.
-func (k Key) ShortPublic() string {
-	fields := strings.Fields(k.PublicKey)
-	if len(fields) < 2 {
-		return k.PublicKey
-	}
-	material := fields[1]
-	if len(material) > 10 {
-		material = "…" + material[len(material)-10:]
-	}
-	return fields[0] + " " + material
 }

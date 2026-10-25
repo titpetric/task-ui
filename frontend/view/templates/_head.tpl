@@ -30,10 +30,11 @@
 </div>
 {{- end }}
 
-{{/* copyable is a value to copy, (list value label [shown]): the value,
-     or the shorter shown text with the value on a hover, in code, and the
-     copy button right after it. label ends "Copy the ..." for the button's
-     title and a screen reader. */}}
-{{- define "copyable" }}{{ $value := index . 0 }}{{ $label := index . 1 }}{{ $shown := $value }}{{ if gt (len .) 2 }}{{ $shown = index . 2 }}{{ end -}}
-<span class="copyable"><code{{ if ne $shown $value }} title="{{ $value }}"{{ end }}>{{ $shown }}</code><button type="button" class="btn-icon" data-copy="{{ $value }}" title="Copy {{ $label }}" aria-label="Copy {{ $label }}"><svg class="ic"><use href="#i-copy"/></svg></button></span>
+{{/* copyable is a value to copy, (list value label [shown [fill]]): the value,
+     or shown in its place with the value in the tooltip, in code and
+     the copy button right after it, "Copy <label>". fill makes it take
+     the width it has and end the value with an ellipsis, the whole in
+     the tooltip. */}}
+{{- define "copyable" }}{{ $value := index . 0 }}{{ $label := index . 1 }}{{ $shown := $value }}{{ if gt (len .) 2 }}{{ $shown = index . 2 }}{{ end }}{{ $fill := false }}{{ if gt (len .) 3 }}{{ $fill = index . 3 }}{{ end -}}
+<span class="copyable{{ if $fill }} fill{{ end }}"><code{{ if or $fill (ne $shown $value) }} title="{{ $value }}"{{ end }}>{{ $shown }}</code><button type="button" class="btn-icon" data-copy="{{ $value }}" title="Copy {{ $label }}" aria-label="Copy {{ $label }}"><svg class="ic"><use href="#i-copy"/></svg></button></span>
 {{- end }}
