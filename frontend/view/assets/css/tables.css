@@ -84,7 +84,7 @@ table.table-kv td {
 
 /* Step labels stack in their cell and lose their tail rather than pushing
    the table into a scroll: the full step is one click away on the job. */
-.steps code {
+td.steps code {
   display: block;
   margin: 0.1rem 0;
   overflow: hidden;

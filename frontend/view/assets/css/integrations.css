@@ -1,8 +1,89 @@
-/* Settings, Integrations: one type size for the prose of a section, its
-   description and the hint under each field; a switch shows or hides the
-   section, and remembers. */
+/* Settings, Integrations: a table-like grid in the block, a row per
+   integration. The left cell holds the name, the description and the
+   form; the right cell the numbered steps to its key, about 3:2. In a
+   box narrower than 46rem the steps stack under the form, and the head
+   row goes, as each row's cells carry their own headings. */
+.integrations {
+  container-type: inline-size;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--ink-1);
+}
+
+.integrations-head,
+.integration {
+  display: grid;
+  grid-template-columns: 3fr 2fr;
+}
+
+.integrations-head {
+  border-bottom: 1px solid var(--line);
+  background: var(--ink-2);
+
+  & span {
+    padding: 0.32rem 0.9rem;
+    color: var(--text-faint);
+    font-size: var(--fs-label);
+    font-weight: 600;
+    letter-spacing: var(--ls-label);
+    text-transform: uppercase;
+  }
+}
+
+.integration {
+  & + .integration {
+    border-top: 1px solid var(--line);
+  }
+
+  & > div {
+    min-width: 0;
+    padding: 0.8rem 0.9rem;
+  }
+
+  & .steps-cell {
+    border-inline-start: 1px solid var(--line);
+  }
+
+  & .form {
+    max-width: none;
+  }
+
+  /* Save, Sync now, Dry run and Clear wrap in a narrow cell. */
+  & .form-foot {
+    flex-wrap: wrap;
+  }
+}
+
+/* The row's heading line: the name with its badge, the Show switch at
+   the end; the steps cell's heading sits on the same line. */
+.integration-head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  margin-bottom: var(--head-gap);
+
+  & h3 {
+    margin: 0;
+  }
+}
+
+.steps-cell h4 {
+  margin: 0 0 var(--head-gap);
+  color: var(--text-faint);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  letter-spacing: var(--ls-heading);
+  text-transform: uppercase;
+  line-height: 1.25rem;
+}
+
+/* One type size for the prose of a row: its description, the steps and
+   the hint under each field. */
+.integration .desc,
 .integration .integration-body > p,
-.integration .field small {
+.integration .steps-cell p,
+.integration .field small,
+.integration .steps {
   font-size: var(--fs-data);
   line-height: 1.5;
 }
@@ -12,12 +93,58 @@
   margin-top: 0.3rem;
 }
 
-.integration:has(.peek-toggle input:not(:checked)) .integration-body {
-  display: none;
+.integration .desc p {
+  margin: 0 0 0.8rem;
 }
 
-.integration:has(.peek-toggle input:not(:checked)) .block-head {
-  margin-bottom: 0;
+/* The steps: the list numbers them, in the muted colour. */
+.integration .steps {
+  margin: 0;
+  padding-inline-start: 1.5rem;
+
+  & li {
+    margin-bottom: 0.45rem;
+  }
+
+  & li::marker {
+    color: var(--text-faint);
+    font-weight: 600;
+  }
+
+  & li p {
+    margin: 0;
+  }
+}
+
+/* Off, the switch leaves the row its heading line alone. */
+.integration:has(.peek-toggle input:not(:checked)) {
+  & .integration-body,
+  & .steps-cell {
+    display: none;
+  }
+
+  & .form-cell {
+    grid-column: 1 / -1;
+  }
+
+  & .integration-head {
+    margin-bottom: 0;
+  }
+}
+
+@container (max-width: 46rem) {
+  .integrations-head {
+    display: none;
+  }
+
+  .integration {
+    grid-template-columns: minmax(0, 1fr);
+
+    & .steps-cell {
+      border-inline-start: 0;
+      border-top: 1px solid var(--line);
+    }
+  }
 }
 
 .checks {
@@ -48,6 +175,66 @@
 .checks .dd {
   width: auto;
   min-width: 18rem;
+}
+
+/* Who gets the token: a role's box carries how many users act with the
+   role; the users are a list, each with its effective role and its state,
+   which the script keeps: gets it by its own box (who-direct), by a
+   checked role (who-role), both in the ok tint; not at all (who-none),
+   faint; or with nothing checked (who-all), as everyone. */
+.field.who {
+  & .count,
+  & .role {
+    color: var(--text-faint);
+  }
+
+  & .who-users {
+    align-items: flex-start;
+  }
+
+  & .who-list {
+    flex: 1 1 16rem;
+    max-width: 24rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  /* A user is a row of the list, its box, name, role and state in
+     columns, so the states line up. */
+  & .who-list label.who-user {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto auto;
+    margin: 0;
+    padding: 0.1rem 0.4rem;
+    border-radius: var(--radius);
+  }
+
+  & .who-state {
+    color: var(--text-faint);
+    white-space: nowrap;
+  }
+
+  & :is(.who-direct, .who-role) {
+    background: var(--ok-wash);
+
+    & .who-state {
+      color: var(--ok);
+    }
+  }
+
+  & .who-none {
+    color: var(--text-faint);
+  }
+
+  & .who-all .who-state {
+    color: var(--text-dim);
+  }
+
+  & .who-summary {
+    margin: 0.2rem 0 0;
+    font-size: var(--fs-data);
+  }
 }
 
 /* A show/hide switch beside a heading, as oida sets it: a small uppercase
