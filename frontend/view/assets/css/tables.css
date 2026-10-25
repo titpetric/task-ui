@@ -1,10 +1,26 @@
 /* ------------------------------------------------------------------ tables */
 
+/* A table wider than its box scrolls sideways, and its right edge
+   fades while there is more past it: the fade follows the scroll, gone
+   once the end is in view, and absent when the table fits. */
 .table-wrap {
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--ink-1);
+  animation: table-edge linear both;
+  animation-timeline: scroll(self inline);
+}
+
+@keyframes table-edge {
+  from {
+    mask-image: linear-gradient(to right, #000 calc(100% - 3rem), transparent);
+  }
+
+  to {
+    mask-image: linear-gradient(to right, #000 calc(100% - 3rem), #000);
+  }
 }
 
 table.table {
