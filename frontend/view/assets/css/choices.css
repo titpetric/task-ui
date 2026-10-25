@@ -5,7 +5,7 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  margin-bottom: 0.3rem;
+  margin-bottom: var(--label-gap);
   color: var(--text);
   font-size: var(--fs-field);
   font-weight: 400;

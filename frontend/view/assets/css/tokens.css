@@ -126,6 +126,21 @@
   --control-sm: 1.75rem;
   --control-xs: 1.5rem;
 
+  /* The widths of a control that is not as wide as its box: a number, a
+     filter, a pick in a row of words, a pick that names the keys of a
+     user; and the width of a form. */
+  --control-w-s: 8rem;
+  --control-w-m: 11rem;
+  --control-w-l: 14rem;
+  --control-w-xl: 18rem;
+  --form-w: 40rem;
+
+  /* The gaps of a form: between its fields, under a label, and around a
+     hint, after the label or under the control. */
+  --field-gap: 0.8rem;
+  --label-gap: 0.3rem;
+  --hint-gap: 0.35rem;
+
   /* What floats over the page casts a shadow by how far it rises: a
      tooltip, a dropdown, the user menu, the drawer, a dialog. The scrim
      dims the page under a dialog. */
