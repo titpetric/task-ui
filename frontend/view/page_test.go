@@ -1,6 +1,7 @@
 package view_test
 
 import (
+	"bytes"
 	"os"
 	"path/filepath"
 	"testing"
@@ -324,4 +325,40 @@ func TestPage_SummarizesRun(t *testing.T) {
 	assert.False(t, p.SummarizesRun(job, run))
 	assert.True(t, p.RunReport("r1").Pending)
 	assert.Nil(t, p.RunReport("r2"))
+}
+
+// The selects of the filters and the page size carry an id their label
+// names, which names the dropdown that stands in for each; a
+// row of choices under a label is a group the label names.
+func TestPage_FieldNames(t *testing.T) {
+	t.Parallel()
+	v, err := view.New()
+	assert.NoError(t, err)
+	p := admin(t)
+	p.Instance = &view.Instance{ParentEnv: "none"}
+	for _, c := range []struct{ page, want string }{
+		{"runs", `<label for="runs-folder">Folder`},
+		{"runs", `<select id="runs-folder" name="folder">`},
+		{"runs", `<select id="runs-state" name="state">`},
+		{"runs", `<select id="runs-user" name="user">`},
+		{"runs", `<label class="page-size" for="page-size">Page size`},
+		{"runs", `<select id="page-size" name="n">`},
+		{"artifacts", `<label for="art-folder">Folder`},
+		{"artifacts", `<select id="art-folder" name="folder">`},
+		{"instance", `<div class="field" role="radiogroup" aria-labelledby="parent-env-label">`},
+		{"instance", `<span class="label" id="parent-env-label">Forward`},
+		{"key_generate", `<div class="field" role="radiogroup" aria-labelledby="key-purpose-label">`},
+		{"key_generate", `<span class="label" id="key-purpose-label">Purpose</span>`},
+		{"user_form", `<div class="field" data-folder-pick role="group" aria-labelledby="folders-label">`},
+		{"user_form", `<span class="label" id="folders-label">Folders</span>`},
+	} {
+		var buf bytes.Buffer
+		assert.NoError(t, v.Render(&buf, c.page, p), c.page)
+		assert.Contains(t, buf.String(), c.want, c.page)
+	}
+
+	var buf bytes.Buffer
+	assert.NoError(t, v.Render(&buf, "project_edit", projectPage(t, &model.User{Name: "admin", Role: model.RoleAdmin}, nil)))
+	assert.Contains(t, buf.String(), `<div class="field" role="group" aria-labelledby="pe-allow-label">`)
+	assert.Contains(t, buf.String(), `<span class="label" id="pe-allow-label">Who can run</span>`)
 }

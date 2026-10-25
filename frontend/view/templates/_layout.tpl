@@ -361,8 +361,8 @@
 
 {{- /* The page size select of a form that lists runs. */}}
 {{ define "pagesize" }}
-	<label class="page-size">Page size
-		<select name="n">
+	<label class="page-size" for="page-size">Page size
+		<select id="page-size" name="n">
 			{{- range list "15" "50" "100" }}<option value="{{ . }}"{{ if eq (index $.Form "n") . }} selected{{ end }}>{{ . }}</option>{{ end }}
 		</select>
 	</label>
@@ -640,8 +640,8 @@
 
 {{- /* keypurpose is the purpose field of a key form. */}}
 {{- define "keypurpose" }}
-<div class="field">
-	<span class="label">Purpose</span>
+<div class="field" role="radiogroup" aria-labelledby="key-purpose-label">
+	<span class="label" id="key-purpose-label">Purpose</span>
 	<label class="check"><input type="radio" name="purpose" value="ssh" checked> SSH key</label>
 	<small class="faint">Runs, git and logins authenticate with it.</small>
 	<label class="check"><input type="radio" name="purpose" value="encrypt"> Encryption key</label>

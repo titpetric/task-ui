@@ -181,7 +181,7 @@ func TestRuns_Pages(t *testing.T) {
 
 	first := f.page(t, asAdmin, "/runs")
 	assert.Equal(t, 15, rows(first))
-	assert.Contains(t, first, `<select name="n">`)
+	assert.Contains(t, first, `<select id="page-size" name="n">`)
 	assert.Contains(t, first, `<option value="15" selected>15</option>`)
 	assert.Contains(t, first, `<nav class="pager" aria-label="Pages">`)
 	assert.NotContains(t, first, `rel="prev"`)

@@ -59,8 +59,8 @@
 <section class="block">
 	<h3>History</h3>
 	<form method="get" action="/artifacts" class="filters">
-		<label>Folder
-			<select name="folder">
+		<label for="art-folder">Folder
+			<select id="art-folder" name="folder">
 				<option value="">all folders</option>
 				{{- range .Folders }}<option value="{{ .ID }}"{{ if eq (index $.Form "folder") .ID }} selected{{ end }}>{{ .ID }}</option>{{ end }}
 			</select>

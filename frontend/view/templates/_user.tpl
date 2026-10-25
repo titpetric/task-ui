@@ -46,9 +46,9 @@
      sees, All projects or the boxes of Custom, in the user forms; label
      heads the field, left out where the block's heading says it. */}}
 {{ define "folder-pick" }}{{ $all := index . 1 -}}
-	<div class="field" data-folder-pick>
+	<div class="field" data-folder-pick{{ if index . 2 }} role="group" aria-labelledby="folders-label"{{ end }}>
 		{{- if index . 2 }}
-		<span class="label">Folders</span>
+		<span class="label" id="folders-label">Folders</span>
 		{{- end }}
 		<label class="check"><input type="radio" name="scope" value="all"{{ if $all }} checked{{ end }}> All projects</label>
 		<label class="check"><input type="radio" name="scope" value="custom"{{ if not $all }} checked{{ end }}> Custom</label>
