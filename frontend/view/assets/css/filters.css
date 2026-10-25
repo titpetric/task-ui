@@ -36,29 +36,6 @@
   }
 }
 
-.form.inline {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  gap: 0.6rem 0.8rem;
-  max-width: none;
-  margin: var(--stack-gap) 0 var(--block-gap);
-
-  & .field {
-    flex: 1 1 14rem;
-    margin: 0;
-  }
-
-  /* A toggle and its help take a row of their own. */
-  & .field.whole {
-    flex-basis: 100%;
-  }
-
-  & .form-foot {
-    margin: 0;
-  }
-}
-
 .form-error {
   margin: 0 0 0.8rem;
   padding: 0.5rem 0.7rem;

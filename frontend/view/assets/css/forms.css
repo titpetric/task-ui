@@ -220,6 +220,67 @@ select {
   max-width: 40rem;
 }
 
+/* An inline form, the schedule forms: the fields side by side on one
+   grid, as many to a row as fit, each three rows, the label, the
+   control and the help under it, shared across the row through a
+   subgrid, so the labels sit on one line over the controls whether or
+   not a hint makes one of them wrap, and a help line under one control
+   hangs under them all. The submit button is in the last column on the
+   controls' row. A toggle takes a row of its own, its help running on
+   after it. */
+.form.inline {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: 0 1rem;
+  align-items: start;
+  max-width: none;
+  margin: var(--stack-gap) 0 var(--block-gap);
+
+  & .field {
+    display: grid;
+    grid-row: span 3;
+    grid-template-rows: subgrid;
+    margin: 0 0 0.8rem;
+  }
+
+  & .field > label,
+  & .field > .label {
+    align-self: end;
+  }
+
+  & .field.whole {
+    display: block;
+    grid-column: 1 / -1;
+    grid-row: auto;
+  }
+
+  & .field.whole > label.check {
+    display: block;
+    margin: 0;
+    line-height: 1.5;
+
+    & input[type="checkbox"] {
+      margin-inline-end: 0.5rem;
+      vertical-align: -0.15em;
+    }
+  }
+
+  & .form-foot {
+    display: grid;
+    grid-auto-flow: column;
+    grid-column: -2 / -1;
+    grid-row: span 3;
+    grid-template-rows: subgrid;
+    gap: 0 0.5rem;
+    justify-content: end;
+    margin: 0 0 0.8rem;
+
+    & > * {
+      grid-row: 2;
+    }
+  }
+}
+
 /* A row of boxes or radios under a field's label, the group's word
    first. */
 .checks {

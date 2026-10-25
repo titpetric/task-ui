@@ -102,15 +102,18 @@ func TestView_RenderWorkflowEditor(t *testing.T) {
 	// Runs as: an admin picks from the users, the saved user selected on
 	// edit, the login on new; the help says what the user brings.
 	p.Users = []model.User{{ID: "u1", Name: "admin", Role: model.RoleAdmin}, {ID: "u2", Name: "miguel", Role: model.RoleRunner}}
+	p.UserKeys = map[string][]string{"miguel": {"deploy_ed25519", "forge_ed25519"}}
 	p.Workflow.RunAs = "miguel"
 	buf.Reset()
 	assert.NoError(t, v.Render(&buf, "workflow_edit", p))
 	out = buf.String()
 	assert.Contains(t, out, `<label for="wf-user-w1">Runs as</label>`)
 	assert.Contains(t, out, `<select id="wf-user-w1" name="user">`)
-	assert.Contains(t, out, `<option value="miguel" selected>miguel (runner)</option>`)
-	assert.Contains(t, out, `<option value="admin">admin (admin)</option>`)
+	// Each user with the instance keys their runs get, or none.
+	assert.Contains(t, out, `<option value="miguel" selected data-keys="deploy_ed25519 forge_ed25519">miguel (runner) · keys: deploy_ed25519, forge_ed25519</option>`)
+	assert.Contains(t, out, `<option value="admin" data-keys="">admin (admin) · no keys</option>`)
 	assert.Contains(t, out, `<option value="">Whoever starts it</option>`)
+	assert.Contains(t, out, "The keys are the instance keys the user gets; a step's workspace adds its own keys.")
 	p.Workflow.RunAs = ""
 	buf.Reset()
 	assert.NoError(t, v.Render(&buf, "workflow_edit", p))
@@ -121,7 +124,7 @@ func TestView_RenderWorkflowEditor(t *testing.T) {
 	assert.NoError(t, v.Render(&buf, "workflow_new", p))
 	out = buf.String()
 	assert.Contains(t, out, `<select id="wf-user-new" name="user">`)
-	assert.Contains(t, out, `<option value="admin" selected>admin (admin)</option>`, "the login on a new workflow")
+	assert.Contains(t, out, `<option value="admin" selected data-keys="">admin (admin) · no keys</option>`, "the login on a new workflow")
 
 	runner := &model.User{Name: "ops", Role: model.RoleRunner}
 	p.User, p.Permissions, p.Users = runner, permission.Set{User: runner, Role: permission.Policy{"workflow/edit": permission.Allow}}, nil
@@ -384,6 +387,7 @@ func TestView_RenderSchedulesWorkflow(t *testing.T) {
 	p.WorkflowNames = map[string]string{"w1": "release"}
 	p.SideWorkflows = []view.Workflow{{Workflow: model.Workflow{ID: "w1", Name: "release", UserName: "ops"}, RunAs: "miguel"}}
 	p.Users = []model.User{{ID: "u1", Name: "admin", Role: model.RoleAdmin}, {ID: "u2", Name: "ops", Role: model.RoleRunner}}
+	p.UserKeys = map[string][]string{"ops": {"deploy_ed25519"}}
 	p.Schedules = []model.Schedule{
 		{ID: "s1", WorkflowID: "w1", Expression: "0 7 * * 1-5", Enabled: 1, UserName: "ops", NextRunAt: &next},
 		{ID: "s2", Folder: "infra", Job: "plan", Expression: "@daily", Enabled: 1, UserName: "ops", NextRunAt: &next},
@@ -391,6 +395,12 @@ func TestView_RenderSchedulesWorkflow(t *testing.T) {
 	var buf bytes.Buffer
 	assert.NoError(t, v.Render(&buf, "schedules", p))
 	out := buf.String()
+	// The row's pick names each user's keys in the short form, the
+	// form's with the role, under a line on what the keys are.
+	assert.Contains(t, out, `<option value="ops" selected data-keys="deploy_ed25519">ops · keys: deploy_ed25519</option>`)
+	assert.Contains(t, out, `<option value="admin" data-keys="">admin · no keys</option>`)
+	assert.Contains(t, out, `<option value="ops" data-keys="deploy_ed25519">ops (runner) · keys: deploy_ed25519</option>`)
+	assert.Contains(t, out, `<small class="faint">The keys are the instance keys the user gets; the job's workspace adds its own keys.</small>`)
 	// The workflow's row names the workflow's user with no pick; the
 	// job's row keeps the admin's pick.
 	assert.Contains(t, out, `<td data-label="Runs as"><span class="user-ref">`)

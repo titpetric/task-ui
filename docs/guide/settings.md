@@ -254,7 +254,8 @@ Algorithm and Size out.
   find the keys by default.
 - **Who gets which key** lists each role and each user, and the instance
   SSH keys their runs get: a user's own keys, then, dashed, those of
-  their role.
+  their role. The **Run as** pickers of the schedule forms and the
+  workflow editor name the same keys after each user.
 - A project with private keys in its `.ssh/` folder gets a warning: runs
   do not load them. Keys belong in the key folder: upload a key it needs
   and link it, then delete the folder.

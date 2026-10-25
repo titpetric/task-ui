@@ -12,7 +12,12 @@ schedule with its next and last run, and its **Add schedule** form takes
 a folder and job too.
 
 An admin picks who a schedule runs as: **Run as** on both forms lists
-the users, with the admin first selected. task-ui checks that the picked
+the users, with the admin first selected. Each option names the user's
+role and the instance SSH keys the user's runs get, `ops (runner) ·
+keys: deploy_ed25519`, or `no keys`: the keys linked to the user by name
+or to the user's role on the [Keys](settings.md#keys) page. The job's
+workspace adds its own keys to the run, which the list leaves out, so
+pick by the instance keys alone. task-ui checks that the picked
 user may run the job: they see its folder, hold Run Jobs, and the
 job's allow lists name them or their role. If they may not, the form
 says so and saves nothing. On the lists, the **Runs as** column shows

@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/titpetric/task-ui/internal/assert"
+	"github.com/titpetric/task-ui/keystore"
 	"github.com/titpetric/task-ui/model"
 )
 
@@ -86,15 +87,23 @@ func TestSchedules_RunAs(t *testing.T) {
 	f := newFixture(t)
 	ctx := context.Background()
 	assert.NoError(t, f.opts.Schedules.Create(ctx, &model.Schedule{Folder: "infra", Job: "plan", UserID: f.users[asOps].ID, UserName: asOps, Expression: "@hourly", Enabled: 1}))
+	// A key linked to the runners' role shows on ops's options, in the
+	// form and on the row; the admin, with no key, says so.
+	deploy, err := f.opts.Keys.Generate(ctx, keystore.Spec{Name: "deploy"})
+	assert.NoError(t, err)
+	assert.NoError(t, f.opts.Keys.Link(ctx, deploy.Name, []string{model.RoleRunner}, nil))
 
 	admin := f.page(t, asAdmin, "/schedules")
 	assert.Contains(t, admin, `<label for="sch-user">Run as</label>`)
-	assert.Contains(t, admin, `<option value="admin" selected>admin (admin)</option>`)
+	assert.Contains(t, admin, `<option value="admin" selected data-keys="">admin (admin) · no keys</option>`)
+	assert.Contains(t, admin, `<option value="ops" data-keys="deploy_ed25519">ops (runner) · keys: deploy_ed25519</option>`)
+	assert.Contains(t, admin, `<small class="faint">The keys are the instance keys the user gets; the job's workspace adds its own keys.</small>`)
 	assert.Contains(t, admin, `<select name="user" data-submit aria-label="Run as">`)
-	assert.Contains(t, admin, `<option value="ops" selected>ops</option>`)
+	assert.Contains(t, admin, `<option value="ops" selected data-keys="deploy_ed25519">ops · keys: deploy_ed25519</option>`)
 
 	job := f.page(t, asAdmin, "/f/_/infra/plan")
 	assert.Contains(t, job, `<label for="sch-user">Run as</label>`)
+	assert.Contains(t, job, `<option value="ops" data-keys="deploy_ed25519">ops (runner) · keys: deploy_ed25519</option>`)
 
 	for _, path := range []string{"/schedules", "/f/_/infra/plan"} {
 		ops := f.page(t, asOps, path)
