@@ -25,6 +25,18 @@
   text-transform: none;
 }
 
+/* The help under a control is a sentence of its own, on its own line. */
+.field > small {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: var(--fs-xs);
+}
+
+/* A number stands in a box as wide as the number, not the form. */
+.field > input[type="number"] {
+  width: 8rem;
+}
+
 input:is([type="text"], [type="password"]),
 textarea {
   width: 100%;

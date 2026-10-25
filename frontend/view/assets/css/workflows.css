@@ -181,13 +181,6 @@
       font-family: var(--font-ui);
       font-size: var(--fs-field);
     }
-
-    /* The help under Runs as is a sentence of its own under the control. */
-    & .field > small {
-      display: block;
-      margin-top: 0.35rem;
-      font-size: var(--fs-xs);
-    }
   }
 }
 
