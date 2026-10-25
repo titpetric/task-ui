@@ -21,7 +21,6 @@
 @import url("css/login.css");
 @import url("css/footer.css");
 @import url("css/dialogs.css");
-@import url("css/mobile.css");
 @import url("css/sidebar.css");
 @import url("css/tiles.css");
 @import url("css/filters.css");
@@ -50,3 +49,4 @@
 @import url("css/users.css");
 @import url("css/setup.css");
 @import url("css/retention.css");
+@import url("css/mobile.css");

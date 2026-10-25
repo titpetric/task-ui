@@ -24,6 +24,14 @@
   padding: 0 0.55rem;
 }
 
+.filters .dd {
+  width: var(--control-w-m);
+}
+
+.filters .page-size .dd {
+  width: 5.5rem;
+}
+
 /* Previous on the left, Next on the right, under a table of runs. */
 .pager {
   display: flex;
