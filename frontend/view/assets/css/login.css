@@ -65,11 +65,3 @@ section.login {
     cursor: pointer;
   }
 }
-
-/* A label inside a field's table names its row in the row's own type. */
-.field .table label {
-  color: inherit;
-  font: inherit;
-  letter-spacing: 0;
-  text-transform: none;
-}

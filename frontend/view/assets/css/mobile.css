@@ -166,7 +166,6 @@
   }
 
   .filters input,
-  .filters select,
   .filters .dd {
     width: 100%;
   }

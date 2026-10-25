@@ -221,13 +221,6 @@ table.matrix {
   align-items: center;
   gap: 0.35rem;
 
-  & select {
-    width: auto;
-    min-width: 0;
-    padding: 0.15rem 1.6rem 0.15rem 0.4rem;
-    font-size: var(--fs-data);
-  }
-
   /* The pick names the user's keys after the name: the dropdown stops
      at a width that keeps the row's other columns in view, the full
      list of keys in its open list. */

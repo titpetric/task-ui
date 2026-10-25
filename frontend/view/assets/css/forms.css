@@ -152,14 +152,6 @@
   display: inline-flex;
 }
 
-.checks > label.faint {
-  min-width: 3.5rem;
-  margin: 0;
-  font-weight: 400;
-  letter-spacing: 0;
-  text-transform: none;
-}
-
 .checks .dd {
   width: auto;
   min-width: var(--control-w-xl);
@@ -250,6 +242,15 @@
       padding-inline: 0.3rem;
     }
   }
+}
+
+/* A label in a field's table, a project's Per job rows with the
+   compact who-field, names its row in the row's own type. */
+.field .table label {
+  color: inherit;
+  font: inherit;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 .form-foot {
