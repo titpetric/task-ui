@@ -34,7 +34,7 @@ func (h *Handlers) workspaceNew(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	p := h.page(r, "Add workspace")
-	p.Crumbs = view.Crumbs("Settings", "/settings", "Workspaces", "/settings/workspaces", "Add")
+	p.Crumbs = view.Crumbs("Settings", "/settings", "Workspaces", "/settings/workspaces", "Add workspace")
 	p.Step = view.StepWorkspaces
 	h.render(w, http.StatusOK, "workspace_new", p)
 }
@@ -56,8 +56,8 @@ func (h *Handlers) workspaceEdit(w http.ResponseWriter, r *http.Request) {
 		h.missing(w, r, "No workspace named "+name+".")
 		return
 	}
-	p := h.page(r, "Workspace settings: "+workspace.Folder)
-	p.Crumbs = view.Crumbs("Settings", "/settings", "Workspaces", "/settings/workspaces", workspace.Folder)
+	p := h.page(r, "Edit "+workspace.Folder)
+	p.Crumbs = view.Crumbs("Settings", "/settings", "Workspaces", "/settings/workspaces", crumbName(workspace.Folder), view.FolderHref(workspace.Folder, p.Workspaces), "Edit")
 	p.Step = view.StepWorkspaces
 	p.Workspace = workspace
 	p.Root = h.opts.Root

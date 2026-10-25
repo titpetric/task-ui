@@ -2,7 +2,7 @@
 {{- $ws := .Workspace }}{{ $here := print "/settings/workspaces/" $ws.Folder "/keys" }}{{ $edit := .Can "workspace/edit" }}
 <div class="page-head">
 	<div>
-		<h2>SSH keys of {{ $ws.Folder }}</h2>
+		<h2>Keys of {{ $ws.Folder }}</h2>
 		<p>The keys the workspace's runs get in their ssh agent, each to every run in {{ $ws.Folder }} or to the roles and users its links name. Generate, upload, link and remove them here.</p>
 	</div>
 	<div class="actions">
@@ -12,7 +12,7 @@
 		{{- end }}
 		{{ template "menu" (menu (print "Actions on " $ws.Folder)
 			(item "folder-open" "Open" "href" ($.Href $ws.Folder))
-			(item "settings" "Workspace settings" "href" (print "/settings/workspaces/" $ws.Folder))
+			(item "settings" "Edit workspace" "href" (print "/settings/workspaces/" $ws.Folder))
 			(and (.Can "secret/view") (item "secret" "Secrets" "href" (print "/settings/workspaces/" $ws.Folder "/secrets")))
 		) }}
 	</div>

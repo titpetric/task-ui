@@ -2,7 +2,7 @@
 {{- $p := .Folder }}
 <div class="page-head">
 	<div>
-		<h2>Project settings <span class="badge">{{ $p.ID }}</span></h2>
+		<h2>Edit {{ $p.ID }}</h2>
 		<p>Settings task-ui keeps for the folder: a title, who can run it, and which sources to read. task-ui doesn't change the files in the folder.</p>
 	</div>
 	{{- if and $.Checkout ($.Can "project/delete") }}

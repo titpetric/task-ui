@@ -16,7 +16,7 @@
 		{{- end }}
 		{{ template "menu" (menu (print "Actions on " $ws.Folder)
 			(item "folder-open" "Open" "href" ($.Href $ws.Folder))
-			(and (.Can "workspace/view") (item "settings" "Workspace settings" "href" (print "/settings/workspaces/" $ws.Folder)))
+			(and (.Can "workspace/view") (item "settings" "Edit workspace" "href" (print "/settings/workspaces/" $ws.Folder)))
 			(and (.Can "workspace/view") (item "key" "SSH keys" "href" (print "/settings/workspaces/" $ws.Folder "/keys")))
 			(item "secret" "Every workspace's secrets" "href" "/settings/secrets")
 		) }}

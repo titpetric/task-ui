@@ -121,7 +121,7 @@ func TestFolderMenu_Workspace(t *testing.T) {
 	assert.NoError(t, v.Render(&buf, "folder", p))
 	head := pageHead(t, buf.String())
 	assert.Contains(t, head, `href="/settings/workspaces/malta"`)
-	assert.Contains(t, head, "Workspace settings")
+	assert.Contains(t, head, "Edit workspace")
 	assert.Contains(t, head, `href="/settings/workspaces/malta/keys"`)
 	assert.Contains(t, head, `href="/settings/workspaces/malta/secrets"`)
 	assert.NotContains(t, head, "data-delete")

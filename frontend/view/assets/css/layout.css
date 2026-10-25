@@ -166,11 +166,15 @@ main {
   }
 }
 
+/* The head of a page: the title and its lead in the first column, the
+   actions pinned to the end of the second, whatever the lead's length.
+   At phone width the actions stack under the lead, and the [...] menu
+   leaves them for the title's line, so it never stands alone. */
 .page-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  flex-wrap: wrap;
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
   gap: 0.75rem 1.5rem;
   padding-bottom: 0.8rem;
   margin-bottom: 1rem;
@@ -191,8 +195,29 @@ main {
   & .actions {
     display: flex;
     align-items: center;
+    justify-content: flex-end;
     gap: 0.5rem;
     flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 640px) {
+  .page-head {
+    grid-template-columns: minmax(0, 1fr);
+
+    & > div:first-child {
+      padding-inline-end: 2.5rem;
+    }
+
+    & .actions {
+      justify-content: flex-start;
+    }
+
+    & .actions > .more-menu {
+      position: absolute;
+      top: 0;
+      inset-inline-end: 0;
+    }
   }
 }
 

@@ -2,7 +2,7 @@
 {{- with $k := .Key }}
 <div class="page-head">
 	<div>
-		<h2>{{ $k.Name }}</h2>
+		<h2>Edit {{ $k.Name }}</h2>
 		<p>{{ if $k.Comment }}{{ $k.Comment }}, {{ end }}<span class="dim">{{ $k.Kind }}</span> {{ $k.Fingerprint }}. Choose whose runs get it: runs started by a checked user, or by anyone with a checked role, have it in their ssh agent. Users see their keys under SSH keys in their menu.</p>
 	</div>
 </div>

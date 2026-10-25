@@ -187,9 +187,9 @@ Open a folder from the sidebar:
 
 - **The `[...]` menu** at the top right of a project's or a workspace's
   page, `/f/_` among them, behind the rule of each item:
-  - **Project settings**, with `project/view`, or **Workspace
-    settings**, with `workspace/view`, opens the settings page, the
-    one **Project settings** in **Settings**, **Projects** opens;
+  - **Edit project**, with `project/view`, or **Edit workspace**, with
+    `workspace/view`, opens the settings page, the one **Edit project**
+    in **Settings**, **Projects** opens;
   - **Pull now**, on a checkout with the `git` skill, for a user who
     may run the folder's jobs, runs `@git:pull` there;
   - **Remove checkout**, last and in red, on a project that is a git

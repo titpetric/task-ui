@@ -63,7 +63,7 @@ func TestWorkspaceKeys_Page(t *testing.T) {
 	t.Parallel()
 
 	body := render(t, "workspace_keys", keysPage(t, &model.User{Name: "admin", Role: model.RoleAdmin}, nil))
-	assert.Contains(t, body, "<h2>SSH keys of malta</h2>")
+	assert.Contains(t, body, "<h2>Keys of malta</h2>")
 	assert.Contains(t, body, `<tr id="key-workspace_malta_deploy_ed25519">`)
 	assert.Contains(t, body, `data-dialog-open="key-generate-dialog"`)
 	assert.Contains(t, body, `data-dialog-open="key-upload-dialog"`)

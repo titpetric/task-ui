@@ -3,7 +3,7 @@
      the folder, its sources and jobs, the checkout's remote, cut to its
      column and whole on a hover, and branch, the last commit with its
      subject on a hover, the size on disk when the page measures it, and
-     the row's [...] with Open, Project settings, Pull now on a checkout
+     the row's [...] with Open, Edit project, Pull now on a checkout
      whose git skill the user may run, and Remove checkout. A page with
      no entries draws its blockhead's empty line instead. */}}
 {{- define "projecttable" }}{{ $p := index . 0 }}
@@ -21,7 +21,7 @@
 			{{- $pull := index $p.Pulls .ID }}
 			<td class="actions">{{ template "menu" (menu (print "Actions on " .ID)
 				(item "folder-open" "Open" "href" ($p.Href .ID))
-				(item "settings" "Project settings" "href" (print "/settings/projects/" .ID))
+				(item "settings" "Edit project" "href" (print "/settings/projects/" .ID))
 				(and $pull (item "download" "Pull now" "data-run" "" "data-folder" .ID "data-dir" $pull.Dir "data-job" $pull.ID "data-title" (print .ID " / " $pull.Name)))
 				(and .Checkout ($p.Can "project/delete") (danger "trash" "Remove checkout" "data-delete" (print "/api/projects/" .ID) "data-confirm" (removeConfirm .ID .Checkout.Remote) "data-confirm-ok" "Remove checkout" "data-next" "reload"))
 			) }}</td>

@@ -43,9 +43,9 @@ func (h *Handlers) workspaceKeys(r *http.Request, p *view.Page) {
 }
 
 // workspaceKeyPage starts a page of a workspace's keys.
-func (h *Handlers) workspaceKeyPage(r *http.Request, workspace *model.Workspace, title, crumb string) *view.Page {
+func (h *Handlers) workspaceKeyPage(r *http.Request, workspace *model.Workspace, title string, crumbs ...string) *view.Page {
 	p := h.page(r, title)
-	p.Crumbs = view.Crumbs("Settings", "/settings", "Workspaces", "/settings/workspaces", workspace.Folder, "/settings/workspaces/"+workspace.Folder, crumb)
+	p.Crumbs = view.Crumbs(append([]string{"Settings", "/settings", "Workspaces", "/settings/workspaces", crumbName(workspace.Folder), "/settings/workspaces/" + workspace.Folder}, crumbs...)...)
 	p.Step = view.StepWorkspaces
 	p.Workspace = workspace
 	h.workspaceKeys(r, p)
@@ -62,7 +62,7 @@ func (h *Handlers) workspaceKeyList(w http.ResponseWriter, r *http.Request) {
 	if workspace == nil {
 		return
 	}
-	h.render(w, http.StatusOK, "workspace_keys", h.workspaceKeyPage(r, workspace, "SSH keys of "+workspace.Folder, "SSH keys"))
+	h.render(w, http.StatusOK, "workspace_keys", h.workspaceKeyPage(r, workspace, "Keys of "+workspace.Folder, "Keys"))
 }
 
 // workspaceKeyGenerate shows the form that generates an SSH key for a
@@ -108,7 +108,7 @@ func (h *Handlers) workspaceKeyEdit(w http.ResponseWriter, r *http.Request) {
 		h.notFound(w, r)
 		return
 	}
-	p := h.workspaceKeyPage(r, workspace, key.Name, key.Name)
+	p := h.workspaceKeyPage(r, workspace, "Edit "+key.Name, "Keys", "/settings/workspaces/"+workspace.Folder+"/keys", key.Name, "/settings/workspaces/"+workspace.Folder+"/keys#key-"+key.Name, "Edit")
 	p.Key = key
 	h.render(w, http.StatusOK, "workspace_key_edit", p)
 }

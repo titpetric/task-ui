@@ -87,7 +87,7 @@ func TestWorkspaceKeys_Scoped(t *testing.T) {
 	deploy := f.gen(t, keystore.Spec{Name: "workspace_malta_deploy", Scope: keystore.ScopeWorkspace(ws.ID)})
 
 	body := f.page(t, asAdmin, "/settings/workspaces/malta/keys")
-	assert.Contains(t, body, "<h2>SSH keys of malta</h2>")
+	assert.Contains(t, body, "<h2>Keys of malta</h2>")
 	assert.Contains(t, body, html(deploy.Fingerprint))
 	assert.Contains(t, body, `id="key-generate-dialog"`)
 	assert.Contains(t, body, `id="key-links-`+deploy.Name+`"`)

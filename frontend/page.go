@@ -450,13 +450,22 @@ func (h *Handlers) refuse(w http.ResponseWriter, r *http.Request) {
 	h.render(w, http.StatusForbidden, "forbidden", p)
 }
 
+// crumbName is a folder's name in a crumb: Default for the default
+// workspace, _, as the Keys and Workspaces pages call it.
+func crumbName(folder string) string {
+	if folder == model.Default {
+		return "Default"
+	}
+	return folder
+}
+
 // crumbsOf walks a nested folder ID into a breadcrumb, one step per
 // segment, with a last step that has no link when given. A folder in no
-// named workspace starts at the default workspace's _.
+// named workspace starts at the default workspace, Default.
 func crumbsOf(id, last string, workspaces map[string]int) []view.Crumb {
 	var crumbs []view.Crumb
 	if strings.HasPrefix(view.FolderHref(id, workspaces), "/f/"+model.Default+"/") {
-		crumbs = append(crumbs, view.Crumb{Text: model.Default, Href: view.FolderHref(model.Default, workspaces)})
+		crumbs = append(crumbs, view.Crumb{Text: crumbName(model.Default), Href: view.FolderHref(model.Default, workspaces)})
 	}
 	path := ""
 	for _, segment := range strings.Split(id, "/") {
@@ -464,7 +473,7 @@ func crumbsOf(id, last string, workspaces map[string]int) []view.Crumb {
 			path += "/"
 		}
 		path += segment
-		crumbs = append(crumbs, view.Crumb{Text: segment, Href: view.FolderHref(path, workspaces)})
+		crumbs = append(crumbs, view.Crumb{Text: crumbName(segment), Href: view.FolderHref(path, workspaces)})
 	}
 	if last != "" {
 		crumbs = append(crumbs, view.Crumb{Text: last})

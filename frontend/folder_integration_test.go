@@ -321,7 +321,7 @@ func TestFolder_Namespace(t *testing.T) {
 	assert.Contains(t, body, `<a class="section" href="/f/acme" data-folder="acme">`)
 	assert.Contains(t, body, `<a class="section" href="/f/acme/api" data-folder="acme/api">`)
 	assert.Contains(t, body, `data-workspaces='{&#34;acme&#34;:0}'`)
-	assert.Contains(t, body, `<div class="crumbs"><a href="/">Dashboard</a><span><a href="/f/_">_</a></span><span>infra</span></div>`)
+	assert.Contains(t, body, `<div class="crumbs"><a href="/">Dashboard</a><span><a href="/f/_">Default</a></span><span>infra</span></div>`)
 	assert.NotContains(t, sidebar(body), `href="/f/infra`)
 	assert.Contains(t, f.page(t, asOps, "/f/_/infra/edge"), `<span><a href="/f/_/infra">infra</a></span><span>edge</span>`)
 

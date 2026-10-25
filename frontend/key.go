@@ -109,12 +109,12 @@ func (h *Handlers) instanceKey(r *http.Request, p *view.Page) {
 
 // keyGenerate shows the generate form.
 func (h *Handlers) keyGenerate(w http.ResponseWriter, r *http.Request) {
-	h.keyForm(w, r, "Generate key", "Generate", "key_generate")
+	h.keyForm(w, r, "Generate key", "Generate key", "key_generate")
 }
 
 // keyUpload shows the upload form.
 func (h *Handlers) keyUpload(w http.ResponseWriter, r *http.Request) {
-	h.keyForm(w, r, "Upload key", "Upload", "key_upload")
+	h.keyForm(w, r, "Upload key", "Upload key", "key_upload")
 }
 
 // keyForm shows a form that adds a key.
@@ -167,8 +167,8 @@ func (h *Handlers) keyEdit(w http.ResponseWriter, r *http.Request) {
 		h.notFound(w, r)
 		return
 	}
-	p := h.page(r, key.Name)
-	p.Crumbs = view.Crumbs("Settings", "/settings", "Keys", "/settings/keys", key.Name)
+	p := h.page(r, "Edit "+key.Name)
+	p.Crumbs = view.Crumbs("Settings", "/settings", "Keys", "/settings/keys", key.Name, "/settings/keys#key-"+key.Name, "Edit")
 	p.Step = view.StepKeys
 	h.fillKeys(r.Context(), p)
 	p.Key = key

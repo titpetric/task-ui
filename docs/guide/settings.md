@@ -823,7 +823,7 @@ runs get as `HOME`, and a `src` of projects side by side. **Add
 workspace** makes one under the folder you name, its home cloned from a
 **Home repository** when the form has one, **Move up** and **Move
 down** order them, and **Delete** deletes one with everything inside
-it. **Workspace settings** opens a workspace's settings page: its
+it. **Edit workspace** opens a workspace's settings page: its
 title, description, **Recursive**, the toggle a project has, and
 **Hours**, when its runs may start (see
 [Workspaces](workspaces.md#hours)), its
@@ -858,7 +858,7 @@ and the folder appears in the sidebar, or the page shows git's output and
 keeps nothing. git reaches private repositories with the instance SSH
 keys.
 
-A row's `[...]` menu opens the folder, its **Project settings**, and
+A row's `[...]` menu opens the folder, its **Edit project**, and
 **Pull now**, which runs `@git:pull` there, on a checkout with the `git`
 skill for a user who may run the folder's jobs. **Remove checkout**, last
 in the menu, in this list, on the settings page and on the folder's
@@ -866,7 +866,7 @@ page, deletes the folder, its files and its configuration, for a user
 with Allow Deletes on Projects, `project/delete`. It names the folder and
 the remote to clone it again from before it does.
 
-**Project settings** on a folder sets what the instance adds to it; its files
+**Edit project** on a folder sets what the instance adds to it; its files
 stay as they are:
 
 - a title and a description;
@@ -889,7 +889,7 @@ The API sets two more on a project: `commands`, the program a kind of
 job runs with (`make: gmake`), and `job_allow`, who may run, per job.
 A project has no hours: its workspace's apply.
 
-![Project settings](../assets/project-edit-dark.png)
+![Edit project](../assets/project-edit-dark.png)
 
 ## Env files
 
