@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 )
 
 func gitCmd(t *testing.T, dir string, args ...string) {
@@ -111,6 +112,35 @@ func TestGit_Info(t *testing.T) {
 	}
 	if g.Info(t.TempDir()) != nil {
 		t.Fatal("info of a plain folder")
+	}
+}
+
+// LastCommit is the committer date of a checkout's last commit, zero for
+// a repository with no commit and for a plain directory.
+func TestGit_LastCommit(t *testing.T) {
+	g := &Git{}
+	url, _ := repo(t)
+	dir := filepath.Join(t.TempDir(), "notes")
+	if _, err := g.Clone(context.Background(), url, dir, ""); err != nil {
+		t.Fatal(err)
+	}
+	when := g.LastCommit(dir)
+	if when.IsZero() || time.Since(when) > time.Hour {
+		t.Fatalf("last commit: %v", when)
+	}
+	if info := g.Info(dir); !info.When.Equal(when) {
+		t.Fatalf("Info says %v, LastCommit %v", info.When, when)
+	}
+	empty := filepath.Join(t.TempDir(), "empty")
+	if err := os.MkdirAll(empty, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	gitCmd(t, empty, "init", "-q")
+	if !g.LastCommit(empty).IsZero() {
+		t.Fatal("a repository with no commit has a last commit")
+	}
+	if !g.LastCommit(t.TempDir()).IsZero() {
+		t.Fatal("a plain directory has a last commit")
 	}
 }
 

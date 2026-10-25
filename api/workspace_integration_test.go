@@ -93,6 +93,24 @@ func TestWorkspace_CRUD(t *testing.T) {
 	deep := f.call(t, asAdmin, http.MethodPut, "/workspaces/malta", api.WorkspaceRequest{Title: "The island", Recursive: new(true)})
 	assert.Equal(t, false, deep.get("shallow"))
 
+	// A sidebar limit lists the newest projects; left out, it stays; 0
+	// lists every one again; below 0 answers 400.
+	assert.Equal(t, float64(0), deep.get("sidebar_limit"))
+	limit := int64(2)
+	limited := f.call(t, asAdmin, http.MethodPut, "/workspaces/malta", api.WorkspaceRequest{Title: "The island", SidebarLimit: &limit})
+	assert.Equal(t, http.StatusOK, limited.Status, string(limited.Raw))
+	assert.Equal(t, float64(2), limited.get("sidebar_limit"))
+	kept = f.call(t, asAdmin, http.MethodPut, "/workspaces/malta", api.WorkspaceRequest{Title: "The island"})
+	assert.Equal(t, float64(2), kept.get("sidebar_limit"))
+	assert.Equal(t, float64(2), f.call(t, asAdmin, http.MethodGet, "/workspaces/malta", nil).get("sidebar_limit"))
+	limit = -1
+	refused := f.call(t, asAdmin, http.MethodPut, "/workspaces/malta", api.WorkspaceRequest{Title: "The island", SidebarLimit: &limit})
+	assert.Equal(t, http.StatusBadRequest, refused.Status, string(refused.Raw))
+	assert.Contains(t, refused.str("error"), "sidebar_limit")
+	limit = 0
+	all := f.call(t, asAdmin, http.MethodPut, "/workspaces/malta", api.WorkspaceRequest{Title: "The island", SidebarLimit: &limit})
+	assert.Equal(t, float64(0), all.get("sidebar_limit"))
+
 	deleted := f.call(t, asAdmin, http.MethodDelete, "/workspaces/malta", nil)
 	assert.Equal(t, http.StatusNoContent, deleted.Status)
 	assert.NoDirExists(t, filepath.Join(f.root, "malta"))

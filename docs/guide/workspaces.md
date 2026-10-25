@@ -181,10 +181,12 @@ order.
   its own folder: two teams can start from the same tooling and clone
   different projects beside it.
 - **Workspace settings** opens the workspace's settings page. Its
-  **Settings** change the title, description and **Recursive**, which,
+  **Settings** change the title, description, **Recursive**, which,
   as a project's does, lists the folders inside it as deep as they go,
-  or, off, the workspace and its top-level folders alone; the folder
-  stays. Its **Home repository** shows the repository and branch of the
+  or, off, the workspace and its top-level folders alone, and
+  **Sidebar**, how many of its projects the sidebar lists, the most
+  recently committed first, empty for every one (see [In the
+  sidebar](#in-the-sidebar)); the folder stays. Its **Home repository** shows the repository and branch of the
   home with what git knows of the checkout, or "The home is an empty
   directory.", and beside it **Pull now**, the home's `@git:pull`,
   **Replace**, or **Clone** while the home is empty, which removes the
@@ -262,7 +264,8 @@ both answer `409` while a run of the workspace is active. A workspace's
 row names its home repository in `home_url` and `home_branch`, `""` for
 an empty home. A `sort` in the `PUT` places the workspace: the lowest
 comes first, and workspaces of one sort go by folder. Left out, the
-sort stays.
+sort stays. A `sidebar_limit` in the `PUT` is the Sidebar setting, `0`
+for every project; below `0` answers `400`, and left out it stays.
 
 ## In the sidebar
 
@@ -275,7 +278,21 @@ projects, each with a fold of its own: every directory right inside the
 workspace's `src/`, a checkout with jobs or without; the home never
 shows in the sidebar, pinned or not; its files are on the workspace's
 page. This browser remembers each fold apart, so `malta` and
-`malta/dockerfiles` open and close on their own. **Pin workspace** in
+`malta/dockerfiles` open and close on their own.
+
+A workspace with many projects lists the ones in use: **Sidebar** in
+its settings takes a number, and the sidebar lists that many of the
+workspace's projects, the ones with the most recent commit first, a
+checkout without a commit last, and ties by name; the folders inside a
+kept project stay with it, and the listed projects keep the sidebar's
+name order. Empty or `0` lists every project, by name. A project set
+not to show takes no place in the count. The rest leave the sidebar
+alone: the Projects page, the workspace's page, the dashboard and a pin
+list them as before. The default workspace, `_`, takes the setting over
+the projects at the root. task-ui reads each project's last commit with
+one git command and keeps it a minute, so a page costs at most one git
+process per project per minute, and a pull or a push shows in the order
+within the minute. **Pin workspace** in
 the `[...]` of the workspace's page, and **Pin** on a folder or a job
 inside it, add to what the sidebar lists, for you (see [What the
 sidebar lists](projects.md#what-the-sidebar-lists)).

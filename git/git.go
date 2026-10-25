@@ -116,6 +116,21 @@ func (g *Git) Info(dir string) *Info {
 	return info
 }
 
+// LastCommit returns the time of a checkout's last commit, its committer
+// date, in one git command; zero for a folder that is no checkout or has
+// no commit.
+func (g *Git) LastCommit(dir string) time.Time {
+	if !g.IsRepo(dir) {
+		return time.Time{}
+	}
+	last, err := g.output(dir, "log", "-1", "--format=%cI")
+	if err != nil {
+		return time.Time{}
+	}
+	when, _ := time.Parse(time.RFC3339, last)
+	return when
+}
+
 // ValidURL reports whether url is something git clone accepts from a
 // form: an https, ssh, git or file URL, or the scp-like user@host:path.
 func (g *Git) ValidURL(url string) bool {

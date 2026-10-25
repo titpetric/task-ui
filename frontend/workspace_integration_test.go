@@ -74,10 +74,15 @@ func TestWorkspaceEdit(t *testing.T) {
 	assert.Contains(t, body, `type="checkbox" id="we-recursive" name="recursive" checked`)
 	assert.Contains(t, f.page(t, asAdmin, "/settings/workspaces/new"), `type="checkbox" id="w-recursive" name="recursive" checked`)
 
-	assert.NoError(t, f.opts.Workspaces.Create(ctx, &model.Workspace{Folder: "gozo", Shallow: true}))
+	// The Sidebar field: empty for every project, the number when set.
+	assert.Contains(t, body, `<input type="number" id="we-sidebar" name="sidebar_limit" data-type="int" min="0" step="1" placeholder="all" value="" autocomplete="off">`)
+	assert.Contains(t, body, "How many projects the sidebar lists for this workspace, the most recently committed first. Empty or 0 lists them all, by name.")
+
+	assert.NoError(t, f.opts.Workspaces.Create(ctx, &model.Workspace{Folder: "gozo", Shallow: true, SidebarLimit: 4}))
 	shallow := f.page(t, asAdmin, "/settings/workspaces/gozo")
 	assert.Contains(t, shallow, `type="checkbox" id="we-recursive" name="recursive">`)
 	assert.Contains(t, shallow, "off lists only the folder and its top-level folders")
+	assert.Contains(t, shallow, `name="sidebar_limit" data-type="int" min="0" step="1" placeholder="all" value="4"`)
 
 	assert.Equal(t, http.StatusNotFound, f.get(t, asAdmin, "/settings/workspaces/nope").Status)
 }

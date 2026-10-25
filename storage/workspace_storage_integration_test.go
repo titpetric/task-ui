@@ -85,12 +85,13 @@ func TestWorkspaceStorage_Update(t *testing.T) {
 	workspace := &model.Workspace{Folder: "malta"}
 	assert.NoError(t, workspaces.Create(ctx, workspace))
 
-	workspace.Title, workspace.Description = "Malta", "the island"
+	workspace.Title, workspace.Description, workspace.SidebarLimit = "Malta", "the island", 3
 	assert.NoError(t, workspaces.Update(ctx, workspace))
 	got, err := workspaces.Get(ctx, workspace.ID)
 	assert.NoError(t, err)
 	assert.Equal(t, "Malta", got.Title)
 	assert.Equal(t, "the island", got.Description)
+	assert.Equal(t, int64(3), got.SidebarLimit, "the sidebar limit round trips")
 }
 
 func TestWorkspaceStorage_Delete(t *testing.T) {

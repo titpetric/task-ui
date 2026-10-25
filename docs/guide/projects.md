@@ -18,7 +18,10 @@ With nothing pinned, the sidebar lists every folder you see with
 something to run, and every directory right inside a named workspace's
 `src/`, the checkouts side by side there, with jobs or without. A
 project set not to show there (**Show in sidebar** off in its
-settings), a workspace's home and the folders inside them stay out.
+settings), a workspace's home and the folders inside them stay out. A
+workspace with a **Sidebar** limit lists that many of its projects, the
+most recently committed first (see [In the
+sidebar](workspaces.md#in-the-sidebar)).
 
 **Pin** adds to that, for you alone: a workspace, a project, a folder
 or a directory inside one, or a job. Pin a folder from the `[...]` of

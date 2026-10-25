@@ -5,8 +5,12 @@ package frontend_test
 import (
 	"context"
 	"net/http"
+	"os"
+	"os/exec"
+	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/titpetric/task-ui/internal/assert"
 	"github.com/titpetric/task-ui/model"
@@ -247,6 +251,76 @@ func TestPage_Workspaces(t *testing.T) {
 	assert.Contains(t, hidden, `data-project="malta/apps"`)
 	assert.NotContains(t, hidden, `data-project="malta/deploy"`)
 	assert.NotContains(t, hidden, `data-folder="malta/deploy/web"`)
+}
+
+// A workspace with a sidebar limit lists its newest projects alone, by
+// their last commit, a checkout without one last, with the folders
+// inside each kept project; a project set not to show does not count,
+// and the pages of a project left out still answer. The root takes a
+// limit over the projects at its top.
+func TestPage_SidebarLimit(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	ctx := context.Background()
+	cat := f.opts.Catalogue.(catalogue)
+	for _, id := range []string{"malta/apps", "malta/apps/blog", "malta/dockerfiles", "malta/vhosts", "malta/old"} {
+		cat[id] = shellFolder(t, f.root, id, map[string]string{"build": "echo " + id})
+	}
+	day := time.Date(2026, time.October, 20, 9, 0, 0, 0, time.UTC)
+	commit(t, cat["malta/vhosts"].Dir, day.Add(48*time.Hour))
+	commit(t, cat["malta/apps"].Dir, day.Add(24*time.Hour))
+	commit(t, cat["malta/dockerfiles"].Dir, day)
+	commit(t, f.infra.Dir, day)
+	malta := &model.Workspace{Folder: "malta", Title: "Malta", SidebarLimit: 2}
+	assert.NoError(t, f.opts.Workspaces.Create(ctx, malta))
+
+	side := sidebar(f.page(t, asAdmin, "/"))
+	assert.Contains(t, side, `data-project="malta/vhosts"`)
+	assert.Contains(t, side, `data-project="malta/apps"`)
+	assert.Contains(t, side, `data-folder="malta/apps/blog"`, "the kept project keeps its folders")
+	assert.NotContains(t, side, `data-project="malta/dockerfiles"`)
+	assert.NotContains(t, side, `data-project="malta/old"`, "no commit, so last")
+	assert.True(t, strings.Index(side, `data-project="malta/apps"`) < strings.Index(side, `data-project="malta/vhosts"`), "the sidebar keeps its name order")
+	assert.Contains(t, side, `data-project="infra"`)
+	assert.Contains(t, side, `data-project="private"`)
+	// The cut is the sidebar's alone: the project's pages still answer.
+	assert.Equal(t, http.StatusOK, f.get(t, asAdmin, "/f/malta/dockerfiles").Status)
+	assert.Contains(t, f.page(t, asAdmin, "/f/malta/dockerfiles"), `data-folder="malta/dockerfiles"`)
+
+	// A hidden project does not take a place: dockerfiles comes back once
+	// apps leaves the sidebar.
+	assert.NoError(t, f.opts.Projects.Create(ctx, &model.Project{Folder: "malta/apps", SidebarHidden: true}))
+	side = sidebar(f.page(t, asAdmin, "/"))
+	assert.NotContains(t, side, `data-project="malta/apps"`)
+	assert.Contains(t, side, `data-project="malta/vhosts"`)
+	assert.Contains(t, side, `data-project="malta/dockerfiles"`)
+
+	// The root's limit: infra has a commit, private none.
+	assert.NoError(t, f.opts.Workspaces.EnsureDefault(ctx))
+	root, err := f.opts.Workspaces.GetByFolder(ctx, model.Default)
+	assert.NoError(t, err)
+	root.SidebarLimit = 1
+	assert.NoError(t, f.opts.Workspaces.Update(ctx, root))
+	side = sidebar(f.page(t, asAdmin, "/"))
+	assert.Contains(t, side, `data-project="infra"`)
+	assert.Contains(t, side, `data-folder="infra/edge"`)
+	assert.NotContains(t, side, `data-project="private"`)
+	assert.Contains(t, side, `data-project="malta/vhosts"`, "the named workspaces keep their own limits")
+}
+
+// commit makes dir a repository with one commit, of one file, at the
+// time given.
+func commit(t *testing.T, dir string, at time.Time) {
+	t.Helper()
+	assert.NoError(t, os.WriteFile(filepath.Join(dir, "README.md"), []byte("work\n"), 0o644))
+	for _, args := range [][]string{{"init", "-q"}, {"add", "."}, {"commit", "-q", "-m", "work", "--date", at.Format(time.RFC3339)}} {
+		cmd := exec.Command("git", append([]string{"-c", "user.name=t", "-c", "user.email=t@t", "-c", "init.defaultBranch=main"}, args...)...)
+		cmd.Dir = dir
+		cmd.Env = append(os.Environ(), "GIT_COMMITTER_DATE="+at.Format(time.RFC3339))
+		if out, err := cmd.CombinedOutput(); err != nil {
+			t.Fatalf("git %v: %v\n%s", args, err, out)
+		}
+	}
 }
 
 // sidebar is the folders part of a page's sidebar.

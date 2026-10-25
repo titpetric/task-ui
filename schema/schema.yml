@@ -1633,6 +1633,11 @@
       type: boolean
       comment: Shallow
       datatype: boolean
+    - name: sidebar_limit
+      type: integer
+      comment: Sidebar Limit
+      datatype: bigint
+      size: 8
     - name: sort
       type: integer
       comment: Sort

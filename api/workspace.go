@@ -138,9 +138,9 @@ func (h *Handlers) getWorkspace(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, workspace)
 }
 
-// updateWorkspace writes a workspace's title, description and Recursive.
-// Its folder and its home stay. The default workspace keeps its place,
-// first.
+// updateWorkspace writes a workspace's title, description, Recursive
+// and sidebar limit, a 400 below 0. Its folder and its home stay. The
+// default workspace keeps its place, first.
 func (h *Handlers) updateWorkspace(w http.ResponseWriter, r *http.Request) {
 	if !h.require(w, r, "workspace/edit") {
 		return
@@ -155,12 +155,19 @@ func (h *Handlers) updateWorkspace(w http.ResponseWriter, r *http.Request) {
 		failErr(w, err)
 		return
 	}
+	if req.SidebarLimit != nil && *req.SidebarLimit < 0 {
+		fail(w, http.StatusBadRequest, "sidebar_limit takes 0, every project, or how many to list")
+		return
+	}
 	workspace.Title, workspace.Description = req.Title, req.Description
 	if req.Sort != nil && workspace.Folder != model.Default {
 		workspace.Sort = *req.Sort
 	}
 	if req.Recursive != nil {
 		workspace.Shallow = !*req.Recursive
+	}
+	if req.SidebarLimit != nil {
+		workspace.SidebarLimit = *req.SidebarLimit
 	}
 	if err := h.opts.Workspaces.Update(r.Context(), workspace); err != nil {
 		failErr(w, err)

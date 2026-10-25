@@ -18,6 +18,11 @@ func TestWorkspaceRequest(t *testing.T) {
 	assert.NoError(t, json.Unmarshal([]byte(`{"title":"Malta"}`), &kept))
 	assert.Nil(t, kept.Recursive)
 	assert.Nil(t, kept.Sort)
+	assert.Nil(t, kept.SidebarLimit)
+
+	var limited api.WorkspaceRequest
+	assert.NoError(t, json.Unmarshal([]byte(`{"sidebar_limit":3}`), &limited))
+	assert.Equal(t, int64(3), *limited.SidebarLimit)
 }
 
 // A home request names the repository and, when it has one, the branch.

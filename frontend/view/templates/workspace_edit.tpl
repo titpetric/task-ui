@@ -33,6 +33,11 @@
 			<input type="text" id="we-description" name="description" value="{{ index .Form "description" }}" autocomplete="off">
 		</div>
 		{{- template "recursivefield" (list "we-recursive" (not $ws.Shallow)) }}
+		<div class="field">
+			<label for="we-sidebar">Sidebar</label>
+			<input type="number" id="we-sidebar" name="sidebar_limit" data-type="int" min="0" step="1" placeholder="all" value="{{ if gt $ws.SidebarLimit 0 }}{{ $ws.SidebarLimit }}{{ end }}" autocomplete="off">
+			<small class="faint">How many projects the sidebar lists for this workspace, the most recently committed first. Empty or 0 lists them all, by name.</small>
+		</div>
 		<div class="form-foot">
 			<a class="btn" href="/settings/workspaces">Cancel</a>
 			<button class="btn btn-primary" type="submit">Save</button>
