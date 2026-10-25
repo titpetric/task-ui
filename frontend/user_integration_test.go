@@ -27,7 +27,7 @@ func TestUsers(t *testing.T) {
 	assert.NotContains(t, body, "TASK_UI_ADMINS")
 	assert.Contains(t, body, `<span class="badge" title="MCP agent user">mcp</span>`)
 	for _, name := range []string{asAdmin, asOps, asViewer, asLimited} {
-		assert.Contains(t, body, `href="/users/`+name+`" title="Profile of `+name+`"`)
+		assert.Contains(t, body, `href="/users/`+name+`"><svg class="ic"><use href="#i-users"/></svg><span>Profile</span></a>`)
 		assert.Contains(t, body, `<tr class="row-link" data-href="/users/`+name+`">`, "a click on the row opens the profile")
 		assert.Contains(t, body, `<a class="user-name" href="/users/`+name+`">`+name+`</a>`)
 	}

@@ -24,7 +24,7 @@
 <section class="block workspace-keys" id="keys">
 	{{- template "blockhead" (head "Keys" (print (len .Keys) " key" (or (and (ne (len .Keys) 1) "s") "")) (and (not .Keys) "No keys added.")) }}
 	{{- with .Keys }}
-	<div class="table-wrap">
+	<div class="table-wrap fit">
 	<table class="table keys key-table cards">
 		{{ template "keyhead" }}
 		<tbody>

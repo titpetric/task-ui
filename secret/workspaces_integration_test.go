@@ -15,16 +15,14 @@ import (
 	"github.com/titpetric/task-ui/storage"
 )
 
-// spaces is a store over a private database that keeps the secrets per
-// workspace: the default one, _, and acme, each with its encryption
-// key, beside the instance's encryption key for the services and the
-// legacy SSH keys the migrations read.
+// spaces is a store over a private database with two workspaces, the
+// default one, _, and acme, every secret on the instance's encryption
+// key, beside the legacy SSH keys the migrations read.
 type spaces struct {
 	store    *secret.Store
 	rows     *storage.SecretStorage
 	instance *sshkey.Store
 	legacy   *sshkey.Store
-	encrypt  map[string]*sshkey.Store
 	ids      map[string]string
 }
 
@@ -44,13 +42,10 @@ func newSpaces(t *testing.T) *spaces {
 	instance := newKeys(t)
 	_, err = instance.Generate("ed25519", "instance")
 	assert.NoError(t, err)
-	ids, encrypt := map[string]string{}, map[string]*sshkey.Store{}
+	ids := map[string]string{}
 	list, err := workspaces.List(ctx)
 	assert.NoError(t, err)
 	for _, ws := range list {
-		encrypt[ws.ID] = newKeys(t)
-		_, err := encrypt[ws.ID].Generate("ed25519", "task-ui "+ws.Folder)
-		assert.NoError(t, err)
 		ids[ws.Folder] = ws.ID
 	}
 
@@ -58,7 +53,7 @@ func newSpaces(t *testing.T) *spaces {
 	store := secret.New(rows, secret.NewVault(secret.DirKeys{Store: instance}))
 	store.Workspaces = &secret.Workspaces{Rows: workspaces}
 	store.Legacy = secret.NewVault(secret.DirKeys{Store: legacy})
-	return &spaces{store: store, rows: rows, instance: instance, legacy: legacy, encrypt: encrypt, ids: ids}
+	return &spaces{store: store, rows: rows, instance: instance, legacy: legacy, ids: ids}
 }
 
 // hide moves a store's ed25519 pair away until the test ends.
@@ -100,8 +95,8 @@ func TestWorkspaces(t *testing.T) {
 	assert.Equal(t, "_", name, "with no workspaces every folder is the default one's")
 }
 
-// A workspace's secrets open with its key and not the instance key;
-// the integrations' with the instance key alone. A folder gets its
+// Every secret, a workspace's and an integration's, opens with the
+// instance's encryption key and nothing else. A folder gets its
 // workspace's shared secrets and no other workspace's.
 func TestStore_Workspaces(t *testing.T) {
 	t.Parallel()
@@ -120,10 +115,11 @@ func TestStore_Workspaces(t *testing.T) {
 
 	shared, err := s.rows.Get(ctx, model.Secret{Scope: "workspace:_", Name: "SHARED"})
 	assert.NoError(t, err, "all is the default workspace's shared scope")
-	_, err = secret.NewVault(secret.DirKeys{Store: s.instance}).Decrypt(shared.Content)
-	assert.Error(t, err, "the instance key does not open a workspace's secret")
-	_, err = secret.NewVault(secret.DirKeys{Store: s.encrypt[s.ids["_"]]}).Decrypt(shared.Content)
-	assert.NoError(t, err)
+	plain, err := secret.NewVault(secret.DirKeys{Store: s.instance}).Decrypt(shared.Content)
+	assert.NoError(t, err, "the instance key opens a workspace's secret")
+	assert.Equal(t, "root", plain)
+	_, err = secret.NewVault(secret.DirKeys{Store: s.legacy}).Decrypt(shared.Content)
+	assert.Error(t, err, "the legacy keys open nothing new")
 
 	web, err := s.store.For(ctx, "web")
 	assert.NoError(t, err)
@@ -132,20 +128,18 @@ func TestStore_Workspaces(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, map[string]string{"ACME": "mine", "API": "p"}, api, "no _ secrets in acme, the folder's own wins")
 
-	// With the instance key away the workspaces' secrets still open,
-	// the integrations' do not.
-	hide(t, s.instance)
-	web, err = s.store.For(ctx, "web")
+	n, err := s.store.OnInstance(ctx)
 	assert.NoError(t, err)
-	assert.Equal(t, "root", web["SHARED"])
+	assert.Equal(t, 6, n, "every secret is on the instance key")
+
+	// With the instance key away nothing opens.
+	hide(t, s.instance)
+	_, err = s.store.For(ctx, "web")
+	assert.Error(t, err)
 	_, err = s.store.Scope(ctx, "integration:claude")
 	assert.Error(t, err)
 	_, err = s.store.Get(ctx, model.Secret{Scope: "acme/api", Name: "API"})
-	assert.NoError(t, err)
-
-	n, err := s.store.OnInstance(ctx)
-	assert.NoError(t, err)
-	assert.Equal(t, 1, n)
+	assert.Error(t, err)
 }
 
 // Rekey writes every secret for the instance's key; Forget removes a
@@ -172,9 +166,9 @@ func TestStore_Forget(t *testing.T) {
 	assert.Equal(t, 1, count)
 }
 
-// RekeyInstance writes the integrations' settings for a rotated
-// instance key and leaves the workspaces' secrets alone; Workspace
-// names a scope's workspace.
+// RekeyInstance writes every secret, the integrations' settings and
+// the workspaces' secrets, for a rotated instance key; Workspace names
+// a scope's workspace.
 func TestStore_RekeyInstance(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
@@ -187,12 +181,15 @@ func TestStore_RekeyInstance(t *testing.T) {
 	assert.NoError(t, err)
 	n, err := s.store.RekeyInstance(ctx)
 	assert.NoError(t, err)
-	assert.Equal(t, 1, n)
+	assert.Equal(t, 2, n)
 	after, _ := s.rows.Get(ctx, model.Secret{Scope: "web", Name: "WEB"})
-	assert.Equal(t, web.Content, after.Content)
+	assert.NotEqual(t, web.Content, after.Content, "written for the new material")
 	values, err := s.store.Scope(ctx, "integration:claude")
 	assert.NoError(t, err)
 	assert.Equal(t, "t", values[0].Content)
+	got, err := s.store.Get(ctx, model.Secret{Scope: "web", Name: "WEB"})
+	assert.NoError(t, err)
+	assert.Equal(t, "w", got.Content)
 
 	name, err := s.store.Workspace(ctx, "acme/api")
 	assert.NoError(t, err)

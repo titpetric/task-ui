@@ -5,9 +5,10 @@
 {{/* The head of a keys table, the same wherever keys list: the Keys
      page, the Instance page, a workspace's page, Your SSH keys and a
      profile: Name, Algorithm, Size, Public key with its copy button,
-     Purpose and the row's ⋯ menu. */}}
+     Purpose and the row's ⋯ menu. The table sits in a table-wrap fit;
+     a narrow one leaves out Algorithm and Size, hide-narrow. */}}
 {{ define "keyhead" }}<colgroup><col class="c-name"><col class="c-algo"><col class="c-size"><col class="c-pub"><col class="c-purpose"><col class="c-actions"></colgroup>
-		<thead><tr><th>Name</th><th>Algorithm</th><th>Size</th><th>Public key</th><th>Purpose</th><th class="actions" aria-label="Actions"></th></tr></thead>{{ end }}
+		<thead><tr><th>Name</th><th class="hide-narrow">Algorithm</th><th class="hide-narrow">Size</th><th>Public key</th><th>Purpose</th><th class="actions" aria-label="Actions"></th></tr></thead>{{ end }}
 
 {{/* A key's row, (list page key next [workspace [inline]]): its kind,
      its public key to copy, and the [...] menu, its details on top, then
@@ -25,8 +26,8 @@
 {{- if $k.Encrypts }}{{ $links = "never handed out" }}{{ else if not $links }}{{ if $k.Workspace }}{{ $links = "every run of the workspace" }}{{ else }}{{ $links = "none" }}{{ end }}{{ end }}
 <tr id="key-{{ $k.Name }}">
 	<td class="key">{{ if or $k.Encrypts (not $canEdit) $inline }}<span class="mono">{{ $k.Name }}</span>{{ else }}<a class="mono" href="{{ $edit }}">{{ $k.Name }}</a>{{ end }}{{ with $k.Backup }}{{ template "backup-active" . }}{{ end }}{{ with $k.Comment }}<div class="faint">{{ . }}</div>{{ end }}</td>
-	<td class="mono" data-label="Algorithm">{{ $k.Algo }}</td>
-	<td class="mono nowrap" data-label="Size">{{ $k.Size }} bits</td>
+	<td class="mono hide-narrow" data-label="Algorithm">{{ $k.Algo }}</td>
+	<td class="mono nowrap hide-narrow" data-label="Size">{{ $k.Size }} bits</td>
 	<td class="pubkey" data-label="Public key">{{ template "copyable" (list $k.PublicKey (print "the public key of " $k.Name) $k.ShortPublic) }}</td>
 	<td data-label="Purpose"><span class="badge{{ if $k.Encrypts }} signal{{ end }}"{{ if $k.Git }} title="git pulls and clones with it"{{ end }}>{{ if $k.Encrypts }}encryption{{ else }}git + ssh{{ end }}</span></td>
 	<td class="actions">{{ template "menu" (menu (print "Actions on " $k.Name)

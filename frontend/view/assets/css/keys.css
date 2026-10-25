@@ -154,3 +154,16 @@
     text-align: right;
   }
 }
+
+/* In a box narrower than 44rem, the table leaves out Algorithm and
+   Size, so the public key keeps a column rather than fold a letter a
+   line; a phone's card shows them, labelled. */
+@container (max-width: 44rem) {
+  .key-table {
+    & .hide-narrow,
+    & col.c-algo,
+    & col.c-size {
+      display: none;
+    }
+  }
+}

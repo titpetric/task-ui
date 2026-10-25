@@ -147,7 +147,7 @@
 <section class="block instance-section" id="keys">
 	<h3>Keys <small>in the key folder</small></h3>
 	<p class="section-intro">The encryption key of the instance's secrets and the SSH key git pulls and clones with. <a href="/settings/keys">Every key</a></p>
-	<div class="table-wrap">
+	<div class="table-wrap fit">
 	<table class="table instance-keys key-table cards">
 		{{ template "keyhead" }}
 		<tbody>

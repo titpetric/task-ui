@@ -68,7 +68,7 @@ func TestWorkspaceEdit(t *testing.T) {
 	assert.Contains(t, body, `data-api="/api/workspaces/malta" data-method="PUT"`)
 	assert.Contains(t, body, `value="Malta"`)
 	assert.Contains(t, body, `value="The org"`)
-	assert.Contains(t, body, "none yet")
+	assert.Contains(t, body, "The home is an empty directory.")
 	assert.Contains(t, body, `type="checkbox" id="we-recursive" name="recursive" checked`)
 	assert.Contains(t, f.page(t, asAdmin, "/settings/workspaces/new"), `type="checkbox" id="w-recursive" name="recursive" checked`)
 
@@ -91,14 +91,14 @@ func TestWorkspaceEdit_DeleteNamesProjects(t *testing.T) {
 	for _, folder := range []string{"malta/deploy", "malta/dockerfiles", "maltese", "infra"} {
 		assert.NoError(t, f.opts.Projects.Create(ctx, &model.Project{Folder: folder}))
 	}
-	confirm := "with its checkout, keys and secrets, and the projects inside it: malta/deploy, malta/dockerfiles?"
+	confirm := "with its keys and secrets, and the projects inside it with their checkouts: malta/deploy, malta/dockerfiles?"
 	for _, path := range []string{"/settings/workspaces/malta", "/settings/workspaces"} {
 		body := f.page(t, asAdmin, path)
 		assert.Contains(t, body, confirm)
 		assert.NotContains(t, body, "maltese")
 	}
 	edit := f.page(t, asAdmin, "/settings/workspaces/malta")
-	assert.Contains(t, edit, `data-next="/settings/workspaces?notice=Workspace&#43;deleted"`)
+	assert.Contains(t, edit, `data-next="/settings/workspaces?notice=Workspace+deleted"`)
 }
 
 func TestWorkspaces_AdminOnly(t *testing.T) {

@@ -47,7 +47,7 @@ func (h *Handlers) moveTarget(r *http.Request, id, ws string) (string, int, stri
 	if ws == from {
 		return id, 0, ""
 	}
-	if model.IsInternal(ws) || layout.IsHome(h.workspaceFolders(ctx), id) {
+	if (ws != model.Default && layout.Reserved(ws)) || layout.IsHome(h.workspaceFolders(ctx), id) {
 		return "", http.StatusBadRequest, reservedRefused
 	}
 	to := last

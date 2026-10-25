@@ -93,7 +93,7 @@ func TestInventory(t *testing.T) {
 	assert.Contains(t, body, `class="meter high"`)
 	assert.Contains(t, body, `class="meter warm"`)
 	assert.Contains(t, body, `<td class="center">4</td>`)
-	assert.Contains(t, body, `<code>debian@10.10.10.11</code>`)
+	assert.Contains(t, body, `<code title="ssh debian@10.10.10.11">debian@10.10.10.11</code>`)
 	assert.Contains(t, body, `data-copy="ssh debian@10.10.10.11"`)
 	assert.Contains(t, body, `<td class="key nowrap" title="10.10.10.11, up"><svg class="ic host-state up" role="img" aria-label="up"><use href="#i-server"/></svg> dev1</td>`)
 	assert.Contains(t, body, "12.4 / 15.6</td>")

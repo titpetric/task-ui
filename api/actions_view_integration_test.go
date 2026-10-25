@@ -47,7 +47,7 @@ func TestFolders_Actions(t *testing.T) {
 	assert.Equal(t, "infra", view.Folder)
 	assert.Equal(t, "app", view.Dir)
 	assert.NotNil(t, view.Git)
-	assert.Equal(t, "infra", view.Git.Checkout)
+	assert.Equal(t, "src/infra", view.Git.Checkout, "the checkout's path from the root")
 	assert.Equal(t, "main", view.Git.Branch)
 	assert.Len(t, view.Skills, 2)
 	assert.Equal(t, "git", view.Skills[0].ID)

@@ -47,7 +47,9 @@ func TestKeys(t *testing.T) {
 	assert.Contains(t, body, `data-delete="/api/keys/deploy_ed25519"`)
 	assert.NotContains(t, body, `data-delete="/api/keys/task_encryption_ed25519"`, "an encryption key stays")
 	assert.Contains(t, body, `<span class="badge signal">encryption</span>`)
-	assert.Contains(t, body, `<span class="faint">never handed out</span>`)
+	assert.Contains(t, body, `<dt>Links</dt><dd>never handed out</dd>`)
+	assert.Contains(t, body, `<div class="table-wrap fit">`, "the table fits its box")
+	assert.Contains(t, body, `<th class="hide-narrow">Algorithm</th><th class="hide-narrow">Size</th>`, "a narrow box leaves them out")
 }
 
 // The forms take a name, the algorithm with its size, the purpose and
@@ -91,7 +93,8 @@ func TestKeys_Encryption(t *testing.T) {
 	page := f.page(t, asAdmin, "/settings/instance")
 	assert.Contains(t, page, `<span class="mono">task_encryption_ed25519</span>`)
 	assert.Contains(t, page, `<a class="mono" href="/settings/keys/task_ssh_ed25519">task_ssh_ed25519</a>`)
-	assert.Contains(t, page, "Rotate Key</button>")
+	assert.Contains(t, page, `data-api="/api/keys/task_encryption_ed25519/rotate" data-method="POST"`)
+	assert.Contains(t, page, "<span>Rotate Key</span>")
 }
 
 // A project that is a checkout with keys in its .ssh/ folder gets a
@@ -141,18 +144,19 @@ func TestKeys_Links(t *testing.T) {
 	ops := f.page(t, asOps, "/keys")
 	assert.Contains(t, ops, "Your SSH keys")
 	assert.Contains(t, ops, strings.ReplaceAll(key.Fingerprint, "+", "&#43;"))
-	assert.Contains(t, ops, ">you<")
+	assert.Contains(t, ops, `<tr id="key-deploy_ed25519">`)
+	assert.NotContains(t, ops, "<dt>Links</dt>", "the links are the key admins' to see")
 	viewer := f.page(t, asViewer, "/keys")
 	assert.Contains(t, viewer, "No keys for you or your role yet")
 
 	profile := f.page(t, asAdmin, "/users/"+asOps+"/edit")
-	assert.Contains(t, profile, `<span class="mono">deploy_ed25519</span>`)
+	assert.Contains(t, profile, `<a class="mono" href="/settings/keys/deploy_ed25519">deploy_ed25519</a>`)
 	assert.Contains(t, profile, `href="/settings/keys/generate?for=`+asOps+`"`)
 }
 
 // The keys page has a row per workspace: its projects, a count of its
-// secrets linked to them, its encryption key, set or missing, and its
-// SSH keys, or what having none means.
+// secrets linked to them, the instance's encryption key as the one that
+// encrypts them, and its SSH keys, or what having none means.
 func TestKeys_Workspaces(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
@@ -162,9 +166,7 @@ func TestKeys_Workspaces(t *testing.T) {
 	assert.NoError(t, f.opts.Workspaces.Create(ctx, &model.Workspace{Folder: "acme", Title: "Acme"}))
 	acme, err := f.opts.Workspaces.GetByFolder(ctx, "acme")
 	assert.NoError(t, err)
-	scope := keystore.ScopeWorkspace(acme.ID)
-	enc := f.gen(t, keystore.Spec{Name: "workspace_acme_encryption", Purpose: keystore.PurposeEncrypt, Scope: scope})
-	f.gen(t, keystore.Spec{Name: "workspace_acme_deploy", Scope: scope})
+	f.gen(t, keystore.Spec{Name: "workspace_acme_deploy", Scope: keystore.ScopeWorkspace(acme.ID)})
 	f.opts.Secrets.Workspaces = f.workspaceVaults()
 	assert.NoError(t, f.opts.Secrets.Set(ctx, &model.Secret{Scope: "workspace:acme", Name: "TOKEN", Content: "x"}))
 	assert.NoError(t, f.opts.Secrets.Set(ctx, &model.Secret{Scope: "workspace:acme", Name: "OTHER", Content: "y"}))
@@ -173,11 +175,11 @@ func TestKeys_Workspaces(t *testing.T) {
 	assert.Contains(t, body, `<tr id="ws-acme">`)
 	assert.Contains(t, body, `<a href="/settings/secrets?workspace=acme">2 secrets</a>`)
 	assert.Contains(t, body, `<a class="key-chip" href="/settings/workspaces/acme/keys/workspace_acme_deploy_ed25519"`)
-	assert.Contains(t, body, html(enc.Fingerprint))
-	assert.Contains(t, body, `<tr id="ws-_" class="key-missing">`)
-	assert.Contains(t, body, "You can't add secrets until it has one.")
-	assert.Contains(t, body, "This workspace has no SSH key of its own")
-	assert.Contains(t, body, `href="/settings/workspaces/_/keys/upload?encrypt=1"`)
+	assert.Equal(t, 2, strings.Count(body, `<span class="faint">the instance's</span>`), "one encryption key, the instance's, for every workspace")
+	assert.Contains(t, body, `<tr id="ws-_">`)
+	assert.Contains(t, body, `<a class="faint" href="/settings/workspaces/_#keys">none</a>`)
+	assert.Contains(t, body, "Its runs get only the instance SSH keys their policies grant.")
+	assert.NotContains(t, body, "encrypt=1", "no workspace encryption key to upload")
 	assert.Contains(t, body, `<div class="faint key-projects">infra, private</div>`, "the root's projects are the default workspace's")
 	assert.Contains(t, body, "every run of the workspace")
 }

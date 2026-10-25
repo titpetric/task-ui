@@ -22,7 +22,7 @@ func TestTools_whoami(t *testing.T) {
 	assert.Contains(t, text, "  Run Jobs (run): allowed.")
 	assert.Contains(t, text, "  Secrets (secret): denied. Variables added to the environment of runs")
 	assert.Contains(t, text, "  Prompts (prompt): denied.")
-	assert.Contains(t, text, "Folders you see (1): site")
+	assert.Contains(t, text, "Folders you see (2): home, site", "the root's home is a folder")
 	assert.Contains(t, text, "taskui://context")
 
 	text, _ = f.tool(t, "guest", "whoami", nil)
