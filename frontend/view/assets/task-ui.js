@@ -1598,6 +1598,7 @@
     button.setAttribute("aria-expanded", "false");
     var label = select.getAttribute("aria-label") || (select.id && document.querySelector('label[for="' + select.id + '"]') || {}).textContent;
     if (label) button.setAttribute("aria-label", label.trim());
+    if (select.required) button.setAttribute("aria-required", "true");
     var text = document.createElement("span");
     text.className = "dd-text";
     button.appendChild(text);

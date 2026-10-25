@@ -7,21 +7,21 @@
 </div>
 
 <form method="get" action="/runs" class="filters">
-	<label>Folder
-		<select name="folder">
+	<label for="runs-folder">Folder
+		<select id="runs-folder" name="folder">
 			<option value="">all folders</option>
 			{{- range .Folders }}<option value="{{ .ID }}"{{ if eq (index $.Form "folder") .ID }} selected{{ end }}>{{ .ID }}</option>{{ end }}
 		</select>
 	</label>
 	<label>Job <input type="text" name="job" value="{{ index .Form "job" }}" spellcheck="false" autocomplete="off"></label>
-	<label>State
-		<select name="state">
+	<label for="runs-state">State
+		<select id="runs-state" name="state">
 			<option value="">any state</option>
 			{{- range states }}<option value="{{ . }}"{{ if eq (index $.Form "state") . }} selected{{ end }}>{{ . }}</option>{{ end }}
 		</select>
 	</label>
-	<label>By
-		<select name="user">
+	<label for="runs-user">By
+		<select id="runs-user" name="user">
 			<option value="">anyone</option>
 			{{- range .UserNames }}<option value="{{ . }}"{{ if eq (index $.Form "user") . }} selected{{ end }}>{{ . }}</option>{{ end }}
 		</select>

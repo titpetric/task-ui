@@ -23,8 +23,8 @@
 		<label for="pe-description">Description</label>
 		<input type="text" id="pe-description" name="description" value="{{ index .Form "description" }}" autocomplete="off">
 	</div>
-	<div class="field">
-		<span class="label">Who can run</span>
+	<div class="field" role="group" aria-labelledby="pe-allow-label">
+		<span class="label" id="pe-allow-label">Who can run</span>
 		{{- template "whofield" (who "allow" "set" .Allow .Allow .Users "everyone who may run can") }}
 		<small class="faint">With nothing checked, everyone who may run can.</small>
 	</div>

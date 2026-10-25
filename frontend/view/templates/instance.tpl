@@ -54,8 +54,8 @@
 	<p class="section-intro">How much of the server's own environment a run starts with. The folder's secrets and the integrations' variables reach a run under every choice; a script reads any other secret with <code>task-ui get-secret NAME</code>, as <a href="https://github.com/titpetric/task-ui/blob/main/docs/guide/settings.md#secrets-in-scripts">Secrets in scripts</a> shows.</p>
 	{{- if $admin }}
 	<form class="form parent-env" data-api="/api/instance" data-method="PUT" data-next="/settings/instance?notice=Parent+environment+saved#environment" data-parent-env>
-		<div class="field">
-			<span class="label">Forward <span class="faint">applies to the next run</span></span>
+		<div class="field" role="radiogroup" aria-labelledby="parent-env-label">
+			<span class="label" id="parent-env-label">Forward <span class="faint">applies to the next run</span></span>
 			<label class="check"><input type="radio" name="parent_env" value="none"{{ if eq .ParentEnv "none" }} checked{{ end }}> <strong>None</strong></label>
 			<small class="faint">Secure: the base variables alone, less the sensitive ones.</small>
 			<label class="check"><input type="radio" name="parent_env" value="auto"{{ if eq .ParentEnv "auto" }} checked{{ end }}> <strong>Auto</strong></label>

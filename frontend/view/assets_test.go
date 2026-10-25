@@ -3,6 +3,7 @@ package view_test
 import (
 	"io/fs"
 	"regexp"
+	"slices"
 	"strings"
 	"testing"
 
@@ -50,6 +51,16 @@ func TestStylesheet(t *testing.T) {
 
 	imports := regexp.MustCompile(`@import url\("([^"]+)"\);`).FindAllStringSubmatch(css, -1)
 	assert.Len(t, imports, len(files))
+	// The order is the cascade: the tokens first, the controls before the
+	// forms that place them, and the phone's folds last, over every page.
+	order := []string{}
+	for _, m := range imports {
+		order = append(order, strings.TrimSuffix(m[1], "?v="+view.AssetVersion()))
+	}
+	assert.Equal(t, "css/tokens.css", order[0])
+	assert.Equal(t, "css/mobile.css", order[len(order)-1])
+	assert.Less(t, slices.Index(order, "css/controls.css"), slices.Index(order, "css/forms.css"))
+	assert.Less(t, slices.Index(order, "css/forms.css"), slices.Index(order, "css/filters.css"))
 	for _, m := range imports {
 		assert.True(t, strings.HasSuffix(m[1], "?v="+view.AssetVersion()), m[1])
 		data, err := fs.ReadFile(view.AssetsFS(), strings.TrimSuffix(m[1], "?v="+view.AssetVersion()))
