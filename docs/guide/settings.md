@@ -571,14 +571,44 @@ The settings:
 **Sync now** runs `@forgejo-sync` of the root, `task-ui forgejo-sync`,
 and opens the run window on it; **Dry run** runs it with `--dry-run`,
 which reports what a sync would do and changes nothing. The run's output
-is the report, one line per action, `workspace malta: created`, `home
-Malta/malta: cloned main`, `project malta/apps: cloned main`, `hook
-Malta/apps: installed`, `skipped Malta/old-thing: archived`, `not on
-Forgejo: malta/vhosts`, the same for a user, `workspace black:
-created`, `home black/black: cloned main`, `project black/dotfiles:
-cloned main`, and a summary line that counts the organisations and the
-users; the organisations come first, then the users. The line under
-the form names the last run and links to it. Admins run the job, by hand, on a
+is the report, in the shape of a `terraform plan`: a block per owner,
+the organisations first, then the users, and a footer with the counts.
+
+```
+# org Malta
+  + workspace malta: would create
+  + home Malta/malta: would clone main
+  + project malta/apps: would clone main
+    skipped Malta/old-thing: archived
+  + hook Malta/apps: would install
+# org Acme
+    workspace acme: ok
+  ~ project acme/web: would update url
+  ~ hook Acme/web: would update
+# user black
+  + workspace black: would create
+  + home black/black: would clone main
+  + project black/dotfiles: would clone main
+    skipped hook black/dotfiles: the token has no admin access
+! orphan acme/vhosts: not on Forgejo, left alone
+
+Plan: 2 workspaces to create, 2 homes to clone, 2 projects to clone, 1 hooks to install, 2 to update, 1 unchanged, 2 skipped, 1 left alone, over 2 organisations and 1 users.
+```
+
+A symbol leads each row: `+` for what sync creates, a workspace, a
+home or project clone, a hook, `~` for what it brings current, a pulled
+home, a project's URL or a hook, and `!` for what it leaves alone where
+Forgejo says otherwise, an orphan whose repository Forgejo lacks, a
+home that is another repository's checkout, a directory in `src` that is
+no checkout, and for what fails. A row sync finds in place,
+`ok` or `exists`, and a `skipped` row with its reason carry no symbol.
+The footer, `Plan:` for a dry run and `Applied:` for a sync, counts
+them by kind. In a run and on a terminal the report has colour: `+`
+green, `~` yellow, `!` red, the unchanged and skipped rows dim, an
+organisation and a workspace name cyan, a user login magenta, a project
+blue; `--no-color` as an argument, or `NO_COLOR` in the environment,
+turns it off, as a pipe does. The line under the form names the last
+run and links to it. Admins run the job, by hand, on a
 [schedule](scheduled.md) or as a workflow step, as `@cleanup` runs.
 
 Sync adds and updates, and never removes:

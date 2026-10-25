@@ -120,6 +120,7 @@ task-ui user mcp alice on                    # MCP agent user; off ends alice's 
 task-ui user agent alice on                  # Run instance Claude when mentioned, with MCP
 task-ui channel --url https://task.example.com --token-file task.token  # pushes alice's notes into a Claude Code session
 task-ui cleanup --dry-run                    # what the Data retention rules would remove; without the flag, removes it
+task-ui forgejo-sync --dry-run               # the Forgejo integration's plan, workspaces, homes, projects and hooks; without the flag, applies it; --no-color
 task-ui get-secret GITHUB_TOKEN              # in a run: prints a secret of the run's folder, for a script that reads it where it needs it
 task-ui -v                                   # the version and the commit
 ```

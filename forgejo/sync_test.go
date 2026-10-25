@@ -88,42 +88,52 @@ func TestSync(t *testing.T) {
 	assert.NoError(t, s.Run(ctx, &out))
 	report := out.String()
 	for _, line := range []string{
-		"workspace malta: created",
-		"home Malta/malta: cloned main",
-		"project malta/apps: cloned main",
-		"project malta/deploy: cloned dev",
-		"skipped Malta/old-thing: archived",
-		`skipped Malta/src: "src" is no folder name`,
-		"hook Malta/malta: installed",
-		"hook Malta/apps: installed",
-		"hook Malta/deploy: installed",
-		"workspace acme: ok",
-		"home acme: no Acme/Acme repository: home is empty",
-		"project acme/web: cloned main",
-		"hook Acme/web: installed",
-		`skipped _: "_" is no folder name`,
-		"skipped Taken: a project named taken is at the root",
-		"workspace black: created",
-		"home black/black: cloned main",
-		"project black/dotfiles: cloned main",
-		"skipped black/old: archived",
-		"hook black/black: installed",
-		"hook black/dotfiles: installed",
-		"skipped nobody: no repositories",
-		`skipped Bad.Name!: "bad.name!" is no folder name`,
-		"workspace jane: created",
-		"home jane: no Jane/Jane repository: home is empty",
-		"project jane/notes: cloned main",
-		"hook Jane/notes: skipped, the token has no admin access",
-		"not on Forgejo: acme/vhosts",
-		"summary: 4 organisations, 4 users, 3 workspaces created, 2 homes cloned, 5 projects cloned, 6 hooks installed, 8 skipped, 1 not on Forgejo",
+		"# org Malta",
+		"  + workspace malta: created",
+		"  + home Malta/malta: cloned main",
+		"  + project malta/apps: cloned main",
+		"  + project malta/deploy: cloned dev",
+		"    skipped Malta/old-thing: archived",
+		`    skipped Malta/src: "src" is no folder name`,
+		"  + hook Malta/malta: installed",
+		"  + hook Malta/apps: installed",
+		"  + hook Malta/deploy: installed",
+		"# org Acme",
+		"    workspace acme: ok",
+		"    home acme: no Acme/Acme repository: home is empty",
+		"  + project acme/web: cloned main",
+		"  + hook Acme/web: installed",
+		"# org _",
+		`    skipped _: "_" is no folder name`,
+		"# org Taken",
+		"    skipped Taken: a project named taken is at the root",
+		"# user black",
+		"  + workspace black: created",
+		"  + home black/black: cloned main",
+		"  + project black/dotfiles: cloned main",
+		"    skipped black/old: archived",
+		"  + hook black/black: installed",
+		"  + hook black/dotfiles: installed",
+		"# user nobody",
+		"    skipped nobody: no repositories",
+		`    skipped Bad.Name!: "bad.name!" is no folder name`,
+		"# user Jane",
+		"  + workspace jane: created",
+		"    home jane: no Jane/Jane repository: home is empty",
+		"  + project jane/notes: cloned main",
+		"    skipped hook Jane/notes: the token has no admin access",
+		"! orphan acme/vhosts: not on Forgejo, left alone",
+		"",
+		"Applied: 3 workspaces created, 2 homes cloned, 5 projects cloned, 6 hooks installed, 3 unchanged, 8 skipped, 1 left alone, over 4 organisations and 4 users.",
 	} {
 		assert.Contains(t, report, line+"\n")
 	}
 	assert.NotContains(t, report, "hook Malta/src")
 	assert.NotContains(t, report, "users skipped")
-	assert.NotContains(t, report, "dry run")
-	assert.True(t, strings.Index(report, "workspace black") > strings.Index(report, "skipped Taken"), "organisations first, then users")
+	assert.NotContains(t, report, "Plan:")
+	assert.NotContains(t, report, "\x1b[")
+	assert.True(t, strings.Index(report, "# user black") > strings.Index(report, "skipped Taken"), "organisations first, then users")
+	assert.True(t, strings.HasSuffix(report, "4 users.\n"), "the footer ends the report")
 
 	malta := workspaces.rows["malta"]
 	assert.NotNil(t, malta)
@@ -159,17 +169,17 @@ func TestSync(t *testing.T) {
 	assert.NoError(t, s.Run(ctx, &out))
 	report = out.String()
 	for _, line := range []string{
-		"workspace malta: ok",
-		"home Malta/malta: pulled",
-		"project malta/apps: exists",
-		"hook Malta/malta: ok",
-		"hook Acme/web: ok",
-		"workspace black: ok",
-		"home black/black: pulled",
-		"project black/dotfiles: exists",
-		"hook black/dotfiles: ok",
-		"hook Jane/notes: skipped, the token has no admin access",
-		"summary: 4 organisations, 4 users, 0 workspaces created, 0 homes cloned, 0 projects cloned, 0 hooks installed, 8 skipped, 1 not on Forgejo",
+		"    workspace malta: ok",
+		"  ~ home Malta/malta: pulled",
+		"    project malta/apps: exists",
+		"    hook Malta/malta: ok",
+		"    hook Acme/web: ok",
+		"    workspace black: ok",
+		"  ~ home black/black: pulled",
+		"    project black/dotfiles: exists",
+		"    hook black/dotfiles: ok",
+		"    skipped hook Jane/notes: the token has no admin access",
+		"Applied: 0 workspaces created, 0 homes cloned, 0 projects cloned, 0 hooks installed, 2 updated, 17 unchanged, 8 skipped, 1 left alone, over 4 organisations and 4 users.",
 	} {
 		assert.Contains(t, report, line+"\n")
 	}
@@ -191,23 +201,25 @@ func TestSync_DryRun(t *testing.T) {
 	assert.NoError(t, s.Run(context.Background(), &out))
 	report := out.String()
 	for _, line := range []string{
-		"workspace malta: would create",
-		"home Malta/malta: would clone main",
-		"project malta/apps: would clone main",
-		"hook Malta/apps: would install",
-		"project acme/web: would clone main",
-		"workspace black: would create",
-		"home black/black: would clone main",
-		"project black/dotfiles: would clone main",
-		"hook black/dotfiles: would install",
-		"skipped nobody: no repositories",
-		"hook Jane/notes: skipped, the token has no admin access",
-		"not on Forgejo: acme/vhosts",
-		"summary: 4 organisations, 4 users, 3 workspaces created, 2 homes cloned, 5 projects cloned, 6 hooks installed, 8 skipped, 1 not on Forgejo",
-		"a dry run: nothing changed",
+		"# org Malta",
+		"  + workspace malta: would create",
+		"  + home Malta/malta: would clone main",
+		"  + project malta/apps: would clone main",
+		"  + hook Malta/apps: would install",
+		"  + project acme/web: would clone main",
+		"# user black",
+		"  + workspace black: would create",
+		"  + home black/black: would clone main",
+		"  + project black/dotfiles: would clone main",
+		"  + hook black/dotfiles: would install",
+		"    skipped nobody: no repositories",
+		"    skipped hook Jane/notes: the token has no admin access",
+		"! orphan acme/vhosts: not on Forgejo, left alone",
+		"Plan: 3 workspaces to create, 2 homes to clone, 5 projects to clone, 6 hooks to install, 3 unchanged, 8 skipped, 1 left alone, over 4 organisations and 4 users.",
 	} {
 		assert.Contains(t, report, line+"\n")
 	}
+	assert.NotContains(t, report, "Applied:")
 	_, err := os.Stat(filepath.Join(root, "malta"))
 	assert.True(t, os.IsNotExist(err))
 	_, err = os.Stat(filepath.Join(root, "black"))
@@ -256,11 +268,12 @@ func TestSync_Edges(t *testing.T) {
 	assert.NoError(t, s.Run(ctx, &out))
 	report := out.String()
 	for _, line := range []string{
-		"home Acme/acme: the home is a checkout of ssh://git@git.example:2222/Acme/workspace.git: replace it on the workspace's settings page",
-		"project malta/apps: src/apps exists and is no checkout: left alone",
-		"project malta/deploy: updated url",
-		"hook Malta/deploy: updated",
-		"hook Acme/web: installed",
+		"  ! home Acme/acme: the home is a checkout of ssh://git@git.example:2222/Acme/workspace.git, left alone: replace it on the workspace's settings page",
+		"  ! project malta/apps: src/apps exists and is no checkout: left alone",
+		"  ~ project malta/deploy: updated url",
+		"  ~ hook Malta/deploy: updated",
+		"  + hook Acme/web: installed",
+		"Applied: 3 workspaces created, 2 homes cloned, 3 projects cloned, 5 hooks installed, 2 updated, 2 unchanged, 8 skipped, 3 left alone, over 4 organisations and 4 users.",
 	} {
 		assert.Contains(t, report, line+"\n")
 	}
@@ -302,7 +315,7 @@ func TestSync_Refused(t *testing.T) {
 	out.Reset()
 	assert.NoError(t, s.Run(ctx, &out))
 	assert.Contains(t, out.String(), "the token's user is in no organisation\n")
-	assert.Contains(t, out.String(), "workspace black: ok\n")
+	assert.Contains(t, out.String(), "    workspace black: ok\n")
 }
 
 // A token without read:user syncs the organisations alone, with one
@@ -322,9 +335,9 @@ func TestSync_Users(t *testing.T) {
 	report := out.String()
 	for _, line := range []string{
 		"users skipped: the token lacks read:user",
-		"workspace malta: created",
-		"hook Acme/web: skipped, the token has no admin access",
-		"summary: 4 organisations, 0 users, 1 workspaces created, 1 homes cloned, 3 projects cloned, 3 hooks installed, 5 skipped, 1 not on Forgejo",
+		"  + workspace malta: created",
+		"    skipped hook Acme/web: the token has no admin access",
+		"Applied: 1 workspaces created, 1 homes cloned, 3 projects cloned, 3 hooks installed, 2 unchanged, 5 skipped, 1 left alone, over 4 organisations and 0 users.",
 	} {
 		assert.Contains(t, report, line+"\n")
 	}
