@@ -31,6 +31,22 @@ func TestIntegrations(t *testing.T) {
 	assert.Contains(t, body, `<span class="badge ok">set</span>`)
 	assert.NotContains(t, body, "sk-secret")
 	assert.Contains(t, body, `data-api="/api/integrations/beszel"`)
+	assert.Contains(t, body, `data-api="/api/integrations/forgejo"`)
+	assert.Contains(t, body, `<option value="ssh" selected>ssh</option>`)
+	assert.NotContains(t, body, `data-job="@forgejo-sync"`, "no sync while the integration is not set up")
+	assert.Contains(t, body, "No sync ran yet")
+
+	// Set up, the form gets Sync now and Dry run, and the line names the
+	// last run of @forgejo-sync.
+	assert.NoError(t, f.opts.Integrations.Save(context.Background(), integration.Forgejo, map[string]string{"url": "https://git.example", "token": "t0k3n", "clone": "https"}))
+	run := &model.Run{Folder: model.Default, Job: "@forgejo-sync", UserName: "admin", State: model.StateOK}
+	assert.NoError(t, f.opts.Runs.Create(context.Background(), run))
+	body = f.page(t, asAdmin, "/settings/integrations")
+	assert.Contains(t, body, `data-job="@forgejo-sync" data-title="_ / forgejo-sync"`)
+	assert.Contains(t, body, `data-run-args='["--dry-run"]'`)
+	assert.Contains(t, body, `<option value="https" selected>https</option>`)
+	assert.Contains(t, body, `href="/runs/`+run.ID+`"`)
+	assert.NotContains(t, body, "t0k3n")
 
 	assert.Equal(t, http.StatusForbidden, f.get(t, asOps, "/settings/integrations").Status)
 	assert.Contains(t, f.page(t, asAdmin, "/settings"), `href="/settings/integrations"`)

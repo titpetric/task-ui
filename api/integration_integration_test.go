@@ -31,7 +31,7 @@ func TestIntegration_SaveListDelete(t *testing.T) {
 
 	list := f.call(t, asAdmin, http.MethodGet, "/integrations", nil)
 	assert.Equal(t, http.StatusOK, list.Status)
-	assert.Len(t, list.list("integrations"), 2)
+	assert.Len(t, list.list("integrations"), 3)
 	assert.False(t, strings.Contains(string(list.Raw), "sk-1"))
 	assert.Len(t, f.call(t, asAdmin, http.MethodGet, "/secrets", nil).list("secrets"), 0)
 

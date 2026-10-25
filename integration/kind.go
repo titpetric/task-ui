@@ -11,9 +11,14 @@ type Kind struct {
 
 // The integrations.
 const (
-	Claude = "claude"
-	Beszel = "beszel"
+	Claude  = "claude"
+	Forgejo = "forgejo"
+	Beszel  = "beszel"
 )
+
+// WebhookPath is the path of the Forgejo webhook under the instance's
+// public URL.
+const WebhookPath = "/api/webhooks/forgejo"
 
 // Kinds returns the integrations, in the order Settings lists them.
 func Kinds() []Kind {
@@ -25,6 +30,17 @@ func Kinds() []Kind {
 			Fields: []Field{
 				{Name: "token", Label: "OAuth token", Secret: true, Placeholder: "sk-ant-oat01-…", Help: "Valid for a year from setup-token; set a new one before it ends."},
 				{Name: "who", Label: "Who", Optional: true, Who: true, Help: "The roles and users whose runs get the token; none checked is everyone."},
+			},
+		},
+		{
+			ID:          Forgejo,
+			Title:       "Forgejo",
+			Description: "The git host. Sync makes a workspace of every organisation the token's user belongs to, with the repository named like the organisation as its home and every other repository a project in its src, and installs a push hook on each so a push pulls the checkout. It adds and updates, and never removes.",
+			Fields: []Field{
+				{Name: "url", Label: "URL", Placeholder: "https://git.cdn.si", Help: "The instance task-ui syncs from."},
+				{Name: "token", Label: "Token", Secret: true, Help: "A personal access token of a user who is a member of the organisations to sync, with the scopes read:organization, read:repository and write:repository, the last for the hooks; see the Integrations chapter."},
+				{Name: "clone", Label: "Clone over", Optional: true, Options: []string{"ssh", "https"}, Help: "ssh clones with the instance keys; https needs public repositories, as task-ui puts no token in a URL."},
+				{Name: "secret", Label: "Webhook secret", Secret: true, Optional: true, Generated: true, Help: "Signs what Forgejo posts; empty makes one on the first save and keeps it."},
 			},
 		},
 		{

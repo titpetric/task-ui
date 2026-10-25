@@ -50,7 +50,7 @@ row's **⋯** menu; "Delete" and "Remove" are in red, last.
 | Secrets | `/settings/secrets` | a block per workspace, its secrets by project | **Add secret** | a block: **Add secret**; a row: `[...]`: Replace the value, Reads, Delete | none | "No secrets in <workspace> yet." beside **Add secret** |
 | Add secret, Replace | `/settings/secrets/new`, `/edit` | none | none | none | scope, name, value, Cancel and Save | none |
 | Reads | `/settings/secrets/<id>/reads` | the runs that got a secret | Secrets | none | none | "No run got <name> yet." |
-| Integrations | `/settings/integrations` | a block per service | none | Show | the service's settings, Save and Clear | none |
+| Integrations | `/settings/integrations` | a block per service | none | Show | the service's settings, Save and Clear; Forgejo: **Sync now**, **Dry run**, and the line on the push hook and the last sync, a link to its run | none |
 | Users | `/settings/users` | the users, Connect an MCP client | **Add user** | `[...]`: Edit, Profile, Runs, Delete | none | none |
 | Add user | `/settings/users/new` | none | none | none | name, password, Cancel and **Add user** | none |
 | Permissions | `/settings/permissions` | a matrix per role | none | none | the matrices, Save | none |

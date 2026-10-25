@@ -351,8 +351,8 @@ func getSecret(ctx context.Context, args []string, getenv func(string) string, s
 }
 
 // run is main without the exit: the hash, agent, channel, cleanup,
-// migrate-layout, get-secret, passwd, email, backup, token and user commands, the
-// version, or the server until a signal.
+// migrate-layout, forgejo-sync, get-secret, passwd, email, backup, token
+// and user commands, the version, or the server until a signal.
 func run(ctx context.Context, args []string, stdin io.Reader, stdout io.Writer) error {
 	if len(args) > 0 && args[0] == "get-secret" {
 		return getSecret(ctx, args[1:], os.Getenv, stdout)
@@ -368,6 +368,9 @@ func run(ctx context.Context, args []string, stdin io.Reader, stdout io.Writer) 
 	}
 	if len(args) > 0 && args[0] == "migrate-layout" {
 		return migrateLayout(ctx, args[1:], stdout)
+	}
+	if len(args) > 0 && args[0] == "forgejo-sync" {
+		return forgejoSync(ctx, args[1:], stdout)
 	}
 	if len(args) > 0 && args[0] == "agent" {
 		a := &agent.Agent{Env: os.Environ(), Stdin: stdin, Stdout: stdout, Stderr: os.Stderr}

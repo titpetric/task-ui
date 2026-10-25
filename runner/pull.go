@@ -3,7 +3,10 @@ package runner
 import (
 	"context"
 	"fmt"
+	"io"
 	"sync"
+
+	"github.com/titpetric/task-ui/git"
 )
 
 // checkout returns the checkout the run's folder belongs to: the folder
@@ -51,6 +54,18 @@ func (m *Manager) pullDir(ctx context.Context, session *Session, dir, line strin
 	}
 	fmt.Fprint(session, "\r\n")
 	return nil
+}
+
+// PullCheckout fast forwards a checkout under its lock, as a run of it does before it starts, writing git's
+// output to w: what a push hook calls, so it pulls under no run in progress; git.ErrNotRepo for no checkout.
+func (m *Manager) PullCheckout(ctx context.Context, dir string, w io.Writer) error {
+	if m.opts.Git == nil {
+		return git.ErrNotRepo
+	}
+	lock := m.pullLock(dir)
+	lock.Lock()
+	defer lock.Unlock()
+	return m.opts.Git.Pull(ctx, dir, w)
 }
 
 // pullLock returns the lock of a checkout.

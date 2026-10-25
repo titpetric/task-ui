@@ -72,6 +72,22 @@ func TestStore(t *testing.T) {
 	assert.ErrorIs(t, err, integration.ErrUnknown)
 	assert.ErrorIs(t, s.Delete(ctx, "nothing"), integration.ErrUnknown)
 
+	// Forgejo: an option takes only its values, and the webhook secret
+	// comes into being on the first save and stays.
+	assert.ErrorIs(t, s.Save(ctx, integration.Forgejo, map[string]string{"url": "https://git.example", "token": "t", "clone": "ftp"}), integration.ErrUnknown)
+	assert.NoError(t, s.Save(ctx, integration.Forgejo, map[string]string{"url": "https://git.example", "token": "t"}))
+	values, _ = s.Values(ctx, integration.Forgejo)
+	assert.Len(t, values["secret"], 64, "a generated secret")
+	assert.Equal(t, "ssh", values["clone"], "an empty option takes the first")
+	made := values["secret"]
+	assert.NoError(t, s.Save(ctx, integration.Forgejo, map[string]string{"url": "https://git.example", "clone": "https"}))
+	values, _ = s.Values(ctx, integration.Forgejo)
+	assert.Equal(t, made, values["secret"], "kept on the next save")
+	assert.Equal(t, "https", values["clone"])
+	assert.NoError(t, s.Save(ctx, integration.Forgejo, map[string]string{"secret": "mine"}))
+	values, _ = s.Values(ctx, integration.Forgejo)
+	assert.Equal(t, "mine", values["secret"], "a given secret replaces it")
+
 	assert.NoError(t, s.Delete(ctx, integration.Claude))
 	values, _ = s.Values(ctx, integration.Claude)
 	assert.Len(t, values, 0)
