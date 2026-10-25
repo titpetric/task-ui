@@ -232,8 +232,10 @@ does.
 Running a workflow with a user takes two rights at once: yours, to run
 every step as before, and the workflow's user's, who must be able to
 run every step at that time, the steps of nested workflows checked as
-their own users. **Run** shows when both hold, and a start the user may
-not make says which step and whom it refuses. A schedule of the
+their own users. **Run** shows when both hold; without it the page says
+which step keeps it, `Run needs malta/deploy / plan`, as it does for a
+step whose folder moved or went. A start the user may not make says
+which step and whom it refuses. A schedule of the
 workflow follows the same user (see [Scheduling one](#scheduling-one)).
 A user since deleted leaves the workflow with no one to run as: the
 start refuses until an admin picks another user, and a nested workflow

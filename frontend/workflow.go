@@ -155,10 +155,14 @@ func (h *Handlers) workflowView(ctx context.Context, p *view.Page, wf model.Work
 		if wf.RunAsUserID != "" {
 			v.RunAs = runAs.Name
 		}
-		v.CanRun = h.opts.Flows.MayRun(ctx, p.Permissions, steps) == ""
-		if h.opts.Users != nil && runAs.ID != user.ID {
-			v.CanRun = v.CanRun && h.opts.Flows.MayRun(ctx, h.opts.Users.Permissions(ctx, runAs), steps) == ""
+		if step := h.opts.Flows.MayRun(ctx, p.Permissions, steps); step != "" {
+			v.RunDenied = "Run needs " + step
+		} else if h.opts.Users != nil && runAs.ID != user.ID {
+			if step := h.opts.Flows.MayRun(ctx, h.opts.Users.Permissions(ctx, runAs), steps); step != "" {
+				v.RunDenied = "Run needs " + step + ", which " + runAs.Name + " may not run"
+			}
 		}
+		v.CanRun = v.RunDenied == ""
 	}
 	v.Running, _ = h.opts.Flows.Active(wf.ID)
 	if runs, err := h.opts.WorkflowRuns.ListByWorkflow(ctx, wf.ID, storage.WorkflowRunFilter{Limit: 1}); err == nil && len(runs) > 0 {

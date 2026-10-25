@@ -13,7 +13,8 @@
 		<button type="button" class="btn" data-workflow-stop="{{ $w.Running }}"><svg class="ic"><use href="#i-stop"/></svg>Stop</button>
 		{{- else }}
 		<button type="button" class="btn btn-primary" data-workflow-run="{{ $w.ID }}"{{ if $w.Prompted }} data-workflow-prompt="{{ $w.Name }}"{{ end }}><svg class="ic"><use href="#i-play"/></svg>Run</button>
-		{{- end }}{{ end }}
+		{{- end }}{{ else if $w.RunDenied }}
+		<span class="faint run-denied">{{ $w.RunDenied }}</span>{{ end }}
 		{{- if $w.CanChange }}
 		<a class="btn" href="/workflows/{{ $w.ID }}/edit"><svg class="ic"><use href="#i-edit"/></svg>Edit</a>
 		{{- end }}
