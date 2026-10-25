@@ -13,7 +13,7 @@
   text-transform: none;
   cursor: pointer;
 
-  & input[type="checkbox"] {
+  & input:is([type="checkbox"], [type="radio"]) {
     width: 1rem;
     height: 1rem;
     margin: 0;

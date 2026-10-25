@@ -20,7 +20,8 @@
 			<textarea id="wf-desc-{{ $id }}" name="description" rows="2" placeholder="What the workflow is for, in a line or two">{{ if $w }}{{ $w.Description }}{{ end }}</textarea>
 		</div>
 		<div class="field">
-			<label class="check"><input type="checkbox" name="sidebar"{{ if or (not $w) (not $w.SidebarHidden) }} checked{{ end }}> Show in sidebar <span class="faint">off for a workflow you only use as a step of others</span></label>
+			<label class="check"><input type="checkbox" name="sidebar"{{ if or (not $w) (not $w.SidebarHidden) }} checked{{ end }}> Show in sidebar</label>
+			<small class="faint">Off for a workflow you only use as a step of others.</small>
 		</div>
 		{{- /* Runs as: an admin picks the user from a select, the current
 		     login on a new workflow and the saved user on edit, or whoever
@@ -145,8 +146,9 @@
 					</select>
 				</div>
 				<div class="field wf-wide" data-step-args-field>
-					<span class="label">Arguments <span class="faint">after --, for a job that takes them; the command, for a host</span></span>
+					<span class="label">Arguments</span>
 					<input type="text" data-step-args aria-label="Arguments" placeholder="none" value="{{ argLine $s.Job $s.Args }}" spellcheck="false" autocomplete="off">
+					<small class="faint">After --, for a job that takes them; the command, for a host.</small>
 				</div>
 			</div>
 			{{- else }}
@@ -154,13 +156,13 @@
 			<div class="field">
 				<span class="label">Prompt</span>
 				<textarea data-step-prompt-text rows="5" spellcheck="false" aria-label="Prompt" placeholder="Fetch the forecast for the next 3 days and print a short table.">{{ $s.Prompt }}</textarea>
-				<p class="faint field-note">Claude gets it with the output of the steps before it, the run's input and the last 3 answers of this workflow. Its answer is the step's output.</p>
+				<small class="faint">Claude gets it with the output of the steps before it, the run's input and the last 3 answers of this workflow. Its answer is the step's output.</small>
 			</div>
 			{{- end }}
 			<div class="wf-fields wf-cascade">
 				{{- template "stepspace" (list $p ($p.StepSpaceOf $s.Folder) false) }}
 				<div class="field">
-					<span class="label">Asks in <span class="faint">the folder Claude works in, as the workflow's user</span></span>
+					<span class="label">Asks in <span class="faint">the folder Claude works in</span></span>
 					{{- $found := eq $s.Folder "_" }}
 					<select data-step-place aria-label="Folder Claude works in">
 						<option value="_" data-workspace="_" data-rel="."{{ if eq $s.Folder "_" }} selected{{ end }}>the root</option>
@@ -181,7 +183,7 @@
 			<div class="wf-builtin">
 				<span class="label">Claude gets</span>
 				<blockquote><p class="wf-question">{{ workflowSummaryQuestion }}</p><p>{{ summaryPrompt }}</p></blockquote>
-				<p class="faint field-note">With the output of every step before it, the run's input and the last 3 answers of this workflow. A summary runs after a failed step too, to say why; the last answer is the run's.</p>
+				<small class="faint">With the output of every step before it, the run's input and the last 3 answers of this workflow. A summary runs after a failed step too, to say why; the last answer is the run's.</small>
 			</div>
 			{{- end }}
 			{{- end }}

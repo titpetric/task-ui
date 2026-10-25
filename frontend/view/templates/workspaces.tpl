@@ -61,8 +61,9 @@
 			<input type="password" id="wi-passphrase" name="passphrase" autocomplete="off" spellcheck="false" required>
 		</div>
 		<div class="field">
-			<label for="wi-folder">Folder <span class="faint">optional, defaults to the bundle's folder; one name, no slashes</span></label>
+			<label for="wi-folder">Folder <span class="faint">optional, one name, no slashes</span></label>
 			<input type="text" id="wi-folder" name="folder" pattern="[A-Za-z0-9._-]+" spellcheck="false" autocomplete="off">
+			<small class="faint">Defaults to the bundle's folder.</small>
 		</div>
 		<div class="confirm-foot">
 			<button type="button" class="btn" data-dialog-close>Cancel</button>

@@ -106,7 +106,8 @@
 			<input type="text" id="sch-expr" name="expression" placeholder="0 3 * * *  or  @daily" spellcheck="false" autocomplete="off" required>
 		</div>
 		<div class="field whole">
-			<label class="check"><input type="checkbox" id="sch-triage" name="triage"> Triage failures with Claude <span class="faint">when the run fails, Claude reads the run in its folder, fixes the cause when it can, replies on the run's page and posts a note</span></label>
+			<label class="check"><input type="checkbox" id="sch-triage" name="triage"> Triage failures with Claude</label>
+		<small class="faint">When the run fails, Claude reads the run in its folder, fixes the cause when it can, replies on the run's page and posts a note.</small>
 		</div>
 		{{- template "runas" (list $ "sch-user") }}
 		<div class="form-foot">

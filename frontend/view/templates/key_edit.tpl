@@ -11,7 +11,8 @@
 <form class="form" data-api="/api/keys/{{ $k.Name }}" data-method="PUT" data-next="{{ $next }}?notice=Links+saved#key-{{ $k.Name }}">
 	{{- template "keypolicies" (list $k.Roles $k.Users $.Users) }}
 	<div class="field">
-		<label class="check"><input type="checkbox" name="git"{{ if $k.Git }} checked{{ end }}> git pulls and clones with this key <span class="faint">one key at a time; the remotes trust its public half</span></label>
+		<label class="check"><input type="checkbox" name="git"{{ if $k.Git }} checked{{ end }}> git pulls and clones with this key</label>
+		<small class="faint">One key at a time; the remotes trust its public half.</small>
 	</div>
 	<div class="form-foot">
 		<a class="btn" href="{{ $next }}">Cancel</a>

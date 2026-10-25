@@ -80,8 +80,9 @@
 	<p>Creates an SSH key of {{ $ws.Folder }} in {{ $p.KeysDir }}, named <span class="mono">workspace_{{ $ws.Folder }}_&lt;name&gt;_&lt;algorithm&gt;</span>.</p>
 	{{- end }}
 	<div class="field">
-		<label for="wkg-name">Name <span class="faint">lower case letters, digits, dashes and underscores; empty is ssh</span></label>
+		<label for="wkg-name">Name</label>
 		<input type="text" id="wkg-name" name="name" value="" autocomplete="off" placeholder="deploy">
+		<small class="faint">Lower case letters, digits, dashes and underscores; empty is ssh.</small>
 	</div>
 	<div class="field">
 		<label for="wkg-algo">Algorithm</label>
@@ -123,8 +124,9 @@
 		<textarea id="wku-content" name="content" rows="{{ if $dialog }}6{{ else }}10{{ end }}" spellcheck="false" autocomplete="off" placeholder="-----BEGIN OPENSSH PRIVATE KEY-----" required></textarea>
 	</div>
 	<div class="field">
-		<label for="wku-name">Name <span class="faint">lower case letters, digits, dashes and underscores; empty is ssh</span></label>
+		<label for="wku-name">Name</label>
 		<input type="text" id="wku-name" name="name" value="" autocomplete="off" placeholder="deploy">
+		<small class="faint">Lower case letters, digits, dashes and underscores; empty is ssh.</small>
 	</div>
 	<div class="field">
 		<label for="wku-comment">Comment</label>

@@ -32,11 +32,13 @@
 		</select>
 	</div>
 	<div class="field">
-		<label for="sch-args">Args <span class="faint">for a job that takes them; the command of a host</span></label>
+		<label for="sch-args">Args</label>
 		<input type="text" id="sch-args" name="args" data-type="args" placeholder="df -h /" spellcheck="false" autocomplete="off">
+		<small class="faint">For a job that takes them; the command of a host.</small>
 	</div>
 	<div class="field whole">
-		<label class="check"><input type="checkbox" id="sch-triage" name="triage"> Triage failures with Claude <span class="faint">when the run fails, Claude reads the run in its folder, fixes the cause when it can, replies on the run's page and posts a note</span></label>
+		<label class="check"><input type="checkbox" id="sch-triage" name="triage"> Triage failures with Claude</label>
+		<small class="faint">When the run fails, Claude reads the run in its folder, fixes the cause when it can, replies on the run's page and posts a note.</small>
 	</div>
 	<div class="field">
 		<label for="sch-expr">Expression</label>
