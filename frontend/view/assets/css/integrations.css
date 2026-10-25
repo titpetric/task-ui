@@ -91,7 +91,7 @@
 
 .integration .field small {
   display: block;
-  margin-top: 0.3rem;
+  margin-top: var(--hint-gap);
 }
 
 .integration .desc p {

@@ -34,4 +34,3 @@
 :is(details[open] > summary, [aria-expanded="true"]) .ic.chev {
   transform: rotate(90deg);
 }
-

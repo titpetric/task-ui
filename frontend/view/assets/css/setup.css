@@ -185,7 +185,7 @@
   gap: 0.4rem;
 
   & input {
-    width: 8rem;
+    width: var(--control-w-s);
     height: var(--control-sm);
     padding: 0 0.5rem;
     font-family: var(--font);

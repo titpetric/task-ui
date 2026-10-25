@@ -21,7 +21,7 @@
 
 .filters input,
 .filters select {
-  width: 11rem;
+  width: var(--control-w-m);
   padding: 0 0.55rem;
 }
 

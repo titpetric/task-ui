@@ -233,7 +233,7 @@ table.matrix {
      list of keys in its open list. */
   & .dd {
     width: auto;
-    max-width: 14rem;
+    max-width: var(--control-w-l);
   }
 }
 

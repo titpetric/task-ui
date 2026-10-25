@@ -82,14 +82,6 @@ aside.side {
   min-height: 100%;
 }
 
-.label {
-  color: var(--text-faint);
-  font-size: var(--fs-caption);
-  font-weight: 600;
-  letter-spacing: var(--ls-heading);
-  text-transform: uppercase;
-}
-
 /* The folders, as a file browser lists them: an icon, the folder name, and
    the count of jobs. The open folder shows an open icon and the accent. */
 .folders a {

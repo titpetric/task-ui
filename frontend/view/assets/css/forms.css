@@ -2,13 +2,14 @@
 
 .field {
   display: block;
-  margin-bottom: 0.8rem;
+  margin-bottom: var(--field-gap);
 }
 
-.field > label,
-.field > .label {
-  display: block;
-  margin-bottom: 0.3rem;
+/* A label: over a control in a field, and the word that heads a group
+   wherever one stands, the sidebar's Recents, a run window's kind, a
+   workflow step's summary. */
+.label,
+.field > label {
   color: var(--text-faint);
   font-size: var(--fs-caption);
   font-weight: 600;
@@ -16,10 +17,16 @@
   text-transform: uppercase;
 }
 
+.field > label,
+.field > .label {
+  display: block;
+  margin-bottom: var(--label-gap);
+}
+
 /* The hint after a label is a sentence, not a label. */
 .field > label .faint,
 .field > .label .faint {
-  margin-inline-start: 0.35rem;
+  margin-inline-start: var(--hint-gap);
   font-weight: 400;
   letter-spacing: 0;
   text-transform: none;
@@ -28,7 +35,7 @@
 /* The help under a control is a sentence of its own, on its own line. */
 .field > small {
   display: block;
-  margin-top: 0.35rem;
+  margin-top: var(--hint-gap);
   font-size: var(--fs-xs);
 }
 
@@ -44,11 +51,11 @@
 
 /* A number stands in a box as wide as the number, not the form. */
 .field > input[type="number"] {
-  width: 8rem;
+  width: var(--control-w-s);
 }
 
 .filters .dd {
-  width: 11rem;
+  width: var(--control-w-m);
 }
 
 .filters .page-size :is(select, .dd) {
@@ -57,12 +64,12 @@
 
 .run-foot .dd {
   width: auto;
-  min-width: 14rem;
+  min-width: var(--control-w-l);
   max-width: 22rem;
 }
 
 .form {
-  max-width: 40rem;
+  max-width: var(--form-w);
 }
 
 /* An inline form, the schedule forms: the fields side by side on one
@@ -75,7 +82,7 @@
    after it. */
 .form.inline {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(var(--control-w-l), 1fr));
   gap: 0 1rem;
   align-items: start;
   max-width: none;
@@ -85,7 +92,7 @@
     display: grid;
     grid-row: span 3;
     grid-template-rows: subgrid;
-    margin: 0 0 0.8rem;
+    margin: 0 0 var(--field-gap);
   }
 
   & .field > label,
@@ -118,7 +125,7 @@
     grid-template-rows: subgrid;
     gap: 0 0.5rem;
     justify-content: end;
-    margin: 0 0 0.8rem;
+    margin: 0 0 var(--field-gap);
 
     & > * {
       grid-row: 2;
@@ -155,7 +162,7 @@
 
 .checks .dd {
   width: auto;
-  min-width: 18rem;
+  min-width: var(--control-w-xl);
 }
 
 /* The "who gets it" element, .whofield from the template of that name:
