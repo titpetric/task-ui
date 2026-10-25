@@ -221,7 +221,7 @@ func (a *App) wire(version string) error {
 		self = ComposeProject("docker")
 	}
 	store := &artifactstore.Store{Dir: cfg.ArtifactTree(), Keep: cfg.ArtifactHistory}
-	cleaner := NewCleaner(db, cfg)
+	cleaner := NewCleaner(db, cfg, os.Getenv("HOME"))
 	cleaner.Store = store
 	summaries := storage.NewRunSummaryStorage(a.DB)
 	secretReads := storage.NewSecretReadStorage(a.DB)
@@ -291,7 +291,7 @@ func (a *App) wire(version string) error {
 		Users: a.Users, Projects: projects, Workspaces: workspaces, Runs: runs, Artifacts: artifacts, ArtifactStore: store, Schedules: schedules, Secrets: secrets, SecretReads: secretReads,
 		FolderRefs: refs,
 		Workflows:  workflows, WorkflowRuns: workflowRuns, Flows: a.Workflows, Events: events,
-		Runner: a.Runner, Catalogue: a.Catalogue, Steps: a.Catalogue.Steps(), Git: g, Keys: keys, KeyReads: storage.NewKeyReadStorage(db), Env: env, Recordings: recordings, Root: cfg.Root, Board: a.Board,
+		Runner: a.Runner, Catalogue: a.Catalogue, Steps: a.Catalogue.Steps(), Git: g, Keys: keys, Env: env, Recordings: recordings, Root: cfg.Root, Board: a.Board,
 		Integrations: integrations, Hosts: hosts, HostRuns: hostRuns, Summarizer: &claude.Summarizer{Timeout: 3 * time.Minute},
 		AddUser: addUser, RemoveUser: removeUser, Tokens: a.Guard.Tokens, Now: cfg.Clock(), Summaries: summaries, Version: version,
 		Cleaner: cleaner, Pins: pins,
@@ -300,7 +300,7 @@ func (a *App) wire(version string) error {
 		Guard: a.Guard, Auth: access.NewAuthenticator(a.Users, a.Emails, a.Passwords), Users: a.Users, Projects: projects, Workspaces: workspaces, Runs: runs, Artifacts: artifacts, Schedules: schedules, Secrets: secrets, SecretReads: secretReads,
 		FolderRefs: refs,
 		Workflows:  workflows, WorkflowRuns: workflowRuns, Flows: a.Workflows,
-		Runner: a.Runner, Catalogue: a.Catalogue, Steps: a.Catalogue.Steps(), Git: g, Keys: keys, KeyReads: storage.NewKeyReadStorage(db), Env: env, Recordings: recordings, Root: cfg.Root, Version: version, Now: cfg.Clock(),
+		Runner: a.Runner, Catalogue: a.Catalogue, Steps: a.Catalogue.Steps(), Git: g, Keys: keys, Env: env, Recordings: recordings, Root: cfg.Root, Version: version, Now: cfg.Clock(),
 		ArtifactStore: store, Disk: &diskusage.Meter{TTL: 10 * time.Minute}, Board: a.Board, ComposeProject: self, Cleaner: cleaner,
 		Storage:      &diskusage.Inventory{TTL: 30 * time.Second, Wait: 2 * time.Second, Items: storageItems(cfg, workspaces, os.Getenv("HOME"))},
 		Integrations: integrations, Hosts: hosts, Pins: pins,

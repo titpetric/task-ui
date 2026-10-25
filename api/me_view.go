@@ -15,11 +15,8 @@ type MeView struct {
 	// application permissions.
 	Sections    []AreaView `json:"sections"`
 	Permissions []AreaView `json:"permissions"`
-	// Keys are the SSH keys the user may read over MCP, key/read, by
-	// name.
-	Keys        []string `json:"keys"`
-	FolderCount int      `json:"folder_count"`
-	Folders     []string `json:"folders"`
+	FolderCount int        `json:"folder_count"`
+	Folders     []string   `json:"folders"`
 }
 
 // MaxFolders bounds the folders a MeView lists.

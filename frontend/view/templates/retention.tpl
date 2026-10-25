@@ -3,7 +3,7 @@
 <div class="page-head">
 	<div>
 		<h2>Data retention</h2>
-		<p>How long task-ui keeps recordings, artifact history and the secret read log. <code>@cleanup</code> applies the rules every midnight, oldest first.{{ if not $admin }} An admin changes them.{{ end }}</p>
+		<p>How long task-ui keeps what it records, one row per area. <code>@cleanup</code> applies the rows in this order every midnight, oldest first: run history takes a run's recording, summary and threads with it.{{ if not $admin }} An admin changes the rules.{{ end }}</p>
 	</div>
 	{{- if $admin }}
 	<div class="actions">
@@ -13,43 +13,38 @@
 </div>
 
 <form class="form retention" data-api="/api/retention" data-method="PUT" data-next="/settings/retention?notice=Data+retention+saved">
-{{- range .Retention }}{{ $b := . }}
-<section class="block retention-block" data-retention data-average="{{ .Average }}" data-one="{{ .One }}" data-many="{{ .Many }}">
-	<h3>{{ .Title }}</h3>
-	<p class="dim">{{ .Desc }}</p>
+<section class="block">
+	<h3>What the instance keeps <small>a row per area, the oldest items go first</small></h3>
 	<div class="table-wrap">
-	<table class="table table-kv">
+	<table class="table retention">
+		<thead><tr><th>Area</th><th>What goes</th><th>Keep</th><th>Size limit</th><th>Holds now</th><th>Last cleanup</th></tr></thead>
 		<tbody>
-			<tr><th>Holds</th><td>{{ .Usage.Says .One .Many }}</td></tr>
-			<tr><th>Oldest</th><td>{{ with .Usage.Oldest }}<span title="{{ stamp . }}">{{ ago . }}</span>{{ else }}<span class="faint">none</span>{{ end }}</td></tr>
+		{{- range .Retention }}
+			<tr>
+				<td class="key">{{ .Area.Title }}</td>
+				<td class="desc">{{ .Area.What }}</td>
+				{{- if .Area.Fixed }}
+				<td colspan="2" class="dim">{{ .Area.Fixed }}</td>
+				{{- else }}
+				<td><select name="{{ .Area.Kind }}.age" aria-label="Keep {{ .Area.Title }} for"{{ if not $admin }} disabled{{ end }}>
+					{{- range .Ages }}<option value="{{ .Value }}"{{ if .Selected }} selected{{ end }}>{{ .Label }}</option>{{ end }}
+				</select></td>
+				<td>{{ if .Area.Limited }}<select name="{{ .Area.Kind }}.limit" aria-label="Size limit of {{ .Area.Title }}"{{ if not $admin }} disabled{{ end }}>
+					{{- range .Limits }}<option value="{{ .Value }}"{{ if .Selected }} selected{{ end }}>{{ .Label }}</option>{{ end }}
+				</select>{{ else }}<span class="faint">none</span>{{ end }}</td>
+				{{- end }}
+				<td class="nowrap">{{ .Holds }}</td>
+				<td class="nowrap">{{ with $.Cleanup }}<a href="/runs/{{ .ID }}" title="{{ stamp .StartedAt }}">{{ ago .StartedAt }}</a> {{ template "state" . }}{{ else }}<span class="faint">never</span>{{ end }}</td>
+			</tr>
+		{{- end }}
 		</tbody>
 	</table>
 	</div>
-	<fieldset class="field"{{ if not $admin }} disabled{{ end }}>
-		<legend class="label">Keep for</legend>
-		<div class="segmented">
-			{{- range .Ages }}
-			<label><input type="radio" name="{{ $b.Kind }}.age" value="{{ .Value }}"{{ if .Checked }} checked{{ end }}><span>{{ .Label }}</span></label>
-			{{- end }}
-		</div>
-	</fieldset>
-	<fieldset class="field"{{ if not $admin }} disabled{{ end }}>
-		<legend class="label">Size limit</legend>
-		<div class="size-limit">
-			<input type="text" id="{{ .Kind }}-limit" name="{{ .Kind }}.limit" value="{{ .LimitText }}" placeholder="none" aria-label="Size limit of {{ .Title }}, such as 500MB or 2GB" autocomplete="off" spellcheck="false" data-size-input>
-			{{- range .Sizes }}
-			<button type="button" class="btn btn-sm" data-size="{{ . }}">{{ . }}</button>
-			{{- end }}
-			<button type="button" class="btn btn-sm" data-size="">None</button>
-		</div>
-		<small class="faint" data-estimate>{{ .Estimate }}</small>
-	</fieldset>
-</section>
-{{- end }}
 	{{- if $admin }}
 	<div class="form-foot">
 		<button class="btn btn-primary" type="submit">Save</button>
 	</div>
 	{{- end }}
+</section>
 </form>
 {{ end }}

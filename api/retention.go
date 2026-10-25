@@ -2,15 +2,17 @@ package api
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/titpetric/task-ui/access"
 	"github.com/titpetric/task-ui/retention"
 )
 
-// saveRetention sets the Data retention rules, each kind's age and size
-// limit, the limit a size such as 500MB, empty for none: for admins
-// alone, as the page's form sends them. The next run of @cleanup applies
-// them. It answers the rules as they stand.
+// saveRetention sets the Data retention rules, each area's age and, where
+// its items have a size, the size limit, a size such as 500MB or the
+// bytes, empty or 0 for none: for admins alone, as the page's form sends
+// them. An area the request leaves out keeps its rule. The next run of
+// @cleanup applies them. It answers the rules as they stand.
 func (h *Handlers) saveRetention(w http.ResponseWriter, r *http.Request) {
 	if !access.UserFrom(r.Context()).CanAdmin() {
 		fail(w, http.StatusForbidden, "only an admin sets the data retention rules")
@@ -30,7 +32,6 @@ func (h *Handlers) saveRetention(w http.ResponseWriter, r *http.Request) {
 		failErr(w, err)
 		return
 	}
-	rules := map[string]retention.Rule{}
 	for _, kind := range retention.Kinds {
 		rule := settings.Rule(kind)
 		if in, ok := req[kind]; ok {
@@ -44,13 +45,15 @@ func (h *Handlers) saveRetention(w http.ResponseWriter, r *http.Request) {
 			}
 			rule.Limit = limit
 		}
+		if !retention.AreaOf(kind).Limited() {
+			rule.Limit = 0
+		}
 		if !rule.Valid() {
-			fail(w, http.StatusBadRequest, kind+": keep for 24h, 7d, 31d or never")
+			fail(w, http.StatusBadRequest, kind+": keep for "+strings.Join(retention.Ages, ", "))
 			return
 		}
-		rules[kind] = rule
+		settings[kind] = rule
 	}
-	settings = retention.Settings{Recordings: rules[retention.Recordings], Artifacts: rules[retention.Artifacts], SecretReads: rules[retention.SecretReads], KeyReads: rules[retention.KeyReads]}
 	if err := h.opts.Cleaner.Save(r.Context(), settings); err != nil {
 		failErr(w, err)
 		return

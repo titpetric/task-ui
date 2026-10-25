@@ -107,18 +107,18 @@ image or the code, **default** for a setting with a starting value, or
 | D9 | The Claude Code integration and its **Who** | opt-in; with **Who** empty, every run gets the token | To let Claude act in runs: `@claude`, `@claude-prompt` and `@claude-note` sign in with it. | **Who** naming the agent user and the roles that use Claude; or no integration, and no Claude in runs. |
 | D10 | Prompts and notes to the agent (`prompt/edit`, the user flag **Run instance Claude when mentioned**) | the `claude` user holds `prompt/edit`; no role does | To let Claude act in runs on a prompt or a note. Claude Code runs with `--dangerously-skip-permissions`, any command as root. | `prompt/edit` for admins and the agent user; the flag on the agent user alone. Costs: prompts for everyone else. |
 | D11 | **MCP agent user** | opt-in per user | To let an agent outside task-ui run jobs, read runs and artifacts, and post notes, with a 30-day token. | An account of its own for each agent, with `run` on chosen folders. Costs: an account to keep for each agent. |
-| D12 | `key/read`, an agent's read of an SSH private key | admins alone; outside `key/all` | To return an SSH key to an agent for a task, encrypted to its recipient. | Keep it with admins. Costs: agents that fetch keys. |
+| D12 | Private keys | never leave: no API route, MCP tool or page returns one | The ssh agent of a run consumes them, and signing happens inside task-ui; nothing else needs the material. | Nothing to tighten; the one copy that travels is inside an admin's workspace export bundle ([D19](#decisions)). |
 | D13 | Interactive input: the `input` rule and jobs marked interactive | `input` for admins alone; `@shell`, `@claude` and jobs marked `interactive` take keystrokes | To answer a job's prompt from the run window, and to watch and type into shells together. | Keep `input` with admins; mark interactive only the jobs that need it. Costs: answering a waiting job from the browser. |
 | D14 | Who sees a folder's runs | default: every user who sees the folder | To watch terminals live, an admin's `@shell` included, as a shared remote desktop. | Folder limits per user; admins work in folders viewers don't see. Costs: watching those runs. |
-| D15 | Recording retention | default: 31 days, no size cap | To replay a run's terminal after it ends. | A shorter age and a size cap where jobs touch secrets. Costs: older replays; the run's row stays. |
+| D15 | Data retention | default: every area 31 days, no size cap | To replay a run's terminal, read its summary and its threads, and look back at workflow runs after they end. | A shorter age and a size cap on recordings where jobs touch secrets. Costs: older replays and history; a run's row stays as long as run history keeps it. |
 | D16 | Secret scope | per secret | To reach every folder of a workspace with one secret (`workspace:<name>`). | A folder's own secret. Costs: one secret for many folders. |
 | D17 | Env file path | per env file | To write an env file where a tool expects it, such as `deploy/app.env`. Secret values sit there in plain text, and the file preview serves it. | A dot path, such as `.env`, which task-ui seals. Costs: tools that read a fixed path without a dot. |
 | D18 | Workflow webhooks: a git host calls `POST /api/workflows/{id}/runs` with a token | opt-in | To start a workflow on a push. A leaked hook token starts the workflow. | A user of its own with `run` on the workflow's folders alone, and the token's 30-day expiry; or no webhook. Costs: push-started workflows. |
-| D19 | Workspace export and import (`workspace/edit`) | admins alone | To move a workspace with its secrets and SSH keys between instances. | Keep `workspace/edit` with admins; a passphrase of 12 characters or more; delete the file after the import. Costs non-admins nothing. |
+| D19 | Workspace export and import | admins alone, whatever `workspace/edit` says | To move a workspace with its secrets and SSH keys between instances: the bundle is the one place a private key leaves by, inside its passphrase. | A passphrase of 12 characters or more; delete the file after the import. Costs non-admins nothing. |
 | D20 | Triage of a failed scheduled run (`triage` on a schedule) | opt-in per schedule | To have Claude fix a failing job on its own: it runs as the schedule's user with that user's permissions, reads the run and the folder, changes the folder's files and commits, and posts the result as that user on the board. The instruction forbids it task-ui's settings, users and secrets, which the user's permissions, not the code, bound. | Leave it off, or turn it on for the schedules of a user whose `prompt/edit` and folders are narrow, with a folder whose key may push nowhere it should not. Costs: a person reading each failure. |
-| D22 | The Forgejo integration: its token, and the webhook `POST /api/webhooks/forgejo` | opt-in | To mirror a git host: an admin-held token with `read:organization`, `read:repository` and `write:repository`, the write for the push hooks alone, which sync installs on every repository it syncs; the webhook takes no session, as Forgejo calls it, and is open to the network. | The webhook checks the HMAC-SHA256 of the body under the integration's webhook secret before it reads anything, answers `404` while the integration is off, and only ever pulls a checkout whose clone URL names the repository pushed; it writes nothing else. A token of a user who is in the organisations to sync alone, and `read:repository` without the write when the hooks go in by hand. Costs: installing the hooks yourself. |
-| D20 | `TASK_UI_AUTOLOGIN` | opt-in; unset | To skip sign in, for development and screenshots. | Unset. |
-| D21 | `TASK_UI_SESSION_TTL` | default: 12 hours | To stay signed in for a working day. | A shorter session. Costs more sign-ins. |
+| D21 | The Forgejo integration: its token, and the webhook `POST /api/webhooks/forgejo` | opt-in | To mirror a git host: an admin-held token with `read:organization`, `read:repository` and `write:repository`, the write for the push hooks alone, which sync installs on every repository it syncs; the webhook takes no session, as Forgejo calls it, and is open to the network. | The webhook checks the HMAC-SHA256 of the body under the integration's webhook secret before it reads anything, answers `404` while the integration is off, and only ever pulls a checkout whose clone URL names the repository pushed; it writes nothing else. A token of a user who is in the organisations to sync alone, and `read:repository` without the write when the hooks go in by hand. Costs: installing the hooks yourself. |
+| D22 | `TASK_UI_AUTOLOGIN` | opt-in; unset | To skip sign in, for development and screenshots. | Unset. |
+| D23 | `TASK_UI_SESSION_TTL` | default: 12 hours | To stay signed in for a working day. | A shorter session. Costs more sign-ins. |
 
 ## Checklist
 
@@ -156,10 +156,12 @@ image or the code, **default** for a setting with a starting value, or
 - [ ] Each MCP agent user is an account of its own, with only what the
       agent needs, and its token rotates within 30 days
       ([D11](#decisions), [D18](#decisions)).
-- [ ] `key/read` and `input` stay with admins ([D12](#decisions),
-      [D13](#decisions)).
-- [ ] Recording retention fits what the jobs print; jobs do not echo
-      secrets ([D15](#decisions)).
+- [ ] No private key leaves but inside an admin's export bundle
+      ([D12](#decisions), [D19](#decisions)); `input` stays with admins
+      ([D13](#decisions)).
+- [ ] Data retention fits what the jobs print and how far back the
+      history needs to reach; jobs do not echo secrets
+      ([D15](#decisions)).
 - [ ] Each secret's scope is the folder or workspace that uses it
       ([D16](#decisions)).
 - [ ] Env files use dot-file paths, such as `.env` ([D17](#decisions)).
@@ -168,7 +170,7 @@ image or the code, **default** for a setting with a starting value, or
       no backup off the host holds both.
 - [ ] Workspace exports use a long passphrase; delete the file after the
       import ([D19](#decisions)).
-- [ ] `TASK_UI_AUTOLOGIN` is unset ([D20](#decisions)).
+- [ ] `TASK_UI_AUTOLOGIN` is unset ([D22](#decisions)).
 - [ ] `/login` has a rate limit at the proxy (see the findings).
 
 ## Stance and threat model
@@ -258,14 +260,14 @@ inherits. A user's own policy sits on top of the role's
 3. else the role's entry decides; nothing means no.
 
 A section's `all` entry stands for its rules, and a `deny` on `all` wins
-over an `allow` on a rule (`permission/policy.go`, `Effect`). A rule a
-section adds, `key/read`, takes an entry of its own: `key/all` does not
-grant it.
+over an `allow` on a rule (`permission/policy.go`, `Effect`). No section
+adds a rule of its own: a saved entry for `key/read`, from before private
+keys stopped leaving, has no effect, since no check names it.
 
 The rules live in one file, `config/permissions.yml`: `view`, `edit`,
 `delete` for each section (workspaces, projects, notes, prompts,
 workflows, schedules, artifacts, env files, secrets, instance keys,
-integrations, inventory, users), `key/read`, and four application
+integrations, inventory, users), and four application
 rules, `run`, `shell`, `hosts` and `input`. `go run ./internal/cmd/rulelint`
 fails the build when a check names a rule the file lacks, or a rule of
 the file goes unchecked, so the matrix on Settings, Permissions is the
@@ -372,9 +374,9 @@ material it already holds, under any name or purpose, answers `409`
   or the inventory's logins (`keystore/local_runs.go`, `AgentKeys`
   refuses one with `ErrNotSSH`);
 - no SSH key is an age recipient or opens a secret (`secret/vault.go`);
-- no route hands out an encryption key: `GET /api/keys/{name}/private`
-  answers `403` for one (`api/key_read.go`), and a workspace export
-  leaves them out (`keystore/bundle.go`).
+- no route hands out a private key of either kind (see [Private keys
+  never leave](#private-keys-never-leave)), and a workspace export
+  leaves encryption keys out (`keystore/bundle.go`).
 
 This limits the blast radius. A leaked deploy key opens the hosts that
 trust it and no secret; a leaked encryption key opens the database's
@@ -423,17 +425,16 @@ answers for a host the first time is the host from then on. Seed
 `known_hosts` with the keys of the git remotes and the inventory before
 the first run reaches them.
 
-### Private keys leave encrypted
+### Private keys never leave
 
-A user with `key/read` and **MCP agent user** may fetch the private half
-of an SSH key linked to them or their role, any SSH key for an admin,
-with `GET /api/keys/{name}/private?recipient=age1...` or the MCP tool
-`get_ssh_key` (`api/key_read.go`). The response holds the key encrypted
-to the X25519 recipient the caller made for the request, never the key
-in clear, with `Cache-Control: no-store`. Each read goes to the key read
-log: the key, the user, the token and whether it came over MCP or the
-API. `key/read` is outside `key/all`, so only admins hold it until a
-policy grants it.
+Two readers open a private key: the ssh agent of a run, which gets the
+keys the run's links name (`$ ssh-agent: ...` on the terminal's first
+line), and task-ui itself for signing and decrypting. No API route, MCP tool or
+page returns a private key, encrypted or not, and no log counts reads of
+one: the `key_read` table stays in the schema, empty and unused. The
+one copy that leaves is inside a workspace export, for an admin alone,
+encrypted to the bundle's passphrase ([Workspace
+export](#workspace-export)).
 
 ## Secrets
 
@@ -506,9 +507,12 @@ its projects, its env files and its secrets in plain text, and the SSH
 keys its runs get (`workspace/manifest.go`). No instance key and no
 encryption key goes: the importing instance encrypts the secrets for its
 own key. The passphrase travels in a `POST` body, out of URLs and logs
-(`api/workspace_export.go`). The bundle is as strong as its passphrase,
-and it carries the workspace's secrets and SSH keys: no file task-ui
-produces needs more care.
+(`api/workspace_export.go`). Export and import are for admins alone,
+whatever `workspace/edit` a user holds: the bundle carries the
+workspace's secrets and SSH private keys, the one way a private key
+leaves task-ui, and the import writes keys into the key folder. The
+bundle is as strong as its passphrase: no file task-ui produces needs
+more care.
 
 ## Terminals
 
@@ -542,9 +546,9 @@ What a terminal shows, everyone who sees the run sees:
 - the recording is an asciicast of the terminal's output
   (`recording/recorder.go`): what the screen showed, keystrokes included
   as the terminal echoes them, a password typed at a prompt that does
-  not echo left out. Data retention keeps recordings 31 days by default
-  (`retention/settings.go`); the run's row stays after its recording
-  goes.
+  not echo left out. Data retention keeps recordings and runs 31 days
+  by default (`retention/settings.go`); a run's row stays after its
+  recording goes, until run history lets it go.
 
 A secret printed in a shell, a token pasted on a command line, a
 `cat .env`: each lands in the recording and on the screens of
@@ -617,7 +621,7 @@ page checks. The tools: `whoami`, `list_jobs`, `list_workflows`,
 `run_job`, `run_workflow`, `get_workflow`, `create_workflow`,
 `update_workflow`, `list_runs`, `get_run`, `list_workflow_runs`,
 `list_notes`, `note_comment`, `post_note`, `ask_prompt`,
-`list_artifacts`, `read_artifact`, `write_artifact` and `get_ssh_key`.
+`list_artifacts`, `read_artifact` and `write_artifact`.
 `run_job` opens `@shell` or `@claude` for admins alone, and cannot
 start `@claude-prompt` or `@claude-note`, which start from their own
 routes ([MCP](guide/mcp.md)). A refused call names the permission it
@@ -635,7 +639,6 @@ notes, is the usual setup.
 | High | The task container mounts the host's docker socket, so any user who can run a command of their choosing (admin, `prompt/edit`, `run` on code they can change, `env/edit`, `project/edit`, `workspace/edit`) is root on the host. | `malta/dockerfiles/task/compose.yml` | Grant those permissions only to people trusted with the host. Where builds need docker but users don't need the host, put a socket proxy that allows build and push alone in front of the daemon, or run one instance per trust boundary. |
 | High | Every run is root in the container beside `/keys`, the database, `/root/.docker` and `/root/.claude`. Key links, ssh agents and secret scopes decide what task-ui loads for a run, not what it can read: any run reads every private key, the encryption key included, and so every secret. | `malta/dockerfiles/task/Dockerfile` (no `USER`), `keystore/docs.go` | State it to operators (this page, [Workspaces](guide/workspaces.md#what-a-workspace-keeps-apart)). For real separation, run jobs as another uid without read access to `/keys` and the data folder, or in a container of their own that gets only the run's agent socket. |
 | Medium | An env file saved at a path that does not start with a dot, such as `deploy/app.env`, carries the folder's secret values in plain text, and the file preview serves the file to every user who sees the folder, viewers included. | `envfile/store.go` (`SafeRelative`), `api/file.go` (`viewFile`), `frontend/file.go` (`checkoutFile`) | Refuse an env file path whose last segment does not start with a dot on save, so task-ui seals the file; have both file viewers refuse a file that holds `envfile.Marker`. |
-| Medium | A workspace export takes `workspace/edit` alone, yet returns the workspace's secrets in plain text and its SSH private keys, under a passphrase the caller picks. It goes around `secret/view` and `key/read`. | `api/workspace_export.go` | Require `key/read` and `secret/edit` besides `workspace/edit`, or an admin. |
 | Medium | Under **Parent environment** All, runs get the server's whole environment. `SECRETSMANAGER_KEY`, set in production, reaches every run of every user and workspace, and no read log records it. A fresh instance starts on None; production stays on All until an admin switches. | `runner/environment.go` (`ParentEnv`), Instance page, `compose.yml` | Move the value into a scoped secret that scripts read with `task-ui get-secret`, so scopes and the read log apply, then set **Parent environment** to None, or Auto. |
 | Medium | ssh trusts host keys on first use: `accept-new` everywhere ssh runs. The first answer for a host, right or wrong, becomes its key. | Dockerfile (`ssh_config.d/task-ui.conf`), `git/git.go`, `sshprobe/prober.go` | Seed `/keys/known_hosts` for the git remotes and inventory hosts; review it after adding hosts. |
 | Low | The Claude Code token reaches every run of the users and roles **Who** names, every run when it names nobody, not only the Claude runs. | `integration/store.go` (`Env`) | Check a **Who** box; better, set the token only for `@claude`, `@claude-prompt` and `@claude-note`. |

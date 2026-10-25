@@ -5,6 +5,7 @@ package storage_test
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/titpetric/task-ui/internal/assert"
 	"github.com/titpetric/task-ui/model"
@@ -177,4 +178,52 @@ func TestNoteStorage_Area(t *testing.T) {
 	root, _ := notes.List(ctx, storage.NoteFilter{Prompts: true, Dir: "_"})
 	assert.Len(t, root, 1)
 	assert.Equal(t, "a root prompt", root[0].Body)
+}
+
+// Threads lists the prompt threads, the notes with a workspace, by
+// their last reply, oldest first, an open or working instruction among
+// their notes marked; the board's notes are not among them. The threads
+// about a run, and those of a workflow run's prompts, go with their
+// replies.
+func TestNoteStorage_Threads(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	db := newDB(t)
+	notes := storage.NewNoteStorage(db)
+	board := &model.Note{UserName: "ops", Body: "@claude look", State: model.NoteOpen}
+	assert.NoError(t, notes.Create(ctx, board))
+	quiet := &model.Note{UserName: "ops", Body: "why", WorkspaceID: model.Default, Dir: "infra"}
+	assert.NoError(t, notes.Create(ctx, quiet))
+	busy := &model.Note{UserName: "ops", Body: "fix it", WorkspaceID: model.Default, Dir: "infra", State: model.NoteOpen, AboutRunID: "run1"}
+	assert.NoError(t, notes.Create(ctx, busy))
+	flow := &model.Note{UserName: "ops", Body: "summarise", WorkspaceID: model.Default, AboutWorkflowRunID: "flow1"}
+	assert.NoError(t, notes.Create(ctx, flow))
+	reply := &model.Note{UserName: "claude", Body: "because", ParentID: quiet.ID, WorkspaceID: model.Default}
+	assert.NoError(t, notes.Create(ctx, reply))
+	later := time.Now().Add(time.Hour).UTC()
+	_, err := db.ExecContext(ctx, "UPDATE note SET created_at = ? WHERE id = ?", later, reply.ID)
+	assert.NoError(t, err)
+	flowReply := &model.Note{UserName: "claude", Body: "it shipped", ParentID: flow.ID, WorkspaceID: model.Default, AboutWorkflowRunID: "flow1"}
+	assert.NoError(t, notes.Create(ctx, flowReply))
+
+	threads, err := notes.Threads(ctx)
+	assert.NoError(t, err)
+	assert.Len(t, threads, 3, "the board's note is no thread")
+	assert.Equal(t, busy.ID, threads[0].ID)
+	assert.True(t, threads[0].Open)
+	assert.Equal(t, flow.ID, threads[1].ID)
+	assert.Equal(t, quiet.ID, threads[2].ID, "its reply came last")
+	assert.False(t, threads[2].Open)
+	assert.Equal(t, later.Truncate(time.Millisecond), threads[2].LastAt.UTC().Truncate(time.Millisecond))
+
+	assert.NoError(t, notes.DeleteAboutRun(ctx, "run1"))
+	_, err = notes.Get(ctx, busy.ID)
+	assert.ErrorIs(t, err, storage.ErrNotFound)
+	assert.NoError(t, notes.DeleteAboutWorkflowRun(ctx, "flow1"))
+	_, err = notes.Get(ctx, flowReply.ID)
+	assert.ErrorIs(t, err, storage.ErrNotFound)
+	threads, _ = notes.Threads(ctx)
+	assert.Len(t, threads, 1)
+	_, err = notes.Get(ctx, board.ID)
+	assert.NoError(t, err)
 }

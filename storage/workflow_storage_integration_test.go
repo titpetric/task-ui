@@ -411,3 +411,31 @@ func TestWorkflowRunStorage_Number(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, 1, n)
 }
+
+// History lists every workflow run; Delete removes one
+// with its steps and leaves the others and the workflow.
+func TestWorkflowRunStorage_HistoryDelete(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	runs := storage.NewWorkflowRunStorage(newDB(t))
+	first := &model.WorkflowRun{WorkflowID: "wf", Name: "deploy"}
+	assert.NoError(t, runs.Create(ctx, first, steps("a", "build")))
+	second := &model.WorkflowRun{WorkflowID: "wf", Name: "deploy"}
+	assert.NoError(t, runs.Create(ctx, second, steps("a", "build", "a", "push")))
+	history, err := runs.History(ctx)
+	assert.NoError(t, err)
+	assert.Len(t, history, 2)
+	assert.Contains(t, []string{history[0].ID, history[1].ID}, first.ID)
+	assert.Contains(t, []string{history[0].ID, history[1].ID}, second.ID)
+
+	assert.NoError(t, runs.Delete(ctx, first.ID))
+	_, err = runs.Get(ctx, first.ID)
+	assert.ErrorIs(t, err, storage.ErrNotFound)
+	chain, err := runs.Steps(ctx, first.ID)
+	assert.NoError(t, err)
+	assert.Len(t, chain, 0)
+	chain, _ = runs.Steps(ctx, second.ID)
+	assert.Len(t, chain, 2)
+	history, _ = runs.History(ctx)
+	assert.Len(t, history, 1)
+}

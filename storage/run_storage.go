@@ -227,6 +227,11 @@ func (s *RunStorage) FailQueued(ctx context.Context, message string) (int64, err
 	return db.RowsAffected(), nil
 }
 
+// History returns every run, oldest first, for the data retention rules.
+func (s *RunStorage) History(ctx context.Context) ([]model.Run, error) {
+	return client(s.db).Select[model.Run](ctx, "SELECT * FROM run ORDER BY started_at ASC, id ASC")
+}
+
 // Recorded returns the runs with a recording, oldest first, for the data retention rules.
 func (s *RunStorage) Recorded(ctx context.Context) ([]model.Run, error) {
 	return client(s.db).Select[model.Run](ctx, "SELECT * FROM run WHERE cast_path != '' ORDER BY started_at ASC, id ASC")

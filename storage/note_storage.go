@@ -3,8 +3,10 @@ package storage
 import (
 	"context"
 	"errors"
+	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/titpetric/task-ui/model"
 )
@@ -220,4 +222,58 @@ func (s *NoteStorage) change(ctx context.Context, query string, args ...any) err
 // Delete removes a note and its replies.
 func (s *NoteStorage) Delete(ctx context.Context, id string) error {
 	return client(s.db).Exec(ctx, "DELETE FROM note WHERE id = ? OR parent_id = ?", id, id)
+}
+
+// Threads returns the prompt threads, the notes with a workspace, by
+// their last reply, oldest first, for the data retention rules. The
+// board's notes are not among them.
+func (s *NoteStorage) Threads(ctx context.Context) ([]Thread, error) {
+	db := client(s.db)
+	roots, err := db.Select[model.Note](ctx, "SELECT * FROM note WHERE parent_id = '' AND workspace_id != '' ORDER BY rowid ASC")
+	if err != nil {
+		return nil, err
+	}
+	last, err := db.Select[model.Note](ctx, "SELECT * FROM note WHERE parent_id != '' AND rowid IN (SELECT MAX(rowid) FROM note WHERE parent_id != '' GROUP BY parent_id)")
+	if err != nil {
+		return nil, err
+	}
+	open, err := db.Select[noteID](ctx, "SELECT id FROM note WHERE parent_id = '' AND state IN (?, ?) UNION SELECT parent_id AS id FROM note WHERE parent_id != '' AND state IN (?, ?)",
+		model.NoteOpen, model.NoteWorking, model.NoteOpen, model.NoteWorking)
+	if err != nil {
+		return nil, err
+	}
+	latest, busy := map[string]*time.Time{}, map[string]bool{}
+	for i := range last {
+		latest[last[i].ParentID] = last[i].CreatedAt
+	}
+	for _, row := range open {
+		busy[row.ID] = true
+	}
+	threads := make([]Thread, 0, len(roots))
+	for _, root := range roots {
+		thread := Thread{ID: root.ID, LastAt: root.CreatedAt, Open: busy[root.ID]}
+		if at := latest[root.ID]; at != nil {
+			thread.LastAt = at
+		}
+		threads = append(threads, thread)
+	}
+	sort.SliceStable(threads, func(i, j int) bool {
+		return threads[i].LastAt != nil && threads[j].LastAt != nil && threads[i].LastAt.Before(*threads[j].LastAt)
+	})
+	return threads, nil
+}
+
+// noteID is a note's ID, as Threads reads the open ones.
+type noteID struct {
+	ID string `db:"id"`
+}
+
+// DeleteAboutRun removes the threads about a run with their replies.
+func (s *NoteStorage) DeleteAboutRun(ctx context.Context, runID string) error {
+	return client(s.db).Exec(ctx, "DELETE FROM note WHERE about_run_id = ? OR parent_id IN (SELECT id FROM note WHERE about_run_id = ?)", runID, runID)
+}
+
+// DeleteAboutWorkflowRun removes the threads of a workflow run's prompts with their replies, as the workflow run goes.
+func (s *NoteStorage) DeleteAboutWorkflowRun(ctx context.Context, id string) error {
+	return client(s.db).Exec(ctx, "DELETE FROM note WHERE about_workflow_run_id = ? OR parent_id IN (SELECT id FROM note WHERE about_workflow_run_id = ?)", id, id)
 }

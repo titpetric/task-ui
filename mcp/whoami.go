@@ -43,9 +43,6 @@ func whoami(ctx context.Context, c *client, args json.RawMessage) (string, error
 		fmt.Fprintf(&b, ", the first %d", len(me.Folders))
 	}
 	fmt.Fprintf(&b, ": %s\n", strings.Join(me.Folders, ", "))
-	if len(me.Keys) > 0 {
-		fmt.Fprintf(&b, "\nSSH keys you may read with get_ssh_key: %s\n", strings.Join(me.Keys, ", "))
-	}
 	b.WriteString("\nResource " + contextURI + " describes every area.\n")
 	return b.String(), nil
 }

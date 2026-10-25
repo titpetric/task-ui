@@ -366,6 +366,21 @@ func (s *WorkflowRunStorage) List(ctx context.Context, limit int) ([]model.Workf
 	return client(s.db).Select[model.WorkflowRun](ctx, "SELECT * FROM workflow_run ORDER BY started_at DESC, id DESC LIMIT ?", limit)
 }
 
+// History returns every workflow run, oldest first, for the data retention rules.
+func (s *WorkflowRunStorage) History(ctx context.Context) ([]model.WorkflowRun, error) {
+	return client(s.db).Select[model.WorkflowRun](ctx, "SELECT * FROM workflow_run ORDER BY started_at ASC, id ASC")
+}
+
+// Delete removes a workflow run with its steps; the workflow stays.
+func (s *WorkflowRunStorage) Delete(ctx context.Context, id string) error {
+	return inTx(ctx, s.db, func(c conn) error {
+		if err := c.Exec(ctx, "DELETE FROM workflow_run_step WHERE workflow_run_id = ?", id); err != nil {
+			return err
+		}
+		return c.Exec(ctx, "DELETE FROM workflow_run WHERE id = ?", id)
+	})
+}
+
 // Update writes a workflow run back, by ID; a finished state stamps it.
 func (s *WorkflowRunStorage) Update(ctx context.Context, run *model.WorkflowRun) error {
 	run.UpdatedAt = stamp()

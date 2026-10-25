@@ -207,10 +207,6 @@ type Page struct {
 	KeysDir string
 	// GitKey names the key git pulls and clones with.
 	GitKey string
-	// KeyReads count the reads of each private key, by name, and
-	// KeyLastRead is the newest of each.
-	KeyReads    map[string]int
-	KeyLastRead map[string]model.KeyRead
 	// KeyFolders are the projects' .ssh/ folders with keys in them.
 	KeyFolders []KeyFolder
 	// KeyPolicies are the roles whose runs get each SSH key, by key
@@ -278,9 +274,11 @@ type Page struct {
 	StepCounts map[string]string
 	// Instance is what the server runs with, for the Instance step.
 	Instance *Instance
-	// Retention are the kinds of data the Data retention step keeps,
-	// with what each holds and its rule.
-	Retention []RetentionBlock
+	// Retention are the rows of the Data retention table, an area each
+	// with what it holds and its rule; Cleanup is the last run of
+	// @cleanup, nil before the first.
+	Retention []RetentionRow
+	Cleanup   *Run
 }
 
 // Groups are the sidebar's projects, and the workspaces with theirs.

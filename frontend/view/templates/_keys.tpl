@@ -36,7 +36,6 @@
 		(and $k.Backup (detail "Backup" (print $k.Backup " " $k.BackupFingerprint) "mono" ""))
 		(detail "Scope" (or (and $k.Workspace (print "workspace " $k.Workspace)) "instance"))
 		(and (or ($p.Can "key/view") $ws) (detail "Links" $links))
-		(and $p.KeyReads (index $p.KeyReads $k.Name) (detail "Reads" (print (index $p.KeyReads $k.Name))))
 		(item "copy" "Copy public key" "data-copy" $k.PublicKey)
 		(item "download" "Download public key" "data-download" $k.PublicKey "data-filename" (print $k.Name ".pub"))
 		(and $canEdit (not $k.Encrypts) (not $inline) (item "edit" "Edit links" "href" $edit))

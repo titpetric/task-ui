@@ -148,7 +148,6 @@ func newFixture(t *testing.T) *fixture {
 		Steps:         steps,
 		Git:           &git.Git{},
 		Keys:          keys,
-		KeyReads:      storage.NewKeyReadStorage(db),
 		Env:           envfile.New(storage.NewEnvFileStorage(db), secrets),
 		Recordings:    recordings,
 		Root:          root,

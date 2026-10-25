@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/titpetric/task-ui/internal/assert"
@@ -32,7 +33,9 @@ func recordedRun(t *testing.T, f *fixture, size int, gone bool) *model.Run {
 	return run
 }
 
-// The page shows what each kind holds and its rule; an admin edits the
+// The page is one table with a row per area in order, the fixed rows
+// among them and no key read log; the selects show the saved rule, a
+// limit the list lacks as an option of its own; an admin edits the
 // rules and cleans up now, a user who may see the settings reads them,
 // and a viewer may not open the page.
 func TestDataRetention(t *testing.T) {
@@ -40,28 +43,48 @@ func TestDataRetention(t *testing.T) {
 	f := newFixture(t)
 	recordedRun(t, f, 2048, false)
 	recordedRun(t, f, 2048, false)
-	assert.NoError(t, f.opts.Cleaner.Save(context.Background(), retention.Settings{Recordings: retention.Rule{Age: retention.Week, Limit: 1 << 20}, Artifacts: retention.Rule{Age: retention.Never}, SecretReads: retention.Rule{Age: retention.Never}}))
+	settings := retention.Defaults()
+	settings[retention.Recordings] = retention.Rule{Age: retention.Week, Limit: 1 << 20}
+	settings[retention.Runs] = retention.Rule{Age: retention.Year, Limit: 3 << 30}
+	settings[retention.Artifacts] = retention.Rule{Age: retention.Never}
+	assert.NoError(t, f.opts.Cleaner.Save(context.Background(), settings))
+	cleanup := f.run(t, model.Default, "@cleanup", asAdmin, model.StateOK)
 
 	body := f.page(t, asAdmin, "/settings/retention")
 	assert.Contains(t, body, "<h2>Data retention</h2>")
-	assert.Contains(t, body, "<h3>Run recordings</h3>")
-	assert.Contains(t, body, "<h3>Artifact history</h3>")
-	assert.Contains(t, body, "<h3>Secret read log</h3>")
-	assert.Contains(t, body, "2 runs, 4.0 KB")
-	assert.Contains(t, body, `data-average="2048"`)
-	assert.Contains(t, body, `name="recordings.age" value="7d" checked`)
-	assert.Contains(t, body, `name="artifacts.age" value="never" checked`)
-	assert.Contains(t, body, `value="1.0 MB"`)
-	assert.Contains(t, body, "about 512 runs")
+	assert.Contains(t, body, "<thead><tr><th>Area</th><th>What goes</th><th>Keep</th><th>Size limit</th><th>Holds now</th><th>Last cleanup</th></tr></thead>")
+	last := -1
+	for _, area := range retention.Areas {
+		at := strings.Index(body, `<td class="key">`+area.Title+`</td>`)
+		assert.Greater(t, at, last, area.Title)
+		last = at
+	}
+	assert.NotContains(t, body, "Key read log")
+	assert.Contains(t, body, `<select name="recordings.age" aria-label="Keep Run recordings for">`)
+	assert.Contains(t, body, `<option value="7d" selected>7 days</option>`)
+	assert.Contains(t, body, `<option value="365d" selected>365 days</option>`)
+	assert.Contains(t, body, `<option value="1048576" selected>1 MB</option>`, "a limit the list lacks shows as set")
+	assert.Contains(t, body, `<option value="3221225472" selected>3 GB</option>`)
+	assert.Contains(t, body, `<option value="never" selected>Never</option>`)
+	assert.Contains(t, body, `<select name="prompts.age"`)
+	assert.NotContains(t, body, `name="prompts.limit"`, "no size on a row without one")
+	assert.Contains(t, body, `<td colspan="2" class="dim">Removed every cleanup, no setting.</td>`)
+	assert.Contains(t, body, `<select name="tooling.age" aria-label="Keep Tool history for"`)
+	assert.NotContains(t, body, `name="tooling.limit"`, "tool history takes an age, no size limit")
+	assert.Contains(t, body, "0 databases, 0 B")
+	assert.Contains(t, body, "2 recordings, 4.0 KB")
+	assert.Contains(t, body, "3 runs, 4.0 KB", "run history counts the cleanup's run, its size its recordings'")
+	assert.Contains(t, body, `<a href="/runs/`+cleanup.ID+`"`)
+	assert.Contains(t, body, `<i class="dot ok"></i>ok`)
 	assert.Contains(t, body, `data-api="/api/retention"`)
 	assert.Contains(t, body, `data-job="@cleanup"`)
 	assert.Contains(t, body, `rel="prev"><svg class="ic back"><use href="#i-chev"/></svg>Previous: Instance</a>`)
-	assert.NotContains(t, body, "<fieldset class=\"field\" disabled>")
+	assert.NotContains(t, body, " disabled>")
 
 	assert.NoError(t, f.opts.Users.Policies().Put(context.Background(), permission.KindUser, asOps, "secret/view", permission.Allow))
 	read := f.page(t, asOps, "/settings/retention")
-	assert.Contains(t, read, "<fieldset class=\"field\" disabled>")
-	assert.Contains(t, read, "An admin changes them.")
+	assert.Contains(t, read, `<select name="recordings.age" aria-label="Keep Run recordings for" disabled>`)
+	assert.Contains(t, read, "An admin changes the rules.")
 	assert.NotContains(t, read, `data-job="@cleanup"`)
 	assert.NotContains(t, read, `type="submit">Save`)
 

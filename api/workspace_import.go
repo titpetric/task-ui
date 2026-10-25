@@ -12,6 +12,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/titpetric/task-ui/access"
 	"github.com/titpetric/task-ui/envfile"
 	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/keystore"
@@ -38,10 +39,12 @@ var errImport = errors.New("the bundle")
 // directory with its home and src, writes its keys, adds its rows under
 // the folder, clones its home repository and then its projects. Up to
 // the clones a failure keeps nothing; a home or a project that does not
-// clone leaves an empty directory and reports git's output. Takes
-// workspace/edit.
+// clone leaves an empty directory and reports git's output. For admins
+// alone, as the export is: the bundle writes private keys into the key
+// folder.
 func (h *Handlers) importWorkspace(w http.ResponseWriter, r *http.Request) {
-	if !h.require(w, r, "workspace/edit") {
+	if !access.UserFrom(r.Context()).CanAdmin() {
+		fail(w, http.StatusForbidden, "only an admin imports a workspace: the bundle holds private keys and secrets")
 		return
 	}
 	if h.keysOff(w) {

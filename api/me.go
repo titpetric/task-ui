@@ -35,7 +35,6 @@ func (h *Handlers) getMe(w http.ResponseWriter, r *http.Request) {
 	for _, permission := range p.Permissions {
 		view.Permissions = append(view.Permissions, AreaView{Key: permission.Key, Title: permission.Title, About: config.About(permission.Key), Allowed: effective[permission.Key]})
 	}
-	view.Keys = h.readableKeys(r)
 	for _, f := range h.opts.Catalogue.List() {
 		if !user.CanSee(f.ID) {
 			continue

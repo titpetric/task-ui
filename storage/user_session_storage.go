@@ -52,6 +52,11 @@ func (s *UserSessionStorage) DeleteByUser(ctx context.Context, userID string) er
 	return client(s.db).Exec(ctx, "DELETE FROM user_session WHERE user_id = ?", userID)
 }
 
+// Expired returns the sessions that expired by now, oldest expiry first.
+func (s *UserSessionStorage) Expired(ctx context.Context, now time.Time) ([]model.UserSession, error) {
+	return client(s.db).Select[model.UserSession](ctx, "SELECT * FROM user_session WHERE expires_at <= ? ORDER BY expires_at ASC", now.UTC())
+}
+
 // DeleteExpired removes the sessions that expired by now.
 func (s *UserSessionStorage) DeleteExpired(ctx context.Context, now time.Time) error {
 	return client(s.db).Exec(ctx, "DELETE FROM user_session WHERE expires_at <= ?", now.UTC())

@@ -52,12 +52,19 @@ a host. The bare `@host` names no host, and the API refuses it.
 ## Cleanup
 
 `@cleanup` of the root, `_`, is `task-ui cleanup`: it applies the
-[Data retention](settings.md#data-retention) rules. It removes the
-recording files of finished runs, and only those, the earlier versions
-of the artifact tree, never the latest of a file in the tree, and the
-reads of the secret read log, the oldest first, and prints, for each
-kind, what it removed and what stays. After it removed rows it
-vacuums the database and prints its size before and after. With
+[Data retention](settings.md#data-retention) table, each row in the table's
+order, the oldest items first: the recording files of finished runs, the rows
+of old runs with their recordings, summaries and threads, old prompt
+threads, old workflow runs with their steps, the earlier versions of
+the artifact tree, never the latest of a file in the tree, the reads of
+the secret read log, the expired tokens and sessions, which go every
+time, and then the tool history, which it hands to `atkins --prune`
+database by database, the instance's own copy among them. It prints a
+line per row, what it removed and what stays, a line per tool history
+database, and after it removed rows it
+vacuums the database and prints its size before and after. A run in
+progress or queued, a thread with an open instruction, a workflow run
+in progress and its own run stay whatever the rules say. With
 `--dry-run` as its arguments it prints what would go and changes
 nothing.
 

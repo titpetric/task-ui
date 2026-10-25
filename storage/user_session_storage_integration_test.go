@@ -57,3 +57,24 @@ func TestUserSessionStorage(t *testing.T) {
 	_, err = sessions.Find(ctx, "h2")
 	assert.ErrorIs(t, err, storage.ErrNotFound)
 }
+
+// Expired lists the sessions past their expiry, which DeleteExpired removes.
+func TestUserSessionStorage_Expired(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	sessions := storage.NewUserSessionStorage(newDB(t))
+	now := time.Now()
+	_, err := sessions.Create(ctx, "u1", "live", now.Add(time.Hour))
+	assert.NoError(t, err)
+	old, err := sessions.Create(ctx, "u1", "old", now.Add(-time.Minute))
+	assert.NoError(t, err)
+	expired, err := sessions.Expired(ctx, now)
+	assert.NoError(t, err)
+	assert.Len(t, expired, 1)
+	assert.Equal(t, old.ID, expired[0].ID)
+	assert.NoError(t, sessions.DeleteExpired(ctx, now))
+	expired, _ = sessions.Expired(ctx, now)
+	assert.Len(t, expired, 0)
+	_, err = sessions.Find(ctx, "live")
+	assert.NoError(t, err)
+}

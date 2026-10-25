@@ -165,7 +165,6 @@ func (h *Handlers) Routes() http.Handler {
 	r.Put("/keys/{name}", h.updateKey)
 	r.Post("/keys/{name}/rotate", h.rotateKey)
 	r.Delete("/keys/{name}/backup", h.deleteKeyBackup)
-	r.Get("/keys/{name}/private", h.readKey)
 	r.Delete("/keys/{name}", h.deleteKey)
 
 	r.Get("/sources/*", h.getSource)

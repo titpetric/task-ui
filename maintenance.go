@@ -68,7 +68,7 @@ func cleanup(ctx context.Context, args []string, stdout io.Writer) error {
 		return err
 	}
 	defer db.Close()
-	cleaner := app.NewCleaner(db, cfg)
+	cleaner := app.NewCleaner(db, cfg, os.Getenv("HOME"))
 	when := "now"
 	if dry {
 		when = "a dry run: nothing changes"
