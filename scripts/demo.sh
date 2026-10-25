@@ -229,7 +229,6 @@ for theme in dark light; do
 done
 shot user-new-dark /settings/users/new dark
 api PUT /integrations/forgejo -d '{"values":{"url":"https://git.example","token":"demo"}}'
-shot integrations-dark /settings/integrations dark 1440x1300
 shot notes-dark /notes dark
 shot envfile-dark /f/_/infra/env/.env dark
 shot out-of-hours-dark "/f/_/website#start=website/lint" dark 1440x900 2000
@@ -269,7 +268,13 @@ ANSWER
 chmod +x "$work/demo/acme/home/bin/claude"
 api POST /projects -d "{\"url\":\"file://$work/repos/acme-api.git\",\"id\":\"api\",\"workspace\":\"acme\"}"
 api POST /projects -d "{\"url\":\"file://$work/repos/acme-web.git\",\"id\":\"web\",\"workspace\":\"acme\"}"
-api PUT /integrations/claude -d '{"values":{"token":"sk-ant-oat01-demo","who":"admin"}}'
+api PUT /integrations/claude -d '{"values":{"token":"sk-ant-oat01-demo","who":"admin,runner"}}'
+# Integrations after the token, with the admin and runner roles checked:
+# the Claude row's Who shows admin getting it by its own box, ops as a
+# runner, and guest without.
+for theme in dark light; do
+  shot "integrations-${theme}" /settings/integrations "$theme" 1440x1600
+done
 # The workspace's own: a shared secret and one of a project in it, an SSH key every run in acme gets and one only the
 # admins' runs get, and a local .env in the api checkout, which its
 # Files panel lists sealed.

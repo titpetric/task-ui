@@ -93,7 +93,7 @@ func TestStore_MigrateConflict(t *testing.T) {
 // MigrateInstance writes the integrations for the instance's
 // encryption key, copying first: after it the legacy SSH keys can go
 // and the integrations still open. A secret the instance's key already
-// opens, a workspace's say, is current and stays as it is, an
+// opens, a workspace's say, is current and stays as is, an
 // integration nothing opens stays and counts, and a second run does
 // nothing.
 func TestStore_MigrateInstance(t *testing.T) {

@@ -1051,6 +1051,42 @@
     });
   });
 
+  // Who gets the token, on a Who field: each user's state follows the
+  // boxes, their own (gets it), a checked role that is their effective
+  // role (gets it as the role), neither (doesn't), or nothing checked at
+  // all (everyone gets it); the summary line counts them.
+  function whoState(field) {
+    var roles = {}, any = false, users = field.querySelectorAll(".who-user"), getting = 0, without = [];
+    field.querySelectorAll(".who-roles input").forEach(function (box) {
+      if (box.checked) { roles[box.value] = true; any = true; }
+    });
+    users.forEach(function (label) { if (label.querySelector("input").checked) any = true; });
+    users.forEach(function (label) {
+      var box = label.querySelector("input"), role = label.dataset.role, state, text;
+      if (!any) { state = "who-all"; text = "gets it (everyone)"; }
+      else if (box.checked) { state = "who-direct"; text = "gets it"; }
+      else if (roles[role]) { state = "who-role"; text = "gets it as " + role; }
+      else { state = "who-none"; text = "doesn't"; }
+      label.classList.remove("who-all", "who-direct", "who-role", "who-none");
+      label.classList.add(state);
+      label.querySelector(".who-state").textContent = text;
+      if (state === "who-none") without.push(box.value); else getting++;
+    });
+    var summary = field.querySelector(".who-summary");
+    if (!summary) return;
+    if (!any) summary.textContent = "Nothing checked: every run gets the token.";
+    else summary.textContent = getting + " of " + users.length + (users.length === 1 ? " user gets" : " users get") + " the token" +
+      (without.length && without.length <= 5 ? "; not " + without.join(", ") : "") + ".";
+  }
+  function initWho() {
+    document.querySelectorAll(".field.who").forEach(whoState);
+  }
+  document.addEventListener("change", function (event) {
+    var field = event.target.closest(".field.who");
+    if (field && event.target.matches("input[type=checkbox]")) whoState(field);
+  });
+  initWho();
+
   // A show/hide switch remembers its choice, in this browser.
   Array.prototype.forEach.call(document.querySelectorAll("input[data-peek]"), function (input) {
     var key = "task-ui.peek." + input.dataset.peek;

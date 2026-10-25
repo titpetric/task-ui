@@ -1,6 +1,8 @@
 package integration_test
 
 import (
+	"encoding/json"
+	"strings"
 	"testing"
 
 	"github.com/titpetric/task-ui/integration"
@@ -26,4 +28,25 @@ func TestKinds(t *testing.T) {
 
 	assert.False(t, integration.Configured(*kind, map[string]string{"url": "http://beszel:8090"}))
 	assert.True(t, integration.Configured(*kind, map[string]string{"url": "u", "token": "t"}))
+}
+
+// Every kind carries the steps to its credential, each one with words in
+// it, in the JSON the API serves too; the heading names the credential
+// as its field's label, lower case unless it starts with an acronym.
+func TestKind_Steps(t *testing.T) {
+	t.Parallel()
+	for _, kind := range integration.Kinds() {
+		assert.True(t, len(kind.Steps) >= 3, kind.ID)
+		for i, step := range kind.Steps {
+			assert.True(t, strings.TrimSpace(step) != "", kind.ID, i)
+		}
+		raw, err := json.Marshal(kind)
+		assert.NoError(t, err)
+		assert.Contains(t, string(raw), `"steps":["`)
+	}
+	assert.Equal(t, "OAuth token", integration.KindOf(integration.Claude).Credential())
+	assert.Equal(t, "token", integration.KindOf(integration.Forgejo).Credential())
+	assert.Equal(t, "token", integration.KindOf(integration.Beszel).Credential())
+	assert.Equal(t, "", (&integration.Kind{Fields: []integration.Field{{Name: "secret", Secret: true, Generated: true}}}).Credential())
+	assert.Contains(t, integration.KindOf(integration.Claude).Steps[0], "`claude setup-token`")
 }

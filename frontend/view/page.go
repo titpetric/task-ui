@@ -474,6 +474,17 @@ func (p *Page) JobSummary(key string) *SummaryLink {
 	return p.JobSummaries[key]
 }
 
+// RoleCount returns how many of the page's users act with a role.
+func (p *Page) RoleCount(role model.Role) int {
+	count := 0
+	for i := range p.Users {
+		if p.Users[i].EffectiveRole() == role {
+			count++
+		}
+	}
+	return count
+}
+
 // LastRun returns the latest run of a job, or nil.
 func (p *Page) LastRun(key string) *Run {
 	if run, ok := p.Last[key]; ok {

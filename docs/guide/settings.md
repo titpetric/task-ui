@@ -453,13 +453,17 @@ open stays, with a warning.
 
 ![Integrations](../assets/integrations-dark.png)
 
-The services task-ui talks to, with their API keys and tokens. task-ui
-encrypts them with the instance's encryption key, as every secret, and never
-shows them again: a form marks a secret with a value as **set**, and an empty secret
-field keeps it on save. The Secrets page leaves them out, and no run sees
-them as secrets. A switch beside each integration's name shows or hides
-its form, and the browser keeps the choice. **Clear** deletes every
-setting of an integration.
+The services task-ui talks to, with their API keys and tokens, a row per
+integration: its name with its set up badge, its description and its
+form on the left, and on the right the numbered steps to its key, the
+short form of the how-tos below. task-ui encrypts the keys with the
+instance's encryption key, as every secret, and never shows them again: a
+form marks a secret with a value as **set**, and an empty secret field
+keeps it on save. The Secrets page leaves them out, and no run sees them
+as secrets. A switch beside each integration's name shows or hides its
+row below the name, and the browser keeps the choice. **Clear** deletes
+every setting of an integration. The API serves the steps with the kind,
+`steps` on `GET /api/integrations`.
 
 - **Claude Code**: the token Claude Code signs in with, from
   `claude setup-token`, for the whole instance, and **Who**: a box for
@@ -478,6 +482,29 @@ setting of an integration.
   containers each host runs, and `container_stats`, their records,
   the newest minute on a hub without `containers`. A read-only user
   reads them all.
+
+### Who gets the token
+
+The **Who** field of Claude Code lists the roles, each with how many
+users act with it, and the users, each with the role a run checks for
+them: an admin-flagged user with the runner role counts as `admin`.
+Beside each user stands their state, which follows the boxes as you
+check them, before the save:
+
+- **gets it**: the user's own box has a check.
+- **gets it as `role`**: the user's box is clear, and a checked role is
+  the role they act with; the row carries the same tint as a checked
+  one.
+- **doesn't**: neither, so a run of the user starts without the token;
+  the row is faint.
+- **gets it (everyone)**: no box at all has a check, roles or users, so
+  every run gets the token.
+
+The line under the list sums it up: *Nothing checked: every run gets
+the token*, or how many of the users get it, naming the ones who don't
+when they are five or fewer.
+
+### Beszel's token
 
 Beszel has no API keys, so task-ui takes a token of a read-only user that
 no one signs in as. Make one in Beszel with a password nobody keeps, then

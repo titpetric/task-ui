@@ -25,7 +25,7 @@ it with headless chromium; `task docs:shots` regenerates them into
 | ![Users, from the password file](assets/users-dark.png) | ![Secrets, grouped by workspace, each on its own key](assets/secrets-dark.png) |
 | ![Permissions: a matrix per role](assets/permissions-dark.png) | ![A profile: a user's activity](assets/profile-dark.png) |
 | ![The edit page of a user: Roles, Folders, Permissions, Keys, MCP access](assets/user-edit-dark.png) | ![The edit page, light theme](assets/user-edit-light.png) |
-| ![A profile, light theme](assets/profile-light.png) | ![Integrations: Claude Code, Forgejo with Sync now and Dry run, and Beszel](assets/integrations-dark.png) |
+| ![A profile, light theme](assets/profile-light.png) | ![Integrations: a row per integration, its form on the left and the steps to its key on the right; Who shows which users get the Claude token](assets/integrations-dark.png) |
 | ![Notes: messages, replies and instructions](assets/notes-dark.png) | ![Add user](assets/user-new-dark.png) |
 | ![Add a secret](assets/secret-new-dark.png) | ![An env file](assets/envfile-dark.png) |
 | ![SSH keys](assets/keys-dark.png) | ![Generate a key](assets/keys-generate-dark.png) |
@@ -37,4 +37,4 @@ it with headless chromium; `task docs:shots` regenerates them into
 | ![The phone: a row's actions menu as a sheet along the bottom](assets/mobile-actions-dark.png) | ![Workspace settings, light theme](assets/workspace-edit-light.png) |
 | ![The phone: a workspace's settings page, its home repository with Pull now, Replace and Remove](assets/mobile-workspace-edit-dark.png) | ![The sidebar with pins: a directory under its project, a file as a run item](assets/sidebar-pin-dark.png) |
 | ![Pins, light theme](assets/sidebar-pin-light.png) | ![Data retention: a table, a row per area, with Keep and Size limit selects](assets/retention-dark.png) |
-| ![Data retention, light theme](assets/retention-light.png) | |
+| ![Data retention, light theme](assets/retention-light.png) | ![Integrations, light theme: the Who field with a user who gets the token as admin and two who do not](assets/integrations-light.png) |
