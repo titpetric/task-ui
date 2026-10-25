@@ -19,6 +19,7 @@ func TestSettings(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
 	f.withKey(t)
+	assert.NoError(t, f.opts.Workspaces.EnsureDefault(context.Background()), "a fresh instance has the default workspace")
 	assert.NoError(t, f.opts.Secrets.Set(context.Background(), &model.Secret{Scope: "all", Name: "TOKEN", Content: "x"}))
 
 	body := f.page(t, asAdmin, "/settings")

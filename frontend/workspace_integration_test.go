@@ -186,8 +186,9 @@ func TestWorkspaces_NoDefault(t *testing.T) {
 
 	body := f.page(t, asAdmin, "/settings/workspaces")
 	assert.Contains(t, body, `href="/f/malta"`)
-	assert.NotContains(t, body, `href="/f/_"`)
-	assert.NotContains(t, body, "Empty")
+	main := body[strings.Index(body, "<main"):]
+	assert.NotContains(t, main, `href="/f/_"`, "the header's prompt still names the root; the list does not")
+	assert.NotContains(t, main, "Empty")
 	assert.Contains(t, body, `data-delete="/api/workspaces/malta"`)
 	assert.Contains(t, body, `data-confirm-ok="Delete"`)
 

@@ -297,12 +297,10 @@ func TestPage_SidebarLimit(t *testing.T) {
 	assert.Contains(t, side, `data-project="malta/vhosts"`)
 	assert.Contains(t, side, `data-project="malta/dockerfiles"`)
 
-	// The root's limit: infra has a commit, private none.
-	assert.NoError(t, f.opts.Workspaces.EnsureDefault(ctx))
-	root, err := f.opts.Workspaces.GetByFolder(ctx, model.Default)
-	assert.NoError(t, err)
-	root.SidebarLimit = 1
-	assert.NoError(t, f.opts.Workspaces.Update(ctx, root))
+	// The root's limit: infra has a commit, private none. EnsureDefault
+	// adds _ to an empty table alone, so the row comes by hand here.
+	root := &model.Workspace{Folder: model.Default, Title: "Default", SidebarLimit: 1}
+	assert.NoError(t, f.opts.Workspaces.Create(ctx, root))
 	side = sidebar(f.page(t, asAdmin, "/"))
 	assert.Contains(t, side, `data-project="infra"`)
 	assert.Contains(t, side, `data-folder="infra/edge"`)

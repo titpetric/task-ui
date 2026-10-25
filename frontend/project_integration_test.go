@@ -15,6 +15,7 @@ import (
 func TestProjects(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
+	assert.NoError(t, f.opts.Workspaces.EnsureDefault(context.Background()), "a fresh instance has the default workspace")
 
 	body := f.page(t, asAdmin, "/settings/projects")
 	assert.Contains(t, body, "<h2>Projects</h2>")
