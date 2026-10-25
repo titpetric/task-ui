@@ -325,14 +325,3 @@ func TestPage_SummarizesRun(t *testing.T) {
 	assert.True(t, p.RunReport("r1").Pending)
 	assert.Nil(t, p.RunReport("r2"))
 }
-
-// RoleCount counts the users by the role they act with: an Admin-flagged
-// runner is an admin.
-func TestPage_RoleCount(t *testing.T) {
-	t.Parallel()
-	p := &view.Page{Users: []model.User{{Name: "admin", Role: model.RoleAdmin}, {Name: "ops", Role: model.RoleRunner, Admin: true}, {Name: "dev", Role: model.RoleRunner}, {Name: "guest", Role: model.RoleViewer}}}
-	assert.Equal(t, 2, p.RoleCount(model.RoleAdmin))
-	assert.Equal(t, 1, p.RoleCount(model.RoleRunner))
-	assert.Equal(t, 1, p.RoleCount(model.RoleViewer))
-	assert.Equal(t, 0, (&view.Page{}).RoleCount(model.RoleAdmin))
-}

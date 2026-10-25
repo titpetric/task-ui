@@ -105,13 +105,8 @@ func (h *Handlers) projectEdit(w http.ResponseWriter, r *http.Request) {
 			"hours":       project.Hours,
 		}
 	}
-	users, _ := h.opts.Users.List(r.Context())
-	p.AllowChoices = view.WhoChoices(p.Project.AllowList(), users)
-	p.JobAllowChoices = map[string][]view.WhoChoice{}
-	jobAllow := p.Project.JobAllowMap()
-	for _, job := range f.Jobs {
-		p.JobAllowChoices[job.ID] = view.WhoChoices(jobAllow[job.ID], users)
-	}
+	p.Users, _ = h.opts.Users.List(r.Context())
+	p.Allow, p.JobAllow = p.Project.AllowList(), p.Project.JobAllowMap()
 	h.moveChoices(r.Context(), p, id)
 	h.render(w, http.StatusOK, "project_edit", p)
 }

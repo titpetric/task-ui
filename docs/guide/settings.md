@@ -232,10 +232,10 @@ public key, Edit links, Rotate Key or Delete backup, and Remove last.
 - The copy button copies a public key, to add on the hosts that
   accept it. **Remove**, in the **⋯** menu, retires an SSH key: its files stay in the folder
   as `<name>.key.bak-<time>`, nothing lists or loads them.
-- **Who gets it** picks whose runs get an SSH key, in a **Roles** row and
-  a **Users** row of boxes. A run started by someone with one of the
-  key's roles, or by one of its users, has it in the run's ssh agent, and
-  nothing else does: that agent is the only way a key reaches a run,
+- **Who gets it** picks whose runs get an SSH key, with the element
+  [Who gets it](#who-gets-it) describes. A run started by someone with
+  one of the key's roles, or by one of its users, has it in the run's
+  ssh agent, and nothing else does: that agent is the only way a key reaches a run,
   from memory, with no key file on disk. A workspace's SSH key with no
   link goes to every run of the workspace. An instance SSH key with no
   link stays the instance's: the inventory's logins use it, runs don't.
@@ -467,8 +467,9 @@ every setting of an integration. The API serves the steps with the kind,
 `steps` on `GET /api/integrations`.
 
 - **Claude Code**: the token Claude Code signs in with, from
-  `claude setup-token`, for the whole instance, and **Who**: a box for
-  each role and each user, checked for those whose runs get it as
+  `claude setup-token`, for the whole instance, and **Who**, the
+  element [Who gets it](#who-gets-it) describes: a box for each role
+  and each user, checked for those whose runs get it as
   `CLAUDE_CODE_OAUTH_TOKEN`, such as the admin role and the user
   `claude`. Check the agent's user too: the agent job of the
   [Notes](notes.md) board runs as that user. With no box checked, every
@@ -484,11 +485,13 @@ every setting of an integration. The API serves the steps with the kind,
   the newest minute on a hub without `containers`. A read-only user
   reads them all.
 
-### Who gets the token
+### Who gets it
 
-The **Who** field of Claude Code lists the roles, each with how many
-users act with it, and the users, each with the role a run checks for
-them: an admin-flagged user with the runner role counts as `admin`.
+One element picks whose runs get something, wherever a form asks:
+whose runs get an SSH key, who may run a project or one of its jobs,
+and whose runs get the Claude token. It lists the roles, each with how
+many users act with it, and the users, each with the role a run checks
+for them: an admin-flagged user with the runner role counts as `admin`.
 Beside each user stands their state, which follows the boxes as you
 check them, before the save:
 
@@ -496,14 +499,20 @@ check them, before the save:
 - **gets it as `role`**: the user's box is clear, and a checked role is
   the role they act with; the row carries the same tint as a checked
   one.
-- **doesn't**: neither, so a run of the user starts without the token;
-  the row is faint.
-- **gets it (everyone)**: no box at all has a check, roles or users, so
-  every run gets the token.
+- **doesn't**: neither, so a run of the user starts without it; the row
+  is faint.
+- **gets it (everyone)**: no box at all has a check, roles or users, and
+  nothing checked means everyone: every run gets the token, every run
+  in the workspace gets its key, everyone who may run can.
 
 The line under the list sums it up: *Nothing checked: every run gets
-the token*, or how many of the users get it, naming the ones who don't
-when they are five or fewer.
+the token*, in the words of the form, or how many of the users get it,
+naming the ones who don't when they are five or fewer. An instance SSH
+key with nothing checked goes to no run, so there every user reads
+**doesn't** and the line says so. A name the setting holds that is no
+user of the instance keeps a checked box, marked *no such user*, so a
+save keeps it. In the per-job table of a project's settings the element
+runs on one line without the line under it.
 
 ### Beszel's token
 
@@ -823,10 +832,10 @@ the remote to clone it again from before it does.
 stay as they are:
 
 - a title and a description;
-- **who can run it**: a box for each role that runs, admin and runner,
-  and each user who is no viewer; none checked is every runner. Each job
-  has the same boxes in the per-job table, over the folder's, and none
-  checked there inherits;
+- **who can run it**: the roles and the users, with the element
+  [Who gets it](#who-gets-it) describes; none checked is everyone who
+  may run. Each job has the same element in the per-job table, over the
+  folder's, and none checked there inherits;
 - which **sources** to read, which is also how a folder with a pipeline
   gets its Makefile or scripts back as jobs;
 - **hours**, one rule per line, days then a span. The last rule that

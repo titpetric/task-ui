@@ -36,10 +36,11 @@ func TestProjectEdit(t *testing.T) {
 	empty := f.page(t, asAdmin, "/settings/projects/infra")
 	assert.Contains(t, empty, `<h2>Project settings <span class="badge">infra</span></h2>`)
 	assert.Contains(t, empty, `data-api="/api/projects/infra"`)
-	// Who can run is a box a role and a user; none checked is everyone.
+	// Who can run is the whofield element: a box a role, with its count, and a user; none checked is everyone.
 	assert.Contains(t, empty, `<input type="checkbox" name="allow" value="runner" data-type="set">`)
 	assert.Contains(t, empty, `<input type="checkbox" name="allow" value="ops" data-type="set">`)
-	assert.NotContains(t, empty, `name="allow" value="viewer"`)
+	assert.Contains(t, empty, `name="allow" value="viewer" data-type="set"> viewer <small class="count">· 1</small>`)
+	assert.Contains(t, empty, `<div class="whofield" data-who-empty="everyone who may run can">`)
 
 	project := &model.Project{Folder: "infra", Title: "Infra", Allow: model.EncodeList([]string{"ops", "release"}), Sources: model.EncodeList([]string{"Makefile"})}
 	assert.NoError(t, f.opts.Projects.Create(context.Background(), project))
@@ -73,6 +74,7 @@ func TestProjectEdit_PerJob(t *testing.T) {
 
 	fresh := f.page(t, asAdmin, "/settings/projects/infra")
 	assert.Contains(t, fresh, `<input type="checkbox" name="job_allow.plan" value="ops" data-type="set">`)
+	assert.Contains(t, fresh, `<div class="whofield compact" data-who-empty="the folder&#39;s Who can run applies">`)
 	assert.Contains(t, fresh, `name="job_hours.slow" value=""`)
 
 	project := &model.Project{Folder: "infra", JobAllow: model.EncodeMap(map[string][]string{"plan": {"ops", "release"}}), JobHours: `{"slow":"mon-fri 9-17"}`}
