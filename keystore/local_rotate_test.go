@@ -14,7 +14,7 @@ import (
 	"github.com/titpetric/task-ui/storage"
 )
 
-// Rotate Key keeps the previous material as the key's one backup, which
+// Rotate key keeps the previous material as the key's one backup, which
 // serves beside the new key until it goes; a second rotation waits for
 // that.
 func TestLocal_Rotate(t *testing.T) {

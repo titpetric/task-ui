@@ -555,9 +555,9 @@
 {{- end }}
 {{- end }}
 
-{{- /* runButtons hold Run, |>summarize, and Run force for a job with
+{{- /* runButtons hold Run, |> Summarize, and Run force for a job with
      hours. Run of a job that takes args opens a field for them under its
-     card or head first, with the command they follow. |>summarize runs
+     card or head first, with the command they follow. |> Summarize runs
      the job the same way, and Claude summarises the run on its page when
      it ends. */}}
 {{ define "runButtons" }}
@@ -570,12 +570,12 @@
 <button type="button" class="btn btn-primary btn-sm" data-run data-folder="{{ $p.ID }}"{{ with $r.Dir }} data-dir="{{ . }}"{{ end }} data-job="{{ $r.ID }}" data-title="{{ $p.ID }}{{ with $r.Dir }}/{{ . }}{{ end }} / {{ $r.Name }}"{{ with $r.ArgsCommand }} data-args="{{ . }}" title="Run with arguments after {{ . }}"{{ end }}><svg class="ic"><use href="#i-play"/></svg>Run{{ if $r.TakesArgs }}...{{ end }}</button>
 {{- end }}
 
-{{- /* summarizeButton is |>summarize of a job Claude summarizes for the
+{{- /* summarizeButton is |> Summarize of a job Claude summarizes for the
      user, Page.Summarizes. (list $ folder job) */}}
 {{ define "summarizeButton" }}
 {{- $ := index . 0 }}{{ $p := index . 1 }}{{ $r := index . 2 -}}
 {{- if $.Summarizes $r }}
-<button type="button" class="btn btn-sm" data-run data-summarize data-folder="{{ $p.ID }}"{{ with $r.Dir }} data-dir="{{ . }}"{{ end }} data-job="{{ $r.ID }}" data-title="{{ $p.ID }}{{ with $r.Dir }}/{{ . }}{{ end }} / {{ $r.Name }}"{{ with $r.ArgsCommand }} data-args="{{ . }}"{{ end }} title="Run and summarize">|&gt;summarize</button>
+<button type="button" class="btn btn-sm" data-run data-summarize data-folder="{{ $p.ID }}"{{ with $r.Dir }} data-dir="{{ . }}"{{ end }} data-job="{{ $r.ID }}" data-title="{{ $p.ID }}{{ with $r.Dir }}/{{ . }}{{ end }} / {{ $r.Name }}"{{ with $r.ArgsCommand }} data-args="{{ . }}"{{ end }} title="Run and summarize">|&gt; Summarize</button>
 {{- end }}
 {{- end }}
 

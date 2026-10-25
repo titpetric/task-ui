@@ -2,7 +2,7 @@
 <div class="page-head">
 	<div>
 		<h2>Generate key</h2>
-		<p>Creates a key in {{ .KeysDir }}, as <code>&lt;name&gt;_&lt;algorithm&gt;.key</code> and <code>.pub</code>. A name is unique across the folder.</p>
+		<p>Generates a key in {{ .KeysDir }}, as <code>&lt;name&gt;_&lt;algorithm&gt;.key</code> and <code>.pub</code>. A name is unique across the folder.</p>
 	</div>
 </div>
 
@@ -29,7 +29,7 @@
 	{{- template "keypolicies" (list nil (list (index .Form "for")) .Users) }}
 	<div class="form-foot">
 		<a class="btn" href="/settings/keys">Cancel</a>
-		<button class="btn btn-primary" type="submit">Generate</button>
+		<button class="btn btn-primary" type="submit">Add key</button>
 	</div>
 </form>
 {{ end }}

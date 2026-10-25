@@ -251,7 +251,7 @@ func (h *Handlers) rotateEncryptKey(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusCreated, body)
 }
 
-// rotateKey rotates an instance key, Rotate Key: new material of its
+// rotateKey rotates an instance key, Rotate key: new material of its
 // algorithm and size under its name, the previous material kept as its
 // one backup, backup/<name>, which serves beside it. The encryption key
 // writes the instance's secrets again for the new material, as

@@ -349,7 +349,7 @@ task-ui signs nothing with an instance key: there is no signing
 purpose. A job may still use a key from its agent to sign, such as a git
 commit with `gpg.format ssh`; that is the job's choice.
 
-**Rotate Key** writes new material of the same algorithm and size under
+**Rotate key** writes new material of the same algorithm and size under
 the key's name and moves the old pair to `backup/<name>.key` and `.pub`
 (`keystore/local_rotate.go`). The key's row shows
 `BACKUP ACTIVE: backup/<name>` while the backup exists, and both serve:
@@ -359,7 +359,7 @@ the key's name and moves the old pair to `backup/<name>.key` and `.pub`
 - an SSH key goes into an agent with its backup after it, so a host that
   knows only the old public key still lets the run in.
 
-A key keeps one backup. While it has one, Rotate Key answers `409`; an
+A key keeps one backup. While it has one, Rotate key answers `409`; an
 admin adds the new public key where it belongs, then deletes the
 backup, and the key rotates again.
 

@@ -6,5 +6,5 @@
 	</div>
 </div>
 
-{{ template "stepeditor" (list $ nil "/api/workflows" "POST" "/workflows" "Create") }}
+{{ template "stepeditor" (list $ nil "/api/workflows" "POST" "/workflows" "Add workflow") }}
 {{ end }}

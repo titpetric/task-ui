@@ -23,7 +23,7 @@
 
 <section class="block">
 	<h3>Settings <small class="mono-break">{{ if $default }}the root, {{ .Root }}{{ else }}{{ $ws.Dir .Root }}{{ end }}</small></h3>
-	<form class="form" data-api="/api/workspaces/{{ $ws.Folder }}" data-method="PUT" data-next="/settings/workspaces/{{ $ws.Folder }}?notice=Saved">
+	<form class="form" data-api="/api/workspaces/{{ $ws.Folder }}" data-method="PUT" data-next="/settings/workspaces/{{ $ws.Folder }}?notice=Workspace+saved">
 		<div class="field">
 			<label for="we-title">Title</label>
 			<input type="text" id="we-title" name="title" value="{{ index .Form "title" }}" autocomplete="off">

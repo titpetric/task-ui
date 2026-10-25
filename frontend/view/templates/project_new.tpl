@@ -36,7 +36,7 @@
 	</div>
 	<div class="form-foot">
 		<a class="btn" href="{{ $back }}">Cancel</a>
-		<button class="btn btn-primary" type="submit">Clone</button>
+		<button class="btn btn-primary" type="submit">Add project</button>
 	</div>
 </form>
 {{ end }}

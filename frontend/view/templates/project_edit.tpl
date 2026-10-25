@@ -14,7 +14,7 @@
 	{{- end }}
 </div>
 
-<form class="form" data-api="/api/projects/{{ $p.ID }}" data-method="PUT" data-next="/settings/projects?notice=Saved">
+<form class="form" data-api="/api/projects/{{ $p.ID }}" data-method="PUT" data-next="/settings/projects?notice=Project+saved">
 	<div class="field">
 		<label for="pe-title">Title</label>
 		<input type="text" id="pe-title" name="title" value="{{ index .Form "title" }}" autocomplete="off">

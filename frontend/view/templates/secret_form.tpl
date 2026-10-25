@@ -7,11 +7,11 @@
 	</div>
 </div>
 
-<form class="form" data-api="/api/secrets" data-method="POST" data-next="/settings/secrets?notice=Secret+saved">
+<form class="form" data-api="/api/secrets" data-method="POST" data-next="/settings/secrets?notice=Secret+{{ if $s.ID }}saved{{ else }}added{{ end }}">
 	{{- template "secretfields" (list $s .SecretGroups) }}
 	<div class="form-foot">
 		<a class="btn" href="/settings/secrets">Cancel</a>
-		<button class="btn btn-primary" type="submit">Save</button>
+		<button class="btn btn-primary" type="submit">{{ if $s.ID }}Save{{ else }}Add secret{{ end }}</button>
 	</div>
 </form>
 {{ end }}

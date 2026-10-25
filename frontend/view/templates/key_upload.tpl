@@ -24,7 +24,7 @@
 	{{- template "keypolicies" (list nil (list (index .Form "for")) .Users) }}
 	<div class="form-foot">
 		<a class="btn" href="/settings/keys">Cancel</a>
-		<button class="btn btn-primary" type="submit">Upload</button>
+		<button class="btn btn-primary" type="submit">Add key</button>
 	</div>
 </form>
 {{ end }}

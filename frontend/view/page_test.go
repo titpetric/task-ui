@@ -38,7 +38,7 @@ func signIn(p *view.Page, user *model.User, role permission.Policy) {
 	p.User, p.Permissions = user, permission.Set{User: user, Role: role}
 }
 
-// |>summarize takes Summaries, on a job that ends on its own.
+// |> Summarize takes Summaries, on a job that ends on its own.
 func TestPage_Summarizes(t *testing.T) {
 	t.Parallel()
 	f := &folder.Folder{ID: "infra", Dir: t.TempDir()}

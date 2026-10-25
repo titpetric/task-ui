@@ -1019,7 +1019,7 @@
     if (pick.value === pick.dataset.moveFrom) {
       delete form.dataset.confirm;
       delete form.dataset.confirmOk;
-      form.dataset.next = "/settings/projects?notice=Saved";
+      form.dataset.next = "/settings/projects?notice=Project+saved";
       return;
     }
     var last = id.slice(id.lastIndexOf("/") + 1);
@@ -1361,7 +1361,7 @@
       var failed = (res.data.projects || []).filter(function (p) { return !p.cloned && p.output; });
       var unknown = res.data.unknown_users || [];
       if (!failed.length && !unknown.length) {
-        next("/settings/workspaces/" + encodeURIComponent(folder) + "?notice=Imported");
+        next("/settings/workspaces/" + encodeURIComponent(folder) + "?notice=Workspace+imported");
         return;
       }
       var lines = ["Imported " + folder + "."];

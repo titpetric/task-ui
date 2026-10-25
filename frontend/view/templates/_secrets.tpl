@@ -95,13 +95,13 @@
 {{- define "secretdialogs" }}
 {{- $p := index . 0 }}{{ $next := index . 1 }}
 <dialog class="confirm" id="secret-add-dialog" aria-labelledby="secret-add-title">
-	<form class="form" data-api="/api/secrets" data-method="POST" data-next="{{ $next }}?notice=Secret+saved">
+	<form class="form" data-api="/api/secrets" data-method="POST" data-next="{{ $next }}?notice=Secret+added">
 		<h3 id="secret-add-title">Add secret</h3>
 		<p>task-ui encrypts the value and never shows it again. Saving an existing name replaces its value.</p>
 		{{- template "secretfields" (list $p.Secret $p.SecretGroups) }}
 		<div class="form-foot">
 			<button type="button" class="btn" data-dialog-close>Cancel</button>
-			<button class="btn btn-primary" type="submit">Save</button>
+			<button class="btn btn-primary" type="submit">Add secret</button>
 		</div>
 	</form>
 </dialog>
