@@ -190,10 +190,6 @@
     padding: 0 0.5rem;
     font-family: var(--font);
   }
-
-  & .form-error {
-    flex: 1 1 100%;
-  }
 }
 
 /* A rotated key's label while its backup serves beside it. */

@@ -98,7 +98,7 @@
 	{{- template "blockhead" (head "Schedules" "cron expressions, in the server's time zone" (and (not .Schedules) $none)) }}
 	{{- template "schedtable" (list $ .Schedules $can $r.Name) }}
 	{{- if $can }}
-	<form class="form inline" data-api="/api/schedules" data-method="POST" data-next="reload">
+	<form class="form inline" data-api="/api/schedules" data-method="POST" data-next="reload" data-notice="Schedule added">
 		<input type="hidden" name="folder" value="{{ $p.ID }}">
 		<input type="hidden" name="job" value="{{ $r.ID }}">
 		<div class="field">

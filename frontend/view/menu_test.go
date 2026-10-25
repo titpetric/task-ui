@@ -82,7 +82,7 @@ func TestMenu_Pages(t *testing.T) {
 	next := time.Now()
 	p.Schedules = []model.Schedule{{ID: "s1", Folder: "infra", Job: "plan", Expression: "@daily", Enabled: 1, NextRunAt: &next}}
 	body = render(t, "schedules", p)
-	assert.Contains(t, body, `data-api="/api/schedules/s1" data-method="PUT" data-body="{&#34;enabled&#34;:false}" data-next="reload"><svg class="ic"><use href="#i-stop"/></svg><span>Disable</span>`)
+	assert.Contains(t, body, `data-api="/api/schedules/s1" data-method="PUT" data-body="{&#34;enabled&#34;:false}" data-next="reload" data-notice="Schedule disabled"><svg class="ic"><use href="#i-stop"/></svg><span>Disable</span>`)
 	assert.Contains(t, body, `class="more-item danger" role="menuitem" data-delete="/api/schedules/s1" data-confirm="Delete the schedule @daily for infra / plan?"`)
 	assert.Contains(t, body, `<input type="checkbox" id="sch-triage" name="triage"> Triage failures with Claude`, "the form offers the triage")
 	assert.NotContains(t, body, `>triage</span>`, "no badge while off")

@@ -142,6 +142,9 @@
 	{{ template "dialog" . }}
 	{{ template "confirm" . }}
 {{- end }}
+	{{- /* The page's toasts: what a change that reloads the page did, and
+	     what failed outside a form. */}}
+	<div class="toasts" id="toasts" role="status" aria-live="polite"></div>
 	<footer>
 		<span class="credit">
 			<a class="wordmark" href="https://github.com/titpetric/task-ui">task-ui</a>

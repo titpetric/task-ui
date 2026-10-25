@@ -37,7 +37,7 @@
      the change. A schedule of a workflow with a user of its own runs as
      that user, read from the workflow, with no pick. */}}
 {{ define "runas-row" }}{{ $p := index . 0 }}{{ with index . 1 }}{{ if $p.WorkflowUser . }}{{ template "user" (list $p ($p.WorkflowUser .)) }}{{ else if $p.Users -}}
-<form class="run-as" data-api="/api/schedules/{{ .ID }}" data-method="PUT" data-next="reload">{{ template "avatar" (list $p .UserName) }} <select name="user" data-submit aria-label="Runs as">
+<form class="run-as" data-api="/api/schedules/{{ .ID }}" data-method="PUT" data-next="reload" data-notice="Schedule saved">{{ template "avatar" (list $p .UserName) }} <select name="user" data-submit aria-label="Runs as">
 			{{- template "user-options" (list $p.Users .UserName $p.UserKeys true) }}
 		</select>{{ template "user-menu" (list $p .UserName) }}</form>
 {{- else }}{{ template "user" (list $p .UserName) }}{{ end }}{{ end }}{{ end }}
@@ -69,7 +69,7 @@
      changes. With Effective, a muted mark after each cell says whether
      the user may do it by the role's policy and their own. */}}
 {{ define "matrix" }}{{ $m := index . 1 -}}
-<form class="matrix-form{{ if $m.Fixed }} fixed{{ end }}"{{ if $m.Editable }} data-api="{{ $m.API }}" data-method="PUT" data-next="reload" data-matrix{{ end }}>
+<form class="matrix-form{{ if $m.Fixed }} fixed{{ end }}"{{ if $m.Editable }} data-api="{{ $m.API }}" data-method="PUT" data-next="reload" data-notice="Permissions saved" data-matrix{{ end }}>
 	<div class="table-wrap">
 	<table class="table matrix{{ if $m.Effective }} effective{{ end }}">
 		<thead><tr><th>Section</th>{{ range $m.Rules }}<th>{{ .Title }}</th>{{ end }}</tr></thead>

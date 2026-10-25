@@ -26,6 +26,6 @@
      or Disable, by on, whether the schedule runs, and Delete, whose
      confirm names what the schedule is for. */}}
 {{ define "schedmenu" }}{{ $on := index . 1 }}{{ $what := index . 2 }}{{ with index . 0 }}{{ template "menu" (menu (print "Actions on the schedule " .Expression)
-	(item (or (and $on "stop") "play") (or (and $on "Disable") "Enable") "data-api" (print "/api/schedules/" .ID) "data-method" "PUT" "data-body" (or (and $on `{"enabled":false}`) `{"enabled":true}`) "data-next" "reload")
-	(danger "trash" "Delete" "data-delete" (print "/api/schedules/" .ID) "data-confirm" (print "Delete the schedule " .Expression " for " $what "?") "data-confirm-ok" "Delete" "data-next" "reload")
+	(item (or (and $on "stop") "play") (or (and $on "Disable") "Enable") "data-api" (print "/api/schedules/" .ID) "data-method" "PUT" "data-body" (or (and $on `{"enabled":false}`) `{"enabled":true}`) "data-next" "reload" "data-notice" (or (and $on "Schedule disabled") "Schedule enabled"))
+	(danger "trash" "Delete" "data-delete" (print "/api/schedules/" .ID) "data-confirm" (print "Delete the schedule " .Expression " for " $what "?") "data-confirm-ok" "Delete" "data-next" "reload" "data-notice" "Schedule deleted")
 ) }}{{ end }}{{ end }}

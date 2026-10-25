@@ -43,21 +43,6 @@
   }
 }
 
-.form-error {
-  margin: 0 0 0.8rem;
-  padding: 0.5rem 0.7rem;
-  background: var(--bad-wash);
-  border: 1px solid var(--bad);
-  border-radius: var(--radius);
-  color: var(--text);
-  font-size: var(--fs-sm);
-  white-space: pre-wrap;
-
-  &:empty {
-    display: none;
-  }
-}
-
 .table td.actions form {
   display: inline;
 }

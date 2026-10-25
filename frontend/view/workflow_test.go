@@ -350,7 +350,7 @@ func TestView_RenderWorkflowEditSchedule(t *testing.T) {
 	out := buf.String()
 	block := out[strings.Index(out, `<section class="block" id="schedule">`):]
 	assert.Contains(t, block, "<h3>Schedule <small>Runs the workflow on a cron expression, as miguel, the user set on the workflow. Each run needs permission to run every step at that time.</small></h3>")
-	assert.Contains(t, block, `<form class="form inline" data-api="/api/schedules" data-method="POST" data-next="reload">`)
+	assert.Contains(t, block, `<form class="form inline" data-api="/api/schedules" data-method="POST" data-next="reload" data-notice="Schedule added">`)
 	assert.Contains(t, block, `<input type="hidden" name="workflow" value="w1">`)
 	assert.Contains(t, block, `<input type="text" id="sch-expr" name="expression" placeholder="0 3 * * *  or  @daily" spellcheck="false" autocomplete="off" required>`)
 	assert.NotContains(t, block, `Run as</label>`, "the workflow's user runs it")
@@ -363,6 +363,8 @@ func TestView_RenderWorkflowEditSchedule(t *testing.T) {
 	assert.Contains(t, block, `<td class="key" data-label="Expression"><code>0 7 * * 1-5</code></td>`)
 	assert.Contains(t, block, `<span class="badge ok">enabled</span>`)
 	assert.Contains(t, block, `data-confirm="Delete the schedule 0 7 * * 1-5 for release?"`)
+	assert.Contains(t, block, `data-notice="Schedule deleted"`, "the reload after a delete says what it did")
+	assert.Contains(t, block, `data-notice="Schedule disabled"`)
 	assert.NotContains(t, block, "Not scheduled.")
 	assert.True(t, strings.Index(out, `data-api="/api/workflows/w1"`) < strings.Index(out, `id="schedule"`), "the schedule block ends the page")
 	editor := strings.Index(out, `data-workflow data-api="/api/workflows/w1"`)
