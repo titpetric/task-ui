@@ -49,19 +49,19 @@ func Kinds() []Kind {
 		{
 			ID:          Forgejo,
 			Title:       "Forgejo",
-			Description: "The git host. Sync makes a workspace of every organisation the token's user belongs to, with the repository named like the organisation as its home and every other repository a project in its src, and installs a push hook on each so a push pulls the checkout. It adds and updates, and never removes.",
+			Description: "The git host. Sync makes a workspace of every organisation the token's user belongs to and of every user whose repositories it can read, with the repository named like the owner as its home and every other repository a project in its src, and installs a push hook on each the token administers so a push pulls the checkout. A user without a readable repository gets no workspace. It adds and updates, and never removes.",
 			Fields: []Field{
 				{Name: "url", Label: "URL", Placeholder: "https://git.cdn.si", Help: "The instance task-ui syncs from."},
-				{Name: "token", Label: "Token", Secret: true, Help: "A personal access token of a user who is a member of the organisations to sync, with the scopes read:organization, read:repository and write:repository, the last for the hooks; see the Integrations chapter."},
+				{Name: "token", Label: "Token", Secret: true, Help: "A personal access token of a user who is a member of the organisations to sync, with the scopes read:user, read:organization, read:repository and write:repository, the last for the hooks; see the Integrations chapter."},
 				{Name: "clone", Label: "Clone over", Optional: true, Options: []string{"ssh", "https"}, Help: "ssh clones with the instance keys; https needs public repositories, as task-ui puts no token in a URL."},
 				{Name: "secret", Label: "Webhook secret", Secret: true, Optional: true, Generated: true, Help: "Signs what Forgejo posts; empty makes one on the first save and keeps it."},
 			},
 			Steps: []string{
 				"Sign in to Forgejo as a user who is a member of the organisations to sync.",
-				"Under Settings, Applications, Generate token, make a token with the scopes `read:organization`, `read:repository` and `write:repository`; the last is for the push hooks alone.",
+				"Under Settings, Applications, Generate token, make a token with the scopes `read:user`, `read:organization`, `read:repository` and `write:repository`; the first lists the users, the last is for the push hooks alone.",
 				"Enter the instance URL and the token. Keep Clone over at `ssh`, which clones with the instance's git key.",
 				"Leave the webhook secret empty: the first save makes one and keeps it.",
-				"Save, then Dry run to read what a sync would do, then Sync now.",
+				"Save, then Dry run to read what a sync would do, then Sync now: a workspace per organisation, then one per user with a repository the token reads, `<login>/<login>` its home and every other repository a project.",
 			},
 		},
 		{

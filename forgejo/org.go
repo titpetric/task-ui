@@ -8,11 +8,7 @@ type Org struct {
 	Description string `json:"description"`
 }
 
-// Title returns the title of a workspace made of the organisation:
-// its full name, else its name.
-func (o Org) Title() string {
-	if o.FullName != "" {
-		return o.FullName
-	}
-	return o.Name
+// Owner returns the organisation as an owner of repositories.
+func (o Org) Owner() Owner {
+	return Owner{Name: o.Name, FullName: o.FullName, Description: o.Description, Kind: OwnerOrg}
 }

@@ -48,7 +48,7 @@ A user with Allow Edits on Projects, `project/edit`, adds a project from a git r
 project at the top of the root, `_`, or inside a named workspace (see
 [Workspaces](workspaces.md#clone-a-project-into-one)). With the
 [Forgejo integration](settings.md#forgejo) set up, a sync clones every
-repository of each organisation as a project of the organisation's
+repository of each organisation and user as a project of the owner's
 workspace, on the repository's default branch, and a push to the
 repository pulls the checkout; the project's settings stay yours.
 

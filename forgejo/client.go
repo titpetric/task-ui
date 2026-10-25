@@ -20,9 +20,9 @@ const pageSize = 50
 var ErrStatus = errors.New("forgejo answered")
 
 // Client calls the API v1 of a Forgejo instance with a personal access
-// token: the organisations of the token's user, their repositories and
-// the hooks of each. Every request has a timeout, and a listing
-// follows the pages to the end.
+// token: the organisations of the token's user, the users of the
+// instance, the repositories of each and the hooks of those. Every
+// request has a timeout, and a listing follows the pages to the end.
 type Client struct {
 	// URL is the instance, such as https://git.cdn.si.
 	URL   string
@@ -46,10 +46,36 @@ func (c *Client) Orgs(ctx context.Context) ([]Org, error) {
 	return all, err
 }
 
+// Users lists the users of the instance; without read:user Forgejo answers 403, which Status reads.
+func (c *Client) Users(ctx context.Context) ([]User, error) {
+	var all []User
+	err := c.pages(ctx, "/api/v1/users/search", func(page []byte) (int, error) {
+		var body struct {
+			Data []User `json:"data"`
+		}
+		if err := json.Unmarshal(page, &body); err != nil {
+			return 0, err
+		}
+		all = append(all, body.Data...)
+		return len(body.Data), nil
+	})
+	return all, err
+}
+
 // Repos lists the repositories of an organisation, archived ones too.
 func (c *Client) Repos(ctx context.Context, org string) ([]Repo, error) {
+	return c.repos(ctx, "/api/v1/orgs/"+url.PathEscape(org)+"/repos")
+}
+
+// UserRepos lists the repositories of a user the token may read, archived and its own private ones too.
+func (c *Client) UserRepos(ctx context.Context, login string) ([]Repo, error) {
+	return c.repos(ctx, "/api/v1/users/"+url.PathEscape(login)+"/repos")
+}
+
+// repos lists the repositories a path serves, page by page.
+func (c *Client) repos(ctx context.Context, path string) ([]Repo, error) {
 	var all []Repo
-	err := c.pages(ctx, "/api/v1/orgs/"+url.PathEscape(org)+"/repos", func(page []byte) (int, error) {
+	err := c.pages(ctx, path, func(page []byte) (int, error) {
 		var repos []Repo
 		if err := json.Unmarshal(page, &repos); err != nil {
 			return 0, err
@@ -146,12 +172,33 @@ func (c *Client) do(ctx context.Context, method, path string, in, out any) error
 		return err
 	}
 	if res.StatusCode < 200 || res.StatusCode > 299 {
-		return fmt.Errorf("%w %d on %s %s: %s", ErrStatus, res.StatusCode, method, path, message(data))
+		return &statusError{status: res.StatusCode, text: fmt.Sprintf("%v %d on %s %s: %s", ErrStatus, res.StatusCode, method, path, message(data))}
 	}
 	if out == nil || len(data) == 0 {
 		return nil
 	}
 	return json.Unmarshal(data, out)
+}
+
+// statusError is an answer of the API that is no success: errors.Is
+// takes it for ErrStatus, and Status reads its code.
+type statusError struct {
+	status int
+	text   string
+}
+
+func (e *statusError) Error() string { return e.text }
+
+func (e *statusError) Is(target error) bool { return target == ErrStatus }
+
+// Status returns the HTTP status an error of the client carries, or 0
+// for an error that is no answer of the API.
+func Status(err error) int {
+	var status *statusError
+	if errors.As(err, &status) {
+		return status.status
+	}
+	return 0
 }
 
 // message returns what an error answer said: its message field, else

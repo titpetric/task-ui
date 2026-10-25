@@ -200,10 +200,11 @@ reads them, and no page, API route or MCP tool returns one. Page:
 
 The services task-ui talks to: Claude Code, whose token runs get as
 `CLAUDE_CODE_OAUTH_TOKEN` for the users and roles it names; Forgejo,
-the git host, whose organisations the root's `@forgejo-sync` makes
-workspaces of, the repository `<org>/<org>` the home and every other
-repository a project, with a push hook on each that pulls the checkout
-through `/api/webhooks/forgejo`, for admins; and Beszel, which lists
+the git host, whose organisations and users the root's `@forgejo-sync`
+makes workspaces of, the repository `<owner>/<owner>` the home and every
+other repository a project, with a push hook on each the token
+administers that pulls the checkout through `/api/webhooks/forgejo`, for
+admins; and Beszel, which lists
 the hosts of the inventory. Their tokens are never shown; each kind
 carries the steps to get its key, which the page shows beside the form.
 Page: `/settings/integrations`; API: `/api/integrations`.

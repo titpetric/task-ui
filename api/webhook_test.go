@@ -18,19 +18,25 @@ import (
 )
 
 // hookInstance returns a webhook over a Forgejo integration with the
-// secret s3, the workspace malta with its home from Malta/malta and the
-// projects malta/apps and infra at the root, recording the directories
-// pulled.
+// secret s3, the workspace malta with its home from Malta/malta, the
+// user's workspace black with its home from black/black, and the
+// projects malta/apps, black/dotfiles and infra at the root, recording
+// the directories pulled.
 func hookInstance(root string, values map[string]string) (*api.Webhook, *[]string) {
 	var pulled []string
 	return &api.Webhook{
 		Settings: func(context.Context) (map[string]string, error) { return values, nil },
 		Workspaces: func(context.Context) ([]model.Workspace, error) {
-			return []model.Workspace{{Folder: model.Default}, {Folder: "malta", HomeURL: "ssh://git@git.cdn.si:2222/Malta/malta.git"}}, nil
+			return []model.Workspace{
+				{Folder: model.Default},
+				{Folder: "malta", HomeURL: "ssh://git@git.cdn.si:2222/Malta/malta.git"},
+				{Folder: "black", HomeURL: "ssh://git@git.cdn.si:2222/black/black.git"},
+			}, nil
 		},
 		Projects: func(context.Context) ([]model.Project, error) {
 			return []model.Project{
 				{Folder: "malta/apps", SourceURL: "ssh://git@git.cdn.si:2222/Malta/apps.git"},
+				{Folder: "black/dotfiles", SourceURL: "ssh://git@git.cdn.si:2222/black/dotfiles.git"},
 				{Folder: "infra", SourceURL: "https://git.cdn.si/ops/infra.git"},
 			}, nil
 		},
@@ -62,7 +68,7 @@ func hook(h http.Handler, event, secret, body string) *httptest.ResponseRecorder
 }
 
 // A signed push pulls the checkouts of its repository, the project and
-// the home alike; a ping answers; a bad signature is 401, an unknown
+// the home alike, a user's repository as an organisation's; a ping answers; a bad signature is 401, an unknown
 // repository 200 with the message, a pull that fails 502.
 func TestWebhook(t *testing.T) {
 	t.Parallel()
@@ -84,6 +90,11 @@ func TestWebhook(t *testing.T) {
 	assert.Equal(t, http.StatusAccepted, rec.Code)
 	assert.Contains(t, rec.Body.String(), `"pulled":["malta/home"]`)
 	assert.Equal(t, filepath.Join(root, "malta", "home"), (*pulled)[1])
+
+	rec = hook(h, "push", "s3", `{"ref":"refs/heads/main","repository":{"full_name":"black/dotfiles","ssh_url":"ssh://git@git.cdn.si:2222/black/dotfiles.git","clone_url":"https://git.cdn.si/black/dotfiles.git"}}`)
+	assert.Equal(t, http.StatusAccepted, rec.Code)
+	assert.Contains(t, rec.Body.String(), `"pulled":["black/dotfiles"]`)
+	assert.Equal(t, filepath.Join(root, "black", "src", "dotfiles"), (*pulled)[2])
 
 	rec = hook(h, "ping", "s3", `{"zen":"Forgejo"}`)
 	assert.Equal(t, http.StatusOK, rec.Code)
@@ -110,7 +121,7 @@ func TestWebhook(t *testing.T) {
 	assert.Equal(t, http.StatusBadRequest, rec.Code)
 	rec = hook(h, "push", "s3", `not json`)
 	assert.Equal(t, http.StatusBadRequest, rec.Code)
-	assert.Len(t, *pulled, 2)
+	assert.Len(t, *pulled, 3)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/webhooks/forgejo", nil)
 	rec = httptest.NewRecorder()

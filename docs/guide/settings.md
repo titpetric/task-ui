@@ -474,8 +474,8 @@ every setting of an integration. The API serves the steps with the kind,
   [Notes](notes.md) board runs as that user. With no box checked, every
   run gets it. The token alone sets the integration up.
 - **Forgejo**: the git host's URL and a token, for the sync that makes
-  workspaces of its organisations and projects of their repositories,
-  see [Forgejo](#forgejo) below.
+  workspaces of its organisations and users and projects of their
+  repositories, see [Forgejo](#forgejo) below.
 - **Beszel**: the hub's URL, as task-ui reaches it, and a token, for the
   [Inventory](inventory.md) page. task-ui reads the collections
   `systems`, `system_stats`, the latest minute of each host and its
@@ -524,22 +524,30 @@ Beszel revokes it.
 ### Forgejo
 
 The Forgejo integration mirrors a git host into task-ui: every
-organisation the token's user belongs to is a workspace, with the
-organisation's lower case name as its folder; the repository named like
-the organisation, `malta/malta`, is the workspace's home repository, the
-convention a home follows (see [Workspaces](workspaces.md#the-home));
-every other repository of the organisation is a project in the
-workspace's `src`, cloned on its default branch. The token user's own
-repositories, outside any organisation, stay out.
+organisation the token's user belongs to is a workspace, and so is
+every user whose repositories the token reads, by the same rules. The
+owner's lower case name is the workspace's folder; the repository named
+like the owner, `malta/malta` for the organisation Malta and
+`black/black` for the user black, is the workspace's home repository,
+the convention a home follows (see
+[Workspaces](workspaces.md#the-home)); every other repository of the
+owner is a project in the workspace's `src`, cloned on its default
+branch. A user's repositories are the ones the token reads, the token
+user's own private ones among them; a user with none gets no
+workspace, with the line `skipped <login>: no repositories` in the
+report, so an instance with many accounts grows no empty workspaces.
+An organisation gets its workspace even without a repository.
 
 The settings:
 
 - **URL**: the instance, such as `https://git.cdn.si`.
 - **Token**: a personal access token of a user who is a member of the
   organisations to sync. Mint it in Forgejo under **Settings ->
-  Applications -> Generate token**, with the scopes `read:organization`,
-  `read:repository` and `write:repository`; the last is for the hooks
-  alone, which sync installs on the repositories.
+  Applications -> Generate token**, with the scopes `read:user`,
+  `read:organization`, `read:repository` and `write:repository`; the
+  first lists the users, the last is for the hooks alone, which sync
+  installs on the repositories. Without `read:user` the sync does the
+  organisations and says `users skipped: the token lacks read:user`.
 - **Clone over**: `ssh`, the default, clones with the instance's git key
   as every project does (see [Keys](#keys)); `https` works for public
   repositories, as task-ui puts no token in a clone URL.
@@ -552,8 +560,11 @@ which reports what a sync would do and changes nothing. The run's output
 is the report, one line per action, `workspace malta: created`, `home
 Malta/malta: cloned main`, `project malta/apps: cloned main`, `hook
 Malta/apps: installed`, `skipped Malta/old-thing: archived`, `not on
-Forgejo: malta/vhosts`, and a summary line; the line under the form
-names the last run and links to it. Admins run the job, by hand, on a
+Forgejo: malta/vhosts`, the same for a user, `workspace black:
+created`, `home black/black: cloned main`, `project black/dotfiles:
+cloned main`, and a summary line that counts the organisations and the
+users; the organisations come first, then the users. The line under
+the form names the last run and links to it. Admins run the job, by hand, on a
 [schedule](scheduled.md) or as a workflow step, as `@cleanup` runs.
 
 Sync adds and updates, and never removes:
@@ -564,8 +575,8 @@ Sync adds and updates, and never removes:
   pulls a home that is the home repository's checkout, and leaves a
   home that is a checkout of some other repository alone, with a line
   in the report: replace it on the workspace's settings page if the
-  convention should apply. Without a `<org>/<org>` repository the home
-  stays, empty or not.
+  convention should apply. Without a `<org>/<org>` or `<login>/<login>`
+  repository the home stays, empty or not.
 - A project row that exists keeps its title, who may run it and its
   other settings; its source URL follows the repository's. A checkout
   without a row gets one; a directory in `src` that is no checkout
@@ -578,7 +589,12 @@ Sync adds and updates, and never removes:
 
 For every repository it syncs, sync lists the repository's webhooks and,
 when none posts to the instance's `<URL>/api/webhooks/forgejo`, installs
-one: a push hook, JSON, signed with the webhook secret. On a push,
+one: a push hook, JSON, signed with the webhook secret. A hook takes
+admin access to the repository, which the token has on its user's own
+repositories and on those of an organisation the user owns; on any
+other, the report says `hook <owner>/<repo>: skipped, the token has no
+admin access`, counted among the skipped, and the checkout stays as a
+project without a hook. On a push,
 Forgejo posts to the instance, task-ui checks the signature and pulls
 the checkouts of that repository, the project and the home alike, under
 the lock a run pulls with, so a job in progress is not pulled under. An
@@ -595,7 +611,9 @@ integration is not set up on the instance the hook reaches. A `200` with
 `no such checkout` means no project or home has that repository's clone
 URL: sync, or check the project's source URL. A sync that ends with
 `listing the organisations: forgejo answered 401` has a token Forgejo
-does not take any more.
+does not take any more. `users skipped: the token lacks read:user` is
+a token without that scope: the organisations sync, the users wait for
+a token with it.
 
 ## Users
 

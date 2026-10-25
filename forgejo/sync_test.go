@@ -24,11 +24,24 @@ const hookURL = "https://task.example/api/webhooks/forgejo"
 // with its home repository, two projects, an archived repository and
 // one named src; Acme, a workspace already, without a home repository
 // and with a project row of a repository Forgejo lacks; _, no folder name;
-// and Taken, whose name a project at the root holds.
+// and Taken, whose name a project at the root holds. Its users: black,
+// with a home repository, a project and an archived repository; nobody,
+// without a repository; Bad.Name!, no folder name; and Jane, with one
+// repository the token does not administer.
 func instance(t *testing.T) (*fakeForgejo, *fakeWorkspaces, *fakeProjects) {
 	t.Helper()
 	fake := newFakeForgejo("t0k3n")
 	fake.orgs = []forgejo.Org{{Name: "Malta", FullName: "Malta d.o.o."}, {Name: "Acme"}, {Name: "_"}, {Name: "Taken"}}
+	fake.users = []forgejo.User{{Login: "black", FullName: "Tit Petric"}, {Login: "nobody"}, {Login: "Bad.Name!"}, {Login: "Jane", FullName: "Jane Doe"}}
+	fake.userRepos["black"] = []forgejo.Repo{
+		repo("black", "black", "main", false),
+		repo("black", "dotfiles", "main", false),
+		repo("black", "old", "main", true),
+	}
+	fake.userRepos["nobody"] = nil
+	notes := repo("Jane", "notes", "main", false)
+	notes.Permissions.Admin = false
+	fake.userRepos["Jane"] = []forgejo.Repo{notes}
 	fake.repos["Malta"] = []forgejo.Repo{
 		repo("Malta", "malta", "main", false),
 		repo("Malta", "apps", "main", false),
@@ -57,9 +70,11 @@ func newSync(t *testing.T, fake *fakeForgejo, workspaces *fakeWorkspaces, projec
 	}, g
 }
 
-// A first sync makes the workspace, clones the home and the projects and
-// installs the hooks; it skips what it must and reports the project
-// whose repository Forgejo lacks. A second sync changes nothing and says so.
+// A first sync makes the workspaces of the organisations and the users,
+// clones the homes and the projects and installs the hooks where the
+// token is admin; it skips what it must, a user without a repository
+// among it, and reports the project whose repository Forgejo lacks. A
+// second sync changes nothing and says so.
 func TestSync(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
@@ -88,13 +103,27 @@ func TestSync(t *testing.T) {
 		"hook Acme/web: installed",
 		`skipped _: "_" is no folder name`,
 		"skipped Taken: a project named taken is at the root",
+		"workspace black: created",
+		"home black/black: cloned main",
+		"project black/dotfiles: cloned main",
+		"skipped black/old: archived",
+		"hook black/black: installed",
+		"hook black/dotfiles: installed",
+		"skipped nobody: no repositories",
+		`skipped Bad.Name!: "bad.name!" is no folder name`,
+		"workspace jane: created",
+		"home jane: no Jane/Jane repository: home is empty",
+		"project jane/notes: cloned main",
+		"hook Jane/notes: skipped, the token has no admin access",
 		"not on Forgejo: acme/vhosts",
-		"summary: 4 organisations, 1 workspaces created, 1 homes cloned, 3 projects cloned, 4 hooks installed, 4 skipped, 1 not on Forgejo",
+		"summary: 4 organisations, 4 users, 3 workspaces created, 2 homes cloned, 5 projects cloned, 6 hooks installed, 8 skipped, 1 not on Forgejo",
 	} {
 		assert.Contains(t, report, line+"\n")
 	}
 	assert.NotContains(t, report, "hook Malta/src")
+	assert.NotContains(t, report, "users skipped")
 	assert.NotContains(t, report, "dry run")
+	assert.True(t, strings.Index(report, "workspace black") > strings.Index(report, "skipped Taken"), "organisations first, then users")
 
 	malta := workspaces.rows["malta"]
 	assert.NotNil(t, malta)
@@ -109,9 +138,21 @@ func TestSync(t *testing.T) {
 	assert.Nil(t, projects.rows["malta/old-thing"])
 	assert.Nil(t, projects.rows["malta/src"])
 	assert.Equal(t, "", workspaces.rows["acme"].HomeURL)
-	assert.Len(t, g.clones, 4)
-	assert.Equal(t, 4, fake.created)
+	black := workspaces.rows["black"]
+	assert.NotNil(t, black)
+	assert.Equal(t, "Tit Petric", black.Title)
+	assert.Equal(t, "ssh://git@git.example:2222/black/black.git", black.HomeURL)
+	assert.True(t, g.IsRepo(filepath.Join(root, "black", "home")))
+	assert.True(t, g.IsRepo(filepath.Join(root, "black", "src", "dotfiles")))
+	assert.Nil(t, projects.rows["black/old"])
+	assert.Nil(t, workspaces.rows["nobody"])
+	assert.Nil(t, workspaces.rows["bad.name!"])
+	assert.Equal(t, "Jane Doe", workspaces.rows["jane"].Title)
+	assert.Len(t, fake.hooksOf("Jane/notes"), 0)
+	assert.Len(t, g.clones, 7)
+	assert.Equal(t, 6, fake.created)
 	assert.Equal(t, "s3", fake.hooksOf("Malta/apps")[0].Config["secret"])
+	assert.Equal(t, "s3", fake.hooksOf("black/dotfiles")[0].Config["secret"])
 
 	// Again: everything is there, the home pulls, no hook goes in twice.
 	out.Reset()
@@ -123,14 +164,19 @@ func TestSync(t *testing.T) {
 		"project malta/apps: exists",
 		"hook Malta/malta: ok",
 		"hook Acme/web: ok",
-		"summary: 4 organisations, 0 workspaces created, 0 homes cloned, 0 projects cloned, 0 hooks installed, 4 skipped, 1 not on Forgejo",
+		"workspace black: ok",
+		"home black/black: pulled",
+		"project black/dotfiles: exists",
+		"hook black/dotfiles: ok",
+		"hook Jane/notes: skipped, the token has no admin access",
+		"summary: 4 organisations, 4 users, 0 workspaces created, 0 homes cloned, 0 projects cloned, 0 hooks installed, 8 skipped, 1 not on Forgejo",
 	} {
 		assert.Contains(t, report, line+"\n")
 	}
-	assert.Equal(t, 4, fake.created)
+	assert.Equal(t, 6, fake.created)
 	assert.Equal(t, 0, fake.updated)
-	assert.Len(t, g.clones, 4)
-	assert.Equal(t, []string{filepath.Join(root, "malta", "home")}, g.pulls)
+	assert.Len(t, g.clones, 7)
+	assert.Equal(t, []string{filepath.Join(root, "malta", "home"), filepath.Join(root, "black", "home")}, g.pulls)
 }
 
 // A dry run reports what it would do and touches nothing.
@@ -150,15 +196,26 @@ func TestSync_DryRun(t *testing.T) {
 		"project malta/apps: would clone main",
 		"hook Malta/apps: would install",
 		"project acme/web: would clone main",
+		"workspace black: would create",
+		"home black/black: would clone main",
+		"project black/dotfiles: would clone main",
+		"hook black/dotfiles: would install",
+		"skipped nobody: no repositories",
+		"hook Jane/notes: skipped, the token has no admin access",
 		"not on Forgejo: acme/vhosts",
+		"summary: 4 organisations, 4 users, 3 workspaces created, 2 homes cloned, 5 projects cloned, 6 hooks installed, 8 skipped, 1 not on Forgejo",
 		"a dry run: nothing changed",
 	} {
 		assert.Contains(t, report, line+"\n")
 	}
 	_, err := os.Stat(filepath.Join(root, "malta"))
 	assert.True(t, os.IsNotExist(err))
+	_, err = os.Stat(filepath.Join(root, "black"))
+	assert.True(t, os.IsNotExist(err))
 	assert.Nil(t, workspaces.rows["malta"])
+	assert.Nil(t, workspaces.rows["black"])
 	assert.Nil(t, projects.rows["malta/apps"])
+	assert.Nil(t, projects.rows["black/dotfiles"])
 	assert.Len(t, g.clones, 0)
 	assert.Equal(t, 0, fake.created)
 }
@@ -244,7 +301,38 @@ func TestSync_Refused(t *testing.T) {
 	fake.orgs = nil
 	out.Reset()
 	assert.NoError(t, s.Run(ctx, &out))
-	assert.Contains(t, out.String(), "the token's user is in no organisation: nothing to sync\n")
+	assert.Contains(t, out.String(), "the token's user is in no organisation\n")
+	assert.Contains(t, out.String(), "workspace black: ok\n")
+}
+
+// A token without read:user syncs the organisations alone, with one
+// line on the users and no error; a repository of an organisation the
+// token does not administer gets no hook either.
+func TestSync_Users(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	fake, workspaces, projects := instance(t)
+	fake.noUserScope = true
+	web := fake.repos["Acme"][0]
+	web.Permissions.Admin = false
+	fake.repos["Acme"][0] = web
+	s, g := newSync(t, fake, workspaces, projects, t.TempDir())
+	var out bytes.Buffer
+	assert.NoError(t, s.Run(ctx, &out))
+	report := out.String()
+	for _, line := range []string{
+		"users skipped: the token lacks read:user",
+		"workspace malta: created",
+		"hook Acme/web: skipped, the token has no admin access",
+		"summary: 4 organisations, 0 users, 1 workspaces created, 1 homes cloned, 3 projects cloned, 3 hooks installed, 5 skipped, 1 not on Forgejo",
+	} {
+		assert.Contains(t, report, line+"\n")
+	}
+	assert.Equal(t, 1, strings.Count(report, "users skipped"))
+	assert.NotContains(t, report, "black")
+	assert.Nil(t, workspaces.rows["black"])
+	assert.Len(t, fake.hooksOf("Acme/web"), 0)
+	assert.Len(t, g.clones, 4)
 }
 
 // fakeGit records the clones and pulls: a clone makes the directory
