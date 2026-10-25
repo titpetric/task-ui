@@ -83,15 +83,19 @@ func DeleteBlocked(secrets int) string {
 	return "Delete its " + strconv.Itoa(secrets) + " secrets first"
 }
 
-// DeleteWorkspaceConfirm returns what Delete of a workspace asks, or
-// what Empty of the default workspace asks.
+// DeleteWorkspaceConfirm returns what Delete of a workspace asks; of
+// the default workspace, what goes at the root and what stays.
 func DeleteWorkspaceConfirm(folder string, nested []string) string {
 	projects := ""
 	if len(nested) > 0 {
 		projects = ", and the projects inside it with their checkouts: " + strings.Join(nested, ", ")
 	}
 	if folder == model.Default {
-		return "Empty the default workspace " + folder + "? This deletes its home checkout, its keys and secrets" + projects + ". The root stays, with an empty home and src, as do the other workspaces."
+		at := ""
+		if len(nested) > 0 {
+			at = " and the projects at the root with their checkouts: " + strings.Join(nested, ", ")
+		}
+		return "Delete the default workspace " + folder + " with its keys, its home" + at + "? The root's built-in jobs keep running; Add project then needs a workspace."
 	}
 	return "Delete the workspace " + folder + " with its keys and secrets" + projects + "? Its directory goes once nothing else is in it."
 }

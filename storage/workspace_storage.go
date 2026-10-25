@@ -10,7 +10,9 @@ import (
 // WorkspaceStorage keeps the workspaces: directories under the root
 // whose folder is the namespace of the projects cloned into their src,
 // each with a home, the checkout of its home repository or an empty
-// directory, that its runs get as HOME.
+// directory, that its runs get as HOME. The default workspace, _, is
+// the root itself, made on the first start and deleted like any other:
+// an instance with named workspaces alone runs without it.
 type WorkspaceStorage struct {
 	db DB
 }
@@ -53,10 +55,11 @@ func (s *WorkspaceStorage) GetByFolder(ctx context.Context, folder string) (*mod
 	return workspace, notFound(err)
 }
 
-// EnsureDefault adds the default workspace, whose directory is the root, when the row is missing.
-// A default workspace already there keeps its row unchanged.
+// EnsureDefault adds the default workspace to an empty table, the first
+// start of an instance; a table with a workspace stays unchanged.
 func (s *WorkspaceStorage) EnsureDefault(ctx context.Context) error {
-	if _, err := s.GetByFolder(ctx, model.Default); !errors.Is(err, ErrNotFound) {
+	workspaces, err := s.List(ctx)
+	if err != nil || len(workspaces) > 0 {
 		return err
 	}
 	return s.Create(ctx, &model.Workspace{Folder: model.Default, Title: "Default"})

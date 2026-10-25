@@ -1,6 +1,7 @@
 package main
 
 import (
+	"path/filepath"
 	"testing"
 
 	"github.com/titpetric/task-ui/internal/assert"
@@ -24,19 +25,27 @@ func TestDryRun(t *testing.T) {
 }
 
 // A maintenance command in a run of task-ui, where TASK_UI_WORKSPACE names
-// the run's workspace, takes the root from TASK_UI_WORKSPACE_DIR; outside
-// a run it reads the server's configuration, TASK_UI_WORKSPACE the root.
+// the run's workspace, reads neither it nor TASK_UI_WORKSPACE_DIR: its root
+// is the data directory's, <data>/workspaces, with or without a workspace.
+// Outside a run it reads the server's configuration, TASK_UI_WORKSPACE the root.
 func TestMaintenanceConfig(t *testing.T) {
-	root := t.TempDir()
-	t.Setenv("TASK_UI_DATA", t.TempDir())
+	data := t.TempDir()
+	t.Setenv("TASK_UI_DATA", data)
 	t.Setenv("TASK_UI_RUN_ID", "run")
 	t.Setenv("TASK_UI_WORKSPACE", "_")
-	t.Setenv("TASK_UI_WORKSPACE_DIR", root)
+	t.Setenv("TASK_UI_WORKSPACE_DIR", t.TempDir())
 	cfg, err := maintenanceConfig()
 	assert.NoError(t, err)
-	assert.Equal(t, root, cfg.Root)
+	assert.Equal(t, filepath.Join(data, "workspaces"), cfg.Root)
+
+	t.Setenv("TASK_UI_WORKSPACE", "")
+	t.Setenv("TASK_UI_WORKSPACE_DIR", "")
+	cfg, err = maintenanceConfig()
+	assert.NoError(t, err)
+	assert.Equal(t, filepath.Join(data, "workspaces"), cfg.Root)
 
 	t.Setenv("TASK_UI_RUN_ID", "")
+	t.Setenv("TASK_UI_WORKSPACE", "_")
 	_, err = maintenanceConfig()
 	assert.Error(t, err)
 	assert.Equal(t, "TASK_UI_WORKSPACE: _ is not a directory", err.Error())

@@ -181,7 +181,8 @@ func TestDeleteWorkspaceConfirm(t *testing.T) {
 
 	assert.Equal(t, "Delete the workspace acme with its keys and secrets, and the projects inside it with their checkouts: acme/api, acme/web? Its directory goes once nothing else is in it.", view.DeleteWorkspaceConfirm("acme", []string{"acme/api", "acme/web"}))
 	assert.Equal(t, "Delete the workspace labs with its keys and secrets? Its directory goes once nothing else is in it.", view.DeleteWorkspaceConfirm("labs", nil))
-	assert.Equal(t, "Empty the default workspace _? This deletes its home checkout, its keys and secrets, and the projects inside it with their checkouts: apps, mobius. The root stays, with an empty home and src, as do the other workspaces.", view.DeleteWorkspaceConfirm("_", []string{"apps", "mobius"}))
+	assert.Equal(t, "Delete the default workspace _ with its keys, its home and the projects at the root with their checkouts: apps, mobius? The root's built-in jobs keep running; Add project then needs a workspace.", view.DeleteWorkspaceConfirm("_", []string{"apps", "mobius"}))
+	assert.Equal(t, "Delete the default workspace _ with its keys, its home? The root's built-in jobs keep running; Add project then needs a workspace.", view.DeleteWorkspaceConfirm("_", nil))
 }
 
 // A workspace's page lists its home project's files under ~/, each

@@ -15,9 +15,11 @@ import (
 
 // A run of a folder inside a workspace names the workspace and its
 // directory, and gets HOME at the workspace's home. A run outside a
-// named one gets the default workspace, _ at the root, once there is
-// one, and the home at the root; before that it keeps the server's
-// HOME. A request's Workspace, or WorkspaceOf's, wins over the folder's.
+// named one gets the default workspace, _ at the root, while there is
+// one, and the home at the root; without the default workspace it has
+// no workspace: no TASK_UI_WORKSPACE, no TASK_UI_WORKSPACE_DIR and the
+// server's HOME. A request's Workspace, or WorkspaceOf's, wins over the
+// folder's.
 func TestManager_Workspace(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
@@ -42,7 +44,7 @@ func TestManager_Workspace(t *testing.T) {
 	outside := run(f.shellJob("plain", script, false))
 	assert.Contains(t, outside, "home=["+home+"] ws=[] dir=[] set=[]")
 
-	assert.NoError(t, f.workspaces.EnsureDefault(ctx))
+	assert.NoError(t, f.workspaces.Create(ctx, &model.Workspace{Folder: model.Default, Title: "Default"}))
 	root := run(f.shellJob("plain", script, false))
 	assert.Contains(t, root, "home=["+filepath.Join(f.root, "home")+"] ws=[_] dir=["+f.root+"] set=[y]")
 	assert.Contains(t, run(f.shellJob("ws/project", script, false)), "ws=[ws] dir=["+filepath.Join(f.root, "ws")+"]")

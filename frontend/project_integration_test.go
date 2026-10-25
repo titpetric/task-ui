@@ -104,23 +104,32 @@ func TestProject_RecursiveToggle(t *testing.T) {
 	assert.NotContains(t, shallow, `name="recursive" checked`)
 }
 
-// The clone form always has a Workspace select, the default one, _,
-// chosen, and lists the named ones after it.
+// The clone form's Workspace select lists the workspaces there are, the
+// default one, _, first and chosen while the instance has it, and
+// without it the first named one chosen.
 func TestProjectNew_Workspace(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
 	ctx := context.Background()
 
 	alone := f.page(t, asAdmin, "/settings/projects/new")
-	assert.Contains(t, alone, `<select id="p-workspace" name="workspace">`)
-	assert.Contains(t, alone, `<option value="_" selected>`)
+	assert.Contains(t, alone, `<select id="p-workspace" name="workspace" required>`)
+	assert.NotContains(t, alone, `<option value="_"`)
 
 	assert.NoError(t, f.opts.Workspaces.EnsureDefault(ctx))
 	assert.NoError(t, f.opts.Workspaces.Create(ctx, &model.Workspace{Folder: "malta", Title: "Malta"}))
 	form := f.page(t, asAdmin, "/settings/projects/new")
 	assert.Equal(t, 1, strings.Count(form, `<option value="_"`))
-	assert.Contains(t, form, `<option value="_" selected>`)
+	assert.Contains(t, form, `<option value="_" selected>_ · the root</option>`)
 	assert.Contains(t, form, `<option value="malta">malta · Malta</option>`)
+	assert.Contains(t, f.page(t, asAdmin, "/settings/projects/new?workspace=malta"), `<option value="malta" selected>malta · Malta</option>`)
+
+	def, err := f.opts.Workspaces.GetByFolder(ctx, model.Default)
+	assert.NoError(t, err)
+	assert.NoError(t, f.opts.Workspaces.Delete(ctx, def.ID))
+	without := f.page(t, asAdmin, "/settings/projects/new")
+	assert.NotContains(t, without, `<option value="_"`)
+	assert.Contains(t, without, `<option value="malta" selected>malta · Malta</option>`)
 }
 
 // A project at the top of a workspace gets a Workspace select on its

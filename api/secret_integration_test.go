@@ -146,7 +146,7 @@ func (f *fixture) withWorkspaces(t *testing.T) {
 // A secret scoped to a workspace reaches its folders; all is the
 // default workspace's; the API refuses a workspace that is not there. A
 // rotation of the instance's encryption key and a rekey write every
-// secret again; removing the workspace removes its secrets.
+// secret again; removing the workspace waits for its secrets to go.
 func TestSecret_WorkspaceScope(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
@@ -186,7 +186,12 @@ func TestSecret_WorkspaceScope(t *testing.T) {
 	assert.Equal(t, http.StatusOK, rekeyed.Status, string(rekeyed.Raw))
 	assert.Equal(t, float64(2), rekeyed.get("rekeyed"))
 
-	// Removing acme takes its secrets, which nothing opens after.
+	// Removing acme waits for its secrets to go first, then takes the workspace.
+	assert.Equal(t, http.StatusConflict, f.call(t, asAdmin, http.MethodDelete, "/workspaces/acme", nil).Status)
+	held, err := f.opts.Secrets.Encrypted(context.Background(), "acme")
+	assert.NoError(t, err)
+	assert.Len(t, held, 1)
+	assert.NoError(t, f.opts.Secrets.Delete(context.Background(), held[0].ID))
 	assert.Equal(t, http.StatusNoContent, f.call(t, asAdmin, http.MethodDelete, "/workspaces/acme", nil).Status)
 	left, err := f.opts.Secrets.List(context.Background())
 	assert.NoError(t, err)

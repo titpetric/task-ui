@@ -124,7 +124,7 @@ func TestCatalogue_Home(t *testing.T) {
 	projects, workspaces := storage.NewProjectStorage(db), storage.NewWorkspaceStorage(db)
 	assert.NoError(t, workspaces.Create(ctx, &model.Workspace{Folder: "malta", HomeURL: "git@example.com:org/workspace.git"}))
 	assert.NoError(t, workspaces.Create(ctx, &model.Workspace{Folder: "gozo"}))
-	assert.NoError(t, workspaces.EnsureDefault(ctx))
+	assert.NoError(t, workspaces.Create(ctx, &model.Workspace{Folder: model.Default, Title: "Default"}))
 
 	c := app.NewCatalogue(root, true, projects)
 	c.Workspaces = workspaces

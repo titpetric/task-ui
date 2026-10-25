@@ -41,7 +41,7 @@ func (h *Handlers) settings(w http.ResponseWriter, r *http.Request) {
 		p.StepCounts[view.StepWorkspaces] = count(len(h.workspaceList(r.Context())), "workspace", "workspaces")
 	}
 	if p.Can("project/view") {
-		entries := folder.Entries(h.opts.Root, h.opts.Git, h.workspaceFolders(r.Context()))
+		entries := folder.Entries(h.opts.Root, h.opts.Git, h.workspaceList(r.Context()))
 		p.StepCounts[view.StepProjects] = count(len(entries), "folder", "folders")
 	}
 	h.render(w, http.StatusOK, "settings", p)

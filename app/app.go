@@ -411,9 +411,11 @@ func (a *App) Close() error {
 	return a.DB.Close()
 }
 
-// ensureWorkspaces adds the default workspace's row when there is none
-// and makes the home and src of every workspace, so a run has a HOME
-// and a clone has a place before the first page.
+// ensureWorkspaces adds the default workspace's row to an instance with
+// no workspace at all, its first start, and makes the home and src of
+// every workspace there is, so a run has a HOME and a clone has a place
+// before the first page; a default workspace deleted stays gone, and the
+// root gets no home or src back.
 func (a *App) ensureWorkspaces(ctx context.Context) error {
 	workspaces := storage.NewWorkspaceStorage(a.DB)
 	if err := workspaces.EnsureDefault(ctx); err != nil {

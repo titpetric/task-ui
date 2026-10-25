@@ -88,9 +88,11 @@ func (h *Handlers) folderAt(w http.ResponseWriter, r *http.Request, path string)
 // defaultWorkspace shows the default workspace, the root: the projects
 // in it the user may see, with prompt/edit its prompt, and with
 // project/view what the root holds, each project and workspace linked.
+// Without a default workspace the page lists the root's built-in jobs
+// and the workspaces' directories.
 func (h *Handlers) defaultWorkspace(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	f := &folder.Folder{ID: model.Default, Title: "Default", Dir: layout.SrcDir(h.opts.Root, model.Default)}
+	f := &folder.Folder{ID: model.Default, Title: "Default", Dir: h.opts.Root}
 	var workspace *model.Workspace
 	if h.opts.Workspaces != nil {
 		if row, err := h.opts.Workspaces.GetByFolder(ctx, model.Default); err == nil {
@@ -98,7 +100,7 @@ func (h *Handlers) defaultWorkspace(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if workspace != nil {
-		f.Title, f.Description = workspace.Title, workspace.Description
+		f.Title, f.Description, f.Dir = workspace.Title, workspace.Description, layout.SrcDir(h.opts.Root, model.Default)
 	}
 	p := h.page(r, f.Title)
 	p.Folder = f

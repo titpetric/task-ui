@@ -11,11 +11,13 @@ import (
 )
 
 // Plan lists the moves that bring a root laid out as before to the home
-// and src layout; a root laid out already returns none, and a directory
-// that exists on both sides of a move is an error.
-func Plan(root string, named []string, homes map[string]string) ([]Move, error) {
+// and src layout, for the workspaces named, the default one, _, among
+// them while the instance has it; a root laid out already returns none,
+// and a directory that exists on both sides of a move is an error.
+func Plan(root string, workspaces []string, homes map[string]string) ([]Move, error) {
 	var moves []Move
-	for _, workspace := range append([]string{model.Default}, named...) {
+	named := slices.DeleteFunc(slices.Clone(workspaces), func(name string) bool { return name == model.Default })
+	for _, workspace := range workspaces {
 		dir := WorkspaceDir(root, workspace)
 		entries, err := os.ReadDir(dir)
 		if err != nil && !os.IsNotExist(err) {

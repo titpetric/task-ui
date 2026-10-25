@@ -49,10 +49,10 @@ func (g ProjectGroup) Empty() string {
 	return "No projects in " + g.Workspace + " yet."
 }
 
-// ProjectGroups returns a group per workspace, each with its entries.
+// ProjectGroups returns a group per workspace, in their order, each with its entries, the top-level ones the root's when _ is among them.
 func ProjectGroups(entries []folder.Entry, workspaces []model.Workspace) []ProjectGroup {
-	groups := []ProjectGroup{{Workspace: model.Default}}
-	at := map[string]int{model.Default: 0}
+	groups := []ProjectGroup{}
+	at := map[string]int{}
 	for _, ws := range workspaces {
 		if _, ok := at[ws.Folder]; ok {
 			continue
@@ -66,10 +66,9 @@ func ProjectGroups(entries []folder.Entry, workspaces []model.Workspace) []Proje
 			if _, named := at[top]; named && top != model.Default {
 				continue
 			}
-			groups[0].Entries = append(groups[0].Entries, entry)
-			continue
+			top = model.Default
 		}
-		if i, named := at[top]; named {
+		if i, ok := at[top]; ok {
 			groups[i].Entries = append(groups[i].Entries, entry)
 		}
 	}

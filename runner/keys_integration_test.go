@@ -98,7 +98,7 @@ func TestManager_WorkspaceKeys(t *testing.T) {
 	ctx := context.Background()
 	assert.NoError(t, f.keys.Link(ctx, "task_ssh_ed25519", []string{model.RoleRunner, model.RoleAdmin}, nil))
 	assert.NoError(t, f.workspaces.Create(ctx, &model.Workspace{Folder: "ws"}))
-	assert.NoError(t, f.workspaces.EnsureDefault(ctx))
+	assert.NoError(t, f.workspaces.Create(ctx, &model.Workspace{Folder: model.Default, Title: "Default"}))
 	ws, err := f.workspaces.GetByFolder(ctx, "ws")
 	assert.NoError(t, err)
 	scope := keystore.ScopeWorkspace(ws.ID)

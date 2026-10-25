@@ -262,12 +262,13 @@ func (h *Handlers) workspaceBusy(ctx context.Context, name string) (string, erro
 
 // deleteWorkspace removes the projects inside a workspace, their rows
 // and their checkouts, their managed env files, its secrets and its keys
-// with their grants, and then the workspace: a named one loses its row
-// and its directory, home and src with everything in them; the default
-// workspace, the root, keeps its row and its directory and ends with an
-// empty home and an empty src, its home repository forgotten. It
-// refuses, a 409, while a run of the workspace is active or while the
-// workspace holds a secret: a delete never takes a secret with it.
+// with their grants, and then the workspace: its row and its directory,
+// home and src with everything in them. The default workspace, the
+// root, loses its row and the root's home and src, and the root
+// directory stays with the named workspaces in it: the instance then
+// runs without a default workspace. It refuses, a 409, while a run of
+// the workspace is active or while the workspace holds a secret: a
+// delete never takes a secret with it.
 func (h *Handlers) deleteWorkspace(w http.ResponseWriter, r *http.Request) {
 	if !h.require(w, r, "workspace/delete") {
 		return
@@ -300,32 +301,19 @@ func (h *Handlers) deleteWorkspace(w http.ResponseWriter, r *http.Request) {
 		failErr(w, err)
 		return
 	}
-	if ws.Folder == model.Default {
-		ws.HomeURL, ws.HomeBranch = "", ""
-		if err := h.opts.Workspaces.Update(ctx, ws); err != nil {
-			failErr(w, err)
-			return
-		}
-		for _, dir := range []string{layout.HomeDir(h.opts.Root, ws.Folder), layout.SrcDir(h.opts.Root, ws.Folder)} {
-			if err := os.RemoveAll(dir); err != nil {
-				failErr(w, err)
-				return
-			}
-		}
-		if err := layout.Ensure(h.opts.Root, ws.Folder); err != nil {
-			failErr(w, err)
-			return
-		}
-		w.WriteHeader(http.StatusNoContent)
-		return
-	}
 	if err := h.opts.Workspaces.Delete(ctx, ws.ID); err != nil {
 		failErr(w, err)
 		return
 	}
-	if err := os.RemoveAll(layout.WorkspaceDir(h.opts.Root, ws.Folder)); err != nil {
-		failErr(w, err)
-		return
+	dirs := []string{layout.WorkspaceDir(h.opts.Root, ws.Folder)}
+	if ws.Folder == model.Default {
+		dirs = []string{layout.HomeDir(h.opts.Root, ws.Folder), layout.SrcDir(h.opts.Root, ws.Folder)}
+	}
+	for _, dir := range dirs {
+		if err := os.RemoveAll(dir); err != nil {
+			failErr(w, err)
+			return
+		}
 	}
 	w.WriteHeader(http.StatusNoContent)
 }
@@ -390,6 +378,16 @@ func (h *Handlers) workspaceFolders(ctx context.Context) []string {
 	}
 	folders, _ := h.opts.Workspaces.Folders(ctx)
 	return folders
+}
+
+// workspaceRows returns every workspace, none without the storage or on
+// an error.
+func (h *Handlers) workspaceRows(ctx context.Context) []model.Workspace {
+	if h.opts.Workspaces == nil {
+		return nil
+	}
+	rows, _ := h.opts.Workspaces.List(ctx)
+	return rows
 }
 
 // dirOf returns the directory of a folder ID, as the layout places it

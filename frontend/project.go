@@ -23,8 +23,9 @@ func (h *Handlers) projects(w http.ResponseWriter, r *http.Request) {
 	p.Crumbs = view.Crumbs("Settings", "/settings", "Projects")
 	p.Step = view.StepProjects
 	p.Root = h.opts.Root
-	p.Entries = folder.Entries(h.opts.Root, h.opts.Git, h.workspaceFolders(r.Context()))
-	p.ProjectGroups = view.ProjectGroups(p.Entries, h.workspaceList(r.Context()))
+	workspaces := h.workspaceList(r.Context())
+	p.Entries = folder.Entries(h.opts.Root, h.opts.Git, workspaces)
+	p.ProjectGroups = view.ProjectGroups(p.Entries, workspaces)
 	h.measure(p)
 	h.pulls(p)
 	h.render(w, http.StatusOK, "projects", p)

@@ -19,16 +19,20 @@ type StepSpace struct {
 	Title string
 }
 
-// StepSpaces lists the default workspace, then by rank each one holding a folder of StepFolders.
+// StepSpaces lists _, while it exists or a step folder lies at the root, then by rank each named workspace holding a folder of StepFolders.
 func (p *Page) StepSpaces() []StepSpace {
 	titles := map[string]string{}
+	root := false
 	for _, ws := range p.WorkspaceList {
 		titles[ws.Folder] = ws.Title
+		root = root || ws.Folder == model.Default
 	}
 	seen := map[string]bool{}
 	for _, f := range p.StepFolders {
 		if ws := p.workspaceOf(f.ID); ws != model.Default {
 			seen[ws] = true
+		} else {
+			root = true
 		}
 	}
 	named := make([]string, 0, len(seen))
@@ -42,9 +46,12 @@ func (p *Page) StepSpaces() []StepSpace {
 		}
 		return a < b
 	})
-	spaces := []StepSpace{{ID: model.Default, Title: "Default"}}
-	if title := titles[model.Default]; title != "" {
-		spaces[0].Title = title
+	spaces := []StepSpace{}
+	if root {
+		spaces = append(spaces, StepSpace{ID: model.Default, Title: "Default"})
+		if title := titles[model.Default]; title != "" {
+			spaces[0].Title = title
+		}
 	}
 	for _, ws := range named {
 		title := titles[ws]
