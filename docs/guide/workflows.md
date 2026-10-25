@@ -193,9 +193,43 @@ when you see every folder its steps ran in.
 
 **Add workflow** on the Workflows page opens the editor on a blank
 workflow: a **Name**, a **Description**, optional, which the workflow's
-page and the list show under its name, and **Show in sidebar**. The
-steps come next, on a rail: a numbered node a step, in the order they
-run, and the step's card beside it, in the colour of its kind.
+page and the list show under its name, **Show in sidebar** and **Runs
+as**, the user every run of the workflow goes as. The steps come next,
+on a rail: a numbered node a step, in the order they run, and the
+step's card beside it, in the colour of its kind.
+
+## Runs as
+
+A workflow runs as a user of its own. Every step of a run, a command, a
+prompt or a summary, runs as that user: with their permissions, the
+Claude token the Integrations page grants their role or user, and the
+SSH keys and secrets of the workspace each step's folder is in, through
+the run's ssh agent. The run shows under that user's name, on
+the Workflows page, the workflow's page and in Recents, as a run they
+started.
+
+An admin picks the user from **Runs as** in the editor, the current
+login selected on a new workflow and the saved user on edit. Everyone
+else reads the user there: a workflow they make runs as themself, and
+one an admin set to another user keeps that user. Who runs it and who
+owns it differ: the **By** column of the Workflows page names the
+owner, and `runs as` with the user when they differ, as the head of
+the workflow's page does.
+
+Running the workflow takes two rights at once: yours, to run every step
+as before, and the run-as user's, who must be able to run every step at
+that time. **Run** shows when both hold, and a start the run-as user
+may not make says which step and whom it refuses. A schedule of the
+workflow follows the same user (see [Scheduling one](#scheduling-one)).
+A user since deleted leaves the workflow with no one to run as: the
+start refuses until an admin picks another user.
+
+Through the API, `user` on `POST` and `PUT /api/workflows` names the
+user: an admin names anyone, anyone else only themself (`403`), a name
+nobody holds answers `404`, and left out the workflow runs as its
+creator on create and keeps its user on update. Every workflow carries
+`run_as`, the name, and `run_as_user_id`, empty for one that runs as
+its owner.
 
 - **Add step** at the foot of the rail picks the kind: **Command**,
   **Prompt** or **Summary**, the last two with `prompt/edit`. The new
@@ -260,25 +294,28 @@ The edit page ends with **Schedule**: the workflow's schedules, each
 with its expression, its next and last run, who it runs as and its
 state, with **Enable** or **Disable** and **Delete** in the row's menu,
 and under them the form that adds one: an **Expression** (see
-[Scheduled](scheduled.md#scheduling-a-job) for the syntax) and, for an
-admin, **Run as**. **Add schedule** saves it. The schedule starts a run
-of the workflow at each time, as its user, with no input, as **Run**
-does without the input field; the run shows under Recent runs and on
-the workflow's page like any other. Scheduling a workflow takes the
-right to run every step, as running it does, and the scheduler checks
-again at each time: when the user may not run a step by then, it skips
-the run and logs why. A run skips its time while the workflow is still
-running. A schedule of a workflow has no **Triage failures with
-Claude**, a job's run has that; a workflow with a prompt or a summary
-step reads how its steps went on its own. Deleting the workflow
-disables the schedule when its time comes.
+[Scheduled](scheduled.md#scheduling-a-job) for the syntax). **Add
+schedule** saves it. The schedule starts a run of the workflow at each
+time, as the workflow's [Runs as](#runs-as) user, with no input, as
+**Run** does without the input field; the run shows under Recent runs
+and on the workflow's page like any other. The block's lead and each
+row's **Runs as** name that user; a workflow's schedule has no user of
+its own to pick, so changing who runs it means changing the workflow.
+Scheduling a workflow takes the right to run every step, as running it
+does, and the scheduler checks the run-as user again at each time: when
+they may not run a step by then, or nobody holds the user any more, it
+skips the run and logs why. A run skips its time while the workflow is still running.
+A schedule of a workflow has no **Triage failures with Claude**, a
+job's run has that; a workflow with a prompt or a summary step reads
+how its steps went on its own. Deleting the workflow disables the
+schedule when its time comes.
 
 The workflows list shows each workflow's schedules under its name, a
 clock and the expression, and [Scheduled](scheduled.md) lists them
 among the jobs' with the workflow in place of the folder and the job.
 Through `POST /api/schedules`: `{"workflow": "<id>", "expression":
-"0 7 * * 1-5"}`, with `user` for an admin; `folder`, `job`, `args` and
-`triage` stay out of it.
+"0 7 * * 1-5"}`; `user`, `folder`, `job`, `args` and `triage` stay out
+of it, `user` with a `400` that points to the workflow.
 
 ---
 

@@ -31,8 +31,9 @@
 
 {{/* runas-row takes (list $ schedule): who a schedule runs as, with the
      user menu; an admin picks another user, and the schedule saves on
-     the change. */}}
-{{ define "runas-row" }}{{ $p := index . 0 }}{{ with index . 1 }}{{ if $p.Users -}}
+     the change. A workflow's schedule runs as the workflow's own user,
+     read from the workflow, with no pick. */}}
+{{ define "runas-row" }}{{ $p := index . 0 }}{{ with index . 1 }}{{ if .WorkflowID }}{{ template "user" (list $p ($p.ScheduleUser .)) }}{{ else if $p.Users -}}
 <form class="run-as" data-api="/api/schedules/{{ .ID }}" data-method="PUT" data-next="reload">{{ template "avatar" (list $p .UserName) }} <select name="user" data-submit aria-label="Run as">
 			{{- template "user-options" (list $p.Users .UserName true) }}
 		</select>{{ template "user-menu" (list $p .UserName) }}</form>

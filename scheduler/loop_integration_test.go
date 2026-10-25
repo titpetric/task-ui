@@ -148,6 +148,32 @@ func TestLoop_TickWorkflow(t *testing.T) {
 	assert.Len(t, f.flows.started(), 1)
 }
 
+// A workflow schedule runs as the workflow's own user, the one set on
+// it, not the schedule's; a run-as user nobody holds skips the time, and
+// the schedule moves on.
+func TestLoop_TickWorkflowRunAs(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	ctx := context.Background()
+	miguel := &model.User{Name: "miguel", Role: model.RoleRunner}
+	assert.NoError(t, f.users.Create(ctx, miguel))
+	wf, _ := f.workflow(t, "daily summary", "plan")
+	wf.RunAsUserID = miguel.ID
+	assert.NoError(t, f.workflows.Update(ctx, wf, []model.WorkflowStep{{Folder: "infra", Job: "plan"}}))
+	gone, skipped := f.workflow(t, "orphan", "plan")
+	gone.RunAsUserID = "nobody"
+	assert.NoError(t, f.workflows.Update(ctx, gone, []model.WorkflowStep{{Folder: "infra", Job: "plan"}}))
+
+	started, err := f.loop.Tick(ctx)
+	assert.NoError(t, err)
+	assert.Equal(t, 1, started)
+	assert.Equal(t, []string{`daily summary as miguel with ""`}, f.flows.started())
+	got, err := f.schedules.Get(ctx, skipped.ID)
+	assert.NoError(t, err)
+	assert.True(t, got.IsEnabled())
+	assert.Equal(t, f.now.Add(time.Hour), got.NextRunAt.UTC(), "moved on")
+}
+
 // The loop disables a schedule whose workflow nobody holds, skips one
 // whose workflow runs and one whose user may not run a step, and moves
 // each on all the same.

@@ -178,9 +178,11 @@ func (l *Loop) advance(ctx context.Context, schedule *model.Schedule, now time.T
 }
 
 // fireWorkflow starts a schedule of a workflow: a run of every step as
-// the schedule's user, with no input, when the user may run them all;
-// a workflow nobody holds disables the schedule, one with a run in
-// progress skips it. A workflow run is no run of a job, so no triage follows it.
+// the workflow's own user, the one it runs as, with no input, when that
+// user may run them all; a user nobody holds skips it as one who may
+// not. A workflow nobody holds disables the schedule, one with a run in
+// progress skips it. A workflow run is no run of a job, so no triage
+// follows it.
 func (l *Loop) fireWorkflow(ctx context.Context, schedule *model.Schedule, now time.Time) (bool, error) {
 	if l.Workflows == nil || l.Flows == nil {
 		slog.Warn("scheduled run skipped, no workflows on this instance", "workflow", schedule.WorkflowID)
@@ -195,8 +197,13 @@ func (l *Loop) fireWorkflow(ctx context.Context, schedule *model.Schedule, now t
 	if err := l.advance(ctx, schedule, now); err != nil {
 		return false, err
 	}
-	user := l.user(ctx, schedule)
+	user := &model.User{ID: wf.RunsAs(), Name: wf.UserName}
 	if l.Users != nil {
+		user, err = l.Users.Get(ctx, wf.RunsAs())
+		if err != nil {
+			slog.Warn("scheduled run skipped, its user may not run a step of the workflow", "workflow", wf.Name, "step", "", "user", wf.RunsAs(), "err", "the user is gone")
+			return false, nil
+		}
 		steps, err := l.Workflows.Steps(ctx, wf.ID)
 		if err != nil {
 			return false, err

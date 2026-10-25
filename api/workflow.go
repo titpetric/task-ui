@@ -28,6 +28,10 @@ type WorkflowRequest struct {
 	// keeps it out, for one that is a step of others. Left out on a
 	// change, it stays unchanged.
 	Sidebar *bool `json:"sidebar,omitempty"`
+	// User is who every run of the workflow runs as, by name: an admin
+	// names anyone, everyone else only themselves. Left out, the caller
+	// on create, and no change on update.
+	User string `json:"user,omitempty"`
 }
 
 // WorkflowView is a workflow as the API shows it.
@@ -42,7 +46,11 @@ type WorkflowView struct {
 	Running string `json:"running,omitempty"`
 	// LastRun is the newest run.
 	LastRun *model.WorkflowRun `json:"last_run,omitempty"`
-	// CanRun says whether the user asking may run every step.
+	// RunAs names the user the workflow's runs run as, its owner
+	// without one; empty for a user nobody holds any more.
+	RunAs string `json:"run_as"`
+	// CanRun says whether a start by the user asking goes: they may run
+	// every step, and so may the user the workflow runs as.
 	CanRun bool `json:"can_run"`
 	// CanChange says whether the user asking may change or delete it.
 	CanChange bool `json:"can_change"`
@@ -103,7 +111,10 @@ func (h *Handlers) workflowView(r *http.Request, wf model.Workflow, steps []mode
 	if runs, err := h.opts.WorkflowRuns.ListByWorkflow(r.Context(), wf.ID, storage.WorkflowRunFilter{Limit: 1}); err == nil && len(runs) > 0 {
 		v.LastRun = &runs[0]
 	}
-	v.CanRun = h.mayRun(r, steps) == ""
+	v.RunAs = h.runAsName(r, &wf)
+	if user, err := h.runAsUser(r, &wf); err == nil {
+		v.CanRun = h.mayRun(r, steps) == "" && h.mayRunAs(r, user, steps) == ""
+	}
 	v.CanChange = h.mayChangeWorkflow(r, &wf, false)
 	return v
 }
@@ -172,6 +183,14 @@ func (h *Handlers) checkWorkflow(w http.ResponseWriter, r *http.Request, req Wor
 		fail(w, http.StatusBadRequest, "a workflow needs an enabled step")
 		return nil, false
 	}
+	runAs, status, problem := h.pickRunAs(r, req.User)
+	if problem != "" {
+		fail(w, status, problem)
+		return nil, false
+	}
+	if runAs != nil {
+		wf.RunAsUserID = runAs.ID
+	}
 	return steps, true
 }
 
@@ -222,7 +241,8 @@ func (h *Handlers) listWorkflows(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"workflows": views})
 }
 
-// createWorkflow adds a workflow. Any user may, from the jobs they see.
+// createWorkflow adds a workflow. Any user may, from the jobs they see;
+// its runs run as the caller unless an admin names another user.
 func (h *Handlers) createWorkflow(w http.ResponseWriter, r *http.Request) {
 	if !h.require(w, r, "workflow/edit") {
 		return
@@ -259,7 +279,8 @@ func (h *Handlers) getWorkflow(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, h.workflowView(r, *wf, steps))
 }
 
-// updateWorkflow renames a workflow and replaces its steps.
+// updateWorkflow renames a workflow, replaces its steps and, with a
+// user named, changes who its runs run as.
 func (h *Handlers) updateWorkflow(w http.ResponseWriter, r *http.Request) {
 	wf, _, err := h.workflowOf(r)
 	if err != nil {
@@ -314,9 +335,12 @@ func (h *Handlers) deleteWorkflow(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-// startWorkflow runs a workflow, when the user may run every step, its
-// prompts with prompt/edit; an optional body's input goes to the
-// prompts. A workflow already running answers 409 with its run.
+// startWorkflow runs a workflow, when the caller may run every step,
+// its prompts with prompt/edit, as the user the workflow runs as, who
+// must be able to run them too, a 403 naming the step and the user
+// otherwise and a 409 for a user nobody holds; an optional body's input
+// goes to the prompts. A workflow already running answers 409 with its
+// run.
 func (h *Handlers) startWorkflow(w http.ResponseWriter, r *http.Request) {
 	wf, steps, err := h.workflowOf(r)
 	if err != nil {
@@ -332,7 +356,16 @@ func (h *Handlers) startWorkflow(w http.ResponseWriter, r *http.Request) {
 		fail(w, http.StatusForbidden, "you don't have permission to run "+step)
 		return
 	}
-	run, err := h.opts.Flows.Start(r.Context(), wf, access.UserFrom(r.Context()), req.Input)
+	user, err := h.runAsUser(r, wf)
+	if err != nil {
+		fail(w, http.StatusConflict, "the user this workflow runs as is gone; change it on the workflow")
+		return
+	}
+	if step := h.mayRunAs(r, user, steps); step != "" {
+		fail(w, http.StatusForbidden, user.Name+" may not run "+step)
+		return
+	}
+	run, err := h.opts.Flows.Start(r.Context(), wf, user, req.Input)
 	if errors.Is(err, workflow.ErrBusy) {
 		running, _ := h.opts.Flows.Active(wf.ID)
 		writeJSON(w, http.StatusConflict, map[string]any{"error": err.Error(), "run_id": running})

@@ -43,12 +43,14 @@ func TestWorkflowStorage_Create(t *testing.T) {
 	// A prompt or a summary step runs a workflow with every job step
 	// disabled; the kinds, the description and the step toggles round
 	// trip.
-	asks := &model.Workflow{Name: "asks", Description: "summarise the build"}
+	asks := &model.Workflow{Name: "asks", Description: "summarise the build", UserID: "u-ops", RunAsUserID: "u-miguel"}
 	summary := model.WorkflowStep{Kind: model.StepSummary, Folder: "malta", Dir: "dockerfiles", Job: model.PromptJob}
 	assert.NoError(t, workflows.Create(ctx, asks, append(off, model.WorkflowStep{Folder: "a", Job: "c"}, summary)))
 	read, err := workflows.Get(ctx, asks.ID)
 	assert.NoError(t, err)
 	assert.Equal(t, "summarise the build", read.Description)
+	assert.Equal(t, "u-miguel", read.RunAsUserID, "the run-as user round trips")
+	assert.Equal(t, "u-miguel", read.RunsAs())
 	toggled, err := workflows.Steps(ctx, asks.ID)
 	assert.NoError(t, err)
 	assert.True(t, toggled[0].Disabled)
@@ -56,6 +58,11 @@ func TestWorkflowStorage_Create(t *testing.T) {
 	assert.Equal(t, model.StepJob, toggled[1].Kind)
 	assert.Equal(t, model.StepSummary, toggled[2].Kind)
 	assert.Equal(t, "malta/dockerfiles", toggled[2].Place())
+	read.RunAsUserID = ""
+	assert.NoError(t, workflows.Update(ctx, read, toggled))
+	read, err = workflows.Get(ctx, asks.ID)
+	assert.NoError(t, err)
+	assert.Equal(t, "u-ops", read.RunsAs(), "without one the owner runs it")
 	alone := &model.Workflow{Name: "alone"}
 	assert.NoError(t, workflows.Create(ctx, alone, []model.WorkflowStep{{Folder: "_", Job: model.PromptJob, Prompt: "say ok"}}))
 	one, err := workflows.Steps(ctx, alone.ID)

@@ -42,6 +42,10 @@ type ScheduleRequest struct {
 // workflow's.
 const errWorkflowSchedule = "a workflow schedule takes no folder, job, args or triage"
 
+// errWorkflowScheduleUser refuses a user on a workflow's schedule: the
+// workflow's own run-as user runs every run of it.
+const errWorkflowScheduleUser = "a workflow runs as its own user; change it on the workflow"
+
 // onOff is the row's value of a switch of a request, 1 or 0.
 func onOff(on bool) int64 {
 	if on {
@@ -159,10 +163,16 @@ func (h *Handlers) createSchedule(w http.ResponseWriter, r *http.Request) {
 
 // createWorkflowSchedule adds a schedule of a workflow, for a user who
 // may run every step of it, as startWorkflow asks: no folder, job, args
-// or triage with it (400), a workflow the user sees (404).
+// or triage with it (400), a workflow the user sees (404). Its runs run
+// as the workflow's own user, so a user on it answers 400 too; the row
+// keeps the creator for the record.
 func (h *Handlers) createWorkflowSchedule(w http.ResponseWriter, r *http.Request, req ScheduleRequest) {
 	if req.Folder != "" || req.Job != "" || len(req.Args) > 0 || (req.Triage != nil && *req.Triage) {
 		fail(w, http.StatusBadRequest, errWorkflowSchedule)
+		return
+	}
+	if req.User != "" {
+		fail(w, http.StatusBadRequest, errWorkflowScheduleUser)
 		return
 	}
 	wf, steps, err := h.workflowByID(r, req.Workflow)
@@ -174,20 +184,13 @@ func (h *Handlers) createWorkflowSchedule(w http.ResponseWriter, r *http.Request
 		fail(w, http.StatusForbidden, "you don't have permission to run "+step)
 		return
 	}
-	runAs, status, problem := h.runAsWorkflow(r, req.User, steps)
-	if problem != "" {
-		fail(w, status, problem)
-		return
-	}
-	if runAs == nil {
-		runAs = access.UserFrom(r.Context())
-	}
+	creator := access.UserFrom(r.Context())
 	next, err := scheduler.NextRun(req.Expression, time.Now())
 	if err != nil {
 		fail(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	schedule := &model.Schedule{WorkflowID: wf.ID, UserID: runAs.ID, UserName: runAs.Name, Expression: req.Expression, Enabled: 1, NextRunAt: &next}
+	schedule := &model.Schedule{WorkflowID: wf.ID, UserID: creator.ID, UserName: creator.Name, Expression: req.Expression, Enabled: 1, NextRunAt: &next}
 	if req.Enabled != nil && !*req.Enabled {
 		schedule.Enabled = 0
 	}
@@ -238,21 +241,6 @@ func (h *Handlers) runAs(r *http.Request, name, folderID, jobID string) (*model.
 	return user, 0, ""
 }
 
-// runAsWorkflow resolves the user a workflow schedule request names to
-// run as, as pickedUser does, and checks that someone else may run
-// every step, a 400 naming the step otherwise.
-func (h *Handlers) runAsWorkflow(r *http.Request, name string, steps []model.WorkflowStep) (*model.User, int, string) {
-	user, status, problem := h.pickedUser(r, name)
-	if user == nil || user == access.UserFrom(r.Context()) {
-		return user, status, problem
-	}
-	as := r.WithContext(access.WithUser(r.Context(), user))
-	if step := h.mayRun(as, steps); step != "" {
-		return nil, http.StatusBadRequest, user.Name + " may not run " + step
-	}
-	return user, 0, ""
-}
-
 // scheduleOf returns the schedule a route names, when the user may see it.
 func (h *Handlers) scheduleOf(r *http.Request) (*model.Schedule, error) {
 	schedule, err := h.opts.Schedules.Get(r.Context(), param(r, "id"))
@@ -295,7 +283,7 @@ func (h *Handlers) mayChange(r *http.Request, schedule *model.Schedule) bool {
 
 // updateSchedule changes the expression, the user, the args or the
 // triage of a schedule, or switches it. A workflow's schedule takes no
-// args or triage.
+// args, triage or user: the workflow's own user runs it.
 func (h *Handlers) updateSchedule(w http.ResponseWriter, r *http.Request) {
 	if !h.require(w, r, "schedule/edit") {
 		return
@@ -319,14 +307,9 @@ func (h *Handlers) updateSchedule(w http.ResponseWriter, r *http.Request) {
 			fail(w, http.StatusBadRequest, errWorkflowSchedule)
 			return
 		}
-		_, steps, _ := h.workflowByID(r, schedule.WorkflowID)
-		runAs, status, problem := h.runAsWorkflow(r, req.User, steps)
-		if problem != "" {
-			fail(w, status, problem)
+		if req.User != "" {
+			fail(w, http.StatusBadRequest, errWorkflowScheduleUser)
 			return
-		}
-		if runAs != nil {
-			schedule.UserID, schedule.UserName = runAs.ID, runAs.Name
 		}
 	} else {
 		runAs, status, problem := h.runAs(r, req.User, schedule.Folder, schedule.Job)

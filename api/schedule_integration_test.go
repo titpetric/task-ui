@@ -252,20 +252,24 @@ func TestSchedule_Workflow(t *testing.T) {
 	assert.Equal(t, http.StatusOK, off.Status, string(off.Raw))
 	assert.Equal(t, float64(0), off.get("enabled"))
 	assert.Equal(t, wf, off.str("workflow_id"))
-	// An admin, who may run the steps, switches it back and picks its user.
-	on := f.call(t, asAdmin, http.MethodPut, path, api.ScheduleRequest{Enabled: ptr(true), User: "ops"})
+	// An admin, who may run the steps, switches it back; the workflow
+	// holds the user, so a pick on the schedule answers 400.
+	on := f.call(t, asAdmin, http.MethodPut, path, api.ScheduleRequest{Enabled: ptr(true)})
 	assert.Equal(t, http.StatusOK, on.Status, string(on.Raw))
 	assert.Equal(t, float64(1), on.get("enabled"))
 	assert.Equal(t, "ops", on.str("user_name"))
+	picked := f.call(t, asAdmin, http.MethodPut, path, api.ScheduleRequest{User: "admin"})
+	assert.Equal(t, http.StatusBadRequest, picked.Status, string(picked.Raw))
+	assert.Contains(t, picked.str("error"), "a workflow runs as its own user")
 	assert.Equal(t, http.StatusBadRequest, f.call(t, asOps, http.MethodPut, path, api.ScheduleRequest{Args: api.RunArgs{"x"}}).Status, "no args on a workflow schedule")
 	assert.Equal(t, http.StatusBadRequest, f.call(t, asOps, http.MethodPut, path, api.ScheduleRequest{Triage: ptr(true)}).Status, "no triage on a workflow schedule")
 
 	assert.Equal(t, http.StatusNoContent, f.call(t, asOps, http.MethodDelete, path, nil).Status)
 }
 
-// A workflow schedule takes no folder, job, args or triage (400), names
-// a workflow there is (404), and needs the right to run every step
-// (403); an admin picks a user who may run them all (400 otherwise).
+// A workflow schedule takes no folder, job, args, triage or user (400),
+// names a workflow there is (404), and needs the right to run every
+// step (403): the workflow's own user runs it.
 func TestSchedule_WorkflowRefused(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
@@ -286,8 +290,8 @@ func TestSchedule_WorkflowRefused(t *testing.T) {
 		{"no workflow", asOps, api.ScheduleRequest{Workflow: model.NewID(), Expression: "@daily"}, http.StatusNotFound},
 		{"a step the user may not run", asOps, api.ScheduleRequest{Workflow: private, Expression: "@daily"}, http.StatusForbidden},
 		{"viewer", asViewer, api.ScheduleRequest{Workflow: wf, Expression: "@daily"}, http.StatusForbidden},
-		{"as someone else", asOps, api.ScheduleRequest{Workflow: wf, Expression: "@daily", User: asAdmin}, http.StatusForbidden},
-		{"as one who may not run a step", asAdmin, api.ScheduleRequest{Workflow: private, Expression: "@daily", User: asOps}, http.StatusBadRequest},
+		{"as someone else", asOps, api.ScheduleRequest{Workflow: wf, Expression: "@daily", User: asAdmin}, http.StatusBadRequest},
+		{"as oneself", asOps, api.ScheduleRequest{Workflow: wf, Expression: "@daily", User: asOps}, http.StatusBadRequest},
 	}
 	for _, c := range cases {
 		res := f.call(t, c.user, http.MethodPost, "/schedules", c.req)

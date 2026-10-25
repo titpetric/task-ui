@@ -364,6 +364,19 @@ func (p *Page) CanSettings() bool {
 	return p.Can("workspace/view") || p.Can("project/view") || p.Can("key/view") || p.Can("secret/view") || p.Can("integration/view") || p.Can("user/view")
 }
 
+// ScheduleUser names who a schedule's runs run as: a workflow's user
+// for a workflow's schedule, else the schedule's own.
+func (p *Page) ScheduleUser(schedule model.Schedule) string {
+	if schedule.IsWorkflow() {
+		for _, wf := range p.SideWorkflows {
+			if wf.ID == schedule.WorkflowID {
+				return wf.RunAs
+			}
+		}
+	}
+	return schedule.UserName
+}
+
 // CanProfile reports whether the signed in user may open a profile by name: their own, or any with user/view.
 // A name no user holds, such as the agent a note names, has no profile.
 func (p *Page) CanProfile(name string) bool {

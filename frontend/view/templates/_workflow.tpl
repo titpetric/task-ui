@@ -1,6 +1,6 @@
 {{/* stepeditor is the workflow form, new and edit alike: the name, a
-     description and the sidebar toggle, then the steps in order on a
-     rail, each a card of its kind that folds to one line, and Add step
+     description, the sidebar toggle and who its runs run as, then the
+     steps in order on a rail, each a card of its kind that folds to one line, and Add step
      with the kinds to pick from. A prompt or a summary takes prompt/edit.
      list: page, workflow (nil for a new one), API path, method, where to
      go after, the submit label. task-ui.js reads the cards into the
@@ -21,6 +21,23 @@
 		</div>
 		<div class="field">
 			<label class="check"><input type="checkbox" name="sidebar"{{ if or (not $w) (not $w.SidebarHidden) }} checked{{ end }}> Show in sidebar <span class="faint">off for a workflow you only use as a step of others</span></label>
+		</div>
+		{{- /* Runs as: an admin picks the user from a select, the current
+		     login on a new workflow and the saved user on edit; everyone
+		     else reads the user, the form posts none and the API keeps
+		     the caller, or the saved user. */}}
+		{{- $runAs := $p.User.Name }}{{ if $w }}{{ $runAs = $w.RunAs }}{{ end }}
+		<div class="field">
+			{{- if $p.Users }}
+			<label for="wf-user-{{ $id }}">Runs as</label>
+			<select id="wf-user-{{ $id }}" name="user">
+				{{- template "user-options" (list $p.Users $runAs) }}
+			</select>
+			{{- else }}
+			<span class="label">Runs as</span>
+			<span class="wf-runas">{{ $runAs }}</span>
+			{{- end }}
+			<small class="faint">Every step runs as this user: with their permissions, the Claude token granted to their role or user, and the keys and secrets of the workspace each step's folder is in.</small>
 		</div>
 	</div>
 
