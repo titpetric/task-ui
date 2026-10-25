@@ -4,6 +4,7 @@ package runner_test
 
 import (
 	"context"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -11,6 +12,7 @@ import (
 	"testing"
 
 	"github.com/titpetric/task-ui/folder"
+	"github.com/titpetric/task-ui/git"
 	"github.com/titpetric/task-ui/internal/assert"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/runner"
@@ -138,4 +140,18 @@ func TestManager_PullHomeFirst(t *testing.T) {
 	assert.Contains(t, out, "home v2")
 	assert.Contains(t, out, "project v2")
 	assert.Contains(t, out, "home="+home)
+}
+
+// A push hook's pull fast forwards a checkout, and answers ErrNotRepo
+// for a directory that is none, with or without git.
+func TestManager_PullCheckout(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	dir := checkout(t)
+	m := runner.New(runner.Options{Git: &git.Git{}})
+	var out strings.Builder
+	assert.NoError(t, m.PullCheckout(ctx, dir, &out))
+	assert.Contains(t, out.String(), "Already up to date")
+	assert.ErrorIs(t, m.PullCheckout(ctx, t.TempDir(), io.Discard), git.ErrNotRepo)
+	assert.ErrorIs(t, runner.New(runner.Options{}).PullCheckout(ctx, t.TempDir(), io.Discard), git.ErrNotRepo)
 }

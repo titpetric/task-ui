@@ -326,6 +326,17 @@ func (a *App) wire(version string) error {
 	// A run's task-ui get-secret signs in with the run's own token,
 	// which no other route takes.
 	r.Get("/api/run/secrets/{name}", (&api.RunSecret{Source: a.Runner}).ServeHTTP)
+	// Forgejo posts a push with no session: the hook's signature under
+	// the integration's secret signs it in, and it only ever pulls.
+	r.Post("/api/webhooks/forgejo", (&api.Webhook{
+		Settings: func(ctx context.Context) (map[string]string, error) {
+			return integrations.Values(ctx, integration.Forgejo)
+		},
+		Projects:   projects.List,
+		Workspaces: workspaces.List,
+		Root:       cfg.Root,
+		Pull:       a.Runner.PullCheckout,
+	}).ServeHTTP)
 	r.Mount("/api/mcp", a.Guard.Require(access.RequireMCP(access.SameOrigin(server))))
 	r.Mount("/api", a.Guard.Require(access.SameOrigin(routes)))
 	r.Mount("/", pages.Routes())
@@ -397,24 +408,6 @@ func (a *App) shutdown(server *http.Server) error {
 // Close releases the database.
 func (a *App) Close() error {
 	return a.DB.Close()
-}
-
-// promptHosts lists the inventory for a prompt's run: the hosts, largest
-// first, with who task-ui signs in to each as, waiting at most 10s for
-// the hosts not yet probed.
-func promptHosts(hosts *beszel.Inventory, prober *sshprobe.Prober) func(ctx context.Context) (string, error) {
-	return func(ctx context.Context) (string, error) {
-		systems, err := hosts.Systems(ctx)
-		if err != nil {
-			return "", err
-		}
-		systems = beszel.ByCapacity(systems)
-		names := make([]string, len(systems))
-		for i, system := range systems {
-			names[i] = system.Host
-		}
-		return beszel.Hosts(systems, prober.Logins(ctx, names, 10*time.Second)), nil
-	}
 }
 
 // ensureWorkspaces adds the default workspace's row when there is none

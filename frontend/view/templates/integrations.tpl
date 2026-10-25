@@ -7,6 +7,7 @@
 </div>
 
 {{- $users := .Users }}
+{{- $admin := and .User .User.CanAdmin }}
 {{- range .Integrations }}
 <section class="block integration" id="{{ .ID }}">
 	<div class="block-head">
@@ -38,6 +39,13 @@
 			<label for="{{ $i.ID }}-{{ .Name }}">{{ .Label }}{{ if .Secret }} {{ if index $i.Set .Name }}<span class="badge ok">set</span>{{ else }}<span class="badge">empty</span>{{ end }}{{ end }}</label>
 			{{- if .Secret }}
 			<input type="password" id="{{ $i.ID }}-{{ .Name }}" name="values.{{ .Name }}" placeholder="{{ if index $i.Set .Name }}leave empty to keep it{{ else }}{{ .Placeholder }}{{ end }}" autocomplete="new-password" spellcheck="false">
+			{{- else if .Options }}
+			{{- $value := index $i.Values .Name }}{{ if not $value }}{{ $value = index .Options 0 }}{{ end }}
+			<select id="{{ $i.ID }}-{{ .Name }}" name="values.{{ .Name }}">
+				{{- range .Options }}
+				<option value="{{ . }}"{{ if eq . $value }} selected{{ end }}>{{ . }}</option>
+				{{- end }}
+			</select>
 			{{- else }}
 			<input type="text" id="{{ $i.ID }}-{{ .Name }}" name="values.{{ .Name }}" value="{{ index $i.Values .Name }}" placeholder="{{ .Placeholder }}" autocomplete="off" spellcheck="false">
 			{{- end }}
@@ -47,9 +55,20 @@
 		{{- end }}
 		<div class="form-foot">
 			<button class="btn btn-primary" type="submit">Save</button>
+			{{- if and (eq .ID "forgejo") .Configured $admin }}
+			<button type="button" class="btn" data-run data-folder="_" data-job="@forgejo-sync" data-title="_ / forgejo-sync" title="Run @forgejo-sync now: workspaces, homes, projects and hooks">Sync now</button>
+			<button type="button" class="btn" data-run data-folder="_" data-job="@forgejo-sync" data-run-args='["--dry-run"]' data-title="_ / forgejo-sync --dry-run" title="Run @forgejo-sync --dry-run: the report alone, nothing changes">Dry run</button>
+			{{- end }}
 			<button type="button" class="btn btn-danger" data-delete="/api/integrations/{{ .ID }}" data-confirm="Clear every setting of {{ .Title }}?" data-confirm-ok="Clear" data-next="reload">Clear</button>
 		</div>
 	</form>
+	{{- if eq .ID "forgejo" }}
+	<p class="dim integration-sync">
+		{{- $url := "" }}{{ with $.Instance }}{{ $url = .URL }}{{ end }}
+		{{- if $url }}Sync installs the push hook <code>{{ $url }}/api/webhooks/forgejo</code> on every repository it syncs.{{ else }}The instance has no public URL (<code>TASK_UI_URL</code>), so sync installs no push hook.{{ end }}
+		{{ with $.LastRun "_/@forgejo-sync" }}Last sync <span class="state"><i class="dot {{ .State }}"></i>{{ .State }}</span> {{ ago .StartedAt }} by {{ .UserName }}: <a href="/runs/{{ .ID }}">the report</a>.{{ else }}No sync ran yet: <b>Dry run</b> shows what one would do.{{ end }}
+	</p>
+	{{- end }}
 	</div>
 </section>
 {{- end }}

@@ -162,6 +162,7 @@ domains, the domains to `model` and `storage`, `model` to nothing of ours.
 | `claude`    | Claude Code for task-ui's own uses, such as the summary of a run's output   |
 | `integration` | the settings of the services task-ui talks to, encrypted with the instance key |
 | `beszel`    | the client of a Beszel hub, for the host inventory                           |
+| `forgejo`   | the client of a Forgejo instance and the sync of its organisations into workspaces and projects, with the push hook's signature |
 | `artifactstore` | the files runs leave, as one tree with its history in git                    |
 | `retention` | the Data retention rules and `task-ui cleanup`, which applies them           |
 | `channel`   | `task-ui channel`, the Claude Code channel of the notes that name a user     |

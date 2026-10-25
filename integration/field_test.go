@@ -14,4 +14,10 @@ func TestField(t *testing.T) {
 	data, err := json.Marshal(integration.Field{Name: "token", Label: "Token", Secret: true})
 	assert.NoError(t, err)
 	assert.JSONEq(t, `{"name":"token","label":"Token","secret":true}`, string(data))
+
+	clone := integration.Field{Name: "clone", Options: []string{"ssh", "https"}}
+	assert.True(t, clone.Valid("ssh"))
+	assert.True(t, clone.Valid(""))
+	assert.False(t, clone.Valid("ftp"))
+	assert.True(t, integration.Field{Name: "url"}.Valid("anything"))
 }

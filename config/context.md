@@ -201,9 +201,13 @@ the task and delete it. `whoami` names the keys you may read. Page:
 ## Integrations (`integration`)
 
 The services task-ui talks to: Claude Code, whose token runs get as
-`CLAUDE_CODE_OAUTH_TOKEN` for the users and roles it names, and Beszel,
-which lists the hosts of the inventory. Their tokens are never shown.
-Page: `/settings/integrations`; API: `/api/integrations`.
+`CLAUDE_CODE_OAUTH_TOKEN` for the users and roles it names; Forgejo,
+the git host, whose organisations the root's `@forgejo-sync` makes
+workspaces of, the repository `<org>/<org>` the home and every other
+repository a project, with a push hook on each that pulls the checkout
+through `/api/webhooks/forgejo`, for admins; and Beszel, which lists
+the hosts of the inventory. Their tokens are never shown. Page:
+`/settings/integrations`; API: `/api/integrations`.
 
 ## Inventory (`inventory`, `hosts`)
 

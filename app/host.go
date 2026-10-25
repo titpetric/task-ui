@@ -1,9 +1,13 @@
 package app
 
 import (
+	"context"
 	"path/filepath"
+	"time"
 
+	"github.com/titpetric/task-ui/beszel"
 	"github.com/titpetric/task-ui/hostpath"
+	"github.com/titpetric/task-ui/sshprobe"
 )
 
 // hostPaths returns the mounts of the container task-ui runs in and the
@@ -27,4 +31,22 @@ func hostDataShown(dataDir, host string) string {
 		return ""
 	}
 	return host
+}
+
+// promptHosts lists the inventory for a prompt's run: the hosts, largest
+// first, with who task-ui signs in to each as, waiting at most 10s for
+// the hosts not yet probed.
+func promptHosts(hosts *beszel.Inventory, prober *sshprobe.Prober) func(ctx context.Context) (string, error) {
+	return func(ctx context.Context) (string, error) {
+		systems, err := hosts.Systems(ctx)
+		if err != nil {
+			return "", err
+		}
+		systems = beszel.ByCapacity(systems)
+		names := make([]string, len(systems))
+		for i, system := range systems {
+			names[i] = system.Host
+		}
+		return beszel.Hosts(systems, prober.Logins(ctx, names, 10*time.Second)), nil
+	}
 }

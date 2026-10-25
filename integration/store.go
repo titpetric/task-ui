@@ -9,6 +9,8 @@ package integration
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"strings"
@@ -45,16 +47,21 @@ func (s *Store) Values(ctx context.Context, id string) (map[string]string, error
 }
 
 // Save writes an integration's settings. An empty secret field keeps the
-// value it has, so a form never has to show one; an empty plain field
-// clears it.
+// value it has, so a form never has to show one, or takes a generated
+// value the first time when the field says so; an empty field with
+// options takes the first; an empty plain field clears it.
 func (s *Store) Save(ctx context.Context, id string, values map[string]string) error {
 	kind := KindOf(id)
 	if kind == nil {
 		return ErrUnknown
 	}
-	for name := range values {
-		if kind.Field(name) == nil {
+	for name, value := range values {
+		field := kind.Field(name)
+		if field == nil {
 			return fmt.Errorf("%w setting %s for %s", ErrUnknown, name, id)
+		}
+		if !field.Valid(strings.TrimSpace(value)) {
+			return fmt.Errorf("%w value %q for %s: one of %s", ErrUnknown, value, name, strings.Join(field.Options, ", "))
 		}
 	}
 	current, err := s.rows(ctx, id)
@@ -64,6 +71,12 @@ func (s *Store) Save(ctx context.Context, id string, values map[string]string) e
 	for _, field := range kind.Fields {
 		value := strings.TrimSpace(values[field.Name])
 		row, exists := current[field.Name]
+		if value == "" && len(field.Options) > 0 {
+			value = field.Options[0]
+		}
+		if value == "" && field.Secret && field.Generated && !exists {
+			value = generated()
+		}
 		switch {
 		case value == "" && field.Secret:
 			continue
@@ -109,6 +122,15 @@ func (s *Store) Env(ctx context.Context, user, role string) (map[string]string, 
 		return nil, nil
 	}
 	return map[string]string{"CLAUDE_CODE_OAUTH_TOKEN": values["token"]}, nil
+}
+
+// generated returns a random secret, 32 bytes in hex.
+func generated() string {
+	var raw [32]byte
+	if _, err := rand.Read(raw[:]); err != nil {
+		panic(err)
+	}
+	return hex.EncodeToString(raw[:])
 }
 
 // listed reports whether a comma separated list names the item, or is *.

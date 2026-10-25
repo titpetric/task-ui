@@ -446,6 +446,9 @@ setting of an integration.
   `claude`. Check the agent's user too: the agent job of the
   [Notes](notes.md) board runs as that user. With no box checked, every
   run gets it. The token alone sets the integration up.
+- **Forgejo**: the git host's URL and a token, for the sync that makes
+  workspaces of its organisations and projects of their repositories,
+  see [Forgejo](#forgejo) below.
 - **Beszel**: the hub's URL, as task-ui reaches it, and a token, for the
   [Inventory](inventory.md) page. task-ui reads the collections
   `systems`, `system_stats`, the latest minute of each host and its
@@ -467,6 +470,82 @@ curl -s -X POST http://beszel:8090/api/collections/users/impersonate/<user id> \
 
 The token works until it expires, and changing the user's password in
 Beszel revokes it.
+
+### Forgejo
+
+The Forgejo integration mirrors a git host into task-ui: every
+organisation the token's user belongs to is a workspace, with the
+organisation's lower case name as its folder; the repository named like
+the organisation, `malta/malta`, is the workspace's home repository, the
+convention a home follows (see [Workspaces](workspaces.md#the-home));
+every other repository of the organisation is a project in the
+workspace's `src`, cloned on its default branch. The token user's own
+repositories, outside any organisation, stay out.
+
+The settings:
+
+- **URL**: the instance, such as `https://git.cdn.si`.
+- **Token**: a personal access token of a user who is a member of the
+  organisations to sync. Mint it in Forgejo under **Settings ->
+  Applications -> Generate token**, with the scopes `read:organization`,
+  `read:repository` and `write:repository`; the last is for the hooks
+  alone, which sync installs on the repositories.
+- **Clone over**: `ssh`, the default, clones with the instance's git key
+  as every project does (see [Keys](#keys)); `https` works for public
+  repositories, as task-ui puts no token in a clone URL.
+- **Webhook secret**: what signs the pushes Forgejo posts. Leave it
+  empty and the first save makes one, which later saves keep.
+
+**Sync now** runs `@forgejo-sync` of the root, `task-ui forgejo-sync`,
+and opens the run window on it; **Dry run** runs it with `--dry-run`,
+which reports what a sync would do and changes nothing. The run's output
+is the report, one line per action, `workspace malta: created`, `home
+Malta/malta: cloned main`, `project malta/apps: cloned main`, `hook
+Malta/apps: installed`, `skipped Malta/old-thing: archived`, `not on
+Forgejo: malta/vhosts`, and a summary line; the line under the form
+names the last run and links to it. Admins run the job, by hand, on a
+[schedule](scheduled.md) or as a workflow step, as `@cleanup` runs.
+
+Sync adds and updates, and never removes:
+
+- A missing workspace comes into being with its `home` and `src`; one
+  that exists stays as you set it.
+- The home: sync clones the repository into an empty home directory,
+  pulls a home that is the home repository's checkout, and leaves a
+  home that is a checkout of some other repository alone, with a line
+  in the report: replace it on the workspace's settings page if the
+  convention should apply. Without a `<org>/<org>` repository the home
+  stays, empty or not.
+- A project row that exists keeps its title, who may run it and its
+  other settings; its source URL follows the repository's. A checkout
+  without a row gets one; a directory in `src` that is no checkout
+  stays alone.
+- Sync skips an archived repository, and one whose name task-ui keeps,
+  `home`, `src`, `internal` or `_`; a mirror or a fork is a project
+  like any other.
+- A project whose repository Forgejo lacks shows as `not on
+  Forgejo` and stays; remove it on the Projects page if it should go.
+
+For every repository it syncs, sync lists the repository's webhooks and,
+when none posts to the instance's `<URL>/api/webhooks/forgejo`, installs
+one: a push hook, JSON, signed with the webhook secret. On a push,
+Forgejo posts to the instance, task-ui checks the signature and pulls
+the checkouts of that repository, the project and the home alike, under
+the lock a run pulls with, so a job in progress is not pulled under. An
+instance without a public URL (`TASK_UI_URL`) installs no hook, and the
+report says so. Sync turns a hook of ours that is off or hears other
+events back into a push hook; the listing shows no secret, so a changed
+webhook secret reaches the hooks only when you delete them on Forgejo
+and sync again.
+
+Troubleshooting: a hook whose delivery Forgejo shows as `401` has a
+secret other than the integration's: delete the hook in the
+repository's settings and run **Sync now**. A `404` means the
+integration is not set up on the instance the hook reaches. A `200` with
+`no such checkout` means no project or home has that repository's clone
+URL: sync, or check the project's source URL. A sync that ends with
+`listing the organisations: forgejo answered 401` has a token Forgejo
+does not take any more.
 
 ## Users
 

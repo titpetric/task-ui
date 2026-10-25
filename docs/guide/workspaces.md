@@ -53,6 +53,12 @@ workspace's files there:
 - `bash -l` reads the home's `.profile` or `.bash_profile`, when it has
   one.
 
+The convention for a home repository is a repository named like the
+organisation: `malta/malta` is the home of the workspace `malta`. The
+[Forgejo integration](settings.md#forgejo) follows it when it syncs a
+git host, and a workspace made by hand does well to, so the tooling of
+an organisation has one obvious place.
+
 The workspace's page, `/f/malta`, lists the home's files in its **Home**
 section, in the table of the Files section: a directory opens its page,
 a file opens in the preview window, a dot file and `.git` list sealed

@@ -32,7 +32,19 @@ func (h *Handlers) integrations(w http.ResponseWriter, r *http.Request) {
 		}
 		p.Integrations = append(p.Integrations, view.NewIntegration(kind, values))
 	}
+	p.Instance = h.opts.Instance
+	h.lastSync(r, p)
 	h.render(w, http.StatusOK, "integrations", p)
+}
+
+// lastSync puts the latest run of @forgejo-sync on the page, for the
+// Forgejo form's line on it.
+func (h *Handlers) lastSync(r *http.Request, p *view.Page) {
+	runs, err := h.opts.Runs.List(r.Context(), storage.RunFilter{Folder: model.Default, Job: folder.ForgejoSyncID, Limit: 1})
+	if err != nil || len(runs) == 0 {
+		return
+	}
+	p.Last = map[string]view.Run{model.RunKey(runs[0].Folder, "", runs[0].Job): h.runView(runs[0])}
 }
 
 // inventory shows the hosts of the Beszel integration, who task-ui signs

@@ -10,8 +10,13 @@ import (
 	"path/filepath"
 
 	"github.com/titpetric/task-ui/app"
+	"github.com/titpetric/task-ui/forgejo"
+	"github.com/titpetric/task-ui/git"
+	"github.com/titpetric/task-ui/integration"
+	"github.com/titpetric/task-ui/keystore"
 	"github.com/titpetric/task-ui/layout"
 	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/secret"
 	"github.com/titpetric/task-ui/storage"
 )
 
@@ -137,4 +142,56 @@ func layoutRows(ctx context.Context, db storage.DB) ([]string, map[string]string
 		homes[workspace] = path.Base(project)
 	}
 	return named, homes, rows.Err()
+}
+
+// errForgejoOff refuses a sync while the Forgejo integration lacks its
+// URL or token.
+var errForgejoOff = errors.New("the Forgejo integration is not set up: set its URL and token in Settings, Integrations")
+
+// forgejoSync runs task-ui forgejo-sync, the root's @forgejo-sync: the
+// Forgejo integration's organisations as workspaces and projects under
+// the root of the configuration, read as maintenanceConfig does, with
+// the integration's settings from the database and the key folder.
+// --dry-run prints what it would do and changes nothing.
+func forgejoSync(ctx context.Context, args []string, stdout io.Writer) error {
+	dry, err := dryRun(args, "usage: task-ui forgejo-sync [--dry-run]")
+	if err != nil {
+		return err
+	}
+	cfg, err := maintenanceConfig()
+	if err != nil {
+		return err
+	}
+	if cfg.SSHDir == "" {
+		cfg.SSHDir = filepath.Join(cfg.DataDir, "keys")
+	}
+	db, err := storage.OpenAndMigrate(ctx, cfg.DB)
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+	keys := &keystore.Local{Dir: cfg.SSHDir, Rows: storage.NewKeyInfoStorage(db), Settings: storage.NewSettingStorage(db)}
+	secrets := secret.New(storage.NewSecretStorage(db), secret.NewVault(keys.Vault(storage.ScopeInstance)))
+	values, err := (&integration.Store{Secrets: secrets}).Values(ctx, integration.Forgejo)
+	if err != nil {
+		return err
+	}
+	if !integration.Configured(*integration.KindOf(integration.Forgejo), values) {
+		return errForgejoOff
+	}
+	sync := &forgejo.Sync{
+		Client:     &forgejo.Client{URL: values["url"], Token: values["token"]},
+		Git:        &git.Git{Keys: keys},
+		Workspaces: storage.NewWorkspaceStorage(db),
+		Projects:   storage.NewProjectStorage(db),
+		Root:       cfg.Root,
+		Secret:     values["secret"],
+		HTTPS:      values["clone"] == "https",
+		DryRun:     dry,
+	}
+	if cfg.URL != "" {
+		sync.HookURL = cfg.URL + integration.WebhookPath
+	}
+	fmt.Fprintf(stdout, "task-ui forgejo-sync of %s from %s\n", cfg.Root, values["url"])
+	return sync.Run(ctx, stdout)
 }

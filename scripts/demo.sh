@@ -226,7 +226,8 @@ for theme in dark light; do
   shot "user-edit-${theme}" /users/ops/edit "$theme" 1440x2000
 done
 shot user-new-dark /settings/users/new dark
-shot integrations-dark /settings/integrations dark
+api PUT /integrations/forgejo -d '{"values":{"url":"https://git.example","token":"demo"}}'
+shot integrations-dark /settings/integrations dark 1440x1300
 shot notes-dark /notes dark
 shot envfile-dark /f/_/infra/env/.env dark
 shot out-of-hours-dark "/f/_/website#start=website/lint" dark 1440x900 2000
