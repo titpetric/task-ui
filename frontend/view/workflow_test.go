@@ -309,11 +309,15 @@ func TestView_RenderWorkflowsTable(t *testing.T) {
 		{Workflow: model.Workflow{ID: "w1", Name: "release", UserName: "ops"}, Steps: []view.Step{{Folder: "infra", Job: "plan"}}, CanRun: true, CanChange: true,
 			Schedules: []model.Schedule{{ID: "s1", WorkflowID: "w1", Expression: "0 7 * * 1-5", Enabled: 1, UserName: "ops"}, {ID: "s2", WorkflowID: "w1", Expression: "@weekly", UserName: "admin"}}},
 		{Workflow: model.Workflow{ID: "w2", Name: "ship", UserName: "ops"}, RunAs: "miguel", Steps: []view.Step{{Folder: "infra", Job: "plan"}}, Running: "wr9"},
+		{Workflow: model.Workflow{ID: "w3", Name: "stale", UserName: "ops"}, Steps: []view.Step{{Folder: "gone/infra", Job: "plan"}}, RunDenied: "Run needs gone/infra / plan"},
 	}
 	p.Workflows[0].RunAs = "ops"
 	var buf bytes.Buffer
 	assert.NoError(t, v.Render(&buf, "workflows", p))
 	out := buf.String()
+	// A workflow without Run says which step keeps it.
+	assert.Contains(t, out, `<span class="faint run-denied">Run needs gone/infra / plan</span>`)
+	assert.NotContains(t, out, `data-workflow-run="w3"`)
 	assert.Contains(t, out, `<thead><tr><th>Workflow</th><th>Last run</th><th>By</th><th></th></tr></thead>`)
 	// By names the owner, and the user the runs go as when another.
 	assert.Contains(t, out, `<span class="user-name">ops</span>`)

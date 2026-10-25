@@ -94,7 +94,9 @@ func TestWorkflows_List(t *testing.T) {
 	// The row names the workflow, its last run and its maker; the steps
 	// are the workflow page's.
 	assert.Contains(t, ops, `<thead><tr><th>Workflow</th><th>Last run</th><th>By</th><th></th></tr></thead>`)
-	// ops may run release, not private, which needs the admin's folder.
+	// ops may run release, not private, which needs the admin's folder;
+	// the row says which step keeps Run.
+	assert.Contains(t, ops, `<span class="faint run-denied">Run needs private / deploy</span>`)
 	// The sidebar lists them too, each with its chain as the link's
 	// title: look at the page's own content.
 	content := ops[strings.Index(ops, "<main>"):]

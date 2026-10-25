@@ -20,6 +20,10 @@ type Workflow struct {
 	// CanRun says whether a start by the page's user goes: they may run
 	// every step, and so may the user it runs as, when it has one.
 	CanRun bool
+	// RunDenied says why Run is missing: the step the page's user, or
+	// the user it runs as, may not run, or that nothing holds; "" when
+	// CanRun.
+	RunDenied string
 	// CanChange says whether the user may change or delete it.
 	CanChange bool
 	// Schedules are the schedules that start it, for the list's hint

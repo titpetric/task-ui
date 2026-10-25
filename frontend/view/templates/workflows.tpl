@@ -29,7 +29,8 @@
 					<button type="button" class="btn btn-sm" data-workflow-stop="{{ .Running }}"><svg class="ic"><use href="#i-stop"/></svg>Stop</button>
 					{{- else }}
 					<button type="button" class="btn btn-primary btn-sm" data-workflow-run="{{ .ID }}"{{ if .Prompted }} data-workflow-prompt="{{ .Name }}"{{ end }}><svg class="ic"><use href="#i-play"/></svg>Run</button>
-					{{- end }}{{ end }}
+					{{- end }}{{ else if .RunDenied }}
+					<span class="faint run-denied">{{ .RunDenied }}</span>{{ end }}
 					{{- template "menu" (menu (print "Actions on " .Name)
 						(and .CanChange (item "edit" "Edit" "href" (print "/workflows/" .ID "/edit")))
 						(and .Running (item "eye" "The run going" "href" (print "/workflows/" .ID "/runs/" .Running)))
