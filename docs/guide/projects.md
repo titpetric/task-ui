@@ -371,7 +371,12 @@ directory inside a folder: open on a workspace's page, on `/f/_`,
 which prompts at the root, and wherever its directory holds a prompt, folded
 elsewhere until clicked. The prompt runs `@claude-prompt` of that
 folder and directory as you, with Claude Code there, so it reads the
-`CLAUDE.md` and `.claude/` there and above.
+`CLAUDE.md` and `.claude/` there and above. An admin picks who the
+prompt runs as, **Runs as** in the box's foot, the admin's own login
+unless changed: the thread, its run, the Claude token, the keys and the
+secrets are that user's, who holds `prompt/edit` and sees the folder. A
+reply keeps the thread's user, and the prompt in the header takes the
+same pick.
 
 Claude also reads what task-ui is, from `config/context.md`, with your
 name, role and permissions, which say what you may do, and the rule that a

@@ -70,6 +70,10 @@ func (h *Handlers) page(r *http.Request, title string) *view.Page {
 	// clock stays fixed for a demo or a test.
 	p.Recents = view.GroupRecents(time.Now(), view.Recents(runs, h.visibleFlowRuns(r.Context(), user, recentCount), recentCount))
 	p.SideWorkflows = h.visibleWorkflows(r.Context(), p)
+	if user.CanAdmin() && p.Can("prompt/edit") && h.opts.Users != nil {
+		p.PromptUsers, _ = h.opts.Users.List(r.Context())
+		p.UserKeys = h.runAsKeys(r, p.PromptUsers)
+	}
 	return p
 }
 

@@ -33,9 +33,10 @@ func (h *Handlers) runAsName(r *http.Request, wf *model.Workflow) string {
 	return user.Name
 }
 
-// pickRunAs resolves the user a workflow request names to run as, by
-// name. Nil for no name, and the caller for their own; only an admin
-// names someone else (403), and a name nobody holds is a 404.
+// pickRunAs resolves the user a request names to run as, by name, for a
+// workflow or a prompt. Nil for no name, and the caller for their own;
+// only an admin names someone else (403), and a name nobody holds is a
+// 404.
 func (h *Handlers) pickRunAs(r *http.Request, name string) (*model.User, int, string) {
 	name = strings.TrimSpace(name)
 	if name == "" {
@@ -46,7 +47,7 @@ func (h *Handlers) pickRunAs(r *http.Request, name string) (*model.User, int, st
 		return caller, 0, ""
 	}
 	if !caller.CanAdmin() {
-		return nil, http.StatusForbidden, "an admin picks another user for a workflow to run as"
+		return nil, http.StatusForbidden, "an admin picks another user to run as"
 	}
 	if h.opts.Users == nil {
 		return nil, http.StatusNotFound, "no user " + name

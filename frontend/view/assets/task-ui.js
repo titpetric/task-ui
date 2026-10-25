@@ -3411,6 +3411,9 @@
       frame(here, text, "");
       setOpen(true);
       var body = here.run ? { run: here.run, prompt: text } : { folder: here.folder, dir: here.dir, prompt: text };
+      // An admin's pick of who the prompt runs as goes with it.
+      var runAs = document.getElementById("header-prompt-user");
+      if (runAs && runAs.value) body.user = runAs.value;
       api("POST", "/api/prompts", body).then(function (res) {
         if (res.status >= 300) {
           setState("failed", res.data.error || ("HTTP " + res.status));

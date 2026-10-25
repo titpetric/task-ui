@@ -15,6 +15,10 @@ type PromptRequest struct {
 	// the Workflows page's box, which builds and changes workflows with
 	// the task tools, in Folder and Dir, the root unless given.
 	Area string `json:"area"`
+	// User names who the prompt runs as, picked as a workflow's user is:
+	// an admin anyone, others themself; empty, the caller. A reply takes
+	// none: the thread keeps its user.
+	User string `json:"user"`
 	Cols int    `json:"cols"`
 	Rows int    `json:"rows"`
 }

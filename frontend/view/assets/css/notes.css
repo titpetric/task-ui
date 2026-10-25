@@ -32,16 +32,24 @@
   gap: 1rem;
   font-size: var(--fs-xs);
 
-  /* The folder an area's prompt runs in, picked inside the line. */
+  /* Who a prompt runs as, and the folder an area's prompt runs in,
+     picked inside the line: the dropdown as wide as its choice, in the
+     flow of the words. */
   & .run-in {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.4rem;
+    line-height: 2;
 
-    & select {
+    & .dd {
+      display: inline-block;
       width: auto;
+      min-width: 7rem;
       max-width: 16rem;
+      margin-inline: 0.15rem;
+      vertical-align: middle;
+    }
+
+    & .dd-button {
+      height: var(--control-sm);
+      font-size: var(--fs-xs);
     }
   }
 }

@@ -31,6 +31,11 @@
 	{{- end }}
 		{{- if .Can "prompt/edit" }}
 		<input type="text" class="header-prompt" id="header-prompt" tabindex="-1" autocomplete="off" spellcheck="false">
+		{{- if .PromptUsers }}
+		{{- /* An admin picks who the header's prompt runs as; the pick shows with the field. */}}
+		<span class="header-runas"><select class="header-prompt-user" id="header-prompt-user" tabindex="-1" aria-label="Runs as">{{ template "user-options" (list .PromptUsers .User.Name .UserKeys true) }}
+		</select></span>
+		{{- end }}
 		<div class="header-answer" id="header-answer" hidden></div>
 		{{- else }}
 		<span class="spacer"></span>

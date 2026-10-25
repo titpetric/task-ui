@@ -148,6 +148,19 @@ func TestFolder_Prompt(t *testing.T) {
 	assert.Contains(t, browse, `<input type="hidden" name="dir" value="images">`)
 	assert.Contains(t, browse, "Claude Code in infra/images/")
 	assert.NotContains(t, f.page(t, asOps, "/f/infra/images"), block)
+
+	// An admin picks who the prompt runs as, the login selected, in the
+	// box and in the header; a runner with prompt/edit prompts as themself.
+	assert.Contains(t, admin, `Runs @claude-prompt as <select name="user" aria-label="Runs as">`)
+	assert.Contains(t, admin, `<option value="admin" selected data-keys="">admin · no keys</option>`)
+	assert.Contains(t, admin, `<option value="ops" data-keys="">ops · no keys</option>`)
+	assert.Contains(t, admin, `id="header-prompt-user"`)
+	assert.NoError(t, f.opts.Users.Policies().Put(ctx, "user", asOps, "prompt/edit", "allow"))
+	ops := f.page(t, asOps, "/f/infra")
+	assert.Contains(t, ops, block)
+	assert.Contains(t, ops, `Runs @claude-prompt as you in infra/`)
+	assert.NotContains(t, ops, `name="user"`)
+	assert.NotContains(t, ops, `header-prompt-user`)
 }
 
 // @shell is a built-in row of the Jobs table of a folder and of a

@@ -7,8 +7,7 @@ import (
 	"github.com/titpetric/task-ui/model"
 )
 
-// UserKeys returns the instance SSH keys each user's runs get, by user name, sorted, as keystore.Local.ForRun
-// picks them: linked to the user by name or to the user's effective role; a user with none has no entry.
+// UserKeys returns the instance SSH keys each user's runs get, by user name, sorted as keystore.Local.ForRun picks them; a user with none has no entry.
 func UserKeys(keys []keystore.Key, users []model.User) map[string][]string {
 	names := map[string][]string{}
 	for i := range users {

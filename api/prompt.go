@@ -13,7 +13,8 @@ import (
 
 // startPrompt puts a prompt to Claude in a folder, or in a directory
 // inside one: a note of the folder's workspace, which the board answers
-// by running @claude-prompt there as the user, with the thread in
+// by running @claude-prompt there as the user, the caller or the one an
+// admin names with user, as promptUser picks them, with the thread in
 // TASK_UI_PROMPT and the directory in TASK_UI_PROMPT_DIR. It answers with
 // the note; Claude's answer is a reply to it once the run ends. With
 // run, the prompt asks about that run, in its folder and directory, and
@@ -71,16 +72,21 @@ func (h *Handlers) promptPlace(r *http.Request, folderID, dir string) (string, s
 	return model.Run{Folder: f.ID, Dir: dir}.Where(), ""
 }
 
-// ask puts the request's prompt to the board in where, or as a reply in
-// its parent's thread, and answers 201 with the note. One prompt runs in
-// a directory at a time; another there waits for it.
+// ask puts the request's prompt to the board in where, as the user
+// promptUser picks, or as a reply in its parent's thread, and answers
+// 201 with the note.
 func (h *Handlers) ask(w http.ResponseWriter, r *http.Request, req PromptRequest, where string) {
 	prompt := strings.TrimSpace(req.Prompt)
 	if prompt == "" {
 		fail(w, http.StatusBadRequest, "write a prompt")
 		return
 	}
-	note, err := h.opts.Board.Ask(r.Context(), access.UserFrom(r.Context()), req.Parent, where, prompt)
+	user, status, problem := h.promptUser(r, req, where)
+	if problem != "" {
+		fail(w, status, problem)
+		return
+	}
+	note, err := h.opts.Board.Ask(r.Context(), user, req.Parent, where, prompt)
 	if err != nil {
 		failErr(w, err)
 		return
@@ -109,7 +115,12 @@ func (h *Handlers) askArea(w http.ResponseWriter, r *http.Request, req PromptReq
 		fail(w, http.StatusNotFound, problem)
 		return
 	}
-	note, err := h.opts.Board.AskArea(r.Context(), access.UserFrom(r.Context()), req.Area, where, prompt)
+	user, status, problem := h.promptUser(r, req, where)
+	if problem != "" {
+		fail(w, status, problem)
+		return
+	}
+	note, err := h.opts.Board.AskArea(r.Context(), user, req.Area, where, prompt)
 	if err != nil {
 		failErr(w, err)
 		return
@@ -117,15 +128,26 @@ func (h *Handlers) askArea(w http.ResponseWriter, r *http.Request, req PromptReq
 	writeJSON(w, http.StatusCreated, note)
 }
 
-// askRun puts the request's prompt about its run to the board, and
-// answers 201 with the note.
+// askRun puts the request's prompt about its run to the board, as the
+// user promptUser picks, and answers 201 with the note; 404 for a run
+// the caller does not see.
 func (h *Handlers) askRun(w http.ResponseWriter, r *http.Request, req PromptRequest) {
 	prompt := strings.TrimSpace(req.Prompt)
 	if prompt == "" {
 		fail(w, http.StatusBadRequest, "write a prompt")
 		return
 	}
-	note, err := h.opts.Board.AskRun(r.Context(), access.UserFrom(r.Context()), req.Run, prompt)
+	run, err := h.opts.Runs.Get(r.Context(), req.Run)
+	if err != nil || !access.UserFrom(r.Context()).CanSee(run.Folder) {
+		fail(w, http.StatusNotFound, "no such run")
+		return
+	}
+	user, status, problem := h.promptUser(r, req, run.Where())
+	if problem != "" {
+		fail(w, status, problem)
+		return
+	}
+	note, err := h.opts.Board.AskRun(r.Context(), user, req.Run, prompt)
 	if err != nil {
 		failErr(w, err)
 		return
