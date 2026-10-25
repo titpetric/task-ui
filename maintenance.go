@@ -151,9 +151,18 @@ var errForgejoOff = errors.New("the Forgejo integration is not set up: set its U
 // Forgejo integration's organisations as workspaces and projects under
 // the root of the configuration, read as maintenanceConfig does, with
 // the integration's settings from the database and the key folder.
-// --dry-run prints what it would do and changes nothing.
+// --dry-run prints what it would do and changes nothing; the report has
+// colour on a terminal and in a run, --no-color or NO_COLOR turns it off.
 func forgejoSync(ctx context.Context, args []string, stdout io.Writer) error {
-	dry, err := dryRun(args, "usage: task-ui forgejo-sync [--dry-run]")
+	color, rest := forgejo.Colored(stdout), make([]string, 0, len(args))
+	for _, arg := range args {
+		if arg == "--no-color" {
+			color = false
+			continue
+		}
+		rest = append(rest, arg)
+	}
+	dry, err := dryRun(rest, "usage: task-ui forgejo-sync [--dry-run] [--no-color]")
 	if err != nil {
 		return err
 	}
@@ -187,6 +196,7 @@ func forgejoSync(ctx context.Context, args []string, stdout io.Writer) error {
 		Secret:     values["secret"],
 		HTTPS:      values["clone"] == "https",
 		DryRun:     dry,
+		Color:      color,
 	}
 	if cfg.URL != "" {
 		sync.HookURL = cfg.URL + integration.WebhookPath

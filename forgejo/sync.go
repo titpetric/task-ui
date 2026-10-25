@@ -21,7 +21,8 @@ import (
 // no readable repository gets no workspace. It adds and updates, and
 // never removes: it reports a project whose repository Forgejo lacks
 // and leaves it alone, as it does a home or a checkout that is not what
-// Forgejo says. With DryRun it reports what it would do and changes nothing.
+// Forgejo says. With DryRun it reports what it would do and changes nothing;
+// the report's shape is in the package documentation, and Color paints it.
 type Sync struct {
 	Client     *Client
 	Git        Git
@@ -37,21 +38,25 @@ type Sync struct {
 	// HTTPS clones over https in place of ssh.
 	HTTPS  bool
 	DryRun bool
+	// Color paints the report, see Paint; the caller decides, Colored says
+	// when a writer wants it.
+	Color bool
 
 	w     io.Writer
+	paint Paint
 	count map[string]int
 }
 
-// Run syncs every organisation, then every user, and writes the report to w, one line per action
-// and a summary; it returns an error only when the listing of the organisations fails.
+// Run syncs every organisation, then every user, and writes the report to w, a block per owner and
+// a footer with the counts; it returns an error only when the listing of the organisations fails.
 func (s *Sync) Run(ctx context.Context, w io.Writer) error {
-	s.w, s.count = w, map[string]int{}
+	s.w, s.paint, s.count = w, Paint(s.Color), map[string]int{}
 	orgs, err := s.Client.Orgs(ctx)
 	if err != nil {
 		return fmt.Errorf("listing the organisations: %w", err)
 	}
 	if len(orgs) == 0 {
-		s.line("the token's user is in no organisation")
+		s.line("%s", s.paint.Dim("the token's user is in no organisation"))
 	}
 	synced := map[string]map[string]bool{}
 	for _, org := range orgs {
@@ -63,14 +68,46 @@ func (s *Sync) Run(ctx context.Context, w io.Writer) error {
 	}
 	s.orphans(ctx, synced)
 	if s.HookURL == "" {
-		s.line("hooks skipped: the instance has no public URL (TASK_UI_URL)")
+		s.line("%s", s.paint.Dim("hooks skipped: the instance has no public URL (TASK_UI_URL)"))
 	}
-	s.line("summary: %d organisations, %d users, %d workspaces created, %d homes cloned, %d projects cloned, %d hooks installed, %d skipped, %d not on Forgejo",
-		len(orgs), len(users), s.count["workspace"], s.count["home"], s.count["project"], s.count["hook"], s.count["skipped"], s.count["orphan"])
-	if s.DryRun {
-		s.line("a dry run: nothing changed")
-	}
+	s.line("")
+	s.line("%s", s.footer(len(orgs), len(users)))
 	return nil
+}
+
+// footer sums the report up the way terraform does: Plan for a dry run, Applied for a sync, the
+// adds by kind, then the updates, unchanged, skipped, left alone and failed rows, the last three
+// kinds when there are any, over the owners.
+func (s *Sync) footer(orgs, users int) string {
+	head, to := "Applied:", ""
+	if s.DryRun {
+		head, to = "Plan:", "to "
+	}
+	parts := []string{
+		fmt.Sprintf("%d workspaces %s", s.count["workspace"], s.verb(to, "create")),
+		fmt.Sprintf("%d homes %s", s.count["home"], s.verb(to, "clone")),
+		fmt.Sprintf("%d projects %s", s.count["project"], s.verb(to, "clone")),
+		fmt.Sprintf("%d hooks %s", s.count["hook"], s.verb(to, "install")),
+	}
+	if n := s.count["update"]; n > 0 {
+		parts = append(parts, fmt.Sprintf("%d %s", n, s.verb(to, "update")))
+	}
+	parts = append(parts, fmt.Sprintf("%d unchanged", s.count["unchanged"]), fmt.Sprintf("%d skipped", s.count["skipped"]))
+	if n := s.count["alone"]; n > 0 {
+		parts = append(parts, fmt.Sprintf("%d left alone", n))
+	}
+	if n := s.count["failed"]; n > 0 {
+		parts = append(parts, fmt.Sprintf("%d failed", n))
+	}
+	return fmt.Sprintf("%s %s, over %d organisations and %d users.", s.paint.Bold(head), strings.Join(parts, ", "), orgs, users)
+}
+
+// verb returns "to create" for a plan and "created" for a sync.
+func (s *Sync) verb(to, verb string) string {
+	if to != "" {
+		return to + verb
+	}
+	return s.did(verb)
 }
 
 // users lists the users of the instance; a token without read:user
@@ -79,9 +116,9 @@ func (s *Sync) users(ctx context.Context) []User {
 	users, err := s.Client.Users(ctx)
 	switch {
 	case Status(err) == http.StatusForbidden:
-		s.line("users skipped: the token lacks read:user")
+		s.line("%s", s.paint.Dim("users skipped: the token lacks read:user"))
 	case err != nil:
-		s.line("users skipped: listing them: %v", err)
+		s.line("%s", s.paint.Dim(fmt.Sprintf("users skipped: listing them: %v", err)))
 	}
 	return users
 }
@@ -91,20 +128,30 @@ func (s *Sync) users(ctx context.Context) []User {
 // workspace even empty.
 func (s *Sync) sync(ctx context.Context, owner Owner, synced map[string]map[string]bool) {
 	ws := strings.ToLower(owner.Name)
+	s.header(owner)
 	if !folder.ValidID(ws) || strings.Contains(ws, "/") || layout.Reserved(ws) {
-		s.skip("%s: %q is no folder name", owner.Name, ws)
+		s.skip(owner.Name, "%q is no folder name", ws)
 		return
 	}
 	repos, err := s.repos(ctx, owner)
 	if err != nil {
-		s.skip("%s: listing its repositories: %v", owner.Name, err)
+		s.skip(owner.Name, "listing its repositories: %v", err)
 		return
 	}
 	if owner.Kind == OwnerUser && len(repos) == 0 {
-		s.skip("%s: no repositories", owner.Name)
+		s.skip(owner.Name, "no repositories")
 		return
 	}
 	s.owner(ctx, owner, repos, synced)
+}
+
+// header opens an owner's block, "# org Malta" or "# user black".
+func (s *Sync) header(owner Owner) {
+	kind, name := "org", s.paint.Cyan(owner.Name)
+	if owner.Kind == OwnerUser {
+		kind, name = "user", s.paint.Magenta(owner.Name)
+	}
+	s.line("%s %s", s.paint.Bold("# "+kind), name)
 }
 
 // repos lists the repositories of an owner, by its kind.
@@ -134,7 +181,7 @@ func (s *Sync) owner(ctx context.Context, owner Owner, repos []Repo, synced map[
 	}
 	var hooked []Repo
 	if home == nil {
-		s.line("home %s: no %s/%s repository: %s", ws, owner.Name, owner.Name, s.homeIs(row))
+		s.same("home", ws, "no %s/%s repository: %s", owner.Name, owner.Name, s.homeIs(row))
 	} else {
 		s.home(ctx, ws, row, *home)
 		hooked = append(hooked, *home)
@@ -171,25 +218,25 @@ func (s *Sync) homeIs(row *model.Workspace) string {
 func (s *Sync) workspace(ctx context.Context, owner Owner, ws string) (*model.Workspace, bool) {
 	row, err := s.Workspaces.GetByFolder(ctx, ws)
 	if err == nil {
-		s.line("workspace %s: ok", ws)
+		s.same("workspace", ws, "ok")
 		return row, true
 	}
 	if _, err := s.Projects.GetByFolder(ctx, ws); err == nil {
-		s.skip("%s: a project named %s is at the root", owner.Name, ws)
+		s.skip(owner.Name, "a project named %s is at the root", ws)
 		return nil, false
 	}
 	s.count["workspace"]++
-	s.line("workspace %s: %s", ws, s.did("create"))
+	s.add("workspace", ws, "%s", s.did("create"))
 	if s.DryRun {
 		return nil, true
 	}
 	if err := layout.Ensure(s.Root, ws); err != nil {
-		s.line("workspace %s: %v", ws, err)
+		s.fail("workspace", ws, err)
 		return nil, false
 	}
 	row = &model.Workspace{Folder: ws, Title: owner.Title(), Description: owner.Description}
 	if err := s.Workspaces.Create(ctx, row); err != nil {
-		s.line("workspace %s: %v", ws, err)
+		s.fail("workspace", ws, err)
 		return nil, false
 	}
 	return row, true
@@ -202,26 +249,27 @@ func (s *Sync) home(ctx context.Context, ws string, row *model.Workspace, repo R
 	url, dir := repo.URL(s.HTTPS), layout.HomeDir(s.Root, ws)
 	switch {
 	case row != nil && row.HomeURL != "" && Key(row.HomeURL) != Key(url):
-		s.line("home %s: the home is a checkout of %s: replace it on the workspace's settings page", repo.FullName, row.HomeURL)
+		s.alone("home", repo.FullName, "the home is a checkout of %s, left alone: replace it on the workspace's settings page", row.HomeURL)
 		return
 	case s.Git.IsRepo(dir):
-		s.line("home %s: %s", repo.FullName, s.did("pull"))
+		s.count["update"]++
+		s.change("home", repo.FullName, "%s", s.did("pull"))
 		if !s.DryRun {
 			if err := s.Git.Pull(ctx, dir, io.Discard); err != nil {
-				s.line("home %s: pull failed: %v", repo.FullName, err)
+				s.fail("home", repo.FullName, fmt.Errorf("pull failed: %w", err))
 			}
 		}
 	case !empty(dir):
-		s.line("home %s: %s/home is not empty and no checkout: left alone", repo.FullName, ws)
+		s.alone("home", repo.FullName, "%s/home is not empty and no checkout: left alone", ws)
 		return
 	default:
 		s.count["home"]++
-		s.line("home %s: %s %s", repo.FullName, s.did("clone"), repo.DefaultBranch)
+		s.add("home", repo.FullName, "%s %s", s.did("clone"), repo.DefaultBranch)
 		if !s.DryRun {
 			_ = os.Remove(dir)
 			if _, err := s.Git.Clone(ctx, url, dir, repo.DefaultBranch); err != nil {
 				_ = os.MkdirAll(dir, 0o755)
-				s.line("home %s: %v", repo.FullName, err)
+				s.fail("home", repo.FullName, err)
 				return
 			}
 		}
@@ -231,7 +279,7 @@ func (s *Sync) home(ctx context.Context, ws string, row *model.Workspace, repo R
 	}
 	row.HomeURL, row.HomeBranch = url, repo.DefaultBranch
 	if err := s.Workspaces.Update(ctx, row); err != nil {
-		s.line("home %s: %v", repo.FullName, err)
+		s.fail("home", repo.FullName, err)
 	}
 }
 
@@ -242,41 +290,42 @@ func (s *Sync) home(ctx context.Context, ws string, row *model.Workspace, repo R
 // the repository is a project to hook.
 func (s *Sync) project(ctx context.Context, ws string, repo Repo) bool {
 	if repo.Archived {
-		s.skip("%s: archived", repo.FullName)
+		s.skip(repo.FullName, "archived")
 		return false
 	}
 	if !folder.ValidID(repo.Name) || layout.Reserved(repo.Name) {
-		s.skip("%s: %q is no folder name", repo.FullName, repo.Name)
+		s.skip(repo.FullName, "%q is no folder name", repo.Name)
 		return false
 	}
 	id, url, dir := ws+"/"+repo.Name, repo.URL(s.HTTPS), layout.ProjectDir(s.Root, ws, repo.Name)
 	row := &model.Project{Folder: id, SourceURL: url, Branch: repo.DefaultBranch}
 	switch current, err := s.Projects.GetByFolder(ctx, id); {
 	case err == nil && current.SourceURL == url:
-		s.line("project %s: exists", id)
+		s.same("project", id, "exists")
 		return true
 	case err == nil:
-		s.line("project %s: %s url", id, s.did("update"))
+		s.count["update"]++
+		s.change("project", id, "%s url", s.did("update"))
 		current.SourceURL = url
 		row = current
 	case s.Git.IsRepo(dir):
-		s.line("project %s: checkout exists, %s row", id, s.did("add"))
+		s.add("project", id, "checkout exists, %s row", s.did("add"))
 	case !empty(dir):
-		s.line("project %s: src/%s exists and is no checkout: left alone", id, repo.Name)
+		s.alone("project", id, "src/%s exists and is no checkout: left alone", repo.Name)
 		return false
 	default:
 		s.count["project"]++
-		s.line("project %s: %s %s", id, s.did("clone"), repo.DefaultBranch)
+		s.add("project", id, "%s %s", s.did("clone"), repo.DefaultBranch)
 		if !s.DryRun {
 			if _, err := s.Git.Clone(ctx, url, dir, repo.DefaultBranch); err != nil {
-				s.line("project %s: %v", id, err)
+				s.fail("project", id, err)
 				return false
 			}
 		}
 	}
 	if !s.DryRun {
 		if err := s.Projects.Upsert(ctx, row); err != nil {
-			s.line("project %s: %v", id, err)
+			s.fail("project", id, err)
 		}
 	}
 	return true
@@ -287,13 +336,12 @@ func (s *Sync) project(ctx context.Context, ws string, repo Repo) bool {
 // the token does not administer, as its hooks are out of reach.
 func (s *Sync) hook(ctx context.Context, repo Repo) {
 	if !repo.Permissions.Admin {
-		s.count["skipped"]++
-		s.line("hook %s: skipped, the token has no admin access", repo.FullName)
+		s.skip("hook "+repo.FullName, "the token has no admin access")
 		return
 	}
 	hooks, err := s.Client.Hooks(ctx, repo.Owner(), repo.Name)
 	if err != nil {
-		s.line("hook %s: listing the hooks: %v", repo.FullName, err)
+		s.fail("hook", repo.FullName, fmt.Errorf("listing the hooks: %w", err))
 		return
 	}
 	want := PushHook(s.HookURL, s.Secret)
@@ -302,22 +350,23 @@ func (s *Sync) hook(ctx context.Context, repo Repo) {
 			continue
 		}
 		if hook.Current(s.HookURL, s.Secret) {
-			s.line("hook %s: ok", repo.FullName)
+			s.same("hook", repo.FullName, "ok")
 			return
 		}
-		s.line("hook %s: %s", repo.FullName, s.did("update"))
+		s.count["update"]++
+		s.change("hook", repo.FullName, "%s", s.did("update"))
 		if !s.DryRun {
 			if _, err := s.Client.UpdateHook(ctx, repo.Owner(), repo.Name, hook.ID, want); err != nil {
-				s.line("hook %s: %v", repo.FullName, err)
+				s.fail("hook", repo.FullName, err)
 			}
 		}
 		return
 	}
 	s.count["hook"]++
-	s.line("hook %s: %s", repo.FullName, s.did("install"))
+	s.add("hook", repo.FullName, "%s", s.did("install"))
 	if !s.DryRun {
 		if _, err := s.Client.CreateHook(ctx, repo.Owner(), repo.Name, want); err != nil {
-			s.line("hook %s: %v", repo.FullName, err)
+			s.fail("hook", repo.FullName, err)
 		}
 	}
 }
@@ -327,7 +376,8 @@ func (s *Sync) hook(ctx context.Context, repo Repo) {
 func (s *Sync) orphans(ctx context.Context, synced map[string]map[string]bool) {
 	projects, err := s.Projects.List(ctx)
 	if err != nil {
-		s.line("listing the projects: %v", err)
+		s.count["failed"]++
+		s.line("%s listing the projects: %v", s.paint.Red("!"), err)
 		return
 	}
 	for _, project := range projects {
@@ -336,8 +386,8 @@ func (s *Sync) orphans(ctx context.Context, synced map[string]map[string]bool) {
 		if !ok || name == "" || strings.Contains(name, "/") || names[strings.ToLower(name)] {
 			continue
 		}
-		s.count["orphan"]++
-		s.line("not on Forgejo: %s", project.Folder)
+		s.count["alone"]++
+		s.line("%s orphan %s: not on Forgejo, left alone", s.paint.Red("!"), s.paint.Blue(project.Folder))
 	}
 }
 
@@ -352,10 +402,61 @@ func (s *Sync) did(verb string) string {
 	return verb + "ed"
 }
 
-// skip reports something sync leaves out and counts it.
-func (s *Sync) skip(format string, args ...any) {
+// add writes a row sync creates, "+" in green.
+func (s *Sync) add(kind, name, format string, args ...any) {
+	s.row(s.paint.Green("+"), kind, s.name(kind, name), format, args...)
+}
+
+// change writes a row sync brings current, "~" in yellow.
+func (s *Sync) change(kind, name, format string, args ...any) {
+	s.row(s.paint.Yellow("~"), kind, s.name(kind, name), format, args...)
+}
+
+// same writes a row sync finds in place, dim, and counts it.
+func (s *Sync) same(kind, name, format string, args ...any) {
+	s.count["unchanged"]++
+	s.row("", kind, name, format, args...)
+}
+
+// skip writes a row sync leaves out, dim with the reason, and counts it.
+func (s *Sync) skip(name, format string, args ...any) {
 	s.count["skipped"]++
-	s.line("skipped "+format, args...)
+	s.row("", "skipped", name, format, args...)
+}
+
+// alone writes a row sync leaves alone where Forgejo says otherwise, "!" in red, and counts it.
+func (s *Sync) alone(kind, name, format string, args ...any) {
+	s.count["alone"]++
+	s.row(s.paint.Red("!"), kind, s.name(kind, name), format, args...)
+}
+
+// fail writes a row sync could not do, "!" in red, and counts it.
+func (s *Sync) fail(kind, name string, err error) {
+	s.count["failed"]++
+	s.row(s.paint.Red("!"), kind, s.name(kind, name), "%v", err)
+}
+
+// row writes one row of an owner's block, two spaces in: the symbol or a
+// space in its place, the kind, the name and the text; a row with no
+// symbol is dim as a whole.
+func (s *Sync) row(symbol, kind, name, format string, args ...any) {
+	text := fmt.Sprintf("%s %s: %s", kind, name, fmt.Sprintf(format, args...))
+	if symbol == "" {
+		s.line("    %s", s.paint.Dim(text))
+		return
+	}
+	s.line("  %s %s", symbol, text)
+}
+
+// name colours a name by its kind: a workspace and its home cyan, a project blue, a hook plain.
+func (s *Sync) name(kind, name string) string {
+	switch kind {
+	case "workspace", "home":
+		return s.paint.Cyan(name)
+	case "project":
+		return s.paint.Blue(name)
+	}
+	return name
 }
 
 // line writes one line of the report.

@@ -8,4 +8,12 @@
 // forgejo-sync, the root's @forgejo-sync, and never deletes; Sign and
 // Verify are the HMAC-SHA256 of a hook's body, which the webhook
 // checks.
+//
+// The report of a Sync has the shape of a terraform plan: a block per
+// owner, "# org Malta" or "# user black", its rows two spaces in, each
+// led by a symbol, "+" for what sync creates, "~" for what it brings
+// current, "!" for what it leaves alone or fails at, and none for a row
+// in place or a skipped one, which are dim; a footer counts them,
+// "Plan:" for a dry run and "Applied:" for a sync. Paint colours it on
+// a terminal and in a run, and Colored says when a writer is one.
 package forgejo

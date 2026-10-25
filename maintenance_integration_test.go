@@ -11,8 +11,8 @@ import (
 	"github.com/titpetric/task-ui/internal/assert"
 )
 
-// forgejo-sync takes --dry-run alone, and ends with an error while the
-// Forgejo integration has no URL and token.
+// forgejo-sync takes --dry-run and --no-color alone, and ends with an
+// error while the Forgejo integration has no URL and token.
 func TestForgejoSync(t *testing.T) {
 	t.Setenv("TASK_UI_DATA", t.TempDir())
 	t.Setenv("TASK_UI_WORKSPACE", t.TempDir())
@@ -20,9 +20,9 @@ func TestForgejoSync(t *testing.T) {
 	var out bytes.Buffer
 	err := forgejoSync(context.Background(), []string{"--all"}, &out)
 	assert.Error(t, err)
-	assert.Equal(t, "usage: task-ui forgejo-sync [--dry-run]", err.Error())
+	assert.Equal(t, "usage: task-ui forgejo-sync [--dry-run] [--no-color]", err.Error())
 
-	err = forgejoSync(context.Background(), []string{"--dry-run"}, &out)
+	err = forgejoSync(context.Background(), []string{"--dry-run", "--no-color"}, &out)
 	assert.ErrorIs(t, err, errForgejoOff)
 	assert.Equal(t, "", out.String())
 }
