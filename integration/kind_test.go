@@ -49,4 +49,8 @@ func TestKind_Steps(t *testing.T) {
 	assert.Equal(t, "token", integration.KindOf(integration.Beszel).Credential())
 	assert.Equal(t, "", (&integration.Kind{Fields: []integration.Field{{Name: "secret", Secret: true, Generated: true}}}).Credential())
 	assert.Contains(t, integration.KindOf(integration.Claude).Steps[0], "`claude setup-token`")
+	forgejo := integration.KindOf(integration.Forgejo)
+	assert.Contains(t, forgejo.Steps[1], "`read:user`")
+	assert.Contains(t, forgejo.Field("token").Help, "read:user")
+	assert.Contains(t, forgejo.Steps[4], "`<login>/<login>`")
 }

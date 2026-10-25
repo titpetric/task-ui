@@ -7,9 +7,11 @@ import (
 	"github.com/titpetric/task-ui/internal/assert"
 )
 
-// A workspace takes the organisation's full name, else its name.
+// An organisation is an owner of the org kind, with its names and
+// description.
 func TestOrg(t *testing.T) {
 	t.Parallel()
-	assert.Equal(t, "Malta d.o.o.", forgejo.Org{Name: "malta", FullName: "Malta d.o.o."}.Title())
-	assert.Equal(t, "malta", forgejo.Org{Name: "malta"}.Title())
+	owner := forgejo.Org{Name: "malta", FullName: "Malta d.o.o.", Description: "The firm"}.Owner()
+	assert.Equal(t, forgejo.Owner{Name: "malta", FullName: "Malta d.o.o.", Description: "The firm", Kind: forgejo.OwnerOrg}, owner)
+	assert.Equal(t, "Malta d.o.o.", owner.Title())
 }

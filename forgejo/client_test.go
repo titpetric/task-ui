@@ -3,6 +3,7 @@ package forgejo_test
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -14,8 +15,9 @@ import (
 	"github.com/titpetric/task-ui/internal/assert"
 )
 
-// The client follows a listing over its pages, sends the token, and
-// reports what Forgejo answered when it refuses.
+// The client follows a listing over its pages, the users out of their
+// envelope, sends the token, and reports what Forgejo answered when it
+// refuses, the status readable.
 func TestClient(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
@@ -33,6 +35,31 @@ func TestClient(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Len(t, repos, 120)
 	assert.Equal(t, "repo-119", repos[119].Name)
+	assert.True(t, repos[0].Permissions.Admin)
+
+	for i := 0; i < 51; i++ {
+		fake.users = append(fake.users, forgejo.User{Login: fmt.Sprintf("user-%02d", i), FullName: "User"})
+	}
+	fake.userRepos["user-50"] = []forgejo.Repo{repo("user-50", "notes", "main", false)}
+	users, err := client.Users(ctx)
+	assert.NoError(t, err)
+	assert.Len(t, users, 51, "the users come out of the data envelope, over two pages")
+	assert.Equal(t, "user-50", users[50].Login)
+	assert.Equal(t, "User", users[50].FullName)
+	repos, err = client.UserRepos(ctx, "user-50")
+	assert.NoError(t, err)
+	assert.Len(t, repos, 1)
+	assert.Equal(t, "user-50/notes", repos[0].FullName)
+	_, err = client.UserRepos(ctx, "user-99")
+	assert.ErrorIs(t, err, forgejo.ErrStatus)
+	assert.Equal(t, 404, forgejo.Status(err))
+	fake.noUserScope = true
+	_, err = client.Users(ctx)
+	assert.ErrorIs(t, err, forgejo.ErrStatus)
+	assert.Equal(t, 403, forgejo.Status(err))
+	assert.Contains(t, err.Error(), "read:user")
+	assert.Equal(t, 0, forgejo.Status(nil))
+	assert.Equal(t, 0, forgejo.Status(errors.New("dial")))
 
 	hooks, err := client.Hooks(ctx, "malta", "repo-000")
 	assert.NoError(t, err)
@@ -60,24 +87,30 @@ func TestClient(t *testing.T) {
 }
 
 // fakeForgejo is a Forgejo API in process, behind an http.RoundTripper:
-// the organisations of one token, their repositories and the hooks of
-// each, listed by the page. As Forgejo does, a listing of hooks leaves
-// the secret out.
+// the organisations of one token, the users of the instance, the
+// repositories of each and the hooks of those, listed by the page. As
+// Forgejo does, a listing of hooks leaves the secret out, and a users
+// search answers in an envelope, or with a 403 when the token lacks
+// read:user.
 type fakeForgejo struct {
 	mu    sync.Mutex
 	token string
 	orgs  []forgejo.Org
-	// repos are by organisation, hooks by owner/name.
+	users []forgejo.User
+	// noUserScope refuses the users search as a token without read:user is.
+	noUserScope bool
+	// repos are by organisation, userRepos by login, hooks by owner/name.
 	repos            map[string][]forgejo.Repo
+	userRepos        map[string][]forgejo.Repo
 	hooks            map[string][]forgejo.Hook
 	created, updated int
 	mux              *http.ServeMux
 }
 
 func newFakeForgejo(token string) *fakeForgejo {
-	f := &fakeForgejo{token: token, repos: map[string][]forgejo.Repo{}, hooks: map[string][]forgejo.Hook{}, mux: http.NewServeMux()}
+	f := &fakeForgejo{token: token, repos: map[string][]forgejo.Repo{}, userRepos: map[string][]forgejo.Repo{}, hooks: map[string][]forgejo.Hook{}, mux: http.NewServeMux()}
 	f.mux.HandleFunc("GET /api/v1/user/orgs", func(w http.ResponseWriter, r *http.Request) {
-		writePage(w, r, f.orgs)
+		writeJSON(w, http.StatusOK, page(r, f.orgs))
 	})
 	f.mux.HandleFunc("GET /api/v1/orgs/{org}/repos", func(w http.ResponseWriter, r *http.Request) {
 		repos, ok := f.repos[r.PathValue("org")]
@@ -85,7 +118,22 @@ func newFakeForgejo(token string) *fakeForgejo {
 			fail(w, http.StatusNotFound, "the organisation does not exist")
 			return
 		}
-		writePage(w, r, repos)
+		writeJSON(w, http.StatusOK, page(r, repos))
+	})
+	f.mux.HandleFunc("GET /api/v1/users/search", func(w http.ResponseWriter, r *http.Request) {
+		if f.noUserScope {
+			fail(w, http.StatusForbidden, "token does not have at least one of required scope(s): [read:user]")
+			return
+		}
+		writeJSON(w, http.StatusOK, map[string]any{"ok": true, "data": page(r, f.users)})
+	})
+	f.mux.HandleFunc("GET /api/v1/users/{login}/repos", func(w http.ResponseWriter, r *http.Request) {
+		repos, ok := f.userRepos[r.PathValue("login")]
+		if !ok {
+			fail(w, http.StatusNotFound, "user does not exist")
+			return
+		}
+		writeJSON(w, http.StatusOK, page(r, repos))
 	})
 	f.mux.HandleFunc("GET /api/v1/repos/{owner}/{repo}/hooks", func(w http.ResponseWriter, r *http.Request) {
 		shown := []forgejo.Hook{}
@@ -160,8 +208,8 @@ func (f *fakeForgejo) hooksOf(fullName string) []forgejo.Hook {
 	return f.hooks[fullName]
 }
 
-// writePage writes the page of a listing the query names.
-func writePage[T any](w http.ResponseWriter, r *http.Request, rows []T) {
+// page returns the page of a listing the query names.
+func page[T any](r *http.Request, rows []T) []T {
 	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
 	limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
 	if page < 1 {
@@ -172,7 +220,7 @@ func writePage[T any](w http.ResponseWriter, r *http.Request, rows []T) {
 	}
 	from := min((page-1)*limit, len(rows))
 	to := min(from+limit, len(rows))
-	writeJSON(w, http.StatusOK, rows[from:to])
+	return rows[from:to]
 }
 
 func writeJSON(w http.ResponseWriter, status int, v any) {
@@ -185,11 +233,14 @@ func fail(w http.ResponseWriter, status int, message string) {
 	writeJSON(w, status, map[string]string{"message": message})
 }
 
-// repo returns a repository of an organisation on the fake instance.
-func repo(org, name, branch string, archived bool) forgejo.Repo {
-	return forgejo.Repo{
-		Name: name, FullName: org + "/" + name, DefaultBranch: branch, Archived: archived,
-		SSHURL:   "ssh://git@git.example:2222/" + org + "/" + name + ".git",
-		CloneURL: "https://git.example/" + org + "/" + name + ".git",
+// repo returns a repository of an owner on the fake instance, which the
+// token administers.
+func repo(owner, name, branch string, archived bool) forgejo.Repo {
+	r := forgejo.Repo{
+		Name: name, FullName: owner + "/" + name, DefaultBranch: branch, Archived: archived,
+		SSHURL:   "ssh://git@git.example:2222/" + owner + "/" + name + ".git",
+		CloneURL: "https://git.example/" + owner + "/" + name + ".git",
 	}
+	r.Permissions.Admin = true
+	return r
 }

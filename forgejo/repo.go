@@ -4,8 +4,9 @@ import (
 	"strings"
 )
 
-// Repo is a repository of an organisation, as the API lists them
-// under an organisation.
+// Repo is a repository, as the API lists them under an organisation or
+// a user. Permissions are the token's on it: Admin is what installing a
+// hook takes.
 type Repo struct {
 	Name          string `json:"name"`
 	FullName      string `json:"full_name"`
@@ -13,6 +14,9 @@ type Repo struct {
 	SSHURL        string `json:"ssh_url"`
 	CloneURL      string `json:"clone_url"`
 	Archived      bool   `json:"archived"`
+	Permissions   struct {
+		Admin bool `json:"admin"`
+	} `json:"permissions"`
 }
 
 // Owner returns the owner of the repository, from its full name.

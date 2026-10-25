@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net/http"
 	"os"
 	"strings"
 
@@ -13,11 +14,13 @@ import (
 )
 
 // Sync brings the workspaces and projects under the root in line with
-// the organisations of the token's user: a workspace per organisation,
-// the repository named like it as the home, every other repository a
-// project, and a push hook on each. It adds and updates, and never
-// removes: it reports a project whose repository Forgejo lacks and
-// leaves it alone, as it does a home or a checkout that is not what
+// the owners of repositories the token sees, the organisations of its
+// user and the users of the instance alike: a workspace per owner, the
+// repository named like it as the home, every other repository a
+// project, and a push hook on each the token administers. A user with
+// no readable repository gets no workspace. It adds and updates, and
+// never removes: it reports a project whose repository Forgejo lacks
+// and leaves it alone, as it does a home or a checkout that is not what
 // Forgejo says. With DryRun it reports what it would do and changes nothing.
 type Sync struct {
 	Client     *Client
@@ -39,8 +42,8 @@ type Sync struct {
 	count map[string]int
 }
 
-// Run syncs every organisation and writes the report to w, one line per action and a summary;
-// it returns an error only when the listing of the organisations fails.
+// Run syncs every organisation, then every user, and writes the report to w, one line per action
+// and a summary; it returns an error only when the listing of the organisations fails.
 func (s *Sync) Run(ctx context.Context, w io.Writer) error {
 	s.w, s.count = w, map[string]int{}
 	orgs, err := s.Client.Orgs(ctx)
@@ -48,38 +51,75 @@ func (s *Sync) Run(ctx context.Context, w io.Writer) error {
 		return fmt.Errorf("listing the organisations: %w", err)
 	}
 	if len(orgs) == 0 {
-		s.line("the token's user is in no organisation: nothing to sync")
+		s.line("the token's user is in no organisation")
 	}
 	synced := map[string]map[string]bool{}
 	for _, org := range orgs {
-		s.org(ctx, org, synced)
+		s.sync(ctx, org.Owner(), synced)
+	}
+	users := s.users(ctx)
+	for _, user := range users {
+		s.sync(ctx, user.Owner(), synced)
 	}
 	s.orphans(ctx, synced)
 	if s.HookURL == "" {
 		s.line("hooks skipped: the instance has no public URL (TASK_UI_URL)")
 	}
-	s.line("summary: %d organisations, %d workspaces created, %d homes cloned, %d projects cloned, %d hooks installed, %d skipped, %d not on Forgejo",
-		len(orgs), s.count["workspace"], s.count["home"], s.count["project"], s.count["hook"], s.count["skipped"], s.count["orphan"])
+	s.line("summary: %d organisations, %d users, %d workspaces created, %d homes cloned, %d projects cloned, %d hooks installed, %d skipped, %d not on Forgejo",
+		len(orgs), len(users), s.count["workspace"], s.count["home"], s.count["project"], s.count["hook"], s.count["skipped"], s.count["orphan"])
 	if s.DryRun {
 		s.line("a dry run: nothing changed")
 	}
 	return nil
 }
 
-// org syncs one organisation and records the names of its repositories
-// in synced, by workspace, archived ones too.
-func (s *Sync) org(ctx context.Context, org Org, synced map[string]map[string]bool) {
-	ws := strings.ToLower(org.Name)
+// users lists the users of the instance; a token without read:user
+// lists none, and the report says so, as it does for any other refusal.
+func (s *Sync) users(ctx context.Context) []User {
+	users, err := s.Client.Users(ctx)
+	switch {
+	case Status(err) == http.StatusForbidden:
+		s.line("users skipped: the token lacks read:user")
+	case err != nil:
+		s.line("users skipped: listing them: %v", err)
+	}
+	return users
+}
+
+// sync syncs one owner, and skips a name that is no folder name and a
+// user without a readable repository; an organisation keeps its
+// workspace even empty.
+func (s *Sync) sync(ctx context.Context, owner Owner, synced map[string]map[string]bool) {
+	ws := strings.ToLower(owner.Name)
 	if !folder.ValidID(ws) || strings.Contains(ws, "/") || layout.Reserved(ws) {
-		s.skip("%s: %q is no folder name", org.Name, ws)
+		s.skip("%s: %q is no folder name", owner.Name, ws)
 		return
 	}
-	repos, err := s.Client.Repos(ctx, org.Name)
+	repos, err := s.repos(ctx, owner)
 	if err != nil {
-		s.skip("%s: listing its repositories: %v", org.Name, err)
+		s.skip("%s: listing its repositories: %v", owner.Name, err)
 		return
 	}
-	row, ok := s.workspace(ctx, org, ws)
+	if owner.Kind == OwnerUser && len(repos) == 0 {
+		s.skip("%s: no repositories", owner.Name)
+		return
+	}
+	s.owner(ctx, owner, repos, synced)
+}
+
+// repos lists the repositories of an owner, by its kind.
+func (s *Sync) repos(ctx context.Context, owner Owner) ([]Repo, error) {
+	if owner.Kind == OwnerUser {
+		return s.Client.UserRepos(ctx, owner.Name)
+	}
+	return s.Client.Repos(ctx, owner.Name)
+}
+
+// owner makes the workspace of an owner from its repositories, and
+// records their names in synced, by workspace, archived ones too.
+func (s *Sync) owner(ctx context.Context, owner Owner, repos []Repo, synced map[string]map[string]bool) {
+	ws := strings.ToLower(owner.Name)
+	row, ok := s.workspace(ctx, owner, ws)
 	if !ok {
 		return
 	}
@@ -88,13 +128,13 @@ func (s *Sync) org(ctx context.Context, org Org, synced map[string]map[string]bo
 	var home *Repo
 	for i := range repos {
 		names[strings.ToLower(repos[i].Name)] = true
-		if strings.EqualFold(repos[i].Name, org.Name) {
+		if strings.EqualFold(repos[i].Name, owner.Name) {
 			home = &repos[i]
 		}
 	}
 	var hooked []Repo
 	if home == nil {
-		s.line("home %s: no %s/%s repository: %s", ws, org.Name, org.Name, s.homeIs(row))
+		s.line("home %s: no %s/%s repository: %s", ws, owner.Name, owner.Name, s.homeIs(row))
 	} else {
 		s.home(ctx, ws, row, *home)
 		hooked = append(hooked, *home)
@@ -124,18 +164,18 @@ func (s *Sync) homeIs(row *model.Workspace) string {
 	return "the home stays " + row.HomeURL
 }
 
-// workspace returns the row of an organisation's workspace, created
-// with its home and src when there is none, and whether to go on with
-// the organisation: a dry run goes on without a row; a name a project
-// at the root holds, or a row the storage refuses, stops it.
-func (s *Sync) workspace(ctx context.Context, org Org, ws string) (*model.Workspace, bool) {
+// workspace returns the row of an owner's workspace, created with its
+// home and src when there is none, and whether to go on with the owner:
+// a dry run goes on without a row; a name a project at the root holds,
+// or a row the storage refuses, stops it.
+func (s *Sync) workspace(ctx context.Context, owner Owner, ws string) (*model.Workspace, bool) {
 	row, err := s.Workspaces.GetByFolder(ctx, ws)
 	if err == nil {
 		s.line("workspace %s: ok", ws)
 		return row, true
 	}
 	if _, err := s.Projects.GetByFolder(ctx, ws); err == nil {
-		s.skip("%s: a project named %s is at the root", org.Name, ws)
+		s.skip("%s: a project named %s is at the root", owner.Name, ws)
 		return nil, false
 	}
 	s.count["workspace"]++
@@ -147,7 +187,7 @@ func (s *Sync) workspace(ctx context.Context, org Org, ws string) (*model.Worksp
 		s.line("workspace %s: %v", ws, err)
 		return nil, false
 	}
-	row = &model.Workspace{Folder: ws, Title: org.Title(), Description: org.Description}
+	row = &model.Workspace{Folder: ws, Title: owner.Title(), Description: owner.Description}
 	if err := s.Workspaces.Create(ctx, row); err != nil {
 		s.line("workspace %s: %v", ws, err)
 		return nil, false
@@ -155,8 +195,7 @@ func (s *Sync) workspace(ctx context.Context, org Org, ws string) (*model.Worksp
 	return row, true
 }
 
-// home makes the repository named like the organisation the
-// workspace's home: cloned into an empty home/, pulled from a home/
+// home makes the repository named like the owner the workspace's home: cloned into an empty home/, pulled from a home/
 // that is its checkout, left alone and reported for any other home/,
 // and the row set to its clone URL and default branch.
 func (s *Sync) home(ctx context.Context, ws string, row *model.Workspace, repo Repo) {
@@ -244,8 +283,14 @@ func (s *Sync) project(ctx context.Context, ws string, repo Repo) bool {
 }
 
 // hook installs the push hook on a repository when it has none, and
-// updates one that posts to the URL but differs.
+// updates one that posts to the URL but differs; it skips a repository
+// the token does not administer, as its hooks are out of reach.
 func (s *Sync) hook(ctx context.Context, repo Repo) {
+	if !repo.Permissions.Admin {
+		s.count["skipped"]++
+		s.line("hook %s: skipped, the token has no admin access", repo.FullName)
+		return
+	}
 	hooks, err := s.Client.Hooks(ctx, repo.Owner(), repo.Name)
 	if err != nil {
 		s.line("hook %s: listing the hooks: %v", repo.FullName, err)
