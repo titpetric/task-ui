@@ -16,28 +16,30 @@
 	<h3>Workspaces</h3>
 	<div class="table-wrap">
 	<table class="table">
-		<thead><tr><th>Folder</th><th>Title</th><th>Home repository</th><th class="hide-sm">Projects</th><th></th></tr></thead>
+		<thead><tr><th>Folder</th><th>Title</th><th>Home repository</th><th class="hide-sm">Projects</th><th class="hide-sm">Secrets</th><th></th></tr></thead>
 		<tbody>
 		{{- $first := 0 }}{{ $last := len .WorkspaceList }}
 		{{- with .WorkspaceList }}{{ if eq (index . 0).Folder "_" }}{{ $first = 1 }}{{ end }}{{ end }}
 		{{- range $i, $ws := .WorkspaceList }}
-			{{- $nested := index $.Nested .Folder }}{{ $default := eq .Folder "_" }}
+			{{- $nested := index $.Nested .Folder }}{{ $default := eq .Folder "_" }}{{ $secrets := index $.SecretCounts .Folder }}
 			<tr>
 				<td class="key nowrap"><a href="{{ $.Href .Folder }}"><svg class="ic"><use href="#i-folder-open"/></svg> {{ .Folder }}</a></td>
 				<td class="desc">{{ .Title }}{{ with .Description }} <span class="faint">{{ . }}</span>{{ end }}</td>
 				<td class="origin">{{ with index $.Homes .Folder }}<span class="remote mono" title="{{ . }}">{{ . }}</span>{{ else }}<span class="faint">empty</span>{{ end }}</td>
 				<td class="hide-sm num">{{ with $nested }}<a href="/settings/workspaces/{{ $ws.Folder }}" title="{{ join . ", " }}">{{ len . }}</a>{{ else }}<span class="faint">none</span>{{ end }}</td>
+				<td class="hide-sm num">{{ if $secrets }}<a href="/settings/workspaces/{{ $ws.Folder }}/secrets" title="delete them before deleting the workspace">{{ $secrets }}</a>{{ else }}<span class="faint">none</span>{{ end }}</td>
 				<td class="actions">{{ template "menu" (menu (print "Actions on " .Folder)
 					(item "folder-open" "Open" "href" ($.Href .Folder))
 					(item "settings" "Workspace settings" "href" (print "/settings/workspaces/" .Folder))
 					sep
 					(and (not $default) (ne $i $first) (item "up" "Move up" "data-workspace-move" "up" "data-folder" .Folder))
 					(and (not $default) (ne (add $i 1) $last) (item "down" "Move down" "data-workspace-move" "down" "data-folder" .Folder))
-					(and ($.Can "workspace/delete") (danger "trash" (or (and $default "Empty") "Delete") "data-delete" (print "/api/workspaces/" .Folder) "data-confirm" (deleteWorkspaceConfirm .Folder $nested) "data-confirm-ok" "Delete" "data-next" "reload"))
+					(and ($.Can "workspace/delete") $secrets (item "secret" (deleteBlocked $secrets) "href" (print "/settings/workspaces/" .Folder "/secrets")))
+					(and ($.Can "workspace/delete") (not $secrets) (danger "trash" (or (and $default "Empty") "Delete") "data-delete" (print "/api/workspaces/" .Folder) "data-confirm" (deleteWorkspaceConfirm .Folder $nested) "data-confirm-ok" "Delete" "data-next" "reload"))
 				) }}</td>
 			</tr>
 		{{- else }}
-			<tr class="empty"><td colspan="5">No workspaces yet. Add one, with its home from a git repository, then clone projects into it with Add project.</td></tr>
+			<tr class="empty"><td colspan="6">No workspaces yet. Add one, with its home from a git repository, then clone projects into it with Add project.</td></tr>
 		{{- end }}
 		</tbody>
 	</table>

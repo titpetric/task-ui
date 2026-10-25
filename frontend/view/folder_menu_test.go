@@ -169,6 +169,13 @@ func TestFolderMenu_ProjectEdit(t *testing.T) {
 
 // Delete of a workspace names the projects that go with it, their
 // checkouts too.
+func TestDeleteBlocked(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, "Delete its 1 secret first", view.DeleteBlocked(1))
+	assert.Equal(t, "Delete its 3 secrets first", view.DeleteBlocked(3))
+}
+
 func TestDeleteWorkspaceConfirm(t *testing.T) {
 	t.Parallel()
 

@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"os"
 	"strings"
@@ -258,7 +259,8 @@ func (h *Handlers) workspaceBusy(ctx context.Context, name string) (string, erro
 // and its directory, home and src with everything in them; the default
 // workspace, the root, keeps its row and its directory and ends with an
 // empty home and an empty src, its home repository forgotten. It
-// refuses, a 409, while a run of the workspace is active.
+// refuses, a 409, while a run of the workspace is active or while the
+// workspace holds a secret: a delete never takes a secret with it.
 func (h *Handlers) deleteWorkspace(w http.ResponseWriter, r *http.Request) {
 	if !h.require(w, r, "workspace/delete") {
 		return
@@ -275,6 +277,17 @@ func (h *Handlers) deleteWorkspace(w http.ResponseWriter, r *http.Request) {
 	} else if busy != "" {
 		fail(w, http.StatusConflict, busy+" is running in "+ws.Folder+": delete the workspace after the run ends")
 		return
+	}
+	if h.opts.Secrets != nil {
+		secrets, err := h.opts.Secrets.Encrypted(ctx, ws.Folder)
+		if err != nil {
+			failErr(w, err)
+			return
+		}
+		if len(secrets) > 0 {
+			fail(w, http.StatusConflict, fmt.Sprintf("the workspace holds %d secrets: delete them first, so none goes unseen", len(secrets)))
+			return
+		}
 	}
 	if err := h.emptyWorkspace(ctx, ws); err != nil {
 		failErr(w, err)

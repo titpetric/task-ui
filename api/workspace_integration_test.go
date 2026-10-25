@@ -198,6 +198,17 @@ func TestWorkspace_DeleteNested(t *testing.T) {
 	// A project whose name only starts like the workspace's stays.
 	assert.Equal(t, http.StatusOK, f.call(t, asAdmin, http.MethodPut, "/projects/maltase", api.ProjectRequest{Title: "Other"}).Status)
 
+	// A secret in the workspace, shared or a folder's, stops the delete until someone deletes it.
+	assert.NoError(t, f.opts.Secrets.Set(ctx, &model.Secret{Scope: "workspace:malta", Name: "TOKEN", Content: "shared value"}))
+	blocked := f.call(t, asAdmin, http.MethodDelete, "/workspaces/malta", nil)
+	assert.Equal(t, http.StatusConflict, blocked.Status, string(blocked.Raw))
+	assert.Contains(t, string(blocked.Raw), "holds 1 secrets: delete them first")
+	assert.DirExists(t, filepath.Join(f.root, "malta"))
+	held, err := f.opts.Secrets.Encrypted(ctx, "malta")
+	assert.NoError(t, err)
+	assert.Len(t, held, 1)
+	assert.NoError(t, f.opts.Secrets.Delete(ctx, held[0].ID))
+
 	res := f.call(t, asAdmin, http.MethodDelete, "/workspaces/malta", nil)
 	assert.Equal(t, http.StatusNoContent, res.Status)
 	assert.NoDirExists(t, filepath.Join(f.root, "malta"))

@@ -61,6 +61,8 @@ func Funcs() template.FuncMap {
 		"removeConfirm": RemoveConfirm,
 		// deleteWorkspaceConfirm is what Delete of a workspace asks.
 		"deleteWorkspaceConfirm": DeleteWorkspaceConfirm,
+		// deleteBlocked is the menu line of a workspace whose secrets stop its delete.
+		"deleteBlocked": DeleteBlocked,
 		// bytes and megabytes word a size in bytes, or in MB as Beszel
 		// counts memory, as size does.
 		"bytes":     func(n uint64) string { return Size(int64(n)) },

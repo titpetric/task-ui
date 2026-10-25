@@ -162,9 +162,11 @@ Settings, **Workspaces** manages them: Allow View on Workspaces,
 configures and orders, and Allow Deletes, `workspace/delete`, removes
 one. Export and Import are an admin's: the bundle holds the workspace's
 private keys and secrets. The page lists each workspace with its
-home repository, or "empty", and how many projects are inside it, the
+home repository, or "empty", how many projects are inside it, the
 checkouts under its `src/` and the project rows there, each once, the
-names in the number's tooltip, in the sidebar's order.
+names in the number's tooltip, and how many secrets it holds, shared
+and its folders', the number opening its Secrets page, in the sidebar's
+order.
 
 ![Workspaces, each with its home repository and projects](../assets/workspaces-dark.png)
 
@@ -200,7 +202,10 @@ names in the number's tooltip, in the sidebar's order.
   for them, the workspace's secrets and its keys, and the workspace's
   directory with everything in it, the home included; its confirm names
   those projects first. It refuses, a `409`, while a run of the
-  workspace is active. The default workspace, the root, has **Empty**
+  workspace is active. A workspace that holds a secret has no Delete:
+  the menu says **Delete its N secrets first** and opens its Secrets
+  page, and `DELETE` answers `409` until you delete each one by hand,
+  so a delete never takes a secret with it unseen. The default workspace, the root, has **Empty**
   in its place: the same removal of its projects, env files, secrets
   and keys, and of its home checkout, after which the root stays with
   an empty `home/` and `src/`, its row and the other workspaces
@@ -383,7 +388,9 @@ a tar.gz of `manifest.json` and `.ssh/`, encrypted with
 [age](https://age-encryption.org) to a passphrase of at least 12
 characters. Whoever holds the file and the passphrase holds the
 workspace's secrets and SSH keys: nothing else protects them inside it,
-and task-ui keeps no copy of the passphrase.
+and task-ui keeps no copy of the passphrase. To move a workspace, export
+it, import the bundle on the other instance, then delete its secrets
+here by hand, which Delete needs, and then the workspace.
 
 The bundle carries:
 

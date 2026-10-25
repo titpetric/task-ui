@@ -121,7 +121,14 @@ func TestWorkspaceImport(t *testing.T) {
 	assert.NoDirExists(t, filepath.Join(to.root, "acme"))
 
 	// A removed workspace takes its env files and its keys with it;
-	// importing it again brings them back.
+	// importing it again brings them back. Its secrets go first, by
+	// hand: a delete refuses while any is there.
+	secretsHeld, err := to.opts.Secrets.Encrypted(ctx, "acme2")
+	assert.NoError(t, err)
+	assert.NotEmpty(t, secretsHeld)
+	for _, secret := range secretsHeld {
+		assert.NoError(t, to.opts.Secrets.Delete(ctx, secret.ID))
+	}
 	removed := to.call(t, asAdmin, http.MethodDelete, "/workspaces/acme2", nil)
 	assert.Equal(t, http.StatusNoContent, removed.Status, string(removed.Raw))
 	_, err = to.opts.Env.Managed.Get(ctx, model.EnvFile{Folder: "acme2/api", Path: ".env"})

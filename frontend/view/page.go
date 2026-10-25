@@ -201,6 +201,10 @@ type Page struct {
 	MoveLeft []string
 	// Nested are the project rows inside each workspace, by its folder.
 	Nested map[string][]string
+	// SecretCounts is how many secrets each workspace holds, by its
+	// folder: the shared ones and its folders'. A workspace with any
+	// is not deleted.
+	SecretCounts map[string]int
 	// Homes are the URLs of the workspaces' home repositories, by
 	// workspace folder, "" for an empty home. Home is the home of the
 	// workspace a settings page edits.
