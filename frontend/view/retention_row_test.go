@@ -71,6 +71,7 @@ func TestRetentionRow_Page(t *testing.T) {
 	assert.Contains(t, body, "2 databases, 4.0 KB")
 	assert.Contains(t, body, "2 recordings, 4.0 KB")
 	assert.Contains(t, body, "2 threads<")
-	assert.Contains(t, body, `<span class="faint">never</span>`, "no cleanup yet")
+	assert.Contains(t, body, `Applied by <a href="/runs?folder=_&amp;job=@cleanup" title="The runs of @cleanup">@cleanup</a>, which <span class="faint">has not run yet</span>.`, "the lead links the job; no cleanup yet")
+	assert.NotContains(t, body, "Last cleanup")
 	assert.Contains(t, body, `data-api="/api/retention" data-method="PUT"`)
 }
