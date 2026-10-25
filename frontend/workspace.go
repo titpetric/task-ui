@@ -122,25 +122,31 @@ func (h *Handlers) workspaceList(ctx context.Context) []model.Workspace {
 	return workspaces
 }
 
-// nestedProjects returns the folders of the project rows inside each
-// workspace, by workspace folder: the projects a delete removes. The
-// default workspace holds the rows at the top of the root.
+// nestedProjects returns the projects inside each workspace, by
+// workspace folder: the checkouts under its src and the project rows
+// there, the direct ones, each once, in name order. They are what the Projects column
+// counts and a delete removes. The default workspace holds the root's.
 func (h *Handlers) nestedProjects(ctx context.Context) map[string][]string {
 	nested := map[string][]string{}
-	projects, _ := h.opts.Projects.List(ctx)
 	named := h.workspaceFolders(ctx)
+	add := func(id string) {
+		ws, rel := layout.Split(named, id)
+		if rel == "" || strings.Contains(rel, "/") || model.IsReserved(rel) || slices.Contains(nested[ws], id) {
+			return
+		}
+		nested[ws] = append(nested[ws], id)
+	}
+	for _, entry := range folder.Entries(h.opts.Root, h.opts.Git, named) {
+		add(entry.ID)
+	}
+	projects, _ := h.opts.Projects.List(ctx)
 	for _, project := range projects {
-		top, _, _ := strings.Cut(project.Folder, "/")
-		if !slices.Contains(named, top) && !strings.Contains(project.Folder, "/") && !model.IsReserved(top) {
-			nested[model.Default] = append(nested[model.Default], project.Folder)
+		if !strings.Contains(project.Folder, "/") || slices.Contains(named, strings.SplitN(project.Folder, "/", 2)[0]) {
+			add(project.Folder)
 		}
 	}
-	for _, ws := range named {
-		for _, project := range projects {
-			if strings.HasPrefix(project.Folder, ws+"/") {
-				nested[ws] = append(nested[ws], project.Folder)
-			}
-		}
+	for _, ids := range nested {
+		slices.Sort(ids)
 	}
 	return nested
 }

@@ -26,14 +26,14 @@
 				<td class="key nowrap"><a href="{{ $.Href .Folder }}"><svg class="ic"><use href="#i-folder-open"/></svg> {{ .Folder }}</a></td>
 				<td class="desc">{{ .Title }}{{ with .Description }} <span class="faint">{{ . }}</span>{{ end }}</td>
 				<td class="origin">{{ with index $.Homes .Folder }}<span class="remote mono" title="{{ . }}">{{ . }}</span>{{ else }}<span class="faint">empty</span>{{ end }}</td>
-				<td class="hide-sm">{{ range $i, $id := $nested }}{{ if $i }}, {{ end }}<a href="{{ $.Href $id }}">{{ $id }}</a>{{ else }}<span class="faint">none yet</span>{{ end }}</td>
+				<td class="hide-sm num">{{ with $nested }}<a href="/settings/workspaces/{{ $ws.Folder }}" title="{{ join . ", " }}">{{ len . }}</a>{{ else }}<span class="faint">none</span>{{ end }}</td>
 				<td class="actions">{{ template "menu" (menu (print "Actions on " .Folder)
 					(item "folder-open" "Open" "href" ($.Href .Folder))
 					(item "settings" "Workspace settings" "href" (print "/settings/workspaces/" .Folder))
 					sep
 					(and (not $default) (ne $i $first) (item "up" "Move up" "data-workspace-move" "up" "data-folder" .Folder))
 					(and (not $default) (ne (add $i 1) $last) (item "down" "Move down" "data-workspace-move" "down" "data-folder" .Folder))
-					(and (not $default) ($.Can "workspace/delete") (danger "trash" "Delete" "data-delete" (print "/api/workspaces/" .Folder) "data-confirm" (deleteWorkspaceConfirm .Folder $nested) "data-confirm-ok" "Delete" "data-next" "reload"))
+					(and ($.Can "workspace/delete") (danger "trash" (or (and $default "Empty") "Delete") "data-delete" (print "/api/workspaces/" .Folder) "data-confirm" (deleteWorkspaceConfirm .Folder $nested) "data-confirm-ok" "Delete" "data-next" "reload"))
 				) }}</td>
 			</tr>
 		{{- else }}

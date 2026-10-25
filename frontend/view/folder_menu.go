@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/titpetric/task-ui/folder"
+	"github.com/titpetric/task-ui/model"
 )
 
 // FolderMenu is the [...] menu in the head of a folder page: Pin or
@@ -73,11 +74,15 @@ func RemoveConfirm(id, remote string) string {
 	return "Remove the folder " + id + " and its checkout? You can clone it again from " + remote + "."
 }
 
-// DeleteWorkspaceConfirm returns what Delete of a workspace asks, naming its nested projects.
+// DeleteWorkspaceConfirm returns what Delete of a workspace asks, or
+// what Empty of the default workspace asks.
 func DeleteWorkspaceConfirm(folder string, nested []string) string {
-	text := "Delete the workspace " + folder + " with its keys and secrets"
+	projects := ""
 	if len(nested) > 0 {
-		text += ", and the projects inside it with their checkouts: " + strings.Join(nested, ", ")
+		projects = ", and the projects inside it with their checkouts: " + strings.Join(nested, ", ")
 	}
-	return text + "? Its directory goes once nothing else is in it."
+	if folder == model.Default {
+		return "Empty the default workspace " + folder + "? This deletes its home checkout, its keys and secrets" + projects + ". The root stays, with an empty home and src, as do the other workspaces."
+	}
+	return "Delete the workspace " + folder + " with its keys and secrets" + projects + "? Its directory goes once nothing else is in it."
 }
