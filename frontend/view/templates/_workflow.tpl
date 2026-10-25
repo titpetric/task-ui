@@ -23,21 +23,24 @@
 			<label class="check"><input type="checkbox" name="sidebar"{{ if or (not $w) (not $w.SidebarHidden) }} checked{{ end }}> Show in sidebar <span class="faint">off for a workflow you only use as a step of others</span></label>
 		</div>
 		{{- /* Runs as: an admin picks the user from a select, the current
-		     login on a new workflow and the saved user on edit; everyone
-		     else reads the user, the form posts none and the API keeps
-		     the caller, or the saved user. */}}
+		     login on a new workflow and the saved user on edit, or whoever
+		     starts it; everyone else reads the user: themself on a new
+		     workflow, posted hidden, and on edit the saved user, which the
+		     form leaves alone. */}}
 		{{- $runAs := $p.User.Name }}{{ if $w }}{{ $runAs = $w.RunAs }}{{ end }}
 		<div class="field">
 			{{- if $p.Users }}
 			<label for="wf-user-{{ $id }}">Runs as</label>
 			<select id="wf-user-{{ $id }}" name="user">
+				<option value=""{{ if not $runAs }} selected{{ end }}>Whoever starts it</option>
 				{{- template "user-options" (list $p.Users $runAs) }}
 			</select>
 			{{- else }}
 			<span class="label">Runs as</span>
-			<span class="wf-runas">{{ $runAs }}</span>
+			<span class="wf-runas">{{ or $runAs "Whoever starts it" }}</span>
+			{{- if not $w }}<input type="hidden" name="user" value="{{ $runAs }}">{{ end }}
 			{{- end }}
-			<small class="faint">Every step runs as this user: with their permissions, the Claude token granted to their role or user, and the keys and secrets of the workspace each step's folder is in.</small>
+			<small class="faint">Every step runs as this user: with their permissions, the Claude token granted to their role or user, and the keys and secrets of the workspace each step's folder is in. A step that runs another workflow follows that workflow's user when it has one. Whoever starts it: the run is the user's who presses Run, or the schedule's.</small>
 		</div>
 	</div>
 

@@ -29,9 +29,9 @@ type WorkflowRequest struct {
 	// change, it stays unchanged.
 	Sidebar *bool `json:"sidebar,omitempty"`
 	// User is who every run of the workflow runs as, by name: an admin
-	// names anyone, everyone else only themselves. Left out, the caller
-	// on create, and no change on update.
-	User string `json:"user,omitempty"`
+	// names anyone, everyone else only themselves. Empty, the workflow
+	// runs as whoever starts it; left out, no change on update.
+	User *string `json:"user,omitempty"`
 }
 
 // WorkflowView is a workflow as the API shows it.
@@ -46,11 +46,12 @@ type WorkflowView struct {
 	Running string `json:"running,omitempty"`
 	// LastRun is the newest run.
 	LastRun *model.WorkflowRun `json:"last_run,omitempty"`
-	// RunAs names the user the workflow's runs run as, its owner
-	// without one; empty for a user nobody holds any more.
+	// RunAs names the user the workflow's runs run as; empty for one
+	// that runs as whoever starts it, or as a user nobody holds any more.
 	RunAs string `json:"run_as"`
 	// CanRun says whether a start by the user asking goes: they may run
-	// every step, and so may the user the workflow runs as.
+	// every step, and so may the user the workflow runs as, when it has
+	// one.
 	CanRun bool `json:"can_run"`
 	// CanChange says whether the user asking may change or delete it.
 	CanChange bool `json:"can_change"`
@@ -183,13 +184,16 @@ func (h *Handlers) checkWorkflow(w http.ResponseWriter, r *http.Request, req Wor
 		fail(w, http.StatusBadRequest, "a workflow needs an enabled step")
 		return nil, false
 	}
-	runAs, status, problem := h.pickRunAs(r, req.User)
-	if problem != "" {
-		fail(w, status, problem)
-		return nil, false
-	}
-	if runAs != nil {
-		wf.RunAsUserID = runAs.ID
+	if req.User != nil {
+		runAs, status, problem := h.pickRunAs(r, *req.User)
+		if problem != "" {
+			fail(w, status, problem)
+			return nil, false
+		}
+		wf.RunAsUserID = ""
+		if runAs != nil {
+			wf.RunAsUserID = runAs.ID
+		}
 	}
 	return steps, true
 }

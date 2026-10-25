@@ -57,13 +57,13 @@ Scheduled page lists a workflow's schedule among the jobs': the Folder
 column says workflow, the Job column names the workflow, linked to its
 page, and the menu enables, disables and deletes it as it does a job's.
 The form on the Scheduled page takes jobs alone. Each run of the
-schedule runs the workflow as the workflow's own user, its **Runs as**
-(see [Workflows](workflows.md#runs-as)), with no input, which takes
-that user's right to run every step at that time; the scheduler skips
-the time while the workflow is still running. The **Runs as** column
-shows the workflow's user, with no pick: an admin changes it on the
-workflow. A workflow's schedule takes no **Args**, no **Run as** and no
-triage.
+schedule runs the workflow as the workflow's own user when it has one,
+its **Runs as** (see [Workflows](workflows.md#runs-as)), else as the
+schedule's user, with no input, which takes that user's right to run
+every step at that time; the scheduler skips the time while the
+workflow is still running. The **Runs as** column shows the workflow's
+user, with no pick, when it has one: an admin changes it on the
+workflow. A workflow's schedule takes no **Args** and no triage.
 
 ## Cleanup
 

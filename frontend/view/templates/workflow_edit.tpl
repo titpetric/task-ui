@@ -21,7 +21,8 @@
      and Run as, which a workflow run has no use for: it runs as the
      workflow's user. */}}
 <section class="block" id="schedule">
-	{{- template "blockhead" (head "Schedule" (print "Runs the workflow on a cron expression, as " (or $w.RunAs "its user") ", the user set on the workflow. Each run needs permission to run every step at that time.") (and (not $.Schedules) "Not scheduled.")) }}
+	{{- $as := "the user who adds the schedule" }}{{ if $w.RunAs }}{{ $as = print $w.RunAs ", the user set on the workflow" }}{{ end }}
+	{{- template "blockhead" (head "Schedule" (print "Runs the workflow on a cron expression, as " $as ". Each run needs permission to run every step at that time.") (and (not $.Schedules) "Not scheduled.")) }}
 	{{- template "schedtable" (list $ $.Schedules (or $w.CanRun $.User.CanAdmin) $w.Name) }}
 	<form class="form inline" data-api="/api/schedules" data-method="POST" data-next="reload">
 		<input type="hidden" name="workflow" value="{{ $w.ID }}">

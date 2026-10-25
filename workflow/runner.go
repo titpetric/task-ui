@@ -24,6 +24,7 @@ import (
 	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/hostrun"
 	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/permission"
 	"github.com/titpetric/task-ui/runner"
 	"github.com/titpetric/task-ui/storage"
 )
@@ -65,6 +66,13 @@ type Step struct {
 	Args []string
 }
 
+// Users looks up the user of a workflow, by ID, and what a user may do.
+// storage.UserStorage is one.
+type Users interface {
+	Get(ctx context.Context, id string) (*model.User, error)
+	Permissions(ctx context.Context, user *model.User) permission.Set
+}
+
 // Prompter puts a workflow's prompt and summary steps to Claude, as the
 // user who started the run, with the run's input and the steps before
 // it, in the step's place. AskStep returns when Claude replied, with the
@@ -88,6 +96,11 @@ type Runner struct {
 	Prompter Prompter
 	// Hosts start a step of @host:<host> on its host. Nil fails such a step.
 	Hosts *hostrun.Starter
+	// Users finds the user a nested workflow runs as, and what they may
+	// do, for its run and for MayRun, which counts a nested workflow's
+	// steps as its own user's. Nil runs every nested workflow as the
+	// run's user.
+	Users Users
 
 	mu     sync.Mutex
 	byFlow map[string]*active // workflow ID -> its run in progress
@@ -393,11 +406,19 @@ func (r *Runner) hosts(ctx context.Context, step Step, user *model.User, started
 	return state, sessions[0].ID(), message
 }
 
-// nested runs the workflow a step names and waits for it. When that
-// workflow is already running, nested waits for it and then starts it
-// again; a stop ends the run in
-// progress. The run's own state and message are the step's.
+// nested runs the workflow a step names and waits for it: as the user
+// set on that workflow, else as the run's user. When that workflow is
+// already running, nested waits for it and then starts it again; a stop
+// ends the run in progress. The run's own state and message are the
+// step's; a run-as user nobody holds fails it.
 func (r *Runner) nested(ctx context.Context, wf *model.Workflow, user *model.User) (state, runID, message string) {
+	if wf.RunAsUserID != "" && r.Users != nil {
+		runAs, err := r.Users.Get(ctx, wf.RunAsUserID)
+		if err != nil {
+			return model.StateFailed, "", "the user " + wf.Name + " runs as is gone"
+		}
+		user = runAs
+	}
 	for {
 		if ctx.Err() != nil {
 			return model.StateStopped, "", ""

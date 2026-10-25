@@ -10,6 +10,7 @@ import (
 	"github.com/titpetric/task-ui/internal/assert"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/permission"
+	"github.com/titpetric/task-ui/storage"
 	"github.com/titpetric/task-ui/workflow"
 )
 
@@ -39,6 +40,24 @@ func TestRunner_MayRun(t *testing.T) {
 	assert.Equal(t, "infra / build", r.MayRun(ctx, runner, steps), "the nested workflow's step")
 
 	admin := permission.Set{User: &model.User{ID: "u3", Name: "root", Role: model.RoleAdmin}}
+	assert.Equal(t, "", r.MayRun(ctx, admin, steps))
+
+	// A nested workflow with a user of its own counts as that user:
+	// the viewer may not run infra / build, so the admin's outer run
+	// fails there; a gone user names the workflow.
+	users := storage.NewUserStorage(f.db)
+	guest := &model.User{Name: "guest", Role: model.RoleViewer}
+	assert.NoError(t, users.Create(ctx, guest))
+	inner.RunAsUserID = guest.ID
+	assert.NoError(t, f.workflows.Update(ctx, inner, []model.WorkflowStep{{Folder: "infra", Job: "build"}}))
+	r.Users = users
+	assert.Equal(t, "infra / build", r.MayRun(ctx, admin, steps), "checked as the nested workflow's user")
+	inner.RunAsUserID = runner.User.ID
+	assert.NoError(t, f.workflows.Update(ctx, inner, []model.WorkflowStep{{Folder: "infra", Job: "build"}}))
+	assert.Equal(t, "workflow chain, whose user is gone", r.MayRun(ctx, admin, steps))
+	infra.Job("build").Allow = nil
+	inner.RunAsUserID = ""
+	assert.NoError(t, f.workflows.Update(ctx, inner, []model.WorkflowStep{{Folder: "infra", Job: "build"}}))
 	assert.Equal(t, "", r.MayRun(ctx, admin, steps))
 
 	assert.Equal(t, "infra / gone", r.MayRun(ctx, admin, []model.WorkflowStep{{Folder: "infra", Job: "gone"}}))

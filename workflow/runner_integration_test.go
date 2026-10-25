@@ -190,6 +190,41 @@ func TestRunner_NestedWorkflow(t *testing.T) {
 	assert.True(t, !second.StartedAt.Before(*first.FinishedAt), "inner starts after the step before it ended")
 }
 
+// A nested workflow with a user of its own runs as that user, not the
+// outer run's; one whose user nobody holds fails the step.
+func TestRunner_NestedRunAs(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	ctx := context.Background()
+	users := storage.NewUserStorage(f.db)
+	deploy := &model.User{Name: "deploy", Role: model.RoleRunner}
+	assert.NoError(t, users.Create(ctx, deploy))
+	f.runner.Users = workflow.Users(users)
+	inner := f.create(t, "build")
+	inner.RunAsUserID = deploy.ID
+	assert.NoError(t, f.workflows.Update(ctx, inner, []model.WorkflowStep{{Folder: "infra", Job: "build"}}))
+	outer := &model.Workflow{Name: "outer"}
+	assert.NoError(t, f.workflows.Create(ctx, outer, []model.WorkflowStep{{WorkflowRef: inner.ID}}))
+
+	run, err := f.runner.Start(ctx, outer, ops, "")
+	assert.NoError(t, err)
+	assert.Equal(t, model.StateOK, f.wait(t, run.ID).State)
+	steps, _ := f.wfRuns.Steps(ctx, run.ID)
+	innerRun, err := f.wfRuns.Get(ctx, steps[0].WorkflowRunRef)
+	assert.NoError(t, err)
+	assert.Equal(t, "deploy", innerRun.UserName, "the nested workflow's own user")
+	innerSteps, _ := f.wfRuns.Steps(ctx, innerRun.ID)
+	job, _ := f.runs.Get(ctx, innerSteps[0].RunID)
+	assert.Equal(t, "deploy", job.UserName)
+
+	assert.NoError(t, users.Delete(ctx, deploy.ID))
+	run, err = f.runner.Start(ctx, outer, ops, "")
+	assert.NoError(t, err)
+	ended := f.wait(t, run.ID)
+	assert.Equal(t, model.StateFailed, ended.State)
+	assert.Equal(t, "chain the user chain runs as is gone", ended.Message, "the step name leads the message")
+}
+
 // A failing nested workflow fails the step that ran it, and the runner
 // skips the rest.
 func TestRunner_NestedFailure(t *testing.T) {

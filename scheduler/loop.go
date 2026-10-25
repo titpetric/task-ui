@@ -197,12 +197,17 @@ func (l *Loop) fireWorkflow(ctx context.Context, schedule *model.Schedule, now t
 	if err := l.advance(ctx, schedule, now); err != nil {
 		return false, err
 	}
-	user := &model.User{ID: wf.RunsAs(), Name: wf.UserName}
+	user := l.user(ctx, schedule)
+	if wf.RunAsUserID != "" {
+		user = &model.User{ID: wf.RunAsUserID, Name: wf.UserName}
+	}
 	if l.Users != nil {
-		user, err = l.Users.Get(ctx, wf.RunsAs())
-		if err != nil {
-			slog.Warn("scheduled run skipped, its user may not run a step of the workflow", "workflow", wf.Name, "step", "", "user", wf.RunsAs(), "err", "the user is gone")
-			return false, nil
+		if wf.RunAsUserID != "" {
+			user, err = l.Users.Get(ctx, wf.RunAsUserID)
+			if err != nil {
+				slog.Warn("scheduled run skipped, its user may not run a step of the workflow", "workflow", wf.Name, "step", "", "user", wf.RunAsUserID, "err", "the user is gone")
+				return false, nil
+			}
 		}
 		steps, err := l.Workflows.Steps(ctx, wf.ID)
 		if err != nil {
