@@ -120,28 +120,10 @@ select {
   }
 }
 
-.btn-ghost {
-  background: transparent;
-  border-color: transparent;
-  color: var(--text-dim);
-
-  &:hover {
-    background: var(--ink-2);
-    border-color: var(--line);
-    color: var(--text);
-  }
-}
-
 .btn-sm {
   height: var(--control-sm);
   padding: 0.12em 0.55rem 0;
   font-size: var(--fs-label);
-}
-
-.btn-group {
-  display: inline-flex;
-  gap: 0.4rem;
-  flex-wrap: wrap;
 }
 
 input:is([type="text"], [type="password"]),

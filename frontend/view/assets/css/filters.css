@@ -19,8 +19,7 @@
   text-transform: uppercase;
 }
 
-.filters input,
-.filters select {
+.filters input {
   width: var(--control-w-m);
   padding: 0 0.55rem;
 }
