@@ -33,14 +33,14 @@
 			<label for="wf-user-{{ $id }}">Runs as</label>
 			<select id="wf-user-{{ $id }}" name="user">
 				<option value=""{{ if not $runAs }} selected{{ end }}>Whoever starts it</option>
-				{{- template "user-options" (list $p.Users $runAs) }}
+				{{- template "user-options" (list $p.Users $runAs $p.UserKeys) }}
 			</select>
 			{{- else }}
 			<span class="label">Runs as</span>
 			<span class="wf-runas">{{ or $runAs "Whoever starts it" }}</span>
 			{{- if not $w }}<input type="hidden" name="user" value="{{ $runAs }}">{{ end }}
 			{{- end }}
-			<small class="faint">Every step runs as this user: with their permissions, the Claude token granted to their role or user, and the keys and secrets of the workspace each step's folder is in. A step that runs another workflow follows that workflow's user when it has one. Whoever starts it: the run is the user's who presses Run, or the schedule's.</small>
+			<small class="faint">Every step runs as this user: with their permissions, the Claude token granted to their role or user, and the keys and secrets of the workspace each step's folder is in. A step that runs another workflow follows that workflow's user when it has one. Whoever starts it: the run is the user's who presses Run, or the schedule's. The keys are the instance keys the user gets; a step's workspace adds its own keys.</small>
 		</div>
 	</div>
 

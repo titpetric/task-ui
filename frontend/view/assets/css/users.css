@@ -208,6 +208,14 @@ table.matrix {
     padding: 0.15rem 1.6rem 0.15rem 0.4rem;
     font-size: var(--fs-data);
   }
+
+  /* The pick names the user's keys after the name: the dropdown stops
+     at a width that keeps the row's other columns in view, the full
+     list of keys in its open list. */
+  & .dd {
+    width: auto;
+    max-width: 14rem;
+  }
 }
 
 /* A row that opens a page on a click anywhere in it. */

@@ -11,21 +11,24 @@
 	(and ($p.CanPermissions $name) (item "edit" "Edit" "href" (print "/users/" $name "/edit")))) }}
 {{- end }}
 
-{{/* user-options takes (list users selected [short]): an option per
-     user, name and role, or the name alone when short, for a select that
-     picks a user: who a schedule runs as, who a key is for. */}}
-{{ define "user-options" }}{{ $selected := index . 1 }}{{ $short := gt (len .) 2 }}{{ range index . 0 }}
-			<option value="{{ .Name }}"{{ if eq .Name $selected }} selected{{ end }}>{{ .Name }}{{ if not $short }} ({{ .EffectiveRole }}){{ end }}</option>
+{{/* user-options takes (list users selected keys [short]): an option
+     per user for a select that picks who a run is as: the name and the
+     role, or the name alone when short, then the instance SSH keys the
+     user's runs get, by the keys map of user name to key names, or "no
+     keys"; data-keys holds the names, space apart, for a script. */}}
+{{ define "user-options" }}{{ $selected := index . 1 }}{{ $keys := index . 2 }}{{ $short := gt (len .) 3 }}{{ range index . 0 }}{{ $names := index $keys .Name }}
+			<option value="{{ .Name }}"{{ if eq .Name $selected }} selected{{ end }} data-keys="{{ join $names " " }}">{{ .Name }}{{ if not $short }} ({{ .EffectiveRole }}){{ end }} · {{ if $names }}keys: {{ join $names ", " }}{{ else }}no keys{{ end }}</option>
 {{- end }}{{ end }}
 
 {{/* runas takes (list $ id): the Run as field of a schedule form, for an
-     admin, on the admin to start. */}}
+     admin, on the admin to start, each user with the keys they bring. */}}
 {{ define "runas" }}{{ $p := index . 0 }}{{ if $p.Users }}
 	<div class="field">
 		<label for="{{ index . 1 }}">Run as</label>
 		<select id="{{ index . 1 }}" name="user">
-			{{- template "user-options" (list $p.Users $p.User.Name) }}
+			{{- template "user-options" (list $p.Users $p.User.Name $p.UserKeys) }}
 		</select>
+		<small class="faint">The keys are the instance keys the user gets; the job's workspace adds its own keys.</small>
 	</div>
 {{- end }}{{ end }}
 
@@ -35,7 +38,7 @@
      that user, read from the workflow, with no pick. */}}
 {{ define "runas-row" }}{{ $p := index . 0 }}{{ with index . 1 }}{{ if $p.WorkflowUser . }}{{ template "user" (list $p ($p.WorkflowUser .)) }}{{ else if $p.Users -}}
 <form class="run-as" data-api="/api/schedules/{{ .ID }}" data-method="PUT" data-next="reload">{{ template "avatar" (list $p .UserName) }} <select name="user" data-submit aria-label="Run as">
-			{{- template "user-options" (list $p.Users .UserName true) }}
+			{{- template "user-options" (list $p.Users .UserName $p.UserKeys true) }}
 		</select>{{ template "user-menu" (list $p .UserName) }}</form>
 {{- else }}{{ template "user" (list $p .UserName) }}{{ end }}{{ end }}{{ end }}
 

@@ -246,6 +246,9 @@ type Page struct {
 	// every secret.
 	InstanceKey *keystore.Key
 	Users       []model.User
+	// UserKeys are the instance SSH keys each of Users gets, by name, for
+	// the Run as pickers.
+	UserKeys map[string][]string
 	// Account is the user a form or a profile shows, and AccountMCP
 	// their MCP token.
 	Account    *model.User

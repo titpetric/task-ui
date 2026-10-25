@@ -216,7 +216,12 @@ keys whoever runs the workflow that calls it. Without one, the nested
 workflow runs as the outer run's user.
 
 An admin picks the user from **Runs as** in the editor, the current
-login selected on a new workflow and the saved choice on edit. Everyone
+login selected on a new workflow and the saved choice on edit. Each
+option names the user's role and the instance SSH keys the user's runs
+get, `deploy (runner) · keys: deploy_ed25519`, or `no keys`: the keys
+linked to the user by name or to the user's role on the
+[Keys](settings.md#keys) page. The workspace of each step's folder adds
+its own keys, which the list leaves out. Everyone
 else reads the field: a workflow they make runs as themself, and one an
 admin set keeps its user. Who runs it and who owns it differ: the
 **By** column of the Workflows page names the owner, and `runs as` with

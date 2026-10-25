@@ -11,6 +11,7 @@ import (
 
 	"github.com/titpetric/task-ui/integration"
 	"github.com/titpetric/task-ui/internal/assert"
+	"github.com/titpetric/task-ui/keystore"
 	"github.com/titpetric/task-ui/model"
 )
 
@@ -262,10 +263,17 @@ func TestWorkflow_EditPage(t *testing.T) {
 	assert.Contains(t, admin, "Runs the workflow on a cron expression, as the user who adds the schedule.")
 	wf.RunAsUserID = f.users[asOps].ID
 	assert.NoError(t, f.opts.Workflows.Update(context.Background(), wf, []model.WorkflowStep{{Folder: "infra", Job: "plan"}}))
+	// Runs as names the instance keys each user's runs get: a key linked
+	// to the runners' role shows on ops's option; the admin has none.
+	deploy, err := f.opts.Keys.Generate(context.Background(), keystore.Spec{Name: "deploy"})
+	assert.NoError(t, err)
+	assert.NoError(t, f.opts.Keys.Link(context.Background(), deploy.Name, []string{model.RoleRunner}, nil))
 	fixed := f.page(t, asAdmin, "/workflows/"+wf.ID+"/edit")
-	assert.Contains(t, fixed, `<option value="ops" selected>ops (runner)</option>`)
+	assert.Contains(t, fixed, `<option value="ops" selected data-keys="deploy_ed25519">ops (runner) · keys: deploy_ed25519</option>`)
+	assert.Contains(t, fixed, `<option value="admin" data-keys="">admin (admin) · no keys</option>`)
+	assert.Contains(t, fixed, "The keys are the instance keys the user gets; a step's workspace adds its own keys.")
 	assert.Contains(t, fixed, "Runs the workflow on a cron expression, as ops, the user set on the workflow.")
-	assert.Contains(t, f.page(t, asAdmin, "/workflows/new"), `<option value="admin" selected>admin (admin)</option>`, "the login on a new workflow")
+	assert.Contains(t, f.page(t, asAdmin, "/workflows/new"), `<option value="admin" selected data-keys="">admin (admin) · no keys</option>`, "the login on a new workflow")
 	assert.Contains(t, admin, `<td class="key" data-label="Expression"><code>0 7 * * 1-5</code></td>`)
 	assert.Contains(t, admin, `data-confirm="Delete the schedule 0 7 * * 1-5 for release?"`)
 	assert.NotContains(t, admin, "Not scheduled.")
