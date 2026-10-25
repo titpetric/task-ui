@@ -2,7 +2,7 @@
 <div class="page-head">
 	<div>
 		<h2>Projects</h2>
-		<p>The folders under the root, a block per workspace. task-ui pulls a git checkout before every run.</p>
+		<p>The projects of each workspace, a block per workspace. task-ui pulls a git checkout before every run.</p>
 	</div>
 	{{- if .Can "project/edit" }}
 	<div class="actions">

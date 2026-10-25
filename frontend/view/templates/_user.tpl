@@ -20,11 +20,11 @@
 			<option value="{{ .Name }}"{{ if eq .Name $selected }} selected{{ end }} data-keys="{{ join $names " " }}">{{ .Name }}{{ if not $short }} ({{ .EffectiveRole }}){{ end }} · {{ if $names }}keys: {{ join $names ", " }}{{ else }}no keys{{ end }}</option>
 {{- end }}{{ end }}
 
-{{/* runas takes (list $ id): the Run as field of a schedule form, for an
+{{/* runas takes (list $ id): the Runs as field of a schedule form, for an
      admin, on the admin to start, each user with the keys they bring. */}}
 {{ define "runas" }}{{ $p := index . 0 }}{{ if $p.Users }}
 	<div class="field">
-		<label for="{{ index . 1 }}">Run as</label>
+		<label for="{{ index . 1 }}">Runs as</label>
 		<select id="{{ index . 1 }}" name="user">
 			{{- template "user-options" (list $p.Users $p.User.Name $p.UserKeys) }}
 		</select>
@@ -37,20 +37,20 @@
      the change. A schedule of a workflow with a user of its own runs as
      that user, read from the workflow, with no pick. */}}
 {{ define "runas-row" }}{{ $p := index . 0 }}{{ with index . 1 }}{{ if $p.WorkflowUser . }}{{ template "user" (list $p ($p.WorkflowUser .)) }}{{ else if $p.Users -}}
-<form class="run-as" data-api="/api/schedules/{{ .ID }}" data-method="PUT" data-next="reload">{{ template "avatar" (list $p .UserName) }} <select name="user" data-submit aria-label="Run as">
+<form class="run-as" data-api="/api/schedules/{{ .ID }}" data-method="PUT" data-next="reload">{{ template "avatar" (list $p .UserName) }} <select name="user" data-submit aria-label="Runs as">
 			{{- template "user-options" (list $p.Users .UserName $p.UserKeys true) }}
 		</select>{{ template "user-menu" (list $p .UserName) }}</form>
 {{- else }}{{ template "user" (list $p .UserName) }}{{ end }}{{ end }}{{ end }}
 
 {{/* folder-pick takes (list choices all label): the folders a user
-     sees, All projects or the boxes of Custom, in the user forms; label
+     sees, All folders or the boxes of Custom, in the user forms; label
      heads the field, left out where the block's heading says it. */}}
 {{ define "folder-pick" }}{{ $all := index . 1 -}}
 	<div class="field" data-folder-pick{{ if index . 2 }} role="group" aria-labelledby="folders-label"{{ end }}>
 		{{- if index . 2 }}
 		<span class="label" id="folders-label">Folders</span>
 		{{- end }}
-		<label class="check"><input type="radio" name="scope" value="all"{{ if $all }} checked{{ end }}> All projects</label>
+		<label class="check"><input type="radio" name="scope" value="all"{{ if $all }} checked{{ end }}> All folders</label>
 		<label class="check"><input type="radio" name="scope" value="custom"{{ if not $all }} checked{{ end }}> Custom</label>
 		<div class="folder-choices">
 			{{- range index . 0 }}

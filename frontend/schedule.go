@@ -36,7 +36,7 @@ func (h *Handlers) schedules(w http.ResponseWriter, r *http.Request) {
 }
 
 // runAsUsers fills the users a schedule may run as, for an admin, who
-// picks one: the Run as picker shows only with them, each user with the
+// picks one: the Runs as picker shows only with them, each user with the
 // instance SSH keys their runs get, read from the key folder once.
 func (h *Handlers) runAsUsers(r *http.Request, p *view.Page) {
 	if !p.User.CanAdmin() {

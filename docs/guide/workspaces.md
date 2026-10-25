@@ -434,7 +434,7 @@ retires the key. `"encrypt": true` on `generate` or `upload` answers
 
 A workspace's secrets reach its runs as variables (see
 [Settings](settings.md#secrets)). Its **shared** secrets, scope
-`workspace:malta`, reach every project in it; a project's own, scope
+`workspace:malta`, reach every folder in it; a project's own, scope
 `malta/deploy`, reach that project and win over a shared one of the same
 name. The shared secrets of `_` reach the projects at the root and no
 named workspace: a project in `malta` gets `malta`'s shared secrets and

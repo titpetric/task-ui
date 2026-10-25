@@ -94,15 +94,15 @@ func TestSchedules_RunAs(t *testing.T) {
 	assert.NoError(t, f.opts.Keys.Link(ctx, deploy.Name, []string{model.RoleRunner}, nil))
 
 	admin := f.page(t, asAdmin, "/schedules")
-	assert.Contains(t, admin, `<label for="sch-user">Run as</label>`)
+	assert.Contains(t, admin, `<label for="sch-user">Runs as</label>`)
 	assert.Contains(t, admin, `<option value="admin" selected data-keys="">admin (admin) · no keys</option>`)
 	assert.Contains(t, admin, `<option value="ops" data-keys="deploy_ed25519">ops (runner) · keys: deploy_ed25519</option>`)
 	assert.Contains(t, admin, `<small class="faint">The keys are the instance keys the user gets; the job's workspace adds its own keys.</small>`)
-	assert.Contains(t, admin, `<select name="user" data-submit aria-label="Run as">`)
+	assert.Contains(t, admin, `<select name="user" data-submit aria-label="Runs as">`)
 	assert.Contains(t, admin, `<option value="ops" selected data-keys="deploy_ed25519">ops · keys: deploy_ed25519</option>`)
 
 	job := f.page(t, asAdmin, "/f/_/infra/plan")
-	assert.Contains(t, job, `<label for="sch-user">Run as</label>`)
+	assert.Contains(t, job, `<label for="sch-user">Runs as</label>`)
 	assert.Contains(t, job, `<option value="ops" data-keys="deploy_ed25519">ops (runner) · keys: deploy_ed25519</option>`)
 
 	for _, path := range []string{"/schedules", "/f/_/infra/plan"} {

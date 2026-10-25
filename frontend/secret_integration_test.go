@@ -89,10 +89,10 @@ func TestSecrets_Encryption(t *testing.T) {
 
 	form := f.page(t, asAdmin, "/settings/secrets/new?scope=workspace:acme")
 	assert.Contains(t, form, `<optgroup label="Acme">`)
-	assert.Contains(t, form, `<option value="workspace:acme" selected>every project in acme</option>`)
+	assert.Contains(t, form, `<option value="workspace:acme" selected>every folder in Acme</option>`)
 	assert.Contains(t, form, `<optgroup label="Default">`)
-	assert.Contains(t, form, `<option value="workspace:_">every project in _</option>`)
-	assert.Contains(t, f.page(t, asAdmin, "/settings/secrets/new"), `<option value="workspace:_" selected>every project in _</option>`, "the root first")
+	assert.Contains(t, form, `<option value="workspace:_">every folder in Default</option>`)
+	assert.Contains(t, f.page(t, asAdmin, "/settings/secrets/new"), `<option value="workspace:_" selected>every folder in Default</option>`, "the root first")
 }
 
 // A secret's row counts its reads and names the last run; the count

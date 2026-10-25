@@ -55,7 +55,7 @@ func TestWorkspaceSecrets_Page(t *testing.T) {
 	assert.Contains(t, body, `<td class="key">DB_PASS</td>`)
 	assert.NotContains(t, body, "hunter2")
 	assert.Contains(t, body, `id="secret-add-dialog"`)
-	assert.Contains(t, body, `<option value="workspace:malta" selected>every project in malta</option>`)
+	assert.Contains(t, body, `<option value="workspace:malta" selected>every folder in Malta</option>`)
 	assert.Contains(t, body, `<option value="malta/api">malta/api</option>`)
 	assert.Contains(t, body, `data-dialog-open="secret-replace-dialog" data-fill-scope="malta/api" data-fill-name="DB_PASS"`)
 	assert.Contains(t, body, `data-next="/settings/workspaces/malta/secrets?notice=Secret+saved"`)

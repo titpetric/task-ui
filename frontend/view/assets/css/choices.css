@@ -21,7 +21,7 @@
   }
 }
 
-/* The user form's folders: All projects, or Custom and a box each. */
+/* The user form's folders: All folders, or Custom and a box each. */
 [data-folder-pick] > label.check {
   display: inline-flex;
   margin-inline-end: 1.2rem;

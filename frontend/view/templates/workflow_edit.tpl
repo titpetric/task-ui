@@ -18,7 +18,7 @@
 
 {{- /* The workflow's schedules, with the form that adds one: the
      schedules page's create form less the job, the args, the triage
-     and Run as, which a workflow run has no use for: it runs as the
+     and Runs as, which a workflow run has no use for: it runs as the
      workflow's user. */}}
 <section class="block" id="schedule">
 	{{- $as := "the user who adds the schedule" }}{{ if $w.RunAs }}{{ $as = print $w.RunAs ", the user set on the workflow" }}{{ end }}
