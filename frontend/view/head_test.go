@@ -37,15 +37,17 @@ func TestNewHead(t *testing.T) {
 	assert.Error(t, err)
 }
 
-// keyRow returns the row of the key named in a page, its data-next left
-// out: the one attribute that names the page a change returns to.
+// keyRow returns the row of the key named in a page, its data-next and
+// the ?next of Edit links left out: the attributes that name the page a
+// change returns to.
 func keyRow(t *testing.T, body, name string) string {
 	t.Helper()
 	at := strings.Index(body, `<tr id="key-`+name+`">`)
 	assert.True(t, at >= 0, "no row of "+name)
 	row := body[at:]
 	row = row[:strings.Index(row, "</tr>")]
-	return regexp.MustCompile(` data-next="[^"]*"`).ReplaceAllString(row, "")
+	row = regexp.MustCompile(` data-next="[^"]*"`).ReplaceAllString(row, "")
+	return regexp.MustCompile(`\?next=[^"]*`).ReplaceAllString(row, "")
 }
 
 // An SSH key renders the same row on every page that lists keys: the

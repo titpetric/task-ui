@@ -16,13 +16,14 @@
      whole line in its tooltip, to copy, and the [...] menu, its details
      on top, the purpose among them, then
      Copy and Download, Edit links, Rotate Key or Delete backup, and
-     Remove last. next is the page a change returns to. On a workspace's
+     Remove last. next is the page a change returns to, Edit links
+     too. On a workspace's
      page, a key of the workspace links and removes through the
      workspace, which takes workspace/edit. inline opens Edit links in
      the page's dialog key-links-<name>, which wskeylinks fills. */}}
 {{ define "keyrow" }}
 {{- $p := index . 0 }}{{ $k := index . 1 }}{{ $next := index . 2 }}{{ $ws := "" }}{{ if gt (len .) 3 }}{{ $ws = index . 3 }}{{ end }}
-{{- $edit := print "/settings/keys/" $k.Name }}{{ $remove := print "/api/keys/" $k.Name }}{{ $canEdit := $p.Can "key/edit" }}{{ $canRemove := $p.Can "key/delete" }}
+{{- $edit := print "/settings/keys/" $k.Name }}{{ if ne $next "/settings/keys" }}{{ $edit = print $edit "?next=" (urlquery $next) }}{{ end }}{{ $remove := print "/api/keys/" $k.Name }}{{ $canEdit := $p.Can "key/edit" }}{{ $canRemove := $p.Can "key/delete" }}
 {{- if $ws }}{{ $edit = print "/settings/workspaces/" $ws "/keys/" $k.Name }}{{ $remove = print "/api/workspaces/" $ws "/keys/" $k.Name }}{{ $canRemove = $p.Can "workspace/edit" }}{{ end }}
 {{- $inline := false }}{{ if gt (len .) 4 }}{{ $inline = index . 4 }}{{ end }}
 {{- $links := join $k.Roles ", " }}{{ with $k.Users }}{{ if $links }}{{ $links = print $links ", " }}{{ end }}{{ $links = print $links (join . ", ") }}{{ end }}
