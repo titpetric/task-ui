@@ -1344,6 +1344,11 @@
       type: text
       comment: Prompt Folder
       datatype: varchar
+    - name: run_as_user_id
+      type: text
+      key: MUL
+      comment: Run As User ID
+      datatype: varchar
     - name: sidebar_hidden
       type: boolean
       comment: Sidebar Hidden

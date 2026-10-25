@@ -6,7 +6,7 @@
 		{{- with $w.Description }}
 		<p>{{ . }}</p>
 		{{- end }}
-		<p class="faint">{{ len $w.Steps }} step{{ if ne (len $w.Steps) 1 }}s{{ end }}, by {{ $w.UserName }}</p>
+		<p class="faint">{{ len $w.Steps }} step{{ if ne (len $w.Steps) 1 }}s{{ end }}, by {{ $w.UserName }}{{ if and $w.RunAs (ne $w.RunAs $w.UserName) }}. Runs as {{ $w.RunAs }}{{ end }}</p>
 	</div>
 	<div class="actions" data-actions>
 		{{- if $w.CanRun }}{{ if $w.Running }}

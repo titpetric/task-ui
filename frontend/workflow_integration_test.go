@@ -248,11 +248,19 @@ func TestWorkflow_EditPage(t *testing.T) {
 	// The page ends with the workflow's schedules and the form for one.
 	assert.Contains(t, edit, `<input type="hidden" name="workflow" value="`+wf.ID+`">`)
 	assert.Contains(t, edit, `<p class="empty-line">Not scheduled.</p>`)
-	assert.NotContains(t, edit, `<label for="sch-user">Run as</label>`)
+	assert.NotContains(t, edit, `Run as</label>`, "the workflow's user runs its schedules")
+	// Runs as: the owner reads it, an admin picks it, the saved user
+	// selected; the Schedule block names the same user.
+	assert.Contains(t, edit, `<span class="wf-runas">ops</span>`)
+	assert.NotContains(t, edit, `name="user"`)
 	assert.NoError(t, f.opts.Schedules.Create(context.Background(), &model.Schedule{WorkflowID: wf.ID, UserID: f.users[asOps].ID, UserName: asOps, Expression: "0 7 * * 1-5", Enabled: 1}))
 	admin := f.page(t, asAdmin, "/workflows/"+wf.ID+"/edit")
 	assert.Contains(t, admin, `data-method="PUT"`)
-	assert.Contains(t, admin, `<label for="sch-user">Run as</label>`)
+	assert.NotContains(t, admin, `Run as</label>`)
+	assert.Contains(t, admin, `<label for="wf-user-`+wf.ID+`">Runs as</label>`)
+	assert.Contains(t, admin, `<option value="ops" selected>ops (runner)</option>`)
+	assert.Contains(t, admin, "Runs the workflow on a cron expression, as ops, the user set on the workflow.")
+	assert.Contains(t, f.page(t, asAdmin, "/workflows/new"), `<option value="admin" selected>admin (admin)</option>`, "the login on a new workflow")
 	assert.Contains(t, admin, `<td class="key" data-label="Expression"><code>0 7 * * 1-5</code></td>`)
 	assert.Contains(t, admin, `data-confirm="Delete the schedule 0 7 * * 1-5 for release?"`)
 	assert.NotContains(t, admin, "Not scheduled.")

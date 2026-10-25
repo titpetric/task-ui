@@ -99,9 +99,26 @@ func TestView_RenderWorkflowEditor(t *testing.T) {
 	assert.Contains(t, out, `data-step-add="summary"`)
 	assert.Contains(t, out, `data-step-template="prompt"`)
 	assert.Contains(t, out, "Water the plants or not.")
+	// Runs as: an admin picks from the users, the saved user selected on
+	// edit, the login on new; the help says what the user brings.
+	p.Users = []model.User{{ID: "u1", Name: "admin", Role: model.RoleAdmin}, {ID: "u2", Name: "miguel", Role: model.RoleRunner}}
+	p.Workflow.RunAs = "miguel"
+	buf.Reset()
+	assert.NoError(t, v.Render(&buf, "workflow_edit", p))
+	out = buf.String()
+	assert.Contains(t, out, `<label for="wf-user-w1">Runs as</label>`)
+	assert.Contains(t, out, `<select id="wf-user-w1" name="user">`)
+	assert.Contains(t, out, `<option value="miguel" selected>miguel (runner)</option>`)
+	assert.Contains(t, out, `<option value="admin">admin (admin)</option>`)
+	assert.Contains(t, out, "Every step runs as this user: with their permissions, the Claude token granted to their role or user, and the keys and secrets of the workspace each step's folder is in.")
+	buf.Reset()
+	assert.NoError(t, v.Render(&buf, "workflow_new", p))
+	out = buf.String()
+	assert.Contains(t, out, `<select id="wf-user-new" name="user">`)
+	assert.Contains(t, out, `<option value="admin" selected>admin (admin)</option>`, "the login on a new workflow")
 
 	runner := &model.User{Name: "ops", Role: model.RoleRunner}
-	p.User, p.Permissions = runner, permission.Set{User: runner, Role: permission.Policy{"workflow/edit": permission.Allow}}
+	p.User, p.Permissions, p.Users = runner, permission.Set{User: runner, Role: permission.Policy{"workflow/edit": permission.Allow}}, nil
 	p.Workflow.Steps = nil
 	buf.Reset()
 	assert.NoError(t, v.Render(&buf, "workflow_new", p))
@@ -109,6 +126,14 @@ func TestView_RenderWorkflowEditor(t *testing.T) {
 	assert.Contains(t, out, `data-step-add="job"`)
 	assert.NotContains(t, out, `data-step-add="prompt"`, "no prompt/edit")
 	assert.Contains(t, out, "No steps yet. Start with a command.")
+	// A runner reads who the workflow runs as, themself on new, the saved
+	// user on edit, and the form posts no user.
+	assert.NotContains(t, out, `name="user"`)
+	assert.Contains(t, out, `<span class="label">Runs as</span>
+			<span class="wf-runas">ops</span>`)
+	buf.Reset()
+	assert.NoError(t, v.Render(&buf, "workflow_edit", p))
+	assert.Contains(t, buf.String(), `<span class="wf-runas">miguel</span>`)
 }
 
 // threadRun is a finished run of Porec watering: its input and Claude's
@@ -270,12 +295,16 @@ func TestView_RenderWorkflowsTable(t *testing.T) {
 	p.Workflows = []view.Workflow{
 		{Workflow: model.Workflow{ID: "w1", Name: "release", UserName: "ops"}, Steps: []view.Step{{Folder: "infra", Job: "plan"}}, CanRun: true, CanChange: true,
 			Schedules: []model.Schedule{{ID: "s1", WorkflowID: "w1", Expression: "0 7 * * 1-5", Enabled: 1, UserName: "ops"}, {ID: "s2", WorkflowID: "w1", Expression: "@weekly", UserName: "admin"}}},
-		{Workflow: model.Workflow{ID: "w2", Name: "ship", UserName: "ops"}, Steps: []view.Step{{Folder: "infra", Job: "plan"}}, Running: "wr9"},
+		{Workflow: model.Workflow{ID: "w2", Name: "ship", UserName: "ops"}, RunAs: "miguel", Steps: []view.Step{{Folder: "infra", Job: "plan"}}, Running: "wr9"},
 	}
+	p.Workflows[0].RunAs = "ops"
 	var buf bytes.Buffer
 	assert.NoError(t, v.Render(&buf, "workflows", p))
 	out := buf.String()
 	assert.Contains(t, out, `<thead><tr><th>Workflow</th><th>Last run</th><th>By</th><th></th></tr></thead>`)
+	// By names the owner, and the user the runs go as when another.
+	assert.Contains(t, out, `<span class="user-name">ops</span>`)
+	assert.Equal(t, 1, strings.Count(out, `· runs as miguel</span>`), "ship runs as miguel; release as its owner")
 	assert.NotContains(t, out, `data-label="Steps"`)
 	assert.Contains(t, out, `<a href="/workflows/w1">release</a>`)
 	assert.Contains(t, out, `<small class="faint wf-desc" title="Scheduled, as ops"><svg class="ic lead"><use href="#i-clock"/></svg><code>0 7 * * 1-5</code></small>`)
@@ -287,25 +316,31 @@ func TestView_RenderWorkflowsTable(t *testing.T) {
 }
 
 // The edit page ends with the workflow's schedules and the form that
-// adds one, which posts the workflow's ID, with Run as for an admin.
+// adds one, which posts the workflow's ID and no user: the runs go as
+// the workflow's user, whom the lead and each row name.
 func TestView_RenderWorkflowEditSchedule(t *testing.T) {
 	t.Parallel()
 	v, err := view.New()
 	assert.NoError(t, err)
 	p := admin(t)
 	p.Users = []model.User{{ID: "u1", Name: "admin", Role: model.RoleAdmin}, {ID: "u2", Name: "ops", Role: model.RoleRunner}}
-	p.Workflow = &view.Workflow{Workflow: model.Workflow{ID: "w1", Name: "release"}, Steps: []view.Step{{Kind: model.StepJob, Folder: "infra", Job: "plan"}}, CanRun: true, CanChange: true}
+	p.Workflow = &view.Workflow{Workflow: model.Workflow{ID: "w1", Name: "release", UserName: "admin"}, RunAs: "miguel", Steps: []view.Step{{Kind: model.StepJob, Folder: "infra", Job: "plan"}}, CanRun: true, CanChange: true}
+	p.SideWorkflows = []view.Workflow{*p.Workflow}
 	next := time.Now()
 	p.Schedules = []model.Schedule{{ID: "s1", WorkflowID: "w1", Expression: "0 7 * * 1-5", Enabled: 1, UserName: "ops", NextRunAt: &next}}
 	var buf bytes.Buffer
 	assert.NoError(t, v.Render(&buf, "workflow_edit", p))
 	out := buf.String()
 	block := out[strings.Index(out, `<section class="block" id="schedule">`):]
-	assert.Contains(t, block, "<h3>Schedule <small>Runs the workflow on a cron expression, as you, or as the user you pick. Each run needs permission to run every step at that time.</small></h3>")
+	assert.Contains(t, block, "<h3>Schedule <small>Runs the workflow on a cron expression, as miguel, the user set on the workflow. Each run needs permission to run every step at that time.</small></h3>")
 	assert.Contains(t, block, `<form class="form inline" data-api="/api/schedules" data-method="POST" data-next="reload">`)
 	assert.Contains(t, block, `<input type="hidden" name="workflow" value="w1">`)
 	assert.Contains(t, block, `<input type="text" id="sch-expr" name="expression" placeholder="0 3 * * *  or  @daily" spellcheck="false" autocomplete="off" required>`)
-	assert.Contains(t, block, `<label for="sch-user">Run as</label>`)
+	assert.NotContains(t, block, `Run as</label>`, "the workflow's user runs it")
+	assert.NotContains(t, block, `name="user"`)
+	assert.Contains(t, block, `<td data-label="Runs as"><span class="user-ref">`)
+	assert.Contains(t, block, `<span class="user-name">miguel</span>`, "the row names the workflow's user, not the schedule's")
+	assert.NotContains(t, block, `data-submit`, "no pick on the row")
 	assert.NotContains(t, block, `name="triage"`, "no triage for a workflow")
 	assert.NotContains(t, block, `name="folder"`)
 	assert.Contains(t, block, `<td class="key" data-label="Expression"><code>0 7 * * 1-5</code></td>`)
@@ -322,7 +357,7 @@ func TestView_RenderWorkflowEditSchedule(t *testing.T) {
 	buf.Reset()
 	assert.NoError(t, v.Render(&buf, "workflow_edit", p))
 	block = buf.String()[strings.Index(buf.String(), `id="schedule"`):]
-	assert.Contains(t, block, "Runs the workflow on a cron expression, as you. Each run needs")
+	assert.Contains(t, block, "Runs the workflow on a cron expression, as miguel, the user set on the workflow. Each run needs")
 	assert.NotContains(t, block, "Run as</label>", "no picker without admin")
 	assert.Contains(t, block, `<p class="empty-line">Not scheduled.</p>`)
 	assert.Contains(t, block, `<input type="hidden" name="workflow" value="w1">`)
@@ -337,6 +372,8 @@ func TestView_RenderSchedulesWorkflow(t *testing.T) {
 	p := admin(t)
 	next := time.Now()
 	p.WorkflowNames = map[string]string{"w1": "release"}
+	p.SideWorkflows = []view.Workflow{{Workflow: model.Workflow{ID: "w1", Name: "release", UserName: "ops"}, RunAs: "miguel"}}
+	p.Users = []model.User{{ID: "u1", Name: "admin", Role: model.RoleAdmin}, {ID: "u2", Name: "ops", Role: model.RoleRunner}}
 	p.Schedules = []model.Schedule{
 		{ID: "s1", WorkflowID: "w1", Expression: "0 7 * * 1-5", Enabled: 1, UserName: "ops", NextRunAt: &next},
 		{ID: "s2", Folder: "infra", Job: "plan", Expression: "@daily", Enabled: 1, UserName: "ops", NextRunAt: &next},
@@ -344,6 +381,13 @@ func TestView_RenderSchedulesWorkflow(t *testing.T) {
 	var buf bytes.Buffer
 	assert.NoError(t, v.Render(&buf, "schedules", p))
 	out := buf.String()
+	// The workflow's row names the workflow's user with no pick; the
+	// job's row keeps the admin's pick.
+	assert.Contains(t, out, `<td data-label="Runs as"><span class="user-ref">`)
+	assert.Contains(t, out, `<span class="user-name">miguel</span>`)
+	assert.Equal(t, 1, strings.Count(out, `data-submit aria-label="Run as"`))
+	assert.Equal(t, "miguel", p.ScheduleUser(p.Schedules[0]))
+	assert.Equal(t, "ops", p.ScheduleUser(p.Schedules[1]))
 	assert.Contains(t, out, `<td data-label="Folder"><svg class="ic lead"><use href="#i-flow"/></svg>workflow</td>`)
 	assert.Contains(t, out, `<td class="key" data-label="Job"><a href="/workflows/w1">release</a></td>`)
 	assert.Contains(t, out, `data-confirm="Delete the schedule 0 7 * * 1-5 for release?"`)

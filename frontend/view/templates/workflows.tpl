@@ -21,9 +21,9 @@
 		{{- range . }}
 			<tr>
 				<td class="key"><a href="/workflows/{{ .ID }}">{{ .Name }}</a>{{ with .Description }}<small class="faint wf-desc">{{ . }}</small>{{ end }}
-					{{- range .Schedules }}<small class="faint wf-desc" title="{{ if .IsEnabled }}Scheduled{{ else }}A schedule, disabled{{ end }}, as {{ .UserName }}"><svg class="ic lead"><use href="#i-clock"/></svg><code>{{ .Expression }}</code>{{ if not .IsEnabled }} disabled{{ end }}</small>{{ end }}</td>
+					{{- range .Schedules }}<small class="faint wf-desc" title="{{ if .IsEnabled }}Scheduled{{ else }}A schedule, disabled{{ end }}, as {{ $.ScheduleUser . }}"><svg class="ic lead"><use href="#i-clock"/></svg><code>{{ .Expression }}</code>{{ if not .IsEnabled }} disabled{{ end }}</small>{{ end }}</td>
 				<td class="nowrap" data-label="Last run">{{ if .Running }}<span class="state"><i class="dot running"></i>running</span>{{ else if .LastRun }}<span class="state"><i class="dot {{ .LastRun.State }}"></i>{{ .LastRun.State }}</span> <span class="faint" title="{{ stamp .LastRun.StartedAt }}">{{ ago .LastRun.StartedAt }}</span>{{ else }}<span class="faint">never run</span>{{ end }}</td>
-				<td data-label="By">{{ template "user" (list $ .UserName) }}</td>
+				<td data-label="By">{{ template "user" (list $ .UserName) }}{{ if and .RunAs (ne .RunAs .UserName) }} <span class="faint nowrap">· runs as {{ .RunAs }}</span>{{ end }}</td>
 				<td class="actions">
 					{{- if .CanRun }}{{ if .Running }}
 					<button type="button" class="btn btn-sm" data-workflow-stop="{{ .Running }}"><svg class="ic"><use href="#i-stop"/></svg>Stop</button>

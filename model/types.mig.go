@@ -2242,6 +2242,9 @@ type Workflow struct {
 	// Prompt Folder
 	PromptFolder string `db:"prompt_folder" json:"prompt_folder"`
 
+	// Run As User ID
+	RunAsUserID string `db:"run_as_user_id" json:"run_as_user_id"`
+
 	// Sidebar Hidden
 	SidebarHidden bool `db:"sidebar_hidden" json:"sidebar_hidden"`
 }
@@ -2300,6 +2303,12 @@ func (w *Workflow) GetPromptFolder() string { return w.PromptFolder }
 // SetPromptFolder sets PromptFolder to the provided value.
 func (w *Workflow) SetPromptFolder(val string) { w.PromptFolder = val }
 
+// GetRunAsUserID will return the value of RunAsUserID.
+func (w *Workflow) GetRunAsUserID() string { return w.RunAsUserID }
+
+// SetRunAsUserID sets RunAsUserID to the provided value.
+func (w *Workflow) SetRunAsUserID(val string) { w.RunAsUserID = val }
+
 // GetSidebarHidden will return the value of SidebarHidden.
 func (w *Workflow) GetSidebarHidden() bool { return w.SidebarHidden }
 
@@ -2310,7 +2319,7 @@ func (w *Workflow) SetSidebarHidden(val bool) { w.SidebarHidden = val }
 const WorkflowTable = "`workflow`"
 
 // WorkflowFields is a list of all columns in the DB table.
-var WorkflowFields = []string{"id", "name", "user_id", "user_name", "created_at", "updated_at", "description", "prompt", "prompt_folder", "sidebar_hidden"}
+var WorkflowFields = []string{"id", "name", "user_id", "user_name", "created_at", "updated_at", "description", "prompt", "prompt_folder", "run_as_user_id", "sidebar_hidden"}
 
 // WorkflowPrimaryFields are the primary key fields in the DB table.
 var WorkflowPrimaryFields = []string{"id"}

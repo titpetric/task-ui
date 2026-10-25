@@ -17,10 +17,11 @@
 {{ template "stepeditor" (list $ $w "/api/workflows/" "PUT" (print "/workflows/" $w.ID) "Save") }}
 
 {{- /* The workflow's schedules, with the form that adds one: the
-     schedules page's create form less the job, the args and the
-     triage, which a workflow run has no use for. */}}
+     schedules page's create form less the job, the args, the triage
+     and Run as, which a workflow run has no use for: it runs as the
+     workflow's user. */}}
 <section class="block" id="schedule">
-	{{- template "blockhead" (head "Schedule" (print "Runs the workflow on a cron expression, as you" (or (and $.Users ", or as the user you pick") "") ". Each run needs permission to run every step at that time.") (and (not $.Schedules) "Not scheduled.")) }}
+	{{- template "blockhead" (head "Schedule" (print "Runs the workflow on a cron expression, as " (or $w.RunAs "its user") ", the user set on the workflow. Each run needs permission to run every step at that time.") (and (not $.Schedules) "Not scheduled.")) }}
 	{{- template "schedtable" (list $ $.Schedules (or $w.CanRun $.User.CanAdmin) $w.Name) }}
 	<form class="form inline" data-api="/api/schedules" data-method="POST" data-next="reload">
 		<input type="hidden" name="workflow" value="{{ $w.ID }}">
@@ -28,7 +29,6 @@
 			<label for="sch-expr">Expression</label>
 			<input type="text" id="sch-expr" name="expression" placeholder="0 3 * * *  or  @daily" spellcheck="false" autocomplete="off" required>
 		</div>
-		{{- template "runas" (list $ "sch-user") }}
 		<div class="form-foot">
 			<button class="btn btn-primary" type="submit"><svg class="ic"><use href="#i-plus"/></svg>Add schedule</button>
 		</div>

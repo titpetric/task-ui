@@ -52,15 +52,18 @@ a host. The bare `@host` names no host, and the API refuses it.
 ## Scheduling a workflow
 
 The end of a workflow's edit page schedules it (see
-[Workflows](workflows.md#scheduling-one)): an expression and, for an
-admin, **Run as**. The Scheduled page lists a workflow's schedule
-among the jobs': the Folder column says workflow, the Job column names
-the workflow, linked to its page, and the menu enables, disables and
-deletes it as it does a job's. The form on the Scheduled page takes
-jobs alone. Each run of the schedule runs the workflow as its user
-with no input, which takes the right to run every step at that time;
-the scheduler skips the time while the workflow is still running. A
-workflow's schedule takes no **Args** and no triage.
+[Workflows](workflows.md#scheduling-one)): an expression alone. The
+Scheduled page lists a workflow's schedule among the jobs': the Folder
+column says workflow, the Job column names the workflow, linked to its
+page, and the menu enables, disables and deletes it as it does a job's.
+The form on the Scheduled page takes jobs alone. Each run of the
+schedule runs the workflow as the workflow's own user, its **Runs as**
+(see [Workflows](workflows.md#runs-as)), with no input, which takes
+that user's right to run every step at that time; the scheduler skips
+the time while the workflow is still running. The **Runs as** column
+shows the workflow's user, with no pick: an admin changes it on the
+workflow. A workflow's schedule takes no **Args**, no **Run as** and no
+triage.
 
 ## Cleanup
 
@@ -128,13 +131,14 @@ scheduler logs that it skipped.
 
 ## How a scheduled run runs
 
-It starts in the background as the schedule's user, with their
-permissions, and shows up like any other run under their name: on the
-dashboard, in Runs and in Recents; a workflow's run under Recent runs
-on Workflows and on the workflow's page. When the user may not run the
-job, or a step of the workflow, at that time, because a permission, a
-folder grant or an allow list changed, the scheduler skips the run and
-logs why. When its time comes while the job or the workflow still runs,
+It starts in the background as the schedule's user, a workflow's as
+the workflow's user, with their permissions, and shows up like any
+other run under their name: on the dashboard, in Runs and in Recents; a
+workflow's run under Recent runs on Workflows and on the workflow's
+page. When the user may not run the job, or a step of the workflow, at
+that time, because a permission, a folder grant or an allow list
+changed, or nobody holds the user any more, the scheduler skips the run
+and logs why. When its time comes while the job or the workflow still runs,
 the schedule skips that time. Office hours do not gate a schedule: the schedule
 is the decision.
 

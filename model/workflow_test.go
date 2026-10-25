@@ -70,3 +70,12 @@ func TestWorkflow_Asks(t *testing.T) {
 	steps[1].Disabled = false
 	assert.True(t, (&model.Workflow{}).Asks(steps))
 }
+
+// A workflow runs as the user set on it, its owner without one.
+func TestWorkflow_RunsAs(t *testing.T) {
+	t.Parallel()
+	wf := model.Workflow{UserID: "u-owner"}
+	assert.Equal(t, "u-owner", wf.RunsAs())
+	wf.RunAsUserID = "u-miguel"
+	assert.Equal(t, "u-miguel", wf.RunsAs())
+}

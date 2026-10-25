@@ -114,9 +114,23 @@ func (h *Handlers) seesWorkflowRun(ctx context.Context, user *model.User, rows [
 	return true
 }
 
+// runAsUser returns the user a workflow's runs run as, the one its
+// run-as names or its owner, nil for a user nobody holds any more.
+func (h *Handlers) runAsUser(ctx context.Context, wf *model.Workflow) *model.User {
+	if h.opts.Users == nil {
+		return &model.User{ID: wf.RunsAs(), Name: wf.UserName}
+	}
+	user, err := h.opts.Users.Get(ctx, wf.RunsAs())
+	if err != nil {
+		return nil
+	}
+	return user
+}
+
 // workflowView decorates a workflow for the page's user. It returns nil when
 // the user may not see a step's folder, the folders of the workflows
-// the steps run among them.
+// the steps run among them. CanRun says whether the user may run every
+// step, and the user the workflow runs as may too.
 func (h *Handlers) workflowView(ctx context.Context, p *view.Page, wf model.Workflow, names map[string]string) *view.Workflow {
 	steps, err := h.opts.Workflows.Steps(ctx, wf.ID)
 	if err != nil {
@@ -127,17 +141,17 @@ func (h *Handlers) workflowView(ctx context.Context, p *view.Page, wf model.Work
 		return nil
 	}
 	user := access.UserFrom(ctx)
-	v := &view.Workflow{Workflow: wf, Steps: viewSteps(steps, names), CanRun: true}
+	v := &view.Workflow{Workflow: wf, Steps: viewSteps(steps, names)}
 	for _, step := range jobs {
 		if !user.CanSee(step.Folder) {
 			return nil
 		}
-		if step.IsPrompt() {
-			v.CanRun = v.CanRun && p.Can("prompt/edit")
-			continue
-		}
-		if !p.CanRunJob(step.Folder, "", step.Job) {
-			v.CanRun = false
+	}
+	if runAs := h.runAsUser(ctx, &wf); runAs != nil {
+		v.RunAs = runAs.Name
+		v.CanRun = h.opts.Flows.MayRun(ctx, p.Permissions, steps) == ""
+		if h.opts.Users != nil && runAs.ID != user.ID {
+			v.CanRun = v.CanRun && h.opts.Flows.MayRun(ctx, h.opts.Users.Permissions(ctx, runAs), steps) == ""
 		}
 	}
 	v.Running, _ = h.opts.Flows.Active(wf.ID)
@@ -234,6 +248,7 @@ func (h *Handlers) workflowNew(w http.ResponseWriter, r *http.Request) {
 	p.StepFolders = h.stepFolders(r)
 	p.WorkspaceList = h.workspaceList(r.Context())
 	h.hostJobs(r, p)
+	h.runAsUsers(r, p)
 	h.render(w, http.StatusOK, "workflow_new", p)
 }
 
