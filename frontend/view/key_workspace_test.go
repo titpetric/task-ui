@@ -22,7 +22,8 @@ func TestKeyWorkspace(t *testing.T) {
 }
 
 // The keys page names one encryption key, the instance's, for every
-// workspace, and says git + ssh for an SSH key, the git key too.
+// workspace, marks the encryption key in its Name cell and says git +
+// ssh for an SSH key in its menu, the git key too.
 func TestKeyWorkspace_Page(t *testing.T) {
 	t.Parallel()
 	v, err := view.New()
@@ -36,7 +37,9 @@ func TestKeyWorkspace_Page(t *testing.T) {
 	assert.NoError(t, v.Render(&buf, "keys", p))
 	body := buf.String()
 	assert.Contains(t, body, `<span class="faint">the instance's</span>`)
-	assert.Contains(t, body, "git + ssh</span>")
+	assert.Contains(t, body, "<dt>Purpose</dt><dd title=\"git pulls and clones with it\">git &#43; ssh</dd>")
+	assert.Contains(t, body, `<span class="mono">task_encryption_ed25519</span> <span class="badge signal">encryption</span>`)
+	assert.NotContains(t, body, `<th>Purpose</th>`)
 	assert.NotContains(t, body, `>git</span>`)
 	assert.NotContains(t, body, `name="encrypt"`)
 }

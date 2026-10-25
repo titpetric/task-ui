@@ -174,11 +174,11 @@ Keys have two purposes, and no key serves both:
 
 - the **encryption key** stores secrets. The instance has exactly one,
   and it encrypts every secret, the workspaces' and the integrations'
-  settings. Its Purpose reads `encryption`.
+  settings. Its row reads `encryption` after the name.
 - **SSH keys** connect runs and git to hosts and remotes. A workspace has
   any number, for its own runs; the instance's go to the runs of the
-  roles and users they link. Git runs over ssh, so an SSH key's Purpose
-  reads `git + ssh`, the git key's too.
+  roles and users they link. Git runs over ssh, so an SSH key's purpose
+  reads `git + ssh` in its menu, the git key's too.
 
 ![Keys](../assets/keys-dark.png)
 
@@ -214,14 +214,17 @@ folder reads a key file: git, the inventory's logins, the secrets and
 the runs all go through it, and none reads `~/.ssh`.
 
 Under the table, **Every key** lists them all in the columns every keys
-table has, the Instance page's too: **Name**, **Algorithm** (ed25519,
-ecdsa, rsa), **Size** (256 bits, 4096 bits), **Public key**, shortened
-to its type and the end of its material with the whole line in its
-tooltip and a copy button that copies the whole line, **Purpose**,
-`encryption` or `git + ssh`, and the row's **⋯** menu. The menu opens
-on the key's details, its fingerprint, its creation and rotation dates,
-its backup, scope and links, then Copy public key, Download
-public key, Edit links, Rotate Key or Delete backup, and Remove last.
+table has, the Instance page's too: **Name**, as wide as the names, the
+encryption key marked `encryption` and a key's comment under it,
+**Algorithm** (ed25519, ecdsa, rsa), **Size** (256 bits, 4096 bits),
+**Public key**, which takes the rest of the width, as much of the line
+as fits with the whole in its tooltip and a copy button that copies the
+whole line, and the row's **⋯** menu. The menu opens on the key's
+details, its fingerprint, its creation and rotation dates, its backup,
+scope, purpose, `encryption` or `git + ssh`, and links, then Copy public
+key, Download public key, Edit links, Rotate Key or Delete backup, and
+Remove last. The table fits its box at any width; a narrow one leaves
+Algorithm and Size out.
 
 - **Generate key** makes a key: a name, the algorithm and the size,
   ed25519 by default, ECDSA P-256, P-384 or P-521, RSA 2048, 3072 or

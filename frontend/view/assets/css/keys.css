@@ -104,16 +104,12 @@
 }
 
 /* A keys table, wherever keys list, from the keyhead and keyrow
-   templates: Name, Algorithm, Size, Public key with its copy button,
-   Purpose, and the row's actions behind a menu that opens over the
-   table. */
+   templates: Name as wide as the names, with the encryption key's badge
+   and a comment under it that wraps, Algorithm, Size, Public key taking
+   the rest of the width, as much of the line as fits with its copy
+   button beside it, and the row's actions behind a menu that opens over
+   the table. */
 .key-table {
-  table-layout: fixed;
-
-  & col.c-name {
-    width: 32%;
-  }
-
   & col.c-algo {
     width: 6rem;
   }
@@ -122,22 +118,36 @@
     width: 5.5rem;
   }
 
-  & col.c-purpose {
-    width: 7.5rem;
-  }
-
   & col.c-actions {
     width: 3.5rem;
   }
 
   & td.key {
+    width: 1%;
     font-size: var(--fs-md);
-    white-space: normal;
-    overflow-wrap: anywhere;
+    white-space: nowrap;
 
     & a {
       color: var(--text);
     }
+
+    & .badge {
+      margin-inline-start: 0.35rem;
+      vertical-align: middle;
+    }
+
+    /* The comment wraps at the width the names set: it adds nothing
+       to the column's width. */
+    & .faint {
+      width: 0;
+      min-width: 100%;
+      white-space: normal;
+    }
+  }
+
+  & td.pubkey {
+    width: 100%;
+    max-width: 0;
   }
 
   & .copyable code {
@@ -146,8 +156,6 @@
     border: 0;
     color: var(--text-dim);
     font-size: var(--fs-xs);
-    white-space: normal;
-    overflow-wrap: anywhere;
   }
 
   & td.actions {

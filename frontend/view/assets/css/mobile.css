@@ -117,6 +117,25 @@
       padding-bottom: 0.25rem;
     }
 
+    /* A key's card: the name, its badge and its comment on lines of
+       their own, the public key cut to the card's width. */
+    & td.key {
+      flex-wrap: wrap;
+      width: auto;
+      white-space: normal;
+
+      & .faint {
+        flex-basis: 100%;
+        width: auto;
+        min-width: 0;
+      }
+    }
+
+    & td.pubkey {
+      width: auto;
+      max-width: none;
+    }
+
     & td.steps {
       width: auto;
       max-width: none;

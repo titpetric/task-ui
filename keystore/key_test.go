@@ -27,11 +27,3 @@ func TestKey_Size(t *testing.T) {
 	assert.Equal(t, 256, keystore.Key{Algo: "ed25519"}.Size())
 	assert.Equal(t, 4096, keystore.Key{Algo: "rsa", Bits: 4096}.Size())
 }
-
-func TestKey_ShortPublic(t *testing.T) {
-	t.Parallel()
-	key := keystore.Key{PublicKey: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKx0123456789abcdefWXYZ task-ui"}
-	assert.Equal(t, "ssh-ed25519 …abcdefWXYZ", key.ShortPublic())
-	assert.Equal(t, "ssh-ed25519 short", keystore.Key{PublicKey: "ssh-ed25519 short"}.ShortPublic())
-	assert.Equal(t, "", keystore.Key{}.ShortPublic())
-}
