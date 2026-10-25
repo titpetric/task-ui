@@ -4,7 +4,7 @@
 <div class="page-head">
 	<div>
 		<h2>Secrets of {{ $ws.Folder }}</h2>
-		<p>Variables for the environment of the workspace's runs, for every project in {{ $ws.Folder }} or for one; a project secret replaces a workspace one of the same name. Add, replace and delete them here; a value never shows again once saved.</p>
+		<p>Variables for the environment of the workspace's runs, for every folder in {{ $ws.Folder }} or for one project; a project secret replaces a workspace one of the same name. Add, replace and delete them here; a value never shows again once saved.</p>
 	</div>
 	<div class="actions">
 		{{- if .Can "secret/edit" }}

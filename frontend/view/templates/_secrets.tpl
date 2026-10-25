@@ -1,6 +1,6 @@
 {{- /* secretgroup is a workspace's block of secrets, (list page group
      inline): its head with Add secret, then its secrets, those every
-     project in it gets first, then by project. inline opens Add secret
+     folder in it gets first, then by project. inline opens Add secret
      and Replace the value in the page's dialogs, secretdialogs. */}}
 {{- define "secretgroup" }}
 {{- $ := index . 0 }}{{ $g := index . 1 }}{{ $inline := index . 2 }}
@@ -18,7 +18,7 @@
 		<thead><tr><th>Name</th><th>Scope</th><th>Updated</th><th>Reads</th><th>Last read</th><th class="actions" aria-label="Actions"></th></tr></thead>
 		{{- with $g.SharedSecrets }}
 		<tbody>
-			<tr class="secret-scope"><th colspan="6">Every project in {{ $g.Workspace }}</th></tr>
+			<tr class="secret-scope"><th colspan="6">Every folder in {{ $g.Title }}</th></tr>
 			{{- range . }}{{ template "secretrow" (list $ $g . $inline) }}{{ end }}
 		</tbody>
 		{{- end }}
@@ -53,7 +53,7 @@
 					(and ($p.Can "secret/edit") (not $inline) (item "edit" "Replace the value" "href" (print "/settings/secrets/edit?scope=" (urlquery $s.Scope) "&name=" (urlquery $s.Name))))
 					(and ($p.Can "secret/edit") $inline (item "edit" "Replace the value" "data-dialog-open" "secret-replace-dialog" "data-fill-scope" $s.Scope "data-fill-name" $s.Name))
 					(item "list" "Reads" "href" (print "/settings/secrets/" $s.ID "/reads"))
-					(and ($p.Can "secret/delete") (danger "trash" "Delete" "data-delete" (print "/api/secrets/" $s.ID) "data-confirm" (print "Delete " $s.Name " from " (or (and (eq $s.Scope $g.Shared) (print "every project in " $g.Workspace)) $s.Scope) "? Runs stop getting it.") "data-confirm-ok" "Delete" "data-next" "reload"))
+					(and ($p.Can "secret/delete") (danger "trash" "Delete" "data-delete" (print "/api/secrets/" $s.ID) "data-confirm" (print "Delete " $s.Name " from " (or (and (eq $s.Scope $g.Shared) (print "every folder in " $g.Workspace)) $s.Scope) "? Runs stop getting it.") "data-confirm-ok" "Delete" "data-next" "reload"))
 				) }}</td>
 			</tr>
 {{- end }}
@@ -70,7 +70,7 @@
 			{{- range $groups }}
 			{{- $off := not .Key }}
 			<optgroup label="{{ .Title }}{{ if $off }}: no encryption key{{ end }}"{{ if $off }} disabled{{ end }}>
-				<option value="{{ .Shared }}"{{ if eq $s.Scope .Shared }} selected{{ end }}{{ if $off }} disabled{{ end }}>every project in {{ .Workspace }}</option>
+				<option value="{{ .Shared }}"{{ if eq $s.Scope .Shared }} selected{{ end }}{{ if $off }} disabled{{ end }}>every folder in {{ .Title }}</option>
 				{{- range .Folders }}
 				<option value="{{ . }}"{{ if eq $s.Scope . }} selected{{ end }}{{ if $off }} disabled{{ end }}>{{ . }}</option>
 				{{- end }}

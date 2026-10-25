@@ -254,7 +254,7 @@ Algorithm and Size out.
   find the keys by default.
 - **Who gets which key** lists each role and each user, and the instance
   SSH keys their runs get: a user's own keys, then, dashed, those of
-  their role. The **Run as** pickers of the schedule forms and the
+  their role. The **Runs as** pickers of the schedule forms and the
   workflow editor name the same keys after each user.
 - A project with private keys in its `.ssh/` folder gets a warning: runs
   do not load them. Keys belong in the key folder: upload a key it needs
@@ -340,7 +340,7 @@ nothing reads them, and the log says so: remove them once the keys work.
 
 Variables added to the environment of the runs in a
 [workspace](workspaces.md). The page manages them and groups them by
-workspace: first the secrets for every project in it,
+workspace: first the secrets for every folder in it,
 then each project's own under the project's name. A row shows the
 secret's name, its scope, when it changed, its **Reads** and **Last
 read**, and two buttons, replace the value and delete. A value is never
@@ -359,10 +359,11 @@ values nor names. What a job prints itself, it records.
 
 A secret has a scope:
 
-- `workspace:<name>`, a workspace's shared secret, reaches every project
-  in that workspace and no project in another one. "every project in
-  _", `workspace:_`, reaches the projects at the root; a project in a
-  named workspace doesn't get it.
+- `workspace:<name>`, a workspace's shared secret, reaches every folder
+  in that workspace, its projects and the folders inside them, and no
+  folder in another one. "every folder in Default", `workspace:_`,
+  reaches the folders at the root; a folder in a named workspace
+  doesn't get it.
 - a folder, `malta/deploy`, reaches that folder's jobs and wins over its
   workspace's shared secret of the same name.
 
@@ -720,7 +721,7 @@ else. Its sections, in order:
     ends the user's MCP token.
   - **Run instance Claude when mentioned**: a note naming the user
     starts the Notes agent as them. It needs MCP agent user.
-- **Folders**: which folders the user sees, **All projects**, or
+- **Folders**: which folders the user sees, **All folders**, or
   **Custom** and the folders checked.
 - **Permissions**: the user's own rules over the role's (see
   [Permissions](#permissions)).
@@ -844,8 +845,8 @@ workspace.
 
 ## Projects
 
-The folders under the root, a block per workspace: the folders at the
-top of the root first, then each workspace's projects, with their
+The projects of each workspace, a block per workspace: the projects at
+the top of the root first, then each workspace's projects, with their
 sources, where they came from, and the space each takes: its files, and
 the git history beside them. A workspace's block has its own **Add
 project**, which clones into it; the Origin column holds a long remote

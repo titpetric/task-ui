@@ -55,7 +55,7 @@
 		</div>
 	</form>
 	{{- else }}
-	<p>{{ with $u.FolderList }}{{ range $i, $f := . }}{{ if $i }}, {{ end }}<span class="mono">{{ $f }}</span>{{ end }}{{ else }}All projects.{{ end }}</p>
+	<p>{{ with $u.FolderList }}{{ range $i, $f := . }}{{ if $i }}, {{ end }}<span class="mono">{{ $f }}</span>{{ end }}{{ else }}All folders.{{ end }}</p>
 	{{- end }}
 </section>
 

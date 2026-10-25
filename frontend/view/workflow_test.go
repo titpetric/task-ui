@@ -409,7 +409,7 @@ func TestView_RenderSchedulesWorkflow(t *testing.T) {
 	// job's row keeps the admin's pick.
 	assert.Contains(t, out, `<td data-label="Runs as"><span class="user-ref">`)
 	assert.Contains(t, out, `<span class="user-name">miguel</span>`)
-	assert.Equal(t, 1, strings.Count(out, `data-submit aria-label="Run as"`))
+	assert.Equal(t, 1, strings.Count(out, `data-submit aria-label="Runs as"`))
 	assert.Equal(t, "miguel", p.ScheduleUser(p.Schedules[0]))
 	assert.Equal(t, "ops", p.ScheduleUser(p.Schedules[1]))
 	assert.Equal(t, "miguel", p.WorkflowUser(p.Schedules[0]))
@@ -421,7 +421,7 @@ func TestView_RenderSchedulesWorkflow(t *testing.T) {
 	assert.NoError(t, v.Render(&buf, "schedules", p))
 	assert.Equal(t, "", p.WorkflowUser(p.Schedules[0]))
 	assert.Equal(t, "ops", p.ScheduleUser(p.Schedules[0]))
-	assert.Equal(t, 2, strings.Count(buf.String(), `data-submit aria-label="Run as"`), "both rows take a pick")
+	assert.Equal(t, 2, strings.Count(buf.String(), `data-submit aria-label="Runs as"`), "both rows take a pick")
 	p.SideWorkflows[0].RunAs = "miguel"
 	assert.Contains(t, out, `<td data-label="Folder"><svg class="ic lead"><use href="#i-flow"/></svg>workflow</td>`)
 	assert.Contains(t, out, `<td class="key" data-label="Job"><a href="/workflows/w1">release</a></td>`)

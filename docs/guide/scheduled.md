@@ -11,7 +11,7 @@ enter an expression and **Add schedule**. The Scheduled page lists every
 schedule with its next and last run, and its **Add schedule** form takes
 a folder and job too.
 
-An admin picks who a schedule runs as: **Run as** on both forms lists
+An admin picks who a schedule runs as: **Runs as** on both forms lists
 the users, with the admin first selected. Each option names the user's
 role and the instance SSH keys the user's runs get, `ops (runner) ·
 keys: deploy_ed25519`, or `no keys`: the keys linked to the user by name

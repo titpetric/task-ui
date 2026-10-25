@@ -1000,7 +1000,7 @@
     return body;
   }
 
-  // A user's folders: All projects turns the boxes off, so the form sends
+  // A user's folders: All folders turns the boxes off, so the form sends
   // none and the user sees everything; Custom turns them on.
   document.addEventListener("change", function (event) {
     var radio = event.target.closest("[data-folder-pick] input[name=scope]");
