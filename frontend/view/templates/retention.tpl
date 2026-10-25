@@ -15,9 +15,10 @@
 <form class="form retention" data-api="/api/retention" data-method="PUT" data-next="/settings/retention?notice=Data+retention+saved">
 <section class="block">
 	<h3>What the instance keeps <small>a row per area, the oldest items go first</small></h3>
+	<p class="dim">Applied by <a href="/runs?folder=_&amp;job=@cleanup" title="The runs of @cleanup">@cleanup</a>, which {{ with $.Cleanup }}last ran <a href="/runs/{{ .ID }}" title="{{ stamp .StartedAt }}">{{ ago .StartedAt }}</a> {{ template "state" . }}{{ else }}<span class="faint">has not run yet</span>{{ end }}.</p>
 	<div class="table-wrap">
 	<table class="table retention">
-		<thead><tr><th>Area</th><th>What goes</th><th>Keep</th><th>Size limit</th><th>Holds now</th><th>Last cleanup</th></tr></thead>
+		<thead><tr><th>Area</th><th>What goes</th><th>Keep</th><th>Size limit</th><th>Holds now</th></tr></thead>
 		<tbody>
 		{{- range .Retention }}
 			<tr>
@@ -34,7 +35,6 @@
 				</select>{{ else }}<span class="faint">none</span>{{ end }}</td>
 				{{- end }}
 				<td class="nowrap">{{ .Holds }}</td>
-				<td class="nowrap">{{ with $.Cleanup }}<a href="/runs/{{ .ID }}" title="{{ stamp .StartedAt }}">{{ ago .StartedAt }}</a> {{ template "state" . }}{{ else }}<span class="faint">never</span>{{ end }}</td>
 			</tr>
 		{{- end }}
 		</tbody>

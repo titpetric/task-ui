@@ -109,8 +109,10 @@ the `setting` table as `runs.parent_env`.
 
 `/settings/retention` is one table of what the instance keeps, a row per
 area, with the columns **Area**, **What goes**, **Keep**, **Size
-limit**, **Holds now** and **Last cleanup**. Every area the instance
-records has a row, so nothing grows without a rule:
+limit** and **Holds now**. The line above the table names `@cleanup`,
+the job of the root folder that applies the rules, linking its runs,
+and says when it last ran and how it ended, linking the run. Every area
+the instance records has a row, so nothing grows without a rule:
 
 | Area | What goes | What stays | Rule |
 |------|-----------|------------|------|
@@ -140,9 +142,8 @@ select always shows the saved limit:
 | 50 GB |
 
 The rows without a size show a dash there. **Holds now** is the count,
-with the bytes where the items have them. **Last cleanup** is when
-`@cleanup` last ran and how it ended, linking the run. The fixed rows
-say their rule across the two columns.
+with the bytes where the items have them. The fixed rows say their
+rule across the two columns.
 
 Past either rule the oldest go first, until both hold. `@cleanup`
 applies the rows in the order of the table: run recordings, then run
