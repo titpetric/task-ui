@@ -23,6 +23,9 @@ type Handlers struct {
 	view *view.View
 	// subs holds the directories of Files lists, as detected.
 	subs *subCache
+	// commits holds the time of each project's last commit, for the
+	// sidebar of a workspace that lists its newest projects.
+	commits *LastCommits
 }
 
 // New returns the handlers over the options, with the templates parsed.
@@ -31,7 +34,11 @@ func New(opts Options) (*Handlers, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Handlers{opts: opts, view: v, subs: &subCache{}}, nil
+	h := &Handlers{opts: opts, view: v, subs: &subCache{}, commits: &LastCommits{}}
+	if opts.Git != nil {
+		h.commits.Read = opts.Git.LastCommit
+	}
+	return h, nil
 }
 
 // Routes returns the router of the pages, to mount at the root, every response under markdown.CSP.

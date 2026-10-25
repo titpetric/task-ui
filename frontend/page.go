@@ -145,7 +145,7 @@ func (h *Handlers) seesFlowRun(ctx context.Context, user *model.User, runID stri
 	return true
 }
 
-// sidebar fills the page's folder tree: the folders seen and the workspaces' directories, less hidden and the homes, then the user's pins.
+// sidebar fills the page's folder tree: the folders seen and the workspaces' directories, less hidden and the homes, each workspace's projects cut to its sidebar limit, then the user's pins.
 func (h *Handlers) sidebar(ctx context.Context, p *view.Page) {
 	hidden, homes := map[string]bool{}, map[string]bool{}
 	if h.opts.Projects != nil {
@@ -162,6 +162,7 @@ func (h *Handlers) sidebar(ctx context.Context, p *view.Page) {
 		hidden[home], homes[home] = true, true
 	}
 	side := view.SideDefaults(p.Folders, h.workspaceDirs(p.Workspaces), hidden, p.User.CanSee)
+	side = h.sideLimits(ctx).Apply(side, p.Workspaces, h.lastCommitOf(ctx, side))
 	p.Pinning = h.opts.Pins != nil && p.User != nil
 	var pins []view.SidePin
 	if p.Pinning {
@@ -174,6 +175,45 @@ func (h *Handlers) sidebar(ctx context.Context, p *view.Page) {
 	}
 	tree := view.NewSidebar(side, pins, p.Workspaces, homes)
 	p.SideFolders, p.SidePins = tree.Folders, tree.Pins
+}
+
+// lastCommitOf answers the time of a project's last commit, for the
+// sidebar's limits: in the directory the catalogue knows for a folder,
+// else where the layout puts the project.
+func (h *Handlers) lastCommitOf(ctx context.Context, folders []*folder.Folder) func(id string) time.Time {
+	dirs := map[string]string{}
+	for _, f := range folders {
+		if f.Dir != "" {
+			dirs[f.ID] = f.Dir
+		}
+	}
+	var named []string
+	return func(id string) time.Time {
+		dir, ok := dirs[id]
+		if !ok {
+			if named == nil {
+				named = h.workspaceFolders(ctx)
+			}
+			dir = layout.Dir(h.opts.Root, named, id)
+		}
+		return h.commits.Get(dir)
+	}
+}
+
+// sideLimits returns how many projects the sidebar lists for each
+// workspace that limits them, the root among them.
+func (h *Handlers) sideLimits(ctx context.Context) view.SideLimits {
+	limits := view.SideLimits{}
+	if h.opts.Workspaces == nil {
+		return limits
+	}
+	workspaces, _ := h.opts.Workspaces.List(ctx)
+	for _, ws := range workspaces {
+		if ws.SidebarLimit > 0 {
+			limits[ws.Folder] = int(ws.SidebarLimit)
+		}
+	}
+	return limits
 }
 
 // workspaceDirs returns the directories in the src of each named workspace by ID, none without a root.

@@ -14,4 +14,5 @@ Workspace.
 | home_url        | varchar  |     | Home URL        |
 | home_branch     | varchar  |     | Home Branch     |
 | shallow         | boolean  |     | Shallow         |
+| sidebar_limit   | bigint   |     | Sidebar Limit   |
 | sort            | bigint   |     | Sort            |

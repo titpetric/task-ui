@@ -2749,6 +2749,9 @@ type Workspace struct {
 	// Shallow
 	Shallow bool `db:"shallow" json:"shallow"`
 
+	// Sidebar Limit
+	SidebarLimit int64 `db:"sidebar_limit" json:"sidebar_limit"`
+
 	// Sort
 	Sort int64 `db:"sort" json:"sort"`
 }
@@ -2813,6 +2816,12 @@ func (w *Workspace) GetShallow() bool { return w.Shallow }
 // SetShallow sets Shallow to the provided value.
 func (w *Workspace) SetShallow(val bool) { w.Shallow = val }
 
+// GetSidebarLimit will return the value of SidebarLimit.
+func (w *Workspace) GetSidebarLimit() int64 { return w.SidebarLimit }
+
+// SetSidebarLimit sets SidebarLimit to the provided value.
+func (w *Workspace) SetSidebarLimit(val int64) { w.SidebarLimit = val }
+
 // GetSort will return the value of Sort.
 func (w *Workspace) GetSort() int64 { return w.Sort }
 
@@ -2823,7 +2832,7 @@ func (w *Workspace) SetSort(val int64) { w.Sort = val }
 const WorkspaceTable = "`workspace`"
 
 // WorkspaceFields is a list of all columns in the DB table.
-var WorkspaceFields = []string{"id", "folder", "title", "description", "created_at", "updated_at", "home_project_id", "home_url", "home_branch", "shallow", "sort"}
+var WorkspaceFields = []string{"id", "folder", "title", "description", "created_at", "updated_at", "home_project_id", "home_url", "home_branch", "shallow", "sidebar_limit", "sort"}
 
 // WorkspacePrimaryFields are the primary key fields in the DB table.
 var WorkspacePrimaryFields = []string{"id"}
