@@ -1,16 +1,9 @@
 /* ---------------------------------------------------------------- controls */
 
 /* The controls: text fields, textareas and selects, the dropdown that
-   stands in for a select, and the buttons, each in one place. The data
-   wears the mono face in them as it does on the page. */
-.filters input,
-input[type="text"],
-input[type="password"],
-textarea,
-select {
-  font-family: var(--font);
-}
-
+   stands in for a select, and the buttons, each in one place. A field
+   is set in the page's face, font: inherit below; the dropdown's button
+   and options wear the data's mono face. */
 .btn-icon {
   display: inline-flex;
   align-items: center;
