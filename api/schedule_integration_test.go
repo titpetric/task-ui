@@ -252,24 +252,30 @@ func TestSchedule_Workflow(t *testing.T) {
 	assert.Equal(t, http.StatusOK, off.Status, string(off.Raw))
 	assert.Equal(t, float64(0), off.get("enabled"))
 	assert.Equal(t, wf, off.str("workflow_id"))
-	// An admin, who may run the steps, switches it back; the workflow
-	// holds the user, so a pick on the schedule answers 400.
+	// An admin, who may run the steps, switches it back and picks who it
+	// runs as, the workflow having no user of its own; one it has runs it
+	// whatever the schedule says, so a pick there answers 400.
 	on := f.call(t, asAdmin, http.MethodPut, path, api.ScheduleRequest{Enabled: ptr(true)})
 	assert.Equal(t, http.StatusOK, on.Status, string(on.Raw))
 	assert.Equal(t, float64(1), on.get("enabled"))
 	assert.Equal(t, "ops", on.str("user_name"))
 	picked := f.call(t, asAdmin, http.MethodPut, path, api.ScheduleRequest{User: "admin"})
-	assert.Equal(t, http.StatusBadRequest, picked.Status, string(picked.Raw))
-	assert.Contains(t, picked.str("error"), "a workflow runs as its own user")
+	assert.Equal(t, http.StatusOK, picked.Status, string(picked.Raw))
+	assert.Equal(t, "admin", picked.str("user_name"))
+	fixed := f.call(t, asAdmin, http.MethodPost, "/workflows", api.WorkflowRequest{Name: "fixed", Steps: chain("infra", "plan"), User: ptr(asOps)})
+	assert.Equal(t, http.StatusCreated, fixed.Status, string(fixed.Raw))
+	fixedSchedule := f.call(t, asAdmin, http.MethodPost, "/schedules", api.ScheduleRequest{Workflow: fixed.str("id"), Expression: "@daily", User: "admin"})
+	assert.Equal(t, http.StatusBadRequest, fixedSchedule.Status, string(fixedSchedule.Raw))
+	assert.Contains(t, fixedSchedule.str("error"), "the workflow runs as its own user")
 	assert.Equal(t, http.StatusBadRequest, f.call(t, asOps, http.MethodPut, path, api.ScheduleRequest{Args: api.RunArgs{"x"}}).Status, "no args on a workflow schedule")
 	assert.Equal(t, http.StatusBadRequest, f.call(t, asOps, http.MethodPut, path, api.ScheduleRequest{Triage: ptr(true)}).Status, "no triage on a workflow schedule")
 
 	assert.Equal(t, http.StatusNoContent, f.call(t, asOps, http.MethodDelete, path, nil).Status)
 }
 
-// A workflow schedule takes no folder, job, args, triage or user (400),
-// names a workflow there is (404), and needs the right to run every
-// step (403): the workflow's own user runs it.
+// A workflow schedule takes no folder, job, args or triage (400), names
+// a workflow there is (404), and needs the right to run every step
+// (403); a runner names only themself as its user (403).
 func TestSchedule_WorkflowRefused(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
@@ -290,8 +296,7 @@ func TestSchedule_WorkflowRefused(t *testing.T) {
 		{"no workflow", asOps, api.ScheduleRequest{Workflow: model.NewID(), Expression: "@daily"}, http.StatusNotFound},
 		{"a step the user may not run", asOps, api.ScheduleRequest{Workflow: private, Expression: "@daily"}, http.StatusForbidden},
 		{"viewer", asViewer, api.ScheduleRequest{Workflow: wf, Expression: "@daily"}, http.StatusForbidden},
-		{"as someone else", asOps, api.ScheduleRequest{Workflow: wf, Expression: "@daily", User: asAdmin}, http.StatusBadRequest},
-		{"as oneself", asOps, api.ScheduleRequest{Workflow: wf, Expression: "@daily", User: asOps}, http.StatusBadRequest},
+		{"as someone else", asOps, api.ScheduleRequest{Workflow: wf, Expression: "@daily", User: asAdmin}, http.StatusForbidden},
 	}
 	for _, c := range cases {
 		res := f.call(t, c.user, http.MethodPost, "/schedules", c.req)

@@ -114,13 +114,17 @@ func (h *Handlers) seesWorkflowRun(ctx context.Context, user *model.User, rows [
 	return true
 }
 
-// runAsUser returns the user a workflow's runs run as, the one its
-// run-as names or its owner, nil for a user nobody holds any more.
-func (h *Handlers) runAsUser(ctx context.Context, wf *model.Workflow) *model.User {
-	if h.opts.Users == nil {
-		return &model.User{ID: wf.RunsAs(), Name: wf.UserName}
+// runAsUser returns the user a workflow's runs run as, the one set on
+// it or the page's user, who starts it; nil for a user nobody holds any
+// more.
+func (h *Handlers) runAsUser(ctx context.Context, wf *model.Workflow, user *model.User) *model.User {
+	if wf.RunAsUserID == "" {
+		return user
 	}
-	user, err := h.opts.Users.Get(ctx, wf.RunsAs())
+	if h.opts.Users == nil {
+		return &model.User{ID: wf.RunAsUserID, Name: wf.UserName}
+	}
+	user, err := h.opts.Users.Get(ctx, wf.RunAsUserID)
 	if err != nil {
 		return nil
 	}
@@ -147,8 +151,10 @@ func (h *Handlers) workflowView(ctx context.Context, p *view.Page, wf model.Work
 			return nil
 		}
 	}
-	if runAs := h.runAsUser(ctx, &wf); runAs != nil {
-		v.RunAs = runAs.Name
+	if runAs := h.runAsUser(ctx, &wf, user); runAs != nil {
+		if wf.RunAsUserID != "" {
+			v.RunAs = runAs.Name
+		}
 		v.CanRun = h.opts.Flows.MayRun(ctx, p.Permissions, steps) == ""
 		if h.opts.Users != nil && runAs.ID != user.ID {
 			v.CanRun = v.CanRun && h.opts.Flows.MayRun(ctx, h.opts.Users.Permissions(ctx, runAs), steps) == ""

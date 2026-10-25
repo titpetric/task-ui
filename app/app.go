@@ -256,6 +256,7 @@ func (a *App) wire(version string) error {
 	a.Scheduler.Hosts = hostRuns
 	a.Workflows = workflow.New(workflows, workflowRuns, a.Catalogue.Steps(), a.Runner)
 	a.Workflows.Hosts = hostRuns
+	a.Workflows.Users = a.Users
 	a.Scheduler.Workflows, a.Scheduler.Flows = workflows, a.Workflows
 	events := event.NewBus()
 	a.Workflows.Events = events

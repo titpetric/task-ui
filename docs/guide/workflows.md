@@ -200,36 +200,45 @@ step's card beside it, in the colour of its kind.
 
 ## Runs as
 
-A workflow runs as a user of its own. Every step of a run, a command, a
-prompt or a summary, runs as that user: with their permissions, the
-Claude token the Integrations page grants their role or user, and the
-SSH keys and secrets of the workspace each step's folder is in, through
-the run's ssh agent. The run shows under that user's name, on
+A workflow can have a user of its own. Every step of a run, a command,
+a prompt or a summary, then runs as that user: with their permissions,
+the Claude token the Integrations page grants their role or user, and
+the SSH keys and secrets of the workspace each step's folder is in,
+through the run's ssh agent. The run shows under that user's name, on
 the Workflows page, the workflow's page and in Recents, as a run they
-started.
+started. A workflow with no user of its own, **Whoever starts it**,
+runs as the user who presses **Run**, or as the schedule's user, as
+every workflow did before the setting.
+
+A step that runs another workflow follows that workflow's user when it
+has one: a deploy workflow set to a `deploy` user runs with the deploy
+keys whoever runs the workflow that calls it. Without one, the nested
+workflow runs as the outer run's user.
 
 An admin picks the user from **Runs as** in the editor, the current
-login selected on a new workflow and the saved user on edit. Everyone
-else reads the user there: a workflow they make runs as themself, and
-one an admin set to another user keeps that user. Who runs it and who
-owns it differ: the **By** column of the Workflows page names the
-owner, and `runs as` with the user when they differ, as the head of
-the workflow's page does.
+login selected on a new workflow and the saved choice on edit. Everyone
+else reads the field: a workflow they make runs as themself, and one an
+admin set keeps its user. Who runs it and who owns it differ: the
+**By** column of the Workflows page names the owner, and `runs as` with
+the user when the workflow has one, as the head of the workflow's page
+does.
 
-Running the workflow takes two rights at once: yours, to run every step
-as before, and the run-as user's, who must be able to run every step at
-that time. **Run** shows when both hold, and a start the run-as user
-may not make says which step and whom it refuses. A schedule of the
+Running a workflow with a user takes two rights at once: yours, to run
+every step as before, and the workflow's user's, who must be able to
+run every step at that time, the steps of nested workflows checked as
+their own users. **Run** shows when both hold, and a start the user may
+not make says which step and whom it refuses. A schedule of the
 workflow follows the same user (see [Scheduling one](#scheduling-one)).
 A user since deleted leaves the workflow with no one to run as: the
-start refuses until an admin picks another user.
+start refuses until an admin picks another user, and a nested workflow
+whose user nobody holds fails its step.
 
 Through the API, `user` on `POST` and `PUT /api/workflows` names the
 user: an admin names anyone, anyone else only themself (`403`), a name
-nobody holds answers `404`, and left out the workflow runs as its
-creator on create and keeps its user on update. Every workflow carries
-`run_as`, the name, and `run_as_user_id`, empty for one that runs as
-its owner.
+nobody holds answers `404`, an empty name is whoever starts it, and
+left out the workflow keeps what it has, none on create. Every workflow
+carries `run_as`, the name, and `run_as_user_id`, both empty for one
+that runs as whoever starts it.
 
 - **Add step** at the foot of the rail picks the kind: **Command**,
   **Prompt** or **Summary**, the last two with `prompt/edit`. The new
@@ -296,15 +305,16 @@ state, with **Enable** or **Disable** and **Delete** in the row's menu,
 and under them the form that adds one: an **Expression** (see
 [Scheduled](scheduled.md#scheduling-a-job) for the syntax). **Add
 schedule** saves it. The schedule starts a run of the workflow at each
-time, as the workflow's [Runs as](#runs-as) user, with no input, as
-**Run** does without the input field; the run shows under Recent runs
-and on the workflow's page like any other. The block's lead and each
-row's **Runs as** name that user; a workflow's schedule has no user of
-its own to pick, so changing who runs it means changing the workflow.
-Scheduling a workflow takes the right to run every step, as running it
-does, and the scheduler checks the run-as user again at each time: when
-they may not run a step by then, or nobody holds the user any more, it
-skips the run and logs why. A run skips its time while the workflow is still running.
+time, as the workflow's [Runs as](#runs-as) user when it has one, else
+as the schedule's own user, who added it or whom an admin picked on
+the row, with no input, as **Run** does without the input field; the
+run shows under Recent runs and on the workflow's page like any other.
+The block's lead and each row's **Runs as** name that user; for a
+workflow with a user of its own the row has no pick, so changing who
+runs it means changing the workflow. Scheduling a workflow takes the
+right to run every step, as running it does, and the scheduler checks
+the user again at each time: when they may not run a step by then, or
+nobody holds the user any more, it skips the run and logs why. A run skips its time while the workflow is still running.
 A schedule of a workflow has no **Triage failures with Claude**, a
 job's run has that; a workflow with a prompt or a summary step reads
 how its steps went on its own. Deleting the workflow disables the

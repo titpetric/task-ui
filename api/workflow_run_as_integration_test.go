@@ -14,12 +14,12 @@ import (
 	"github.com/titpetric/task-ui/model"
 )
 
-// A workflow runs as a user of its own: the creator unless an admin
-// names another, a runner only themself (403), a name nobody holds a
-// 404. Run starts the run as that user, who must be able to run every
-// step as the caller must, a 403 naming the step and the user when they
-// may not; an update changes the user, left out keeps it, and a user
-// since deleted answers 409.
+// A workflow runs as the user set on it: an admin names anyone, a
+// runner only themself (403), a name nobody holds a 404, and none, the
+// starter. Run starts the run as that user, who must be able to run
+// every step as the caller must, a 403 naming the step and the user when
+// they may not; an update changes the user, left out keeps it, an empty
+// name clears it, and a user since deleted answers 409.
 func TestWorkflow_RunAs(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
@@ -27,17 +27,20 @@ func TestWorkflow_RunAs(t *testing.T) {
 
 	own := f.call(t, asOps, http.MethodPost, "/workflows", api.WorkflowRequest{Name: "own", Steps: chain("infra", "plan")})
 	assert.Equal(t, http.StatusCreated, own.Status, string(own.Raw))
-	assert.Equal(t, "ops", own.str("run_as"))
-	assert.Equal(t, "", own.str("run_as_user_id"), "left out, the owner runs it")
+	assert.Equal(t, "", own.str("run_as"), "left out, whoever starts it")
+	assert.Equal(t, "", own.str("run_as_user_id"))
 	assert.True(t, own.get("can_run").(bool))
+	ownRun := f.call(t, asAdmin, http.MethodPost, "/workflows/"+own.str("id")+"/runs", nil)
+	assert.Equal(t, http.StatusCreated, ownRun.Status, string(ownRun.Raw))
+	assert.Equal(t, "admin", f.workflowRun(t, own.str("id"), ownRun.str("id"))["user_name"], "the starter's run")
 
-	other := f.call(t, asOps, http.MethodPost, "/workflows", api.WorkflowRequest{Name: "other", Steps: chain("infra", "plan"), User: asAdmin})
+	other := f.call(t, asOps, http.MethodPost, "/workflows", api.WorkflowRequest{Name: "other", Steps: chain("infra", "plan"), User: ptr(asAdmin)})
 	assert.Equal(t, http.StatusForbidden, other.Status, string(other.Raw))
 	assert.Contains(t, other.str("error"), "an admin picks another user")
-	nobody := f.call(t, asAdmin, http.MethodPost, "/workflows", api.WorkflowRequest{Name: "nobody", Steps: chain("infra", "plan"), User: "nobody"})
+	nobody := f.call(t, asAdmin, http.MethodPost, "/workflows", api.WorkflowRequest{Name: "nobody", Steps: chain("infra", "plan"), User: ptr("nobody")})
 	assert.Equal(t, http.StatusNotFound, nobody.Status, string(nobody.Raw))
 
-	asOpsRes := f.call(t, asAdmin, http.MethodPost, "/workflows", api.WorkflowRequest{Name: "as ops", Steps: chain("infra", "plan"), User: asOps})
+	asOpsRes := f.call(t, asAdmin, http.MethodPost, "/workflows", api.WorkflowRequest{Name: "as ops", Steps: chain("infra", "plan"), User: ptr(asOps)})
 	assert.Equal(t, http.StatusCreated, asOpsRes.Status, string(asOpsRes.Raw))
 	assert.Equal(t, "ops", asOpsRes.str("run_as"))
 	assert.Equal(t, f.users[asOps].ID, asOpsRes.str("run_as_user_id"))
@@ -52,7 +55,7 @@ func TestWorkflow_RunAs(t *testing.T) {
 	// The run-as user's permissions bound a start besides the caller's:
 	// ops may not run private / deploy, so the admin's start fails and
 	// can_run says so.
-	private := f.call(t, asAdmin, http.MethodPost, "/workflows", api.WorkflowRequest{Name: "private as ops", Steps: chain("infra", "plan", "private", "deploy"), User: asOps})
+	private := f.call(t, asAdmin, http.MethodPost, "/workflows", api.WorkflowRequest{Name: "private as ops", Steps: chain("infra", "plan", "private", "deploy"), User: ptr(asOps)})
 	assert.Equal(t, http.StatusCreated, private.Status, string(private.Raw))
 	assert.False(t, private.get("can_run").(bool))
 	denied := f.call(t, asAdmin, http.MethodPost, "/workflows/"+private.str("id")+"/runs", nil)
@@ -64,7 +67,7 @@ func TestWorkflow_RunAs(t *testing.T) {
 	assert.NoError(t, f.opts.Users.Create(ctx, miguel))
 	assert.NoError(t, os.MkdirAll(promptOut(f, ""), 0o755))
 	f.opts.Board.AgentCommand = []string{"sh", "-c", `printf 'A: %s\n' "$TASK_UI_PROMPT" > "$TASK_UI_PROMPT_REPLY"`}
-	asks := f.call(t, asAdmin, http.MethodPost, "/workflows", api.WorkflowRequest{Name: "asks", Steps: []api.StepRequest{{Kind: model.StepPrompt, Prompt: "what changed"}}, User: "miguel"})
+	asks := f.call(t, asAdmin, http.MethodPost, "/workflows", api.WorkflowRequest{Name: "asks", Steps: []api.StepRequest{{Kind: model.StepPrompt, Prompt: "what changed"}}, User: ptr("miguel")})
 	assert.Equal(t, http.StatusCreated, asks.Status, string(asks.Raw))
 	assert.Equal(t, "miguel", asks.str("run_as"))
 	started = f.call(t, asAdmin, http.MethodPost, "/workflows/"+asks.str("id")+"/runs", nil)
@@ -78,14 +81,18 @@ func TestWorkflow_RunAs(t *testing.T) {
 
 	// An update changes the user; one without keeps it; a runner may
 	// name only themself.
-	changed := f.call(t, asAdmin, http.MethodPut, "/workflows/"+id, api.WorkflowRequest{Name: "as ops", Steps: chain("infra", "plan"), User: "miguel"})
+	changed := f.call(t, asAdmin, http.MethodPut, "/workflows/"+id, api.WorkflowRequest{Name: "as ops", Steps: chain("infra", "plan"), User: ptr("miguel")})
 	assert.Equal(t, http.StatusOK, changed.Status, string(changed.Raw))
 	assert.Equal(t, "miguel", changed.str("run_as"))
 	kept := f.call(t, asAdmin, http.MethodPut, "/workflows/"+id, api.WorkflowRequest{Name: "as ops still", Steps: chain("infra", "plan")})
 	assert.Equal(t, http.StatusOK, kept.Status, string(kept.Raw))
 	assert.Equal(t, "miguel", kept.str("run_as"))
-	assert.Equal(t, http.StatusForbidden, f.call(t, asOps, http.MethodPut, "/workflows/"+own.str("id"), api.WorkflowRequest{Name: "own", Steps: chain("infra", "plan"), User: asAdmin}).Status)
-	assert.Equal(t, http.StatusOK, f.call(t, asOps, http.MethodPut, "/workflows/"+own.str("id"), api.WorkflowRequest{Name: "own", Steps: chain("infra", "plan"), User: asOps}).Status)
+	cleared := f.call(t, asAdmin, http.MethodPut, "/workflows/"+id, api.WorkflowRequest{Name: "as ops still", Steps: chain("infra", "plan"), User: ptr("")})
+	assert.Equal(t, http.StatusOK, cleared.Status, string(cleared.Raw))
+	assert.Equal(t, "", cleared.str("run_as"), "an empty name clears the user")
+	assert.Equal(t, http.StatusOK, f.call(t, asAdmin, http.MethodPut, "/workflows/"+id, api.WorkflowRequest{Name: "as ops still", Steps: chain("infra", "plan"), User: ptr("miguel")}).Status)
+	assert.Equal(t, http.StatusForbidden, f.call(t, asOps, http.MethodPut, "/workflows/"+own.str("id"), api.WorkflowRequest{Name: "own", Steps: chain("infra", "plan"), User: ptr(asAdmin)}).Status)
+	assert.Equal(t, http.StatusOK, f.call(t, asOps, http.MethodPut, "/workflows/"+own.str("id"), api.WorkflowRequest{Name: "own", Steps: chain("infra", "plan"), User: ptr(asOps)}).Status)
 
 	// The list carries run_as on every workflow; a user since deleted
 	// leaves it empty, and a start answers 409.

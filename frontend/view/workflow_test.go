@@ -110,6 +110,12 @@ func TestView_RenderWorkflowEditor(t *testing.T) {
 	assert.Contains(t, out, `<select id="wf-user-w1" name="user">`)
 	assert.Contains(t, out, `<option value="miguel" selected>miguel (runner)</option>`)
 	assert.Contains(t, out, `<option value="admin">admin (admin)</option>`)
+	assert.Contains(t, out, `<option value="">Whoever starts it</option>`)
+	p.Workflow.RunAs = ""
+	buf.Reset()
+	assert.NoError(t, v.Render(&buf, "workflow_edit", p))
+	assert.Contains(t, buf.String(), `<option value="" selected>Whoever starts it</option>`, "no user set: the starter")
+	p.Workflow.RunAs = "miguel"
 	assert.Contains(t, out, "Every step runs as this user: with their permissions, the Claude token granted to their role or user, and the keys and secrets of the workspace each step's folder is in.")
 	buf.Reset()
 	assert.NoError(t, v.Render(&buf, "workflow_new", p))
@@ -126,14 +132,18 @@ func TestView_RenderWorkflowEditor(t *testing.T) {
 	assert.Contains(t, out, `data-step-add="job"`)
 	assert.NotContains(t, out, `data-step-add="prompt"`, "no prompt/edit")
 	assert.Contains(t, out, "No steps yet. Start with a command.")
-	// A runner reads who the workflow runs as, themself on new, the saved
-	// user on edit, and the form posts no user.
-	assert.NotContains(t, out, `name="user"`)
+	// A runner reads who the workflow runs as: themself on new, posted
+	// hidden, and the saved user on edit, which the form leaves alone.
 	assert.Contains(t, out, `<span class="label">Runs as</span>
-			<span class="wf-runas">ops</span>`)
+			<span class="wf-runas">ops</span><input type="hidden" name="user" value="ops">`)
 	buf.Reset()
 	assert.NoError(t, v.Render(&buf, "workflow_edit", p))
 	assert.Contains(t, buf.String(), `<span class="wf-runas">miguel</span>`)
+	assert.NotContains(t, buf.String(), `name="user"`)
+	p.Workflow.RunAs = ""
+	buf.Reset()
+	assert.NoError(t, v.Render(&buf, "workflow_edit", p))
+	assert.Contains(t, buf.String(), `<span class="wf-runas">Whoever starts it</span>`)
 }
 
 // threadRun is a finished run of Porec watering: its input and Claude's
@@ -388,6 +398,17 @@ func TestView_RenderSchedulesWorkflow(t *testing.T) {
 	assert.Equal(t, 1, strings.Count(out, `data-submit aria-label="Run as"`))
 	assert.Equal(t, "miguel", p.ScheduleUser(p.Schedules[0]))
 	assert.Equal(t, "ops", p.ScheduleUser(p.Schedules[1]))
+	assert.Equal(t, "miguel", p.WorkflowUser(p.Schedules[0]))
+	assert.Equal(t, "", p.WorkflowUser(p.Schedules[1]), "a job's schedule")
+	// A workflow with no user of its own: the schedule's user, with the
+	// admin's pick on the row.
+	p.SideWorkflows[0].RunAs = ""
+	buf.Reset()
+	assert.NoError(t, v.Render(&buf, "schedules", p))
+	assert.Equal(t, "", p.WorkflowUser(p.Schedules[0]))
+	assert.Equal(t, "ops", p.ScheduleUser(p.Schedules[0]))
+	assert.Equal(t, 2, strings.Count(buf.String(), `data-submit aria-label="Run as"`), "both rows take a pick")
+	p.SideWorkflows[0].RunAs = "miguel"
 	assert.Contains(t, out, `<td data-label="Folder"><svg class="ic lead"><use href="#i-flow"/></svg>workflow</td>`)
 	assert.Contains(t, out, `<td class="key" data-label="Job"><a href="/workflows/w1">release</a></td>`)
 	assert.Contains(t, out, `data-confirm="Delete the schedule 0 7 * * 1-5 for release?"`)

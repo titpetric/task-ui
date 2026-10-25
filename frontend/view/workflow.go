@@ -14,11 +14,11 @@ type Workflow struct {
 	Running string
 	// LastRun is its newest run.
 	LastRun *model.WorkflowRun
-	// RunAs names the user its runs run as, its owner without one; ""
-	// for a user nobody holds any more.
+	// RunAs names the user set to run its runs; "" for none, whoever
+	// starts it, and for a user nobody holds any more.
 	RunAs string
-	// CanRun says whether its runs may go: the user it runs as may run
-	// every step.
+	// CanRun says whether a start by the page's user goes: they may run
+	// every step, and so may the user it runs as, when it has one.
 	CanRun bool
 	// CanChange says whether the user may change or delete it.
 	CanChange bool

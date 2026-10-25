@@ -8,21 +8,23 @@ import (
 	"github.com/titpetric/task-ui/model"
 )
 
-// runAsUser returns the user a workflow's runs run as: the one its
-// run-as names, else its owner; storage.ErrNotFound for a user nobody
-// holds any more.
+// runAsUser returns the user a workflow's runs run as: the one set on
+// it, else the caller, who starts it.
 func (h *Handlers) runAsUser(r *http.Request, wf *model.Workflow) (*model.User, error) {
-	if h.opts.Users == nil {
-		return &model.User{ID: wf.RunsAs(), Name: wf.UserName}, nil
+	if wf.RunAsUserID == "" {
+		return access.UserFrom(r.Context()), nil
 	}
-	return h.opts.Users.Get(r.Context(), wf.RunsAs())
+	if h.opts.Users == nil {
+		return &model.User{ID: wf.RunAsUserID, Name: wf.UserName}, nil
+	}
+	return h.opts.Users.Get(r.Context(), wf.RunAsUserID)
 }
 
-// runAsName names the user a workflow's runs run as, "" for a user
-// nobody holds any more.
+// runAsName names the user set to run a workflow's runs, "" for none,
+// whoever starts it, and for a user nobody holds any more.
 func (h *Handlers) runAsName(r *http.Request, wf *model.Workflow) string {
 	if wf.RunAsUserID == "" {
-		return wf.UserName
+		return ""
 	}
 	user, err := h.runAsUser(r, wf)
 	if err != nil {

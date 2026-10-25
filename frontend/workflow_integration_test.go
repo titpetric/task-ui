@@ -251,15 +251,20 @@ func TestWorkflow_EditPage(t *testing.T) {
 	assert.NotContains(t, edit, `Run as</label>`, "the workflow's user runs its schedules")
 	// Runs as: the owner reads it, an admin picks it, the saved user
 	// selected; the Schedule block names the same user.
-	assert.Contains(t, edit, `<span class="wf-runas">ops</span>`)
+	assert.Contains(t, edit, `<span class="wf-runas">Whoever starts it</span>`)
 	assert.NotContains(t, edit, `name="user"`)
 	assert.NoError(t, f.opts.Schedules.Create(context.Background(), &model.Schedule{WorkflowID: wf.ID, UserID: f.users[asOps].ID, UserName: asOps, Expression: "0 7 * * 1-5", Enabled: 1}))
 	admin := f.page(t, asAdmin, "/workflows/"+wf.ID+"/edit")
 	assert.Contains(t, admin, `data-method="PUT"`)
 	assert.NotContains(t, admin, `Run as</label>`)
 	assert.Contains(t, admin, `<label for="wf-user-`+wf.ID+`">Runs as</label>`)
-	assert.Contains(t, admin, `<option value="ops" selected>ops (runner)</option>`)
-	assert.Contains(t, admin, "Runs the workflow on a cron expression, as ops, the user set on the workflow.")
+	assert.Contains(t, admin, `<option value="" selected>Whoever starts it</option>`, "ops made it through the API with no user")
+	assert.Contains(t, admin, "Runs the workflow on a cron expression, as the user who adds the schedule.")
+	wf.RunAsUserID = f.users[asOps].ID
+	assert.NoError(t, f.opts.Workflows.Update(context.Background(), wf, []model.WorkflowStep{{Folder: "infra", Job: "plan"}}))
+	fixed := f.page(t, asAdmin, "/workflows/"+wf.ID+"/edit")
+	assert.Contains(t, fixed, `<option value="ops" selected>ops (runner)</option>`)
+	assert.Contains(t, fixed, "Runs the workflow on a cron expression, as ops, the user set on the workflow.")
 	assert.Contains(t, f.page(t, asAdmin, "/workflows/new"), `<option value="admin" selected>admin (admin)</option>`, "the login on a new workflow")
 	assert.Contains(t, admin, `<td class="key" data-label="Expression"><code>0 7 * * 1-5</code></td>`)
 	assert.Contains(t, admin, `data-confirm="Delete the schedule 0 7 * * 1-5 for release?"`)

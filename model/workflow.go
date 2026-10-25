@@ -96,12 +96,3 @@ func (w *Workflow) Asks(steps []WorkflowStep) bool {
 	}
 	return false
 }
-
-// RunsAs is the ID of the user every run of the workflow runs as: the
-// one set on it, else its owner.
-func (w *Workflow) RunsAs() string {
-	if w.RunAsUserID != "" {
-		return w.RunAsUserID
-	}
-	return w.UserID
-}

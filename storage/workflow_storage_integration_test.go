@@ -50,7 +50,6 @@ func TestWorkflowStorage_Create(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "summarise the build", read.Description)
 	assert.Equal(t, "u-miguel", read.RunAsUserID, "the run-as user round trips")
-	assert.Equal(t, "u-miguel", read.RunsAs())
 	toggled, err := workflows.Steps(ctx, asks.ID)
 	assert.NoError(t, err)
 	assert.True(t, toggled[0].Disabled)
@@ -62,7 +61,7 @@ func TestWorkflowStorage_Create(t *testing.T) {
 	assert.NoError(t, workflows.Update(ctx, read, toggled))
 	read, err = workflows.Get(ctx, asks.ID)
 	assert.NoError(t, err)
-	assert.Equal(t, "u-ops", read.RunsAs(), "without one the owner runs it")
+	assert.Equal(t, "", read.RunAsUserID, "cleared: whoever starts it")
 	alone := &model.Workflow{Name: "alone"}
 	assert.NoError(t, workflows.Create(ctx, alone, []model.WorkflowStep{{Folder: "_", Job: model.PromptJob, Prompt: "say ok"}}))
 	one, err := workflows.Steps(ctx, alone.ID)
