@@ -56,9 +56,15 @@ func (h *Handlers) folderPath(w http.ResponseWriter, r *http.Request) {
 }
 
 // folderAt serves the path of a folder, its workspace's prefix taken off
-// for one at the root.
+// for one at the root; a bare job name is one of the root's own jobs,
+// which no listed folder holds.
 func (h *Handlers) folderAt(w http.ResponseWriter, r *http.Request, path string) {
 	f, rest := folder.Resolve(h.opts.Catalogue, path)
+	if f == nil && !strings.Contains(path, "/") {
+		if root := h.opts.Catalogue.Find(model.Default); root != nil && root.Job(path) != nil {
+			f, rest = root, path
+		}
+	}
 	if f == nil || !access.UserFrom(r.Context()).CanSee(f.ID) {
 		h.missing(w, r, "No folder named "+path+".")
 		return
