@@ -468,8 +468,8 @@ instance's encryption key, as every secret, and never shows them again: a
 form marks a secret with a value as **set**, and an empty secret field
 keeps it on save. The Secrets page leaves them out, and no run sees them
 as secrets. A switch beside each integration's name shows or hides its
-row below the name, and the browser keeps the choice. **Clear** deletes
-every setting of an integration. The API serves the steps with the kind,
+row below the name, and the browser keeps the choice. **Clear**, in the
+**⋯** menu beside the name, deletes every setting of an integration. The API serves the steps with the kind,
 `steps` on `GET /api/integrations`.
 
 - **Claude Code**: the token Claude Code signs in with, from
@@ -764,7 +764,7 @@ rule reads a private key: none leaves task-ui.
 ![Permissions: a matrix per role](../assets/permissions-dark.png)
 
 A cell inherits, empty, allows, a green ✓, or denies, a red ✕; a click
-moves it to the next, and **Save** keeps the cells that changed. **Allow
+moves it to the next, and **Save permissions** keeps the cells that changed. **Allow
 All** sets every rule of its section; where it and a rule set on its
 own disagree, the deny wins. The admin role shows every cell allowed and none changes:
 an admin may do everything. The page opens with Allow View on Users and

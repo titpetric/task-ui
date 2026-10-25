@@ -33,12 +33,6 @@ dialog.confirm {
   }
 }
 
-.confirm-foot {
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.5rem;
-}
-
 /* A workspace's Export and Import: a form in the confirm dialog, a
    passphrase field with Copy and Generate beside it. */
 dialog.workspace-export,

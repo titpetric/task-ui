@@ -87,7 +87,7 @@
 	{{- if $m.Editable }}
 	<div class="form-foot">
 		<span class="faint" data-matrix-changed>No changes yet.</span>
-		<button class="btn btn-primary" type="submit">Save</button>
+		<button class="btn btn-primary" type="submit">Save permissions</button>
 	</div>
 	{{- end }}
 </form>

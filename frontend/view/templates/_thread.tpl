@@ -37,7 +37,7 @@
 			<summary>Reply</summary>
 			<form class="note-form" data-note-form data-parent="{{ .ID }}">
 				<textarea name="body" rows="2" required data-mentions aria-label="A reply"></textarea>
-				<div class="note-form-foot"><span></span><button class="btn" type="submit">Reply</button></div>
+				<div class="form-foot note"><span></span><button class="btn" type="submit">Reply</button></div>
 			</form>
 		</details>
 	</article>

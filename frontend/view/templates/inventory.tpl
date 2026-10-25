@@ -32,7 +32,7 @@
 				{{- end }}{{ end }}
 			</div>
 		</div>
-		<div class="note-form-foot"><span></span><span class="actions">{{ if .Summarize }}<button class="btn" type="submit" name="summarize" value="1"><svg class="ic"><use href="#i-note"/></svg>Run and summarize</button>{{ end }}<button class="btn btn-primary" type="submit"><svg class="ic"><use href="#i-play"/></svg>Run</button></span></div>
+		<div class="form-foot note"><span></span><span class="actions">{{ if .Summarize }}<button class="btn" type="submit" name="summarize" value="1"><svg class="ic"><use href="#i-note"/></svg>Run and summarize</button>{{ end }}<button class="btn btn-primary" type="submit"><svg class="ic"><use href="#i-play"/></svg>Run</button></span></div>
 	</form>
 	{{- /* The user's last Run: a run of @host:<host> a host, one batch. While one
 	     runs, the page fetches itself and puts this back. */}}

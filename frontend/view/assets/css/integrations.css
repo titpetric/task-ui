@@ -48,14 +48,15 @@
     max-width: none;
   }
 
-  /* Save, Sync now, Dry run and Clear wrap in a narrow cell. */
+  /* Dry run, Sync now and Save wrap in a narrow cell. */
   & .form-foot {
     flex-wrap: wrap;
   }
 }
 
-/* The row's heading line: the name with its badge, the Show switch at
-   the end; the steps cell's heading sits on the same line. */
+/* The row's heading line: the name with its badge, the Show switch and
+   the [...] menu with Clear at the end; the steps cell's heading sits on
+   the same line. */
 .integration-head {
   display: flex;
   align-items: baseline;

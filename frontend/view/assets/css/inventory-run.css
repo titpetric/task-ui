@@ -145,7 +145,7 @@
   overflow: auto;
 }
 
-.note-form-foot .actions {
+.form-foot.note .actions {
   display: flex;
   gap: 0.5rem;
   flex-shrink: 0;

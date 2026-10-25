@@ -236,16 +236,16 @@
 			<button type="button" class="btn btn-sm" id="run-next" title="The run after this one">Next ›</button>
 		</nav>
 		<a class="btn btn-sm" id="run-report" href="#" title="Claude's answer or summary, as a document" hidden>Report</a>
+		<button type="button" class="btn" id="run-close" aria-label="Close">Close</button>
 		<span class="hint" id="run-hint"></span>
 		<button type="button" class="btn" id="run-attach" hidden>Attach</button>
-		<button type="button" class="btn btn-primary" id="run-force" hidden>Run force</button>
 		<button type="button" class="btn" id="run-again" hidden>Run again</button>
 		<button type="button" class="btn" id="run-take" aria-pressed="false" title="Send your keystrokes to the run, to answer a prompt it waits on" hidden>Take input</button>
 		<button type="button" class="btn" id="run-stop" hidden>Stop</button>
 		<button type="button" class="btn btn-danger" id="run-kill" hidden>Kill</button>
 		<button type="button" class="btn" id="run-pause" hidden>Pause</button>
 		<button type="button" class="btn" id="run-restart" hidden>Restart</button>
-		<button type="button" class="btn" id="run-close" aria-label="Close">Close</button>
+		<button type="button" class="btn btn-primary" id="run-force" hidden>Run force</button>
 	</div>
 </dialog>
 {{- /* The image window: an image or an svg of the artifacts, scaled to
@@ -313,7 +313,7 @@
 		<h3 id="workflow-input-title">Run</h3>
 		<p>Optional input for the workflow's prompt. Claude reads it after the prompt, under the line <code>Input:</code>.</p>
 		<textarea name="input" rows="3" spellcheck="false" aria-label="Input for the prompt"></textarea>
-		<div class="confirm-foot">
+		<div class="form-foot">
 			<button type="button" class="btn" data-workflow-input-cancel>Cancel</button>
 			<button type="submit" class="btn btn-primary">Run</button>
 		</div>
@@ -322,7 +322,7 @@
 <dialog class="confirm" id="confirm-dialog" aria-labelledby="confirm-title">
 	<h3 id="confirm-title">Are you sure?</h3>
 	<p id="confirm-text"></p>
-	<div class="confirm-foot">
+	<div class="form-foot">
 		<button type="button" class="btn" id="confirm-cancel">Cancel</button>
 		<button type="button" class="btn btn-danger" id="confirm-ok">Delete</button>
 	</div>

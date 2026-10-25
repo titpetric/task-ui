@@ -25,8 +25,9 @@
   }
 }
 
-.note-form-foot {
-  display: flex;
+/* The foot of a note or prompt form: a line of words at the start, the
+   buttons at the end. */
+.form-foot.note {
   align-items: center;
   justify-content: space-between;
   gap: 1rem;

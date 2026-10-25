@@ -93,7 +93,7 @@
 			<label for="hr-branch">Branch <span class="faint">optional</span></label>
 			<input type="text" id="hr-branch" name="branch" value="{{ $home.Branch }}" spellcheck="false" autocomplete="off">
 		</div>
-		<div class="confirm-foot">
+		<div class="form-foot">
 			<button type="button" class="btn" data-dialog-close>Cancel</button>
 			<button class="btn btn-primary" type="submit">Clone</button>
 		</div>
@@ -125,7 +125,7 @@
 			<input type="password" id="wx-confirm" name="confirm" autocomplete="new-password" spellcheck="false">
 		</div>
 		<p class="passphrase-note" data-passphrase-note hidden>Store this passphrase before you export: task-ui keeps no copy, and nothing recovers it.</p>
-		<div class="confirm-foot">
+		<div class="form-foot">
 			<button type="button" class="btn" data-dialog-close>Cancel</button>
 			<button class="btn btn-primary" type="submit"><svg class="ic"><use href="#i-download"/></svg>Export</button>
 		</div>
