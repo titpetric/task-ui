@@ -19,7 +19,7 @@ func (h *Handlers) jobStep(r *http.Request, step StepRequest) (model.WorkflowSte
 	if step.Job == model.HostBare {
 		return model.WorkflowStep{}, fmt.Errorf("%s / %s: %w", step.Folder, step.Job, folder.ErrHostBare)
 	}
-	f, job, problem := h.stepTarget(r, step.Folder, step.Job)
+	f, job, problem := h.target(r, step.Folder, step.Job)
 	if f == nil {
 		return model.WorkflowStep{}, h.stepLacks(r, step)
 	}

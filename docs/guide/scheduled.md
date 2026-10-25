@@ -127,6 +127,8 @@ is the decision.
 **Enable** starts it again. The schedule's user changes or deletes it, as does anyone else
 who may run its job: changing takes Allow Edits on Schedules,
 `schedule/edit`, deleting Allow Deletes, `schedule/delete`. When its job leaves the folder, task-ui disables the schedule.
+A folder that Recursive off in the project or workspace settings hides
+from the listings keeps its schedules: hidden is not gone.
 
 ---
 

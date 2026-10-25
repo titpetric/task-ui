@@ -24,7 +24,7 @@ func TestSchedules(t *testing.T) {
 	// The table fits its box: Last run goes on a narrow one, and a
 	// narrower one shows each schedule as a card, State kept.
 	assert.Contains(t, body, `<div class="table-wrap fit">
-<table class="table fit-cards">`)
+	<table class="table fit-cards">`)
 	assert.Contains(t, body, `<th class="hide-narrow">Last run</th>`)
 	assert.Contains(t, body, `<td data-label="State"><span class="badge ok">enabled</span></td>`)
 	assert.Contains(t, body, `class="badge">disabled`)

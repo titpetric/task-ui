@@ -144,6 +144,9 @@ counted from its own folder, in a workspace as at the root.
 The deeper folders leave the sidebar, the folder pages, the dashboard
 and `list_jobs`; their `/f/` path opens as a directory of the folder
 above, to browse, and **Files** still holds the whole checkout.
+Recursive hides a folder, it does not disable what runs there: a
+schedule, a pin or a run start that names a deeper folder resolves it
+all the same, for a user whose folders hold it.
 
 An agent sees the same list over [MCP](mcp.md): `list_jobs` returns the
 folders, their jobs, whether its user may run each, and how each last

@@ -131,7 +131,7 @@ func TestSecrets_Reads(t *testing.T) {
 	log := f.page(t, asAdmin, "/settings/secrets/"+id+"/reads")
 	assert.Contains(t, log, "<h2>Reads of DB_PASS")
 	assert.Equal(t, 50, strings.Count(log, `<td class="key">infra/plan</td>`))
-	assert.Contains(t, log, `href="/runs/`+last.ID+`"`)
+	assert.Contains(t, log, `<a class="faint mono" href="/runs/`+last.ID+`" title="`+last.ID+`">`+last.ID[:8]+`</a>`)
 	assert.Contains(t, log, `rel="next">Next</a>`)
 	assert.NotContains(t, log, "hunter2secret")
 	assert.Equal(t, http.StatusNotFound, f.get(t, asAdmin, "/settings/secrets/"+model.NewID()+"/reads").Status)

@@ -15,7 +15,10 @@ import (
 	"github.com/titpetric/task-ui/storage"
 )
 
-// Catalogue finds the folder a schedule names. folder.Discovery is one.
+// Catalogue finds the folder a schedule names: every folder with a job,
+// the ones the workspace and project settings hide from the listings
+// too, as the composition's Steps catalogue does, so a hidden folder
+// keeps its schedules. folder.Discovery is one.
 type Catalogue interface {
 	Find(id string) *folder.Folder
 }

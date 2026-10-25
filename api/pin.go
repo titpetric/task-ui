@@ -91,7 +91,7 @@ func (h *Handlers) pinTarget(r *http.Request, req PinRequest) string {
 	if req.Dir != "" || len(req.Args) > 0 {
 		return "a dir or args pin a job: name it"
 	}
-	f, rest := folder.Resolve(h.opts.Catalogue, req.Folder)
+	f, rest := folder.Resolve(h.every(), req.Folder)
 	if f == nil || !access.UserFrom(r.Context()).CanSee(f.ID) {
 		return "no such folder"
 	}

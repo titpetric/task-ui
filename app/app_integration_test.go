@@ -77,6 +77,31 @@ func TestNew(t *testing.T) {
 	assert.Equal(t, "site", a.Catalogue.Find("site").ID)
 }
 
+// A schedule on a folder that Recursive off hides from the listings
+// still fires: the scheduler resolves it through the catalogue of every
+// folder with a job, and the tick leaves it enabled.
+func TestNew_SchedulerHidden(t *testing.T) {
+	t.Parallel()
+	a := newApp(t, "admin")
+	ctx := context.Background()
+	makeFolder(t, a.Config.Root, "site/sub/deep")
+	assert.NoError(t, storage.NewProjectStorage(a.DB).Create(ctx, &model.Project{Folder: "site", Shallow: true}))
+	assert.Nil(t, a.Catalogue.Find("site/sub/deep"), "hidden from the listings")
+
+	admin, err := a.Users.GetByName(ctx, "admin")
+	assert.NoError(t, err)
+	due := time.Now().Add(-time.Minute)
+	schedule := &model.Schedule{Folder: "site/sub/deep", Job: "build", Expression: "@hourly", Enabled: 1, NextRunAt: &due, UserID: admin.ID, UserName: admin.Name}
+	assert.NoError(t, a.Scheduler.Schedules.Create(ctx, schedule))
+
+	started, err := a.Scheduler.Tick(ctx)
+	assert.NoError(t, err)
+	assert.Equal(t, 1, started)
+	got, err := a.Scheduler.Schedules.Get(ctx, schedule.ID)
+	assert.NoError(t, err)
+	assert.True(t, got.IsEnabled(), "hidden is not gone")
+}
+
 func TestNew_Errors(t *testing.T) {
 	t.Parallel()
 

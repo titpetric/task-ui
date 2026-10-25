@@ -75,7 +75,7 @@ func (h *Handlers) mayRun(r *http.Request, steps []model.WorkflowStep) string {
 			}
 			continue
 		}
-		f, job, _ := h.stepTarget(r, step.Folder, step.Job)
+		f, job, _ := h.target(r, step.Folder, step.Job)
 		if !h.canRun(r, f, job) {
 			return step.Folder + " / " + step.Job
 		}
