@@ -9,9 +9,9 @@
 
 <div class="grid-2 wide">
 {{- if $f.Path }}
-<form class="form" data-api="/api/env/{{ $p.ID }}/{{ $f.Path }}" data-method="PUT" data-next="{{ $.Href $p.ID }}?notice=Saved+{{ $f.Path }}">
+<form class="form" data-api="/api/env/{{ $p.ID }}/{{ $f.Path }}" data-method="PUT" data-next="{{ $.Href $p.ID }}?notice={{ $f.Path }}+saved">
 {{- else }}
-<form class="form" data-api="/api/env/{{ $p.ID }}/{path}" data-method="PUT" data-next="{{ $.Href $p.ID }}?notice=Saved+{path}">
+<form class="form" data-api="/api/env/{{ $p.ID }}/{path}" data-method="PUT" data-next="{{ $.Href $p.ID }}?notice={path}+saved">
 	<div class="field">
 		<label for="env-path">Path <span class="faint">relative to the folder, such as .env</span></label>
 		<input type="text" id="env-path" name="path" required spellcheck="false" autocomplete="off" placeholder=".env">

@@ -19,7 +19,7 @@ func TestNewMenuItem(t *testing.T) {
 	assert.Equal(t, template.HTMLAttr(`title="say &#34;hi&#34;"`), link.Attrs)
 	assert.False(t, link.Danger)
 
-	btn, err := view.NewMenuItem("rotate", "Rotate Key", "data-api", "/api/keys/k/rotate", "data-confirm", "Rotate <k>?", "disabled", "Delete the backup first")
+	btn, err := view.NewMenuItem("rotate", "Rotate key", "data-api", "/api/keys/k/rotate", "data-confirm", "Rotate <k>?", "disabled", "Delete the backup first")
 	assert.NoError(t, err)
 	assert.Equal(t, template.HTMLAttr(`data-api="/api/keys/k/rotate" data-confirm="Rotate &lt;k&gt;?"`), btn.Attrs)
 	assert.True(t, btn.Disabled)

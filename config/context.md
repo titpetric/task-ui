@@ -56,7 +56,7 @@ over that waits, queued, for a free slot, in order; terminals, `@shell`,
 20 runs per CPU unless an admin sets another length on the Instance
 page; a start past it answers `429`, and `run_job` the same error: start
 it again later. **Run again** starts the same job, directory and arguments.
-**|>summarize** runs a job and has Claude summarise the run on its page
+**|> Summarize** runs a job and has Claude summarise the run on its page
 when it ends; the run window follows the chain to the summary's run, as
 it does a workflow run's steps, with Previous and Next in its foot. A job names its current step with its terminal title,
 `printf '\033]0;building images\007'`, which shows beside the run on

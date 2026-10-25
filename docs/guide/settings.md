@@ -223,7 +223,7 @@ as fits with the whole in its tooltip and a copy button that copies the
 whole line, and the row's **⋯** menu. The menu opens on the key's
 details, its fingerprint, its creation and rotation dates, its backup,
 scope, purpose, `encryption` or `git + ssh`, and links, then Copy public
-key, Download public key, Edit links, Rotate Key or Delete backup, and
+key, Download public key, Edit links, Rotate key or Delete backup, and
 Remove last. The table fits its box at any width; a narrow one leaves
 Algorithm and Size out.
 
@@ -264,9 +264,9 @@ The instance's encryption key, `task_encryption_ed25519`, encrypts the
 integrations' settings. No run, git remote or SSH connection gets it,
 and with it gone the workspaces' secrets still open.
 
-### Rotate Key
+### Rotate key
 
-**Rotate Key**, in the **⋯** menu of a key on the Instance page and in
+**Rotate key**, in the **⋯** menu of a key on the Instance page and in
 Every key here, makes a new key of the same
 algorithm and size under the key's name and moves the previous one to
 `backup/<name>.key` and `.pub` in the key folder, `0600` in a `0700`
@@ -282,7 +282,7 @@ there. Both keys serve meanwhile:
   public key alone still lets them in. Add the new public key there,
   then delete the backup.
 
-A key keeps one backup: while it has one, **Rotate Key** stays off with
+A key keeps one backup: while it has one, **Rotate key** stays off with
 "Delete the backup first". **Delete backup** removes the backup's files
 and record, after a confirm that names its fingerprint; the key then
 rotates again. The routes are `POST /api/keys/{name}/rotate` and
@@ -381,7 +381,7 @@ place, Add secret and Replace the value in dialogs (see
 
 The instance's encryption key encrypts every secret, the workspaces'
 and the integrations': one encryption key per instance, which
-[Rotate Key](#rotate-key) rotates, re-encrypting them all. Runs see no
+[Rotate key](#rotate-key) rotates, re-encrypting them all. Runs see no
 change.
 
 The scopes keep a workspace's secrets out of the environment of

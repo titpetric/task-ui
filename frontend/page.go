@@ -406,6 +406,7 @@ func (h *Handlers) notFound(w http.ResponseWriter, r *http.Request) {
 // missing renders the not found page with a reason.
 func (h *Handlers) missing(w http.ResponseWriter, r *http.Request, reason string) {
 	p := h.page(r, "Not found")
+	p.Crumbs = view.Crumbs("Not found")
 	p.Error = reason
 	h.render(w, http.StatusNotFound, "notfound", p)
 }

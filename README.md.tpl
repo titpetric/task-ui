@@ -20,7 +20,7 @@ admin, a shell and Claude Code in a terminal in that directory.
 
 Claude works beside the jobs. A prompt asks Claude Code in a folder, a
 directory, about a run, from the header on any page, or at the end of a
-workflow, and Claude's reply lands under the question. **|>summarize** runs
+workflow, and Claude's reply lands under the question. **|> Summarize** runs
 a job and has Claude summarise the run. The Notes board takes messages
 and replies, and a note naming a user with `@name` is an instruction to
 that user: to the agent, which works on it at once, or to

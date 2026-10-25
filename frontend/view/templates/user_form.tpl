@@ -6,7 +6,7 @@
 	</div>
 </div>
 
-<form class="form" data-api="/api/users" data-method="POST" data-next="/settings/users?notice=User+created">
+<form class="form" data-api="/api/users" data-method="POST" data-next="/settings/users?notice=User+added">
 	<div class="field">
 		<label for="u-name">Name</label>
 		<input type="text" id="u-name" name="name" required pattern="[a-z0-9][a-z0-9\-]{0,31}" spellcheck="false" autocomplete="off" autofocus>

@@ -42,7 +42,7 @@
 	{{- with $.Activity }}{{ template "activity" . }}{{ end }}
 	<form method="get" action="/workflows/{{ $w.ID }}" class="filters">
 		{{- template "pagesize" $ }}
-		<button class="btn" type="submit">Show</button>
+		<button class="btn" type="submit">Filter</button>
 	</form>
 	<div class="table-wrap">
 	<table class="table cards wf-runs">

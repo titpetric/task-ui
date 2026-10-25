@@ -15,7 +15,7 @@
      the encryption key marked, its public key, as much as fits with the
      whole line in its tooltip, to copy, and the [...] menu, its details
      on top, the purpose among them, then
-     Copy and Download, Edit links, Rotate Key or Delete backup, and
+     Copy and Download, Edit links, Rotate key or Delete backup, and
      Remove last. next is the page a change returns to, Edit links
      too. On a workspace's
      page, a key of the workspace links and removes through the
@@ -46,9 +46,9 @@
 		(and $canEdit (not $k.Encrypts) (not $inline) (item "edit" "Edit links" "href" $edit))
 		(and $canRemove (not $k.Encrypts) $inline (item "edit" "Edit links" "data-dialog-open" (print "key-links-" $k.Name)))
 		sep
-		(and $canEdit $k.Backup (item "rotate" "Rotate Key" "disabled" "Delete the backup first"))
+		(and $canEdit $k.Backup (item "rotate" "Rotate key" "disabled" "Delete the backup first"))
 		(and $canEdit $k.Backup (danger "trash" "Delete backup" "data-delete" (print "/api/keys/" $k.Name "/backup") "data-confirm" (print "Delete the backup " $k.Backup ", " $k.BackupFingerprint "? " (or (and $k.Encrypts "Secrets the new key has not re-encrypted stop opening.") "Hosts that know only its public key stop letting runs in.")) "data-confirm-ok" "Delete backup" "data-next" "reload"))
-		(and $canEdit (not $k.Backup) (item "rotate" "Rotate Key" "data-api" (print "/api/keys/" $k.Name "/rotate") "data-method" "POST" "data-next" (print $next (or (and $k.Encrypts "?rekeyed={rekeyed}&what=secret") "?notice=Key+rotated") "#key-" $k.Name) "data-confirm" (print "Rotate " $k.Name ", " $k.Fingerprint "? task-ui makes a new " $k.Algo " key under its name and keeps this one as " (backupName $k.Name) ", which " (or (and $k.Encrypts "still decrypts while task-ui re-encrypts every secret") "runs and git keep using beside the new key until you delete it: add the new public key to the hosts and remotes first") ".") "data-confirm-ok" "Rotate Key"))
+		(and $canEdit (not $k.Backup) (item "rotate" "Rotate key" "data-api" (print "/api/keys/" $k.Name "/rotate") "data-method" "POST" "data-next" (print $next (or (and $k.Encrypts "?rekeyed={rekeyed}&what=secret") "?notice=Key+rotated") "#key-" $k.Name) "data-confirm" (print "Rotate " $k.Name ", " $k.Fingerprint "? task-ui makes a new " $k.Algo " key under its name and keeps this one as " (backupName $k.Name) ", which " (or (and $k.Encrypts "still decrypts while task-ui re-encrypts every secret") "runs and git keep using beside the new key until you delete it: add the new public key to the hosts and remotes first") ".") "data-confirm-ok" "Rotate key"))
 		(and $canRemove (not $k.Encrypts) (danger "trash" "Remove" "data-delete" $remove "data-confirm" (print "Remove " $k.Name "? " (or (and $ws "The workspace's runs lose it.") "Runs and hosts that use it lose access.") " Its files stay in the key folder as a backup.") "data-confirm-ok" "Remove" "data-next" "reload"))
 	) }}</td>
 </tr>
@@ -77,7 +77,7 @@
 <form class="form" data-api="/api/workspaces/{{ $ws.Folder }}/keys/generate" data-method="POST" data-next="{{ $next }}?notice=Key+generated">
 	{{- if $dialog }}
 	<h3 id="key-generate-title">Generate key</h3>
-	<p>Creates an SSH key of {{ $ws.Folder }} in {{ $p.KeysDir }}, named <span class="mono">workspace_{{ $ws.Folder }}_&lt;name&gt;_&lt;algorithm&gt;</span>.</p>
+	<p>Generates an SSH key of {{ $ws.Folder }} in {{ $p.KeysDir }}, named <span class="mono">workspace_{{ $ws.Folder }}_&lt;name&gt;_&lt;algorithm&gt;</span>.</p>
 	{{- end }}
 	<div class="field">
 		<label for="wkg-name">Name</label>
@@ -102,7 +102,7 @@
 		<input type="text" id="wkg-comment" name="comment" value="task-ui {{ $ws.Folder }}">
 	</div>
 	{{- template "keygrants" (list (list) nil $p.Users) }}
-	{{- template "wskeyfoot" (list $next $dialog "Generate") }}
+	{{- template "wskeyfoot" (list $next $dialog "Add key") }}
 </form>
 {{- end }}
 
@@ -133,7 +133,7 @@
 		<input type="text" id="wku-comment" name="comment" value="task-ui {{ $ws.Folder }}">
 	</div>
 	{{- template "keygrants" (list (list) nil $p.Users) }}
-	{{- template "wskeyfoot" (list $next $dialog "Upload") }}
+	{{- template "wskeyfoot" (list $next $dialog "Add key") }}
 </form>
 {{- end }}
 

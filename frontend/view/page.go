@@ -430,7 +430,7 @@ func (p *Page) CanRun(f *folder.Folder, job *folder.Job) bool {
 	return p.permissions().Run(f.ID, f.Allow, job.Allow)
 }
 
-// Summarizes reports whether a job's Run has |>summarize beside it: for Summaries, on a job that ends on its own.
+// Summarizes reports whether a job's Run has |> Summarize beside it: for Summaries, on a job that ends on its own.
 func (p *Page) Summarizes(job *folder.Job) bool {
 	return p.Summaries && job != nil && !job.IsShell() && !job.IsPrompt() && !job.IsNote() && !job.Interactive
 }

@@ -144,7 +144,7 @@ page: the run's terminal, live.
 
 ### The window follows a chain
 
-Some runs come in a chain: **|>summarize**, the job's run and then
+Some runs come in a chain: **|> Summarize**, the job's run and then
 Claude's summary of it; a workflow run, the runs of its steps in order
 and then its prompt's; a command on every host, a run a host and the
 summary with **Run and summarize**. A window on a run of a chain keeps
@@ -300,7 +300,7 @@ curl -s "https://task.example.com/api/prompts?run=<run id>" \
 
 ### Run and summarize
 
-**|>summarize** beside **Run** on a job's page, and **Run and
+**|> Summarize** beside **Run** on a job's page, and **Run and
 summarize** in the `[...]` of its row in a folder's Jobs table, run the job as **Run** does, in its
 window, and when the run ends, in any state,
 task-ui asks Claude about it on the run's page, as you: a thread whose
@@ -318,7 +318,7 @@ another summary.
 **Summarize**, in the **⋯** menu of a row of a job page's runs, starts the same thread for
 a run that ended without a summary, with the same question; the window
 opens on the run and moves on to Claude's run, `Run 2/2`. It shows with
-the same rights as **|>summarize**; while Claude writes, the row reads
+the same rights as **|> Summarize**; while Claude writes, the row reads
 "summarizing". Once Claude answered, a **Summary** line under the row
 opens to the summary, rendered as markdown: headings, lists, tables and
 code, with any raw HTML in it shown as text. The API takes Summarize as

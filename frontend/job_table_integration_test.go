@@ -44,7 +44,7 @@ func TestFolder_FilesDashboard(t *testing.T) {
 
 // A directory of a Files list that is no folder, with a job source at
 // its top, gets a group of the Jobs table, its heading linked to the
-// directory, its jobs run as the folder's in that directory. |>summarize
+// directory, its jobs run as the folder's in that directory. |> Summarize
 // leaves out the interactive ones. The catalogue does not change.
 func TestFolder_DirJobs(t *testing.T) {
 	t.Parallel()

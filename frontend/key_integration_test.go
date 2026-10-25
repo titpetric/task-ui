@@ -98,7 +98,7 @@ func TestKeys_Encryption(t *testing.T) {
 	assert.Contains(t, page, `<span class="mono">task_encryption_ed25519</span>`)
 	assert.Contains(t, page, `<a class="mono" href="/settings/keys/task_ssh_ed25519?next=%2Fsettings%2Finstance">task_ssh_ed25519</a>`, "Edit links returns to the Instance page")
 	assert.Contains(t, page, `data-api="/api/keys/task_encryption_ed25519/rotate" data-method="POST"`)
-	assert.Contains(t, page, "<span>Rotate Key</span>")
+	assert.Contains(t, page, "<span>Rotate key</span>")
 }
 
 // A project that is a checkout with keys in its .ssh/ folder gets a
