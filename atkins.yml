@@ -13,3 +13,11 @@ jobs:
     desc: "Run the integration tests: processes, databases and the network"
     steps:
       - go test -tags integration -count=1 ./...
+
+  deploy:
+    desc: "Deploy docs to cdn.si"
+    vars:
+      stage: $(mktemp -d)
+    cmds:
+      - rsync -a --del ./README.md ./docs ${{stage}}/
+      - rsync -a --del -e 'ssh -p 8022' ${{stage}}/ titpetric@cdn.si:/task-ui/
