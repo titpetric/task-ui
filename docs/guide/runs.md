@@ -365,8 +365,8 @@ runs, as a login shell, with:
   `TASK_UI_PERMISSIONS`, what that user may do in a line, as
   `note/view, note/edit, run; everything else is denied`;
 - `TASK_UI_WORKSPACE`, the name of its [workspace](workspaces.md),
-  `_` at the top of the workspace folder, and `TASK_UI_WORKSPACE_DIR`,
-  its directory, the workspace folder for `_`;
+  `internal` at the top of the workspace folder, and `TASK_UI_WORKSPACE_DIR`,
+  its directory, the workspace folder for `internal`;
 - `HOME` and `TASK_UI_HOME`, the workspace's [home](workspaces.md#the-home),
   `<root>/<workspace>/home`, with the server's registry logins, Claude
   Code settings, cache and `GOPATH` kept in use, and `ATKINS_DB`, the

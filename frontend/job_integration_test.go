@@ -21,7 +21,7 @@ func TestJob(t *testing.T) {
 	f.run(t, "infra", "slow", "ops", model.StateKilled)
 	assert.NoError(t, f.opts.Schedules.Create(context.Background(), &model.Schedule{Folder: "infra", Job: "plan", UserName: "ops", Expression: "@hourly", Enabled: 1}))
 
-	body := f.page(t, asOps, "/f/_/infra/plan")
+	body := f.page(t, asOps, "/f/internal/infra/plan")
 	assert.Contains(t, body, "<h2>plan")
 	// A script is its own source: there is no pipeline file to show.
 	assert.NotContains(t, body, `class="btn btn-sm show-source"`)
@@ -32,7 +32,7 @@ func TestJob(t *testing.T) {
 	assert.Contains(t, body, `data-api="/api/schedules"`)
 	assert.Contains(t, body, "admin, runner")
 
-	viewer := f.page(t, asViewer, "/f/_/infra/plan")
+	viewer := f.page(t, asViewer, "/f/internal/infra/plan")
 	assert.Contains(t, viewer, "you don't have permission to run it")
 	assert.NotContains(t, viewer, `data-api="/api/schedules"`)
 }
@@ -42,7 +42,7 @@ func TestJob_Running(t *testing.T) {
 	f := newFixture(t)
 	session := f.start(t, f.infra, "slow")
 
-	body := f.page(t, asOps, "/f/_/infra/slow")
+	body := f.page(t, asOps, "/f/internal/infra/slow")
 	assert.Contains(t, body, "<b>Running</b>")
 	assert.Contains(t, body, `data-attach="`+session.ID()+`">Attach</a>`)
 	assert.Contains(t, body, `data-kill="`+session.ID()+`"`)
@@ -52,10 +52,10 @@ func TestJob_Missing(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
 
-	res := f.get(t, asOps, "/f/_/infra/nothing")
+	res := f.get(t, asOps, "/f/internal/infra/nothing")
 	assert.Equal(t, http.StatusNotFound, res.Status)
 	assert.Contains(t, res.Body, "No job named nothing in infra")
-	assert.Equal(t, http.StatusNotFound, f.get(t, asOps, "/f/_/nowhere/plan").Status)
+	assert.Equal(t, http.StatusNotFound, f.get(t, asOps, "/f/internal/nowhere/plan").Status)
 }
 
 // A pipeline's job shows its file and the files it includes, each with
@@ -68,13 +68,13 @@ func TestJob_ShowSource(t *testing.T) {
 	f.infra.Job("plan").Kind, f.infra.Job("plan").Source = "atkins", "atkins.yml"
 	assert.NoError(t, os.WriteFile(filepath.Join(f.infra.Dir, "atkins.yml"), []byte("jobs:\n  plan: echo plan\n  apply: echo apply\n"), 0o644))
 
-	job := f.page(t, asOps, "/f/_/infra/plan")
+	job := f.page(t, asOps, "/f/internal/infra/plan")
 	assert.Contains(t, job, `atkins.yml<button type="button" class="btn btn-sm show-source" data-source="infra" data-file="atkins.yml" aria-haspopup="dialog">`)
 	assert.Contains(t, job, `<span>Show 3 lines</span>`)
 	assert.Contains(t, job, `data-source="infra" data-file="vars.yml"`)
 	assert.Contains(t, job, `<dialog class="run source" id="source-dialog"`)
 
-	folder := f.page(t, asOps, "/f/_/infra")
+	folder := f.page(t, asOps, "/f/internal/infra")
 	assert.Contains(t, folder, `data-source="infra" data-file="atkins.yml"`)
 	assert.Contains(t, folder, `data-source="infra" data-file="vars.yml"`)
 }
@@ -89,12 +89,12 @@ func TestJob_Args(t *testing.T) {
 	assert.NoError(t, os.MkdirAll(dir, 0o755))
 	assert.NoError(t, os.WriteFile(filepath.Join(dir, "atkins.yml"), []byte("jobs:\n  custom:\n    desc: Compose with arguments\n    args: true\n    steps:\n      - exec: [docker, compose]\n  logs:\n    desc: Logs with arguments\n    args: true\n    steps:\n      - run: docker compose logs\n  up:\n    desc: Up\n    steps:\n      - run: docker compose up -d\n"), 0o644))
 
-	body := f.page(t, asOps, "/f/_/infra/stack")
+	body := f.page(t, asOps, "/f/internal/infra/stack")
 	assert.Contains(t, body, `data-job="custom" data-title="infra/stack / custom" data-args="docker compose" title="Run infra/stack / custom: Compose with arguments, with arguments after docker compose"`)
 	assert.Contains(t, body, `data-job="logs" data-title="infra/stack / logs" data-args="atkins -f atkins.yml logs --"`)
 	assert.NotContains(t, body, `data-job="up" data-title="infra/stack / up" data-args`)
 
-	page := f.page(t, asOps, "/f/_/infra/stack/custom")
+	page := f.page(t, asOps, "/f/internal/infra/stack/custom")
 	assert.Contains(t, page, `data-args="docker compose"`)
 	assert.Contains(t, page, `Run...</button>`)
 	assert.Contains(t, page, `<code>exec: docker compose</code>`)

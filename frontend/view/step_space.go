@@ -19,7 +19,7 @@ type StepSpace struct {
 	Title string
 }
 
-// StepSpaces lists _, while it exists or a step folder lies at the root, then by rank each named workspace holding a folder of StepFolders.
+// StepSpaces lists internal, while it exists or a step folder lies at the root, then by rank each named workspace holding a folder of StepFolders.
 func (p *Page) StepSpaces() []StepSpace {
 	titles := map[string]string{}
 	root := false
@@ -180,7 +180,7 @@ func (p *Page) StepMove(steps []Step, ws string) (moved []Step, missed int) {
 	return moved, missed
 }
 
-// StepSpaceOf returns the workspace of a folder ID, _ for the root and the projects at its top.
+// StepSpaceOf returns the workspace of a folder ID, internal for the root and the projects at its top.
 func (p *Page) StepSpaceOf(id string) string {
 	return p.workspaceOf(id)
 }

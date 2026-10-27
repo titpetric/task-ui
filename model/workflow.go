@@ -63,7 +63,7 @@ func (s WorkflowRunStep) IsSummary() bool { return s.StepKind() == StepSummary }
 func asks(kind string) bool { return kind == StepPrompt || kind == StepSummary }
 
 // Place is where a prompt step asks Claude: its folder and the
-// directory inside it, or _ for the root.
+// directory inside it, or internal for the root.
 func (s WorkflowStep) Place() string {
 	folder := s.Folder
 	if folder == "" {

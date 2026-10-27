@@ -150,7 +150,7 @@ func TestView_RenderDashboard(t *testing.T) {
 	assert.NoError(t, v.Render(&buf, "home", p))
 	out := buf.String()
 	assert.Contains(t, out, `<thead><tr><th>Folder</th><th class="col"><span>plan</span></th><th class="col"><span>other</span></th></tr></thead>`)
-	assert.Contains(t, out, `<td class="key nowrap"><a href="/f/_/infra">infra</a></td>`)
+	assert.Contains(t, out, `<td class="key nowrap"><a href="/f/internal/infra">infra</a></td>`)
 	assert.Contains(t, out, `<span class="cc-slot" data-cc="infra/plan" data-folder="infra" data-job="plan" data-name="plan" data-label="" data-last="ok" data-can><button type="button" class="cc ok" data-run data-folder="infra" data-job="plan" data-title="infra / plan" title="Run infra / plan"><svg class="ic"><use href="#i-play"/></svg></button></span>`)
 	assert.NotContains(t, out, `class="named"`)
 	assert.NotContains(t, out, `<td class="actions">`)

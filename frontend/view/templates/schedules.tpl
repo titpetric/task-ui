@@ -18,7 +18,7 @@
 			<option value="{{ $p.ID }}"{{ if eq (index $.Form "folder") $p.ID }} selected{{ end }}>{{ $p.ID }}</option>
 			{{- end }}{{ end }}
 			{{- if .HostJobs }}
-			<option value="_"{{ if eq (index $.Form "folder") "_" }} selected{{ end }}>_</option>
+			<option value="internal"{{ if eq (index $.Form "folder") "internal" }} selected{{ end }}>internal</option>
 			{{- end }}
 		</select>
 	</div>
@@ -63,7 +63,7 @@
 			<tr>
 				{{- $what := print .Folder " / " .Job }}{{ if .IsWorkflow }}{{ $what = or (index $.WorkflowNames .WorkflowID) .WorkflowID }}{{ end }}
 				<td data-label="Folder">{{ if .IsWorkflow }}<svg class="ic lead"><use href="#i-flow"/></svg>workflow{{ else }}<a href="{{ $.Href .Folder }}">{{ .Folder }}</a>{{ end }}</td>
-				<td class="key" data-label="Job">{{ if .IsWorkflow }}<a href="/workflows/{{ .WorkflowID }}">{{ $what }}</a>{{ else if and (eq .Folder "_") (hasPrefix .Job "@") }}{{ .Job }}{{ else }}<a href="{{ $.Href .Folder }}/{{ .Job }}">{{ .Job }}</a>{{ end }}{{ with argLine .Job .Args }} <code>{{ . }}</code>{{ end }}</td>
+				<td class="key" data-label="Job">{{ if .IsWorkflow }}<a href="/workflows/{{ .WorkflowID }}">{{ $what }}</a>{{ else if and (eq .Folder "internal") (hasPrefix .Job "@") }}{{ .Job }}{{ else }}<a href="{{ $.Href .Folder }}/{{ .Job }}">{{ .Job }}</a>{{ end }}{{ with argLine .Job .Args }} <code>{{ . }}</code>{{ end }}</td>
 				<td data-label="Expression"><code class="nowrap">{{ .Expression }}</code></td>
 				<td data-label="Next run">{{ template "nextrun" . }}</td>
 				<td class="nowrap hide-narrow" data-label="Last run">{{ if .LastRunAt }}{{ ago .LastRunAt }}{{ else }}<span class="faint">never</span>{{ end }}</td>

@@ -183,8 +183,8 @@ func TestView_RenderJobTable(t *testing.T) {
 	// other.
 	assert.Contains(t, out, `<table class="table control col-hover">`)
 	assert.NotContains(t, out, `<th class="col">`)
-	assert.Contains(t, out, `<a class="badge" href="/f/_/infra">Makefile</a>`)
-	assert.Contains(t, out, `<a class="badge" href="/f/_/infra/tools">tools/Makefile</a>`)
+	assert.Contains(t, out, `<a class="badge" href="/f/internal/infra">Makefile</a>`)
+	assert.Contains(t, out, `<a class="badge" href="/f/internal/infra/tools">tools/Makefile</a>`)
 	assert.Contains(t, out, `<span class="faint">No targets in Makefile.</span>`)
 	assert.Equal(t, 5, strings.Count(out, `<tr class="named" data-span>`))
 	for _, kind := range []string{"files", "@compose", "built-in"} {
@@ -215,7 +215,7 @@ func TestView_RenderJobTable(t *testing.T) {
 	signIn(viewer, &model.User{Name: "guest", Role: model.RoleViewer}, nil)
 	out = render(viewer)
 	assert.NotContains(t, out, "data-run ")
-	assert.Contains(t, out, `<a class="cc named idle never" href="/f/_/infra/build" title="infra / build: Build the images: no permission to run it">`)
+	assert.Contains(t, out, `<a class="cc named idle never" href="/f/internal/infra/build" title="infra / build: Build the images: no permission to run it">`)
 
 	running := admin(t)
 	table(running)
@@ -300,7 +300,7 @@ func TestView_RenderReport(t *testing.T) {
 	assert.Contains(t, out, "<h3>Summary</h3>")
 	assert.Contains(t, out, `href="/runs/`+about.ID+`">Run</a>`)
 	assert.Contains(t, out, `href="/runs/c1">Claude's run</a>`)
-	assert.Contains(t, out, `href="/f/_/infra/plan">Job</a>`)
+	assert.Contains(t, out, `href="/f/internal/infra/plan">Job</a>`)
 	assert.Contains(t, out, "&lt;script&gt;")
 	assert.NotContains(t, out, `data-output=`)
 	assert.NotContains(t, out, "<h3>Question</h3>")
@@ -381,10 +381,10 @@ func TestWorkspaceEdit_Page(t *testing.T) {
 	buf.Reset()
 	assert.NoError(t, v.Render(&buf, "workspace_edit", p))
 	assert.Contains(t, buf.String(), `data-dialog-open="export-dialog"`)
-	assert.Contains(t, buf.String(), `data-delete="/api/workspaces/_"`, "the default workspace deletes like any other")
+	assert.Contains(t, buf.String(), `data-delete="/api/workspaces/internal"`, "the default workspace deletes like any other")
 	assert.NotContains(t, buf.String(), `Empty</span>`)
 	assert.Contains(t, buf.String(), `data-confirm-ok="Delete"`)
-	assert.Contains(t, buf.String(), `Delete the default workspace _ with its keys, its home? The root&#39;s built-in jobs keep running; Add project then needs a workspace.`)
+	assert.Contains(t, buf.String(), `Delete the default workspace internal with its keys, its home? The root&#39;s built-in jobs keep running; Add project then needs a workspace.`)
 }
 
 // A workspace's settings page shows its home: an empty one with Clone,
@@ -453,7 +453,7 @@ func TestView_RenderEnvironment(t *testing.T) {
 	buf.Reset()
 	assert.NoError(t, v.Render(&buf, "folder", p))
 	assert.Contains(t, buf.String(), "Environment")
-	assert.Contains(t, buf.String(), `href="/f/_/infra/env/conf/.env"`)
+	assert.Contains(t, buf.String(), `href="/f/internal/infra/env/conf/.env"`)
 	assert.NotContains(t, buf.String(), "A=1")
 }
 

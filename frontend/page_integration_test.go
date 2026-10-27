@@ -63,7 +63,7 @@ func TestPage_Chrome(t *testing.T) {
 	assert.Contains(t, head, prompt+"\n\t\t"+`<span class="header-runas"><select class="header-prompt-user" id="header-prompt-user" aria-label="Runs as">`)
 	// Off a folder or a run it asks at the root, and the logo is a button
 	// of its own that opens the panel, the name a link home.
-	assert.Contains(t, head, `<header class="top" data-prompt-folder="_" data-prompt-dir="" data-prompt-run="" data-prompt-label="_" data-prompt-href="/f/_">`)
+	assert.Contains(t, head, `<header class="top" data-prompt-folder="internal" data-prompt-dir="" data-prompt-run="" data-prompt-label="internal" data-prompt-href="/f/internal">`)
 	assert.Contains(t, head, `<h1><a href="/"><span>TaskUI</span></a><button type="button" class="logo-toggle" id="header-toggle"`)
 
 	limited := f.page(t, asLimited, "/")
@@ -89,13 +89,13 @@ func TestPage_HeaderPrompt(t *testing.T) {
 		body := f.page(t, asAdmin, path)
 		return body[strings.Index(body, `<header class="top"`):strings.Index(body, `<button type="button" class="btn-icon menu-toggle"`)]
 	}
-	assert.Contains(t, header("/f/_/infra"), `data-prompt-folder="infra" data-prompt-dir="" data-prompt-run="" data-prompt-label="infra" data-prompt-href="/f/_/infra"`)
+	assert.Contains(t, header("/f/internal/infra"), `data-prompt-folder="infra" data-prompt-dir="" data-prompt-run="" data-prompt-label="infra" data-prompt-href="/f/internal/infra"`)
 	run := f.run(t, "infra", "plan", "ops", model.StateOK)
 	assert.Contains(t, header("/runs/"+run.ID), `data-prompt-folder="infra" data-prompt-dir="" data-prompt-run="`+run.ID+`" data-prompt-label="run `+run.ID[:4]+`…" data-prompt-href="/runs/`+run.ID+`"`)
 	prompt := f.run(t, "infra", model.PromptJob, "admin", model.StateOK)
 	assert.Contains(t, header("/runs/"+prompt.ID), `data-prompt-folder="infra" data-prompt-dir="" data-prompt-run=""`, "a prompt's run asks in its place")
 	for _, path := range []string{"/", "/runs", "/notes", "/settings"} {
-		assert.Contains(t, header(path), `data-prompt-folder="_" data-prompt-dir="" data-prompt-run="" data-prompt-label="_"`, path)
+		assert.Contains(t, header(path), `data-prompt-folder="internal" data-prompt-dir="" data-prompt-run="" data-prompt-label="internal"`, path)
 	}
 }
 
@@ -119,7 +119,7 @@ func TestPage_ProjectsFold(t *testing.T) {
 	assert.True(t, infra >= 0 && edge > infra && private > edge, "infra holds infra/edge, then private")
 	assert.True(t, strings.Index(body[infra:], "</details>") > edge-infra, "infra closes after infra/edge")
 	chev := body[infra : strings.Index(body[infra:], "</summary>")+infra]
-	assert.Contains(t, chev, `<a class="section" href="/f/_/infra" data-folder="infra"`)
+	assert.Contains(t, chev, `<a class="section" href="/f/internal/infra" data-folder="infra"`)
 	assert.Contains(t, chev, `<svg class="ic chev"><use href="#i-chev"/></svg>`)
 	// Without a workspace the sidebar has none to fold.
 	assert.NotContains(t, body, `class="workspace`)
@@ -131,16 +131,16 @@ func TestPage_ProjectsFold(t *testing.T) {
 	assert.NotContains(t, hidden, `data-project="infra"`)
 	assert.NotContains(t, hidden, `<details class="folder" data-folder="infra/edge"`)
 	assert.Contains(t, hidden, `data-project="private"`)
-	assert.Equal(t, http.StatusOK, f.get(t, asAdmin, "/f/_/infra").Status)
+	assert.Equal(t, http.StatusOK, f.get(t, asAdmin, "/f/internal/infra").Status)
 	assert.NoError(t, f.opts.Projects.Delete(context.Background(), mustProject(t, f, "infra").ID))
 
 	// The sidebar marks the open project, on the project and its whole row.
-	page := f.page(t, asAdmin, "/f/_/infra")
+	page := f.page(t, asAdmin, "/f/internal/infra")
 	assert.Contains(t, page, `<details class="project active" data-project="infra" open>`)
 	assert.Contains(t, page, `<summary class="active" title="infra/`)
-	assert.Contains(t, page, `<a class="section active" href="/f/_/infra"`)
+	assert.Contains(t, page, `<a class="section active" href="/f/internal/infra"`)
 	// A folder inside it keeps the project open, and lights its own row only.
-	edgePage := f.page(t, asAdmin, "/f/_/infra/edge")
+	edgePage := f.page(t, asAdmin, "/f/internal/infra/edge")
 	assert.Contains(t, edgePage, `<details class="project active" data-project="infra" open>`)
 	assert.NotContains(t, edgePage, `<summary class="active"`)
 }
@@ -158,7 +158,7 @@ func TestPage_AdminOnly(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
 
-	for _, path := range []string{"/settings", "/settings/projects", "/settings/keys", "/settings/secrets", "/settings/users", "/f/_/infra/env/.env"} {
+	for _, path := range []string{"/settings", "/settings/projects", "/settings/keys", "/settings/secrets", "/settings/users", "/f/internal/infra/env/.env"} {
 		res := f.get(t, asOps, path)
 		assert.Equal(t, http.StatusForbidden, res.Status, path)
 		assert.Contains(t, res.Body, "You need permission to open this page.")
@@ -168,25 +168,25 @@ func TestPage_AdminOnly(t *testing.T) {
 	}
 }
 
-// No folder is internal: not in the sidebar, not on the dashboard, not
-// at /f/internal, for anyone; its older runs still open for an admin.
+// The default workspace is internal. Older runs of the Claude jobs
+// carry it as their folder and open; _, its earlier name, moves
+// permanently to it.
 func TestPage_internal(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
-	older := f.run(t, model.Internal, "claude-note", "claude", model.StateOK)
+	older := f.run(t, model.Default, "claude-note", "claude", model.StateOK)
 
-	for _, user := range []string{asAdmin, asOps, asViewer, asLimited} {
-		assert.NotContains(t, f.page(t, user, "/"), `/f/internal`, user)
-		assert.NotContains(t, sidebar(f.page(t, user, "/runs")), `internal`, user)
-		assert.Equal(t, http.StatusNotFound, f.get(t, user, "/f/internal").Status, user)
-		assert.Equal(t, http.StatusNotFound, f.get(t, user, "/f/internal/claude-note").Status, user)
-	}
 	runs := f.page(t, asAdmin, "/runs")
 	assert.Contains(t, runs, "/runs/"+older.ID)
 	page := f.page(t, asAdmin, "/runs/"+older.ID)
-	assert.Contains(t, page, "<title>internal / claude-note")
+	assert.Contains(t, page, "<title>claude-note | TaskUI")
 	assert.NotContains(t, page, "promptbox")
-	assert.NotContains(t, f.page(t, asOps, "/runs"), "/runs/"+older.ID)
+
+	for from, to := range map[string]string{"/f/_": "/f/internal", "/f/_/infra": "/f/internal/infra", "/f/_/infra/plan?x=1": "/f/internal/infra/plan?x=1"} {
+		res := f.get(t, asAdmin, from)
+		assert.Equal(t, http.StatusMovedPermanently, res.Status, from)
+		assert.Equal(t, to, res.Location, from)
+	}
 }
 
 // A workspace in the sidebar folds its projects under it, each a project
@@ -344,6 +344,6 @@ func TestPage_rootRunName(t *testing.T) {
 	runs := f.page(t, asAdmin, "/runs")
 	assert.NotContains(t, runs, ">_/@shell")
 	assert.NotContains(t, runs, "_ / @shell")
-	assert.Contains(t, runs, `href="/f/_/@shell">@shell</a>`)
+	assert.Contains(t, runs, `href="/f/internal/@shell">@shell</a>`)
 	assert.Contains(t, runs, `title="Open @shell, admin, ok"`)
 }

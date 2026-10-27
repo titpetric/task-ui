@@ -33,12 +33,12 @@ func spacePage(t *testing.T) *view.Page {
 func TestStepSpace(t *testing.T) {
 	t.Parallel()
 	p := spacePage(t)
-	assert.Equal(t, []view.StepSpace{{ID: "_", Title: "Default"}, {ID: "malta", Title: "Malta"}, {ID: "ops", Title: "ops"}}, p.StepSpaces())
+	assert.Equal(t, []view.StepSpace{{ID: "internal", Title: "Default"}, {ID: "malta", Title: "Malta"}, {ID: "ops", Title: "ops"}}, p.StepSpaces())
 	assert.Equal(t, "malta", p.StepSpaceOf("malta/vhosts"))
-	assert.Equal(t, "_", p.StepSpaceOf("infra"))
-	assert.Equal(t, "_", p.StepSpaceOf(""))
+	assert.Equal(t, "internal", p.StepSpaceOf("infra"))
+	assert.Equal(t, "internal", p.StepSpaceOf(""))
 
-	p.WorkspaceList = append(p.WorkspaceList, model.Workspace{Folder: "_", Title: "Root"})
+	p.WorkspaceList = append(p.WorkspaceList, model.Workspace{Folder: "internal", Title: "Root"})
 	assert.Equal(t, "Root", p.StepSpaces()[0].Title)
 
 	// Without the default workspace and without a folder at the root,
@@ -46,7 +46,7 @@ func TestStepSpace(t *testing.T) {
 	p.WorkspaceList = p.WorkspaceList[:1]
 	p.StepFolders = p.StepFolders[len(p.Folders):]
 	assert.Equal(t, []view.StepSpace{{ID: "malta", Title: "Malta"}, {ID: "ops", Title: "ops"}}, p.StepSpaces())
-	p.WorkspaceList = append(p.WorkspaceList, model.Workspace{Folder: "_", Title: "Root"})
+	p.WorkspaceList = append(p.WorkspaceList, model.Workspace{Folder: "internal", Title: "Root"})
 	assert.Equal(t, "Root", p.StepSpaces()[0].Title, "the default workspace is a place while it exists")
 }
 
@@ -75,9 +75,9 @@ func TestView_RenderStepSpace(t *testing.T) {
 	assert.Contains(t, out, `<option value="workflow:" selected>Workflows</option>`, "the workflow step's")
 	assert.Contains(t, out, `<option value="ops" selected>ops</option>`, "the prompt's")
 	assert.Contains(t, out, `<option value="malta/vhosts" data-workspace="malta" data-rel="vhosts" selected>vhosts</option>`)
-	assert.Contains(t, out, `<option value="infra" data-workspace="_" data-rel="infra">infra</option>`)
+	assert.Contains(t, out, `<option value="infra" data-workspace="internal" data-rel="infra">infra</option>`)
 	assert.Contains(t, out, `<option value="workflow:w2" data-workspace="workflow:" selected>nightly</option>`)
-	assert.Contains(t, out, `<option value="_" data-workspace="_" data-rel=".">the root</option>`)
+	assert.Contains(t, out, `<option value="internal" data-workspace="internal" data-rel=".">the root</option>`)
 	assert.Contains(t, out, `<option value="ops/deploy" data-workspace="ops" data-rel="deploy" selected>deploy</option>`)
 	assert.Contains(t, out, `data-step-folder-label>Workflow</span>`)
 	assert.NotContains(t, out, `value="empty"`, "a workspace without a folder the user sees")
@@ -102,14 +102,14 @@ func TestStepRel(t *testing.T) {
 	assert.Equal(t, "apps/blog", p.StepRel("malta/apps/blog"))
 	assert.Equal(t, "apps/blog", p.StepRel("apps/blog"))
 	assert.Equal(t, ".", p.StepRel("malta"))
-	assert.Equal(t, ".", p.StepRel("_"))
+	assert.Equal(t, ".", p.StepRel("internal"))
 	assert.Equal(t, "the root", p.StepLabel("malta"))
 	assert.Equal(t, "vhosts", p.StepLabel("malta/vhosts"))
 
 	assert.Equal(t, "malta/apps/blog", view.StepFolderIn("malta", "apps/blog"))
-	assert.Equal(t, "apps/blog", view.StepFolderIn("_", "apps/blog"))
+	assert.Equal(t, "apps/blog", view.StepFolderIn("internal", "apps/blog"))
 	assert.Equal(t, "malta", view.StepFolderIn("malta", "."))
-	assert.Equal(t, "_", view.StepFolderIn("_", "."))
+	assert.Equal(t, "internal", view.StepFolderIn("internal", "."))
 }
 
 // Moving the steps keeps each folder and job the workspace has, and
@@ -123,7 +123,7 @@ func TestMoveSteps(t *testing.T) {
 		{Kind: model.StepWorkflow, WorkflowID: "w2"},
 		{Kind: model.StepPrompt, Folder: "infra", Dir: "docs", Prompt: "Why?"},
 		{Kind: model.StepSummary, Folder: "ops/deploy"},
-		{Kind: model.StepSummary, Folder: "_"},
+		{Kind: model.StepSummary, Folder: "internal"},
 	}
 	moved, missed := p.StepMove(steps, "malta")
 	assert.Equal(t, 2, missed)
@@ -134,7 +134,7 @@ func TestMoveSteps(t *testing.T) {
 	assert.Equal(t, view.Step{Kind: model.StepSummary, Folder: "malta", Missing: "deploy is not in Malta."}, moved[4])
 	assert.Equal(t, view.Step{Kind: model.StepSummary, Folder: "malta"}, moved[5])
 
-	back, missed := p.StepMove(moved, "_")
+	back, missed := p.StepMove(moved, "internal")
 	assert.Equal(t, 0, missed)
 	assert.Equal(t, "infra", back[0].Folder)
 	assert.Equal(t, "plan", back[0].Job)
@@ -155,7 +155,7 @@ func TestMoveSteps_FolderNotTitle(t *testing.T) {
 	steps := []view.Step{
 		{Kind: model.StepJob, Folder: "infra", Job: "plan"},
 		{Kind: model.StepPrompt, Folder: "infra"},
-		{Kind: model.StepSummary, Folder: "_"},
+		{Kind: model.StepSummary, Folder: "internal"},
 	}
 	moved, missed := p.StepMove(steps, "malta")
 	assert.Equal(t, 0, missed)
@@ -178,7 +178,7 @@ func TestView_RenderStepValuesAreIDs(t *testing.T) {
 	v, err := view.New()
 	assert.NoError(t, err)
 	p := movePage(t)
-	p.WorkspaceList = append(p.WorkspaceList, model.Workspace{Folder: "_", Title: "Root"}, model.Workspace{Folder: "ops", Title: "Operations"})
+	p.WorkspaceList = append(p.WorkspaceList, model.Workspace{Folder: "internal", Title: "Root"}, model.Workspace{Folder: "ops", Title: "Operations"})
 	p.StepWorkflows = []view.Workflow{{Workflow: model.Workflow{ID: "w2", Name: "nightly"}}}
 	p.Workflow.Steps, _ = p.StepMove([]view.Step{{Kind: model.StepJob, Folder: "infra", Job: "plan"}, {Kind: model.StepPrompt, Folder: "ops/deploy", Prompt: "Why?"}}, "malta")
 	var buf bytes.Buffer
@@ -214,7 +214,7 @@ func TestView_RenderMoveSteps(t *testing.T) {
 	assert.NoError(t, v.Render(&buf, "workflow_edit", p))
 	out := buf.String()
 	assert.Contains(t, out, `href="/workflows/w1/edit?workspace=malta"><svg class="ic"><use href="#i-folder"/></svg><span>Move to Malta</span>`)
-	assert.Contains(t, out, `href="/workflows/w1/edit?workspace=_">`)
+	assert.Contains(t, out, `href="/workflows/w1/edit?workspace=internal">`)
 	assert.Contains(t, out, `<p class="wf-hint" data-step-hint role="status">deploy is not in Malta.</p>`)
 
 	p.StepFolders, p.Workspaces = p.StepFolders[:1], nil

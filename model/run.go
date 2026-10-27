@@ -11,7 +11,7 @@ const (
 	// PromptJob is the job of a prompt's run, in the folder and the
 	// directory the prompt asks in.
 	PromptJob = "@claude-prompt"
-	// NoteJob is the job of the Notes agent's run, in the root, _.
+	// NoteJob is the job of the Notes agent's run, in the root, internal.
 	NoteJob = "@claude-note"
 	// ClaudeJob is Claude Code in a terminal, in the folder or a
 	// directory inside it.
@@ -43,7 +43,7 @@ func (r *Run) IsPrompt() bool {
 	if r == nil {
 		return false
 	}
-	return r.Job == PromptJob || (IsInternal(r.Folder) && r.Job == "claude-prompt")
+	return r.Job == PromptJob || (r.Folder == Default && r.Job == "claude-prompt")
 }
 
 // IsNote reports whether the run is the Notes agent's: @claude-note, or
@@ -52,7 +52,7 @@ func (r *Run) IsNote() bool {
 	if r == nil {
 		return false
 	}
-	return r.Job == NoteJob || (IsInternal(r.Folder) && r.Job == "claude-note")
+	return r.Job == NoteJob || (r.Folder == Default && r.Job == "claude-note")
 }
 
 // IsClaude reports whether the run is Claude's own: a prompt's, the Notes agent's, Claude Code in a terminal or an internal one.
@@ -61,7 +61,7 @@ func (r *Run) IsClaude() bool {
 	if r == nil {
 		return false
 	}
-	return r.IsPrompt() || r.IsNote() || r.Job == ClaudeJob || IsInternal(r.Folder)
+	return r.IsPrompt() || r.IsNote() || r.Job == ClaudeJob || (r.Folder == Default && r.Job == "claude")
 }
 
 // Key is the identity of a job's runs that the run lock takes, as RunKey builds it.
@@ -102,7 +102,7 @@ func (r Run) Where() string {
 }
 
 // Place is the folder a page names the run by: Where, with the root's
-// _/ dropped from a directory of it; _ alone for a job of the root.
+// internal/ dropped from a directory of it; internal alone for a job of the root.
 func (r Run) Place() string {
 	if r.Folder == Default && r.Dir != "" {
 		return r.Dir
@@ -111,7 +111,7 @@ func (r Run) Place() string {
 }
 
 // Name returns the run's title on a page: Place / job, or the job alone for the root, such as @host:web1.
-// The stored row keeps the folder _.
+// The stored row keeps the folder internal.
 func (r Run) Name() string {
 	if r.Folder == Default && r.Dir == "" {
 		return r.Job
@@ -119,7 +119,7 @@ func (r Run) Name() string {
 	return r.Place() + " / " + r.Job
 }
 
-// Path names the run in one word, folder/job without the root's _/: @claude-note, deploy/up.
+// Path names the run in one word, folder/job without the root's internal/: @claude-note, deploy/up.
 func (r Run) Path() string {
 	return strings.TrimPrefix(RunKey(r.Folder, r.Dir, r.Job), Default+"/")
 }

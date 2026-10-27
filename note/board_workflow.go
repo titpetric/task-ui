@@ -33,7 +33,7 @@ func WorkflowQuestion(prompt, input string) string {
 // WorkflowSummaryQuestion is the question of a workflow run's summary step; claude.RunSummary goes beside it.
 const WorkflowSummaryQuestion = "Summarize this workflow run."
 
-// PromptPlace checks a place a workflow's prompt runs in as the user: a folder or directory the user sees, or _.
+// PromptPlace checks a place a workflow's prompt runs in as the user: a folder or directory the user sees, or internal.
 func (b *Board) PromptPlace(ctx context.Context, user *model.User, place string) error {
 	_, err := b.promptRequest(ctx, user, place)
 	return err

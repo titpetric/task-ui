@@ -41,7 +41,7 @@ func TestWorkflowStep_IsPrompt(t *testing.T) {
 	assert.True(t, model.WorkflowRunStep{Prompt: "say ok"}.IsPrompt())
 	assert.True(t, model.WorkflowRunStep{Kind: model.StepSummary}.IsPrompt())
 	assert.False(t, model.WorkflowRunStep{Folder: "infra", Job: "plan"}.IsPrompt())
-	assert.Equal(t, "_", model.WorkflowStep{Prompt: "say ok"}.Place())
+	assert.Equal(t, "internal", model.WorkflowStep{Prompt: "say ok"}.Place())
 	assert.Equal(t, "malta/dockerfiles", model.WorkflowStep{Folder: "malta", Dir: "dockerfiles", Prompt: "say ok"}.Place())
 }
 

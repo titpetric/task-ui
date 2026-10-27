@@ -41,14 +41,14 @@ pins under `/api/pins` (see [API](../api.md)).
 A [workspace](workspaces.md) adds a level above its projects: a label
 row with the workspace's name, and its projects folded under it. Their
 links carry the workspace, as `/f/malta/dockerfiles`. The projects at
-the top of the root are in the default workspace, `_`, and list first,
-without a label row; their links carry `_`, as `/f/_/infra`.
+the top of the root are in the default workspace, `internal`, and list first,
+without a label row; their links carry `internal`, as `/f/internal/infra`.
 
 ![A folder: its jobs, files and environment](../assets/folder-dark.png)
 
 A user with Allow Edits on Projects, `project/edit`, adds a project from a git repository on **Add project** (see
 [Settings](settings.md#projects)). Its **Workspace** select clones the
-project at the top of the root, `_`, or inside a named workspace (see
+project at the top of the root, `internal`, or inside a named workspace (see
 [Workspaces](workspaces.md#clone-a-project-into-one)). With the
 [Forgejo integration](settings.md#forgejo) set up, a sync clones every
 repository of each organisation and user as a project of the owner's
@@ -59,8 +59,8 @@ repository pulls the checkout; the project's settings stay yours.
 
 A project's settings page, **Settings**, **Projects**, then the
 project, has the same **Workspace** select, on the workspace the
-project is in. Pick another one and **Save** moves it: `web` in `_`
-becomes `acme/web` in `acme`, and `acme/web` picked back to `_` becomes
+project is in. Pick another one and **Save** moves it: `web` in `internal`
+becomes `acme/web` in `acme`, and `acme/web` picked back to `internal` becomes
 `web`. Before the move a dialog names the new ID and every row that
 stays behind.
 
@@ -186,7 +186,7 @@ lists its jobs again: task-ui asks atkins afresh once the file changes.
 Open a folder from the sidebar:
 
 - **The `[...]` menu** at the top right of a project's or a workspace's
-  page, `/f/_` among them, behind the rule of each item:
+  page, `/f/internal` among them, behind the rule of each item:
   - **Edit project**, with `project/view`, or **Edit workspace**, with
     `workspace/view`, opens the settings page, the one **Edit project**
     in **Settings**, **Projects** opens;
@@ -368,7 +368,7 @@ and above, and the run's history keeps under the directory.
 
 A user with Allow Edits on Prompts, `prompt/edit`, and a token in the
 [Claude Code integration](settings.md#integrations) gets a **Prompt** box under the Jobs table of every folder page and every
-directory inside a folder: open on a workspace's page, on `/f/_`,
+directory inside a folder: open on a workspace's page, on `/f/internal`,
 which prompts at the root, and wherever its directory holds a prompt, folded
 elsewhere until clicked. The prompt runs `@claude-prompt` of that
 folder and directory as you, with Claude Code there, so it reads the
@@ -414,7 +414,7 @@ The reply is the note, with `dir` `malta/dockerfiles/blog`; `GET
 its `@shell` is: `malta/dockerfiles/blog/@claude-prompt`, folder `malta`,
 `dir` `dockerfiles/blog` and job `@claude-prompt`, with the absolute
 directory in `TASK_UI_PROMPT_DIR`; the recents and the runs list show it
-under the folder. A prompt at the root runs as `@claude-prompt` of the folder `_`, and its
+under the folder. A prompt at the root runs as `@claude-prompt` of the folder `internal`, and its
 run shows as `@claude-prompt`. The
 run gets the secrets of the folder, as its other jobs do, and runs out of
 the workspace's hours too, as it runs none of the folder's jobs; no `POST /api/runs`

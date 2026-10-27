@@ -30,14 +30,14 @@ func TestFolder_EnvironmentWhileEmpty(t *testing.T) {
 	p := projectPage(t, &model.User{Name: "admin", Role: model.RoleAdmin}, nil)
 	block := envBlock(render(t, "folder", p))
 	assert.Contains(t, block, `<p class="empty-line">No env files.</p>`)
-	assert.Contains(t, block, `href="/f/_/apps/env"`)
+	assert.Contains(t, block, `href="/f/internal/apps/env"`)
 	assert.NotContains(t, block, "<table")
 
 	p.EnvFiles = []envfile.File{{Folder: "apps", Path: ".env"}}
 	block = envBlock(render(t, "folder", p))
 	assert.NotContains(t, block, "No env files.")
 	assert.Contains(t, block, "<table")
-	assert.Contains(t, block, `href="/f/_/apps/env"`)
+	assert.Contains(t, block, `href="/f/internal/apps/env"`)
 }
 
 // The empty block is a project's alone; a workspace or a folder inside a

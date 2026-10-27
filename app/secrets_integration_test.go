@@ -42,7 +42,7 @@ func TestNew_MigratesSecrets(t *testing.T) {
 	a, err := app.New(ctx, cfg, "test")
 	assert.NoError(t, err)
 	rows := storage.NewSecretStorage(a.DB)
-	row, err := rows.Get(ctx, model.Secret{Scope: "workspace:_", Name: "TOKEN"})
+	row, err := rows.Get(ctx, model.Secret{Scope: "workspace:internal", Name: "TOKEN"})
 	assert.NoError(t, err)
 	_, err = secret.NewVault(secret.DirKeys{Store: keys}).Decrypt(row.Content)
 	assert.Error(t, err, "the SSH key opens it no more")
@@ -56,7 +56,7 @@ func TestNew_MigratesSecrets(t *testing.T) {
 
 	b, err := app.New(ctx, cfg, "test")
 	assert.NoError(t, err)
-	again, err := storage.NewSecretStorage(b.DB).Get(ctx, model.Secret{Scope: "workspace:_", Name: "TOKEN"})
+	again, err := storage.NewSecretStorage(b.DB).Get(ctx, model.Secret{Scope: "workspace:internal", Name: "TOKEN"})
 	assert.NoError(t, err)
 	assert.Equal(t, row.Content, again.Content, "a second start writes nothing")
 	kept, err := os.Stat(db + ".pre-instance-key")

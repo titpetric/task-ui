@@ -44,9 +44,9 @@ func TestWorkflow_JobStep(t *testing.T) {
 	assert.Equal(t, "step 1: infra/hidden / nope: no such job", out["error"], "the hidden folder is there, its job is not")
 
 	for body, want := range map[string]string{
-		`{"name":"x","steps":[{"folder":"nowhere","job":"plan"}]}`:                                 "step 1: nowhere / plan: Default has no folder nowhere",
-		`{"name":"x","steps":[{"folder":"infra","job":"plan"},{"folder":"_","job":"plan"}]}`:       "step 2: the root / plan: Default has no jobs at its root",
-		`{"name":"x","steps":[{"folder":"infra/hidden","job":"deploy"},{"folder":"_","job":"x"}]}`: "step 2: the root / x: Default has no jobs at its root",
+		`{"name":"x","steps":[{"folder":"nowhere","job":"plan"}]}`:                                        "step 1: nowhere / plan: Default has no folder nowhere",
+		`{"name":"x","steps":[{"folder":"infra","job":"plan"},{"folder":"internal","job":"plan"}]}`:       "step 2: the root / plan: Default has no jobs at its root",
+		`{"name":"x","steps":[{"folder":"infra/hidden","job":"deploy"},{"folder":"internal","job":"x"}]}`: "step 2: the root / x: Default has no jobs at its root",
 	} {
 		code, out = pinCall(t, h, ops, http.MethodPost, "/workflows", body)
 		assert.Equal(t, http.StatusBadRequest, code, body)

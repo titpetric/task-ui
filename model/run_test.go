@@ -13,7 +13,7 @@ func TestRun_Key(t *testing.T) {
 	assert.Equal(t, "infra/make:build", (&model.Run{Folder: "infra", Job: "make:build"}).Key())
 	assert.Equal(t, "malta/dockerfiles/build", (&model.Run{Folder: "malta", Dir: "dockerfiles", Job: "build"}).Key())
 	// A host run locks per host: its job names the host.
-	assert.Equal(t, "_/@host:web1", (&model.Run{Folder: model.Default, Job: model.HostJob("web1"), Target: "web1"}).Key())
+	assert.Equal(t, "internal/@host:web1", (&model.Run{Folder: model.Default, Job: model.HostJob("web1"), Target: "web1"}).Key())
 	assert.True(t, (&model.Run{Job: model.HostJob("web1")}).IsHost())
 	assert.False(t, (&model.Run{Job: model.HostBare}).IsHost())
 	assert.False(t, (&model.Run{Job: "@shell"}).IsHost())
@@ -26,8 +26,8 @@ func TestRun_LockKey(t *testing.T) {
 	assert.Equal(t, "infra/build", (&model.Run{ID: "r1", Folder: "infra", Job: "build"}).LockKey())
 	prompt := &model.Run{ID: "r1", Folder: model.Default, Job: model.PromptJob}
 	assert.True(t, prompt.Parallel())
-	assert.Equal(t, "_/@claude-prompt#r1", prompt.LockKey())
-	assert.Equal(t, "_/@claude-note#r2", (&model.Run{ID: "r2", Folder: model.Default, Job: model.NoteJob}).LockKey())
+	assert.Equal(t, "internal/@claude-prompt#r1", prompt.LockKey())
+	assert.Equal(t, "internal/@claude-note#r2", (&model.Run{ID: "r2", Folder: model.Default, Job: model.NoteJob}).LockKey())
 	assert.False(t, (&model.Run{Job: model.ClaudeJob}).Parallel())
 }
 
@@ -70,7 +70,7 @@ func TestRun_Where(t *testing.T) {
 func TestRun_IsPrompt(t *testing.T) {
 	t.Parallel()
 	assert.True(t, (&model.Run{Folder: "malta", Dir: "dockerfiles", Job: model.PromptJob}).IsPrompt())
-	assert.True(t, (&model.Run{Folder: "internal/malta", Job: "claude-prompt"}).IsPrompt(), "an older prompt's run")
+	assert.True(t, (&model.Run{Folder: model.Default, Job: "claude-prompt"}).IsPrompt(), "an older prompt's run")
 	assert.False(t, (&model.Run{Folder: "malta", Job: "claude-prompt"}).IsPrompt())
 	assert.False(t, (&model.Run{Folder: "malta", Job: "@shell"}).IsPrompt())
 	assert.False(t, (*model.Run)(nil).IsPrompt())
@@ -79,7 +79,7 @@ func TestRun_IsPrompt(t *testing.T) {
 func TestRun_IsNote(t *testing.T) {
 	t.Parallel()
 	assert.True(t, (&model.Run{Folder: model.Default, Job: model.NoteJob}).IsNote())
-	assert.True(t, (&model.Run{Folder: model.Internal, Job: "claude-note"}).IsNote(), "an older note's run")
+	assert.True(t, (&model.Run{Folder: model.Default, Job: "claude-note"}).IsNote(), "an older note's run")
 	assert.False(t, (&model.Run{Folder: "malta", Job: "claude-note"}).IsNote())
 	assert.False(t, (&model.Run{Folder: "malta", Job: model.PromptJob}).IsNote())
 	assert.False(t, (*model.Run)(nil).IsNote())
@@ -91,7 +91,7 @@ func TestRun_IsClaude(t *testing.T) {
 		{Folder: "malta", Job: model.PromptJob},
 		{Folder: model.Default, Job: model.NoteJob},
 		{Folder: "malta", Dir: "dockerfiles", Job: model.ClaudeJob},
-		{Folder: model.Internal, Job: "claude"},
+		{Folder: model.Default, Job: "claude"},
 	} {
 		assert.True(t, run.IsClaude(), run.Key())
 	}
@@ -104,7 +104,7 @@ func TestRun_IsClaude(t *testing.T) {
 func TestRun_Name(t *testing.T) {
 	t.Parallel()
 	assert.Equal(t, "@claude-note", model.Run{Folder: model.Default, Job: model.NoteJob}.Name())
-	assert.Equal(t, "_", model.Run{Folder: model.Default, Job: "@shell"}.Place())
+	assert.Equal(t, "internal", model.Run{Folder: model.Default, Job: "@shell"}.Place())
 	assert.Equal(t, "deploy / @claude-prompt", model.Run{Folder: model.Default, Dir: "deploy", Job: model.PromptJob}.Name())
 	assert.Equal(t, "deploy", model.Run{Folder: model.Default, Dir: "deploy", Job: "up"}.Place())
 	assert.Equal(t, "malta/dockerfiles / build", model.Run{Folder: "malta", Dir: "dockerfiles", Job: "build"}.Name())

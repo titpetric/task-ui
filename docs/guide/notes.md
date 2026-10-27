@@ -99,7 +99,7 @@ holds its token.
 
 The Claude jobs sit beside `@shell`, built into task-ui, as host
 commands that run `task-ui agent`: `@claude-prompt` and `@claude` in
-every folder, and `@claude-note` in the root, `_`, alone:
+every folder, and `@claude-note` in the root, `internal`, alone:
 
 | Job              | Runs                         | What it does                                                                                     |
 |------------------|------------------------------|--------------------------------------------------------------------------------------------------|
@@ -115,7 +115,7 @@ works for, the role and what the user may do, and the run's
 [MCP](mcp.md#what-task-ui-is)). They run `claude` from the `PATH` with
 `IS_SANDBOX=1` and `--dangerously-skip-permissions`, so Claude skips the
 permission prompts. Each run gets the secrets of its folder, as any job
-there does; the Notes agent's, of the root's, `_`.
+there does; the Notes agent's, of the root's, `internal`.
 
 The board starts `@claude-note` in the root as the agent's user, whose role does
 not need to see a folder; no `POST /api/runs` starts it. Who sees the
@@ -124,7 +124,7 @@ always sees its own, which it, or an admin, may stop with `note/edit`.
 A run of the root names its job alone, as `@claude-note` or `@shell`, in
 the recents, the runs list, a run's page and the MCP tools' text, and a
 directory of the root by its path, as `deploy / up`; the run's row keeps
-the folder `_`.
+the folder `internal`.
 A prompt on a folder page runs `@claude-prompt` of that folder as the
 user who asks, or as the user an admin picks (see
 [Prompt](projects.md#prompt)); that prompt and its

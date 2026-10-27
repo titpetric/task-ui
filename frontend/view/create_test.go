@@ -16,7 +16,7 @@ func TestAddProjectHref(t *testing.T) {
 
 	assert.Equal(t, "/settings/projects/new", view.AddProjectHref(""))
 	assert.Equal(t, "/settings/projects/new?workspace=malta", view.AddProjectHref("malta"))
-	assert.Equal(t, "/settings/projects/new?workspace=_", view.AddProjectHref("_"))
+	assert.Equal(t, "/settings/projects/new?workspace=internal", view.AddProjectHref("internal"))
 	assert.Equal(t, "/settings/projects/new?workspace=a+b%26c", view.AddProjectHref("a b&c"))
 }
 

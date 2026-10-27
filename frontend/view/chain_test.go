@@ -9,7 +9,7 @@ import (
 
 // A chain names the folder once for the steps that follow in it, and a
 // workflow step by its name. A job of a project at the root links under
-// /f/_/, one of a workspace by its folder.
+// /f/internal/, one of a workspace by its folder.
 func TestChain(t *testing.T) {
 	t.Parallel()
 	links := view.Chain([]view.Step{
@@ -25,7 +25,7 @@ func TestChain(t *testing.T) {
 		hrefs = append(hrefs, l.Href)
 	}
 	assert.Equal(t, []string{"dockerfiles / build", "push", "deploy/terraform / fmt", "release", "deploy/terraform / apply"}, texts)
-	assert.Equal(t, []string{"/f/_/dockerfiles/build", "/f/_/dockerfiles/push", "/f/deploy/terraform/fmt", "/workflows/w1", "/runs/r1"}, hrefs)
+	assert.Equal(t, []string{"/f/internal/dockerfiles/build", "/f/internal/dockerfiles/push", "/f/deploy/terraform/fmt", "/workflows/w1", "/runs/r1"}, hrefs)
 	assert.True(t, links[3].Workflow)
 	assert.Equal(t, "ok", links[4].State)
 }
@@ -39,13 +39,13 @@ func TestChain_Prompt(t *testing.T) {
 		{Folder: "infra", Job: "plan"},
 		{Folder: "infra", Dir: "docs", Job: "@claude-prompt", Prompt: "fetch the weather"},
 		{Folder: "infra", Job: "apply"},
-		{Folder: "_", Job: "@claude-prompt", Prompt: "water today?", RunID: "r1"},
+		{Folder: "internal", Job: "@claude-prompt", Prompt: "water today?", RunID: "r1"},
 	}, nil)
 	assert.Equal(t, "prompt in infra/docs", links[1].Text)
 	assert.Equal(t, "fetch the weather", links[1].Prompt)
-	assert.Equal(t, "/f/_/infra", links[1].Href)
+	assert.Equal(t, "/f/internal/infra", links[1].Href)
 	assert.Equal(t, "infra / apply", links[2].Text)
-	assert.Equal(t, "prompt in _", links[3].Text)
+	assert.Equal(t, "prompt in internal", links[3].Text)
 	assert.Equal(t, "/runs/r1", links[3].Href)
 }
 

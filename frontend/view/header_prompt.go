@@ -9,16 +9,16 @@ import (
 // HeaderPrompt is where the header's prompt asks on a page: the folder
 // and the directory of a folder page, a directory, a job, an env file
 // or a project's or workspace's settings; the run of a run's page, in
-// its folder and directory; the root, _, anywhere else. The header
+// its folder and directory; the root, internal, anywhere else. The header
 // carries it in data- attributes.
 type HeaderPrompt struct {
-	// Folder and Dir are the place /api/prompts asks in, _ for the root.
+	// Folder and Dir are the place /api/prompts asks in, internal for the root.
 	Folder string
 	Dir    string
 	// Run is the run a run's page asks about, in Folder and Dir.
 	Run string
 	// Label names the place in the panel's first line: malta/dockerfiles,
-	// run and the start of its ID, or _.
+	// run and the start of its ID, or internal.
 	Label string
 	// Href is the page of the thread: the place's page or the run's.
 	Href string
@@ -30,9 +30,6 @@ func (p *Page) HeaderPrompt() HeaderPrompt {
 	switch {
 	case p.Run != nil:
 		run := p.Run.Run
-		if model.IsInternal(run.Folder) {
-			return root
-		}
 		if run.IsClaude() {
 			return p.headerPlace(run.Folder, run.Dir, root)
 		}
@@ -58,7 +55,7 @@ func (p *Page) HeaderPrompt() HeaderPrompt {
 // headerPlace is the header's prompt in a folder and a directory inside
 // it; the root for _ or the internal folder of older runs.
 func (p *Page) headerPlace(folderID, dir string, root HeaderPrompt) HeaderPrompt {
-	if folderID == model.Default && dir == "" || model.IsInternal(folderID) || folderID == "" {
+	if folderID == model.Default && dir == "" || folderID == "" {
 		return root
 	}
 	where := model.Run{Folder: folderID, Dir: dir}.Where()

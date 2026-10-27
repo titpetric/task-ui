@@ -23,7 +23,7 @@ func TestFolder_HostJob(t *testing.T) {
 	assert.False(t, job.Interactive)
 	assert.Len(t, job.Command, 0)
 	assert.Len(t, job.Allow, 0)
-	assert.Equal(t, "_/@host:dev1", job.Key())
+	assert.Equal(t, "internal/@host:dev1", job.Key())
 	assert.Equal(t, "*", root.Job(model.HostAll).HostTarget())
 
 	assert.Nil(t, root.Job(model.HostBare))

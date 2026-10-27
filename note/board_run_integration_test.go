@@ -25,7 +25,7 @@ func TestBoard_AskRun(t *testing.T) {
 	ctx := context.Background()
 	run := &model.Run{Folder: "agent", Job: "run", UserName: "ops", State: string(model.StateFailed)}
 	assert.NoError(t, f.board.Runs.Create(ctx, run))
-	internal := &model.Run{Folder: model.Internal, Job: "claude-prompt", UserName: "ops", State: string(model.StateOK)}
+	internal := &model.Run{Folder: model.Default, Job: "claude-prompt", UserName: "ops", State: string(model.StateOK)}
 	assert.NoError(t, f.board.Runs.Create(ctx, internal))
 	own := &model.Run{Folder: "agent", Job: model.ClaudeJob, UserName: "ops", State: string(model.StateOK)}
 	assert.NoError(t, f.board.Runs.Create(ctx, own))

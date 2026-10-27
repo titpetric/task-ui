@@ -18,7 +18,7 @@ func TestDirAndID(t *testing.T) {
 	named := []string{"malta"}
 	root := filepath.FromSlash("/data")
 	for _, c := range []struct{ id, dir string }{
-		{"_", "/data/src"},
+		{"internal", "/data/src"},
 		{"apps", "/data/src/apps"},
 		{"apps/blog", "/data/src/apps/blog"},
 		{"home", "/data/home"},
@@ -43,13 +43,13 @@ func TestDirAndID(t *testing.T) {
 func TestDirs(t *testing.T) {
 	t.Parallel()
 	root := filepath.FromSlash("/data")
-	assert.Equal(t, root, layout.WorkspaceDir(root, "_"))
+	assert.Equal(t, root, layout.WorkspaceDir(root, "internal"))
 	assert.Equal(t, filepath.FromSlash("/data/malta"), layout.WorkspaceDir(root, "malta"))
-	assert.Equal(t, filepath.FromSlash("/data/home"), layout.HomeDir(root, "_"))
+	assert.Equal(t, filepath.FromSlash("/data/home"), layout.HomeDir(root, "internal"))
 	assert.Equal(t, filepath.FromSlash("/data/malta/home"), layout.HomeDir(root, "malta"))
 	assert.Equal(t, filepath.FromSlash("/data/src"), layout.SrcDir(root, ""))
 	assert.Equal(t, filepath.FromSlash("/data/malta/src/apps/blog"), layout.ProjectDir(root, "malta", "apps/blog"))
-	assert.Equal(t, "home", layout.HomeID("_"))
+	assert.Equal(t, "home", layout.HomeID("internal"))
 	assert.Equal(t, "malta/home", layout.HomeID("malta"))
 }
 
@@ -62,16 +62,16 @@ func TestSplitJoin(t *testing.T) {
 	assert.Equal(t, "malta", ws)
 	assert.Equal(t, "dockerfiles/task", rel)
 	ws, rel = layout.Split(named, "apps/blog")
-	assert.Equal(t, "_", ws)
+	assert.Equal(t, "internal", ws)
 	assert.Equal(t, "apps/blog", rel)
 	ws, rel = layout.Split(named, "malta")
 	assert.Equal(t, "malta", ws)
 	assert.Equal(t, "", rel)
-	ws, rel = layout.Split(named, "_")
-	assert.Equal(t, "_", ws)
+	ws, rel = layout.Split(named, "internal")
+	assert.Equal(t, "internal", ws)
 	assert.Equal(t, "", rel)
-	assert.Equal(t, "_", layout.Join("_", ""))
-	assert.Equal(t, "apps", layout.Join("_", "apps"))
+	assert.Equal(t, "internal", layout.Join("internal", ""))
+	assert.Equal(t, "apps", layout.Join("internal", "apps"))
 	assert.Equal(t, "malta", layout.Join("malta", ""))
 	assert.Equal(t, "malta/apps", layout.Join("malta", "apps"))
 	assert.True(t, layout.IsHome(named, "home"))
@@ -80,6 +80,7 @@ func TestSplitJoin(t *testing.T) {
 	assert.False(t, layout.IsHome(named, "apps/home"))
 	assert.True(t, layout.Reserved("home"))
 	assert.True(t, layout.Reserved("src"))
+	assert.True(t, layout.Reserved("internal"))
 	assert.True(t, layout.Reserved("_"))
 	assert.False(t, layout.Reserved("homes"))
 }
@@ -89,7 +90,7 @@ func TestSplitJoin(t *testing.T) {
 func TestWorkspaceEnsure(t *testing.T) {
 	t.Parallel()
 	root := t.TempDir()
-	assert.NoError(t, layout.Ensure(root, "_"))
+	assert.NoError(t, layout.Ensure(root, "internal"))
 	assert.NoError(t, layout.Ensure(root, "malta"))
 	for _, dir := range []string{"home", "src", "malta/home", "malta/src"} {
 		info, err := os.Stat(filepath.Join(root, filepath.FromSlash(dir)))
@@ -101,7 +102,7 @@ func TestWorkspaceEnsure(t *testing.T) {
 	assert.Equal(t, "malta", ws)
 	ws, ok = layout.Workspace(root, []string{"malta"}, filepath.Join(root, "src", "apps"))
 	assert.True(t, ok)
-	assert.Equal(t, "_", ws)
+	assert.Equal(t, "internal", ws)
 	_, ok = layout.Workspace(root, nil, filepath.Dir(root))
 	assert.False(t, ok)
 }

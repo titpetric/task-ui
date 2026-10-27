@@ -148,7 +148,7 @@ func TestWorkflow_StopPrompt(t *testing.T) {
 	assert.Equal(t, http.StatusNoContent, f.call(t, asAdmin, http.MethodPost, "/workflow-runs/"+runID+"/stop", nil).Status)
 	run := f.workflowRun(t, id, runID)
 	assert.Equal(t, model.StateStopped, run["state"])
-	assert.Equal(t, "stopped at the prompt in _", run["message"])
+	assert.Equal(t, "stopped at the prompt in internal", run["message"])
 	threads := f.call(t, asAdmin, http.MethodGet, "/prompts?workflow_run="+runID, nil).list("notes")
 	assert.Equal(t, model.NoteFailed, threads[0].(map[string]any)["state"])
 }

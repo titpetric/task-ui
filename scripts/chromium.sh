@@ -5,7 +5,7 @@
 #
 #   scripts/chromium.sh /
 #   scripts/chromium.sh /p/infra project dark 1440x900
-#   scripts/chromium.sh "/f/_/infra/deploy#history=<id>" history light
+#   scripts/chromium.sh "/f/internal/infra/deploy#history=<id>" history light
 #
 # Writes /tmp/task-ui-<name>.png and prints the path. Chromium renders the
 # light theme by default, so pass dark explicitly when checking the dark

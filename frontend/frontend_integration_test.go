@@ -282,9 +282,9 @@ func TestRoutes_Guard(t *testing.T) {
 	f := newFixture(t)
 
 	// The server sends a visitor without a session to sign in, with the way back.
-	res := f.get(t, "", "/f/_/infra")
+	res := f.get(t, "", "/f/internal/infra")
 	assert.Equal(t, http.StatusSeeOther, res.Status)
-	assert.Equal(t, "/login?back=%2Ff%2F_%2Finfra", res.Location)
+	assert.Equal(t, "/login?back=%2Ff%2Finternal%2Finfra", res.Location)
 
 	missing := f.get(t, "", "/nothing")
 	assert.Equal(t, http.StatusSeeOther, missing.Status)

@@ -101,7 +101,6 @@ func TestProject_MoveConflicts(t *testing.T) {
 		{"the folder is taken", "/projects/infra", "taken", http.StatusConflict},
 		{"a workspace holds the name at the root", "/projects/taken/infra", model.Default, http.StatusConflict},
 		{"a folder inside a project", "/projects/infra/edge", "acme", http.StatusBadRequest},
-		{"into internal", "/projects/infra", model.Internal, http.StatusBadRequest},
 		{"into src", "/projects/infra", layout.Src, http.StatusBadRequest},
 	} {
 		res := f.call(t, asAdmin, http.MethodPut, c.path, inWorkspace(c.ws))

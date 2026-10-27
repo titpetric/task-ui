@@ -89,7 +89,7 @@ func (h *Handlers) activityOf(r *http.Request, p *view.Page, user *model.User) {
 }
 
 // seesPlace reports whether a user sees the place a prompt ran in, as a
-// note's Dir holds it: the root, _, or a directory of a folder they see,
+// note's Dir holds it: the root, internal, or a directory of a folder they see,
 // the deepest folder that holds it.
 func (h *Handlers) seesPlace(user *model.User, place string) bool {
 	if place == model.Default {

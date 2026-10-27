@@ -72,15 +72,15 @@ func TestSecrets_Encryption(t *testing.T) {
 	assert.NotContains(t, body, "SHA256:")
 	assert.NotContains(t, body, `data-api="/api/secrets/rekey"`)
 	assert.NotContains(t, body, "/keys/generate")
-	assert.Contains(t, body, `<section class="block secret-group" id="ws-_">`)
-	assert.Contains(t, body, `<a class="btn btn-sm" href="/settings/secrets/new?scope=workspace:_">`)
+	assert.Contains(t, body, `<section class="block secret-group" id="ws-internal">`)
+	assert.Contains(t, body, `<a class="btn btn-sm" href="/settings/secrets/new?scope=workspace:internal">`)
 	assert.Contains(t, body, `<section class="block secret-group" id="ws-acme">`)
 	assert.Contains(t, body, `<a class="btn btn-sm" href="/settings/secrets/new?scope=workspace:acme">`)
 	assert.Equal(t, 0, strings.Count(body, `class="more-menu"`), "no secret, no menu")
 
 	one := f.page(t, asAdmin, "/settings/secrets?workspace=acme")
 	assert.Contains(t, one, `id="ws-acme"`)
-	assert.NotContains(t, one, `id="ws-_"`)
+	assert.NotContains(t, one, `id="ws-internal"`)
 	assert.Contains(t, one, `href="/settings/secrets/new?scope=workspace:acme"`)
 
 	assert.Contains(t, f.page(t, asAdmin, "/settings/secrets?rekeyed=3"), "Encryption key rotated. Re-encrypted 3 secrets.")
@@ -91,8 +91,8 @@ func TestSecrets_Encryption(t *testing.T) {
 	assert.Contains(t, form, `<optgroup label="Acme">`)
 	assert.Contains(t, form, `<option value="workspace:acme" selected>every folder in Acme</option>`)
 	assert.Contains(t, form, `<optgroup label="Default">`)
-	assert.Contains(t, form, `<option value="workspace:_">every folder in Default</option>`)
-	assert.Contains(t, f.page(t, asAdmin, "/settings/secrets/new"), `<option value="workspace:_" selected>every folder in Default</option>`, "the root first")
+	assert.Contains(t, form, `<option value="workspace:internal">every folder in Default</option>`)
+	assert.Contains(t, f.page(t, asAdmin, "/settings/secrets/new"), `<option value="workspace:internal" selected>every folder in Default</option>`, "the root first")
 }
 
 // A secret's row counts its reads and names the last run; the count
@@ -151,8 +151,8 @@ func TestSecrets_Workspace(t *testing.T) {
 	assert.NoError(t, f.opts.Workspaces.EnsureDefault(ctx))
 	assert.NoError(t, f.opts.Secrets.Set(ctx, &model.Secret{Scope: "infra", Name: "DB_PASS", Content: "hunter2secret"}))
 
-	body := f.page(t, asAdmin, "/settings/workspaces/_/secrets")
-	assert.Contains(t, body, "<h2>Secrets of _</h2>")
+	body := f.page(t, asAdmin, "/settings/workspaces/internal/secrets")
+	assert.Contains(t, body, "<h2>Secrets of internal</h2>")
 	assert.Contains(t, body, `<td class="key">DB_PASS</td>`)
 	assert.Contains(t, body, `data-fill-scope="infra" data-fill-name="DB_PASS"`)
 	assert.Contains(t, body, `id="secret-add-dialog"`)

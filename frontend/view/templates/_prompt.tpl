@@ -37,7 +37,7 @@
 		{{- else if .Area }}
 		<input type="hidden" name="area" value="{{ .Area }}">
 		<textarea name="prompt" rows="3" required spellcheck="false" placeholder="Describe a workflow to build or change" aria-label="The prompt"></textarea>
-		<div class="form-foot note"><span class="faint run-in">Runs @claude-prompt as {{ template "prompt-as" $ }} in <select name="folder" aria-label="Run in"><option value="_">the root</option>{{ range $.Folders }}<option value="{{ .ID }}">{{ .ID }}</option>{{ end }}</select> with the task tools: it saves the workflow and runs it up to 3 times.</span><button class="btn btn-primary" type="submit"><svg class="ic"><use href="#i-play"/></svg>Run prompt</button></div>
+		<div class="form-foot note"><span class="faint run-in">Runs @claude-prompt as {{ template "prompt-as" $ }} in <select name="folder" aria-label="Run in"><option value="internal">the root</option>{{ range $.Folders }}<option value="{{ .ID }}">{{ .ID }}</option>{{ end }}</select> with the task tools: it saves the workflow and runs it up to 3 times.</span><button class="btn btn-primary" type="submit"><svg class="ic"><use href="#i-play"/></svg>Run prompt</button></div>
 		{{- else }}
 		{{- if .Folder }}
 		<input type="hidden" name="folder" value="{{ .Folder }}">

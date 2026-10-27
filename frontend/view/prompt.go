@@ -1,5 +1,7 @@
 package view
 
+import "github.com/titpetric/task-ui/model"
+
 // Prompt is the prompt box of a folder page, of a directory browsed
 // inside a folder, or of a run's page: Claude Code on a prompt, a run
 // of @claude-prompt in that directory, and the threads of the prompts asked there, each
@@ -29,7 +31,7 @@ type Prompt struct {
 	// Open shows the box open, as on a workspace's page.
 	Open bool
 	// Place is where the prompts run as their notes hold it: the folder
-	// and the directory, or _ for the root.
+	// and the directory, or internal for the root.
 	Place string
 	// Threads are the prompts asked in Place, newest first.
 	Threads []Thread
@@ -46,7 +48,7 @@ func PromptIn(folderID, dir string) *Prompt {
 
 // PromptOfArea returns the prompt box of an area's page, asked in the root unless the form picks a folder.
 func PromptOfArea(area string) *Prompt {
-	return &Prompt{API: "/api/prompts", Area: area, Folder: "_", Where: "the root", Place: "_", Open: true}
+	return &Prompt{API: "/api/prompts", Area: area, Folder: model.Default, Where: "the root", Place: model.Default, Open: true}
 }
 
 // PromptOfWorkflowRun returns the box of the workflow prompt's threads, asked in place, open while running and folded after.

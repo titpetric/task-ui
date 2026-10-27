@@ -388,7 +388,7 @@
 {{- define "hostjobs" }}{{ $job := "" }}{{ if gt (len .) 1 }}{{ $job = index . 1 }}{{ end }}{{ with index . 0 }}{{ if .HostJobs }}
 			<optgroup label="Hosts">
 				{{- range .HostJobs }}
-				<option value="{{ .ID }}" data-folder="_" title="{{ .Description }}"{{ if eq .ID $job }} selected{{ end }}>{{ .Name }}</option>
+				<option value="{{ .ID }}" data-folder="internal" title="{{ .Description }}"{{ if eq .ID $job }} selected{{ end }}>{{ .Name }}</option>
 				{{- end }}
 			</optgroup>
 {{- end }}{{ end }}{{ end }}

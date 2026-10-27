@@ -456,7 +456,7 @@ A secret's scope decides which runs get it (`secret/store.go`,
 `Reaching`):
 
 - `workspace:<name>` reaches every folder of the workspace, and no
-  folder of another workspace; `workspace:_` reaches the folders of the
+  folder of another workspace; `workspace:internal` reaches the folders of the
   default workspace;
 - a folder's own secret reaches that folder's runs and wins over a
   shared secret of the same name.

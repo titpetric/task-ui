@@ -92,12 +92,12 @@
 
   // folderHref returns the path of a folder's page, as Page.Href does: a
   // folder of a named workspace by its ID, a project at the root under
-  // /f/_/.
+  // /f/internal/.
   function folderHref(id) {
     var top = String(id).split("/")[0];
-    if (id === "_") return "/f/_";
+    if (id === "internal") return "/f/internal";
     if (Object.prototype.hasOwnProperty.call(workspaces, top)) return "/f/" + id;
-    return "/f/_/" + id;
+    return "/f/internal/" + id;
   }
 
   // avatarHTML draws the initials of a user in the colour of their role,
@@ -478,15 +478,15 @@
 
   // runTitle names a run as its window does: folder, the directory
   // inside it when the job is one of that directory's, and the job; a
-  // job of the root, _, by its name alone, as Run.Name does.
+  // job of the root, internal, by its name alone, as Run.Name does.
   function runTitle(run) {
-    return run.folder === "_" && !run.dir ? run.job : runPlace(run) + " / " + run.job;
+    return run.folder === "internal" && !run.dir ? run.job : runPlace(run) + " / " + run.job;
   }
 
   // runPlace is the folder a run names: folder/dir, a directory of the
-  // root without the _/, as Run.Place does.
+  // root without the internal/, as Run.Place does.
   function runPlace(run) {
-    if (run.folder === "_" && run.dir) return run.dir;
+    if (run.folder === "internal" && run.dir) return run.dir;
     return run.folder + (run.dir ? "/" + run.dir : "");
   }
 
@@ -1023,7 +1023,7 @@
       return;
     }
     var last = id.slice(id.lastIndexOf("/") + 1);
-    var to = pick.value === "_" ? last : pick.value + "/" + last;
+    var to = pick.value === "internal" ? last : pick.value + "/" + last;
     var left = pick.dataset.moveLeft;
     form.dataset.confirm = "Move " + id + " to " + to + "? The checkout, the project, the users' folder access and the pins move with it; earlier runs stay under " + id + ". " +
       (left ? "These still point to " + id + " and won't move: " + left + "." : "Nothing else points to " + id + ".");
@@ -1895,7 +1895,7 @@
   // the directory inside it without slashes around it.
   function stepPlace(row) {
     return {
-      folder: row.querySelector("[data-step-place]").value || "_",
+      folder: row.querySelector("[data-step-place]").value || "internal",
       dir: row.querySelector("[data-step-dir]").value.trim().replace(/^\/+|\/+$/g, "")
     };
   }
@@ -2005,7 +2005,7 @@
     } else if (kind === "summary") {
       var place = stepPlace(row);
       var at = place.dir ? place.folder + "/" + place.dir : place.folder;
-      line = "of the steps before it, in " + (at === "_" ? "the root" : at);
+      line = "of the steps before it, in " + (at === "internal" ? "the root" : at);
     } else {
       var folder = row.querySelector("[data-step-folder]");
       if (kind === "workflow") {
@@ -2334,7 +2334,7 @@
     api("GET", "/api/workspaces").then(function (res) {
       if (res.status >= 300) throw new Error(res.data.error || ("HTTP " + res.status));
       // The default workspace keeps its place, first; the rest swap.
-      var list = res.data.workspaces.filter(function (ws) { return ws.folder !== "_"; });
+      var list = res.data.workspaces.filter(function (ws) { return ws.folder !== "internal"; });
       var i = list.findIndex(function (ws) { return ws.folder === btn.dataset.folder; });
       var j = btn.dataset.workspaceMove === "up" ? i - 1 : i + 1;
       if (i < 0 || j < 0 || j >= list.length) return null;

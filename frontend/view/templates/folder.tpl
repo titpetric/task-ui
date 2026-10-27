@@ -1,5 +1,5 @@
 {{ define "content" }}
-{{- $p := .Folder }}{{ $default := eq $p.ID "_" }}
+{{- $p := .Folder }}{{ $default := eq $p.ID "internal" }}
 <div class="page-head">
 	<div>
 		<h2><svg class="ic"><use href="#i-folder-open"/></svg> {{ $p.Title }}</h2>

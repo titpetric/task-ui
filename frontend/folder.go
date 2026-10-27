@@ -19,12 +19,20 @@ import (
 // job of it, one of its env files, or a directory inside it with
 // nothing to run, which opens as a page to browse. Folders nest, so the
 // longest folder that starts the path is the one meant. A path starts
-// with its workspace: a named one, or _ for the projects at the root;
-// internal names none, the folder of older runs only. /f/_ is the
-// default workspace itself, and a path that starts with none moves, for
-// good, under /f/_/.
+// with its workspace: a named one, or internal for the projects at the
+// root. /f/internal is the default workspace itself, a path that starts
+// with none moves, for good, under /f/internal/, and so does one that
+// starts with _, the name the default workspace had.
 func (h *Handlers) folderPath(w http.ResponseWriter, r *http.Request) {
 	path := strings.Trim(param(r, "*"), "/")
+	if model.Canonical(path) != path {
+		target := "/f/" + escapePath(model.Canonical(path))
+		if r.URL.RawQuery != "" {
+			target += "?" + r.URL.RawQuery
+		}
+		http.Redirect(w, r, target, http.StatusMovedPermanently)
+		return
+	}
 	named := map[string]bool{}
 	for _, ws := range h.workspaceFolders(r.Context()) {
 		named[ws] = true
@@ -41,9 +49,6 @@ func (h *Handlers) folderPath(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		path = rest
-	case top == model.Internal:
-		h.missing(w, r, "No folder named "+path+".")
-		return
 	case !named[top]:
 		target := "/f/" + model.Default + "/" + escapePath(path)
 		if r.URL.RawQuery != "" {

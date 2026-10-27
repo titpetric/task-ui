@@ -26,7 +26,7 @@ func TestPlan(t *testing.T) {
 	assert.NoError(t, os.WriteFile(filepath.Join(root, "notes.txt"), []byte("a file at the root stays\n"), 0o644))
 	assert.NoError(t, os.WriteFile(filepath.Join(root, "malta", "workspace", "CLAUDE.md"), []byte("# malta\n"), 0o644))
 
-	moves, err := layout.Plan(root, []string{"_", "malta"}, map[string]string{"malta": "workspace"})
+	moves, err := layout.Plan(root, []string{"internal", "malta"}, map[string]string{"malta": "workspace"})
 	assert.NoError(t, err)
 	lines := []string{}
 	for _, move := range moves {
@@ -58,7 +58,7 @@ func TestPlan(t *testing.T) {
 	assert.NoDirExists(t, filepath.Join(root, "malta", "workspace"))
 	assert.FileExists(t, filepath.Join(root, "notes.txt"))
 
-	again, err := layout.Plan(root, []string{"_", "malta"}, map[string]string{"malta": "workspace"})
+	again, err := layout.Plan(root, []string{"internal", "malta"}, map[string]string{"malta": "workspace"})
 	assert.NoError(t, err)
 	assert.Len(t, again, 0, "laid out already")
 
@@ -86,7 +86,7 @@ func TestPlan_Conflict(t *testing.T) {
 	for _, dir := range []string{"apps", "src/apps", "home"} {
 		assert.NoError(t, os.MkdirAll(filepath.Join(root, filepath.FromSlash(dir)), 0o755))
 	}
-	_, err := layout.Plan(root, []string{"_"}, nil)
+	_, err := layout.Plan(root, []string{"internal"}, nil)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "src/apps")
 }

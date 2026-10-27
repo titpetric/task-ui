@@ -35,6 +35,6 @@ func TestCatalogueSteps(t *testing.T) {
 	assert.True(t, sub != nil && sub.Job("test") != nil)
 	assert.Equal(t, "proj", steps.Find("proj").ID)
 	assert.True(t, steps.Find("proj/docs") == nil)
-	assert.Equal(t, "_", steps.Find("_").ID)
+	assert.Equal(t, "internal", steps.Find("internal").ID)
 	assert.Equal(t, 2, len(c.Every()), "cached")
 }

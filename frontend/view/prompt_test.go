@@ -30,7 +30,7 @@ func TestPromptOfArea(t *testing.T) {
 	p := view.PromptOfArea("workflows")
 	assert.Equal(t, "workflows", p.Area)
 	assert.Equal(t, "/api/prompts", p.API)
-	assert.Equal(t, "_", p.Place)
+	assert.Equal(t, "internal", p.Place)
 	assert.True(t, p.Open)
 }
 

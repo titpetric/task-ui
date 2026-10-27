@@ -411,7 +411,7 @@ func (h *Handlers) dirOf(ctx context.Context, id string) string {
 }
 
 // forgetEnvFiles deletes the managed env files of a workspace's
-// folders, its own and its projects': for _, the root's folders outside
+// folders, its own and its projects': for internal, the root's folders outside
 // the named workspaces.
 func (h *Handlers) forgetEnvFiles(ctx context.Context, name string, named []string) error {
 	if h.opts.Env == nil {

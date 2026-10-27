@@ -52,6 +52,6 @@ func TestSideLimits_Apply(t *testing.T) {
 
 	// The root's limit counts the projects at its top: infra has a
 	// commit, private and apps have none, so 1 keeps infra and its edge.
-	assert.Equal(t, []string{"infra", "infra/edge", "malta", "malta/apps", "malta/apps/blog", "malta/dockerfiles", "malta/vhosts", "malta/old", "gozo/one", "gozo/two"}, idsOf(view.SideLimits{"_": 1}.Apply(folders, ws, when)))
-	assert.Equal(t, []string{"infra", "infra/edge", "apps"}, idsOf(view.SideLimits{"_": 2}.Apply(folders, nil, when))[:3], "apps before private by name among those with no commit")
+	assert.Equal(t, []string{"infra", "infra/edge", "malta", "malta/apps", "malta/apps/blog", "malta/dockerfiles", "malta/vhosts", "malta/old", "gozo/one", "gozo/two"}, idsOf(view.SideLimits{"internal": 1}.Apply(folders, ws, when)))
+	assert.Equal(t, []string{"infra", "infra/edge", "apps"}, idsOf(view.SideLimits{"internal": 2}.Apply(folders, nil, when))[:3], "apps before private by name among those with no commit")
 }

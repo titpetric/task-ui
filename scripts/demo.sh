@@ -197,11 +197,11 @@ shot runs-dark /runs dark 1440x1500
 scripts/run.sh tools make:build >/dev/null 2>&1
 
 for theme in dark light; do
-  shot "folder-${theme}" /f/_/infra "$theme"
-  shot "job-${theme}" /f/_/infra/deploy "$theme"
+  shot "folder-${theme}" /f/internal/infra "$theme"
+  shot "job-${theme}" /f/internal/infra/deploy "$theme"
   shot "run-${theme}" "/runs/${run}#run=${run}" "$theme" 1440x900 2500
 done
-shot tools-dark /f/_/tools dark 1440x1000
+shot tools-dark /f/internal/tools dark 1440x1000
 shot run-page-dark "/runs/${run}" dark
 shot artifacts-dark /artifacts dark
 shot schedules-dark /schedules dark
@@ -232,14 +232,14 @@ done
 shot user-new-dark /settings/users/new dark
 api PUT /integrations/forgejo -d '{"values":{"url":"https://git.example","token":"demo"}}'
 shot notes-dark /notes dark
-shot envfile-dark /f/_/infra/env/.env dark
-shot out-of-hours-dark "/f/_/website#start=website/lint" dark 1440x900 2000
+shot envfile-dark /f/internal/infra/env/.env dark
+shot out-of-hours-dark "/f/internal/website#start=website/lint" dark 1440x900 2000
 shot mobile-dashboard-dark / dark 390x844
-shot mobile-menu-dark "/f/_/infra#menu" dark 390x844
-shot mobile-folder-dark /f/_/infra dark 390x1100
+shot mobile-menu-dark "/f/internal/infra#menu" dark 390x844
+shot mobile-folder-dark /f/internal/infra dark 390x1100
 
 # The viewer's instance over the same database: it attaches read only.
-TASK_UI_BASE="http://127.0.0.1:${viewer}" shot viewer-job-dark /f/_/infra/deploy dark
+TASK_UI_BASE="http://127.0.0.1:${viewer}" shot viewer-job-dark /f/internal/infra/deploy dark
 
 # The instance nobody is signed in to, for the sign in screen.
 for theme in dark light; do
@@ -333,7 +333,7 @@ shot workspace-keys-dark /settings/workspaces/acme/keys dark
 shot workspace-secrets-dark /settings/workspaces/acme/secrets dark
 # The default workspace's page as a dashboard of the root: each project
 # in its Files list.
-shot folder-dashboard-dark /f/_ dark 1440x800
+shot folder-dashboard-dark /f/internal dark 1440x800
 # The api project's Files: .git and .env sealed, ./serve marked to run,
 # and its README in the preview window.
 shot files-dark /f/acme/api dark
@@ -362,7 +362,7 @@ shot secrets-dark /settings/secrets dark 1440x1300
 # on a phone, a sheet along the bottom.
 for theme in dark light; do
   shot "keys-menu-${theme}" "/settings/keys#actions=1" "$theme" 1440x1500
-  shot "job-menu-${theme}" "/f/_/infra/deploy#actions=1" "$theme" 1440x1400
+  shot "job-menu-${theme}" "/f/internal/infra/deploy#actions=1" "$theme" 1440x1400
 done
 shot mobile-actions-dark "/settings/users#actions=2" dark 390x844
 

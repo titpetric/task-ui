@@ -14,7 +14,7 @@ import (
 // checkout Remove checkout, each behind its permission in the folder
 // template.
 type FolderMenu struct {
-	// ID is the folder's: _ for the root.
+	// ID is the folder's: internal for the root.
 	ID string
 	// Workspace marks a workspace's page, Project a project's.
 	Workspace bool

@@ -182,11 +182,11 @@ func TestBoard_AskStep_summary(t *testing.T) {
 	ctx := context.Background()
 	f.board.AgentCommand = []string{"sh", "-c", `{ printf 'Q: %s\n' "$TASK_UI_PROMPT"; printf 'I: %s\n' "$TASK_UI_PROMPT_INSTRUCTIONS"; } > "$TASK_UI_PROMPT_REPLY"`}
 	run := &model.WorkflowRun{WorkflowID: model.NewID(), Name: "release", UserID: admin.ID, UserName: admin.Name, Input: "for 1.2"}
-	assert.NoError(t, f.board.WorkflowRuns.Create(ctx, run, []model.WorkflowStep{{Kind: model.StepSummary, Folder: "_", Job: model.PromptJob}}))
+	assert.NoError(t, f.board.WorkflowRuns.Create(ctx, run, []model.WorkflowStep{{Kind: model.StepSummary, Folder: "internal", Job: model.PromptJob}}))
 	steps, err := f.board.WorkflowRuns.Steps(ctx, run.ID)
 	assert.NoError(t, err)
 	assert.Equal(t, model.StepSummary, steps[0].Kind)
-	_, answer, err := f.board.AskStep(ctx, admin, run, &steps[0], "_", run.Input)
+	_, answer, err := f.board.AskStep(ctx, admin, run, &steps[0], "internal", run.Input)
 	assert.NoError(t, err)
 	assert.Contains(t, answer, "Q: "+note.WorkflowSummaryQuestion+"\n")
 	assert.Contains(t, answer, "I: Summarise the run in one or two short paragraphs")
@@ -207,7 +207,7 @@ func TestBoard_AskStep(t *testing.T) {
 	run := &model.WorkflowRun{WorkflowID: model.NewID(), Name: "weather", UserID: admin.ID, UserName: admin.Name}
 	assert.NoError(t, f.board.WorkflowRuns.Create(ctx, run, []model.WorkflowStep{
 		{Folder: "proj", Job: "build"},
-		{Folder: "_", Job: model.PromptJob, Prompt: "fetch the weather"},
+		{Folder: "internal", Job: model.PromptJob, Prompt: "fetch the weather"},
 		{Folder: "proj/images", Job: model.PromptJob, Prompt: "water today?"},
 		{Folder: "proj", Job: "push"},
 	}))
@@ -226,7 +226,7 @@ func TestBoard_AskStep(t *testing.T) {
 	assert.Contains(t, answer, "The prompt asks after step 2; the steps after it have not run.")
 	assert.Contains(t, answer, "## Step 1, proj / build: ok, exit code 0")
 	assert.Contains(t, answer, "built image v1.2")
-	assert.Contains(t, answer, `## Step 2, a prompt to Claude in _, "fetch the weather": ok`)
+	assert.Contains(t, answer, `## Step 2, a prompt to Claude in internal, "fetch the weather": ok`)
 	assert.Contains(t, answer, "Its answer:\n\n```\nrain 3 mm today\n```")
 	assert.NotContains(t, answer, "Step 3")
 	assert.NotContains(t, answer, "proj / push")

@@ -54,15 +54,15 @@
 					{{- end }}
 					<div class="form-foot">
 						{{- if and (eq .ID "forgejo") .Configured $admin }}
-						<button type="button" class="btn" data-run data-folder="_" data-job="@forgejo-sync" data-run-args='["--dry-run"]' data-title="_ / forgejo-sync --dry-run" title="Run @forgejo-sync --dry-run: the report alone, nothing changes">Dry run</button>
-						<button type="button" class="btn" data-run data-folder="_" data-job="@forgejo-sync" data-title="_ / forgejo-sync" title="Run @forgejo-sync now: workspaces, homes, projects and hooks">Sync now</button>
+						<button type="button" class="btn" data-run data-folder="internal" data-job="@forgejo-sync" data-run-args='["--dry-run"]' data-title="internal / forgejo-sync --dry-run" title="Run @forgejo-sync --dry-run: the report alone, nothing changes">Dry run</button>
+						<button type="button" class="btn" data-run data-folder="internal" data-job="@forgejo-sync" data-title="internal / forgejo-sync" title="Run @forgejo-sync now: workspaces, homes, projects and hooks">Sync now</button>
 						{{- end }}
 						<button class="btn btn-primary" type="submit">Save</button>
 					</div>
 				</form>
 				{{- if eq .ID "forgejo" }}
 				<p class="dim integration-sync">
-					{{- with $.LastRun "_/@forgejo-sync" }}Last sync <span class="state"><i class="dot {{ .State }}"></i>{{ .State }}</span> {{ ago .StartedAt }} by {{ .UserName }}: <a href="/runs/{{ .ID }}">the report</a>.{{ else }}No sync ran yet: <b>Dry run</b> shows what one would do.{{ end }}
+					{{- with $.LastRun "internal/@forgejo-sync" }}Last sync <span class="state"><i class="dot {{ .State }}"></i>{{ .State }}</span> {{ ago .StartedAt }} by {{ .UserName }}: <a href="/runs/{{ .ID }}">the report</a>.{{ else }}No sync ran yet: <b>Dry run</b> shows what one would do.{{ end }}
 				</p>
 				{{- end }}
 				</div>

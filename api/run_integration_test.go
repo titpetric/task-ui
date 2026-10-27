@@ -418,12 +418,12 @@ func TestRun_NoteVisibility(t *testing.T) {
 	assert.Equal(t, false, f.call(t, asOps, http.MethodGet, "/runs/"+run.ID, nil).get("can_run"), "with note/edit")
 	assert.Equal(t, true, f.call(t, asAdmin, http.MethodGet, "/runs/"+run.ID, nil).get("can_run"))
 
-	// An older run of the internal folder lists for admins and its starter.
-	older := &model.Run{Folder: model.Internal, Job: "claude-note", UserID: agent.ID, UserName: agent.Name, State: model.StateOK}
+	// An older note run of the root lists as a note's run does.
+	older := &model.Run{Folder: model.Default, Job: "claude-note", UserID: agent.ID, UserName: agent.Name, State: model.StateOK}
 	assert.NoError(t, f.opts.Runs.Create(ctx, older))
 	assert.Equal(t, http.StatusOK, f.call(t, asAdmin, http.MethodGet, "/runs/"+older.ID, nil).Status)
-	assert.Equal(t, http.StatusOK, f.call(t, asOps, http.MethodGet, "/runs/"+older.ID, nil).Status)
-	assert.Equal(t, http.StatusNotFound, f.call(t, asViewer, http.MethodGet, "/runs/"+older.ID, nil).Status)
+	assert.Equal(t, http.StatusOK, f.call(t, asOps, http.MethodGet, "/runs/"+older.ID, nil).Status, "with note/view")
+	assert.Equal(t, http.StatusOK, f.call(t, asViewer, http.MethodGet, "/runs/"+older.ID, nil).Status, "with note/view")
 }
 
 // POST /api/runs with summarize runs the job as usual, then asks Claude

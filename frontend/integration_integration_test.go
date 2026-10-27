@@ -42,7 +42,7 @@ func TestIntegrations(t *testing.T) {
 	run := &model.Run{Folder: model.Default, Job: "@forgejo-sync", UserName: "admin", State: model.StateOK}
 	assert.NoError(t, f.opts.Runs.Create(context.Background(), run))
 	body = f.page(t, asAdmin, "/settings/integrations")
-	assert.Contains(t, body, `data-job="@forgejo-sync" data-title="_ / forgejo-sync"`)
+	assert.Contains(t, body, `data-job="@forgejo-sync" data-title="internal / forgejo-sync"`)
 	assert.Contains(t, body, `data-run-args='["--dry-run"]'`)
 	assert.Contains(t, body, `<option value="https" selected>https</option>`)
 	assert.Contains(t, body, `href="/runs/`+run.ID+`"`)
@@ -171,9 +171,9 @@ func TestHostJobs(t *testing.T) {
 	for _, path := range []string{"/schedules", "/workflows/new"} {
 		admin := f.page(t, asAdmin, path)
 		assert.Contains(t, admin, `<optgroup label="Hosts">`, path)
-		assert.Contains(t, admin, `<option value="@host:*" data-folder="_"`, path)
-		assert.Contains(t, admin, `<option value="@host:10.10.10.11" data-folder="_"`, path)
-		assert.Contains(t, admin, `<option value="_"`, path)
+		assert.Contains(t, admin, `<option value="@host:*" data-folder="internal"`, path)
+		assert.Contains(t, admin, `<option value="@host:10.10.10.11" data-folder="internal"`, path)
+		assert.Contains(t, admin, `<option value="internal"`, path)
 		ops := f.page(t, asOps, path)
 		assert.NotContains(t, ops, `label="Hosts"`, path)
 		assert.NotContains(t, ops, `@host:`, path)

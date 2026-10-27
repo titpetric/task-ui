@@ -54,10 +54,11 @@ func (h *Handlers) startPrompt(w http.ResponseWriter, r *http.Request) {
 }
 
 // promptPlace returns where a prompt in a folder, or in dir inside it,
-// runs, as a note's Dir holds it: _ for the default workspace, the root.
+// runs, as a note's Dir holds it: internal for the default workspace, the root.
 // The second result says what is wrong when the place is none.
 func (h *Handlers) promptPlace(r *http.Request, folderID, dir string) (string, string) {
 	dir = strings.Trim(dir, "/")
+	folderID = model.Canonical(folderID)
 	if folderID == model.Default && dir == "" {
 		return model.Default, ""
 	}
@@ -156,7 +157,7 @@ func (h *Handlers) askRun(w http.ResponseWriter, r *http.Request, req PromptRequ
 }
 
 // listPrompts returns the prompt threads of a folder, or of ?dir= inside
-// it, ?folder=_ for the root, or those about a run the user sees, ?run=,
+// it, ?folder=internal for the root, or those about a run the user sees, ?run=,
 // those of an area's page, ?area=workflows,
 // or the prompt's of a workflow run the user sees, ?workflow_run=,
 // newest first, each with its replies: ?limit=. Takes prompt/view.

@@ -123,9 +123,9 @@ steps. Saving a prompt or a summary, and running a workflow with one,
 takes the `prompt/edit` permission.
 
 Through `/api/workflows`, a prompt step is `{"kind": "prompt", "prompt":
-"fetch the weather", "folder": "_", "dir": ""}`, a summary step
-`{"kind": "summary", "folder": "_"}`: `folder` the folder Claude runs
-in, `_` or empty for the root, and `dir` a directory inside it.
+"fetch the weather", "folder": "internal", "dir": ""}`, a summary step
+`{"kind": "summary", "folder": "internal"}`: `folder` the folder Claude runs
+in, `internal` or empty for the root, and `dir` a directory inside it.
 
 ## Workflow context
 
@@ -297,11 +297,11 @@ deletes it; the runs so far keep the steps they had.
 A step's args field goes to a job that takes arguments, after `--`.
 
 A step runs a command on hosts of the [inventory](inventory.md) as
-`@host:<name>` of the root, `_`, on the host, or `@host:*` on every host
+`@host:<name>` of the root, `internal`, on the host, or `@host:*` on every host
 with an ssh login, with the command as its args. With the `hosts`
 permission, the folder list of the **Default** workspace has `_ hosts`,
 and once you pick it the job picker lists them under **Hosts**, and the args field takes the command whole. Through
-`/api/workflows`: `{"folder": "_", "job": "@host:*", "args":
+`/api/workflows`: `{"folder": "internal", "job": "@host:*", "args":
 ["uptime"]}`. A step of `@host:*` runs on every host at once and ends ok
 when every host's run did; running it takes the `hosts` permission.
 

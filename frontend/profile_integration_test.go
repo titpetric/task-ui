@@ -41,7 +41,7 @@ func TestProfile(t *testing.T) {
 	assert.Contains(t, body, "deploy-private")
 	assert.NotContains(t, body, "infra / by-admin</a>")
 	assert.Contains(t, body, `href="/notes#note-`+note.ID+`">rotate the certificates</a>`)
-	assert.Contains(t, body, `href="/f/_/infra/docs#note-`+seen.ID+`">what builds here</a>`)
+	assert.Contains(t, body, `href="/f/internal/infra/docs#note-`+seen.ID+`">what builds here</a>`)
 	assert.Contains(t, body, "a private question")
 	assert.Contains(t, body, `href="/runs?user=ops"`)
 	edit := f.page(t, asAdmin, "/users/ops/edit")

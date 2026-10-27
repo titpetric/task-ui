@@ -55,11 +55,10 @@ func TestSet_Run(t *testing.T) {
 	assert.True(t, ops.Run("infra", nil, nil))
 	assert.True(t, ops.Run("infra", []string{"ops"}, []string{"runner"}))
 	assert.False(t, ops.Run("infra", []string{"dev"}, nil))
-	assert.False(t, ops.Run(model.Internal, nil, nil), "the internal folder is the admins'")
 	assert.False(t, permission.Set{User: &model.User{Name: "guest", Role: model.RoleViewer}}.Run("infra", nil, nil))
 
 	admin := permission.Set{User: &model.User{Name: "root", Role: model.RoleAdmin}}
-	assert.True(t, admin.Run(model.Internal, []string{"ops"}, []string{"dev"}))
+	assert.True(t, admin.Run(model.Default, []string{"ops"}, []string{"dev"}))
 	assert.False(t, permission.Set{}.Run("infra", nil, nil))
 }
 

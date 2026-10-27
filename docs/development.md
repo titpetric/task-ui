@@ -161,7 +161,7 @@ domains, the domains to `model` and `storage`, `model` to nothing of ours.
 | `model`     | the mig generated types and the rules on them                                |
 | `storage`   | CRUD per table over pdo, one in-memory database per test                     |
 | `detector`  | the conventions: a `Detector` per file kind, returning a `Source` of `Target`s |
-| `layout`    | where a folder ID lives on disk and back: `<ws>/home` and `<ws>/src/<project>` under the root, `home` and `src/<project>` for `_`; the only place that maps IDs to directories, and the layout migration |
+| `layout`    | where a folder ID lives on disk and back: `<ws>/home` and `<ws>/src/<project>` under the root, `home` and `src/<project>` for `internal`; the only place that maps IDs to directories, and the layout migration |
 | `folder`    | the catalogue: a `Folder` with its `Job`s, discovery under the root, the project configuration |
 | `runner`    | sessions: a `Process` on a pty, the terminal `Frame`, subscribers, artifacts |
 | `scheduler` | cron `Expression`s and the `Loop` that starts due schedules                  |

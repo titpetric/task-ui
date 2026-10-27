@@ -59,7 +59,7 @@ func TestWorkflow_PromptStep(t *testing.T) {
 	final := threads[0].(map[string]any)
 	assert.Equal(t, "water today?\n\nInput:\nporec", final["body"])
 	answer := final["replies"].([]any)[0].(map[string]any)["body"].(string)
-	assert.Contains(t, answer, `## Step 1, a prompt to Claude in _, "fetch the weather": ok`)
+	assert.Contains(t, answer, `## Step 1, a prompt to Claude in internal, "fetch the weather": ok`)
 	assert.Contains(t, answer, "Its answer:")
 	assert.Contains(t, answer, "## Step 2, infra / plan: ok")
 }

@@ -7,7 +7,7 @@
 	</div>
 	{{- if $admin }}
 	<div class="actions">
-		<button type="button" class="btn" data-run data-folder="_" data-job="@cleanup" data-title="_ / cleanup" title="Run @cleanup now, with the saved rules">Clean up now</button>
+		<button type="button" class="btn" data-run data-folder="internal" data-job="@cleanup" data-title="internal / cleanup" title="Run @cleanup now, with the saved rules">Clean up now</button>
 	</div>
 	{{- end }}
 </div>
@@ -15,7 +15,7 @@
 <form class="form retention" data-api="/api/retention" data-method="PUT" data-next="/settings/retention?notice=Data+retention+saved">
 <section class="block">
 	<h3>What the instance keeps <small>a row per area, the oldest items go first</small></h3>
-	<p class="dim">Applied by <a href="/runs?folder=_&amp;job=@cleanup" title="The runs of @cleanup">@cleanup</a>, which {{ with $.Cleanup }}last ran <a href="/runs/{{ .ID }}" title="{{ stamp .StartedAt }}">{{ ago .StartedAt }}</a> {{ template "state" . }}{{ else }}<span class="faint">has not run yet</span>{{ end }}.</p>
+	<p class="dim">Applied by <a href="/runs?folder=internal&amp;job=@cleanup" title="The runs of @cleanup">@cleanup</a>, which {{ with $.Cleanup }}last ran <a href="/runs/{{ .ID }}" title="{{ stamp .StartedAt }}">{{ ago .StartedAt }}</a> {{ template "state" . }}{{ else }}<span class="faint">has not run yet</span>{{ end }}.</p>
 	<div class="table-wrap">
 	<table class="table retention">
 		<thead><tr><th>Area</th><th>What goes</th><th>Keep</th><th>Size limit</th><th>Holds now</th></tr></thead>

@@ -74,9 +74,9 @@ func (d *Discovery) List() []*Folder {
 	c := &catalogue{byID: map[string]*Folder{}, byDir: map[string]*Folder{}}
 	named := d.named()
 	// Configured folders first, so their paths win over discovery; one
-	// under internal lists nothing, as the folder of older runs.
+	// under internal lists nothing, that is the root's own name.
 	for _, cfg := range d.Config {
-		if f := configured(root, named, cfg); !model.IsInternal(f.ID) {
+		if f := configured(root, named, cfg); !strings.HasPrefix(f.ID, model.Default+"/") {
 			c.add(f)
 		}
 	}

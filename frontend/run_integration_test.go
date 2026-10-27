@@ -32,8 +32,8 @@ func TestRuns(t *testing.T) {
 	// Only the View button opens the window: the row is not a Run button,
 	// the folder and the job are plain links to their pages.
 	assert.NotContains(t, body, `<tr data-run=`)
-	assert.Contains(t, body, `<td data-label="Folder"><a href="/f/_/infra">infra</a></td>`)
-	assert.Contains(t, body, `<td class="key"><a href="/f/_/infra/plan">plan</a></td>`)
+	assert.Contains(t, body, `<td data-label="Folder"><a href="/f/internal/infra">infra</a></td>`)
+	assert.Contains(t, body, `<td class="key"><a href="/f/internal/infra/plan">plan</a></td>`)
 	assert.NotContains(t, body, `data-live`)
 	// A run without a recording has no replay.
 	assert.NotContains(t, body, `data-replay="`+plan.ID+`"`)
@@ -225,8 +225,8 @@ func TestRun_Dir(t *testing.T) {
 
 	body := f.page(t, asViewer, "/runs/"+run.ID)
 	assert.Contains(t, body, `<h2>infra/images / custom <span`)
-	assert.Contains(t, body, `<th>Directory</th><td><a href="/f/_/infra/images">`)
-	assert.Contains(t, body, `<th>Job</th><td><a href="/f/_/infra/images/custom">custom</a></td>`)
+	assert.Contains(t, body, `<th>Directory</th><td><a href="/f/internal/infra/images">`)
+	assert.Contains(t, body, `<th>Job</th><td><a href="/f/internal/infra/images/custom">custom</a></td>`)
 	assert.Contains(t, body, `<code>ps</code> <code>; id</code>`)
 
 	plain := f.page(t, asViewer, "/runs/"+f.run(t, "infra", "plan", "ops", model.StateOK).ID)
@@ -262,7 +262,7 @@ func TestRun_Prompt(t *testing.T) {
 	admin = f.page(t, asAdmin, "/runs/"+run.ID)
 	assert.Contains(t, admin, `id="note-`+thread.ID+`"`)
 	assert.NotContains(t, admin, "what builds here")
-	assert.NotContains(t, f.page(t, asAdmin, "/f/_/infra"), "why did it fail")
+	assert.NotContains(t, f.page(t, asAdmin, "/f/internal/infra"), "why did it fail")
 
 	assert.NoError(t, f.opts.Users.Policies().Put(ctx, "user", asViewer, "prompt/view", "allow"))
 	viewer := f.page(t, asViewer, "/runs/"+run.ID)
@@ -276,7 +276,7 @@ func TestRun_Prompt(t *testing.T) {
 	assert.Contains(t, live, `<details class="promptbox" open hidden>`)
 	assert.NotContains(t, live, box)
 
-	prompt := f.run(t, model.Internal, "claude-prompt", "admin", model.StateOK)
+	prompt := f.run(t, model.Default, "claude-prompt", "admin", model.StateOK)
 	assert.NotContains(t, f.page(t, asAdmin, "/runs/"+prompt.ID), "promptbox", "an older prompt's run renders, with no box")
 
 	// A prompt's run is its place's, @claude-prompt, with no box; the

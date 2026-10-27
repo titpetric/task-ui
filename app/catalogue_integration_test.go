@@ -33,7 +33,6 @@ func TestCatalogue(t *testing.T) {
 	list := c.List()
 	assert.Len(t, list, 2)
 	assert.Equal(t, "infra", list[0].ID)
-	assert.Nil(t, c.Find(model.Internal), "no internal folder")
 	assert.Equal(t, "site", c.Find("site").ID)
 	assert.Nil(t, c.Find("nowhere"))
 	// _ is the root, for its built-in jobs, and lists as no folder;
@@ -99,7 +98,6 @@ func TestCatalogue_internal(t *testing.T) {
 	assert.NoError(t, projects.Create(ctx, &model.Project{Folder: "internal/tools", Title: "Tools"}))
 
 	c := app.NewCatalogue(root, true, projects)
-	assert.Nil(t, c.Find(model.Internal))
 	assert.Nil(t, c.Find("internal/tools"))
 	assert.Len(t, c.List(), 0)
 }

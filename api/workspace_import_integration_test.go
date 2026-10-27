@@ -238,7 +238,7 @@ func TestWorkspaceImport_Default(t *testing.T) {
 	assert.NoError(t, from.opts.Secrets.Set(ctx, &model.Secret{Scope: "internal/claude-prompt", Name: "KEEP", Content: "instance"}))
 	assert.NoError(t, from.opts.Env.Managed.Set(ctx, &model.EnvFile{Folder: "infra", Path: ".env", Content: "A=1\n"}))
 	assert.NoError(t, from.opts.Projects.Create(ctx, &model.Project{Folder: "web", Title: "Web"}))
-	bundle := from.export(t, "_", passphrase)
+	bundle := from.export(t, "internal", passphrase)
 
 	read, err := workspace.ReadBundle(bytes.NewReader(bundle), passphrase)
 	assert.NoError(t, err)

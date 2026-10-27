@@ -46,13 +46,13 @@ func TestPage_PipelineAlert(t *testing.T) {
 	assert.Nil(t, p.PipelineAlert("malta/apps"+"x"))
 	assert.Nil(t, p.PipelineAlert("infra"))
 
-	root := p.PipelineAlert("_")
+	root := p.PipelineAlert("internal")
 	assert.Equal(t, 1, root.Pipelines)
 	assert.Equal(t, "site", root.Shown[0].Folder.ID)
 
 	all := p.PipelineAlert("")
 	assert.Equal(t, 2, all.Pipelines)
-	assert.Equal(t, []string{"malta", "_"}, all.Workspaces)
+	assert.Equal(t, []string{"malta", "internal"}, all.Workspaces)
 }
 
 // Past five rows the rest fold under Show more.
@@ -95,7 +95,7 @@ func TestView_RenderPipelineAlert(t *testing.T) {
 
 	home := render("home", broken(t))
 	assert.Contains(t, home, "2 pipelines have errors</b> in")
-	assert.Contains(t, home, `<a href="/f/_">the default workspace</a>`)
+	assert.Contains(t, home, `<a href="/f/internal">the default workspace</a>`)
 
 	clean := admin(t)
 	for _, name := range []string{"folder", "home"} {

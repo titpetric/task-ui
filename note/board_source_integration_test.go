@@ -45,7 +45,7 @@ func TestBoard_RunReply(t *testing.T) {
 	thread, err := f.board.Ask(ctx, admin, "", "proj/images", "what builds here")
 	assert.NoError(t, err)
 	text := source()
-	assert.Contains(t, text, "The prompt is the thread of the task-ui note "+thread.ID+", in proj/images, /f/_/proj/images#note-"+thread.ID+".")
+	assert.Contains(t, text, "The prompt is the thread of the task-ui note "+thread.ID+", in proj/images, /f/internal/proj/images#note-"+thread.ID+".")
 	assert.Contains(t, text, "note_comment with the id "+thread.ID)
 	reply, err := f.board.RunReply(ctx, admin, thread.ID, "the images", "done")
 	assert.NoError(t, err)

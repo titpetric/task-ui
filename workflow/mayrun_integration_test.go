@@ -63,5 +63,5 @@ func TestRunner_MayRun(t *testing.T) {
 	assert.Equal(t, "infra / gone", r.MayRun(ctx, admin, []model.WorkflowStep{{Folder: "infra", Job: "gone"}}))
 	assert.Equal(t, "infra / "+folder.ShellID, r.MayRun(ctx, admin, []model.WorkflowStep{{Folder: "infra", Job: folder.ShellID}}))
 	hosts := []model.WorkflowStep{{Folder: model.Default, Job: "@host:*"}}
-	assert.Equal(t, "_ / @host:*", r.MayRun(ctx, runner, hosts), "no root folder in the catalogue")
+	assert.Equal(t, "internal / @host:*", r.MayRun(ctx, runner, hosts), "no root folder in the catalogue")
 }

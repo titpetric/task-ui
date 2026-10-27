@@ -24,7 +24,7 @@ type Step struct {
 	// Args are what the step passes its job, a JSON list: the command of
 	// @host:<host>.
 	Args string
-	// Prompt is what a prompt step asks Claude, in Folder, _ for the
+	// Prompt is what a prompt step asks Claude, in Folder, internal for the
 	// root, and Dir inside it; empty for any other step. A summary step
 	// asks in the same place.
 	Prompt string

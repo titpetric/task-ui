@@ -38,14 +38,11 @@ func TestUser_CanSee(t *testing.T) {
 	assert.True(t, guest.CanSee("infra"))
 	assert.False(t, (*model.User)(nil).CanSee("web"))
 
-	// The internal folder is the admins', whatever the folder list says.
-	admin := &model.User{Name: "root", Role: model.RoleAdmin, Folders: `["web"]`}
+	// The root is a folder like another: the folder list decides.
 	ops := &model.User{Name: "ops", Role: model.RoleRunner}
-	assert.True(t, admin.CanSee(model.Internal))
-	assert.True(t, admin.CanSee("internal/tools"))
-	assert.False(t, ops.CanSee(model.Internal))
-	assert.False(t, guest.CanSee("internal/tools"))
-	assert.False(t, (&model.User{Role: model.RoleRunner, Folders: `["internal"]`}).CanSee(model.Internal))
+	assert.True(t, ops.CanSee(model.Default))
+	assert.False(t, (&model.User{Role: model.RoleRunner, Folders: `["web"]`}).CanSee(model.Default))
+	assert.True(t, (&model.User{Role: model.RoleRunner, Folders: `["internal"]`}).CanSee(model.Default))
 }
 
 // An artifact a user wrote with no run belongs to no folder, so whoever
@@ -104,11 +101,11 @@ func TestUser_SeesRun(t *testing.T) {
 	assert.True(t, other.SeesRun(noted, false, true))
 	assert.True(t, agent.SeesRun(noted, false, false), "the agent sees its own")
 
-	// The older runs of the internal folder are the admins' and their
-	// starter's.
+	// The older runs of the root's claude-note are a note's runs: they
+	// take note/view, and their starter sees them.
 	admin := &model.User{ID: "u4", Role: model.RoleAdmin}
-	older := &model.Run{Folder: model.Internal, Job: "claude-note", UserID: "u3"}
+	older := &model.Run{Folder: model.Default, Job: "claude-note", UserID: "u3"}
 	assert.True(t, admin.SeesRun(older, true, true))
 	assert.True(t, agent.SeesRun(older, false, false))
-	assert.False(t, other.SeesRun(older, true, true))
+	assert.False(t, other.SeesRun(older, true, false))
 }

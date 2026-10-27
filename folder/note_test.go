@@ -19,7 +19,7 @@ func TestFolder_NoteJob(t *testing.T) {
 	assert.False(t, job.IsShell())
 	assert.Equal(t, "note", job.Kind)
 	assert.Equal(t, []string{"agent", "note"}, job.Command[1:])
-	assert.Equal(t, "_/@claude-note", job.Key())
+	assert.Equal(t, "internal/@claude-note", job.Key())
 	assert.Nil(t, root.Job(folder.NoteID), "the board starts it, on a note")
 	assert.Nil(t, checkout(t).Job(folder.NoteID))
 

@@ -151,7 +151,7 @@ func TestPage_JobHref(t *testing.T) {
 	assert.Equal(t, "/f/malta/build", p.JobHref(f, job))
 	job.Dir = "dockerfiles/blog"
 	assert.Equal(t, "/f/malta/dockerfiles/blog/build", p.JobHref(f, job))
-	assert.Equal(t, "/f/_/acme/@git:status", p.JobHref(&folder.Folder{ID: "acme"}, &folder.Job{ID: "@git:status"}))
+	assert.Equal(t, "/f/internal/acme/@git:status", p.JobHref(&folder.Folder{ID: "acme"}, &folder.Job{ID: "@git:status"}))
 	assert.Equal(t, "", p.JobHref(nil, job))
 }
 
@@ -170,13 +170,13 @@ func TestPage_Groups(t *testing.T) {
 }
 
 // A page links a folder among its workspaces: a named one by its folder,
-// a project at the root under /f/_/.
+// a project at the root under /f/internal/.
 func TestPage_Href(t *testing.T) {
 	t.Parallel()
 	p := &view.Page{Workspaces: map[string]int{"acme": 0}}
 	assert.Equal(t, "/f/acme/api", p.Href("acme/api"))
-	assert.Equal(t, "/f/_/infra", p.Href("infra"))
-	assert.Equal(t, "/f/_/infra", (&view.Page{}).Href("infra"))
+	assert.Equal(t, "/f/internal/infra", p.Href("infra"))
+	assert.Equal(t, "/f/internal/infra", (&view.Page{}).Href("infra"))
 }
 
 // A run links its place and its job's page; a prompt's, the Notes
@@ -186,14 +186,12 @@ func TestPage_RunJobHref(t *testing.T) {
 	t.Parallel()
 	p := &view.Page{Workspaces: map[string]int{"acme": 0}}
 	assert.Equal(t, "/f/acme/dockerfiles/build", p.RunJobHref("acme", "dockerfiles", "build"))
-	assert.Equal(t, "/f/_/infra/@claude", p.RunJobHref("infra", "", "@claude"))
+	assert.Equal(t, "/f/internal/infra/@claude", p.RunJobHref("infra", "", "@claude"))
 	assert.Equal(t, "", p.RunJobHref("acme", "dockerfiles", "@claude-prompt"))
-	assert.Equal(t, "", p.RunJobHref("_", "", "@claude-note"))
-	assert.Equal(t, "", p.RunJobHref("internal", "", "claude"))
+	assert.Equal(t, "", p.RunJobHref("internal", "", "@claude-note"))
 
 	assert.Equal(t, "/f/acme/dockerfiles", p.RunFolderHref("acme", "dockerfiles"))
-	assert.Equal(t, "/f/_", p.RunFolderHref("_", ""))
-	assert.Equal(t, "", p.RunFolderHref("internal", ""))
+	assert.Equal(t, "/f/internal", p.RunFolderHref("internal", ""))
 }
 
 func TestPage_Links(t *testing.T) {
@@ -201,7 +199,7 @@ func TestPage_Links(t *testing.T) {
 	p := &view.Page{Workspaces: map[string]int{"acme": 0}}
 	links := p.Links([]view.Step{{Folder: "acme/api", Job: "build"}, {Folder: "infra", Job: "plan"}})
 	assert.Equal(t, "/f/acme/api/build", links[0].Href)
-	assert.Equal(t, "/f/_/infra/plan", links[1].Href)
+	assert.Equal(t, "/f/internal/infra/plan", links[1].Href)
 }
 
 func TestPage_Can(t *testing.T) {
@@ -288,7 +286,7 @@ func TestPage_UserNames(t *testing.T) {
 func TestPage_PlaceHref(t *testing.T) {
 	t.Parallel()
 	p := &view.Page{Folders: []*folder.Folder{{ID: "malta"}, {ID: "malta/vhosts"}}, Workspaces: map[string]int{"malta": 0}}
-	assert.Equal(t, "/f/_", p.PlaceHref("_"))
+	assert.Equal(t, "/f/internal", p.PlaceHref("internal"))
 	assert.Equal(t, "/f/malta", p.PlaceHref("malta"))
 	assert.Equal(t, "/f/malta/vhosts/www", p.PlaceHref("malta/vhosts/www"))
 	assert.Equal(t, "/f/malta/docs", p.PlaceHref("malta/docs"))

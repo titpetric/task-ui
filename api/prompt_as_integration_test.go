@@ -84,5 +84,5 @@ func TestPrompts_RunAs(t *testing.T) {
 	f.answered(t, area.str("id"))
 	res = f.call(t, asAdmin, http.MethodPost, "/prompts", api.PromptRequest{Area: model.AreaWorkflows, Prompt: "build one", User: asLimited})
 	assert.Equal(t, http.StatusForbidden, res.Status, string(res.Raw))
-	assert.Equal(t, "limited may not prompt in _", res.str("error"), "limited does not see the root")
+	assert.Equal(t, "limited may not prompt in internal", res.str("error"), "limited does not see the root")
 }

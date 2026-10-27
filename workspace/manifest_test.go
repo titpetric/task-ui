@@ -20,10 +20,10 @@ func TestContains(t *testing.T) {
 		{"acme", "acme/api", true},
 		{"acme", "acmes/api", false},
 		{"acme", "web", false},
-		{"_", "web", true},
-		{"_", "web/docs", true},
-		{"_", "acme/api", false},
-		{"_", "internal/claude-prompt", false},
+		{"internal", "web", true},
+		{"internal", "web/docs", true},
+		{"internal", "acme/api", false},
+		{"internal", "internal/claude-prompt", false},
 	} {
 		assert.Equal(t, c.want, workspace.Contains(c.workspace, named, c.folder), c.workspace+" "+c.folder)
 	}
@@ -35,11 +35,11 @@ func TestRelative(t *testing.T) {
 	t.Parallel()
 	assert.Equal(t, "", workspace.Relative("acme", "acme"))
 	assert.Equal(t, "api", workspace.Relative("acme", "acme/api"))
-	assert.Equal(t, "web", workspace.Relative("_", "web"))
+	assert.Equal(t, "web", workspace.Relative("internal", "web"))
 	assert.Equal(t, "acme2/api", workspace.Absolute("acme2", "api"))
 	assert.Equal(t, "acme2", workspace.Absolute("acme2", ""))
-	assert.Equal(t, "legacy/web", workspace.Absolute("legacy", workspace.Relative("_", "web")))
-	assert.Equal(t, "web", workspace.Absolute("_", "web"))
+	assert.Equal(t, "legacy/web", workspace.Absolute("legacy", workspace.Relative("internal", "web")))
+	assert.Equal(t, "web", workspace.Absolute("internal", "web"))
 }
 
 // A shared scope stays shared, under the target's name; a folder scope
@@ -48,6 +48,6 @@ func TestRelativeScope(t *testing.T) {
 	t.Parallel()
 	assert.Equal(t, "workspace:", workspace.RelativeScope("acme", "workspace:acme"))
 	assert.Equal(t, "api", workspace.RelativeScope("acme", "acme/api"))
-	assert.Equal(t, "workspace:legacy", workspace.AbsoluteScope("legacy", workspace.RelativeScope("_", "workspace:_")))
-	assert.Equal(t, "legacy/web", workspace.AbsoluteScope("legacy", workspace.RelativeScope("_", "web")))
+	assert.Equal(t, "workspace:legacy", workspace.AbsoluteScope("legacy", workspace.RelativeScope("internal", "workspace:internal")))
+	assert.Equal(t, "legacy/web", workspace.AbsoluteScope("legacy", workspace.RelativeScope("internal", "web")))
 }

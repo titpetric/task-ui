@@ -41,7 +41,7 @@ func TestSecret_Set(t *testing.T) {
 
 	var view api.SecretView
 	assert.NoError(t, json.Unmarshal(res.Raw, &view))
-	assert.Equal(t, "workspace:_", view.Scope, "no scope is the default workspace's shared one")
+	assert.Equal(t, "workspace:internal", view.Scope, "no scope is the default workspace's shared one")
 	assert.Equal(t, "API_TOKEN", view.Name)
 	assert.True(t, model.ValidID(view.ID))
 	assert.False(t, string(res.Raw) != "" && contains(res.Raw, "hunter2"))
@@ -154,7 +154,7 @@ func TestSecret_WorkspaceScope(t *testing.T) {
 
 	all := f.call(t, asAdmin, http.MethodPost, "/secrets", api.SecretRequest{Scope: "all", Name: "ROOT", Content: "r"})
 	assert.Equal(t, http.StatusOK, all.Status, string(all.Raw))
-	assert.Equal(t, "workspace:_", all.str("scope"))
+	assert.Equal(t, "workspace:internal", all.str("scope"))
 	acme := f.call(t, asAdmin, http.MethodPost, "/secrets", api.SecretRequest{Scope: "workspace:acme", Name: "ACME", Content: "a"})
 	assert.Equal(t, http.StatusOK, acme.Status, string(acme.Raw))
 	assert.Equal(t, "workspace:acme", acme.str("scope"))

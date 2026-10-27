@@ -56,7 +56,7 @@ The environment sets the whole configuration:
 |-----------------------|----------------------|-------------------------------------------------------------------|
 | `TASK_UI_LISTEN`      | `:3000`              | Listen address                                                    |
 | `TASK_UI_DATA`        | `/data`, else `data` | Database, recordings, artifacts, the password file `.htpasswd`, the workspace folder |
-| `TASK_UI_WORKSPACE`   | `<data>/workspaces`  | The workspace folder: the default workspace `_`, its `home` and `src`, and a directory per named workspace |
+| `TASK_UI_WORKSPACE`   | `<data>/workspaces`  | The workspace folder: the default workspace `internal`, its `home` and `src`, and a directory per named workspace |
 | `TASK_UI_DISCOVER`    | `true`               | List every folder under the workspace folder with something to run |
 | `TASK_UI_DB`          | `<data>/task-ui.db`  | Database file (sqlite)                                            |
 | `TASK_UI_SSH_DIR`     | `/keys`, else `keys` | The key folder, every key of the instance                         |

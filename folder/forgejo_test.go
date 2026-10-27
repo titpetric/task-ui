@@ -20,7 +20,7 @@ func TestFolder_ForgejoSyncJob(t *testing.T) {
 	assert.True(t, job.TakesArgs)
 	assert.Equal(t, "forgejo-sync", job.Command[len(job.Command)-1])
 	assert.Equal(t, []string{model.RoleAdmin}, job.Allow)
-	assert.Equal(t, "_/@forgejo-sync", job.Key())
+	assert.Equal(t, "internal/@forgejo-sync", job.Key())
 
 	assert.Nil(t, checkout(t).Job(folder.ForgejoSyncID))
 	assert.Nil(t, (*folder.Folder)(nil).ForgejoSyncJob())

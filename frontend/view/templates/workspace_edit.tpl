@@ -1,6 +1,6 @@
 {{ define "content" }}
 {{- $ws := .Workspace }}
-{{- $nested := index .Nested $ws.Folder }}{{ $default := eq $ws.Folder "_" }}{{ $secrets := index .SecretCounts $ws.Folder }}
+{{- $nested := index .Nested $ws.Folder }}{{ $default := eq $ws.Folder "internal" }}{{ $secrets := index .SecretCounts $ws.Folder }}
 <div class="page-head">
 	<div>
 		<h2>Edit {{ $ws.Folder }}</h2>

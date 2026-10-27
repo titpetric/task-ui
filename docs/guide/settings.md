@@ -361,7 +361,7 @@ A secret has a scope:
 
 - `workspace:<name>`, a workspace's shared secret, reaches every folder
   in that workspace, its projects and the folders inside them, and no
-  folder in another one. "every folder in Default", `workspace:_`,
+  folder in another one. "every folder in Default", `workspace:internal`,
   reaches the folders at the root; a folder in a named workspace
   doesn't get it.
 - a folder, `malta/deploy`, reaches that folder's jobs and wins over its
@@ -369,7 +369,7 @@ A secret has a scope:
 
 **Add secret** at the top opens the form with a scope picker; each
 workspace has an **Add secret** of its own that starts on its shared
-scope. In the API, the scope `all`, or none, is `workspace:_`.
+scope. In the API, the scope `all`, or none, is `workspace:internal`.
 `/settings/secrets?workspace=malta` shows one workspace alone; the keys
 page links each workspace's count of secrets there.
 `/settings/workspaces/malta/secrets`, **Secrets** in the **⋯** menu of
@@ -388,7 +388,7 @@ The scopes keep a workspace's secrets out of the environment of
 another workspace's runs, not out of their reach on disk (see
 [What a workspace keeps apart](workspaces.md#what-a-workspace-keeps-apart)).
 A folder's workspace is its first segment when that's a named
-workspace, else `_`, while the instance has the default workspace.
+workspace, else `internal`, while the instance has the default workspace.
 Removing a workspace waits for its secrets to go first and takes its
 SSH keys. The integrations' settings aren't on this page: the
 [Integrations](#integrations) page holds them.
@@ -445,8 +445,8 @@ At start, task-ui writes every secret the instance's encryption key
 can't open again for that key: a secret of a workspace's encryption key
 from before one key encrypted them all, or of an instance that kept them
 all on its SSH key, the `id_ed25519` or `id_rsa` of the key folder. A
-secret for all folders, scope `all`, becomes `_`'s shared secret,
-`workspace:_`. Before it writes anything it copies the database to
+secret for all folders, scope `all`, becomes `internal`'s shared secret,
+`workspace:internal`. Before it writes anything it copies the database to
 `task-ui.db.pre-instance-key`, and for the integrations to
 `task-ui.db.pre-keysplit`; it reads each secret back before it keeps
 it. A secret no key opens stays untouched, and the log names it. The
@@ -628,7 +628,7 @@ Sync adds and updates, and never removes:
   without a row gets one; a directory in `src` that is no checkout
   stays alone.
 - Sync skips an archived repository, and one whose name task-ui keeps,
-  `home`, `src`, `internal` or `_`; a mirror or a fork is a project
+  `home`, `src`, `internal` or `internal`; a mirror or a fork is a project
   like any other.
 - A project whose repository Forgejo lacks shows as `not on
   Forgejo` and stays; remove it on the Projects page if it should go.

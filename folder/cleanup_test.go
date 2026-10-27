@@ -21,7 +21,7 @@ func TestFolder_CleanupJob(t *testing.T) {
 	assert.True(t, job.TakesArgs)
 	assert.Equal(t, "cleanup", job.Command[len(job.Command)-1])
 	assert.Equal(t, []string{model.RoleAdmin}, job.Allow)
-	assert.Equal(t, "_/@cleanup", job.Key())
+	assert.Equal(t, "internal/@cleanup", job.Key())
 
 	assert.Nil(t, checkout(t).Job(folder.CleanupID))
 	assert.Nil(t, (*folder.Folder)(nil).CleanupJob())

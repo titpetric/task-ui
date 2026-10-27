@@ -392,7 +392,7 @@ func TestWorkflow_PromptEditor(t *testing.T) {
 		{Folder: "infra", Job: "plan"},
 		{Folder: "infra", Job: "many", Disabled: true},
 		{Kind: model.StepPrompt, Folder: "infra", Job: model.PromptJob, Prompt: "summarize, change nothing"},
-		{Kind: model.StepSummary, Folder: "_", Job: model.PromptJob},
+		{Kind: model.StepSummary, Folder: "internal", Job: model.PromptJob},
 	}))
 
 	edit := f.page(t, asAdmin, "/workflows/"+wf.ID+"/edit")
@@ -401,7 +401,7 @@ func TestWorkflow_PromptEditor(t *testing.T) {
 	assert.Contains(t, edit, `<span class="wf-line" data-step-line>infra / many</span>`)
 	assert.Contains(t, edit, `<span>Enable</span>`)
 	assert.Contains(t, edit, `>summarize, change nothing</textarea>`)
-	assert.Contains(t, edit, `<option value="infra" data-workspace="_" data-rel="infra" selected>infra</option>`)
+	assert.Contains(t, edit, `<option value="infra" data-workspace="internal" data-rel="infra" selected>infra</option>`)
 	assert.Contains(t, edit, `data-kind="summary"`)
 	assert.Contains(t, edit, `Summarise the run in one or two short paragraphs`)
 	assert.Contains(t, edit, `>the plan, summed</textarea>`)
@@ -427,7 +427,7 @@ func TestWorkflow_PromptEditor(t *testing.T) {
 	assert.Contains(t, page, `<li class="node disabled" data-step="1">`)
 	assert.Contains(t, page, "step 2, off: runs skip it")
 	assert.Contains(t, page, `<p class="step-prompt">summarize, change nothing</p>`)
-	assert.Contains(t, page, `<use href="#i-summary"/></svg>summary in _</a>`)
+	assert.Contains(t, page, `<use href="#i-summary"/></svg>summary in internal</a>`)
 	assert.Contains(t, page, `id="workflow-input-dialog"`)
 
 	plain := f.workflow(t, asOps, "plain", "infra", "plan")
@@ -442,7 +442,7 @@ func TestWorkflow_RunPromptThread(t *testing.T) {
 	ctx := context.Background()
 	admin := f.users[asAdmin]
 	wf := &model.Workflow{Name: "summed", UserID: admin.ID, UserName: admin.Name}
-	assert.NoError(t, f.opts.Workflows.Create(ctx, wf, []model.WorkflowStep{{Folder: "infra", Job: "plan", Disabled: true}, {Kind: model.StepPrompt, Folder: "_", Job: model.PromptJob, Prompt: "summarize, change nothing"}}))
+	assert.NoError(t, f.opts.Workflows.Create(ctx, wf, []model.WorkflowStep{{Folder: "infra", Job: "plan", Disabled: true}, {Kind: model.StepPrompt, Folder: "internal", Job: model.PromptJob, Prompt: "summarize, change nothing"}}))
 	run := &model.WorkflowRun{WorkflowID: wf.ID, Name: wf.Name, UserID: admin.ID, UserName: admin.Name}
 	steps, _ := f.opts.Workflows.Steps(ctx, wf.ID)
 	assert.NoError(t, f.opts.WorkflowRuns.Create(ctx, run, steps))
@@ -458,11 +458,11 @@ func TestWorkflow_RunPromptThread(t *testing.T) {
 	page := f.page(t, asAdmin, "/workflows/"+wf.ID+"/runs/"+run.ID)
 	assert.Contains(t, page, "<small>skipped</small>")
 	assert.Contains(t, page, "the run's prompt and summary steps, each with the output of the steps before it")
-	assert.Contains(t, page, `data-notes data-dir="_"`)
+	assert.Contains(t, page, `data-notes data-dir="internal"`)
 	assert.Contains(t, page, "for 1.2")
 	assert.Contains(t, page, "<strong>quiet</strong>")
 	// The root's prompts leave it out.
-	assert.NotContains(t, f.page(t, asAdmin, "/f/_"), "for 1.2")
+	assert.NotContains(t, f.page(t, asAdmin, "/f/internal"), "for 1.2")
 }
 
 // A prompt step edits as a prompt, the folder it runs in and the
@@ -484,7 +484,7 @@ func TestWorkflow_PromptStepEditor(t *testing.T) {
 	assert.Contains(t, edit, `<li class="wf-step kind-prompt" data-step data-kind="prompt">`)
 	assert.Contains(t, edit, `<span class="wf-line" data-step-line>fetch the weather</span>`)
 	assert.Contains(t, edit, `>fetch the weather</textarea>`)
-	assert.Contains(t, edit, `<option value="infra" data-workspace="_" data-rel="infra" selected>infra</option>`)
+	assert.Contains(t, edit, `<option value="infra" data-workspace="internal" data-rel="infra" selected>infra</option>`)
 	assert.Contains(t, edit, `data-step-dir aria-label="Directory inside the folder" placeholder="none" value="docs"`)
 	assert.Contains(t, edit, `data-step-add="prompt"`)
 	assert.Contains(t, edit, `<template data-step-template="prompt">`)
@@ -510,15 +510,15 @@ func TestWorkflows_Prompt(t *testing.T) {
 
 	f.withKey(t)
 	assert.NoError(t, f.opts.Integrations.Save(ctx, integration.Claude, map[string]string{"token": "sk-1"}))
-	assert.NoError(t, f.opts.Board.Notes.Create(ctx, &model.Note{UserName: asAdmin, Body: "build the watering workflow", State: model.NoteDone, WorkspaceID: model.Default, Dir: "_", Area: model.AreaWorkflows}))
-	assert.NoError(t, f.opts.Board.Notes.Create(ctx, &model.Note{UserName: asAdmin, Body: "a root prompt", State: model.NoteDone, WorkspaceID: model.Default, Dir: "_"}))
+	assert.NoError(t, f.opts.Board.Notes.Create(ctx, &model.Note{UserName: asAdmin, Body: "build the watering workflow", State: model.NoteDone, WorkspaceID: model.Default, Dir: "internal", Area: model.AreaWorkflows}))
+	assert.NoError(t, f.opts.Board.Notes.Create(ctx, &model.Note{UserName: asAdmin, Body: "a root prompt", State: model.NoteDone, WorkspaceID: model.Default, Dir: "internal"}))
 	admin := f.page(t, asAdmin, "/workflows")
 	assert.Contains(t, admin, box)
 	assert.Contains(t, admin, `placeholder="Describe a workflow to build or change"`)
-	assert.Contains(t, admin, `<select name="folder" aria-label="Run in"><option value="_">the root</option>`)
+	assert.Contains(t, admin, `<select name="folder" aria-label="Run in"><option value="internal">the root</option>`)
 	assert.Contains(t, admin, `data-area="workflows"`)
 	assert.Contains(t, admin, "build the watering workflow")
 	assert.NotContains(t, admin, "a root prompt")
 	assert.NotContains(t, f.page(t, asOps, "/workflows"), box)
-	assert.NotContains(t, f.page(t, asAdmin, "/f/_"), "build the watering workflow")
+	assert.NotContains(t, f.page(t, asAdmin, "/f/internal"), "build the watering workflow")
 }

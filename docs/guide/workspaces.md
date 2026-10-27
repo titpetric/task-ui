@@ -19,19 +19,24 @@ is the folder `malta/home`, at `/f/malta/home`.
 <root>/malta/src/apps/        another, malta/apps
 ```
 
-Every project is in a workspace. The **default workspace**, `_`, is the
+Every project is in a workspace. The **default workspace**, `internal`, is the
 root itself, laid out the same: `<root>/home` is its home, an empty
 directory task-ui makes, and `<root>/src` holds the projects cloned at
-the root, whose pages open under `/f/_/`, so `<root>/src/infra` is the
-folder `infra` and opens at `/f/_/infra`. A link without the `_`, such
+the root, whose pages open under `/f/internal/`, so `<root>/src/infra` is the
+folder `infra` and opens at `/f/internal/infra`. A link without the `internal`, such
 as a bookmarked `/f/infra`, redirects there for good, its query kept.
-`/f/_` lists the projects at the root you can see. task-ui adds the
+The default workspace was named `_` before: the migration moves every
+stored `_` (runs, workflow steps, schedules, secret scopes, notes, pins,
+env files) to `internal`, older runs of the Claude jobs that already
+carried `internal` now sit in the root with the rest, and a link with
+`/f/_` redirects to `/f/internal` for good, its query kept.
+`/f/internal` lists the projects at the root you can see. task-ui adds the
 default workspace on its first start, when it has no workspace at all,
 and makes the home and src of every workspace it has when it starts.
 The default workspace deletes like any other (see [Delete the default
 workspace](#delete-the-default-workspace)). No workspace, project or directory
-under a workspace takes the name `_`, `internal`, `home` or `src`;
-discovery skips a directory of `src` named `_` or `internal`, and a
+under a workspace takes the name `internal`, `_`, `home` or `src`;
+discovery skips a directory of `src` named `internal` or `_`, and a
 directory of the root or of a workspace that is neither `home` nor
 `src` is not a folder.
 
@@ -178,7 +183,7 @@ order.
   out, the home is an empty directory. The clone works, or the page
   shows git's output and keeps nothing. task-ui refuses a folder that a
   workspace, a project or a directory under the root holds already, and
-  `internal`, `_`, `home` and `src`, its own names.
+  `internal`, `_` (its earlier name), `home` and `src`, its own names.
 - Any number of workspaces may take the same home repository, each under
   its own folder: two teams can start from the same tooling and clone
   different projects beside it.
@@ -220,7 +225,7 @@ order.
 
 ### Delete the default workspace
 
-An instance runs without a default workspace. Without `_`, the
+An instance runs without a default workspace. Without `internal`, the
 Workspaces page lists the named workspaces alone, and task-ui makes no
 `home/` or `src/` at the root again. What changes:
 
@@ -229,27 +234,27 @@ Workspaces page lists the named workspaces alone, and task-ui makes no
   "pick a workspace: the instance has no default workspace".
 - The Projects page, the dashboard and the sidebar list no projects at
   the root; the sidebar starts with the workspaces.
-- `/f/_` still opens: the root's page, with its built-in jobs, `@host:*`,
+- `/f/internal` still opens: the root's page, with its built-in jobs, `@host:*`,
   `@forgejo-sync` and `@cleanup`, which keep running, on their schedules
   too. A run of one of them has no workspace: no `TASK_UI_WORKSPACE`, no
   `TASK_UI_WORKSPACE_DIR`, and `HOME` stays the server's. Its keys are
   the instance keys linked to it, as before.
 - A prompt at the root, and `@claude-note` on the Notes board, run in
   the root directory with the server's `HOME`.
-- The Secrets page has no `_` group and no shared scope `workspace:_`;
+- The Secrets page has no `internal` group and no shared scope `workspace:internal`;
   the integrations' settings, under the instance key, stay.
-- A workflow step lists `_` as a place only for the root's own jobs.
+- A workflow step lists `internal` as a place only for the root's own jobs.
 
-Like any workspace, `_` deletes once it holds no secret and no run of
+Like any workspace, `internal` deletes once it holds no secret and no run of
 the root is active: delete its secrets by hand first, then Delete.
 
 ## Clone a project into one
 
 **Add project** under Settings, Projects has a **Workspace** select.
-`_`, the default, while the instance has it, clones the project into
+`internal`, the default, while the instance has it, clones the project into
 `src/` at the root; a named workspace clones it into its `src/`, as
 `malta/dockerfiles`. The Projects page lists it under that name. In the
-API an empty `workspace` means `_`, and answers `400` on an instance
+API an empty `workspace` means `internal`, and answers `400` on an instance
 without a default workspace. A project may not take a workspace's name, `home`, `src` or
 a directory that's there already: that answers `409`, or `400` for one
 of task-ui's names, before git runs.
@@ -316,7 +321,7 @@ kept project stay with it, and the listed projects keep the sidebar's
 name order. Empty or `0` lists every project, by name. A project set
 not to show takes no place in the count. The rest leave the sidebar
 alone: the Projects page, the workspace's page, the dashboard and a pin
-list them as before. The default workspace, `_`, takes the setting over
+list them as before. The default workspace, `internal`, takes the setting over
 the projects at the root. task-ui reads each project's last commit with
 one git command and keeps it a minute, so a page costs at most one git
 process per project per minute, and a pull or a push shows in the order
@@ -332,12 +337,12 @@ With no named workspace, the sidebar lists the projects alone (see
 A run of a job in the workspace or in one of its projects gets two more
 variables (see [Runs](runs.md#what-a-job-gets)):
 
-- `TASK_UI_WORKSPACE`, the workspace's folder, such as `malta`, or `_`
+- `TASK_UI_WORKSPACE`, the workspace's folder, such as `malta`, or `internal`
   for a project at the root;
 - `TASK_UI_WORKSPACE_DIR`, its directory, such as `<root>/malta`, or the
-  root for `_`;
+  root for `internal`;
 - `HOME` and `TASK_UI_HOME`, the workspace's home, `<root>/malta/home`,
-  or `<root>/home` for `_` (see [The home](#the-home)).
+  or `<root>/home` for `internal` (see [The home](#the-home)).
 
 A run at the root of an instance without a default workspace gets none
 of them: `HOME` stays the server's.
@@ -413,7 +418,7 @@ A run gets the instance keys linked to it (see
 [Settings](settings.md#keys)), then its workspace's SSH keys, and the
 first line of its terminal names each: `$ ssh-agent: deploy_rsa4096,
 workspace_malta_deploy_ed25519`. A project at the root gets the keys of
-`_`. The links decide what reaches a run's agent, not what a job can
+`internal`. The links decide what reaches a run's agent, not what a job can
 open on disk (see [What a workspace keeps apart](#what-a-workspace-keeps-apart)).
 
 ```sh
@@ -436,9 +441,9 @@ A workspace's secrets reach its runs as variables (see
 [Settings](settings.md#secrets)). Its **shared** secrets, scope
 `workspace:malta`, reach every folder in it; a project's own, scope
 `malta/deploy`, reach that project and win over a shared one of the same
-name. The shared secrets of `_` reach the projects at the root and no
+name. The shared secrets of `internal` reach the projects at the root and no
 named workspace: a project in `malta` gets `malta`'s shared secrets and
-its own, never `_`'s. The instance's encryption key encrypts them all.
+its own, never `internal`'s. The instance's encryption key encrypts them all.
 The Secrets page groups
 them by workspace, each project's under its name.
 
@@ -482,8 +487,8 @@ The bundle carries:
 
 It never carries the instance's encryption key, the instance's SSH keys
 or another workspace's keys. Schedules, workflows, runs and artifacts
-stay on the instance, as do the integrations. The bundle of `_` leaves
-out the named workspaces and `internal`.
+stay on the instance, as do the integrations. The bundle of `internal` leaves
+out the named workspaces.
 
 **Export** at the top right of a workspace's settings page, which an
 admin sees, opens a dialog for the passphrase, typed twice, or made by **Generate**: 24
@@ -511,7 +516,7 @@ key folder holds answers `409` with the key's name before it clones
 anything, so a workspace exported and imported again on the same
 instance needs the original removed first, or another instance.
 
-The bundle of the default workspace, `_`, imports as a named workspace,
+The bundle of the default workspace, `internal`, imports as a named workspace,
 so it needs a folder, such as `legacy`. Its projects move under that
 folder, `web` becomes `legacy/web`, and its shared secrets become
 `legacy`'s; the workspace's title is the folder.

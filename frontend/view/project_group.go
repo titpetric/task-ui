@@ -15,7 +15,7 @@ import (
 // keeps a group without rows. The projects table draws each group's
 // entries.
 type ProjectGroup struct {
-	// Workspace is the workspace's folder, _ for the default one.
+	// Workspace is the workspace's folder, internal for the default one.
 	Workspace string
 	Entries   []folder.Entry
 }
@@ -49,7 +49,7 @@ func (g ProjectGroup) Empty() string {
 	return "No projects in " + g.Workspace + " yet."
 }
 
-// ProjectGroups returns a group per workspace, in their order, each with its entries, the top-level ones the root's when _ is among them.
+// ProjectGroups returns a group per workspace, in their order, each with its entries, the top-level ones the root's when internal is among them.
 func ProjectGroups(entries []folder.Entry, workspaces []model.Workspace) []ProjectGroup {
 	groups := []ProjectGroup{}
 	at := map[string]int{}

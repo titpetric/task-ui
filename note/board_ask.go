@@ -37,7 +37,7 @@ func (b *Board) AskArea(ctx context.Context, user *model.User, area, dir, body s
 }
 
 // ask puts a prompt to Claude in dir, a folder and a directory inside it
-// as Run.Where names them, or _ for the root, and answers with the note:
+// as Run.Where names them, or internal for the root, and answers with the note:
 // open, of the folder's workspace, about the run aboutRun names and of
 // the area when they name one. With parentID it replies in a prompt's
 // thread instead, in the thread's place, keeps its run and area, and
@@ -204,7 +204,7 @@ func (b *Board) hosts(ctx context.Context) []string {
 
 // promptRequest resolves where a prompt runs, as the user: the prompt
 // job, @claude-prompt, of the place dir names, a folder and a directory
-// in it, a workspace's directory, or _ for the root, with the directory
+// in it, a workspace's directory, or internal for the root, with the directory
 // in TASK_UI_PROMPT_DIR for a folder's, and the run's workspace. The run
 // is the place's, as its @shell run is, with the place's secrets. The
 // user sees the place; the prompt job runs by prompt/edit, which the

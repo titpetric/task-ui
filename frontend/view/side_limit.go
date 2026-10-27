@@ -10,7 +10,7 @@ import (
 )
 
 // SideLimits is how many projects the sidebar lists for each workspace,
-// by the workspace's folder, _ for the root: the most recently committed
+// by the workspace's folder, internal for the root: the most recently committed
 // first, a project with no commit last, ties by name. A workspace not
 // in it, or with 0, lists every project. Apply cuts the sidebar's
 // folders to that: the projects past a limit go with the folders inside
@@ -65,7 +65,7 @@ func (l SideLimits) Apply(folders []*folder.Folder, workspaces map[string]int, w
 	return kept
 }
 
-// projectOf returns the workspace a folder is in, _ for the root, and
+// projectOf returns the workspace a folder is in, internal for the root, and
 // the project, the folder at the top of the workspace's src that holds
 // it; "" for the workspace's own folder.
 func projectOf(id string, workspaces map[string]int) (string, string) {

@@ -14,7 +14,7 @@ const alertRows = 5
 // pipelines in a place: how many pipelines atkins refuses, the rows it
 // shows open and the ones it folds, and the workspaces they are in. A
 // place is a folder and every folder inside it, the folders of the
-// default workspace for _, and every folder the user sees for "".
+// default workspace for internal, and every folder the user sees for "".
 type PipelineAlert struct {
 	Pipelines  int
 	Shown      []PipelineError
@@ -73,7 +73,7 @@ func (p *Page) inPlace(place, id string) bool {
 }
 
 // workspaceOf returns the workspace a folder is in: the named one its ID
-// starts with, or _ for a project at the root.
+// starts with, or internal for a project at the root.
 func (p *Page) workspaceOf(id string) string {
 	top, _, _ := strings.Cut(id, "/")
 	if _, named := p.Workspaces[top]; named {

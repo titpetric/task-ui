@@ -265,7 +265,7 @@ func TestBoard_NoteJob(t *testing.T) {
 	assert.Equal(t, model.NoteDone, done.State)
 	reply := replies(t, f, posted.ID)
 	assert.Len(t, reply, 1)
-	assert.Equal(t, "Done in "+root+": @claude answer this (_/@claude-note note)", reply[0].Body)
+	assert.Equal(t, "Done in "+root+": @claude answer this (internal/@claude-note note)", reply[0].Body)
 	run, ok := f.board.Runner.Get(done.RunID)
 	assert.True(t, ok)
 	assert.Equal(t, model.Default+"/"+model.NoteJob, snapshotKey(run))

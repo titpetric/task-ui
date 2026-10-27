@@ -117,7 +117,6 @@ func TestPrompts(t *testing.T) {
 	}{
 		{"empty", api.PromptRequest{Folder: "infra", Prompt: "  "}, http.StatusBadRequest},
 		{"no folder", api.PromptRequest{Folder: "nowhere", Prompt: "x"}, http.StatusNotFound},
-		{"internal", api.PromptRequest{Folder: model.Internal, Prompt: "x"}, http.StatusNotFound},
 		{"up and out", api.PromptRequest{Folder: "infra", Dir: "../private", Prompt: "x"}, http.StatusNotFound},
 		{"missing", api.PromptRequest{Folder: "infra", Dir: "nothing", Prompt: "x"}, http.StatusNotFound},
 		{"a file", api.PromptRequest{Folder: "infra", Dir: "images/hold", Prompt: "x"}, http.StatusNotFound},

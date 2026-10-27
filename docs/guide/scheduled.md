@@ -41,14 +41,14 @@ Month and day names work too (`mon-fri`, `jan`).
 `--`, on every run of the schedule; a job that takes none refuses them.
 
 A schedule runs a command on hosts of the [inventory](inventory.md)
-too: `@host:<name>` of the root, `_`, on the host, or `@host:*` on every
+too: `@host:<name>` of the root, `internal`, on the host, or `@host:*` on every
 host with an ssh login, with the command as its args. With the `hosts`
 permission, the job picker of the Scheduled form lists them under
-**Hosts**, beside the root `_` in the folder picker, and **Args** takes
+**Hosts**, beside the root `internal` in the folder picker, and **Args** takes
 the command whole. Through `POST /api/schedules`:
 
 ```json
-{"folder": "_", "job": "@host:*", "args": ["df -h /"], "expression": "0 6 * * *"}
+{"folder": "internal", "job": "@host:*", "args": ["df -h /"], "expression": "0 6 * * *"}
 ```
 
 Its user needs the `hosts` permission; `@host:*` starts a batch, a run
@@ -72,7 +72,7 @@ workflow. A workflow's schedule takes no **Args** and no triage.
 
 ## Cleanup
 
-`@cleanup` of the root, `_`, is `task-ui cleanup`: it applies the
+`@cleanup` of the root, `internal`, is `task-ui cleanup`: it applies the
 [Data retention](settings.md#data-retention) table, each row in the table's
 order, the oldest items first: the recording files of finished runs, the rows
 of old runs with their recordings, summaries and threads, old prompt

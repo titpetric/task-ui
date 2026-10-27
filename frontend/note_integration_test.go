@@ -52,7 +52,7 @@ func TestNotes_runLink(t *testing.T) {
 	ctx := context.Background()
 	note, err := f.opts.Board.Post(ctx, f.users[asOps], "", "@claude tidy up")
 	assert.NoError(t, err)
-	internal := f.run(t, model.Internal, "claude-note", "claude", model.StateOK)
+	internal := f.run(t, model.Default, "claude-note", "claude", model.StateOK)
 	assert.NoError(t, f.opts.Board.Notes.SetState(ctx, note.ID, model.NoteDone, internal.ID))
 	assert.NoError(t, f.opts.Board.Notes.Create(ctx, &model.Note{Channel: model.ChannelNotes, ParentID: note.ID, UserName: "claude", Body: "Tidied.", RunID: internal.ID}))
 	other, err := f.opts.Board.Post(ctx, f.users[asOps], "", "@claude build it")
@@ -65,7 +65,6 @@ func TestNotes_runLink(t *testing.T) {
 	assert.Equal(t, 2, strings.Count(admin, link(internal.ID)), "the note and the reply")
 	assert.Contains(t, admin, link(web.ID))
 	ops := f.page(t, asOps, "/notes")
-	assert.NotContains(t, ops, link(internal.ID))
 	assert.Contains(t, ops, "Tidied.")
 	assert.Contains(t, ops, link(web.ID))
 }

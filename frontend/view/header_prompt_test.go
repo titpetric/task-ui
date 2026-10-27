@@ -16,7 +16,7 @@ func TestPage_HeaderPrompt(t *testing.T) {
 	t.Parallel()
 	malta := &folder.Folder{ID: "malta"}
 	workspaces := map[string]int{"malta": 0}
-	root := view.HeaderPrompt{Folder: "_", Label: "_", Href: "/f/_"}
+	root := view.HeaderPrompt{Folder: "internal", Label: "internal", Href: "/f/internal"}
 	for _, c := range []struct {
 		name string
 		page view.Page
@@ -27,11 +27,11 @@ func TestPage_HeaderPrompt(t *testing.T) {
 		{"directory", view.Page{Folders: []*folder.Folder{malta}, Workspaces: workspaces, Folder: malta, Browse: "dockerfiles/"}, view.HeaderPrompt{Folder: "malta", Dir: "dockerfiles", Label: "malta/dockerfiles", Href: "/f/malta/dockerfiles"}},
 		{"job of a directory", view.Page{Folders: []*folder.Folder{malta}, Workspaces: workspaces, Folder: malta, Job: &folder.Job{Dir: "dockerfiles"}}, view.HeaderPrompt{Folder: "malta", Dir: "dockerfiles", Label: "malta/dockerfiles", Href: "/f/malta/dockerfiles"}},
 		{"workspace settings", view.Page{Folders: []*folder.Folder{malta}, Workspaces: workspaces, Workspace: &model.Workspace{Folder: "malta"}}, view.HeaderPrompt{Folder: "malta", Label: "malta", Href: "/f/malta"}},
-		{"default workspace", view.Page{Workspace: &model.Workspace{Folder: "_"}}, root},
-		{"internal", view.Page{Folder: &folder.Folder{ID: model.Internal}}, root},
+		{"default workspace", view.Page{Workspace: &model.Workspace{Folder: "internal"}}, root},
+		{"root folder", view.Page{Folder: &folder.Folder{ID: model.Default}}, root},
 		{"run", view.Page{Folders: []*folder.Folder{malta}, Workspaces: workspaces, Run: &view.Run{Run: model.Run{ID: "06gp9t19", Folder: "malta", Dir: "dockerfiles", Job: "build"}}}, view.HeaderPrompt{Folder: "malta", Dir: "dockerfiles", Run: "06gp9t19", Label: "run 06gp…", Href: "/runs/06gp9t19"}},
 		{"prompt's run", view.Page{Folders: []*folder.Folder{malta}, Workspaces: workspaces, Run: &view.Run{Run: model.Run{ID: "06gp9t19", Folder: "malta", Job: model.PromptJob}}}, view.HeaderPrompt{Folder: "malta", Label: "malta", Href: "/f/malta"}},
-		{"internal run", view.Page{Run: &view.Run{Run: model.Run{ID: "06gp9t19", Folder: model.Internal, Job: "claude"}}}, root},
+		{"internal run", view.Page{Run: &view.Run{Run: model.Run{ID: "06gp9t19", Folder: model.Default, Job: "claude"}}}, root},
 	} {
 		assert.Equal(t, c.want, c.page.HeaderPrompt(), c.name)
 	}

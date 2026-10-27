@@ -104,13 +104,13 @@ func TestProjectNew_Workspace(t *testing.T) {
 
 	alone := f.page(t, asAdmin, "/settings/projects/new")
 	assert.Contains(t, alone, `<select id="p-workspace" name="workspace" required>`)
-	assert.NotContains(t, alone, `<option value="_"`)
+	assert.NotContains(t, alone, `<option value="internal"`)
 
 	assert.NoError(t, f.opts.Workspaces.EnsureDefault(ctx))
 	assert.NoError(t, f.opts.Workspaces.Create(ctx, &model.Workspace{Folder: "malta", Title: "Malta"}))
 	form := f.page(t, asAdmin, "/settings/projects/new")
-	assert.Equal(t, 1, strings.Count(form, `<option value="_"`))
-	assert.Contains(t, form, `<option value="_" selected>_ · the root</option>`)
+	assert.Equal(t, 1, strings.Count(form, `<option value="internal"`))
+	assert.Contains(t, form, `<option value="internal" selected>internal · the root</option>`)
 	assert.Contains(t, form, `<option value="malta">malta · Malta</option>`)
 	assert.Contains(t, f.page(t, asAdmin, "/settings/projects/new?workspace=malta"), `<option value="malta" selected>malta · Malta</option>`)
 
@@ -118,7 +118,7 @@ func TestProjectNew_Workspace(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NoError(t, f.opts.Workspaces.Delete(ctx, def.ID))
 	without := f.page(t, asAdmin, "/settings/projects/new")
-	assert.NotContains(t, without, `<option value="_"`)
+	assert.NotContains(t, without, `<option value="internal"`)
 	assert.Contains(t, without, `<option value="malta" selected>malta · Malta</option>`)
 }
 
@@ -133,8 +133,8 @@ func TestProjectEdit_Move(t *testing.T) {
 	assert.NoError(t, f.opts.Schedules.Create(ctx, &model.Schedule{Folder: "infra", Job: "plan", Expression: "@hourly"}))
 
 	body := f.page(t, asAdmin, "/settings/projects/infra")
-	assert.Contains(t, body, `data-move="infra" data-move-from="_" data-move-left="schedule infra · plan"`)
-	assert.Contains(t, body, `<option value="_" selected>`)
+	assert.Contains(t, body, `data-move="infra" data-move-from="internal" data-move-left="schedule infra · plan"`)
+	assert.Contains(t, body, `<option value="internal" selected>`)
 	assert.Contains(t, body, `<option value="acme">acme · Acme</option>`)
 
 	assert.NotContains(t, f.page(t, asAdmin, "/settings/projects/infra/edge"), `data-move=`)

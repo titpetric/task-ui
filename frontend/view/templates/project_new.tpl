@@ -20,7 +20,7 @@
 		<label for="p-workspace">Workspace</label>
 		<select id="p-workspace" name="workspace" required>
 			{{- range $i, $w := .WorkspaceList }}
-			<option value="{{ .Folder }}"{{ if or (eq .Folder $ws) (and (not $ws) (eq $i 0)) }} selected{{ end }}>{{ .Folder }} · {{ if eq .Folder "_" }}the root{{ else }}{{ or .Title .Folder }}{{ end }}</option>
+			<option value="{{ .Folder }}"{{ if or (eq .Folder $ws) (and (not $ws) (eq $i 0)) }} selected{{ end }}>{{ .Folder }} · {{ if eq .Folder "internal" }}the root{{ else }}{{ or .Title .Folder }}{{ end }}</option>
 			{{- end }}
 		</select>
 		<small class="faint">_, the default workspace while there is one, clones the project at the top of the root; any other clones it inside that workspace, as workspace/folder.</small>

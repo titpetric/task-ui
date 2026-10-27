@@ -56,7 +56,7 @@ type Step struct {
 	// Disabled is a step the run skips, resolved to nothing.
 	Disabled bool
 	// Asks is a prompt or a summary step, which asks Claude in Place, a
-	// folder and a directory in it or _ for the root; Summary is a
+	// folder and a directory in it or internal for the root; Summary is a
 	// summary step.
 	Asks    bool
 	Summary bool

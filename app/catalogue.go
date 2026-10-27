@@ -75,9 +75,11 @@ func (c *Catalogue) List() []*folder.Folder {
 	return c.discovery().List()
 }
 
-// Find returns a folder by ID, or nil; _ that no folder takes is the
-// root, in its src while the default workspace exists, else the root itself.
+// Find returns a folder by ID, or nil; internal that no folder takes is
+// the root, in its src while the default workspace exists, else the root
+// itself. The _ it was named before reads as internal.
 func (c *Catalogue) Find(id string) *folder.Folder {
+	id = model.Canonical(id)
 	d := c.discovery()
 	if f := d.Find(id); f != nil || id != model.Default {
 		return f

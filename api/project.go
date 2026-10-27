@@ -19,7 +19,7 @@ type ProjectCloneRequest struct {
 	ID     string `json:"id"`
 	Branch string `json:"branch"`
 	// Workspace clones the project inside that workspace's directory:
-	// the folder becomes <workspace>/<id>. Empty or _, the default
+	// the folder becomes <workspace>/<id>. Empty or internal, the default
 	// workspace, clones into the root.
 	Workspace string `json:"workspace,omitempty"`
 	// Recursive lists the folders inside the checkout as deep as they go,
@@ -45,9 +45,9 @@ type ProjectRequest struct {
 	// Sidebar lists the project in the sidebar, the default; false keeps
 	// it, and the folders inside it, out. Left out, it stays unchanged.
 	Sidebar *bool `json:"sidebar,omitempty"`
-	// Workspace moves the project into that workspace, _ for the root:
+	// Workspace moves the project into that workspace, internal for the root:
 	// the checkout and the row take the ID <workspace>/<last segment>,
-	// or the last segment alone in _. Left out, or naming the workspace
+	// or the last segment alone in internal. Left out, or naming the workspace
 	// that holds it, the project stays.
 	Workspace *string `json:"workspace,omitempty"`
 }
@@ -119,11 +119,11 @@ func (h *Handlers) cloneProject(w http.ResponseWriter, r *http.Request) {
 		fail(w, http.StatusBadRequest, "a folder name can use only letters, digits, dots, dashes and underscores")
 		return
 	}
-	req.Workspace = strings.TrimSpace(req.Workspace)
+	req.Workspace = model.Canonical(strings.TrimSpace(req.Workspace))
 	if req.Workspace == "" {
 		req.Workspace = model.Default
 	}
-	if top, _, _ := strings.Cut(req.ID, "/"); layout.Reserved(top) || model.IsInternal(req.Workspace) {
+	if top, _, _ := strings.Cut(req.ID, "/"); layout.Reserved(top) {
 		fail(w, http.StatusBadRequest, reservedRefused)
 		return
 	}

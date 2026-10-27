@@ -78,14 +78,14 @@ func TestStore_MigrateConflict(t *testing.T) {
 	encrypted, err := secret.NewVault(secret.DirKeys{Store: s.legacy}).Encrypt("old")
 	assert.NoError(t, err)
 	assert.NoError(t, s.rows.Create(ctx, &model.Secret{Scope: storage.ScopeAll, Name: "TOKEN", Content: encrypted}))
-	assert.NoError(t, s.store.Set(ctx, &model.Secret{Scope: "workspace:_", Name: "TOKEN", Content: "new"}))
+	assert.NoError(t, s.store.Set(ctx, &model.Secret{Scope: "workspace:internal", Name: "TOKEN", Content: "new"}))
 
 	result, err := s.store.Migrate(ctx, nil)
 	assert.NoError(t, err)
 	assert.Equal(t, secret.Migration{Current: 1, Failed: 1}, result)
 	_, err = s.rows.Get(ctx, model.Secret{Scope: storage.ScopeAll, Name: "TOKEN"})
 	assert.NoError(t, err)
-	got, err := s.store.Get(ctx, model.Secret{Scope: "workspace:_", Name: "TOKEN"})
+	got, err := s.store.Get(ctx, model.Secret{Scope: "workspace:internal", Name: "TOKEN"})
 	assert.NoError(t, err)
 	assert.Equal(t, "new", got.Content)
 }

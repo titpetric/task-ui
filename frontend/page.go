@@ -453,7 +453,7 @@ func (h *Handlers) refuse(w http.ResponseWriter, r *http.Request) {
 }
 
 // crumbName is a folder's name in a crumb: Default for the default
-// workspace, _, as the Keys and Workspaces pages call it.
+// workspace, internal, as the Keys and Workspaces pages call it.
 func crumbName(folder string) string {
 	if folder == model.Default {
 		return "Default"

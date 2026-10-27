@@ -101,11 +101,11 @@ func TestSchedules_RunAs(t *testing.T) {
 	assert.Contains(t, admin, `<select name="user" data-submit aria-label="Runs as">`)
 	assert.Contains(t, admin, `<option value="ops" selected data-keys="deploy_ed25519">ops · keys: deploy_ed25519</option>`)
 
-	job := f.page(t, asAdmin, "/f/_/infra/plan")
+	job := f.page(t, asAdmin, "/f/internal/infra/plan")
 	assert.Contains(t, job, `<label for="sch-user">Runs as</label>`)
 	assert.Contains(t, job, `<option value="ops" data-keys="deploy_ed25519">ops (runner) · keys: deploy_ed25519</option>`)
 
-	for _, path := range []string{"/schedules", "/f/_/infra/plan"} {
+	for _, path := range []string{"/schedules", "/f/internal/infra/plan"} {
 		ops := f.page(t, asOps, path)
 		assert.NotContains(t, ops, `Run as</label>`, path)
 		assert.NotContains(t, ops, `data-submit`, path)

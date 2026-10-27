@@ -25,10 +25,10 @@ func TestFolder(t *testing.T) {
 	// the server can refuse a plain run; the window of a failed run forces it.
 	f.infra.Hours = "mon-fri 9-17"
 
-	body := f.page(t, asOps, "/f/_/infra")
+	body := f.page(t, asOps, "/f/internal/infra")
 	assert.Contains(t, body, "The servers")
 	// The page lists the folders under it, each linked, with its job count.
-	assert.Contains(t, body, `<a href="/f/_/infra/edge">`)
+	assert.Contains(t, body, `<a href="/f/internal/infra/edge">`)
 	assert.NotContains(t, body, "task-ui found nothing to run")
 	assert.NotContains(t, body, "data-run-all") // workflows chain jobs instead
 	assert.Contains(t, body, `data-run data-folder="infra" data-job="plan"`)
@@ -39,26 +39,26 @@ func TestFolder(t *testing.T) {
 	// No env file filled: no Environment section at all.
 	assert.NotContains(t, body, "Environment")
 
-	viewer := f.page(t, asViewer, "/f/_/infra")
+	viewer := f.page(t, asViewer, "/f/internal/infra")
 	assert.NotContains(t, viewer, "data-run-all")
 	assert.NotContains(t, viewer, "data-force")
 	assert.Contains(t, viewer, `<span>History of plan</span></a>`)
 
 	// A user who may add env files sees the empty block, with the button.
-	admin := f.page(t, asAdmin, "/f/_/infra")
+	admin := f.page(t, asAdmin, "/f/internal/infra")
 	assert.Contains(t, admin, "No env files.")
-	assert.Contains(t, admin, `href="/f/_/infra/env"`)
-	assert.NotContains(t, admin, `href="/f/_/infra/env/.env"`)
+	assert.Contains(t, admin, `href="/f/internal/infra/env"`)
+	assert.NotContains(t, admin, `href="/f/internal/infra/env/.env"`)
 
 	// A filled one shows, with its edit link for admins alone.
 	f.withKey(t)
 	assert.NoError(t, f.opts.Env.Save(context.Background(), f.infra, envfile.File{Path: ".env", Content: "A=1\n"}))
-	admin = f.page(t, asAdmin, "/f/_/infra")
+	admin = f.page(t, asAdmin, "/f/internal/infra")
 	assert.Contains(t, admin, "Environment")
-	assert.Contains(t, admin, `href="/f/_/infra/env/.env"`)
-	ops := f.page(t, asOps, "/f/_/infra")
+	assert.Contains(t, admin, `href="/f/internal/infra/env/.env"`)
+	ops := f.page(t, asOps, "/f/internal/infra")
 	assert.Contains(t, ops, "Environment")
-	assert.NotContains(t, ops, `href="/f/_/infra/env/.env"`)
+	assert.NotContains(t, ops, `href="/f/internal/infra/env/.env"`)
 }
 
 func TestFolder_Running(t *testing.T) {
@@ -66,17 +66,17 @@ func TestFolder_Running(t *testing.T) {
 	f := newFixture(t)
 	session := f.start(t, f.infra, "slow")
 
-	body := f.page(t, asOps, "/f/_/infra")
+	body := f.page(t, asOps, "/f/internal/infra")
 	assert.Contains(t, body, `<a class="cc named running" href="/runs/`+session.ID()+`" data-attach="`+session.ID()+`"`)
 	assert.Contains(t, body, `data-kill="`+session.ID()+`"`)
 
-	viewer := f.page(t, asViewer, "/f/_/infra")
+	viewer := f.page(t, asViewer, "/f/internal/infra")
 	assert.Contains(t, viewer, `data-attach="`+session.ID()+`"`)
 	assert.NotContains(t, viewer, "data-kill")
 }
 
 // The root's own jobs, which no listed folder holds, have their job page
-// under /f/_/<job>, as the dashboard links them.
+// under /f/internal/<job>, as the dashboard links them.
 func TestFolder_RootJob(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
@@ -84,18 +84,18 @@ func TestFolder_RootJob(t *testing.T) {
 	root.Jobs[0].Name = "Forgejo sync"
 	f.opts.Catalogue.(catalogue)[model.Default] = root
 
-	body := f.page(t, asAdmin, "/f/_/@forgejo-sync")
+	body := f.page(t, asAdmin, "/f/internal/@forgejo-sync")
 	assert.Contains(t, body, "Forgejo sync")
-	assert.Contains(t, body, `data-folder="_"`)
-	assert.Equal(t, http.StatusNotFound, f.get(t, asAdmin, "/f/_/@nothing").Status)
+	assert.Contains(t, body, `data-folder="internal"`)
+	assert.Equal(t, http.StatusNotFound, f.get(t, asAdmin, "/f/internal/@nothing").Status)
 }
 
 func TestFolder_Missing(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
 
-	assert.Equal(t, http.StatusNotFound, f.get(t, asOps, "/f/_/nowhere").Status)
-	hidden := f.get(t, asLimited, "/f/_/private")
+	assert.Equal(t, http.StatusNotFound, f.get(t, asOps, "/f/internal/nowhere").Status)
+	hidden := f.get(t, asLimited, "/f/internal/private")
 	assert.Equal(t, http.StatusNotFound, hidden.Status)
 	assert.Contains(t, hidden.Body, "No folder named private")
 }
@@ -111,30 +111,30 @@ func TestFolder_Tree(t *testing.T) {
 	assert.NoError(t, os.WriteFile(filepath.Join(f.infra.Dir, "README.md"), []byte("infra"), 0o644))
 	assert.NoError(t, os.WriteFile(filepath.Join(f.infra.Dir, "terraform", "main.tf"), []byte(""), 0o644))
 
-	body := f.page(t, asOps, "/f/_/infra")
-	assert.Contains(t, body, `<a href="/f/_/infra/edge">edge</a>`) // a folder of the catalogue
-	assert.Contains(t, body, `<a href="/f/_/infra/terraform">terraform</a>`)
+	body := f.page(t, asOps, "/f/internal/infra")
+	assert.Contains(t, body, `<a href="/f/internal/infra/edge">edge</a>`) // a folder of the catalogue
+	assert.Contains(t, body, `<a href="/f/internal/infra/terraform">terraform</a>`)
 	assert.Contains(t, body, `<a href="/files/infra/README.md" data-file="README.md">README.md</a>`)
 	assert.Contains(t, body, `href="/files/infra/README.md?download"`)
-	assert.Contains(t, body, `<a href="/f/_" title="Up a level">..</a>`)
+	assert.Contains(t, body, `<a href="/f/internal" title="Up a level">..</a>`)
 	assert.True(t, strings.Index(body, `>terraform</a>`) < strings.Index(body, `>README.md</a>`), "folders before files")
 
-	sub := f.page(t, asOps, "/f/_/infra/terraform")
+	sub := f.page(t, asOps, "/f/internal/infra/terraform")
 	assert.Contains(t, sub, "<h2>")
-	assert.Contains(t, sub, `<a href="/f/_/infra/terraform/modules">modules</a>`)
+	assert.Contains(t, sub, `<a href="/f/internal/infra/terraform/modules">modules</a>`)
 	assert.Contains(t, sub, `<a href="/files/infra/terraform/main.tf" data-file="terraform/main.tf">main.tf</a>`)
-	assert.Contains(t, sub, `<a href="/f/_/infra">infra</a>`) // the crumb back
-	assert.Contains(t, sub, `<a href="/f/_/infra" title="Up a level">..</a>`)
+	assert.Contains(t, sub, `<a href="/f/internal/infra">infra</a>`) // the crumb back
+	assert.Contains(t, sub, `<a href="/f/internal/infra" title="Up a level">..</a>`)
 	assert.Contains(t, sub, "Nothing to run")
-	deep := f.page(t, asOps, "/f/_/infra/terraform/modules")
-	assert.Contains(t, deep, `<a href="/f/_/infra/terraform">terraform</a>`)
-	assert.Contains(t, deep, `<a href="/f/_/infra/terraform" title="Up a level">..</a>`)
-	edge := f.page(t, asOps, "/f/_/infra/edge")
-	assert.Contains(t, edge, `<a href="/f/_/infra" title="Up a level">..</a>`)
+	deep := f.page(t, asOps, "/f/internal/infra/terraform/modules")
+	assert.Contains(t, deep, `<a href="/f/internal/infra/terraform">terraform</a>`)
+	assert.Contains(t, deep, `<a href="/f/internal/infra/terraform" title="Up a level">..</a>`)
+	edge := f.page(t, asOps, "/f/internal/infra/edge")
+	assert.Contains(t, edge, `<a href="/f/internal/infra" title="Up a level">..</a>`)
 
-	assert.Equal(t, http.StatusNotFound, f.get(t, asOps, "/f/_/infra/nowhere").Status)
-	assert.Equal(t, http.StatusNotFound, f.get(t, asOps, "/f/_/infra/terraform/README.md").Status) // a file is not a page
-	assert.Equal(t, http.StatusNotFound, f.get(t, asLimited, "/f/_/private/anything").Status)
+	assert.Equal(t, http.StatusNotFound, f.get(t, asOps, "/f/internal/infra/nowhere").Status)
+	assert.Equal(t, http.StatusNotFound, f.get(t, asOps, "/f/internal/infra/terraform/README.md").Status) // a file is not a page
+	assert.Equal(t, http.StatusNotFound, f.get(t, asLimited, "/f/internal/private/anything").Status)
 }
 
 // The page lists dot entries; the sealed ones, .git and every dot
@@ -156,28 +156,28 @@ func TestFolder_Sealed(t *testing.T) {
 	assert.NoError(t, os.WriteFile(filepath.Join(dir, ".hook"), []byte("#!/bin/sh\necho hook\n"), 0o755))
 	assert.NoError(t, os.Symlink(".env", filepath.Join(dir, "envlink")))
 
-	body := f.page(t, asOps, "/f/_/infra")
+	body := f.page(t, asOps, "/f/internal/infra")
 	assert.Contains(t, body, `<tr class="sealed" aria-disabled="true" title="task-ui lists .git but does not open it">`)
 	assert.Contains(t, body, `<span>.git</span>`)
 	assert.Contains(t, body, `<span>.env</span>`)
 	assert.Contains(t, body, `<span>.env.local</span>`)
-	assert.NotContains(t, body, `href="/f/_/infra/.git"`)
+	assert.NotContains(t, body, `href="/f/internal/infra/.git"`)
 	assert.NotContains(t, body, `/files/infra/.env`)
-	assert.Contains(t, body, `<a href="/f/_/infra/.claude">.claude</a>`)
+	assert.Contains(t, body, `<a href="/f/internal/infra/.claude">.claude</a>`)
 	assert.Contains(t, body, `<span>.gitignore</span>`)
 	assert.Contains(t, body, `<span>.hook</span>`)
 	assert.Contains(t, body, `<span>envlink</span>`)
 	assert.NotContains(t, body, `data-job="./.hook"`)
 	assert.NotContains(t, body, `/files/infra/envlink`)
-	claude := f.page(t, asOps, "/f/_/infra/.claude")
+	claude := f.page(t, asOps, "/f/internal/infra/.claude")
 	assert.Contains(t, claude, `data-file=".claude/settings.json"`)
 	assert.Contains(t, claude, `<span>.secret</span>`)
 	assert.Equal(t, http.StatusOK, f.get(t, asOps, "/files/infra/.claude/settings.json").Status)
 	assert.Contains(t, body, `<span>escape.txt</span>`)
 	assert.NotContains(t, body, `/files/infra/escape.txt`)
-	assert.Contains(t, f.page(t, asOps, "/f/_/infra/web"), `<span>.htaccess</span>`)
+	assert.Contains(t, f.page(t, asOps, "/f/internal/infra/web"), `<span>.htaccess</span>`)
 
-	for _, path := range []string{"/f/_/infra/.git", "/f/_/infra/rootlink", "/f/_/infra/web/.htaccess", "/f/_/infra/.hook", "/f/_/infra/./.hook"} {
+	for _, path := range []string{"/f/internal/infra/.git", "/f/internal/infra/rootlink", "/f/internal/infra/web/.htaccess", "/f/internal/infra/.hook", "/f/internal/infra/./.hook"} {
 		assert.Equal(t, http.StatusNotFound, f.get(t, asOps, path).Status, path)
 	}
 	for _, path := range []string{
@@ -199,19 +199,19 @@ func TestFolder_Executable(t *testing.T) {
 	assert.NoError(t, os.WriteFile(filepath.Join(f.infra.Dir, "bin", "hello"), []byte("#!/bin/sh\necho hello\n"), 0o755))
 	assert.NoError(t, os.WriteFile(filepath.Join(f.infra.Dir, "tool.py"), []byte("#!/usr/bin/env python3\n"), 0o644))
 
-	ops := f.page(t, asOps, "/f/_/infra/bin")
+	ops := f.page(t, asOps, "/f/internal/infra/bin")
 	assert.Contains(t, ops, `<i class="shebang" aria-hidden="true">#!</i> <a href="/files/infra/bin/hello" data-file="bin/hello">hello</a> <span class="badge exec"`)
 	assert.Contains(t, ops, `data-run data-folder="infra" data-job="./bin/hello" data-title="infra / bin/hello"`)
-	assert.Contains(t, f.page(t, asOps, "/f/_/infra"), `data-job="./tool.py"`)
+	assert.Contains(t, f.page(t, asOps, "/f/internal/infra"), `data-job="./tool.py"`)
 
-	viewer := f.page(t, asViewer, "/f/_/infra/bin")
+	viewer := f.page(t, asViewer, "/f/internal/infra/bin")
 	assert.Contains(t, viewer, `<span class="badge exec"`)
 	assert.NotContains(t, viewer, `data-run data-folder="infra" data-job="./bin/hello"`)
 
-	job := f.get(t, asOps, "/f/_/infra/bin/hello")
+	job := f.get(t, asOps, "/f/internal/infra/bin/hello")
 	assert.Equal(t, http.StatusOK, job.Status)
 	assert.Contains(t, job.Body, "<h2>bin/hello")
-	assert.Equal(t, http.StatusOK, f.get(t, asOps, "/f/_/infra/./bin/hello").Status)
+	assert.Equal(t, http.StatusOK, f.get(t, asOps, "/f/internal/infra/./bin/hello").Status)
 }
 
 // The sidebar heads each top level folder with its name and its jobs,
@@ -222,10 +222,10 @@ func TestFolder_SidebarAndCards(t *testing.T) {
 	f := newFixture(t)
 	session := f.start(t, f.infra, "slow")
 
-	body := f.page(t, asOps, "/f/_/infra")
-	assert.Contains(t, body, `<a class="section active" href="/f/_/infra" data-folder="infra"`)
+	body := f.page(t, asOps, "/f/internal/infra")
+	assert.Contains(t, body, `<a class="section active" href="/f/internal/infra" data-folder="infra"`)
 	// The sidebar runs a job in place and attaches to the one running.
-	assert.Contains(t, body, `<a class="section" href="/f/_/private" data-folder="private"`)
+	assert.Contains(t, body, `<a class="section" href="/f/internal/private" data-folder="private"`)
 	assert.Contains(t, body, `<div class="job" data-job-key="infra/plan">`)
 	assert.Contains(t, body, `class="play" data-run data-folder="infra" data-job="plan"`)
 	assert.Contains(t, body, `<div class="job" data-job-key="infra/slow">
@@ -242,10 +242,10 @@ func TestFolder_SidebarAndCards(t *testing.T) {
 	assert.Contains(t, body, `<a class="cc named running" href="/runs/`+session.ID()+`"`)
 	assert.Contains(t, body, "<th>Hours</th><td><span class=\"faint\">always</span></td>")
 
-	job := f.page(t, asOps, "/f/_/infra/plan")
+	job := f.page(t, asOps, "/f/internal/infra/plan")
 	assert.Contains(t, job, `<div class="job active" data-job-key="infra/plan">`)
 
-	viewer := f.page(t, asViewer, "/f/_/infra")
+	viewer := f.page(t, asViewer, "/f/internal/infra")
 	assert.NotContains(t, viewer, `class="play" data-run`)
 	assert.Contains(t, viewer, `class="play" data-attach="`+session.ID()+`"`)
 }
@@ -257,13 +257,13 @@ func TestFolder_Hours(t *testing.T) {
 
 	// The fixture's clock is a Friday night; a job runs in its
 	// workspace's hours, which the folder carries.
-	body := f.page(t, asOps, "/f/_/infra")
+	body := f.page(t, asOps, "/f/internal/infra")
 	assert.Contains(t, body, "mon-fri 9-17, fri 9-13 <span class=\"badge bad\">out of hours now</span>")
 
-	job := f.page(t, asOps, "/f/_/infra/plan")
+	job := f.page(t, asOps, "/f/internal/infra/plan")
 	assert.Contains(t, job, "mon-fri 9-17, fri 9-13 <span class=\"badge bad\">out of hours now</span>")
 
-	slow := f.page(t, asOps, "/f/_/infra/slow")
+	slow := f.page(t, asOps, "/f/internal/infra/slow")
 	assert.Contains(t, slow, "out of hours now")
 }
 
@@ -274,31 +274,31 @@ func TestFolder_Nested(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
 
-	body := f.page(t, asAdmin, "/f/_/infra/edge")
+	body := f.page(t, asAdmin, "/f/internal/infra/edge")
 	assert.Contains(t, body, `<details class="folder active" data-folder="infra/edge" open>`)
-	assert.Contains(t, body, `<a class="section" href="/f/_/infra" data-folder="infra"`)
-	assert.Contains(t, body, `<a href="/f/_/infra/edge"><svg class="ic"><use href="#i-folder-open"/></svg><span><b>edge</b></span></a>`)
-	assert.Contains(t, body, `<a href="/f/_/infra">infra</a>`)
+	assert.Contains(t, body, `<a class="section" href="/f/internal/infra" data-folder="infra"`)
+	assert.Contains(t, body, `<a href="/f/internal/infra/edge"><svg class="ic"><use href="#i-folder-open"/></svg><span><b>edge</b></span></a>`)
+	assert.Contains(t, body, `<a href="/f/internal/infra">infra</a>`)
 	assert.Contains(t, body, `class="play" data-run data-folder="infra/edge" data-job="deploy"`)
 
-	job := f.page(t, asAdmin, "/f/_/infra/edge/deploy")
+	job := f.page(t, asAdmin, "/f/internal/infra/edge/deploy")
 	assert.Contains(t, job, "<h2>deploy")
-	assert.Contains(t, job, `<span><a href="/f/_/infra/edge">edge</a></span><span>deploy</span>`)
+	assert.Contains(t, job, `<span><a href="/f/internal/infra/edge">edge</a></span><span>deploy</span>`)
 
-	env := f.page(t, asAdmin, "/f/_/infra/edge/env/.env")
+	env := f.page(t, asAdmin, "/f/internal/infra/edge/env/.env")
 	assert.Contains(t, env, `data-api="/api/env/infra/edge/.env"`)
 
-	assert.Equal(t, http.StatusNotFound, f.get(t, asAdmin, "/f/_/infra/edge/nothing").Status)
-	assert.Equal(t, http.StatusNotFound, f.get(t, asAdmin, "/f/_/infra/edge/deploy/more").Status)
-	assert.Equal(t, http.StatusNotFound, f.get(t, asAdmin, "/f/_/infra/nope/deploy").Status)
+	assert.Equal(t, http.StatusNotFound, f.get(t, asAdmin, "/f/internal/infra/edge/nothing").Status)
+	assert.Equal(t, http.StatusNotFound, f.get(t, asAdmin, "/f/internal/infra/edge/deploy/more").Status)
+	assert.Equal(t, http.StatusNotFound, f.get(t, asAdmin, "/f/internal/infra/nope/deploy").Status)
 	// The limited user sees infra; the folder inside it stays hidden.
-	assert.Equal(t, http.StatusNotFound, f.get(t, asLimited, "/f/_/infra/edge").Status)
+	assert.Equal(t, http.StatusNotFound, f.get(t, asLimited, "/f/internal/infra/edge").Status)
 	assert.Equal(t, http.StatusOK, f.get(t, asAdmin, "/settings/projects/infra/edge").Status)
 }
 
 // A folder's path starts with its workspace: a named one by its folder,
 // _ for a project at the root. A path that starts with neither moves to
-// /f/_/ for good, its query kept; internal is no folder, and a named
+// /f/internal/ for good, its query kept; internal is no folder, and a named
 // workspace is not reached through _.
 func TestFolder_Namespace(t *testing.T) {
 	t.Parallel()
@@ -313,36 +313,35 @@ func TestFolder_Namespace(t *testing.T) {
 
 	moved := f.get(t, asOps, "/f/infra/plan?notice=Saved#x")
 	assert.Equal(t, http.StatusMovedPermanently, moved.Status)
-	assert.Equal(t, "/f/_/infra/plan?notice=Saved", moved.Location)
-	assert.Equal(t, "/f/_/infra", f.get(t, asOps, "/f/infra").Location)
+	assert.Equal(t, "/f/internal/infra/plan?notice=Saved", moved.Location)
+	assert.Equal(t, "/f/internal/infra", f.get(t, asOps, "/f/infra").Location)
 
-	body := f.page(t, asOps, "/f/_/infra")
-	assert.Contains(t, body, `<a class="section active" href="/f/_/infra" data-folder="infra">`)
-	assert.Contains(t, body, `<a href="/f/_/infra/edge">`)
+	body := f.page(t, asOps, "/f/internal/infra")
+	assert.Contains(t, body, `<a class="section active" href="/f/internal/infra" data-folder="infra">`)
+	assert.Contains(t, body, `<a href="/f/internal/infra/edge">`)
 	assert.Contains(t, body, `<span class="cc-slot" data-cc="infra/plan"`)
 	assert.Contains(t, body, `<a class="section" href="/f/acme" data-folder="acme">`)
 	assert.Contains(t, body, `<a class="section" href="/f/acme/api" data-folder="acme/api">`)
 	assert.Contains(t, body, `data-workspaces='{&#34;acme&#34;:0}'`)
-	assert.Contains(t, body, `<div class="crumbs"><a href="/">Dashboard</a><span><a href="/f/_">Default</a></span><span>infra</span></div>`)
+	assert.Contains(t, body, `<div class="crumbs"><a href="/">Dashboard</a><span><a href="/f/internal">Default</a></span><span>infra</span></div>`)
 	assert.NotContains(t, sidebar(body), `href="/f/infra`)
-	assert.Contains(t, f.page(t, asOps, "/f/_/infra/edge"), `<span><a href="/f/_/infra">infra</a></span><span>edge</span>`)
+	assert.Contains(t, f.page(t, asOps, "/f/internal/infra/edge"), `<span><a href="/f/internal/infra">infra</a></span><span>edge</span>`)
 
 	assert.Contains(t, f.page(t, asOps, "/f/acme/api"), `<span><a href="/f/acme">acme</a></span><span>api</span>`)
-	for _, path := range []string{"/f/_/acme", "/f/_/acme/api", "/f/_/internal", "/f/_/_", "/f/_/nothing"} {
+	for _, path := range []string{"/f/internal/acme", "/f/internal/acme/api", "/f/internal/internal", "/f/internal/_", "/f/internal/nothing"} {
 		assert.Equal(t, http.StatusNotFound, f.get(t, asAdmin, path).Status, path)
 	}
-	assert.Equal(t, http.StatusNotFound, f.get(t, asAdmin, "/f/internal").Status)
 
-	// /f/_ is the default workspace: the projects at the root a user sees.
-	def := f.page(t, asLimited, "/f/_")
+	// /f/internal is the default workspace: the projects at the root a user sees.
+	def := f.page(t, asLimited, "/f/internal")
 	assert.Contains(t, def, "Default")
-	assert.Contains(t, def, `<a href="/f/_/infra">`)
-	assert.NotContains(t, def, `<a href="/f/_/private">`)
+	assert.Contains(t, def, `<a href="/f/internal/infra">`)
+	assert.NotContains(t, def, `<a href="/f/internal/private">`)
 	assert.NotContains(t, def, `href="/f/acme`)
 	// Without project/view the Files list holds the projects alone.
 	assert.Contains(t, def, "the root</small>")
-	admin := f.page(t, asAdmin, "/f/_")
-	assert.Contains(t, admin, `<a href="/f/_/private">`)
+	admin := f.page(t, asAdmin, "/f/internal")
+	assert.Contains(t, admin, `<a href="/f/internal/private">`)
 	assert.Contains(t, admin, "the root</small>")
 	assert.Contains(t, admin, `<a href="/f/acme">acme</a>`)
 }
@@ -359,7 +358,7 @@ func TestFolder_JobRow(t *testing.T) {
 	plan.DependsOn = []string{"lint"}
 	f.infra.Job("slow").Description = "slow"
 
-	body := f.page(t, asOps, "/f/_/infra")
+	body := f.page(t, asOps, "/f/internal/infra")
 	assert.Contains(t, jobRow(t, body, "infra/plan"), `data-desc="Show the plan"`)
 	assert.Contains(t, jobRow(t, body, "infra/plan"), `title="Run infra / plan: Show the plan"><svg class="ic"><use href="#i-play"/></svg><span>plan</span></button>`)
 	slow := jobRow(t, body, "infra/slow")
@@ -367,12 +366,12 @@ func TestFolder_JobRow(t *testing.T) {
 	assert.Contains(t, slow, `data-cc="infra/slow" data-folder="infra" data-job="slow" data-name="slow" data-label="slow" data-last="never" data-can><button`)
 	assert.Contains(t, slow, `title="Run infra / slow"><svg class="ic">`)
 
-	page := f.page(t, asOps, "/f/_/infra/plan")
+	page := f.page(t, asOps, "/f/internal/infra/plan")
 	assert.Contains(t, page, "<h2>plan <span class=\"badge\">script</span>")
 	assert.Contains(t, page, "<p>Show the plan</p>")
 	assert.Contains(t, page, "<tr><th>Depends on</th><td>lint </td></tr>")
 	assert.Contains(t, page, `<td class="steps"><code>task setup:checkout</code><code>go build ./...</code><code>go test ./...</code><code>docker build .</code><code>docker push</code></td>`)
-	assert.Contains(t, f.page(t, asOps, "/f/_/infra/slow"), `<tr><th>Command</th><td><code>sh -c sleep 30</code></td></tr>`)
+	assert.Contains(t, f.page(t, asOps, "/f/internal/infra/slow"), `<tr><th>Command</th><td><code>sh -c sleep 30</code></td></tr>`)
 }
 
 // A directory browsed inside a folder lists its own targets as job
@@ -389,20 +388,20 @@ func TestFolder_BrowseJobs(t *testing.T) {
 	run.Dir = "images"
 	assert.NoError(t, f.opts.Runs.Update(context.Background(), run))
 
-	body := f.page(t, asOps, "/f/_/infra/images")
+	body := f.page(t, asOps, "/f/internal/infra/images")
 	assert.Contains(t, body, "Its jobs run in infra/images/")
 	assert.NotContains(t, body, "Nothing to run here")
 	for _, job := range []string{"default", "build", "push"} {
 		assert.Contains(t, body, `data-run data-folder="infra" data-dir="images" data-job="`+job+`" data-title="infra/images / `+job+`"`)
-		assert.Contains(t, body, `href="/f/_/infra/images/`+job+`"><svg class="ic"><use href="#i-list"/></svg><span>History of `+job+`</span></a>`)
+		assert.Contains(t, body, `href="/f/internal/infra/images/`+job+`"><svg class="ic"><use href="#i-list"/></svg><span>History of `+job+`</span></a>`)
 	}
 	assert.Contains(t, body, `class="cc named bad" data-run data-folder="infra" data-dir="images" data-job="build"`)
 	assert.Contains(t, body, "atkins -f atkins.yml")
-	viewer := f.page(t, asViewer, "/f/_/infra/images")
-	assert.Contains(t, viewer, `<a class="cc named idle bad" href="/f/_/infra/images/build"`)
+	viewer := f.page(t, asViewer, "/f/internal/infra/images")
+	assert.Contains(t, viewer, `<a class="cc named idle bad" href="/f/internal/infra/images/build"`)
 	assert.NotContains(t, viewer, `data-run data-folder`)
 
-	page := f.page(t, asOps, "/f/_/infra/images/build")
+	page := f.page(t, asOps, "/f/internal/infra/images/build")
 	assert.Contains(t, page, "infra/images / build")
 	assert.Contains(t, page, `data-attach="`+run.ID+`"`)
 	assert.Contains(t, page, "the job runs here")
@@ -411,11 +410,11 @@ func TestFolder_BrowseJobs(t *testing.T) {
 	inDir := f.run(t, "infra", "plan", "ops", model.StateOK)
 	inDir.Dir = "images"
 	assert.NoError(t, f.opts.Runs.Update(context.Background(), inDir))
-	_, plan, _ := strings.Cut(f.page(t, asOps, "/f/_/infra/plan"), "<h3>History")
+	_, plan, _ := strings.Cut(f.page(t, asOps, "/f/internal/infra/plan"), "<h3>History")
 	plan, _, _ = strings.Cut(plan, "</section>")
 	assert.Contains(t, plan, `data-attach="`+own.ID+`"`)
 	assert.NotContains(t, plan, `data-attach="`+inDir.ID+`"`)
-	assert.Equal(t, http.StatusNotFound, f.get(t, asOps, "/f/_/infra/images/nothing").Status)
+	assert.Equal(t, http.StatusNotFound, f.get(t, asOps, "/f/internal/infra/images/nothing").Status)
 }
 
 // An admin's folder page shows the prompts asked there under the box,
@@ -434,7 +433,7 @@ func TestFolder_PromptThreads(t *testing.T) {
 	elsewhere := &model.Note{UserName: asAdmin, Body: "and in private", State: model.NoteOpen, WorkspaceID: model.Default, Dir: "private"}
 	assert.NoError(t, notes.Create(ctx, elsewhere))
 
-	admin := f.page(t, asAdmin, "/f/_/infra")
+	admin := f.page(t, asAdmin, "/f/internal/infra")
 	assert.Contains(t, admin, `data-notes data-dir="infra"`)
 	assert.Contains(t, admin, `id="note-`+asked.ID+`"`)
 	assert.Contains(t, admin, "what runs here")
@@ -442,6 +441,6 @@ func TestFolder_PromptThreads(t *testing.T) {
 	assert.Contains(t, admin, `<span class="badge note-state done">done</span>`)
 	assert.Contains(t, admin, `data-parent="`+asked.ID+`"`)
 	assert.NotContains(t, admin, "and in private", "a prompt of another place")
-	assert.NotContains(t, f.page(t, asOps, "/f/_/infra"), "what runs here")
+	assert.NotContains(t, f.page(t, asOps, "/f/internal/infra"), "what runs here")
 	assert.NotContains(t, f.page(t, asAdmin, "/notes"), "what runs here")
 }

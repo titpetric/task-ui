@@ -34,19 +34,19 @@ func TestLogin(t *testing.T) {
 	admin := f.users[asAdmin]
 	assert.NoError(t, f.passwords.SetPassword(ctx, admin.ID, hash))
 
-	form := f.get(t, "", "/login?back=/f/_/infra")
+	form := f.get(t, "", "/login?back=/f/internal/infra")
 	assert.Equal(t, http.StatusOK, form.Status)
 	assert.Contains(t, form.Body, "Sign in")
-	assert.Contains(t, form.Body, `name="back" value="/f/_/infra"`)
+	assert.Contains(t, form.Body, `name="back" value="/f/internal/infra"`)
 	assert.NotContains(t, form.Body, "Recents")
 	assert.NotContains(t, form.Body, "header-prompt")
 
-	wrong := f.post(t, "/login", url.Values{"username": {"admin"}, "password": {"nope"}, "back": {"/f/_/infra"}})
+	wrong := f.post(t, "/login", url.Values{"username": {"admin"}, "password": {"nope"}, "back": {"/f/internal/infra"}})
 	assert.Equal(t, http.StatusUnauthorized, wrong.StatusCode)
 
-	right := f.post(t, "/login", url.Values{"username": {" admin "}, "password": {"demo"}, "back": {"/f/_/infra"}})
+	right := f.post(t, "/login", url.Values{"username": {" admin "}, "password": {"demo"}, "back": {"/f/internal/infra"}})
 	assert.Equal(t, http.StatusSeeOther, right.StatusCode)
-	assert.Equal(t, "/f/_/infra", right.Header.Get("Location"))
+	assert.Equal(t, "/f/internal/infra", right.Header.Get("Location"))
 	var cookie *http.Cookie
 	for _, c := range right.Cookies() {
 		if c.Name == access.Cookie {

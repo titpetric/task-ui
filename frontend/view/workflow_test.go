@@ -27,7 +27,7 @@ func TestWorkflow(t *testing.T) {
 	assert.True(t, w.CanRun)
 	assert.False(t, w.CanChange)
 	assert.False(t, w.Prompted())
-	assert.Equal(t, "_", w.PromptPlace())
+	assert.Equal(t, "internal", w.PromptPlace())
 
 	w.Steps = append(w.Steps, view.Step{Kind: model.StepSummary, Folder: "infra", Dir: "app"})
 	w.Steps[1].Disabled = true
@@ -77,7 +77,7 @@ func TestView_RenderWorkflowEditor(t *testing.T) {
 		Workflow: model.Workflow{ID: "w1", Name: "Porec watering", Description: "Water the plants or not."},
 		Steps: []view.Step{
 			{Kind: model.StepJob, Folder: "infra", Job: "plan"},
-			{Kind: model.StepPrompt, Folder: "_", Prompt: "Fetch the weather for Porec.", Disabled: true},
+			{Kind: model.StepPrompt, Folder: "internal", Prompt: "Fetch the weather for Porec.", Disabled: true},
 			{Kind: model.StepSummary, Folder: "infra", Dir: "app"},
 		},
 		CanChange: true,
@@ -428,7 +428,7 @@ func TestView_RenderSchedulesWorkflow(t *testing.T) {
 	assert.Contains(t, out, `<td data-label="Folder"><svg class="ic lead"><use href="#i-flow"/></svg>workflow</td>`)
 	assert.Contains(t, out, `<td class="key" data-label="Job"><a href="/workflows/w1">release</a></td>`)
 	assert.Contains(t, out, `data-confirm="Delete the schedule 0 7 * * 1-5 for release?"`)
-	assert.Contains(t, out, `<td data-label="Folder"><a href="/f/_/infra">infra</a></td>`)
+	assert.Contains(t, out, `<td data-label="Folder"><a href="/f/internal/infra">infra</a></td>`)
 	assert.Contains(t, out, `data-confirm="Delete the schedule @daily for infra / plan?"`)
 	assert.Contains(t, out, "Schedule a workflow from its edit page.")
 }

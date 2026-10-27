@@ -2,7 +2,7 @@
 <div class="page-head">
 	<div>
 		<h2>Workspaces</h2>
-		<p>Directories under the root, each with a home, the <code>HOME</code> of the workspace's runs and a checkout of its home repository when it has one, and its projects side by side under <code>src/</code>. The folder name is the projects' namespace; <code>_</code>, the default workspace, is the root itself; the instance runs without it after Delete.</p>
+		<p>Directories under the root, each with a home, the <code>HOME</code> of the workspace's runs and a checkout of its home repository when it has one, and its projects side by side under <code>src/</code>. The folder name is the projects' namespace; <code>internal</code>, the default workspace, is the root itself; the instance runs without it after Delete.</p>
 	</div>
 	<div class="actions">
 		{{- if and .User .User.CanAdmin }}
@@ -19,9 +19,9 @@
 		<thead><tr><th>Folder</th><th>Title</th><th>Home repository</th><th class="hide-sm">Projects</th><th class="hide-sm">Secrets</th><th></th></tr></thead>
 		<tbody>
 		{{- $first := 0 }}{{ $last := len .WorkspaceList }}
-		{{- with .WorkspaceList }}{{ if eq (index . 0).Folder "_" }}{{ $first = 1 }}{{ end }}{{ end }}
+		{{- with .WorkspaceList }}{{ if eq (index . 0).Folder "internal" }}{{ $first = 1 }}{{ end }}{{ end }}
 		{{- range $i, $ws := .WorkspaceList }}
-			{{- $nested := index $.Nested .Folder }}{{ $default := eq .Folder "_" }}{{ $secrets := index $.SecretCounts .Folder }}
+			{{- $nested := index $.Nested .Folder }}{{ $default := eq .Folder "internal" }}{{ $secrets := index $.SecretCounts .Folder }}
 			<tr>
 				<td class="key nowrap"><a href="{{ $.Href .Folder }}"><svg class="ic"><use href="#i-folder-open"/></svg> {{ .Folder }}</a></td>
 				<td class="desc">{{ .Title }}{{ with .Description }} <span class="faint">{{ . }}</span>{{ end }}</td>

@@ -32,8 +32,8 @@
 	<div class="field">
 		<label for="pe-workspace">Workspace</label>
 		<select id="pe-workspace" name="workspace" data-move="{{ $p.ID }}" data-move-from="{{ .MoveFrom }}" data-move-left="{{ join .MoveLeft "; " }}">
-			<option value="_"{{ if eq .MoveFrom "_" }} selected{{ end }}>_ · the root</option>
-			{{- range .WorkspaceList }}{{ if ne .Folder "_" }}
+			<option value="internal"{{ if eq .MoveFrom "internal" }} selected{{ end }}>internal · the root</option>
+			{{- range .WorkspaceList }}{{ if ne .Folder "internal" }}
 			<option value="{{ .Folder }}"{{ if eq .Folder $.MoveFrom }} selected{{ end }}>{{ .Folder }}{{ with .Title }} · {{ . }}{{ end }}</option>
 			{{- end }}{{ end }}
 		</select>

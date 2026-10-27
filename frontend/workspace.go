@@ -75,7 +75,7 @@ func (h *Handlers) workspaceEdit(w http.ResponseWriter, r *http.Request) {
 
 // workspaceProjects puts the projects of a workspace on its page, as
 // the Projects page lists them: the checkouts inside a named workspace,
-// the folders at the top of the root, less the workspaces, for _.
+// the folders at the top of the root, less the workspaces, for internal.
 func (h *Handlers) workspaceProjects(ctx context.Context, p *view.Page, name string) {
 	named := h.workspaceFolders(ctx)
 	for _, entry := range folder.Entries(h.opts.Root, h.opts.Git, h.workspaceList(ctx)) {

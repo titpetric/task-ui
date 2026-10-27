@@ -26,12 +26,12 @@ func Service(scope string) bool {
 // workspaces, is the default workspace's.
 func (w *Workspaces) Name(ctx context.Context, scope string) (string, error) {
 	if name, ok := strings.CutPrefix(scope, storage.ScopeWorkspace); ok {
-		return name, nil
+		return model.Canonical(name), nil
 	}
 	if scope == storage.ScopeAll {
 		return model.Default, nil
 	}
-	top, _, _ := strings.Cut(scope, "/")
+	top, _, _ := strings.Cut(model.Canonical(scope), "/")
 	if top == model.Default || w == nil || w.Rows == nil {
 		return model.Default, nil
 	}

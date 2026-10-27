@@ -49,14 +49,14 @@ func TestDataRetention(t *testing.T) {
 	settings[retention.Artifacts] = retention.Rule{Age: retention.Never}
 	assert.NoError(t, f.opts.Cleaner.Save(context.Background(), settings))
 	body := f.page(t, asAdmin, "/settings/retention")
-	assert.Contains(t, body, `Applied by <a href="/runs?folder=_&amp;job=@cleanup" title="The runs of @cleanup">@cleanup</a>, which <span class="faint">has not run yet</span>.`, "the lead names the job before its first run")
+	assert.Contains(t, body, `Applied by <a href="/runs?folder=internal&amp;job=@cleanup" title="The runs of @cleanup">@cleanup</a>, which <span class="faint">has not run yet</span>.`, "the lead names the job before its first run")
 	cleanup := f.run(t, model.Default, "@cleanup", asAdmin, model.StateOK)
 
 	body = f.page(t, asAdmin, "/settings/retention")
 	assert.Contains(t, body, "<h2>Data retention</h2>")
 	assert.Contains(t, body, "<thead><tr><th>Area</th><th>What goes</th><th>Keep</th><th>Size limit</th><th>Holds now</th></tr></thead>")
 	assert.NotContains(t, body, "Last cleanup")
-	assert.Contains(t, body, `Applied by <a href="/runs?folder=_&amp;job=@cleanup" title="The runs of @cleanup">@cleanup</a>, which last ran <a href="/runs/`+cleanup.ID+`"`)
+	assert.Contains(t, body, `Applied by <a href="/runs?folder=internal&amp;job=@cleanup" title="The runs of @cleanup">@cleanup</a>, which last ran <a href="/runs/`+cleanup.ID+`"`)
 	last := -1
 	for _, area := range retention.Areas {
 		at := strings.Index(body, `<td class="key">`+area.Title+`</td>`)

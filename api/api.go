@@ -26,6 +26,7 @@ import (
 	"github.com/titpetric/task-ui/hours"
 	"github.com/titpetric/task-ui/integration"
 	"github.com/titpetric/task-ui/keystore"
+	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/note"
 	"github.com/titpetric/task-ui/recording"
 	"github.com/titpetric/task-ui/runner"
@@ -177,6 +178,9 @@ func (h *Handlers) Routes() http.Handler {
 
 // param returns what the route bound under name.
 func param(r *http.Request, name string) string {
+	if name == "folder" {
+		return model.Canonical(chi.URLParam(r, name))
+	}
 	return chi.URLParam(r, name)
 }
 

@@ -25,7 +25,7 @@ The page has three parts.
      **Artifacts**, **Scheduled** and **Notes**;
   2. the **projects**, each with its jobs and the folders inside it, as
      a tree: first those at the top of the root, in the default
-     workspace `_`, then each named **workspace**, in its order, with
+     workspace `internal`, then each named **workspace**, in its order, with
      the projects cloned inside it folded under its own row.
 - **Recents**, on a wide screen, a rail on the right: the latest runs and
   workflow runs by anyone. A narrower screen leaves it out; **Runs** lists

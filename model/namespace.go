@@ -4,24 +4,31 @@ import (
 	"strings"
 )
 
-// Internal is the folder older runs of the Claude jobs carry,
-// internal/claude-note, claude-prompt and claude: they list and open by
-// it, for admins and their starter. No checkout, project or workspace
-// takes the name, so no folder shares those runs.
-const Internal = "internal"
-
 // Default is the folder of the default workspace: the root itself, which
-// holds every project that is in no named workspace. No checkout,
-// project or other workspace takes the name.
-const Default = "_"
+// holds every project that is in no named workspace, its built-in jobs
+// and older runs of the Claude jobs, internal/claude-note, claude-prompt
+// and claude. No checkout, project or other workspace takes the name.
+const Default = "internal"
 
-// IsInternal reports whether a folder ID is the internal folder or one under it.
-func IsInternal(folder string) bool {
-	return folder == Internal || strings.HasPrefix(folder, Internal+"/")
+// Legacy is the name the default workspace had before it was internal.
+// Stored rows moved to Default; a URL or an argument that names it is
+// read as Default.
+const Legacy = "_"
+
+// Canonical returns the folder ID with its first segment _ read as the default workspace.
+func Canonical(folder string) string {
+	top, rest, found := strings.Cut(folder, "/")
+	if top != Legacy {
+		return folder
+	}
+	if !found {
+		return Default
+	}
+	return Default + "/" + rest
 }
 
-// IsReserved reports whether a folder ID starts with a name task-ui keeps: internal or the default workspace's _.
+// IsReserved reports whether a folder ID starts with a name task-ui keeps: the default workspace's internal, or the _ it had.
 func IsReserved(folder string) bool {
 	top, _, _ := strings.Cut(folder, "/")
-	return top == Internal || top == Default
+	return top == Default || top == Legacy
 }

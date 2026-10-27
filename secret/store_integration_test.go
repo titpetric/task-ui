@@ -140,7 +140,7 @@ func TestStore_Rekey(t *testing.T) {
 		}
 	}
 	_, err = s.List(ctx)
-	assert.ErrorContains(t, err, "secret A for workspace:_")
+	assert.ErrorContains(t, err, "secret A for workspace:internal")
 	_, err = s.For(ctx, "infra")
 	assert.Error(t, err)
 	_, err = s.Rekey(ctx)

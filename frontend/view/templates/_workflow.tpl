@@ -129,7 +129,7 @@
 						<option value="{{ .ID }}" data-workspace="{{ $p.StepSpaceOf .ID }}" data-rel="{{ $p.StepRel .ID }}"{{ if eq .ID $s.Folder }} selected{{ end }}>{{ $p.StepLabel .ID }}</option>
 						{{- end }}{{ end }}
 						{{- if $p.HostJobs }}
-						<option value="_" data-workspace="_" data-rel="."{{ if eq "_" $s.Folder }} selected{{ end }}>_ hosts</option>
+						<option value="internal" data-workspace="internal" data-rel="."{{ if eq "internal" $s.Folder }} selected{{ end }}>internal hosts</option>
 						{{- end }}
 						{{- range $p.StepWorkflows }}
 						<option value="workflow:{{ .ID }}" data-workspace="workflow:"{{ if eq .ID $s.WorkflowID }} selected{{ end }}>{{ .Name }}</option>
@@ -163,9 +163,9 @@
 				{{- template "stepspace" (list $p ($p.StepSpaceOf $s.Folder) false) }}
 				<div class="field">
 					<span class="label">Asks in <span class="faint">the folder Claude works in</span></span>
-					{{- $found := eq $s.Folder "_" }}
+					{{- $found := eq $s.Folder "internal" }}
 					<select data-step-place aria-label="Folder Claude works in">
-						<option value="_" data-workspace="_" data-rel="."{{ if eq $s.Folder "_" }} selected{{ end }}>the root</option>
+						<option value="internal" data-workspace="internal" data-rel="."{{ if eq $s.Folder "internal" }} selected{{ end }}>the root</option>
 						{{- range $p.StepFolders }}{{ if eq .ID $s.Folder }}{{ $found = true }}{{ end }}
 						<option value="{{ .ID }}" data-workspace="{{ $p.StepSpaceOf .ID }}" data-rel="{{ $p.StepRel .ID }}"{{ if eq .ID $s.Folder }} selected{{ end }}>{{ $p.StepLabel .ID }}</option>
 						{{- end }}

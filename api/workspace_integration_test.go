@@ -214,10 +214,6 @@ func TestWorkspace_CloneProject(t *testing.T) {
 	assert.Equal(t, http.StatusBadRequest, missing.Status)
 	assert.NoDirExists(t, filepath.Join(f.root, "gozo"))
 
-	internal := f.call(t, asAdmin, http.MethodPost, "/projects", api.ProjectCloneRequest{URL: repo, ID: "x", Workspace: "internal"})
-	assert.Equal(t, http.StatusBadRequest, internal.Status)
-	assert.Contains(t, internal.str("error"), "task-ui's own names")
-	assert.NoDirExists(t, filepath.Join(f.root, "internal"))
 	for _, id := range []string{"home", "src", "home/x"} {
 		taken := f.call(t, asAdmin, http.MethodPost, "/projects", api.ProjectCloneRequest{URL: repo, ID: id, Workspace: "malta"})
 		assert.Equal(t, http.StatusBadRequest, taken.Status, id)
@@ -376,10 +372,10 @@ func TestWorkspace_Default(t *testing.T) {
 	slow := f.start(t, asAdmin, "infra", "slow")
 	busy := f.call(t, asAdmin, http.MethodDelete, "/workspaces/_", nil)
 	assert.Equal(t, http.StatusConflict, busy.Status, string(busy.Raw))
-	assert.Contains(t, busy.str("error"), "infra/slow is running in _")
+	assert.Contains(t, busy.str("error"), "infra/slow is running in internal")
 	assert.Equal(t, http.StatusNoContent, f.call(t, asAdmin, http.MethodPost, "/runs/"+slow+"/kill", nil).Status)
 	f.finished(t, slow)
-	assert.NoError(t, f.opts.Secrets.Set(ctx, &model.Secret{Scope: "workspace:_", Name: "TOKEN", Content: "shared value"}))
+	assert.NoError(t, f.opts.Secrets.Set(ctx, &model.Secret{Scope: "workspace:internal", Name: "TOKEN", Content: "shared value"}))
 	blocked := f.call(t, asAdmin, http.MethodDelete, "/workspaces/_", nil)
 	assert.Equal(t, http.StatusConflict, blocked.Status, string(blocked.Raw))
 	assert.Contains(t, blocked.str("error"), "holds 1 secrets: delete them first")
