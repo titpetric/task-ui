@@ -90,4 +90,8 @@
 	</ul>
 	{{- end }}
 </section>
+
+{{- if or $pr.Own (.Can "key/view") }}
+{{ template "userkeys" (list . $u (print "/users/" $u.Name)) }}
+{{- end }}
 {{ end }}

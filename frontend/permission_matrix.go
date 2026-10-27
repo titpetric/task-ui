@@ -5,6 +5,7 @@ import (
 
 	"github.com/titpetric/task-ui/config"
 	"github.com/titpetric/task-ui/frontend/view"
+	"github.com/titpetric/task-ui/keystore"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/permission"
 )
@@ -31,5 +32,17 @@ func (h *Handlers) permissionMatrix(w http.ResponseWriter, r *http.Request) {
 		m.Editable = !fixed && p.Can("user/edit") && (role != p.User.EffectiveRole() || editsByRole(p))
 		p.Matrices = append(p.Matrices, m)
 	}
+	p.RoleMembers = h.roleMembers(r, p)
 	h.render(w, http.StatusOK, "permissions", p)
+}
+
+// roleMembers returns the users and the instance SSH keys of each role;
+// the keys only for a user who may view keys.
+func (h *Handlers) roleMembers(r *http.Request, p *view.Page) map[string]view.RoleMembers {
+	users, _ := h.opts.Users.List(r.Context())
+	var keys []keystore.Key
+	if h.opts.Keys != nil && p.Can("key/view") {
+		keys, _ = h.opts.Keys.List(r.Context())
+	}
+	return view.NewRoleMembers(users, keys)
 }

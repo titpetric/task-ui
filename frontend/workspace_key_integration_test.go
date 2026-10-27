@@ -45,7 +45,7 @@ func TestWorkspaceKeys(t *testing.T) {
 	assert.Contains(t, body, `<dt>Links</dt><dd>admin</dd>`)
 	assert.Contains(t, body, `href="/settings/workspaces/malta/keys/workspace_malta_deploy_ed25519"`)
 	assert.Contains(t, body, `data-delete="/api/workspaces/malta/keys/workspace_malta_deploy_ed25519"`)
-	assert.NotContains(t, body, "PRIVATE KEY")
+	assert.NotContains(t, body, "PRIVATE KEY-----\n", "the upload dialog's placeholder is the only mention; key material would follow it with a line")
 
 	generate := f.page(t, asAdmin, "/settings/workspaces/malta/keys/generate")
 	assert.Contains(t, generate, `data-api="/api/workspaces/malta/keys/generate"`)

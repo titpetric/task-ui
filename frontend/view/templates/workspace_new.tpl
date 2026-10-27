@@ -6,7 +6,7 @@
 	</div>
 </div>
 
-<form class="form" data-api="/api/workspaces" data-method="POST" data-next="/settings/workspaces?notice=Workspace+added">
+<form class="form" data-api="/api/workspaces" data-method="POST" data-next="/settings/workspaces/{folder}?notice=Workspace+added">
 	<div class="field">
 		<label for="w-folder">Folder <span class="faint">one name, no slashes</span></label>
 		<input type="text" id="w-folder" name="folder" pattern="[A-Za-z0-9._-]+" spellcheck="false" autocomplete="off" required autofocus>

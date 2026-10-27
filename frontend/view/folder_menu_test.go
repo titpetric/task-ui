@@ -146,6 +146,41 @@ func TestFolderMenu_Workspace(t *testing.T) {
 	assert.NotContains(t, pageHead(t, buf.String()), "more-menu", "a workspace has no Pull now")
 }
 
+// A workspace's page adds a project to itself: in the menu, and as the
+// main button of the head while it has none.
+func TestFolderMenu_WorkspaceAddProject(t *testing.T) {
+	t.Parallel()
+
+	p := projectPage(t, &model.User{Name: "admin", Role: model.RoleAdmin}, nil)
+	p.Folder = &folder.Folder{ID: "malta", Title: "Malta"}
+	p.FolderMenu = &view.FolderMenu{ID: "malta", Workspace: true}
+	head := pageHead(t, render(t, "folder", p))
+	assert.Contains(t, head, `<a class="btn btn-primary" href="/settings/projects/new?workspace=malta">`)
+	assert.Contains(t, head, `<a class="more-item" role="menuitem" href="/settings/projects/new?workspace=malta"`)
+
+	p.FolderMenu.Projects = 2
+	head = pageHead(t, render(t, "folder", p))
+	assert.NotContains(t, head, `class="btn btn-primary"`, "with projects, the menu alone adds one")
+	assert.Contains(t, head, `href="/settings/projects/new?workspace=malta"`)
+
+	signIn(p, &model.User{Name: "ops", Role: model.RoleRunner}, permission.Policy{"workspace/view": permission.Allow})
+	p.FolderMenu.Projects = 0
+	head = pageHead(t, render(t, "folder", p))
+	assert.NotContains(t, head, "/settings/projects/new", "adding a project takes project/edit")
+
+	p.FolderMenu = &view.FolderMenu{ID: "malta/api", Project: true}
+	signIn(p, &model.User{Name: "admin", Role: model.RoleAdmin}, nil)
+	assert.NotContains(t, pageHead(t, render(t, "folder", p)), "/settings/projects/new", "a project adds no project")
+}
+
+func TestFolderMenu_AddProjectPage(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, "/settings/projects/new?workspace=malta", (&view.FolderMenu{ID: "malta", Workspace: true}).AddProjectPage())
+	assert.Equal(t, "", (&view.FolderMenu{ID: "malta/api", Project: true}).AddProjectPage())
+	assert.Equal(t, "", (*view.FolderMenu)(nil).AddProjectPage())
+}
+
 // The configure page of a checkout has Remove checkout in its head, for
 // a user with project/delete.
 func TestFolderMenu_ProjectEdit(t *testing.T) {

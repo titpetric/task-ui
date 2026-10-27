@@ -99,7 +99,7 @@ func TestWorkflows_List(t *testing.T) {
 	assert.Contains(t, ops, `<span class="faint run-denied">Run needs private / deploy</span>`)
 	// The sidebar lists them too, each with its chain as the link's
 	// title: look at the page's own content.
-	content := ops[strings.Index(ops, "<main>"):]
+	content := ops[strings.Index(ops, `<main id="main"`):]
 	assert.NotContains(t, content, "infra/edge / deploy")
 	assert.NotContains(t, content, `<span>Open</span>`)
 	assert.Contains(t, content, `data-workflow-run="`)
@@ -302,7 +302,7 @@ func TestWorkflows_ChainAndNested(t *testing.T) {
 	assert.Contains(t, page, "infra / plan</a>")
 	assert.Contains(t, page, `href="/workflows/`+same.ID+`"><svg class="ic lead"><use href="#i-flow"/></svg>same</a>`)
 	list := f.page(t, asOps, "/workflows")
-	assert.NotContains(t, list[strings.Index(list, "<main>"):], "infra / plan")
+	assert.NotContains(t, list[strings.Index(list, `<main id="main"`):], "infra / plan")
 	form := f.page(t, asOps, "/workflows/new")
 	assert.Contains(t, form, `<option value="workflow:`+same.ID+`" data-workspace="workflow:">same</option>`)
 	assert.Contains(t, form, `<option value="workflow:`+outer.ID+`" data-workspace="workflow:">outer</option>`)

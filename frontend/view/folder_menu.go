@@ -19,6 +19,9 @@ type FolderMenu struct {
 	// Workspace marks a workspace's page, Project a project's.
 	Workspace bool
 	Project   bool
+	// Projects is how many projects a workspace's page lists; none puts
+	// Add project in the head as the main button.
+	Projects int
 	// Pull is the pull job of the git skill there, nil without one.
 	Pull *folder.Job
 }
@@ -41,7 +44,7 @@ func (m *FolderMenu) Settings() string {
 	case m == nil:
 		return ""
 	case m.Workspace:
-		return "/settings/workspaces/" + m.ID
+		return WorkspaceHref(m.ID)
 	case m.Project:
 		return "/settings/projects/" + m.ID
 	}
@@ -54,7 +57,7 @@ func (m *FolderMenu) KeysPage() string {
 	if m == nil || !m.Workspace {
 		return ""
 	}
-	return "/settings/workspaces/" + m.ID + "/keys"
+	return WorkspaceKeysHref(m.ID)
 }
 
 // SecretsPage returns the path of the page of a workspace's secrets, ""
@@ -63,7 +66,16 @@ func (m *FolderMenu) SecretsPage() string {
 	if m == nil || !m.Workspace {
 		return ""
 	}
-	return "/settings/workspaces/" + m.ID + "/secrets"
+	return WorkspaceSecretsHref(m.ID)
+}
+
+// AddProjectPage returns the form that clones a project into a
+// workspace, "" for a project.
+func (m *FolderMenu) AddProjectPage() string {
+	if m == nil || !m.Workspace {
+		return ""
+	}
+	return AddProjectHref(m.ID)
 }
 
 // RemoveConfirm returns what Remove checkout asks before it removes the

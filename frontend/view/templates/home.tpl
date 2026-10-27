@@ -4,6 +4,12 @@
 		<h2>Dashboard</h2>
 		<p>Every running terminal, live, for everyone to see. Open one to attach, or pick a folder on the left to start a run.</p>
 	</div>
+	{{- $create := .CreateItems }}
+	{{- if $create }}
+	<div class="actions">
+		{{ template "menu" (menu "Add a workspace, project, user, key, secret or workflow" $create) }}
+	</div>
+	{{- end }}
 </div>
 
 {{- /* The dashboard follows the runs topic: a run that starts adds its

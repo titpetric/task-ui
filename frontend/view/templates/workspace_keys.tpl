@@ -35,12 +35,7 @@
 	{{- end }}
 </section>
 {{- if $edit }}
-<dialog class="confirm" id="key-generate-dialog" aria-labelledby="key-generate-title">
-	{{ template "wskeygenerate" (list . $here true) }}
-</dialog>
-<dialog class="confirm" id="key-upload-dialog" aria-labelledby="key-upload-title">
-	{{ template "wskeyupload" (list . $here true) }}
-</dialog>
+{{ template "wskeydialogs" (list . $here) }}
 {{- range .Keys }}{{ if not .Encrypts }}
 <dialog class="confirm" id="key-links-{{ .Name }}" aria-labelledby="key-links-{{ .Name }}-title">
 	{{ template "wskeylinks" (list $ . $here true) }}

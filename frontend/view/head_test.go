@@ -99,10 +99,13 @@ func TestHead_WorkspacePage(t *testing.T) {
 	assert.Contains(t, head, `data-confirm="Delete the workspace acme with its keys and secrets, and the projects inside it with their checkouts: acme/api?`)
 
 	keys := body[strings.Index(body, `id="keys"`):]
-	assert.Contains(t, keys, `<p class="empty-line">No keys added.</p>`)
-	assert.Contains(t, keys, `<a class="btn btn-sm" href="/settings/workspaces/acme/keys/upload">`)
-	assert.Contains(t, keys, `<a class="btn btn-sm" href="/settings/workspaces/acme/keys/generate">`)
-	assert.NotContains(t, keys, `<table`)
+	section, dialogs, _ := strings.Cut(keys, "</section>")
+	assert.Contains(t, section, `<p class="empty-line">No keys added.</p>`)
+	assert.Contains(t, section, `<button type="button" class="btn btn-sm" data-dialog-open="key-upload-dialog">`)
+	assert.Contains(t, section, `<button type="button" class="btn btn-sm" data-dialog-open="key-generate-dialog">`)
+	assert.NotContains(t, section, `<table`)
+	assert.Contains(t, dialogs, `<dialog class="confirm" id="key-generate-dialog"`, "the buttons open the dialogs of the keys page")
+	assert.Contains(t, dialogs, `data-api="/api/workspaces/acme/keys/upload" data-method="POST" data-next="/settings/workspaces/acme?notice=Key+uploaded"`)
 
 	p.Entries = nil
 	body = render(t, "workspace_edit", p)

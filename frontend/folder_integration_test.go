@@ -44,8 +44,10 @@ func TestFolder(t *testing.T) {
 	assert.NotContains(t, viewer, "data-force")
 	assert.Contains(t, viewer, `<span>History of plan</span></a>`)
 
+	// A user who may add env files sees the empty block, with the button.
 	admin := f.page(t, asAdmin, "/f/_/infra")
-	assert.NotContains(t, admin, "Environment")
+	assert.Contains(t, admin, "No env files.")
+	assert.Contains(t, admin, `href="/f/_/infra/env"`)
 	assert.NotContains(t, admin, `href="/f/_/infra/env/.env"`)
 
 	// A filled one shows, with its edit link for admins alone.

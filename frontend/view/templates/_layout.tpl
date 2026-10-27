@@ -18,22 +18,23 @@
 	</header>
 	{{ template "content" . }}
 {{- else }}
+	<a class="skip-link" href="#main">Skip to content</a>
 	{{- if .Can "prompt/edit" }}
 	{{- $ask := .HeaderPrompt }}
 	<header class="top" data-prompt-folder="{{ $ask.Folder }}" data-prompt-dir="{{ $ask.Dir }}" data-prompt-run="{{ $ask.Run }}" data-prompt-label="{{ $ask.Label }}" data-prompt-href="{{ $ask.Href }}">
 		<button type="button" class="btn-icon menu-toggle" id="menu-toggle" aria-label="Menu" aria-controls="side" aria-expanded="false"><svg class="ic"><use href="#i-menu"/></svg></button>
 		{{- /* The logo toggles the prompt's panel; the name links home. */}}
-		<h1><a href="/"><span>TaskUI</span></a><button type="button" class="logo-toggle" id="header-toggle" tabindex="-1" aria-label="Prompt" aria-controls="header-answer" aria-expanded="false">{{ template "logo" }}</button></h1>
+		<h1><a href="/"><span>TaskUI</span></a><button type="button" class="logo-toggle" id="header-toggle" aria-label="Prompt" aria-controls="header-answer" aria-expanded="false">{{ template "logo" }}</button></h1>
 	{{- else }}
 	<header class="top">
 		<button type="button" class="btn-icon menu-toggle" id="menu-toggle" aria-label="Menu" aria-controls="side" aria-expanded="false"><svg class="ic"><use href="#i-menu"/></svg></button>
 		<h1><a href="/"><span>TaskUI</span>{{ template "logo" }}</a></h1>
 	{{- end }}
 		{{- if .Can "prompt/edit" }}
-		<input type="text" class="header-prompt" id="header-prompt" tabindex="-1" autocomplete="off" spellcheck="false">
+		<input type="text" class="header-prompt" id="header-prompt" aria-label="Ask Claude" autocomplete="off" spellcheck="false">
 		{{- if .PromptUsers }}
 		{{- /* An admin picks who the header's prompt runs as; the pick shows with the field. */}}
-		<span class="header-runas"><select class="header-prompt-user" id="header-prompt-user" tabindex="-1" aria-label="Runs as">{{ template "user-options" (list .PromptUsers .User.Name .UserKeys true) }}
+		<span class="header-runas"><select class="header-prompt-user" id="header-prompt-user" aria-label="Runs as">{{ template "user-options" (list .PromptUsers .User.Name .UserKeys true) }}
 		</select></span>
 		{{- end }}
 		<div class="header-answer" id="header-answer" hidden></div>
@@ -83,17 +84,20 @@
 				<a href="/artifacts" class="{{ if .Under "/artifacts" }}active{{ end }}"><svg class="ic"><use href="#i-box"/></svg><span>Artifacts</span></a>
 				<a href="/schedules" class="{{ if .Under "/schedules" }}active{{ end }}"><svg class="ic"><use href="#i-clock"/></svg><span>Scheduled</span></a>
 				<a href="/notes" class="{{ if .Under "/notes" }}active{{ end }}"><svg class="ic"><use href="#i-note"/></svg><span>Notes</span></a>
+				{{- if .CanSettings }}
+				<a href="/settings" class="{{ if .Under "/settings" }}active{{ end }}"><svg class="ic"><use href="#i-settings"/></svg><span>Settings</span></a>
+				{{- end }}
 			</nav>
 			<nav class="folders">
 				{{- $total := 0 }}{{ range .SideFolders }}{{ $total = len .Jobs | add $total }}{{ end }}
 				{{- range $g := .Groups }}
 				{{- if $g.Workspace }}{{ template "sideworkspace" (list $ $g $total) }}{{ else }}{{ template "sideproject" (list $ $g $total) }}{{ end }}
 				{{- else }}
-				<div class="empty">No folders yet. Add a git repository in Settings, or put a folder with jobs under the root.</div>
+				<div class="empty">No folders yet. {{ if $.Can "project/edit" }}<a href="{{ addProjectHref "" }}">Add a git repository</a>{{ else }}Add a git repository in Settings{{ end }}, or put a folder with jobs under the root.</div>
 				{{- end }}
 			</nav>
 		</aside>
-		<main>
+		<main id="main" tabindex="-1">
 			{{- if .Crumbs }}
 			<div class="crumbs"><a href="/">Dashboard</a>{{ range .Crumbs }}<span>{{ if .Href }}<a href="{{ .Href }}">{{ .Text }}</a>{{ else }}{{ .Text }}{{ end }}</span>{{ end }}</div>
 			{{- end }}

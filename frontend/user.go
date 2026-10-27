@@ -18,7 +18,6 @@ func (h *Handlers) users(w http.ResponseWriter, r *http.Request) {
 	p.Crumbs = view.Crumbs("Settings", "/settings", "Users")
 	p.Step = view.StepUsers
 	p.Users, _ = h.opts.Users.List(r.Context())
-	p.CanAddUsers = h.opts.AddUsers
 	h.render(w, http.StatusOK, "users", p)
 }
 

@@ -902,10 +902,10 @@ gets the folder's secrets in its environment, with or without an env
 file.
 
 A user with Allow Edits on Env Files, `env/edit`, adds one with **Add
-env file** in a project's or a workspace's **⋯** menu: a path relative
-to the folder, such as `.env`, and its content. The folder's page then
-lists it under Environment, a section it shows only for a folder with
-an env file. A user with Allow View, `env/view`, opens one from there,
+env file** in a project's **⋯** menu, or in the Environment block of its
+page: a path relative to the project, such as `.env`, and its content.
+Env files are per project; a workspace has none to add. The project's
+page lists them under Environment. A user with Allow View, `env/view`, opens one from there,
 and saving it empty deletes it, which takes Allow Deletes,
 `env/delete`.
 

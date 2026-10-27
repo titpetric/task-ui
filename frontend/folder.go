@@ -266,6 +266,9 @@ func (h *Handlers) folder(w http.ResponseWriter, r *http.Request, f *folder.Fold
 			p.SubFolders = append(p.SubFolders, sub)
 		}
 	}
+	if p.FolderMenu != nil && p.FolderMenu.Workspace {
+		p.FolderMenu.Projects = len(p.SubFolders)
+	}
 	withTreeFolders(p, f.Dir, p.SubFolders)
 	p.Last = h.latestRuns(r, []*folder.Folder{f})
 	h.jobTable(r, p, f, f)

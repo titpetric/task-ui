@@ -57,6 +57,13 @@ func Funcs() template.FuncMap {
 		"primary": NewPrimaryItem,
 		// who builds the "who gets it" element for the whofield template.
 		"who": NewWho,
+		// The pages that add a thing under a workspace or a user, one
+		// place for every menu and empty line that links them.
+		"addProjectHref":       AddProjectHref,
+		"workspaceHref":        WorkspaceHref,
+		"workspaceKeysHref":    WorkspaceKeysHref,
+		"workspaceSecretsHref": WorkspaceSecretsHref,
+		"userKeyHref":          UserKeyHref,
 		// removeConfirm is what Remove checkout of a project asks.
 		"removeConfirm": RemoveConfirm,
 		// deleteWorkspaceConfirm is what Delete of a workspace asks.
