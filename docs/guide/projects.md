@@ -13,11 +13,11 @@ With nothing pinned, the sidebar lists every folder you see with something to ru
 
 **Pin** adds to that, for you alone: a workspace, a project, a folder or a directory inside one, or a job. Pin a folder from the `[...]` of its page's head, **Pin workspace**, **Pin project** or **Pin folder**, and a job from the `[...]` of its row in **Jobs**, **Pin build**. The sidebar draws itself again at once, the pin in its place: a deep folder under its workspace and project, in the sidebar's order, its path below the project; a pinned job as a run item, the play button and its name, under its folder. A folder there for its pinned jobs alone lists those. A job pinned with a directory or args runs with them. The same item reads **Unpin** once pinned; what the sidebar lists only for the pin leaves it. A workspace's home stays out, pinned or not. The API keeps the pins under `/api/pins` (see [API](../api.md)).
 
-![The sidebar with two pins of the admin: acme/api's docs directory under the project, and its ./serve file as a run item](../assets/sidebar-pin-dark.png)
+![The sidebar with two pins of the admin: acme/api's docs directory under the project, and its ./serve file as a run item](https://cdn.si/titpetric/task-ui/docs/assets/sidebar-pin-dark.png)
 
 A [workspace](workspaces.md) adds a level above its projects: a label row with the workspace's name, and its projects folded under it. Their links carry the workspace, as `/f/malta/dockerfiles`. The projects at the top of the root are in the internal workspace, `internal`, and list first, without a label row; their links carry `internal`, as `/f/internal/infra`.
 
-![A folder: its jobs, files and environment](../assets/folder-dark.png)
+![A folder: its jobs, files and environment](https://cdn.si/titpetric/task-ui/docs/assets/folder-dark.png)
 
 A user with Allow Edits on Projects, `project/edit`, adds a project from a git repository on **Add project** (see [Settings](settings.md#projects)). Its **Workspace** select clones the project at the top of the root, `internal`, or inside a named workspace (see [Workspaces](workspaces.md#clone-a-project-into-one)). With the [Forgejo integration](settings.md#forgejo) set up, a sync clones every repository of each organisation and user as a project of the owner's workspace, on the repository's default branch, and a push to the repository pulls the checkout; the project's settings stay yours.
 
@@ -97,9 +97,9 @@ Open a folder from the sidebar:
 - **Sealed entries**: `.git` and every dot file, such as `.env`, `.gitignore` or `.claude/.secret`, list with a lock and open nothing, on the page or over the API, nor does a path through `.git` or a symlink to a dot file. A dot file never runs as a job. A dot directory other than `.git`, such as `.claude/` or `.atkins/`, opens as any directory does, and so do the files in it whose names have no dot in front. A symlink that leads out of the checkout opens nothing either. Whoever has the server reaches the sealed entries there, and so does a job, which runs as the server's user.
 - **Folder**: its path, its sources, who can run it, its workspace's hours, the files it includes, its schedules. **Show** beside a pipeline file opens it, coloured, in a window. A folder in a git checkout also shows the checkout's size: its files, and the history in `.git`.
 
-![A project's Files: .git and .env sealed, ./serve marked to run](../assets/files-dark.png)
+![A project's Files: .git and .env sealed, ./serve marked to run](https://cdn.si/titpetric/task-ui/docs/assets/files-dark.png)
 
-![A file of the checkout in the preview window](../assets/file-dark.png)
+![A file of the checkout in the preview window](https://cdn.si/titpetric/task-ui/docs/assets/file-dark.png)
 
 A link to the folder's page with `#file=<name>`, such as `/f/acme/api#file=README.md`, opens that file of its Files in the window on load.
 
@@ -109,7 +109,7 @@ The line under a folder's title, and under a directory's inside a folder, reads 
 
 ## Skills
 
-![The git, compose and dockerfile skills of a directory](../assets/actions-dark.png)
+![The git, compose and dockerfile skills of a directory](https://cdn.si/titpetric/task-ui/docs/assets/actions-dark.png)
 
 An [atkins](https://github.com/titpetric/atkins) skill that applies in a directory adds its jobs to the folder, each with its page, such as `@git` with `@git:pull`, `@git:rebase` and `@git:status`, or `@compose` with `@compose:build`, `@compose:custom`, `@compose:down`, `@compose:pull` and `@compose:up`. A skill comes from a `.atkins/skills/` folder of the directory or of any directory above it, a workspace's among them, and applies where its `when:` holds; a job of it with a `when:` of its own that fails, such as `compose: build` beside a compose file that builds nothing, has no row ([Workspaces](workspaces.md#skills) shows how to write one). task-ui asks `atkins -l --json --all` in the directory as a page opens, and keeps what it lists until the pipeline file or a skill file changes, or its time runs out; an atkins that is missing, fails or runs out of time lists no skills:
 
@@ -164,7 +164,7 @@ A run's page has a prompt of its own, about the run and its output, with its thr
 
 ## A job's page
 
-![A job: what it runs, its history and schedules](../assets/job-dark.png)
+![A job: what it runs, its history and schedules](https://cdn.si/titpetric/task-ui/docs/assets/job-dark.png)
 
 Open a job from the sidebar or a card: the command it runs, its steps and dependencies, who can run it and when, its **History** of runs, and its **Scheduled** section (see [Scheduled](scheduled.md)).
 
@@ -186,7 +186,7 @@ A checkout's `.ssh/` folder is not loaded. The SSH keys page warns about one wit
 
 A workspace's office hours gate every run of a job in its folders, the built-ins too (see [Workspaces](workspaces.md#hours)); a project and a job have no hours of their own. Out of hours **Run** fails. **Run force** still works, but asks why: it needs a reason, keeps it with the run, and every list of runs shows it.
 
-![Out of hours, Run force asks why](../assets/out-of-hours-dark.png)
+![Out of hours, Run force asks why](https://cdn.si/titpetric/task-ui/docs/assets/out-of-hours-dark.png)
 
 ## Who may run what
 

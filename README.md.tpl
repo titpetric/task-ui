@@ -30,7 +30,7 @@ its own. Permissions decide, per role and per user, what each may view,
 edit, delete and run. The inventory lists the hosts Beszel watches and
 runs a command on every one at once.
 
-![The dashboard: every terminal in progress, as it looks right now](https://raw.githubusercontent.com/titpetric/task-ui/main/docs/assets/task-ui.png)
+![The dashboard: every terminal in progress, as it looks right now](https://cdn.si/titpetric/task-ui/docs/assets/task-ui.png)
 
 The [usage guide](docs/README.md) shows how to use it, a chapter per
 section of the sidebar: the [dashboard](docs/guide/dashboard.md), the

@@ -2,7 +2,7 @@
 
 A workflow is a named chain of steps: a one button deploy, such as build, test, push, plan, apply, or a chain of prompts to Claude that fetches something and reasons over it, ending with a summary. A step is a command, a job of any folder or another workflow, a prompt to Claude, or a summary by Claude of the steps before it, in any number and order. The sidebar lists the workflows under **Workflows**, each with a play button.
 
-![Workflows](../assets/workflows-dark.png)
+![Workflows](https://cdn.si/titpetric/task-ui/docs/assets/workflows-dark.png)
 
 ## Building one with Claude
 
@@ -61,14 +61,14 @@ Every prompt a workflow runs, a prompt step's and a summary's, starts with a **W
 
 ## The workflow page
 
-![A workflow: its chain and its runs](../assets/workflow-dark.png)
+![A workflow: its chain and its runs](https://cdn.si/titpetric/task-ui/docs/assets/workflow-dark.png)
 
 - **Pipeline**: the steps in the order they run, a step that is off dimmed, a prompt with its text under it. While a run is going, it follows that run live: each step's state and terminal.
 - **Runs**: the workflow's activity, its runs of the last thirty days by day and of the last 24 hours by hour, and the duration of its latest thirty (see [Runs](runs.md#activity)), then every run of the workflow, newest first: when it started, linked to its page, with the dot of how it ended and the message of a failure, who started it and each step's run, which opens like any other run. A run with an answer folds it under a chevron; Workflows shows the answers open. **View** opens that run in a window, its thread over its steps, each step with its state and the screen it ended on; Ctrl and a click open it as a page. With the Claude Code integration set up for you, a finished run also has **Summary**: Claude reads every step, its job, how it ended and the end of its output, and writes what the workflow did or where and why it failed, in one or two short paragraphs and a table of the values worth a glance, such as failures per step. task-ui keeps the summary, as for a single run (see [Runs](runs.md#the-list)). The runs come a page at a time, as on [Runs](runs.md#the-list): **Page size** picks 15, 50 or 100 rows, and **Previous** and **Next** under the table page through the rest. The pipeline and its latest run follow the newest run on every page. **Stop** on a running workflow stops the step that runs and skips the rest.
 
 ## Making and changing one
 
-![The workflow editor: the steps on a rail, a prompt open](../assets/workflow-edit-dark.png)
+![The workflow editor: the steps on a rail, a prompt open](https://cdn.si/titpetric/task-ui/docs/assets/workflow-edit-dark.png)
 
 **Add workflow** on the Workflows page opens the editor on a blank workflow: a **Name**, a **Description**, optional, which the workflow's page and the list show under its name, **Show in sidebar** and **Runs as**, the user every run of the workflow goes as. The steps come next, on a rail: a numbered node a step, in the order they run, and the step's card beside it, in the colour of its kind.
 

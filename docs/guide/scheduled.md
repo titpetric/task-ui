@@ -2,7 +2,7 @@
 
 Jobs and workflows that run on their own, on a cron expression.
 
-![Scheduled](../assets/schedules-dark.png)
+![Scheduled](https://cdn.si/titpetric/task-ui/docs/assets/schedules-dark.png)
 
 ## Scheduling a job
 

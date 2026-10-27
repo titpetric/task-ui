@@ -2,7 +2,7 @@
 
 The files runs leave behind: build output, reports, coverage, images, anything a job wants kept. task-ui gathers them into one tree with every run's files side by side, and keeps the versions a later run replaced.
 
-![Artifacts](../assets/artifacts-dark.png)
+![Artifacts](https://cdn.si/titpetric/task-ui/docs/assets/artifacts-dark.png)
 
 ## Leaving one
 

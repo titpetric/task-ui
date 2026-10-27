@@ -6,7 +6,7 @@ A prompt runs as `@claude-prompt` of the folder and directory it asks in, such a
 
 A command on a host of the [inventory](inventory.md) runs as `@host:<host>`, a built-in job of the root, one run a host, its command the run's args. `/runs?job=@host:dev1` lists the runs on `dev1`, `/runs?job=@host:*` those on every host, and `/runs?batch=<id>` the runs started together on more than one host.
 
-![The runs](../assets/runs-dark.png)
+![The runs](https://cdn.si/titpetric/task-ui/docs/assets/runs-dark.png)
 
 ## Activity
 
@@ -60,7 +60,7 @@ With the Claude Code integration set up for you (see [Settings](settings.md#inte
 
 ## The run window
 
-![A run in its window](../assets/run-dark.png)
+![A run in its window](https://cdn.si/titpetric/task-ui/docs/assets/run-dark.png)
 
 Starting a job, or attaching to a run, opens the run window over the page: the run's terminal, live.
 
@@ -106,7 +106,7 @@ An agent starts runs over [MCP](mcp.md) as the user of its token: `run_job` star
 
 ## A run's page
 
-![A run's page](../assets/run-page-dark.png)
+![A run's page](https://cdn.si/titpetric/task-ui/docs/assets/run-page-dark.png)
 
 `/runs/<id>` is one run, to link to:
 
@@ -190,7 +190,7 @@ A job that takes arguments, an atkins job with `args: true`, gets them after `--
 
 On its page, **Run...** of such a job, such as `@compose:custom`, opens a field under it first. The field starts with the command the arguments follow: the `exec:` step of the job, such as `docker compose`, or the job's own argv and `--`. Below it, task-ui shows the whole command as each word reaches it, `docker compose ps -a '; id'`, or says a quote does not close; **Run** sends the line, Esc or **Cancel** closes the field. The job's `exec` in `GET /api/folders` is the same command. A link to the page with `#args=<job>;<line>`, such as `/f/acme/api/deploy#args=@compose:custom;ps%20-a`, opens the field of that job on load with the line typed in.
 
-![The field of compose: custom..., and the argv it runs](../assets/args-dark.png)
+![The field of compose: custom..., and the argv it runs](https://cdn.si/titpetric/task-ui/docs/assets/args-dark.png)
 
 Before the job, a folder in a git checkout pulls it, in the run's own terminal; when the pull fails, the run fails with it. A folder in a workspace whose home is a checkout pulls the home first, then its own. A shell, `@shell`, pulls nothing: it opens on the checkout as it stands.
 

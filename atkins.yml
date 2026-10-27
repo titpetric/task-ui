@@ -18,6 +18,7 @@ jobs:
     desc: "Deploy docs to cdn.si"
     vars:
       stage: $(mktemp -d)
+    passthru: true
     cmds:
-      - rsync -a --del ./README.md ./docs ${{stage}}/
-      - rsync -a --del -e 'ssh -p 8022' ${{stage}}/ titpetric@cdn.si:/task-ui/
+      - rsync -a ./README.md ./docs ${{stage}}/
+      - rsync -aiP -e 'ssh -p 8022' ${{stage}}/ titpetric@cdn.si:/task-ui/

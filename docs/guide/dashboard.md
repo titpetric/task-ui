@@ -2,7 +2,7 @@
 
 The first item in the sidebar, and where the name in the header goes. It shows every run in progress.
 
-![The dashboard](../assets/dashboard-dark.png)
+![The dashboard](https://cdn.si/titpetric/task-ui/docs/assets/dashboard-dark.png)
 
 ## Running now
 

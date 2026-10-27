@@ -13,7 +13,7 @@ Not in the sidebar but in the user menu, behind your initials in the header, for
 9. [Workspaces](#workspaces): directories of a home and projects under src.
 10. [Projects](#projects): the folders under the root.
 
-![Settings](../assets/settings-dark.png)
+![Settings](https://cdn.si/titpetric/task-ui/docs/assets/settings-dark.png)
 
 ## Instance
 
@@ -29,7 +29,7 @@ Not in the sidebar but in the user menu, behind your initials in the header, for
 
 The environment sets most of these: change one on the server, then restart task-ui. The backlog length and the parent environment are the settings the page saves. The page shows paths and names, never a password, token or key. Anyone who may open a step of the settings may open it.
 
-![Instance](../assets/instance-dark.png)
+![Instance](https://cdn.si/titpetric/task-ui/docs/assets/instance-dark.png)
 
 ### Runs
 
@@ -80,7 +80,7 @@ Past either rule the oldest go first, until both hold. `@cleanup` applies the ro
 
 Anyone who may open a step of the settings reads the page; an admin saves the rules, with `PUT /api/retention`, and **Clean up now** starts `@cleanup` at once, as a run whose output shows what went. A run of `@cleanup` works on the data directory it inherits, `TASK_UI_DATA`, with the workspace folder at `<data>/workspaces`: inside a run `TASK_UI_WORKSPACE` names the run's workspace, not the folder, and task-ui reads it as the folder outside a run alone. A save takes effect at the next run of `@cleanup`: task-ui schedules it `@daily`, at midnight, as the first admin, once, when it first starts; the [Schedules](scheduled.md#cleanup) page changes or deletes that schedule.
 
-![Data retention: a table, a row per area](../assets/retention-dark.png)
+![Data retention: a table, a row per area](https://cdn.si/titpetric/task-ui/docs/assets/retention-dark.png)
 
 ## Keys
 
@@ -89,7 +89,7 @@ Keys have two purposes, and no key serves both:
 - the **encryption key** stores secrets. The instance has exactly one, and it encrypts every secret, the workspaces' and the integrations' settings. Its row reads `encryption` after the name.
 - **SSH keys** connect runs and git to hosts and remotes. A workspace has any number, for its own runs; the instance's go to the runs of the roles and users they link. Git runs over ssh, so an SSH key's purpose reads `git + ssh` in its menu, the git key's too.
 
-![Keys](../assets/keys-dark.png)
+![Keys](https://cdn.si/titpetric/task-ui/docs/assets/keys-dark.png)
 
 The page opens on one table, a row for the instance and one per workspace:
 
@@ -166,7 +166,7 @@ A folder's own entry, `malta/deploy`, is an older scope: it reaches that folder'
 
 **Add variable** at the top opens the form: a name, a value, a **Secret** box, and **Applies to**, every workspace or one. Unchecking **Secret** makes an env entry, whose value shows in the table; checking it keeps the value out of every page and response. Editing a secret leaves the value field empty: blank keeps the value it has. In the API, `is_secret` says which, and an env entry's answer carries `value`. `/settings/secrets?workspace=malta` shows what reaches one workspace; the Workspaces page links each workspace's count there. There is no per-workspace or per-project secrets page: everything is managed here.
 
-![Secrets and env](../assets/secrets-dark.png)
+![Secrets and env](https://cdn.si/titpetric/task-ui/docs/assets/secrets-dark.png)
 
 Below the table, **Integration environment** lists what the integrations compute for your runs, read only: the variable names and values, with the value of a name that holds a credential shown as `REDACTED`. The [Integrations](#integrations) page sets those values.
 
@@ -212,7 +212,7 @@ At start, task-ui writes every variable the instance's encryption key can't open
 
 ## Integrations
 
-![Integrations](../assets/integrations-dark.png)
+![Integrations](https://cdn.si/titpetric/task-ui/docs/assets/integrations-dark.png)
 
 The services task-ui talks to, with their API keys and tokens, a card per integration on a numbered rail as the workflow editor's steps: its name with its set up badge, its description and its form, and the numbered steps to its key folded under the form. **Fold all** folds the cards to their heads. task-ui encrypts the keys with the instance's encryption key, as every secret, and never shows them again: a form marks a secret with a value as **set**, and an empty secret field keeps it on save. The Secrets page leaves them out, and no run sees them as secrets. **Clear**, in the **⋯** menu beside the name, deletes every setting of an integration. The API serves the steps with the kind, `steps` on `GET /api/integrations`.
 
@@ -325,11 +325,11 @@ Who may sign in comes from the password file on the server. **Create user** adds
 
 What a role may do comes from permission policies over the rules of `config/permissions.yml`, which [Permissions](#permissions) sets. An admin may do everything. A runner runs jobs, reads and writes notes, workflows, schedules and the artifact tree, and reads the inventory; a viewer does the same without running and without writing the artifact tree. A user's own allow or deny decides first; where the user has none, the role's rules decide, and a deny there wins over an allow. [Permissions](#permissions) lists what each role starts with.
 
-![Users](../assets/users-dark.png)
+![Users](https://cdn.si/titpetric/task-ui/docs/assets/users-dark.png)
 
 A user's name opens their **profile**, at `/users/<name>`: the name, when they joined, and what the user did lately, as far as you see it, in the order you look at a person: **Runs** in folders you see, each with its result and **View** or **Attach**, **Workflow runs**, **Notes** with Allow View on Notes, each as one line of plain text, and **Prompts** with Allow View on Prompts in places you see. A section with nothing says so in one line. Anyone with Allow View on Users opens any profile; everyone opens their own, from **Profile** in the user menu. The profile shows no roles, permissions or forms; **Edit**, top right, for your own page or with Allow Edits on Users, opens them, and the **⋯** menu holds **Runs by this user** and **Delete**.
 
-![A profile: the activity of a user](../assets/profile-dark.png)
+![A profile: the activity of a user](https://cdn.si/titpetric/task-ui/docs/assets/profile-dark.png)
 
 The **edit page**, at `/users/<name>/edit`, from **Edit** on the profile or in a user's row's **⋯** menu, holds what the user is and may do, with **View profile** top right and **Cancel** under a form back to the profile. It opens as the profile does; each form saves through the API, which takes Allow Edits on Users, and shows its values as text to anyone else. Its sections, in order:
 
@@ -345,11 +345,11 @@ The **edit page**, at `/users/<name>/edit`, from **Edit** on the profile or in a
 
 `/settings/users/<id>` opens the edit page too.
 
-![The edit page of a user: Roles first, then Folders, Permissions, Keys and MCP access](../assets/user-edit-dark.png)
+![The edit page of a user: Roles first, then Folders, Permissions, Keys and MCP access](https://cdn.si/titpetric/task-ui/docs/assets/user-edit-dark.png)
 
 Next to a user's name, on every page that shows one, a **⋯** button opens a menu: **Profile**, **Runs by this user**, which opens Runs filtered to them, and **Edit** with Allow Edits on Users. A name that no user holds, such as the agent a note names, has no profile.
 
-![Add user](../assets/user-new-dark.png)
+![Add user](https://cdn.si/titpetric/task-ui/docs/assets/user-new-dark.png)
 
 A client that is not a browser, such as an agent over [MCP](mcp.md), signs in with a token instead: `task-ui token <user> <name>` on the server prints one, once, without an expiry. Under the table, **Connect an MCP client** shows the instance's base link and its MCP endpoint, each with a copy button, the link to your own MCP access, and the command that connects Claude Code.
 
@@ -357,13 +357,13 @@ A client that is not a browser, such as an agent over [MCP](mcp.md), signs in wi
 
 What each role may do, rule by rule, over `config/permissions.yml`: each section, such as Notes, Secrets or Users, has the rules **Allow All**, **Allow View**, **Allow Edits** and **Allow Deletes**, and the application has **Run Jobs**, **Enter Shell**, **Run on Hosts** and **Allow interactive mode**. A matrix per role holds a row per section, a column per rule, and under them the application's permissions. No rule reads a private key: none leaves task-ui.
 
-![Permissions: a matrix per role](../assets/permissions-dark.png)
+![Permissions: a matrix per role](https://cdn.si/titpetric/task-ui/docs/assets/permissions-dark.png)
 
 A cell inherits, empty, allows, a green ✓, or denies, a red ✕; a click moves it to the next, and **Save permissions** keeps the cells that changed. **Allow All** sets every rule of its section; where it and a rule set on its own disagree, the deny wins. The admin role shows every cell allowed and none changes: an admin may do everything. The page opens with Allow View on Users and changes with Allow Edits on Users; your own role's matrix changes only when your role grants Allow Edits on Users.
 
 A user's edit page has the same matrix under **Permissions**, for their own policy over their role's, with the result after each cell: a muted ✓ where the user may do it, ✕ where not. The user's own allow or deny decides first, whatever the role says; an empty cell inherits the role's rules, where a deny wins over an allow; what neither allows, the user may not do. An admin's matrix shows everything allowed and does not change, and your own changes only with Allow Edits on Users through your role, so no one grants themselves more.
 
-![A user's permissions on their edit page: shell denied, the secrets readable](../assets/user-edit-light.png)
+![A user's permissions on their edit page: shell denied, the secrets readable](https://cdn.si/titpetric/task-ui/docs/assets/user-edit-light.png)
 
 The application's permissions gate what the sections do not:
 
@@ -398,7 +398,7 @@ Directories under the root, each with a `home`, the checkout of an organisation'
 
 The projects of each workspace, a block per workspace: the projects at the top of the root first, then each workspace's projects, with their sources, where they came from, and the space each takes: its files, and the git history beside them. A workspace's block has its own **Add project**, which clones into it; the Origin column holds a long remote on one line, whole on a hover.
 
-![Projects](../assets/projects-dark.png)
+![Projects](https://cdn.si/titpetric/task-ui/docs/assets/projects-dark.png)
 
 **Add project** clones a git repository into the root. It either works, and the folder appears in the sidebar, or the page shows git's output and keeps nothing. git reaches private repositories with the instance SSH keys.
 
@@ -414,7 +414,7 @@ A row's `[...]` menu opens the folder, its **Edit project**, and **Pull now**, w
 
 The API sets two more on a project: `commands`, the program a kind of job runs with (`make: gmake`), and `job_allow`, who may run, per job. A project has no hours: its workspace's apply.
 
-![Edit project](../assets/project-edit-dark.png)
+![Edit project](https://cdn.si/titpetric/task-ui/docs/assets/project-edit-dark.png)
 
 ---
 

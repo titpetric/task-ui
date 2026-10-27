@@ -2,7 +2,7 @@
 
 The hosts Beszel monitors, inline in task-ui, the largest first by cores, then RAM: whether each is up, its icon green when up and red otherwise, who task-ui signs in to it as over ssh, its cores, how busy its CPU is, and how full its memory and disk are, with what it uses of each and the size, in GB. A share turns amber past 75% and red past 90%. A host whose agent sends no core count shows its threads.
 
-![The Inventory page: the cluster's pools and month, and the hosts](../assets/inventory-dark.png)
+![The Inventory page: the cluster's pools and month, and the hosts](https://cdn.si/titpetric/task-ui/docs/assets/inventory-dark.png)
 
 ## The cluster
 
@@ -16,7 +16,7 @@ The SSH column is the first of `debian@` and `root@` that signs in to the host w
 
 With `hosts`, a click on a host's line, or Enter or Space on it, opens its expanded row under it, and the next click folds it; the **⋯** menu and the other controls on the line do what they do and open nothing. The row is the host's page, `/inventory/hosts/<name>`, fetched when it opens and kept half a minute. The hosts you open stay open through the page's refresh and a reload, and `/inventory#host=<name>` opens one. Over the tables, the host's address, its ssh login, cores, uptime, Beszel agent and when task-ui last read it over ssh.
 
-![A host's expanded row: its containers, filesystems and month](../assets/inventory-host-dark.png)
+![A host's expanded row: its containers, filesystems and month](https://cdn.si/titpetric/task-ui/docs/assets/inventory-host-dark.png)
 
 **Containers** lists the host's containers, the busiest first, by CPU then memory; a click on a header sorts by it, the next the other way. A row puts two sources together by the container's name:
 

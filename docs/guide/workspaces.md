@@ -11,7 +11,7 @@ A workspace is a directory under the root with two directories in it: `home/`, t
 
 Every project is in a workspace. The **default workspace**, `internal`, is the root itself, laid out the same: `<root>/home` is its home, an empty directory task-ui makes, and `<root>/src` holds the projects cloned at the root, whose pages open under `/f/internal/`, so `<root>/src/infra` is the folder `infra` and opens at `/f/internal/infra`. A link without the `internal`, such as a bookmarked `/f/infra`, redirects there for good, its query kept. The default workspace was named `_` before: the migration moves every stored `_` (runs, workflow steps, schedules, secret scopes, notes, pins, env files) to `internal`, older runs of the Claude jobs that already carried `internal` now sit in the root with the rest, and a link with `/f/_` redirects to `/f/internal` for good, its query kept. `/f/internal` lists the projects at the root you can see. task-ui adds the default workspace on its first start, when it has no workspace at all, and makes the home and src of every workspace it has when it starts. The default workspace deletes like any other (see [Delete the default workspace](#delete-the-default-workspace)). No workspace, project or directory under a workspace takes the name `internal`, `_`, `home` or `src`; discovery skips a directory of `src` named `internal` or `_`, and a directory of the root or of a workspace that is neither `home` nor `src` is not a folder.
 
-![The sidebar with the workspace acme open, its projects api and web under it](../assets/sidebar-workspace-dark.png)
+![The sidebar with the workspace acme open, its projects api and web under it](https://cdn.si/titpetric/task-ui/docs/assets/sidebar-workspace-dark.png)
 
 ## The home
 
@@ -25,7 +25,7 @@ The convention for a home repository is a repository named like the organisation
 
 The workspace's page, `/f/malta`, lists the home's files in its **Home** section, in the table of the Files section: a directory opens its page, a file opens in the preview window, a dot file and `.git` list sealed and never open. The home is a folder of its own, `malta/home`, with the jobs of its `atkins.yml` when it has one, so `@git:pull` runs on it as on any checkout; the home is no project: the Projects list, the sidebar and the pins leave it out.
 
-![The acme workspace's page: its Home section lists the home's files](../assets/workspace-home-dark.png)
+![The acme workspace's page: its Home section lists the home's files](https://cdn.si/titpetric/task-ui/docs/assets/workspace-home-dark.png)
 
 Whoever commits to the workspace's home repository controls that workspace's runs: its `.profile` runs first in every `bash -l`, and its skills and `CLAUDE.md` shape every job and every prompt there. What the instance keeps in the server's own `HOME` stays in use, each through a variable the run gets when the server does not set it itself:
 
@@ -85,7 +85,7 @@ In a directory whose `compose.yml` builds an image, the `@compose` rows are `bui
 
 Settings, **Workspaces** manages them: Allow View on Workspaces, `workspace/view`, opens the page, Allow Edits, `workspace/edit`, adds, configures and orders, and Allow Deletes, `workspace/delete`, removes one. Export and Import are an admin's: the bundle holds the workspace's private keys and secrets. The page lists each workspace with its home repository, or "empty", how many projects are inside it, the checkouts under its `src/` and the project rows there, each once, the names in the number's tooltip, and how many secrets it holds, shared and its folders', the number opening its Secrets page, in the sidebar's order.
 
-![Workspaces, each with its home repository and projects](../assets/workspaces-dark.png)
+![Workspaces, each with its home repository and projects](https://cdn.si/titpetric/task-ui/docs/assets/workspaces-dark.png)
 
 - **Add workspace** makes the directory under the root, the folder you name, with `home/` and `src/` in it. A **Home repository** clones that repository into `home/`, at its **Home branch** when you name one; left out, the home is an empty directory. The clone works, or the page shows git's output and keeps nothing. task-ui refuses a folder that a workspace, a project or a directory under the root holds already, and `internal`, `_` (its earlier name), `home` and `src`, its own names.
 - Any number of workspaces may take the same home repository, each under its own folder: two teams can start from the same tooling and clone different projects beside it.
@@ -168,15 +168,15 @@ Every workspace has SSH keys of its own, in the key folder, `TASK_UI_SSH_DIR`, o
 
 **SSH keys**, in the **⋯** menu at the top right of the workspace's page, `/f/malta`, opens `/settings/workspaces/malta/keys`, the workspace's keys alone, edited in place: **Generate key** and **Upload key** at the top right, and **Edit links** in a key's **⋯** menu, open their forms in a dialog over the list, and **Remove** retires a key. The page and the menu item take `workspace/view`, the forms `workspace/edit`, as the key routes do.
 
-![The workspace page's menu with SSH keys and Secrets](../assets/workspace-menu-dark.png)
+![The workspace page's menu with SSH keys and Secrets](https://cdn.si/titpetric/task-ui/docs/assets/workspace-menu-dark.png)
 
-![The SSH keys of acme, edited in place](../assets/workspace-keys-dark.png)
+![The SSH keys of acme, edited in place](https://cdn.si/titpetric/task-ui/docs/assets/workspace-keys-dark.png)
 
 - The **SSH keys**, zero or more, are for the workspace's runs. A workspace has no encryption key: the instance's encrypts its [secrets](settings.md#secrets-and-env), as every secret. Generate or upload any number, each under a name of its own, `workspace_malta_deploy_ed25519`. A key without a link goes to every run in the workspace; checking roles or users narrows it to their runs. Remove retires the key and its links. With none, task-ui can't SSH to the workspace's hosts with a key of its own: its runs get only the instance SSH keys linked to them.
 
 A key has one use (see [One key, one use](settings.md#one-key-one-use)): an upload of key material the key folder holds already, under any name, answers `409`.
 
-![A workspace's settings page: its home repository, keys, and Export](../assets/workspace-edit-dark.png)
+![A workspace's settings page: its home repository, keys, and Export](https://cdn.si/titpetric/task-ui/docs/assets/workspace-edit-dark.png)
 
 A run gets the instance keys linked to it (see [Settings](settings.md#keys)), then its workspace's SSH keys, and the first line of its terminal names each: `$ ssh-agent: deploy_rsa4096, workspace_malta_deploy_ed25519`. A project at the root gets the keys of `internal`. The links decide what reaches a run's agent, not what a job can open on disk (see [What a workspace keeps apart](#what-a-workspace-keeps-apart)).
 
@@ -249,7 +249,7 @@ A job that someone in one workspace can change can read another workspace's secr
 
 A workspace's folder page, `/f/malta`, carries the **Prompt** box open for a user with Allow Edits on Prompts, `prompt/edit`, once the [Claude Code integration](settings.md#integrations) has a token for them; every other folder page, and every directory inside a folder, carries it folded until its directory holds a prompt (see [Prompt](projects.md#prompt)). The prompt runs `@claude-prompt` of the workspace as you, and Claude's answer shows under the question when the run ends.
 
-![The Prompt box on a workspace's page](../assets/workspace-prompt-dark.png)
+![The Prompt box on a workspace's page](https://cdn.si/titpetric/task-ui/docs/assets/workspace-prompt-dark.png)
 
 Claude Code works in the workspace's home, so it reads the workspace's `CLAUDE.md` and `.claude/`, in an empty home too. The run's environment holds the thread in `TASK_UI_PROMPT`, the home in `TASK_UI_HOME`, the workspace's directory in `TASK_UI_WORKSPACE_DIR`, and the file Claude writes its answer to in `TASK_UI_PROMPT_REPLY`. `task-ui agent prompt` works in `TASK_UI_PROMPT_DIR`, which a prompt of a folder or a directory sets, or else in `TASK_UI_HOME`, or else in `TASK_UI_WORKSPACE_DIR`, and exits with an error when the prompt or all three are empty. The run lists under Runs as the workspace's, `malta/@claude-prompt`.
 

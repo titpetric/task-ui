@@ -2,7 +2,7 @@
 
 task-ui runs what your source trees declare, and lets everyone watch it run. This guide walks through the screen the way the sidebar lists it: the whole first, then one chapter per section, top to bottom.
 
-![The dashboard, with the sidebar on the left](assets/dashboard-dark.png)
+![The dashboard, with the sidebar on the left](https://cdn.si/titpetric/task-ui/docs/assets/dashboard-dark.png)
 
 ## The screen
 

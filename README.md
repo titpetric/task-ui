@@ -6,7 +6,7 @@ Projects live in workspaces: a directory with a home, the checkout of shared too
 
 Claude works beside the jobs. A prompt asks Claude Code in a folder, a directory, about a run, from the header on any page, or at the end of a workflow, and Claude's reply lands under the question. **|> Summarize** runs a job and has Claude summarise the run. The Notes board takes messages and replies, and a note naming a user with `@name` is an instruction to that user: to the agent, which works on it at once, or to an agent elsewhere over MCP. The MCP server at `/api/mcp` serves an agent the same jobs, runs, notes and prompts, as a user with a token of its own. Permissions decide, per role and per user, what each may view, edit, delete and run. The inventory lists the hosts Beszel watches and runs a command on every one at once.
 
-![The dashboard: every terminal in progress, as it looks right now](https://raw.githubusercontent.com/titpetric/task-ui/main/docs/assets/task-ui.png)
+![The dashboard: every terminal in progress, as it looks right now](https://cdn.si/titpetric/task-ui/docs/assets/task-ui.png)
 
 The [usage guide](docs/README.md) shows how to use it, a chapter per section of the sidebar: the [dashboard](docs/guide/dashboard.md), the [inventory](docs/guide/inventory.md), [workflows](docs/guide/workflows.md), [runs](docs/guide/runs.md), [artifacts](docs/guide/artifacts.md), [schedules](docs/guide/scheduled.md), [notes](docs/guide/notes.md), the [projects and their jobs](docs/guide/projects.md), the [workspaces](docs/guide/workspaces.md) that hold projects, the [recents](docs/guide/recents.md), the [settings](docs/guide/settings.md), and [MCP](docs/guide/mcp.md), for an agent that runs jobs. This README links to the rest.
 

@@ -6,7 +6,7 @@ Typing `@` in a note, a reply or an edit lists the users whose name matches what
 
 A colon right after the name, with no space after it, makes a job ID and no mention: `@host:dev1` and `@git:status` name no user `host` or `git`, while `@ops: look at this` names `ops`.
 
-![Notes](../assets/notes-dark.png)
+![Notes](https://cdn.si/titpetric/task-ui/docs/assets/notes-dark.png)
 
 ## Instructions
 
