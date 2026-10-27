@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/titpetric/task-ui/config"
-	"github.com/titpetric/task-ui/envfile"
 	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/frontend/view"
 	"github.com/titpetric/task-ui/git"
@@ -44,7 +43,6 @@ func admin(t *testing.T) *view.Page {
 		Job:           job,
 		Run:           &run,
 		Runs:          []view.Run{run},
-		EnvFile:       &envfile.File{Folder: "infra", Path: ".env", Content: "A=1\n"},
 		Secret:        &model.Secret{Scope: "all", Name: "TOKEN"},
 		Account:       &model.User{ID: "u1", Name: "ops", Role: model.RoleRunner},
 		Profile:       &view.Profile{Runs: []view.Run{run}, Prompts: []model.Note{{ID: "n1", Body: "why", Dir: "infra"}}, Matrix: &matrix},
@@ -339,8 +337,8 @@ func TestWorkspaces_ImportDialog(t *testing.T) {
 	assert.Contains(t, body, `data-import="/api/workspaces/import"`)
 }
 
-// A folder page draws its Environment section only for a folder with an
-// env file a user filled: none at all otherwise, no table, no empty line.
+// A folder page has no Environment section: variables live on the
+// Secrets page alone.
 func TestView_RenderEnvironment(t *testing.T) {
 	t.Parallel()
 
@@ -351,27 +349,4 @@ func TestView_RenderEnvironment(t *testing.T) {
 	assert.NotContains(t, buf.String(), "Environment")
 	assert.NotContains(t, buf.String(), "env file")
 	assert.NotContains(t, buf.String(), "/env/")
-
-	p := admin(t)
-	p.EnvFiles = []envfile.File{{Folder: "infra", Path: "conf/.env", Content: "A=1\n"}}
-	buf.Reset()
-	assert.NoError(t, v.Render(&buf, "folder", p))
-	assert.Contains(t, buf.String(), "Environment")
-	assert.Contains(t, buf.String(), `href="/f/internal/infra/env/conf/.env"`)
-	assert.NotContains(t, buf.String(), "A=1")
-}
-
-// The env file page with no path is the form that adds one, its path a
-// field the API path takes.
-func TestView_RenderEnvFileAdd(t *testing.T) {
-	t.Parallel()
-
-	v, err := view.New()
-	assert.NoError(t, err)
-	p := admin(t)
-	p.EnvFile = &envfile.File{Folder: "infra"}
-	var buf bytes.Buffer
-	assert.NoError(t, v.Render(&buf, "envfile", p))
-	assert.Contains(t, buf.String(), `data-api="/api/env/infra/{path}"`)
-	assert.Contains(t, buf.String(), `name="path"`)
 }

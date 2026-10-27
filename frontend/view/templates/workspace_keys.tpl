@@ -13,7 +13,7 @@
 		{{ template "menu" (menu (print "Actions on " $ws.Folder)
 			(item "folder-open" "Open" "href" ($.Href $ws.Folder))
 			(item "settings" "Edit workspace" "href" (print "/settings/workspaces/" $ws.Folder))
-			(and (.Can "secret/view") (item "secret" "Secrets" "href" (print "/settings/workspaces/" $ws.Folder "/secrets")))
+			(and (.Can "secret/view") (item "secret" "Secrets" "href" (workspaceSecretsHref $ws.Folder)))
 		) }}
 	</div>
 </div>

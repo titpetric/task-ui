@@ -26,7 +26,6 @@ func TestOptions(t *testing.T) {
 	assert.NotNil(t, opts.Catalogue)
 	assert.NotNil(t, opts.Git)
 	assert.NotNil(t, opts.Keys)
-	assert.NotNil(t, opts.Env)
 	assert.Equal(t, f.root, opts.Root)
 	assert.Equal(t, "test", opts.Version)
 	assert.Equal(t, time.Friday, opts.Now().Weekday())

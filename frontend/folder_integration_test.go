@@ -10,7 +10,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/titpetric/task-ui/envfile"
 	"github.com/titpetric/task-ui/integration"
 	"github.com/titpetric/task-ui/internal/assert"
 	"github.com/titpetric/task-ui/model"
@@ -32,27 +31,13 @@ func TestFolder(t *testing.T) {
 	assert.NotContains(t, body, "task-ui found nothing to run")
 	assert.NotContains(t, body, "data-run-all") // workflows chain jobs instead
 	assert.Contains(t, body, `data-run data-folder="infra" data-job="plan"`)
-	// No env file filled: no Environment section at all.
+	// Variables live on the Secrets page: the folder page has no
+	// Environment section and no env file links.
 	assert.NotContains(t, body, "Environment")
+	assert.NotContains(t, body, "/env")
 
 	viewer := f.page(t, asViewer, "/f/internal/infra")
 	assert.NotContains(t, viewer, "data-run-all")
-
-	// A user who may add env files sees the empty block, with the button.
-	admin := f.page(t, asAdmin, "/f/internal/infra")
-	assert.Contains(t, admin, "No env files.")
-	assert.Contains(t, admin, `href="/f/internal/infra/env"`)
-	assert.NotContains(t, admin, `href="/f/internal/infra/env/.env"`)
-
-	// A filled one shows, with its edit link for admins alone.
-	f.withKey(t)
-	assert.NoError(t, f.opts.Env.Save(context.Background(), f.infra, envfile.File{Path: ".env", Content: "A=1\n"}))
-	admin = f.page(t, asAdmin, "/f/internal/infra")
-	assert.Contains(t, admin, "Environment")
-	assert.Contains(t, admin, `href="/f/internal/infra/env/.env"`)
-	ops := f.page(t, asOps, "/f/internal/infra")
-	assert.Contains(t, ops, "Environment")
-	assert.NotContains(t, ops, `href="/f/internal/infra/env/.env"`)
 }
 
 func TestFolder_Running(t *testing.T) {
@@ -272,9 +257,6 @@ func TestFolder_Nested(t *testing.T) {
 	job := f.page(t, asAdmin, "/f/internal/infra/edge/deploy")
 	assert.Contains(t, job, "<h2>deploy")
 	assert.Contains(t, job, `<span><a href="/f/internal/infra/edge">edge</a></span><span>deploy</span>`)
-
-	env := f.page(t, asAdmin, "/f/internal/infra/edge/env/.env")
-	assert.Contains(t, env, `data-api="/api/env/infra/edge/.env"`)
 
 	assert.Equal(t, http.StatusNotFound, f.get(t, asAdmin, "/f/internal/infra/edge/nothing").Status)
 	assert.Equal(t, http.StatusNotFound, f.get(t, asAdmin, "/f/internal/infra/edge/deploy/more").Status)

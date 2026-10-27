@@ -1223,7 +1223,8 @@
   }
 
   // filledPath puts the form's fields in a data-api path the way filled
-  // does, a field's slashes kept as path separators: {path} of an env file.
+  // does, a field's slashes kept as path separators: {folder} of a
+  // workspace in a key's route.
   function filledPath(target, data) {
     if (!target) return target;
     return target.replace(/\{(\w+)\}/g, function (all, name) {

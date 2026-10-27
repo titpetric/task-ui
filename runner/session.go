@@ -54,7 +54,7 @@ type Session struct {
 	workspaceName string
 	workspaceID   string
 	// noWorkspace says the run has no workspace: no workspace secrets or
-	// keys, and no env files or pull of a workspace.
+	// keys, and no pull of a workspace.
 	noWorkspace bool
 	// home is the directory of the workspace's home project, the run's
 	// HOME; "" keeps the server's.

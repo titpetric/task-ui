@@ -72,7 +72,7 @@ func TestWorkspaces(t *testing.T) {
 	w := s.store.Workspaces
 
 	for scope, want := range map[string]string{
-		"workspace:acme": "acme", "workspace:internal": "internal", "workspace:_": "internal", "all": "internal",
+		"workspace:acme": "acme", "workspace:internal": "internal", "workspace:_": "internal", "all": "",
 		"acme": "acme", "acme/api": "acme", "web": "internal", "internal/web": "internal", "_/web": "internal", "acmes/x": "internal",
 	} {
 		got, err := w.Name(ctx, scope)
@@ -113,8 +113,8 @@ func TestStore_Workspaces(t *testing.T) {
 	set("acme/api", "ACME", "mine")
 	set("integration:claude", "token", "t")
 
-	shared, err := s.rows.Get(ctx, model.Secret{Scope: "workspace:internal", Name: "SHARED"})
-	assert.NoError(t, err, "all is the default workspace's shared scope")
+	shared, err := s.rows.Get(ctx, model.Secret{Scope: storage.ScopeAll, Name: "SHARED"})
+	assert.NoError(t, err, "all is the scope of every workspace")
 	plain, err := secret.NewVault(secret.DirKeys{Store: s.instance}).Decrypt(shared.Content)
 	assert.NoError(t, err, "the instance key opens a workspace's secret")
 	assert.Equal(t, "root", plain)
@@ -126,7 +126,7 @@ func TestStore_Workspaces(t *testing.T) {
 	assert.Equal(t, map[string]string{"SHARED": "root", "WEB": "w"}, web)
 	api, err := s.store.For(ctx, "acme/api")
 	assert.NoError(t, err)
-	assert.Equal(t, map[string]string{"ACME": "mine", "API": "p"}, api, "no _ secrets in acme, the folder's own wins")
+	assert.Equal(t, map[string]string{"ACME": "mine", "API": "p", "SHARED": "root"}, api, "every workspace's, then its own, the folder's own winning")
 
 	n, err := s.store.OnInstance(ctx)
 	assert.NoError(t, err)

@@ -37,7 +37,7 @@
 					sep
 					(and (not $default) (ne $i $first) (item "up" "Move up" "data-workspace-move" "up" "data-folder" .Folder))
 					(and (not $default) (ne (add $i 1) $last) (item "down" "Move down" "data-workspace-move" "down" "data-folder" .Folder))
-					(and ($.Can "workspace/delete") $secrets (item "secret" (deleteBlocked $secrets) "href" (print "/settings/workspaces/" .Folder "/secrets")))
+					(and ($.Can "workspace/delete") $secrets (item "secret" (deleteBlocked $secrets) "href" (workspaceSecretsHref .Folder)))
 					(and ($.Can "workspace/delete") (not $secrets) (danger "trash" "Delete" "data-delete" (print "/api/workspaces/" .Folder) "data-confirm" (deleteWorkspaceConfirm .Folder $nested) "data-confirm-ok" "Delete" "data-next" "reload"))
 				) }}</td>
 			</tr>

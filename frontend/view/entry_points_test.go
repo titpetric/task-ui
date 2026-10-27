@@ -62,7 +62,7 @@ func TestHome_AddMenu(t *testing.T) {
 
 	p := admin(t)
 	head := pageHead(t, render(t, "home", p))
-	for _, label := range []string{"Add workspace", "Add project", "Generate key", "Upload key", "Add secret", "Add workflow"} {
+	for _, label := range []string{"Add workspace", "Add project", "Generate key", "Upload key", "Add variable", "Add workflow"} {
 		assert.Contains(t, head, "<span>"+label+"</span>")
 	}
 	assert.NotContains(t, head, "Add user", "the server writes no password file here")

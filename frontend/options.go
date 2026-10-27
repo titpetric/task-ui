@@ -7,7 +7,6 @@ import (
 	"github.com/titpetric/task-ui/artifactstore"
 	"github.com/titpetric/task-ui/beszel"
 	"github.com/titpetric/task-ui/diskusage"
-	"github.com/titpetric/task-ui/envfile"
 	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/frontend/view"
 	"github.com/titpetric/task-ui/git"
@@ -60,7 +59,6 @@ type Options struct {
 	// Keys are the key folder: every key of the instance and its
 	// workspaces.
 	Keys *keystore.Local
-	Env  *envfile.Store
 	// Recordings holds the runs' recordings, for the last screen of a
 	// run whose session has ended.
 	Recordings *recording.Store

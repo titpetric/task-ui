@@ -169,26 +169,22 @@ with `write_artifact`, over the version there, which the history keeps;
 holds it. Page: `/artifacts`; API: `/api/artifacts`; MCP:
 `list_artifacts`, `read_artifact`, `write_artifact`.
 
-## Env files (`env`)
-
-The dotenv files a user fills for a folder, which task-ui writes into
-the folder with the secrets appended, on save and before every run.
-task-ui reads no env file of a folder: atkins and the job tools read
-what they need, and runs get the secrets in their environment. API:
-`/api/env`.
-
-## Secrets (`secret`)
+## Secrets and env (`secret`)
 
 Variables added to the environment of runs, encrypted with the
-instance's one encryption key. A secret's scope is a workspace, `workspace:<name>`,
-or a folder. A value is never shown again once saved. Page:
-`/settings/secrets`; API: `/api/secrets`. A script in a run reads a
-secret of its folder with `task-ui get-secret NAME`, which prints the
-value, as `GITHUB_TOKEN=$(task-ui get-secret GITHUB_TOKEN)`. The
-Instance page's **Parent environment** says how much of the server's own
-environment runs get: None, the base variables alone, the default; Auto,
-all but names holding KEY, TOKEN, SECRET, PASS, CREDENTIAL or PRIVATE;
-All, every variable.
+instance's one encryption key. Each is a secret or an env entry: a
+secret's value is never shown again, an env entry's is listed on the
+page. A variable applies to every workspace, scope `all`, or to one,
+`workspace:<name>`. Page: `/settings/secrets`, which also lists the
+environment the integrations compute for the user, read only, a
+credential's value redacted. API: `/api/secrets`, `is_secret` on a
+request and `value` on an env entry's answer. A script in a run reads
+either with `task-ui get-secret NAME`, which prints the value, as
+`GITHUB_TOKEN=$(task-ui get-secret GITHUB_TOKEN)`. The Instance page's
+**Parent environment** says how much of the server's own environment
+runs get: None, the base variables alone, the default; Auto, all but
+names holding KEY, TOKEN, SECRET, PASS, CREDENTIAL or PRIVATE; All,
+every variable.
 
 ## Keys (`key`)
 

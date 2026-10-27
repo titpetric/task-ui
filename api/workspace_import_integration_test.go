@@ -233,7 +233,8 @@ func TestWorkspaceImport_Default(t *testing.T) {
 	from.withKeyring(t)
 	to.withKeyring(t)
 	from.acme(t)
-	assert.NoError(t, from.opts.Secrets.Set(ctx, &model.Secret{Scope: "all", Name: "ROOT", Content: "root value"}))
+	assert.NoError(t, from.opts.Secrets.Set(ctx, &model.Secret{Scope: storage.ScopeAll, Name: "GLOBAL", Content: "every workspace"}))
+	assert.NoError(t, from.opts.Secrets.Set(ctx, &model.Secret{Scope: "workspace:internal", Name: "ROOT", Content: "root value"}))
 	assert.NoError(t, from.opts.Secrets.Set(ctx, &model.Secret{Scope: "infra", Name: "INFRA", Content: "infra value"}))
 	assert.NoError(t, from.opts.Secrets.Set(ctx, &model.Secret{Scope: "internal/claude-prompt", Name: "KEEP", Content: "instance"}))
 	assert.NoError(t, from.opts.Env.Managed.Set(ctx, &model.EnvFile{Folder: "infra", Path: ".env", Content: "A=1\n"}))
@@ -242,7 +243,7 @@ func TestWorkspaceImport_Default(t *testing.T) {
 
 	read, err := workspace.ReadBundle(bytes.NewReader(bundle), passphrase)
 	assert.NoError(t, err)
-	assert.Len(t, read.Manifest.Secrets, 2, "neither acme's nor internal's")
+	assert.Len(t, read.Manifest.Secrets, 2, "internal's shared and folder secrets, not acme's and not the one of every workspace")
 	assert.Len(t, read.Manifest.Projects, 1)
 
 	unnamed := to.importBundle(t, asAdmin, bundle, passphrase, "")

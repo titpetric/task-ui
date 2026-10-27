@@ -4,22 +4,28 @@ import (
 	"context"
 	"errors"
 	"regexp"
+	"strings"
 
 	"github.com/titpetric/task-ui/model"
 )
 
-// ScopeAll is the scope the API reads as the default workspace's
-// shared scope, workspace:_, and the scope of the shared secrets of an
-// instance that predates workspaces.
+// ScopeAll is the scope of a variable that reaches every workspace.
 const ScopeAll = "all"
 
-// ScopeWorkspace starts the scope of the secrets a workspace shares with
-// every folder in it: workspace:<folder>.
+// ScopeWorkspace starts the scope of the variables of one workspace:
+// workspace:<folder>.
 const ScopeWorkspace = "workspace:"
 
-// SharedScope returns the scope of a workspace's shared secrets.
+// SharedScope returns the scope of a workspace's variables.
 func SharedScope(workspace string) string {
 	return ScopeWorkspace + workspace
+}
+
+// ScopeWorkspaceName returns the workspace a workspace scope names, and
+// whether the scope names one at all.
+func ScopeWorkspaceName(scope string) (string, bool) {
+	name, ok := strings.CutPrefix(scope, ScopeWorkspace)
+	return name, ok
 }
 
 var validName = regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_]*$`)
@@ -64,9 +70,16 @@ func (s *SecretStorage) Get(ctx context.Context, ref model.Secret) (*model.Secre
 	return secret, notFound(err)
 }
 
-// List returns every secret, shared ones first, then by scope and name.
+// GetByID returns a secret by its row ID.
+func (s *SecretStorage) GetByID(ctx context.Context, id string) (*model.Secret, error) {
+	secret, err := client(s.db).Get[model.Secret](ctx, "SELECT * FROM secret WHERE id = ?", id)
+	return secret, notFound(err)
+}
+
+// List returns every secret, the ones of every workspace first, then a
+// workspace's, then a folder's, by scope and name.
 func (s *SecretStorage) List(ctx context.Context) ([]model.Secret, error) {
-	return client(s.db).Select[model.Secret](ctx, "SELECT * FROM secret ORDER BY CASE WHEN scope = ? OR scope LIKE ? THEN 0 ELSE 1 END, scope, name", ScopeAll, ScopeWorkspace+"%")
+	return client(s.db).Select[model.Secret](ctx, "SELECT * FROM secret ORDER BY CASE WHEN scope = ? THEN 0 WHEN scope LIKE ? THEN 1 ELSE 2 END, scope, name", ScopeAll, ScopeWorkspace+"%")
 }
 
 // Scoped returns the secrets of the scopes given, in their order, then

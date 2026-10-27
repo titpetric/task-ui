@@ -7,7 +7,6 @@ import (
 
 	"github.com/titpetric/task-ui/beszel"
 	"github.com/titpetric/task-ui/diskusage"
-	"github.com/titpetric/task-ui/envfile"
 	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/git"
 	"github.com/titpetric/task-ui/hostinfo"
@@ -157,18 +156,20 @@ type Page struct {
 	Workflow *Workflow
 	// WorkflowRuns are a workflow's runs, newest first.
 	WorkflowRuns []WorkflowRun
-	EnvFiles     []envfile.File
-	EnvFile      *envfile.File
-	// SecretNames are the secrets that reach a folder, by name.
-	SecretNames []string
-	Secrets     []model.Secret
-	Secret      *model.Secret
-	// SecretGroups are the workspaces on the secrets pages, each with
-	// its secrets and its folders.
+	Secrets      []model.Secret
+	Secret       *model.Secret
+	// SecretKey is the instance's encryption key, nil while it has none.
+	SecretKey *keystore.Key
+	// SecretGroups are the workspaces the variable form offers as a scope.
 	SecretGroups []SecretGroup
+	// SecretScopeTitles name each scope the secrets page lists.
+	SecretScopeTitles map[string]string
 	// SecretWorkspace is the workspace the secrets page shows alone,
 	// empty for every one.
 	SecretWorkspace string
+	// IntegrationEnv is what the integrations add to the runs of the
+	// user, read only, a credential's value redacted.
+	IntegrationEnv []EnvVar
 	// SecretReadCounts and SecretLastReads are how many runs read each
 	// secret and the last of them, by secret ID, on the secrets page.
 	SecretReadCounts map[string]int

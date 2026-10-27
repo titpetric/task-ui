@@ -14,8 +14,8 @@ import (
 // ErrRunToken refuses a token no live run holds.
 var ErrRunToken = errors.New("no running run holds this token")
 
-// ErrNoSecret answers a name no secret of the run's folder has.
-var ErrNoSecret = errors.New("no secret of this name reaches the run's folder")
+// ErrNoSecret answers a name no variable of the run's folder has.
+var ErrNoSecret = errors.New("no secret or env of this name reaches the run's folder")
 
 // runToken mints the token a run's task-ui get-secret signs in with,
 // and returns the variables that carry it with the revoke that ends it
@@ -46,11 +46,11 @@ func (m *Manager) runToken(session *Session) ([]string, func(), error) {
 	return []string{"TASK_UI_API=" + url, "TASK_UI_RUN_TOKEN=" + token}, revoke, nil
 }
 
-// Secret returns the content of the secret of a name that reaches the
-// folder of the run holding the token, as the run's environment has
-// it, and records the read against the run. It fails with ErrRunToken
-// for a token of no running run, and ErrNoSecret for a name the folder's
-// secrets lack.
+// Secret returns the content of the variable of a name that reaches the
+// folder of the run holding the token, a secret or an env entry, as the
+// run's environment has it, and records the read against the run. It
+// fails with ErrRunToken for a token of no running run, and ErrNoSecret
+// for a name the folder's variables lack.
 func (m *Manager) Secret(ctx context.Context, token, name string) (string, error) {
 	m.mu.Lock()
 	session, ok := m.runTokens[hashToken(token)]

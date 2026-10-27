@@ -6,6 +6,14 @@ import (
 	"github.com/titpetric/task-ui/integration"
 )
 
+// EnvVar is one variable an integration sets in the environment of a
+// run, its value redacted when its name holds a credential.
+type EnvVar struct {
+	Name     string
+	Value    string
+	Redacted bool
+}
+
 // Integration is an integration as its form shows it: the plain settings
 // as they are, the secret ones only as set or not.
 type Integration struct {

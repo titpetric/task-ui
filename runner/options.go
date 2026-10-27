@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/titpetric/task-ui/artifactstore"
-	"github.com/titpetric/task-ui/envfile"
 	"github.com/titpetric/task-ui/git"
 	"github.com/titpetric/task-ui/hostpath"
 	"github.com/titpetric/task-ui/keystore"
@@ -23,7 +22,6 @@ type Options struct {
 	Secrets   *secret.Store
 	// SecretReads log which run got which secret. Nil logs none.
 	SecretReads *storage.SecretReadStorage
-	Env         *envfile.Store
 	// Integrations add to a run what an integration has for its folder,
 	// such as the Claude Code token. Nil adds nothing.
 	Integrations Integrations

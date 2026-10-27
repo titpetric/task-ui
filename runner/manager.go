@@ -279,7 +279,7 @@ func (m *Manager) Shutdown(ctx context.Context) {
 }
 
 // serve runs a session from start to finish: the recording, the pull, the
-// env files, the process, the pump, the outcome, the artifacts.
+// process, the pump, the outcome, the artifacts.
 func (m *Manager) serve(session *Session) {
 	ctx := context.Background()
 	run := session.Run
@@ -331,10 +331,10 @@ func (m *Manager) settle(ctx context.Context, session *Session, status Status) {
 }
 
 // execute does the run: a pull when the folder is in a checkout, the
-// keys the policies grant the run's user in an agent, the env files, then
-// the process, pumped until it exits.
+// keys the policies grant the run's user in an agent, then the process,
+// pumped until it exits.
 func (m *Manager) execute(ctx context.Context, session *Session) Status {
-	f, job, run := session.Folder, session.Job, session.Run
+	job, run := session.Job, session.Run
 	if len(job.Command) == 0 {
 		return failed(session, "the job has no command")
 	}
@@ -348,11 +348,6 @@ func (m *Manager) execute(ctx context.Context, session *Session) Status {
 		return failed(session, err.Error())
 	}
 	defer keys.Close()
-	if m.opts.Env != nil && !session.noWorkspace {
-		if err := m.opts.Env.Generate(ctx, f); err != nil {
-			return failed(session, "generating env files: "+err.Error())
-		}
-	}
 	cmd, err := m.command(ctx, session)
 	if err != nil {
 		return failed(session, err.Error())

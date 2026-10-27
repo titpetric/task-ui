@@ -11,20 +11,26 @@ import (
 	"github.com/titpetric/task-ui/storage"
 )
 
-// SecretRequest sets a secret.
+// SecretRequest sets a variable: a secret, whose value no page shows, or
+// an env entry, whose value it does. An empty is_secret makes a secret;
+// an ID replaces that row, so its scope and name may change too.
 type SecretRequest struct {
-	Scope   string `json:"scope"`
-	Name    string `json:"name"`
-	Content string `json:"content"`
+	ID       string `json:"id"`
+	Scope    string `json:"scope"`
+	Name     string `json:"name"`
+	Content  string `json:"content"`
+	IsSecret *bool  `json:"is_secret"`
 }
 
-// SecretView is a secret as the API shows it: never its content. The
-// list adds how many runs read it, in the log's newest
-// storage.SecretReadKeep, and the last of them.
+// SecretView is a variable as the API shows it: a secret never shows its
+// content, an env entry does. The list adds how many runs read it, in the
+// log's newest storage.SecretReadKeep, and the last of them.
 type SecretView struct {
 	ID       string            `json:"id"`
 	Scope    string            `json:"scope"`
 	Name     string            `json:"name"`
+	IsSecret bool              `json:"is_secret"`
+	Value    string            `json:"value,omitempty"`
 	Reads    int               `json:"reads"`
 	LastRead *model.SecretRead `json:"last_read,omitempty"`
 }
@@ -54,7 +60,10 @@ func (h *Handlers) listSecrets(w http.ResponseWriter, r *http.Request) {
 		if integration.Internal(secret.Scope) {
 			continue
 		}
-		view := SecretView{ID: secret.ID, Scope: secret.Scope, Name: secret.Name, Reads: counts[secret.ID]}
+		view := SecretView{ID: secret.ID, Scope: secret.Scope, Name: secret.Name, IsSecret: secret.IsSecret != 0, Reads: counts[secret.ID]}
+		if !view.IsSecret {
+			view.Value = secret.Content
+		}
 		if read, ok := last[secret.ID]; ok {
 			view.LastRead = &read
 		}
@@ -95,7 +104,8 @@ func (h *Handlers) secretReads(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"reads": reads})
 }
 
-// setSecret creates a secret or replaces its content.
+// setSecret creates a variable or replaces its content. Without a
+// scope it reaches every workspace; an ID replaces that row.
 func (h *Handlers) setSecret(w http.ResponseWriter, r *http.Request) {
 	if !h.require(w, r, "secret/edit") {
 		return
@@ -106,25 +116,58 @@ func (h *Handlers) setSecret(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	req.Scope = strings.TrimSpace(req.Scope)
-	if req.Scope == "" || req.Scope == storage.ScopeAll {
-		req.Scope = storage.SharedScope(model.Default)
+	if req.Scope == "" {
+		req.Scope = storage.ScopeAll
 	}
 	if err := h.secretScope(r, req.Scope); err != nil {
 		fail(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	secret := &model.Secret{Scope: req.Scope, Name: strings.TrimSpace(req.Name), Content: req.Content}
-	if err := h.opts.Secrets.Set(r.Context(), secret); err != nil {
-		failErr(w, err)
-		return
+	isSecret := req.IsSecret == nil || *req.IsSecret
+	secret := &model.Secret{ID: req.ID, Scope: req.Scope, Name: strings.TrimSpace(req.Name), Content: req.Content}
+	if isSecret {
+		secret.IsSecret = 1
 	}
-	writeJSON(w, http.StatusOK, SecretView{ID: secret.ID, Scope: secret.Scope, Name: secret.Name})
+	if req.ID == "" {
+		set := h.opts.Secrets.Set
+		if !isSecret {
+			set = h.opts.Secrets.SetEnv
+		}
+		if err := set(r.Context(), secret); err != nil {
+			failErr(w, err)
+			return
+		}
+	} else {
+		existing, err := h.opts.Secrets.ByID(r.Context(), req.ID)
+		if err != nil {
+			failErr(w, err)
+			return
+		}
+		// An empty value keeps a secret's, whatever the box now says,
+		// since an edit of one starts blank; an env entry may be empty.
+		if existing.IsSecret != 0 && req.Content == "" {
+			secret.Content = existing.Content
+		}
+		secret.CreatedAt = existing.CreatedAt
+		if err := h.opts.Secrets.Update(r.Context(), secret); err != nil {
+			failErr(w, err)
+			return
+		}
+	}
+	view := SecretView{ID: secret.ID, Scope: secret.Scope, Name: secret.Name, IsSecret: isSecret}
+	if !isSecret {
+		view.Value = secret.Content
+	}
+	writeJSON(w, http.StatusOK, view)
 }
 
-// secretScope refuses a scope that is not a workspace's shared scope,
-// workspace:<folder>, or a folder.
+// secretScope refuses a scope that is not every workspace, all,
+// workspace:<folder>, or a folder of older rows.
 func (h *Handlers) secretScope(r *http.Request, scope string) error {
-	if name, ok := strings.CutPrefix(scope, storage.ScopeWorkspace); ok {
+	if scope == storage.ScopeAll {
+		return nil
+	}
+	if name, ok := storage.ScopeWorkspaceName(scope); ok {
 		if h.opts.Workspaces == nil {
 			return nil
 		}

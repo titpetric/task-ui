@@ -3,15 +3,15 @@
 <div class="page-head">
 	<div>
 		<h2>{{ .Title }}</h2>
-		<p>task-ui encrypts the value with the instance's encryption key and never shows it again. A workspace secret goes to every folder in that workspace, its projects and the folders inside them, and to no other workspace. Saving an existing name replaces its value.</p>
+		<p>A variable for the environment of runs. A secret's value is encrypted with the instance's encryption key and never shown again; an env value is listed on the Secrets page. One applies to every workspace, or to one workspace. Saving an existing name replaces its value.</p>
 	</div>
 </div>
 
-<form class="form" data-api="/api/secrets" data-method="POST" data-next="/settings/secrets?notice=Secret+{{ if $s.ID }}saved{{ else }}added{{ end }}">
+<form class="form" data-api="/api/secrets" data-method="POST" data-next="/settings/secrets?notice=Variable+{{ if $s.ID }}saved{{ else }}added{{ end }}">
 	{{- template "secretfields" (list $s .SecretGroups) }}
 	<div class="form-foot">
 		<a class="btn" href="/settings/secrets">Cancel</a>
-		<button class="btn btn-primary" type="submit">{{ if $s.ID }}Save{{ else }}Add secret{{ end }}</button>
+		<button class="btn btn-primary" type="submit">{{ if $s.ID }}Save{{ else }}Add variable{{ end }}</button>
 	</div>
 </form>
 {{ end }}

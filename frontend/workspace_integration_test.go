@@ -144,8 +144,8 @@ func TestWorkspaces_Default(t *testing.T) {
 	body := f.page(t, asAdmin, "/settings/workspaces")
 	assert.True(t, strings.Index(body, `href="/f/internal"`) < strings.Index(body, `href="/f/malta"`), "internal lists first")
 	assert.Contains(t, body, `<th class="hide-sm">Secrets</th>`)
-	assert.Contains(t, body, `<a href="/settings/workspaces/malta/secrets" title="delete them before deleting the workspace">1</a>`)
-	assert.Contains(t, body, `href="/settings/workspaces/malta/secrets"><svg class="ic"><use href="#i-secret"/></svg><span>Delete its 1 secret first</span>`)
+	assert.Contains(t, body, `<a href="/settings/secrets?workspace=malta" title="delete them before deleting the workspace">1</a>`)
+	assert.Contains(t, body, `href="/settings/secrets?workspace=malta"><svg class="ic"><use href="#i-secret"/></svg><span>Delete its 1 variable first</span>`)
 	assert.NotContains(t, body, `data-delete="/api/workspaces/malta"`, "a workspace with secrets has no Delete")
 	assert.Contains(t, body, `<a href="/settings/workspaces/internal" title="extra, infra, private, site">4</a>`)
 	assert.Contains(t, body, `<a href="/settings/workspaces/malta" title="malta/deploy">1</a>`)
@@ -168,7 +168,7 @@ func TestWorkspaces_Default(t *testing.T) {
 	assert.Contains(t, body, `data-delete="/api/workspaces/gozo"`)
 
 	malta := f.page(t, asAdmin, "/settings/workspaces/malta")
-	assert.Contains(t, malta, `<span>Delete its 1 secret first</span>`)
+	assert.Contains(t, malta, `<span>Delete its 1 variable first</span>`)
 	assert.NotContains(t, malta, `data-delete="/api/workspaces/malta"`)
 }
 
@@ -197,8 +197,10 @@ func TestWorkspaces_NoDefault(t *testing.T) {
 	assert.NotContains(t, projects, "in "+f.root+"/src")
 
 	secrets := f.page(t, asAdmin, "/settings/secrets")
-	assert.Contains(t, secrets, `scope=workspace:malta`)
-	assert.NotContains(t, secrets, `scope=workspace:internal`)
+	assert.Contains(t, secrets, "No variables yet.")
+	form := f.page(t, asAdmin, "/settings/secrets/new")
+	assert.Contains(t, form, `<option value="workspace:malta">Malta</option>`)
+	assert.NotContains(t, form, `workspace:internal`)
 
 	root := f.get(t, asAdmin, "/f/internal")
 	assert.Equal(t, http.StatusOK, root.Status)

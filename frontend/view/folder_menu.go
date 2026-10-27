@@ -87,12 +87,12 @@ func RemoveConfirm(id, remote string) string {
 	return "Remove the folder " + id + " and its checkout? You can clone it again from " + remote + "."
 }
 
-// DeleteBlocked returns the menu line of a workspace that holds secrets: delete them first.
-func DeleteBlocked(secrets int) string {
-	if secrets == 1 {
-		return "Delete its 1 secret first"
+// DeleteBlocked returns the menu line of a workspace that holds variables: delete them first.
+func DeleteBlocked(variables int) string {
+	if variables == 1 {
+		return "Delete its 1 variable first"
 	}
-	return "Delete its " + strconv.Itoa(secrets) + " secrets first"
+	return "Delete its " + strconv.Itoa(variables) + " variables first"
 }
 
 // DeleteWorkspaceConfirm returns what Delete of a workspace asks; of

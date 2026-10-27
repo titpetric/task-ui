@@ -3,6 +3,7 @@ package secret
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/storage"
@@ -44,12 +45,25 @@ func (s *Store) Workspace(ctx context.Context, scope string) (string, error) {
 	return s.Workspaces.Name(ctx, scope)
 }
 
-// Set creates a secret or replaces its content, encrypted. The scope
-// all is the default workspace's shared scope.
+// Set creates a secret or replaces its content, encrypted. A caller that
+// does not set IsSecret makes a secret; SetEnv makes an env entry. Its
+// scope is all, every workspace, or a workspace's.
 func (s *Store) Set(ctx context.Context, secret *model.Secret) error {
-	if secret.Scope == storage.ScopeAll {
-		secret.Scope = storage.SharedScope(model.Default)
+	if secret.IsSecret == 0 {
+		secret.IsSecret = 1
 	}
+	return s.set(ctx, secret)
+}
+
+// SetEnv creates an env entry or replaces its content: a variable whose
+// value the Secrets page shows, encrypted at rest as a secret's is.
+func (s *Store) SetEnv(ctx context.Context, secret *model.Secret) error {
+	secret.IsSecret = 0
+	return s.set(ctx, secret)
+}
+
+// set writes a variable with the is_secret it carries.
+func (s *Store) set(ctx context.Context, secret *model.Secret) error {
 	vault, err := s.vault(ctx, secret.Scope)
 	if err != nil {
 		return err
@@ -64,6 +78,25 @@ func (s *Store) Set(ctx context.Context, secret *model.Secret) error {
 		return err
 	}
 	secret.ID, secret.CreatedAt, secret.UpdatedAt = row.ID, row.CreatedAt, row.UpdatedAt
+	return nil
+}
+
+// Update writes a variable back by its ID, encrypted.
+func (s *Store) Update(ctx context.Context, secret *model.Secret) error {
+	vault, err := s.vault(ctx, secret.Scope)
+	if err != nil {
+		return err
+	}
+	encrypted, err := vault.Encrypt(secret.Content)
+	if err != nil {
+		return err
+	}
+	row := *secret
+	row.Content = encrypted
+	if err := s.Secrets.Update(ctx, &row); err != nil {
+		return err
+	}
+	secret.CreatedAt, secret.UpdatedAt = row.CreatedAt, row.UpdatedAt
 	return nil
 }
 
@@ -115,8 +148,8 @@ func (s *Store) openAll(ctx context.Context, secrets []model.Secret) error {
 	return nil
 }
 
-// For returns the secrets that reach a folder by name, decrypted: its workspace's shared ones, the folder's own winning.
-// A folder in a named workspace does not get the default workspace's.
+// For returns the variables that reach a folder by name, decrypted: those
+// of every workspace, its own workspace's, and the folder's own winning.
 func (s *Store) For(ctx context.Context, folder string) (map[string]string, error) {
 	secrets, err := s.Reaching(ctx, folder)
 	if err != nil {
@@ -129,30 +162,69 @@ func (s *Store) For(ctx context.Context, folder string) (map[string]string, erro
 	return result, nil
 }
 
-// Reaching returns the rows of the secrets that reach a folder,
-// decrypted, one per name by name: the folder's own in place of a
-// shared one of the same name. A run gets these, and records them read.
+// Reaching returns the rows of the variables that reach a folder,
+// decrypted, one per name by name: the folder's own in place of its
+// workspace's, which in place of the one for every workspace. A run gets
+// these, and records them read; task-ui get-secret reads the same set.
 func (s *Store) Reaching(ctx context.Context, folder string) ([]model.Secret, error) {
 	workspace, err := s.Workspace(ctx, folder)
 	if err != nil {
 		return nil, err
 	}
-	secrets, err := s.Secrets.Scoped(ctx, storage.SharedScope(workspace), folder)
+	all, err := s.Secrets.List(ctx)
 	if err != nil {
 		return nil, err
 	}
-	if err := s.openAll(ctx, secrets); err != nil {
-		return nil, err
-	}
 	byName := map[string]model.Secret{}
-	for _, secret := range secrets {
-		byName[secret.Name] = secret
+	rank := map[string]int{}
+	for _, row := range all {
+		if Service(row.Scope) {
+			continue
+		}
+		reach := reachRank(row.Scope, workspace, folder)
+		if reach < 0 || rank[row.Name] > reach {
+			continue
+		}
+		rank[row.Name], byName[row.Name] = reach, row
 	}
 	result := make([]model.Secret, 0, len(byName))
 	for _, name := range model.SortedKeys(byName) {
-		result = append(result, byName[name])
+		row := byName[name]
+		if err := s.open(ctx, &row); err != nil {
+			return nil, err
+		}
+		result = append(result, row)
 	}
 	return result, nil
+}
+
+// reachRank returns how closely a scope reaches a folder: a folder's own
+// scope 2, its workspace's 1, every workspace 0, none -1.
+func reachRank(scope, workspace, folder string) int {
+	rank := -1
+	for _, term := range strings.Split(scope, ",") {
+		term = strings.TrimSpace(term)
+		switch {
+		case term == storage.ScopeAll:
+			rank = max(rank, 0)
+		case model.Canonical(term) == model.Canonical(folder):
+			rank = max(rank, 2)
+		default:
+			if name, ok := storage.ScopeWorkspaceName(term); ok && model.Canonical(name) == workspace {
+				rank = max(rank, 1)
+			}
+		}
+	}
+	return rank
+}
+
+// ByID returns a variable by its row ID, decrypted.
+func (s *Store) ByID(ctx context.Context, id string) (*model.Secret, error) {
+	secret, err := s.Secrets.GetByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	return secret, s.open(ctx, secret)
 }
 
 // Delete removes a secret by ID.

@@ -41,7 +41,7 @@ func TestSecret_Set(t *testing.T) {
 
 	var view api.SecretView
 	assert.NoError(t, json.Unmarshal(res.Raw, &view))
-	assert.Equal(t, "workspace:internal", view.Scope, "no scope is the default workspace's shared one")
+	assert.Equal(t, "all", view.Scope, "no scope reaches every workspace")
 	assert.Equal(t, "API_TOKEN", view.Name)
 	assert.True(t, model.ValidID(view.ID))
 	assert.False(t, string(res.Raw) != "" && contains(res.Raw, "hunter2"))
@@ -60,6 +60,37 @@ func TestSecret_Set(t *testing.T) {
 	scoped := f.call(t, asAdmin, http.MethodPost, "/secrets", api.SecretRequest{Scope: "infra", Name: "DB_PASS", Content: "x"})
 	assert.Equal(t, http.StatusOK, scoped.Status)
 	assert.Equal(t, "infra", scoped.str("scope"))
+
+	// An env entry shows its value in the list; a secret never does.
+	env := f.call(t, asAdmin, http.MethodPost, "/secrets", api.SecretRequest{Scope: "infra", Name: "PUBLIC_URL", Content: "https://example.com", IsSecret: ptr(false)})
+	assert.Equal(t, http.StatusOK, env.Status)
+	assert.Equal(t, false, env.get("is_secret"))
+	assert.Equal(t, "https://example.com", env.str("value"), "the saved answer carries an env value")
+	list := f.call(t, asAdmin, http.MethodGet, "/secrets", nil)
+	values := map[string]string{}
+	for _, item := range list.list("secrets") {
+		view := item.(map[string]any)
+		values[view["name"].(string)], _ = view["value"].(string)
+	}
+	assert.Equal(t, "https://example.com", values["PUBLIC_URL"])
+	assert.Equal(t, "", values["DB_PASS"], "a secret's value is withheld")
+
+	// An edit by ID: blank keeps a secret's value, even when the box
+	// turns it into an env entry; an env entry's blank clears it.
+	ids := map[string]string{}
+	for _, item := range list.list("secrets") {
+		view := item.(map[string]any)
+		ids[view["name"].(string)] = view["id"].(string)
+	}
+	toggled := f.call(t, asAdmin, http.MethodPost, "/secrets", api.SecretRequest{ID: ids["DB_PASS"], Scope: "infra", Name: "DB_PASS", IsSecret: ptr(false)})
+	assert.Equal(t, http.StatusOK, toggled.Status, string(toggled.Raw))
+	assert.Equal(t, false, toggled.get("is_secret"))
+	secrets, _ = f.opts.Secrets.For(context.Background(), "infra")
+	assert.Equal(t, "x", secrets["DB_PASS"], "the value survives the box")
+
+	f.call(t, asAdmin, http.MethodPost, "/secrets", api.SecretRequest{ID: ids["PUBLIC_URL"], Scope: "infra", Name: "PUBLIC_URL", IsSecret: ptr(false), Content: ""})
+	secrets, _ = f.opts.Secrets.For(context.Background(), "infra")
+	assert.Equal(t, "", secrets["PUBLIC_URL"], "an env value may be empty")
 }
 
 func TestSecret_SetRefused(t *testing.T) {
@@ -143,10 +174,10 @@ func (f *fixture) withWorkspaces(t *testing.T) {
 	f.opts.Secrets.Workspaces = f.workspaceVaults()
 }
 
-// A secret scoped to a workspace reaches its folders; all is the
-// default workspace's; the API refuses a workspace that is not there. A
-// rotation of the instance's encryption key and a rekey write every
-// secret again; removing the workspace waits for its secrets to go.
+// A secret scoped to a workspace reaches its folders; all reaches every
+// workspace; the API refuses a workspace that is not there. A rotation
+// of the instance's encryption key and a rekey write every secret again;
+// removing the workspace waits for its secrets to go.
 func TestSecret_WorkspaceScope(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
@@ -154,7 +185,7 @@ func TestSecret_WorkspaceScope(t *testing.T) {
 
 	all := f.call(t, asAdmin, http.MethodPost, "/secrets", api.SecretRequest{Scope: "all", Name: "ROOT", Content: "r"})
 	assert.Equal(t, http.StatusOK, all.Status, string(all.Raw))
-	assert.Equal(t, "workspace:internal", all.str("scope"))
+	assert.Equal(t, "all", all.str("scope"))
 	acme := f.call(t, asAdmin, http.MethodPost, "/secrets", api.SecretRequest{Scope: "workspace:acme", Name: "ACME", Content: "a"})
 	assert.Equal(t, http.StatusOK, acme.Status, string(acme.Raw))
 	assert.Equal(t, "workspace:acme", acme.str("scope"))
@@ -168,7 +199,7 @@ func TestSecret_WorkspaceScope(t *testing.T) {
 	assert.Equal(t, map[string]string{"ROOT": "r"}, infra)
 	inAcme, err := f.opts.Secrets.For(context.Background(), "acme/api")
 	assert.NoError(t, err)
-	assert.Equal(t, map[string]string{"ACME": "a"}, inAcme)
+	assert.Equal(t, map[string]string{"ACME": "a", "ROOT": "r"}, inAcme, "every workspace's, then acme's")
 
 	// Rotating the instance's key writes both secrets again; the backup
 	// can go.

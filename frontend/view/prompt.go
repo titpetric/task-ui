@@ -1,6 +1,8 @@
 package view
 
-import "github.com/titpetric/task-ui/model"
+import (
+	"github.com/titpetric/task-ui/model"
+)
 
 // Prompt is the prompt box of a folder page, of a directory browsed
 // inside a folder, or of a run's page: Claude Code on a prompt, a run

@@ -4,84 +4,51 @@ import (
 	"context"
 	"net/http"
 	"strconv"
+	"strings"
 
-	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/frontend/view"
 	"github.com/titpetric/task-ui/integration"
 	"github.com/titpetric/task-ui/keystore"
 	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/runner"
 	"github.com/titpetric/task-ui/storage"
 )
 
-// secrets lists the secrets by workspace, values withheld; ?workspace=
-// shows one workspace alone.
+// secrets lists every variable runs may get, secrets and env entries
+// together, values withheld for secrets; ?workspace= shows what reaches
+// one workspace, its own and the ones of every workspace.
 func (h *Handlers) secrets(w http.ResponseWriter, r *http.Request) {
 	if !h.require(w, r, "secret/view") {
 		return
 	}
+	ctx := r.Context()
 	p := h.page(r, "Secrets")
 	p.Crumbs = view.Crumbs("Settings", "/settings", "Secrets")
 	p.Step = view.StepSecrets
-	secrets, err := h.opts.Secrets.List(r.Context())
+	secrets, err := h.opts.Secrets.List(ctx)
 	p.Secrets = userSecrets(secrets)
 	if err != nil {
 		p.Error = err.Error()
 	}
-	p.SecretGroups = h.secretGroups(r.Context(), p.Secrets, p.Folders)
-	if h.opts.SecretReads != nil {
-		p.SecretReadCounts, _ = h.opts.SecretReads.Counts(r.Context())
-		p.SecretLastReads, _ = h.opts.SecretReads.Last(r.Context())
+	p.SecretGroups = h.secretGroups(ctx)
+	if h.opts.Keys != nil {
+		p.SecretKey = h.opts.Keys.EncryptKey(ctx, storage.ScopeInstance)
 	}
+	p.SecretScopeTitles = scopeTitles(p.SecretGroups)
 	if only := r.URL.Query().Get("workspace"); only != "" {
-		for _, group := range p.SecretGroups {
-			if group.Workspace == only {
-				p.SecretWorkspace, p.SecretGroups = only, []view.SecretGroup{group}
-				break
-			}
-		}
+		p.SecretWorkspace = only
+		p.Secrets = h.reachingWorkspace(ctx, p.Secrets, only)
 	}
-	h.render(w, http.StatusOK, "secrets", p)
-}
-
-// workspaceSecrets lists the secrets of one workspace, values withheld,
-// with Add secret and Replace the value in dialogs on the page. A
-// workspace unknown is not found.
-func (h *Handlers) workspaceSecrets(w http.ResponseWriter, r *http.Request) {
-	if !h.require(w, r, "secret/view") {
-		return
-	}
-	ctx, name := r.Context(), param(r, "folder")
-	var workspace *model.Workspace
-	if h.opts.Workspaces != nil {
-		workspace, _ = h.opts.Workspaces.GetByFolder(ctx, name)
-	}
-	if workspace == nil {
-		h.missing(w, r, "No workspace named "+name+".")
-		return
-	}
-	p := h.page(r, "Secrets of "+workspace.Folder)
-	p.Crumbs = view.Crumbs("Settings", "/settings", "Workspaces", "/settings/workspaces", crumbName(workspace.Folder), "/settings/workspaces/"+workspace.Folder, "Secrets")
-	p.Step = view.StepSecrets
-	p.Workspace = workspace
-	secrets, err := h.opts.Secrets.List(ctx)
-	if err != nil {
-		p.Error = err.Error()
-	}
-	for _, group := range h.secretGroups(ctx, userSecrets(secrets), p.Folders) {
-		if group.Workspace == workspace.Folder {
-			p.SecretGroups = []view.SecretGroup{group}
-		}
-	}
-	p.Secret = &model.Secret{Scope: storage.SharedScope(workspace.Folder)}
 	if h.opts.SecretReads != nil {
 		p.SecretReadCounts, _ = h.opts.SecretReads.Counts(ctx)
 		p.SecretLastReads, _ = h.opts.SecretReads.Last(ctx)
 	}
-	h.render(w, http.StatusOK, "workspace_secrets", p)
+	p.IntegrationEnv = h.integrationEnv(r, p)
+	h.render(w, http.StatusOK, "secrets", p)
 }
 
-// secretReads lists the runs that got a secret, newest first, a page
-// at a time; the value never shows.
+// secretReads lists the runs that got a variable, newest first, a page
+// at a time; a secret's value never shows.
 func (h *Handlers) secretReads(w http.ResponseWriter, r *http.Request) {
 	if !h.require(w, r, "secret/view") {
 		return
@@ -95,7 +62,7 @@ func (h *Handlers) secretReads(w http.ResponseWriter, r *http.Request) {
 	var found *model.Secret
 	for _, secret := range userSecrets(secrets) {
 		if secret.ID == id {
-			found = &model.Secret{ID: secret.ID, Scope: secret.Scope, Name: secret.Name}
+			found = &model.Secret{ID: secret.ID, Scope: secret.Scope, Name: secret.Name, IsSecret: secret.IsSecret}
 		}
 	}
 	if found == nil {
@@ -139,111 +106,120 @@ func rekeyedNotice(n, what string) string {
 	return "Encryption key rotated. Re-encrypted " + strconv.Itoa(count) + " " + what + "."
 }
 
-// secretNew shows the form for a new secret, scoped by the query.
+// secretNew shows the form for a new variable, scoped by the query.
 func (h *Handlers) secretNew(w http.ResponseWriter, r *http.Request) {
 	if !h.require(w, r, "secret/edit") {
 		return
 	}
 	scope := r.URL.Query().Get("scope")
-	if scope == "" || scope == storage.ScopeAll {
-		scope = storage.SharedScope(model.Default)
+	if scope == "" {
+		scope = storage.ScopeAll
 	}
-	p := h.page(r, "Add secret")
-	p.Crumbs = view.Crumbs("Settings", "/settings", "Secrets", "/settings/secrets", "Add secret")
+	p := h.page(r, "Add variable")
+	p.Crumbs = view.Crumbs("Settings", "/settings", "Secrets", "/settings/secrets", "Add variable")
 	p.Step = view.StepSecrets
-	p.SecretGroups = h.secretGroups(r.Context(), nil, p.Folders)
-	p.Secret = &model.Secret{Scope: keyedScope(p.SecretGroups, scope, h.workspaceOf(r.Context(), scope))}
+	p.SecretGroups = h.secretGroups(r.Context())
+	p.Secret = &model.Secret{Scope: scope, IsSecret: 1}
 	h.render(w, http.StatusOK, "secret_form", p)
 }
 
-// workspaceOf returns the folder of the workspace a scope is in.
-func (h *Handlers) workspaceOf(ctx context.Context, scope string) string {
-	name, _ := h.opts.Secrets.Workspace(ctx, scope)
-	return name
-}
-
-// keyedScope keeps a scope whose workspace has an encryption key, else
-// picks the shared scope of the first workspace with one: a workspace
-// without a key stores no secret.
-func keyedScope(groups []view.SecretGroup, scope, workspace string) string {
-	for _, group := range groups {
-		if group.Workspace == workspace && group.Key != nil {
-			return scope
-		}
-	}
-	for _, group := range groups {
-		if group.Key != nil {
-			return group.Shared()
-		}
-	}
-	return scope
-}
-
-// secretEdit shows the form to replace a secret's value.
+// secretEdit shows the form to change a variable, by ID or by its scope
+// and name.
 func (h *Handlers) secretEdit(w http.ResponseWriter, r *http.Request) {
 	if !h.require(w, r, "secret/view") {
 		return
 	}
 	q := r.URL.Query()
-	secret, err := h.opts.Secrets.Get(r.Context(), model.Secret{Scope: q.Get("scope"), Name: q.Get("name")})
+	var secret *model.Secret
+	var err error
+	if id := q.Get("id"); id != "" {
+		secret, err = h.opts.Secrets.ByID(r.Context(), id)
+	} else {
+		secret, err = h.opts.Secrets.Get(r.Context(), model.Secret{Scope: q.Get("scope"), Name: q.Get("name")})
+	}
 	if err != nil {
-		h.missing(w, r, "No secret named "+q.Get("name")+" for "+q.Get("scope")+".")
+		h.missing(w, r, "No variable named "+q.Get("name")+" for "+q.Get("scope")+".")
 		return
 	}
-	p := h.page(r, "Replace "+secret.Name)
+	p := h.page(r, "Edit "+secret.Name)
 	p.Crumbs = view.Crumbs("Settings", "/settings", "Secrets", "/settings/secrets", secret.Name)
 	p.Step = view.StepSecrets
-	p.Secret = &model.Secret{ID: secret.ID, Scope: secret.Scope, Name: secret.Name}
-	p.SecretGroups = h.secretGroups(r.Context(), nil, p.Folders)
+	p.Secret = secret
+	p.SecretGroups = h.secretGroups(r.Context())
 	h.render(w, http.StatusOK, "secret_form", p)
 }
 
-// secretGroups sorts the secrets and the folders by workspace, in the
-// order of the workspaces, the default one first while the instance has
-// it; each takes the instance's encryption key, which encrypts every
-// secret.
-func (h *Handlers) secretGroups(ctx context.Context, secrets []model.Secret, folders []*folder.Folder) []view.SecretGroup {
-	var groups []view.SecretGroup
+// secretGroups sorts the workspaces the form offers a scope for, the
+// default one first while the instance has it, each with the instance's
+// encryption key, which encrypts every variable.
+func (h *Handlers) secretGroups(ctx context.Context) []view.SecretGroup {
 	var key *keystore.Key
 	if h.opts.Keys != nil {
 		key = h.opts.Keys.EncryptKey(ctx, storage.ScopeInstance)
 	}
-	index := map[string]int{}
-	add := func(name, title string, key *keystore.Key) int {
-		if i, ok := index[name]; ok {
-			return i
-		}
-		if title == "" {
-			title = name
-		}
-		index[name] = len(groups)
-		groups = append(groups, view.SecretGroup{Workspace: name, Title: title, Key: key})
-		return index[name]
-	}
 	if h.opts.Workspaces == nil {
-		add(model.Default, "Internal", key)
-	} else {
-		workspaces, _ := h.opts.Workspaces.List(ctx)
-		for _, ws := range workspaces {
-			add(ws.Folder, ws.Title, key)
-		}
+		return []view.SecretGroup{{Workspace: model.Default, Title: "Internal", Key: key}}
 	}
-	for _, secret := range secrets {
-		name, _ := h.opts.Secrets.Workspace(ctx, secret.Scope)
-		i := add(name, "", key)
-		groups[i].Secrets = append(groups[i].Secrets, secret)
-	}
-	// A folder joins the group of its workspace; one whose workspace has
-	// no row, the root's folders once someone deletes internal, has no group to join.
-	for _, f := range folders {
-		name, _ := h.opts.Secrets.Workspace(ctx, f.ID)
-		if _, ok := index[name]; !ok && h.opts.Workspaces != nil {
-			continue
-		}
-		i := add(name, "", key)
-		groups[i].Folders = append(groups[i].Folders, f.ID)
+	workspaces, _ := h.opts.Workspaces.List(ctx)
+	groups := make([]view.SecretGroup, 0, len(workspaces))
+	for _, ws := range workspaces {
+		groups = append(groups, view.SecretGroup{Workspace: ws.Folder, Title: ws.Title, Key: key})
 	}
 	return groups
+}
+
+// workspaceOf returns the folder of the workspace a scope is in, "" for
+// every workspace.
+func (h *Handlers) workspaceOf(ctx context.Context, scope string) string {
+	name, _ := h.opts.Secrets.Workspace(ctx, scope)
+	return name
+}
+
+// scopeTitles names each scope the page lists: every workspace, then
+// each workspace's.
+func scopeTitles(groups []view.SecretGroup) map[string]string {
+	titles := map[string]string{storage.ScopeAll: "All workspaces"}
+	for _, group := range groups {
+		titles[group.Shared()] = group.Title
+	}
+	return titles
+}
+
+// reachingWorkspace keeps the variables that reach a workspace: those of
+// every workspace, its own, and its folders'.
+func (h *Handlers) reachingWorkspace(ctx context.Context, secrets []model.Secret, workspace string) []model.Secret {
+	result := make([]model.Secret, 0, len(secrets))
+	for _, secret := range secrets {
+		for _, term := range strings.Split(secret.Scope, ",") {
+			term = strings.TrimSpace(term)
+			if term == storage.ScopeAll || model.Canonical(h.workspaceOf(ctx, term)) == model.Canonical(workspace) {
+				result = append(result, secret)
+				break
+			}
+		}
+	}
+	return result
+}
+
+// integrationEnv returns what the integrations add to a run of the user,
+// name and value, the value of a name that holds a credential redacted.
+func (h *Handlers) integrationEnv(r *http.Request, p *view.Page) []view.EnvVar {
+	if h.opts.Integrations == nil || p.User == nil {
+		return nil
+	}
+	vars, err := h.opts.Integrations.Env(r.Context(), p.User.Name, p.User.EffectiveRole())
+	if err != nil {
+		return nil
+	}
+	result := make([]view.EnvVar, 0, len(vars))
+	for _, name := range model.SortedKeys(vars) {
+		item := view.EnvVar{Name: name, Value: vars[name]}
+		if runner.Sensitive(name) {
+			item.Value, item.Redacted = "", true
+		}
+		result = append(result, item)
+	}
+	return result
 }
 
 // userSecrets leaves out the secrets of the integrations, which their own

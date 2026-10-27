@@ -12,10 +12,9 @@ import (
 	"github.com/titpetric/task-ui/storage"
 )
 
-// Migrate moves the shared secrets to workspace:_ and writes every
-// workspace secret for its workspace's key, copying first; it leaves
-// the integrations and a secret nothing opens as they are, and a second
-// run does nothing.
+// Migrate writes every secret, the ones of every workspace included,
+// for the instance's key, copying first; it leaves the integrations and
+// a secret nothing opens as they are, and a second run does nothing.
 func TestStore_Migrate(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
@@ -48,8 +47,9 @@ func TestStore_Migrate(t *testing.T) {
 	assert.Equal(t, secret.Migration{Migrated: 4, Current: 0, Failed: 1}, result)
 	assert.Equal(t, 1, copies)
 
-	_, err = s.rows.Get(ctx, model.Secret{Scope: storage.ScopeAll, Name: "SHARED"})
-	assert.ErrorIs(t, err, storage.ErrNotFound, "the shared row moved")
+	shared, err := s.rows.Get(ctx, model.Secret{Scope: storage.ScopeAll, Name: "SHARED"})
+	assert.NoError(t, err, "the scope all stays, of every workspace")
+	assert.True(t, secret.Encrypted(shared.Content))
 	still, _ := s.rows.Get(ctx, model.Secret{Scope: "integration:claude", Name: "token"})
 	assert.Equal(t, integration.Content, still.Content, "MigrateInstance moves the integrations")
 	left, _ := s.rows.Get(ctx, model.Secret{Scope: "web", Name: "LOST"})
@@ -62,7 +62,7 @@ func TestStore_Migrate(t *testing.T) {
 	assert.Equal(t, map[string]string{"SHARED": "root", "WEB": "w", "PLAIN": "unencrypted"}, web)
 	api, err := s.store.For(ctx, "acme/api")
 	assert.NoError(t, err)
-	assert.Equal(t, map[string]string{"API": "p"}, api)
+	assert.Equal(t, map[string]string{"API": "p", "SHARED": "root"}, api)
 
 	again, err := s.store.Migrate(ctx, before)
 	assert.NoError(t, err)
@@ -70,8 +70,10 @@ func TestStore_Migrate(t *testing.T) {
 	assert.Equal(t, 1, copies, "nothing to do copies nothing")
 }
 
-// A shared secret whose name workspace:_ already has stays in its scope.
-func TestStore_MigrateConflict(t *testing.T) {
+// A secret of every workspace and one of a workspace under the same name
+// are two rows: the migration keeps both, and the workspace's wins in
+// the environment.
+func TestStore_MigrateBothScopes(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
 	s := newSpaces(t)
@@ -82,12 +84,17 @@ func TestStore_MigrateConflict(t *testing.T) {
 
 	result, err := s.store.Migrate(ctx, nil)
 	assert.NoError(t, err)
-	assert.Equal(t, secret.Migration{Current: 1, Failed: 1}, result)
-	_, err = s.rows.Get(ctx, model.Secret{Scope: storage.ScopeAll, Name: "TOKEN"})
+	assert.Equal(t, secret.Migration{Migrated: 1, Current: 1}, result)
+	all, err := s.store.Get(ctx, model.Secret{Scope: storage.ScopeAll, Name: "TOKEN"})
 	assert.NoError(t, err)
+	assert.Equal(t, "old", all.Content)
 	got, err := s.store.Get(ctx, model.Secret{Scope: "workspace:internal", Name: "TOKEN"})
 	assert.NoError(t, err)
 	assert.Equal(t, "new", got.Content)
+
+	vars, err := s.store.For(ctx, "internal/web")
+	assert.NoError(t, err)
+	assert.Equal(t, "new", vars["TOKEN"], "a workspace's row wins over the one of every workspace")
 }
 
 // MigrateInstance writes the integrations for the instance's

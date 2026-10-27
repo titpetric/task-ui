@@ -10,3 +10,4 @@ Secret.
 | content    | varchar  |     | Content    |
 | created_at | datetime |     | Created At |
 | updated_at | datetime |     | Updated At |
+| is_secret  | bigint   |     | Is Secret  |

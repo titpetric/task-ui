@@ -281,8 +281,8 @@ func (h *Handlers) workspaceBusy(ctx context.Context, name string) (string, erro
 // root, loses its row and the root's home and src, and the root
 // directory stays with the named workspaces in it: the instance then
 // runs without a default workspace. It refuses, a 409, while a run of
-// the workspace is active or while the workspace holds a secret: a
-// delete never takes a secret with it.
+// the workspace is active or while the workspace holds a variable: a
+// delete never takes a variable with it.
 func (h *Handlers) deleteWorkspace(w http.ResponseWriter, r *http.Request) {
 	if !h.require(w, r, "workspace/delete") {
 		return
@@ -307,7 +307,7 @@ func (h *Handlers) deleteWorkspace(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		if len(secrets) > 0 {
-			fail(w, http.StatusConflict, fmt.Sprintf("the workspace holds %d secrets: delete them first, so none goes unseen", len(secrets)))
+			fail(w, http.StatusConflict, fmt.Sprintf("the workspace holds %d variables: delete them first, so none goes unseen", len(secrets)))
 			return
 		}
 	}

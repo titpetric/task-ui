@@ -170,8 +170,6 @@ func (h *Handlers) Routes() http.Handler {
 
 	r.Get("/sources/*", h.getSource)
 	r.Get("/files/*", h.viewFile)
-	r.Get("/env/*", h.getEnv)
-	r.Put("/env/*", h.putEnv)
 
 	return r
 }

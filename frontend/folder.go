@@ -16,8 +16,8 @@ import (
 )
 
 // folderPath serves everything under /f: the folder a path names, a
-// job of it, one of its env files, or a directory inside it with
-// nothing to run, which opens as a page to browse. Folders nest, so the
+// job of it, or a directory inside it with nothing to run, which opens
+// as a page to browse. Folders nest, so the
 // longest folder that starts the path is the one meant. A path starts
 // with its workspace: a named one, or internal for the projects at the
 // root. /f/internal is the default workspace itself, a path that starts
@@ -77,8 +77,6 @@ func (h *Handlers) folderAt(w http.ResponseWriter, r *http.Request, path string)
 	switch {
 	case rest == "":
 		h.folder(w, r, f)
-	case strings.HasPrefix(rest, "env/"):
-		h.envFile(w, r, f, strings.TrimPrefix(rest, "env/"))
 	case !strings.Contains(rest, "/") && f.Job(rest) != nil:
 		h.job(w, r, f, rest)
 	case isDirIn(f, rest):
@@ -87,8 +85,6 @@ func (h *Handlers) folderAt(w http.ResponseWriter, r *http.Request, path string)
 		h.job(w, r, f, fileJob(f, rest))
 	case dirJob(f, rest) != nil:
 		h.job(w, r, dirJob(f, rest), rest[strings.LastIndex(rest, "/")+1:])
-	case rest == "env":
-		h.envFile(w, r, f, "")
 	case !strings.Contains(rest, "/"):
 		h.job(w, r, f, rest)
 	default:
@@ -258,9 +254,6 @@ func (h *Handlers) folder(w http.ResponseWriter, r *http.Request, f *folder.Fold
 				p.Space = &usage
 			}
 		}
-	}
-	if h.opts.Env != nil {
-		p.EnvFiles = h.opts.Env.Files(r.Context(), f)
 	}
 	p.Schedules = h.visibleSchedules(r, f.ID, "")
 	_, workspace := p.Workspaces[f.ID]

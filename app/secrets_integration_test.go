@@ -19,8 +19,8 @@ import (
 	"github.com/titpetric/task-ui/storage"
 )
 
-// Starting puts a shared secret the SSH key of old encrypted on the
-// instance's encryption key, under workspace:_, after a copy of the
+// Starting puts a secret of every workspace, which the SSH key of old
+// encrypted, on the instance's encryption key, after a copy of the
 // database to .pre-instance-key; a second start finds nothing to do and
 // keeps the copy.
 func TestNew_MigratesSecrets(t *testing.T) {
@@ -42,7 +42,7 @@ func TestNew_MigratesSecrets(t *testing.T) {
 	a, err := app.New(ctx, cfg, "test")
 	assert.NoError(t, err)
 	rows := storage.NewSecretStorage(a.DB)
-	row, err := rows.Get(ctx, model.Secret{Scope: "workspace:internal", Name: "TOKEN"})
+	row, err := rows.Get(ctx, model.Secret{Scope: storage.ScopeAll, Name: "TOKEN"})
 	assert.NoError(t, err)
 	_, err = secret.NewVault(secret.DirKeys{Store: keys}).Decrypt(row.Content)
 	assert.Error(t, err, "the SSH key opens it no more")
@@ -56,7 +56,7 @@ func TestNew_MigratesSecrets(t *testing.T) {
 
 	b, err := app.New(ctx, cfg, "test")
 	assert.NoError(t, err)
-	again, err := storage.NewSecretStorage(b.DB).Get(ctx, model.Secret{Scope: "workspace:internal", Name: "TOKEN"})
+	again, err := storage.NewSecretStorage(b.DB).Get(ctx, model.Secret{Scope: storage.ScopeAll, Name: "TOKEN"})
 	assert.NoError(t, err)
 	assert.Equal(t, row.Content, again.Content, "a second start writes nothing")
 	kept, err := os.Stat(db + ".pre-instance-key")

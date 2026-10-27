@@ -1,6 +1,8 @@
 package view
 
-import "net/url"
+import (
+	"net/url"
+)
 
 // The pages that add a thing, and the pages of the things a workspace
 // owns. Every template and menu that links "add" reads them here, so
@@ -34,9 +36,10 @@ func WorkspaceKeysHref(workspace string) string {
 	return WorkspaceHref(workspace) + "/keys"
 }
 
-// WorkspaceSecretsHref returns the page of a workspace's secrets.
+// WorkspaceSecretsHref returns the secrets page filtered to what
+// reaches a workspace.
 func WorkspaceSecretsHref(workspace string) string {
-	return WorkspaceHref(workspace) + "/secrets"
+	return "/settings/secrets?workspace=" + url.QueryEscape(workspace)
 }
 
 // UserKeyHref returns the form that adds an SSH key linked to a user:
@@ -46,8 +49,8 @@ func UserKeyHref(kind, user string) string {
 }
 
 // CreateItems returns what the user may add anywhere, in the order of
-// the setup: a workspace, a project, a user, an SSH key, a secret and a
-// workflow, each behind the rule of the page that adds it. The
+// the setup: a workspace, a project, a user, an SSH key, a variable and
+// a workflow, each behind the rule of the page that adds it. The
 // dashboard's Add menu draws them.
 func (p *Page) CreateItems() []MenuItem {
 	var items []MenuItem
@@ -63,7 +66,7 @@ func (p *Page) CreateItems() []MenuItem {
 	add(p.CanAddUsers && p.Can("user/edit"), "users", "Add user", newUserPath)
 	add(p.Can("key/edit"), "key", "Generate key", keysPath+"/generate")
 	add(p.Can("key/edit"), "upload", "Upload key", keysPath+"/upload")
-	add(p.Can("secret/edit"), "secret", "Add secret", newSecretPath)
+	add(p.Can("secret/edit"), "secret", "Add variable", newSecretPath)
 	add(p.Can("workflow/edit"), "flow", "Add workflow", newWorkflowPath)
 	return items
 }

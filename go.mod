@@ -9,6 +9,7 @@ require (
 	github.com/go-chi/chi/v5 v5.5.0
 	github.com/hinshun/vt10x v0.0.0-20220301184237-5011da428d02
 	github.com/jmoiron/sqlx v1.4.0
+	github.com/russross/blackfriday/v2 v2.1.0
 	github.com/spf13/pflag v1.0.10
 	github.com/titpetric/pdo v0.2.5
 	golang.org/x/crypto v0.58.0
@@ -28,7 +29,6 @@ require (
 	github.com/ncruces/go-strftime v1.0.0 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
-	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	golang.org/x/sync v0.24.0 // indirect
 	golang.org/x/sys v0.49.0 // indirect
 	golang.org/x/tools v0.51.0 // indirect

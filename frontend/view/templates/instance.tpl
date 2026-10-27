@@ -51,7 +51,7 @@
 {{- if .ParentEnv }}
 <section class="block instance-section" id="environment">
 	<h3>Parent environment</h3>
-	<p class="section-intro">How much of the server's own environment a run starts with. The folder's secrets and the integrations' variables reach a run under every choice; a script reads any other secret with <code>task-ui get-secret NAME</code>, as <a href="https://github.com/titpetric/task-ui/blob/main/docs/guide/settings.md#secrets-in-scripts">Secrets in scripts</a> shows.</p>
+	<p class="section-intro">How much of the server's own environment a run starts with. The variables of the folder and of the integrations reach a run under every choice; a script reads any other variable with <code>task-ui get-secret NAME</code>, as <a href="https://github.com/titpetric/task-ui/blob/main/docs/guide/settings.md#secrets-in-scripts">Secrets in scripts</a> shows.</p>
 	{{- if $admin }}
 	<form class="form parent-env" data-api="/api/instance" data-method="PUT" data-next="/settings/instance?notice=Parent+environment+saved#environment" data-parent-env>
 		<div class="field" role="radiogroup" aria-labelledby="parent-env-label">

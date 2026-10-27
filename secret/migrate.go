@@ -60,9 +60,6 @@ func (s *Store) pending(ctx context.Context, result *Migration) ([]pending, erro
 			continue
 		}
 		target := row.Scope
-		if target == storage.ScopeAll {
-			target = storage.SharedScope(model.Default)
-		}
 		vault, err := s.vault(ctx, target)
 		if err != nil {
 			result.Failed++

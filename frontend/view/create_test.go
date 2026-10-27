@@ -26,7 +26,7 @@ func TestWorkspaceHrefs(t *testing.T) {
 
 	assert.Equal(t, "/settings/workspaces/malta", view.WorkspaceHref("malta"))
 	assert.Equal(t, "/settings/workspaces/malta/keys", view.WorkspaceKeysHref("malta"))
-	assert.Equal(t, "/settings/workspaces/malta/secrets", view.WorkspaceSecretsHref("malta"))
+	assert.Equal(t, "/settings/secrets?workspace=malta", view.WorkspaceSecretsHref("malta"))
 }
 
 // A key of a user starts on the key forms with the user preset.
@@ -53,10 +53,10 @@ func TestPage_CreateItems_Admin(t *testing.T) {
 
 	p := &view.Page{}
 	signIn(p, &model.User{Name: "admin", Role: model.RoleAdmin}, nil)
-	assert.Equal(t, []string{"Add workspace", "Add project", "Generate key", "Upload key", "Add secret", "Add workflow"}, createLabels(p))
+	assert.Equal(t, []string{"Add workspace", "Add project", "Generate key", "Upload key", "Add variable", "Add workflow"}, createLabels(p))
 
 	p.CanAddUsers = true
-	assert.Equal(t, []string{"Add workspace", "Add project", "Add user", "Generate key", "Upload key", "Add secret", "Add workflow"}, createLabels(p))
+	assert.Equal(t, []string{"Add workspace", "Add project", "Add user", "Generate key", "Upload key", "Add variable", "Add workflow"}, createLabels(p))
 
 	items := p.CreateItems()
 	assert.Equal(t, "/settings/workspaces/new", items[0].Href)

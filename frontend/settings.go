@@ -27,7 +27,7 @@ func (h *Handlers) settings(w http.ResponseWriter, r *http.Request) {
 	}
 	if p.Can("secret/view") {
 		secrets, _ := h.opts.Secrets.List(r.Context())
-		p.StepCounts[view.StepSecrets] = count(len(userSecrets(secrets)), "secret", "secrets")
+		p.StepCounts[view.StepSecrets] = count(len(userSecrets(secrets)), "variable", "variables")
 	}
 	if p.Can("user/view") {
 		users, _ := h.opts.Users.List(r.Context())

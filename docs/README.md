@@ -37,7 +37,7 @@ Every list marks a job, a workflow or a run with `#!`: faint until it has run, t
 | [Projects and jobs](guide/projects.md) | The tree of projects, folders, jobs      | Folders, the conventions, the git line, skills, Enter Shell, the prompt, a job's page, moving a project, pulls, keys, hours |
 | [Workspaces](guide/workspaces.md)      | A workspace's row, its projects under it | Shared tooling, skills, cloning into one, keys, secrets, export and import, what it keeps apart, the prompt                 |
 | [Recents](guide/recents.md)            | Recents                                  | The latest runs, by anyone                                                                                                  |
-| [Settings](guide/settings.md)          | The user menu, Settings                  | Projects, workspaces, users, secrets, SSH keys, integrations, env files                                                     |
+| [Settings](guide/settings.md)          | The user menu, Settings                  | Projects, workspaces, users, secrets and env, SSH keys, integrations                                                        |
 | [MCP](guide/mcp.md)                    |                                          | Tokens, and the tools an agent runs jobs with                                                                               |
 | [Screenshots](screenshots.md)          |                                          | Every view, in both themes and on a phone                                                                                   |
 

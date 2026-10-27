@@ -16,7 +16,7 @@
 	<h3>Scopes <small>the keys of the instance and each workspace</small></h3>
 	<div class="table-wrap">
 	<table class="table key-purposes">
-		<thead><tr><th>Scope</th><th>Secrets</th><th>Encryption key</th><th>SSH keys</th></tr></thead>
+		<thead><tr><th>Scope</th><th>Variables</th><th>Encryption key</th><th>SSH keys</th></tr></thead>
 		<tbody>
 			{{- $instance := 0 }}{{ range .Keys }}{{ if and (not .Encrypts) (not .Workspace) }}{{ $instance = add $instance 1 }}{{ end }}{{ end }}
 			<tr class="key-instance" id="instance">
@@ -46,7 +46,7 @@
 					<a href="{{ $base }}"><b>{{ or $ws.Title $ws.Folder }}</b></a>{{ if and $ws.Title (ne $ws.Title $ws.Folder) }} <span class="badge">{{ $ws.Folder }}</span>{{ end }}
 					<div class="faint key-projects">{{ if .Projects }}{{ join .Projects ", " }}{{ else }}no projects{{ end }}</div>
 				</td>
-				<td>{{ if .Secrets }}<a href="/settings/secrets?workspace={{ $ws.Folder }}">{{ .Secrets }} secret{{ if ne .Secrets 1 }}s{{ end }}</a>{{ else }}<a class="faint" href="/settings/secrets?workspace={{ $ws.Folder }}">none</a>{{ end }}</td>
+				<td>{{ if .Secrets }}<a href="/settings/secrets?workspace={{ $ws.Folder }}">{{ .Secrets }} variable{{ if ne .Secrets 1 }}s{{ end }}</a>{{ else }}<a class="faint" href="/settings/secrets?workspace={{ $ws.Folder }}">none</a>{{ end }}</td>
 				<td>
 					<span class="faint">the instance's</span>
 				</td>

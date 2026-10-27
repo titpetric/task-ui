@@ -887,6 +887,11 @@
       type: timestamp
       comment: Updated At
       datatype: datetime
+    - name: is_secret
+      type: integer
+      comment: Is Secret
+      datatype: bigint
+      size: 8
   indexes:
     - name: sqlite_autoindex_secret_1
       columns:

@@ -21,15 +21,14 @@ func Service(scope string) bool {
 	return strings.Contains(scope, ":") && !strings.HasPrefix(scope, storage.ScopeWorkspace)
 }
 
-// Name returns the folder of the workspace a scope belongs to. The
-// scope all, the shared secrets of an instance that predates
-// workspaces, is the default workspace's.
+// Name returns the folder of the workspace a scope belongs to, "" for
+// the scope all, a variable of every workspace.
 func (w *Workspaces) Name(ctx context.Context, scope string) (string, error) {
 	if name, ok := strings.CutPrefix(scope, storage.ScopeWorkspace); ok {
 		return model.Canonical(name), nil
 	}
 	if scope == storage.ScopeAll {
-		return model.Default, nil
+		return "", nil
 	}
 	top, _, _ := strings.Cut(model.Canonical(scope), "/")
 	if top == model.Default || w == nil || w.Rows == nil {

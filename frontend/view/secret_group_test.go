@@ -27,45 +27,46 @@ func TestSecretGroup(t *testing.T) {
 	assert.Len(t, projects[1].Secrets, 2)
 }
 
-// secretsPage is the secrets page of malta with a secret every project
-// gets and one of malta/api, as user sees it.
+// secretsPage is the secrets page with an env entry and a secret, as
+// user sees it.
 func secretsPage(t *testing.T, user *model.User, role permission.Policy) *view.Page {
 	t.Helper()
 	p := admin(t)
 	signIn(p, user, role)
-	p.Workspace = &model.Workspace{ID: "w1", Folder: "malta"}
 	p.SecretGroups = []view.SecretGroup{{
 		Workspace: "malta", Title: "Malta", Key: &keystore.Key{Name: "instance_encryption"},
-		Secrets: []model.Secret{{ID: "s1", Scope: "workspace:malta", Name: "TOKEN"}, {ID: "s2", Scope: "malta/api", Name: "DB_PASS", Content: "hunter2"}},
-		Folders: []string{"malta/api"},
 	}}
-	p.Secret = &model.Secret{Scope: "workspace:malta"}
+	p.SecretScopeTitles = map[string]string{"all": "All workspaces", "workspace:malta": "Malta"}
+	p.Secrets = []model.Secret{
+		{ID: "s1", Scope: "all", Name: "PUBLIC_URL", Content: "https://example.com", IsSecret: 0},
+		{ID: "s2", Scope: "workspace:malta", Name: "DB_PASS", Content: "hunter2", IsSecret: 1},
+	}
+	p.IntegrationEnv = []view.EnvVar{{Name: "ANTHROPIC_AUTH_TOKEN", Redacted: true}, {Name: "ANTHROPIC_BASE_URL", Value: "https://openrouter.ai/api"}}
 	return p
 }
 
-// The secrets page of a workspace lists its secrets and edits them in
-// place: Add secret and Replace the value open dialogs that return to
-// it, and no value shows.
-func TestWorkspaceSecrets_Page(t *testing.T) {
+// The secrets page lists secrets and env entries in one table: an env
+// value shows, a secret's never does, and the integrations' computed
+// environment is read only below them.
+func TestSecrets_Page(t *testing.T) {
 	t.Parallel()
 
-	body := render(t, "workspace_secrets", secretsPage(t, &model.User{Name: "admin", Role: model.RoleAdmin}, nil))
-	assert.Contains(t, body, "<h2>Secrets of malta</h2>")
-	assert.Contains(t, body, `<td class="key">TOKEN</td>`)
-	assert.Contains(t, body, `<td class="key">DB_PASS</td>`)
+	body := render(t, "secrets", secretsPage(t, &model.User{Name: "admin", Role: model.RoleAdmin}, nil))
+	assert.Contains(t, body, "<h2>Secrets and env</h2>")
+	assert.Contains(t, body, `<td class="key">PUBLIC_URL`)
+	assert.Contains(t, body, `<code>https://example.com</code>`)
+	assert.Contains(t, body, `<td class="key">DB_PASS`)
 	assert.NotContains(t, body, "hunter2")
-	assert.Contains(t, body, `id="secret-add-dialog"`)
-	assert.Contains(t, body, `<option value="workspace:malta" selected>every folder in Malta</option>`)
-	assert.Contains(t, body, `<option value="malta/api">malta/api</option>`)
-	assert.Contains(t, body, `data-dialog-open="secret-replace-dialog" data-fill-scope="malta/api" data-fill-name="DB_PASS"`)
-	assert.Contains(t, body, `data-next="/settings/workspaces/malta/secrets?notice=Secret+saved"`)
-	assert.Contains(t, body, `data-next="/settings/workspaces/malta/secrets?notice=Secret+added"`)
+	assert.Contains(t, body, `href="/settings/secrets/edit?id=s2"`)
 	assert.Contains(t, body, `data-delete="/api/secrets/s2"`)
-	assert.NotContains(t, body, "/settings/secrets/edit")
+	assert.Contains(t, body, `All workspaces`)
+	assert.Contains(t, body, `>Malta</td>`)
+	assert.Contains(t, body, `id="integration-env"`)
+	assert.Contains(t, body, `<td class="key">ANTHROPIC_AUTH_TOKEN</td><td><span class="faint mono">REDACTED</span>`)
+	assert.Contains(t, body, `<code>https://openrouter.ai/api</code>`)
 
-	body = render(t, "workspace_secrets", secretsPage(t, &model.User{Name: "ops", Role: model.RoleRunner}, permission.Policy{"secret/view": permission.Allow}))
-	assert.Contains(t, body, `<td class="key">TOKEN</td>`)
-	assert.NotContains(t, body, `id="secret-add-dialog"`)
-	assert.NotContains(t, body, "Replace the value")
+	body = render(t, "secrets", secretsPage(t, &model.User{Name: "ops", Role: model.RoleRunner}, permission.Policy{"secret/view": permission.Allow}))
+	assert.Contains(t, body, `<td class="key">PUBLIC_URL`)
+	assert.NotContains(t, body, "Edit")
 	assert.NotContains(t, body, "data-delete")
 }

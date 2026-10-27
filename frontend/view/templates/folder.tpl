@@ -17,7 +17,6 @@
 			(and .Workspace ($.Can "secret/view") (item "secret" "Secrets" "href" .SecretsPage))
 			(and .Project ($.Can "project/view") (item "settings" "Edit project" "href" .Settings))
 			(and (not $default) $.Pinning ($.PinItem $p.ID "" "" .Kind))
-			(and (not $default) .Project ($.Can "env/edit") (item "plus" "Add env file" "href" (print ($.Href $p.ID) "/env")))
 			(and (not $default) (or .Workspace .Project) ($.Can "schedule/edit") (item "clock" "Add schedule" "href" (print "/schedules?folder=" (urlquery $p.ID))))
 			(and .Pull ($.CanRun $p .Pull) (item "download" "Pull now" "data-run" "" "data-folder" $p.ID "data-dir" .Pull.Dir "data-job" .Pull.ID "data-title" (print $p.ID " / " .Pull.Name)))
 			(and .Project $.Checkout ($.Can "project/delete") (danger "trash" "Remove checkout" "data-delete" (print "/api/projects/" .ID) "data-confirm" (removeConfirm .ID $.Checkout.Remote) "data-confirm-ok" "Remove checkout" "data-next" (print "/settings/projects?notice=" (urlquery "Removed " .ID))))
@@ -72,33 +71,6 @@
 	</div>
 </section>
 
-{{- /* Env files are per project: a project draws the block while it has no env file, so Add env file is on the page. */}}
-{{- $addEnv := and (not $default) ($.Can "env/edit") }}
-{{- $ownsEnv := and $.FolderMenu $.FolderMenu.Project }}
-{{- if or .EnvFiles (and $addEnv $ownsEnv) }}
-<section class="block">
-	{{- template "blockhead" (head "Environment" "env files written into the folder before each run, the secrets appended" (and (not .EnvFiles) "No env files.")
-		(and $addEnv (item "plus" "Add env file" "href" (print ($.Href $p.ID) "/env")))) }}
-	{{- with .EnvFiles }}
-	<div class="table-wrap">
-	<table class="table">
-		<thead><tr><th>File</th>{{ if $.Can "env/view" }}<th></th>{{ end }}</tr></thead>
-		<tbody>
-		{{- range . }}
-			<tr>
-				<td class="key"><svg class="ic"><use href="#i-file"/></svg> {{ .Path }}</td>
-				{{- if $.Can "env/view" }}
-				<td class="actions">{{ template "menu" (menu (print "Actions on " .Path)
-					(item "edit" "Edit" "href" (print ($.Href $p.ID) "/env/" .Path))) }}</td>
-				{{- end }}
-			</tr>
-		{{- end }}
-		</tbody>
-	</table>
-	</div>
-	{{- end }}
-</section>
-{{- end }}
 </div>
 {{- end }}
 {{ end }}

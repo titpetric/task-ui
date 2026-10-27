@@ -7,8 +7,8 @@ import (
 )
 
 // HeaderPrompt is where the header's prompt asks on a page: the folder
-// and the directory of a folder page, a directory, a job, an env file
-// or a project's or workspace's settings; the run of a run's page, in
+// and the directory of a folder page, a directory, a job or a project's
+// or workspace's settings; the run of a run's page, in
 // its folder and directory; the root, internal, anywhere else. The header
 // carries it in data- attributes.
 type HeaderPrompt struct {

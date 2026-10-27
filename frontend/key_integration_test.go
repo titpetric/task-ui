@@ -188,7 +188,7 @@ func TestKeys_Workspaces(t *testing.T) {
 
 	body := f.page(t, asAdmin, "/settings/keys")
 	assert.Contains(t, body, `<tr id="ws-acme">`)
-	assert.Contains(t, body, `<a href="/settings/secrets?workspace=acme">2 secrets</a>`)
+	assert.Contains(t, body, `<a href="/settings/secrets?workspace=acme">2 variables</a>`)
 	assert.Contains(t, body, `<a class="key-chip" href="/settings/workspaces/acme/keys/workspace_acme_deploy_ed25519"`)
 	assert.Equal(t, 2, strings.Count(body, `<span class="faint">the instance's</span>`), "one encryption key, the instance's, for every workspace")
 	assert.Contains(t, body, `<tr id="ws-internal">`)

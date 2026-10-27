@@ -91,7 +91,7 @@ Settings, **Workspaces** manages them: Allow View on Workspaces, `workspace/view
 - Any number of workspaces may take the same home repository, each under its own folder: two teams can start from the same tooling and clone different projects beside it.
 - **Edit workspace** opens the workspace's settings page. Its **Settings** change the title, description, **Recursive**, which, as a project's does, lists the folders inside it as deep as they go, or, off, the workspace and its top-level folders alone, and **Sidebar**, how many of its projects the sidebar lists, the most recently committed first, empty for every one (see [In the sidebar](#in-the-sidebar)); the folder stays. Its **Home repository** shows the repository and branch of the home with what git knows of the checkout, or "The home is an empty directory.", and beside it **Pull now**, the home's `@git:pull`, **Replace**, or **Clone** while the home is empty, which removes the home and clones a repository in its place, and **Remove**, which removes the checkout and leaves the home an empty directory. Replace and Remove refuse, a `409`, while a run of the workspace is active: the home is that run's `HOME`. Its **Projects** lists the projects inside it in the table of the Projects page, and **Add project**, at the top right, clones one into its `src/`.
 - **Move up** and **Move down**, in a workspace's **⋯** menu, change the order of the workspaces, in the sidebar and on the page. An added workspace goes last. The default workspace lists first and keeps its place.
-- **Delete**, last in the menu, deletes every project inside the workspace with its checkout and its row, the env files task-ui keeps for them, the workspace's secrets and its keys, and the workspace's directory with everything in it, the home included; its confirm names those projects first. It refuses, a `409`, while a run of the workspace is active. A workspace that holds a secret has no Delete: the menu says **Delete its N secrets first** and opens its Secrets page, and `DELETE` answers `409` until you delete each one by hand, so a delete never takes a secret with it unseen. The default workspace, the root, deletes the same way: its projects at the root with their checkouts, their env files, its keys and its home go, and so does its row; the root directory stays with the named workspaces in it.
+- **Delete**, last in the menu, deletes every project inside the workspace with its checkout and its row, the env files task-ui keeps for them, the workspace's variables and its keys, and the workspace's directory with everything in it, the home included; its confirm names those projects first. It refuses, a `409`, while a run of the workspace is active. A workspace that holds a variable has no Delete: the menu says **Delete its N variables first** and opens its Secrets page, and `DELETE` answers `409` until you delete each one by hand, so a delete never takes a variable with it unseen. The default workspace, the root, deletes the same way: its projects at the root with their checkouts, their env files, its keys and its home go, and so does its row; the root directory stays with the named workspaces in it.
 - **Import**, at the top right for an admin, adds a workspace from a bundle another instance exported (see [Move to another instance](#move-to-another-instance)).
 
 ### Delete the default workspace
@@ -102,10 +102,10 @@ An instance runs without a default workspace. Without `internal`, the Workspaces
 - The Projects page, the dashboard and the sidebar list no projects at the root; the sidebar starts with the workspaces.
 - `/f/internal` still opens: the root's page, with its built-in jobs, `@host:*`, `@forgejo-sync` and `@cleanup`, which keep running, on their schedules too. A run of one of them has no workspace: no `TASK_UI_WORKSPACE`, no `TASK_UI_WORKSPACE_DIR`, and `HOME` stays the server's. Its keys are the instance keys linked to it, as before.
 - A prompt at the root, and `@claude-note` on the Notes board, run in the root directory with the server's `HOME`.
-- The Secrets page has no `internal` group and no shared scope `workspace:internal`; the integrations' settings, under the instance key, stay.
+- The Secrets page has no `internal` workspace to choose; a variable of scope `all` still reaches every named workspace. The integrations' settings, under the instance key, stay.
 - A workflow step lists `internal` as a place only for the root's own jobs.
 
-Like any workspace, `internal` deletes once it holds no secret and no run of the root is active: delete its secrets by hand first, then Delete.
+Like any workspace, `internal` deletes once it holds no secret and no run of the root is active: delete its variables by hand first, then Delete.
 
 ## Clone a project into one
 
@@ -172,7 +172,7 @@ Every workspace has SSH keys of its own, in the key folder, `TASK_UI_SSH_DIR`, o
 
 ![The SSH keys of acme, edited in place](../assets/workspace-keys-dark.png)
 
-- The **SSH keys**, zero or more, are for the workspace's runs. A workspace has no encryption key: the instance's encrypts its [secrets](settings.md#secrets), as every secret. Generate or upload any number, each under a name of its own, `workspace_malta_deploy_ed25519`. A key without a link goes to every run in the workspace; checking roles or users narrows it to their runs. Remove retires the key and its links. With none, task-ui can't SSH to the workspace's hosts with a key of its own: its runs get only the instance SSH keys linked to them.
+- The **SSH keys**, zero or more, are for the workspace's runs. A workspace has no encryption key: the instance's encrypts its [secrets](settings.md#secrets-and-env), as every secret. Generate or upload any number, each under a name of its own, `workspace_malta_deploy_ed25519`. A key without a link goes to every run in the workspace; checking roles or users narrows it to their runs. Remove retires the key and its links. With none, task-ui can't SSH to the workspace's hosts with a key of its own: its runs get only the instance SSH keys linked to them.
 
 A key has one use (see [One key, one use](settings.md#one-key-one-use)): an upload of key material the key folder holds already, under any name, answers `409`.
 
@@ -190,17 +190,15 @@ curl -s https://task.example.com/api/workspaces/malta/keys \
 
 `PUT /api/workspaces/malta/keys/workspace_malta_deploy_ed25519` with `{policies, users}` sets the links, empty for every run, and `DELETE` retires the key. `"encrypt": true` on `generate` or `upload` answers `400`: one encryption key per instance. Listing the keys takes `workspace/view`; the other key routes take `workspace/edit`.
 
-## Secrets
+## Secrets and env
 
-A workspace's secrets reach its runs as variables (see [Settings](settings.md#secrets)). Its **shared** secrets, scope `workspace:malta`, reach every folder in it; a project's own, scope `malta/deploy`, reach that project and win over a shared one of the same name. The shared secrets of `internal` reach the projects at the root and no named workspace: a project in `malta` gets `malta`'s shared secrets and its own, never `internal`'s. The instance's encryption key encrypts them all. The Secrets page groups them by workspace, each project's under its name.
+A workspace's variables reach its runs (see [Settings](settings.md#secrets-and-env)). A variable of scope `workspace:malta` reaches every folder in it; a project's own, scope `malta/deploy`, reaches that project and wins over a workspace one of the same name. A variable of scope `all` reaches every workspace. The variables of `internal` reach the projects at the root and no named workspace unless their scope is `all`: a project in `malta` gets `malta`'s own variables, the `all` ones and its own, never `internal`'s. The instance's encryption key encrypts them all.
 
-**Secrets**, in the **⋯** menu at the top right of the workspace's page, opens `/settings/workspaces/malta/secrets`, the workspace's secrets alone, edited in place: **Add secret** opens a dialog with the workspace's scopes, the shared one and each project's, **Replace the value** in a secret's **⋯** menu opens one that takes the new value, and **Delete** removes it. A value never shows again once saved. The page and the menu item take `secret/view`, Add and Replace `secret/edit`, Delete `secret/delete`.
-
-![The secrets of acme, edited in place](../assets/workspace-secrets-dark.png)
+**Secrets** in the **⋯** menu at the top right of the workspace's page opens `/settings/secrets?workspace=malta`, the variables that reach that workspace, on the one page that manages them. It takes `secret/view`; adding, editing and deleting take `secret/edit` and `secret/delete`.
 
 ## Move to another instance
 
-A workspace moves to another task-ui as a bundle, `<folder>.tui.age`: a tar.gz of `manifest.json` and `.ssh/`, encrypted with [age](https://age-encryption.org) to a passphrase of at least 12 characters. Whoever holds the file and the passphrase holds the workspace's secrets and SSH keys: nothing else protects them inside it, and task-ui keeps no copy of the passphrase. To move a workspace, export it, import the bundle on the other instance, then delete its secrets here by hand, which Delete needs, and then the workspace.
+A workspace moves to another task-ui as a bundle, `<folder>.tui.age`: a tar.gz of `manifest.json` and `.ssh/`, encrypted with [age](https://age-encryption.org) to a passphrase of at least 12 characters. Whoever holds the file and the passphrase holds the workspace's variables and SSH keys: nothing else protects them inside it, and task-ui keeps no copy of the passphrase. To move a workspace, export it, import the bundle on the other instance, then delete its variables here by hand, which Delete needs, and then the workspace.
 
 The bundle carries:
 
@@ -208,7 +206,7 @@ The bundle carries:
 - its home repository and branch in `home`, `{url, branch}`, empty for an empty home;
 - its projects, by folder relative to the workspace, with their repository, branch and settings;
 - its env files, by folder and path;
-- its secrets in plain text in `manifest.json`, which the importing instance encrypts with its own encryption key as they go into its vault;
+- its variables in plain text in `manifest.json`, which the importing instance encrypts with its own encryption key as they go into its vault;
 - the SSH keys the workspace's runs get, its own keys, as `.ssh/<name>.key` and `.ssh/<name>.pub`, and their links; an import names them after its folder, `workspace_<folder>_...`.
 
 It never carries the instance's encryption key, the instance's SSH keys or another workspace's keys. Schedules, workflows, runs and artifacts stay on the instance, as do the integrations. The bundle of `internal` leaves out the named workspaces.

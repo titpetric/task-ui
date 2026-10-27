@@ -15,7 +15,7 @@
 		{{- end }}
 		{{ template "menu" (menu (print "Actions on " $ws.Folder)
 			(item "folder-open" "Open" "href" ($.Href $ws.Folder))
-			(and (.Can "workspace/delete") $secrets (item "secret" (deleteBlocked $secrets) "href" (print "/settings/workspaces/" $ws.Folder "/secrets")))
+			(and (.Can "workspace/delete") $secrets (item "secret" (deleteBlocked $secrets) "href" (workspaceSecretsHref $ws.Folder)))
 			(and (.Can "workspace/delete") (not $secrets) (danger "trash" "Delete" "data-delete" (print "/api/workspaces/" $ws.Folder) "data-confirm" (deleteWorkspaceConfirm $ws.Folder $nested) "data-confirm-ok" "Delete" "data-next" "/settings/workspaces?notice=Workspace+deleted"))
 		) }}
 	</div>

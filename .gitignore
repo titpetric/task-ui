@@ -1,6 +1,7 @@
 /task-ui
 /.ssh
 /build
+*.cov
 /env
 /history
 .data/

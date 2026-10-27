@@ -5,7 +5,7 @@ Not in the sidebar but in the user menu, behind your initials in the header, for
 1. [Instance](#instance): what the server runs with.
 2. [Data retention](#data-retention): how long the instance keeps what it records.
 3. [Keys](#keys): the encryption key and the SSH keys.
-4. [Secrets](#secrets), on the instance's encryption key.
+4. [Secrets and env](#secrets-and-env), on the instance's encryption key.
 5. [Integrations](#integrations): Claude Code, OpenRouter, Forgejo and Beszel.
 6. [Users](#users): who may sign in.
 7. [Permissions](#permissions): what each role may do.
@@ -95,7 +95,7 @@ The page opens on one table, a row for the instance and one per workspace:
 
 - **Scope**: the instance, or the workspace with its projects under its name. The name links to the workspace's settings page.
 - **Secrets**: how many the workspace stores, linked to `/settings/secrets?workspace=<name>`. For the instance, the integrations.
-- **Encryption key**: for the instance, **set**, a link to the key's row in Every key, whose **⋯** menu rotates it, and the key's fingerprint in small type; for a workspace, the instance's, which encrypts its secrets too.
+- **Encryption key**: for the instance, **set**, a link to the key's row in Every key, whose **⋯** menu rotates it, and the key's fingerprint in small type; for a workspace, the instance's, which encrypts its variables too.
 - **SSH keys**: how many, and their names, each linked to its edit form. A workspace with none says its runs get only the instance SSH keys linked to them, with **Generate** and **Upload**.
 
 The only key task-ui makes on its own is the instance's encryption key, at start when it's missing. The workspace's settings page has its SSH keys in its [Keys](workspaces.md#keys) section.
@@ -151,34 +151,38 @@ An instance from before the key folder kept its keys apart: `TASK_UI_DATA/instan
 
 Backups come along, to decrypt what they encrypted, and the secrets and the integrations open as before. The old files stay in place; nothing reads them, and the log says so: remove them once the keys work.
 
-## Secrets
+## Secrets and env
 
-Variables added to the environment of the runs in a [workspace](workspaces.md). The page manages them and groups them by workspace: first the secrets for every folder in it, then each project's own under the project's name. A row shows the secret's name, its scope, when it changed, its **Reads** and **Last read**, and two buttons, replace the value and delete. A value is never shown again once saved.
+Variables added to the environment of the runs. Every variable is either a **secret**, whose value the page never shows again once saved, or an **env** entry, whose value the page lists. Both are encrypted at rest and reach runs the same way, and `task-ui get-secret` reads either. The page lists them in one table: the name, the value (never a secret's), what it applies to, its **Reads**, and the edit and delete actions; the **⋯** menu holds when it changed.
 
-Every run records the secrets it gets in its environment, one read per secret per run. **Reads** counts them, and **Last read** says when the last run got the secret and names its job as `folder/dir/job`, a link to that run. The count links to the secret's read log, `/settings/secrets/<id>/reads`: the runs that got it, newest first, 50 a page, each with when, the run, the job and who started it. task-ui keeps the last 1000 reads of each secret and drops older ones. The log on the secret's page is the only trace: task-ui writes nothing of a run's environment into the run's page, its output or its recording, neither values nor names. What a job prints itself, it records.
+Every run records the variables it gets in its environment, one read per variable per run. **Reads** counts them and says how long ago the last run got the variable; that time links to the run, and its title names the job as `folder/dir/job`. The count links to the variable's read log, `/settings/secrets/<id>/reads`: the runs that got it, newest first, 50 a page, each with when, the run, the job and who started it. task-ui keeps the last 1000 reads of each variable and drops older ones. The log is the only trace: task-ui writes nothing of a run's environment into the run's page, its output or its recording, neither values nor names. What a job prints itself, it records.
 
-A secret has a scope:
+A variable applies to:
 
-- `workspace:<name>`, a workspace's shared secret, reaches every folder in that workspace, its projects and the folders inside them, and no folder in another one. "every folder in Internal", `workspace:internal`, reaches the folders at the root; a folder in a named workspace doesn't get it.
-- a folder, `malta/deploy`, reaches that folder's jobs and wins over its workspace's shared secret of the same name.
+- **All workspaces**, scope `all`, which reaches every folder in every workspace, including one added later.
+- one workspace, `workspace:<name>`, which reaches its folders and projects and no folder of another workspace.
 
-**Add secret** at the top opens the form with a scope picker; each workspace has an **Add secret** of its own that starts on its shared scope. In the API, the scope `all`, or none, is `workspace:internal`. `/settings/secrets?workspace=malta` shows one workspace alone; the keys page links each workspace's count of secrets there. `/settings/workspaces/malta/secrets`, **Secrets** in the **⋯** menu of the workspace's page, lists one workspace's secrets and edits them in place, Add secret and Replace the value in dialogs (see [Workspaces](workspaces.md#secrets)).
+A folder's own entry, `malta/deploy`, is an older scope: it reaches that folder's jobs and wins over its workspace's entry of the same name. A workspace's entry wins over the one of every workspace.
 
-![Secrets, grouped by workspace](../assets/secrets-dark.png)
+**Add variable** at the top opens the form: a name, a value, a **Secret** box, and **Applies to**, every workspace or one. Unchecking **Secret** makes an env entry, whose value shows in the table; checking it keeps the value out of every page and response. Editing a secret leaves the value field empty: blank keeps the value it has. In the API, `is_secret` says which, and an env entry's answer carries `value`. `/settings/secrets?workspace=malta` shows what reaches one workspace; the Workspaces page links each workspace's count there. There is no per-workspace or per-project secrets page: everything is managed here.
 
-The instance's encryption key encrypts every secret, the workspaces' and the integrations': one encryption key per instance, which [Rotate key](#rotate-key) rotates, re-encrypting them all. Runs see no change.
+![Secrets and env](../assets/secrets-dark.png)
 
-The scopes keep a workspace's secrets out of the environment of another workspace's runs, not out of their reach on disk (see [What a workspace keeps apart](workspaces.md#what-a-workspace-keeps-apart)). A folder's workspace is its first segment when that's a named workspace, else `internal`, while the instance has the default workspace. Removing a workspace waits for its secrets to go first and takes its SSH keys. The integrations' settings aren't on this page: the [Integrations](#integrations) page holds them.
+Below the table, **Integration environment** lists what the integrations compute for your runs, read only: the variable names and values, with the value of a name that holds a credential shown as `REDACTED`. The [Integrations](#integrations) page sets those values.
+
+The instance's encryption key encrypts every variable, the workspaces' and the integrations': one encryption key per instance, which [Rotate key](#rotate-key) rotates, re-encrypting them all. Runs see no change.
+
+The scopes keep a workspace's variables out of the environment of another workspace's runs, not out of their reach on disk (see [What a workspace keeps apart](workspaces.md#what-a-workspace-keeps-apart)). A folder's workspace is its first segment when that's a named workspace, else `internal`, while the instance has the default workspace. Removing a workspace waits for its variables to go first and takes its SSH keys. The integrations' settings aren't in the table: the [Integrations](#integrations) page holds them, and the computed environment below shows their effect.
 
 ### Secrets in scripts
 
-A run gets its folder's secrets in its environment. A script reads one where it needs it with `task-ui get-secret NAME`, which prints the value and nothing after it, and fails with a message on stderr when no secret of the name reaches the folder:
+A run gets its variables in its environment, secrets and env entries alike. A script reads one where it needs it with `task-ui get-secret NAME`, which prints the value and nothing after it, and fails with a message on stderr when no variable of the name reaches the folder:
 
 ```bash
 GITHUB_TOKEN=$(task-ui get-secret GITHUB_TOKEN) gh release list
 ```
 
-A value the server's environment holds, which [Parent environment](#parent-environment) None or Auto keeps from the runs, belongs in a secret of the folders or workspace that use it. For secretsmanager, which opens a project's `.secrets.json` with `SECRETSMANAGER_KEY`, save the key as a secret of that scope and set it for the one command that needs it:
+A value the server's environment holds, which [Parent environment](#parent-environment) None or Auto keeps from the runs, belongs in a variable of the workspace that uses it. For secretsmanager, which opens a project's `.secrets.json` with `SECRETSMANAGER_KEY`, save the key as a secret of that workspace and set it for the one command that needs it:
 
 ```bash
 SECRETSMANAGER_KEY=$(task-ui get-secret SECRETSMANAGER_KEY) secretsmanager ...
@@ -202,9 +206,9 @@ jobs:
       - SECRETSMANAGER_KEY=$(task-ui get-secret SECRETSMANAGER_KEY) secretsmanager ...
 ```
 
-`task-ui get-secret` reads `TASK_UI_API`, the instance's API as the run reaches it, and `TASK_UI_RUN_TOKEN`, a token of the run's own that signs in `GET /api/run/secrets/{name}` alone and stops working when the run ends. It returns the secrets that reach the run's folder, the set its environment holds, never a variable of the server's environment, and each read lands in the secret's read log under the run. Outside a run of task-ui it fails: neither variable is there.
+`task-ui get-secret` reads `TASK_UI_API`, the instance's API as the run reaches it, and `TASK_UI_RUN_TOKEN`, a token of the run's own that signs in `GET /api/run/secrets/{name}` alone and stops working when the run ends. It returns the variables that reach the run's folder, secrets and env entries, the set its environment holds, never a variable of the server's environment, and each read lands in the variable's read log under the run. Outside a run of task-ui it fails: neither variable is there.
 
-At start, task-ui writes every secret the instance's encryption key can't open again for that key: a secret of a workspace's encryption key from before one key encrypted them all, or of an instance that kept them all on its SSH key, the `id_ed25519` or `id_rsa` of the key folder. A secret for all folders, scope `all`, becomes `internal`'s shared secret, `workspace:internal`. Before it writes anything it copies the database to `task-ui.db.pre-instance-key`, and for the integrations to `task-ui.db.pre-keysplit`; it reads each secret back before it keeps it. A secret no key opens stays untouched, and the log names it. The log lines `secrets on the instance's encryption key` and `integrations on the instance's encryption key` count what moved. Then each workspace's encryption key whose secrets the instance's key opens goes, its row and its files in the key folder, logged as `workspace encryption key removed`; one with a secret the instance's key doesn't open stays, with a warning.
+At start, task-ui writes every variable the instance's encryption key can't open again for that key: a variable of a workspace's encryption key from before one key encrypted them all, or of an instance that kept them all on its SSH key, the `id_ed25519` or `id_rsa` of the key folder. A variable of scope `all` stays the one of every workspace. Before it writes anything it copies the database to `task-ui.db.pre-instance-key`, and for the integrations to `task-ui.db.pre-keysplit`; it reads each variable back before it keeps it. A variable no key opens stays untouched, and the log names it. The log lines `secrets on the instance's encryption key` and `integrations on the instance's encryption key` count what moved. Then each workspace's encryption key whose variables the instance's key opens goes, its row and its files in the key folder, logged as `workspace encryption key removed`; one with a variable the instance's key doesn't open stays, with a warning.
 
 ## Integrations
 
@@ -382,7 +386,7 @@ The workflows step opens the [Workflows](workflows.md) page, the chains of jobs 
 
 ## Workspaces
 
-Directories under the root, each with a `home`, the checkout of an organisation's tooling or an empty directory, which the workspace's runs get as `HOME`, and a `src` of projects side by side. **Add workspace** makes one under the folder you name, its home cloned from a **Home repository** when the form has one, **Move up** and **Move down** order them, and **Delete** deletes one with everything inside it. **Edit workspace** opens a workspace's settings page: its title, description, **Recursive**, the toggle a project has, and **Hours**, when its runs may start (see [Workspaces](workspaces.md#hours)), its **Home repository**, with **Pull now**, **Replace** or **Clone**, and **Remove**, its **Projects**, in the table of the Projects page, and its **Keys**, the SSH keys of its runs, which the [Keys](#keys) page also lists. `/settings/workspaces/<folder>/keys` and `/secrets`, **SSH keys** and **Secrets** in the **⋯** menu of the workspace's page, edit its keys and its secrets in place. At the top right of that page, **Add project** clones a project into the workspace, and, for an admin, **Export** downloads the workspace, encrypted to a passphrase, which **Import** at the top right of the Workspaces page reads on another instance, for an admin there. [Workspaces](workspaces.md) covers them, their keys and runs, the move between instances, what they keep apart, and the prompt against a workspace.
+Directories under the root, each with a `home`, the checkout of an organisation's tooling or an empty directory, which the workspace's runs get as `HOME`, and a `src` of projects side by side. **Add workspace** makes one under the folder you name, its home cloned from a **Home repository** when the form has one, **Move up** and **Move down** order them, and **Delete** deletes one with everything inside it. **Edit workspace** opens a workspace's settings page: its title, description, **Recursive**, the toggle a project has, and **Hours**, when its runs may start (see [Workspaces](workspaces.md#hours)), its **Home repository**, with **Pull now**, **Replace** or **Clone**, and **Remove**, its **Projects**, in the table of the Projects page, and its **Keys**, the SSH keys of its runs, which the [Keys](#keys) page also lists. `/settings/workspaces/<folder>/keys`, **SSH keys** in the **⋯** menu of the workspace's page, edits its keys in place, and **Secrets** opens the secrets page filtered to what reaches it. At the top right of that page, **Add project** clones a project into the workspace, and, for an admin, **Export** downloads the workspace, encrypted to a passphrase, which **Import** at the top right of the Workspaces page reads on another instance, for an admin there. [Workspaces](workspaces.md) covers them, their keys and runs, the move between instances, what they keep apart, and the prompt against a workspace.
 
 ## Projects
 
@@ -405,14 +409,6 @@ A row's `[...]` menu opens the folder, its **Edit project**, and **Pull now**, w
 The API sets two more on a project: `commands`, the program a kind of job runs with (`make: gmake`), and `job_allow`, who may run, per job. A project has no hours: its workspace's apply.
 
 ![Edit project](../assets/project-edit-dark.png)
-
-## Env files
-
-An env file is a dotenv file a user fills for a folder. On saving, and again before every run, task-ui writes it into the folder with the folder's secrets appended. task-ui reads no env file and no source on its own: atkins and the job tools read what they need, and every run gets the folder's secrets in its environment, with or without an env file.
-
-A user with Allow Edits on Env Files, `env/edit`, adds one with **Add env file** in a project's **⋯** menu, or in the Environment block of its page: a path relative to the project, such as `.env`, and its content. Env files are per project; a workspace has none to add. The project's page lists them under Environment. A user with Allow View, `env/view`, opens one from there, and saving it empty deletes it, which takes Allow Deletes, `env/delete`.
-
-![An env file](../assets/envfile-dark.png)
 
 ---
 

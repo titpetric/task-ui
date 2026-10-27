@@ -4,8 +4,6 @@ package runner_test
 
 import (
 	"context"
-	"os"
-	"path/filepath"
 	"testing"
 	"time"
 
@@ -23,33 +21,29 @@ func TestManager_Secrets(t *testing.T) {
 	assert.NoError(t, f.secrets.Set(ctx, &model.Secret{Scope: storage.ScopeAll, Name: "GREETING", Content: "hello from all"}))
 	assert.NoError(t, f.secrets.Set(ctx, &model.Secret{Scope: "env", Name: "GREETING", Content: "hello from the folder"}))
 	assert.NoError(t, f.secrets.Set(ctx, &model.Secret{Scope: storage.ScopeAll, Name: "REGION", Content: "eu"}))
+	assert.NoError(t, f.secrets.Set(ctx, &model.Secret{Scope: storage.ScopeAll, Name: "MODE", Content: "test", IsSecret: 0}))
 
-	req := f.shellJob("env", `echo "$GREETING" "$TASK_UI_FOLDER" "$TASK_UI_JOB" "$TASK_UI_USER"; test -d "$TASK_UI_ARTIFACTS"`, false)
-	assert.NoError(t, f.env.Set(ctx, &model.EnvFile{Folder: req.Folder.ID, Path: ".env", Content: "MODE=test\n"}))
+	req := f.shellJob("env", `echo "$GREETING" "$MODE" "$TASK_UI_FOLDER" "$TASK_UI_JOB" "$TASK_UI_USER"; test -d "$TASK_UI_ARTIFACTS"`, false)
 	session, err := f.manager.Start(ctx, req)
 	assert.NoError(t, err)
 	out, status := collect(t, session.Attach(true))
 	assert.Equal(t, model.StateOK, status.State)
-	assert.Contains(t, out, "hello from the folder env run ops")
+	assert.Contains(t, out, "hello from the folder test env run ops", "an env entry reaches the run as a secret does")
 
-	// Each secret the run got logs a read: the folder's own GREETING and
-	// REGION. Names, never values.
+	// Each variable the run got logs a read: the folder's own GREETING,
+	// MODE and REGION. Names, never values.
 	reads, err := f.reads.ForRun(ctx, session.ID())
 	assert.NoError(t, err)
-	assert.Len(t, reads, 2)
+	assert.Len(t, reads, 3)
 	assert.Equal(t, "GREETING", reads[0].Name)
 	assert.Equal(t, "env", reads[0].Folder)
 	assert.Equal(t, "run", reads[0].Job)
 	assert.Equal(t, "ops", reads[0].UserName)
-	assert.Equal(t, "REGION", reads[1].Name)
+	assert.Equal(t, "MODE", reads[1].Name)
+	assert.Equal(t, "REGION", reads[2].Name)
 	own, err := f.secrets.Get(ctx, model.Secret{Scope: "env", Name: "GREETING"})
 	assert.NoError(t, err)
 	assert.Equal(t, own.ID, reads[0].SecretID)
-
-	data, err := os.ReadFile(filepath.Join(req.Folder.Dir, ".env"))
-	assert.NoError(t, err)
-	assert.Contains(t, string(data), "MODE=test", "the filled env file was written")
-	assert.Contains(t, string(data), "GREETING=\"hello from the folder\"", "with the secrets appended")
 }
 
 // A request's Env reaches the run; the TASK_UI_ variables still win.

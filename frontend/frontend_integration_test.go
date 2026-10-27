@@ -21,7 +21,6 @@ import (
 	"github.com/titpetric/task-ui/beszel"
 	"github.com/titpetric/task-ui/detector"
 	"github.com/titpetric/task-ui/diskusage"
-	"github.com/titpetric/task-ui/envfile"
 	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/frontend"
 	"github.com/titpetric/task-ui/frontend/view"
@@ -118,7 +117,6 @@ func newFixture(t *testing.T) *fixture {
 		Catalogue:     cat,
 		Git:           &git.Git{},
 		Keys:          keys,
-		Env:           envfile.New(storage.NewEnvFileStorage(db), secrets),
 		Root:          root,
 		Version:       "test",
 		Now:           func() time.Time { return time.Date(2026, time.October, 16, 22, 0, 0, 0, time.Local) },

@@ -1522,6 +1522,9 @@ type Secret struct {
 
 	// Updated At
 	UpdatedAt *time.Time `db:"updated_at" json:"updated_at"`
+
+	// Is Secret
+	IsSecret int64 `db:"is_secret" json:"is_secret"`
 }
 
 // GetID will return the value of ID.
@@ -1560,11 +1563,17 @@ func (s *Secret) GetUpdatedAt() *time.Time { return s.UpdatedAt }
 // SetUpdatedAt sets UpdatedAt to the provided value.
 func (s *Secret) SetUpdatedAt(stamp time.Time) { s.UpdatedAt = &stamp }
 
+// GetIsSecret will return the value of IsSecret.
+func (s *Secret) GetIsSecret() int64 { return s.IsSecret }
+
+// SetIsSecret sets IsSecret to the provided value.
+func (s *Secret) SetIsSecret(val int64) { s.IsSecret = val }
+
 // SecretTable is the name of the table in the DB.
 const SecretTable = "`secret`"
 
 // SecretFields is a list of all columns in the DB table.
-var SecretFields = []string{"id", "scope", "name", "content", "created_at", "updated_at"}
+var SecretFields = []string{"id", "scope", "name", "content", "created_at", "updated_at", "is_secret"}
 
 // SecretPrimaryFields are the primary key fields in the DB table.
 var SecretPrimaryFields = []string{"id"}

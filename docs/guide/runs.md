@@ -111,7 +111,7 @@ An agent starts runs over [MCP](mcp.md) as the user of its token: `run_job` star
 `/runs/<id>` is one run, to link to:
 
 - **Output**: every line the run printed, in its colours, from the first to the last, scrolling inside the block. The block replays the recording, so what redraws itself, a progress bar or a pipeline tree, shows its last frame.
-- **Run**: folder, job, who and when, how long, how it ended, and the reason for a run forced out of hours. A run of a directory's job names the directory, linked to its page, and a run given arguments lists them, one each. Nothing of the run's environment shows, not a secret's value and not its name: the secret's read log names the run (see [Settings](settings.md#secrets) and [Security](../security.md#secrets)).
+- **Run**: folder, job, who and when, how long, how it ended, and the reason for a run forced out of hours. A run of a directory's job names the directory, linked to its page, and a run given arguments lists them, one each. Nothing of the run's environment shows, not a secret's value and not its name: the secret's read log names the run (see [Settings](settings.md#secrets-and-env) and [Security](../security.md#secrets)).
 - **Artifacts**: the files the run left (see [Artifacts](artifacts.md)).
 - **|>** replays the recording in the run window as the run printed it, idle gaps and all, under a blinking `( * recording )` beside the title, with **Pause** and **Restart**. It reads the recording and nothing more: no run starts, the recents stay as they are, and typing goes nowhere. A finished run's window header has the same **|>**, and its row in a list has **Replay the recording** in its **⋯** menu.
 
@@ -181,7 +181,7 @@ A run starts in its folder, or in the directory inside it whose job it runs, as 
 - `TASK_UI_WORKSPACE`, the name of its [workspace](workspaces.md), `internal` at the top of the workspace folder, and `TASK_UI_WORKSPACE_DIR`, its directory, the workspace folder for `internal`;
 - `HOME` and `TASK_UI_HOME`, the workspace's [home](workspaces.md#the-home), `<root>/<workspace>/home`, with the server's registry logins, Claude Code settings, cache and `GOPATH` kept in use, and `ATKINS_DB`, the home's history with the instance's copy as its mirror;
 - `TASK_UI_HOST_PWD`, its directory as the docker host sees it, and `TASK_UI_HOST_DATA`, the data directory there, for a `docker run -v "${TASK_UI_HOST_PWD:-$PWD}:/src"` that the host's daemon resolves (see [Running the server](../running.md));
-- the secrets of its folder and its workspace's shared secrets, never another workspace's (see [Settings](settings.md#secrets));
+- the secrets of its folder and its workspace's shared secrets, never another workspace's (see [Settings](settings.md#secrets-and-env));
 - `TASK_UI_API` and `TASK_UI_RUN_TOKEN`, for `task-ui get-secret NAME`, which prints a secret of the folder (see [Secrets in scripts](settings.md#secrets-in-scripts));
 - of the server's own environment, what the [Parent environment](settings.md#parent-environment) passes: the base variables alone by default, every variable but the sensitive ones, or every one;
 - an ssh agent, through `SSH_AUTH_SOCK`, with the instance keys linked to the role or the name of whoever started the run (see [Projects and jobs](projects.md#keys-for-a-run)), and the SSH keys of its workspace its links let through (see [Workspaces](workspaces.md#keys)); a host command gets every instance SSH key, as the inventory signs in with them; the terminal says which, or `(none)`.

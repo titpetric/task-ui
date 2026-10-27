@@ -28,8 +28,8 @@ trap cleanup EXIT
 
 go build -o "$work/task-ui" .
 
-# Runs generate env files inside the folders, so the demo is served from
-# a copy and the checkout stays clean.
+# The demo is served from a copy, so the runs and the screenshots leave
+# the checkout clean.
 cp -r testdata/demo "$work/demo"
 
 # Login is mandatory: three users in the password file, the roles from
@@ -124,13 +124,14 @@ api PUT /projects/website -d '{"hours":"mon-fri 9-17\nfri 9-13"}'
 api PUT /projects/tools -d '{"sources":["make","npm","script"]}'
 
 # An SSH key for the keys page, which git pulls with; the instance's
-# encryption key encrypts the secrets. Then secrets and a managed env
-# file, so the runs and the pages have them.
+# encryption key encrypts the variables. Then one for every workspace,
+# three for internal, one a plain env entry, so the runs and the page
+# have both kinds.
 api POST /keys/generate -d '{"name":"deploy","type":"ed25519","comment":"task-ui","git":true}'
 api POST /secrets -d '{"scope":"all","name":"CDN_PURGE_URL","content":"https://cdn.example/purge"}'
-api POST /secrets -d '{"scope":"infra","name":"REGION","content":"eu-central-1"}'
-api POST /secrets -d '{"scope":"infra","name":"DEPLOY_TOKEN","content":"s3cret"}'
-api PUT /env/infra/.env -d '{"content":"# Managed from task-ui; the secrets are appended on generation.\nRELEASE=v1.42.0\n"}'
+api POST /secrets -d '{"scope":"workspace:internal","name":"REGION","content":"eu-central-1"}'
+api POST /secrets -d '{"scope":"workspace:internal","name":"DEPLOY_TOKEN","content":"s3cret"}'
+api POST /secrets -d '{"scope":"workspace:internal","name":"RELEASE","content":"v1.42.0","is_secret":false}'
 
 # Two schedules, one of them off.
 api POST /schedules -d '{"folder":"backups","job":"verify","expression":"0 3 * * *"}'
@@ -218,7 +219,7 @@ shot project-new-dark /settings/projects/new dark
 shot project-edit-dark /settings/projects/infra dark
 shot keys-generate-dark /settings/keys/generate dark
 shot keys-upload-dark /settings/keys/upload dark
-shot secret-new-dark "/settings/secrets/new?scope=infra" dark
+shot secret-new-dark "/settings/secrets/new?scope=workspace:internal" dark
 shot users-dark /settings/users dark
 # The roles' permissions, the admin's profile, with the activity of the
 # runs above, and the edit page of ops, with a policy of its own over
@@ -232,7 +233,6 @@ done
 shot user-new-dark /settings/users/new dark
 api PUT /integrations/forgejo -d '{"values":{"url":"https://git.example","token":"demo"}}'
 shot notes-dark /notes dark
-shot envfile-dark /f/internal/infra/env/.env dark
 shot out-of-hours-dark "/f/internal/website#start=website/lint" dark 1440x900 2000
 shot mobile-dashboard-dark / dark 390x844
 shot mobile-menu-dark "/f/internal/infra#menu" dark 390x844
@@ -277,11 +277,11 @@ api PUT /integrations/claude -d '{"values":{"token":"sk-ant-oat01-demo","who":"a
 for theme in dark light; do
   shot "integrations-${theme}" /settings/integrations "$theme" 1440x1600
 done
-# The workspace's own: a shared secret and one of a project in it, an SSH key every run in acme gets and one only the
-# admins' runs get, and a local .env in the api checkout, which its
-# Files panel lists sealed.
+# The workspace's own: two variables of acme, an SSH key every run in
+# acme gets and one only the admins' runs get, and a local .env in the
+# api checkout, which its Files panel lists sealed.
 api POST /secrets -d '{"scope":"workspace:acme","name":"REGISTRY_URL","content":"registry.acme.example"}'
-api POST /secrets -d '{"scope":"acme/api","name":"DATABASE_URL","content":"postgres://api@db/api"}'
+api POST /secrets -d '{"scope":"workspace:acme","name":"DATABASE_URL","content":"postgres://api@db/api"}'
 api POST /workspaces/acme/keys/generate -d '{"type":"ed25519","name":"git","comment":"acme git"}'
 api POST /workspaces/acme/keys/generate -d '{"type":"ed25519","name":"deploy","comment":"acme deploy","policies":["admin"]}'
 printf 'DATABASE_URL=postgres://localhost/api\n' >"$work/demo/acme/src/api/.env"
@@ -325,12 +325,12 @@ shot mobile-workspace-edit-dark /settings/workspaces/acme dark 390x1600
 shot sidebar-workspace-dark /f/acme/api dark 1440x1900
 shot workspace-prompt-dark /f/acme dark
 # The workspace page's [...] menu open, with its SSH keys and Secrets,
-# its Home section, the home's files, and the two pages that
-# edit the workspace's keys and secrets in place.
+# its Home section, the home's files, the workspace's SSH keys, and the
+# secrets page filtered to what reaches it.
 shot workspace-menu-dark "/f/acme#actions=head" dark
 shot workspace-home-dark /f/acme dark 1440x1700
 shot workspace-keys-dark /settings/workspaces/acme/keys dark
-shot workspace-secrets-dark /settings/workspaces/acme/secrets dark
+shot workspace-secrets-dark "/settings/secrets?workspace=acme" dark
 # The default workspace's page as a dashboard of the root: each project
 # in its Files list.
 shot folder-dashboard-dark /f/internal dark 1440x800
@@ -356,6 +356,7 @@ shot keys-dark /settings/keys dark 1440x1100
 # A key's edit form: Who gets it, the element every such form shares.
 shot key-edit-dark /settings/keys/deploy_ed25519 dark 1440x1000
 shot secrets-dark /settings/secrets dark 1440x1300
+shot secrets-light /settings/secrets light 1440x1300
 # A row's [...] menu open, #actions=<n> opening row n's: a key's, its
 # details on top and Remove last, in both themes; a run of a job beside
 # View;

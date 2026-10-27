@@ -123,5 +123,5 @@ func TestFolder_Home(t *testing.T) {
 	assert.Contains(t, body, `<a href="/files/malta/home/CLAUDE.md" data-file="~/CLAUDE.md">CLAUDE.md</a>`)
 	assert.Contains(t, body, `title="task-ui lists .env but does not open it"`)
 	assert.Contains(t, body, `href="/settings/workspaces/malta/keys"`)
-	assert.Contains(t, body, `href="/settings/workspaces/malta/secrets"`)
+	assert.Contains(t, body, `href="/settings/secrets?workspace=malta"`)
 }

@@ -26,7 +26,7 @@ func TestSettings(t *testing.T) {
 	assert.Contains(t, body, "<h2>Settings</h2>")
 	assert.Contains(t, body, "2 folders")
 	assert.Contains(t, body, "2 keys<", "the SSH key and the encryption key")
-	assert.Contains(t, body, "1 secret<")
+	assert.Contains(t, body, "1 variable<")
 	assert.Contains(t, body, "4 users")
 	// The key folder's path is the Keys page's to show.
 	assert.NotContains(t, body, f.opts.Keys.Dir)

@@ -29,7 +29,7 @@ func TestWorkspaces_RowMenu(t *testing.T) {
 	row := workspacesRow(t, render(t, "workspaces", p), "malta")
 	assert.Contains(t, row, `href="/settings/projects/new?workspace=malta"`)
 	assert.Contains(t, row, `href="/settings/workspaces/malta/keys"`)
-	assert.Contains(t, row, `href="/settings/workspaces/malta/secrets"`)
+	assert.Contains(t, row, `href="/settings/secrets?workspace=malta"`)
 	add := strings.Index(row, "Add project")
 	keys := strings.Index(row, "SSH keys")
 	secrets := strings.Index(row, "<span>Secrets</span>")
@@ -57,7 +57,7 @@ func TestWorkspaces_EmptyCounts(t *testing.T) {
 
 	empty := workspacesRow(t, body, "empty")
 	assert.Contains(t, empty, `<a href="/settings/projects/new?workspace=empty" aria-label="Add a project to empty">add</a>`)
-	assert.Contains(t, empty, `<a href="/settings/workspaces/empty/secrets" aria-label="Add a secret to empty">add</a>`)
+	assert.Contains(t, empty, `<a href="/settings/secrets?workspace=empty" aria-label="Add a secret to empty">add</a>`)
 
 	full := workspacesRow(t, body, "full")
 	assert.Contains(t, full, `<a href="/settings/workspaces/full" title="full/api, full/web">2</a>`)

@@ -31,7 +31,7 @@ func TestFolderMenu_ScopedPages(t *testing.T) {
 
 	ws := &view.FolderMenu{ID: "malta", Workspace: true}
 	assert.Equal(t, "/settings/workspaces/malta/keys", ws.KeysPage())
-	assert.Equal(t, "/settings/workspaces/malta/secrets", ws.SecretsPage())
+	assert.Equal(t, "/settings/secrets?workspace=malta", ws.SecretsPage())
 	assert.Equal(t, "/settings/workspaces/internal/keys", (&view.FolderMenu{ID: "internal", Workspace: true}).KeysPage())
 	project := &view.FolderMenu{ID: "malta/api", Project: true}
 	assert.Equal(t, "", project.KeysPage())
@@ -123,14 +123,14 @@ func TestFolderMenu_Workspace(t *testing.T) {
 	assert.Contains(t, head, `href="/settings/workspaces/malta"`)
 	assert.Contains(t, head, "Edit workspace")
 	assert.Contains(t, head, `href="/settings/workspaces/malta/keys"`)
-	assert.Contains(t, head, `href="/settings/workspaces/malta/secrets"`)
+	assert.Contains(t, head, `href="/settings/secrets?workspace=malta"`)
 	assert.NotContains(t, head, "data-delete")
 
 	signIn(p, &model.User{Name: "ops", Role: model.RoleRunner}, permission.Policy{"secret/view": permission.Allow})
 	buf.Reset()
 	assert.NoError(t, v.Render(&buf, "folder", p))
 	head = pageHead(t, buf.String())
-	assert.Contains(t, head, `href="/settings/workspaces/malta/secrets"`, "secret/view links the secrets")
+	assert.Contains(t, head, `href="/settings/secrets?workspace=malta"`, "secret/view links the secrets")
 	assert.NotContains(t, head, `href="/settings/workspaces/malta/keys"`, "the keys take workspace/view")
 
 	signIn(p, &model.User{Name: "ops", Role: model.RoleRunner}, permission.Policy{"workspace/view": permission.Allow})
@@ -138,7 +138,7 @@ func TestFolderMenu_Workspace(t *testing.T) {
 	assert.NoError(t, v.Render(&buf, "folder", p))
 	head = pageHead(t, buf.String())
 	assert.Contains(t, head, `href="/settings/workspaces/malta/keys"`)
-	assert.NotContains(t, head, `href="/settings/workspaces/malta/secrets"`)
+	assert.NotContains(t, head, `href="/settings/secrets?workspace=malta"`)
 
 	signIn(p, &model.User{Name: "ops", Role: model.RoleRunner}, permission.Policy{"run": permission.Allow})
 	buf.Reset()
@@ -207,8 +207,8 @@ func TestFolderMenu_ProjectEdit(t *testing.T) {
 func TestDeleteBlocked(t *testing.T) {
 	t.Parallel()
 
-	assert.Equal(t, "Delete its 1 secret first", view.DeleteBlocked(1))
-	assert.Equal(t, "Delete its 3 secrets first", view.DeleteBlocked(3))
+	assert.Equal(t, "Delete its 1 variable first", view.DeleteBlocked(1))
+	assert.Equal(t, "Delete its 3 variables first", view.DeleteBlocked(3))
 }
 
 func TestDeleteWorkspaceConfirm(t *testing.T) {
