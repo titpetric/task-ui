@@ -228,6 +228,7 @@ func (b *Board) promptRequest(ctx context.Context, user *model.User, dir string)
 		// The root without one: Claude works in the root directory, as
 		// the Notes agent does, with the server's HOME.
 		place = &folder.Folder{ID: model.Default, Title: model.Default, Dir: b.Root}
+		req.Env = []string{"TASK_UI_PROMPT_DIR=" + at}
 	case f != nil && rest == "" && b.isWorkspace(ctx, f.ID):
 		// A workspace: Claude works in its home, TASK_UI_HOME.
 		at, place = layout.HomeDir(b.Root, f.ID), f
