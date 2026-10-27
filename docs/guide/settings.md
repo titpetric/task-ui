@@ -227,23 +227,23 @@ The OpenRouter integration points every Claude run at `https://openrouter.ai/api
 
 The key reaches a run twice, as `OPENROUTER_API_KEY` for the tools that read it and as `ANTHROPIC_AUTH_TOKEN` for Claude Code. `ANTHROPIC_API_KEY` is sent empty, overriding a value the server's environment carries, and while the auth token is sent no run gets `CLAUDE_CODE_OAUTH_TOKEN`, so the two sign-ins never compete. A set key sends every variable below; there is no per-variable switch, and an empty value takes its default.
 
-| Setting                 | Variable                                     | Value                               |
-|-------------------------|----------------------------------------------|-------------------------------------|
-| API key                 | `OPENROUTER_API_KEY`, `ANTHROPIC_AUTH_TOKEN` | the key                             |
-| `ANTHROPIC_API_KEY`     | `ANTHROPIC_API_KEY`                          | empty                               |
-| Base URL                | `ANTHROPIC_BASE_URL`                         | `https://openrouter.ai/api`         |
-| Model                   | `ANTHROPIC_MODEL`                            | `deepseek/deepseek-v4.1-flash-1017` |
-| Fable model             | `ANTHROPIC_DEFAULT_FABLE_MODEL`              | `deepseek/deepseek-v4.1-flash-1017` |
-| Opus model              | `ANTHROPIC_DEFAULT_OPUS_MODEL`               | `deepseek/deepseek-v4.1-flash-1017` |
-| Sonnet model            | `ANTHROPIC_DEFAULT_SONNET_MODEL`             | `deepseek/deepseek-v4.1-flash-1017` |
-| Haiku model             | `ANTHROPIC_DEFAULT_HAIKU_MODEL`              | `deepseek/deepseek-v4.1-flash-1017` |
-| Subagent model          | `CLAUDE_CODE_SUBAGENT_MODEL`                 | `deepseek/deepseek-v4.1-flash-1017` |
-| Context tokens          | `CLAUDE_CODE_MAX_CONTEXT_TOKENS`             | `1000000`                           |
-| Compact window          | `CLAUDE_CODE_AUTO_COMPACT_WINDOW`            | `400000`                            |
-| Gateway model discovery | `CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY` | `1`                                 |
-| Unknown model window    | `CLAUDE_CODE_DISABLE_UNKNOWN_MODEL_WINDOW_ENFORCEMENT` | `1`                        |
-| Nonessential traffic    | `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC`   | `1`                                 |
-| Todo tools              | `CLAUDE_CODE_ENABLE_TODO_TOOLS`              | `1`                                 |
+| Setting                 | Variable                                               | Value                               |
+|-------------------------|--------------------------------------------------------|-------------------------------------|
+| API key                 | `OPENROUTER_API_KEY`, `ANTHROPIC_AUTH_TOKEN`           | the key                             |
+| `ANTHROPIC_API_KEY`     | `ANTHROPIC_API_KEY`                                    | empty                               |
+| Base URL                | `ANTHROPIC_BASE_URL`                                   | `https://openrouter.ai/api`         |
+| Model                   | `ANTHROPIC_MODEL`                                      | `deepseek/deepseek-v4.1-flash-1017` |
+| Fable model             | `ANTHROPIC_DEFAULT_FABLE_MODEL`                        | `deepseek/deepseek-v4.1-flash-1017` |
+| Opus model              | `ANTHROPIC_DEFAULT_OPUS_MODEL`                         | `deepseek/deepseek-v4.1-flash-1017` |
+| Sonnet model            | `ANTHROPIC_DEFAULT_SONNET_MODEL`                       | `deepseek/deepseek-v4.1-flash-1017` |
+| Haiku model             | `ANTHROPIC_DEFAULT_HAIKU_MODEL`                        | `deepseek/deepseek-v4.1-flash-1017` |
+| Subagent model          | `CLAUDE_CODE_SUBAGENT_MODEL`                           | `deepseek/deepseek-v4.1-flash-1017` |
+| Context tokens          | `CLAUDE_CODE_MAX_CONTEXT_TOKENS`                       | `1000000`                           |
+| Compact window          | `CLAUDE_CODE_AUTO_COMPACT_WINDOW`                      | `400000`                            |
+| Gateway model discovery | `CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY`           | `1`                                 |
+| Unknown model window    | `CLAUDE_CODE_DISABLE_UNKNOWN_MODEL_WINDOW_ENFORCEMENT` | `1`                                 |
+| Nonessential traffic    | `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC`             | `1`                                 |
+| Todo tools              | `CLAUDE_CODE_ENABLE_TODO_TOOLS`                        | `1`                                 |
 
 The base URL, the models and the numbers are fields in the table; a model other than the default is a change of that row.
 
