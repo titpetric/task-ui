@@ -11,7 +11,10 @@ FROM golang:1.27-alpine AS builder
 # $COLUMNS/$LINES before the pty, so it misses a resize the tests make.
 RUN apk --no-cache add bash coreutils git make
 RUN GOBIN=/usr/local/bin CGO_ENABLED=0 go install github.com/go-task/task/v3/cmd/task@latest
-RUN GOBIN=/usr/local/bin CGO_ENABLED=0 go install github.com/titpetric/atkins@latest
+# Pinned: task-ui sets ATKINS_DB to the home database and its mirror;
+# atkins v0.11.1 reads that path list. An older binary opens the string
+# as one file and records nothing.
+RUN GOBIN=/usr/local/bin CGO_ENABLED=0 go install github.com/titpetric/atkins@v0.11.1
 
 WORKDIR /task-ui
 ADD . /task-ui
