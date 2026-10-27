@@ -470,8 +470,8 @@ A run gets SSH keys only through an ssh agent served for that run alone:
 the instance keys linked to the role of whoever started it, or to them
 by name (see [Settings](settings.md#keys)), and the SSH keys of its
 workspace its links let through (see [Workspaces](workspaces.md#keys)).
-The agent's socket is in a `0700` directory under `/tmp`, and no key
-file lands on disk; a start of task-ui removes the directories a process
+The agent's socket is in a `0700` directory under `$XDG_RUNTIME_DIR`, else `/run/task-ui`, else `/tmp`, and no key
+file lands on disk; a start of task-ui removes the directories a dead process
 before it left. A scheduled run gets
 the keys of the schedule's creator. The job gets `SSH_AUTH_SOCK`, and
 `ssh`, `git`, `rsync` and terraform's agent authentication use it. The

@@ -11,15 +11,17 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strconv"
 	"strings"
 	"sync"
+	"syscall"
 
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/agent"
 )
 
 // Agent is an ssh agent holding the keys of one directory. A tmp
-// directory of "" stands for the system's temporary directory.
+// directory of "" stands for Dir.
 type Agent struct {
 	// Socket is the path ssh connects to, for SSH_AUTH_SOCK.
 	Socket string
@@ -109,7 +111,10 @@ const Prefix = "task-ui-agent-"
 
 // serveRing serves a keyring on a socket in a new private directory.
 func serveRing(tmp string, ring agent.Agent, loaded []string) (*Agent, error) {
-	dir, err := os.MkdirTemp(tmp, Prefix)
+	if tmp == "" {
+		tmp = Dir()
+	}
+	dir, err := os.MkdirTemp(tmp, Prefix+strconv.Itoa(os.Getpid())+"-")
 	if err != nil {
 		return nil, err
 	}
@@ -153,17 +158,51 @@ func (a *Agent) Close() error {
 	return err
 }
 
-// Clean removes the agent directories that earlier processes left under tmp, and returns how many.
+// Dir is where agents put their sockets by default: the user's runtime
+// directory, else /run/task-ui, else the system's temporary directory,
+// which a test run or a tmp cleaner may wipe.
+func Dir() string {
+	if dir := os.Getenv("XDG_RUNTIME_DIR"); dir != "" {
+		if info, err := os.Stat(dir); err == nil && info.IsDir() {
+			return dir
+		}
+	}
+	if err := os.MkdirAll("/run/task-ui", 0o700); err == nil {
+		if f, err := os.CreateTemp("/run/task-ui", ".probe"); err == nil {
+			f.Close()
+			os.Remove(f.Name())
+			return "/run/task-ui"
+		}
+	}
+	return os.TempDir()
+}
+
+// Clean removes the agent directories that earlier processes left under tmp ("" is Dir), and returns how many.
+// A directory of a process that still runs, another than this one, stays: it holds that process's live agents.
 func Clean(tmp string) int {
 	if tmp == "" {
-		tmp = os.TempDir()
+		tmp = Dir()
 	}
 	dirs, _ := filepath.Glob(filepath.Join(tmp, Prefix+"*"))
 	removed := 0
 	for _, dir := range dirs {
+		if owned(filepath.Base(dir)) {
+			continue
+		}
 		if os.RemoveAll(dir) == nil {
 			removed++
 		}
 	}
 	return removed
+}
+
+// owned reports whether the directory name belongs to another process that is alive.
+func owned(name string) bool {
+	pid, _, _ := strings.Cut(strings.TrimPrefix(name, Prefix), "-")
+	n, err := strconv.Atoi(pid)
+	if err != nil || n == os.Getpid() {
+		return false
+	}
+	err = syscall.Kill(n, 0)
+	return err == nil || errors.Is(err, syscall.EPERM)
 }
