@@ -212,7 +212,7 @@ func TestFolder_SidebarAndCards(t *testing.T) {
 	assert.NotContains(t, body, `class="play" data-run data-folder="private"`) // ops may not run private
 	assert.Contains(t, body, `id="menu-toggle"`)
 	assert.Contains(t, body, `id="menu-backdrop"`)
-	assert.NotContains(t, body, `data-cc="infra/plan"`, "no Jobs table")
+	assert.Contains(t, body, `data-cc="infra/plan"`, "the Jobs table")
 	assert.Contains(t, body, "<th>Hours</th><td><span class=\"faint\">always</span></td>")
 
 	job := f.page(t, asOps, "/f/internal/infra/plan")

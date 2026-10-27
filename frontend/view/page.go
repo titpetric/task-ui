@@ -225,6 +225,12 @@ type Page struct {
 	// TreeFolders are the folders of the directories Tree lists, by the
 	// directory's name; their jobs stay on their own pages.
 	TreeFolders map[string]*folder.Folder
+	// JobGroups are the rows of the Jobs table of a folder's page, or of
+	// a directory's inside one, by group.
+	JobGroups []JobGroup
+	// JobSummaries are the summaries of the last runs of the rows
+	// JobGroups lists, by the job's key.
+	JobSummaries map[string]*SummaryLink
 	// RunReports are the summaries of the runs a job page lists, by run
 	// ID, those under way as well.
 	RunReports map[string]*note.Report
@@ -502,6 +508,11 @@ func (p *Page) LastRun(key string) *Run {
 		return &run
 	}
 	return nil
+}
+
+// JobSummary returns the summary of the last run of a job the Jobs table lists, nil for none.
+func (p *Page) JobSummary(key string) *SummaryLink {
+	return p.JobSummaries[key]
 }
 
 // IsPath reports whether the page is at a path.

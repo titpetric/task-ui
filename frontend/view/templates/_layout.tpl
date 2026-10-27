@@ -536,6 +536,21 @@
 <span class="spacemini" title="{{ size .Files }} of files, {{ size .History }} of history{{ if .Ignored }}; {{ size .Ignored }} more that git ignores{{ end }}"><span class="spacebar-track"><i class="files" style="width: {{ printf "%.2f" .FilesPercent }}%"></i><i class="history" style="width: {{ printf "%.2f" .HistoryPercent }}%"></i></span><span class="nowrap">{{ size .Total }}</span></span>
 {{- end }}
 
+{{/* jobtable is the Jobs table of a folder's page, and of a directory's
+     inside one: a row of named buttons per job source of the place and
+     of each directory inside with targets, under the source's file, then
+     the files that run, each skill's jobs and the built-ins, from
+     Page.JobGroups. A row's [...] holds Run and summarize, the last run
+     and its summary, the history, Pin, Run force and Kill of its jobs. */}}
+{{- define "jobtable" }}
+{{- if $.JobGroups }}
+<section class="block" data-live>
+	<h3>Jobs <small>a row per job source, then files, skills and terminals</small></h3>
+	{{- template "controltable" (list $ $.JobControl true) }}
+</section>
+{{- end }}
+{{- end }}
+
 {{/* showsource is the Show button of a file a folder's pipeline reads:
      it opens the file, coloured, in the source window. */}}
 {{- define "showsource" }}
