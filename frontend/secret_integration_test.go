@@ -190,7 +190,7 @@ func TestSecrets_IntegrationEnv(t *testing.T) {
 	assert.Contains(t, body, `<code>https://openrouter.ai/api</code>`)
 	assert.NotContains(t, body, "sk-or-secret")
 	assert.NotContains(t, body, `data-api="/api/integrations`)
-	assert.Equal(t, 3, strings.Count(body, "REDACTED"), "the key, the auth token and the token count")
+	assert.Equal(t, 4, strings.Count(body, "REDACTED"), "the key, the auth token, the empty API key and the token count")
 }
 
 // The count of the variables on the settings index and a workspace's

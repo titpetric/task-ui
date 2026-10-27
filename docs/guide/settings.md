@@ -225,7 +225,7 @@ The services task-ui talks to, with their API keys and tokens, a card per integr
 
 The OpenRouter integration points every Claude run at `https://openrouter.ai/api` with a key from that account: the agent jobs, the prompts, the workflow's prompt and summary steps, and the summaries task-ui asks for. A key needs credit on the account, and a model OpenRouter serves.
 
-The key reaches a run twice, as `OPENROUTER_API_KEY` for the tools that read it and as `ANTHROPIC_AUTH_TOKEN` for Claude Code. `ANTHROPIC_API_KEY` goes empty, and while the auth token is sent no run gets `CLAUDE_CODE_OAUTH_TOKEN`, so the two sign-ins never compete. A set key sends every variable below; there is no per-variable switch, and an empty value takes its default.
+The key reaches a run twice, as `OPENROUTER_API_KEY` for the tools that read it and as `ANTHROPIC_AUTH_TOKEN` for Claude Code. `ANTHROPIC_API_KEY` is sent empty, overriding a value the server's environment carries, and while the auth token is sent no run gets `CLAUDE_CODE_OAUTH_TOKEN`, so the two sign-ins never compete. A set key sends every variable below; there is no per-variable switch, and an empty value takes its default.
 
 | Setting                 | Variable                                     | Value                               |
 |-------------------------|----------------------------------------------|-------------------------------------|
@@ -241,6 +241,7 @@ The key reaches a run twice, as `OPENROUTER_API_KEY` for the tools that read it 
 | Context tokens          | `CLAUDE_CODE_MAX_CONTEXT_TOKENS`             | `1000000`                           |
 | Compact window          | `CLAUDE_CODE_AUTO_COMPACT_WINDOW`            | `400000`                            |
 | Gateway model discovery | `CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY` | `1`                                 |
+| Unknown model window    | `CLAUDE_CODE_DISABLE_UNKNOWN_MODEL_WINDOW_ENFORCEMENT` | `1`                        |
 | Nonessential traffic    | `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC`   | `1`                                 |
 | Todo tools              | `CLAUDE_CODE_ENABLE_TODO_TOOLS`              | `1`                                 |
 

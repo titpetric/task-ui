@@ -107,6 +107,7 @@ func TestStore(t *testing.T) {
 	assert.Equal(t, "1000000", env["CLAUDE_CODE_MAX_CONTEXT_TOKENS"])
 	assert.Equal(t, "400000", env["CLAUDE_CODE_AUTO_COMPACT_WINDOW"])
 	assert.Equal(t, "1", env["CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY"])
+	assert.Equal(t, "1", env["CLAUDE_CODE_DISABLE_UNKNOWN_MODEL_WINDOW_ENFORCEMENT"])
 	assert.Equal(t, "1", env["CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC"])
 	assert.Equal(t, "1", env["CLAUDE_CODE_ENABLE_TODO_TOOLS"])
 	assert.Equal(t, "deepseek/deepseek-v4.1-flash-1017", env["ANTHROPIC_DEFAULT_FABLE_MODEL"])
@@ -114,6 +115,8 @@ func TestStore(t *testing.T) {
 	assert.Equal(t, "deepseek/deepseek-v4.1-flash-1017", env["ANTHROPIC_DEFAULT_SONNET_MODEL"])
 	assert.Equal(t, "deepseek/deepseek-v4.1-flash-1017", env["ANTHROPIC_DEFAULT_HAIKU_MODEL"])
 	assert.Equal(t, "deepseek/deepseek-v4.1-flash-1017", env["CLAUDE_CODE_SUBAGENT_MODEL"])
+	_, emptyKey := env["ANTHROPIC_API_KEY"]
+	assert.True(t, emptyKey, "ANTHROPIC_API_KEY goes out empty, not left to the parent")
 	assert.Equal(t, "", env["ANTHROPIC_API_KEY"])
 	assert.Equal(t, "", env["CLAUDE_CODE_OAUTH_TOKEN"], "OpenRouter stands in for the Claude token")
 
