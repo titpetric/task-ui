@@ -3,7 +3,7 @@ package view
 import "net/url"
 
 // The pages that add a thing, and the pages of the things a workspace
-// owns. Every template and menu that offers "add" reads them here, so
+// owns. Every template and menu that links "add" reads them here, so
 // the folder menu, the row menus, the dashboard and the empty states
 // cannot link different places for the same action.
 const (

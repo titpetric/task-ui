@@ -17,7 +17,7 @@ type RoleMembers struct {
 // NewRoleMembers returns the members of each role, by role name, every
 // role with an entry. A user counts under their effective role, so an
 // admin flag puts them under admin; a workspace's key and an encryption
-// key belong to no role. Names are sorted.
+// key belong to no role. Each list sorts its names.
 func NewRoleMembers(users []model.User, keys []keystore.Key) map[string]RoleMembers {
 	members := map[string]RoleMembers{}
 	for _, role := range model.Roles() {

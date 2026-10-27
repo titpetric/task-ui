@@ -92,7 +92,7 @@ follow one set of rules:
   A second list on a page holds its own in its block head, small and
   plain: a workspace's keys, a user's keys on their edit page, a
   workspace's secrets.
-- **Reach**: an entity's page offers to add what it owns, within two
+- **Reach**: an entity's page links the forms that add what it owns, within two
   clicks of the page: a workspace adds a project, an SSH key and a
   secret; a user adds a key; a project adds an env file and a schedule.
   Whoever builds a link to one of these pages takes it from
