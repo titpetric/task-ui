@@ -76,6 +76,38 @@
   }
 }
 
+/* OpenRouter's variables: the name and its short description on the
+   left, the value on the right. The API key fills the derived ones. */
+.integration-env {
+  margin: 0 0 var(--field-gap);
+
+  & td:first-child {
+    width: 45%;
+  }
+
+  & td:last-child {
+    width: 55%;
+  }
+
+  & td b {
+    display: block;
+    font-size: var(--fs-data);
+  }
+
+  & td .faint {
+    font-size: var(--fs-caption);
+    line-height: 1.35;
+  }
+
+  & input {
+    width: 100%;
+  }
+}
+
+.integration-env-note {
+  margin: 0.2rem 0 0.4rem;
+}
+
 .integration-desc {
   margin: 0 0 0.6rem;
   font-size: var(--fs-caption);

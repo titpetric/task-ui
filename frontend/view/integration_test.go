@@ -23,15 +23,15 @@ func TestIntegration(t *testing.T) {
 	assert.False(t, leaked)
 	assert.False(t, view.NewIntegration(kind, nil).Configured)
 
-	// A switch without a row takes its setting's default; a row says on or off.
-	router := view.NewIntegration(*integration.KindOf(integration.OpenRouter), map[string]string{"token": "sk-or-1", "model_enabled": "0", "auth_token_enabled": "1"})
-	assert.False(t, router.Enabled["model"])
-	assert.True(t, router.Enabled["auth_token"])
-	assert.True(t, router.Enabled["base_url"])
+	// OpenRouter's extra variables have no switch: the key sets each.
+	router := view.NewIntegration(*integration.KindOf(integration.OpenRouter), map[string]string{"token": "sk-or-1"})
+	assert.True(t, router.Configured)
+	assert.True(t, router.Set["token"])
+	assert.Empty(t, router.Enabled)
 }
 
 // The page is a card per integration on a rail: the form and its
-// switches, the steps to its key folded under it, in order; the Claude
+// variables, the steps to its key folded under it, in order; the Claude
 // card's Who lists the users
 // with the role they act with, the roles with their counts, and the
 // summary line the script fills. Nothing of a secret shows.
@@ -69,7 +69,10 @@ func TestIntegration_Page(t *testing.T) {
 	assert.Contains(t, body, `<summary>Get the OAuth token</summary>`)
 	assert.Contains(t, body, `<summary>Get the API key</summary>`)
 	assert.Contains(t, body, `<summary>Get the token</summary>`)
-	assert.Contains(t, body, `name="values.model.enabled" value="1" data-type="toggle" checked`)
+	assert.Contains(t, body, `class="table-wrap integration-env"`)
+	assert.Contains(t, body, `<b class="mono">ANTHROPIC_DEFAULT_OPUS_MODEL</b>`)
+	assert.Contains(t, body, `name="values.default_opus_model"`)
+	assert.NotContains(t, body, `values.model.enabled`)
 	assert.Contains(t, body, `value="deepseek/deepseek-v4.1-flash-1017"`)
 	assert.Contains(t, body, `value="https://openrouter.ai/api"`)
 	assert.Contains(t, body, "<li><p>On a machine where you are signed in to Claude Code, run <code>claude setup-token</code>.</p>\n</li>")

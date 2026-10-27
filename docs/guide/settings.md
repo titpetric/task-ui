@@ -214,10 +214,10 @@ At start, task-ui writes every variable the instance's encryption key can't open
 
 ![Integrations](../assets/integrations-dark.png)
 
-The services task-ui talks to, with their API keys and tokens, a card per integration on a numbered rail as the workflow editor's steps: its name with its set up badge, its description and its form, and the numbered steps to its key folded under the form. **Fold all** folds the cards to their heads. task-ui encrypts the keys with the instance's encryption key, as every secret, and never shows them again: a form marks a secret with a value as **set**, and an empty secret field keeps it on save. The Secrets page leaves them out, and no run sees them as secrets. A setting with a switch sends its environment variable to the runs the integration serves; off leaves the variable out and keeps the value for the next switch on. **Clear**, in the **⋯** menu beside the name, deletes every setting of an integration. The API serves the steps with the kind, `steps` on `GET /api/integrations`.
+The services task-ui talks to, with their API keys and tokens, a card per integration on a numbered rail as the workflow editor's steps: its name with its set up badge, its description and its form, and the numbered steps to its key folded under the form. **Fold all** folds the cards to their heads. task-ui encrypts the keys with the instance's encryption key, as every secret, and never shows them again: a form marks a secret with a value as **set**, and an empty secret field keeps it on save. The Secrets page leaves them out, and no run sees them as secrets. **Clear**, in the **⋯** menu beside the name, deletes every setting of an integration. The API serves the steps with the kind, `steps` on `GET /api/integrations`.
 
 - **Claude Code**: the token Claude Code signs in with, from `claude setup-token`, for the whole instance, and **Who**, the element [Who gets it](#who-gets-it) describes: a box for each role and each user, checked for those whose runs get it as `CLAUDE_CODE_OAUTH_TOKEN`, such as the admin role and the user `claude`. Check the agent's user too: the agent job of the [Notes](notes.md) board runs as that user. With no box checked, every run gets it. The token alone sets the integration up. With OpenRouter set up, its auth token stands in for this one.
-- **OpenRouter**: a key that sends Claude Code to OpenRouter's gateway instead of an Anthropic account, with a switch for each variable, see [OpenRouter](#openrouter) below.
+- **OpenRouter**: a key that sends Claude Code to OpenRouter's gateway instead of an Anthropic account; the key sets every variable, see [OpenRouter](#openrouter) below.
 - **Forgejo**: the git host's URL and a token, for the sync that makes workspaces of its organisations and users and projects of their repositories, see [Forgejo](#forgejo) below.
 - **Beszel**: the hub's URL, as task-ui reaches it, and a token, for the [Inventory](inventory.md) page. task-ui reads the collections `systems`, `system_stats`, the latest minute of each host and its records of eight or two hours for the charts, `containers`, the containers each host runs, and `container_stats`, their records, the newest minute on a hub without `containers`. A read-only user reads them all.
 
@@ -225,7 +225,7 @@ The services task-ui talks to, with their API keys and tokens, a card per integr
 
 The OpenRouter integration points every Claude run at `https://openrouter.ai/api` with a key from that account: the agent jobs, the prompts, the workflow's prompt and summary steps, and the summaries task-ui asks for. A key needs credit on the account, and a model OpenRouter serves.
 
-The key reaches a run twice, as `OPENROUTER_API_KEY` for the tools that read it and as `ANTHROPIC_AUTH_TOKEN` for Claude Code. `ANTHROPIC_API_KEY` goes empty, and while the auth token is sent no run gets `CLAUDE_CODE_OAUTH_TOKEN`, so the two sign-ins never compete. Switch `ANTHROPIC_AUTH_TOKEN` off and the Claude Code integration signs the runs in again.
+The key reaches a run twice, as `OPENROUTER_API_KEY` for the tools that read it and as `ANTHROPIC_AUTH_TOKEN` for Claude Code. `ANTHROPIC_API_KEY` goes empty, and while the auth token is sent no run gets `CLAUDE_CODE_OAUTH_TOKEN`, so the two sign-ins never compete. A set key sends every variable below; there is no per-variable switch, and an empty value takes its default.
 
 | Setting                 | Variable                                     | Value                               |
 |-------------------------|----------------------------------------------|-------------------------------------|
@@ -233,13 +233,18 @@ The key reaches a run twice, as `OPENROUTER_API_KEY` for the tools that read it 
 | `ANTHROPIC_API_KEY`     | `ANTHROPIC_API_KEY`                          | empty                               |
 | Base URL                | `ANTHROPIC_BASE_URL`                         | `https://openrouter.ai/api`         |
 | Model                   | `ANTHROPIC_MODEL`                            | `deepseek/deepseek-v4.1-flash-1017` |
+| Fable model             | `ANTHROPIC_DEFAULT_FABLE_MODEL`              | `deepseek/deepseek-v4.1-flash-1017` |
+| Opus model              | `ANTHROPIC_DEFAULT_OPUS_MODEL`               | `deepseek/deepseek-v4.1-flash-1017` |
+| Sonnet model            | `ANTHROPIC_DEFAULT_SONNET_MODEL`             | `deepseek/deepseek-v4.1-flash-1017` |
+| Haiku model             | `ANTHROPIC_DEFAULT_HAIKU_MODEL`              | `deepseek/deepseek-v4.1-flash-1017` |
+| Subagent model          | `CLAUDE_CODE_SUBAGENT_MODEL`                 | `deepseek/deepseek-v4.1-flash-1017` |
 | Context tokens          | `CLAUDE_CODE_MAX_CONTEXT_TOKENS`             | `1000000`                           |
 | Compact window          | `CLAUDE_CODE_AUTO_COMPACT_WINDOW`            | `400000`                            |
 | Gateway model discovery | `CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY` | `1`                                 |
 | Nonessential traffic    | `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC`   | `1`                                 |
 | Todo tools              | `CLAUDE_CODE_ENABLE_TODO_TOOLS`              | `1`                                 |
 
-Each row but the key has a switch, on by default; off leaves its variable out of the run and keeps the value for the next switch on. The base URL, the model and the numbers are fields, so a model other than the default is a change of the Model field.
+The base URL, the models and the numbers are fields in the table; a model other than the default is a change of that row.
 
 ### Who gets it
 

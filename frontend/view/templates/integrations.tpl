@@ -33,6 +33,15 @@
 					<div class="dim desc integration-desc">{{ message $int.Description }}</div>
 					<form class="form integration-form" data-api="/api/integrations/{{ $int.ID }}" data-method="PUT" data-next="/settings/integrations?notice={{ $int.Title }}+saved">
 						<div class="wf-fields">
+							{{- if eq $int.ID "openrouter" }}
+							{{- range $int.Fields }}{{ if eq .Name "token" }}
+							<div class="field wf-wide">
+								<label for="{{ $int.ID }}-{{ .Name }}">{{ .Label }} {{ if index $int.Set .Name }}<span class="badge ok">set</span>{{ else }}<span class="badge">empty</span>{{ end }}</label>
+								<input type="password" id="{{ $int.ID }}-{{ .Name }}" name="values.{{ .Name }}" placeholder="{{ if index $int.Set .Name }}leave empty to keep it{{ else }}{{ .Placeholder }}{{ end }}" autocomplete="new-password" spellcheck="false">
+								<small class="faint">{{ .Help }}</small>
+							</div>
+							{{- end }}{{ end }}
+							{{- else }}
 							{{- range $int.Fields }}
 							{{- if .Who }}
 							<div class="field wf-wide">
@@ -75,7 +84,31 @@
 							</div>
 							{{- end }}
 							{{- end }}
+							{{- end }}
 						</div>
+						{{- if eq $int.ID "openrouter" }}
+						<p class="faint integration-env-note">A set API key sends every variable below; an empty value takes its default.</p>
+						<div class="table-wrap integration-env">
+							<table class="table">
+								<thead><tr><th>Variable</th><th>Value</th></tr></thead>
+								<tbody>
+								{{- range $int.Fields }}{{ if and (ne .Name "token") .Env }}
+								<tr>
+									<td><b class="mono">{{ .Env }}</b><div class="faint">{{ .Help }}</div></td>
+									<td>
+									{{- if .Source }}<span class="faint">the API key</span>
+									{{- else if .Empty }}<span class="faint">empty</span>
+									{{- else }}
+									{{- $value := index $int.Values .Name }}{{ if and (not $value) .Default }}{{ $value = .Default }}{{ end }}
+									<input type="text" id="{{ $int.ID }}-{{ .Name }}" name="values.{{ .Name }}" value="{{ $value }}" aria-label="{{ .Env }}" autocomplete="off" spellcheck="false">
+									{{- end }}
+									</td>
+								</tr>
+								{{- end }}{{ end }}
+								</tbody>
+							</table>
+						</div>
+						{{- end }}
 						<details class="integration-key">
 							<summary>Get the {{ $int.Credential }}</summary>
 							<ol class="steps">

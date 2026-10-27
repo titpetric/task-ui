@@ -29,6 +29,10 @@ const (
 // public URL.
 const WebhookPath = "/api/webhooks/forgejo"
 
+// openRouterModel is the model OpenRouter serves every Claude tier by
+// default.
+const openRouterModel = "deepseek/deepseek-v4.1-flash-1017"
+
 // Kinds returns the integrations, in the order Settings lists them.
 func Kinds() []Kind {
 	return []Kind{
@@ -54,16 +58,21 @@ func Kinds() []Kind {
 			Description: "The gateway Claude Code asks instead of an Anthropic account; while set up, a run gets its variables and none of the Claude Code token.",
 			Fields: []Field{
 				{Name: "token", Label: "API key", Secret: true, Placeholder: "sk-or-v1-…", Help: "A key from openrouter.ai/settings/keys; it reaches a run as OPENROUTER_API_KEY and ANTHROPIC_AUTH_TOKEN."},
-				{Name: "openrouter_api_key", Label: "OPENROUTER_API_KEY", Optional: true, Env: "OPENROUTER_API_KEY", Source: "token", Toggle: true, DefaultOn: true, Help: "OpenRouter's own name for the key, for the tools that read it."},
-				{Name: "auth_token", Label: "ANTHROPIC_AUTH_TOKEN", Optional: true, Env: "ANTHROPIC_AUTH_TOKEN", Source: "token", Toggle: true, DefaultOn: true, Help: "What Claude Code signs in with; off falls back to the Claude Code integration."},
-				{Name: "api_key", Label: "ANTHROPIC_API_KEY", Optional: true, Empty: true, Toggle: true, DefaultOn: true, Help: "Sent empty, so Claude Code signs in with the key alone."},
-				{Name: "base_url", Label: "Base URL", Optional: true, Env: "ANTHROPIC_BASE_URL", Default: "https://openrouter.ai/api", Toggle: true, DefaultOn: true, Help: "Where Claude Code sends its requests."},
-				{Name: "model", Label: "Model", Optional: true, Env: "ANTHROPIC_MODEL", Default: "deepseek/deepseek-v4.1-flash-1017", Toggle: true, DefaultOn: true, Help: "The model every Claude run asks for."},
-				{Name: "max_context_tokens", Label: "Context tokens", Optional: true, Env: "CLAUDE_CODE_MAX_CONTEXT_TOKENS", Default: "1000000", Toggle: true, DefaultOn: true, Help: "The context window Claude Code plans for."},
-				{Name: "auto_compact_window", Label: "Compact window", Optional: true, Env: "CLAUDE_CODE_AUTO_COMPACT_WINDOW", Default: "400000", Toggle: true, DefaultOn: true, Help: "How much of the context Claude Code fills before it compacts."},
-				{Name: "gateway_model_discovery", Label: "Gateway model discovery", Optional: true, Env: "CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY", Default: "1", Toggle: true, DefaultOn: true, Help: "Lets Claude Code list the models the gateway offers."},
-				{Name: "disable_nonessential_traffic", Label: "Nonessential traffic", Optional: true, Env: "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC", Default: "1", Toggle: true, DefaultOn: true, Help: "Stops Claude Code's traffic that is not the conversation."},
-				{Name: "enable_todo_tools", Label: "Todo tools", Optional: true, Env: "CLAUDE_CODE_ENABLE_TODO_TOOLS", Default: "1", Toggle: true, DefaultOn: true, Help: "Gives Claude Code its todo tools."},
+				{Name: "openrouter_api_key", Label: "OPENROUTER_API_KEY", Optional: true, Env: "OPENROUTER_API_KEY", Source: "token", Help: "OpenRouter's own name for the key."},
+				{Name: "auth_token", Label: "ANTHROPIC_AUTH_TOKEN", Optional: true, Env: "ANTHROPIC_AUTH_TOKEN", Source: "token", Help: "Signs Claude Code in; it stands in for the Claude Code token."},
+				{Name: "api_key", Label: "ANTHROPIC_API_KEY", Optional: true, Empty: true, Help: "Sent empty, so Claude Code signs in with the key alone."},
+				{Name: "base_url", Label: "Base URL", Optional: true, Env: "ANTHROPIC_BASE_URL", Default: "https://openrouter.ai/api", Help: "Where Claude Code sends its requests."},
+				{Name: "model", Label: "Model", Optional: true, Env: "ANTHROPIC_MODEL", Default: openRouterModel, Help: "The model every Claude run asks for."},
+				{Name: "default_fable_model", Label: "Fable model", Optional: true, Env: "ANTHROPIC_DEFAULT_FABLE_MODEL", Default: openRouterModel, Help: "The model the Fable tier asks for."},
+				{Name: "default_opus_model", Label: "Opus model", Optional: true, Env: "ANTHROPIC_DEFAULT_OPUS_MODEL", Default: openRouterModel, Help: "The model the Opus tier asks for."},
+				{Name: "default_sonnet_model", Label: "Sonnet model", Optional: true, Env: "ANTHROPIC_DEFAULT_SONNET_MODEL", Default: openRouterModel, Help: "The model the Sonnet tier asks for."},
+				{Name: "default_haiku_model", Label: "Haiku model", Optional: true, Env: "ANTHROPIC_DEFAULT_HAIKU_MODEL", Default: openRouterModel, Help: "The model the Haiku tier asks for."},
+				{Name: "subagent_model", Label: "Subagent model", Optional: true, Env: "CLAUDE_CODE_SUBAGENT_MODEL", Default: openRouterModel, Help: "The model Claude Code's subagents ask for."},
+				{Name: "max_context_tokens", Label: "Context tokens", Optional: true, Env: "CLAUDE_CODE_MAX_CONTEXT_TOKENS", Default: "1000000", Help: "The context window Claude Code plans for."},
+				{Name: "auto_compact_window", Label: "Compact window", Optional: true, Env: "CLAUDE_CODE_AUTO_COMPACT_WINDOW", Default: "400000", Help: "How much context fills before it compacts."},
+				{Name: "gateway_model_discovery", Label: "Gateway model discovery", Optional: true, Env: "CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY", Default: "1", Help: "Lets Claude Code list the gateway's models."},
+				{Name: "disable_nonessential_traffic", Label: "Nonessential traffic", Optional: true, Env: "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC", Default: "1", Help: "Stops traffic that is not the conversation."},
+				{Name: "enable_todo_tools", Label: "Todo tools", Optional: true, Env: "CLAUDE_CODE_ENABLE_TODO_TOOLS", Default: "1", Help: "Gives Claude Code its todo tools."},
 			},
 			Steps: []string{
 				"Sign in at `https://openrouter.ai` and open Keys.",

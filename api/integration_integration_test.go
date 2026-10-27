@@ -35,11 +35,11 @@ func TestIntegration_SaveListDelete(t *testing.T) {
 	assert.False(t, strings.Contains(string(list.Raw), "sk-1"))
 	assert.Len(t, f.call(t, asAdmin, http.MethodGet, "/secrets", nil).list("secrets"), 0)
 
-	// A switch comes back as on or off, never with the key.
-	routed := f.call(t, asAdmin, http.MethodPut, "/integrations/openrouter", api.IntegrationRequest{Values: map[string]string{"token": "sk-or-2", "model.enabled": "0"}})
+	// The API key sets the rest of the variables, and the key never comes
+	// back.
+	routed := f.call(t, asAdmin, http.MethodPut, "/integrations/openrouter", api.IntegrationRequest{Values: map[string]string{"token": "sk-or-2"}})
 	assert.Equal(t, http.StatusOK, routed.Status, string(routed.Raw))
-	assert.Contains(t, string(routed.Raw), `"model":false`)
-	assert.Contains(t, string(routed.Raw), `"base_url":true`)
+	assert.Contains(t, string(routed.Raw), `"set":["token"]`)
 	assert.NotContains(t, string(routed.Raw), "sk-or-2")
 
 	unknown := f.call(t, asAdmin, http.MethodPut, "/integrations/nothing", api.IntegrationRequest{})
