@@ -20,7 +20,7 @@ func sideMenu(t *testing.T, body string) string {
 }
 
 // Settings is in the sidebar, after Notes, for a user who may open any
-// settings page; it sits under Settings, so it is active on its pages.
+// settings page; the link is active on every page under Settings.
 func TestSidebar_Settings(t *testing.T) {
 	t.Parallel()
 
@@ -40,7 +40,7 @@ func TestSidebar_Settings(t *testing.T) {
 }
 
 // With no folder the sidebar says so and links the form that adds a
-// repository, for a user who may; others read where it is added.
+// repository, for a user who may; others read where to add one.
 func TestSidebar_EmptyLinksAddProject(t *testing.T) {
 	t.Parallel()
 

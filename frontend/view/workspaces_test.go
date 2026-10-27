@@ -43,8 +43,8 @@ func TestWorkspaces_RowMenu(t *testing.T) {
 	assert.Contains(t, row, "SSH keys")
 }
 
-// A workspace with no project, or no secret, says so and offers to add
-// one in the cell, for a user who may; with some, the count links.
+// A workspace with no project, or no secret, says so and links the form
+// that adds one in the cell, for a user who may; with some, the count links.
 func TestWorkspaces_EmptyCounts(t *testing.T) {
 	t.Parallel()
 
