@@ -2,7 +2,7 @@
 <div class="page-head">
 	<div>
 		<h2>Integrations</h2>
-		<p>The services task-ui talks to. task-ui encrypts their tokens with the instance key {{ with .InstanceKey }}<b class="mono-break">{{ .Fingerprint }}</b>{{ else }}<span class="badge bad">none yet</span>{{ end }}; leave a secret field empty to keep it.</p>
+		<p>Tokens are encrypted with the instance key {{ with .InstanceKey }}<b class="mono-break">{{ .Fingerprint }}</b>{{ else }}<span class="badge bad">none yet</span>{{ end }}; leave a secret field empty to keep it.</p>
 	</div>
 </div>
 
@@ -10,19 +10,16 @@
 {{- $admin := and .User .User.CanAdmin }}
 <section class="block integration-cards">
 	<div class="wf-steps-head">
-		<div>
-			<h3 class="section-title">The services</h3>
-			<p class="faint">A card per integration, its settings and the switches that leave a variable out of a run, then how to get its key.</p>
-		</div>
-		<button type="button" class="btn btn-sm" data-cards-fold aria-pressed="true">Fold all</button>
+		<h3 class="section-title">The services</h3>
+		<button type="button" class="btn btn-sm" data-cards-fold aria-pressed="false">Expand all</button>
 	</div>
 	<ol class="wf-rail">
 		{{- range $n, $int := .Integrations }}
-		<li class="wf-step integration-step kind-{{ $int.ID }} open" id="{{ $int.ID }}">
+		<li class="wf-step integration-step kind-{{ $int.ID }}" id="{{ $int.ID }}">
 			<span class="wf-node" aria-hidden="true">{{ add $n 1 }}</span>
 			<div class="wf-card">
 				<div class="wf-card-head">
-					<button type="button" class="wf-toggle" data-card-toggle aria-expanded="true">
+					<button type="button" class="wf-toggle" data-card-toggle aria-expanded="false">
 						<span class="wf-kind"><svg class="ic" aria-hidden="true"><use href="#i-plug"/></svg>Integration</span>
 						<span class="wf-line">{{ $int.Title }}</span>
 						{{- if $int.Configured }}<span class="badge ok">set up</span>{{ else }}<span class="badge">not set up</span>{{ end }}
@@ -98,7 +95,7 @@
 							<button type="button" class="btn" data-run data-folder="internal" data-job="@forgejo-sync" data-run-args='["--dry-run"]' data-title="internal / forgejo-sync --dry-run" title="Run @forgejo-sync --dry-run: the report alone, nothing changes">Dry run</button>
 							<button type="button" class="btn" data-run data-folder="internal" data-job="@forgejo-sync" data-title="internal / forgejo-sync" title="Run @forgejo-sync now: workspaces, homes, projects and hooks">Sync now</button>
 							{{- end }}
-							<button class="btn btn-primary" type="submit">Save</button>
+							<button class="btn btn-primary" type="submit" disabled>Save</button>
 						</div>
 					</form>
 					{{- if eq $int.ID "forgejo" }}

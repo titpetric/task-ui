@@ -2209,6 +2209,23 @@
     toggle.setAttribute("aria-expanded", opened ? "true" : "false");
   });
 
+  // An integration form saves only a change: Save starts disabled, and
+  // the card takes the accent border while a field differs from the page.
+  document.querySelectorAll("form.integration-form").forEach(function (form) {
+    var save = form.querySelector('button[type="submit"]');
+    if (!save) return;
+    var card = form.closest(".integration-step");
+    var saved = new URLSearchParams(new FormData(form)).toString();
+    function changed() {
+      var dirty = new URLSearchParams(new FormData(form)).toString() !== saved;
+      save.disabled = !dirty;
+      if (card) card.classList.toggle("dirty", dirty);
+    }
+    form.addEventListener("input", changed);
+    form.addEventListener("change", changed);
+    changed();
+  });
+
   document.querySelectorAll("form[data-workflow]").forEach(function (form) {
     var list = form.querySelector("[data-steps]");
     list.querySelectorAll("[data-step]").forEach(function (row) {

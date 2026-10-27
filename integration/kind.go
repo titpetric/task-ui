@@ -35,7 +35,7 @@ func Kinds() []Kind {
 		{
 			ID:          Claude,
 			Title:       "Claude Code",
-			Description: "The token Claude Code signs in with, from `claude setup-token`, for the whole instance. A run gets it as CLAUDE_CODE_OAUTH_TOKEN when the user who started it, or their role, is checked below: the agent job of the Notes board runs as the agent's user, and a Claude terminal as you.",
+			Description: "The token Claude Code signs in with, from `claude setup-token`; a run gets it as CLAUDE_CODE_OAUTH_TOKEN for the users and roles checked below.",
 			Fields: []Field{
 				{Name: "token", Label: "OAuth token", Secret: true, Env: "CLAUDE_CODE_OAUTH_TOKEN", Placeholder: "sk-ant-oat01-…", Help: "Valid for a year from setup-token; set a new one before it ends."},
 				{Name: "who", Label: "Who", Optional: true, Who: true, Help: "The roles and users whose runs get the token; none checked is everyone."},
@@ -51,7 +51,7 @@ func Kinds() []Kind {
 		{
 			ID:          OpenRouter,
 			Title:       "OpenRouter",
-			Description: "The gateway Claude Code asks instead of an Anthropic account. While it is set up, a run gets its variables and none of the Claude Code token: `ANTHROPIC_BASE_URL` sends Claude Code to OpenRouter, `ANTHROPIC_AUTH_TOKEN` signs it in with the key, and `ANTHROPIC_API_KEY` goes empty so no key of its own signs it in. A switch leaves its variable out of the runs and keeps the value for the next switch on.",
+			Description: "The gateway Claude Code asks instead of an Anthropic account; while set up, a run gets its variables and none of the Claude Code token.",
 			Fields: []Field{
 				{Name: "token", Label: "API key", Secret: true, Placeholder: "sk-or-v1-…", Help: "A key from openrouter.ai/settings/keys; it reaches a run as OPENROUTER_API_KEY and ANTHROPIC_AUTH_TOKEN."},
 				{Name: "openrouter_api_key", Label: "OPENROUTER_API_KEY", Optional: true, Env: "OPENROUTER_API_KEY", Source: "token", Toggle: true, DefaultOn: true, Help: "OpenRouter's own name for the key, for the tools that read it."},
@@ -76,7 +76,7 @@ func Kinds() []Kind {
 		{
 			ID:          Forgejo,
 			Title:       "Forgejo",
-			Description: "The git host. Sync makes a workspace of every organisation the token's user belongs to and of every user whose repositories it can read, with the repository named like the owner as its home and every other repository a project in its src, and installs a push hook on each the token administers so a push pulls the checkout. A user without a readable repository gets no workspace. It adds and updates, and never removes.",
+			Description: "The git host; Sync makes a workspace of every organisation and of every user whose repositories the token reads, and installs a push hook on each repository it administers.",
 			Fields: []Field{
 				{Name: "url", Label: "URL", Placeholder: "https://git.cdn.si", Help: "The instance task-ui syncs from."},
 				{Name: "token", Label: "Token", Secret: true, Help: "A personal access token of a user who is a member of the organisations to sync, with the scopes read:user, read:organization, read:repository and write:repository, the last for the hooks; see the Integrations chapter."},
@@ -94,7 +94,7 @@ func Kinds() []Kind {
 		{
 			ID:          Beszel,
 			Title:       "Beszel",
-			Description: "The host monitor. task-ui reads its systems for the Inventory page: each host's state, cores, CPU, memory and disk. It signs in with a token, never a password.",
+			Description: "The host monitor; task-ui reads its systems for the Inventory page.",
 			Fields: []Field{
 				{Name: "url", Label: "URL", Placeholder: "http://beszel:8090", Help: "Where task-ui reaches the hub."},
 				{Name: "token", Label: "Token", Secret: true, Help: "An impersonation token of a read-only Beszel user, minted by a superuser with a duration; see the Integrations chapter. Changing that user's password revokes it."},

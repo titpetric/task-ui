@@ -53,11 +53,12 @@ func TestIntegration_Page(t *testing.T) {
 	body := buf.String()
 	assert.NotContains(t, body, "sk-secret")
 	assert.Contains(t, body, `<ol class="wf-rail">`)
-	assert.Contains(t, body, `data-cards-fold aria-pressed="true">Fold all</button>`)
+	assert.Contains(t, body, `data-cards-fold aria-pressed="false">Expand all</button>`)
 	for _, kind := range integration.Kinds() {
-		assert.Contains(t, body, `<li class="wf-step integration-step kind-`+kind.ID+` open" id="`+kind.ID+`">`)
+		assert.Contains(t, body, `<li class="wf-step integration-step kind-`+kind.ID+`" id="`+kind.ID+`">`)
 		assert.Contains(t, body, `data-api="/api/integrations/`+kind.ID+`"`)
-		assert.Contains(t, body, `data-card-toggle aria-expanded="true"`)
+		assert.Contains(t, body, `data-card-toggle aria-expanded="false"`)
+		assert.Contains(t, body, `type="submit" disabled>Save</button>`)
 		last := 0
 		for i, step := range kind.Steps {
 			at := strings.Index(body, `<li>`+string(view.Message(step))+`</li>`)

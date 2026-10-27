@@ -1,9 +1,16 @@
 /* Settings, Integrations: a rail of cards as the workflow editor's
-   steps, one per integration, all open; each card holds its form, the
-   switches that send a variable or leave it out, and the steps to its
-   key. */
+   steps, one per integration, folded by default; each card holds its
+   form, the switches that send a variable or leave it out, and the steps
+   to its key. The cards fill the page. */
 .integration-cards {
-  max-width: 56rem;
+  width: 100%;
+  max-width: none;
+}
+
+/* A form with unsaved changes: its card's border takes the accent until
+   Save writes it or the page reloads. */
+.integration-step.dirty .wf-card {
+  border-color: var(--signal);
 }
 
 .integration-step {
@@ -44,8 +51,8 @@
   }
 
   & .field small {
-    font-size: var(--fs-data);
-    line-height: 1.5;
+    font-size: var(--fs-caption);
+    line-height: 1.35;
   }
 
   & .steps {
@@ -70,12 +77,12 @@
 }
 
 .integration-desc {
-  margin: 0 0 var(--block-gap);
-  font-size: var(--fs-data);
-  line-height: 1.5;
+  margin: 0 0 0.6rem;
+  font-size: var(--fs-caption);
+  line-height: 1.4;
 
   & p {
-    margin: 0 0 0.8rem;
+    margin: 0 0 0.35rem;
   }
 
   & p:last-child {
