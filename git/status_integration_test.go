@@ -57,6 +57,10 @@ func TestGit_Status(t *testing.T) {
 	assert.Equal(t, 1, s.Ahead)
 	assert.Equal(t, 2, s.Behind)
 	assert.Equal(t, 2, s.Dirty)
+	assert.Equal(t, []git.Change{
+		{Index: ".", Worktree: "M", Path: "a"},
+		{Index: "?", Worktree: "?", Path: "new"},
+	}, s.Changes)
 
 	// The root bounds the search: from inside the checkout, a root
 	// below it finds none.

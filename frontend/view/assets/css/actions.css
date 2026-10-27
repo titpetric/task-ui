@@ -12,10 +12,12 @@
   font-size: var(--fs-data);
 }
 
-/* ⎇ main ↑1 ↓3 ●2 · the checkout: the branch bright, what to push or
-   pull and what changed in the accent, the checkout faint. */
+/* ⎇ main ↑1 ↓3 ● 2 files changed or untracked · the checkout: the
+   branch bright, what to push or pull and what changed in the accent,
+   the checkout faint. */
 .gitline {
   display: flex;
+  flex-wrap: wrap;
   align-items: baseline;
   gap: 0.55rem;
   min-width: 0;
@@ -33,9 +35,26 @@
   }
 
   & .ahead,
-  & .behind,
-  & .dirty {
+  & .behind {
     color: var(--signal);
+  }
+
+  /* The count of changed files opens the table under the line: the
+     line's own type, with a chevron that turns down while it is open. */
+  & .dirty {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--signal);
+    font: inherit;
+    cursor: pointer;
+
+    &:hover {
+      text-decoration: underline;
+    }
   }
 
   & .clean {
@@ -46,6 +65,21 @@
     overflow: hidden;
     text-overflow: ellipsis;
     color: var(--text-faint);
+  }
+}
+
+/* The changed files of the checkout, under the git line: the status git
+   prints in short, and the file's path. */
+.gitstatus {
+  flex-basis: 100%;
+  min-width: 0;
+
+  & .gitstate code {
+    color: var(--signal);
+  }
+
+  & .gitpath {
+    overflow-wrap: anywhere;
   }
 }
 

@@ -2678,6 +2678,19 @@
     body.hidden = !open;
   });
 
+  // The count of changed files in the git line unfolds the table of the
+  // checkout's status under the line, and folds it again.
+  document.addEventListener("click", function (event) {
+    var button = event.target.closest("[data-git-status]");
+    if (!button) return;
+    var body = document.getElementById(button.getAttribute("aria-controls"));
+    if (!body) return;
+    var open = button.getAttribute("aria-expanded") !== "true";
+    button.setAttribute("aria-expanded", open ? "true" : "false");
+    button.title = open ? "Hide the changed files" : "Show the changed files";
+    body.hidden = !open;
+  });
+
   // followThread puts a running workflow run's thread in again once the
   // workflow's topic says the run ended: data-follow names the workflow,
   // and the thread comes from the run's page, data-page, with its answer.
