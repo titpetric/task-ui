@@ -13,19 +13,10 @@
 </div>
 
 {{- /* The dashboard follows the runs topic: a run that starts adds its
-     tile, one that ends marks it, and the count keeps up; no reload. */}}
+     tile, one that ends marks it; no reload. */}}
 {{- template "pipelinenote" (list $ ($.PipelineAlert "")) }}
 
 <div data-sse="runs" data-dashboard>
-{{- $jobs := 0 }}{{ range .Folders }}{{ $jobs = len .Jobs | add $jobs }}{{ end }}
-<div class="metrics">
-	<div><b>Folders</b><span>{{ len .Folders }}</span></div>
-	<div><b>Jobs</b><span>{{ $jobs }}</span></div>
-	<div><b>Running</b><span data-running-count>{{ len .Running }}</span></div>
-	<div><b>Scheduled</b><span>{{ len .Schedules }}</span></div>
-	<div><b>Your role</b><span>{{ .User.EffectiveRole }}</span></div>
-</div>
-
 <section class="block">
 	<h3>Running now <small>one run per job, up to a run per CPU; terminals take no turn</small></h3>
 	<div class="tiles" data-tiles>

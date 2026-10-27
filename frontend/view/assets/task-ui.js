@@ -4067,17 +4067,11 @@
   }
   // The dashboard follows the runs topic: a run that starts adds its
   // tile, polled for its frame; one that ends marks its tile and the last
-  // frame is fetched. The running count follows.
+  // frame is fetched.
   var dashboard = document.querySelector('[data-sse="runs"][data-dashboard]');
   if (dashboard && window.EventSource) {
     var tiles = dashboard.querySelector("[data-tiles]");
     var tilesEmpty = dashboard.querySelector("[data-tiles-empty]");
-    var runningCount = dashboard.querySelector("[data-running-count]");
-    var countRunning = function () {
-      var n = tiles.querySelectorAll(".tile-head .dot.running").length;
-      if (runningCount) runningCount.textContent = n;
-      if (tilesEmpty) tilesEmpty.hidden = tiles.children.length > 0;
-    };
     onRuns(function (run) {
       var tile = tiles.querySelector('[data-tile="' + run.id + '"]');
       if (!tile && run.state === "running") {
@@ -4110,7 +4104,7 @@
         named.textContent = run.title || "";
         named.title = run.title || "";
       }
-      countRunning();
+      if (tilesEmpty) tilesEmpty.hidden = tiles.children.length > 0;
     });
   }
 
