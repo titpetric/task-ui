@@ -20,4 +20,9 @@ func TestField(t *testing.T) {
 	assert.True(t, clone.Valid(""))
 	assert.False(t, clone.Valid("ftp"))
 	assert.True(t, integration.Field{Name: "url"}.Valid("anything"))
+
+	// A variable's setting carries what a run gets and its switch.
+	data, err = json.Marshal(integration.Field{Name: "model", Label: "Model", Env: "ANTHROPIC_MODEL", Default: "m", Toggle: true, DefaultOn: true})
+	assert.NoError(t, err)
+	assert.JSONEq(t, `{"name":"model","label":"Model","env":"ANTHROPIC_MODEL","default":"m","toggle":true,"default_on":true}`, string(data))
 }

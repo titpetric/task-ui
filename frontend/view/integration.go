@@ -15,12 +15,17 @@ type Integration struct {
 	Set        map[string]bool
 	// Checked are the roles and users a Who setting names.
 	Checked map[string]bool
+	// Enabled are the switches of the settings that have one.
+	Enabled map[string]bool
 }
 
 // NewIntegration reads an integration's settings for its form.
 func NewIntegration(kind integration.Kind, values map[string]string) Integration {
-	view := Integration{Kind: kind, Configured: integration.Configured(kind, values), Values: map[string]string{}, Set: map[string]bool{}, Checked: map[string]bool{}}
+	view := Integration{Kind: kind, Configured: integration.Configured(kind, values), Values: map[string]string{}, Set: map[string]bool{}, Checked: map[string]bool{}, Enabled: map[string]bool{}}
 	for _, field := range kind.Fields {
+		if field.Toggle {
+			view.Enabled[field.Name] = integration.Enabled(field, values)
+		}
 		if field.Secret {
 			view.Set[field.Name] = values[field.Name] != ""
 			continue

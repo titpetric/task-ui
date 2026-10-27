@@ -22,10 +22,17 @@ func TestIntegration(t *testing.T) {
 	_, leaked := got.Values["token"]
 	assert.False(t, leaked)
 	assert.False(t, view.NewIntegration(kind, nil).Configured)
+
+	// A switch without a row takes its setting's default; a row says on or off.
+	router := view.NewIntegration(*integration.KindOf(integration.OpenRouter), map[string]string{"token": "sk-or-1", "model_enabled": "0", "auth_token_enabled": "1"})
+	assert.False(t, router.Enabled["model"])
+	assert.True(t, router.Enabled["auth_token"])
+	assert.True(t, router.Enabled["base_url"])
 }
 
-// The page is a row per integration: the form on the left, the steps to
-// its key on the right, in order; the Claude row's Who lists the users
+// The page is a card per integration on a rail: the form and its
+// switches, the steps to its key folded under it, in order; the Claude
+// card's Who lists the users
 // with the role they act with, the roles with their counts, and the
 // summary line the script fills. Nothing of a secret shows.
 func TestIntegration_Page(t *testing.T) {
@@ -45,11 +52,12 @@ func TestIntegration_Page(t *testing.T) {
 	assert.NoError(t, v.Render(&buf, "integrations", p))
 	body := buf.String()
 	assert.NotContains(t, body, "sk-secret")
-	assert.Contains(t, body, `<div class="integrations-head" aria-hidden="true"><span>Integration</span><span>How to get its key</span></div>`)
+	assert.Contains(t, body, `<ol class="wf-rail">`)
+	assert.Contains(t, body, `data-cards-fold aria-pressed="true">Fold all</button>`)
 	for _, kind := range integration.Kinds() {
-		assert.Contains(t, body, `<div class="integration" id="`+kind.ID+`">`)
+		assert.Contains(t, body, `<li class="wf-step integration-step kind-`+kind.ID+` open" id="`+kind.ID+`">`)
 		assert.Contains(t, body, `data-api="/api/integrations/`+kind.ID+`"`)
-		assert.Contains(t, body, `data-peek="integration.`+kind.ID+`" checked`)
+		assert.Contains(t, body, `data-card-toggle aria-expanded="true"`)
 		last := 0
 		for i, step := range kind.Steps {
 			at := strings.Index(body, `<li>`+string(view.Message(step))+`</li>`)
@@ -57,8 +65,12 @@ func TestIntegration_Page(t *testing.T) {
 			last = at
 		}
 	}
-	assert.Contains(t, body, `<h4>Get the OAuth token</h4>`)
-	assert.Contains(t, body, `<h4>Get the token</h4>`)
+	assert.Contains(t, body, `<summary>Get the OAuth token</summary>`)
+	assert.Contains(t, body, `<summary>Get the API key</summary>`)
+	assert.Contains(t, body, `<summary>Get the token</summary>`)
+	assert.Contains(t, body, `name="values.model.enabled" value="1" data-type="toggle" checked`)
+	assert.Contains(t, body, `value="deepseek/deepseek-v4.1-flash-1017"`)
+	assert.Contains(t, body, `value="https://openrouter.ai/api"`)
 	assert.Contains(t, body, "<li><p>On a machine where you are signed in to Claude Code, run <code>claude setup-token</code>.</p>\n</li>")
 	assert.Contains(t, body, `<div class="whofield" data-who-empty="every run gets the token">`)
 	assert.Contains(t, body, `value="admin" data-type="joined" checked> admin <small class="count">· 2</small></label>`)

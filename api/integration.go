@@ -22,13 +22,16 @@ func (h *Handlers) integrationView(r *http.Request, kind integration.Kind) (Inte
 	if err != nil {
 		return IntegrationView{}, err
 	}
-	view := IntegrationView{Kind: kind, Configured: integration.Configured(kind, values), Values: map[string]string{}, Set: []string{}}
+	view := IntegrationView{Kind: kind, Configured: integration.Configured(kind, values), Values: map[string]string{}, Set: []string{}, Switches: map[string]bool{}}
 	for _, field := range kind.Fields {
 		switch {
 		case field.Secret && values[field.Name] != "":
 			view.Set = append(view.Set, field.Name)
 		case !field.Secret:
 			view.Values[field.Name] = values[field.Name]
+		}
+		if field.Toggle {
+			view.Switches[field.Name] = integration.Enabled(field, values)
 		}
 	}
 	return view, nil
@@ -201,5 +204,5 @@ func (h *Handlers) summarize(r *http.Request, prompt, report string) (string, er
 		return "", err
 	}
 	system := claude.Context(user.Name, user.EffectiveRole(), h.permissions(r).Summary())
-	return h.opts.Summarizer.Summarize(r.Context(), env["CLAUDE_CODE_OAUTH_TOKEN"], system, prompt, report)
+	return h.opts.Summarizer.Summarize(r.Context(), env, system, prompt, report)
 }

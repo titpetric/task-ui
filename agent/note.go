@@ -15,7 +15,7 @@ func (a *Agent) Note(ctx context.Context) error {
 	if thread == "" {
 		return errors.New("TASK_UI_NOTE: this job runs from a note on the Notes board")
 	}
-	if a.getenv("CLAUDE_CODE_OAUTH_TOKEN") == "" {
+	if !a.signedIn() {
 		return errNoToken
 	}
 	author := a.getenv("TASK_UI_NOTE_AUTHOR")

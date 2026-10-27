@@ -9,7 +9,7 @@ import (
 // The pty is Claude's own, and the context goes into its system prompt.
 // As a folder's @claude it starts in the folder, or in the directory inside it the run is of.
 func (a *Agent) Shell(args []string) error {
-	if a.getenv("CLAUDE_CODE_OAUTH_TOKEN") == "" {
+	if !a.signedIn() {
 		return errNoToken
 	}
 	path, err := a.claudePath()

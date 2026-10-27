@@ -969,6 +969,9 @@
         case "bool":
           value = value === "true" || value === "1" || value === "on";
           break;
+        case "toggle":
+          value = el.checked ? "1" : "0";
+          break;
         case "int":
           value = parseInt(value, 10) || 0;
           break;
@@ -2190,6 +2193,31 @@
     stepProblem(row, problem);
     row.scrollIntoView({ block: "center" });
   }
+
+  // A card folds to its head and back, and Fold all folds every card on
+  // the page, its aria-pressed the state they share.
+  document.addEventListener("click", function (event) {
+    var all = event.target.closest("[data-cards-fold]");
+    if (all) {
+      var open = all.getAttribute("aria-pressed") !== "true";
+      all.setAttribute("aria-pressed", open ? "true" : "false");
+      all.textContent = open ? "Fold all" : "Expand all";
+      document.querySelectorAll("[data-card-toggle]").forEach(function (toggle) {
+        var card = toggle.closest(".wf-step");
+        if (!card) return;
+        card.classList.toggle("open", open);
+        toggle.setAttribute("aria-expanded", open ? "true" : "false");
+      });
+      return;
+    }
+    var toggle = event.target.closest("[data-card-toggle]");
+    if (!toggle) return;
+    var card = toggle.closest(".wf-step");
+    if (!card) return;
+    var opened = !card.classList.contains("open");
+    card.classList.toggle("open", opened);
+    toggle.setAttribute("aria-expanded", opened ? "true" : "false");
+  });
 
   document.querySelectorAll("form[data-workflow]").forEach(function (form) {
     var list = form.querySelector("[data-steps]");

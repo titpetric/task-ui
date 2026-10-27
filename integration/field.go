@@ -24,6 +24,23 @@ type Field struct {
 	// Generated fills an empty secret with a random value the first time
 	// the integration saves, and keeps it after.
 	Generated bool `json:"generated,omitempty"`
+	// Env is the environment variable the setting sets in a run the
+	// integration serves.
+	Env string `json:"env,omitempty"`
+	// Default is the value the setting has while its field is empty, and
+	// what its form shows in place of a placeholder.
+	Default string `json:"default,omitempty"`
+	// Toggle gives the setting a switch: off leaves its variable out of a
+	// run and keeps its value for the next switch on.
+	Toggle bool `json:"toggle,omitempty"`
+	// DefaultOn starts the switch on, for a variable a run needs.
+	DefaultOn bool `json:"default_on,omitempty"`
+	// Empty sends the variable with no value, such as ANTHROPIC_API_KEY,
+	// and the form shows the switch alone.
+	Empty bool `json:"empty,omitempty"`
+	// Source takes the value from another field, and the form shows the
+	// switch alone: a key that reaches a run as two variables.
+	Source string `json:"source,omitempty"`
 }
 
 // Valid reports whether a value is one the setting takes: any without options, else one of them or empty.

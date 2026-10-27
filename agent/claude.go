@@ -12,8 +12,8 @@ import (
 	"github.com/titpetric/task-ui/claude"
 )
 
-// errNoToken stops a command without a Claude Code token to sign in with.
-var errNoToken = errors.New("CLAUDE_CODE_OAUTH_TOKEN: set up Settings, Integrations, Claude Code, and name this user in Who")
+// errNoToken stops a command without a sign-in for Claude Code.
+var errNoToken = errors.New("CLAUDE_CODE_OAUTH_TOKEN or ANTHROPIC_AUTH_TOKEN: set up Settings, Integrations, Claude Code or OpenRouter")
 
 // getenv returns a variable of the environment, the last one set winning
 // as it does for a process.
@@ -25,6 +25,15 @@ func (a *Agent) getenv(name string) string {
 		}
 	}
 	return value
+}
+
+// signedIn reports whether Claude Code has a sign-in: an OAuth token, or
+// OpenRouter's auth token with its base URL.
+func (a *Agent) signedIn() bool {
+	if a.getenv("CLAUDE_CODE_OAUTH_TOKEN") != "" {
+		return true
+	}
+	return a.getenv("ANTHROPIC_AUTH_TOKEN") != "" && a.getenv("ANTHROPIC_BASE_URL") != ""
 }
 
 // environ is the environment Claude Code runs with. IS_SANDBOX lets it
@@ -88,7 +97,7 @@ func (a *Agent) claudePath() (string, error) {
 // the MCP configuration of TASK_UI_MCP_CONFIG, task-ui's tools as the
 // run's user, when the run has one, and the workspace's home.
 func (a *Agent) ask(ctx context.Context, dir, prompt, system string, out io.Writer) error {
-	if a.getenv("CLAUDE_CODE_OAUTH_TOKEN") == "" {
+	if !a.signedIn() {
 		return errNoToken
 	}
 	path, err := a.claudePath()

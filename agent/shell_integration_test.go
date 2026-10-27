@@ -27,7 +27,7 @@ func TestAgent_Shell(t *testing.T) {
 	assert.Contains(t, out, "arg=--dangerously-skip-permissions\narg=--append-system-prompt\narg=# task-ui\n", "the context goes to the system prompt")
 	assert.Contains(t, out, "arg=--resume\narg=x\n")
 
-	out, err = shell("AGENT_TEST_SHELL=", "PATH="+fakeClaude(t), "CLAUDE_CODE_OAUTH_TOKEN=")
+	out, err = shell("AGENT_TEST_SHELL=", "PATH="+fakeClaude(t), "CLAUDE_CODE_OAUTH_TOKEN=", "ANTHROPIC_AUTH_TOKEN=", "ANTHROPIC_BASE_URL=")
 	assert.Error(t, err)
-	assert.Contains(t, out, "CLAUDE_CODE_OAUTH_TOKEN: set up Settings")
+	assert.Contains(t, out, "CLAUDE_CODE_OAUTH_TOKEN or ANTHROPIC_AUTH_TOKEN: set up Settings")
 }

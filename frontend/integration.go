@@ -148,7 +148,7 @@ func (h *Handlers) claudeFor(r *http.Request, user *model.User) bool {
 		return false
 	}
 	env, _ := h.opts.Integrations.Env(r.Context(), user.Name, user.EffectiveRole())
-	return env["CLAUDE_CODE_OAUTH_TOKEN"] != ""
+	return env["CLAUDE_CODE_OAUTH_TOKEN"] != "" || env["ANTHROPIC_AUTH_TOKEN"] != ""
 }
 
 // hostJobs puts the jobs that run a command on hosts on a page with a

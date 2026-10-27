@@ -29,7 +29,7 @@ func (a *Agent) Prompt(ctx context.Context) error {
 	if dir == "" {
 		return errors.New("TASK_UI_PROMPT_DIR or TASK_UI_WORKSPACE_DIR: this job runs in a folder or a workspace")
 	}
-	if a.getenv("CLAUDE_CODE_OAUTH_TOKEN") == "" {
+	if !a.signedIn() {
 		return errNoToken
 	}
 	source := a.getenv("TASK_UI_PROMPT_SOURCE")

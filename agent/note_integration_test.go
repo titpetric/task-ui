@@ -47,7 +47,7 @@ func TestAgent_Note_refused(t *testing.T) {
 	none := &agent.Agent{Stdout: &out, Env: []string{"PATH=" + path, "CLAUDE_CODE_OAUTH_TOKEN=sk-1"}}
 	assert.ErrorContains(t, none.Note(context.Background()), "TASK_UI_NOTE: this job runs from a note on the Notes board")
 	untokened := &agent.Agent{Stdout: &out, Env: []string{"PATH=" + path, "TASK_UI_NOTE=@claude hi"}}
-	assert.ErrorContains(t, untokened.Note(context.Background()), "CLAUDE_CODE_OAUTH_TOKEN: set up Settings, Integrations, Claude Code, and name this user in Who")
+	assert.ErrorContains(t, untokened.Note(context.Background()), "CLAUDE_CODE_OAUTH_TOKEN or ANTHROPIC_AUTH_TOKEN: set up Settings, Integrations, Claude Code or OpenRouter")
 	assert.Equal(t, "", out.String())
 
 }

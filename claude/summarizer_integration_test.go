@@ -26,21 +26,26 @@ func fakeClaude(t *testing.T) string {
 func TestSummarizer_Summarize(t *testing.T) {
 	t.Parallel()
 	s := &claude.Summarizer{Command: fakeClaude(t), Timeout: 5 * time.Second}
-	out, err := s.Summarize(context.Background(), "sk-1", "", "Summarize.", "## a\n\nok\n")
+	token := map[string]string{"CLAUDE_CODE_OAUTH_TOKEN": "sk-1"}
+	out, err := s.Summarize(context.Background(), token, "", "Summarize.", "## a\n\nok\n")
 	assert.NoError(t, err)
 	assert.Equal(t, "prompt=Summarize. token=sk-1\n## a\n\nok", out)
 
-	_, err = s.Summarize(context.Background(), "", "", "Summarize.", "x")
+	_, err = s.Summarize(context.Background(), map[string]string{}, "", "Summarize.", "x")
 	assert.ErrorIs(t, err, claude.ErrNoToken)
-	_, err = s.Summarize(context.Background(), "sk-1", "", "fail", "x")
+	_, err = s.Summarize(context.Background(), token, "", "fail", "x")
 	assert.ErrorContains(t, err, "broken")
 
 	quick := &claude.Summarizer{Command: fakeClaude(t), Timeout: 200 * time.Millisecond}
-	_, err = quick.Summarize(context.Background(), "sk-1", "", "slow", "x")
+	_, err = quick.Summarize(context.Background(), token, "", "slow", "x")
 	assert.ErrorContains(t, err, "ran past")
 
 	// The system prompt goes ahead of the prompt.
-	out, err = s.Summarize(context.Background(), "sk-1", "You work in task-ui.", "Summarize.", "x")
+	out, err = s.Summarize(context.Background(), token, "You work in task-ui.", "Summarize.", "x")
 	assert.NoError(t, err)
 	assert.Equal(t, "system=You work in task-ui.\nprompt=Summarize. token=sk-1\nx", out)
+
+	// OpenRouter's auth token and base URL sign it in too.
+	_, err = s.Summarize(context.Background(), map[string]string{"ANTHROPIC_AUTH_TOKEN": "sk-or-1", "ANTHROPIC_BASE_URL": "https://openrouter.ai/api"}, "", "Summarize.", "x")
+	assert.NoError(t, err)
 }

@@ -1,163 +1,145 @@
-/* Settings, Integrations: a table-like grid in the block, a row per
-   integration. The left cell holds the name, the description and the
-   form; the right cell the numbered steps to its key, about 3:2. In a
-   box narrower than 46rem the steps stack under the form, and the head
-   row goes, as each row's cells carry their own headings. */
-.integrations {
-  container-type: inline-size;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  background: var(--ink-1);
+/* Settings, Integrations: a rail of cards as the workflow editor's
+   steps, one per integration, all open; each card holds its form, the
+   switches that send a variable or leave it out, and the steps to its
+   key. */
+.integration-cards {
+  max-width: 56rem;
 }
 
-.integrations-head,
-.integration {
-  display: grid;
-  grid-template-columns: 3fr 2fr;
-}
+.integration-step {
+  --kind: var(--series-4);
 
-.integrations-head {
-  border-bottom: 1px solid var(--line);
-  background: var(--ink-2);
-
-  & span {
-    padding: 0.32rem 0.9rem;
-    color: var(--text-faint);
-    font-size: var(--fs-label);
-    font-weight: 600;
-    letter-spacing: var(--ls-label);
-    text-transform: uppercase;
-  }
-}
-
-.integration {
-  & + .integration {
-    border-top: 1px solid var(--line);
+  &.kind-claude {
+    --kind: var(--signal);
   }
 
-  & > div {
-    min-width: 0;
-    padding: 0.8rem 0.9rem;
+  &.kind-openrouter {
+    --kind: var(--series-4);
   }
 
-  & .steps-cell {
-    border-inline-start: 1px solid var(--line);
+  &.kind-forgejo {
+    --kind: var(--series-2);
+  }
+
+  &.kind-beszel {
+    --kind: var(--series-5);
+  }
+
+  /* The last card ends the rail. */
+  &:last-child::before {
+    display: none;
+  }
+
+  & .wf-card-body {
+    padding-bottom: 0.9rem;
   }
 
   & .form {
     max-width: none;
   }
 
-  /* Dry run, Sync now and Save wrap in a narrow cell. */
+  /* Dry run, Sync now and Save wrap in a narrow card. */
   & .form-foot {
     flex-wrap: wrap;
   }
-}
 
-/* The row's heading line: the name with its badge, the Show switch and
-   the [...] menu with Clear at the end; the steps cell's heading sits on
-   the same line. */
-.integration-head {
-  display: flex;
-  align-items: baseline;
-  gap: 0.6rem;
-  margin-bottom: var(--head-gap);
+  & .field small {
+    font-size: var(--fs-data);
+    line-height: 1.5;
+  }
 
-  & h3 {
+  & .steps {
     margin: 0;
-  }
-}
+    padding-inline-start: 1.5rem;
+    font-size: var(--fs-data);
+    line-height: 1.5;
 
-.steps-cell h4 {
-  margin: 0 0 var(--head-gap);
-  color: var(--text-faint);
-  font-size: var(--fs-caption);
-  font-weight: 600;
-  letter-spacing: var(--ls-heading);
-  text-transform: uppercase;
-  line-height: 1.25rem;
-}
+    & li {
+      margin-bottom: 0.45rem;
+    }
 
-/* One type size for the prose of a row: its description, the steps and
-   the hint under each field. */
-.integration .desc,
-.integration .integration-body > p,
-.integration .steps-cell p,
-.integration .field small,
-.integration .steps {
-  font-size: var(--fs-data);
-  line-height: 1.5;
-}
+    & li::marker {
+      color: var(--text-faint);
+      font-weight: 600;
+    }
 
-.integration .field small {
-  display: block;
-  margin-top: var(--hint-gap);
-}
-
-.integration .desc p {
-  margin: 0 0 0.8rem;
-}
-
-/* The steps: the list numbers them, in the muted colour. */
-.integration .steps {
-  margin: 0;
-  padding-inline-start: 1.5rem;
-
-  & li {
-    margin-bottom: 0.45rem;
-  }
-
-  & li::marker {
-    color: var(--text-faint);
-    font-weight: 600;
-  }
-
-  & li p {
-    margin: 0;
-  }
-}
-
-/* Off, the switch leaves the row its heading line alone. */
-.integration:has(.peek-toggle input:not(:checked)) {
-  & .integration-body,
-  & .steps-cell {
-    display: none;
-  }
-
-  & .form-cell {
-    grid-column: 1 / -1;
-  }
-
-  & .integration-head {
-    margin-bottom: 0;
-  }
-}
-
-@container (max-width: 46rem) {
-  .integrations-head {
-    display: none;
-  }
-
-  .integration {
-    grid-template-columns: minmax(0, 1fr);
-
-    & .steps-cell {
-      border-inline-start: 0;
-      border-top: 1px solid var(--line);
+    & li p {
+      margin: 0;
     }
   }
 }
 
-/* A show/hide switch beside a heading, as oida sets it: a small uppercase
-   word and a track whose knob moves; the checkbox stays the state and the
-   focus target. A .switch is the same track alone, leading a part of a
-   form it turns on and off. */
-.peek-toggle,
+.integration-desc {
+  margin: 0 0 var(--block-gap);
+  font-size: var(--fs-data);
+  line-height: 1.5;
+
+  & p {
+    margin: 0 0 0.8rem;
+  }
+
+  & p:last-child {
+    margin-bottom: 0;
+  }
+}
+
+/* A field's line: its label and, for a variable, the switch that sends
+   it. A switch-only variable shows the line alone. */
+.field-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  margin-bottom: var(--label-gap);
+
+  & > label,
+  & > .label {
+    margin-bottom: 0;
+  }
+}
+
+.env-flag .field-head {
+  margin-bottom: 0;
+}
+
+/* The steps to a key, folded under the form. */
+.integration-key {
+  margin: 0 0 var(--field-gap);
+  padding-top: 0.6rem;
+  border-top: 1px dashed var(--line-2);
+
+  & > summary {
+    color: var(--text-faint);
+    font-size: var(--fs-caption);
+    font-weight: 600;
+    letter-spacing: var(--ls-label);
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+
+  &[open] > summary {
+    margin-bottom: 0.6rem;
+  }
+
+  & > p {
+    margin: 0.6rem 0 0;
+    font-size: var(--fs-data);
+    line-height: 1.5;
+  }
+}
+
+.integration-sync {
+  margin: 0.6rem 0 0;
+  font-size: var(--fs-data);
+}
+
+/* A switch: a track whose knob moves; the checkbox stays the state and
+   the focus target. */
 .switch {
   display: inline-flex;
+  flex: none;
   align-items: center;
   gap: 0.45rem;
-  margin-inline-start: auto;
   color: var(--text-dim);
   font-size: 0.63rem;
   letter-spacing: 0.18em;
@@ -216,7 +198,7 @@
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  :is(.peek-toggle, .switch) i::after {
+  .switch i::after {
     transition: transform 0.12s ease, background 0.12s ease;
   }
 }

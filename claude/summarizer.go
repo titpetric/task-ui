@@ -27,10 +27,12 @@ type Summarizer struct {
 }
 
 // Summarize sends the document on stdin with the prompt, signed in with
-// the token, with system, when not empty, after Claude's own system
-// prompt, and returns what Claude writes.
-func (s *Summarizer) Summarize(ctx context.Context, token, system, prompt, document string) (string, error) {
-	if token == "" {
+// the integration variables in env, with system, when not empty, after
+// Claude's own system prompt, and returns what Claude writes. The sign-in
+// is a Claude Code token, or OpenRouter's auth token and base URL.
+func (s *Summarizer) Summarize(ctx context.Context, env map[string]string, system, prompt, document string) (string, error) {
+	signedIn := env["CLAUDE_CODE_OAUTH_TOKEN"] != "" || (env["ANTHROPIC_AUTH_TOKEN"] != "" && env["ANTHROPIC_BASE_URL"] != "")
+	if !signedIn {
 		return "", ErrNoToken
 	}
 	run, cancel := context.WithTimeout(ctx, s.Timeout)
@@ -44,7 +46,10 @@ func (s *Summarizer) Summarize(ctx context.Context, token, system, prompt, docum
 		args = append(args, "--append-system-prompt", system)
 	}
 	cmd := exec.CommandContext(run, command, append(args, prompt)...)
-	cmd.Env = append(os.Environ(), "CLAUDE_CODE_OAUTH_TOKEN="+token)
+	cmd.Env = os.Environ()
+	for name, value := range env {
+		cmd.Env = append(cmd.Env, name+"="+value)
+	}
 	cmd.Stdin = strings.NewReader(document)
 	var out, errOut bytes.Buffer
 	cmd.Stdout, cmd.Stderr = &out, &errOut

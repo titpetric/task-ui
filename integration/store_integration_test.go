@@ -94,4 +94,42 @@ func TestStore(t *testing.T) {
 	env, _ = s.Env(ctx, "ops", "runner")
 	assert.Len(t, env, 0)
 	assert.False(t, integration.Internal("tools"))
+
+	// OpenRouter sets a run's environment from its key and the defaults of
+	// its variables, and its auth token stands in for the Claude token.
+	assert.NoError(t, s.Save(ctx, integration.Claude, map[string]string{"token": "sk-1"}))
+	assert.NoError(t, s.Save(ctx, integration.OpenRouter, map[string]string{"token": "sk-or-1"}))
+	env, _ = s.Env(ctx, "ops", "runner")
+	assert.Equal(t, "sk-or-1", env["OPENROUTER_API_KEY"])
+	assert.Equal(t, "sk-or-1", env["ANTHROPIC_AUTH_TOKEN"])
+	assert.Equal(t, "https://openrouter.ai/api", env["ANTHROPIC_BASE_URL"])
+	assert.Equal(t, "deepseek/deepseek-v4.1-flash-1017", env["ANTHROPIC_MODEL"])
+	assert.Equal(t, "1000000", env["CLAUDE_CODE_MAX_CONTEXT_TOKENS"])
+	assert.Equal(t, "400000", env["CLAUDE_CODE_AUTO_COMPACT_WINDOW"])
+	assert.Equal(t, "1", env["CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY"])
+	assert.Equal(t, "1", env["CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC"])
+	assert.Equal(t, "1", env["CLAUDE_CODE_ENABLE_TODO_TOOLS"])
+	assert.Equal(t, "", env["ANTHROPIC_API_KEY"])
+	assert.Equal(t, "", env["CLAUDE_CODE_OAUTH_TOKEN"], "OpenRouter stands in for the Claude token")
+
+	// A switch leaves its variable out and the value stays for the next
+	// switch on.
+	assert.NoError(t, s.Save(ctx, integration.OpenRouter, map[string]string{"model": "other/model", "model.enabled": "0"}))
+	values, _ = s.Values(ctx, integration.OpenRouter)
+	assert.Equal(t, "other/model", values["model"])
+	assert.Equal(t, "0", values["model_enabled"])
+	env, _ = s.Env(ctx, "ops", "runner")
+	_, ok := env["ANTHROPIC_MODEL"]
+	assert.False(t, ok)
+	assert.NoError(t, s.Save(ctx, integration.OpenRouter, map[string]string{"model": "other/model", "model.enabled": "1"}))
+	env, _ = s.Env(ctx, "ops", "runner")
+	assert.Equal(t, "other/model", env["ANTHROPIC_MODEL"])
+
+	// Without the auth token, the Claude integration signs in again.
+	assert.NoError(t, s.Save(ctx, integration.OpenRouter, map[string]string{"token": "sk-or-1", "auth_token.enabled": "0"}))
+	env, _ = s.Env(ctx, "ops", "runner")
+	assert.Equal(t, "", env["ANTHROPIC_AUTH_TOKEN"])
+	assert.Equal(t, "sk-1", env["CLAUDE_CODE_OAUTH_TOKEN"])
+
+	assert.ErrorIs(t, s.Save(ctx, integration.OpenRouter, map[string]string{"model.enabled": "yes"}), integration.ErrUnknown)
 }

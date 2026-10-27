@@ -56,13 +56,19 @@ func (s *Store) Save(ctx context.Context, id string, values map[string]string) e
 		return ErrUnknown
 	}
 	for name, value := range values {
-		field := kind.Field(name)
-		if field == nil {
-			return fmt.Errorf("%w setting %s for %s", ErrUnknown, name, id)
+		if field := kind.Field(name); field != nil {
+			if !field.Valid(strings.TrimSpace(value)) {
+				return fmt.Errorf("%w value %q for %s: one of %s", ErrUnknown, value, name, strings.Join(field.Options, ", "))
+			}
+			continue
 		}
-		if !field.Valid(strings.TrimSpace(value)) {
-			return fmt.Errorf("%w value %q for %s: one of %s", ErrUnknown, value, name, strings.Join(field.Options, ", "))
+		if kind.ToggleField(name) != nil {
+			if value != "0" && value != "1" {
+				return fmt.Errorf("%w value %q for %s: 0 or 1", ErrUnknown, value, name)
+			}
+			continue
 		}
+		return fmt.Errorf("%w setting %s for %s", ErrUnknown, name, id)
 	}
 	current, err := s.rows(ctx, id)
 	if err != nil {
@@ -90,6 +96,18 @@ func (s *Store) Save(ctx context.Context, id string, values map[string]string) e
 			}
 		}
 	}
+	for _, field := range kind.Fields {
+		if !field.Toggle {
+			continue
+		}
+		state, ok := values[field.Name+".enabled"]
+		if !ok {
+			continue
+		}
+		if err := s.Secrets.Set(ctx, &model.Secret{Scope: ScopePrefix + id, Name: field.Name + "_enabled", Content: state}); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -110,18 +128,70 @@ func (s *Store) Delete(ctx context.Context, id string) error {
 	return nil
 }
 
-// Env returns what the integrations add to a run by a user of a role: the
-// Claude token, when the Claude integration names the user or the role, or
-// names nobody.
+// Env returns what the integrations add to a run by a user of a role: each
+// set up integration's variables, when its Who names the user or the role,
+// or names nobody. OpenRouter's auth token stands in for the Claude Code
+// token, so the two sign-ins never compete.
 func (s *Store) Env(ctx context.Context, user, role string) (map[string]string, error) {
-	values, err := s.Values(ctx, Claude)
-	if err != nil || values["token"] == "" {
-		return nil, err
+	vars := map[string]string{}
+	for _, kind := range Kinds() {
+		if !emitsEnv(kind) {
+			continue
+		}
+		values, err := s.Values(ctx, kind.ID)
+		if err != nil {
+			return nil, err
+		}
+		if !Configured(kind, values) {
+			continue
+		}
+		if who := strings.TrimSpace(values["who"]); who != "" && !listed(who, user) && !listed(who, role) {
+			continue
+		}
+		for _, field := range kind.Fields {
+			if field.Env == "" || !Enabled(field, values) {
+				continue
+			}
+			value := strings.TrimSpace(values[field.Name])
+			switch {
+			case field.Source != "":
+				value = strings.TrimSpace(values[field.Source])
+			case value == "":
+				value = field.Default
+			}
+			if field.Empty {
+				value = ""
+			}
+			vars[field.Env] = value
+		}
 	}
-	if strings.TrimSpace(values["who"]) != "" && !listed(values["who"], user) && !listed(values["who"], role) {
-		return nil, nil
+	if vars["ANTHROPIC_AUTH_TOKEN"] != "" {
+		delete(vars, "CLAUDE_CODE_OAUTH_TOKEN")
 	}
-	return map[string]string{"CLAUDE_CODE_OAUTH_TOKEN": values["token"]}, nil
+	return vars, nil
+}
+
+// emitsEnv reports whether an integration sets any environment variable.
+func emitsEnv(kind Kind) bool {
+	for _, field := range kind.Fields {
+		if field.Env != "" {
+			return true
+		}
+	}
+	return false
+}
+
+// Enabled reports whether a setting's switch is on: its companion row
+// says so, or its default without one.
+func Enabled(field Field, values map[string]string) bool {
+	if !field.Toggle {
+		return true
+	}
+	state, ok := values[field.Name+"_enabled"]
+	if !ok {
+		return field.DefaultOn
+	}
+	return state == "1"
 }
 
 // generated returns a random secret, 32 bytes in hex.

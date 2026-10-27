@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"strings"
 	"unicode"
 )
 
@@ -18,9 +19,10 @@ type Kind struct {
 
 // The integrations.
 const (
-	Claude  = "claude"
-	Forgejo = "forgejo"
-	Beszel  = "beszel"
+	Claude     = "claude"
+	OpenRouter = "openrouter"
+	Forgejo    = "forgejo"
+	Beszel     = "beszel"
 )
 
 // WebhookPath is the path of the Forgejo webhook under the instance's
@@ -35,7 +37,7 @@ func Kinds() []Kind {
 			Title:       "Claude Code",
 			Description: "The token Claude Code signs in with, from `claude setup-token`, for the whole instance. A run gets it as CLAUDE_CODE_OAUTH_TOKEN when the user who started it, or their role, is checked below: the agent job of the Notes board runs as the agent's user, and a Claude terminal as you.",
 			Fields: []Field{
-				{Name: "token", Label: "OAuth token", Secret: true, Placeholder: "sk-ant-oat01-…", Help: "Valid for a year from setup-token; set a new one before it ends."},
+				{Name: "token", Label: "OAuth token", Secret: true, Env: "CLAUDE_CODE_OAUTH_TOKEN", Placeholder: "sk-ant-oat01-…", Help: "Valid for a year from setup-token; set a new one before it ends."},
 				{Name: "who", Label: "Who", Optional: true, Who: true, Help: "The roles and users whose runs get the token; none checked is everyone."},
 			},
 			Steps: []string{
@@ -44,6 +46,31 @@ func Kinds() []Kind {
 				"Paste it as the OAuth token here.",
 				"Under Who, check the roles and users whose runs get it: the admin role, and the agent's user, `claude` on most instances, which the agent job of the Notes board runs as. Nothing checked means every run gets it.",
 				"Save. A run of a checked user gets the token as `CLAUDE_CODE_OAUTH_TOKEN`. Set a new token before the year ends.",
+			},
+		},
+		{
+			ID:          OpenRouter,
+			Title:       "OpenRouter",
+			Description: "The gateway Claude Code asks instead of an Anthropic account. While it is set up, a run gets its variables and none of the Claude Code token: `ANTHROPIC_BASE_URL` sends Claude Code to OpenRouter, `ANTHROPIC_AUTH_TOKEN` signs it in with the key, and `ANTHROPIC_API_KEY` goes empty so no key of its own signs it in. A switch leaves its variable out of the runs and keeps the value for the next switch on.",
+			Fields: []Field{
+				{Name: "token", Label: "API key", Secret: true, Placeholder: "sk-or-v1-…", Help: "A key from openrouter.ai/settings/keys; it reaches a run as OPENROUTER_API_KEY and ANTHROPIC_AUTH_TOKEN."},
+				{Name: "openrouter_api_key", Label: "OPENROUTER_API_KEY", Optional: true, Env: "OPENROUTER_API_KEY", Source: "token", Toggle: true, DefaultOn: true, Help: "OpenRouter's own name for the key, for the tools that read it."},
+				{Name: "auth_token", Label: "ANTHROPIC_AUTH_TOKEN", Optional: true, Env: "ANTHROPIC_AUTH_TOKEN", Source: "token", Toggle: true, DefaultOn: true, Help: "What Claude Code signs in with; off falls back to the Claude Code integration."},
+				{Name: "api_key", Label: "ANTHROPIC_API_KEY", Optional: true, Empty: true, Toggle: true, DefaultOn: true, Help: "Sent empty, so Claude Code signs in with the key alone."},
+				{Name: "base_url", Label: "Base URL", Optional: true, Env: "ANTHROPIC_BASE_URL", Default: "https://openrouter.ai/api", Toggle: true, DefaultOn: true, Help: "Where Claude Code sends its requests."},
+				{Name: "model", Label: "Model", Optional: true, Env: "ANTHROPIC_MODEL", Default: "deepseek/deepseek-v4.1-flash-1017", Toggle: true, DefaultOn: true, Help: "The model every Claude run asks for."},
+				{Name: "max_context_tokens", Label: "Context tokens", Optional: true, Env: "CLAUDE_CODE_MAX_CONTEXT_TOKENS", Default: "1000000", Toggle: true, DefaultOn: true, Help: "The context window Claude Code plans for."},
+				{Name: "auto_compact_window", Label: "Compact window", Optional: true, Env: "CLAUDE_CODE_AUTO_COMPACT_WINDOW", Default: "400000", Toggle: true, DefaultOn: true, Help: "How much of the context Claude Code fills before it compacts."},
+				{Name: "gateway_model_discovery", Label: "Gateway model discovery", Optional: true, Env: "CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY", Default: "1", Toggle: true, DefaultOn: true, Help: "Lets Claude Code list the models the gateway offers."},
+				{Name: "disable_nonessential_traffic", Label: "Nonessential traffic", Optional: true, Env: "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC", Default: "1", Toggle: true, DefaultOn: true, Help: "Stops Claude Code's traffic that is not the conversation."},
+				{Name: "enable_todo_tools", Label: "Todo tools", Optional: true, Env: "CLAUDE_CODE_ENABLE_TODO_TOOLS", Default: "1", Toggle: true, DefaultOn: true, Help: "Gives Claude Code its todo tools."},
+			},
+			Steps: []string{
+				"Sign in at `https://openrouter.ai` and open Keys.",
+				"Create a key named for this instance, and copy it: OpenRouter shows it once.",
+				"The account needs credit, and the model must be one OpenRouter serves; the default is `deepseek/deepseek-v4.1-flash-1017`.",
+				"Paste the key as the API key here, leave the switches on and Save.",
+				"A Claude run then asks OpenRouter. Switch a variable off to leave it out of the runs; its value stays for the next switch on.",
 			},
 		},
 		{
@@ -118,4 +145,18 @@ func (k *Kind) Field(name string) *Field {
 		}
 	}
 	return nil
+}
+
+// ToggleField returns the setting a request's "<name>.enabled" names, a
+// setting with a switch; nil for any other name.
+func (k *Kind) ToggleField(name string) *Field {
+	base, ok := strings.CutSuffix(name, ".enabled")
+	if !ok {
+		return nil
+	}
+	field := k.Field(base)
+	if field == nil || !field.Toggle {
+		return nil
+	}
+	return field
 }
