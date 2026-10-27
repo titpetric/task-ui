@@ -28,8 +28,10 @@ func (h *Handlers) profile(w http.ResponseWriter, r *http.Request) {
 		p.Crumbs = view.Crumbs("Settings", "/settings", "Users", "/settings/users", user.Name)
 	}
 	p.Account = user
-	p.CanAddUsers = h.opts.AddUsers
 	p.Profile = &view.Profile{Own: own, CanEdit: own || p.Can("user/edit")}
+	if own || p.Can("key/view") {
+		p.Keys = h.userKeys(r.Context(), user)
+	}
 	h.activityOf(r, p, user)
 	h.render(w, http.StatusOK, "profile", p)
 }

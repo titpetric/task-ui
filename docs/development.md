@@ -92,6 +92,22 @@ follow one set of rules:
   A second list on a page holds its own in its block head, small and
   plain: a workspace's keys, a user's keys on their edit page, a
   workspace's secrets.
+- **Reach**: an entity's page offers to add what it owns, within two
+  clicks of the page: a workspace adds a project, an SSH key and a
+  secret; a user adds a key; a project adds an env file and a schedule.
+  Whoever builds a link to one of these pages takes it from
+  `frontend/view/create.go` (`AddProjectHref`, `WorkspaceKeysHref`,
+  `UserKeyHref`), so the folder menu, a row menu, the dashboard's Add
+  menu and an empty line cannot differ. What the user may add anywhere
+  is `Page.CreateItems`, each behind the rule of the page it links. An
+  empty list says what is missing and carries the button that adds it;
+  a count of none is an "add" link for a user who may, never plain text.
+- **Roles** are not entities with a page; a role's Permissions block
+  lists its users and its keys, and the role on the Users list links to
+  it.
+- **Keyboard**: the page starts with a skip link to `main`; nothing in
+  the header carries `tabindex="-1"`; a field without a visible label
+  has an `aria-label`.
 - **Page-level danger**, deleting what the page shows, goes in a **⋯**
   menu at the end of the page head, never a loose red button: a
   workspace, a project's checkout, a workflow, a user, every artifact.

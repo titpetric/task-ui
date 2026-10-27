@@ -84,7 +84,7 @@ func TestProfile_Permissions(t *testing.T) {
 
 	body := f.page(t, asAdmin, "/users/ops/edit")
 	assert.Contains(t, body, `id="permissions"`)
-	assert.Contains(t, body, `data-api="/api/permissions/users/ops" data-method="PUT" data-next="reload" data-matrix`)
+	assert.Contains(t, body, `data-api="/api/permissions/users/ops" data-method="PUT" data-next="reload" data-notice="Permissions saved" data-matrix`)
 	assert.Contains(t, body, `data-tri="deny" data-title="Enter Shell" title="Enter Shell: deny"`)
 	assert.Contains(t, body, `<input type="hidden" name="shell" value="deny" data-was="deny" disabled>`)
 	assert.Contains(t, body, `<span class="eff ok" title="Result: allowed">✓</span>`)

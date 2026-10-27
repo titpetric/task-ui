@@ -82,7 +82,8 @@ func (h *Handlers) createWorkspace(w http.ResponseWriter, r *http.Request) {
 		failErr(w, err)
 		return
 	}
-	writeJSON(w, http.StatusCreated, map[string]any{"workspace": workspace, "output": output})
+	// folder is at the top for the form's data-next, which fills {folder}.
+	writeJSON(w, http.StatusCreated, map[string]any{"folder": workspace.Folder, "workspace": workspace, "output": output})
 }
 
 // makeHome makes the home and src of a workspace and, with a URL,

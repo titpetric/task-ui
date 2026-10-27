@@ -49,6 +49,7 @@ func TestWorkspace_CRUD(t *testing.T) {
 	created := f.call(t, asAdmin, http.MethodPost, "/workspaces", api.WorkspaceRequest{URL: repo, Folder: "malta", Title: "Malta", Branch: "main"})
 	assert.Equal(t, http.StatusCreated, created.Status, string(created.Raw))
 	assert.Equal(t, "malta", created.str("workspace", "folder"))
+	assert.Equal(t, "malta", created.str("folder"), "the form's data-next fills {folder}")
 	assert.Equal(t, repo, created.str("workspace", "home_url"), "the URL clones as the home")
 	assert.Equal(t, "main", created.str("workspace", "home_branch"))
 	assert.Nil(t, created.get("project"), "no project row: the home is a folder")

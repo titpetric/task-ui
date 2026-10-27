@@ -1,5 +1,27 @@
 /* ------------------------------------------------------------------ header */
 
+/* The first stop of the page: off screen until the keyboard reaches it,
+   then a button over the header that jumps past the sidebar to main. */
+.skip-link {
+  position: absolute;
+  left: 0.5rem;
+  top: -4rem;
+  z-index: 100;
+  padding: 0.5rem 0.9rem;
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius, 4px);
+  background: var(--ink-0);
+  color: var(--text);
+}
+
+.skip-link:focus {
+  top: 0.5rem;
+}
+
+main:focus {
+  outline: none;
+}
+
 header.top {
   position: relative;
   z-index: 20;

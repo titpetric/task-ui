@@ -52,15 +52,15 @@ func TestPage_Chrome(t *testing.T) {
 	// the avatars the script draws.
 	assert.Contains(t, body, `<body data-roles='{&#34;admin&#34;:&#34;admin&#34;,&#34;limited&#34;:&#34;runner&#34;,&#34;ops&#34;:&#34;runner&#34;,&#34;viewer&#34;:&#34;viewer&#34;}' data-workspaces='{}' data-me="admin" data-user-menu="edit">`)
 
-	// The header's prompt, for prompt/edit: a bare field with nothing
-	// that names it.
-	const prompt = `<input type="text" class="header-prompt" id="header-prompt" tabindex="-1" autocomplete="off" spellcheck="false">`
+	// The header's prompt, for prompt/edit: a bare field, no visible text,
+	// named for a screen reader and reachable with Tab.
+	const prompt = `<input type="text" class="header-prompt" id="header-prompt" aria-label="Ask Claude" autocomplete="off" spellcheck="false">`
 	assert.Contains(t, body, prompt)
 	head := body[strings.Index(body, `<header class="top"`):strings.Index(body, `</header>`)]
 	assert.NotContains(t, head, "placeholder")
-	assert.NotContains(t, head[strings.Index(head, "header-prompt"):strings.Index(head, "header-runas")], "aria-label")
+	assert.NotContains(t, head, `tabindex="-1"`, "the header is on the keyboard's path")
 	// An admin picks who the prompt runs as, after the field.
-	assert.Contains(t, head, prompt+"\n\t\t"+`<span class="header-runas"><select class="header-prompt-user" id="header-prompt-user" tabindex="-1" aria-label="Runs as">`)
+	assert.Contains(t, head, prompt+"\n\t\t"+`<span class="header-runas"><select class="header-prompt-user" id="header-prompt-user" aria-label="Runs as">`)
 	// Off a folder or a run it asks at the root, and the logo is a button
 	// of its own that opens the panel, the name a link home.
 	assert.Contains(t, head, `<header class="top" data-prompt-folder="_" data-prompt-dir="" data-prompt-run="" data-prompt-label="_" data-prompt-href="/f/_">`)

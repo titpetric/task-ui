@@ -7,7 +7,9 @@
 </div>
 
 <section class="block">
-	{{- template "blockhead" (head "Keys" "" (and (not .Keys) "No keys for you or your role yet. Someone with Allow Edits on Instance Keys can grant one under Settings, Keys.")) }}
+	{{- template "blockhead" (head "Keys" "" (and (not .Keys) (or (and (.Can "key/edit") "No keys for you or your role yet. Generate or upload one for yourself.") "No keys for you or your role yet. Someone with Allow Edits on Instance Keys can grant one under Settings, Keys."))
+		(and .User (.Can "key/edit") (item "key" "Generate key" "href" (userKeyHref "generate" .User.Name)))
+		(and .User (.Can "key/edit") (item "upload" "Upload key" "href" (userKeyHref "upload" .User.Name)))) }}
 	{{- with .Keys }}
 	<div class="table-wrap fit">
 	<table class="table keys key-table cards">

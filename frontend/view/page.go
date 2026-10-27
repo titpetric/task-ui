@@ -260,6 +260,9 @@ type Page struct {
 	Profile *Profile
 	// Matrices are the roles' policies on the permissions page.
 	Matrices []Matrix
+	// RoleMembers are the users and the instance SSH keys of each role,
+	// by role name, under its matrix.
+	RoleMembers map[string]RoleMembers
 	// Allow names who may run a project, roles and users, and JobAllow
 	// who may run each of its jobs, by job ID.
 	Allow    []string

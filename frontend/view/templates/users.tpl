@@ -24,7 +24,7 @@
 		{{- range .Users }}
 			<tr class="row-link" data-href="/users/{{ .Name }}">
 				<td class="key nowrap"><span class="user-ref">{{ template "avatar" (list $ .Name) }} <a class="user-name" href="/users/{{ .Name }}">{{ .Name }}</a></span></td>
-				<td data-label="Role"><span class="badge{{ if .CanAdmin }} signal{{ end }}">{{ .EffectiveRole }}</span></td>
+				<td data-label="Role"><a class="badge{{ if .CanAdmin }} signal{{ end }}" href="/settings/permissions#role-{{ .EffectiveRole }}" title="What {{ .EffectiveRole }} may do">{{ .EffectiveRole }}</a></td>
 				<td class="nowrap" data-label="Flags">{{ if .Mcp }}<span class="badge" title="MCP agent user">mcp</span>{{ end }}{{ if .AgentReply }} <span class="badge" title="Runs instance Claude when mentioned">agent</span>{{ end }}{{ if not .Mcp }}<span class="faint">none</span>{{ end }}</td>
 				<td class="desc" data-label="Folders">{{ with .FolderList }}{{ join . ", " }}{{ else }}<span class="faint">all</span>{{ end }}</td>
 				<td class="nowrap" data-label="Since" title="{{ stamp .CreatedAt }}">{{ ago .CreatedAt }}</td>

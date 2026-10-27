@@ -51,7 +51,7 @@ func TestPrompt_RunsAs(t *testing.T) {
 	assert.Contains(t, body, `<option value="admin" selected data-keys="">admin · no keys</option>`)
 	assert.Contains(t, body, `<option value="ops" data-keys="deploy">ops · keys: deploy</option>`)
 	assert.Contains(t, body, `</select> in infra/, one prompt at a time.`)
-	assert.Contains(t, body, `<select class="header-prompt-user" id="header-prompt-user" tabindex="-1" aria-label="Runs as">`)
+	assert.Contains(t, body, `<select class="header-prompt-user" id="header-prompt-user" aria-label="Runs as">`)
 	assert.NotContains(t, body, "as you in")
 
 	p = admin(t)

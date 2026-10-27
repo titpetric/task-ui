@@ -143,11 +143,11 @@
      linked: the keys table every page shares, or one line with Upload
      key and Generate key while there is none. */}}
 {{- define "workspacekeys" }}
-{{- $ws := .Workspace }}{{ $base := printf "/settings/workspaces/%s/keys" $ws.Folder }}{{ $edit := .Can "workspace/edit" }}
+{{- $ws := .Workspace }}{{ $edit := .Can "workspace/edit" }}
 <section class="block workspace-keys" id="keys">
 	{{- template "blockhead" (head "Keys" "SSH keys the workspace's runs get" (and (not .Keys) "No keys added.")
-		(and $edit (item "upload" "Upload key" "href" (print $base "/upload")))
-		(and $edit (item "key" "Generate key" "href" (print $base "/generate")))) }}
+		(and $edit .KeysDir (item "upload" "Upload key" "data-dialog-open" "key-upload-dialog"))
+		(and $edit .KeysDir (item "key" "Generate key" "data-dialog-open" "key-generate-dialog"))) }}
 	{{- with .Keys }}
 	<p class="dim">A key goes to every run in the workspace, or to the roles and users its links name, through the run's ssh agent.</p>
 	<div class="table-wrap fit">
@@ -160,4 +160,7 @@
 	</div>
 	{{- end }}
 </section>
+{{- if $edit }}
+{{ template "wskeydialogs" (list . (workspaceHref $ws.Folder)) }}
+{{- end }}
 {{- end }}

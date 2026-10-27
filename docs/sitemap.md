@@ -10,7 +10,7 @@ row's **⋯** menu; "Delete" and "Remove" are in red, last.
 
 | Page | Path | Lists | Head, top right | Row actions | Forms | Empty |
 |------|------|-------|-----------------|-------------|-------|-------|
-| Dashboard | `/` | running terminals as tiles, the control centre of jobs by folder | none | Run, Attach on a tile | none | "No jobs yet." in the control centre |
+| Dashboard | `/` | running terminals as tiles, the control centre of jobs by folder | `[...]` Add: workspace, project, user, key, secret, workflow, as far as the user may | Run, Attach on a tile | none | "No jobs yet." in the control centre |
 | Runs | `/runs` | every run, newest first, with filters; Activity and Tooling folds | none | **View** or **Attach**, `[...]`: open, replay, Summary, Stop, Kill | the filter bar | "No runs match." |
 | Run | `/runs/<id>` | the terminal, its output, the run's details, its artifacts | **View** or **Attach**, Stop, Kill, Report, Replay | artifacts: `[...]` | the prompt about the run | "None: a job keeps files by writing them to $TASK_UI_ARTIFACTS." |
 | Report | `/runs/<id>/report` | the question and Claude's answer | Run, Claude's run, Job | none | none | none |
@@ -31,7 +31,7 @@ row's **⋯** menu; "Delete" and "Remove" are in red, last.
 
 | Page | Path | Lists | Head, top right | Row actions | Forms | Empty |
 |------|------|-------|-----------------|-------------|-------|-------|
-| Workspace, project or folder | `/f/<workspace>/<folder>` | the git line, Jobs (a row per job source under its file, as `atkins.yml` or `task/atkins.yml`, then the files, skills and built-ins, each with a named button per job), Files, on a workspace Home, its home's files, the folder's details, Environment when a user filled an env file, its block head with **Add env file** | `[...]`: Pin or Unpin, Workspace or Project settings, a workspace's SSH keys and Secrets, Add env file, Pull now, Remove checkout | a job: its named button, Run, Attach or `#!`; a Jobs row: `[...]`: Run and summarize, View the last run, Summary, History, Pin or Unpin, Run force, Kill; a file: `[...]`; an env file: `[...]` Edit | the Prompt box | "No targets in <file>."; no env file, no Environment section |
+| Workspace, project or folder | `/f/<workspace>/<folder>` | the git line, Jobs (a row per job source under its file, as `atkins.yml` or `task/atkins.yml`, then the files, skills and built-ins, each with a named button per job), Files, on a workspace Home, its home's files, the folder's details, Environment on a project, its block head with **Add env file**, empty or not | a workspace with no project: **Add project**; `[...]`: Add project, Pin or Unpin, Workspace or Project settings, a workspace's SSH keys and Secrets, a project's Add env file, Add schedule, Pull now, Remove checkout | a job: its named button, Run, Attach or `#!`; a Jobs row: `[...]`: Run and summarize, View the last run, Summary, History, Pin or Unpin, Run force, Kill; a file: `[...]`; an env file: `[...]` Edit | the Prompt box | "No targets in <file>."; "No env files." on a project |
 | Directory | `/f/<folder>/<dir>` | the git line, Jobs, Files | `[...]`: Pin or Unpin | as a folder's | the Prompt box | none |
 | Job | `/f/<folder>/<job>` | the job, History, Schedules | **Run**, or **Attach** and Kill | History: **View** or **Attach**, `[...]`; Schedules: `[...]` | **Add schedule** | "No runs yet.", "Not scheduled." |
 | Env file | `/f/<folder>/env/<path>`, `/f/<folder>/env` to add | the file, the secrets appended | none | none | the path when adding, the content, Cancel and **Save** | "No secrets reach this folder." |
@@ -53,8 +53,8 @@ row's **⋯** menu; "Delete" and "Remove" are in red, last.
 | Integrations | `/settings/integrations` | a block per service | none | Show | the service's settings, Save and Clear; Forgejo: **Sync now**, **Dry run**, and the line on the push hook and the last sync, a link to its run | none |
 | Users | `/settings/users` | the users, Connect an MCP client | **Add user** | `[...]`: Edit, Profile, Runs, Delete | none | none |
 | Add user | `/settings/users/new` | none | none | none | name, password, Cancel and **Add user** | none |
-| Permissions | `/settings/permissions` | a matrix per role | none | none | the matrices, Save | none |
-| Workspaces | `/settings/workspaces` | the workspaces, their home repositories and projects | Import, **Add workspace** | `[...]`: Open, Workspace settings, Move up, Move down, Delete | Import in a dialog | none: `_` always lists; "empty" for a workspace without a home repository |
+| Permissions | `/settings/permissions` | a matrix per role, with the role's users and keys above it | Add user and Generate key in a role's block | none | the matrices, Save | none |
+| Workspaces | `/settings/workspaces` | the workspaces, their home repositories and projects | Import, **Add workspace** | `[...]`: Open, Workspace settings, Add project, SSH keys, Secrets, Move up, Move down, Delete; a project or secret count of none carries "add" | Import in a dialog | none: `_` always lists; "empty" for a workspace without a home repository |
 | Add workspace | `/settings/workspaces/new` | none | none | none | folder, title, description, home repository and home branch, Recursive, Cancel and Add workspace | none |
 | Workspace settings | `/settings/workspaces/<folder>`, `_` too | Settings, Home repository, Projects, Keys | **Add project**, Export, `[...]`: Open, Delete | Home repository: Pull now, Replace or Clone, Remove; Projects: the projects table; Keys: the keys table | Settings, Cancel and Save; Replace in a dialog; Export in a dialog | "The home is an empty directory." beside **Clone**; "No projects in <folder> yet."; "No keys added." beside **Upload key** and **Generate key** |
 | Workspace keys | `/settings/workspaces/<folder>/keys` | the workspace's SSH keys | **Upload key**, **Generate key**, `[...]`: Open, Workspace settings, Secrets | the keys table, Edit links in a dialog | Upload, Generate and Edit links in dialogs | "No keys added." |
@@ -68,9 +68,9 @@ row's **⋯** menu; "Delete" and "Remove" are in red, last.
 
 | Page | Path | Lists | Head, top right | Row actions | Forms | Empty |
 |------|------|-------|-----------------|-------------|-------|-------|
-| Profile | `/users/<name>` | Runs, Workflow runs, Notes, Prompts | **Edit** for your own or with `user/edit`, `[...]`: Runs by this user, Delete | Runs: **View** or **Attach**, `[...]`; Workflow runs: **View** | none | "No runs yet.", "No workflow runs yet.", "No notes yet.", "No prompts yet." |
-| Edit user | `/users/<name>/edit` | Roles, Folders, Permissions, Keys, MCP access | View profile | Keys: the keys table, **Generate key** | Roles, Folders, each Cancel and Save; Permissions, Save; MCP Enable or Rotate | "No key linked to <name>." |
-| Your SSH keys | `/keys` | the keys your runs get | none | the keys table | none | "No keys for you or your role yet." |
+| Profile | `/users/<name>` | Runs, Workflow runs, Notes, Prompts, Keys for your own or with `key/view` | **Edit** for your own or with `user/edit`, `[...]`: Runs by this user, Delete | Runs: **View** or **Attach**, `[...]`; Workflow runs: **View**; Keys: the keys table, **Generate key**, **Upload key** | none | "No runs yet.", "No workflow runs yet.", "No notes yet.", "No prompts yet." |
+| Edit user | `/users/<name>/edit` | Roles, Folders, Permissions, Keys, MCP access | View profile | Keys: the keys table, **Generate key**, **Upload key** | Roles, Folders, each Cancel and Save; Permissions, Save; MCP Enable or Rotate | "No key linked to <name>." |
+| Your SSH keys | `/keys` | the keys your runs get | **Generate key**, **Upload key** with `key/edit`, for yourself | the keys table | none | "No keys for you or your role yet." |
 | Sign in | `/login` | none | none | none | name, password | none |
 
 ## Shared parts

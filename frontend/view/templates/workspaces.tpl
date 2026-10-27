@@ -26,11 +26,14 @@
 				<td class="key nowrap"><a href="{{ $.Href .Folder }}"><svg class="ic"><use href="#i-folder-open"/></svg> {{ .Folder }}</a></td>
 				<td class="desc">{{ .Title }}{{ with .Description }} <span class="faint">{{ . }}</span>{{ end }}</td>
 				<td class="origin">{{ with index $.Homes .Folder }}<span class="remote mono" title="{{ . }}">{{ . }}</span>{{ else }}<span class="faint">empty</span>{{ end }}</td>
-				<td class="hide-sm num">{{ with $nested }}<a href="/settings/workspaces/{{ $ws.Folder }}" title="{{ join . ", " }}">{{ len . }}</a>{{ else }}<span class="faint">none</span>{{ end }}</td>
-				<td class="hide-sm num">{{ if $secrets }}<a href="/settings/workspaces/{{ $ws.Folder }}/secrets" title="delete them before deleting the workspace">{{ $secrets }}</a>{{ else }}<span class="faint">none</span>{{ end }}</td>
+				<td class="hide-sm num">{{ with $nested }}<a href="{{ workspaceHref $ws.Folder }}" title="{{ join . ", " }}">{{ len . }}</a>{{ else }}<span class="faint">none</span>{{ if $.Can "project/edit" }} <a href="{{ addProjectHref $ws.Folder }}" aria-label="Add a project to {{ $ws.Folder }}">add</a>{{ end }}{{ end }}</td>
+				<td class="hide-sm num">{{ if $secrets }}<a href="{{ workspaceSecretsHref $ws.Folder }}" title="delete them before deleting the workspace">{{ $secrets }}</a>{{ else }}<span class="faint">none</span>{{ if $.Can "secret/edit" }} <a href="{{ workspaceSecretsHref $ws.Folder }}" aria-label="Add a secret to {{ $ws.Folder }}">add</a>{{ end }}{{ end }}</td>
 				<td class="actions">{{ template "menu" (menu (print "Actions on " .Folder)
 					(item "folder-open" "Open" "href" ($.Href .Folder))
-					(item "settings" "Edit workspace" "href" (print "/settings/workspaces/" .Folder))
+					(item "settings" "Edit workspace" "href" (workspaceHref .Folder))
+					(and ($.Can "project/edit") (item "plus" "Add project" "href" (addProjectHref .Folder)))
+					(and ($.Can "workspace/view") (item "key" "SSH keys" "href" (workspaceKeysHref .Folder)))
+					(and ($.Can "secret/view") (item "secret" "Secrets" "href" (workspaceSecretsHref .Folder)))
 					sep
 					(and (not $default) (ne $i $first) (item "up" "Move up" "data-workspace-move" "up" "data-folder" .Folder))
 					(and (not $default) (ne (add $i 1) $last) (item "down" "Move down" "data-workspace-move" "down" "data-folder" .Folder))

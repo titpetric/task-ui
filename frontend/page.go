@@ -45,6 +45,7 @@ func (h *Handlers) page(r *http.Request, title string) *view.Page {
 		Error:         q.Get("error"),
 		Now:           time.Now(),
 		BaseURL:       h.baseURL(r),
+		CanAddUsers:   h.opts.AddUsers,
 	}
 	if p.Notice == "" {
 		p.Notice = rekeyedNotice(q.Get("rekeyed"), q.Get("what"))

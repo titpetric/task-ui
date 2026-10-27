@@ -71,20 +71,7 @@
 {{- end }}
 
 {{- if or $pr.Own (.Can "key/view") }}
-<section class="block" id="keys">
-	{{- template "blockhead" (head "Keys" (print "linked to " $u.Name ", in the ssh agent of their runs") (and (not .Keys) (print "No key linked to " $u.Name "; the role's keys come with the role."))
-		(and (.Can "key/edit") (item "key" "Generate key" "href" (print "/settings/keys/generate?for=" $u.Name)))) }}
-	{{- with .Keys }}
-	<div class="table-wrap fit">
-	<table class="table keys key-table cards">
-		{{ template "keyhead" }}
-		<tbody>
-		{{- range . }}{{ template "keyrow" (list $ . $edit) }}{{ end }}
-		</tbody>
-	</table>
-	</div>
-	{{- end }}
-</section>
+{{ template "userkeys" (list . $u $edit) }}
 {{- end }}
 
 {{ template "mcp-access" (list $ $u) }}

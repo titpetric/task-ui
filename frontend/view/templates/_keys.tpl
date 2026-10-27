@@ -150,3 +150,40 @@
 	{{- template "wskeyfoot" (list $next $dialog "Save") }}
 </form>
 {{- end }}
+
+{{/* wskeydialogs are the dialogs that generate and upload a workspace's
+     SSH key, (list page next), for the pages that list the workspace's
+     keys: the keys page and the workspace's own page open the same two,
+     and return to next. */}}
+{{ define "wskeydialogs" }}
+{{- $p := index . 0 }}{{ $next := index . 1 }}
+<dialog class="confirm" id="key-generate-dialog" aria-labelledby="key-generate-title">
+	{{ template "wskeygenerate" (list $p $next true) }}
+</dialog>
+<dialog class="confirm" id="key-upload-dialog" aria-labelledby="key-upload-title">
+	{{ template "wskeyupload" (list $p $next true) }}
+</dialog>
+{{- end }}
+
+{{/* userkeys is the Keys block of a user, (list page account next): the
+     instance SSH keys linked to them, with Generate key and Upload key
+     for key/edit, on the profile and on the edit page. next is the page
+     a change returns to. */}}
+{{ define "userkeys" }}
+{{- $p := index . 0 }}{{ $u := index . 1 }}{{ $next := index . 2 }}
+<section class="block" id="keys">
+	{{- template "blockhead" (head "Keys" (print "linked to " $u.Name ", in the ssh agent of their runs") (and (not $p.Keys) (print "No key linked to " $u.Name "; the role's keys come with the role."))
+		(and ($p.Can "key/edit") (item "key" "Generate key" "href" (userKeyHref "generate" $u.Name)))
+		(and ($p.Can "key/edit") (item "upload" "Upload key" "href" (userKeyHref "upload" $u.Name)))) }}
+	{{- with $p.Keys }}
+	<div class="table-wrap fit">
+	<table class="table keys key-table cards">
+		{{ template "keyhead" }}
+		<tbody>
+		{{- range . }}{{ template "keyrow" (list $p . $next) }}{{ end }}
+		</tbody>
+	</table>
+	</div>
+	{{- end }}
+</section>
+{{- end }}

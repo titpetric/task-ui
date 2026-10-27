@@ -329,7 +329,7 @@ func TestView_RenderWorkflowsTable(t *testing.T) {
 	assert.Contains(t, out, `<a class="more-item" role="menuitem" href="/workflows/w1/edit">`)
 	assert.NotContains(t, out, `<span>Open</span>`, "the name is the link")
 	assert.Contains(t, out, `href="/workflows/w2/runs/wr9"`)
-	assert.Equal(t, 1, strings.Count(out[strings.Index(out, "<main>"):], `href="/workflows/w1/edit"`), "Edit for the owner's alone")
+	assert.Equal(t, 1, strings.Count(out[strings.Index(out, `<main id="main"`):], `href="/workflows/w1/edit"`), "Edit for the owner's alone")
 }
 
 // The edit page ends with the workflow's schedules and the form that
