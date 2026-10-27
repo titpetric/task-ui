@@ -51,10 +51,10 @@ func (h *Handlers) stepLacks(r *http.Request, step StepRequest) error {
 }
 
 // stepSpace returns the workspace of a step's folder, its folder and
-// its title: the default one, Default unless titled, for a folder at
+// its title: the default one, Internal unless titled, for a folder at
 // the top of the root.
 func (h *Handlers) stepSpace(r *http.Request, folderID string) (ws, title string) {
-	ws, title = model.Default, "Default"
+	ws, title = model.Default, "Internal"
 	if h.opts.Workspaces == nil {
 		return ws, title
 	}

@@ -32,17 +32,11 @@ func TestFolder(t *testing.T) {
 	assert.NotContains(t, body, "task-ui found nothing to run")
 	assert.NotContains(t, body, "data-run-all") // workflows chain jobs instead
 	assert.Contains(t, body, `data-run data-folder="infra" data-job="plan"`)
-	// Run force sits in the row's menu; the button carries the last run's colour.
-	assert.Contains(t, body, `data-force="" title="Run out of hours, with a reason" data-run="" data-folder="infra" data-dir="" data-job="plan"`)
-	assert.Equal(t, 3, strings.Count(body, "data-force"), "every job of a workspace with hours")
-	assert.Contains(t, body, `class="cc named bad" data-run data-folder="infra" data-job="plan"`)
 	// No env file filled: no Environment section at all.
 	assert.NotContains(t, body, "Environment")
 
 	viewer := f.page(t, asViewer, "/f/internal/infra")
 	assert.NotContains(t, viewer, "data-run-all")
-	assert.NotContains(t, viewer, "data-force")
-	assert.Contains(t, viewer, `<span>History of plan</span></a>`)
 
 	// A user who may add env files sees the empty block, with the button.
 	admin := f.page(t, asAdmin, "/f/internal/infra")
@@ -67,8 +61,7 @@ func TestFolder_Running(t *testing.T) {
 	session := f.start(t, f.infra, "slow")
 
 	body := f.page(t, asOps, "/f/internal/infra")
-	assert.Contains(t, body, `<a class="cc named running" href="/runs/`+session.ID()+`" data-attach="`+session.ID()+`"`)
-	assert.Contains(t, body, `data-kill="`+session.ID()+`"`)
+	assert.Contains(t, body, `data-attach="`+session.ID()+`"`)
 
 	viewer := f.page(t, asViewer, "/f/internal/infra")
 	assert.Contains(t, viewer, `data-attach="`+session.ID()+`"`)
@@ -201,8 +194,6 @@ func TestFolder_Executable(t *testing.T) {
 
 	ops := f.page(t, asOps, "/f/internal/infra/bin")
 	assert.Contains(t, ops, `<i class="shebang" aria-hidden="true">#!</i> <a href="/files/infra/bin/hello" data-file="bin/hello">hello</a> <span class="badge exec"`)
-	assert.Contains(t, ops, `data-run data-folder="infra" data-job="./bin/hello" data-title="infra / bin/hello"`)
-	assert.Contains(t, f.page(t, asOps, "/f/internal/infra"), `data-job="./tool.py"`)
 
 	viewer := f.page(t, asViewer, "/f/internal/infra/bin")
 	assert.Contains(t, viewer, `<span class="badge exec"`)
@@ -215,8 +206,7 @@ func TestFolder_Executable(t *testing.T) {
 }
 
 // The sidebar heads each top level folder with its name and its jobs,
-// marks the folder of the page, a menu button drives the drawer, and the
-// jobs table folds into cards.
+// marks the folder of the page, and a menu button drives the drawer.
 func TestFolder_SidebarAndCards(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
@@ -237,9 +227,7 @@ func TestFolder_SidebarAndCards(t *testing.T) {
 	assert.NotContains(t, body, `class="play" data-run data-folder="private"`) // ops may not run private
 	assert.Contains(t, body, `id="menu-toggle"`)
 	assert.Contains(t, body, `id="menu-backdrop"`)
-	assert.Contains(t, body, `<table class="table control col-hover">`)
-	assert.Contains(t, body, `<span class="cc-slot" data-cc="infra/plan"`)
-	assert.Contains(t, body, `<a class="cc named running" href="/runs/`+session.ID()+`"`)
+	assert.NotContains(t, body, `data-cc="infra/plan"`, "no Jobs table")
 	assert.Contains(t, body, "<th>Hours</th><td><span class=\"faint\">always</span></td>")
 
 	job := f.page(t, asOps, "/f/internal/infra/plan")
@@ -297,9 +285,9 @@ func TestFolder_Nested(t *testing.T) {
 }
 
 // A folder's path starts with its workspace: a named one by its folder,
-// _ for a project at the root. A path that starts with neither moves to
-// /f/internal/ for good, its query kept; internal is no folder, and a named
-// workspace is not reached through _.
+// internal for a project at the root. A path that starts with neither
+// moves to /f/internal/ for good, its query kept; internal is no folder,
+// and a named workspace is not reached through it.
 func TestFolder_Namespace(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
@@ -319,11 +307,10 @@ func TestFolder_Namespace(t *testing.T) {
 	body := f.page(t, asOps, "/f/internal/infra")
 	assert.Contains(t, body, `<a class="section active" href="/f/internal/infra" data-folder="infra">`)
 	assert.Contains(t, body, `<a href="/f/internal/infra/edge">`)
-	assert.Contains(t, body, `<span class="cc-slot" data-cc="infra/plan"`)
 	assert.Contains(t, body, `<a class="section" href="/f/acme" data-folder="acme">`)
 	assert.Contains(t, body, `<a class="section" href="/f/acme/api" data-folder="acme/api">`)
 	assert.Contains(t, body, `data-workspaces='{&#34;acme&#34;:0}'`)
-	assert.Contains(t, body, `<div class="crumbs"><a href="/">Dashboard</a><span><a href="/f/internal">Default</a></span><span>infra</span></div>`)
+	assert.Contains(t, body, `<div class="crumbs"><a href="/">Dashboard</a><span><a href="/f/internal">Internal</a></span><span>infra</span></div>`)
 	assert.NotContains(t, sidebar(body), `href="/f/infra`)
 	assert.Contains(t, f.page(t, asOps, "/f/internal/infra/edge"), `<span><a href="/f/internal/infra">infra</a></span><span>edge</span>`)
 
@@ -334,7 +321,7 @@ func TestFolder_Namespace(t *testing.T) {
 
 	// /f/internal is the default workspace: the projects at the root a user sees.
 	def := f.page(t, asLimited, "/f/internal")
-	assert.Contains(t, def, "Default")
+	assert.Contains(t, def, "Internal")
 	assert.Contains(t, def, `<a href="/f/internal/infra">`)
 	assert.NotContains(t, def, `<a href="/f/internal/private">`)
 	assert.NotContains(t, def, `href="/f/acme`)
@@ -346,9 +333,8 @@ func TestFolder_Namespace(t *testing.T) {
 	assert.Contains(t, admin, `<a href="/f/acme">acme</a>`)
 }
 
-// The Jobs table names each job once on a button whose title carries
-// its description, and drops a description that repeats the name; the
-// job's page lists what it depends on and every step it runs.
+// A job's page carries its description, what it depends on and every
+// step it runs.
 func TestFolder_JobRow(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
@@ -356,15 +342,6 @@ func TestFolder_JobRow(t *testing.T) {
 	plan.Description = "Show the plan"
 	plan.Steps = []string{"task setup:checkout", "go build ./...", "go test ./...", "docker build .", "docker push"}
 	plan.DependsOn = []string{"lint"}
-	f.infra.Job("slow").Description = "slow"
-
-	body := f.page(t, asOps, "/f/internal/infra")
-	assert.Contains(t, jobRow(t, body, "infra/plan"), `data-desc="Show the plan"`)
-	assert.Contains(t, jobRow(t, body, "infra/plan"), `title="Run infra / plan: Show the plan"><svg class="ic"><use href="#i-play"/></svg><span>plan</span></button>`)
-	slow := jobRow(t, body, "infra/slow")
-	assert.Equal(t, 1, strings.Count(slow, "<span>slow</span>"))
-	assert.Contains(t, slow, `data-cc="infra/slow" data-folder="infra" data-job="slow" data-name="slow" data-label="slow" data-last="never" data-can><button`)
-	assert.Contains(t, slow, `title="Run infra / slow"><svg class="ic">`)
 
 	page := f.page(t, asOps, "/f/internal/infra/plan")
 	assert.Contains(t, page, "<h2>plan <span class=\"badge\">script</span>")
@@ -374,10 +351,9 @@ func TestFolder_JobRow(t *testing.T) {
 	assert.Contains(t, f.page(t, asOps, "/f/internal/infra/slow"), `<tr><th>Command</th><td><code>sh -c sleep 30</code></td></tr>`)
 }
 
-// A directory browsed inside a folder lists its own targets as job
-// cards, with Run naming the directory and the job's page under it; a
-// run there shows on its card and in that page's history, not in the
-// history of the folder's job of the same name.
+// A directory browsed inside a folder says where its jobs run; a run
+// there shows in that page's history, not in the history of the
+// folder's job of the same name.
 func TestFolder_BrowseJobs(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
@@ -391,15 +367,6 @@ func TestFolder_BrowseJobs(t *testing.T) {
 	body := f.page(t, asOps, "/f/internal/infra/images")
 	assert.Contains(t, body, "Its jobs run in infra/images/")
 	assert.NotContains(t, body, "Nothing to run here")
-	for _, job := range []string{"default", "build", "push"} {
-		assert.Contains(t, body, `data-run data-folder="infra" data-dir="images" data-job="`+job+`" data-title="infra/images / `+job+`"`)
-		assert.Contains(t, body, `href="/f/internal/infra/images/`+job+`"><svg class="ic"><use href="#i-list"/></svg><span>History of `+job+`</span></a>`)
-	}
-	assert.Contains(t, body, `class="cc named bad" data-run data-folder="infra" data-dir="images" data-job="build"`)
-	assert.Contains(t, body, "atkins -f atkins.yml")
-	viewer := f.page(t, asViewer, "/f/internal/infra/images")
-	assert.Contains(t, viewer, `<a class="cc named idle bad" href="/f/internal/infra/images/build"`)
-	assert.NotContains(t, viewer, `data-run data-folder`)
 
 	page := f.page(t, asOps, "/f/internal/infra/images/build")
 	assert.Contains(t, page, "infra/images / build")

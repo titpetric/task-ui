@@ -109,7 +109,7 @@ func TestWorkflow_HiddenFolder(t *testing.T) {
 	assert.Equal(t, http.StatusNotFound, limited.Status, "the user's folders name infra alone")
 	refused := f.call(t, asLimited, http.MethodPost, "/workflows", api.WorkflowRequest{Name: "x", Steps: chain("infra/hidden", "deploy")})
 	assert.Equal(t, http.StatusBadRequest, refused.Status)
-	assert.Equal(t, "step 1: infra/hidden / deploy: Default has no folder infra/hidden", refused.str("error"))
+	assert.Equal(t, "step 1: infra/hidden / deploy: Internal has no folder infra/hidden", refused.str("error"))
 
 	denied := f.call(t, asViewer, http.MethodPost, "/workflows/"+id+"/runs", nil)
 	assert.Equal(t, http.StatusForbidden, denied.Status)
@@ -130,10 +130,10 @@ func TestWorkflow_FolderError(t *testing.T) {
 	assert.NoError(t, f.opts.Workspaces.Create(context.Background(), &model.Workspace{Folder: "malta", Title: "Malta"}))
 
 	for req, want := range map[string]string{
-		"nowhere":                "step 1: nowhere / plan: Default has no folder nowhere",
+		"nowhere":                "step 1: nowhere / plan: Internal has no folder nowhere",
 		"malta/deploy/terraform": "step 1: deploy/terraform / plan: Malta has no folder deploy/terraform",
 		"malta":                  "step 1: the root / plan: Malta has no jobs at its root",
-		"private":                "step 1: private / plan: Default has no folder private",
+		"private":                "step 1: private / plan: Internal has no folder private",
 	} {
 		user := asOps
 		if req == "private" {

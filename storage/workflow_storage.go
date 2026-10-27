@@ -42,10 +42,10 @@ func checkChain(workflow *model.Workflow, steps []model.WorkflowStep) error {
 
 // checkStep says what is wrong with one step for its kind: a job names
 // its folder and job, a workflow the workflow alone, a prompt its text
-// and folder, and a summary its folder and no text.
+// and its place, a folder or none, and a summary its place and no text.
 func checkStep(step model.WorkflowStep) error {
 	job := step.Folder != "" || step.Job != ""
-	asks := step.Folder != "" && step.Job == model.PromptJob && step.WorkflowRef == ""
+	asks := step.Job == model.PromptJob && step.WorkflowRef == ""
 	switch step.StepKind() {
 	case model.StepJob:
 		if step.Folder == "" || step.Job == "" || step.WorkflowRef != "" || step.Prompt != "" {

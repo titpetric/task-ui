@@ -10,7 +10,7 @@ import (
 // WorkspaceStorage keeps the workspaces: directories under the root
 // whose folder is the namespace of the projects cloned into their src,
 // each with a home, the checkout of its home repository or an empty
-// directory, that its runs get as HOME. The default workspace, _, is
+// directory, that its runs get as HOME. The default workspace, internal, is
 // the root itself, made on the first start and deleted like any other:
 // an instance with named workspaces alone runs without it.
 type WorkspaceStorage struct {
@@ -62,7 +62,7 @@ func (s *WorkspaceStorage) EnsureDefault(ctx context.Context) error {
 	if err != nil || len(workspaces) > 0 {
 		return err
 	}
-	return s.Create(ctx, &model.Workspace{Folder: model.Default, Title: "Default"})
+	return s.Create(ctx, &model.Workspace{Folder: model.Default, Title: "Internal"})
 }
 
 // List returns every workspace: the default first, then by sort, then by folder.

@@ -22,7 +22,7 @@ func (r *Runner) mayRun(ctx context.Context, set permission.Set, steps []model.W
 			}
 		case step.IsPrompt():
 			if !set.Allowed("prompt/edit") {
-				return "the prompt in " + step.Place()
+				return "the prompt in " + model.PlaceLabel(step.Place())
 			}
 		default:
 			if !r.mayRunJob(set, step) {

@@ -126,7 +126,12 @@ func (h *Handlers) workflowView(r *http.Request, wf model.Workflow, steps []mode
 func (h *Handlers) checkSteps(r *http.Request, req WorkflowRequest) ([]model.WorkflowStep, error) {
 	requested := req.Steps
 	if prompt := strings.TrimSpace(req.Prompt); prompt != "" {
-		requested = append(slices.Clip(requested), StepRequest{Kind: model.StepPrompt, Folder: req.PromptFolder, Prompt: prompt})
+		folder := req.PromptFolder
+		if folder == "" {
+			// The old field named the root by leaving its folder out.
+			folder = model.Default
+		}
+		requested = append(slices.Clip(requested), StepRequest{Kind: model.StepPrompt, Folder: folder, Prompt: prompt})
 	}
 	steps := make([]model.WorkflowStep, 0, len(requested))
 	for i, step := range requested {

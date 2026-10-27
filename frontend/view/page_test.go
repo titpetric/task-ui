@@ -55,16 +55,6 @@ func TestPage_Summarizes(t *testing.T) {
 	assert.False(t, p.Summarizes(interactive))
 }
 
-// A job's dot is how its last run ended, pending for none.
-func TestPage_LastState(t *testing.T) {
-	t.Parallel()
-	job := &folder.Job{Folder: "infra", ID: "plan"}
-	p := &view.Page{Last: map[string]view.Run{job.Key(): {Run: model.Run{State: model.StateFailed}}}}
-	assert.Equal(t, model.StateFailed, p.LastState(job))
-	assert.Equal(t, "pending", p.LastState(&folder.Job{Folder: "infra", ID: "apply"}))
-	assert.Equal(t, "pending", p.LastState(nil))
-}
-
 func TestPage_Runs(t *testing.T) {
 	t.Parallel()
 	p := admin(t)

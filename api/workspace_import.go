@@ -122,7 +122,7 @@ func (h *Handlers) readImport(w http.ResponseWriter, r *http.Request) (*workspac
 	target := strings.TrimSpace(r.FormValue("folder"))
 	source := bundle.Manifest.Workspace.Folder
 	if target == "" && source == model.Default {
-		return nil, "", http.StatusBadRequest, "the bundle holds the default workspace, _: name the folder it imports as"
+		return nil, "", http.StatusBadRequest, "the bundle holds the default workspace, internal: name the folder it imports as"
 	}
 	if target == "" {
 		target = source

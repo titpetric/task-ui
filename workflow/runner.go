@@ -488,9 +488,9 @@ func skips(state string, step Step) bool {
 func label(step Step) string {
 	switch {
 	case step.Summary:
-		return "the summary in " + step.Place
+		return "the summary in " + model.PlaceLabel(step.Place)
 	case step.Asks:
-		return "the prompt in " + step.Place
+		return "the prompt in " + model.PlaceLabel(step.Place)
 	}
 	if step.Workflow != nil {
 		return step.Workflow.Name

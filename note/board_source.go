@@ -47,13 +47,13 @@ func (b *Board) asking(ctx context.Context, thread *model.Note) string {
 func (b *Board) place(ctx context.Context, thread *model.Note) string {
 	switch {
 	case thread.Area == model.AreaWorkflows:
-		return "the prompt of the Workflows page, in " + thread.Dir
+		return "the prompt of the Workflows page, in " + model.PlaceLabel(thread.Dir)
 	case thread.AboutRunID != "":
-		return "about the run " + thread.AboutRunID + ", in " + thread.Dir
+		return "about the run " + thread.AboutRunID + ", in " + model.PlaceLabel(thread.Dir)
 	case thread.AboutWorkflowRunID != "":
-		return "a prompt of the workflow run " + thread.AboutWorkflowRunID + ", in " + thread.Dir
+		return "a prompt of the workflow run " + thread.AboutWorkflowRunID + ", in " + model.PlaceLabel(thread.Dir)
 	}
-	return "in " + thread.Dir
+	return "in " + model.PlaceLabel(thread.Dir)
 }
 
 // threadPath is the path of the page that shows a prompt's thread, with

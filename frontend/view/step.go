@@ -79,14 +79,9 @@ func (s Step) Icon() string {
 	return "terminal"
 }
 
-// Place is where a prompt or summary step asks Claude, folder or
-// folder/dir, the root as "the root".
+// Place is where a prompt or summary step asks Claude: the root, the workspace root, or folder/dir.
 func (s Step) Place() string {
-	place := model.WorkflowStep{Folder: s.Folder, Dir: s.Dir}.Place()
-	if place == model.Default {
-		return "the root"
-	}
-	return place
+	return model.PlaceLabel(model.WorkflowStep{Folder: s.Folder, Dir: s.Dir}.Place())
 }
 
 // Line is the step in one line, its card's heading while folded: the

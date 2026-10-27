@@ -42,7 +42,8 @@ func (w Workflow) Prompted() bool {
 }
 
 // PromptPlace is where the workflow's first prompt or summary step asks
-// Claude, the place its thread shows before it starts: _ without one.
+// Claude, the place its thread shows before it starts: "" for no
+// workspace, internal without one.
 func (w Workflow) PromptPlace() string {
 	for _, step := range w.Steps {
 		if kind := step.StepKind(); kind == model.StepPrompt || kind == model.StepSummary {

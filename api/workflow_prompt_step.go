@@ -12,12 +12,13 @@ import (
 
 // promptStep turns a requested prompt or summary step into its row: the
 // prompt, none for a summary, asked in a folder and a directory inside
-// it the user sees, or in the root, internal, for one without a folder. It
-// names no job or workflow.
+// it the user sees, in the root, internal, when it names that, or in no
+// workspace, the workspaces root, for one without a folder. It names no
+// job or workflow.
 func (h *Handlers) promptStep(r *http.Request, step StepRequest) (model.WorkflowStep, error) {
 	row := model.WorkflowStep{Kind: step.StepKind(), Folder: model.Canonical(strings.Trim(step.Folder, "/")), Dir: strings.Trim(step.Dir, "/"), Job: model.PromptJob, Prompt: strings.TrimSpace(step.Prompt)}
 	if row.Folder == "" {
-		row.Folder = model.Default
+		row.Dir = ""
 	}
 	switch {
 	case step.Job != "" || step.Workflow != "":

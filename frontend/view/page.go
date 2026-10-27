@@ -154,8 +154,6 @@ type Page struct {
 	// Pipeline is a workflow's steps top to bottom, with the latest run's
 	// states.
 	Pipeline []Link
-	// Control is the dashboard's control centre.
-	Control  Control
 	Workflow *Workflow
 	// WorkflowRuns are a workflow's runs, newest first.
 	WorkflowRuns []WorkflowRun
@@ -226,12 +224,6 @@ type Page struct {
 	// TreeFolders are the folders of the directories Tree lists, by the
 	// directory's name; their jobs stay on their own pages.
 	TreeFolders map[string]*folder.Folder
-	// JobGroups are the rows of the Jobs table of a folder's page, or of
-	// a directory's inside one, by group.
-	JobGroups []JobGroup
-	// JobSummaries are the summaries of the last runs of the rows
-	// JobGroups lists, by the job's key.
-	JobSummaries map[string]*SummaryLink
 	// RunReports are the summaries of the runs a job page lists, by run
 	// ID, those under way as well.
 	RunReports map[string]*note.Report
@@ -503,11 +495,6 @@ func (p *Page) RunningRun(key string) *Run {
 	return nil
 }
 
-// JobSummary returns the summary of the last run of a job the Jobs table lists, nil for none.
-func (p *Page) JobSummary(key string) *SummaryLink {
-	return p.JobSummaries[key]
-}
-
 // LastRun returns the latest run of a job, or nil.
 func (p *Page) LastRun(key string) *Run {
 	if run, ok := p.Last[key]; ok {
@@ -542,16 +529,4 @@ func (p *Page) WhoCanRun(f *folder.Folder, job *folder.Job) string {
 		return "admin, runner"
 	}
 	return "admin, " + strings.Join(allow, ", ")
-}
-
-// LastState is the class of a job's dot: how its last run ended, pending
-// for none.
-func (p *Page) LastState(job *folder.Job) string {
-	if job == nil {
-		return "pending"
-	}
-	if run := p.LastRun(job.Key()); run != nil {
-		return run.State
-	}
-	return "pending"
 }

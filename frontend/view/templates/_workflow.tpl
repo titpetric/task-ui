@@ -120,7 +120,7 @@
 			{{- if or (eq $kind "job") (eq $kind "workflow") }}
 			{{- $space := $p.StepSpaceOf $s.Folder }}{{ if eq $kind "workflow" }}{{ $space = "workflow:" }}{{ end }}
 			<div class="wf-fields wf-cascade">
-				{{- template "stepspace" (list $p $space true) }}
+				{{- template "stepspace" (list $p $space true false) }}
 				<div class="field">
 					<span class="label" data-step-folder-label>{{ if eq $kind "workflow" }}Workflow{{ else }}Folder{{ end }}</span>
 					<select data-step-folder aria-label="Folder or workflow">
@@ -160,11 +160,15 @@
 			</div>
 			{{- end }}
 			<div class="wf-fields wf-cascade">
-				{{- template "stepspace" (list $p ($p.StepSpaceOf $s.Folder) false) }}
+				{{- $space := $p.StepSpaceOf $s.Folder }}{{ if eq $s.Folder "" }}{{ $space = "" }}{{ end }}
+				{{- template "stepspace" (list $p $space false $p.StepNone) }}
 				<div class="field">
 					<span class="label">Asks in <span class="faint">the folder Claude works in</span></span>
 					{{- $found := eq $s.Folder "internal" }}
 					<select data-step-place aria-label="Folder Claude works in">
+						{{- if $p.StepNone }}
+						<option value="" data-workspace="" data-rel="."{{ if eq $s.Folder "" }} selected{{ end }}>none (the workspace root)</option>
+						{{- end }}
 						<option value="internal" data-workspace="internal" data-rel="."{{ if eq $s.Folder "internal" }} selected{{ end }}>the root</option>
 						{{- range $p.StepFolders }}{{ if eq .ID $s.Folder }}{{ $found = true }}{{ end }}
 						<option value="{{ .ID }}" data-workspace="{{ $p.StepSpaceOf .ID }}" data-rel="{{ $p.StepRel .ID }}"{{ if eq .ID $s.Folder }} selected{{ end }}>{{ $p.StepLabel .ID }}</option>
@@ -195,18 +199,22 @@
 {{- end }}
 
 {{/* stepspace is the Workspace field of a step card, (list page
-     selected workflows): the default workspace, the named ones the user
-     sees a folder of, and Workflows for a command. The folder select
-     next to it lists the options whose data-workspace matches, each by
-     its folder relative to the workspace, data-rel; when the workspace
-     changes, task-ui.js narrows it and keeps the folder of the same
-     data-rel and its job, or says under the card what the workspace
-     lacks. */}}
+     selected workflows allow-none): internal, the named workspaces the
+     user sees a folder of, and Workflows for a command; allow-none adds
+     no workspace, the workspaces root, for a prompt or summary. The
+     folder select next to it lists the options whose data-workspace
+     matches, each by its folder relative to the workspace, data-rel;
+     when the workspace changes, task-ui.js narrows it and keeps the
+     folder of the same data-rel and its job, or says under the card
+     what the workspace lacks. */}}
 {{ define "stepspace" }}
-{{- $p := index . 0 }}{{ $sel := index . 1 }}{{ $flows := index . 2 -}}
+{{- $p := index . 0 }}{{ $sel := index . 1 }}{{ $flows := index . 2 }}{{ $none := index . 3 -}}
 <div class="field">
 	<span class="label">Workspace</span>
 	<select data-step-space aria-label="Workspace">
+		{{- if $none }}
+		<option value="" data-workspace="" data-rel="."{{ if eq $sel "" }} selected{{ end }}>none (the workspace root)</option>
+		{{- end }}
 		{{- range $p.StepSpaces }}
 		<option value="{{ .ID }}"{{ if eq .ID $sel }} selected{{ end }}>{{ .Title }}</option>
 		{{- end }}

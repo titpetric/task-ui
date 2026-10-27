@@ -32,7 +32,7 @@ type Discovery struct {
 	Discover bool
 	Config   []Config
 	// Workspaces are the workspace rows, by ID, and their Shallow; the
-	// default workspace, _, is one whether they name it or not.
+	// default workspace, internal, is one whether they name it or not.
 	Workspaces []Config
 	// Probe is every folder's Probe, for the skills atkins applies in it.
 	Probe *skills.Prober

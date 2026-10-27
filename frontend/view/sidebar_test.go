@@ -117,3 +117,14 @@ func TestView_RenderSidePin(t *testing.T) {
 	assert.Contains(t, side, `>eu/ plan -x</a>`)
 	assert.NotContains(t, side, "Nothing to run.")
 }
+
+// jobs returns a folder of the ID with a job per name.
+func jobs(id string, names ...string) *folder.Folder {
+	f := &folder.Folder{ID: id}
+	for _, name := range names {
+		job := &folder.Job{Folder: id, ID: name}
+		job.Name = name
+		f.Jobs = append(f.Jobs, job)
+	}
+	return f
+}

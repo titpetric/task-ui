@@ -24,13 +24,13 @@ func TestTools_WorkflowEdits(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
 	f.board.AgentCommand = []string{"sh", "-c", `printf 'Asked: %s' "$TASK_UI_PROMPT" > "$TASK_UI_PROMPT_REPLY"`}
-	steps := []map[string]any{{"folder": "site", "job": "build"}, {"prompt": "fetch the weather", "folder": "_"}, {"kind": "summary"}}
+	steps := []map[string]any{{"folder": "site", "job": "build"}, {"prompt": "fetch the weather", "folder": "_"}, {"kind": "summary", "folder": "_"}}
 
 	text, failed := f.tool(t, "admin", "create_workflow", map[string]any{"name": "Weather", "description": "water or not", "steps": steps})
 	assert.False(t, failed, text)
 	assert.Contains(t, text, "workflow Weather (id ")
 	assert.Contains(t, text, "water or not\n")
-	assert.Contains(t, text, "  1. site/build\n  2. prompt in internal: fetch the weather\n  3. summary in internal\n")
+	assert.Contains(t, text, "  1. site/build\n  2. prompt in the root: fetch the weather\n  3. summary in the root\n")
 
 	text, failed = f.tool(t, "ops", "create_workflow", map[string]any{"name": "Asks", "steps": steps[1:2]})
 	assert.True(t, failed, text)
@@ -41,7 +41,7 @@ func TestTools_WorkflowEdits(t *testing.T) {
 	assert.Contains(t, text, "workflow Watering (id ")
 	assert.Contains(t, text, ", not in the sidebar")
 	assert.Contains(t, text, "water or not\n")
-	assert.Contains(t, text, "  2. prompt in internal: fetch the weather\n  3. summary in internal\n")
+	assert.Contains(t, text, "  2. prompt in the root: fetch the weather\n  3. summary in the root\n")
 
 	text, failed = f.tool(t, "admin", "get_workflow", map[string]any{"workflow": "watering"})
 	assert.False(t, failed, text)
@@ -50,8 +50,8 @@ func TestTools_WorkflowEdits(t *testing.T) {
 	text, failed = f.tool(t, "admin", "run_workflow", map[string]any{"workflow": "Watering", "wait": 30})
 	assert.False(t, failed, text)
 	assert.Contains(t, text, "Watering by admin, ok")
-	assert.Contains(t, text, "  2. prompt in internal: ok")
-	assert.Contains(t, text, "  3. summary in internal: ok")
+	assert.Contains(t, text, "  2. prompt in the root: ok")
+	assert.Contains(t, text, "  3. summary in the root: ok")
 	assert.Contains(t, text, "answer:\nAsked: Summarize this workflow run.")
 
 	text, failed = f.tool(t, "admin", "create_workflow", map[string]any{"name": "Bad", "steps": []map[string]any{{"kind": "summary", "prompt": "no"}}})
@@ -189,7 +189,7 @@ func TestTools_BuilderReplies(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Len(t, threads, 1)
 	thread := threads[0].ID
-	assert.Contains(t, source, "## The prompt's source\n\nThe prompt is the thread of the task-ui note "+thread+", the prompt of the Workflows page, in internal, ")
+	assert.Contains(t, source, "## The prompt's source\n\nThe prompt is the thread of the task-ui note "+thread+", the prompt of the Workflows page, in the root, ")
 	assert.Contains(t, source, "/workflows#note-"+thread+".")
 	assert.Contains(t, source, "note_comment with the id "+thread+" and the answer as the body")
 

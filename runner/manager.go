@@ -189,9 +189,14 @@ func (m *Manager) newSession(ctx context.Context, req Request, run *model.Run) *
 	session.env = req.Env
 	session.dir, session.args, session.timeout = req.Dir, req.Args, req.Timeout
 	session.Titled = m.publish
-	session.workspaceName, session.workspace = m.workspace(ctx, req)
-	session.workspaceID = m.workspaceID(ctx, session.workspaceName)
-	session.home = m.home(ctx, session.workspaceName)
+	session.noWorkspace = req.NoWorkspace
+	if session.noWorkspace {
+		session.workspaceName, session.workspace, session.workspaceID, session.home = "", "", "", ""
+	} else {
+		session.workspaceName, session.workspace = m.workspace(ctx, req)
+		session.workspaceID = m.workspaceID(ctx, session.workspaceName)
+		session.home = m.home(ctx, session.workspaceName)
+	}
 	if req.User != nil {
 		session.role = req.User.EffectiveRole()
 		if m.opts.Users != nil {
@@ -333,15 +338,17 @@ func (m *Manager) execute(ctx context.Context, session *Session) Status {
 	if len(job.Command) == 0 {
 		return failed(session, "the job has no command")
 	}
-	if err := m.pull(ctx, session); err != nil {
-		return failed(session, err.Error())
+	if !session.noWorkspace {
+		if err := m.pull(ctx, session); err != nil {
+			return failed(session, err.Error())
+		}
 	}
 	keys, err := m.agent(ctx, session)
 	if err != nil {
 		return failed(session, err.Error())
 	}
 	defer keys.Close()
-	if m.opts.Env != nil {
+	if m.opts.Env != nil && !session.noWorkspace {
 		if err := m.opts.Env.Generate(ctx, f); err != nil {
 			return failed(session, "generating env files: "+err.Error())
 		}
@@ -385,6 +392,9 @@ func (m *Manager) execute(ctx context.Context, session *Session) Status {
 // workspace known: without a default workspace a run at the root gets
 // no workspace, no TASK_UI_WORKSPACE and the server's HOME.
 func (m *Manager) workspace(ctx context.Context, req Request) (string, string) {
+	if req.NoWorkspace {
+		return "", ""
+	}
 	if req.Workspace != "" {
 		if m.opts.Root != "" && filepath.Clean(req.Workspace) == filepath.Clean(m.opts.Root) {
 			return model.Default, req.Workspace

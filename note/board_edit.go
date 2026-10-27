@@ -48,7 +48,7 @@ func (b *Board) Edit(ctx context.Context, user *model.User, id, body string) (*m
 		if !b.permissions(ctx, user).Allowed("prompt/edit") {
 			return nil, ErrForbidden
 		}
-		if req, err = b.promptRequest(ctx, user, thread.Dir); err != nil {
+		if req, err = b.promptRequest(ctx, user, thread.Dir, thread.AboutWorkflowRunID != ""); err != nil {
 			return nil, err
 		}
 	}

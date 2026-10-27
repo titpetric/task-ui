@@ -360,7 +360,10 @@ func (h *Handlers) workflowRunPrompt(r *http.Request, p *view.Page, run *model.W
 		return nil
 	}
 	where := "the root"
-	if place != model.Default {
+	switch {
+	case place == "":
+		where = "the workspace root"
+	case place != model.Default:
 		where = place + "/"
 	}
 	prompt := view.PromptOfWorkflowRun(run.ID, place, where, run.State == model.StateRunning)

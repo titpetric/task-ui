@@ -12,27 +12,24 @@ import (
 
 // StepSpace is a workspace the workflow editor's steps pick before a
 // folder: a workflow belongs to no workspace, so each step names the
-// workspace of the folder it runs in. ID is the workspace's folder, _
-// for the default one; Title is what the picker shows.
+// workspace of the folder it runs in. ID is the workspace's folder,
+// internal for the default one; Title is what the picker shows.
 type StepSpace struct {
 	ID    string
 	Title string
 }
 
-// StepSpaces lists internal, while it exists or a step folder lies at the root, then by rank each named workspace holding a folder of StepFolders.
+// StepSpaces lists internal, then by rank each named workspace holding a
+// folder of StepFolders.
 func (p *Page) StepSpaces() []StepSpace {
 	titles := map[string]string{}
-	root := false
 	for _, ws := range p.WorkspaceList {
 		titles[ws.Folder] = ws.Title
-		root = root || ws.Folder == model.Default
 	}
 	seen := map[string]bool{}
 	for _, f := range p.StepFolders {
 		if ws := p.workspaceOf(f.ID); ws != model.Default {
 			seen[ws] = true
-		} else {
-			root = true
 		}
 	}
 	named := make([]string, 0, len(seen))
@@ -46,12 +43,9 @@ func (p *Page) StepSpaces() []StepSpace {
 		}
 		return a < b
 	})
-	spaces := []StepSpace{}
-	if root {
-		spaces = append(spaces, StepSpace{ID: model.Default, Title: "Default"})
-		if title := titles[model.Default]; title != "" {
-			spaces[0].Title = title
-		}
+	spaces := []StepSpace{{ID: model.Default, Title: "Internal"}}
+	if title := titles[model.Default]; title != "" {
+		spaces[0].Title = title
 	}
 	for _, ws := range named {
 		title := titles[ws]
@@ -183,6 +177,11 @@ func (p *Page) StepMove(steps []Step, ws string) (moved []Step, missed int) {
 // StepSpaceOf returns the workspace of a folder ID, internal for the root and the projects at its top.
 func (p *Page) StepSpaceOf(id string) string {
 	return p.workspaceOf(id)
+}
+
+// StepNone reports whether a step may name no workspace: a user who sees every folder.
+func (p *Page) StepNone() bool {
+	return len(p.User.FolderList()) == 0
 }
 
 // StepMoveItems returns the edited workflow's menu items that move its steps to each other workspace.

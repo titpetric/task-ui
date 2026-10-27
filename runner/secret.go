@@ -58,7 +58,7 @@ func (m *Manager) Secret(ctx context.Context, token, name string) (string, error
 	if !ok || token == "" {
 		return "", ErrRunToken
 	}
-	if m.opts.Secrets == nil {
+	if m.opts.Secrets == nil || session.noWorkspace {
 		return "", ErrNoSecret
 	}
 	secrets, err := m.opts.Secrets.Reaching(ctx, session.Folder.ID)

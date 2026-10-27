@@ -103,7 +103,7 @@ func (h *Handlers) folderAt(w http.ResponseWriter, r *http.Request, path string)
 // and the workspaces' directories.
 func (h *Handlers) defaultWorkspace(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	f := &folder.Folder{ID: model.Default, Title: "Default", Dir: h.opts.Root}
+	f := &folder.Folder{ID: model.Default, Title: "Internal", Dir: h.opts.Root}
 	var workspace *model.Workspace
 	if h.opts.Workspaces != nil {
 		if row, err := h.opts.Workspaces.GetByFolder(ctx, model.Default); err == nil {
@@ -224,8 +224,6 @@ func (h *Handlers) browse(w http.ResponseWriter, r *http.Request, f *folder.Fold
 	}
 	p.Tree = h.checkoutTree(p, f, rel, folder.Listing(dir))
 	withTreeFolders(p, dir, nil)
-	p.Last = h.latestRuns(r, []*folder.Folder{f})
-	h.jobTable(r, p, f, sub)
 	p.Up = p.Href(f.ID)
 	if parent := path.Dir(rel); parent != "." {
 		p.Up += "/" + escapePath(parent)
@@ -275,8 +273,6 @@ func (h *Handlers) folder(w http.ResponseWriter, r *http.Request, f *folder.Fold
 		p.FolderMenu.Projects = len(p.SubFolders)
 	}
 	withTreeFolders(p, f.Dir, p.SubFolders)
-	p.Last = h.latestRuns(r, []*folder.Folder{f})
-	h.jobTable(r, p, f, f)
 	// A workspace's page shows its prompt box open.
 	if _, ok := p.Workspaces[f.ID]; ok && p.Prompt != nil {
 		p.Prompt.Open = true

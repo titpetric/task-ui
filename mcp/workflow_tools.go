@@ -206,9 +206,9 @@ func showWorkflow(wf api.WorkflowView, names map[string]string) string {
 		fmt.Fprintf(&b, "  %d. ", i+1)
 		switch {
 		case step.IsSummary():
-			fmt.Fprintf(&b, "summary in %s", step.Place())
+			fmt.Fprintf(&b, "summary in %s", model.PlaceLabel(step.Place()))
 		case step.IsPrompt():
-			fmt.Fprintf(&b, "prompt in %s: %s", step.Place(), step.Prompt)
+			fmt.Fprintf(&b, "prompt in %s: %s", model.PlaceLabel(step.Place()), step.Prompt)
 		case step.IsWorkflow():
 			fmt.Fprintf(&b, "workflow %s (id %s)", names[step.WorkflowRef], step.WorkflowRef)
 		default:

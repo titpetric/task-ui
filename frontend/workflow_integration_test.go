@@ -427,7 +427,7 @@ func TestWorkflow_PromptEditor(t *testing.T) {
 	assert.Contains(t, page, `<li class="node disabled" data-step="1">`)
 	assert.Contains(t, page, "step 2, off: runs skip it")
 	assert.Contains(t, page, `<p class="step-prompt">summarize, change nothing</p>`)
-	assert.Contains(t, page, `<use href="#i-summary"/></svg>summary in internal</a>`)
+	assert.Contains(t, page, `<use href="#i-summary"/></svg>summary in the root</a>`)
 	assert.Contains(t, page, `id="workflow-input-dialog"`)
 
 	plain := f.workflow(t, asOps, "plain", "infra", "plan")
@@ -515,7 +515,7 @@ func TestWorkflows_Prompt(t *testing.T) {
 	admin := f.page(t, asAdmin, "/workflows")
 	assert.Contains(t, admin, box)
 	assert.Contains(t, admin, `placeholder="Describe a workflow to build or change"`)
-	assert.Contains(t, admin, `<select name="folder" aria-label="Run in"><option value="internal">the root</option>`)
+	assert.Contains(t, admin, `<select name="folder" aria-label="Run in"><option value="internal">internal (the root)</option>`)
 	assert.Contains(t, admin, `data-area="workflows"`)
 	assert.Contains(t, admin, "build the watering workflow")
 	assert.NotContains(t, admin, "a root prompt")

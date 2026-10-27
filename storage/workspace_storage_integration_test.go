@@ -121,7 +121,7 @@ func TestWorkspaceStorage_EnsureDefault(t *testing.T) {
 	assert.NoError(t, workspaces.EnsureDefault(ctx))
 	def, err := workspaces.GetByFolder(ctx, model.Default)
 	assert.NoError(t, err)
-	assert.Equal(t, "Default", def.Title)
+	assert.Equal(t, "Internal", def.Title)
 	assert.NoError(t, workspaces.Create(ctx, &model.Workspace{Folder: "malta"}))
 
 	// Again, it keeps the row and its title.

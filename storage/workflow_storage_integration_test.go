@@ -351,17 +351,23 @@ func TestWorkflowStorage_PromptStep(t *testing.T) {
 	assert.Equal(t, "malta/docs", got[1].Place())
 
 	bad := []model.WorkflowStep{
-		{Job: model.PromptJob, Prompt: "where"},
 		{Folder: "_", Job: "build", Prompt: "which job"},
 		{Folder: "_", Job: model.PromptJob, WorkflowRef: wf.ID, Prompt: "both"},
 		{Kind: model.StepPrompt, Folder: "_", Job: model.PromptJob, Prompt: "  "},
 		{Kind: model.StepSummary, Folder: "_", Job: model.PromptJob, Prompt: "a summary takes none"},
-		{Kind: model.StepSummary, Job: model.PromptJob},
 		{Kind: "other", Folder: "a", Job: "b"},
 	}
 	for _, step := range bad {
 		assert.Error(t, workflows.Create(ctx, &model.Workflow{Name: "bad"}, []model.WorkflowStep{step}))
 	}
+
+	// A step with no folder asks at the workspaces root, with no workspace.
+	sweep := &model.Workflow{Name: "sweep"}
+	assert.NoError(t, workflows.Create(ctx, sweep, []model.WorkflowStep{{Kind: model.StepSummary, Job: model.PromptJob}}))
+	noneSteps, err := workflows.Steps(ctx, sweep.ID)
+	assert.NoError(t, err)
+	assert.Equal(t, "", noneSteps[0].Folder)
+	assert.Equal(t, "", noneSteps[0].Place())
 
 	run := &model.WorkflowRun{WorkflowID: wf.ID, Name: wf.Name}
 	assert.NoError(t, runs.Create(ctx, run, got))

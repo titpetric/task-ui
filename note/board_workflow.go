@@ -33,9 +33,9 @@ func WorkflowQuestion(prompt, input string) string {
 // WorkflowSummaryQuestion is the question of a workflow run's summary step; claude.RunSummary goes beside it.
 const WorkflowSummaryQuestion = "Summarize this workflow run."
 
-// PromptPlace checks a place a workflow's prompt runs in as the user: a folder or directory the user sees, or internal.
+// PromptPlace checks a place a workflow's prompt runs in as the user: a folder or directory the user sees, internal, or none.
 func (b *Board) PromptPlace(ctx context.Context, user *model.User, place string) error {
-	_, err := b.promptRequest(ctx, user, place)
+	_, err := b.promptRequest(ctx, user, place, true)
 	return err
 }
 
@@ -72,7 +72,7 @@ func (b *Board) askWorkflowRun(stop context.Context, user *model.User, run *mode
 	if !b.permissions(ctx, user).Allowed("prompt/edit") {
 		return nil, false, ErrForbidden
 	}
-	req, err := b.promptRequest(ctx, user, place)
+	req, err := b.promptRequest(ctx, user, place, true)
 	if err != nil {
 		return nil, false, err
 	}
@@ -220,9 +220,9 @@ func (b *Board) stepHead(ctx context.Context, i int, step model.WorkflowRunStep)
 	name := step.Folder + " / " + step.Job
 	switch {
 	case step.IsSummary():
-		name = "a summary by Claude in " + step.Folder
+		name = "a summary by Claude in " + model.PlaceLabel(step.Folder)
 	case step.IsPrompt():
-		name = "a prompt to Claude in " + step.Folder + ", " + strconv.Quote(step.Prompt)
+		name = "a prompt to Claude in " + model.PlaceLabel(step.Folder) + ", " + strconv.Quote(step.Prompt)
 	case step.IsWorkflow():
 		name = "the workflow " + step.WorkflowRef
 		if step.WorkflowRunRef != "" {

@@ -1095,18 +1095,6 @@
   });
   initWho();
 
-  // A show/hide switch remembers its choice, in this browser.
-  Array.prototype.forEach.call(document.querySelectorAll("input[data-peek]"), function (input) {
-    var key = "task-ui.peek." + input.dataset.peek;
-    try {
-      var saved = localStorage.getItem(key);
-      if (saved !== null) input.checked = saved === "1";
-    } catch (e) { /* no storage: the default stands */ }
-    input.addEventListener("change", function () {
-      try { localStorage.setItem(key, input.checked ? "1" : "0"); } catch (e) { /* not remembered */ }
-    });
-  });
-
   // ---------------------------------------------------------------- feedback
 
   // toast shows a line of feedback at the foot of the page, in the ok
@@ -1531,9 +1519,9 @@
     select.addEventListener("change", function () { select.form.requestSubmit(); });
   });
 
-  // ------------------------------------------------------------ cc-menus
+  // ------------------------------------------------------------ menus
 
-  // A menu, a row's [...] or a control centre's Other, is a <details>
+  // A menu, a row's [...], is a <details>
   // that opens on a click, never a hover. Its list opens over the page,
   // placed against its button so a table's scrolling box cannot clip it:
   // under the button, or over it when the screen ends first, its right
@@ -1542,10 +1530,10 @@
   // at a time; a click outside, Escape, a scroll of the page and the
   // pick of an item close it, Escape giving the focus back to the
   // button. The arrow keys, Home and End move between the items.
-  var menuSelector = "details.more-menu, details.cc-more";
-  var menuList = function (menu) { return menu.querySelector(":scope > .more-list, :scope > .cc-menu"); };
+  var menuSelector = "details.more-menu";
+  var menuList = function (menu) { return menu.querySelector(":scope > .more-list"); };
   var menuItems = function (menu) {
-    return Array.prototype.filter.call(menu.querySelectorAll('.more-item, .cc-menu [role="menuitem"], .cc-menu .cc'), function (el) {
+    return Array.prototype.filter.call(menu.querySelectorAll(".more-item"), function (el) {
       return !el.disabled && el.offsetParent !== null;
     });
   };
@@ -1588,7 +1576,7 @@
   document.addEventListener("click", function (event) {
     document.querySelectorAll(menuSelector).forEach(function (menu) {
       if (!menu.open) return;
-      if (!menu.contains(event.target) || event.target.closest(".more-item, .cc-menu .cc, .cc-menu [data-run], .cc-menu [data-attach]")) closeMenu(menu);
+      if (!menu.contains(event.target) || event.target.closest(".more-item")) closeMenu(menu);
     });
   });
   document.addEventListener("keydown", function (event) {
@@ -1894,11 +1882,12 @@
     summary: ["Summary", "i-summary"]
   };
 
-  // stepPlace is where a prompt or summary card asks: its folder, and
-  // the directory inside it without slashes around it.
+  // stepPlace is where a prompt or summary card asks: its folder, empty
+  // for no workspace, and the directory inside it without slashes around
+  // it.
   function stepPlace(row) {
     return {
-      folder: row.querySelector("[data-step-place]").value || "internal",
+      folder: row.querySelector("[data-step-place]").value,
       dir: row.querySelector("[data-step-dir]").value.trim().replace(/^\/+|\/+$/g, "")
     };
   }
@@ -2008,7 +1997,7 @@
     } else if (kind === "summary") {
       var place = stepPlace(row);
       var at = place.dir ? place.folder + "/" + place.dir : place.folder;
-      line = "of the steps before it, in " + (at === "internal" ? "the root" : at);
+      line = "of the steps before it, in " + (at === "" ? "the workspace root" : at === "internal" ? "the root" : at);
     } else {
       var folder = row.querySelector("[data-step-folder]");
       if (kind === "workflow") {
@@ -2905,37 +2894,12 @@
       }
       else showDoc('<p class="faint">No preview for this file, ' + escapeHTML(view.content_type) + ". Download it to open it.</p>", "text");
     };
-    // previewActions carries a file's Run or Attach from its button in
-    // the Jobs table into the window's foot; the window closes for the
-    // run window to open.
-    var previewActions = document.getElementById("preview-actions");
-    previewActions.addEventListener("click", function (event) {
-      if (event.target.closest("[data-run], [data-attach]")) previewDialog.close();
-    });
-    var showActions = function (href) {
-      previewActions.innerHTML = "";
-      var link = Array.prototype.find.call(document.querySelectorAll("a[data-file]"), function (a) {
-        return a.getAttribute("href") === href;
-      });
-      var slot = link && Array.prototype.find.call(document.querySelectorAll(".cc-slot[data-path]"), function (el) {
-        return el.dataset.path === link.dataset.file;
-      });
-      if (!slot) return;
-      slot.querySelectorAll("[data-run], [data-attach]").forEach(function (btn) {
-        var copy = btn.cloneNode(true);
-        copy.className = btn.hasAttribute("data-run") ? "btn btn-primary" : "btn";
-        copy.querySelectorAll("span").forEach(function (part) { part.remove(); });
-        copy.appendChild(document.createTextNode(btn.hasAttribute("data-run") ? "Run" : "Attach"));
-        previewActions.appendChild(copy);
-      });
-    };
     // openCheckout opens a file of a folder's checkout: its link is where
     // it opens on its own, and the API answers the same path.
     var openCheckout = function (href, rel) {
       previewPath = href;
       previewLabel.textContent = "File";
       previewVersion.hidden = true;
-      showActions(href);
       document.getElementById("preview-title").textContent = rel;
       showDoc('<p class="faint">Loading…</p>', "text");
       if (!previewDialog.open) previewDialog.showModal();
@@ -4021,56 +3985,13 @@
     }, 1000);
   }
 
-  // A job's control button in the dashboard's control centre, and in a
-  // folder's Jobs table, follows the runs topic: an eye on the job
-  // running, Run again when it ended, in the colour of how it ended. Its
-  // slot keeps that colour in data-last, and what the button carries:
-  // the directory, the args command, the question before the run.
-  function slotHTML(slot, run) {
-    var d = slot.dataset;
-    var label = d.label ? "<span>" + escapeHTML(d.label) + "</span>" : "";
-    var named = d.label ? " named" : "";
-    if (run && run.state && run.state !== "running") d.last = run.state === "ok" ? "ok" : "bad";
-    var last = " " + escapeHTML(d.last || "never");
-    var what = escapeHTML(d.folder + (d.dir ? "/" + d.dir : "") + " / " + d.name);
-    var desc = d.desc ? ": " + escapeHTML(d.desc) : "";
-    var term = slot.hasAttribute("data-interactive");
-    if (run && run.state === "running") {
-      return '<a class="cc' + named + ' running" href="/runs/' + escapeHTML(run.id) + '" data-attach="' + escapeHTML(run.id) +
-        '" title="Attach to ' + what + ", running" + (run.title ? ": " + escapeHTML(run.title) : "") + '"><svg class="ic"><use href="#i-eye"/></svg>' + label + "</a>";
-    }
-    if (slot.hasAttribute("data-can")) {
-      return '<button type="button" class="cc' + named + last + '" data-run data-folder="' + escapeHTML(d.folder) + '"' +
-        (d.dir ? ' data-dir="' + escapeHTML(d.dir) + '"' : "") + ' data-job="' + escapeHTML(d.job) + '" data-title="' + what + '"' +
-        (d.confirm ? ' data-confirm="' + escapeHTML(d.confirm) + '" data-confirm-ok="Run ' + escapeHTML(d.name) + '"' : "") +
-        (d.args ? ' data-args="' + escapeHTML(d.args) + '"' : "") +
-        ' title="Run ' + what + desc + (d.args ? ", with arguments after " + escapeHTML(d.args) : "") + (term ? ", in a terminal" : "") +
-        '"><svg class="ic"><use href="#i-' + (term ? "terminal" : "play") + '"/></svg>' + label + "</button>";
-    }
-    return '<a class="cc' + named + " idle" + last + '" href="' + escapeHTML(folderHref(d.folder)) + "/" + (d.dir ? escapeHTML(d.dir) + "/" : "") + escapeHTML(d.job) + '" title="' + what + desc +
-      ': no permission to run it"><i class="shebang" aria-hidden="true">#!</i>' + label + "</a>";
-  }
-  if (document.querySelector(".cc-slot") && window.EventSource) {
-    onRuns(function (run) {
-      var key = run.folder + (run.dir ? "/" + run.dir : "") + "/" + run.job;
-      document.querySelectorAll(".cc-slot").forEach(function (slot) {
-        if (slot.dataset.cc === key) slot.innerHTML = slotHTML(slot, run);
-      });
-    });
-  }
-  // The dashboard follows the runs topic too: a run that starts adds its
+  // The dashboard follows the runs topic: a run that starts adds its
   // tile, polled for its frame; one that ends marks its tile and the last
-  // frame is fetched. The running count follows.
+  // frame is fetched.
   var dashboard = document.querySelector('[data-sse="runs"][data-dashboard]');
   if (dashboard && window.EventSource) {
     var tiles = dashboard.querySelector("[data-tiles]");
     var tilesEmpty = dashboard.querySelector("[data-tiles-empty]");
-    var runningCount = dashboard.querySelector("[data-running-count]");
-    var countRunning = function () {
-      var n = tiles.querySelectorAll(".tile-head .dot.running").length;
-      if (runningCount) runningCount.textContent = n;
-      if (tilesEmpty) tilesEmpty.hidden = tiles.children.length > 0;
-    };
     onRuns(function (run) {
       var tile = tiles.querySelector('[data-tile="' + run.id + '"]');
       if (!tile && run.state === "running") {
@@ -4103,7 +4024,7 @@
         named.textContent = run.title || "";
         named.title = run.title || "";
       }
-      countRunning();
+      if (tilesEmpty) tilesEmpty.hidden = tiles.children.length > 0;
     });
   }
 
@@ -4281,12 +4202,11 @@
     return "'" + word.replace(/'/g, "'\\''") + "'";
   }
 
-  // argsLine opens the field for the arguments of a job under its row of
-  // the Jobs table or the page's head: what the job runs, the words typed
-  // after it as they reach it, and Run. In a table the field takes a row
-  // of its own.
+  // argsLine opens the field for the arguments of a job under the page's
+  // head: what the job runs, the words typed after it as they reach it,
+  // and Run.
   function argsLine(btn, spec) {
-    var anchor = btn.closest("table.control tr, .page-head") || btn.parentNode;
+    var anchor = btn.closest(".page-head") || btn.parentNode;
     var dismiss = function (f) { (f.closest("tr.argsrow") || f).remove(); };
     var open = document.querySelector("form.argsline");
     if (open) {

@@ -256,8 +256,7 @@
 	</div>
 </dialog>
 {{- /* The image window: an image or an svg of the artifacts, scaled to
-     fit, in place of a download. A file of a checkout that runs carries
-     the Run or Attach of its row in the foot. */}}
+     fit, in place of a download. */}}
 <dialog class="run preview" id="preview-dialog" aria-labelledby="preview-title">
 	<div class="run-head">
 		<span class="label" id="preview-label">Artifact</span>
@@ -267,7 +266,6 @@
 	<div class="run-foot">
 		<span class="hint"><select id="preview-version" aria-label="Version" hidden></select></span>
 		<a class="btn" id="preview-download" href="#" download>Download</a>
-		<span class="preview-actions" id="preview-actions"></span>
 		<button type="button" class="btn" id="preview-close" aria-label="Close">Close</button>
 	</div>
 </dialog>
@@ -472,8 +470,7 @@
 {{/* tree is the Files panel of a folder page, a dashboard of what it
      holds: .. up a level, the directories first, linked into, then the
      files, each opening in the preview window. A directory that is a
-     folder links to its page. A file that runs carries #! and exec; it
-     runs from the Jobs table, whose Run its preview window carries too.
+     folder links to its page. A file that runs carries #! and exec.
      A sealed entry shows plain and locked. */}}
 {{- define "tree" }}{{ template "filetable" (list $.Up $.Tree) }}{{ end }}
 
@@ -544,22 +541,6 @@
 {{- define "showsource" }}
 {{- $folder := index . 0 }}{{ $file := index . 1 }}{{ $lines := $folder.Lines $file -}}
 <button type="button" class="btn btn-sm show-source" data-source="{{ $folder.ID }}" data-file="{{ $file }}" aria-haspopup="dialog"><svg class="ic"><use href="#i-file"/></svg><span>Show {{ $lines }} line{{ if ne $lines 1 }}s{{ end }}</span></button>
-{{- end }}
-
-{{/* jobtable is the Jobs table of a folder's page, and of a directory's
-     inside one, with the buttons of the dashboard's control centre: a
-     row of named buttons per job source of the place and of each
-     directory inside with targets, under the source's file, then the
-     files that run, each skill's jobs and the built-ins, from
-     Page.JobGroups. A row's [...] holds Run and summarize, the last run
-     and its summary, the history, Pin, Run force and Kill of its jobs. */}}
-{{- define "jobtable" }}
-{{- if $.JobGroups }}
-<section class="block" data-live>
-	<h3>Jobs <small>a row per job source, then files, skills and terminals</small></h3>
-	{{- template "controltable" (list $ $.JobControl true) }}
-</section>
-{{- end }}
 {{- end }}
 
 {{- /* runButtons hold Run, |> Summarize, and Run force for a job with

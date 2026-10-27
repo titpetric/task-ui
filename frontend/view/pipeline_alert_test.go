@@ -95,7 +95,7 @@ func TestView_RenderPipelineAlert(t *testing.T) {
 
 	home := render("home", broken(t))
 	assert.Contains(t, home, "2 pipelines have errors</b> in")
-	assert.Contains(t, home, `<a href="/f/internal">the default workspace</a>`)
+	assert.Contains(t, home, `<a href="/f/internal">internal</a>`)
 
 	clean := admin(t)
 	for _, name := range []string{"folder", "home"} {

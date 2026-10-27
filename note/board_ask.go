@@ -62,7 +62,7 @@ func (b *Board) ask(ctx context.Context, user *model.User, parentID, dir, aboutR
 		}
 		dir, aboutRun, area = parent.Dir, parent.AboutRunID, parent.Area
 	}
-	req, err := b.promptRequest(ctx, user, dir)
+	req, err := b.promptRequest(ctx, user, dir, parent != nil && parent.AboutWorkflowRunID != "")
 	if err != nil {
 		return nil, err
 	}
@@ -103,7 +103,7 @@ func (b *Board) reask(ctx context.Context, note *model.Note) {
 		b.finish(ctx, note, model.NoteFailed, "The user "+note.UserName+" who asked is not there any more.", nil)
 		return
 	}
-	req, err := b.promptRequest(ctx, user, note.Dir)
+	req, err := b.promptRequest(ctx, user, note.Dir, note.AboutWorkflowRunID != "")
 	if err != nil {
 		b.finish(ctx, note, model.NoteFailed, "The prompt did not start: "+err.Error(), nil)
 		return
@@ -204,12 +204,13 @@ func (b *Board) hosts(ctx context.Context) []string {
 
 // promptRequest resolves where a prompt runs, as the user: the prompt
 // job, @claude-prompt, of the place dir names, a folder and a directory
-// in it, a workspace's directory, or internal for the root, with the directory
-// in TASK_UI_PROMPT_DIR for a folder's, and the run's workspace. The run
-// is the place's, as its @shell run is, with the place's secrets. The
-// user sees the place; the prompt job runs by prompt/edit, which the
-// callers check, whatever the folder's allow lists.
-func (b *Board) promptRequest(ctx context.Context, user *model.User, dir string) (runner.Request, error) {
+// in it, a workspace's directory, internal for the root, or, with none,
+// no workspace at the workspaces root, with the directory in
+// TASK_UI_PROMPT_DIR for a folder's, and the run's workspace. The run is
+// the place's, as its @shell run is, with the place's secrets. The user
+// sees the place; the prompt job runs by prompt/edit, which the callers
+// check, whatever the folder's allow lists.
+func (b *Board) promptRequest(ctx context.Context, user *model.User, dir string, none bool) (runner.Request, error) {
 	var req runner.Request
 	if b.Catalogue == nil || b.Runner == nil {
 		return req, fmt.Errorf("%w: prompts aren't available on this instance", ErrNoPrompt)
@@ -219,11 +220,19 @@ func (b *Board) promptRequest(ctx context.Context, user *model.User, dir string)
 	switch f, rest := folder.Resolve(b.Catalogue, dir); {
 	case !sees(user, f, dir):
 		return req, fmt.Errorf("%w: no such directory", ErrNoPrompt)
+	case dir == "" && none:
+		// No workspace: Claude works at the workspaces root, over every
+		// workspace, with the server's HOME and none of a workspace's
+		// secrets or keys. Only a user who sees every folder asks so.
+		place = &folder.Folder{ID: model.Default, Title: model.Default, Dir: b.Root}
+		req.NoWorkspace = true
+		req.Env = []string{"TASK_UI_PROMPT_DIR=" + at}
 	case dir == model.Default && b.isWorkspace(ctx, model.Default):
-		// The root with a default workspace: Claude works in its home.
-		at = layout.HomeDir(b.Root, model.Default)
+		// The root with a default workspace: Claude works at the root, over
+		// every workspace, with the workspace's secrets, keys and HOME.
 		place = &folder.Folder{ID: model.Default, Title: model.Default, Dir: layout.SrcDir(b.Root, model.Default)}
 		req.Workspace = b.Root
+		req.Env = []string{"TASK_UI_PROMPT_DIR=" + at}
 	case dir == model.Default:
 		// The root without one: Claude works in the root directory, as
 		// the Notes agent does, with the server's HOME.

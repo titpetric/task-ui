@@ -27,12 +27,6 @@ dialog.preview #preview-version {
   max-width: 22rem;
 }
 
-/* The Run, Run force or Attach of a file that runs, after Download, which
-   keeps the focus the window opens with. */
-dialog.preview .preview-actions {
-  display: contents;
-}
-
 /* The pipeline window: centred, one size, the run's pipeline scrolling
    inside it on the page's background. */
 dialog.pipeline-window {

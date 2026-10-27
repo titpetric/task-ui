@@ -3,7 +3,7 @@
 <div class="page-head">
 	<div>
 		<h2>Add project</h2>
-		<p>Clones the repository into a workspace; the default workspace, _, is the root. If the clone works, the folder appears. If it fails, you see git's output here and task-ui keeps nothing. task-ui uses the instance SSH keys to reach private repositories.</p>
+		<p>Clones the repository into a workspace; the internal workspace, internal, is the root. If the clone works, the folder appears. If it fails, you see git's output here and task-ui keeps nothing. task-ui uses the instance SSH keys to reach private repositories.</p>
 	</div>
 </div>
 
@@ -23,7 +23,7 @@
 			<option value="{{ .Folder }}"{{ if or (eq .Folder $ws) (and (not $ws) (eq $i 0)) }} selected{{ end }}>{{ .Folder }} · {{ if eq .Folder "internal" }}the root{{ else }}{{ or .Title .Folder }}{{ end }}</option>
 			{{- end }}
 		</select>
-		<small class="faint">_, the default workspace while there is one, clones the project at the top of the root; any other clones it inside that workspace, as workspace/folder.</small>
+		<small class="faint">internal, the default workspace while there is one, clones the project at the top of the root; any other clones it inside that workspace, as workspace/folder.</small>
 	</div>
 	<div class="field">
 		<label for="p-branch">Branch <span class="faint">optional, defaults to the repository's default branch</span></label>

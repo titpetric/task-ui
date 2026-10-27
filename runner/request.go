@@ -29,6 +29,10 @@ type Request struct {
 	// Workspace is empty: for an internal job run for a folder, such as a
 	// prompt in it. Empty takes the workspace of the run's own folder.
 	WorkspaceOf string
+	// NoWorkspace runs with no workspace at all: no workspace's
+	// environment, secrets or keys, and no HOME but the server's. A
+	// prompt over every workspace uses it.
+	NoWorkspace bool
 	// Dir is the directory the job runs in, absolute: a directory inside
 	// the folder, which the caller holds to the folder's rules, for a job
 	// of Folder.Sub. Empty runs in the folder's own directory.

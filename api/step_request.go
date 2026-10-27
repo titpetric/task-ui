@@ -22,10 +22,11 @@ type StepRequest struct {
 	// Args follow the job's argv after --, for a job that takes args:
 	// the command of @host:<host>, which needs one.
 	Args RunArgs `json:"args,omitempty"`
-	// Prompt is what a prompt step asks Claude, in Folder, _ or empty
-	// for the root, and Dir inside it, with the output of the steps
-	// before it; a summary step asks in the same place, with no prompt.
-	// Both take prompt/edit.
+	// Prompt is what a prompt step asks Claude, in Folder, internal for
+	// the root, and Dir inside it, with the output of the steps before
+	// it; a summary step asks in the same place, with no prompt. An empty
+	// Folder names no workspace: the step asks at the workspaces root,
+	// with no workspace's secrets or keys. Both take prompt/edit.
 	Prompt string `json:"prompt,omitempty"`
 	Dir    string `json:"dir,omitempty"`
 }

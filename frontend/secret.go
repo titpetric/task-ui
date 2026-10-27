@@ -221,7 +221,7 @@ func (h *Handlers) secretGroups(ctx context.Context, secrets []model.Secret, fol
 		return index[name]
 	}
 	if h.opts.Workspaces == nil {
-		add(model.Default, "Default", key)
+		add(model.Default, "Internal", key)
 	} else {
 		workspaces, _ := h.opts.Workspaces.List(ctx)
 		for _, ws := range workspaces {

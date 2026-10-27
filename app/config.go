@@ -23,7 +23,7 @@ type Config struct {
 	// Listen is the listen address. TASK_UI_LISTEN, -l.
 	Listen string
 	// Root is the workspace folder, the directory holding the folders
-	// with jobs and the default workspace, _. TASK_UI_WORKSPACE,
+	// with jobs and the default workspace, internal. TASK_UI_WORKSPACE,
 	// --workspace, default <data>/workspaces.
 	Root string
 	// Discover lists every directory under Root with something to run.

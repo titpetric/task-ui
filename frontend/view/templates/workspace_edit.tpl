@@ -4,7 +4,7 @@
 <div class="page-head">
 	<div>
 		<h2>Edit {{ $ws.Folder }}</h2>
-		<p>The workspace's settings, its home repository, its projects and the SSH keys its runs get. The workspace holds its home, the <code>HOME</code> of its runs, and its projects side by side under <code>src/</code>; its folder stays as added.{{ if $default }} The default workspace is the root itself: deleting it removes the root's home and projects, and the instance runs without one.{{ end }}</p>
+		<p>The workspace's settings, its home repository, its projects and the SSH keys its runs get. The workspace holds its home, the <code>HOME</code> of its runs, and its projects side by side under <code>src/</code>; its folder stays as added.{{ if $default }} The internal workspace is the root itself: deleting it removes the root's home and projects, and the instance runs without one.{{ end }}</p>
 	</div>
 	<div class="actions">
 		{{- if .Can "project/edit" }}

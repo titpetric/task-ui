@@ -40,13 +40,15 @@ func TestChain_Prompt(t *testing.T) {
 		{Folder: "infra", Dir: "docs", Job: "@claude-prompt", Prompt: "fetch the weather"},
 		{Folder: "infra", Job: "apply"},
 		{Folder: "internal", Job: "@claude-prompt", Prompt: "water today?", RunID: "r1"},
+		{Job: "@claude-prompt", Prompt: "everywhere"},
 	}, nil)
 	assert.Equal(t, "prompt in infra/docs", links[1].Text)
 	assert.Equal(t, "fetch the weather", links[1].Prompt)
 	assert.Equal(t, "/f/internal/infra", links[1].Href)
 	assert.Equal(t, "infra / apply", links[2].Text)
-	assert.Equal(t, "prompt in internal", links[3].Text)
+	assert.Equal(t, "prompt in the root", links[3].Text)
 	assert.Equal(t, "/runs/r1", links[3].Href)
+	assert.Equal(t, "prompt in the workspace root", links[4].Text)
 }
 
 // A link of a run's chain points at the run a step made, and one of a

@@ -12,11 +12,11 @@ func Chain(steps []Step, workspaces map[string]int) []Link {
 		l := Link{State: s.State, RunID: s.RunID, Disabled: s.Disabled}
 		switch s.StepKind() {
 		case model.StepSummary:
-			place := model.WorkflowStep{Folder: s.Folder, Dir: s.Dir}.Place()
+			place := model.PlaceLabel(model.WorkflowStep{Folder: s.Folder, Dir: s.Dir}.Place())
 			l.Summary, l.Text, l.Href = true, "summary in "+place, FolderHref(s.Folder, workspaces)
 			last = ""
 		case model.StepPrompt:
-			place := model.WorkflowStep{Folder: s.Folder, Dir: s.Dir}.Place()
+			place := model.PlaceLabel(model.WorkflowStep{Folder: s.Folder, Dir: s.Dir}.Place())
 			l.Prompt, l.Text, l.Href = s.Prompt, "prompt in "+place, FolderHref(s.Folder, workspaces)
 			last = ""
 		case model.StepWorkflow:

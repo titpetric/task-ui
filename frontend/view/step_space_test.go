@@ -28,26 +28,30 @@ func spacePage(t *testing.T) *view.Page {
 	return p
 }
 
-// The default workspace comes first, then the named ones holding a
-// folder the user sees, by rank, each by its title or its folder.
+// Internal comes first, then the named ones holding a folder the user
+// sees, by rank, each by its title or its folder.
 func TestStepSpace(t *testing.T) {
 	t.Parallel()
 	p := spacePage(t)
-	assert.Equal(t, []view.StepSpace{{ID: "internal", Title: "Default"}, {ID: "malta", Title: "Malta"}, {ID: "ops", Title: "ops"}}, p.StepSpaces())
+	assert.Equal(t, []view.StepSpace{{ID: "internal", Title: "Internal"}, {ID: "malta", Title: "Malta"}, {ID: "ops", Title: "ops"}}, p.StepSpaces())
 	assert.Equal(t, "malta", p.StepSpaceOf("malta/vhosts"))
 	assert.Equal(t, "internal", p.StepSpaceOf("infra"))
 	assert.Equal(t, "internal", p.StepSpaceOf(""))
+	assert.True(t, p.StepNone(), "a user who sees every folder may name none")
 
 	p.WorkspaceList = append(p.WorkspaceList, model.Workspace{Folder: "internal", Title: "Root"})
 	assert.Equal(t, "Root", p.StepSpaces()[0].Title)
 
-	// Without the default workspace and without a folder at the root,
-	// the named workspaces alone are places.
+	// Without the default workspace row and without a folder at the root,
+	// internal is still a place, then the named workspaces.
 	p.WorkspaceList = p.WorkspaceList[:1]
 	p.StepFolders = p.StepFolders[len(p.Folders):]
-	assert.Equal(t, []view.StepSpace{{ID: "malta", Title: "Malta"}, {ID: "ops", Title: "ops"}}, p.StepSpaces())
+	assert.Equal(t, []view.StepSpace{{ID: "internal", Title: "Internal"}, {ID: "malta", Title: "Malta"}, {ID: "ops", Title: "ops"}}, p.StepSpaces())
 	p.WorkspaceList = append(p.WorkspaceList, model.Workspace{Folder: "internal", Title: "Root"})
-	assert.Equal(t, "Root", p.StepSpaces()[0].Title, "the default workspace is a place while it exists")
+	assert.Equal(t, "Root", p.StepSpaces()[0].Title, "a titled internal keeps its title")
+
+	p.User = &model.User{Folders: `["infra"]`}
+	assert.False(t, p.StepNone(), "a user who sees some folders may not name none")
 }
 
 // Each step card picks a workspace first, preselected from the step's
@@ -64,6 +68,7 @@ func TestView_RenderStepSpace(t *testing.T) {
 			{Kind: model.StepJob, Folder: "malta/vhosts", Job: "up"},
 			{Kind: model.StepWorkflow, WorkflowID: "w2"},
 			{Kind: model.StepPrompt, Folder: "ops/deploy", Prompt: "Why?"},
+			{Kind: model.StepPrompt, Folder: "", Prompt: "Where?"},
 		},
 		CanChange: true,
 	}
@@ -79,6 +84,7 @@ func TestView_RenderStepSpace(t *testing.T) {
 	assert.Contains(t, out, `<option value="workflow:w2" data-workspace="workflow:" selected>nightly</option>`)
 	assert.Contains(t, out, `<option value="internal" data-workspace="internal" data-rel=".">the root</option>`)
 	assert.Contains(t, out, `<option value="ops/deploy" data-workspace="ops" data-rel="deploy" selected>deploy</option>`)
+	assert.Contains(t, out, `<option value="" data-workspace="" data-rel="." selected>none (the workspace root)</option>`, "a step of no workspace")
 	assert.Contains(t, out, `data-step-folder-label>Workflow</span>`)
 	assert.NotContains(t, out, `value="empty"`, "a workspace without a folder the user sees")
 }
@@ -144,6 +150,10 @@ func TestMoveSteps(t *testing.T) {
 	moved, missed = p.StepMove(steps[:1], "malta")
 	assert.Equal(t, 1, missed)
 	assert.Equal(t, view.Step{Kind: model.StepJob, Folder: "malta/infra", Missing: "infra has no job plan in Malta."}, moved[0])
+
+	kept, missed := p.StepMove([]view.Step{{Kind: model.StepPrompt, Prompt: "Why?"}}, "malta")
+	assert.Equal(t, 0, missed)
+	assert.Equal(t, "", kept[0].Folder, "a step of no workspace keeps none on a move")
 }
 
 // A move names the workspace by its title and writes its folder: the

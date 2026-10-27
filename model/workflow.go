@@ -63,16 +63,28 @@ func (s WorkflowRunStep) IsSummary() bool { return s.StepKind() == StepSummary }
 func asks(kind string) bool { return kind == StepPrompt || kind == StepSummary }
 
 // Place is where a prompt step asks Claude: its folder and the
-// directory inside it, or internal for the root.
+// directory inside it, internal for the root, and "" for no workspace,
+// which asks at the workspaces root.
 func (s WorkflowStep) Place() string {
-	folder := s.Folder
-	if folder == "" {
-		folder = Default
+	if s.Folder == "" {
+		return ""
 	}
 	if s.Dir == "" {
-		return folder
+		return s.Folder
 	}
-	return folder + "/" + s.Dir
+	return s.Folder + "/" + s.Dir
+}
+
+// PlaceLabel names a prompt's place for a reader: the workspace root for
+// none, the root for internal, else the place itself.
+func PlaceLabel(place string) string {
+	switch place {
+	case "":
+		return "the workspace root"
+	case Default:
+		return "the root"
+	}
+	return place
 }
 
 // Runs reports whether the workflow has something to run with these

@@ -344,8 +344,9 @@ func TestBoard_Ask(t *testing.T) {
 	assert.Contains(t, replies(t, f, asked.ID)[2].Body, "admin:\nwhat builds here\n\nclaude:\nIn ")
 	assert.Contains(t, replies(t, f, asked.ID)[2].Body, "admin:\nand which first")
 
-	// The root is _: without the default workspace Claude works in the
-	// root directory, with it in the default workspace's home.
+	// The root, internal: Claude works at the workspaces root, with or
+	// without the default workspace's row; with it, the run keeps the
+	// workspace and its HOME.
 	bare, err := f.board.Ask(ctx, admin, "", model.Default, "what is at the root")
 	assert.NoError(t, err)
 	assert.Equal(t, model.NoteDone, f.settled(t, bare.ID).State)
@@ -354,7 +355,7 @@ func TestBoard_Ask(t *testing.T) {
 	root, err := f.board.Ask(ctx, admin, "", model.Default, "what is here")
 	assert.NoError(t, err)
 	assert.Equal(t, model.NoteDone, f.settled(t, root.ID).State)
-	assert.Equal(t, "In "+layout.HomeDir(f.board.Root, model.Default)+": what is here", replies(t, f, root.ID)[0].Body)
+	assert.Equal(t, "In "+f.board.Root+": what is here", replies(t, f, root.ID)[0].Body)
 	rootRun, ok := f.board.Runner.Get(f.settled(t, root.ID).RunID)
 	assert.True(t, ok)
 	assert.Equal(t, model.Default+"/"+model.PromptJob, snapshotKey(rootRun))

@@ -71,7 +71,7 @@ func (b *Board) TriageRun(stop context.Context, user *model.User, runID string) 
 	if !b.permissions(ctx, user).Allowed("prompt/edit") {
 		return nil, "", ErrForbidden
 	}
-	req, err := b.promptRequest(ctx, user, run.Where())
+	req, err := b.promptRequest(ctx, user, run.Where(), false)
 	if err != nil {
 		return nil, "", err
 	}

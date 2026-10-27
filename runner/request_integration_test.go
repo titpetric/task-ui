@@ -46,7 +46,7 @@ func TestManager_Workspace(t *testing.T) {
 
 	assert.NoError(t, f.workspaces.Create(ctx, &model.Workspace{Folder: model.Default, Title: "Default"}))
 	root := run(f.shellJob("plain", script, false))
-	assert.Contains(t, root, "home=["+filepath.Join(f.root, "home")+"] ws=[_] dir=["+f.root+"] set=[y]")
+	assert.Contains(t, root, "home=["+filepath.Join(f.root, "home")+"] ws=["+model.Default+"] dir=["+f.root+"] set=[y]")
 	assert.Contains(t, run(f.shellJob("ws/project", script, false)), "ws=[ws] dir=["+filepath.Join(f.root, "ws")+"]")
 
 	other := filepath.Join(f.root, "gozo")
@@ -55,7 +55,7 @@ func TestManager_Workspace(t *testing.T) {
 	assert.Contains(t, run(req), "home=["+filepath.Join(other, "home")+"] ws=[gozo] dir=["+other+"]")
 	req = f.shellJob("tools/prompt", script, false)
 	req.Workspace = f.root
-	assert.Contains(t, run(req), "ws=[_] dir=["+f.root+"]")
+	assert.Contains(t, run(req), "ws=["+model.Default+"] dir=["+f.root+"]")
 	// A job run for another folder takes that folder's workspace.
 	req = f.shellJob("tools/prompt", script, false)
 	req.WorkspaceOf = "ws/project"

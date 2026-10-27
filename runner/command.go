@@ -33,7 +33,7 @@ func (m *Manager) command(ctx context.Context, session *Session) (*exec.Cmd, err
 	cmd.Env = append(cmd.Env, HomeEnv(cmd.Env, session.home)...)
 	// Every run gets its folder's secrets, Claude's built-ins too, and
 	// the log of each secret records the run.
-	if m.opts.Secrets != nil {
+	if m.opts.Secrets != nil && !session.noWorkspace {
 		secrets, err := m.opts.Secrets.Reaching(ctx, f.ID)
 		if err != nil {
 			return nil, err

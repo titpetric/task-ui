@@ -287,7 +287,6 @@ func TestPage_SidebarLimit(t *testing.T) {
 	assert.Contains(t, side, `data-project="private"`)
 	// The cut is the sidebar's alone: the project's pages still answer.
 	assert.Equal(t, http.StatusOK, f.get(t, asAdmin, "/f/malta/dockerfiles").Status)
-	assert.Contains(t, f.page(t, asAdmin, "/f/malta/dockerfiles"), `data-folder="malta/dockerfiles"`)
 
 	// A hidden project does not take a place: dockerfiles comes back once
 	// apps leaves the sidebar.

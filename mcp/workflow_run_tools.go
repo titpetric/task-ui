@@ -169,11 +169,12 @@ func showFlowRun(view api.WorkflowRunView, names map[string]string) string {
 	fmt.Fprintf(&b, "workflow run %s: %s by %s, %s\n", view.ID, view.Name, view.UserName, flowOutcome(&view.WorkflowRun))
 	for i, step := range view.Steps {
 		name := step.Folder + "/" + step.Job
+		place := model.PlaceLabel(step.Folder)
 		switch {
 		case step.IsSummary():
-			name = "summary in " + step.Folder
+			name = "summary in " + place
 		case step.IsPrompt():
-			name = "prompt in " + step.Folder
+			name = "prompt in " + place
 		case step.WorkflowRef != "":
 			name = "workflow " + names[step.WorkflowRef]
 		}

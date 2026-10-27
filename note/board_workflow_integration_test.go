@@ -116,6 +116,9 @@ func TestBoard_AskWorkflow_refused(t *testing.T) {
 	assert.ErrorIs(t, askErr(askFinal(&note.Board{}, ctx, admin, run, &model.Workflow{Prompt: "say ok"}, "")), note.ErrNoPrompt)
 	assert.NoError(t, f.board.PromptPlace(ctx, admin, "proj/images"))
 	assert.ErrorIs(t, f.board.PromptPlace(ctx, admin, "proj/gone"), note.ErrNoPrompt)
+	assert.NoError(t, f.board.PromptPlace(ctx, admin, ""), "no workspace")
+	scoped := &model.User{Name: "web", Role: model.RoleRunner, Folders: model.EncodeList([]string{"proj"})}
+	assert.ErrorIs(t, f.board.PromptPlace(ctx, scoped, ""), note.ErrNoPrompt, "only for a user who sees every folder")
 
 	stop, cancel := context.WithCancel(ctx)
 	go func() {
@@ -226,7 +229,7 @@ func TestBoard_AskStep(t *testing.T) {
 	assert.Contains(t, answer, "The prompt asks after step 2; the steps after it have not run.")
 	assert.Contains(t, answer, "## Step 1, proj / build: ok, exit code 0")
 	assert.Contains(t, answer, "built image v1.2")
-	assert.Contains(t, answer, `## Step 2, a prompt to Claude in internal, "fetch the weather": ok`)
+	assert.Contains(t, answer, `## Step 2, a prompt to Claude in the root, "fetch the weather": ok`)
 	assert.Contains(t, answer, "Its answer:\n\n```\nrain 3 mm today\n```")
 	assert.NotContains(t, answer, "Step 3")
 	assert.NotContains(t, answer, "proj / push")
@@ -237,4 +240,28 @@ func TestBoard_AskStep(t *testing.T) {
 
 	_, _, err = f.board.AskStep(ctx, f.ops, run, &steps[2], "proj/images", "")
 	assert.ErrorIs(t, err, note.ErrForbidden)
+}
+
+// A step with no folder asks at the workspaces root, with no workspace's
+// environment: no TASK_UI_WORKSPACE, and TASK_UI_PROMPT_DIR at the root.
+func TestBoard_AskStep_noWorkspace(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t, "")
+	admin := f.withPrompts(t)
+	ctx := context.Background()
+	f.board.AgentCommand = []string{"sh", "-c", `{ printf 'W: %s\n' "${TASK_UI_WORKSPACE-unset}"; printf 'D: %s\n' "$TASK_UI_PROMPT_DIR"; printf 'P: %s\n' "$(pwd -P)"; } > "$TASK_UI_PROMPT_REPLY"`}
+	run := &model.WorkflowRun{WorkflowID: model.NewID(), Name: "sweep", UserID: admin.ID, UserName: admin.Name}
+	assert.NoError(t, f.board.WorkflowRuns.Create(ctx, run, []model.WorkflowStep{{Kind: model.StepSummary, Folder: "", Job: model.PromptJob}}))
+	steps, err := f.board.WorkflowRuns.Steps(ctx, run.ID)
+	assert.NoError(t, err)
+	assert.Equal(t, "", steps[0].Folder)
+
+	_, answer, err := f.board.AskStep(ctx, admin, run, &steps[0], "", run.Input)
+	assert.NoError(t, err)
+	assert.Equal(t, "W: unset\nD: "+f.board.Root+"\nP: "+f.board.Root, strings.TrimSpace(answer))
+
+	threads, _ := f.board.Notes.List(ctx, storage.NoteFilter{Prompts: true, AboutWorkflowRunID: run.ID})
+	assert.Len(t, threads, 1)
+	assert.Equal(t, "", threads[0].Dir)
+	assert.Equal(t, model.Default, threads[0].WorkspaceID, "the note keeps a workspace for its place")
 }

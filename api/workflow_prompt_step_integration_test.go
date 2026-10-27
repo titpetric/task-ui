@@ -12,9 +12,9 @@ import (
 	"github.com/titpetric/task-ui/model"
 )
 
-// A prompt step asks Claude in its place, the root by default, with the
-// steps before it; its answer is its output for the prompts after it. A
-// prompt step takes prompt/edit, a place the user sees, and no job.
+// A prompt step asks Claude in its place, no workspace by default, with
+// the steps before it; its answer is its output for the prompts after
+// it. A prompt step takes prompt/edit, a place the user sees, and no job.
 func TestWorkflow_PromptStep(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
@@ -36,7 +36,7 @@ func TestWorkflow_PromptStep(t *testing.T) {
 	assert.Equal(t, http.StatusCreated, made.Status, string(made.Raw))
 	step := made.list("steps")[0].(map[string]any)
 	assert.Equal(t, "fetch the weather", step["prompt"])
-	assert.Equal(t, model.Default, step["folder"])
+	assert.Equal(t, "", step["folder"])
 	assert.Equal(t, model.PromptJob, step["job"])
 	assert.Equal(t, model.StepPrompt, step["kind"])
 	id := made.str("id")
@@ -59,7 +59,7 @@ func TestWorkflow_PromptStep(t *testing.T) {
 	final := threads[0].(map[string]any)
 	assert.Equal(t, "water today?\n\nInput:\nporec", final["body"])
 	answer := final["replies"].([]any)[0].(map[string]any)["body"].(string)
-	assert.Contains(t, answer, `## Step 1, a prompt to Claude in internal, "fetch the weather": ok`)
+	assert.Contains(t, answer, `## Step 1, a prompt to Claude in the workspace root, "fetch the weather": ok`)
 	assert.Contains(t, answer, "Its answer:")
 	assert.Contains(t, answer, "## Step 2, infra / plan: ok")
 }

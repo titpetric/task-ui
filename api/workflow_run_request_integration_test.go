@@ -34,6 +34,10 @@ func TestWorkflow_PromptAndToggles(t *testing.T) {
 	assert.Equal(t, http.StatusForbidden, opsSummary.Status, string(opsSummary.Raw))
 	gone := f.call(t, asAdmin, http.MethodPost, "/workflows", api.WorkflowRequest{Name: "asks", Prompt: "say ok", PromptFolder: "nowhere"})
 	assert.Equal(t, http.StatusBadRequest, gone.Status, string(gone.Raw))
+	// The old prompt field names the root by leaving its folder out.
+	rooted := f.call(t, asAdmin, http.MethodPost, "/workflows", api.WorkflowRequest{Name: "rooted", Prompt: "say ok"})
+	assert.Equal(t, http.StatusCreated, rooted.Status, string(rooted.Raw))
+	assert.Equal(t, model.Default, rooted.list("steps")[0].(map[string]any)["folder"])
 
 	made := f.call(t, asAdmin, http.MethodPost, "/workflows", api.WorkflowRequest{
 		Name: "summed", Description: " the plan, summed ", Prompt: " summarize, change nothing ", PromptFolder: "infra",
@@ -52,14 +56,14 @@ func TestWorkflow_PromptAndToggles(t *testing.T) {
 	assert.Equal(t, "summarize, change nothing", last["prompt"])
 	assert.Equal(t, "infra", last["folder"])
 
-	// A summary step asks in the root without a folder, and takes no
-	// prompt; a prompt step needs one.
+	// A summary step without a folder asks at the workspaces root, with
+	// no workspace, and takes no prompt; a prompt step needs its text.
 	id := made.str("id")
 	summed := f.call(t, asAdmin, http.MethodPut, "/workflows/"+id, api.WorkflowRequest{Name: "summed", Steps: append(chain("infra", "plan"), api.StepRequest{Kind: model.StepSummary})})
 	assert.Equal(t, http.StatusOK, summed.Status, string(summed.Raw))
 	summary := summed.list("steps")[1].(map[string]any)
 	assert.Equal(t, model.StepSummary, summary["kind"])
-	assert.Equal(t, model.Default, summary["folder"])
+	assert.Equal(t, "", summary["folder"])
 	assert.Equal(t, model.PromptJob, summary["job"])
 	for _, bad := range []api.StepRequest{
 		{Kind: model.StepSummary, Prompt: "say ok"},
@@ -148,7 +152,7 @@ func TestWorkflow_StopPrompt(t *testing.T) {
 	assert.Equal(t, http.StatusNoContent, f.call(t, asAdmin, http.MethodPost, "/workflow-runs/"+runID+"/stop", nil).Status)
 	run := f.workflowRun(t, id, runID)
 	assert.Equal(t, model.StateStopped, run["state"])
-	assert.Equal(t, "stopped at the prompt in internal", run["message"])
+	assert.Equal(t, "stopped at the prompt in the root", run["message"])
 	threads := f.call(t, asAdmin, http.MethodGet, "/prompts?workflow_run="+runID, nil).list("notes")
 	assert.Equal(t, model.NoteFailed, threads[0].(map[string]any)["state"])
 }

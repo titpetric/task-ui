@@ -34,7 +34,7 @@
 {{- define "pipelinenote" }}
 {{- $ := index . 0 }}{{ $a := index . 1 }}
 {{- with $a }}
-<div class="alert bad" role="alert"><b>{{ .Pipelines }} {{ if eq .Pipelines 1 }}pipeline has{{ else }}pipelines have{{ end }} errors</b> in {{ range $i, $ws := .Workspaces }}{{ if $i }}, {{ end }}<a href="{{ $.Href $ws }}">{{ if eq $ws "internal" }}the default workspace{{ else }}{{ $ws }}{{ end }}</a>{{ end }}. {{ if eq (len .Workspaces) 1 }}Its page lists{{ else }}Their pages list{{ end }} them.</div>
+<div class="alert bad" role="alert"><b>{{ .Pipelines }} {{ if eq .Pipelines 1 }}pipeline has{{ else }}pipelines have{{ end }} errors</b> in {{ range $i, $ws := .Workspaces }}{{ if $i }}, {{ end }}<a href="{{ $.Href $ws }}">{{ if eq $ws "internal" }}internal{{ else }}{{ $ws }}{{ end }}</a>{{ end }}. {{ if eq (len .Workspaces) 1 }}Its page lists{{ else }}Their pages list{{ end }} them.</div>
 {{- end }}
 {{- end }}
 

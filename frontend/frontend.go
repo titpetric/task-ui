@@ -21,8 +21,6 @@ import (
 type Handlers struct {
 	opts Options
 	view *view.View
-	// subs holds the directories of Files lists, as detected.
-	subs *subCache
 	// commits holds the time of each project's last commit, for the
 	// sidebar of a workspace that lists its newest projects.
 	commits *LastCommits
@@ -34,7 +32,7 @@ func New(opts Options) (*Handlers, error) {
 	if err != nil {
 		return nil, err
 	}
-	h := &Handlers{opts: opts, view: v, subs: &subCache{}, commits: &LastCommits{}}
+	h := &Handlers{opts: opts, view: v, commits: &LastCommits{}}
 	if opts.Git != nil {
 		h.commits.Read = opts.Git.LastCommit
 	}
