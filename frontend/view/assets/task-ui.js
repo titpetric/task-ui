@@ -1520,9 +1520,9 @@
     select.addEventListener("change", function () { select.form.requestSubmit(); });
   });
 
-  // ------------------------------------------------------------ menus
+  // ------------------------------------------------------------ cc-menus
 
-  // A menu, a row's [...], is a <details>
+  // A menu, a row's [...] or a control centre's Other, is a <details>
   // that opens on a click, never a hover. Its list opens over the page,
   // placed against its button so a table's scrolling box cannot clip it:
   // under the button, or over it when the screen ends first, its right
@@ -1531,10 +1531,10 @@
   // at a time; a click outside, Escape, a scroll of the page and the
   // pick of an item close it, Escape giving the focus back to the
   // button. The arrow keys, Home and End move between the items.
-  var menuSelector = "details.more-menu";
-  var menuList = function (menu) { return menu.querySelector(":scope > .more-list"); };
+  var menuSelector = "details.more-menu, details.cc-more";
+  var menuList = function (menu) { return menu.querySelector(":scope > .more-list, :scope > .cc-menu"); };
   var menuItems = function (menu) {
-    return Array.prototype.filter.call(menu.querySelectorAll(".more-item"), function (el) {
+    return Array.prototype.filter.call(menu.querySelectorAll('.more-item, .cc-menu [role="menuitem"], .cc-menu .cc'), function (el) {
       return !el.disabled && el.offsetParent !== null;
     });
   };
@@ -1577,7 +1577,7 @@
   document.addEventListener("click", function (event) {
     document.querySelectorAll(menuSelector).forEach(function (menu) {
       if (!menu.open) return;
-      if (!menu.contains(event.target) || event.target.closest(".more-item")) closeMenu(menu);
+      if (!menu.contains(event.target) || event.target.closest(".more-item, .cc-menu .cc, .cc-menu [data-run], .cc-menu [data-attach]")) closeMenu(menu);
     });
   });
   document.addEventListener("keydown", function (event) {
@@ -2912,12 +2912,37 @@
       }
       else showDoc('<p class="faint">No preview for this file, ' + escapeHTML(view.content_type) + ". Download it to open it.</p>", "text");
     };
+    // previewActions carries a file's Run or Attach from its button in
+    // the Jobs table into the window's foot; the window closes for the
+    // run window to open.
+    var previewActions = document.getElementById("preview-actions");
+    previewActions.addEventListener("click", function (event) {
+      if (event.target.closest("[data-run], [data-attach]")) previewDialog.close();
+    });
+    var showActions = function (href) {
+      previewActions.innerHTML = "";
+      var link = Array.prototype.find.call(document.querySelectorAll("a[data-file]"), function (a) {
+        return a.getAttribute("href") === href;
+      });
+      var slot = link && Array.prototype.find.call(document.querySelectorAll(".cc-slot[data-path]"), function (el) {
+        return el.dataset.path === link.dataset.file;
+      });
+      if (!slot) return;
+      slot.querySelectorAll("[data-run], [data-attach]").forEach(function (btn) {
+        var copy = btn.cloneNode(true);
+        copy.className = btn.hasAttribute("data-run") ? "btn btn-primary" : "btn";
+        copy.querySelectorAll("span").forEach(function (part) { part.remove(); });
+        copy.appendChild(document.createTextNode(btn.hasAttribute("data-run") ? "Run" : "Attach"));
+        previewActions.appendChild(copy);
+      });
+    };
     // openCheckout opens a file of a folder's checkout: its link is where
     // it opens on its own, and the API answers the same path.
     var openCheckout = function (href, rel) {
       previewPath = href;
       previewLabel.textContent = "File";
       previewVersion.hidden = true;
+      showActions(href);
       document.getElementById("preview-title").textContent = rel;
       showDoc('<p class="faint">Loading…</p>', "text");
       if (!previewDialog.open) previewDialog.showModal();
@@ -4003,13 +4028,56 @@
     }, 1000);
   }
 
+  // A job's control button in a folder's Jobs table follows the runs
+  // topic: an eye on the job running, Run again when it ended, in the
+  // colour of how it ended. Its slot keeps that colour in data-last, and
+  // what the button carries: the directory, the args command, the
+  // question before the run.
+  function slotHTML(slot, run) {
+    var d = slot.dataset;
+    var label = d.label ? "<span>" + escapeHTML(d.label) + "</span>" : "";
+    var named = d.label ? " named" : "";
+    if (run && run.state && run.state !== "running") d.last = run.state === "ok" ? "ok" : "bad";
+    var last = " " + escapeHTML(d.last || "never");
+    var what = escapeHTML(d.folder + (d.dir ? "/" + d.dir : "") + " / " + d.name);
+    var desc = d.desc ? ": " + escapeHTML(d.desc) : "";
+    var term = slot.hasAttribute("data-interactive");
+    if (run && run.state === "running") {
+      return '<a class="cc' + named + ' running" href="/runs/' + escapeHTML(run.id) + '" data-attach="' + escapeHTML(run.id) +
+        '" title="Attach to ' + what + ", running" + (run.title ? ": " + escapeHTML(run.title) : "") + '"><svg class="ic"><use href="#i-eye"/></svg>' + label + "</a>";
+    }
+    if (slot.hasAttribute("data-can")) {
+      return '<button type="button" class="cc' + named + last + '" data-run data-folder="' + escapeHTML(d.folder) + '"' +
+        (d.dir ? ' data-dir="' + escapeHTML(d.dir) + '"' : "") + ' data-job="' + escapeHTML(d.job) + '" data-title="' + what + '"' +
+        (d.confirm ? ' data-confirm="' + escapeHTML(d.confirm) + '" data-confirm-ok="Run ' + escapeHTML(d.name) + '"' : "") +
+        (d.args ? ' data-args="' + escapeHTML(d.args) + '"' : "") +
+        ' title="Run ' + what + desc + (d.args ? ", with arguments after " + escapeHTML(d.args) : "") + (term ? ", in a terminal" : "") +
+        '"><svg class="ic"><use href="#i-' + (term ? "terminal" : "play") + '"/></svg>' + label + "</button>";
+    }
+    return '<a class="cc' + named + " idle" + last + '" href="' + escapeHTML(folderHref(d.folder)) + "/" + (d.dir ? escapeHTML(d.dir) + "/" : "") + escapeHTML(d.job) + '" title="' + what + desc +
+      ': no permission to run it"><i class="shebang" aria-hidden="true">#!</i>' + label + "</a>";
+  }
+  if (document.querySelector(".cc-slot") && window.EventSource) {
+    onRuns(function (run) {
+      var key = run.folder + (run.dir ? "/" + run.dir : "") + "/" + run.job;
+      document.querySelectorAll(".cc-slot").forEach(function (slot) {
+        if (slot.dataset.cc === key) slot.innerHTML = slotHTML(slot, run);
+      });
+    });
+  }
   // The dashboard follows the runs topic: a run that starts adds its
   // tile, polled for its frame; one that ends marks its tile and the last
-  // frame is fetched.
+  // frame is fetched. The running count follows.
   var dashboard = document.querySelector('[data-sse="runs"][data-dashboard]');
   if (dashboard && window.EventSource) {
     var tiles = dashboard.querySelector("[data-tiles]");
     var tilesEmpty = dashboard.querySelector("[data-tiles-empty]");
+    var runningCount = dashboard.querySelector("[data-running-count]");
+    var countRunning = function () {
+      var n = tiles.querySelectorAll(".tile-head .dot.running").length;
+      if (runningCount) runningCount.textContent = n;
+      if (tilesEmpty) tilesEmpty.hidden = tiles.children.length > 0;
+    };
     onRuns(function (run) {
       var tile = tiles.querySelector('[data-tile="' + run.id + '"]');
       if (!tile && run.state === "running") {
@@ -4042,7 +4110,7 @@
         named.textContent = run.title || "";
         named.title = run.title || "";
       }
-      if (tilesEmpty) tilesEmpty.hidden = tiles.children.length > 0;
+      countRunning();
     });
   }
 

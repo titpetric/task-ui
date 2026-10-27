@@ -1,0 +1,39 @@
+/* ----------------------------------------------------------------- metrics */
+
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  margin-bottom: 1.4rem;
+  background: var(--ink-1);
+
+  & > div {
+    padding: 0.55rem 0.8rem;
+    border-inline-end: 1px solid var(--line);
+
+    &:last-child {
+      border-inline-end: 0;
+    }
+  }
+
+  & b {
+    display: block;
+    color: var(--text-faint);
+    font-size: var(--fs-label);
+    font-weight: 600;
+    letter-spacing: var(--ls-heading);
+    text-transform: uppercase;
+  }
+
+  & span {
+    font-size: 1.1rem;
+    color: var(--text);
+  }
+
+  & small {
+    margin-inline-start: 0.35rem;
+    color: var(--text-faint);
+    font-size: var(--fs-xs);
+  }
+}

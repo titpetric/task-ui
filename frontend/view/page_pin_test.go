@@ -34,3 +34,24 @@ func TestPage_BrowseID(t *testing.T) {
 	p := &view.Page{Folder: &folder.Folder{ID: "malta"}, Browse: "apps/blog/"}
 	assert.Equal(t, "malta/apps/blog", p.BrowseID())
 }
+
+// A Jobs row's [...] pins each of its jobs, for a user who may pin.
+func TestPage_ControlMenuPin(t *testing.T) {
+	t.Parallel()
+	f := jobs("infra", "build")
+	p := admin(t)
+	p.Running = nil
+	p.JobGroups = []view.JobGroup{{Kind: "make", Source: "Makefile", Folder: f, Jobs: f.Jobs, Targets: true}}
+	row := p.JobControl().Rows[0]
+	has := func(label string) bool {
+		for _, item := range p.ControlMenu(row).Items {
+			if item.Label == label {
+				return true
+			}
+		}
+		return false
+	}
+	assert.False(t, has("Pin build"))
+	p.Pinning = true
+	assert.True(t, has("Pin build"))
+}

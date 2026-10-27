@@ -3,15 +3,23 @@ package frontend
 import (
 	"net/http"
 
+	"github.com/titpetric/task-ui/access"
 	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/frontend/view"
 	"github.com/titpetric/task-ui/model"
 )
 
-// home is the dashboard: every live terminal.
+// home is the dashboard: every live terminal, and the numbers above them.
 func (h *Handlers) home(w http.ResponseWriter, r *http.Request) {
+	user := access.UserFrom(r.Context())
 	p := h.page(r, "Dashboard")
 	p.Runs = h.live(h.runSeer(r))
+	schedules, _ := h.opts.Schedules.List(r.Context())
+	for _, schedule := range schedules {
+		if user.CanSee(schedule.Folder) {
+			p.Schedules = append(p.Schedules, schedule)
+		}
+	}
 	h.render(w, http.StatusOK, "home", p)
 }
 

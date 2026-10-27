@@ -78,6 +78,7 @@ h2 {
 code, pre, kbd,
 .mono,
 .table td.key,
+.metrics span,
 .avatar,
 .recents .what b,
 .folders details.folder summary a span,
