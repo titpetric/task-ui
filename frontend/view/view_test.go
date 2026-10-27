@@ -256,6 +256,39 @@ func TestView_RenderJobSummarize(t *testing.T) {
 	assert.NotContains(t, render(p), "data-summarize-run", "still running")
 }
 
+// A job's page runs it with [ Run | v ], the caret opening the other
+// ways to run it: Run and summarize and Run force. A user who may pin
+// gets the job's Pin or Unpin at the head.
+func TestView_RenderJobRunMenu(t *testing.T) {
+	t.Parallel()
+
+	v, err := view.New()
+	assert.NoError(t, err)
+	p := admin(t)
+	p.Running = nil
+	p.Summaries = true
+	p.Pinning = true
+	p.Folder.Hours = "mon-fri 9-17"
+	render := func() string {
+		var buf bytes.Buffer
+		assert.NoError(t, v.Render(&buf, "job", p))
+		return buf.String()
+	}
+
+	out := render()
+	assert.Contains(t, out, `<div class="run-split">`)
+	assert.Contains(t, out, `<summary class="btn btn-primary btn-sm run-caret"`)
+	assert.Contains(t, out, `<span>Run and summarize</span>`)
+	assert.Contains(t, out, `<span>Run force</span>`)
+	assert.Contains(t, out, `data-pin-folder="infra" data-pin-job="plan" data-pin-dir="" data-pin-key="infra||plan" title="Show it in the sidebar"`)
+	assert.Contains(t, out, `>Pin plan</button>`)
+
+	p.Pins = []model.Pin{{ID: "p1", Folder: "infra", Job: "plan"}}
+	out = render()
+	assert.Contains(t, out, `data-pin-id="p1"`)
+	assert.Contains(t, out, `>Unpin plan</button>`)
+}
+
 // A run with a summary has a row under it holding the summary as
 // rendered markdown, not as plain text.
 func TestView_RenderJobSummary(t *testing.T) {

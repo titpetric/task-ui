@@ -561,38 +561,40 @@
 <button type="button" class="btn btn-sm show-source" data-source="{{ $folder.ID }}" data-file="{{ $file }}" aria-haspopup="dialog"><svg class="ic"><use href="#i-file"/></svg><span>Show {{ $lines }} line{{ if ne $lines 1 }}s{{ end }}</span></button>
 {{- end }}
 
-{{- /* runButtons hold Run, |> Summarize, and Run force for a job with
-     hours. Run of a job that takes args opens a field for them under its
-     card or head first, with the command they follow. |> Summarize runs
-     the job the same way, and Claude summarises the run on its page when
-     it ends. */}}
+{{- /* runButtons hold Run and the menu of the other ways to run the job:
+     Run and summarize, for a job Claude summarizes for the user, and Run
+     force, for a job in a workspace with hours, where task-ui refuses a
+     plain run outside them. Run of a job that takes args opens a field
+     for them under its card or head first, with the command they
+     follow; the menu's options do the same. */}}
 {{ define "runButtons" }}
-{{- template "runButton" . }}{{ template "summarizeButton" . }}{{ template "forceButton" . }}
+{{- $ := index . 0 }}{{ $p := index . 1 }}{{ $r := index . 2 -}}
+{{- $summarize := $.Summarizes $r -}}
+{{- $force := $p.Hours -}}
+<div class="run-split">
+	{{- template "runButton" . }}
+	{{- if or $summarize $force }}
+	<details class="more-menu run-menu">
+		<summary class="btn btn-primary btn-sm run-caret" aria-haspopup="menu" aria-expanded="false" title="More ways to run {{ $r.Name }}" aria-label="More ways to run {{ $r.Name }}"><svg class="ic"><use href="#i-down"/></svg></summary>
+		<div class="more-list">
+			<div class="more-items" role="menu" aria-label="Run options">
+				{{- if $summarize }}
+				<button type="button" class="more-item" role="menuitem" data-run data-summarize data-folder="{{ $p.ID }}"{{ with $r.Dir }} data-dir="{{ . }}"{{ end }} data-job="{{ $r.ID }}" data-title="{{ $p.ID }}{{ with $r.Dir }}/{{ . }}{{ end }} / {{ $r.Name }}"{{ with $r.ArgsCommand }} data-args="{{ . }}"{{ end }} title="Run and summarize"><svg class="ic"><use href="#i-summary"/></svg><span>Run and summarize</span></button>
+				{{- end }}
+				{{- if $force }}
+				<button type="button" class="more-item danger" role="menuitem" data-run data-force data-folder="{{ $p.ID }}"{{ with $r.Dir }} data-dir="{{ . }}"{{ end }} data-job="{{ $r.ID }}" data-title="{{ $p.ID }}{{ with $r.Dir }}/{{ . }}{{ end }}" title="Run out of hours, with a reason"><svg class="ic"><use href="#i-play"/></svg><span>Run force</span></button>
+				{{- end }}
+			</div>
+		</div>
+	</details>
+	{{- end }}
+</div>
 {{- end }}
 
 {{- /* runButton holds Run of a job. (list $ folder job) */}}
 {{ define "runButton" }}
 {{- $ := index . 0 }}{{ $p := index . 1 }}{{ $r := index . 2 -}}
 <button type="button" class="btn btn-primary btn-sm" data-run data-folder="{{ $p.ID }}"{{ with $r.Dir }} data-dir="{{ . }}"{{ end }} data-job="{{ $r.ID }}" data-title="{{ $p.ID }}{{ with $r.Dir }}/{{ . }}{{ end }} / {{ $r.Name }}"{{ with $r.ArgsCommand }} data-args="{{ . }}" title="Run with arguments after {{ . }}"{{ end }}><svg class="ic"><use href="#i-play"/></svg>Run{{ if $r.TakesArgs }}...{{ end }}</button>
-{{- end }}
-
-{{- /* summarizeButton is |> Summarize of a job Claude summarizes for the
-     user, Page.Summarizes. (list $ folder job) */}}
-{{ define "summarizeButton" }}
-{{- $ := index . 0 }}{{ $p := index . 1 }}{{ $r := index . 2 -}}
-{{- if $.Summarizes $r }}
-<button type="button" class="btn btn-sm" data-run data-summarize data-folder="{{ $p.ID }}"{{ with $r.Dir }} data-dir="{{ . }}"{{ end }} data-job="{{ $r.ID }}" data-title="{{ $p.ID }}{{ with $r.Dir }}/{{ . }}{{ end }} / {{ $r.Name }}"{{ with $r.ArgsCommand }} data-args="{{ . }}"{{ end }} title="Run and summarize">|&gt; Summarize</button>
-{{- end }}
-{{- end }}
-
-{{- /* forceButton holds Run force, beside Run only in a workspace with
-     hours, where task-ui refuses a plain run outside them. To force a run that
-     failed, use its window. (list $ folder job) */}}
-{{ define "forceButton" }}
-{{- $ := index . 0 }}{{ $p := index . 1 }}{{ $r := index . 2 -}}
-{{- if $p.Hours }}
-<button type="button" class="btn btn-danger btn-sm" data-run data-force data-folder="{{ $p.ID }}"{{ with $r.Dir }} data-dir="{{ . }}"{{ end }} data-job="{{ $r.ID }}" data-title="{{ $p.ID }}{{ with $r.Dir }}/{{ . }}{{ end }} / {{ $r.Name }}" title="Run out of hours, with a reason">Run force</button>
-{{- end }}
 {{- end }}
 
 {{- define "sidejobs" }}

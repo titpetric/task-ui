@@ -119,6 +119,30 @@ select {
   font-size: var(--fs-label);
 }
 
+/* Run and the menu of the other ways to run it share one control:
+   [ Run | ▾ ], the menu's list under the caret. */
+.run-split {
+  display: inline-flex;
+  align-items: stretch;
+
+  & > .btn {
+    border-start-end-radius: 0;
+    border-end-end-radius: 0;
+  }
+
+  & > .more-menu > summary.run-caret {
+    border-start-start-radius: 0;
+    border-end-start-radius: 0;
+    margin-inline-start: -1px;
+    padding-inline: 0.4rem;
+
+    & .ic {
+      width: 0.7rem;
+      height: 0.7rem;
+    }
+  }
+}
+
 input:is([type="text"], [type="password"]),
 textarea {
   width: 100%;

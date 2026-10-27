@@ -10,6 +10,7 @@
 		<a class="btn btn-primary" href="/runs/{{ $run.ID }}" data-attach="{{ $run.ID }}">Attach</a>
 		{{- if $can }}<button type="button" class="btn btn-danger" data-kill="{{ $run.ID }}">Kill</button>{{ end }}
 		{{- else if $can }}{{ template "runButtons" (list $ $p $r) }}{{ end }}
+		{{- if $.Pinning }}{{ $pin := $.PinItem $p.ID $r.ID $r.Dir $r.Name }}<button type="button" class="btn btn-sm"{{ with $pin.Attrs }} {{ . }}{{ end }}><svg class="ic"><use href="#i-pin"/></svg>{{ $pin.Label }}</button>{{ end }}
 	</div>
 </div>
 

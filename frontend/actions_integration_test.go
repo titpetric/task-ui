@@ -241,15 +241,15 @@ func TestFolder_SettingsLinks(t *testing.T) {
 	}
 }
 
-// |> Summarize stands beside Run on the job's page, and in the row's
-// menu of the folder's Jobs table, for a user with prompt/edit and a
-// Claude token; no one else gets it, and neither does an interactive
-// job.
+// Run and summarize stands in Run's menu on the job's page, and in the
+// row's menu of the folder's Jobs table, for a user with prompt/edit
+// and a Claude token; no one else gets it, and neither does an
+// interactive job.
 func TestFolder_Summarize(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
 	ctx := context.Background()
-	const button = `data-run data-summarize data-folder="infra" data-job="plan" data-title="infra / plan" title="Run and summarize">|&gt; Summarize</button>`
+	const button = `data-run data-summarize data-folder="infra" data-job="plan" data-title="infra / plan" title="Run and summarize"><svg class="ic"><use href="#i-summary"/></svg><span>Run and summarize</span></button>`
 
 	assert.NotContains(t, f.page(t, asAdmin, "/f/internal/infra"), "data-summarize", "no Claude token")
 	f.withKey(t)
