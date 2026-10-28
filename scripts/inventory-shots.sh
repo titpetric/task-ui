@@ -10,6 +10,9 @@
 # then with pve open, in both themes. Writes docs/assets/inventory-*.png.
 #
 # Needs chromium and curl in PATH.
+#
+# TASK_UI_SHOT_FILTER is an ERE on the shot names; when set, only the shots
+# it matches are taken.
 set -euo pipefail
 
 root="$(cd "$(dirname "$0")/.." && pwd)"
@@ -18,6 +21,15 @@ cd "$root"
 for tool in chromium curl; do
   command -v "$tool" >/dev/null || { echo "$tool not found in PATH" >&2; exit 1; }
 done
+
+if [ -n "${TASK_UI_SHOT_FILTER:-}" ]; then
+  rc=0
+  printf '' | grep -Eq -- "$TASK_UI_SHOT_FILTER" 2>/dev/null || rc=$?
+  if [ "$rc" -ge 2 ]; then
+    echo "invalid TASK_UI_SHOT_FILTER: ${TASK_UI_SHOT_FILTER}" >&2
+    exit 2
+  fi
+fi
 
 work="$(mktemp -d)"
 pids=()
@@ -118,9 +130,17 @@ curl -fsS -o /dev/null "${TASK_UI_BASE}/inventory"
 
 export TASK_UI_SHOTS="$work"
 shots=()
+shot() {
+  local name="$1"
+  shift
+  if [ -n "${TASK_UI_SHOT_FILTER:-}" ] && ! [[ $name =~ $TASK_UI_SHOT_FILTER ]]; then
+    return 0
+  fi
+  shots+=("$(scripts/chromium.sh "$1" "$name" "${@:2}")")
+}
 for theme in dark light; do
-  shots+=("$(scripts/chromium.sh /inventory "inventory-${theme}" "$theme" 1440x1400)")
-  shots+=("$(scripts/chromium.sh "/inventory#host=pve" "inventory-host-${theme}" "$theme" 1440x2850 5000)")
+  shot "inventory-${theme}" /inventory "$theme" 1440x1400
+  shot "inventory-host-${theme}" "/inventory#host=pve" "$theme" 1440x2850 5000
 done
 
 mkdir -p docs/assets

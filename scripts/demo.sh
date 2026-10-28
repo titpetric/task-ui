@@ -9,6 +9,11 @@
 # scripts/chromium.sh in both themes. Writes docs/assets/*.png.
 #
 # Needs chromium, curl, atkins, task and git in PATH.
+#
+# TASK_UI_SHOT_FILTER is an ERE on the shot names. When set, only the shots
+# it matches are taken and only their files under docs/assets are replaced;
+# the rest of the set is left alone. The filter also reaches
+# scripts/inventory-shots.sh, which this script runs at the end.
 set -euo pipefail
 
 root="$(cd "$(dirname "$0")/.." && pwd)"
@@ -17,6 +22,15 @@ cd "$root"
 for tool in chromium curl atkins task git; do
   command -v "$tool" >/dev/null || { echo "$tool not found in PATH" >&2; exit 1; }
 done
+
+if [ -n "${TASK_UI_SHOT_FILTER:-}" ]; then
+  rc=0
+  printf '' | grep -Eq -- "$TASK_UI_SHOT_FILTER" 2>/dev/null || rc=$?
+  if [ "$rc" -ge 2 ]; then
+    echo "invalid TASK_UI_SHOT_FILTER: ${TASK_UI_SHOT_FILTER}" >&2
+    exit 2
+  fi
+fi
 
 work="$(mktemp -d)"
 pids=()
@@ -177,6 +191,9 @@ shots=()
 shot() {
   local name="$1"
   shift
+  if [ -n "${TASK_UI_SHOT_FILTER:-}" ] && ! [[ $name =~ $TASK_UI_SHOT_FILTER ]]; then
+    return 0
+  fi
   shots+=("$(scripts/chromium.sh "$1" "$name" "${@:2}")")
 }
 
@@ -377,7 +394,10 @@ for theme in dark light; do
 done
 
 mkdir -p docs/assets
-rm -f docs/assets/*.png
+# A filtered run only overwrites the shots it took.
+if [ -z "${TASK_UI_SHOT_FILTER:-}" ]; then
+  rm -f docs/assets/*.png
+fi
 for file in "${shots[@]}"; do
   name="$(basename "$file" .png)"
   out="docs/assets/${name#task-ui-}.png"
@@ -388,7 +408,9 @@ for file in "${shots[@]}"; do
   fi
   echo "$out"
 done
-cp docs/assets/dashboard-dark.png docs/assets/task-ui.png
+if [ -z "${TASK_UI_SHOT_FILTER:-}" ] || [[ dashboard-dark =~ $TASK_UI_SHOT_FILTER ]]; then
+  cp docs/assets/dashboard-dark.png docs/assets/task-ui.png
+fi
 
 # The Inventory page's shots, from a hub and hosts of their own.
 scripts/inventory-shots.sh

@@ -6,6 +6,8 @@ Every view, in both themes and on a phone, is in [docs/screenshots.md](screensho
 
 `scripts/demo.sh` regenerates them: it serves a copy of `testdata/demo`, sets the instance up through the API with curl, starts real runs with `scripts/run.sh`, walks every link of every page with `scripts/crawl.sh` and captures each view with headless chromium through `scripts/chromium.sh`, the phone views included. A run opens in its window from a link: `/runs/<id>#run=<id>`; `#start=<folder>/<job>` starts one; `#menu` opens the drawer; `#actions=<n>` opens the **⋯** menu of row n.
 
+Each browser runs in a systemd scope capped at `TASK_UI_CHROMIUM_MEM` (default `1G`) with swap off, so a shot that runs away is killed alone. At most `TASK_UI_CHROMIUM_PARALLEL` (default 2) browsers run at once across all callers; without systemd the cgroup cap is skipped and only the chromium flags bound the browser. `TASK_UI_SHOT_FILTER` takes only the shots whose names match the ERE and replaces only their files under `docs/assets/`.
+
 Under 860px the sidebar is a drawer behind the menu button, with the folders opening into their jobs, and the tables of jobs and runs fold into cards.
 
 ## Row actions
