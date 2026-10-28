@@ -1812,6 +1812,72 @@ var SSHKeyUserFields = []string{"id", "key_name", "user_name", "created_at"}
 // SSHKeyUserPrimaryFields are the primary key fields in the DB table.
 var SSHKeyUserPrimaryFields = []string{"id"}
 
+// Tool generated for db table `tool`.
+type Tool struct {
+	// Name
+	Name string `db:"name" json:"name"`
+
+	// Category
+	Category string `db:"category" json:"category"`
+
+	// Version
+	Version string `db:"version" json:"version"`
+
+	// Path
+	Path string `db:"path" json:"path"`
+
+	// Description
+	Description string `db:"description" json:"description"`
+
+	// Updated At
+	UpdatedAt *time.Time `db:"updated_at" json:"updated_at"`
+}
+
+// GetName will return the value of Name.
+func (t *Tool) GetName() string { return t.Name }
+
+// SetName sets Name to the provided value.
+func (t *Tool) SetName(val string) { t.Name = val }
+
+// GetCategory will return the value of Category.
+func (t *Tool) GetCategory() string { return t.Category }
+
+// SetCategory sets Category to the provided value.
+func (t *Tool) SetCategory(val string) { t.Category = val }
+
+// GetVersion will return the value of Version.
+func (t *Tool) GetVersion() string { return t.Version }
+
+// SetVersion sets Version to the provided value.
+func (t *Tool) SetVersion(val string) { t.Version = val }
+
+// GetPath will return the value of Path.
+func (t *Tool) GetPath() string { return t.Path }
+
+// SetPath sets Path to the provided value.
+func (t *Tool) SetPath(val string) { t.Path = val }
+
+// GetDescription will return the value of Description.
+func (t *Tool) GetDescription() string { return t.Description }
+
+// SetDescription sets Description to the provided value.
+func (t *Tool) SetDescription(val string) { t.Description = val }
+
+// GetUpdatedAt will return the value of UpdatedAt.
+func (t *Tool) GetUpdatedAt() *time.Time { return t.UpdatedAt }
+
+// SetUpdatedAt sets UpdatedAt to the provided value.
+func (t *Tool) SetUpdatedAt(stamp time.Time) { t.UpdatedAt = &stamp }
+
+// ToolTable is the name of the table in the DB.
+const ToolTable = "`tool`"
+
+// ToolFields is a list of all columns in the DB table.
+var ToolFields = []string{"name", "category", "version", "path", "description", "updated_at"}
+
+// ToolPrimaryFields are the primary key fields in the DB table.
+var ToolPrimaryFields = []string{"name"}
+
 // User generated for db table `user`.
 type User struct {
 	// ID
@@ -4057,6 +4123,67 @@ func (s *SSHKeyUser) Update(opts ...QueryOption) string {
 // Delete starts building a DELETE query.
 func (s *SSHKeyUser) Delete(opts ...QueryOption) string {
 	cfg := (&QueryConfig{Table: SSHKeyUserTable}).Apply(opts...)
+	query := fmt.Sprintf("DELETE FROM %s", cfg.Table)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	return query
+}
+
+// Insert starts building an INSERT INTO query.
+func (t *Tool) Insert(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: ToolTable, Statement: "INSERT INTO"}).Apply(opts...)
+	cols := ToolFields
+	if len(cfg.Columns) > 0 {
+		cols = cfg.Columns
+	}
+	return fmt.Sprintf("%s %s (%s) VALUES (:%s)", cfg.Statement, cfg.Table, strings.Join(cols, ", "), strings.Join(cols, ", :"))
+}
+
+// Select starts building a SELECT query.
+func (t *Tool) Select(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: ToolTable}).Apply(opts...)
+	cols := "*"
+	if len(cfg.Columns) > 0 {
+		cols = strings.Join(cfg.Columns, ", ")
+	}
+	query := fmt.Sprintf("SELECT %s FROM %s", cols, cfg.Table)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	if cfg.OrderBy != "" {
+		query += " ORDER BY " + cfg.OrderBy
+	}
+	if cfg.LimitOffset > 0 {
+		query += fmt.Sprintf(" LIMIT %d, %d", cfg.LimitStart, cfg.LimitOffset)
+	}
+	return query
+}
+
+// Update starts building a UPDATE query.
+func (t *Tool) Update(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: ToolTable}).Apply(opts...)
+	cols := ToolFields
+	if len(cfg.Columns) > 0 {
+		cols = cfg.Columns
+	}
+	setClause := ""
+	for i, col := range cols {
+		if i > 0 {
+			setClause += ", "
+		}
+		setClause += col + "=:" + col
+	}
+	query := fmt.Sprintf("UPDATE %s SET %s", cfg.Table, setClause)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	return query
+}
+
+// Delete starts building a DELETE query.
+func (t *Tool) Delete(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: ToolTable}).Apply(opts...)
 	query := fmt.Sprintf("DELETE FROM %s", cfg.Table)
 	if cfg.Where != "" {
 		query += " WHERE " + cfg.Where

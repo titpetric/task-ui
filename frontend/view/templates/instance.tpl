@@ -121,6 +121,33 @@
 </section>
 {{- end }}{{ end }}
 
+{{- with .Instance }}
+<section class="block instance-section" id="tooling">
+	<h3>Tooling</h3>
+	<p class="section-intro">The tools task-ui found in its PATH at the last check, and what each is used for. Check probes one tool; Check all probes every tool and replaces the list. A tool that is not there is left out.</p>
+	{{- if $admin }}
+	<form class="inline" data-api="/api/instance/tools/check" data-method="POST" data-next="/settings/instance?notice=Tooling+checked#tooling"><button class="btn btn-sm" type="submit">Check all</button></form>
+	{{- end }}
+	{{- range .Tooling }}
+	<h4>{{ .Title }}</h4>
+	<div class="table-wrap">
+	<table class="table toolset-table cards">
+		<colgroup><col class="c-tool"><col class="c-version"><col class="c-path"><col class="c-use"><col class="c-actions"></colgroup>
+		<thead><tr><th>Tool</th><th>Version</th><th>Path</th><th>Used for</th><th></th></tr></thead>
+		<tbody>
+		{{- range .Tools }}
+		<tr><td class="key mono" data-label="Tool">{{ .Name }}</td><td class="mono" data-label="Version">{{ with .Version }}{{ . }}{{ else }}<span class="faint">unknown</span>{{ end }}</td><td class="path mono" data-label="Path">{{ .Path }}</td><td class="desc" data-label="Used for">{{ .Description }}</td><td class="actions">{{ if $admin }}<form class="inline" data-api="/api/instance/tools/{{ .ID }}/check" data-method="POST" data-next="/settings/instance?notice=Tool+checked#tooling"><button class="btn btn-sm" type="submit">Check</button></form>{{ end }}</td></tr>
+		{{- end }}
+		</tbody>
+	</table>
+	</div>
+	{{- end }}
+	{{- if not .Tooling }}
+	<p>No tooling was detected: Check all probes the PATH.</p>
+	{{- end }}
+</section>
+{{- end }}
+
 {{- if .Can "key/view" }}
 {{ template "instance-keys" . }}
 {{- end }}

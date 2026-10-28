@@ -107,6 +107,18 @@ func aboutWorkflow(run, thread, source string) string {
 		thread + "\n\n" + answerLine(source, "the workflow run's page")
 }
 
+// toolset tells Claude what tools TASK_UI_TOOLING found in the
+// environment and how to ask one for its usage, a line a tool with what
+// it is used for; nothing without tools.
+func toolset(tools string) string {
+	if tools == "" {
+		return ""
+	}
+	return "The tools task-ui found in this environment are available to you here, one a line with what it is used for:\n\n" +
+		tools + "\n\n" +
+		"Run `<tool> --help` for how to use one."
+}
+
 // inventory tells Claude about the hosts of TASK_UI_HOSTS and how to
 // inspect them over ssh, or passes on why there are none, a line without
 // tabs; nothing without hosts.

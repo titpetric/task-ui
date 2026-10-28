@@ -194,6 +194,7 @@ func (a *App) wire(version string) error {
 	workflows := storage.NewWorkflowStorage(db)
 	workflowRuns := storage.NewWorkflowRunStorage(db)
 	refs := storage.NewFolderRefStorage(db)
+	tools := storage.NewToolStorage(db)
 	keys := a.keys()
 	g := &git.Git{Keys: keys}
 	secrets := a.secrets()
@@ -249,6 +250,7 @@ func (a *App) wire(version string) error {
 		Backlog:       &runner.Backlog{Settings: storage.NewSettingStorage(a.DB)},
 		Environment:   &runner.Environment{Settings: storage.NewSettingStorage(a.DB)},
 		APIURL:        func() string { return strings.TrimSuffix(MCPURL(a.Addr()), "/mcp") },
+		Tooling:       toolSummary(tools),
 	})
 	hostRuns := &hostrun.Starter{Catalogue: a.Catalogue, Hosts: hosts, SSH: prober, Runner: a.Runner}
 	a.Scheduler = scheduler.NewLoop(schedules, a.Users, a.Catalogue.Steps(), a.Runner)
@@ -295,7 +297,7 @@ func (a *App) wire(version string) error {
 		Runner: a.Runner, Catalogue: a.Catalogue, Steps: a.Catalogue.Steps(), Git: g, Keys: keys, Env: env, Recordings: recordings, Root: cfg.Root, Board: a.Board,
 		Integrations: integrations, Hosts: hosts, HostRuns: hostRuns, Summarizer: &claude.Summarizer{Timeout: 3 * time.Minute},
 		AddUser: addUser, RemoveUser: removeUser, Tokens: a.Guard.Tokens, Now: cfg.Clock(), Summaries: summaries, Version: version,
-		Cleaner: cleaner, Pins: pins,
+		Cleaner: cleaner, Pins: pins, Tools: tools,
 	})
 	pages, err := frontend.New(frontend.Options{
 		Guard: a.Guard, Auth: access.NewAuthenticator(a.Users, a.Emails, a.Passwords), Users: a.Users, Projects: projects, Workspaces: workspaces, Runs: runs, Artifacts: artifacts, Schedules: schedules, Secrets: secrets, SecretReads: secretReads,
@@ -306,6 +308,7 @@ func (a *App) wire(version string) error {
 		Storage:      &diskusage.Inventory{TTL: 30 * time.Second, Wait: 2 * time.Second, Items: storageItems(cfg, workspaces, os.Getenv("HOME"))},
 		Integrations: integrations, Hosts: hosts, Pins: pins,
 		Tooling: &tooling.Prober{Timeout: 5 * time.Second, TTL: time.Minute},
+		Tools:   tools,
 		SSH:     prober, AddUsers: a.UsersFile != nil, BaseURL: cfg.URL,
 		Facts: &hostinfo.Reader{Run: prober.Output, Timeout: 20 * time.Second, TTL: 5 * time.Minute},
 		Instance: &view.Instance{

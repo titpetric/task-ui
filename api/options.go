@@ -96,4 +96,7 @@ type Options struct {
 	// ExportWorkFactor is the scrypt work factor of an export's
 	// passphrase, log2 of N; zero is age's default.
 	ExportWorkFactor int
+	// Tools keep the tools the Instance page found in the PATH, checked
+	// on demand; nil turns the check routes off.
+	Tools *storage.ToolStorage
 }

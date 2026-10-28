@@ -12,9 +12,9 @@ import (
 // command builds the process: bash -l for the login environment, the
 // job's argv passed as arguments so the shell never parses a name, and
 // the request's args after --, the same way; the share of the server's
-// environment the parent environment passes, the secrets and the run
-// facts in the environment, HOME at the workspace's home project, the
-// artifact directory ready. The process starts in the request's
+// environment the parent environment passes, the secrets, the run
+// facts and what the instance found in its PATH in the environment,
+// HOME at the workspace's home project, the artifact directory ready. The process starts in the request's
 // directory, or the folder's.
 func (m *Manager) command(ctx context.Context, session *Session) (*exec.Cmd, error) {
 	f, job, run := session.Folder, session.Job, session.Run
@@ -77,6 +77,12 @@ func (m *Manager) command(ctx context.Context, session *Session) (*exec.Cmd, err
 	}
 	if session.permissions != "" {
 		cmd.Env = append(cmd.Env, "TASK_UI_PERMISSIONS="+session.permissions)
+	}
+	// Claude in the run reads what the instance found in its PATH.
+	if m.opts.Tooling != nil {
+		if tooling := m.opts.Tooling(ctx); tooling != "" {
+			cmd.Env = append(cmd.Env, "TASK_UI_TOOLING="+tooling)
+		}
 	}
 	if session.workspace != "" {
 		cmd.Env = append(cmd.Env,

@@ -1057,6 +1057,40 @@
     - name: idx_ssh_key_user_user
       columns:
         - user_name
+- name: tool
+  comment: Tool
+  columns:
+    - name: name
+      type: text
+      key: PRI
+      comment: Name
+      datatype: varchar
+    - name: category
+      type: text
+      comment: Category
+      datatype: varchar
+    - name: version
+      type: text
+      comment: Version
+      datatype: varchar
+    - name: path
+      type: text
+      comment: Path
+      datatype: varchar
+    - name: description
+      type: text
+      comment: Description
+      datatype: varchar
+    - name: updated_at
+      type: timestamp
+      comment: Updated At
+      datatype: datetime
+  indexes:
+    - name: sqlite_autoindex_tool_1
+      columns:
+        - name
+      primary: true
+      unique: true
 - name: user
   comment: User
   columns:

@@ -7,7 +7,9 @@ import (
 	"github.com/titpetric/task-ui/diskusage"
 	"github.com/titpetric/task-ui/frontend/view"
 	"github.com/titpetric/task-ui/internal/assert"
+	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/runner"
+	"github.com/titpetric/task-ui/toolenv"
 )
 
 // The Instance page's Storage table lists each item with its size and
@@ -37,6 +39,36 @@ func TestInstance_Storage(t *testing.T) {
 	buf.Reset()
 	assert.NoError(t, v.Render(&buf, "instance", p))
 	assert.NotContains(t, buf.String(), `id="storage"`)
+}
+
+// The Tooling section lists the detected tools in a table per category,
+// the tool, its version, its path and what it is used for; a category
+// with no tool has no table, and no tool at all says so.
+func TestInstance_Tooling(t *testing.T) {
+	t.Parallel()
+	v, err := view.New()
+	assert.NoError(t, err)
+	p := admin(t)
+	p.Instance = &view.Instance{Tooling: view.ToolGroups([]model.Tool{
+		{Name: "go", Category: toolenv.CategoryRuntime, Version: "go1.22.1", Path: "/usr/local/go/bin/go", Description: "Go toolchain: builds and tests Go"},
+		{Name: "git", Category: toolenv.CategoryTooling, Version: "2.43.0", Path: "/usr/bin/git", Description: "version control"},
+	})}
+	var buf bytes.Buffer
+	assert.NoError(t, v.Render(&buf, "instance", p))
+	body := buf.String()
+	assert.Contains(t, body, `<section class="block instance-section" id="tooling">`)
+	assert.Contains(t, body, `<h4>Runtimes</h4>`)
+	assert.Contains(t, body, `<td class="key mono" data-label="Tool">go</td><td class="mono" data-label="Version">go1.22.1</td><td class="path mono" data-label="Path">/usr/local/go/bin/go</td><td class="desc" data-label="Used for">Go toolchain: builds and tests Go</td><td class="actions"><form class="inline" data-api="/api/instance/tools/go/check" data-method="POST" data-next="/settings/instance?notice=Tool+checked#tooling"><button class="btn btn-sm" type="submit">Check</button></form></td>`)
+	assert.Contains(t, body, `data-api="/api/instance/tools/check" data-method="POST" data-next="/settings/instance?notice=Tooling+checked#tooling"><button class="btn btn-sm" type="submit">Check all</button>`)
+	assert.Contains(t, body, `<h4>Tooling</h4>`)
+	assert.Contains(t, body, `<td class="key mono" data-label="Tool">git</td>`)
+	assert.Contains(t, body, `data-api="/api/instance/tools/git/check"`)
+	assert.NotContains(t, body, `<h4>Custom tooling</h4>`, "a category with no tool is left out")
+
+	p.Instance = &view.Instance{}
+	buf.Reset()
+	assert.NoError(t, v.Render(&buf, "instance", p))
+	assert.Contains(t, buf.String(), "No tooling was detected: Check all probes the PATH.")
 }
 
 // The Parent environment section reads the base variables and the

@@ -77,6 +77,12 @@ func (h *Handlers) instance(w http.ResponseWriter, r *http.Request) {
 		table := h.opts.Storage.Table()
 		instance.Storage = &table
 	}
+	// The tool names, versions and paths are no secret: whoever reaches
+	// the page sees them.
+	if h.opts.Tools != nil {
+		tools, _ := h.opts.Tools.List(r.Context())
+		instance.Tooling = view.ToolGroups(tools)
+	}
 	p.Instance = &instance
 	if p.Can("key/view") {
 		h.fillKeys(r.Context(), p)

@@ -179,6 +179,42 @@
   }
 }
 
+/* The tools found in the PATH, a table per category: the tool, its
+   version, where it is, and what it is used for. */
+.toolset-table {
+  table-layout: fixed;
+
+  & col.c-tool {
+    width: 10rem;
+  }
+
+  & col.c-version {
+    width: 20%;
+  }
+
+  & col.c-path {
+    width: 38%;
+  }
+
+  & col.c-actions {
+    width: 5rem;
+  }
+
+  & td.key {
+    font-weight: 500;
+  }
+
+  & td.path {
+    word-break: break-all;
+  }
+
+  & td.desc {
+    color: var(--text-dim);
+    font-size: var(--fs-sm);
+    line-height: 1.45;
+  }
+}
+
 .inline-setting {
   display: flex;
   align-items: center;

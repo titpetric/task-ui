@@ -2,7 +2,9 @@ package view
 
 import (
 	"github.com/titpetric/task-ui/diskusage"
+	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/runner"
+	"github.com/titpetric/task-ui/toolenv"
 )
 
 // Instance is what the server runs with, as the Instance step of the
@@ -47,6 +49,59 @@ type Instance struct {
 	// Storage is what the instance keeps on disk, by item, for an admin
 	// alone; nil leaves the Storage table out.
 	Storage *diskusage.Table
+	// Tooling is what the instance found in its PATH at start, a table
+	// per category; empty says there is none.
+	Tooling []ToolGroup
+}
+
+// Tool is a tool task-ui found in the PATH at start, as the Tooling
+// section of the Instance page lists it.
+type Tool struct {
+	// ID is the tool's name in the check URL, as "docker-compose".
+	ID          string
+	Name        string
+	Version     string
+	Path        string
+	Description string
+}
+
+// ToolGroup is one table of the Tooling section.
+type ToolGroup struct {
+	// Title is the category's title, such as Runtimes.
+	Title string
+	Tools []Tool
+}
+
+// ToolCategories are the categories of the Tooling section, with their
+// titles, in the order the page lists them.
+var ToolCategories = []struct{ Category, Title string }{
+	{Category: toolenv.CategoryRuntime, Title: "Runtimes"},
+	{Category: toolenv.CategoryTooling, Title: "Tooling"},
+	{Category: toolenv.CategoryCustom, Title: "Custom tooling"},
+}
+
+// ToolGroups groups the stored tools into the tables of the Tooling
+// section, the categories in ToolCategories' order, a category with no
+// tool left out.
+func ToolGroups(tools []model.Tool) []ToolGroup {
+	groups := []ToolGroup{}
+	for _, category := range ToolCategories {
+		group := ToolGroup{Title: category.Title}
+		for _, tool := range tools {
+			if tool.Category != category.Category {
+				continue
+			}
+			id := ""
+			if spec, ok := toolenv.SpecByName(tool.Name); ok {
+				id = spec.ID
+			}
+			group.Tools = append(group.Tools, Tool{ID: id, Name: tool.Name, Version: tool.Version, Path: tool.Path, Description: tool.Description})
+		}
+		if len(group.Tools) > 0 {
+			groups = append(groups, group)
+		}
+	}
+	return groups
 }
 
 // EnvBase returns runner.BaseEnv, the variables None passes.

@@ -99,6 +99,8 @@ func (h *Handlers) Routes() http.Handler {
 	r.Put("/retention", h.saveRetention)
 	r.Get("/instance", h.getInstance)
 	r.Put("/instance", h.putInstance)
+	r.Post("/instance/tools/check", h.checkTools)
+	r.Post("/instance/tools/{id}/check", h.checkTool)
 
 	r.Get("/integrations", h.listIntegrations)
 	r.Put("/integrations/{id}", h.saveIntegration)

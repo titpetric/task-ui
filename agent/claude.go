@@ -60,7 +60,8 @@ func (a *Agent) homeArgs(dir string) []string {
 
 // context is what every Claude run here reads after the instructions
 // of its own: where the run's artifacts go, task-ui's MCP tools for a
-// run that has them, then claude.Context, the
+// run that has them, the tools of the environment from
+// TASK_UI_TOOLING, then claude.Context, the
 // user of the run with the role and what the user may do, from
 // TASK_UI_USER, TASK_UI_ROLE and TASK_UI_PERMISSIONS, and what task-ui is.
 func (a *Agent) context() string {
@@ -75,7 +76,7 @@ func (a *Agent) context() string {
 			"its tools list and run jobs and workflows, read runs, make and change workflows with get_workflow, create_workflow and update_workflow, " +
 			"and read and leave notes. Use them for what the question asks of task-ui; the access ends with the run."
 	}
-	return system(artifacts, tools, claude.Context(a.getenv("TASK_UI_USER"), a.getenv("TASK_UI_ROLE"), a.getenv("TASK_UI_PERMISSIONS")))
+	return system(artifacts, tools, toolset(a.getenv("TASK_UI_TOOLING")), claude.Context(a.getenv("TASK_UI_USER"), a.getenv("TASK_UI_ROLE"), a.getenv("TASK_UI_PERMISSIONS")))
 }
 
 // claudePath finds claude in the PATH of the environment.

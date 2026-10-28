@@ -1,6 +1,7 @@
 package runner
 
 import (
+	"context"
 	"time"
 
 	"github.com/titpetric/task-ui/artifactstore"
@@ -70,4 +71,8 @@ type Options struct {
 	// one, each run gets a token of its own in TASK_UI_RUN_TOKEN and the
 	// link in TASK_UI_API, for task-ui get-secret. Nil sets neither.
 	APIURL func() string
+	// Tooling returns the tools of the environment as TASK_UI_TOOLING,
+	// one a line, which a run's Claude context reads; empty sets
+	// nothing. Nil sets nothing either.
+	Tooling func(ctx context.Context) string
 }

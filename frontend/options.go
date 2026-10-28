@@ -103,6 +103,9 @@ type Options struct {
 	// Instance is what the server runs with, for the Instance step of
 	// the settings; nil shows an empty page.
 	Instance *view.Instance
+	// Tools are the tools the instance found in its PATH at start, for
+	// the Tooling section of the Instance page; nil leaves it empty.
+	Tools *storage.ToolStorage
 	// Cleaner measures what the instance keeps and holds the Data
 	// retention rules; nil shows an empty page.
 	Cleaner *retention.Cleaner

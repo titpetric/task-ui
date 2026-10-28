@@ -5,8 +5,12 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/go-chi/chi/v5"
+
 	"github.com/titpetric/task-ui/access"
+	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/runner"
+	"github.com/titpetric/task-ui/toolenv"
 )
 
 // InstanceRequest sets the instance settings the Instance page edits.
@@ -18,6 +22,69 @@ type InstanceRequest struct {
 	// ParentEnv is how much of the server's environment a run starts
 	// with: none, auto or all.
 	ParentEnv *string `json:"parent_env"`
+}
+
+// toolRow is a detected tool as the tool table keeps it.
+func toolRow(tool toolenv.Tool) model.Tool {
+	return model.Tool{Name: tool.Name, Category: tool.Category, Version: tool.Version, Path: tool.Path, Description: tool.Description}
+}
+
+// checkTools probes the PATH for every tool the instance knows, replaces
+// the stored rows with what it found, and answers them: the Check all
+// button of the Instance page. For admins alone.
+func (h *Handlers) checkTools(w http.ResponseWriter, r *http.Request) {
+	if !access.UserFrom(r.Context()).CanAdmin() {
+		fail(w, http.StatusForbidden, "only an admin checks the instance's tooling")
+		return
+	}
+	if h.opts.Tools == nil {
+		fail(w, http.StatusNotFound, "the tool table isn't available on this instance")
+		return
+	}
+	found := toolenv.Detect{}.Tools(r.Context())
+	rows := make([]model.Tool, 0, len(found))
+	for _, tool := range found {
+		rows = append(rows, toolRow(tool))
+	}
+	if err := h.opts.Tools.Replace(r.Context(), rows); err != nil {
+		fail(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"tools": rows})
+}
+
+// checkTool probes the PATH for one tool and stores what it found, or
+// removes the row when the PATH no longer has the tool: the Check button
+// beside a tool of the Instance page. For admins alone.
+func (h *Handlers) checkTool(w http.ResponseWriter, r *http.Request) {
+	if !access.UserFrom(r.Context()).CanAdmin() {
+		fail(w, http.StatusForbidden, "only an admin checks the instance's tooling")
+		return
+	}
+	if h.opts.Tools == nil {
+		fail(w, http.StatusNotFound, "the tool table isn't available on this instance")
+		return
+	}
+	spec, ok := toolenv.SpecByID(chi.URLParam(r, "id"))
+	if !ok {
+		fail(w, http.StatusNotFound, "the instance doesn't know this tool")
+		return
+	}
+	found := toolenv.Detect{Specs: []toolenv.Spec{spec}}.Tools(r.Context())
+	if len(found) == 0 {
+		if err := h.opts.Tools.Remove(r.Context(), spec.Name); err != nil {
+			fail(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+		writeJSON(w, http.StatusOK, map[string]any{"tool": spec.Name, "found": false})
+		return
+	}
+	row := toolRow(found[0])
+	if err := h.opts.Tools.Save(r.Context(), row); err != nil {
+		fail(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"tool": spec.Name, "found": true, "version": row.Version})
 }
 
 // instanceState reads the state GET and PUT /api/instance answer.
