@@ -1,0 +1,18 @@
+---
+extends: substitution
+message: "Write '%s', not '%s'. A code identifier is exempt and belongs in backticks."
+level: warning
+ignorecase: false
+swap:
+  '\bconfig\b': configuration
+  '\bconfigs\b': configurations
+  '\bcum\b': cumulative
+  '\brepo\b': repository
+  '\brepos\b': repositories
+  '\bperf\b': performance
+  '\bdocs dir\b': the docs directory
+  '\binfo\b': information
+  '\bimpl\b': implementation
+  '\be\.g\.\b': for example
+  '\bi\.e\.\b': that is
+  '\betc\.': and the rest

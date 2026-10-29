@@ -1,0 +1,17 @@
+---
+extends: existence
+message: "'%s' reports the author, not the result. State what the code does now."
+level: error
+ignorecase: false
+nonword: true
+tokens:
+  # A reply, a commit message and a pull request body all record the state the
+  # tree is in. Who ran what, in which order, and which files they opened is
+  # the author's path to the change and not the change.
+  - '\bI (?:fixed|ran|re-?ran|checked|re-?checked|verified|compared|touched|reverted|rewrote|narrowed|widened|probed|diffed|trimmed|added|removed|deleted|edited|moved|wired|split|confirmed|found|discovered|measured|tested|audited|swept)\b'
+  - '\bI (?:have|had|will|would|can|could|should|am|was|do|did|was not|did not)\b'
+  - "\\bI'(?:ve|ll|m|d)\\b"
+  - '\bwhat I (?:did|touched|changed|found|ran|fixed|read)\b'
+  - '\bmy (?:edit|edits|change|changes|fix|fixes|reply|probe|sweep|rule|rules|commit|commits|branch|read|run)\b'
+  - '\balready fixed it\b'
+  - '\bturns out I\b'

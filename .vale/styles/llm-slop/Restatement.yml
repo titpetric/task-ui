@@ -1,0 +1,24 @@
+---
+extends: existence
+message: "'%s' says the sentence twice. End at the fact."
+level: error
+ignorecase: true
+nonword: true
+tokens:
+  - '\bwhich is (?:what|why|where|how|the point|the reason|exactly)\b'
+  - '\band that is (?:what|why|the point)\b'
+  - '\bthat is (?:what|why) (?:makes|keeps|lets|gives)\b'
+  - '\bwhich is the (?:whole|entire) (?:point|reason)\b'
+  - '\bwhich is itself\b'
+  - '\bthe (?:whole|entire) point\b'
+  - '\bthat is the point\b'
+  - '\bthe point (?:is|being)\b'
+  - '\bthe reason (?:is|being) that\b'
+  - '\bin other words\b'
+  - '\bput (?:another way|differently)\b'
+  - '\bto be clear\b'
+  # "the answer" renames a return value the sentence already gave. A trailing
+  # ", the answer X gives" is an appositive on a complete sentence; cut it.
+  - '\bthe answers?\b'
+  - '\bthe return value is\b'
+  - '\bwhat it comes down to\b'

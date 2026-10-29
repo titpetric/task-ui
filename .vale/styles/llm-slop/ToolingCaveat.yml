@@ -1,0 +1,15 @@
+---
+extends: existence
+message: "'%s' is the state of the toolchain, not the change. Fix the tool or raise it."
+level: error
+ignorecase: true
+nonword: true
+tokens:
+  - '\bbut the job is advisory\b'
+  - '\bdoes not gate\b'
+  - '\bfails to load its config\b'
+  - '\badvisory so\b'
+  - '\bhad to run twice\b'
+  - '\bneeded a second pass\b'
+  - '\bthe formatter rewrote\b'
+  - '\bunrelated to this change, but\b'

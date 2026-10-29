@@ -1,0 +1,18 @@
+---
+extends: existence
+message: "Measurement '%s' in prose. Put it in a table or a pasted output block."
+level: error
+scope: paragraph
+nonword: true
+tokens:
+  # A number with a unit goes stale the moment the code moves, and prose is the
+  # one place nothing regenerates it. Tables, code blocks, headings and list
+  # items are out of scope: a table is where a measurement belongs.
+  - '\b\d[\d,.]*\s?(?:ns|us|µs|ms|sec|secs|seconds)\b'
+  - '\b\d[\d,.]*\s?(?:B|KB|KiB|MB|MiB|GB|GiB)\b'
+  - '\b\d[\d,.]*\s?(?:ns|us|µs|ms)/op\b'
+  - '\b\d[\d,.]*\s+allocs?\b'
+  - '\ballocs?/op\b'
+  - '\b\d[\d,.]*x\s+(?:faster|slower|cheaper|the)\b'
+  - '\b-?\d[\d,.]*%\b'
+  - '\b\d[\d,.]*\s+(?:requests?|logins?|guesses)\s+(?:a|per)\s+(?:second|minute|hour|day)\b'

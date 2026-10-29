@@ -1,0 +1,23 @@
+---
+extends: existence
+message: "Code does not ask, want, know or decide to: '%s'. State the contract."
+level: error
+ignorecase: true
+nonword: true
+tokens:
+  # An API contract is a contract. Nothing in it asks for anything.
+  - '\basks?\s+(?:for|a|the|whether|what|how)\b'
+  - '\basking\s+(?:for|a|the|whether)\b'
+  - '\basked\s+for\b'
+  - '\bwhat (?:it|the \w+) asks\b'
+  - '\bwants?\s+(?:to|a|an|the)\b'
+  - '\bknows?\s+(?:to|that|which|what)\b'
+  - '\bbelieves?\b'
+  - '\bexpects? (?:to|that)\b'
+  - '\bis happy to\b'
+  - '\bprefers? to\b'
+  - '\bchooses? to\b'
+  - '\brefuses? to\b'
+  - '\btries? to\b'
+  - '\bhas an opinion about\b'
+  - '\bcares? about\b'

@@ -1,0 +1,11 @@
+---
+extends: existence
+message: "'%s' hangs significance off a fact. Stop at the fact."
+level: error
+ignorecase: true
+nonword: true
+tokens:
+  - ',\s*(?:highlighting|underscoring|demonstrating|showcasing|illustrating|emphasi[sz]ing|reflecting|cementing|reinforcing)\s+(?:the|that|how|its|a|an)\b'
+  - ',\s*making it (?:the|a|an|one of)\b'
+  - ',\s*which speaks to\b'
+  - ',\s*a testament to\b'

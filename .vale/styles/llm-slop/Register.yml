@@ -1,0 +1,46 @@
+---
+extends: substitution
+message: "AI register. Write '%s' instead of '%s'."
+level: error
+ignorecase: true
+swap:
+  delve: read
+  delves: reads
+  seamless: direct
+  seamlessly: directly
+  robust: correct
+  leverage: use
+  leverages: uses
+  leveraging: using
+  utilize: use
+  utilizes: uses
+  utilization: use
+  crucial: required
+  vital: required
+  comprehensive: complete
+  unlock: enable
+  unlocks: enables
+  empower: let
+  empowers: lets
+  elevate: raise
+  elevates: raises
+  streamline: simplify
+  streamlines: simplifies
+  effortless: automatic
+  plethora: many
+  myriad: many
+  ecosystem: the named tools
+  landscape: the named tools
+  tapestry: the named parts
+  synergy: the shared behaviour
+  holistic: whole-system
+  paradigm: model
+  game-changing: name the change
+  cutting-edge: current
+  outlier: name the difference
+  'state-of-the-art': current
+  'best-in-class': name the comparison
+  'deep dive': detail
+  'under the hood': in the implementation
+  'at its core': name the component
+  'the beauty of': cut this

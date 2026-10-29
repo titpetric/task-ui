@@ -1,0 +1,18 @@
+---
+extends: existence
+message: "'%s' narrates the work, not the change. State what the branch does."
+level: error
+ignorecase: true
+nonword: true
+tokens:
+  - '\bthe first (?:attempt|approach|version|try)\b'
+  - '\bafter (?:some|a bit of) (?:digging|investigation|trial)\b'
+  - '\bit turned out\b'
+  - '\bas it turns out\b'
+  - '\bhad to be (?:moved|regenerated|rerun|re-run|redone)\b'
+  - '\bneeded (?:regenerating|rerunning|a second pass)\b'
+  - '\bonce I\b'
+  - '\bI then\b'
+  - '\bI first\b'
+  - '\binitially,\b'
+  - '\bwent down the\b'

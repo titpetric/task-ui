@@ -1,0 +1,15 @@
+---
+extends: existence
+message: "'%s' cites nobody. Name the person, the issue or the benchmark run."
+level: error
+ignorecase: true
+nonword: true
+tokens:
+  - '\bexperts (?:argue|say|agree|recommend)\b'
+  - '\bstudies (?:show|suggest)\b'
+  - '\bindustry (?:reports|practice) (?:suggest|show)\b'
+  - '\bit is (?:widely|generally) (?:known|accepted|understood)\b'
+  - '\bmany (?:believe|argue|would say)\b'
+  - '\bsome would (?:say|argue)\b'
+  - '\bconventional wisdom\b'
+  - '\bbest practice is\b'

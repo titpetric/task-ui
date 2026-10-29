@@ -1,0 +1,10 @@
+---
+extends: existence
+message: "A question answered in the next clause: '%s'. State the answer."
+level: error
+nonword: true
+tokens:
+  # "The result? Devastating." and "Why? Because ..."
+  - '\?\s+[A-Z][a-z]+\.'
+  - '\?\s+(?:Because|Yes|No|None|Nothing|Simple|Two|Three)\b'
+  - '\b(?:The|Its|Their) (?:result|answer|catch|problem|upshot|verdict)\?'

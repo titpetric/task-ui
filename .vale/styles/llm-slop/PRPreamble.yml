@@ -1,0 +1,13 @@
+---
+extends: existence
+message: "'%s' is preamble. Open with the defect, in the code's own terms."
+level: error
+ignorecase: true
+nonword: true
+tokens:
+  - '\bthis (?:PR|pull request|patch|changeset)\b'
+  - '\bin this (?:PR|pull request|change|commit)\b'
+  - '\bthe (?:goal|purpose|aim) of this\b'
+  - '\bthis (?:change|commit) (?:adds|introduces|implements|provides)\b'
+  - '\bat a high level\b'
+  - '\bTL;?DR\b'

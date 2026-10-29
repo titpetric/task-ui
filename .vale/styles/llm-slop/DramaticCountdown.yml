@@ -1,0 +1,11 @@
+---
+extends: existence
+message: "Dramatic countdown: '%s'. State the fact once."
+level: error
+ignorecase: true
+nonword: true
+tokens:
+  - '\bNot a \w+\.\s+Not a \w+\.'
+  - '\bNot \w+\.\s+Not \w+\.\s+'
+  - '\bone (?:word|thing|reason):\s*$'
+  - '\bthe (?:real|actual) (?:problem|issue|answer) (?:is|was)\b'

@@ -1,0 +1,19 @@
+---
+extends: existence
+message: "'%s' is an idiom for a method. Name what was done to each item."
+level: error
+ignorecase: true
+nonword: true
+tokens:
+  - '\bline by line\b'
+  - '\bpackage by package\b'
+  - '\bfile by file\b'
+  - '\bpiece by piece\b'
+  - '\bcase by case\b'
+  - '\brow by row\b'
+  - '\bbit by bit\b'
+  - '\bacross the board\b'
+  - '\bout of the box\b'
+  - '\bhand in hand\b'
+  - '\bin lockstep\b'
+  - '\bin one shot\b'

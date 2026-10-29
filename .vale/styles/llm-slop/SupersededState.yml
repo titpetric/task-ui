@@ -1,0 +1,21 @@
+---
+extends: existence
+message: "'%s' dates the sentence. State the current behaviour; history belongs in a commit message."
+level: warning
+ignorecase: true
+nonword: true
+tokens:
+  - '\bpreviously\b'
+  # The past-habitual only. "cannot be used to find out" is passive voice.
+  - '\b(?:it|this|that|they|we|which|there|section|document|field|key)\s+used to\b'
+  - '\bused to (?:say|be|have|do|work|live|read|carry|return|call|report|mean)\b'
+  - '\bno longer\b'
+  - '\ban earlier (?:revision|version)\b'
+  - '\bhistorically\b'
+  - '\bin the past\b'
+  - '\buntil recently\b'
+  - '\bas of (?:now|today|this writing)\b'
+  - '\bcurrently\b'
+  - '\bat present\b'
+  - '\bfor now\b'
+  - '\bgoing forward\b'

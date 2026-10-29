@@ -1,0 +1,22 @@
+---
+extends: existence
+message: "Filler transition: '%s'. Delete it."
+level: error
+ignorecase: true
+nonword: true
+tokens:
+  - '(?:^|\.\s+)(?:Importantly|Interestingly|Notably|Crucially|Essentially|Ultimately|Fundamentally|Arguably|Remarkably|Indeed)\b'
+  - '\bhere is (?:the thing|where it gets)\b'
+  - '\blet us (?:unpack|dig|look at)\b'
+  - '\bin conclusion\b'
+  - '\bto sum up\b'
+  - '\bin summary\b'
+  - '\bto summari[sz]e\b'
+  - '\bsimply put\b'
+  - '\bthat said\b'
+  - '\bthat being said\b'
+  - '\bwith that in mind\b'
+  - '\bat the end of the day\b'
+  - '\bwhen all is said\b'
+  - '\bneedless to say\b'
+  - '\bas (?:we|you) (?:can see|saw|know)\b'

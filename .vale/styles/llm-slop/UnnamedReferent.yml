@@ -1,0 +1,25 @@
+---
+extends: existence
+message: "'%s' points at a thing it does not name. Name the branch, the file, the rule or the number."
+level: error
+ignorecase: true
+nonword: true
+tokens:
+  # A bare limit where the document naming it is a link away. Only "against the
+  # cap" is matched: "past the cap" and "the cap is pinched" are a slice's
+  # capacity, which is what the word means in Go.
+  - '\bagainst the cap\b'
+  # Two checkouts counted instead of named. "main and area/docs-tone" is two
+  # names and the same length. "both branches" is an if statement and stays.
+  - '\bthe two (?:trees|checkouts)\b'
+  # Growth written as a noun. The counts are the claim: "415 to 418".
+  - '\bdrift (?:from|against|vs\.?)\b'
+  - '\bthe (?:drift|growth|movement|regression) (?:is|was|came|belongs)\b'
+  # A finding assigned to a branch as property, which says neither what is
+  # wrong nor where.
+  - "\\bis (?:main|the branch|the baseline)'s\\b"
+  - "\\bare (?:main|the branch|the baseline)'s\\b"
+  # A pronoun standing where a file, a selector or a scope belongs. "styles
+  # nothing inside it" leaves the reader to guess which tree is meant, and
+  # the name is shorter than the pronoun plus the sentence explaining it.
+  - '\b(?:inside|within|outside) (?:it|them|this|that|these|those)\b'

@@ -1,0 +1,15 @@
+---
+extends: substitution
+message: "Write '%s', not '%s'."
+level: error
+ignorecase: true
+swap:
+  'serves as': is
+  'stands as': is
+  'acts as': is
+  'functions as': is
+  'exists as': is
+  'can be seen as': is
+  'is designed to': does
+  'is intended to': does
+  'is responsible for': does

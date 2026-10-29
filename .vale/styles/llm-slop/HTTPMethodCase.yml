@@ -1,0 +1,12 @@
+---
+extends: existence
+message: "'%s' is a wire protocol token and is uppercase."
+level: error
+ignorecase: false
+nonword: true
+tokens:
+  # A lowercase method in front of a path, as in "get /hello".
+  - '\b(?:get|post|put|delete|patch|head|options)\s+/[a-z{]'
+  - '\ba (?:get|post|put|delete|patch) request\b'
+  - '\bcontent-type\b'
+  - '\bcontent-length\b'

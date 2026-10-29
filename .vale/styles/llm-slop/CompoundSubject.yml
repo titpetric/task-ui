@@ -1,0 +1,22 @@
+---
+extends: existence
+message: "Compound subject: '%s'. A title names one change."
+level: error
+scope: heading
+ignorecase: true
+nonword: true
+tokens:
+  # A subject joined to a second claim, usually its own consequence: "a linter
+  # for the prose rules, and the tree held to it". Name the change; the
+  # consequence follows from it and costs the reader a second clause to read.
+  # Anchored with no earlier comma, so a serial list keeps its Oxford comma:
+  # "Host calls, errors, and panics" is one list, not two claims.
+  # "and the" in a title is the red flag even without the comma: it pairs two
+  # things where the title should name one.
+  - '\s+and\s+the\s+'
+  - '^[^,]*,\s+and\s+'
+  - '^[^,]*,\s+plus\s+'
+  - '^[^;]*;\s+and\s+'
+  - '\s+and also\s+'
+  - '\s+as well as\s+'
+  - '^[^,]*,\s+together with\s+'

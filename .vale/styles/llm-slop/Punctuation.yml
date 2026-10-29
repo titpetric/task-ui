@@ -1,0 +1,16 @@
+---
+extends: existence
+message: "'%s' is not on a keyboard. Use -, ..., ' , \" or ->."
+level: error
+nonword: true
+tokens:
+  - '—'
+  - '–'
+  - '…'
+  - '’'
+  - '‘'
+  - '“'
+  - '”'
+  - '→'
+  - '⇒'
+  - '•'

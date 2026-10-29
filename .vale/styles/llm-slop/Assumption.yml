@@ -1,0 +1,16 @@
+---
+extends: existence
+message: "'%s' describes nobody's state of mind. Name the behaviour or the check."
+level: error
+ignorecase: true
+nonword: true
+tokens:
+  - '\bassum(?:e|es|ed|ing|ption|ptions)\b'
+  - '\bpresum(?:e|es|ed|ably)\b'
+  - '\bsupposedly\b'
+  - '\bintended to\b'
+  - '\bmeant to\b'
+  - '\bshould (?:be|work|answer|return)\b'
+  - '\bprobably\b'
+  - '\bpresumably\b'
+  - '\bone would (?:expect|think)\b'

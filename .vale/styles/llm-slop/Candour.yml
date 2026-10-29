@@ -1,0 +1,15 @@
+---
+extends: existence
+message: "'%s' performs candour. State the limitation plainly or leave it out."
+level: error
+ignorecase: true
+nonword: true
+tokens:
+  - '\band yes,\b'
+  - '\bI (?:will|have to) admit\b'
+  - '\bto be (?:honest|fair|clear)\b'
+  - '\bfull disclosure\b'
+  - '\bthis is not a rant\b'
+  - '\bI want to be explicit\b'
+  - '\bhonestly,\b'
+  - '\bfrankly,\b'

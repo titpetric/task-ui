@@ -1,0 +1,20 @@
+---
+extends: existence
+message: "'%s' addresses a reviewer. A document records the behaviour, not what to look at."
+level: error
+ignorecase: true
+nonword: true
+tokens:
+  - '\bworth reviewing\b'
+  - '\bworth a second look\b'
+  - '\bplease (?:check|review|note|see)\b'
+  - '\bopen questions?\b'
+  - '\bneeds review\b'
+  - '\breviewer note\b'
+  - '\bI would appreciate\b'
+  - '\bfeel free to\b'
+  - '\bnote that\b'
+  - '\bkeep in mind\b'
+  - '\bbear in mind\b'
+  - '\bbe aware\b'
+  - '\byou (?:may|might) want to\b'

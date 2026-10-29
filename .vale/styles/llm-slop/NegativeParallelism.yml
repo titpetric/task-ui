@@ -1,0 +1,20 @@
+---
+extends: existence
+message: "Negative parallelism: '%s'. State what is true and stop."
+level: error
+scope: ~table
+nonword: true
+tokens:
+  # "rather than" and "instead of" frame a fact as a correction of something
+  # nobody said. Name the thing that happens.
+  - '\brather than\b'
+  - '\binstead of\b'
+  # "It is not X, it is Y" and its conjugations.
+  - '\b(?:is|are|was|were|does|do|did|has|have)\s+not\s+[^.;:]{3,60},\s*(?:it|they|that|this)\b'
+  - "\\b(?:is|are|was|were|does|do|did|has|have)n't\\s+[^.;:]{3,60},\\s*(?:it|they|that|this)\\b"
+  # "not because X, but because Y", "not a X but a Y".
+  - '\bnot\s+(?:because|only|just|a|an|the)\b[^.;:]{3,60}\s+but\b'
+  # Trailing "X, not Y" where Y is the real claim.
+  - ',\s*not\s+(?:a|an|the|its|his|her|their|one)\b[^.;:]{0,40}\.'
+  # "the wrong X" / "the right X" as a verdict on an approach.
+  - '\bis the wrong (?:arithmetic|question|function|shape|answer)\b'

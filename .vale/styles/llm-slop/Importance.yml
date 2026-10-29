@@ -1,0 +1,29 @@
+---
+extends: existence
+message: "'%s' asserts importance. Say what breaks without it."
+level: error
+ignorecase: true
+nonword: true
+tokens:
+  - '\bload[- ]bearing\b'
+  - '\bmission[- ]critical\b'
+  - '\bthe linchpin\b'
+  - '\bthe crux\b'
+  - '\bthis matters because\b'
+  - '\bdo not skip\b'
+  - '\bit is worth (?:noting|knowing|saying|mentioning)\b'
+  - '\bworth (?:noting|knowing|a mention)\b'
+  # "One thing" opens an advisory nobody asked for, and the thing it names is
+  # either a finding, which goes in the report, or nothing.
+  - '\bone thing\b'
+  - '\bheads up\b'
+  - '\bthe key (?:insight|takeaway|thing)\b'
+  - '\bthe important (?:thing|part) (?:is|here)\b'
+  - '\bcannot be overstated\b'
+  - '\bis not optional\b'
+  - '\bis non-negotiable\b'
+  # A test is described by what it detects: "fails when the reset stops
+  # clearing the buffer stack", not by a figure of speech about its strength.
+  - '\bhas (?:real )?teeth\b'
+  - '\bwith teeth\b'
+  - '\btoothless\b'

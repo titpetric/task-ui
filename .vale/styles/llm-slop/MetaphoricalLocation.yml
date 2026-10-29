@@ -1,0 +1,21 @@
+---
+extends: existence
+message: "'%s' points at a place a reader cannot open. Name the file, function or call."
+level: error
+ignorecase: true
+nonword: true
+tokens:
+  - '\bat the seam\b'
+  - '\bthe seam between\b'
+  - '\bat the boundary\b'
+  - '\bat the intersection of\b'
+  - '\bstraddles\b'
+  - '\bbridges the gap\b'
+  - '\bwhere the rubber meets\b'
+  - '\bfalls? through the cracks\b'
+  - '\bthe glue (?:between|that)\b'
+  - '\bunder the covers\b'
+  - '\bbehind the scenes\b'
+  - '\bthink of it as\b'
+  - '\bit is like a\b'
+  - '\bimagine (?:a|that|if)\b'

@@ -1,0 +1,30 @@
+---
+extends: existence
+message: "'%s' is vague. A function returns, writes, reports, reads, sets or refuses; a field holds, names or sends a value."
+level: error
+ignorecase: true
+nonword: true
+tokens:
+  - '\bgives?(?: back)?\b'
+  - '\bgiving\b'
+  # The verb only. "left-hand end" and "first-hand" are not it.
+  - '\bhands? (?:back|off|over|it|them|the|a|an|its)\b'
+  - '\byields?\b'
+  - '\bprovides?\b'
+  - '\boffers?\b'
+  - '\bgrabs?\b'
+  - '\bspits? out\b'
+  - '\bcomes? back with\b'
+  - '\bends? up\b'
+  - '\bwinds? up\b'
+  - '\bmakes? sure\b'
+  - '\btakes? care of\b'
+  - '\bdeals? with\b'
+  - '\bgoes? through\b'
+  - '\bsorts? out\b'
+  - '\bfigures? out\b'
+  # One verb standing in for every relation a thing can have to a value:
+  # holds, stores, sends, sets, lists, names. A request carries a header, a
+  # struct carries a field, a commit carries a change, and none of them says
+  # what the relation is. "load-carrying" and a carriage return are not it.
+  - '\bcarr(?:y|ies|ied|ying)\b'
