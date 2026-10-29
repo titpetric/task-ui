@@ -4119,11 +4119,25 @@
         (!params.get("state") || params.get("state") === run.state) &&
         (!params.get("user") || params.get("user") === run.user_name);
     };
+    // startedAt is a run's start as the cell carries it, milliseconds
+    // since the epoch, which is what the ticker counts from. The view
+    // function of the same name writes it on the rows the server renders.
+    var startedAt = function (run) {
+      var at = run.started_at ? Date.parse(run.started_at) : NaN;
+      return isNaN(at) ? "" : String(at);
+    };
+    // took formats a run's time the way view.Duration does, so the value
+    // the server rendered and the value the ticker writes a second later
+    // read the same: seconds under a minute, m and s under an hour, h and
+    // m past it.
     var took = function (run) {
       if (!run.started_at) return "";
       var end = run.finished_at ? Date.parse(run.finished_at) : Date.now();
       var s = Math.max(0, (end - Date.parse(run.started_at)) / 1000);
-      return s < 60 ? s.toFixed(1) + "s" : Math.floor(s / 60) + "m" + ("0" + Math.floor(s % 60)).slice(-2) + "s";
+      var pad = function (n) { return ("0" + Math.floor(n)).slice(-2); };
+      if (s < 60) return s.toFixed(1) + "s";
+      if (s < 3600) return Math.floor(s / 60) + "m" + pad(s % 60) + "s";
+      return Math.floor(s / 3600) + "h" + pad((s % 3600) / 60) + "m";
     };
     var stateHTML = function (run) {
       return '<span class="state"><i class="dot ' + escapeHTML(run.state) + '"></i>' + escapeHTML(run.state) +
@@ -4154,7 +4168,11 @@
       if (row) {
         if (!matches(run)) { row.remove(); return; }
         row.querySelector("[data-result]").innerHTML = stateHTML(run) + termTitleHTML(run);
-        row.querySelector("[data-took]").textContent = took(run);
+        var cell = row.querySelector("[data-took]");
+        // The start comes with the run, so a row the server rendered and
+        // a row an update touched count from the same moment.
+        cell.dataset.started = startedAt(run);
+        cell.textContent = took(run);
         var canRun = !!row.querySelector("[data-stop]");
         row.querySelector("[data-actions]").innerHTML = actionsHTML(run, canRun);
         return;
@@ -4172,7 +4190,7 @@
         '<td data-label="Folder"><a href="' + place + '">' + escapeHTML(runPlace(run)) + "</a></td>" +
         '<td class="key"><a href="' + place + "/" + job + '">' + job + "</a></td>" +
         '<td data-label="By">' + whoHTML(run) + "</td>" +
-        '<td class="nowrap" data-label="Took" data-took>' + took(run) + "</td>" +
+        '<td class="nowrap" data-label="Took" data-took data-started="' + startedAt(run) + '">' + took(run) + "</td>" +
         '<td data-label="Result" data-result>' + stateHTML(run) + termTitleHTML(run) + "</td>" +
         '<td class="actions" data-actions>' + actionsHTML(run, false) + "</td>";
       runsTable.insertBefore(row, runsTable.firstChild);
@@ -4210,13 +4228,20 @@
     if (document.getElementById("runs-activity") || document.getElementById("runs-tooling")) {
       onRuns(function (run) { if (ended(run.state)) refreshCharts(); });
     }
-    // The running rows count their time.
+    // The running rows count their time, from the start the server wrote
+    // on the cell.
+    //
+    // Not from the text beside it: Duration writes "2m05s" past a minute
+    // and "1h02m" past an hour, and parseFloat reads those as 2 and 1, so
+    // seeding the counter from the rendered value threw away everything
+    // the page loaded with and restarted the column near zero.
     setInterval(function () {
       runsTable.querySelectorAll("tr[data-run-id]").forEach(function (row) {
         if (!row.querySelector(".dot.running")) return;
         var cell = row.querySelector("[data-took]");
-        if (!cell.dataset.since) cell.dataset.since = Date.now() - (parseFloat(cell.textContent) || 0) * 1000;
-        cell.textContent = took({ started_at: new Date(Number(cell.dataset.since)).toISOString() });
+        var started = Number(cell.dataset.started);
+        if (!started) return;
+        cell.textContent = took({ started_at: new Date(started).toISOString() });
       });
     }, 1000);
   }

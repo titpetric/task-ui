@@ -64,7 +64,7 @@
 				<td data-label="Folder">{{ with $.RunFolderHref .Folder .Dir }}<a href="{{ . }}">{{ $r.Place }}</a>{{ else }}{{ .Place }}{{ end }}</td>
 				<td class="key">{{ with $.RunJobHref .Folder .Dir .Job }}<a href="{{ . }}">{{ $r.Job }}</a>{{ else }}{{ .Job }}{{ end }}</td>
 				<td data-label="By">{{ template "who" (list $ .) }}</td>
-				<td class="nowrap" data-label="Took" data-took>{{ duration .Elapsed }}</td>
+				<td class="nowrap" data-label="Took" data-took data-started="{{ started .StartedAt }}">{{ duration .Elapsed }}</td>
 				<td data-label="Result" data-result>{{ template "state" . }}{{ if and (eq .State "queued") .Message }} <span class="faint">{{ .Message }}</span>{{ end }}{{ with .Title }} <span class="term-title" title="{{ . }}">{{ . }}</span>{{ end }}{{ if .Attached }} <span class="faint">{{ .Attached }} watching</span>{{ end }}</td>
 				<td class="actions" data-actions>
 					<a class="btn btn-sm" href="/runs/{{ .ID }}" data-attach="{{ .ID }}">{{ if not (ended .State) }}Attach{{ else }}View{{ end }}</a>

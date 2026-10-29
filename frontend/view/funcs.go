@@ -19,6 +19,7 @@ func Funcs() template.FuncMap {
 	return template.FuncMap{
 		"ago":          Ago,
 		"stamp":        Stamp,
+		"started":      Started,
 		"duration":     Duration,
 		"size":         Size,
 		"join":         strings.Join,
