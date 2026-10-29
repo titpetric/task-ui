@@ -169,6 +169,32 @@ with `write_artifact`, replacing the version there, which the history keeps;
 holds it. Page: `/artifacts`; API: `/api/artifacts`; MCP:
 `list_artifacts`, `read_artifact`, `write_artifact`.
 
+## Modules (`module`)
+
+Modules are plugins written in PHP, run inside task-ui by the phpscript
+interpreter the binary holds. A directory with a `modinfo.php` in it is
+a module, and that directory is its root; the instance finds them under
+the modules folder and the workspace root at startup, records each in
+the `module` table, and serves it at `/m/<vendor>/<name>` as an ordinary
+page, the body the module's and the layout the instance's. A module
+declares no routes: `index.php` answers whatever
+`$_SERVER['REQUEST_URI']` holds, and a path under its `public/` tree is
+served as bytes. Its own tables are in task-ui's database, prefixed with
+the module's name, applied from its `schema/` through `Task::migrate`.
+`Task::dispatch($comment, "action/<file>.md")` starts a Claude run whose
+prompt is that file, the comment and the run's own environment, which is
+what a prompt from a page sends too. The run is the asking user's, so a
+module does nothing its user may not. `module` is the one rule: opening a
+module is a capability and not a section: a plugin is installed by
+putting its directory under a root, so there is nothing to edit. The
+sidebar row of each is in the `sidebar` table, ordered and hidden from
+`/settings/sidebar`, and `POST /api/modules/reload` reads the roots again
+for an admin. The
+module that ships with the instance is `titpetric/refinement`: a thread
+of comments that each start a run, which writes artifacts and a
+`README.md` indexing them. Page: `/m/<vendor>/<name>`,
+`/settings/sidebar`; API: `/api/modules`, `/api/sidebar`.
+
 ## Secrets and env (`secret`)
 
 Variables added to the environment of runs, encrypted with the

@@ -230,6 +230,15 @@ shot workflow-edit-light "/workflows/${ship}/edit" light 1440x1200
 shot settings-dark /settings dark
 shot retention-dark /settings/retention dark 1440x1300
 shot retention-light /settings/retention light 1440x1300
+shot telemetry-dark /settings/telemetry dark 1440x1600
+shot telemetry-light /settings/telemetry light 1440x1600
+shot sidebar-settings-dark /settings/sidebar dark 1440x1100
+shot sidebar-settings-light /settings/sidebar light 1440x1100
+# The module: a plugin written in PHP, rendered into the instance's
+# layout. The demo instance extracts the modules it ships into its data
+# folder on start, so the link is there without any setup.
+shot module-refinement-dark /m/titpetric/refinement dark
+shot module-refinement-light /m/titpetric/refinement light
 shot instance-dark /settings/instance dark 1440x2400
 shot projects-dark /settings/projects dark
 shot project-new-dark /settings/projects/new dark

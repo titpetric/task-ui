@@ -10,7 +10,7 @@ The page has three parts.
 
 - **The header.** The name goes home to the dashboard. With Allow Edits on Prompts, `prompt/edit`, a prompt field follows it: Enter asks Claude about the page you are on, and the logo opens and closes the panel with Claude's reply (see [the prompt](guide/projects.md#prompt)); without it, the logo goes home too. Your initials, on the right, open the user menu: who you are, your role, **Profile**, with your activity, folders, permissions and MCP access, **SSH keys**, **Settings** with the view permission of any of its sections, and **Logout**. On a phone a menu button on the left opens the sidebar as a drawer.
 - **The sidebar.** Everything you can open, in a fixed order:
-  1. the views across all folders: **Dashboard**, **Inventory**, **Workflows** (with the workflows listed under it), **Runs**, **Artifacts**, **Scheduled** and **Notes**;
+  1. the views across all folders: **Dashboard**, **Inventory**, **Workflows** (with the workflows listed under it), **Runs**, **Artifacts**, **Scheduled** and **Notes**, then a row per [module](guide/modules.md) the instance found. [Settings, Sidebar](guide/settings.md#sidebar) orders this block and hides a row of it;
   2. the **projects**, each with its jobs and the folders inside it, as a tree: first those at the top of the root, in the default workspace `internal`, then each named **workspace**, in its order, with the projects cloned inside it folded under its own row.
 - **Recents**, on a wide screen, a rail on the right: the latest runs and workflow runs by anyone. A narrower screen leaves it out; **Runs** lists the same runs.
 - **The page.** What you opened in the sidebar. A run you start or attach to opens in a **window** over the page: a terminal on the run, which you close without ending the run.
@@ -34,6 +34,7 @@ Every list marks a job, a workflow or a run with `#!`: faint until it has run, t
 | [Artifacts](guide/artifacts.md)        | Artifacts                                | Files the runs leave behind                                                                                                 |
 | [Scheduled](guide/scheduled.md)        | Scheduled                                | Jobs on a cron expression                                                                                                   |
 | [Notes](guide/notes.md)                | Notes                                    | Messages, replies, and instructions to the agent                                                                            |
+| [Modules](guide/modules.md)            | A module's row                           | The plugins written in PHP, and the refinement module                                                                       |
 | [Projects and jobs](guide/projects.md) | The tree of projects, folders, jobs      | Folders, the conventions, the git line, skills, Enter Shell, the prompt, a job's page, moving a project, pulls, keys, hours |
 | [Workspaces](guide/workspaces.md)      | A workspace's row, its projects under it | Shared tooling, skills, cloning into one, keys, secrets, export and import, what it keeps apart, the prompt                 |
 | [Recents](guide/recents.md)            | Recents                                  | The latest runs, by anyone                                                                                                  |
@@ -47,5 +48,7 @@ Beside the guide:
 - [API](api.md): the JSON endpoints and the MCP server;
 - [Security](security.md): the threat model, identity and roles, keys, secrets, terminals and agents, with the findings of a review;
 - [Development](development.md): the packages, the lint and test bar, and the screenshots;
+- [Modules](modules.md): writing a plugin in PHP, the bindings and what the runtime refuses;
+- [Corrections](todo-correction.md): where the PHP runtime lacks what the module system needs;
 - [Sitemap](sitemap.md): every page, its lists, actions, forms and empty lines;
 - [Testing](testing.md): the unit tests of the default run and the integration tests behind a build tag.

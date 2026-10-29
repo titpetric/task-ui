@@ -4,14 +4,16 @@ Not in the sidebar but in the user menu, behind your initials in the header, for
 
 1. [Instance](#instance): what the server runs with.
 2. [Data retention](#data-retention): how long the instance keeps what it records.
-3. [Keys](#keys): the encryption key and the SSH keys.
-4. [Secrets and env](#secrets-and-env), on the instance's encryption key.
-5. [Integrations](#integrations): Claude Code, OpenRouter, Forgejo and Beszel.
-6. [Users](#users): who may sign in.
-7. [Permissions](#permissions): what each role may do.
-8. [Workflows](workflows.md): chains of jobs.
-9. [Workspaces](#workspaces): directories of a home and projects under src.
-10. [Projects](#projects): the folders under the root.
+3. [Telemetry](#telemetry): what the instance records of its own requests.
+4. [Keys](#keys): the encryption key and the SSH keys.
+5. [Secrets and env](#secrets-and-env), on the instance's encryption key.
+6. [Integrations](#integrations): Claude Code, OpenRouter, Forgejo and Beszel.
+7. [Users](#users): who may sign in.
+8. [Permissions](#permissions): what each role may do.
+9. [Workflows](workflows.md): chains of jobs.
+10. [Workspaces](#workspaces): directories of a home and projects under src.
+11. [Projects](#projects): the folders under the root.
+12. [Sidebar](#sidebar): the order of the sidebar, and what it leaves out.
 
 ![Settings](https://cdn.si/titpetric/task-ui/docs/assets/settings-dark.png)
 
@@ -82,6 +84,41 @@ Past either rule the oldest go first, until both hold. `@cleanup` applies the ro
 Anyone who may open a step of the settings reads the page; an admin saves the rules, with `PUT /api/retention`, and **Clean up now** starts `@cleanup` at once, as a run whose output shows what went. A run of `@cleanup` works on the data directory it inherits, `TASK_UI_DATA`, with the workspace folder at `<data>/workspaces`: inside a run `TASK_UI_WORKSPACE` names the run's workspace, and task-ui reads it as the folder outside a run alone. A save takes effect at the next run of `@cleanup`: task-ui schedules it `@daily`, at midnight, as the first admin, once, when it first starts; the [Schedules](scheduled.md#cleanup) page changes or deletes that schedule.
 
 ![Data retention: a table, a row per area](https://cdn.si/titpetric/task-ui/docs/assets/retention-dark.png)
+
+## Telemetry
+
+`/settings/telemetry` is the one form that configures what the instance
+records of its own work. With it on, every sampled request becomes a
+trace: the spans of the handler, the spans of the database calls under
+it and, on a [module](modules.md) page, the spans of the PHP that ran
+inside the request, in the same trace. `/debug/oida` is where the traces
+are read, and an admin alone may open it.
+
+| Setting              | What it does                                                                        |
+|----------------------|-------------------------------------------------------------------------------------|
+| **Enabled**          | records traces. Off, a request passes through and costs nothing                     |
+| **Service name**     | the name on every trace and in the heading of the dashboard                         |
+| **Sample rate**      | the percentage of requests traced, 0 to 100                                         |
+| **Retained traces**  | how many finished traces the ring buffer holds; the oldest go first                 |
+| **Top requests**     | how many groups the rolling statistics keep                                         |
+| **Spans per trace**  | the cap on one trace's spans. The rest are counted, not kept. Zero is no cap        |
+| **Refresh interval** | how often the live view reloads, in seconds, where the browser cannot stream        |
+| **Live stream**      | serves the live view over server sent events, so a trace appears as it happens      |
+| **Capture logs**     | records the log lines a trace writes. Off, an error still lands on its span         |
+| **Track memory use** | records the process's allocation change per trace                                   |
+| **Trust Request-Id** | reuses a client's `Request-Id` header as the trace identifier. Behind a trusted proxy alone |
+| **Ignored paths**    | the paths never traced, one per line. An entry ending in `/*` matches by prefix     |
+| **Allowed networks** | the CIDR ranges that may open the dashboard, empty for every network                |
+
+**Enabled** takes effect on save and keeps the traces already recorded.
+Every other setting rebuilds the recorder, which empties the ring
+buffer: the page says so above the button. The settings live in the
+`setting` table as `telemetry.options`, so they survive a restart, and
+the `OIDA_*` variables of the environment set the first start of a fresh
+instance.
+
+Anyone who may open a step of the settings reads the page; an admin
+saves it, with `PUT /api/telemetry`.
 
 ## Keys
 
@@ -416,6 +453,35 @@ A row's `[...]` menu opens the folder, its **Edit project**, and **Pull now**, w
 The API sets two more on a project: `commands`, the program a kind of job runs with (`make: gmake`), and `job_allow`, who may run, per job. A project has no hours: its workspace's apply.
 
 ![Edit project](https://cdn.si/titpetric/task-ui/docs/assets/project-edit-dark.png)
+
+## Sidebar
+
+`/settings/sidebar` is the sidebar itself, as a table: a row per item,
+in the order the sidebar lists them, with the columns **Order**,
+**Item**, **Link** and **Shown**. Every item of the sidebar's top block
+has a row, Dashboard through Settings, and so does every
+[module](modules.md) the instance found.
+
+Drag a row by its grip to move it, or focus the grip and press the up
+and down arrows; **Move up** and **Move down** in the row's **⋯** menu
+do the same with the keyboard alone. The **Shown** switch leaves an item
+out of the sidebar without deleting it. Nothing is saved until **Save**
+at the bottom of the table, which writes the whole table at once with
+`PUT /api/sidebar`, so a change that goes wrong is one reload away from
+the state before it.
+
+An item the sidebar hides is still reachable by its link, and the
+permission of the page behind it still decides: hiding Settings takes
+the row out of the sidebar and leaves `/settings` open to whoever may
+read it. A row names the rule of its page, and a user without that
+rule never sees the row at all.
+
+A module that registers gets a row at the end, shown. A module that is
+gone loses its row, and the order of the rest stays.
+
+The order lives in the `sidebar` table as a position per row, written
+from the order of the rows the form posts. An instance with no rows
+seeds them from the fixed list the sidebar had before the table existed.
 
 ---
 
