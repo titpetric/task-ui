@@ -1,0 +1,50 @@
+#!/usr/bin/env atkins
+# Atkins: https://github.com/titpetric/atkins
+
+name: refinement
+
+# The module's own pipeline. `.` reads the PHP directly in a directory and
+# `./...` reads it and everything below; both skip a directory named vendor,
+# so composer's tree is never linted or rewritten.
+#
+# The paths are named rather than globbed from the root because the compiled
+# templates under templates_c are generated PHP: the formatter would rewrite
+# them and the next precompile would write them back.
+jobs:
+  default:
+    desc: "Format, lint and precompile"
+    cmds:
+      - task: fmt
+      - task: lint
+      - task: precompile
+
+  # `phpscript fmt -l` exits zero whether or not it listed a file, so the
+  # check is whether it printed anything. Without the test this job reports
+  # success over an unformatted tree.
+  fmt:
+    desc: "Fail if phpscript fmt would rewrite a file"
+    steps:
+      - |
+        out="$(phpscript fmt -l . ./stubs/...)"
+        if [ -n "${out}" ]; then
+            echo "phpscript fmt would rewrite:" >&2
+            echo "${out}" >&2
+            exit 1
+        fi
+        echo "every file is formatted"
+
+  # --include registers the names the module's own files do not declare:
+  # composer's autoloader for MiniTPL, and stubs/ for the host bindings, which
+  # are Go and invisible to a linter reading PHP. Without it every
+  # `new Task\Module` reports as an undefined class and a real one reads as
+  # more of the same noise.
+  lint:
+    desc: "Lint the module"
+    steps:
+      - phpscript lint --include stubs/autoload.php .
+      - phpscript lint --include stubs/autoload.php ./stubs/...
+
+  precompile:
+    desc: "Compile the templates into templates_c"
+    steps:
+      - phpscript run precompile.php

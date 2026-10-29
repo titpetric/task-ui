@@ -1,0 +1,71 @@
+/* The refinement module's own styles, loaded from its public tree.
+ *
+ * Every colour, radius and space is a task-ui custom property, so the module
+ * follows the instance's theme in both light and dark without knowing which
+ * one is on. A literal colour here would read wrong under the other theme.
+ */
+
+.refinement {
+	display: flex;
+	flex-direction: column;
+	gap: var(--gap, 1rem);
+}
+
+.refinement-head h2 {
+	margin: 0;
+}
+
+.refinement-head p {
+	margin: 0.25rem 0 0;
+}
+
+/* The thread: a comment, then what the run it started produced. */
+.refinement-thread {
+	display: flex;
+	flex-direction: column;
+	gap: var(--gap, 1rem);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.refinement-comment {
+	border-top: 1px solid var(--line);
+	padding-top: var(--gap, 1rem);
+}
+
+.refinement-comment:first-child {
+	border-top: 0;
+	padding-top: 0;
+}
+
+.refinement-comment-head {
+	display: flex;
+	align-items: baseline;
+	gap: 0.5rem;
+}
+
+/* The artifact index the run writes, rendered from the thread's README. An
+ * image artifact is embedded at the width it has, up to the column, so a
+ * schema diagram is read on the page.
+ */
+.refinement-report img,
+.refinement-report svg {
+	display: block;
+	max-width: 100%;
+	height: auto;
+	margin: 0.5rem 0;
+	background: var(--bg-raised, transparent);
+	border: 1px solid var(--line);
+}
+
+.refinement-report pre {
+	overflow-x: auto;
+}
+
+.refinement-artifacts {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+	font-size: 0.875rem;
+}

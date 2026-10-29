@@ -1,0 +1,17 @@
+{
+  "name": "titpetric/refinement",
+
+  "description": "Refine a design through a thread of comments, each one a Claude run",
+
+  "license": "MIT",
+
+  "type": "project",
+
+  "require": {
+    "titpetric/minitpl": "^1.3"
+  },
+
+  "config": {
+    "vendor-dir": "vendor"
+  }
+}

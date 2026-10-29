@@ -1,0 +1,36 @@
+{
+  "name": "titpetric/minitpl",
+
+  "description": "Miniature fully featured PHP template engine",
+
+  "keywords": ["minitpl", "template", "php", "tiny", "small", "smarty"],
+
+  "homepage": "https://github.com/titpetric/minitpl",
+
+  "authors": [
+    {
+      "name": "Tit Petric",
+      "email": "tit.petric@gmail.com",
+      "homepage": "http://titpetric.github.io",
+      "role": "developer"
+    }
+  ],
+
+  "license": "MIT",
+
+  "type": "library",
+
+  "require": {
+      "php": ">=5.6.0"
+  },
+
+  "autoload": {
+    "psr-4": {
+      "MiniTPL\\": "code/MiniTPL/"
+    }
+  },
+
+  "archive": {
+    "exclude": ["/tests", "/docs", "/vendor", "/phpunit.xml"]
+  }
+}
