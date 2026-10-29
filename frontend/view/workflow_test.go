@@ -356,7 +356,7 @@ func TestView_RenderWorkflowEditSchedule(t *testing.T) {
 	assert.NotContains(t, block, `Run as</label>`, "the workflow's user runs it")
 	assert.NotContains(t, block, `name="user"`)
 	assert.Contains(t, block, `<td data-label="Runs as"><span class="user-ref">`)
-	assert.Contains(t, block, `<span class="user-name">miguel</span>`, "the row names the workflow's user, not the schedule's")
+	assert.Contains(t, block, `<span class="user-name">miguel</span>`, "the row names the workflow's user")
 	assert.NotContains(t, block, `data-submit`, "no pick on the row")
 	assert.NotContains(t, block, `name="triage"`, "no triage for a workflow")
 	assert.NotContains(t, block, `name="folder"`)

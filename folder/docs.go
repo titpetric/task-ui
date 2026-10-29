@@ -4,7 +4,7 @@
 //
 // A folder with a pipeline file lists that pipeline's targets only: the
 // Makefile, package scripts and scripts folder beside it are the
-// pipeline's business, not jobs of their own. A configuration widens or
+// pipeline's business and list no jobs of their own. A configuration widens or
 // narrows a folder by the detector kinds it names. Load and Skills order a
 // folder's jobs with DefaultFirst, so the default job comes first everywhere.
 //

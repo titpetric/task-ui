@@ -22,7 +22,7 @@ func TestNewSessions(t *testing.T) {
 	assert.Equal(t, time.Hour, guard.Sessions.TTL())
 }
 
-// A token is opaque: random base64url, not a JWT, and the database holds
+// A token is opaque: random base64url with no JWT structure, and the database holds
 // its hash alone.
 func TestSessions_Issue(t *testing.T) {
 	t.Parallel()

@@ -6,8 +6,8 @@ import (
 )
 
 // Head is the head of a block: its title and the note beside it, its
-// buttons on the right, and the one line an empty list shows in place of
-// its table, "No keys added.", so a list whose only actions are to add
+// buttons on the right, and the one line an empty list shows where its
+// table goes, "No keys added.", so a list whose only actions are to add
 // to it draws no empty table. The blockhead template draws it;
 // docs/development.md, Lists and actions, says what goes where.
 type Head struct {

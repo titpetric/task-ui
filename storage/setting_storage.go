@@ -30,7 +30,7 @@ func (s *SettingStorage) Values(ctx context.Context) (map[string]string, error) 
 	return values, nil
 }
 
-// Set stores settings by name, over the values they had, at once.
+// Set stores settings by name, replacing the values they had, at once.
 func (s *SettingStorage) Set(ctx context.Context, values map[string]string) error {
 	return inTx(ctx, s.db, func(c conn) error {
 		now := stamp()

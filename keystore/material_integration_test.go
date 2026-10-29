@@ -45,7 +45,7 @@ func TestLocal_Generate(t *testing.T) {
 	assert.Equal(t, os.FileMode(0o700), info.Mode().Perm())
 
 	_, err = l.Generate(ctx, keystore.Spec{Name: "a", Algo: "rsa", Bits: 2048})
-	assert.ErrorIs(t, err, keystore.ErrExists, "a name is unique whatever the algorithm")
+	assert.ErrorIs(t, err, keystore.ErrExists, "a name is unique across algorithms")
 	_, err = l.Generate(ctx, keystore.Spec{Name: "x", Algo: "ecdsa", Bits: 128})
 	assert.Error(t, err)
 	_, err = l.Generate(ctx, keystore.Spec{Name: "x", Algo: "dsa"})

@@ -174,7 +174,7 @@ func TestWorkflowRunStorage(t *testing.T) {
 	assert.Equal(t, model.StepSkipped, openSteps[1].State)
 }
 
-// A step runs another workflow in place of a job. A workflow may not
+// A step runs another workflow. A workflow may not
 // reach itself through the workflows it runs, and one in use stays.
 func TestWorkflowStorage_WorkflowSteps(t *testing.T) {
 	t.Parallel()
@@ -191,7 +191,7 @@ func TestWorkflowStorage_WorkflowSteps(t *testing.T) {
 	assert.Equal(t, inner.ID, got[1].WorkflowRef)
 	assert.Equal(t, "", got[1].Folder)
 
-	assert.Error(t, workflows.Create(ctx, &model.Workflow{Name: "both"}, []model.WorkflowStep{{Folder: "infra", Job: "build", WorkflowRef: inner.ID}}), "a job or a workflow, not both")
+	assert.Error(t, workflows.Create(ctx, &model.Workflow{Name: "both"}, []model.WorkflowStep{{Folder: "infra", Job: "build", WorkflowRef: inner.ID}}), "a step names a job or a workflow")
 	assert.Error(t, workflows.Create(ctx, &model.Workflow{Name: "gone"}, []model.WorkflowStep{{WorkflowRef: model.NewID()}}), "a workflow that is not there")
 
 	// inner may not run outer, which runs inner, nor itself.

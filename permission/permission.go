@@ -7,8 +7,8 @@
 // first; a user without one inherits the role's, and task-ui refuses
 // what neither sets. A <section>/all entry stands for every rule
 // of the section, and where a subject's all and its entry for a rule
-// disagree, task-ui applies the deny. The admin role allows everything, whatever
-// the policies say.
+// disagree, the deny decides. The admin role allows everything, and
+// the policies leave it as is.
 //
 // Checks name their path as a string literal, so internal/cmd/rulelint
 // finds every one and matches it against the configuration.

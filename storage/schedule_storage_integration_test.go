@@ -70,8 +70,8 @@ func TestScheduleStorage_Due(t *testing.T) {
 }
 
 // TestScheduleStorage_Due_local fires a schedule at 07:00 on a clock
-// east of UTC at 07:00 there, not hours later: the row and now compare
-// in UTC whatever zone each comes in.
+// east of UTC at 07:00 there: the row and now compare in UTC, from any
+// zone each comes in.
 func TestScheduleStorage_Due_local(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()

@@ -131,7 +131,7 @@ func TestWorkspaceStorage_EnsureDefault(t *testing.T) {
 	list, err := workspaces.List(ctx)
 	assert.NoError(t, err)
 	assert.Len(t, list, 2)
-	// The default comes first whatever its sort, and Folders leaves it out.
+	// The default comes first at any sort, and Folders leaves it out.
 	assert.Equal(t, model.Default, list[0].Folder)
 	assert.Equal(t, def.ID, list[0].ID)
 	assert.Equal(t, "The root", list[0].Title)

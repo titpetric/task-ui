@@ -334,8 +334,8 @@ func TestFolder_JobRow(t *testing.T) {
 }
 
 // A directory browsed inside a folder says where its jobs run; a run
-// there shows in that page's history, not in the history of the
-// folder's job of the same name.
+// there shows in that page's history alone, apart from the folder's job
+// of the same name.
 func TestFolder_BrowseJobs(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)

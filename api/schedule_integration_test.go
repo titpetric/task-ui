@@ -221,7 +221,7 @@ func TestSchedule_RunAsRefused(t *testing.T) {
 	assert.Equal(t, http.StatusForbidden, refused.Status)
 }
 
-// A schedule of a workflow names it in place of a folder and a job, for
+// A schedule of a workflow names the workflow, with no folder or job, for
 // a user who may run every step; the row carries workflow_id and no
 // folder or job, and lists among the schedules. Its enabled switch
 // updates as a job's does.
@@ -253,8 +253,8 @@ func TestSchedule_Workflow(t *testing.T) {
 	assert.Equal(t, float64(0), off.get("enabled"))
 	assert.Equal(t, wf, off.str("workflow_id"))
 	// An admin, who may run the steps, switches it back and picks who it
-	// runs as, the workflow having no user of its own; one it has runs it
-	// whatever the schedule says, so a pick there answers 400.
+	// runs as, the workflow having no user of its own. A workflow's own
+	// user always runs it, and a pick there answers 400.
 	on := f.call(t, asAdmin, http.MethodPut, path, api.ScheduleRequest{Enabled: ptr(true)})
 	assert.Equal(t, http.StatusOK, on.Status, string(on.Raw))
 	assert.Equal(t, float64(1), on.get("enabled"))

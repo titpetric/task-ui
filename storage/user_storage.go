@@ -84,7 +84,7 @@ func (s *UserStorage) Update(ctx context.Context, user *model.User) error {
 	return client(s.db).Update(ctx, model.UserTable, user, "id")
 }
 
-// normalize turns the admin role into the admin flag over a runner, as
+// normalize turns the admin role into the admin flag on a runner, as
 // storage keeps it: the role column holds runner or viewer, and admin
 // is the flag. Agent reply needs MCP.
 func normalize(user *model.User) error {

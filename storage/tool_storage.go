@@ -22,7 +22,7 @@ func (s *ToolStorage) List(ctx context.Context) ([]model.Tool, error) {
 	return client(s.db).Select[model.Tool](ctx, "SELECT * FROM tool ORDER BY category, name")
 }
 
-// Save stores one tool in place of its row.
+// Save stores one tool, replacing its row.
 func (s *ToolStorage) Save(ctx context.Context, tool model.Tool) error {
 	return inTx(ctx, s.db, func(c conn) error {
 		if err := c.Exec(ctx, "DELETE FROM tool WHERE name = ?", tool.Name); err != nil {
@@ -39,7 +39,7 @@ func (s *ToolStorage) Remove(ctx context.Context, name string) error {
 	return err
 }
 
-// Replace stores the tools in place of every row there is, at once.
+// Replace stores the tools, replacing every row there is, at once.
 func (s *ToolStorage) Replace(ctx context.Context, tools []model.Tool) error {
 	return inTx(ctx, s.db, func(c conn) error {
 		if err := c.Exec(ctx, "DELETE FROM tool"); err != nil {

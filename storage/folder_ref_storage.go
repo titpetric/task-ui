@@ -19,7 +19,7 @@ func NewFolderRefStorage(db DB) *FolderRefStorage {
 
 // folderRefQuery selects the rows of a folder and of the folders inside
 // it. Each table matches on the ID or on the ID and a slash as a
-// prefix: substr, not LIKE, as an ID may hold the _ LIKE matches any
+// prefix with substr, as an ID may hold the _ that LIKE matches any
 // character with.
 const folderRefQuery = `
 SELECT 'schedule' AS kind, id, folder, job AS name FROM schedule

@@ -26,8 +26,8 @@ func TestParseListing(t *testing.T) {
 	assert.False(t, listing.Broken())
 }
 
-// The lint object reads into the error and its findings, whatever
-// follows it; sections after it list too.
+// The lint object reads into the error and its findings; sections after
+// it list too.
 func TestParseListing_Lint(t *testing.T) {
 	t.Parallel()
 	listing, err := skills.ParseListing([]byte(lintAnswer + "\nError: EOF\n"))

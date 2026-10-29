@@ -132,7 +132,7 @@ func TestBoard_ReplyInstruction(t *testing.T) {
 }
 
 // A note to someone else, a reply that names no agent, a viewer's note and
-// the agent's own note are messages, not instructions.
+// the agent's own note are messages and start no agent.
 func TestBoard_Messages(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t, "agent/run")
@@ -448,8 +448,8 @@ func TestBoard_AskHosts(t *testing.T) {
 	assert.Equal(t, "hosts: unset", replies(t, f, off.ID)[0].Body)
 }
 
-// A user with prompt/edit asks in a folder the user sees, whatever the
-// folder's allow list says.
+// A user with prompt/edit asks in a folder the user sees; the folder's
+// allow list plays no part.
 func TestBoard_AskByPermission(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t, "")

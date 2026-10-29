@@ -97,7 +97,7 @@ func TestGroup(t *testing.T) {
 
 // The top-level projects come first, in their order, and the workspaces
 // after them: a project cloned at the root lists above every workspace,
-// whatever its name, and none of it falls under a workspace's fold.
+// with any name, and none of it falls under a workspace's fold.
 func TestGroups_newProject(t *testing.T) {
 	t.Parallel()
 	ids := []string{"acme", "acme/api", "alpha", "beta", "beta/app", "infra", "zeta"}

@@ -4,7 +4,7 @@
 // run, and the runner skips the steps after it. A step names a job or
 // another workflow; a workflow runs as a run of its own, and ends the
 // step as it ended. The runner skips a disabled step and runs the rest.
-// A step may ask Claude a prompt in place of a job, with the output of
+// A step may ask Claude a prompt, with the output of
 // the steps before it; Claude's answer is the step's output for the
 // prompts after it. A summary step asks Claude for task-ui's summary of
 // the steps before it, and runs after a step that failed too, to say
@@ -47,7 +47,7 @@ type Catalogue interface {
 }
 
 // Step is a workflow step resolved to its folder and job, or to the
-// workflow it runs in place of one.
+// workflow it runs.
 type Step struct {
 	Folder *folder.Folder
 	Job    *folder.Job

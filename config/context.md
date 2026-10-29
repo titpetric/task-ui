@@ -143,7 +143,7 @@ tools, run it and fix it. Page: `/workflows`; API:
 A schedule runs a job, or a workflow, on a cron expression, in the
 server's time zone, as its user. An admin picks who it runs as; anyone
 else schedules as themselves. A workflow's schedule, `workflow` with
-its ID in place of `folder` and `job`, made on the workflow's edit
+its ID and no `folder` or `job`, made on the workflow's edit
 page, starts a run of every step with no input, for a user who may run
 them all; it takes no args and no triage. `@cleanup` of the root, `_`, applies the Data retention
 settings, `/settings/retention`, a table with a row per area of data,
@@ -163,7 +163,7 @@ tree at the same paths when the run ends. A later run that writes the
 same path replaces the file, and the history keeps the earlier
 versions. A generated file worth keeping, such as a report, a build or
 an image, belongs there. An agent writes into the tree as its user,
-with `write_artifact`, over the version there, which the history keeps;
+with `write_artifact`, replacing the version there, which the history keeps;
 `list_artifacts` lists a directory and `read_artifact` reads a file.
 `artifact/edit` writes and takes a file out of the tree; the runner role
 holds it. Page: `/artifacts`; API: `/api/artifacts`; MCP:
@@ -231,8 +231,8 @@ the folders the user sees, the user's permissions and MCP access. Page:
 
 A policy allows or denies a rule, for a role or for a user. Every
 section has the rules view, edit and delete, and the application has
-`run`, `shell`, `hosts` and `input`. A user's own allow or deny decides first;
-without one the role's decides, where task-ui applies a deny over an allow, and
+`run`, `shell`, `hosts` and `input`. A user's own allow or deny decides for that user;
+without one the role's decides, where a deny denies the action even where another rule allows it, and
 task-ui refuses what neither allows. An admin may do everything and
 holds no policy. Page: `/settings/permissions`; API: `/api/permissions`;
 MCP and API: `whoami`, `GET /api/me`, what the token's user may do.

@@ -43,7 +43,7 @@ func TestNewConfig(t *testing.T) {
 	assert.Equal(t, 22, cfg.Clock()().Hour())
 	assert.Equal(t, time.Friday, cfg.Clock()().Weekday())
 
-	// Flags win over the environment.
+	// A flag sets its value even where the environment sets one.
 	flagged, err := app.NewConfig([]string{"-l", ":9000", "--workspace", root, "--data", "/tmp/d", "-v"})
 	assert.NoError(t, err)
 	assert.Equal(t, ":9000", flagged.Listen)

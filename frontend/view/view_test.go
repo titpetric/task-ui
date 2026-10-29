@@ -72,7 +72,7 @@ func TestNew(t *testing.T) {
 }
 
 // Every page renders over the same page model, so a template that
-// reaches for a field that is not there fails here, not in a browser.
+// reaches for a field that is not there fails here.
 func TestView_Render(t *testing.T) {
 	t.Parallel()
 
@@ -290,7 +290,7 @@ func TestView_RenderJobRunMenu(t *testing.T) {
 }
 
 // A run with a summary has a row under it holding the summary as
-// rendered markdown, not as plain text.
+// rendered markdown.
 func TestView_RenderJobSummary(t *testing.T) {
 	t.Parallel()
 

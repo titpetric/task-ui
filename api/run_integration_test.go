@@ -326,8 +326,8 @@ func TestRun_StartInDir(t *testing.T) {
 }
 
 // @shell is bash -l with a terminal in the folder's directory, or a
-// directory inside it: an admin's alone, 403 for a runner, whatever the
-// folder allows, and for a viewer. The admin types into it.
+// directory inside it: an admin's alone, 403 for a runner, even where the
+// folder allows them, and for a viewer. The admin types into it.
 func TestRun_Shell(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)

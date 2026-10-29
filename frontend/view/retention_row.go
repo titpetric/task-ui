@@ -9,7 +9,7 @@ import (
 
 // RetentionRow is one area of the Data retention table: what it holds
 // and the rule that keeps it, which the row's selects set. A fixed area
-// shows its text in place of the selects.
+// shows its text where the selects go.
 type RetentionRow struct {
 	Area  retention.Area
 	Usage retention.Usage

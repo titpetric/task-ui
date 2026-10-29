@@ -137,7 +137,7 @@
 					<div class="empty">Runs started by anyone show up here.</div>
 					{{- end }}
 					{{- /* The last slot when the rail can't show every entry:
-					     the script shows it in place of the last one that fits. */}}
+					     the script puts it in the last slot that fits. */}}
 					<a href="/runs" class="recent more" data-recents-more hidden><svg class="ic"><use href="#i-list"/></svg><span class="what"><b>All runs</b><small></small></span></a>
 				</nav>
 			</div>
@@ -256,7 +256,7 @@
 	</div>
 </dialog>
 {{- /* The image window: an image or an svg of the artifacts, scaled to
-     fit, in place of a download. A file of a checkout that runs carries
+     fit, opened in the page. A file of a checkout that runs carries
      the Run or Attach of its row in the foot. */}}
 <dialog class="run preview" id="preview-dialog" aria-labelledby="preview-title">
 	<div class="run-head">
@@ -473,7 +473,7 @@
 {{/* sideicon is the icon of a project's or a folder's row, (list icon
      dirty): lit in the brand colour while git has files changed or
      untracked under it, and saying how many on a mouse-over. An SVG
-     takes its tooltip from a <title> child, not a title attribute. */}}
+     takes its tooltip from a <title> child. */}}
 {{- define "sideicon" }}
 {{- $dirty := index . 1 -}}
 <svg class="ic{{ if $dirty }} dirty{{ end }}">{{ if $dirty }}<title>{{ $dirty }} file{{ if ne $dirty 1 }}s{{ end }} changed or untracked</title>{{ end }}<use href="#i-{{ index . 0 }}"/></svg>

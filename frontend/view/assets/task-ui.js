@@ -461,7 +461,7 @@
       chainNav(s.chain);
       reportLink(run.report);
       // A finished run stays live in memory for a while, for the windows
-      // on it; opened afterwards it is history, not something to attach to.
+      // on it; opened afterwards it is history and shows as a recording.
       if (run.live && !ended(run.state)) {
         connect(s, run);
       } else {
@@ -3357,7 +3357,7 @@
     mention.area.setAttribute("aria-activedescendant", "mention-opt-" + mention.at);
   }
 
-  // takeMention puts @name and a space in place of the word being typed.
+  // takeMention replaces the word being typed with @name and a space.
   function takeMention(i) {
     var area = mention.area, name = mention.names[i];
     if (!area || !name) return;
@@ -4643,16 +4643,16 @@
   }
 
   // fitRecents hides the recents that run past the rail's column or the
-  // bottom of the screen, whichever comes first, and a heading left with
-  // no entry under it: the list is trimmed, not scrolled. When it hides
+  // bottom of the screen, at the first of the two it reaches, and a heading
+  // left with no entry under it: the list is trimmed to fit. When it hides
   // any, the last slot that fits links to Runs and says how many more
   // there are, so the rail never ends silently.
   function fitRecents() {
     if (!recents) return;
     var rail = recents.closest(".rail-inner");
     if (!rail || !rail.offsetParent) return;
-    // Where the rail starts on the page, not on the screen, so the trim
-    // holds wherever the page is scrolled to.
+    // Where the rail starts on the page, measured from the page's top, so
+    // the trim holds at any scroll position.
     var top = rail.getBoundingClientRect().top + window.scrollY;
     var limit = Math.min(rail.clientHeight, window.innerHeight - top);
     var more = recents.querySelector("[data-recents-more]");
@@ -4761,7 +4761,7 @@
   }
 
   // Expand on a step's row asks the API for the run's whole output and
-  // shows it in place of the last screen; Collapse puts back the screen
+  // replaces the last screen with it; Collapse puts back the screen
   // it kept, with no request.
   document.addEventListener("click", function (event) {
     var btn = event.target.closest("[data-expand]");

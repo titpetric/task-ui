@@ -7,7 +7,7 @@ exports a limited API that does about the same.
 It's based on [fortio.org/assert](https://github.com/fortio/assert) and
 contains the following modifications:
 
-- Use `testing.TB` in place of explicit `*testing.T`
+- Use `testing.TB` for the test argument
 - Use `any` or `...any` for printf arguments
 
 Code inside the current module imports it; other modules should not

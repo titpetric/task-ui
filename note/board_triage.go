@@ -25,7 +25,7 @@ const (
 var verdictLine = regexp.MustCompile(`(?i)^[\s*_\x60]*result:\s*(resolved|not\s+resolved|no\s+action)[\s*_\x60.]*$`)
 
 // Verdict returns the verdict of Claude's answer, its last Result line
-// whatever its case and spacing, or TriageUnresolved without one.
+// in any case and spacing, or TriageUnresolved without one.
 func Verdict(answer string) string {
 	lines := strings.Split(answer, "\n")
 	for i := len(lines) - 1; i >= 0; i-- {

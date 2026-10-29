@@ -149,7 +149,7 @@ func TestLoop_TickWorkflow(t *testing.T) {
 }
 
 // A workflow schedule runs as the workflow's own user, the one set on
-// it, not the schedule's; a run-as user nobody holds skips the time, and
+// it; a run-as user nobody holds skips the time, and
 // the schedule moves on.
 func TestLoop_TickWorkflowRunAs(t *testing.T) {
 	t.Parallel()
@@ -320,7 +320,7 @@ func TestLoop_TickBusy(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, 1, started)
 
-	// The job is still running at the next minute: skipped, not queued.
+	// The job is still running at the next minute: the tick skips it.
 	f.now = f.now.Add(time.Minute)
 	started, err = f.loop.Tick(ctx)
 	assert.NoError(t, err)
@@ -344,7 +344,7 @@ func TestLoop_TickGone(t *testing.T) {
 	for _, id := range []string{missing.ID, bad.ID, shell.ID} {
 		got, err := f.schedules.Get(ctx, id)
 		assert.NoError(t, err)
-		assert.False(t, got.IsEnabled(), "disabled rather than asked again")
+		assert.False(t, got.IsEnabled(), "the schedule is disabled")
 	}
 }
 

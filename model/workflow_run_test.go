@@ -53,7 +53,7 @@ func TestWorkflowRun_AnswerFrom_commands(t *testing.T) {
 	assert.Equal(t, "", replyOf(nil))
 }
 
-// replyOf is what a run takes from its steps, over a stale one.
+// replyOf is the reply a run takes from its steps, replacing a stale one.
 func replyOf(steps []model.WorkflowRunStep) string {
 	run := &model.WorkflowRun{Answer: "stale"}
 	run.AnswerFrom(steps)

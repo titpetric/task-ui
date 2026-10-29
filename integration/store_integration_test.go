@@ -116,7 +116,7 @@ func TestStore(t *testing.T) {
 	assert.Equal(t, "deepseek/deepseek-v4.1-flash-1017", env["ANTHROPIC_DEFAULT_HAIKU_MODEL"])
 	assert.Equal(t, "deepseek/deepseek-v4.1-flash-1017", env["CLAUDE_CODE_SUBAGENT_MODEL"])
 	_, emptyKey := env["ANTHROPIC_API_KEY"]
-	assert.True(t, emptyKey, "ANTHROPIC_API_KEY goes out empty, not left to the parent")
+	assert.True(t, emptyKey, "ANTHROPIC_API_KEY goes out set and empty")
 	assert.Equal(t, "", env["ANTHROPIC_API_KEY"])
 	assert.Equal(t, "", env["CLAUDE_CODE_OAUTH_TOKEN"], "OpenRouter stands in for the Claude token")
 

@@ -32,7 +32,7 @@ func TestAgent_Prompt(t *testing.T) {
 	assert.Contains(t, text, "the last message is the question:\n\nList the skills.\n\nYour final message is the answer, in markdown")
 
 	// With TASK_UI_PROMPT_DIR, a folder or a directory inside one, Claude
-	// works in that directory in place of the workspace.
+	// works in that directory.
 	here := realDir(t)
 	out.Reset()
 	a.Env = append(a.Env, "TASK_UI_PROMPT_DIR="+here)

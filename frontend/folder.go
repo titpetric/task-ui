@@ -166,7 +166,7 @@ func (h *Handlers) homeTree(r *http.Request, p *view.Page, workspace string) {
 }
 
 // isDirIn reports whether rel names a directory inside the folder that
-// task-ui opens: not sealed, not reached through a symlink out of it.
+// task-ui opens: unsealed, and reached through no symlink out of it.
 func isDirIn(f *folder.Folder, rel string) bool {
 	dir, ok := f.Path(rel)
 	if !ok || rel == "" {

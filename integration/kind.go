@@ -55,7 +55,7 @@ func Kinds() []Kind {
 		{
 			ID:          OpenRouter,
 			Title:       "OpenRouter",
-			Description: "The gateway Claude Code asks instead of an Anthropic account; while set up, a run gets its variables and none of the Claude Code token.",
+			Description: "The gateway Claude Code sends its requests to; while set up, a run gets its variables and none of the Claude Code token.",
 			Fields: []Field{
 				{Name: "token", Label: "API key", Secret: true, Placeholder: "sk-or-v1-…", Help: "A key from openrouter.ai/settings/keys; it reaches a run as OPENROUTER_API_KEY and ANTHROPIC_AUTH_TOKEN."},
 				{Name: "openrouter_api_key", Label: "OPENROUTER_API_KEY", Optional: true, Env: "OPENROUTER_API_KEY", Source: "token", Help: "OpenRouter's own name for the key."},

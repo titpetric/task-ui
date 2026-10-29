@@ -17,7 +17,7 @@ import (
 )
 
 // fakeAtkins writes an atkins that logs each call to calls, refuses a
-// pipe on stdin, and prints body with $PWD in place of DIR.
+// pipe on stdin, and prints body with DIR replaced by $PWD.
 func fakeAtkins(t *testing.T, body string) (string, string) {
 	t.Helper()
 	dir := t.TempDir()

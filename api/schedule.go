@@ -244,8 +244,7 @@ func (h *Handlers) runAs(r *http.Request, name, folderID, jobID string) (*model.
 // workflowScheduleUser resolves whom a workflow's schedule runs as: the
 // caller without a name; the named user, as a job's schedule takes one,
 // when they may run every step (400 naming the step); and nobody by name
-// on a workflow with a user of its own (400), who runs it whatever the
-// schedule says.
+// on a workflow with a user of its own (400): that user runs it.
 func (h *Handlers) workflowScheduleUser(r *http.Request, wf *model.Workflow, steps []model.WorkflowStep, name string) (*model.User, int, string) {
 	if name == "" {
 		return access.UserFrom(r.Context()), 0, ""

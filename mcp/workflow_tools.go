@@ -15,8 +15,7 @@ import (
 
 // workflowTools read, make and change workflows as the token's user,
 // through /api/workflows, so an agent builds a workflow and tests it
-// with run_workflow, not only runs one (docs/api.md). There is no
-// delete.
+// with run_workflow (docs/api.md). There is no delete.
 func workflowTools() []Tool {
 	str := func(text string) Property { return Property{Type: "string", Description: text} }
 	step := Schema{Type: "object", Properties: map[string]Property{

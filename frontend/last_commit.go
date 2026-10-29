@@ -6,8 +6,8 @@ import (
 )
 
 // lastCommitTTL is how long a directory's last commit time stays good:
-// the sidebar costs at most one git process per project per minute,
-// whatever the pages rendered, and a pull shows within the minute.
+// the sidebar costs at most one git process per project per minute for
+// any number of pages, and a pull shows within the minute.
 const lastCommitTTL = time.Minute
 
 // LastCommits answers the time of each project's last commit, from

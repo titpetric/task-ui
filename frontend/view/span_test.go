@@ -11,7 +11,7 @@ import (
 
 // A span's slots end with the slot now is in, counted on the clock of
 // now's zone: the week's three-hour slots start at 00:00, 03:00 and so
-// on there, not in UTC.
+// on there.
 func TestSpan(t *testing.T) {
 	t.Parallel()
 	now := at(19, 22, 10) // 20:10 UTC

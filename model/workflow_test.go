@@ -7,7 +7,7 @@ import (
 	"github.com/titpetric/task-ui/model"
 )
 
-// A step runs a workflow in place of a job when it names one.
+// A step that names a workflow runs it.
 func TestWorkflowStep_IsWorkflow(t *testing.T) {
 	t.Parallel()
 	assert.True(t, model.WorkflowStep{WorkflowRef: "w1"}.IsWorkflow())

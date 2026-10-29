@@ -102,8 +102,8 @@ func (h *Handlers) putUserPolicy(w http.ResponseWriter, r *http.Request) {
 }
 
 // editsUsersByRole reports whether the user of a request holds user/edit
-// through the role, not only through a policy of the user's own: an
-// admin, or a role that allows it.
+// through the role: an admin, or a role that allows it. A policy of the
+// user's own alone reports false.
 func (h *Handlers) editsUsersByRole(r *http.Request) bool {
 	set := h.permissions(r)
 	return set.User.CanAdmin() || (set.Allowed("user/edit") && set.Role.Effect("user/edit") == permission.Allow)

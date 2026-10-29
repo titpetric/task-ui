@@ -32,7 +32,7 @@ func TestUserKeys(t *testing.T) {
 	got := view.UserKeys(keys, users)
 	assert.Equal(t, []string{"deploy_rsa4096", "forge_ed25519"}, got["admin"], "by role and by name, sorted")
 	assert.Equal(t, []string{"forge_ed25519", "user_alice_ed25519"}, got["alice"])
-	assert.Equal(t, []string{"deploy_rsa4096"}, got["ops"], "the effective role, admin, not the role column")
+	assert.Equal(t, []string{"deploy_rsa4096"}, got["ops"], "the effective role, admin, decides")
 	_, has := got["guest"]
 	assert.False(t, has, "no entry without a key")
 	assert.Len(t, view.UserKeys(nil, users), 0)

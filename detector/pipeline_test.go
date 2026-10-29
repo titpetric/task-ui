@@ -74,7 +74,7 @@ func TestPipelineDetectorInvalid(t *testing.T) {
 	}
 }
 
-// A Taskfile task takes no arguments, whatever key it carries: the
+// A Taskfile task takes no arguments, with any key it carries: the
 // command line passing them after -- is an atkins feature.
 func TestPipelineDetectorTakesArgs(t *testing.T) {
 	dir := t.TempDir()

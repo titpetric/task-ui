@@ -78,7 +78,7 @@ Every page of task-ui, by area: what it lists, the actions at the top right of i
 | Block head     | `blockhead`, from `head` | a block's title, its note, its buttons and the line of an empty list                        |
 | Buttons        | `buttons`                | the buttons of a block head                                                                 |
 | Copy           | `copyable`               | a public key, an ssh login, the MCP links and command, a token shown once                   |
-| Row menu       | `menu`                   | every row and page head with more than its main action                                      |
+| Row menu       | `menu`                   | every row and page head with actions besides its main one                                   |
 
 ---
 

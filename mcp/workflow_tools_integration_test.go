@@ -176,8 +176,7 @@ func porecBuilder(t *testing.T, f *fixture, out string) (string, string) {
 // reply of a workflow whose prompt step asks in the builder's own place,
 // as the prompts run side by side. The builder replies in the thread its
 // source names with note_comment, as Claude, and the thread gets that
-// reply alone, not the run's final message; the run's token comments on
-// no other note.
+// reply alone; the run's token comments on no other note.
 func TestTools_BuilderReplies(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)

@@ -12,7 +12,7 @@ import (
 )
 
 // No route answers a private key: the path of the former read answers
-// 404 for an admin, whatever the method.
+// 404 for an admin, on every method.
 func TestKey_NoPrivateRoute(t *testing.T) {
 	t.Parallel()
 	h := api.New(api.Options{}).Routes()

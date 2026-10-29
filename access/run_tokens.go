@@ -9,7 +9,7 @@ import (
 // Claude reaches task-ui's MCP server as the run's user: minted when
 // the run starts, revoked when it ends, held in memory alone, never in
 // the user's tokens and never shown. A run token signs in as its user,
-// with the user's own permissions, whatever the user's MCP access, and
+// with the user's own permissions, with or without MCP access, and
 // names the thread the run answers, so what it starts reports there.
 type RunTokens struct {
 	mu     sync.Mutex

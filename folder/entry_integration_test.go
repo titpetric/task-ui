@@ -42,7 +42,7 @@ func TestEntries(t *testing.T) {
 		byID[entry.ID] = entry
 	}
 	if len(entries) != 5 {
-		t.Fatalf("entries: the folders of src, not the home: %+v", entries)
+		t.Fatalf("entries: the folders of src, home left out: %+v", entries)
 	}
 	tools := byID["tools"]
 	// The Makefile reads tools; its package.json is the Makefile's business.

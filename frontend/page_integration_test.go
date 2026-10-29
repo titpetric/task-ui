@@ -231,7 +231,7 @@ func TestPage_Workspaces(t *testing.T) {
 	}
 	assert.True(t, closes > web, "the workspace closes after malta/deploy/web")
 
-	// A project at the root lists above the workspaces, whatever its name.
+	// A project at the root lists above the workspaces, with any name.
 	cat["zeta"] = shellFolder(t, f.root, "zeta", map[string]string{"build": "echo zeta"})
 	body = f.page(t, asAdmin, "/")
 	zeta := strings.Index(body, `<details class="project" data-project="zeta" open>`)

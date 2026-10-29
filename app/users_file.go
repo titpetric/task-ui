@@ -173,8 +173,8 @@ func (f *UsersFile) keep(ctx context.Context, users *storage.UserStorage, passwo
 			created++
 		}
 		if len(creds) == 1 && admins == 0 && !user.Admin {
-			// The row again, not the listing: the folders may have
-			// changed under Settings since.
+			// Read the row again: the folders may have changed under
+			// Settings since the listing.
 			current, err := users.GetByName(ctx, cred.Name)
 			if err != nil {
 				return created, err

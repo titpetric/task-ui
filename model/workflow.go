@@ -42,16 +42,16 @@ func (s WorkflowStep) StepKind() string { return stepKind(s.Kind, s.Prompt, s.Wo
 // StepKind is what the step did, as WorkflowStep.StepKind says.
 func (s WorkflowRunStep) StepKind() string { return stepKind(s.Kind, s.Prompt, s.WorkflowRef) }
 
-// IsWorkflow says the step runs a workflow in place of a job.
+// IsWorkflow says the step runs a workflow.
 func (s WorkflowStep) IsWorkflow() bool { return s.StepKind() == StepWorkflow }
 
-// IsWorkflow says the step ran a workflow in place of a job.
+// IsWorkflow says the step ran a workflow.
 func (s WorkflowRunStep) IsWorkflow() bool { return s.StepKind() == StepWorkflow }
 
-// IsPrompt says the step asks Claude in place of running a job: a prompt or a summary.
+// IsPrompt says the step asks Claude: a prompt or a summary.
 func (s WorkflowStep) IsPrompt() bool { return asks(s.StepKind()) }
 
-// IsPrompt says the step asked Claude in place of running a job.
+// IsPrompt says the step asked Claude.
 func (s WorkflowRunStep) IsPrompt() bool { return asks(s.StepKind()) }
 
 // IsSummary says the step asks Claude for task-ui's summary of the steps before it.

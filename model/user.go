@@ -74,7 +74,7 @@ func (u *User) Listed(folderAllow, jobAllow []string) bool {
 	return u != nil && u.allowed(folderAllow) && u.allowed(jobAllow)
 }
 
-// CanAdmin reports whether the user is an admin by the flag or the role, whatever the policies say.
+// CanAdmin reports whether the user is an admin by the flag or the role; the policies leave it as is.
 func (u *User) CanAdmin() bool {
 	return u != nil && (u.Admin || u.Role == RoleAdmin)
 }

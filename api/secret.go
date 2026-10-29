@@ -143,8 +143,8 @@ func (h *Handlers) setSecret(w http.ResponseWriter, r *http.Request) {
 			failErr(w, err)
 			return
 		}
-		// An empty value keeps a secret's, whatever the box now says,
-		// since an edit of one starts blank; an env entry may be empty.
+		// An empty value keeps a secret's saved value, since an edit of
+		// one starts blank; an env entry may be empty.
 		if existing.IsSecret != 0 && req.Content == "" {
 			secret.Content = existing.Content
 		}

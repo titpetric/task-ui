@@ -20,8 +20,8 @@ import (
 // given, and puts the previous prober back when the test ends.
 //
 // The listing is the contract between the two programs, so a test of
-// this package is a test of what it makes of one, not of the atkins
-// that produced it.
+// this package tests what it makes of one, with a stub in front of
+// atkins.
 func stubAtkins(t *testing.T, listing string) {
 	t.Helper()
 
@@ -185,7 +185,7 @@ func TestAtkinsDetectorFileNames(t *testing.T) {
 	}
 }
 
-// FromFile reads the file a configuration names, whatever its name,
+// FromFile reads the file a configuration names, under any name,
 // through the same listing.
 func TestFromFileReadsAnAtkinsPipeline(t *testing.T) {
 	stubAtkins(t, infra)

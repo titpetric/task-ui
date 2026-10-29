@@ -24,7 +24,7 @@ func (s *RunSummaryStorage) Get(ctx context.Context, runID string) (*model.RunSu
 	return summary, notFound(err)
 }
 
-// Set stores a run's summary, in place of one it had.
+// Set stores a run's summary, replacing one it had.
 func (s *RunSummaryStorage) Set(ctx context.Context, summary *model.RunSummary) error {
 	if summary.RunID == "" || summary.Summary == "" {
 		return errors.New("a summary needs a run and some text")

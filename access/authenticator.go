@@ -9,8 +9,8 @@ import (
 	"github.com/titpetric/task-ui/storage"
 )
 
-// ErrWrongCredentials is the one answer to a failed sign in, whatever
-// the fault: the login, the password, or a spent backup password.
+// ErrWrongCredentials is the one answer to every failed sign in: a wrong
+// login, a wrong password, or a spent backup password.
 var ErrWrongCredentials = errors.New("wrong username or password")
 
 // Authenticator checks a sign in: a login, which is a user name or one

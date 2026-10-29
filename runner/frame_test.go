@@ -74,7 +74,7 @@ func TestFrame_Trim(t *testing.T) {
 	cursor := frame
 	cursor.CursorY = 4
 	assert.Equal(t, 5, cursor.Trim(1).Rows)
-	assert.Equal(t, 6, frame.Trim(10).Rows, "never more than there is")
+	assert.Equal(t, 6, frame.Trim(10).Rows, "at most the rows there are")
 
 	// A painted empty row counts as content.
 	painted := frame

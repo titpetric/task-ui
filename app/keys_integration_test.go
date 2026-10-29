@@ -39,7 +39,7 @@ func TestNew_Keys(t *testing.T) {
 	folder := &keystore.Local{Dir: keys, Rows: storage.NewKeyInfoStorage(a.DB), Settings: storage.NewSettingStorage(a.DB)}
 	instance := folder.EncryptKey(ctx, storage.ScopeInstance)
 	assert.Equal(t, "task_encryption_ed25519", instance.Name)
-	assert.Equal(t, old.Fingerprint, instance.Fingerprint, "the old key, not a new one")
+	assert.Equal(t, old.Fingerprint, instance.Fingerprint, "the old key stays")
 	git := folder.Git(ctx)
 	assert.Equal(t, "task_ssh_ed25519", git.Name)
 	assert.Equal(t, own.Fingerprint, git.Fingerprint)

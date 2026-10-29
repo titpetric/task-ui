@@ -19,8 +19,8 @@ type Area struct {
 	Sized bool
 	// Unlimited says a sized area takes no size limit, only an age.
 	Unlimited bool
-	// Fixed is what the row says in place of a rule; empty for an area
-	// with one.
+	// Fixed is what the row says for an area without a rule; empty for
+	// an area with one.
 	Fixed string
 }
 
@@ -40,7 +40,7 @@ var Areas = []Area{
 	{Kind: Artifacts, Title: "Artifact history", One: "version", Many: "versions", Sized: true,
 		What: "The earlier versions of the artifact tree's files, which the history keeps when a run or a user writes a file again. The latest version of every file stays."},
 	{Kind: SecretReads, Title: "Secret read log", One: "read", Many: "reads",
-		What: "Which run got which secret in its environment. The log keeps the last 1000 reads of each secret whatever the rule says."},
+		What: "Which run got which secret in its environment. The log always keeps the last 1000 reads of each secret."},
 	{Kind: Signins, Title: "Expired sign-ins", One: "row", Many: "rows",
 		What:  "Tokens and browser sessions past their expiry, which no longer sign in.",
 		Fixed: "Removed every cleanup, no setting."},

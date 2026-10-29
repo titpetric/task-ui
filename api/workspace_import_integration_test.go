@@ -243,7 +243,7 @@ func TestWorkspaceImport_Default(t *testing.T) {
 
 	read, err := workspace.ReadBundle(bytes.NewReader(bundle), passphrase)
 	assert.NoError(t, err)
-	assert.Len(t, read.Manifest.Secrets, 2, "internal's shared and folder secrets, not acme's and not the one of every workspace")
+	assert.Len(t, read.Manifest.Secrets, 2, "internal's shared and folder secrets alone")
 	assert.Len(t, read.Manifest.Projects, 1)
 
 	unnamed := to.importBundle(t, asAdmin, bundle, passphrase, "")

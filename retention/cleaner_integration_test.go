@@ -213,7 +213,7 @@ func TestCleaner_SecretReads(t *testing.T) {
 	assert.Equal(t, reads[3].ID, left[0].ID)
 }
 
-// Expired tokens and sessions go every cleanup, whatever the rules; the
+// Expired tokens and sessions go every cleanup under any rule; the
 // live ones and the tokens without an expiry stay.
 func TestCleaner_Signins(t *testing.T) {
 	t.Parallel()

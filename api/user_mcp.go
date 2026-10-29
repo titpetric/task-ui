@@ -46,7 +46,7 @@ func (h *Handlers) mcpUser(w http.ResponseWriter, r *http.Request) *model.User {
 	return user
 }
 
-// enableMCP makes a user's MCP token, in place of the one they had,
+// enableMCP makes a user's MCP token and replaces the one they had,
 // which stops signing in at once. Its 201 holds the token, the one
 // place it shows; storage keeps its hash.
 func (h *Handlers) enableMCP(w http.ResponseWriter, r *http.Request) {

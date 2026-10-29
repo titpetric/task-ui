@@ -54,7 +54,7 @@ The flags `-l`, `--workspace` and `--data` override the matching variables; `-v`
 
 ## Users and roles
 
-Login is mandatory, through the sign in screen; there is no HTTP basic auth. Who may sign in is the password file, `.htpasswd` in the data directory: one `name:hash` per line, the htpasswd format, bcrypt hashes only. The file is the truth. task-ui reads it on startup and again whenever it changes. Adding, resetting or removing a user needs no restart: a user not in the file cannot sign in and the instance removes them. A file that is not there yet is a warning, not an error: the instance reads it once `task-ui passwd` makes it.
+Login is mandatory, through the sign in screen; there is no HTTP basic auth. Who may sign in is the password file, `.htpasswd` in the data directory: one `name:hash` per line, the htpasswd format, bcrypt hashes only. The file is the truth. task-ui reads it on startup and again whenever it changes. Adding, resetting or removing a user needs no restart: a user not in the file cannot sign in and the instance removes them. A file that is not there yet is a warning: the instance reads it once `task-ui passwd` makes it.
 
 A sign in sets a session cookie that holds only a random token. The database keeps the hash of the token, the user and the expiry. A session survives a restart of the server and ends when it expires, on sign out, when the file removes the user, or when the user gets a new password.
 

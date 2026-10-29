@@ -54,8 +54,7 @@ func TestPipelineSection(t *testing.T) {
 }
 
 func TestAtkinsTarget(t *testing.T) {
-	// A job the file hides is not offered, whatever it says about
-	// itself.
+	// A job the file hides is not offered.
 	assert.Nil(t, atkinsTarget(skills.Command{Name: "x", Desc: "Hidden", Hidden: true}))
 	// A job with neither a desc nor a step says nothing about itself.
 	assert.Nil(t, atkinsTarget(skills.Command{Name: "x"}))

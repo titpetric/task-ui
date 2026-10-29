@@ -46,7 +46,7 @@ func TestManager_Secrets(t *testing.T) {
 	assert.Equal(t, own.ID, reads[0].SecretID)
 }
 
-// A request's Env reaches the run; the TASK_UI_ variables still win.
+// A request's Env reaches the run; the TASK_UI_ variables keep task-ui's values.
 func TestManager_RequestEnv(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)

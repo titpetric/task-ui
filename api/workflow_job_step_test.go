@@ -28,7 +28,7 @@ func stepFixture(steps bool) http.Handler {
 
 // A job step resolves its folder through the steps' catalogue, every
 // folder with a job, as the editor lists them: a folder the listings
-// hide has its job checked, not refused as missing. For a folder in
+// hide has its job checked and resolves. For a folder in
 // neither catalogue, or outside the user's own, the error names the step
 // by its folder relative to the workspace and the job, and the workspace
 // that lacks it.

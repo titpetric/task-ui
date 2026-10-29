@@ -55,7 +55,7 @@ func TestLogin(t *testing.T) {
 	}
 	assert.NotNil(t, cookie)
 	assert.True(t, cookie.HttpOnly)
-	assert.False(t, strings.Contains(cookie.Value, "."), "an opaque token, not a JWT")
+	assert.False(t, strings.Contains(cookie.Value, "."), "an opaque token")
 	user, err := f.opts.Guard.Sessions.Resolve(ctx, cookie.Value)
 	assert.NoError(t, err)
 	assert.Equal(t, admin.ID, user.ID)

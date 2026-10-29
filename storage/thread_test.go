@@ -9,7 +9,7 @@ import (
 )
 
 // A thread with no reply has no last time, and the cleanup reads an
-// open one as busy whatever its age.
+// open one as busy at any age.
 func TestThread(t *testing.T) {
 	t.Parallel()
 	var none storage.Thread

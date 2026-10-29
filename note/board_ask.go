@@ -209,7 +209,7 @@ func (b *Board) hosts(ctx context.Context) []string {
 // TASK_UI_PROMPT_DIR for a folder's, and the run's workspace. The run is
 // the place's, as its @shell run is, with the place's secrets. The user
 // sees the place; the prompt job runs by prompt/edit, which the callers
-// check, whatever the folder's allow lists.
+// check, and the folder's allow lists play no part.
 func (b *Board) promptRequest(ctx context.Context, user *model.User, dir string, none bool) (runner.Request, error) {
 	var req runner.Request
 	if b.Catalogue == nil || b.Runner == nil {

@@ -110,7 +110,7 @@ func (c *Catalogue) Home(dir string) string {
 	return layout.HomeDir(root, workspace)
 }
 
-// Every returns each folder with a job, whatever the settings hide, cached for everyTTL.
+// Every returns each folder with a job, hidden ones included, cached for everyTTL.
 func (c *Catalogue) Every() []*folder.Folder {
 	c.mu.Lock()
 	defer c.mu.Unlock()

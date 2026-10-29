@@ -51,7 +51,7 @@ type Page struct {
 	Pins    []model.Pin
 	Pinning bool
 	// StepFolders are the folders the workflow editor's steps pick, every
-	// folder with a job the user sees, whatever the settings hide.
+	// folder with a job the user sees, hidden ones included.
 	StepFolders []*folder.Folder
 	// Workspaces are the folders of the workspaces, each with its rank,
 	// which the sidebar lists in that order, after the projects at the
@@ -363,8 +363,8 @@ func (p *Page) Can(path string) bool {
 	return p.permissions().Allowed(path)
 }
 
-// permissions returns Permissions when they are the user's, and nothing
-// more than the user's role grants without a policy otherwise.
+// permissions returns Permissions when they are the user's, and otherwise
+// only what the user's role grants without a policy.
 func (p *Page) permissions() permission.Set {
 	if p.Permissions.User != p.User {
 		return permission.Set{User: p.User}

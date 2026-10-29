@@ -24,8 +24,7 @@ import (
 	"github.com/titpetric/task-ui/storage"
 )
 
-// recentCount is how many runs the rail lists, more than a screen holds:
-// the rail scrolls.
+// recentCount is how many runs the rail lists; the rail scrolls.
 const recentCount = 50
 
 // page returns the page model with the chrome filled in: the user, the

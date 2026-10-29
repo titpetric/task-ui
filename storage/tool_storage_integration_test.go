@@ -11,8 +11,7 @@ import (
 	"github.com/titpetric/task-ui/storage"
 )
 
-// Tools store by name, and a start replaces the whole set in place of
-// the one before.
+// Tools store by name, and a start replaces the whole set.
 func TestToolStorage(t *testing.T) {
 	t.Parallel()
 	s := storage.NewToolStorage(newDB(t))

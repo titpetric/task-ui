@@ -7,7 +7,7 @@ import (
 	"github.com/titpetric/task-ui/note"
 )
 
-// The verdict is the last Result line, whatever its case, spacing or
+// The verdict is the last Result line, in any case, spacing or
 // emphasis; without one the verdict is not resolved.
 func TestVerdict(t *testing.T) {
 	t.Parallel()

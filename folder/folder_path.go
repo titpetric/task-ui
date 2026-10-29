@@ -17,8 +17,8 @@ const FilePrefix = "./"
 // symlinks resolved, and whether task-ui may open it: it exists, has no
 // .. in it, is not sealed nor reached through .git, and stays inside
 // the folder once Path follows its symlinks. Path holds where a symlink
-// leads to the same rules: a link to a dot file opens no more than the
-// dot file does. The empty path is the folder itself.
+// leads to the same rules: a link to a dot file opens as the dot file
+// does. The empty path is the folder itself.
 func (f *Folder) Path(rel string) (string, bool) {
 	if f == nil || strings.HasPrefix(rel, "/") || strings.Contains(rel, "\\") {
 		return "", false

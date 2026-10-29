@@ -116,7 +116,7 @@ func (h *Handlers) userMatrix(r *http.Request, p *view.Page, user *model.User, o
 }
 
 // editsByRole reports whether the page's user holds user/edit through
-// their role, not only through a policy of their own.
+// their role; a policy of their own alone reports false.
 func editsByRole(p *view.Page) bool {
 	return p.User.CanAdmin() || p.Permissions.Role.Effect("user/edit") == permission.Allow
 }

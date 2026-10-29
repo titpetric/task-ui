@@ -99,7 +99,7 @@ func TestFolderMenu_Project(t *testing.T) {
 	buf.Reset()
 	assert.NoError(t, v.Render(&buf, "folder", projectPage(t, &model.User{Name: "ops", Role: model.RoleRunner}, permission.Policy{"project/view": permission.Allow, "project/delete": permission.Allow})))
 	head = pageHead(t, buf.String())
-	assert.Contains(t, head, `href="/settings/projects/apps"`, "the rules, not the role, decide")
+	assert.Contains(t, head, `href="/settings/projects/apps"`, "the rules decide")
 	assert.Contains(t, head, `data-delete="/api/projects/apps"`)
 	assert.NotContains(t, head, "@git:pull", "without run, no Pull now")
 

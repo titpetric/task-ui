@@ -35,7 +35,7 @@ type Sync struct {
 	HookURL string
 	// Secret signs the hooks' bodies.
 	Secret string
-	// HTTPS clones over https in place of ssh.
+	// HTTPS clones over https.
 	HTTPS  bool
 	DryRun bool
 	// Color paints the report, see Paint; the caller decides, Colored says

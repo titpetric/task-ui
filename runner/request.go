@@ -19,7 +19,7 @@ type Request struct {
 	Cols      int
 	Rows      int
 	// Env adds NAME=value pairs to the run's environment, after the
-	// secrets and before the TASK_UI_ variables, which win.
+	// secrets and before the TASK_UI_ variables, which keep task-ui's values.
 	Env []string
 	// Workspace is the directory of the workspace the run belongs to, the
 	// root for the default one. Empty takes the workspace of the folder's

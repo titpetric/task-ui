@@ -12,7 +12,7 @@ import (
 	"github.com/titpetric/task-ui/model"
 )
 
-// A folder git ignores is a build copy or a cache, not a project: the
+// A folder git ignores is a build copy or a cache and lists as no project: the
 // sources a dockerfiles build copies into src/ carry their own pipelines.
 // A folder with nothing to run (a Taskfile whose tasks have no desc, a
 // package.json without scripts) stays out as well.

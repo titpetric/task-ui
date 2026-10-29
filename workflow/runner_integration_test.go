@@ -190,8 +190,8 @@ func TestRunner_NestedWorkflow(t *testing.T) {
 	assert.True(t, !second.StartedAt.Before(*first.FinishedAt), "inner starts after the step before it ended")
 }
 
-// A nested workflow with a user of its own runs as that user, not the
-// outer run's; one whose user nobody holds fails the step.
+// A nested workflow with a user of its own runs as that user; one whose
+// user nobody holds fails the step.
 func TestRunner_NestedRunAs(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)

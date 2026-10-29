@@ -77,7 +77,7 @@ func TestTakesSlot(t *testing.T) {
 func TestSlots_Room(t *testing.T) {
 	t.Parallel()
 	s := runner.NewSlots(1)
-	assert.True(t, s.Room(0), "a free slot takes a run whatever the backlog")
+	assert.True(t, s.Room(0), "a free slot takes a run at any backlog")
 	assert.True(t, s.Take("a"))
 	assert.True(t, s.Room(2))
 	assert.False(t, s.Take("b"))

@@ -17,7 +17,7 @@
 	<form class="form" data-api="/api/users/{{ $u.ID }}" data-method="PUT" data-next="{{ $edit }}?notice=Roles+saved#roles">
 		<div class="field">
 			<label class="check"><input type="checkbox" name="admin"{{ if $u.Admin }} checked{{ end }}> Administrative privileges (all)</label>
-			<small class="faint">Every permission, whatever the role; the last admin keeps it.</small>
+			<small class="faint">Every permission, for any role; the last admin keeps it.</small>
 		</div>
 		<div class="field">
 			<label for="u-role">Role <span class="faint">without the admin flag</span></label>
@@ -64,7 +64,7 @@
 	<h3>Permissions <small>{{ $u.Name }}'s own rules, before the role's</small></h3>
 	<p>Role: {{ if $.Can "user/view" }}<a href="/settings/permissions#role-{{ $u.EffectiveRole }}">{{ $u.EffectiveRole }}</a>{{ else }}{{ $u.EffectiveRole }}{{ end }}.{{ if .Fixed }} Admins can do everything; this can't change.{{ end }}</p>
 	{{- if not .Fixed }}
-	<p>An allow or a deny here is {{ $u.Name }}'s own and decides first, whatever the role says. Inherit, the empty box, leaves it to the role's rules, where task-ui applies a deny over an allow. The mark after each box shows the result.</p>
+	<p>An allow or a deny here is {{ $u.Name }}'s own and decides the rule for them. Inherit, the empty box, leaves it to the role's rules, where a deny denies the action even where another rule allows it. The mark after each box shows the result.</p>
 	{{- end }}
 	{{- template "matrix" (list $ .) }}
 </section>

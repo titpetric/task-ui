@@ -21,7 +21,7 @@ import (
 // and the reads of the secret read log; then the expired tokens and
 // sessions, which go every time. A run in progress or queued, a thread
 // with an open instruction, a workflow run in progress and the cleanup's
-// own run stay whatever the rules say.
+// own run always stay.
 type Cleaner struct {
 	// DB is the database, which a clean that removed rows vacuums, and
 	// DBPath its file, for the size before and after; empty skips both.

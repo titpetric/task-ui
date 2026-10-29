@@ -129,7 +129,7 @@ func (v *Vault) Encrypt(plain string, exclude ...string) (string, error) {
 	return buf.String(), nil
 }
 
-// Decrypt reads a value with whichever key opens it. It returns a value
+// Decrypt reads a value with the key that opens it. It returns a value
 // without encryption unchanged.
 func (v *Vault) Decrypt(text string) (string, error) {
 	if !Encrypted(text) {

@@ -77,7 +77,7 @@ func TestCatalogue_Shallow(t *testing.T) {
 	assert.NoError(t, projects.Create(ctx, &model.Project{Folder: "mono", Shallow: true}))
 	assert.NotNil(t, c.Find("mono/blog"))
 	assert.Nil(t, c.Find("mono/blog/admin"))
-	assert.NotNil(t, c.Steps().Find("mono/blog/admin"), "hidden, not gone")
+	assert.NotNil(t, c.Steps().Find("mono/blog/admin"), "a hidden folder stays in the steps")
 	f, rest := folder.Resolve(c, "mono/blog/admin")
 	assert.Equal(t, "mono/blog", f.ID)
 	assert.Equal(t, "admin", rest)

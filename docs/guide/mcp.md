@@ -38,7 +38,7 @@ chmod 600 /root/task.token
 
 task-ui prints the token once and keeps only its hash. A new token under the same name replaces it, and the old one stops working.
 
-To list the tokens of a user with the last use of each, run `task-ui token claude`; `task-ui token claude rm claude-code` removes one. A token signs in to the rest of `/api` too, in an `Authorization: Bearer` header in place of the session cookie.
+To list the tokens of a user with the last use of each, run `task-ui token claude`; `task-ui token claude rm claude-code` removes one. A token signs in to the rest of `/api` too, in an `Authorization: Bearer` header.
 
 ## Claude Code inside task-ui
 
@@ -69,7 +69,7 @@ A reply that names the user again opens the note again, and it shows in the next
 
 ## Live notes for an agent elsewhere
 
-`task-ui channel` pushes the notes to an open Claude Code session as they come, in place of polling `list_notes`: a Claude Code [channel](https://code.claude.com/docs/en/channels-reference.md), a research preview, and a stdio MCP server, in the task-ui binary, that the session starts. It holds the instance's notes stream open with the token, connects again with a growing wait when the stream drops, and reads the open notes each time it connects. Every open instruction that names the token's user, from someone else, reaches the session once while it stays open, as:
+`task-ui channel` pushes the notes to an open Claude Code session as they come, with no polling of `list_notes`: a Claude Code [channel](https://code.claude.com/docs/en/channels-reference.md), a research preview, and a stdio MCP server, in the task-ui binary, that the session starts. It holds the instance's notes stream open with the token, connects again with a growing wait when the stream drops, and reads the open notes each time it connects. Every open instruction that names the token's user, from someone else, reaches the session once while it stays open, as:
 
 ```text
 <channel source="task-notes" note_id="01J..." author="black" url="https://task.example.com/notes#note-01J...">
@@ -117,7 +117,7 @@ The notes reach a session only while it runs; a note left between sessions arriv
 | `ask_prompt`         | `folder`, `dir`, `prompt`, `area`, `wait`           | Asks Claude in a folder, or `dir` inside it, as the folder's **Prompt** box does; with `wait`, up to 900 seconds, returns Claude's answer; `area` `workflows` asks as the Workflows page's box does, in the root unless `folder` names one: Claude builds or changes the workflow the prompt describes, runs it and answers with its link; takes `prompt/edit` |
 | `list_artifacts`     | `path`                                              | A directory of the artifact tree, the top unless given: each file's size, time, and the run or the user that wrote it; takes `artifact/view`                                                                                                                                                                                                                   |
 | `read_artifact`      | `path`, `version`                                   | A file of the tree, the latest or `version`: text up to 256 KiB, saying where it cut, and for anything else its type, size and download link; takes `artifact/view`                                                                                                                                                                                            |
-| `write_artifact`     | `path`, `content`, `encoding`                       | Writes a file into the tree as you, at most 16 MiB, `encoding` `base64` for a binary one, over the version there, which the history keeps; a relative path with no `..` and no dot file; takes `artifact/edit`                                                                                                                                                 |
+| `write_artifact`     | `path`, `content`, `encoding`                       | Writes a file into the tree as you, at most 16 MiB, `encoding` `base64` for a binary one, replacing the version there, which the history keeps; a relative path with no `..` and no dot file; takes `artifact/edit`                                                                                                                                            |
 
 Each tool takes the permissions of the token's user, the ones a page takes in the browser: the role's policy and the user's own, which Settings, Permissions and the user's edit page set (see [Settings](settings.md#permissions)). An agent that should post notes or ask prompts gets Allow Edits on Notes or on Prompts in its own policy; the `claude` user starts with both. A note from `post_note` and a prompt from `ask_prompt` carry that user's name. A user with `prompt/edit` asks in the folders the user sees, and reads the runs of the prompts the user asked with `get_run`: `@claude-prompt` of the folder asked in. Other users' prompt runs list in `list_runs` and `get_run` with `prompt/view`.
 

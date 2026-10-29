@@ -25,7 +25,7 @@ func TestRun(t *testing.T) {
 	assert.False(t, run.IsForced())
 }
 
-// A run whose recording expired says so in place of its output.
+// A run whose recording expired says so where its output goes.
 func TestRun_ExpiredText(t *testing.T) {
 	t.Parallel()
 	assert.Contains(t, view.Run{Expired: true}.ExpiredText(), "expired under the Data retention settings")

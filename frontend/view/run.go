@@ -22,11 +22,11 @@ type Run struct {
 	// page shows it.
 	FrameSVG template.HTML
 	// Expired says the Data retention settings removed the run's
-	// recording; the run's page says so in place of its output.
+	// recording; the run's page says so where its output goes.
 	Expired bool
 }
 
-// ExpiredText is what a page shows in place of the output of a run whose recording expired.
+// ExpiredText is what a page shows for the output of a run whose recording expired.
 func (r Run) ExpiredText() string {
 	return recording.Expired
 }

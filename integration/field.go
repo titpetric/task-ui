@@ -28,7 +28,7 @@ type Field struct {
 	// integration serves.
 	Env string `json:"env,omitempty"`
 	// Default is the value the setting has while its field is empty, and
-	// what its form shows in place of a placeholder.
+	// what its form shows as the placeholder.
 	Default string `json:"default,omitempty"`
 	// Toggle gives the setting a switch: off leaves its variable out of a
 	// run and keeps its value for the next switch on.

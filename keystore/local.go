@@ -312,7 +312,7 @@ func (l *Local) add(ctx context.Context, spec Spec, privatePEM []byte, private a
 	return l.Get(ctx, name)
 }
 
-// free refuses a base another key holds, whatever its algorithm, and a
+// free refuses a base another key holds, of any algorithm, and a
 // second encryption key in a scope.
 func (l *Local) free(ctx context.Context, name string, spec Spec) error {
 	rows, err := l.Rows.List(ctx)

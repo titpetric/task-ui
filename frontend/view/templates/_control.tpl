@@ -66,7 +66,7 @@
 {{- $what := print $f.ID (or (and $r.Dir (print "/" $r.Dir)) "") " / " $r.Name }}
 {{- $desc := "" }}{{ if and $r.Description (ne $r.Description $r.Name) }}{{ $desc = $r.Description }}{{ end }}
 {{- $confirm := $.RunConfirm $r }}
-{{- /* On a folder's page a job that takes a terminal shows one in place of the play. */}}
+{{- /* On a folder's page a job that takes a terminal shows the terminal where the play goes. */}}
 {{- $term := and $r.Interactive $.JobGroups }}
 <span class="cc-slot" data-cc="{{ $r.Key }}" data-folder="{{ $f.ID }}" data-job="{{ $r.ID }}" data-name="{{ $r.Name }}" data-label="{{ if $named }}{{ $label }}{{ end }}" data-last="{{ $last }}"{{ if $.CanRun $f $r }} data-can{{ end }}{{ with $r.Dir }} data-dir="{{ . }}"{{ end }}{{ with $desc }} data-desc="{{ . }}"{{ end }}{{ with $r.ArgsCommand }} data-args="{{ . }}"{{ end }}{{ with $confirm }} data-confirm="{{ . }}"{{ end }}{{ if eq $r.Kind "file" }} data-path="{{ $r.Source }}"{{ end }}{{ if $term }} data-interactive{{ end }}>
 {{- if $run -}}

@@ -10,7 +10,7 @@ import (
 // toolSummary returns what the stored tooling reads as TASK_UI_TOOLING:
 // the tools, one a line, or nothing when there are none or the table
 // cannot be read. The rows come from the last Check of the Instance
-// page, not from this start.
+// page.
 func toolSummary(tools *storage.ToolStorage) func(ctx context.Context) string {
 	return func(ctx context.Context) string {
 		rows, err := tools.List(ctx)

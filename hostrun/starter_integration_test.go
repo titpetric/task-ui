@@ -115,7 +115,7 @@ func TestStarter_Start(t *testing.T) {
 }
 
 // Resolve names every host with a login for *, in the inventory's
-// order, a named host whatever its login, and refuses one it doesn't
+// order, a named host with any login, and refuses one it doesn't
 // list.
 func TestStarter_Resolve(t *testing.T) {
 	t.Parallel()

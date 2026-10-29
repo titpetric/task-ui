@@ -163,8 +163,8 @@ func (s *Store) For(ctx context.Context, folder string) (map[string]string, erro
 }
 
 // Reaching returns the rows of the variables that reach a folder,
-// decrypted, one per name by name: the folder's own in place of its
-// workspace's, which in place of the one for every workspace. A run gets
+// decrypted, one per name by name: the folder's own where it has one,
+// then its workspace's, then the one for every workspace. A run gets
 // these, and records them read; task-ui get-secret reads the same set.
 func (s *Store) Reaching(ctx context.Context, folder string) ([]model.Secret, error) {
 	workspace, err := s.Workspace(ctx, folder)

@@ -30,7 +30,7 @@ type RunFilter struct {
 	// job, @host:<host>.
 	Job string
 	// Dir is the directory inside the folder of the job, with Job: ""
-	// keeps the runs of the folder's own job, not those of the job of a
+	// keeps the runs of the folder's own job and leaves out the job of a
 	// directory inside it with the same name.
 	Dir    string
 	State  model.State
@@ -63,7 +63,7 @@ func (s *RunStorage) Create(ctx context.Context, run *model.Run) error {
 	}
 	// A caller's time comes in the caller's zone, and SQLite compares
 	// and orders started_at as text: two zones in one column sort by
-	// their offset, not by their instant.
+	// their offset text and lose the order of their instants.
 	run.StartedAt = utc(run.StartedAt)
 	run.CreatedAt = now
 	run.UpdatedAt = now
@@ -237,7 +237,7 @@ func (s *RunStorage) Recorded(ctx context.Context) ([]model.Run, error) {
 	return client(s.db).Select[model.Run](ctx, "SELECT * FROM run WHERE cast_path != '' ORDER BY started_at ASC, id ASC")
 }
 
-// Busy returns the IDs of the runs whose recordings stay whatever the retention rules say.
+// Busy returns the IDs of the runs whose recordings always stay.
 // Those are the runs in progress and the step runs of a workflow run in progress, whose prompt reads their output.
 func (s *RunStorage) Busy(ctx context.Context) (map[string]bool, error) {
 	ids, err := client(s.db).Select[runID](ctx, `SELECT id FROM run WHERE state = ?

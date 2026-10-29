@@ -170,7 +170,7 @@ func TestReport_Daily(t *testing.T) {
 }
 
 // A report of thirty days draws thirty bars, so the chart is the width
-// of its window whatever is in it.
+// of its window, full or empty.
 func TestReport_DailyFillsTheWindow(t *testing.T) {
 	days := scope().Daily(30)
 	assert.Len(t, days, 30)

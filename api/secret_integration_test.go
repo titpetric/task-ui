@@ -129,8 +129,8 @@ func TestSecret_ListAndDelete(t *testing.T) {
 	assert.Equal(t, http.StatusNoContent, again.Status)
 }
 
-// Without an encryption key the store keeps no secret, whatever SSH
-// keys there are; a rekey writes every secret again for the current
+// Without an encryption key the store keeps no secret, with or without
+// SSH keys; a rekey writes every secret again for the current
 // keys.
 func TestSecret_Encryption(t *testing.T) {
 	t.Parallel()

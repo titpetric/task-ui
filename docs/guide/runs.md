@@ -4,7 +4,7 @@ Every run, by anyone, newest first. A dot beside **Runs** in the sidebar pulses 
 
 A prompt runs as `@claude-prompt` of the folder and directory it asks in, such as `malta/dockerfiles/@claude-prompt`, and lists under that folder here and in the recents. Another user's prompt runs list with the `prompt/view` permission; your own always do (see [Prompt](projects.md#prompt)). A run of the root names its job alone, as `@claude-note` or `@shell`, and a directory of the root by its path.
 
-A command on a host of the [inventory](inventory.md) runs as `@host:<host>`, a built-in job of the root, one run a host, its command the run's args. `/runs?job=@host:dev1` lists the runs on `dev1`, `/runs?job=@host:*` those on every host, and `/runs?batch=<id>` the runs started together on more than one host.
+A command on a host of the [inventory](inventory.md) runs as `@host:<host>`, a built-in job of the root, one run a host, its command the run's args. `/runs?job=@host:dev1` lists the runs on `dev1`, `/runs?job=@host:*` those on every host, and `/runs?batch=<id>` the runs started together on two or more hosts.
 
 ![The runs](https://cdn.si/titpetric/task-ui/docs/assets/runs-dark.png)
 

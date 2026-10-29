@@ -101,7 +101,7 @@ func TestNoteStorage_Prompts(t *testing.T) {
 	none, _ := notes.List(ctx, storage.NoteFilter{Prompts: true, WorkspaceID: "ws2"})
 	assert.Len(t, none, 0)
 
-	// A prompt about a run lists by the run, not with its place's.
+	// A prompt about a run lists by the run.
 	about := &model.Note{UserName: "admin", Body: "why did it fail", State: model.NoteOpen, WorkspaceID: "ws1", Dir: "malta", AboutRunID: "run1"}
 	assert.NoError(t, notes.Create(ctx, about))
 	mine, _ = notes.List(ctx, storage.NoteFilter{Prompts: true, Dir: "malta"})
@@ -116,8 +116,7 @@ func TestNoteStorage_Prompts(t *testing.T) {
 	all, _ = notes.List(ctx, storage.NoteFilter{Prompts: true})
 	assert.Len(t, all, 3)
 
-	// A workflow run's prompt lists by the workflow run, not with its
-	// place's.
+	// A workflow run's prompt lists by the workflow run.
 	flow := &model.Note{UserName: "admin", Body: "summarize", State: model.NoteOpen, WorkspaceID: "ws1", Dir: "malta", AboutWorkflowRunID: "wr1"}
 	assert.NoError(t, notes.Create(ctx, flow))
 	mine, _ = notes.List(ctx, storage.NoteFilter{Prompts: true, Dir: "malta"})

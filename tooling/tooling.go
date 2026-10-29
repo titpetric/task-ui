@@ -57,8 +57,8 @@ func (r *Report) Empty() bool {
 // Scope is one database's history.
 //
 // Since and the methods built on it count a window in days back from the
-// report's last day, not from a cutoff time: the rows are dates, and a
-// reader asks "the last seven days" of a calendar, not of a clock. The
+// report's last day: the rows are dates, and a reader asks "the last
+// seven days" of a calendar. The
 // report's own Tools cover its whole window, so ToolsSince rolls a
 // shorter one up from the usage rows. Daily fills the empty days with
 // zeros: a chart that leaves them out draws a busy fortnight and a quiet

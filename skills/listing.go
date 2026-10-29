@@ -17,16 +17,16 @@ type Listing struct {
 	Lint     []Finding
 }
 
-// lintAnswer is the object atkins prints in place of the sections for
-// a pipeline with lint findings.
+// lintAnswer is the object atkins prints for a pipeline with lint
+// findings.
 type lintAnswer struct {
 	Error string    `json:"error"`
 	Lint  []Finding `json:"lint"`
 }
 
 // ParseListing reads atkins' answer: one or more JSON values, each the
-// list of sections or a lint object, and whatever follows the last one
-// it can read, which it ignores. An answer that starts with neither is
+// list of sections or a lint object, and ignores the text after the
+// last one it can read. An answer that starts with neither is
 // an error.
 func ParseListing(out []byte) (Listing, error) {
 	var listing Listing

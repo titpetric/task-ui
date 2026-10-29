@@ -37,7 +37,7 @@ The end of a workflow's edit page schedules it (see [Workflows](workflows.md#sch
 
 ## Cleanup
 
-`@cleanup` of the root, `internal`, is `task-ui cleanup`: it applies the [Data retention](settings.md#data-retention) table, each row in the table's order, the oldest items first: the recording files of finished runs, the rows of old runs with their recordings, summaries and threads, old prompt threads, old workflow runs with their steps, the earlier versions of the artifact tree, never the latest of a file in the tree, the reads of the secret read log, the expired tokens and sessions, which go every time, and then the tool history, which it hands to `atkins --prune` database by database, the instance's own copy among them. It prints a line per row, what it removed and what stays, a line per tool history database, and after it removed rows it vacuums the database and prints its size before and after. A run in progress or queued, a thread with an open instruction, a workflow run in progress and its own run stay whatever the rules say. With `--dry-run` as its arguments it prints what would go and changes nothing.
+`@cleanup` of the root, `internal`, is `task-ui cleanup`: it applies the [Data retention](settings.md#data-retention) table, each row in the table's order, the oldest items first: the recording files of finished runs, the rows of old runs with their recordings, summaries and threads, old prompt threads, old workflow runs with their steps, the earlier versions of the artifact tree, never the latest of a file in the tree, the reads of the secret read log, the expired tokens and sessions, which go every time, and then the tool history, which it hands to `atkins --prune` database by database, the instance's own copy among them. It prints a line per row, what it removed and what stays, a line per tool history database, and after it removed rows it vacuums the database and prints its size before and after. A run in progress or queued, a thread with an open instruction, a workflow run in progress and its own run always stay. With `--dry-run` as its arguments it prints what would go and changes nothing.
 
 When task-ui first starts it schedules `@cleanup` `@daily` as the first admin, once: the schedule is yours to change, disable or delete, and task-ui adds no other. Admins alone run `@cleanup`, by hand, on a schedule, or as a workflow step.
 
@@ -57,7 +57,7 @@ The thread on the run's page keeps the full record of what Claude read and did. 
 
 > Attempted triage of failing infra/plan task, result: resolved. Info: https://task.example/runs/01K8ABCDEFGHJKMNPQRSTVWXYZ
 
-One note per triaged run, whichever the result. A schedule gets one triage at a time, and none for an hour after its last triage ended: a job that keeps failing every minute gets one thread and one note an hour, and the scheduler logs each run it leaves alone. A run that ends `ok`, or one a person stops, gets no triage. A schedule of `@host:<name>` or `@host:*` gets none either, as its runs have no folder to fix in: the scheduler logs that it skipped.
+One note per triaged run, for every result. A schedule gets one triage at a time, and none for an hour after its last triage ended: a job that keeps failing every minute gets one thread and one note an hour, and the scheduler logs each run it leaves alone. A run that ends `ok`, or one a person stops, gets no triage. A schedule of `@host:<name>` or `@host:*` gets none either, as its runs have no folder to fix in: the scheduler logs that it skipped.
 
 ## How a scheduled run runs
 

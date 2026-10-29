@@ -98,8 +98,8 @@ func stamp() *time.Time {
 }
 
 // utc returns a time as the database keeps it, in UTC: a column
-// compared as text against another time holds one zone, whatever the
-// zone of the clock that made it. Nil stays nil.
+// compared as text against another time holds one zone, from any clock
+// that made it. Nil stays nil.
 //
 // It keeps the precision the time came with. stamp() rounds the clock it reads
 // to the millisecond, which is resolution enough for a row nobody else

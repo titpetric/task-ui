@@ -36,7 +36,7 @@ Whoever commits to the workspace's home repository controls that workspace's run
 | the caches of XDG tools, Go's build cache among them | `XDG_CACHE_HOME`, `~/.cache`     |
 | Go's modules                                         | `GOPATH`, `~/go`                 |
 
-Everything else of `HOME` is the workspace's: the git identity, `~/.gitconfig`, the shell history, the XDG configuration, data and state. ssh reads `~/.ssh` from the user's entry in the password database, not from `HOME`, and its configuration and known hosts stay the server's. The run also gets `TASK_UI_HOME`, the home's directory, the same as `HOME`.
+Everything else of `HOME` is the workspace's: the git identity, `~/.gitconfig`, the shell history, the XDG configuration, data and state. ssh reads `~/.ssh` from the user's entry in the password database, and its configuration and known hosts stay the server's. The run also gets `TASK_UI_HOME`, the home's directory, the same as `HOME`.
 
 ## Skills
 
@@ -135,7 +135,7 @@ The create's `url` is optional: with it, the home is a clone of that repository 
 
 The projects at the top of the root come first, by name, and the workspaces follow them, in their order. A workspace adds a level above its projects: a label row with the workspace's name, the count of its projects and a chevron that points down while it's open. Under it come the workspace's own jobs, then its projects, each with a fold of its own: every directory right inside the workspace's `src/`, a checkout with jobs or without; the home never shows in the sidebar, pinned or not; its files are on the workspace's page. This browser remembers each fold apart, and `malta` and `malta/dockerfiles` open and close on their own.
 
-A workspace with many projects lists the ones in use: **Sidebar** in its settings takes a number, and the sidebar lists that many of the workspace's projects, the ones with the most recent commit first, a checkout without a commit last, and ties by name; the folders inside a kept project stay with it, and the listed projects keep the sidebar's name order. Empty or `0` lists every project, by name. A project set not to show takes no place in the count. The rest leave the sidebar alone: the Projects page, the workspace's page, the dashboard and a pin list them as before. The default workspace, `internal`, takes the setting over the projects at the root. task-ui reads each project's last commit with one git command and keeps it a minute. A page costs at most one git process per project per minute, and a pull or a push shows in the order within the minute. **Pin workspace** in the `[...]` of the workspace's page, and **Pin** on a folder or a job inside it, add to what the sidebar lists, for you (see [What the sidebar lists](projects.md#what-the-sidebar-lists)). With no named workspace, the sidebar lists the projects alone (see [Projects and jobs](projects.md)).
+A workspace with many projects lists the ones in use: **Sidebar** in its settings takes a number, and the sidebar lists that many of the workspace's projects, the ones with the most recent commit first, a checkout without a commit last, and ties by name; the folders inside a kept project stay with it, and the listed projects keep the sidebar's name order. Empty or `0` lists every project, by name. A project set not to show takes no place in the count. The rest leave the sidebar alone: the Projects page, the workspace's page, the dashboard and a pin list them as before. The default workspace, `internal`, takes the setting for the projects at the root. task-ui reads each project's last commit with one git command and keeps it a minute. A page costs at most one git process per project per minute, and a pull or a push shows in the order within the minute. **Pin workspace** in the `[...]` of the workspace's page, and **Pin** on a folder or a job inside it, add to what the sidebar lists, for you (see [What the sidebar lists](projects.md#what-the-sidebar-lists)). With no named workspace, the sidebar lists the projects alone (see [Projects and jobs](projects.md)).
 
 ## Runs in a workspace
 
@@ -178,7 +178,7 @@ A key has one use (see [One key, one use](settings.md#one-key-one-use)): an uplo
 
 ![A workspace's settings page: its home repository, keys, and Export](https://cdn.si/titpetric/task-ui/docs/assets/workspace-edit-dark.png)
 
-A run gets the instance keys linked to it (see [Settings](settings.md#keys)), then its workspace's SSH keys, and the first line of its terminal names each: `$ ssh-agent: deploy_rsa4096, workspace_malta_deploy_ed25519`. A project at the root gets the keys of `internal`. The links decide what reaches a run's agent, not what a job can open on disk (see [What a workspace keeps apart](#what-a-workspace-keeps-apart)).
+A run gets the instance keys linked to it (see [Settings](settings.md#keys)), then its workspace's SSH keys, and the first line of its terminal names each: `$ ssh-agent: deploy_rsa4096, workspace_malta_deploy_ed25519`. A project at the root gets the keys of `internal`. The links decide what reaches a run's agent; a job can still open any key file on disk (see [What a workspace keeps apart](#what-a-workspace-keeps-apart)).
 
 ```sh
 curl -s -X POST https://task.example.com/api/workspaces/malta/keys/generate \
@@ -192,7 +192,7 @@ curl -s https://task.example.com/api/workspaces/malta/keys \
 
 ## Secrets and env
 
-A workspace's variables reach its runs (see [Settings](settings.md#secrets-and-env)). A variable of scope `workspace:malta` reaches every folder in it; a project's own, scope `malta/deploy`, reaches that project, which gets it in place of a workspace one of the same name. A variable of scope `all` reaches every workspace. The variables of `internal` reach the projects at the root and no named workspace unless their scope is `all`: a project in `malta` gets `malta`'s own variables, the `all` ones and its own, never `internal`'s. The instance's encryption key encrypts them all.
+A workspace's variables reach its runs (see [Settings](settings.md#secrets-and-env)). A variable of scope `workspace:malta` reaches every folder in it; a project's own, scope `malta/deploy`, reaches that project, and a run there reads the project's entry of a name the workspace also holds. A variable of scope `all` reaches every workspace. The variables of `internal` reach the projects at the root and no named workspace unless their scope is `all`: a project in `malta` gets `malta`'s own variables, the `all` ones and its own, never `internal`'s. The instance's encryption key encrypts them all.
 
 **Secrets** in the **⋯** menu at the top right of the workspace's page opens `/settings/secrets?workspace=malta`, the variables that reach that workspace, on the one page that manages them. It takes `secret/view`; adding, editing and deleting take `secret/edit` and `secret/delete`.
 
@@ -226,7 +226,7 @@ curl -s -X POST https://other.example.com/api/workspaces/import \
   -F bundle=@malta.tui.age -F passphrase='correct horse battery' -F folder=malta
 ```
 
-The import answers `{workspace, home, projects, unknown_users}`: the home and each project with `cloned` and git's `output`, and the users the grants name that the instance doesn't have. Their grants stay and reach a run once a user of that name exists. An export's passphrase under 12 characters, a wrong passphrase on import, a file that is not a bundle, and an entry other than `manifest.json` or a `.key` or `.pub` file of `.ssh/` answer `400`; bundled keys held here answer `409`, and a file over the upload limit `413`. Both routes take an admin, `403` for anyone else, `workspace/edit` or not: the bundle alone, of everything task-ui hands out, holds private keys, inside its passphrase, and the import writes them into the key folder.
+The import answers `{workspace, home, projects, unknown_users}`: the home and each project with `cloned` and git's `output`, and the users the grants name that the instance doesn't have. Their grants stay and reach a run once a user of that name exists. An export's passphrase under 12 characters, a wrong passphrase on import, a file that is not a bundle, and an entry other than `manifest.json` or a `.key` or `.pub` file of `.ssh/` answer `400`; bundled keys held here answer `409`, and a file over the upload limit `413`. Both routes take an admin, `403` for anyone else, with or without `workspace/edit`: the bundle alone, of everything task-ui hands out, holds private keys, inside its passphrase, and the import writes them into the key folder.
 
 | Limit           | Size   |
 |-----------------|--------|
@@ -241,7 +241,7 @@ A workspace decides what task-ui puts into a run: which secrets go into its envi
 
 - every key file of the key folder, `TASK_UI_SSH_DIR`, the encryption keys among them; in the image, mount only `/keys` there;
 - the database, with every workspace's secrets as ciphertext, which the keys beside it open;
-- every checkout under the root, the homes among them, sealed entries such as `.git` and `.env` included: sealing keeps them off the pages and the API, not out of a job's reach.
+- every checkout under the root, the homes among them, sealed entries such as `.git` and `.env` included: sealing keeps them off the pages and the API; a job still reaches them.
 
 A job that someone in one workspace can change can read another workspace's secrets, and whoever commits to a workspace's home repository controls that workspace's runs: its `.profile`, skills and `CLAUDE.md` run in every one of them. Runner rights, and the right to push to a workspace's repositories, its home repository first, belong with people you would trust with every workspace on the instance; where that does not hold, run one instance per trust boundary.
 

@@ -18,8 +18,8 @@ const Cookie = "task_ui_session"
 // Guard resolves the user of a request and keeps the ones without one
 // out. Login is the only way in, unless the development auto login names
 // a user: then every request is that user. A bearer token decides alone:
-// one that signs in nobody leaves the request without a user, whatever
-// cookie it carries.
+// one that signs in nobody leaves the request without a user, and the
+// request's cookie goes unread.
 type Guard struct {
 	Sessions *Sessions
 	Users    *storage.UserStorage

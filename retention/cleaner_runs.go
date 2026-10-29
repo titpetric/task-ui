@@ -41,7 +41,7 @@ func (c *Cleaner) recordings(ctx context.Context) ([]Item, error) {
 	return items, nil
 }
 
-// busy reports whether a run stays whatever the rules say: in progress
+// busy reports whether a run always stays: in progress
 // or queued, a step of a workflow run in progress, or the cleanup's own.
 func (c *Cleaner) busy(run *model.Run, busy map[string]bool) bool {
 	return busy[run.ID] || !model.Finished(run.State) || run.ID == c.Self

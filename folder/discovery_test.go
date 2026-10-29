@@ -14,7 +14,7 @@ func src(root string, path ...string) string {
 func TestDiscovery(t *testing.T) {
 	root := t.TempDir()
 	write(t, src(root, "infra", "atkins.yml"), "name: Infra\njobs:\n  plan: echo plan\n")
-	// Atkins files win over Taskfiles in the same folder.
+	// A folder with an atkins file reads its jobs from atkins.
 	write(t, src(root, "infra", "Taskfile.yml"), "tasks:\n  other:\n    desc: Other\n")
 	write(t, src(root, "web site", "Taskfile.yml"), "tasks:\n  build:\n    desc: Build\n")
 	write(t, src(root, ".hidden", "Taskfile.yml"), "tasks:\n  x:\n    desc: X\n")

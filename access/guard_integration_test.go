@@ -129,7 +129,7 @@ func TestGuard_SetCookie(t *testing.T) {
 	assert.True(t, cookies[0].Secure)
 	assert.True(t, cookies[0].HttpOnly)
 	assert.Equal(t, 3600, cookies[0].MaxAge)
-	assert.False(t, strings.Contains(cookies[0].Value, "."), "opaque, not a JWT")
+	assert.False(t, strings.Contains(cookies[0].Value, "."), "an opaque token")
 	user, err := guard.Sessions.Resolve(r.Context(), cookies[0].Value)
 	assert.NoError(t, err)
 	assert.Equal(t, ops.ID, user.ID)

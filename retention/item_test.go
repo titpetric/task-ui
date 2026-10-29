@@ -18,8 +18,8 @@ func items(now time.Time) []retention.Item {
 }
 
 // Each age lets the older items go; the limit takes the oldest until
-// the rest fit; both together take whichever takes more; never with no
-// limit keeps everything.
+// the rest fit; both together take every item either takes; never with
+// no limit keeps everything.
 func TestExpire(t *testing.T) {
 	t.Parallel()
 	now := time.Date(2026, 10, 23, 12, 0, 0, 0, time.UTC)

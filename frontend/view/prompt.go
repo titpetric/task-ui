@@ -21,7 +21,7 @@ type Prompt struct {
 	// WorkflowRun is the workflow run whose prompt's thread the box of a
 	// workflow run's page lists, without a box to ask.
 	WorkflowRun string
-	// Area is the area's page the box asks from in place of a folder's,
+	// Area is the area's page the box asks from,
 	// model.AreaWorkflows on the Workflows page, with a pick of the
 	// folder Claude runs in; its threads are the area's.
 	Area string

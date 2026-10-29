@@ -56,10 +56,10 @@ Below the choice, an admin sees every variable of the server by name, never its 
 |--------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------|------------------------------------------|
 | **Run recordings**       | the `.cast` file of a finished run, its output                                                                                                | the run, who started it and how it ended; its page says the recording expired                                     | age and size                             |
 | **Run history**          | the rows of runs older than the age, with their recordings, summaries and the prompt threads about them                                       | runs in progress or queued, and the cleanup's own                                                                 | age and size, the size their recordings' |
-| **Prompt threads**       | prompt threads whose last reply is older than the age, with their replies                                                                     | the runs; the board's notes, which people write, whatever their age; a thread with an open or working instruction | age                                      |
+| **Prompt threads**       | prompt threads whose last reply is older than the age, with their replies                                                                     | the runs; the board's notes, which people write, at any age; a thread with an open or working instruction         | age                                      |
 | **Workflow run history** | workflow runs older than the age, with their steps, answers and the threads of their prompts                                                  | the workflows; a workflow run in progress                                                                         | age                                      |
 | **Artifact history**     | earlier versions of the artifact tree's files, with their records                                                                             | the latest version of every file in the tree                                                                      | age and size                             |
-| **Secret read log**      | which run got which secret                                                                                                                    | the last 1000 reads of each secret, which the log keeps whatever the rule                                         | age                                      |
+| **Secret read log**      | which run got which secret                                                                                                                    | the last 1000 reads of each secret, which the log always keeps                                                    | age                                      |
 | **Expired sign-ins**     | tokens and browser sessions past their expiry                                                                                                 | the ones still signing in                                                                                         | fixed: removed every cleanup, no setting |
 | **Tool history**         | the runs and commands older than the age in `atkins.db` of each workspace's home and the instance's own copy, which atkins prunes and vacuums | the newer runs and commands, the databases                                                                        | age                                      |
 
@@ -77,9 +77,9 @@ Every rule keeps 31 days at the start. **Keep** picks 24 hours, 7 days, 31 days,
 
 The rows without a size show a dash there. **Holds now** is the count, with the bytes where the items have them. The fixed rows say their rule across the two columns.
 
-Past either rule the oldest go first, until both hold. `@cleanup` applies the rows in the order of the table: run recordings, then run history, which takes a run's recording, summary and threads with it, then prompt threads, workflow runs, artifact history and the secret read log, and the expired sign-ins last. A thread run history removes counts to it, not to the Prompt threads row. A recording of a run in progress, or of a step of a workflow run in progress, stays and counts towards the limit. A run of `internal/*`, from before prompts had folders of their own, falls under the same rules. A file deleted from the tree keeps its versions in the history until they expire.
+Past either rule the oldest go first, until both hold. `@cleanup` applies the rows in the order of the table: run recordings, then run history, which takes a run's recording, summary and threads with it, then prompt threads, workflow runs, artifact history and the secret read log, and the expired sign-ins last. A thread run history removes counts to run history. A recording of a run in progress, or of a step of a workflow run in progress, stays and counts towards the limit. A run of `internal/*`, from before prompts had folders of their own, falls under the same rules. A file deleted from the tree keeps its versions in the history until they expire.
 
-Anyone who may open a step of the settings reads the page; an admin saves the rules, with `PUT /api/retention`, and **Clean up now** starts `@cleanup` at once, as a run whose output shows what went. A run of `@cleanup` works on the data directory it inherits, `TASK_UI_DATA`, with the workspace folder at `<data>/workspaces`: inside a run `TASK_UI_WORKSPACE` names the run's workspace, not the folder, and task-ui reads it as the folder outside a run alone. A save takes effect at the next run of `@cleanup`: task-ui schedules it `@daily`, at midnight, as the first admin, once, when it first starts; the [Schedules](scheduled.md#cleanup) page changes or deletes that schedule.
+Anyone who may open a step of the settings reads the page; an admin saves the rules, with `PUT /api/retention`, and **Clean up now** starts `@cleanup` at once, as a run whose output shows what went. A run of `@cleanup` works on the data directory it inherits, `TASK_UI_DATA`, with the workspace folder at `<data>/workspaces`: inside a run `TASK_UI_WORKSPACE` names the run's workspace, and task-ui reads it as the folder outside a run alone. A save takes effect at the next run of `@cleanup`: task-ui schedules it `@daily`, at midnight, as the first admin, once, when it first starts; the [Schedules](scheduled.md#cleanup) page changes or deletes that schedule.
 
 ![Data retention: a table, a row per area](https://cdn.si/titpetric/task-ui/docs/assets/retention-dark.png)
 
@@ -163,7 +163,7 @@ A variable applies to:
 - **All workspaces**, scope `all`, which reaches every folder in every workspace, including one added later.
 - one workspace, `workspace:<name>`, which reaches its folders and projects and no folder of another workspace.
 
-A folder's own entry, `malta/deploy`, is an older scope: it reaches that folder's jobs, and a run of them gets it in place of its workspace's entry of the same name. A run gets a workspace's entry in place of the one of every workspace.
+A folder's own entry, `malta/deploy`, is an older scope: a run of that folder's jobs reads the folder's entry, and other runs in the workspace read the workspace's. A run in a workspace reads the workspace's entry; a run in a workspace without an entry of that name reads the one of every workspace.
 
 **Add variable** at the top opens the form: a name, a value, a **Secret** box, and **Applies to**, every workspace or one. Unchecking **Secret** makes an env entry, whose value shows in the table; checking it keeps the value out of every page and response. Editing a secret leaves the value field empty: blank keeps the value it has. In the API, `is_secret` says which, and an env entry's answer carries `value`. `/settings/secrets?workspace=malta` shows what reaches one workspace; the Workspaces page links each workspace's count there. This page manages the variables of every workspace and project.
 
@@ -173,7 +173,7 @@ Below the table, **Integration environment** lists what the integrations compute
 
 The instance's encryption key encrypts every variable, the workspaces' and the integrations': one encryption key per instance, which [Rotate key](#rotate-key) rotates, re-encrypting them all. Runs see no change.
 
-The scopes keep a workspace's variables out of the environment of another workspace's runs, not out of their reach on disk (see [What a workspace keeps apart](workspaces.md#what-a-workspace-keeps-apart)). A folder's workspace is its first segment when that's a named workspace, else `internal`, while the instance has the default workspace. Removing a workspace waits for its variables to go first and takes its SSH keys. The integrations' settings aren't in the table: the [Integrations](#integrations) page holds them, and the computed environment below shows their effect.
+The scopes keep a workspace's variables out of the environment of another workspace's runs; on disk, those runs can still reach them (see [What a workspace keeps apart](workspaces.md#what-a-workspace-keeps-apart)). A folder's workspace is its first segment when that's a named workspace, else `internal`, while the instance has the default workspace. Removing a workspace waits for its variables to go first and takes its SSH keys. The integrations' settings aren't in the table: the [Integrations](#integrations) page holds them, and the computed environment below shows their effect.
 
 ### Secrets in scripts
 
@@ -324,7 +324,7 @@ Troubleshooting: a hook whose delivery Forgejo shows as `401` has a secret other
 
 Who may sign in comes from the password file on the server. **Create user** adds one to it, with a name and a password of at least 8 characters, and they can sign in at once; `task-ui passwd <user>` on the server adds or resets one too. **Delete**, in a user's row's **⋯** menu or on the profile, removes one who is no admin and not you: their line leaves the file, and their sessions, tokens and policy end at once, while runs, notes and history keep their name. Deleting takes Allow Deletes on Users, `user/delete`. Removing the line on the server does the same, and task-ui reads the file again whenever it changes. A new user comes in as a viewer, the lowest role; the first users of an empty database come in as admins (see [Running the server](../running.md#users-and-roles)). The **Flags** column shows `mcp` for an MCP agent user and `agent` for one whose mentions run instance Claude.
 
-What a role may do comes from permission policies over the rules of `config/permissions.yml`, which [Permissions](#permissions) sets. An admin may do everything. A runner runs jobs, reads and writes notes, workflows, schedules and the artifact tree, and reads the inventory; a viewer does the same without running and without writing the artifact tree. A user's own allow or deny decides first; where the user has none, the role's rules decide, and task-ui applies a deny there over an allow. [Permissions](#permissions) lists what each role starts with.
+What a role may do comes from permission policies on the rules of `config/permissions.yml`, which [Permissions](#permissions) sets. An admin may do everything. A runner runs jobs, reads and writes notes, workflows, schedules and the artifact tree, and reads the inventory; a viewer does the same without running and without writing the artifact tree. A user's own allow or deny decides for that user; where the user has none, the role's rules decide, and a deny there denies the action even where another rule allows it. [Permissions](#permissions) lists what each role starts with.
 
 ![Users](https://cdn.si/titpetric/task-ui/docs/assets/users-dark.png)
 
@@ -335,12 +335,12 @@ A user's name opens their **profile**, at `/users/<name>`: the name, when they j
 The **edit page**, at `/users/<name>/edit`, from **Edit** on the profile or in a user's row's **⋯** menu, holds what the user is and may do, with **View profile** top right and **Cancel** under a form back to the profile. It opens as the profile does; each form saves through the API, which takes Allow Edits on Users, and shows its values as text to anyone else. Its sections, in order:
 
 - **Roles**, which an admin sets:
-  - **Administrative privileges (all)**: every permission, whatever the role says. The last admin keeps it: unchecking it answers "the last admin".
+  - **Administrative privileges (all)**: every permission, for any role. The last admin keeps it: unchecking it answers "the last admin".
   - **Role**: runner or viewer, what the user's permissions start from without the flag.
   - **MCP agent user**: the user's token reaches the MCP endpoint, and an agent learns of work from the notes that name the user. Off, it ends the user's MCP token.
   - **Run instance Claude when mentioned**: a note naming the user starts the Notes agent as them. It needs MCP agent user.
 - **Folders**: which folders the user sees, **All folders**, or **Custom** and the folders checked.
-- **Permissions**: the user's own rules over the role's (see [Permissions](#permissions)).
+- **Permissions**: the user's own rules, on top of the role's (see [Permissions](#permissions)).
 - **Keys**: the SSH keys linked to the user, with **Generate key** (see [Keys](#keys)).
 - **MCP access**: **Enable MCP** makes a token for an MCP client that lasts 30 days and shows it once, with the `claude mcp add` command filled in. Once on, the section shows its dates, the expiry in amber within a week and red once past, with **Rotate** and **Disable**. Enabling takes Allow Edits on Users; you rotate or disable your own from your own edit page. See [MCP](mcp.md).
 
@@ -362,7 +362,7 @@ What each role may do, rule by rule, over `config/permissions.yml`: each section
 
 A cell inherits, empty, allows, a green ✓, or denies, a red ✕; a click moves it to the next, and **Save permissions** keeps the cells that changed. **Allow All** sets every rule of its section; where it and a rule set on its own disagree, task-ui applies the deny. The admin role shows every cell allowed and none changes: an admin may do everything. The page opens with Allow View on Users and changes with Allow Edits on Users; your own role's matrix changes only when your role grants Allow Edits on Users.
 
-A user's edit page has the same matrix under **Permissions**, for their own policy over their role's, with the result after each cell: a muted ✓ where the user may do it, ✕ where not. The user's own allow or deny decides first, whatever the role says; an empty cell inherits the role's rules, where task-ui applies a deny over an allow; what neither allows, the user may not do. An admin's matrix shows everything allowed and does not change, and your own changes only with Allow Edits on Users through your role. No one grants themselves more.
+A user's edit page has the same matrix under **Permissions**, for their own policy on top of their role's, with the result after each cell: a muted ✓ where the user may do it, ✕ where not. The user's own allow or deny decides for that user; an empty cell inherits the role's rules, where a deny denies the action even where another rule allows it; what neither allows, the user may not do. An admin's matrix shows everything allowed and does not change, and your own changes only with Allow Edits on Users through your role. No one grants themselves more.
 
 ![A user's permissions on their edit page: shell denied, the secrets readable](https://cdn.si/titpetric/task-ui/docs/assets/user-edit-light.png)
 
@@ -385,7 +385,7 @@ The admin role may do everything and holds no policy. The other roles, and the `
 
 So no role but admin starts with Enter Shell, Run on Hosts, Allow interactive mode, the prompts or any section of the settings.
 
-Folder visibility and the allow lists of jobs still apply over the permissions: a user runs a job with Run Jobs, in a folder they see, when its allow lists name them or their role.
+Folder visibility and the allow lists of jobs apply on top of the permissions: a user runs a job with Run Jobs, in a folder they see, when its allow lists name them or their role.
 
 ## Workflows
 
@@ -408,7 +408,7 @@ A row's `[...]` menu opens the folder, its **Edit project**, and **Pull now**, w
 **Edit project** on a folder sets what the instance adds to it; its files stay as they are:
 
 - a title and a description;
-- **who can run it**: the roles and the users, with the element [Who gets it](#who-gets-it) describes; none checked is everyone who may run. Each job has the same element in the per-job table, over the folder's, and none checked there inherits;
+- **who can run it**: the roles and the users, with the element [Who gets it](#who-gets-it) describes; none checked is everyone who may run. Each job has the same element in the per-job table, which decides for that job, and none checked there inherits the folder's;
 - which **sources** to read, which is also how a folder with a pipeline gets its Makefile or scripts back as jobs;
 - **Recursive**, on by default, lists the folders inside the project as deep as they go; off lists the project and its top-level folders alone, to keep a tree's nested folders out of the catalogue (see [Projects and jobs](projects.md#where-the-jobs-come-from));
 - the **workspace** a project at the top of one is in: another one moves the project there, as [Move a project](projects.md#move-a-project-to-another-workspace) describes.

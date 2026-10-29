@@ -158,8 +158,8 @@ func NewConfig(args []string) (*Config, error) {
 }
 
 // NewConfigAt reads the configuration as NewConfig does, with the
-// default data and key folders under base in place of /: /data and
-// /keys when they exist there, else ./data and ./keys.
+// default data and key folders under base: base/data and base/keys when
+// they exist, else ./data and ./keys.
 func NewConfigAt(base string, args []string) (*Config, error) {
 	for _, name := range model.SortedKeys(gone) {
 		if _, ok := os.LookupEnv(name); ok {

@@ -94,7 +94,7 @@ func TestLayout_Keyboard(t *testing.T) {
 }
 
 // Add workspace lands on the new workspace, where its project and its
-// keys are one click away, not on the list.
+// keys are one click away.
 func TestWorkspaceNew_LandsOnTheWorkspace(t *testing.T) {
 	t.Parallel()
 

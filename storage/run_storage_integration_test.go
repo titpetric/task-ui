@@ -332,7 +332,7 @@ func TestRunStorage_Busy(t *testing.T) {
 // a host that is not on UTC.
 //
 // The query compares and orders started_at as text, so two zones in one
-// column sort by their offset, not their instant: without the
+// column sort by their offset text: without the
 // conversion a run started an hour ago in CEST sorts above one started
 // now, and the list is not newest first.
 func TestRunStorage_CreateNormalisesTheClock(t *testing.T) {
