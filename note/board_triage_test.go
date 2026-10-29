@@ -20,7 +20,7 @@ func TestVerdict(t *testing.T) {
 		{"case and spacing", "  result:   NO   ACTION  ", note.TriageNoAction},
 		{"bold", "**Result: resolved**", note.TriageResolved},
 		{"code and stop", "`Result: not resolved`.", note.TriageUnresolved},
-		{"the last line wins", "Result: no action\n\nOn a second look:\nResult: resolved\nFixed the path.", note.TriageResolved},
+		{"the last line decides", "Result: no action\n\nOn a second look:\nResult: resolved\nFixed the path.", note.TriageResolved},
 		{"missing", "I looked at the run and found nothing.", note.TriageUnresolved},
 		{"empty", "", note.TriageUnresolved},
 		{"in a sentence", "The result: resolved, I think.", note.TriageUnresolved},

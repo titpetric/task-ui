@@ -5,7 +5,7 @@ import (
 )
 
 // Resolve finds the folder a path under /f names, and the rest: "", a job ID, or env/<file>.
-// The longest folder ID that starts the path wins, as folder IDs nest.
+// It picks the longest folder ID that starts the path, as folder IDs nest.
 func Resolve(c Catalogue, path string) (*Folder, string) {
 	path = strings.Trim(path, "/")
 	var best *Folder

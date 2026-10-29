@@ -51,7 +51,7 @@ func (s *UserAuthPasswordStorage) SetBackups(ctx context.Context, userID string,
 }
 
 // Use marks a backup password used. It reports false for a password
-// already used, so of two sign ins racing on one backup password only one wins.
+// already used: of two sign ins racing on one backup password, only one succeeds.
 func (s *UserAuthPasswordStorage) Use(ctx context.Context, id string) (bool, error) {
 	db := client(s.db)
 	now := stamp()

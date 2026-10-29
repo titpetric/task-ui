@@ -1082,7 +1082,7 @@
     });
     var summary = field.querySelector(".who-summary");
     if (!summary) return;
-    if (!any) summary.textContent = "Nothing checked: " + (empty || "no run gets it") + ".";
+    if (!any) summary.textContent = "None checked: " + (empty || "no run gets it") + ".";
     else summary.textContent = getting + " of " + users.length + (users.length === 1 ? " user gets" : " users get") + " it" +
       (without.length && without.length <= 5 ? "; not " + without.join(", ") : "") + ".";
   }

@@ -71,8 +71,8 @@ func TestStore_Migrate(t *testing.T) {
 }
 
 // A secret of every workspace and one of a workspace under the same name
-// are two rows: the migration keeps both, and the workspace's wins in
-// the environment.
+// are two rows: the migration keeps both, and the environment holds the
+// workspace's.
 func TestStore_MigrateBothScopes(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
@@ -94,7 +94,7 @@ func TestStore_MigrateBothScopes(t *testing.T) {
 
 	vars, err := s.store.For(ctx, "internal/web")
 	assert.NoError(t, err)
-	assert.Equal(t, "new", vars["TOKEN"], "a workspace's row wins over the one of every workspace")
+	assert.Equal(t, "new", vars["TOKEN"], "the environment holds the workspace's row")
 }
 
 // MigrateInstance writes the integrations for the instance's

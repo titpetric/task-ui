@@ -44,7 +44,7 @@ func TestStore_SetAndRead(t *testing.T) {
 	assert.NoError(t, s.Set(ctx, token))
 	assert.True(t, model.ValidID(token.ID))
 	assert.Equal(t, "hunter2", token.Content)
-	assert.NoError(t, s.Set(ctx, &model.Secret{Scope: "infra", Name: "TOKEN", Content: "infra wins"}))
+	assert.NoError(t, s.Set(ctx, &model.Secret{Scope: "infra", Name: "TOKEN", Content: "infra value"}))
 	assert.NoError(t, s.Set(ctx, &model.Secret{Scope: "infra", Name: "REGION", Content: "eu"}))
 
 	// At rest the store keeps the content armored; every way out decrypts.
@@ -66,7 +66,7 @@ func TestStore_SetAndRead(t *testing.T) {
 
 	infra, err := s.For(ctx, "infra")
 	assert.NoError(t, err)
-	assert.Equal(t, map[string]string{"TOKEN": "infra wins", "REGION": "eu"}, infra)
+	assert.Equal(t, map[string]string{"TOKEN": "infra value", "REGION": "eu"}, infra)
 	website, err := s.For(ctx, "website")
 	assert.NoError(t, err)
 	assert.Equal(t, map[string]string{"TOKEN": "hunter2"}, website)

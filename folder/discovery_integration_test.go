@@ -162,7 +162,7 @@ func TestDiscovery_Workspace(t *testing.T) {
 // checkout, lists when it holds a job source, on top or further in, such
 // as another checkout; the folders inside it follow the workspace's
 // Recursive. One with no job source stays out, as does an ignored
-// directory deeper down. A project row on the directory wins over the
+// directory deeper down. A project row on the directory replaces the
 // discovered one.
 func TestDiscovery_IgnoredCheckouts(t *testing.T) {
 	t.Parallel()

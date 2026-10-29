@@ -18,8 +18,8 @@ import (
 // named one gets the default workspace, _ at the root, while there is
 // one, and the home at the root; without the default workspace it has
 // no workspace: no TASK_UI_WORKSPACE, no TASK_UI_WORKSPACE_DIR and the
-// server's HOME. A request's Workspace, or WorkspaceOf's, wins over the
-// folder's.
+// server's HOME. A run gets a request's Workspace, or WorkspaceOf's, in
+// place of the folder's.
 func TestManager_Workspace(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)

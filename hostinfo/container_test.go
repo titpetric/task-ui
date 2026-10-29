@@ -31,7 +31,7 @@ func TestMerge(t *testing.T) {
 	assert.True(t, db.Measured && db.Sized)
 	assert.Equal(t, 25.0, db.MemoryShare)
 	assert.Equal(t, uint64(10), db.SizeRw)
-	assert.Equal(t, "Up 2 days (healthy)", db.Status, "docker's word wins")
+	assert.Equal(t, "Up 2 days (healthy)", db.Status, "the status is docker's word")
 	assert.False(t, rows[1].Sized)
 	assert.False(t, rows[3].Measured)
 	assert.Equal(t, 0.0, hostinfo.Merge(measured, nil, 0)[0].MemoryShare)

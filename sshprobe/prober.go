@@ -16,8 +16,8 @@ import (
 // A host whose probe still runs when Logins stops waiting comes back
 // empty, and the probe's answer fills in for the next call.
 type Prober struct {
-	// Users are the logins Logins tries, in order; the first that signs in
-	// wins.
+	// Users are the logins Logins tries, in order; Logins keeps the first
+	// that signs in.
 	Users []string
 	// Keys serve the instance's SSH keys to a probe in an ssh agent; nil
 	// probes with none. A run of a host command gets them in the run's

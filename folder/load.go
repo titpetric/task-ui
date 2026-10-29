@@ -24,7 +24,7 @@ func Load(id, dir string, kinds ...string) *Folder {
 }
 
 // firstSource keeps the one convention that reads a folder: the first
-// there is, in the order of detector.Detectors. Atkins wins, then a
+// there is, in the order of detector.Detectors: Atkins first, then a
 // Taskfile, a Makefile, package scripts, and the scripts folder only
 // when nothing names the jobs. A project's sources name others on
 // purpose.
