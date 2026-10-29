@@ -59,6 +59,23 @@ A keys table has the same columns on every page, the Keys page, the Instance pag
 - **One template per entity**: keys list through `keyhead` and `keyrow`, projects through `projecttable`, a user through `user`, a row's menu through `menu`. A page that lists them again uses those.
 - **Forms**: a label above each field, its help in faint text beside the label, Cancel and the primary submit at the bottom right in `form-foot`. A page of two or more forms or lists puts each in a block with a heading: a workspace's Settings, Projects and Keys.
 
+## Prose
+
+`task lint:docs`, the atkins job `lint:docs`, reports what vale finds:
+every markdown file whole, and the comments out of the Go, PHP,
+JavaScript and CSS. The style is `llm-slop`, thirty rules vendored under
+`.vale/styles`, so it needs no network. `.vale.ini` declares the globs
+and switches the style off for the two vendored trees, the testdata
+fixtures and the four generated documents.
+
+It is run by name and never from `default` or `lint`. The tree is not at
+zero, so a job that fails on every run gates nothing; the count comes
+down on its own schedule.
+
+git decides which files vale reads, `git ls-files --cached --others
+--exclude-standard`, because `.gitignore` already names the composer
+`vendor/` trees and the agent worktrees.
+
 ## Layout
 
 Packages are the bounded contexts, one per domain, singular. The dependency runs one way: `app` to everything, `api` and `frontend` to the domains, the domains to `model` and `storage`, `model` to nothing of ours.
@@ -106,6 +123,8 @@ Packages are the bounded contexts, one per domain, singular. The dependency runs
 | `diskusage`               | how much space a directory takes, files and git history apart                                                                                                                                                   |
 | `argv`                    | the arguments a user types for a job, split as a shell splits words                                                                                                                                             |
 | `internal/rulelint`       | matches the permission checks of the code against `config/permissions.yml`                                                                                                                                      |
+| `phpscript`               | the plugin boundary: the `Task\Module` and `Task::` bindings, discovery of a `modinfo.php`, the runtime pool and the handler that serves `/m/<vendor>/<name>` ([Modules](modules.md))                            |
+| `phpscripts`              | the modules that ship in the binary, embedded, extracted to the data folder on first start                                                                                                                      |
 | `api`                     | the JSON endpoints and the attach socket                                                                                                                                                                        |
 | `mcp`                     | the MCP server: JSON-RPC tools that call the API as the token's user                                                                                                                                            |
 | `frontend`                | the pages; `frontend/view` renders them from embedded templates and assets                                                                                                                                      |
@@ -113,7 +132,9 @@ Packages are the bounded contexts, one per domain, singular. The dependency runs
 
 A convention is a `Detector` in the `detector` package: one type that reads a folder and returns a `Source`, added to the `Detectors` list. The rest of task-ui runs on sources and jobs and never asks which kind they are.
 
-`splint ./...` (`task lint`) is the bar: every file has a test beside it, every exported symbol a test that reaches it, every symbol a file named for it, and every dependency one import per package. Tests are black box, parallel, and share nothing. `go test ./...` runs the unit tests alone; the tests that run processes, open a database or use the network sit behind the `integration` build tag, see [Testing](testing.md). The integration suite runs in chunks of test names under the memory cap, as `go test -tags integration -run 'TestFolder' ./frontend` chunk by chunk, since the `frontend` package alone exceeds the cap at once; every chunk, and every other package, is green before a release. `go run ./internal/cmd/rulelint` (`task lint` too) matches the permission checks against `config/permissions.yml`: every rule a check names is in the file, and every rule the file holds has a check. A check names its rule as a string literal, `h.require(w, r, "secret/edit")` in Go and `{{ if .Can "secret/edit" }}` in a template, where the lint finds it. `config/context.md` tells an agent what task-ui is, area by area, for the MCP instructions and every Claude run; keep it in step with the features. Its test fails when a section or permission of `config/permissions.yml`, an MCP tool or a built-in job has no line there.
+A module's PHP is held to the pipeline it ships: `phpscript fmt -l` reports what the formatter would rewrite and `phpscript lint` reports undefined names, unreachable code and unused variables. A path of `./...` makes either one recursive and a bare `.` reads one directory; both skip a directory named `vendor`. Neither reads a sentence, so vale reads the comments instead.
+
+`splint ./...` (`task lint`) is the bar: every file has a test beside it, every exported symbol a test that reaches it, every symbol a file named for it, and every dependency one import per package. Tests are black box, parallel, and share nothing. `go test ./...` runs the unit tests alone; the tests that run processes, open a database or use the network sit behind the `integration` build tag, see [Testing](testing.md). `scripts/test-integration.sh` runs that suite one package at a time and splits a package of more than twenty tests into batches of twenty, because the `frontend` package needs more than the memory cap when its tests run together; every batch, and every other package, is green before a release. `go run ./internal/cmd/rulelint` (`task lint` too) matches the permission checks against `config/permissions.yml`: every rule a check names is in the file, and every rule the file holds has a check. A check names its rule as a string literal, `h.require(w, r, "secret/edit")` in Go and `{{ if .Can "secret/edit" }}` in a template, where the lint finds it. `config/context.md` tells an agent what task-ui is, area by area, for the MCP instructions and every Claude run; keep it in step with the features. Its test fails when a section or permission of `config/permissions.yml`, an MCP tool or a built-in job has no line there.
 
 ---
 

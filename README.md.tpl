@@ -39,9 +39,17 @@ section of the sidebar: the [dashboard](docs/guide/dashboard.md), the
 [schedules](docs/guide/scheduled.md), [notes](docs/guide/notes.md), the
 [projects and their jobs](docs/guide/projects.md), the
 [workspaces](docs/guide/workspaces.md) that hold projects, the
-[recents](docs/guide/recents.md), the [settings](docs/guide/settings.md),
-and [MCP](docs/guide/mcp.md), for an agent that runs jobs. This README
-links to the rest.
+[recents](docs/guide/recents.md), the [modules](docs/guide/modules.md),
+the [settings](docs/guide/settings.md), and [MCP](docs/guide/mcp.md),
+for an agent that runs jobs. This README links to the rest.
+
+A module is a plugin written in PHP, run inside the binary by
+[phpscript](https://github.com/titpetric/phpscript) and served at
+`/m/<vendor>/<name>` as an ordinary page: the layout is the instance's,
+the body is the module's, and nothing loads in an iframe. A directory
+with a `modinfo.php` in it is a module. `titpetric/refinement` ships
+with it: a thread of comments, each one a Claude run that writes
+artifacts and the `README.md` that indexes them.
 
 The look follows [oida](https://github.com/titpetric/oida): hairlines,
 one amber accent, dark and light from `prefers-color-scheme`. The type is
@@ -58,7 +66,9 @@ binary embeds all assets, and the front end makes no external requests.
 | [Running the server](docs/running.md) | The Docker image, the environment, users, roles and the server commands |
 | [API](docs/api.md) | The JSON endpoints and the MCP server |
 | [Security](docs/security.md) | The threat model, identity and roles, keys, secrets, terminals and agents, and the review's findings |
-| [Development](docs/development.md) | The packages, the lint and test bar, and the screenshots |
+| [Development](docs/development.md) | The packages, the lint and test bar, the prose gate and the screenshots |
+| [Modules](docs/modules.md) | Writing a plugin in PHP: the directory, the bindings, and what the runtime refuses |
+| [Corrections](docs/todo-correction.md) | Where the PHP runtime lacks what the module system needs, and what the code does instead |
 | [Testing](docs/testing.md) | Unit tests by default, integration tests behind a build tag |
 
 A quick start, with the compose file in [Running the server](docs/running.md):

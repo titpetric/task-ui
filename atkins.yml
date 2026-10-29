@@ -3,16 +3,61 @@
 
 name: task-ui tests
 
+# Every go command here runs under the same bounds. A test binary that grows
+# past GOMEMLIMIT is collected rather than killed, and -p=1 with two procs
+# keeps one package building or running at a time, so the peak is one package
+# and not all of them.
+env:
+  vars:
+    GOFLAGS: -p=1
+    GOMAXPROCS: "2"
+    GOMEMLIMIT: 2GiB
+
 jobs:
+  # What a change has to pass, and nothing that takes minutes. The prose gate
+  # and the unit suite together are under a minute on a cold cache.
+  #
+  # test:integration is deliberately out. It builds and runs a binary per
+  # package, a few of them serving a whole instance, and it answers a question
+  # about the drivers rather than about the change. Run it by name, or for the
+  # package a change touched: `atkins test:integration`, or
+  # `scripts/test-integration.sh ./storage/...`.
+  default:
+    desc: "The fast gate: the unit tests"
+    cmds:
+      - task: test
+
   test:
     desc: "Run the unit tests"
     steps:
-      - env GOFLAGS=-p=1 GOMAXPROCS=2 GOMEMLIMIT=2GiB go test -cover ./...
+      - go test ./...
+
+  test:cover:
+    desc: "Report unit test coverage per package"
+    steps:
+      - go test -cover ./...
 
   test:integration:
     desc: "Run the integration tests: processes, databases and the network"
     steps:
-      - env GOFLAGS=-p=1 GOMAXPROCS=2 GOMEMLIMIT=2GiB go test -tags integration -count=1 ./...
+      - ./scripts/test-integration.sh
+
+  lint:
+    desc: "Lint the Go source and the permission rules"
+    steps:
+      - splint ./...
+      - go run ./internal/cmd/rulelint
+
+  # Run by name, never from default: the tree is not at zero yet, and a
+  # job that fails on every run gates nothing. vale reads the markdown
+  # whole and the comments out of the Go, PHP, JavaScript and CSS; the
+  # style is llm-slop, vendored under .vale/styles, so it needs no
+  # network. git decides which files it reads, because .gitignore already
+  # names the composer trees and the agent worktrees.
+  lint:docs:
+    desc: "Report the prose findings: markdown, and the comments of the Go, PHP, JS and CSS"
+    steps:
+      - git ls-files --cached --others --exclude-standard | grep -E '\.(md|go|php|js|css)$' | xargs -r vale
 
   deploy:
     desc: "Deploy docs to cdn.si"

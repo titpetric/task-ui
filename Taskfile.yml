@@ -21,12 +21,21 @@ tasks:
   test:
     desc: "Run the unit tests"
     cmds:
-      - go test -cover ./...
+      - go test ./...
 
   test:integration:
     desc: "Run the integration tests: processes, databases and the network"
+    summary: |
+      One go test per package, batched by test name, under a memory cap, so a
+      package that holds more than the cap fits cannot take the suite down.
+      Takes a package pattern: task test:integration -- ./storage/...
     cmds:
-      - go test -tags integration -count=1 ./...
+      - scripts/test-integration.sh {{.CLI_ARGS}}
+
+  test:cover:
+    desc: "Report unit test coverage per package"
+    cmds:
+      - go test -cover ./...
 
   run:
     desc: "Run task-ui over the demo projects"
@@ -43,10 +52,15 @@ tasks:
       - scripts/demo.sh
 
   lint:
-    desc: "Lint with splint and rulelint, zero findings is the bar"
+    desc: "Lint with splint, rulelint and vale, zero findings is the bar"
     cmds:
       - splint ./...
       - go run ./internal/cmd/rulelint
+
+  lint:docs:
+    desc: "Report the prose findings of the markdown, Go, PHP, JavaScript and CSS"
+    cmds:
+      - git ls-files --cached --others --exclude-standard | grep -E '\.(md|go|php|js|css)$' | xargs -r vale
 
   install:
     desc: "Install task-ui"

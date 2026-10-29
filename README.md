@@ -8,20 +8,24 @@ Claude works beside the jobs. A prompt asks Claude Code in a folder, a directory
 
 ![The dashboard: every terminal in progress, as it looks right now](https://cdn.si/titpetric/task-ui/docs/assets/task-ui.png)
 
-The [usage guide](docs/README.md) shows how to use it, a chapter per section of the sidebar: the [dashboard](docs/guide/dashboard.md), the [inventory](docs/guide/inventory.md), [workflows](docs/guide/workflows.md), [runs](docs/guide/runs.md), [artifacts](docs/guide/artifacts.md), [schedules](docs/guide/scheduled.md), [notes](docs/guide/notes.md), the [projects and their jobs](docs/guide/projects.md), the [workspaces](docs/guide/workspaces.md) that hold projects, the [recents](docs/guide/recents.md), the [settings](docs/guide/settings.md), and [MCP](docs/guide/mcp.md), for an agent that runs jobs. This README links to the rest.
+The [usage guide](docs/README.md) shows how to use it, a chapter per section of the sidebar: the [dashboard](docs/guide/dashboard.md), the [inventory](docs/guide/inventory.md), [workflows](docs/guide/workflows.md), [runs](docs/guide/runs.md), [artifacts](docs/guide/artifacts.md), [schedules](docs/guide/scheduled.md), [notes](docs/guide/notes.md), the [projects and their jobs](docs/guide/projects.md), the [workspaces](docs/guide/workspaces.md) that hold projects, the [recents](docs/guide/recents.md), the [modules](docs/guide/modules.md), the [settings](docs/guide/settings.md), and [MCP](docs/guide/mcp.md), for an agent that runs jobs. This README links to the rest.
+
+A module is a plugin written in PHP, run inside the binary by [phpscript](https://github.com/titpetric/phpscript) and served at `/m/<vendor>/<name>` as an ordinary page: the layout is the instance's, the body is the module's, and nothing loads in an iframe. A directory with a `modinfo.php` in it is a module. `titpetric/refinement` ships with it: a thread of comments, each one a Claude run that writes artifacts and the `README.md` that indexes them.
 
 The look follows [oida](https://github.com/titpetric/oida): hairlines, one amber accent, dark and light from `prefers-color-scheme`. The type is a dashboard pair, [Inter](https://rsms.me/inter/) for the words and [JetBrains Mono](https://www.jetbrains.com/lp/mono/) for the data, both vendored under `frontend/view/assets/fonts/` with their licenses. The binary embeds all assets, and the front end makes no external requests.
 
 ## Documents
 
-| Document                              | What is in it                                                                                        |
-|---------------------------------------|------------------------------------------------------------------------------------------------------|
-| [Usage guide](docs/README.md)         | The screen, a chapter per sidebar section, and MCP                                                   |
-| [Running the server](docs/running.md) | The Docker image, the environment, users, roles and the server commands                              |
-| [API](docs/api.md)                    | The JSON endpoints and the MCP server                                                                |
-| [Security](docs/security.md)          | The threat model, identity and roles, keys, secrets, terminals and agents, and the review's findings |
-| [Development](docs/development.md)    | The packages, the lint and test bar, and the screenshots                                             |
-| [Testing](docs/testing.md)            | Unit tests by default, integration tests behind a build tag                                          |
+| Document                               | What is in it                                                                                        |
+|----------------------------------------|------------------------------------------------------------------------------------------------------|
+| [Usage guide](docs/README.md)          | The screen, a chapter per sidebar section, and MCP                                                   |
+| [Running the server](docs/running.md)  | The Docker image, the environment, users, roles and the server commands                              |
+| [API](docs/api.md)                     | The JSON endpoints and the MCP server                                                                |
+| [Security](docs/security.md)           | The threat model, identity and roles, keys, secrets, terminals and agents, and the review's findings |
+| [Development](docs/development.md)     | The packages, the lint and test bar, the prose gate and the screenshots                              |
+| [Modules](docs/modules.md)             | Writing a plugin in PHP: the directory, the bindings, and what the runtime refuses                   |
+| [Corrections](docs/todo-correction.md) | Where the PHP runtime lacks what the module system needs, and what the code does instead             |
+| [Testing](docs/testing.md)             | Unit tests by default, integration tests behind a build tag                                          |
 
 A quick start, with the compose file in [Running the server](docs/running.md):
 
@@ -38,13 +42,15 @@ task: Available tasks for this project:
 * default: Run everything
 * fix: Fix code
 * install: Install task-ui
-* lint: Lint with splint and rulelint, zero findings is the bar
+* lint: Lint with splint, rulelint and vale, zero findings is the bar
 * run: Run task-ui over the demo projects
+* cover: Report unit test coverage per package
 * test: Run the unit tests
 * docker:build: Build task-ui docker image
 * docker:gen: Generate an ssh key for the key folder, ./keys
 * docker:run: Run task-ui in docker env
 * docs:shots: Regenerate the README screenshots
+* lint:docs: Lint the prose of the markdown, Go, PHP, JavaScript and CSS
 * test:integration: Run the integration tests: processes, databases and the network
 
 ## task: default
@@ -62,14 +68,23 @@ commands:
 Run the unit tests
 
 commands:
-- `go test -cover ./...`
+- `go test ./...`
 
 ## task: test:integration
 
-Run the integration tests: processes, databases and the network
+One go test per package, batched by test name, under a memory cap, so a
+package that holds more than the cap fits cannot take the suite down.
+Takes a package pattern: task test:integration -- ./storage/...
 
 commands:
-- `go test -tags integration -count=1 ./...`
+- `scripts/test-integration.sh`
+
+## task: cover
+
+Report unit test coverage per package
+
+commands:
+- `go test -cover ./...`
 
 ## task: run
 
@@ -87,11 +102,19 @@ commands:
 
 ## task: lint
 
-Lint with splint and rulelint, zero findings is the bar
+Lint with splint, rulelint and vale, zero findings is the bar
 
 commands:
 - `splint ./...`
 - `go run ./internal/cmd/rulelint`
+- `Task: lint:docs`
+
+## task: lint:docs
+
+Lint the prose of the markdown, Go, PHP, JavaScript and CSS
+
+commands:
+- `scripts/vale-gate.sh`
 
 ## task: install
 
