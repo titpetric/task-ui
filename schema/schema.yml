@@ -325,6 +325,65 @@
         - filename
       primary: true
       unique: true
+- name: module
+  comment: Module
+  columns:
+    - name: id
+      type: text
+      key: PRI
+      comment: ID
+      datatype: char(26)
+    - name: name
+      type: text
+      key: MUL
+      comment: Name
+      datatype: varchar
+    - name: vendor
+      type: text
+      comment: Vendor
+      datatype: varchar
+    - name: plugin
+      type: text
+      comment: Plugin
+      datatype: varchar
+    - name: root
+      type: text
+      comment: Root
+      datatype: varchar
+    - name: title
+      type: text
+      comment: Title
+      datatype: varchar
+    - name: description
+      type: text
+      comment: Description
+      datatype: varchar
+    - name: icon
+      type: text
+      comment: Icon
+      datatype: varchar
+    - name: version
+      type: text
+      comment: Version
+      datatype: varchar
+    - name: created_at
+      type: timestamp
+      comment: Created At
+      datatype: datetime
+    - name: updated_at
+      type: timestamp
+      comment: Updated At
+      datatype: datetime
+  indexes:
+    - name: sqlite_autoindex_module_1
+      columns:
+        - id
+      primary: true
+      unique: true
+    - name: uidx_module_name
+      columns:
+        - name
+      unique: true
 - name: note
   comment: Note
   columns:
@@ -981,6 +1040,66 @@
         - name
       primary: true
       unique: true
+- name: sidebar
+  comment: Sidebar
+  columns:
+    - name: id
+      type: text
+      key: PRI
+      comment: ID
+      datatype: char(26)
+    - name: kind
+      type: text
+      comment: Kind
+      datatype: varchar
+    - name: href
+      type: text
+      key: MUL
+      comment: Href
+      datatype: varchar
+    - name: title
+      type: text
+      comment: Title
+      datatype: varchar
+    - name: icon
+      type: text
+      comment: Icon
+      datatype: varchar
+    - name: position
+      type: integer
+      key: MUL
+      comment: Position
+      datatype: bigint
+      size: 8
+    - name: hidden
+      type: boolean
+      comment: Hidden
+      datatype: boolean
+    - name: rule
+      type: text
+      comment: Rule
+      datatype: varchar
+    - name: created_at
+      type: timestamp
+      comment: Created At
+      datatype: datetime
+    - name: updated_at
+      type: timestamp
+      comment: Updated At
+      datatype: datetime
+  indexes:
+    - name: sqlite_autoindex_sidebar_1
+      columns:
+        - id
+      primary: true
+      unique: true
+    - name: uidx_sidebar_href
+      columns:
+        - href
+      unique: true
+    - name: idx_sidebar_position
+      columns:
+        - position
 - name: ssh_key_policy
   comment: SSH Key Policy
   columns:

@@ -3,6 +3,7 @@ package model
 import (
 	"encoding/json"
 	"sort"
+	"strings"
 )
 
 // A few columns hold a list or a map as JSON text: the folders a user
@@ -76,4 +77,20 @@ func SortedKeys[V any](m map[string]V) []string {
 	}
 	sort.Strings(keys)
 	return keys
+}
+
+// Lines splits a textarea's value into the entries of a list setting,
+// dropping the blank lines and the space around each entry.
+//
+// A blank line is not an entry. An empty string in a list of paths to
+// ignore would match every path, and in a list of networks it would
+// match no address at all.
+func Lines(value string) []string {
+	var out []string
+	for _, line := range strings.Split(value, "\n") {
+		if trimmed := strings.TrimSpace(line); trimmed != "" {
+			out = append(out, trimmed)
+		}
+	}
+	return out
 }

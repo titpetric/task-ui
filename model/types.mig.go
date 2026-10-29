@@ -641,6 +641,117 @@ var MigrationsFields = []string{"project", "filename", "statement_index", "statu
 // MigrationsPrimaryFields are the primary key fields in the DB table.
 var MigrationsPrimaryFields = []string{"project", "filename"}
 
+// Module generated for db table `module`.
+type Module struct {
+	// ID
+	ID string `db:"id" json:"id"`
+
+	// Name
+	Name string `db:"name" json:"name"`
+
+	// Vendor
+	Vendor string `db:"vendor" json:"vendor"`
+
+	// Plugin
+	Plugin string `db:"plugin" json:"plugin"`
+
+	// Root
+	Root string `db:"root" json:"root"`
+
+	// Title
+	Title string `db:"title" json:"title"`
+
+	// Description
+	Description string `db:"description" json:"description"`
+
+	// Icon
+	Icon string `db:"icon" json:"icon"`
+
+	// Version
+	Version string `db:"version" json:"version"`
+
+	// Created At
+	CreatedAt *time.Time `db:"created_at" json:"created_at"`
+
+	// Updated At
+	UpdatedAt *time.Time `db:"updated_at" json:"updated_at"`
+}
+
+// GetID will return the value of ID.
+func (m *Module) GetID() string { return m.ID }
+
+// SetID sets ID to the provided value.
+func (m *Module) SetID(val string) { m.ID = val }
+
+// GetName will return the value of Name.
+func (m *Module) GetName() string { return m.Name }
+
+// SetName sets Name to the provided value.
+func (m *Module) SetName(val string) { m.Name = val }
+
+// GetVendor will return the value of Vendor.
+func (m *Module) GetVendor() string { return m.Vendor }
+
+// SetVendor sets Vendor to the provided value.
+func (m *Module) SetVendor(val string) { m.Vendor = val }
+
+// GetPlugin will return the value of Plugin.
+func (m *Module) GetPlugin() string { return m.Plugin }
+
+// SetPlugin sets Plugin to the provided value.
+func (m *Module) SetPlugin(val string) { m.Plugin = val }
+
+// GetRoot will return the value of Root.
+func (m *Module) GetRoot() string { return m.Root }
+
+// SetRoot sets Root to the provided value.
+func (m *Module) SetRoot(val string) { m.Root = val }
+
+// GetTitle will return the value of Title.
+func (m *Module) GetTitle() string { return m.Title }
+
+// SetTitle sets Title to the provided value.
+func (m *Module) SetTitle(val string) { m.Title = val }
+
+// GetDescription will return the value of Description.
+func (m *Module) GetDescription() string { return m.Description }
+
+// SetDescription sets Description to the provided value.
+func (m *Module) SetDescription(val string) { m.Description = val }
+
+// GetIcon will return the value of Icon.
+func (m *Module) GetIcon() string { return m.Icon }
+
+// SetIcon sets Icon to the provided value.
+func (m *Module) SetIcon(val string) { m.Icon = val }
+
+// GetVersion will return the value of Version.
+func (m *Module) GetVersion() string { return m.Version }
+
+// SetVersion sets Version to the provided value.
+func (m *Module) SetVersion(val string) { m.Version = val }
+
+// GetCreatedAt will return the value of CreatedAt.
+func (m *Module) GetCreatedAt() *time.Time { return m.CreatedAt }
+
+// SetCreatedAt sets CreatedAt to the provided value.
+func (m *Module) SetCreatedAt(stamp time.Time) { m.CreatedAt = &stamp }
+
+// GetUpdatedAt will return the value of UpdatedAt.
+func (m *Module) GetUpdatedAt() *time.Time { return m.UpdatedAt }
+
+// SetUpdatedAt sets UpdatedAt to the provided value.
+func (m *Module) SetUpdatedAt(stamp time.Time) { m.UpdatedAt = &stamp }
+
+// ModuleTable is the name of the table in the DB.
+const ModuleTable = "`module`"
+
+// ModuleFields is a list of all columns in the DB table.
+var ModuleFields = []string{"id", "name", "vendor", "plugin", "root", "title", "description", "icon", "version", "created_at", "updated_at"}
+
+// ModulePrimaryFields are the primary key fields in the DB table.
+var ModulePrimaryFields = []string{"id"}
+
 // Note generated for db table `note`.
 type Note struct {
 	// ID
@@ -1711,6 +1822,108 @@ var SettingFields = []string{"name", "value", "updated_at"}
 
 // SettingPrimaryFields are the primary key fields in the DB table.
 var SettingPrimaryFields = []string{"name"}
+
+// Sidebar generated for db table `sidebar`.
+type Sidebar struct {
+	// ID
+	ID string `db:"id" json:"id"`
+
+	// Kind
+	Kind string `db:"kind" json:"kind"`
+
+	// Href
+	Href string `db:"href" json:"href"`
+
+	// Title
+	Title string `db:"title" json:"title"`
+
+	// Icon
+	Icon string `db:"icon" json:"icon"`
+
+	// Position
+	Position int64 `db:"position" json:"position"`
+
+	// Hidden
+	Hidden bool `db:"hidden" json:"hidden"`
+
+	// Rule
+	Rule string `db:"rule" json:"rule"`
+
+	// Created At
+	CreatedAt *time.Time `db:"created_at" json:"created_at"`
+
+	// Updated At
+	UpdatedAt *time.Time `db:"updated_at" json:"updated_at"`
+}
+
+// GetID will return the value of ID.
+func (s *Sidebar) GetID() string { return s.ID }
+
+// SetID sets ID to the provided value.
+func (s *Sidebar) SetID(val string) { s.ID = val }
+
+// GetKind will return the value of Kind.
+func (s *Sidebar) GetKind() string { return s.Kind }
+
+// SetKind sets Kind to the provided value.
+func (s *Sidebar) SetKind(val string) { s.Kind = val }
+
+// GetHref will return the value of Href.
+func (s *Sidebar) GetHref() string { return s.Href }
+
+// SetHref sets Href to the provided value.
+func (s *Sidebar) SetHref(val string) { s.Href = val }
+
+// GetTitle will return the value of Title.
+func (s *Sidebar) GetTitle() string { return s.Title }
+
+// SetTitle sets Title to the provided value.
+func (s *Sidebar) SetTitle(val string) { s.Title = val }
+
+// GetIcon will return the value of Icon.
+func (s *Sidebar) GetIcon() string { return s.Icon }
+
+// SetIcon sets Icon to the provided value.
+func (s *Sidebar) SetIcon(val string) { s.Icon = val }
+
+// GetPosition will return the value of Position.
+func (s *Sidebar) GetPosition() int64 { return s.Position }
+
+// SetPosition sets Position to the provided value.
+func (s *Sidebar) SetPosition(val int64) { s.Position = val }
+
+// GetHidden will return the value of Hidden.
+func (s *Sidebar) GetHidden() bool { return s.Hidden }
+
+// SetHidden sets Hidden to the provided value.
+func (s *Sidebar) SetHidden(val bool) { s.Hidden = val }
+
+// GetRule will return the value of Rule.
+func (s *Sidebar) GetRule() string { return s.Rule }
+
+// SetRule sets Rule to the provided value.
+func (s *Sidebar) SetRule(val string) { s.Rule = val }
+
+// GetCreatedAt will return the value of CreatedAt.
+func (s *Sidebar) GetCreatedAt() *time.Time { return s.CreatedAt }
+
+// SetCreatedAt sets CreatedAt to the provided value.
+func (s *Sidebar) SetCreatedAt(stamp time.Time) { s.CreatedAt = &stamp }
+
+// GetUpdatedAt will return the value of UpdatedAt.
+func (s *Sidebar) GetUpdatedAt() *time.Time { return s.UpdatedAt }
+
+// SetUpdatedAt sets UpdatedAt to the provided value.
+func (s *Sidebar) SetUpdatedAt(stamp time.Time) { s.UpdatedAt = &stamp }
+
+// SidebarTable is the name of the table in the DB.
+const SidebarTable = "`sidebar`"
+
+// SidebarFields is a list of all columns in the DB table.
+var SidebarFields = []string{"id", "kind", "href", "title", "icon", "position", "hidden", "rule", "created_at", "updated_at"}
+
+// SidebarPrimaryFields are the primary key fields in the DB table.
+var SidebarPrimaryFields = []string{"id"}
 
 // SSHKeyPolicy generated for db table `ssh_key_policy`.
 //
@@ -3408,6 +3621,67 @@ func (m *Migrations) Delete(opts ...QueryOption) string {
 }
 
 // Insert starts building an INSERT INTO query.
+func (m *Module) Insert(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: ModuleTable, Statement: "INSERT INTO"}).Apply(opts...)
+	cols := ModuleFields
+	if len(cfg.Columns) > 0 {
+		cols = cfg.Columns
+	}
+	return fmt.Sprintf("%s %s (%s) VALUES (:%s)", cfg.Statement, cfg.Table, strings.Join(cols, ", "), strings.Join(cols, ", :"))
+}
+
+// Select starts building a SELECT query.
+func (m *Module) Select(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: ModuleTable}).Apply(opts...)
+	cols := "*"
+	if len(cfg.Columns) > 0 {
+		cols = strings.Join(cfg.Columns, ", ")
+	}
+	query := fmt.Sprintf("SELECT %s FROM %s", cols, cfg.Table)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	if cfg.OrderBy != "" {
+		query += " ORDER BY " + cfg.OrderBy
+	}
+	if cfg.LimitOffset > 0 {
+		query += fmt.Sprintf(" LIMIT %d, %d", cfg.LimitStart, cfg.LimitOffset)
+	}
+	return query
+}
+
+// Update starts building a UPDATE query.
+func (m *Module) Update(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: ModuleTable}).Apply(opts...)
+	cols := ModuleFields
+	if len(cfg.Columns) > 0 {
+		cols = cfg.Columns
+	}
+	setClause := ""
+	for i, col := range cols {
+		if i > 0 {
+			setClause += ", "
+		}
+		setClause += col + "=:" + col
+	}
+	query := fmt.Sprintf("UPDATE %s SET %s", cfg.Table, setClause)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	return query
+}
+
+// Delete starts building a DELETE query.
+func (m *Module) Delete(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: ModuleTable}).Apply(opts...)
+	query := fmt.Sprintf("DELETE FROM %s", cfg.Table)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	return query
+}
+
+// Insert starts building an INSERT INTO query.
 func (n *Note) Insert(opts ...QueryOption) string {
 	cfg := (&QueryConfig{Table: NoteTable, Statement: "INSERT INTO"}).Apply(opts...)
 	cols := NoteFields
@@ -4010,6 +4284,67 @@ func (s *Setting) Update(opts ...QueryOption) string {
 // Delete starts building a DELETE query.
 func (s *Setting) Delete(opts ...QueryOption) string {
 	cfg := (&QueryConfig{Table: SettingTable}).Apply(opts...)
+	query := fmt.Sprintf("DELETE FROM %s", cfg.Table)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	return query
+}
+
+// Insert starts building an INSERT INTO query.
+func (s *Sidebar) Insert(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: SidebarTable, Statement: "INSERT INTO"}).Apply(opts...)
+	cols := SidebarFields
+	if len(cfg.Columns) > 0 {
+		cols = cfg.Columns
+	}
+	return fmt.Sprintf("%s %s (%s) VALUES (:%s)", cfg.Statement, cfg.Table, strings.Join(cols, ", "), strings.Join(cols, ", :"))
+}
+
+// Select starts building a SELECT query.
+func (s *Sidebar) Select(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: SidebarTable}).Apply(opts...)
+	cols := "*"
+	if len(cfg.Columns) > 0 {
+		cols = strings.Join(cfg.Columns, ", ")
+	}
+	query := fmt.Sprintf("SELECT %s FROM %s", cols, cfg.Table)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	if cfg.OrderBy != "" {
+		query += " ORDER BY " + cfg.OrderBy
+	}
+	if cfg.LimitOffset > 0 {
+		query += fmt.Sprintf(" LIMIT %d, %d", cfg.LimitStart, cfg.LimitOffset)
+	}
+	return query
+}
+
+// Update starts building a UPDATE query.
+func (s *Sidebar) Update(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: SidebarTable}).Apply(opts...)
+	cols := SidebarFields
+	if len(cfg.Columns) > 0 {
+		cols = cfg.Columns
+	}
+	setClause := ""
+	for i, col := range cols {
+		if i > 0 {
+			setClause += ", "
+		}
+		setClause += col + "=:" + col
+	}
+	query := fmt.Sprintf("UPDATE %s SET %s", cfg.Table, setClause)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	return query
+}
+
+// Delete starts building a DELETE query.
+func (s *Sidebar) Delete(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: SidebarTable}).Apply(opts...)
 	query := fmt.Sprintf("DELETE FROM %s", cfg.Table)
 	if cfg.Where != "" {
 		query += " WHERE " + cfg.Where
