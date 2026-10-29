@@ -1,14 +1,16 @@
 {{/* stepeditor is the workflow form, new and edit alike: the name, a
-     description, the sidebar toggle and who its runs run as, then the
-     steps in order on a rail, each a card of its kind that folds to one line, and Add step
-     with the kinds to pick from. A prompt or a summary takes prompt/edit.
+     description, the sidebar toggle, who its runs run as and the
+     workspace whose projects they run over, then the steps in order on
+     a rail, each a card of its kind that folds to one line, and Add step
+     with the kinds to pick from. A prompt or a summary takes prompt/edit,
+     a script shell.
      list: page, workflow (nil for a new one), API path, method, where to
      go after, the submit label. task-ui.js reads the cards into the
      request's steps, moves them by their grip or their menu, and puts an
      error the API names a step by under that step. */}}
 {{ define "stepeditor" }}
 {{- $p := index . 0 }}{{ $w := index . 1 }}{{ $api := index . 2 }}{{ $method := index . 3 }}{{ $next := index . 4 }}{{ $label := index . 5 -}}
-{{- $id := "new" }}{{ if $w }}{{ $id = $w.ID }}{{ end }}{{ $asks := $p.Can "prompt/edit" -}}
+{{- $id := "new" }}{{ if $w }}{{ $id = $w.ID }}{{ end }}{{ $asks := $p.Can "prompt/edit" }}{{ $shell := $p.Can "shell" -}}
 <form class="form workflow-form" data-workflow data-api="{{ $api }}{{ if $w }}{{ $w.ID }}{{ end }}" data-method="{{ $method }}" data-next="{{ $next }}" novalidate>
 	<div class="wf-meta">
 		<div class="field">
@@ -43,6 +45,17 @@
 			{{- end }}
 			<small class="faint">Every step runs as this user: with their permissions, the Claude token granted to their role or user, and the keys and secrets of the workspace each step's folder is in. A step that runs another workflow follows that workflow's user when it has one. Whoever starts it: the run is the user's who presses Run, or the schedule's. The keys are the instance keys the user gets; a step's workspace adds its own keys.</small>
 		</div>
+		{{- $over := "" }}{{ if $w }}{{ $over = $w.RunsOver }}{{ end }}
+		<div class="field">
+			<label for="wf-over-{{ $id }}">Runs over</label>
+			<select id="wf-over-{{ $id }}" name="runs_over">
+				<option value=""{{ if not $over }} selected{{ end }}>No workspace: the steps run once</option>
+				{{- range $p.StepSpaces }}
+				<option value="{{ .ID }}"{{ if eq .ID $over }} selected{{ end }}>Every project of {{ .Title }}</option>
+				{{- end }}
+			</select>
+			<small class="faint">The steps run once per project of the workspace, a project at a time: a step in a project of it runs in each project in turn, at the same path, and a project without the step's job skips it. A failed step ends that project's pass, and the next project starts. Steps outside the workspace run in every pass as they are. A workflow step may not run over projects.</small>
+		</div>
 	</div>
 
 	<section class="wf-steps" aria-labelledby="wf-steps-{{ $id }}">
@@ -64,6 +77,9 @@
 					<summary class="btn" aria-haspopup="menu"><svg class="ic"><use href="#i-plus"/></svg>Add step</summary>
 					<div class="wf-add-list" role="menu" aria-label="Kind of step">
 						<button type="button" role="menuitem" data-step-add="job"><svg class="ic"><use href="#i-terminal"/></svg><span><b>Command</b><small>A job of a folder, a command on hosts, or another workflow.</small></span></button>
+						{{- if $shell }}
+						<button type="button" role="menuitem" data-step-add="script"><svg class="ic"><use href="#i-script"/></svg><span><b>Script</b><small>A shell command you write, run in a folder, like go get -u ./...</small></span></button>
+						{{- end }}
 						{{- if $asks }}
 						<button type="button" role="menuitem" data-step-add="prompt"><svg class="ic"><use href="#i-prompt"/></svg><span><b>Prompt</b><small>Claude answers a prompt with the output of the steps before it.</small></span></button>
 						<button type="button" role="menuitem" data-step-add="summary"><svg class="ic"><use href="#i-summary"/></svg><span><b>Summary</b><small>Claude summarises the steps before it, after a failure too.</small></span></button>
@@ -73,6 +89,9 @@
 			</div>
 		</div>
 		<template data-step-template="job">{{ template "wfstep" (list $p (newStep "job") true) }}</template>
+		{{- if $shell }}
+		<template data-step-template="script">{{ template "wfstep" (list $p (newStep "script") true) }}</template>
+		{{- end }}
 		{{- if $asks }}
 		<template data-step-template="prompt">{{ template "wfstep" (list $p (newStep "prompt") true) }}</template>
 		<template data-step-template="summary">{{ template "wfstep" (list $p (newStep "summary") true) }}</template>
@@ -91,8 +110,9 @@
      node on the rail, its head, the grip, its kind and the step in one
      line, with the [...] menu, and its fields under it, folded unless
      open. A command picks a workspace, then a folder of it and its job,
-     or Workflows, then a workflow; a prompt its text and place, a
-     summary its place, each a workspace and then a folder of it. */}}
+     or Workflows, then a workflow; a script its command and folder, a
+     prompt its text and place, a summary its place, each a workspace
+     and then a folder of it. */}}
 {{ define "wfstep" }}
 {{- $p := index . 0 }}{{ $s := index . 1 }}{{ $open := index . 2 }}{{ $kind := $s.StepKind -}}
 {{- $off := "Disable" }}{{ $offIcon := "stop" }}{{ if $s.Disabled }}{{ $off = "Enable" }}{{ $offIcon = "play" }}{{ end -}}
@@ -149,6 +169,25 @@
 					<span class="label">Arguments</span>
 					<input type="text" data-step-args aria-label="Arguments" placeholder="none" value="{{ argLine $s.Job $s.Args }}" spellcheck="false" autocomplete="off">
 					<small class="faint">After --, for a job that takes them; the command, for a host.</small>
+				</div>
+			</div>
+			{{- else if eq $kind "script" }}
+			<div class="field">
+				<span class="label">Command</span>
+				<textarea data-step-script rows="3" spellcheck="false" aria-label="Command" placeholder="go get -u ./...">{{ $s.Command }}</textarea>
+				<small class="faint">Runs with bash -l -c in the folder, as the workflow's user. A non-zero exit fails the step.</small>
+			</div>
+			<div class="wf-fields wf-cascade">
+				{{- template "stepspace" (list $p ($p.StepSpaceOf $s.Folder) false false) }}
+				<div class="field">
+					<span class="label">Runs in</span>
+					<select data-step-place aria-label="Folder the command runs in">
+						<option value="" disabled{{ if not $s.Folder }} selected{{ end }}>pick one</option>
+						<option value="internal" data-workspace="internal" data-rel="."{{ if eq $s.Folder "internal" }} selected{{ end }}>the root</option>
+						{{- range $p.StepFolders }}
+						<option value="{{ .ID }}" data-workspace="{{ $p.StepSpaceOf .ID }}" data-rel="{{ $p.StepRel .ID }}"{{ if eq .ID $s.Folder }} selected{{ end }}>{{ $p.StepLabel .ID }}</option>
+						{{- end }}
+					</select>
 				</div>
 			</div>
 			{{- else }}

@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"strconv"
+	"strings"
 
 	"github.com/titpetric/task-ui/model"
 )
@@ -19,9 +20,13 @@ import (
 func (m *Manager) command(ctx context.Context, session *Session) (*exec.Cmd, error) {
 	f, job, run := session.Folder, session.Job, session.Run
 	args := append([]string{"-l", "-c", `exec "$0" "$@"`}, job.Command...)
+	switch {
+	// A script step's command is shell input: bash reads it whole.
+	case job.IsScript():
+		args = []string{"-l", "-c", strings.Join(session.args, " ")}
 	// A host job's command carries its args already, as the remote
 	// command of ssh.
-	if len(session.args) > 0 && !job.IsHost() {
+	case len(session.args) > 0 && !job.IsHost():
 		args = append(append(args, "--"), session.args...)
 	}
 	cmd := exec.Command("bash", args...)

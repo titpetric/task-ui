@@ -74,3 +74,18 @@ func TestManager_Integrations(t *testing.T) {
 		assert.Contains(t, out, want, user)
 	}
 }
+
+// A script job's args are shell input: bash reads the command whole, its
+// pipes and variables too, in the folder's directory.
+func TestManager_Script(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	req := f.shellJob("scripted", "true", false)
+	req.Job = req.Folder.ScriptJob()
+	req.Args = []string{`echo "in $(basename "$PWD")" | tr a-z A-Z && test -n "$TASK_UI_RUN_ID"`}
+	session, err := f.manager.Start(context.Background(), req)
+	assert.NoError(t, err)
+	out, status := collect(t, session.Attach(true))
+	assert.Equal(t, model.StateOK, status.State)
+	assert.Contains(t, out, "IN SCRIPTED")
+}

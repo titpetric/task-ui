@@ -1869,16 +1869,19 @@
   // ------------------------------------------------------------- workflows
 
   // The workflow form's steps are cards on a rail, one per step, each of
-  // a kind: data-kind is job, workflow, prompt or summary, and data-off
-  // a step a run skips. A command card's folder select also lists the
+  // a kind: data-kind is job, workflow, script, prompt or summary, and
+  // data-off a step a run skips. A script card is a job step of @script,
+  // its command the one arg. A command card's folder select also lists the
   // workflows, as workflow:<id>, and picking one makes it a workflow
   // step. A card folds to its head, the step in one line; its [...] menu
   // moves, disables, duplicates and removes it, and its grip drags it, or
   // takes the up and down arrows.
   var WORKFLOW = "workflow:";
+  var SCRIPT = "@script";
   var STEP_KINDS = {
     job: ["Command", "i-terminal"],
     workflow: ["Workflow", "i-flow"],
+    script: ["Script", "i-script"],
     prompt: ["Prompt", "i-prompt"],
     summary: ["Summary", "i-summary"]
   };
@@ -1903,6 +1906,10 @@
         var asks = { kind: kind, folder: place.folder, dir: place.dir, enabled: enabled };
         if (kind === "prompt") asks.prompt = row.querySelector("[data-step-prompt-text]").value;
         return asks;
+      }
+      if (kind === "script") {
+        var cmd = row.querySelector("[data-step-script]").value.trim();
+        return { kind: "job", folder: row.querySelector("[data-step-place]").value, job: SCRIPT, args: [cmd], enabled: enabled };
       }
       var folder = row.querySelector("[data-step-folder]").value;
       if (folder.indexOf(WORKFLOW) === 0) return { kind: "workflow", workflow: folder.slice(WORKFLOW.length), enabled: enabled };
@@ -1936,7 +1943,7 @@
     keepOptions(folder, "workspace", space.value, true);
     var kept = Array.prototype.filter.call(folder.options, function (o) { return o.dataset.workspace === space.value; });
     var same = kept.find(function (o) { return o.value === picked; }) || kept.find(function (o) { return rel && o.dataset.rel === rel; });
-    var place = folder.matches("[data-step-place]");
+    var place = folder.matches("[data-step-place]") && row.dataset.kind !== "script";
     if (same) folder.value = same.value;
     else {
       var root = kept.find(function (o) { return o.dataset.rel === "."; });
@@ -1995,6 +2002,10 @@
     row.querySelector("[data-step-icon] use").setAttribute("href", "#" + named[1]);
     if (kind === "prompt") {
       line = row.querySelector("[data-step-prompt-text]").value.trim().split("\n")[0];
+    } else if (kind === "script") {
+      var cmd = row.querySelector("[data-step-script]").value.trim().split("\n")[0];
+      var where = row.querySelector("[data-step-place]").value;
+      line = cmd ? (where ? where + ": " : "") + cmd : "";
     } else if (kind === "summary") {
       var place = stepPlace(row);
       var at = place.dir ? place.folder + "/" + place.dir : place.folder;
@@ -2010,7 +2021,7 @@
       }
     }
     var head = row.querySelector("[data-step-line]");
-    head.textContent = line || (kind === "prompt" ? "no prompt yet" : "no job picked yet");
+    head.textContent = line || (kind === "prompt" ? "no prompt yet" : kind === "script" ? "no command yet" : "no job picked yet");
     head.classList.toggle("unset", !line);
   }
 
@@ -2018,7 +2029,7 @@
   function stepFold(row, open) {
     row.classList.toggle("open", open);
     row.querySelector("[data-step-toggle]").setAttribute("aria-expanded", open ? "true" : "false");
-    if (open) row.querySelectorAll("[data-step-prompt-text]").forEach(fitText);
+    if (open) row.querySelectorAll("[data-step-prompt-text], [data-step-script]").forEach(fitText);
   }
 
   // fitText grows a prompt's field to its text, up to about 24 lines,
@@ -2095,7 +2106,7 @@
     if (!copy) return null;
     setValue(copy.querySelector("[data-step-space]"), row.querySelector("[data-step-space]").value);
     narrowSpace(copy);
-    ["[data-step-folder]", "[data-step-prompt-text]", "[data-step-place]", "[data-step-dir]"].forEach(function (sel) {
+    ["[data-step-folder]", "[data-step-prompt-text]", "[data-step-script]", "[data-step-place]", "[data-step-dir]"].forEach(function (sel) {
       var from = row.querySelector(sel), to = copy.querySelector(sel);
       if (from && to) setValue(to, from.value);
     });
@@ -2146,6 +2157,9 @@
         else if (!job) problem = "Pick the job of " + folder + ".";
       } else if (kind === "prompt" && !row.querySelector("[data-step-prompt-text]").value.trim()) {
         problem = "Write the prompt Claude answers.";
+      } else if (kind === "script") {
+        if (!row.querySelector("[data-step-script]").value.trim()) problem = "Write the command the step runs.";
+        else if (!row.querySelector("[data-step-place]").value) problem = "Pick the folder the command runs in.";
       }
       stepProblem(row, problem);
       if (problem && !first) first = row;
@@ -2247,7 +2261,7 @@
     form.addEventListener("input", function (event) {
       var row = event.target.closest("[data-step]");
       if (!row) return;
-      if (event.target.matches("[data-step-prompt-text]")) fitText(event.target);
+      if (event.target.matches("[data-step-prompt-text], [data-step-script]")) fitText(event.target);
       if (row.classList.contains("invalid")) stepProblem(row, "");
       stepLine(row);
     });
@@ -2260,7 +2274,7 @@
         var fresh = stepAdd(form, add.dataset.stepAdd);
         if (!fresh) return;
         stepFold(fresh, true);
-        var field = fresh.querySelector("[data-step-prompt-text], .dd-button, input");
+        var field = fresh.querySelector("[data-step-prompt-text], [data-step-script], .dd-button, input");
         if (field) field.focus();
         fresh.scrollIntoView({ block: "nearest" });
         stepSay(form, STEP_KINDS[add.dataset.stepAdd][0] + " step added");

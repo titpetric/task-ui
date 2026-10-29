@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/titpetric/task-ui/access"
 	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/model"
 )
@@ -15,6 +16,9 @@ import (
 func (h *Handlers) jobStep(r *http.Request, step StepRequest) (model.WorkflowStep, error) {
 	if step.Folder == "" || step.Job == "" {
 		return model.WorkflowStep{}, errors.New("a job step needs a folder and a job")
+	}
+	if step.Job == folder.ScriptID {
+		return h.scriptStep(r, step)
 	}
 	if step.Job == model.HostBare {
 		return model.WorkflowStep{}, fmt.Errorf("%s / %s: %w", step.Folder, step.Job, folder.ErrHostBare)
@@ -75,4 +79,17 @@ func (h *Handlers) stepSpace(r *http.Request, folderID string) (ws, title string
 		}
 	}
 	return ws, title
+}
+
+// scriptStep turns a requested script step, the job @script, into its row: a folder the user sees and the command, its one arg.
+func (h *Handlers) scriptStep(r *http.Request, step StepRequest) (model.WorkflowStep, error) {
+	f := h.visibleFolder(access.UserFrom(r.Context()), step.Folder)
+	if f == nil {
+		return model.WorkflowStep{}, h.stepLacks(r, step)
+	}
+	command := strings.TrimSpace(strings.Join(step.Args, " "))
+	if command == "" {
+		return model.WorkflowStep{}, fmt.Errorf("%s: %w", step.Folder, folder.ErrScriptEmpty)
+	}
+	return model.WorkflowStep{Kind: model.StepJob, Folder: f.ID, Job: folder.ScriptID, Args: model.EncodeList([]string{command})}, nil
 }

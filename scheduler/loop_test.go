@@ -30,5 +30,4 @@ func TestStarter(t *testing.T) {
 	assert.NotNil(t, &flows)
 	loop := scheduler.NewLoop(nil, nil, catalogue{}, nil)
 	assert.Nil(t, loop.Flows)
-	assert.Nil(t, loop.Workflows)
 }

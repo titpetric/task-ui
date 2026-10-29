@@ -14,4 +14,5 @@ Workflow.
 | prompt         | varchar  |     | Prompt         |
 | prompt_folder  | varchar  |     | Prompt Folder  |
 | run_as_user_id | varchar  | MUL | Run As User ID |
+| runs_over      | varchar  |     | Runs Over      |
 | sidebar_hidden | boolean  |     | Sidebar Hidden |

@@ -11,6 +11,7 @@ import (
 	"github.com/titpetric/task-ui/runner"
 	"github.com/titpetric/task-ui/scheduler"
 	"github.com/titpetric/task-ui/storage"
+	"github.com/titpetric/task-ui/workflow"
 )
 
 // ScheduleRequest creates or changes a schedule: of a job, Folder and
@@ -71,7 +72,7 @@ func jobArgs(job *folder.Job, args []string) string {
 // schedule: its folder, or every step of its workflow.
 func (h *Handlers) seesSchedule(r *http.Request, schedule *model.Schedule) bool {
 	if schedule.IsWorkflow() {
-		_, _, err := h.workflowByID(r, schedule.WorkflowID)
+		_, err := h.workflowByID(r, schedule.WorkflowID)
 		return err == nil
 	}
 	return access.UserFrom(r.Context()).CanSee(schedule.Folder)
@@ -171,16 +172,17 @@ func (h *Handlers) createWorkflowSchedule(w http.ResponseWriter, r *http.Request
 		fail(w, http.StatusBadRequest, errWorkflowSchedule)
 		return
 	}
-	wf, steps, err := h.workflowByID(r, req.Workflow)
+	flow, err := h.workflowByID(r, req.Workflow)
 	if err != nil {
 		failErr(w, err)
 		return
 	}
-	if step := h.mayRun(r, steps); step != "" {
+	if step := flow.MayRun(r.Context(), h.permissions(r)); step != "" {
 		fail(w, http.StatusForbidden, "you don't have permission to run "+step)
 		return
 	}
-	user, status, problem := h.workflowScheduleUser(r, wf, steps, req.User)
+	wf := flow.Workflow()
+	user, status, problem := h.workflowScheduleUser(r, flow, req.User)
 	if problem != "" {
 		fail(w, status, problem)
 		return
@@ -245,18 +247,18 @@ func (h *Handlers) runAs(r *http.Request, name, folderID, jobID string) (*model.
 // caller without a name; the named user, as a job's schedule takes one,
 // when they may run every step (400 naming the step); and nobody by name
 // on a workflow with a user of its own (400): that user runs it.
-func (h *Handlers) workflowScheduleUser(r *http.Request, wf *model.Workflow, steps []model.WorkflowStep, name string) (*model.User, int, string) {
+func (h *Handlers) workflowScheduleUser(r *http.Request, flow *workflow.Flow, name string) (*model.User, int, string) {
 	if name == "" {
 		return access.UserFrom(r.Context()), 0, ""
 	}
-	if wf.RunAsUserID != "" {
+	if flow.Workflow().RunAsUserID != "" {
 		return nil, http.StatusBadRequest, errWorkflowScheduleUser
 	}
 	user, status, problem := h.pickedUser(r, name)
 	if problem != "" {
 		return nil, status, problem
 	}
-	if step := h.mayRunAs(r, user, steps); step != "" {
+	if step := flow.MayRun(r.Context(), h.permissionsOf(r, user)); step != "" {
 		return nil, http.StatusBadRequest, user.Name + " may not run " + step
 	}
 	return user, 0, ""
@@ -295,8 +297,8 @@ func (h *Handlers) mayChange(r *http.Request, schedule *model.Schedule) bool {
 		return true
 	}
 	if schedule.IsWorkflow() {
-		_, steps, err := h.workflowByID(r, schedule.WorkflowID)
-		return err == nil && h.mayRun(r, steps) == ""
+		flow, err := h.workflowByID(r, schedule.WorkflowID)
+		return err == nil && flow.MayRun(r.Context(), h.permissions(r)) == ""
 	}
 	f, job, _ := h.target(r, schedule.Folder, schedule.Job)
 	return h.canRun(r, f, job)
@@ -329,12 +331,12 @@ func (h *Handlers) updateSchedule(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		if req.User != "" {
-			wf, steps, err := h.workflowByID(r, schedule.WorkflowID)
+			flow, err := h.workflowByID(r, schedule.WorkflowID)
 			if err != nil {
 				failErr(w, err)
 				return
 			}
-			user, status, problem := h.workflowScheduleUser(r, wf, steps, req.User)
+			user, status, problem := h.workflowScheduleUser(r, flow, req.User)
 			if problem != "" {
 				fail(w, status, problem)
 				return

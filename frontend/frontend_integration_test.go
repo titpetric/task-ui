@@ -97,11 +97,13 @@ func newFixture(t *testing.T) *fixture {
 
 	cat := catalogue{"infra": infra, "private": private, "infra/edge": edge}
 	workflows, workflowRuns := storage.NewWorkflowStorage(db), storage.NewWorkflowRunStorage(db)
+	flows := workflow.New(workflows, workflowRuns, cat, manager)
+	flows.Users = users
 	f.opts = frontend.Options{
 		Recordings:    recordings,
 		Workflows:     workflows,
 		WorkflowRuns:  workflowRuns,
-		Flows:         workflow.New(workflows, workflowRuns, cat, manager),
+		Flows:         flows,
 		Guard:         access.NewGuard(users, access.NewSessions(storage.NewUserSessionStorage(db), users, time.Hour)),
 		Auth:          access.NewAuthenticator(users, storage.NewUserEmailStorage(db), storage.NewUserAuthPasswordStorage(db)),
 		Users:         users,

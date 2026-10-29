@@ -130,7 +130,7 @@ func newFixture(t *testing.T) *fixture {
 	}
 	workflows, workflowRuns := storage.NewWorkflowStorage(db), storage.NewWorkflowRunStorage(db)
 	flows := workflow.New(workflows, workflowRuns, steps, manager)
-	flows.Events = event.NewBus()
+	flows.Events, flows.Users = event.NewBus(), users
 	manager.Events = flows.Events
 	f.opts = api.Options{
 		Workflows:     workflows,

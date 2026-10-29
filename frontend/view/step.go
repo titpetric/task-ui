@@ -3,8 +3,13 @@ package view
 import (
 	"strings"
 
+	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/model"
 )
+
+// StepScript is the kind the editor shows a job step of @script as: a
+// command the step runs with bash, which the API keeps as a job step.
+const StepScript = "script"
 
 // Step is a step of a workflow, or of a run of one, as a page shows
 // it: a job of a folder, another workflow, a prompt to Claude or a
@@ -40,17 +45,29 @@ type Step struct {
 }
 
 // NewStep returns a blank step of a kind, as the workflow editor adds
-// one: a prompt or a summary asks in the root.
+// one: a prompt or a summary asks in the root, a script is the job @script.
 func NewStep(kind string) Step {
-	if kind == model.StepPrompt || kind == model.StepSummary {
+	switch kind {
+	case model.StepPrompt, model.StepSummary:
 		return Step{Kind: kind, Folder: model.Default}
+	case StepScript:
+		return Step{Kind: model.StepJob, Job: folder.ScriptID}
 	}
 	return Step{Kind: kind}
 }
 
-// StepKind is what the step does, from its fields when Kind is empty.
+// StepKind is what the step does, from its fields when Kind is empty: StepScript for the job @script.
 func (s Step) StepKind() string {
-	return model.WorkflowStep{Kind: s.Kind, Prompt: s.Prompt, WorkflowRef: s.WorkflowID}.StepKind()
+	kind := model.WorkflowStep{Kind: s.Kind, Prompt: s.Prompt, WorkflowRef: s.WorkflowID}.StepKind()
+	if kind == model.StepJob && s.Job == folder.ScriptID {
+		return StepScript
+	}
+	return kind
+}
+
+// Command is the command of a script step, its one arg.
+func (s Step) Command() string {
+	return strings.Join(model.DecodeList(s.Args), " ")
 }
 
 // KindLabel names the step's kind as the editor shows it.
@@ -62,6 +79,8 @@ func (s Step) KindLabel() string {
 		return "Prompt"
 	case model.StepSummary:
 		return "Summary"
+	case StepScript:
+		return "Script"
 	}
 	return "Command"
 }
@@ -75,6 +94,8 @@ func (s Step) Icon() string {
 		return "prompt"
 	case model.StepSummary:
 		return "summary"
+	case StepScript:
+		return "script"
 	}
 	return "terminal"
 }
@@ -99,6 +120,12 @@ func (s Step) Line() string {
 		return line
 	case model.StepSummary:
 		return "of the steps before it, in " + s.Place()
+	case StepScript:
+		line, _, _ := strings.Cut(strings.TrimSpace(s.Command()), "\n")
+		if s.Folder == "" || line == "" {
+			return ""
+		}
+		return s.Folder + ": " + line
 	case model.StepJob:
 		if s.Job == "" {
 			return ""

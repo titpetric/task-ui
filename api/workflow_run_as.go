@@ -6,32 +6,8 @@ import (
 
 	"github.com/titpetric/task-ui/access"
 	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/permission"
 )
-
-// runAsUser returns the user a workflow's runs run as: the one set on
-// it, else the caller, who starts it.
-func (h *Handlers) runAsUser(r *http.Request, wf *model.Workflow) (*model.User, error) {
-	if wf.RunAsUserID == "" {
-		return access.UserFrom(r.Context()), nil
-	}
-	if h.opts.Users == nil {
-		return &model.User{ID: wf.RunAsUserID, Name: wf.UserName}, nil
-	}
-	return h.opts.Users.Get(r.Context(), wf.RunAsUserID)
-}
-
-// runAsName names the user set to run a workflow's runs, "" for none,
-// whoever starts it, and for a user nobody holds any more.
-func (h *Handlers) runAsName(r *http.Request, wf *model.Workflow) string {
-	if wf.RunAsUserID == "" {
-		return ""
-	}
-	user, err := h.runAsUser(r, wf)
-	if err != nil {
-		return ""
-	}
-	return user.Name
-}
 
 // pickRunAs resolves the user a request names to run as, by name, for a
 // workflow or a prompt. Nil for no name, and the caller for their own;
@@ -59,11 +35,10 @@ func (h *Handlers) pickRunAs(r *http.Request, name string) (*model.User, int, st
 	return user, 0, ""
 }
 
-// mayRunAs returns the first step the user a workflow runs as may not
-// run, "" when they may run them all, as mayRun does for the caller.
-func (h *Handlers) mayRunAs(r *http.Request, user *model.User, steps []model.WorkflowStep) string {
+// permissionsOf returns what a user may do, the caller's permissions without a user store.
+func (h *Handlers) permissionsOf(r *http.Request, user *model.User) permission.Set {
 	if h.opts.Users == nil {
-		return h.mayRun(r, steps)
+		return h.permissions(r)
 	}
-	return h.opts.Flows.MayRun(r.Context(), h.opts.Users.Permissions(r.Context(), user), steps)
+	return h.opts.Users.Permissions(r.Context(), user)
 }

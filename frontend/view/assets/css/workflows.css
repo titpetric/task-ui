@@ -237,6 +237,10 @@
     --kind: var(--series-4);
   }
 
+  &.kind-script {
+    --kind: var(--series-0);
+  }
+
   &.kind-prompt {
     --kind: var(--signal);
   }

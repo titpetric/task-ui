@@ -38,7 +38,7 @@ type fixture struct {
 }
 
 // fakeStarter records the workflow runs the loop starts, with the real
-// runner's MayRun; busy answers every start with ErrBusy.
+// runner's FlowByID; busy answers every start with ErrBusy.
 type fakeStarter struct {
 	*workflow.Runner
 	mu     sync.Mutex
@@ -92,7 +92,8 @@ func newFixture(t *testing.T) *fixture {
 	loop := scheduler.NewLoop(schedules, users, folders, manager)
 	workflows := storage.NewWorkflowStorage(db)
 	flows := &fakeStarter{Runner: workflow.New(workflows, storage.NewWorkflowRunStorage(db), folders, manager)}
-	loop.Workflows, loop.Flows = workflows, flows
+	flows.Users = users
+	loop.Flows = flows
 	ops := &model.User{Name: "ops", Role: model.RoleRunner}
 	assert.NoError(t, users.Create(context.Background(), ops))
 	f := &fixture{loop: loop, schedules: schedules, runs: runs, users: users, workflows: workflows, flows: flows, ops: ops, now: time.Date(2026, time.October, 17, 10, 0, 0, 0, time.UTC)}

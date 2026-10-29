@@ -46,26 +46,6 @@ type Catalogue interface {
 	Find(id string) *folder.Folder
 }
 
-// Step is a workflow step resolved to its folder and job, or to the
-// workflow it runs.
-type Step struct {
-	Folder *folder.Folder
-	Job    *folder.Job
-	// Workflow is the workflow the step runs, nil for a job.
-	Workflow *model.Workflow
-	// Disabled is a step the run skips, resolved to nothing.
-	Disabled bool
-	// Asks is a prompt or a summary step, which asks Claude in Place, a
-	// folder and a directory in it or internal for the root; Summary is a
-	// summary step.
-	Asks    bool
-	Summary bool
-	Place   string
-	// Args follow the job's argv after --, for a job that takes args;
-	// for a step of @host:<host> they are the shell command.
-	Args []string
-}
-
 // Users looks up the user of a workflow, by ID, and what a user may do.
 // storage.UserStorage is one.
 type Users interface {
@@ -101,6 +81,9 @@ type Runner struct {
 	// steps as its own user's. Nil runs every nested workflow as the
 	// run's user.
 	Users Users
+	// Projects lists the projects a workflow that runs over a workspace
+	// walks. Nil refuses a run of such a workflow.
+	Projects Projects
 
 	mu     sync.Mutex
 	byFlow map[string]*active // workflow ID -> its run in progress
@@ -129,47 +112,6 @@ func New(workflows *storage.WorkflowStorage, runs *storage.WorkflowRunStorage, c
 	}
 }
 
-// Resolve finds the folder and job, or the workflow, of every enabled
-// step, or says which one is missing.
-func (r *Runner) Resolve(ctx context.Context, steps []model.WorkflowStep) ([]Step, error) {
-	resolved := make([]Step, 0, len(steps))
-	for _, step := range steps {
-		if step.Disabled {
-			resolved = append(resolved, Step{Disabled: true})
-			continue
-		}
-		if step.IsPrompt() {
-			resolved = append(resolved, Step{Asks: true, Summary: step.IsSummary(), Place: step.Place()})
-			continue
-		}
-		if step.IsWorkflow() {
-			wf, err := r.workflows.Get(ctx, step.WorkflowRef)
-			if err != nil {
-				return nil, fmt.Errorf("no workflow %s", step.WorkflowRef)
-			}
-			resolved = append(resolved, Step{Workflow: wf})
-			continue
-		}
-		f := r.catalogue.Find(step.Folder)
-		var job *folder.Job
-		if f != nil {
-			job = f.Job(step.Job)
-		}
-		if job == nil {
-			return nil, fmt.Errorf("no job %s / %s", step.Folder, step.Job)
-		}
-		if job.IsShell() {
-			return nil, fmt.Errorf("%s / %s: %w", step.Folder, step.Job, folder.ErrShellUnattended)
-		}
-		args := model.DecodeList(step.Args)
-		if job.IsHost() && strings.TrimSpace(strings.Join(args, " ")) == "" {
-			return nil, fmt.Errorf("%s: %w", step.Job, ErrHostStep)
-		}
-		resolved = append(resolved, Step{Folder: f, Job: job, Args: args})
-	}
-	return resolved, nil
-}
-
 // Start begins a run of the workflow as the user, and walks its steps in
 // the background; input goes to its prompts. The caller checks the user
 // may run every step.
@@ -181,7 +123,11 @@ func (r *Runner) Start(ctx context.Context, workflow *model.Workflow, user *mode
 	if !workflow.Runs(steps) {
 		return nil, ErrNothing
 	}
-	resolved, err := r.Resolve(ctx, steps)
+	steps, groups, projects, err := r.over(ctx, workflow, steps)
+	if err != nil {
+		return nil, err
+	}
+	resolved, err := r.resolve(ctx, steps, groups, projects)
 	if err != nil {
 		return nil, err
 	}
@@ -220,23 +166,6 @@ type RunEvent struct {
 	// Input is what the run started with, on `run`; Answer is its answer, on `done`.
 	Input  string `json:"input,omitempty"`
 	Answer string `json:"answer,omitempty"`
-}
-
-// StepEvent is the payload of a workflow's `step` event: the step as
-// its row stands.
-type StepEvent struct {
-	RunID       string `json:"run_id"`
-	Position    int64  `json:"position"`
-	Folder      string `json:"folder,omitempty"`
-	Job         string `json:"job,omitempty"`
-	WorkflowRef string `json:"workflow_ref,omitempty"`
-	// Kind is the step's kind; Prompt says it asks Claude in Folder, a
-	// prompt or a summary step.
-	Kind           string `json:"kind"`
-	Prompt         bool   `json:"prompt,omitempty"`
-	State          string `json:"state"`
-	StepRunID      string `json:"step_run_id,omitempty"`
-	WorkflowRunRef string `json:"workflow_run_ref,omitempty"`
 }
 
 // publish tells the workflow's topic, when there is a bus.
@@ -297,38 +226,48 @@ func (r *Runner) walk(ctx context.Context, a *active, steps []Step, rows []model
 	store := context.Background()
 	run := a.run
 	run.State = model.StateOK
+	// Each project of a workflow that runs over a workspace starts ok: a
+	// failure skips the rest of its own steps alone, and a stop all.
+	group, state := 0, model.StateOK
 
 	for i, step := range steps {
 		row := &rows[i]
-		if skips(run.State, step) {
+		if step.Group != group && state != model.StateStopped {
+			group, state = step.Group, model.StateOK
+		}
+		if skips(state, step) {
 			row.State = model.StepSkipped
 			r.saveStep(store, row)
 			continue
 		}
 		row.State = model.StateRunning
 		r.saveStep(store, row)
-		var state, message string
+		var ended, message string
 		switch {
 		case step.Asks:
-			state, row.RunID, row.Answer, message = r.promptStep(ctx, a, row, step, user)
+			ended, row.RunID, row.Answer, message = r.promptStep(ctx, a, row, step, user)
 		case step.Workflow != nil:
-			state, row.WorkflowRunRef, message = r.nested(ctx, step.Workflow, user)
+			ended, row.WorkflowRunRef, message = r.nested(ctx, step.Workflow, user)
 		default:
 			// The step's row names its run once it starts, so the
 			// run window follows the workflow from run to run.
-			state, row.RunID, message = r.step(ctx, step, user, func(runID string) {
+			ended, row.RunID, message = r.step(ctx, step, user, func(runID string) {
 				row.RunID = runID
 				r.saveStep(store, row)
 			})
 		}
-		row.State = state
+		row.State = ended
 		r.saveStep(store, row)
 		switch {
-		case state == model.StateOK:
-		case state == model.StateStopped && ctx.Err() != nil:
+		case ended == model.StateOK:
+		case ended == model.StateStopped && ctx.Err() != nil:
+			state = model.StateStopped
 			run.State, run.Message = model.StateStopped, "stopped at "+label(step)
-		case run.State == model.StateOK:
-			run.State, run.Message = model.StateFailed, fmt.Sprintf("%s %s", label(step), firstOf(message, state))
+		case state == model.StateOK:
+			state = model.StateFailed
+			if run.State == model.StateOK {
+				run.State, run.Message = model.StateFailed, fmt.Sprintf("%s %s", label(step), firstOf(message, ended))
+			}
 		}
 	}
 	run.AnswerFrom(rows)
@@ -351,7 +290,7 @@ func (r *Runner) step(ctx context.Context, step Step, user *model.User, started 
 			return model.StateStopped, "", ""
 		}
 		// The run's own writes must not fail on a stop; a stop reaches the
-		// run through the manager instead.
+		// run through the manager.
 		session, err := r.manager.Start(context.WithoutCancel(ctx), runner.Request{Folder: step.Folder, Job: step.Job, User: user, Args: step.Args})
 		if errors.Is(err, runner.ErrBusy) && session != nil {
 			select {

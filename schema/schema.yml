@@ -1380,6 +1380,10 @@
       key: MUL
       comment: Run As User ID
       datatype: varchar
+    - name: runs_over
+      type: text
+      comment: Runs Over
+      datatype: varchar
     - name: sidebar_hidden
       type: boolean
       comment: Sidebar Hidden

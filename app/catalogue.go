@@ -3,8 +3,10 @@ package app
 import (
 	"context"
 	"log/slog"
+	"os"
 	"path/filepath"
 	"slices"
+	"strings"
 	"sync"
 	"time"
 
@@ -118,6 +120,28 @@ func (c *Catalogue) Every() []*folder.Folder {
 		c.every, c.everyAt = c.discover(true).List(), time.Now()
 	}
 	return c.every
+}
+
+// WorkspaceProjects returns the projects of a workspace, the directories of its src in name order:
+// each the folder the catalogue finds, hidden ones too, else a folder of its directory with no jobs but the skills.
+func (c *Catalogue) WorkspaceProjects(_ context.Context, workspace string) []*folder.Folder {
+	entries, err := os.ReadDir(layout.SrcDir(c.Root, workspace))
+	if err != nil {
+		return nil
+	}
+	var projects []*folder.Folder
+	for _, entry := range entries {
+		if !entry.IsDir() || strings.HasPrefix(entry.Name(), ".") {
+			continue
+		}
+		id := layout.Join(workspace, entry.Name())
+		f := c.Steps().Find(id)
+		if f == nil {
+			f = &folder.Folder{ID: id, Title: entry.Name(), Dir: layout.ProjectDir(c.Root, workspace, entry.Name()), Probe: c.Skills}
+		}
+		projects = append(projects, f)
+	}
+	return projects
 }
 
 // Steps returns the catalogue of workflow steps, which lists and finds by Every too.

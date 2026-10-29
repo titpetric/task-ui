@@ -134,3 +134,23 @@ func TestCatalogue_Home(t *testing.T) {
 	assert.Equal(t, filepath.Join(root, "home"), c.Home(filepath.Join(root, "src", "deploy")), "the default workspace's home is at the root")
 	assert.Equal(t, "", c.Home(t.TempDir()))
 }
+
+// A workspace's projects are the directories of its src in name order,
+// a project without jobs too; a workspace with no src has none.
+func TestCatalogue_WorkspaceProjects(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	root := t.TempDir()
+	makeFolder(t, root, "site")
+	assert.NoError(t, os.MkdirAll(filepath.Join(root, layout.Src, "notes"), 0o755))
+	assert.NoError(t, os.MkdirAll(filepath.Join(root, layout.Src, ".cache"), 0o755))
+
+	c := app.NewCatalogue(root, true, nil)
+	projects := c.WorkspaceProjects(ctx, model.Default)
+	assert.Len(t, projects, 2)
+	assert.Equal(t, "notes", projects[0].ID)
+	assert.Equal(t, filepath.Join(root, layout.Src, "notes"), projects[0].Dir)
+	assert.Equal(t, "site", projects[1].ID)
+	assert.NotNil(t, projects[1].Job("build"))
+	assert.Len(t, c.WorkspaceProjects(ctx, "nowhere"), 0)
+}

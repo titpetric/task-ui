@@ -15,6 +15,7 @@ Over MCP, `ask_prompt` with `area` `workflows` posts the same prompt.
 Each step is of a kind, which the editor shows on its card and the API names in `kind`:
 
 - **Command** (`job`): a job of a folder, picked from the jobs you can see, with its arguments for a job that takes them; a command on hosts of the inventory (see below); or another workflow (`workflow`), which then runs in its place, all its steps.
+- **Script** (`job` of `@script`): a shell command you write, such as `go get -u ./...`, run with `bash -l -c` in a folder you pick. The command is the step's one arg; a non-zero exit fails the step. Adding or changing one takes the `shell` permission, as running it does.
 - **Prompt** (`prompt`): Claude answers a prompt in a folder, the root by default, or a directory inside it, with the output of the steps before it. Claude's answer is the step's output: the prompts after it read it.
 - **Summary** (`summary`): Claude summarises the steps before it, with no prompt of yours: task-ui asks Claude the question "Summarize this workflow run." and the instruction of **Run and summarize**, one or two short paragraphs and a table of the values worth a glance. A summary is optional; it ends most chains.
 
@@ -70,7 +71,7 @@ Every prompt a workflow runs, a prompt step's and a summary's, starts with a **W
 
 ![The workflow editor: the steps on a rail, a prompt open](https://cdn.si/titpetric/task-ui/docs/assets/workflow-edit-dark.png)
 
-**Add workflow** on the Workflows page opens the editor on a blank workflow: a **Name**, a **Description**, optional, which the workflow's page and the list show under its name, **Show in sidebar** and **Runs as**, the user every run of the workflow goes as. The steps come next, on a rail: a numbered node a step, in the order they run, and the step's card beside it, in the colour of its kind.
+**Add workflow** on the Workflows page opens the editor on a blank workflow: a **Name**, a **Description**, optional, which the workflow's page and the list show under its name, **Show in sidebar**, **Runs as**, the user every run of the workflow goes as, and **Runs over**, a workspace whose projects every run repeats the steps for. The steps come next, on a rail: a numbered node a step, in the order they run, and the step's card beside it, in the colour of its kind.
 
 ## Runs as
 
@@ -84,7 +85,15 @@ Running a workflow with a user takes two rights at once: yours, to run every ste
 
 Through the API, `user` on `POST` and `PUT /api/workflows` names the user: an admin names anyone, anyone else only themself (`403`), a name nobody holds answers `404`, an empty name is whoever starts it, and left out the workflow keeps what it has, none on create. Every workflow carries `run_as`, the name, and `run_as_user_id`, both empty for one that runs as whoever starts it.
 
-- **Add step** at the foot of the rail picks the kind: **Command**, **Prompt** or **Summary**, the last two with `prompt/edit`. The new card opens on its fields.
+## Runs over
+
+**Runs over** picks a workspace, and each run then repeats the steps for each project of it, a project at a time, in the order of the workspace's projects. A step whose folder is in a project of the workspace runs in each project in turn, in the folder at the same path inside it: a `go get -u ./...` script step on `malta/apps` runs in every project of `malta`. A project without the step's job skips that step. A failed step ends that project's pass, the next project starts, and the run ends failed. Steps outside the workspace, such as a summary at the root, run in every pass as they are. **No workspace: the steps run once** keeps the steps as written.
+
+A schedule of such a workflow keeps a set of projects up to date with no one at the keyboard: a script step updates the dependencies, a command runs the tests, and a prompt asks Claude to fix what broke, in each project. A step that runs another workflow may not be part of one, and the start refuses a workspace with no projects.
+
+Through the API, `runs_over` on `POST` and `PUT /api/workflows` names the workspace, empty for none, left out unchanged; a workspace you may not see answers `400`, as does a workflow step with it; a script step without `shell` answers `403`.
+
+- **Add step** at the foot of the rail picks the kind: **Command**, **Script** with `shell`, **Prompt** or **Summary**, the last two with `prompt/edit`. The new card opens on its fields.
 - A card folds to one line: its kind, and the job and its args, the workflow, the first line of the prompt, or where the summary asks. A click on it opens it on its fields; **Expand all** opens them all.
 - A workflow belongs to no workspace, and every step starts with its **Workspace**: **Internal** for the root and the projects at its top, then each workspace that holds a folder you see. The folder list next to it holds that workspace's folders with a job, every one you see, also the ones the sidebar leaves out: a checkout the workspace's `.gitignore` ignores, a folder below a project or a workspace with **Recursive** off, a folder hidden from the sidebar. A folder with no job isn't listed. The list names each folder relative to its workspace, `apps/blog` for `malta/apps/blog`, and `the root` for the workspace's own. Picking another workspace keeps the folder of the same relative name and its job when that workspace has them; what it lacks goes back to pick one, and a line under the card says so, such as `apps/blog is not in Malta.` A step you edit opens on the workspace of its folder. Save refuses a step whose folder its workspace lacks and says so under the card, naming the step and the workspace: `apps/blog / build: Malta has no folder apps/blog`.
 - **Move to** a workspace in the edit page's [...] menu does that for every step at once: the form opens with the steps moved, each one the workspace lacks a folder or a job of saying so under its card, and **Save** keeps it. A step that runs another workflow stays put.

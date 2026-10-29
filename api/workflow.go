@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/titpetric/task-ui/access"
+	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/storage"
 	"github.com/titpetric/task-ui/workflow"
@@ -32,6 +33,10 @@ type WorkflowRequest struct {
 	// names anyone, everyone else only themselves. Empty, the workflow
 	// runs as whoever starts it; left out, no change on update.
 	User *string `json:"user,omitempty"`
+	// RunsOver is the workspace whose projects every run walks, the
+	// steps in each project in turn. Empty runs the steps once; left
+	// out, no change on update.
+	RunsOver *string `json:"runs_over,omitempty"`
 }
 
 // WorkflowView is a workflow as the API shows it.
@@ -73,14 +78,6 @@ func (h *Handlers) expand(r *http.Request, steps []model.WorkflowStep) []model.W
 	return flat
 }
 
-// mayRun returns the first step the user of a request may not run, or
-// "" when the user may run them all, the steps of the workflows the
-// steps run too, as the runner's MayRun says, which the scheduler asks
-// as well.
-func (h *Handlers) mayRun(r *http.Request, steps []model.WorkflowStep) string {
-	return h.opts.Flows.MayRun(r.Context(), h.permissions(r), steps)
-}
-
 // visibleSteps reports whether the user may see every step's folder,
 // the folders of the workflows the steps run too.
 func (h *Handlers) visibleSteps(r *http.Request, steps []model.WorkflowStep) bool {
@@ -106,16 +103,16 @@ func (h *Handlers) mayChangeWorkflow(r *http.Request, wf *model.Workflow, del bo
 }
 
 // workflowView decorates a workflow for the user asking.
-func (h *Handlers) workflowView(r *http.Request, wf model.Workflow, steps []model.WorkflowStep) WorkflowView {
-	v := WorkflowView{Workflow: wf, Steps: steps}
+func (h *Handlers) workflowView(r *http.Request, flow *workflow.Flow) WorkflowView {
+	wf := *flow.Workflow()
+	v := WorkflowView{Workflow: wf, Steps: flow.Steps()}
 	v.Running, _ = h.opts.Flows.Active(wf.ID)
 	if runs, err := h.opts.WorkflowRuns.ListByWorkflow(r.Context(), wf.ID, storage.WorkflowRunFilter{Limit: 1}); err == nil && len(runs) > 0 {
 		v.LastRun = &runs[0]
 	}
-	v.RunAs = h.runAsName(r, &wf)
-	if user, err := h.runAsUser(r, &wf); err == nil {
-		v.CanRun = h.mayRun(r, steps) == "" && h.mayRunAs(r, user, steps) == ""
-	}
+	v.RunAs = flow.RunAsName(r.Context())
+	_, refusal, err := flow.Check(r.Context(), access.UserFrom(r.Context()), h.permissions(r))
+	v.CanRun = err == nil && refusal.Step == ""
 	v.CanChange = h.mayChangeWorkflow(r, &wf, false)
 	return v
 }
@@ -167,7 +164,8 @@ func (h *Handlers) checkStep(r *http.Request, step StepRequest) (model.WorkflowS
 }
 
 // checkWorkflow reads a request into the workflow and its steps, those
-// checkSteps takes; a prompt or summary step takes prompt/edit. It
+// checkSteps takes; a prompt or summary step takes prompt/edit, a script
+// step shell. It
 // answers the error and returns false for a request it refuses, and for
 // one with no enabled step.
 func (h *Handlers) checkWorkflow(w http.ResponseWriter, r *http.Request, req WorkflowRequest, wf *model.Workflow) ([]model.WorkflowStep, bool) {
@@ -179,6 +177,10 @@ func (h *Handlers) checkWorkflow(w http.ResponseWriter, r *http.Request, req Wor
 		fail(w, http.StatusForbidden, "you don't have permission to prompt Claude")
 		return nil, false
 	}
+	if slices.ContainsFunc(req.Steps, func(s StepRequest) bool { return s.Job == folder.ScriptID }) && !h.can(r, "shell") {
+		fail(w, http.StatusForbidden, "a script step runs any command, which takes the shell permission")
+		return nil, false
+	}
 	steps, err := h.checkSteps(r, req)
 	if err != nil {
 		fail(w, http.StatusBadRequest, err.Error())
@@ -188,6 +190,15 @@ func (h *Handlers) checkWorkflow(w http.ResponseWriter, r *http.Request, req Wor
 	if !wf.Runs(steps) {
 		fail(w, http.StatusBadRequest, "a workflow needs an enabled step")
 		return nil, false
+	}
+	if req.RunsOver != nil {
+		wf.RunsOver = strings.TrimSpace(*req.RunsOver)
+	}
+	if wf.RunsOver != "" {
+		if err := h.runsOver(r, wf.RunsOver, steps); err != nil {
+			fail(w, http.StatusBadRequest, err.Error())
+			return nil, false
+		}
 	}
 	if req.User != nil {
 		runAs, status, problem := h.pickRunAs(r, *req.User)
@@ -203,27 +214,22 @@ func (h *Handlers) checkWorkflow(w http.ResponseWriter, r *http.Request, req Wor
 	return steps, true
 }
 
-// workflowOf returns the workflow a route names and its steps, when the
-// user may see every step.
-func (h *Handlers) workflowOf(r *http.Request) (*model.Workflow, []model.WorkflowStep, error) {
+// workflowOf returns the workflow a route names with its steps, when
+// the user may see every step.
+func (h *Handlers) workflowOf(r *http.Request) (*workflow.Flow, error) {
 	return h.workflowByID(r, param(r, "id"))
 }
 
-// workflowByID returns a workflow by ID and its steps, when the user may
-// see every step; storage.ErrNotFound otherwise.
-func (h *Handlers) workflowByID(r *http.Request, id string) (*model.Workflow, []model.WorkflowStep, error) {
-	wf, err := h.opts.Workflows.Get(r.Context(), id)
+// workflowByID returns a workflow by ID with its steps, when the user may see every step; storage.ErrNotFound otherwise.
+func (h *Handlers) workflowByID(r *http.Request, id string) (*workflow.Flow, error) {
+	flow, err := h.opts.Flows.FlowByID(r.Context(), id)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	steps, err := h.opts.Workflows.Steps(r.Context(), wf.ID)
-	if err != nil {
-		return nil, nil, err
+	if !h.visibleSteps(r, flow.Steps()) {
+		return nil, storage.ErrNotFound
 	}
-	if !h.visibleSteps(r, steps) {
-		return nil, nil, storage.ErrNotFound
-	}
-	return wf, steps, nil
+	return flow, nil
 }
 
 // listWorkflows returns the workflows whose steps the user may see.
@@ -244,7 +250,7 @@ func (h *Handlers) listWorkflows(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		if h.visibleSteps(r, steps) {
-			views = append(views, h.workflowView(r, wf, steps))
+			views = append(views, h.workflowView(r, h.opts.Flows.Flow(&wf, steps)))
 		}
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"workflows": views})
@@ -272,7 +278,7 @@ func (h *Handlers) createWorkflow(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	steps, _ = h.opts.Workflows.Steps(r.Context(), wf.ID)
-	writeJSON(w, http.StatusCreated, h.workflowView(r, *wf, steps))
+	writeJSON(w, http.StatusCreated, h.workflowView(r, h.opts.Flows.Flow(wf, steps)))
 }
 
 // getWorkflow returns one workflow.
@@ -280,22 +286,23 @@ func (h *Handlers) getWorkflow(w http.ResponseWriter, r *http.Request) {
 	if !h.require(w, r, "workflow/view") {
 		return
 	}
-	wf, steps, err := h.workflowOf(r)
+	flow, err := h.workflowOf(r)
 	if err != nil {
 		failErr(w, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, h.workflowView(r, *wf, steps))
+	writeJSON(w, http.StatusOK, h.workflowView(r, flow))
 }
 
 // updateWorkflow renames a workflow, replaces its steps and, with a
 // user named, changes who its runs run as.
 func (h *Handlers) updateWorkflow(w http.ResponseWriter, r *http.Request) {
-	wf, _, err := h.workflowOf(r)
+	flow, err := h.workflowOf(r)
 	if err != nil {
 		failErr(w, err)
 		return
 	}
+	wf := flow.Workflow()
 	if !h.mayChangeWorkflow(r, wf, false) {
 		fail(w, http.StatusForbidden, "only its owner or an admin can change this workflow")
 		return
@@ -317,17 +324,18 @@ func (h *Handlers) updateWorkflow(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	steps, _ = h.opts.Workflows.Steps(r.Context(), wf.ID)
-	writeJSON(w, http.StatusOK, h.workflowView(r, *wf, steps))
+	writeJSON(w, http.StatusOK, h.workflowView(r, h.opts.Flows.Flow(wf, steps)))
 }
 
 // deleteWorkflow removes a workflow; its runs stay in the history. One
 // another workflow runs stays, with 409.
 func (h *Handlers) deleteWorkflow(w http.ResponseWriter, r *http.Request) {
-	wf, _, err := h.workflowOf(r)
+	flow, err := h.workflowOf(r)
 	if err != nil {
 		failErr(w, err)
 		return
 	}
+	wf := flow.Workflow()
 	if !h.mayChangeWorkflow(r, wf, true) {
 		fail(w, http.StatusForbidden, "only its owner or an admin can change this workflow")
 		return
@@ -351,30 +359,27 @@ func (h *Handlers) deleteWorkflow(w http.ResponseWriter, r *http.Request) {
 // goes to the prompts. A workflow already running answers 409 with its
 // run.
 func (h *Handlers) startWorkflow(w http.ResponseWriter, r *http.Request) {
-	wf, steps, err := h.workflowOf(r)
+	flow, err := h.workflowOf(r)
 	if err != nil {
 		failErr(w, err)
 		return
 	}
+	wf := flow.Workflow()
 	var req WorkflowRunRequest
 	if err := readJSON(r, &req); err != nil && r.ContentLength > 0 {
 		fail(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	if step := h.mayRun(r, steps); step != "" {
-		fail(w, http.StatusForbidden, "you don't have permission to run "+step)
-		return
-	}
-	user, err := h.runAsUser(r, wf)
+	runAs, refusal, err := flow.Check(r.Context(), access.UserFrom(r.Context()), h.permissions(r))
 	if err != nil {
-		fail(w, http.StatusConflict, "the user this workflow runs as is gone; change it on the workflow")
+		fail(w, http.StatusConflict, err.Error())
 		return
 	}
-	if step := h.mayRunAs(r, user, steps); step != "" {
-		fail(w, http.StatusForbidden, user.Name+" may not run "+step)
+	if refusal.Step != "" {
+		fail(w, http.StatusForbidden, refusal.String())
 		return
 	}
-	run, err := h.opts.Flows.Start(r.Context(), wf, user, req.Input)
+	run, err := flow.Start(r.Context(), runAs, req.Input)
 	if errors.Is(err, workflow.ErrBusy) {
 		running, _ := h.opts.Flows.Active(wf.ID)
 		writeJSON(w, http.StatusConflict, map[string]any{"error": err.Error(), "run_id": running})
@@ -393,11 +398,12 @@ func (h *Handlers) listWorkflowRuns(w http.ResponseWriter, r *http.Request) {
 	if !h.require(w, r, "workflow/view") {
 		return
 	}
-	wf, _, err := h.workflowOf(r)
+	flow, err := h.workflowOf(r)
 	if err != nil {
 		failErr(w, err)
 		return
 	}
+	wf := flow.Workflow()
 	runs, err := h.opts.WorkflowRuns.ListByWorkflow(r.Context(), wf.ID, storage.WorkflowRunFilter{Limit: queryInt(r, "limit", 20)})
 	if err != nil {
 		failErr(w, err)
@@ -462,7 +468,8 @@ func (h *Handlers) stopWorkflowRun(w http.ResponseWriter, r *http.Request) {
 		failErr(w, storage.ErrNotFound)
 		return
 	}
-	if step := h.mayRun(r, steps); step != "" {
+	// The run's rows name each project's steps already.
+	if step := h.opts.Flows.MayRun(r.Context(), h.permissions(r), nil, steps); step != "" {
 		fail(w, http.StatusForbidden, "you don't have permission to run "+step)
 		return
 	}

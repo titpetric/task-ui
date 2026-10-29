@@ -35,6 +35,13 @@ func TestStep(t *testing.T) {
 	assert.Equal(t, "summary", summary.Icon())
 	assert.Equal(t, "of the steps before it, in malta/vhosts", summary.Line())
 	assert.Equal(t, "the root", view.Step{Kind: model.StepSummary, Folder: "internal"}.Place())
+
+	script := view.Step{Kind: model.StepJob, Folder: "malta/apps", Job: "@script", Args: `["go get -u ./..."]`}
+	assert.Equal(t, view.StepScript, script.StepKind())
+	assert.Equal(t, "Script", script.KindLabel())
+	assert.Equal(t, "script", script.Icon())
+	assert.Equal(t, "go get -u ./...", script.Command())
+	assert.Equal(t, "malta/apps: go get -u ./...", script.Line())
 }
 
 // A blank step of the editor: a command picks its folder, a prompt and

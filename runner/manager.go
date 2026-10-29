@@ -335,7 +335,7 @@ func (m *Manager) settle(ctx context.Context, session *Session, status Status) {
 // pumped until it exits.
 func (m *Manager) execute(ctx context.Context, session *Session) Status {
 	job, run := session.Job, session.Run
-	if len(job.Command) == 0 {
+	if len(job.Command) == 0 && !job.IsScript() {
 		return failed(session, "the job has no command")
 	}
 	if !session.noWorkspace {

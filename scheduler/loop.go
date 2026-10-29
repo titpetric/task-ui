@@ -11,7 +11,6 @@ import (
 	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/hostrun"
 	"github.com/titpetric/task-ui/model"
-	"github.com/titpetric/task-ui/permission"
 	"github.com/titpetric/task-ui/runner"
 	"github.com/titpetric/task-ui/storage"
 	"github.com/titpetric/task-ui/workflow"
@@ -25,12 +24,11 @@ type Catalogue interface {
 	Find(id string) *folder.Folder
 }
 
-// Starter starts a run of a workflow as a user, with the run's input,
-// and says which step a user with a set of permissions may not run, ""
-// for none. *workflow.Runner is one.
+// Starter loads a workflow with its steps, to check who may run it, and
+// starts a run of it as a user. *workflow.Runner is one.
 type Starter interface {
+	FlowByID(ctx context.Context, id string) (*workflow.Flow, error)
 	Start(ctx context.Context, wf *model.Workflow, user *model.User, input string) (*model.WorkflowRun, error)
-	MayRun(ctx context.Context, set permission.Set, steps []model.WorkflowStep) string
 }
 
 // Loop starts the due schedules as detached runs, as the user each
@@ -42,10 +40,9 @@ type Loop struct {
 	Users     *storage.UserStorage
 	Catalogue Catalogue
 	Runner    *runner.Manager
-	// Workflows holds the workflows the schedules of workflows name, and
-	// Flows starts their runs. Nil skips such a schedule.
-	Workflows *storage.WorkflowStorage
-	Flows     Starter
+	// Flows loads the workflows the schedules of workflows name and
+	// starts their runs. Nil skips such a schedule.
+	Flows Starter
 	// Hosts start a schedule of @host:<host> on its host. Nil skips such a
 	// schedule.
 	Hosts *hostrun.Starter
@@ -184,36 +181,30 @@ func (l *Loop) advance(ctx context.Context, schedule *model.Schedule, now time.T
 // progress skips it. A workflow run is no run of a job, so no triage
 // follows it.
 func (l *Loop) fireWorkflow(ctx context.Context, schedule *model.Schedule, now time.Time) (bool, error) {
-	if l.Workflows == nil || l.Flows == nil {
+	if l.Flows == nil {
 		slog.Warn("scheduled run skipped, no workflows on this instance", "workflow", schedule.WorkflowID)
 		return false, nil
 	}
-	wf, err := l.Workflows.Get(ctx, schedule.WorkflowID)
-	if err != nil {
+	flow, err := l.Flows.FlowByID(ctx, schedule.WorkflowID)
+	if errors.Is(err, storage.ErrNotFound) {
 		schedule.Enabled = 0
 		slog.Warn("schedule disabled, its workflow is gone", "workflow", schedule.WorkflowID)
 		return false, l.Schedules.Update(ctx, schedule)
 	}
+	if err != nil {
+		return false, err
+	}
+	wf := flow.Workflow()
 	if err := l.advance(ctx, schedule, now); err != nil {
 		return false, err
 	}
-	user := l.user(ctx, schedule)
-	if wf.RunAsUserID != "" {
-		user = &model.User{ID: wf.RunAsUserID, Name: wf.UserName}
+	user, err := flow.RunAs(ctx, l.user(ctx, schedule))
+	if err != nil {
+		slog.Warn("scheduled run skipped, its user may not run a step of the workflow", "workflow", wf.Name, "step", "", "user", wf.RunAsUserID, "err", "the user is gone")
+		return false, nil
 	}
 	if l.Users != nil {
-		if wf.RunAsUserID != "" {
-			user, err = l.Users.Get(ctx, wf.RunAsUserID)
-			if err != nil {
-				slog.Warn("scheduled run skipped, its user may not run a step of the workflow", "workflow", wf.Name, "step", "", "user", wf.RunAsUserID, "err", "the user is gone")
-				return false, nil
-			}
-		}
-		steps, err := l.Workflows.Steps(ctx, wf.ID)
-		if err != nil {
-			return false, err
-		}
-		if step := l.Flows.MayRun(ctx, l.Users.Permissions(ctx, user), steps); step != "" {
+		if step := flow.MayRun(ctx, l.Users.Permissions(ctx, user)); step != "" {
 			slog.Warn("scheduled run skipped, its user may not run a step of the workflow", "workflow", wf.Name, "step", step, "user", user.Name)
 			return false, nil
 		}

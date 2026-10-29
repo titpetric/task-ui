@@ -114,23 +114,6 @@ func (h *Handlers) seesWorkflowRun(ctx context.Context, user *model.User, rows [
 	return true
 }
 
-// runAsUser returns the user a workflow's runs run as, the one set on
-// it or the page's user, who starts it; nil for a user nobody holds any
-// more.
-func (h *Handlers) runAsUser(ctx context.Context, wf *model.Workflow, user *model.User) *model.User {
-	if wf.RunAsUserID == "" {
-		return user
-	}
-	if h.opts.Users == nil {
-		return &model.User{ID: wf.RunAsUserID, Name: wf.UserName}
-	}
-	user, err := h.opts.Users.Get(ctx, wf.RunAsUserID)
-	if err != nil {
-		return nil
-	}
-	return user
-}
-
 // workflowView decorates a workflow for the page's user. It returns nil when
 // the user may not see a step's folder, the folders of the workflows
 // the steps run among them. CanRun says whether the user may run every
@@ -151,16 +134,14 @@ func (h *Handlers) workflowView(ctx context.Context, p *view.Page, wf model.Work
 			return nil
 		}
 	}
-	if runAs := h.runAsUser(ctx, &wf, user); runAs != nil {
-		if wf.RunAsUserID != "" {
-			v.RunAs = runAs.Name
-		}
-		if step := h.opts.Flows.MayRun(ctx, p.Permissions, steps); step != "" {
-			v.RunDenied = "Run needs " + step
-		} else if h.opts.Users != nil && runAs.ID != user.ID {
-			if step := h.opts.Flows.MayRun(ctx, h.opts.Users.Permissions(ctx, runAs), steps); step != "" {
-				v.RunDenied = "Run needs " + step + ", which " + runAs.Name + " may not run"
-			}
+	flow := h.opts.Flows.Flow(&wf, steps)
+	v.RunAs = flow.RunAsName(ctx)
+	if _, refusal, err := flow.Check(ctx, user, p.Permissions); err == nil {
+		switch {
+		case refusal.User != "":
+			v.RunDenied = "Run needs " + refusal.Step + ", which " + refusal.User + " may not run"
+		case refusal.Step != "":
+			v.RunDenied = "Run needs " + refusal.Step
 		}
 		v.CanRun = v.RunDenied == ""
 	}

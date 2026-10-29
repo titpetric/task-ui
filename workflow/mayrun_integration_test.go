@@ -28,19 +28,19 @@ func TestRunner_MayRun(t *testing.T) {
 	steps := []model.WorkflowStep{{Folder: "infra", Job: "test"}, {WorkflowRef: inner.ID}, {Kind: model.StepPrompt, Folder: "infra", Prompt: "why"}}
 
 	runner := permission.Set{User: &model.User{ID: "u1", Name: "ops", Role: model.RoleRunner}, Role: permission.Policy{"run": permission.Allow, "prompt/edit": permission.Allow}}
-	assert.Equal(t, "", r.MayRun(ctx, runner, steps))
+	assert.Equal(t, "", r.MayRun(ctx, runner, nil, steps))
 
 	noPrompt := permission.Set{User: runner.User, Role: permission.Policy{"run": permission.Allow}}
-	assert.Equal(t, "the prompt in infra", r.MayRun(ctx, noPrompt, steps))
+	assert.Equal(t, "the prompt in infra", r.MayRun(ctx, noPrompt, nil, steps))
 
 	viewer := permission.Set{User: &model.User{ID: "u2", Name: "guest", Role: model.RoleViewer}, Role: permission.Policy{"prompt/edit": permission.Allow}}
-	assert.Equal(t, "infra / test", r.MayRun(ctx, viewer, steps))
+	assert.Equal(t, "infra / test", r.MayRun(ctx, viewer, nil, steps))
 
 	infra.Job("build").Allow = []string{"admin"}
-	assert.Equal(t, "infra / build", r.MayRun(ctx, runner, steps), "the nested workflow's step")
+	assert.Equal(t, "infra / build", r.MayRun(ctx, runner, nil, steps), "the nested workflow's step")
 
 	admin := permission.Set{User: &model.User{ID: "u3", Name: "root", Role: model.RoleAdmin}}
-	assert.Equal(t, "", r.MayRun(ctx, admin, steps))
+	assert.Equal(t, "", r.MayRun(ctx, admin, nil, steps))
 
 	// A nested workflow with a user of its own counts as that user:
 	// the viewer may not run infra / build, so the admin's outer run
@@ -51,17 +51,17 @@ func TestRunner_MayRun(t *testing.T) {
 	inner.RunAsUserID = guest.ID
 	assert.NoError(t, f.workflows.Update(ctx, inner, []model.WorkflowStep{{Folder: "infra", Job: "build"}}))
 	r.Users = users
-	assert.Equal(t, "infra / build", r.MayRun(ctx, admin, steps), "checked as the nested workflow's user")
+	assert.Equal(t, "infra / build", r.MayRun(ctx, admin, nil, steps), "checked as the nested workflow's user")
 	inner.RunAsUserID = runner.User.ID
 	assert.NoError(t, f.workflows.Update(ctx, inner, []model.WorkflowStep{{Folder: "infra", Job: "build"}}))
-	assert.Equal(t, "workflow chain, whose user is gone", r.MayRun(ctx, admin, steps))
+	assert.Equal(t, "workflow chain, whose user is gone", r.MayRun(ctx, admin, nil, steps))
 	infra.Job("build").Allow = nil
 	inner.RunAsUserID = ""
 	assert.NoError(t, f.workflows.Update(ctx, inner, []model.WorkflowStep{{Folder: "infra", Job: "build"}}))
-	assert.Equal(t, "", r.MayRun(ctx, admin, steps))
+	assert.Equal(t, "", r.MayRun(ctx, admin, nil, steps))
 
-	assert.Equal(t, "infra / gone", r.MayRun(ctx, admin, []model.WorkflowStep{{Folder: "infra", Job: "gone"}}))
-	assert.Equal(t, "infra / "+folder.ShellID, r.MayRun(ctx, admin, []model.WorkflowStep{{Folder: "infra", Job: folder.ShellID}}))
+	assert.Equal(t, "infra / gone", r.MayRun(ctx, admin, nil, []model.WorkflowStep{{Folder: "infra", Job: "gone"}}))
+	assert.Equal(t, "infra / "+folder.ShellID, r.MayRun(ctx, admin, nil, []model.WorkflowStep{{Folder: "infra", Job: folder.ShellID}}))
 	hosts := []model.WorkflowStep{{Folder: model.Default, Job: "@host:*"}}
-	assert.Equal(t, "internal / @host:*", r.MayRun(ctx, runner, hosts), "no root folder in the catalogue")
+	assert.Equal(t, "internal / @host:*", r.MayRun(ctx, runner, nil, hosts), "no root folder in the catalogue")
 }

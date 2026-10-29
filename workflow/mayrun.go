@@ -8,12 +8,17 @@ import (
 	"github.com/titpetric/task-ui/permission"
 )
 
-// MayRun returns the first step the permissions may not run, "" for none.
-func (r *Runner) MayRun(ctx context.Context, set permission.Set, steps []model.WorkflowStep) string {
-	return r.mayRun(ctx, set, steps, map[string]bool{})
+// MayRun returns the first step of the workflow the permissions may not run, "" for none.
+// A workflow that runs over a workspace counts its steps in each project, and the steps a project skips for lack of the job not at all.
+func (r *Runner) MayRun(ctx context.Context, set permission.Set, wf *model.Workflow, steps []model.WorkflowStep) string {
+	expanded, _, projects, err := r.over(ctx, wf, steps)
+	if err != nil {
+		return err.Error()
+	}
+	return r.mayRun(ctx, set, expanded, projects, map[string]bool{})
 }
 
-func (r *Runner) mayRun(ctx context.Context, set permission.Set, steps []model.WorkflowStep, seen map[string]bool) string {
+func (r *Runner) mayRun(ctx context.Context, set permission.Set, steps []model.WorkflowStep, projects map[string]*folder.Folder, seen map[string]bool) string {
 	for _, step := range steps {
 		switch {
 		case step.IsWorkflow():
@@ -24,8 +29,9 @@ func (r *Runner) mayRun(ctx context.Context, set permission.Set, steps []model.W
 			if !set.Allowed("prompt/edit") {
 				return "the prompt in " + model.PlaceLabel(step.Place())
 			}
+		case step.Disabled:
 		default:
-			if !r.mayRunJob(set, step) {
+			if !r.mayRunJob(set, step, projects) {
 				return step.Folder + " / " + step.Job
 			}
 		}
@@ -57,23 +63,29 @@ func (r *Runner) mayRunNested(ctx context.Context, set permission.Set, step mode
 			set = r.Users.Permissions(ctx, user)
 		}
 	}
-	return r.mayRun(ctx, set, inner, seen)
+	return r.mayRun(ctx, set, inner, nil, seen)
 }
 
 // mayRunJob reports whether the permissions run a job step: a job the
-// catalogue holds that is no shell, with `hosts` for a host command and
-// the folder's and the job's allow lists otherwise.
-func (r *Runner) mayRunJob(set permission.Set, step model.WorkflowStep) bool {
-	f := r.catalogue.Find(step.Folder)
-	var job *folder.Job
-	if f != nil {
-		job = f.Job(step.Job)
+// catalogue holds that is no shell, with `hosts` for a host command,
+// `shell` for a script and the folder's and the job's allow lists
+// otherwise. A project of a workspace run over that lacks the job skips
+// the step, which takes no permission.
+func (r *Runner) mayRunJob(set permission.Set, step model.WorkflowStep, projects map[string]*folder.Folder) bool {
+	f := projects[step.Folder]
+	if f == nil {
+		f = r.catalogue.Find(step.Folder)
 	}
+	job := r.job(f, step.Job)
 	switch {
-	case job == nil, job.IsShell():
+	case job == nil:
+		return projects != nil
+	case job.IsShell():
 		return false
 	case job.IsHost():
 		return set.Allowed("hosts")
+	case job.IsScript():
+		return set.Allowed("shell")
 	}
 	return set.Run(f.ID, f.Allow, job.Allow)
 }
