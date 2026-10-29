@@ -30,13 +30,25 @@ package p
 
 A file holds tests of one kind. Helpers that only integration tests call go in the tagged file with them; a helper that both kinds call stays in the untagged file and crosses no boundary itself.
 
-Integration tests take longer and need `git`, `sh` and the other tools on the machine. They run with the tag alone:
+Integration tests take longer and need `git`, `sh` and the other tools on the machine. `scripts/test-integration.sh` runs them, and `task test:integration` and the atkins job `test:integration` call it:
 
 ```bash
-go test -tags integration -count=1 ./...
+scripts/test-integration.sh                  # every package
+scripts/test-integration.sh ./storage/...    # one package or pattern
+task test:integration -- ./frontend/...      # the same, through task
 ```
 
-`task test:integration` and the atkins job `test:integration` run the same command.
+One `go test` per package, and a package holding more tests than the batch size is split by test name into batches of that size. The names come from `go test -list`, so a test added to a split package runs without the script being edited. Three variables set the bounds:
+
+| Variable             | Default | What it sets                                     |
+|----------------------|---------|--------------------------------------------------|
+| `TASK_UI_TEST_BATCH` | `20`    | Tests per `go test`, over which a package splits |
+| `TASK_UI_TEST_MEM`   | `2GiB`  | `GOMEMLIMIT` of each `go test`                   |
+| `TASK_UI_TEST_PROCS` | `2`     | `GOMAXPROCS` of each `go test`                   |
+
+The split is what keeps the suite inside the memory cap. A cap binds a process, not a run: `go test -tags integration ./...` builds one binary per package, and `frontend` holds enough tests that running them together needs more than the cap, which ends the whole suite in an OOM that names no package. One `go test` per batch keeps a failure local and prints which package and which batch it is.
+
+Nothing here runs a benchmark: the repository holds none, and `go test` runs one only under `-bench`. Coverage is its own target, `task cover`, because `-cover` instruments every package and the correctness run does not read the number.
 
 ## Where integration tests belong
 
