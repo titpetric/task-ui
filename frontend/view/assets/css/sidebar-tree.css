@@ -176,7 +176,9 @@
     }
   }
 
-  &.active .ic {
+  /* The icon lights for a checkout with files changed or untracked,
+     not for the open page: the row's wash and bar say that. */
+  & .ic.dirty {
     color: var(--signal);
   }
 
@@ -256,6 +258,10 @@
     color: var(--text-faint);
   }
 
+  & .ic.dirty {
+    color: var(--signal);
+  }
+
   & small {
     color: var(--text-faint);
 
@@ -279,10 +285,6 @@
   color: var(--text);
   background: var(--signal-wash);
   border-inline-start-color: var(--signal);
-
-  & .ic {
-    color: var(--signal);
-  }
 }
 
 .folders .jobs {

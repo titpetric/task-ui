@@ -43,3 +43,18 @@ func TestParseStatus_Changes(t *testing.T) {
 	assert.Equal(t, "AM", s.Changes[3].Code())
 	assert.Equal(t, "added", s.Changes[3].State())
 }
+
+// Under counts the changed files in a directory of the checkout, all of
+// them for the checkout itself, and none for a sibling sharing a prefix.
+func TestStatus_Under(t *testing.T) {
+	t.Parallel()
+	s := git.ParseStatus("# branch.oid 0123456789abcdef\n" +
+		"1 .M N... 100644 100644 100644 a a app/main.go\n" +
+		"? app/new.txt\n" +
+		"? apps/other.txt\n" +
+		"? top.txt\n")
+	assert.Equal(t, 4, s.Under(""))
+	assert.Equal(t, 2, s.Under("app"))
+	assert.Equal(t, 1, s.Under("apps"))
+	assert.Equal(t, 0, s.Under("docs"))
+}

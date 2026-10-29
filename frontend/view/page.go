@@ -42,6 +42,10 @@ type Page struct {
 	// SidePins are the pinned jobs a folder of the sidebar lists besides
 	// its own, by folder ID.
 	SidePins map[string][]SidePin
+	// SideDirty counts the changed and untracked files under each folder
+	// of the sidebar that is in a git checkout, by folder ID; a folder
+	// with none is not in it.
+	SideDirty map[string]int
 	// Pins are the user's pins, for Pin and Unpin; Pinning says the user
 	// may pin, signed in with pins on.
 	Pins    []model.Pin
@@ -299,6 +303,11 @@ type Page struct {
 // Groups are the sidebar's projects, and the workspaces with theirs.
 func (p *Page) Groups() []Group {
 	return Groups(p.SideFolders, p.Workspaces)
+}
+
+// Dirty returns how many files are changed or untracked under a folder of the sidebar, 0 for a clean one or one outside git.
+func (p *Page) Dirty(id string) int {
+	return p.SideDirty[id]
 }
 
 // Href returns the path of a folder's page among the page's workspaces.

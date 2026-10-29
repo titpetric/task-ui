@@ -28,6 +28,21 @@ type Status struct {
 	Changes []Change `json:"changes"`
 }
 
+// Under returns every changed file for rel "", the checkout itself, else
+// those in rel, a slash path inside the checkout.
+func (s *Status) Under(rel string) int {
+	if rel == "" {
+		return len(s.Changes)
+	}
+	n := 0
+	for _, c := range s.Changes {
+		if c.Path == rel || strings.HasPrefix(c.Path, rel+"/") {
+			n++
+		}
+	}
+	return n
+}
+
 // Change is one file a checkout changed or added, as git status
 // --porcelain=v2 lists it.
 type Change struct {

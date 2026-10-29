@@ -107,6 +107,8 @@ A link to the folder's page with `#file=<name>`, such as `/f/acme/api#file=READM
 
 The line under a folder's title, and under a directory's inside a folder, reads `⎇ main ↑1 ↓3 ● 2 files changed or untracked · malta/dockerfiles`: the checkout the page is in, the nearest one up from it and no higher than the root: its branch, or `detached` and the commit of a checkout off any branch; `↑` the commits to push and `↓` those to pull from its upstream, as last fetched; `●` the files changed or untracked, counted; then where the checkout is. A checkout level with its upstream and with nothing changed reads `up to date`. A click on the count folds the checkout's status out under the line, and folds it back: a row per changed or untracked file, the status git prints in short and in a word, and the path, a rename naming where it came from. Hover the line for the upstream. The line reads `git status` and changes nothing; the pulls are jobs of the git skill. The links to a project's or a workspace's settings are in the `[...]` menu of its page head (see [A folder's page](#a-folders-page)).
 
+The sidebar reads the same status. A project's or a folder's icon turns amber while git has files changed or untracked under it, and hovering the icon says how many. A clean checkout, or a folder outside git, keeps its plain icon, the open page's own row included.
+
 ## Skills
 
 ![The git, compose and dockerfile skills of a directory](https://cdn.si/titpetric/task-ui/docs/assets/actions-dark.png)

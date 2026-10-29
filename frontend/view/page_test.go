@@ -350,3 +350,13 @@ func TestPage_FieldNames(t *testing.T) {
 	assert.Contains(t, buf.String(), `<div class="field" role="group" aria-labelledby="pe-allow-label">`)
 	assert.Contains(t, buf.String(), `<span class="label" id="pe-allow-label">Who can run</span>`)
 }
+
+// Dirty answers the changed files under a folder of the sidebar, and 0
+// for one git has nothing to say about.
+func TestPage_Dirty(t *testing.T) {
+	t.Parallel()
+	p := &view.Page{SideDirty: map[string]int{"malta/apps": 3}}
+	assert.Equal(t, 3, p.Dirty("malta/apps"))
+	assert.Equal(t, 0, p.Dirty("malta/deploy"))
+	assert.Equal(t, 0, (&view.Page{}).Dirty("malta/apps"))
+}

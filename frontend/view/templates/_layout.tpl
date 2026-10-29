@@ -405,7 +405,7 @@
 				<details class="project{{ if $active }} active{{ end }}" data-project="{{ $p.ID }}" open>
 					<summary{{ if $here }} class="active"{{ end }} title="{{ $p.ID }}/{{ range $i, $s := $p.Sources }}{{ if $i }}, {{ end }}{{ $s.File }}{{ end }}">
 						<a class="section{{ if $here }} active{{ end }}" href="{{ $.Href $p.ID }}" data-folder="{{ $p.ID }}">
-							<svg class="ic"><use href="#i-project"/></svg><span>{{ $p.Name }}</span>
+							{{- template "sideicon" (list "project" ($.Dirty $p.ID)) }}<span>{{ $p.Name }}</span>
 							{{- if $p.Error }}{{ template "sidebad" $p }}{{ else if $p.Jobs }}<small>{{ len $p.Jobs }}</small>{{ end }}
 						</a>
 						<svg class="ic chev"><use href="#i-chev"/></svg>
@@ -456,9 +456,10 @@
 {{- define "sidefolder" }}
 {{- $ := index . 0 }}{{ $p := index . 1 }}{{ $total := index . 2 }}{{ $top := index . 3 }}
 {{- $active := and $.Folder (eq $.Folder.ID $p.ID) }}
+{{- $icon := "folder" }}{{ if $active }}{{ $icon = "folder-open" }}{{ end }}
 <details class="folder{{ if $active }} active{{ end }}" data-folder="{{ $p.ID }}"{{ if or $active (le $total 24) }} open{{ end }}>
 	<summary title="{{ $p.ID }}/{{ range $i, $s := $p.Sources }}{{ if $i }}, {{ end }}{{ $s.File }}{{ end }}">
-		<a href="{{ $.Href $p.ID }}"><svg class="ic"><use href="#i-folder{{ if $active }}-open{{ end }}"/></svg><span>{{ with folderDir $p.ID $top }}<i>{{ . }}/</i>{{ end }}<b>{{ $p.Name }}</b></span></a>
+		<a href="{{ $.Href $p.ID }}">{{ template "sideicon" (list $icon ($.Dirty $p.ID)) }}<span>{{ with folderDir $p.ID $top }}<i>{{ . }}/</i>{{ end }}<b>{{ $p.Name }}</b></span></a>
 		<i class="dot"></i>
 		{{- if $p.Error }}{{ template "sidebad" $p }}{{ else }}<small>{{ add (len $p.Jobs) (len ($.PinnedJobs $p.ID)) }}</small>{{ end }}
 		<svg class="ic chev"><use href="#i-chev"/></svg>
@@ -467,6 +468,15 @@
 		{{- template "sidejobs" (list $ $p) }}
 	</div>
 </details>
+{{- end }}
+
+{{/* sideicon is the icon of a project's or a folder's row, (list icon
+     dirty): lit in the brand colour while git has files changed or
+     untracked under it, and saying how many on a mouse-over. An SVG
+     takes its tooltip from a <title> child, not a title attribute. */}}
+{{- define "sideicon" }}
+{{- $dirty := index . 1 -}}
+<svg class="ic{{ if $dirty }} dirty{{ end }}">{{ if $dirty }}<title>{{ $dirty }} file{{ if ne $dirty 1 }}s{{ end }} changed or untracked</title>{{ end }}<use href="#i-{{ index . 0 }}"/></svg>
 {{- end }}
 
 {{/* tree is the Files panel of a folder page, a dashboard of what it
