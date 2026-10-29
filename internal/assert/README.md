@@ -30,7 +30,7 @@ across modules. The copy carries two changes:
 
 ## No require
 
-There is no `require`, so a failed assertion reports and continues; it
+There is no `require`. A failed assertion reports and continues; it
 never calls `FailNow`. A test that dereferences a value it just
 asserted on panics on failure and does not stop at the assertion.
 The panic still fails the test; it reads worse in the output.

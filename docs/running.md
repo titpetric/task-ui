@@ -18,7 +18,7 @@ services:
 Two mounts hold everything the instance keeps:
 
 - `/data`, `TASK_UI_DATA`: the database, the recordings, the artifacts, the password file, `/data/.htpasswd`, and the workspace folder, `/data/workspaces`, `TASK_UI_WORKSPACE`. The workspace folder holds `home/`, the `HOME` of every run at the root, `src/`, whose subfolders with something to run are the folders of the UI, and a directory per named workspace, each with a `home/` and a `src/` of its own ([Workspaces](guide/workspaces.md)).
-- `/keys`, `TASK_UI_SSH_DIR`: the keys of the instance. Keep it out of `/root/.ssh`, so `ssh` in a job does not find them by default; a run receives the keys its policies grant it.
+- `/keys`, `TASK_UI_SSH_DIR`: the keys of the instance. Keep it out of `/root/.ssh`, where `ssh` in a job would find them by default; a run receives the keys its policies grant it.
 
 `/app`, the working directory, holds the image's own configuration and nothing a run writes; mount nothing there. The image bundles `task`, `atkins`, `docker` and `docker compose`.
 
@@ -50,13 +50,13 @@ The environment sets the whole configuration:
 
 The flags `-l`, `--workspace` and `--data` override the matching variables; `-v` prints the build. `TASK_UI_ROOT` and `TASK_UI_HTPASSWD` set stop task-ui at start, with where the folders and the password file go. `/healthz` answers `ok` to anyone, for a proxy or a compose health check.
 
-`task-ui migrate-layout` brings a workspace folder laid out as before, the projects right under the root and under each workspace, to the `home` and `src` layout: it reads the configuration and the database, moves each workspace's home project to `home/`, every other directory of the workspace to `src/`, and makes `home/` and `src/` where they are not, printing each move; `--dry-run` prints them and moves nothing. Run it with the server stopped. A folder laid out already prints nothing to move, so the command runs again without harm.
+`task-ui migrate-layout` brings a workspace folder laid out as before, the projects right under the root and under each workspace, to the `home` and `src` layout: it reads the configuration and the database, moves each workspace's home project to `home/`, every other directory of the workspace to `src/`, and makes `home/` and `src/` where they are not, printing each move; `--dry-run` prints them and moves nothing. Run it with the server stopped. A folder laid out already prints nothing to move, and the command runs again without harm.
 
 ## Users and roles
 
-Login is mandatory, through the sign in screen; there is no HTTP basic auth. Who may sign in is the password file, `.htpasswd` in the data directory: one `name:hash` per line, the htpasswd format, bcrypt hashes only. The file is the truth. task-ui reads it on startup and again whenever it changes, so adding, resetting or removing a user needs no restart: a user not in the file cannot sign in and the instance removes them. A file that is not there yet is a warning, not an error: the instance reads it once `task-ui passwd` makes it.
+Login is mandatory, through the sign in screen; there is no HTTP basic auth. Who may sign in is the password file, `.htpasswd` in the data directory: one `name:hash` per line, the htpasswd format, bcrypt hashes only. The file is the truth. task-ui reads it on startup and again whenever it changes. Adding, resetting or removing a user needs no restart: a user not in the file cannot sign in and the instance removes them. A file that is not there yet is a warning, not an error: the instance reads it once `task-ui passwd` makes it.
 
-A sign in sets a session cookie that holds a random token and nothing else. The database keeps the hash of the token, the user and the expiry, so a session survives a restart of the server and ends when it expires, on sign out, when the file removes the user, or when the user gets a new password.
+A sign in sets a session cookie that holds only a random token. The database keeps the hash of the token, the user and the expiry. A session survives a restart of the server and ends when it expires, on sign out, when the file removes the user, or when the user gets a new password.
 
 ```sh
 task-ui passwd alice                         # add or reset; the password from stdin
@@ -82,7 +82,7 @@ task-ui -v                                   # the version and the commit
 
 `task-ui agent note|prompt|shell [args]` are the host commands of the Claude built-ins, `@claude-note`, `@claude-prompt` and `@claude`: the server runs them in a run's terminal, and they read the run's environment (see [Notes](guide/notes.md#the-claude-jobs)).
 
-task-ui keeps what a user signs in with apart from the user row, so nothing that reads a user, the API included, carries a credential: `user_auth_password` holds the password hashes, `user_email` the addresses and `user_auth_token` the token hashes. The `email`, `backup` and `token` commands work on the database of a user the server has read from the password file. To remove a user, delete the line, or **Delete** the user on Settings, **Users**, or call `DELETE /api/users/{id}`; both take Allow Deletes on Users, `user/delete`, and remove the line and the user's sessions, tokens and policy at once.
+task-ui keeps what a user signs in with apart from the user row, and no reader of a user, the API included, carries a credential: `user_auth_password` holds the password hashes, `user_email` the addresses and `user_auth_token` the token hashes. The `email`, `backup` and `token` commands work on the database of a user the server has read from the password file. To remove a user, delete the line, or **Delete** the user on Settings, **Users**, or call `DELETE /api/users/{id}`; both take Allow Deletes on Users, `user/delete`, and remove the line and the user's sessions, tokens and policy at once.
 
 The database holds what each user is: the admin flag, **Administrative privileges (all)**, which allows everything, and the role, runner or viewer, whose policy decides the rest; what each role may do is in [Settings, Permissions](guide/settings.md#permissions). The password file brings users in:
 

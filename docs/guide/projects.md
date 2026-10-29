@@ -5,7 +5,7 @@ Below the views, the sidebar lists what there is to run, as a tree:
 - a **project** (the branch icon) is a folder at the top of the root, most often a git checkout;
 - under it, its own **jobs**, then the **folders** inside it (the folder icon), each with its jobs.
 
-Every job has a play button, so a job is one click from anywhere; a job that runs has an eye instead, to watch it. A project folds on its chevron, and this browser remembers the folded ones. The project of the page you are on stays open.
+Every job has a play button and is one click from anywhere; a job that runs has an eye instead, to watch it. A project folds on its chevron, and this browser remembers the folded ones. The project of the page you are on stays open.
 
 ## What the sidebar lists
 
@@ -29,8 +29,8 @@ What moves and what stays:
 
 - the checkout moves, renamed in place, with the folders inside it;
 - the project row moves, with its title and allow lists, and the project takes the hours of the workspace it moves into;
-- the users whose folder list names the project, or a folder inside it, get the new ID in its place, so access follows the project;
-- the pins of every user that name the project, a folder inside it or a job of either get the new ID too, so the sidebar keeps them; `pins` in the API's answer counts them;
+- the users whose folder list names the project, or a folder inside it, get the new ID in its place, and access follows the project;
+- the pins of every user that name the project, a folder inside it or a job of either get the new ID too, and the sidebar keeps them; `pins` in the API's answer counts them;
 - the runs stay under the old ID: their pages, recordings and artifacts still open from the Runs page;
 - schedules, imported env files and workflow steps that name the old ID stay behind, as do secrets scoped to a folder of an older instance. The dialog lists them, as does `left` in the API's answer; change them to the new ID, or move the project back, to bring them along.
 
@@ -44,7 +44,7 @@ curl -X PUT -H "Authorization: Bearer $TOKEN" \
   https://task.example.com/api/projects/web
 ```
 
-The request configures as well, so send the fields the project has. It responds with the project row under its new ID, and `left`: each row that still names the old ID, as `{kind, id, folder, name}`.
+The request configures as well: send the fields the project has. It responds with the project row under its new ID, and `left`: each row that still names the old ID, as `{kind, id, folder, name}`.
 
 ## Where the jobs come from
 
@@ -61,7 +61,7 @@ task-ui reads the files a folder has and lists their targets; task-ui itself nev
 
 A pipeline file, `atkins.yml` or a Taskfile, speaks for its folder: the folder lists that pipeline's jobs, and the files beside it are the pipeline's business. Without one, the folder lists every source, and a job name that two of them share gets its kind in front (`make:build`, `npm:build`). A folder that is itself a `scripts` directory with a pipeline also lists the scripts beside it that the pipeline does not run, under their own names, such as a `bash.sh` with `exec bash` and `# interactive: true`, a terminal to work in.
 
-Every directory under the root that has something to run is a folder, as deep as they go. Under a folder with a pipeline, the sidebar lists only folders with a pipeline of their own, so the Makefiles of a Go tree do not become folders; under a plain folder they do. Hidden directories, `node_modules`, `vendor` and `testdata` are never looked into.
+Every directory under the root that has something to run is a folder, as deep as they go. Under a folder with a pipeline, the sidebar lists only folders with a pipeline of their own, and the Makefiles of a Go tree do not become folders; under a plain folder they do. Hidden directories, `node_modules`, `vendor` and `testdata` are never looked into.
 
 Discovery skips what a checkout's `.gitignore` ignores: build copies, caches, dependencies. One kind of ignored directory lists all the same: a directory right below a workspace or a project that holds a job source, an `atkins.yml`, a Taskfile, a Makefile, `package.json` scripts, at its top or in a directory inside it, such as a checkout the workspace keeps beside its files with its jobs in `scripts/`. The folders inside it follow the Recursive of the workspace or project above it. An ignored directory with nothing to run, or one deeper down, stays out; a project row on the directory configures it, as on any folder.
 
@@ -105,7 +105,7 @@ A link to the folder's page with `#file=<name>`, such as `/f/acme/api#file=READM
 
 ## The git line
 
-The line under a folder's title, and under a directory's inside a folder, reads `⎇ main ↑1 ↓3 ● 2 files changed or untracked · malta/dockerfiles`: the checkout the page is in, the nearest one up from it and no higher than the root: its branch, or `detached` and the commit of a checkout off any branch; `↑` the commits to push and `↓` those to pull from its upstream, as last fetched; `●` the files changed or untracked, counted; then where the checkout is. A checkout level with its upstream and with nothing changed reads `up to date`. A click on the count folds the checkout's status out under the line, and folds it back: a row per changed or untracked file, the status git prints in short and in a word, and the path, a rename naming where it came from. Hover the line for the upstream. The line reads `git status` and changes nothing; the pulls are jobs of the git skill. The links to a project's or a workspace's settings are in the `[...]` menu of its page head (see [A folder's page](#a-folders-page)).
+The line under a folder's title, and under a directory's inside a folder, reads `⎇ main ↑1 ↓3 ● 2 files changed or untracked · malta/dockerfiles`: the checkout the page is in, the nearest one up from it and no higher than the root: its branch, or `detached` and the commit of a checkout off any branch; `↑` the commits to push and `↓` those to pull from its upstream, as last fetched; `●` the files changed or untracked, counted; then where the checkout is. A checkout level with its upstream and with nothing changed reads `up to date`. A click on the count folds the checkout's status out under the line, and folds it back: a row per changed or untracked file, the status as git's short code and as a word, and the path, a rename naming where it came from. Hover the line for the upstream. The line reads `git status` and changes nothing; the pulls are jobs of the git skill. The links to a project's or a workspace's settings are in the `[...]` menu of its page head (see [A folder's page](#a-folders-page)).
 
 The sidebar reads the same status. A project's or a folder's icon turns amber while git has files changed or untracked under it, and hovering the icon says how many. A clean checkout, or a folder outside git, keeps its plain icon, the open page's own row included.
 
@@ -140,13 +140,13 @@ Below it, an admin with a token in the [Claude Code integration](settings.md#int
 
 ### Prompt
 
-A user with Allow Edits on Prompts, `prompt/edit`, and a token in the [Claude Code integration](settings.md#integrations) gets a **Prompt** box on every folder page and every directory inside a folder: open on a workspace's page, on `/f/internal`, which prompts at the root, and wherever its directory holds a prompt, folded elsewhere until clicked. The prompt runs `@claude-prompt` of that folder and directory as you, with Claude Code there, so it reads the `CLAUDE.md` and `.claude/` there and above. An admin picks who the prompt runs as, **Runs as** in the box's foot, the admin's own login unless changed: the thread, its run, the Claude token, the keys and the secrets are that user's, who holds `prompt/edit` and sees the folder. A reply keeps the thread's user, and the prompt in the header takes the same pick.
+A user with Allow Edits on Prompts, `prompt/edit`, and a token in the [Claude Code integration](settings.md#integrations) gets a **Prompt** box on every folder page and every directory inside a folder: open on a workspace's page, on `/f/internal`, which prompts at the root, and wherever its directory holds a prompt, folded elsewhere until clicked. The prompt runs `@claude-prompt` of that folder and directory as you, with Claude Code there. It reads the `CLAUDE.md` and `.claude/` there and above. An admin picks who the prompt runs as, **Runs as** in the box's foot, the admin's own login unless changed: the thread, its run, the Claude token, the keys and the secrets are that user's, who holds `prompt/edit` and sees the folder. A reply keeps the thread's user, and the prompt in the header takes the same pick.
 
 Claude also reads what task-ui is, from `config/context.md`, with your name, role and permissions, which say what you may do, and the rule that a file it writes to `$TASK_UI_ARTIFACTS` stays as an artifact (see [MCP](mcp.md#what-task-ui-is)).
 
 No window opens. The question shows under the box at once, `open`, then `working` while the run goes, and Claude's answer, in markdown, lands under it when the run ends, without a reload. Each thread links its run, which keeps the output. **Reply** under a thread asks again: Claude reads the whole thread, its earlier answers among them. The box lists the last 20 threads asked in its directory, by anyone; the Notes board lists none of them.
 
-Click a question, or a reply of yours, to edit it: add what you need and **Save**, or Ctrl+Enter; Esc cancels. The question runs again on the edited text, with the thread up to Claude's answer to it, and that answer changes in place: its old text stays, dimmed and marked `working`, until the new one lands. The thread gets no new reply, and the run keeps its ID, so the run link opens the latest attempt; the attempt before goes with its recording and artifacts. The question shows `edited` beside its time.
+Click a question, or a reply of yours, to edit it: add what you need and **Save**, or Ctrl+Enter; Esc cancels. The question runs again on the edited text, with the thread up to Claude's answer to it, and that answer changes in place: its old text stays, dimmed and marked `working`, until the new one lands. The thread gets no new reply, and the run keeps its ID: the run link opens the latest attempt; the attempt before goes with its recording and artifacts. The question shows `edited` beside its time.
 
 ```sh
 curl -s -X POST https://task.example.com/api/prompts \
@@ -160,7 +160,7 @@ The reply is the note, with `dir` `malta/dockerfiles/blog`; `GET /api/prompts` l
 
 Enter at the header's prompt, after the logo, asks where the page is: in the folder or the directory of its page, a project's or workspace's settings included, about the run on a run's page, and at the root anywhere else. Claude's answer lands in a panel under the header, in markdown, with no reload; the panel names the place and links the thread. A click on the logo opens and closes the panel, which keeps its thread in the tab from page to page.
 
-With the Beszel integration set up, a prompt also sees the [Inventory](inventory.md#prompts-on-the-hosts): Claude gets the hosts with who signs in to each, and inspects them over ssh with the keys of the run, so a question such as "list running containers on all hosts, check for any usage of php or frankenphp images" gets an answer per host.
+With the Beszel integration set up, a prompt also sees the [Inventory](inventory.md#prompts-on-the-hosts): Claude gets the hosts with who signs in to each, and inspects them over ssh with the keys of the run. A question such as "list running containers on all hosts, check for any usage of php or frankenphp images" gets an answer per host.
 
 A run's page has a prompt of its own, about the run and its output, with its threads kept on that page (see [Runs](runs.md#a-prompt-about-a-run)).
 
@@ -174,7 +174,7 @@ The History opens with the job's activity: its runs of the last thirty days by d
 
 ## Pulled before every run
 
-A folder in a git checkout pulls it with `git pull --ff-only` before every run, in the run's own terminal, so a job always runs the latest version. A folder inside a checkout pulls the checkout. When the pull fails, the run fails with it. A project in a workspace whose home is a checkout pulls the home first (see [Workspaces](workspaces.md#runs-in-a-workspace)).
+A folder in a git checkout pulls it with `git pull --ff-only` before every run, in the run's own terminal, and a job always runs the latest version. A folder inside a checkout pulls the checkout. When the pull fails, the run fails with it. A project in a workspace whose home is a checkout pulls the home first (see [Workspaces](workspaces.md#runs-in-a-workspace)).
 
 ## Keys for a run
 

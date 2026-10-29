@@ -24,11 +24,11 @@ A bar is as tall as its runs against the busiest bar, split into the runs that e
 
 The Activity and Tooling headings each carry a toggle that shows and hides the block: the chevron the sidebar's workspaces, projects and folders fold on, pointing right while the block hides and down while it shows. Every block starts open, and the browser remembers a hidden one for the user who hid it.
 
-Under the activity, what the commands inside the runs spent their time on, as atkins recorded it. A run of a job is one row in the list above; the twenty commands inside it are twenty rows here, so this answers a question the run history cannot: how much of a month goes to `go test`, and whether that has been true all month or only since Tuesday.
+Under the activity, what the commands inside the runs spent their time on, as atkins recorded it. A run of a job is one row in the list above; the twenty commands inside it are twenty rows here. This answers a question the run history cannot: how much of a month goes to `go test`, and whether that has been true all month or only since Tuesday.
 
 A section per database atkins records to, the project first. The **project** is the checkout the root belongs to, named by its repository, and says what standing in it costs. The **workspace** is `$HOME/.atkins`, which every run on the machine records to, and says where a week went across every project. A root that belongs to no checkout has the workspace alone.
 
-Each section holds the activity's three charts, in the same places and with the same slots, so each tooling chart lines up with the activity chart of the same span above it. A slot nothing ran in is an empty column:
+Each section holds the activity's three charts, in the same places and with the same slots, and each tooling chart lines up with the activity chart of the same span above it. A slot nothing ran in is an empty column:
 
 - **Last 30 days**, a column a day, the shape of a month;
 - **Last 24 hours**, a column an hour;
@@ -44,7 +44,7 @@ Under the charts, **Latest commands** lists the twenty newest, newest first: the
 
 The toggle under the list opens the commands themselves, by total time: the key, its tool, how often it ran, its total, its average, its slowest run, how many failed and when it last ran.
 
-The two blocks follow the runs: when a run ends, the page fetches itself again, at most four times a minute, and redraws Activity and Tooling in place, without a reload. task-ui keeps what atkins answered for a minute, and asks again as soon as a database it read from changes, so the commands of the run that ended are in the redraw.
+The two blocks follow the runs: when a run ends, the page fetches itself again, at most four times a minute, and redraws Activity and Tooling in place, without a reload. task-ui keeps what atkins answered for a minute, and asks again as soon as a database it read from changes. The commands of the run that ended are in the redraw.
 
 A section is there when its database has something recorded, and absent when it has not. The file each reads sits at the end of its summary line. See [Statistics](https://atkins.incubator.to/usage/stats) for what atkins records, the two databases it records to and the 31 day window it keeps.
 
@@ -54,9 +54,9 @@ Each row is a run: when it started, the folder and job, who started it, how long
 
 A run waits, **queued**, its dot a ring, behind the run of its job before it: a command on a host that still runs one (see [Inventory](inventory.md#queued-commands)); or for a free slot, while as many runs go as the machine has CPUs (see [Runs at once](#runs-at-once)). It starts once that run ended or a slot frees, and its page says so; **Stop** takes it out of the queue, stopped. A queued run the instance restarted before it ran ends failed, its page saying "the instance restarted before it ran".
 
-The list shows a page of runs at a time. **Page size** picks 15, the default, 50 or 100 rows. Under the table, **Next** goes to older runs and **Previous** back to newer ones; both keep the filter and the page size. A page holds only the runs of the folders you may see, so no hidden run leaves a gap in it. The list adds a run that starts on top of the first page only; on a later page, the rows in it still update in place.
+The list shows a page of runs at a time. **Page size** picks 15, the default, 50 or 100 rows. Under the table, **Next** goes to older runs and **Previous** back to newer ones; both keep the filter and the page size. A page holds only the runs of the folders you may see, and no hidden run leaves a gap in it. The list adds a run that starts on top of the first page only; on a later page, the rows in it still update in place.
 
-With the Claude Code integration set up for you (see [Settings](settings.md#integrations)), a finished run also has **Summary**: Claude reads the end of its output, up to 2000 lines, and writes one or two short paragraphs on what it did and how it ended, the cause when it failed, then a markdown table of the values worth a glance, such as versions, images, counts or durations, when the output has any, in a window. task-ui keeps the summary by run, so the next **Summary** of that run, by anyone, shows the kept one at once, without asking Claude again.
+With the Claude Code integration set up for you (see [Settings](settings.md#integrations)), a finished run also has **Summary**: Claude reads the end of its output, up to 2000 lines, and writes one or two short paragraphs on what it did and how it ended, the cause when it failed, then a markdown table of the values worth a glance, such as versions, images, counts or durations, when the output has any, in a window. task-ui keeps the summary by run. The next **Summary** of that run, by anyone, shows the kept one at once, without asking Claude again.
 
 ## The run window
 
@@ -66,7 +66,7 @@ Starting a job, or attaching to a run, opens the run window over the page: the r
 
 - **The run goes on without the window.** Closing it detaches; the run keeps running, and the dashboard, this list or the run's page open a window on it again. A window that comes back gets the tail of what it missed.
 - **Runners type into an interactive job.** Input goes to the job, and the terminal takes the window's size. A viewer can only watch in the window.
-- **Take input** answers a job that takes no input but waits on a prompt, such as the ssh prompt to trust a host. Every run has a terminal on its input, so it reaches the process. With **Allow interactive mode**, which admins hold, the button sits in the foot of a running run's window: your keystrokes go to the process and the header says `( > input on )` until **Release input**. The run's recording names who took input first, and a window opened later shows it in the header.
+- **Take input** answers a job that takes no input but waits on a prompt, such as the ssh prompt to trust a host. Every run has a terminal on its input, and what you type reaches the process. With **Allow interactive mode**, which admins hold, the button sits in the foot of a running run's window: your keystrokes go to the process and the header says `( > input on )` until **Release input**. The run's recording names who took input first, and a window opened later shows it in the header.
 - **Stop** signals the job to end (SIGHUP and SIGTERM, then SIGKILL after `TASK_UI_GRACE`, ten seconds) and records it as `stopped`. **Kill** ends it now, as `killed`.
 - **Run again** starts the job once more when it has ended.
 - **Open run page** in the window's header goes to the run's page.
@@ -86,7 +86,7 @@ The hint says the chain goes on while it does, such as "Claude's summary of it s
 
 ### A run's report
 
-`/runs/<id>/report` shows Claude's markdown of a run as a document: the summary of a run, or what Claude's run on a prompt replied, with the question above the reply when the question is no summary's. Its head names the job, when the run started, who started it and who asked, with links to the run, Claude's run and the job. The page reads the reply Claude saved, not the terminal, so no output, spinner or tool call shows in it. **Report** on a run's page, in the run window and under a summary on a job page all open it. The page takes `prompt/view` and a run you see; `GET /api/runs/<id>` names it as `report` when the run has one.
+`/runs/<id>/report` shows Claude's markdown of a run as a document: the summary of a run, or what Claude's run on a prompt replied, with the question above the reply when the question is no summary's. Its head names the job, when the run started, who started it and who asked, with links to the run, Claude's run and the job. The page reads the reply Claude saved and shows no output, spinner or tool call of the terminal. **Report** on a run's page, in the run window and under a summary on a job page all open it. The page takes `prompt/view` and a run you see; `GET /api/runs/<id>` names it as `report` when the run has one.
 
 A finished run stays attachable, its last frame in memory, for `TASK_UI_KEEP`, fifteen minutes; after that it opens as history: its whole recording played into the window, with how it ended, and **Run again** for whoever may run it.
 
@@ -96,9 +96,9 @@ A job runs once at a time across the instance; the same target of two directorie
 
 ### Runs at once
 
-Different jobs run side by side, as many at once as the machine that runs task-ui has CPUs. A run that comes while the runs fill every slot waits, **queued**, and starts when a run ends, in the order the runs came; the runs list, the dashboard and the run's page say where it stands in line, and **Stop** takes it out. A terminal takes no slot: `@shell`, `@claude` and a job marked `interactive: true` idle on their input, so an open shell never holds up a run. A prompt's run and the Notes agent's do work and take one.
+Different jobs run side by side, as many at once as the machine that runs task-ui has CPUs. A run that comes while the runs fill every slot waits, **queued**, and starts when a run ends, in the order the runs came; the runs list, the dashboard and the run's page say where it stands in line, and **Stop** takes it out. A terminal takes no slot: `@shell`, `@claude` and a job marked `interactive: true` idle on their input, and an open shell never holds up a run. A prompt's run and the Notes agent's do work and take one.
 
-The line for a slot is the **backlog**, 20 runs per CPU, 80 on a host with 4 CPUs, so a flood of requests never piles up runs without end. An admin sets another length on the [Instance](settings.md#runs) page, **Backlog length**; empty is the automatic one, and a change applies to the next start. A run that comes while the backlog is full starts nothing: the page says so, `POST /api/runs` answers `429` "80 runs wait for a free slot already; start it again later", and `run_job` over MCP ends in that error.
+The line for a slot is the **backlog**, 20 runs per CPU, 80 on a host with 4 CPUs. A flood of requests never piles up runs without end. An admin sets another length on the [Instance](settings.md#runs) page, **Backlog length**; empty is the automatic one, and a change applies to the next start. A run that comes while the backlog is full does not start: the page says so, `POST /api/runs` answers `429` "80 runs wait for a free slot already; start it again later", and `run_job` over MCP ends in that error.
 
 ### From an agent
 
@@ -110,10 +110,10 @@ An agent starts runs over [MCP](mcp.md) as the user of its token: `run_job` star
 
 `/runs/<id>` is one run, to link to:
 
-- **Output**: every line the run printed, in its colours, from the first to the last, scrolling inside the block. The block replays the recording, so what redraws itself, a progress bar or a pipeline tree, shows its last frame.
-- **Run**: folder, job, who and when, how long, how it ended, and the reason for a run forced out of hours. A run of a directory's job names the directory, linked to its page, and a run given arguments lists them, one each. Nothing of the run's environment shows, not a secret's value and not its name: the secret's read log names the run (see [Settings](settings.md#secrets-and-env) and [Security](../security.md#secrets)).
+- **Output**: every line the run printed, in its colours, from the first to the last, scrolling inside the block. The block replays the recording, and what redraws itself, a progress bar or a pipeline tree, shows its last frame.
+- **Run**: folder, job, who and when, how long, how it ended, and the reason for a run forced out of hours. A run of a directory's job names the directory, linked to its page, and a run given arguments lists them, one each. The run's environment stays hidden, a secret's value and its name alike: the secret's read log names the run (see [Settings](settings.md#secrets-and-env) and [Security](../security.md#secrets)).
 - **Artifacts**: the files the run left (see [Artifacts](artifacts.md)).
-- **|>** replays the recording in the run window as the run printed it, idle gaps and all, under a blinking `( * recording )` beside the title, with **Pause** and **Restart**. It reads the recording and nothing more: no run starts, the recents stay as they are, and typing goes nowhere. A finished run's window header has the same **|>**, and its row in a list has **Replay the recording** in its **⋯** menu.
+- **|>** replays the recording in the run window as the run printed it, idle gaps and all, under a blinking `( * recording )` beside the title, with **Pause** and **Restart**. It only reads the recording: no run starts, the recents stay as they are, and typing goes nowhere. A finished run's window header has the same **|>**, and its row in a list has **Replay the recording** in its **⋯** menu.
 
 Once its recording expires under the [Data retention](settings.md#data-retention) settings, a run keeps its page, its details and its artifacts: **Output** says the recording expired, **|>** goes, its frame says so, and a prompt about the run reads that the run has no output any more.
 
@@ -192,7 +192,7 @@ On its page, **Run...** of such a job, such as `@compose:custom`, opens a field 
 
 ![The field of compose: custom..., and the argv it runs](https://cdn.si/titpetric/task-ui/docs/assets/args-dark.png)
 
-Before the job, a folder in a git checkout pulls it, in the run's own terminal; when the pull fails, the run fails with it. A folder in a workspace whose home is a checkout pulls the home first, then its own. A shell, `@shell`, pulls nothing: it opens on the checkout as it stands.
+Before the job, a folder in a git checkout pulls it, in the run's own terminal; when the pull fails, the run fails with it. A folder in a workspace whose home is a checkout pulls the home first, then its own. A shell, `@shell`, skips the pull: it opens on the checkout as it stands.
 
 ---
 

@@ -37,7 +37,7 @@ task-ui reads a host over ssh at most every five minutes, in the background, and
 
 A user with the `hosts` permission, Run on Hosts, runs a shell command on the hosts at once, like pssh: pick the hosts, by default every one with an ssh login (**All**, **None** and **Invert** set them at once), write the command or take a quick one (`uptime`, `df -h /`, `free -h`, the containers, the kernel, the OS), and **Run**, or Ctrl+Enter.
 
-Each host gets a run of its own, a run of `@host:<host>`, a built-in job of the root beside `@shell`, `@host:dev1` for the host `dev1`: it runs the command over the host's login, on a terminal, for at most two minutes; task-ui kills it past that. Pagers are off (`PAGER=cat`), so `systemctl status` and the like end on their own. A run of `@host:<host>` is a run like any other: it has a row, a recording, live output, a place in the recents and on [Runs](runs.md), where `job=@host:dev1` keeps the runs on `dev1` and `job=@host:*` those on every host, and its page, which names it by its job. Its target is the host, its args the command, so **Run again** runs the same command on the same host. A host without an ssh login gets a run that fails saying so. Who ran what on which host is the run history.
+Each host gets a run of its own, a run of `@host:<host>`, a built-in job of the root beside `@shell`, `@host:dev1` for the host `dev1`: it runs the command over the host's login, on a terminal, for at most two minutes; task-ui kills it past that. Pagers are off (`PAGER=cat`), and `systemctl status` and the like end on their own. A run of `@host:<host>` is a run like any other: it has a row, a recording, live output, a place in the recents and on [Runs](runs.md), where `job=@host:dev1` keeps the runs on `dev1` and `job=@host:*` those on every host, and its page, which names it by its job. Its target is the host and its args the command: **Run again** runs the same command on the same host. A host without an ssh login gets a run that fails saying so. Who ran what on which host is the run history.
 
 ### Queued commands
 
@@ -51,7 +51,7 @@ The runs started together are a batch. The panel shows your last batch under the
 
 A [schedule](scheduled.md) or a [workflow](workflows.md) step runs `@host:<name>` or `@host:*` too, with the command as its args; `@host:*` starts a batch. Their job pickers list the host jobs under **Hosts** for a user with `hosts`, and nothing new for anyone else. A workflow step of `@host:*` ends ok when every host's run did. Both take the `hosts` permission of the user they run as. An agent on a [prompt](#prompts-on-the-hosts) reaches the hosts through the inventory in its context; the `@host:` jobs are for the commands to record and to schedule.
 
-The logins sign in as `debian` or `root`, so the panel shows only with `hosts`, which no role but admin holds until [Settings, Permissions](settings.md#permissions) grants it. The page itself takes Allow View on Inventory, `inventory/view`, which the runner and viewer roles hold.
+The logins sign in as `debian` or `root`, and the panel shows only with `hosts`, which no role but admin holds until [Settings, Permissions](settings.md#permissions) grants it. The page itself takes Allow View on Inventory, `inventory/view`, which the runner and viewer roles hold.
 
 ## Prompts on the hosts
 
@@ -59,7 +59,7 @@ A [prompt](projects.md#prompt) on a folder page sees the inventory. Its run gets
 
 > list running containers on all hosts, check for any usage of php or frankenphp images
 
-The ssh agent of the run holds the keys that sign in: the instance keys [Settings, Keys](settings.md#keys) links to your role or your name, and the SSH keys of the workspace its links let through. The SSH column comes from every instance SSH key, as a host command does, so a host there may still refuse a prompt whose run lacks the key that reaches it; link that key to the admin role, or to you, in Settings, Keys. When Beszel does not answer, the prompt runs all the same, and Claude reads that task-ui got no inventory. The notes agent, `@claude` on the Notes board, gets no inventory.
+The ssh agent of the run holds the keys that sign in: the instance keys [Settings, Keys](settings.md#keys) links to your role or your name, and the SSH keys of the workspace its links let through. The SSH column comes from every instance SSH key, as a host command does. A host there may still refuse a prompt whose run lacks the key that reaches it; link that key to the admin role, or to you, in Settings, Keys. When Beszel does not answer, the prompt runs all the same, and Claude reads that task-ui got no inventory. The notes agent, `@claude` on the Notes board, gets no inventory.
 
 task-ui reads the hub at most once a minute, and the page fetches the hosts again each minute on its own, with the time of the fetch under the table as **Updated**. The page needs the Beszel integration: its URL and a token (see [Settings](settings.md#integrations)). Without one, the page says so.
 

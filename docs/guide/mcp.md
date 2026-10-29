@@ -1,6 +1,6 @@
 # MCP
 
-task-ui is also an MCP server, so an agent such as Claude Code can see the jobs and workflows, run them and read how they went. The endpoint `/api/mcp` serves it, and the agent signs in with a token of a user: it may see and run what that user may in the browser, with the same roles, allow lists and hours.
+task-ui is also an MCP server: an agent such as Claude Code can see the jobs and workflows, run them and read how they went. The endpoint `/api/mcp` serves it, and the agent signs in with a token of a user: it may see and run what that user may in the browser, with the same roles, allow lists and hours.
 
 ## Install
 
@@ -44,7 +44,7 @@ To list the tokens of a user with the last use of each, run `task-ui token claud
 
 Every prompt task-ui runs, `@claude-prompt`, and the Notes agent, `@claude-note`, get the tools as the user they run for, with no setup: task-ui mints a token for the run when it starts and revokes it when the run ends, writes an MCP configuration with it to a directory of the run's own, mode 0700, that `TASK_UI_MCP_CONFIG` names, and Claude starts with `--mcp-config` on it. The token has that user's permissions and no more, shows nowhere, and is none of the user's tokens: it needs no MCP agent user on the user's edit page. The configuration goes with the run. So a prompt can build a workflow with `create_workflow`, run it with `run_workflow` and read how it went.
 
-A prompt's run also gets its source in `TASK_UI_PROMPT_SOURCE`, which goes to Claude's system prompt: the thread's note ID, the reply that asks when a reply asks, its place or area and its link, and the instruction to reply there with `note_comment` once the result is in. The token comments on that thread alone, with the asker's `prompt/edit`, and any other note answers 403. The reply comes as Claude, the author of the thread's answers, and a state given with it changes nothing: the thread ends with its run. Claude's final message is the fallback: task-ui posts it only when the run posted no reply. A run's token can't start a prompt, `ask_prompt` answers 409: a builder would start another builder.
+A prompt's run also gets its source in `TASK_UI_PROMPT_SOURCE`, which goes to Claude's system prompt: the thread's note ID, the reply that asks when a reply asks, its place or area and its link, and the instruction to reply there with `note_comment` once the result is in. The token comments on that thread alone, with the asker's `prompt/edit`, and any other note answers 403. The reply comes as Claude, the author of the thread's answers, and a state given with it leaves the thread unchanged: the thread ends with its run. Claude's final message is the fallback: task-ui posts it only when the run posted no reply. A run's token can't start a prompt, `ask_prompt` answers 409: a builder would start another builder.
 
 A Claude terminal, **Enter Claude**, reaches the same tools when its own configuration has the server. Add it with a token of the agent's user and the loopback address, from inside the server:
 
@@ -62,7 +62,7 @@ Every Claude task-ui starts reads `config/context.md` after its own system promp
 An MCP client on another machine, with a token of its own user, such as `consuela`, takes the notes that name it, as the agent job does for `@claude`:
 
 1. `list_notes` with no arguments lists the open notes that name the token's user, in the note or in a reply, with their threads. Poll it.
-2. `note_comment` with `state` `working` claims a note, so the board shows someone is on it.
+2. `note_comment` with `state` `working` claims a note, and the board shows someone is on it.
 3. `note_comment` with a `body`, what changed and where to look, and `state` `done`, or `failed` with the reason, ends it.
 
 A reply that names the user again opens the note again, and it shows in the next `list_notes`. The state is for the users the note names, its author and an admin; anyone who may post replies.
@@ -79,7 +79,7 @@ Reply with note_comment (state working, then done or failed).
 </channel>
 ```
 
-A note to any other user, and the user's own, never reaches the session: anyone who may post can name the user, and only the user's notes go through. The channel has no tools; the session answers with the `task` server's `note_comment`, so add that server too (see [Install](#install)).
+A note to any other user, and the user's own, never reaches the session: anyone who may post can name the user, and only the user's notes go through. The channel has no tools; the session answers with the `task` server's `note_comment`; add that server too (see [Install](#install)).
 
 Add the channel on the machine the agent runs on, with the token in a file:
 

@@ -13,7 +13,7 @@ go build -o "$TASK_UI_ARTIFACTS/app" .
 mkdir -p "$TASK_UI_ARTIFACTS/coverage" && cp coverage.html "$TASK_UI_ARTIFACTS/coverage/"
 ```
 
-When the run ends, task-ui moves the files into the artifact tree, at the same paths. A job that writes `job1.txt` and another that writes `job2.txt` leave both at the top of the tree. A later run that writes `job1.txt` again replaces it there, and the history keeps the version before, so a report a job writes on every run stays current. The run's own directory goes, and nothing carries over into the next run's.
+When the run ends, task-ui moves the files into the artifact tree, at the same paths. A job that writes `job1.txt` and another that writes `job2.txt` leave both at the top of the tree. A later run that writes `job1.txt` again replaces it there, and the history keeps the version before. A report a job writes on every run stays current. The run's own directory goes, and nothing carries over into the next run's.
 
 ## The page
 

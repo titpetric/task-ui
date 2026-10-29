@@ -73,7 +73,7 @@ on a running run of any job, to answer a prompt it waits on. The
 their time on, from `atkins --stats --json`: a section per database
 atkins records to, the project's and the workspace's, each with a chart
 of the last 30 and 7 days, the tools of each by total time, and the
-commands behind a toggle. It reports commands and not runs, so it needs
+commands behind a toggle. It reports commands and not runs, and needs
 no permission of its own.
 
 ## Workspaces (`workspace`)
@@ -173,8 +173,8 @@ holds it. Page: `/artifacts`; API: `/api/artifacts`; MCP:
 
 Variables added to the environment of runs, encrypted with the
 instance's one encryption key. Each is a secret or an env entry: a
-secret's value is never shown again, an env entry's is listed on the
-page. A variable applies to every workspace, scope `all`, or to one,
+secret's value is never shown again, the page lists an env entry's
+value. A variable applies to every workspace, scope `all`, or to one,
 `workspace:<name>`. Page: `/settings/secrets`, which also lists the
 environment the integrations compute for the user, read only, a
 credential's value redacted. API: `/api/secrets`, `is_secret` on a
@@ -232,7 +232,7 @@ the folders the user sees, the user's permissions and MCP access. Page:
 A policy allows or denies a rule, for a role or for a user. Every
 section has the rules view, edit and delete, and the application has
 `run`, `shell`, `hosts` and `input`. A user's own allow or deny decides first;
-without one the role's decides, where a deny wins over an allow, and
+without one the role's decides, where task-ui applies a deny over an allow, and
 task-ui refuses what neither allows. An admin may do everything and
 holds no policy. Page: `/settings/permissions`; API: `/api/permissions`;
 MCP and API: `whoami`, `GET /api/me`, what the token's user may do.
