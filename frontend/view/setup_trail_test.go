@@ -22,23 +22,23 @@ func TestSetupTrail(t *testing.T) {
 	trail := p.SetupTrail()
 	assert.Equal(t, "Secrets", trail.Previous.Name)
 	assert.Equal(t, "Users", trail.Next.Name)
-	assert.Equal(t, 10, len(trail.Steps))
+	assert.Equal(t, 12, len(trail.Steps))
 
 	p.Step = view.StepInstance
 	trail = p.SetupTrail()
 	assert.Nil(t, trail.Previous)
 	assert.Equal(t, "/settings/retention", trail.Next.Href)
 
-	p.Step = view.StepProjects
+	p.Step = view.StepSidebar
 	trail = p.SetupTrail()
-	assert.Equal(t, "Workspaces", trail.Previous.Name)
+	assert.Equal(t, "Projects", trail.Previous.Name)
 	assert.Nil(t, trail.Next)
 
 	// A limited user skips the steps they may not open.
 	signIn(p, &model.User{Name: "ops", Role: model.RoleRunner}, permission.Policy{"secret/view": permission.Allow, "workflow/view": permission.Allow})
 	p.Step = view.StepSecrets
 	trail = p.SetupTrail()
-	assert.Equal(t, "Data retention", trail.Previous.Name)
+	assert.Equal(t, "Telemetry", trail.Previous.Name)
 	assert.Equal(t, "Workflows", trail.Next.Name)
 
 	// No footer on a step the user may not open, or with no other step.

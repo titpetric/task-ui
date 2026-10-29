@@ -4,6 +4,7 @@ package view
 const (
 	StepInstance     = "Instance"
 	StepRetention    = "Data retention"
+	StepTelemetry    = "Telemetry"
 	StepKeys         = "Keys"
 	StepSecrets      = "Secrets"
 	StepIntegrations = "Integrations"
@@ -12,6 +13,7 @@ const (
 	StepWorkflows    = "Workflows"
 	StepWorkspaces   = "Workspaces"
 	StepProjects     = "Projects"
+	StepSidebar      = "Sidebar"
 )
 
 // SetupStep is a step of the settings in the order an admin sets up an
@@ -40,6 +42,7 @@ var setupOrder = []struct {
 }{
 	{SetupStep{Name: StepInstance, Href: "/settings/instance", Icon: "settings", Desc: "The server's settings, from the environment."}, (*Page).CanSettings},
 	{SetupStep{Name: StepRetention, Href: "/settings/retention", Icon: "clock", Desc: "How long runs, recordings, threads, artifact history and the read log stay."}, (*Page).CanSettings},
+	{SetupStep{Name: StepTelemetry, Href: "/settings/telemetry", Icon: "pulse", Desc: "What the instance records of its own requests, and who reads the traces."}, (*Page).CanSettings},
 	{SetupStep{Name: StepKeys, Href: "/settings/keys", Icon: "key", Desc: "The encryption key that stores the secrets, and the SSH keys that connect runs and git to hosts."}, func(p *Page) bool { return p.Can("key/view") }},
 	{SetupStep{Name: StepSecrets, Href: "/settings/secrets", Icon: "secret", Desc: "Run environment variables and secrets, for every workspace or one."}, func(p *Page) bool { return p.Can("secret/view") }},
 	{SetupStep{Name: StepIntegrations, Href: "/settings/integrations", Icon: "plug", Desc: "Claude Code, OpenRouter, Forgejo and Beszel, and their tokens."}, func(p *Page) bool { return p.Can("integration/view") }},
@@ -48,6 +51,7 @@ var setupOrder = []struct {
 	{SetupStep{Name: StepWorkflows, Href: "/workflows", Icon: "flow", Desc: "Chains of jobs, by hand, schedule or webhook."}, func(p *Page) bool { return p.Can("workflow/view") }},
 	{SetupStep{Name: StepWorkspaces, Href: "/settings/workspaces", Icon: "folder-open", Desc: "Directories that hold projects and their tooling."}, func(p *Page) bool { return p.Can("workspace/view") }},
 	{SetupStep{Name: StepProjects, Href: "/settings/projects", Icon: "folder", Desc: "Git checkouts under the root, pulled before each run."}, func(p *Page) bool { return p.Can("project/view") }},
+	{SetupStep{Name: StepSidebar, Href: "/settings/sidebar", Icon: "grip", Desc: "The order of the sidebar, and what it leaves out."}, (*Page).CanSettings},
 }
 
 // SetupSteps returns the numbered steps of the settings the user may open, in order, the page's Step current.

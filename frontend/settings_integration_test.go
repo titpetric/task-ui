@@ -74,15 +74,16 @@ func TestSettings_Footer(t *testing.T) {
 	assert.NoError(t, f.opts.Workspaces.Create(ctx, &model.Workspace{Folder: "acme", Title: "Acme"}))
 
 	for path, want := range map[string][2]string{
-		"/settings/keys":            {"Data retention", "Secrets"},
-		"/settings/keys/generate":   {"Data retention", "Secrets"},
+		"/settings/keys":            {"Telemetry", "Secrets"},
+		"/settings/keys/generate":   {"Telemetry", "Secrets"},
 		"/settings/secrets":         {"Keys", "Integrations"},
 		"/settings/integrations":    {"Secrets", "Users"},
 		"/settings/users":           {"Integrations", "Permissions"},
 		"/settings/permissions":     {"Users", "Workflows"},
 		"/settings/workspaces":      {"Workflows", "Projects"},
 		"/settings/workspaces/acme": {"Workflows", "Projects"},
-		"/settings/projects/infra":  {"Workspaces", ""},
+		"/settings/projects/infra":  {"Workspaces", "Sidebar"},
+		"/settings/sidebar":         {"Projects", ""},
 	} {
 		body := f.page(t, asAdmin, path)
 		assert.Contains(t, body, `rel="prev"><svg class="ic back"><use href="#i-chev"/></svg>Previous: `+want[0]+`</a>`, path)

@@ -1,0 +1,97 @@
+/* The Sidebar settings page: the sidebar as a table the user orders.
+ *
+ * The grip is the workflow editor's, in a table cell rather than on a
+ * card: the same shape, the same cursor and the same touch-action, so a
+ * drag reads the same in both places.
+ */
+
+.sidebar-rows {
+  & td.num {
+    white-space: nowrap;
+  }
+
+  & td.key {
+    display: flex;
+    align-items: baseline;
+    gap: 0.4rem;
+  }
+
+  & td.key .ic {
+    flex: none;
+    width: 0.95rem;
+    height: 0.95rem;
+    color: var(--text-faint);
+    transform: translateY(0.15rem);
+  }
+
+  & td.key small {
+    font-size: 0.8125rem;
+  }
+}
+
+.sidebar-rows .grip {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 1.4rem;
+  height: 1.6rem;
+  margin-right: 0.3rem;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--text-faint);
+  cursor: grab;
+  touch-action: none;
+  vertical-align: middle;
+
+  & .ic {
+    width: 0.95rem;
+    height: 0.95rem;
+  }
+
+  &:hover,
+  &:focus-visible {
+    color: var(--text);
+    background: var(--ink-3);
+  }
+
+  &:disabled {
+    cursor: default;
+    opacity: 0.4;
+  }
+}
+
+/* The row under the pointer while it moves. A table row cannot carry a
+ * shadow, so the mark is the accent border a dragged card gets.
+ */
+.sidebar-rows.sorting {
+  cursor: grabbing;
+  user-select: none;
+}
+
+.sidebar-rows tr.dragging {
+  background: var(--ink-2);
+
+  & td {
+    border-top-color: var(--signal);
+    border-bottom-color: var(--signal);
+  }
+}
+
+/* A row left out of the sidebar reads as one: the title dims and the
+ * link keeps its colour, because the page behind it still answers.
+ */
+.sidebar-rows tr:has([data-row-shown]:not(:checked)) {
+  & td.key {
+    color: var(--text-faint);
+  }
+}
+
+.sidebar-form .form-foot {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}

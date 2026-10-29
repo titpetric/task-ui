@@ -53,6 +53,12 @@ func render(t *testing.T, name string, p *view.Page) string {
 	t.Helper()
 	v, err := view.New()
 	assert.NoError(t, err)
+	// The sidebar's top block is data, and the handler fills it from the
+	// sidebar table right before it renders. A test renders through here,
+	// so this is where it is filled, from the defaults: a test that signs
+	// a different user in or moves to another path then sees the block
+	// that user sees on that path.
+	p.FillSide(model.SidebarDefaults())
 	var buf bytes.Buffer
 	assert.NoError(t, v.Render(&buf, name, p))
 	return buf.String()
