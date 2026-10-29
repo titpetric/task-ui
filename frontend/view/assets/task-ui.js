@@ -1268,6 +1268,7 @@
       }
       body.steps = workflowSteps(form);
     }
+    if (form.hasAttribute("data-sidebar")) body = sidebarBody(form);
     api(method, filledPath(form.dataset.api, body), body).then(function (res) {
       if (res.status >= 300) {
         if (button) button.disabled = false;
@@ -2402,6 +2403,171 @@
       btn.disabled = false;
       fail(btn, err.message);
     });
+  });
+
+  // ------------------------------------------------------------ sort rows
+
+  // A table whose rows the user orders: the Sidebar settings page.
+  //
+  // The same grip, the same pointer drag and the same arrow keys as a
+  // workflow's steps, over table rows rather than cards. The order is
+  // the DOM order and no row carries a number of its own, so nothing can
+  // disagree with the order the form posts; sidebarBody reads both out
+  // of the DOM when it submits.
+  //
+  // One Save at the bottom and nothing written until then, which is what
+  // makes a change that goes wrong one reload away from the state before
+  // it.
+
+  // rowsChanged renumbers the rows after a move and says how many rows
+  // differ from the order the page loaded with.
+  function rowsChanged(table) {
+    var rows = table.querySelectorAll("[data-row]");
+    var moved = 0;
+    Array.prototype.forEach.call(rows, function (row, i) {
+      var num = row.querySelector("[data-row-num]");
+      if (num) num.textContent = i + 1;
+      var grip = row.querySelector("[data-row-grip]");
+      if (grip) grip.setAttribute("aria-label", "Move " + rowName(row) + ", " + (i + 1) + " of " + rows.length);
+      var up = row.querySelector('[data-row-move="up"]');
+      var down = row.querySelector('[data-row-move="down"]');
+      if (up) up.disabled = i === 0;
+      if (down) down.disabled = i === rows.length - 1;
+      if (row.dataset.rowWas === undefined) row.dataset.rowWas = String(i);
+      if (row.dataset.rowWas !== String(i)) moved++;
+    });
+    rowsNote(table, moved);
+  }
+
+  // rowsNote says what Save would write, counting a moved row and a
+  // switch the user turned, so the button is never the only feedback.
+  function rowsNote(table, moved) {
+    var form = table.closest("form");
+    if (!form) return;
+    var note = form.querySelector("[data-sidebar-changed]");
+    if (!note) return;
+    var toggled = 0;
+    form.querySelectorAll("[data-row-shown]").forEach(function (box) {
+      if (String(box.checked) !== box.dataset.rowShown) toggled++;
+    });
+    var parts = [];
+    if (moved) parts.push(moved === 1 ? "1 row moved" : moved + " rows moved");
+    if (toggled) parts.push(toggled === 1 ? "1 switch turned" : toggled + " switches turned");
+    note.textContent = parts.length ? parts.join(", ") + " to save." : "No changes yet.";
+  }
+
+  // rowName is what a row is called, for the live region and the labels.
+  function rowName(row) {
+    var cell = row.querySelector(".key");
+    return (cell ? cell.textContent : row.dataset.href || "the row").trim();
+  }
+
+  // rowSay writes a line to the form's live region, so a move made with
+  // the keyboard is announced rather than only seen.
+  function rowSay(table, text) {
+    var form = table.closest("form");
+    var live = form && form.querySelector("[data-rows-live]");
+    if (live) live.textContent = text;
+  }
+
+  // rowMove moves a row one place and reports where it landed.
+  function rowMove(table, row, delta) {
+    var body = row.parentNode;
+    var focused = document.activeElement;
+    if (delta < 0 && row.previousElementSibling) body.insertBefore(row, row.previousElementSibling);
+    else if (delta > 0 && row.nextElementSibling) body.insertBefore(row.nextElementSibling, row);
+    else return;
+    rowsChanged(table);
+    if (focused && row.contains(focused)) focused.focus();
+    var rows = table.querySelectorAll("[data-row]");
+    var at = Array.prototype.indexOf.call(rows, row);
+    rowSay(table, rowName(row) + " moved to " + (at + 1) + " of " + rows.length);
+  }
+
+  // sidebarBody is what the Sidebar form posts: the links in the order
+  // the rows stand now, and whether each one is shown.
+  function sidebarBody(form) {
+    var items = [], shown = {};
+    form.querySelectorAll("[data-row]").forEach(function (row) {
+      var href = row.dataset.href;
+      if (!href) return;
+      items.push(href);
+      var box = row.querySelector("[data-row-shown]");
+      shown[href] = box ? box.checked : true;
+    });
+    return { items: items, shown: shown };
+  }
+
+  document.querySelectorAll("[data-sort-rows]").forEach(function (table) {
+    rowsChanged(table);
+
+    table.addEventListener("click", function (event) {
+      var btn = event.target.closest("[data-row-move]");
+      if (!btn) return;
+      event.preventDefault();
+      rowMove(table, btn.closest("[data-row]"), btn.dataset.rowMove === "up" ? -1 : 1);
+    });
+
+    // A switch turned changes what Save would write, and nothing else.
+    table.addEventListener("change", function (event) {
+      if (!event.target.matches("[data-row-shown]")) return;
+      rowsChanged(table);
+    });
+
+    // The grip takes the up and down arrows: the row moves one place.
+    table.addEventListener("keydown", function (event) {
+      var grip = event.target.closest && event.target.closest("[data-row-grip]");
+      if (!grip || (event.key !== "ArrowUp" && event.key !== "ArrowDown")) return;
+      event.preventDefault();
+      rowMove(table, grip.closest("[data-row]"), event.key === "ArrowUp" ? -1 : 1);
+      grip.focus();
+    });
+
+    // A drag by the grip moves the row under the pointer as it goes:
+    // above the middle of a row, it goes before that row.
+    var drag = null;
+    table.addEventListener("pointerdown", function (event) {
+      var grip = event.target.closest("[data-row-grip]");
+      if (!grip || event.button !== 0) return;
+      event.preventDefault();
+      try {
+        grip.setPointerCapture(event.pointerId);
+      } catch (e) {
+        // A pointer the browser does not track moves the row all the same.
+      }
+      drag = { row: grip.closest("[data-row]"), grip: grip };
+      drag.row.classList.add("dragging");
+      table.classList.add("sorting");
+    });
+    table.addEventListener("pointermove", function (event) {
+      if (!drag) return;
+      var before = null;
+      var rows = table.querySelectorAll("[data-row]");
+      for (var i = 0; i < rows.length; i++) {
+        if (rows[i] === drag.row) continue;
+        var box = rows[i].getBoundingClientRect();
+        if (event.clientY < box.top + box.height / 2) {
+          before = rows[i];
+          break;
+        }
+      }
+      if (before !== drag.row.nextElementSibling) {
+        drag.row.parentNode.insertBefore(drag.row, before);
+        rowsChanged(table);
+      }
+    });
+    var drop = function () {
+      if (!drag) return;
+      drag.row.classList.remove("dragging");
+      table.classList.remove("sorting");
+      var rows = table.querySelectorAll("[data-row]");
+      var at = Array.prototype.indexOf.call(rows, drag.row);
+      rowSay(table, rowName(drag.row) + " moved to " + (at + 1) + " of " + rows.length);
+      drag.grip.focus();
+      drag = null;
+    };
+    table.addEventListener("pointerup", drop);
+    table.addEventListener("pointercancel", drop);
   });
 
   // The workflow page follows its topic; live says so, below. Any page

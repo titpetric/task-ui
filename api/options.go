@@ -15,6 +15,7 @@ import (
 	"github.com/titpetric/task-ui/integration"
 	"github.com/titpetric/task-ui/keystore"
 	"github.com/titpetric/task-ui/note"
+	"github.com/titpetric/task-ui/phpscript"
 	"github.com/titpetric/task-ui/recording"
 	"github.com/titpetric/task-ui/retention"
 	"github.com/titpetric/task-ui/runner"
@@ -99,4 +100,12 @@ type Options struct {
 	// Tools keep the tools the Instance page found in the PATH, checked
 	// on demand; nil turns the check routes off.
 	Tools *storage.ToolStorage
+	// Sidebar is the sidebar's top block, which /settings/sidebar
+	// reorders; nil turns that route off.
+	Sidebar *storage.SidebarStorage
+	// Modules are the plugins written in PHP; nil turns the module
+	// routes off.
+	Modules *phpscript.Manager
+	// Telemetry is the tracer's settings; nil turns that route off.
+	Telemetry Telemetry
 }

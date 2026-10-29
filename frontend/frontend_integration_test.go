@@ -59,6 +59,10 @@ type fixture struct {
 	users  map[string]*model.User
 	infra  *folder.Folder
 	root   string
+	// modules is the root a module test writes its modinfo.php into, and
+	// db is the pool its module table lives in.
+	modules string
+	db      storage.DB
 
 	passwords *storage.UserAuthPasswordStorage
 	emails    *storage.UserEmailStorage
@@ -143,6 +147,13 @@ func newFixture(t *testing.T) *fixture {
 		Values: storage.NewSettingStorage(db), Runs: runs, Artifacts: f.opts.Artifacts, Store: f.opts.ArtifactStore,
 		SecretReads: f.opts.SecretReads, RecordingsDir: recordings.Root,
 	}
+	// The sidebar's top block as a fresh instance seeds it, so the pages
+	// draw the block they draw in production rather than the fallback.
+	f.opts.Sidebar = storage.NewSidebarStorage(db)
+	assert.NoError(t, f.opts.Sidebar.EnsureDefaults(context.Background(), model.SidebarDefaults()))
+	// The modules a test wants come from its own root: withModule puts one
+	// there and starts the manager over it.
+	f.modules, f.db = t.TempDir(), db
 	h, err := frontend.New(f.opts)
 	assert.NoError(t, err)
 	f.server = httptest.NewServer(h.Routes())
@@ -198,6 +209,39 @@ func (f *fixture) get(t *testing.T, user, path string) response {
 	body, err := io.ReadAll(res.Body)
 	assert.NoError(t, err)
 	return response{Status: res.StatusCode, Body: string(body), Location: res.Header.Get("Location"), Headers: res.Header}
+}
+
+// reload rebuilds the handler from the options as they stand, for a test
+// that set one the fixture leaves nil.
+func (f *fixture) reload(t *testing.T) {
+	t.Helper()
+	h, err := frontend.New(f.opts)
+	assert.NoError(t, err)
+	f.server.Config.Handler = h.Routes()
+}
+
+// send posts a form to a page as a user, with an Origin header when one
+// is given: a module is the one page that takes a post, and the check
+// around it reads that header.
+func (f *fixture) send(t *testing.T, user, path, body, origin string) response {
+	t.Helper()
+	req, err := http.NewRequest(http.MethodPost, f.server.URL+path, strings.NewReader(body))
+	assert.NoError(t, err)
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	if origin != "" {
+		req.Header.Set("Origin", origin)
+	}
+	if user != "" {
+		token, err := f.opts.Guard.Sessions.Issue(context.Background(), f.users[user])
+		assert.NoError(t, err)
+		req.AddCookie(&http.Cookie{Name: access.Cookie, Value: token})
+	}
+	res, err := client().Do(req)
+	assert.NoError(t, err)
+	defer res.Body.Close()
+	read, err := io.ReadAll(res.Body)
+	assert.NoError(t, err)
+	return response{Status: res.StatusCode, Body: string(read), Location: res.Header.Get("Location"), Headers: res.Header}
 }
 
 // page fetches a page that must render, and returns its body.

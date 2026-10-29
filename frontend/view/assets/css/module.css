@@ -1,0 +1,43 @@
+/* A module's page: the frame around what its PHP echoed.
+ *
+ * The module's body gets no styling of its own here. A module ships its
+ * own CSS in its public tree and reads the instance's custom properties
+ * from it, so the theme is shared and the look is the module's. What
+ * this file does is set the width of the column and the footer line.
+ */
+
+.module-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap, 1rem);
+
+  /* A table a module renders reads like the instance's own: a module
+   * that writes <table class="table"> gets the instance's table, and
+   * one that writes a bare table still fits the column.
+   */
+  & table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  /* An image a module embeds, a diagram among them, fits the column and
+   * keeps its ratio. A module that wants it wider says so in its own
+   * stylesheet.
+   */
+  & img,
+  & svg {
+    max-width: 100%;
+    height: auto;
+  }
+}
+
+/* How long the body took to render, under it. It is the module's cost
+ * and not the page's: the layout, the sidebar and the recents are the
+ * instance's and are not counted.
+ */
+.module-foot {
+  margin: var(--gap, 1rem) 0 0;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--line);
+  font-size: 0.8125rem;
+}

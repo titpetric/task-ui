@@ -14,6 +14,7 @@ import (
 	"github.com/titpetric/task-ui/integration"
 	"github.com/titpetric/task-ui/keystore"
 	"github.com/titpetric/task-ui/note"
+	"github.com/titpetric/task-ui/phpscript"
 	"github.com/titpetric/task-ui/recording"
 	"github.com/titpetric/task-ui/retention"
 	"github.com/titpetric/task-ui/runner"
@@ -44,6 +45,15 @@ type Options struct {
 	SecretReads *storage.SecretReadStorage
 	// Pins keep what each user pins to the sidebar; nil pins nothing.
 	Pins *storage.PinStorage
+	// Sidebar is the sidebar's top block, in the order it lists them.
+	// Nil falls back to the fixed list the block held before the table.
+	Sidebar *storage.SidebarStorage
+	// Modules serves the plugins written in PHP, under /m. Nil is an
+	// instance with none, and every module path answers 404.
+	Modules *phpscript.Manager
+	// Telemetry is the tracer and its settings, for /settings/telemetry.
+	// Nil leaves that page saying telemetry is off.
+	Telemetry Telemetry
 
 	Workflows    *storage.WorkflowStorage
 	WorkflowRuns *storage.WorkflowRunStorage

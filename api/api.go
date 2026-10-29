@@ -97,6 +97,12 @@ func (h *Handlers) Routes() http.Handler {
 	r.Get("/sse/{topic}", h.sse)
 
 	r.Put("/retention", h.saveRetention)
+	r.Get("/telemetry", h.listTelemetry)
+	r.Put("/telemetry", h.saveTelemetry)
+	r.Get("/sidebar", h.listSidebar)
+	r.Put("/sidebar", h.saveSidebar)
+	r.Get("/modules", h.listModules)
+	r.Post("/modules/reload", h.reloadModules)
 	r.Get("/instance", h.getInstance)
 	r.Put("/instance", h.putInstance)
 	r.Post("/instance/tools/check", h.checkTools)

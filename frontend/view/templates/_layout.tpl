@@ -61,13 +61,17 @@
 	<div class="shell">
 		<div class="menu-backdrop" id="menu-backdrop"></div>
 		<aside class="side" id="side">
+			{{/* The sidebar's top block is the sidebar table, in its order,
+			     less the rows the user hid and the rows whose rule the user
+			     lacks: /settings/sidebar edits it. Two rows carry more than
+			     a link, and SideItem says which rather than the template
+			     matching on the href. */}}
 			<nav class="menu">
-				<a href="/" class="{{ if .IsPath "/" }}active{{ end }}"><svg class="ic"><use href="#i-grid"/></svg><span>Dashboard</span></a>
-				<a href="/inventory" class="{{ if .Under "/inventory" }}active{{ end }}"><svg class="ic"><use href="#i-server"/></svg><span>Inventory</span></a>
-				<a href="/workflows" class="{{ if .Under "/workflows" }}active{{ end }}"><svg class="ic"><use href="#i-flow"/></svg><span>Workflows</span></a>
-				{{- if .SideWorkflows }}
+				{{- range .SideItems }}
+				<a href="{{ .Href }}" class="{{ if .Active }}active{{ end }}"><svg class="ic"><use href="#i-{{ .Icon }}"/></svg><span>{{ .Title }}</span>{{ if .Pulse }}<i class="dot{{ if $.Running }} running{{ end }}" data-any-running></i>{{ end }}</a>
+				{{- if and .Flows $.SideWorkflows }}
 				<div class="flows">
-					{{- range .SideWorkflows }}{{ if not .SidebarHidden }}
+					{{- range $.SideWorkflows }}{{ if not .SidebarHidden }}
 					<div class="flow{{ if $.IsPath (print "/workflows/" .ID) }} active{{ end }}">
 						<i class="shebang{{ if .Running }} running{{ end }}" aria-hidden="true">#!</i>
 						<a class="name" href="/workflows/{{ .ID }}" title="{{ range $i, $l := $.Links .Steps }}{{ if $i }} → {{ end }}{{ $l.Text }}{{ end }}">{{ .Name }}</a>
@@ -80,12 +84,6 @@
 					{{- end }}{{ end }}
 				</div>
 				{{- end }}
-				<a href="/runs" class="{{ if .Under "/runs" }}active{{ end }}"><svg class="ic"><use href="#i-list"/></svg><span>Runs</span><i class="dot{{ if .Running }} running{{ end }}" data-any-running></i></a>
-				<a href="/artifacts" class="{{ if .Under "/artifacts" }}active{{ end }}"><svg class="ic"><use href="#i-box"/></svg><span>Artifacts</span></a>
-				<a href="/schedules" class="{{ if .Under "/schedules" }}active{{ end }}"><svg class="ic"><use href="#i-clock"/></svg><span>Scheduled</span></a>
-				<a href="/notes" class="{{ if .Under "/notes" }}active{{ end }}"><svg class="ic"><use href="#i-note"/></svg><span>Notes</span></a>
-				{{- if .CanSettings }}
-				<a href="/settings" class="{{ if .Under "/settings" }}active{{ end }}"><svg class="ic"><use href="#i-settings"/></svg><span>Settings</span></a>
 				{{- end }}
 			</nav>
 			<nav class="folders">
@@ -182,6 +180,7 @@
 	<symbol id="i-plug" viewBox="0 0 16 16"><path d="M6 1.5v3M10 1.5v3M4 4.5h8v3a4 4 0 0 1-8 0zM8 11.5v3" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
 	<symbol id="i-note" viewBox="0 0 16 16"><path d="M3 2.5h10v7.5l-3.5 3.5H3zM13 10H9.5v3.5M5.5 5.5h5M5.5 8h3" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round"/></symbol>
 	<symbol id="i-clock" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="1.2"/><path d="M8 4.5V8l2.5 1.5" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></symbol>
+	<symbol id="i-pulse" viewBox="0 0 16 16"><path d="M1.5 8h3L6 4.5 8.5 11.5 10.5 8h4" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
 	<symbol id="i-users" viewBox="0 0 16 16"><circle cx="6" cy="5.5" r="2.5" fill="none" stroke="currentColor" stroke-width="1.2"/><path d="M1.5 13.5c0-2.5 2-4 4.5-4s4.5 1.5 4.5 4M11 3.5a2.5 2.5 0 0 1 0 4.5M12 9.5c1.5.4 2.5 1.8 2.5 4" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></symbol>
 	<symbol id="i-settings" viewBox="0 0 16 16"><circle cx="8" cy="8" r="2.2" fill="none" stroke="currentColor" stroke-width="1.2"/><path d="M8 1.5v2M8 12.5v2M1.5 8h2M12.5 8h2M3.4 3.4l1.4 1.4M11.2 11.2l1.4 1.4M3.4 12.6l1.4-1.4M11.2 4.8l1.4-1.4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></symbol>
 	<symbol id="i-logout" viewBox="0 0 16 16"><path d="M6 2.5H3.5a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1H6M10 11l3-3-3-3M13 8H6" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>

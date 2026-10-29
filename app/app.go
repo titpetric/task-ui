@@ -34,6 +34,8 @@ import (
 	"github.com/titpetric/task-ui/mcp"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/note"
+	"github.com/titpetric/task-ui/phpscript"
+	"github.com/titpetric/task-ui/phpscripts"
 	"github.com/titpetric/task-ui/recording"
 	"github.com/titpetric/task-ui/runner"
 	"github.com/titpetric/task-ui/scheduler"
@@ -61,6 +63,10 @@ type App struct {
 	Board *note.Board
 	// UsersFile is the password file, nil when there is none.
 	UsersFile *UsersFile
+	// Modules are the plugins written in PHP, served under /m.
+	Modules *phpscript.Manager
+	// Telemetry is the tracer and the dashboard at /debug/oida.
+	Telemetry *Telemetry
 
 	handler http.Handler
 	addr    atomic.Pointer[string]
@@ -210,6 +216,19 @@ func (a *App) wire(version string) error {
 		return values["url"], values["token"], err
 	}}
 	recordings := &recording.Store{Root: cfg.RecordingsDir()}
+	modules := storage.NewModuleStorage(db)
+	sidebar := storage.NewSidebarStorage(db)
+	// The sidebar's top block as it stood before the table held it, on the
+	// first start of an instance. A table with a row in it is left alone,
+	// so the order a user saved survives a restart.
+	if err := sidebar.EnsureDefaults(context.Background(), model.SidebarDefaults()); err != nil {
+		return err
+	}
+	telemetry, err := NewTelemetry(context.Background(), storage.NewSettingStorage(db), "task-ui")
+	if err != nil {
+		return err
+	}
+	a.Telemetry = telemetry
 
 	a.Catalogue = NewCatalogue(cfg.Root, cfg.Discover, projects)
 	a.Catalogue.Workspaces = workspaces
@@ -280,6 +299,27 @@ func (a *App) wire(version string) error {
 		return err
 	}
 
+	// The modules: the tree in the binary lands in the data folder, then
+	// every root is walked for a modinfo.php and each one is run once.
+	//
+	// A module that will not register is a warning and not a failure. The
+	// instance serves its own pages either way, and a plugin that throws
+	// on startup should not be the reason nobody can sign in.
+	if err := phpscripts.Extract(cfg.ModulesDir()); err != nil {
+		return err
+	}
+	moduleOpts := phpscript.NewOptions(cfg.ModulesDir())
+	moduleOpts.Roots = append(moduleOpts.Roots, cfg.Root)
+	moduleOpts.Registry = phpscript.NewStore(modules, sidebar)
+	moduleOpts.Dispatcher = NewDispatcher(a.Board, a.Users, store)
+	moduleOpts.Tracer = telemetry.Tracer()
+	moduleOpts.Version = version
+	moduleOpts.OnError = func(err error) { slog.Warn("a module did not register", "err", err) }
+	a.Modules = phpscript.New(moduleOpts)
+	if err := a.Modules.Start(context.Background()); err != nil {
+		return err
+	}
+
 	var addUser func(ctx context.Context, name, password string) error
 	var removeUser func(ctx context.Context, name string) error
 	if a.UsersFile != nil {
@@ -299,6 +339,7 @@ func (a *App) wire(version string) error {
 		Integrations: integrations, Hosts: hosts, HostRuns: hostRuns, Summarizer: &claude.Summarizer{Timeout: 3 * time.Minute},
 		AddUser: addUser, RemoveUser: removeUser, Tokens: a.Guard.Tokens, Now: cfg.Clock(), Summaries: summaries, Version: version,
 		Cleaner: cleaner, Pins: pins, Tools: tools,
+		Sidebar: sidebar, Modules: a.Modules, Telemetry: telemetry,
 	})
 	pages, err := frontend.New(frontend.Options{
 		Guard: a.Guard, Auth: access.NewAuthenticator(a.Users, a.Emails, a.Passwords), Users: a.Users, Projects: projects, Workspaces: workspaces, Runs: runs, Artifacts: artifacts, Schedules: schedules, Secrets: secrets, SecretReads: secretReads,
@@ -308,6 +349,7 @@ func (a *App) wire(version string) error {
 		ArtifactStore: store, Disk: &diskusage.Meter{TTL: 10 * time.Minute}, Board: a.Board, ComposeProject: self, Cleaner: cleaner,
 		Storage:      &diskusage.Inventory{TTL: 30 * time.Second, Wait: 2 * time.Second, Items: storageItems(cfg, workspaces, os.Getenv("HOME"))},
 		Integrations: integrations, Hosts: hosts, Pins: pins,
+		Sidebar: sidebar, Modules: a.Modules, Telemetry: telemetry,
 		Tooling: &tooling.Prober{Timeout: 5 * time.Second, TTL: time.Minute},
 		Tools:   tools,
 		SSH:     prober, AddUsers: a.UsersFile != nil, BaseURL: cfg.URL,
@@ -344,8 +386,15 @@ func (a *App) wire(version string) error {
 	}).ServeHTTP)
 	r.Mount("/api/mcp", a.Guard.Require(access.RequireMCP(access.SameOrigin(server))))
 	r.Mount("/api", a.Guard.Require(access.SameOrigin(routes)))
+	// The telemetry dashboard. The tracer sits behind the Guard so a
+	// trace is read by a signed in user, and behind its own Authorize,
+	// which answers anyone but an admin with a 404.
+	r.Mount(telemetry.Path(), a.Guard.Require(telemetry))
 	r.Mount("/", pages.Routes())
-	a.handler = r
+	// The middleware wraps every route above, so one trace holds a
+	// request and whatever ran inside it: a handler's own spans, and the
+	// spans of a module's PHP, which reports into the same tracer.
+	a.handler = telemetry.Middleware(r)
 	return nil
 }
 

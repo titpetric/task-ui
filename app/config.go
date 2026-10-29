@@ -276,6 +276,13 @@ func (c *Config) ArtifactsDir() string {
 	return filepath.Join(c.DataDir, "artifacts")
 }
 
+// ModulesDir is where the modules that ship in the binary are extracted,
+// and the first directory walked for a modinfo.php. The workspace folder
+// is walked after it, so a project's checkout carries a module of its own.
+func (c *Config) ModulesDir() string {
+	return filepath.Join(c.DataDir, "modules")
+}
+
 // envInt reads a whole number from the environment, or the fallback.
 func envInt(name string, fallback int) (int, error) {
 	value := os.Getenv(name)

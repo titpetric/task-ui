@@ -34,6 +34,19 @@ type Page struct {
 	// avatar; the body carries them for the avatars the script draws.
 	Roles map[string]string
 
+	// SideItems are the rows of the sidebar's top block, in the order the
+	// sidebar table holds them, less the hidden ones and the ones whose
+	// rule the user lacks.
+	SideItems []SideItem
+	// SidebarRows are every row of the sidebar, hidden ones too, for the
+	// Sidebar settings page.
+	SidebarRows []SidebarRow
+	// Telemetry is the tracer's settings, for the Telemetry page.
+	Telemetry *Telemetry
+	// Module is the module a /m page serves, with what its PHP echoed as
+	// the body and how long the render took.
+	Module *Module
+
 	// Folders are the folders the user may see.
 	Folders []*folder.Folder
 	// SideFolders are the folders the sidebar lists: Folders less the

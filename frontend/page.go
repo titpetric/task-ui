@@ -181,6 +181,46 @@ func (h *Handlers) sidebar(ctx context.Context, p *view.Page) {
 	tree := view.NewSidebar(side, pins, p.Workspaces, homes)
 	p.SideFolders, p.SidePins = tree.Folders, tree.Pins
 	p.SideDirty = h.sideDirty(tree.Folders, h.dirOf(ctx, tree.Folders))
+	p.FillSide(h.sideRows(ctx))
+}
+
+// sideRows is the sidebar's top block as the table holds it.
+//
+// An instance whose table cannot be read falls back to the fixed list the
+// block held before the table existed, so a database that refuses one
+// query does not leave the page with no way out of itself.
+func (h *Handlers) sideRows(ctx context.Context) []model.Sidebar {
+	if h.opts.Sidebar == nil {
+		return model.SidebarDefaults()
+	}
+	stored, err := h.opts.Sidebar.List(ctx)
+	if err != nil || len(stored) == 0 {
+		return model.SidebarDefaults()
+	}
+	return stored
+}
+
+// lastCommitOf answers the time of a project's last commit, for the
+// sidebar's limits: in the directory the catalogue knows for a folder,
+// else where the layout puts the project.
+func (h *Handlers) lastCommitOf(ctx context.Context, folders []*folder.Folder) func(id string) time.Time {
+	dirs := map[string]string{}
+	for _, f := range folders {
+		if f.Dir != "" {
+			dirs[f.ID] = f.Dir
+		}
+	}
+	var named []string
+	return func(id string) time.Time {
+		dir, ok := dirs[id]
+		if !ok {
+			if named == nil {
+				named = h.workspaceFolders(ctx)
+			}
+			dir = layout.Dir(h.opts.Root, named, id)
+		}
+		return h.commits.Get(dir)
+	}
 }
 
 // sideLimits returns how many projects the sidebar lists for each

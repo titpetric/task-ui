@@ -144,6 +144,7 @@ func newFixture(t *testing.T) *fixture {
 		Artifacts:     artifacts,
 		ArtifactStore: tree,
 		Pins:          storage.NewPinStorage(db),
+		Sidebar:       storage.NewSidebarStorage(db),
 		Schedules:     storage.NewScheduleStorage(db),
 		Secrets:       secrets,
 		FolderRefs:    storage.NewFolderRefStorage(db),
@@ -193,13 +194,25 @@ func newFixture(t *testing.T) *fixture {
 		}
 		return users.Delete(ctx, user.ID)
 	}
-	routes := api.New(f.opts).Routes()
-	f.server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		user := f.users[r.Header.Get("X-User")]
-		routes.ServeHTTP(w, r.WithContext(access.WithUser(r.Context(), user)))
-	}))
+	// The sidebar's top block as a fresh instance seeds it, so a test of
+	// its order starts from the rows a real instance holds.
+	assert.NoError(t, f.opts.Sidebar.EnsureDefaults(context.Background(), model.SidebarDefaults()))
+	f.server = httptest.NewServer(nil)
+	f.reload(t)
 	t.Cleanup(f.server.Close)
 	return f
+}
+
+// reload rebuilds the routes from the options as they stand, for a test
+// that set one the fixture leaves nil. The server in front puts the user
+// a request names on the context, as the guard does.
+func (f *fixture) reload(t *testing.T) {
+	t.Helper()
+	routes := api.New(f.opts).Routes()
+	f.server.Config.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		user := f.users[r.Header.Get("X-User")]
+		routes.ServeHTTP(w, r.WithContext(access.WithUser(r.Context(), user)))
+	})
 }
 
 // shellFolder makes a folder under root with one shell job per script.

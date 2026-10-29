@@ -30,3 +30,9 @@ permissions:
   shell: "Enter Shell"
   hosts: "Run on Hosts"
   input: "Allow interactive mode"
+  # Opening a module is one capability and not a section: every module
+  # shares it, and a module is installed by putting its directory under a
+  # root rather than through a page, so there is nothing here to edit or
+  # delete. What a module then does is the rule of whoever asked for it:
+  # a run it starts runs as that user.
+  module: "Open Modules"

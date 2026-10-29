@@ -76,6 +76,23 @@ func (h *Handlers) Routes() http.Handler {
 		r.Get("/settings", h.settings)
 		r.Get("/settings/instance", h.instance)
 		r.Get("/settings/retention", h.dataRetention)
+		r.Get("/settings/telemetry", h.telemetry)
+		r.Get("/settings/sidebar", h.sidebarSettings)
+		// A module's pages, inside the guard, so a plugin inherits the
+		// sign in, the content policy and the layout rather than carrying
+		// any of them. Two patterns: the bare link and everything under
+		// it, which index.php answers as a catch-all.
+		//
+		// A module is the one part of the front end that takes a POST. A
+		// page of the instance is read only and its forms call /api,
+		// which is behind access.SameOrigin; a module's forms post to
+		// itself, so the same check wraps these routes. Without it a
+		// third party page could make a signed in browser send a module
+		// anything.
+		mod := access.SameOrigin(http.HandlerFunc(h.module))
+		for _, pattern := range []string{"/m/{vendor}/{plugin}", "/m/{vendor}/{plugin}/*"} {
+			r.Handle(pattern, mod)
+		}
 		r.Get("/settings/projects", h.projects)
 		r.Get("/settings/projects/new", h.projectNew)
 		r.Get("/settings/projects/*", h.projectEdit)
