@@ -43,27 +43,36 @@ func TestExtract(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, os.FileMode(0o644), info.Mode().Perm(), "nothing in the tree is executable")
 
-	// MiniTPL travels with the module: a running instance installs nothing
-	// and reaches no network.
-	assert.FileExists(t, filepath.Join(dir, "titpetric", "refinement", "lib", "MiniTPL", "Template.php"))
+	// composer's tree travels with the module: a running instance installs
+	// nothing and reaches no network.
+	assert.FileExists(t, filepath.Join(dir, "titpetric", "refinement", "ext", "autoload.php"))
+	assert.FileExists(t, filepath.Join(dir, "titpetric", "refinement", "ext", "composer", "autoload_real.php"))
+	assert.FileExists(t, filepath.Join(dir, "titpetric", "refinement", "ext", "titpetric", "minitpl", "code", "MiniTPL", "Template.php"))
 }
 
-// No file a module needs may sit under a directory named vendor.
+// A module installs its PHP dependencies into ext, never vendor.
 //
 // The tree is embedded from a checkout, where a vendor directory is a
-// directory like any other, and it is read from a release, where it is not:
-// the binary is installed with `go install <module>@<ref>`, the Go module
-// proxy builds that zip, and the zip drops what sits under vendor. A module
-// that reaches into one works in every test here and fails on the instance
-// with "no such file or directory", which is how it shipped once.
-func TestModulesCarryNoVendor(t *testing.T) {
+// directory like any other, and read from a release, where it is not. The
+// binary is installed with `go install <module>@<ref>`, the Go module proxy
+// builds that zip, and x/mod/zip drops every file more than one level under
+// a directory named vendor: isVendoredPackage finds the "vendor/" element
+// and asks whether a slash follows it.
+//
+// A composer tree there arrives as one file, vendor/autoload.php, with
+// nothing left for it to load. Every test here still passes, because they
+// read the checkout, and the instance answers the first request with "open
+// vendor/composer/autoload_real.php: no such file or directory", which is
+// how it shipped once. ext is an ordinary directory to Go and to composer
+// both: composer.json names it in config.vendor-dir.
+func TestModulesInstallIntoExt(t *testing.T) {
 	t.Parallel()
 	assert.NoError(t, fs.WalkDir(phpscripts.Modules(), ".", func(name string, entry fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
 		for _, part := range strings.Split(name, "/") {
-			assert.NotEqual(t, "vendor", part, name+" sits under a vendor directory, which the module zip of a release drops")
+			assert.NotEqual(t, "vendor", part, name+": a module installs into ext, because the module zip of a release drops what is under vendor")
 		}
 		return nil
 	}))
@@ -73,12 +82,18 @@ func TestModulesCarryNoVendor(t *testing.T) {
 // resolves against the module's root.
 var requirePath = regexp.MustCompile(`require(?:_once)?\s+"([^"]+)"`)
 
-// Every require of every shipped PHP file names a file that shipped with it.
+// Every require a module writes names a file that shipped with it.
 //
-// The runtime roots a module at its own directory, so a require is a path
-// inside the module and nothing above it resolves. A require that names a
-// file the tree does not hold is a 500 on the first request, and the only
-// place to catch it before the instance is here.
+// A module's own files are entered from its root, so the path in a require
+// is read from there: index.php is the root's own file, stubs/autoload.php
+// arrives through `phpscript lint --include` from the root, and the fixtures
+// of tests/ run under the suite root phpscript.yml puts there. A require
+// that names a file the tree does not hold is a 500 on the first request,
+// and the only place to catch it before the instance is here.
+//
+// ext/ is left out: it is what composer installed, its files find each other
+// through __DIR__ and the autoloader, and upstream's paths are not ours to
+// resolve.
 func TestModulesRequiresResolve(t *testing.T) {
 	t.Parallel()
 	tree := phpscripts.Modules()
@@ -87,10 +102,9 @@ func TestModulesRequiresResolve(t *testing.T) {
 		if err != nil || entry.IsDir() || filepath.Ext(name) != ".php" {
 			return err
 		}
-		// The first two segments are the module's vendor and plugin; a
-		// require is relative to the directory they name.
+		// The first two segments are the module's vendor and plugin.
 		parts := strings.SplitN(name, "/", 3)
-		if len(parts) < 3 {
+		if len(parts) < 3 || strings.HasPrefix(parts[2], "ext/") {
 			return nil
 		}
 		root := parts[0] + "/" + parts[1]

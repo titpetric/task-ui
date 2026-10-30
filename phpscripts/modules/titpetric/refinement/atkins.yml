@@ -6,16 +6,17 @@ name: refinement
 # The module's own pipeline. `.` reads the PHP directly in a directory and
 # `./...` reads it and everything below.
 #
-# The paths are named rather than globbed from the root because the compiled
-# templates under templates_c are generated PHP: the formatter would rewrite
-# them and the next precompile would write them back. lib/MiniTPL is upstream
-# code, copied in rather than installed, and passes both jobs as it stands.
+# The paths are named rather than globbed from the root for two reasons: the
+# compiled templates under templates_c are generated PHP, which the formatter
+# would rewrite and the next precompile would write back, and ext/ is what
+# `composer install` put there, which is upstream's to format and not ours.
 jobs:
   default:
-    desc: "Format, lint and precompile"
+    desc: "Format, lint, test and precompile"
     cmds:
       - task: fmt
       - task: lint
+      - task: test
       - task: precompile
 
   # `phpscript fmt -l` exits zero whether or not it listed a file, so the
@@ -25,7 +26,7 @@ jobs:
     desc: "Fail if phpscript fmt would rewrite a file"
     steps:
       - |
-        out="$(phpscript fmt -l . ./stubs/... ./lib/... ./storage/...)"
+        out="$(phpscript fmt -l . ./stubs/... ./lib/... ./storage/... ./tests/...)"
         if [ -n "${out}" ]; then
             echo "phpscript fmt would rewrite:" >&2
             echo "${out}" >&2
@@ -34,10 +35,10 @@ jobs:
         echo "every file is formatted"
 
   # --include registers the names the module's own files do not declare:
-  # MiniTPL's classes, and stubs/ for the host bindings, which are Go and
-  # invisible to a linter reading PHP. Without it every `new Task\Module`
-  # reports as an undefined class and a real one reads as more of the same
-  # noise.
+  # composer's autoloader for the MiniTPL classes, and stubs/ for the host
+  # bindings, which are Go and invisible to a linter reading PHP. Without it
+  # every `new Task\Module` reports as an undefined class and a real one reads
+  # as more of the same noise.
   lint:
     desc: "Lint the module"
     steps:
@@ -45,6 +46,16 @@ jobs:
       - phpscript lint --include stubs/autoload.php ./lib/...
       - phpscript lint --include stubs/autoload.php ./storage/...
       - phpscript lint --include stubs/autoload.php ./stubs/...
+      - phpscript lint --include stubs/autoload.php ./tests/...
+
+  # The fixtures of tests/, each one about a function that stands without
+  # task-ui. phpscript.yml at the module root is what puts their application
+  # root here instead of in tests/, so a fixture reads the tree index.php
+  # reads. docs/testing.md has the rest.
+  test:
+    desc: "Run the module's test fixtures"
+    steps:
+      - phpscript test ./tests/...
 
   precompile:
     desc: "Compile the templates into templates_c"

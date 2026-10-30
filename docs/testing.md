@@ -54,6 +54,64 @@ Nothing here runs a benchmark: the repository holds none, and `go test` runs one
 
 Integration tests belong in the `storage` package and in the drivers, the packages that wrap a process or a protocol: `git`, `runner`, `sshprobe`, `agent` and the like. They test the real implementation, with no mocks. A package that consumes storage or a driver, such as `api`, `frontend`, `mcp` or `note`, tests its own code with unit tests over fakes.
 
+## A module's PHP
+
+A [module](modules.md) is PHP, and PHP is tested with phpscript, not with Go. Two commands do it, both run from the module's root, the directory `modinfo.php` sits in:
+
+```bash
+phpscript test ./tests/...     # the .phpt fixtures
+phpscript run precompile.php   # a script, end to end
+```
+
+`atkins test` in the module runs the first and `atkins precompile` the second, and `atkins` runs fmt, lint, test and precompile in that order.
+
+A fixture is a `.phpt` file: front matter with a `name` and a `description`, the PHP, and the output it must print, each part separated by a `---` line.
+
+```text
+name: refinement_kind
+description: >
+  Whether the thread page embeds an artifact or links it.
+---
+<?php
+
+echo refinement_kind("diagrams/schema.svg"), "\n";
+---
+image
+```
+
+Print with `echo`, not `var_dump`. `echo` writes the value and nothing else, which is the same in every runtime; `var_dump` writes the type and the length beside it, and those are the runtime's own and move when a binding changes what a value is made of.
+
+### The suite root
+
+`phpscript test` roots a fixture at the directory the fixture sits in, so a fixture in `tests/` sees `tests/` as `/` and nothing of the module. A `phpscript.yml` in the tree moves that root: the directory holding the file is the application root for every fixture below it. The module keeps one at its own root, so a fixture reads the tree `index.php` reads and `require "lib/render.php"` means the same path in both.
+
+```yaml
+test:
+  include: tests/bootstrap.php
+```
+
+`include` runs ahead of every fixture. `tests/bootstrap.php` requires `ext/autoload.php` and the module's own declarations, so a fixture names the function it is about and nothing else.
+
+### What runs and what cannot
+
+phpscript is the runtime, not the instance. It carries the PHP standard library and nothing of task-ui: `Task\Module`, `Task::register`, `Task::dispatch`, `Task::migrate`, `Task::markdown`, `Task::artifacts`, `Task::artifact` and `Database` are Go bindings the host registers on a runtime it builds itself, and a `phpscript test` or `phpscript run` has none of them.
+
+So a fixture covers what stands on its own, which is most of what a module decides:
+
+| Runs under phpscript | Does not |
+|----------------------|----------|
+| the pure functions of `lib/`: routing a path, a title, an artifact's kind | anything calling `Task::` |
+| the stamp functions, over the runtime's own `DateTime` | `storage/`, a class over a `Database` |
+| MiniTPL: compiling a template, rendering one with data | `modinfo.php` and `migrate.php`, which are `Task::` from their first line |
+
+Loading a file is not calling it: `lib/thread.php` declares functions that reach `Task::` and the repository, and the declaration costs nothing, so the bootstrap loads the file and a fixture calls the functions that stand alone.
+
+For what cannot run, `stubs/` holds PHP declarations of the bindings. They are for `phpscript lint --include`, so the linter knows the names; nothing requires them at runtime and they do not make a binding callable.
+
+### What the Go tests cover
+
+The Go side of a module is packaging, not behaviour, and `phpscripts/phpscripts_test.go` is where it is pinned: that the embedded tree extracts, that a module installs its composer tree into `ext/` and not `vendor/`, and that every `require` a module writes names a file that shipped. Behaviour belongs in a `.phpt` fixture. Do not write a Go integration test to cover what a module's PHP does.
+
 ---
 
-[Contents](README.md) · [Development](development.md) · [Running the server](running.md)
+[Contents](README.md) · [Development](development.md) · [Modules](modules.md) · [Running the server](running.md)

@@ -19,15 +19,16 @@
 // the module runs, lib/thread.php decides what to ask it for, and this
 // routes.
 
-// Every file this module needs, named. There is no autoloader and no
-// vendor directory: a module ships inside the task-ui binary, the binary
-// is installed from the Go module proxy, and the proxy's zip drops what
-// sits under a vendor directory. MiniTPL's sources are copied into
-// lib/MiniTPL instead, which is why composer.json is a record of where
-// they came from and not something a start reads.
-require "lib/MiniTPL/Compiler.php";
-require "lib/MiniTPL/Hook.php";
-require "lib/MiniTPL/Template.php";
+// A require is a path from the module's root, the directory modinfo.php
+// sits in, whatever file it is written in: the runtime roots the module
+// there and nothing above it resolves.
+//
+// ext/ is composer's install directory, `composer install` writes it and
+// it ships with the module. It is not named vendor: the binary is
+// installed from the Go module proxy, whose zip drops every file more
+// than one level under a directory named vendor, so a composer tree
+// there arrives with its autoloader and nothing for it to load.
+require "ext/autoload.php";
 require "storage/Refinement.php";
 require "lib/thread.php";
 require "lib/render.php";

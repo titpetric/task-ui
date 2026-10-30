@@ -19,9 +19,9 @@ class Template {
 	var $_nocache = false;
 	/** Auto-escape printed variables */
 	var $_escape = true;
-	/** Compile location, relative or absolute */
-	var $_compile_location;
-	var $_compile_absolute;
+	/** Compile location, relative or absolute. A null location compiles beside the templates. */
+	var $_compile_location = null;
+	var $_compile_absolute = false;
 	/** Defaults */
 	var $_defaults;
 
@@ -34,7 +34,6 @@ class Template {
 
 	/** Default constructor */
 	function __construct($paths = false) {
-		$this->set_compile_location("cache/", false);
 		$this->set_paths($paths);
 		$this->_defaults = array(array("ldelim", "{"), array("rdelim", "}"));
 		$this->_nocache = false;
@@ -126,10 +125,18 @@ class Template {
 		$this->_paths = $paths;
 	}
 
-	/** Sets compile location */
-	function set_compile_location($path, $is_absolute) {
+	/**
+	 * Sets compile location.
+	 *
+	 * Without a call to this method, compiled templates are stored in a
+	 * "<path>_c/" directory beside the template directory: the default
+	 * "templates/" search path compiles into "templates_c/", and a path such
+	 * as "theme/templates/" into "theme/templates_c/". The caller does not
+	 * have to configure or create it.
+	 */
+	function set_compile_location($path, $is_absolute = false) {
 		$this->_compile_location = rtrim($path, "/") . "/";
-		$this->_compile_absolute = $is_absolute;
+		$this->_compile_absolute = $is_absolute ? true : false;
 	}
 
 	/** Compile path calculation */
@@ -138,7 +145,18 @@ class Template {
 			return $this->_compile_location . $path;
 		}
 
-		return $path . $this->_compile_location;
+		if ($this->_compile_location !== null) {
+			return $path . $this->_compile_location;
+		}
+
+		// Default: the compiled templates live next to the source templates,
+		// in a sibling directory named after it with "_c" appended.
+		$path = rtrim($path, "/");
+		if ($path === "" || $path === ".") {
+			return "templates_c/";
+		}
+
+		return $path . "_c/";
 	}
 
 	/** Finds first path with existing template file */

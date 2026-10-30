@@ -26,7 +26,15 @@ A module is a directory with a `modinfo.php` in it. The directory is the module'
 
 A module declares no routes of its own. `index.php` reads `$_SERVER['REQUEST_URI']` and answers what it finds there.
 
-**No module file sits under a directory named `vendor`, and no module uses an autoloader.** A module is embedded in the task-ui binary, the binary is installed with `go install <module>@<ref>`, and the zip the Go module proxy builds for that drops what sits under `vendor`. A module that reaches into one passes every test, because the tests read the checkout, and fails on the instance with `no such file or directory`. A PHP dependency is copied into the module under its own name, `lib/MiniTPL/` for MiniTPL, and `index.php` names each file it needs with a `require`. `composer.json` stays as the record of the upstream package and its version; to take a new release, `composer update` in a scratch directory and copy the sources over. `TestModulesCarryNoVendor` and `TestModulesRequiresResolve` in `phpscripts/` are the gate: the first refuses a `vendor` path in the embedded tree, the second resolves every `require` of every shipped file against it.
+A path in a `require` is read from the module's root, the directory `modinfo.php` sits in, whatever file the `require` is written in: the runtime roots the module there and nothing above it resolves.
+
+**A module installs its PHP dependencies with composer, into `ext/` and never `vendor/`.** The installed tree ships with the module, so a running instance installs nothing and reaches no network. The directory is `ext` because the binary is installed with `go install <module>@<ref>` and the zip the Go module proxy builds for that drops every file more than one level under a directory named `vendor`: a composer tree there arrives as `vendor/autoload.php` alone, with nothing left for it to load, and the instance answers the first request with `no such file or directory` while every test here passes. `composer.json` names it:
+
+```json
+"config": { "vendor-dir": "ext" }
+```
+
+`index.php` then requires `ext/autoload.php` and the autoloader finds the rest. `TestModulesInstallIntoExt` and `TestModulesRequiresResolve` in `phpscripts/` are the gate: the first refuses a `vendor` path in the embedded tree, the second resolves every `require` a module writes against that tree.
 
 A module's forms post to the module, which is the one place in the front end that takes a `POST`, so those routes carry the same `access.SameOrigin` check `/api` has. A form that changed something answers with a redirect, `header("Location: ...")` and `http_response_code(303)`, which task-ui sends on rather than wrapping in a layout: without it a reload repeats the work.
 

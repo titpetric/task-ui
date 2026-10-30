@@ -1,0 +1,355 @@
+#!/usr/bin/env phpscript
+<?php
+
+/*
+ * minitpl - command line for the MiniTPL template engine.
+ *
+ * The compiler turns every {tag} of a template into php at build time. This
+ * command runs that step on a directory, and renders a template with data
+ * read from yaml, so a project can use MiniTPL without writing a php script
+ * for either.
+ *
+ * The script runs under phpscript, which roots the source filesystem at the
+ * directory it is started from: __DIR__ is "/cmd" and the repository root is
+ * "/". A complete git clone carries vendor/autoload.php there after
+ * composer install.
+ *
+ * Tit Petric <black@titpetric.com>, MIT license, see LICENSE.
+ */
+
+use MiniTPL\Compiler;
+use MiniTPL\Template;
+
+$root = dirname(dirname(__DIR__));
+require $root . "/vendor/autoload.php";
+
+/** The commands this command line runs, and the function each one calls */
+function commands() {
+	return array(
+		"compile" => "command_compile",
+		"render" => "command_render",
+		"help" => "command_help",
+		"-h" => "command_help",
+		"--help" => "command_help"
+	);
+}
+
+/** The usage text */
+function usage() {
+	return "minitpl - compile and render MiniTPL templates\n" .
+		"\n" .
+		"Usage:\n" .
+		"  minitpl compile [options] [templates_dir] [output_dir]\n" .
+		"  minitpl render  [options] <template.tpl> [data.yml]\n" .
+		"  minitpl help\n" .
+		"\n" .
+		"compile\n" .
+		"  Transpiles every .tpl file under templates_dir (default: templates) into\n" .
+		"  output_dir, which defaults to the templates_c directory beside\n" .
+		"  templates_dir. Subdirectories keep their names, and {include} is resolved\n" .
+		"  against templates_dir.\n" .
+		"\n" .
+		"render\n" .
+		"  Renders template.tpl to standard output. Template variables come from a\n" .
+		"  yaml mapping read from data.yml, or from standard input when it is a file\n" .
+		"  or a pipe; pass - to read standard input explicitly.\n" .
+		"\n" .
+		"Options:\n" .
+		"  -o, --output DIR  write compiled templates to DIR (compile)\n" .
+		"  -q, --quiet       print nothing but errors\n" .
+		"  -h, --help        show this help\n";
+}
+
+/** minitpl help */
+function command_help($args) {
+	fwrite(STDOUT, usage() . "\n");
+	return 0;
+}
+
+/** minitpl compile [options] [templates_dir] [output_dir] */
+function command_compile($args) {
+	list($options, $positional) = parse_options($args);
+
+	if (!empty($options["help"])) {
+		return command_help(array());
+	}
+
+	$source = isset($positional[0]) ? $positional[0] : "templates";
+	if (!is_dir($source)) {
+		throw new \RuntimeException("templates directory '" . $source . "' does not exist");
+	}
+
+	if (isset($options["output"])) {
+		$output = $options["output"];
+	} elseif (isset($positional[1])) {
+		$output = $positional[1];
+	} else {
+		$output = compiled_dir($source);
+	}
+
+	$source = rtrim($source, "/");
+	if ($source === "") {
+		$source = "/";
+	}
+
+	$output = rtrim($output, "/");
+	if ($output === "") {
+		$output = "/";
+	}
+
+	$files = find_templates($source);
+	$compiler = new Compiler();
+	$find_path = function ($name) use ($source) {
+		return file_exists($source . "/" . $name) ? $source . "/" : false;
+	};
+
+	$compiled = 0;
+	$failed = 0;
+	foreach ($files as $file) {
+		$relative = substr($file, strlen($source) + 1);
+		$destination = $output . "/" . $relative;
+
+		if ($compiler->compile($file, $destination, $find_path, false)) {
+			$compiled++;
+			if (empty($options["quiet"])) {
+				echo $file . " -> " . $destination . "\n";
+			}
+		} else {
+			$failed++;
+			fwrite(STDERR, "minitpl: failed to compile '" . $file . "'\n");
+		}
+	}
+
+	if (empty($options["quiet"])) {
+		echo "compiled " . $compiled . " template" . (($compiled === 1) ? "" : "s") . " into " . $output . "\n";
+	}
+
+	return $failed > 0 ? 1 : 0;
+}
+
+/** minitpl render [options] <template.tpl> [data.yml] */
+function command_render($args) {
+	list($options, $positional) = parse_options($args);
+
+	if (!empty($options["help"])) {
+		return command_help(array());
+	}
+
+	if (count($positional) === 0) {
+		throw new \RuntimeException("render needs a template file");
+	}
+
+	if (count($positional) > 2) {
+		throw new \RuntimeException("render takes at most a template file and a data file");
+	}
+
+	$template = $positional[0];
+	$data_file = isset($positional[1]) ? $positional[1] : null;
+
+	if (!is_file($template)) {
+		throw new \RuntimeException("template file '" . $template . "' does not exist");
+	}
+
+	$data = array();
+	if ($data_file !== null && $data_file !== "-") {
+		$yaml = @file_get_contents($data_file);
+		if ($yaml === false) {
+			throw new \RuntimeException("Unable to read yaml file '" . $data_file . "'");
+		}
+
+		$data = parse_data($yaml);
+	} elseif ($data_file === "-" || !stdin_is_tty()) {
+		$yaml = stream_get_contents(STDIN);
+		if ($yaml !== false && trim($yaml) !== "") {
+			$data = parse_data($yaml);
+		}
+	}
+
+	if ($data === null) {
+		$data = array();
+	}
+
+	// assign() takes a mapping of variable names. A top level yaml sequence
+	// parses to a list, which is not one.
+	if (!is_array($data) || (count($data) > 0 && is_list($data))) {
+		throw new \RuntimeException("template data has to be a yaml mapping");
+	}
+
+	$dir = dirname($template);
+	$path = ($dir === "." || $dir === "") ? "./" : rtrim($dir, "/") . "/";
+
+	$tpl = new Template();
+	$tpl->set_paths($path);
+
+	// load() resets the variables assigned before it, so the data goes in after.
+	if (!$tpl->load(basename($template))) {
+		throw new \RuntimeException("template file '" . $template . "' could not be compiled");
+	}
+
+	$tpl->assign($data);
+	$tpl->render();
+	return 0;
+}
+
+/**
+ * Template data from a document, through the bindings of the runtime.
+ *
+ * phpscript registers yaml_decode(); `phpscript list --bindings` names it.
+ * A runtime without the yaml binding decodes json instead.
+ */
+function parse_data($text) {
+	try {
+		if (function_exists("yaml_decode")) {
+			return yaml_decode($text);
+		}
+
+		return json_decode($text, true);
+	} catch (\Error $e) {
+		throw new \RuntimeException("unable to parse template data: " . $e->getMessage());
+	}
+}
+
+/** Split arguments into options and positional values */
+function parse_options($args) {
+	$options = array();
+	$positional = array();
+	$length = count($args);
+
+	for ($i = 0; $i < $length; $i++) {
+		$arg = $args[$i];
+
+		if ($arg === "--") {
+			for ($i++; $i < $length; $i++) {
+				$positional[] = $args[$i];
+			}
+
+			break;
+		}
+
+		if ($arg === "-o" || $arg === "--output") {
+			if ($i + 1 >= $length) {
+				throw new \RuntimeException($arg . " needs a directory");
+			}
+
+			$options["output"] = $args[++$i];
+			continue;
+		}
+
+		if (substr($arg, 0, 9) === "--output=") {
+			$options["output"] = substr($arg, 9);
+			continue;
+		}
+
+		if ($arg === "-q" || $arg === "--quiet") {
+			$options["quiet"] = true;
+			continue;
+		}
+
+		if ($arg === "-h" || $arg === "--help") {
+			$options["help"] = true;
+			continue;
+		}
+
+		if ($arg !== "-" && substr($arg, 0, 1) === "-") {
+			throw new \RuntimeException("unknown option '" . $arg . "'");
+		}
+
+		$positional[] = $arg;
+	}
+
+	return array($options, $positional);
+}
+
+/** Whether an array is a list with indices 0..n */
+function is_list($data) {
+	$index = 0;
+	foreach ($data as $key => $value) {
+		if ($key !== $index++) {
+			return false;
+		}
+	}
+
+	return true;
+}
+
+/** The compiled directory that belongs to a template directory */
+function compiled_dir($dir) {
+	$template = new Template();
+	$path = rtrim($dir, "/") . "/";
+	$template->set_paths($path);
+
+	return rtrim($template->_compile_path($path), "/");
+}
+
+/** Every .tpl file under a directory, oldest name first */
+function find_templates($dir) {
+	$found = array();
+	$entries = @scandir($dir);
+	if ($entries === false) {
+		throw new \RuntimeException("unable to read directory '" . $dir . "'");
+	}
+
+	sort($entries);
+	foreach ($entries as $entry) {
+		if ($entry === "." || $entry === ".." || substr($entry, 0, 1) === ".") {
+			continue;
+		}
+
+		$path = $dir . "/" . $entry;
+		if (is_dir($path)) {
+			$found = array_merge($found, find_templates($path));
+		} elseif (substr($entry, -4) === ".tpl") {
+			$found[] = $path;
+		}
+	}
+
+	return $found;
+}
+
+/** Whether standard input is a terminal, where reading it would wait */
+function stdin_is_tty() {
+	if (!defined("STDIN")) {
+		return false;
+	}
+
+	if (function_exists("stream_isatty")) {
+		return @stream_isatty(STDIN);
+	}
+
+	if (function_exists("posix_isatty")) {
+		return @posix_isatty(STDIN);
+	}
+
+	return false;
+}
+
+/** Run the command line and return the exit status */
+function main($argv) {
+	$args = array_slice($argv, 1);
+	if (count($args) === 0) {
+		fwrite(STDERR, usage() . "\n");
+		return 1;
+	}
+
+	$command = $args[0];
+	$args = array_slice($args, 1);
+	$commands = commands();
+	if (!array_key_exists($command, $commands)) {
+		fwrite(STDERR, "minitpl: unknown command '" . $command . "'\n\n" . usage() . "\n");
+		return 1;
+	}
+
+	return call_user_func($commands[$command], $args);
+}
+
+try {
+	$status = main($argv);
+} catch (\Exception $e) {
+	fwrite(STDERR, "minitpl: " . $e->getMessage() . "\n");
+	$status = 1;
+} catch (\Error $e) {
+	fwrite(STDERR, "minitpl: " . $e->getMessage() . "\n");
+	$status = 1;
+}
+
+exit($status);

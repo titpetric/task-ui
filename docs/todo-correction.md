@@ -89,19 +89,31 @@ Specified: nothing directly. A module that loops forever would hang a page.
 
 Correction: the handler bounds each render with `context.WithTimeout` and the pool bounds how many runtimes exist, so Go keeps the two limits. The two fields stay at their defaults.
 
-## 7. A module cannot carry a `vendor/` directory
+## 7. A composer tree cannot be installed into `vendor/`
 
-Specified: `composer.json` requiring `titpetric/minitpl`, with `vendor/` committed so a running instance installs nothing and reaches no network.
+Specified: `composer.json` requiring `titpetric/minitpl`, with the installed tree committed so a running instance installs nothing and reaches no network.
 
-The first half holds, the second does not. The committed tree is there in a checkout and gone in a release. The image installs the binary with `go install github.com/titpetric/task-ui@<ref>`, the Go module proxy builds that zip, and the zip drops what sits under a directory named `vendor`: of the seventeen files committed under the module's, one survived, `vendor/autoload.php`, the one at the top. Everything it requires went. The module then failed its first request on the instance with
+The requirement holds. The directory name does not. The committed tree is whole in a checkout and gutted in a release: the image installs the binary with `go install github.com/titpetric/task-ui@<ref>`, the Go module proxy builds that zip, and `x/mod/zip` drops what it reads as a vendored package. `isVendoredPackage` finds the `vendor/` element in a path and asks whether a slash follows it, so `vendor/autoload.php` stays and `vendor/composer/autoload_real.php` goes. Of the seventeen files under the module's `vendor/`, one survived, the one at the top, with nothing left for it to load. The module answered its first request on the instance with
 
 ```
 error including /vendor/composer/autoload_real.php: no such file or directory
 ```
 
-while passing every test here, because the embed is built from the checkout.
+while passing every test here, because the embed is built from the checkout and the checkout is whole.
 
-Correction: no module file sits under a `vendor` directory and no module uses an autoloader. MiniTPL's sources are copied into `lib/MiniTPL/` and `index.php` names each file with a `require`. `composer.json` stays as the record of the package and its constraint. `TestModulesCarryNoVendor` refuses a `vendor` path in the embedded tree, and `TestModulesRequiresResolve` resolves every `require` of every shipped PHP file against that tree, so a require that did not ship fails here instead of on the instance.
+Correction: the install directory is `ext`, which composer takes from `config.vendor-dir` and Go treats as any other directory. `composer install` writes it, it ships with the module, and `index.php` requires `ext/autoload.php`. Nothing else changes: the autoloader works, and a dependency is still added by naming it in `composer.json` and running composer.
+
+`TestModulesInstallIntoExt` refuses a `vendor` path in the embedded tree and `TestModulesRequiresResolve` resolves every `require` a module writes against that tree, so a require that would not ship fails here instead of on the instance.
+
+## 8. `phpscript test` roots a fixture at its own directory
+
+Specified: nothing directly. A module's PHP has to be testable without task-ui.
+
+`phpscript test` is the runner and a `.phpt` fixture is the unit test, which is right. The root is the surprise: a fixture runs with the directory it sits in as `/`, so a fixture in `tests/` sees the fixtures beside it and no `lib/`, no `ext/` and no module at all. `require "lib/render.php"` from there is `tests/lib/render.php`, and an absolute `/lib/render.php` is the same path with the slash taken off.
+
+Correction: a `phpscript.yml` in the tree marks a suite root, and the directory holding it is the application root for every fixture below it. The module keeps one at its own root with `test.include: tests/bootstrap.php`, so a fixture reads the tree `index.php` reads and the bootstrap loads the autoloader and the module's declarations ahead of it. [Testing](testing.md) has the shape.
+
+Recorded because the default reads as a bug when it is a default: a fixture tree that holds its own fixtures and nothing else needs no configuration, and a fixture tree inside an application does.
 
 ## Not a runtime gap
 

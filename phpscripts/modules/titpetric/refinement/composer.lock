@@ -1,0 +1,70 @@
+{
+    "_readme": [
+        "This file locks the dependencies of your project to a known state",
+        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
+        "This file is @generated automatically"
+    ],
+    "content-hash": "39923e1d69df8bede3d4f74d4bb35bda",
+    "packages": [
+        {
+            "name": "titpetric/minitpl",
+            "version": "v1.3.4",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/titpetric/minitpl.git",
+                "reference": "0fba26212aa42822d0c4f598ca9d83fd836b2e81"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/titpetric/minitpl/zipball/0fba26212aa42822d0c4f598ca9d83fd836b2e81",
+                "reference": "0fba26212aa42822d0c4f598ca9d83fd836b2e81",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.6.0"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "MiniTPL\\": "code/MiniTPL/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Tit Petric",
+                    "email": "tit.petric@gmail.com",
+                    "homepage": "http://titpetric.github.io",
+                    "role": "developer"
+                }
+            ],
+            "description": "Miniature fully featured PHP template engine",
+            "homepage": "https://github.com/titpetric/minitpl",
+            "keywords": [
+                "minitpl",
+                "php",
+                "small",
+                "smarty",
+                "template",
+                "tiny"
+            ],
+            "support": {
+                "issues": "https://github.com/titpetric/minitpl/issues",
+                "source": "https://github.com/titpetric/minitpl/tree/v1.3.4"
+            },
+            "time": "2026-10-29T22:02:19+00:00"
+        }
+    ],
+    "packages-dev": [],
+    "aliases": [],
+    "minimum-stability": "stable",
+    "stability-flags": {},
+    "prefer-stable": false,
+    "prefer-lowest": false,
+    "platform": {},
+    "platform-dev": {},
+    "plugin-api-version": "2.9.0"
+}
