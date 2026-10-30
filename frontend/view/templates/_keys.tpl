@@ -11,25 +11,29 @@
 {{ define "keyhead" }}<colgroup><col class="c-name"><col class="c-algo"><col class="c-size"><col class="c-pub"><col class="c-actions"></colgroup>
 		<thead><tr><th>Name</th><th class="hide-narrow">Algorithm</th><th class="hide-narrow">Size</th><th>Public key</th><th class="actions" aria-label="Actions"></th></tr></thead>{{ end }}
 
-{{/* A key's row, (list page key next [workspace [inline]]): its name,
-     the encryption key marked, its public key, as much as fits with the
+{{/* A key's row, (list page key next [workspace]): its name, the
+     encryption key marked, its public key, as much as fits with the
      whole line in its tooltip, to copy, and the [...] menu, its details
-     on top, the purpose among them, then
-     Copy and Download, Edit links, Rotate key or Delete backup, and
-     Remove last. next is the page a change returns to, Edit links
-     too. On a workspace's
-     page, a key of the workspace links and removes through the
-     workspace, which takes workspace/edit. inline opens Edit links in
-     the page's dialog key-links-<name>, which wskeylinks fills. */}}
+     on top, the purpose among them, then Copy and Download, Edit links,
+     Rotate key or Delete backup, and Remove last. next is the page a
+     change returns to, Edit links too.
+
+     On a workspace's page a key of the workspace removes through the
+     workspace, which takes workspace/edit, and has neither Edit links
+     nor a link on its name: it was added to one workspace and every run
+     of that workspace gets it, so there is nothing left to choose and no
+     page to open. The instance's keys reach every workspace, so theirs
+     is the menu item that stays. */}}
 {{ define "keyrow" }}
 {{- $p := index . 0 }}{{ $k := index . 1 }}{{ $next := index . 2 }}{{ $ws := "" }}{{ if gt (len .) 3 }}{{ $ws = index . 3 }}{{ end }}
 {{- $edit := print "/settings/keys/" $k.Name }}{{ if ne $next "/settings/keys" }}{{ $edit = print $edit "?next=" (urlquery $next) }}{{ end }}{{ $remove := print "/api/keys/" $k.Name }}{{ $canEdit := $p.Can "key/edit" }}{{ $canRemove := $p.Can "key/delete" }}
-{{- if $ws }}{{ $edit = print "/settings/workspaces/" $ws "/keys/" $k.Name }}{{ $remove = print "/api/workspaces/" $ws "/keys/" $k.Name }}{{ $canRemove = $p.Can "workspace/edit" }}{{ end }}
-{{- $inline := false }}{{ if gt (len .) 4 }}{{ $inline = index . 4 }}{{ end }}
+{{- if $ws }}{{ $remove = print "/api/workspaces/" $ws "/keys/" $k.Name }}{{ $canRemove = $p.Can "workspace/edit" }}{{ end }}
 {{- $links := join $k.Roles ", " }}{{ with $k.Users }}{{ if $links }}{{ $links = print $links ", " }}{{ end }}{{ $links = print $links (join . ", ") }}{{ end }}
-{{- if $k.Encrypts }}{{ $links = "never handed out" }}{{ else if not $links }}{{ if $k.Workspace }}{{ $links = "every run of the workspace" }}{{ else }}{{ $links = "none" }}{{ end }}{{ end }}
+{{/* A workspace's key goes to every run of its workspace, whatever the
+     rows of an older instance say: the scope is the grant. */}}
+{{- if $k.Encrypts }}{{ $links = "never handed out" }}{{ else if $k.Workspace }}{{ $links = "every run of the workspace" }}{{ else if not $links }}{{ $links = "none" }}{{ end }}
 <tr id="key-{{ $k.Name }}">
-	<td class="key">{{ if or $k.Encrypts (not $canEdit) $inline }}<span class="mono">{{ $k.Name }}</span>{{ else }}<a class="mono" href="{{ $edit }}">{{ $k.Name }}</a>{{ end }}{{ if $k.Encrypts }} <span class="badge signal">encryption</span>{{ end }}{{ with $k.Backup }}{{ template "backup-active" . }}{{ end }}{{ with $k.Comment }}<div class="faint">{{ . }}</div>{{ end }}</td>
+	<td class="key">{{ if or $k.Encrypts (not $canEdit) $ws }}<span class="mono">{{ $k.Name }}</span>{{ else }}<a class="mono" href="{{ $edit }}">{{ $k.Name }}</a>{{ end }}{{ if $k.Encrypts }} <span class="badge signal">encryption</span>{{ end }}{{ with $k.Backup }}{{ template "backup-active" . }}{{ end }}{{ with $k.Comment }}<div class="faint">{{ . }}</div>{{ end }}</td>
 	<td class="mono hide-narrow" data-label="Algorithm">{{ $k.Algo }}</td>
 	<td class="mono nowrap hide-narrow" data-label="Size">{{ $k.Size }} bits</td>
 	<td class="pubkey" data-label="Public key">{{ template "copyable" (list $k.PublicKey (print "the public key of " $k.Name) $k.PublicKey true) }}</td>
@@ -43,8 +47,7 @@
 		(and (or ($p.Can "key/view") $ws) (detail "Links" $links))
 		(item "copy" "Copy public key" "data-copy" $k.PublicKey)
 		(item "download" "Download public key" "data-download" $k.PublicKey "data-filename" (print $k.Name ".pub"))
-		(and $canEdit (not $k.Encrypts) (not $inline) (item "edit" "Edit links" "href" $edit))
-		(and $canRemove (not $k.Encrypts) $inline (item "edit" "Edit links" "data-dialog-open" (print "key-links-" $k.Name)))
+		(and $canEdit (not $k.Encrypts) (not $ws) (item "edit" "Edit links" "href" $edit))
 		sep
 		(and $canEdit $k.Backup (item "rotate" "Rotate key" "disabled" "Delete the backup first"))
 		(and $canEdit $k.Backup (danger "trash" "Delete backup" "data-delete" (print "/api/keys/" $k.Name "/backup") "data-confirm" (print "Delete the backup " $k.Backup ", " $k.BackupFingerprint "? " (or (and $k.Encrypts "Secrets the new key has not re-encrypted stop opening.") "Hosts that know only its public key stop letting runs in.")) "data-confirm-ok" "Delete backup" "data-next" "reload"))
@@ -70,8 +73,11 @@
 {{- end }}
 
 {{/* wskeygenerate is the form that generates an SSH key of a workspace,
-     (list page next dialog): its name, algorithm, comment and whose runs
-     get it; it returns to next. In a dialog, Cancel closes it. */}}
+     (list page next dialog): its name, algorithm and comment; it returns
+     to next. In a dialog, Cancel closes it.
+
+     Whose runs get it is no field: it is a key of this workspace, so
+     every run of this workspace gets it. */}}
 {{ define "wskeygenerate" }}
 {{- $p := index . 0 }}{{ $next := index . 1 }}{{ $dialog := index . 2 }}{{ $ws := $p.Workspace }}
 <form class="form" data-api="/api/workspaces/{{ $ws.Folder }}/keys/generate" data-method="POST" data-next="{{ $next }}?notice=Key+generated">
@@ -101,7 +107,6 @@
 		<label for="wkg-comment">Comment</label>
 		<input type="text" id="wkg-comment" name="comment" value="task-ui {{ $ws.Folder }}">
 	</div>
-	{{- template "keygrants" (list (list) nil $p.Users) }}
 	{{- template "wskeyfoot" (list $next $dialog "Add key") }}
 </form>
 {{- end }}
@@ -132,22 +137,7 @@
 		<label for="wku-comment">Comment</label>
 		<input type="text" id="wku-comment" name="comment" value="task-ui {{ $ws.Folder }}">
 	</div>
-	{{- template "keygrants" (list (list) nil $p.Users) }}
 	{{- template "wskeyfoot" (list $next $dialog "Add key") }}
-</form>
-{{- end }}
-
-{{/* wskeylinks is the form that sets whose runs get a workspace's SSH
-     key, (list page key next dialog). */}}
-{{ define "wskeylinks" }}
-{{- $p := index . 0 }}{{ $k := index . 1 }}{{ $next := index . 2 }}{{ $dialog := index . 3 }}{{ $ws := $p.Workspace }}
-<form class="form" data-api="/api/workspaces/{{ $ws.Folder }}/keys/{{ $k.Name }}" data-method="PUT" data-next="{{ $next }}?notice=Links+saved">
-	{{- if $dialog }}
-	<h3 id="key-links-{{ $k.Name }}-title">Edit links of {{ $k.Name }}</h3>
-	<p>With nothing checked, every run in {{ $ws.Folder }} gets it.</p>
-	{{- end }}
-	{{- template "keygrants" (list (index $p.KeyPolicies $k.Name) (index $p.KeyUsers $k.Name) $p.Users) }}
-	{{- template "wskeyfoot" (list $next $dialog "Save") }}
 </form>
 {{- end }}
 

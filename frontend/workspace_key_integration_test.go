@@ -15,11 +15,11 @@ import (
 	"github.com/titpetric/task-ui/model"
 )
 
-// A workspace's configure page lists its SSH keys with whom each goes
-// to, every run of the workspace without a grant; the instance's one
-// encryption key encrypts its secrets, so the page has none to add. The
-// key pages generate, upload and grant; none of them shows a private
-// key.
+// A workspace's configure page lists its SSH keys, each to every run of
+// the workspace whatever an older instance linked it to; the instance's
+// one encryption key encrypts its secrets, so the page has none to add.
+// The key pages generate and upload, and ask nothing about who gets the
+// key; none of them shows a private key.
 func TestWorkspaceKeys(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
@@ -41,30 +41,29 @@ func TestWorkspaceKeys(t *testing.T) {
 	assert.Contains(t, body, `name="passphrase" minlength="12" autocomplete="new-password" spellcheck="false" required`)
 	assert.Contains(t, body, html(deploy.Fingerprint))
 	assert.Contains(t, body, html(admin.Fingerprint))
+	// Every row reads the same, the one a role was linked to included:
+	// the scope is the grant and the link is no longer an answer.
 	assert.Contains(t, body, `<dt>Links</dt><dd>every run of the workspace</dd>`)
-	assert.Contains(t, body, `<dt>Links</dt><dd>admin</dd>`)
-	assert.Contains(t, body, `href="/settings/workspaces/malta/keys/workspace_malta_deploy_ed25519"`)
+	assert.NotContains(t, body, `<dt>Links</dt><dd>admin</dd>`)
+	assert.NotContains(t, body, `href="/settings/workspaces/malta/keys/workspace_malta_deploy_ed25519"`)
 	assert.Contains(t, body, `data-delete="/api/workspaces/malta/keys/workspace_malta_deploy_ed25519"`)
 	assert.NotContains(t, body, "PRIVATE KEY-----\n", "the upload dialog's placeholder is the only mention; key material would follow it with a line")
 
 	generate := f.page(t, asAdmin, "/settings/workspaces/malta/keys/generate")
 	assert.Contains(t, generate, `data-api="/api/workspaces/malta/keys/generate"`)
-	assert.Contains(t, generate, `<small class="faint">With nothing checked, every run in the workspace gets it; check roles or users to limit it to their runs.</small>`)
-	assert.Contains(t, generate, `name="policies" value="admin"`)
+	assert.NotContains(t, generate, `name="policies"`)
 
 	upload := f.page(t, asAdmin, "/settings/workspaces/malta/keys/upload")
 	assert.Contains(t, upload, "<h2>Upload key</h2>")
 	assert.Contains(t, upload, `data-api="/api/workspaces/malta/keys/upload"`)
 	assert.NotContains(t, upload, `name="encrypt"`)
-	assert.Contains(t, upload, `name="policies"`)
+	assert.NotContains(t, upload, `name="policies"`)
 	// No workspace encryption key to upload: ?encrypt=1 is the same form.
 	assert.Equal(t, upload, f.page(t, asAdmin, "/settings/workspaces/malta/keys/upload?encrypt=1"))
 
-	edit := f.page(t, asAdmin, "/settings/workspaces/malta/keys/"+admin.Name)
-	assert.Contains(t, edit, `data-api="/api/workspaces/malta/keys/workspace_malta_admin_ed25519" data-method="PUT"`)
-	assert.Contains(t, edit, `name="policies" value="admin" data-type="set" checked>`)
-	assert.Contains(t, edit, html(admin.Fingerprint))
-
+	// There is no page that edits one: the key of a workspace has
+	// nothing to edit.
+	assert.Equal(t, http.StatusNotFound, f.get(t, asAdmin, "/settings/workspaces/malta/keys/"+admin.Name).Status)
 	assert.Equal(t, http.StatusNotFound, f.get(t, asAdmin, "/settings/workspaces/malta/keys/workspace_malta_nope_ed25519").Status)
 	assert.Equal(t, http.StatusNotFound, f.get(t, asAdmin, "/settings/workspaces/nope/keys/generate").Status)
 	assert.Equal(t, http.StatusForbidden, f.get(t, asOps, "/settings/workspaces/malta/keys/generate").Status)
@@ -75,8 +74,8 @@ func html(fingerprint string) string {
 	return strings.ReplaceAll(fingerprint, "+", "&#43;")
 }
 
-// The SSH keys page of a workspace edits its keys in place: the table,
-// and Generate, Upload and Edit links in dialogs that return to it.
+// The SSH keys page of a workspace adds keys in place: the table, and
+// Generate and Upload in dialogs that return to it.
 func TestWorkspaceKeys_Scoped(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
@@ -90,7 +89,7 @@ func TestWorkspaceKeys_Scoped(t *testing.T) {
 	assert.Contains(t, body, "<h2>Keys of malta</h2>")
 	assert.Contains(t, body, html(deploy.Fingerprint))
 	assert.Contains(t, body, `id="key-generate-dialog"`)
-	assert.Contains(t, body, `id="key-links-`+deploy.Name+`"`)
+	assert.NotContains(t, body, `id="key-links-`+deploy.Name+`"`)
 	assert.Contains(t, body, `data-next="/settings/workspaces/malta/keys?notice=Key+uploaded"`)
 	assert.NotContains(t, body, "PRIVATE KEY-----\n")
 

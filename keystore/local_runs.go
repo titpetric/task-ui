@@ -10,8 +10,14 @@ import (
 	"github.com/titpetric/task-ui/storage"
 )
 
-// ForRun returns the names of the SSH keys a run gets: the instance's linked to the starter's role or name,
-// and those of the run's workspace linked the same way or to nobody.
+// ForRun returns the names of the SSH keys a run gets: the instance's
+// keys linked to the starter's role or name, and every key of the run's
+// workspace.
+//
+// A workspace's key needs no link. It was added to one workspace, and
+// the runs of that workspace are the ones that get it; asking a second
+// time who inside the workspace may have it was a question with no
+// answer anyone wanted to give.
 func (l *Local) ForRun(ctx context.Context, role, user, workspaceID string) ([]string, error) {
 	keys, err := l.List(ctx)
 	if err != nil {
@@ -22,14 +28,19 @@ func (l *Local) ForRun(ctx context.Context, role, user, workspaceID string) ([]s
 		if key.Purpose != PurposeSSH {
 			continue
 		}
-		linked := (role != "" && slices.Contains(key.Roles, role)) || (user != "" && slices.Contains(key.Users, user))
 		switch key.Scope {
 		case storage.ScopeInstance:
-			if linked {
+			// An instance key reaches every workspace, so who gets it is
+			// the question its links answer.
+			if (role != "" && slices.Contains(key.Roles, role)) || (user != "" && slices.Contains(key.Users, user)) {
 				names = append(names, key.Name)
 			}
 		case ScopeWorkspace(workspaceID):
-			if workspaceID != "" && (linked || len(key.Roles)+len(key.Users) == 0) {
+			// A workspace's key goes to every run of that workspace. The
+			// scope is the grant: a key is added to one workspace and the
+			// runs of that workspace are the ones that get it, which is
+			// what putting it there said.
+			if workspaceID != "" {
 				names = append(names, key.Name)
 			}
 		}

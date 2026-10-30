@@ -141,7 +141,6 @@ func (h *Handlers) Routes() http.Handler {
 	r.Get("/workspaces/{folder}/keys", h.listWorkspaceKeys)
 	r.Post("/workspaces/{folder}/keys/generate", h.generateWorkspaceKey)
 	r.Post("/workspaces/{folder}/keys/upload", h.uploadWorkspaceKey)
-	r.Put("/workspaces/{folder}/keys/{name}", h.updateWorkspaceKey)
 	r.Delete("/workspaces/{folder}/keys/{name}", h.deleteWorkspaceKey)
 
 	r.Get("/users", h.listUsers)

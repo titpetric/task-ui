@@ -24,10 +24,9 @@ func (h *Handlers) keysWorkspace(w http.ResponseWriter, r *http.Request) *model.
 }
 
 // listWorkspaceKeys returns a workspace's SSH keys, public halves and
-// fingerprints only, with the roles and the users each goes to; a key
-// with neither goes to every run in the workspace. A workspace has no
-// encryption key: the instance's encrypts every secret. Takes
-// workspace/view.
+// fingerprints only. Each goes to every run in the workspace; a
+// workspace has no encryption key, the instance's encrypts every
+// secret. Takes workspace/view.
 func (h *Handlers) listWorkspaceKeys(w http.ResponseWriter, r *http.Request) {
 	if !h.require(w, r, "workspace/view") {
 		return
@@ -76,10 +75,12 @@ func (h *Handlers) workspaceSpec(workspace *model.Workspace, req WorkspaceKeyReq
 	return spec
 }
 
-// addWorkspaceKey reads a key request, adds the SSH key, links it to
-// the roles or users the request names, and answers with its public
-// half. A request for an encryption key answers 400: one encryption
-// key per instance, the instance's.
+// addWorkspaceKey reads a key request, adds the SSH key and answers
+// with its public half. A request for an encryption key answers 400:
+// one encryption key per instance, the instance's.
+//
+// The key is linked to nothing, which is what makes it a key of the
+// workspace: every run of the workspace gets it.
 func (h *Handlers) addWorkspaceKey(w http.ResponseWriter, r *http.Request, add func(*model.Workspace, WorkspaceKeyRequest) (*keystore.Key, error)) {
 	if !h.require(w, r, "workspace/edit") {
 		return
@@ -102,10 +103,6 @@ func (h *Handlers) addWorkspaceKey(w http.ResponseWriter, r *http.Request, add f
 		failKey(w, err)
 		return
 	}
-	if err := h.link(r, key.Name, req.keyRequest()); err != nil {
-		failKey(w, err)
-		return
-	}
 	writeJSON(w, http.StatusCreated, map[string]any{"key": key})
 }
 
@@ -118,39 +115,6 @@ func (h *Handlers) workspaceSSHKey(w http.ResponseWriter, r *http.Request, works
 		return nil
 	}
 	return key
-}
-
-// updateWorkspaceKey sets the roles and the users whose runs get one of
-// a workspace's SSH keys; with none of either, every run in the
-// workspace gets it. Takes workspace/edit.
-func (h *Handlers) updateWorkspaceKey(w http.ResponseWriter, r *http.Request) {
-	if !h.require(w, r, "workspace/edit") {
-		return
-	}
-	workspace := h.keysWorkspace(w, r)
-	if workspace == nil {
-		return
-	}
-	key := h.workspaceSSHKey(w, r, workspace)
-	if key == nil {
-		return
-	}
-	var req WorkspaceKeyRequest
-	if err := readJSON(r, &req); err != nil {
-		fail(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	if req.Policies == nil {
-		req.Policies = []string{}
-	}
-	if req.Users == nil {
-		req.Users = []string{}
-	}
-	if err := h.opts.Keys.Link(r.Context(), key.Name, req.Policies, trimmed(req.Users)); err != nil {
-		failKey(w, err)
-		return
-	}
-	writeJSON(w, http.StatusOK, map[string]any{"name": key.Name, "policies": req.Policies, "users": req.Users})
 }
 
 // deleteWorkspaceKey retires one of a workspace's SSH keys and drops

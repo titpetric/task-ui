@@ -25,21 +25,19 @@ func (h *Handlers) keyWorkspace(w http.ResponseWriter, r *http.Request) *model.W
 	return workspace
 }
 
-// workspaceKeys puts a workspace's SSH keys on its page, and whom each
-// goes to. Without the key folder the
-// page has none.
+// workspaceKeys puts a workspace's SSH keys on its page. Without the
+// key folder the page has none.
+//
+// Whom each key goes to is not a question the page asks: a key of this
+// workspace goes to every run of this workspace, so there are no roles
+// and no users to fill in beside it.
 func (h *Handlers) workspaceKeys(r *http.Request, p *view.Page) {
-	p.KeyPolicies, p.KeyUsers = map[string][]string{}, map[string][]string{}
 	if h.opts.Keys == nil || p.Workspace == nil {
 		return
 	}
 	scope := keystore.ScopeWorkspace(p.Workspace.ID)
 	p.Keys, _ = h.opts.Keys.Of(r.Context(), scope, keystore.PurposeSSH)
 	p.KeysDir = h.opts.Keys.Dir
-	for _, key := range p.Keys {
-		p.KeyPolicies[key.Name], p.KeyUsers[key.Name] = key.Roles, key.Users
-	}
-	p.Users, _ = h.opts.Users.List(r.Context())
 }
 
 // workspaceKeyPage starts a page of a workspace's keys.
@@ -93,22 +91,3 @@ func (h *Handlers) workspaceKeyUpload(w http.ResponseWriter, r *http.Request) {
 	h.render(w, http.StatusOK, "workspace_key_upload", p)
 }
 
-// workspaceKeyEdit shows the form that sets whose runs get one of a
-// workspace's SSH keys.
-func (h *Handlers) workspaceKeyEdit(w http.ResponseWriter, r *http.Request) {
-	if !h.require(w, r, "workspace/view") {
-		return
-	}
-	workspace := h.keyWorkspace(w, r)
-	if workspace == nil {
-		return
-	}
-	key, err := h.opts.Keys.Get(r.Context(), param(r, "name"))
-	if err != nil || key.Scope != keystore.ScopeWorkspace(workspace.ID) || key.Encrypts() {
-		h.notFound(w, r)
-		return
-	}
-	p := h.workspaceKeyPage(r, workspace, "Edit "+key.Name, "Keys", "/settings/workspaces/"+workspace.Folder+"/keys", key.Name, "/settings/workspaces/"+workspace.Folder+"/keys#key-"+key.Name, "Edit")
-	p.Key = key
-	h.render(w, http.StatusOK, "workspace_key_edit", p)
-}

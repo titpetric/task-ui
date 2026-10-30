@@ -114,13 +114,15 @@ func TestMenu_Pages(t *testing.T) {
 		PublicKey: "ssh-ed25519 AAAAws", CreatedAt: time.Now(), RotatedAt: &rotated, Roles: []string{"admin"}, Users: []string{"ann"}}
 	p.Keys = []keystore.Key{ws}
 	body = render(t, "keys", p)
-	assert.Contains(t, body, `<dt>Links</dt><dd>admin, ann</dd>`)
+	// The links an older instance wrote are not what the row says: the
+	// key is scoped to a workspace, so its runs are the ones that get it.
+	assert.Contains(t, body, `<dt>Links</dt><dd>every run of the workspace</dd>`)
 	assert.Contains(t, body, `<dt>Scope</dt><dd>workspace acme</dd>`)
 	assert.Contains(t, body, `data-delete="/api/keys/workspace_acme_git_ed25519"`)
 
 	p.Workspace, p.KeysDir = &model.Workspace{Folder: "acme"}, "/keys"
 	body = render(t, "workspace_edit", p)
-	assert.Contains(t, body, `href="/settings/workspaces/acme/keys/workspace_acme_git_ed25519"><svg class="ic"><use href="#i-edit"/></svg><span>Edit links</span>`)
+	assert.NotContains(t, body, `<span>Edit links</span>`, "a workspace's key has no links to edit")
 	assert.Contains(t, body, `data-delete="/api/workspaces/acme/keys/workspace_acme_git_ed25519" data-confirm="Remove workspace_acme_git_ed25519? The workspace&#39;s runs lose it.`)
 
 	p = admin(t)

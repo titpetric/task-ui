@@ -23,7 +23,6 @@ func TestWorkspaceKey_AdminOnly(t *testing.T) {
 		{http.MethodGet, "/workspaces/malta/keys"},
 		{http.MethodPost, "/workspaces/malta/keys/generate"},
 		{http.MethodPost, "/workspaces/malta/keys/upload"},
-		{http.MethodPut, "/workspaces/malta/keys/workspace_malta_ssh_ed25519"},
 		{http.MethodDelete, "/workspaces/malta/keys/workspace_malta_ssh_ed25519"},
 	} {
 		for _, user := range []string{asOps, asViewer, asLimited} {
@@ -35,10 +34,14 @@ func TestWorkspaceKey_AdminOnly(t *testing.T) {
 }
 
 // A workspace has no encryption key, the instance's encrypts every
-// secret, so an encryption key for one answers 400; an admin generates,
-// links and removes its SSH keys, named
+// secret, so an encryption key for one answers 400; an admin generates
+// and removes its SSH keys, named
 // workspace_<folder>_<name>_<algorithm>, and no answer carries a private
 // key. Deleting the workspace takes its keys.
+//
+// A key of a workspace is linked to nobody, and there is no route that
+// links it: it was added to this workspace and every run of this
+// workspace gets it.
 func TestWorkspaceKey_CRUD(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
@@ -54,7 +57,7 @@ func TestWorkspaceKey_CRUD(t *testing.T) {
 	assert.Nil(t, f.opts.Keys.EncryptKey(ctx, scope))
 	assert.NoFileExists(t, filepath.Join(f.opts.Keys.Dir, "workspace_malta_encryption_ed25519.key"))
 
-	ssh := f.call(t, asAdmin, http.MethodPost, "/workspaces/malta/keys/generate", api.WorkspaceKeyRequest{Name: "build", Policies: []string{model.RoleAdmin}})
+	ssh := f.call(t, asAdmin, http.MethodPost, "/workspaces/malta/keys/generate", api.WorkspaceKeyRequest{Name: "build"})
 	assert.Equal(t, http.StatusCreated, ssh.Status, string(ssh.Raw))
 	name := ssh.str("key", "name")
 	assert.Equal(t, "workspace_malta_build_ed25519", name)
@@ -67,12 +70,11 @@ func TestWorkspaceKey_CRUD(t *testing.T) {
 	assert.Equal(t, f.opts.Keys.Dir, list.str("dir"))
 	assert.NotContains(t, string(list.Raw), "PRIVATE KEY")
 
-	put := f.call(t, asAdmin, http.MethodPut, "/workspaces/malta/keys/"+name, api.WorkspaceKeyRequest{Users: []string{"ops"}})
-	assert.Equal(t, http.StatusOK, put.Status, string(put.Raw))
 	key, err := f.opts.Keys.Get(ctx, name)
 	assert.NoError(t, err)
-	assert.Equal(t, []string{"ops"}, key.Users)
-	assert.Equal(t, http.StatusNotFound, f.call(t, asAdmin, http.MethodPut, "/workspaces/malta/keys/workspace_malta_encryption_ed25519", api.WorkspaceKeyRequest{}).Status, "no encryption key to link")
+	assert.Len(t, key.Roles, 0, "a workspace's key is linked to no role")
+	assert.Len(t, key.Users, 0, "a workspace's key is linked to no user")
+	assert.Equal(t, http.StatusMethodNotAllowed, f.call(t, asAdmin, http.MethodPut, "/workspaces/malta/keys/"+name, api.WorkspaceKeyRequest{}).Status, "nothing to link")
 
 	assert.Equal(t, http.StatusNoContent, f.call(t, asAdmin, http.MethodDelete, "/workspaces/malta/keys/"+name, nil).Status)
 	assert.Equal(t, http.StatusNotFound, f.call(t, asAdmin, http.MethodDelete, "/workspaces/malta/keys/"+name, nil).Status)

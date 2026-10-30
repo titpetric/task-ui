@@ -52,13 +52,13 @@ func keysPage(t *testing.T, user *model.User, role permission.Policy) *view.Page
 	p.Workspace = &model.Workspace{ID: "w1", Folder: "malta"}
 	p.KeysDir = "/keys"
 	p.Keys = []keystore.Key{{Name: "workspace_malta_deploy_ed25519", Purpose: keystore.PurposeSSH, Scope: keystore.ScopeWorkspace("w1"), Algo: "ed25519", Fingerprint: "SHA256:abc", PublicKey: "ssh-ed25519 AAAA deploy"}}
-	p.KeyPolicies = map[string][]string{"workspace_malta_deploy_ed25519": {model.RoleAdmin}}
-	p.KeyUsers = map[string][]string{}
 	return p
 }
 
-// The SSH keys page of a workspace lists its keys and edits them in
-// place: Generate, Upload and Edit links open dialogs that return to it.
+// The SSH keys page of a workspace lists its keys, with Generate and
+// Upload in dialogs that return to it. A key of the workspace has no
+// links: it goes to every run of the workspace, which the row says and
+// no form asks about.
 func TestWorkspaceKeys_Page(t *testing.T) {
 	t.Parallel()
 
@@ -67,12 +67,13 @@ func TestWorkspaceKeys_Page(t *testing.T) {
 	assert.Contains(t, body, `<tr id="key-workspace_malta_deploy_ed25519">`)
 	assert.Contains(t, body, `data-dialog-open="key-generate-dialog"`)
 	assert.Contains(t, body, `data-dialog-open="key-upload-dialog"`)
-	assert.Contains(t, body, `data-dialog-open="key-links-workspace_malta_deploy_ed25519"`)
+	assert.Contains(t, body, "<dt>Links</dt><dd>every run of the workspace</dd>")
 	assert.Contains(t, body, `data-api="/api/workspaces/malta/keys/generate" data-method="POST" data-next="/settings/workspaces/malta/keys?notice=Key+generated"`)
 	assert.Contains(t, body, `data-api="/api/workspaces/malta/keys/upload" data-method="POST" data-next="/settings/workspaces/malta/keys?notice=Key+uploaded"`)
-	assert.Contains(t, body, `data-api="/api/workspaces/malta/keys/workspace_malta_deploy_ed25519" data-method="PUT" data-next="/settings/workspaces/malta/keys?notice=Links+saved"`)
-	assert.Contains(t, body, `name="policies" value="admin" data-type="set" checked>`)
 	assert.Contains(t, body, `data-delete="/api/workspaces/malta/keys/workspace_malta_deploy_ed25519"`)
+	assert.NotContains(t, body, `data-dialog-open="key-links-workspace_malta_deploy_ed25519"`)
+	assert.NotContains(t, body, `data-method="PUT"`)
+	assert.NotContains(t, body, `name="policies"`)
 	assert.NotContains(t, body, `href="/settings/workspaces/malta/keys/workspace_malta_deploy_ed25519"`)
 
 	body = render(t, "workspace_keys", keysPage(t, &model.User{Name: "ops", Role: model.RoleRunner}, permission.Policy{"workspace/view": permission.Allow}))

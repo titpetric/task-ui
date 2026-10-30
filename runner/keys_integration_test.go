@@ -88,10 +88,10 @@ func TestManager_LinkedKeys(t *testing.T) {
 	assert.Len(t, entries, 0, "no key, no socket on disk after the runs")
 }
 
-// A run gets its workspace's SSH keys beside the instance ones: a key
-// without a link goes to every run in the workspace, a key linked to
-// admins skips a runner's run, and the encryption key goes to none. A
-// run in _ gets _'s keys, and a run in another workspace none of these.
+// A run gets its workspace's SSH keys beside the instance ones: every
+// key of the workspace, whatever an older instance linked it to, and
+// the encryption key to none. A run in _ gets _'s keys, and a run in
+// another workspace none of these.
 func TestManager_WorkspaceKeys(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
@@ -106,9 +106,9 @@ func TestManager_WorkspaceKeys(t *testing.T) {
 	assert.NoError(t, err)
 	deploy, err := f.keys.Generate(ctx, keystore.Spec{Name: "workspace_ws_deploy", Scope: scope})
 	assert.NoError(t, err)
-	admin, err := f.keys.Generate(ctx, keystore.Spec{Name: "workspace_ws_admin", Scope: scope})
+	linked, err := f.keys.Generate(ctx, keystore.Spec{Name: "workspace_ws_admin", Scope: scope})
 	assert.NoError(t, err)
-	assert.NoError(t, f.keys.Link(ctx, admin.Name, []string{model.RoleAdmin}, nil))
+	assert.NoError(t, f.keys.Link(ctx, linked.Name, []string{model.RoleAdmin}, nil))
 	script := `ssh-add -l; ssh-add -L`
 
 	run := func(id, role string) string {
@@ -122,10 +122,12 @@ func TestManager_WorkspaceKeys(t *testing.T) {
 	}
 	pub := func(k *keystore.Key) string { return strings.Fields(k.PublicKey)[1] }
 
+	// The runner's run gets the admin-linked key too: it is a key of ws
+	// and this run is a run of ws.
 	out := run("ws/runner", model.RoleRunner)
-	assert.Contains(t, out, "ssh-agent: task_ssh_ed25519, workspace_ws_deploy_ed25519\x1b")
+	assert.Contains(t, out, "ssh-agent: task_ssh_ed25519, workspace_ws_admin_ed25519, workspace_ws_deploy_ed25519\x1b")
 	assert.Contains(t, out, pub(deploy))
-	assert.NotContains(t, out, pub(admin))
+	assert.Contains(t, out, pub(linked))
 	assert.NotContains(t, out, pub(encrypt))
 
 	out = run("ws/admin", model.RoleAdmin)

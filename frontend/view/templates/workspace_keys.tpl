@@ -3,7 +3,7 @@
 <div class="page-head">
 	<div>
 		<h2>Keys of {{ $ws.Folder }}</h2>
-		<p>The keys the workspace's runs get in their ssh agent, each to every run in {{ $ws.Folder }} or to the roles and users its links name. Generate, upload, link and remove them here.</p>
+		<p>The keys the workspace's runs get in their ssh agent, each one to every run in {{ $ws.Folder }}: a key added here is a key of this workspace and nothing narrows it further. Generate, upload and remove them here.</p>
 	</div>
 	<div class="actions">
 		{{- if and $edit .KeysDir }}
@@ -28,7 +28,7 @@
 	<table class="table keys key-table cards">
 		{{ template "keyhead" }}
 		<tbody>
-		{{- range . }}{{ template "keyrow" (list $ . $here $ws.Folder true) }}{{ end }}
+		{{- range . }}{{ template "keyrow" (list $ . $here $ws.Folder) }}{{ end }}
 		</tbody>
 	</table>
 	</div>
@@ -36,11 +36,6 @@
 </section>
 {{- if $edit }}
 {{ template "wskeydialogs" (list . $here) }}
-{{- range .Keys }}{{ if not .Encrypts }}
-<dialog class="confirm" id="key-links-{{ .Name }}" aria-labelledby="key-links-{{ .Name }}-title">
-	{{ template "wskeylinks" (list $ . $here true) }}
-</dialog>
-{{- end }}{{ end }}
 {{- end }}
 {{- end }}
 {{ end }}

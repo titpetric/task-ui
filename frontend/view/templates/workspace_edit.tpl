@@ -139,9 +139,9 @@
 {{- end }}
 
 {{- /* workspacekeys are a workspace's SSH keys, which its runs get,
-     each to every run in the workspace or to the roles and users
-     linked: the keys table every page shares, or one line with Upload
-     key and Generate key while there is none. */}}
+     each to every run in the workspace: the keys table every page
+     shares, or one line with Upload key and Generate key while there is
+     none. */}}
 {{- define "workspacekeys" }}
 {{- $ws := .Workspace }}{{ $edit := .Can "workspace/edit" }}
 <section class="block workspace-keys" id="keys">
@@ -149,7 +149,7 @@
 		(and $edit .KeysDir (item "upload" "Upload key" "data-dialog-open" "key-upload-dialog"))
 		(and $edit .KeysDir (item "key" "Generate key" "data-dialog-open" "key-generate-dialog"))) }}
 	{{- with .Keys }}
-	<p class="dim">A key goes to every run in the workspace, or to the roles and users its links name, through the run's ssh agent.</p>
+	<p class="dim">A key goes to every run in the workspace, through the run's ssh agent.</p>
 	<div class="table-wrap fit">
 	<table class="table keys key-table cards">
 		{{ template "keyhead" }}

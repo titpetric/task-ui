@@ -711,17 +711,6 @@
 </div>
 {{- end }}
 
-{{- /* keygrants is who gets a workspace's SSH key, (list roles users
-     all): the roles and the users checked, or every run in the
-     workspace with none checked. */}}
-{{- define "keygrants" }}
-<div class="field">
-	<span class="label">Who gets it</span>
-	{{- template "whofield" ((who "policies" "set" (index . 0) (index . 1) (index . 2) "every run in the workspace gets it").UsersNamed "users") }}
-	<small class="faint">With nothing checked, every run in the workspace gets it; check roles or users to limit it to their runs.</small>
-</div>
-{{- end }}
-
 {{- /* When runs ran: a bar per day and per hour of the last 24, each split
      into the runs that ended ok, failed and the rest, and for a job or a
      workflow the duration of its latest runs. Every bar and every run

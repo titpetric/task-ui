@@ -166,13 +166,13 @@ Out of hours **Run** fails, and **Run force** asks why: it needs a reason, keeps
 
 Every workspace has SSH keys of its own, in the key folder, `TASK_UI_SSH_DIR`, out of its directory, where a `git add -A` would publish them: `workspace_<folder>_<name>_<algorithm>.key` and `.pub`, the files `0600`. The **Keys** section of a workspace's settings page, `/settings/workspaces/malta`, lists them in the keys table of the Keys page, name, algorithm, size, public key with its copy button, purpose and the **⋯** menu, never a private key. With none, it says "No keys added." beside **Upload key** and **Generate key**.
 
-**SSH keys**, in the **⋯** menu at the top right of the workspace's page, `/f/malta`, opens `/settings/workspaces/malta/keys`, the workspace's keys alone, edited in place: **Generate key** and **Upload key** at the top right, and **Edit links** in a key's **⋯** menu, open their forms in a dialog over the list, and **Remove** retires a key. The page and the menu item take `workspace/view`, the forms `workspace/edit`, as the key routes do.
+**SSH keys**, in the **⋯** menu at the top right of the workspace's page, `/f/malta`, opens `/settings/workspaces/malta/keys`, the workspace's keys alone, added in place: **Generate key** and **Upload key** at the top right open their forms in a dialog over the list, and **Remove** retires a key. There is no form that asks whose runs get one: a key added here is a key of this workspace, so every run of this workspace gets it. The page and the menu item take `workspace/view`, the forms `workspace/edit`, as the key routes do.
 
 ![The workspace page's menu with SSH keys and Secrets](https://cdn.si/titpetric/task-ui/docs/assets/workspace-menu-dark.png)
 
 ![The SSH keys of acme, edited in place](https://cdn.si/titpetric/task-ui/docs/assets/workspace-keys-dark.png)
 
-- The **SSH keys**, zero or more, are for the workspace's runs. A workspace has no encryption key: the instance's encrypts its [secrets](settings.md#secrets-and-env), as every secret. Generate or upload any number, each under a name of its own, `workspace_malta_deploy_ed25519`. A key without a link goes to every run in the workspace; checking roles or users narrows it to their runs. Remove retires the key and its links. With none, task-ui can't SSH to the workspace's hosts with a key of its own: its runs get only the instance SSH keys linked to them.
+- The **SSH keys**, zero or more, are for the workspace's runs. A workspace has no encryption key: the instance's encrypts its [secrets](settings.md#secrets-and-env), as every secret. Generate or upload any number, each under a name of its own, `workspace_malta_deploy_ed25519`. Each goes to every run in the workspace, and nothing narrows it further: the workspace it was added to is the answer to who gets it. Remove retires the key. With none, task-ui can't SSH to the workspace's hosts with a key of its own: its runs get only the instance SSH keys linked to them.
 
 A key has one use (see [One key, one use](settings.md#one-key-one-use)): an upload of key material the key folder holds already, under any name, answers `409`.
 

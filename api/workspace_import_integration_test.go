@@ -39,8 +39,13 @@ func (f *fixture) acme(t *testing.T) string {
 	id := res.str("workspace", "id")
 	res = f.call(t, asAdmin, http.MethodPost, "/projects", api.ProjectCloneRequest{URL: repo, ID: "api", Workspace: "acme"})
 	assert.Equal(t, http.StatusCreated, res.Status, string(res.Raw))
-	res = f.call(t, asAdmin, http.MethodPost, "/workspaces/acme/keys/generate", api.WorkspaceKeyRequest{Type: "ed25519", Name: "deploy", Users: []string{asOps, "ghost"}})
+	res = f.call(t, asAdmin, http.MethodPost, "/workspaces/acme/keys/generate", api.WorkspaceKeyRequest{Type: "ed25519", Name: "deploy"})
 	assert.Equal(t, http.StatusCreated, res.Status, string(res.Raw))
+	// The grants go on through the key folder and not the API: a
+	// workspace's key is handed to every run of its workspace and no
+	// route links one. A bundle an older instance wrote carries them,
+	// so an import still has to read them and name the users it lacks.
+	assert.NoError(t, f.opts.Keys.Link(ctx, res.str("key", "name"), nil, []string{asOps, "ghost"}))
 	assert.NoError(t, f.opts.Secrets.Set(ctx, &model.Secret{Scope: "workspace:acme", Name: "TOKEN", Content: "shared value"}))
 	assert.NoError(t, f.opts.Secrets.Set(ctx, &model.Secret{Scope: "acme/api", Name: "OWN", Content: "own value"}))
 	assert.NoError(t, f.opts.Env.Managed.Set(ctx, &model.EnvFile{Folder: "acme/api", Path: ".env", Content: "MODE=prod\n"}))

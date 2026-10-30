@@ -102,7 +102,6 @@ func (h *Handlers) Routes() http.Handler {
 		r.Get("/settings/workspaces/{folder}/keys", h.workspaceKeyList)
 		r.Get("/settings/workspaces/{folder}/keys/generate", h.workspaceKeyGenerate)
 		r.Get("/settings/workspaces/{folder}/keys/upload", h.workspaceKeyUpload)
-		r.Get("/settings/workspaces/{folder}/keys/{name}", h.workspaceKeyEdit)
 		r.Get("/settings/keys", h.keys)
 		r.Get("/settings/keys/generate", h.keyGenerate)
 		r.Get("/settings/keys/upload", h.keyUpload)

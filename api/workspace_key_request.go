@@ -9,7 +9,11 @@ import (
 var ErrWorkspaceEncrypt = errors.New("a workspace has no encryption key: the instance's encryption key encrypts every secret, one per instance")
 
 // WorkspaceKeyRequest generates a workspace key, or uploads a private
-// key, or sets whose runs get one of the workspace's SSH keys.
+// key as one.
+//
+// Whose runs get it is no field. The key is added to one workspace and
+// every run of that workspace gets it: the scope is the grant, and
+// there is nothing left to narrow.
 type WorkspaceKeyRequest struct {
 	// Encrypt names a workspace's encryption key, which no workspace
 	// has any more: true answers 400, ErrWorkspaceEncrypt.
@@ -25,14 +29,10 @@ type WorkspaceKeyRequest struct {
 	Comment string `json:"comment"`
 	// Content is the private key to upload, PEM or OpenSSH.
 	Content string `json:"content"`
-	// Policies are the roles, and Users the users by name, whose runs
-	// in the workspace get an SSH key. With neither, every run in the
-	// workspace gets it.
-	Policies []string `json:"policies"`
-	Users    []string `json:"users"`
 }
 
-// keyRequest returns the request as a request of the key folder.
+// keyRequest returns the request as a request of the key folder, with
+// no links: a workspace's key is handed out by its scope.
 func (req *WorkspaceKeyRequest) keyRequest() KeyRequest {
-	return KeyRequest{Name: req.Name, Algo: req.Algo, Type: req.Type, Bits: req.Bits, Comment: req.Comment, Content: req.Content, Policies: req.Policies, Users: req.Users}
+	return KeyRequest{Name: req.Name, Algo: req.Algo, Type: req.Type, Bits: req.Bits, Comment: req.Comment, Content: req.Content}
 }

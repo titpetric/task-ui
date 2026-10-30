@@ -17,10 +17,10 @@ import (
 	"github.com/titpetric/task-ui/keystore"
 )
 
-// Links decide which runs get an SSH key: an instance key goes to the
-// roles and users it links, a workspace's to every run of the workspace
-// without links, to the linked ones with. An encryption key goes to no
-// run and links nothing.
+// Which runs get an SSH key: an instance key goes to the roles and
+// users it links, a workspace's to every run of the workspace, whatever
+// an older instance linked it to. An encryption key goes to no run and
+// links nothing.
 func TestLocal_ForRun(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
@@ -34,8 +34,10 @@ func TestLocal_ForRun(t *testing.T) {
 	assert.NoError(t, l.Link(ctx, deploy.Name, []string{"admin"}, []string{"claude"}))
 	mustGen(keystore.Spec{Name: "task_ssh"})
 	ws := mustGen(keystore.Spec{Name: "workspace_malta_ssh", Scope: keystore.ScopeWorkspace("w1")})
-	limited := mustGen(keystore.Spec{Name: "workspace_malta_build", Scope: keystore.ScopeWorkspace("w1")})
-	assert.NoError(t, l.Link(ctx, limited.Name, nil, []string{"ops"}))
+	// A link an older instance wrote on a workspace's key narrows
+	// nothing: the key is still handed to every run of w1.
+	linked := mustGen(keystore.Spec{Name: "workspace_malta_build", Scope: keystore.ScopeWorkspace("w1")})
+	assert.NoError(t, l.Link(ctx, linked.Name, nil, []string{"ops"}))
 	enc := mustGen(keystore.Spec{Name: "task_encryption", Purpose: keystore.PurposeEncrypt})
 	assert.ErrorIs(t, l.Link(ctx, enc.Name, []string{"admin"}, nil), keystore.ErrNotSSH)
 
@@ -43,9 +45,9 @@ func TestLocal_ForRun(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, []string{deploy.Name}, names)
 	names, _ = l.ForRun(ctx, "runner", "claude", "w1")
-	assert.Equal(t, []string{deploy.Name, ws.Name}, names)
+	assert.Equal(t, []string{deploy.Name, linked.Name, ws.Name}, names)
 	names, _ = l.ForRun(ctx, "runner", "ops", "w1")
-	assert.Equal(t, []string{limited.Name, ws.Name}, names)
+	assert.Equal(t, []string{linked.Name, ws.Name}, names)
 	names, _ = l.ForRun(ctx, "viewer", "guest", "w2")
 	assert.Len(t, names, 0)
 
