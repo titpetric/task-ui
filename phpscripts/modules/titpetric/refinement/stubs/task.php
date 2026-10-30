@@ -24,23 +24,33 @@ class Task {
 	static function migrate($dir) {
 	}
 
-	/** Starts a Claude run over a comment and an action file, returning its id. */
-	static function dispatch($comment, $action) {
+	/**
+	 * Starts a Claude run over a comment and an action file, returning its
+	 * id. The folder is where in the artifact tree the run works, and the
+	 * only part of it the prompt names; empty is the top of the tree.
+	 */
+	static function dispatch($comment, $action, $folder = "") {
 		return "";
 	}
 
-	/** The artifact tree's files, by path. */
-	static function artifacts() {
+	/**
+	 * The files under one folder of the artifact tree, by path relative to
+	 * that folder. Empty is the whole tree.
+	 */
+	static function artifacts($folder = "") {
 		return array();
 	}
 
-	/** The text of one artifact, or "". */
+	/** The text of one artifact, from the top of the tree, or "". */
 	static function artifact($path) {
 		return "";
 	}
 
-	/** Renders markdown as the instance's own pages do. */
-	static function markdown($src) {
+	/**
+	 * Renders markdown as the instance's own pages do. The folder is what a
+	 * relative link resolves under, for a report written inside one.
+	 */
+	static function markdown($src, $folder = "") {
 		return "";
 	}
 }

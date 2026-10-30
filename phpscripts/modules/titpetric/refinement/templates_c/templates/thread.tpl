@@ -19,7 +19,7 @@
 
 	<div class="refinement-artifacts">
 		<?php if(!empty($_v['artifacts']))foreach($_v['artifacts'] as $_v['artifact']){?>
-			<a class="badge mono" href="/artifacts/files/<?php echo htmlspecialchars($_v['artifact']['path'], ENT_QUOTES);?>
+			<a class="badge mono" href="<?php echo htmlspecialchars($_v['files'], ENT_QUOTES); echo htmlspecialchars($_v['artifact']['path'], ENT_QUOTES);?>
 " title="<?php echo htmlspecialchars($_v['artifact']['path'], ENT_QUOTES);?>
 "><?php echo htmlspecialchars($_v['artifact']['path'], ENT_QUOTES);?>
 </a>

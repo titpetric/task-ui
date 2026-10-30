@@ -1,18 +1,17 @@
 # Refine the design
 
 You are answering one comment in a refinement thread. The comment is
-below, under "The request". Everything the thread produced before it is
-already in the artifact tree, at `$TASK_UI_ARTIFACTS`, and the artifacts
-belong to the instance rather than to this thread: a later thread reads
-what an earlier one left.
+below, under "The request", and the folder you work in is under "Where
+to work". That folder is this thread's alone: everything the thread
+produced before this comment is in it, and nothing else writes there.
 
-Work in the artifact tree. Read what is there first, and change it to
-what the comment asks for. A thread's first comment usually has nothing
-to read; every comment after it is a correction over what stands now.
+Read what is there first, and change it to what the comment asks for. A
+thread's first comment arrives at an empty folder and has nothing to
+read; every comment after it is a correction over what stands now.
 
 ## What to write
 
-Write the artifacts the comment calls for, under `$TASK_UI_ARTIFACTS`:
+Write the artifacts the comment calls for, inside the thread's folder:
 
 - A schema goes in `schema/` as one `*.up.sql` per table, named for it.
   Singular table names, a ULID primary key in `CHAR(26)`, no foreign
@@ -28,7 +27,7 @@ Write the artifacts the comment calls for, under `$TASK_UI_ARTIFACTS`:
 
 ## The report
 
-Rewrite `README.md` at the top of the artifact tree every time. It is
+Rewrite `README.md` at the top of the thread's folder every time. It is
 the index of the thread and the page shows it, so it is the one file
 that has to be right.
 
@@ -40,7 +39,8 @@ that has to be right.
   need.
 - Then a sentence on what the design is now, not what changed.
 - List every artifact the thread has produced, each as a markdown link
-  to its path relative to the tree: `[schema/user.up.sql](schema/user.up.sql)`.
+  to its path relative to the thread's folder, which is where the report
+  sits too: `[schema/user.up.sql](schema/user.up.sql)`.
 - Embed every image: `![The schema](diagrams/schema.svg)`. The page
   draws these, so a diagram is read there rather than downloaded.
 - Say what a reader needs to know to judge it, in a few lines. No

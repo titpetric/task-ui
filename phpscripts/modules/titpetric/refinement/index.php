@@ -53,7 +53,7 @@ if ($posted && count($parts) === 1 && $parts[0] === "threads") {
 
 	$thread = refinement_start($store, $user, $want);
 
-	refinement_dispatch($store, $thread["comment_id"], $want);
+	refinement_dispatch($store, $thread["id"], $thread["comment_id"], $want);
 	refinement_go($base . "/threads/" . $thread["id"]);
 	return;
 }
@@ -75,7 +75,7 @@ if ($posted && count($parts) === 3 && $parts[0] === "threads" && $parts[2] === "
 
 	$comment = refinement_correct($store, $thread["id"], $user, $body);
 
-	refinement_dispatch($store, $comment, $body);
+	refinement_dispatch($store, $thread["id"], $comment, $body);
 	refinement_go($base . "/threads/" . $thread["id"]);
 	return;
 }

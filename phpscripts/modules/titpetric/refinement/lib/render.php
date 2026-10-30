@@ -76,7 +76,8 @@ function refinement_render_thread($base, $thread, $comments, $artifacts) {
 	$tpl->assign("thread", $thread);
 	$tpl->assign("comments", $comments);
 	$tpl->assign("artifacts", $artifacts);
-	$tpl->assign("report", refinement_report($thread["report_markdown"]));
+	$tpl->assign("files", "/artifacts/files/" . $thread["id"] . "/");
+	$tpl->assign("report", refinement_report($thread["report_markdown"], $thread["id"]));
 
 	echo $tpl->get();
 }
@@ -89,13 +90,17 @@ function refinement_render_thread($base, $thread, $comments, $artifacts) {
  * not anything a reader typed, and the page draws it rather than
  * printing it. An image in it is embedded, which is how a schema diagram
  * is read on the page instead of downloaded.
+ *
+ * The folder is the thread's own, and the report names its files from
+ * inside it: [schema/user.up.sql](schema/user.up.sql) is the thread's
+ * copy and the link has to carry the folder the run left out.
  */
-function refinement_report($markdown) {
+function refinement_report($markdown, $folder) {
 	$text = trim($markdown);
 
 	if ($text === "") {
 		return "";
 	}
 
-	return Task::markdown($text);
+	return Task::markdown($text, $folder);
 }

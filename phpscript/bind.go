@@ -72,7 +72,7 @@ func Bind(rt *runner.Runtime, opts Options, registered func(*Module)) {
 		return true, nil
 	})
 
-	rt.RegisterFunc("Task::dispatch", func(ctx context.Context, comment, action string) (string, error) {
+	rt.RegisterFunc("Task::dispatch", func(ctx context.Context, comment, action, folder string) (string, error) {
 		m, ok := ModuleFrom(ctx)
 		if !ok {
 			return "", ErrNoModule
@@ -90,7 +90,7 @@ func Bind(rt *runner.Runtime, opts Options, registered func(*Module)) {
 		if _, err := os.Stat(filepath.Join(m.Root, rel)); err != nil {
 			return "", fmt.Errorf("%s: %w", action, err)
 		}
-		return opts.Dispatcher.Dispatch(ctx, m, comment, rel)
+		return opts.Dispatcher.Dispatch(ctx, m, comment, rel, folder)
 	})
 
 	// Task::markdown renders markdown the way every other page of the
@@ -101,8 +101,12 @@ func Bind(rt *runner.Runtime, opts Options, registered func(*Module)) {
 	// reader's: the README a Claude run wrote into the artifact tree. A
 	// relative link in it resolves against the artifact tree, which is
 	// where the run put the files it names.
-	rt.RegisterFunc("Task::markdown", func(src string) (string, error) {
-		return markdown.HTML([]byte(src), ArtifactPrefix, ""), nil
+	// The folder is what a relative link resolves under, for markdown a
+	// run wrote inside a folder of its own: the report of a thread says
+	// [schema/user.up.sql](schema/user.up.sql) and means the thread's
+	// copy. Empty is the top of the tree.
+	rt.RegisterFunc("Task::markdown", func(src, folder string) (string, error) {
+		return markdown.HTML([]byte(src), ArtifactHref(folder), ""), nil
 	})
 
 	// Task::artifacts and Task::artifact are the instance's artifact tree
@@ -111,8 +115,8 @@ func Bind(rt *runner.Runtime, opts Options, registered func(*Module)) {
 	// A module cannot reach the tree on its own, because the filesystem
 	// boundary roots every path a script opens at the module's own
 	// directory. Reading only: a module shows what a run wrote.
-	rt.RegisterFunc("Task::artifacts", func() ([]string, error) {
-		return opts.Artifacts.Files(), nil
+	rt.RegisterFunc("Task::artifacts", func(folder string) ([]string, error) {
+		return opts.Artifacts.Files(folder), nil
 	})
 	rt.RegisterFunc("Task::artifact", func(rel string) (string, error) {
 		return opts.Artifacts.Read(rel), nil
@@ -125,6 +129,18 @@ func Bind(rt *runner.Runtime, opts Options, registered func(*Module)) {
 // resolves: the instance's artifact tree, which is where a run wrote the
 // files its report names.
 const ArtifactPrefix = "/artifacts/files/"
+
+// ArtifactHref is the link a path inside one folder of the tree reads
+// as, the whole tree when the folder is empty. A report written inside
+// a folder names its files relative to that folder, and the page has to
+// put the folder back.
+func ArtifactHref(folder string) string {
+	folder = strings.Trim(folder, "/")
+	if folder == "" {
+		return ArtifactPrefix
+	}
+	return ArtifactPrefix + folder + "/"
+}
 
 // taskClass is the host class the constants live on. RegisterClass takes PHP
 // declarations alone, so this declares no method: the three static calls are

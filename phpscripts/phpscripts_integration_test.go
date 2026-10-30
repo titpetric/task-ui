@@ -30,11 +30,13 @@ var refinementProject = (&phpscript.Module{Vendor: "titpetric", Plugin: "refinem
 type fakeDispatcher struct {
 	comments []string
 	actions  []string
+	folders  []string
 }
 
-func (f *fakeDispatcher) Dispatch(_ context.Context, m *phpscript.Module, comment, action string) (string, error) {
+func (f *fakeDispatcher) Dispatch(_ context.Context, m *phpscript.Module, comment, action, folder string) (string, error) {
 	f.comments = append(f.comments, comment)
 	f.actions = append(f.actions, m.Name()+":"+action)
+	f.folders = append(f.folders, folder)
 	return "01NOTE" + strings.ToUpper(action[:1]), nil
 }
 
@@ -228,13 +230,17 @@ func TestRefinementReport(t *testing.T) {
 		"01ARTIFACT0000000000000001", id, "diagrams/schema.svg", "image", "2026-10-30 00:00:00")
 	assert.NoError(t, err)
 
+	// The report names its files from inside the thread's own folder, so
+	// every link the page draws carries the folder the run left out.
 	body := string(get(t, m, to).Body)
 	assert.Contains(t, body, "The user and its login methods, kept apart.")
-	assert.Contains(t, body, `href="/artifacts/files/schema/user.up.sql"`,
-		"a relative link resolves into the artifact tree")
-	assert.Contains(t, body, `<img src="/artifacts/files/diagrams/schema.svg"`,
+	assert.Contains(t, body, `href="/artifacts/files/`+id+`/schema/user.up.sql"`,
+		"a relative link resolves into the thread's folder of the artifact tree")
+	assert.Contains(t, body, `<img src="/artifacts/files/`+id+`/diagrams/schema.svg"`,
 		"an image is embedded, so a diagram is read on the page")
-	assert.Contains(t, body, "diagrams/schema.svg</a>", "the artifact is listed beside the report")
+	assert.Contains(t, body, `href="/artifacts/files/`+id+`/diagrams/schema.svg"`,
+		"the artifact is listed beside the report, under the thread's folder")
+	assert.Contains(t, body, "diagrams/schema.svg</a>", "and reads as the path the run wrote")
 }
 
 // A thread that is not there is a 404, and a form with nothing in it is

@@ -13,7 +13,7 @@
 	{if $artifacts}
 	<div class="refinement-artifacts">
 		{foreach $artifacts as $artifact}
-			<a class="badge mono" href="/artifacts/files/{$artifact.path}" title="{$artifact.path}">{$artifact.path}</a>
+			<a class="badge mono" href="{$files}{$artifact.path}" title="{$artifact.path}">{$artifact.path}</a>
 		{/foreach}
 	</div>
 	{/if}

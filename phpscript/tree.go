@@ -34,15 +34,28 @@ func NewTree(store *artifactstore.Store) *Tree {
 	return &Tree{Store: store}
 }
 
-// Files is every file of the tree, by path, as a module lists them.
-// Directories are walked and not listed: a module shows files.
-func (t *Tree) Files() []string {
+// Files is every file under one folder of the tree, by path relative to
+// that folder, as a module lists them. An empty folder is the whole
+// tree. Directories are walked and not listed: a module shows files.
+//
+// The folder is how a module keeps its own scratch space apart from the
+// instance's: a plugin that gives each of its threads a folder lists one
+// thread's files by naming it, and the paths come back the way the run
+// wrote them, without the folder in front.
+func (t *Tree) Files(folder string) []string {
 	if t == nil || t.Store == nil {
 		return nil
 	}
 	root, err := t.Store.Path("")
 	if err != nil {
 		return nil
+	}
+	if folder != "" {
+		clean, err := Inside(root, folder)
+		if err != nil {
+			return nil
+		}
+		root = filepath.Join(root, clean)
 	}
 	var files []string
 	err = filepath.WalkDir(root, func(at string, entry os.DirEntry, err error) error {

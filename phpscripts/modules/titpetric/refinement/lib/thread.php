@@ -171,9 +171,14 @@ function refinement_correct($store, $thread, $user, $body) {
  * that file, the comment and the run's own environment into the prompt.
  * Which module is asking is not an argument: the call reads it from the
  * context task-ui put on the runtime before the request.
+ *
+ * The thread is the third argument and it is the folder of the artifact
+ * tree the run works in. A thread gets its own and nothing else writes
+ * there, so a new thread opens on an empty directory rather than on
+ * whatever every thread before it left.
  */
-function refinement_dispatch($store, $comment, $body) {
-	$note = Task::dispatch($body, "action/refinement.md");
+function refinement_dispatch($store, $thread, $comment, $body) {
+	$note = Task::dispatch($body, "action/refinement.md", $thread);
 
 	$store->updateRefinementComment(array("id" => $comment, "note_id" => $note));
 
@@ -189,12 +194,14 @@ function refinement_dispatch($store, $comment, $body) {
  * thread keeps, which is what the page reads and what a later correction
  * is counted against, so a page load reconciles them.
  *
- * The artifacts belong to the instance and not to the thread. A thread
- * lists what the tree holds now, which is what its runs left and what an
- * earlier thread left before them.
+ * The artifacts are the thread's own. Each thread works in a folder of
+ * the tree named after it, so what this lists is what this thread's runs
+ * left and nothing a neighbouring thread wrote, and the paths are the
+ * ones the run used, without the folder in front.
  */
 function refinement_sync($store, $thread) {
-	$report = Task::artifact("README.md");
+	$folder = $thread["id"];
+	$report = Task::artifact($folder . "/README.md");
 	$changed = array();
 
 	// A tree with no README has nothing to say, which is not the same as
@@ -226,7 +233,7 @@ function refinement_sync($store, $thread) {
 	$known = $store->getArtifactPaths($thread["id"]);
 	$comment = $store->getLatestCommentID($thread["id"]);
 
-	foreach (Task::artifacts() as $path) {
+	foreach (Task::artifacts($folder) as $path) {
 		if ($path === "README.md" || isset($known[$path])) {
 			continue;
 		}

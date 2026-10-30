@@ -82,22 +82,32 @@ These reach the PHP of every module.
 | `new Task\Module`                   | an empty module, with `setName`, `setTitle`, `setDescription`, `setIcon`, `setVersion` |
 | `Task::register($module)`           | records the module and its root in the `module` table, and adds its sidebar row        |
 | `Task::migrate("schema/")`          | applies a directory of `*.up.sql` into task-ui's database                              |
-| `Task::dispatch($comment, $action)` | starts a Claude run, returns the identifier of the note that holds it                  |
-| `Task::artifacts()`                 | the files of the instance's artifact tree, by path                                     |
-| `Task::artifact($path)`             | the text of one artifact, or `""`                                                      |
-| `Task::markdown($src)`              | markdown as HTML, through the renderer that owns the content policy                    |
+| `Task::dispatch($comment, $action, $folder)` | starts a Claude run in that folder of the tree, returns the identifier of the note that holds it |
+| `Task::artifacts($folder)`          | the files under one folder of the artifact tree, by path relative to it                |
+| `Task::artifact($path)`             | the text of one artifact, from the top of the tree, or `""`                            |
+| `Task::markdown($src, $folder)`     | markdown as HTML, through the renderer that owns the content policy                    |
 | `new Database("task-ui")`           | the instance's database, with `query`, `get`, `get_all` and `insert`                   |
 
 `Task::VERSION` is the instance's version and `Task::PREFIX` is `/m`.
 
+A trailing argument is optional: a Go binding spells an optional parameter as an extra one, and a call that leaves it out is zero-padded. `Task::artifacts()` is the whole tree and `Task::dispatch($comment, $action)` works at the top of it.
+
 A module reads the artifact tree through the two bindings and not with `fopen`: the filesystem boundary roots every path a script opens at the module's own directory. Both are read only, because a module shows what a run wrote and the runs write.
 
-`Task::markdown` is for markdown a run wrote, not for anything a reader typed: a relative link in it resolves into the artifact tree, which is where a run put the files its report names.
+### A folder per thread
 
-`Task::dispatch` takes the comment the user wrote and the path of a markdown file under the module's root. The prompt it builds is that file, then the comment, then the run's own environment: the artifact tree, the MCP server and what the user may do. Which module is asking is not an argument; the call reads it from the context task-ui put on the runtime before the request:
+One artifact tree serves every run of the instance, which makes a module's work and everyone else's one pile. A module that keeps several pieces of work apart gives each one a folder of the tree and names it in the three calls that take one: the run writes there, the module lists there, and the links the page draws carry it back.
+
+The refinement module names each folder after the thread, so a new thread starts on an empty directory and a correction reads what that thread's own runs left. The paths never carry the folder: a run writes `schema/user.up.sql` inside it, `Task::artifacts($thread)` answers `schema/user.up.sql`, and `Task::markdown($report, $thread)` is what resolves the report's own `[schema/user.up.sql](schema/user.up.sql)` to the thread's copy.
+
+`Task::artifact` is the exception and takes a whole path, because reading one file is not a listing: a module inside a folder spells it `Task::artifact($thread . "/README.md")`.
+
+`Task::markdown` is for markdown a run wrote, not for anything a reader typed: a relative link in it resolves into the artifact tree, under the folder named, which is where a run put the files its report names.
+
+`Task::dispatch` takes the comment the user wrote, the path of a markdown file under the module's root, and the folder the run works in. The prompt it builds is that file, then where to work, then the comment, then what the folder holds now. Which module is asking is not an argument; the call reads it from the context task-ui put on the runtime before the request:
 
 ```php
-$run = Task::dispatch($comment, "action/refinement.md");
+$run = Task::dispatch($comment, "action/refinement.md", $thread);
 ```
 
 The run is an ordinary task-ui run. It appears on `/runs`, its output replays, its artifacts land in the instance's artifact tree, and Claude's reply lands as a note.

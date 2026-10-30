@@ -181,10 +181,13 @@ declares no routes: `index.php` answers whatever
 `$_SERVER['REQUEST_URI']` holds, and a path under its `public/` tree is
 served as bytes. Its own tables are in task-ui's database, prefixed with
 the module's name, applied from its `schema/` through `Task::migrate`.
-`Task::dispatch($comment, "action/<file>.md")` starts a Claude run whose
-prompt is that file, the comment and the run's own environment, which is
-what a prompt from a page sends too. The run is the asking user's, so a
-module does nothing its user may not. `module` is the one rule: opening a
+`Task::dispatch($comment, "action/<file>.md", $folder)` starts a Claude
+run whose prompt is that file, the folder of the artifact tree to work
+in, the comment and the run's own environment, which is what a prompt
+from a page sends too. A module that keeps pieces of work apart names a
+folder per piece and the run writes only there; refinement names one per
+thread, so a new thread starts on an empty directory. The run is the
+asking user's, so a module does nothing its user may not. `module` is the one rule: opening a
 module is a capability and not a section: a plugin is installed by
 putting its directory under a root, so there is nothing to edit. The
 sidebar row of each is in the `sidebar` table, ordered and hidden from
