@@ -39,6 +39,15 @@ func (h *Handlers) module(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// A module that staged a redirect gets one. Its forms post to itself
+	// and answer with "see other", the way a page that changed something
+	// should, and rendering a layout around a 303 would leave the browser
+	// on the form with the work already done.
+	if location := out.Header.Get("Location"); location != "" && out.Status >= 300 && out.Status < 400 {
+		http.Redirect(w, r, location, out.Status)
+		return
+	}
+
 	if out.File {
 		for name, values := range out.Header {
 			for _, value := range values {

@@ -30,6 +30,14 @@ type Options struct {
 	// Dispatcher starts the Claude runs. Nil makes Task::dispatch refuse.
 	Dispatcher Dispatcher
 
+	// Database resolves the connection a module opens, `new Database("task-ui")`.
+	// Nil leaves a module with no database.
+	Database *Database
+
+	// Artifacts is the instance's artifact tree as a module reads it.
+	// Nil leaves Task::artifacts empty and Task::artifact blank.
+	Artifacts *Tree
+
 	// Tracer records the spans of the PHP into the same traces as the
 	// instance's own middleware. Nil records nothing.
 	Tracer *oida.Tracer

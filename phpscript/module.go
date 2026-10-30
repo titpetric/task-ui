@@ -17,6 +17,8 @@ package phpscript
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"strings"
@@ -96,6 +98,34 @@ func (m *Module) Href() string {
 		return Prefix + "/" + name
 	}
 	return ""
+}
+
+// ProjectLimit is how long a migration project name may be: the column
+// mig records one in holds sixteen characters.
+const ProjectLimit = 16
+
+// Project is the module's name as mig records an applied migration
+// under. Each module migrates under its own, so two modules cannot claim
+// one applied row and a module added later starts from its own first
+// migration rather than from wherever the instance stands.
+//
+// A full name does not fit: `titpetric/refinement` is twenty characters
+// and the column holds sixteen. The name is the plugin cut to seven
+// characters, then eight hex of the sha256 of the whole name, so
+// `titpetric/refinement` reads as `refinem_` and its digest. The prefix
+// says which module a row belongs to at a glance; the digest is what
+// keeps two vendors' modules of one name apart.
+func (m *Module) Project() string {
+	name := m.Name()
+	if name == "" {
+		return ""
+	}
+	digest := sha256.Sum256([]byte(name))
+	short := m.Plugin
+	if len(short) > 7 {
+		short = short[:7]
+	}
+	return short + "_" + hex.EncodeToString(digest[:])[:ProjectLimit-len(short)-1]
 }
 
 // Label is the title, falling back to the plugin half of the name, so a module

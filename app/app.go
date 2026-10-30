@@ -312,6 +312,9 @@ func (a *App) wire(version string) error {
 	moduleOpts.Roots = append(moduleOpts.Roots, cfg.Root)
 	moduleOpts.Registry = phpscript.NewStore(modules, sidebar)
 	moduleOpts.Dispatcher = NewDispatcher(a.Board, a.Users, store)
+	moduleOpts.Migrator = phpscript.NewSchema(db)
+	moduleOpts.Database = phpscript.NewDatabase(db)
+	moduleOpts.Artifacts = phpscript.NewTree(store)
 	moduleOpts.Tracer = telemetry.Tracer()
 	moduleOpts.Version = version
 	moduleOpts.OnError = func(err error) { slog.Warn("a module did not register", "err", err) }

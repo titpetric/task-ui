@@ -10,6 +10,8 @@ import (
 
 	"github.com/titpetric/phpscript/model"
 	"github.com/titpetric/phpscript/runner"
+
+	"github.com/titpetric/task-ui/markdown"
 )
 
 // ErrNoModule is returned when a binding runs on a runtime the Manager did not
@@ -19,7 +21,7 @@ var ErrNoModule = errors.New("no module on the context")
 // ErrEscapes is returned when a module names a path outside its own root.
 var ErrEscapes = errors.New("the path leaves the module root")
 
-// Bind registers the four host symbols of a module's runtime: the
+// Bind registers the host symbols of a module's runtime: the
 // `Task\Module` constructor, and `Task::register`, `Task::migrate` and
 // `Task::dispatch` as host functions whose names hold `::`. registered takes
 // what a modinfo.php registers, and nil refuses the call.
@@ -91,8 +93,38 @@ func Bind(rt *runner.Runtime, opts Options, registered func(*Module)) {
 		return opts.Dispatcher.Dispatch(ctx, m, comment, rel)
 	})
 
+	// Task::markdown renders markdown the way every other page of the
+	// instance does, through the renderer that owns the content security
+	// policy: what it draws loads nothing from elsewhere.
+	//
+	// A module needs it because the markdown it shows is a run's, not a
+	// reader's: the README a Claude run wrote into the artifact tree. A
+	// relative link in it resolves against the artifact tree, which is
+	// where the run put the files it names.
+	rt.RegisterFunc("Task::markdown", func(src string) (string, error) {
+		return markdown.HTML([]byte(src), ArtifactPrefix, ""), nil
+	})
+
+	// Task::artifacts and Task::artifact are the instance's artifact tree
+	// as a module reads it: the files its runs left, and the text of one.
+	//
+	// A module cannot reach the tree on its own, because the filesystem
+	// boundary roots every path a script opens at the module's own
+	// directory. Reading only: a module shows what a run wrote.
+	rt.RegisterFunc("Task::artifacts", func() ([]string, error) {
+		return opts.Artifacts.Files(), nil
+	})
+	rt.RegisterFunc("Task::artifact", func(rel string) (string, error) {
+		return opts.Artifacts.Read(rel), nil
+	})
+
 	rt.RegisterClass(taskClass(opts))
 }
+
+// ArtifactPrefix is where a relative link in a module's markdown
+// resolves: the instance's artifact tree, which is where a run wrote the
+// files its report names.
+const ArtifactPrefix = "/artifacts/files/"
 
 // taskClass is the host class the constants live on. RegisterClass takes PHP
 // declarations alone, so this declares no method: the three static calls are

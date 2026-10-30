@@ -4,6 +4,7 @@ import (
 	"io"
 	"os"
 
+	"github.com/titpetric/phpscript/model"
 	"github.com/titpetric/phpscript/runner"
 	"github.com/titpetric/phpscript/stdlib"
 )
@@ -46,7 +47,7 @@ func newPool(opts Options, m *Module) *pool {
 // what the host registered, so the reset between requests keeps the bindings
 // and drops what a script defined.
 func (p *pool) build(opts Options) *runner.Runtime {
-	rt := runner.New(io.Discard, runtimeOptions(p.module))
+	rt := runner.New(io.Discard, runtimeOptions(opts, p.module))
 	rt.SetIncludeCache(p.includes)
 	rt.SetExprCache(p.exprs)
 	stdlib.Register(rt)
@@ -66,6 +67,17 @@ func (p *pool) get() (*runner.Runtime, func()) {
 	return rt, func() { p.sessions.Put(rt) }
 }
 
+// databaseOf is the provider a module's runtime resolves `new Database`
+// through, and nil where the instance wired none: a nil provider leaves
+// the constructor to say there is no such connection rather than hand a
+// module a pool nobody configured.
+func databaseOf(opts Options) model.DatabaseProvider {
+	if opts.Database == nil {
+		return nil
+	}
+	return opts.Database
+}
+
 // runtimeOptions are the interpreter's options for one module: its own
 // directory as the root every include and every entrypoint resolves against,
 // and the working directory a relative path is read from.
@@ -73,10 +85,11 @@ func (p *pool) get() (*runner.Runtime, func()) {
 // TimeLimit and ConcurrencyLimit are left alone. The interpreter holds both
 // and enforces neither, so the Manager bounds a render with a context deadline
 // and the pool bounds how many run at once.
-func runtimeOptions(m *Module) runner.Options {
+func runtimeOptions(opts Options, m *Module) runner.Options {
 	return runner.Options{
-		RootFS:  os.DirFS(m.Root),
-		WorkDir: "/",
-		SAPI:    "phpscript",
+		RootFS:   os.DirFS(m.Root),
+		WorkDir:  "/",
+		SAPI:     "phpscript",
+		Database: databaseOf(opts),
 	}
 }

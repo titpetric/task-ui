@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"path/filepath"
 
 	"github.com/titpetric/phpscript/runner"
 	"github.com/titpetric/phpscript/stdlib"
@@ -74,7 +75,7 @@ func (m *Manager) startup(ctx context.Context, entry Found) (*Module, error) {
 	own := &Module{Root: entry.Root}
 
 	var registered *Module
-	rt := runner.New(io.Discard, runtimeOptions(own))
+	rt := runner.New(io.Discard, runtimeOptions(m.opts, own))
 	stdlib.Register(rt)
 	stdlib.RegisterFS(rt, entry.Root)
 	Bind(rt, m.opts, func(module *Module) { registered = module })
@@ -92,7 +93,40 @@ func (m *Manager) startup(ctx context.Context, entry Found) (*Module, error) {
 	if registered == nil {
 		return nil, errors.New("the script called no Task::register")
 	}
+
+	// The module's other startup files, on the same runtime and with the
+	// module it just registered on the context, so migrate.php migrates
+	// the module that registered and not the directory it was found in.
+	rt.SetContext(WithModule(ctx, registered))
+	files, err := Startups(entry.Root)
+	if err != nil {
+		return nil, err
+	}
+	for _, file := range files {
+		rel, err := filepath.Rel(entry.Root, file)
+		if err != nil {
+			return nil, err
+		}
+		if err := runStartup(rt, filepath.ToSlash(rel)); err != nil {
+			return nil, fmt.Errorf("%s: %w", rel, err)
+		}
+	}
 	return registered, nil
+}
+
+// runStartup loads and runs one of a module's startup files. A script
+// that calls exit has ended on purpose and is not a failure.
+func runStartup(rt *runner.Runtime, rel string) error {
+	prog, err := rt.LoadFile(rel)
+	if err != nil {
+		return err
+	}
+	if err := rt.Run(prog); err != nil {
+		if _, exited := runner.IsExit(err); !exited {
+			return err
+		}
+	}
+	return nil
 }
 
 // Nothing here prepares a compile directory. A module's templates compile
