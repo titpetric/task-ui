@@ -11,3 +11,4 @@ require "vendor/autoload.php";
 require "stubs/module.php";
 require "stubs/task.php";
 require "stubs/database.php";
+require "stubs/time.php";

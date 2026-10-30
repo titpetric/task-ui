@@ -396,7 +396,7 @@ func TestWorkflow_PromptEditor(t *testing.T) {
 	}))
 
 	edit := f.page(t, asAdmin, "/workflows/"+wf.ID+"/edit")
-	assert.Equal(t, 4, strings.Count(edit, `<li class="wf-step kind-`)-3, "four cards and the templates of the three kinds")
+	assert.Equal(t, 4, strings.Count(edit, `<li class="wf-step kind-`)-4, "four cards and the templates of the four kinds")
 	assert.Contains(t, edit, `<li class="wf-step kind-job off" data-step data-kind="job" data-off>`)
 	assert.Contains(t, edit, `<span class="wf-line" data-step-line>infra / many</span>`)
 	assert.Contains(t, edit, `<span>Enable</span>`)

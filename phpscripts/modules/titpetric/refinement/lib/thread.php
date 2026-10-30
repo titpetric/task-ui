@@ -1,14 +1,27 @@
 <?php
 
-// The module's own tables, and the run a comment starts.
+// What a thread does, over the repository in storage/Refinement.php.
 //
-// Every identifier is a ULID, which ulid() answers, and every table is
-// task-ui's in task-ui's database: the module declared the SQL under
-// schema/ and migrate.php applied it at startup.
+// No SQL is written here. Every statement the module runs is in the
+// storage class, and this decides what to ask it for: how a thread
+// opens, what a correction is counted against, and what a page load
+// reconciles against the artifact tree.
 
-/** refinement_now is the stamp the tables keep, as the database reads it. */
+/**
+ * refinement_now is the stamp the tables keep.
+ *
+ * DateTime::now()->format() and not date(): date() in this runtime
+ * answers with the layout it was handed, so every row written through it
+ * carried the literal "2006-01-02 15:04:05" and nothing could be ordered
+ * by when it happened.
+ *
+ * To the microsecond, because a thread's comments are ordered by this
+ * and two of them land in one second. ulid() is not monotonic inside a
+ * millisecond, so the identifier is no tiebreak: a second-resolution
+ * stamp let three corrections render in any order.
+ */
 function refinement_now() {
-	return date("2006-01-02 15:04:05");
+	return DateTime::now()->format("2006-01-02 15:04:05.000000");
 }
 
 /** refinement_title is the first line of a comment, for the thread list. */
@@ -24,18 +37,33 @@ function refinement_title($body) {
 }
 
 /**
+ * refinement_kind says whether the page embeds an artifact or links it:
+ * a diagram is read on the page, a SQL file is a link.
+ */
+function refinement_kind($path) {
+	$dot = strrpos($path, ".");
+	$ext = $dot === false ? "" : strtolower(substr($path, $dot));
+
+	if (in_array($ext, array(".svg", ".png", ".jpg", ".jpeg", ".gif", ".webp"))) {
+		return "image";
+	}
+
+	return "file";
+}
+
+/**
  * refinement_start opens a thread from its first comment.
  *
  * The first comment is no correction: it has nothing to correct. Every
  * comment after it is one, which is what separates "design this" from
  * "use ULID as primary keys".
  */
-function refinement_start($db, $user, $want) {
+function refinement_start($store, $user, $want) {
 	$now = refinement_now();
 	$thread = ulid();
 	$comment = ulid();
 
-	$db->insert("refinement_thread", array(
+	$store->createRefinementThread(array(
 		"id" => $thread,
 		"title" => refinement_title($want),
 		"user" => $user,
@@ -44,7 +72,7 @@ function refinement_start($db, $user, $want) {
 		"updated_at" => $now,
 	));
 
-	$db->insert("refinement_comment", array(
+	$store->createRefinementComment(array(
 		"id" => $comment,
 		"thread_id" => $thread,
 		"user" => $user,
@@ -60,12 +88,12 @@ function refinement_start($db, $user, $want) {
  * refinement_correct adds a comment that changes what the run before it
  * produced, and records the correction against that comment.
  */
-function refinement_correct($db, $thread, $user, $body) {
+function refinement_correct($store, $thread, $user, $body) {
 	$now = refinement_now();
 	$comment = ulid();
-	$before = $db->get("SELECT id FROM refinement_comment WHERE thread_id = ? ORDER BY created_at DESC, id DESC LIMIT 1", $thread);
+	$before = $store->getLatestCommentID($thread);
 
-	$db->insert("refinement_comment", array(
+	$store->createRefinementComment(array(
 		"id" => $comment,
 		"thread_id" => $thread,
 		"user" => $user,
@@ -74,15 +102,15 @@ function refinement_correct($db, $thread, $user, $body) {
 		"created_at" => $now,
 	));
 
-	$db->insert("refinement_correction", array(
+	$store->createRefinementCorrection(array(
 		"id" => ulid(),
 		"thread_id" => $thread,
 		"comment_id" => $comment,
-		"corrects_id" => is_array($before) ? $before["id"] : "",
+		"corrects_id" => $before,
 		"created_at" => $now,
 	));
 
-	$db->query("UPDATE refinement_thread SET updated_at = ? WHERE id = ?", $now, $thread);
+	$store->updateRefinementThread(array("id" => $thread, "updated_at" => $now));
 
 	return $comment;
 }
@@ -96,36 +124,12 @@ function refinement_correct($db, $thread, $user, $body) {
  * Which module is asking is not an argument: the call reads it from the
  * context task-ui put on the runtime before the request.
  */
-function refinement_dispatch($db, $thread, $comment, $body) {
+function refinement_dispatch($store, $comment, $body) {
 	$note = Task::dispatch($body, "action/refinement.md");
 
-	$db->query("UPDATE refinement_comment SET note_id = ? WHERE id = ?", $note, $comment);
+	$store->updateRefinementComment(array("id" => $comment, "note_id" => $note));
 
 	return $note;
-}
-
-/** refinement_threads is every thread, newest first, with its comment count. */
-function refinement_threads($db) {
-	return $db->get_all("SELECT t.*, (SELECT COUNT(*) FROM refinement_comment c WHERE c.thread_id = t.id) AS comments" . " FROM refinement_thread t ORDER BY t.created_at DESC, t.id DESC");
-}
-
-/** refinement_thread is one thread, or false where there is none: get()
- * answers a missing row with false, the way PHP does, and not null. */
-function refinement_thread($db, $id) {
-	return $db->get("SELECT * FROM refinement_thread WHERE id = ?", $id);
-}
-
-/**
- * refinement_comments is a thread's comments oldest first, each with
- * whether it is a correction, which is what the page marks them with.
- */
-function refinement_comments($db, $thread) {
-	return $db->get_all("SELECT c.*, (SELECT COUNT(*) FROM refinement_correction r WHERE r.comment_id = c.id) AS correction" . " FROM refinement_comment c WHERE c.thread_id = ? ORDER BY c.created_at, c.id", $thread);
-}
-
-/** refinement_artifacts is what a thread's runs left, by path. */
-function refinement_artifacts($db, $thread) {
-	return $db->get_all("SELECT * FROM refinement_artifact WHERE thread_id = ? ORDER BY path", $thread);
 }
 
 /**
@@ -141,31 +145,30 @@ function refinement_artifacts($db, $thread) {
  * lists what the tree holds now, which is what its runs left and what an
  * earlier thread left before them.
  */
-function refinement_sync($db, $thread) {
+function refinement_sync($store, $thread) {
 	$report = Task::artifact("README.md");
 
 	// A tree with no README has nothing to say, which is not the same as
 	// a report that is empty: a run that has not written one yet must
 	// not erase the one the run before it did.
 	if ($report !== "" && $report !== $thread["report_markdown"]) {
-		$db->query("UPDATE refinement_thread SET report_markdown = ?, updated_at = ? WHERE id = ?", $report, refinement_now(), $thread["id"]);
+		$store->updateRefinementThread(array(
+			"id" => $thread["id"],
+			"report_markdown" => $report,
+			"updated_at" => refinement_now(),
+		));
 		$thread["report_markdown"] = $report;
 	}
 
-	$known = array();
-	foreach (refinement_artifacts($db, $thread["id"]) as $row) {
-		$known[$row["path"]] = true;
-	}
-
-	$last = $db->get("SELECT id FROM refinement_comment WHERE thread_id = ? ORDER BY created_at DESC, id DESC LIMIT 1", $thread["id"]);
-	$comment = is_array($last) ? $last["id"] : "";
+	$known = $store->getArtifactPaths($thread["id"]);
+	$comment = $store->getLatestCommentID($thread["id"]);
 
 	foreach (Task::artifacts() as $path) {
 		if ($path === "README.md" || isset($known[$path])) {
 			continue;
 		}
 
-		$db->insert("refinement_artifact", array(
+		$store->createRefinementArtifact(array(
 			"id" => ulid(),
 			"thread_id" => $thread["id"],
 			"comment_id" => $comment,
@@ -176,19 +179,4 @@ function refinement_sync($db, $thread) {
 	}
 
 	return $thread;
-}
-
-/**
- * refinement_kind says whether the page embeds an artifact or links it:
- * a diagram is read on the page, a SQL file is a link.
- */
-function refinement_kind($path) {
-	$dot = strrpos($path, ".");
-	$ext = $dot === false ? "" : strtolower(substr($path, $dot));
-
-	if (in_array($ext, array(".svg", ".png", ".jpg", ".jpeg", ".gif", ".webp"))) {
-		return "image";
-	}
-
-	return "file";
 }

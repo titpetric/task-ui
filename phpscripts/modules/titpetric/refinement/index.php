@@ -14,14 +14,19 @@
 //   "threads"            POST   starts a thread and dispatches its run
 //   "threads/<id>"              one thread: its index, artifacts, comments
 //   "threads/<id>/comments" POST a correction, and the run that applies it
+//
+// Nothing here writes SQL. storage/Refinement.php holds every statement
+// the module runs, lib/thread.php decides what to ask it for, and this
+// routes.
 
 require "vendor/autoload.php";
-require "lib/store.php";
+require "storage/Refinement.php";
+require "lib/thread.php";
 require "lib/render.php";
 
 $base = $_SERVER["TASK_UI_MODULE_BASE"];
-$db = new Database("task-ui");
 $user = isset($_SERVER["TASK_UI_USER"]) ? $_SERVER["TASK_UI_USER"] : "";
+$store = new Refinement(new Database("task-ui"));
 
 $path = refinement_path($_SERVER["REQUEST_URI"], $base);
 $parts = $path === "" ? array() : explode("/", $path);
@@ -37,9 +42,9 @@ if ($posted && count($parts) === 1 && $parts[0] === "threads") {
 		return;
 	}
 
-	$thread = refinement_start($db, $user, $want);
+	$thread = refinement_start($store, $user, $want);
 
-	refinement_dispatch($db, $thread["id"], $thread["comment_id"], $want);
+	refinement_dispatch($store, $thread["comment_id"], $want);
 	refinement_go($base . "/threads/" . $thread["id"]);
 	return;
 }
@@ -48,7 +53,7 @@ if ($posted && count($parts) === 1 && $parts[0] === "threads") {
 // stand, and the run that applies it.
 if ($posted && count($parts) === 3 && $parts[0] === "threads" && $parts[2] === "comments") {
 	$body = isset($_POST["comment"]) ? trim($_POST["comment"]) : "";
-	$thread = refinement_thread($db, $parts[1]);
+	$thread = $store->getThread($parts[1]);
 	if (!is_array($thread)) {
 		refinement_missing();
 		return;
@@ -59,26 +64,26 @@ if ($posted && count($parts) === 3 && $parts[0] === "threads" && $parts[2] === "
 		return;
 	}
 
-	$comment = refinement_correct($db, $thread["id"], $user, $body);
+	$comment = refinement_correct($store, $thread["id"], $user, $body);
 
-	refinement_dispatch($db, $thread["id"], $comment, $body);
+	refinement_dispatch($store, $comment, $body);
 	refinement_go($base . "/threads/" . $thread["id"]);
 	return;
 }
 
 // GET /threads/<id>: one thread.
 if (count($parts) === 2 && $parts[0] === "threads") {
-	$thread = refinement_thread($db, $parts[1]);
+	$thread = $store->getThread($parts[1]);
 	if (!is_array($thread)) {
 		refinement_missing();
 		return;
 	}
 
-	$thread = refinement_sync($db, $thread);
+	$thread = refinement_sync($store, $thread);
 
-	refinement_render_thread($base, $thread, refinement_comments($db, $thread["id"]), refinement_artifacts($db, $thread["id"]));
+	refinement_render_thread($base, $thread, $store->getComments($thread["id"]), $store->getArtifacts($thread["id"]));
 	return;
 }
 
 // GET /: every thread, newest first, and the form that starts one.
-refinement_render_threads($base, refinement_threads($db));
+refinement_render_threads($base, $store->getThreads());

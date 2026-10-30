@@ -29,4 +29,8 @@ class Database {
 	/** Writes a row, the array keyed by column. */
 	function insert($table, $value) {
 	}
+
+	/** Writes a row back, the array keyed by column, keyed by the named columns. */
+	function update($table, $value, $key) {
+	}
 }

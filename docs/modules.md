@@ -17,6 +17,8 @@ A module is a directory with a `modinfo.php` in it. The directory is the module'
 | `templates/`    | the MiniTPL sources                                                                  |
 | `templates_c/`  | the same templates compiled, written by `precompile.php` and shipped with the module |
 | `public/`       | files served as bytes under `/m/<vendor>/<name>/`, the `assets/` tree among them     |
+| `storage/`      | the repository layer: every SQL statement the module runs, one class per module      |
+| `lib/`          | what the module does over that repository, and what it renders                       |
 | `action/`       | the markdown a `Task::dispatch` call puts into a Claude run's context                |
 | `stubs/`        | PHP declarations of the host bindings, for the linter alone                          |
 | `composer.json` | the dependencies, `titpetric/minitpl` among them, with `vendor/` committed           |
@@ -129,6 +131,42 @@ A module's tables are task-ui's tables, in task-ui's database, applied by `mig` 
 
 Each module migrates under a project of its own, so two cannot claim one applied row. The name is the plugin cut to seven characters and eight hex of the digest of the full name, because the column mig records it in holds sixteen: `titpetric/refinement` is twenty.
 
+### The repository layer
+
+Every statement a module runs lives in `storage/`, in one class named
+for the module, the way a Go package keeps its queries in `storage/` and
+nothing outside it issues one. A page that writes its own SQL is the
+thing this stops.
+
+```php
+class Refinement {
+	var $db;
+
+	function __construct($db) {
+		$this->db = $db;
+	}
+
+	function getThread($id) {
+		return $this->db->get("SELECT * FROM refinement_thread WHERE id = ?", $id);
+	}
+
+	function updateRefinementThread($data) {
+		return $this->db->update("refinement_thread", $data, "id");
+	}
+}
+```
+
+- A read is `get<Thing>()` and answers rows or a value. One that needs
+  more than one statement composes them in the class, not in the page.
+- A write is a CRUD verb and the table it writes:
+  `createRefinementThread`, `updateRefinementThread`. It takes one array
+  whose keys are the table's columns, so the call site reads as the row
+  it writes and a new column is a new key rather than a new argument.
+- Nothing in the class renders, routes or dispatches. The page decides
+  what to ask for; the class answers.
+- `get()` answers a missing row with `false`. A caller tests
+  `is_array($row)`.
+
 The rules are the instance's:
 
 - one file owns one table, named for it, and the files are append-only once applied anywhere;
@@ -188,6 +226,14 @@ phpscript decided against these, and they will not arrive. The full list is in t
 - Generators, `yield`, fibers, `eval`, `goto`, `global`, references outside `foreach`, `$$name`.
 - `??` and `??=`, the null coalescing operators: the parser refuses the second `?`. Write `isset($a["k"]) ? $a["k"] : $fallback`. The short ternary, `$a ?: $b`, does parse.
 - `strtok`. Use `explode` and take the first entry.
+- `date()`, which answers with the layout it was handed rather than a
+  time. `DateTime::now()->format("2006-01-02 15:04:05.000000")` is the
+  one that reads the clock, and a row written through `date()` carries
+  the layout as its timestamp with nothing to say it went wrong.
+- A monotonic `ulid()`. Two in one millisecond share the timestamp and
+  carry unordered random tails, so an identifier is no tiebreak for a
+  second-resolution stamp: order rows by a timestamp that holds
+  microseconds.
 - `session_start` and `$_SESSION`, PDO, `mysqli_*`, `curl_*`, `proc_*`, `uniqid`, `strftime`, `mktime`, the spaceship operator. `ulid()` is there, which is what a primary key wants.
 
 `$db->get()` answers a missing row with `false`, the way PHP does, and not with `null`. Test it with `is_array($row)`: a `=== null` reads every missing row as a hit, and the page draws an empty one.
