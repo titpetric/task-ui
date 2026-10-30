@@ -24,6 +24,8 @@ A module is a directory with a `modinfo.php` in it. The directory is the module'
 
 A module declares no routes of its own. `index.php` reads `$_SERVER['REQUEST_URI']` and answers what it finds there.
 
+A module's forms post to the module, which is the one place in the front end that takes a `POST`, so those routes carry the same `access.SameOrigin` check `/api` has. A form that changed something answers with a redirect, `header("Location: ...")` and `http_response_code(303)`, which task-ui sends on rather than wrapping in a layout: without it a reload repeats the work.
+
 ## Registration
 
 `modinfo.php` is annotated `@startup`. It builds a module and registers it. A file without the annotation is refused and the reason is logged:
@@ -48,16 +50,37 @@ The name is `<vendor>/<plugin>`. It decides the link, `/m/titpetric/refinement`,
 
 task-ui runs `modinfo.php` once per module, in path order, before it serves a request. A module that throws does not register and does not serve; the rest start.
 
+Then it runs every other `@startup` file of the module, in path order, on the same runtime. A module's migrations go in one of those rather than in a `require` from `modinfo.php`, so a startup step is a file with an annotation and the list of them is the directory:
+
+```php
+<?php
+// @startup
+
+Task::migrate("schema/");
+```
+
+A startup file that throws keeps the module from registering, which is what should happen when its tables are the thing that failed.
+
 ## The bindings
 
-Four host symbols are registered on the runtime of every module.
+These reach the PHP of every module.
 
 | Symbol                              | What it does                                                                           |
 |-------------------------------------|----------------------------------------------------------------------------------------|
 | `new Task\Module`                   | an empty module, with `setName`, `setTitle`, `setDescription`, `setIcon`, `setVersion` |
 | `Task::register($module)`           | records the module and its root in the `module` table, and adds its sidebar row        |
 | `Task::migrate("schema/")`          | applies a directory of `*.up.sql` into task-ui's database                              |
-| `Task::dispatch($comment, $action)` | starts a Claude run, returns the run's identifier                                      |
+| `Task::dispatch($comment, $action)` | starts a Claude run, returns the identifier of the note that holds it                  |
+| `Task::artifacts()`                 | the files of the instance's artifact tree, by path                                     |
+| `Task::artifact($path)`             | the text of one artifact, or `""`                                                      |
+| `Task::markdown($src)`              | markdown as HTML, through the renderer that owns the content policy                    |
+| `new Database("task-ui")`           | the instance's database, with `query`, `get`, `get_all` and `insert`                   |
+
+`Task::VERSION` is the instance's version and `Task::PREFIX` is `/m`.
+
+A module reads the artifact tree through the two bindings and not with `fopen`: the filesystem boundary roots every path a script opens at the module's own directory. Both are read only, because a module shows what a run wrote and the runs write.
+
+`Task::markdown` is for markdown a run wrote, not for anything a reader typed: a relative link in it resolves into the artifact tree, which is where a run put the files its report names.
 
 `Task::dispatch` takes the comment the user wrote and the path of a markdown file under the module's root. The prompt it builds is that file, then the comment, then the run's own environment: the artifact tree, the MCP server and what the user may do. Which module is asking is not an argument; the call reads it from the context task-ui put on the runtime before the request:
 
@@ -102,7 +125,11 @@ A module cannot reach the host's `/tmp`: the filesystem boundary roots every pat
 
 ## The database
 
-A module's tables are task-ui's tables, in task-ui's database, applied by `mig` through `Task::migrate`. The rules are the instance's:
+A module's tables are task-ui's tables, in task-ui's database, applied by `mig` through `Task::migrate` and read through `new Database("task-ui")`. There is one connection and every module shares it: the pool is sqlite on one connection, so a module's work belongs in a statement and not in a long transaction.
+
+Each module migrates under a project of its own, so two cannot claim one applied row. The name is the plugin cut to seven characters and eight hex of the digest of the full name, because the column mig records it in holds sixteen: `titpetric/refinement` is twenty.
+
+The rules are the instance's:
 
 - one file owns one table, named for it, and the files are append-only once applied anywhere;
 - a primary key is a ULID in `CHAR(26)`;
@@ -160,7 +187,10 @@ phpscript decided against these, and they will not arrive. The full list is in t
 - `extends`, `parent::`, traits, `abstract`, `final`, `readonly`, `new self()`, `new static()`, enums, cloning. An `interface` with `implements` is the only contract there is, and it is checked.
 - Generators, `yield`, fibers, `eval`, `goto`, `global`, references outside `foreach`, `$$name`.
 - `??` and `??=`, the null coalescing operators: the parser refuses the second `?`. Write `isset($a["k"]) ? $a["k"] : $fallback`. The short ternary, `$a ?: $b`, does parse.
-- `session_start` and `$_SESSION`, PDO, `mysqli_*`, `curl_*`, `proc_*`, `uniqid`, `strftime`, `mktime`, the spaceship operator.
+- `strtok`. Use `explode` and take the first entry.
+- `session_start` and `$_SESSION`, PDO, `mysqli_*`, `curl_*`, `proc_*`, `uniqid`, `strftime`, `mktime`, the spaceship operator. `ulid()` is there, which is what a primary key wants.
+
+`$db->get()` answers a missing row with `false`, the way PHP does, and not with `null`. Test it with `is_array($row)`: a `=== null` reads every missing row as a hit, and the page draws an empty one.
 
 Four behaviours differ from PHP without saying so, and each one has cost an hour somewhere:
 

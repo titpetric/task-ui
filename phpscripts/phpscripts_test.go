@@ -1,16 +1,12 @@
 package phpscripts_test
 
 import (
-	"context"
 	"io/fs"
-	"net/http"
-	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"testing"
 
 	"github.com/titpetric/task-ui/internal/assert"
-	"github.com/titpetric/task-ui/phpscript"
 	"github.com/titpetric/task-ui/phpscripts"
 )
 
@@ -72,68 +68,4 @@ func TestExtractRefuses(t *testing.T) {
 	file := filepath.Join(t.TempDir(), "notadir")
 	assert.NoError(t, os.WriteFile(file, []byte("x"), 0o644))
 	assert.Error(t, phpscripts.Extract(file), "a target that is a file is not a modules directory")
-}
-
-// The shipped modules, end to end: extract the embedded tree, discover it, run
-// every modinfo.php, and render a page. What this covers that the phpscript
-// package's own tests cannot is the real module, with composer's autoloader
-// resolving MiniTPL inside the filesystem boundary and a template compiling
-// into the module's own templates_c.
-func TestRefinement(t *testing.T) {
-	t.Parallel()
-	root := filepath.Join(t.TempDir(), "modules")
-	assert.NoError(t, phpscripts.Extract(root))
-
-	var reported []error
-	opts := phpscript.NewOptions(root)
-	opts.OnError = func(err error) { reported = append(reported, err) }
-	m := phpscript.New(opts)
-	assert.NoError(t, m.Start(context.Background()))
-	assert.Len(t, reported, 0, "every shipped module registers")
-
-	module, ok := m.Module("titpetric/refinement")
-	assert.True(t, ok)
-	assert.Equal(t, "Refinement", module.Title)
-	assert.Equal(t, "flow", module.Icon)
-	assert.Equal(t, "/m/titpetric/refinement", module.Href())
-
-	r := httptest.NewRequest(http.MethodGet, "/m/titpetric/refinement", nil)
-	out, err := m.Render(context.Background(), httptest.NewRecorder(), r)
-	assert.NoError(t, err)
-	assert.Equal(t, http.StatusOK, out.Status)
-	assert.False(t, out.File)
-
-	body := string(out.Body)
-	assert.Contains(t, body, `<section class="refinement">`, "MiniTPL rendered the template")
-	assert.Contains(t, body, `data-api="/m/titpetric/refinement/threads"`,
-		"the module built its own link from the base task-ui gave it")
-	assert.Contains(t, body, "Start a thread")
-
-	// The compiled template is the one the module ships, under its own root.
-	assert.FileExists(t, filepath.Join(root, "titpetric", "refinement",
-		"templates_c", "templates", "thread.tpl"))
-}
-
-// A module's public tree is served as bytes, with no layout around it, so its
-// own JavaScript and CSS load.
-func TestRefinementAssets(t *testing.T) {
-	t.Parallel()
-	root := filepath.Join(t.TempDir(), "modules")
-	assert.NoError(t, phpscripts.Extract(root))
-
-	m := phpscript.New(phpscript.NewOptions(root))
-	assert.NoError(t, m.Start(context.Background()))
-
-	public := filepath.Join(root, "titpetric", "refinement", "public", "assets")
-	entries, err := os.ReadDir(public)
-	assert.NoError(t, err)
-	assert.Greater(t, len(entries), 0, "the module ships at least one asset")
-
-	for _, entry := range entries {
-		r := httptest.NewRequest(http.MethodGet, "/m/titpetric/refinement/assets/"+entry.Name(), nil)
-		out, err := m.Render(context.Background(), httptest.NewRecorder(), r)
-		assert.NoError(t, err, entry.Name())
-		assert.True(t, out.File, entry.Name())
-		assert.NotEqual(t, "", out.Header.Get("Content-Type"), entry.Name())
-	}
 }

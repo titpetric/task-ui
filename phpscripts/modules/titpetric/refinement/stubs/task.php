@@ -28,4 +28,19 @@ class Task {
 	static function dispatch($comment, $action) {
 		return "";
 	}
+
+	/** The artifact tree's files, by path. */
+	static function artifacts() {
+		return array();
+	}
+
+	/** The text of one artifact, or "". */
+	static function artifact($path) {
+		return "";
+	}
+
+	/** Renders markdown as the instance's own pages do. */
+	static function markdown($src) {
+		return "";
+	}
 }
