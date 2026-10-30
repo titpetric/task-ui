@@ -2,7 +2,7 @@
 <div class="page-head">
 	<div>
 		<h2>Keys</h2>
-		<p>There are two kinds of key, and a key can't be both. The <b>encryption key</b> protects secrets: the instance has one, and it encrypts every secret, the workspaces' and the integrations'. <b>SSH keys</b> let runs and git connect to hosts and remotes; git runs over ssh. Instance SSH keys go to the runs of the roles and users they link; a workspace's SSH keys go to that workspace's runs.</p>
+		<p>There are two kinds of key, and a key can't be both. The <b>encryption key</b> protects secrets: the instance has one, and it encrypts every secret, the workspaces' and the integrations'. <b>SSH keys</b> let runs and git connect to hosts and remotes; git runs over ssh. Instance SSH keys go to the runs of the roles and users they link; a workspace's SSH keys go to every run of that workspace, with nothing to link.</p>
 	</div>
 	{{- if .Can "key/edit" }}
 	<div class="actions">
@@ -53,7 +53,10 @@
 				<td>
 					{{- if .SSH }}
 					<a href="{{ $base }}#keys">{{ len .SSH }} key{{ if ne (len .SSH) 1 }}s{{ end }}</a>
-					<div class="key-names">{{ range .SSH }}<a class="key-chip" href="{{ $base }}/keys/{{ .Name }}" title="Grants of {{ .Name }}">{{ .Name }}</a>{{ end }}</div>
+					{{/* Each chip opens the workspace's keys, not a page of
+					     its own: a key of a workspace goes to every run of
+					     that workspace, so there is nothing of it to edit. */}}
+					<div class="key-names">{{ range .SSH }}<a class="key-chip" href="{{ $base }}/keys#key-{{ .Name }}" title="{{ .Name }}, to every run of {{ $ws.Folder }}">{{ .Name }}</a>{{ end }}</div>
 					{{- else }}
 					<a class="faint" href="{{ $base }}#keys">none</a>
 					<div class="faint">Its runs get only the instance SSH keys their policies grant.</div>
