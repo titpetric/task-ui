@@ -24,16 +24,64 @@ function refinement_now() {
 	return DateTime::now()->format("2006-01-02 15:04:05.000000");
 }
 
-/** refinement_title is the first line of a comment, for the thread list. */
-function refinement_title($body) {
-	$lines = explode("\n", trim($body));
-	$line = trim($lines[0]);
+/** refinement_cut is one line as the thread list shows it, 120 at most. */
+function refinement_cut($line) {
+	$line = trim($line);
 
 	if (strlen($line) > 120) {
 		return substr($line, 0, 117) . "...";
 	}
 
+	return $line;
+}
+
+/** refinement_title is the first line of a comment, for the thread list. */
+function refinement_title($body) {
+	$lines = explode("\n", trim($body));
+	$line = refinement_cut($lines[0]);
+
 	return $line === "" ? "a thread" : $line;
+}
+
+/**
+ * refinement_report_title is the first heading of the report, which is
+ * what the thread is called once a run has written one.
+ *
+ * A thread opens named after the line the person typed, because that is
+ * all there is at the time. The runs then go and find out what the thing
+ * actually is, and README.md leads with it: the report's own heading is
+ * a better name than the request that started it, and a correction that
+ * changes the heading renames the thread with it.
+ *
+ * ATX and setext both, and the first one anywhere in the document, so a
+ * report opening with a badge or a comment still answers.
+ *
+ * Empty when the report has no heading at all. That is not a title of
+ * "", it is the absence of one: the caller keeps what the thread had.
+ */
+function refinement_report_title($markdown) {
+	$lines = explode("\n", $markdown);
+	$count = count($lines);
+
+	for ($i = 0; $i < $count; $i++) {
+		$line = trim($lines[$i]);
+
+		if ($line === "") {
+			continue;
+		}
+
+		// # The heading, with any hashes the writer balanced it with.
+		if (substr($line, 0, 2) === "# ") {
+			return refinement_cut(trim(substr($line, 2), " #"));
+		}
+
+		// The heading, with a line of = under it.
+		if ($i + 1 < $count && preg_match('/^=+$/', trim($lines[$i + 1]))) {
+			return refinement_cut($line);
+		}
+	}
+
+	return "";
 }
 
 /**
@@ -147,17 +195,32 @@ function refinement_dispatch($store, $comment, $body) {
  */
 function refinement_sync($store, $thread) {
 	$report = Task::artifact("README.md");
+	$changed = array();
 
 	// A tree with no README has nothing to say, which is not the same as
 	// a report that is empty: a run that has not written one yet must
 	// not erase the one the run before it did.
 	if ($report !== "" && $report !== $thread["report_markdown"]) {
-		$store->updateRefinementThread(array(
-			"id" => $thread["id"],
-			"report_markdown" => $report,
-			"updated_at" => refinement_now(),
-		));
+		$changed["report_markdown"] = $report;
 		$thread["report_markdown"] = $report;
+	}
+
+	// The report's heading names the thread, so any run that writes one
+	// fills the title and any correction that rewrites it renames the
+	// thread. A thread that was opened before this reconciles on its next
+	// page load, which is the whole of the backfill.
+	$title = refinement_report_title($thread["report_markdown"]);
+
+	if ($title !== "" && $title !== $thread["title"]) {
+		$changed["title"] = $title;
+		$thread["title"] = $title;
+	}
+
+	if ($changed) {
+		$changed["id"] = $thread["id"];
+		$changed["updated_at"] = refinement_now();
+
+		$store->updateRefinementThread($changed);
 	}
 
 	$known = $store->getArtifactPaths($thread["id"]);
