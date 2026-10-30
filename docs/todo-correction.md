@@ -52,7 +52,7 @@ Specified: `phpscripts/modules/` embedded in the binary with `go:embed` and serv
 
 `server.NewHandler(fs.FS)` serves an `fs.FS` but takes no options: the document root is fixed at `public`, the flat stack is off and `runner.Options` is the zero value. `server.NewModule` takes options but its root is a string and it calls `os.DirFS` itself, so an `embed.FS` cannot reach it. `annotations.NewRoute(fs.FS, ...)` takes both, and it registers `@route` endpoints, which a module does not declare.
 
-Three other parts of a module need a real directory in any case. `stdlib.RegisterFS` reroots the file, image and session bindings at one; `composer`'s autoloader reads `vendor/`; and the compile directory has to be writable.
+Two other parts of a module need a real directory in any case. `stdlib.RegisterFS` reroots the file, image and session bindings at one, and the compile directory has to be writable.
 
 Correction: `phpscripts.Extract` writes the embedded tree to `<data>/modules` on first start, and discovery walks that directory with the working directory. The binary still holds the modules; the filesystem the runtime reads is a real one.
 
@@ -88,6 +88,20 @@ Specified: nothing directly. A module that loops forever would hang a page.
 `runner.Options.TimeLimit` and `runner.Options.ConcurrencyLimit` are read from the configuration and held on the struct. Neither is enforced.
 
 Correction: the handler bounds each render with `context.WithTimeout` and the pool bounds how many runtimes exist, so Go keeps the two limits. The two fields stay at their defaults.
+
+## 7. A module cannot carry a `vendor/` directory
+
+Specified: `composer.json` requiring `titpetric/minitpl`, with `vendor/` committed so a running instance installs nothing and reaches no network.
+
+The first half holds, the second does not. The committed tree is there in a checkout and gone in a release. The image installs the binary with `go install github.com/titpetric/task-ui@<ref>`, the Go module proxy builds that zip, and the zip drops what sits under a directory named `vendor`: of the seventeen files committed under the module's, one survived, `vendor/autoload.php`, the one at the top. Everything it requires went. The module then failed its first request on the instance with
+
+```
+error including /vendor/composer/autoload_real.php: no such file or directory
+```
+
+while passing every test here, because the embed is built from the checkout.
+
+Correction: no module file sits under a `vendor` directory and no module uses an autoloader. MiniTPL's sources are copied into `lib/MiniTPL/` and `index.php` names each file with a `require`. `composer.json` stays as the record of the package and its constraint. `TestModulesCarryNoVendor` refuses a `vendor` path in the embedded tree, and `TestModulesRequiresResolve` resolves every `require` of every shipped PHP file against that tree, so a require that did not ship fails here instead of on the instance.
 
 ## Not a runtime gap
 

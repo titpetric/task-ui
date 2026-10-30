@@ -7,11 +7,9 @@
 
   "type": "project",
 
+  "comment": "Where lib/MiniTPL came from. Nothing installs this: a module ships inside the task-ui binary and the Go module proxy drops a vendor directory, so the sources are copied into lib/MiniTPL and index.php names them. To take a new release, composer update in a scratch directory and copy code/MiniTPL over lib/MiniTPL.",
+
   "require": {
     "titpetric/minitpl": "^1.3"
-  },
-
-  "config": {
-    "vendor-dir": "vendor"
   }
 }

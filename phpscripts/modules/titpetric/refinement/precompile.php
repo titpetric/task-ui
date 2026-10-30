@@ -11,7 +11,9 @@
 //
 //   atkins precompile
 
-require "vendor/autoload.php";
+require "lib/MiniTPL/Compiler.php";
+require "lib/MiniTPL/Hook.php";
+require "lib/MiniTPL/Template.php";
 
 $tpl = new MiniTPL\Template("templates/");
 

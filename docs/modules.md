@@ -21,10 +21,12 @@ A module is a directory with a `modinfo.php` in it. The directory is the module'
 | `lib/`          | what the module does over that repository, and what it renders                       |
 | `action/`       | the markdown a `Task::dispatch` call puts into a Claude run's context                |
 | `stubs/`        | PHP declarations of the host bindings, for the linter alone                          |
-| `composer.json` | the dependencies, `titpetric/minitpl` among them, with `vendor/` committed           |
+| `composer.json` | a record of where a copied-in dependency came from; nothing installs it              |
 | `atkins.yml`    | the module's own pipeline: format, lint, precompile                                  |
 
 A module declares no routes of its own. `index.php` reads `$_SERVER['REQUEST_URI']` and answers what it finds there.
+
+**No module file sits under a directory named `vendor`, and no module uses an autoloader.** A module is embedded in the task-ui binary, the binary is installed with `go install <module>@<ref>`, and the zip the Go module proxy builds for that drops what sits under `vendor`. A module that reaches into one passes every test, because the tests read the checkout, and fails on the instance with `no such file or directory`. A PHP dependency is copied into the module under its own name, `lib/MiniTPL/` for MiniTPL, and `index.php` names each file it needs with a `require`. `composer.json` stays as the record of the upstream package and its version; to take a new release, `composer update` in a scratch directory and copy the sources over. `TestModulesCarryNoVendor` and `TestModulesRequiresResolve` in `phpscripts/` are the gate: the first refuses a `vendor` path in the embedded tree, the second resolves every `require` of every shipped file against it.
 
 A module's forms post to the module, which is the one place in the front end that takes a `POST`, so those routes carry the same `access.SameOrigin` check `/api` has. A form that changed something answers with a redirect, `header("Location: ...")` and `http_response_code(303)`, which task-ui sends on rather than wrapping in a layout: without it a reload repeats the work.
 
@@ -110,7 +112,9 @@ A module loads JavaScript from its own `public/` tree and calls what the embeddi
 `index.php` renders through MiniTPL. The sources live in `templates/` and the compiled output in `templates_c/`, both inside the module, and the module resolves the path itself:
 
 ```php
-require "vendor/autoload.php";
+require "lib/MiniTPL/Compiler.php";
+require "lib/MiniTPL/Hook.php";
+require "lib/MiniTPL/Template.php";
 
 $tpl = new MiniTPL\Template("templates/");
 $tpl->set_compile_location("templates_c/", true);
@@ -194,7 +198,7 @@ With telemetry off the call records nothing and costs a function call. [Settings
 
 A module ships an `atkins.yml` whose `default` runs three jobs in order: `fmt`, `lint`, `precompile`.
 
-`./...` is what makes a path recursive; a bare `.` reads the PHP in the top directory alone. Both skip a directory named `vendor`, so composer's tree is never linted or rewritten. Run `fmt` before `lint`.
+`./...` is what makes a path recursive; a bare `.` reads the PHP in the top directory alone. Run `fmt` before `lint`.
 
 Two things about the jobs are not obvious, and each one has cost an hour:
 

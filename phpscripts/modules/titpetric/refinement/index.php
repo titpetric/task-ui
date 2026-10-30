@@ -19,7 +19,15 @@
 // the module runs, lib/thread.php decides what to ask it for, and this
 // routes.
 
-require "vendor/autoload.php";
+// Every file this module needs, named. There is no autoloader and no
+// vendor directory: a module ships inside the task-ui binary, the binary
+// is installed from the Go module proxy, and the proxy's zip drops what
+// sits under a vendor directory. MiniTPL's sources are copied into
+// lib/MiniTPL instead, which is why composer.json is a record of where
+// they came from and not something a start reads.
+require "lib/MiniTPL/Compiler.php";
+require "lib/MiniTPL/Hook.php";
+require "lib/MiniTPL/Template.php";
 require "storage/Refinement.php";
 require "lib/thread.php";
 require "lib/render.php";

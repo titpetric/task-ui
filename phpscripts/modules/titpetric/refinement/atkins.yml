@@ -4,12 +4,12 @@
 name: refinement
 
 # The module's own pipeline. `.` reads the PHP directly in a directory and
-# `./...` reads it and everything below; both skip a directory named vendor,
-# so composer's tree is never linted or rewritten.
+# `./...` reads it and everything below.
 #
 # The paths are named rather than globbed from the root because the compiled
 # templates under templates_c are generated PHP: the formatter would rewrite
-# them and the next precompile would write them back.
+# them and the next precompile would write them back. lib/MiniTPL is upstream
+# code, copied in rather than installed, and passes both jobs as it stands.
 jobs:
   default:
     desc: "Format, lint and precompile"
@@ -34,10 +34,10 @@ jobs:
         echo "every file is formatted"
 
   # --include registers the names the module's own files do not declare:
-  # composer's autoloader for MiniTPL, and stubs/ for the host bindings, which
-  # are Go and invisible to a linter reading PHP. Without it every
-  # `new Task\Module` reports as an undefined class and a real one reads as
-  # more of the same noise.
+  # MiniTPL's classes, and stubs/ for the host bindings, which are Go and
+  # invisible to a linter reading PHP. Without it every `new Task\Module`
+  # reports as an undefined class and a real one reads as more of the same
+  # noise.
   lint:
     desc: "Lint the module"
     steps:
