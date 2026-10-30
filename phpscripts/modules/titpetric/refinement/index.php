@@ -90,7 +90,7 @@ if (count($parts) === 2 && $parts[0] === "threads") {
 
 	$thread = refinement_sync($store, $thread);
 
-	refinement_render_thread($base, $thread, $store->getComments($thread["id"]), $store->getArtifacts($thread["id"]));
+	refinement_render_thread($base, $thread, $store->getComments($thread["id"]));
 	return;
 }
 

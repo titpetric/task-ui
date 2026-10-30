@@ -85,21 +85,6 @@ function refinement_report_title($markdown) {
 }
 
 /**
- * refinement_kind says whether the page embeds an artifact or links it:
- * a diagram is read on the page, a SQL file is a link.
- */
-function refinement_kind($path) {
-	$dot = strrpos($path, ".");
-	$ext = $dot === false ? "" : strtolower(substr($path, $dot));
-
-	if (in_array($ext, array(".svg", ".png", ".jpg", ".jpeg", ".gif", ".webp"))) {
-		return "image";
-	}
-
-	return "file";
-}
-
-/**
  * refinement_start opens a thread from its first comment.
  *
  * The first comment is no correction: it has nothing to correct. Every
@@ -194,10 +179,10 @@ function refinement_dispatch($store, $thread, $comment, $body) {
  * thread keeps, which is what the page reads and what a later correction
  * is counted against, so a page load reconciles them.
  *
- * The artifacts are the thread's own. Each thread works in a folder of
- * the tree named after it, so what this lists is what this thread's runs
- * left and nothing a neighbouring thread wrote, and the paths are the
- * ones the run used, without the folder in front.
+ * The files are not reconciled. They are a folder of the artifact tree
+ * and the instance's own artifacts view browses one; this module links
+ * that folder and keeps no second listing of it, which is a listing that
+ * goes stale the moment a run renames something.
  */
 function refinement_sync($store, $thread) {
 	$folder = $thread["id"];
@@ -228,24 +213,6 @@ function refinement_sync($store, $thread) {
 		$changed["updated_at"] = refinement_now();
 
 		$store->updateRefinementThread($changed);
-	}
-
-	$known = $store->getArtifactPaths($thread["id"]);
-	$comment = $store->getLatestCommentID($thread["id"]);
-
-	foreach (Task::artifacts($folder) as $path) {
-		if ($path === "README.md" || isset($known[$path])) {
-			continue;
-		}
-
-		$store->createRefinementArtifact(array(
-			"id" => ulid(),
-			"thread_id" => $thread["id"],
-			"comment_id" => $comment,
-			"path" => $path,
-			"kind" => refinement_kind($path),
-			"created_at" => refinement_now(),
-		));
 	}
 
 	return $thread;

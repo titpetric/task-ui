@@ -6,26 +6,20 @@
 	<?php if($_v['report']){?>
 
 	<div class="block refinement-report">
-		<h3>The artifacts <small>as the last run indexed them</small></h3>
+		<h3>The design <small>as the last run left it</small></h3>
 		<?php echo $_v['report'];?>
 
 	</div>
 	<?php }else{?>
 
-	<p class="faint">The first run has not written its index yet. It appears here once the run ends.</p>
+	<p class="faint">The first run has not written its report yet. It appears here once the run ends.</p>
 	<?php }?>
 
-	<?php if($_v['artifacts']){?>
-
-	<div class="refinement-artifacts">
-		<?php if(!empty($_v['artifacts']))foreach($_v['artifacts'] as $_v['artifact']){?>
-			<a class="badge mono" href="<?php echo htmlspecialchars($_v['files'], ENT_QUOTES); echo htmlspecialchars($_v['artifact']['path'], ENT_QUOTES);?>
-" title="<?php echo htmlspecialchars($_v['artifact']['path'], ENT_QUOTES);?>
-"><?php echo htmlspecialchars($_v['artifact']['path'], ENT_QUOTES);?>
-</a>
-		<?php }?>
-	</div>
-	<?php }?>
+	
+	<p class="refinement-files">
+		<a class="btn btn-sm" href="/artifacts?path=<?php echo htmlspecialchars($_v['thread']['id'], ENT_QUOTES);?>
+">The files of this thread</a>
+	</p>
 
 	<ol class="refinement-thread">
 	<?php if(!empty($_v['comments']))foreach($_v['comments'] as $_v['comment']){?>

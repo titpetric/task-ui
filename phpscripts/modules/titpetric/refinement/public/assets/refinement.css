@@ -63,9 +63,7 @@
 	overflow-x: auto;
 }
 
-.refinement-artifacts {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 0.5rem;
-	font-size: 0.875rem;
+/* One link to the thread's folder, where the artifacts view takes over. */
+.refinement-files {
+	margin: 0 0 1rem;
 }

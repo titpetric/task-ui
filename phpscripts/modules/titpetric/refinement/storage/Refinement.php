@@ -47,11 +47,6 @@ class Refinement {
 		return $this->db->get_all("SELECT c.*, (SELECT COUNT(*) FROM refinement_correction r WHERE r.comment_id = c.id) AS correction FROM refinement_comment c WHERE c.thread_id = ? ORDER BY c.created_at, c.id", $thread);
 	}
 
-	/** getArtifacts is what a thread's runs left, by path. */
-	function getArtifacts($thread) {
-		return $this->db->get_all("SELECT * FROM refinement_artifact WHERE thread_id = ? ORDER BY path", $thread);
-	}
-
 	/**
 	 * getLatestCommentID is the identifier of the comment a thread ends
 	 * on, which a correction names and a new artifact is counted
@@ -61,20 +56,6 @@ class Refinement {
 		$row = $this->db->get("SELECT id FROM refinement_comment WHERE thread_id = ? ORDER BY created_at DESC, id DESC LIMIT 1", $thread);
 
 		return is_array($row) ? $row["id"] : "";
-	}
-
-	/**
-	 * getArtifactPaths is a thread's artifact paths as a set, for the
-	 * reconcile that adds the files a run left and no row holds yet.
-	 */
-	function getArtifactPaths($thread) {
-		$paths = array();
-
-		foreach ($this->getArtifacts($thread) as $row) {
-			$paths[$row["path"]] = true;
-		}
-
-		return $paths;
 	}
 
 	// --------------------------------------------------------- writes
@@ -92,11 +73,6 @@ class Refinement {
 	/** createRefinementCorrection writes a correction. */
 	function createRefinementCorrection($data) {
 		return $this->db->insert("refinement_correction", $data);
-	}
-
-	/** createRefinementArtifact writes an artifact. */
-	function createRefinementArtifact($data) {
-		return $this->db->insert("refinement_artifact", $data);
 	}
 
 	/** updateRefinementThread writes a thread back, keyed by its id. */

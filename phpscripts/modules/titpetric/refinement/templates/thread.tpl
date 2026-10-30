@@ -3,20 +3,20 @@
 
 	{if $report}
 	<div class="block refinement-report">
-		<h3>The artifacts <small>as the last run indexed them</small></h3>
+		<h3>The design <small>as the last run left it</small></h3>
 		{$report|raw}
 	</div>
 	{else}
-	<p class="faint">The first run has not written its index yet. It appears here once the run ends.</p>
+	<p class="faint">The first run has not written its report yet. It appears here once the run ends.</p>
 	{/if}
 
-	{if $artifacts}
-	<div class="refinement-artifacts">
-		{foreach $artifacts as $artifact}
-			<a class="badge mono" href="{$files}{$artifact.path}" title="{$artifact.path}">{$artifact.path}</a>
-		{/foreach}
-	</div>
-	{/if}
+	{* One link, not a list. The thread's files are a folder of the
+	   artifact tree and the artifacts view is what browses one, with the
+	   preview, the history and the download the module would otherwise
+	   be building a second time. *}
+	<p class="refinement-files">
+		<a class="btn btn-sm" href="/artifacts?path={$thread.id}">The files of this thread</a>
+	</p>
 
 	<ol class="refinement-thread">
 	{foreach $comments as $comment}

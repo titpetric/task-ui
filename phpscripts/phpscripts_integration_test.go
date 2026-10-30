@@ -12,6 +12,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/titpetric/task-ui/artifactstore"
 	"github.com/titpetric/task-ui/internal/assert"
 	"github.com/titpetric/task-ui/phpscript"
 	"github.com/titpetric/task-ui/phpscripts"
@@ -40,9 +41,14 @@ func (f *fakeDispatcher) Dispatch(_ context.Context, m *phpscript.Module, commen
 	return "01NOTE" + strings.ToUpper(action[:1]), nil
 }
 
-// instance extracts the shipped modules, wires them to a database of
-// their own and starts the manager over them, the way app does.
-func instance(t *testing.T) (*phpscript.Manager, storage.DB, *fakeDispatcher) {
+// instance extracts the shipped modules, wires them to a database and an
+// artifact tree of their own and starts the manager over them, the way
+// app does.
+//
+// The tree is a real one because a module reconciles against it: a row
+// whose file is not there is dropped, so a test that writes rows and no
+// files is a test of an empty folder.
+func instance(t *testing.T) (*phpscript.Manager, storage.DB, *fakeDispatcher, *artifactstore.Store) {
 	t.Helper()
 	root := filepath.Join(t.TempDir(), "modules")
 	assert.NoError(t, phpscripts.Extract(root))
@@ -51,18 +57,27 @@ func instance(t *testing.T) (*phpscript.Manager, storage.DB, *fakeDispatcher) {
 	assert.NoError(t, err)
 	t.Cleanup(func() { assert.NoError(t, db.Close()) })
 
+	store := &artifactstore.Store{Dir: filepath.Join(t.TempDir(), "tree")}
 	dispatcher := &fakeDispatcher{}
 	var reported []error
 	opts := phpscript.NewOptions(root)
 	opts.Database = phpscript.NewDatabase(db)
 	opts.Migrator = phpscript.NewSchema(db)
 	opts.Dispatcher = dispatcher
+	opts.Artifacts = phpscript.NewTree(store)
 	opts.OnError = func(err error) { reported = append(reported, err) }
 
 	m := phpscript.New(opts)
 	assert.NoError(t, m.Start(context.Background()))
 	assert.Len(t, reported, 0, "every shipped module registers")
-	return m, db, dispatcher
+	return m, db, dispatcher, store
+}
+
+// artifact writes one file into the tree, as a run's does.
+func artifact(t *testing.T, store *artifactstore.Store, rel, body string) {
+	t.Helper()
+	_, err := store.Write(context.Background(), rel, []byte(body), "claude")
+	assert.NoError(t, err)
 }
 
 // get drives one request through a module.
@@ -88,7 +103,7 @@ func post(t *testing.T, m *phpscript.Manager, target string, form url.Values) ph
 // because it carries @startup and not because anything requires it.
 func TestRefinementMigrates(t *testing.T) {
 	t.Parallel()
-	_, db, _ := instance(t)
+	_, db, _, _ := instance(t)
 
 	for _, table := range []string{"refinement_thread", "refinement_comment", "refinement_artifact", "refinement_correction"} {
 		var name string
@@ -109,7 +124,7 @@ func TestRefinementMigrates(t *testing.T) {
 // is empty until one does.
 func TestRefinementIndex(t *testing.T) {
 	t.Parallel()
-	m, _, _ := instance(t)
+	m, _, _, _ := instance(t)
 
 	out := get(t, m, "/m/titpetric/refinement")
 	body := string(out.Body)
@@ -123,7 +138,7 @@ func TestRefinementIndex(t *testing.T) {
 // the run, and answers with a redirect so a reload starts no second one.
 func TestRefinementStart(t *testing.T) {
 	t.Parallel()
-	m, db, dispatcher := instance(t)
+	m, db, dispatcher, _ := instance(t)
 	ctx := context.Background()
 
 	want := "A database schema with strict separation of user, user_login_method and user_login_method_password."
@@ -163,7 +178,7 @@ func TestRefinementStart(t *testing.T) {
 // it produced, and each one starts a run of its own.
 func TestRefinementCorrections(t *testing.T) {
 	t.Parallel()
-	m, db, dispatcher := instance(t)
+	m, db, dispatcher, _ := instance(t)
 	ctx := context.Background()
 
 	out := post(t, m, "/m/titpetric/refinement/threads", url.Values{"want": {"a schema"}})
@@ -209,45 +224,50 @@ func TestRefinementCorrections(t *testing.T) {
 }
 
 // The report a run wrote is the index the page shows, rendered as the
-// instance's own markdown: a link resolves into the artifact tree and an
-// image is embedded, so a diagram is read on the page.
+// instance's own markdown: a link resolves into the thread's folder of
+// the artifact tree and an image is embedded, so a diagram is read on
+// the page. The report's heading names the thread.
 func TestRefinementReport(t *testing.T) {
 	t.Parallel()
-	m, db, _ := instance(t)
-	ctx := context.Background()
+	m, _, _, store := instance(t)
 
 	out := post(t, m, "/m/titpetric/refinement/threads", url.Values{"want": {"a schema"}})
 	to := out.Header.Get("Location")
 	id := filepath.Base(to)
 
-	report := "The user and its login methods, kept apart.\n\n" +
-		"- [schema/user.up.sql](schema/user.up.sql)\n\n" +
-		"![The schema](diagrams/schema.svg)\n"
-	_, err := db.ExecContext(ctx, "UPDATE refinement_thread SET report_markdown = ? WHERE id = ?", report, id)
-	assert.NoError(t, err)
-	_, err = db.ExecContext(ctx,
-		"INSERT INTO refinement_artifact (id, thread_id, comment_id, path, kind, created_at) VALUES (?, ?, '', ?, ?, ?)",
-		"01ARTIFACT0000000000000001", id, "diagrams/schema.svg", "image", "2026-10-30 00:00:00")
-	assert.NoError(t, err)
+	// A run writes into the thread's folder and names its files from
+	// inside it. Nothing writes a row: the page reconciles the tree.
+	artifact(t, store, id+"/README.md", "# Users and their login methods\n\n"+
+		"The user and its login methods, kept apart.\n\n"+
+		"- [schema/user.up.sql](schema/user.up.sql)\n\n"+
+		"![The schema](diagrams/schema.svg)\n")
+	artifact(t, store, id+"/schema/user.up.sql", "CREATE TABLE \"user\" (id CHAR(26) PRIMARY KEY);\n")
+	artifact(t, store, id+"/diagrams/schema.svg", "<svg xmlns=\"http://www.w3.org/2000/svg\"></svg>\n")
+	artifact(t, store, "PLAN.md", "An artifact of the instance, no thread's.\n")
 
-	// The report names its files from inside the thread's own folder, so
-	// every link the page draws carries the folder the run left out.
 	body := string(get(t, m, to).Body)
 	assert.Contains(t, body, "The user and its login methods, kept apart.")
 	assert.Contains(t, body, `href="/artifacts/files/`+id+`/schema/user.up.sql"`,
 		"a relative link resolves into the thread's folder of the artifact tree")
 	assert.Contains(t, body, `<img src="/artifacts/files/`+id+`/diagrams/schema.svg"`,
 		"an image is embedded, so a diagram is read on the page")
-	assert.Contains(t, body, `href="/artifacts/files/`+id+`/diagrams/schema.svg"`,
-		"the artifact is listed beside the report, under the thread's folder")
-	assert.Contains(t, body, "diagrams/schema.svg</a>", "and reads as the path the run wrote")
+	// The files are one link to the folder and not a listing: the
+	// instance's artifacts view is what browses one.
+	assert.Contains(t, body, `href="/artifacts?path=`+id+`"`,
+		"the thread links the folder that holds its files")
+	assert.NotContains(t, body, `class="badge mono"`,
+		"and lists none of them itself: the artifacts view does that")
+	assert.NotContains(t, body, "PLAN.md", "what the instance holds outside the folder is no file of the thread")
+
+	assert.Contains(t, string(get(t, m, "/m/titpetric/refinement").Body),
+		"Users and their login methods", "the report's heading names the thread")
 }
 
 // A thread that is not there is a 404, and a form with nothing in it is
 // a 400 that says what it needs.
 func TestRefinementRefuses(t *testing.T) {
 	t.Parallel()
-	m, _, dispatcher := instance(t)
+	m, _, dispatcher, _ := instance(t)
 
 	out := get(t, m, "/m/titpetric/refinement/threads/01NOTATHREAD00000000000000")
 	assert.Equal(t, http.StatusNotFound, out.Status)
@@ -269,7 +289,7 @@ func TestRefinementRefuses(t *testing.T) {
 // A module's public tree is served as bytes, with its content type.
 func TestRefinementAssets(t *testing.T) {
 	t.Parallel()
-	m, _, _ := instance(t)
+	m, _, _, _ := instance(t)
 
 	root := filepath.Dir(filepath.Dir(mustRoot(t, m)))
 	entries, err := os.ReadDir(filepath.Join(root, "titpetric", "refinement", "public", "assets"))

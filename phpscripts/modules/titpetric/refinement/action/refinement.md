@@ -27,9 +27,8 @@ Write the artifacts the comment calls for, inside the thread's folder:
 
 ## The report
 
-Rewrite `README.md` at the top of the thread's folder every time. It is
-the index of the thread and the page shows it, so it is the one file
-that has to be right.
+Rewrite `README.md` at the top of the thread's folder every time. The
+page shows it, so it is the one file that has to be right.
 
 - Open with a `#` heading naming the design in a few words, `# Users and
   their login methods`. That heading is the thread's title: the list of
@@ -37,17 +36,22 @@ that has to be right.
   The thread opens named after the comment that started it, which is a
   request rather than a name, so write the name the work turned out to
   need.
-- Then a sentence on what the design is now, not what changed.
-- List every artifact the thread has produced, each as a markdown link
-  to its path relative to the thread's folder, which is where the report
-  sits too: `[schema/user.up.sql](schema/user.up.sql)`.
-- Embed every image: `![The schema](diagrams/schema.svg)`. The page
-  draws these, so a diagram is read there rather than downloaded.
-- Say what a reader needs to know to judge it, in a few lines. No
-  changelog, no list of what you did.
+- Then say what the design is now, not what changed, and what a reader
+  needs to know to judge it. A few paragraphs.
+- Embed a diagram where it explains something: `![The schema](diagrams/schema.svg)`.
+  The page draws these, so a diagram is read there rather than
+  downloaded.
 
-A link that names a file you did not write is a broken link on the page.
-Write the file or leave the link out.
+**Do not list the files.** The report is not an index: the page links
+the thread's folder and the artifacts view is where anyone who wants the
+files goes. A list of paths in the report is a second copy of that
+listing, it goes stale the moment a run renames something, and every
+path in it is a link that can break. Name a file in a sentence when the
+sentence is about that file, and otherwise let the folder speak.
+
+- No "Artifacts" section, no table of files, no bullet list of paths.
+- A link to a file you did not write is a broken link on the page. Write
+  the file or leave the link out.
 
 ## How to answer
 

@@ -47,7 +47,7 @@ A module's forms post to the module, which is the one place in the front end tha
 // @startup
 //
 // The refinement module: a thread of comments that Claude turns into
-// artifacts, and a report that indexes them.
+// artifacts, and a report on what they are.
 
 $module = new Task\Module;
 $module->setName("titpetric/refinement");

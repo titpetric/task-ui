@@ -30,17 +30,25 @@ opens on one field: what you want designed. **Start a thread** records
 the thread and your first comment, and starts a Claude run that has the
 artifact tree and the comment, and nothing else to go on.
 
-The run writes its output into the instance's artifacts, where every run
-writes, and it writes a `README.md` beside them that indexes what it
-made: a line per artifact, with a link, and an image embedded where the
-artifact is one. The thread's page shows that index, so a diagram the
-run drew as an SVG is on the page, not behind a download.
+The run writes its output into a folder of the instance's artifacts
+named after the thread, which is the thread's alone: a new thread starts
+on an empty directory and nothing another thread wrote is in its way. It
+writes a `README.md` at the top of that folder saying what the design is
+now, with a diagram embedded where one explains something. The thread's
+page shows that report, so an SVG the run drew is on the page rather
+than behind a download.
+
+The report lists no files. Under it the page carries one link, **The
+files of this thread**, which opens the folder in
+[Artifacts](artifacts.md): the preview, the versions and the download
+are there already, and a list in the report would be a second copy of
+that listing going stale at the next rename.
 
 A thread then takes corrections. The comment box at the bottom of the
 thread is the same field as the first one: a comment starts a Claude run
-of its own, with the artifacts as they stand now and the comment you
-just wrote. The run applies the correction and rewrites the index. Three
-corrections in a row that each produce a run:
+of its own, with the thread's folder as it stands now and the comment
+you just wrote. The run applies the correction and rewrites the report.
+Three corrections in a row that each produce a run:
 
 ```
 use ULID as primary keys

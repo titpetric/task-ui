@@ -3,8 +3,8 @@
 // @startup
 //
 // The refinement module. A thread holds the comments a user writes; each one
-// starts a Claude run over the artifacts as they stand, and the run rewrites
-// them and the README.md that indexes them.
+// starts a Claude run over the thread's own folder of the artifact tree, and
+// the run rewrites what is there and the README.md that reports on it.
 //
 // task-ui runs this file once, before it serves a request, and the module
 // serves only if Task::register takes what it built.

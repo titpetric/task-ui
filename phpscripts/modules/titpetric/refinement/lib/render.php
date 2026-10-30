@@ -64,19 +64,21 @@ function refinement_render_threads($base, $threads) {
 }
 
 /**
- * refinement_render_thread draws one thread: the index its last run
- * wrote, the artifacts behind it, the comments, and the box that asks
- * for the next correction.
+ * refinement_render_thread draws one thread: the report its last run
+ * wrote, a link to the folder that holds the files, the comments, and
+ * the box that asks for the next correction.
+ *
+ * The files are not listed. They are a folder of the artifact tree and
+ * the instance already has the page that browses one, with the preview,
+ * the versions and the download beside it.
  */
-function refinement_render_thread($base, $thread, $comments, $artifacts) {
+function refinement_render_thread($base, $thread, $comments) {
 	$tpl = refinement_tpl();
 
 	$tpl->load("thread.tpl");
 	$tpl->assign("base", $base);
 	$tpl->assign("thread", $thread);
 	$tpl->assign("comments", $comments);
-	$tpl->assign("artifacts", $artifacts);
-	$tpl->assign("files", "/artifacts/files/" . $thread["id"] . "/");
 	$tpl->assign("report", refinement_report($thread["report_markdown"], $thread["id"]));
 
 	echo $tpl->get();
