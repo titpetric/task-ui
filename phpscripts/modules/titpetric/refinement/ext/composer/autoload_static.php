@@ -22,6 +22,10 @@ class ComposerStaticInit39923e1d69df8bede3d4f74d4bb35bda
 
     public static $classMap = array (
         'Composer\\InstalledVersions' => __DIR__ . '/..' . '/composer/InstalledVersions.php',
+        'RefinementManager' => __DIR__ . '/../..' . '/code/RefinementManager.php',
+        'RefinementPage' => __DIR__ . '/../..' . '/code/RefinementPage.php',
+        'RefinementPrompt' => __DIR__ . '/../..' . '/code/RefinementPrompt.php',
+        'RefinementStore' => __DIR__ . '/../..' . '/code/RefinementStore.php',
     );
 
     public static function getInitializer(ClassLoader $loader)

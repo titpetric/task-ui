@@ -17,14 +17,19 @@ A module is a directory with a `modinfo.php` in it. The directory is the module'
 | `templates/`    | the MiniTPL sources                                                                  |
 | `templates_c/`  | the same templates compiled, written by `precompile.php` and shipped with the module |
 | `public/`       | files served as bytes under `/m/<vendor>/<name>/`, the `assets/` tree among them     |
-| `storage/`      | the repository layer: every SQL statement the module runs, one class per module      |
-| `lib/`          | what the module does over that repository, and what it renders                       |
+| `code/`         | the module's classes, autoloaded: its store, its manager, its pages                  |
+| `ext/`          | what `composer install` wrote, the autoloader among it                               |
+| `tests/`        | the `.phpt` fixtures `phpscript test` runs, and their bootstrap                      |
 | `action/`       | the markdown a `Task::dispatch` call puts into a Claude run's context                |
 | `stubs/`        | PHP declarations of the host bindings, for the linter alone                          |
-| `composer.json` | a record of where a copied-in dependency came from; nothing installs it              |
-| `atkins.yml`    | the module's own pipeline: format, lint, precompile                                  |
+| `composer.json` | the dependencies, and the classmap over `code/`                                      |
+| `atkins.yml`    | the module's own pipeline: format, lint, test, precompile                            |
 
 A module declares no routes of its own. `index.php` reads `$_SERVER['REQUEST_URI']` and answers what it finds there.
+
+**A module writes classes, not functions, and autoloads them.** `composer.json` carries a classmap over `code/`, `composer install` writes `ext/`, and `index.php` requires `ext/autoload.php` and nothing else: naming a class is what loads it. Free functions in a shared include are what this stops — a module is one page's worth of PHP and a handful of types, and the types are easier to read and to test than a namespace full of `module_thing_verb()`.
+
+The refinement module is four: `RefinementStore` holds every statement, `RefinementManager` decides what to ask the store for, `RefinementPrompt` composes what a run is sent, and `RefinementPage` routes and draws. The shape is phpscript's own and Go's: a manager over a store, made once per request.
 
 A path in a `require` is read from the module's root, the directory `modinfo.php` sits in, whatever file the `require` is written in: the runtime roots the module there and nothing above it resolves.
 
@@ -130,9 +135,7 @@ A module loads JavaScript from its own `public/` tree and calls what the embeddi
 `index.php` renders through MiniTPL. The sources live in `templates/` and the compiled output in `templates_c/`, both inside the module, and the module resolves the path itself:
 
 ```php
-require "lib/MiniTPL/Compiler.php";
-require "lib/MiniTPL/Hook.php";
-require "lib/MiniTPL/Template.php";
+require "ext/autoload.php";
 
 $tpl = new MiniTPL\Template("templates/");
 $tpl->set_compile_location("templates_c/", true);
@@ -153,15 +156,14 @@ A module's tables are task-ui's tables, in task-ui's database, applied by `mig` 
 
 Each module migrates under a project of its own, so two cannot claim one applied row. The name is the plugin cut to seven characters and eight hex of the digest of the full name, because the column mig records it in holds sixteen: `titpetric/refinement` is twenty.
 
-### The repository layer
+### The store, and the manager over it
 
-Every statement a module runs lives in `storage/`, in one class named
-for the module, the way a Go package keeps its queries in `storage/` and
-nothing outside it issues one. A page that writes its own SQL is the
-thing this stops.
+Every statement a module runs lives in one class, `<Module>Store`, the
+way a Go package keeps its queries in `storage/` and nothing outside it
+issues one. A page that writes its own SQL is the thing this stops.
 
 ```php
-class Refinement {
+class RefinementStore {
 	var $db;
 
 	function __construct($db) {
@@ -184,10 +186,18 @@ class Refinement {
   `createRefinementThread`, `updateRefinementThread`. It takes one array
   whose keys are the table's columns, so the call site reads as the row
   it writes and a new column is a new key rather than a new argument.
-- Nothing in the class renders, routes or dispatches. The page decides
-  what to ask for; the class answers.
+- A statement that returns no rows goes through `query()`. The binding
+  has no `delete`.
 - `get()` answers a missing row with `false`. A caller tests
   `is_array($row)`.
+- Nothing in the store renders, routes or dispatches.
+
+`<Module>Manager` is what decides. It holds the store, it is made once
+per request, and the work of the module is its methods: what a thread
+does, what a correction is counted against, what a page load reconciles.
+Its static side is the part that needs no host binding — parsing a
+title, grouping rows for a page — and that is the part a `.phpt` fixture
+calls, which is why it is static rather than free.
 
 The rules are the instance's:
 

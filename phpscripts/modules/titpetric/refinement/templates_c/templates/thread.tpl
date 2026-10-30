@@ -19,28 +19,81 @@
 	<p class="refinement-files">
 		<a class="btn btn-sm" href="/artifacts?path=<?php echo htmlspecialchars($_v['thread']['id'], ENT_QUOTES);?>
 ">The files of this thread</a>
+		<?php if($_v['context']){?>
+<a class="btn btn-sm" href="/artifacts/files/<?php echo htmlspecialchars($_v['thread']['id'], ENT_QUOTES);?>
+/CONTEXT.md">The agent's context</a><?php }?>
 	</p>
 
 	<ol class="refinement-thread">
-	<?php if(!empty($_v['comments']))foreach($_v['comments'] as $_v['comment']){?>
-		<li class="refinement-comment" data-run-state="<?php echo htmlspecialchars($_v['comment']['state'], ENT_QUOTES);?>
+	<?php if(!empty($_v['entries']))foreach($_v['entries'] as $_v['entry']){?>
+		<?php if($_v['entry']['folded_count']){?>
+
+		<li class="refinement-folded">
+			<details>
+				<summary><?php echo htmlspecialchars($_v['entry']['folded_count'], ENT_QUOTES);?>
+ folded into the request below</summary>
+				<ol>
+				<?php if(!empty($_v['entry']['folded']))foreach($_v['entry']['folded'] as $_v['comment']){?>
+					<li class="refinement-comment" data-run-state="<?php echo htmlspecialchars($_v['comment']['state'], ENT_QUOTES);?>
 ">
-			<div class="refinement-comment-head">
-				<strong><?php echo htmlspecialchars($_v['comment']['user'], ENT_QUOTES);?>
+						<div class="refinement-comment-head">
+							<strong><?php echo htmlspecialchars($_v['comment']['user'], ENT_QUOTES);?>
 </strong>
-				<span class="faint"><?php echo htmlspecialchars($_v['comment']['created_at'], ENT_QUOTES);?>
+							<span class="faint"><?php echo htmlspecialchars($_v['comment']['created_at'], ENT_QUOTES);?>
 </span>
-				<?php if($_v['comment']['note_id']){?>
+							<?php if($_v['comment']['note_id']){?>
 <a class="badge" href="/notes#<?php echo htmlspecialchars($_v['comment']['note_id'], ENT_QUOTES);?>
 ">the run</a><?php }?>
-				<?php if($_v['comment']['correction']){?>
-<span class="badge">correction</span><?php }?>
+							<?php if($_v['comment']['correction']){?>
+<span class="badge">rule</span><?php }?>
+						</div>
+						<p><?php echo htmlspecialchars($_v['comment']['body'], ENT_QUOTES);?>
+</p>
+					</li>
+				<?php }?>
+				</ol>
+			</details>
+		</li>
+		<?php }?>
+		<li class="refinement-comment" data-run-state="<?php echo htmlspecialchars($_v['entry']['comment']['state'], ENT_QUOTES);?>
+">
+			<div class="refinement-comment-head">
+				<strong><?php echo htmlspecialchars($_v['entry']['comment']['user'], ENT_QUOTES);?>
+</strong>
+				<span class="faint"><?php echo htmlspecialchars($_v['entry']['comment']['created_at'], ENT_QUOTES);?>
+</span>
+				<?php if($_v['entry']['comment']['note_id']){?>
+<a class="badge" href="/notes#<?php echo htmlspecialchars($_v['entry']['comment']['note_id'], ENT_QUOTES);?>
+">the run</a><?php }?>
+				<?php if($_v['entry']['applied']){?>
+<span class="badge signal">applied</span><?php }?>
+				<?php if($_v['entry']['comment']['correction']){?>
+<span class="badge">rule</span><?php }?>
+				
+				<form class="refinement-delete" method="post" action="<?php echo htmlspecialchars($_v['base'], ENT_QUOTES);?>
+/threads/<?php echo htmlspecialchars($_v['thread']['id'], ENT_QUOTES);?>
+/comments/<?php echo htmlspecialchars($_v['entry']['comment']['id'], ENT_QUOTES);?>
+/delete"
+					<?php if($_v['entry']['comment']['id'] == $_v['design']){?>
+data-confirm="Delete the design, and the whole thread with it? Its rules and its runs go. The files stay in the artifacts, under <?php echo htmlspecialchars($_v['thread']['id'], ENT_QUOTES);?>
+."<?php }else{?>
+data-confirm="Delete this request? The next Apply all will not carry it. The files it produced stay."<?php }?>>
+					<button class="btn-icon" type="submit" title="Delete" aria-label="Delete"><svg class="ic"><use href="#i-trash"/></svg></button>
+				</form>
 			</div>
-			<p><?php echo htmlspecialchars($_v['comment']['body'], ENT_QUOTES);?>
+			<p><?php echo htmlspecialchars($_v['entry']['comment']['body'], ENT_QUOTES);?>
 </p>
 		</li>
 	<?php }?>
 	</ol>
+
+	
+	<form class="form refinement-apply" method="post" action="<?php echo htmlspecialchars($_v['base'], ENT_QUOTES);?>
+/threads/<?php echo htmlspecialchars($_v['thread']['id'], ENT_QUOTES);?>
+/apply">
+		<p class="faint">Folds every request above into one and runs it over the files as they stand, so the result satisfies all of them together rather than one after another.</p>
+		<button class="btn" type="submit"><svg class="ic"><use href="#i-collapse"/></svg>Apply all</button>
+	</form>
 
 	<form class="form refinement-comment-form" method="post" action="<?php echo htmlspecialchars($_v['base'], ENT_QUOTES);?>
 /threads/<?php echo htmlspecialchars($_v['thread']['id'], ENT_QUOTES);?>

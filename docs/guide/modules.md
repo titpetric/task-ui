@@ -42,7 +42,12 @@ The report lists no files. Under it the page carries one link, **The
 files of this thread**, which opens the folder in
 [Artifacts](artifacts.md): the preview, the versions and the download
 are there already, and a list in the report would be a second copy of
-that listing going stale at the next rename.
+that listing going stale at the next rename. Beside it, once a run has
+written one, **The agent's context** opens `CONTEXT.md`, which is the
+runs' own notes: which tool drew which artifact, the command and the
+flags, and the script under `bin/` that regenerates it. A run reads it
+before it reads anything else, so the second run does not work out again
+what the first already knew.
 
 A thread then takes corrections. The comment box at the bottom of the
 thread is the same field as the first one: a comment starts a Claude run
@@ -55,6 +60,37 @@ use ULID as primary keys
 don't use foreign keys
 run mig lint on the schema and fix violations
 ```
+
+### Rules, and Apply all
+
+Every correction is a **rule**: a thing the artifacts have to satisfy,
+not a thing that happened once. The thread keeps them, and the **⋯**
+trash button on a request retires one. A rule that was a mistake stops
+counting from the moment it goes, and the files it produced stay where
+they are.
+
+Running the corrections one after another is what drifts. Each run sees
+the folder as the run before it left it and the comment you just wrote,
+so by the tenth the first correction is a thing nobody has read in an
+hour. **Apply all**, above the comment box, is the answer: it folds the
+design and every surviving rule into one request and runs it once, over
+the artifacts that are already there, so the result satisfies all of
+them together.
+
+What it sends reads as the design, then the rules numbered in the order
+they were asked for, then where to start from — the folder and
+`CONTEXT.md`. A later rule wins where two disagree, and the run is told
+so. The requests it folded stay on the page, behind **N folded into the
+request below**, with the run each one started still linked.
+
+It composes from the thread and not from its own last answer, so a
+second **Apply all** after two more corrections carries all of them
+again. Delete a rule, press **Apply all**, and what comes back is the
+design as it should have been.
+
+Deleting the first request deletes the thread. It is the design the
+rules correct, and without it they correct nothing. The folder in the
+artifacts is not touched.
 
 Every run is an ordinary run. It is on [Runs](runs.md) with its output
 to replay, its artifacts are in [Artifacts](artifacts.md) with their

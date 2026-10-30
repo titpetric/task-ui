@@ -1,14 +1,10 @@
 /* The refinement module's own script, loaded from its public tree.
  *
- * It defines nothing the page already has. task-ui's own task-ui.js holds the
- * form contract, so a form with data-api posts itself as JSON, a data-next
- * navigates or reloads, and a failure raises a toast: this file adds only what
- * that contract has no spelling for.
- *
- * The globals it reads, all from task-ui.js: api(method, url, body) for a call
- * the form contract does not cover, and toast(text, tone) for feedback. Each
- * is checked before use, so a page that loads this script without them does
- * nothing at all.
+ * task-ui's own task-ui.js holds the form contract a page writes against, but
+ * it reaches no global: its api(), toast() and confirm() are inside its
+ * function and nothing on window names them. A module's forms are therefore
+ * ordinary forms that post and redirect, and what this file adds is what a
+ * plain form has no spelling for.
  */
 (function () {
 	"use strict";
@@ -38,6 +34,15 @@
 		}, 15000);
 	}
 
+	// A form that deletes asks first. The question is on the form, because
+	// the one on the design says that the thread goes with it and the one on
+	// a rule says that only the request does.
+	function confirmOnSubmit(form) {
+		form.addEventListener("submit", function (event) {
+			if (!window.confirm(form.dataset.confirm)) event.preventDefault();
+		});
+	}
+
 	// The artifact index the run wrote is markdown rendered to HTML by the
 	// module, so a link in it is an ordinary link. One that names an artifact
 	// of this instance opens in the preview window the page already has.
@@ -54,6 +59,7 @@
 
 	function start() {
 		document.querySelectorAll("form.refinement-comment-form").forEach(sendOnEnter);
+		document.querySelectorAll("form[data-confirm]").forEach(confirmOnSubmit);
 		document.querySelectorAll(".refinement-thread").forEach(followRuns);
 		document.querySelectorAll(".refinement-report").forEach(previewArtifacts);
 	}

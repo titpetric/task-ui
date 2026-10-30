@@ -7,4 +7,8 @@ $baseDir = dirname($vendorDir);
 
 return array(
     'Composer\\InstalledVersions' => $vendorDir . '/composer/InstalledVersions.php',
+    'RefinementManager' => $baseDir . '/code/RefinementManager.php',
+    'RefinementPage' => $baseDir . '/code/RefinementPage.php',
+    'RefinementPrompt' => $baseDir . '/code/RefinementPrompt.php',
+    'RefinementStore' => $baseDir . '/code/RefinementStore.php',
 );

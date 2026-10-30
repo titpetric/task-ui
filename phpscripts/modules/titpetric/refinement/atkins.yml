@@ -26,7 +26,7 @@ jobs:
     desc: "Fail if phpscript fmt would rewrite a file"
     steps:
       - |
-        out="$(phpscript fmt -l . ./stubs/... ./lib/... ./storage/... ./tests/...)"
+        out="$(phpscript fmt -l . ./stubs/... ./code/... ./tests/...)"
         if [ -n "${out}" ]; then
             echo "phpscript fmt would rewrite:" >&2
             echo "${out}" >&2
@@ -43,8 +43,7 @@ jobs:
     desc: "Lint the module"
     steps:
       - phpscript lint --include stubs/autoload.php .
-      - phpscript lint --include stubs/autoload.php ./lib/...
-      - phpscript lint --include stubs/autoload.php ./storage/...
+      - phpscript lint --include stubs/autoload.php ./code/...
       - phpscript lint --include stubs/autoload.php ./stubs/...
       - phpscript lint --include stubs/autoload.php ./tests/...
 

@@ -53,6 +53,29 @@ sentence is about that file, and otherwise let the folder speak.
 - A link to a file you did not write is a broken link on the page. Write
   the file or leave the link out.
 
+## The context you keep
+
+Write `CONTEXT.md` at the top of the thread's folder, beside `README.md`,
+and keep it current on every run. `README.md` is the report a reader
+reads. `CONTEXT.md` is yours: what you would need in order to do this
+again without working it out a second time.
+
+- Name every tool an artifact goes through, the command that runs it and
+  the flags that matter. `d2`, `plantuml`, `mig`, `chromium` and the rest
+  of the image are on the PATH.
+- Make each artifact repeatable. A script under `bin/` in the folder
+  regenerates it from its source, and a line in `CONTEXT.md` says which
+  script makes which artifact. A run that can regenerate an artifact does
+  not redraw it by hand.
+- Say what you tried that did not work, where it is not obvious. The next
+  run is you with none of this in mind.
+
+A request that arrives with a numbered list of rules is a flattened
+thread: every correction it ever made, at once, over artifacts that are
+already there. Read `CONTEXT.md` before anything else, run the pipelines
+it names rather than starting over, and make the result satisfy every
+rule together.
+
 ## How to answer
 
 Your reply is one short paragraph: what the design says now, and

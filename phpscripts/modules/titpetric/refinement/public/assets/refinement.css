@@ -63,7 +63,61 @@
 	overflow-x: auto;
 }
 
-/* One link to the thread's folder, where the artifacts view takes over. */
+/* Links to the thread's folder and to the context its runs keep, where the
+ * artifacts view takes over.
+ */
 .refinement-files {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
 	margin: 0 0 1rem;
+}
+
+/* The delete button of a request sits at the end of its head, away from the
+ * badges, and shows itself when the request is under the pointer or the
+ * button has the focus: a row of trash cans reads as a toolbar and this is
+ * one button that belongs to one request.
+ */
+.refinement-delete {
+	margin-left: auto;
+}
+
+.refinement-delete .btn-icon {
+	opacity: 0;
+	color: var(--danger, inherit);
+}
+
+.refinement-comment:hover .refinement-delete .btn-icon,
+.refinement-delete .btn-icon:focus-visible {
+	opacity: 1;
+}
+
+/* The requests an Apply all folded. The disclosure is closed, because the
+ * point of folding is that the thread reads as one request; what is inside
+ * is the record of how it got there.
+ */
+.refinement-folded > details > summary {
+	cursor: pointer;
+	color: var(--fg-faint, inherit);
+	font-size: 0.875rem;
+}
+
+.refinement-folded > details > ol {
+	margin: 0.5rem 0 0;
+	padding-left: 1rem;
+	border-left: 1px solid var(--line);
+}
+
+/* Apply all, above the box that adds one more request: a different thing to
+ * press, so it does not read as the send button.
+ */
+.refinement-apply {
+	margin: 1rem 0;
+	padding: 0.75rem 1rem;
+	border: 1px solid var(--line);
+	border-radius: var(--radius, 4px);
+}
+
+.refinement-apply p {
+	margin: 0 0 0.5rem;
 }

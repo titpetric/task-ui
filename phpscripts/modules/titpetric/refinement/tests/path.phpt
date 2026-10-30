@@ -1,4 +1,4 @@
-name: refinement_path
+name: RefinementPage::path
 description: >
   What is left of a request for the module to answer: the path past its
   own prefix, without the query and without the slashes at either end.
@@ -7,18 +7,21 @@ description: >
 ---
 <?php
 
+$page = new RefinementPage("/m/titpetric/refinement");
 $base = "/m/titpetric/refinement";
 
-echo "[", refinement_path($base, $base), "]\n";
-echo "[", refinement_path($base . "/", $base), "]\n";
-echo "[", refinement_path($base . "/threads", $base), "]\n";
-echo "[", refinement_path($base . "/threads/01K8/comments", $base), "]\n";
-echo "[", refinement_path($base . "/threads?page=2", $base), "]\n";
-echo "[", refinement_path("/elsewhere/threads", $base), "]\n";
+echo "[", $page->path($base), "]\n";
+echo "[", $page->path($base . "/"), "]\n";
+echo "[", $page->path($base . "/threads"), "]\n";
+echo "[", $page->path($base . "/threads/01K8/comments"), "]\n";
+echo "[", $page->path($base . "/threads/01K8/comments/01K9/delete"), "]\n";
+echo "[", $page->path($base . "/threads?page=2"), "]\n";
+echo "[", $page->path("/elsewhere/threads"), "]\n";
 ---
 []
 []
 [threads]
 [threads/01K8/comments]
+[threads/01K8/comments/01K9/delete]
 [threads]
 [elsewhere/threads]

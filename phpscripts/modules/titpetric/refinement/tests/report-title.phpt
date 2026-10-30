@@ -1,4 +1,4 @@
-name: refinement_report_title
+name: RefinementManager::reportTitle
 description: >
   The first heading of the report, which is what the thread is called
   once a run has written one. ATX and setext both, the first one
@@ -22,7 +22,7 @@ $cases = array(
 );
 
 foreach ($cases as $markdown) {
-	$title = refinement_report_title($markdown);
+	$title = RefinementManager::reportTitle($markdown);
 
 	echo "[", $title, "] ", strlen($title), "\n";
 }

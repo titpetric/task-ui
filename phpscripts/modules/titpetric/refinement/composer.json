@@ -11,6 +11,10 @@
     "vendor-dir": "ext"
   },
 
+  "autoload": {
+    "classmap": ["code/"]
+  },
+
   "require": {
     "titpetric/minitpl": "^1.3"
   }

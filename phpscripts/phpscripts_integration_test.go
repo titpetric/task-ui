@@ -117,7 +117,7 @@ func TestRefinementMigrates(t *testing.T) {
 	var count int
 	assert.NoError(t, db.GetContext(context.Background(), &count,
 		"SELECT COUNT(*) FROM migrations WHERE project = ?", refinementProject))
-	assert.Equal(t, 4, count)
+	assert.Equal(t, 5, count)
 }
 
 // The first page is the form that starts a thread, and the thread list
@@ -220,7 +220,7 @@ func TestRefinementCorrections(t *testing.T) {
 		assert.True(t, at > last, want)
 		last = at
 	}
-	assert.Equal(t, 3, strings.Count(body, "correction</span>"))
+	assert.Equal(t, 3, strings.Count(body, "rule</span>"), "a correction is a rule the next Apply all carries")
 }
 
 // The report a run wrote is the index the page shows, rendered as the
@@ -261,6 +261,126 @@ func TestRefinementReport(t *testing.T) {
 
 	assert.Contains(t, string(get(t, m, "/m/titpetric/refinement").Body),
 		"Users and their login methods", "the report's heading names the thread")
+}
+
+// thread opens one with the corrections given, and answers its path and
+// its id.
+func thread(t *testing.T, m *phpscript.Manager, want string, corrections ...string) (string, string) {
+	t.Helper()
+	to := post(t, m, "/m/titpetric/refinement/threads", url.Values{"want": {want}}).Header.Get("Location")
+	for _, body := range corrections {
+		assert.Equal(t, http.StatusSeeOther,
+			post(t, m, to+"/comments", url.Values{"comment": {body}}).Status, body)
+	}
+	return to, filepath.Base(to)
+}
+
+// Apply all sends the design and every rule as one request, over the
+// artifacts that are already there, rather than one run per rule over
+// what the run before it left.
+//
+// It is composed from the comments and not from its own last answer, so
+// a second Apply all after another correction carries all of them again.
+// That is the whole of the model: a rule stays a rule until it is
+// deleted.
+func TestRefinementApplyAll(t *testing.T) {
+	t.Parallel()
+	m, db, dispatcher, _ := instance(t)
+	ctx := context.Background()
+
+	to, id := thread(t, m, "A schema for users and their logins.",
+		"Use ULID as primary keys.", "No foreign keys.", "Run mig lint.")
+
+	assert.Equal(t, http.StatusSeeOther, post(t, m, to+"/apply", nil).Status)
+
+	sent := dispatcher.comments[len(dispatcher.comments)-1]
+	assert.Contains(t, sent, "## The design\n\nA schema for users and their logins.")
+	assert.Contains(t, sent, "1. Use ULID as primary keys.")
+	assert.Contains(t, sent, "2. No foreign keys.")
+	assert.Contains(t, sent, "3. Run mig lint.")
+	assert.Contains(t, sent, "CONTEXT.md")
+	assert.Equal(t, []string{id}, []string{dispatcher.folders[len(dispatcher.folders)-1]},
+		"the flattened run works in the thread's own folder")
+
+	// Four comments stood before it and all four are folded into the one
+	// it wrote; the apply comment itself stands.
+	var folded, standing int
+	assert.NoError(t, db.GetContext(ctx, &folded,
+		"SELECT COUNT(*) FROM refinement_comment WHERE thread_id = ? AND collapsed_into <> ''", id))
+	assert.Equal(t, 4, folded)
+	assert.NoError(t, db.GetContext(ctx, &standing,
+		"SELECT COUNT(*) FROM refinement_comment WHERE thread_id = ? AND collapsed_into = ''", id))
+	assert.Equal(t, 1, standing)
+
+	// An apply is neither a design nor a rule, so the next one composes
+	// from the comments this one did, plus whatever arrived since.
+	assert.Equal(t, http.StatusSeeOther,
+		post(t, m, to+"/comments", url.Values{"comment": {"Comment every column."}}).Status)
+	assert.Equal(t, http.StatusSeeOther, post(t, m, to+"/apply", nil).Status)
+
+	sent = dispatcher.comments[len(dispatcher.comments)-1]
+	assert.Contains(t, sent, "## The design\n\nA schema for users and their logins.")
+	assert.Contains(t, sent, "1. Use ULID as primary keys.")
+	assert.Contains(t, sent, "4. Comment every column.")
+	assert.NotContains(t, sent, "## The rules\n\nEvery correction this thread has made, as a rule the artifacts have to\nsatisfy at once. A later rule wins where two disagree.\n\n1. ## The design",
+		"a flattened request is never flattened into the next one")
+
+	// The page folds them, and says how many.
+	body := string(get(t, m, to).Body)
+	assert.Contains(t, body, "folded into the request below")
+	assert.Contains(t, body, `<span class="badge signal">applied</span>`)
+}
+
+// A rule can be retired. Deleting the design retires the thread with it,
+// because a rule corrects a design and there is nothing left to correct.
+func TestRefinementDelete(t *testing.T) {
+	t.Parallel()
+	m, db, dispatcher, store := instance(t)
+	ctx := context.Background()
+
+	to, id := thread(t, m, "A schema for users and their logins.",
+		"Use ULID as primary keys.", "Draw it in Comic Sans.")
+	artifact(t, store, id+"/schema/user.up.sql", "CREATE TABLE \"user\" (id CHAR(26));\n")
+
+	var rule string
+	assert.NoError(t, db.GetContext(ctx, &rule,
+		"SELECT id FROM refinement_comment WHERE thread_id = ? AND body LIKE 'Draw it%'", id))
+
+	assert.Equal(t, http.StatusSeeOther, post(t, m, to+"/comments/"+rule+"/delete", nil).Status)
+
+	var left int
+	assert.NoError(t, db.GetContext(ctx, &left,
+		"SELECT COUNT(*) FROM refinement_correction WHERE comment_id = ?", rule))
+	assert.Equal(t, 0, left, "the correction row goes with the comment")
+	assert.NotContains(t, string(get(t, m, to).Body), "Comic Sans")
+
+	// What is gone is not carried.
+	assert.Equal(t, http.StatusSeeOther, post(t, m, to+"/apply", nil).Status)
+	sent := dispatcher.comments[len(dispatcher.comments)-1]
+	assert.Contains(t, sent, "1. Use ULID as primary keys.")
+	assert.NotContains(t, sent, "Comic Sans")
+
+	// The design takes the thread with it, and leaves the files alone.
+	var design string
+	assert.NoError(t, db.GetContext(ctx, &design,
+		"SELECT id FROM refinement_comment WHERE thread_id = ? AND body LIKE 'A schema%'", id))
+
+	out := post(t, m, to+"/comments/"+design+"/delete", nil)
+	assert.Equal(t, http.StatusSeeOther, out.Status)
+	assert.Equal(t, "/m/titpetric/refinement", out.Header.Get("Location"))
+
+	var threads, comments, corrections int
+	assert.NoError(t, db.GetContext(ctx, &threads, "SELECT COUNT(*) FROM refinement_thread WHERE id = ?", id))
+	assert.NoError(t, db.GetContext(ctx, &comments, "SELECT COUNT(*) FROM refinement_comment WHERE thread_id = ?", id))
+	assert.NoError(t, db.GetContext(ctx, &corrections, "SELECT COUNT(*) FROM refinement_correction WHERE thread_id = ?", id))
+	assert.Equal(t, 0, threads)
+	assert.Equal(t, 0, comments)
+	assert.Equal(t, 0, corrections)
+
+	assert.Equal(t, http.StatusNotFound, get(t, m, to).Status)
+	assert.Equal(t, "CREATE TABLE \"user\" (id CHAR(26));\n",
+		phpscript.NewTree(store).Read(id+"/schema/user.up.sql"),
+		"the files stay in the artifact tree")
 }
 
 // A thread that is not there is a 404, and a form with nothing in it is

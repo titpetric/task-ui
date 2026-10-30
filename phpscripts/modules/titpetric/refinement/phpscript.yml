@@ -1,11 +1,11 @@
 # The suite root of the module's tests.
 #
 # phpscript test roots a fixture at the directory the fixture sits in, which
-# would put tests/ out of reach of lib/ and storage/. This file moves that
-# root here, to the module root, the directory modinfo.php sits in: a fixture
-# under it requires "lib/render.php" and means the same path index.php means.
+# would put tests/ out of reach of ext/ and code/. This file moves that root
+# here, to the module root, the directory modinfo.php sits in: a fixture under
+# it requires "ext/autoload.php" and means the same path index.php means.
 #
-# include runs ahead of every fixture and loads what the module declares, so a
-# fixture names the function it is about and nothing else.
+# include runs ahead of every fixture and loads composer's autoloader, so a
+# fixture names the class it is about and nothing else.
 test:
   include: tests/bootstrap.php

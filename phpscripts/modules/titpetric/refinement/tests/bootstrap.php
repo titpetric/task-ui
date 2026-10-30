@@ -2,15 +2,13 @@
 
 // What every fixture gets before it runs, named in phpscript.yml.
 //
-// The paths are the module's own, from its root: phpscript.yml puts the
-// suite root there, so a test reads the same tree index.php reads.
+// One require. ext/autoload.php is composer's and the classmap over
+// code/ is in it, so a fixture names a class and the loader finds it.
 //
-// Loading a file is not calling it. lib/thread.php declares functions that
-// reach Task:: and the repository, and declaring them needs neither; a
-// fixture calls the ones that stand on their own. storage/Refinement.php
-// stays out: it is a class over a Database, which is a host binding
-// `phpscript test` does not carry. docs/testing.md says which is which.
+// Naming a class is not constructing one. RefinementStore wants a
+// Database and RefinementManager's instance methods reach Task::, both
+// of them host bindings `phpscript test` does not carry; what a fixture
+// calls is the static side, which stands on its own. docs/testing.md
+// says which is which.
 
 require "ext/autoload.php";
-require "lib/render.php";
-require "lib/thread.php";

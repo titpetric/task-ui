@@ -68,29 +68,29 @@ phpscript run precompile.php   # a script, end to end
 A fixture is a `.phpt` file: front matter with a `name` and a `description`, the PHP, and the output it must print, each part separated by a `---` line.
 
 ```text
-name: refinement_kind
+name: RefinementManager::title
 description: >
-  Whether the thread page embeds an artifact or links it.
+  The first line of the comment a thread opened on, for the list.
 ---
 <?php
 
-echo refinement_kind("diagrams/schema.svg"), "\n";
+echo RefinementManager::title("Design the user tables\nand the logins."), "\n";
 ---
-image
+Design the user tables
 ```
 
 Print with `echo`, not `var_dump`. `echo` writes the value and nothing else, which is the same in every runtime; `var_dump` writes the type and the length beside it, and those are the runtime's own and move when a binding changes what a value is made of.
 
 ### The suite root
 
-`phpscript test` roots a fixture at the directory the fixture sits in, so a fixture in `tests/` sees `tests/` as `/` and nothing of the module. A `phpscript.yml` in the tree moves that root: the directory holding the file is the application root for every fixture below it. The module keeps one at its own root, so a fixture reads the tree `index.php` reads and `require "lib/render.php"` means the same path in both.
+`phpscript test` roots a fixture at the directory the fixture sits in, so a fixture in `tests/` sees `tests/` as `/` and nothing of the module. A `phpscript.yml` in the tree moves that root: the directory holding the file is the application root for every fixture below it. The module keeps one at its own root, so a fixture reads the tree `index.php` reads and `require "ext/autoload.php"` means the same path in both.
 
 ```yaml
 test:
   include: tests/bootstrap.php
 ```
 
-`include` runs ahead of every fixture. `tests/bootstrap.php` requires `ext/autoload.php` and the module's own declarations, so a fixture names the function it is about and nothing else.
+`include` runs ahead of every fixture. `tests/bootstrap.php` requires `ext/autoload.php` and nothing else, so a fixture names the class it is about and the classmap finds it.
 
 ### What runs and what cannot
 
@@ -100,11 +100,12 @@ So a fixture covers what stands on its own, which is most of what a module decid
 
 | Runs under phpscript | Does not |
 |----------------------|----------|
-| the pure functions of `lib/`: routing a path, a title, an artifact's kind | anything calling `Task::` |
-| the stamp functions, over the runtime's own `DateTime` | `storage/`, a class over a `Database` |
-| MiniTPL: compiling a template, rendering one with data | `modinfo.php` and `migrate.php`, which are `Task::` from their first line |
+| a manager's static side: routing a path, a title, grouping rows for a page | a manager's instance methods, which reach `Task::` |
+| composing a prompt out of rows, over plain arrays | the store, a class over a `Database` |
+| the stamp functions, over the runtime's own `DateTime` | `modinfo.php` and `migrate.php`, which are `Task::` from their first line |
+| MiniTPL: compiling a template, rendering one with data | |
 
-Loading a file is not calling it: `lib/thread.php` declares functions that reach `Task::` and the repository, and the declaration costs nothing, so the bootstrap loads the file and a fixture calls the functions that stand alone.
+Naming a class is not constructing one, which is why the static side is static: `RefinementManager::title` and `RefinementPrompt::flatten` are called straight off the class, and the fixture never reaches the constructor that wants a `Database`.
 
 For what cannot run, `stubs/` holds PHP declarations of the bindings. They are for `phpscript lint --include`, so the linter knows the names; nothing requires them at runtime and they do not make a binding callable.
 

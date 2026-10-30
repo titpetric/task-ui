@@ -194,9 +194,16 @@ sidebar row of each is in the `sidebar` table, ordered and hidden from
 `/settings/sidebar`, and `POST /api/modules/reload` reads the roots again
 for an admin. The
 module that ships with the instance is `titpetric/refinement`: a thread
-of comments that each start a run, which writes artifacts and a
-`README.md` indexing them. Page: `/m/<vendor>/<name>`,
-`/settings/sidebar`; API: `/api/modules`, `/api/sidebar`.
+whose first comment designs an artifact and whose every later comment is
+a rule the artifact has to satisfy. Each one starts a run over the
+thread's own folder, which writes the artifacts, a `README.md` reporting
+what the design is, and a `CONTEXT.md` naming the tools and the scripts
+that regenerate each artifact. A rule can be deleted, and deleting the
+design deletes the thread. **Apply all** folds the design and every
+surviving rule into one request and runs it once over the artifacts that
+are there, rather than one run per rule, and folds the requests it
+carried. Page: `/m/<vendor>/<name>`, `/settings/sidebar`; API:
+`/api/modules`, `/api/sidebar`.
 
 ## Secrets and env (`secret`)
 
