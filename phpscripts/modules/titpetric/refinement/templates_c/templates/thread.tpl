@@ -19,9 +19,9 @@
 	<p class="refinement-files">
 		<a class="btn btn-sm" href="/artifacts?path=<?php echo htmlspecialchars($_v['thread']['id'], ENT_QUOTES);?>
 ">The files of this thread</a>
-		<?php if($_v['context']){?>
+		<?php if($_v['scratchpad']){?>
 <a class="btn btn-sm" href="/artifacts/files/<?php echo htmlspecialchars($_v['thread']['id'], ENT_QUOTES);?>
-/CONTEXT.md">The agent's context</a><?php }?>
+/SCRATCHPAD.md">The scratch pad</a><?php }?>
 	</p>
 
 	<ol class="refinement-thread">
@@ -47,8 +47,8 @@
 							<?php if($_v['comment']['correction']){?>
 <span class="badge">rule</span><?php }?>
 						</div>
-						<p><?php echo htmlspecialchars($_v['comment']['body'], ENT_QUOTES);?>
-</p>
+						<div class="refinement-body"><?php echo $_v['comment']['html'];?>
+</div>
 					</li>
 				<?php }?>
 				</ol>
@@ -81,8 +81,8 @@ data-confirm="Delete this request? The next Apply all will not carry it. The fil
 					<button class="btn-icon" type="submit" title="Delete" aria-label="Delete"><svg class="ic"><use href="#i-trash"/></svg></button>
 				</form>
 			</div>
-			<p><?php echo htmlspecialchars($_v['entry']['comment']['body'], ENT_QUOTES);?>
-</p>
+			<div class="refinement-body"><?php echo $_v['entry']['comment']['html'];?>
+</div>
 		</li>
 	<?php }?>
 	</ol>

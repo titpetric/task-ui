@@ -18,6 +18,17 @@
 // tests/ pin the text without a database.
 class RefinementPrompt {
 	/**
+	 * SCRATCHPAD is the file a thread's runs keep for themselves, at the
+	 * top of the thread's folder: the tools, the commands and the scripts
+	 * that make each artifact.
+	 *
+	 * A scratch pad and not a specification. README.md is the report a
+	 * reader reads and this is working notes, which is a thing an agent
+	 * already knows how to keep.
+	 */
+	const SCRATCHPAD = "SCRATCHPAD.md";
+
+	/**
 	 * rules is the body of each rule, in the order they were asked for,
 	 * from the comment rows of a thread's corrections.
 	 */
@@ -71,11 +82,12 @@ class RefinementPrompt {
 		$parts[] = implode("\n", array(
 			"## Where this starts",
 			"",
-			"The thread's folder already holds the artifacts, and CONTEXT.md says",
-			"which tools made them and how to run them again. Read both before you",
-			"change anything, reuse the pipelines CONTEXT.md names, and produce",
-			"artifacts that satisfy every rule together rather than applying them one",
-			"after another.",
+			"The thread's folder already holds the artifacts, and your scratch pad,",
+			"`" . RefinementPrompt::SCRATCHPAD . "` at the top of it, says which tools made them and how to",
+			"run them again. Read both before you change anything, run the pipelines",
+			"the scratch pad names rather than starting over, and produce artifacts",
+			"that satisfy every rule together rather than applying them one after",
+			"another.",
 		));
 
 		return implode("\n\n", $parts);

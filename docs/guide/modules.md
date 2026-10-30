@@ -43,7 +43,7 @@ files of this thread**, which opens the folder in
 [Artifacts](artifacts.md): the preview, the versions and the download
 are there already, and a list in the report would be a second copy of
 that listing going stale at the next rename. Beside it, once a run has
-written one, **The agent's context** opens `CONTEXT.md`, which is the
+written one, **The scratch pad** opens `SCRATCHPAD.md`, which is the
 runs' own notes: which tool drew which artifact, the command and the
 flags, and the script under `bin/` that regenerates it. A run reads it
 before it reads anything else, so the second run does not work out again
@@ -78,10 +78,16 @@ the artifacts that are already there, so the result satisfies all of
 them together.
 
 What it sends reads as the design, then the rules numbered in the order
-they were asked for, then where to start from — the folder and
-`CONTEXT.md`. A later rule wins where two disagree, and the run is told
+they were asked for, then where to start from — the folder and the
+scratch pad. A later rule wins where two disagree, and the run is told
 so. The requests it folded stay on the page, behind **N folded into the
 request below**, with the run each one started still linked.
+
+Every request on the page is drawn as the markdown it was written as, so
+a list reads as a list and a path in backticks reads as code. Its
+headings come down to the smallest one and set as a bold line: a request
+is a paragraph inside a thread, and a flattened one carrying `## The
+design` would otherwise outrank the thread's own headings.
 
 It composes from the thread and not from its own last answer, so a
 second **Apply all** after two more corrections carries all of them

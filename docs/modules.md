@@ -107,7 +107,7 @@ The refinement module names each folder after the thread, so a new thread starts
 
 `Task::artifact` is the exception and takes a whole path, because reading one file is not a listing: a module inside a folder spells it `Task::artifact($thread . "/README.md")`.
 
-`Task::markdown` is for markdown a run wrote, not for anything a reader typed: a relative link in it resolves into the artifact tree, under the folder named, which is where a run put the files its report names.
+`Task::markdown` resolves a relative link into the artifact tree, under the folder named, which is where a run put the files its report names. It is the instance's own renderer: raw HTML shows as text and a link keeps to a scheme it knows, so markdown a reader typed is as safe to draw as markdown a run wrote. What the folder argument decides is only what a relative link means.
 
 `Task::dispatch` takes the comment the user wrote, the path of a markdown file under the module's root, and the folder the run works in. The prompt it builds is that file, then where to work, then the comment, then what the folder holds now. Which module is asking is not an argument; the call reads it from the context task-ui put on the runtime before the request:
 

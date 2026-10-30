@@ -11,12 +11,12 @@
 	{/if}
 
 	{* Links, not listings. The thread's files are a folder of the artifact
-	   tree and the artifacts view browses one; CONTEXT.md is what the runs
-	   keep for themselves, which is worth reading when a run surprises
-	   you. *}
+	   tree and the artifacts view browses one; the scratch pad is what the
+	   runs keep for themselves, which is worth reading when a run
+	   surprises you. *}
 	<p class="refinement-files">
 		<a class="btn btn-sm" href="/artifacts?path={$thread.id}">The files of this thread</a>
-		{if $context}<a class="btn btn-sm" href="/artifacts/files/{$thread.id}/CONTEXT.md">The agent's context</a>{/if}
+		{if $scratchpad}<a class="btn btn-sm" href="/artifacts/files/{$thread.id}/SCRATCHPAD.md">The scratch pad</a>{/if}
 	</p>
 
 	<ol class="refinement-thread">
@@ -34,7 +34,7 @@
 							{if $comment.note_id}<a class="badge" href="/notes#{$comment.note_id}">the run</a>{/if}
 							{if $comment.correction}<span class="badge">rule</span>{/if}
 						</div>
-						<p>{$comment.body}</p>
+						<div class="refinement-body">{$comment.html|raw}</div>
 					</li>
 				{/foreach}
 				</ol>
@@ -55,7 +55,7 @@
 					<button class="btn-icon" type="submit" title="Delete" aria-label="Delete"><svg class="ic"><use href="#i-trash"/></svg></button>
 				</form>
 			</div>
-			<p>{$entry.comment.body}</p>
+			<div class="refinement-body">{$entry.comment.html|raw}</div>
 		</li>
 	{/foreach}
 	</ol>

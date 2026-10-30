@@ -92,6 +92,34 @@
 	opacity: 1;
 }
 
+/* A request, drawn as the markdown it was written as. Its headings came
+ * down to h6 before rendering, so what is left is a bold line: a request is
+ * a paragraph inside a thread and the thread's own headings have to win.
+ */
+.refinement-body > :first-child {
+	margin-top: 0;
+}
+
+.refinement-body > :last-child {
+	margin-bottom: 0;
+}
+
+.refinement-body h6 {
+	margin: 0.75rem 0 0.25rem;
+	font-size: 1em;
+	font-weight: 600;
+}
+
+.refinement-body ol,
+.refinement-body ul {
+	margin: 0.25rem 0;
+	padding-left: 1.25rem;
+}
+
+.refinement-body pre {
+	overflow-x: auto;
+}
+
 /* The requests an Apply all folded. The disclosure is closed, because the
  * point of folding is that the thread reads as one request; what is inside
  * is the record of how it got there.

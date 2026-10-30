@@ -84,17 +84,87 @@ class RefinementPage {
 	 */
 	function thread($thread, $comments) {
 		$tpl = RefinementPage::template("thread.tpl");
+		$folder = $thread["id"];
+		$entries = RefinementManager::entries($comments);
+
+		foreach ($entries as $i => $entry) {
+			$entries[$i]["comment"]["html"] = RefinementPage::request($entry["comment"]["body"], $folder);
+
+			foreach ($entry["folded"] as $j => $under) {
+				$entries[$i]["folded"][$j]["html"] = RefinementPage::request($under["body"], $folder);
+			}
+		}
 
 		$tpl->assign("base", $this->base);
 		$tpl->assign("thread", $thread);
-		$tpl->assign("entries", RefinementManager::entries($comments));
+		$tpl->assign("entries", $entries);
 		// Which comment is the design, so its delete button can say that
 		// it takes the thread with it.
 		$tpl->assign("design", RefinementManager::designID($comments));
-		$tpl->assign("context", Task::artifact($thread["id"] . "/CONTEXT.md") !== "");
-		$tpl->assign("report", RefinementPage::report($thread["report_markdown"], $thread["id"]));
+		$tpl->assign("scratchpad", Task::artifact($folder . "/" . RefinementPrompt::SCRATCHPAD) !== "");
+		$tpl->assign("report", RefinementPage::report($thread["report_markdown"], $folder));
 
 		echo $tpl->get();
+	}
+
+	/**
+	 * request is what a person wrote, or what an Apply all composed, as
+	 * the HTML the thread shows.
+	 *
+	 * Markdown, because a request is written as markdown: a flattened one
+	 * is sections and a numbered list, and a typed one is as likely to
+	 * carry a list or a path in backticks. Printing the source left the
+	 * reader with the hashes and the asterisks.
+	 *
+	 * The renderer is the instance's, which skips raw HTML and keeps a
+	 * link to a scheme it knows, so a request a reader typed is as safe
+	 * to draw as a report a run wrote.
+	 */
+	static function request($body, $folder) {
+		$text = trim($body);
+
+		if ($text === "") {
+			return "";
+		}
+
+		return Task::markdown(RefinementPage::flatHeadings($text), $folder);
+	}
+
+	/**
+	 * flatHeadings takes every heading of a request down to the smallest
+	 * one, which the page draws as a bold line.
+	 *
+	 * A request is a paragraph inside a thread, not a document: a run of
+	 * `## The design` and `## The rules` set in the page's own h2 reads as
+	 * though the thread had been cut into chapters, and the thread's own
+	 * headings lose against them.
+	 *
+	 * Inside a fence nothing is a heading. A shell snippet's `# comment`
+	 * is a comment, and rewriting it would be rewriting the code the
+	 * request is showing.
+	 */
+	static function flatHeadings($markdown) {
+		$lines = explode("\n", $markdown);
+		$fenced = false;
+
+		foreach ($lines as $i => $line) {
+			$trimmed = trim($line);
+
+			if (substr($trimmed, 0, 3) === "```" || substr($trimmed, 0, 3) === "~~~") {
+				$fenced = !$fenced;
+				continue;
+			}
+
+			if ($fenced) {
+				continue;
+			}
+
+			if (preg_match('/^#{1,6}\s+(.*)$/', $trimmed, $found)) {
+				$lines[$i] = "###### " . trim($found[1], " #");
+			}
+		}
+
+		return implode("\n", $lines);
 	}
 
 	/**

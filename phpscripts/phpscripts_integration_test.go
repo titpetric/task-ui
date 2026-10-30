@@ -298,7 +298,7 @@ func TestRefinementApplyAll(t *testing.T) {
 	assert.Contains(t, sent, "1. Use ULID as primary keys.")
 	assert.Contains(t, sent, "2. No foreign keys.")
 	assert.Contains(t, sent, "3. Run mig lint.")
-	assert.Contains(t, sent, "CONTEXT.md")
+	assert.Contains(t, sent, "SCRATCHPAD.md", "the run is pointed at the scratch pad before anything else")
 	assert.Equal(t, []string{id}, []string{dispatcher.folders[len(dispatcher.folders)-1]},
 		"the flattened run works in the thread's own folder")
 
@@ -329,6 +329,15 @@ func TestRefinementApplyAll(t *testing.T) {
 	body := string(get(t, m, to).Body)
 	assert.Contains(t, body, "folded into the request below")
 	assert.Contains(t, body, `<span class="badge signal">applied</span>`)
+
+	// A request is drawn as the markdown it was written as, and its
+	// headings come down to the smallest one: a request is a paragraph
+	// inside a thread, so its sections must not outrank the thread's.
+	assert.Contains(t, body, `<h6 id="the-design">The design</h6>`)
+	assert.Contains(t, body, `<h6 id="the-rules">The rules</h6>`)
+	assert.NotContains(t, body, `<h2 id="the-design">`)
+	assert.NotContains(t, body, "## The design", "the hashes are not printed at the reader")
+	assert.Contains(t, body, "<li>Use ULID as primary keys.</li>", "and a numbered rule is a list item")
 }
 
 // A rule can be retired. Deleting the design retires the thread with it,

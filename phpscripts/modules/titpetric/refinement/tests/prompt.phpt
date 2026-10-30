@@ -32,11 +32,12 @@ satisfy at once. A later rule wins where two disagree.
 
 ## Where this starts
 
-The thread's folder already holds the artifacts, and CONTEXT.md says
-which tools made them and how to run them again. Read both before you
-change anything, reuse the pipelines CONTEXT.md names, and produce
-artifacts that satisfy every rule together rather than applying them one
-after another.
+The thread's folder already holds the artifacts, and your scratch pad,
+`SCRATCHPAD.md` at the top of it, says which tools made them and how to
+run them again. Read both before you change anything, run the pipelines
+the scratch pad names rather than starting over, and produce artifacts
+that satisfy every rule together rather than applying them one after
+another.
 --- with no rules ---
 ## The design
 
@@ -44,8 +45,9 @@ A schema for users and their logins.
 
 ## Where this starts
 
-The thread's folder already holds the artifacts, and CONTEXT.md says
-which tools made them and how to run them again. Read both before you
-change anything, reuse the pipelines CONTEXT.md names, and produce
-artifacts that satisfy every rule together rather than applying them one
-after another.
+The thread's folder already holds the artifacts, and your scratch pad,
+`SCRATCHPAD.md` at the top of it, says which tools made them and how to
+run them again. Read both before you change anything, run the pipelines
+the scratch pad names rather than starting over, and produce artifacts
+that satisfy every rule together rather than applying them one after
+another.
