@@ -45,6 +45,16 @@ $posted = $_SERVER["REQUEST_METHOD"] === "POST";
 // answers it. The answer is a redirect, so a reload does not start a
 // second run.
 if ($posted && count($parts) === 1 && $parts[0] === "threads") {
+	// A correction that arrives here is a correction that lost its
+	// thread: the comment form posts to threads/<id>/comments and only
+	// the form that opens a thread posts here. Opening a thread from it
+	// would bury the correction in a thread of its own, with none of the
+	// work it was correcting, so this says what happened instead.
+	if (isset($_POST["comment"])) {
+		refinement_fail($base, "That is a correction and it needs its thread. Open the thread and send it from the box at the bottom.");
+		return;
+	}
+
 	$want = isset($_POST["want"]) ? trim($_POST["want"]) : "";
 	if ($want === "") {
 		refinement_fail($base, "A thread starts from one paragraph of what to design.");

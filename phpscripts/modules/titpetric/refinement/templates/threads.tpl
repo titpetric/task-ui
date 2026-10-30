@@ -1,7 +1,7 @@
 <section class="refinement">
 	<form class="form refinement-start" method="post" action="{$base}/threads">
-		<label for="refinement-want">What to design</label>
-		<p class="faint" id="refinement-want-help">One paragraph, and the thread starts from it. Every comment after it is a Claude run over the artifacts as they stand.</p>
+		<label for="refinement-want">Start a new thread: what to design</label>
+		<p class="faint" id="refinement-want-help">One paragraph, and a <strong>new</strong> thread starts from it, on an empty folder of its own. To correct a design that already exists, open its thread below and use the box at the bottom.</p>
 		<textarea id="refinement-want" name="want" rows="5" aria-describedby="refinement-want-help" placeholder="A database schema with strict separation of user, user_login_method and user_login_method_password." required></textarea>
 		<div class="form-foot">
 			<button class="btn btn-primary" type="submit">Start a thread</button>

@@ -284,6 +284,16 @@ func TestRefinementRefuses(t *testing.T) {
 	assert.Equal(t, http.StatusBadRequest, out.Status)
 	assert.Contains(t, string(out.Body), "one thing to change")
 	assert.Len(t, dispatcher.comments, 1, "the empty correction started no run")
+
+	// A correction that reaches the route that opens threads opens none:
+	// it would bury the correction in a thread with none of the work it
+	// was correcting.
+	out = post(t, m, "/m/titpetric/refinement/threads", url.Values{"comment": {"use ULID as primary keys"}})
+	assert.Equal(t, http.StatusBadRequest, out.Status)
+	assert.Contains(t, string(out.Body), "needs its thread")
+	assert.Len(t, dispatcher.comments, 1, "and starts no run")
+	assert.Equal(t, 1, strings.Count(string(get(t, m, "/m/titpetric/refinement").Body), `class="key"`),
+		"the one thread is the one that was asked for")
 }
 
 // A module's public tree is served as bytes, with its content type.
