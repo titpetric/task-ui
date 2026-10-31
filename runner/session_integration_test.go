@@ -38,6 +38,8 @@ func waitOutput(t *testing.T, sub *runner.Subscriber, want string) string {
 func TestSession_Attach(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
+	// lifetime: prints once and stays up, so a second window can attach
+	// to a run already going and see what it missed.
 	session, err := f.manager.Start(context.Background(), f.shellJob("late", "echo first; sleep 30", false))
 	assert.NoError(t, err)
 	first := session.Attach(true)
@@ -69,7 +71,6 @@ func TestSession_Input(t *testing.T) {
 	session, err := f.manager.Start(context.Background(), f.shellJob("cat", "cat", true))
 	assert.NoError(t, err)
 	sub := session.Attach(false)
-	time.Sleep(100 * time.Millisecond)
 	assert.NoError(t, session.Input([]byte("hi there\n")))
 	waitOutput(t, sub, "hi there")
 
@@ -78,9 +79,10 @@ func TestSession_Input(t *testing.T) {
 	assert.Equal(t, model.StateStopped, status.State)
 	assert.ErrorIs(t, session.Input([]byte("x")), runner.ErrNotRunning)
 
+	// lifetime: a job with no terminal, held up long enough to be asked
+	// for input and refuse.
 	plain, err := f.manager.Start(context.Background(), f.shellJob("plain", "sleep 30", false))
 	assert.NoError(t, err)
-	time.Sleep(100 * time.Millisecond)
 	assert.ErrorIs(t, plain.Input([]byte("x")), runner.ErrNotInteractive)
 	plain.Kill(time.Second)
 	<-plain.Done()
@@ -89,9 +91,10 @@ func TestSession_Input(t *testing.T) {
 func TestSession_Resize(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
+	// lifetime: the job waits before reading the size, which is the window
+	// the test resizes in. The wait is the subject, not a guess.
 	session, err := f.manager.Start(context.Background(), f.shellJob("size", "sleep 0.3; stty size", false))
 	assert.NoError(t, err)
-	time.Sleep(100 * time.Millisecond)
 	session.Resize(100, 40)
 	session.Resize(0, 0)
 	out, status := collect(t, session.Attach(true))
@@ -127,6 +130,8 @@ func TestSession_Frame(t *testing.T) {
 func TestSession_Write(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
+	// lifetime: stays up so the manager can write a note onto its terminal
+	// and the test read it back.
 	session, err := f.manager.Start(context.Background(), f.shellJob("note", "sleep 30", false))
 	assert.NoError(t, err)
 	n, err := session.Write([]byte("a note from the manager\r\n"))
@@ -141,9 +146,9 @@ func TestSession_Write(t *testing.T) {
 func TestSession_Stop(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
+	// lifetime: stays up until Stop ends it, which is what is asserted.
 	session, err := f.manager.Start(context.Background(), f.shellJob("stop", "sleep 30", false))
 	assert.NoError(t, err)
-	time.Sleep(50 * time.Millisecond)
 	session.Stop(time.Second)
 	<-session.Done()
 	assert.Equal(t, model.StateStopped, session.Status().State)

@@ -10,7 +10,10 @@ when:
 jobs:
   up:
     desc: Start the services
-    cmd: docker compose up -d --remove-orphans
+    # --wait returns when the services are up, and healthy where they
+    # declare a healthcheck. Without it the job ends while the containers
+    # are still starting and whatever runs next sleeps and hopes.
+    cmd: docker compose up -d --wait --remove-orphans
 
   down:
     desc: Stop and remove the services

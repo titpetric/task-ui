@@ -22,6 +22,8 @@ var storageQueued = storage.RunFilter{Folder: "q", State: model.StateQueued}
 // queueJob is a run of the job q/run that appends its name to the order
 // file once the gate file is there, as a request that queues.
 func (f *fixture) queueJob(name, gate, order string) runner.Request {
+	// lifetime: the job waits on a gate the test opens, so it ends when the
+	// test says and not when a duration runs out.
 	req := f.shellJob("q", `while [ ! -f "`+gate+`" ]; do sleep 0.05; done; echo `+name+` >> "`+order+`"`, false)
 	req.Queue = true
 	return req

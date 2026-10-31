@@ -184,6 +184,7 @@ func TestManager_StartBusy(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
 	ctx := context.Background()
+	// lifetime: stays up so a second start meets a busy job.
 	req := f.shellJob("sleep", "sleep 30", false)
 
 	first, err := f.manager.Start(ctx, req)
@@ -216,10 +217,10 @@ func TestManager_StartBusy(t *testing.T) {
 func TestManager_Stop(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
+	// lifetime: stays up until Stop ends it, which is what is asserted.
 	session, err := f.manager.Start(context.Background(), f.shellJob("sleep", "sleep 30", false))
 	assert.NoError(t, err)
 	sub := session.Attach(true)
-	time.Sleep(100 * time.Millisecond)
 	assert.NoError(t, f.manager.Stop(session.ID()))
 	_, status := collect(t, sub)
 	assert.Equal(t, model.StateStopped, status.State)
@@ -230,8 +231,10 @@ func TestManager_Shutdown(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
 	ctx := context.Background()
+	// lifetime: both stay up so Shutdown has something to kill.
 	a, err := f.manager.Start(ctx, f.shellJob("a", "sleep 30", false))
 	assert.NoError(t, err)
+	// lifetime: the second of the pair.
 	b, err := f.manager.Start(ctx, f.shellJob("b", "sleep 30", false))
 	assert.NoError(t, err)
 	f.manager.Shutdown(ctx)
@@ -294,6 +297,8 @@ func TestManager_HostTargets(t *testing.T) {
 		assert.NoError(t, err)
 		return session
 	}
+	// lifetime: outlives the 300ms deadline below, which is what makes it
+	// the slow host of this test.
 	slow := start("web1", "sleep 5", 300*time.Millisecond)
 	fast := start("web2", `echo "on web2 with $# args"`, 0)
 

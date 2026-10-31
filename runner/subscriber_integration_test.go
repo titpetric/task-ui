@@ -5,7 +5,6 @@ package runner_test
 import (
 	"context"
 	"testing"
-	"time"
 
 	"github.com/titpetric/task-ui/internal/assert"
 	"github.com/titpetric/task-ui/model"
@@ -21,7 +20,8 @@ func TestSubscriber(t *testing.T) {
 	assert.NoError(t, err)
 	sub := session.Attach(true)
 	<-session.Done()
-	time.Sleep(50 * time.Millisecond)
+	// No wait here: the range below blocks until the subscription closes,
+	// which is the thing a sleep was standing in for.
 	var last *runner.Status
 	for event := range sub.C {
 		if event.Status != nil {

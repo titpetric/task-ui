@@ -37,6 +37,7 @@ func TestManager_Freeze(t *testing.T) {
 func TestManager_FreezeBusy(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
+	// lifetime: stays up so the frame of a running terminal can be read.
 	session, err := f.manager.Start(context.Background(), f.shellJob("web/docs", "sleep 30", false))
 	assert.NoError(t, err)
 

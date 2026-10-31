@@ -21,6 +21,8 @@ func TestManager_Lock(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
 	ctx := context.Background()
+	// lifetime: the job stays up until the test ends it, which is the
+	// whole subject here: a second start while it holds the lock.
 	slow, err := f.manager.Start(ctx, f.shellJob("lock", "sleep 30", false))
 	assert.NoError(t, err)
 	in, err := f.manager.Start(ctx, f.shellJob("lock", "true", false))
@@ -47,6 +49,8 @@ func TestManager_LockParallel(t *testing.T) {
 	f := newFixture(t)
 	ctx := context.Background()
 	prompt := func() runner.Request {
+		// lifetime: a prompt that stays up, so two of them are running at
+		// once and the test can see they take no lock from each other.
 		req := f.shellJob("prompts", "sleep 30", false)
 		req.Job.ID = model.PromptJob
 		return req
@@ -60,6 +64,8 @@ func TestManager_LockParallel(t *testing.T) {
 	assert.Equal(t, model.StateRunning, first.Status().State)
 	assert.Equal(t, model.StateRunning, second.Status().State)
 
+	// lifetime: an ordinary job of the same folder, held up so the start
+	// after it meets the lock a prompt does not take.
 	job, err := f.manager.Start(ctx, f.shellJob("prompts", "sleep 30", false))
 	assert.NoError(t, err)
 	in, err := f.manager.Start(ctx, f.shellJob("prompts", "true", false))
@@ -87,6 +93,8 @@ func TestManager_LockConcurrent(t *testing.T) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
+			// lifetime: eight starts race for one lock and the winner has
+			// to still hold it when they are counted.
 			sessions[i], errs[i] = f.manager.Start(ctx, f.shellJob("race", "sleep 30", false))
 		}()
 	}
@@ -113,6 +121,7 @@ func TestManager_LockConcurrent(t *testing.T) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
+			// lifetime: as above, for the forced starts.
 			req := f.shellJob("race", "sleep 30", false)
 			req.Force = true
 			_, forced[i] = f.manager.Start(ctx, req)
@@ -134,6 +143,9 @@ func TestManager_LockConcurrent(t *testing.T) {
 	wait(t, current)
 	deadline := time.Now().Add(5 * time.Second)
 	for len(f.manager.List()) > 0 && time.Now().Before(deadline) {
+		// lifetime: the manager offers no signal for "the last run left
+		// the list", so this polls for it rather than guessing at a
+		// duration: the wait ends when the list drains, not on a timer.
 		time.Sleep(20 * time.Millisecond)
 	}
 	assert.Len(t, f.manager.List(), 0, "no run holds or waits for the lock")

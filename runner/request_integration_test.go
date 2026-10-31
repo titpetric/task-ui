@@ -81,6 +81,8 @@ func TestManager_DirArgs(t *testing.T) {
 	f := newFixture(t)
 	ctx := context.Background()
 
+	// lifetime: stays up after printing, so the test reads its output while
+	// it still runs.
 	req := f.shellJob("site", `pwd -P; printf '[%s]' "$@"; sleep 1`, false)
 	sub := func(rel string) runner.Request {
 		dir := filepath.Join(req.Folder.Dir, rel)
