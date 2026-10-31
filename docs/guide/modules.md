@@ -38,6 +38,12 @@ now, with a diagram embedded where one explains something. The thread's
 page shows that report, so an SVG the run drew is on the page rather
 than behind a download.
 
+What a thread shows above everything is what the last run embedded: the
+diagram, the rendering, the screenshot. A refinement is reviewed by
+looking at it, so the pictures get the width of the column and the run's
+prose folds behind **show thinking**. A report that embeds nothing has
+no picture to review, and then its prose is the output and stands open.
+
 The report lists no files. Under it the page carries one link, **The
 files of this thread**, which opens the folder in
 [Artifacts](artifacts.md): the preview, the versions and the download
@@ -97,6 +103,32 @@ design as it should have been.
 Deleting the first request deletes the thread. It is the design the
 rules correct, and without it they correct nothing. The folder in the
 artifacts is not touched.
+
+### Rolling back
+
+The artifact tree is a git repository and every revision of it is a
+commit, which the thread's runs are told: each request carries the
+folder's recent history, the commits newest first with the paths each
+one touched. So going back is an ordinary correction — *put the diagram
+back the way it was before the layout change* — and the run does it by
+reading the file at that commit and writing what it finds. Nothing is
+erased either way: a rollback is a new revision that says what an old
+one said.
+
+### Forking
+
+The rules generalise and the subject does not. *Every id is a ULID*,
+*no foreign keys*, *the diagram is generated and the generation is
+repeatable* are not about users and their logins; they are how the work
+is done, and typing them again for the next subject is the thing worth
+not doing.
+
+**Fork**, under the comment box, takes the subject of the new work and
+opens a thread with every rule of this one already in it. The new thread
+starts on an empty folder of its own and its first run is the flattened
+request: the subject you typed, then the rules. From there it is a
+thread like any other, and retiring a rule in it leaves the thread it
+came from alone.
 
 Every run is an ordinary run. It is on [Runs](runs.md) with its output
 to replay, its artifacts are in [Artifacts](artifacts.md) with their

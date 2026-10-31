@@ -9,6 +9,17 @@ Read what is there first, and change it to what the comment asks for. A
 thread's first comment arrives at an empty folder and has nothing to
 read; every comment after it is a correction over what stands now.
 
+What is being refined is what can be looked at: a diagram, a rendering,
+a screenshot. The thread's page shows the images and folds your prose
+behind a disclosure, so the picture is what a correction is about. Make
+one, and make the next request change it.
+
+The artifact tree is a git repository and every revision of it is a
+commit. The request carries the folder's history, so "put the diagram
+back the way it was before the layout change" is a thing you can do:
+`read_artifact` takes a commit as its `version`, and writing what it
+answers is the rollback.
+
 ## What to write
 
 Write the artifacts the comment calls for, inside the thread's folder:
@@ -38,9 +49,14 @@ page shows it, so it is the one file that has to be right.
   need.
 - Then say what the design is now, not what changed, and what a reader
   needs to know to judge it. A few paragraphs.
-- Embed a diagram where it explains something: `![The schema](diagrams/schema.svg)`.
-  The page draws these, so a diagram is read there rather than
-  downloaded.
+- Embed what is being refined: `![The schema](diagrams/schema.svg)`, on a
+  line of its own. The page takes every line that is nothing but an
+  embedded image and shows those above everything else, so a picture
+  that is not embedded is a picture nobody reviews. An image inside a
+  sentence stays in the sentence.
+- Keep the prose short. It goes behind **show thinking**, which is the
+  right place for it: it is how you got there, and the picture is the
+  work.
 
 **Do not list the files.** The report is not an index: the page links
 the thread's folder and the artifacts view is where anyone who wants the

@@ -1,10 +1,21 @@
 <section class="refinement">
 	<p class="refinement-back"><a href="{$base}">&larr; Every thread</a></p>
 
-	{if $report}
+	{* What is being refined is the picture. The run's prose is how it got
+	   there: kept, and behind a disclosure. A report that embeds nothing
+	   has no picture, and then its prose is the output and stands open. *}
+	{if $visual}
+	<div class="refinement-output">{$output|raw}</div>
+		{if $thinking}
+		<details class="refinement-thinking">
+			<summary>show thinking</summary>
+			<div class="refinement-report">{$thinking|raw}</div>
+		</details>
+		{/if}
+	{elseif $thinking}
 	<div class="block refinement-report">
 		<h3>The design <small>as the last run left it</small></h3>
-		{$report|raw}
+		{$thinking|raw}
 	</div>
 	{else}
 	<p class="faint">The first run has not written its report yet. It appears here once the run ends.</p>
@@ -65,6 +76,18 @@
 	<form class="form refinement-apply" method="post" action="{$base}/threads/{$thread.id}/apply">
 		<p class="faint">Folds every request above into one and runs it over the files as they stand, so the result satisfies all of them together rather than one after another.</p>
 		<button class="btn" type="submit"><svg class="ic"><use href="#i-collapse"/></svg>Apply all</button>
+	</form>
+
+	{* The rules generalise and the subject does not. A fork is the next
+	   subject with this thread's rules already in it, on a folder of its
+	   own: what travels is how the work is done. *}
+	<form class="form refinement-fork" method="post" action="{$base}/threads/{$thread.id}/fork">
+		<label for="refinement-fork">Fork</label>
+		<p class="faint" id="refinement-fork-help">A new thread on another subject, carrying every rule above. Say what it is and what it should produce; the rules come along and the files do not.</p>
+		<textarea id="refinement-fork" name="want" rows="2" aria-describedby="refinement-fork-help" placeholder="A deployment topology diagram: the hosts, what runs on each and the links between them." required></textarea>
+		<div class="form-foot">
+			<button class="btn" type="submit"><svg class="ic"><use href="#i-flow"/></svg>Fork</button>
+		</div>
 	</form>
 
 	<form class="form refinement-comment-form" method="post" action="{$base}/threads/{$thread.id}/comments">

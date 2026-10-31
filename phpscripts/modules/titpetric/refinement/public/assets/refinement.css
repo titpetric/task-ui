@@ -92,6 +92,52 @@
 	opacity: 1;
 }
 
+/* What is being refined, above everything: the images the last run
+ * embedded, at the width the column gives them. A refinement is reviewed by
+ * looking at it, so this is the part of the page that gets the room.
+ */
+.refinement-output {
+	margin: 0 0 1rem;
+}
+
+.refinement-output img,
+.refinement-output svg {
+	display: block;
+	width: 100%;
+	height: auto;
+	margin: 0 0 0.75rem;
+	background: var(--bg-raised, transparent);
+	border: 1px solid var(--line);
+}
+
+.refinement-output p {
+	margin: 0;
+}
+
+/* How the run got there. Kept, and closed: the picture is the work and the
+ * prose is the working.
+ */
+.refinement-thinking {
+	margin: 0 0 1rem;
+}
+
+.refinement-thinking > summary {
+	cursor: pointer;
+	color: var(--fg-faint, inherit);
+	font-size: 0.875rem;
+}
+
+.refinement-thinking[open] > summary {
+	margin-bottom: 0.5rem;
+}
+
+/* The next subject, with this thread's rules. Set apart from Apply all: one
+ * runs this thread again and the other opens another.
+ */
+.refinement-fork {
+	margin: 1rem 0;
+}
+
 /* A request, drawn as the markdown it was written as. Its headings came
  * down to h6 before rendering, so what is left is a bold line: a request is
  * a paragraph inside a thread and the thread's own headings have to win.

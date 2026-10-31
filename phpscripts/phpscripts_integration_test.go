@@ -340,6 +340,81 @@ func TestRefinementApplyAll(t *testing.T) {
 	assert.Contains(t, body, "<li>Use ULID as primary keys.</li>", "and a numbered rule is a list item")
 }
 
+// A fork is the next subject with this thread's rules already in it. The
+// rules generalise and the subject does not, so what travels is how the
+// work is done; the artifacts stay where they were.
+func TestRefinementFork(t *testing.T) {
+	t.Parallel()
+	m, db, dispatcher, _ := instance(t)
+	ctx := context.Background()
+
+	_, id := thread(t, m, "A schema for users and their logins.",
+		"Use ULID as primary keys.", "No foreign keys.")
+
+	out := post(t, m, "/m/titpetric/refinement/threads/"+id+"/fork",
+		url.Values{"want": {"A deployment topology: the hosts and what runs on each."}})
+	assert.Equal(t, http.StatusSeeOther, out.Status)
+
+	forked := filepath.Base(out.Header.Get("Location"))
+	assert.NotEqual(t, id, forked, "a fork is a thread of its own")
+
+	// It starts on the flattened request: the new subject, and every rule
+	// of the thread it came from.
+	sent := dispatcher.comments[len(dispatcher.comments)-1]
+	assert.Contains(t, sent, "## The design\n\nA deployment topology: the hosts and what runs on each.")
+	assert.Contains(t, sent, "1. Use ULID as primary keys.")
+	assert.Contains(t, sent, "2. No foreign keys.")
+	assert.NotContains(t, sent, "A schema for users and their logins.", "the subject does not travel")
+	assert.Equal(t, forked, dispatcher.folders[len(dispatcher.folders)-1],
+		"and it works in a folder of its own, which is empty")
+
+	// The rules are the fork's own rows, so retiring one there leaves the
+	// thread it came from alone.
+	var rules int
+	assert.NoError(t, db.GetContext(ctx, &rules,
+		"SELECT COUNT(*) FROM refinement_correction WHERE thread_id = ?", forked))
+	assert.Equal(t, 2, rules)
+	assert.NoError(t, db.GetContext(ctx, &rules,
+		"SELECT COUNT(*) FROM refinement_correction WHERE thread_id = ?", id))
+	assert.Equal(t, 2, rules)
+
+	// A fork with nothing in it is a 400: a fork is the subject.
+	out = post(t, m, "/m/titpetric/refinement/threads/"+id+"/fork", url.Values{"want": {"  "}})
+	assert.Equal(t, http.StatusBadRequest, out.Status)
+	assert.Contains(t, string(out.Body), "the subject of the new work")
+}
+
+// What is being refined is what can be looked at. The report's embedded
+// images are the output and stand above everything; its prose is how the
+// run got there and folds behind "show thinking". A report that embeds
+// nothing has no picture, and then its prose is the output.
+func TestRefinementShowsTheOutput(t *testing.T) {
+	t.Parallel()
+	m, _, _, store := instance(t)
+
+	to, id := thread(t, m, "A schema for users and their logins.")
+	artifact(t, store, id+"/README.md", "# Credentials\n\n"+
+		"![The schema](diagrams/schema.svg)\n\n"+
+		"Three tables, kept apart.\n")
+
+	body := string(get(t, m, to).Body)
+	assert.Contains(t, body, `<div class="refinement-output">`)
+	assert.Contains(t, body, `<img src="/artifacts/files/`+id+`/diagrams/schema.svg"`)
+	assert.Contains(t, body, "<summary>show thinking</summary>")
+	assert.Contains(t, body, "Three tables, kept apart.")
+
+	// The prose is behind the disclosure, not above the picture.
+	assert.True(t, strings.Index(body, "refinement-output") < strings.Index(body, "show thinking"))
+	assert.True(t, strings.Index(body, "show thinking") < strings.Index(body, "Three tables, kept apart."))
+
+	_, other := thread(t, m, "A policy for passwords.")
+	artifact(t, store, other+"/README.md", "# Passwords\n\nTwelve characters, no reuse.\n")
+
+	body = string(get(t, m, "/m/titpetric/refinement/threads/"+other).Body)
+	assert.NotContains(t, body, "show thinking", "with no picture the prose is the output")
+	assert.Contains(t, body, "Twelve characters, no reuse.")
+}
+
 // A rule can be retired. Deleting the design retires the thread with it,
 // because a rule corrects a design and there is nothing left to correct.
 func TestRefinementDelete(t *testing.T) {

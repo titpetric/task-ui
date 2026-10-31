@@ -102,7 +102,12 @@ class RefinementPage {
 		// it takes the thread with it.
 		$tpl->assign("design", RefinementManager::designID($comments));
 		$tpl->assign("scratchpad", Task::artifact($folder . "/" . RefinementPrompt::SCRATCHPAD) !== "");
-		$tpl->assign("report", RefinementPage::report($thread["report_markdown"], $folder));
+
+		$report = RefinementPage::split($thread["report_markdown"]);
+
+		$tpl->assign("output", RefinementPage::report($report["images"], $folder));
+		$tpl->assign("thinking", RefinementPage::report($report["prose"], $folder));
+		$tpl->assign("visual", $report["images"] !== "");
 
 		echo $tpl->get();
 	}
@@ -187,5 +192,49 @@ class RefinementPage {
 		}
 
 		return Task::markdown($text, $folder);
+	}
+
+	/**
+	 * split separates the report into what is looked at and what is
+	 * read: the lines that are nothing but an embedded image, and
+	 * everything else.
+	 *
+	 * The point of a refinement is the picture. What the run wrote
+	 * around it is how it got there, which is worth keeping and not
+	 * worth putting first: the page draws the images and folds the prose
+	 * behind "show thinking".
+	 *
+	 * A report that embeds nothing is all prose, and then the prose is
+	 * the output: there is nothing to look at and the page shows it
+	 * rather than hiding the only thing it has.
+	 */
+	static function split($markdown) {
+		$images = array();
+		$prose = array();
+		$fenced = false;
+
+		foreach (explode("\n", $markdown) as $line) {
+			$trimmed = trim($line);
+
+			if (substr($trimmed, 0, 3) === "```" || substr($trimmed, 0, 3) === "~~~") {
+				$fenced = !$fenced;
+			}
+
+			// An image inside a fence is a fragment being shown, not a
+			// picture being embedded, and a line with prose around the
+			// image is a sentence: only a line that is the image moves.
+			if (!$fenced && preg_match('/^!\[[^\]]*\]\([^)]+\)$/', $trimmed)) {
+				$images[] = $trimmed;
+				continue;
+			}
+
+			$prose[] = $line;
+		}
+
+		// Lifting a line out leaves the blank lines that framed it, and
+		// two gaps where there was one reads as a missing paragraph.
+		$text = preg_replace('/\n{3,}/', "\n\n", implode("\n", $prose));
+
+		return array("images" => implode("\n\n", $images), "prose" => trim($text));
 	}
 }

@@ -88,7 +88,53 @@ func (d *Dispatcher) prompt(m *phpscript.Module, comment, action, folder string)
 	if index := d.artifacts(folder); index != "" {
 		parts = append(parts, index)
 	}
+	if history := d.history(folder); history != "" {
+		parts = append(parts, history)
+	}
 	return strings.Join(parts, "\n\n"), nil
+}
+
+// Revisions is how far back the prompt carries the history of a folder.
+// Enough to roll back a few steps of refinement and short enough that it
+// is a paragraph rather than a log.
+const Revisions = 12
+
+// history is what the folder has been, as a list of revisions, so a
+// request to put something back the way it was has something to name.
+//
+// The artifact tree is a git repository and every write to it is a
+// commit, which has always been true and was never told to a run. A
+// refinement thread is a sequence of revisions of one folder, so going
+// back one is the ordinary correction: the run reads the file as the
+// revision holds it and writes it again.
+//
+// A folder with no history adds nothing: a thread whose first run has
+// not finished has nothing to go back to.
+func (d *Dispatcher) history(folder string) string {
+	if d.Store == nil {
+		return ""
+	}
+	revisions, err := d.Store.History(context.Background(), strings.Trim(folder, "/"), Revisions)
+	if err != nil || len(revisions) == 0 {
+		return ""
+	}
+	lines := []string{
+		"## The history",
+		"",
+		"The artifact tree is a git repository and every revision of it is a",
+		"commit. These are the folder's, newest first. `read_artifact` takes one",
+		"of them as its `version`, so a request to put something back the way it",
+		"was is a read of the revision that held it and a write of what it said.",
+		"",
+	}
+	for _, revision := range revisions {
+		line := "- `" + revision.Short + "` " + revision.When + ", " + revision.Subject
+		if len(revision.Files) > 0 {
+			line += ": " + strings.Join(revision.Files, ", ")
+		}
+		lines = append(lines, line)
+	}
+	return strings.Join(lines, "\n")
 }
 
 // where names the folder of the artifact tree a run writes in, which is

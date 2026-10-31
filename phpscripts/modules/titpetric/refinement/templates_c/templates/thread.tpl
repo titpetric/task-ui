@@ -3,11 +3,24 @@
 	<p class="refinement-back"><a href="<?php echo htmlspecialchars($_v['base'], ENT_QUOTES);?>
 ">&larr; Every thread</a></p>
 
-	<?php if($_v['report']){?>
+	
+	<?php if($_v['visual']){?>
+
+	<div class="refinement-output"><?php echo $_v['output'];?>
+</div>
+		<?php if($_v['thinking']){?>
+
+		<details class="refinement-thinking">
+			<summary>show thinking</summary>
+			<div class="refinement-report"><?php echo $_v['thinking'];?>
+</div>
+		</details>
+		<?php }?>
+	<?php }elseif($_v['thinking']){?>
 
 	<div class="block refinement-report">
 		<h3>The design <small>as the last run left it</small></h3>
-		<?php echo $_v['report'];?>
+		<?php echo $_v['thinking'];?>
 
 	</div>
 	<?php }else{?>
@@ -93,6 +106,18 @@ data-confirm="Delete this request? The next Apply all will not carry it. The fil
 /apply">
 		<p class="faint">Folds every request above into one and runs it over the files as they stand, so the result satisfies all of them together rather than one after another.</p>
 		<button class="btn" type="submit"><svg class="ic"><use href="#i-collapse"/></svg>Apply all</button>
+	</form>
+
+	
+	<form class="form refinement-fork" method="post" action="<?php echo htmlspecialchars($_v['base'], ENT_QUOTES);?>
+/threads/<?php echo htmlspecialchars($_v['thread']['id'], ENT_QUOTES);?>
+/fork">
+		<label for="refinement-fork">Fork</label>
+		<p class="faint" id="refinement-fork-help">A new thread on another subject, carrying every rule above. Say what it is and what it should produce; the rules come along and the files do not.</p>
+		<textarea id="refinement-fork" name="want" rows="2" aria-describedby="refinement-fork-help" placeholder="A deployment topology diagram: the hosts, what runs on each and the links between them." required></textarea>
+		<div class="form-foot">
+			<button class="btn" type="submit"><svg class="ic"><use href="#i-flow"/></svg>Fork</button>
+		</div>
 	</form>
 
 	<form class="form refinement-comment-form" method="post" action="<?php echo htmlspecialchars($_v['base'], ENT_QUOTES);?>

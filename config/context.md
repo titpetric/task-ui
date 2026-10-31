@@ -202,8 +202,13 @@ naming the tools and the scripts that regenerate each artifact. A rule can be de
 design deletes the thread. **Apply all** folds the design and every
 surviving rule into one request and runs it once over the artifacts that
 are there, rather than one run per rule, and folds the requests it
-carried. Page: `/m/<vendor>/<name>`, `/settings/sidebar`; API:
-`/api/modules`, `/api/sidebar`.
+carried. **Fork** opens a thread on another subject carrying the same
+rules, on an empty folder. The page shows the images the report embeds
+and folds its prose behind **show thinking**, because a refinement is
+reviewed by looking at it. Every request carries the folder's git
+history, so a correction can ask for a rollback and the run reads the
+file at that commit. Page: `/m/<vendor>/<name>`, `/settings/sidebar`;
+API: `/api/modules`, `/api/sidebar`.
 
 ## Secrets and env (`secret`)
 

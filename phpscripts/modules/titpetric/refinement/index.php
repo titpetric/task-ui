@@ -8,13 +8,14 @@
 // description and the badges are the ones modinfo.php registered, and
 // the layout, the sidebar and the footer are the instance's.
 //
-// Six routes, read off the path past the prefix:
+// Seven routes, read off the path past the prefix:
 //
 //   ""                                   the threads, and the form that starts one
 //   "threads"                     POST   starts a thread and dispatches its run
 //   "threads/<id>"                       one thread: its report and its requests
 //   "threads/<id>/comments"       POST   a correction, and the run that applies it
 //   "threads/<id>/apply"          POST   folds every rule into one run
+//   "threads/<id>/fork"           POST   a new subject, carrying the rules
 //   "threads/<id>/comments/<c>/delete" POST retires a rule, or the whole thread
 //
 // Nothing here holds logic. RefinementStore has every SQL statement the
@@ -114,6 +115,28 @@ if ($posted && count($parts) === 3 && $parts[0] === "threads" && $parts[2] === "
 
 	$manager->dispatch($thread["id"], $comment["id"], $comment["body"]);
 	RefinementPage::go($to);
+	return;
+}
+
+// POST /threads/<id>/fork: a new subject, carrying this thread's rules.
+if ($posted && count($parts) === 3 && $parts[0] === "threads" && $parts[2] === "fork") {
+	$thread = $store->getThread($parts[1]);
+	if (!is_array($thread)) {
+		RefinementPage::missing();
+		return;
+	}
+
+	$want = isset($_POST["want"]) ? trim($_POST["want"]) : "";
+	if ($want === "") {
+		RefinementPage::fail($base . "/threads/" . $thread["id"], "A fork starts from the subject of the new work.");
+		return;
+	}
+
+	$forked = $manager->fork($thread["id"], $user, $want);
+	$comment = $manager->apply($forked, $user);
+
+	$manager->dispatch($forked, $comment["id"], $comment["body"]);
+	RefinementPage::go($base . "/threads/" . $forked);
 	return;
 }
 

@@ -264,6 +264,55 @@ class RefinementManager {
 	}
 
 	/**
+	 * fork opens a thread on a new subject, carrying the rules of one
+	 * that already works.
+	 *
+	 * A thread's corrections generalise. "Every id is a ULID", "no
+	 * foreign keys", "the diagram is generated and the generation is
+	 * repeatable" are not about users and their logins; they are how
+	 * this person wants the work done, and typing them again for the
+	 * next subject is the thing worth not doing.
+	 *
+	 * So a fork is the subject and the rules: the new thread opens on
+	 * what you typed, every rule of the old one is copied into it as a
+	 * rule of its own, and the run it starts is the flattened request.
+	 * It is the first run of a new thread and it starts on an empty
+	 * folder, because the rules travel and the artifacts do not.
+	 */
+	function fork($from, $user, $want) {
+		$opened = $this->start($user, $want);
+		$thread = $opened["id"];
+		$now = RefinementManager::now();
+		$before = $opened["comment_id"];
+
+		foreach ($this->store->getRuleComments($from) as $rule) {
+			$comment = ulid();
+
+			$this->store->createRefinementComment(array(
+				"id" => $comment,
+				"thread_id" => $thread,
+				"user" => $rule["user"],
+				"body" => $rule["body"],
+				"note_id" => "",
+				"created_at" => $now,
+			));
+
+			$this->store->createRefinementCorrection(array(
+				"id" => ulid(),
+				"thread_id" => $thread,
+				"comment_id" => $comment,
+				"corrects_id" => $before,
+				"created_at" => $now,
+			));
+
+			$before = $comment;
+			$now = RefinementManager::now();
+		}
+
+		return $thread;
+	}
+
+	/**
 	 * dispatch starts the Claude run that answers a comment, and records
 	 * the note it opened beside the comment.
 	 *
