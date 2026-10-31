@@ -26,8 +26,7 @@ func TestKeyWorkspace(t *testing.T) {
 // ssh for an SSH key in its menu, the git key too.
 func TestKeyWorkspace_Page(t *testing.T) {
 	t.Parallel()
-	v, err := view.New()
-	assert.NoError(t, err)
+	v := shared(t)
 	p := admin(t)
 	enc := keystore.Key{Name: "task_encryption_ed25519", Purpose: keystore.PurposeEncrypt, Algo: "ed25519", Fingerprint: "SHA256:enc"}
 	git := keystore.Key{Name: "deploy_ed25519", Purpose: keystore.PurposeSSH, Algo: "ed25519", Fingerprint: "SHA256:git", Git: true}

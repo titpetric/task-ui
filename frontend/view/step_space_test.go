@@ -58,8 +58,7 @@ func TestStepSpace(t *testing.T) {
 // folder; the folder options carry their workspace for the cascade.
 func TestView_RenderStepSpace(t *testing.T) {
 	t.Parallel()
-	v, err := view.New()
-	assert.NoError(t, err)
+	v := shared(t)
 	p := spacePage(t)
 	p.StepWorkflows = []view.Workflow{{Workflow: model.Workflow{ID: "w2", Name: "nightly"}}}
 	p.Workflow = &view.Workflow{
@@ -185,8 +184,7 @@ func TestMoveSteps_FolderNotTitle(t *testing.T) {
 // shows as the text alone.
 func TestView_RenderStepValuesAreIDs(t *testing.T) {
 	t.Parallel()
-	v, err := view.New()
-	assert.NoError(t, err)
+	v := shared(t)
 	p := movePage(t)
 	p.WorkspaceList = append(p.WorkspaceList, model.Workspace{Folder: "internal", Title: "Root"}, model.Workspace{Folder: "ops", Title: "Operations"})
 	p.StepWorkflows = []view.Workflow{{Workflow: model.Workflow{ID: "w2", Name: "nightly"}}}
@@ -214,8 +212,7 @@ func TestView_RenderStepValuesAreIDs(t *testing.T) {
 // step says under its card what the workspace lacks.
 func TestView_RenderMoveSteps(t *testing.T) {
 	t.Parallel()
-	v, err := view.New()
-	assert.NoError(t, err)
+	v := shared(t)
 	p := movePage(t)
 	assert.True(t, p.StepSpaceHas("malta"))
 	assert.False(t, p.StepSpaceHas("empty"))

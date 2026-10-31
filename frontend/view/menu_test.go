@@ -3,6 +3,7 @@ package view_test
 import (
 	"bytes"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -49,10 +50,31 @@ func TestNewMenu(t *testing.T) {
 	assert.Error(t, err)
 }
 
+// views is the one parsed template set a test run needs. view.New reads
+// every template out of the embedded tree and parses it, 65ms measured,
+// and the tests of this package asked for about a hundred and forty of
+// them: nine seconds of parsing one unchanging set of files.
+//
+// A View is read only once New returns and html/template executes a
+// parsed template from any number of goroutines, so one set serves every
+// test, parallel ones included.
+var views struct {
+	sync.Once
+	v   *view.View
+	err error
+}
+
+// shared is the parsed template set, built on the first call.
+func shared(t *testing.T) *view.View {
+	t.Helper()
+	views.Do(func() { views.v, views.err = view.New() })
+	assert.NoError(t, views.err)
+	return views.v
+}
+
 func render(t *testing.T, name string, p *view.Page) string {
 	t.Helper()
-	v, err := view.New()
-	assert.NoError(t, err)
+	v := shared(t)
 	// The sidebar's top block is data, and the handler fills it from the
 	// sidebar table right before it renders. A test renders through here,
 	// so this is where it is filled, from the defaults: a test that signs

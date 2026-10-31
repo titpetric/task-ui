@@ -97,8 +97,7 @@ func TestSidebar(t *testing.T) {
 // play runs the job with the pin's directory and args.
 func TestView_RenderSidePin(t *testing.T) {
 	t.Parallel()
-	v, err := view.New()
-	assert.NoError(t, err)
+	v := shared(t)
 	p := admin(t)
 	p.Running = nil
 	edge := jobs("infra/edge", "plan")

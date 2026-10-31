@@ -77,8 +77,7 @@ func TestToolingLatest(t *testing.T) {
 // The panel of samples renders the three charts, the week on its own
 // row, and the newest commands.
 func TestToolingRendersSamples(t *testing.T) {
-	v, err := view.New()
-	assert.NoError(t, err)
+	v := shared(t)
 
 	var out strings.Builder
 	page := &view.Page{Title: "Runs", Tooling: view.NewTooling(&tooling.Report{Project: sampleScope()}, toolingNow)}

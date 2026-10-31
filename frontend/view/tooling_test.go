@@ -249,8 +249,7 @@ func TestToolingColorsAreStable(t *testing.T) {
 // The panel renders inside the runs page without a template error, and
 // what it draws is the report's own numbers.
 func TestToolingRenders(t *testing.T) {
-	v, err := view.New()
-	assert.NoError(t, err)
+	v := shared(t)
 
 	var out strings.Builder
 	page := &view.Page{Title: "Runs", Tooling: view.NewTooling(toolingReport(), toolingNow)}
@@ -297,8 +296,7 @@ func TestToolingTicks(t *testing.T) {
 // The Activity and Tooling blocks of the runs page each fold on a
 // toggle in their heading, open by default.
 func TestToolingRendersFoldToggles(t *testing.T) {
-	v, err := view.New()
-	assert.NoError(t, err)
+	v := shared(t)
 
 	var out strings.Builder
 	page := &view.Page{Title: "Runs", Tooling: view.NewTooling(&tooling.Report{Project: commandScope()}, toolingNow)}
@@ -318,8 +316,7 @@ func TestToolingRendersFoldToggles(t *testing.T) {
 
 // A page with nothing recorded draws no panel at all.
 func TestToolingRendersNothing(t *testing.T) {
-	v, err := view.New()
-	assert.NoError(t, err)
+	v := shared(t)
 
 	var out strings.Builder
 	assert.NoError(t, v.Render(&out, "runs", &view.Page{Title: "Runs"}))
@@ -388,8 +385,7 @@ func TestToolingScope(t *testing.T) {
 
 // Both sections render, each with its own heading, charts and table.
 func TestToolingRendersBothScopes(t *testing.T) {
-	v, err := view.New()
-	assert.NoError(t, err)
+	v := shared(t)
 
 	project := toolingScope()
 	project.Repository = "titpetric/atkins"

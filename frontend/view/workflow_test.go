@@ -70,8 +70,7 @@ func TestWorkflowRun_Took(t *testing.T) {
 // kinds take prompt/edit.
 func TestView_RenderWorkflowEditor(t *testing.T) {
 	t.Parallel()
-	v, err := view.New()
-	assert.NoError(t, err)
+	v := shared(t)
 	p := admin(t)
 	p.Workflow = &view.Workflow{
 		Workflow: model.Workflow{ID: "w1", Name: "Porec watering", Description: "Water the plants or not."},
@@ -170,8 +169,7 @@ func threadRun(answer string) view.WorkflowRun {
 // without an answer has no chevron, and the input stays out.
 func TestView_RenderWorkflowsRecentRuns(t *testing.T) {
 	t.Parallel()
-	v, err := view.New()
-	assert.NoError(t, err)
+	v := shared(t)
 	p := admin(t)
 	long := strings.Repeat("Rain all week. ", 40)
 	failed := threadRun("")
@@ -210,8 +208,7 @@ func TestView_RenderWorkflowsRecentRuns(t *testing.T) {
 // dot by the run's link, how it ended, and Claude's reply folded under it.
 func TestView_RenderWorkflowRuns(t *testing.T) {
 	t.Parallel()
-	v, err := view.New()
-	assert.NoError(t, err)
+	v := shared(t)
 	p := admin(t)
 	p.Workflow = &view.Workflow{Workflow: model.Workflow{ID: "w1", Name: "Porec watering"}}
 	failed := threadRun("")
@@ -235,8 +232,7 @@ func TestView_RenderWorkflowRuns(t *testing.T) {
 // the steps.
 func TestView_RenderWorkflowRunThread(t *testing.T) {
 	t.Parallel()
-	v, err := view.New()
-	assert.NoError(t, err)
+	v := shared(t)
 	p := admin(t)
 	p.Workflow = &view.Workflow{Workflow: model.Workflow{ID: "w1", Name: "Porec watering"}}
 	p.WorkflowRuns = []view.WorkflowRun{threadRun("Skip **watering**.\n\n<script>alert(1)</script>")}
@@ -268,8 +264,7 @@ func TestView_RenderWorkflowRunThread(t *testing.T) {
 // without input says what ran.
 func TestView_RenderWorkflowRunOutcome(t *testing.T) {
 	t.Parallel()
-	v, err := view.New()
-	assert.NoError(t, err)
+	v := shared(t)
 	p := admin(t)
 	p.Workflow = &view.Workflow{Workflow: model.Workflow{ID: "w2", Name: "Deploy vhosts"}}
 	run := threadRun("")
@@ -302,8 +297,7 @@ func TestWorkflowRun_NoteState(t *testing.T) {
 // of its steps and a link to the page the name is stay off the row.
 func TestView_RenderWorkflowsTable(t *testing.T) {
 	t.Parallel()
-	v, err := view.New()
-	assert.NoError(t, err)
+	v := shared(t)
 	p := admin(t)
 	p.Workflows = []view.Workflow{
 		{Workflow: model.Workflow{ID: "w1", Name: "release", UserName: "ops"}, Steps: []view.Step{{Folder: "infra", Job: "plan"}}, CanRun: true, CanChange: true,
@@ -337,8 +331,7 @@ func TestView_RenderWorkflowsTable(t *testing.T) {
 // the workflow's user, whom the lead and each row name.
 func TestView_RenderWorkflowEditSchedule(t *testing.T) {
 	t.Parallel()
-	v, err := view.New()
-	assert.NoError(t, err)
+	v := shared(t)
 	p := admin(t)
 	p.Users = []model.User{{ID: "u1", Name: "admin", Role: model.RoleAdmin}, {ID: "u2", Name: "ops", Role: model.RoleRunner}}
 	p.Workflow = &view.Workflow{Workflow: model.Workflow{ID: "w1", Name: "release", UserName: "admin"}, RunAs: "miguel", Steps: []view.Step{{Kind: model.StepJob, Folder: "infra", Job: "plan"}}, CanRun: true, CanChange: true}
@@ -386,8 +379,7 @@ func TestView_RenderWorkflowEditSchedule(t *testing.T) {
 // it, and the delete confirm names the workflow.
 func TestView_RenderSchedulesWorkflow(t *testing.T) {
 	t.Parallel()
-	v, err := view.New()
-	assert.NoError(t, err)
+	v := shared(t)
 	p := admin(t)
 	next := time.Now()
 	p.WorkflowNames = map[string]string{"w1": "release"}

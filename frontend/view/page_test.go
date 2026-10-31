@@ -320,8 +320,7 @@ func TestPage_SummarizesRun(t *testing.T) {
 // row of choices under a label is a group the label names.
 func TestPage_FieldNames(t *testing.T) {
 	t.Parallel()
-	v, err := view.New()
-	assert.NoError(t, err)
+	v := shared(t)
 	p := admin(t)
 	p.Instance = &view.Instance{ParentEnv: "none"}
 	for _, c := range []struct{ page, want string }{

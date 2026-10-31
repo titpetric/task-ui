@@ -74,8 +74,7 @@ func projectPage(t *testing.T, user *model.User, role permission.Policy) *view.P
 // project rules: settings, Pull now, and Remove checkout last.
 func TestFolderMenu_Project(t *testing.T) {
 	t.Parallel()
-	v, err := view.New()
-	assert.NoError(t, err)
+	v := shared(t)
 
 	var buf bytes.Buffer
 	assert.NoError(t, v.Render(&buf, "folder", projectPage(t, &model.User{Name: "admin", Role: model.RoleAdmin}, nil)))
@@ -111,8 +110,7 @@ func TestFolderMenu_Project(t *testing.T) {
 // A workspace's page links its settings, with nothing to remove.
 func TestFolderMenu_Workspace(t *testing.T) {
 	t.Parallel()
-	v, err := view.New()
-	assert.NoError(t, err)
+	v := shared(t)
 
 	p := projectPage(t, &model.User{Name: "admin", Role: model.RoleAdmin}, nil)
 	p.Folder = &folder.Folder{ID: "malta", Title: "Malta"}
@@ -185,8 +183,7 @@ func TestFolderMenu_AddProjectPage(t *testing.T) {
 // a user with project/delete.
 func TestFolderMenu_ProjectEdit(t *testing.T) {
 	t.Parallel()
-	v, err := view.New()
-	assert.NoError(t, err)
+	v := shared(t)
 
 	p := projectPage(t, &model.User{Name: "admin", Role: model.RoleAdmin}, nil)
 	var buf bytes.Buffer

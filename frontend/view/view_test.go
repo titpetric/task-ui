@@ -54,6 +54,8 @@ func admin(t *testing.T) *view.Page {
 func TestNew(t *testing.T) {
 	t.Parallel()
 
+	// The one test that builds its own: this is the constructor under
+	// test, and the rest of the package shares what it made.
 	v, err := view.New()
 	assert.NoError(t, err)
 	names := v.Names()
@@ -76,8 +78,7 @@ func TestNew(t *testing.T) {
 func TestView_Render(t *testing.T) {
 	t.Parallel()
 
-	v, err := view.New()
-	assert.NoError(t, err)
+	v := shared(t)
 	for _, name := range v.Names() {
 		var buf bytes.Buffer
 		assert.NoError(t, v.Render(&buf, name, admin(t)), name)
@@ -102,8 +103,7 @@ func TestView_Render(t *testing.T) {
 func TestView_RenderDialog(t *testing.T) {
 	t.Parallel()
 
-	v, err := view.New()
-	assert.NoError(t, err)
+	v := shared(t)
 	var buf bytes.Buffer
 	assert.NoError(t, v.Render(&buf, "home", admin(t)))
 	assert.Contains(t, buf.String(), `id="run-reason-text"`)
@@ -115,8 +115,7 @@ func TestView_RenderDialog(t *testing.T) {
 func TestView_RenderTree(t *testing.T) {
 	t.Parallel()
 
-	v, err := view.New()
-	assert.NoError(t, err)
+	v := shared(t)
 	p := admin(t)
 	p.Tree = []folder.Item{{Name: "deploy.sh", Path: "deploy.sh", Href: "/files/infra/deploy.sh", Exec: true}, {Name: "docs", Dir: true}}
 	var buf bytes.Buffer
@@ -137,8 +136,7 @@ func TestView_RenderTree(t *testing.T) {
 func TestView_RenderJobTable(t *testing.T) {
 	t.Parallel()
 
-	v, err := view.New()
-	assert.NoError(t, err)
+	v := shared(t)
 	render := func(p *view.Page) string {
 		var buf bytes.Buffer
 		assert.NoError(t, v.Render(&buf, "folder", p))
@@ -230,8 +228,7 @@ func TestView_RenderJobTable(t *testing.T) {
 func TestView_RenderJobSummarize(t *testing.T) {
 	t.Parallel()
 
-	v, err := view.New()
-	assert.NoError(t, err)
+	v := shared(t)
 	render := func(p *view.Page) string {
 		var buf bytes.Buffer
 		assert.NoError(t, v.Render(&buf, "job", p))
@@ -262,8 +259,7 @@ func TestView_RenderJobSummarize(t *testing.T) {
 func TestView_RenderJobRunMenu(t *testing.T) {
 	t.Parallel()
 
-	v, err := view.New()
-	assert.NoError(t, err)
+	v := shared(t)
 	p := admin(t)
 	p.Running = nil
 	p.Summaries = true
@@ -294,8 +290,7 @@ func TestView_RenderJobRunMenu(t *testing.T) {
 func TestView_RenderJobSummary(t *testing.T) {
 	t.Parallel()
 
-	v, err := view.New()
-	assert.NoError(t, err)
+	v := shared(t)
 	p := admin(t)
 	p.RunReports = map[string]*note.Report{p.Runs[0].ID: {RunID: p.Runs[0].ID, By: "ops", Body: "## Passed\n\n- 3 images"}}
 	var buf bytes.Buffer
@@ -313,8 +308,7 @@ func TestView_RenderJobSummary(t *testing.T) {
 func TestView_RenderReport(t *testing.T) {
 	t.Parallel()
 
-	v, err := view.New()
-	assert.NoError(t, err)
+	v := shared(t)
 	render := func(p *view.Page) string {
 		var buf bytes.Buffer
 		assert.NoError(t, v.Render(&buf, "report", p))
@@ -347,8 +341,7 @@ func TestView_RenderReport(t *testing.T) {
 func TestView_RenderReportLinks(t *testing.T) {
 	t.Parallel()
 
-	v, err := view.New()
-	assert.NoError(t, err)
+	v := shared(t)
 	p := admin(t)
 	id := p.Runs[0].ID
 	p.Report = &note.Report{RunID: id, Body: "done"}
@@ -369,8 +362,7 @@ func TestView_RenderReportLinks(t *testing.T) {
 func TestView_RenderTableHeadings(t *testing.T) {
 	t.Parallel()
 
-	v, err := view.New()
-	assert.NoError(t, err)
+	v := shared(t)
 	heading := regexp.MustCompile(`<h[34][ >]|<span class="label">`)
 	for _, name := range v.Names() {
 		var buf bytes.Buffer
@@ -393,8 +385,7 @@ func TestView_RenderTableHeadings(t *testing.T) {
 // passphrase, typed or generated; the default workspace has no Delete.
 func TestWorkspaceEdit_Page(t *testing.T) {
 	t.Parallel()
-	v, err := view.New()
-	assert.NoError(t, err)
+	v := shared(t)
 	p := admin(t)
 	p.Workspace = &model.Workspace{Folder: "malta"}
 	p.KeysDir = "/keys"
@@ -422,8 +413,7 @@ func TestWorkspaceEdit_Page(t *testing.T) {
 // a checkout with its repository, Replace and Remove.
 func TestWorkspaceEdit_Home(t *testing.T) {
 	t.Parallel()
-	v, err := view.New()
-	assert.NoError(t, err)
+	v := shared(t)
 	p := admin(t)
 	p.Workspace = &model.Workspace{Folder: "malta", Title: "Malta"}
 	p.Workspaces = map[string]int{"malta": 1}
@@ -456,8 +446,7 @@ func TestWorkspaceEdit_Home(t *testing.T) {
 // The Workspaces page opens Import in a dialog from its head.
 func TestWorkspaces_ImportDialog(t *testing.T) {
 	t.Parallel()
-	v, err := view.New()
-	assert.NoError(t, err)
+	v := shared(t)
 	var buf bytes.Buffer
 	assert.NoError(t, v.Render(&buf, "workspaces", admin(t)))
 	body := buf.String()
@@ -471,8 +460,7 @@ func TestWorkspaces_ImportDialog(t *testing.T) {
 func TestView_RenderEnvironment(t *testing.T) {
 	t.Parallel()
 
-	v, err := view.New()
-	assert.NoError(t, err)
+	v := shared(t)
 	var buf bytes.Buffer
 	assert.NoError(t, v.Render(&buf, "folder", admin(t)))
 	assert.NotContains(t, buf.String(), "Environment")

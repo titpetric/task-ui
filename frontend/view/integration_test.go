@@ -37,8 +37,7 @@ func TestIntegration(t *testing.T) {
 // summary line the script fills. Nothing of a secret shows.
 func TestIntegration_Page(t *testing.T) {
 	t.Parallel()
-	v, err := view.New()
-	assert.NoError(t, err)
+	v := shared(t)
 	p := admin(t)
 	p.Users = []model.User{{Name: "admin", Role: model.RoleAdmin}, {Name: "ops", Role: model.RoleRunner, Admin: true}, {Name: "dev", Role: model.RoleRunner}, {Name: "guest", Role: model.RoleViewer}}
 	for _, kind := range integration.Kinds() {

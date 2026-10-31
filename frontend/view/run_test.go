@@ -36,8 +36,7 @@ func TestRun_ExpiredText(t *testing.T) {
 // the run window has the place for it.
 func TestRender_runTitle(t *testing.T) {
 	t.Parallel()
-	v, err := view.New()
-	assert.NoError(t, err)
+	v := shared(t)
 	for _, name := range []string{"home", "runs", "run"} {
 		page := admin(t)
 		page.Runs[0].Title = "<b>deploying</b>"
@@ -59,8 +58,7 @@ func TestRender_runTitle(t *testing.T) {
 // and links no .cast to download.
 func TestRender_runRecording(t *testing.T) {
 	t.Parallel()
-	v, err := view.New()
-	assert.NoError(t, err)
+	v := shared(t)
 	page := admin(t)
 	page.Run.State, page.Run.CastPath = model.StateOK, "infra/plan/x.cast"
 	var buf bytes.Buffer

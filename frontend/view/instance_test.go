@@ -16,8 +16,7 @@ import (
 // files, an ellipsis for a pending one, and the total.
 func TestInstance_Storage(t *testing.T) {
 	t.Parallel()
-	v, err := view.New()
-	assert.NoError(t, err)
+	v := shared(t)
 	p := admin(t)
 	p.Instance = &view.Instance{Root: "/data/workspaces", Storage: &diskusage.Table{
 		Rows: []diskusage.Row{
@@ -46,8 +45,7 @@ func TestInstance_Storage(t *testing.T) {
 // with no tool has no table, and no tool at all says so.
 func TestInstance_Tooling(t *testing.T) {
 	t.Parallel()
-	v, err := view.New()
-	assert.NoError(t, err)
+	v := shared(t)
 	p := admin(t)
 	p.Instance = &view.Instance{Tooling: view.ToolGroups([]model.Tool{
 		{Name: "go", Category: toolenv.CategoryRuntime, Version: "go1.22.1", Path: "/usr/local/go/bin/go", Description: "Go toolchain: builds and tests Go"},

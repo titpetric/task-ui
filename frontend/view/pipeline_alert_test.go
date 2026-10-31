@@ -76,8 +76,7 @@ func TestPipelineAlert_Rows(t *testing.T) {
 // page shows none of it.
 func TestView_RenderPipelineAlert(t *testing.T) {
 	t.Parallel()
-	v, err := view.New()
-	assert.NoError(t, err)
+	v := shared(t)
 	render := func(name string, p *view.Page) string {
 		var buf bytes.Buffer
 		assert.NoError(t, v.Render(&buf, name, p))

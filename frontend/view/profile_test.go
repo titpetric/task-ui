@@ -25,8 +25,7 @@ func TestProfile_Activity(t *testing.T) {
 func TestView_RenderProfile(t *testing.T) {
 	t.Parallel()
 
-	v, err := view.New()
-	assert.NoError(t, err)
+	v := shared(t)
 	render := func(p *view.Page) string {
 		var buf bytes.Buffer
 		assert.NoError(t, v.Render(&buf, "profile", p))
@@ -75,8 +74,7 @@ func TestView_RenderProfile(t *testing.T) {
 func TestView_RenderUserEdit(t *testing.T) {
 	t.Parallel()
 
-	v, err := view.New()
-	assert.NoError(t, err)
+	v := shared(t)
 	var buf bytes.Buffer
 	assert.NoError(t, v.Render(&buf, "user_edit", admin(t)))
 	out := buf.String()
@@ -101,8 +99,7 @@ func TestView_RenderUserEdit(t *testing.T) {
 func TestView_RenderUsers(t *testing.T) {
 	t.Parallel()
 
-	v, err := view.New()
-	assert.NoError(t, err)
+	v := shared(t)
 	p := admin(t)
 	p.Users = []model.User{{ID: "u1", Name: "ops", Role: model.RoleRunner}}
 	var buf bytes.Buffer
