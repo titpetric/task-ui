@@ -44,24 +44,23 @@ task: Available tasks for this project:
 * install: Install task-ui
 * lint: Lint with splint, rulelint and vale, zero findings is the bar
 * run: Run task-ui over the demo projects
-* cover: Report unit test coverage per package
 * test: Run the unit tests
 * docker:build: Build task-ui docker image
 * docker:gen: Generate an ssh key for the key folder, ./keys
 * docker:run: Run task-ui in docker env
 * docs:shots: Regenerate the README screenshots
-* lint:docs: Lint the prose of the markdown, Go, PHP, JavaScript and CSS
+* lint:docs: Report the prose findings of the markdown, Go, PHP, JavaScript and CSS
+* test:cover: Report unit test coverage per package
+* test:duplicate: Report the coverage two tests share
 * test:integration: Run the integration tests: processes, databases and the network
+* test:scope: Run the tests of what changed, inside the 1s per test budget
 
 ## task: default
 
 Run everything
 
 commands:
-- `Task: fix`
-- `Task: lint`
-- `Task: install`
-- `Task: test`
+- `Task: fix`- `Task: lint`- `Task: install`- `Task: test`
 
 ## task: test
 
@@ -70,16 +69,28 @@ Run the unit tests
 commands:
 - `go test ./...`
 
+## task: test:scope
+
+The packages a change touched and the packages that import them, from git and go list, with every test held to a second. Takes the flags of scripts/test.sh: task test:scope -- --all
+
+commands:
+- `scripts/test.sh`
+
+## task: test:duplicate
+
+Report the coverage two tests share
+
+commands:
+- `scripts/test-duplicate.sh`
+
 ## task: test:integration
 
-One go test per package, batched by test name, under a memory cap, so a
-package that holds more than the cap fits cannot take the suite down.
-Takes a package pattern: task test:integration -- ./storage/...
+One go test per package, batched by test name, under a memory cap, so a package that holds more than the cap fits cannot take the suite down. Takes a package pattern: task test:integration -- ./storage/...
 
 commands:
 - `scripts/test-integration.sh`
 
-## task: cover
+## task: test:cover
 
 Report unit test coverage per package
 
@@ -105,16 +116,14 @@ commands:
 Lint with splint, rulelint and vale, zero findings is the bar
 
 commands:
-- `splint ./...`
-- `go run ./internal/cmd/rulelint`
-- `Task: lint:docs`
+- `splint ./...`- `go run ./internal/cmd/rulelint`
 
 ## task: lint:docs
 
-Lint the prose of the markdown, Go, PHP, JavaScript and CSS
+Report the prose findings of the markdown, Go, PHP, JavaScript and CSS
 
 commands:
-- `scripts/vale-gate.sh`
+- `git ls-files --cached --others --exclude-standard | grep -E '\.(md|go|php|js|css)$' | xargs -r vale`
 
 ## task: install
 
@@ -128,10 +137,5 @@ commands:
 Fix code
 
 dependencies:
-- `deps:splint`
-
-commands:
-- `splint fix ./...`
-- `go vet ./...`
-- `go mod tidy`
-- `./README.md.sh > README.md`
+- `deps:splint` commands:
+- `splint fix ./...`- `go vet ./...`- `go mod tidy`- `./README.md.sh > README.md`

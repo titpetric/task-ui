@@ -16,6 +16,8 @@ for NAME in $(taskList); do
 	if [ -z "$NAME" ]; then
 		continue
 	fi
-	echo "## $(task ${NAME} --summary | awk '/^vars:/ { skip = 1; next } skip && /^$/ { skip = 0; next } !skip' | perl -p -e 's/^ - (.*)/- \`\1\`/g')"
+	# vars: and env: are how a task is wired, not what it is for: the
+	# summary prints both and a reader of the README wants neither.
+	echo "## $(task ${NAME} --summary | awk '/^vars:/ || /^env:/ { skip = 1; next } skip && /^$/ { skip = 0; next } !skip' | perl -p -e 's/^ - (.*?)\s*$/- \`\1\`/')"
 	echo
 done
