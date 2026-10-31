@@ -101,6 +101,10 @@ scripts/test-integration.sh ./storage/...    # one package or pattern
 task test:integration -- ./frontend/...      # the same, through task
 ```
 
+An integration test gets five seconds rather than one, because it starts
+processes; `TASK_UI_TEST_BUDGET` moves that, and the run names anything
+over it. What takes longer than five seconds is waiting.
+
 One `go test` per package, and a package holding more tests than the batch size is split by test name into batches of that size. The names come from `go test -list`, so a test added to a split package runs without the script being edited. Three variables set the bounds:
 
 | Variable             | Default | What it sets                                     |

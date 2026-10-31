@@ -40,19 +40,51 @@ fi
 
 status=0
 
+# The json of every batch, read at the end for the tests over the budget.
+# An integration test is allowed more than a unit test, because it starts
+# processes, but not minutes: what takes minutes is waiting.
+budget="${TASK_UI_TEST_BUDGET:-5s}"
+json="$(mktemp -d)"
+trap 'rm -rf "${json}"' EXIT
+
 # one runs a single go test and reports what it covered. An empty filter runs
 # the whole package.
 one() {
 	local package="$1" filter="$2" label="$3"
 	printf '\n== %s\n' "${label}"
-	local args=(test -tags integration -count=1 -timeout 15m)
+	local args=(-count=1 -timeout 15m -tags integration)
 	if [ -n "${filter}" ]; then
 		args+=(-run "${filter}")
 	fi
 	args+=("${package}")
-	if ! env GOFLAGS=-p=1 "GOMAXPROCS=${procs}" "GOMEMLIMIT=${mem}" go "${args[@]}"; then
+	local out
+	out="${json}/$(echo "${label}" | tr -c 'a-zA-Z0-9' _).json"
+	if ! env GOFLAGS=-p=1 "GOMAXPROCS=${procs}" "GOMEMLIMIT=${mem}" \
+		gotestsum --jsonfile "${out}" --format pkgname -- "${args[@]}"; then
 		status=1
 	fi
+}
+
+# slowest reports the tests over the budget, across every batch.
+slowest() {
+	local found=0
+	for out in "${json}"/*.json; do
+		[ -e "${out}" ] || continue
+		local slow
+		slow="$(gotestsum tool slowest --jsonfile "${out}" --threshold "${budget}" 2>/dev/null)"
+		if [ -n "${slow}" ]; then
+			[ "${found}" -eq 0 ] && printf '\nover the %s budget:\n' "${budget}" >&2
+			found=1
+			echo "${slow}" >&2
+		fi
+	done
+	if [ "${found}" -eq 1 ]; then
+		echo >&2
+		echo "A test over ${budget} is waiting on something it could be told about." >&2
+		echo "docs/testing.md says what to do instead of sleeping." >&2
+		return 1
+	fi
+	printf '\nevery test is inside the %s budget\n' "${budget}"
 }
 
 for package in "${packages[@]}"; do
@@ -74,6 +106,8 @@ for package in "${packages[@]}"; do
 		one "${package}" "^(${filter%|})\$" "${package} $((i + 1))-$((i + batch > total ? total : i + batch)) of ${total}"
 	done
 done
+
+slowest || status=1
 
 if [ "${status}" -ne 0 ]; then
 	echo >&2
