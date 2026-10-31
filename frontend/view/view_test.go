@@ -13,6 +13,7 @@ import (
 	"github.com/titpetric/task-ui/frontend/view"
 	"github.com/titpetric/task-ui/git"
 	"github.com/titpetric/task-ui/internal/assert"
+	"github.com/titpetric/task-ui/keystore"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/note"
 	"github.com/titpetric/task-ui/permission"
@@ -466,4 +467,304 @@ func TestView_RenderEnvironment(t *testing.T) {
 	assert.NotContains(t, buf.String(), "Environment")
 	assert.NotContains(t, buf.String(), "env file")
 	assert.NotContains(t, buf.String(), "/env/")
+}
+
+// sideMenu returns the top nav of the sidebar.
+func sideMenu(t *testing.T, body string) string {
+	t.Helper()
+	at := strings.Index(body, `<nav class="menu">`)
+	assert.True(t, at >= 0, "the sidebar menu")
+	rest := body[at:]
+	return rest[:strings.Index(rest, "</nav>")]
+}
+
+// Settings is in the sidebar, after Notes, for a user who may open any
+// settings page; the link is active on every page under Settings.
+func TestSidebar_Settings(t *testing.T) {
+	t.Parallel()
+
+	p := admin(t)
+	menu := sideMenu(t, render(t, "home", p))
+	notes, settings := strings.Index(menu, `href="/notes"`), strings.Index(menu, `<a href="/settings" class="">`)
+	assert.True(t, notes > 0 && settings > notes, "Settings after Notes")
+
+	p.Path = "/settings/keys"
+	assert.Contains(t, sideMenu(t, render(t, "home", p)), `<a href="/settings" class="active">`)
+
+	signIn(p, &model.User{Name: "guest", Role: model.RoleViewer}, nil)
+	assert.NotContains(t, sideMenu(t, render(t, "home", p)), `href="/settings"`, "nothing to open, no entry")
+
+	signIn(p, &model.User{Name: "ops", Role: model.RoleRunner}, permission.Policy{"secret/view": permission.Allow})
+	assert.Contains(t, sideMenu(t, render(t, "home", p)), `href="/settings"`)
+}
+
+// With no folder the sidebar says so and links the form that adds a
+// repository, for a user who may; others read where to add one.
+func TestSidebar_EmptyLinksAddProject(t *testing.T) {
+	t.Parallel()
+
+	p := admin(t)
+	p.SideFolders, p.Folders = nil, nil
+	body := render(t, "home", p)
+	assert.Contains(t, body, `No folders yet. <a href="/settings/projects/new">Add a git repository</a>, or put a folder with jobs under the root.`)
+
+	signIn(p, &model.User{Name: "guest", Role: model.RoleViewer}, nil)
+	body = render(t, "home", p)
+	assert.Contains(t, body, `No folders yet. Add a git repository in Settings, or put a folder with jobs under the root.`)
+	assert.NotContains(t, body, `href="/settings/projects/new"`)
+}
+
+// The dashboard's head adds anything the user may, behind one menu; a
+// user who may add nothing sees no menu.
+func TestHome_AddMenu(t *testing.T) {
+	t.Parallel()
+
+	p := admin(t)
+	head := pageHead(t, render(t, "home", p))
+	for _, label := range []string{"Add workspace", "Add project", "Generate key", "Upload key", "Add variable", "Add workflow"} {
+		assert.Contains(t, head, "<span>"+label+"</span>")
+	}
+	assert.NotContains(t, head, "Add user", "the server writes no password file here")
+	p.CanAddUsers = true
+	assert.Contains(t, pageHead(t, render(t, "home", p)), `href="/settings/users/new"`)
+
+	signIn(p, &model.User{Name: "guest", Role: model.RoleViewer}, nil)
+	assert.NotContains(t, pageHead(t, render(t, "home", p)), "more-menu")
+}
+
+// The keyboard's first stop is a link past the sidebar to the content,
+// which takes the focus; the header's prompt and its logo button sit on
+// the Tab path.
+func TestLayout_Keyboard(t *testing.T) {
+	t.Parallel()
+
+	body := render(t, "home", admin(t))
+	skip := strings.Index(body, `<a class="skip-link" href="#main">Skip to content</a>`)
+	header := strings.Index(body, `<header class="top"`)
+	main := strings.Index(body, `<main id="main" tabindex="-1">`)
+	assert.True(t, skip > 0 && skip < header && header < main, "skip link, header, then main")
+	head := body[header:strings.Index(body, `</header>`)]
+	assert.NotContains(t, head, `tabindex="-1"`)
+	assert.Contains(t, head, `id="header-toggle" aria-label="Prompt"`)
+	assert.Contains(t, head, `id="header-prompt" aria-label="Ask Claude"`)
+
+	login := &view.Page{Title: "Sign in"}
+	assert.NotContains(t, render(t, "login", login), "skip-link", "no sidebar on the sign in screen")
+}
+
+// Add workspace lands on the new workspace, where its project and its
+// keys are one click away.
+func TestWorkspaceNew_LandsOnTheWorkspace(t *testing.T) {
+	t.Parallel()
+
+	body := render(t, "workspace_new", admin(t))
+	assert.Contains(t, body, `data-api="/api/workspaces" data-method="POST" data-next="/settings/workspaces/{folder}?notice=Workspace+added"`)
+}
+
+// The folder's menu schedules a run of it, for a project and a
+// workspace with schedule/edit.
+func TestFolderMenu_AddSchedule(t *testing.T) {
+	t.Parallel()
+
+	p := projectPage(t, &model.User{Name: "admin", Role: model.RoleAdmin}, nil)
+	head := pageHead(t, render(t, "folder", p))
+	assert.Contains(t, head, `href="/schedules?folder=apps"`)
+	assert.Contains(t, head, "<span>Add schedule</span>")
+
+	p.Folder = &folder.Folder{ID: "malta", Title: "Malta"}
+	p.FolderMenu = &view.FolderMenu{ID: "malta", Workspace: true}
+	assert.Contains(t, pageHead(t, render(t, "folder", p)), `href="/schedules?folder=malta"`)
+
+	signIn(p, &model.User{Name: "ops", Role: model.RoleRunner}, permission.Policy{"workspace/view": permission.Allow})
+	assert.NotContains(t, pageHead(t, render(t, "folder", p)), "/schedules", "scheduling takes schedule/edit")
+}
+
+// roleBlock returns the block of a role on the permissions page.
+func roleBlock(t *testing.T, body, role string) string {
+	t.Helper()
+	at := strings.Index(body, `id="role-`+role+`"`)
+	assert.True(t, at >= 0, "a block for "+role)
+	rest := body[at:]
+	return rest[:strings.Index(rest, "</section>")]
+}
+
+// Each role's block lists the users who act with it and the instance SSH
+// keys linked to it, so a role leads to both.
+func TestPermissions_RoleMembers(t *testing.T) {
+	t.Parallel()
+
+	p := admin(t)
+	p.CanAddUsers = true
+	p.Matrices = []view.Matrix{{ID: "role-runner", Title: "runner"}, {ID: "role-viewer", Title: "viewer"}}
+	p.RoleMembers = map[string]view.RoleMembers{
+		"runner": {Users: []string{"ann", "zed"}, Keys: []string{"deploy_ed25519"}},
+	}
+	body := render(t, "permissions", p)
+
+	runner := roleBlock(t, body, "runner")
+	assert.Contains(t, runner, `<a class="key-chip" href="/users/ann">ann</a>`)
+	assert.Contains(t, runner, `<a class="key-chip" href="/users/zed">zed</a>`)
+	assert.Contains(t, runner, `<a class="key-chip" href="/settings/keys/deploy_ed25519">deploy_ed25519</a>`)
+	assert.Contains(t, runner, `href="/settings/users/new">Add user</a>`)
+	assert.Contains(t, runner, `href="/settings/keys/generate">Generate key</a>`)
+
+	viewer := roleBlock(t, body, "viewer")
+	assert.Equal(t, 2, strings.Count(viewer, `<span class="faint">none</span>`), "no user and no key")
+}
+
+// The keys and the add links of a role follow the user's rules.
+func TestPermissions_RoleMembersRules(t *testing.T) {
+	t.Parallel()
+
+	p := admin(t)
+	p.Matrices = []view.Matrix{{ID: "role-runner", Title: "runner"}}
+	p.RoleMembers = map[string]view.RoleMembers{"runner": {Users: []string{"ann"}, Keys: []string{"deploy_ed25519"}}}
+	signIn(p, &model.User{Name: "ops", Role: model.RoleRunner}, permission.Policy{"user/view": permission.Allow})
+	runner := roleBlock(t, render(t, "permissions", p), "runner")
+	assert.Contains(t, runner, `href="/users/ann"`)
+	assert.NotContains(t, runner, "deploy_ed25519", "the keys take key/view")
+	assert.NotContains(t, runner, "Add user", "adding a user takes user/edit")
+	assert.NotContains(t, runner, "Generate key")
+
+	signIn(p, &model.User{Name: "ops", Role: model.RoleRunner}, permission.Policy{"user/view": permission.Allow, "key/view": permission.Allow})
+	runner = roleBlock(t, render(t, "permissions", p), "runner")
+	assert.Contains(t, runner, `href="/settings/keys/deploy_ed25519"`)
+	assert.NotContains(t, runner, "Generate key", "adding a key takes key/edit")
+}
+
+// The role on the users list links to what the role may do.
+func TestUsers_RoleLinksToPermissions(t *testing.T) {
+	t.Parallel()
+
+	p := admin(t)
+	p.Users = []model.User{{ID: "u1", Name: "ops", Role: model.RoleRunner}, {ID: "u2", Name: "root", Role: model.RoleViewer, Admin: true}}
+	body := render(t, "users", p)
+	assert.Contains(t, body, `<a class="badge" href="/settings/permissions#role-runner" title="What runner may do">runner</a>`)
+	assert.Contains(t, body, `<a class="badge signal" href="/settings/permissions#role-admin" title="What admin may do">admin</a>`)
+}
+
+// keysBlock returns the Keys block of a rendered page, up to the next block.
+func keysBlock(t *testing.T, body string) string {
+	t.Helper()
+	at := strings.Index(body, `<section class="block" id="keys">`)
+	assert.True(t, at >= 0, "a Keys block")
+	rest := body[at:]
+	return rest[:strings.Index(rest, "</section>")]
+}
+
+// The user's Keys block, on the profile and on the edit page, adds a key
+// linked to them: Generate key and Upload key, for key/edit.
+func TestUserKeys_AddButtons(t *testing.T) {
+	t.Parallel()
+
+	for _, page := range []string{"profile", "user_edit"} {
+		p := admin(t)
+		p.Profile.Own = true
+		block := keysBlock(t, render(t, page, p))
+		assert.Contains(t, block, `href="/settings/keys/generate?for=ops"`, page)
+		assert.Contains(t, block, `href="/settings/keys/upload?for=ops"`, page)
+		assert.Contains(t, block, "No key linked to ops", page)
+
+		signIn(p, &model.User{Name: "ops", Role: model.RoleRunner}, permission.Policy{"key/view": permission.Allow})
+		block = keysBlock(t, render(t, page, p))
+		assert.NotContains(t, block, "/settings/keys/generate", page+": key/view alone adds nothing")
+		assert.NotContains(t, block, "/settings/keys/upload", page)
+	}
+}
+
+// The profile lists the keys linked to the user, with the row every key
+// page shares, for their own page or with key/view.
+func TestUserKeys_ProfileRows(t *testing.T) {
+	t.Parallel()
+
+	key := keystore.Key{Name: "deploy_ed25519", Purpose: keystore.PurposeSSH, Algo: "ed25519", Fingerprint: "SHA256:abc",
+		PublicKey: "ssh-ed25519 AAAAdeploy task-ui", Users: []string{"ops"}}
+	p := admin(t)
+	p.Keys = []keystore.Key{key}
+	p.Profile.Own = true
+	body := render(t, "profile", p)
+	assert.Equal(t, keyRow(t, render(t, "keys", p), key.Name), keyRow(t, body, key.Name))
+	assert.Contains(t, body, `id="keys"`)
+
+	signIn(p, &model.User{Name: "guest", Role: model.RoleViewer}, nil)
+	p.Profile.Own = false
+	assert.NotContains(t, render(t, "profile", p), `id="keys"`, "another user's keys take key/view")
+}
+
+// Your SSH keys, in the avatar menu, adds a key for yourself when you
+// may; otherwise it says who can.
+func TestMyKeys_AddButtons(t *testing.T) {
+	t.Parallel()
+
+	p := admin(t)
+	body := render(t, "my_keys", p)
+	assert.Contains(t, body, `href="/settings/keys/generate?for=admin"`)
+	assert.Contains(t, body, `href="/settings/keys/upload?for=admin"`)
+	assert.Contains(t, body, "Generate or upload one for yourself.")
+
+	signIn(p, &model.User{Name: "guest", Role: model.RoleViewer}, nil)
+	body = render(t, "my_keys", p)
+	assert.NotContains(t, body, "/settings/keys/generate")
+	assert.Contains(t, body, "Someone with Allow Edits on Instance Keys can grant one")
+}
+
+// workspacesRow returns the row of the workspace in the rendered list.
+func workspacesRow(t *testing.T, body, folder string) string {
+	t.Helper()
+	start := strings.Index(body, `<a href="/f/`+folder+`">`)
+	assert.True(t, start >= 0, "a row for "+folder)
+	end := strings.Index(body[start:], "</tr>")
+	return body[start : start+end]
+}
+
+// The row of a workspace adds a project, lists its keys and its secrets
+// without opening Edit workspace first.
+func TestWorkspaces_RowMenu(t *testing.T) {
+	t.Parallel()
+
+	p := admin(t)
+	p.WorkspaceList = []model.Workspace{{Folder: "malta", Title: "Malta"}}
+	p.Workspaces = map[string]int{"malta": 0}
+	row := workspacesRow(t, render(t, "workspaces", p), "malta")
+	assert.Contains(t, row, `href="/settings/projects/new?workspace=malta"`)
+	assert.Contains(t, row, `href="/settings/workspaces/malta/keys"`)
+	assert.Contains(t, row, `href="/settings/secrets?workspace=malta"`)
+	add := strings.Index(row, "Add project")
+	keys := strings.Index(row, "SSH keys")
+	secrets := strings.Index(row, "<span>Secrets</span>")
+	edit := strings.Index(row, "Edit workspace")
+	assert.True(t, edit < add && add < keys && keys < secrets, "Edit workspace, Add project, SSH keys, Secrets")
+
+	signIn(p, &model.User{Name: "ops", Role: model.RoleRunner}, permission.Policy{"workspace/view": permission.Allow})
+	row = workspacesRow(t, render(t, "workspaces", p), "malta")
+	assert.NotContains(t, row, "Add project", "adding a project takes project/edit")
+	assert.NotContains(t, row, "<span>Secrets</span>", "the secrets take secret/view")
+	assert.Contains(t, row, "SSH keys")
+}
+
+// A workspace with no project, or no secret, says so and links the form
+// that adds one in the cell, for a user who may; with some, the count links.
+func TestWorkspaces_EmptyCounts(t *testing.T) {
+	t.Parallel()
+
+	p := admin(t)
+	p.WorkspaceList = []model.Workspace{{Folder: "empty"}, {Folder: "full"}}
+	p.Workspaces = map[string]int{"empty": 0, "full": 1}
+	p.Nested = map[string][]string{"full": {"full/api", "full/web"}}
+	p.SecretCounts = map[string]int{"full": 2}
+	body := render(t, "workspaces", p)
+
+	empty := workspacesRow(t, body, "empty")
+	assert.Contains(t, empty, `<a href="/settings/projects/new?workspace=empty" aria-label="Add a project to empty">add</a>`)
+	assert.Contains(t, empty, `<a href="/settings/secrets?workspace=empty" aria-label="Add a secret to empty">add</a>`)
+
+	full := workspacesRow(t, body, "full")
+	assert.Contains(t, full, `<a href="/settings/workspaces/full" title="full/api, full/web">2</a>`)
+	assert.NotContains(t, full, "aria-label=\"Add a project")
+	assert.NotContains(t, full, "aria-label=\"Add a secret")
+
+	signIn(p, &model.User{Name: "ops", Role: model.RoleRunner}, permission.Policy{"workspace/view": permission.Allow})
+	empty = workspacesRow(t, render(t, "workspaces", p), "empty")
+	assert.NotContains(t, empty, "aria-label=\"Add a")
+	assert.Contains(t, empty, `<span class="faint">none</span>`)
 }
