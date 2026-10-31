@@ -95,7 +95,16 @@ func TestSession_Titled(t *testing.T) {
 			t.Fatal("Titled not called")
 		}
 	}
-	time.Sleep(2 * runner.TitleEvery)
+	// Two calls and no third: the first title at once, the last of the
+	// run of them when TitleEvery passed, and the three in between
+	// coalesced. Waiting out another TitleEvery to prove the absence
+	// would be half a second of sleeping for a channel that is already
+	// empty.
+	select {
+	case <-got:
+		t.Fatal("a third title: the changes between did not coalesce")
+	default:
+	}
 	mu.Lock()
 	defer mu.Unlock()
 	assert.Equal(t, []string{"step 1", "step 5"}, heard)

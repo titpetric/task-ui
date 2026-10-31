@@ -32,10 +32,31 @@ jobs:
     steps:
       - go test ./...
 
+  # What a change needs: the packages it touched, the packages that import
+  # them, and a budget. A test over a second is waiting on something it
+  # could be told about, and the run names it rather than leaving it to be
+  # noticed a year later. `scripts/test.sh --all` is every package.
+  test:scope:
+    desc: "Run the tests of what changed, inside the 1s per test budget"
+    steps:
+      - ./scripts/test.sh
+
+  test:budget:
+    desc: "Fail on any test over a second, over every package"
+    steps:
+      - ./scripts/test.sh --all
+
   test:cover:
     desc: "Report unit test coverage per package"
     steps:
       - go test -cover ./...
+
+  # Which function each test covers, and which two tests cover the same
+  # lines: the report that says what to merge.
+  test:duplicate:
+    desc: "Report the coverage two tests share"
+    steps:
+      - ./scripts/test-duplicate.sh
 
   test:integration:
     desc: "Run the integration tests: processes, databases and the network"

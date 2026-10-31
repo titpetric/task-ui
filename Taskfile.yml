@@ -23,6 +23,20 @@ tasks:
     cmds:
       - go test ./...
 
+  test:scope:
+    desc: "Run the tests of what changed, inside the 1s per test budget"
+    summary: |
+      The packages a change touched and the packages that import them, from
+      git and go list, with every test held to a second. Takes the flags of
+      scripts/test.sh: task test:scope -- --all
+    cmds:
+      - scripts/test.sh {{.CLI_ARGS}}
+
+  test:duplicate:
+    desc: "Report the coverage two tests share"
+    cmds:
+      - scripts/test-duplicate.sh {{.CLI_ARGS}}
+
   test:integration:
     desc: "Run the integration tests: processes, databases and the network"
     summary: |
