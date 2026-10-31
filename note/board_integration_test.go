@@ -17,6 +17,7 @@ import (
 	"github.com/titpetric/task-ui/event"
 	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/internal/assert"
+	"github.com/titpetric/task-ui/internal/testdb"
 	"github.com/titpetric/task-ui/layout"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/note"
@@ -36,9 +37,7 @@ type fixture struct {
 func newFixture(t *testing.T, agentJob string) *fixture {
 	t.Helper()
 	ctx := context.Background()
-	db, err := storage.OpenAndMigrate(ctx, ":memory:")
-	assert.NoError(t, err)
-	t.Cleanup(func() { db.Close() })
+	db := testdb.New(t)
 	users := storage.NewUserStorage(db)
 	ops := &model.User{Name: "ops", Role: model.RoleRunner}
 	assert.NoError(t, users.Create(ctx, ops))

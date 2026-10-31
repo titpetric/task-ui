@@ -18,6 +18,7 @@ import (
 	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/hostrun"
 	"github.com/titpetric/task-ui/internal/assert"
+	"github.com/titpetric/task-ui/internal/testdb"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/recording"
 	"github.com/titpetric/task-ui/runner"
@@ -41,9 +42,7 @@ func starter(t *testing.T) (*hostrun.Starter, *storage.RunStorage) {
 	body := "#!/bin/sh\nlogin=$(eval echo \\${$(($# - 1))})\nremote=$(eval echo \\${$#})\ncase \"$login\" in debian@dev1|debian@dev2) exec sh -c \"$remote\";; esac\nexit 255\n"
 	assert.NoError(t, os.WriteFile(ssh, []byte(body), 0o755))
 
-	db, err := storage.OpenAndMigrate(context.Background(), ":memory:")
-	assert.NoError(t, err)
-	t.Cleanup(func() { db.Close() })
+	db := testdb.New(t)
 	runs := storage.NewRunStorage(db)
 	manager := runner.New(runner.Options{Runs: runs, Artifacts: storage.NewArtifactStorage(db), Recordings: &recording.Store{Root: t.TempDir()}, ArtifactRoot: t.TempDir(), Grace: time.Second, Keep: time.Minute})
 	t.Cleanup(func() { manager.Shutdown(context.Background()) })

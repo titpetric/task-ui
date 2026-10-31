@@ -12,6 +12,7 @@ import (
 	"github.com/titpetric/task-ui/access"
 	"github.com/titpetric/task-ui/app"
 	"github.com/titpetric/task-ui/internal/assert"
+	"github.com/titpetric/task-ui/internal/testdb"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/storage"
 	_ "modernc.org/sqlite"
@@ -20,9 +21,7 @@ import (
 // newSettings opens a database of its own and returns its setting storage.
 func newSettings(t *testing.T) *storage.SettingStorage {
 	t.Helper()
-	db, err := storage.OpenAndMigrate(context.Background(), ":memory:")
-	assert.NoError(t, err)
-	t.Cleanup(func() { assert.NoError(t, db.Close()) })
+	db := testdb.New(t)
 	return storage.NewSettingStorage(db)
 }
 

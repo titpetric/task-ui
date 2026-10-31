@@ -8,6 +8,7 @@ import (
 
 	"github.com/titpetric/task-ui/access"
 	"github.com/titpetric/task-ui/internal/assert"
+	"github.com/titpetric/task-ui/internal/testdb"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/storage"
 )
@@ -15,9 +16,7 @@ import (
 func TestAuthenticator_Authenticate(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
-	db, err := storage.OpenAndMigrate(ctx, ":memory:")
-	assert.NoError(t, err)
-	t.Cleanup(func() { db.Close() })
+	db := testdb.New(t)
 	users, emails, passwords := storage.NewUserStorage(db), storage.NewUserEmailStorage(db), storage.NewUserAuthPasswordStorage(db)
 	auth := access.NewAuthenticator(users, emails, passwords)
 

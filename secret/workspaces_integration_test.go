@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/titpetric/task-ui/internal/assert"
+	"github.com/titpetric/task-ui/internal/testdb"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/secret"
 	"github.com/titpetric/task-ui/sshkey"
@@ -29,11 +30,9 @@ type spaces struct {
 func newSpaces(t *testing.T) *spaces {
 	t.Helper()
 	ctx := context.Background()
-	db, err := storage.OpenAndMigrate(ctx, ":memory:")
-	assert.NoError(t, err)
-	t.Cleanup(func() { db.Close() })
+	db := testdb.New(t)
 	legacy := newKeys(t)
-	_, err = legacy.Generate("ed25519", "legacy")
+	_, err := legacy.Generate("ed25519", "legacy")
 	assert.NoError(t, err)
 
 	workspaces := storage.NewWorkspaceStorage(db)

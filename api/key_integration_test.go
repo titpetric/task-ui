@@ -11,6 +11,7 @@ import (
 
 	"github.com/titpetric/task-ui/api"
 	"github.com/titpetric/task-ui/internal/assert"
+	"github.com/titpetric/task-ui/internal/testkey"
 	"github.com/titpetric/task-ui/keystore"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/storage"
@@ -69,7 +70,7 @@ func TestKey_Upload(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
 	other := &keystore.Local{Dir: t.TempDir(), Rows: storage.NewKeyInfoStorage(f.db), Settings: storage.NewSettingStorage(f.db)}
-	made, err := other.Generate(context.Background(), keystore.Spec{Name: "elsewhere", Algo: "rsa", Bits: 2048})
+	made, err := other.Import(context.Background(), keystore.Spec{Name: "elsewhere"}, testkey.Of(t, 2048))
 	assert.NoError(t, err)
 	pem, err := os.ReadFile(filepath.Join(other.Dir, made.Name+".key"))
 	assert.NoError(t, err)

@@ -14,6 +14,7 @@ import (
 	"github.com/titpetric/task-ui/event"
 	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/internal/assert"
+	"github.com/titpetric/task-ui/internal/testdb"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/recording"
 	"github.com/titpetric/task-ui/runner"
@@ -31,9 +32,7 @@ type fixture struct {
 
 func newFixture(t *testing.T) *fixture {
 	t.Helper()
-	db, err := storage.OpenAndMigrate(context.Background(), ":memory:")
-	assert.NoError(t, err)
-	t.Cleanup(func() { db.Close() })
+	db := testdb.New(t)
 
 	dir := t.TempDir()
 	assert.NoError(t, os.MkdirAll(filepath.Join(dir, "infra"), 0o755))

@@ -28,6 +28,7 @@ import (
 	"github.com/titpetric/task-ui/hostinfo"
 	"github.com/titpetric/task-ui/integration"
 	"github.com/titpetric/task-ui/internal/assert"
+	"github.com/titpetric/task-ui/internal/testdb"
 	"github.com/titpetric/task-ui/keystore"
 	"github.com/titpetric/task-ui/layout"
 	"github.com/titpetric/task-ui/model"
@@ -70,9 +71,7 @@ type fixture struct {
 
 func newFixture(t *testing.T) *fixture {
 	t.Helper()
-	db, err := storage.OpenAndMigrate(context.Background(), ":memory:")
-	assert.NoError(t, err)
-	t.Cleanup(func() { db.Close() })
+	db := testdb.New(t)
 
 	root := t.TempDir()
 	infra := shellFolder(t, root, "infra", map[string]string{"plan": "echo planned", "slow": "sleep 30", "many": "seq 1 200"})

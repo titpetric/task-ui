@@ -15,6 +15,7 @@ import (
 
 	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/internal/assert"
+	"github.com/titpetric/task-ui/internal/testdb"
 	"github.com/titpetric/task-ui/keystore"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/recording"
@@ -64,9 +65,7 @@ func (s *fakeStarter) started() []string {
 
 func newFixture(t *testing.T) *fixture {
 	t.Helper()
-	db, err := storage.OpenAndMigrate(context.Background(), ":memory:")
-	assert.NoError(t, err)
-	t.Cleanup(func() { db.Close() })
+	db := testdb.New(t)
 
 	dir := t.TempDir()
 	assert.NoError(t, os.MkdirAll(filepath.Join(dir, "infra"), 0o755))
@@ -259,9 +258,7 @@ func TestLoop_Tick(t *testing.T) {
 func TestLoop_TickKeys(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
-	db, err := storage.OpenAndMigrate(ctx, ":memory:")
-	assert.NoError(t, err)
-	t.Cleanup(func() { db.Close() })
+	db := testdb.New(t)
 	keys := &keystore.Local{Dir: t.TempDir(), Rows: storage.NewKeyInfoStorage(db), Settings: storage.NewSettingStorage(db), Tmp: t.TempDir()}
 	deploy, err := keys.Generate(ctx, keystore.Spec{Name: "deploy"})
 	assert.NoError(t, err)

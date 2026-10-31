@@ -31,6 +31,7 @@ import (
 	"github.com/titpetric/task-ui/hostrun"
 	"github.com/titpetric/task-ui/integration"
 	"github.com/titpetric/task-ui/internal/assert"
+	"github.com/titpetric/task-ui/internal/testdb"
 	"github.com/titpetric/task-ui/keystore"
 	"github.com/titpetric/task-ui/layout"
 	"github.com/titpetric/task-ui/model"
@@ -66,9 +67,7 @@ const (
 
 func newFixture(t *testing.T) *fixture {
 	t.Helper()
-	db, err := storage.OpenAndMigrate(context.Background(), ":memory:")
-	assert.NoError(t, err)
-	t.Cleanup(func() { db.Close() })
+	db := testdb.New(t)
 
 	root := t.TempDir()
 	// The default workspace, as the first start makes it, with the
@@ -117,7 +116,7 @@ func newFixture(t *testing.T) *fixture {
 	}
 
 	keys := &keystore.Local{Dir: t.TempDir(), Rows: storage.NewKeyInfoStorage(db), Settings: storage.NewSettingStorage(db), Tmp: t.TempDir()}
-	_, err = keys.Generate(context.Background(), keystore.Spec{Name: "task_encryption", Purpose: keystore.PurposeEncrypt, Comment: "task-ui instance"})
+	_, err := keys.Generate(context.Background(), keystore.Spec{Name: "task_encryption", Purpose: keystore.PurposeEncrypt, Comment: "task-ui instance"})
 	assert.NoError(t, err)
 	secrets := secret.New(storage.NewSecretStorage(db), secret.NewVault(keys.Vault(storage.ScopeInstance)))
 	cat := catalogue{"infra": infra, "private": private, "infra/edge": edge, model.Default: {ID: model.Default, Dir: layout.SrcDir(root, model.Default)}}

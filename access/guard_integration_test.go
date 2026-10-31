@@ -14,15 +14,14 @@ import (
 
 	"github.com/titpetric/task-ui/access"
 	"github.com/titpetric/task-ui/internal/assert"
+	"github.com/titpetric/task-ui/internal/testdb"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/storage"
 )
 
 func newGuard(t *testing.T) (*access.Guard, *model.User) {
 	t.Helper()
-	db, err := storage.OpenAndMigrate(context.Background(), ":memory:")
-	assert.NoError(t, err)
-	t.Cleanup(func() { db.Close() })
+	db := testdb.New(t)
 	users := storage.NewUserStorage(db)
 	ops := &model.User{Name: "ops", Role: model.RoleRunner}
 	assert.NoError(t, users.Create(context.Background(), ops))
@@ -159,9 +158,7 @@ func TestGuard_ClearCookie(t *testing.T) {
 func TestGuard_UserBearer(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
-	db, err := storage.OpenAndMigrate(ctx, ":memory:")
-	assert.NoError(t, err)
-	t.Cleanup(func() { db.Close() })
+	db := testdb.New(t)
 	users := storage.NewUserStorage(db)
 	ops := &model.User{Name: "ops", Role: model.RoleRunner}
 	assert.NoError(t, users.Create(ctx, ops))
@@ -198,9 +195,7 @@ func TestGuard_UserBearer(t *testing.T) {
 func TestGuard_UserBearerExpiry(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
-	db, err := storage.OpenAndMigrate(ctx, ":memory:")
-	assert.NoError(t, err)
-	t.Cleanup(func() { db.Close() })
+	db := testdb.New(t)
 	users := storage.NewUserStorage(db)
 	ops := &model.User{Name: "ops", Role: model.RoleRunner}
 	assert.NoError(t, users.Create(ctx, ops))

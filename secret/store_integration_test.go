@@ -9,6 +9,7 @@ import (
 	_ "modernc.org/sqlite"
 
 	"github.com/titpetric/task-ui/internal/assert"
+	"github.com/titpetric/task-ui/internal/testdb"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/secret"
 	"github.com/titpetric/task-ui/storage"
@@ -18,11 +19,9 @@ import (
 // one ed25519 key.
 func newStore(t *testing.T) (*secret.Store, *storage.SecretStorage) {
 	t.Helper()
-	db, err := storage.OpenAndMigrate(context.Background(), ":memory:")
-	assert.NoError(t, err)
-	t.Cleanup(func() { db.Close() })
+	db := testdb.New(t)
 	keys := newKeys(t)
-	_, err = keys.Generate("ed25519", "task-ui")
+	_, err := keys.Generate("ed25519", "task-ui")
 	assert.NoError(t, err)
 	rows := storage.NewSecretStorage(db)
 	return secret.New(rows, secret.NewVault(secret.DirKeys{Store: keys})), rows

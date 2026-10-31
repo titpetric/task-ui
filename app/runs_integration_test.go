@@ -8,6 +8,7 @@ import (
 
 	"github.com/titpetric/task-ui/app"
 	"github.com/titpetric/task-ui/internal/assert"
+	"github.com/titpetric/task-ui/internal/testdb"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/storage"
 )
@@ -19,9 +20,7 @@ import (
 func TestModuleRuns_RunOf(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
-	db, err := storage.OpenAndMigrate(ctx, ":memory:")
-	assert.NoError(t, err)
-	t.Cleanup(func() { assert.NoError(t, db.Close()) })
+	db := testdb.New(t)
 
 	notes := storage.NewNoteStorage(db)
 	runs := app.NewModuleRuns(notes)

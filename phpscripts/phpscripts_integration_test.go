@@ -14,6 +14,7 @@ import (
 
 	"github.com/titpetric/task-ui/artifactstore"
 	"github.com/titpetric/task-ui/internal/assert"
+	"github.com/titpetric/task-ui/internal/testdb"
 	"github.com/titpetric/task-ui/phpscript"
 	"github.com/titpetric/task-ui/phpscripts"
 	"github.com/titpetric/task-ui/storage"
@@ -53,9 +54,7 @@ func instance(t *testing.T) (*phpscript.Manager, storage.DB, *fakeDispatcher, *a
 	root := filepath.Join(t.TempDir(), "modules")
 	assert.NoError(t, phpscripts.Extract(root))
 
-	db, err := storage.OpenAndMigrate(context.Background(), ":memory:")
-	assert.NoError(t, err)
-	t.Cleanup(func() { assert.NoError(t, db.Close()) })
+	db := testdb.New(t)
 
 	store := &artifactstore.Store{Dir: filepath.Join(t.TempDir(), "tree")}
 	dispatcher := &fakeDispatcher{}

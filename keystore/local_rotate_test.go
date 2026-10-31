@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/titpetric/task-ui/internal/assert"
+	"github.com/titpetric/task-ui/internal/testkey"
 	"github.com/titpetric/task-ui/keystore"
 	"github.com/titpetric/task-ui/secret"
 	"github.com/titpetric/task-ui/storage"
@@ -21,7 +22,7 @@ func TestLocal_Rotate(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
 	l := newLocal(t)
-	key, err := l.Generate(ctx, keystore.Spec{Name: "deploy", Algo: "rsa", Bits: 2048})
+	key, err := l.Import(ctx, keystore.Spec{Name: "deploy"}, testkey.Of(t, 2048))
 	assert.NoError(t, err)
 	old := key.Fingerprint
 	assert.NoError(t, l.SetGit(ctx, key.Name))

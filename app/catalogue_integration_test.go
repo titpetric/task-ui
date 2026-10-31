@@ -13,6 +13,7 @@ import (
 	"github.com/titpetric/task-ui/app"
 	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/internal/assert"
+	"github.com/titpetric/task-ui/internal/testdb"
 	"github.com/titpetric/task-ui/layout"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/storage"
@@ -21,9 +22,7 @@ import (
 func TestCatalogue(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
-	db, err := storage.OpenAndMigrate(ctx, ":memory:")
-	assert.NoError(t, err)
-	t.Cleanup(func() { db.Close() })
+	db := testdb.New(t)
 	root := t.TempDir()
 	makeFolder(t, root, "site")
 	makeFolder(t, root, "infra")
@@ -62,9 +61,7 @@ func TestCatalogue(t *testing.T) {
 func TestCatalogue_Shallow(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
-	db, err := storage.OpenAndMigrate(ctx, ":memory:")
-	assert.NoError(t, err)
-	t.Cleanup(func() { db.Close() })
+	db := testdb.New(t)
 	root := t.TempDir()
 	makeFolder(t, root, "mono")
 	makeFolder(t, root, "mono/blog")
@@ -88,9 +85,7 @@ func TestCatalogue_Shallow(t *testing.T) {
 func TestCatalogue_internal(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
-	db, err := storage.OpenAndMigrate(ctx, ":memory:")
-	assert.NoError(t, err)
-	t.Cleanup(func() { db.Close() })
+	db := testdb.New(t)
 	root := t.TempDir()
 	makeFolder(t, root, "internal")
 	makeFolder(t, root, "internal/tools")
@@ -116,9 +111,7 @@ func makeFolder(t *testing.T, root, id string) {
 func TestCatalogue_Home(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
-	db, err := storage.OpenAndMigrate(ctx, ":memory:")
-	assert.NoError(t, err)
-	t.Cleanup(func() { db.Close() })
+	db := testdb.New(t)
 	root := t.TempDir()
 	projects, workspaces := storage.NewProjectStorage(db), storage.NewWorkspaceStorage(db)
 	assert.NoError(t, workspaces.Create(ctx, &model.Workspace{Folder: "malta", HomeURL: "git@example.com:org/workspace.git"}))

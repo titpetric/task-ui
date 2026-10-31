@@ -10,6 +10,8 @@ import (
 	_ "modernc.org/sqlite"
 
 	"github.com/titpetric/task-ui/internal/assert"
+	"github.com/titpetric/task-ui/internal/testdb"
+	"github.com/titpetric/task-ui/internal/testkey"
 	"github.com/titpetric/task-ui/keystore"
 	"github.com/titpetric/task-ui/storage"
 )
@@ -17,9 +19,7 @@ import (
 // newStore returns a key folder over an in-memory database.
 func newStore(t *testing.T) *keystore.Local {
 	t.Helper()
-	db, err := storage.OpenAndMigrate(context.Background(), ":memory:")
-	assert.NoError(t, err)
-	t.Cleanup(func() { db.Close() })
+	db := testdb.New(t)
 	return &keystore.Local{Dir: filepath.Join(t.TempDir(), "keys"), Rows: storage.NewKeyInfoStorage(db), Settings: storage.NewSettingStorage(db), Tmp: t.TempDir()}
 }
 
@@ -30,7 +30,7 @@ func TestLocal_Import(t *testing.T) {
 	ctx := context.Background()
 	l := newStore(t)
 	other := newStore(t)
-	made, err := other.Generate(ctx, keystore.Spec{Name: "deploy", Algo: "rsa", Bits: 2048})
+	made, err := other.Import(ctx, keystore.Spec{Name: "deploy"}, testkey.Of(t, 2048))
 	assert.NoError(t, err)
 	pem, err := other.Private(ctx, made.Name)
 	assert.NoError(t, err)

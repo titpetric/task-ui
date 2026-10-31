@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/titpetric/task-ui/internal/assert"
+	"github.com/titpetric/task-ui/internal/testdb"
 	"github.com/titpetric/task-ui/phpscript"
 	"github.com/titpetric/task-ui/storage"
 	_ "modernc.org/sqlite"
@@ -17,9 +18,7 @@ import (
 // newDB opens a task-ui database of its own.
 func newDB(t *testing.T) storage.DB {
 	t.Helper()
-	db, err := storage.OpenAndMigrate(context.Background(), ":memory:")
-	assert.NoError(t, err)
-	t.Cleanup(func() { assert.NoError(t, db.Close()) })
+	db := testdb.New(t)
 	return db
 }
 

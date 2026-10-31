@@ -11,6 +11,7 @@ import (
 	"golang.org/x/crypto/ssh/agent"
 
 	"github.com/titpetric/task-ui/internal/assert"
+	"github.com/titpetric/task-ui/internal/testkey"
 	"github.com/titpetric/task-ui/sshagent"
 	"github.com/titpetric/task-ui/sshkey"
 )
@@ -50,7 +51,7 @@ func TestLoadFiles(t *testing.T) {
 	one, two := t.TempDir(), t.TempDir()
 	_, err := (&sshkey.Store{Dir: one}).Generate("ed25519", "project")
 	assert.NoError(t, err)
-	_, err = (&sshkey.Store{Dir: two}).Generate("rsa", "instance")
+	_, err = (&sshkey.Store{Dir: two}).Upload(testkey.RSA(t), "instance")
 	assert.NoError(t, err)
 	first, second := filepath.Join(one, "id_ed25519"), filepath.Join(two, "id_rsa")
 

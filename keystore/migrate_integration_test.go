@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/titpetric/task-ui/internal/assert"
+	"github.com/titpetric/task-ui/internal/testdb"
 	"github.com/titpetric/task-ui/keystore"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/secret"
@@ -22,14 +23,12 @@ import (
 func TestLocal_Migrate(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
-	db, err := storage.OpenAndMigrate(ctx, ":memory:")
-	assert.NoError(t, err)
-	t.Cleanup(func() { db.Close() })
+	db := testdb.New(t)
 	data, dir := t.TempDir(), t.TempDir()
 	l := &keystore.Local{Dir: dir, Rows: storage.NewKeyInfoStorage(db), Settings: storage.NewSettingStorage(db), Tmp: t.TempDir()}
 
 	instance := &sshkey.Store{Dir: filepath.Join(data, "instance", "encrypt")}
-	_, err = instance.Generate("ed25519", "task-ui instance")
+	_, err := instance.Generate("ed25519", "task-ui instance")
 	assert.NoError(t, err)
 	sealed, err := secret.NewVault(secret.DirKeys{Store: instance}).Encrypt("integration token")
 	assert.NoError(t, err)

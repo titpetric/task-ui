@@ -11,6 +11,7 @@ import (
 
 	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/internal/assert"
+	"github.com/titpetric/task-ui/internal/testkey"
 	"github.com/titpetric/task-ui/keystore"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/runner"
@@ -26,7 +27,7 @@ func TestManager_CheckoutKeys(t *testing.T) {
 	dir := checkout(t)
 	sub := filepath.Join(dir, "terraform")
 	assert.NoError(t, os.MkdirAll(sub, 0o755))
-	_, err := (&sshkey.Store{Dir: filepath.Join(dir, ".ssh")}).Generate("rsa", "deploy")
+	_, err := (&sshkey.Store{Dir: filepath.Join(dir, ".ssh")}).Upload(testkey.RSA(t), "deploy")
 	assert.NoError(t, err)
 
 	fold := &folder.Folder{ID: "repo/terraform", Dir: sub}

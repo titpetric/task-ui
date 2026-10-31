@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/titpetric/task-ui/internal/assert"
+	"github.com/titpetric/task-ui/internal/testkey"
 	"github.com/titpetric/task-ui/keystore"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/sshkey"
@@ -108,7 +109,7 @@ func TestKeys_ProjectFolders(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
 	dir := filepath.Join(f.infra.Dir, ".ssh")
-	_, err := (&sshkey.Store{Dir: dir}).Generate("rsa", "deploy")
+	_, err := (&sshkey.Store{Dir: dir}).Upload(testkey.RSA(t), "deploy")
 	assert.NoError(t, err)
 
 	plain := f.page(t, asAdmin, "/settings/keys")

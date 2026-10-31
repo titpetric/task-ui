@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/titpetric/task-ui/internal/assert"
+	"github.com/titpetric/task-ui/internal/testkey"
 	"github.com/titpetric/task-ui/secret"
 	"github.com/titpetric/task-ui/sshkey"
 )
@@ -113,7 +114,7 @@ func TestVault_KeyTypes(t *testing.T) {
 	_, err = v.Encrypt("x")
 	assert.ErrorIs(t, err, secret.ErrNoKey)
 
-	_, err = keys.Generate("rsa", "big")
+	_, err = keys.Upload(testkey.RSA(t), "big")
 	assert.NoError(t, err)
 	assert.Equal(t, []string{"id_rsa"}, v.Recipients())
 	text, err := v.Encrypt("with rsa")
@@ -129,14 +130,14 @@ func TestVault_KeyTypes(t *testing.T) {
 func TestVault_InstanceKey(t *testing.T) {
 	t.Parallel()
 	keys := newKeys(t)
-	deploy, err := keys.GenerateAs("rsa", "deploy", "deploy")
+	deploy, err := keys.UploadAs(testkey.RSA(t), "deploy", "deploy")
 	assert.NoError(t, err)
 	v := secret.NewVault(secret.DirKeys{Store: keys})
 	assert.Nil(t, v.Recipients())
 	_, err = v.Encrypt("x")
 	assert.ErrorIs(t, err, secret.ErrNoKey)
 
-	_, err = keys.Generate("rsa", "own")
+	_, err = keys.Upload(testkey.RSA(t), "own")
 	assert.NoError(t, err)
 	assert.Equal(t, []string{"id_rsa"}, v.Recipients())
 	_, err = keys.Generate("ed25519", "instance")

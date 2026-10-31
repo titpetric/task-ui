@@ -11,6 +11,7 @@ import (
 	"github.com/titpetric/task-ui/app"
 	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/internal/assert"
+	"github.com/titpetric/task-ui/internal/testdb"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/storage"
 )
@@ -58,9 +59,7 @@ func TestNew_SeedsCleanup(t *testing.T) {
 func TestNewCleaner(t *testing.T) {
 	t.Parallel()
 	cfg := &app.Config{DataDir: t.TempDir(), DB: ":memory:", ArtifactHistory: 7}
-	db, err := storage.OpenAndMigrate(context.Background(), ":memory:")
-	assert.NoError(t, err)
-	defer db.Close()
+	db := testdb.New(t)
 	c := app.NewCleaner(db, cfg, "")
 	assert.Equal(t, cfg.RecordingsDir(), c.RecordingsDir)
 	assert.Equal(t, cfg.ArtifactTree(), c.Store.Dir)

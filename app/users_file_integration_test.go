@@ -12,15 +12,14 @@ import (
 	"github.com/titpetric/task-ui/access"
 	"github.com/titpetric/task-ui/app"
 	"github.com/titpetric/task-ui/internal/assert"
+	"github.com/titpetric/task-ui/internal/testdb"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/storage"
 )
 
 func newUsers(t *testing.T) (*storage.UserStorage, *storage.UserAuthPasswordStorage) {
 	t.Helper()
-	db, err := storage.OpenAndMigrate(context.Background(), ":memory:")
-	assert.NoError(t, err)
-	t.Cleanup(func() { db.Close() })
+	db := testdb.New(t)
 	return storage.NewUserStorage(db), storage.NewUserAuthPasswordStorage(db)
 }
 
@@ -35,9 +34,7 @@ func signsIn(t *testing.T, passwords *storage.UserAuthPasswordStorage, user *mod
 func TestUsersFile_Sync(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
-	db, err := storage.OpenAndMigrate(ctx, ":memory:")
-	assert.NoError(t, err)
-	t.Cleanup(func() { db.Close() })
+	db := testdb.New(t)
 	users, passwords := storage.NewUserStorage(db), storage.NewUserAuthPasswordStorage(db)
 	sessions := access.NewSessions(storage.NewUserSessionStorage(db), users, time.Hour)
 	path := htpasswdFile(t, "admin", "ops", "guest")

@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/titpetric/task-ui/internal/assert"
+	"github.com/titpetric/task-ui/internal/testdb"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/phpscript"
 	"github.com/titpetric/task-ui/storage"
@@ -19,9 +20,7 @@ import (
 // with the two storages for a test to read.
 func newStore(t *testing.T) (*phpscript.Store, *storage.ModuleStorage, *storage.SidebarStorage) {
 	t.Helper()
-	db, err := storage.OpenAndMigrate(context.Background(), ":memory:")
-	assert.NoError(t, err)
-	t.Cleanup(func() { assert.NoError(t, db.Close()) })
+	db := testdb.New(t)
 
 	modules, sidebar := storage.NewModuleStorage(db), storage.NewSidebarStorage(db)
 	return phpscript.NewStore(modules, sidebar), modules, sidebar

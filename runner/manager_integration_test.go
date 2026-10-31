@@ -16,6 +16,7 @@ import (
 	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/git"
 	"github.com/titpetric/task-ui/internal/assert"
+	"github.com/titpetric/task-ui/internal/testdb"
 	"github.com/titpetric/task-ui/keystore"
 	"github.com/titpetric/task-ui/layout"
 	"github.com/titpetric/task-ui/model"
@@ -48,13 +49,11 @@ type fixture struct {
 
 func newFixture(t *testing.T) *fixture {
 	t.Helper()
-	db, err := storage.OpenAndMigrate(context.Background(), ":memory:")
-	assert.NoError(t, err)
-	t.Cleanup(func() { db.Close() })
+	db := testdb.New(t)
 	runs := storage.NewRunStorage(db)
 	artifacts := storage.NewArtifactStorage(db)
 	keys := &keystore.Local{Dir: t.TempDir(), Rows: storage.NewKeyInfoStorage(db), Settings: storage.NewSettingStorage(db), Tmp: t.TempDir()}
-	_, err = keys.Generate(context.Background(), keystore.Spec{Name: "task_ssh", Comment: "test"})
+	_, err := keys.Generate(context.Background(), keystore.Spec{Name: "task_ssh", Comment: "test"})
 	assert.NoError(t, err)
 	_, err = keys.Generate(context.Background(), keystore.Spec{Name: "task_encryption", Purpose: keystore.PurposeEncrypt})
 	assert.NoError(t, err)

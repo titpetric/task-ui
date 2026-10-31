@@ -90,4 +90,3 @@ func (h *Handlers) workspaceKeyUpload(w http.ResponseWriter, r *http.Request) {
 	p.Form = map[string]string{}
 	h.render(w, http.StatusOK, "workspace_key_upload", p)
 }
-
