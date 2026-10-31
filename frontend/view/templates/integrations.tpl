@@ -133,7 +133,7 @@
 					</form>
 					{{- if eq $int.ID "forgejo" }}
 					<p class="dim integration-sync">
-						{{- with $.LastRun "internal/@forgejo-sync" }}Last sync <span class="state"><i class="dot {{ .State }}"></i>{{ .State }}</span> {{ ago .StartedAt }} by {{ .UserName }}: <a href="/runs/{{ .ID }}">the report</a>.{{ else }}No sync ran yet: <b>Dry run</b> shows what one would do.{{ end }}
+						{{- with $.LastRun "internal/@forgejo-sync" }}Last sync {{ template "state" . }} {{ ago .StartedAt }} by {{ .UserName }}: <a href="/runs/{{ .ID }}">the report</a>.{{ else }}No sync ran yet: <b>Dry run</b> shows what one would do.{{ end }}
 					</p>
 					{{- end }}
 				</div>

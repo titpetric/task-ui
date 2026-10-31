@@ -30,6 +30,10 @@ type Options struct {
 	// Dispatcher starts the Claude runs. Nil makes Task::dispatch refuse.
 	Dispatcher Dispatcher
 
+	// Runs answers which run a dispatch turned into, for the status
+	// label a module draws. Nil answers "" for every note.
+	Runs Runs
+
 	// Database resolves the connection a module opens, `new Database("task-ui")`.
 	// Nil leaves a module with no database.
 	Database *Database

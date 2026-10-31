@@ -128,7 +128,15 @@ The run is an ordinary task-ui run. It appears on `/runs`, its output replays, i
 
 The page footer prints how long the body took to render.
 
-A module loads JavaScript from its own `public/` tree and calls what the embedding page already defines: `api(method, url, body)`, `toast(text, tone)`, and the `data-api` form contract that posts a form as JSON. The conventions are in [Development](development.md).
+A module loads JavaScript from its own `public/` tree. What the instance's own script offers it is markup rather than functions: [the front end's shared markup](framework.md) is the contract, and a module writes the attribute and ships no handler.
+
+The one a module that dispatches work wants is the run status label. `Task::run($note)` answers the run a dispatch turned into, and
+
+```html
+<span class="state" data-run-id="01K8Z3..."></span>
+```
+
+is filled and kept current by the instance, over the event stream every other page of it already shares.
 
 ## Templates
 

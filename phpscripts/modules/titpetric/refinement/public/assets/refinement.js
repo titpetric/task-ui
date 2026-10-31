@@ -23,17 +23,6 @@
 		});
 	}
 
-	// A run started by a comment takes minutes. The thread reloads while one
-	// is going, so the artifacts and the report appear without the reader
-	// pressing anything, and stops once none is.
-	function followRuns(thread) {
-		var going = thread.querySelectorAll("[data-run-state=running]").length;
-		if (!going) return;
-		window.setTimeout(function () {
-			window.location.reload();
-		}, 15000);
-	}
-
 	// A form that deletes asks first. The question is on the form, because
 	// the one on the design says that the thread goes with it and the one on
 	// a rule says that only the request does.
@@ -60,7 +49,6 @@
 	function start() {
 		document.querySelectorAll("form.refinement-comment-form").forEach(sendOnEnter);
 		document.querySelectorAll("form[data-confirm]").forEach(confirmOnSubmit);
-		document.querySelectorAll(".refinement-thread").forEach(followRuns);
 		document.querySelectorAll(".refinement-report").forEach(previewArtifacts);
 	}
 

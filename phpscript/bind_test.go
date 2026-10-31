@@ -119,6 +119,42 @@ func TestBindConstants(t *testing.T) {
 	assert.Equal(t, "1.4.0 /m", body)
 }
 
+// fakeRuns answers the run of one note and nothing of any other.
+type fakeRuns struct{ note, run string }
+
+func (f *fakeRuns) RunOf(_ context.Context, note string) string {
+	if note == f.note {
+		return f.run
+	}
+	return ""
+}
+
+// Task::run is what a module draws a status label from: the run a
+// dispatch turned into, by the note it answered with. A note with no run
+// yet, an empty note and an instance with no lookup are all "", because
+// a label with no run is a run that has not started and not an error.
+func TestBindRun(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	opts := phpscript.Options{Runs: &fakeRuns{note: "01NOTE", run: "06grxxqjec8jjt19vd65wfdg8r"}}
+
+	body, err := run(t, dir, `<?php echo "[", Task::run("01NOTE"), "]";`, opts, nil)
+	assert.NoError(t, err)
+	assert.Equal(t, "[06grxxqjec8jjt19vd65wfdg8r]", body)
+
+	body, err = run(t, dir, `<?php echo "[", Task::run("01OTHER"), "]";`, opts, nil)
+	assert.NoError(t, err)
+	assert.Equal(t, "[]", body, "a note whose run has not started")
+
+	body, err = run(t, dir, `<?php echo "[", Task::run("  "), "]";`, opts, nil)
+	assert.NoError(t, err)
+	assert.Equal(t, "[]", body, "no note is no run")
+
+	body, err = run(t, dir, `<?php echo "[", Task::run("01NOTE"), "]";`, phpscript.Options{}, nil)
+	assert.NoError(t, err)
+	assert.Equal(t, "[]", body, "an instance with no lookup answers rather than failing")
+}
+
 func TestBindMigrate(t *testing.T) {
 	t.Parallel()
 	dir := t.TempDir()

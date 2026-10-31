@@ -115,6 +115,21 @@ func Bind(rt *runner.Runtime, opts Options, registered func(*Module)) {
 	// A module cannot reach the tree on its own, because the filesystem
 	// boundary roots every path a script opens at the module's own
 	// directory. Reading only: a module shows what a run wrote.
+	// Task::run answers which run a dispatch turned into, so a module
+	// can draw the status label the interface shares:
+	// <span data-run-id="..."></span>, which the site's own script
+	// fills and keeps current. docs/framework.md is the contract.
+	//
+	// A dispatch opens the note and starts the run behind it, so the
+	// run arrives after the dispatch answered: this is asked at the
+	// page, which is later. "" is a run that has not started yet.
+	rt.RegisterFunc("Task::run", func(ctx context.Context, note string) (string, error) {
+		if opts.Runs == nil || strings.TrimSpace(note) == "" {
+			return "", nil
+		}
+		return opts.Runs.RunOf(ctx, note), nil
+	})
+
 	rt.RegisterFunc("Task::artifacts", func(folder string) ([]string, error) {
 		return opts.Artifacts.Files(folder), nil
 	})

@@ -89,9 +89,11 @@ class RefinementPage {
 
 		foreach ($entries as $i => $entry) {
 			$entries[$i]["comment"]["html"] = RefinementPage::request($entry["comment"]["body"], $folder);
+			$entries[$i]["comment"]["run"] = Task::run($entry["comment"]["note_id"]);
 
 			foreach ($entry["folded"] as $j => $under) {
 				$entries[$i]["folded"][$j]["html"] = RefinementPage::request($under["body"], $folder);
+				$entries[$i]["folded"][$j]["run"] = Task::run($under["note_id"]);
 			}
 		}
 

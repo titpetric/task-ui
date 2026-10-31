@@ -48,6 +48,7 @@ Beside the guide:
 - [API](api.md): the JSON endpoints and the MCP server;
 - [Security](security.md): the threat model, identity and roles, keys, secrets, terminals and agents, with the findings of a review;
 - [Development](development.md): the packages, the lint and test bar, and the screenshots;
+- [The front end's shared markup](framework.md): the behaviour a page gets by writing an attribute, the run status label among it;
 - [Modules](modules.md): writing a plugin in PHP, the bindings and what the runtime refuses;
 - [Corrections](todo-correction.md): where the PHP runtime lacks what the module system needs;
 - [Sitemap](sitemap.md): every page, its lists, actions, forms and empty lines;

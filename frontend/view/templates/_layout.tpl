@@ -336,9 +336,14 @@
 </dialog>
 {{ end }}
 
+{{/* A run's state, and the run it belongs to, so the script keeps it
+     current: docs/framework.md. The content is rendered here and not
+     left to the script, so a reader with no JavaScript sees the state
+     the page was drawn with. data-finished says the run was over
+     already, which is most of them, and asks the instance nothing. */}}
 {{ define "state" }}
 {{- if . -}}
-<span class="state"><i class="dot {{ .State }}"></i>{{ .State }}{{ if and (ne .State "ok") (ended .State) }} <span class="faint">({{ .ExitCode }})</span>{{ end }}</span>
+<span class="state" data-run-id="{{ .ID }}"{{ if ended .State }} data-finished="true"{{ end }}><i class="dot {{ .State }}"></i>{{ .State }}{{ if and (ne .State "ok") (ended .State) }} <span class="faint">({{ .ExitCode }})</span>{{ end }}</span>
 {{- else -}}
 <span class="faint">never run</span>
 {{- end -}}

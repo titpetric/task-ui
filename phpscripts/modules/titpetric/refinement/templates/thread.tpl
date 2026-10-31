@@ -38,11 +38,11 @@
 				<summary>{$entry.folded_count} folded into the request below</summary>
 				<ol>
 				{foreach $entry.folded as $comment}
-					<li class="refinement-comment" data-run-state="{$comment.state}">
+					<li class="refinement-comment">
 						<div class="refinement-comment-head">
 							<strong>{$comment.user}</strong>
 							<span class="faint">{$comment.created_at}</span>
-							{if $comment.note_id}<a class="badge" href="/notes#{$comment.note_id}">the run</a>{/if}
+							{if $comment.run}<span class="state" data-run-id="{$comment.run}"></span>{/if}{if $comment.note_id}<a class="badge" href="/notes#{$comment.note_id}">the run</a>{/if}
 							{if $comment.correction}<span class="badge">rule</span>{/if}
 						</div>
 						<div class="refinement-body">{$comment.html|raw}</div>
@@ -52,11 +52,11 @@
 			</details>
 		</li>
 		{/if}
-		<li class="refinement-comment" data-run-state="{$entry.comment.state}">
+		<li class="refinement-comment">
 			<div class="refinement-comment-head">
 				<strong>{$entry.comment.user}</strong>
 				<span class="faint">{$entry.comment.created_at}</span>
-				{if $entry.comment.note_id}<a class="badge" href="/notes#{$entry.comment.note_id}">the run</a>{/if}
+				{if $entry.comment.run}<span class="state" data-run-id="{$entry.comment.run}"></span>{/if}{if $entry.comment.note_id}<a class="badge" href="/notes#{$entry.comment.note_id}">the run</a>{/if}
 				{if $entry.applied}<span class="badge signal">applied</span>{/if}
 				{if $entry.comment.correction}<span class="badge">rule</span>{/if}
 				{* Deleting the design deletes the thread: the rules correct it,

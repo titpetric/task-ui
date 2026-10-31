@@ -47,14 +47,15 @@
  folded into the request below</summary>
 				<ol>
 				<?php if(!empty($_v['entry']['folded']))foreach($_v['entry']['folded'] as $_v['comment']){?>
-					<li class="refinement-comment" data-run-state="<?php echo htmlspecialchars($_v['comment']['state'], ENT_QUOTES);?>
-">
+					<li class="refinement-comment">
 						<div class="refinement-comment-head">
 							<strong><?php echo htmlspecialchars($_v['comment']['user'], ENT_QUOTES);?>
 </strong>
 							<span class="faint"><?php echo htmlspecialchars($_v['comment']['created_at'], ENT_QUOTES);?>
 </span>
-							<?php if($_v['comment']['note_id']){?>
+							<?php if($_v['comment']['run']){?>
+<span class="state" data-run-id="<?php echo htmlspecialchars($_v['comment']['run'], ENT_QUOTES);?>
+"></span><?php }?><?php if($_v['comment']['note_id']){?>
 <a class="badge" href="/notes#<?php echo htmlspecialchars($_v['comment']['note_id'], ENT_QUOTES);?>
 ">the run</a><?php }?>
 							<?php if($_v['comment']['correction']){?>
@@ -68,14 +69,15 @@
 			</details>
 		</li>
 		<?php }?>
-		<li class="refinement-comment" data-run-state="<?php echo htmlspecialchars($_v['entry']['comment']['state'], ENT_QUOTES);?>
-">
+		<li class="refinement-comment">
 			<div class="refinement-comment-head">
 				<strong><?php echo htmlspecialchars($_v['entry']['comment']['user'], ENT_QUOTES);?>
 </strong>
 				<span class="faint"><?php echo htmlspecialchars($_v['entry']['comment']['created_at'], ENT_QUOTES);?>
 </span>
-				<?php if($_v['entry']['comment']['note_id']){?>
+				<?php if($_v['entry']['comment']['run']){?>
+<span class="state" data-run-id="<?php echo htmlspecialchars($_v['entry']['comment']['run'], ENT_QUOTES);?>
+"></span><?php }?><?php if($_v['entry']['comment']['note_id']){?>
 <a class="badge" href="/notes#<?php echo htmlspecialchars($_v['entry']['comment']['note_id'], ENT_QUOTES);?>
 ">the run</a><?php }?>
 				<?php if($_v['entry']['applied']){?>

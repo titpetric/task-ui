@@ -4092,6 +4092,14 @@
     return out;
   }
 
+  // runStateHTML is a run's state as every page of the instance draws
+  // it, the same markup the `state` template of _layout.tpl renders: the
+  // dot, the word, and the exit code of one that ended badly.
+  function runStateHTML(run) {
+    return '<span class="state"><i class="dot ' + escapeHTML(run.state) + '"></i>' + escapeHTML(run.state) +
+      (run.state !== "ok" && ended(run.state) ? ' <span class="faint">(' + (run.exit_code || 0) + ")</span>" : "") + "</span>";
+  }
+
   // onRuns calls fn with each run of the runs topic, as it starts and as
   // it ends, over one event stream for the page.
   var runsHandlers = [];
@@ -4106,6 +4114,79 @@
     }
     runsHandlers.push(fn);
   }
+
+  // A run status label: <span class="state" data-run-id="01ABC"></span>,
+  // anywhere in the interface, kept current from the runs event stream.
+  //
+  // It is markup and nothing else, which is the point: a page, a partial
+  // or a plugin that dispatched a run prints the span and is done. There
+  // is no handler to write, no selector to invent and no second event
+  // stream, because every label on the page shares the one onRuns holds.
+  //
+  // A span that carries data-finished="true" is a run that ended before
+  // the page was drawn. It is never hydrated and never subscribed: most
+  // runs are over, and a page of fifty of them should ask the server
+  // nothing.
+  //
+  // An empty span is hydrated once over the API, because the stream
+  // carries a run when it starts and when it ends and says nothing in
+  // between: a page drawn in the middle of a run would otherwise show an
+  // empty label until it finished. A span the server already filled is
+  // left as it is until the stream has something newer.
+  //
+  // The class is part of the selector and not decoration. data-run-id
+  // already names two kinds of thing elsewhere: the runs table keys its
+  // rows by a run and the workflow tables key theirs by a workflow run,
+  // whose identifiers never appear on this stream. A label is
+  // .state[data-run-id] and a row is neither.
+  //
+  // The runs table is left to itself: it rewrites its whole Result cell
+  // on every event, the title and the watchers with the state, and two
+  // writers on one node is one too many.
+  //
+  // docs/framework.md is the contract.
+  var runLabelSelector = ".state[data-run-id]";
+  function runLabelsIn(root, id) {
+    var selector = runLabelSelector;
+    if (id) selector = ".state[data-run-id=\"" + CSS.escape(id) + "\"]";
+    return Array.prototype.slice.call(root.querySelectorAll(selector)).filter(function (label) {
+      return !label.closest("[data-runs-table]");
+    });
+  }
+  function runLabels() {
+    var labels = runLabelsIn(document).filter(function (label) {
+      return label.dataset.finished !== "true";
+    });
+    if (!labels.length) return;
+
+    var draw = function (label, run) {
+      label.innerHTML = runStateHTML(run);
+      if (ended(run.state)) label.dataset.finished = "true";
+    };
+
+    // One request per run and not per label: a page may show the same
+    // run in a list and in its heading.
+    var hydrating = {};
+    labels.forEach(function (label) {
+      var id = label.dataset.runId;
+      if (!id || label.innerHTML.trim() !== "" || hydrating[id]) return;
+      hydrating[id] = true;
+      // A run the reader may not see answers 403 or 404, and the label
+      // keeps whatever the page drew.
+      api("GET", "/api/runs/" + encodeURIComponent(id)).then(function (res) {
+        if (res.status !== 200) return;
+        runLabelsIn(document, id).forEach(function (each) {
+          if (each.dataset.finished !== "true") draw(each, res.data);
+        });
+      });
+    });
+
+    if (!window.EventSource) return;
+    onRuns(function (run) {
+      runLabelsIn(document, run.id).forEach(function (label) { draw(label, run); });
+    });
+  }
+  runLabels();
 
   // The runs page follows the runs topic: a run that starts is added on
   // top of the table, one that ends is updated in place. The filters of
@@ -4139,10 +4220,7 @@
       if (s < 3600) return Math.floor(s / 60) + "m" + pad(s % 60) + "s";
       return Math.floor(s / 3600) + "h" + pad((s % 3600) / 60) + "m";
     };
-    var stateHTML = function (run) {
-      return '<span class="state"><i class="dot ' + escapeHTML(run.state) + '"></i>' + escapeHTML(run.state) +
-        (run.state !== "ok" && ended(run.state) ? ' <span class="faint">(' + (run.exit_code || 0) + ")</span>" : "") + "</span>";
-    };
+    var stateHTML = runStateHTML;
     var termTitleHTML = function (run) {
       return run.title ? ' <span class="term-title" title="' + escapeHTML(run.title) + '">' + escapeHTML(run.title) + "</span>" : "";
     };

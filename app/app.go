@@ -312,6 +312,7 @@ func (a *App) wire(version string) error {
 	moduleOpts.Roots = append(moduleOpts.Roots, cfg.Root)
 	moduleOpts.Registry = phpscript.NewStore(modules, sidebar)
 	moduleOpts.Dispatcher = NewDispatcher(a.Board, a.Users, store)
+	moduleOpts.Runs = NewModuleRuns(storage.NewNoteStorage(db))
 	moduleOpts.Migrator = phpscript.NewSchema(db)
 	moduleOpts.Database = phpscript.NewDatabase(db)
 	moduleOpts.Artifacts = phpscript.NewTree(store)

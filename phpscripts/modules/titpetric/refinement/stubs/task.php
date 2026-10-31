@@ -47,6 +47,15 @@ class Task {
 	}
 
 	/**
+	 * The run a dispatch turned into, by the note it answered with, or
+	 * "" for one that has not started. It is what a status label names:
+	 * <span class="state" data-run-id="..."></span>.
+	 */
+	static function run($note) {
+		return "";
+	}
+
+	/**
 	 * Renders markdown as the instance's own pages do. The folder is what a
 	 * relative link resolves under, for a report written inside one.
 	 */
