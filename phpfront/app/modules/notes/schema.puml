@@ -1,0 +1,41 @@
+@startuml
+' Generated from schema/schema.yml by tools/docs.php. DO NOT EDIT.
+hide circle
+hide empty members
+skinparam linetype ortho
+skinparam shadowing false
+skinparam backgroundColor transparent
+entity "note" {
+  * id : text
+  + channel : TEXT
+  + parent_id : text
+  + user_id : text
+  + user_name : text
+  + body : text
+  + mentions : text
+  + state : TEXT
+  + run_id : text
+  + created_at : timestamp
+  + updated_at : timestamp
+  + about_run_id : text
+  + about_workflow_run_id : text
+  + area : text
+  + edited_at : timestamp
+  + workspace_id : text
+  + dir : text
+}
+
+entity "user" {
+  * id : text
+  + name : text
+  + role : TEXT
+  + folders : text
+  + created_at : timestamp
+  + updated_at : timestamp
+  + admin : boolean
+  + mcp : boolean
+  + agent_reply : boolean
+}
+
+note }o--|| user : user_id
+@enduml

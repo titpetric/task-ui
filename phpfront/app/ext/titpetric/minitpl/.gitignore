@@ -1,0 +1,7 @@
+/composer.lock
+/tests/compile
+/tests/composer.lock
+/tests/vendor
+/vendor
+/.phpunit.cache
+/.cli-tmp-*

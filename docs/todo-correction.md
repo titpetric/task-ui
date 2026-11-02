@@ -1,8 +1,10 @@
 # Corrections
 
-The module system has a specification written against phpscript and MiniTPL sight unseen, and six of its requirements name something neither one has. Each requirement is below with the snippet the specification calls for, what the runtime does instead, and the correction the code takes.
+Two specifications here stand against phpscript and MiniTPL sight unseen: the module system, and the [front end](phpfront.md) that replaces the Go pages. Each one names things neither runtime has. Every requirement is below with the snippet the specification calls for, what the runtime does instead, and the correction the code takes.
 
-Checked against `github.com/titpetric/phpscript` at commit `ee889fe`, which `@main` resolves to as `v0.6.1-0.20261027175813-ee889febddf9`, and `titpetric/minitpl` v1.3.3.
+Sections 1 to 8 are the module system, 9 to 18 the front end.
+
+Checked against `github.com/titpetric/phpscript` at commit `ee889fe`, which `@main` resolves to as `v0.6.1-0.20261027175813-ee889febddf9`, and `titpetric/minitpl` v1.3.4.
 
 ## 1. `new Task::Module()` does not parse
 
@@ -114,6 +116,134 @@ Specified: nothing directly. A module's PHP has to be testable without task-ui.
 Correction: a `phpscript.yml` in the tree marks a suite root, and the directory holding it is the application root for every fixture below it. The module keeps one at its own root with `test.include: tests/bootstrap.php`, so a fixture reads the tree `index.php` reads and the bootstrap loads the autoloader and the module's declarations ahead of it. [Testing](testing.md) has the shape.
 
 Recorded because the default reads as a bug when it is a default: a fixture tree that holds its own fixtures and nothing else needs no configuration, and a fixture tree inside an application does.
+
+## 9. `fmt` repoints a static call on a root class
+
+Specified: the host calls keep the `Task::` spelling the module system uses, so one contract covers both trees.
+
+`phpscript fmt` rewrites `\Task::base()` to `Task::base()` inside a namespaced file. The two name different classes: the second resolves to `Task\Task`. `\Other\Thing::make()`, `new \Database(...)` and `\strlen(...)` keep their backslash, so it is the single-segment class name in a static call alone. The file still parses, and `phpscript lint` is what reports it:
+
+```
+| WARN | Route.php | 26 | static call Task\Task::base(): unknown class |
+```
+
+Correction: the host class is registered as `Task\Host`. Every reference is multi-segment, which the formatter leaves alone, and a file inside `namespace Task` writes `Host::base()` with no qualifier at all. `phpfront.HostClass` is the one place the name is spelled.
+
+Filed as [phpscript#187](https://github.com/titpetric/phpscript/issues/187). A formatter that changes name resolution is the one class of bug a formatter must not have, so the fix belongs upstream and `Task\Host` stands on its own merits.
+
+## 10. A property cannot be named by a variable
+
+Specified: one hydrator over every generated model, `fill($object, $fields, $row)`, so the row to model mapping is written once.
+
+`$object->$name` does not parse: `line 15: expected member name`. Neither does `$object->{$name}`: `expected "(" after a braced member name`. The read direction has an answer, because `get_object_vars($object)` and `(array)$object` both work and a generated model declares its columns and nothing else, so its properties are exactly its row.
+
+Correction: `tools/models.php` writes the assignments out, one per column, and `Task\Row::values()` is `get_object_vars`. The repetition lives in `tools/templates/model.tpl`.
+
+Filed as [phpscript#188](https://github.com/titpetric/phpscript/issues/188). The workaround holds for a generated class; hand-written code that maps a row by name has none.
+
+## 11. There is no `gmdate`, and `date` is not UTC
+
+Specified: a row's timestamps written the way `storage.stamp()` writes them, UTC to the millisecond.
+
+`gmdate` is not bound. `date` is, and it reads the process timezone: with `TZ` an hour off UTC it answers `2026-11-02 10:59:04` where the column holds `2026-11-02 09:59:04`. A timestamp column compared as text against another holds one zone, so the hour matters.
+
+Correction: `Task\Clock` reads the Go time binding, which is exact: `DateTime::now()->in(Time\Location::utc())->format(Clock::LAYOUT)`. Reading a column back is `DateTime::parse_in_location`, because `DateTime::parse` also answers local. The layout is a Go layout, `2006-01-02 15:04:05`, and no PHP format string.
+
+## 12. `phpscript list` reports no methods
+
+Specified: a module's `README.md` generated from the API of its storage classes.
+
+`list.Row` holds a route, a filename and the class names of a file. A method, its signature and its docblock are not there, and `phpscript ast` answers a token stream.
+
+Correction: `tools/apidoc.php` reads the classes with `token_get_all()` and writes the API as JSON, which `tools/render.php` feeds to `README.md.tpl`.
+
+Filed as [phpscript#189](https://github.com/titpetric/phpscript/issues/189), proposing `list --api`. The generator re-finds in PHP what the parser already holds.
+
+## 13. A class receives nothing through `extends` and there are no traits
+
+Specified: the row behaviour of `model/user.go` on the generated `Task\Model\User`, as Go puts it in a second file of one package.
+
+`extends` names a parent that a catch clause and `instanceof` filter on, and a class receives no member through it. Traits are unavailable. PHP merges no methods from a second file into a class, so a generated class is the whole class.
+
+Correction: one class owns a table and the behaviour of its rows. `Task\User` holds the statements and `Task\User::admin($row)`, `::sees($row, $folder)`, `::initials($row)` answer what a row means. `Task\Model\User` is data.
+
+Recorded as a design decision of the runtime and not a gap: `docs/design.md` in phpscript argues the absence. It decides the shape of every class under `code/Task`.
+
+## 14. The matched route is not published
+
+Specified: one `mod_` file that holds several `@route` lines and dispatches on the one that matched.
+
+`runner.WithRoutePattern` puts the declared pattern on the request context, and `Context.pathValues` reads it to fill `$_REQUEST` with the path parameters. The pattern itself reaches no superglobal, so a file with four routes cannot ask which of them it is answering.
+
+Correction: `Task\Route::path()` cuts `Host::base()` off `$_SERVER["REQUEST_URI"]` and `::segments()` splits the rest. A handler matches on the method and the segments, as the refinement module's `index.php` does.
+
+## 15. `mig gen` emits Go only
+
+Specified: `Task\Model` generated from the same source the Go types come from.
+
+`mig gen --lang` defaults to `go` and `go` is the only case it handles.
+
+Correction: `tools/models.php` renders `schema/schema.yml`, the file `mig docs --yaml` writes and `mig gen` reads, through `tools/templates/model.tpl`. `scripts/schema.sh` runs it beside `mig gen`, so the Go types and the PHP models are written from one file in one pass.
+
+Not a phpscript gap. Worth folding into mig as `--lang php` once the template has settled.
+
+## 16. A compiled template outlives the component it includes
+
+Specified: components in the theme, included by a module's template, each compiled ahead of time.
+
+MiniTPL resolves `{include}` at compile time and writes the component's body into the compiled template. `load()` recompiles where the source is newer than the compiled file, and the source it stats is the template's own: a changed component leaves every template that includes it compiled against the old body.
+
+Correction: `tools/precompile.php` calls `compile()` for every template, which compiles whatever the timestamps say, and the pipeline runs it. Nothing reaches `load()` for a first compile on a served request.
+
+## 17. An out parameter is lost inside a short circuit
+
+Specified: the names a note mentions, read with the shape a regex that both
+tests and captures is written in.
+
+`preg_match_all(..., $names) && isset($names[1])` reads `$names` as unset. The
+write lands alone in an `if`, in a preceding assignment, and in the same `&&`
+where the right operand does not read it, so it is applied after the
+expression and not at the call. `php` 8.5.4 writes it at the call in all five
+shapes.
+
+It fails quietly: the branch is skipped, the function answers empty and the
+column is written blank, which leaves a `LIKE` over it matching nothing.
+
+Correction: the call gets its own statement and the result is tested
+afterwards. `tests/notes.phpt` states the four shapes the column answers.
+
+Filed as [phpscript#190](https://github.com/titpetric/phpscript/issues/190).
+
+## 18. A timestamp column takes two shapes
+
+Specified: a row the front end writes read back by the Go pages while both
+answer.
+
+Two things about a timestamp column, found by posting a note in one front end
+and listing it in the other.
+
+A nullable timestamp column holds null and not `""`. The Go side writes a nil
+`*time.Time` as null, and `""` in the column fails the scan into one.
+`storage.NoteStorage.List` discards its error, so the page answers an empty
+list and says nothing: a note written with `edited_at = ""` is invisible to
+`/notes` and the log is silent.
+
+A write is `time.Time.String()`, `2026-11-02 10:32:12.414 +0000 UTC`, because
+that is what the Go side leaves in the column. A read is ISO seconds with no
+zone, because the driver parses the column and the bridge renders the time it
+got. Both sides read either shape, so ISO writes work; they leave two formats
+in one column, and the queries that compare a timestamp compare it as text.
+
+Correction: the generated model names its timestamp columns in `static
+$stamps`, and `Task\Row::values()` writes null for an empty one.
+`Task\Clock::STORED` is what a write leaves and `::READ` is what a read
+answers; `parse()` takes either by looking for the zone. `tests/clock.phpt` states both
+shapes, and that a whole second and a fraction of it sort the way they compare
+as numbers.
+
+Recorded as a boundary and not a gap: two writers share one table and the
+format is the Go driver's. It is the first thing a module's write gets right,
+and the only sign of getting it wrong is a page that lists nothing.
 
 ## Not a runtime gap
 

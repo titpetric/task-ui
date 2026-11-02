@@ -1,0 +1,1 @@
+{* input scope: data_user. See user.md. *}<span class="user-ref"><span class="avatar sm role-{data_user.role}" title="{data_user.name}">{data_user.initials}</span> <span class="user-name">{data_user.name}</span>{eval $data_menu = $data_user.menu}{include components/menu.tpl}</span>

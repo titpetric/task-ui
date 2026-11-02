@@ -33,7 +33,9 @@ import (
 	"github.com/titpetric/task-ui/layout"
 	"github.com/titpetric/task-ui/mcp"
 	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/internal/assets"
 	"github.com/titpetric/task-ui/note"
+	"github.com/titpetric/task-ui/phpfront"
 	"github.com/titpetric/task-ui/phpscript"
 	"github.com/titpetric/task-ui/phpscripts"
 	"github.com/titpetric/task-ui/recording"
@@ -65,6 +67,8 @@ type App struct {
 	UsersFile *UsersFile
 	// Modules are the plugins written in PHP, served under /m.
 	Modules *phpscript.Manager
+	// Front is the front end being ported, served under FrontBase.
+	Front *phpfront.Front
 	// Telemetry is the tracer and the dashboard at /debug/oida.
 	Telemetry *Telemetry
 
@@ -324,6 +328,26 @@ func (a *App) wire(version string) error {
 		return err
 	}
 
+	// The front end being ported. Its tree is extracted beside the modules'
+	// and it answers under FrontBase; every row it draws it reads itself,
+	// through the same pool, and FrontHost answers what is not a row.
+	frontRoot, err := phpfront.Extract(cfg.DataDir)
+	if err != nil {
+		return err
+	}
+	frontOpts := phpfront.NewOptions(frontRoot)
+	frontOpts.Base = FrontBase
+	frontOpts.Version = version
+	frontOpts.Database = phpscript.NewDatabase(db)
+	frontOpts.Artifacts = phpscript.NewTree(store)
+	frontOpts.Tracer = telemetry.Tracer()
+	frontOpts.Host = &FrontHost{Catalogue: a.Catalogue, Runner: a.Runner, Git: g, Events: events, Root: cfg.Root}
+	frontOpts.OnError = func(err error) { slog.Warn("the front end", "err", err) }
+	a.Front, err = phpfront.New(frontOpts)
+	if err != nil {
+		return err
+	}
+
 	var addUser func(ctx context.Context, name, password string) error
 	var removeUser func(ctx context.Context, name string) error
 	if a.UsersFile != nil {
@@ -390,6 +414,18 @@ func (a *App) wire(version string) error {
 	}).ServeHTTP)
 	r.Mount("/api/mcp", a.Guard.Require(access.RequireMCP(access.SameOrigin(server))))
 	r.Mount("/api", a.Guard.Require(access.SameOrigin(routes)))
+	// The front end being ported, under a prefix while the Go pages still
+	// answer at the root. Its static files sit beside the pages and not under
+	// them, so an asset URL survives the cutover. FrontBase is the one place
+	// the prefix is spelled: dropping it is that line.
+	if a.Front != nil {
+		front, err := a.Front.Routes(context.Background())
+		if err != nil {
+			return err
+		}
+		r.Mount(assets.Prefix, a.Front.Assets())
+		r.Mount(FrontBase, a.Guard.Require(access.SameOrigin(front)))
+	}
 	// The telemetry dashboard. The tracer sits behind the Guard so a
 	// trace is read by a signed in user, and behind its own Authorize,
 	// which answers anyone but an admin with a 404.

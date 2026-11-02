@@ -1,0 +1,94 @@
+#!/usr/bin/env atkins
+# Atkins: https://github.com/titpetric/atkins
+
+name: phpfront
+
+# The front end's own pipeline. `.` reads the PHP directly in a directory and
+# `./...` reads it and everything below.
+#
+# The paths are named rather than globbed from the root for two reasons: the
+# compiled templates under every templates_c are generated PHP, which the
+# formatter would rewrite and the next precompile would write back, and ext/ is
+# what `composer install` put there, which is upstream's to format and not
+# ours.
+vars:
+  paths: ./code/... ./modules/... ./modules/notes/storage/... ./stubs/... ./tools/...
+
+jobs:
+  default:
+    desc: "Format, lint, test, generate and precompile"
+    cmds:
+      - task: fmt
+      - task: lint
+      - task: test
+      - task: precompile
+      - task: rules
+
+  # `phpscript fmt -l` exits zero whether or not it listed a file, so the
+  # check is whether it printed anything. Without the test this job reports
+  # success over an unformatted tree.
+  fmt:
+    desc: "Fail if phpscript fmt would rewrite a file"
+    steps:
+      - |
+        out="$(phpscript fmt -l ${{paths}})"
+        if [ -n "${out}" ]; then
+            echo "phpscript fmt would rewrite:" >&2
+            echo "${out}" >&2
+            exit 1
+        fi
+        echo "every file is formatted"
+
+  # --include registers the names the tree's own files do not declare:
+  # composer's autoloader for the MiniTPL classes, and stubs/ for the host
+  # calls, which are Go and invisible to a linter reading PHP. Without it
+  # every Task\Host:: reports as an unknown class and a real one reads as more
+  # of the same noise.
+  #
+  # Zero warnings is the bar. The linter reports an unknown class, which is
+  # how a misspelled DAO or a renamed model is caught before a page serves.
+  lint:
+    desc: "Lint the tree, zero warnings"
+    steps:
+      - |
+        out="$(phpscript lint --include stubs/autoload.php ${{paths}})"
+        echo "${out}"
+        if echo "${out}" | grep -qE '^\| (WARN|FAIL)'; then
+            echo "lint is not at zero" >&2
+            exit 1
+        fi
+
+  test:
+    desc: "Run the test fixtures"
+    steps:
+      - phpscript test ./tests/...
+
+  # Rewrites code/Task/Model from the same schema.yml mig gen reads for the Go
+  # types, then formats what it wrote, so the fmt job stays clean. It runs
+  # from the repository root, because the schema sits outside this tree.
+  models:
+    desc: "Regenerate the models from schema/schema.yml"
+    dir: ../..
+    steps:
+      - phpscript run phpfront/app/tools/models.php
+      - phpscript fmt ./phpfront/app/code/Task/Model/...
+
+  precompile:
+    desc: "Compile every template into the templates_c beside it"
+    steps:
+      - phpscript run tools/precompile.php
+
+  # The README and the diagram source come from the module; plantuml turns the
+  # second into the SVG the first links at the top.
+  docs:
+    desc: "Regenerate each module's README, schema diagram and data model"
+    steps:
+      - phpscript run tools/docs.php
+      - plantuml -tsvg modules/*/schema.puml
+      - mdox fmt modules/*/README.md
+
+  rules:
+    desc: "Hold the conventions: SQL in storage, no prefix, no routed file"
+    dir: ../..
+    steps:
+      - semgrep scan --metrics=off --quiet --error --config rules ./phpfront

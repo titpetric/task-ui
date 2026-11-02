@@ -1,0 +1,58 @@
+name: MiniTPL build and test
+
+vars:
+  sources: code tests
+
+jobs:
+  default:
+    desc: "Build and test"
+    depends_on: [deps, lint, test]
+
+  deps:
+    desc: "Install composer dependencies"
+    steps:
+      - name: install
+        run: composer install --no-interaction --no-progress --quiet && echo "dependencies installed"
+      # The .phpt fixtures resolve minitpl through their own autoloader, so the
+      # tests directory is a composer project of its own.
+      - name: install fixtures
+        dir: tests
+        run: composer install --no-interaction --no-progress --quiet && echo "fixture dependencies installed"
+
+  lint:
+    desc: "Validate composer.json and lint the sources"
+    passthru: true
+    steps:
+      # The fixtures are linted by name. A bare ./tests/... would pull in
+      # TemplateTest.php, which phpscript cannot parse: it reads the PHPUnit
+      # attributes above the class as a statement in a namespaced file.
+      # --include registers the composer autoloader's classmap, so MiniTPL
+      # classes resolve across files instead of warning as undefined.
+      - name: phpscript lint
+        tty: true
+        run: phpscript lint --include vendor/autoload.php ./code/... tests/*.phpt
+      - name: composer validate
+        run: composer validate --no-check-publish --quiet && echo "composer.json is valid"
+      # The command line has no .php suffix, so the find above misses it.
+      - name: php -l
+        run: find ${{ sources }} -name '*.php' -print0 | xargs -0 -n1 php -l && php -l cmd/minitpl
+
+  test:
+    desc: "Run the phpunit test suite"
+    passthru: true
+    depends_on: [deps]
+    steps:
+      - name: phpunit
+        run: phpunit
+      # Run from tests/ so a fixture reads and includes against the same root.
+      # The matrix holds every fixture to its expected output on both engines
+      # and on the php binary.
+      - name: phpscript test
+        dir: tests
+        tty: true
+        run: phpscript test --matrix ./...
+
+  clean:
+    desc: "Remove build and test artifacts"
+    steps:
+      - rm -rf .phpunit.cache .cli-tmp-* tests/compile tests/templates/tests && echo "artifacts removed"

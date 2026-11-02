@@ -1,0 +1,8 @@
+# The suite root of this application's tests.
+#
+# phpscript test roots a fixture at the directory the fixture sits in, which
+# would put tests/ out of reach of ext/ and code/. This moves that root here,
+# to the tree root: a fixture requires "ext/autoload.php" and means the path
+# an endpoint means.
+test:
+  include: tests/bootstrap.php

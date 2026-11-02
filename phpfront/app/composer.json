@@ -1,0 +1,25 @@
+{
+  "name": "titpetric/task-ui-front",
+
+  "description": "The task-ui front end: a phpscript application of a theme and a module per view",
+
+  "license": "MIT",
+
+  "type": "project",
+
+  "config": {
+    "vendor-dir": "ext"
+  },
+
+  "autoload": {
+    "psr-4": {
+      "Task\\": "code/Task/"
+    },
+    "classmap": ["code/", "modules/"],
+    "exclude-from-classmap": ["modules/*/templates_c/", "**/mod_*.php"]
+  },
+
+  "require": {
+    "titpetric/minitpl": "^1.3"
+  }
+}
