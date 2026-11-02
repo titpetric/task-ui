@@ -23,9 +23,19 @@ jobs:
   # package a change touched: `atkins test:integration`, or
   # `scripts/test-integration.sh ./storage/...`.
   default:
-    desc: "The fast gate: the unit tests"
+    desc: "The fast gate: the unit tests and the front end"
     cmds:
       - task: test
+      - task: front
+
+  # The front end being ported, which has a pipeline of its own: format,
+  # lint, its .phpt fixtures, the precompiled templates and the conventions.
+  # docs/phpfront.md is the contract it holds.
+  front:
+    desc: "Run the phpscript front end's pipeline"
+    dir: phpfront/app
+    steps:
+      - atkins
 
   test:
     desc: "Run the unit tests"
@@ -59,15 +69,39 @@ jobs:
       - ./scripts/test-duplicate.sh
 
   test:integration:
-    desc: "Run the integration tests: processes, databases and the network"
+    desc: "Run the integration tests: the storage package over a throwaway database"
     steps:
       - ./scripts/test-integration.sh
 
+  # What each suite costs and what each suite covers, side by side, and
+  # the coverage of all of them together. The screenshot suites count
+  # because their server is built with `go build -cover`.
+  test:coverage:
+    desc: "Report every suite's duration and coverage, and the merged total"
+    steps:
+      - ./scripts/test-coverage.sh
+
   lint:
-    desc: "Lint the Go source and the permission rules"
+    desc: "Lint the Go source, the permission rules and the conventions"
     steps:
       - splint ./...
       - go run ./internal/cmd/rulelint
+      # Every rule under rules/ was written at zero and is proven to
+      # fire, so --error is right: a finding is a new violation.
+      # rules/SKILL.md says what they hold and how to add one.
+      - semgrep scan --metrics=off --quiet --error --config rules .
+
+  # What the cutover reads: every view that answers from phpscript leaves a
+  # marker on the Go handler it replaced, and the last one to go is the one
+  # that drops the prefix. A count of zero is a front end that is finished.
+  front:markers:
+    desc: "List the Go code a ported view has marked for deletion"
+    steps:
+      - |
+        git grep -n "TODO: delete, replaced with phpscript" -- '*.go' '*.tpl' || {
+            echo "nothing is marked yet"
+            exit 0
+        }
 
   # Run by name, never from default: the tree is not at zero yet, and a
   # job that fails on every run gates nothing. vale reads the markdown

@@ -8,37 +8,37 @@ Both front ends answer while the port runs. The Go pages hold the root and the n
 
 ## The tree
 
-| Path                          | What it is                                                              |
-|-------------------------------|-------------------------------------------------------------------------|
+| Path                          | What it is                                                                        |
+|-------------------------------|-----------------------------------------------------------------------------------|
 | `composer.json`               | `vendor-dir: ext`, psr-4 over `code/Task`, a classmap over `code/` and `modules/` |
-| `ext/`                        | what `composer install` wrote, the autoloader among it                   |
-| `code/Module.php`             | the interface every `mod_` class declares                                |
-| `code/Task/`                  | the task-ui domain: a DAO per table, and the helpers every page shares   |
-| `code/Task/Model/`            | generated from `schema/schema.yml`; do not edit                          |
-| `theme/templates/index.tpl`   | the page shell, which places the components                              |
-| `theme/templates/components/` | a component and its `.md` per piece of shared markup                     |
-| `theme/assets/`               | the stylesheet, the script, the fonts and the icon, served at `/assets/theme/` |
-| `modules/<name>/`             | one directory per sidebar entry                                          |
+| `ext/`                        | what `composer install` wrote, the autoloader among it                            |
+| `code/Module.php`             | the interface every `mod_` class declares                                         |
+| `code/Task/`                  | the task-ui domain: a DAO per table, and the helpers every page shares            |
+| `code/Task/Model/`            | generated from `schema/schema.yml`; do not edit                                   |
+| `theme/templates/index.tpl`   | the page shell, which places the components                                       |
+| `theme/templates/components/` | a component and its `.md` per piece of shared markup                              |
+| `theme/assets/`               | the stylesheet, the script, the fonts and the icon, served at `/assets/theme/`    |
+| `modules/<name>/`             | one directory per sidebar entry                                                   |
 | `stubs/`                      | the host calls, for the linter and the fixtures; nothing requires them at runtime |
-| `tools/`                      | the generators and the precompiler                                       |
-| `tests/`                      | the `.phpt` fixtures, and `bootstrap.php`                                |
+| `tools/`                      | the generators and the precompiler                                                |
+| `tests/`                      | the `.phpt` fixtures, and `bootstrap.php`                                         |
 
 A module directory holds:
 
-| Path                 | What it is                                                     |
-|----------------------|-----------------------------------------------------------------|
-| `mod_<name>.php`     | one per view: its `@route` lines, its class, its dispatch       |
-| `storage/`           | the SQL of a data model the module owns                          |
-| `templates/index.tpl`| the module's body; more templates beside it                      |
-| `templates_c/`       | the same compiled, written by `tools/precompile.php` and shipped |
-| `assets/`            | served at `/assets/<name>/`                                      |
-| `api/`               | new JSON endpoints, `@route` annotated                           |
-| `docs/`              | the data model and the operations over it                        |
-| `README.md`, `schema.puml`, `schema.svg` | generated                                    |
+| Path                                     | What it is                                                       |
+|------------------------------------------|------------------------------------------------------------------|
+| `mod_<name>.php`                         | one per view: its `@route` lines, its class, its dispatch        |
+| `storage/`                               | the SQL of a data model the module owns                          |
+| `templates/index.tpl`                    | the module's body; more templates beside it                      |
+| `templates_c/`                           | the same compiled, written by `tools/precompile.php` and shipped |
+| `assets/`                                | served at `/assets/<name>/`                                      |
+| `api/`                                   | new JSON endpoints, `@route` annotated                           |
+| `docs/`                                  | the data model and the operations over it                        |
+| `README.md`, `schema.puml`, `schema.svg` | generated                                                        |
 
 ## A module
 
-`mod_<name>.php` carries its own routes, declares its class and runs its dispatch. The pooled runtime drops what an endpoint declared between requests, so declaring the class in the endpoint file is safe, and the dispatch is guarded so a fixture can require the file for the class alone.
+`mod_<name>.php` holds its own routes, declares its class and runs its dispatch. The pooled runtime drops what an endpoint declared between requests, so declaring the class in the endpoint file is safe. The dispatch is guarded, so a fixture requires the file for the class alone.
 
 ```php
 <?php
@@ -98,7 +98,7 @@ A file holds no `use` block. `phpscript fmt` inlines an alias and leaves the imp
 
 `// @route GET /path` and `// @route POST /path`. A line naming no method routes both. A path parameter arrives in `$_REQUEST` under the name the annotation declared, so `/runs/{id}` reads `Task\Route::param("id")`.
 
-The matched pattern reaches no superglobal, so a file carrying several routes matches on the method and the segments: `Task\Route::posted()` and `Task\Route::segments()`.
+The matched pattern reaches no superglobal, so a file holding several routes matches on the method and the segments: `Task\Route::posted()` and `Task\Route::segments()`.
 
 An `@route` never names a file. The static files are Go's, at `/assets/theme/` and `/assets/<module>/`, and `rules/` refuses a route path with an extension.
 
@@ -110,28 +110,28 @@ A write publishes. `Task\Host::publish($topic, $payload)` sends the event every 
 
 ## The domain
 
-`code/Task` holds a class per table and the helpers every page shares. A page reads rows itself: no binding hands it a workspace, a run or a user.
+`code/Task` holds a class per table and the helpers every page shares. A page reads rows itself: no binding answers a workspace, a run or a user.
 
-| Class                 | What it is                                                        |
-|-----------------------|---------------------------------------------------------------------|
-| `Task\DB`             | `reader()`, which refuses every write, and `writer()`               |
-| `Task\Row`            | the readers over a database row, and `values()` over a model        |
-| `Task\Model\*`        | a row: its columns, its getters and setters, `TABLE`, `$fields`, `$primary`, `$stamps` |
-| `Task\Route`          | the request past the prefix, and the links back                     |
-| `Task\Chrome`         | who is reading, what they may do, the sidebar, the crumbs           |
-| `Task\View`           | a module's body inside the theme's shell                            |
-| `Task\Menu`           | the `[...]` menu of a row or a block                                |
-| `Task\Who`            | a user as every page draws them: avatar, name, menu                 |
-| `Task\Access`         | what one user may do                                                |
-| `Task\Policy`         | a subject's entries, an effect per path                             |
-| `Task\Permission`     | `config/permissions.yml`, over `Task\Host::rules()`                 |
-| `Task\Clock`          | the two shapes a timestamp column takes                             |
-| `Task\Id`             | the 26 character identifier a row carries                           |
-| `Task\Text`           | the JSON a column holds where it holds a list or a map              |
+| Class             | What it is                                                                             |
+|-------------------|----------------------------------------------------------------------------------------|
+| `Task\DB`         | `reader()`, which refuses every write, and `writer()`                                  |
+| `Task\Row`        | the readers over a database row, and `values()` over a model                           |
+| `Task\Model\*`    | a row: its columns, its getters and setters, `TABLE`, `$fields`, `$primary`, `$stamps` |
+| `Task\Route`      | the request past the prefix, and the links back                                        |
+| `Task\Chrome`     | who is reading, what they may do, the sidebar, the crumbs                              |
+| `Task\View`       | a module's body inside the theme's shell                                               |
+| `Task\Menu`       | the `[...]` menu of a row or a block                                                   |
+| `Task\Who`        | a user as every page draws them: avatar, name, menu                                    |
+| `Task\Access`     | what one user may do                                                                   |
+| `Task\Policy`     | a subject's entries, an effect per path                                                |
+| `Task\Permission` | `config/permissions.yml`, over `Task\Host::rules()`                                    |
+| `Task\Clock`      | the two shapes a timestamp column takes                                                |
+| `Task\Id`         | the 26 character identifier of a row                                                   |
+| `Task\Text`       | the JSON a column holds where it holds a list or a map                                 |
 
 A class owns a table and the behaviour of its rows both, because the runtime merges no methods into a generated class: `Task\User` holds the statements and `Task\User::admin($row)` answers what a row means.
 
-**Every SQL statement lives in `code/Task/*.php` or `modules/*/storage/*.php`.** `rules/` refuses one anywhere else. A read page takes `Task\DB::reader()`, which refuses a statement that is not a read, so a view meant to list something cannot write.
+**Every SQL statement lives in `code/Task/*.php` or `modules/*/storage/*.php`.** `rules/` refuses one anywhere else. A read page takes `Task\DB::reader()`, which refuses a statement that does not start with a read-only keyword, so a view that only lists cannot write.
 
 A nullable timestamp column holds null and not `""`. The generated model names its timestamp columns and `Task\Row::values()` writes null for an empty one; writing `""` makes the Go scanner fail and the Go page lists nothing, silently.
 
@@ -139,20 +139,20 @@ A nullable timestamp column holds null and not `""`. The generated model names i
 
 `Task\Host::x()` is Go. Every other `Task\` name is PHP. That spelling is the whole of the boundary.
 
-| Call                          | Why it is not PHP                                                |
-|-------------------------------|--------------------------------------------------------------------|
-| `base()`                      | where the router is mounted                                        |
-| `version()`                   | the instance's version                                             |
-| `assets()`, `assetVersion()`  | where the static files answer, and their content hash              |
-| `whoami()`                    | the name the Guard resolved; the row behind it is `Task\User`      |
-| `folders()`                   | `folder.Catalogue` parses Taskfiles to find jobs                   |
-| `running()`                   | the runner's memory, where a run lives until it ends               |
-| `dirty($dir)`                 | git's answer, not a row                                            |
-| `rules()`                     | `config/permissions.yml`, embedded in the binary                   |
-| `publish($topic, $payload)`   | the stream every live label reads                                  |
-| `markdown($src, $folder)`     | the renderer that owns the content security policy                 |
-| `message($src, $prefix, $link)` | the same, with a line break kept and `@name` marked              |
-| `artifacts($folder)`, `artifact($path)` | the artifact tree, outside the directory the PHP may open |
+| Call                                    | Why it is not PHP                                             |
+|-----------------------------------------|---------------------------------------------------------------|
+| `base()`                                | where the router is mounted                                   |
+| `version()`                             | the instance's version                                        |
+| `assets()`, `assetVersion()`            | where the static files answer, and their content hash         |
+| `whoami()`                              | the name the Guard resolved; the row behind it is `Task\User` |
+| `folders()`                             | `folder.Catalogue` parses Taskfiles to find jobs              |
+| `running()`                             | the runner's memory, where a run lives until it ends          |
+| `dirty($dir)`                           | git's answer, not a row                                       |
+| `rules()`                               | `config/permissions.yml`, embedded in the binary              |
+| `publish($topic, $payload)`             | the stream every live label reads                             |
+| `markdown($src, $folder)`               | the renderer that owns the content security policy            |
+| `message($src, $prefix, $link)`         | the same, with a line break kept and `@name` marked           |
+| `artifacts($folder)`, `artifact($path)` | the artifact tree, outside the directory the PHP may open     |
 
 A Go slice crosses as a PHP array and a Go struct crosses as a host object whose fields no key reaches, so `phpfront/convert.go` converts: everything that arrives is an array all the way down, keyed by the names `phpfront/host.go` declares as json tags. A binding that answers a shape adds a converter there and a case to `bind_test`.
 
@@ -160,14 +160,14 @@ A Go slice crosses as a PHP array and a Go struct crosses as a host object whose
 
 ## The theme
 
-`theme/templates/index.tpl` is the shell. It places each component and hands it its own slice of the chrome as `data` immediately before including it:
+`theme/templates/index.tpl` is the shell. It places each component and assigns its own slice of the chrome as `data` immediately before including it:
 
 ```smarty
 {eval $data = $chrome.sidebar}
 {include components/sidebar-menu.tpl}
 ```
 
-Every component has a sibling `.md` stating one thing: its input scope, and the schema of that scope. A component that draws a row inside another names its scope apart — `data_row`, `data_menu`, `data_user` — so neither overwrites the other.
+Every component has a sibling `.md` stating its input scope and the schema of that scope, and nothing else. A component that draws a row inside another names its scope apart, `data_row`, `data_menu`, `data_user`, so neither overwrites the other.
 
 A module's `templates/index.tpl` is the body. `Task\View` renders it with the module's templates and the theme's as the search paths, in that order, so `{include components/table.tpl}` resolves into the theme, then renders the shell around it.
 
@@ -198,15 +198,15 @@ A new `@route` needs a restart: the tree is scanned once, when the front end is 
 
 `phpfront/app/atkins.yml`:
 
-| Job          | What it does                                                   |
-|--------------|------------------------------------------------------------------|
-| `fmt`        | fails if `phpscript fmt` would rewrite a file                    |
-| `lint`       | `phpscript lint --include stubs/autoload.php`, zero warnings     |
-| `test`       | `phpscript test ./tests/...`                                     |
+| Job          | What it does                                                      |
+|--------------|-------------------------------------------------------------------|
+| `fmt`        | fails if `phpscript fmt` would rewrite a file                     |
+| `lint`       | `phpscript lint --include stubs/autoload.php`, zero warnings      |
+| `test`       | `phpscript test ./tests/...`                                      |
 | `models`     | rewrites `code/Task/Model` from `schema/schema.yml`, then formats |
-| `precompile` | compiles every template into the `templates_c` beside it         |
-| `docs`       | each module's `README.md`, `schema.puml` and `schema.svg`        |
-| `rules`      | the semgrep conventions                                          |
+| `precompile` | compiles every template into the `templates_c` beside it          |
+| `docs`       | each module's `README.md`, `schema.puml` and `schema.svg`         |
+| `rules`      | the semgrep conventions                                           |
 
 `atkins` runs them in that order. The Go side keeps its own: `atkins test` and `splint ./...`.
 
