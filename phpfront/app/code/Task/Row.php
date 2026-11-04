@@ -41,13 +41,47 @@ class Row {
 		return (bool)$value;
 	}
 
-	/** stamp is a timestamp column, or "" where the row holds none. */
+	/**
+	 * items is a key that holds a list, as a list.
+	 *
+	 * No column holds one; what does is the host's answers, which arrive as
+	 * arrays all the way down and are read with the same readers as a row. A
+	 * key that is absent or holds something else is an empty list, so a
+	 * foreach over the answer is safe without a test of its own.
+	 */
+	static function items($row, $column) {
+		if (!is_array($row) || !isset($row[$column]) || !is_array($row[$column])) {
+			return array();
+		}
+
+		return $row[$column];
+	}
+
+	/**
+	 * stamp is a timestamp column, or "" where the row holds none.
+	 *
+	 * The driver answers such a column as a time and not as a string, and a
+	 * cast of one renders whole seconds: the fraction the column holds is
+	 * dropped, which is what orders two runs that started in the same second.
+	 * So a time is formatted in the shape the column holds, in UTC, which is
+	 * what Clock says a row records.
+	 *
+	 * The shape matters a second time: a model read from a row and written
+	 * back carries this value, and a column that holds two formats is
+	 * compared as text by every statement that orders by it.
+	 */
 	static function stamp($row, $column) {
 		if (!is_array($row) || !isset($row[$column])) {
 			return "";
 		}
 
-		return (string)$row[$column];
+		$value = $row[$column];
+
+		if (is_object($value) && method_exists($value, "format")) {
+			return $value->in(\Time\Location::utc())->format(Clock::STORED);
+		}
+
+		return (string)$value;
 	}
 
 	/**

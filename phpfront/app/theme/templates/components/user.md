@@ -11,5 +11,8 @@ Input scope: `data_user`, from `Task\Who::of()`.
 
 The scope is `data_user` so a row drawing a user keeps its own `data_row`.
 
+The avatar is `avatar.tpl`, which this scope is a superset of, so the place
+that draws a user and the place that draws an avatar alone draw one thing.
+
 `userHTML` in task-ui.js draws the same markup for the rows a script adds, so
 a change here changes the script too.

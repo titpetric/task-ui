@@ -1,0 +1,39 @@
+# The @ operator, adopted from mobius's rules/suppression.yml.
+#
+# It hides the failure the author thought of and every other one with it, and
+# this runtime ignores it anyway. No fix: the rewrite is an explicit guard —
+# `file_exists()` before `filemtime()`, `isset()` before a read — which is a
+# decision and not a substitution.
+#
+# mobius's rule carries no paths block. Ours does, because the four findings
+# it had on this tree were all false and all outside our own code:
+#
+#   phpfront/app/ext/composer/InstalledVersions.php:270   @trigger_error(),
+#   phpscripts/modules/titpetric/refinement/ext/...:270   vendored twice
+#   phpfront/app/tests/note.phpt:266                      "rewritten for @ops"
+#   phpfront/app/tests/notes.phpt:27                       "@a&lt;b", a mention
+#
+# The two fixtures only match because everything before `<?php` in a .phpt is
+# inline text to a PHP parser, so the expected-output block reads as code.
+# Neither exclude may be widened past those two directories: a suppressed
+# call in a page is the thing this refuses.
+#
+# History:
+#   2026-11-03  Adopted at zero, with ext/ and tests/ excluded.
+rules:
+  - id: task-ui.find.error-suppression
+    languages: [php]
+    severity: ERROR
+    message: >-
+      No @ error suppression. It hides the failure you thought of and every
+      other one, and the runtime ignores it. Ask the question instead:
+      file_exists() before filemtime(), isset() before a read.
+    paths:
+      include:
+        - "phpfront/app/**/*.php"
+        - "phpscripts/modules/**/*.php"
+      exclude:
+        - "**/ext/**"
+        - "**/tests/**"
+        - "**/templates_c/**"
+    pattern: "@$X"

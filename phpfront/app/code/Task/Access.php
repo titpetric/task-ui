@@ -10,9 +10,17 @@ class Access {
 	var $own = null;
 
 	function __construct($user = null, $role = null, $own = null) {
+		if ($role === null) {
+			$role = new Policy;
+		}
+
+		if ($own === null) {
+			$own = new Policy;
+		}
+
 		$this->user = $user;
-		$this->role = $role === null ? new Policy : $role;
-		$this->own = $own === null ? new Policy : $own;
+		$this->role = $role;
+		$this->own = $own;
 	}
 
 	/** allowed reports whether the user may do what a path names. */

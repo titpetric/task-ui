@@ -89,3 +89,42 @@ func TestPinStorage_MoveFolder(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, 0, moved)
 }
+
+// Every method hands back what the driver said. Add and MoveFolder look
+// for the pin a user has already: a dead pool answers that with an error
+// rather than with "not there", and neither writes.
+func TestPinStorage_Closed(t *testing.T) {
+	t.Parallel()
+	pins := storage.NewPinStorage(closedDB(t))
+	ctx := context.Background()
+
+	_, err := pins.List(ctx, "admin")
+	assert.ErrorContains(t, err, errClosed)
+	assert.ErrorContains(t, pins.Add(ctx, &model.Pin{UserName: "admin", Folder: "acme"}), errClosed)
+	assert.ErrorContains(t, pins.Delete(ctx, "admin", "p1"), errClosed)
+	_, err = pins.MoveFolder(ctx, "acme", "acme2")
+	assert.ErrorContains(t, err, errClosed)
+}
+
+// A move is two statements and stops at the one that failed: the delete
+// of the pins whose user holds the target, and the update that moves
+// the rest.
+func TestPinStorage_MoveFolderWrites(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+
+	moving := newDB(t)
+	pins := storage.NewPinStorage(moving)
+	assert.NoError(t, pins.Add(ctx, &model.Pin{UserName: "admin", Folder: "acme", Job: "build"}))
+	refuse(t, moving, model.PinTable, "UPDATE")
+	_, err := pins.MoveFolder(ctx, "acme", "acme2")
+	assert.ErrorContains(t, err, errRefused)
+
+	dropping := newDB(t)
+	held := storage.NewPinStorage(dropping)
+	assert.NoError(t, held.Add(ctx, &model.Pin{UserName: "admin", Folder: "acme", Job: "build"}))
+	assert.NoError(t, held.Add(ctx, &model.Pin{UserName: "admin", Folder: "acme2", Job: "build"}))
+	refuse(t, dropping, model.PinTable, "DELETE")
+	_, err = held.MoveFolder(ctx, "acme", "acme2")
+	assert.ErrorContains(t, err, errRefused)
+}

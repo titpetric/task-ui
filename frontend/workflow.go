@@ -44,6 +44,24 @@ func viewRunSteps(rows []model.WorkflowRunStep, names map[string]string) []view.
 	return out
 }
 
+// seenSteps blanks the run of a step whose run the user may not see,
+// because a chain links a step's run as /runs/{id} and that page
+// refuses what seeing the step's folder does not give: a prompt's run
+// takes prompt/view and the Notes agent's takes note/view. A step with
+// no run links its own page, and no frame of the run is drawn either,
+// which a run the page refuses must not show.
+//
+// A run that is gone is blanked the same way, as a note's is: nothing
+// is left to link to.
+func seenSteps(sees func(string) bool, steps []view.Step) []view.Step {
+	for i := range steps {
+		if steps[i].RunID != "" && !sees(steps[i].RunID) {
+			steps[i].RunID = ""
+		}
+	}
+	return steps
+}
+
 // recentWorkflowRuns is how many runs the Workflows page lists under
 // Recent runs.
 const recentWorkflowRuns = 15
@@ -279,9 +297,12 @@ func (h *Handlers) workflow(w http.ResponseWriter, r *http.Request) {
 	runs, _ := h.opts.WorkflowRuns.ListByWorkflow(r.Context(), p.Workflow.ID, filter)
 	runs, prev, next := paged(runs, n, filter.Before, filter.After, func(run model.WorkflowRun) string { return run.ID })
 	p.Pager = view.NewPager("/workflows/"+p.Workflow.ID, q, prev, next)
+	sees := h.seesRun(r)
 	for _, run := range runs {
 		rows, _ := h.opts.WorkflowRuns.Steps(r.Context(), run.ID)
-		p.WorkflowRuns = append(p.WorkflowRuns, h.workflowThread(run, rows, names))
+		thread := h.workflowThread(run, rows, names)
+		thread.Steps = seenSteps(sees, thread.Steps)
+		p.WorkflowRuns = append(p.WorkflowRuns, thread)
 	}
 	// The pipeline follows the newest run, which a page further down
 	// does not hold.
@@ -291,13 +312,13 @@ func (h *Handlers) workflow(w http.ResponseWriter, r *http.Request) {
 			latest = p.WorkflowRuns[0].Steps
 		} else {
 			rows, _ := h.opts.WorkflowRuns.Steps(r.Context(), last.ID)
-			latest = viewRunSteps(rows, names)
+			latest = seenSteps(sees, viewRunSteps(rows, names))
 		}
 	}
 	p.Activity = h.workflowActivity(r.Context(), p.Workflow.ID, p.Now)
 	p.Summarize = h.claudeFor(r, p.User)
 	p.Pipeline = view.Pipeline(p.Workflow.Steps, latest, p.Workspaces)
-	h.frames(r.Context(), p.Pipeline, names, p.Workspaces, true)
+	h.frames(r.Context(), p.Pipeline, names, p.Workspaces, true, sees)
 	h.render(w, http.StatusOK, "workflow", p)
 }
 
@@ -316,9 +337,12 @@ func (h *Handlers) workflowRun(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	rows, _ := h.opts.WorkflowRuns.Steps(r.Context(), run.ID)
-	p.WorkflowRuns = []view.WorkflowRun{h.workflowThread(*run, rows, names)}
-	p.Pipeline = view.Chain(p.WorkflowRuns[0].Steps, p.Workspaces)
-	h.frames(r.Context(), p.Pipeline, names, p.Workspaces, true)
+	sees := h.seesRun(r)
+	thread := h.workflowThread(*run, rows, names)
+	thread.Steps = seenSteps(sees, thread.Steps)
+	p.WorkflowRuns = []view.WorkflowRun{thread}
+	p.Pipeline = view.Chain(thread.Steps, p.Workspaces)
+	h.frames(r.Context(), p.Pipeline, names, p.Workspaces, true, sees)
 	p.Prompt = h.workflowRunPrompt(r, p, run)
 	p.Crumbs = view.Crumbs("Workflows", "/workflows", p.Workflow.Name, "/workflows/"+p.Workflow.ID, "Run")
 	h.render(w, http.StatusOK, "workflow_run", p)
@@ -354,8 +378,9 @@ func (h *Handlers) workflowRunPrompt(r *http.Request, p *view.Page, run *model.W
 
 // frames puts on each step of a run's chain the screen its run ended
 // on, and under a step that ran a workflow the chain of that run, one
-// level down.
-func (h *Handlers) frames(ctx context.Context, links []view.Link, names map[string]string, workspaces map[string]int, deeper bool) {
+// level down. sees keeps a run the user may not see out of that inner
+// chain, as seenSteps does for the outer one.
+func (h *Handlers) frames(ctx context.Context, links []view.Link, names map[string]string, workspaces map[string]int, deeper bool, sees func(string) bool) {
 	for i := range links {
 		if links[i].RunID != "" {
 			links[i].FrameSVG, links[i].Lines, links[i].Complete = h.frameOf(ctx, links[i].RunID)
@@ -365,8 +390,9 @@ func (h *Handlers) frames(ctx context.Context, links []view.Link, names map[stri
 			if err != nil {
 				continue
 			}
-			links[i].Sub = view.Chain(viewRunSteps(rows, names), workspaces)
-			h.frames(ctx, links[i].Sub, names, workspaces, false)
+			steps := seenSteps(sees, viewRunSteps(rows, names))
+			links[i].Sub = view.Chain(steps, workspaces)
+			h.frames(ctx, links[i].Sub, names, workspaces, false, sees)
 		}
 	}
 }

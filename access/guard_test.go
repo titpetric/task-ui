@@ -7,7 +7,29 @@ import (
 
 	"github.com/titpetric/task-ui/access"
 	"github.com/titpetric/task-ui/internal/assert"
+	"github.com/titpetric/task-ui/model"
 )
+
+// Attach keeps nobody out. A request with no session reaches the page it asked
+// for, carrying no user, which is what the sign in page needs: Require would
+// redirect it to the page it is already asking for.
+func TestGuardAttachKeepsNobodyOut(t *testing.T) {
+	t.Parallel()
+	guard := &access.Guard{LoginPath: "/login"}
+	var drawn bool
+	var reader *model.User
+	page := http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
+		drawn = true
+		reader = access.UserFrom(r.Context())
+	})
+
+	w := httptest.NewRecorder()
+	guard.Attach(page).ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/login", nil))
+
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.True(t, drawn)
+	assert.Nil(t, reader)
+}
 
 func TestIsHTTPS(t *testing.T) {
 	t.Parallel()

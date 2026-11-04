@@ -1,0 +1,1 @@
+{* input scope: data_finding. See pipeline-error.md. *}<li><a href="{data_finding.href}">{data_finding.folder}</a> <code>{data_finding.path}</code>{if $data_finding.job} <span class="dim">job</span> <b>{data_finding.job}</b>{/if}: <span{if $data_finding.issue} title="{data_finding.issue}"{/if}>{data_finding.detail}</span></li>

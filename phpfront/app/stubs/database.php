@@ -33,4 +33,16 @@ class Database {
 	/** Writes a row back, the array keyed by column, keyed by the named columns. */
 	function update($table, $value, $key) {
 	}
+
+	/** Opens a transaction on this connection. */
+	function begin() {
+	}
+
+	/** Commits the open transaction. */
+	function commit() {
+	}
+
+	/** Rolls the open transaction back. Deferred on the line after begin. */
+	function rollback() {
+	}
 }

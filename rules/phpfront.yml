@@ -41,6 +41,10 @@ rules:
 
   # The same convention as a text match, for the statement built in a page
   # and handed to something this does not name.
+  #
+  # The match is case sensitive. Every statement in the tree writes its
+  # keywords in capitals, and a case insensitive match reads the menu label
+  # "Delete from the tree" as SQL, which is a sentence no rule may forbid.
   - id: task-ui.front.sql-literal-outside-storage
     languages: [generic]
     severity: ERROR
@@ -56,23 +60,29 @@ rules:
         - "phpfront/app/ext/**"
         - "phpfront/app/tests/**"
         - "**/templates_c/**"
-    pattern-regex: '(?i)[''"]\s*(SELECT\s+[\w*.,()\s]+\s+FROM|INSERT\s+INTO|UPDATE\s+\w+\s+SET|DELETE\s+FROM)\s'
+    pattern-regex: '[''"]\s*(SELECT|INSERT\s+INTO|UPDATE\s+\w+\s+SET|DELETE\s+FROM|CREATE\s+TABLE)\s'
 
-  # The prefix is Go's. app.FrontBase is where it is spelled, Task\Host::base()
-  # is how the tree reads it, and the cutover is that one line.
+  # A mount is Go's. app.FrontBase is where this tree's is spelled,
+  # Task\Host::base() is how the tree reads it, and it is the empty string now
+  # that the ported pages hold the root.
+  #
+  # app.GoBase is the other one, where the Go pages being replaced answer. No
+  # page of this tree links one: the pages here are what the instance serves,
+  # and a link into the front end being compared against would take a reader
+  # out of it. It goes at cutover with the pages under it.
   - id: task-ui.front.prefix-in-php
     languages: [generic]
     severity: ERROR
     message: >-
-      The mount prefix is spelled once, in app.FrontBase. Build a link with
-      Task\Route::href() and write {base} in a template.
+      A mount is spelled once, in app.FrontBase or app.GoBase. Build a link
+      with Task\Route::href() and write {base} in a template.
     paths:
       include:
         - "phpfront/app/**/*.php"
         - "phpfront/app/**/*.tpl"
       exclude:
         - "**/templates_c/**"
-    pattern-regex: '/development'
+    pattern-regex: '/development|/legacy'
 
   # A static file is served by Go, at /assets/theme/ or /assets/<module>/. A
   # route that names one is a page the native router should have answered.
@@ -114,3 +124,34 @@ rules:
       include:
         - "phpfront/app/code/Task/Model/*.php"
     pattern-regex: '^(?!.*Code generated from schema/schema\.yml).*DO NOT EDIT'
+
+  # An allocation inside an expression does two things on one line and names
+  # neither. The four shapes are a parenthesised allocation, which is almost
+  # always (new X)->m(); one passed as a later argument; one in a ternary; and
+  # one as an array value.
+  #
+  # The three extensions are named, the way the SQL literal rule names one: the
+  # match is generic and reads any language it is given, and a module ships CSS
+  # and JavaScript beside its templates, where `new Event(...)` is how the
+  # language is written. A .tpl is in because {eval} compiles to a statement.
+  - id: task-ui.front.allocation-in-expression
+    languages: [generic]
+    severity: ERROR
+    message: >-
+      An allocation is a statement of its own, bound to a name: $view = new
+      Task\View(...); then $view->page(...). See docs/phpfront.md, Statements.
+    paths:
+      include:
+        - "phpfront/app/**/*.php"
+        - "phpfront/app/**/*.phpt"
+        - "phpfront/app/**/*.tpl"
+      exclude:
+        - "phpfront/app/stubs/**"
+        - "**/templates_c/**"
+        - "**/ext/**"
+    pattern-either:
+      - pattern-regex: '\(\s*new\s+\\?[A-Z]'
+      - pattern-regex: ',\s*new\s+\\?[A-Z]'
+      - pattern-regex: '\?\s*new\s+\\?[A-Z]'
+      - pattern-regex: '=>\s*new\s+\\?[A-Z]'
+      - pattern-regex: '[^:\s]\s:\s*new\s+\\?[A-Z]'

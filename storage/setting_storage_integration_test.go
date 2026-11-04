@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/titpetric/task-ui/internal/assert"
+	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/storage"
 )
 
@@ -24,4 +25,18 @@ func TestSettingStorage(t *testing.T) {
 	values, err = s.Values(ctx)
 	assert.NoError(t, err)
 	assert.Equal(t, map[string]string{"a": "1", "b": "3"}, values)
+}
+
+// Every method hands back what the driver said, from the pool that is
+// closed and from the statement inside the transaction.
+func TestSettingStorage_Errors(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	closed := storage.NewSettingStorage(closedDB(t))
+	_, err := closed.Values(ctx)
+	assert.ErrorContains(t, err, errClosed)
+	assert.ErrorContains(t, closed.Set(ctx, map[string]string{"a": "1"}), errClosed)
+
+	gone := storage.NewSettingStorage(brokenDB(t, model.SettingTable))
+	assert.ErrorContains(t, gone.Set(ctx, map[string]string{"a": "1"}), errNoTable)
 }

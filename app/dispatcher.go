@@ -17,7 +17,8 @@ import (
 )
 
 // Dispatcher starts the Claude runs a module asks for. It is what
-// `Task::dispatch($comment, "action/refinement.md")` reaches.
+// `Task::dispatch($comment, "action/refinement.md")` and the front end's
+// `Task\Host::dispatch` both reach.
 //
 // A dispatch is an ordinary prompt: the same board, the same run, the
 // same artifact tree and the same MCP server a prompt from a page gets.
@@ -39,11 +40,15 @@ func NewDispatcher(board *note.Board, users *storage.UserStorage, store *artifac
 // thread. The run is started in the background: the note exists when this
 // returns and Claude's reply arrives under it.
 //
+// The root is the tree the action file sits in, a plugin's module root or
+// the front end's own, and the action is a path inside it: every path the
+// prompt reads is resolved against the root and refused outside it.
+//
 // The user is the one whose request reached the module, so a module's run
 // has the permissions of whoever clicked rather than the instance's: a
 // viewer's comment starts nothing, and the run reads the secrets and keys
 // its own user may.
-func (d *Dispatcher) Dispatch(ctx context.Context, m *phpscript.Module, comment, action, folder string) (string, error) {
+func (d *Dispatcher) Dispatch(ctx context.Context, root, comment, action, folder string) (string, error) {
 	if d.Board == nil {
 		return "", errors.New("this instance starts no module runs")
 	}
@@ -51,7 +56,7 @@ func (d *Dispatcher) Dispatch(ctx context.Context, m *phpscript.Module, comment,
 	if user == nil {
 		return "", errors.New("a module run needs the user who asked for it")
 	}
-	body, err := d.prompt(m, comment, action, folder)
+	body, err := d.prompt(root, comment, action, folder)
 	if err != nil {
 		return "", err
 	}
@@ -71,12 +76,12 @@ func (d *Dispatcher) Dispatch(ctx context.Context, m *phpscript.Module, comment,
 // artifact tree, the MCP server and what the user may do, and the agent's
 // context repeats them, so a module's prompt says what this module wants
 // and lets the instance say the rest.
-func (d *Dispatcher) prompt(m *phpscript.Module, comment, action, folder string) (string, error) {
-	rel, err := phpscript.Inside(m.Root, action)
+func (d *Dispatcher) prompt(root, comment, action, folder string) (string, error) {
+	rel, err := phpscript.Inside(root, action)
 	if err != nil {
 		return "", err
 	}
-	instructions, err := os.ReadFile(filepath.Join(m.Root, rel))
+	instructions, err := os.ReadFile(filepath.Join(root, rel))
 	if err != nil {
 		return "", fmt.Errorf("%s: %w", action, err)
 	}

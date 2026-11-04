@@ -147,3 +147,51 @@ func TestArtifactStorage_Rewrite(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Len(t, history, 0)
 }
+
+// Every method hands back what the driver said.
+func TestArtifactStorage_Closed(t *testing.T) {
+	t.Parallel()
+	artifacts := storage.NewArtifactStorage(closedDB(t))
+	ctx := context.Background()
+
+	assert.ErrorContains(t, artifacts.Create(ctx, &model.Artifact{RunID: "r1", Name: "out.txt"}), errClosed)
+	_, err := artifacts.Get(ctx, "a1")
+	assert.ErrorContains(t, err, errClosed)
+	_, err = artifacts.List(ctx, storage.ArtifactFilter{})
+	assert.ErrorContains(t, err, errClosed)
+	_, err = artifacts.Latest(ctx)
+	assert.ErrorContains(t, err, errClosed)
+	_, err = artifacts.History(ctx)
+	assert.ErrorContains(t, err, errClosed)
+	assert.ErrorContains(t, artifacts.Delete(ctx, "a1"), errClosed)
+	assert.ErrorContains(t, artifacts.DeleteByRun(ctx, "r1"), errClosed)
+	assert.ErrorContains(t, artifacts.DeleteAll(ctx), errClosed)
+	assert.ErrorContains(t, artifacts.Squash(ctx, "c1"), errClosed)
+	_, err = artifacts.Rewrite(ctx, "c1", nil, nil, nil)
+	assert.ErrorContains(t, err, errClosed)
+}
+
+// A rewrite stops at the statement that failed and reports it: the read
+// of a commit's artifacts, a rename, and the write of a row the keep
+// callback cancelled the context before.
+func TestArtifactStorage_RewriteErrors(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	gone := storage.NewArtifactStorage(brokenDB(t, model.ArtifactTable))
+	_, err := gone.Rewrite(ctx, "root", nil, []string{"c1"}, nil)
+	assert.ErrorContains(t, err, errNoTable)
+	_, err = gone.Rewrite(ctx, "root", map[string]string{"c1": "c2"}, nil, nil)
+	assert.ErrorContains(t, err, errNoTable)
+
+	artifacts := storage.NewArtifactStorage(newDB(t))
+	assert.NoError(t, artifacts.Create(ctx, &model.Artifact{UserName: "admin", CommitID: "c1", Name: "out.txt", Path: "out.txt"}))
+	stopping, cancel := context.WithCancel(ctx)
+	_, err = artifacts.Rewrite(stopping, "root", nil, []string{"c1"}, func(model.Artifact) bool {
+		cancel()
+		return true
+	})
+	assert.ErrorContains(t, err, "context canceled")
+	left, err := artifacts.Latest(ctx)
+	assert.NoError(t, err)
+	assert.Len(t, left, 1, "the transaction rolled back")
+}

@@ -40,6 +40,18 @@ func text(t *testing.T, a *model.Array, key string) string {
 	return out
 }
 
+// flag is a key of an array as a bool.
+func flag(t *testing.T, a *model.Array, key string) bool {
+	t.Helper()
+
+	value, ok := a.Get(key)
+	assert.True(t, ok, key)
+	out, ok := value.(bool)
+	assert.True(t, ok, key+" is a bool")
+
+	return out
+}
+
 // list is a key of an array as an array.
 func list(t *testing.T, a *model.Array, key string) *model.Array {
 	t.Helper()
@@ -55,14 +67,48 @@ func list(t *testing.T, a *model.Array, key string) *model.Array {
 func TestFolders(t *testing.T) {
 	t.Parallel()
 
-	out := folders([]Folder{{ID: "infra", Title: "Infra", Dir: "/src/infra", Jobs: []string{"build", "test"}}})
+	out := folders([]Folder{{
+		ID:    "infra",
+		Title: "Infra",
+		Dir:   "/src/infra",
+		Allow: []string{"ops"},
+		Jobs:  []Job{{ID: "build", Name: "build", Allow: []string{"ann"}}, {ID: "task:test", Name: "test"}},
+	}})
 	assert.Equal(t, 1, out.Len())
 
 	row := at(t, out, 0)
 	assert.Equal(t, "infra", text(t, row, "id"))
 	assert.Equal(t, "Infra", text(t, row, "title"))
 	assert.Equal(t, "/src/infra", text(t, row, "dir"))
-	assert.Equal(t, 2, list(t, row, "jobs").Len())
+	assert.Equal(t, 1, list(t, row, "allow").Len())
+
+	// A job of a folder that follows more than one convention is named
+	// kind:name and called by its name alone, so the two are separate keys:
+	// a schedule is written with the ID and the picker shows the name.
+	jobs := list(t, row, "jobs")
+	assert.Equal(t, 2, jobs.Len())
+	assert.Equal(t, "task:test", text(t, at(t, jobs, 1), "id"))
+	assert.Equal(t, "test", text(t, at(t, jobs, 1), "name"))
+	assert.Equal(t, 1, list(t, at(t, jobs, 0), "allow").Len())
+}
+
+// The job of a run answers the whole gate: whether it is there, the kind a
+// permission gates, and both allow lists. A job that is not there answers
+// every key empty, which is the nil pointer the Go page gates on.
+func TestJob(t *testing.T) {
+	t.Parallel()
+
+	out := job(Job{Found: true, ID: "@host:db1", Name: "host db1", Host: true, FolderAllow: []string{"ops"}})
+	assert.True(t, flag(t, out, "found"))
+	assert.Equal(t, "@host:db1", text(t, out, "id"))
+	assert.True(t, flag(t, out, "host"))
+	assert.False(t, flag(t, out, "shell"))
+	assert.Equal(t, 0, list(t, out, "allow").Len())
+	assert.Equal(t, 1, list(t, out, "folder_allow").Len())
+
+	none := job(Job{})
+	assert.False(t, flag(t, none, "found"))
+	assert.Equal(t, "", text(t, none, "id"))
 }
 
 // An empty list is an empty array, so a foreach over it draws the empty line.

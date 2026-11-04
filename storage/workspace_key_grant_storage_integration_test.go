@@ -55,3 +55,31 @@ func TestWorkspaceKeyGrantStorage(t *testing.T) {
 	roles, _, _ = grants.All(ctx, "ws2")
 	assert.Len(t, roles, 0)
 }
+
+// Every method hands back what the driver said.
+func TestWorkspaceKeyGrantStorage_Closed(t *testing.T) {
+	t.Parallel()
+	grants := storage.NewWorkspaceKeyGrantStorage(closedDB(t))
+	ctx := context.Background()
+
+	assert.ErrorContains(t, grants.Set(ctx, "ws1", "deploy", []string{model.RoleAdmin}, nil), errClosed)
+	_, _, err := grants.All(ctx, "ws1")
+	assert.ErrorContains(t, err, errClosed)
+	_, err = grants.For(ctx, "ws1", []string{"deploy"}, model.RoleAdmin, "alice")
+	assert.ErrorContains(t, err, errClosed)
+	assert.ErrorContains(t, grants.Delete(ctx, "ws1", "deploy"), errClosed)
+	assert.ErrorContains(t, grants.DeleteWorkspace(ctx, "ws1"), errClosed)
+}
+
+// Set clears the key's grants and then writes one row per role and per
+// user, and stops at the write that failed.
+func TestWorkspaceKeyGrantStorage_Writes(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	db := newDB(t)
+	refuse(t, db, model.WorkspaceKeyGrantTable, "INSERT")
+	grants := storage.NewWorkspaceKeyGrantStorage(db)
+
+	assert.ErrorContains(t, grants.Set(ctx, "ws1", "deploy", []string{model.RoleAdmin}, nil), errRefused)
+	assert.ErrorContains(t, grants.Set(ctx, "ws1", "deploy", nil, []string{"alice"}), errRefused)
+}

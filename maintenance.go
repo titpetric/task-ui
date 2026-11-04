@@ -15,7 +15,6 @@ import (
 	"github.com/titpetric/task-ui/integration"
 	"github.com/titpetric/task-ui/keystore"
 	"github.com/titpetric/task-ui/layout"
-	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/secret"
 	"github.com/titpetric/task-ui/storage"
 )
@@ -121,26 +120,32 @@ func migrateLayout(ctx context.Context, args []string, stdout io.Writer) error {
 // instance has it, and, by workspace, the name of the directory of its
 // home project, from a database before or after the migration that
 // replaced the home project with the home repository: a database
-// already migrated names no home project.
+// already migrated names no home project, and its workspace table has
+// no column for one, which is the error read as none here.
 func layoutRows(ctx context.Context, db storage.DB) ([]string, map[string]string, error) {
-	var workspaces []string
-	if err := db.SelectContext(ctx, &workspaces, "SELECT folder FROM workspace ORDER BY CASE WHEN folder = ? THEN 0 ELSE 1 END, folder", model.Default); err != nil {
+	workspaces, err := storage.NewWorkspaceStorage(db).LayoutFolders(ctx)
+	if err != nil {
 		return nil, nil, err
 	}
 	homes := map[string]string{}
-	rows, err := db.QueryContext(ctx, "SELECT w.folder, p.folder FROM workspace w JOIN project p ON p.id = w.home_project_id WHERE w.home_project_id <> ''")
+	projectIDs, err := storage.NewWorkspaceStorage(db).HomeProjectIDs(ctx)
 	if err != nil {
 		return workspaces, homes, nil
 	}
-	defer rows.Close()
-	for rows.Next() {
-		var workspace, project string
-		if err := rows.Scan(&workspace, &project); err != nil {
-			return nil, nil, err
-		}
-		homes[workspace] = path.Base(project)
+	ids := make([]string, 0, len(projectIDs))
+	for _, id := range projectIDs {
+		ids = append(ids, id)
 	}
-	return workspaces, homes, rows.Err()
+	folders, err := storage.NewProjectStorage(db).FoldersByID(ctx, ids)
+	if err != nil {
+		return nil, nil, err
+	}
+	for workspace, id := range projectIDs {
+		if folder, ok := folders[id]; ok {
+			homes[workspace] = path.Base(folder)
+		}
+	}
+	return workspaces, homes, nil
 }
 
 // errForgejoOff refuses a sync while the Forgejo integration lacks its

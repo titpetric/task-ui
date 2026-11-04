@@ -1,0 +1,64 @@
+# Transactions, adopted from mobius's rules/transactions.yml.
+#
+# `begin()` is followed by `defer($db->rollback);` on the next line, before
+# anything that can throw. A later `commit()` makes the rollback a no-op; a
+# fault in between reaches it, so the connection never stays inside a
+# transaction. The metavariable binds the handle, so `$this->db->begin()`
+# pairs with `defer($this->db->rollback)`.
+#
+# Why a catch is not enough: a PHP Error and a fault the interpreter raises
+# are neither an Exception, so `catch (Exception)` does not cover them. The
+# frame returns either way, and a deferred callback runs on the way out.
+#
+# What it costs when it is missing, measured: the pooled connection keeps a
+# write transaction open until the render context times out and database/sql
+# abandons the Tx, and on SQLite that is a lock every other writer waits on.
+#
+# No fix on either rule: the right handle and the right line are the
+# author's to place.
+#
+# History:
+#   2026-11-03  Adopted at one finding, code/Task/Sidebar.php, fixed in the
+#               same commit. Zero since.
+rules:
+  - id: task-ui.find.begin-without-defer-rollback
+    languages: [php]
+    severity: ERROR
+    message: >-
+      begin() without defer($db->rollback); on the next line. Anything that
+      faults in between leaves the connection inside a transaction, and a
+      catch does not cover an Error. commit() makes the deferred rollback a
+      no-op.
+    paths:
+      include:
+        - "phpfront/app/**/*.php"
+        - "phpscripts/modules/**/*.php"
+      exclude:
+        - "**/ext/**"
+        - "**/stubs/**"
+        - "**/templates_c/**"
+    patterns:
+      - pattern: $DB->begin();
+      - pattern-not-inside: |
+          $DB->begin();
+          defer($DB->rollback);
+
+  - id: task-ui.find.defer-closure
+    languages: [php]
+    severity: ERROR
+    message: >-
+      A closure does not capture in this runtime, so the $db inside this
+      function is not the one outside it and the deferred body does nothing.
+      Pass the bound method: defer($db->rollback);
+    paths:
+      include:
+        - "phpfront/app/**/*.php"
+        - "phpscripts/modules/**/*.php"
+      exclude:
+        - "**/ext/**"
+        - "**/stubs/**"
+        - "**/templates_c/**"
+    patterns:
+      - pattern-either:
+          - pattern: defer(function () { ... });
+          - pattern: defer(function (...) { ... });

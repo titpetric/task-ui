@@ -30,10 +30,10 @@ import (
 	"github.com/titpetric/task-ui/hostinfo"
 	"github.com/titpetric/task-ui/hostrun"
 	"github.com/titpetric/task-ui/integration"
+	"github.com/titpetric/task-ui/internal/assets"
 	"github.com/titpetric/task-ui/layout"
 	"github.com/titpetric/task-ui/mcp"
 	"github.com/titpetric/task-ui/model"
-	"github.com/titpetric/task-ui/internal/assets"
 	"github.com/titpetric/task-ui/note"
 	"github.com/titpetric/task-ui/phpfront"
 	"github.com/titpetric/task-ui/phpscript"
@@ -245,6 +245,13 @@ func (a *App) wire(version string) error {
 		self = ComposeProject("docker")
 	}
 	store := &artifactstore.Store{Dir: cfg.ArtifactTree(), Keep: cfg.ArtifactHistory}
+	// The meter walks the artifact tree, the reader signs in to a host and
+	// the tool prober runs atkins: both front ends hold the same one, so the
+	// work is done once however a reader came to the page, and the two show
+	// the same numbers.
+	disk := &diskusage.Meter{TTL: 10 * time.Minute}
+	facts := &hostinfo.Reader{Run: prober.Output, Timeout: 20 * time.Second, TTL: 5 * time.Minute}
+	tooled := &tooling.Prober{Timeout: 5 * time.Second, TTL: time.Minute}
 	cleaner := NewCleaner(db, cfg, os.Getenv("HOME"))
 	cleaner.Store = store
 	summaries := storage.NewRunSummaryStorage(a.DB)
@@ -312,11 +319,18 @@ func (a *App) wire(version string) error {
 	if err := phpscripts.Extract(cfg.ModulesDir()); err != nil {
 		return err
 	}
+	// One dispatcher and one lookup on the instance, read by both the
+	// plugins and the front end: a run a page asks for is the same run a
+	// module asks for, and the tree the action file sits in is the only
+	// part that differs.
+	dispatcher := NewDispatcher(a.Board, a.Users, store)
+	moduleRuns := NewModuleRuns(storage.NewNoteStorage(db))
+
 	moduleOpts := phpscript.NewOptions(cfg.ModulesDir())
 	moduleOpts.Roots = append(moduleOpts.Roots, cfg.Root)
 	moduleOpts.Registry = phpscript.NewStore(modules, sidebar)
-	moduleOpts.Dispatcher = NewDispatcher(a.Board, a.Users, store)
-	moduleOpts.Runs = NewModuleRuns(storage.NewNoteStorage(db))
+	moduleOpts.Dispatcher = dispatcher
+	moduleOpts.Runs = moduleRuns
 	moduleOpts.Migrator = phpscript.NewSchema(db)
 	moduleOpts.Database = phpscript.NewDatabase(db)
 	moduleOpts.Artifacts = phpscript.NewTree(store)
@@ -328,6 +342,17 @@ func (a *App) wire(version string) error {
 		return err
 	}
 
+	// What the server runs with and what it keeps on disk, both read by the
+	// two front ends: the Instance page of either draws the same
+	// configuration, and the meter is one so a page drawn twice walks the
+	// disk once.
+	instance := &view.Instance{
+		URL: cfg.URL, Listen: cfg.Listen, Root: cfg.Root, DataDir: cfg.DataDir, SSHDir: cfg.SSHDir, Htpasswd: cfg.Htpasswd, HostData: hostDataShown(cfg.DataDir, hostData),
+		Discover: cfg.Discover, AutoLogin: cfg.AutoLogin, TimeZone: timeZone(cfg.Clock()()),
+		SessionTTL: cfg.SessionTTL.String(), Keep: cfg.Keep.String(), Grace: cfg.Grace.String(), ArtifactHistory: cfg.ArtifactHistory, ComposeProject: self,
+	}
+	measured := &diskusage.Inventory{TTL: 30 * time.Second, Wait: 2 * time.Second, Items: storageItems(cfg, workspaces, os.Getenv("HOME"))}
+
 	// The front end being ported. Its tree is extracted beside the modules'
 	// and it answers under FrontBase; every row it draws it reads itself,
 	// through the same pool, and FrontHost answers what is not a row.
@@ -338,10 +363,22 @@ func (a *App) wire(version string) error {
 	frontOpts := phpfront.NewOptions(frontRoot)
 	frontOpts.Base = FrontBase
 	frontOpts.Version = version
+	frontOpts.Login = a.Guard.LoginRequired()
+	frontOpts.Now = cfg.Clock()
 	frontOpts.Database = phpscript.NewDatabase(db)
 	frontOpts.Artifacts = phpscript.NewTree(store)
 	frontOpts.Tracer = telemetry.Tracer()
-	frontOpts.Host = &FrontHost{Catalogue: a.Catalogue, Runner: a.Runner, Git: g, Events: events, Root: cfg.Root}
+	frontOpts.Host = &FrontHost{
+		Catalogue: a.Catalogue, Runner: a.Runner, Workflows: a.Workflows, Git: g, Events: events,
+		Recordings: recordings, Integrations: integrations, Secrets: secrets, Root: cfg.Root,
+		Artifacts: store, Disk: disk, Now: cfg.Clock(),
+		Hosts: hosts, SSH: prober, Facts: facts,
+		Tools: tooled, Compose: cfg.ComposeProject,
+		Keystore: keys, Config: instance,
+		Tracing: telemetry, Plugins: a.Modules,
+		Cleaner: cleaner, Storage: measured,
+		Dispatcher: dispatcher, Runs: moduleRuns, FrontRoot: frontRoot,
+	}
 	frontOpts.OnError = func(err error) { slog.Warn("the front end", "err", err) }
 	a.Front, err = phpfront.New(frontOpts)
 	if err != nil {
@@ -374,19 +411,15 @@ func (a *App) wire(version string) error {
 		FolderRefs: refs,
 		Workflows:  workflows, WorkflowRuns: workflowRuns, Flows: a.Workflows,
 		Runner: a.Runner, Catalogue: a.Catalogue, Steps: a.Catalogue.Steps(), Git: g, Keys: keys, Recordings: recordings, Root: cfg.Root, Version: version, Now: cfg.Clock(),
-		ArtifactStore: store, Disk: &diskusage.Meter{TTL: 10 * time.Minute}, Board: a.Board, ComposeProject: self, Cleaner: cleaner,
-		Storage:      &diskusage.Inventory{TTL: 30 * time.Second, Wait: 2 * time.Second, Items: storageItems(cfg, workspaces, os.Getenv("HOME"))},
+		ArtifactStore: store, Disk: disk, Board: a.Board, ComposeProject: self, Cleaner: cleaner,
+		Storage:      measured,
 		Integrations: integrations, Hosts: hosts, Pins: pins,
 		Sidebar: sidebar, Modules: a.Modules, Telemetry: telemetry,
-		Tooling: &tooling.Prober{Timeout: 5 * time.Second, TTL: time.Minute},
+		Tooling: tooled,
 		Tools:   tools,
 		SSH:     prober, AddUsers: a.UsersFile != nil, BaseURL: cfg.URL,
-		Facts: &hostinfo.Reader{Run: prober.Output, Timeout: 20 * time.Second, TTL: 5 * time.Minute},
-		Instance: &view.Instance{
-			URL: cfg.URL, Listen: cfg.Listen, Root: cfg.Root, DataDir: cfg.DataDir, SSHDir: cfg.SSHDir, Htpasswd: cfg.Htpasswd, HostData: hostDataShown(cfg.DataDir, hostData),
-			Discover: cfg.Discover, AutoLogin: cfg.AutoLogin, TimeZone: timeZone(cfg.Clock()()),
-			SessionTTL: cfg.SessionTTL.String(), Keep: cfg.Keep.String(), Grace: cfg.Grace.String(), ArtifactHistory: cfg.ArtifactHistory, ComposeProject: self,
-		},
+		Facts:    facts,
+		Instance: instance,
 	})
 	if err != nil {
 		return err
@@ -414,23 +447,45 @@ func (a *App) wire(version string) error {
 	}).ServeHTTP)
 	r.Mount("/api/mcp", a.Guard.Require(access.RequireMCP(access.SameOrigin(server))))
 	r.Mount("/api", a.Guard.Require(access.SameOrigin(routes)))
-	// The front end being ported, under a prefix while the Go pages still
-	// answer at the root. Its static files sit beside the pages and not under
-	// them, so an asset URL survives the cutover. FrontBase is the one place
-	// the prefix is spelled: dropping it is that line.
+	// The ported front end, which answers at the root: it is the front end
+	// the instance serves. Its static files sit beside the pages and not under
+	// them, so an asset URL is the same name whatever holds the root.
+	var ported http.Handler
 	if a.Front != nil {
 		front, err := a.Front.Routes(context.Background())
 		if err != nil {
 			return err
 		}
-		r.Mount(assets.Prefix, a.Front.Assets())
-		r.Mount(FrontBase, a.Guard.Require(access.SameOrigin(front)))
+		r.Mount(assets.Prefix, phpfront.Policy(a.Front.Assets()))
+		guarded := a.Front.Guarded(a.Guard, access.SameOrigin(front))
+		ported = phpfront.Policy(guarded)
 	}
 	// The telemetry dashboard. The tracer sits behind the Guard so a
 	// trace is read by a signed in user, and behind its own Authorize,
 	// which answers anyone but an admin with a 404.
 	r.Mount(telemetry.Path(), a.Guard.Require(telemetry))
-	r.Mount("/", pages.Routes())
+	if ported == nil {
+		// No PHP front end was built, so the Go pages hold the root as they
+		// always did. A build that cannot extract the tree still serves.
+		r.Mount("/", pages.Routes())
+		a.handler = telemetry.Middleware(r)
+		return nil
+	}
+	// The Go pages, under a prefix and kept to be read against the ported
+	// ones. GoBase says why a link from one of them leaves.
+	//
+	// StripPrefix as well as the mount, because chi's Mount takes the prefix
+	// off the path it routes on and leaves the request's own URL whole, and a
+	// page reads that URL to decide which sidebar row it is: the row would be
+	// marked on none of them. The pages see themselves at the root, which is
+	// where they are compared from.
+	r.Mount(GoBase, http.StripPrefix(GoBase, pages.Routes()))
+	// What stays at the root because it is a page of neither front end: the
+	// session, the readiness check, the theme's files, the byte streams the
+	// ported pages link to, and a plugin's own pages. frontend's Root names
+	// each of them and says why.
+	pages.Root(r)
+	r.Mount("/", ported)
 	// The middleware wraps every route above, so one trace holds a
 	// request and whatever ran inside it: a handler's own spans, and the
 	// spans of a module's PHP, which reports into the same tracer.

@@ -22,9 +22,10 @@
 <?php if(!$_v['entry']['ended']){?>
 						<svg class="ic act"><use href="#i-<?php echo htmlspecialchars($_v['entry']['act'], ENT_QUOTES);?>
 "/></svg><?php }?>
-						<span class="avatar sm role-<?php echo htmlspecialchars($_v['entry']['role'], ENT_QUOTES);?>
-" title="<?php echo htmlspecialchars($_v['entry']['user'], ENT_QUOTES);?>
-"><?php echo htmlspecialchars($_v['entry']['initials'], ENT_QUOTES);?>
+						<?php $_v['data_avatar'] = $_v['entry']['avatar'];?>
+<span class="avatar sm<?php if($_v['data_avatar']['role']){?>
+ role-<?php echo htmlspecialchars($_v['data_avatar']['role'], ENT_QUOTES); }?>" title="<?php echo htmlspecialchars($_v['data_avatar']['name'], ENT_QUOTES);?>
+"><?php echo htmlspecialchars($_v['data_avatar']['initials'], ENT_QUOTES);?>
 </span>
 					</a>
 <?php } } if(!$_v['data']['groups']){?>

@@ -13,6 +13,7 @@ import (
 	"github.com/titpetric/phpscript/runner"
 
 	"github.com/titpetric/task-ui/internal/assets"
+	"github.com/titpetric/task-ui/markdown"
 )
 
 // Front serves the application tree.
@@ -78,6 +79,65 @@ func (f *Front) Routes(ctx context.Context) (http.Handler, error) {
 		return nil, err
 	}
 	return r, nil
+}
+
+// Public is what the front end answers before a sign in: the login page, and
+// nothing else.
+//
+// The Go router puts the same paths outside its Guard group rather than at the
+// mount, for the reason a list of one makes plain — a sign in page behind a
+// sign in redirects to itself, so nobody could ever reach it. The assets are
+// outside too, by being mounted on their own. docs/phpfront.md names this the
+// one documented exclusion from "every page".
+var Public = []string{"/login"}
+
+// Gate is the Guard as the front end mounts it: the check that keeps a reader
+// without a session out, and the one that only names the reader there is.
+type Gate interface {
+	Require(http.Handler) http.Handler
+	Attach(http.Handler) http.Handler
+}
+
+// Guarded is the front end behind the gate: Require for every page, Attach for
+// the ones in Public, which answer before a sign in and still have to know who
+// is reading.
+//
+// The Go router does this with a chi group and the public routes outside it.
+// Everything under a mount is one handler, so this is that shape at the mount,
+// matched on the path the base gives each public route — chi leaves the
+// request's own URL whole and only the route context carries the remainder.
+func (f *Front) Guarded(gate Gate, next http.Handler) http.Handler {
+	if f == nil {
+		return next
+	}
+	open := make(map[string]bool, len(Public))
+	for _, path := range Public {
+		open[f.Href(path)] = true
+	}
+	named := gate.Attach(next)
+	guarded := gate.Require(next)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if open[r.URL.Path] {
+			named.ServeHTTP(w, r)
+			return
+		}
+		guarded.ServeHTTP(w, r)
+	})
+}
+
+// Policy sets the content security policy of every page and asset this front
+// end answers with, which is the one the Go pages carry.
+//
+// The Go router sets it for everything under it with one r.Use, so a page, a
+// stylesheet and a refusal all carry it. Nothing in PHP can: a header set
+// inside the request is the page's, and a response the Guard writes before the
+// page runs would carry none. So it is a middleware at the mount, wrapped
+// around the Guard rather than inside it, and the cutover keeps the line.
+func Policy(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Security-Policy", markdown.CSP)
+		next.ServeHTTP(w, r)
+	})
 }
 
 // Href is a link built in Go: the one place outside the tree that has to agree

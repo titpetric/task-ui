@@ -1198,6 +1198,287 @@ var ProjectFields = []string{"id", "folder", "title", "description", "source_url
 // ProjectPrimaryFields are the primary key fields in the DB table.
 var ProjectPrimaryFields = []string{"id"}
 
+// RefinementArtifact generated for db table `refinement_artifact`.
+//
+// Refinement Artifact.
+type RefinementArtifact struct {
+	// ID
+	ID string `db:"id" json:"id"`
+
+	// Thread ID
+	ThreadID string `db:"thread_id" json:"thread_id"`
+
+	// Comment ID
+	CommentID string `db:"comment_id" json:"comment_id"`
+
+	// Path
+	Path string `db:"path" json:"path"`
+
+	// Kind
+	Kind string `db:"kind" json:"kind"`
+
+	// Created At
+	CreatedAt *time.Time `db:"created_at" json:"created_at"`
+}
+
+// GetID will return the value of ID.
+func (r *RefinementArtifact) GetID() string { return r.ID }
+
+// SetID sets ID to the provided value.
+func (r *RefinementArtifact) SetID(val string) { r.ID = val }
+
+// GetThreadID will return the value of ThreadID.
+func (r *RefinementArtifact) GetThreadID() string { return r.ThreadID }
+
+// SetThreadID sets ThreadID to the provided value.
+func (r *RefinementArtifact) SetThreadID(val string) { r.ThreadID = val }
+
+// GetCommentID will return the value of CommentID.
+func (r *RefinementArtifact) GetCommentID() string { return r.CommentID }
+
+// SetCommentID sets CommentID to the provided value.
+func (r *RefinementArtifact) SetCommentID(val string) { r.CommentID = val }
+
+// GetPath will return the value of Path.
+func (r *RefinementArtifact) GetPath() string { return r.Path }
+
+// SetPath sets Path to the provided value.
+func (r *RefinementArtifact) SetPath(val string) { r.Path = val }
+
+// GetKind will return the value of Kind.
+func (r *RefinementArtifact) GetKind() string { return r.Kind }
+
+// SetKind sets Kind to the provided value.
+func (r *RefinementArtifact) SetKind(val string) { r.Kind = val }
+
+// GetCreatedAt will return the value of CreatedAt.
+func (r *RefinementArtifact) GetCreatedAt() *time.Time { return r.CreatedAt }
+
+// SetCreatedAt sets CreatedAt to the provided value.
+func (r *RefinementArtifact) SetCreatedAt(stamp time.Time) { r.CreatedAt = &stamp }
+
+// RefinementArtifactTable is the name of the table in the DB.
+const RefinementArtifactTable = "`refinement_artifact`"
+
+// RefinementArtifactFields is a list of all columns in the DB table.
+var RefinementArtifactFields = []string{"id", "thread_id", "comment_id", "path", "kind", "created_at"}
+
+// RefinementArtifactPrimaryFields are the primary key fields in the DB table.
+var RefinementArtifactPrimaryFields = []string{"id"}
+
+// RefinementComment generated for db table `refinement_comment`.
+//
+// Refinement Comment.
+type RefinementComment struct {
+	// ID
+	ID string `db:"id" json:"id"`
+
+	// Thread ID
+	ThreadID string `db:"thread_id" json:"thread_id"`
+
+	// User
+	User string `db:"user" json:"user"`
+
+	// Body
+	Body string `db:"body" json:"body"`
+
+	// Note ID
+	NoteID string `db:"note_id" json:"note_id"`
+
+	// Created At
+	CreatedAt *time.Time `db:"created_at" json:"created_at"`
+
+	// Kind
+	Kind string `db:"kind" json:"kind"`
+
+	// Collapsed Into
+	CollapsedInto string `db:"collapsed_into" json:"collapsed_into"`
+}
+
+// GetID will return the value of ID.
+func (r *RefinementComment) GetID() string { return r.ID }
+
+// SetID sets ID to the provided value.
+func (r *RefinementComment) SetID(val string) { r.ID = val }
+
+// GetThreadID will return the value of ThreadID.
+func (r *RefinementComment) GetThreadID() string { return r.ThreadID }
+
+// SetThreadID sets ThreadID to the provided value.
+func (r *RefinementComment) SetThreadID(val string) { r.ThreadID = val }
+
+// GetUser will return the value of User.
+func (r *RefinementComment) GetUser() string { return r.User }
+
+// SetUser sets User to the provided value.
+func (r *RefinementComment) SetUser(val string) { r.User = val }
+
+// GetBody will return the value of Body.
+func (r *RefinementComment) GetBody() string { return r.Body }
+
+// SetBody sets Body to the provided value.
+func (r *RefinementComment) SetBody(val string) { r.Body = val }
+
+// GetNoteID will return the value of NoteID.
+func (r *RefinementComment) GetNoteID() string { return r.NoteID }
+
+// SetNoteID sets NoteID to the provided value.
+func (r *RefinementComment) SetNoteID(val string) { r.NoteID = val }
+
+// GetCreatedAt will return the value of CreatedAt.
+func (r *RefinementComment) GetCreatedAt() *time.Time { return r.CreatedAt }
+
+// SetCreatedAt sets CreatedAt to the provided value.
+func (r *RefinementComment) SetCreatedAt(stamp time.Time) { r.CreatedAt = &stamp }
+
+// GetKind will return the value of Kind.
+func (r *RefinementComment) GetKind() string { return r.Kind }
+
+// SetKind sets Kind to the provided value.
+func (r *RefinementComment) SetKind(val string) { r.Kind = val }
+
+// GetCollapsedInto will return the value of CollapsedInto.
+func (r *RefinementComment) GetCollapsedInto() string { return r.CollapsedInto }
+
+// SetCollapsedInto sets CollapsedInto to the provided value.
+func (r *RefinementComment) SetCollapsedInto(val string) { r.CollapsedInto = val }
+
+// RefinementCommentTable is the name of the table in the DB.
+const RefinementCommentTable = "`refinement_comment`"
+
+// RefinementCommentFields is a list of all columns in the DB table.
+var RefinementCommentFields = []string{"id", "thread_id", "user", "body", "note_id", "created_at", "kind", "collapsed_into"}
+
+// RefinementCommentPrimaryFields are the primary key fields in the DB table.
+var RefinementCommentPrimaryFields = []string{"id"}
+
+// RefinementCorrection generated for db table `refinement_correction`.
+//
+// Refinement Correction.
+type RefinementCorrection struct {
+	// ID
+	ID string `db:"id" json:"id"`
+
+	// Thread ID
+	ThreadID string `db:"thread_id" json:"thread_id"`
+
+	// Comment ID
+	CommentID string `db:"comment_id" json:"comment_id"`
+
+	// Corrects ID
+	CorrectsID string `db:"corrects_id" json:"corrects_id"`
+
+	// Created At
+	CreatedAt *time.Time `db:"created_at" json:"created_at"`
+}
+
+// GetID will return the value of ID.
+func (r *RefinementCorrection) GetID() string { return r.ID }
+
+// SetID sets ID to the provided value.
+func (r *RefinementCorrection) SetID(val string) { r.ID = val }
+
+// GetThreadID will return the value of ThreadID.
+func (r *RefinementCorrection) GetThreadID() string { return r.ThreadID }
+
+// SetThreadID sets ThreadID to the provided value.
+func (r *RefinementCorrection) SetThreadID(val string) { r.ThreadID = val }
+
+// GetCommentID will return the value of CommentID.
+func (r *RefinementCorrection) GetCommentID() string { return r.CommentID }
+
+// SetCommentID sets CommentID to the provided value.
+func (r *RefinementCorrection) SetCommentID(val string) { r.CommentID = val }
+
+// GetCorrectsID will return the value of CorrectsID.
+func (r *RefinementCorrection) GetCorrectsID() string { return r.CorrectsID }
+
+// SetCorrectsID sets CorrectsID to the provided value.
+func (r *RefinementCorrection) SetCorrectsID(val string) { r.CorrectsID = val }
+
+// GetCreatedAt will return the value of CreatedAt.
+func (r *RefinementCorrection) GetCreatedAt() *time.Time { return r.CreatedAt }
+
+// SetCreatedAt sets CreatedAt to the provided value.
+func (r *RefinementCorrection) SetCreatedAt(stamp time.Time) { r.CreatedAt = &stamp }
+
+// RefinementCorrectionTable is the name of the table in the DB.
+const RefinementCorrectionTable = "`refinement_correction`"
+
+// RefinementCorrectionFields is a list of all columns in the DB table.
+var RefinementCorrectionFields = []string{"id", "thread_id", "comment_id", "corrects_id", "created_at"}
+
+// RefinementCorrectionPrimaryFields are the primary key fields in the DB table.
+var RefinementCorrectionPrimaryFields = []string{"id"}
+
+// RefinementThread generated for db table `refinement_thread`.
+//
+// Refinement Thread.
+type RefinementThread struct {
+	// ID
+	ID string `db:"id" json:"id"`
+
+	// Title
+	Title string `db:"title" json:"title"`
+
+	// User
+	User string `db:"user" json:"user"`
+
+	// Report Markdown
+	ReportMarkdown string `db:"report_markdown" json:"report_markdown"`
+
+	// Created At
+	CreatedAt *time.Time `db:"created_at" json:"created_at"`
+
+	// Updated At
+	UpdatedAt *time.Time `db:"updated_at" json:"updated_at"`
+}
+
+// GetID will return the value of ID.
+func (r *RefinementThread) GetID() string { return r.ID }
+
+// SetID sets ID to the provided value.
+func (r *RefinementThread) SetID(val string) { r.ID = val }
+
+// GetTitle will return the value of Title.
+func (r *RefinementThread) GetTitle() string { return r.Title }
+
+// SetTitle sets Title to the provided value.
+func (r *RefinementThread) SetTitle(val string) { r.Title = val }
+
+// GetUser will return the value of User.
+func (r *RefinementThread) GetUser() string { return r.User }
+
+// SetUser sets User to the provided value.
+func (r *RefinementThread) SetUser(val string) { r.User = val }
+
+// GetReportMarkdown will return the value of ReportMarkdown.
+func (r *RefinementThread) GetReportMarkdown() string { return r.ReportMarkdown }
+
+// SetReportMarkdown sets ReportMarkdown to the provided value.
+func (r *RefinementThread) SetReportMarkdown(val string) { r.ReportMarkdown = val }
+
+// GetCreatedAt will return the value of CreatedAt.
+func (r *RefinementThread) GetCreatedAt() *time.Time { return r.CreatedAt }
+
+// SetCreatedAt sets CreatedAt to the provided value.
+func (r *RefinementThread) SetCreatedAt(stamp time.Time) { r.CreatedAt = &stamp }
+
+// GetUpdatedAt will return the value of UpdatedAt.
+func (r *RefinementThread) GetUpdatedAt() *time.Time { return r.UpdatedAt }
+
+// SetUpdatedAt sets UpdatedAt to the provided value.
+func (r *RefinementThread) SetUpdatedAt(stamp time.Time) { r.UpdatedAt = &stamp }
+
+// RefinementThreadTable is the name of the table in the DB.
+const RefinementThreadTable = "`refinement_thread`"
+
+// RefinementThreadFields is a list of all columns in the DB table.
+var RefinementThreadFields = []string{"id", "title", "user", "report_markdown", "created_at", "updated_at"}
+
+// RefinementThreadPrimaryFields are the primary key fields in the DB table.
+var RefinementThreadPrimaryFields = []string{"id"}
+
 // Run generated for db table `run`.
 type Run struct {
 	// ID
@@ -3918,6 +4199,250 @@ func (p *Project) Update(opts ...QueryOption) string {
 // Delete starts building a DELETE query.
 func (p *Project) Delete(opts ...QueryOption) string {
 	cfg := (&QueryConfig{Table: ProjectTable}).Apply(opts...)
+	query := fmt.Sprintf("DELETE FROM %s", cfg.Table)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	return query
+}
+
+// Insert starts building an INSERT INTO query.
+func (r *RefinementArtifact) Insert(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: RefinementArtifactTable, Statement: "INSERT INTO"}).Apply(opts...)
+	cols := RefinementArtifactFields
+	if len(cfg.Columns) > 0 {
+		cols = cfg.Columns
+	}
+	return fmt.Sprintf("%s %s (%s) VALUES (:%s)", cfg.Statement, cfg.Table, strings.Join(cols, ", "), strings.Join(cols, ", :"))
+}
+
+// Select starts building a SELECT query.
+func (r *RefinementArtifact) Select(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: RefinementArtifactTable}).Apply(opts...)
+	cols := "*"
+	if len(cfg.Columns) > 0 {
+		cols = strings.Join(cfg.Columns, ", ")
+	}
+	query := fmt.Sprintf("SELECT %s FROM %s", cols, cfg.Table)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	if cfg.OrderBy != "" {
+		query += " ORDER BY " + cfg.OrderBy
+	}
+	if cfg.LimitOffset > 0 {
+		query += fmt.Sprintf(" LIMIT %d, %d", cfg.LimitStart, cfg.LimitOffset)
+	}
+	return query
+}
+
+// Update starts building a UPDATE query.
+func (r *RefinementArtifact) Update(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: RefinementArtifactTable}).Apply(opts...)
+	cols := RefinementArtifactFields
+	if len(cfg.Columns) > 0 {
+		cols = cfg.Columns
+	}
+	setClause := ""
+	for i, col := range cols {
+		if i > 0 {
+			setClause += ", "
+		}
+		setClause += col + "=:" + col
+	}
+	query := fmt.Sprintf("UPDATE %s SET %s", cfg.Table, setClause)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	return query
+}
+
+// Delete starts building a DELETE query.
+func (r *RefinementArtifact) Delete(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: RefinementArtifactTable}).Apply(opts...)
+	query := fmt.Sprintf("DELETE FROM %s", cfg.Table)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	return query
+}
+
+// Insert starts building an INSERT INTO query.
+func (r *RefinementComment) Insert(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: RefinementCommentTable, Statement: "INSERT INTO"}).Apply(opts...)
+	cols := RefinementCommentFields
+	if len(cfg.Columns) > 0 {
+		cols = cfg.Columns
+	}
+	return fmt.Sprintf("%s %s (%s) VALUES (:%s)", cfg.Statement, cfg.Table, strings.Join(cols, ", "), strings.Join(cols, ", :"))
+}
+
+// Select starts building a SELECT query.
+func (r *RefinementComment) Select(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: RefinementCommentTable}).Apply(opts...)
+	cols := "*"
+	if len(cfg.Columns) > 0 {
+		cols = strings.Join(cfg.Columns, ", ")
+	}
+	query := fmt.Sprintf("SELECT %s FROM %s", cols, cfg.Table)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	if cfg.OrderBy != "" {
+		query += " ORDER BY " + cfg.OrderBy
+	}
+	if cfg.LimitOffset > 0 {
+		query += fmt.Sprintf(" LIMIT %d, %d", cfg.LimitStart, cfg.LimitOffset)
+	}
+	return query
+}
+
+// Update starts building a UPDATE query.
+func (r *RefinementComment) Update(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: RefinementCommentTable}).Apply(opts...)
+	cols := RefinementCommentFields
+	if len(cfg.Columns) > 0 {
+		cols = cfg.Columns
+	}
+	setClause := ""
+	for i, col := range cols {
+		if i > 0 {
+			setClause += ", "
+		}
+		setClause += col + "=:" + col
+	}
+	query := fmt.Sprintf("UPDATE %s SET %s", cfg.Table, setClause)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	return query
+}
+
+// Delete starts building a DELETE query.
+func (r *RefinementComment) Delete(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: RefinementCommentTable}).Apply(opts...)
+	query := fmt.Sprintf("DELETE FROM %s", cfg.Table)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	return query
+}
+
+// Insert starts building an INSERT INTO query.
+func (r *RefinementCorrection) Insert(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: RefinementCorrectionTable, Statement: "INSERT INTO"}).Apply(opts...)
+	cols := RefinementCorrectionFields
+	if len(cfg.Columns) > 0 {
+		cols = cfg.Columns
+	}
+	return fmt.Sprintf("%s %s (%s) VALUES (:%s)", cfg.Statement, cfg.Table, strings.Join(cols, ", "), strings.Join(cols, ", :"))
+}
+
+// Select starts building a SELECT query.
+func (r *RefinementCorrection) Select(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: RefinementCorrectionTable}).Apply(opts...)
+	cols := "*"
+	if len(cfg.Columns) > 0 {
+		cols = strings.Join(cfg.Columns, ", ")
+	}
+	query := fmt.Sprintf("SELECT %s FROM %s", cols, cfg.Table)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	if cfg.OrderBy != "" {
+		query += " ORDER BY " + cfg.OrderBy
+	}
+	if cfg.LimitOffset > 0 {
+		query += fmt.Sprintf(" LIMIT %d, %d", cfg.LimitStart, cfg.LimitOffset)
+	}
+	return query
+}
+
+// Update starts building a UPDATE query.
+func (r *RefinementCorrection) Update(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: RefinementCorrectionTable}).Apply(opts...)
+	cols := RefinementCorrectionFields
+	if len(cfg.Columns) > 0 {
+		cols = cfg.Columns
+	}
+	setClause := ""
+	for i, col := range cols {
+		if i > 0 {
+			setClause += ", "
+		}
+		setClause += col + "=:" + col
+	}
+	query := fmt.Sprintf("UPDATE %s SET %s", cfg.Table, setClause)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	return query
+}
+
+// Delete starts building a DELETE query.
+func (r *RefinementCorrection) Delete(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: RefinementCorrectionTable}).Apply(opts...)
+	query := fmt.Sprintf("DELETE FROM %s", cfg.Table)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	return query
+}
+
+// Insert starts building an INSERT INTO query.
+func (r *RefinementThread) Insert(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: RefinementThreadTable, Statement: "INSERT INTO"}).Apply(opts...)
+	cols := RefinementThreadFields
+	if len(cfg.Columns) > 0 {
+		cols = cfg.Columns
+	}
+	return fmt.Sprintf("%s %s (%s) VALUES (:%s)", cfg.Statement, cfg.Table, strings.Join(cols, ", "), strings.Join(cols, ", :"))
+}
+
+// Select starts building a SELECT query.
+func (r *RefinementThread) Select(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: RefinementThreadTable}).Apply(opts...)
+	cols := "*"
+	if len(cfg.Columns) > 0 {
+		cols = strings.Join(cfg.Columns, ", ")
+	}
+	query := fmt.Sprintf("SELECT %s FROM %s", cols, cfg.Table)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	if cfg.OrderBy != "" {
+		query += " ORDER BY " + cfg.OrderBy
+	}
+	if cfg.LimitOffset > 0 {
+		query += fmt.Sprintf(" LIMIT %d, %d", cfg.LimitStart, cfg.LimitOffset)
+	}
+	return query
+}
+
+// Update starts building a UPDATE query.
+func (r *RefinementThread) Update(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: RefinementThreadTable}).Apply(opts...)
+	cols := RefinementThreadFields
+	if len(cfg.Columns) > 0 {
+		cols = cfg.Columns
+	}
+	setClause := ""
+	for i, col := range cols {
+		if i > 0 {
+			setClause += ", "
+		}
+		setClause += col + "=:" + col
+	}
+	query := fmt.Sprintf("UPDATE %s SET %s", cfg.Table, setClause)
+	if cfg.Where != "" {
+		query += " WHERE " + cfg.Where
+	}
+	return query
+}
+
+// Delete starts building a DELETE query.
+func (r *RefinementThread) Delete(opts ...QueryOption) string {
+	cfg := (&QueryConfig{Table: RefinementThreadTable}).Apply(opts...)
 	query := fmt.Sprintf("DELETE FROM %s", cfg.Table)
 	if cfg.Where != "" {
 		query += " WHERE " + cfg.Where

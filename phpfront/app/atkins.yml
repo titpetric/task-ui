@@ -12,7 +12,7 @@ name: phpfront
 # what `composer install` put there, which is upstream's to format and not
 # ours.
 vars:
-  paths: ./code/... ./modules/... ./modules/notes/storage/... ./stubs/... ./tools/...
+  paths: ./code/... ./modules/... ./stubs/... ./tools/...
 
 jobs:
   default:
@@ -85,10 +85,19 @@ jobs:
     steps:
       - phpscript run tools/docs.php
       - plantuml -tsvg modules/*/schema.puml
-      - mdox fmt modules/*/README.md
+      # --markdown keeps the fixer off the Go, and -i points it at the modules
+      # whose READMEs the generator just wrote.
+      - splint fix --markdown -i modules ./...
 
   rules:
     desc: "Hold the conventions: SQL in storage, no prefix, no routed file"
     dir: ../..
+    # Given a directory, semgrep walks the files git tracks and says so in its
+    # own summary, so a module written this hour is scanned by nothing. Named
+    # files are scanned whatever git knows of them, and the list is git's own:
+    # what it tracks and what it does not, minus what it ignores.
+    #
+    # The root gate keeps the directory, because a named file also escapes
+    # semgrep's own ignore list, which holds the Go tests.
     steps:
-      - semgrep scan --metrics=off --quiet --error --config rules ./phpfront
+      - git ls-files -co --exclude-standard -- ./phpfront | xargs semgrep scan --metrics=off --quiet --error --config rules

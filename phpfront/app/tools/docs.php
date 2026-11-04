@@ -48,11 +48,30 @@ function api($dir) {
 	return $out;
 }
 
-/** classes reads the classes a source declares. */
+/**
+ * MODIFIERS are the words that may stand between a docblock and the function
+ * it documents.
+ *
+ * They are matched by text and not by token: the runtime's tokenizer answers
+ * T_STRING for each one and declares no T_STATIC, T_PUBLIC or T_ABSTRACT. See
+ * docs/todo-correction.md.
+ */
+const MODIFIERS = array("static", "public", "private", "protected", "final", "abstract");
+
+/**
+ * classes reads the classes a source declares.
+ *
+ * The prose of a class is a run of // lines, the way a Go type's is, and the
+ * prose of a member is a /** block: both are read, and the block wins where a
+ * declaration carries one. The run counts only where nothing but whitespace
+ * stands between it and the declaration, so a comment at the end of a method
+ * body does not become the next method's.
+ */
 function classes($src) {
 	$tokens = token_get_all($src);
 	$out = array();
 	$doc = "";
+	$note = "";
 	// The class being read, by index: a reference binds by value here, so
 	// the list is written through the index it was appended at.
 	$at = -1;
@@ -70,11 +89,21 @@ function classes($src) {
 				$depth--;
 			}
 
+			$note = "";
+
 			continue;
 		}
 
 		if ($token[0] === T_COMMENT && substr($token[1], 0, 3) === "/**") {
 			$doc = docblock($token[1]);
+			$note = "";
+
+			continue;
+		}
+
+		if ($token[0] === T_COMMENT && substr($token[1], 0, 2) === "//") {
+			$line = trim(substr($token[1], 2));
+			$note = $note === "" ? $line : trim($note . " " . $line);
 
 			continue;
 		}
@@ -83,14 +112,21 @@ function classes($src) {
 			continue;
 		}
 
+		// A modifier keeps the prose: `static function` is two tokens and the
+		// comment belongs to the function, not to the word before it.
+		if ($token[0] === T_STRING && in_array($token[1], MODIFIERS, true)) {
+			continue;
+		}
+
 		if ($token[0] === T_CLASS) {
 			$out[] = array(
 				"name" => name($tokens, $i),
-				"doc" => $doc,
+				"doc" => $doc === "" ? $note : $doc,
 				"methods" => array(),
 			);
 			$at = count($out) - 1;
 			$doc = "";
+			$note = "";
 
 			continue;
 		}
@@ -99,21 +135,24 @@ function classes($src) {
 		// a closure and anything shallower is a free function.
 		if ($token[0] === T_FUNCTION && $at >= 0 && $depth === 1) {
 			$name = name($tokens, $i);
+			$prose = $doc === "" ? $note : $doc;
 
 			if (substr($name, 0, 2) !== "__") {
 				$out[$at]["methods"][] = array(
 					"name" => $name,
 					"signature" => $name . signature($tokens, $i),
-					"doc" => $doc === "" ? "-" : $doc,
+					"doc" => $prose === "" ? "-" : $prose,
 				);
 			}
 
 			$doc = "";
+			$note = "";
 
 			continue;
 		}
 
 		$doc = "";
+		$note = "";
 	}
 
 	return $out;
@@ -273,9 +312,16 @@ function modules() {
 	return $out;
 }
 
-/** load requires a module's files and answers the first Module it declared. */
+/**
+ * load requires a module's files and answers every Module they declared.
+ *
+ * All of them, because a module directory holds one class per page and each
+ * names the tables its own page reads: the data model of the directory is what
+ * they name together, and the first file glob happens to answer is not it.
+ */
 function load($name) {
 	$found = glob("modules/" . $name . "/mod_*.php");
+	$out = array();
 
 	foreach ($found as $file) {
 		require_once $file;
@@ -285,11 +331,65 @@ function load($name) {
 		$class = basename($file, ".php");
 
 		if (class_exists($class)) {
-			return new $class;
+			$out[] = new $class;
 		}
 	}
 
-	return null;
+	return $out;
+}
+
+/**
+ * own is the module's own class of the classes a directory declares, the one
+ * named after it, which is where the directory's title and prose are.
+ *
+ * A directory that declares no eponymous class is answered by its first, so a
+ * module is documented either way.
+ */
+function own($modules, $name) {
+	foreach ($modules as $module) {
+		if (get_class($module) === "mod_" . $name) {
+			return $module;
+		}
+	}
+
+	return $modules[0];
+}
+
+/** prune drops the diagram a module used to have and no longer earns. */
+function prune($dir) {
+	$found = array($dir . "/schema.puml", $dir . "/schema.svg");
+
+	foreach ($found as $file) {
+		if (file_exists($file)) {
+			unlink($file);
+		}
+	}
+}
+
+/** declares is the tables a directory's classes name, each one once. */
+function declares($modules) {
+	$out = array();
+
+	foreach ($modules as $module) {
+		foreach ($module->tables() as $table) {
+			if (!in_array($table, $out, true)) {
+				$out[] = $table;
+			}
+		}
+	}
+
+	return $out;
+}
+
+/** names is the classes of a directory, as the footer spells them. */
+function names($modules) {
+	$out = array();
+
+	foreach ($modules as $module) {
+		$out[] = "`" . get_class($module) . "`";
+	}
+
+	return implode(", ", $out);
 }
 
 /**
@@ -301,7 +401,8 @@ function load($name) {
  */
 function render($module, $template, $data) {
 	$own = "modules/" . $module . "/";
-	$tpl = new MiniTPL\Template(array($own, "tools/templates/"));
+	$paths = array($own, "tools/templates/");
+	$tpl = new MiniTPL\Template($paths);
 
 	$tpl->load($template);
 	$tpl->assign("nl", "\n");
@@ -316,25 +417,44 @@ function render($module, $template, $data) {
 $written = 0;
 
 foreach (modules() as $name) {
-	$module = load($name);
+	$declared = load($name);
 
-	if ($module === null) {
+	if (count($declared) === 0) {
 		echo "no Module in modules/", $name, "\n";
 		exit(1);
 	}
 
+	$module = own($declared, $name);
 	$dir = "modules/" . $name;
-	$tables = schema($module->tables());
+	$tables = schema(declares($declared));
 
-	file_put_contents($dir . "/schema.puml", render($name, "schema.puml.tpl", array("tables" => $tables, "links" => links($tables))));
+	// The operations are both of a module's own directories: storage/ runs the
+	// statements and code/ is the logic over the rows that is neither a
+	// statement nor a page, which a module large enough to have one puts there
+	// because a mod_ file is outside the classmap and cannot be called from
+	// another. The store comes first: it says what the rows are, and the rest
+	// is read in terms of them.
+	$stored = api($dir . "/storage");
+	$logic = api($dir . "/code");
+	$classes = array_merge($stored, $logic);
+
+	// A module whose pages read no table of their own gets no diagram: an
+	// empty one renders to a blank SVG, which reads as a drawing that failed
+	// rather than as a module with nothing to draw. The README says so in
+	// words instead.
+	if (count($tables) === 0) {
+		prune($dir);
+	} else {
+		file_put_contents($dir . "/schema.puml", render($name, "schema.puml.tpl", array("tables" => $tables, "links" => links($tables))));
+	}
 
 	file_put_contents($dir . "/README.md", render($name, "readme.md.tpl", array(
 		"title" => $module->title(),
-		"module" => get_class($module),
+		"module" => names($declared),
 		"description" => description($dir . "/mod_" . $name . ".php"),
 		"routes" => routes($dir),
 		"tables" => $tables,
-		"classes" => api($dir . "/storage"),
+		"classes" => $classes,
 	)));
 
 	echo $name, ": ", count($tables), " tables, ", count(routes($dir)), " routes\n";
@@ -343,33 +463,57 @@ foreach (modules() as $name) {
 
 echo $written, " modules\n";
 
-/** description is the comment above a module's own class. */
+/**
+ * description is the comment above a module's own class, as markdown: an empty
+ * comment line is a paragraph break, the way it is in the source, and not two
+ * spaces in the middle of a sentence.
+ *
+ * The comment is the one that names the class, so the notes every mod_ file
+ * carries about the formatter are not the module's prose.
+ */
 function description($file) {
 	if (!file_exists($file)) {
 		return "";
 	}
 
+	$paragraphs = array();
 	$lines = array();
+	$started = false;
 
 	foreach (explode("\n", file_get_contents($file)) as $line) {
 		$trimmed = trim($line);
+		$comment = substr($trimmed, 0, 2) === "//";
 
-		if (substr($trimmed, 0, 2) === "//" && count($lines) > 0) {
-			$lines[] = trim(substr($trimmed, 2));
+		if ($comment && !$started && strpos($trimmed, "mod_") === false) {
+			continue;
+		}
+
+		if ($comment) {
+			$started = true;
+			$text = trim(substr($trimmed, 2));
+
+			if ($text !== "") {
+				$lines[] = $text;
+
+				continue;
+			}
+
+			if (count($lines) > 0) {
+				$paragraphs[] = implode(" ", $lines);
+				$lines = array();
+			}
 
 			continue;
 		}
 
-		if (substr($trimmed, 0, 2) === "//" && strpos($trimmed, "mod_") !== false) {
-			$lines[] = trim(substr($trimmed, 2));
-
-			continue;
-		}
-
-		if (count($lines) > 0) {
+		if ($started) {
 			break;
 		}
 	}
 
-	return implode(" ", $lines);
+	if (count($lines) > 0) {
+		$paragraphs[] = implode(" ", $lines);
+	}
+
+	return implode("\n\n", $paragraphs);
 }

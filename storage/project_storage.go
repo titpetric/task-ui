@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"errors"
+	"strings"
 
 	"github.com/titpetric/task-ui/model"
 )
@@ -63,6 +64,30 @@ func (s *ProjectStorage) GetByFolder(ctx context.Context, folder string) (*model
 // List returns every project, by folder.
 func (s *ProjectStorage) List(ctx context.Context) ([]model.Project, error) {
 	return client(s.db).Select[model.Project](ctx, "SELECT * FROM project ORDER BY folder")
+}
+
+// projectFolder is a project's ID and folder, as FoldersByID reads them.
+type projectFolder struct {
+	ID     string `db:"id"`
+	Folder string `db:"folder"`
+}
+
+// FoldersByID is the folder of each project named, by ID; an ID with no
+// project is missing, and no IDs reads nothing.
+func (s *ProjectStorage) FoldersByID(ctx context.Context, ids []string) (map[string]string, error) {
+	folders := map[string]string{}
+	if len(ids) == 0 {
+		return folders, nil
+	}
+	rows, err := client(s.db).Select[projectFolder](ctx,
+		"SELECT id, folder FROM project WHERE id IN (?"+strings.Repeat(", ?", len(ids)-1)+")", anyList(ids)...)
+	if err != nil {
+		return nil, err
+	}
+	for _, row := range rows {
+		folders[row.ID] = row.Folder
+	}
+	return folders, nil
 }
 
 // Update writes a project back, by ID.

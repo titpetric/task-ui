@@ -7,8 +7,8 @@
 {/foreach}		</dl>
 {/if}		<div class="more-items" role="menu" aria-label="{data_menu.label}">
 {foreach $data_menu.groups as $index => $group}{if $index}			<hr class="more-sep">
-{/if}{foreach $group as $item}{if $item.href}			<a class="more-item{if $item.danger} danger{/if}" role="menuitem" href="{item.href}"{if $item.download} download{/if} {item.attrs|raw}><svg class="ic"><use href="#i-{item.icon}"/></svg><span>{item.label}</span>{if $item.note}<small class="faint">{item.note}</small>{/if}</a>
-{else}			<button type="button" class="more-item{if $item.danger} danger{/if}" role="menuitem"{if $item.disabled} disabled{/if} {item.attrs|raw}><svg class="ic"><use href="#i-{item.icon}"/></svg><span>{item.label}</span>{if $item.note}<small class="faint">{item.note}</small>{/if}</button>
+{/if}{foreach $group as $item}{if $item.href}			<a class="more-item{if $item.danger} danger{/if}" role="menuitem" href="{item.href}"{if $item.download} download{/if}{if $item.attrs} {item.attrs|raw}{/if}><svg class="ic"><use href="#i-{item.icon}"/></svg><span>{item.label}</span>{if $item.note}<small class="faint">{item.note}</small>{/if}</a>
+{else}			<button type="button" class="more-item{if $item.danger} danger{/if}" role="menuitem"{if $item.disabled} disabled{/if}{if $item.attrs} {item.attrs|raw}{/if}><svg class="ic"><use href="#i-{item.icon}"/></svg><span>{item.label}</span>{if $item.note}<small class="faint">{item.note}</small>{/if}</button>
 {/if}{/foreach}{/foreach}
 		</div>
 	</div>

@@ -90,7 +90,7 @@ func Bind(rt *runner.Runtime, opts Options, registered func(*Module)) {
 		if _, err := os.Stat(filepath.Join(m.Root, rel)); err != nil {
 			return "", fmt.Errorf("%s: %w", action, err)
 		}
-		return opts.Dispatcher.Dispatch(ctx, m, comment, rel, folder)
+		return opts.Dispatcher.Dispatch(ctx, m.Root, comment, rel, folder)
 	})
 
 	// Task::markdown renders markdown the way every other page of the

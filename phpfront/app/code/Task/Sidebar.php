@@ -28,7 +28,11 @@ class Sidebar {
 	function byHref($href) {
 		$row = $this->db->get("SELECT * FROM sidebar WHERE href = ?", $href);
 
-		return is_array($row) ? new Model\Sidebar($row) : null;
+		if (!is_array($row)) {
+			return null;
+		}
+
+		return new Model\Sidebar($row);
 	}
 
 	/** order writes the position and the hidden flag of each link, in one transaction. */
@@ -36,6 +40,12 @@ class Sidebar {
 		$now = Clock::stamp();
 
 		$this->db->begin();
+
+		// A runtime failure in the loop is not catchable: an Error and a
+		// fault the interpreter raises are neither an Exception. Without
+		// this the frame leaves a write transaction open on the pooled
+		// connection, and every other writer waits on it.
+		defer($this->db->rollback);
 
 		foreach ($hrefs as $position => $href) {
 			$this->db->query("UPDATE sidebar SET position = ?, hidden = ?, updated_at = ? WHERE href = ?", $position, isset($hidden[$href]) && $hidden[$href] ? 1 : 0, $now, $href);
@@ -64,7 +74,7 @@ class Sidebar {
 
 			$out[] = array(
 				"title" => $row->getTitle(),
-				"href" => $row->getHref(),
+				"href" => self::link($row),
 				"icon" => self::icon($row->getIcon()),
 				"active" => self::active($row->getHref(), $path),
 				"flows" => $row->getHref() === "/workflows",
@@ -73,6 +83,156 @@ class Sidebar {
 		}
 
 		return $out;
+	}
+
+	/**
+	 * defaults is the top block as it stood before the table held it: the
+	 * views across all folders, in this order, which is the order a fresh
+	 * instance starts with and what the settings page draws while the table is
+	 * empty.
+	 *
+	 * The rows, their links and their symbols are model/sidebar.go's
+	 * SidebarDefaults, a constant table no binding carries; keep them in step
+	 * with it. The positions are the order of this list, which the instance
+	 * writes when it fills the table.
+	 */
+	static function defaults() {
+		$views = array(
+			array(
+				"title" => "Dashboard",
+				"href" => "/",
+				"icon" => "grid",
+				"rule" => "",
+			),
+			array(
+				"title" => "Inventory",
+				"href" => "/inventory",
+				"icon" => "server",
+				"rule" => "",
+			),
+			array(
+				"title" => "Workflows",
+				"href" => "/workflows",
+				"icon" => "flow",
+				"rule" => "",
+			),
+			array(
+				"title" => "Runs",
+				"href" => "/runs",
+				"icon" => "list",
+				"rule" => "",
+			),
+			array(
+				"title" => "Artifacts",
+				"href" => "/artifacts",
+				"icon" => "box",
+				"rule" => "",
+			),
+			array(
+				"title" => "Scheduled",
+				"href" => "/schedules",
+				"icon" => "clock",
+				"rule" => "",
+			),
+			array(
+				"title" => "Notes",
+				"href" => "/notes",
+				"icon" => "note",
+				"rule" => "",
+			),
+			array(
+				"title" => "Settings",
+				"href" => "/settings",
+				"icon" => "settings",
+				"rule" => self::SETTINGS,
+			),
+		);
+		$out = array();
+
+		foreach ($views as $view) {
+			$view["kind"] = self::VIEW;
+			$row = new Model\Sidebar($view);
+			$out[] = $row;
+		}
+
+		return $out;
+	}
+
+	/**
+	 * rows are the rows of the Sidebar settings table: every row the table
+	 * holds in its order, the hidden ones too, because this is the page that
+	 * unhides one.
+	 *
+	 * $modules is Task\Host::modules(), which a row of a module is paired with
+	 * by its link: the description under the title is the module's own. A
+	 * module whose row outlived its directory is paired with nothing, and the
+	 * row says what kind it is instead.
+	 */
+	static function rows($items, $modules) {
+		$found = array();
+
+		foreach ($modules as $module) {
+			$found["/m/" . Row::text($module, "name")] = $module;
+		}
+
+		$out = array();
+
+		foreach ($items as $item) {
+			$href = $item->getHref();
+			$module = isset($found[$href]) ? $found[$href] : array();
+
+			$out[] = array(
+				"href" => $href,
+				"link" => self::link($item),
+				"icon" => self::icon($item->getIcon()),
+				"title" => self::title($item),
+				"kind" => $item->getKind(),
+				"hidden" => $item->getHidden(),
+				"note" => self::note($item, $module),
+			);
+		}
+
+		return $out;
+	}
+
+	/**
+	 * title is what a row of the settings table shows, falling back to the
+	 * link so a row with no title is still something to drag.
+	 */
+	static function title($item) {
+		$title = $item->getTitle();
+
+		return $title === "" ? $item->getHref() : $title;
+	}
+
+	/**
+	 * note is the line under the title: a module's description, or what the
+	 * instance calls the row's kind where the module is gone.
+	 */
+	static function note($item, $module) {
+		$said = Row::text($module, "description");
+
+		if ($said !== "") {
+			return $said;
+		}
+
+		return $item->getKind() === self::MODULE ? "a module" : "";
+	}
+
+	/**
+	 * link is a row's whole link, the prefix in it where the prefix applies.
+	 *
+	 * A module's page is another application on the same instance, mounted at
+	 * /m/<vendor>/<name> and not under this one, so the prefix is this
+	 * application's own rows alone. Every other link a template writes is
+	 * {base} and a path, because every other link is a page of this one.
+	 */
+	static function link($row) {
+		if ($row->getKind() === self::MODULE) {
+			return $row->getHref();
+		}
+
+		return Route::href($row->getHref());
 	}
 
 	/**

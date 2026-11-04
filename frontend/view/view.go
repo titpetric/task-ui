@@ -1,6 +1,13 @@
 // Package view renders the pages of task-ui: the templates, the page
 // model they bind to and the embedded assets. It knows nothing of HTTP
 // routing; the frontend package fills a Page and renders it by name.
+//
+// The template set is parsed once per process, because it is not cheap:
+// 49 pages over 19 partials, and a page is a clone of the whole layout
+// tree, which is 16MB of parse nodes and 90ms of parsing. A server
+// builds one and would never have noticed. The tests built one per
+// fixture, and ninety of them held 1.5GB of identical template trees
+// until the kernel stopped the test binary.
 package view
 
 import (
@@ -13,6 +20,7 @@ import (
 	"path"
 	"sort"
 	"strings"
+	"sync"
 )
 
 //go:embed templates/*.tpl
@@ -29,8 +37,25 @@ type View struct {
 	pages map[string]*template.Template
 }
 
-// New parses the embedded templates.
+// parsed is the one template set of the process, built on the first
+// call to New and kept. Sharing it is safe because a View is read only
+// once it is built, the files are embedded and the functions are
+// package level, and html/template executes a parsed template from any
+// number of goroutines.
+var parsed struct {
+	sync.Once
+	v   *View
+	err error
+}
+
+// New answers the parsed templates, the same set every time.
 func New() (*View, error) {
+	parsed.Do(func() { parsed.v, parsed.err = parse() })
+	return parsed.v, parsed.err
+}
+
+// parse reads the embedded templates into a page per file.
+func parse() (*View, error) {
 	entries, err := fs.ReadDir(templates, "templates")
 	if err != nil {
 		return nil, err

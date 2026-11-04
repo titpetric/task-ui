@@ -1,0 +1,1 @@
+{* input scope: data_avatar. See avatar.md. *}<span class="avatar sm{if $data_avatar.role} role-{data_avatar.role}{/if}" title="{data_avatar.name}">{data_avatar.initials}</span>

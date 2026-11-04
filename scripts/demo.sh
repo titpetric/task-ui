@@ -8,12 +8,27 @@
 # starts real runs with scripts/run.sh, and captures every view with
 # scripts/chromium.sh in both themes. Writes docs/assets/*.png.
 #
+# It is also what tests the front end: the instance it builds is the only one
+# with the data every page needs, so it crawls every link and compares every
+# page it reached against the front end being ported, as the admin and as the
+# viewer. scripts/test-coverage.sh runs it as the shots suite.
+#
 # Needs chromium, curl, atkins, task and git in PATH.
 #
 # TASK_UI_SHOT_FILTER is an ERE on the shot names. When set, only the shots
 # it matches are taken and only their files under docs/assets are replaced;
 # the rest of the set is left alone. The filter also reaches
-# scripts/inventory-shots.sh, which this script runs at the end.
+# scripts/inventory-shots.sh, which this script runs at the end. A filter that
+# matches no name — '^$' — is the whole run with no screenshot taken and
+# nothing under docs/assets touched, which is the crawl and the comparison on
+# their own.
+#
+# TASK_UI_COVER_DIR builds the server with coverage and writes the counters
+# of every instance there, for scripts/test-coverage.sh. An instrumented
+# binary writes its counters when it exits, so the cleanup waits for the
+# instances it signalled rather than leaving them to be reaped.
+# TASK_UI_SHOT_SKIP_INVENTORY leaves scripts/inventory-shots.sh to the
+# caller, which is what measures it as a suite of its own.
 set -euo pipefail
 
 root="$(cd "$(dirname "$0")/.." && pwd)"
@@ -36,11 +51,22 @@ work="$(mktemp -d)"
 pids=()
 cleanup() {
   for pid in "${pids[@]}"; do kill "$pid" 2>/dev/null || true; done
+  if [ -n "${TASK_UI_COVER_DIR:-}" ]; then
+    for pid in "${pids[@]}"; do wait "$pid" 2>/dev/null || true; done
+  fi
   rm -rf "$work"
 }
 trap cleanup EXIT
 
-go build -o "$work/task-ui" .
+# build is the server, instrumented when a coverage directory is asked
+# for. -coverpkg is the whole module, so the profile this leaves has the
+# same denominator as the one a test suite writes and the two merge.
+build=(go build -o "$work/task-ui")
+if [ -n "${TASK_UI_COVER_DIR:-}" ]; then
+  mkdir -p "$TASK_UI_COVER_DIR"
+  build=(go build -cover -coverpkg=./... -o "$work/task-ui")
+fi
+"${build[@]}" .
 
 # The demo is served from a copy, so the runs and the screenshots leave
 # the checkout clean.
@@ -91,6 +117,7 @@ serve() {
     TASK_UI_SSH_DIR="$work/ssh" \
     TASK_UI_ADMINS=admin \
     TASK_UI_VIEWERS=guest \
+    ${TASK_UI_COVER_DIR:+GOCOVERDIR="$TASK_UI_COVER_DIR"} \
     "$@" "$work/task-ui" >"$work/task-ui-${port}.log" 2>&1 &
   pids+=("$!")
   for _ in $(seq 1 50); do
@@ -339,9 +366,6 @@ api PUT /workspaces/acme/home -d "{\"url\":\"file://$work/repos/acme.git\"}"
 mkdir -p "$work/demo/acme/src/design"
 printf '# Design\n\nMockups and the style guide.\n' >"$work/demo/acme/src/design/README.md"
 
-# Every link on every page answers, the workspace's included.
-scripts/crawl.sh
-
 shot workspaces-dark /settings/workspaces dark 1440x1000
 shot workspace-edit-dark /settings/workspaces/acme dark 1440x1500
 shot workspace-edit-light /settings/workspaces/acme light 1440x1500
@@ -422,4 +446,59 @@ if [ -z "${TASK_UI_SHOT_FILTER:-}" ] || [[ dashboard-dark =~ $TASK_UI_SHOT_FILTE
 fi
 
 # The Inventory page's shots, from a hub and hosts of their own.
-scripts/inventory-shots.sh
+# scripts/test-coverage.sh runs it as a suite of its own, so it skips it
+# here rather than counting it twice.
+if [ -z "${TASK_UI_SHOT_SKIP_INVENTORY:-}" ]; then
+  scripts/inventory-shots.sh
+fi
+
+# Every link on every page answers, the workspace's included, and every page
+# the crawl reached is the same page on the front end being ported. The
+# instance this script built is what makes that comparison worth anything: the
+# demo data reaches the branches a page draws only when a row exists, and a
+# page compared on data it has none of is compared on nothing.
+#
+# Then the same pages again as the viewer, over the same database: a permission
+# gate one front end has and the other does not is invisible to an admin's
+# sweep, since both draw everything.
+#
+# Last of everything, and every pass runs whatever the one before it found: a
+# page that differs is a finding of the run and not the end of it, so the
+# screenshots are written before the comparison reads anything and the
+# viewer's sweep is never skipped by the admin's.
+differ=0
+scripts/compare-site.sh || differ=$((differ + $?))
+TASK_UI_BASE="http://127.0.0.1:${viewer}" scripts/compare-site.sh || differ=$((differ + $?))
+# The sign in page is the one page a reader with no session is given, so it
+# compares on the instance that has no autologin and nowhere else.
+TASK_UI_BASE="http://127.0.0.1:${login}" scripts/compare.sh /login || differ=$((differ + $?))
+
+# The same pages through a browser, in both palettes. The markup comparison
+# above cannot see a stylesheet rule that matches a class only one front end
+# writes, a font that resolves on one path, or an SVG drawn outside its box, so
+# one page of each layout the theme has is rendered and the pixels counted. The
+# set is small because a shot is a browser: these are the distinct layouts and
+# not the distinct pages.
+#
+# It runs under the shot filter, since it is a screenshot pass: a sweep asking
+# for the comparison alone skips it with the rest of them.
+if [ -z "${TASK_UI_SHOT_FILTER:-}" ]; then
+  # The run page is not in the set, ended run or live one: its output block is
+  # a terminal the browser writes out of the recording it fetches after the
+  # load event, so a shot catches the placeholder or the screen depending on
+  # the moment, in either front end. Two shots of one of them differ as far as
+  # a shot of each, which is a capture and not a layout. The page is compared
+  # as markup by the sweep above, with every other page the crawl reached.
+  scripts/compare-shots.sh / /runs /notes /artifacts /inventory /workflows \
+    /schedules /settings /settings/users /f/internal/backups ||
+    differ=$((differ + $?))
+fi
+
+# The count of pages that differ is the exit code. A status wraps past 255 and
+# 0 is among what it wraps to, so a sweep that differed everywhere caps there
+# and still fails.
+if [ "${differ}" -gt 255 ]; then
+  differ=255
+fi
+
+exit "${differ}"

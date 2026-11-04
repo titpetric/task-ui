@@ -83,3 +83,85 @@ func TestSecretReadStorage_DeleteThrough(t *testing.T) {
 	assert.Len(t, left, 1)
 	assert.Equal(t, batch[2].ID, left[0].ID)
 }
+
+// Every method hands back what the driver said.
+func TestSecretReadStorage_Closed(t *testing.T) {
+	t.Parallel()
+	reads := storage.NewSecretReadStorage(closedDB(t))
+	ctx := context.Background()
+
+	assert.ErrorContains(t, reads.Record(ctx, []model.SecretRead{{SecretID: "s1", RunID: "r1"}}), errClosed)
+	_, err := reads.List(ctx, "s1", "", "", 10)
+	assert.ErrorContains(t, err, errClosed)
+	_, err = reads.ForRun(ctx, "r1")
+	assert.ErrorContains(t, err, errClosed)
+	_, err = reads.Counts(ctx)
+	assert.ErrorContains(t, err, errClosed)
+	_, err = reads.Last(ctx)
+	assert.ErrorContains(t, err, errClosed)
+	_, _, err = reads.Usage(ctx)
+	assert.ErrorContains(t, err, errClosed)
+	_, err = reads.All(ctx)
+	assert.ErrorContains(t, err, errClosed)
+	assert.ErrorContains(t, reads.Prune(ctx, time.Now()), errClosed)
+	assert.ErrorContains(t, reads.DeleteThrough(ctx, "x"), errClosed)
+}
+
+// Record writes a row and prunes the secret's log, both inside one
+// transaction, and stops at the statement that failed. Keep of zero is
+// the default cap rather than a log of nothing.
+func TestSecretReadStorage_RecordErrors(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	read := []model.SecretRead{{SecretID: "s1", RunID: "r1", Name: "TOKEN"}}
+
+	assert.NoError(t, storage.NewSecretReadStorage(newDB(t)).Record(ctx, nil), "no reads is no work")
+
+	gone := storage.NewSecretReadStorage(brokenDB(t, model.SecretReadTable))
+	assert.ErrorContains(t, gone.Record(ctx, read), errNoTable)
+
+	insert := newDB(t)
+	refuse(t, insert, model.SecretReadTable, "INSERT")
+	assert.ErrorContains(t, storage.NewSecretReadStorage(insert).Record(ctx, read), errRefused)
+
+	// Keep of one makes the second read prune the first, which is the
+	// delete the trigger is there for.
+	prune := newDB(t)
+	refuse(t, prune, model.SecretReadTable, "DELETE")
+	capped := storage.NewSecretReadStorage(prune)
+	capped.Keep = 1
+	assert.ErrorContains(t, capped.Record(ctx, []model.SecretRead{
+		{SecretID: "s1", RunID: "r1", Name: "ONE"},
+		{SecretID: "s1", RunID: "r1", Name: "TWO"},
+	}), errRefused)
+}
+
+// Keep of zero is the default cap, not a log of nothing.
+func TestSecretReadStorage_KeepDefault(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	reads := storage.NewSecretReadStorage(newDB(t))
+	reads.Keep = 0
+
+	assert.NoError(t, reads.Record(ctx, []model.SecretRead{
+		{SecretID: "s1", RunID: "r1", Name: "ONE"},
+		{SecretID: "s1", RunID: "r2", Name: "TWO"},
+	}))
+	all, err := reads.All(ctx)
+	assert.NoError(t, err)
+	assert.Len(t, all, 2)
+}
+
+// A read needs a secret and a run, and the whole batch is refused
+// without them.
+func TestSecretReadStorage_RecordRefuses(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	reads := storage.NewSecretReadStorage(newDB(t))
+
+	assert.ErrorContains(t, reads.Record(ctx, []model.SecretRead{{RunID: "r1"}}), "needs a secret and a run")
+	assert.ErrorContains(t, reads.Record(ctx, []model.SecretRead{{SecretID: "s1"}}), "needs a secret and a run")
+	all, err := reads.All(ctx)
+	assert.NoError(t, err)
+	assert.Len(t, all, 0, "the transaction rolled back")
+}

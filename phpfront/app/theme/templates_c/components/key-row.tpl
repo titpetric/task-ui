@@ -1,0 +1,72 @@
+<?php $_v=&$this->vars;?>
+			<tr id="key-<?php echo htmlspecialchars($_v['data_key']['name'], ENT_QUOTES);?>
+">
+				<td class="key"><?php if($_v['data_key']['href']){?>
+<a class="mono" href="<?php echo htmlspecialchars($_v['data_key']['href'], ENT_QUOTES);?>
+"><?php echo htmlspecialchars($_v['data_key']['name'], ENT_QUOTES);?>
+</a><?php }else{?>
+<span class="mono"><?php echo htmlspecialchars($_v['data_key']['name'], ENT_QUOTES);?>
+</span><?php }?><?php if($_v['data_key']['encrypts']){?>
+ <span class="badge signal">encryption</span><?php }?><?php if($_v['data_key']['backup']){?>
+<span class="backup-active" title="The previous material serves beside the key until you delete the backup">BACKUP ACTIVE: <?php echo htmlspecialchars($_v['data_key']['backup'], ENT_QUOTES);?>
+</span><?php }?><?php if($_v['data_key']['comment']){?>
+<div class="faint"><?php echo htmlspecialchars($_v['data_key']['comment'], ENT_QUOTES);?>
+</div><?php }?></td>
+				<td class="mono hide-narrow" data-label="Algorithm"><?php echo htmlspecialchars($_v['data_key']['algo'], ENT_QUOTES);?>
+</td>
+				<td class="mono nowrap hide-narrow" data-label="Size"><?php echo htmlspecialchars($_v['data_key']['size'], ENT_QUOTES);?>
+ bits</td>
+				<td class="pubkey" data-label="Public key"><?php $_v['data_copy'] = $_v['data_key']['copy'];?>
+<span class="copyable<?php if($_v['data_copy']['fill']){?>
+ fill<?php }?>"><code<?php if($_v['data_copy']['fill'] || $_v['data_copy']['shown'] !== $_v['data_copy']['value']){?>
+ title="<?php echo htmlspecialchars($_v['data_copy']['value'], ENT_QUOTES);?>
+"<?php }?>><?php echo htmlspecialchars($_v['data_copy']['shown'], ENT_QUOTES);?>
+</code><button type="button" class="btn-icon" data-copy="<?php echo htmlspecialchars($_v['data_copy']['value'], ENT_QUOTES);?>
+" title="Copy <?php echo htmlspecialchars($_v['data_copy']['label'], ENT_QUOTES);?>
+" aria-label="Copy <?php echo htmlspecialchars($_v['data_copy']['label'], ENT_QUOTES);?>
+"><svg class="ic"><use href="#i-copy"/></svg></button></span>
+</td>
+				<td class="actions"><?php $_v['data_menu'] = $_v['data_key']['menu'];if(!$_v['data_menu']['empty']){?>
+<details class="more-menu">
+	<summary class="btn-icon" aria-haspopup="menu" aria-expanded="false" title="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
+" aria-label="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
+"><svg class="ic"><use href="#i-more"/></svg></summary>
+	<div class="more-list">
+<?php if($_v['data_menu']['details']){?>
+		<dl class="more-details">
+<?php if(!empty($_v['data_menu']['details']))foreach($_v['data_menu']['details'] as $_v['detail']){?>			<dt><?php echo htmlspecialchars($_v['detail']['label'], ENT_QUOTES);?>
+</dt><dd<?php if($_v['detail']['mono']){?>
+ class="mono"<?php }?><?php if($_v['detail']['title']){?>
+ title="<?php echo htmlspecialchars($_v['detail']['title'], ENT_QUOTES);?>
+"<?php }?>><?php echo htmlspecialchars($_v['detail']['value'], ENT_QUOTES);?>
+</dd>
+<?php }?>		</dl>
+<?php }?>		<div class="more-items" role="menu" aria-label="<?php echo htmlspecialchars($_v['data_menu']['label'], ENT_QUOTES);?>
+">
+<?php if(!empty($_v['data_menu']['groups']))foreach($_v['data_menu']['groups'] as $_v['index'] => $_v['group']){?><?php if($_v['index']){?>
+			<hr class="more-sep">
+<?php }?><?php if(!empty($_v['group']))foreach($_v['group'] as $_v['item']){?><?php if($_v['item']['href']){?>
+			<a class="more-item<?php if($_v['item']['danger']){?>
+ danger<?php }?>" role="menuitem" href="<?php echo htmlspecialchars($_v['item']['href'], ENT_QUOTES);?>
+"<?php if($_v['item']['download']){?>
+ download<?php }?><?php if($_v['item']['attrs']){?>
+ <?php echo $_v['item']['attrs']; }?>><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['item']['icon'], ENT_QUOTES);?>
+"/></svg><span><?php echo htmlspecialchars($_v['item']['label'], ENT_QUOTES);?>
+</span><?php if($_v['item']['note']){?>
+<small class="faint"><?php echo htmlspecialchars($_v['item']['note'], ENT_QUOTES);?>
+</small><?php }?></a>
+<?php }else{?>
+			<button type="button" class="more-item<?php if($_v['item']['danger']){?>
+ danger<?php }?>" role="menuitem"<?php if($_v['item']['disabled']){?>
+ disabled<?php }?><?php if($_v['item']['attrs']){?>
+ <?php echo $_v['item']['attrs']; }?>><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['item']['icon'], ENT_QUOTES);?>
+"/></svg><span><?php echo htmlspecialchars($_v['item']['label'], ENT_QUOTES);?>
+</span><?php if($_v['item']['note']){?>
+<small class="faint"><?php echo htmlspecialchars($_v['item']['note'], ENT_QUOTES);?>
+</small><?php }?></button>
+<?php }?><?php }?><?php }?>
+		</div>
+	</div>
+</details><?php }?>
+</td>
+			</tr>

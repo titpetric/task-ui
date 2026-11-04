@@ -163,3 +163,59 @@ func TestWorkspaceStorage_Home(t *testing.T) {
 	assert.Equal(t, "", got.HomeURL, "Remove leaves an empty home")
 	assert.Equal(t, "", got.HomeBranch)
 }
+
+// The two reads task-ui migrate-layout makes: the folders in the order
+// it lays them out, and the home project each workspace names. They
+// name their columns rather than reading the row, so a database from
+// before the migration answers them.
+func TestWorkspaceStorage_Layout(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	workspaces := storage.NewWorkspaceStorage(newDB(t))
+	for _, folder := range []string{"zulu", "acme", model.Default} {
+		assert.NoError(t, workspaces.Create(ctx, &model.Workspace{Folder: folder}))
+	}
+
+	folders, err := workspaces.LayoutFolders(ctx)
+	assert.NoError(t, err)
+	assert.Equal(t, []string{model.Default, "acme", "zulu"}, folders)
+
+	homes, err := workspaces.HomeProjectIDs(ctx)
+	assert.NoError(t, err)
+	assert.Len(t, homes, 0, "a workspace names no home project")
+
+	acme, err := workspaces.GetByFolder(ctx, "acme")
+	assert.NoError(t, err)
+	acme.HomeProjectID = "p1"
+	assert.NoError(t, workspaces.Update(ctx, acme))
+	homes, err = workspaces.HomeProjectIDs(ctx)
+	assert.NoError(t, err)
+	assert.Equal(t, map[string]string{"acme": "p1"}, homes)
+
+	gone := storage.NewWorkspaceStorage(brokenDB(t, model.WorkspaceTable))
+	_, err = gone.LayoutFolders(ctx)
+	assert.ErrorContains(t, err, errNoTable)
+	_, err = gone.HomeProjectIDs(ctx)
+	assert.ErrorContains(t, err, errNoTable)
+}
+
+// Every method hands back what the driver said. Create reads the next
+// sort before it inserts, so a workspace without one stops there.
+func TestWorkspaceStorage_Closed(t *testing.T) {
+	t.Parallel()
+	workspaces := storage.NewWorkspaceStorage(closedDB(t))
+	ctx := context.Background()
+
+	assert.ErrorContains(t, workspaces.Create(ctx, &model.Workspace{Folder: "acme"}), errClosed)
+	_, err := workspaces.Get(ctx, "w1")
+	assert.ErrorContains(t, err, errClosed)
+	_, err = workspaces.GetByFolder(ctx, "acme")
+	assert.ErrorContains(t, err, errClosed)
+	_, err = workspaces.List(ctx)
+	assert.ErrorContains(t, err, errClosed)
+	_, err = workspaces.Folders(ctx)
+	assert.ErrorContains(t, err, errClosed)
+	assert.ErrorContains(t, workspaces.EnsureDefault(ctx), errClosed)
+	assert.ErrorContains(t, workspaces.Update(ctx, &model.Workspace{ID: "w1"}), errClosed)
+	assert.ErrorContains(t, workspaces.Delete(ctx, "w1"), errClosed)
+}

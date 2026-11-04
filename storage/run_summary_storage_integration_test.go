@@ -30,3 +30,16 @@ func TestRunSummaryStorage(t *testing.T) {
 	_, err = summaries.Get(ctx, "r1")
 	assert.ErrorIs(t, err, storage.ErrNotFound)
 }
+
+// Every method hands back what the driver said. Set deletes before it
+// inserts, so a dead pool stops it at the delete.
+func TestRunSummaryStorage_Closed(t *testing.T) {
+	t.Parallel()
+	summaries := storage.NewRunSummaryStorage(closedDB(t))
+	ctx := context.Background()
+
+	_, err := summaries.Get(ctx, "r1")
+	assert.ErrorContains(t, err, errClosed)
+	assert.ErrorContains(t, summaries.Set(ctx, &model.RunSummary{RunID: "r1", Summary: "built"}), errClosed)
+	assert.ErrorContains(t, summaries.Delete(ctx, "r1"), errClosed)
+}

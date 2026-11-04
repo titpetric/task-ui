@@ -119,7 +119,33 @@ Nothing here runs a benchmark: the repository holds none, and `go test` runs one
 
 ## Where integration tests belong
 
-Integration tests belong in the `storage` package and in the drivers, the packages that wrap a process or a protocol: `git`, `runner`, `sshprobe`, `agent` and the like. They test the real implementation, with no mocks. A package that consumes storage or a driver, such as `api`, `frontend`, `mcp` or `note`, tests its own code with unit tests over fakes.
+Integration tests belong in the `storage` package, and it is the only one that holds them: 28 files over a throwaway database, testing the real implementation with no mocks. A package that consumes storage, such as `api`, `frontend`, `mcp` or `note`, tests its own code with unit tests over fakes.
+
+A driver — `git`, `runner`, `sshprobe`, `agent`, the packages that wrap a process or a protocol — has none of its own. The instance the shots suite builds is what runs them: real runs through the real runner, over real checkouts, read back through the pages that draw them, with the counters of that server in the coverage the suite reports. A driver whose behaviour no page reaches needs a test of its own, and this is the package it goes in.
+
+## The front end
+
+The pages are tested by an instance, not by a handler test: `scripts/demo.sh` builds the server, serves a copy of `testdata/demo` from four instances over one database, sets the instance up through the API, starts real runs, and then reads every page of it twice.
+
+```bash
+scripts/demo.sh                              # the screenshots, the crawl and the comparison
+TASK_UI_SHOT_FILTER='^$' scripts/demo.sh     # the crawl and the comparison alone
+task test:coverage -- shots                  # the same, instrumented, as a suite
+```
+
+Five things are asserted over that instance:
+
+- **Every link answers.** `scripts/crawl.sh` starts at `/` and fetches every `href` that stays on the site, once each, and names what did not answer 200. The page list is the site's own, so a page is crawled the run after it is linked.
+- **Every page it reached is the same page on the front end being replaced.** The ported pages are what the instance serves, at `/`, and the Go pages answer under `app.GoBase`; `scripts/compare-site.sh` hands each crawled path to `scripts/compare.sh`, which fetches `/<path>` and `/legacy/<path>` with one session, normalises both and diffs them; the exit code is the count that differ. [The port](phpfront.md) is what this is for, and the demo data is what makes it worth anything — a page compared on data that reaches none of its branches is compared on nothing. Both front ends are crawled and the page lists are read together, because each crawl is blind to a page only the other links; the prefixed crawl's status is discarded, since a Go page links the root as well as itself and prefixing those paths fabricates a 404.
+- **The same pages again as the viewer**, over the same database. A permission gate one front end has and the other does not is invisible to an admin's sweep, because both draw everything.
+- **The sign in page**, on the instance that has no autologin, because it is the one page a reader with no session is given and nowhere else draws it.
+- **One page of each layout through a browser**, in both palettes. `scripts/compare-shots.sh` shoots `/<path>` and `/legacy/<path>` with `scripts/chromium.sh` and counts the pixels that are not the same colour with `magick compare -metric AE`; the bar is zero. A diff of the markup cannot see a stylesheet rule that matches a class one front end stopped writing, a font that resolves on one path, or an SVG drawn outside its box. The set is the distinct layouts and not the distinct pages, because a shot is a browser. The run page is not in it: its output block is a terminal the browser writes out of the recording it fetches after the load event, so the shot catches the placeholder or the screen depending on the moment, in either front end: two shots of one of them differ as far as a shot of each. A block the browser fills itself is compared as markup and never as pixels.
+
+A page that differs is read a second time with the two fetches the other way round, and only what both readings hold in common is reported. Two kinds of difference are not one: a value that moves while the sweep walks — an mtime a run is rewriting — is in one reading and not the other, and a stamp of 179 seconds ago that the second fetch draws as 181 is `2m ago` against `3m ago` in the same direction on every reload, which the swap puts in the other diff. What survives both is the page.
+
+The server is built with `go build -cover` when `TASK_UI_COVER_DIR` is set, so what a browser and a crawl reach counts towards the coverage `scripts/test-coverage.sh` reports. That is what the suite is for: the pages are read by the thing that serves them.
+
+Each suite's whole output is kept at `cover/logs/<suite>.log`, and a failure prints the last thirty lines of it and that path. The sweep names a page where it reached it, so the one of a hundred that differed is usually further up than the tail.
 
 ## A module's PHP
 
@@ -131,6 +157,8 @@ phpscript run precompile.php   # a script, end to end
 ```
 
 `atkins test` in the module runs the first and `atkins precompile` the second, and `atkins` runs fmt, lint, test and precompile in that order.
+
+Two trees hold fixtures and each roots them at its own `phpscript.yml`: a module's, and `phpfront/app`, [the front end being ported](phpfront.md), whose `atkins` runs the same jobs over its own. `scripts/test-coverage.sh` runs both as the `php` suite, from their own directories.
 
 A fixture is a `.phpt` file: front matter with a `name` and a `description`, the PHP, and the output it must print, each part separated by a `---` line.
 

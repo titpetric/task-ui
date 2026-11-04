@@ -104,29 +104,10 @@ func (s *SidebarStorage) Order(ctx context.Context, hrefs []string, hidden map[s
 // how many it dropped. A view's row is never dropped: the instance owns
 // those, and a module's goes when its directory does.
 func (s *SidebarStorage) Keep(ctx context.Context, hrefs []string) (int, error) {
-	found := map[string]bool{}
-	for _, href := range hrefs {
-		found[href] = true
-	}
-	dropped := 0
-	err := inTx(ctx, s.db, func(c conn) error {
-		rows, err := c.Select[model.Sidebar](ctx, "SELECT * FROM sidebar WHERE kind = ?", model.SidebarModule)
-		if err != nil {
-			return err
-		}
-		for _, row := range rows {
-			if found[row.Href] {
-				continue
-			}
-			if err := c.Exec(ctx, "DELETE FROM sidebar WHERE id = ?", row.ID); err != nil {
-				return err
-			}
-			dropped++
-		}
-		return nil
-	})
-	if err != nil {
+	db := client(s.db)
+	args := append([]any{model.SidebarModule}, anyList(hrefs)...)
+	if err := db.Exec(ctx, "DELETE FROM sidebar WHERE kind = ?"+notIn("AND", "href", len(hrefs)), args...); err != nil {
 		return 0, err
 	}
-	return dropped, nil
+	return int(db.RowsAffected()), nil
 }

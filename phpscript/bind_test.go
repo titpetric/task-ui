@@ -27,16 +27,18 @@ func (f *fakeMigrator) Migrate(_ context.Context, m *phpscript.Module, dir strin
 }
 
 // fakeDispatcher records the comment, the action and the folder
-// Task::dispatch named.
+// Task::dispatch named, and the root the action was resolved inside.
 type fakeDispatcher struct {
 	calls   []string
+	roots   []string
 	folders []string
 	id      string
 	err     error
 }
 
-func (f *fakeDispatcher) Dispatch(_ context.Context, m *phpscript.Module, comment, action, folder string) (string, error) {
-	f.calls = append(f.calls, m.Name()+":"+action+":"+comment)
+func (f *fakeDispatcher) Dispatch(_ context.Context, root, comment, action, folder string) (string, error) {
+	f.calls = append(f.calls, action+":"+comment)
+	f.roots = append(f.roots, root)
 	f.folders = append(f.folders, folder)
 	return f.id, f.err
 }
@@ -184,7 +186,8 @@ func TestBindDispatch(t *testing.T) {
 		phpscript.Options{Dispatcher: dispatcher}, nil)
 	assert.NoError(t, err)
 	assert.Equal(t, "01JRUN", body)
-	assert.Equal(t, []string{"titpetric/test:action/refinement.md:use ULID as primary keys"}, dispatcher.calls)
+	assert.Equal(t, []string{"action/refinement.md:use ULID as primary keys"}, dispatcher.calls)
+	assert.Equal(t, []string{dir}, dispatcher.roots, "a plugin's action file is resolved in the module root")
 	assert.Equal(t, []string{""}, dispatcher.folders, "a call with no folder works at the top of the tree")
 
 	// The folder is the third argument, and a module that keeps a scratch

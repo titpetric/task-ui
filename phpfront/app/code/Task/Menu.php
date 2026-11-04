@@ -41,6 +41,9 @@ class Menu {
 	 * faint text after the label, disabled turns it off with the note; a
 	 * data-*, aria-* or title pair reaches the markup, and any other name is
 	 * refused, so a misspelling fails rather than drawing nothing.
+	 *
+	 * A null value is the attribute on its own, with no `=""` after it: what
+	 * the script reads of `data-run` is whether it is there.
 	 */
 	function item($icon, $label, $attrs = array()) {
 		$this->items[] = $this->build($icon, $label, $attrs, false);
@@ -145,7 +148,14 @@ class Menu {
 		return $groups;
 	}
 
-	/** build is one item, its attribute values escaped. */
+	/**
+	 * build is one item, its attribute values escaped.
+	 *
+	 * A null value is the attribute alone, with no `=""`: `data-run` is read
+	 * by its presence and the Go template writes it bare, so a button that
+	 * carries it is one attribute and not a pair. An empty string is a pair
+	 * with an empty value, which is a different thing and still written.
+	 */
 	function build($icon, $label, $attrs, $danger) {
 		$item = array(
 			"icon" => $icon,
@@ -181,6 +191,12 @@ class Menu {
 				default:
 					if (preg_match(self::ATTRS, $name) !== 1) {
 						throw new \Exception("menu item " . $label . ": attribute " . $name . " is not data-*, aria-* or title");
+					}
+
+					if ($value === null) {
+						$written[] = $name;
+
+						break;
 					}
 
 					$written[] = $name . '="' . htmlspecialchars($value, ENT_QUOTES) . '"';

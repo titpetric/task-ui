@@ -3,6 +3,7 @@
 /.ssh
 /build
 *.cov
+/cover
 /env
 /history
 .data/

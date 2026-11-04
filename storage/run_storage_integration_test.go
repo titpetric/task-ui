@@ -376,3 +376,78 @@ func TestRunStorage_History(t *testing.T) {
 	assert.Equal(t, first.ID, history[0].ID)
 	assert.Equal(t, second.ID, history[1].ID)
 }
+
+// Every method hands back what the driver said.
+func TestRunStorage_Closed(t *testing.T) {
+	t.Parallel()
+	runs := storage.NewRunStorage(closedDB(t))
+	ctx := context.Background()
+	run := &model.Run{Folder: "acme", Job: "build", UserName: "alice", State: model.StateRunning}
+
+	assert.ErrorContains(t, runs.Create(ctx, run), errClosed)
+	_, err := runs.Get(ctx, "r1")
+	assert.ErrorContains(t, err, errClosed)
+	_, err = runs.List(ctx, storage.RunFilter{})
+	assert.ErrorContains(t, err, errClosed)
+	_, err = runs.Last(ctx, storage.RunFilter{Folder: "acme"})
+	assert.ErrorContains(t, err, errClosed)
+	_, err = runs.Active(ctx)
+	assert.ErrorContains(t, err, errClosed)
+	_, err = runs.Latest(ctx, nil)
+	assert.ErrorContains(t, err, errClosed)
+	_, err = runs.History(ctx)
+	assert.ErrorContains(t, err, errClosed)
+	_, err = runs.Recorded(ctx)
+	assert.ErrorContains(t, err, errClosed)
+	_, err = runs.Busy(ctx)
+	assert.ErrorContains(t, err, errClosed)
+	_, err = runs.KillActive(ctx)
+	assert.ErrorContains(t, err, errClosed)
+	_, err = runs.FailQueued(ctx, "lost")
+	assert.ErrorContains(t, err, errClosed)
+	assert.ErrorContains(t, runs.Update(ctx, run), errClosed)
+	assert.ErrorContains(t, runs.Delete(ctx, "r1"), errClosed)
+}
+
+// A run of a job filters by its directory as well, a host job by the
+// prefix of its name, and a list of folders by the list: the clauses
+// runQuery builds that a page asks for.
+func TestRunStorage_Filters(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	runs := storage.NewRunStorage(newDB(t))
+	for _, run := range []*model.Run{
+		{Folder: "acme", Job: "build", UserName: "alice", State: model.StateOK},
+		{Folder: "acme", Job: model.HostPrefix + "uptime", UserName: "alice", State: model.StateOK},
+		{Folder: "other", Job: "build", UserName: "bob", State: model.StateFailed, BatchID: "b1"},
+	} {
+		assert.NoError(t, runs.Create(ctx, run))
+	}
+
+	hosts, err := runs.List(ctx, storage.RunFilter{Job: model.HostAll})
+	assert.NoError(t, err)
+	assert.Len(t, hosts, 1)
+
+	scoped, err := runs.List(ctx, storage.RunFilter{Folders: []string{"acme", "other"}})
+	assert.NoError(t, err)
+	assert.Len(t, scoped, 3)
+
+	batch, err := runs.List(ctx, storage.RunFilter{BatchID: "b1"})
+	assert.NoError(t, err)
+	assert.Len(t, batch, 1)
+
+	byUserID, err := runs.List(ctx, storage.RunFilter{UserID: "nobody"})
+	assert.NoError(t, err)
+	assert.Len(t, byUserID, 0)
+
+	_, err = runs.Last(ctx, storage.RunFilter{Folder: "nowhere"})
+	assert.ErrorIs(t, err, storage.ErrNotFound)
+}
+
+// A run finishes in a final state, and nothing else is a finish.
+func TestRunStorage_FinishRefuses(t *testing.T) {
+	t.Parallel()
+	runs := storage.NewRunStorage(newDB(t))
+	err := runs.Finish(context.Background(), &model.Run{State: model.StateRunning})
+	assert.ErrorContains(t, err, "finishes in a final state")
+}

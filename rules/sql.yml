@@ -1,0 +1,129 @@
+# SQL belongs in one place, per language.
+#
+# Go: the storage package owns every statement. storage/storage.go is the
+# only file that imports github.com/titpetric/pdo, and a question the app
+# has gets a method there rather than a query of its own. The reason is
+# not taste: a query outside storage is a query no storage test covers,
+# and the storage tests are the only integration tests this repository
+# keeps.
+#
+# PHP: a module's statements live in its <Module>Store class, which
+# docs/modules.md states and RefinementStore.php repeats. A page that
+# writes its own SQL is the thing this stops.
+#
+# History:
+#   2026-11-01  Written at zero. maintenance.go held the one Go
+#               violation, a workspace/project join, which moved into
+#               WorkspaceStorage.HomeProjectIDs and
+#               ProjectStorage.FoldersByID.
+rules:
+  - id: task-ui.find.go-pdo-outside-storage
+    languages: [go]
+    severity: ERROR
+    message: >-
+      titpetric/pdo is the storage package's dependency, not the app's.
+      storage/storage.go wraps it as conn and client; add a method there
+      instead of a query here.
+    paths:
+      exclude:
+        - storage/
+    pattern-either:
+      - pattern: import "github.com/titpetric/pdo"
+      - pattern: pdo.New(...)
+
+  - id: task-ui.find.go-sql-outside-storage
+    languages: [go]
+    severity: ERROR
+    message: >-
+      A statement runs through the storage package. Add the method the
+      caller needs to the storage type that owns the table, with its
+      paired test, rather than issuing SQL here.
+    paths:
+      exclude:
+        - storage/
+    pattern-either:
+      - pattern: $DB.ExecContext($CTX, ...)
+      - pattern: $DB.QueryContext($CTX, ...)
+      - pattern: $DB.QueryRowContext($CTX, ...)
+      - pattern: $DB.SelectContext($CTX, ...)
+      - pattern: $DB.GetContext($CTX, ...)
+      - pattern: $DB.NamedExecContext($CTX, ...)
+      - pattern: $DB.PrepareContext($CTX, ...)
+
+  # The AST holds no string's meaning, so the statement in a literal is a
+  # text match. schema/ is the migrations, which are SQL by definition,
+  # and docs/ is prose about it.
+  #
+  # SELECT is matched as a bare keyword rather than up to its FROM, because
+  # the FROM is often in another literal: "SELECT " . COLUMNS . " FROM run"
+  # is how a storage type with a column list actually writes it, and the
+  # narrower form read straight past it. CREATE TABLE is here for the same
+  # reason it is in mobius's rule — a DDL statement is as much SQL as a read.
+  #
+  # Both widenings make the case policy matter, so the match is case
+  # sensitive, as rules/phpfront.yml argues: every statement in the tree
+  # writes its keywords in capitals, and a case insensitive bare SELECT
+  # reads the sentence "select a folder" as SQL.
+  - id: task-ui.find.go-sql-literal-outside-storage
+    languages: [generic]
+    severity: ERROR
+    message: >-
+      A SQL statement in a literal outside the storage package. The
+      storage type that owns the table holds the query.
+    paths:
+      include:
+        - "*.go"
+      exclude:
+        - storage/
+        - schema/
+        # mig writes model/types.mig.go, whose builders hold the keywords
+        # of the statements storage composes. It says DO NOT EDIT.
+        - "*.mig.go"
+    pattern-regex: '"\s*(SELECT|INSERT\s+INTO|UPDATE\s+\w+\s+SET|DELETE\s+FROM|CREATE\s+TABLE)\s'
+
+  - id: task-ui.find.php-sql-outside-store
+    languages: [php]
+    severity: ERROR
+    message: >-
+      A module's statements live in its <Module>Store class, the one file
+      docs/modules.md names. Move the query there and ask the store for
+      what this needs.
+    paths:
+      include:
+        - "phpscripts/modules/**"
+      exclude:
+        - "**/code/*Store.php"
+        - "**/stubs/**"
+        - "**/ext/**"
+        - "**/tests/**"
+    # The receiver is named, not just the method: get() is the database
+    # stub's read and also how a MiniTPL template renders itself.
+    patterns:
+      - pattern-either:
+          - pattern: $this->db->$METHOD(...)
+          - pattern: $db->$METHOD(...)
+      - metavariable-regex:
+          metavariable: $METHOD
+          regex: ^(query|get|get_all|get_one|insert|replace|update|exec|prepare|begin|commit|rollback)$
+
+  # The same convention as a text match, for the statement built in a
+  # page and handed to something this does not name.
+  #
+  # The match is case sensitive, for the reason rules/phpfront.yml gives:
+  # a case insensitive one reads the menu label "Delete from the tree" as
+  # SQL, which is a sentence no rule may forbid.
+  - id: task-ui.find.php-sql-literal-outside-store
+    languages: [generic]
+    severity: ERROR
+    message: >-
+      A SQL statement in a literal outside the module's store class.
+    paths:
+      include:
+        - "phpscripts/modules/**/*.php"
+      exclude:
+        - "**/code/*Store.php"
+        - "**/stubs/**"
+        - "**/ext/**"
+        - "**/tests/**"
+        - "**/schema/**"
+    pattern-regex: '[''"]\s*(SELECT|INSERT\s+INTO|UPDATE\s+\w+\s+SET|DELETE\s+FROM|CREATE\s+TABLE)\s'

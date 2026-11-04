@@ -19,10 +19,15 @@
 	<link rel="stylesheet" href="<?php echo htmlspecialchars($_v['data']['assets'], ENT_QUOTES);?>
 /theme/task-ui.css?v=<?php echo htmlspecialchars($_v['data']['assetVersion'], ENT_QUOTES);?>
 ">
-</head>
+<?php if(!empty($_v['data']['styles']))foreach($_v['data']['styles'] as $_v['style']){?>	<link rel="stylesheet" href="<?php echo htmlspecialchars($_v['style'], ENT_QUOTES);?>
+">
+<?php }?></head>
 
-<body data-me="<?php echo htmlspecialchars($_v['chrome']['user']['name'], ENT_QUOTES);?>
-" data-user-menu="<?php if($_v['chrome']['can']['user/edit']){?>
+<body data-roles='<?php echo htmlspecialchars($_v['chrome']['roles'], ENT_QUOTES);?>
+' data-workspaces='<?php echo htmlspecialchars($_v['chrome']['workspaces'], ENT_QUOTES);?>
+'<?php if($_v['chrome']['user']){?>
+ data-me="<?php echo htmlspecialchars($_v['chrome']['user']['name'], ENT_QUOTES);?>
+"<?php }?> data-user-menu="<?php if($_v['chrome']['can']['user/edit']){?>
 edit<?php }elseif($_v['chrome']['can']['user/view']){?>
 view<?php }?>">
 
@@ -76,13 +81,38 @@ view<?php }?>">
 <?php $_v['data'] = $_v['chrome'];?>
 
 
+<?php if($_v['data']['can']['prompt/edit']){?>
+	<header class="top" data-prompt-folder="<?php echo htmlspecialchars($_v['data']['prompt']['folder'], ENT_QUOTES);?>
+" data-prompt-dir="<?php echo htmlspecialchars($_v['data']['prompt']['dir'], ENT_QUOTES);?>
+" data-prompt-run="<?php echo htmlspecialchars($_v['data']['prompt']['run'], ENT_QUOTES);?>
+" data-prompt-label="<?php echo htmlspecialchars($_v['data']['prompt']['label'], ENT_QUOTES);?>
+" data-prompt-href="<?php echo htmlspecialchars($_v['data']['prompt']['href'], ENT_QUOTES);?>
+">
+		<button type="button" class="btn-icon menu-toggle" id="menu-toggle" aria-label="Menu" aria-controls="side" aria-expanded="false"><svg class="ic"><use href="#i-menu"/></svg></button>
+		
+		<h1><a href="<?php echo htmlspecialchars($_v['data']['base'], ENT_QUOTES);?>
+/"><span>TaskUI</span></a><button type="button" class="logo-toggle" id="header-toggle" aria-label="Prompt" aria-controls="header-answer" aria-expanded="false"><svg class="logo" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="3"/><path class="prompt" d="M8 10l6 6-6 6"/><path class="cursor" d="M16 23h8"/></svg>
+</button></h1>
+		<input type="text" class="header-prompt" id="header-prompt" aria-label="Ask Claude" autocomplete="off" spellcheck="false">
+<?php if($_v['data']['runAs']['users']){?>
+		
+		<span class="header-runas"><select class="header-prompt-user" id="header-prompt-user" aria-label="Runs as"><?php $_v['data_options'] = $_v['data']['runAs'];if(!empty($_v['data_options']['users']))foreach($_v['data_options']['users'] as $_v['option']){?>			<option value="<?php echo htmlspecialchars($_v['option']['name'], ENT_QUOTES);?>
+"<?php if($_v['option']['name'] == $_v['data_options']['selected']){?>
+ selected<?php }?> data-keys="<?php echo htmlspecialchars($_v['option']['keys'], ENT_QUOTES);?>
+"><?php echo htmlspecialchars($_v['option']['name'], ENT_QUOTES); if(!$_v['data_options']['short']){?>
+ (<?php echo htmlspecialchars($_v['option']['role'], ENT_QUOTES);?>
+)<?php }?> · <?php echo htmlspecialchars($_v['option']['said'], ENT_QUOTES);?>
+</option>
+<?php }?>		</select></span>
+<?php }?>		<div class="header-answer" id="header-answer" hidden></div>
+<?php }else{?>
 	<header class="top">
 		<button type="button" class="btn-icon menu-toggle" id="menu-toggle" aria-label="Menu" aria-controls="side" aria-expanded="false"><svg class="ic"><use href="#i-menu"/></svg></button>
 		<h1><a href="<?php echo htmlspecialchars($_v['data']['base'], ENT_QUOTES);?>
 /"><span>TaskUI</span><svg class="logo" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="3"/><path class="prompt" d="M8 10l6 6-6 6"/><path class="cursor" d="M16 23h8"/></svg>
 </a></h1>
 		<span class="spacer"></span>
-		<details class="user" id="user-menu">
+<?php }?>		<details class="user" id="user-menu">
 			<summary aria-label="<?php echo htmlspecialchars($_v['data']['user']['name'], ENT_QUOTES);?>
 , <?php echo htmlspecialchars($_v['data']['user']['role'], ENT_QUOTES);?>
 " title="<?php echo htmlspecialchars($_v['data']['user']['name'], ENT_QUOTES);?>
@@ -103,7 +133,13 @@ view<?php }?>">
 				<a href="<?php echo htmlspecialchars($_v['data']['base'], ENT_QUOTES);?>
 /settings"><svg class="ic"><use href="#i-settings"/></svg>Settings</a>
 				<?php }?>
+				<?php if($_v['data']['loginRequired']){?>
+
 				<form method="post" action="/logout"><button type="submit"><svg class="ic"><use href="#i-logout"/></svg>Logout</button></form>
+				<?php }else{?>
+
+				<div class="who"><span>auto login, no logout</span></div>
+				<?php }?>
 			</div>
 		</details>
 	</header>
@@ -116,41 +152,777 @@ view<?php }?>">
 
 			<nav class="menu">
 <?php if(!empty($_v['data']))foreach($_v['data'] as $_v['item']){?>
-				<a href="<?php echo htmlspecialchars($_v['base'], ENT_QUOTES); echo htmlspecialchars($_v['item']['href'], ENT_QUOTES);?>
+				<a href="<?php echo htmlspecialchars($_v['item']['href'], ENT_QUOTES);?>
 " class="<?php if($_v['item']['active']){?>
 active<?php }?>"><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['item']['icon'], ENT_QUOTES);?>
 "/></svg><span><?php echo htmlspecialchars($_v['item']['title'], ENT_QUOTES);?>
 </span><?php if($_v['item']['pulse']){?>
-<i class="dot" data-any-running></i><?php }?></a>
+<i class="dot<?php if($_v['chrome']['running']){?>
+ running<?php }?>" data-any-running></i><?php }?></a>
+<?php if($_v['item']['flows'] && $_v['chrome']['workflows']){ $_v['data_workflows'] = $_v['chrome']['workflows'];?>
+				<div class="flows">
+<?php if(!empty($_v['data_workflows']))foreach($_v['data_workflows'] as $_v['flow']){ if(!$_v['flow']['hidden']){?>
+					<div class="flow<?php if($_v['flow']['active']){?>
+ active<?php }?>">
+						<i class="shebang<?php if($_v['flow']['running']){?>
+ running<?php }?>" aria-hidden="true">#!</i>
+						<a class="name" href="<?php echo htmlspecialchars($_v['base'], ENT_QUOTES);?>
+/workflows/<?php echo htmlspecialchars($_v['flow']['id'], ENT_QUOTES);?>
+" title="<?php echo htmlspecialchars($_v['flow']['title'], ENT_QUOTES);?>
+"><?php echo htmlspecialchars($_v['flow']['name'], ENT_QUOTES);?>
+</a>
+<?php if($_v['flow']['running']){?>
+						<a class="play" href="<?php echo htmlspecialchars($_v['base'], ENT_QUOTES);?>
+/workflows/<?php echo htmlspecialchars($_v['flow']['id'], ENT_QUOTES);?>
+" title="<?php echo htmlspecialchars($_v['flow']['name'], ENT_QUOTES);?>
+, running" aria-label="Watch <?php echo htmlspecialchars($_v['flow']['name'], ENT_QUOTES);?>
+"><svg class="ic"><use href="#i-eye"/></svg></a>
+<?php }elseif($_v['flow']['canRun']){?>
+						<button type="button" class="play" data-workflow-run="<?php echo htmlspecialchars($_v['flow']['id'], ENT_QUOTES);?>
+"<?php if($_v['flow']['prompted']){?>
+ data-workflow-prompt="<?php echo htmlspecialchars($_v['flow']['name'], ENT_QUOTES);?>
+"<?php }?> title="Run <?php echo htmlspecialchars($_v['flow']['name'], ENT_QUOTES);?>
+" aria-label="Run <?php echo htmlspecialchars($_v['flow']['name'], ENT_QUOTES);?>
+"><svg class="ic"><use href="#i-play"/></svg></button>
 <?php }?>
+					</div>
+<?php } }?>
+				</div>
+<?php } }?>
 			</nav>
 
 <?php $_v['data'] = $_v['chrome']['folders'];?>
 
 
 			<nav class="folders">
-<?php if(!empty($_v['data']))foreach($_v['data'] as $_v['group']){?>
-				<div class="group<?php if($_v['group']['workspace']){?>
- workspace<?php }?>">
-					<a class="name" href="<?php echo htmlspecialchars($_v['base'], ENT_QUOTES); echo htmlspecialchars($_v['group']['href'], ENT_QUOTES);?>
-"><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['group']['icon'], ENT_QUOTES);?>
-"/></svg><span><?php echo htmlspecialchars($_v['group']['title'], ENT_QUOTES);?>
-</span><?php if($_v['group']['dirty']){?>
-<i class="dirty" title="<?php echo htmlspecialchars($_v['group']['dirty'], ENT_QUOTES);?>
- changed files"><?php echo htmlspecialchars($_v['group']['dirty'], ENT_QUOTES);?>
-</i><?php }?></a>
-<?php if(!empty($_v['group']['jobs']))foreach($_v['group']['jobs'] as $_v['job']){?>
-					<a class="job" href="<?php echo htmlspecialchars($_v['base'], ENT_QUOTES); echo htmlspecialchars($_v['job']['href'], ENT_QUOTES);?>
-"><i class="shebang" aria-hidden="true">#!</i><span><?php echo htmlspecialchars($_v['job']['name'], ENT_QUOTES);?>
-</span></a>
+<?php if(!empty($_v['data']))foreach($_v['data'] as $_v['group']){ if($_v['group']['workspace']){ $_v['data_workspace'] = $_v['group'];if($_v['data_workspace']['top']){?>
+
+<details class="workspace<?php if($_v['data_workspace']['active']){?>
+ active<?php }?>" data-project="<?php echo htmlspecialchars($_v['data_workspace']['id'], ENT_QUOTES);?>
+" open>
+	<summary<?php if($_v['data_workspace']['here']){?>
+ class="active"<?php }?> title="<?php echo htmlspecialchars($_v['data_workspace']['title'], ENT_QUOTES);?>
+">
+		<svg class="ic chev"><use href="#i-chev"/></svg>
+		<a class="section<?php if($_v['data_workspace']['here']){?>
+ active<?php }?>" href="<?php echo htmlspecialchars($_v['base'], ENT_QUOTES); echo htmlspecialchars($_v['data_workspace']['href'], ENT_QUOTES);?>
+" data-folder="<?php echo htmlspecialchars($_v['data_workspace']['id'], ENT_QUOTES);?>
+">
+			<span><?php echo htmlspecialchars($_v['data_workspace']['name'], ENT_QUOTES);?>
+</span>
+<?php if($_v['data_workspace']['bad']){?>
+<small class="bad" title="<?php echo htmlspecialchars($_v['data_workspace']['badTitle'], ENT_QUOTES);?>
+"><?php echo htmlspecialchars($_v['data_workspace']['badge'], ENT_QUOTES);?>
+</small><?php }else{?>
+<small><?php echo htmlspecialchars($_v['data_workspace']['count'], ENT_QUOTES);?>
+</small><?php }?>
+		</a>
+	</summary>
+<?php if($_v['data_workspace']['jobs']){?>
+
+	<div class="jobs top">
+<?php $_v['data_jobs'] = $_v['data_workspace'];if(!empty($_v['data_jobs']['jobs']))foreach($_v['data_jobs']['jobs'] as $_v['job']){?>
+<div class="job<?php if($_v['job']['pinned']){?>
+ pinned<?php }?><?php if($_v['job']['active']){?>
+ active<?php }?>" data-job-key="<?php echo htmlspecialchars($_v['job']['key'], ENT_QUOTES);?>
+">
+	<i class="shebang<?php if($_v['job']['running']){?>
+ running<?php }?>" aria-hidden="true">#!</i>
+	<a href="<?php echo htmlspecialchars($_v['base'], ENT_QUOTES); echo htmlspecialchars($_v['job']['href'], ENT_QUOTES);?>
+"<?php if($_v['job']['hint']){?>
+ title="<?php echo htmlspecialchars($_v['job']['hint'], ENT_QUOTES);?>
+"<?php }?>><?php if($_v['job']['kind']){?>
+<i><?php echo htmlspecialchars($_v['job']['kind'], ENT_QUOTES);?>
+:</i><?php }?><?php echo htmlspecialchars($_v['job']['label'], ENT_QUOTES);?>
+</a>
+<?php if($_v['job']['running']){?>
+
+	<button type="button" class="play" data-attach="<?php echo htmlspecialchars($_v['job']['attach'], ENT_QUOTES);?>
+" title="Attach to <?php echo htmlspecialchars($_v['job']['name'], ENT_QUOTES);?>
+, running" aria-label="Attach to <?php echo htmlspecialchars($_v['job']['name'], ENT_QUOTES);?>
+"><svg class="ic"><use href="#i-eye"/></svg></button>
+<?php }elseif($_v['job']['can']){?>
+
+	<button type="button" class="play" data-run data-folder="<?php echo htmlspecialchars($_v['job']['folder'], ENT_QUOTES);?>
+"<?php if($_v['job']['dir']){?>
+ data-dir="<?php echo htmlspecialchars($_v['job']['dir'], ENT_QUOTES);?>
+"<?php }?> data-job="<?php echo htmlspecialchars($_v['job']['job'], ENT_QUOTES);?>
+"<?php if($_v['job']['args']){?>
+ data-run-args="<?php echo htmlspecialchars($_v['job']['args'], ENT_QUOTES);?>
+"<?php }?> data-title="<?php echo htmlspecialchars($_v['job']['folder'], ENT_QUOTES);?>
+ / <?php echo htmlspecialchars($_v['job']['said'], ENT_QUOTES);?>
+" title="Run <?php echo htmlspecialchars($_v['job']['said'], ENT_QUOTES);?>
+" aria-label="Run <?php echo htmlspecialchars($_v['job']['said'], ENT_QUOTES);?>
+"><svg class="ic"><use href="#i-play"/></svg></button>
 <?php }?>
-				</div>
-<?php }else{ if($_v['chrome']['can']['project/edit']){?>
-				<div class="empty">No folders yet. <a href="<?php echo htmlspecialchars($_v['base'], ENT_QUOTES);?>
-/settings/projects/new">Add a git repository</a>, or put a folder with jobs under the root.</div>
+</div>
 <?php }else{?>
-				<div class="empty">No folders yet. Add a git repository in Settings, or put a folder with jobs under the root.</div>
-<?php }?><?php }?>
+
+<div class="empty"><?php echo htmlspecialchars($_v['data_jobs']['empty'], ENT_QUOTES);?>
+</div>
+<?php }?>
+
+	</div>
+<?php } if(!empty($_v['data_workspace']['projects']))foreach($_v['data_workspace']['projects'] as $_v['project']){?><?php $_v['data_project'] = $_v['project'];if($_v['data_project']['top']){?>
+
+				<details class="project<?php if($_v['data_project']['active']){?>
+ active<?php }?>" data-project="<?php echo htmlspecialchars($_v['data_project']['id'], ENT_QUOTES);?>
+" open>
+					<summary<?php if($_v['data_project']['here']){?>
+ class="active"<?php }?> title="<?php echo htmlspecialchars($_v['data_project']['title'], ENT_QUOTES);?>
+">
+						<a class="section<?php if($_v['data_project']['here']){?>
+ active<?php }?>" href="<?php echo htmlspecialchars($_v['base'], ENT_QUOTES); echo htmlspecialchars($_v['data_project']['href'], ENT_QUOTES);?>
+" data-folder="<?php echo htmlspecialchars($_v['data_project']['id'], ENT_QUOTES);?>
+">
+<?php $_v['data_icon'] = $_v['data_project'];?>
+<svg class="ic<?php if($_v['data_icon']['dirty']){?>
+ dirty<?php }?>"><?php if($_v['data_icon']['dirty']){?>
+<title><?php echo htmlspecialchars($_v['data_icon']['changed'], ENT_QUOTES);?>
+</title><?php }?><use href="#i-<?php echo htmlspecialchars($_v['data_icon']['icon'], ENT_QUOTES);?>
+"/></svg><span><?php echo htmlspecialchars($_v['data_project']['name'], ENT_QUOTES);?>
+</span>
+<?php if($_v['data_project']['bad']){?>
+<small class="bad" title="<?php echo htmlspecialchars($_v['data_project']['badTitle'], ENT_QUOTES);?>
+"><?php echo htmlspecialchars($_v['data_project']['badge'], ENT_QUOTES);?>
+</small><?php }elseif($_v['data_project']['counted']){?>
+<small><?php echo htmlspecialchars($_v['data_project']['count'], ENT_QUOTES);?>
+</small><?php }?>
+						</a>
+						<svg class="ic chev"><use href="#i-chev"/></svg>
+					</summary>
+<?php if($_v['data_project']['jobs']){?>
+
+					<div class="jobs top">
+<?php $_v['data_jobs'] = $_v['data_project'];if(!empty($_v['data_jobs']['jobs']))foreach($_v['data_jobs']['jobs'] as $_v['job']){?>
+<div class="job<?php if($_v['job']['pinned']){?>
+ pinned<?php }?><?php if($_v['job']['active']){?>
+ active<?php }?>" data-job-key="<?php echo htmlspecialchars($_v['job']['key'], ENT_QUOTES);?>
+">
+	<i class="shebang<?php if($_v['job']['running']){?>
+ running<?php }?>" aria-hidden="true">#!</i>
+	<a href="<?php echo htmlspecialchars($_v['base'], ENT_QUOTES); echo htmlspecialchars($_v['job']['href'], ENT_QUOTES);?>
+"<?php if($_v['job']['hint']){?>
+ title="<?php echo htmlspecialchars($_v['job']['hint'], ENT_QUOTES);?>
+"<?php }?>><?php if($_v['job']['kind']){?>
+<i><?php echo htmlspecialchars($_v['job']['kind'], ENT_QUOTES);?>
+:</i><?php }?><?php echo htmlspecialchars($_v['job']['label'], ENT_QUOTES);?>
+</a>
+<?php if($_v['job']['running']){?>
+
+	<button type="button" class="play" data-attach="<?php echo htmlspecialchars($_v['job']['attach'], ENT_QUOTES);?>
+" title="Attach to <?php echo htmlspecialchars($_v['job']['name'], ENT_QUOTES);?>
+, running" aria-label="Attach to <?php echo htmlspecialchars($_v['job']['name'], ENT_QUOTES);?>
+"><svg class="ic"><use href="#i-eye"/></svg></button>
+<?php }elseif($_v['job']['can']){?>
+
+	<button type="button" class="play" data-run data-folder="<?php echo htmlspecialchars($_v['job']['folder'], ENT_QUOTES);?>
+"<?php if($_v['job']['dir']){?>
+ data-dir="<?php echo htmlspecialchars($_v['job']['dir'], ENT_QUOTES);?>
+"<?php }?> data-job="<?php echo htmlspecialchars($_v['job']['job'], ENT_QUOTES);?>
+"<?php if($_v['job']['args']){?>
+ data-run-args="<?php echo htmlspecialchars($_v['job']['args'], ENT_QUOTES);?>
+"<?php }?> data-title="<?php echo htmlspecialchars($_v['job']['folder'], ENT_QUOTES);?>
+ / <?php echo htmlspecialchars($_v['job']['said'], ENT_QUOTES);?>
+" title="Run <?php echo htmlspecialchars($_v['job']['said'], ENT_QUOTES);?>
+" aria-label="Run <?php echo htmlspecialchars($_v['job']['said'], ENT_QUOTES);?>
+"><svg class="ic"><use href="#i-play"/></svg></button>
+<?php }?>
+</div>
+<?php }else{?>
+
+<div class="empty"><?php echo htmlspecialchars($_v['data_jobs']['empty'], ENT_QUOTES);?>
+</div>
+<?php }?>
+
+					</div>
+<?php } if(!empty($_v['data_project']['nested']))foreach($_v['data_project']['nested'] as $_v['folder']){?><?php $_v['data_folder'] = $_v['folder'];?>
+
+<details class="folder<?php if($_v['data_folder']['active']){?>
+ active<?php }?>" data-folder="<?php echo htmlspecialchars($_v['data_folder']['id'], ENT_QUOTES);?>
+"<?php if($_v['data_folder']['open']){?>
+ open<?php }?>>
+	<summary title="<?php echo htmlspecialchars($_v['data_folder']['title'], ENT_QUOTES);?>
+">
+		<a href="<?php echo htmlspecialchars($_v['base'], ENT_QUOTES); echo htmlspecialchars($_v['data_folder']['href'], ENT_QUOTES);?>
+"><?php $_v['data_icon'] = $_v['data_folder'];?>
+<svg class="ic<?php if($_v['data_icon']['dirty']){?>
+ dirty<?php }?>"><?php if($_v['data_icon']['dirty']){?>
+<title><?php echo htmlspecialchars($_v['data_icon']['changed'], ENT_QUOTES);?>
+</title><?php }?><use href="#i-<?php echo htmlspecialchars($_v['data_icon']['icon'], ENT_QUOTES);?>
+"/></svg><span><?php if($_v['data_folder']['dir']){?>
+<i><?php echo htmlspecialchars($_v['data_folder']['dir'], ENT_QUOTES);?>
+/</i><?php }?><b><?php echo htmlspecialchars($_v['data_folder']['name'], ENT_QUOTES);?>
+</b></span></a>
+		<i class="dot"></i>
+<?php if($_v['data_folder']['bad']){?>
+<small class="bad" title="<?php echo htmlspecialchars($_v['data_folder']['badTitle'], ENT_QUOTES);?>
+"><?php echo htmlspecialchars($_v['data_folder']['badge'], ENT_QUOTES);?>
+</small><?php }else{?>
+<small><?php echo htmlspecialchars($_v['data_folder']['count'], ENT_QUOTES);?>
+</small><?php }?>
+		<svg class="ic chev"><use href="#i-chev"/></svg>
+	</summary>
+	<div class="jobs">
+<?php $_v['data_jobs'] = $_v['data_folder'];if(!empty($_v['data_jobs']['jobs']))foreach($_v['data_jobs']['jobs'] as $_v['job']){?>
+<div class="job<?php if($_v['job']['pinned']){?>
+ pinned<?php }?><?php if($_v['job']['active']){?>
+ active<?php }?>" data-job-key="<?php echo htmlspecialchars($_v['job']['key'], ENT_QUOTES);?>
+">
+	<i class="shebang<?php if($_v['job']['running']){?>
+ running<?php }?>" aria-hidden="true">#!</i>
+	<a href="<?php echo htmlspecialchars($_v['base'], ENT_QUOTES); echo htmlspecialchars($_v['job']['href'], ENT_QUOTES);?>
+"<?php if($_v['job']['hint']){?>
+ title="<?php echo htmlspecialchars($_v['job']['hint'], ENT_QUOTES);?>
+"<?php }?>><?php if($_v['job']['kind']){?>
+<i><?php echo htmlspecialchars($_v['job']['kind'], ENT_QUOTES);?>
+:</i><?php }?><?php echo htmlspecialchars($_v['job']['label'], ENT_QUOTES);?>
+</a>
+<?php if($_v['job']['running']){?>
+
+	<button type="button" class="play" data-attach="<?php echo htmlspecialchars($_v['job']['attach'], ENT_QUOTES);?>
+" title="Attach to <?php echo htmlspecialchars($_v['job']['name'], ENT_QUOTES);?>
+, running" aria-label="Attach to <?php echo htmlspecialchars($_v['job']['name'], ENT_QUOTES);?>
+"><svg class="ic"><use href="#i-eye"/></svg></button>
+<?php }elseif($_v['job']['can']){?>
+
+	<button type="button" class="play" data-run data-folder="<?php echo htmlspecialchars($_v['job']['folder'], ENT_QUOTES);?>
+"<?php if($_v['job']['dir']){?>
+ data-dir="<?php echo htmlspecialchars($_v['job']['dir'], ENT_QUOTES);?>
+"<?php }?> data-job="<?php echo htmlspecialchars($_v['job']['job'], ENT_QUOTES);?>
+"<?php if($_v['job']['args']){?>
+ data-run-args="<?php echo htmlspecialchars($_v['job']['args'], ENT_QUOTES);?>
+"<?php }?> data-title="<?php echo htmlspecialchars($_v['job']['folder'], ENT_QUOTES);?>
+ / <?php echo htmlspecialchars($_v['job']['said'], ENT_QUOTES);?>
+" title="Run <?php echo htmlspecialchars($_v['job']['said'], ENT_QUOTES);?>
+" aria-label="Run <?php echo htmlspecialchars($_v['job']['said'], ENT_QUOTES);?>
+"><svg class="ic"><use href="#i-play"/></svg></button>
+<?php }?>
+</div>
+<?php }else{?>
+
+<div class="empty"><?php echo htmlspecialchars($_v['data_jobs']['empty'], ENT_QUOTES);?>
+</div>
+<?php }?>
+
+	</div>
+</details>
+<?php }?>
+				</details>
+<?php }else{if(!empty($_v['data_project']['nested']))foreach($_v['data_project']['nested'] as $_v['folder']){?><?php $_v['data_folder'] = $_v['folder'];?>
+
+<details class="folder<?php if($_v['data_folder']['active']){?>
+ active<?php }?>" data-folder="<?php echo htmlspecialchars($_v['data_folder']['id'], ENT_QUOTES);?>
+"<?php if($_v['data_folder']['open']){?>
+ open<?php }?>>
+	<summary title="<?php echo htmlspecialchars($_v['data_folder']['title'], ENT_QUOTES);?>
+">
+		<a href="<?php echo htmlspecialchars($_v['base'], ENT_QUOTES); echo htmlspecialchars($_v['data_folder']['href'], ENT_QUOTES);?>
+"><?php $_v['data_icon'] = $_v['data_folder'];?>
+<svg class="ic<?php if($_v['data_icon']['dirty']){?>
+ dirty<?php }?>"><?php if($_v['data_icon']['dirty']){?>
+<title><?php echo htmlspecialchars($_v['data_icon']['changed'], ENT_QUOTES);?>
+</title><?php }?><use href="#i-<?php echo htmlspecialchars($_v['data_icon']['icon'], ENT_QUOTES);?>
+"/></svg><span><?php if($_v['data_folder']['dir']){?>
+<i><?php echo htmlspecialchars($_v['data_folder']['dir'], ENT_QUOTES);?>
+/</i><?php }?><b><?php echo htmlspecialchars($_v['data_folder']['name'], ENT_QUOTES);?>
+</b></span></a>
+		<i class="dot"></i>
+<?php if($_v['data_folder']['bad']){?>
+<small class="bad" title="<?php echo htmlspecialchars($_v['data_folder']['badTitle'], ENT_QUOTES);?>
+"><?php echo htmlspecialchars($_v['data_folder']['badge'], ENT_QUOTES);?>
+</small><?php }else{?>
+<small><?php echo htmlspecialchars($_v['data_folder']['count'], ENT_QUOTES);?>
+</small><?php }?>
+		<svg class="ic chev"><use href="#i-chev"/></svg>
+	</summary>
+	<div class="jobs">
+<?php $_v['data_jobs'] = $_v['data_folder'];if(!empty($_v['data_jobs']['jobs']))foreach($_v['data_jobs']['jobs'] as $_v['job']){?>
+<div class="job<?php if($_v['job']['pinned']){?>
+ pinned<?php }?><?php if($_v['job']['active']){?>
+ active<?php }?>" data-job-key="<?php echo htmlspecialchars($_v['job']['key'], ENT_QUOTES);?>
+">
+	<i class="shebang<?php if($_v['job']['running']){?>
+ running<?php }?>" aria-hidden="true">#!</i>
+	<a href="<?php echo htmlspecialchars($_v['base'], ENT_QUOTES); echo htmlspecialchars($_v['job']['href'], ENT_QUOTES);?>
+"<?php if($_v['job']['hint']){?>
+ title="<?php echo htmlspecialchars($_v['job']['hint'], ENT_QUOTES);?>
+"<?php }?>><?php if($_v['job']['kind']){?>
+<i><?php echo htmlspecialchars($_v['job']['kind'], ENT_QUOTES);?>
+:</i><?php }?><?php echo htmlspecialchars($_v['job']['label'], ENT_QUOTES);?>
+</a>
+<?php if($_v['job']['running']){?>
+
+	<button type="button" class="play" data-attach="<?php echo htmlspecialchars($_v['job']['attach'], ENT_QUOTES);?>
+" title="Attach to <?php echo htmlspecialchars($_v['job']['name'], ENT_QUOTES);?>
+, running" aria-label="Attach to <?php echo htmlspecialchars($_v['job']['name'], ENT_QUOTES);?>
+"><svg class="ic"><use href="#i-eye"/></svg></button>
+<?php }elseif($_v['job']['can']){?>
+
+	<button type="button" class="play" data-run data-folder="<?php echo htmlspecialchars($_v['job']['folder'], ENT_QUOTES);?>
+"<?php if($_v['job']['dir']){?>
+ data-dir="<?php echo htmlspecialchars($_v['job']['dir'], ENT_QUOTES);?>
+"<?php }?> data-job="<?php echo htmlspecialchars($_v['job']['job'], ENT_QUOTES);?>
+"<?php if($_v['job']['args']){?>
+ data-run-args="<?php echo htmlspecialchars($_v['job']['args'], ENT_QUOTES);?>
+"<?php }?> data-title="<?php echo htmlspecialchars($_v['job']['folder'], ENT_QUOTES);?>
+ / <?php echo htmlspecialchars($_v['job']['said'], ENT_QUOTES);?>
+" title="Run <?php echo htmlspecialchars($_v['job']['said'], ENT_QUOTES);?>
+" aria-label="Run <?php echo htmlspecialchars($_v['job']['said'], ENT_QUOTES);?>
+"><svg class="ic"><use href="#i-play"/></svg></button>
+<?php }?>
+</div>
+<?php }else{?>
+
+<div class="empty"><?php echo htmlspecialchars($_v['data_jobs']['empty'], ENT_QUOTES);?>
+</div>
+<?php }?>
+
+	</div>
+</details>
+<?php } } }?>
+</details>
+<?php }else{if(!empty($_v['data_workspace']['projects']))foreach($_v['data_workspace']['projects'] as $_v['project']){?><?php $_v['data_project'] = $_v['project'];if($_v['data_project']['top']){?>
+
+				<details class="project<?php if($_v['data_project']['active']){?>
+ active<?php }?>" data-project="<?php echo htmlspecialchars($_v['data_project']['id'], ENT_QUOTES);?>
+" open>
+					<summary<?php if($_v['data_project']['here']){?>
+ class="active"<?php }?> title="<?php echo htmlspecialchars($_v['data_project']['title'], ENT_QUOTES);?>
+">
+						<a class="section<?php if($_v['data_project']['here']){?>
+ active<?php }?>" href="<?php echo htmlspecialchars($_v['base'], ENT_QUOTES); echo htmlspecialchars($_v['data_project']['href'], ENT_QUOTES);?>
+" data-folder="<?php echo htmlspecialchars($_v['data_project']['id'], ENT_QUOTES);?>
+">
+<?php $_v['data_icon'] = $_v['data_project'];?>
+<svg class="ic<?php if($_v['data_icon']['dirty']){?>
+ dirty<?php }?>"><?php if($_v['data_icon']['dirty']){?>
+<title><?php echo htmlspecialchars($_v['data_icon']['changed'], ENT_QUOTES);?>
+</title><?php }?><use href="#i-<?php echo htmlspecialchars($_v['data_icon']['icon'], ENT_QUOTES);?>
+"/></svg><span><?php echo htmlspecialchars($_v['data_project']['name'], ENT_QUOTES);?>
+</span>
+<?php if($_v['data_project']['bad']){?>
+<small class="bad" title="<?php echo htmlspecialchars($_v['data_project']['badTitle'], ENT_QUOTES);?>
+"><?php echo htmlspecialchars($_v['data_project']['badge'], ENT_QUOTES);?>
+</small><?php }elseif($_v['data_project']['counted']){?>
+<small><?php echo htmlspecialchars($_v['data_project']['count'], ENT_QUOTES);?>
+</small><?php }?>
+						</a>
+						<svg class="ic chev"><use href="#i-chev"/></svg>
+					</summary>
+<?php if($_v['data_project']['jobs']){?>
+
+					<div class="jobs top">
+<?php $_v['data_jobs'] = $_v['data_project'];if(!empty($_v['data_jobs']['jobs']))foreach($_v['data_jobs']['jobs'] as $_v['job']){?>
+<div class="job<?php if($_v['job']['pinned']){?>
+ pinned<?php }?><?php if($_v['job']['active']){?>
+ active<?php }?>" data-job-key="<?php echo htmlspecialchars($_v['job']['key'], ENT_QUOTES);?>
+">
+	<i class="shebang<?php if($_v['job']['running']){?>
+ running<?php }?>" aria-hidden="true">#!</i>
+	<a href="<?php echo htmlspecialchars($_v['base'], ENT_QUOTES); echo htmlspecialchars($_v['job']['href'], ENT_QUOTES);?>
+"<?php if($_v['job']['hint']){?>
+ title="<?php echo htmlspecialchars($_v['job']['hint'], ENT_QUOTES);?>
+"<?php }?>><?php if($_v['job']['kind']){?>
+<i><?php echo htmlspecialchars($_v['job']['kind'], ENT_QUOTES);?>
+:</i><?php }?><?php echo htmlspecialchars($_v['job']['label'], ENT_QUOTES);?>
+</a>
+<?php if($_v['job']['running']){?>
+
+	<button type="button" class="play" data-attach="<?php echo htmlspecialchars($_v['job']['attach'], ENT_QUOTES);?>
+" title="Attach to <?php echo htmlspecialchars($_v['job']['name'], ENT_QUOTES);?>
+, running" aria-label="Attach to <?php echo htmlspecialchars($_v['job']['name'], ENT_QUOTES);?>
+"><svg class="ic"><use href="#i-eye"/></svg></button>
+<?php }elseif($_v['job']['can']){?>
+
+	<button type="button" class="play" data-run data-folder="<?php echo htmlspecialchars($_v['job']['folder'], ENT_QUOTES);?>
+"<?php if($_v['job']['dir']){?>
+ data-dir="<?php echo htmlspecialchars($_v['job']['dir'], ENT_QUOTES);?>
+"<?php }?> data-job="<?php echo htmlspecialchars($_v['job']['job'], ENT_QUOTES);?>
+"<?php if($_v['job']['args']){?>
+ data-run-args="<?php echo htmlspecialchars($_v['job']['args'], ENT_QUOTES);?>
+"<?php }?> data-title="<?php echo htmlspecialchars($_v['job']['folder'], ENT_QUOTES);?>
+ / <?php echo htmlspecialchars($_v['job']['said'], ENT_QUOTES);?>
+" title="Run <?php echo htmlspecialchars($_v['job']['said'], ENT_QUOTES);?>
+" aria-label="Run <?php echo htmlspecialchars($_v['job']['said'], ENT_QUOTES);?>
+"><svg class="ic"><use href="#i-play"/></svg></button>
+<?php }?>
+</div>
+<?php }else{?>
+
+<div class="empty"><?php echo htmlspecialchars($_v['data_jobs']['empty'], ENT_QUOTES);?>
+</div>
+<?php }?>
+
+					</div>
+<?php } if(!empty($_v['data_project']['nested']))foreach($_v['data_project']['nested'] as $_v['folder']){?><?php $_v['data_folder'] = $_v['folder'];?>
+
+<details class="folder<?php if($_v['data_folder']['active']){?>
+ active<?php }?>" data-folder="<?php echo htmlspecialchars($_v['data_folder']['id'], ENT_QUOTES);?>
+"<?php if($_v['data_folder']['open']){?>
+ open<?php }?>>
+	<summary title="<?php echo htmlspecialchars($_v['data_folder']['title'], ENT_QUOTES);?>
+">
+		<a href="<?php echo htmlspecialchars($_v['base'], ENT_QUOTES); echo htmlspecialchars($_v['data_folder']['href'], ENT_QUOTES);?>
+"><?php $_v['data_icon'] = $_v['data_folder'];?>
+<svg class="ic<?php if($_v['data_icon']['dirty']){?>
+ dirty<?php }?>"><?php if($_v['data_icon']['dirty']){?>
+<title><?php echo htmlspecialchars($_v['data_icon']['changed'], ENT_QUOTES);?>
+</title><?php }?><use href="#i-<?php echo htmlspecialchars($_v['data_icon']['icon'], ENT_QUOTES);?>
+"/></svg><span><?php if($_v['data_folder']['dir']){?>
+<i><?php echo htmlspecialchars($_v['data_folder']['dir'], ENT_QUOTES);?>
+/</i><?php }?><b><?php echo htmlspecialchars($_v['data_folder']['name'], ENT_QUOTES);?>
+</b></span></a>
+		<i class="dot"></i>
+<?php if($_v['data_folder']['bad']){?>
+<small class="bad" title="<?php echo htmlspecialchars($_v['data_folder']['badTitle'], ENT_QUOTES);?>
+"><?php echo htmlspecialchars($_v['data_folder']['badge'], ENT_QUOTES);?>
+</small><?php }else{?>
+<small><?php echo htmlspecialchars($_v['data_folder']['count'], ENT_QUOTES);?>
+</small><?php }?>
+		<svg class="ic chev"><use href="#i-chev"/></svg>
+	</summary>
+	<div class="jobs">
+<?php $_v['data_jobs'] = $_v['data_folder'];if(!empty($_v['data_jobs']['jobs']))foreach($_v['data_jobs']['jobs'] as $_v['job']){?>
+<div class="job<?php if($_v['job']['pinned']){?>
+ pinned<?php }?><?php if($_v['job']['active']){?>
+ active<?php }?>" data-job-key="<?php echo htmlspecialchars($_v['job']['key'], ENT_QUOTES);?>
+">
+	<i class="shebang<?php if($_v['job']['running']){?>
+ running<?php }?>" aria-hidden="true">#!</i>
+	<a href="<?php echo htmlspecialchars($_v['base'], ENT_QUOTES); echo htmlspecialchars($_v['job']['href'], ENT_QUOTES);?>
+"<?php if($_v['job']['hint']){?>
+ title="<?php echo htmlspecialchars($_v['job']['hint'], ENT_QUOTES);?>
+"<?php }?>><?php if($_v['job']['kind']){?>
+<i><?php echo htmlspecialchars($_v['job']['kind'], ENT_QUOTES);?>
+:</i><?php }?><?php echo htmlspecialchars($_v['job']['label'], ENT_QUOTES);?>
+</a>
+<?php if($_v['job']['running']){?>
+
+	<button type="button" class="play" data-attach="<?php echo htmlspecialchars($_v['job']['attach'], ENT_QUOTES);?>
+" title="Attach to <?php echo htmlspecialchars($_v['job']['name'], ENT_QUOTES);?>
+, running" aria-label="Attach to <?php echo htmlspecialchars($_v['job']['name'], ENT_QUOTES);?>
+"><svg class="ic"><use href="#i-eye"/></svg></button>
+<?php }elseif($_v['job']['can']){?>
+
+	<button type="button" class="play" data-run data-folder="<?php echo htmlspecialchars($_v['job']['folder'], ENT_QUOTES);?>
+"<?php if($_v['job']['dir']){?>
+ data-dir="<?php echo htmlspecialchars($_v['job']['dir'], ENT_QUOTES);?>
+"<?php }?> data-job="<?php echo htmlspecialchars($_v['job']['job'], ENT_QUOTES);?>
+"<?php if($_v['job']['args']){?>
+ data-run-args="<?php echo htmlspecialchars($_v['job']['args'], ENT_QUOTES);?>
+"<?php }?> data-title="<?php echo htmlspecialchars($_v['job']['folder'], ENT_QUOTES);?>
+ / <?php echo htmlspecialchars($_v['job']['said'], ENT_QUOTES);?>
+" title="Run <?php echo htmlspecialchars($_v['job']['said'], ENT_QUOTES);?>
+" aria-label="Run <?php echo htmlspecialchars($_v['job']['said'], ENT_QUOTES);?>
+"><svg class="ic"><use href="#i-play"/></svg></button>
+<?php }?>
+</div>
+<?php }else{?>
+
+<div class="empty"><?php echo htmlspecialchars($_v['data_jobs']['empty'], ENT_QUOTES);?>
+</div>
+<?php }?>
+
+	</div>
+</details>
+<?php }?>
+				</details>
+<?php }else{if(!empty($_v['data_project']['nested']))foreach($_v['data_project']['nested'] as $_v['folder']){?><?php $_v['data_folder'] = $_v['folder'];?>
+
+<details class="folder<?php if($_v['data_folder']['active']){?>
+ active<?php }?>" data-folder="<?php echo htmlspecialchars($_v['data_folder']['id'], ENT_QUOTES);?>
+"<?php if($_v['data_folder']['open']){?>
+ open<?php }?>>
+	<summary title="<?php echo htmlspecialchars($_v['data_folder']['title'], ENT_QUOTES);?>
+">
+		<a href="<?php echo htmlspecialchars($_v['base'], ENT_QUOTES); echo htmlspecialchars($_v['data_folder']['href'], ENT_QUOTES);?>
+"><?php $_v['data_icon'] = $_v['data_folder'];?>
+<svg class="ic<?php if($_v['data_icon']['dirty']){?>
+ dirty<?php }?>"><?php if($_v['data_icon']['dirty']){?>
+<title><?php echo htmlspecialchars($_v['data_icon']['changed'], ENT_QUOTES);?>
+</title><?php }?><use href="#i-<?php echo htmlspecialchars($_v['data_icon']['icon'], ENT_QUOTES);?>
+"/></svg><span><?php if($_v['data_folder']['dir']){?>
+<i><?php echo htmlspecialchars($_v['data_folder']['dir'], ENT_QUOTES);?>
+/</i><?php }?><b><?php echo htmlspecialchars($_v['data_folder']['name'], ENT_QUOTES);?>
+</b></span></a>
+		<i class="dot"></i>
+<?php if($_v['data_folder']['bad']){?>
+<small class="bad" title="<?php echo htmlspecialchars($_v['data_folder']['badTitle'], ENT_QUOTES);?>
+"><?php echo htmlspecialchars($_v['data_folder']['badge'], ENT_QUOTES);?>
+</small><?php }else{?>
+<small><?php echo htmlspecialchars($_v['data_folder']['count'], ENT_QUOTES);?>
+</small><?php }?>
+		<svg class="ic chev"><use href="#i-chev"/></svg>
+	</summary>
+	<div class="jobs">
+<?php $_v['data_jobs'] = $_v['data_folder'];if(!empty($_v['data_jobs']['jobs']))foreach($_v['data_jobs']['jobs'] as $_v['job']){?>
+<div class="job<?php if($_v['job']['pinned']){?>
+ pinned<?php }?><?php if($_v['job']['active']){?>
+ active<?php }?>" data-job-key="<?php echo htmlspecialchars($_v['job']['key'], ENT_QUOTES);?>
+">
+	<i class="shebang<?php if($_v['job']['running']){?>
+ running<?php }?>" aria-hidden="true">#!</i>
+	<a href="<?php echo htmlspecialchars($_v['base'], ENT_QUOTES); echo htmlspecialchars($_v['job']['href'], ENT_QUOTES);?>
+"<?php if($_v['job']['hint']){?>
+ title="<?php echo htmlspecialchars($_v['job']['hint'], ENT_QUOTES);?>
+"<?php }?>><?php if($_v['job']['kind']){?>
+<i><?php echo htmlspecialchars($_v['job']['kind'], ENT_QUOTES);?>
+:</i><?php }?><?php echo htmlspecialchars($_v['job']['label'], ENT_QUOTES);?>
+</a>
+<?php if($_v['job']['running']){?>
+
+	<button type="button" class="play" data-attach="<?php echo htmlspecialchars($_v['job']['attach'], ENT_QUOTES);?>
+" title="Attach to <?php echo htmlspecialchars($_v['job']['name'], ENT_QUOTES);?>
+, running" aria-label="Attach to <?php echo htmlspecialchars($_v['job']['name'], ENT_QUOTES);?>
+"><svg class="ic"><use href="#i-eye"/></svg></button>
+<?php }elseif($_v['job']['can']){?>
+
+	<button type="button" class="play" data-run data-folder="<?php echo htmlspecialchars($_v['job']['folder'], ENT_QUOTES);?>
+"<?php if($_v['job']['dir']){?>
+ data-dir="<?php echo htmlspecialchars($_v['job']['dir'], ENT_QUOTES);?>
+"<?php }?> data-job="<?php echo htmlspecialchars($_v['job']['job'], ENT_QUOTES);?>
+"<?php if($_v['job']['args']){?>
+ data-run-args="<?php echo htmlspecialchars($_v['job']['args'], ENT_QUOTES);?>
+"<?php }?> data-title="<?php echo htmlspecialchars($_v['job']['folder'], ENT_QUOTES);?>
+ / <?php echo htmlspecialchars($_v['job']['said'], ENT_QUOTES);?>
+" title="Run <?php echo htmlspecialchars($_v['job']['said'], ENT_QUOTES);?>
+" aria-label="Run <?php echo htmlspecialchars($_v['job']['said'], ENT_QUOTES);?>
+"><svg class="ic"><use href="#i-play"/></svg></button>
+<?php }?>
+</div>
+<?php }else{?>
+
+<div class="empty"><?php echo htmlspecialchars($_v['data_jobs']['empty'], ENT_QUOTES);?>
+</div>
+<?php }?>
+
+	</div>
+</details>
+<?php } } } }}else{ $_v['data_project'] = $_v['group'];if($_v['data_project']['top']){?>
+
+				<details class="project<?php if($_v['data_project']['active']){?>
+ active<?php }?>" data-project="<?php echo htmlspecialchars($_v['data_project']['id'], ENT_QUOTES);?>
+" open>
+					<summary<?php if($_v['data_project']['here']){?>
+ class="active"<?php }?> title="<?php echo htmlspecialchars($_v['data_project']['title'], ENT_QUOTES);?>
+">
+						<a class="section<?php if($_v['data_project']['here']){?>
+ active<?php }?>" href="<?php echo htmlspecialchars($_v['base'], ENT_QUOTES); echo htmlspecialchars($_v['data_project']['href'], ENT_QUOTES);?>
+" data-folder="<?php echo htmlspecialchars($_v['data_project']['id'], ENT_QUOTES);?>
+">
+<?php $_v['data_icon'] = $_v['data_project'];?>
+<svg class="ic<?php if($_v['data_icon']['dirty']){?>
+ dirty<?php }?>"><?php if($_v['data_icon']['dirty']){?>
+<title><?php echo htmlspecialchars($_v['data_icon']['changed'], ENT_QUOTES);?>
+</title><?php }?><use href="#i-<?php echo htmlspecialchars($_v['data_icon']['icon'], ENT_QUOTES);?>
+"/></svg><span><?php echo htmlspecialchars($_v['data_project']['name'], ENT_QUOTES);?>
+</span>
+<?php if($_v['data_project']['bad']){?>
+<small class="bad" title="<?php echo htmlspecialchars($_v['data_project']['badTitle'], ENT_QUOTES);?>
+"><?php echo htmlspecialchars($_v['data_project']['badge'], ENT_QUOTES);?>
+</small><?php }elseif($_v['data_project']['counted']){?>
+<small><?php echo htmlspecialchars($_v['data_project']['count'], ENT_QUOTES);?>
+</small><?php }?>
+						</a>
+						<svg class="ic chev"><use href="#i-chev"/></svg>
+					</summary>
+<?php if($_v['data_project']['jobs']){?>
+
+					<div class="jobs top">
+<?php $_v['data_jobs'] = $_v['data_project'];if(!empty($_v['data_jobs']['jobs']))foreach($_v['data_jobs']['jobs'] as $_v['job']){?>
+<div class="job<?php if($_v['job']['pinned']){?>
+ pinned<?php }?><?php if($_v['job']['active']){?>
+ active<?php }?>" data-job-key="<?php echo htmlspecialchars($_v['job']['key'], ENT_QUOTES);?>
+">
+	<i class="shebang<?php if($_v['job']['running']){?>
+ running<?php }?>" aria-hidden="true">#!</i>
+	<a href="<?php echo htmlspecialchars($_v['base'], ENT_QUOTES); echo htmlspecialchars($_v['job']['href'], ENT_QUOTES);?>
+"<?php if($_v['job']['hint']){?>
+ title="<?php echo htmlspecialchars($_v['job']['hint'], ENT_QUOTES);?>
+"<?php }?>><?php if($_v['job']['kind']){?>
+<i><?php echo htmlspecialchars($_v['job']['kind'], ENT_QUOTES);?>
+:</i><?php }?><?php echo htmlspecialchars($_v['job']['label'], ENT_QUOTES);?>
+</a>
+<?php if($_v['job']['running']){?>
+
+	<button type="button" class="play" data-attach="<?php echo htmlspecialchars($_v['job']['attach'], ENT_QUOTES);?>
+" title="Attach to <?php echo htmlspecialchars($_v['job']['name'], ENT_QUOTES);?>
+, running" aria-label="Attach to <?php echo htmlspecialchars($_v['job']['name'], ENT_QUOTES);?>
+"><svg class="ic"><use href="#i-eye"/></svg></button>
+<?php }elseif($_v['job']['can']){?>
+
+	<button type="button" class="play" data-run data-folder="<?php echo htmlspecialchars($_v['job']['folder'], ENT_QUOTES);?>
+"<?php if($_v['job']['dir']){?>
+ data-dir="<?php echo htmlspecialchars($_v['job']['dir'], ENT_QUOTES);?>
+"<?php }?> data-job="<?php echo htmlspecialchars($_v['job']['job'], ENT_QUOTES);?>
+"<?php if($_v['job']['args']){?>
+ data-run-args="<?php echo htmlspecialchars($_v['job']['args'], ENT_QUOTES);?>
+"<?php }?> data-title="<?php echo htmlspecialchars($_v['job']['folder'], ENT_QUOTES);?>
+ / <?php echo htmlspecialchars($_v['job']['said'], ENT_QUOTES);?>
+" title="Run <?php echo htmlspecialchars($_v['job']['said'], ENT_QUOTES);?>
+" aria-label="Run <?php echo htmlspecialchars($_v['job']['said'], ENT_QUOTES);?>
+"><svg class="ic"><use href="#i-play"/></svg></button>
+<?php }?>
+</div>
+<?php }else{?>
+
+<div class="empty"><?php echo htmlspecialchars($_v['data_jobs']['empty'], ENT_QUOTES);?>
+</div>
+<?php }?>
+
+					</div>
+<?php } if(!empty($_v['data_project']['nested']))foreach($_v['data_project']['nested'] as $_v['folder']){?><?php $_v['data_folder'] = $_v['folder'];?>
+
+<details class="folder<?php if($_v['data_folder']['active']){?>
+ active<?php }?>" data-folder="<?php echo htmlspecialchars($_v['data_folder']['id'], ENT_QUOTES);?>
+"<?php if($_v['data_folder']['open']){?>
+ open<?php }?>>
+	<summary title="<?php echo htmlspecialchars($_v['data_folder']['title'], ENT_QUOTES);?>
+">
+		<a href="<?php echo htmlspecialchars($_v['base'], ENT_QUOTES); echo htmlspecialchars($_v['data_folder']['href'], ENT_QUOTES);?>
+"><?php $_v['data_icon'] = $_v['data_folder'];?>
+<svg class="ic<?php if($_v['data_icon']['dirty']){?>
+ dirty<?php }?>"><?php if($_v['data_icon']['dirty']){?>
+<title><?php echo htmlspecialchars($_v['data_icon']['changed'], ENT_QUOTES);?>
+</title><?php }?><use href="#i-<?php echo htmlspecialchars($_v['data_icon']['icon'], ENT_QUOTES);?>
+"/></svg><span><?php if($_v['data_folder']['dir']){?>
+<i><?php echo htmlspecialchars($_v['data_folder']['dir'], ENT_QUOTES);?>
+/</i><?php }?><b><?php echo htmlspecialchars($_v['data_folder']['name'], ENT_QUOTES);?>
+</b></span></a>
+		<i class="dot"></i>
+<?php if($_v['data_folder']['bad']){?>
+<small class="bad" title="<?php echo htmlspecialchars($_v['data_folder']['badTitle'], ENT_QUOTES);?>
+"><?php echo htmlspecialchars($_v['data_folder']['badge'], ENT_QUOTES);?>
+</small><?php }else{?>
+<small><?php echo htmlspecialchars($_v['data_folder']['count'], ENT_QUOTES);?>
+</small><?php }?>
+		<svg class="ic chev"><use href="#i-chev"/></svg>
+	</summary>
+	<div class="jobs">
+<?php $_v['data_jobs'] = $_v['data_folder'];if(!empty($_v['data_jobs']['jobs']))foreach($_v['data_jobs']['jobs'] as $_v['job']){?>
+<div class="job<?php if($_v['job']['pinned']){?>
+ pinned<?php }?><?php if($_v['job']['active']){?>
+ active<?php }?>" data-job-key="<?php echo htmlspecialchars($_v['job']['key'], ENT_QUOTES);?>
+">
+	<i class="shebang<?php if($_v['job']['running']){?>
+ running<?php }?>" aria-hidden="true">#!</i>
+	<a href="<?php echo htmlspecialchars($_v['base'], ENT_QUOTES); echo htmlspecialchars($_v['job']['href'], ENT_QUOTES);?>
+"<?php if($_v['job']['hint']){?>
+ title="<?php echo htmlspecialchars($_v['job']['hint'], ENT_QUOTES);?>
+"<?php }?>><?php if($_v['job']['kind']){?>
+<i><?php echo htmlspecialchars($_v['job']['kind'], ENT_QUOTES);?>
+:</i><?php }?><?php echo htmlspecialchars($_v['job']['label'], ENT_QUOTES);?>
+</a>
+<?php if($_v['job']['running']){?>
+
+	<button type="button" class="play" data-attach="<?php echo htmlspecialchars($_v['job']['attach'], ENT_QUOTES);?>
+" title="Attach to <?php echo htmlspecialchars($_v['job']['name'], ENT_QUOTES);?>
+, running" aria-label="Attach to <?php echo htmlspecialchars($_v['job']['name'], ENT_QUOTES);?>
+"><svg class="ic"><use href="#i-eye"/></svg></button>
+<?php }elseif($_v['job']['can']){?>
+
+	<button type="button" class="play" data-run data-folder="<?php echo htmlspecialchars($_v['job']['folder'], ENT_QUOTES);?>
+"<?php if($_v['job']['dir']){?>
+ data-dir="<?php echo htmlspecialchars($_v['job']['dir'], ENT_QUOTES);?>
+"<?php }?> data-job="<?php echo htmlspecialchars($_v['job']['job'], ENT_QUOTES);?>
+"<?php if($_v['job']['args']){?>
+ data-run-args="<?php echo htmlspecialchars($_v['job']['args'], ENT_QUOTES);?>
+"<?php }?> data-title="<?php echo htmlspecialchars($_v['job']['folder'], ENT_QUOTES);?>
+ / <?php echo htmlspecialchars($_v['job']['said'], ENT_QUOTES);?>
+" title="Run <?php echo htmlspecialchars($_v['job']['said'], ENT_QUOTES);?>
+" aria-label="Run <?php echo htmlspecialchars($_v['job']['said'], ENT_QUOTES);?>
+"><svg class="ic"><use href="#i-play"/></svg></button>
+<?php }?>
+</div>
+<?php }else{?>
+
+<div class="empty"><?php echo htmlspecialchars($_v['data_jobs']['empty'], ENT_QUOTES);?>
+</div>
+<?php }?>
+
+	</div>
+</details>
+<?php }?>
+				</details>
+<?php }else{if(!empty($_v['data_project']['nested']))foreach($_v['data_project']['nested'] as $_v['folder']){?><?php $_v['data_folder'] = $_v['folder'];?>
+
+<details class="folder<?php if($_v['data_folder']['active']){?>
+ active<?php }?>" data-folder="<?php echo htmlspecialchars($_v['data_folder']['id'], ENT_QUOTES);?>
+"<?php if($_v['data_folder']['open']){?>
+ open<?php }?>>
+	<summary title="<?php echo htmlspecialchars($_v['data_folder']['title'], ENT_QUOTES);?>
+">
+		<a href="<?php echo htmlspecialchars($_v['base'], ENT_QUOTES); echo htmlspecialchars($_v['data_folder']['href'], ENT_QUOTES);?>
+"><?php $_v['data_icon'] = $_v['data_folder'];?>
+<svg class="ic<?php if($_v['data_icon']['dirty']){?>
+ dirty<?php }?>"><?php if($_v['data_icon']['dirty']){?>
+<title><?php echo htmlspecialchars($_v['data_icon']['changed'], ENT_QUOTES);?>
+</title><?php }?><use href="#i-<?php echo htmlspecialchars($_v['data_icon']['icon'], ENT_QUOTES);?>
+"/></svg><span><?php if($_v['data_folder']['dir']){?>
+<i><?php echo htmlspecialchars($_v['data_folder']['dir'], ENT_QUOTES);?>
+/</i><?php }?><b><?php echo htmlspecialchars($_v['data_folder']['name'], ENT_QUOTES);?>
+</b></span></a>
+		<i class="dot"></i>
+<?php if($_v['data_folder']['bad']){?>
+<small class="bad" title="<?php echo htmlspecialchars($_v['data_folder']['badTitle'], ENT_QUOTES);?>
+"><?php echo htmlspecialchars($_v['data_folder']['badge'], ENT_QUOTES);?>
+</small><?php }else{?>
+<small><?php echo htmlspecialchars($_v['data_folder']['count'], ENT_QUOTES);?>
+</small><?php }?>
+		<svg class="ic chev"><use href="#i-chev"/></svg>
+	</summary>
+	<div class="jobs">
+<?php $_v['data_jobs'] = $_v['data_folder'];if(!empty($_v['data_jobs']['jobs']))foreach($_v['data_jobs']['jobs'] as $_v['job']){?>
+<div class="job<?php if($_v['job']['pinned']){?>
+ pinned<?php }?><?php if($_v['job']['active']){?>
+ active<?php }?>" data-job-key="<?php echo htmlspecialchars($_v['job']['key'], ENT_QUOTES);?>
+">
+	<i class="shebang<?php if($_v['job']['running']){?>
+ running<?php }?>" aria-hidden="true">#!</i>
+	<a href="<?php echo htmlspecialchars($_v['base'], ENT_QUOTES); echo htmlspecialchars($_v['job']['href'], ENT_QUOTES);?>
+"<?php if($_v['job']['hint']){?>
+ title="<?php echo htmlspecialchars($_v['job']['hint'], ENT_QUOTES);?>
+"<?php }?>><?php if($_v['job']['kind']){?>
+<i><?php echo htmlspecialchars($_v['job']['kind'], ENT_QUOTES);?>
+:</i><?php }?><?php echo htmlspecialchars($_v['job']['label'], ENT_QUOTES);?>
+</a>
+<?php if($_v['job']['running']){?>
+
+	<button type="button" class="play" data-attach="<?php echo htmlspecialchars($_v['job']['attach'], ENT_QUOTES);?>
+" title="Attach to <?php echo htmlspecialchars($_v['job']['name'], ENT_QUOTES);?>
+, running" aria-label="Attach to <?php echo htmlspecialchars($_v['job']['name'], ENT_QUOTES);?>
+"><svg class="ic"><use href="#i-eye"/></svg></button>
+<?php }elseif($_v['job']['can']){?>
+
+	<button type="button" class="play" data-run data-folder="<?php echo htmlspecialchars($_v['job']['folder'], ENT_QUOTES);?>
+"<?php if($_v['job']['dir']){?>
+ data-dir="<?php echo htmlspecialchars($_v['job']['dir'], ENT_QUOTES);?>
+"<?php }?> data-job="<?php echo htmlspecialchars($_v['job']['job'], ENT_QUOTES);?>
+"<?php if($_v['job']['args']){?>
+ data-run-args="<?php echo htmlspecialchars($_v['job']['args'], ENT_QUOTES);?>
+"<?php }?> data-title="<?php echo htmlspecialchars($_v['job']['folder'], ENT_QUOTES);?>
+ / <?php echo htmlspecialchars($_v['job']['said'], ENT_QUOTES);?>
+" title="Run <?php echo htmlspecialchars($_v['job']['said'], ENT_QUOTES);?>
+" aria-label="Run <?php echo htmlspecialchars($_v['job']['said'], ENT_QUOTES);?>
+"><svg class="ic"><use href="#i-play"/></svg></button>
+<?php }?>
+</div>
+<?php }else{?>
+
+<div class="empty"><?php echo htmlspecialchars($_v['data_jobs']['empty'], ENT_QUOTES);?>
+</div>
+<?php }?>
+
+	</div>
+</details>
+<?php } }} }else{?>
+
+				<div class="empty">No folders yet. <?php if($_v['chrome']['can']['project/edit']){?>
+<a href="<?php echo htmlspecialchars($_v['base'], ENT_QUOTES);?>
+/settings/projects/new">Add a git repository</a><?php }else{?>
+Add a git repository in Settings<?php }?>, or put a folder with jobs under the root.</div>
+<?php }?>
 			</nav>
 
 		</aside>
@@ -204,9 +976,10 @@ active<?php }?>"><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['
 <?php if(!$_v['entry']['ended']){?>
 						<svg class="ic act"><use href="#i-<?php echo htmlspecialchars($_v['entry']['act'], ENT_QUOTES);?>
 "/></svg><?php }?>
-						<span class="avatar sm role-<?php echo htmlspecialchars($_v['entry']['role'], ENT_QUOTES);?>
-" title="<?php echo htmlspecialchars($_v['entry']['user'], ENT_QUOTES);?>
-"><?php echo htmlspecialchars($_v['entry']['initials'], ENT_QUOTES);?>
+						<?php $_v['data_avatar'] = $_v['entry']['avatar'];?>
+<span class="avatar sm<?php if($_v['data_avatar']['role']){?>
+ role-<?php echo htmlspecialchars($_v['data_avatar']['role'], ENT_QUOTES); }?>" title="<?php echo htmlspecialchars($_v['data_avatar']['name'], ENT_QUOTES);?>
+"><?php echo htmlspecialchars($_v['data_avatar']['initials'], ENT_QUOTES);?>
 </span>
 					</a>
 <?php } } if(!$_v['data']['groups']){?>
@@ -220,6 +993,123 @@ active<?php }?>"><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['
 		</aside>
 
 	</div>
+
+	<dialog class="run" id="run-dialog" aria-labelledby="run-title">
+		<div class="run-head">
+			<span class="label" id="run-kind">Run</span>
+			<h3 id="run-title"></h3>
+			<span class="run-subtitle" id="run-subtitle" hidden></span>
+			<span class="tag rec" id="run-rec" hidden>Recording</span>
+			<span class="tag input-on" id="run-input" hidden>Input on</span>
+			<span class="spacer"></span>
+			<span class="dim" id="run-who"></span>
+			<span class="elapsed" id="run-elapsed"></span>
+			<span class="state" id="run-state"></span>
+			<button type="button" class="btn btn-sm" id="run-replay" title="Replay the recording" aria-label="Replay the recording" hidden>|&gt;</button>
+			<a class="btn btn-sm" id="run-page" href="<?php echo htmlspecialchars($_v['base'], ENT_QUOTES);?>
+/runs" hidden>Open run page</a>
+		</div>
+		<div class="run-body">
+			<div class="terminal-host" id="run-terminal"></div>
+		</div>
+		<p class="run-notice" id="run-notice" role="status"></p>
+		<div class="run-reason" id="run-reason" hidden>
+			<label for="run-reason-text">Why does this need to run outside its hours? task-ui saves your reason with the run.</label>
+			<input type="text" id="run-reason-text" placeholder="customer is waiting on the hotfix" autocomplete="off" maxlength="200">
+		</div>
+		<div class="run-foot">
+			<nav class="run-chain" id="run-chain" aria-label="The runs of the chain" hidden>
+				<button type="button" class="btn btn-sm" id="run-prev" title="The run before this one">‹ Previous</button>
+				<span class="run-pos" id="run-pos"></span>
+				<button type="button" class="btn btn-sm" id="run-next" title="The run after this one">Next ›</button>
+			</nav>
+			<a class="btn btn-sm" id="run-report" href="#" title="Claude's answer or summary, as a document" hidden>Report</a>
+			<button type="button" class="btn" id="run-close" aria-label="Close">Close</button>
+			<span class="hint" id="run-hint"></span>
+			<button type="button" class="btn" id="run-attach" hidden>Attach</button>
+			<button type="button" class="btn" id="run-again" hidden>Run again</button>
+			<button type="button" class="btn" id="run-take" aria-pressed="false" title="Send your keystrokes to the run, to answer a prompt it waits on" hidden>Take input</button>
+			<button type="button" class="btn" id="run-stop" hidden>Stop</button>
+			<button type="button" class="btn btn-danger" id="run-kill" hidden>Kill</button>
+			<button type="button" class="btn" id="run-pause" hidden>Pause</button>
+			<button type="button" class="btn" id="run-restart" hidden>Restart</button>
+			<button type="button" class="btn btn-primary" id="run-force" hidden>Run force</button>
+		</div>
+	</dialog>
+
+	<dialog class="run preview" id="preview-dialog" aria-labelledby="preview-title">
+		<div class="run-head">
+			<span class="label" id="preview-label">Artifact</span>
+			<h3 id="preview-title"></h3>
+		</div>
+		<div class="run-body preview-body"><img id="preview-image" alt=""><div id="preview-doc" class="preview-doc" hidden></div></div>
+		<div class="run-foot">
+			<span class="hint"><select id="preview-version" aria-label="Version" hidden></select></span>
+			<a class="btn" id="preview-download" href="#" download>Download</a>
+			<span class="preview-actions" id="preview-actions"></span>
+			<button type="button" class="btn" id="preview-close" aria-label="Close">Close</button>
+		</div>
+	</dialog>
+
+	<dialog class="run pipeline-window" id="pipeline-dialog" aria-labelledby="pipeline-title">
+		<div class="run-head">
+			<span class="label">Workflow run</span>
+			<h3 id="pipeline-title"></h3>
+		</div>
+		<div class="run-body pipeline-body" id="pipeline-body"></div>
+		<div class="run-foot">
+			<span class="hint"></span>
+			<a class="btn" id="pipeline-page" href="#">Open page</a>
+			<button type="button" class="btn" id="pipeline-close" aria-label="Close">Close</button>
+		</div>
+	</dialog>
+
+	<dialog class="run preview run-summary" id="summary-dialog" aria-labelledby="summary-title">
+		<div class="run-head">
+			<span class="label">Summary</span>
+			<h3 id="summary-title"></h3>
+		</div>
+		<div class="run-body preview-body"><div id="summary-text" class="preview-doc markdown"></div></div>
+		<div class="run-foot">
+			<span class="hint" id="summary-meta"></span>
+			<a class="btn" id="summary-run" href="#">View run</a>
+			<button type="button" class="btn" id="summary-close" aria-label="Close">Close</button>
+		</div>
+	</dialog>
+
+	<dialog class="run source" id="source-dialog" aria-labelledby="source-title">
+		<div class="run-head">
+			<span class="label">Source</span>
+			<h3 id="source-title"></h3>
+		</div>
+		<div class="run-body"><pre class="code" id="source-code"></pre></div>
+		<div class="run-foot">
+			<span class="hint"></span>
+			<button type="button" class="btn" id="source-close" aria-label="Close">Close</button>
+		</div>
+	</dialog>
+
+
+	<dialog class="confirm" id="workflow-input-dialog" aria-labelledby="workflow-input-title">
+		<form method="dialog" data-workflow-input>
+			<h3 id="workflow-input-title">Run</h3>
+			<p>Optional input for the workflow's prompt. Claude reads it after the prompt, under the line <code>Input:</code>.</p>
+			<textarea name="input" rows="3" spellcheck="false" aria-label="Input for the prompt"></textarea>
+			<div class="form-foot">
+				<button type="button" class="btn" data-workflow-input-cancel>Cancel</button>
+				<button type="submit" class="btn btn-primary">Run</button>
+			</div>
+		</form>
+	</dialog>
+	<dialog class="confirm" id="confirm-dialog" aria-labelledby="confirm-title">
+		<h3 id="confirm-title">Are you sure?</h3>
+		<p id="confirm-text"></p>
+		<div class="form-foot">
+			<button type="button" class="btn" id="confirm-cancel">Cancel</button>
+			<button type="button" class="btn btn-danger" id="confirm-ok">Delete</button>
+		</div>
+	</dialog>
+
 <?php }else{?>
 
 	<header class="top login-top">
@@ -250,6 +1140,9 @@ active<?php }?>"><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['
 	<script src="<?php echo htmlspecialchars($_v['data']['assets'], ENT_QUOTES);?>
 /theme/task-ui.js?v=<?php echo htmlspecialchars($_v['data']['assetVersion'], ENT_QUOTES);?>
 " defer></script>
+<?php if(!empty($_v['data']['scripts']))foreach($_v['data']['scripts'] as $_v['script']){?>	<script src="<?php echo htmlspecialchars($_v['script'], ENT_QUOTES);?>
+" defer></script>
+<?php }?>
 
 </body>
 </html>

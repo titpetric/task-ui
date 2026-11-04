@@ -1,0 +1,34 @@
+@startuml
+' Generated from schema/schema.yml by tools/docs.php. DO NOT EDIT.
+hide circle
+hide empty members
+skinparam linetype ortho
+skinparam shadowing false
+skinparam backgroundColor transparent
+entity "artifact" {
+  * id : text
+  + run_id : text
+  + folder : text
+  + job : text
+  + name : text
+  + path : text
+  + byte_size : integer
+  + content_type : text
+  + created_at : timestamp
+  + commit_id : text
+  + user_name : text
+}
+
+entity "user" {
+  * id : text
+  + name : text
+  + role : TEXT
+  + folders : text
+  + created_at : timestamp
+  + updated_at : timestamp
+  + admin : boolean
+  + mcp : boolean
+  + agent_reply : boolean
+}
+
+@enduml

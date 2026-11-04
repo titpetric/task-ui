@@ -1,0 +1,1 @@
+{* input scope: data_source. See show-source.md. *}<button type="button" class="btn btn-sm show-source" data-source="{data_source.folder}" data-file="{data_source.file}" aria-haspopup="dialog"><svg class="ic"><use href="#i-file"/></svg><span>{data_source.label}</span></button>

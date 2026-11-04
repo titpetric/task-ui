@@ -108,3 +108,58 @@ func TestSecretStorage_Delete(t *testing.T) {
 	_, err := secrets.Get(ctx, *secret)
 	assert.ErrorIs(t, err, storage.ErrNotFound)
 }
+
+// A workspace scope names its workspace; every other scope names none.
+func TestScopeWorkspaceName(t *testing.T) {
+	t.Parallel()
+	name, ok := storage.ScopeWorkspaceName(storage.SharedScope("acme"))
+	assert.True(t, ok)
+	assert.Equal(t, "acme", name)
+
+	name, ok = storage.ScopeWorkspaceName(storage.ScopeAll)
+	assert.False(t, ok)
+	assert.Equal(t, storage.ScopeAll, name)
+
+	_, ok = storage.ScopeWorkspaceName("infra")
+	assert.False(t, ok)
+}
+
+// A secret reads by its row ID as well as by scope and name: the API
+// reads one that way, from a link that holds the ID.
+func TestSecretStorage_GetByID(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	secrets := storage.NewSecretStorage(newDB(t))
+	secret := &model.Secret{Scope: storage.ScopeAll, Name: "TOKEN", Content: "x"}
+	assert.NoError(t, secrets.Create(ctx, secret))
+
+	got, err := secrets.GetByID(ctx, secret.ID)
+	assert.NoError(t, err)
+	assert.Equal(t, "TOKEN", got.Name)
+
+	_, err = secrets.GetByID(ctx, "nope")
+	assert.ErrorIs(t, err, storage.ErrNotFound)
+}
+
+// Every method hands back what the driver said. Set reads before it
+// writes: a dead pool answers its read with an error rather than with
+// "not there", and it stops instead of inserting.
+func TestSecretStorage_Closed(t *testing.T) {
+	t.Parallel()
+	secrets := storage.NewSecretStorage(closedDB(t))
+	ctx := context.Background()
+	secret := &model.Secret{Scope: storage.ScopeAll, Name: "TOKEN", Content: "x"}
+
+	assert.ErrorContains(t, secrets.Create(ctx, secret), errClosed)
+	_, err := secrets.Get(ctx, *secret)
+	assert.ErrorContains(t, err, errClosed)
+	_, err = secrets.GetByID(ctx, "s1")
+	assert.ErrorContains(t, err, errClosed)
+	_, err = secrets.List(ctx)
+	assert.ErrorContains(t, err, errClosed)
+	_, err = secrets.Scoped(ctx, storage.ScopeAll)
+	assert.ErrorContains(t, err, errClosed)
+	assert.ErrorContains(t, secrets.Set(ctx, secret), errClosed)
+	assert.ErrorContains(t, secrets.Update(ctx, secret), errClosed)
+	assert.ErrorContains(t, secrets.Delete(ctx, "s1"), errClosed)
+}

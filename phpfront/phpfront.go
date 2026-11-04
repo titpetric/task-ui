@@ -9,7 +9,9 @@
 //
 // Routing is the phpscript annotation scanner. The @route paths carry no
 // prefix; Go mounts the router where the instance serves it and chi strips
-// that, so /development is one Go line and no template knows of it.
+// that, so the mount is one Go line, app.FrontBase, and no template knows of
+// it. It is the empty string: these pages are what the instance serves, and
+// the Go pages being replaced are the ones under a prefix now.
 //
 // Static files never reach the PHP: assets.go serves them from Go, so an
 // @route is always a page or an endpoint.

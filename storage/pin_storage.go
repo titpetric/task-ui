@@ -55,33 +55,34 @@ func (s *PinStorage) Delete(ctx context.Context, user, id string) error {
 	return client(s.db).Exec(ctx, "DELETE FROM pin WHERE id = ?", id)
 }
 
-// MoveFolder renames the pins that name a folder, or a directory inside
-// it, to its new ID, for every user: pins follow a project that moves. A
-// pin whose user pins the new target already goes, the target's pin
-// stays. It returns how many pins moved.
-func (s *PinStorage) MoveFolder(ctx context.Context, from, to string) (int, error) {
+// movedPins matches the pins of a folder and of the folders inside it,
+// and ?4 || substr(folder, ?5) is where each of them moves to: the new
+// folder with what followed the old one. It is model.Moved as a column
+// expression, and the arguments are movedArgs.
+const movedPins = "folder = ?1 OR substr(folder, 1, ?2) = ?3"
+
+// movedArgs are the arguments of movedPins and of the expression that
+// rewrites a folder: the old folder, the length of its prefix and the
+// prefix, then the new folder and where the suffix of the old one starts.
+func movedArgs(from, to string) []any {
 	prefix := from + "/"
-	pins, err := client(s.db).Select[model.Pin](ctx, "SELECT * FROM pin WHERE folder = ?1 OR substr(folder, 1, ?2) = ?3 ORDER BY rowid", from, len(prefix), prefix)
-	if err != nil {
+	return []any{from, len(prefix), prefix, to, len(from) + 1}
+}
+
+// MoveFolder renames the pins of a folder and of the folders inside it
+// to its new ID, for every user, and returns how many moved. A pin
+// whose user holds the target already goes, the target's pin stays.
+func (s *PinStorage) MoveFolder(ctx context.Context, from, to string) (int, error) {
+	db := client(s.db)
+	if err := db.Exec(ctx, `DELETE FROM pin WHERE (`+movedPins+`)
+		AND EXISTS (SELECT 1 FROM pin AS held WHERE held.id <> pin.id
+			AND held.user_name = pin.user_name AND held.folder = ?4 || substr(pin.folder, ?5)
+			AND held.job = pin.job AND held.dir = pin.dir AND held.args = pin.args)`,
+		movedArgs(from, to)...); err != nil {
 		return 0, err
 	}
-	moved := 0
-	for _, pin := range pins {
-		folder, _ := model.Moved(pin.Folder, from, to)
-		_, err := client(s.db).Get[model.Pin](ctx, "SELECT * FROM pin WHERE user_name = ? AND folder = ? AND job = ? AND dir = ? AND args = ?", pin.UserName, folder, pin.Job, pin.Dir, pin.Args)
-		if err = notFound(err); err == nil {
-			if err := client(s.db).Exec(ctx, "DELETE FROM pin WHERE id = ?", pin.ID); err != nil {
-				return moved, err
-			}
-			continue
-		}
-		if !errors.Is(err, ErrNotFound) {
-			return moved, err
-		}
-		if err := client(s.db).Exec(ctx, "UPDATE pin SET folder = ? WHERE id = ?", folder, pin.ID); err != nil {
-			return moved, err
-		}
-		moved++
+	if err := db.Exec(ctx, "UPDATE pin SET folder = ?4 || substr(folder, ?5) WHERE "+movedPins, movedArgs(from, to)...); err != nil {
+		return 0, err
 	}
-	return moved, nil
+	return int(db.RowsAffected()), nil
 }

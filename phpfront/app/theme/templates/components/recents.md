@@ -16,9 +16,7 @@ anyone, grouped by when they started.
 | `entries[].ended`         | bool   | Whether the run is over                         |
 | `entries[].act`           | string | `play` or `eye`, the icon for what the reader may do |
 | `entries[].flow`          | bool   | Whether the entry is a workflow run             |
-| `entries[].user`          | string | Who started it                                  |
-| `entries[].role`          | string | Their role, which colours the avatar            |
-| `entries[].initials`      | string | The one or two letters the avatar draws         |
+| `entries[].avatar`        | object | Who started it, from `Task\Who::avatar()`       |
 
 The last slot is the script's: it puts "All runs" in the last slot that fits
 when the rail cannot show every entry.

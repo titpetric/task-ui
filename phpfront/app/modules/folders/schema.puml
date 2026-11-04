@@ -1,0 +1,152 @@
+@startuml
+' Generated from schema/schema.yml by tools/docs.php. DO NOT EDIT.
+hide circle
+hide empty members
+skinparam linetype ortho
+skinparam shadowing false
+skinparam backgroundColor transparent
+entity "key_info" {
+  * name : text
+  + purpose : TEXT
+  + algo : text
+  + bits : integer
+  + fingerprint : text
+  + scope : text
+  + comment : text
+  + created_at : timestamp
+  + updated_at : timestamp
+  + backup : text
+  + backup_fingerprint : text
+  + rotated_at : timestamp
+}
+
+entity "key_role" {
+  * id : text
+  + key_name : text
+  + role : TEXT
+  + created_at : timestamp
+}
+
+entity "key_user" {
+  * id : text
+  + key_name : text
+  + user_name : text
+  + created_at : timestamp
+}
+
+entity "note" {
+  * id : text
+  + channel : TEXT
+  + parent_id : text
+  + user_id : text
+  + user_name : text
+  + body : text
+  + mentions : text
+  + state : TEXT
+  + run_id : text
+  + created_at : timestamp
+  + updated_at : timestamp
+  + about_run_id : text
+  + about_workflow_run_id : text
+  + area : text
+  + edited_at : timestamp
+  + workspace_id : text
+  + dir : text
+}
+
+entity "pin" {
+  * id : text
+  + user_name : text
+  + folder : text
+  + job : text
+  + dir : text
+  + args : text
+  + created_at : timestamp
+}
+
+entity "run" {
+  * id : text
+  + folder : text
+  + job : text
+  + user_id : text
+  + user_name : text
+  + state : TEXT
+  + exit_code : integer
+  + forced : integer
+  + scheduled : integer
+  + term_cols : integer
+  + term_rows : integer
+  + cast_path : text
+  + reason : text
+  + started_at : timestamp
+  + finished_at : timestamp
+  + created_at : timestamp
+  + updated_at : timestamp
+  + dir : text
+  + args : text
+  + target : text
+  + batch_id : text
+  + message : text
+  + title : text
+}
+
+entity "run_summary" {
+  * run_id : text
+  + summary : text
+  + user_name : text
+  + created_at : timestamp
+}
+
+entity "schedule" {
+  * id : text
+  + folder : text
+  + job : text
+  + user_id : text
+  + user_name : text
+  + expression : text
+  + enabled : integer
+  + last_run_at : timestamp
+  + next_run_at : timestamp
+  + created_at : timestamp
+  + updated_at : timestamp
+  + target : text
+  + args : text
+  + triage : integer
+  + workflow_id : text
+}
+
+entity "user" {
+  * id : text
+  + name : text
+  + role : TEXT
+  + folders : text
+  + created_at : timestamp
+  + updated_at : timestamp
+  + admin : boolean
+  + mcp : boolean
+  + agent_reply : boolean
+}
+
+entity "workspace" {
+  * id : text
+  + folder : text
+  + title : text
+  + description : text
+  + created_at : timestamp
+  + updated_at : timestamp
+  + home_project_id : text
+  + home_url : text
+  + home_branch : text
+  + hours : text
+  + shallow : boolean
+  + sidebar_limit : integer
+  + sort : integer
+}
+
+note }o--|| user : user_id
+note }o--|| run : run_id
+note }o--|| workspace : workspace_id
+run }o--|| user : user_id
+run_summary }o--|| run : run_id
+schedule }o--|| user : user_id
+@enduml

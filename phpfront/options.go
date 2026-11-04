@@ -36,6 +36,19 @@ type Options struct {
 	// Version is the instance's version, bound as Task::version().
 	Version string
 
+	// Login reports whether the instance requires a sign in, bound as
+	// Task::login(). It is the Guard's, which mints and reads the session
+	// outside the base, so the header asks rather than deciding: with auto
+	// login on there is nothing to log out of.
+	Login bool
+
+	// Now is the instance's clock, bound as Task::now(). It is the one the
+	// hours gate and the Go pages read, which TASK_UI_NOW pins for the
+	// screenshots: a page reading the process clock instead would draw a
+	// window of thirty days ending on another day than the page it is
+	// compared against. Nil is time.Now.
+	Now func() time.Time
+
 	// PoolSize bounds how many pages render at once: one runtime, one goroutine.
 	PoolSize int
 

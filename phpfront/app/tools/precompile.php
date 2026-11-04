@@ -45,7 +45,8 @@ $count = 0;
 foreach (roots() as $root) {
 	// Every root searches itself and the theme, the way Task\View does, so an
 	// include compiles against the same paths a request resolves.
-	$tpl = new MiniTPL\Template(array($root, "theme/templates/"));
+	$paths = array($root, "theme/templates/");
+	$tpl = new MiniTPL\Template($paths);
 
 	foreach (sources($root) as $source) {
 		$to = target($root, $source);

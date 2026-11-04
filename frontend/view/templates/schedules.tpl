@@ -10,7 +10,7 @@
 {{- if $any }}
 <section class="block" id="add-schedule">
 <h3>Add schedule</h3>
-<form class="form inline" data-api="/api/schedules" data-method="POST" data-next="reload" data-notice="Schedule added">
+<form class="form inline" data-api="/api/schedules" data-method="POST" data-next="reload" data-notice="Schedule added" data-sched>
 	<div class="field">
 		<label for="sch-folder">Folder</label>
 		<select id="sch-folder" name="folder" data-narrows="sch-job" required>
@@ -40,14 +40,8 @@
 		<label class="check"><input type="checkbox" id="sch-triage" name="triage"> Triage failures with Claude</label>
 		<small class="faint">When the run fails, Claude reads the run in its folder, fixes the cause when it can, replies on the run's page and posts a note.</small>
 	</div>
-	<div class="field">
-		<label for="sch-expr">Expression</label>
-		<input type="text" id="sch-expr" name="expression" placeholder="0 3 * * *  or  @daily" spellcheck="false" autocomplete="off" required>
-	</div>
 	{{- template "runas" (list $ "sch-user") }}
-	<div class="form-foot">
-		<button class="btn btn-primary" type="submit"><svg class="ic"><use href="#i-plus"/></svg>Add schedule</button>
-	</div>
+	{{- template "schedbuilder" }}
 </form>
 </section>
 {{- end }}
@@ -69,7 +63,7 @@
 				<td class="nowrap hide-narrow" data-label="Last run">{{ if .LastRunAt }}{{ ago .LastRunAt }}{{ else }}<span class="faint">never</span>{{ end }}</td>
 				<td data-label="Runs as">{{ template "runas-row" (list $ .) }}</td>
 				<td data-label="State">{{ if .IsEnabled }}<span class="badge ok">enabled</span>{{ else }}<span class="badge">disabled</span>{{ end }}{{ if .Triages }} <span class="badge signal" title="Claude triages a failed run">triage</span>{{ end }}</td>
-				<td class="actions">{{ template "schedmenu" (list . .IsEnabled $what) }}</td>
+				<td class="actions">{{ template "schedmenu" (list . .IsEnabled $what $any) }}</td>
 			</tr>
 		{{- end }}
 		</tbody>

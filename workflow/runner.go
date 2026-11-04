@@ -185,6 +185,19 @@ func (r *Runner) Active(workflowID string) (string, bool) {
 	return "", false
 }
 
+// Running returns the run in progress of every workflow that has one, by
+// workflow ID. It is Active for a page that draws many workflows: the sidebar
+// marks each of them and asks once.
+func (r *Runner) Running() map[string]string {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	out := make(map[string]string, len(r.byFlow))
+	for id, a := range r.byFlow {
+		out[id] = a.run.ID
+	}
+	return out
+}
+
 // Done returns a channel that closes when the workflow run ended; for a
 // run not in progress it returns a closed channel.
 func (r *Runner) Done(runID string) <-chan struct{} {

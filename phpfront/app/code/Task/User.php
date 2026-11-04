@@ -16,6 +16,26 @@ class User {
 
 	const VIEWER = "viewer";
 
+	/**
+	 * ROLES is every role, most permissive first: model.Roles().
+	 *
+	 * The permission matrix draws a column per role and the setup trail counts
+	 * them, so the list has one owner here rather than a number written out
+	 * beside a matrix that grew a column.
+	 *
+	 * The three are written out and not self::ADMIN: a const array holding
+	 * self:: resolves it against the class that reads the const, so
+	 * mod_settings::ADMIN is what Task\User::ROLES asks for there. See
+	 * docs/todo-correction.md.
+	 */
+	const ROLES = array("admin", "runner", "viewer");
+
+	/**
+	 * ASSIGNABLE is the roles a select offers: every role but admin, which is
+	 * the flag beside it and not a choice of the list.
+	 */
+	const ASSIGNABLE = array("runner", "viewer");
+
 	var $db;
 
 	function __construct($db = null) {
@@ -26,14 +46,22 @@ class User {
 	function get($id) {
 		$row = $this->db->get("SELECT * FROM user WHERE id = ?", $id);
 
-		return is_array($row) ? new Model\User($row) : null;
+		if (!is_array($row)) {
+			return null;
+		}
+
+		return new Model\User($row);
 	}
 
 	/** byName is one user by name, or null. */
 	function byName($name) {
 		$row = $this->db->get("SELECT * FROM user WHERE name = ?", $name);
 
-		return is_array($row) ? new Model\User($row) : null;
+		if (!is_array($row)) {
+			return null;
+		}
+
+		return new Model\User($row);
 	}
 
 	/** all is every user, by name. */
@@ -78,8 +106,10 @@ class User {
 		}
 
 		$policies = new PermissionPolicy($this->db);
+		$role = $policies->policy(Policy::ROLE, $user->getRole());
+		$own = $policies->policy(Policy::USER, $user->getName());
 
-		return new Access($user, $policies->policy(Policy::ROLE, $user->getRole()), $policies->policy(Policy::USER, $user->getName()));
+		return new Access($user, $role, $own);
 	}
 
 	/** admin reports whether a row is an admin, by the flag or the role. */
@@ -112,6 +142,25 @@ class User {
 		return count($list) === 0 || in_array($folder, $list, true);
 	}
 
+	/**
+	 * seesArtifact reports whether a row may see one artifact.
+	 *
+	 * An artifact with neither a run nor a folder was written into the tree
+	 * over MCP or the API and belongs to no place, so everyone signed in sees
+	 * it. Any other is its folder's, and the folders a row sees decide it.
+	 */
+	static function seesArtifact($user, $artifact) {
+		if ($user === null || $artifact === null) {
+			return false;
+		}
+
+		if ($artifact->getRunId() === "" && $artifact->getFolder() === "") {
+			return true;
+		}
+
+		return self::sees($user, $artifact->getFolder());
+	}
+
 	/** listed reports whether both allow lists let a row run a job. */
 	static function listed($user, $folderAllow = array(), $jobAllow = array()) {
 		return $user !== null && self::onList($user, $folderAllow) && self::onList($user, $jobAllow);
@@ -120,6 +169,31 @@ class User {
 	/** initials are the one or two letters an avatar draws for a row. */
 	static function initials($user) {
 		return $user === null ? "?" : Who::initials($user->getName());
+	}
+
+	/**
+	 * options is the users a select picks a run's user from, as
+	 * components/user-options.tpl writes them: the name, the role, the
+	 * instance SSH keys the user's runs get for a script to read, and what
+	 * the option says about them. The keys are the map Key::ofUsers()
+	 * answers, of user name to key names.
+	 */
+	static function options($users, $keys) {
+		$out = array();
+
+		foreach ($users as $user) {
+			$name = $user->getName();
+			$names = isset($keys[$name]) ? $keys[$name] : array();
+
+			$out[] = array(
+				"name" => $name,
+				"role" => self::role($user),
+				"keys" => implode(" ", $names),
+				"said" => count($names) > 0 ? "keys: " . implode(", ", $names) : "no keys",
+			);
+		}
+
+		return $out;
 	}
 
 	/** onList reports whether an empty list, or one naming the row or its role. */

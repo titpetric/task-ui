@@ -34,14 +34,35 @@ func TestExpand(t *testing.T) {
 	assert.Equal(t, "w1", expanded[9].WorkflowRef)
 	assert.Equal(t, "malta/apps", steps[0].Folder, "the workflow's own steps stay as they are")
 
-	// The default workspace names its projects without a prefix.
+	// The default workspace names its projects without a prefix, and its
+	// root is the workspace root a prompt asks in each project of.
 	root, _ := workflow.Expand([]model.WorkflowStep{{Kind: model.StepJob, Folder: "apps", Job: "build"}, {Kind: model.StepPrompt, Folder: model.Default}}, model.Default, []string{"apps", "web"})
 	assert.Equal(t, "web", root[2].Folder)
-	assert.Equal(t, model.Default, root[3].Folder, "the root is no project")
+	assert.Equal(t, "web", root[3].Folder, "the root of the default workspace is its root")
 
 	none, groups := workflow.Expand(steps, "malta", nil)
 	assert.Len(t, none, 0)
 	assert.Len(t, groups, 0)
+}
+
+// A prompt at the workspace root asks in each project's root, the
+// directory of its pass; one at a folder outside the workspace keeps the
+// place it names.
+func TestExpandAsks(t *testing.T) {
+	t.Parallel()
+	steps := []model.WorkflowStep{
+		{Kind: model.StepPrompt, Prompt: "Review the changes."},
+		{Kind: model.StepPrompt, Folder: "malta", Prompt: "And the tests."},
+		{Kind: model.StepSummary, Folder: model.Default},
+	}
+	asks, _ := workflow.Expand(steps, "malta", []string{"apps", "deploy"})
+	assert.Len(t, asks, 6)
+	assert.Equal(t, "malta/apps", asks[0].Folder, "no place asks in the project")
+	assert.Equal(t, "malta/apps", asks[1].Folder, "the workspace's own folder is its root")
+	assert.Equal(t, model.Default, asks[2].Folder, "the root is outside a named workspace")
+	assert.Equal(t, "malta/deploy", asks[3].Folder)
+	assert.Equal(t, "malta/deploy", asks[4].Folder)
+	assert.Equal(t, model.Default, asks[5].Folder)
 }
 
 // projects lists the projects of the workspace ws.

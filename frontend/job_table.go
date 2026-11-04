@@ -90,7 +90,11 @@ func (h *Handlers) jobSummaries(r *http.Request, p *view.Page) {
 		}
 	}
 	replies, _ := h.opts.Board.Notes.Replies(r.Context(), threadIDs)
-	for thread, runID := range byThread {
+	// In thread order, not the map's: two threads asking about one run write
+	// the same key, and the threads come back newest first, so the oldest is
+	// read last and stays. Ranging the map picked one of them per request.
+	for _, thread := range threadIDs {
+		runID := byThread[thread]
 		text := ""
 		if answers := replies[thread]; len(answers) > 0 {
 			text = answers[0].Body

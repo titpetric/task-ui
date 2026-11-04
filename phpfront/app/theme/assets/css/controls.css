@@ -55,7 +55,7 @@
 /* Every control in a row is --control high. The caption is uppercase,
    which has no descenders, so it sits a hair lower than the line box's
    middle to look centred. */
-input:is([type="text"], [type="password"], [type="email"], [type="number"], [type="search"], [type="url"]),
+input:is([type="text"], [type="password"], [type="email"], [type="number"], [type="search"], [type="time"], [type="url"]),
 select {
   height: var(--control);
 }

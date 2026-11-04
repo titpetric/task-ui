@@ -105,8 +105,9 @@
 	{{- $open := .Can "hosts" }}
 	{{- range .Hosts }}
 		{{- /* With hosts, a click on a host's line, or Enter or Space on it,
-		     opens its expanded row: the page of the host, fetched. */}}
-		<tr{{ if $open }} class="host-row" data-host-row="{{ .Name }}" tabindex="0" aria-expanded="false"{{ end }}>
+		     opens its expanded row: the page of the host, which the row
+		     names so the script fetches it from this front end. */}}
+		<tr{{ if $open }} class="host-row" data-host-row="{{ .Name }}" data-host-url="/inventory/hosts/{{ .Name }}" tabindex="0" aria-expanded="false"{{ end }}>
 			<td class="key nowrap" title="{{ .Host }}, {{ .Status }}">{{ if $open }}<svg class="ic chev" aria-hidden="true"><use href="#i-chev"/></svg>{{ end }}<svg class="ic host-state {{ if .Up }}up{{ else }}down{{ end }}" role="img" aria-label="{{ .Status }}"><use href="#i-server"/></svg> {{ .Name }}</td>
 			{{- if $.Logins }}
 			<td class="nowrap">{{ with index $.Logins .Host }}{{ template "copyable" (list (print "ssh " .) (print "ssh " .) .) }}{{ else }}<span class="faint">-</span>{{ end }}</td>

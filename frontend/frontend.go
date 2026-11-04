@@ -23,9 +23,6 @@ type Handlers struct {
 	view *view.View
 	// subs holds the directories of Files lists, as detected.
 	subs *subCache
-	// commits holds the time of each project's last commit, for the
-	// sidebar of a workspace that lists its newest projects.
-	commits *LastCommits
 }
 
 // New returns the handlers over the options, with the templates parsed.
@@ -34,11 +31,7 @@ func New(opts Options) (*Handlers, error) {
 	if err != nil {
 		return nil, err
 	}
-	h := &Handlers{opts: opts, view: v, subs: &subCache{}, commits: &LastCommits{}}
-	if opts.Git != nil {
-		h.commits.Read = opts.Git.LastCommit
-	}
-	return h, nil
+	return &Handlers{opts: opts, view: v, subs: &subCache{}}, nil
 }
 
 // Routes returns the router of the pages, to mount at the root, every response under markdown.CSP.
@@ -50,7 +43,7 @@ func (h *Handlers) Routes() http.Handler {
 	r.Get("/login", h.loginForm)
 	r.With(access.SameOrigin).Post("/login", h.login)
 	r.With(access.SameOrigin).Post("/logout", h.logout)
-	r.Get("/healthz", func(w http.ResponseWriter, _ *http.Request) { _, _ = w.Write([]byte("ok\n")) })
+	r.Method(http.MethodGet, "/healthz", h.Health())
 
 	r.Group(func(r chi.Router) {
 		r.Use(h.opts.Guard.Require)
@@ -122,6 +115,62 @@ func (h *Handlers) Routes() http.Handler {
 	r.NotFound(h.opts.Guard.Require(http.HandlerFunc(h.notFound)).ServeHTTP)
 
 	return r
+}
+
+// Root registers on r what answers at the root whichever front end draws the
+// pages, because none of it is a page of either one. Routes is mounted under a
+// prefix now that the ported pages hold the root, and this is what could not
+// go under it with them:
+//
+//   - The session. The credential check the ported sign in form posts to, and
+//     the logout beside it. The Guard is the boundary in front of /api, the
+//     modules and the pages alike, so minting and reading a session cannot
+//     move while anything sits behind it: the sign in page is ported and the
+//     check is not.
+//   - The readiness check, which is asked for by whatever watches the
+//     instance and is nobody's page.
+//   - The theme's files, under the name the Go templates write. They are the
+//     same bytes the ported front end serves under /assets/theme; this second
+//     name goes at cutover.
+//   - The byte streams. A file of the artifact tree, a file of a checkout, and
+//     the .tgz of a directory of the tree: each is read from outside the PHP
+//     root and none of them is a page. The ported pages link to them here,
+//     with no base on the path, and mod_artifacts.php and Task\Files each say
+//     why.
+//   - A plugin's pages: the bare link and the catch-all its index.php answers.
+//     A module is its own PHP application and no part of the port, so an
+//     installed module's links mean the same before the cutover and after.
+//
+// The Guard and access.SameOrigin wrap what they wrap inside Routes. A module
+// inherits the sign in rather than carrying one, and it is the one part of the
+// front end that takes a POST, so a third party page must not be able to make
+// a signed in browser send it anything.
+func (h *Handlers) Root(r chi.Router) {
+	r.Method(http.MethodPost, "/login", policy(access.SameOrigin(http.HandlerFunc(h.login))))
+	r.Method(http.MethodPost, "/logout", policy(access.SameOrigin(http.HandlerFunc(h.logout))))
+	r.Method(http.MethodGet, "/healthz", h.Health())
+	r.Handle(view.AssetPrefix+"*", policy(assets()))
+
+	guarded := func(next http.HandlerFunc) http.Handler {
+		return policy(h.opts.Guard.Require(next))
+	}
+	r.Method(http.MethodGet, "/artifacts/files/*", guarded(h.artifactFile))
+	r.Method(http.MethodGet, "/files/*", guarded(h.checkoutFile))
+	r.Method(http.MethodGet, "/artifacts.tgz", guarded(h.artifactArchive))
+	r.Method(http.MethodGet, "/artifacts/*", guarded(h.artifactArchive))
+
+	mod := policy(h.opts.Guard.Require(access.SameOrigin(http.HandlerFunc(h.module))))
+	for _, pattern := range []string{"/m/{vendor}/{plugin}", "/m/{vendor}/{plugin}/*"} {
+		r.Handle(pattern, mod)
+	}
+}
+
+// Health answers the readiness check, which is nobody's page and is asked for
+// at the root by whatever watches the instance.
+func (h *Handlers) Health() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write([]byte("ok\n"))
+	})
 }
 
 // policy sets markdown.CSP on a response; a served file sets a stricter one of its own.

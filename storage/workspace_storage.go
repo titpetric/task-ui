@@ -86,6 +86,36 @@ func (s *WorkspaceStorage) Folders(ctx context.Context) ([]string, error) {
 	return folders, nil
 }
 
+// LayoutFolders is every workspace's folder, the default one first, as task-ui migrate-layout lays them out.
+func (s *WorkspaceStorage) LayoutFolders(ctx context.Context) ([]string, error) {
+	return client(s.db).Select[string](ctx,
+		"SELECT folder FROM workspace ORDER BY CASE WHEN folder = ? THEN 0 ELSE 1 END, folder", model.Default)
+}
+
+// workspaceHome is a workspace's folder and the ID of its home project,
+// as HomeProjectIDs reads them. A database migrated past the home
+// project has no column for one, and the error that reports the missing
+// column is what task-ui migrate-layout reads as "names none".
+type workspaceHome struct {
+	Folder    string `db:"folder"`
+	ProjectID string `db:"home_project_id"`
+}
+
+// HomeProjectIDs is the ID of the home project of each workspace that
+// names one, by folder.
+func (s *WorkspaceStorage) HomeProjectIDs(ctx context.Context) (map[string]string, error) {
+	rows, err := client(s.db).Select[workspaceHome](ctx,
+		"SELECT folder, home_project_id FROM workspace WHERE home_project_id <> ''")
+	if err != nil {
+		return nil, err
+	}
+	homes := map[string]string{}
+	for _, row := range rows {
+		homes[row.Folder] = row.ProjectID
+	}
+	return homes, nil
+}
+
 // Update writes a workspace back, by ID.
 func (s *WorkspaceStorage) Update(ctx context.Context, workspace *model.Workspace) error {
 	workspace.UpdatedAt = stamp()

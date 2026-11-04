@@ -1,0 +1,36 @@
+@startuml
+' Generated from schema/schema.yml by tools/docs.php. DO NOT EDIT.
+hide circle
+hide empty members
+skinparam linetype ortho
+skinparam shadowing false
+skinparam backgroundColor transparent
+entity "refinement_comment" {
+  * id : text
+  + thread_id : text
+  + user : text
+  + body : text
+  + note_id : text
+  + created_at : timestamp
+  + kind : text
+  + collapsed_into : text
+}
+
+entity "refinement_correction" {
+  * id : text
+  + thread_id : text
+  + comment_id : text
+  + corrects_id : text
+  + created_at : timestamp
+}
+
+entity "refinement_thread" {
+  * id : text
+  + title : text
+  + user : text
+  + report_markdown : text
+  + created_at : timestamp
+  + updated_at : timestamp
+}
+
+@enduml

@@ -1,0 +1,143 @@
+@startuml
+' Generated from schema/schema.yml by tools/docs.php. DO NOT EDIT.
+hide circle
+hide empty members
+skinparam linetype ortho
+skinparam shadowing false
+skinparam backgroundColor transparent
+entity "note" {
+  * id : text
+  + channel : TEXT
+  + parent_id : text
+  + user_id : text
+  + user_name : text
+  + body : text
+  + mentions : text
+  + state : TEXT
+  + run_id : text
+  + created_at : timestamp
+  + updated_at : timestamp
+  + about_run_id : text
+  + about_workflow_run_id : text
+  + area : text
+  + edited_at : timestamp
+  + workspace_id : text
+  + dir : text
+}
+
+entity "permission_policy" {
+  * id : text
+  + subject_kind : TEXT
+  + subject : text
+  + path : text
+  + effect : TEXT
+  + created_at : timestamp
+}
+
+entity "run" {
+  * id : text
+  + folder : text
+  + job : text
+  + user_id : text
+  + user_name : text
+  + state : TEXT
+  + exit_code : integer
+  + forced : integer
+  + scheduled : integer
+  + term_cols : integer
+  + term_rows : integer
+  + cast_path : text
+  + reason : text
+  + started_at : timestamp
+  + finished_at : timestamp
+  + created_at : timestamp
+  + updated_at : timestamp
+  + dir : text
+  + args : text
+  + target : text
+  + batch_id : text
+  + message : text
+  + title : text
+}
+
+entity "user" {
+  * id : text
+  + name : text
+  + role : TEXT
+  + folders : text
+  + created_at : timestamp
+  + updated_at : timestamp
+  + admin : boolean
+  + mcp : boolean
+  + agent_reply : boolean
+}
+
+entity "user_auth_token" {
+  * id : text
+  + user_id : text
+  + name : text
+  + hash : text
+  + used_at : timestamp
+  + created_at : timestamp
+  + updated_at : timestamp
+  + expires_at : timestamp
+}
+
+entity "workflow_run" {
+  * id : text
+  + workflow_id : text
+  + name : text
+  + user_id : text
+  + user_name : text
+  + state : TEXT
+  + message : text
+  + started_at : timestamp
+  + finished_at : timestamp
+  + created_at : timestamp
+  + updated_at : timestamp
+  + input : text
+  + answer : text
+}
+
+entity "workflow_run_step" {
+  * id : text
+  + workflow_run_id : text
+  + position : integer
+  + folder : text
+  + job : text
+  + run_id : text
+  + state : TEXT
+  + created_at : timestamp
+  + updated_at : timestamp
+  + prompt : text
+  + answer : text
+  + workflow_ref : text
+  + workflow_run_ref : text
+  + kind : text
+}
+
+entity "workspace" {
+  * id : text
+  + folder : text
+  + title : text
+  + description : text
+  + created_at : timestamp
+  + updated_at : timestamp
+  + home_project_id : text
+  + home_url : text
+  + home_branch : text
+  + hours : text
+  + shallow : boolean
+  + sidebar_limit : integer
+  + sort : integer
+}
+
+note }o--|| user : user_id
+note }o--|| run : run_id
+note }o--|| workspace : workspace_id
+run }o--|| user : user_id
+user_auth_token }o--|| user : user_id
+workflow_run }o--|| user : user_id
+workflow_run_step }o--|| workflow_run : workflow_run_id
+workflow_run_step }o--|| run : run_id
+@enduml

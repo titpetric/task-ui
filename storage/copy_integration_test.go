@@ -4,6 +4,7 @@ package storage_test
 
 import (
 	"context"
+	"errors"
 	"os"
 	"path/filepath"
 	"testing"
@@ -38,4 +39,21 @@ func TestCopy(t *testing.T) {
 	after, err := os.ReadFile(path)
 	assert.NoError(t, err)
 	assert.Equal(t, before, after)
+}
+
+// A path Copy can neither read nor write: a directory that is a file,
+// which the stat answers for with something other than "not there", and
+// a pool that is closed.
+func TestCopy_Errors(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	dir := t.TempDir()
+	file := filepath.Join(dir, "file")
+	assert.NoError(t, os.WriteFile(file, []byte("x"), 0o600))
+
+	err := storage.Copy(ctx, newDB(t), filepath.Join(file, "copy.db"))
+	assert.Error(t, err)
+	assert.False(t, errors.Is(err, os.ErrExist), "a file in the way of the directory is not ErrExist")
+
+	assert.ErrorContains(t, storage.Copy(ctx, closedDB(t), filepath.Join(dir, "copy.db")), errClosed)
 }

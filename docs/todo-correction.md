@@ -2,7 +2,9 @@
 
 Two specifications here stand against phpscript and MiniTPL sight unseen: the module system, and the [front end](phpfront.md) that replaces the Go pages. Each one names things neither runtime has. Every requirement is below with the snippet the specification calls for, what the runtime does instead, and the correction the code takes.
 
-Sections 1 to 8 are the module system, 9 to 18 the front end.
+Sections 1 to 8 are the module system, 9 to 25 the front end.
+
+A gap of this port's own making is not one of these and is not recorded here: a binding that answered less than the Go page it replaced is a binding to widen, which [the front end](phpfront.md) states as a rule.
 
 Checked against `github.com/titpetric/phpscript` at commit `ee889fe`, which `@main` resolves to as `v0.6.1-0.20261027175813-ee889febddf9`, and `titpetric/minitpl` v1.3.4.
 
@@ -244,6 +246,158 @@ as numbers.
 Recorded as a boundary and not a gap: two writers share one table and the
 format is the Go driver's. It is the first thing a module's write gets right,
 and the only sign of getting it wrong is a page that lists nothing.
+
+## 19. A write inside a fixture fails silently
+
+Specified: a fixture renders a module's page and states the markup, since the
+template is the page.
+
+A fixture runs under a sandbox that refuses a write. `file_put_contents`
+returns false and leaves no file, while `is_writable` on the same directory
+returns true. MiniTPL compiles inside `load()` where the source is newer than
+the compiled file, the write fails silently, and `_find_path` then reports
+`Template file 'run.tpl' doesn't exist! Is the compile dir writable?`, naming
+the condition the fixture reports as true. A page whose template is compiled
+renders in a fixture; a new template renders nowhere until `atkins precompile`
+writes it.
+
+Correction: a module holds what the template reads in a `scope()` method and
+`serve()` renders it, so `tests/run-page.phpt` and `tests/report-page.phpt`
+state every key of the scope and no fixture compiles anything.
+`is_writable` under the sandbox needs to answer what a write does.
+
+## 20. A modifier tokenizes as a name and the `T_STATIC` family is undefined
+
+Specified: the API table of a module's `README.md`, which carries each method's
+docblock, read with `token_get_all()` because [12](#12-phpscript-list-reports-no-methods)
+leaves nothing else to read it with.
+
+`token_get_all` answers `T_STRING` for `static`, `public`, `private`,
+`protected`, `final` and `abstract`, and the constants that name them are not
+declared: `T_STATIC` raises `Undefined constant`. A reader that keeps a
+docblock until the token it documents cannot ask whether the token between the
+two is a modifier, so a documented static method reads as undocumented and the
+table prints `-`.
+
+Correction: `tools/docs.php` holds `MODIFIERS` and matches the token's text. It
+is the one place in the tree that reads a modifier, so the list is stated once.
+
+## 21. `fmt` drops the fraction of a whole float literal
+
+Specified: `Task\Chart`, whose share axis pins to 0/25/50/75/100 where the unit
+it draws is a percentage and reads against its own hundred, and scales to the
+data otherwise.
+
+`phpscript fmt` rewrites `100.0` to `100` and `2.0` to `2`. That is not a
+format change: in PHP `100.0 === 100` is false, float against int, so a
+comparison the author wrote and tested stops matching the moment the formatter
+runs over the file. `1.50` to `1.5` is the same number of the same type and is
+the correct half of the rule. The probe is three lines — `$a = 100.0; if ($a
+=== 100.0)` comes back as `$a = 100; if ($a === 100)` — and nothing reports it:
+`fmt -l` is clean afterwards, the linter sees valid code, and the only symptom
+was a chart drawing 0/50/100 instead of 0/25/50/75/100, caught by a text diff
+of the SVG.
+
+Correction: `Task\Chart` casts both sides of the comparison,
+`(float)$unit["max"] === (float)self::SHARE`, with a comment saying why. It is
+the only place in the tree that compares a computed float against a
+whole-number literal. The fix belongs in Go: the formatter prints a float
+literal with its fraction.
+
+## 22. `self::` in a const array resolves against the reader
+
+Specified: `Task\User` owns the role list once — `const ROLES = array(self::ADMIN, self::RUNNER, self::VIEWER)` beside the three constants it is built from — so the permission matrix's column count and the role select cannot drift apart.
+
+The members are not resolved where the const is declared. They are resolved where it is read: `Task\User::ROLES` from `mod_settings` raises `undefined class constant mod_settings::ADMIN`, and from `mod_user_edit` it raises `mod_user_edit::RUNNER`. The same const read from a method of `Task\User` is correct, which is why a three-line probe passes and the page 500s. Nothing reports it ahead of the request: `fmt` and `lint` are clean, and the linter resolves no constant.
+
+Correction: `Task\User::ROLES` and `::ASSIGNABLE` write the three strings out, with a comment saying why. The fix belongs in Go: a constant expression is evaluated in the scope of the class that declares it.
+
+## 23. `fmt` moves a comment out of the expression it sits in
+
+Specified: a comment sits beside the line it is about. In the thread page's
+`scope()` the two halves of a run's report — the images, which are looked at,
+and the prose, which is read — are two keys of one array, and which of them the
+page draws is the thing to say beside them.
+
+`phpscript fmt` relocates a comment written anywhere inside an expression to
+**after the statement that holds it**. Both of these are one pass:
+
+```php
+return array(
+	"thread" => $folder,
+	// The images are the thing to look at and the prose the thing to read.
+	"visual" => $report["images"] !== "",
+);
+```
+
+```php
+return array("thread" => $folder, "visual" => $report["images"] !== "");
+// The images are the thing to look at and the prose the thing to read.
+```
+
+The same happens in an argument list, and in a literal nested one deeper: the
+comment leaves every level and lands after the statement. A comment at the head
+of a block stays where it is written, so the rule is expressions, not comments.
+The result is stable — a second pass changes nothing — which is what makes it
+quiet: the comment now reads as being about the statement after it, and the
+author who moved it next sees no diff.
+
+`fmt -l` does report the file, so the pipeline does catch it. It cost one
+round trip per file and nothing silent.
+
+Correction: nothing in the tree writes a comment inside an expression. Where one
+is wanted it goes above the statement, or into the docblock of the method, or
+into the template that draws the thing. The fix belongs in Go: a comment inside
+an expression keeps its position, the way `gofmt` keeps one inside a composite
+literal.
+
+## 24. An empty path parameter lets the query string stand in for it
+
+`runner/request.go:479` writes a path parameter into `$_REQUEST` only when it
+matched something:
+
+```go
+value := r.PathValue(param.Name)
+if value == "" && param.Rest {
+	value = r.PathValue("*")
+}
+if value != "" {
+	c.Path[param.Name] = value
+}
+```
+
+A `{rest...}` wildcard that matched nothing is therefore absent, and `$_REQUEST`
+merges the path over the query, so `param("rest")` answers with whatever the
+query string called `rest`. The route `/settings/projects/{rest...}` and the URL
+`/settings/projects/?rest=widget` drew the edit page for `widget`, where Go
+answers 404: the caller supplied a path segment through the query string.
+
+Nothing is escalated by it here — the page the parameter reaches is one the
+caller may already ask for by its real URL — but a path parameter that an
+untrusted query can set is the wrong shape for any check written over it.
+
+Correction: a wildcard is read from `Task\Route::path()` with the literal prefix
+cut, never with `param()`. `/settings/projects/?rest=widget` is 404 on both
+front ends, verified. The fix belongs in Go: an empty match of a parameter the
+pattern declares should be written as `""` and shadow the query, the way a
+matched one does. A declared parameter is either present or the route did not
+match, and either way the query has no say in it.
+
+## 25. `html/template` normalises a URL attribute and not a data attribute
+
+`href="{{.}}"` puts Go's escaper in a URL context: it percent-escapes what is
+outside the unreserved set and the URL delimiters, and leaves an existing `%XX`
+alone. The same value in `data-next="{{.}}"` is plain attribute escaping, which
+normalises nothing. MiniTPL has one escaper and applies it to both, so a link
+carrying `?workspace=%20labs` matched in the `data-` attribute and diverged in
+the `href`.
+
+Correction: `Task\Route::linked()` does the URL normalisation, and a template
+asks for it per link rather than having `href()` fold it in — the two attributes
+want different answers for one value, so the choice belongs at the call site.
+Not a runtime gap in the end, but it is the one place where matching Go's output
+needs a second escaper, and it is invisible until a path carries a `%XX` or a
+space.
 
 ## Not a runtime gap
 

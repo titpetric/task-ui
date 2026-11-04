@@ -1,0 +1,202 @@
+@startuml
+' Generated from schema/schema.yml by tools/docs.php. DO NOT EDIT.
+hide circle
+hide empty members
+skinparam linetype ortho
+skinparam shadowing false
+skinparam backgroundColor transparent
+entity "env_file" {
+  * id : text
+  + folder : text
+  + path : text
+  + content : text
+  + created_at : timestamp
+  + updated_at : timestamp
+}
+
+entity "permission_policy" {
+  * id : text
+  + subject_kind : TEXT
+  + subject : text
+  + path : text
+  + effect : TEXT
+  + created_at : timestamp
+}
+
+entity "project" {
+  * id : text
+  + folder : text
+  + title : text
+  + description : text
+  + source_url : text
+  + branch : text
+  + allow : text
+  + commands : text
+  + sources : text
+  + job_allow : text
+  + created_at : timestamp
+  + updated_at : timestamp
+  + shallow : boolean
+  + sidebar_hidden : boolean
+}
+
+entity "run" {
+  * id : text
+  + folder : text
+  + job : text
+  + user_id : text
+  + user_name : text
+  + state : TEXT
+  + exit_code : integer
+  + forced : integer
+  + scheduled : integer
+  + term_cols : integer
+  + term_rows : integer
+  + cast_path : text
+  + reason : text
+  + started_at : timestamp
+  + finished_at : timestamp
+  + created_at : timestamp
+  + updated_at : timestamp
+  + dir : text
+  + args : text
+  + target : text
+  + batch_id : text
+  + message : text
+  + title : text
+}
+
+entity "schedule" {
+  * id : text
+  + folder : text
+  + job : text
+  + user_id : text
+  + user_name : text
+  + expression : text
+  + enabled : integer
+  + last_run_at : timestamp
+  + next_run_at : timestamp
+  + created_at : timestamp
+  + updated_at : timestamp
+  + target : text
+  + args : text
+  + triage : integer
+  + workflow_id : text
+}
+
+entity "secret" {
+  * id : text
+  + scope : text
+  + name : text
+  + content : text
+  + created_at : timestamp
+  + updated_at : timestamp
+  + is_secret : integer
+}
+
+entity "secret_read" {
+  * id : text
+  + secret_id : text
+  + name : text
+  + run_id : text
+  + folder : text
+  + dir : text
+  + job : text
+  + user_name : text
+  + created_at : timestamp
+}
+
+entity "setting" {
+  * name : text
+  + value : text
+  + updated_at : timestamp
+}
+
+entity "sidebar" {
+  * id : text
+  + kind : text
+  + href : text
+  + title : text
+  + icon : text
+  + position : integer
+  + hidden : boolean
+  + rule : text
+  + created_at : timestamp
+  + updated_at : timestamp
+}
+
+entity "tool" {
+  * name : text
+  + category : text
+  + version : text
+  + path : text
+  + description : text
+  + updated_at : timestamp
+}
+
+entity "user" {
+  * id : text
+  + name : text
+  + role : TEXT
+  + folders : text
+  + created_at : timestamp
+  + updated_at : timestamp
+  + admin : boolean
+  + mcp : boolean
+  + agent_reply : boolean
+}
+
+entity "workflow" {
+  * id : text
+  + name : text
+  + user_id : text
+  + user_name : text
+  + created_at : timestamp
+  + updated_at : timestamp
+  + description : text
+  + prompt : text
+  + prompt_folder : text
+  + run_as_user_id : text
+  + runs_over : text
+  + sidebar_hidden : boolean
+}
+
+entity "workflow_step" {
+  * id : text
+  + workflow_id : text
+  + position : integer
+  + folder : text
+  + job : text
+  + disabled : boolean
+  + prompt : text
+  + dir : text
+  + workflow_ref : text
+  + target : text
+  + args : text
+  + kind : text
+}
+
+entity "workspace" {
+  * id : text
+  + folder : text
+  + title : text
+  + description : text
+  + created_at : timestamp
+  + updated_at : timestamp
+  + home_project_id : text
+  + home_url : text
+  + home_branch : text
+  + hours : text
+  + shallow : boolean
+  + sidebar_limit : integer
+  + sort : integer
+}
+
+run }o--|| user : user_id
+schedule }o--|| user : user_id
+schedule }o--|| workflow : workflow_id
+secret_read }o--|| secret : secret_id
+secret_read }o--|| run : run_id
+workflow }o--|| user : user_id
+workflow_step }o--|| workflow : workflow_id
+@enduml

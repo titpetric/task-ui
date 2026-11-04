@@ -35,11 +35,21 @@ work="$(mktemp -d)"
 pids=()
 cleanup() {
   for pid in "${pids[@]}"; do kill "$pid" 2>/dev/null || true; done
+  if [ -n "${TASK_UI_COVER_DIR:-}" ]; then
+    for pid in "${pids[@]}"; do wait "$pid" 2>/dev/null || true; done
+  fi
   rm -rf "$work"
 }
 trap cleanup EXIT
 
-go build -o "$work/task-ui" .
+# TASK_UI_COVER_DIR instruments the server and collects its counters
+# there, the way scripts/demo.sh does; scripts/test-coverage.sh sets it.
+build=(go build -o "$work/task-ui")
+if [ -n "${TASK_UI_COVER_DIR:-}" ]; then
+  mkdir -p "$TASK_UI_COVER_DIR"
+  build=(go build -cover -coverpkg=./... -o "$work/task-ui")
+fi
+"${build[@]}" .
 go build -o "$work/fakehub" ./internal/cmd/fakehub
 
 hub=3191
@@ -102,6 +112,7 @@ env PATH="$work/bin:$PATH" \
   TASK_UI_SSH_DIR="$work/ssh" \
   TASK_UI_ADMINS=admin \
   TASK_UI_AUTOLOGIN=admin \
+  ${TASK_UI_COVER_DIR:+GOCOVERDIR="$TASK_UI_COVER_DIR"} \
   "$work/task-ui" >"$work/task-ui.log" 2>&1 &
 pids+=("$!")
 for _ in $(seq 1 50); do

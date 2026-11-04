@@ -187,3 +187,91 @@ func TestUserStorage_SetFlags(t *testing.T) {
 	n, _ = users.Admins(ctx)
 	assert.Equal(t, int64(0), n)
 }
+
+// Every method hands back what the driver said.
+func TestUserStorage_Closed(t *testing.T) {
+	t.Parallel()
+	users := storage.NewUserStorage(closedDB(t))
+	ctx := context.Background()
+	user := &model.User{Name: "alice", Role: model.RoleRunner}
+
+	assert.ErrorContains(t, users.Create(ctx, user), errClosed)
+	_, err := users.Get(ctx, "u1")
+	assert.ErrorContains(t, err, errClosed)
+	_, err = users.GetByName(ctx, "alice")
+	assert.ErrorContains(t, err, errClosed)
+	_, err = users.List(ctx)
+	assert.ErrorContains(t, err, errClosed)
+	_, err = users.Count(ctx)
+	assert.ErrorContains(t, err, errClosed)
+	_, err = users.Admins(ctx)
+	assert.ErrorContains(t, err, errClosed)
+	_, err = users.Agents(ctx)
+	assert.ErrorContains(t, err, errClosed)
+	assert.ErrorContains(t, users.Update(ctx, user), errClosed)
+	assert.ErrorContains(t, users.SetFlags(ctx, user, true, model.RoleRunner, true, false, false), errClosed)
+	assert.ErrorContains(t, users.Delete(ctx, "u1"), errClosed)
+	_, err = users.MoveFolder(ctx, "acme", "acme2")
+	assert.ErrorContains(t, err, errClosed)
+}
+
+// SetFlags counts the admins before it takes the flag from the last of
+// them, writes the user back, and drops the MCP token when MCP goes: it
+// stops at whichever of those failed.
+func TestUserStorage_SetFlagsErrors(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+
+	counting := newDB(t)
+	users := storage.NewUserStorage(counting)
+	admin := &model.User{Name: "root", Role: model.RoleAdmin}
+	assert.NoError(t, users.Create(ctx, admin))
+	second := &model.User{Name: "other", Role: model.RoleAdmin}
+	assert.NoError(t, users.Create(ctx, second))
+
+	refuse(t, counting, model.UserTable, "UPDATE")
+	assert.ErrorContains(t, users.SetFlags(ctx, second, false, model.RoleRunner, true, false, false), errRefused)
+
+	tokens := newDB(t)
+	withToken := storage.NewUserStorage(tokens)
+	user := &model.User{Name: "alice", Role: model.RoleRunner, Mcp: true}
+	assert.NoError(t, withToken.Create(ctx, user))
+	_, err := storage.NewUserAuthTokenStorage(tokens).SetUntil(ctx, user.ID, "mcp", "hash", time.Now().Add(time.Hour))
+	assert.NoError(t, err)
+	refuse(t, tokens, model.UserAuthTokenTable, "DELETE")
+	assert.ErrorContains(t, withToken.SetFlags(ctx, user, false, model.RoleRunner, false, false, false), errRefused)
+}
+
+// Delete clears what a user signs in with, its policy and then its row,
+// and stops at whichever of those failed.
+func TestUserStorage_DeleteErrors(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+
+	for _, table := range []string{model.UserEmailTable, model.UserSessionTable, model.UserAuthPasswordTable, model.UserAuthTokenTable, model.UserTable} {
+		db := brokenDB(t, table)
+		assert.ErrorContains(t, storage.NewUserStorage(db).Delete(ctx, "u1"), errNoTable, table)
+	}
+
+	policies := newDB(t)
+	users := storage.NewUserStorage(policies)
+	user := &model.User{Name: "alice", Role: model.RoleRunner}
+	assert.NoError(t, users.Create(ctx, user))
+	assert.NoError(t, users.Policies().Put(ctx, permission.KindUser, "alice", "run", permission.Allow))
+	refuse(t, policies, model.PermissionPolicyTable, "DELETE")
+	assert.ErrorContains(t, users.Delete(ctx, user.ID), errRefused)
+}
+
+// A move rewrites the folder list of a user at a time, and stops at the
+// user that failed.
+func TestUserStorage_MoveFolderErrors(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	db := newDB(t)
+	users := storage.NewUserStorage(db)
+	assert.NoError(t, users.Create(ctx, &model.User{Name: "alice", Role: model.RoleRunner, Folders: model.EncodeList([]string{"acme"})}))
+
+	refuse(t, db, model.UserTable, "UPDATE")
+	_, err := users.MoveFolder(ctx, "acme", "acme2")
+	assert.ErrorContains(t, err, errRefused)
+}

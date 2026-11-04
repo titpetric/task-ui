@@ -451,3 +451,201 @@ func TestWorkflowRunStorage_HistoryDelete(t *testing.T) {
 	history, _ = runs.History(ctx)
 	assert.Len(t, history, 1)
 }
+
+// Every method of the workflows hands back what the driver said.
+func TestWorkflowStorage_Closed(t *testing.T) {
+	t.Parallel()
+	flows := storage.NewWorkflowStorage(closedDB(t))
+	ctx := context.Background()
+	workflow := &model.Workflow{Name: "deploy"}
+	steps := []model.WorkflowStep{{Folder: "acme", Job: "build"}}
+
+	assert.ErrorContains(t, flows.Create(ctx, workflow, steps), errClosed)
+	_, err := flows.Get(ctx, "w1")
+	assert.ErrorContains(t, err, errClosed)
+	_, err = flows.Steps(ctx, "w1")
+	assert.ErrorContains(t, err, errClosed)
+	_, err = flows.List(ctx)
+	assert.ErrorContains(t, err, errClosed)
+	_, err = flows.UsedBy(ctx, "w1")
+	assert.ErrorContains(t, err, errClosed)
+	_, err = flows.Reaches(ctx, "w1", "w2")
+	assert.ErrorContains(t, err, errClosed)
+	_, err = flows.Expand(ctx, []model.WorkflowStep{{WorkflowRef: "w2"}})
+	assert.ErrorContains(t, err, errClosed)
+	assert.ErrorContains(t, flows.Update(ctx, workflow, steps), errClosed)
+	assert.ErrorContains(t, flows.Delete(ctx, "w1"), errClosed)
+}
+
+// Every method of the workflow runs hands back what the driver said.
+func TestWorkflowRunStorage_Closed(t *testing.T) {
+	t.Parallel()
+	runs := storage.NewWorkflowRunStorage(closedDB(t))
+	ctx := context.Background()
+	run := &model.WorkflowRun{WorkflowID: "w1"}
+
+	assert.ErrorContains(t, runs.Create(ctx, run, []model.WorkflowStep{{Folder: "acme", Job: "build"}}), errClosed)
+	_, err := runs.Get(ctx, "r1")
+	assert.ErrorContains(t, err, errClosed)
+	_, err = runs.Steps(ctx, "r1")
+	assert.ErrorContains(t, err, errClosed)
+	_, err = runs.List(ctx, 0)
+	assert.ErrorContains(t, err, errClosed)
+	_, err = runs.History(ctx)
+	assert.ErrorContains(t, err, errClosed)
+	_, err = runs.Answered(ctx, "w1", "", 5)
+	assert.ErrorContains(t, err, errClosed)
+	_, err = runs.Number(ctx, run)
+	assert.ErrorContains(t, err, errClosed)
+	assert.ErrorContains(t, runs.Update(ctx, run), errClosed)
+	assert.ErrorContains(t, runs.UpdateStep(ctx, &model.WorkflowRunStep{ID: "s1"}), errClosed)
+	assert.ErrorContains(t, runs.Delete(ctx, "r1"), errClosed)
+	assert.ErrorContains(t, runs.Interrupt(ctx, "lost"), errClosed)
+}
+
+// The statements inside a transaction hand their error back: the tables
+// a workflow and a workflow run are written across, one gone at a time.
+func TestWorkflowStorage_Broken(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	workflow := &model.Workflow{ID: "w1", Name: "deploy"}
+	steps := []model.WorkflowStep{{Folder: "acme", Job: "build"}}
+
+	for _, table := range []string{model.WorkflowTable, model.WorkflowStepTable} {
+		flows := storage.NewWorkflowStorage(brokenDB(t, table))
+		assert.ErrorContains(t, flows.Create(ctx, &model.Workflow{Name: "deploy"}, steps), errNoTable, table)
+		assert.ErrorContains(t, flows.Update(ctx, workflow, steps), errNoTable, table)
+		assert.ErrorContains(t, flows.Delete(ctx, "w1"), errNoTable, table)
+	}
+
+	for _, table := range []string{model.WorkflowRunTable, model.WorkflowRunStepTable} {
+		runs := storage.NewWorkflowRunStorage(brokenDB(t, table))
+		assert.ErrorContains(t, runs.Create(ctx, &model.WorkflowRun{WorkflowID: "w1"}, steps), errNoTable, table)
+		assert.ErrorContains(t, runs.Delete(ctx, "r1"), errNoTable, table)
+		assert.ErrorContains(t, runs.Interrupt(ctx, "lost"), errNoTable, table)
+	}
+}
+
+// A step that runs a workflow is checked against the workflows there
+// are, and the check reads them: a workflow that is not there, one that
+// runs this one, and the reads that answer neither.
+func TestWorkflowStorage_RefErrors(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	flows := storage.NewWorkflowStorage(newDB(t))
+
+	inner := &model.Workflow{Name: "inner"}
+	assert.NoError(t, flows.Create(ctx, inner, []model.WorkflowStep{{Folder: "acme", Job: "build"}}))
+	outer := &model.Workflow{Name: "outer"}
+	assert.NoError(t, flows.Create(ctx, outer, []model.WorkflowStep{{WorkflowRef: inner.ID}}))
+
+	assert.ErrorContains(t, flows.Update(ctx, inner, []model.WorkflowStep{{WorkflowRef: inner.ID}}), "may not run itself")
+	assert.ErrorContains(t, flows.Update(ctx, inner, []model.WorkflowStep{{WorkflowRef: "nope"}}), "no workflow nope")
+	assert.ErrorContains(t, flows.Update(ctx, inner, []model.WorkflowStep{{WorkflowRef: outer.ID}}), "runs this workflow: a loop")
+
+	// The read the loop check makes is the steps of the workflow a step
+	// runs; without that table it answers neither yes nor no.
+	gone := storage.NewWorkflowStorage(brokenDB(t, model.WorkflowStepTable))
+	_, err := gone.Reaches(ctx, "w1", "w2")
+	assert.ErrorContains(t, err, errNoTable)
+	_, err = gone.Expand(ctx, []model.WorkflowStep{{WorkflowRef: "w2"}})
+	assert.ErrorContains(t, err, errNoTable)
+
+	// The workflow a step runs is there and the loop check cannot read
+	// its steps: the check stops rather than deciding without them.
+	losing := newDB(t)
+	losingFlows := storage.NewWorkflowStorage(losing)
+	kept := &model.Workflow{Name: "kept"}
+	assert.NoError(t, losingFlows.Create(ctx, kept, []model.WorkflowStep{{Folder: "acme", Job: "build"}}))
+	caller := &model.Workflow{Name: "caller"}
+	assert.NoError(t, losingFlows.Create(ctx, caller, []model.WorkflowStep{{Folder: "acme", Job: "build"}}))
+	drop(t, losing, model.WorkflowStepTable)
+	assert.ErrorContains(t, losingFlows.Update(ctx, caller, []model.WorkflowStep{{WorkflowRef: kept.ID}}), errNoTable)
+}
+
+// A workflow two steps run is expanded once: the second step is the
+// same workflow and adds nothing.
+func TestWorkflowStorage_ExpandTwice(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	flows := storage.NewWorkflowStorage(newDB(t))
+
+	inner := &model.Workflow{Name: "inner"}
+	assert.NoError(t, flows.Create(ctx, inner, []model.WorkflowStep{{Folder: "acme", Job: "build"}}))
+
+	flat, err := flows.Expand(ctx, []model.WorkflowStep{{WorkflowRef: inner.ID}, {WorkflowRef: inner.ID}})
+	assert.NoError(t, err)
+	assert.Len(t, flat, 1)
+	assert.Equal(t, "build", flat[0].Job)
+}
+
+// The check of a step's workflow reads the row, and a read that answers
+// neither the row nor "not there" is its own error.
+func TestWorkflowStorage_RefReadFails(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	db := newDB(t)
+	flows := storage.NewWorkflowStorage(db)
+	inner := &model.Workflow{Name: "inner"}
+	assert.NoError(t, flows.Create(ctx, inner, []model.WorkflowStep{{Folder: "acme", Job: "build"}}))
+	outer := &model.Workflow{Name: "outer"}
+	assert.NoError(t, flows.Create(ctx, outer, []model.WorkflowStep{{Folder: "acme", Job: "build"}}))
+
+	widen(t, db, model.WorkflowTable)
+	assert.ErrorContains(t, flows.Update(ctx, outer, []model.WorkflowStep{{WorkflowRef: inner.ID}}), errNoField)
+}
+
+// A delete clears the steps and then the workflow, and stops at the one
+// that failed. An interrupt writes the steps that ran, the steps that
+// waited and then the run, and stops at the one that failed.
+func TestWorkflowStorage_WriteErrors(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+
+	dropping := newDB(t)
+	flows := storage.NewWorkflowStorage(dropping)
+	workflow := &model.Workflow{Name: "deploy"}
+	assert.NoError(t, flows.Create(ctx, workflow, []model.WorkflowStep{{Folder: "acme", Job: "build"}}))
+	refuse(t, dropping, model.WorkflowTable, "DELETE")
+	assert.ErrorContains(t, flows.Delete(ctx, workflow.ID), errRefused)
+
+	steps := newDB(t)
+	withSteps := storage.NewWorkflowStorage(steps)
+	stepped := &model.Workflow{Name: "deploy"}
+	assert.NoError(t, withSteps.Create(ctx, stepped, []model.WorkflowStep{{Folder: "acme", Job: "build"}}))
+	refuse(t, steps, model.WorkflowStepTable, "DELETE")
+	assert.ErrorContains(t, withSteps.Delete(ctx, stepped.ID), errRefused)
+
+	// A run whose step waits and none of whose steps runs: the first
+	// statement of the interrupt writes nothing and the second writes
+	// the step that waited.
+	waiting := newDB(t)
+	runs := storage.NewWorkflowRunStorage(waiting)
+	assert.NoError(t, runs.Create(ctx, &model.WorkflowRun{WorkflowID: "w1"}, []model.WorkflowStep{{Folder: "acme", Job: "build"}}))
+	refuse(t, waiting, model.WorkflowRunStepTable, "UPDATE")
+	assert.ErrorContains(t, runs.Interrupt(ctx, "lost"), errRefused)
+
+	// The same run with its steps left alone: the interrupt reaches the
+	// run's own row.
+	lost := newDB(t)
+	byRun := storage.NewWorkflowRunStorage(lost)
+	assert.NoError(t, byRun.Create(ctx, &model.WorkflowRun{WorkflowID: "w1"}, []model.WorkflowStep{{Folder: "acme", Job: "build"}}))
+	refuse(t, lost, model.WorkflowRunTable, "UPDATE")
+	assert.ErrorContains(t, byRun.Interrupt(ctx, "lost"), errRefused)
+}
+
+// A workflow another workflow runs is kept, named by what runs it.
+func TestWorkflowStorage_DeleteInUse(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	flows := storage.NewWorkflowStorage(newDB(t))
+
+	inner := &model.Workflow{Name: "inner"}
+	assert.NoError(t, flows.Create(ctx, inner, []model.WorkflowStep{{Folder: "acme", Job: "build"}}))
+	outer := &model.Workflow{Name: "outer"}
+	assert.NoError(t, flows.Create(ctx, outer, []model.WorkflowStep{{WorkflowRef: inner.ID}}))
+
+	err := flows.Delete(ctx, inner.ID)
+	assert.ErrorIs(t, err, storage.ErrInUse)
+	assert.ErrorContains(t, err, "outer runs it")
+}

@@ -81,3 +81,46 @@ func TestSSHKeyPolicyStorage_Users(t *testing.T) {
 	keys, _ = policies.For(ctx, model.RoleViewer, "alice")
 	assert.Len(t, keys, 0)
 }
+
+// Every method hands back what the driver said.
+func TestSSHKeyPolicyStorage_Closed(t *testing.T) {
+	t.Parallel()
+	policies := storage.NewSSHKeyPolicyStorage(closedDB(t))
+	ctx := context.Background()
+
+	assert.ErrorContains(t, policies.Set(ctx, "deploy", []string{model.RoleAdmin}), errClosed)
+	assert.ErrorContains(t, policies.SetUsers(ctx, "deploy", []string{"alice"}), errClosed)
+	_, err := policies.Roles(ctx, "deploy")
+	assert.ErrorContains(t, err, errClosed)
+	_, err = policies.All(ctx)
+	assert.ErrorContains(t, err, errClosed)
+	_, err = policies.Keys(ctx, model.RoleAdmin)
+	assert.ErrorContains(t, err, errClosed)
+	_, err = policies.AllUsers(ctx)
+	assert.ErrorContains(t, err, errClosed)
+	_, err = policies.For(ctx, model.RoleAdmin, "alice")
+	assert.ErrorContains(t, err, errClosed)
+	assert.ErrorContains(t, policies.Delete(ctx, "deploy"), errClosed)
+}
+
+// Set and SetUsers clear the key's rows and then write them, and stop at
+// the write that failed. Delete clears two tables and stops at the
+// second: the trigger leaves the users alone and refuses the roles.
+func TestSSHKeyPolicyStorage_Writes(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+
+	roles := newDB(t)
+	refuse(t, roles, model.SSHKeyPolicyTable, "INSERT")
+	assert.ErrorContains(t, storage.NewSSHKeyPolicyStorage(roles).Set(ctx, "deploy", []string{model.RoleAdmin}), errRefused)
+
+	users := newDB(t)
+	refuse(t, users, model.SSHKeyUserTable, "INSERT")
+	assert.ErrorContains(t, storage.NewSSHKeyPolicyStorage(users).SetUsers(ctx, "deploy", []string{"alice"}), errRefused)
+
+	second := newDB(t)
+	held := storage.NewSSHKeyPolicyStorage(second)
+	assert.NoError(t, held.Set(ctx, "deploy", []string{model.RoleAdmin}))
+	refuse(t, second, model.SSHKeyPolicyTable, "DELETE")
+	assert.ErrorContains(t, held.Delete(ctx, "deploy"), errRefused)
+}

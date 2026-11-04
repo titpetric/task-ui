@@ -148,3 +148,32 @@ func TestPermissionPolicyStorage_DeleteSubject(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Len(t, policy, 1, "another subject keeps its entries")
 }
+
+// Every method hands back what the driver said. Put clears the entry of
+// the path before it writes one, so a dead pool stops it at the delete,
+// and a trigger at the insert.
+func TestPermissionPolicyStorage_Closed(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	policies := storage.NewPermissionPolicyStorage(closedDB(t))
+
+	_, err := policies.Policy(ctx, permission.KindRole, model.RoleRunner)
+	assert.ErrorContains(t, err, errClosed)
+	assert.ErrorContains(t, policies.Put(ctx, permission.KindRole, model.RoleRunner, "secret/all", permission.Allow), errClosed)
+	assert.ErrorContains(t, policies.DeleteSubject(ctx, permission.KindRole, model.RoleRunner), errClosed)
+
+	refused := newDB(t)
+	refuse(t, refused, model.PermissionPolicyTable, "INSERT")
+	assert.ErrorContains(t, storage.NewPermissionPolicyStorage(refused).
+		Put(ctx, permission.KindRole, model.RoleRunner, "secret/all", permission.Allow), errRefused)
+}
+
+// A policy the pool cannot read leaves the user with what the other
+// allows: For swallows the error, by design, so a page renders.
+func TestPermissionPolicyStorage_ForClosed(t *testing.T) {
+	t.Parallel()
+	set := storage.NewPermissionPolicyStorage(closedDB(t)).
+		For(context.Background(), &model.User{Name: "alice", Role: model.RoleRunner})
+	assert.Len(t, set.Role, 0)
+	assert.Len(t, set.Own, 0)
+}

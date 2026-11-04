@@ -39,12 +39,26 @@ class Permission {
 		return isset($file["checks"]) ? $file["checks"] : array();
 	}
 
+	/**
+	 * extras is the rules the sections added of their own, which no column of
+	 * every section holds: a key of <section>/<rule>, and the rule's own
+	 * title, which the matrix composes with the section's.
+	 */
+	static function extras() {
+		$file = self::file();
+
+		return isset($file["extras"]) ? $file["extras"] : array();
+	}
+
 	/** extra reports whether a path is a rule a section added of its own. */
 	static function extra($path) {
-		$file = self::file();
-		$extras = isset($file["extras"]) ? $file["extras"] : array();
+		foreach (self::extras() as $each) {
+			if (Row::text($each, "key") === $path) {
+				return true;
+			}
+		}
 
-		return in_array($path, $extras, true);
+		return false;
 	}
 
 	/** valid reports whether a policy may set a path. */

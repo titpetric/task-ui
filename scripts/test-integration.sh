@@ -26,11 +26,17 @@ mem="${TASK_UI_TEST_MEM:-2GiB}"
 procs="${TASK_UI_TEST_PROCS:-2}"
 batch="${TASK_UI_TEST_BATCH:-20}"
 
-# Packages that hold at least one test under the tag. go list reads the build
-# tag, so a package with no tagged file is left out instead of being built for
-# nothing.
+# Packages that hold a test file the tag turns on, which is the suite. The
+# tag adds files rather than replacing them, so a package's test file count
+# under the tag is higher than without it exactly when it has a tagged file;
+# listing by `if .TestGoFiles` alone would run every package's unit tests a
+# second time wearing the tag.
+counts() {
+	go list "$@" -f '{{.ImportPath}} {{len .TestGoFiles}} {{len .XTestGoFiles}}' "${pattern}" 2>/dev/null
+}
 mapfile -t packages < <(
-	go list -tags integration -f '{{if or .TestGoFiles .XTestGoFiles}}{{.ImportPath}}{{end}}' "${pattern}" | sort -u
+	join <(counts -tags integration | sort) <(counts | sort) |
+		awk '$2 + $3 > $4 + $5 { print $1 }' | sort -u
 )
 
 if [ "${#packages[@]}" -eq 0 ]; then

@@ -41,3 +41,63 @@ func TestToolStorage(t *testing.T) {
 	assert.Len(t, tools, 1)
 	assert.Equal(t, "jq", tools[0].Name)
 }
+
+// Save stores one tool over its own row, and Remove drops one: what the
+// instance's tool editor does, a tool at a time, rather than the whole
+// set a start replaces.
+func TestToolStorage_SaveAndRemove(t *testing.T) {
+	t.Parallel()
+	s := storage.NewToolStorage(newDB(t))
+	ctx := context.Background()
+
+	assert.NoError(t, s.Save(ctx, model.Tool{Name: "jq", Category: "custom", Version: "jq-1.7", Path: "/usr/bin/jq"}))
+	assert.NoError(t, s.Save(ctx, model.Tool{Name: "yq", Category: "custom", Version: "v4.44", Path: "/usr/bin/yq"}))
+	tools, err := s.List(ctx)
+	assert.NoError(t, err)
+	assert.Len(t, tools, 2)
+
+	assert.NoError(t, s.Save(ctx, model.Tool{Name: "jq", Category: "custom", Version: "jq-1.8", Path: "/usr/local/bin/jq"}))
+	tools, err = s.List(ctx)
+	assert.NoError(t, err)
+	assert.Len(t, tools, 2, "a second save of a name replaces its row")
+	assert.Equal(t, "jq-1.8", tools[0].Version)
+	assert.Equal(t, "/usr/local/bin/jq", tools[0].Path)
+
+	assert.NoError(t, s.Remove(ctx, "jq"))
+	assert.NoError(t, s.Remove(ctx, "jq"), "removing what is gone is not an error")
+	tools, err = s.List(ctx)
+	assert.NoError(t, err)
+	assert.Len(t, tools, 1)
+	assert.Equal(t, "yq", tools[0].Name)
+}
+
+// Every method hands back what the driver said.
+func TestToolStorage_Closed(t *testing.T) {
+	t.Parallel()
+	s := storage.NewToolStorage(closedDB(t))
+	ctx := context.Background()
+
+	_, err := s.List(ctx)
+	assert.ErrorContains(t, err, errClosed)
+	assert.ErrorContains(t, s.Save(ctx, model.Tool{Name: "jq"}), errClosed)
+	assert.ErrorContains(t, s.Remove(ctx, "jq"), errClosed)
+	assert.ErrorContains(t, s.Replace(ctx, []model.Tool{{Name: "jq"}}), errClosed)
+}
+
+// The statements inside a transaction hand their error back too: the
+// delete against a table that is gone, and the insert of a name the
+// same call already inserted, which the primary key refuses.
+func TestToolStorage_Broken(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	gone := storage.NewToolStorage(brokenDB(t, model.ToolTable))
+	assert.ErrorContains(t, gone.Save(ctx, model.Tool{Name: "jq"}), errNoTable)
+	assert.ErrorContains(t, gone.Replace(ctx, []model.Tool{{Name: "jq"}}), errNoTable)
+
+	s := storage.NewToolStorage(newDB(t))
+	twice := []model.Tool{{Name: "jq", Category: "custom"}, {Name: "jq", Category: "custom"}}
+	assert.ErrorContains(t, s.Replace(ctx, twice), "UNIQUE constraint failed")
+	tools, err := s.List(ctx)
+	assert.NoError(t, err)
+	assert.Len(t, tools, 0, "the transaction rolled back")
+}

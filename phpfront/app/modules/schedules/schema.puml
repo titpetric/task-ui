@@ -1,0 +1,117 @@
+@startuml
+' Generated from schema/schema.yml by tools/docs.php. DO NOT EDIT.
+hide circle
+hide empty members
+skinparam linetype ortho
+skinparam shadowing false
+skinparam backgroundColor transparent
+entity "key_info" {
+  * name : text
+  + purpose : TEXT
+  + algo : text
+  + bits : integer
+  + fingerprint : text
+  + scope : text
+  + comment : text
+  + created_at : timestamp
+  + updated_at : timestamp
+  + backup : text
+  + backup_fingerprint : text
+  + rotated_at : timestamp
+}
+
+entity "key_role" {
+  * id : text
+  + key_name : text
+  + role : TEXT
+  + created_at : timestamp
+}
+
+entity "key_user" {
+  * id : text
+  + key_name : text
+  + user_name : text
+  + created_at : timestamp
+}
+
+entity "schedule" {
+  * id : text
+  + folder : text
+  + job : text
+  + user_id : text
+  + user_name : text
+  + expression : text
+  + enabled : integer
+  + last_run_at : timestamp
+  + next_run_at : timestamp
+  + created_at : timestamp
+  + updated_at : timestamp
+  + target : text
+  + args : text
+  + triage : integer
+  + workflow_id : text
+}
+
+entity "user" {
+  * id : text
+  + name : text
+  + role : TEXT
+  + folders : text
+  + created_at : timestamp
+  + updated_at : timestamp
+  + admin : boolean
+  + mcp : boolean
+  + agent_reply : boolean
+}
+
+entity "workflow" {
+  * id : text
+  + name : text
+  + user_id : text
+  + user_name : text
+  + created_at : timestamp
+  + updated_at : timestamp
+  + description : text
+  + prompt : text
+  + prompt_folder : text
+  + run_as_user_id : text
+  + runs_over : text
+  + sidebar_hidden : boolean
+}
+
+entity "workflow_step" {
+  * id : text
+  + workflow_id : text
+  + position : integer
+  + folder : text
+  + job : text
+  + disabled : boolean
+  + prompt : text
+  + dir : text
+  + workflow_ref : text
+  + target : text
+  + args : text
+  + kind : text
+}
+
+entity "workspace" {
+  * id : text
+  + folder : text
+  + title : text
+  + description : text
+  + created_at : timestamp
+  + updated_at : timestamp
+  + home_project_id : text
+  + home_url : text
+  + home_branch : text
+  + hours : text
+  + shallow : boolean
+  + sidebar_limit : integer
+  + sort : integer
+}
+
+schedule }o--|| user : user_id
+schedule }o--|| workflow : workflow_id
+workflow }o--|| user : user_id
+workflow_step }o--|| workflow : workflow_id
+@enduml

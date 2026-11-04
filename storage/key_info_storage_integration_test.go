@@ -81,3 +81,57 @@ func TestKeyInfoStorage_ClearBackup(t *testing.T) {
 	assert.Equal(t, "", got.BackupFingerprint)
 	assert.Equal(t, "SHA256:new", got.Fingerprint)
 }
+
+// Every method hands back what the driver said.
+func TestKeyInfoStorage_Closed(t *testing.T) {
+	t.Parallel()
+	keys := storage.NewKeyInfoStorage(closedDB(t))
+	ctx := context.Background()
+
+	assert.ErrorContains(t, keys.Create(ctx, &model.KeyInfo{Name: "deploy", Purpose: storage.KeySSH}), errClosed)
+	_, err := keys.Get(ctx, "deploy")
+	assert.ErrorContains(t, err, errClosed)
+	_, err = keys.ByFingerprint(ctx, "SHA256:x")
+	assert.ErrorContains(t, err, errClosed)
+	_, err = keys.List(ctx)
+	assert.ErrorContains(t, err, errClosed)
+	assert.ErrorContains(t, keys.SetFingerprint(ctx, "deploy", "SHA256:x"), errClosed)
+	assert.ErrorContains(t, keys.SetBackup(ctx, "deploy", "SHA256:x", "deploy.old", "SHA256:y"), errClosed)
+	assert.ErrorContains(t, keys.ClearBackup(ctx, "deploy"), errClosed)
+	assert.ErrorContains(t, keys.Delete(ctx, "deploy"), errClosed)
+	assert.ErrorContains(t, keys.Link(ctx, "deploy", nil, nil), errClosed)
+	_, _, err = keys.Links(ctx)
+	assert.ErrorContains(t, err, errClosed)
+}
+
+// Delete and Link each run several statements in one transaction and
+// stop at the one that failed, whichever it is: a table that is gone
+// fails a delete, and a trigger fails an insert.
+func TestKeyInfoStorage_Writes(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+
+	for _, table := range []string{model.KeyRoleTable, model.KeyUserTable, model.KeyInfoTable} {
+		keys := storage.NewKeyInfoStorage(brokenDB(t, table))
+		assert.ErrorContains(t, keys.Delete(ctx, "deploy"), errNoTable, table)
+	}
+	for _, table := range []string{model.KeyRoleTable, model.KeyUserTable} {
+		keys := storage.NewKeyInfoStorage(brokenDB(t, table))
+		assert.ErrorContains(t, keys.Link(ctx, "deploy", nil, nil), errNoTable, table)
+	}
+
+	roles := newDB(t)
+	refuse(t, roles, model.KeyRoleTable, "INSERT")
+	assert.ErrorContains(t, storage.NewKeyInfoStorage(roles).Link(ctx, "deploy", []string{model.RoleAdmin}, nil), errRefused)
+
+	users := newDB(t)
+	refuse(t, users, model.KeyUserTable, "INSERT")
+	assert.ErrorContains(t, storage.NewKeyInfoStorage(users).Link(ctx, "deploy", nil, []string{"alice"}), errRefused)
+}
+
+// Links reads two tables and hands back what the second read said.
+func TestKeyInfoStorage_LinksSecondRead(t *testing.T) {
+	t.Parallel()
+	_, _, err := storage.NewKeyInfoStorage(brokenDB(t, model.KeyUserTable)).Links(context.Background())
+	assert.ErrorContains(t, err, errNoTable)
+}

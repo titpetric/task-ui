@@ -1,0 +1,109 @@
+@startuml
+' Generated from schema/schema.yml by tools/docs.php. DO NOT EDIT.
+hide circle
+hide empty members
+skinparam linetype ortho
+skinparam shadowing false
+skinparam backgroundColor transparent
+entity "artifact" {
+  * id : text
+  + run_id : text
+  + folder : text
+  + job : text
+  + name : text
+  + path : text
+  + byte_size : integer
+  + content_type : text
+  + created_at : timestamp
+  + commit_id : text
+  + user_name : text
+}
+
+entity "note" {
+  * id : text
+  + channel : TEXT
+  + parent_id : text
+  + user_id : text
+  + user_name : text
+  + body : text
+  + mentions : text
+  + state : TEXT
+  + run_id : text
+  + created_at : timestamp
+  + updated_at : timestamp
+  + about_run_id : text
+  + about_workflow_run_id : text
+  + area : text
+  + edited_at : timestamp
+  + workspace_id : text
+  + dir : text
+}
+
+entity "run" {
+  * id : text
+  + folder : text
+  + job : text
+  + user_id : text
+  + user_name : text
+  + state : TEXT
+  + exit_code : integer
+  + forced : integer
+  + scheduled : integer
+  + term_cols : integer
+  + term_rows : integer
+  + cast_path : text
+  + reason : text
+  + started_at : timestamp
+  + finished_at : timestamp
+  + created_at : timestamp
+  + updated_at : timestamp
+  + dir : text
+  + args : text
+  + target : text
+  + batch_id : text
+  + message : text
+  + title : text
+}
+
+entity "run_summary" {
+  * run_id : text
+  + summary : text
+  + user_name : text
+  + created_at : timestamp
+}
+
+entity "user" {
+  * id : text
+  + name : text
+  + role : TEXT
+  + folders : text
+  + created_at : timestamp
+  + updated_at : timestamp
+  + admin : boolean
+  + mcp : boolean
+  + agent_reply : boolean
+}
+
+entity "workspace" {
+  * id : text
+  + folder : text
+  + title : text
+  + description : text
+  + created_at : timestamp
+  + updated_at : timestamp
+  + home_project_id : text
+  + home_url : text
+  + home_branch : text
+  + hours : text
+  + shallow : boolean
+  + sidebar_limit : integer
+  + sort : integer
+}
+
+artifact }o--|| run : run_id
+note }o--|| user : user_id
+note }o--|| run : run_id
+note }o--|| workspace : workspace_id
+run }o--|| user : user_id
+run_summary }o--|| run : run_id
+@enduml

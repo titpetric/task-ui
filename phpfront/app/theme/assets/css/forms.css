@@ -79,8 +79,11 @@
   }
 }
 
-/* A number stands in a box as wide as the number, not the form. */
-.field > input[type="number"] {
+/* A number, and a clock, stand in a box as wide as what they hold, not
+   as the form. Both keep the browser's own box: the page sets its colour
+   scheme, so a native control follows the theme, and the spinner and the
+   clock stay the ones the reader knows. */
+.field > input:is([type="number"], [type="time"]) {
   width: var(--control-w-s);
 }
 
@@ -171,6 +174,28 @@
 .checks .dd {
   width: auto;
   min-width: var(--control-w-xl);
+}
+
+/* A day of the month sits in the row with its presets, so its box is as
+   wide as two digits and a spinner and no wider. */
+.checks > input[type="number"] {
+  width: 5rem;
+}
+
+/* The schedule builder's legend is a read-out of the expression above
+   it, not data: the three columns that name a position are as narrow as
+   their words, and the field the expression holds there carries the
+   accent, so the eye lands on what this one says. */
+.table.sched-legend {
+  & th:nth-child(-n + 4),
+  & td:nth-child(-n + 4) {
+    width: 1%;
+    white-space: nowrap;
+  }
+
+  & [data-sched-pos] {
+    color: var(--signal);
+  }
 }
 
 /* The "who gets it" element, .whofield from the template of that name:

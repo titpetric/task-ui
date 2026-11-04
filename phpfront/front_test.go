@@ -136,6 +136,72 @@ func TestFront_Assets(t *testing.T) {
 	}
 }
 
+// The sign in page answers before a sign in and every other page does not,
+// which is the boundary the mount draws: a bug here would hand the tree to
+// anyone, so the two sides of it are checked rather than reviewed.
+func TestFront_Guarded(t *testing.T) {
+	for _, base := range []string{"/development", ""} {
+		front := testFront(t, base)
+		gate := &testGate{}
+		drawn := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			_, _ = w.Write([]byte("the page"))
+		})
+		handler := front.Guarded(gate, drawn)
+
+		for _, tc := range []struct {
+			name   string
+			path   string
+			status int
+			want   string
+		}{
+			{"the sign in page is named, not required", base + "/login", http.StatusOK, "attached: the page"},
+			{"a query does not open a path", base + "/login?back=%2Fruns", http.StatusOK, "attached: the page"},
+			{"every other page is required", base + "/notes", http.StatusUnauthorized, "required"},
+			{"the root is required", base + "/", http.StatusUnauthorized, "required"},
+			{"a path that ends in the public one is not it", base + "/users/login", http.StatusUnauthorized, "required"},
+		} {
+			t.Run(base+" "+tc.name, func(t *testing.T) {
+				w := httptest.NewRecorder()
+				handler.ServeHTTP(w, httptest.NewRequest(http.MethodGet, tc.path, nil))
+				if w.Code != tc.status {
+					t.Errorf("status: want %d, got %d", tc.status, w.Code)
+				}
+				if !strings.Contains(w.Body.String(), tc.want) {
+					t.Errorf("want %q in %q", tc.want, w.Body.String())
+				}
+			})
+		}
+	}
+
+	// A nil front mounts nothing, so it guards nothing either.
+	var none *Front
+	drawn := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write([]byte("the page"))
+	})
+	w := httptest.NewRecorder()
+	none.Guarded(&testGate{}, drawn).ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/notes", nil))
+	if want := "the page"; w.Body.String() != want {
+		t.Errorf("nil front: want %q, got %q", want, w.Body.String())
+	}
+}
+
+// testGate is the Guard as the mount reads it: Require refuses, Attach says it
+// named the reader and passes the request on.
+type testGate struct{}
+
+func (g *testGate) Require(http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		http.Error(w, "required", http.StatusUnauthorized)
+	})
+}
+
+func (g *testGate) Attach(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte("attached: "))
+		next.ServeHTTP(w, r)
+	})
+}
+
 // testFront returns the front end over the routing fixture.
 func testFront(t *testing.T, base string) *Front {
 	t.Helper()

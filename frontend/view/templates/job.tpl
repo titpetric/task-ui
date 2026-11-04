@@ -99,21 +99,15 @@
 	{{- template "blockhead" (head "Schedules" "cron expressions, in the server's time zone" (and (not .Schedules) $none)) }}
 	{{- template "schedtable" (list $ .Schedules $can $r.Name) }}
 	{{- if $can }}
-	<form class="form inline" data-api="/api/schedules" data-method="POST" data-next="reload" data-notice="Schedule added">
+	<form class="form inline" data-api="/api/schedules" data-method="POST" data-next="reload" data-notice="Schedule added" data-sched>
 		<input type="hidden" name="folder" value="{{ $p.ID }}">
 		<input type="hidden" name="job" value="{{ $r.ID }}">
-		<div class="field">
-			<label for="sch-expr">Expression</label>
-			<input type="text" id="sch-expr" name="expression" placeholder="0 3 * * *  or  @daily" spellcheck="false" autocomplete="off" required>
-		</div>
 		<div class="field whole">
 			<label class="check"><input type="checkbox" id="sch-triage" name="triage"> Triage failures with Claude</label>
 		<small class="faint">When the run fails, Claude reads the run in its folder, fixes the cause when it can, replies on the run's page and posts a note.</small>
 		</div>
 		{{- template "runas" (list $ "sch-user") }}
-		<div class="form-foot">
-			<button class="btn btn-primary" type="submit"><svg class="ic"><use href="#i-plus"/></svg>Add schedule</button>
-		</div>
+		{{- template "schedbuilder" }}
 	</form>
 	{{- end }}
 </section>

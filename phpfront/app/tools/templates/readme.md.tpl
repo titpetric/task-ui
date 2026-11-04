@@ -2,9 +2,9 @@
 
 Generated from the module by `atkins docs`. DO NOT EDIT.
 
-![The tables this module reads](schema.svg)
+{if $tables}![The tables this module reads](schema.svg)
 
-{description}
+{/if}{description}
 
 ## Pages
 
@@ -13,7 +13,10 @@ Generated from the module by `atkins docs`. DO NOT EDIT.
 {foreach $routes as $route}| `{route.method}` | `{route.path}` | [`{route.file}`]({route.file}) |{nl}{/foreach}
 ## The data model
 
-{foreach $tables as $table}### `{table.name}`
+{if !$tables}No page of this module reads a table of its own. The chrome every page
+draws reads the instance's, which `docs/phpfront.md` lists once.
+
+{/if}{foreach $tables as $table}### `{table.name}`
 
 {table.comment}
 
@@ -34,5 +37,5 @@ through `code/Task`.
 
 {/if}---
 
-The tables are what `{module}::tables()` names. The operations are the classes
-of `storage/`, which hold every statement this module runs.
+The tables come from `tables()` on {module}. The operations are the classes of
+`storage/`, which hold every statement this module runs.

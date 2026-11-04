@@ -102,3 +102,36 @@ func TestModuleStorage_Keep(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Len(t, rows, 0)
 }
+
+// Every method hands back what the driver said.
+func TestModuleStorage_Closed(t *testing.T) {
+	t.Parallel()
+	s := storage.NewModuleStorage(closedDB(t))
+	ctx := context.Background()
+
+	_, err := s.List(ctx)
+	assert.ErrorContains(t, err, errClosed)
+	_, err = s.Get(ctx, "titpetric/refinement")
+	assert.ErrorContains(t, err, errClosed)
+	assert.ErrorContains(t, s.Save(ctx, &model.Module{Name: "titpetric/refinement"}), errClosed)
+	_, err = s.Keep(ctx, nil)
+	assert.ErrorContains(t, err, errClosed)
+}
+
+// Save upserts and then reads the row back, so its ID and dates are the
+// row's. The read is its own error: the upsert lands and the scan of
+// what came back fails.
+func TestModuleStorage_SaveReadBack(t *testing.T) {
+	t.Parallel()
+	s := storage.NewModuleStorage(widenedDB(t, model.ModuleTable))
+	err := s.Save(context.Background(), &model.Module{Name: "titpetric/refinement", Vendor: "titpetric", Plugin: "refinement"})
+	assert.ErrorContains(t, err, errNoField)
+}
+
+// Keep reads the modules inside a transaction, and hands back what the
+// read said.
+func TestModuleStorage_KeepBroken(t *testing.T) {
+	t.Parallel()
+	_, err := storage.NewModuleStorage(brokenDB(t, model.ModuleTable)).Keep(context.Background(), nil)
+	assert.ErrorContains(t, err, errNoTable)
+}

@@ -1,0 +1,1 @@
+{* input scope: data_hours. See hours.md. *}{if $data_hours.text}{data_hours.line} {if $data_hours.open}<span class="badge ok">open now</span>{else}<span class="badge bad">out of hours now</span>{/if}{else}<span class="faint">always</span>{/if}

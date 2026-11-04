@@ -1,7 +1,8 @@
 <?php $_v=&$this->vars;?>
-<span class="user-ref"><span class="avatar sm role-<?php echo htmlspecialchars($_v['data_user']['role'], ENT_QUOTES);?>
-" title="<?php echo htmlspecialchars($_v['data_user']['name'], ENT_QUOTES);?>
-"><?php echo htmlspecialchars($_v['data_user']['initials'], ENT_QUOTES);?>
+<span class="user-ref"><?php $_v['data_avatar'] = $_v['data_user'];?>
+<span class="avatar sm<?php if($_v['data_avatar']['role']){?>
+ role-<?php echo htmlspecialchars($_v['data_avatar']['role'], ENT_QUOTES); }?>" title="<?php echo htmlspecialchars($_v['data_avatar']['name'], ENT_QUOTES);?>
+"><?php echo htmlspecialchars($_v['data_avatar']['initials'], ENT_QUOTES);?>
 </span> <span class="user-name"><?php echo htmlspecialchars($_v['data_user']['name'], ENT_QUOTES);?>
 </span><?php $_v['data_menu'] = $_v['data_user']['menu'];if(!$_v['data_menu']['empty']){?>
 <details class="more-menu">
@@ -26,8 +27,8 @@
 			<a class="more-item<?php if($_v['item']['danger']){?>
  danger<?php }?>" role="menuitem" href="<?php echo htmlspecialchars($_v['item']['href'], ENT_QUOTES);?>
 "<?php if($_v['item']['download']){?>
- download<?php }?> <?php echo $_v['item']['attrs'];?>
-><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['item']['icon'], ENT_QUOTES);?>
+ download<?php }?><?php if($_v['item']['attrs']){?>
+ <?php echo $_v['item']['attrs']; }?>><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['item']['icon'], ENT_QUOTES);?>
 "/></svg><span><?php echo htmlspecialchars($_v['item']['label'], ENT_QUOTES);?>
 </span><?php if($_v['item']['note']){?>
 <small class="faint"><?php echo htmlspecialchars($_v['item']['note'], ENT_QUOTES);?>
@@ -35,8 +36,8 @@
 <?php }else{?>
 			<button type="button" class="more-item<?php if($_v['item']['danger']){?>
  danger<?php }?>" role="menuitem"<?php if($_v['item']['disabled']){?>
- disabled<?php }?> <?php echo $_v['item']['attrs'];?>
-><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['item']['icon'], ENT_QUOTES);?>
+ disabled<?php }?><?php if($_v['item']['attrs']){?>
+ <?php echo $_v['item']['attrs']; }?>><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['item']['icon'], ENT_QUOTES);?>
 "/></svg><span><?php echo htmlspecialchars($_v['item']['label'], ENT_QUOTES);?>
 </span><?php if($_v['item']['note']){?>
 <small class="faint"><?php echo htmlspecialchars($_v['item']['note'], ENT_QUOTES);?>

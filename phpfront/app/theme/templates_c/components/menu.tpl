@@ -21,8 +21,8 @@
 			<a class="more-item<?php if($_v['item']['danger']){?>
  danger<?php }?>" role="menuitem" href="<?php echo htmlspecialchars($_v['item']['href'], ENT_QUOTES);?>
 "<?php if($_v['item']['download']){?>
- download<?php }?> <?php echo $_v['item']['attrs'];?>
-><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['item']['icon'], ENT_QUOTES);?>
+ download<?php }?><?php if($_v['item']['attrs']){?>
+ <?php echo $_v['item']['attrs']; }?>><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['item']['icon'], ENT_QUOTES);?>
 "/></svg><span><?php echo htmlspecialchars($_v['item']['label'], ENT_QUOTES);?>
 </span><?php if($_v['item']['note']){?>
 <small class="faint"><?php echo htmlspecialchars($_v['item']['note'], ENT_QUOTES);?>
@@ -30,8 +30,8 @@
 <?php }else{?>
 			<button type="button" class="more-item<?php if($_v['item']['danger']){?>
  danger<?php }?>" role="menuitem"<?php if($_v['item']['disabled']){?>
- disabled<?php }?> <?php echo $_v['item']['attrs'];?>
-><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['item']['icon'], ENT_QUOTES);?>
+ disabled<?php }?><?php if($_v['item']['attrs']){?>
+ <?php echo $_v['item']['attrs']; }?>><svg class="ic"><use href="#i-<?php echo htmlspecialchars($_v['item']['icon'], ENT_QUOTES);?>
 "/></svg><span><?php echo htmlspecialchars($_v['item']['label'], ENT_QUOTES);?>
 </span><?php if($_v['item']['note']){?>
 <small class="faint"><?php echo htmlspecialchars($_v['item']['note'], ENT_QUOTES);?>

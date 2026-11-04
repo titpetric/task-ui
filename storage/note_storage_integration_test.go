@@ -226,3 +226,54 @@ func TestNoteStorage_Threads(t *testing.T) {
 	_, err = notes.Get(ctx, board.ID)
 	assert.NoError(t, err)
 }
+
+// Every method hands back what the driver said.
+func TestNoteStorage_Closed(t *testing.T) {
+	t.Parallel()
+	notes := storage.NewNoteStorage(closedDB(t))
+	ctx := context.Background()
+
+	assert.ErrorContains(t, notes.Create(ctx, &model.Note{UserName: "alice", Body: "hello"}), errClosed)
+	_, err := notes.Get(ctx, "n1")
+	assert.ErrorContains(t, err, errClosed)
+	_, err = notes.ByRun(ctx, "r1")
+	assert.ErrorContains(t, err, errClosed)
+	_, err = notes.List(ctx, storage.NoteFilter{})
+	assert.ErrorContains(t, err, errClosed)
+	_, err = notes.Replies(ctx, []string{"n1"})
+	assert.ErrorContains(t, err, errClosed)
+	_, err = notes.Threads(ctx)
+	assert.ErrorContains(t, err, errClosed)
+	assert.ErrorContains(t, notes.SetState(ctx, "n1", model.NoteWorking, "r1"), errClosed)
+	assert.ErrorContains(t, notes.Release(ctx, "n1", model.NoteOpen), errClosed)
+	assert.ErrorContains(t, notes.Edit(ctx, "n1", "hello"), errClosed)
+	assert.ErrorContains(t, notes.Answer(ctx, "n1", "hello", "", "r1"), errClosed)
+	assert.ErrorContains(t, notes.Delete(ctx, "n1"), errClosed)
+}
+
+// A note needs some text, whichever call puts it there, and a change of
+// a note that is not there is ErrNotFound rather than a silent success.
+func TestNoteStorage_Refuses(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	notes := storage.NewNoteStorage(newDB(t))
+
+	limited, err := notes.List(ctx, storage.NoteFilter{Limit: 1})
+	assert.NoError(t, err)
+	assert.Len(t, limited, 0)
+
+	assert.ErrorContains(t, notes.Edit(ctx, "n1", "  "), "needs some text")
+	assert.ErrorContains(t, notes.Answer(ctx, "n1", "\n", "", ""), "needs some text")
+	assert.ErrorIs(t, notes.Answer(ctx, "nope", "hello", "", ""), storage.ErrNotFound)
+	assert.ErrorIs(t, notes.SetState(ctx, "nope", model.NoteWorking, ""), storage.ErrNotFound)
+
+	_, err = notes.ByRun(ctx, "")
+	assert.ErrorIs(t, err, storage.ErrNotFound)
+	_, err = notes.ByRun(ctx, "nope")
+	assert.ErrorIs(t, err, storage.ErrNotFound)
+	replies, err := notes.Replies(ctx, nil)
+	assert.NoError(t, err)
+	assert.Len(t, replies, 0)
+	assert.NoError(t, notes.DeleteAboutRun(ctx, "r1"))
+	assert.NoError(t, notes.DeleteAboutWorkflowRun(ctx, "w1"))
+}

@@ -111,3 +111,36 @@ func TestUserAuthTokenStorage_Expired(t *testing.T) {
 		assert.NoError(t, err, hash)
 	}
 }
+
+// Every method hands back what the driver said. A set deletes the token
+// of the name before it writes the new one, so a dead pool stops it at
+// the delete.
+func TestUserAuthTokenStorage_Closed(t *testing.T) {
+	t.Parallel()
+	tokens := storage.NewUserAuthTokenStorage(closedDB(t))
+	ctx := context.Background()
+
+	assert.ErrorContains(t, tokens.Set(ctx, "u1", "cli", "hash"), errClosed)
+	_, err := tokens.SetUntil(ctx, "u1", "cli", "hash", time.Now().Add(time.Hour))
+	assert.ErrorContains(t, err, errClosed)
+	_, err = tokens.Get(ctx, "u1", "cli")
+	assert.ErrorContains(t, err, errClosed)
+	_, err = tokens.Find(ctx, "hash")
+	assert.ErrorContains(t, err, errClosed)
+	_, err = tokens.List(ctx, "u1")
+	assert.ErrorContains(t, err, errClosed)
+	assert.ErrorContains(t, tokens.Touch(ctx, "t1"), errClosed)
+	assert.ErrorContains(t, tokens.Delete(ctx, "u1", "cli"), errClosed)
+	assert.ErrorContains(t, tokens.DeleteByUser(ctx, "u1"), errClosed)
+}
+
+// A token needs a user, a name and a hash.
+func TestUserAuthTokenStorage_Refuses(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	tokens := storage.NewUserAuthTokenStorage(newDB(t))
+
+	assert.ErrorContains(t, tokens.Set(ctx, "", "cli", "hash"), "needs a user, a name and a hash")
+	assert.ErrorContains(t, tokens.Set(ctx, "u1", "", "hash"), "needs a user, a name and a hash")
+	assert.ErrorContains(t, tokens.Set(ctx, "u1", "cli", ""), "needs a user, a name and a hash")
+}

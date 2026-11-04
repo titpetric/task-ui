@@ -1,0 +1,2 @@
+{* input scope: data_mini. See space-mini.md. *}
+<span class="spacemini" title="{data_mini.title}"><span class="spacebar-track"><i class="files" style="width: {data_mini.filesPercent}%"></i><i class="history" style="width: {data_mini.historyPercent}%"></i></span><span class="nowrap">{data_mini.total}</span></span>

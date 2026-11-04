@@ -133,15 +133,40 @@ func (g *Guard) Require(next http.Handler) http.Handler {
 			http.Error(w, "unauthorized", http.StatusUnauthorized)
 			return
 		}
-		ctx := WithUser(r.Context(), user)
-		if token != "" {
-			ctx = WithToken(ctx, token)
-		}
-		if run, ok := g.RunTokens.run(BearerToken(r)); ok {
-			ctx = withRun(ctx, run)
-		}
-		next.ServeHTTP(w, r.WithContext(ctx))
+		next.ServeHTTP(w, g.with(r, user, token))
 	})
+}
+
+// Attach names the reader of a request and keeps nobody out: a request with a
+// session carries its user, one without carries none, and both go through.
+//
+// A page that answers before a sign in needs the name and not the check. The
+// sign in page is the one: it draws a reader who is already signed in nothing
+// and sends them home instead, which it can only do if it knows. Require
+// cannot be what tells it, because a reader with no session asking for the
+// sign in page would be redirected to the page they are already asking for.
+func (g *Guard) Attach(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		user, token, _ := g.resolve(r)
+		if user == nil {
+			next.ServeHTTP(w, r)
+			return
+		}
+		next.ServeHTTP(w, g.with(r, user, token))
+	})
+}
+
+// with is the request as the handler behind the guard reads it: the user, the
+// token that signed them in, and the run a run token names.
+func (g *Guard) with(r *http.Request, user *model.User, token string) *http.Request {
+	ctx := WithUser(r.Context(), user)
+	if token != "" {
+		ctx = WithToken(ctx, token)
+	}
+	if run, ok := g.RunTokens.run(BearerToken(r)); ok {
+		ctx = withRun(ctx, run)
+	}
+	return r.WithContext(ctx)
 }
 
 // wantsPage reports a browser's request for a page, which gets a

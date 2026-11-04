@@ -1,5 +1,5 @@
 name: notes
-description: The notes module reads the names a note mentions, as the column holds them.
+description: The notes module names itself, its icon and the tables its docs read, and implements the whole Module contract.
 ---
 <?php
 
@@ -11,17 +11,17 @@ echo $mod->name(), " ", $mod->title(), " ", $mod->icon(), "\n";
 echo implode(",", $mod->tables()), "\n";
 echo var_export($mod instanceof Module, true), "\n";
 
-// A name reaches the column spaced, so a LIKE for "% name %" matches a whole
-// name and not a prefix of one.
-echo "[", $mod->mentions("A note for @admin and @ops"), "]\n";
-echo "[", $mod->mentions("@admin @admin twice is once"), "]\n";
-echo "[", $mod->mentions("nobody is named here"), "]\n";
-echo "[", $mod->mentions("@a.b @c-d @e_f are all names"), "]\n";
+// The sentence under the heading is HTML the module writes, because it names a
+// tag. An instance with no agent says the first part alone; one with an agent
+// says who to name, and the name is escaped where the prose around it is not,
+// because a user name is what a reader typed.
+echo var_export(mod_notes::lead("") === mod_notes::LEAD, true), "\n";
+echo substr(mod_notes::lead("claude"), strlen(mod_notes::LEAD)), "\n";
+echo substr(mod_notes::lead("a<b"), strlen(mod_notes::LEAD)), "\n";
 ---
 notes Notes note
-note,user
+note,run,user
 true
-[ admin ops ]
-[ admin ]
-[]
-[ a.b c-d e_f ]
+true
+ Name <span class="mention">@claude</span> in a note or a reply to start the agent on the thread. It works on the request and replies here when it finishes, or explains why it can't.
+ Name <span class="mention">@a&lt;b</span> in a note or a reply to start the agent on the thread. It works on the request and replies here when it finishes, or explains why it can't.

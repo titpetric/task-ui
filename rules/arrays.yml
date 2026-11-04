@@ -1,0 +1,41 @@
+# A comment inside an array literal, adopted from mobius's rules/arrays.yml.
+#
+# It guards the defect docs/todo-correction.md section 23 records: `phpscript
+# fmt` relocates a comment written anywhere inside an expression to after the
+# statement that holds it. The result is stable, so a second pass changes
+# nothing and the author who moved it sees no diff — the comment now reads as
+# being about the next statement instead of the key it was written for.
+#
+# languages: generic, because semgrep's PHP patterns cannot see comments.
+#
+# Two shapes: a comment directly after `array(`, and a comment between
+# entries. The second anchors on the lines around it — above ends with
+# `array(` or a comma, below is a `"key" => value,` entry with no semicolon —
+# so a comment above a statement that merely contains an inline `array(...)`
+# stays legal, which is where every comment in this tree already sits.
+#
+# The rewrite is to hoist the value into a variable above the literal and
+# comment that, which is also what the one-statement-per-line convention
+# wants. No fix: which value to name is the author's.
+#
+# History:
+#   2026-11-03  Adopted at zero, with the front end at 23 modules.
+rules:
+  - id: task-ui.find.comment-in-array
+    languages: [generic]
+    severity: ERROR
+    message: >-
+      No comment inside an array literal: `phpscript fmt` moves it out of the
+      expression and onto the statement after it. Hoist the value into a
+      variable above the literal and put the comment there.
+    paths:
+      include:
+        - "*.php"
+        - "*.phpt"
+      exclude:
+        - "**/ext/**"
+        - "**/templates_c/**"
+    patterns:
+      - pattern-either:
+          - pattern-regex: 'array\([ \t]*\n[ \t]*(//|#|/\*)'
+          - pattern-regex: '(?m)(?:array\(|,)[ \t]*\n(?:[ \t]*(//|#)[^\n]*\n)+[ \t]*[^\n;]*=>[^\n;]*,[ \t]*$'

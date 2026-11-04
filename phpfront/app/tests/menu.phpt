@@ -54,7 +54,9 @@ echo var_export($item["disabled"], true), " ", $item["note"], " [", $item["attrs
 // An attribute that is not data-*, aria-* or title is refused, so a
 // misspelling fails rather than drawing nothing.
 try {
-	(new Task\Menu("Bad"))->item("play", "Run", array("onclick" => "x()"));
+	$bad = new Task\Menu("Bad");
+
+	$bad->item("play", "Run", array("onclick" => "x()"));
 
 	echo "not refused\n";
 } catch (Exception $e) {

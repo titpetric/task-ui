@@ -49,6 +49,8 @@ func TestDetect_Tools(t *testing.T) {
 func TestDetect_Timeout(t *testing.T) {
 	t.Parallel()
 	dir := t.TempDir()
+	// lifetime: the stub outlives the 50ms timeout, which is what this
+	// asserts: a tool that hangs reports no version.
 	stub(t, dir, "go", "sleep 5\necho go version go1.22.0")
 	start := time.Now()
 	tools := Detect{Path: dir, Timeout: 50 * time.Millisecond}.Tools(context.Background())

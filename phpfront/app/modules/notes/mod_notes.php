@@ -1,7 +1,6 @@
 <?php
 
 // @route GET /notes
-// @route POST /notes
 
 require "ext/autoload.php";
 
@@ -11,7 +10,18 @@ require "ext/autoload.php";
 
 // mod_notes is the notes board: the notes newest first, each with its
 // replies, and the agent a note names to start work.
+//
+// The page reads and does not write. Both forms it draws carry
+// data-note-form, which the script posts to /api/notes and then refreshes the
+// list in place; a POST route here would reload the whole page instead, and
+// the Go page has none either.
 class mod_notes implements Module {
+	/** LEAD is the sentence under the heading, as HTML: it names a tag. */
+	const LEAD = 'Leave a note for someone with <code>@name</code>. If you can run jobs, the note is an instruction to the people it names. It stays open until they mark it working, and then done or failed, here or over MCP.';
+
+	/** AGENT is what the sentence says further where an agent answers notes. */
+	const AGENT = ' Name <span class="mention">@%s</span> in a note or a reply to start the agent on the thread. It works on the request and replies here when it finishes, or explains why it can\'t.';
+
 	function name() {
 		return "notes";
 	}
@@ -25,141 +35,60 @@ class mod_notes implements Module {
 	}
 
 	function tables() {
-		return array("note", "user");
+		return array("note", "run", "user");
 	}
 
 	function serve() {
 		$chrome = new Task\Chrome;
+		$view = new Task\View($this, $chrome);
 
 		if (!$chrome->allowed("note/view")) {
-			Task\Route::refused();
-			$chrome->heading("Not allowed");
-
-			(new Task\View($this, $chrome))->page(array("refused" => true), "forbidden.tpl");
-
-			return;
-		}
-
-		if (Task\Route::posted()) {
-			$this->post($chrome);
+			$view->refused();
 
 			return;
 		}
 
 		$chrome->heading("Notes", array(array("text" => "Notes", "href" => "")));
 
-		$store = new Task\Notes\NoteStore;
-		$replies = $store->replies(Task\Notes\NoteStore::NOTES);
-		$agents = (new Task\User)->agents();
+		$store = new Task\Note;
+		$users = new Task\User;
+		$roots = $store->threads(Task\Note::NOTES);
+		$replies = $store->replies(Task\Note::ids($roots));
+		$agents = $users->agents();
+		$seen = new Task\Seen($chrome);
 		$threads = array();
 
-		foreach ($store->threads(Task\Notes\NoteStore::NOTES) as $note) {
-			$threads[] = $this->thread($note, $replies, $chrome);
+		foreach ($roots as $note) {
+			$under = isset($replies[$note->getId()]) ? $replies[$note->getId()] : array();
+			$answerer = Task\Note::answerer($note, $under, $agents);
+			$threads[] = Task\Note::thread($note, $replies, $chrome, $answerer, $seen);
 		}
 
-		(new Task\View($this, $chrome))->page(array(
-			"agent" => count($agents) > 0 ? $agents[0]->getName() : "",
+		$agent = count($agents) > 0 ? $agents[0]->getName() : "";
+		$head = new Task\Head("Notes", self::lead($agent));
+
+		$view->page(array(
+			"head" => $head->data(),
+			"agent" => $agent,
 			"threads" => $threads,
-			"edits" => $chrome->allowed("note/edit"),
 		));
-	}
-
-	/** post writes a note the board's form sent, and answers with a redirect. */
-	function post($chrome) {
-		if (!$chrome->allowed("note/edit")) {
-			Task\Route::refused();
-
-			return;
-		}
-
-		$body = Task\Route::input("body");
-
-		if ($body === "") {
-			Task\Route::fail("/notes", "A note says something.");
-
-			return;
-		}
-
-		$note = (new Task\Notes\NoteStore(Task\DB::writer()))->post($chrome->name(), $body, $this->mentions($body), Task\Route::input("parent"));
-
-		Task\Host::publish("notes", array("event" => "note", "id" => $note->getId()));
-		Task\Route::go("/notes");
-	}
-
-	/** thread is one note with its replies, as the note component reads it. */
-	function thread($note, $replies, $chrome) {
-		$out = $this->one($note, $chrome);
-
-		$out["replyable"] = $chrome->allowed("note/edit");
-		$out["replies"] = array();
-
-		$id = $note->getId();
-
-		if (!isset($replies[$id])) {
-			return $out;
-		}
-
-		foreach ($replies[$id] as $reply) {
-			$out["replies"][] = $this->one($reply, $chrome);
-		}
-
-		return $out;
-	}
-
-	/** one is a note or a reply, with the menu of what the reader may do to it. */
-	function one($note, $chrome) {
-		$id = $note->getId();
-		$author = $note->getUserName();
-		$run = $note->getRunId();
-		$menu = new Task\Menu("Actions on the note of " . $author);
-
-		$menu->when($chrome->allowed("note/edit") && $chrome->name() === $author, "edit", "Edit", array("data-edit-open" => $id));
-		$menu->when($run !== "", "terminal", "Open its run", array("href" => Task\Route::href("/runs/" . $run)));
-		$menu->whenDanger($chrome->allowed("note/delete"), "trash", "Delete", array(
-			"data-delete" => "/api/notes/" . $id,
-			"data-confirm" => "Delete the note of " . $author . " and its replies?",
-			"data-confirm-ok" => "Delete",
-			"data-next" => "reload",
-		));
-
-		return array(
-			"id" => $id,
-			"body" => $chrome->message($note->getBody()),
-			"author" => $chrome->who()->of($author),
-			"state" => $note->getState(),
-			"run" => $run,
-			"short" => substr($run, 0, 8),
-			"ago" => Task\Clock::ago($note->getCreatedAt()),
-			"edited" => $note->getEditedAt() !== "",
-			"menu" => $menu->data(),
-		);
 	}
 
 	/**
-	 * mentions is the names a note names, as the column holds them: each one
-	 * spaced, so a LIKE for "% name %" matches a whole name alone.
+	 * lead is the sentence under the heading: how a note names someone, and
+	 * the agent that answers one where the instance has one.
+	 *
+	 * The sentence is HTML and built here, not in the template: a template
+	 * writes the newline that sits before a tag, so a sentence cut across
+	 * branches arrives cut. See docs/phpfront.md. The agent's name is a user
+	 * name, so it is escaped where the prose around it is not.
 	 */
-	function mentions($body) {
-		$found = array();
-		// The match is its own statement. An out parameter written by a call
-		// that is an operand of && is not visible to the operand after it, so
-		// `preg_match_all(..., $names) && isset($names[1])` reads $names as
-		// unset. See docs/todo-correction.md.
-		$count = preg_match_all('/@([A-Za-z0-9._-]+)/', $body, $names);
-
-		if ($count > 0 && isset($names[1])) {
-			foreach ($names[1] as $name) {
-				if (!in_array($name, $found, true)) {
-					$found[] = $name;
-				}
-			}
+	static function lead($agent) {
+		if ($agent === "") {
+			return self::LEAD;
 		}
 
-		if (count($found) === 0) {
-			return "";
-		}
-
-		return " " . implode(" ", $found) . " ";
+		return self::LEAD . sprintf(self::AGENT, htmlspecialchars($agent, ENT_QUOTES));
 	}
 }
 
@@ -167,5 +96,7 @@ class mod_notes implements Module {
 // under the http SAPI and a fixture does not, so a fixture requires this file
 // for the class and nothing answers.
 if (PHP_SAPI === "http") {
-	(new mod_notes)->serve();
+	$mod = new mod_notes;
+
+	$mod->serve();
 }

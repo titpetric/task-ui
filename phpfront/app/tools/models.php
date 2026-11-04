@@ -115,7 +115,8 @@ if (!is_array($schema)) {
 	exit(1);
 }
 
-$tpl = new MiniTPL\Template(TREE . "/tools/templates/");
+$templates = TREE . "/tools/templates/";
+$tpl = new MiniTPL\Template($templates);
 $names = array();
 
 foreach ($schema as $table) {

@@ -25,11 +25,12 @@ echo var_export($set->allowed("note/delete"), true), " the user's deny beats the
 echo var_export($set->allowed("note/edit"), true), "\n";
 echo var_export($set->allowed("secret/view"), true), " the user's allow adds to the role\n";
 
-$denied = new Task\Access($ops, new Task\Policy(array("secret/all" => Task\Policy::DENY)), $own);
+$secrets = new Task\Policy(array("secret/all" => Task\Policy::DENY));
+$denied = new Task\Access($ops, $secrets, $own);
 
 echo var_export($denied->allowed("secret/view"), true), " the user's allow overrides the role's deny\n";
 
-$inherits = new Task\Access($ops, new Task\Policy(array("secret/all" => Task\Policy::DENY)));
+$inherits = new Task\Access($ops, $secrets);
 
 echo var_export($inherits->allowed("secret/view"), true), " without an entry the user inherits the deny\n";
 
@@ -40,7 +41,9 @@ echo $both->effect("note/view"), " a deny of all decides\n";
 
 // An admin may do everything, and the policies leave it as is.
 $root = new Task\Model\User(array("id" => "02", "name" => "root", "role" => "admin"));
-$admin = new Task\Access($root, new Task\Policy(), new Task\Policy(array("run" => Task\Policy::DENY)));
+$nothing = new Task\Policy();
+$noRun = new Task\Policy(array("run" => Task\Policy::DENY));
+$admin = new Task\Access($root, $nothing, $noRun);
 
 echo var_export($admin->allowed("run"), true), var_export($admin->allowed("secret/delete"), true), "\n";
 echo $admin->summary(), "\n";

@@ -167,7 +167,7 @@ func (h *Handlers) sidebar(ctx context.Context, p *view.Page) {
 	}
 	side := view.SideDefaults(p.Folders, h.workspaceDirs(p.Workspaces), hidden, p.User.CanSee)
 	dirOf := h.dirOf(ctx, side)
-	side = h.sideLimits(ctx).Apply(side, p.Workspaces, func(id string) time.Time { return h.commits.Get(dirOf(id)) })
+	side = h.sideLimits(ctx).Apply(side, p.Workspaces, func(id string) time.Time { return h.lastCommit(dirOf(id)) })
 	p.Pinning = h.opts.Pins != nil && p.User != nil
 	var pins []view.SidePin
 	if p.Pinning {
@@ -219,8 +219,17 @@ func (h *Handlers) lastCommitOf(ctx context.Context, folders []*folder.Folder) f
 			}
 			dir = layout.Dir(h.opts.Root, named, id)
 		}
-		return h.commits.Get(dir)
+		return h.lastCommit(dir)
 	}
+}
+
+// lastCommit is the time of the last commit in a directory, through the
+// cache both front ends share; zero on an instance with no git.
+func (h *Handlers) lastCommit(dir string) time.Time {
+	if h.opts.Git == nil {
+		return time.Time{}
+	}
+	return h.opts.Git.Commit(dir)
 }
 
 // sideLimits returns how many projects the sidebar lists for each

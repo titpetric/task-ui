@@ -1,0 +1,100 @@
+<?php
+
+// @route GET /refinement
+
+require "ext/autoload.php";
+
+// mod_refinement is the refinement board: the threads newest first, and the
+// paragraph that starts one.
+//
+// The module came from phpscripts/modules/titpetric/refinement, where it was a
+// plugin of its own under /m. The page is the same page; what it loses is the
+// plugin frame around it, which named the module and timed its render, and what
+// it gains is the theme's own head and table.
+//
+// The gate is the one the plugin page answered behind, which is the capability
+// to open a module at all.
+class mod_refinement implements Module {
+	/** LEAD is the sentence under the heading, which modinfo.php described the plugin with. */
+	const LEAD = "Refine a design through a thread of comments";
+
+	/** HELP is the paragraph above the box, as HTML: it emphasises a word. */
+	const HELP = 'One paragraph, and a <strong>new</strong> thread starts from it, on an empty folder of its own. To correct a design that already exists, open its thread below and use the box at the bottom.';
+
+	/** WANT is what the box asks for when it is empty. */
+	const WANT = "A database schema with strict separation of user, user_login_method and user_login_method_password.";
+
+	function name() {
+		return "refinement";
+	}
+
+	function title() {
+		return "Refinement";
+	}
+
+	function icon() {
+		return "flow";
+	}
+
+	function tables() {
+		return array("refinement_thread", "refinement_comment");
+	}
+
+	function serve() {
+		$chrome = new Task\Chrome;
+		$view = new Task\View($this, $chrome);
+
+		if (!$chrome->allowed("module")) {
+			$view->refused();
+
+			return;
+		}
+
+		$chrome->heading("Refinement", array(array("text" => "Refinement", "href" => "")));
+
+		$head = new Task\Head("Refinement", self::LEAD);
+		$store = new Task\Refinement\Threads;
+		$threads = $store->all();
+		$table = self::table($threads);
+
+		$view->page(array(
+			"head" => $head->data(),
+			"table" => $table->data(),
+			"help" => self::HELP,
+			"want" => self::WANT,
+		));
+	}
+
+	/** table is the threads: the title, how many comments it holds, when it started, and the way in. */
+	static function table($threads) {
+		$table = new Task\Table;
+
+		$table->head(array(
+			Task\Table::cell("Thread"),
+			Task\Table::cell("Comments", "num"),
+			Task\Table::cell("Started"),
+			Task\Table::raw(""),
+		));
+
+		foreach ($threads as $thread) {
+			$id = Task\Row::text($thread, "id");
+			$href = Task\Route::href("/refinement/threads/" . Task\Route::pathEscape($id));
+			$open = '<a class="btn btn-sm" href="' . htmlspecialchars($href, ENT_QUOTES) . '">Open</a>';
+
+			$table->row(array(
+				Task\Table::link($href, Task\Row::text($thread, "title"), "key"),
+				Task\Table::cell(Task\Row::number($thread, "comments"), "num mono"),
+				Task\Table::cell(Task\Row::text($thread, "created_at"), "nowrap faint"),
+				Task\Table::raw($open, "actions"),
+			));
+		}
+
+		return $table;
+	}
+}
+
+if (PHP_SAPI === "http") {
+	$mod = new mod_refinement;
+
+	$mod->serve();
+}

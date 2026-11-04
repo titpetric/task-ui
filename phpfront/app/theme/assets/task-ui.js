@@ -42,6 +42,22 @@
 
   var session = null; // { run, spec, ws, term, fit, timer, onResize, finished, changed }
 
+  // ---------------------------------------------------------------- mount
+
+  // The pages answer under a prefix while the port runs, and a link this
+  // script writes has to stay on the front end that drew the page. The
+  // brand links the home page, so its href names the mount: "/" is no
+  // prefix. The API is one mount for both, so an /api call never asks.
+  var prefix = null;
+  function mount() {
+    if (prefix === null) {
+      var home = document.querySelector("header h1 a");
+      var href = home ? home.getAttribute("href") : "/";
+      prefix = href === "/" ? "" : href.replace(/\/+$/, "");
+    }
+    return prefix;
+  }
+
   // ------------------------------------------------------------------ api
 
   function api(method, url, body) {
@@ -95,9 +111,9 @@
   // /f/internal/.
   function folderHref(id) {
     var top = String(id).split("/")[0];
-    if (id === "internal") return "/f/internal";
-    if (Object.prototype.hasOwnProperty.call(workspaces, top)) return "/f/" + id;
-    return "/f/internal/" + id;
+    if (id === "internal") return mount() + "/f/internal";
+    if (Object.prototype.hasOwnProperty.call(workspaces, top)) return mount() + "/f/" + id;
+    return mount() + "/f/internal/" + id;
   }
 
   // avatarHTML draws the initials of a user in the colour of their role,
@@ -155,9 +171,9 @@
     var known = Object.prototype.hasOwnProperty.call(roles, name);
     return '<span class="user-ref">' + avatarHTML(name) + ' <span class="user-name">' + who + "</span>" +
       menuHTML("More on " + name, [], [
-        known && (name === me || may) && { icon: "users", label: "Profile", href: "/users/" + q },
-        { icon: "list", label: "Runs by this user", href: "/runs?user=" + q },
-        known && may === "edit" && { icon: "edit", label: "Edit", href: "/users/" + q + "/edit" }
+        known && (name === me || may) && { icon: "users", label: "Profile", href: mount() + "/users/" + q },
+        { icon: "list", label: "Runs by this user", href: mount() + "/runs?user=" + q },
+        known && may === "edit" && { icon: "edit", label: "Edit", href: mount() + "/users/" + q + "/edit" }
       ]) + "</span>";
   }
 
@@ -377,7 +393,7 @@
   function pageLink(id) {
     if (!els.page) return;
     els.page.hidden = !id;
-    els.page.href = "/runs/" + encodeURIComponent(id || "");
+    els.page.href = mount() + "/runs/" + encodeURIComponent(id || "");
   }
 
   // ------------------------------------------------------------------ runs
@@ -1022,7 +1038,7 @@
     if (pick.value === pick.dataset.moveFrom) {
       delete form.dataset.confirm;
       delete form.dataset.confirmOk;
-      form.dataset.next = "/settings/projects?notice=Project+saved";
+      form.dataset.next = mount() + "/settings/projects?notice=Project+saved";
       return;
     }
     var last = id.slice(id.lastIndexOf("/") + 1);
@@ -1031,7 +1047,7 @@
     form.dataset.confirm = "Move " + id + " to " + to + "? The checkout, the project, the users' folder access and the pins move with it; earlier runs stay under " + id + ". " +
       (left ? "These still point to " + id + " and won't move: " + left + "." : "Nothing else points to " + id + ".");
     form.dataset.confirmOk = "Move";
-    form.dataset.next = "/settings/projects?notice=" + encodeURIComponent("Moved to " + to);
+    form.dataset.next = mount() + "/settings/projects?notice=" + encodeURIComponent("Moved to " + to);
   });
 
   // The algorithm of a new key carries its size: the bits field takes
@@ -1456,7 +1472,7 @@
       var failed = (res.data.projects || []).filter(function (p) { return !p.cloned && p.output; });
       var unknown = res.data.unknown_users || [];
       if (!failed.length && !unknown.length) {
-        next("/settings/workspaces/" + encodeURIComponent(folder) + "?notice=Workspace+imported");
+        next(mount() + "/settings/workspaces/" + encodeURIComponent(folder) + "?notice=Workspace+imported");
         return;
       }
       var lines = ["Imported " + folder + "."];
@@ -1866,6 +1882,339 @@
       });
     });
   }).observe(document.body, { childList: true, subtree: true });
+
+  // ------------------------------------------------------------- schedules
+
+  // A form with data-sched draws a cron expression from its controls:
+  // Repeat picks the mode and the minute, the time, the days of the week
+  // or the day of the month compile into the expression field, which is
+  // the only field of the builder the form sends. The expression mode
+  // leaves the five fields to the reader, and so does an expression no
+  // control can draw: the field is read back into the controls whenever
+  // its shape is one of theirs.
+  //
+  // A row's Edit turns the form into a save of that row: the endpoint and
+  // the method become the row's, the expression comes out of the menu
+  // item, every other field of the form goes off so the save carries the
+  // expression alone, and Cancel puts the add form back.
+  var SCHED_ALIAS = {
+    "@yearly": "0 0 1 1 *",
+    "@annually": "0 0 1 1 *",
+    "@monthly": "0 0 1 * *",
+    "@weekly": "0 0 * * 0",
+    "@daily": "0 0 * * *",
+    "@midnight": "0 0 * * *",
+    "@hourly": "0 * * * *"
+  };
+  var SCHED_ABBREV = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
+  var SCHED_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  var SCHED_CONTROLS = "[data-sched-mode], [data-sched-minute], [data-sched-time], [data-sched-day], [data-sched-dom]";
+
+  // schedFields is the five fields of an expression, a whole period name
+  // resolved to the five it stands for; null for anything else, which
+  // only the expression field itself can hold.
+  function schedFields(expr) {
+    var text = (expr || "").trim().toLowerCase();
+    if (SCHED_ALIAS[text]) text = SCHED_ALIAS[text];
+    var fields = text.split(/\s+/).filter(Boolean);
+    return fields.length === 5 ? fields : null;
+  }
+
+  // schedNum is the number a field names, -1 for a field that names
+  // anything else: a star, a range, a step or a list.
+  function schedNum(field) {
+    return /^\d{1,2}$/.test(field) ? parseInt(field, 10) : -1;
+  }
+
+  // schedDays is the days a day of the week field names, the three letter
+  // names included and 7 counted as Sunday, empty for every day; null for
+  // a field the day boxes cannot draw, a range or a step among them.
+  function schedDays(field) {
+    if (field === "*") return [];
+    var parts = field.split(","), out = [];
+    for (var i = 0; i < parts.length; i++) {
+      var named = SCHED_ABBREV.indexOf(parts[i]);
+      var day = named >= 0 ? named : schedNum(parts[i]);
+      if (day < 0 || day > 7) return null;
+      out.push(day === 7 ? 0 : day);
+    }
+    out.sort(function (a, b) { return a - b; });
+    return out;
+  }
+
+  // schedShape is the mode whose controls draw an expression, "" for one
+  // only the expression field can hold. A month of its own is always "":
+  // no control names a month.
+  function schedShape(f) {
+    if (!f || f[3] !== "*") return "";
+    var minute = schedNum(f[0]), hour = schedNum(f[1]), day = schedNum(f[2]), days = schedDays(f[4]);
+    if (minute < 0 || minute > 59 || days === null) return "";
+    if (f[1] === "*" && f[2] === "*" && !days.length) return "hourly";
+    if (hour < 0 || hour > 23) return "";
+    if (f[2] === "*") return days.length ? "weekly" : "daily";
+    if (!days.length && day >= 1 && day <= 28) return "monthly";
+    return "";
+  }
+
+  // schedValue is a control's value, "" on a form that has none.
+  function schedValue(root, selector) {
+    var el = root.querySelector(selector);
+    return el ? el.value : "";
+  }
+
+  function schedSet(root, selector, value) {
+    var el = root.querySelector(selector);
+    if (el) el.value = value;
+  }
+
+  // schedBound holds a number inside its bounds, and takes the low one
+  // for a field that holds nothing.
+  function schedBound(n, low, high) {
+    if (!(n >= low)) return low;
+    return n > high ? high : n;
+  }
+
+  function schedInt(root, selector, low, high) {
+    return schedBound(parseInt(schedValue(root, selector), 10), low, high);
+  }
+
+  // schedPad is a field as a clock writes it, two digits.
+  function schedPad(field) {
+    var n = schedNum(field);
+    return (n < 10 ? "0" : "") + n;
+  }
+
+  // schedClock is the time an hour field and a minute field name, as the
+  // time control takes it.
+  function schedClock(hour, minute) {
+    return schedPad(hour) + ":" + schedPad(minute);
+  }
+
+  // schedCompile is the expression the controls draw, "" in the
+  // expression mode, where the five fields are the reader's own.
+  function schedCompile(root) {
+    var mode = schedValue(root, "[data-sched-mode]");
+    var time = schedValue(root, "[data-sched-time]").split(":");
+    var hour = schedBound(parseInt(time[0], 10), 0, 23), at = schedBound(parseInt(time[1], 10), 0, 59);
+    if (mode === "hourly") return schedInt(root, "[data-sched-minute]", 0, 59) + " * * * *";
+    if (mode === "daily") return at + " " + hour + " * * *";
+    if (mode === "weekly") {
+      var days = [];
+      root.querySelectorAll("[data-sched-day]").forEach(function (box) {
+        if (box.checked) days.push(parseInt(box.value, 10));
+      });
+      days.sort(function (a, b) { return a - b; });
+      return at + " " + hour + " * * " + (days.length ? days.join(",") : "*");
+    }
+    if (mode === "monthly") return at + " " + hour + " " + schedInt(root, "[data-sched-dom]", 1, 28) + " * *";
+    return "";
+  }
+
+  // schedList is a list of names as a sentence reads it.
+  function schedList(names) {
+    if (names.length < 2) return names.join("");
+    return names.slice(0, -1).join(", ") + " and " + names[names.length - 1];
+  }
+
+  // schedOrdinal is the day of the month a monthly expression names: 1st,
+  // 2nd, 3rd, 11th.
+  function schedOrdinal(n) {
+    var tens = n % 100, ones = n % 10;
+    if (tens >= 11 && tens <= 13) return n + "th";
+    return n + ({ 1: "st", 2: "nd", 3: "rd" }[ones] || "th");
+  }
+
+  // schedSays reads an expression out in words, under the field: when it
+  // runs where the controls draw it, the five fields named where they do
+  // not, and what is missing where it is not five fields at all.
+  function schedSays(f) {
+    if (!f) return "Not five fields: write five, or one of the @ names below.";
+    switch (schedShape(f)) {
+      case "hourly":
+        return "Every hour, at " + schedNum(f[0]) + " minutes past.";
+      case "daily":
+        return "Every day at " + schedClock(f[1], f[0]) + ".";
+      case "weekly":
+        return "Every " + schedList(schedDays(f[4]).map(function (day) { return SCHED_NAMES[day]; })) + " at " + schedClock(f[1], f[0]) + ".";
+      case "monthly":
+        return "The " + schedOrdinal(schedNum(f[2])) + " of every month at " + schedClock(f[1], f[0]) + ".";
+    }
+    return "Minute " + f[0] + ", hour " + f[1] + ", day of the month " + f[2] + ", month " + f[3] + ", day of the week " + f[4] + ".";
+  }
+
+  // schedShow follows the mode: a field says which modes it belongs to
+  // and the rest go off. The legend takes the five fields of whatever the
+  // expression field holds now, and the line under it reads them out.
+  function schedShow(root) {
+    var mode = schedValue(root, "[data-sched-mode]") || "expression";
+    root.querySelectorAll("[data-sched-when]").forEach(function (field) {
+      field.hidden = field.dataset.schedWhen.split(" ").indexOf(mode) < 0;
+    });
+    var f = schedFields(schedValue(root, "[data-sched-expr]"));
+    root.querySelectorAll("[data-sched-pos]").forEach(function (cell) {
+      cell.textContent = f ? f[parseInt(cell.dataset.schedPos, 10)] : "?";
+    });
+    var says = root.querySelector("[data-sched-says]");
+    if (says) says.textContent = schedSays(f);
+  }
+
+  // schedWrite puts what the controls draw into the expression field; in
+  // the expression mode they draw nothing and the field stays as typed.
+  function schedWrite(root) {
+    var expr = schedCompile(root), field = root.querySelector("[data-sched-expr]");
+    if (field && expr) {
+      field.value = expr;
+      unmark(field);
+    }
+    schedShow(root);
+  }
+
+  // schedApply reads an expression into the controls: the mode its shape
+  // names, and the fields of that mode. An expression no control draws
+  // takes the expression mode and leaves the controls as they were.
+  function schedApply(root, expr) {
+    var f = schedFields(expr), shape = schedShape(f);
+    var mode = root.querySelector("[data-sched-mode]");
+    if (mode) {
+      mode.value = shape || "expression";
+      if (mode.dropdown) mode.dropdown();
+    }
+    if (shape === "hourly") schedSet(root, "[data-sched-minute]", String(schedNum(f[0])));
+    if (shape && shape !== "hourly") schedSet(root, "[data-sched-time]", schedClock(f[1], f[0]));
+    if (shape === "weekly") {
+      var days = schedDays(f[4]);
+      root.querySelectorAll("[data-sched-day]").forEach(function (box) {
+        box.checked = days.indexOf(parseInt(box.value, 10)) >= 0;
+      });
+    }
+    if (shape === "monthly") schedSet(root, "[data-sched-dom]", String(schedNum(f[2])));
+    schedShow(root);
+  }
+
+  // schedOther turns every field but the expression off, or on again: a
+  // save of one row carries the expression alone, and the API leaves what
+  // a field left out would have said as it is.
+  function schedOther(form, off) {
+    Array.prototype.forEach.call(form.elements, function (el) {
+      if (!el.name || el.name === "expression") return;
+      el.disabled = off;
+    });
+  }
+
+  // schedLabel says what the button does: Add schedule, with the plus, or
+  // Save schedule with Cancel beside it. A save button in this interface
+  // carries no icon, so the icon goes rather than changes.
+  function schedLabel(form, editing) {
+    var label = form.querySelector("[data-sched-label]");
+    var icon = form.querySelector("[data-sched-icon]");
+    var cancel = form.querySelector("[data-sched-cancel]");
+    if (label) label.textContent = editing ? "Save schedule" : "Add schedule";
+    if (icon) icon.hidden = editing;
+    if (cancel) cancel.hidden = !editing;
+  }
+
+  // schedExpr writes the expression field and reads it into the controls.
+  function schedExpr(form, expr) {
+    var field = form.querySelector("[data-sched-expr]");
+    if (field) {
+      field.value = expr;
+      unmark(field);
+    }
+    schedApply(form, expr);
+    return field;
+  }
+
+  // schedEdit turns the add form into a save of one row; where the add
+  // form sends and what it held are kept for Cancel.
+  function schedEdit(form, api, expr) {
+    if (!form.dataset.schedAdd) {
+      form.dataset.schedAdd = form.dataset.api;
+      form.dataset.schedAddNotice = form.dataset.notice || "";
+      form.dataset.schedAddExpr = schedValue(form, "[data-sched-expr]");
+    }
+    form.dataset.api = api;
+    form.dataset.method = "PUT";
+    form.dataset.notice = "Schedule saved";
+    formError(form, "");
+    schedOther(form, true);
+    schedLabel(form, true);
+    var field = schedExpr(form, expr);
+    form.scrollIntoView({ block: "center" });
+    if (field) field.focus({ preventScroll: true });
+  }
+
+  // schedCancel puts the add form back, as it was before an Edit.
+  function schedCancel(form) {
+    if (!form.dataset.schedAdd) return;
+    form.dataset.api = form.dataset.schedAdd;
+    form.dataset.method = "POST";
+    form.dataset.notice = form.dataset.schedAddNotice;
+    formError(form, "");
+    schedOther(form, false);
+    schedLabel(form, false);
+    schedExpr(form, form.dataset.schedAddExpr);
+    delete form.dataset.schedAdd;
+    delete form.dataset.schedAddNotice;
+    delete form.dataset.schedAddExpr;
+  }
+
+  document.addEventListener("change", function (event) {
+    var form = event.target.closest("form[data-sched]");
+    if (!form) return;
+    if (event.target.matches(SCHED_CONTROLS)) schedWrite(form);
+    // An expression typed by hand goes into the controls once the typing
+    // stops: the mode it draws, and the fields of that mode.
+    else if (event.target.matches("[data-sched-expr]")) schedApply(form, event.target.value);
+  });
+
+  document.addEventListener("input", function (event) {
+    var form = event.target.closest("form[data-sched]");
+    if (!form) return;
+    if (event.target.matches(SCHED_CONTROLS)) schedWrite(form);
+    // As it is typed the expression only reads itself out, so the caret
+    // stays where it is.
+    else if (event.target.matches("[data-sched-expr]")) schedShow(form);
+  });
+
+  document.addEventListener("click", function (event) {
+    var form = event.target.closest("form[data-sched]");
+    if (form) {
+      // A preset checks the days it names, or clears them for every day.
+      var preset = event.target.closest("[data-sched-days]");
+      if (preset) {
+        var want = preset.dataset.schedDays.split(",").filter(Boolean);
+        form.querySelectorAll("[data-sched-day]").forEach(function (box) { box.checked = want.indexOf(box.value) >= 0; });
+        schedWrite(form);
+        return;
+      }
+      var pick = event.target.closest("[data-sched-pick]");
+      if (pick) {
+        schedSet(form, "[data-sched-dom]", pick.dataset.schedPick);
+        schedWrite(form);
+        return;
+      }
+      if (event.target.closest("[data-sched-cancel]")) {
+        schedCancel(form);
+        return;
+      }
+    }
+    // A row's Edit is in its [...] menu, away from the form it edits: the
+    // page holds one, and the item carries the row's endpoint and what it
+    // runs on now.
+    var edit = event.target.closest("[data-sched-edit]");
+    if (!edit) return;
+    var target = document.querySelector("form[data-sched]");
+    if (target) schedEdit(target, edit.dataset.schedEdit, edit.dataset.schedExpression);
+  });
+
+  // On load a form takes the expression it holds, or, holding none, the
+  // one its controls draw: the add form opens on Daily with the field
+  // already saying what it would send.
+  document.querySelectorAll("form[data-sched]").forEach(function (form) {
+    var field = form.querySelector("[data-sched-expr]");
+    if (field && field.value.trim()) schedApply(form, field.value);
+    else schedWrite(form);
+  });
 
   // ------------------------------------------------------------- workflows
 
@@ -2634,7 +2983,7 @@
       // The workflow's own page hears of the run from its events and
       // draws it; elsewhere, go there.
       if (live) return;
-      if (run) window.location.href = "/workflows/" + encodeURIComponent(btn.dataset.workflowRun);
+      if (run) window.location.href = mount() + "/workflows/" + encodeURIComponent(btn.dataset.workflowRun);
       else window.location.reload();
     });
   }
@@ -2762,7 +3111,7 @@
 
     if (name === "step") {
       var node = nodes[data.position];
-      var href = data.step_run_id ? "/runs/" + data.step_run_id : null;
+      var href = data.step_run_id ? mount() + "/runs/" + data.step_run_id : null;
       if (node) setStep(node, data.state, href, data.step_run_id || null);
       if (node && data.step_run_id) stepFrame(node, data.step_run_id, data.state === "running");
       if (node && data.workflow_ref && data.workflow_run_ref) subChain(node, data.workflow_ref, data.workflow_run_ref);
@@ -2922,7 +3271,7 @@
         var what = el("div", "what");
         var a = el("a");
         if (data.workflow_ref) {
-          a.href = "/workflows/" + data.workflow_ref;
+          a.href = mount() + "/workflows/" + data.workflow_ref;
           a.appendChild(icon("i-flow", "lead"));
           a.appendChild(document.createTextNode("workflow"));
         } else if (data.prompt) {
@@ -2942,7 +3291,7 @@
         item.appendChild(what);
         list.appendChild(item);
       }
-      var href = data.step_run_id ? "/runs/" + data.step_run_id : null;
+      var href = data.step_run_id ? mount() + "/runs/" + data.step_run_id : null;
       setStep(item, data.state, href, data.step_run_id || null);
       if (data.step_run_id) stepFrame(item, data.step_run_id, data.state === "running");
       if (data.state === "running" && data.step_run_id && session && dialog && dialog.open) attach(data.step_run_id);
@@ -2971,7 +3320,7 @@
       head.appendChild(button);
     }
     button.dataset.expand = runId;
-    frame.href = "/runs/" + runId;
+    frame.href = mount() + "/runs/" + runId;
     frame.dataset.attach = runId;
     if (running) {
       frame.dataset.frame = runId;
@@ -3908,7 +4257,7 @@
     var fill = function (html) { detail.firstChild.innerHTML = html; };
     var kept = hostDetails[name];
     if (kept && Date.now() - kept.at < 30000) return fill(kept.html);
-    fetch("/inventory/hosts/" + encodeURIComponent(name), { credentials: "same-origin" })
+    fetch(row.getAttribute("data-host-url"), { credentials: "same-origin" })
       .then(function (res) { return res.ok ? res.text() : Promise.reject(res.status); })
       .then(function (text) {
         var found = new DOMParser().parseFromString(text, "text/html").querySelector("[data-host-detail]");
@@ -4228,11 +4577,11 @@
     // then the [...] menu.
     var actionsHTML = function (run, canRun) {
       var id = run.id, live = !ended(run.state);
-      return '<a class="btn btn-sm" href="/runs/' + escapeHTML(id) + '" data-attach="' + escapeHTML(id) + '">' + (live ? "Attach" : "View") + "</a>" +
+      return '<a class="btn btn-sm" href="' + mount() + "/runs/" + escapeHTML(id) + '" data-attach="' + escapeHTML(id) + '">' + (live ? "Attach" : "View") + "</a>" +
         menuHTML("Actions on the run of " + run.job, [["Run", id, true], run.started_at && ["Started", new Date(run.started_at).toLocaleString()]], [
-          { icon: "file", label: "Open the run's page", href: "/runs/" + encodeURIComponent(id) },
+          { icon: "file", label: "Open the run's page", href: mount() + "/runs/" + encodeURIComponent(id) },
           !live && run.cast_path && { icon: "play", label: "Replay the recording", attrs: { "data-replay": id, "data-replay-title": runTitle(run), "data-replay-who": run.user_name || "" } },
-          !live && runsTable.hasAttribute("data-summarize") && { icon: "note", label: "Summary", attrs: { "data-summary": "/api/runs/" + id + "/summary", "data-summary-page": "/runs/" + id, "data-summary-title": runTitle(run), title: "Claude's summary of the output" } },
+          !live && runsTable.hasAttribute("data-summarize") && { icon: "note", label: "Summary", attrs: { "data-summary": "/api/runs/" + id + "/summary", "data-summary-page": mount() + "/runs/" + id, "data-summary-title": runTitle(run), title: "Claude's summary of the output" } },
           live && canRun && { icon: "stop", label: "Stop", attrs: { "data-stop": id } },
           live && canRun && { icon: "trash", label: "Kill", danger: true, attrs: { "data-kill": id } }
         ]);
@@ -4339,7 +4688,7 @@
     var desc = d.desc ? ": " + escapeHTML(d.desc) : "";
     var term = slot.hasAttribute("data-interactive");
     if (run && run.state === "running") {
-      return '<a class="cc' + named + ' running" href="/runs/' + escapeHTML(run.id) + '" data-attach="' + escapeHTML(run.id) +
+      return '<a class="cc' + named + ' running" href="' + mount() + "/runs/" + escapeHTML(run.id) + '" data-attach="' + escapeHTML(run.id) +
         '" title="Attach to ' + what + ", running" + (run.title ? ": " + escapeHTML(run.title) : "") + '"><svg class="ic"><use href="#i-eye"/></svg>' + label + "</a>";
     }
     if (slot.hasAttribute("data-can")) {
@@ -4373,7 +4722,7 @@
       if (!tile && run.state === "running") {
         tile = document.createElement("a");
         tile.className = "tile";
-        tile.href = "/runs/" + run.id;
+        tile.href = mount() + "/runs/" + run.id;
         tile.dataset.attach = run.id;
         tile.dataset.tile = run.id;
         tile.innerHTML = '<div class="tile-head"><i class="dot running"></i><b>' + escapeHTML(runTitle(run)) + "</b>" +
@@ -4902,7 +5251,7 @@
   var known = null;
   // recentsMore is the rail's last slot, as the layout draws it: shown in
   // place of the last entry that fits when some don't.
-  var recentsMore = '<a href="/runs" class="recent more" data-recents-more hidden><svg class="ic"><use href="#i-list"/></svg><span class="what"><b>All runs</b><small></small></span></a>';
+  var recentsMore = '<a href="' + mount() + '/runs" class="recent more" data-recents-more hidden><svg class="ic"><use href="#i-list"/></svg><span class="what"><b>All runs</b><small></small></span></a>';
 
   // renderRecents draws the runs of jobs and of workflows, newest first.
   function renderRecents(runs, flows) {
@@ -4980,7 +5329,7 @@
   function recentHTML(e) {
     if (e.flow) {
       var f = e.flow;
-      return '<a href="/workflows/' + encodeURIComponent(f.workflow_id) + '" class="recent flow" title="' +
+      return '<a href="' + mount() + "/workflows/" + encodeURIComponent(f.workflow_id) + '" class="recent flow" title="' +
         escapeHTML("Workflow " + f.name + ", " + f.user_name + ", " + f.state) + '">' +
         '<i class="dot ' + escapeHTML(f.state) + '"></i>' +
         '<span class="what"><b>' + escapeHTML(f.name) + '</b><small><svg class="ic lead"><use href="#i-flow"/></svg>workflow</small></span>' +
@@ -4989,7 +5338,7 @@
     }
     var r = e.run;
     var running = r.state === "running";
-    return '<a href="/runs/' + encodeURIComponent(r.id) + '" class="recent" title="' +
+    return '<a href="' + mount() + "/runs/" + encodeURIComponent(r.id) + '" class="recent" title="' +
       escapeHTML("Open " + runTitle(r) + ", " + r.user_name + ", " + r.state) + '">' +
       '<i class="dot ' + escapeHTML(r.state) + '"></i>' +
       '<span class="what"><b>' + escapeHTML(r.job + (r.target ? " · " + r.target : "")) + '</b><small>' + escapeHTML(runPlace(r)) + '</small></span>' +

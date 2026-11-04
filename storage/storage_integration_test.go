@@ -4,6 +4,8 @@ package storage_test
 
 import (
 	"context"
+	"io/fs"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -24,6 +26,97 @@ func newDB(t *testing.T) storage.DB {
 	t.Cleanup(func() { db.Close() })
 	return db
 }
+
+// closedDB is a migrated database that is closed, so every query
+// through it fails with "sql: database is closed".
+//
+// It is how the error paths of this package are tested. A method here
+// is a query and a check of what the driver said; the check is most of
+// the branches in the package and none of them can be reached by a
+// well-formed call against a working database. A closed pool reaches
+// every one of them at once, which is why a storage test comes in two
+// halves: what the rows do, and what a dead pool does.
+func closedDB(t *testing.T) storage.DB {
+	t.Helper()
+	db, err := storage.OpenAndMigrate(context.Background(), ":memory:")
+	assert.NoError(t, err)
+	assert.NoError(t, db.Close())
+	return db
+}
+
+// errClosed is what the driver says once the pool is closed, and what
+// every method is asserted to pass back unchanged: this package wraps no
+// driver error, so the string arrives as the driver wrote it.
+const errClosed = "sql: database is closed"
+
+// brokenDB is a migrated database with tables dropped. A closed pool
+// fails before a transaction opens, so it never reaches the statements
+// inside one; a missing table opens the transaction and fails in it,
+// which is the other half of the error paths.
+func brokenDB(t *testing.T, tables ...string) storage.DB {
+	t.Helper()
+	db := newDB(t)
+	drop(t, db, tables...)
+	return db
+}
+
+// drop removes tables from a database that already holds rows, for the
+// methods that need one before the table goes.
+func drop(t *testing.T, db storage.DB, tables ...string) {
+	t.Helper()
+	for _, table := range tables {
+		_, err := db.ExecContext(context.Background(), "DROP TABLE "+table)
+		assert.NoError(t, err)
+	}
+}
+
+// errNoTable is what the driver says for a statement against a table
+// brokenDB dropped.
+const errNoTable = "no such table"
+
+// widenedDB is a migrated database with a column added to a table that
+// the model type has no field for.
+//
+// It is the lever for the methods that write and then read the row back:
+// a write names its columns and still succeeds, and the SELECT * that
+// follows fails to scan. Nothing else reaches the second error of such a
+// method, because the first one succeeding is what gets there.
+func widenedDB(t *testing.T, table string) storage.DB {
+	t.Helper()
+	db := newDB(t)
+	widen(t, db, table)
+	return db
+}
+
+// widen adds the column to a table of a database that already holds
+// rows, for the methods that need one to read back.
+func widen(t *testing.T, db storage.DB, table string) {
+	t.Helper()
+	_, err := db.ExecContext(context.Background(), "ALTER TABLE "+table+" ADD COLUMN unexpected TEXT NOT NULL DEFAULT ''")
+	assert.NoError(t, err)
+}
+
+// errNoField is what sqlx says when a row holds a column the model type
+// has no field for, which is what widenedDB arranges.
+const errNoField = "missing destination name unexpected"
+
+// refuse puts a trigger on a table that aborts every statement of one
+// operation: INSERT, UPDATE or DELETE.
+//
+// It is the lever for the methods that read rows and then write them one
+// at a time. The read has to succeed to reach the write, so nothing that
+// breaks the table reaches it; a trigger leaves the read alone and fails
+// the write the row after it.
+func refuse(t *testing.T, db storage.DB, table, operation string) {
+	t.Helper()
+	_, err := db.ExecContext(context.Background(),
+		"CREATE TRIGGER no_"+operation+" BEFORE "+operation+" ON "+table+
+			" BEGIN SELECT RAISE(ABORT, 'refused'); END")
+	assert.NoError(t, err)
+}
+
+// errRefused is what the trigger refuse installed says.
+const errRefused = "refused"
 
 func TestOpen(t *testing.T) {
 	t.Parallel()
@@ -49,9 +142,16 @@ func TestMigrate(t *testing.T) {
 	assert.NoError(t, storage.Migrate(ctx, db))
 	assert.NoError(t, storage.Migrate(ctx, db), "applying twice is fine")
 
+	// As many rows as there are migrations embedded, counted rather than
+	// written down: a migration added is a file added, and a number here
+	// only says what it was when someone last looked. schema's own test
+	// is where the file count is pinned.
+	files, err := fs.Glob(schema.Migrations(), "*.up.sql")
+	assert.NoError(t, err)
+
 	var count int
 	assert.NoError(t, db.GetContext(ctx, &count, "SELECT COUNT(*) FROM migrations WHERE project = ?", storage.Project))
-	assert.Equal(t, 80, count)
+	assert.Equal(t, len(files), count)
 }
 
 func TestOpenAndMigrate(t *testing.T) {
@@ -201,4 +301,22 @@ func TestMigrate_stepKinds(t *testing.T) {
 	var left int
 	assert.NoError(t, db.GetContext(ctx, &left, "SELECT COUNT(*) FROM workflow WHERE prompt <> '' OR prompt_folder <> ''"))
 	assert.Equal(t, 0, left)
+}
+
+// A database that cannot be migrated and a pool that is closed each
+// hand back what they were told.
+//
+// Open itself has no error to test: sqlx.Open answers one only for a
+// driver that is not registered, and the program links this one in.
+func TestOpen_Errors(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+
+	notADatabase := filepath.Join(t.TempDir(), "text.db")
+	assert.NoError(t, os.WriteFile(notADatabase, []byte(strings.Repeat("not a database", 100)), 0o600))
+	_, err := storage.OpenAndMigrate(ctx, notADatabase)
+	assert.Error(t, err, "a file that is not a database")
+
+	assert.ErrorContains(t, storage.Migrate(ctx, closedDB(t)), errClosed)
+	assert.ErrorContains(t, storage.Vacuum(ctx, closedDB(t)), errClosed)
 }

@@ -146,3 +146,50 @@ func TestSidebarStorage_Keep(t *testing.T) {
 	_, err = s.Get(ctx, "/m/a/one")
 	assert.ErrorIs(t, err, storage.ErrNotFound)
 }
+
+// Every method hands back what the driver said.
+func TestSidebarStorage_Closed(t *testing.T) {
+	t.Parallel()
+	s := storage.NewSidebarStorage(closedDB(t))
+	ctx := context.Background()
+	item := &model.Sidebar{Href: "/runs", Title: "Runs"}
+
+	_, err := s.List(ctx)
+	assert.ErrorContains(t, err, errClosed)
+	_, err = s.Get(ctx, "/runs")
+	assert.ErrorContains(t, err, errClosed)
+	assert.ErrorContains(t, s.Save(ctx, item), errClosed)
+	assert.ErrorContains(t, s.EnsureDefaults(ctx, []model.Sidebar{*item}), errClosed)
+	assert.ErrorContains(t, s.Order(ctx, []string{"/runs"}, nil), errClosed)
+	_, err = s.Keep(ctx, nil)
+	assert.ErrorContains(t, err, errClosed)
+}
+
+// Save upserts and then reads the row back, so the item is the row. The
+// read is its own error: the upsert lands and the scan of what came back
+// fails, which an EnsureDefaults of an empty table passes on.
+func TestSidebarStorage_SaveReadBack(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	item := model.Sidebar{Href: "/runs", Title: "Runs"}
+
+	s := storage.NewSidebarStorage(widenedDB(t, model.SidebarTable))
+	row := item
+	assert.ErrorContains(t, s.Save(ctx, &row), errNoField)
+
+	empty := storage.NewSidebarStorage(newDB(t))
+	defaults := []model.Sidebar{item}
+	assert.NoError(t, empty.EnsureDefaults(ctx, defaults))
+
+	refused := newDB(t)
+	refuse(t, refused, model.SidebarTable, "INSERT")
+	assert.ErrorContains(t, storage.NewSidebarStorage(refused).EnsureDefaults(ctx, []model.Sidebar{item}), errRefused)
+}
+
+// Order writes a row per link in one transaction, and hands back what
+// the write said.
+func TestSidebarStorage_OrderBroken(t *testing.T) {
+	t.Parallel()
+	s := storage.NewSidebarStorage(brokenDB(t, model.SidebarTable))
+	assert.ErrorContains(t, s.Order(context.Background(), []string{"/runs"}, nil), errNoTable)
+}

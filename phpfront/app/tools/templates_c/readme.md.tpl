@@ -4,9 +4,10 @@
 
 Generated from the module by `atkins docs`. DO NOT EDIT.
 
+<?php if($_v['tables']){?>
 ![The tables this module reads](schema.svg)
 
-<?php echo $_v['description'];?>
+<?php }?><?php echo $_v['description'];?>
 
 
 ## Pages
@@ -20,7 +21,11 @@ Generated from the module by `atkins docs`. DO NOT EDIT.
 ) |<?php echo $_v['nl']; }?>
 ## The data model
 
-<?php if(!empty($_v['tables']))foreach($_v['tables'] as $_v['table']){?>### `<?php echo $_v['table']['name'];?>
+<?php if(!$_v['tables']){?>
+No page of this module reads a table of its own. The chrome every page
+draws reads the instance's, which `docs/phpfront.md` lists once.
+
+<?php }?><?php if(!empty($_v['tables']))foreach($_v['tables'] as $_v['table']){?>### `<?php echo $_v['table']['name'];?>
 `
 
 <?php echo $_v['table']['comment'];?>
@@ -49,6 +54,6 @@ through `code/Task`.
 
 <?php }?>---
 
-The tables are what `<?php echo $_v['module'];?>
-::tables()` names. The operations are the classes
-of `storage/`, which hold every statement this module runs.
+The tables come from `tables()` on <?php echo $_v['module'];?>
+. The operations are the classes of
+`storage/`, which hold every statement this module runs.

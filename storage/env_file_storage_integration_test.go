@@ -96,3 +96,24 @@ func TestEnvFileStorage_All(t *testing.T) {
 	assert.Len(t, all, 2)
 	assert.Equal(t, "acme/api", all[0].Folder)
 }
+
+// Every method hands back what the driver said. Set is the one that
+// reads before it writes: a dead pool answers its read with an error
+// rather than with "not there", and it stops instead of inserting.
+func TestEnvFileStorage_Closed(t *testing.T) {
+	t.Parallel()
+	files := storage.NewEnvFileStorage(closedDB(t))
+	ctx := context.Background()
+	file := &model.EnvFile{Folder: "acme", Path: ".env"}
+
+	assert.ErrorContains(t, files.Create(ctx, file), errClosed)
+	_, err := files.Get(ctx, *file)
+	assert.ErrorContains(t, err, errClosed)
+	_, err = files.List(ctx, "acme")
+	assert.ErrorContains(t, err, errClosed)
+	_, err = files.All(ctx)
+	assert.ErrorContains(t, err, errClosed)
+	assert.ErrorContains(t, files.Set(ctx, file), errClosed)
+	assert.ErrorContains(t, files.Update(ctx, file), errClosed)
+	assert.ErrorContains(t, files.Delete(ctx, "x"), errClosed)
+}

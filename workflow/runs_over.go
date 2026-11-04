@@ -13,8 +13,9 @@ import (
 // Projects lists the projects of a workspace, the folders a workflow
 // that runs over it walks, in order. A run walks every step once per
 // project: a step whose folder is in a project of the workspace runs in
-// each project in turn, at the same path inside it, and any other step
-// runs as it stands. app.Catalogue is one.
+// each project in turn, at the same path inside it, a prompt at the
+// workspace root asks in each project's root, and any other step runs as
+// it stands. app.Catalogue is one.
 type Projects interface {
 	WorkspaceProjects(ctx context.Context, workspace string) []*folder.Folder
 }
@@ -29,14 +30,30 @@ func Expand(steps []model.WorkflowStep, workspace string, projects []string) ([]
 	groups := make([]int, 0, cap(expanded))
 	for i, project := range projects {
 		for _, step := range steps {
-			if name, rest, ok := projectOf(step.Folder, workspace); ok && listed[name] && !step.IsWorkflow() {
+			switch name, rest, ok := projectOf(step.Folder, workspace); {
+			case ok && listed[name] && !step.IsWorkflow():
 				step.Folder = layout.Join(workspace, project+rest)
+			case step.IsPrompt() && atRoot(step.Folder, workspace):
+				step.Folder = layout.Join(workspace, project)
 			}
 			expanded = append(expanded, step)
 			groups = append(groups, i)
 		}
 	}
 	return expanded, groups
+}
+
+// atRoot reports whether a step's place is the root of the workspace the
+// run walks: none, which is the workspaces root, or the workspace's own
+// folder, internal for the default workspace.
+//
+// A pass is over one project, so a prompt there asks in that project's
+// root rather than once per project in the one directory above them all:
+// it works where the project is, with its checkout, its CLAUDE.md and the
+// keys and secrets of its workspace. A prompt at a folder of another
+// workspace names a place of its own and keeps it.
+func atRoot(id, workspace string) bool {
+	return id == "" || id == workspace
 }
 
 // projectOf splits a folder ID of the workspace into its project's name

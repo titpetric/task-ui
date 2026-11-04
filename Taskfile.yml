@@ -38,7 +38,7 @@ tasks:
       - scripts/test-duplicate.sh {{.CLI_ARGS}}
 
   test:integration:
-    desc: "Run the integration tests: processes, databases and the network"
+    desc: "Run the integration tests: the storage package over a throwaway database"
     summary: |
       One go test per package, batched by test name, under a memory cap, so a
       package that holds more than the cap fits cannot take the suite down.
@@ -51,6 +51,26 @@ tasks:
     cmds:
       - go test -cover ./...
 
+  test:coverage:
+    desc: "Report every suite's duration and coverage, and the merged total"
+    summary: |
+      Runs the suites one at a time: the unit tests, the storage integration
+      tests, the module's PHP fixtures and the two screenshot suites, whose
+      server is built with go build -cover so a browser driving a real
+      instance counts. Leaves cover/merged.txt.
+      Takes suite names: task test:coverage -- unit storage
+    cmds:
+      - scripts/test-coverage.sh {{.CLI_ARGS}}
+
+  test:memory:
+    desc: "Run one test per process and report its peak memory"
+    summary: |
+      Answers whether one test is heavy or every test is heavy together. A
+      suite whose tests are each small while the package is large is a leak
+      between them. Takes a package pattern: task test:memory -- ./storage
+    cmds:
+      - scripts/test-memory.sh {{.CLI_ARGS}}
+
   run:
     desc: "Run task-ui over the demo projects"
     env:
@@ -60,8 +80,21 @@ tasks:
     cmds:
       - go run .
 
+  test:pages:
+    desc: "Compare every page of a demo instance against the ported front end"
+    summary: |
+      Builds the server, serves testdata/demo from throwaway instances, seeds
+      them through the API and starts real runs, then crawls every link and
+      compares every page it reached against the Go pages, as the admin and
+      again as the viewer. The exit code is the count that differ.
+      The screenshots are left alone: the filter matches no shot name.
+    env:
+      TASK_UI_SHOT_FILTER: "^$"
+    cmds:
+      - scripts/demo.sh
+
   docs:shots:
-    desc: "Regenerate the README screenshots"
+    desc: "Regenerate the README screenshots, crawling and comparing on the way"
     cmds:
       - scripts/demo.sh
 

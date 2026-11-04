@@ -1,0 +1,1 @@
+{* input scope: data_who. See who.md. *}<span class="who-ran">{eval $data_user = $data_who.user}{include components/user.tpl}{if $data_who.scheduled} <span class="badge">scheduled</span>{/if}{if $data_who.reason} <span class="badge bad" title="{data_who.reason}">out of hours</span>{elseif $data_who.forced} <span class="badge signal">forced</span>{/if}</span>

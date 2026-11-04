@@ -29,6 +29,9 @@ $_REQUEST = array("id" => "01HZ", "title" => "  spaced  ");
 
 echo var_export(Task\Route::posted(), true), "\n";
 echo Task\Route::param("id"), "|", Task\Route::param("none", "fallback"), "\n";
+// input hands back what arrived, padding and all: Go reads a query value
+// with r.URL.Query().Get(), which does not trim, so a padded filter has to
+// match nothing on both sides.
 echo "[", Task\Route::input("title"), "]", Task\Route::input("none", "fallback"), "\n";
 ---
 settings/users/01HZ
@@ -40,4 +43,4 @@ settings/users/01HZ
 0
 true
 01HZ|fallback
-[spaced]fallback
+[  spaced  ]fallback

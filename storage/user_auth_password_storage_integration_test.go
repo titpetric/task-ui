@@ -67,3 +67,54 @@ func TestUserAuthPasswordStorage(t *testing.T) {
 	list, _ = passwords.List(ctx, user.ID)
 	assert.Len(t, list, 0)
 }
+
+// Every method hands back what the driver said. PasswordHash tells a
+// user with no password from a pool that cannot answer: the first is no
+// hash and no error, the second is the error.
+func TestUserAuthPasswordStorage_Closed(t *testing.T) {
+	t.Parallel()
+	passwords := storage.NewUserAuthPasswordStorage(closedDB(t))
+	ctx := context.Background()
+
+	_, err := passwords.List(ctx, "u1")
+	assert.ErrorContains(t, err, errClosed)
+	_, err = passwords.PasswordHash(ctx, "u1")
+	assert.ErrorContains(t, err, errClosed)
+	assert.ErrorContains(t, passwords.SetPassword(ctx, "u1", "hash"), errClosed)
+	assert.ErrorContains(t, passwords.SetBackups(ctx, "u1", []string{"hash"}), errClosed)
+	_, err = passwords.Use(ctx, "p1")
+	assert.ErrorContains(t, err, errClosed)
+	assert.ErrorContains(t, passwords.DeleteByUser(ctx, "u1"), errClosed)
+}
+
+// A replace clears the user's passwords of the kind and then writes the
+// hashes, and stops at the write that failed. A password set leaves the
+// user's sessions, which is its own statement and its own error.
+func TestUserAuthPasswordStorage_Writes(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+
+	refused := newDB(t)
+	refuse(t, refused, model.UserAuthPasswordTable, "INSERT")
+	assert.ErrorContains(t, storage.NewUserAuthPasswordStorage(refused).SetBackups(ctx, "u1", []string{"hash"}), errRefused)
+
+	sessions := newDB(t)
+	refuse(t, sessions, model.UserSessionTable, "DELETE")
+	users := storage.NewUserStorage(sessions)
+	user := &model.User{Name: "alice", Role: model.RoleRunner}
+	assert.NoError(t, users.Create(ctx, user))
+	open := storage.NewUserSessionStorage(sessions)
+	_, err := open.Create(ctx, user.ID, "cookiehash", time.Now().Add(time.Hour))
+	assert.NoError(t, err)
+	assert.ErrorContains(t, storage.NewUserAuthPasswordStorage(sessions).SetPassword(ctx, user.ID, "hash"), errRefused)
+}
+
+// A password needs a user, and a hash for every password it names.
+func TestUserAuthPasswordStorage_Refuses(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	passwords := storage.NewUserAuthPasswordStorage(newDB(t))
+
+	assert.ErrorContains(t, passwords.SetPassword(ctx, "", "hash"), "needs a user")
+	assert.ErrorContains(t, passwords.SetBackups(ctx, "u1", []string{""}), "needs a hash")
+}

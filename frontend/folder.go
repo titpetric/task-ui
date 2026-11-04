@@ -136,7 +136,7 @@ func (h *Handlers) defaultWorkspace(w http.ResponseWriter, r *http.Request) {
 	}
 	withTreeFolders(p, f.Dir, p.SubFolders)
 	if workspace != nil {
-		p.FolderMenu = &view.FolderMenu{ID: model.Default, Workspace: true}
+		p.FolderMenu = &view.FolderMenu{ID: model.Default, Workspace: true, Projects: len(p.SubFolders)}
 		h.homeTree(r, p, model.Default)
 	}
 	if workspace != nil && p.Can("prompt/edit") && h.claudeFor(r, p.User) {
@@ -279,6 +279,14 @@ func (h *Handlers) folder(w http.ResponseWriter, r *http.Request, f *folder.Fold
 
 // withTreeFolders links the listing's directories that are folders, into TreeFolders, and adds the subs it lacks as rows.
 func withTreeFolders(p *view.Page, dir string, subs []*folder.Folder) {
+	// Discovery absolutises the root, so every folder of the catalogue
+	// holds an absolute directory. The root's own page builds its
+	// directory off the configured root, which is relative on an instance
+	// configured with a relative one, and then no name matches and every
+	// sub is listed twice.
+	if abs, err := filepath.Abs(dir); err == nil {
+		dir = abs
+	}
 	byDir := map[string]*folder.Folder{}
 	for _, f := range p.Folders {
 		byDir[filepath.Clean(f.Dir)] = f

@@ -5,7 +5,26 @@
 // generated model types. A *pdo.PDO is request scoped and not safe for
 // concurrent use, so every method allocates one over the shared *sqlx.DB
 // pool. Callers outside this package issue no SQL; a question the app
-// has gets a method here.
+// has gets a method here. rules/sql.yml refuses one written elsewhere.
+//
+// Three shapes recur, and the reason for each is here rather than on
+// every method that takes it.
+//
+// A method that is one statement takes no transaction. The statement
+// either happens whole or not at all, and a count comes from the
+// driver's RowsAffected rather than from a loop that read every row to
+// decide. Keep and MoveFolder are written that way; inTx is for the
+// methods that genuinely write across tables.
+//
+// A method that names its columns rather than reading the row with
+// SELECT * is one task-ui migrate-layout calls: it runs against a
+// database from before the migration it is part of, whose tables hold
+// other columns than this package's models do.
+//
+// No method wraps a driver error. What the driver said goes back as it
+// came, so a caller comparing against sql.ErrNoRows or reading a
+// message gets the driver's own; ErrNotFound is the one translation,
+// and notFound makes it.
 package storage
 
 import (
@@ -23,7 +42,9 @@ import (
 	"github.com/titpetric/task-ui/schema"
 )
 
-// DB is the shared connection pool under every storage.
+// DB is the shared connection pool under every storage. The program
+// links the driver: main and the tests import modernc.org/sqlite for
+// its side effect.
 type DB = *sqlx.DB
 
 // Project is the migration project name recorded in the migrations table.
@@ -33,7 +54,6 @@ const Project = "task-ui"
 var ErrNotFound = errors.New("not found")
 
 // Open opens a sqlite database: a file, or for an empty DSN or ":memory:" a private one in memory on one connection.
-// The program links the driver: main and the tests import modernc.org/sqlite for its side effect.
 func Open(dsn string) (DB, error) {
 	memory := dsn == "" || dsn == ":memory:"
 	if memory {
@@ -41,14 +61,13 @@ func Open(dsn string) (DB, error) {
 	} else if !strings.Contains(dsn, "?") {
 		dsn += "?_pragma=busy_timeout(5000)&_pragma=journal_mode(WAL)"
 	}
+	// sqlx.Open answers an error only for a driver that is not
+	// registered, and the program links this one in.
 	db, err := sqlx.Open("sqlite", dsn)
-	if err != nil {
-		return nil, err
-	}
-	if memory {
+	if memory && err == nil {
 		db.SetMaxOpenConns(1)
 	}
-	return db, nil
+	return db, err
 }
 
 // Migrate applies the schema migrations to the database.
@@ -81,6 +100,26 @@ type conn = *pdo.PDO
 // client returns a request scoped pdo client over the shared pool.
 func client(db DB) conn {
 	return pdo.New(db)
+}
+
+// notIn is the clause that excludes a list of values from a statement,
+// " <keyword> <column> NOT IN (?, ?, ?)", and nothing at all for an
+// empty list: a delete of everything but nothing is a delete of
+// everything. The keyword is WHERE or AND, whichever the statement is at.
+func notIn(keyword, column string, n int) string {
+	if n == 0 {
+		return ""
+	}
+	return " " + keyword + " " + column + " NOT IN (?" + strings.Repeat(", ?", n-1) + ")"
+}
+
+// anyList is a list of strings as query arguments.
+func anyList(values []string) []any {
+	args := make([]any, 0, len(values))
+	for _, value := range values {
+		args = append(args, value)
+	}
+	return args
 }
 
 // notFound maps the driver's missing row to ErrNotFound.

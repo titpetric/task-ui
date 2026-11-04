@@ -671,6 +671,176 @@
       columns:
         - folder
       unique: true
+- name: refinement_artifact
+  comment: Refinement Artifact
+  columns:
+    - name: id
+      type: text
+      key: PRI
+      comment: ID
+      datatype: char(26)
+    - name: thread_id
+      type: text
+      key: MUL
+      comment: Thread ID
+      datatype: char(26)
+    - name: comment_id
+      type: text
+      key: MUL
+      comment: Comment ID
+      datatype: char(26)
+    - name: path
+      type: text
+      key: MUL
+      comment: Path
+      datatype: varchar
+    - name: kind
+      type: text
+      comment: Kind
+      datatype: varchar
+    - name: created_at
+      type: timestamp
+      comment: Created At
+      datatype: datetime
+  indexes:
+    - name: sqlite_autoindex_refinement_artifact_1
+      columns:
+        - id
+      primary: true
+      unique: true
+    - name: idx_refinement_artifact_thread
+      columns:
+        - thread_id
+        - path
+- name: refinement_comment
+  comment: Refinement Comment
+  columns:
+    - name: id
+      type: text
+      key: PRI
+      comment: ID
+      datatype: char(26)
+    - name: thread_id
+      type: text
+      key: MUL
+      comment: Thread ID
+      datatype: char(26)
+    - name: user
+      type: text
+      comment: User
+      datatype: varchar
+    - name: body
+      type: text
+      comment: Body
+      datatype: varchar
+    - name: note_id
+      type: text
+      key: MUL
+      comment: Note ID
+      datatype: char(26)
+    - name: created_at
+      type: timestamp
+      key: MUL
+      comment: Created At
+      datatype: datetime
+    - name: kind
+      type: text
+      comment: Kind
+      datatype: varchar
+    - name: collapsed_into
+      type: text
+      comment: Collapsed Into
+      datatype: char(26)
+  indexes:
+    - name: sqlite_autoindex_refinement_comment_1
+      columns:
+        - id
+      primary: true
+      unique: true
+    - name: idx_refinement_comment_thread
+      columns:
+        - thread_id
+        - created_at
+- name: refinement_correction
+  comment: Refinement Correction
+  columns:
+    - name: id
+      type: text
+      key: PRI
+      comment: ID
+      datatype: char(26)
+    - name: thread_id
+      type: text
+      key: MUL
+      comment: Thread ID
+      datatype: char(26)
+    - name: comment_id
+      type: text
+      key: MUL
+      comment: Comment ID
+      datatype: char(26)
+    - name: corrects_id
+      type: text
+      key: MUL
+      comment: Corrects ID
+      datatype: char(26)
+    - name: created_at
+      type: timestamp
+      key: MUL
+      comment: Created At
+      datatype: datetime
+  indexes:
+    - name: sqlite_autoindex_refinement_correction_1
+      columns:
+        - id
+      primary: true
+      unique: true
+    - name: uidx_refinement_correction_comment
+      columns:
+        - comment_id
+      unique: true
+    - name: idx_refinement_correction_thread
+      columns:
+        - thread_id
+        - created_at
+- name: refinement_thread
+  comment: Refinement Thread
+  columns:
+    - name: id
+      type: text
+      key: PRI
+      comment: ID
+      datatype: char(26)
+    - name: title
+      type: text
+      comment: Title
+      datatype: varchar
+    - name: user
+      type: text
+      comment: User
+      datatype: varchar
+    - name: report_markdown
+      type: text
+      comment: Report Markdown
+      datatype: varchar
+    - name: created_at
+      type: timestamp
+      key: MUL
+      comment: Created At
+      datatype: datetime
+    - name: updated_at
+      type: timestamp
+      comment: Updated At
+      datatype: datetime
+  indexes:
+    - name: sqlite_autoindex_refinement_thread_1
+      columns:
+        - id
+      primary: true
+      unique: true
+    - name: idx_refinement_thread_created
+      columns:
+        - created_at
 - name: run
   comment: Run
   columns:

@@ -25,6 +25,32 @@ entity "note" {
   + dir : text
 }
 
+entity "run" {
+  * id : text
+  + folder : text
+  + job : text
+  + user_id : text
+  + user_name : text
+  + state : TEXT
+  + exit_code : integer
+  + forced : integer
+  + scheduled : integer
+  + term_cols : integer
+  + term_rows : integer
+  + cast_path : text
+  + reason : text
+  + started_at : timestamp
+  + finished_at : timestamp
+  + created_at : timestamp
+  + updated_at : timestamp
+  + dir : text
+  + args : text
+  + target : text
+  + batch_id : text
+  + message : text
+  + title : text
+}
+
 entity "user" {
   * id : text
   + name : text
@@ -38,4 +64,6 @@ entity "user" {
 }
 
 note }o--|| user : user_id
+note }o--|| run : run_id
+run }o--|| user : user_id
 @enduml

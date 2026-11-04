@@ -10,7 +10,7 @@
 						<i class="dot {entry.state}"></i>
 						<span class="what"><b>{entry.name}</b><small>{if $entry.flow}<svg class="ic lead"><use href="#i-flow"/></svg>{/if}{entry.place}</small></span>
 {if !$entry.ended}						<svg class="ic act"><use href="#i-{entry.act}"/></svg>{/if}
-						<span class="avatar sm role-{entry.role}" title="{entry.user}">{entry.initials}</span>
+						{eval $data_avatar = $entry.avatar}{include components/avatar.tpl}
 					</a>
 {/foreach}
 {/foreach}
