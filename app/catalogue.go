@@ -8,6 +8,7 @@ import (
 	"slices"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/titpetric/task-ui/folder"
@@ -17,11 +18,11 @@ import (
 	"github.com/titpetric/task-ui/storage"
 )
 
-// Catalogue discovers the folders under the root on every call, with the
-// project rows applied, so a clone or a configuration change shows at
-// once. Discovery lists the root under no ID, so Find answers _ with the
-// src of the default workspace: the folder of the root's built-in jobs,
-// @shell, @claude and @host:<host>.
+// Catalogue discovers the folders under the root, with the project rows
+// applied, so a clone or a configuration change shows at once. Discovery
+// lists the root under no ID, so Find answers _ with the src of the
+// default workspace: the folder of the root's built-in jobs, @shell,
+// @claude and @host:<host>.
 type Catalogue struct {
 	Root     string
 	Discover bool
@@ -36,15 +37,40 @@ type Catalogue struct {
 	mu      sync.Mutex
 	every   []*folder.Folder
 	everyAt time.Time
+	seen    []*folder.Folder
+	seenAt  time.Time
+
+	walks atomic.Int64
 }
 
 // everyTTL is how long the workflow editor's listing of every folder
 // with a job lasts: the walk goes into every checkout.
 const everyTTL = 30 * time.Second
 
+// listTTL is how long the catalogue the pages see lasts.
+//
+// It was no time at all, and that was the latency of the instance. The
+// walk goes into every checkout under the root, and one page takes it
+// many times over: the chrome lists the folders, each workflow in the
+// sidebar resolves the job of every step through Find to say whether the
+// reader may start it, and the ported front end asks for those jobs one
+// Host::job at a time. A second is shorter than a click and longer than
+// a request, so a clone still shows at once and a page walks once.
+const listTTL = time.Second
+
 // NewCatalogue returns a catalogue over the root and the project rows.
 func NewCatalogue(root string, discover bool, projects *storage.ProjectStorage) *Catalogue {
 	return &Catalogue{Root: root, Discover: discover, Projects: projects}
+}
+
+// Walks counts the walks of the root taken since the instance started.
+//
+// A walk reads the project and workspace rows and goes into every
+// checkout, so how many of them a page takes is the page's latency. The
+// number is here to be held down: the tests of what a listing costs
+// assert it, because nothing else makes an O(n) walk visible.
+func (c *Catalogue) Walks() int64 {
+	return c.walks.Load()
 }
 
 // discovery builds the discovery of the moment.
@@ -72,9 +98,15 @@ func (c *Catalogue) discover(every bool) *folder.Discovery {
 	return d
 }
 
-// List returns the folders of the root ordered by ID.
+// List returns the folders of the root ordered by ID, cached for listTTL.
 func (c *Catalogue) List() []*folder.Folder {
-	return c.discovery().List()
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.seen == nil || time.Since(c.seenAt) > listTTL {
+		c.walks.Add(1)
+		c.seen, c.seenAt = c.discover(false).List(), time.Now()
+	}
+	return c.seen
 }
 
 // Find returns a folder by ID, or nil; internal that no folder takes is
@@ -82,10 +114,18 @@ func (c *Catalogue) List() []*folder.Folder {
 // itself. The _ it was named before reads as internal.
 func (c *Catalogue) Find(id string) *folder.Folder {
 	id = model.Canonical(id)
-	d := c.discovery()
-	if f := d.Find(id); f != nil || id != model.Default {
-		return f
+	for _, f := range c.List() {
+		if f.ID == id {
+			return f
+		}
 	}
+	if id != model.Default {
+		return nil
+	}
+	// The root under its own name, which discovery lists under none. The
+	// walk here is the one a page never takes: nothing asks Find for
+	// internal but the pages of the root's own jobs.
+	d := c.discovery()
 	root := &folder.Folder{ID: model.Default, Title: model.Default, Dir: c.Root, Hours: d.HoursOf(model.Default)}
 	if slices.ContainsFunc(d.Workspaces, func(cfg folder.Config) bool { return cfg.ID == model.Default }) {
 		root.Dir = layout.SrcDir(c.Root, model.Default)
@@ -117,6 +157,7 @@ func (c *Catalogue) Every() []*folder.Folder {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	if c.every == nil || time.Since(c.everyAt) > everyTTL {
+		c.walks.Add(1)
 		c.every, c.everyAt = c.discover(true).List(), time.Now()
 	}
 	return c.every
@@ -129,13 +170,30 @@ func (c *Catalogue) WorkspaceProjects(_ context.Context, workspace string) []*fo
 	if err != nil {
 		return nil
 	}
+	// The catalogue once, not once per project. Steps().Find answers one
+	// ID by building a discovery and walking it, so asking it for every
+	// directory here walked every checkout under the root as many times
+	// as the workspace has projects: that is seconds on a real root, and
+	// it is on every page, because the sidebar lists the workflows and a
+	// workflow that runs over a workspace reads its projects to say
+	// whether the user may start it.
+	known := map[string]*folder.Folder{}
+	for _, f := range c.Every() {
+		known[f.ID] = f
+	}
+	// The visible catalogue wins over Every, as Steps().Find prefers it:
+	// a folder the project rows configure is that folder, and Every only
+	// adds the ones a section or a setting hides.
+	for _, f := range c.List() {
+		known[f.ID] = f
+	}
 	var projects []*folder.Folder
 	for _, entry := range entries {
 		if !entry.IsDir() || strings.HasPrefix(entry.Name(), ".") {
 			continue
 		}
 		id := layout.Join(workspace, entry.Name())
-		f := c.Steps().Find(id)
+		f := known[model.Canonical(id)]
 		if f == nil {
 			f = &folder.Folder{ID: id, Title: entry.Name(), Dir: layout.ProjectDir(c.Root, workspace, entry.Name()), Probe: c.Skills}
 		}
