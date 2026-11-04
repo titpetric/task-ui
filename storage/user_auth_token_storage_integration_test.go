@@ -87,10 +87,13 @@ func TestUserAuthTokenStorage_Many(t *testing.T) {
 	list, err := tokens.ListKind(ctx, "u1", model.TokenMCP)
 	assert.NoError(t, err)
 	assert.Len(t, list, 2, "both MCP tokens stand, and no CLI one is among them")
-	// Two writes of one request land on the same millisecond, so the
-	// name breaks the tie and the order is stable either way.
-	assert.Equal(t, first.ID, list[0].ID)
-	assert.Equal(t, second.ID, list[1].ID)
+	// Newest first, and two writes of one request fall on either side of a
+	// millisecond as often as not, so which of the two leads is the stamps'
+	// business: what the order owes is that the later one never follows.
+	ids := []string{list[0].ID, list[1].ID}
+	assert.Contains(t, ids, first.ID)
+	assert.Contains(t, ids, second.ID)
+	assert.False(t, list[0].CreatedAt.Before(*list[1].CreatedAt))
 	assert.True(t, expires.Equal(*list[0].ExpiresAt))
 
 	got, err := tokens.Get(ctx, "u1", model.TokenMCP, "mcp-2")
