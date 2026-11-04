@@ -464,6 +464,10 @@ func (a *App) wire(version string) error {
 	// trace is read by a signed in user, and behind its own Authorize,
 	// which answers anyone but an admin with a 404.
 	r.Mount(telemetry.Path(), a.Guard.Require(telemetry))
+	// The runtime profiles, behind the Guard and the same admin check. A
+	// trace names the slow request; a CPU profile names the function in
+	// it, and only the running instance can be asked for one.
+	r.Mount(PprofPath, a.Guard.Require(pprofRoutes()))
 	if ported == nil {
 		// No PHP front end was built, so the Go pages hold the root as they
 		// always did. A build that cannot extract the tree still serves.
