@@ -19,8 +19,20 @@ dialog.preview .preview-body img {
   background: var(--ink-0);
 }
 
-dialog.preview .preview-body:has(.preview-doc:not([hidden])) {
+dialog.preview .preview-body:has(.preview-doc:not([hidden])),
+dialog.preview .preview-body:has(.preview-frame:not([hidden])) {
   align-items: flex-start;
+}
+
+/* A page a run wrote, in a frame of its own. The page is a document the
+   instance did not write: it comes down sandboxed, so it renders on its
+   own white background and reaches nothing of the window around it. */
+dialog.preview .preview-frame {
+  width: 100%;
+  height: calc(100vh - 10rem);
+  border: 1px solid var(--line-2);
+  border-radius: 4px;
+  background: #fff;
 }
 
 dialog.preview #preview-version {

@@ -23,6 +23,11 @@ const maxPreview = 1 << 20
 // imageTypes are the extensions the artifact window shows as an image.
 var imageTypes = map[string]bool{".png": true, ".jpg": true, ".jpeg": true, ".gif": true, ".webp": true, ".svg": true}
 
+// pageTypes are the extensions the artifact window opens as a page, in a
+// frame of its own: a refinement job writes an HTML report and reading it
+// as source is reading the markup instead of the report.
+var pageTypes = map[string]bool{".html": true, ".htm": true}
+
 // viewArtifactFile returns a file of the artifact tree for the artifact
 // window: the version ?version= names, the latest without, and the
 // versions the user may see.
@@ -96,6 +101,11 @@ func (h *Handlers) viewArtifactFile(w http.ResponseWriter, r *http.Request) {
 	switch {
 	case imageTypes[ext]:
 		view.Kind = "image"
+	case pageTypes[ext]:
+		// The frame fetches the file from its own URL, which answers
+		// text/html in a sandbox, so neither the size of the page nor
+		// the encoding of its bytes is this answer's business.
+		view.Kind = "page"
 	case len(data) > maxPreview || !utf8.Valid(data):
 		view.Kind = "file"
 	case ext == ".md" || ext == ".markdown":

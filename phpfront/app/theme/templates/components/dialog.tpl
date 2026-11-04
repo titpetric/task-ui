@@ -41,14 +41,15 @@
 		</div>
 	</dialog>
 {* The image window: an image or an svg of the artifacts, scaled to fit, opened
-   in the page. A file of a checkout that runs carries the Run or Attach of its
+   in the page, or an HTML page a run wrote, in a frame that holds it apart from
+   this one. A file of a checkout that runs carries the Run or Attach of its
    row in the foot. *}
 	<dialog class="run preview" id="preview-dialog" aria-labelledby="preview-title">
 		<div class="run-head">
 			<span class="label" id="preview-label">Artifact</span>
 			<h3 id="preview-title"></h3>
 		</div>
-		<div class="run-body preview-body"><img id="preview-image" alt=""><div id="preview-doc" class="preview-doc" hidden></div></div>
+		<div class="run-body preview-body"><img id="preview-image" alt=""><div id="preview-doc" class="preview-doc" hidden></div><iframe id="preview-frame" class="preview-frame" title="The page the run wrote" sandbox referrerpolicy="no-referrer" hidden></iframe></div>
 		<div class="run-foot">
 			<span class="hint"><select id="preview-version" aria-label="Version" hidden></select></span>
 			<a class="btn" id="preview-download" href="#" download>Download</a>
