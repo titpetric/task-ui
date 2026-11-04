@@ -1,6 +1,7 @@
 package phpfront
 
 import (
+	"reflect"
 	"testing"
 
 	"github.com/titpetric/phpscript/model"
@@ -156,6 +157,25 @@ func TestRules(t *testing.T) {
 
 	assert.Equal(t, "note", text(t, at(t, list(t, out, "sections"), 0), "key"))
 	assert.Equal(t, "Notes", text(t, at(t, list(t, out, "sections"), 0), "title"))
+}
+
+// Every field of the struct is a key, checked by reflection rather than by
+// name: a field added to host.go and forgotten here is a form drawing an empty
+// box over a value the instance holds, which is what happened to
+// debug_span_min_duration.
+func TestTelemetry(t *testing.T) {
+	t.Parallel()
+
+	out := telemetry(Telemetry{Wired: true, ServiceName: "task-ui", DebugSpanMinDuration: "1ms"})
+	for i := range reflect.TypeFor[Telemetry]().NumField() {
+		key := reflect.TypeFor[Telemetry]().Field(i).Tag.Get("json")
+		_, ok := out.Get(key)
+		assert.True(t, ok, key)
+	}
+
+	assert.True(t, flag(t, out, "wired"))
+	assert.Equal(t, "task-ui", text(t, out, "service_name"))
+	assert.Equal(t, "1ms", text(t, out, "debug_span_min_duration"))
 }
 
 func TestPhpMap(t *testing.T) {

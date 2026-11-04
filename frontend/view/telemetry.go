@@ -27,6 +27,11 @@ func (t *Telemetry) IgnorePaths() string {
 	return strings.Join(t.Options.IgnorePaths, "\n")
 }
 
+// DebugSpanMinDuration is the shortest debug span kept, as "1ms".
+func (t *Telemetry) DebugSpanMinDuration() string {
+	return t.Options.DebugSpanMinDuration.String()
+}
+
 // AllowedNetworks is the CIDR ranges that may open the dashboard, one per
 // line. Empty is every network, which the page's help says.
 func (t *Telemetry) AllowedNetworks() string {

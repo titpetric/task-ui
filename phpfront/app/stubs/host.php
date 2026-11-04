@@ -725,9 +725,14 @@ class Host {
 	/**
 	 * The options the tracer runs on, the stored ones over the defaults:
 	 * `enabled`, `service_name`, `sample_rate`, `ring_buffer_size`,
-	 * `top_requests`, `max_spans_per_trace`, `ignore_paths`, `live_stream`,
-	 * `refresh_interval`, `allowed_networks`, `option_path`, `capture_logs`,
-	 * `track_memory_use` and `trust_request_id`.
+	 * `top_requests`, `max_spans_per_trace`, `debug_span_min_duration`,
+	 * `ignore_paths`, `live_stream`, `refresh_interval`, `allowed_networks`,
+	 * `option_path`, `capture_logs`, `track_memory_use` and
+	 * `trust_request_id`.
+	 *
+	 * `debug_span_min_duration` is spelled as a duration, "1ms" or "500us",
+	 * which is what the form posts back: the shortest span marked as detail
+	 * that a trace keeps.
 	 *
 	 * `wired` says the instance has telemetry at all, which is what makes the
 	 * page editable; `path` is the mount the router read at startup, which is
@@ -749,6 +754,7 @@ class Host {
 			"ring_buffer_size" => 0,
 			"top_requests" => 0,
 			"max_spans_per_trace" => 0,
+			"debug_span_min_duration" => "",
 			"ignore_paths" => array(),
 			"live_stream" => false,
 			"refresh_interval" => 0,

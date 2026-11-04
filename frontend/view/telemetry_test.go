@@ -2,6 +2,7 @@ package view_test
 
 import (
 	"testing"
+	"time"
 
 	"github.com/titpetric/oida"
 
@@ -28,6 +29,18 @@ func TestTelemetry(t *testing.T) {
 	assert.Equal(t, "", empty.AllowedNetworks())
 }
 
+// The shortest debug span reads as a duration, which is what the field posts
+// back: a number of nanoseconds is not a unit anybody typing in the box means.
+func TestTelemetryDebugSpanMinDuration(t *testing.T) {
+	t.Parallel()
+	opts := oida.NewOptions("task-ui")
+	opts.DebugSpanMinDuration = time.Millisecond
+	shown := &view.Telemetry{Options: opts}
+
+	assert.Equal(t, "1ms", shown.DebugSpanMinDuration())
+	assert.Equal(t, "0s", (&view.Telemetry{}).DebugSpanMinDuration())
+}
+
 // The page shows every setting, and the one that takes effect on its own
 // says so beside the ones that rebuild the recorder.
 func TestTelemetryPage(t *testing.T) {
@@ -47,6 +60,7 @@ func TestTelemetryPage(t *testing.T) {
 	assert.Contains(t, body, `name="enabled"`)
 	assert.Contains(t, body, `value="25"`)
 	assert.Contains(t, body, `value="64"`)
+	assert.Contains(t, body, `name="debug_span_min_duration"`)
 	assert.Contains(t, body, `name="ignore_paths"`)
 	assert.Contains(t, body, `name="allowed_networks"`)
 	assert.Contains(t, body, `href="/debug/oida"`)

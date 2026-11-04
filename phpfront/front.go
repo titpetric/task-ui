@@ -56,6 +56,12 @@ func route(static *assets.Tree, opts Options) *annotations.Route {
 		annotations.WithRunnerOptions(runner.Options{
 			WorkDir:  "/",
 			Database: database(opts),
+			// The interpreter's own spans, marked as detail: a frame under
+			// the recorder's minimum is dropped and counted, and the files
+			// a page included arrive as one span at the end of it. debug
+			// publishes a span per frame and per include instead, which is
+			// a page being taken apart and not a page being served.
+			TraceLevel: runner.TraceLevelInfo,
 		}),
 		// Per request, after the request context sits on the runtime.
 		annotations.WithRuntimeFunc(func(rt *runner.Runtime) { Bind(rt, opts, static) }),

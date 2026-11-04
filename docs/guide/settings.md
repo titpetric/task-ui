@@ -102,6 +102,7 @@ are read, and an admin alone may open it.
 | **Retained traces**  | how many finished traces the ring buffer holds; the oldest go first                 |
 | **Top requests**     | how many groups the rolling statistics keep                                         |
 | **Spans per trace**  | the cap on one trace's spans. The rest are counted, not kept. Zero is no cap        |
+| **Shortest debug span** | the shortest span marked as detail a trace keeps, spelled as a duration, `1ms` or `500us`. A shorter one is dropped and counted. Zero keeps every one |
 | **Refresh interval** | how often the live view reloads, in seconds, where the browser cannot stream        |
 | **Live stream**      | serves the live view over server sent events, so a trace appears as it happens      |
 | **Capture logs**     | records the log lines a trace writes. Off, an error still lands on its span         |
@@ -109,6 +110,15 @@ are read, and an admin alone may open it.
 | **Trust Request-Id** | reuses a client's `Request-Id` header as the trace identifier. Behind a trusted proxy alone |
 | **Ignored paths**    | the paths never traced, one per line. An entry ending in `/*` matches by prefix     |
 | **Allowed networks** | the CIDR ranges that may open the dashboard, empty for every network                |
+
+A page served by the PHP front end reports a span per PHP frame and
+marks each as detail, which is what **Shortest debug span** decides on:
+a page calling two hundred methods would otherwise fill its trace with
+two hundred spans of a microsecond and the request they belong to would
+be somewhere underneath. The instance's default is a millisecond, and a
+dropped frame gives its slot in **Spans per trace** back to the work
+that needs it. How much the interpreter reports at all is the front
+end's `trace_level`, which is not a setting of this page.
 
 **Enabled** takes effect on save and keeps the traces already recorded.
 Every other setting rebuilds the recorder, which empties the ring

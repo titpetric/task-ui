@@ -1135,6 +1135,10 @@ type Telemetry struct {
 	CaptureLogs      bool     `json:"capture_logs"`
 	TrackMemoryUse   bool     `json:"track_memory_use"`
 	TrustRequestID   bool     `json:"trust_request_id"`
+	// DebugSpanMinDuration is spelled as a duration, "1ms" or "500us",
+	// which is what the form posts and what the stored row holds. The page
+	// writes it into a text field and no PHP parses it.
+	DebugSpanMinDuration string `json:"debug_span_min_duration"`
 }
 
 // Integration is one service of the Integrations settings as its form draws

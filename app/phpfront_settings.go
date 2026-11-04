@@ -349,6 +349,7 @@ func (h *FrontHost) Telemetry(ctx context.Context) phpfront.Telemetry {
 	out.LiveStream, out.RefreshInterval = opts.LiveStream, opts.RefreshInterval
 	out.OptionPath, out.CaptureLogs = opts.Path, opts.CaptureLogs
 	out.TrackMemoryUse, out.TrustRequestID = opts.TrackMemoryUse, opts.TrustRequestID
+	out.DebugSpanMinDuration = opts.DebugSpanMinDuration.String()
 	return out
 }
 

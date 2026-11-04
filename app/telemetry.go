@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"sync/atomic"
+	"time"
 
 	chi "github.com/go-chi/chi/v5"
 	"gopkg.in/yaml.v3"
@@ -56,6 +57,13 @@ func NewTelemetry(ctx context.Context, settings *storage.SettingStorage, service
 // the statistics grouped by chi's routed pattern.
 func (t *Telemetry) Defaults() oida.Options {
 	opts := oida.NewOptions(t.service)
+	// A millisecond, where the library takes a microsecond. The producer
+	// here is the PHP interpreter: it marks a span per frame as detail,
+	// and a page calling two hundred methods reports two hundred of
+	// them. A frame under a millisecond is not where the page spent its
+	// time, and dropping it gives its slot in MaxSpansPerTrace back to
+	// the work that is. Zero keeps every frame.
+	opts.DebugSpanMinDuration = time.Millisecond
 	opts.RouteFunc = routePattern
 	opts.Authorize = authorizeTelemetry
 	return opts

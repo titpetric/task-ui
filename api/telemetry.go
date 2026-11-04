@@ -2,7 +2,10 @@ package api
 
 import (
 	"context"
+	"fmt"
 	"net/http"
+	"strings"
+	"time"
 
 	"github.com/titpetric/oida"
 
@@ -42,6 +45,12 @@ type TelemetryRequest struct {
 	Path             *string  `json:"path"`
 	IgnorePaths      *string  `json:"ignore_paths"`
 	AllowedNetworks  *string  `json:"allowed_networks"`
+
+	// DebugSpanMinDuration is a duration and arrives spelled as one,
+	// "1ms" or "500us", which is how OIDA_DEBUG_SPAN_MIN_DURATION and the
+	// stored row spell it too. A number of nanoseconds in a form field
+	// would be a unit nobody typing in it means.
+	DebugSpanMinDuration *string `json:"debug_span_min_duration"`
 }
 
 // TelemetryView is the settings as the API answers them.
@@ -66,6 +75,9 @@ type TelemetryView struct {
 	Path             string   `json:"path"`
 	IgnorePaths      []string `json:"ignore_paths"`
 	AllowedNetworks  []string `json:"allowed_networks"`
+	// DebugSpanMinDuration is answered as it is posted, spelled as a
+	// duration.
+	DebugSpanMinDuration string `json:"debug_span_min_duration"`
 }
 
 // NewTelemetryView returns the options as the API answers them.
@@ -77,6 +89,7 @@ func NewTelemetryView(opts oida.Options) TelemetryView {
 		LiveStream: opts.LiveStream, CaptureLogs: opts.CaptureLogs,
 		TrackMemoryUse: opts.TrackMemoryUse, TrustRequestID: opts.TrustRequestID,
 		Path: opts.Path, IgnorePaths: opts.IgnorePaths, AllowedNetworks: opts.AllowedNetworks,
+		DebugSpanMinDuration: opts.DebugSpanMinDuration.String(),
 	}
 }
 
@@ -103,7 +116,10 @@ func (h *Handlers) saveTelemetry(w http.ResponseWriter, r *http.Request) {
 		failErr(w, err)
 		return
 	}
-	req.Apply(&opts)
+	if err := req.Apply(&opts); err != nil {
+		fail(w, http.StatusBadRequest, err.Error())
+		return
+	}
 	// A sample rate or a path out of range is the caller's mistake, and
 	// the library says which. Validating here rather than reading it off
 	// the save keeps a storage failure a 500 and this a 400.
@@ -119,8 +135,9 @@ func (h *Handlers) saveTelemetry(w http.ResponseWriter, r *http.Request) {
 }
 
 // Apply writes the fields the request named onto the options it has, and
-// leaves every other field as it stands.
-func (t TelemetryRequest) Apply(opts *oida.Options) {
+// leaves every other field as it stands. A duration it cannot read is the
+// one value that fails here rather than at Validate.
+func (t TelemetryRequest) Apply(opts *oida.Options) error {
 	setIf(&opts.Enabled, t.Enabled)
 	setIf(&opts.ServiceName, t.ServiceName)
 	setIf(&opts.SampleRate, t.SampleRate)
@@ -142,6 +159,22 @@ func (t TelemetryRequest) Apply(opts *oida.Options) {
 	if t.AllowedNetworks != nil {
 		opts.AllowedNetworks = model.Lines(*t.AllowedNetworks)
 	}
+	// An empty field is the zero duration, which keeps every debug span:
+	// time.ParseDuration refuses "" and nobody clearing the box means an
+	// error.
+	if t.DebugSpanMinDuration != nil {
+		value := strings.TrimSpace(*t.DebugSpanMinDuration)
+		if value == "" {
+			opts.DebugSpanMinDuration = 0
+			return nil
+		}
+		parsed, err := time.ParseDuration(value)
+		if err != nil {
+			return fmt.Errorf("debug_span_min_duration: %w", err)
+		}
+		opts.DebugSpanMinDuration = parsed
+	}
+	return nil
 }
 
 // setIf writes a value the request named, and leaves the field alone

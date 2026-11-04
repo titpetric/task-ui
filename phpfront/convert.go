@@ -773,6 +773,7 @@ func telemetry(found Telemetry) *model.Array {
 		"capture_logs", found.CaptureLogs,
 		"track_memory_use", found.TrackMemoryUse,
 		"trust_request_id", found.TrustRequestID,
+		"debug_span_min_duration", found.DebugSpanMinDuration,
 	)
 }
 

@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/titpetric/oida"
 
@@ -499,6 +500,11 @@ func TestFrontSpans(t *testing.T) {
 	opts := oida.NewOptions("task-ui-test")
 	opts.ReadEnv = false
 	opts.Enabled = true
+	// Every interpreter span is kept. The front end runs at trace_level
+	// info, which marks a frame as detail, and the instance's own minimum
+	// of a millisecond would drop a frame of this fixture: what is asserted
+	// here is what the interpreter reports, not how fast the machine is.
+	opts.DebugSpanMinDuration = 0
 	tracer, err := oida.New(opts)
 	assert.NoError(t, err)
 
@@ -513,6 +519,41 @@ func TestFrontSpans(t *testing.T) {
 
 	assert.Contains(t, names, "new Page", "the allocation of a class is a span")
 	assert.Contains(t, names, "page.draw", "and a frame, named after the receiver the call was written on")
+}
+
+// A frame too short to read is dropped and counted.
+//
+// This is the division of labour the trace level is for: the interpreter
+// reports a span per frame and marks it as detail, and the recorder's minimum
+// decides which of them a reader sees. A page that calls two hundred methods
+// is two hundred spans of a microsecond without it, with the request they
+// belong to somewhere underneath.
+func TestFrontSpansDropped(t *testing.T) {
+	t.Parallel()
+
+	opts := oida.NewOptions("task-ui-test")
+	opts.ReadEnv = false
+	opts.Enabled = true
+	// A second: no frame of this fixture runs that long, so every one of
+	// them is detail the trace drops.
+	opts.DebugSpanMinDuration = time.Second
+	tracer, err := oida.New(opts)
+	assert.NoError(t, err)
+
+	assert.Contains(t, serveTraced(t, &host{}, "/spans", tracer), "drawn=ops")
+
+	var names []string
+	var dropped int
+	for _, trace := range tracer.Snapshot().Log {
+		dropped += trace.DroppedSpans
+		for _, span := range trace.Spans {
+			names = append(names, span.Name)
+		}
+	}
+
+	assert.NotContains(t, names, "new Page", "a frame under the minimum is detail the trace drops")
+	assert.NotContains(t, names, "page.draw")
+	assert.True(t, dropped >= 2, "and the trace counts what it dropped")
 }
 
 // serve runs one request against the host fixture tree.

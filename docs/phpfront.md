@@ -348,6 +348,8 @@ sqlite3 .live/data/task-ui.db "INSERT INTO note …"
 
 So an edit to `mod_*.php` shows on the next request, and an edit to a class under `code/Task`, to a template, or to `composer`'s autoload map needs the instance restarted. A method added to `Task\Buttons` is `call to undefined method` until then — on the page, not in the log of the editor, which is why a 500 after an edit under `code/` is this and not the edit. A template edit also needs `php tools/precompile.php` first, and the restart after it. A new `@route` needs a restart too: the tree is scanned once, when the front end is built.
 
+**A page's trace is the interpreter's, filtered by the recorder.** `phpfront/front.go` runs the runtime at `trace_level: info`: the interpreter reports a span per PHP frame and marks each as detail, and reports the files a page included as one `includes` span at the end of the request rather than one span each. What a reader then sees is the Shortest debug span setting of `/settings/telemetry`, a millisecond on this instance: a frame under it is dropped and counted, and its slot in Spans per trace goes back to the work that took the time. `trace_level: debug` reports every frame unmarked and a span per include with them, which is a page being taken apart rather than a page being served; `off` reports none of the interpreter's own work, and the spans a binding or a `start_span` recorded still arrive.
+
 ## The pipeline
 
 `phpfront/app/atkins.yml`:

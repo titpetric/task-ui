@@ -54,6 +54,12 @@
 	</div>
 
 	<div class="field">
+		<label for="telemetry-debug-min">Shortest debug span <span class="faint">a span marked as detail is dropped under this, and counted; <code>0</code> keeps every one</span></label>
+		<input type="text" id="telemetry-debug-min" name="debug_span_min_duration" value="{{ .DebugSpanMinDuration }}"{{ if not $admin }} disabled{{ end }}>
+		<p class="faint">Spelled as a duration: <code>1ms</code>, <code>500us</code>. The PHP interpreter marks a span per frame as detail, so this is what keeps a page that calls two hundred methods from filling its trace with them.</p>
+	</div>
+
+	<div class="field">
 		<label for="telemetry-ignore">Ignored paths <span class="faint">one per line; an entry ending in <code>/*</code> matches by prefix</span></label>
 		<textarea id="telemetry-ignore" name="ignore_paths" rows="4"{{ if not $admin }} disabled{{ end }}>{{ .IgnorePaths }}</textarea>
 	</div>
