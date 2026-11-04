@@ -11,7 +11,7 @@ require (
 	github.com/jmoiron/sqlx v1.4.0
 	github.com/russross/blackfriday/v2 v2.1.0
 	github.com/spf13/pflag v1.0.10
-	github.com/titpetric/oida v0.4.6-0.20261104134218-d71818099bf2
+	github.com/titpetric/oida v0.4.6-0.20261104145046-c3a30ce0c8be
 	github.com/titpetric/pdo v0.2.5
 	github.com/titpetric/phpscript v0.6.1-0.20261104140326-502335c56309
 	golang.org/x/crypto v0.58.0
