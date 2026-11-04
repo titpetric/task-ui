@@ -16,3 +16,5 @@ Workflow Step.
 | target       | varchar  |     | Target       |
 | args         | varchar  |     | Args         |
 | kind         | varchar  |     | Kind         |
+| markers      | varchar  |     | Markers      |
+| tries        | bigint   |     | Tries        |

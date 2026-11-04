@@ -1521,6 +1521,11 @@
       type: timestamp
       comment: Expires At
       datatype: datetime
+    - name: kind
+      type: text
+      key: MUL
+      comment: Kind
+      datatype: varchar
   indexes:
     - name: sqlite_autoindex_user_auth_token_1
       columns:
@@ -1531,9 +1536,10 @@
       columns:
         - hash
       unique: true
-    - name: idx_user_auth_token_user_name
+    - name: idx_user_auth_token_user_kind_name
       columns:
         - user_id
+        - kind
         - name
       unique: true
 - name: user_email
@@ -1833,8 +1839,18 @@
       comment: Workflow Run Ref
       datatype: char(26)
     - name: kind
-      type: text
+      type: TEXT
       comment: Kind
+      datatype: varchar
+      values:
+        - check
+        - job
+        - prompt
+        - summary
+        - workflow
+    - name: markers
+      type: text
+      comment: Markers
       datatype: varchar
   indexes:
     - name: sqlite_autoindex_workflow_run_step_1
@@ -1898,9 +1914,24 @@
       comment: Args
       datatype: varchar
     - name: kind
-      type: text
+      type: TEXT
       comment: Kind
       datatype: varchar
+      values:
+        - check
+        - job
+        - prompt
+        - summary
+        - workflow
+    - name: markers
+      type: text
+      comment: Markers
+      datatype: varchar
+    - name: tries
+      type: integer
+      comment: Tries
+      datatype: bigint
+      size: 8
   indexes:
     - name: sqlite_autoindex_workflow_step_1
       columns:

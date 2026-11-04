@@ -2569,6 +2569,9 @@ type UserAuthToken struct {
 
 	// Expires At
 	ExpiresAt *time.Time `db:"expires_at" json:"expires_at"`
+
+	// Kind
+	Kind string `db:"kind" json:"kind"`
 }
 
 // GetID will return the value of ID.
@@ -2619,11 +2622,17 @@ func (u *UserAuthToken) GetExpiresAt() *time.Time { return u.ExpiresAt }
 // SetExpiresAt sets ExpiresAt to the provided value.
 func (u *UserAuthToken) SetExpiresAt(stamp time.Time) { u.ExpiresAt = &stamp }
 
+// GetKind will return the value of Kind.
+func (u *UserAuthToken) GetKind() string { return u.Kind }
+
+// SetKind sets Kind to the provided value.
+func (u *UserAuthToken) SetKind(val string) { u.Kind = val }
+
 // UserAuthTokenTable is the name of the table in the DB.
 const UserAuthTokenTable = "`user_auth_token`"
 
 // UserAuthTokenFields is a list of all columns in the DB table.
-var UserAuthTokenFields = []string{"id", "user_id", "name", "hash", "used_at", "created_at", "updated_at", "expires_at"}
+var UserAuthTokenFields = []string{"id", "user_id", "name", "hash", "used_at", "created_at", "updated_at", "expires_at", "kind"}
 
 // UserAuthTokenPrimaryFields are the primary key fields in the DB table.
 var UserAuthTokenPrimaryFields = []string{"id"}
@@ -3060,6 +3069,9 @@ type WorkflowRunStep struct {
 
 	// Kind
 	Kind string `db:"kind" json:"kind"`
+
+	// Markers
+	Markers string `db:"markers" json:"markers"`
 }
 
 // GetID will return the value of ID.
@@ -3146,11 +3158,17 @@ func (w *WorkflowRunStep) GetKind() string { return w.Kind }
 // SetKind sets Kind to the provided value.
 func (w *WorkflowRunStep) SetKind(val string) { w.Kind = val }
 
+// GetMarkers will return the value of Markers.
+func (w *WorkflowRunStep) GetMarkers() string { return w.Markers }
+
+// SetMarkers sets Markers to the provided value.
+func (w *WorkflowRunStep) SetMarkers(val string) { w.Markers = val }
+
 // WorkflowRunStepTable is the name of the table in the DB.
 const WorkflowRunStepTable = "`workflow_run_step`"
 
 // WorkflowRunStepFields is a list of all columns in the DB table.
-var WorkflowRunStepFields = []string{"id", "workflow_run_id", "position", "folder", "job", "run_id", "state", "created_at", "updated_at", "prompt", "answer", "workflow_ref", "workflow_run_ref", "kind"}
+var WorkflowRunStepFields = []string{"id", "workflow_run_id", "position", "folder", "job", "run_id", "state", "created_at", "updated_at", "prompt", "answer", "workflow_ref", "workflow_run_ref", "kind", "markers"}
 
 // WorkflowRunStepPrimaryFields are the primary key fields in the DB table.
 var WorkflowRunStepPrimaryFields = []string{"id"}
@@ -3194,6 +3212,12 @@ type WorkflowStep struct {
 
 	// Kind
 	Kind string `db:"kind" json:"kind"`
+
+	// Markers
+	Markers string `db:"markers" json:"markers"`
+
+	// Tries
+	Tries int64 `db:"tries" json:"tries"`
 }
 
 // GetID will return the value of ID.
@@ -3268,11 +3292,23 @@ func (w *WorkflowStep) GetKind() string { return w.Kind }
 // SetKind sets Kind to the provided value.
 func (w *WorkflowStep) SetKind(val string) { w.Kind = val }
 
+// GetMarkers will return the value of Markers.
+func (w *WorkflowStep) GetMarkers() string { return w.Markers }
+
+// SetMarkers sets Markers to the provided value.
+func (w *WorkflowStep) SetMarkers(val string) { w.Markers = val }
+
+// GetTries will return the value of Tries.
+func (w *WorkflowStep) GetTries() int64 { return w.Tries }
+
+// SetTries sets Tries to the provided value.
+func (w *WorkflowStep) SetTries(val int64) { w.Tries = val }
+
 // WorkflowStepTable is the name of the table in the DB.
 const WorkflowStepTable = "`workflow_step`"
 
 // WorkflowStepFields is a list of all columns in the DB table.
-var WorkflowStepFields = []string{"id", "workflow_id", "position", "folder", "job", "disabled", "prompt", "dir", "workflow_ref", "target", "args", "kind"}
+var WorkflowStepFields = []string{"id", "workflow_id", "position", "folder", "job", "disabled", "prompt", "dir", "workflow_ref", "target", "args", "kind", "markers", "tries"}
 
 // WorkflowStepPrimaryFields are the primary key fields in the DB table.
 var WorkflowStepPrimaryFields = []string{"id"}

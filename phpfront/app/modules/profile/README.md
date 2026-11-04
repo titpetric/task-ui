@@ -117,6 +117,7 @@ User Auth Token
 | `created_at` | `timestamp` |         |
 | `updated_at` | `timestamp` |         |
 | `expires_at` | `timestamp` |         |
+| `kind`       | `text`      | indexed |
 
 ### `workflow_run`
 
@@ -157,7 +158,8 @@ Workflow Run Step
 | `answer`           | `text`      |         |
 | `workflow_ref`     | `text`      |         |
 | `workflow_run_ref` | `text`      |         |
-| `kind`             | `text`      |         |
+| `kind`             | `TEXT`      |         |
+| `markers`          | `text`      |         |
 
 ### `workspace`
 

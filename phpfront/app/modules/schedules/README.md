@@ -131,7 +131,9 @@ Workflow Step
 | `workflow_ref` | `text`    |         |
 | `target`       | `text`    |         |
 | `args`         | `text`    |         |
-| `kind`         | `text`    |         |
+| `kind`         | `TEXT`    |         |
+| `markers`      | `text`    |         |
+| `tries`        | `integer` |         |
 
 ### `workspace`
 

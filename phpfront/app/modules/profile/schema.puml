@@ -81,6 +81,7 @@ entity "user_auth_token" {
   + created_at : timestamp
   + updated_at : timestamp
   + expires_at : timestamp
+  + kind : text
 }
 
 entity "workflow_run" {
@@ -113,7 +114,8 @@ entity "workflow_run_step" {
   + answer : text
   + workflow_ref : text
   + workflow_run_ref : text
-  + kind : text
+  + kind : TEXT
+  + markers : text
 }
 
 entity "workspace" {

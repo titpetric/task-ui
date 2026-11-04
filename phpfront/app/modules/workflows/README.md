@@ -211,7 +211,8 @@ Workflow Run Step
 | `answer`           | `text`      |         |
 | `workflow_ref`     | `text`      |         |
 | `workflow_run_ref` | `text`      |         |
-| `kind`             | `text`      |         |
+| `kind`             | `TEXT`      |         |
+| `markers`          | `text`      |         |
 
 ### `workflow_step`
 
@@ -230,7 +231,9 @@ Workflow Step
 | `workflow_ref` | `text`    |         |
 | `target`       | `text`    |         |
 | `args`         | `text`    |         |
-| `kind`         | `text`    |         |
+| `kind`         | `TEXT`    |         |
+| `markers`      | `text`    |         |
+| `tries`        | `integer` |         |
 
 ### `workspace`
 

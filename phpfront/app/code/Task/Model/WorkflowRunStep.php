@@ -25,6 +25,7 @@ class WorkflowRunStep {
 		"workflow_ref",
 		"workflow_run_ref",
 		"kind",
+		"markers",
 	);
 
 	/** primary is the primary key columns. */
@@ -60,6 +61,8 @@ class WorkflowRunStep {
 	var $workflow_run_ref = "";
 	/** Kind */
 	var $kind = "";
+	/** Markers */
+	var $markers = "";
 
 	function __construct($row = array()) {
 		$this->id = \Task\Row::text($row, "id");
@@ -76,6 +79,7 @@ class WorkflowRunStep {
 		$this->workflow_ref = \Task\Row::text($row, "workflow_ref");
 		$this->workflow_run_ref = \Task\Row::text($row, "workflow_run_ref");
 		$this->kind = \Task\Row::text($row, "kind");
+		$this->markers = \Task\Row::text($row, "markers");
 	}
 	/** getId is ID. */
 	function getId() {
@@ -228,6 +232,17 @@ class WorkflowRunStep {
 	/** setKind sets Kind. */
 	function setKind($value) {
 		$this->kind = $value;
+
+		return $this;
+	}
+	/** getMarkers is Markers. */
+	function getMarkers() {
+		return $this->markers;
+	}
+
+	/** setMarkers sets Markers. */
+	function setMarkers($value) {
+		$this->markers = $value;
 
 		return $this;
 	}

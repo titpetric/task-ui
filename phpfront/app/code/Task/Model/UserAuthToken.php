@@ -10,7 +10,17 @@ class UserAuthToken {
 	const TABLE = "user_auth_token";
 
 	/** fields is every column, in the order the schema declares them. */
-	public static $fields = array("id", "user_id", "name", "hash", "used_at", "created_at", "updated_at", "expires_at");
+	public static $fields = array(
+		"id",
+		"user_id",
+		"name",
+		"hash",
+		"used_at",
+		"created_at",
+		"updated_at",
+		"expires_at",
+		"kind",
+	);
 
 	/** primary is the primary key columns. */
 	public static $primary = array("id");
@@ -33,6 +43,8 @@ class UserAuthToken {
 	var $updated_at = "";
 	/** Expires At */
 	var $expires_at = "";
+	/** Kind */
+	var $kind = "";
 
 	function __construct($row = array()) {
 		$this->id = \Task\Row::text($row, "id");
@@ -43,6 +55,7 @@ class UserAuthToken {
 		$this->created_at = \Task\Row::stamp($row, "created_at");
 		$this->updated_at = \Task\Row::stamp($row, "updated_at");
 		$this->expires_at = \Task\Row::stamp($row, "expires_at");
+		$this->kind = \Task\Row::text($row, "kind");
 	}
 	/** getId is ID. */
 	function getId() {
@@ -129,6 +142,17 @@ class UserAuthToken {
 	/** setExpiresAt sets Expires At. */
 	function setExpiresAt($value) {
 		$this->expires_at = $value;
+
+		return $this;
+	}
+	/** getKind is Kind. */
+	function getKind() {
+		return $this->kind;
+	}
+
+	/** setKind sets Kind. */
+	function setKind($value) {
+		$this->kind = $value;
 
 		return $this;
 	}

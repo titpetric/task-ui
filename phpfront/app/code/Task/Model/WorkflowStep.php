@@ -23,6 +23,8 @@ class WorkflowStep {
 		"target",
 		"args",
 		"kind",
+		"markers",
+		"tries",
 	);
 
 	/** primary is the primary key columns. */
@@ -54,6 +56,10 @@ class WorkflowStep {
 	var $args = "";
 	/** Kind */
 	var $kind = "";
+	/** Markers */
+	var $markers = "";
+	/** Tries */
+	var $tries = 0;
 
 	function __construct($row = array()) {
 		$this->id = \Task\Row::text($row, "id");
@@ -68,6 +74,8 @@ class WorkflowStep {
 		$this->target = \Task\Row::text($row, "target");
 		$this->args = \Task\Row::text($row, "args");
 		$this->kind = \Task\Row::text($row, "kind");
+		$this->markers = \Task\Row::text($row, "markers");
+		$this->tries = \Task\Row::number($row, "tries");
 	}
 	/** getId is ID. */
 	function getId() {
@@ -198,6 +206,28 @@ class WorkflowStep {
 	/** setKind sets Kind. */
 	function setKind($value) {
 		$this->kind = $value;
+
+		return $this;
+	}
+	/** getMarkers is Markers. */
+	function getMarkers() {
+		return $this->markers;
+	}
+
+	/** setMarkers sets Markers. */
+	function setMarkers($value) {
+		$this->markers = $value;
+
+		return $this;
+	}
+	/** getTries is Tries. */
+	function getTries() {
+		return $this->tries;
+	}
+
+	/** setTries sets Tries. */
+	function setTries($value) {
+		$this->tries = $value;
 
 		return $this;
 	}

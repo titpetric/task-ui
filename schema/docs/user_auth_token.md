@@ -12,3 +12,4 @@ User Auth Token.
 | created_at | datetime |     | Created At |
 | updated_at | datetime |     | Updated At |
 | expires_at | datetime |     | Expires At |
+| kind       | varchar  | MUL | Kind       |

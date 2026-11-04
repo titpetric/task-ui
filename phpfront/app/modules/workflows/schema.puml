@@ -155,7 +155,8 @@ entity "workflow_run_step" {
   + answer : text
   + workflow_ref : text
   + workflow_run_ref : text
-  + kind : text
+  + kind : TEXT
+  + markers : text
 }
 
 entity "workflow_step" {
@@ -170,7 +171,9 @@ entity "workflow_step" {
   + workflow_ref : text
   + target : text
   + args : text
-  + kind : text
+  + kind : TEXT
+  + markers : text
+  + tries : integer
 }
 
 entity "workspace" {

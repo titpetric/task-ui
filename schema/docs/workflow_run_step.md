@@ -18,3 +18,4 @@ Workflow Run Step.
 | workflow_ref     | char(26) |     | Workflow Ref     |
 | workflow_run_ref | char(26) |     | Workflow Run Ref |
 | kind             | varchar  |     | Kind             |
+| markers          | varchar  |     | Markers          |
