@@ -14,6 +14,7 @@ import (
 
 	"github.com/titpetric/task-ui/internal/assets"
 	"github.com/titpetric/task-ui/markdown"
+	"github.com/titpetric/task-ui/phpscript"
 )
 
 // Front serves the application tree.
@@ -58,6 +59,12 @@ func route(static *assets.Tree, opts Options) *annotations.Route {
 		}),
 		// Per request, after the request context sits on the runtime.
 		annotations.WithRuntimeFunc(func(rt *runner.Runtime) { Bind(rt, opts, static) }),
+		// Once per pooled runtime, which is why it is not in the line above:
+		// Observe appends and nothing clears the list, so a per-request
+		// registration would publish every span once per request served.
+		// Without it the interpreter traces nothing and a page's trace holds
+		// the queries alone.
+		annotations.WithObservers(phpscript.Observer(opts.Tracer)),
 		// The scanner excludes vendor; composer's install directory is ext.
 		annotations.WithExcludedDirectory("ext"),
 		annotations.WithModuleSuffix("taskui"),

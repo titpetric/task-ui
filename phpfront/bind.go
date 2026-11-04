@@ -40,19 +40,22 @@ const clockLayout = time.RFC3339Nano
 
 // Bind registers the host calls on a runtime serving one request.
 func Bind(rt *runner.Runtime, opts Options, static *assets.Tree) {
+	// Every call below is a span named after itself; see trace.go.
+	host := traced{rt: rt}
+
 	// A call, not a constant, so dropping the prefix is one Go line.
-	rt.RegisterFunc(HostClass+"::base", func() (string, error) {
+	host.RegisterFunc(HostClass+"::base", func() (string, error) {
 		return opts.Base, nil
 	})
 
-	rt.RegisterFunc(HostClass+"::version", func() (string, error) {
+	host.RegisterFunc(HostClass+"::version", func() (string, error) {
 		return opts.Version, nil
 	})
 
 	// The instance's clock and not the runtime's: TASK_UI_NOW pins what the
 	// hours gate and every page reads, and a chart of the last thirty days
 	// ends where this says it does.
-	rt.RegisterFunc(HostClass+"::now", func() (string, error) {
+	host.RegisterFunc(HostClass+"::now", func() (string, error) {
 		now := time.Now
 		if opts.Now != nil {
 			now = opts.Now
@@ -62,7 +65,7 @@ func Bind(rt *runner.Runtime, opts Options, static *assets.Tree) {
 	})
 
 	// Whether there is a session to end: the Guard's answer, not a page's.
-	rt.RegisterFunc(HostClass+"::login", func() (bool, error) {
+	host.RegisterFunc(HostClass+"::login", func() (bool, error) {
 		return opts.Login, nil
 	})
 
@@ -70,15 +73,15 @@ func Bind(rt *runner.Runtime, opts Options, static *assets.Tree) {
 	// survives the cutover unchanged. The version is their content hash,
 	// which the URLs carry as ?v= so an hour of caching never outlives a
 	// deploy.
-	rt.RegisterFunc(HostClass+"::assets", func() (string, error) {
+	host.RegisterFunc(HostClass+"::assets", func() (string, error) {
 		return strings.TrimSuffix(assets.Prefix, "/"), nil
 	})
-	rt.RegisterFunc(HostClass+"::assetVersion", func() (string, error) {
+	host.RegisterFunc(HostClass+"::assetVersion", func() (string, error) {
 		return static.Version(), nil
 	})
 
 	// The name the Guard resolved; the row behind it is Task\User.
-	rt.RegisterFunc(HostClass+"::whoami", func(ctx context.Context) (string, error) {
+	host.RegisterFunc(HostClass+"::whoami", func(ctx context.Context) (string, error) {
 		if opts.Host == nil {
 			return "", nil
 		}
@@ -86,7 +89,7 @@ func Bind(rt *runner.Runtime, opts Options, static *assets.Tree) {
 	})
 
 	// The catalogue, which nothing records: it is read off the checkouts.
-	rt.RegisterFunc(HostClass+"::folders", func(ctx context.Context) (*model.Array, error) {
+	host.RegisterFunc(HostClass+"::folders", func(ctx context.Context) (*model.Array, error) {
 		if opts.Host == nil {
 			return phpList(), nil
 		}
@@ -97,7 +100,7 @@ func Bind(rt *runner.Runtime, opts Options, static *assets.Tree) {
 	// directory inside a folder are found by reading that directory, and the
 	// four every folder has it declares nowhere. A run names all three parts,
 	// so the gate of a run's page asks here.
-	rt.RegisterFunc(HostClass+"::job", func(ctx context.Context, folder, dir, id string) (*model.Array, error) {
+	host.RegisterFunc(HostClass+"::job", func(ctx context.Context, folder, dir, id string) (*model.Array, error) {
 		if opts.Host == nil {
 			return job(Job{}), nil
 		}
@@ -108,7 +111,7 @@ func Bind(rt *runner.Runtime, opts Options, static *assets.Tree) {
 	// A checkout with no pipeline file is in no catalogue and still has a
 	// page, and the sidebar lists it beside the catalogue's folders. The
 	// workspaces are rows, so PHP names the one it is asking about.
-	rt.RegisterFunc(HostClass+"::projects", func(ctx context.Context, workspace string) ([]string, error) {
+	host.RegisterFunc(HostClass+"::projects", func(ctx context.Context, workspace string) ([]string, error) {
 		if opts.Host == nil {
 			return nil, nil
 		}
@@ -118,7 +121,7 @@ func Bind(rt *runner.Runtime, opts Options, static *assets.Tree) {
 	// The directory a folder ID names, which is the catalogue's for a folder
 	// it holds and the layout's for a project it does not: what dirty and
 	// commit are asked about.
-	rt.RegisterFunc(HostClass+"::folderDir", func(ctx context.Context, id string, workspaces *model.Array) (string, error) {
+	host.RegisterFunc(HostClass+"::folderDir", func(ctx context.Context, id string, workspaces *model.Array) (string, error) {
 		if opts.Host == nil {
 			return "", nil
 		}
@@ -128,7 +131,7 @@ func Bind(rt *runner.Runtime, opts Options, static *assets.Tree) {
 	// Whether a directory inside a folder is there, which is what a pin of a
 	// directory is resolved against. The folders sit outside the directory
 	// the PHP may open.
-	rt.RegisterFunc(HostClass+"::isDir", func(ctx context.Context, folder, rel string) (bool, error) {
+	host.RegisterFunc(HostClass+"::isDir", func(ctx context.Context, folder, rel string) (bool, error) {
 		if opts.Host == nil {
 			return false, nil
 		}
@@ -137,7 +140,7 @@ func Bind(rt *runner.Runtime, opts Options, static *assets.Tree) {
 
 	// git's answer again, through the cache both front ends share: a project
 	// costs one git process a minute between them.
-	rt.RegisterFunc(HostClass+"::commit", func(ctx context.Context, dir string) (string, error) {
+	host.RegisterFunc(HostClass+"::commit", func(ctx context.Context, dir string) (string, error) {
 		if opts.Host == nil {
 			return "", nil
 		}
@@ -145,7 +148,7 @@ func Bind(rt *runner.Runtime, opts Options, static *assets.Tree) {
 	})
 
 	// The runner's memory, where a run lives until it ends.
-	rt.RegisterFunc(HostClass+"::running", func(ctx context.Context) (*model.Array, error) {
+	host.RegisterFunc(HostClass+"::running", func(ctx context.Context) (*model.Array, error) {
 		if opts.Host == nil {
 			return phpList(), nil
 		}
@@ -154,7 +157,7 @@ func Bind(rt *runner.Runtime, opts Options, static *assets.Tree) {
 
 	// The workflow runner's memory, which decides what counts as running: a
 	// row left behind by a process that died is a row and not a run.
-	rt.RegisterFunc(HostClass+"::flows", func(ctx context.Context) (*model.Array, error) {
+	host.RegisterFunc(HostClass+"::flows", func(ctx context.Context) (*model.Array, error) {
 		if opts.Host == nil {
 			return phpList(), nil
 		}
@@ -163,7 +166,7 @@ func Bind(rt *runner.Runtime, opts Options, static *assets.Tree) {
 
 	// The run the runner holds, which is ahead of the row: a page reads the
 	// row and lays this over the fields a session decides.
-	rt.RegisterFunc(HostClass+"::session", func(ctx context.Context, id string) (*model.Array, error) {
+	host.RegisterFunc(HostClass+"::session", func(ctx context.Context, id string) (*model.Array, error) {
 		if opts.Host == nil {
 			return session(Session{}), nil
 		}
@@ -172,7 +175,7 @@ func Bind(rt *runner.Runtime, opts Options, static *assets.Tree) {
 
 	// The terminal of a live run, which is in no table: the last screen as
 	// the SVG the page embeds.
-	rt.RegisterFunc(HostClass+"::frame", func(ctx context.Context, id string) (string, error) {
+	host.RegisterFunc(HostClass+"::frame", func(ctx context.Context, id string) (string, error) {
 		if opts.Host == nil {
 			return "", nil
 		}
@@ -182,7 +185,7 @@ func Bind(rt *runner.Runtime, opts Options, static *assets.Tree) {
 	// The terminal of a run that has ended, replayed off its recording: the
 	// screen a pipeline draws under a step, with the lines the whole output
 	// has. The columns come over because the row is the caller's.
-	rt.RegisterFunc(HostClass+"::screen", func(ctx context.Context, id, castPath string, cols int) (*model.Array, error) {
+	host.RegisterFunc(HostClass+"::screen", func(ctx context.Context, id, castPath string, cols int) (*model.Array, error) {
 		if opts.Host == nil {
 			return screen(Screen{}), nil
 		}
@@ -191,7 +194,7 @@ func Bind(rt *runner.Runtime, opts Options, static *assets.Tree) {
 
 	// Whether a recording is still on disk, which the retention sweep
 	// decides and no column records.
-	rt.RegisterFunc(HostClass+"::expired", func(ctx context.Context, castPath, state string) (bool, error) {
+	host.RegisterFunc(HostClass+"::expired", func(ctx context.Context, castPath, state string) (bool, error) {
 		if opts.Host == nil {
 			return false, nil
 		}
@@ -200,7 +203,7 @@ func Bind(rt *runner.Runtime, opts Options, static *assets.Tree) {
 
 	// Whether the reader has a token for Claude, which is a secret of the
 	// integration store and not a row the front end reads.
-	rt.RegisterFunc(HostClass+"::claude", func(ctx context.Context) (bool, error) {
+	host.RegisterFunc(HostClass+"::claude", func(ctx context.Context) (bool, error) {
 		if opts.Host == nil {
 			return false, nil
 		}
@@ -208,7 +211,7 @@ func Bind(rt *runner.Runtime, opts Options, static *assets.Tree) {
 	})
 
 	// git's answer, not a row.
-	rt.RegisterFunc(HostClass+"::dirty", func(ctx context.Context, dir string) (int, error) {
+	host.RegisterFunc(HostClass+"::dirty", func(ctx context.Context, dir string) (int, error) {
 		if opts.Host == nil {
 			return 0, nil
 		}
@@ -216,7 +219,7 @@ func Bind(rt *runner.Runtime, opts Options, static *assets.Tree) {
 	})
 
 	// config/permissions.yml. Task\Permission evaluates it over the policy rows.
-	rt.RegisterFunc(HostClass+"::rules", func(ctx context.Context) (*model.Array, error) {
+	host.RegisterFunc(HostClass+"::rules", func(ctx context.Context) (*model.Array, error) {
 		if opts.Host == nil {
 			return rules(Rules{}), nil
 		}
@@ -226,7 +229,7 @@ func Bind(rt *runner.Runtime, opts Options, static *assets.Tree) {
 	// A write that does not publish leaves every open page stale. The payload
 	// is declared as the runtime's own array: coerceArg maps no PHP array onto
 	// a Go map, so a map parameter refuses every call.
-	rt.RegisterFunc(HostClass+"::publish", func(ctx context.Context, topic string, payload *model.Array) (bool, error) {
+	host.RegisterFunc(HostClass+"::publish", func(ctx context.Context, topic string, payload *model.Array) (bool, error) {
 		if opts.Host == nil {
 			return false, nil
 		}
@@ -248,7 +251,7 @@ func Bind(rt *runner.Runtime, opts Options, static *assets.Tree) {
 	// An empty comment is refused rather than dispatched: a run with
 	// nothing asked of it is a run that costs money and answers the action
 	// file back. The plugin host refuses the same call for the same reason.
-	rt.RegisterFunc(HostClass+"::dispatch", func(ctx context.Context, comment, action, folder string) (string, error) {
+	host.RegisterFunc(HostClass+"::dispatch", func(ctx context.Context, comment, action, folder string) (string, error) {
 		if opts.Host == nil {
 			return "", errors.New("this instance starts no runs")
 		}
@@ -262,7 +265,7 @@ func Bind(rt *runner.Runtime, opts Options, static *assets.Tree) {
 	// the interface shares: <span data-run-id="..."></span>, which the
 	// site's own script fills and keeps current. "" is a run that has not
 	// started, which is every dispatch until the board gets to it.
-	rt.RegisterFunc(HostClass+"::run", func(ctx context.Context, note string) (string, error) {
+	host.RegisterFunc(HostClass+"::run", func(ctx context.Context, note string) (string, error) {
 		if opts.Host == nil || strings.TrimSpace(note) == "" {
 			return "", nil
 		}
@@ -275,40 +278,40 @@ func Bind(rt *runner.Runtime, opts Options, static *assets.Tree) {
 	// whose relative links resolve nowhere and stay as text, which is what
 	// a report of a run is - the same two arguments frontend/view.Markdown
 	// passes.
-	rt.RegisterFunc(HostClass+"::markdown", func(src, prefix, dir string) (string, error) {
+	host.RegisterFunc(HostClass+"::markdown", func(ctx context.Context, src, prefix, dir string) (string, error) {
 		return markdown.HTML([]byte(src), prefix, dir), nil
 	})
 
 	// A note's text, which is the same renderer with a line break kept and
 	// @name marked. A name in link becomes a link under prefix, and every
 	// other mention is marked and not linked.
-	rt.RegisterFunc(HostClass+"::message", func(src, prefix string, link *model.Array) (string, error) {
+	host.RegisterFunc(HostClass+"::message", func(ctx context.Context, src, prefix string, link *model.Array) (string, error) {
 		return Message(src, prefix, names(link)), nil
 	})
 
 	// The artifact tree, which sits outside the directory the PHP may open.
-	rt.RegisterFunc(HostClass+"::artifacts", func(folder string) ([]string, error) {
+	host.RegisterFunc(HostClass+"::artifacts", func(ctx context.Context, folder string) ([]string, error) {
 		return opts.Artifacts.Files(folder), nil
 	})
-	rt.RegisterFunc(HostClass+"::artifact", func(rel string) (string, error) {
+	host.RegisterFunc(HostClass+"::artifact", func(ctx context.Context, rel string) (string, error) {
 		return opts.Artifacts.Read(rel), nil
 	})
 
 	// One directory of the tree, which the page lists a level at a time, and
 	// the space the whole of it takes.
-	rt.RegisterFunc(HostClass+"::tree", func(ctx context.Context, dir string) (*model.Array, error) {
+	host.RegisterFunc(HostClass+"::tree", func(ctx context.Context, dir string) (*model.Array, error) {
 		if opts.Host == nil {
 			return phpList(), nil
 		}
 		return treeItems(opts.Host.Tree(ctx, dir)), nil
 	})
-	rt.RegisterFunc(HostClass+"::space", func(ctx context.Context) (*model.Array, error) {
+	host.RegisterFunc(HostClass+"::space", func(ctx context.Context) (*model.Array, error) {
 		if opts.Host == nil {
 			return space(Space{}), nil
 		}
 		return space(opts.Host.Space(ctx)), nil
 	})
-	rt.RegisterFunc(HostClass+"::spaces", func(ctx context.Context, dirs *model.Array) (*model.Array, error) {
+	host.RegisterFunc(HostClass+"::spaces", func(ctx context.Context, dirs *model.Array) (*model.Array, error) {
 		if opts.Host == nil {
 			return phpList(), nil
 		}
@@ -318,19 +321,19 @@ func Bind(rt *runner.Runtime, opts Options, static *assets.Tree) {
 	// The hosts: beszel's hub, the ssh prober and hostinfo, none of them a
 	// row. The hosts permission is the reader's, which PHP decides, and it
 	// decides whether task-ui reads a host now or answers from what it kept.
-	rt.RegisterFunc(HostClass+"::inventory", func(ctx context.Context, hosts bool) (*model.Array, error) {
+	host.RegisterFunc(HostClass+"::inventory", func(ctx context.Context, hosts bool) (*model.Array, error) {
 		if opts.Host == nil {
 			return inventory(Inventory{Off: true}), nil
 		}
 		return inventory(opts.Host.Inventory(ctx, hosts)), nil
 	})
-	rt.RegisterFunc(HostClass+"::host", func(ctx context.Context, name string, hosts bool) (*model.Array, error) {
+	host.RegisterFunc(HostClass+"::host", func(ctx context.Context, name string, hosts bool) (*model.Array, error) {
 		if opts.Host == nil {
 			return facts(HostFacts{}), nil
 		}
 		return facts(opts.Host.HostFacts(ctx, name, hosts)), nil
 	})
-	rt.RegisterFunc(HostClass+"::reachable", func(ctx context.Context) ([]string, error) {
+	host.RegisterFunc(HostClass+"::reachable", func(ctx context.Context) ([]string, error) {
 		if opts.Host == nil {
 			return nil, nil
 		}
@@ -338,7 +341,7 @@ func Bind(rt *runner.Runtime, opts Options, static *assets.Tree) {
 	})
 
 	// What atkins recorded for the tree, which it answers by running atkins.
-	rt.RegisterFunc(HostClass+"::tooling", func(ctx context.Context) (*model.Array, error) {
+	host.RegisterFunc(HostClass+"::tooling", func(ctx context.Context) (*model.Array, error) {
 		if opts.Host == nil {
 			return phpList(), nil
 		}
@@ -348,13 +351,13 @@ func Bind(rt *runner.Runtime, opts Options, static *assets.Tree) {
 	// A folder of the catalogue, or a directory inside one, in the depth the
 	// page about it draws, and the Jobs table of it: the detection of a
 	// directory and the lines of a file, neither of them a row.
-	rt.RegisterFunc(HostClass+"::place", func(ctx context.Context, folder, rel string) (*model.Array, error) {
+	host.RegisterFunc(HostClass+"::place", func(ctx context.Context, folder, rel string) (*model.Array, error) {
 		if opts.Host == nil {
 			return place(Place{}), nil
 		}
 		return place(opts.Host.Place(ctx, folder, rel)), nil
 	})
-	rt.RegisterFunc(HostClass+"::groups", func(ctx context.Context, folder, rel string, seen *model.Array, shell, claude bool) (*model.Array, error) {
+	host.RegisterFunc(HostClass+"::groups", func(ctx context.Context, folder, rel string, seen *model.Array, shell, claude bool) (*model.Array, error) {
 		if opts.Host == nil {
 			return phpList(), nil
 		}
@@ -364,19 +367,19 @@ func Bind(rt *runner.Runtime, opts Options, static *assets.Tree) {
 	// A directory of a folder as the Files panel lists it, and when a
 	// directory last changed, for a folder the listing above it does not
 	// hold. The folders sit outside the directory the PHP may open.
-	rt.RegisterFunc(HostClass+"::listing", func(ctx context.Context, folder, rel string, seen *model.Array) (*model.Array, error) {
+	host.RegisterFunc(HostClass+"::listing", func(ctx context.Context, folder, rel string, seen *model.Array) (*model.Array, error) {
 		if opts.Host == nil {
 			return phpList(), nil
 		}
 		return entries(opts.Host.Listing(ctx, folder, rel, names(seen))), nil
 	})
-	rt.RegisterFunc(HostClass+"::rootTree", func(ctx context.Context, named bool, seen *model.Array) (*model.Array, error) {
+	host.RegisterFunc(HostClass+"::rootTree", func(ctx context.Context, named bool, seen *model.Array) (*model.Array, error) {
 		if opts.Host == nil {
 			return phpList(), nil
 		}
 		return entries(opts.Host.RootTree(ctx, named, names(seen))), nil
 	})
-	rt.RegisterFunc(HostClass+"::modTime", func(ctx context.Context, dir string) (string, error) {
+	host.RegisterFunc(HostClass+"::modTime", func(ctx context.Context, dir string) (string, error) {
 		if opts.Host == nil {
 			return "", nil
 		}
@@ -385,13 +388,13 @@ func Bind(rt *runner.Runtime, opts Options, static *assets.Tree) {
 
 	// What git reports of a checkout: its state now, and the commit it is at
 	// with the space it takes.
-	rt.RegisterFunc(HostClass+"::status", func(ctx context.Context, dir string) (*model.Array, error) {
+	host.RegisterFunc(HostClass+"::status", func(ctx context.Context, dir string) (*model.Array, error) {
 		if opts.Host == nil {
 			return status(Status{}), nil
 		}
 		return status(opts.Host.Status(ctx, dir)), nil
 	})
-	rt.RegisterFunc(HostClass+"::checkout", func(ctx context.Context, dir string) (*model.Array, error) {
+	host.RegisterFunc(HostClass+"::checkout", func(ctx context.Context, dir string) (*model.Array, error) {
 		if opts.Host == nil {
 			return checkout(Checkout{}), nil
 		}
@@ -399,7 +402,7 @@ func Bind(rt *runner.Runtime, opts Options, static *assets.Tree) {
 	})
 
 	// An hours rule read, whose grammar is a Go parser.
-	rt.RegisterFunc(HostClass+"::hours", func(ctx context.Context, text string) (*model.Array, error) {
+	host.RegisterFunc(HostClass+"::hours", func(ctx context.Context, text string) (*model.Array, error) {
 		if opts.Host == nil {
 			return hours(Hours{}), nil
 		}
@@ -409,67 +412,67 @@ func Bind(rt *runner.Runtime, opts Options, static *assets.Tree) {
 	// What the settings read of the instance itself: the key folder, the
 	// configuration the server runs with, what the retention rules apply to,
 	// the tracer's options, the plugins and the project directories.
-	rt.RegisterFunc(HostClass+"::keys", func(ctx context.Context) (*model.Array, error) {
+	host.RegisterFunc(HostClass+"::keys", func(ctx context.Context) (*model.Array, error) {
 		if opts.Host == nil {
 			return keystore(Keystore{}), nil
 		}
 		return keystore(opts.Host.Keys(ctx)), nil
 	})
-	rt.RegisterFunc(HostClass+"::keyFolders", func(ctx context.Context) (*model.Array, error) {
+	host.RegisterFunc(HostClass+"::keyFolders", func(ctx context.Context) (*model.Array, error) {
 		if opts.Host == nil {
 			return keyFolders(nil), nil
 		}
 		return keyFolders(opts.Host.KeyFolders(ctx)), nil
 	})
-	rt.RegisterFunc(HostClass+"::instance", func(ctx context.Context, admin bool) (*model.Array, error) {
+	host.RegisterFunc(HostClass+"::instance", func(ctx context.Context, admin bool) (*model.Array, error) {
 		if opts.Host == nil {
 			return instance(Instance{}), nil
 		}
 		return instance(opts.Host.Instance(ctx, admin)), nil
 	})
-	rt.RegisterFunc(HostClass+"::usage", func(ctx context.Context) (*model.Array, error) {
+	host.RegisterFunc(HostClass+"::usage", func(ctx context.Context) (*model.Array, error) {
 		if opts.Host == nil {
 			return usage(Retention{}), nil
 		}
 		return usage(opts.Host.Usage(ctx)), nil
 	})
-	rt.RegisterFunc(HostClass+"::telemetry", func(ctx context.Context) (*model.Array, error) {
+	host.RegisterFunc(HostClass+"::telemetry", func(ctx context.Context) (*model.Array, error) {
 		if opts.Host == nil {
 			return telemetry(Telemetry{}), nil
 		}
 		return telemetry(opts.Host.Telemetry(ctx)), nil
 	})
-	rt.RegisterFunc(HostClass+"::integrations", func(ctx context.Context) (*model.Array, error) {
+	host.RegisterFunc(HostClass+"::integrations", func(ctx context.Context) (*model.Array, error) {
 		if opts.Host == nil {
 			return phpList(), nil
 		}
 		return integrations(opts.Host.Services(ctx)), nil
 	})
-	rt.RegisterFunc(HostClass+"::variables", func(ctx context.Context) (*model.Array, error) {
+	host.RegisterFunc(HostClass+"::variables", func(ctx context.Context) (*model.Array, error) {
 		if opts.Host == nil {
 			return variables(Variables{}), nil
 		}
 		return variables(opts.Host.Variables(ctx)), nil
 	})
-	rt.RegisterFunc(HostClass+"::variable", func(ctx context.Context, id string) (*model.Array, error) {
+	host.RegisterFunc(HostClass+"::variable", func(ctx context.Context, id string) (*model.Array, error) {
 		if opts.Host == nil {
 			return variable(Variable{}), nil
 		}
 		return variable(opts.Host.Variable(ctx, id)), nil
 	})
-	rt.RegisterFunc(HostClass+"::integrationEnv", func(ctx context.Context) (*model.Array, error) {
+	host.RegisterFunc(HostClass+"::integrationEnv", func(ctx context.Context) (*model.Array, error) {
 		if opts.Host == nil {
 			return phpList(), nil
 		}
 		return envVars(opts.Host.IntegrationEnv(ctx)), nil
 	})
-	rt.RegisterFunc(HostClass+"::modules", func(ctx context.Context) (*model.Array, error) {
+	host.RegisterFunc(HostClass+"::modules", func(ctx context.Context) (*model.Array, error) {
 		if opts.Host == nil {
 			return phpList(), nil
 		}
 		return plugins(opts.Host.Modules(ctx)), nil
 	})
-	rt.RegisterFunc(HostClass+"::entries", func(ctx context.Context, workspaces *model.Array) (*model.Array, error) {
+	host.RegisterFunc(HostClass+"::entries", func(ctx context.Context, workspaces *model.Array) (*model.Array, error) {
 		if opts.Host == nil {
 			return phpList(), nil
 		}

@@ -7,6 +7,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/titpetric/oida"
+
 	"github.com/titpetric/task-ui/internal/assert"
 	"github.com/titpetric/task-ui/phpfront"
 )
@@ -485,14 +487,54 @@ func TestBindDispatch_NoHost(t *testing.T) {
 	assert.Equal(t, http.StatusInternalServerError, w.Code)
 }
 
+// A page's trace holds the PHP that drew it and the host calls it made.
+//
+// Two things are measured and they are measured in two ways: the interpreter
+// traces a frame, a new, an include and a template, which it does only while
+// the runtime carries an observer, and a host binding is none of those, so it
+// opens a span of its own. Without either a page's trace holds the queries the
+// database stdlib opens and a gap where the work was.
+func TestBindSpans(t *testing.T) {
+	t.Parallel()
+
+	opts := oida.NewOptions("task-ui-test")
+	opts.ReadEnv = false
+	opts.Enabled = true
+	tracer, err := oida.New(opts)
+	assert.NoError(t, err)
+
+	assert.Contains(t, serveTraced(t, &host{}, "/host", tracer), "folders=")
+	assert.Contains(t, serveTraced(t, &host{}, "/spans", tracer), "drawn=ops")
+
+	var names []string
+	for _, trace := range tracer.Snapshot().Log {
+		for _, span := range trace.Spans {
+			names = append(names, span.Name)
+		}
+	}
+
+	assert.Contains(t, names, `Task\Host::folders`, "a host binding names itself")
+	assert.Contains(t, names, `Task\Host::markdown`, "and so does one that answers without the instance")
+	assert.Contains(t, names, "new Page", "the runtime carries an observer, so the interpreter traces too")
+	assert.Contains(t, names, "page.draw", "which names a frame after the receiver the call was written on")
+}
+
 // serve runs one request against the host fixture tree.
 func serve(t *testing.T, own phpfront.Host, path string) string {
+	t.Helper()
+	return serveTraced(t, own, path, nil)
+}
+
+// serveTraced is serve, recording into a tracer. A nil tracer records nothing,
+// which is an instance with telemetry switched off.
+func serveTraced(t *testing.T, own phpfront.Host, path string, tracer *oida.Tracer) string {
 	t.Helper()
 
 	opts := phpfront.NewOptions("testdata/host")
 	opts.Base = "/development"
 	opts.Version = "test"
 	opts.Host = own
+	opts.Tracer = tracer
 	opts.OnError = func(err error) { t.Errorf("router: %v", err) }
 
 	front, err := phpfront.New(opts)
@@ -501,8 +543,15 @@ func serve(t *testing.T, own phpfront.Host, path string) string {
 	router, err := front.Routes(context.Background())
 	assert.NoError(t, err)
 
+	// The trace is the request's, so the middleware is what puts one on the
+	// context the page and every binding under it read.
+	var handler http.Handler = router
+	if tracer != nil {
+		handler = tracer.Middleware(router)
+	}
+
 	w := httptest.NewRecorder()
-	router.ServeHTTP(w, httptest.NewRequest(http.MethodGet, path, nil))
+	handler.ServeHTTP(w, httptest.NewRequest(http.MethodGet, path, nil))
 	assert.Equal(t, http.StatusOK, w.Code, w.Body.String())
 
 	return strings.ReplaceAll(w.Body.String(), "\r\n", "\n")
