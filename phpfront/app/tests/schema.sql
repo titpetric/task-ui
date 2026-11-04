@@ -148,8 +148,10 @@ CREATE TABLE refinement_comment (
     user TEXT NOT NULL DEFAULT '',
     body TEXT NOT NULL DEFAULT '',
     note_id CHAR(26) NOT NULL DEFAULT '',
+    kind TEXT NOT NULL DEFAULT '',
+    collapsed_into CHAR(26) NOT NULL DEFAULT '',
     created_at DATETIME
-, kind TEXT NOT NULL DEFAULT '', collapsed_into CHAR(26) NOT NULL DEFAULT '');
+);
 CREATE INDEX idx_refinement_comment_thread ON refinement_comment(thread_id, created_at);
 CREATE TABLE refinement_correction (
     id CHAR(26) PRIMARY KEY NOT NULL,

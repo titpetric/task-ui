@@ -738,11 +738,6 @@
       key: MUL
       comment: Note ID
       datatype: char(26)
-    - name: created_at
-      type: timestamp
-      key: MUL
-      comment: Created At
-      datatype: datetime
     - name: kind
       type: text
       comment: Kind
@@ -751,6 +746,11 @@
       type: text
       comment: Collapsed Into
       datatype: char(26)
+    - name: created_at
+      type: timestamp
+      key: MUL
+      comment: Created At
+      datatype: datetime
   indexes:
     - name: sqlite_autoindex_refinement_comment_1
       columns:

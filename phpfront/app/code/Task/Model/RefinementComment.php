@@ -10,7 +10,7 @@ class RefinementComment {
 	const TABLE = "refinement_comment";
 
 	/** fields is every column, in the order the schema declares them. */
-	public static $fields = array("id", "thread_id", "user", "body", "note_id", "created_at", "kind", "collapsed_into");
+	public static $fields = array("id", "thread_id", "user", "body", "note_id", "kind", "collapsed_into", "created_at");
 
 	/** primary is the primary key columns. */
 	public static $primary = array("id");
@@ -27,12 +27,12 @@ class RefinementComment {
 	var $body = "";
 	/** Note ID */
 	var $note_id = "";
-	/** Created At */
-	var $created_at = "";
 	/** Kind */
 	var $kind = "";
 	/** Collapsed Into */
 	var $collapsed_into = "";
+	/** Created At */
+	var $created_at = "";
 
 	function __construct($row = array()) {
 		$this->id = \Task\Row::text($row, "id");
@@ -40,9 +40,9 @@ class RefinementComment {
 		$this->user = \Task\Row::text($row, "user");
 		$this->body = \Task\Row::text($row, "body");
 		$this->note_id = \Task\Row::text($row, "note_id");
-		$this->created_at = \Task\Row::stamp($row, "created_at");
 		$this->kind = \Task\Row::text($row, "kind");
 		$this->collapsed_into = \Task\Row::text($row, "collapsed_into");
+		$this->created_at = \Task\Row::stamp($row, "created_at");
 	}
 	/** getId is ID. */
 	function getId() {
@@ -99,17 +99,6 @@ class RefinementComment {
 
 		return $this;
 	}
-	/** getCreatedAt is Created At. */
-	function getCreatedAt() {
-		return $this->created_at;
-	}
-
-	/** setCreatedAt sets Created At. */
-	function setCreatedAt($value) {
-		$this->created_at = $value;
-
-		return $this;
-	}
 	/** getKind is Kind. */
 	function getKind() {
 		return $this->kind;
@@ -129,6 +118,17 @@ class RefinementComment {
 	/** setCollapsedInto sets Collapsed Into. */
 	function setCollapsedInto($value) {
 		$this->collapsed_into = $value;
+
+		return $this;
+	}
+	/** getCreatedAt is Created At. */
+	function getCreatedAt() {
+		return $this->created_at;
+	}
+
+	/** setCreatedAt sets Created At. */
+	function setCreatedAt($value) {
+		$this->created_at = $value;
 
 		return $this;
 	}

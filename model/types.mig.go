@@ -1285,14 +1285,14 @@ type RefinementComment struct {
 	// Note ID
 	NoteID string `db:"note_id" json:"note_id"`
 
-	// Created At
-	CreatedAt *time.Time `db:"created_at" json:"created_at"`
-
 	// Kind
 	Kind string `db:"kind" json:"kind"`
 
 	// Collapsed Into
 	CollapsedInto string `db:"collapsed_into" json:"collapsed_into"`
+
+	// Created At
+	CreatedAt *time.Time `db:"created_at" json:"created_at"`
 }
 
 // GetID will return the value of ID.
@@ -1325,12 +1325,6 @@ func (r *RefinementComment) GetNoteID() string { return r.NoteID }
 // SetNoteID sets NoteID to the provided value.
 func (r *RefinementComment) SetNoteID(val string) { r.NoteID = val }
 
-// GetCreatedAt will return the value of CreatedAt.
-func (r *RefinementComment) GetCreatedAt() *time.Time { return r.CreatedAt }
-
-// SetCreatedAt sets CreatedAt to the provided value.
-func (r *RefinementComment) SetCreatedAt(stamp time.Time) { r.CreatedAt = &stamp }
-
 // GetKind will return the value of Kind.
 func (r *RefinementComment) GetKind() string { return r.Kind }
 
@@ -1343,11 +1337,17 @@ func (r *RefinementComment) GetCollapsedInto() string { return r.CollapsedInto }
 // SetCollapsedInto sets CollapsedInto to the provided value.
 func (r *RefinementComment) SetCollapsedInto(val string) { r.CollapsedInto = val }
 
+// GetCreatedAt will return the value of CreatedAt.
+func (r *RefinementComment) GetCreatedAt() *time.Time { return r.CreatedAt }
+
+// SetCreatedAt sets CreatedAt to the provided value.
+func (r *RefinementComment) SetCreatedAt(stamp time.Time) { r.CreatedAt = &stamp }
+
 // RefinementCommentTable is the name of the table in the DB.
 const RefinementCommentTable = "`refinement_comment`"
 
 // RefinementCommentFields is a list of all columns in the DB table.
-var RefinementCommentFields = []string{"id", "thread_id", "user", "body", "note_id", "created_at", "kind", "collapsed_into"}
+var RefinementCommentFields = []string{"id", "thread_id", "user", "body", "note_id", "kind", "collapsed_into", "created_at"}
 
 // RefinementCommentPrimaryFields are the primary key fields in the DB table.
 var RefinementCommentPrimaryFields = []string{"id"}
