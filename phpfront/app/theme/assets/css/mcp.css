@@ -51,6 +51,11 @@
     flex-wrap: wrap;
   }
 
+  /* The tokens, one row each, over the New token that adds one. */
+  & .table-wrap {
+    margin-bottom: 0.75rem;
+  }
+
   & form.inline {
     display: inline;
   }

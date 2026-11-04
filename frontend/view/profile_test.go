@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/titpetric/task-ui/frontend/view"
 	"github.com/titpetric/task-ui/internal/assert"
@@ -91,7 +92,55 @@ func TestView_RenderUserEdit(t *testing.T) {
 	assert.Contains(t, out, `data-next="/users/ops/edit?notice=Folders+saved#folders"`)
 	assert.Contains(t, out, `<a class="btn" href="/users/ops">Cancel</a>`)
 	assert.Contains(t, out, "data-matrix")
-	assert.Contains(t, out, `<a class="btn" href="/users/ops/edit#mcp">Done</a>`)
+	// Done is a navigation and not this page's own anchor: the reader is
+	// already at #mcp, so a link there scrolls nowhere and leaves the
+	// revealed token on screen over a table that has not been read again.
+	assert.Contains(t, out, `<a class="btn" href="/users/ops/edit?notice=MCP+token+made#mcp">Done</a>`)
+}
+
+// The MCP block lists the tokens a user holds, one row each, every row
+// with the Delete of its own token, and New token adds one more.
+func TestView_RenderUserEditMCP(t *testing.T) {
+	t.Parallel()
+
+	now := time.Date(2026, time.October, 22, 12, 0, 0, 0, time.UTC)
+	older := now.Add(-48 * time.Hour)
+	expires := now.Add(20 * 24 * time.Hour)
+
+	p := admin(t)
+	p.Now = now
+	p.AccountMCP = view.MCPAccess{
+		Agent:     true,
+		CanEnable: true,
+		CanManage: true,
+		Tokens: []view.MCPToken{
+			{ID: "t2", Name: "mcp-2", CreatedAt: &now, ExpiresAt: &expires},
+			{ID: "t1", Name: "mcp", CreatedAt: &older, ExpiresAt: &older, UsedAt: &older},
+		},
+	}
+
+	var buf bytes.Buffer
+	assert.NoError(t, shared(t).Render(&buf, "user_edit", p))
+	out := buf.String()
+
+	assert.Contains(t, out, `>mcp-2</td>`)
+	assert.Contains(t, out, `data-delete="/api/users/u1/mcp/t2"`)
+	assert.Contains(t, out, `data-delete="/api/users/u1/mcp/t1"`, "each row deletes its own token and not the user's access")
+	assert.Contains(t, out, `expired `, "a token past its expiry says so")
+	assert.Contains(t, out, `<span class="badge bad"`)
+	assert.Contains(t, out, `data-api="/api/users/u1/mcp" data-method="POST" data-reveal="#mcp-token"`, "New token adds one and replaces none")
+	assert.NotContains(t, out, "Rotate", "a token is made and deleted, never rotated")
+	assert.NotContains(t, out, `data-delete="/api/users/u1/mcp"`, "nothing deletes every token at once")
+
+	// A reader who may not make one sees the rows and no action on them.
+	p.AccountMCP.CanManage, p.AccountMCP.CanEnable = false, false
+	buf.Reset()
+	assert.NoError(t, shared(t).Render(&buf, "user_edit", p))
+	out = buf.String()
+	assert.Contains(t, out, `>mcp-2</td>`)
+	assert.NotContains(t, out, "data-delete=")
+	assert.NotContains(t, out, `data-reveal="#mcp-token"`)
+	assert.Contains(t, out, "Making a token needs Allow Edits on Users.")
 }
 
 // The users page links a name to the profile, and the row's menu opens

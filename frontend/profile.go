@@ -29,6 +29,10 @@ func (h *Handlers) profile(w http.ResponseWriter, r *http.Request) {
 	}
 	p.Account = user
 	p.Profile = &view.Profile{Own: own, CanEdit: own || p.Can("user/edit")}
+	// The MCP tokens, for the head's New token: the same access the edit
+	// page draws the table from, so one answer says whether a reader may
+	// make a token and the two pages cannot disagree about it.
+	p.AccountMCP = h.mcpAccess(r, user, own)
 	if own || p.Can("key/view") {
 		p.Keys = h.userKeys(r.Context(), user)
 	}

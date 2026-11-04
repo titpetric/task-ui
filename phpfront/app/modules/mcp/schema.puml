@@ -1,0 +1,33 @@
+@startuml
+' Generated from schema/schema.yml by tools/docs.php. DO NOT EDIT.
+hide circle
+hide empty members
+skinparam linetype ortho
+skinparam shadowing false
+skinparam backgroundColor transparent
+entity "user" {
+  * id : text
+  + name : text
+  + role : TEXT
+  + folders : text
+  + created_at : timestamp
+  + updated_at : timestamp
+  + admin : boolean
+  + mcp : boolean
+  + agent_reply : boolean
+}
+
+entity "user_auth_token" {
+  * id : text
+  + user_id : text
+  + name : text
+  + hash : text
+  + used_at : timestamp
+  + created_at : timestamp
+  + updated_at : timestamp
+  + expires_at : timestamp
+  + kind : text
+}
+
+user_auth_token }o--|| user : user_id
+@enduml

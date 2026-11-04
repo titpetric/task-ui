@@ -36,7 +36,7 @@
 		<dd>{eval $data_copy = $data.mcp.endpoint}{include components/copyable.tpl}</dd>
 	</dl>
 	<ol class="mcp-steps">
-		<li>{if $data.mcp.name}Enable MCP under <a href="{data.mcp.edit}">your MCP access</a>{else}Enable MCP under your MCP access{/if} and copy the token. It shows once and lasts 30 days, or until you rotate it. A token needs MCP agent user on, which an admin sets, and enabling needs Allow Edits on Users; if you don't have them, ask someone who does.</li>
+		<li>{if $data.mcp.name}Make a token under <a href="{data.mcp.edit}">your MCP access</a>{else}Make a token under your MCP access{/if} and copy it. It shows once and lasts 30 days, or until you delete it; make one per client, so retiring a client takes nothing else with it. A token needs MCP agent user on, which an admin sets, and making one needs Allow Edits on Users; if you don't have them, ask someone who does.</li>
 		<li>Add the server to Claude Code:
 			{eval $data_copy = $data.mcp.add}{include components/copyable.tpl}</li>
 		<li>Other clients connect to the endpoint over HTTP with the header <code>Authorization: Bearer &lt;token&gt;</code>. Check with <code>claude mcp list</code>: it shows <code>task</code> as connected.</li>

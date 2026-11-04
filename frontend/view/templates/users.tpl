@@ -32,6 +32,7 @@
 					(item "edit" "Edit" "href" (print "/users/" .Name "/edit"))
 					(item "users" "Profile" "href" (print "/users/" .Name))
 					(item "list" "Runs by this user" "href" (print "/runs?user=" (urlquery .Name)))
+					(and ($.Can "user/edit") .Mcp (item "copy" "New MCP token" "note" "copied" "data-api" (print "/api/users/" .ID "/mcp") "data-method" "POST" "data-copy-fill" (printf "claude mcp add --transport http --scope user task %s/api/mcp --header \"Authorization: Bearer {token}\"" $.BaseURL) "data-notice" (print "MCP token for " .Name " copied as the claude mcp add command")))
 					(and $.CanAddUsers ($.Can "user/delete") (not .CanAdmin) $.User (ne .ID $.User.ID) (danger "trash" "Delete" "data-delete" (print "/api/users/" .ID) "data-confirm" (print "Delete the user " .Name "? This removes them from the password file and ends their sessions and tokens right away. Their runs, notes and history keep the name.") "data-confirm-ok" "Delete" "data-next" "/settings/users?notice=User+deleted"))
 				) }}</td>
 			</tr>

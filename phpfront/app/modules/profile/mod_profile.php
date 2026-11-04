@@ -86,7 +86,7 @@ class mod_profile implements Module {
 
 		$view->page(array(
 			"who" => $this->who($chrome, $user, $own),
-			"buttons" => $this->buttons($edits, $name),
+			"buttons" => $this->buttons($chrome, $user, $own, $edits),
 			"menu" => $this->menu($chrome, $user),
 			"runs" => $this->runs($chrome, $seen, $name, $workspaces),
 			"flows" => $this->flows($chrome, $name),
@@ -131,15 +131,56 @@ class mod_profile implements Module {
 		);
 	}
 
-	/** buttons is the Edit of the head, which your own page always carries. */
-	function buttons($edits, $name) {
+	/**
+	 * buttons is the head's actions: New MCP token where the reader may make
+	 * one, and the Edit your own page always carries.
+	 *
+	 * New MCP token is one click: the script posts it, takes the token out of
+	 * the answer and puts the `claude mcp add` line that carries it on the
+	 * clipboard. Nothing is drawn, because nothing keeps the token.
+	 */
+	function buttons($chrome, $user, $own, $edits) {
 		$buttons = new Task\Buttons;
+		$name = $user->getName();
+
+		if ($this->manages($chrome, $user, $own)) {
+			$buttons->item("copy", "New MCP token", array(
+				"data-api" => "/api/users/" . $user->getId() . "/mcp",
+				"data-method" => "POST",
+				"data-copy-fill" => Task\Mcp\Connect::add(Task\Route::site()),
+				"data-notice" => "MCP token copied as the claude mcp add command",
+				"title" => "Make an MCP token for " . $name . " and copy the claude mcp add command that carries it",
+			));
+		}
 
 		if ($edits) {
 			$buttons->primary("edit", "Edit", array("href" => Task\Route::href("/users/" . $name . "/edit")));
 		}
 
 		return $buttons->data();
+	}
+
+	/**
+	 * manages reports whether the reader may make the user an MCP token: with
+	 * user/edit and the MCP agent user flag, or on their own page once they
+	 * hold one, which is the same answer the edit page's block draws from.
+	 */
+	function manages($chrome, $user, $own) {
+		if (!$user->getMcp()) {
+			return false;
+		}
+
+		if ($chrome->allowed("user/edit")) {
+			return true;
+		}
+
+		if (!$own) {
+			return false;
+		}
+
+		$store = new Task\Mcp\Tokens($chrome->db);
+
+		return count($store->ofKind($user->getId(), Task\Mcp\Tokens::MCP)) > 0;
 	}
 
 	/**

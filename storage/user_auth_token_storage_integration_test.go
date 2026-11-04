@@ -8,11 +8,12 @@ import (
 	"time"
 
 	"github.com/titpetric/task-ui/internal/assert"
+	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/storage"
 )
 
-// The storage finds a token by its hash, replaces it by name, touches it
-// on use and drops it on delete.
+// The storage finds a token by its hash, replaces a CLI one by name,
+// touches it on use and drops it on delete.
 func TestUserAuthTokenStorage(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
@@ -20,11 +21,12 @@ func TestUserAuthTokenStorage(t *testing.T) {
 
 	assert.Error(t, tokens.Set(ctx, "u1", "", "h0"))
 	assert.NoError(t, tokens.Set(ctx, "u1", "cli", "h1"))
-	assert.NoError(t, tokens.Set(ctx, "u1", "mcp", "h2"))
+	assert.NoError(t, tokens.Set(ctx, "u1", "other", "h2"))
 
 	token, err := tokens.Find(ctx, "h1")
 	assert.NoError(t, err)
 	assert.Equal(t, "cli", token.Name)
+	assert.Equal(t, model.TokenCLI, token.Kind)
 	assert.Nil(t, token.UsedAt)
 	assert.NoError(t, tokens.Touch(ctx, token.ID))
 	token, _ = tokens.Find(ctx, "h1")
@@ -39,25 +41,13 @@ func TestUserAuthTokenStorage(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Len(t, list, 2)
 	assert.Equal(t, "cli", list[0].Name)
-
-	assert.NoError(t, tokens.Delete(ctx, "u1", "mcp"))
-	_, err = tokens.Find(ctx, "h2")
-	assert.ErrorIs(t, err, storage.ErrNotFound)
-	_, err = tokens.Get(ctx, "u1", "mcp")
-	assert.ErrorIs(t, err, storage.ErrNotFound)
 	assert.Nil(t, list[0].ExpiresAt, "a token of Set never expires")
 
-	// SetUntil keeps an expiry; Get finds the token by name.
-	expires := time.Date(2026, time.November, 21, 10, 0, 0, 0, time.UTC)
-	row, err := tokens.SetUntil(ctx, "u1", "mcp", "h4", expires)
-	assert.NoError(t, err)
-	assert.Equal(t, expires, *row.ExpiresAt)
-	got, err := tokens.Get(ctx, "u1", "mcp")
-	assert.NoError(t, err)
-	assert.Equal(t, row.ID, got.ID)
-	assert.True(t, expires.Equal(*got.ExpiresAt))
-	_, err = tokens.SetUntil(ctx, "", "mcp", "h5", expires)
-	assert.Error(t, err)
+	assert.NoError(t, tokens.Delete(ctx, "u1", model.TokenCLI, "other"))
+	_, err = tokens.Find(ctx, "h2")
+	assert.ErrorIs(t, err, storage.ErrNotFound)
+	_, err = tokens.Get(ctx, "u1", model.TokenCLI, "other")
+	assert.ErrorIs(t, err, storage.ErrNotFound)
 
 	assert.NoError(t, tokens.Set(ctx, "u2", "cli", "h6"))
 	assert.NoError(t, tokens.DeleteByUser(ctx, "u1"))
@@ -68,16 +58,65 @@ func TestUserAuthTokenStorage(t *testing.T) {
 	assert.NoError(t, err, "another user's token stays")
 }
 
-// DeleteMCP removes the tokens that expire, the MCP ones, and keeps
-// those of `task-ui token`.
-func TestUserAuthTokenStorage_DeleteMCP(t *testing.T) {
+// Add writes one more token of a kind and replaces nothing, so a user
+// holds several MCP tokens at once; ListKind reads back their kind alone,
+// newest first, and DeleteID drops one of them, scoped to its user.
+func TestUserAuthTokenStorage_Many(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
 	tokens := storage.NewUserAuthTokenStorage(newDB(t))
-	_, err := tokens.SetUntil(ctx, "u1", "mcp", "h1", time.Now().Add(time.Hour))
+	// A stamp is kept to the millisecond, so an expiry compares equal
+	// only when the test hands over one that is already rounded.
+	expires := time.Now().Add(time.Hour).UTC().Truncate(time.Millisecond)
+
+	first, err := tokens.Add(ctx, "u1", model.TokenMCP, "mcp", "h1", &expires)
+	assert.NoError(t, err)
+	second, err := tokens.Add(ctx, "u1", model.TokenMCP, "mcp-2", "h2", &expires)
+	assert.NoError(t, err)
+	assert.NoError(t, tokens.Set(ctx, "u1", "cli", "h3"))
+
+	// A name is unique per user and kind: the same one twice is refused,
+	// and the CLI token takes a name an MCP token already holds.
+	_, err = tokens.Add(ctx, "u1", model.TokenMCP, "mcp", "h4", &expires)
+	assert.Error(t, err)
+	_, err = tokens.Add(ctx, "u1", model.TokenCLI, "mcp", "h5", nil)
+	assert.NoError(t, err)
+	_, err = tokens.Add(ctx, "", model.TokenMCP, "mcp", "h6", &expires)
+	assert.Error(t, err)
+
+	list, err := tokens.ListKind(ctx, "u1", model.TokenMCP)
+	assert.NoError(t, err)
+	assert.Len(t, list, 2, "both MCP tokens stand, and no CLI one is among them")
+	// Two writes of one request land on the same millisecond, so the
+	// name breaks the tie and the order is stable either way.
+	assert.Equal(t, first.ID, list[0].ID)
+	assert.Equal(t, second.ID, list[1].ID)
+	assert.True(t, expires.Equal(*list[0].ExpiresAt))
+
+	got, err := tokens.Get(ctx, "u1", model.TokenMCP, "mcp-2")
+	assert.NoError(t, err)
+	assert.Equal(t, second.ID, got.ID)
+
+	assert.NoError(t, tokens.DeleteID(ctx, "u2", second.ID), "another user's ID removes nothing")
+	list, _ = tokens.ListKind(ctx, "u1", model.TokenMCP)
+	assert.Len(t, list, 2)
+	assert.NoError(t, tokens.DeleteID(ctx, "u1", second.ID))
+	list, _ = tokens.ListKind(ctx, "u1", model.TokenMCP)
+	assert.Len(t, list, 1)
+	assert.Equal(t, first.ID, list[0].ID)
+}
+
+// DeleteKind removes the MCP tokens of a user and keeps those of
+// `task-ui token`.
+func TestUserAuthTokenStorage_DeleteKind(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	tokens := storage.NewUserAuthTokenStorage(newDB(t))
+	expires := time.Now().Add(time.Hour)
+	_, err := tokens.Add(ctx, "u1", model.TokenMCP, "mcp", "h1", &expires)
 	assert.NoError(t, err)
 	assert.NoError(t, tokens.Set(ctx, "u1", "cli", "h2"))
-	assert.NoError(t, tokens.DeleteMCP(ctx, "u1"))
+	assert.NoError(t, tokens.DeleteKind(ctx, "u1", model.TokenMCP))
 	list, err := tokens.List(ctx, "u1")
 	assert.NoError(t, err)
 	assert.Len(t, list, 1)
@@ -92,13 +131,15 @@ func TestUserAuthTokenStorage_Expired(t *testing.T) {
 	ctx := context.Background()
 	tokens := storage.NewUserAuthTokenStorage(newDB(t))
 	now := time.Now()
+	add := func(userID, hash string, at time.Time) {
+		t.Helper()
+		_, err := tokens.Add(ctx, userID, model.TokenMCP, "mcp", hash, &at)
+		assert.NoError(t, err)
+	}
 	assert.NoError(t, tokens.Set(ctx, "u1", "cli", "h1"))
-	_, err := tokens.SetUntil(ctx, "u1", "mcp", "h2", now.Add(-time.Hour))
-	assert.NoError(t, err)
-	_, err = tokens.SetUntil(ctx, "u2", "mcp", "h3", now.Add(-2*time.Hour))
-	assert.NoError(t, err)
-	_, err = tokens.SetUntil(ctx, "u3", "mcp", "h4", now.Add(time.Hour))
-	assert.NoError(t, err)
+	add("u1", "h2", now.Add(-time.Hour))
+	add("u2", "h3", now.Add(-2*time.Hour))
+	add("u3", "h4", now.Add(time.Hour))
 	expired, err := tokens.Expired(ctx, now)
 	assert.NoError(t, err)
 	assert.Len(t, expired, 2)
@@ -119,18 +160,23 @@ func TestUserAuthTokenStorage_Closed(t *testing.T) {
 	t.Parallel()
 	tokens := storage.NewUserAuthTokenStorage(closedDB(t))
 	ctx := context.Background()
+	expires := time.Now().Add(time.Hour)
 
 	assert.ErrorContains(t, tokens.Set(ctx, "u1", "cli", "hash"), errClosed)
-	_, err := tokens.SetUntil(ctx, "u1", "cli", "hash", time.Now().Add(time.Hour))
+	_, err := tokens.Add(ctx, "u1", model.TokenMCP, "mcp", "hash", &expires)
 	assert.ErrorContains(t, err, errClosed)
-	_, err = tokens.Get(ctx, "u1", "cli")
+	_, err = tokens.Get(ctx, "u1", model.TokenCLI, "cli")
 	assert.ErrorContains(t, err, errClosed)
 	_, err = tokens.Find(ctx, "hash")
 	assert.ErrorContains(t, err, errClosed)
 	_, err = tokens.List(ctx, "u1")
 	assert.ErrorContains(t, err, errClosed)
+	_, err = tokens.ListKind(ctx, "u1", model.TokenMCP)
+	assert.ErrorContains(t, err, errClosed)
 	assert.ErrorContains(t, tokens.Touch(ctx, "t1"), errClosed)
-	assert.ErrorContains(t, tokens.Delete(ctx, "u1", "cli"), errClosed)
+	assert.ErrorContains(t, tokens.Delete(ctx, "u1", model.TokenCLI, "cli"), errClosed)
+	assert.ErrorContains(t, tokens.DeleteID(ctx, "u1", "t1"), errClosed)
+	assert.ErrorContains(t, tokens.DeleteKind(ctx, "u1", model.TokenMCP), errClosed)
 	assert.ErrorContains(t, tokens.DeleteByUser(ctx, "u1"), errClosed)
 }
 

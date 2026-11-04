@@ -114,6 +114,11 @@ class mod_users implements Module {
 	 * Delete is there for a reader who may remove a user, on an instance with a
 	 * password file to remove them from, and never on an admin's row or the
 	 * reader's own.
+	 *
+	 * New MCP token is one click and draws nothing: the script posts it, takes
+	 * the token out of the answer and puts the `claude mcp add` line that
+	 * carries it on the clipboard. The token is never shown, so the list stays
+	 * a list.
 	 */
 	function menu($chrome, $user, $adds) {
 		$name = $user->getName();
@@ -125,6 +130,12 @@ class mod_users implements Module {
 		$menu->item("edit", "Edit", array("href" => Task\Route::href("/users/" . $name . "/edit")));
 		$menu->item("users", "Profile", array("href" => Task\Route::href("/users/" . $name)));
 		$menu->item("list", "Runs by this user", array("href" => Task\Route::href("/runs?user=" . Task\Route::queryEscape($name))));
+		$menu->when($chrome->allowed("user/edit") && $user->getMcp(), "copy", "New MCP token", array(
+			"data-api" => "/api/users/" . $id . "/mcp",
+			"data-method" => "POST",
+			"data-copy-fill" => Task\Mcp\Connect::add(Task\Route::site()),
+			"data-notice" => "MCP token for " . $name . " copied as the claude mcp add command",
+		));
 		$menu->whenDanger($drops && $reader !== null && $reader->getId() !== $id, "trash", "Delete", array(
 			"data-delete" => "/api/users/" . $id,
 			"data-confirm" => "Delete the user " . $name . self::DROPS,

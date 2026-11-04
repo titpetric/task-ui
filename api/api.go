@@ -147,8 +147,9 @@ func (h *Handlers) Routes() http.Handler {
 	r.Post("/users", h.createUser)
 	r.Put("/users/{id}", h.updateUser)
 	r.Delete("/users/{id}", h.deleteUser)
-	r.Post("/users/{id}/mcp", h.enableMCP)
+	r.Post("/users/{id}/mcp", h.issueMCP)
 	r.Delete("/users/{id}/mcp", h.disableMCP)
+	r.Delete("/users/{id}/mcp/{token}", h.deleteMCPToken)
 
 	r.Get("/me", h.getMe)
 	r.Get("/pins", h.listPins)

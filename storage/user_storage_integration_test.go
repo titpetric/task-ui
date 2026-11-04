@@ -174,7 +174,8 @@ func TestUserStorage_SetFlags(t *testing.T) {
 	assert.Len(t, agents, 1)
 	assert.NoError(t, users.SetFlags(ctx, root, false, model.RoleRunner, false, false, false), "ops is an admin too")
 
-	_, err = tokens.SetUntil(ctx, ops.ID, "mcp", "h1", time.Now().Add(time.Hour))
+	expires := time.Now().Add(time.Hour)
+	_, err = tokens.Add(ctx, ops.ID, model.TokenMCP, "mcp", "h1", &expires)
 	assert.NoError(t, err)
 	assert.NoError(t, tokens.Set(ctx, ops.ID, "cli", "h2"))
 	assert.NoError(t, users.SetFlags(ctx, ops, true, model.RoleViewer, false, false, false))
@@ -236,7 +237,8 @@ func TestUserStorage_SetFlagsErrors(t *testing.T) {
 	withToken := storage.NewUserStorage(tokens)
 	user := &model.User{Name: "alice", Role: model.RoleRunner, Mcp: true}
 	assert.NoError(t, withToken.Create(ctx, user))
-	_, err := storage.NewUserAuthTokenStorage(tokens).SetUntil(ctx, user.ID, "mcp", "hash", time.Now().Add(time.Hour))
+	expires := time.Now().Add(time.Hour)
+	_, err := storage.NewUserAuthTokenStorage(tokens).Add(ctx, user.ID, model.TokenMCP, "mcp", "hash", &expires)
 	assert.NoError(t, err)
 	refuse(t, tokens, model.UserAuthTokenTable, "DELETE")
 	assert.ErrorContains(t, withToken.SetFlags(ctx, user, false, model.RoleRunner, false, false, false), errRefused)

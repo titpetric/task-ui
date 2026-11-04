@@ -258,9 +258,9 @@
 	</dl>
 	<ol class="mcp-steps">
 		<li><?php if($_v['data']['mcp']['name']){?>
-Enable MCP under <a href="<?php echo htmlspecialchars($_v['data']['mcp']['edit'], ENT_QUOTES);?>
+Make a token under <a href="<?php echo htmlspecialchars($_v['data']['mcp']['edit'], ENT_QUOTES);?>
 ">your MCP access</a><?php }else{?>
-Enable MCP under your MCP access<?php }?> and copy the token. It shows once and lasts 30 days, or until you rotate it. A token needs MCP agent user on, which an admin sets, and enabling needs Allow Edits on Users; if you don't have them, ask someone who does.</li>
+Make a token under your MCP access<?php }?> and copy it. It shows once and lasts 30 days, or until you delete it; make one per client, so retiring a client takes nothing else with it. A token needs MCP agent user on, which an admin sets, and making one needs Allow Edits on Users; if you don't have them, ask someone who does.</li>
 		<li>Add the server to Claude Code:
 			<?php $_v['data_copy'] = $_v['data']['mcp']['add'];?>
 <span class="copyable<?php if($_v['data_copy']['fill']){?>

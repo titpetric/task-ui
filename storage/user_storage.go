@@ -140,7 +140,7 @@ func (s *UserStorage) SetFlags(ctx context.Context, user *model.User, admin bool
 		return err
 	}
 	if !mcp {
-		if err := NewUserAuthTokenStorage(s.db).DeleteMCP(ctx, current.ID); err != nil {
+		if err := NewUserAuthTokenStorage(s.db).DeleteKind(ctx, current.ID, model.TokenMCP); err != nil {
 			return err
 		}
 	}

@@ -177,7 +177,9 @@ func backup(ctx context.Context, dsn string, args []string, stdout io.Writer) er
 // token makes a token for a user's client, such as an MCP client, and
 // prints it, the only time anyone sees it: task-ui token <user> <name>. A
 // token of the same name stops working. task-ui token <user> lists the
-// names, and task-ui token <user> rm <name> removes one.
+// names, the kind after a name where a token came from somewhere other
+// than here, and task-ui token <user> rm <name> removes one of this
+// command's: a token a user's MCP access issued goes from their page.
 func token(ctx context.Context, dsn string, args []string, stdout io.Writer) error {
 	if len(args) < 1 || len(args) > 3 || len(args) == 3 && args[1] != "rm" || len(args) == 2 && args[1] == "rm" {
 		return errors.New("usage: task-ui token <user> [<name> | rm <name>]")
@@ -190,7 +192,7 @@ func token(ctx context.Context, dsn string, args []string, stdout io.Writer) err
 	tokens := storage.NewUserAuthTokenStorage(db)
 	switch len(args) {
 	case 3:
-		return tokens.Delete(ctx, user.ID, args[2])
+		return tokens.Delete(ctx, user.ID, model.TokenCLI, args[2])
 	case 2:
 		secret, hash, err := access.NewToken()
 		if err != nil {
@@ -211,7 +213,11 @@ func token(ctx context.Context, dsn string, args []string, stdout io.Writer) err
 		if t.UsedAt != nil {
 			used = "used " + t.UsedAt.Local().Format("2006-01-02 15:04")
 		}
-		if _, err := fmt.Fprintf(stdout, "%s\t%s\n", t.Name, used); err != nil {
+		name := t.Name
+		if t.Kind != model.TokenCLI {
+			name += " (" + t.Kind + ")"
+		}
+		if _, err := fmt.Fprintf(stdout, "%s\t%s\n", name, used); err != nil {
 			return err
 		}
 	}

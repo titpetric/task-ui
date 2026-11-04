@@ -85,18 +85,18 @@ func editHref(name string) string {
 	return profileHref(name) + "/edit"
 }
 
-// mcpAccess returns a user's MCP token as their page shows it.
+// mcpAccess returns a user's MCP tokens as their page lists them.
 func (h *Handlers) mcpAccess(r *http.Request, user *model.User, own bool) view.MCPAccess {
 	if h.opts.Guard == nil || h.opts.Guard.Tokens == nil {
 		return view.MCPAccess{}
 	}
-	token, err := h.opts.Guard.Tokens.Get(r.Context(), user.ID, access.MCPToken)
+	tokens, err := h.opts.Guard.Tokens.ListKind(r.Context(), user.ID, model.TokenMCP)
 	if err != nil {
-		token = nil
+		tokens = nil
 	}
-	a := view.NewMCPAccess(token)
+	a := view.NewMCPAccess(tokens)
 	a.Agent = user.Mcp
 	a.CanEnable = h.can(r, "user/edit") && user.Mcp
-	a.CanManage = a.CanEnable || own && a.Enabled
+	a.CanManage = a.CanEnable || own && a.Enabled()
 	return a
 }

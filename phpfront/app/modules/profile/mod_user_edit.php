@@ -27,21 +27,6 @@ class mod_user_edit implements Module {
 	/** NOBODY is what a name no row holds answers. */
 	const NOBODY = "No user by that name.";
 
-	/**
-	 * FILL and UNTIL are the placeholders task-ui.js fills from the answer to
-	 * Enable or Rotate: the token itself and the day it runs out.
-	 *
-	 * They are constants of the module and not markup of the template, because
-	 * MiniTPL compiles any {word} into an echo: a template cannot write the
-	 * literal, so it arrives as a field of the scope.
-	 */
-	const FILL = "{token}";
-
-	const UNTIL = "{expires_at}";
-
-	/** ADD is the line that adds this instance to Claude Code, with FILL in it. */
-	const ADD = 'claude mcp add --transport http --scope user task %s/api/mcp --header "Authorization: Bearer {token}"';
-
 	function name() {
 		return "profile";
 	}
@@ -220,46 +205,66 @@ class mod_user_edit implements Module {
 	}
 
 	/**
-	 * mcp is the MCP access block: the user's token as a page may say it, which
-	 * is when it was made, when it runs out and when it last answered.
+	 * mcp is the MCP access block: the tokens the user holds, one row each, as
+	 * a page may say them, which is when each was made, when it runs out and
+	 * when it last answered.
 	 *
-	 * Turning it on takes user/edit and the MCP agent user flag; rotating and
-	 * disabling take that or the token being your own. Nothing here reads the
-	 * token or its hash: the token exists once, in the answer to Enable.
+	 * Making one takes user/edit and the MCP agent user flag; making and
+	 * deleting take that or the tokens being your own. A token is never
+	 * rotated: one is made and one is deleted, and a user holds as many as they
+	 * name. Nothing here reads a token or its hash: a token exists once, in the
+	 * answer to the POST that made it.
 	 */
 	function mcp($chrome, $user, $own) {
 		$name = $user->getName();
 		$id = $user->getId();
-		$tokens = new Task\Token($chrome->db);
-		$token = $tokens->get($id, Task\Token::MCP);
-		$on = $token !== null;
+		$api = "/api/users/" . $id . "/mcp";
+		$store = new Task\Mcp\Tokens($chrome->db);
+		$rows = $store->ofKind($id, Task\Mcp\Tokens::MCP);
 		$agent = $user->getMcp();
 		$enable = $chrome->allowed("user/edit") && $agent;
-		$created = $on ? $token->getCreatedAt() : "";
-		$expires = $on ? $token->getExpiresAt() : "";
-		$used = $on ? $token->getUsedAt() : "";
 
 		return array(
 			"name" => $name,
-			"api" => "/api/users/" . $id . "/mcp",
-			"done" => "/users/" . $name . "/edit#mcp",
-			"on" => $on,
+			"api" => $api,
+			"done" => "/users/" . $name . "/edit?notice=MCP+token+made#mcp",
+			"on" => count($rows) > 0,
 			"agent" => $agent,
 			"enable" => $enable,
-			"manage" => $enable || ($own && $on),
-			"created" => Task\Clock::ago($created),
-			"createdAt" => Task\Clock::read($created),
-			"expires" => $expires !== "",
-			"expiresAt" => Task\Clock::read($expires),
-			"expired" => Task\Token::expired($expires),
-			"tone" => Task\Token::tone($expires),
-			"used" => $used !== "",
-			"usedAgo" => Task\Clock::ago($used),
-			"usedAt" => Task\Clock::read($used),
-			"fill" => self::FILL,
-			"until" => self::UNTIL,
-			"add" => sprintf(self::ADD, Task\Route::site()),
+			"manage" => $enable || ($own && count($rows) > 0),
+			"tokens" => self::rows($rows, $api),
+			"fill" => Task\Mcp\Connect::TOKEN,
+			"until" => Task\Mcp\Connect::UNTIL,
+			"named" => Task\Mcp\Connect::NAMED,
+			"add" => Task\Mcp\Connect::add(Task\Route::site()),
+			"settings" => Task\Mcp\Connect::settings(Task\Route::site()),
 		);
+	}
+
+	/** rows is one table row per token, each with the DELETE of its own. */
+	static function rows($tokens, $api) {
+		$out = array();
+
+		foreach ($tokens as $token) {
+			$created = $token->getCreatedAt();
+			$expires = $token->getExpiresAt();
+			$used = $token->getUsedAt();
+			$out[] = array(
+				"name" => $token->getName(),
+				"delete" => $api . "/" . $token->getId(),
+				"created" => Task\Clock::ago($created),
+				"createdAt" => Task\Clock::read($created),
+				"expires" => $expires !== "",
+				"expiresAt" => Task\Clock::read($expires),
+				"expired" => Task\Mcp\Tokens::expired($expires),
+				"tone" => Task\Mcp\Tokens::tone($expires),
+				"used" => $used !== "",
+				"usedAgo" => Task\Clock::ago($used),
+				"usedAt" => Task\Clock::read($used),
+			);
+		}
+
+		return $out;
 	}
 
 	/**
