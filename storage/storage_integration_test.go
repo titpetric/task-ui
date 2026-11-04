@@ -13,15 +13,22 @@ import (
 	"github.com/go-bridget/mig/migrate"
 	_ "modernc.org/sqlite"
 
+	"github.com/titpetric/task-ui/app"
 	"github.com/titpetric/task-ui/internal/assert"
-	"github.com/titpetric/task-ui/schema"
 	"github.com/titpetric/task-ui/storage"
 )
+
+// migrations is the schema of the instance, merged once for the binary: the
+// owners are embedded trees and walking all four is work no test repeats.
+//
+// It comes from app and not from schema, because app is the one place that
+// names the owners: see app/migrations.go.
+var migrations = app.Migrations()
 
 // newDB opens a private in-memory database with the schema applied.
 func newDB(t *testing.T) storage.DB {
 	t.Helper()
-	db, err := storage.OpenAndMigrate(context.Background(), ":memory:")
+	db, err := storage.OpenAndMigrate(context.Background(), ":memory:", migrations)
 	assert.NoError(t, err)
 	t.Cleanup(func() { db.Close() })
 	return db
@@ -38,7 +45,7 @@ func newDB(t *testing.T) storage.DB {
 // halves: what the rows do, and what a dead pool does.
 func closedDB(t *testing.T) storage.DB {
 	t.Helper()
-	db, err := storage.OpenAndMigrate(context.Background(), ":memory:")
+	db, err := storage.OpenAndMigrate(context.Background(), ":memory:", migrations)
 	assert.NoError(t, err)
 	assert.NoError(t, db.Close())
 	return db
@@ -139,14 +146,14 @@ func TestMigrate(t *testing.T) {
 	assert.NoError(t, err)
 	defer db.Close()
 	ctx := context.Background()
-	assert.NoError(t, storage.Migrate(ctx, db))
-	assert.NoError(t, storage.Migrate(ctx, db), "applying twice is fine")
+	assert.NoError(t, storage.Migrate(ctx, db, migrations))
+	assert.NoError(t, storage.Migrate(ctx, db, migrations), "applying twice is fine")
 
 	// As many rows as there are migrations embedded, counted rather than
 	// written down: a migration added is a file added, and a number here
-	// only says what it was when someone last looked. schema's own test
-	// is where the file count is pinned.
-	files, err := fs.Glob(schema.Migrations(), "*.up.sql")
+	// only says what it was when someone last looked. app's own test is
+	// where the names are pinned.
+	files, err := fs.Glob(migrations, "*.up.sql")
 	assert.NoError(t, err)
 
 	var count int
@@ -161,7 +168,7 @@ func TestOpenAndMigrate(t *testing.T) {
 	assert.NoError(t, db.GetContext(context.Background(), &name, "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'run'"))
 	assert.Equal(t, "run", name)
 
-	_, err := storage.OpenAndMigrate(context.Background(), "file:/nonexistent/dir/x.db")
+	_, err := storage.OpenAndMigrate(context.Background(), "file:/nonexistent/dir/x.db", migrations)
 	assert.Error(t, err)
 }
 
@@ -189,7 +196,7 @@ func TestMigrate_scheduleUTC(t *testing.T) {
 		('b', '_', 'west', '@daily', '2026-01-10 00:30:00 -0330 NST', NULL),
 		('c', '_', 'utc', '@daily', '2026-10-23 05:00:00.5 +0000 UTC', NULL)`)
 	assert.NoError(t, err)
-	statements, err := migrate.Statements(schema.Migrations(), "schedule_utc.up.sql")
+	statements, err := migrate.Statements(migrations,"schedule_utc.up.sql")
 	assert.NoError(t, err)
 	for _, statement := range statements {
 		_, err := db.ExecContext(ctx, statement)
@@ -225,7 +232,7 @@ func TestMigrate_hostJobs(t *testing.T) {
 		assert.NoError(t, err)
 	}
 	for _, file := range []string{"run_target_host_job.up.sql", "schedule_target_host_job.up.sql", "workflow_step_target_host_job.up.sql"} {
-		statements, err := migrate.Statements(schema.Migrations(), file)
+		statements, err := migrate.Statements(migrations,file)
 		assert.NoError(t, err)
 		for _, statement := range statements {
 			_, err := db.ExecContext(ctx, statement)
@@ -267,7 +274,7 @@ func TestMigrate_stepKinds(t *testing.T) {
 		_, err := db.ExecContext(ctx, insert)
 		assert.NoError(t, err)
 	}
-	statements, err := migrate.Statements(schema.Migrations(), "workflow_step_with_kind.up.sql")
+	statements, err := migrate.Statements(migrations,"workflow_step_with_kind.up.sql")
 	assert.NoError(t, err)
 	// The columns are there already; the rest of the migration runs
 	// over the rows above.
@@ -314,9 +321,9 @@ func TestOpen_Errors(t *testing.T) {
 
 	notADatabase := filepath.Join(t.TempDir(), "text.db")
 	assert.NoError(t, os.WriteFile(notADatabase, []byte(strings.Repeat("not a database", 100)), 0o600))
-	_, err := storage.OpenAndMigrate(ctx, notADatabase)
+	_, err := storage.OpenAndMigrate(ctx, notADatabase, migrations)
 	assert.Error(t, err, "a file that is not a database")
 
-	assert.ErrorContains(t, storage.Migrate(ctx, closedDB(t)), errClosed)
+	assert.ErrorContains(t, storage.Migrate(ctx, closedDB(t), migrations), errClosed)
 	assert.ErrorContains(t, storage.Vacuum(ctx, closedDB(t)), errClosed)
 }

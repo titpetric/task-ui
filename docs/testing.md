@@ -189,7 +189,7 @@ test:
 
 ### What runs and what cannot
 
-phpscript is the runtime, not the instance. It carries the PHP standard library and nothing of task-ui: `Task\Module`, `Task::register`, `Task::dispatch`, `Task::migrate`, `Task::markdown`, `Task::artifacts`, `Task::artifact` and `Database` are Go bindings the host registers on a runtime it builds itself, and a `phpscript test` or `phpscript run` has none of them.
+phpscript is the runtime, not the instance. It carries the PHP standard library and nothing of task-ui: `Task\Module`, `Task::register`, `Task::dispatch`, `Task::markdown`, `Task::artifacts`, `Task::artifact` and `Database` are Go bindings the host registers on a runtime it builds itself, and a `phpscript test` or `phpscript run` has none of them.
 
 So a fixture covers what stands on its own, which is most of what a module decides:
 
@@ -197,7 +197,7 @@ So a fixture covers what stands on its own, which is most of what a module decid
 |----------------------|----------|
 | a manager's static side: routing a path, a title, grouping rows for a page | a manager's instance methods, which reach `Task::` |
 | composing a prompt out of rows, over plain arrays | the store, a class over a `Database` |
-| the stamp functions, over the runtime's own `DateTime` | `modinfo.php` and `migrate.php`, which are `Task::` from their first line |
+| the stamp functions, over the runtime's own `DateTime` | `modinfo.php`, which is `Task::` from its first line |
 | MiniTPL: compiling a template, rendering one with data | |
 
 Naming a class is not constructing one, which is why the static side is static: `RefinementManager::title` and `RefinementPrompt::flatten` are called straight off the class, and the fixture never reaches the constructor that wants a `Database`.

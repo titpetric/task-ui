@@ -1,16 +1,13 @@
-package app_test
+package app
 
 import (
-	"context"
-	"io"
-	"net"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
 	"time"
 
-	"github.com/titpetric/task-ui/app"
+	"github.com/titpetric/oida"
+
 	"github.com/titpetric/task-ui/internal/assert"
 )
 
@@ -24,7 +21,7 @@ import (
 // the page spent its time.
 func TestTelemetryDefaults(t *testing.T) {
 	t.Parallel()
-	telemetry := &app.Telemetry{}
+	telemetry := &Telemetry{}
 	opts := telemetry.Defaults()
 
 	assert.Equal(t, time.Millisecond, opts.DebugSpanMinDuration)
@@ -32,45 +29,31 @@ func TestTelemetryDefaults(t *testing.T) {
 	assert.NotNil(t, opts.RouteFunc, "and the statistics group by the routed pattern")
 }
 
-// A terminal window attaches over a websocket, which hijacks the connection,
-// and the middleware is in front of every route of the instance: a tracer that
-// hands the handler a writer it cannot hijack panics the attach instead of
-// serving it, which is what took the shell off task.cdn.si.
-//
-// Over a real server, because that is the only writer that is an
-// http.Hijacker: httptest.NewRecorder is not one, so a test through the
-// recorder proves nothing here.
-func TestTelemetryMiddlewareHijack(t *testing.T) {
+// An instance that built no tracer has no debug front end. The route is there
+// either way, because the router is built once at start and a save changes the
+// setting under it, so what the handler answers is a page that is not there.
+func TestTelemetry_ServeHTTP(t *testing.T) {
 	t.Parallel()
-	telemetry, err := app.NewTelemetry(context.Background(), nil, "task-ui")
-	assert.NoError(t, err)
+	telemetry := &Telemetry{}
+	request := httptest.NewRequest(http.MethodGet, "/debug/oida/", nil)
 
-	opts := telemetry.Defaults()
-	opts.Enabled = true
-	assert.NoError(t, telemetry.Apply(opts), "a tracer that records is the one in front of the attach")
+	assert.ErrorIs(t, telemetry.serveHTTP(httptest.NewRecorder(), request), errTelemetryOff)
 
-	server := httptest.NewServer(telemetry.Middleware(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		hijacker, ok := w.(http.Hijacker)
-		assert.True(t, ok, "the writer the middleware passes on is an http.Hijacker")
-		if !ok {
-			return
-		}
-		conn, buffered, err := hijacker.Hijack()
-		assert.NoError(t, err)
-		defer conn.Close()
-		_, _ = buffered.WriteString("HTTP/1.1 101 Switching Protocols\r\nUpgrade: terminal\r\n\r\nattached")
-		assert.NoError(t, buffered.Flush())
-	})))
-	defer server.Close()
+	recorder := httptest.NewRecorder()
+	telemetry.ServeHTTP(recorder, request)
+	assert.Equal(t, http.StatusNotFound, recorder.Code)
+}
 
-	conn, err := net.Dial("tcp", strings.TrimPrefix(server.URL, "http://"))
-	assert.NoError(t, err)
-	defer conn.Close()
+// Tracer is nil until one is built, which is what every reader of the pointer
+// checks for, and Path falls back to the library's mount so the chrome has a
+// link to draw.
+func TestTelemetry_Tracer(t *testing.T) {
+	t.Parallel()
 
-	_, err = conn.Write([]byte("GET /api/runs/1/attach HTTP/1.1\r\nHost: test\r\n\r\n"))
-	assert.NoError(t, err)
-	answer, err := io.ReadAll(conn)
-	assert.NoError(t, err)
-	assert.Contains(t, string(answer), "101 Switching Protocols")
-	assert.Contains(t, string(answer), "attached")
+	var absent *Telemetry
+	assert.Nil(t, absent.Tracer(), "a nil telemetry is an instance without one")
+
+	telemetry := &Telemetry{}
+	assert.Nil(t, telemetry.Tracer())
+	assert.Equal(t, oida.DefaultPath, telemetry.Path())
 }

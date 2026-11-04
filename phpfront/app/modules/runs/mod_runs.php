@@ -112,15 +112,20 @@ class mod_runs implements Module {
 	 *
 	 * The clock is the server's, which the heading says, and the charts count
 	 * their days in its zone.
+	 *
+	 * The window is read as rows and stays rows: five thousand of them, for
+	 * five numbers each. Hydrating a model per row to read those cost 274ms of
+	 * a 2s page and its stamps were parsed three times over, so charted() asks
+	 * for the six columns the filter and the charts read and nothing else.
 	 */
 	function activity($seen, $runs, $filter) {
 		$filter["before"] = "";
 		$filter["after"] = "";
 		$filter["limit"] = Task\Activity::LIMIT;
 
-		$matched = $runs->find($filter);
-		$found = $seen->of($matched);
-		$days = Task\Activity::of($found);
+		$matched = $runs->charted($filter);
+		$found = $seen->rows($matched);
+		$days = Task\Activity::rows($found);
 		$now = Task\Clock::now();
 		$charts = new Task\Activity($days, $now, Task\Activity::DAYS, false);
 

@@ -282,13 +282,16 @@ class Job {
 	 * The duration line is drawn, because the runs are one job's and mix
 	 * nothing. The clock is the server's and the charts count their days in
 	 * its zone.
+	 *
+	 * The window is read as rows and stays rows, as in the runs module: a
+	 * model per row for five numbers was the cost of the page.
 	 */
 	function activity($runs, $seen, $filter) {
 		$filter["limit"] = Activity::LIMIT;
 
-		$matched = $runs->find($filter);
-		$found = $seen->of($matched);
-		$days = Activity::of($found);
+		$matched = $runs->charted($filter);
+		$found = $seen->rows($matched);
+		$days = Activity::rows($found);
 		$now = Clock::now();
 		$charts = new Activity($days, $now, Activity::DAYS, true);
 

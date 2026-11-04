@@ -31,6 +31,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"io/fs"
 	"strings"
 	"time"
 
@@ -38,8 +39,6 @@ import (
 	"github.com/jmoiron/sqlx"
 
 	"github.com/titpetric/pdo"
-
-	"github.com/titpetric/task-ui/schema"
 )
 
 // DB is the shared connection pool under every storage. The program
@@ -70,9 +69,13 @@ func Open(dsn string) (DB, error) {
 	return db, err
 }
 
-// Migrate applies the schema migrations to the database.
-func Migrate(ctx context.Context, db DB) error {
-	m, err := migrate.NewManager(db, schema.Migrations(), Project)
+// Migrate applies the migrations of fsys to the database.
+//
+// The filesystem is a parameter because the migrations live with the code that
+// owns each table, and some of those owners import this package: app.Migrations
+// is what merges them, and app is the only place naming the owners.
+func Migrate(ctx context.Context, db DB, fsys fs.FS) error {
+	m, err := migrate.NewManager(db, fsys, Project)
 	if err != nil {
 		return err
 	}
@@ -81,12 +84,12 @@ func Migrate(ctx context.Context, db DB) error {
 }
 
 // OpenAndMigrate opens the database and brings it up to date.
-func OpenAndMigrate(ctx context.Context, dsn string) (DB, error) {
+func OpenAndMigrate(ctx context.Context, dsn string, fsys fs.FS) (DB, error) {
 	db, err := Open(dsn)
 	if err != nil {
 		return nil, err
 	}
-	if err := Migrate(ctx, db); err != nil {
+	if err := Migrate(ctx, db, fsys); err != nil {
 		db.Close()
 		return nil, err
 	}

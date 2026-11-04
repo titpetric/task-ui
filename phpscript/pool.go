@@ -4,7 +4,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/titpetric/phpscript/model"
+	phpmodel "github.com/titpetric/phpscript/model"
 	"github.com/titpetric/phpscript/runner"
 	"github.com/titpetric/phpscript/stdlib"
 )
@@ -71,7 +71,7 @@ func (p *pool) get() (*runner.Runtime, func()) {
 // through, and nil where the instance wired none: a nil provider leaves
 // the constructor to say there is no such connection rather than hand a
 // module a pool nobody configured.
-func databaseOf(opts Options) model.DatabaseProvider {
+func databaseOf(opts Options) phpmodel.DatabaseProvider {
 	if opts.Database == nil {
 		return nil
 	}

@@ -21,6 +21,13 @@ class Host {
 	public static $jobs = array();
 	public static $projects = array();
 	public static $folderDirs = array();
+
+	/**
+	 * folderDirCalls counts the crossings a tree spent asking for them, which
+	 * is what the batch answer is for: the number and not the answer is the
+	 * thing a fixture holds.
+	 */
+	public static $folderDirCalls = 0;
 	public static $isDir = array();
 	public static $commits = array();
 	public static $running = array();
@@ -168,7 +175,26 @@ class Host {
 	 * else where the layout puts the project among the named workspaces.
 	 */
 	static function folderDir($id, $workspaces) {
+		self::$folderDirCalls++;
+
 		return isset(self::$folderDirs[$id]) ? self::$folderDirs[$id] : "";
+	}
+
+	/**
+	 * The same for many IDs at once, keyed by the ID, which is what a tree
+	 * asks: an ID the layout places nowhere is absent from the answer.
+	 */
+	static function folderDirs($ids, $workspaces) {
+		self::$folderDirCalls++;
+		$out = array();
+
+		foreach ($ids as $id) {
+			if (isset(self::$folderDirs[$id]) && self::$folderDirs[$id] !== "") {
+				$out[$id] = self::$folderDirs[$id];
+			}
+		}
+
+		return $out;
 	}
 
 	/** Whether a directory inside a folder of the catalogue is there. */
@@ -302,9 +328,19 @@ class Host {
 	 * with what a relative link in it resolves against: the prefix the files
 	 * sit under and the directory the text was written in. Both empty leaves
 	 * a relative link as text.
+	 *
+	 * A blank line starts a paragraph here as it does there, because that is
+	 * the difference a reader of the answer decides on: Task\Chrome::line
+	 * takes the tag off one paragraph and leaves two alone.
 	 */
 	static function markdown($src, $prefix = "", $dir = "") {
-		return "<p>" . htmlspecialchars($src, ENT_QUOTES) . "</p>";
+		$out = array();
+
+		foreach (preg_split('/\n\s*\n/', $src) as $block) {
+			$out[] = "<p>" . htmlspecialchars($block, ENT_QUOTES) . "</p>";
+		}
+
+		return implode("\n\n", $out);
 	}
 
 	/**

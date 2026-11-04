@@ -8,10 +8,13 @@ Generated from the module by `atkins docs`. DO NOT EDIT.
 
 ## Pages
 
-| Method | Path | Answered by |
+{if !$routes}This module draws no page. It owns a data model other modules read, so it
+carries a schema and the statements over it and no route.
+
+{else}| Method | Path | Answered by |
 |--------|------|-------------|
 {foreach $routes as $route}| `{route.method}` | `{route.path}` | [`{route.file}`]({route.file}) |{nl}{/foreach}
-## The data model
+{/if}## The data model
 
 {if !$tables}No page of this module reads a table of its own. The chrome every page
 draws reads the instance's, which `docs/phpfront.md` lists once.

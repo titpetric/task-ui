@@ -487,7 +487,7 @@ you<?php }?><?php echo htmlspecialchars($_v['data_prompt']['tail'], ENT_QUOTES);
 /workflows/<?php echo htmlspecialchars($_v['row']['id'], ENT_QUOTES);?>
 "><?php echo htmlspecialchars($_v['row']['name'], ENT_QUOTES);?>
 </a><?php if($_v['row']['description']){?>
-<small class="faint wf-desc"><?php echo htmlspecialchars($_v['row']['description'], ENT_QUOTES);?>
+<small class="faint wf-desc"><?php echo $_v['row']['description'];?>
 </small><?php }?><?php if(!empty($_v['row']['schedules']))foreach($_v['row']['schedules'] as $_v['hint']){?><small class="faint wf-desc" title="<?php echo htmlspecialchars($_v['hint']['title'], ENT_QUOTES);?>
 "><svg class="ic lead"><use href="#i-clock"/></svg><code><?php echo htmlspecialchars($_v['hint']['expression'], ENT_QUOTES);?>
 </code><?php if(!$_v['hint']['enabled']){?>

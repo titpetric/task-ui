@@ -5,6 +5,18 @@ imports:
     # The run socket's test is a websocket client of the one file that
     # serves it; counting the test reports the dependency twice.
     include-tests: false
+    # The rule is about a dependency a tree took on and then let spread.
+    # These four are the tree: chi is the router every routing file writes
+    # against, oida is the tracer the middleware and the dashboard read
+    # through, and phpscript is the interpreter phpfront and phpscript
+    # exist to wrap. A list here replaces the default, so the two the
+    # linter ships with are named again.
+    ignore:
+      - golang.org/x
+      - github.com/spf13/pflag
+      - github.com/go-chi/chi/v5
+      - github.com/titpetric/oida
+      - github.com/titpetric/phpscript
 integration:
   enabled: true
   storage: [github.com/titpetric/task-ui/storage]

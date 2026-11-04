@@ -112,6 +112,18 @@ $nobody = new Task\Chrome;
 
 echo "[", implode(",", array_keys($nobody->roles())), "] [", implode(",", ids($nobody->folders())), "] ", Task\Text::object($nobody->roles()), "\n";
 echo count($nobody->runAs()["users"]), "\n";
+
+// line is a line of prose as markdown, for the places that draw one inside
+// phrasing: a workflow's description under its name. The renderer is the
+// host's, so what is held here is the paragraph coming off one block and
+// staying on two, and that the text is still escaped either way.
+echo "[", Task\Chrome::line("Deploys **prod** after the tests pass"), "]\n";
+echo "[", Task\Chrome::line("<b>html</b> is text"), "]\n";
+echo "[", str_replace("\n", "|", Task\Chrome::line("what it does\n\nand when")), "]\n";
+
+// A workflow with no description draws no line at all, which is what the
+// markup asks: empty, and empty for text that is only space.
+echo "[", Task\Chrome::line(""), "] [", Task\Chrome::line("  \n "), "] [", Task\Chrome::line(null), "]\n";
 ---
 fx-chrome/seen,fx-chrome/hidden
 fx-chrome-alpha
@@ -127,3 +139,7 @@ fx-chrome/seen docker fx-chrome/seen/docker /f/internal/fx-chrome/seen/docker
 fx-chrome/seen fx-chrome-r1 run fx-c… /runs/fx-chrome-r1
 [] [] {}
 0
+[Deploys **prod** after the tests pass]
+[&lt;b&gt;html&lt;/b&gt; is text]
+[<p>what it does</p>||<p>and when</p>]
+[] [] []

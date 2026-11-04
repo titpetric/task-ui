@@ -63,6 +63,39 @@ func TestFrontHost_Folders(t *testing.T) {
 	assert.Equal(t, []string{"ann"}, found[0].Jobs[1].Allow)
 }
 
+// The directories of a tree are read in one call, keyed by the ID asked
+// about: the catalogue's list is indexed once, so a tree of fifty rows is one
+// scan and not fifty, and an ID nothing places is left out rather than keyed
+// to the empty string.
+func TestFrontHost_FolderDirs(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	workspaces := []string{"malta"}
+
+	assert.Empty(t, (&FrontHost{}).FolderDirs(ctx, []string{"infra"}, workspaces))
+
+	host := &FrontHost{Catalogue: catalogue{{ID: "infra", Dir: "/src/infra"}, {ID: "bare"}}}
+	found := host.FolderDirs(ctx, []string{"infra", "bare", "nowhere", ""}, workspaces)
+	assert.Len(t, found, 1)
+	assert.Equal(t, "/src/infra", found["infra"])
+
+	// A folder the catalogue holds with no directory measured is no key
+	// either, and neither is the empty ID the chrome's list may carry.
+	_, ok := found["bare"]
+	assert.False(t, ok, "a folder with no directory is left out")
+	_, ok = found[""]
+	assert.False(t, ok, "an empty ID is asked of nobody")
+
+	// An ID no folder holds is the layout's, and it answers what the single
+	// reader answers: the batch is an optimisation, not a second rule.
+	rooted := &FrontHost{Root: "/root", Catalogue: host.Catalogue}
+	batched := rooted.FolderDirs(ctx, []string{"infra", "malta/deploy"}, workspaces)
+	assert.Equal(t, "/src/infra", batched["infra"])
+	assert.Equal(t, rooted.FolderDir(ctx, "malta/deploy", workspaces), batched["malta/deploy"])
+	assert.NotEmpty(t, batched["malta/deploy"])
+}
+
 // Running is empty without a runner, which is a test instance.
 func TestFrontHost_Running(t *testing.T) {
 	t.Parallel()
@@ -126,15 +159,6 @@ func TestFrontHost_Publish(t *testing.T) {
 
 	got := <-events
 	assert.Equal(t, "note", got.Name)
-}
-
-// An instance with no artifact tree and no meter says nothing about space,
-// rather than that the tree takes none.
-func TestFrontHost_Space(t *testing.T) {
-	t.Parallel()
-
-	assert.Empty(t, (&FrontHost{}).Tree(context.Background(), ""))
-	assert.False(t, (&FrontHost{}).Space(context.Background()).Measured)
 }
 
 // An instance with no Beszel integration is the Inventory page's unset state,

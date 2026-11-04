@@ -12,8 +12,6 @@ A module is a directory with a `modinfo.php` in it. The directory is the module'
 |-----------------|--------------------------------------------------------------------------------------|
 | `modinfo.php`   | the registration, run once at startup, annotated `@startup`                          |
 | `index.php`     | the catch-all: every request the `public/` tree does not answer arrives here         |
-| `migrate.php`   | applies the module's `schema/` through `Task::migrate`                               |
-| `schema/`       | the module's own `*.up.sql` migrations, applied into task-ui's database              |
 | `templates/`    | the MiniTPL sources                                                                  |
 | `templates_c/`  | the same templates compiled, written by `precompile.php` and shipped with the module |
 | `public/`       | files served as bytes under `/m/<vendor>/<name>/`, the `assets/` tree among them     |
@@ -67,16 +65,9 @@ The name is `<vendor>/<plugin>`. It decides the link, `/m/titpetric/refinement`,
 
 task-ui runs `modinfo.php` once per module, in path order, before it serves a request. A module that throws does not register and does not serve; the rest start.
 
-Then it runs every other `@startup` file of the module, in path order, on the same runtime. A module's migrations go in one of those rather than in a `require` from `modinfo.php`, so a startup step is a file with an annotation and the list of them is the directory:
+Then it runs every other `@startup` file of the module, in path order, on the same runtime. A startup step is a file with an annotation, and the list of them is the directory: nothing is `require`d from `modinfo.php` to get it to run.
 
-```php
-<?php
-// @startup
-
-Task::migrate("schema/");
-```
-
-A startup file that throws keeps the module from registering, which is what should happen when its tables are the thing that failed.
+A startup file that throws keeps the module from registering, which is what should happen when the thing that failed is what the module needs to answer.
 
 ## The bindings
 
@@ -86,7 +77,6 @@ These reach the PHP of every module.
 |-------------------------------------|----------------------------------------------------------------------------------------|
 | `new Task\Module`                   | an empty module, with `setName`, `setTitle`, `setDescription`, `setIcon`, `setVersion` |
 | `Task::register($module)`           | records the module and its root in the `module` table, and adds its sidebar row        |
-| `Task::migrate("schema/")`          | applies a directory of `*.up.sql` into task-ui's database                              |
 | `Task::dispatch($comment, $action, $folder)` | starts a Claude run in that folder of the tree, returns the identifier of the note that holds it |
 | `Task::artifacts($folder)`          | the files under one folder of the artifact tree, by path relative to it                |
 | `Task::artifact($path)`             | the text of one artifact, from the top of the tree, or `""`                            |
@@ -160,9 +150,11 @@ A module cannot reach the host's `/tmp`: the filesystem boundary roots every pat
 
 ## The database
 
-A module's tables are task-ui's tables, in task-ui's database, applied by `mig` through `Task::migrate` and read through `new Database("task-ui")`. There is one connection and every module shares it: the pool is sqlite on one connection, so a module's work belongs in a statement and not in a long transaction.
+A module's tables are task-ui's tables, in task-ui's database, read through `new Database("task-ui")`. There is one connection and every module shares it: the pool is sqlite on one connection, so a module's work belongs in a statement and not in a long transaction.
 
-Each module migrates under a project of its own, so two cannot claim one applied row. The name is the plugin cut to seven characters and eight hex of the digest of the full name, because the column mig records it in holds sixteen: `titpetric/refinement` is twenty.
+A module declares no migrations. Every table of the instance is applied once at start, by `mig`, under the one project name, out of the trees `app.Migrations` merges — and a table a module's pages own gets its `*.up.sql` under `phpfront/app/modules/<name>/schema/`, where the binary embeds it. [schema/schema.go](../schema/schema.go) is the contract, and it says why the merged set is flat.
+
+So a module dropped in at runtime, from outside the binary, cannot create a table. It reads the ones that are there.
 
 ### The store, and the manager over it
 

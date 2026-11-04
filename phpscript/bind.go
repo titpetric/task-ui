@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/titpetric/phpscript/model"
+	phpmodel "github.com/titpetric/phpscript/model"
 	"github.com/titpetric/phpscript/runner"
 
 	"github.com/titpetric/task-ui/markdown"
@@ -22,9 +22,13 @@ var ErrNoModule = errors.New("no module on the context")
 var ErrEscapes = errors.New("the path leaves the module root")
 
 // Bind registers the host symbols of a module's runtime: the
-// `Task\Module` constructor, and `Task::register`, `Task::migrate` and
-// `Task::dispatch` as host functions whose names hold `::`. registered takes
-// what a modinfo.php registers, and nil refuses the call.
+// `Task\Module` constructor, and `Task::register` and `Task::dispatch` as host
+// functions whose names hold `::`. registered takes what a modinfo.php
+// registers, and nil refuses the call.
+//
+// A module declares no migrations of its own. Every table of the instance,
+// a module's pages included, is migrated once at start out of the embedded
+// trees app.Migrations merges, under the one project name.
 //
 // The context.Context each binding takes first is the interpreter's and names
 // the module; PHP counts it as no argument. docs/modules.md is the contract
@@ -54,25 +58,7 @@ func Bind(rt *runner.Runtime, opts Options, registered func(*Module)) {
 		return true, nil
 	})
 
-	rt.RegisterFunc("Task::migrate", func(ctx context.Context, dir string) (bool, error) {
-		m, ok := ModuleFrom(ctx)
-		if !ok {
-			return false, ErrNoModule
-		}
-		if opts.Migrator == nil {
-			return false, errors.New("this instance applies no module schema")
-		}
-		rel, err := Inside(m.Root, dir)
-		if err != nil {
-			return false, err
-		}
-		if err := opts.Migrator.Migrate(ctx, m, rel); err != nil {
-			return false, err
-		}
-		return true, nil
-	})
-
-	rt.RegisterFunc("Task::dispatch", func(ctx context.Context, comment, action, folder string) (string, error) {
+	rt.RegisterFunc("Task::dispatch",func(ctx context.Context, comment, action, folder string) (string, error) {
 		m, ok := ModuleFrom(ctx)
 		if !ok {
 			return "", ErrNoModule
@@ -160,12 +146,12 @@ func ArtifactHref(folder string) string {
 // taskClass is the host class the constants live on. RegisterClass takes PHP
 // declarations alone, so this declares no method: the three static calls are
 // host functions of the same spelling.
-func taskClass(opts Options) *model.Class {
-	return &model.Class{
+func taskClass(opts Options) *phpmodel.Class {
+	return &phpmodel.Class{
 		Name: "Task",
-		Consts: []model.Field{
-			{Name: "VERSION", Default: &model.Lit{Value: opts.Version}},
-			{Name: "PREFIX", Default: &model.Lit{Value: Prefix}},
+		Consts: []phpmodel.Field{
+			{Name: "VERSION", Default: &phpmodel.Lit{Value: opts.Version}},
+			{Name: "PREFIX", Default: &phpmodel.Lit{Value: Prefix}},
 		},
 	}
 }

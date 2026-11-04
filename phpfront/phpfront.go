@@ -44,6 +44,19 @@ func ThemeAssets() fs.FS {
 	return sub(path.Join("app", "theme", "assets"))
 }
 
+// Migrations returns the module tree, where each module carries the migrations
+// of the tables its pages own under modules/<name>/schema/.
+//
+// It reads the embedded tree and never the checkout Env names: the schema a
+// binary applies is the one it was built with, so a checkout that is ahead
+// does not migrate an instance running an older binary.
+//
+// schema.Migrations merges this with every other owner's, keyed by base name,
+// which is what the migrations table records: see schema/schema.go.
+func Migrations() fs.FS {
+	return sub(path.Join("app", "modules"))
+}
+
 // sub roots the embedded tree at dir.
 func sub(dir string) fs.FS {
 	at, err := fs.Sub(tree, dir)

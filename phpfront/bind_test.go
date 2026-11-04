@@ -15,344 +15,17 @@ import (
 )
 
 // host answers what the real one answers off the instance.
+//
+// Its methods are grouped the way the interface is: a folder's and the
+// artifact tree's in host_folder_test.go, the live runs' in host_run_test.go,
+// the Inventory's in host_inventory_test.go, the tooling report's in
+// host_tooling_test.go and the settings' in host_settings_test.go.
 type host struct {
 	published  []string
 	dispatched []string
 }
 
 func (h *host) Whoami(context.Context) string { return "ops" }
-
-func (h *host) Folders(context.Context) []phpfront.Folder {
-	return []phpfront.Folder{{
-		ID:    "infra",
-		Title: "Infra",
-		Dir:   "/src/infra",
-		Allow: []string{"ops"},
-		Jobs:  []phpfront.Job{{ID: "build", Name: "build"}, {ID: "task:test", Name: "test", Allow: []string{"ann"}}},
-	}}
-}
-
-// The job of a run is the folder, the directory inside it and the job, all
-// three: the shell of a directory inside the folder is a different job from
-// the shell of the folder, and only this answers either.
-func (h *host) Job(_ context.Context, folder, dir, id string) phpfront.Job {
-	if folder != "infra" || dir != "api" || id != "@shell" {
-		return phpfront.Job{}
-	}
-	return phpfront.Job{
-		Found:       true,
-		ID:          "@shell",
-		Name:        "shell",
-		Dir:         "api",
-		Shell:       true,
-		Allow:       []string{"admin"},
-		FolderAllow: []string{"ops"},
-	}
-}
-
-func (h *host) Projects(_ context.Context, workspace string) []string {
-	if workspace != "malta" {
-		return nil
-	}
-	return []string{"malta/deploy"}
-}
-
-func (h *host) FolderDir(_ context.Context, id string, workspaces []string) string {
-	if id == "infra" {
-		return "/src/infra"
-	}
-	if len(workspaces) == 0 {
-		return ""
-	}
-	return "/" + workspaces[0] + "/src/" + id
-}
-
-func (h *host) IsDir(_ context.Context, id, rel string) bool {
-	return id == "infra" && rel == "api"
-}
-
-func (h *host) Commit(_ context.Context, dir string) string {
-	if dir != "/src/infra" {
-		return ""
-	}
-	return "2024-05-01 10:00:00 +0000 UTC"
-}
-
-func (h *host) Running(context.Context) []phpfront.Running {
-	return []phpfront.Running{{Key: "infra/build", ID: "01hz", State: "running"}}
-}
-
-func (h *host) Flows(context.Context) []phpfront.Flow {
-	return []phpfront.Flow{{WorkflowID: "01hw", RunID: "01hr"}}
-}
-
-func (h *host) Dirty(_ context.Context, dir string) int {
-	if dir == "/src/infra" {
-		return 3
-	}
-	return 0
-}
-
-func (h *host) Rules(context.Context) phpfront.Rules {
-	return phpfront.Rules{
-		Rules:       []phpfront.Rule{{Key: "view", Title: "Allow View"}},
-		Sections:    []phpfront.Rule{{Key: "note", Title: "Notes"}},
-		Permissions: []phpfront.Rule{{Key: "run", Title: "Run Jobs"}},
-		Paths:       []string{"note/all", "note/view", "run"},
-		Checks:      []string{"note/view", "run"},
-		Extras:      []phpfront.Rule{{Key: "note/pin", Title: "Pin"}},
-	}
-}
-
-func (h *host) Publish(_ context.Context, topic string, _ map[string]any) error {
-	h.published = append(h.published, topic)
-	return nil
-}
-
-func (h *host) Session(_ context.Context, id string) phpfront.Session {
-	if id != "01hz" {
-		return phpfront.Session{}
-	}
-	return phpfront.Session{
-		Live:     true,
-		Attached: 2,
-		Message:  "waits for a free slot, number 1 in line",
-		State:    "running",
-		Title:    "build the image",
-	}
-}
-
-func (h *host) Frame(_ context.Context, id string) string {
-	if id != "01hz" {
-		return ""
-	}
-	return "<svg></svg>"
-}
-
-func (h *host) Screen(_ context.Context, id, castPath string, cols int) phpfront.Screen {
-	if castPath != "run.cast" {
-		return phpfront.Screen{}
-	}
-	return phpfront.Screen{SVG: "<svg></svg>", Lines: 42, Complete: true}
-}
-
-func (h *host) Expired(_ context.Context, castPath, state string) bool {
-	return castPath == "gone.cast" && state == "ok"
-}
-
-func (h *host) Claude(context.Context) bool { return true }
-
-func (h *host) Tree(_ context.Context, dir string) []phpfront.TreeItem {
-	if dir != "lint" {
-		return nil
-	}
-	return []phpfront.TreeItem{
-		{Name: "nested", Dir: true, Size: 4096, ModTime: "2026-11-02 10:32:12.414 +0000 UTC"},
-		{Name: "out.txt", Size: 31},
-	}
-}
-
-func (h *host) Space(context.Context) phpfront.Space {
-	return phpfront.Space{Measured: true, Files: 2048, History: 512, Ignored: 64}
-}
-
-// A directory nothing measured is not in the answer, which is what an
-// instance with no meter answers for every one of them.
-func (h *host) Spaces(_ context.Context, dirs []string) map[string]phpfront.Space {
-	out := map[string]phpfront.Space{}
-	for _, dir := range dirs {
-		if dir != "/root/src/infra" {
-			continue
-		}
-		out[dir] = phpfront.Space{Measured: true, Files: 1024, History: 256, Ignored: 32}
-	}
-	return out
-}
-
-// The hosts permission decides whether task-ui reads a host now, so the
-// double answers a login only where the reader has it.
-func (h *host) Inventory(_ context.Context, hosts bool) phpfront.Inventory {
-	out := phpfront.Inventory{
-		Hosts: []phpfront.System{{
-			ID: "sys1", Name: "web1", Host: "10.0.0.1", Status: "up", Up: true,
-			CPUs: 8, Agent: "0.9.1", Uptime: "3 days",
-			CPU: 12.5, Memory: 48, Disk: 71,
-			Measured: true, MemoryTotal: 32, MemoryUsed: 15.5, DiskTotal: 500, DiskUsed: 355,
-		}},
-		Cluster: phpfront.Cluster{
-			Up: 1, Pools: []phpfront.Pool{{
-				Name: "CPU", Unit: "cores", Figure: "1 / 8 cores", Used: 1, Total: 8, Percent: 12.5,
-				Segments: []phpfront.Segment{{Host: "web1", Width: 100, Fill: 12.5, Title: "web1: 1 of 8 cores"}},
-			}},
-			Hosts: []phpfront.ClusterHost{{Name: "web1"}},
-		},
-		History: []phpfront.Series{{ID: "sys1", Samples: []phpfront.Sample{{At: "2026-11-02 10:00:00 +0000 UTC", CPU: 9, Sent: 1024}}}},
-	}
-	if hosts {
-		out.Logins = []phpfront.Login{{Host: "10.0.0.1", Login: "debian@10.0.0.1"}}
-	}
-	return out
-}
-
-func (h *host) Reachable(context.Context) []string {
-	return []string{"10.0.0.1"}
-}
-
-func (h *host) HostFacts(_ context.Context, name string, hosts bool) phpfront.HostFacts {
-	if name != "web1" {
-		return phpfront.HostFacts{}
-	}
-	out := phpfront.HostFacts{
-		Found:   true,
-		System:  phpfront.System{ID: "sys1", Name: "web1", Host: "10.0.0.1", Up: true, CPUs: 8},
-		Unsized: "task-ui has no ssh login to the host, for docker ps",
-		Containers: []phpfront.Container{{
-			Name: "api", Image: "api:1", State: "running", Status: "Up 2 days",
-			CPU: 3.5, Memory: 512, MemoryShare: 1.5, Net: 2048, Measured: true,
-		}},
-		Measured:    true,
-		Filesystems: []phpfront.Filesystem{{Mount: "/", Size: 1 << 30, Used: 1 << 29, Free: 1 << 29, Percent: 50}},
-	}
-	if hosts {
-		out.Login = "debian@10.0.0.1"
-		out.Read = "2026-11-02 10:32:12.414 +0000 UTC"
-	}
-	return out
-}
-
-func (h *host) Tooling(context.Context) []phpfront.ToolingScope {
-	return []phpfront.ToolingScope{{
-		Name: "task-ui", Repository: "task-ui", Database: "/data/atkins.db",
-		Days: 30, From: "2026-10-04", To: "2026-11-02", Runs: 3, TotalMs: 4500,
-		Commands: []phpfront.ToolingCommand{{
-			Command: "go test", Tool: "go", Runs: 3, TotalMs: 4500,
-			AverageMs: 1500, MaxMs: 2500, Failures: 1,
-			LastRunAt: "2026-11-02 10:32:12.414 +0000 UTC",
-		}},
-		Usage:        []phpfront.ToolingUsage{{Date: "2026-11-02", Tool: "go", Runs: 3, TotalMs: 4500}},
-		CommandUsage: []phpfront.ToolingUsage{{Date: "2026-11-02", Command: "go test", Tool: "go", Runs: 3, TotalMs: 4500}},
-		Samples: []phpfront.ToolingSample{{
-			At: "2026-11-02 10:32:12.414 +0000 UTC", Command: "go test", Tool: "go",
-			Job: "test", DurationMs: 2500, ExitCode: 1, Failed: true,
-		}},
-	}}
-}
-
-// The folder pages read the catalogue and the disk, which this fake has none
-// of: each answers the nothing an instance with no such folder answers.
-func (h *host) Place(context.Context, string, string) phpfront.Place {
-	return phpfront.Place{}
-}
-
-func (h *host) Groups(context.Context, string, string, []string, bool, bool) []phpfront.Group {
-	return nil
-}
-
-func (h *host) Listing(context.Context, string, string, []string) []phpfront.Entry {
-	return nil
-}
-
-func (h *host) RootTree(context.Context, bool, []string) []phpfront.Entry {
-	return nil
-}
-
-func (h *host) ModTime(context.Context, string) string {
-	return ""
-}
-
-func (h *host) Status(context.Context, string) phpfront.Status {
-	return phpfront.Status{}
-}
-
-func (h *host) Checkout(context.Context, string) phpfront.Checkout {
-	return phpfront.Checkout{}
-}
-
-func (h *host) Hours(context.Context, string) phpfront.Hours {
-	return phpfront.Hours{}
-}
-
-func (h *host) Keys(context.Context) phpfront.Keystore {
-	return phpfront.Keystore{}
-}
-
-func (h *host) KeyFolders(context.Context) []phpfront.KeyFolder {
-	return nil
-}
-
-func (h *host) Instance(context.Context, bool) phpfront.Instance {
-	return phpfront.Instance{}
-}
-
-func (h *host) Usage(context.Context) phpfront.Retention {
-	return phpfront.Retention{}
-}
-
-func (h *host) Telemetry(context.Context) phpfront.Telemetry {
-	return phpfront.Telemetry{}
-}
-
-// A service answers its registry entry and what its settings hold; the token
-// it is set up with is not in the answer at all.
-func (h *host) Services(context.Context) []phpfront.Integration {
-	return []phpfront.Integration{{
-		ID: "claude", Title: "Claude Code", Description: "The token Claude Code signs in with.",
-		Credential: "OAuth token", Steps: []string{"Run claude setup-token."},
-		Fields: []phpfront.IntegrationField{
-			{Name: "token", Label: "OAuth token", Secret: true, Env: "CLAUDE_CODE_OAUTH_TOKEN"},
-			{Name: "who", Label: "Who", Optional: true, Who: true},
-		},
-		Configured: true,
-		Values:     map[string]string{"who": "admin, ops"},
-		Set:        map[string]bool{"token": true},
-		Checked:    []string{"admin", "ops"},
-		Enabled:    map[string]bool{},
-	}}
-}
-
-// The vault answers the variables it opened and the first one it would not,
-// which is the shape the page draws: the table and the error above it.
-func (h *host) Variables(context.Context) phpfront.Variables {
-	return phpfront.Variables{Values: map[string]string{"TOKEN": "", "REGION": "eu"}}
-}
-
-// One variable as its form opens it. A secret draws no value, so the row the
-// form edits answers content only where the variable holds some.
-func (h *host) Variable(_ context.Context, id string) phpfront.Variable {
-	if id != "REGION" {
-		return phpfront.Variable{}
-	}
-	return phpfront.Variable{Content: "eu"}
-}
-
-// The environment the integrations add is the reader's: a plain variable and a
-// credential, which answers its name and no value.
-func (h *host) IntegrationEnv(context.Context) []phpfront.EnvVar {
-	return []phpfront.EnvVar{
-		{Name: "CLAUDE_CODE_OAUTH_TOKEN", Redacted: true},
-		{Name: "CLAUDE_MODEL", Value: "opus"},
-	}
-}
-
-func (h *host) Modules(context.Context) []phpfront.Plugin {
-	return nil
-}
-
-func (h *host) Entries(context.Context, []string) []phpfront.Project {
-	return nil
-}
-
-func (h *host) Dispatch(_ context.Context, comment, action, folder string) (string, error) {
-	h.dispatched = append(h.dispatched, action+":"+comment+":"+folder)
-	return "01NOTE", nil
-}
-
-func (h *host) RunOf(_ context.Context, note string) string {
-	if note == "" {
-		return ""
-	}
-	return "01RUN-" + note
-}
 
 // Every host call answers across the boundary, and a Go struct arrives as a
 // map keyed by its json tags.
@@ -405,6 +78,11 @@ func TestBind(t *testing.T) {
 		"notree=[]",
 		`space={"measured":true,"files":2048,"history":512,"ignored":64}`,
 		`spaces={"/root/src/infra":{"measured":true,"files":1024,"history":256,"ignored":32}}`,
+		"folderDir=/src/infra",
+		// A tree asks about every row it draws in one call, and reads the
+		// answer by ID: an empty ID is asked of nobody, so the list the
+		// chrome hands over is not filtered on this side first.
+		"folderDirs=2 /src/infra /malta/src/deploy -",
 		// A service crosses with its registry entry and the state of its
 		// settings, and with no secret in it: `set` says the token has a
 		// value and nothing says what it is.
@@ -461,6 +139,7 @@ func TestBind_NoHost(t *testing.T) {
 	assert.Contains(t, body, "expired=false")
 	assert.Contains(t, body, "claude=false")
 	assert.Contains(t, body, "tree=[]", "an empty array, so a foreach over a directory draws the empty line")
+	assert.Contains(t, body, "folderDirs=0 - - -", "no root places any folder, and a tree reads every row as having none")
 	assert.Contains(t, body, `space={"measured":false,`, "no meter says nothing about space, rather than that it takes none")
 	assert.Contains(t, body, `"off":true`, "no inventory is the page's unset state, not an error")
 	assert.Contains(t, body, `nohost={"found":false,`)

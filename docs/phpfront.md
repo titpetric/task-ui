@@ -40,6 +40,7 @@ A module directory holds:
 | Path                                     | What it is                                                       |
 |------------------------------------------|------------------------------------------------------------------|
 | `mod_<name>.php`                         | one per view: its `@route` lines, its class, its dispatch        |
+| `schema/`                                | the `*.up.sql` of each table this module's pages own             |
 | `storage/`                               | the SQL of a data model the module owns                          |
 | `templates/index.tpl`                    | the module's body; more templates beside it                      |
 | `templates_c/`                           | the same compiled, written by `tools/precompile.php` and shipped |
@@ -47,6 +48,10 @@ A module directory holds:
 | `api/`                                   | new JSON endpoints, `@route` annotated                           |
 | `docs/`                                  | what a module owning `storage/` adds to its generated README     |
 | `README.md`, `schema.puml`, `schema.svg` | generated; the last two only where `tables()` names one          |
+
+`schema/` is where a table's migration lives, with the pages that own it, and `//go:embed all:app` is what ships it. `phpfront.Migrations()` answers the module tree and `app.Migrations` merges it with the other three owners — `keystore/schema/`, `access/schema/`, `phpscript/schema/` — into one flat filesystem keyed by base name, which the instance applies at start. Flat is load-bearing: the `migrations` table records the name of a file relative to the root it was applied from, so a file that gains a directory is a file nobody ran, and the second `ALTER TABLE` of a column that is already there takes the database with it. [schema/schema.go](../schema/schema.go) carries the whole argument, and `atkins schema` is what regenerates the data model after adding one.
+
+Ownership is a decision and not a read set. `user` and `run` are each read by seven modules; what decides is which pages' writes the table exists for. The 12 tables no page queries sit with the Go package that owns them.
 
 Twelve modules in, none has a `docs/`. The generated `README.md` already lists the tables and the operations over them, and a module that reads the instance's rows through `code/Task` owns no data model to write up; the directory is for one that owns a model through `storage/` and needs prose the generator cannot write. An empty `docs/` restating its README is worse than no directory.
 

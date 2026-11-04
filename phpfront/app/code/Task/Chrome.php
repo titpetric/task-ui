@@ -126,6 +126,36 @@ class Chrome {
 	}
 
 	/**
+	 * line renders a line of markdown as what goes inside a <small> or a
+	 * cell: the host's renderer, with the paragraph it wraps a single block
+	 * in taken off again.
+	 *
+	 * The tag has to come off because a <p> is a block and the places that
+	 * draw one line of prose -- a workflow's description under its name --
+	 * are phrasing content, which would draw the margin of a paragraph in
+	 * the middle of a table cell.
+	 *
+	 * Text that is more than one block keeps its tags, because what it is
+	 * then is a document and not a line, and the renderer's own markup is
+	 * the only honest way to draw it.
+	 */
+	static function line($text) {
+		if (!is_string($text) || trim($text) === "") {
+			return "";
+		}
+
+		$html = trim(Host::markdown($text));
+
+		if (substr($html, 0, 3) !== "<p>" || substr($html, -4) !== "</p>") {
+			return $html;
+		}
+
+		$inner = substr($html, 3, strlen($html) - 7);
+
+		return strpos($inner, "<p>") === false ? $inner : $html;
+	}
+
+	/**
 	 * folders is the catalogue the reader sees: every folder the host
 	 * discovered, less the ones the reader's row does not list.
 	 *

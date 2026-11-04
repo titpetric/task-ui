@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"sync/atomic"
 	"time"
@@ -18,6 +19,10 @@ import (
 // TelemetrySetting is the name the options live under in the setting
 // table, beside the retention rules and the parent environment.
 const TelemetrySetting = "telemetry.options"
+
+// errTelemetryOff is what serveHTTP answers for an instance with no tracer:
+// the debug front end is oida's own and there is nothing behind the route.
+var errTelemetryOff = errors.New("telemetry is off")
 
 // Telemetry is the instance's tracer and the settings page behind it.
 //
@@ -172,14 +177,23 @@ func (t *Telemetry) Middleware(next http.Handler) http.Handler {
 }
 
 // ServeHTTP serves the debug front end, reading the pointer per request
-// for the same reason the middleware does.
+// for the same reason the middleware does. An instance with no tracer has
+// no front end, and says so as a page that is not there.
 func (t *Telemetry) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if err := t.serveHTTP(w, r); err != nil {
+		http.NotFound(w, r)
+	}
+}
+
+// serveHTTP is ServeHTTP with its one failure as a value, so a caller that is
+// not a server can ask whether the front end is there.
+func (t *Telemetry) serveHTTP(w http.ResponseWriter, r *http.Request) error {
 	tracer := t.Tracer()
 	if tracer == nil {
-		http.NotFound(w, r)
-		return
+		return errTelemetryOff
 	}
 	tracer.ServeHTTP(w, r)
+	return nil
 }
 
 // build makes a tracer from opts and puts it in place of the one before.

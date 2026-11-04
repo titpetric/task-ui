@@ -242,6 +242,24 @@ func TestFolder_Home(t *testing.T) {
 	assert.Contains(t, body, `title="task-ui lists .env but does not open it"`)
 }
 
+// The folder's menu schedules a run of it, for a project and a
+// workspace with schedule/edit.
+func TestFolderMenu_AddSchedule(t *testing.T) {
+	t.Parallel()
+
+	p := projectPage(t, &model.User{Name: "admin", Role: model.RoleAdmin}, nil)
+	head := pageHead(t, render(t, "folder", p))
+	assert.Contains(t, head, `href="/schedules?folder=apps"`)
+	assert.Contains(t, head, "<span>Add schedule</span>")
+
+	p.Folder = &folder.Folder{ID: "malta", Title: "Malta"}
+	p.FolderMenu = &view.FolderMenu{ID: "malta", Workspace: true}
+	assert.Contains(t, pageHead(t, render(t, "folder", p)), `href="/schedules?folder=malta"`)
+
+	signIn(p, &model.User{Name: "ops", Role: model.RoleRunner}, permission.Policy{"workspace/view": permission.Allow})
+	assert.NotContains(t, pageHead(t, render(t, "folder", p)), "/schedules", "scheduling takes schedule/edit")
+}
+
 // Pin names what the page is a folder of.
 func TestFolderMenu_Kind(t *testing.T) {
 	t.Parallel()

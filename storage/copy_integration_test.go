@@ -18,7 +18,7 @@ func TestCopy(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
 	dir := t.TempDir()
-	db, err := storage.OpenAndMigrate(ctx, filepath.Join(dir, "task-ui.db"))
+	db, err := storage.OpenAndMigrate(ctx, filepath.Join(dir, "task-ui.db"), migrations)
 	assert.NoError(t, err)
 	t.Cleanup(func() { db.Close() })
 	assert.NoError(t, storage.NewSecretStorage(db).Create(ctx, &model.Secret{Scope: "infra", Name: "TOKEN", Content: "x"}))

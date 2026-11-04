@@ -11,9 +11,9 @@ entity "refinement_comment" {
   + user : text
   + body : text
   + note_id : text
-  + created_at : timestamp
   + kind : text
   + collapsed_into : text
+  + created_at : timestamp
 }
 
 entity "refinement_correction" {

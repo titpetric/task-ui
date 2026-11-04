@@ -50,6 +50,18 @@ class Run {
 	 */
 	const COLUMNS = "*, started_at || '' AS started_text, finished_at || '' AS finished_text";
 
+	/**
+	 * CHART_COLUMNS is what a chart of a window reads and nothing else: when a
+	 * run started and ended, how it ended, and the three columns the
+	 * permission filter asks about.
+	 *
+	 * A chart counts the window and not the page, which is five thousand rows
+	 * of it: hydrating each one into a model for five numbers was 274ms of a
+	 * 2s /runs, and the columns it did not read crossed into the runtime
+	 * anyway. See charted.
+	 */
+	const CHART_COLUMNS = "id, folder, job, user_id, state, started_at || '' AS started_text, finished_at || '' AS finished_text";
+
 	var $db;
 
 	function __construct($db = null) {
@@ -99,41 +111,13 @@ class Run {
 	 * from being filled with rows the reader is about to be denied.
 	 */
 	function find($filter = array()) {
-		$job = self::pick($filter, "job");
 		$before = self::pick($filter, "before");
 		$after = self::pick($filter, "after");
-		$folders = isset($filter["folders"]) && is_array($filter["folders"]) ? $filter["folders"] : array();
 		$limit = isset($filter["limit"]) ? (int)$filter["limit"] : 15;
 		$where = array();
 		$args = array();
 
-		self::narrow($where, $args, "folder", self::pick($filter, "folder"));
-
-		// @host:* is every host job and not a job by that name.
-		if ($job === self::HOST_ALL) {
-			$where[] = "job LIKE ?";
-			$args[] = self::HOST_PREFIX . "%";
-		} else {
-			self::narrow($where, $args, "job", $job);
-		}
-
-		if ($job !== "") {
-			$where[] = "dir = ?";
-			$args[] = self::pick($filter, "dir");
-		}
-
-		self::narrow($where, $args, "state", self::pick($filter, "state"));
-		self::narrow($where, $args, "user_id", self::pick($filter, "user_id"));
-		self::narrow($where, $args, "user_name", self::pick($filter, "user"));
-		self::narrow($where, $args, "batch_id", self::pick($filter, "batch"));
-
-		if (count($folders) > 0) {
-			$where[] = "folder IN (" . Row::placeholders($folders) . ")";
-
-			foreach ($folders as $folder) {
-				$args[] = $folder;
-			}
-		}
+		self::narrowed($filter, $where, $args);
 
 		// A page read after a cursor reads up from it, oldest first, for the
 		// caller to reverse: the rows either side of a cursor are the newer
@@ -202,6 +186,81 @@ class Run {
 		}
 
 		return $out;
+	}
+
+	/**
+	 * narrowed is what a filter says about the table, as conditions and the
+	 * arguments under them, with the cursors left out: find reads a page of
+	 * the rows and charted reads the window, and the rows either one answers
+	 * are the same rows.
+	 */
+	static function narrowed($filter, &$where, &$args) {
+		$job = self::pick($filter, "job");
+
+		self::narrow($where, $args, "folder", self::pick($filter, "folder"));
+
+		// @host:* is every host job and not a job by that name.
+		if ($job === self::HOST_ALL) {
+			$where[] = "job LIKE ?";
+			$args[] = self::HOST_PREFIX . "%";
+		} else {
+			self::narrow($where, $args, "job", $job);
+		}
+
+		if ($job !== "") {
+			$where[] = "dir = ?";
+			$args[] = self::pick($filter, "dir");
+		}
+
+		self::narrow($where, $args, "state", self::pick($filter, "state"));
+		self::narrow($where, $args, "user_id", self::pick($filter, "user_id"));
+		self::narrow($where, $args, "user_name", self::pick($filter, "user"));
+		self::narrow($where, $args, "batch_id", self::pick($filter, "batch"));
+
+		$folders = isset($filter["folders"]) && is_array($filter["folders"]) ? $filter["folders"] : array();
+
+		if (count($folders) > 0) {
+			$where[] = "folder IN (" . Row::placeholders($folders) . ")";
+
+			foreach ($folders as $folder) {
+				$args[] = $folder;
+			}
+		}
+	}
+
+	/**
+	 * charted is the rows the activity charts count, newest first, as rows and
+	 * not as runs: the same filter find reads, with the cursors off, over the
+	 * columns of CHART_COLUMNS.
+	 *
+	 * A chart is the window and not the page, so the list is Activity::LIMIT
+	 * long where the filter names no limit of its own. Task\Seen::rows filters
+	 * it and Task\Activity::rows reads it; nothing else may, because the rows
+	 * carry seven columns and a page reads a run.
+	 */
+	function charted($filter) {
+		$where = array();
+		$args = array();
+
+		self::narrowed($filter, $where, $args);
+
+		$limit = isset($filter["limit"]) ? (int)$filter["limit"] : Activity::LIMIT;
+		$sql = "SELECT " . self::CHART_COLUMNS . " FROM run";
+
+		if (count($where) > 0) {
+			$sql .= " WHERE " . implode(" AND ", $where);
+		}
+
+		$sql .= " ORDER BY started_at DESC, id DESC";
+
+		if ($limit > 0) {
+			$sql .= " LIMIT ?";
+			$args[] = $limit;
+		}
+
+		$found = DB::all($this->db, $sql, $args);
+
+		return is_array($found) ? $found : array();
 	}
 
 	/** narrow adds a condition on a column for a value the filter named. */
@@ -313,11 +372,34 @@ class Run {
 			return false;
 		}
 
-		if ((self::isPrompt($run) || self::isNote($run)) && $run->getUserId() === $user->getId()) {
+		return self::allowed($user, $run->getFolder(), $run->getJob(), $run->getUserId(), $prompts, $notes);
+	}
+
+	/**
+	 * seenRow is seen of a row of Run::charted, for the five thousand rows of
+	 * a chart's window, which are read as rows and never hydrated.
+	 */
+	static function seenRow($user, $row, $prompts, $notes) {
+		if ($user === null || !is_array($row)) {
+			return false;
+		}
+
+		return self::allowed($user, Row::text($row, "folder"), Row::text($row, "job"), Row::text($row, "user_id"), $prompts, $notes);
+	}
+
+	/**
+	 * allowed is the rule itself, over the three columns it reads, so a run
+	 * and a row of one are answered by the same sentence.
+	 */
+	static function allowed($user, $folder, $job, $userID, $prompts, $notes) {
+		$prompt = self::isPromptJob($folder, $job);
+		$note = self::isNoteJob($folder, $job);
+
+		if (($prompt || $note) && $userID === $user->getId()) {
 			return true;
 		}
 
-		return User::sees($user, $run->getFolder()) && ($prompts || !self::isPrompt($run)) && ($notes || !self::isNote($run));
+		return User::sees($user, $folder) && ($prompts || !$prompt) && ($notes || !$note);
 	}
 
 	/** tone is the badge class of a state: ok, signal while running, bad for a run that broke. */
@@ -364,12 +446,22 @@ class Run {
 
 	/** isPrompt reports whether the run is a prompt's. */
 	static function isPrompt($run) {
-		return $run->getJob() === self::PROMPT_JOB || ($run->getFolder() === Route::INTERNAL && $run->getJob() === "claude-prompt");
+		return self::isPromptJob($run->getFolder(), $run->getJob());
 	}
 
 	/** isNote reports whether the run is the Notes agent's. */
 	static function isNote($run) {
-		return $run->getJob() === self::NOTE_JOB || ($run->getFolder() === Route::INTERNAL && $run->getJob() === "claude-note");
+		return self::isNoteJob($run->getFolder(), $run->getJob());
+	}
+
+	/** isPromptJob is isPrompt of the two columns it reads, which a row holds too. */
+	static function isPromptJob($folder, $job) {
+		return $job === self::PROMPT_JOB || ($folder === Route::INTERNAL && $job === "claude-prompt");
+	}
+
+	/** isNoteJob is isNote of the two columns it reads. */
+	static function isNoteJob($folder, $job) {
+		return $job === self::NOTE_JOB || ($folder === Route::INTERNAL && $job === "claude-note");
 	}
 
 	/** isClaude reports whether the run is Claude's own, which no prompt asks about. */
@@ -404,13 +496,22 @@ class Run {
 	 * model.Run.Elapsed is time.Since and takes no clock. See Clock::real.
 	 */
 	static function elapsed($run) {
-		$start = Clock::parse($run->getStartedAt());
+		return self::took(Clock::parse($run->getStartedAt()), Clock::parse($run->getFinishedAt()));
+	}
 
+	/**
+	 * took is elapsed of two stamps already read, in milliseconds: start is
+	 * null for a run that never started and end for one still going.
+	 *
+	 * Task\Activity::rows reads it, because a chart of the window has both
+	 * stamps in hand and parsing either a second time is a crossing into the
+	 * host for a number it holds.
+	 */
+	static function took($start, $end) {
 		if ($start === null) {
 			return 0;
 		}
 
-		$end = Clock::parse($run->getFinishedAt());
 		$until = $end === null ? Clock::real()->unixMilli() : $end->unixMilli();
 		$took = $until - $start->unixMilli();
 

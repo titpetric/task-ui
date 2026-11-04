@@ -11,15 +11,19 @@ import (
 	"github.com/titpetric/task-ui/config"
 	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/frontend/view"
-	"github.com/titpetric/task-ui/git"
 	"github.com/titpetric/task-ui/internal/assert"
-	"github.com/titpetric/task-ui/keystore"
 	"github.com/titpetric/task-ui/model"
 	"github.com/titpetric/task-ui/note"
 	"github.com/titpetric/task-ui/permission"
 )
 
 // admin is a page as an admin sees it, with one folder and one run.
+//
+// It is the page model the whole package renders over, so a test of what
+// one component draws sits in that component's file: the Jobs table in
+// job_group_test.go, the sidebar in sidebar_test.go, the head's menus in
+// head_test.go, the roles in role_members_test.go and a user's keys in
+// user_keys_test.go.
 func admin(t *testing.T) *view.Page {
 	t.Helper()
 	now := time.Now()
@@ -127,101 +131,6 @@ func TestView_RenderTree(t *testing.T) {
 	assert.NotContains(t, out, "<th>Summary</th>")
 	assert.NotContains(t, out, `data-label="Action"`)
 	assert.Contains(t, out, `<span class="badge exec"`)
-}
-
-// The Jobs table has a row per job of its groups, under a heading row
-// per group: the job's ID linked to its page, Run, with the field for
-// args, and the confirm of a skill job, and a [...] of Run and
-// summarize, the last run, History, and Run force for a job with hours.
-// A job the user may not run has History; a running one Attach and Kill.
-func TestView_RenderJobTable(t *testing.T) {
-	t.Parallel()
-
-	v := shared(t)
-	render := func(p *view.Page) string {
-		var buf bytes.Buffer
-		assert.NoError(t, v.Render(&buf, "folder", p))
-		return buf.String()
-	}
-	table := func(p *view.Page) {
-		f := p.Folder
-		f.Hours = "Mon-Fri 9-17"
-		build := &folder.Job{Folder: "infra", ID: "build", Command: []string{"make", "build"}}
-		build.Name, build.Description = "build", "Build the images"
-		custom := &folder.Job{Folder: "infra", ID: "@compose:custom", Command: []string{"atkins", "compose:custom"}}
-		custom.Name, custom.TakesArgs = "custom", true
-		up := &folder.Job{Folder: "infra", ID: "@compose:up", Command: []string{"atkins", "compose:up"}}
-		up.Name = "up"
-		script := &folder.Job{Folder: "infra", ID: "./deploy.sh", Kind: "file", Source: "deploy.sh", Command: []string{"./deploy.sh"}}
-		script.Name = "deploy.sh"
-		compose := &folder.Skill{ID: "compose", Project: "infra", Jobs: []*folder.Job{custom, up}}
-		p.Actions = &view.Actions{Place: f, Self: "infra", Shell: f.ShellJob(), Skills: []*folder.Skill{compose}}
-		p.JobGroups = []view.JobGroup{
-			{Kind: "make", Note: "Makefile · make", Source: "Makefile", Folder: f, Jobs: []*folder.Job{build}, Targets: true},
-			{Kind: "files", Folder: f, Jobs: []*folder.Job{script}},
-			{Kind: "@compose", Folder: f, Skill: compose, Jobs: compose.Jobs},
-			{Kind: "built-in", Folder: f, Jobs: []*folder.Job{f.ShellJob()}},
-			{Kind: "make", Source: "Makefile", Dir: "tools", Folder: &folder.Folder{ID: "infra", Rel: "tools"}, Empty: "No targets in Makefile.", Targets: true},
-		}
-	}
-
-	p := admin(t)
-	p.Summaries = true
-	table(p)
-	p.Last = map[string]view.Run{
-		"infra/build":       {Run: model.Run{ID: "r1", Folder: "infra", Job: "build", State: model.StateOK}},
-		"infra/./deploy.sh": {Run: model.Run{ID: "r3", Folder: "infra", Job: "./deploy.sh", State: model.StateFailed}},
-	}
-	p.JobSummaries = map[string]*view.SummaryLink{"infra/build": view.NewSummaryLink("r1", "The build passed.")}
-	out := render(p)
-	// The dashboard's control component as named rows: a source's
-	// targets under its file, linked to where they run, then the files,
-	// the skill and the built-ins, each with its [...]; no columns, no
-	// other.
-	assert.Contains(t, out, `<table class="table control col-hover">`)
-	assert.NotContains(t, out, `<th class="col">`)
-	assert.Contains(t, out, `<a class="badge" href="/f/internal/infra">Makefile</a>`)
-	assert.Contains(t, out, `<a class="badge" href="/f/internal/infra/tools">tools/Makefile</a>`)
-	assert.Contains(t, out, `<span class="faint">No targets in Makefile.</span>`)
-	assert.Equal(t, 5, strings.Count(out, `<tr class="named" data-span>`))
-	for _, kind := range []string{"files", "@compose", "built-in"} {
-		assert.Contains(t, out, `<span class="badge">`+kind+`</span>`, kind)
-	}
-	for _, id := range []string{"build", "./deploy.sh", "@compose:custom", "@compose:up", "@shell"} {
-		assert.Contains(t, out, `data-job="`+id+`"`, id)
-	}
-	assert.Contains(t, out, `<button type="button" class="cc named ok" data-run data-folder="infra" data-job="build" data-title="infra / build" title="Run infra / build: Build the images">`)
-	assert.Contains(t, out, `class="cc named bad" data-run data-folder="infra" data-job="./deploy.sh"`)
-	assert.Contains(t, out, `class="cc named never" data-run data-folder="infra" data-job="@compose:custom"`)
-	assert.Contains(t, out, `data-path="deploy.sh"`)
-	assert.Contains(t, out, `data-args="atkins compose:custom --"`)
-	assert.Contains(t, out, `data-confirm="Run compose up for infra?`)
-	assert.Contains(t, out, `<span>Run and summarize build</span>`)
-	assert.Contains(t, out, `<span>Run and summarize @compose:custom...</span>`)
-	assert.Contains(t, out, `<span>Run force build</span>`)
-	assert.Contains(t, out, `data-force="" title="Run out of hours, with a reason" data-run="" data-folder="infra" data-dir="" data-job="build"`)
-	assert.Equal(t, 5, strings.Count(out, "data-force="), "Run force on every job, the built-ins too, in a workspace with hours")
-	assert.Contains(t, out, `<span>View the last run of build</span>`)
-	assert.Contains(t, out, `<span>History of @shell</span>`)
-	assert.Contains(t, out, `href="/runs/r1/report" title="The build passed."`)
-	assert.Equal(t, "/runs/r1/report", p.JobSummary("infra/build").Href)
-	assert.Nil(t, p.JobSummary("infra/other"))
-
-	viewer := admin(t)
-	table(viewer)
-	signIn(viewer, &model.User{Name: "guest", Role: model.RoleViewer}, nil)
-	out = render(viewer)
-	assert.NotContains(t, out, "data-run ")
-	assert.Contains(t, out, `<a class="cc named idle never" href="/f/internal/infra/build" title="infra / build: Build the images: no permission to run it">`)
-
-	running := admin(t)
-	table(running)
-	now := time.Now()
-	run := view.Run{Run: model.Run{ID: "r2", Folder: "infra", Job: "build", State: model.StateRunning, StartedAt: &now}}
-	running.Running = map[string]view.Run{"infra/build": run}
-	out = render(running)
-	assert.Contains(t, out, `<a class="cc named running" href="/runs/r2" data-attach="r2" title="Attach to infra / build, running">`)
-	assert.Contains(t, out, `data-kill="r2"`)
 }
 
 // A job's runs have Summarize for a user who may, on a run that ended
@@ -410,40 +319,6 @@ func TestWorkspaceEdit_Page(t *testing.T) {
 	assert.Contains(t, buf.String(), `Delete the default workspace internal with its keys, its home? The root&#39;s built-in jobs keep running; Add project then needs a workspace.`)
 }
 
-// A workspace's settings page shows its home: an empty one with Clone,
-// a checkout with its repository, Replace and Remove.
-func TestWorkspaceEdit_Home(t *testing.T) {
-	t.Parallel()
-	v := shared(t)
-	p := admin(t)
-	p.Workspace = &model.Workspace{Folder: "malta", Title: "Malta"}
-	p.Workspaces = map[string]int{"malta": 1}
-	p.Form = map[string]string{"title": "Malta"}
-	p.Home = &view.WorkspaceHome{Folder: "malta/home", Dir: "/data/malta/home"}
-	var buf bytes.Buffer
-	assert.NoError(t, v.Render(&buf, "workspace_edit", p))
-	body := buf.String()
-	assert.Contains(t, body, `<h3>Home repository <small>malta/home/, the HOME of the workspace&#39;s runs</small></h3>`)
-	assert.Contains(t, body, `<p class="empty-line">The home is an empty directory.</p>`)
-	assert.Contains(t, body, `data-dialog-open="home-replace-dialog">`)
-	assert.Contains(t, body, `>Clone</button>`)
-	assert.NotContains(t, body, `>Remove</button>`)
-	assert.Contains(t, body, `data-api="/api/workspaces/malta/home" data-method="PUT"`)
-
-	p.Home.URL, p.Home.Branch = "git@example.com:malta/workspace.git", "main"
-	p.Home.Checkout = &git.Info{Remote: p.Home.URL, Branch: "main", Commit: "abc1234", Subject: "Skills"}
-	buf.Reset()
-	assert.NoError(t, v.Render(&buf, "workspace_edit", p))
-	body = buf.String()
-	assert.NotContains(t, body, `The home is an empty directory.`)
-	assert.Contains(t, body, `git@example.com:malta/workspace.git`)
-	assert.Contains(t, body, `href="/f/malta/home"`)
-	assert.Contains(t, body, `abc1234`)
-	assert.Contains(t, body, `>Replace</button>`)
-	assert.Contains(t, body, `>Remove</button>`)
-	assert.Contains(t, body, `data-api="/api/workspaces/malta/home" data-method="DELETE"`)
-}
-
 // The Workspaces page opens Import in a dialog from its head.
 func TestWorkspaces_ImportDialog(t *testing.T) {
 	t.Parallel()
@@ -467,69 +342,6 @@ func TestView_RenderEnvironment(t *testing.T) {
 	assert.NotContains(t, buf.String(), "Environment")
 	assert.NotContains(t, buf.String(), "env file")
 	assert.NotContains(t, buf.String(), "/env/")
-}
-
-// sideMenu returns the top nav of the sidebar.
-func sideMenu(t *testing.T, body string) string {
-	t.Helper()
-	at := strings.Index(body, `<nav class="menu">`)
-	assert.True(t, at >= 0, "the sidebar menu")
-	rest := body[at:]
-	return rest[:strings.Index(rest, "</nav>")]
-}
-
-// Settings is in the sidebar, after Notes, for a user who may open any
-// settings page; the link is active on every page under Settings.
-func TestSidebar_Settings(t *testing.T) {
-	t.Parallel()
-
-	p := admin(t)
-	menu := sideMenu(t, render(t, "home", p))
-	notes, settings := strings.Index(menu, `href="/notes"`), strings.Index(menu, `<a href="/settings" class="">`)
-	assert.True(t, notes > 0 && settings > notes, "Settings after Notes")
-
-	p.Path = "/settings/keys"
-	assert.Contains(t, sideMenu(t, render(t, "home", p)), `<a href="/settings" class="active">`)
-
-	signIn(p, &model.User{Name: "guest", Role: model.RoleViewer}, nil)
-	assert.NotContains(t, sideMenu(t, render(t, "home", p)), `href="/settings"`, "nothing to open, no entry")
-
-	signIn(p, &model.User{Name: "ops", Role: model.RoleRunner}, permission.Policy{"secret/view": permission.Allow})
-	assert.Contains(t, sideMenu(t, render(t, "home", p)), `href="/settings"`)
-}
-
-// With no folder the sidebar says so and links the form that adds a
-// repository, for a user who may; others read where to add one.
-func TestSidebar_EmptyLinksAddProject(t *testing.T) {
-	t.Parallel()
-
-	p := admin(t)
-	p.SideFolders, p.Folders = nil, nil
-	body := render(t, "home", p)
-	assert.Contains(t, body, `No folders yet. <a href="/settings/projects/new">Add a git repository</a>, or put a folder with jobs under the root.`)
-
-	signIn(p, &model.User{Name: "guest", Role: model.RoleViewer}, nil)
-	body = render(t, "home", p)
-	assert.Contains(t, body, `No folders yet. Add a git repository in Settings, or put a folder with jobs under the root.`)
-	assert.NotContains(t, body, `href="/settings/projects/new"`)
-}
-
-// The dashboard's head adds anything the user may, behind one menu; a
-// user who may add nothing sees no menu.
-func TestHome_AddMenu(t *testing.T) {
-	t.Parallel()
-
-	p := admin(t)
-	head := pageHead(t, render(t, "home", p))
-	for _, label := range []string{"Add workspace", "Add project", "Generate key", "Upload key", "Add variable", "Add workflow"} {
-		assert.Contains(t, head, "<span>"+label+"</span>")
-	}
-	assert.NotContains(t, head, "Add user", "the server writes no password file here")
-	p.CanAddUsers = true
-	assert.Contains(t, pageHead(t, render(t, "home", p)), `href="/settings/users/new"`)
-
-	signIn(p, &model.User{Name: "guest", Role: model.RoleViewer}, nil)
-	assert.NotContains(t, pageHead(t, render(t, "home", p)), "more-menu")
 }
 
 // The keyboard's first stop is a link past the sidebar to the content,
@@ -559,153 +371,6 @@ func TestWorkspaceNew_LandsOnTheWorkspace(t *testing.T) {
 
 	body := render(t, "workspace_new", admin(t))
 	assert.Contains(t, body, `data-api="/api/workspaces" data-method="POST" data-next="/settings/workspaces/{folder}?notice=Workspace+added"`)
-}
-
-// The folder's menu schedules a run of it, for a project and a
-// workspace with schedule/edit.
-func TestFolderMenu_AddSchedule(t *testing.T) {
-	t.Parallel()
-
-	p := projectPage(t, &model.User{Name: "admin", Role: model.RoleAdmin}, nil)
-	head := pageHead(t, render(t, "folder", p))
-	assert.Contains(t, head, `href="/schedules?folder=apps"`)
-	assert.Contains(t, head, "<span>Add schedule</span>")
-
-	p.Folder = &folder.Folder{ID: "malta", Title: "Malta"}
-	p.FolderMenu = &view.FolderMenu{ID: "malta", Workspace: true}
-	assert.Contains(t, pageHead(t, render(t, "folder", p)), `href="/schedules?folder=malta"`)
-
-	signIn(p, &model.User{Name: "ops", Role: model.RoleRunner}, permission.Policy{"workspace/view": permission.Allow})
-	assert.NotContains(t, pageHead(t, render(t, "folder", p)), "/schedules", "scheduling takes schedule/edit")
-}
-
-// roleBlock returns the block of a role on the permissions page.
-func roleBlock(t *testing.T, body, role string) string {
-	t.Helper()
-	at := strings.Index(body, `id="role-`+role+`"`)
-	assert.True(t, at >= 0, "a block for "+role)
-	rest := body[at:]
-	return rest[:strings.Index(rest, "</section>")]
-}
-
-// Each role's block lists the users who act with it and the instance SSH
-// keys linked to it, so a role leads to both.
-func TestPermissions_RoleMembers(t *testing.T) {
-	t.Parallel()
-
-	p := admin(t)
-	p.CanAddUsers = true
-	p.Matrices = []view.Matrix{{ID: "role-runner", Title: "runner"}, {ID: "role-viewer", Title: "viewer"}}
-	p.RoleMembers = map[string]view.RoleMembers{
-		"runner": {Users: []string{"ann", "zed"}, Keys: []string{"deploy_ed25519"}},
-	}
-	body := render(t, "permissions", p)
-
-	runner := roleBlock(t, body, "runner")
-	assert.Contains(t, runner, `<a class="key-chip" href="/users/ann">ann</a>`)
-	assert.Contains(t, runner, `<a class="key-chip" href="/users/zed">zed</a>`)
-	assert.Contains(t, runner, `<a class="key-chip" href="/settings/keys/deploy_ed25519">deploy_ed25519</a>`)
-	assert.Contains(t, runner, `href="/settings/users/new">Add user</a>`)
-	assert.Contains(t, runner, `href="/settings/keys/generate">Generate key</a>`)
-
-	viewer := roleBlock(t, body, "viewer")
-	assert.Equal(t, 2, strings.Count(viewer, `<span class="faint">none</span>`), "no user and no key")
-}
-
-// The keys and the add links of a role follow the user's rules.
-func TestPermissions_RoleMembersRules(t *testing.T) {
-	t.Parallel()
-
-	p := admin(t)
-	p.Matrices = []view.Matrix{{ID: "role-runner", Title: "runner"}}
-	p.RoleMembers = map[string]view.RoleMembers{"runner": {Users: []string{"ann"}, Keys: []string{"deploy_ed25519"}}}
-	signIn(p, &model.User{Name: "ops", Role: model.RoleRunner}, permission.Policy{"user/view": permission.Allow})
-	runner := roleBlock(t, render(t, "permissions", p), "runner")
-	assert.Contains(t, runner, `href="/users/ann"`)
-	assert.NotContains(t, runner, "deploy_ed25519", "the keys take key/view")
-	assert.NotContains(t, runner, "Add user", "adding a user takes user/edit")
-	assert.NotContains(t, runner, "Generate key")
-
-	signIn(p, &model.User{Name: "ops", Role: model.RoleRunner}, permission.Policy{"user/view": permission.Allow, "key/view": permission.Allow})
-	runner = roleBlock(t, render(t, "permissions", p), "runner")
-	assert.Contains(t, runner, `href="/settings/keys/deploy_ed25519"`)
-	assert.NotContains(t, runner, "Generate key", "adding a key takes key/edit")
-}
-
-// The role on the users list links to what the role may do.
-func TestUsers_RoleLinksToPermissions(t *testing.T) {
-	t.Parallel()
-
-	p := admin(t)
-	p.Users = []model.User{{ID: "u1", Name: "ops", Role: model.RoleRunner}, {ID: "u2", Name: "root", Role: model.RoleViewer, Admin: true}}
-	body := render(t, "users", p)
-	assert.Contains(t, body, `<a class="badge" href="/settings/permissions#role-runner" title="What runner may do">runner</a>`)
-	assert.Contains(t, body, `<a class="badge signal" href="/settings/permissions#role-admin" title="What admin may do">admin</a>`)
-}
-
-// keysBlock returns the Keys block of a rendered page, up to the next block.
-func keysBlock(t *testing.T, body string) string {
-	t.Helper()
-	at := strings.Index(body, `<section class="block" id="keys">`)
-	assert.True(t, at >= 0, "a Keys block")
-	rest := body[at:]
-	return rest[:strings.Index(rest, "</section>")]
-}
-
-// The user's Keys block, on the profile and on the edit page, adds a key
-// linked to them: Generate key and Upload key, for key/edit.
-func TestUserKeys_AddButtons(t *testing.T) {
-	t.Parallel()
-
-	for _, page := range []string{"profile", "user_edit"} {
-		p := admin(t)
-		p.Profile.Own = true
-		block := keysBlock(t, render(t, page, p))
-		assert.Contains(t, block, `href="/settings/keys/generate?for=ops"`, page)
-		assert.Contains(t, block, `href="/settings/keys/upload?for=ops"`, page)
-		assert.Contains(t, block, "No key linked to ops", page)
-
-		signIn(p, &model.User{Name: "ops", Role: model.RoleRunner}, permission.Policy{"key/view": permission.Allow})
-		block = keysBlock(t, render(t, page, p))
-		assert.NotContains(t, block, "/settings/keys/generate", page+": key/view alone adds nothing")
-		assert.NotContains(t, block, "/settings/keys/upload", page)
-	}
-}
-
-// The profile lists the keys linked to the user, with the row every key
-// page shares, for their own page or with key/view.
-func TestUserKeys_ProfileRows(t *testing.T) {
-	t.Parallel()
-
-	key := keystore.Key{Name: "deploy_ed25519", Purpose: keystore.PurposeSSH, Algo: "ed25519", Fingerprint: "SHA256:abc",
-		PublicKey: "ssh-ed25519 AAAAdeploy task-ui", Users: []string{"ops"}}
-	p := admin(t)
-	p.Keys = []keystore.Key{key}
-	p.Profile.Own = true
-	body := render(t, "profile", p)
-	assert.Equal(t, keyRow(t, render(t, "keys", p), key.Name), keyRow(t, body, key.Name))
-	assert.Contains(t, body, `id="keys"`)
-
-	signIn(p, &model.User{Name: "guest", Role: model.RoleViewer}, nil)
-	p.Profile.Own = false
-	assert.NotContains(t, render(t, "profile", p), `id="keys"`, "another user's keys take key/view")
-}
-
-// Your SSH keys, in the avatar menu, adds a key for yourself when you
-// may; otherwise it says who can.
-func TestMyKeys_AddButtons(t *testing.T) {
-	t.Parallel()
-
-	p := admin(t)
-	body := render(t, "my_keys", p)
-	assert.Contains(t, body, `href="/settings/keys/generate?for=admin"`)
-	assert.Contains(t, body, `href="/settings/keys/upload?for=admin"`)
-	assert.Contains(t, body, "Generate or upload one for yourself.")
-
-	signIn(p, &model.User{Name: "guest", Role: model.RoleViewer}, nil)
-	body = render(t, "my_keys", p)
-	assert.NotContains(t, body, "/settings/keys/generate")
-	assert.Contains(t, body, "Someone with Allow Edits on Instance Keys can grant one")
 }
 
 // workspacesRow returns the row of the workspace in the rendered list.

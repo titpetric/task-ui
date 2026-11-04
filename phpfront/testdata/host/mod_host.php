@@ -27,6 +27,20 @@ echo "space=", json_encode(Task\Host::space()), "\n";
 // A directory nothing measured is left out of the answer, so a page reads a
 // size for the projects that have one and says nothing about the rest.
 echo "spaces=", json_encode(Task\Host::spaces(array("/root/src/infra", "/root/src/gone"))), "\n";
+// The directory of a folder, one at a time for the pages that ask about one
+// and keyed for a tree that asks about every row it draws. An ID the layout
+// places nowhere is left out of the keyed answer, as a size is.
+// The answer is read by key and never walked, so its order is nobody's, which
+// is why this prints the lookups and not the array.
+echo "folderDir=", Task\Host::folderDir("infra", array("malta")), "\n";
+
+$dirs = Task\Host::folderDirs(array("infra", "deploy", ""), array("malta"));
+
+function held($dirs, $id) {
+	return isset($dirs[$id]) ? $dirs[$id] : "-";
+}
+
+echo "folderDirs=", count($dirs), " ", held($dirs, "infra"), " ", held($dirs, "deploy"), " ", held($dirs, ""), "\n";
 // A service's settings cross as the form draws them: what is set, never what
 // it is set to.
 echo "integrations=", json_encode(Task\Host::integrations()), "\n";

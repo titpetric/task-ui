@@ -49,6 +49,30 @@ class Seen {
 		return $out;
 	}
 
+	/**
+	 * rows is of() of the rows themselves, for a page that reads a window and
+	 * hydrates none of it.
+	 *
+	 * The permission rule is one sentence in Task\Run::allowed and both paths
+	 * ask it, so the filter of a chart and the filter of a list cannot drift.
+	 * The rows carry the three columns it reads and the ID the answer is kept
+	 * under.
+	 */
+	function rows($found) {
+		$out = array();
+
+		foreach ($found as $row) {
+			$id = Row::text($row, "id");
+			$this->asked[$id] = Run::seenRow($this->user, $row, $this->prompts, $this->notes);
+
+			if ($this->asked[$id]) {
+				$out[] = $row;
+			}
+		}
+
+		return $out;
+	}
+
 	/** run reports whether the reader sees the run of an ID. An empty ID is none. */
 	function run($id) {
 		if ($id === "") {

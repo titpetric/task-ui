@@ -188,6 +188,38 @@ class Activity {
 	}
 
 	/**
+	 * rows is of() of the rows themselves, for a page that reads a window with
+	 * Task\Run::charted and hydrates none of it.
+	 *
+	 * The same five values, from the two text columns and the state, with one
+	 * parse of each stamp: of() reads a model, whose stamps were parsed into it
+	 * and written back out as text, so the window was parsed three times over
+	 * -- 274ms of hydration and 57ms of re-parsing on a 2s /runs, for five
+	 * numbers. A row with no stamp is on no chart, as there.
+	 */
+	static function rows($found) {
+		$out = array();
+
+		foreach ($found as $row) {
+			$at = Clock::parse(Row::stamp($row, "started_text"));
+
+			if ($at === null) {
+				continue;
+			}
+
+			$out[] = array(
+				"at" => $at,
+				"unix" => $at->unix(),
+				"nano" => $at->unixnano(),
+				"elapsed" => Run::took($at, Clock::parse(Row::stamp($row, "finished_text"))),
+				"state" => Row::text($row, "state"),
+			);
+		}
+
+		return $out;
+	}
+
+	/**
 	 * tally counts the runs into every chart they fall in, and answers the
 	 * finished ones oldest first, which the median and the duration line
 	 * read.

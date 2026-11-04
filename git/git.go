@@ -131,6 +131,13 @@ func (g *Git) LastCommit(dir string) time.Time {
 	return when
 }
 
+// Commit returns the time of the last commit in dir, through the cache
+// both front ends share; zero for a directory in no checkout, or one
+// whose checkout has no commit.
+func (g *Git) Commit(dir string) time.Time {
+	return commits.read(dir, g.LastCommit)
+}
+
 // ValidURL reports whether url is something git clone accepts from a
 // form: an https, ssh, git or file URL, or the scp-like user@host:path.
 func (g *Git) ValidURL(url string) bool {

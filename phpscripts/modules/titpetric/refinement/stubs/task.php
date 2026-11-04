@@ -20,10 +20,6 @@ class Task {
 	static function register($module) {
 	}
 
-	/** Applies a directory of *.up.sql into task-ui's database. */
-	static function migrate($dir) {
-	}
-
 	/**
 	 * Starts a Claude run over a comment and an action file, returning its
 	 * id. The folder is where in the artifact tree the run works, and the

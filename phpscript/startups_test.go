@@ -15,7 +15,7 @@ func TestStartups(t *testing.T) {
 	t.Parallel()
 	root := t.TempDir()
 	write(t, filepath.Join(root, phpscript.ModInfo), startup)
-	write(t, filepath.Join(root, "migrate.php"), "<?php\n// @startup\nTask::migrate(\"schema/\");\n")
+	write(t, filepath.Join(root, "early.php"), "<?php\n// @startup\n")
 	write(t, filepath.Join(root, "seed.php"), "<?php\n// @startup\n")
 	write(t, filepath.Join(root, phpscript.Index), "<?php echo 'the page';")
 	write(t, filepath.Join(root, "lib", "helpers.php"), "<?php\n// no annotation\n")
@@ -25,7 +25,7 @@ func TestStartups(t *testing.T) {
 	files, err := phpscript.Startups(root)
 	assert.NoError(t, err)
 	assert.Equal(t, []string{
-		filepath.Join(root, "migrate.php"),
+		filepath.Join(root, "early.php"),
 		filepath.Join(root, "seed.php"),
 	}, files, "by path, without modinfo.php, and never out of a vendor tree")
 

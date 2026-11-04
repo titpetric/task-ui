@@ -25,6 +25,9 @@ type Link struct {
 	// Summary says the step asks Claude for the summary of the steps
 	// before it.
 	Summary bool
+	// Check says the step reads the step before it and sends the steps
+	// round again while it finds a marker there.
+	Check bool
 	// Disabled is a step the workflow's runs skip.
 	Disabled bool
 	// Sub is the chain of the run the step made of a workflow, when the

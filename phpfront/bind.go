@@ -118,11 +118,25 @@ func Bind(rt *runner.Runtime, opts Options, static *assets.Tree) {
 	// The directory a folder ID names, which is the catalogue's for a folder
 	// it holds and the layout's for a project it does not: what dirty and
 	// commit are asked about.
-	rt.RegisterFunc(HostClass+"::folderDir", func(ctx context.Context, id string, workspaces *model.Array) (string, error) {
+	rt.RegisterFunc(HostClass+"::folderDir", func(ctx context.Context, id string, workspaces any) (string, error) {
 		if opts.Host == nil {
 			return "", nil
 		}
 		return opts.Host.FolderDir(ctx, id, names(workspaces)), nil
+	})
+
+	// The same, for every row of a tree at once: the chrome draws the pins
+	// and every workspace's projects, and asking per row handed the whole
+	// workspace list across the boundary again each time.
+	//
+	// A list parameter is any and not *model.Array throughout, because the
+	// caller here asks with array_keys, which answers a Go slice and not a
+	// script array: see names.
+	rt.RegisterFunc(HostClass+"::folderDirs", func(ctx context.Context, ids, workspaces any) (*model.Array, error) {
+		if opts.Host == nil {
+			return model.NewArray(), nil
+		}
+		return dirs(opts.Host.FolderDirs(ctx, names(ids), names(workspaces))), nil
 	})
 
 	// Whether a directory inside a folder is there, which is what a pin of a
@@ -224,17 +238,13 @@ func Bind(rt *runner.Runtime, opts Options, static *assets.Tree) {
 	})
 
 	// A write that does not publish leaves every open page stale. The payload
-	// is declared as the runtime's own array: coerceArg maps no PHP array onto
-	// a Go map, so a map parameter refuses every call.
-	rt.RegisterFunc(HostClass+"::publish", func(ctx context.Context, topic string, payload *model.Array) (bool, error) {
+	// is read as any and not as a Go map, because coerceArg maps no PHP array
+	// onto one, and not as *model.Array either: see names.
+	rt.RegisterFunc(HostClass+"::publish", func(ctx context.Context, topic string, payload any) (bool, error) {
 		if opts.Host == nil {
 			return false, nil
 		}
-		fields := map[string]any{}
-		if payload != nil {
-			fields = payload.Map()
-		}
-		if err := opts.Host.Publish(ctx, topic, fields); err != nil {
+		if err := opts.Host.Publish(ctx, topic, fields(payload)); err != nil {
 			return false, err
 		}
 		return true, nil
@@ -282,7 +292,7 @@ func Bind(rt *runner.Runtime, opts Options, static *assets.Tree) {
 	// A note's text, which is the same renderer with a line break kept and
 	// @name marked. A name in link becomes a link under prefix, and every
 	// other mention is marked and not linked.
-	rt.RegisterFunc(HostClass+"::message", func(src, prefix string, link *model.Array) (string, error) {
+	rt.RegisterFunc(HostClass+"::message", func(src, prefix string, link any) (string, error) {
 		return Message(src, prefix, names(link)), nil
 	})
 
@@ -308,7 +318,7 @@ func Bind(rt *runner.Runtime, opts Options, static *assets.Tree) {
 		}
 		return space(opts.Host.Space(ctx)), nil
 	})
-	rt.RegisterFunc(HostClass+"::spaces", func(ctx context.Context, dirs *model.Array) (*model.Array, error) {
+	rt.RegisterFunc(HostClass+"::spaces", func(ctx context.Context, dirs any) (*model.Array, error) {
 		if opts.Host == nil {
 			return phpList(), nil
 		}
@@ -354,7 +364,7 @@ func Bind(rt *runner.Runtime, opts Options, static *assets.Tree) {
 		}
 		return place(opts.Host.Place(ctx, folder, rel)), nil
 	})
-	rt.RegisterFunc(HostClass+"::groups", func(ctx context.Context, folder, rel string, seen *model.Array, shell, claude bool) (*model.Array, error) {
+	rt.RegisterFunc(HostClass+"::groups", func(ctx context.Context, folder, rel string, seen any, shell, claude bool) (*model.Array, error) {
 		if opts.Host == nil {
 			return phpList(), nil
 		}
@@ -364,13 +374,13 @@ func Bind(rt *runner.Runtime, opts Options, static *assets.Tree) {
 	// A directory of a folder as the Files panel lists it, and when a
 	// directory last changed, for a folder the listing above it does not
 	// hold. The folders sit outside the directory the PHP may open.
-	rt.RegisterFunc(HostClass+"::listing", func(ctx context.Context, folder, rel string, seen *model.Array) (*model.Array, error) {
+	rt.RegisterFunc(HostClass+"::listing", func(ctx context.Context, folder, rel string, seen any) (*model.Array, error) {
 		if opts.Host == nil {
 			return phpList(), nil
 		}
 		return entries(opts.Host.Listing(ctx, folder, rel, names(seen))), nil
 	})
-	rt.RegisterFunc(HostClass+"::rootTree", func(ctx context.Context, named bool, seen *model.Array) (*model.Array, error) {
+	rt.RegisterFunc(HostClass+"::rootTree", func(ctx context.Context, named bool, seen any) (*model.Array, error) {
 		if opts.Host == nil {
 			return phpList(), nil
 		}
@@ -469,7 +479,7 @@ func Bind(rt *runner.Runtime, opts Options, static *assets.Tree) {
 		}
 		return plugins(opts.Host.Modules(ctx)), nil
 	})
-	rt.RegisterFunc(HostClass+"::entries", func(ctx context.Context, workspaces *model.Array) (*model.Array, error) {
+	rt.RegisterFunc(HostClass+"::entries", func(ctx context.Context, workspaces any) (*model.Array, error) {
 		if opts.Host == nil {
 			return phpList(), nil
 		}

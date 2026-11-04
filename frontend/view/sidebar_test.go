@@ -9,6 +9,7 @@ import (
 	"github.com/titpetric/task-ui/frontend/view"
 	"github.com/titpetric/task-ui/internal/assert"
 	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/permission"
 )
 
 // With no pins the sidebar lists the folders seen and every directory
@@ -126,4 +127,49 @@ func jobs(id string, names ...string) *folder.Folder {
 		f.Jobs = append(f.Jobs, job)
 	}
 	return f
+}
+
+// sideMenu returns the top nav of the sidebar.
+func sideMenu(t *testing.T, body string) string {
+	t.Helper()
+	at := strings.Index(body, `<nav class="menu">`)
+	assert.True(t, at >= 0, "the sidebar menu")
+	rest := body[at:]
+	return rest[:strings.Index(rest, "</nav>")]
+}
+
+// Settings is in the sidebar, after Notes, for a user who may open any
+// settings page; the link is active on every page under Settings.
+func TestSidebar_Settings(t *testing.T) {
+	t.Parallel()
+
+	p := admin(t)
+	menu := sideMenu(t, render(t, "home", p))
+	notes, settings := strings.Index(menu, `href="/notes"`), strings.Index(menu, `<a href="/settings" class="">`)
+	assert.True(t, notes > 0 && settings > notes, "Settings after Notes")
+
+	p.Path = "/settings/keys"
+	assert.Contains(t, sideMenu(t, render(t, "home", p)), `<a href="/settings" class="active">`)
+
+	signIn(p, &model.User{Name: "guest", Role: model.RoleViewer}, nil)
+	assert.NotContains(t, sideMenu(t, render(t, "home", p)), `href="/settings"`, "nothing to open, no entry")
+
+	signIn(p, &model.User{Name: "ops", Role: model.RoleRunner}, permission.Policy{"secret/view": permission.Allow})
+	assert.Contains(t, sideMenu(t, render(t, "home", p)), `href="/settings"`)
+}
+
+// With no folder the sidebar says so and links the form that adds a
+// repository, for a user who may; others read where to add one.
+func TestSidebar_EmptyLinksAddProject(t *testing.T) {
+	t.Parallel()
+
+	p := admin(t)
+	p.SideFolders, p.Folders = nil, nil
+	body := render(t, "home", p)
+	assert.Contains(t, body, `No folders yet. <a href="/settings/projects/new">Add a git repository</a>, or put a folder with jobs under the root.`)
+
+	signIn(p, &model.User{Name: "guest", Role: model.RoleViewer}, nil)
+	body = render(t, "home", p)
+	assert.Contains(t, body, `No folders yet. Add a git repository in Settings, or put a folder with jobs under the root.`)
+	assert.NotContains(t, body, `href="/settings/projects/new"`)
 }

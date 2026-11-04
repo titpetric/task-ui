@@ -28,6 +28,7 @@ Input scope: `data_editor`, as `Task\Editor::data()` builds it. It also sets `da
 | `blankScript`  | map    | the blank script card                                    |
 | `blankPrompt`  | map    | the blank prompt card                                    |
 | `blankSummary` | map    | the blank summary card                                   |
+| `blankCheck`   | map    | the blank check card                                     |
 
 Each item of `overs`:
 

@@ -60,7 +60,7 @@ func cleanup(ctx context.Context, args []string, stdout io.Writer) error {
 	if err := os.MkdirAll(filepath.Dir(cfg.DB), 0o755); err != nil {
 		return err
 	}
-	db, err := storage.OpenAndMigrate(ctx, cfg.DB)
+	db, err := storage.OpenAndMigrate(ctx, cfg.DB, app.Migrations())
 	if err != nil {
 		return err
 	}
@@ -178,7 +178,7 @@ func forgejoSync(ctx context.Context, args []string, stdout io.Writer) error {
 	if cfg.SSHDir == "" {
 		cfg.SSHDir = filepath.Join(cfg.DataDir, "keys")
 	}
-	db, err := storage.OpenAndMigrate(ctx, cfg.DB)
+	db, err := storage.OpenAndMigrate(ctx, cfg.DB, app.Migrations())
 	if err != nil {
 		return err
 	}

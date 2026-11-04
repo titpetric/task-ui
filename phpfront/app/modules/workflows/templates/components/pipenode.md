@@ -12,6 +12,7 @@ Input scope: `data_node`, from `Task\Pipeline::nodes()`.
 | `runId`      | string | The run the step made of a job; empty draws no screen        |
 | `workflow`   | bool   | Whether the step runs a workflow, which the icon says        |
 | `summary`    | bool   | Whether the step asks for the summary                        |
+| `check`      | bool   | Whether the step is the check that sends the steps round     |
 | `prompt`     | string | What the step asked Claude; empty draws no paragraph         |
 | `text`       | string | The step's name                                              |
 | `small`      | string | The line under the name: the state, or which step it is      |

@@ -85,10 +85,19 @@ class Folders {
 		$this->running = $this->runs();
 		$this->pinned = array();
 
+		// The directories are asked for in two batches, because the tree is
+		// decided in two steps: the limit of a workspace orders its projects
+		// by their last commit, and a pin can put a folder in the tree that no
+		// default listed. One crossing each, not one per row; see warm.
 		$side = $this->defaults($folders);
+
+		$this->warm($this->places($side));
+
 		$limited = $this->limited($side);
 		$pins = $this->pins($folders);
 		$placed = $this->placed($limited, $pins);
+
+		$this->warm($this->places($placed));
 
 		$this->total = self::jobCount($placed);
 
@@ -1076,6 +1085,56 @@ class Folders {
 		}
 
 		return $this->dirs[$id];
+	}
+
+	/**
+	 * warm asks the host for the directory of every ID it does not hold yet,
+	 * in one crossing, so that dirOf answers the tree from memory.
+	 *
+	 * One crossing per row was 102ms of the 151ms the tree cost on every page:
+	 * each handed the whole workspace list across the boundary again, for an
+	 * answer that is a lookup behind it. An ID the host places nowhere is kept
+	 * as the empty string dirOf answers, so a miss is not asked twice either.
+	 */
+	function warm($ids) {
+		$ask = array();
+
+		foreach ($ids as $id) {
+			if ($id !== "" && !isset($this->dirs[$id])) {
+				$ask[$id] = true;
+			}
+		}
+
+		if (count($ask) === 0) {
+			return;
+		}
+
+		$found = Host::folderDirs(array_keys($ask), $this->workspaces);
+
+		foreach ($ask as $id => $_) {
+			$this->dirs[$id] = Row::text($found, $id);
+		}
+	}
+
+	/**
+	 * places is what the rows of a tree are asked about: each folder, and the
+	 * project at the top of the workspace it sits in, which the sidebar limit
+	 * orders by its last commit.
+	 */
+	function places($folders) {
+		$out = array();
+
+		foreach ($folders as $folder) {
+			$id = Row::text($folder, "id");
+			$out[$id] = true;
+			$project = $this->projectOf($id);
+
+			if ($project !== "") {
+				$out[$project] = true;
+			}
+		}
+
+		return array_keys($out);
 	}
 
 	/**

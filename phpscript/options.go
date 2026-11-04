@@ -24,9 +24,6 @@ type Options struct {
 	// and keeps them in memory alone, as a test does.
 	Registry Registry
 
-	// Migrator applies a module's schema. Nil makes Task::migrate refuse.
-	Migrator Migrator
-
 	// Dispatcher starts the Claude runs. Nil makes Task::dispatch refuse.
 	Dispatcher Dispatcher
 

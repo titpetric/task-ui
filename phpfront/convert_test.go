@@ -1,7 +1,6 @@
 package phpfront
 
 import (
-	"reflect"
 	"testing"
 
 	"github.com/titpetric/phpscript/model"
@@ -49,6 +48,33 @@ func flag(t *testing.T, a *model.Array, key string) bool {
 	assert.True(t, ok, key)
 	out, ok := value.(bool)
 	assert.True(t, ok, key+" is a bool")
+
+	return out
+}
+
+// number is a key of an array as an integer, which is how a count and a
+// duration cross.
+func number(t *testing.T, a *model.Array, key string) int64 {
+	t.Helper()
+
+	value, ok := a.Get(key)
+	assert.True(t, ok, key)
+	out, ok := value.(int64)
+	assert.True(t, ok, key+" is an int64")
+
+	return out
+}
+
+// value is a key of an array as the Go type it crossed as. Nothing is widened
+// on the way over, so a count is an int and a measure a float64, and asking
+// for the other one is the failure.
+func value[T any](t *testing.T, a *model.Array, key string) T {
+	t.Helper()
+
+	held, ok := a.Get(key)
+	assert.True(t, ok, key)
+	out, ok := held.(T)
+	assert.True(t, ok, key+" crossed as another type")
 
 	return out
 }
@@ -159,23 +185,19 @@ func TestRules(t *testing.T) {
 	assert.Equal(t, "Notes", text(t, at(t, list(t, out, "sections"), 0), "title"))
 }
 
-// Every field of the struct is a key, checked by reflection rather than by
-// name: a field added to host.go and forgotten here is a form drawing an empty
-// box over a value the instance holds, which is what happened to
-// debug_span_min_duration.
-func TestTelemetry(t *testing.T) {
+// The directories of a tree arrive keyed by the folder ID, because a row reads
+// its own and not a list to search. An ID the layout places nowhere is no key,
+// which is the empty string the single reader answers.
+func TestDirs(t *testing.T) {
 	t.Parallel()
 
-	out := telemetry(Telemetry{Wired: true, ServiceName: "task-ui", DebugSpanMinDuration: "1ms"})
-	for i := range reflect.TypeFor[Telemetry]().NumField() {
-		key := reflect.TypeFor[Telemetry]().Field(i).Tag.Get("json")
-		_, ok := out.Get(key)
-		assert.True(t, ok, key)
-	}
+	out := dirs(map[string]string{"infra": "/src/infra", "malta/deploy": "/src/malta/src/deploy"})
+	assert.Equal(t, 2, out.Len())
+	assert.Equal(t, "/src/infra", text(t, out, "infra"))
+	assert.Equal(t, "/src/malta/src/deploy", text(t, out, "malta/deploy"))
 
-	assert.True(t, flag(t, out, "wired"))
-	assert.Equal(t, "task-ui", text(t, out, "service_name"))
-	assert.Equal(t, "1ms", text(t, out, "debug_span_min_duration"))
+	_, ok := dirs(nil).Get("infra")
+	assert.False(t, ok)
 }
 
 func TestPhpMap(t *testing.T) {

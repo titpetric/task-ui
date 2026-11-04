@@ -112,9 +112,9 @@ class Tooling {
 	 * commands are read after the charts, so each one is already in the colour
 	 * its command holds on them.
 	 *
-	 * The stamps are read here, once, and the charts are given them: three
-	 * charts over the same samples each parsing the same string was 470ms of a
-	 * 2s /runs, and a parse crosses into the host twice.
+	 * The stamps are read here, once, and the charts are given them by index:
+	 * three charts over the same samples, each reading the same series, were
+	 * 470ms of a 2s /runs while a stamp was a string to parse.
 	 */
 	function scope($scope) {
 		$charts = array();
@@ -158,14 +158,19 @@ class Tooling {
 
 	/**
 	 * stamps is the unix time of each sample, by the index the sample holds, 0
-	 * for one whose stamp does not read. Every chart of a scope reads the same
-	 * series, so the strings are parsed once for all of them.
+	 * for one the report gives no moment for.
+	 *
+	 * The report carries the number beside the text, so nothing here parses a
+	 * stamp: a chart buckets by the second, and reading that second off the
+	 * text cost a regexp and two crossings into the host per sample, 107ms of
+	 * a 2s /runs. The list of the newest commands still prints the text,
+	 * which is twenty of them and not the window.
 	 */
 	static function stamps($samples) {
 		$out = array();
 
 		foreach ($samples as $i => $sample) {
-			$out[$i] = Clock::seconds($sample["at"]);
+			$out[$i] = Row::number($sample, "at_unix");
 		}
 
 		return $out;

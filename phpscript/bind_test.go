@@ -15,17 +15,6 @@ import (
 	"github.com/titpetric/task-ui/phpscript"
 )
 
-// fakeMigrator records the directory Task::migrate named.
-type fakeMigrator struct {
-	dirs []string
-	err  error
-}
-
-func (f *fakeMigrator) Migrate(_ context.Context, m *phpscript.Module, dir string) error {
-	f.dirs = append(f.dirs, m.Name()+":"+dir)
-	return f.err
-}
-
 // fakeDispatcher records the comment, the action and the folder
 // Task::dispatch named, and the root the action was resolved inside.
 type fakeDispatcher struct {
@@ -157,25 +146,6 @@ func TestBindRun(t *testing.T) {
 	assert.Equal(t, "[]", body, "an instance with no lookup answers rather than failing")
 }
 
-func TestBindMigrate(t *testing.T) {
-	t.Parallel()
-	dir := t.TempDir()
-	assert.NoError(t, os.MkdirAll(filepath.Join(dir, "schema"), 0o755))
-	migrator := &fakeMigrator{}
-
-	_, err := run(t, dir, `<?php Task::migrate("schema/");`,
-		phpscript.Options{Migrator: migrator}, nil)
-	assert.NoError(t, err)
-	assert.Equal(t, []string{"titpetric/test:schema"}, migrator.dirs, "the module of the context is the one that migrates")
-
-	_, err = run(t, dir, `<?php Task::migrate("../elsewhere");`,
-		phpscript.Options{Migrator: migrator}, nil)
-	assert.ErrorContains(t, err, "leaves the module root")
-
-	_, err = run(t, dir, `<?php Task::migrate("schema/");`, phpscript.Options{}, nil)
-	assert.ErrorContains(t, err, "applies no module schema")
-}
-
 func TestBindDispatch(t *testing.T) {
 	t.Parallel()
 	dir := t.TempDir()
@@ -257,11 +227,10 @@ func TestBindNoModule(t *testing.T) {
 	t.Parallel()
 	rt := runner.New(io.Discard, runner.Options{RootFS: os.DirFS(t.TempDir())})
 	stdlib.Register(rt)
-	phpscript.Bind(rt, phpscript.Options{Migrator: &fakeMigrator{}, Dispatcher: &fakeDispatcher{}}, nil)
+	phpscript.Bind(rt, phpscript.Options{Dispatcher: &fakeDispatcher{}}, nil)
 
 	for _, src := range []string{
 		`<?php Task::register(new Task\Module);`,
-		`<?php Task::migrate("schema/");`,
 		`<?php Task::dispatch("x", "action/a.md");`,
 	} {
 		prog, err := rt.Load(src)

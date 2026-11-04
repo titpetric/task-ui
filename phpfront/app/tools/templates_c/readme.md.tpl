@@ -12,14 +12,18 @@ Generated from the module by `atkins docs`. DO NOT EDIT.
 
 ## Pages
 
+<?php if(!$_v['routes']){?>
+This module draws no page. It owns a data model other modules read, so it
+carries a schema and the statements over it and no route.
+
+<?php }else{?>
 | Method | Path | Answered by |
 |--------|------|-------------|
 <?php if(!empty($_v['routes']))foreach($_v['routes'] as $_v['route']){?>| `<?php echo $_v['route']['method'];?>
 ` | `<?php echo $_v['route']['path'];?>
 ` | [`<?php echo $_v['route']['file'];?>
 `](<?php echo $_v['route']['file'];?>
-) |<?php echo $_v['nl']; }?>
-## The data model
+) |<?php echo $_v['nl']; } }?>## The data model
 
 <?php if(!$_v['tables']){?>
 No page of this module reads a table of its own. The chrome every page

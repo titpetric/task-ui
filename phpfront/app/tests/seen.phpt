@@ -69,16 +69,42 @@ echo var_export($seen->run("fx-seen-1"), true), " ", var_export($seen->run("fx-s
 // An empty ID is no run at all, and nothing is read for it.
 echo var_export($seen->run(""), true), "\n";
 
+// rows() is the same rule over the rows themselves, for the charts of a window
+// that hydrates none of it: the rule is one sentence in Task\Run::allowed and
+// both paths ask it, so the filter of a chart cannot drift from the list's.
+$charted = $runs->charted(array("limit" => 0));
+$mine = array();
+
+foreach ($charted as $row) {
+	if (strpos(Task\Row::text($row, "id"), "fx-seen-") === 0) {
+		$mine[] = $row;
+	}
+}
+
+$rows = new Task\Seen($chrome);
+$kept = array();
+
+foreach ($rows->rows($mine) as $row) {
+	$kept[] = Task\Row::text($row, "id");
+}
+
+sort($kept);
+
+echo implode(",", $kept), "\n";
+echo var_export($rows->run("fx-seen-2"), true), " ", var_export($rows->asked["fx-seen-1"], true), "\n";
+
 // A reader who is nobody sees none of them.
 Task\Host::$whoami = "";
 
 $nobody = new Task\Chrome;
 $hidden = new Task\Seen($nobody);
 
-echo "[", ids($hidden->of($list)), "]\n";
+echo "[", ids($hidden->of($list)), "] [", count($hidden->rows($mine)), "]\n";
 ---
 fx-seen-1,fx-seen-3
 fx-seen-1,fx-seen-2,fx-seen-3
 true false
 false
-[]
+fx-seen-1,fx-seen-3
+false true
+[] [0]

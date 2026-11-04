@@ -110,6 +110,11 @@ class mod_workflows implements Module {
 	 * The Run button carries the workflow for task-ui.js to post, and the name
 	 * as well where a step prompts Claude, which is what the script asks the
 	 * input for before it starts the run.
+	 *
+	 * The description is markdown, drawn as the line under the name: what a
+	 * workflow is for is a link to the runbook and the name of the thing it
+	 * deploys in code, and it was read as text until now. Task\Chrome::line
+	 * is what keeps it a line.
 	 */
 	function row($chrome, $flow, $schedules) {
 		$id = $flow["id"];
@@ -122,7 +127,7 @@ class mod_workflows implements Module {
 		return array(
 			"id" => $id,
 			"name" => $flow["name"],
-			"description" => $flow["description"],
+			"description" => Task\Chrome::line($flow["description"]),
 			"schedules" => self::hints($flow, $schedules),
 			"running" => $flow["running"],
 			"last" => $last !== null,

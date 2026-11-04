@@ -13,7 +13,7 @@
 		<thead><tr><th>Workflow</th><th>Last run</th><th>By</th><th></th></tr></thead>
 		<tbody>
 {foreach $data.rows as $row}			<tr>
-				<td class="key"><a href="{base}/workflows/{row.id}">{row.name}</a>{if $row.description}<small class="faint wf-desc">{row.description}</small>{/if}{foreach $row.schedules as $hint}<small class="faint wf-desc" title="{hint.title}"><svg class="ic lead"><use href="#i-clock"/></svg><code>{hint.expression}</code>{if !$hint.enabled} disabled{/if}</small>{/foreach}</td>
+				<td class="key"><a href="{base}/workflows/{row.id}">{row.name}</a>{if $row.description}<small class="faint wf-desc">{row.description|raw}</small>{/if}{foreach $row.schedules as $hint}<small class="faint wf-desc" title="{hint.title}"><svg class="ic lead"><use href="#i-clock"/></svg><code>{hint.expression}</code>{if !$hint.enabled} disabled{/if}</small>{/foreach}</td>
 				<td class="nowrap" data-label="Last run">{if $row.running}<span class="state"><i class="dot running"></i>running</span>{elseif $row.last}<span class="state"><i class="dot {row.state}"></i>{row.state}</span> <span class="faint" title="{row.stamp}">{row.ago}</span>{else}<span class="faint">never run</span>{/if}</td>
 				<td data-label="By">{eval $data_user = $row.user}{include components/user.tpl}{if $row.runAs} <span class="faint nowrap">· runs as {row.runAs}</span>{/if}</td>
 				<td class="actions">{if $row.canRun}{if $row.running}

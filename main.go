@@ -93,7 +93,7 @@ func openUser(ctx context.Context, dsn, name string) (storage.DB, *model.User, e
 	if err := os.MkdirAll(filepath.Dir(dsn), 0o755); err != nil {
 		return nil, nil, err
 	}
-	db, err := storage.OpenAndMigrate(ctx, dsn)
+	db, err := storage.OpenAndMigrate(ctx, dsn, app.Migrations())
 	if err != nil {
 		return nil, nil, err
 	}
@@ -277,7 +277,7 @@ func listUsers(ctx context.Context, dsn string, stdout io.Writer) error {
 	if err := os.MkdirAll(filepath.Dir(dsn), 0o755); err != nil {
 		return err
 	}
-	db, err := storage.OpenAndMigrate(ctx, dsn)
+	db, err := storage.OpenAndMigrate(ctx, dsn, app.Migrations())
 	if err != nil {
 		return err
 	}

@@ -33,13 +33,6 @@ type commitEntry struct {
 // pages ask and whichever front end they came from.
 var commits = &Commits{}
 
-// Commit returns the time of the last commit in dir, through the cache
-// both front ends share; zero for a directory in no checkout, or one
-// whose checkout has no commit.
-func (g *Git) Commit(dir string) time.Time {
-	return commits.read(dir, g.LastCommit)
-}
-
 // Get returns the time of the last commit in dir, from the cache while
 // that holds, zero for no checkout or no commit.
 func (c *Commits) Get(dir string) time.Time {

@@ -185,12 +185,12 @@ func (h *FrontHost) Groups(_ context.Context, id, rel string, seen []string, she
 			}
 		}
 	}
-	return frontGroups(view.NewJobGroups(f, place, files, actions, dirs), actions)
+	return frontGroups(actions, view.NewJobGroups(f, place, files, actions, dirs))
 }
 
 // frontGroups is the Jobs table's groups as the front host answers them: the
 // folder a row runs as, and the row's jobs with what each asks before it runs.
-func frontGroups(found []view.JobGroup, actions *view.Actions) []phpfront.Group {
+func frontGroups(actions *view.Actions, found []view.JobGroup) []phpfront.Group {
 	out := make([]phpfront.Group, 0, len(found))
 	for _, g := range found {
 		group := phpfront.Group{

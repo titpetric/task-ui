@@ -179,8 +179,8 @@ the `module` table, and serves it at `/m/<vendor>/<name>` as an ordinary
 page, the body the module's and the layout the instance's. A module
 declares no routes: `index.php` answers whatever
 `$_SERVER['REQUEST_URI']` holds, and a path under its `public/` tree is
-served as bytes. Its own tables are in task-ui's database, prefixed with
-the module's name, applied from its `schema/` through `Task::migrate`.
+served as bytes. The tables its pages read are task-ui's own, applied at
+start out of the trees `app.Migrations` merges; a module declares none.
 `Task::dispatch($comment, "action/<file>.md", $folder)` starts a Claude
 run whose prompt is that file, the folder of the artifact tree to work
 in, the comment and the run's own environment, which is what a prompt

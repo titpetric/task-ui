@@ -186,3 +186,21 @@ func TestHead_SettingsTitles(t *testing.T) {
 	assert.NotContains(t, body, `data-confirm-ok="Remove"`)
 	assert.Contains(t, render(t, "workspace_edit", p), "<h2>Edit malta</h2>")
 }
+
+// The dashboard's head adds anything the user may, behind one menu; a
+// user who may add nothing sees no menu.
+func TestHome_AddMenu(t *testing.T) {
+	t.Parallel()
+
+	p := admin(t)
+	head := pageHead(t, render(t, "home", p))
+	for _, label := range []string{"Add workspace", "Add project", "Generate key", "Upload key", "Add variable", "Add workflow"} {
+		assert.Contains(t, head, "<span>"+label+"</span>")
+	}
+	assert.NotContains(t, head, "Add user", "the server writes no password file here")
+	p.CanAddUsers = true
+	assert.Contains(t, pageHead(t, render(t, "home", p)), `href="/settings/users/new"`)
+
+	signIn(p, &model.User{Name: "guest", Role: model.RoleViewer}, nil)
+	assert.NotContains(t, pageHead(t, render(t, "home", p)), "more-menu")
+}

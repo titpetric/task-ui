@@ -91,6 +91,21 @@ jobs:
       # rules/SKILL.md says what they hold and how to add one.
       - semgrep scan --metrics=off --quiet --error --config rules .
 
+  # Run by name, after adding a migration anywhere. It is out of default
+  # because it writes generated files and needs mig and sqlite3 on the path.
+  #
+  # The global schema skill is what this replaces. That one applies
+  # `schema/*.up.sql`, and there is no such file any more: a migration lives
+  # with the code that owns its table, under `phpfront/app/modules/<name>/
+  # schema/`, `keystore/schema/`, `access/schema/` or `phpscript/schema/`.
+  # `mig migrate --recursive` finds all four and merges them flat, keyed by
+  # base name, the way app.Migrations does for the binary - and the base names
+  # are the order the migrations need. schema/schema.go is the contract.
+  schema:
+    desc: "Apply the migrations to a throwaway database and regenerate the data model"
+    steps:
+      - ./scripts/schema.sh
+
   # What the cutover reads: every view that answers from phpscript leaves a
   # marker on the Go handler it replaced, and the last one to go is the one
   # that drops the prefix. A count of zero is a front end that is finished.

@@ -185,7 +185,7 @@ Specified: `Task\Model` generated from the same source the Go types come from.
 
 `mig gen --lang` defaults to `go` and `go` is the only case it handles.
 
-Correction: `tools/models.php` renders `schema/schema.yml`, the file `mig docs --yaml` writes and `mig gen` reads, through `tools/templates/model.tpl`. `scripts/schema.sh` runs it beside `mig gen`, so the Go types and the PHP models are written from one file in one pass.
+Correction: `tools/models.php` renders `schema/schema.yml`, the file `mig docs --yaml` writes and `mig gen` reads, through `tools/templates/model.tpl`. The Go types and the PHP models come from that one file, written by `atkins schema` and then by `atkins models` in `phpfront/app`.
 
 Not a phpscript gap. Worth folding into mig as `--lang php` once the template has settled.
 
@@ -398,6 +398,31 @@ want different answers for one value, so the choice belongs at the call site.
 Not a runtime gap in the end, but it is the one place where matching Go's output
 needs a second escaper, and it is invisible until a path carries a `%XX` or a
 space.
+
+## 26. A host binding cannot declare that it takes an array
+
+The runtime has two spellings of a PHP list. An array a script writes is a
+`*model.Array`; what `array_keys`, `array_values` or `explode` answer is a Go
+`[]any` (`stdlib/core/arrays.go:69`). `runner/invoke.go:345 coerceArg` converts
+neither into the other, and a binding declaring `*model.Array` refuses the
+slice. The TypeError it raises names one word twice, because both spellings
+print as `array` (`runner/dispatch.go:120`):
+
+```
+call(): Argument #1 must be of type array, array given
+```
+
+`Task\Folders::warm` asks `Host::folderDirs(array_keys($ask), ...)`. The folder
+tree is drawn on every page, and every page answered 500. No fixture saw it:
+`stubs/host.php` answers in PHP, where both spellings are one type.
+
+Correction: every binding parameter that takes a list is declared `any` and read
+in `phpfront/names` or `phpfront/fields` with `model.LenValues` and
+`model.RangeValues`, the runtime's own readers of both spellings. The fix belongs
+in Go, in `coerceArg`: a `[]any` bound for a `*model.Array` parameter wraps, the
+way an `int` bound for a `float64` converts. Until then a binding signature
+states nothing about what it takes, and the error message states nothing about
+the fault.
 
 ## Not a runtime gap
 

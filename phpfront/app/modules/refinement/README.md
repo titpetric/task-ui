@@ -35,9 +35,9 @@ Refinement Comment
 | `user`           | `text`      |         |
 | `body`           | `text`      |         |
 | `note_id`        | `text`      | indexed |
-| `created_at`     | `timestamp` | indexed |
 | `kind`           | `text`      |         |
 | `collapsed_into` | `text`      |         |
+| `created_at`     | `timestamp` | indexed |
 
 ### `refinement_correction`
 

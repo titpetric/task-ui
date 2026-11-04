@@ -170,6 +170,30 @@ echo count($found), " ", count($read), " ", $read[0]["elapsed"], " ", $read[0]["
 $empty = $table->find(array("folder" => "fx-activity-none"));
 
 echo count(Task\Activity::of($empty)), "\n";
+
+// rows() is the same five values of the rows themselves, which is what a page
+// reads: charted() asks for the columns the charts and the permission filter
+// want and hydrates nothing, so a window of five thousand runs costs no model
+// at all. The two paths answer the same chart, which is the whole point.
+$charted = $table->charted(array("folder" => "fx-activity"));
+$rows = Task\Activity::rows($charted);
+
+echo count($charted), " ", count($rows), " ", $rows[0]["elapsed"], " ", $rows[0]["state"], " ", $rows[0]["at"]->format(Task\Clock::READ), "\n";
+echo var_export($rows[0]["unix"] === $read[0]["unix"], true), " ", var_export($rows[0]["nano"] === $read[0]["nano"], true), "\n";
+
+$one = new Task\Activity($read, $now, Task\Activity::DAYS);
+$other = new Task\Activity($rows, $now, Task\Activity::DAYS);
+
+echo var_export($one->data() === $other->data(), true), "\n";
+
+// took is elapsed of two stamps already read: a run still going is counted to
+// now, and one that never started took nothing.
+$start = Task\Clock::parse("2026-10-19 07:00:00.000 +0000 UTC");
+
+echo Task\Run::took($start, Task\Clock::parse("2026-10-19 07:00:02.500 +0000 UTC")), " ", Task\Run::took(null, null), " ", var_export(Task\Run::took($start, null) > 0, true), "\n";
+
+// A folder nobody ran in is no rows and no chart, as above.
+echo count($table->charted(array("folder" => "fx-activity-none"))), "\n";
 ---
 30 24 56
 5 2 5000
@@ -212,4 +236,9 @@ left:83.33%;width:16.67% | 4.0s, Mon 2026-10-19 07:30 · failed | true
 0
 0 5 runs in 30 days 3
 2 1 2500 ok 2026-10-19 07:00:00
+0
+2 1 2500 ok 2026-10-19 07:00:00
+true true
+true
+2500 0 true
 0
