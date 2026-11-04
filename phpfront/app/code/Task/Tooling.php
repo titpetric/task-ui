@@ -111,14 +111,20 @@ class Tooling {
 	 * the charts to the daily rollups, which are days wide. The newest
 	 * commands are read after the charts, so each one is already in the colour
 	 * its command holds on them.
+	 *
+	 * The stamps are read here, once, and the charts are given them: three
+	 * charts over the same samples each parsing the same string was 470ms of a
+	 * 2s /runs, and a parse crosses into the host twice.
 	 */
 	function scope($scope) {
 		$charts = array();
 		$latest = array();
 
 		if (count($scope["samples"]) > 0) {
+			$stamps = self::stamps($scope["samples"]);
+
 			foreach (self::spans() as $span) {
-				$chart = $this->sampled($scope, $span);
+				$chart = $this->sampled($scope, $stamps, $span);
 
 				if ($chart !== null) {
 					$charts[] = $chart;
@@ -151,12 +157,29 @@ class Tooling {
 	}
 
 	/**
+	 * stamps is the unix time of each sample, by the index the sample holds, 0
+	 * for one whose stamp does not read. Every chart of a scope reads the same
+	 * series, so the strings are parsed once for all of them.
+	 */
+	static function stamps($samples) {
+		$out = array();
+
+		foreach ($samples as $i => $sample) {
+			$out[$i] = Clock::seconds($sample["at"]);
+		}
+
+		return $out;
+	}
+
+	/**
 	 * sampled is one chart of a span from the samples, a slot per span slot in
 	 * the zone of the clock. Null for a window the report is too short to
 	 * fill: a week of history drawn as a month is a month of empty bars with a
 	 * week at the end.
+	 *
+	 * stamps is what scope read of the samples' own timestamps, by index.
 	 */
-	function sampled($scope, $span) {
+	function sampled($scope, $stamps, $span) {
 		if ($scope["days"] < self::days($span)) {
 			return null;
 		}
@@ -176,27 +199,27 @@ class Tooling {
 
 		$rows = array();
 
-		foreach ($scope["samples"] as $sample) {
-			$at = Clock::parse($sample["at"]);
+		foreach ($scope["samples"] as $i => $sample) {
+			$at = $stamps[$i];
 
-			if ($at === null) {
+			if ($at === 0) {
 				continue;
 			}
 
-			$i = Activity::slot($marks, $at->unix());
+			$slot = Activity::slot($marks, $at);
 
-			if ($i < 0) {
+			if ($slot < 0) {
 				continue;
 			}
 
 			$rows[] = array(
-				"slot" => $i,
+				"slot" => $slot,
 				"name" => $sample["command"],
 				"runs" => 1,
 				"ms" => $sample["duration_ms"],
 			);
-			$slots[$i]["runs"]++;
-			$slots[$i]["ms"] += $sample["duration_ms"];
+			$slots[$slot]["runs"]++;
+			$slots[$slot]["ms"] += $sample["duration_ms"];
 		}
 
 		foreach ($slots as $i => $slot) {

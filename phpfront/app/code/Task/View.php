@@ -38,14 +38,20 @@ class View {
 		return "modules/" . $this->module->name() . "/templates/";
 	}
 
-	/** body renders the module's own template over its scope. */
-	function body($template, $data) {
+	/**
+	 * body renders the module's own template over its scope.
+	 *
+	 * The chrome is given rather than read: page reads it once and hands it to
+	 * both templates. Reading it twice costs the recents rail a second walk of
+	 * every workspace, which a trace of /runs put at 110ms of a 2s page.
+	 */
+	function body($template, $data, $chrome) {
 		$paths = array($this->templates(), self::THEME);
 		$tpl = new \MiniTPL\Template($paths);
 
 		$tpl->load($template);
 		$tpl->assign("base", Host::base());
-		$tpl->assign("chrome", $this->chrome->data());
+		$tpl->assign("chrome", $chrome);
 		$tpl->assign("data", $data);
 
 		return $tpl->get();
@@ -121,8 +127,8 @@ class View {
 
 	/** page renders the module's body inside the theme's shell and echoes it. */
 	function page($data, $template = "index.tpl") {
-		$content = $this->body($template, $data);
 		$chrome = $this->chrome->data();
+		$content = $this->body($template, $data, $chrome);
 		$assets = $this->assets($chrome);
 
 		$chrome["styles"] = $assets["styles"];
