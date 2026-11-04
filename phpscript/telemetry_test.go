@@ -98,25 +98,3 @@ $loader->load();
 	// written on, not the class: the span of a page reads as the line did.
 	assert.Contains(t, names, "loader.load", "a method call is a span")
 }
-
-// TestSpan holds what a host binding records. The interpreter traces what PHP
-// declares, so a binding is a gap in the page's trace unless it opens its own,
-// and the source it carries is the PHP statement that called it.
-func TestSpan(t *testing.T) {
-	t.Parallel()
-
-	// No trace is a nil span, and a binding defers End on one unconditionally.
-	phpscript.Span(context.Background(), "Task\\Host::folders").End()
-
-	run := func(ctx context.Context) error {
-		sourced := telemetry.WithSpanLine(telemetry.WithSpanFilename(ctx, "/modules/runs/mod_runs.php"), 37)
-		span := phpscript.Span(sourced, "Task\\Host::folders")
-		assert.Equal(t, "Task\\Host::folders", span.Name)
-		assert.Equal(t, "/modules/runs/mod_runs.php", span.Filename)
-		assert.Equal(t, 37, span.Line)
-		assert.Equal(t, oida.KindInternal, span.Kind)
-		span.End()
-		return nil
-	}
-	assert.NoError(t, tracer(t).Observe(context.Background(), "GET /runs", run))
-}

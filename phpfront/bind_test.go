@@ -487,14 +487,13 @@ func TestBindDispatch_NoHost(t *testing.T) {
 	assert.Equal(t, http.StatusInternalServerError, w.Code)
 }
 
-// A page's trace holds the PHP that drew it and the host calls it made.
+// A page's trace holds the PHP that drew it.
 //
-// Two things are measured and they are measured in two ways: the interpreter
-// traces a frame, a new, an include and a template, which it does only while
-// the runtime carries an observer, and a host binding is none of those, so it
-// opens a span of its own. Without either a page's trace holds the queries the
-// database stdlib opens and a gap where the work was.
-func TestBindSpans(t *testing.T) {
+// The interpreter measures a frame, a new, an include and a template, and it
+// does so only while the runtime carries an observer: the front end registers
+// the one phpscript's telemetry gives it, and without that a page's trace held
+// the queries the database stdlib opens and not a line of the PHP above them.
+func TestFrontSpans(t *testing.T) {
 	t.Parallel()
 
 	opts := oida.NewOptions("task-ui-test")
@@ -503,7 +502,6 @@ func TestBindSpans(t *testing.T) {
 	tracer, err := oida.New(opts)
 	assert.NoError(t, err)
 
-	assert.Contains(t, serveTraced(t, &host{}, "/host", tracer), "folders=")
 	assert.Contains(t, serveTraced(t, &host{}, "/spans", tracer), "drawn=ops")
 
 	var names []string
@@ -513,10 +511,8 @@ func TestBindSpans(t *testing.T) {
 		}
 	}
 
-	assert.Contains(t, names, `Task\Host::folders`, "a host binding names itself")
-	assert.Contains(t, names, `Task\Host::markdown`, "and so does one that answers without the instance")
-	assert.Contains(t, names, "new Page", "the runtime carries an observer, so the interpreter traces too")
-	assert.Contains(t, names, "page.draw", "which names a frame after the receiver the call was written on")
+	assert.Contains(t, names, "new Page", "the allocation of a class is a span")
+	assert.Contains(t, names, "page.draw", "and a frame, named after the receiver the call was written on")
 }
 
 // serve runs one request against the host fixture tree.
