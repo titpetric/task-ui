@@ -20,6 +20,12 @@ type Step struct {
 	Asks    bool
 	Summary bool
 	Place   string
+	// Check is a step that runs nothing: it reads the step before it and
+	// sends the workflow's steps round again when that step wrote one of
+	// Markers, for Passes passes at the most, the first counted.
+	Check   bool
+	Markers []string
+	Passes  int
 	// Args follow the job's argv after --, for a job that takes args;
 	// for a step of @host:<host> or @script they are the shell command.
 	Args []string

@@ -36,6 +36,13 @@ func TestStep(t *testing.T) {
 	assert.Equal(t, "of the steps before it, in malta/vhosts", summary.Line())
 	assert.Equal(t, "the root", view.Step{Kind: model.StepSummary, Folder: "internal"}.Place())
 
+	check := view.Step{Kind: model.StepCheck, Markers: "Next:,TODO:"}
+	assert.Equal(t, "Check", check.KindLabel())
+	assert.Equal(t, "rotate", check.Icon())
+	assert.Equal(t, model.CheckPasses, check.Passes())
+	assert.Equal(t, "the steps go round again while the step before it writes Next:,TODO:", check.Line())
+	assert.Equal(t, "", view.Step{Kind: model.StepCheck}.Line())
+
 	script := view.Step{Kind: model.StepJob, Folder: "malta/apps", Job: "@script", Args: `["go get -u ./..."]`}
 	assert.Equal(t, view.StepScript, script.StepKind())
 	assert.Equal(t, "Script", script.KindLabel())
@@ -45,11 +52,12 @@ func TestStep(t *testing.T) {
 }
 
 // A blank step of the editor: a command picks its folder, a prompt and
-// a summary ask in the root.
+// a summary ask in the root, a check looks for Next:.
 func TestNewStep(t *testing.T) {
 	t.Parallel()
 	assert.Equal(t, view.Step{Kind: model.StepJob}, view.NewStep(model.StepJob))
 	assert.Equal(t, view.Step{Kind: model.StepPrompt, Folder: "internal"}, view.NewStep(model.StepPrompt))
+	assert.Equal(t, view.Step{Kind: model.StepCheck, Markers: "Next:", Tries: model.CheckPasses}, view.NewStep(model.StepCheck))
 	assert.Equal(t, "", view.NewStep(model.StepJob).Line())
 	assert.Equal(t, "of the steps before it, in the root", view.NewStep(model.StepSummary).Line())
 }

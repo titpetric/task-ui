@@ -22,6 +22,7 @@ class Chain {
 			"workflow_run_id" => "",
 			"prompt" => "",
 			"summary" => false,
+			"check" => false,
 			"disabled" => false,
 			"sub" => array(),
 			"frame" => "",
@@ -58,6 +59,11 @@ class Chain {
 				$link["prompt"] = $step["prompt"];
 				$link["text"] = "prompt in " . Step::place($step);
 				$link["href"] = Route::folderHref($step["folder"], $workspaces);
+				$last = "";
+			} elseif ($kind === Step::CHECK) {
+				$link["check"] = true;
+				$link["text"] = "check for " . $step["markers"];
+				$link["href"] = "/workflows";
 				$last = "";
 			} elseif ($kind === Step::WORKFLOW) {
 				$link["workflow"] = true;

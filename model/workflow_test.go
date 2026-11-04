@@ -20,9 +20,10 @@ func TestWorkflowRunStep_IsWorkflow(t *testing.T) {
 	assert.False(t, model.WorkflowRunStep{Folder: "infra", Job: "plan"}.IsWorkflow())
 }
 
-// A step's kind is its kind column, or for a row without one what its
-// fields say: a prompt, a workflow, else a job. A prompt and a summary
-// ask Claude in their folder and directory, the root without a folder.
+// A step's kind is its kind column, and for a row written before that
+// column what its fields say: a prompt, a workflow, else a job. A prompt
+// and a summary ask Claude in their folder and directory, the root for a
+// step that names no folder.
 func TestWorkflowStep_StepKind(t *testing.T) {
 	t.Parallel()
 	assert.Equal(t, model.StepJob, model.WorkflowStep{Folder: "infra", Job: "plan"}.StepKind())
@@ -31,6 +32,20 @@ func TestWorkflowStep_StepKind(t *testing.T) {
 	assert.Equal(t, model.StepSummary, model.WorkflowStep{Kind: model.StepSummary, Folder: "_", Job: model.PromptJob}.StepKind())
 	assert.Equal(t, model.StepSummary, model.WorkflowRunStep{Kind: model.StepSummary}.StepKind())
 	assert.Equal(t, model.StepPrompt, model.WorkflowRunStep{Prompt: "say ok"}.StepKind())
+}
+
+// A check is the one kind no field but kind spells, so a row that names
+// no kind is never a check.
+func TestWorkflowStep_IsCheck(t *testing.T) {
+	t.Parallel()
+	assert.True(t, model.WorkflowStep{Kind: model.StepCheck, Markers: "Next:"}.IsCheck())
+	assert.False(t, model.WorkflowStep{Folder: "infra", Job: "plan"}.IsCheck())
+}
+
+func TestWorkflowRunStep_IsCheck(t *testing.T) {
+	t.Parallel()
+	assert.True(t, model.WorkflowRunStep{Kind: model.StepCheck, Markers: "Next:"}.IsCheck())
+	assert.False(t, model.WorkflowRunStep{Prompt: "say ok"}.IsCheck())
 }
 
 func TestWorkflowStep_IsPrompt(t *testing.T) {

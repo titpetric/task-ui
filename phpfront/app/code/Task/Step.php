@@ -3,8 +3,8 @@
 namespace Task;
 
 // Step is a step of a workflow, or of a run of one, as a page draws it: a job
-// of a folder, another workflow, a prompt to Claude, or Claude's summary of
-// the steps before it.
+// of a folder, another workflow, a prompt to Claude, Claude's summary of
+// the steps before it, or a check that sends the steps round again.
 //
 // A step is an array and not a model because one shape comes out of two
 // tables: workflow_step is what the editor writes and workflow_run_step what
@@ -19,6 +19,19 @@ class Step {
 	const PROMPT = "prompt";
 
 	const SUMMARY = "summary";
+
+	const CHECK = "check";
+
+	/**
+	 * The passes a check lets the workflow's steps take, the first counted:
+	 * PASSES for a step naming none, and never fewer than LEAST or more than
+	 * MOST, as model/workflow_check.go holds them.
+	 */
+	const PASSES = 3;
+
+	const MOST_PASSES = 20;
+
+	const LEAST_PASSES = 2;
 
 	/**
 	 * SCRIPT is the kind the editor shows a job step of SCRIPT_JOB as: a
@@ -52,6 +65,8 @@ class Step {
 			"args" => "",
 			"prompt" => "",
 			"dir" => "",
+			"markers" => "",
+			"tries" => 0,
 			"missing" => "",
 			"state" => "",
 			"run_id" => "",
@@ -61,8 +76,9 @@ class Step {
 
 	/**
 	 * added is a blank step of a kind, as the editor's template for that kind
-	 * holds it: a prompt or a summary asks in the root, and a script is a job
-	 * step of SCRIPT_JOB.
+	 * holds it: a prompt or a summary asks in the root, a check looks for the
+	 * marker a refinement prompt writes, and a script is a job step of
+	 * SCRIPT_JOB.
 	 */
 	static function added($kind) {
 		$step = self::blank();
@@ -70,6 +86,11 @@ class Step {
 
 		if ($kind === self::PROMPT || $kind === self::SUMMARY) {
 			$step["folder"] = Route::INTERNAL;
+		}
+
+		if ($kind === self::CHECK) {
+			$step["markers"] = "Next:";
+			$step["tries"] = self::PASSES;
 		}
 
 		if ($kind === self::SCRIPT) {
@@ -97,6 +118,8 @@ class Step {
 			$step["args"] = $row->getArgs();
 			$step["prompt"] = $row->getPrompt();
 			$step["dir"] = $row->getDir();
+			$step["markers"] = $row->getMarkers();
+			$step["tries"] = $row->getTries();
 			$out[] = $step;
 		}
 
@@ -126,6 +149,7 @@ class Step {
 			$step["run_id"] = $row->getRunId();
 			$step["workflow_run_id"] = $row->getWorkflowRunRef();
 			$step["prompt"] = $row->getPrompt();
+			$step["markers"] = $row->getMarkers();
 			$out[] = $step;
 		}
 
@@ -185,6 +209,26 @@ class Step {
 		return $kind === self::PROMPT || $kind === self::SUMMARY;
 	}
 
+	/**
+	 * passes is the times a check lets the steps run, its tries made good: the
+	 * default for a step naming none, since one pass leaves a check nothing to
+	 * send round, and MOST_PASSES at the most, so a step that keeps writing
+	 * the marker ends the run instead of looping on.
+	 */
+	static function passes($tries) {
+		$tries = intval($tries);
+
+		if ($tries <= 0) {
+			return self::PASSES;
+		}
+
+		if ($tries < self::LEAST_PASSES) {
+			return self::LEAST_PASSES;
+		}
+
+		return $tries > self::MOST_PASSES ? self::MOST_PASSES : $tries;
+	}
+
 	/** command is the command of a script step, its one argument. */
 	static function command($step) {
 		$list = Text::items($step["args"]);
@@ -208,6 +252,10 @@ class Step {
 			return "Summary";
 		}
 
+		if ($kind === self::CHECK) {
+			return "Check";
+		}
+
 		return $kind === self::SCRIPT ? "Script" : "Command";
 	}
 
@@ -225,6 +273,10 @@ class Step {
 
 		if ($kind === self::SUMMARY) {
 			return "summary";
+		}
+
+		if ($kind === self::CHECK) {
+			return "rotate";
 		}
 
 		return $kind === self::SCRIPT ? "script" : "terminal";
@@ -262,8 +314,8 @@ class Step {
 
 	/**
 	 * line is the step in one line, its card's heading while folded: the job
-	 * and its arguments, the workflow, the first line of the prompt, or where
-	 * the summary asks.
+	 * and its arguments, the workflow, the first line of the prompt, where the
+	 * summary asks, or what the check looks for.
 	 */
 	static function line($step) {
 		$kind = self::kind($step);
@@ -278,6 +330,14 @@ class Step {
 
 		if ($kind === self::SUMMARY) {
 			return "of the steps before it, in " . self::place($step);
+		}
+
+		if ($kind === self::CHECK) {
+			if ($step["markers"] === "") {
+				return "";
+			}
+
+			return "the steps go round again while the step before it writes " . $step["markers"];
 		}
 
 		if ($kind === self::SCRIPT) {

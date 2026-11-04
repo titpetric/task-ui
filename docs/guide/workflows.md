@@ -1,6 +1,6 @@
 # Workflows
 
-A workflow is a named chain of steps: a one button deploy, such as build, test, push, plan, apply, or a chain of prompts to Claude that fetches something and reasons over it, ending with a summary. A step is a command, a job of any folder or another workflow, a prompt to Claude, or a summary by Claude of the steps before it, in any number and order. The sidebar lists the workflows under **Workflows**, each with a play button.
+A workflow is a named chain of steps: a one button deploy, such as build, test, push, plan, apply, or a chain of prompts to Claude that fetches something and reasons over it, ending with a summary. A step is a command, a job of any folder or another workflow, a prompt to Claude, a summary by Claude of the steps before it, or a check that sends the steps round again, in any number and order. The sidebar lists the workflows under **Workflows**, each with a play button.
 
 ![Workflows](https://cdn.si/titpetric/task-ui/docs/assets/workflows-dark.png)
 
@@ -18,12 +18,13 @@ Each step is of a kind, which the editor shows on its card and the API names in 
 - **Script** (`job` of `@script`): a shell command you write, such as `go get -u ./...`, run with `bash -l -c` in a folder you pick. The command is the step's one arg; a non-zero exit fails the step. Adding or changing one takes the `shell` permission, as running it does.
 - **Prompt** (`prompt`): Claude answers a prompt in a folder, the root by default, or a directory inside it, with the output of the steps before it. Claude's answer is the step's output: the prompts after it read it.
 - **Summary** (`summary`): Claude summarises the steps before it, with no prompt of yours: task-ui asks Claude the question "Summarize this workflow run." and the instruction of **Run and summarize**, one or two short paragraphs and a table of the values worth a glance. A summary is optional; it ends most chains.
+- **Check** (`check`): the step reads the step before it and, while it finds one of the markers there, sends the steps round again from the first. Nothing runs in a check: it ends ok whatever it found, and its answer is the finding. See [A check sends the steps round again](#a-check-sends-the-steps-round-again).
 
 A longer chain of prompts is fine: fetch with one prompt, reason over its answer with the next, and summarise at the end.
 
 ## Running one
 
-**Run** starts the first step. Each next step starts when the one before it ended ok. The first step that does not end ok ends the workflow, and the rest do not run, but for a summary: a summary step runs after a failed step too, to say what failed and why. A **Stop** skips every step after it, a summary too. While a workflow runs, the play button in the sidebar becomes an eye: open it to watch.
+**Run** starts the first step. Each next step starts when the one before it ended ok. The first step that does not end ok ends the workflow, and the rest do not run, but for a summary: a summary step runs after a failed step too, to say what failed and why. A **Stop** skips every step after it, a summary too. A check step among them sends the run back to the first step while it finds its marker in the step before it, which is one run and not a second: see [A check sends the steps round again](#a-check-sends-the-steps-round-again). While a workflow runs, the play button in the sidebar becomes an eye: open it to watch.
 
 A step that is off stays in the chain and a run skips it: its row reads skipped, and the steps after it run.
 
@@ -51,6 +52,22 @@ The step ends ok when Claude's run ends ok; a prompt that fails ends the workflo
 The pipeline shows a prompt step with the prompt icon, as a prompt in its folder, its prompt under it, a summary with the summary icon, and each with its run once it ran. Their threads show on the workflow run's page under **Prompts**, live while Claude works: the question, and Claude's answer under it. A reply in a thread asks again with the same steps. Saving a prompt or a summary, and running a workflow with one, takes the `prompt/edit` permission.
 
 Through `/api/workflows`, a prompt step is `{"kind": "prompt", "prompt": "fetch the weather", "folder": "internal", "dir": ""}`, a summary step `{"kind": "summary", "folder": "internal"}`: `folder` the folder Claude runs in, `internal` for the root and empty for no workspace, the workspaces root, and `dir` a directory inside it.
+
+## A check sends the steps round again
+
+A check step reads the last step before it that ran and left something to read — a prompt's or a summary's answer, a command's output, earlier checks passed over, a skipped step read past — and looks in it for the markers it was given: **Looks for**, one or more, comma separated, case ignored, as `Next:,TODO:`. Finding one sends the run back to the first step and they all run again, in the same run: the loop is passes over one workflow run and never a second run. Finding none moves to the step after it.
+
+So a prompt that ends with `Next: build the index` keeps the chain going, and the same prompt that has nothing left to do ends it. The prompt gets each pass's steps as it got the first's, so it reads what the pass before it did.
+
+**Passes** bounds it, the first pass counted: 3 lets the steps run twice more, 2 at the fewest, since one pass leaves a check nothing to send round, and 20 at the most, so a step that keeps writing the marker ends the run instead of looping on. The pass that spends the last one says so in the check's answer and the run goes on to the step after it.
+
+A check runs nothing and ends ok whatever it found, so it never fails a run. Its answer is its finding, on its row of the pipeline: `found "Next:" in step 2: the steps go round again, pass 2 of 3`, `no Next: in step 2`, or that the step before it left nothing to read. A check makes no run of its own, so it is no stop in the chain of a table cell. A failed step skips the rest of its pass, the check among them, so a failure ends the loop rather than retrying it; a summary still runs.
+
+A run writes each pass over the same rows, so the pipeline shows the latest pass of each step and the run's answer is the last answer of all the passes.
+
+In a workflow that **runs over** a workspace, a check sends its own project's steps round again and counts its own passes: the projects already walked are not walked twice, and one project's loop cannot spend another's passes.
+
+Through `/api/workflows`, a check step is `{"kind": "check", "markers": "Next:,TODO:", "tries": 3}`: `markers` is required and `tries` takes the default when it is 0.
 
 ## Workflow context
 
@@ -93,13 +110,13 @@ A schedule of such a workflow keeps a set of projects up to date with no one at 
 
 Through the API, `runs_over` on `POST` and `PUT /api/workflows` names the workspace, empty for none, left out unchanged; a workspace you may not see answers `400`, as does a workflow step with it; a script step without `shell` answers `403`.
 
-- **Add step** at the foot of the rail picks the kind: **Command**, **Script** with `shell`, **Prompt** or **Summary**, the last two with `prompt/edit`. The new card opens on its fields.
-- A card folds to one line: its kind, and the job and its args, the workflow, the first line of the prompt, or where the summary asks. A click on it opens it on its fields; **Expand all** opens them all.
+- **Add step** at the foot of the rail picks the kind: **Command**, **Script** with `shell`, **Prompt** or **Summary**, those two with `prompt/edit`, or **Check**, which needs no permission of its own. The new card opens on its fields.
+- A card folds to one line: its kind, and the job and its args, the workflow, the first line of the prompt, where the summary asks, or what the check looks for. A click on it opens it on its fields; **Expand all** opens them all.
 - A workflow belongs to no workspace, and every step starts with its **Workspace**: **Internal** for the root and the projects at its top, then each workspace that holds a folder you see. The folder list next to it holds that workspace's folders with a job, every one you see, also the ones the sidebar leaves out: a checkout the workspace's `.gitignore` ignores, a folder below a project or a workspace with **Recursive** off, a folder hidden from the sidebar. A folder with no job isn't listed. The list names each folder relative to its workspace, `apps/blog` for `malta/apps/blog`, and `the root` for the workspace's own. Picking another workspace keeps the folder of the same relative name and its job when that workspace has them; what it lacks goes back to pick one, and a line under the card says so, such as `apps/blog is not in Malta.` A step you edit opens on the workspace of its folder. Save refuses a step whose folder its workspace lacks and says so under the card, naming the step and the workspace: `apps/blog / build: Malta has no folder apps/blog`.
 - **Move to** a workspace in the edit page's [...] menu does that for every step at once: the form opens with the steps moved, each one the workspace lacks a folder or a job of saying so under its card, and **Save** keeps it. A step that runs another workflow stays put.
-- A **Command** picks its workspace, then its folder, the job and its arguments; Picking **Workflows** as its workspace lists the workflows it may run. A **Prompt** takes its text, its workspace, **Asks in**, the folder Claude works in, and a directory inside it. A **Summary** takes the workspace, **Asks in** and the directory, and shows what Claude gets. Both also list **none (the workspace root)**, for a user who sees every folder: Claude works at the workspaces root, over every workspace, with no workspace's secrets or keys, and in a workflow that **runs over** a workspace in the root of the project each pass is over. The step keeps the folder alone, whose ID names its workspace.
+- A **Command** picks its workspace, then its folder, the job and its arguments; Picking **Workflows** as its workspace lists the workflows it may run. A **Prompt** takes its text, its workspace, **Asks in**, the folder Claude works in, and a directory inside it. A **Summary** takes the workspace, **Asks in** and the directory, and shows what Claude gets. Both also list **none (the workspace root)**, for a user who sees every folder: Claude works at the workspaces root, over every workspace, with no workspace's secrets or keys, and in a workflow that **runs over** a workspace in the root of the project each pass is over. The step keeps the folder alone, whose ID names its workspace. A **Check** has no folder and no workspace: it takes **Looks for**, the markers, and **Passes**, how many times it lets the steps run.
 - The grip at a card's left moves it: drag it, or focus it and press the up and down arrows. The card's [...] menu has **Move up**, **Move down**, **Disable** or **Enable**, **Duplicate** and **Remove**.
-- **Save** sends the whole list. A step that misses something, a command without its job or a prompt without its text, opens with what is missing under it, and so does a step the server refuses, such as a directory Claude cannot work in.
+- **Save** sends the whole list. A step that misses something, a command without its job, a prompt without its text or a check with nothing to look for, opens with what is missing under it, and so does a step the server refuses, such as a directory Claude cannot work in.
 
 The editor works the same at phone width: the fields stack under each card. Anyone can make a workflow. Its owner, or an admin, edits or deletes it; the runs so far keep the steps they had.
 

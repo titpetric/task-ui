@@ -159,8 +159,14 @@ func (h *Handlers) checkStep(r *http.Request, step StepRequest) (model.WorkflowS
 		return model.WorkflowStep{Kind: model.StepWorkflow, WorkflowRef: wf.ID}, nil
 	case model.StepJob:
 		return h.jobStep(r, step)
+	case model.StepCheck:
+		markers := model.Markers(step.Markers)
+		if len(markers) == 0 {
+			return model.WorkflowStep{}, workflow.ErrCheckMarkers
+		}
+		return model.WorkflowStep{Kind: model.StepCheck, Markers: strings.Join(markers, ","), Tries: step.Tries}, nil
 	}
-	return model.WorkflowStep{}, fmt.Errorf("no step kind %q: job, workflow, prompt or summary", step.Kind)
+	return model.WorkflowStep{}, fmt.Errorf("no step kind %q: job, workflow, prompt, summary or check", step.Kind)
 }
 
 // checkWorkflow reads a request into the workflow and its steps, those

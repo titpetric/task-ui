@@ -10,6 +10,12 @@
 // the steps before it, and runs after a step that failed too, to say
 // why. The run's answer, the reply to its input, comes from the last
 // prompt or summary step that answered.
+//
+// A check step runs nothing: it reads the step it follows, and when that
+// step wrote one of the markers the check names, the steps go round
+// again from the first, within the one run, for as many passes as the
+// check allows. The steps a check precedes wait for the pass that finds
+// no marker.
 package workflow
 
 import (
@@ -41,23 +47,26 @@ var ErrHostStep = errors.New("a step of @host:<host> needs a command as its args
 // ErrNothing refuses a run of a workflow with no enabled step.
 var ErrNothing = errors.New("the workflow has no enabled step")
 
-// Catalogue finds the folder a step names. folder.Discovery is one.
+// ErrCheckMarkers refuses a check step with nothing to look for.
+var ErrCheckMarkers = errors.New("a check step needs a marker to look for")
+
+// Catalogue finds the folder a step names, as folder.Discovery does.
 type Catalogue interface {
 	Find(id string) *folder.Folder
 }
 
-// Users looks up the user of a workflow, by ID, and what a user may do.
-// storage.UserStorage is one.
+// Users looks up the user of a workflow, by ID, and what they may do, as
+// storage.UserStorage does.
 type Users interface {
 	Get(ctx context.Context, id string) (*model.User, error)
 	Permissions(ctx context.Context, user *model.User) permission.Set
 }
 
 // Prompter puts a workflow's prompt and summary steps to Claude, as the
-// user who started the run, with the run's input and the steps before
-// it, in the step's place. AskStep returns when Claude replied, with the
-// prompt's run and the reply, or when the prompt failed; a stop of ctx
-// ends the prompt's run. note.Board is one.
+// user who started the run, with the run's input and the steps already
+// walked, in the step's place. AskStep returns when Claude replied, with
+// the prompt's run and the reply, or when the prompt failed; a stop of
+// ctx ends the prompt's run, as note.Board does it.
 type Prompter interface {
 	AskStep(ctx context.Context, user *model.User, run *model.WorkflowRun, step *model.WorkflowRunStep, place, input string) (string, string, error)
 }
@@ -74,6 +83,9 @@ type Runner struct {
 	Events *event.Bus
 	// Prompter puts the prompt and summary steps to Claude; nil fails them.
 	Prompter Prompter
+	// Output reads a job step's output for the check steps that follow it.
+	// Nil leaves a check nothing to read, so it finds no marker.
+	Output Output
 	// Hosts start a step of @host:<host> on its host. Nil fails such a step.
 	Hosts *hostrun.Starter
 	// Users finds the user a nested workflow runs as, and what they may
@@ -100,7 +112,7 @@ type active struct {
 	done     chan struct{}
 }
 
-// New returns a runner.
+// New returns a runner with nothing wired onto its fields: a prompt step fails until the app sets Prompter.
 func New(workflows *storage.WorkflowStorage, runs *storage.WorkflowRunStorage, catalogue Catalogue, manager *runner.Manager) *Runner {
 	return &Runner{
 		workflows: workflows,
@@ -185,9 +197,7 @@ func (r *Runner) Active(workflowID string) (string, bool) {
 	return "", false
 }
 
-// Running returns the run in progress of every workflow that has one, by
-// workflow ID. It is Active for a page that draws many workflows: the sidebar
-// marks each of them and asks once.
+// Running is Active for a page that draws many workflows, by workflow ID: the sidebar asks once.
 func (r *Runner) Running() map[string]string {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -225,7 +235,8 @@ func (r *Runner) Stop(runID string) error {
 }
 
 // walk runs the steps in order and records how each, and the whole,
-// ended.
+// ended. A check step sends the steps round again, so the walk is a
+// pass over the steps until one runs through.
 func (r *Runner) walk(ctx context.Context, a *active, steps []Step, rows []model.WorkflowRunStep, user *model.User) {
 	defer func() {
 		r.mu.Lock()
@@ -239,14 +250,43 @@ func (r *Runner) walk(ctx context.Context, a *active, steps []Step, rows []model
 	store := context.Background()
 	run := a.run
 	run.State = model.StateOK
+	// A check sends its own project's steps round again, so the passes are
+	// counted by project, and a workflow that runs over no workspace has
+	// the one project.
+	passes := make([]int, len(steps)+1)
+	for from := 0; from >= 0; {
+		from = r.pass(ctx, a, steps, rows, user, from, passes)
+		if from >= 0 {
+			slog.Info("workflow goes round again", "workflow", run.Name, "step", from+1)
+		}
+	}
+	run.AnswerFrom(rows)
+	if err := r.runs.Update(store, run); err != nil {
+		slog.Warn("workflow run not saved", "workflow", run.Name, "err", err)
+	}
+	slog.Info("workflow finished", "workflow", run.Name, "user", run.UserName, "state", run.State)
+	r.publish(run.WorkflowID, "done", RunEvent{RunID: run.ID, WorkflowID: run.WorkflowID, Name: run.Name, State: run.State, Message: run.Message, UserName: run.UserName, Answer: run.Answer})
+}
+
+// pass walks the steps from one of them to the last, counts the pass of
+// each project it enters, and returns the step a check among them sent
+// the project's steps back to, -1 for a walk that ran through. It returns
+// at the check, so the steps after it keep the state they had and the
+// pass after this one reaches them.
+func (r *Runner) pass(ctx context.Context, a *active, steps []Step, rows []model.WorkflowRunStep, user *model.User, from int, passes []int) int {
+	store := context.Background()
+	run := a.run
 	// Each project of a workflow that runs over a workspace starts ok: a
 	// failure skips the rest of its own steps alone, and a stop all.
-	group, state := 0, model.StateOK
+	group, state := groupAt(steps, from), model.StateOK
+	passes[group]++
 
-	for i, step := range steps {
+	for i, step := range steps[from:] {
+		i += from
 		row := &rows[i]
 		if step.Group != group && state != model.StateStopped {
 			group, state = step.Group, model.StateOK
+			passes[group]++
 		}
 		if skips(state, step) {
 			row.State = model.StepSkipped
@@ -256,7 +296,13 @@ func (r *Runner) walk(ctx context.Context, a *active, steps []Step, rows []model
 		row.State = model.StateRunning
 		r.saveStep(store, row)
 		var ended, message string
+		again := false
 		switch {
+		case step.Check:
+			// A check runs nothing, so it ends ok whatever it found; its
+			// answer is the finding.
+			ended = model.StateOK
+			row.Answer, again = r.checked(ctx, step, rows[:i], passes[group])
 		case step.Asks:
 			ended, row.RunID, row.Answer, message = r.promptStep(ctx, a, row, step, user)
 		case step.Workflow != nil:
@@ -282,13 +328,11 @@ func (r *Runner) walk(ctx context.Context, a *active, steps []Step, rows []model
 				run.State, run.Message = model.StateFailed, fmt.Sprintf("%s %s", label(step), firstOf(message, ended))
 			}
 		}
+		if again {
+			return groupStart(steps, group)
+		}
 	}
-	run.AnswerFrom(rows)
-	if err := r.runs.Update(store, run); err != nil {
-		slog.Warn("workflow run not saved", "workflow", run.Name, "err", err)
-	}
-	slog.Info("workflow finished", "workflow", run.Name, "user", run.UserName, "state", run.State)
-	r.publish(run.WorkflowID, "done", RunEvent{RunID: run.ID, WorkflowID: run.WorkflowID, Name: run.Name, State: run.State, Message: run.Message, UserName: run.UserName, Answer: run.Answer})
+	return -1
 }
 
 // step starts one job and waits for it, and tells started the run once
@@ -439,6 +483,8 @@ func skips(state string, step Step) bool {
 
 func label(step Step) string {
 	switch {
+	case step.Check:
+		return "the check for " + strings.Join(step.Markers, ", ")
 	case step.Summary:
 		return "the summary in " + model.PlaceLabel(step.Place)
 	case step.Asks:

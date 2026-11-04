@@ -49,6 +49,18 @@
 {/foreach}					</select>
 				</div>
 			</div>
+{elseif $data_step.check}			<div class="wf-fields">
+				<div class="field wf-wide">
+					<span class="label">Looks for <span class="faint">in the step before it</span></span>
+					<input type="text" data-step-markers aria-label="What the check looks for" placeholder="Next:" value="{data_step.markers}" spellcheck="false" autocomplete="off">
+					<small class="faint">One or more, comma separated, case ignored. While the step before the check writes one of them, the workflow's steps run again from the first.</small>
+				</div>
+				<div class="field">
+					<span class="label">Passes <span class="faint">at the most</span></span>
+					<input type="number" data-step-tries aria-label="Passes at the most" min="{data_step.least}" max="{data_step.most}" step="1" value="{data_step.tries}">
+					<small class="faint">The first pass counted, so 3 lets the steps run twice more. The check runs nothing itself and ends ok whatever it finds.</small>
+				</div>
+			</div>
 {else}{if $data_step.asks}			<div class="field">
 				<span class="label">Prompt</span>
 				<textarea data-step-prompt-text rows="5" spellcheck="false" aria-label="Prompt" placeholder="Fetch the forecast for the next 3 days and print a short table.">{data_step.prompt}</textarea>

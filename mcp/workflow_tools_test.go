@@ -9,8 +9,8 @@ import (
 )
 
 // create_workflow and update_workflow take a description and the steps
-// with their kinds, job, workflow, prompt and summary; the final prompt
-// is a step, no field of its own.
+// with their kinds, job, workflow, prompt, summary and check; the final
+// prompt is a step, no field of its own.
 func TestWorkflowTools_StepKinds(t *testing.T) {
 	t.Parallel()
 	seen := 0
@@ -28,7 +28,9 @@ func TestWorkflowTools_StepKinds(t *testing.T) {
 		assert.False(t, ok, tool.Name)
 		steps := props["steps"]
 		assert.NotNil(t, steps.Items, tool.Name)
-		assert.Equal(t, []string{"job", "workflow", "prompt", "summary"}, steps.Items.Properties["kind"].Enum)
+		assert.Equal(t, []string{"job", "workflow", "prompt", "summary", "check"}, steps.Items.Properties["kind"].Enum)
+		_, ok = steps.Items.Properties["markers"]
+		assert.True(t, ok, tool.Name)
 	}
 	assert.Equal(t, 2, seen)
 }

@@ -1249,6 +1249,37 @@
     });
   }
 
+  // fill puts an answer's fields into a template as they read: {token}
+  // becomes the token a POST answered with, and a *_at field reads as a
+  // local time, because the reader's clock is what spells a stamp. filled
+  // is the same substitution for a link, where a value is escaped.
+  function fill(template, data) {
+    return template.replace(/\{(\w+)\}/g, function (all, name) {
+      var value = data && data[name] !== undefined && data[name] !== null ? String(data[name]) : "";
+      if (/_at$/.test(name) && value) value = new Date(value).toLocaleString();
+      return value;
+    });
+  }
+
+  // copy puts a value on the clipboard and marks the element that asked
+  // for it, which is the only sign a click leaves. A path copies as a
+  // whole link, to paste anywhere. A browser that refuses the clipboard,
+  // over plain HTTP or once the gesture the click gave is spent, shows the
+  // value to copy by hand rather than dropping it. The promise settles
+  // either way, so a caller that reloads after copying waits for the write.
+  function copy(value, el) {
+    if (value.charAt(0) === "/") value = location.origin + value;
+    var byHand = function () { window.prompt("Copy:", value); };
+    if (!navigator.clipboard || !window.isSecureContext) {
+      byHand();
+      return Promise.resolve();
+    }
+    return navigator.clipboard.writeText(value).then(function () {
+      el.classList.add("copied");
+      setTimeout(function () { el.classList.remove("copied"); }, 1200);
+    }).catch(byHand);
+  }
+
   // reveal shows what an answer holds once, such as a new token, in the
   // block a form's data-reveal names, and hides what it replaces: the
   // block's section's [data-before-reveal]. Each [data-fill] there takes
@@ -1260,11 +1291,7 @@
     var section = target.closest("section") || target.parentNode;
     section.querySelectorAll("[data-before-reveal]").forEach(function (el) { el.hidden = true; });
     target.querySelectorAll("[data-fill]").forEach(function (el) {
-      var value = el.dataset.fill.replace(/\{(\w+)\}/g, function (all, name) {
-        var v = data && data[name] !== undefined && data[name] !== null ? String(data[name]) : "";
-        if (/_at$/.test(name) && v) v = new Date(v).toLocaleString();
-        return v;
-      });
+      var value = fill(el.dataset.fill, data);
       if (el.hasAttribute("data-copy")) el.setAttribute("data-copy", value);
       else el.textContent = value;
     });
@@ -1646,6 +1673,11 @@
   // JSON, with data-method, after its data-confirm, as a form with
   // data-api does: on success it goes to data-next, the answer's fields
   // put in.
+  //
+  // With data-copy-fill it copies instead: the answer's fields go into
+  // that template and the result lands on the clipboard, which is how one
+  // click makes a token and hands over the settings that carry it. Nothing
+  // keeps the answer, so a click that copies is the only time it shows.
   document.addEventListener("click", function (event) {
     var btn = event.target.closest("button[data-api]");
     if (!btn || btn.form) return;
@@ -1656,8 +1688,18 @@
       btn.disabled = true;
       api((btn.dataset.method || "POST").toUpperCase(), btn.dataset.api, body).then(function (res) {
         btn.disabled = false;
-        if (res.status >= 300) fail(btn, res);
-        else next(filled(btn.dataset.next, res.data), btn);
+        if (res.status >= 300) {
+          fail(btn, res);
+          return;
+        }
+        if (btn.dataset.copyFill) {
+          copy(fill(btn.dataset.copyFill, res.data), btn).then(function () {
+            if (btn.dataset.next) next(filled(btn.dataset.next, res.data), btn);
+            else toast(btn.dataset.notice || "Copied");
+          });
+          return;
+        }
+        next(filled(btn.dataset.next, res.data), btn);
       });
     };
     if (btn.dataset.confirm) confirm(btn.dataset.confirm, btn.dataset.confirmOk).then(function (ok) { if (ok) send(); });
@@ -2233,7 +2275,8 @@
     workflow: ["Workflow", "i-flow"],
     script: ["Script", "i-script"],
     prompt: ["Prompt", "i-prompt"],
-    summary: ["Summary", "i-summary"]
+    summary: ["Summary", "i-summary"],
+    check: ["Check", "i-rotate"]
   };
 
   // stepPlace is where a prompt or summary card asks: its folder, empty
@@ -2260,6 +2303,14 @@
       if (kind === "script") {
         var cmd = row.querySelector("[data-step-script]").value.trim();
         return { kind: "job", folder: row.querySelector("[data-step-place]").value, job: SCRIPT, args: [cmd], enabled: enabled };
+      }
+      if (kind === "check") {
+        return {
+          kind: kind,
+          markers: row.querySelector("[data-step-markers]").value.trim(),
+          tries: parseInt(row.querySelector("[data-step-tries]").value, 10) || 0,
+          enabled: enabled
+        };
       }
       var folder = row.querySelector("[data-step-folder]").value;
       if (folder.indexOf(WORKFLOW) === 0) return { kind: "workflow", workflow: folder.slice(WORKFLOW.length), enabled: enabled };
@@ -2360,6 +2411,9 @@
       var place = stepPlace(row);
       var at = place.dir ? place.folder + "/" + place.dir : place.folder;
       line = "of the steps before it, in " + (at === "" ? "the workspace root" : at === "internal" ? "the root" : at);
+    } else if (kind === "check") {
+      var markers = row.querySelector("[data-step-markers]").value.trim();
+      line = markers ? "the steps go round again while the step before it writes " + markers : "";
     } else {
       var folder = row.querySelector("[data-step-folder]");
       if (kind === "workflow") {
@@ -2371,7 +2425,7 @@
       }
     }
     var head = row.querySelector("[data-step-line]");
-    head.textContent = line || (kind === "prompt" ? "no prompt yet" : kind === "script" ? "no command yet" : "no job picked yet");
+    head.textContent = line || (kind === "prompt" ? "no prompt yet" : kind === "script" ? "no command yet" : kind === "check" ? "nothing to look for yet" : "no job picked yet");
     head.classList.toggle("unset", !line);
   }
 
@@ -2456,7 +2510,7 @@
     if (!copy) return null;
     setValue(copy.querySelector("[data-step-space]"), row.querySelector("[data-step-space]").value);
     narrowSpace(copy);
-    ["[data-step-folder]", "[data-step-prompt-text]", "[data-step-script]", "[data-step-place]", "[data-step-dir]"].forEach(function (sel) {
+    ["[data-step-folder]", "[data-step-prompt-text]", "[data-step-script]", "[data-step-place]", "[data-step-dir]", "[data-step-markers]", "[data-step-tries]"].forEach(function (sel) {
       var from = row.querySelector(sel), to = copy.querySelector(sel);
       if (from && to) setValue(to, from.value);
     });
@@ -2510,6 +2564,8 @@
       } else if (kind === "script") {
         if (!row.querySelector("[data-step-script]").value.trim()) problem = "Write the command the step runs.";
         else if (!row.querySelector("[data-step-place]").value) problem = "Pick the folder the command runs in.";
+      } else if (kind === "check" && !row.querySelector("[data-step-markers]").value.trim()) {
+        problem = "Write what the check looks for, as Next:.";
       }
       stepProblem(row, problem);
       if (problem && !first) first = row;
@@ -3414,38 +3470,64 @@
   });
 
   // The preview window: a file of the artifact tree, an image scaled to
-  // fit, markdown rendered, or text, with a pick of the versions the runs
-  // wrote, or a file of a checkout the same way, without versions. The link still opens the file on its own
+  // fit, an HTML page in a frame, markdown rendered, or text, with a pick
+  // of the versions the runs wrote, or a file of a checkout the same way,
+  // without versions. The link still opens the file on its own
   // with Ctrl or a middle click.
   var previewDialog = document.getElementById("preview-dialog");
   if (previewDialog) {
     var previewImage = document.getElementById("preview-image");
     var previewDoc = document.getElementById("preview-doc");
+    var previewFrame = document.getElementById("preview-frame");
     var previewVersion = document.getElementById("preview-version");
     var previewDownload = document.getElementById("preview-download");
     var previewPath = "";
     document.getElementById("preview-close").addEventListener("click", function () { previewDialog.close(); });
-    previewDialog.addEventListener("close", function () { previewImage.removeAttribute("src"); previewDoc.innerHTML = ""; });
+    previewDialog.addEventListener("close", function () {
+      previewImage.removeAttribute("src");
+      previewDoc.innerHTML = "";
+      // A frame left standing keeps the page it holds loaded, which for
+      // an artifact that polls or animates is work after the close.
+      previewFrame.hidden = true;
+      previewFrame.removeAttribute("src");
+    });
 
     var fileURL = function (rel, version) {
       return "/artifacts/files/" + rel.split("/").map(encodeURIComponent).join("/") + (version ? "?version=" + encodeURIComponent(version) : "");
     };
     var showImage = function (src) {
       previewDoc.hidden = true;
+      previewFrame.hidden = true;
+      previewFrame.removeAttribute("src");
       previewImage.hidden = false;
       previewImage.src = src;
     };
     var showDoc = function (html, kind) {
       previewImage.hidden = true;
       previewImage.removeAttribute("src");
+      previewFrame.hidden = true;
+      previewFrame.removeAttribute("src");
       previewDoc.hidden = false;
       previewDoc.className = "preview-doc " + kind;
       previewDoc.innerHTML = html;
+    };
+    // showFrame opens a page a run wrote as a page: the frame reads the
+    // file from its own URL, which answers text/html under a sandbox, so
+    // the markup renders without the page around it being reachable. The
+    // markup is never put into this document — it is not ours.
+    var showFrame = function (src) {
+      previewImage.hidden = true;
+      previewImage.removeAttribute("src");
+      previewDoc.hidden = true;
+      previewDoc.innerHTML = "";
+      previewFrame.hidden = false;
+      previewFrame.src = src;
     };
     var previewLabel = document.getElementById("preview-label");
     var showView = function (view, src) {
       previewDownload.setAttribute("href", src + (src.indexOf("?") < 0 ? "?" : "&") + "download");
       if (view.kind === "image") showImage(src);
+      else if (view.kind === "page") showFrame(src);
       else if (view.kind === "markdown") showDoc(view.html, "markdown");
       else if (view.kind === "text") {
         var cut = view.truncated ? '<p class="faint">The first ' + escapeHTML(String(view.text.length)) + " characters of " +
@@ -4795,17 +4877,7 @@
     if (link && link !== btn && btn.contains(link)) return;
 
     if (btn.hasAttribute("data-copy")) {
-      var value = btn.getAttribute("data-copy");
-      // A path copies as a whole link, to paste anywhere.
-      if (value.charAt(0) === "/") value = location.origin + value;
-      if (navigator.clipboard && window.isSecureContext) {
-        navigator.clipboard.writeText(value).then(function () {
-          btn.classList.add("copied");
-          setTimeout(function () { btn.classList.remove("copied"); }, 1200);
-        });
-      } else {
-        window.prompt("Copy:", value);
-      }
+      copy(btn.getAttribute("data-copy"), btn);
       return;
     }
 

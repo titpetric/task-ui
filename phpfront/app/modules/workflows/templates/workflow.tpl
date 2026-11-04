@@ -28,7 +28,7 @@
 {foreach $data.rows as $row}			<tr data-run-id="{row.id}">
 				<td class="key" data-result>{eval $data_wffold = $row.fold}{include components/wffold.tpl}<a href="{base}{row.href}" title="{row.stamp}"><i class="dot {row.state}" title="{row.state}"></i>{row.ago}</a>{if $row.message}<small class="faint wf-desc">{row.message}</small>{/if}</td>
 				<td data-label="By">{eval $data_user = $row.user}{include components/user.tpl}</td>
-				<td data-label="Steps"><span class="chain">{foreach $row.chain as $link}{if $link.then}<span class="faint then" aria-hidden="true"></span>{/if}<a class="nowrap" href="{base}{link.href}" data-pos="{link.pos}"><i class="dot {link.state}"></i>{if $link.workflow}<svg class="ic lead"><use href="#i-flow"/></svg>{elseif $link.summary}<svg class="ic lead"><use href="#i-summary"/></svg>{elseif $link.prompt}<svg class="ic lead"><use href="#i-prompt"/></svg>{/if}{link.text}</a>{/foreach}</span></td>
+				<td data-label="Steps"><span class="chain">{foreach $row.chain as $link}{if $link.then}<span class="faint then" aria-hidden="true"></span>{/if}<a class="nowrap" href="{base}{link.href}" data-pos="{link.pos}"><i class="dot {link.state}"></i>{if $link.workflow}<svg class="ic lead"><use href="#i-flow"/></svg>{elseif $link.summary}<svg class="ic lead"><use href="#i-summary"/></svg>{elseif $link.check}<svg class="ic lead"><use href="#i-rotate"/></svg>{elseif $link.prompt}<svg class="ic lead"><use href="#i-prompt"/></svg>{/if}{link.text}</a>{/foreach}</span></td>
 				<td class="actions"><a class="btn btn-sm" href="{base}{row.href}" data-workflow-view>View</a>{eval $data_menu = $row.menu}{include components/menu.tpl}</td>
 			</tr>
 {eval $data_wfanswer = $row.answer}

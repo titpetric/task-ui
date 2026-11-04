@@ -30,8 +30,8 @@ const (
 )
 
 // RunChain is the chain of runs a run is part of, as the run window
-// follows it: where the run stands in it, the runs beside it, and
-// whether the chain has its last run.
+// follows it: where the run stands in it, the runs before and after,
+// and whether the chain has its last run.
 type RunChain struct {
 	// ID names the chain: the job's run of a summary, the workflow run,
 	// the batch.
@@ -116,7 +116,8 @@ func WorkflowChain(current string, run model.WorkflowRun, steps []model.Workflow
 	var runs []string
 	total := 0
 	for _, step := range steps {
-		if step.IsWorkflow() || step.State == model.StepSkipped {
+		// A check makes no run of its own, so it is no stop of the chain.
+		if step.IsWorkflow() || step.IsCheck() || step.State == model.StepSkipped {
 			continue
 		}
 		total++

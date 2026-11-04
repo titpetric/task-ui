@@ -84,6 +84,7 @@
 						<button type="button" role="menuitem" data-step-add="prompt"><svg class="ic"><use href="#i-prompt"/></svg><span><b>Prompt</b><small>Claude answers a prompt with the output of the steps before it.</small></span></button>
 						<button type="button" role="menuitem" data-step-add="summary"><svg class="ic"><use href="#i-summary"/></svg><span><b>Summary</b><small>Claude summarises the steps before it, after a failure too.</small></span></button>
 						{{- end }}
+						<button type="button" role="menuitem" data-step-add="check"><svg class="ic"><use href="#i-rotate"/></svg><span><b>Check</b><small>While the step before it writes Next:, the steps run again.</small></span></button>
 					</div>
 				</details>
 			</div>
@@ -96,6 +97,7 @@
 		<template data-step-template="prompt">{{ template "wfstep" (list $p (newStep "prompt") true) }}</template>
 		<template data-step-template="summary">{{ template "wfstep" (list $p (newStep "summary") true) }}</template>
 		{{- end }}
+		<template data-step-template="check">{{ template "wfstep" (list $p (newStep "check") true) }}</template>
 		<p class="wf-live" aria-live="polite" data-steps-live></p>
 	</section>
 
@@ -112,7 +114,8 @@
      open. A command picks a workspace, then a folder of it and its job,
      or Workflows, then a workflow; a script its command and folder, a
      prompt its text and place, a summary its place, each a workspace
-     and then a folder of it. */}}
+     and then a folder of it, and a check the markers it looks for and
+     the passes it allows. */}}
 {{ define "wfstep" }}
 {{- $p := index . 0 }}{{ $s := index . 1 }}{{ $open := index . 2 }}{{ $kind := $s.StepKind -}}
 {{- $off := "Disable" }}{{ $offIcon := "stop" }}{{ if $s.Disabled }}{{ $off = "Enable" }}{{ $offIcon = "play" }}{{ end -}}
@@ -188,6 +191,19 @@
 						<option value="{{ .ID }}" data-workspace="{{ $p.StepSpaceOf .ID }}" data-rel="{{ $p.StepRel .ID }}"{{ if eq .ID $s.Folder }} selected{{ end }}>{{ $p.StepLabel .ID }}</option>
 						{{- end }}
 					</select>
+				</div>
+			</div>
+			{{- else if eq $kind "check" }}
+			<div class="wf-fields">
+				<div class="field wf-wide">
+					<span class="label">Looks for <span class="faint">in the step before it</span></span>
+					<input type="text" data-step-markers aria-label="What the check looks for" placeholder="Next:" value="{{ $s.Markers }}" spellcheck="false" autocomplete="off">
+					<small class="faint">One or more, comma separated, case ignored. While the step before the check writes one of them, the workflow's steps run again from the first.</small>
+				</div>
+				<div class="field">
+					<span class="label">Passes <span class="faint">at the most</span></span>
+					<input type="number" data-step-tries aria-label="Passes at the most" min="2" max="20" step="1" value="{{ $s.Passes }}">
+					<small class="faint">The first pass counted, so 3 lets the steps run twice more. The check runs nothing itself and ends ok whatever it finds.</small>
 				</div>
 			</div>
 			{{- else }}

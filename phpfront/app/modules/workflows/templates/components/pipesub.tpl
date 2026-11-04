@@ -2,7 +2,7 @@
 	<span class="rail"><i class="dot{if $data_sub.state} {data_sub.state}{/if}"></i></span>
 	<div class="what">
 		<div class="step-head">
-			<a href="{base}{data_sub.href}"{if $data_sub.runId} data-run-link="{data_sub.runId}"{/if}>{if $data_sub.workflow}<svg class="ic lead"><use href="#i-flow"/></svg>{elseif $data_sub.summary}<svg class="ic lead"><use href="#i-summary"/></svg>{elseif $data_sub.prompt}<svg class="ic lead"><use href="#i-prompt"/></svg>{/if}{data_sub.text}</a>
+			<a href="{base}{data_sub.href}"{if $data_sub.runId} data-run-link="{data_sub.runId}"{/if}>{if $data_sub.workflow}<svg class="ic lead"><use href="#i-flow"/></svg>{elseif $data_sub.summary}<svg class="ic lead"><use href="#i-summary"/></svg>{elseif $data_sub.check}<svg class="ic lead"><use href="#i-rotate"/></svg>{elseif $data_sub.prompt}<svg class="ic lead"><use href="#i-prompt"/></svg>{/if}{data_sub.text}</a>
 {if $data_sub.expand}			<button type="button" class="btn btn-sm" data-expand="{data_sub.runId}" aria-expanded="false"><svg class="ic"><use href="#i-expand"/></svg><span>Expand{if $data_sub.lines} {data_sub.lines} lines{/if}</span></button>
 {/if}		</div>
 		<small>{data_sub.small}</small>

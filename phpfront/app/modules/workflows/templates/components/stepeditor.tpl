@@ -54,7 +54,8 @@
 {if $data_editor.shell}						<button type="button" role="menuitem" data-step-add="script"><svg class="ic"><use href="#i-script"/></svg><span><b>Script</b><small>A shell command you write, run in a folder, like go get -u ./...</small></span></button>
 {/if}{if $data_editor.asks}						<button type="button" role="menuitem" data-step-add="prompt"><svg class="ic"><use href="#i-prompt"/></svg><span><b>Prompt</b><small>Claude answers a prompt with the output of the steps before it.</small></span></button>
 						<button type="button" role="menuitem" data-step-add="summary"><svg class="ic"><use href="#i-summary"/></svg><span><b>Summary</b><small>Claude summarises the steps before it, after a failure too.</small></span></button>
-{/if}					</div>
+{/if}						<button type="button" role="menuitem" data-step-add="check"><svg class="ic"><use href="#i-rotate"/></svg><span><b>Check</b><small>While the step before it writes Next:, the steps run again.</small></span></button>
+					</div>
 				</details>
 			</div>
 		</div>
@@ -62,7 +63,8 @@
 {if $data_editor.shell}		<template data-step-template="script">{eval $data_step = $data_editor.blankScript}{include components/wfstep.tpl}</template>
 {/if}{if $data_editor.asks}		<template data-step-template="prompt">{eval $data_step = $data_editor.blankPrompt}{include components/wfstep.tpl}</template>
 		<template data-step-template="summary">{eval $data_step = $data_editor.blankSummary}{include components/wfstep.tpl}</template>
-{/if}		<p class="wf-live" aria-live="polite" data-steps-live></p>
+{/if}		<template data-step-template="check">{eval $data_step = $data_editor.blankCheck}{include components/wfstep.tpl}</template>
+		<p class="wf-live" aria-live="polite" data-steps-live></p>
 	</section>
 
 	<div class="form-foot">

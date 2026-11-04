@@ -42,7 +42,10 @@ func TestModuleRender(t *testing.T) {
 }
 
 // The module's page renders what its PHP echoed, inside the layout, with
-// the render time in the footer and no iframe anywhere.
+// the render time in the footer and nothing loaded in a frame. The layout
+// carries one frame, empty and hidden, which the preview window points at
+// an HTML artifact; a frame with a source in a module's page would mean
+// the module is embedded instead of drawn.
 func TestModulePage(t *testing.T) {
 	t.Parallel()
 	p := admin(t)
@@ -59,6 +62,6 @@ func TestModulePage(t *testing.T) {
 	assert.Contains(t, body, "Refine a design")
 	assert.Contains(t, body, "titpetric/refinement")
 	assert.Contains(t, body, "Rendered in <span class=\"mono\">4ms</span> by phpscript.")
-	assert.NotContains(t, body, "<iframe")
+	assert.NotContains(t, body, "<iframe src")
 	assert.Contains(t, body, `<nav class="menu">`, "the layout is the instance's")
 }

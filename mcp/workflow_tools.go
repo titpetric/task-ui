@@ -19,13 +19,16 @@ import (
 func workflowTools() []Tool {
 	str := func(text string) Property { return Property{Type: "string", Description: text} }
 	step := Schema{Type: "object", Properties: map[string]Property{
-		"kind": {Type: "string", Enum: []string{model.StepJob, model.StepWorkflow, model.StepPrompt, model.StepSummary}, Description: "What the step does: job runs a job of a folder, workflow runs another workflow, " +
-			"prompt asks Claude its prompt, summary asks Claude for task-ui's summary of the steps before it, with no prompt. Left out, prompt with a prompt, workflow with a workflow, else job."},
+		"kind": {Type: "string", Enum: []string{model.StepJob, model.StepWorkflow, model.StepPrompt, model.StepSummary, model.StepCheck}, Description: "What the step does: job runs a job of a folder, workflow runs another workflow, " +
+			"prompt asks Claude its prompt, summary asks Claude for task-ui's summary of the steps before it, with no prompt, check reads the step before it and sends the steps round again. " +
+			"Left out, prompt with a prompt, workflow with a workflow, else job."},
 		"folder":   str("The folder of a job step, or the folder a prompt or summary step asks in, _ for the root."),
 		"job":      str("The job of a job step, as list_jobs names it."),
 		"workflow": str("The ID or name of a workflow a workflow step runs."),
 		"prompt":   str("What a prompt step asks Claude, with the output of the steps before it; its answer is its output."),
 		"dir":      str("A directory inside the folder a prompt or summary step asks in."),
+		"markers":  str("What a check step looks for in the step before it, comma separated, as `Next:,TODO:`; a check needs one."),
+		"tries":    {Type: "integer", Description: "How many times a check lets the steps run while it keeps finding a marker, the first counted: 3 unless given, 20 at the most."},
 		"args":     {Type: "array", Description: "Args for a job that takes them.", Items: &Schema{Type: "string"}},
 		"enabled":  {Type: "boolean", Description: "False keeps the step and a run skips it; true unless given."},
 	}}
@@ -33,7 +36,7 @@ func workflowTools() []Tool {
 		return map[string]Property{
 			"name":        str("The workflow's name."),
 			"description": str("What the workflow is for, a line or two."),
-			"steps": {Type: "array", Description: "The steps in the order they run, each a job, a workflow, a prompt or a summary. " +
+			"steps": {Type: "array", Description: "The steps in the order they run, each a job, a workflow, a prompt, a summary or a check. " +
 				"The last prompt or summary step's answer is the run's answer.", Items: &step},
 			"sidebar": {Type: "boolean", Description: "List the workflow in the sidebar; true unless given."},
 		}
@@ -43,14 +46,15 @@ func workflowTools() []Tool {
 	return []Tool{
 		{
 			Name:        "get_workflow",
-			Description: "Show a workflow by ID or name: its steps in order, each a job, a workflow, a prompt or a summary, and its last run.",
+			Description: "Show a workflow by ID or name: its steps in order, each a job, a workflow, a prompt, a summary or a check, and its last run.",
 			InputSchema: object(map[string]Property{"workflow": str("The workflow's ID or name.")}, "workflow"),
 			call:        getWorkflow,
 		},
 		{
 			Name: "create_workflow",
-			Description: "Make a workflow as you: a name and its steps in order, each a job of a folder, another workflow, a prompt to Claude " +
-				"or a summary of the steps before it. Prompts and summaries take prompt/edit. Test it with run_workflow.",
+			Description: "Make a workflow as you: a name and its steps in order, each a job of a folder, another workflow, a prompt to Claude, " +
+				"a summary of the steps before it or a check that sends the steps round again while the step before it writes a marker. " +
+				"Prompts and summaries take prompt/edit. Test it with run_workflow.",
 			InputSchema: object(fields(), "name"),
 			call:        createWorkflow,
 		},
@@ -72,6 +76,8 @@ type stepArgs struct {
 	Workflow string   `json:"workflow"`
 	Prompt   string   `json:"prompt"`
 	Dir      string   `json:"dir"`
+	Markers  string   `json:"markers"`
+	Tries    int64    `json:"tries"`
 	Args     []string `json:"args"`
 	Enabled  *bool    `json:"enabled"`
 }
@@ -139,6 +145,8 @@ func keptStep(step model.WorkflowStep) api.StepRequest {
 		out.Prompt, out.Folder, out.Dir = step.Prompt, step.Folder, step.Dir
 	case step.IsWorkflow():
 		out.Workflow = step.WorkflowRef
+	case step.IsCheck():
+		out.Markers, out.Tries = step.Markers, step.Tries
 	default:
 		out.Folder, out.Job, out.Args = step.Folder, step.Job, model.DecodeList(step.Args)
 	}
@@ -154,7 +162,7 @@ func saveWorkflow(ctx context.Context, c *client, method, path string, in workfl
 	if in.Steps != nil {
 		req.Steps = make([]api.StepRequest, 0, len(*in.Steps))
 		for i, step := range *in.Steps {
-			out := api.StepRequest{Kind: step.Kind, Folder: step.Folder, Job: step.Job, Prompt: step.Prompt, Dir: step.Dir, Args: step.Args, Enabled: step.Enabled}
+			out := api.StepRequest{Kind: step.Kind, Folder: step.Folder, Job: step.Job, Prompt: step.Prompt, Dir: step.Dir, Markers: step.Markers, Tries: step.Tries, Args: step.Args, Enabled: step.Enabled}
 			if step.Workflow != "" {
 				ref, _, err := findWorkflow(ctx, c, step.Workflow)
 				if err != nil {
@@ -210,6 +218,8 @@ func showWorkflow(wf api.WorkflowView, names map[string]string) string {
 			fmt.Fprintf(&b, "prompt in %s: %s", model.PlaceLabel(step.Place()), step.Prompt)
 		case step.IsWorkflow():
 			fmt.Fprintf(&b, "workflow %s (id %s)", names[step.WorkflowRef], step.WorkflowRef)
+		case step.IsCheck():
+			fmt.Fprintf(&b, "check for %s, %d tries", step.Markers, model.Passes(step.Tries))
 		default:
 			b.WriteString(step.Folder + "/" + step.Job)
 			if args := model.DecodeList(step.Args); len(args) > 0 {

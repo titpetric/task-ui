@@ -12,14 +12,16 @@ const (
 )
 
 // The kinds of a workflow step, its kind column: a job of a folder,
-// another workflow, a prompt to Claude, or task-ui's summary of the
-// steps before it. The values mirror the CHECK in
-// schema/workflow_step_with_kind.up.sql.
+// another workflow, a prompt to Claude, task-ui's summary of the steps
+// before it, or a check that reads the step before it and sends the
+// steps round again. The values mirror the CHECK in
+// workflow_step_with_kind_check.up.sql.
 const (
 	StepJob      = "job"
 	StepWorkflow = "workflow"
 	StepPrompt   = "prompt"
 	StepSummary  = "summary"
+	StepCheck    = "check"
 )
 
 // stepKind is a step's kind, from its fields for a row written
@@ -36,17 +38,23 @@ func stepKind(kind, prompt, ref string) string {
 	return StepJob
 }
 
-// StepKind is what the step does: StepJob, StepWorkflow, StepPrompt or StepSummary.
+// StepKind is what the step does: StepJob, StepWorkflow, StepPrompt, StepSummary or StepCheck.
 func (s WorkflowStep) StepKind() string { return stepKind(s.Kind, s.Prompt, s.WorkflowRef) }
 
 // StepKind is what the step did, as WorkflowStep.StepKind says.
 func (s WorkflowRunStep) StepKind() string { return stepKind(s.Kind, s.Prompt, s.WorkflowRef) }
 
-// IsWorkflow says the step runs a workflow.
+// IsWorkflow says the step runs the workflow WorkflowRef names, not a job of a folder.
 func (s WorkflowStep) IsWorkflow() bool { return s.StepKind() == StepWorkflow }
 
-// IsWorkflow says the step ran a workflow.
+// IsWorkflow says the step ran a workflow, whose run WorkflowRunRef names.
 func (s WorkflowRunStep) IsWorkflow() bool { return s.StepKind() == StepWorkflow }
+
+// IsCheck says the step reads the step before it instead of running anything.
+func (s WorkflowStep) IsCheck() bool { return s.StepKind() == StepCheck }
+
+// IsCheck says the step read the step before it, and Answer says what it found.
+func (s WorkflowRunStep) IsCheck() bool { return s.StepKind() == StepCheck }
 
 // IsPrompt says the step asks Claude: a prompt or a summary.
 func (s WorkflowStep) IsPrompt() bool { return asks(s.StepKind()) }

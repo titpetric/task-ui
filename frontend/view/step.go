@@ -12,11 +12,12 @@ import (
 const StepScript = "script"
 
 // Step is a step of a workflow, or of a run of one, as a page shows
-// it: a job of a folder, another workflow, a prompt to Claude or a
-// summary by Claude, as Kind says.
+// it: a job of a folder, another workflow, a prompt to Claude, a
+// summary by Claude or a check, as Kind says.
 type Step struct {
-	// Kind is model.StepJob, StepWorkflow, StepPrompt or StepSummary;
-	// empty reads as the fields say, as model.WorkflowStep.StepKind.
+	// Kind is model.StepJob, StepWorkflow, StepPrompt, StepSummary or
+	// StepCheck; empty reads as the fields say, as
+	// model.WorkflowStep.StepKind.
 	Kind   string
 	Folder string
 	Job    string
@@ -34,6 +35,11 @@ type Step struct {
 	// asks in the same place.
 	Prompt string
 	Dir    string
+	// Markers is what a check step looks for in the step before it,
+	// comma separated, and Tries the times the steps run while it keeps
+	// finding one, the first counted.
+	Markers string
+	Tries   int64
 	// Missing says what of the step a move to another workspace did not
 	// find there, for the editor to show under it.
 	Missing string
@@ -45,11 +51,14 @@ type Step struct {
 }
 
 // NewStep returns a blank step of a kind, as the workflow editor adds
-// one: a prompt or a summary asks in the root, a script is the job @script.
+// one: a prompt or a summary asks in the root, a script is the job
+// @script, and a check looks for the marker a refinement prompt writes.
 func NewStep(kind string) Step {
 	switch kind {
 	case model.StepPrompt, model.StepSummary:
 		return Step{Kind: kind, Folder: model.Default}
+	case model.StepCheck:
+		return Step{Kind: kind, Markers: "Next:", Tries: model.CheckPasses}
 	case StepScript:
 		return Step{Kind: model.StepJob, Job: folder.ScriptID}
 	}
@@ -79,6 +88,8 @@ func (s Step) KindLabel() string {
 		return "Prompt"
 	case model.StepSummary:
 		return "Summary"
+	case model.StepCheck:
+		return "Check"
 	case StepScript:
 		return "Script"
 	}
@@ -94,10 +105,17 @@ func (s Step) Icon() string {
 		return "prompt"
 	case model.StepSummary:
 		return "summary"
+	case model.StepCheck:
+		return "rotate"
 	case StepScript:
 		return "script"
 	}
 	return "terminal"
+}
+
+// Passes is the times a check lets the steps run, its Tries made good: the default for a step that names none.
+func (s Step) Passes() int {
+	return model.Passes(s.Tries)
 }
 
 // Place is where a prompt or summary step asks Claude: the root, the workspace root, or folder/dir.
@@ -106,8 +124,8 @@ func (s Step) Place() string {
 }
 
 // Line is the step in one line, its card's heading while folded: the
-// job and its args, the workflow, the first line of the prompt, or
-// where the summary asks.
+// job and its args, the workflow, the first line of the prompt, where
+// the summary asks, or what the check looks for.
 func (s Step) Line() string {
 	switch s.StepKind() {
 	case model.StepWorkflow:
@@ -120,6 +138,11 @@ func (s Step) Line() string {
 		return line
 	case model.StepSummary:
 		return "of the steps before it, in " + s.Place()
+	case model.StepCheck:
+		if s.Markers == "" {
+			return ""
+		}
+		return "the steps go round again while the step before it writes " + s.Markers
 	case StepScript:
 		line, _, _ := strings.Cut(strings.TrimSpace(s.Command()), "\n")
 		if s.Folder == "" || line == "" {

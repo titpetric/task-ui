@@ -93,6 +93,7 @@ class Editor {
 			"blankScript" => $this->blank(Step::SCRIPT),
 			"blankPrompt" => $this->blank(Step::PROMPT),
 			"blankSummary" => $this->blank(Step::SUMMARY),
+			"blankCheck" => $this->blank(Step::CHECK),
 		);
 	}
 
@@ -151,6 +152,7 @@ class Editor {
 			"missing" => $step["missing"],
 			"runs" => $runs,
 			"script" => $kind === Step::SCRIPT,
+			"check" => $kind === Step::CHECK,
 			"asks" => $kind === Step::PROMPT,
 			"sums" => $kind === Step::SUMMARY,
 			"folderLabel" => $kind === Step::WORKFLOW ? "Workflow" : "Folder",
@@ -168,6 +170,10 @@ class Editor {
 			"noneSelected" => $folder === "",
 			"extra" => $found ? null : $this->extra($folder),
 			"dir" => $step["dir"],
+			"markers" => $step["markers"],
+			"tries" => Step::passes($step["tries"]),
+			"least" => Step::LEAST_PASSES,
+			"most" => Step::MOST_PASSES,
 			"question" => Step::SUMMARY_QUESTION,
 			"instruction" => Step::SUMMARY_PROMPT,
 			"space" => $this->spaceOf($kind, $folder),

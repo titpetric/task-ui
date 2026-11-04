@@ -249,6 +249,10 @@
     --kind: var(--ok);
   }
 
+  &.kind-check {
+    --kind: var(--series-5);
+  }
+
   /* The line from this node down to the next, or to Add step. */
   &::before {
     content: "";

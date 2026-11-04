@@ -256,14 +256,15 @@
 	</div>
 </dialog>
 {{- /* The image window: an image or an svg of the artifacts, scaled to
-     fit, opened in the page. A file of a checkout that runs carries
-     the Run or Attach of its row in the foot. */}}
+     fit, opened in the page, or an HTML page a run wrote, in a frame
+     that holds it apart from this one. A file of a checkout that runs
+     carries the Run or Attach of its row in the foot. */}}
 <dialog class="run preview" id="preview-dialog" aria-labelledby="preview-title">
 	<div class="run-head">
 		<span class="label" id="preview-label">Artifact</span>
 		<h3 id="preview-title"></h3>
 	</div>
-	<div class="run-body preview-body"><img id="preview-image" alt=""><div id="preview-doc" class="preview-doc" hidden></div></div>
+	<div class="run-body preview-body"><img id="preview-image" alt=""><div id="preview-doc" class="preview-doc" hidden></div><iframe id="preview-frame" class="preview-frame" title="The page the run wrote" sandbox referrerpolicy="no-referrer" hidden></iframe></div>
 	<div class="run-foot">
 		<span class="hint"><select id="preview-version" aria-label="Version" hidden></select></span>
 		<a class="btn" id="preview-download" href="#" download>Download</a>
@@ -759,7 +760,7 @@
 	<span class="rail"><i class="dot{{ with $l.State }} {{ . }}{{ end }}"></i></span>
 	<div class="what">
 		<div class="step-head">
-			<a href="{{ $l.Href }}"{{ if $l.RunID }} data-run-link="{{ $l.RunID }}"{{ end }}>{{ if $l.Workflow }}<svg class="ic lead"><use href="#i-flow"/></svg>{{ else if $l.Summary }}<svg class="ic lead"><use href="#i-summary"/></svg>{{ else if $l.Prompt }}<svg class="ic lead"><use href="#i-prompt"/></svg>{{ end }}{{ $l.Text }}</a>
+			<a href="{{ $l.Href }}"{{ if $l.RunID }} data-run-link="{{ $l.RunID }}"{{ end }}>{{ if $l.Workflow }}<svg class="ic lead"><use href="#i-flow"/></svg>{{ else if $l.Summary }}<svg class="ic lead"><use href="#i-summary"/></svg>{{ else if $l.Check }}<svg class="ic lead"><use href="#i-rotate"/></svg>{{ else if $l.Prompt }}<svg class="ic lead"><use href="#i-prompt"/></svg>{{ end }}{{ $l.Text }}</a>
 			{{- if and $l.RunID (not $l.Complete) }}<button type="button" class="btn btn-sm" data-expand="{{ $l.RunID }}" aria-expanded="false"><svg class="ic"><use href="#i-expand"/></svg><span>Expand{{ with $l.Lines }} {{ . }} lines{{ end }}</span></button>{{ end }}
 		</div>
 		<small>{{ if $l.State }}{{ $l.State }}{{ else if $l.Disabled }}step {{ add $i 1 }}, off: runs skip it{{ else }}step {{ add $i 1 }}{{ end }}</small>

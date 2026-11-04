@@ -114,6 +114,23 @@ func (b *Board) lastReply(ctx context.Context, note *model.Note) string {
 	return strings.TrimSpace(thread[len(thread)-1].Body)
 }
 
+// StepText is the output of one step of a workflow run, which a check
+// step reads: a prompt's answer off the row, else the job run's output
+// with its ANSI played out, and "" for a step whose run is gone.
+func (b *Board) StepText(ctx context.Context, step *model.WorkflowRunStep) string {
+	if step.Answer != "" {
+		return step.Answer
+	}
+	if b.Runs == nil || step.RunID == "" {
+		return ""
+	}
+	row, err := b.Runs.Get(ctx, step.RunID)
+	if err != nil {
+		return ""
+	}
+	return b.outputText(row)
+}
+
 // aboutWorkflowRun writes what a workflow run's prompt tells Claude of
 // the run to a file, for TASK_UI_PROMPT_WORKFLOW: the workflow, and each
 // step, how it ended and the end of its output. It returns the file's
@@ -223,6 +240,8 @@ func (b *Board) stepHead(ctx context.Context, i int, step model.WorkflowRunStep)
 		name = "a summary by Claude in " + model.PlaceLabel(step.Folder)
 	case step.IsPrompt():
 		name = "a prompt to Claude in " + model.PlaceLabel(step.Folder) + ", " + strconv.Quote(step.Prompt)
+	case step.IsCheck():
+		name = "a check for " + step.Markers
 	case step.IsWorkflow():
 		name = "the workflow " + step.WorkflowRef
 		if step.WorkflowRunRef != "" {

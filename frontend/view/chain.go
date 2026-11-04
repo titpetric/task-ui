@@ -19,6 +19,9 @@ func Chain(steps []Step, workspaces map[string]int) []Link {
 			place := model.PlaceLabel(model.WorkflowStep{Folder: s.Folder, Dir: s.Dir}.Place())
 			l.Prompt, l.Text, l.Href = s.Prompt, "prompt in "+place, FolderHref(s.Folder, workspaces)
 			last = ""
+		case model.StepCheck:
+			l.Check, l.Text, l.Href = true, "check for "+s.Markers, "/workflows"
+			last = ""
 		case model.StepWorkflow:
 			l.Workflow, l.Text, l.Href = true, s.WorkflowName, "/workflows/"+s.WorkflowID
 			l.WorkflowID, l.WorkflowRunID = s.WorkflowID, s.WorkflowRunID

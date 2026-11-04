@@ -27,7 +27,7 @@ func (h *Handlers) workflowNames(ctx context.Context) map[string]string {
 func viewSteps(steps []model.WorkflowStep, names map[string]string) []view.Step {
 	out := make([]view.Step, 0, len(steps))
 	for _, s := range steps {
-		out = append(out, view.Step{Kind: s.StepKind(), Folder: s.Folder, Job: s.Job, WorkflowID: s.WorkflowRef, WorkflowName: names[s.WorkflowRef], Disabled: s.Disabled, Args: s.Args, Prompt: s.Prompt, Dir: s.Dir})
+		out = append(out, view.Step{Kind: s.StepKind(), Folder: s.Folder, Job: s.Job, WorkflowID: s.WorkflowRef, WorkflowName: names[s.WorkflowRef], Disabled: s.Disabled, Args: s.Args, Prompt: s.Prompt, Dir: s.Dir, Markers: s.Markers, Tries: s.Tries})
 	}
 	return out
 }
@@ -38,7 +38,7 @@ func viewRunSteps(rows []model.WorkflowRunStep, names map[string]string) []view.
 	for _, s := range rows {
 		out = append(out, view.Step{
 			Kind: s.StepKind(), Folder: s.Folder, Job: s.Job, WorkflowID: s.WorkflowRef, WorkflowName: names[s.WorkflowRef],
-			State: s.State, RunID: s.RunID, WorkflowRunID: s.WorkflowRunRef, Prompt: s.Prompt,
+			State: s.State, RunID: s.RunID, WorkflowRunID: s.WorkflowRunRef, Prompt: s.Prompt, Markers: s.Markers,
 		})
 	}
 	return out
@@ -53,7 +53,7 @@ func viewRunSteps(rows []model.WorkflowRunStep, names map[string]string) []view.
 //
 // A run that is gone is blanked the same way, as a note's is: nothing
 // is left to link to.
-func seenSteps(sees func(string) bool, steps []view.Step) []view.Step {
+func seenSteps(steps []view.Step, sees func(string) bool) []view.Step {
 	for i := range steps {
 		if steps[i].RunID != "" && !sees(steps[i].RunID) {
 			steps[i].RunID = ""
@@ -301,7 +301,7 @@ func (h *Handlers) workflow(w http.ResponseWriter, r *http.Request) {
 	for _, run := range runs {
 		rows, _ := h.opts.WorkflowRuns.Steps(r.Context(), run.ID)
 		thread := h.workflowThread(run, rows, names)
-		thread.Steps = seenSteps(sees, thread.Steps)
+		thread.Steps = seenSteps(thread.Steps, sees)
 		p.WorkflowRuns = append(p.WorkflowRuns, thread)
 	}
 	// The pipeline follows the newest run, which a page further down
@@ -312,7 +312,7 @@ func (h *Handlers) workflow(w http.ResponseWriter, r *http.Request) {
 			latest = p.WorkflowRuns[0].Steps
 		} else {
 			rows, _ := h.opts.WorkflowRuns.Steps(r.Context(), last.ID)
-			latest = seenSteps(sees, viewRunSteps(rows, names))
+			latest = seenSteps(viewRunSteps(rows, names), sees)
 		}
 	}
 	p.Activity = h.workflowActivity(r.Context(), p.Workflow.ID, p.Now)
@@ -339,7 +339,7 @@ func (h *Handlers) workflowRun(w http.ResponseWriter, r *http.Request) {
 	rows, _ := h.opts.WorkflowRuns.Steps(r.Context(), run.ID)
 	sees := h.seesRun(r)
 	thread := h.workflowThread(*run, rows, names)
-	thread.Steps = seenSteps(sees, thread.Steps)
+	thread.Steps = seenSteps(thread.Steps, sees)
 	p.WorkflowRuns = []view.WorkflowRun{thread}
 	p.Pipeline = view.Chain(thread.Steps, p.Workspaces)
 	h.frames(r.Context(), p.Pipeline, names, p.Workspaces, true, sees)
@@ -390,7 +390,7 @@ func (h *Handlers) frames(ctx context.Context, links []view.Link, names map[stri
 			if err != nil {
 				continue
 			}
-			steps := seenSteps(sees, viewRunSteps(rows, names))
+			steps := seenSteps(viewRunSteps(rows, names), sees)
 			links[i].Sub = view.Chain(steps, workspaces)
 			h.frames(ctx, links[i].Sub, names, workspaces, false, sees)
 		}

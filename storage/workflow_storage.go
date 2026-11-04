@@ -63,6 +63,10 @@ func checkStep(step model.WorkflowStep) error {
 		if step.Prompt != "" || !asks {
 			return errors.New("a summary step names the folder it asks in, and no prompt, job or workflow")
 		}
+	case model.StepCheck:
+		if len(model.Markers(step.Markers)) == 0 || job || step.Prompt != "" || step.WorkflowRef != "" {
+			return errors.New("a check step names what it looks for, and no folder, job, prompt or workflow")
+		}
 	default:
 		return fmt.Errorf("no step kind %q", step.Kind)
 	}
@@ -136,7 +140,7 @@ func inTx(ctx context.Context, db DB, fn func(c conn) error) error {
 // insertSteps writes a workflow's steps in order, positions from zero.
 func insertSteps(ctx context.Context, c conn, workflowID string, steps []model.WorkflowStep) error {
 	for i, step := range steps {
-		row := model.WorkflowStep{ID: model.NewID(), WorkflowID: workflowID, Position: int64(i), Kind: step.StepKind(), Folder: step.Folder, Job: step.Job, WorkflowRef: step.WorkflowRef, Disabled: step.Disabled, Target: step.Target, Args: step.Args, Prompt: step.Prompt, Dir: step.Dir}
+		row := model.WorkflowStep{ID: model.NewID(), WorkflowID: workflowID, Position: int64(i), Kind: step.StepKind(), Folder: step.Folder, Job: step.Job, WorkflowRef: step.WorkflowRef, Disabled: step.Disabled, Target: step.Target, Args: step.Args, Prompt: step.Prompt, Dir: step.Dir, Markers: step.Markers, Tries: step.Tries}
 		if row.Args == "" {
 			row.Args = "[]"
 		}
@@ -183,7 +187,7 @@ func (s *WorkflowStorage) Steps(ctx context.Context, id string) ([]model.Workflo
 	return steps, err
 }
 
-// List returns every workflow, by name.
+// List returns every workflow, by name, the whole table: the sidebar and the pickers draw them all.
 func (s *WorkflowStorage) List(ctx context.Context) ([]model.Workflow, error) {
 	return client(s.db).Select[model.Workflow](ctx, "SELECT * FROM workflow ORDER BY name COLLATE NOCASE, id")
 }
@@ -293,7 +297,7 @@ func (s *WorkflowRunStorage) Create(ctx context.Context, run *model.WorkflowRun,
 		for i, step := range steps {
 			row := model.WorkflowRunStep{
 				ID: model.NewID(), WorkflowRunID: run.ID, Position: int64(i),
-				Kind: step.StepKind(), Folder: step.Folder, Job: step.Job, WorkflowRef: step.WorkflowRef, Prompt: step.Prompt, State: model.StepPending,
+				Kind: step.StepKind(), Folder: step.Folder, Job: step.Job, WorkflowRef: step.WorkflowRef, Prompt: step.Prompt, Markers: step.Markers, State: model.StepPending,
 				CreatedAt: run.StartedAt, UpdatedAt: run.StartedAt,
 			}
 			if err := c.Insert(ctx, model.WorkflowRunStepTable, &row); err != nil {

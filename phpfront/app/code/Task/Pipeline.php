@@ -62,6 +62,7 @@ class Pipeline {
 			"runId" => $link["run_id"],
 			"workflow" => $link["workflow"],
 			"summary" => $link["summary"],
+			"check" => $link["check"],
 			"prompt" => $link["prompt"],
 			"text" => $link["text"],
 			"small" => $small,

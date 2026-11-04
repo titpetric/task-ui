@@ -167,6 +167,23 @@ false<?php }?>">
 <?php }?>					</select>
 				</div>
 			</div>
+<?php }elseif($_v['data_step']['check']){?>
+			<div class="wf-fields">
+				<div class="field wf-wide">
+					<span class="label">Looks for <span class="faint">in the step before it</span></span>
+					<input type="text" data-step-markers aria-label="What the check looks for" placeholder="Next:" value="<?php echo htmlspecialchars($_v['data_step']['markers'], ENT_QUOTES);?>
+" spellcheck="false" autocomplete="off">
+					<small class="faint">One or more, comma separated, case ignored. While the step before the check writes one of them, the workflow's steps run again from the first.</small>
+				</div>
+				<div class="field">
+					<span class="label">Passes <span class="faint">at the most</span></span>
+					<input type="number" data-step-tries aria-label="Passes at the most" min="<?php echo htmlspecialchars($_v['data_step']['least'], ENT_QUOTES);?>
+" max="<?php echo htmlspecialchars($_v['data_step']['most'], ENT_QUOTES);?>
+" step="1" value="<?php echo htmlspecialchars($_v['data_step']['tries'], ENT_QUOTES);?>
+">
+					<small class="faint">The first pass counted, so 3 lets the steps run twice more. The check runs nothing itself and ends ok whatever it finds.</small>
+				</div>
+			</div>
 <?php }else{ if($_v['data_step']['asks']){?>
 			<div class="field">
 				<span class="label">Prompt</span>

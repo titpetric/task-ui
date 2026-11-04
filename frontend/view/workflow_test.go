@@ -78,6 +78,7 @@ func TestView_RenderWorkflowEditor(t *testing.T) {
 			{Kind: model.StepJob, Folder: "infra", Job: "plan"},
 			{Kind: model.StepPrompt, Folder: "internal", Prompt: "Fetch the weather for Porec.", Disabled: true},
 			{Kind: model.StepSummary, Folder: "infra", Dir: "app"},
+			{Kind: model.StepCheck, Markers: "Next:,TODO:", Tries: 5},
 		},
 		CanChange: true,
 	}
@@ -97,6 +98,14 @@ func TestView_RenderWorkflowEditor(t *testing.T) {
 	assert.Contains(t, out, `class="more-item danger" role="menuitem" data-step-remove="1"`)
 	assert.Contains(t, out, `data-step-add="summary"`)
 	assert.Contains(t, out, `data-step-template="prompt"`)
+	// A check card names its markers and the passes it allows, and the
+	// kind needs no permission of its own.
+	assert.Contains(t, out, `data-kind="check"`)
+	assert.Contains(t, out, ">the steps go round again while the step before it writes Next:,TODO:</span>")
+	assert.Contains(t, out, `value="Next:,TODO:"`)
+	assert.Contains(t, out, `max="20" step="1" value="5"`)
+	assert.Contains(t, out, `data-step-add="check"`)
+	assert.Contains(t, out, `data-step-template="check"`)
 	assert.Contains(t, out, "Water the plants or not.")
 	// Runs as: an admin picks from the users, the saved user selected on
 	// edit, the login on new; the help says what the user brings.
@@ -132,6 +141,7 @@ func TestView_RenderWorkflowEditor(t *testing.T) {
 	assert.NoError(t, v.Render(&buf, "workflow_new", p))
 	out = buf.String()
 	assert.Contains(t, out, `data-step-add="job"`)
+	assert.Contains(t, out, `data-step-add="check"`, "a check asks Claude nothing")
 	assert.NotContains(t, out, `data-step-add="prompt"`, "no prompt/edit")
 	assert.Contains(t, out, "No steps yet. Start with a command.")
 	// A runner reads who the workflow runs as: themself on new, posted

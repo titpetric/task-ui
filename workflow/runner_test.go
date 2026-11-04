@@ -7,6 +7,7 @@ import (
 	"github.com/titpetric/task-ui/folder"
 	"github.com/titpetric/task-ui/internal/assert"
 	"github.com/titpetric/task-ui/model"
+	"github.com/titpetric/task-ui/storage"
 	"github.com/titpetric/task-ui/workflow"
 )
 
@@ -38,6 +39,28 @@ func TestCatalogue(t *testing.T) {
 	assert.Equal(t, "infra", c.Find("infra").ID)
 	assert.True(t, c.Find("gone") == nil)
 	var _ workflow.Catalogue = &folder.Discovery{}
+}
+
+// A runner that has started nothing holds no run: the sidebar reads no
+// workflow as running, a stop of a run that ended is refused, and the
+// channel of a run nobody is walking is closed, so a wait on it returns.
+func TestRunner_Active(t *testing.T) {
+	t.Parallel()
+	r := workflow.New(nil, nil, nil, nil)
+
+	id, ok := r.Active("w1")
+	assert.False(t, ok)
+	assert.Equal(t, "", id)
+	assert.Len(t, r.Running(), 0)
+	assert.ErrorIs(t, r.Stop("wr1"), workflow.ErrNotRunning)
+	<-r.Done("wr1")
+}
+
+// The user of a nested workflow comes from the user storage, which
+// answers both of the questions the runner asks about one.
+func TestUsers(t *testing.T) {
+	t.Parallel()
+	var _ workflow.Users = &storage.UserStorage{}
 }
 
 // The run and done events carry the run as the browser reads it.

@@ -14,7 +14,8 @@ func (r *Runner) Resolve(ctx context.Context, steps []model.WorkflowStep) ([]Ste
 	return r.resolve(ctx, steps, make([]int, len(steps)), nil)
 }
 
-// resolve finds what each step runs, with its project's index. Given the
+// resolve finds the job, workflow or check behind a step, with its
+// project's index. Given the
 // projects of a workflow that runs over a workspace, a step finds its
 // folder among them first, and a project without the step's job skips it.
 func (r *Runner) resolve(ctx context.Context, steps []model.WorkflowStep, groups []int, projects map[string]*folder.Folder) ([]Step, error) {
@@ -43,6 +44,12 @@ func (r *Runner) resolveStep(ctx context.Context, step model.WorkflowStep, proje
 			return Step{}, fmt.Errorf("no workflow %s", step.WorkflowRef)
 		}
 		return Step{Workflow: wf}, nil
+	case step.IsCheck():
+		markers := model.Markers(step.Markers)
+		if len(markers) == 0 {
+			return Step{}, ErrCheckMarkers
+		}
+		return Step{Check: true, Markers: markers, Passes: model.Passes(step.Tries)}, nil
 	}
 	f := projects[step.Folder]
 	if f == nil {

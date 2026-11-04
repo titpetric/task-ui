@@ -12,7 +12,8 @@
  data-run-link="<?php echo htmlspecialchars($_v['data_sub']['runId'], ENT_QUOTES);?>
 "<?php }?>><?php if($_v['data_sub']['workflow']){?>
 <svg class="ic lead"><use href="#i-flow"/></svg><?php }elseif($_v['data_sub']['summary']){?>
-<svg class="ic lead"><use href="#i-summary"/></svg><?php }elseif($_v['data_sub']['prompt']){?>
+<svg class="ic lead"><use href="#i-summary"/></svg><?php }elseif($_v['data_sub']['check']){?>
+<svg class="ic lead"><use href="#i-rotate"/></svg><?php }elseif($_v['data_sub']['prompt']){?>
 <svg class="ic lead"><use href="#i-prompt"/></svg><?php }?><?php echo htmlspecialchars($_v['data_sub']['text'], ENT_QUOTES);?>
 </a>
 <?php if($_v['data_sub']['expand']){?>

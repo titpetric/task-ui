@@ -29,7 +29,9 @@ func (r *Runner) mayRun(ctx context.Context, set permission.Set, steps []model.W
 			if !set.Allowed("prompt/edit") {
 				return "the prompt in " + model.PlaceLabel(step.Place())
 			}
-		case step.Disabled:
+		// A check and a disabled step run nothing, so neither takes a
+		// permission.
+		case step.IsCheck(), step.Disabled:
 		default:
 			if !r.mayRunJob(set, step, projects) {
 				return step.Folder + " / " + step.Job

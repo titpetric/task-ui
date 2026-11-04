@@ -173,7 +173,8 @@
  data-run-link="<?php echo htmlspecialchars($_v['data_node']['runId'], ENT_QUOTES);?>
 "<?php }?>><?php if($_v['data_node']['workflow']){?>
 <svg class="ic lead"><use href="#i-flow"/></svg><?php }elseif($_v['data_node']['summary']){?>
-<svg class="ic lead"><use href="#i-summary"/></svg><?php }elseif($_v['data_node']['prompt']){?>
+<svg class="ic lead"><use href="#i-summary"/></svg><?php }elseif($_v['data_node']['check']){?>
+<svg class="ic lead"><use href="#i-rotate"/></svg><?php }elseif($_v['data_node']['prompt']){?>
 <svg class="ic lead"><use href="#i-prompt"/></svg><?php }?><?php echo htmlspecialchars($_v['data_node']['text'], ENT_QUOTES);?>
 </a>
 <?php if($_v['data_node']['expand']){?>
@@ -213,7 +214,8 @@
  data-run-link="<?php echo htmlspecialchars($_v['data_sub']['runId'], ENT_QUOTES);?>
 "<?php }?>><?php if($_v['data_sub']['workflow']){?>
 <svg class="ic lead"><use href="#i-flow"/></svg><?php }elseif($_v['data_sub']['summary']){?>
-<svg class="ic lead"><use href="#i-summary"/></svg><?php }elseif($_v['data_sub']['prompt']){?>
+<svg class="ic lead"><use href="#i-summary"/></svg><?php }elseif($_v['data_sub']['check']){?>
+<svg class="ic lead"><use href="#i-rotate"/></svg><?php }elseif($_v['data_sub']['prompt']){?>
 <svg class="ic lead"><use href="#i-prompt"/></svg><?php }?><?php echo htmlspecialchars($_v['data_sub']['text'], ENT_QUOTES);?>
 </a>
 <?php if($_v['data_sub']['expand']){?>
@@ -425,7 +427,8 @@ Show<?php }?> the answer"><svg class="ic chev"><use href="#i-chev"/></svg></butt
 "><i class="dot <?php echo htmlspecialchars($_v['link']['state'], ENT_QUOTES);?>
 "></i><?php if($_v['link']['workflow']){?>
 <svg class="ic lead"><use href="#i-flow"/></svg><?php }elseif($_v['link']['summary']){?>
-<svg class="ic lead"><use href="#i-summary"/></svg><?php }elseif($_v['link']['prompt']){?>
+<svg class="ic lead"><use href="#i-summary"/></svg><?php }elseif($_v['link']['check']){?>
+<svg class="ic lead"><use href="#i-rotate"/></svg><?php }elseif($_v['link']['prompt']){?>
 <svg class="ic lead"><use href="#i-prompt"/></svg><?php }?><?php echo htmlspecialchars($_v['link']['text'], ENT_QUOTES);?>
 </a><?php }?></span></td>
 				<td class="actions"><a class="btn btn-sm" href="<?php echo htmlspecialchars($_v['base'], ENT_QUOTES); echo htmlspecialchars($_v['row']['href'], ENT_QUOTES);?>

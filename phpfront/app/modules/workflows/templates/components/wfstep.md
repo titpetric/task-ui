@@ -6,7 +6,7 @@ Input scope: `data_step`. It also sets `data_menu`, `data_space`, `data_hostjobs
 
 | Key            | Type   | What                                            |
 |----------------|--------|-------------------------------------------------|
-| `kind`         | string | job, workflow, script, prompt or summary        |
+| `kind`         | string | job, workflow, script, prompt, summary or check |
 | `disabled`     | bool   | runs skip the step                              |
 | `open`         | bool   | the card is unfolded                            |
 | `icon`         | string | `#i-<icon>` of the sprite                       |
@@ -16,6 +16,7 @@ Input scope: `data_step`. It also sets `data_menu`, `data_space`, `data_hostjobs
 | `missing`      | string | what the step's place lacks, "" for nothing     |
 | `runs`         | bool   | the step runs a job or a workflow               |
 | `script`       | bool   | the step runs a command of its own              |
+| `check`        | bool   | the step is a check                             |
 | `asks`         | bool   | the step is a prompt                            |
 | `sums`         | bool   | the step is a summary                           |
 | `folderLabel`  | string | Folder, or Workflow for a step that runs one    |
@@ -33,6 +34,10 @@ Input scope: `data_step`. It also sets `data_menu`, `data_space`, `data_hostjobs
 | `noneSelected` | bool   | no folder is picked                             |
 | `extra`        | map    | the place the reader has no folder for, or null |
 | `dir`          | string | the directory inside the folder                 |
+| `markers`      | string | what a check looks for, comma separated         |
+| `tries`        | int    | the passes a check allows, the first counted    |
+| `least`        | int    | the fewest passes the field takes               |
+| `most`         | int    | the most passes the field takes                 |
 | `question`     | string | what a summary asks Claude                      |
 | `instruction`  | string | the instruction beside it                       |
 | `space`        | map    | the Workspace field, the scope of stepspace.tpl |

@@ -34,11 +34,14 @@ func listWorkflows(ctx context.Context, c *client, args json.RawMessage) (string
 	for _, wf := range out.Workflows {
 		steps := make([]string, 0, len(wf.Steps))
 		for _, step := range wf.Steps {
-			if step.WorkflowRef != "" {
+			switch {
+			case step.WorkflowRef != "":
 				steps = append(steps, "workflow "+names[step.WorkflowRef])
-				continue
+			case step.IsCheck():
+				steps = append(steps, "check for "+step.Markers)
+			default:
+				steps = append(steps, step.Folder+"/"+step.Job)
 			}
-			steps = append(steps, step.Folder+"/"+step.Job)
 		}
 		fmt.Fprintf(&b, "%s (id %s): %s", wf.Name, wf.ID, strings.Join(steps, " -> "))
 		if !wf.CanRun {
@@ -177,6 +180,8 @@ func showFlowRun(view api.WorkflowRunView, names map[string]string) string {
 			name = "prompt in " + place
 		case step.WorkflowRef != "":
 			name = "workflow " + names[step.WorkflowRef]
+		case step.IsCheck():
+			name = "check for " + step.Markers
 		}
 		state := step.State
 		if state == "" {
