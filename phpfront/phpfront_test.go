@@ -68,6 +68,42 @@ func TestThemeAssets(t *testing.T) {
 	assert.Contains(t, string(data), "@import url(")
 }
 
+// The entry stylesheet and the sheets beside it name each other, both ways. A
+// sheet renamed without its @import answers 404 and the page loses every rule
+// it held; a sheet added without one is never fetched at all. Neither shows up
+// in a build or a render, so the pairing is a test.
+//
+// internal/assets.importURL is the pattern that versions these at serve time,
+// so an @import this does not match is one the browser gets without a ?v= and
+// keeps for the hour MaxAge allows.
+func TestStylesheetImports(t *testing.T) {
+	t.Parallel()
+
+	theme := phpfront.ThemeAssets()
+	data, err := fs.ReadFile(theme, "task-ui.css")
+	assert.NoError(t, err)
+
+	imported := map[string]bool{}
+	for _, line := range strings.Split(string(data), "\n") {
+		_, rest, found := strings.Cut(line, `@import url("`)
+		if !found {
+			continue
+		}
+		name, _, _ := strings.Cut(rest, `"`)
+		assert.True(t, strings.HasPrefix(name, "css/"), name+": outside css/, so it is served unversioned")
+		_, err := fs.ReadFile(theme, name)
+		assert.NoError(t, err, name+": imported by task-ui.css and not in the theme")
+		imported[name] = true
+	}
+	assert.True(t, len(imported) > 1, "the entry stylesheet imports the sheets")
+
+	sheets, err := fs.Glob(theme, "css/*.css")
+	assert.NoError(t, err)
+	for _, name := range sheets {
+		assert.True(t, imported[name], name+": in the theme and imported by nothing")
+	}
+}
+
 // Extract writes the tree where a runtime can read and write it. Setenv and
 // t.Parallel do not mix, so these three run in order.
 func TestExtract(t *testing.T) {
